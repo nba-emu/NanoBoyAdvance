@@ -694,6 +694,13 @@ namespace NanoboyAdvance
             LOG(LOG_ERROR, "Unimplemented coprocessor register transfer, r15=0x%x", r15);
             break;
         case ARM_16:
+            // ARM.16 Software interrupt
+            r14_svc = r15 - 4;
+            r15 = 0x8;
+            flush_pipe = true;
+            spsr_svc = cpsr;
+            cpsr = (cpsr & ~0x1F) | SVC;
+            RemapRegisters();
             break;
         }
     }

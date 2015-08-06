@@ -52,6 +52,7 @@ namespace NanoboyAdvance
         // Current program status register (contains status flags)
         // TODO: saved program status register
         uint cpsr;
+        uint spsr_svc;
         
         // In some way emulate the processor's pipeline
         uint pipe_opcode[3];
