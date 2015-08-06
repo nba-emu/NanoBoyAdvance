@@ -61,9 +61,10 @@ namespace NanoboyAdvance
         uint* gprs[16];
         
         // Current program status register (contains status flags)
-        // TODO: saved program status register
         uint cpsr;
-        uint spsr_svc;
+        uint spsr_fiq, spsr_svc, spsr_abt, spsr_irq, spsr_und;
+        // A pointer pointing on the Saved program status register of the current mode
+        uint* pspsr;
         
         // In some way emulate the processor's pipeline
         uint pipe_opcode[3];

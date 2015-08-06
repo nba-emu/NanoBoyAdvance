@@ -31,6 +31,7 @@ namespace NanoboyAdvance
         r13_abt = r14_abt = 0;
         r13_irq = r14_irq = 0;
         r13_und = r14_und = 0;
+        spsr_fiq = spsr_svc = spsr_abt = spsr_irq = spsr_und = 0;
         pipe_status = 0;
         flush_pipe = false;
         // Map the static registers r0-r7, r15
@@ -69,6 +70,7 @@ namespace NanoboyAdvance
             gprs[12] = &r12_fiq;
             gprs[13] = &r13_fiq;
             gprs[14] = &r14_fiq;
+            pspsr = &spsr_fiq;
             break;
         case IRQ:
             gprs[8] = &r8;
@@ -78,6 +80,7 @@ namespace NanoboyAdvance
             gprs[12] = &r12;
             gprs[13] = &r13_irq;
             gprs[14] = &r14_irq;
+            pspsr = &spsr_irq;
             break;
         case SVC:
             gprs[8] = &r8;
@@ -87,6 +90,7 @@ namespace NanoboyAdvance
             gprs[12] = &r12;
             gprs[13] = &r13_svc;
             gprs[14] = &r14_svc;
+            pspsr = &spsr_svc;
             break;
         case Abort:
             gprs[8] = &r8;
@@ -96,6 +100,7 @@ namespace NanoboyAdvance
             gprs[12] = &r12;
             gprs[13] = &r13_abt;
             gprs[14] = &r14_abt;
+            pspsr = &spsr_abt;
             break;
         case Undefined:
             gprs[8] = &r8;
@@ -105,6 +110,7 @@ namespace NanoboyAdvance
             gprs[12] = &r12;
             gprs[13] = &r13_und;
             gprs[14] = &r14_und;
+            pspsr = &spsr_und;
             break;
         case System:
             gprs[8] = &r8;

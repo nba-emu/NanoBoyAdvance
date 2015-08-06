@@ -662,7 +662,128 @@ namespace NanoboyAdvance
             break;
         }
         case ARM_8:
+        {
+            // ARM.8 Data processing and PSR transfer
+            bool setflags = (instruction & (1 << 20)) == (1 << 20);
+            int opcode = (instruction >> 21) & 0xF;
+
+            // Determine wether the instruction is data processing or psr transfer
+            if (!setflags && opcode >= 0b1000 && opcode <= 0b1011)
+            {
+                // PSR transfer
+                LOG(LOG_ERROR, "PSR transfer not implemented yet, r15=0x%x", r15);
+            }
+            else
+            {
+                // Data processing
+                int reg_dest = (instruction >> 12) & 0xF;
+                int reg_operand1 = (instruction >> 16) & 0xF;
+                bool immediate = (instruction & (1 << 25)) == (1 << 25);
+                int operand1 = reg(reg_operand1);
+                uint operand2;
+                bool carry = (cpsr & CarryFlag) == CarryFlag;
+
+                // Operand 2 can either be an 8 bit immediate value rotated right by 4 bit value or the value of a register shifted by a specific amount
+                if (immediate)
+                {
+                    int immediate_value = instruction & 0xFF;
+                    int amount = ((instruction >> 8) & 0xF) << 1;
+                    operand2 = (immediate_value >> amount) | (immediate_value << (32 - amount));
+                }
+                else
+                {
+                    int reg_operand2 = instruction & 0xF;
+                    uint amount;
+                    operand2 = reg(reg_operand2);
+
+                    // When r15 is used as operand and operand2 is not immediate its value will be 12 bytes ahead instead of 8 bytes 
+                    if (reg_operand1 == 15)
+                    {
+                        operand1 += 4;
+                    }
+                    if (reg_operand2 == 15)
+                    {
+                        operand2 += 4;
+                    }
+
+                    // The amount is either the value of a register or a 5 bit immediate
+                    if (instruction & (1 << 4))
+                    {
+                        int reg_shift = (instruction >> 8) & 0xF;
+                        amount = reg(reg_shift);
+
+                        // When r15 is used as operand and operand2 is not immediate its value will be 12 bytes ahead instead of 8 bytes 
+                        // TODO: Check if this is actually done in this case
+                        if (reg_shift == 15)
+                        {
+                            amount += 4;
+                        }
+                    }
+                    else
+                    {
+                        amount = (instruction >> 7) & 0x1F;
+                    }
+
+                    // Perform the actual shift/rotate
+                    if (amount != 0)
+                    {
+                        switch ((instruction >> 5) & 3)
+                        {
+                        case 0b00:
+                        {
+                            // Logical Shift Left
+                            uint result = operand2 << amount;
+                            carry = (operand2 << (amount - 1)) & 0x80000000 ? true : false;
+                            operand2 = result;
+                            break;
+                        }
+                        case 0b01:
+                        {
+                            // Logical Shift Right
+                            uint result = operand2 >> amount;
+                            carry = (operand2 >> (amount - 1)) & 1 ? true : false;
+                            operand2 = result;
+                            break;
+                        }
+                        case 0b10:
+                        {
+                            // Arithmetic Shift Right
+                            sint result = (sint)operand2 >> (sint)amount;
+                            carry = (operand2 >> (amount - 1)) & 1 ? true : false;
+                            operand2 = result;
+                            break;
+                        }
+                        case 0b11:
+                        {
+                            // Rotate Right
+                            uint result = (operand2 << (32 - amount)) | (operand2 >> amount);
+                            carry = (operand2 >> (amount - 1)) & 1 ? true : false;
+                            operand2 = result;
+                            break;
+                        }
+                        }
+                    }
+                }
+
+                // When destination register is r15 and s bit is set rather than updating the flags restore cpsr
+                // This is allows for restoring r15 and cpsr at the same time
+                if (reg_dest == 15 && setflags)
+                {
+                    setflags = false;
+                    cpsr = *pspsr;
+                    RemapRegisters();
+                }
+
+                // Perform the actual operation
+
+                // When writing to r15 initiate pipeline flush
+                if (reg_dest == 15)
+                {
+                    flush_pipe = true;
+                }
+            }
             break;
+        }
         case ARM_9:
         {
             // ARM.9 Load/store register/unsigned byte (Single Data Transfer)
@@ -747,6 +868,7 @@ namespace NanoboyAdvance
             // Perform the actual load / store operation
             if (load)
             {
+                // TODO: Check if loading to r15 flushes the pipeline
                 if (transfer_byte)
                 {
                     reg(reg_dest) = memory->ReadByte(address);
