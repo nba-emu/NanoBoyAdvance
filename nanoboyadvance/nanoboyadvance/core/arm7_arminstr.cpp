@@ -561,7 +561,7 @@ namespace NanoboyAdvance
             uint offset;
             int reg_dest = (instruction >> 12) & 0xF;
             int reg_base = (instruction >> 16) & 0xF;
-            bool load = (instruction & (1 << 20)); // == (1 << 20);
+            bool load = (instruction & (1 << 20)) == (1 << 20);
             bool write_back = (instruction & (1 << 21)) == (1 << 21);
             bool immediate = (instruction & (1 << 22)) == (1 << 22);
             bool add_to_base = (instruction & (1 << 23)) == (1 << 23);
