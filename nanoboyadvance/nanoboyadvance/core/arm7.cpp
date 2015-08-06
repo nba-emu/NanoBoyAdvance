@@ -120,7 +120,7 @@ namespace NanoboyAdvance
     
     void ARM7::Step()
     {
-        bool thumb = (cpsr & 0x20) == 0x20;
+        bool thumb = (cpsr & Thumb) == Thumb;
         if (thumb)
         {
         }

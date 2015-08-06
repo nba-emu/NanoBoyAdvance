@@ -17,7 +17,7 @@
 * along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdio.h>
+#include <cstdio>
 #include <iostream>
 #include "SDL.h"
 #include "core/arm7.h"

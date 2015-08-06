@@ -484,7 +484,7 @@ namespace NanoboyAdvance
         }
         return mmemonic.str();
     }
-    
+
     void ARM7::ARMExecute(uint instruction, int type)
     {
         int condition = instruction >> 28;
@@ -518,7 +518,7 @@ namespace NanoboyAdvance
             {
                 LOG(LOG_ERROR, "Entered -unimplemented- thumb mode, r15=0x%x", r15);
                 r15 = reg(reg_address) & ~(1);
-                cpsr |= 0x20;
+                cpsr |= Thumb;
             }
             else
             {
@@ -569,7 +569,7 @@ namespace NanoboyAdvance
             uint address = reg(reg_base);
 
             // Instructions neither write back if base register is r15 nor should they have the write-back bit set when being post-indexed (post-indexing automatically writes back the address)
-            ASSERT(reg_base == 15 && write_back, LOG_WARN, "Halfword and Signed Data Transfer, thou shall not write to r15, r15=0x%x", r15);
+            ASSERT(reg_base == 15 && write_back, LOG_WARN, "Halfword and Signed Data Transfer, thou shall not writeback to r15, r15=0x%x", r15);
             ASSERT(write_back && !pre_indexed, LOG_WARN, "Halfword and Signed Data Transfer, thou shall not have write-back bit if being post-indexed, r15=0x%x", r15);
 
             // Load-bit shall not be unset when signed transfer is selected
@@ -662,7 +662,135 @@ namespace NanoboyAdvance
             break;
         }
         case ARM_8:
+            break;
         case ARM_9:
+        {
+            // ARM.9 Load/store register/unsigned byte (Single Data Transfer)
+            uint offset;
+            int reg_dest = (instruction >> 12) & 0xF;
+            int reg_base = (instruction >> 16) & 0xF;
+            bool load = (instruction & (1 << 20)) == (1 << 20);
+            bool write_back = (instruction & (1 << 21)) == (1 << 21);
+            bool transfer_byte = (instruction & (1 << 22)) == (1 << 22);
+            bool add_to_base = (instruction & (1 << 23)) == (1 << 23);
+            bool pre_indexed = (instruction & (1 << 24)) == (1 << 24);
+            bool immediate = (instruction & (1 << 25)) == 0;
+            uint address = reg(reg_base);
+
+            // Instructions neither write back if base register is r15 nor should they have the write-back bit set when being post-indexed (post-indexing automatically writes back the address)
+            ASSERT(reg_base == 15 && write_back, LOG_WARN, "Single Data Transfer, thou shall not writeback to r15, r15=0x%x", r15);
+            ASSERT(write_back && !pre_indexed, LOG_WARN, "Single Data Transfer, thou shall not have write-back bit if being post-indexed, r15=0x%x", r15);
+
+            // The offset added to the base address can either be an 12 bit immediate value or a register shifted by 5 bit immediate value
+            if (immediate)
+            {
+                offset = instruction & 0xFFF;
+            }
+            else
+            {
+                uint reg_offset = instruction & 0xF;
+                uint shift_operand1 = reg(reg_offset);
+                uint shift_operand2 = (instruction >> 7) & 0x1F;
+                ASSERT(reg_offset == 15, LOG_WARN, "Single Data Transfer, thou shall not use r15 as offset, r15=0x%x", r15);
+
+                // We can safe some work by ensuring that we do not shift by zero bits
+                if (shift_operand2 != 0)
+                {
+                    switch ((instruction >> 5) & 3)
+                    {
+                    case 0b00:
+                    {
+                        // Logical Shift Left
+                        offset = shift_operand1 << shift_operand2;
+                        break;
+                    }
+                    case 0b01:
+                    {
+                        // Logical Shift Right
+                        offset = shift_operand1 >> shift_operand2;
+                        break;
+                    }
+                    case 0b10:
+                    {
+                        // Arithmetic Shift Right
+                        sint result = (sint)shift_operand1 >> (sint)shift_operand2;
+                        offset = (uint)result;
+                        break;
+                    }
+                    case 0b11:
+                    {
+                        // Rotate Right
+                        offset = (shift_operand1 << (32 - shift_operand2)) | (shift_operand1 >> shift_operand2);
+                        break;
+                    }
+                    }
+                }
+                else
+                {
+                    offset = shift_operand1;
+                }
+            }
+            
+            // If the instruction is pre-indexed we must add/subtract the offset beforehand
+            if (pre_indexed)
+            {
+                if (add_to_base)
+                {
+                    address += offset;
+                }
+                else
+                {
+                    address -= offset;
+                }
+            }
+
+            // Perform the actual load / store operation
+            if (load)
+            {
+                if (transfer_byte)
+                {
+                    reg(reg_dest) = memory->ReadByte(address);
+                }
+                else
+                {
+                    reg(reg_dest) = memory->ReadWord(address);
+                }
+            }
+            else
+            {
+                uint value = reg(reg_dest);
+                if (reg_dest == 15)
+                {
+                    value += 4;
+                }
+                if (transfer_byte)
+                {
+                    memory->WriteByte(address, value & 0xFF);
+                }
+                else
+                {
+                    memory->WriteWord(address, value);
+                }
+            }
+
+            // When the instruction either is pre-indexed and has the write-back bit or it's post-indexed we must writeback the calculated address 
+            if (write_back || !pre_indexed)
+            {
+                if (!pre_indexed)
+                {
+                    if (add_to_base)
+                    {
+                        address += offset;
+                    }
+                    else
+                    {
+                        address -= offset;
+                    }
+                }
+                reg(reg_base) = address;
+            }
+            break;
+        }
         case ARM_10:
         case ARM_11:
         case ARM_12:
@@ -693,14 +821,19 @@ namespace NanoboyAdvance
             // ARM.15 Coprocessor register transfer
             LOG(LOG_ERROR, "Unimplemented coprocessor register transfer, r15=0x%x", r15);
             break;
+        // TODO: Check wether swi is still executed when IRQ is disabled
+        //       Implement HLE version 
         case ARM_16:
             // ARM.16 Software interrupt
-            r14_svc = r15 - 4;
-            r15 = 0x8;
-            flush_pipe = true;
-            spsr_svc = cpsr;
-            cpsr = (cpsr & ~0x1F) | SVC;
-            RemapRegisters();
+            if ((cpsr & IRQDisable) == 0)
+            {
+                r14_svc = r15 - 4;
+                r15 = 0x8;
+                flush_pipe = true;
+                spsr_svc = cpsr;
+                cpsr = (cpsr & ~0x1F) | SVC | IRQDisable;
+                RemapRegisters();
+            }
             break;
         }
     }

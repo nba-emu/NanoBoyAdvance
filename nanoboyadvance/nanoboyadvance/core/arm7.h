@@ -27,6 +27,17 @@
 
 #define reg(r) *gprs[r]
 
+#define bool_carry(n) {\
+    if ((n))\
+    {\
+        cpsr |= CarryFlag;\
+    }\
+    else\
+    {\
+        cpsr &= ~CarryFlag;\
+    }\
+}
+
 using namespace std;
 
 namespace NanoboyAdvance
@@ -74,6 +85,16 @@ namespace NanoboyAdvance
             Abort = 0x17,
             Undefined = 0x1B,
             System = 0x1F
+        };
+        enum CPSRFlags
+        {
+            Thumb = 0x20,
+            FIQDisable = 0x40,
+            IRQDisable = 0x80,
+            OverflowFlag = 0x10000000,
+            CarryFlag = 0x20000000,
+            ZeroFlag = 0x4000000,
+            SignFlag = 0x8000000
         };
         ARM7(PagedMemory* memory);
         void Step();
