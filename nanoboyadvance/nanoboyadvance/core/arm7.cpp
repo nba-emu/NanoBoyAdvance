@@ -129,6 +129,7 @@ namespace NanoboyAdvance
         bool thumb = (cpsr & Thumb) == Thumb;
         if (thumb)
         {
+            LOG(LOG_ERROR, "Thumb not supported, r15=0x%x", r15);
         }
         else 
         {

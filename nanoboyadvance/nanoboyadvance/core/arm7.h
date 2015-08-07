@@ -25,9 +25,36 @@
 #include "common/log.h"
 #include "memory.h"
 
+// Macro for easier register access
 #define reg(r) *gprs[r]
 
-#define bool_carry(n) {\
+// TODO: We can create inlined methods for these
+// Alters the sign flag depending on the MSB of the value being set or not
+#define calculate_sign(n) {\
+    if ((n) & 0x80000000)\
+    {\
+        cpsr |= SignFlag;\
+    }\
+    else\
+    {\
+        cpsr &= ~SignFlag;\
+    }\
+}
+
+// Alters the zero flag depending on the value being zero or not
+#define calculate_zero(n) {\
+    if ((n) & 0x80000000)\
+    {\
+        cpsr |= SignFlag;\
+    }\
+    else\
+    {\
+        cpsr &= ~SignFlag;\
+    }\
+}
+
+// Sets or unsets the carry flag depending on the given condition being true or false
+#define assert_carry(n) {\
     if ((n))\
     {\
         cpsr |= CarryFlag;\
@@ -35,6 +62,30 @@
     else\
     {\
         cpsr &= ~CarryFlag;\
+    }\
+}
+
+// Alters the overflow flag depending on the result and the operands of an addition
+#define calculate_overflow_add(result, operand1, operand2) {\
+    if (((operand1) >> 31 == (operand2) >> 31) && ((result) >> 31 != (operand2) >> 31))\
+    {\
+        cpsr |= OverflowFlag;\
+    }\
+    else\
+    {\
+        cpsr &= ~OverflowFlag;\
+    }\
+}
+
+// Alters the overflow flag depending on the result and the operands of a subtraction
+#define calculate_overflow_sub(result, operand1, operand2) {\
+    if (((operand1) >> 31 != (operand2) >> 31) && ((result) >> 31 == (operand2) >> 31))\
+    {\
+        cpsr |= OverflowFlag;\
+    }\
+    else\
+    {\
+        cpsr &= ~OverflowFlag;\
     }\
 }
 
@@ -72,7 +123,7 @@ namespace NanoboyAdvance
         int pipe_status;
         bool flush_pipe;
 
-        void RemapRegisters();
+        inline void RemapRegisters();
         int ARMDecode(uint instruction);
         void ARMExecute(uint instruction, int type);
     public:

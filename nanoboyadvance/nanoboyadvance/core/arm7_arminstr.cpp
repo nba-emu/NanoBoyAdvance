@@ -679,7 +679,7 @@ namespace NanoboyAdvance
                 int reg_dest = (instruction >> 12) & 0xF;
                 int reg_operand1 = (instruction >> 16) & 0xF;
                 bool immediate = (instruction & (1 << 25)) == (1 << 25);
-                int operand1 = reg(reg_operand1);
+                uint operand1 = reg(reg_operand1);
                 uint operand2;
                 bool carry = (cpsr & CarryFlag) == CarryFlag;
 
@@ -775,6 +775,198 @@ namespace NanoboyAdvance
                 }
 
                 // Perform the actual operation
+                switch (opcode)
+                {
+                case 0b0000: // AND
+                {
+                    uint result = operand1 & operand2;
+                    if (setflags)
+                    {
+                        calculate_sign(result);
+                        calculate_zero(result);
+                        assert_carry(carry);
+                    }
+                    reg(reg_dest) = result;
+                    break;
+                }
+                case 0b0001: // EOR
+                {
+                    uint result = operand1 ^ operand2;
+                    if (setflags)
+                    {
+                        calculate_sign(result);
+                        calculate_zero(result);
+                        assert_carry(carry);
+                    }
+                    reg(reg_dest) = result;
+                    break;
+                }
+                case 0b0010: // SUB
+                {
+                    uint result = operand1 - operand2;
+                    if (setflags)
+                    {
+                        assert_carry(operand1 >= operand2);
+                        calculate_overflow_sub(result, operand1, operand2);
+                        calculate_sign(result);
+                        calculate_zero(result);
+                    }
+                    reg(reg_dest) = result;
+                    break;
+                }
+                case 0b0011: // RSB
+                {
+                    uint result = operand2 - operand1;
+                    if (setflags)
+                    {
+                        assert_carry(operand2 >= operand1);
+                        calculate_overflow_sub(result, operand2, operand1);
+                        calculate_sign(result);
+                        calculate_zero(result);
+                    }
+                    reg(reg_dest) = result;
+                    break;
+                }
+                case 0b0100: // ADD
+                {
+                    uint result = operand1 + operand2;
+                    if (setflags)
+                    {
+                        ulong result_long = (ulong)operand1 + (ulong)operand2;
+                        assert_carry(result_long & 0x100000000);
+                        calculate_overflow_add(result, operand1, operand2);
+                        calculate_sign(result);
+                        calculate_zero(result);
+                    }
+                    reg(reg_dest) = result;
+                    break;
+                }
+                case 0b0101: // ADC
+                {
+                    int carry2 = (cpsr >> 29) & 1;
+                    uint result = operand1 + operand2 + carry2;
+                    if (setflags)
+                    {
+                        ulong result_long = (ulong)operand1 + (ulong)operand2 + (ulong)carry2;
+                        assert_carry(result_long & 0x100000000);
+                        calculate_overflow_add(result, operand1, operand2 + carry2);
+                        calculate_sign(result);
+                        calculate_zero(result);
+                    }
+                    reg(reg_dest) = result;
+                    break;
+                }
+                case 0b0110: // SBC
+                {
+                    int carry2 = (cpsr >> 29) & 1;
+                    uint result = operand1 - operand2 + carry2 - 1;
+                    if (setflags)
+                    {
+                        assert_carry(operand1 >= (operand2 + carry2 - 1));
+                        calculate_overflow_sub(result, operand1, (operand2 + carry2 - 1));
+                        calculate_sign(result);
+                        calculate_zero(result);
+                    }
+                    reg(reg_dest) = result;
+                    break;
+                }
+                case 0b0111: // RSC
+                {
+                    int carry2 = (cpsr >> 29) & 1;
+                    uint result = operand2 - operand1 + carry2 - 1;
+                    if (setflags)
+                    {
+                        assert_carry(operand2 >= (operand1 + carry2 - 1));
+                        calculate_overflow_sub(result, operand2, (operand1 + carry2 - 1));
+                        calculate_sign(result);
+                        calculate_zero(result);
+                    }
+                    reg(reg_dest) = result;
+                    break;
+                }
+                case 0b1000: // TST
+                {
+                    uint result = operand1 & operand2;
+                    calculate_sign(result);
+                    calculate_zero(result);
+                    assert_carry(carry);
+                    break;
+                }
+                case 0b1001: // TEQ
+                {
+                    uint result = operand1 ^ operand2;
+                    calculate_sign(result);
+                    calculate_zero(result);
+                    assert_carry(carry);
+                    break;
+                }
+                case 0b1010: // CMP
+                {
+                    uint result = operand1 - operand2;
+                    assert_carry(operand1 >= operand2);
+                    calculate_overflow_sub(result, operand1, operand2);
+                    calculate_sign(result);
+                    calculate_zero(result);
+                    break;
+                }
+                case 0b1011: // CMN
+                {
+                    uint result = operand1 + operand2;
+                    ulong result_long = (ulong)operand1 + (ulong)operand2;
+                    assert_carry(result_long & 0x100000000);
+                    calculate_overflow_add(result, operand1, operand2);
+                    calculate_sign(result);
+                    calculate_zero(result);
+                    break;
+                }
+                case 0b1100: // OR
+                {
+                    uint result = operand1 | operand2;
+                    if (setflags)
+                    {
+                        calculate_sign(result);
+                        calculate_zero(result);
+                        assert_carry(carry);
+                    }
+                    reg(reg_dest) = result;
+                    break;
+                }
+                case 0b1101: // MOV
+                {
+                    if (setflags)
+                    {
+                        calculate_sign(operand2);
+                        calculate_zero(operand2);
+                        assert_carry(carry);
+                    }
+                    reg(reg_dest) = operand2;
+                    break;
+                }
+                case 0b1110: // BIC
+                {
+                    uint result = operand1 & ~operand2;
+                    if (setflags)
+                    {
+                        calculate_sign(result);
+                        calculate_zero(result);
+                        assert_carry(carry);
+                    }
+                    reg(reg_dest) = result;
+                    break;
+                }
+                case 0b1111:
+                {
+                    uint not_operand2 = ~operand2;
+                    if (setflags)
+                    {
+                        calculate_sign(not_operand2);
+                        calculate_zero(not_operand2);
+                        assert_carry(carry);
+                    }
+                    reg(reg_dest) = not_operand2;
+                    break;
+                }
+                }
 
                 // When writing to r15 initiate pipeline flush
                 if (reg_dest == 15)
