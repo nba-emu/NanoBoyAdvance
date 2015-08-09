@@ -1243,6 +1243,15 @@ namespace NanoboyAdvance
                         // If r15 is overwritten, the pipeline must be flushed
                         if (i == 15)
                         {
+                            // If the s bit is set a mode switch is performed
+                            if (s_bit)
+                            {
+                                // spsr_<mode> must not be copied to cpsr in user mode because user mode has not such a register
+                                ASSERT((cpsr & 0x1F) == User, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r15);
+
+                                cpsr = *pspsr;
+                                RemapRegisters();
+                            }
                             flush_pipe = true;
                         }
                     }
