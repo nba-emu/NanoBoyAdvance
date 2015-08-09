@@ -1167,7 +1167,120 @@ namespace NanoboyAdvance
             break;
         }
         case ARM_10:
+            // ARM.10 Undefined
+            LOG(LOG_ERROR, "Undefined instruction, r15=0x%x", r15);
+            break;
         case ARM_11:
+        {
+            // ARM.11 Block Data Transfer
+            bool pc_in_list = (instruction & (1 << 15)) == (1 << 15);
+            int reg_base = (instruction >> 16) & 0xF;
+            bool load = (instruction & (1 << 20)) == (1 << 20);
+            bool write_back = (instruction & (1 << 21)) == (1 << 21);
+            bool s_bit = (instruction & (1 << 22)) == (1 << 22); // TODO: Give this a meaningful name
+            bool add_to_base = (instruction & (1 << 23)) == (1 << 23);
+            bool pre_indexed = (instruction & (1 << 24)) == (1 << 24);
+            uint address = reg(reg_base);
+            uint old_address = address;
+            bool switched_mode = false;
+            int old_mode;
+            int first_register;
+
+            // Base register must not be r15
+            ASSERT(reg_base == 15, LOG_WARN, "Block Data Tranfser, thou shall not take r15 as base register, r15=0x%x", r15);
+
+            // If the s bit is set and the instruction is either a store or r15 is not in the list switch to user mode
+            if (s_bit && (!load || !pc_in_list))
+            {
+                // Writeback must not be activated in this case
+                ASSERT(write_back, LOG_WARN, "Block Data Transfer, thou shall not do user bank transfer with writeback, r15=0x%x", r15);
+
+                // Save current mode and enter user mode
+                old_mode = cpsr & 0x1F;
+                cpsr = (cpsr & ~0x1F) | User;
+                RemapRegisters();
+
+                // Mark that we switched to user mode
+                switched_mode = true;
+            }
+
+            // Find the first register
+            for (int i = 0; i < 16; i++)
+            {
+                if (instruction & (1 << i))
+                {
+                    first_register = i;
+                    break;
+                }
+            }
+
+            // Walk through the register list
+            // TODO: Start with the first register (?)
+            for (int i = 0; i < 16; i++)
+            {
+                // Determine if the current register will be loaded/saved
+                if (instruction & (1 << i))
+                {
+                    // If instruction is pre-indexed we must update address beforehand
+                    if (pre_indexed)
+                    {
+                        address += add_to_base ? 4 : -4;
+                    }
+
+                    // Perform the actual load / store operation
+                    if (load)
+                    {
+                        // Loading the base disables writeback
+                        // TODO: Check if it only disables writeback if the base is the first register in the list
+                        if (i == reg_base)
+                        {
+                            write_back = false;
+                        }
+
+                        // Load the register
+                        reg(i) = memory->ReadWord(address);
+
+                        // If r15 is overwritten, the pipeline must be flushed
+                        if (i == 15)
+                        {
+                            flush_pipe = true;
+                        }
+                    }
+                    else
+                    { 
+                        // When the base register is the first register in the list its original value is written
+                        if (i == first_register && i == reg_base)
+                        {
+                            memory->WriteWord(address, old_address);
+                        }
+                        else
+                        {
+                            memory->WriteWord(address, reg(i));
+                        }
+                    }
+
+                    // If instruction is not pre-indexed we must update address afterwards
+                    if (!pre_indexed)
+                    {
+                        address += add_to_base ? 4 : -4;
+                    }
+
+                    // If the writeback is specified the base register must be updated after each register
+                    if (write_back)
+                    {
+                        reg(reg_base) = address;
+                    }
+                }
+            }
+
+            // If we switched mode it's time now to restore the previous mode
+            if (switched_mode)
+            {
+                cpsr = (cpsr & ~0x1F) | old_mode;
+                RemapRegisters();
+            }
+            break;
+        }
         case ARM_12:
         {
             // ARM.12 Branch
