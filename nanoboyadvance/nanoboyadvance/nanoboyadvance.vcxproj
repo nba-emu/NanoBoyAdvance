@@ -165,6 +165,7 @@
   <ItemGroup>
     <ClCompile Include="core\arm7.cpp" />
     <ClCompile Include="core\arm7_arminstr.cpp" />
+    <ClCompile Include="core\arm7_thumbinstr.cpp" />
     <ClCompile Include="core\memory.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>

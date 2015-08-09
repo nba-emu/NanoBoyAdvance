@@ -514,8 +514,8 @@ namespace NanoboyAdvance
         case SVC: cout << "SVC" << endl; break;
         default: cout << "n.n." << endl; break;
         }
-        cout << "pipestate = " << pipe_status << endl;
 
+        // Check if the instruction will be executed
         switch (condition)
         {
         case 0x0: execute = (cpsr & ZeroFlag) == ZeroFlag; break;
@@ -535,10 +535,14 @@ namespace NanoboyAdvance
         case 0xE: execute = true; break;
         case 0xF: execute = false; break;
         }
+
+        // If it will not be executed return now
         if (!execute)
         {
             return;
         }
+        
+        // Perform the actual execution
         switch (type)
         {
         case ARM_1:
@@ -1373,8 +1377,6 @@ namespace NanoboyAdvance
             }
             break;
         }
-        //std::cin.get();
-        string bla;
-        std::cin >> bla;
+        cout << endl;
     }
 }

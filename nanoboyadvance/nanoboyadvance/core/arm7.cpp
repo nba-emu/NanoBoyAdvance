@@ -126,6 +126,7 @@ namespace NanoboyAdvance
         }
     }
     
+    // TODO: Implement hashtable for faster decoding
     void ARM7::Step()
     {
         bool thumb = (cpsr & Thumb) == Thumb;
