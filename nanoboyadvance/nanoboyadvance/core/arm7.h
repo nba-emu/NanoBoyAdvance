@@ -43,13 +43,13 @@
 
 // Alters the zero flag depending on the value being zero or not
 #define calculate_zero(n) {\
-    if ((n) & 0x80000000)\
+    if ((n) == 0)\
     {\
-        cpsr |= SignFlag;\
+        cpsr |= ZeroFlag;\
     }\
     else\
     {\
-        cpsr &= ~SignFlag;\
+        cpsr &= ~ZeroFlag;\
     }\
 }
 
@@ -113,7 +113,7 @@ namespace NanoboyAdvance
         
         // Current program status register (contains status flags)
         uint cpsr;
-        uint spsr_fiq, spsr_svc, spsr_abt, spsr_irq, spsr_und;
+        uint spsr_fiq, spsr_svc, spsr_abt, spsr_irq, spsr_und, spsr_def;
         // A pointer pointing on the Saved program status register of the current mode
         uint* pspsr;
         
@@ -145,8 +145,8 @@ namespace NanoboyAdvance
             IRQDisable = 0x80,
             OverflowFlag = 0x10000000,
             CarryFlag = 0x20000000,
-            ZeroFlag = 0x4000000,
-            SignFlag = 0x8000000
+            ZeroFlag = 0x40000000,
+            SignFlag = 0x80000000
         };
         ARM7(PagedMemory* memory);
         void Step();

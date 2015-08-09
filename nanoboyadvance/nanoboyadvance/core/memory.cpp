@@ -18,52 +18,88 @@
 */
 
 #include "memory.h"
+#include "common/log.h"
 
 namespace NanoboyAdvance
 {
     // TODO: Remember that ROMs over 16MB reach from 08.. to 09.. area.
+
+    PagedMemory::PagedMemory()
+    {
+        for (int i = 0; i < 0x40000; i++) wram[i] = 0;
+        for (int i = 0; i < 0x8000; i++) iram[i] = 0;
+        for (int i = 0; i < 0x400; i++) pram[i] = 0;
+        bios = PagedMemory::ReadFile("bios.bin");
+        rom = PagedMemory::ReadFile("rom.gba");
+    }
+
     ubyte PagedMemory::ReadByte(uint offset)
     {
-        MemoryPage page = Pages[offset >> 24];
-        ubyte result = page.ReadByte(offset & 0xFFFFFF);
-        Cycles += page.Cycles8;
-        return result;
+        int page = offset >> 24;
+        uint internal_offset = offset & 0xFFFFFF;
+        switch (page)
+        {
+        case 0:
+            // BIOS
+            return bios[internal_offset];
+        default:
+            LOG(LOG_WARN, "Read from unimplemented 0x%x", offset);
+            break;
+        }
+        return 0;
     }
     
     ushort PagedMemory::ReadHWord(uint offset)
     {
-        MemoryPage page = Pages[offset >> 24];
-        ushort result = page.ReadHWord(offset & 0xFFFFFF);
-        Cycles += page.Cycles16;
+        uint real_offset = offset & ~1;
+        ushort result;
+        result = ReadByte(real_offset);
+        result |= ReadByte(real_offset + 1) << 8;
         return result;
     }
     
     uint PagedMemory::ReadWord(uint offset)
     {
-        MemoryPage page = Pages[offset >> 24];
-        uint result = page.ReadWord(offset & 0xFFFFFF);
-        Cycles += page.Cycles32;
+        uint real_offset = offset & ~3;
+        uint result;
+        result = ReadByte(real_offset);
+        result |= ReadByte(real_offset + 1) << 8;
+        result |= ReadByte(real_offset + 2) << 16;
+        result |= ReadByte(real_offset + 3) << 24;
         return result;
     }
 
     void PagedMemory::WriteByte(uint offset, ubyte value)
     {
-        MemoryPage page = Pages[offset >> 24];
-        page.WriteByte(offset & 0xFFFFFF, value);
-        Cycles += page.Cycles8;
     }
 
     void PagedMemory::WriteHWord(uint offset, ushort value)
     {
-        MemoryPage page = Pages[offset >> 24];
-        page.WriteHWord(offset & 0xFFFFFF, value);
-        Cycles += page.Cycles16;
     }
 
     void PagedMemory::WriteWord(uint offset, uint value)
     {
-        MemoryPage page = Pages[offset >> 24];
-        page.WriteWord(offset & 0xFFFFFF, value);
-        Cycles += page.Cycles32;
     }
+
+    ubyte* PagedMemory::ReadFile(string filename)
+    {
+        ifstream ifs(filename, ios::in | ios::binary | ios::ate);
+        size_t filesize;
+        ubyte* data = 0;
+        if (ifs.is_open())
+        {
+            ifs.seekg(0, ios::end);
+            filesize = ifs.tellg();
+            ifs.seekg(0, ios::beg);
+            data = new ubyte[filesize];
+            ifs.read((char*)data, filesize);
+        }
+        else
+        {
+            cout << "Cannot open file " << filename.c_str();
+            return NULL;
+        }
+        return data;
+    }
+
 } 

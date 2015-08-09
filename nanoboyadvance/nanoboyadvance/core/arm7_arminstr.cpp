@@ -489,12 +489,51 @@ namespace NanoboyAdvance
     {
         int condition = instruction >> 28;
         bool execute = false;
+        
+        // Log our status for debug reasons
         LOG(LOG_INFO, "Executing %s, r15=0x%x", ARMDisasm(r15 - 8, instruction).c_str(), r15);
+        for (int i = 0; i < 16; i++)
+        {
+            if (i == 15)
+            {
+                cout << "r" << i << " = 0x" << std::hex << reg(i) << " (0x" << (reg(i) - 8) << ")" << std::dec << endl;
+            }
+            else
+            {
+                cout << "r" << i << " = 0x" << std::hex << reg(i) << std::dec << endl;
+            }
+        }
+        cout << "cpsr = 0x" << std::hex << cpsr << std::dec << endl;
+        cout << "spsr = 0x" << std::hex << *pspsr << std::dec << endl;
+        cout << "mode = ";
+        switch (cpsr & 0x1F)
+        {
+        case User: cout << "User" << endl; break;
+        case System: cout << "System" << endl; break;
+        case IRQ: cout << "IRQ" << endl; break;
+        case SVC: cout << "SVC" << endl; break;
+        default: cout << "n.n." << endl; break;
+        }
+        cout << "pipestate = " << pipe_status << endl;
+
         switch (condition)
         {
-        default:
-            execute = true;
-            break;
+        case 0x0: execute = (cpsr & ZeroFlag) == ZeroFlag; break;
+        case 0x1: execute = (cpsr & ZeroFlag) != ZeroFlag; break;
+        case 0x2: execute = (cpsr & CarryFlag) == CarryFlag; break;
+        case 0x3: execute = (cpsr & CarryFlag) != CarryFlag; break;
+        case 0x4: execute = (cpsr & SignFlag) == SignFlag; break;
+        case 0x5: execute = (cpsr & SignFlag) != SignFlag; break;
+        case 0x6: execute = (cpsr & OverflowFlag) == OverflowFlag; break;
+        case 0x7: execute = (cpsr & OverflowFlag) != OverflowFlag; break;
+        case 0x8: execute = ((cpsr & CarryFlag) == CarryFlag) & ((cpsr & ZeroFlag) != ZeroFlag); break;
+        case 0x9: execute = ((cpsr & CarryFlag) != CarryFlag) || ((cpsr & ZeroFlag) == ZeroFlag); break;
+        case 0xA: execute = ((cpsr & SignFlag) == SignFlag) == ((cpsr & OverflowFlag) == OverflowFlag); break;
+        case 0xB: execute = ((cpsr & SignFlag) == SignFlag) != ((cpsr & OverflowFlag) == OverflowFlag); break;
+        case 0xC: execute = ((cpsr & ZeroFlag) != ZeroFlag) && (((cpsr & SignFlag) == SignFlag) == ((cpsr & OverflowFlag) == OverflowFlag)); break;
+        case 0xD: execute = ((cpsr & ZeroFlag) == ZeroFlag) || (((cpsr & SignFlag) == SignFlag) != ((cpsr & OverflowFlag) == OverflowFlag)); break;
+        case 0xE: execute = true; break;
+        case 0xF: execute = false; break;
         }
         if (!execute)
         {
@@ -1304,6 +1343,7 @@ namespace NanoboyAdvance
                 reg(14) = r15 - 4;
             }
             r15 += offset << 2;
+            flush_pipe = true;
             break;
         }
         case ARM_13:
@@ -1333,5 +1373,8 @@ namespace NanoboyAdvance
             }
             break;
         }
+        //std::cin.get();
+        string bla;
+        std::cin >> bla;
     }
 }
