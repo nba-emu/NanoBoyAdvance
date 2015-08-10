@@ -132,7 +132,31 @@ namespace NanoboyAdvance
         bool thumb = (cpsr & Thumb) == Thumb;
         if (thumb)
         {
-            LOG(LOG_ERROR, "Thumb not supported, r15=0x%x", r15);
+            switch (pipe_status)
+            {
+            case 0:
+                pipe_opcode[0] = memory->ReadHWord(r15);
+                break;
+            case 1:
+                pipe_opcode[1] = memory->ReadHWord(r15);
+                pipe_decode[0] = THUMBDecode(pipe_opcode[0]);
+                break;
+            case 2:
+                pipe_opcode[2] = memory->ReadHWord(r15);
+                pipe_decode[1] = THUMBDecode(pipe_opcode[1]);
+                THUMBExecute(pipe_opcode[0], pipe_decode[0]);
+                break;
+            case 3:
+                pipe_opcode[0] = memory->ReadHWord(r15);
+                pipe_decode[2] = THUMBDecode(pipe_opcode[2]);
+                THUMBExecute(pipe_opcode[1], pipe_decode[1]);
+                break;
+            case 4:
+                pipe_opcode[1] = memory->ReadHWord(r15);
+                pipe_decode[0] = THUMBDecode(pipe_opcode[0]);
+                THUMBExecute(pipe_opcode[2], pipe_decode[2]);
+                break;
+            }
         }
         else 
         {

@@ -127,6 +127,7 @@ namespace NanoboyAdvance
         int ARMDecode(uint instruction);
         void ARMExecute(uint instruction, int type);
         int THUMBDecode(ushort instruction);
+        void THUMBExecute(ushort instruction, int type);
     public:
         // TODO: Maybe use a traditional define?
         enum ARM7Mode

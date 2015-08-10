@@ -140,4 +140,46 @@ namespace NanoboyAdvance
         }
         return 0;
     }
+
+    void ARM7::THUMBExecute(ushort instruction, int type)
+    {
+        switch (type)
+        {
+        case THUMB_1:
+        {
+            // THUMB.1 Move shifted register
+            int reg_dest = instruction & 7;
+            int reg_source = (instruction >> 3) & 7;
+            uint immediate_value = (instruction >> 6) & 0x1F;
+            if (immediate_value != 0)
+            {
+                switch ((instruction >> 11) & 3)
+                {
+                case 0b00: // LSL
+                    assert_carry((reg(reg_source) << (immediate_value - 1)) & 0x80000000);
+                    reg(reg_dest) = reg(reg_source) << immediate_value;
+                    break;
+                case 0b01: // LSR
+                    assert_carry((reg(reg_source) >> (immediate_value - 1)) & 1);
+                    reg(reg_dest) = reg(reg_source) >> immediate_value;
+                    break;
+                case 0b10: // ASR
+                {
+                    sint result = (sint)reg(reg_source) >> (sint)immediate_value;
+                    assert_carry((reg(reg_source) >> (immediate_value - 1)) & 1);
+                    reg(reg_dest) = (uint)result;
+                    break;
+                }
+                }
+            }
+            else
+            {
+                reg(reg_dest) = reg(reg_source);
+            }
+            calculate_sign(reg(reg_dest));
+            calculate_zero(reg(reg_dest));
+            break;
+        }
+        }
+    }
 }
