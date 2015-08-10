@@ -232,13 +232,16 @@ namespace NanoboyAdvance
                 reg(reg_dest) = immediate_value;
                 break;
             case 0b01: // CMP
+            {
                 uint result = reg(reg_dest) - immediate_value;
                 assert_carry(reg(reg_dest) >= immediate_value);
                 calculate_overflow_sub(result, reg(reg_dest), immediate_value);
                 calculate_sign(result);
                 calculate_zero(result);
                 break;
+            }
             case 0b10: // ADD
+            {
                 uint result = reg(reg_dest) + immediate_value;
                 ulong result_long = (ulong)(reg(reg_dest)) + (ulong)immediate_value;
                 assert_carry(result_long & 0x100000000);
@@ -247,7 +250,9 @@ namespace NanoboyAdvance
                 calculate_zero(result);
                 reg(reg_dest) = result;
                 break;
+            }
             case 0b11: // SUB
+            {
                 uint result = reg(reg_dest) - immediate_value;
                 assert_carry(reg(reg_dest) >= immediate_value);
                 calculate_overflow_sub(result, reg(reg_dest), immediate_value);
@@ -256,7 +261,117 @@ namespace NanoboyAdvance
                 reg(reg_dest) = result;
                 break;
             }
+            }
             break;
+        }
+        case THUMB_4:
+        {
+            // THUMB.4 ALU operations
+            int reg_dest = instruction & 7;
+            int reg_source = (instruction >> 3) & 7;
+            switch ((instruction >> 6) & 0xF)
+            {
+            case 0b0000: // AND
+                reg(reg_dest) &= reg(reg_source);
+                calculate_sign(reg(reg_dest));
+                calculate_zero(reg(reg_dest));
+                break;
+            case 0b0001: // EOR
+                reg(reg_dest) ^= reg(reg_source);
+                calculate_sign(reg(reg_dest));
+                calculate_zero(reg(reg_dest));
+                break;
+            case 0b0010: // LSL
+            {
+                uint amount = reg(reg_source);
+                if (amount != 0)
+                {
+                    assert_carry((reg(reg_dest) << (amount - 1)) & 0x80000000);
+                    reg(reg_dest) <<= amount;
+                }
+                else
+                {
+                    reg(reg_dest) = reg(reg_source);
+                }
+                calculate_sign(reg(reg_dest));
+                calculate_zero(reg(reg_dest));
+                break;
+            }
+            case 0b0011: // LSR
+            {
+                uint amount = reg(reg_source);
+                if (amount != 0)
+                {
+                    assert_carry((reg(reg_dest) >> (amount - 1)) & 1);
+                    reg(reg_dest) >>= amount;
+                }
+                else
+                {
+                    reg(reg_dest) = reg(reg_source);
+                }
+                calculate_sign(reg(reg_dest));
+                calculate_zero(reg(reg_dest));
+                break;
+            }
+            case 0b0100: // ASR
+            {
+                uint amount = reg(reg_source);
+                if (amount != 0)
+                {
+                    sint result = (sint)(reg(reg_dest)) >> (sint)(reg(reg_source));
+                    assert_carry((reg(reg_dest) >> (amount - 1)) & 1);
+                    reg(reg_dest) = result;
+                }
+                else
+                {
+                    reg(reg_dest) = reg(reg_source);
+                }
+                calculate_sign(reg(reg_dest));
+                calculate_zero(reg(reg_dest));
+                break;
+            }
+            case 0b0101: // ADC
+            {
+                int carry = (cpsr >> 29) & 1;
+                uint result = reg(reg_dest) + reg(reg_source) + carry;
+                ulong result_long = (ulong)(reg(reg_dest)) + (ulong)(reg(reg_source)) + (ulong)carry;
+                assert_carry(result_long & 0x100000000);
+                calculate_overflow_add(result, reg(reg_dest), reg(reg_source) + carry);
+                calculate_sign(result);
+                calculate_zero(result);
+                reg(reg_dest) = result;
+                break;
+            }
+            case 0b0110: // SBC
+            {
+                int carry = (cpsr >> 29) & 1;
+                uint result = reg(reg_dest) - reg(reg_source) + carry - 1;
+                assert_carry(reg(reg_dest) >= reg(reg_source) + carry - 1);
+                calculate_overflow_sub(result, reg(reg_dest), (reg(reg_source) + carry - 1));
+                calculate_sign(result);
+                calculate_zero(result);
+                reg(reg_dest) = result;
+                break;
+            }
+            case 0b0111: // ROR
+            {
+                // TODO: Prevent reg_source from going higher that 32
+                uint amount = reg(reg_source);
+                if (amount != 0)
+                {
+                    uint result = (reg(reg_dest) >> amount) | (reg(reg_dest) << (32 - amount));
+                    assert_carry((reg(reg_dest) >> (amount - 1)) & 1);
+                    reg(reg_dest) = result;
+                }
+                else
+                {
+                    reg(reg_dest) = reg(reg_source);
+                }
+                calculate_sign(reg(reg_dest));
+                calculate_zero(reg(reg_dest));
+                break;
+            }
+            }
         }
         }
     }
