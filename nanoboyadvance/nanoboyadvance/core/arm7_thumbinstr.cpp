@@ -219,6 +219,45 @@ namespace NanoboyAdvance
             }
             break;
         }
+        case THUMB_3:
+        {
+            // THUMB.3 Move/compare/add/subtract immediate
+            uint immediate_value = instruction & 0xFF;
+            int reg_dest = (instruction >> 8) & 7;
+            switch ((instruction >> 11) & 3)
+            {
+            case 0b00: // MOV
+                calculate_sign(0);
+                calculate_zero(immediate_value);
+                reg(reg_dest) = immediate_value;
+                break;
+            case 0b01: // CMP
+                uint result = reg(reg_dest) - immediate_value;
+                assert_carry(reg(reg_dest) >= immediate_value);
+                calculate_overflow_sub(result, reg(reg_dest), immediate_value);
+                calculate_sign(result);
+                calculate_zero(result);
+                break;
+            case 0b10: // ADD
+                uint result = reg(reg_dest) + immediate_value;
+                ulong result_long = (ulong)(reg(reg_dest)) + (ulong)immediate_value;
+                assert_carry(result_long & 0x100000000);
+                calculate_overflow_add(result, reg(reg_dest), immediate_value);
+                calculate_sign(result);
+                calculate_zero(result);
+                reg(reg_dest) = result;
+                break;
+            case 0b11: // SUB
+                uint result = reg(reg_dest) - immediate_value;
+                assert_carry(reg(reg_dest) >= immediate_value);
+                calculate_overflow_sub(result, reg(reg_dest), immediate_value);
+                calculate_sign(result);
+                calculate_zero(result);
+                reg(reg_dest) = result;
+                break;
+            }
+            break;
+        }
         }
     }
 }
