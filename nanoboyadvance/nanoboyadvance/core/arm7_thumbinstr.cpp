@@ -264,6 +264,7 @@ namespace NanoboyAdvance
             }
             break;
         }
+        // TODO: It seems like I was pretty tired when writing this... check and look for bugs carefully...
         case THUMB_4:
         {
             // THUMB.4 ALU operations
@@ -371,6 +372,63 @@ namespace NanoboyAdvance
                 calculate_zero(reg(reg_dest));
                 break;
             }
+            case 0b1000: // TST
+            {
+                uint result = reg(reg_dest) & reg(reg_source);
+                calculate_sign(result);
+                calculate_zero(result);
+                break;
+            }
+            case 0b1001: // NEG
+            {
+                uint result = 0 - reg(reg_source);
+                assert_carry(0 >= reg(reg_source));
+                calculate_overflow_sub(result, 0, reg(reg_source));
+                calculate_sign(result);
+                calculate_zero(result);
+                reg(reg_dest) = result;
+                break;
+            }
+            case 0b1010: // CMP
+            {
+                uint result = reg(reg_dest) - reg(reg_source);
+                assert_carry(reg(reg_dest) >= reg(reg_source));
+                calculate_overflow_sub(result, reg(reg_dest), reg(reg_source));
+                calculate_sign(result);
+                calculate_zero(result);
+                break;
+            }
+            case 0b1011: // CMN
+            {
+                uint result = reg(reg_dest) + reg(reg_source);
+                ulong result_long = (ulong)(reg(reg_dest)) + (ulong)(reg(reg_source));
+                assert_carry(result_long & 0x100000000);
+                calculate_overflow_add(result, reg(reg_dest), reg(reg_source));
+                calculate_sign(result);
+                calculate_zero(result);
+                break;
+            }
+            case 0b1100: // ORR
+                reg(reg_dest) |= reg(reg_source);
+                calculate_sign(reg(reg_dest));
+                calculate_zero(reg(reg_dest));
+                break;
+            case 0b1101: // MUL
+                reg(reg_dest) *= reg(reg_source);
+                calculate_sign(reg(reg_dest));
+                calculate_zero(reg(reg_dest));
+                assert_carry(false);
+                break;
+            case 0b1110: // BIC
+                reg(reg_dest) &= ~(reg(reg_source));
+                calculate_sign(reg(reg_dest));
+                calculate_zero(reg(reg_dest));
+                break;
+            case 0b1111: // MVN
+                reg(reg_dest) = ~(reg(reg_source));
+                calculate_sign(reg(reg_dest));
+                calculate_zero(reg(reg_dest));
+                break;
             }
         }
         }
