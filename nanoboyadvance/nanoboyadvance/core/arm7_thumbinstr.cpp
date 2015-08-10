@@ -180,6 +180,45 @@ namespace NanoboyAdvance
             calculate_zero(reg(reg_dest));
             break;
         }
+        case THUMB_2:
+        {
+            // THUMB.2 Add/subtract
+            int reg_dest = instruction & 7;
+            int reg_source = (instruction >> 3) & 7;
+            uint operand;
+
+            // The operand can either be the value of a register or a 3 bit immediate value
+            if (instruction & (1 << 10))
+            {
+                operand = (instruction >> 6) & 7;
+            }
+            else
+            {
+                operand = reg((instruction >> 6) & 7);
+            }
+
+            // Determine wether to subtract or add
+            if (instruction & (1 << 9))
+            {
+                uint result = reg(reg_source) - operand;
+                assert_carry(reg(reg_source) >= operand);
+                calculate_overflow_sub(result, reg(reg_source), operand);
+                calculate_sign(result);
+                calculate_zero(result);
+                reg(reg_dest) = result;
+            }
+            else
+            {
+                uint result = reg(reg_source) + operand;
+                ulong result_long = (ulong)(reg(reg_source)) + (ulong)operand;
+                assert_carry(result_long & 0x100000000);
+                calculate_overflow_add(result, reg(reg_source), operand);
+                calculate_sign(result);
+                calculate_zero(result);
+                reg(reg_dest) = result;
+            }
+            break;
+        }
         }
     }
 }
