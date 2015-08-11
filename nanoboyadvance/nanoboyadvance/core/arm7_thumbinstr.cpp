@@ -552,6 +552,47 @@ namespace NanoboyAdvance
             }
             break;
         }
+        case THUMB_9:
+        {
+            // THUMB.9 Load store with immediate offset
+            int reg_dest = instruction & 7;
+            int reg_base = (instruction >> 3) & 7;
+            uint immediate_value = (instruction >> 6) & 0x1F;
+            switch ((instruction >> 11) & 3)
+            {
+            case 0b00: // STR
+                memory->WriteWord(reg(reg_base) + (immediate_value << 2), reg(reg_dest));
+                break;
+            case 0b01: // LDR
+                reg(reg_dest) = memory->ReadWord(reg(reg_base) + (immediate_value << 2));
+                break;
+            case 0b10: // STRB
+                memory->WriteByte(reg(reg_base) + immediate_value, reg(reg_dest));
+                break;
+            case 0b11: // LDRB
+                reg(reg_dest) = memory->ReadByte(reg(reg_base) + immediate_value);
+                break;
+            }
+            break;
+        }
+        case THUMB_10:
+        {
+            // THUMB.10 Load/store halfword
+            int reg_dest = instruction & 7;
+            int reg_base = (instruction >> 3) & 7;
+            uint immediate_value = (instruction >> 6) & 0x1F;
+            if (instruction & (1 << 11))
+            {
+                // LDRH
+                reg(reg_dest) = memory->ReadHWord(reg(reg_base) + (immediate_value << 1));
+            }
+            else
+            {
+                // STRH
+                memory->WriteHWord(reg(reg_base) + (immediate_value << 1), reg(reg_dest));
+            }
+            break;
+        }
         }
     }
 }
