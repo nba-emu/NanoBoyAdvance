@@ -452,6 +452,9 @@ namespace NanoboyAdvance
                 break;
             }
 
+            // TODO: Handle special case that one of the registers is r15
+            ASSERT(reg_dest == 15 || reg_source == 15, LOG_ERROR, "Hi register operations/branch exchange special case r15 not implemented, r15=0x%x", r15);
+
             // Perform the actual operation
             switch ((instruction >> 8) & 3)
             {
@@ -486,11 +489,13 @@ namespace NanoboyAdvance
             break;
         }
         case THUMB_6:
+        {
             // THUMB.6 PC-relative load
             uint immediate_value = instruction & 0xFF;
             int reg_dest = (instruction >> 8) & 7;
             reg(reg_dest) = memory->ReadWord((r15 & ~2) + (immediate_value << 2));
             break;
+        }
         case THUMB_7:
         {
             // THUMB.7 Load/store with register offset
