@@ -431,6 +431,60 @@ namespace NanoboyAdvance
                 break;
             }
         }
+        case THUMB_5:
+        {
+            // THUMB.5 Hi register operations/branch exchange
+            int reg_dest = instruction & 7;
+            int reg_source = (instruction >> 3) & 7;
+
+            // Both reg_dest and reg_source can encode either a low register (r0-r7) or a high register (r8-r15)
+            switch ((instruction >> 6) & 3)
+            {
+            case 0b01:
+                reg_source += 8;
+                break;
+            case 0b10:
+                reg_dest += 8;
+                break;
+            case 0b11:
+                reg_dest += 8;
+                reg_source += 8;
+                break;
+            }
+
+            // Perform the actual operation
+            switch ((instruction >> 8) & 3)
+            {
+            case 0b00: // ADD
+                reg(reg_dest) += reg(reg_source);
+                break;
+            case 0b01: // CMP
+            {
+                uint result = reg(reg_dest) - reg(reg_source);
+                assert_carry(reg(reg_dest) >= reg(reg_source));
+                calculate_overflow_sub(result, reg(reg_dest), reg(reg_source));
+                calculate_sign(result);
+                calculate_zero(result);
+                break;
+            }
+            case 0b10: // MOV
+                reg(reg_dest) = reg(reg_source);
+                break;
+            case 0b11: // BX
+                if (reg(reg_source) & 1)
+                {
+                    r15 = reg(reg_source) & ~1;
+                }
+                else
+                {
+                    cpsr &= ~Thumb;
+                    r15 = reg(reg_source) & ~3;
+                }
+                flush_pipe = true;
+                break;
+            }
+            break;
+        }
         }
     }
 }
