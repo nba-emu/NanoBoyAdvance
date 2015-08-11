@@ -593,6 +593,54 @@ namespace NanoboyAdvance
             }
             break;
         }
+        case THUMB_11:
+        {
+            // THUMB.11 SP-relative load/store
+            uint immediate_value = instruction & 0xFF;
+            int reg_dest = (instruction >> 8) & 7;
+            if (instruction & (1 << 11))
+            {
+                // LDR
+                reg(reg_dest) = memory->ReadWord(reg(13) + (immediate_value << 2));
+            }
+            else
+            {
+                // STR
+                memory->WriteWord(reg(13) + (immediate_value << 2), reg(reg_dest));
+            }
+            break;
+        }
+        case THUMB_12:
+        {
+            // THUMB.12 Load address
+            uint immediate_value = instruction & 0xFF;
+            int reg_dest = (instruction >> 8) & 7;
+            if (instruction & (1 << 11))
+            {
+                // SP
+                reg(reg_dest) = reg(13) + (immediate_value << 2);
+            }
+            else
+            {
+                // PC
+                reg(reg_dest) = (r15 & ~2) + (immediate_value << 2);
+            }
+            break;
+        }
+        case THUMB_13:
+        {
+            // THUMB.13 Add offset to stack pointer
+            uint immediate_value = instruction & 0x7F;
+            if (instruction & 0x80)
+            {
+                reg(13) -= immediate_value;
+            }
+            else
+            {
+                reg(13) += immediate_value;
+            }
+            break;
+        }
         }
     }
 }
