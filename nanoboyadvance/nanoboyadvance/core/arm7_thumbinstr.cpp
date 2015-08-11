@@ -485,6 +485,36 @@ namespace NanoboyAdvance
             }
             break;
         }
+        case THUMB_6:
+            // THUMB.6 PC-relative load
+            uint immediate_value = instruction & 0xFF;
+            int reg_dest = (instruction >> 8) & 7;
+            reg(reg_dest) = memory->ReadWord((r15 & ~2) + (immediate_value << 2));
+            break;
+        case THUMB_7:
+        {
+            // THUMB.7 Load/store with register offset
+            int reg_dest = instruction & 7;
+            int reg_base = (instruction >> 3) & 7;
+            int reg_offset = (instruction >> 6) & 7;
+            uint address = reg(reg_base) + reg(reg_offset);
+            switch ((instruction >> 10) & 3)
+            {
+            case 0b00: // STR
+                memory->WriteWord(address, reg(reg_dest));
+                break;
+            case 0b01: // STRB
+                memory->WriteByte(address, reg(reg_dest) & 0xFF);
+                break;
+            case 0b10: // LDR
+                reg(reg_dest) = memory->ReadWord(address);
+                break;
+            case 0b11: // LDRB
+                reg(reg_dest) = memory->ReadByte(address);
+                break;
+            }
+            break;
+        }
         }
     }
 }
