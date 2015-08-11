@@ -520,6 +520,38 @@ namespace NanoboyAdvance
             }
             break;
         }
+        case THUMB_8:
+        {
+            // THUMB.8 Load/store sign-extended byte/halfword
+            int reg_dest = instruction & 7;
+            int reg_base = (instruction >> 3) & 7;
+            int reg_offset = (instruction >> 6) & 7;
+            uint address = reg(reg_base) + reg(reg_offset);
+            switch ((instruction >> 10) & 3)
+            {
+            case 0b00: // STRH
+                memory->WriteHWord(address, reg(reg_dest));
+                break;
+            case 0b01: // LDSB
+                reg(reg_dest) = memory->ReadByte(address);
+                if (reg(reg_dest) & 0x80)
+                {
+                    reg(reg_dest) |= 0xFFFFFF00;
+                }
+                break;
+            case 0b10: // LDRH
+                reg(reg_dest) = memory->ReadHWord(address);
+                break;
+            case 0b11: // LDSH
+                reg(reg_dest) = memory->ReadHWord(address);
+                if (reg(reg_dest) & 0x8000)
+                {
+                    reg(reg_dest) |= 0xFFFF0000;
+                }
+                break;
+            }
+            break;
+        }
         }
     }
 }
