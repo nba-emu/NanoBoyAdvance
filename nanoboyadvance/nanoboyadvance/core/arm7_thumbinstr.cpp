@@ -641,6 +641,48 @@ namespace NanoboyAdvance
             }
             break;
         }
+        case THUMB_14:
+        {
+            // THUMB.14 push/pop registers
+            if (instruction & (1 << 11))
+            {
+                // POP
+                for (int i = 0; i <= 7; i++)
+                {
+                    if (instruction & (1 << i))
+                    { 
+                        reg(i) = memory->ReadWord(reg(13));
+                        reg(13) += 4;
+                    }
+                }
+                // Restore r15 if neccessary
+                if (instruction & (1 << 8))
+                {
+                    r15 = memory->ReadWord(reg(13)) & ~1;
+                    flush_pipe = true;
+                    reg(13) += 4;
+                }
+            }
+            else
+            {
+                // PUSH
+                // Store r14 if neccessary
+                if (instruction & (1 << 8))
+                {
+                    reg(13) -= 4;
+                    memory->WriteWord(reg(13), reg(14));
+                }
+                for (int i = 7; i >= 0; i--)
+                {
+                    if (instruction & (1 << i))
+                    {
+                        reg(13) -= 4;
+                        memory->WriteWord(reg(13), reg(i));
+                    }
+                }
+            }
+            break;
+        }
         }
     }
 }
