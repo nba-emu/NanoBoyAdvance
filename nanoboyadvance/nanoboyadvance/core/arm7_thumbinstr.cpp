@@ -683,6 +683,32 @@ namespace NanoboyAdvance
             }
             break;
         }
+        case THUMB_15:
+        {
+            // THUMB.15 Multiple load/store
+            int reg_base = (instruction >> 8) & 7;
+            if (instruction & (1 << 11))
+            {
+                // LDMIA
+                for (int i = 0; i <= 7; i++)
+                {
+                    if (instruction & (1 << i))
+                    {
+                        reg(i) = memory->ReadWord(reg(reg_base));
+                        reg(reg_base) += 4;
+                    }
+                }
+            }
+            else
+            {
+                // STMIA
+                if (instruction & (1 << i))
+                {
+                    memory->WriteWord(reg(reg_base), reg(i));
+                    reg(reg_base) += 4;
+                }
+            }
+        }
         }
     }
 }
