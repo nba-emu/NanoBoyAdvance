@@ -702,10 +702,13 @@ namespace NanoboyAdvance
             else
             {
                 // STMIA
-                if (instruction & (1 << i))
+                for (int i = 0; i <= 7; i++)
                 {
-                    memory->WriteWord(reg(reg_base), reg(i));
-                    reg(reg_base) += 4;
+                    if (instruction & (1 << i))
+                    {
+                        memory->WriteWord(reg(reg_base), reg(i));
+                        reg(reg_base) += 4;
+                    }
                 }
             }
         }
