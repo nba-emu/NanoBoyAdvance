@@ -711,6 +711,7 @@ namespace NanoboyAdvance
                     }
                 }
             }
+            break;
         }
         case THUMB_16:
         {
@@ -748,6 +749,48 @@ namespace NanoboyAdvance
                 r15 += (signed_immediate << 1);
                 flush_pipe = true;
             }
+            break;
+        }
+        case THUMB_17:
+            // THUMB.17 Software Interrupt
+            // TODO: I-bit?
+            reg(14) = r15 - 2;
+            spsr_svc = cpsr;
+            r15 = 8;
+            cpsr &= ~Thumb;
+            cpsr = (cpsr & ~0x1F) | SVC;
+            RemapRegisters();
+            flush_pipe = true;
+            break;
+        case THUMB_18:
+        {
+            // THUMB.18 Unconditional branch
+            uint immediate_value = (instruction & 0x3FF) << 1;
+            if (instruction & 0x400)
+            {
+                immediate_value |= 0xFFFFF800;
+            }
+            r15 += immediate_value;
+            flush_pipe = true;
+            break;
+        }
+        case THUMB_19:
+        {
+            uint immediate_value = instruction & 2047;
+            if (instruction & (1 << 11))
+            {
+                // BH
+                uint temp_pc = r15 - 2;
+                r15 = reg(14) + (immediate_value << 1);
+                reg(14) = temp_pc | 1;
+                flush_pipe = true;
+            }
+            else
+            {
+                // BL
+                reg(14) = r15 + (immediate_value << 12);
+            }
+            break;
         }
         }
     }
