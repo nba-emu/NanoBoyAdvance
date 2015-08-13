@@ -143,6 +143,33 @@ namespace NanoboyAdvance
 
     void ARM7::THUMBExecute(ushort instruction, int type)
     {
+#ifdef CPU_LOG
+        // Log our status for debug reasons
+        LOG(LOG_INFO, "([THUMB] Executing THUMB.%d, r15=0x%x", type, r15);
+        for (int i = 0; i < 16; i++)
+        {
+            if (i == 15)
+            {
+                cout << "r" << i << " = 0x" << std::hex << reg(i) << " (0x" << (reg(i) - 4) << ")" << std::dec << endl;
+            }
+            else
+            {
+                cout << "r" << i << " = 0x" << std::hex << reg(i) << std::dec << endl;
+            }
+        }
+        cout << "cpsr = 0x" << std::hex << cpsr << std::dec << endl;
+        cout << "spsr = 0x" << std::hex << *pspsr << std::dec << endl;
+        cout << "mode = ";
+        switch (cpsr & 0x1F)
+        {
+        case User: cout << "User" << endl; break;
+        case System: cout << "System" << endl; break;
+        case IRQ: cout << "IRQ" << endl; break;
+        case SVC: cout << "SVC" << endl; break;
+        default: cout << "n.n." << endl; break;
+        }
+#endif 
+        // Actual execution
         switch (type)
         {
         case THUMB_1:
@@ -430,6 +457,7 @@ namespace NanoboyAdvance
                 calculate_zero(reg(reg_dest));
                 break;
             }
+            break;
         }
         case THUMB_5:
         {
@@ -793,5 +821,8 @@ namespace NanoboyAdvance
             break;
         }
         }
+#ifdef CPU_LOG
+        cin.get();
+#endif
     }
 }

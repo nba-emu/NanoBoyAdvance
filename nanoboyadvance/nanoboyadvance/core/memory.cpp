@@ -37,13 +37,25 @@ namespace NanoboyAdvance
     {
         int page = offset >> 24;
         uint internal_offset = offset & 0xFFFFFF;
+        //LOG(LOG_INFO, "Read 0x%x", offset);
         switch (page)
         {
         case 0:
             // BIOS
             return bios[internal_offset];
+        case 2:
+            return wram[internal_offset];
+        case 3:
+            if (internal_offset < 0x8000)
+            return iram[internal_offset];
+            return 0;
+        case 5:
+            return pram[internal_offset];
+        case 8:
+            // ROM
+            return rom[internal_offset];
         default:
-            LOG(LOG_WARN, "Read from unimplemented 0x%x", offset);
+            //LOG(LOG_WARN, "Read from unimplemented 0x%x", offset);
             break;
         }
         return 0;
@@ -71,14 +83,35 @@ namespace NanoboyAdvance
 
     void PagedMemory::WriteByte(uint offset, ubyte value)
     {
+        int page = offset >> 24;
+        uint internal_offset = offset & 0xFFFFFF;
+        switch (page)
+        {
+        case 2:
+            wram[internal_offset] = value; break;
+        case 3:
+            if (internal_offset < 0x8000)
+            iram[internal_offset] = value; break;
+        case 5:
+            pram[internal_offset] = value; break;
+        default:
+            //LOG(LOG_WARN, "Write to unimplemented 0x%x, value=0x%x", offset, value);
+            break;
+        }
     }
 
     void PagedMemory::WriteHWord(uint offset, ushort value)
     {
+        WriteByte(offset, value & 0xFF);
+        WriteByte(offset + 1, (value >> 8) & 0xFF);
     }
 
     void PagedMemory::WriteWord(uint offset, uint value)
     {
+        WriteByte(offset, value & 0xFF);
+        WriteByte(offset + 1, (value >> 8) & 0xFF);
+        WriteByte(offset + 2, (value >> 16) & 0xFF);
+        WriteByte(offset + 3, (value >> 24) & 0xFF);
     }
 
     ubyte* PagedMemory::ReadFile(string filename)

@@ -490,6 +490,7 @@ namespace NanoboyAdvance
         int condition = instruction >> 28;
         bool execute = false;
         
+#ifdef CPU_LOG
         // Log our status for debug reasons
         LOG(LOG_INFO, "Executing %s, r15=0x%x", ARMDisasm(r15 - 8, instruction).c_str(), r15);
         for (int i = 0; i < 16; i++)
@@ -514,6 +515,7 @@ namespace NanoboyAdvance
         case SVC: cout << "SVC" << endl; break;
         default: cout << "n.n." << endl; break;
         }
+#endif
 
         // Check if the instruction will be executed
         switch (condition)
@@ -559,7 +561,6 @@ namespace NanoboyAdvance
             int reg_address = instruction & 0xF;
             if (reg(reg_address) & 1)
             {
-                LOG(LOG_ERROR, "Entered -unimplemented- thumb mode, r15=0x%x", r15);
                 r15 = reg(reg_address) & ~(1);
                 cpsr |= Thumb;
             }
@@ -1377,6 +1378,8 @@ namespace NanoboyAdvance
             }
             break;
         }
-        cout << endl;
+#ifdef CPU_LOG
+        cin.get();
+#endif
     }
 }

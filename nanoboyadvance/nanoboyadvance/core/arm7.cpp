@@ -47,6 +47,9 @@ namespace NanoboyAdvance
         // Set the mode (system, thumb disabled)
         cpsr = System;
         RemapRegisters();
+        // Testing
+        r15 = 0x8000000;
+        r13 = 0x3007F00;
     }
     
     void ARM7::RemapRegisters()

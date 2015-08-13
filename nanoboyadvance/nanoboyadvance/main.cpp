@@ -29,11 +29,22 @@ using namespace NanoboyAdvance;
 
 SDL_Surface* screen;
 uint32_t* buffer;
+PagedMemory memory;
+
+int getcolor(int n, int p)
+{
+    ushort v = memory.ReadHWord(0x5000000 + p * 32 + n * 2);
+    uint r = 0xFF000000;
+    cout << std::hex << v << std::dec << endl;
+    r |= ((v & 0x1F) * 8) << 16;
+    r |= (((v >> 5) & 0x1f) * 8) << 8;
+    r |= ((v >> 10) & 0x1f) * 8;
+    return r;
+}
 
 int main(int argc, char **argv)
 {
     SDL_Event event;
-    PagedMemory memory;
     ARM7* arm = new ARM7(&memory);
     bool running = true;
     
@@ -56,7 +67,6 @@ int main(int argc, char **argv)
     while (running)
     {
         arm->Step();
-        _sleep(500);
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT)
