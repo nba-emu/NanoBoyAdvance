@@ -70,6 +70,11 @@ int main(int argc, char **argv)
     
     while (running)
     {
+        ubyte* state = SDL_GetKeyState(NULL);
+        memory.Up = state[SDLK_UP];
+        memory.Down = state[SDLK_DOWN];
+        memory.Left = state[SDLK_LEFT];
+        memory.Right = state[SDLK_RIGHT];
         for (int i = 0; i < 10000; i++)
             arm->Step();
         /*for (int pal = 0; pal < 32; pal++)

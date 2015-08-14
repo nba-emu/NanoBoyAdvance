@@ -37,6 +37,10 @@ namespace NanoboyAdvance
         ubyte* rom;
     public:
         int Cycles;
+        bool Up;
+        bool Down;
+        bool Left;
+        bool Right;
         ubyte ReadByte(uint offset);
         ushort ReadHWord(uint offset);
         uint ReadWord(uint offset);

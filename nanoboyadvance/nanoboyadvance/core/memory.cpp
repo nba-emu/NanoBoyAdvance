@@ -31,6 +31,10 @@ namespace NanoboyAdvance
         for (int i = 0; i < 0x400; i++) pram[i] = 0;
         bios = PagedMemory::ReadFile("bios.bin");
         rom = PagedMemory::ReadFile("display.gba");
+        Up = false;
+        Down = false;
+        Left = false;
+        Right = false;
     }
 
     ubyte PagedMemory::ReadByte(uint offset)
@@ -47,6 +51,17 @@ namespace NanoboyAdvance
         case 3:
             if (internal_offset < 0x8000)
             return iram[internal_offset];
+            return 0;
+        case 4:
+            if (internal_offset == 0x130)
+            {
+                ubyte value = 0;
+                value |= Right ? 0 : (1 << 4);
+                value |= Left ? 0 : (1 << 5);
+                value |= Up ? 0 : (1 << 6);
+                value |= Down ? 0 : (1 << 7);
+                return value;
+            }
             return 0;
         case 5:
             return pram[internal_offset];
