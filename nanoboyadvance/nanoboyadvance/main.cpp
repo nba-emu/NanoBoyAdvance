@@ -35,11 +35,15 @@ int getcolor(int n, int p)
 {
     ushort v = memory.ReadHWord(0x5000000 + p * 32 + n * 2);
     uint r = 0xFF000000;
-    cout << std::hex << v << std::dec << endl;
     r |= ((v & 0x1F) * 8) << 16;
     r |= (((v >> 5) & 0x1f) * 8) << 8;
     r |= ((v >> 10) & 0x1f) * 8;
     return r;
+}
+
+void setpixel(int x, int y, int color)
+{
+    buffer[y * 240 + x] = color;
 }
 
 int main(int argc, char **argv)
@@ -61,13 +65,36 @@ int main(int argc, char **argv)
         SDL_Quit();
     }
     buffer = (uint32_t*)screen->pixels;
-    
+
     SDL_WM_SetCaption("NanoBoyAdvance", "NanoBoyAdvance");
     
     while (running)
     {
-        arm->Step();
-        //_sleep(5);
+        for (int i = 0; i < 10000; i++)
+            arm->Step();
+        /*for (int pal = 0; pal < 32; pal++)
+        {
+            for (int color = 0; color < 16; color++)
+            {
+                int rgb = getcolor(color, pal);
+                for (int y = 0; y < 4; y++)
+                {
+                    for (int x = 0; x < 4; x++)
+                    {
+                        setpixel(color * 4 + x, pal * 4 + y, rgb);
+                    }
+                }
+            }
+        }*/
+        for (int y = 0; y < 160; y++)
+        {
+            for (int x = 0; x < 240; x++)
+            {
+                ubyte color = memory.ReadByte(0x06000000 + (y * 240) + x);
+                int color_rgb = getcolor(color & 0xF, (color >> 4) & 0xF);
+                setpixel(x, y, color_rgb);
+            }
+        }
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT)
@@ -75,6 +102,7 @@ int main(int argc, char **argv)
                 running = false;
             }
         }
+        SDL_Flip(screen);
     }
 
     SDL_FreeSurface(screen);

@@ -50,11 +50,13 @@ namespace NanoboyAdvance
             return 0;
         case 5:
             return pram[internal_offset];
+        case 6:
+            return vram[internal_offset];
         case 8:
             // ROM
             return rom[internal_offset];
         default:
-            LOG(LOG_WARN, "Read from unimplemented 0x%x", offset);
+            //LOG(LOG_WARN, "Read from unimplemented 0x%x", offset);
             break;
         }
         return 0;
@@ -96,8 +98,10 @@ namespace NanoboyAdvance
         //    break;
         case 5:
             pram[internal_offset] = value; break;
+        case 6:
+            vram[internal_offset] = value; break;
         default:
-            LOG(LOG_WARN, "Write to unimplemented 0x%x, value=0x%x", offset, value);
+            //LOG(LOG_WARN, "Write to unimplemented 0x%x, value=0x%x", offset, value);
             break;
         }
     }

@@ -33,6 +33,7 @@ namespace NanoboyAdvance
         ubyte wram[0x40000];
         ubyte iram[0x8000];
         ubyte pram[0x400];
+        ubyte vram[0x18000];
         ubyte* rom;
     public:
         int Cycles;

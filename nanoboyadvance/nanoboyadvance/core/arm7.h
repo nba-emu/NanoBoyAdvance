@@ -25,7 +25,7 @@
 #include "common/log.h"
 #include "memory.h"
 
-#define CPU_LOG
+//#define CPU_LOG
 
 // Macro for easier register access
 #define reg(r) *gprs[r]
