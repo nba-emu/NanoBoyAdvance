@@ -126,13 +126,13 @@ namespace NanoboyAdvance
         bool flush_pipe;
 
         inline void RemapRegisters();
-        /*ubyte ReadByte(uint offset);
+        ubyte ReadByte(uint offset);
         ushort ReadHWord(uint offset);
         uint ReadWord(uint offset);
         uint ReadWordRotated(uint offset);
         void WriteByte(uint offset, ubyte value);
         void WriteHWord(uint offset, ushort value);
-        void WriteWord(uint offset, uint value);*/
+        void WriteWord(uint offset, uint value);
         int ARMDecode(uint instruction);
         void ARMExecute(uint instruction, int type);
         int THUMBDecode(ushort instruction);

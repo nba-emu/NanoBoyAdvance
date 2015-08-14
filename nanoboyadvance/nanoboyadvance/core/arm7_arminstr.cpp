@@ -582,14 +582,14 @@ namespace NanoboyAdvance
             ASSERT(reg_source == 15 || reg_dest == 15 || reg_base == 15, LOG_WARN, "Single Data Transfer, thou shall not use r15, r15=0x%x", r15);
             if (swap_byte)
             {
-                memory_value = memory->ReadByte(reg(reg_base)) & 0xFF;
-                memory->WriteByte(reg(reg_base), reg(reg_source) & 0xFF);
+                memory_value = ReadByte(reg(reg_base)) & 0xFF;
+                WriteByte(reg(reg_base), reg(reg_source) & 0xFF);
                 reg(reg_dest) = memory_value;
             }
             else
             {
-                memory_value = memory->ReadWord(reg(reg_base));
-                memory->WriteWord(reg(reg_base), reg(reg_source));
+                memory_value = ReadWordRotated(reg(reg_base));
+                WriteWord(reg(reg_base), reg(reg_source));
                 reg(reg_dest) = memory_value;
             }
             break;
@@ -602,6 +602,7 @@ namespace NanoboyAdvance
             // ARM.5 Halfword data transfer, register offset
             // ARM.6 Halfword data transfer, immediate offset
             // ARM.7 Signed data transfer (byte/halfword)
+            // TODO: Proper alignment handling
             uint offset;
             int reg_dest = (instruction >> 12) & 0xF;
             int reg_base = (instruction >> 16) & 0xF;
@@ -654,7 +655,7 @@ namespace NanoboyAdvance
                     uint value;
                     if (halfword)
                     {
-                        value = memory->ReadHWord(address);
+                        value = ReadHWord(address);
                         if (value & 0x8000)
                         {
                             value |= 0xFFFF0000;
@@ -662,7 +663,7 @@ namespace NanoboyAdvance
                     }
                     else
                     {
-                        value = memory->ReadByte(address);
+                        value = ReadByte(address);
                         if (value & 0x80)
                         {
                             value |= 0xFFFFFF00;
@@ -672,18 +673,18 @@ namespace NanoboyAdvance
                 }
                 else
                 {
-                    reg(reg_dest) = memory->ReadHWord(address);
+                    reg(reg_dest) = ReadHWord(address);
                 }
             }
             else
             {
                 if (reg(reg_dest) == 15)
                 {
-                    memory->WriteHWord(address, r15 + 4);
+                    WriteHWord(address, r15 + 4);
                 }
                 else
                 {
-                    memory->WriteHWord(address, reg(reg_dest));
+                    WriteHWord(address, reg(reg_dest));
                 }
             }
 
@@ -1168,11 +1169,11 @@ namespace NanoboyAdvance
                 // TODO: Check if loading to r15 flushes the pipeline
                 if (transfer_byte)
                 {
-                    reg(reg_dest) = memory->ReadByte(address);
+                    reg(reg_dest) = ReadByte(address);
                 }
                 else
                 {
-                    reg(reg_dest) = memory->ReadWord(address);
+                    reg(reg_dest) = ReadWordRotated(address);
                 }
             }
             else
@@ -1184,11 +1185,11 @@ namespace NanoboyAdvance
                 }
                 if (transfer_byte)
                 {
-                    memory->WriteByte(address, value & 0xFF);
+                    WriteByte(address, value & 0xFF);
                 }
                 else
                 {
-                    memory->WriteWord(address, value);
+                    WriteWord(address, value);
                 }
             }
 
@@ -1285,7 +1286,7 @@ namespace NanoboyAdvance
                             }
 
                             // Load the register
-                            reg(i) = memory->ReadWord(address);
+                            reg(i) = ReadWord(address);
 
                             // If r15 is overwritten, the pipeline must be flushed
                             if (i == 15)
@@ -1309,11 +1310,11 @@ namespace NanoboyAdvance
                             // When the base register is the first register in the list its original value is written
                             if (i == first_register && i == reg_base)
                             {
-                                memory->WriteWord(address, old_address);
+                                WriteWord(address, old_address);
                             }
                             else
                             {
-                                memory->WriteWord(address, reg(i));
+                                WriteWord(address, reg(i));
                             }
                         }
 
@@ -1355,7 +1356,7 @@ namespace NanoboyAdvance
                             }
 
                             // Load the register
-                            reg(i) = memory->ReadWord(address);
+                            reg(i) = ReadWord(address);
 
                             // If r15 is overwritten, the pipeline must be flushed
                             if (i == 15)
@@ -1379,11 +1380,11 @@ namespace NanoboyAdvance
                             // When the base register is the first register in the list its original value is written
                             if (i == first_register && i == reg_base)
                             {
-                                memory->WriteWord(address, old_address);
+                                WriteWord(address, old_address);
                             }
                             else
                             {
-                                memory->WriteWord(address, reg(i));
+                                WriteWord(address, reg(i));
                             }
                         }
 

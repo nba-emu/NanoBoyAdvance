@@ -521,7 +521,8 @@ namespace NanoboyAdvance
             // THUMB.6 PC-relative load
             uint immediate_value = instruction & 0xFF;
             int reg_dest = (instruction >> 8) & 7;
-            reg(reg_dest) = memory->ReadWord((r15 & ~2) + (immediate_value << 2));
+            // TODO: I'm pretty sure we don't even need the "Rotated" because address will always be aligned
+            reg(reg_dest) = ReadWordRotated((r15 & ~2) + (immediate_value << 2));
             break;
         }
         case THUMB_7:
@@ -534,16 +535,16 @@ namespace NanoboyAdvance
             switch ((instruction >> 10) & 3)
             {
             case 0b00: // STR
-                memory->WriteWord(address, reg(reg_dest));
+                WriteWord(address, reg(reg_dest));
                 break;
             case 0b01: // STRB
-                memory->WriteByte(address, reg(reg_dest) & 0xFF);
+                WriteByte(address, reg(reg_dest) & 0xFF);
                 break;
             case 0b10: // LDR
-                reg(reg_dest) = memory->ReadWord(address);
+                reg(reg_dest) = ReadWordRotated(address);
                 break;
             case 0b11: // LDRB
-                reg(reg_dest) = memory->ReadByte(address);
+                reg(reg_dest) = ReadByte(address);
                 break;
             }
             break;
@@ -558,20 +559,21 @@ namespace NanoboyAdvance
             switch ((instruction >> 10) & 3)
             {
             case 0b00: // STRH
-                memory->WriteHWord(address, reg(reg_dest));
+                WriteHWord(address, reg(reg_dest));
                 break;
             case 0b01: // LDSB
-                reg(reg_dest) = memory->ReadByte(address);
+                reg(reg_dest) = ReadByte(address);
                 if (reg(reg_dest) & 0x80)
                 {
                     reg(reg_dest) |= 0xFFFFFF00;
                 }
                 break;
+            // TODO: Proper alignment handling
             case 0b10: // LDRH
-                reg(reg_dest) = memory->ReadHWord(address);
+                reg(reg_dest) = ReadHWord(address);
                 break;
             case 0b11: // LDSH
-                reg(reg_dest) = memory->ReadHWord(address);
+                reg(reg_dest) = ReadHWord(address);
                 if (reg(reg_dest) & 0x8000)
                 {
                     reg(reg_dest) |= 0xFFFF0000;
@@ -589,16 +591,16 @@ namespace NanoboyAdvance
             switch ((instruction >> 11) & 3)
             {
             case 0b00: // STR
-                memory->WriteWord(reg(reg_base) + (immediate_value << 2), reg(reg_dest));
+                WriteWord(reg(reg_base) + (immediate_value << 2), reg(reg_dest));
                 break;
             case 0b01: // LDR
-                reg(reg_dest) = memory->ReadWord(reg(reg_base) + (immediate_value << 2));
+                reg(reg_dest) = ReadWordRotated(reg(reg_base) + (immediate_value << 2));
                 break;
             case 0b10: // STRB
-                memory->WriteByte(reg(reg_base) + immediate_value, reg(reg_dest));
+                WriteByte(reg(reg_base) + immediate_value, reg(reg_dest));
                 break;
             case 0b11: // LDRB
-                reg(reg_dest) = memory->ReadByte(reg(reg_base) + immediate_value);
+                reg(reg_dest) = ReadByte(reg(reg_base) + immediate_value);
                 break;
             }
             break;
@@ -612,12 +614,13 @@ namespace NanoboyAdvance
             if (instruction & (1 << 11))
             {
                 // LDRH
-                reg(reg_dest) = memory->ReadHWord(reg(reg_base) + (immediate_value << 1));
+                // TODO: Alignment handling
+                reg(reg_dest) = ReadHWord(reg(reg_base) + (immediate_value << 1));
             }
             else
             {
                 // STRH
-                memory->WriteHWord(reg(reg_base) + (immediate_value << 1), reg(reg_dest));
+                WriteHWord(reg(reg_base) + (immediate_value << 1), reg(reg_dest));
             }
             break;
         }
@@ -629,12 +632,12 @@ namespace NanoboyAdvance
             if (instruction & (1 << 11))
             {
                 // LDR
-                reg(reg_dest) = memory->ReadWord(reg(13) + (immediate_value << 2));
+                reg(reg_dest) = ReadWordRotated(reg(13) + (immediate_value << 2));
             }
             else
             {
                 // STR
-                memory->WriteWord(reg(13) + (immediate_value << 2), reg(reg_dest));
+                WriteWord(reg(13) + (immediate_value << 2), reg(reg_dest));
             }
             break;
         }
@@ -679,14 +682,14 @@ namespace NanoboyAdvance
                 {
                     if (instruction & (1 << i))
                     { 
-                        reg(i) = memory->ReadWord(reg(13));
+                        reg(i) = ReadWord(reg(13));
                         reg(13) += 4;
                     }
                 }
                 // Restore r15 if neccessary
                 if (instruction & (1 << 8))
                 {
-                    r15 = memory->ReadWord(reg(13)) & ~1;
+                    r15 = ReadWord(reg(13)) & ~1;
                     flush_pipe = true;
                     reg(13) += 4;
                 }
@@ -698,14 +701,14 @@ namespace NanoboyAdvance
                 if (instruction & (1 << 8))
                 {
                     reg(13) -= 4;
-                    memory->WriteWord(reg(13), reg(14));
+                    WriteWord(reg(13), reg(14));
                 }
                 for (int i = 7; i >= 0; i--)
                 {
                     if (instruction & (1 << i))
                     {
                         reg(13) -= 4;
-                        memory->WriteWord(reg(13), reg(i));
+                        WriteWord(reg(13), reg(i));
                     }
                 }
             }
@@ -722,7 +725,7 @@ namespace NanoboyAdvance
                 {
                     if (instruction & (1 << i))
                     {
-                        reg(i) = memory->ReadWord(reg(reg_base));
+                        reg(i) = ReadWord(reg(reg_base));
                         reg(reg_base) += 4;
                     }
                 }
@@ -734,7 +737,7 @@ namespace NanoboyAdvance
                 {
                     if (instruction & (1 << i))
                     {
-                        memory->WriteWord(reg(reg_base), reg(i));
+                        WriteWord(reg(reg_base), reg(i));
                         reg(reg_base) += 4;
                     }
                 }

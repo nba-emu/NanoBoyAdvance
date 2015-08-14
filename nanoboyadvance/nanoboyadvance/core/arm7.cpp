@@ -128,8 +128,52 @@ namespace NanoboyAdvance
             break;
         }
     }
+
+    ubyte ARM7::ReadByte(uint offset)
+    {
+        return memory->ReadByte(offset);
+    }
+
+    ushort ARM7::ReadHWord(uint offset)
+    {
+        // TODO: Proper handling (Mis-aligned LDRH,LDRSH)
+        return memory->ReadHWord(offset & ~1);
+    }
+
+    uint ARM7::ReadWord(uint offset)
+    {
+        return memory->ReadWord(offset & ~3);
+    }
+
+    uint ARM7::ReadWordRotated(uint offset)
+    {
+        uint value = memory->ReadWord(offset & ~3);
+        int amount = (offset & 3) * 8;
+        if (amount != 0)
+        {
+            return (value >> amount) | (value << (32 - amount));
+        }
+        else
+        {
+            return value;
+        }
+    }
+
+    void ARM7::WriteByte(uint offset, ubyte value)
+    {
+        memory->WriteByte(offset, value);
+    }
+
+    void ARM7::WriteHWord(uint offset, ushort value)
+    {
+        memory->WriteHWord(offset & ~1, value);
+    }
+
+    void ARM7::WriteWord(uint offset, uint value)
+    {
+        memory->WriteWord(offset & ~3, value);
+    }
     
-    // TODO: Implement hashtable for faster decoding
     void ARM7::Step()
     {
         bool thumb = (cpsr & Thumb) == Thumb;
