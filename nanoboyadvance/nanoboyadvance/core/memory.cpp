@@ -71,7 +71,7 @@ namespace NanoboyAdvance
             // ROM
             return rom[internal_offset];
         default:
-            //LOG(LOG_WARN, "Read from unimplemented 0x%x", offset);
+            LOG(LOG_WARN, "Read from unimplemented 0x%x", offset);
             break;
         }
         return 0;

@@ -41,9 +41,13 @@ int getcolor(int n, int p)
     return r;
 }
 
+#define plotpixel(x,y,c) buffer[(y) * 480 + (x)] = color;
 void setpixel(int x, int y, int color)
 {
-    buffer[y * 240 + x] = color;
+    plotpixel(x * 2, y * 2, color);
+    plotpixel(x * 2 + 1, y * 2, color);
+    plotpixel(x * 2, y * 2 + 1, color);
+    plotpixel(x * 2 + 1, y * 2 + 1, color);
 }
 
 int main(int argc, char **argv)
@@ -58,7 +62,7 @@ int main(int argc, char **argv)
         return 1;
     }
     
-    screen = SDL_SetVideoMode(240, 160, 32, SDL_SWSURFACE);
+    screen = SDL_SetVideoMode(480, 320, 32, SDL_SWSURFACE);
     if (screen == NULL)
     {
         printf("SDL_SetVideoMode Error: %s\n", SDL_GetError());
