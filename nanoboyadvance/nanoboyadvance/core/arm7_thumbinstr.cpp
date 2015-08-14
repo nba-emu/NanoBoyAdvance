@@ -804,12 +804,18 @@ namespace NanoboyAdvance
         }
         case THUMB_19:
         {
-            uint immediate_value = instruction & 2047;
+            uint immediate_value = instruction & 0x7FF;
             if (instruction & (1 << 11))
             {
                 // BH
                 uint temp_pc = r15 - 2;
-                r15 = reg(14) + (immediate_value << 1);
+                uint value = reg(14) + (immediate_value << 1);
+                
+                // This was mostly written by looking at shonumis code lol
+                value &= 0x7FFFFF;
+                r15 &= ~0x7FFFFF;
+                r15 |= value & ~1;
+
                 reg(14) = temp_pc | 1;
                 flush_pipe = true;
             }

@@ -67,6 +67,7 @@ int main(int argc, char **argv)
     while (running)
     {
         arm->Step();
+        //_sleep(5);
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT)

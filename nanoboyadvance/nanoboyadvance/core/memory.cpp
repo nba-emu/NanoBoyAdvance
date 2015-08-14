@@ -30,14 +30,13 @@ namespace NanoboyAdvance
         for (int i = 0; i < 0x8000; i++) iram[i] = 0;
         for (int i = 0; i < 0x400; i++) pram[i] = 0;
         bios = PagedMemory::ReadFile("bios.bin");
-        rom = PagedMemory::ReadFile("rom.gba");
+        rom = PagedMemory::ReadFile("display.gba");
     }
 
     ubyte PagedMemory::ReadByte(uint offset)
     {
         int page = offset >> 24;
         uint internal_offset = offset & 0xFFFFFF;
-        //LOG(LOG_INFO, "Read 0x%x", offset);
         switch (page)
         {
         case 0:
@@ -55,7 +54,7 @@ namespace NanoboyAdvance
             // ROM
             return rom[internal_offset];
         default:
-            //LOG(LOG_WARN, "Read from unimplemented 0x%x", offset);
+            LOG(LOG_WARN, "Read from unimplemented 0x%x", offset);
             break;
         }
         return 0;
@@ -92,10 +91,13 @@ namespace NanoboyAdvance
         case 3:
             if (internal_offset < 0x8000)
             iram[internal_offset] = value; break;
+        //case 4:
+        //    LOG(LOG_INFO, "LOL");
+        //    break;
         case 5:
             pram[internal_offset] = value; break;
         default:
-            //LOG(LOG_WARN, "Write to unimplemented 0x%x, value=0x%x", offset, value);
+            LOG(LOG_WARN, "Write to unimplemented 0x%x, value=0x%x", offset, value);
             break;
         }
     }

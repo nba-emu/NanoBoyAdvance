@@ -153,11 +153,11 @@ namespace NanoboyAdvance
             int rd = (instruction >> 16) & 0xF;
             if (instruction & (1 << 21))
             {
-                mmemonic << "mla" << condition << (instruction & (1 << 20) ? "s " : " ") << "r" << rd << ", r" << rm<< ", r" << rs << ", r" << rn;
+                mmemonic << "mla" << condition << (instruction & (1 << 20) ? "s " : " ") << "r" << rd << ", r" << rm << ", r" << rs << ", r" << rn;
             }
             else
             {
-                mmemonic << "mul" << condition << (instruction & (1 << 20) ? "s " : " ") << "r" << rd << ", r" << rm<< ", r" << rs;
+                mmemonic << "mul" << condition << (instruction & (1 << 20) ? "s " : " ") << "r" << rd << ", r" << rm << ", r" << rs;
             }
             break;
         }
@@ -169,7 +169,7 @@ namespace NanoboyAdvance
             int rd_lsw = (instruction >> 12) & 0xF;
             int rd_msw = (instruction >> 16) & 0xF;
             mmemonic << (instruction & (1 << 22) ? "s" : "u") << (instruction & (1 << 21) ? "mlal" : "mull") << condition << (instruction & (1 << 20) ? "s " : " ") <<
-                        "r" << rd_lsw << ", r" << rd_msw << ", r" << rm << ", r" << rs;
+                "r" << rd_lsw << ", r" << rd_msw << ", r" << rm << ", r" << rs;
             break;
         }
         case ARM_3:
@@ -259,7 +259,7 @@ namespace NanoboyAdvance
                 // PSR transfer 
                 switch ((instruction >> 16) & 0x3F)
                 {
-                // MRS (transfer PSR contents to a register) 
+                    // MRS (transfer PSR contents to a register) 
                 case 0b001111:
                 {
                     int rd = (instruction >> 12) & 0xF;
@@ -489,7 +489,7 @@ namespace NanoboyAdvance
     {
         int condition = instruction >> 28;
         bool execute = false;
-        
+
 #ifdef CPU_LOG
         // Log our status for debug reasons
         LOG(LOG_INFO, "Executing %s, r15=0x%x", ARMDisasm(r15 - 8, instruction).c_str(), r15);
@@ -543,7 +543,7 @@ namespace NanoboyAdvance
         {
             return;
         }
-        
+
         // Perform the actual execution
         switch (type)
         {
@@ -643,7 +643,7 @@ namespace NanoboyAdvance
                     address -= offset;
                 }
             }
-            
+
             // Perform the actual load / store operation
             if (load)
             {
@@ -1148,7 +1148,7 @@ namespace NanoboyAdvance
                     offset = shift_operand1;
                 }
             }
-            
+
             // If the instruction is pre-indexed we must add/subtract the offset beforehand
             if (pre_indexed)
             {
@@ -1260,68 +1260,144 @@ namespace NanoboyAdvance
 
             // Walk through the register list
             // TODO: Start with the first register (?)
-            for (int i = 0; i < 16; i++)
+            //       Remove code redundancy
+            if (add_to_base)
             {
-                // Determine if the current register will be loaded/saved
-                if (instruction & (1 << i))
+                for (int i = 0; i < 16; i++)
                 {
-                    // If instruction is pre-indexed we must update address beforehand
-                    if (pre_indexed)
+                    // Determine if the current register will be loaded/saved
+                    if (instruction & (1 << i))
                     {
-                        address += add_to_base ? 4 : -4;
-                    }
-
-                    // Perform the actual load / store operation
-                    if (load)
-                    {
-                        // Loading the base disables writeback
-                        // TODO: Check if it only disables writeback if the base is the first register in the list
-                        if (i == reg_base)
+                        // If instruction is pre-indexed we must update address beforehand
+                        if (pre_indexed)
                         {
-                            write_back = false;
+                            address += 4;
                         }
 
-                        // Load the register
-                        reg(i) = memory->ReadWord(address);
-
-                        // If r15 is overwritten, the pipeline must be flushed
-                        if (i == 15)
+                        // Perform the actual load / store operation
+                        if (load)
                         {
-                            // If the s bit is set a mode switch is performed
-                            if (s_bit)
+                            // Loading the base disables writeback
+                            // TODO: Check if it only disables writeback if the base is the first register in the list
+                            if (i == reg_base)
                             {
-                                // spsr_<mode> must not be copied to cpsr in user mode because user mode has not such a register
-                                ASSERT((cpsr & 0x1F) == User, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r15);
-
-                                cpsr = *pspsr;
-                                RemapRegisters();
+                                write_back = false;
                             }
-                            flush_pipe = true;
-                        }
-                    }
-                    else
-                    { 
-                        // When the base register is the first register in the list its original value is written
-                        if (i == first_register && i == reg_base)
-                        {
-                            memory->WriteWord(address, old_address);
+
+                            // Load the register
+                            reg(i) = memory->ReadWord(address);
+
+                            // If r15 is overwritten, the pipeline must be flushed
+                            if (i == 15)
+                            {
+                                // NOTICE: Here the bad return happens
+                                //         Check why this is happening
+                                // If the s bit is set a mode switch is performed
+                                if (s_bit)
+                                {
+                                    // spsr_<mode> must not be copied to cpsr in user mode because user mode has not such a register
+                                    ASSERT((cpsr & 0x1F) == User, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r15);
+
+                                    cpsr = *pspsr;
+                                    RemapRegisters();
+                                }
+                                flush_pipe = true;
+                            }
                         }
                         else
                         {
-                            memory->WriteWord(address, reg(i));
+                            // When the base register is the first register in the list its original value is written
+                            if (i == first_register && i == reg_base)
+                            {
+                                memory->WriteWord(address, old_address);
+                            }
+                            else
+                            {
+                                memory->WriteWord(address, reg(i));
+                            }
+                        }
+
+                        // If instruction is not pre-indexed we must update address afterwards
+                        if (!pre_indexed)
+                        {
+                            address += 4;
+                        }
+
+                        // If the writeback is specified the base register must be updated after each register
+                        if (write_back)
+                        {
+                            reg(reg_base) = address;
                         }
                     }
-
-                    // If instruction is not pre-indexed we must update address afterwards
-                    if (!pre_indexed)
+                }
+            }
+            else
+            {
+                for (int i = 15; i >= 0; i--)
+                {
+                    // Determine if the current register will be loaded/saved
+                    if (instruction & (1 << i))
                     {
-                        address += add_to_base ? 4 : -4;
-                    }
+                        // If instruction is pre-indexed we must update address beforehand
+                        if (pre_indexed)
+                        {
+                            address -= 4;
+                        }
 
-                    // If the writeback is specified the base register must be updated after each register
-                    if (write_back)
-                    {
-                        reg(reg_base) = address;
+                        // Perform the actual load / store operation
+                        if (load)
+                        {
+                            // Loading the base disables writeback
+                            // TODO: Check if it only disables writeback if the base is the first register in the list
+                            if (i == reg_base)
+                            {
+                                write_back = false;
+                            }
+
+                            // Load the register
+                            reg(i) = memory->ReadWord(address);
+
+                            // If r15 is overwritten, the pipeline must be flushed
+                            if (i == 15)
+                            {
+                                // NOTICE: Here the bad return happens
+                                //         Check why this is happening
+                                // If the s bit is set a mode switch is performed
+                                if (s_bit)
+                                {
+                                    // spsr_<mode> must not be copied to cpsr in user mode because user mode has not such a register
+                                    ASSERT((cpsr & 0x1F) == User, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r15);
+
+                                    cpsr = *pspsr;
+                                    RemapRegisters();
+                                }
+                                flush_pipe = true;
+                            }
+                        }
+                        else
+                        {
+                            // When the base register is the first register in the list its original value is written
+                            if (i == first_register && i == reg_base)
+                            {
+                                memory->WriteWord(address, old_address);
+                            }
+                            else
+                            {
+                                memory->WriteWord(address, reg(i));
+                            }
+                        }
+
+                        // If instruction is not pre-indexed we must update address afterwards
+                        if (!pre_indexed)
+                        {
+                            address -= 4;
+                        }
+
+                        // If the writeback is specified the base register must be updated after each register
+                        if (write_back)
+                        {
+                            reg(reg_base) = address;
+                        }
                     }
                 }
             }
@@ -1363,8 +1439,8 @@ namespace NanoboyAdvance
             // ARM.15 Coprocessor register transfer
             LOG(LOG_ERROR, "Unimplemented coprocessor register transfer, r15=0x%x", r15);
             break;
-        // TODO: Check wether swi is still executed when IRQ is disabled
-        //       Implement HLE version 
+            // TODO: Check wether swi is still executed when IRQ is disabled
+            //       Implement HLE version 
         case ARM_16:
             // ARM.16 Software interrupt
             if ((cpsr & IRQDisable) == 0)
