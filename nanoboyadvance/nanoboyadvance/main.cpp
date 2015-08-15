@@ -30,7 +30,7 @@ using namespace NanoboyAdvance;
 
 SDL_Surface* screen;
 uint32_t* buffer;
-GBAMemory memory("bios.bin", "display.gba");
+GBAMemory memory("bios.bin", "armwrestlerhax.gba");
 
 int getcolor(int n, int p)
 {
@@ -75,8 +75,25 @@ int main(int argc, char **argv)
     
     while (running)
     {
+        ubyte* kb_state = SDL_GetKeyState(NULL);
+        ushort joypad = 0;
+        joypad |= kb_state[SDLK_y] ? 0 : 1;
+        joypad |= kb_state[SDLK_x] ? 0 : (1 << 1);
+        joypad |= kb_state[SDLK_BACKSPACE] ? 0 : (1 << 2);
+        joypad |= kb_state[SDLK_RETURN] ? 0 : (1 << 3);
+        joypad |= kb_state[SDLK_RIGHT] ? 0 : (1 << 4);
+        joypad |= kb_state[SDLK_LEFT] ? 0 : (1 << 5);
+        joypad |= kb_state[SDLK_UP] ? 0 : (1 << 6);
+        joypad |= kb_state[SDLK_DOWN] ? 0 : (1 << 7);
+        joypad |= kb_state[SDLK_s] ? 0 : (1 << 8);
+        joypad |= kb_state[SDLK_a] ? 0 : (1 << 9);
+        memory.WriteHWord(0x04000130, joypad);
         for (int i = 0; i < 10000; i++)
+        {
+            memory.gba_io->dispstat = 1; // fake vblank
             arm->Step();
+        }
+        memory.gba_io->vcount = (memory.gba_io->vcount + 1) % 300;
         /*for (int pal = 0; pal < 32; pal++)
         {
             for (int color = 0; color < 16; color++)

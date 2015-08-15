@@ -32,7 +32,11 @@ namespace NanoboyAdvance
     #pragma pack(push, r1, 1)
     struct GBAIO_S
     {
-
+        // LCD Video Controller
+        ushort dispcnt; // 4000000
+        ushort unused1; // 4000002
+        ushort dispstat; // 4000004
+        ushort vcount; // 4000006
     };
     #pragma pack(pop, r1)
     typedef struct GBAIO_S GBAIO;

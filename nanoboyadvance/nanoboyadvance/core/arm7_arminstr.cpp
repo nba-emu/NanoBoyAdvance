@@ -253,8 +253,8 @@ namespace NanoboyAdvance
         {
             // ARM.8 Data processing and PSR transfer 
             int opcode = (instruction >> 21) & 0xF;
-            bool setflags = (instruction & (1 << 20)) == (1 << 20);
-            if (!setflags && opcode >= 0b1000 && opcode <= 0b1011)
+            bool set_flags = (instruction & (1 << 20)) == (1 << 20);
+            if (!set_flags && opcode >= 0b1000 && opcode <= 0b1011)
             {
                 // PSR transfer 
                 switch ((instruction >> 16) & 0x3F)
@@ -305,7 +305,7 @@ namespace NanoboyAdvance
                     "and", "eor", "sub", "rsb", "add", "adc", "sbc", "rsc",
                     "tst", "teq", "cmp", "cmn", "orr", "mov", "bic", "mvn"
                 };
-                mmemonic << opcodes[opcode] << condition << (setflags ? "s " : " ");
+                mmemonic << opcodes[opcode] << condition << (set_flags ? "s " : " ");
                 if (opcode >= 0b1000 && opcode <= 0b1011)
                 {
                     mmemonic << "r" << rn;
@@ -548,9 +548,24 @@ namespace NanoboyAdvance
         switch (type)
         {
         case ARM_1:
+        {
             // ARM.1 Multiply (accumulate)
-            LOG(LOG_ERROR, "Unimplemented multiply (accumulate), r15=0x%x (0x%x)", r15, instruction);
+            // TODO: Flags
+            int reg_operand1 = instruction & 0xF;
+            int reg_operand2 = (instruction >> 8) & 0xF;
+            int reg_operand3 = (instruction >> 12) & 0xF;
+            int reg_dest = (instruction >> 16) & 0xF;
+            bool set_flags = (instruction & (1 << 20)) == (1 << 20);
+            bool accumulate = (instruction & (1 << 21)) == (1 << 21);
+            reg(reg_dest) = reg(reg_operand1) * reg(reg_operand2);
+            if (accumulate)
+            {
+                reg(reg_dest) += reg(reg_operand3);
+            }
+            calculate_sign(reg(reg_dest));
+            calculate_zero(reg(reg_dest));
             break;
+        }
         case ARM_2:
             // ARM.2 Multiply (accumulate) long
             LOG(LOG_ERROR, "Unimplemented multiply (accumulate) long, r15=0x%x (0x%x)", r15, instruction);
@@ -689,7 +704,7 @@ namespace NanoboyAdvance
             }
 
             // When the instruction either is pre-indexed and has the write-back bit or it's post-indexed we must writeback the calculated address 
-            if (write_back || !pre_indexed)
+            if ((write_back || !pre_indexed) && reg_base != reg_dest)
             {
                 if (!pre_indexed)
                 {
@@ -709,11 +724,11 @@ namespace NanoboyAdvance
         case ARM_8:
         {
             // ARM.8 Data processing and PSR transfer
-            bool setflags = (instruction & (1 << 20)) == (1 << 20);
+            bool set_flags = (instruction & (1 << 20)) == (1 << 20);
             int opcode = (instruction >> 21) & 0xF;
 
             // Determine wether the instruction is data processing or psr transfer
-            if (!setflags && opcode >= 0b1000 && opcode <= 0b1011)
+            if (!set_flags && opcode >= 0b1000 && opcode <= 0b1011)
             {
                 // PSR transfer
                 bool use_spsr = (instruction & (1 << 22)) == (1 << 22);
@@ -795,6 +810,10 @@ namespace NanoboyAdvance
                     int immediate_value = instruction & 0xFF;
                     int amount = ((instruction >> 8) & 0xF) << 1;
                     operand2 = (immediate_value >> amount) | (immediate_value << (32 - amount));
+                    if (amount != 0)
+                    {
+                        carry = (immediate_value >> (amount - 1)) & 1 ? true : false;
+                    }
                 }
                 else
                 {
@@ -873,9 +892,9 @@ namespace NanoboyAdvance
 
                 // When destination register is r15 and s bit is set rather than updating the flags restore cpsr
                 // This is allows for restoring r15 and cpsr at the same time
-                if (reg_dest == 15 && setflags)
+                if (reg_dest == 15 && set_flags)
                 {
-                    setflags = false;
+                    set_flags = false;
                     cpsr = *pspsr;
                     RemapRegisters();
                 }
@@ -886,7 +905,7 @@ namespace NanoboyAdvance
                 case 0b0000: // AND
                 {
                     uint result = operand1 & operand2;
-                    if (setflags)
+                    if (set_flags)
                     {
                         calculate_sign(result);
                         calculate_zero(result);
@@ -898,7 +917,7 @@ namespace NanoboyAdvance
                 case 0b0001: // EOR
                 {
                     uint result = operand1 ^ operand2;
-                    if (setflags)
+                    if (set_flags)
                     {
                         calculate_sign(result);
                         calculate_zero(result);
@@ -910,7 +929,7 @@ namespace NanoboyAdvance
                 case 0b0010: // SUB
                 {
                     uint result = operand1 - operand2;
-                    if (setflags)
+                    if (set_flags)
                     {
                         assert_carry(operand1 >= operand2);
                         calculate_overflow_sub(result, operand1, operand2);
@@ -923,7 +942,7 @@ namespace NanoboyAdvance
                 case 0b0011: // RSB
                 {
                     uint result = operand2 - operand1;
-                    if (setflags)
+                    if (set_flags)
                     {
                         assert_carry(operand2 >= operand1);
                         calculate_overflow_sub(result, operand2, operand1);
@@ -936,7 +955,7 @@ namespace NanoboyAdvance
                 case 0b0100: // ADD
                 {
                     uint result = operand1 + operand2;
-                    if (setflags)
+                    if (set_flags)
                     {
                         ulong result_long = (ulong)operand1 + (ulong)operand2;
                         assert_carry(result_long & 0x100000000);
@@ -951,7 +970,7 @@ namespace NanoboyAdvance
                 {
                     int carry2 = (cpsr >> 29) & 1;
                     uint result = operand1 + operand2 + carry2;
-                    if (setflags)
+                    if (set_flags)
                     {
                         ulong result_long = (ulong)operand1 + (ulong)operand2 + (ulong)carry2;
                         assert_carry(result_long & 0x100000000);
@@ -966,7 +985,7 @@ namespace NanoboyAdvance
                 {
                     int carry2 = (cpsr >> 29) & 1;
                     uint result = operand1 - operand2 + carry2 - 1;
-                    if (setflags)
+                    if (set_flags)
                     {
                         assert_carry(operand1 >= (operand2 + carry2 - 1));
                         calculate_overflow_sub(result, operand1, (operand2 + carry2 - 1));
@@ -980,7 +999,7 @@ namespace NanoboyAdvance
                 {
                     int carry2 = (cpsr >> 29) & 1;
                     uint result = operand2 - operand1 + carry2 - 1;
-                    if (setflags)
+                    if (set_flags)
                     {
                         assert_carry(operand2 >= (operand1 + carry2 - 1));
                         calculate_overflow_sub(result, operand2, (operand1 + carry2 - 1));
@@ -1025,10 +1044,10 @@ namespace NanoboyAdvance
                     calculate_zero(result);
                     break;
                 }
-                case 0b1100: // OR
+                case 0b1100: // ORR
                 {
                     uint result = operand1 | operand2;
-                    if (setflags)
+                    if (set_flags)
                     {
                         calculate_sign(result);
                         calculate_zero(result);
@@ -1039,7 +1058,7 @@ namespace NanoboyAdvance
                 }
                 case 0b1101: // MOV
                 {
-                    if (setflags)
+                    if (set_flags)
                     {
                         calculate_sign(operand2);
                         calculate_zero(operand2);
@@ -1051,7 +1070,7 @@ namespace NanoboyAdvance
                 case 0b1110: // BIC
                 {
                     uint result = operand1 & ~operand2;
-                    if (setflags)
+                    if (set_flags)
                     {
                         calculate_sign(result);
                         calculate_zero(result);
@@ -1060,10 +1079,10 @@ namespace NanoboyAdvance
                     reg(reg_dest) = result;
                     break;
                 }
-                case 0b1111:
+                case 0b1111: // MVN
                 {
                     uint not_operand2 = ~operand2;
-                    if (setflags)
+                    if (set_flags)
                     {
                         calculate_sign(not_operand2);
                         calculate_zero(not_operand2);
@@ -1085,6 +1104,7 @@ namespace NanoboyAdvance
         case ARM_9:
         {
             // ARM.9 Load/store register/unsigned byte (Single Data Transfer)
+            // TODO: Force user mode when instruction is post-indexed and has writeback bit
             uint offset;
             int reg_dest = (instruction >> 12) & 0xF;
             int reg_base = (instruction >> 16) & 0xF;
@@ -1166,7 +1186,6 @@ namespace NanoboyAdvance
             // Perform the actual load / store operation
             if (load)
             {
-                // TODO: Check if loading to r15 flushes the pipeline
                 if (transfer_byte)
                 {
                     reg(reg_dest) = ReadByte(address);
@@ -1174,6 +1193,10 @@ namespace NanoboyAdvance
                 else
                 {
                     reg(reg_dest) = ReadWordRotated(address);
+                }
+                if (reg_dest == 15)
+                {
+                    flush_pipe = true;
                 }
             }
             else
@@ -1194,7 +1217,7 @@ namespace NanoboyAdvance
             }
 
             // When the instruction either is pre-indexed and has the write-back bit or it's post-indexed we must writeback the calculated address 
-            if (write_back || !pre_indexed)
+            if ((write_back || !pre_indexed) && reg_base != reg_dest)
             {
                 if (!pre_indexed)
                 {
