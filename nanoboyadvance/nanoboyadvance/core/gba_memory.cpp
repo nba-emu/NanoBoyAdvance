@@ -26,6 +26,7 @@ namespace NanoboyAdvance
     {
         bios = ReadFile(bios_file);
         rom = ReadFile(rom_file);
+        gba_io = (GBAIO*)io;
     }
 
     ubyte * GBAMemory::ReadFile(string filename)
