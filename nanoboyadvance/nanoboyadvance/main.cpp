@@ -90,10 +90,8 @@ int main(int argc, char **argv)
         memory.WriteHWord(0x04000130, joypad);
         for (int i = 0; i < 10000; i++)
         {
-            memory.gba_io->dispstat = 1; // fake vblank
             arm->Step();
         }
-        memory.gba_io->vcount = (memory.gba_io->vcount + 1) % 300;
         /*for (int pal = 0; pal < 32; pal++)
         {
             for (int color = 0; color < 16; color++)

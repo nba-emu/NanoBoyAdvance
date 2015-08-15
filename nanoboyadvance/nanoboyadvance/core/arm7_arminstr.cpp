@@ -693,7 +693,7 @@ namespace NanoboyAdvance
             }
             else
             {
-                if (reg(reg_dest) == 15)
+                if (reg_dest == 15)
                 {
                     WriteHWord(address, r15 + 4);
                 }
@@ -1127,7 +1127,7 @@ namespace NanoboyAdvance
             }
             else
             {
-                uint reg_offset = instruction & 0xF;
+                int reg_offset = instruction & 0xF;
                 uint shift_operand1 = reg(reg_offset);
                 uint shift_operand2 = (instruction >> 7) & 0x1F;
                 ASSERT(reg_offset == 15, LOG_WARN, "Single Data Transfer, thou shall not use r15 as offset, r15=0x%x", r15);
