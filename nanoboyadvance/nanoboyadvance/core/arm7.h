@@ -97,9 +97,8 @@ namespace NanoboyAdvance
 {
     class ARM7
     {
-        // Grants the processor access to the emulated mmu which
-        // organizes the memory in pages (bit 24-31 determine the page number)
-        PagedMemory* memory;
+        // Grants the processor access to the emulated mmu
+        Memory* memory;
         
         // The ARM7TMDI-S has 31 32-bit general purpose register of
         // which 16 are visible at one time.
@@ -159,7 +158,7 @@ namespace NanoboyAdvance
             ZeroFlag = 0x40000000,
             SignFlag = 0x80000000
         };
-        ARM7(PagedMemory* memory);
+        ARM7(Memory* memory);
         void Step();
         string ARMDisasm(uint base, uint instruction);
     };

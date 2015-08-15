@@ -19,35 +19,20 @@
 
 #pragma once
 
-#include <iostream>
-#include <fstream>
 #include "common/types.h"
 
 using namespace std;
 
 namespace NanoboyAdvance
 { 
-    class PagedMemory
+    class Memory
     { 
-        ubyte* bios;
-        ubyte wram[0x40000];
-        ubyte iram[0x8000];
-        ubyte pram[0x400];
-        ubyte vram[0x18000];
-        ubyte* rom;
     public:
-        int Cycles;
-        bool Up;
-        bool Down;
-        bool Left;
-        bool Right;
-        ubyte ReadByte(uint offset);
-        ushort ReadHWord(uint offset);
-        uint ReadWord(uint offset);
-        void WriteByte(uint offset, ubyte value);
-        void WriteHWord(uint offset, ushort value);
-        void WriteWord(uint offset, uint value);
-        static ubyte* ReadFile(string filename);
-        PagedMemory();
+        virtual ubyte ReadByte(uint offset) { return 0; }
+        virtual ushort ReadHWord(uint offset) { return 0; }
+        virtual uint ReadWord(uint offset) { return 0; }
+        virtual void WriteByte(uint offset, ubyte value) {}
+        virtual void WriteHWord(uint offset, ushort value) {}
+        virtual void WriteWord(uint offset, uint value) {}
     };
 }

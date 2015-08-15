@@ -30,6 +30,9 @@
     <ClInclude Include="common\log.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="core\gba_memory.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core\arm7.cpp">
@@ -38,13 +41,13 @@
     <ClCompile Include="core\arm7_arminstr.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="core\memory.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="core\arm7_thumbinstr.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="core\gba_memory.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>

@@ -21,7 +21,7 @@
 
 namespace NanoboyAdvance
 {
-    ARM7::ARM7(PagedMemory* memory)
+    ARM7::ARM7(Memory* memory)
     {
         this->memory = memory;
         // Zero-initialize stuff

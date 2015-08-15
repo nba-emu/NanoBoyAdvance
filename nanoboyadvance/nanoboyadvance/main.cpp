@@ -21,6 +21,7 @@
 #include <iostream>
 #include "SDL.h"
 #include "core/arm7.h"
+#include "core/gba_memory.h"
 #include "common/log.h"
 #undef main
 
@@ -29,7 +30,7 @@ using namespace NanoboyAdvance;
 
 SDL_Surface* screen;
 uint32_t* buffer;
-PagedMemory memory;
+GBAMemory memory("bios.bin", "display.gba");
 
 int getcolor(int n, int p)
 {
@@ -75,10 +76,10 @@ int main(int argc, char **argv)
     while (running)
     {
         ubyte* state = SDL_GetKeyState(NULL);
-        memory.Up = state[SDLK_UP];
+        /*memory.Up = state[SDLK_UP];
         memory.Down = state[SDLK_DOWN];
         memory.Left = state[SDLK_LEFT];
-        memory.Right = state[SDLK_RIGHT];
+        memory.Right = state[SDLK_RIGHT];*/
         for (int i = 0; i < 10000; i++)
             arm->Step();
         /*for (int pal = 0; pal < 32; pal++)
