@@ -914,8 +914,16 @@ namespace NanoboyAdvance
                         case 0b11:
                         {
                             // Rotate Right
-                            uint result = (operand2 << (32 - amount)) | (operand2 >> amount);
-                            carry = (operand2 >> (amount - 1)) & 1 ? true : false;
+                            uint result = operand2;
+                            for (int i = 1; i <= amount; i++)
+                            {
+                                uint high_bit = (result & 1) << 31;
+                                result = (result >> 1) | high_bit;
+                                if (i == amount)
+                                {
+                                    carry = high_bit == 0x80000000;
+                                }
+                            }
                             operand2 = result;
                             break;
                         }
@@ -1192,7 +1200,12 @@ namespace NanoboyAdvance
                     case 0b11:
                     {
                         // Rotate Right
-                        offset = (shift_operand1 << (32 - shift_operand2)) | (shift_operand1 >> shift_operand2);
+                        offset = shift_operand1;
+                        for (int i = 1; i <= shift_operand2; i++)
+                        {
+                            uint high_bit = (offset & 1) << 31;
+                            offset = (offset >> 1) | high_bit;
+                        }
                         break;
                     }
                     }

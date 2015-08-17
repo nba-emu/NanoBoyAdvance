@@ -317,10 +317,6 @@ namespace NanoboyAdvance
                     assert_carry((reg(reg_dest) << (amount - 1)) & 0x80000000);
                     reg(reg_dest) = amount >= 32 ? 0 : reg(reg_dest) << amount;
                 }
-                else
-                {
-                    reg(reg_dest) = reg(reg_source);
-                }
                 calculate_sign(reg(reg_dest));
                 calculate_zero(reg(reg_dest));
                 break;
@@ -332,10 +328,6 @@ namespace NanoboyAdvance
                 {
                     assert_carry((reg(reg_dest) >> (amount - 1)) & 1);
                     reg(reg_dest) >>= amount;
-                }
-                else
-                {
-                    reg(reg_dest) = reg(reg_source);
                 }
                 calculate_sign(reg(reg_dest));
                 calculate_zero(reg(reg_dest));
@@ -349,10 +341,6 @@ namespace NanoboyAdvance
                     sint result = (sint)(reg(reg_dest)) >> (sint)(reg(reg_source));
                     assert_carry((reg(reg_dest) >> (amount - 1)) & 1);
                     reg(reg_dest) = result;
-                }
-                else
-                {
-                    reg(reg_dest) = reg(reg_source);
                 }
                 calculate_sign(reg(reg_dest));
                 calculate_zero(reg(reg_dest));
@@ -387,13 +375,17 @@ namespace NanoboyAdvance
                 uint amount = reg(reg_source);
                 if (amount != 0)
                 {
-                    uint result = (reg(reg_dest) >> amount) | (reg(reg_dest) << (32 - amount));
-                    assert_carry((reg(reg_dest) >> (amount - 1)) & 1);
+                    uint result = reg(reg_dest);
+                    for (int i = 1; i <= amount; i++)
+                    {
+                        uint high_bit = (result & 1) << 31;
+                        result = (result >> 1) | high_bit;
+                        if (i == amount)
+                        {
+                            assert_carry(high_bit == 0x80000000);
+                        }
+                    }
                     reg(reg_dest) = result;
-                }
-                else
-                {
-                    reg(reg_dest) = reg(reg_source);
                 }
                 calculate_sign(reg(reg_dest));
                 calculate_zero(reg(reg_dest));
