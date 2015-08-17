@@ -550,7 +550,6 @@ namespace NanoboyAdvance
         case ARM_1:
         {
             // ARM.1 Multiply (accumulate)
-            // TODO: Flags
             int reg_operand1 = instruction & 0xF;
             int reg_operand2 = (instruction >> 8) & 0xF;
             int reg_operand3 = (instruction >> 12) & 0xF;
@@ -567,9 +566,43 @@ namespace NanoboyAdvance
             break;
         }
         case ARM_2:
+        {
             // ARM.2 Multiply (accumulate) long
-            LOG(LOG_ERROR, "Unimplemented multiply (accumulate) long, r15=0x%x (0x%x)", r15, instruction);
+            int reg_operand1 = instruction & 0xF;
+            int reg_operand2 = (instruction >> 8) & 0xF;
+            int reg_dest_low = (instruction >> 12) & 0xF;
+            int reg_dest_high = (instruction >> 16) & 0xF;
+            bool set_flags = (instruction & (1 << 20)) == (1 << 20);
+            bool accumulate = (instruction & (1 << 21)) == (1 << 21);
+            bool sign_extend = (instruction & (1 << 22)) == (1 << 22);
+            slong result;
+            if (sign_extend)
+            {
+                slong operand1 = reg(reg_operand1);
+                slong operand2 = reg(reg_operand2);
+                operand1 |= operand1 & 0x80000000 ? 0xFFFFFFFF00000000 : 0;
+                operand2 |= operand2 & 0x80000000 ? 0xFFFFFFFF00000000 : 0;
+                result = operand1 * operand2;
+            }
+            else
+            {
+                ulong uresult = (ulong)reg(reg_operand1) * (ulong)reg(reg_operand2);
+                result = uresult;
+            }
+            if (accumulate)
+            {
+                slong value = reg(reg_dest_high);
+                value <<= 16;
+                value <<= 16;
+                value |= reg(reg_dest_low);
+                result += value;
+            }
+            reg(reg_dest_low) = result & 0xFFFFFFFF;
+            reg(reg_dest_high) = result >> 32;
+            calculate_sign(reg(reg_dest_high));
+            calculate_zero(result);
             break;
+        }
         case ARM_3:
         {
             // ARM.3 Branch and exchange
