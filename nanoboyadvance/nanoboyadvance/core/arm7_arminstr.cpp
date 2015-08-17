@@ -890,7 +890,7 @@ namespace NanoboyAdvance
                         case 0b00:
                         {
                             // Logical Shift Left
-                            uint result = operand2 << amount;
+                            uint result = amount >= 32 ? 0 : operand2 << amount;
                             carry = (operand2 << (amount - 1)) & 0x80000000 ? true : false;
                             operand2 = result;
                             break;
@@ -1173,7 +1173,7 @@ namespace NanoboyAdvance
                     case 0b00:
                     {
                         // Logical Shift Left
-                        offset = shift_operand1 << shift_operand2;
+                        offset = shift_operand2 >= 32 ? 0 : shift_operand1 << shift_operand2;
                         break;
                     }
                     case 0b01:
@@ -1417,8 +1417,6 @@ namespace NanoboyAdvance
                             // If r15 is overwritten, the pipeline must be flushed
                             if (i == 15)
                             {
-                                // NOTICE: Here the bad return happens
-                                //         Check why this is happening
                                 // If the s bit is set a mode switch is performed
                                 if (s_bit)
                                 {
@@ -1496,8 +1494,8 @@ namespace NanoboyAdvance
             // ARM.15 Coprocessor register transfer
             LOG(LOG_ERROR, "Unimplemented coprocessor register transfer, r15=0x%x", r15);
             break;
-            // TODO: Check wether swi is still executed when IRQ is disabled
-            //       Implement HLE version 
+        // TODO: Check wether swi is still executed when IRQ is disabled
+        //       Implement HLE version 
         case ARM_16:
             // ARM.16 Software interrupt
             if ((cpsr & IRQDisable) == 0)

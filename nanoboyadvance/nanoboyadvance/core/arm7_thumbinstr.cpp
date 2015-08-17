@@ -184,7 +184,7 @@ namespace NanoboyAdvance
                 {
                 case 0b00: // LSL
                     assert_carry((reg(reg_source) << (immediate_value - 1)) & 0x80000000);
-                    reg(reg_dest) = reg(reg_source) << immediate_value;
+                    reg(reg_dest) = immediate_value >= 32 ? 0 : reg(reg_source) << immediate_value;
                     break;
                 case 0b01: // LSR
                     assert_carry((reg(reg_source) >> (immediate_value - 1)) & 1);
@@ -315,7 +315,7 @@ namespace NanoboyAdvance
                 if (amount != 0)
                 {
                     assert_carry((reg(reg_dest) << (amount - 1)) & 0x80000000);
-                    reg(reg_dest) <<= amount;
+                    reg(reg_dest) = amount >= 32 ? 0 : reg(reg_dest) << amount;
                 }
                 else
                 {
