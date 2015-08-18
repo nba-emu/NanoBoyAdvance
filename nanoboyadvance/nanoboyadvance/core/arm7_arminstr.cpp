@@ -883,68 +883,65 @@ namespace NanoboyAdvance
                     }
 
                     // Perform the actual shift/rotate
-                    if (true)
+                    switch ((instruction >> 5) & 3)
                     {
-                        switch ((instruction >> 5) & 3)
+                    case 0b00:
+                        // Logical Shift Left
+                        if (amount != 0)
                         {
-                        case 0b00:
-                            // Logical Shift Left
-                            if (amount != 0)
-                            {
-                                uint result = amount >= 32 ? 0 : operand2 << amount;
-                                carry = (operand2 << (amount - 1)) & 0x80000000 ? true : false;
-                                operand2 = result;
-                            }
-                            break;
-                        case 0b01:
-                        {
-                            // Logical Shift Right
-                            uint result;
-                            if (amount == 0)
-                            {
-                                amount = 32;
-                            }
-                            result = amount >= 32 ? 0 : operand2 >> amount;
-                            carry = (operand2 >> (amount - 1)) & 1 ? true : false;
+                            uint result = amount >= 32 ? 0 : operand2 << amount;
+                            carry = (operand2 << (amount - 1)) & 0x80000000 ? true : false;
                             operand2 = result;
-                            break;
                         }
-                        case 0b10:
+                        break;
+                    case 0b01:
+                    {
+                        // Logical Shift Right
+                        uint result;
+                        if (amount == 0)
                         {
-                            // Arithmetic Shift Right
-                            sint result;
-                            sint extended = (operand2 & 0x80000000) == 0x80000000 ? 0xFFFFFFFF : 0;
-                            if (amount == 0)
-                            {
-                                amount = 32;
-                            }
-                            result = amount >= 32 ? extended : (sint)operand2 >> (sint)amount;
-                            carry = (operand2 >> (amount - 1)) & 1 ? true : false;
-                            operand2 = result;
-                            break;
+                            amount = 32;
                         }
-                        case 0b11:
-                            // Rotate Right
-                            if (amount != 0)
+                        result = amount >= 32 ? 0 : operand2 >> amount;
+                        carry = (operand2 >> (amount - 1)) & 1 ? true : false;
+                        operand2 = result;
+                        break;
+                    }
+                    case 0b10:
+                    {
+                        // Arithmetic Shift Right
+                        sint result;
+                        sint extended = (operand2 & 0x80000000) == 0x80000000 ? 0xFFFFFFFF : 0;
+                        if (amount == 0)
+                        {
+                            amount = 32;
+                        }
+                        result = amount >= 32 ? extended : (sint)operand2 >> (sint)amount;
+                        carry = (operand2 >> (amount - 1)) & 1 ? true : false;
+                        operand2 = result;
+                        break;
+                    }
+                    case 0b11:
+                        // Rotate Right
+                        if (amount != 0)
+                        {
+                            for (int i = 1; i <= amount; i++)
                             {
-                                for (int i = 1; i <= amount; i++)
+                                uint high_bit = (operand2 & 1) << 31;
+                                operand2 = (operand2 >> 1) | high_bit;
+                                if (i == amount)
                                 {
-                                    uint high_bit = (operand2 & 1) << 31;
-                                    operand2 = (operand2 >> 1) | high_bit;
-                                    if (i == amount)
-                                    {
-                                        carry = high_bit == 0x80000000;
-                                    }
+                                    carry = high_bit == 0x80000000;
                                 }
                             }
-                            else
-                            {
-                                bool old_carry = carry;
-                                carry = (operand2 & 1) == 1;
-                                operand2 = (operand2 >> 1) | old_carry ? 0x80000000 : 0;
-                            }
-                            break;
                         }
+                        else
+                        {
+                            bool old_carry = carry;
+                            carry = (operand2 & 1) == 1;
+                            operand2 = (operand2 >> 1) | old_carry ? 0x80000000 : 0;
+                        }
+                        break;
                     }
                 }
 
@@ -1192,45 +1189,49 @@ namespace NanoboyAdvance
                 ASSERT(reg_offset == 15, LOG_WARN, "Single Data Transfer, thou shall not use r15 as offset, r15=0x%x", r15);
 
                 // We can safe some work by ensuring that we do not shift by zero bits
-                if (shift_operand2 != 0)
+                switch (shift)
                 {
-                    switch (shift)
-                    {
-                    case 0b00:
-                    {
-                        // Logical Shift Left
-                        offset = shift_operand2 >= 32 ? 0 : shift_operand1 << shift_operand2;
-                        break;
-                    }
-                    case 0b01:
-                    {
-                        // Logical Shift Right
-                        offset = shift_operand2 >= 32 ? 0 : shift_operand1 >> shift_operand2;
-                        break;
-                    }
-                    case 0b10:
-                    {
-                        // Arithmetic Shift Right
-                        sint result = (sint)shift_operand1 >> (sint)shift_operand2;
-                        offset = (uint)result;
-                        break;
-                    }
-                    case 0b11:
-                    {
-                        // Rotate Right
-                        offset = shift_operand1;
-                        for (int i = 1; i <= shift_operand2; i++)
-                        {
-                            uint high_bit = (offset & 1) << 31;
-                            offset = (offset >> 1) | high_bit;
-                        }
-                        break;
-                    }
-                    }
+                case 0b00:
+                {
+                    // Logical Shift Left
+                    offset = shift_operand2 >= 32 ? 0 : shift_operand1 << shift_operand2;
+                    break;
                 }
-                else
+                case 0b01:
                 {
+                    // Logical Shift Right
+                    if (shift_operand2 == 0)
+                    {
+                        shift_operand2 = 32;
+                    }
+                    offset = shift_operand2 >= 32 ? 0 : shift_operand1 >> shift_operand2;
+                    break;
+                }
+                case 0b10:
+                {
+                    // Arithmetic Shift Right
+                    sint result;
+                    sint extended = (shift_operand1 & 0x80000000) == 0x80000000 ? 0xFFFFFFFF : 0;
+                    if (shift_operand2 == 0)
+                    {
+                        shift_operand2 = 32;
+                    }
+                    result = shift_operand2 >= 32 ? extended : (sint)shift_operand1 >> (sint)shift_operand2;
+                    offset = (uint)result;
+                    break;
+                }
+                case 0b11:
+                {
+                    // Rotate Right
+                    // TODO: RRX
                     offset = shift_operand1;
+                    for (int i = 1; i <= shift_operand2; i++)
+                    {
+                        uint high_bit = (offset & 1) << 31;
+                        offset = (offset >> 1) | high_bit;
+                    }
+                    break;
+                }
                 }
             }
 
