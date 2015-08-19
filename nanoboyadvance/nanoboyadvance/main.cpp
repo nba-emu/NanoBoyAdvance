@@ -30,7 +30,7 @@ using namespace NanoboyAdvance;
 
 SDL_Surface* screen;
 uint32_t* buffer;
-GBAMemory memory("bios.bin", "armwrestlerhax.gba");
+GBAMemory memory("bios.bin", "tank.gba");
 
 int getcolor(int n, int p)
 {
@@ -92,6 +92,7 @@ int main(int argc, char **argv)
         {
             arm->Step();
         }
+        memory.gba_io->vcount = (memory.gba_io->vcount + 1) % 200;
         /*for (int pal = 0; pal < 32; pal++)
         {
             for (int color = 0; color < 16; color++)

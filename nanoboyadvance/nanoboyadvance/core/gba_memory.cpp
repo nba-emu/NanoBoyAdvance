@@ -108,7 +108,7 @@ namespace NanoboyAdvance
         switch (page)
         {
         case 0:
-            LOG(LOG_ERROR, "Write into BIOS memory not allowed (0x%x)", offset);
+            //LOG(LOG_ERROR, "Write into BIOS memory not allowed (0x%x)", offset);
             break;
         case 2: 
             ASSERT(internal_offset >= 0x40000, LOG_ERROR, "WRAM write: offset out of bounds");
@@ -134,7 +134,7 @@ namespace NanoboyAdvance
             LOG(LOG_ERROR, "Write into ROM memory not allowed (0x%x)", offset);
             break;
         default:
-            LOG(LOG_ERROR, "Read from invalid/unimplemented address (0x%x)", offset);
+            LOG(LOG_ERROR, "Write to invalid/unimplemented address (0x%x)", offset);
             break;
         }
     }

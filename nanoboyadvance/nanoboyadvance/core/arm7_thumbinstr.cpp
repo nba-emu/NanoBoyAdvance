@@ -530,6 +530,12 @@ namespace NanoboyAdvance
                 flush_pipe = true;
                 break;
             }
+
+            if (reg_dest == 15)
+            {
+                reg(reg_dest) &= ~1;
+                flush_pipe = true;
+            }
             break;
         }
         case THUMB_6:
@@ -677,7 +683,7 @@ namespace NanoboyAdvance
         case THUMB_13:
         {
             // THUMB.13 Add offset to stack pointer
-            uint immediate_value = instruction & 0x7F;
+            uint immediate_value = (instruction & 0x7F) << 2;
             if (instruction & 0x80)
             {
                 reg(13) -= immediate_value;
