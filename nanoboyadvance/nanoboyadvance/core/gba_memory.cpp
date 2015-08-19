@@ -64,7 +64,11 @@ namespace NanoboyAdvance
             ASSERT(internal_offset >= 0x40000, LOG_ERROR, "WRAM read: offset out of bounds");
             return wram[internal_offset];
         case 3:
-            ASSERT(internal_offset >= 0x8000, LOG_ERROR, "IRAM read: offset out of bounds");
+            ASSERT(internal_offset >= 0x8000 && internal_offset <= 0xFFFF00, LOG_ERROR, "IRAM read: offset out of bounds");
+            if ((internal_offset & 0xFFFF00) == 0xFFFF00)
+            {
+                internal_offset = 0x7F00 + (internal_offset & 0xFF);
+            }
             return iram[internal_offset];
         case 4:
             // TODO: Implement IO mirror at 04xx0800
@@ -115,7 +119,11 @@ namespace NanoboyAdvance
             wram[internal_offset] = value;
             break;
         case 3:
-            ASSERT(internal_offset >= 0x8000, LOG_ERROR, "IRAM write: offset out of bounds");
+            ASSERT(internal_offset >= 0x8000 && internal_offset <= 0xFFFF00, LOG_ERROR, "IRAM write: offset out of bounds");
+            if ((internal_offset & 0xFFFF00) == 0xFFFF00)
+            {
+                internal_offset = 0x7F00 + (internal_offset & 0xFF);
+            }
             iram[internal_offset] = value;
             break;
         case 4:

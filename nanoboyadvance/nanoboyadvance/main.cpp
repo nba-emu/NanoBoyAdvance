@@ -30,7 +30,7 @@ using namespace NanoboyAdvance;
 
 SDL_Surface* screen;
 uint32_t* buffer;
-GBAMemory memory("bios.bin", "tank.gba");
+GBAMemory memory("bios.bin", "armwrestlerhax.gba");
 
 int getcolor(int n, int p)
 {
@@ -111,7 +111,7 @@ int main(int argc, char **argv)
         {
             for (int x = 0; x < 240; x++)
             {
-                ubyte color = memory.ReadByte(0x06000000 + (y * 240) + x);
+                ubyte color = memory.ReadByte((memory.gba_io->dispcnt & 0x10 ? 0x0600A000 : 0x06000000) + (y * 240) + x);
                 int color_rgb = getcolor(color & 0xF, (color >> 4) & 0xF);
                 setpixel(x, y, color_rgb);
             }
