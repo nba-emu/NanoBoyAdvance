@@ -160,6 +160,7 @@ namespace NanoboyAdvance
         };
         ARM7(Memory* memory);
         void Step();
+        void FireIRQ();
         string ARMDisasm(uint base, uint instruction);
     };
 }

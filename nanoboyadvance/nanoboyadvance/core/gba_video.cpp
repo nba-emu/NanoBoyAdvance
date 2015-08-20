@@ -27,27 +27,37 @@ namespace NanoboyAdvance
         state = GBAVideoState::Scanline;
         ticks = 0;
         RenderScanline = false;
+        IRQ = false;
     }
 
+    // TODO: Coincidence interrupt
     void NanoboyAdvance::GBAVideo::Step()
     {
         ticks++;
+        IRQ = false;
         switch (state)
         {
         case GBAVideoState::Scanline:
+        {
             if (ticks >= 960)
             {
-                ticks = 0;
+                bool hblank_irq_enable = (memory->gba_io->dispstat & (1 << 4)) == (1 << 4);
                 memory->gba_io->dispstat = (memory->gba_io->dispstat & ~3) | 2; // set hblank bit
                 state = GBAVideoState::HBlank;
+                if (hblank_irq_enable)
+                {
+                    memory->gba_io->if_ |= 2;
+                    IRQ = true;
+                }
                 // This is the point where the scanline should be rendered
                 RenderScanline = true;
+                ticks = 0;
             }
             break;
+        }
         case GBAVideoState::HBlank:
             if (ticks >= 272)
             {
-                ticks = 0;
                 memory->gba_io->dispstat = memory->gba_io->dispstat & ~2; // clear hblank bit
                 memory->gba_io->vcount++;
                 if (memory->gba_io->vcount == 160)
@@ -59,21 +69,30 @@ namespace NanoboyAdvance
                 {
                     state = GBAVideoState::Scanline;
                 }
+                ticks = 0;
             }
             break;
         case GBAVideoState::VBlank:
+        {
+            bool vblank_irq_enable = (memory->gba_io->dispstat & (1 << 3)) == (1 << 3);
             if (ticks >= 1232)
             {
-                ticks = 0;
                 memory->gba_io->vcount++;
+                if (vblank_irq_enable && memory->gba_io->vcount == 161)
+                {
+                    memory->gba_io->if_ |= 1;
+                    IRQ = true;
+                }
                 if (memory->gba_io->vcount >= 227) // check wether this must be 227 or 228
                 {
                     state = GBAVideoState::Scanline;
                     memory->gba_io->dispstat = memory->gba_io->dispstat & ~3; // clear vblank and hblank bit
                     memory->gba_io->vcount = 0;
                 }
+                ticks = 0;
             }
             break;
+        }
         }
     }
 }

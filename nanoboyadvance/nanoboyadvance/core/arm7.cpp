@@ -245,4 +245,12 @@ namespace NanoboyAdvance
             pipe_status = 2;
         }
     }
+
+    void ARM7::FireIRQ()
+    {
+        if ((cpsr & IRQDisable) == 0)
+        {
+
+        }
+    }
 }

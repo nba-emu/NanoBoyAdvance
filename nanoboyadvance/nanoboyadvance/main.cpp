@@ -31,7 +31,7 @@ using namespace NanoboyAdvance;
 
 SDL_Surface* screen;
 uint32_t* buffer;
-GBAMemory memory("bios.bin", "armwrestler_new.gba");
+GBAMemory memory("bios.bin", "pageflip.gba");
 
 int getcolor(int n, int p)
 {
@@ -58,7 +58,7 @@ int main(int argc, char **argv)
     ARM7* arm = new ARM7(&memory);
     GBAVideo* video = new GBAVideo(&memory);
     bool running = true;
-    
+
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
     {
         printf("SDL_Init Error: %s\n", SDL_GetError());
@@ -89,7 +89,8 @@ int main(int argc, char **argv)
         joypad |= kb_state[SDLK_DOWN] ? 0 : (1 << 7);
         joypad |= kb_state[SDLK_s] ? 0 : (1 << 8);
         joypad |= kb_state[SDLK_a] ? 0 : (1 << 9);
-        memory.WriteHWord(0x04000130, joypad);
+        memory.gba_io->keyinput = joypad;
+
         for (int i = 0; i < 280896; i++)
         {
             arm->Step();
@@ -104,6 +105,11 @@ int main(int argc, char **argv)
                     int color_rgb = getcolor(color & 0xF, (color >> 4) & 0xF);
                     setpixel(x, y, color_rgb);
                 }
+            }
+            if (memory.gba_io->ime != 0 && video->IRQ)
+            {
+                LOG(LOG_INFO, "I shall VBLANK IRQ..");
+                arm->FireIRQ();
             }
         }
         /*for (int pal = 0; pal < 32; pal++)

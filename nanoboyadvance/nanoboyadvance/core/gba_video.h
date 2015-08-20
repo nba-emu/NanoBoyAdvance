@@ -38,6 +38,7 @@ namespace NanoboyAdvance
         int ticks;
     public:
         bool RenderScanline;
+        bool IRQ;
         GBAVideo(GBAMemory* memory);
         void Step();
     };
