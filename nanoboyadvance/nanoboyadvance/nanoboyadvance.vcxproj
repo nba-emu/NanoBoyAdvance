@@ -163,6 +163,7 @@
     <ClInclude Include="common\types.h" />
     <ClInclude Include="core\arm7.h" />
     <ClInclude Include="core\gba_memory.h" />
+    <ClInclude Include="core\gba_video.h" />
     <ClInclude Include="core\memory.h" />
   </ItemGroup>
   <ItemGroup>
@@ -170,6 +171,7 @@
     <ClCompile Include="core\arm7_arminstr.cpp" />
     <ClCompile Include="core\arm7_thumbinstr.cpp" />
     <ClCompile Include="core\gba_memory.cpp" />
+    <ClCompile Include="core\gba_video.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -22,6 +22,7 @@
 #include "SDL.h"
 #include "core/arm7.h"
 #include "core/gba_memory.h"
+#include "core/gba_video.h"
 #include "common/log.h"
 #undef main
 
@@ -30,7 +31,7 @@ using namespace NanoboyAdvance;
 
 SDL_Surface* screen;
 uint32_t* buffer;
-GBAMemory memory("bios.bin", "armwrestlerhax.gba");
+GBAMemory memory("bios.bin", "armwrestler.gba");
 
 int getcolor(int n, int p)
 {
@@ -55,6 +56,7 @@ int main(int argc, char **argv)
 {
     SDL_Event event;
     ARM7* arm = new ARM7(&memory);
+    GBAVideo* video = new GBAVideo(&memory);
     bool running = true;
     
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
@@ -88,11 +90,11 @@ int main(int argc, char **argv)
         joypad |= kb_state[SDLK_s] ? 0 : (1 << 8);
         joypad |= kb_state[SDLK_a] ? 0 : (1 << 9);
         memory.WriteHWord(0x04000130, joypad);
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < 280896; i++)
         {
             arm->Step();
+            video->Step();
         }
-        memory.gba_io->vcount = (memory.gba_io->vcount + 1) % 200;
         /*for (int pal = 0; pal < 32; pal++)
         {
             for (int color = 0; color < 16; color++)

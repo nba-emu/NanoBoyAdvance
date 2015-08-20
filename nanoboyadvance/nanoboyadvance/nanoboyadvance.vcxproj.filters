@@ -33,6 +33,9 @@
     <ClInclude Include="core\gba_memory.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="core\gba_video.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core\arm7.cpp">
@@ -48,6 +51,9 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="core\gba_memory.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="core\gba_video.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
