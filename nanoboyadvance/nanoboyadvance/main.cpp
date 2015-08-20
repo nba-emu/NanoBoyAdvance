@@ -31,7 +31,7 @@ using namespace NanoboyAdvance;
 
 SDL_Surface* screen;
 uint32_t* buffer;
-GBAMemory memory("bios.bin", "armwrestler.gba");
+GBAMemory memory("bios.bin", "armwrestler_new.gba");
 
 int getcolor(int n, int p)
 {
@@ -94,6 +94,17 @@ int main(int argc, char **argv)
         {
             arm->Step();
             video->Step();
+            if (video->RenderScanline)
+            {
+                int y = memory.gba_io->vcount;
+                video->RenderScanline = false;
+                for (int x = 0; x < 240; x++)
+                {
+                    ubyte color = memory.ReadByte((memory.gba_io->dispcnt & 0x10 ? 0x0600A000 : 0x06000000) + (y * 240) + x);
+                    int color_rgb = getcolor(color & 0xF, (color >> 4) & 0xF);
+                    setpixel(x, y, color_rgb);
+                }
+            }
         }
         /*for (int pal = 0; pal < 32; pal++)
         {
@@ -109,15 +120,6 @@ int main(int argc, char **argv)
                 }
             }
         }*/
-        for (int y = 0; y < 160; y++)
-        {
-            for (int x = 0; x < 240; x++)
-            {
-                ubyte color = memory.ReadByte((memory.gba_io->dispcnt & 0x10 ? 0x0600A000 : 0x06000000) + (y * 240) + x);
-                int color_rgb = getcolor(color & 0xF, (color >> 4) & 0xF);
-                setpixel(x, y, color_rgb);
-            }
-        }
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT)

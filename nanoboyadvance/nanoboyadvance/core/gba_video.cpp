@@ -26,6 +26,7 @@ namespace NanoboyAdvance
         this->memory = memory;
         state = GBAVideoState::Scanline;
         ticks = 0;
+        RenderScanline = false;
     }
 
     void NanoboyAdvance::GBAVideo::Step()
@@ -40,6 +41,7 @@ namespace NanoboyAdvance
                 memory->gba_io->dispstat = (memory->gba_io->dispstat & ~3) | 2; // set hblank bit
                 state = GBAVideoState::HBlank;
                 // This is the point where the scanline should be rendered
+                RenderScanline = true;
             }
             break;
         case GBAVideoState::HBlank:
