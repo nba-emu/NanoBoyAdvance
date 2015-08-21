@@ -250,7 +250,12 @@ namespace NanoboyAdvance
     {
         if ((cpsr & IRQDisable) == 0)
         {
-
+            r14_irq = r15 - ((cpsr & Thumb) ? 2 : 4);
+            spsr_irq = cpsr;
+            RemapRegisters();
+            cpsr = (cpsr & ~0x3F) | IRQ | IRQDisable;
+            r15 = 0x18;
+            flush_pipe = true;
         }
     }
 }

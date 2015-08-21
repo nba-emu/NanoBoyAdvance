@@ -19,11 +19,11 @@
 
 #include <cstdio>
 #include <iostream>
-#include "SDL.h"
 #include "core/arm7.h"
 #include "core/gba_memory.h"
 #include "core/gba_video.h"
 #include "common/log.h"
+#include "SDL.h"
 #undef main
 
 using namespace std;
@@ -31,7 +31,7 @@ using namespace NanoboyAdvance;
 
 SDL_Surface* screen;
 uint32_t* buffer;
-GBAMemory memory("bios.bin", "pageflip.gba");
+GBAMemory memory("bios.bin", "tank.gba");
 
 int getcolor(int n, int p)
 {
@@ -43,7 +43,7 @@ int getcolor(int n, int p)
     return r;
 }
 
-#define plotpixel(x,y,c) buffer[(y) * 480 + (x)] = color;
+#define plotpixel(x,y,c) buffer[(y) * 480 + (x)] = c;
 void setpixel(int x, int y, int color)
 {
     plotpixel(x * 2, y * 2, color);
@@ -56,7 +56,6 @@ int main(int argc, char **argv)
 {
     SDL_Event event;
     ARM7* arm = new ARM7(&memory);
-    GBAVideo* video = new GBAVideo(&memory);
     bool running = true;
 
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
@@ -94,11 +93,11 @@ int main(int argc, char **argv)
         for (int i = 0; i < 280896; i++)
         {
             arm->Step();
-            video->Step();
-            if (video->RenderScanline)
+            memory.timer->Step();
+            memory.video->Step();
+            if (memory.video->render_scanline)
             {
                 int y = memory.gba_io->vcount;
-                video->RenderScanline = false;
                 for (int x = 0; x < 240; x++)
                 {
                     ubyte color = memory.ReadByte((memory.gba_io->dispcnt & 0x10 ? 0x0600A000 : 0x06000000) + (y * 240) + x);
@@ -106,13 +105,13 @@ int main(int argc, char **argv)
                     setpixel(x, y, color_rgb);
                 }
             }
-            if (memory.gba_io->ime != 0 && video->IRQ)
+            if (memory.gba_io->ime != 0 && (memory.video->irq || memory.timer->irq))
             {
-                LOG(LOG_INFO, "I shall VBLANK IRQ..");
+                //LOG(LOG_INFO, "I shall IRQ..");
                 arm->FireIRQ();
             }
         }
-        /*for (int pal = 0; pal < 32; pal++)
+        for (int pal = 0; pal < 32; pal++)
         {
             for (int color = 0; color < 16; color++)
             {
@@ -125,7 +124,7 @@ int main(int argc, char **argv)
                     }
                 }
             }
-        }*/
+        }
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT)

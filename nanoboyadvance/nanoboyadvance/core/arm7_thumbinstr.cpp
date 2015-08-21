@@ -497,7 +497,7 @@ namespace NanoboyAdvance
             }
 
             // TODO: Handle special case that one of the registers is r15
-            ASSERT(reg_dest == 15 || reg_source == 15, LOG_ERROR, "Hi register operations/branch exchange special case r15 not implemented, r15=0x%x", r15);
+            ASSERT(reg_source == 15, LOG_ERROR, "Hi register operations/branch exchange special case reg_source=r15 not implemented, r15=0x%x", r15);
 
             // Perform the actual operation
             switch ((instruction >> 8) & 3)

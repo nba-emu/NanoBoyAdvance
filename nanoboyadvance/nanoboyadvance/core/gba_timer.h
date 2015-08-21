@@ -19,36 +19,28 @@
 
 #pragma once
 
-#include <iostream>
-#include <fstream>
 #include "common/types.h"
-#include "memory.h"
 #include "gba_io.h"
-#include "gba_timer.h"
-#include "gba_video.h"
 
 using namespace std;
 
 namespace NanoboyAdvance
 {
-    class GBAMemory : public Memory
+    class GBATimer
     {
-        ubyte* bios;
-        ubyte wram[0x40000];
-        ubyte iram[0x8000];
-        ubyte io[0x3FF];
-        ubyte* rom;
-        static ubyte* ReadFile(string filename);
-    public:
         GBAIO* gba_io;
-        GBATimer* timer;
-        GBAVideo* video;
-        ubyte ReadByte(uint offset);
-        ushort ReadHWord(uint offset);
-        uint ReadWord(uint offset);
-        void WriteByte(uint offset, ubyte value);
-        void WriteHWord(uint offset, ushort value);
-        void WriteWord(uint offset, uint value);
-        GBAMemory(string bios_file, string rom_file);
+        static const int timings[4];
+        int timer0_ticks;
+        int timer1_ticks;
+        int timer2_ticks;
+        int timer3_ticks;
+    public:
+        bool irq;
+        ushort timer0_reload;
+        ushort timer1_reload;
+        ushort timer2_reload;
+        ushort timer3_reload;
+        GBATimer(GBAIO* gba_io);
+        void Step();
     };
 }

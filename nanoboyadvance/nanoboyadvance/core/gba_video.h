@@ -19,9 +19,12 @@
 
 #pragma once
 
+#include <cstring>
 #include "common/types.h"
 #include "common/log.h"
-#include "gba_memory.h"
+#include "gba_io.h"
+
+using namespace std;
 
 namespace NanoboyAdvance
 {
@@ -33,13 +36,16 @@ namespace NanoboyAdvance
             HBlank,
             VBlank
         };
-        GBAMemory* memory;
+        GBAIO* gba_io;
         GBAVideoState state;
         int ticks;
     public:
-        bool RenderScanline;
-        bool IRQ;
-        GBAVideo(GBAMemory* memory);
+        bool render_scanline;
+        bool irq;
+        ubyte pal[0x400];
+        ubyte vram[0x18000];
+        ubyte obj[0x400];
+        GBAVideo(GBAIO* gba_io);
         void Step();
     };
 }

@@ -36,6 +36,12 @@
     <ClInclude Include="core\gba_video.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="core\gba_timer.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="core\gba_io.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core\arm7.cpp">
@@ -54,6 +60,9 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="core\gba_video.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="core\gba_timer.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
