@@ -124,10 +124,54 @@ namespace NanoboyAdvance
             iram[internal_offset & 0x7FFF] = value;
             break;
         case 4:
+        {
             // TODO: Implement IO mirror at 04xx0800
+            bool write = true;
             ASSERT(internal_offset >= 0x3FF, LOG_ERROR, "IO write: offset out of bounds");
-            io[internal_offset] = value;
+
+            // Writing to some registers causes a special behaviour which must be emulated
+            switch (internal_offset)
+            {
+            case TM0CNT_L:
+                timer->timer0_reload = (timer->timer0_reload & 0xFF00) | value;
+                write = false;
+                break;
+            case TM0CNT_L+1:
+                timer->timer0_reload = (timer->timer0_reload & 0x00FF) | (value << 8);
+                write = false;
+                break;
+            case TM1CNT_L:
+                timer->timer1_reload = (timer->timer1_reload & 0xFF00) | value;
+                write = false;
+                break;
+            case TM1CNT_L+1:
+                timer->timer1_reload = (timer->timer1_reload & 0x00FF) | (value << 8);
+                write = false;
+                break;
+            case TM2CNT_L:
+                timer->timer2_reload = (timer->timer2_reload & 0xFF00) | value;
+                write = false;
+                break;
+            case TM2CNT_L+1:
+                timer->timer2_reload = (timer->timer2_reload & 0x00FF) | (value << 8);
+                write = false;
+                break;
+            case TM3CNT_L:
+                timer->timer3_reload = (timer->timer3_reload & 0xFF00) | value;
+                write = false;
+                break;
+            case TM3CNT_L+1:
+                timer->timer3_reload = (timer->timer3_reload & 0x00FF) | (value << 8);
+                write = false;
+                break;
+            }
+
+            if (write)
+            {
+                io[internal_offset] = value;
+            }
             break;
+        }
         case 5:
         case 6:
         case 7:
@@ -174,6 +218,7 @@ namespace NanoboyAdvance
 
     void GBAMemory::WriteWord(uint offset, uint value)
     {
+        ASSERT(offset == 0x4000100 || offset == 0x4000104 || offset == 0x4000108 || offset == 0x400010C, LOG_WARN, "Unimplemented case 32 bit write to timer register");
         WriteHWord(offset, value & 0xFFFF);
         WriteHWord(offset + 2, (value >> 16) & 0xFFFF);
     }
