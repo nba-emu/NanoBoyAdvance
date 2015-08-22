@@ -21,13 +21,13 @@
 
 #include <cstdio>
 
-#define LOG_INFO 0
-#define LOG_WARN 1
-#define LOG_ERROR 2
+constexpr auto LOG_INFO = 0;
+constexpr auto LOG_WARN = 1;
+constexpr auto LOG_ERROR = 2;
 
 #define LOG(loglevel, ...) { int line = __LINE__;\
     char message[512];\
-    sprintf_s(message, 512, __VA_ARGS__);\
+    snprintf(message, 512, __VA_ARGS__);\
     switch (loglevel)\
     {\
     case LOG_INFO: printf("[INFO] %s:%d: %s\n", __FILE__, line, message); break;\

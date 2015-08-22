@@ -24,8 +24,6 @@
 #include "common/types.h"
 #include "memory.h"
 
-using namespace std;
-
 namespace NanoboyAdvance
 {
     // Fields with prefixed underscore shouldn't be accessed per GBAIO interface
@@ -219,7 +217,7 @@ namespace NanoboyAdvance
         ubyte vram[0x18000];
         ubyte obj[0x400];
         ubyte* rom;
-        static ubyte* ReadFile(string filename);
+        static ubyte* ReadFile(std::string filename);
     public:
         GBAIO* gba_io;
         ubyte ReadByte(uint offset);
@@ -228,6 +226,6 @@ namespace NanoboyAdvance
         void WriteByte(uint offset, ubyte value);
         void WriteHWord(uint offset, ushort value);
         void WriteWord(uint offset, uint value);
-        GBAMemory(string bios_file, string rom_file);
+        GBAMemory(std::string bios_file, std::string rom_file);
     };
 }

@@ -19,25 +19,25 @@
 
 #include "arm7.h"
 
-#define THUMB_1 1
-#define THUMB_2 2
-#define THUMB_3 3
-#define THUMB_4 4
-#define THUMB_5 5
-#define THUMB_6 6
-#define THUMB_7 7
-#define THUMB_8 8
-#define THUMB_9 9
-#define THUMB_10 10
-#define THUMB_11 11
-#define THUMB_12 12
-#define THUMB_13 13
-#define THUMB_14 14
-#define THUMB_15 15
-#define THUMB_16 16
-#define THUMB_17 17
-#define THUMB_18 18
-#define THUMB_19 19
+constexpr auto THUMB_1 = 1;
+constexpr auto THUMB_2 = 2;
+constexpr auto THUMB_3 = 3;
+constexpr auto THUMB_4 = 4;
+constexpr auto THUMB_5 = 5;
+constexpr auto THUMB_6 = 6;
+constexpr auto THUMB_7 = 7;
+constexpr auto THUMB_8 = 8;
+constexpr auto THUMB_9 = 9;
+constexpr auto THUMB_10 = 10;
+constexpr auto THUMB_11 = 11;
+constexpr auto THUMB_12 = 12;
+constexpr auto THUMB_13 = 13;
+constexpr auto THUMB_14 = 14;
+constexpr auto THUMB_15 = 15;
+constexpr auto THUMB_16 = 16;
+constexpr auto THUMB_17 = 17;
+constexpr auto THUMB_18 = 18;
+constexpr auto THUMB_19 = 19;
 
 namespace NanoboyAdvance
 {

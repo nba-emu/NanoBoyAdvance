@@ -21,8 +21,6 @@
 
 #include "common/types.h"
 
-using namespace std;
-
 namespace NanoboyAdvance
 { 
     class Memory

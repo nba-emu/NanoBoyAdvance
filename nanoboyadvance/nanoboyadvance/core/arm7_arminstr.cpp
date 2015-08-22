@@ -19,23 +19,23 @@
 
 #include "arm7.h"
 
-#define ARM_ERR 0
-#define ARM_1 1
-#define ARM_2 2
-#define ARM_3 3
-#define ARM_4 4
-#define ARM_5 5
-#define ARM_6 6
-#define ARM_7 7
-#define ARM_8 8
-#define ARM_9 9
-#define ARM_10 10
-#define ARM_11 11
-#define ARM_12 12
-#define ARM_13 13
-#define ARM_14 14
-#define ARM_15 15
-#define ARM_16 16
+constexpr auto ARM_ERR = 0;
+constexpr auto ARM_1 = 1;
+constexpr auto ARM_2 = 2;
+constexpr auto ARM_3 = 3;
+constexpr auto ARM_4 = 4;
+constexpr auto ARM_5 = 5;
+constexpr auto ARM_6 = 6;
+constexpr auto ARM_7 = 7;
+constexpr auto ARM_8 = 8;
+constexpr auto ARM_9 = 9;
+constexpr auto ARM_10 = 10;
+constexpr auto ARM_11 = 11;
+constexpr auto ARM_12 = 12;
+constexpr auto ARM_13 = 13;
+constexpr auto ARM_14 = 14;
+constexpr auto ARM_15 = 15;
+constexpr auto ARM_16 = 16;
 
 namespace NanoboyAdvance
 {

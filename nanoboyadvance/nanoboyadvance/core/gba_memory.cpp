@@ -20,6 +20,8 @@
 #include "gba_memory.h"
 #include "common/log.h"
 
+using namespace std;
+
 namespace NanoboyAdvance
 {
     GBAMemory::GBAMemory(string bios_file, string rom_file)
@@ -38,7 +40,7 @@ namespace NanoboyAdvance
         if (ifs.is_open())
         {
             ifs.seekg(0, ios::end);
-            filesize = ifs.tellg();
+            filesize = static_cast<std::size_t>(ifs.tellg());
             ifs.seekg(0, ios::beg);
             data = new ubyte[filesize];
             ifs.read((char*)data, filesize);
