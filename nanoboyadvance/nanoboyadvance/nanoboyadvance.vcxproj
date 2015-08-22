@@ -162,7 +162,9 @@
     <ClInclude Include="common\log.h" />
     <ClInclude Include="common\types.h" />
     <ClInclude Include="core\arm7.h" />
+    <ClInclude Include="core\gba_io.h" />
     <ClInclude Include="core\gba_memory.h" />
+    <ClInclude Include="core\gba_timer.h" />
     <ClInclude Include="core\gba_video.h" />
     <ClInclude Include="core\memory.h" />
   </ItemGroup>
@@ -171,6 +173,7 @@
     <ClCompile Include="core\arm7_arminstr.cpp" />
     <ClCompile Include="core\arm7_thumbinstr.cpp" />
     <ClCompile Include="core\gba_memory.cpp" />
+    <ClCompile Include="core\gba_timer.cpp" />
     <ClCompile Include="core\gba_video.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>

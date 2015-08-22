@@ -29,10 +29,15 @@ namespace NanoboyAdvance
         bios = ReadFile(bios_file);
         rom = ReadFile(rom_file);
         gba_io = (GBAIO*)io;
+        timer = new GBATimer(gba_io);
+        video = new GBAVideo(gba_io);
+        memset(wram, 0, 0x40000);
+        memset(iram, 0, 0x8000);
+        memset(io, 0, 0x3FF);
         io[0x130] = 0xFF;
     }
 
-    ubyte * GBAMemory::ReadFile(string filename)
+    ubyte* GBAMemory::ReadFile(string filename)
     {
         ifstream ifs(filename, ios::in | ios::binary | ios::ate);
         size_t filesize;
@@ -74,13 +79,13 @@ namespace NanoboyAdvance
             return io[internal_offset];
         case 5:
             ASSERT(internal_offset >= 0x400, LOG_ERROR, "PAL read: offset out of bounds");
-            return pal[internal_offset];
+            return video->pal[internal_offset];
         case 6:
             ASSERT(internal_offset >= 0x18000, LOG_ERROR, "VRAM read: offset out of bounds");
-            return vram[internal_offset];
+            return video->vram[internal_offset];
         case 7:
             ASSERT(internal_offset >= 0x400, LOG_ERROR, "OAM read: offset out of bounds");
-            return obj[internal_offset];
+            return video->obj[internal_offset];
         case 8:
             // TODO: Prevent out of bounds read, we should save the rom size somewhere
             return rom[internal_offset];
@@ -121,10 +126,54 @@ namespace NanoboyAdvance
             iram[internal_offset & 0x7FFF] = value;
             break;
         case 4:
+        {
             // TODO: Implement IO mirror at 04xx0800
+            bool write = true;
             ASSERT(internal_offset >= 0x3FF, LOG_ERROR, "IO write: offset out of bounds");
-            io[internal_offset] = value;
+
+            // Writing to some registers causes a special behaviour which must be emulated
+            switch (internal_offset)
+            {
+            case TM0CNT_L:
+                timer->timer0_reload = (timer->timer0_reload & 0xFF00) | value;
+                write = false;
+                break;
+            case TM0CNT_L+1:
+                timer->timer0_reload = (timer->timer0_reload & 0x00FF) | (value << 8);
+                write = false;
+                break;
+            case TM1CNT_L:
+                timer->timer1_reload = (timer->timer1_reload & 0xFF00) | value;
+                write = false;
+                break;
+            case TM1CNT_L+1:
+                timer->timer1_reload = (timer->timer1_reload & 0x00FF) | (value << 8);
+                write = false;
+                break;
+            case TM2CNT_L:
+                timer->timer2_reload = (timer->timer2_reload & 0xFF00) | value;
+                write = false;
+                break;
+            case TM2CNT_L+1:
+                timer->timer2_reload = (timer->timer2_reload & 0x00FF) | (value << 8);
+                write = false;
+                break;
+            case TM3CNT_L:
+                timer->timer3_reload = (timer->timer3_reload & 0xFF00) | value;
+                write = false;
+                break;
+            case TM3CNT_L+1:
+                timer->timer3_reload = (timer->timer3_reload & 0x00FF) | (value << 8);
+                write = false;
+                break;
+            }
+
+            if (write)
+            {
+                io[internal_offset] = value;
+            }
             break;
+        }
         case 5:
         case 6:
         case 7:
@@ -149,18 +198,18 @@ namespace NanoboyAdvance
         {
         case 5: 
             ASSERT(internal_offset + 1 >= 0x400, LOG_ERROR, "PAL write: offset out of bounds");
-            pal[internal_offset] = value & 0xFF;
-            pal[internal_offset + 1] = (value >> 8) & 0xFF;
+            video->pal[internal_offset] = value & 0xFF;
+            video->pal[internal_offset + 1] = (value >> 8) & 0xFF;
             break;
         case 6: 
             ASSERT(internal_offset + 1 >= 0x18000, LOG_ERROR, "VRAM write: offset out of bounds");
-            vram[internal_offset] = value & 0xFF;
-            vram[internal_offset + 1] = (value >> 8) & 0xFF;
+            video->vram[internal_offset] = value & 0xFF;
+            video->vram[internal_offset + 1] = (value >> 8) & 0xFF;
             break;
         case 7: 
             ASSERT(internal_offset + 1 >= 0x400, LOG_ERROR, "OAM write: offset out of bounds");
-            obj[internal_offset] = value & 0xFF;
-            obj[internal_offset + 1] = (value >> 8) & 0xFF;
+            video->obj[internal_offset] = value & 0xFF;
+            video->obj[internal_offset + 1] = (value >> 8) & 0xFF;
             break;
         default:
             WriteByte(offset, value & 0xFF);
@@ -171,6 +220,7 @@ namespace NanoboyAdvance
 
     void GBAMemory::WriteWord(uint offset, uint value)
     {
+        ASSERT(offset == 0x4000100 || offset == 0x4000104 || offset == 0x4000108 || offset == 0x400010C, LOG_WARN, "Unimplemented case 32 bit write to timer register");
         WriteHWord(offset, value & 0xFFFF);
         WriteHWord(offset + 2, (value >> 16) & 0xFFFF);
     }
