@@ -21,8 +21,8 @@
 
 #include <iostream>
 #include <sstream>
-#include "common/types.h"
-#include "common/log.h"
+#include "../common/types.h"
+#include "../common/log.h"
 #include "memory.h"
 
 //#define CPU_LOG
@@ -91,8 +91,6 @@
     }\
 }
 
-using namespace std;
-
 namespace NanoboyAdvance
 {
     class ARM7
@@ -124,7 +122,7 @@ namespace NanoboyAdvance
         int pipe_status;
         bool flush_pipe;
 
-        inline void RemapRegisters();
+        void RemapRegisters();
         ubyte ReadByte(uint offset);
         ushort ReadHWord(uint offset);
         uint ReadWord(uint offset);
@@ -161,6 +159,6 @@ namespace NanoboyAdvance
         ARM7(Memory* memory);
         void Step();
         void FireIRQ();
-        string ARMDisasm(uint base, uint instruction);
+        std::string ARMDisasm(uint base, uint instruction);
     };
 }

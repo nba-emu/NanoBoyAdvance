@@ -23,15 +23,15 @@
 #include "core/gba_memory.h"
 #include "core/gba_video.h"
 #include "common/log.h"
-#include "SDL.h"
+#include <SDL/SDL.h>
 #undef main
 
 using namespace std;
 using namespace NanoboyAdvance;
 
-SDL_Surface* screen;
-uint32_t* buffer;
-GBAMemory memory("bios.bin", "tank.gba");
+SDL_Surface* screen { };
+uint32_t* buffer { };
+GBAMemory memory("bios.bin", "pageflip.gba");
 
 int getcolor(int n, int p)
 {
@@ -54,9 +54,9 @@ void setpixel(int x, int y, int color)
 
 int main(int argc, char **argv)
 {
-    SDL_Event event;
-    ARM7* arm = new ARM7(&memory);
-    bool running = true;
+	SDL_Event event { };
+	ARM7* arm = new ARM7 { &memory };
+	bool running { true };
 
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
     {
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
     }
     
     screen = SDL_SetVideoMode(480, 320, 32, SDL_SWSURFACE);
-    if (screen == NULL)
+    if (screen == nullptr)
     {
         printf("SDL_SetVideoMode Error: %s\n", SDL_GetError());
         SDL_Quit();
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
     
     while (running)
     {
-        ubyte* kb_state = SDL_GetKeyState(NULL);
+        ubyte* kb_state = SDL_GetKeyState(nullptr);
         ushort joypad = 0;
         joypad |= kb_state[SDLK_y] ? 0 : 1;
         joypad |= kb_state[SDLK_x] ? 0 : (1 << 1);
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
             memory.video->Step();
             if (memory.video->render_scanline)
             {
-                int y = memory.gba_io->vcount;
+				int y { memory.gba_io->vcount };
                 for (int x = 0; x < 240; x++)
                 {
                     ubyte color = memory.ReadByte((memory.gba_io->dispcnt & 0x10 ? 0x0600A000 : 0x06000000) + (y * 240) + x);

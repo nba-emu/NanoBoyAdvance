@@ -19,18 +19,26 @@
 
 #pragma once
 
-#include "common/types.h"
+#include "../common/types.h"
+#include "gba_io.h"
 
 namespace NanoboyAdvance
-{ 
-    class Memory
-    { 
+{
+    class GBATimer
+    {
+        GBAIO* gba_io;
+        static const int timings[4];
+        int timer0_ticks;
+        int timer1_ticks;
+        int timer2_ticks;
+        int timer3_ticks;
     public:
-        virtual ubyte ReadByte(uint offset) { return 0; }
-        virtual ushort ReadHWord(uint offset) { return 0; }
-        virtual uint ReadWord(uint offset) { return 0; }
-        virtual void WriteByte(uint offset, ubyte value) {}
-        virtual void WriteHWord(uint offset, ushort value) {}
-        virtual void WriteWord(uint offset, uint value) {}
+        bool irq;
+        ushort timer0_reload;
+        ushort timer1_reload;
+        ushort timer2_reload;
+        ushort timer3_reload;
+        GBATimer(GBAIO* gba_io);
+        void Step();
     };
 }

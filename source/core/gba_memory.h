@@ -19,33 +19,34 @@
 
 #pragma once
 
-#include <cstring>
-#include "common/types.h"
-#include "common/log.h"
+#include <iostream>
+#include <fstream>
+#include "../common/types.h"
+#include "memory.h"
 #include "gba_io.h"
-
-using namespace std;
+#include "gba_timer.h"
+#include "gba_video.h"
 
 namespace NanoboyAdvance
 {
-    class GBAVideo
+    class GBAMemory : public Memory
     {
-        enum class GBAVideoState
-        {
-            Scanline,
-            HBlank,
-            VBlank
-        };
-        GBAIO* gba_io;
-        GBAVideoState state;
-        int ticks;
+        ubyte* bios;
+        ubyte wram[0x40000];
+        ubyte iram[0x8000];
+        ubyte io[0x3FF];
+        ubyte* rom;
+        static ubyte* ReadFile(std::string filename);
     public:
-        bool render_scanline;
-        bool irq;
-        ubyte pal[0x400];
-        ubyte vram[0x18000];
-        ubyte obj[0x400];
-        GBAVideo(GBAIO* gba_io);
-        void Step();
+        GBAIO* gba_io;
+        GBATimer* timer;
+        GBAVideo* video;
+        ubyte ReadByte(uint offset);
+        ushort ReadHWord(uint offset);
+        uint ReadWord(uint offset);
+        void WriteByte(uint offset, ubyte value);
+        void WriteHWord(uint offset, ushort value);
+        void WriteWord(uint offset, uint value);
+        GBAMemory(std::string bios_file, std::string rom_file);
     };
 }

@@ -176,7 +176,7 @@ namespace NanoboyAdvance
     
     void ARM7::Step()
     {
-        bool thumb = (cpsr & Thumb) == Thumb;
+        bool thumb { (cpsr & Thumb) == Thumb };
         if (thumb)
         {
             switch (pipe_status)
