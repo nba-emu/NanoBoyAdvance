@@ -73,7 +73,11 @@ namespace NanoboyAdvance
             //ASSERT(internal_offset >= 0x8000 && internal_offset <= 0xFFFF00, LOG_ERROR, "IRAM read: offset out of bounds");
             return iram[internal_offset % 0x8000];
         case 4:
-            // TODO: Implement IO mirror at 04xx0800
+            // Emulate IO mirror at 04xx0800
+            if ((internal_offset & 0xFFFF) == 0x800)
+            {
+                internal_offset &= 0xFFFF;
+            }
             ASSERT(internal_offset >= 0x3FF, LOG_ERROR, "IO read: offset out of bounds");
             return io[internal_offset];
         case 5:
@@ -88,8 +92,8 @@ namespace NanoboyAdvance
             }
             return video->vram[internal_offset];
         case 7:
-            ASSERT(internal_offset >= 0x400, LOG_ERROR, "OAM read: offset out of bounds");
-            return video->obj[internal_offset];
+            //ASSERT(internal_offset >= 0x400, LOG_ERROR, "OAM read: offset out of bounds");
+            return video->obj[internal_offset % 0x400];
         case 8:
             // TODO: Prevent out of bounds read, we should save the rom size somewhere
             return rom[internal_offset];
@@ -131,9 +135,14 @@ namespace NanoboyAdvance
             break;
         case 4:
         {
-            // TODO: Implement IO mirror at 04xx0800
             bool write = true;
             ASSERT(internal_offset >= 0x3FF, LOG_ERROR, "IO write: offset out of bounds");
+
+            // Emulate IO mirror at 04xx0800
+            if ((internal_offset & 0xFFFF) == 0x800)
+            {
+                internal_offset &= 0xFFFF;
+            }
 
             // Writing to some registers causes special behaviour which must be emulated
             switch (internal_offset)
@@ -252,9 +261,9 @@ namespace NanoboyAdvance
             video->vram[internal_offset + 1] = (value >> 8) & 0xFF;
             break;
         case 7: 
-            ASSERT(internal_offset + 1 >= 0x400, LOG_ERROR, "OAM write: offset out of bounds");
-            video->obj[internal_offset] = value & 0xFF;
-            video->obj[internal_offset + 1] = (value >> 8) & 0xFF;
+            //ASSERT(internal_offset + 1 >= 0x400, LOG_ERROR, "OAM write: offset out of bounds");
+            video->obj[internal_offset % 0x400] = value & 0xFF;
+            video->obj[(internal_offset + 1) % 0x400] = (value >> 8) & 0xFF;
             break;
         default:
             WriteByte(offset, value & 0xFF);
