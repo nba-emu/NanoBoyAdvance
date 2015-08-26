@@ -27,6 +27,9 @@
 
 //#define CPU_LOG
 
+// Macro for easier register access
+#define reg(r) *gprs[r]
+
 namespace NanoboyAdvance
 {
     class ARM7
@@ -70,11 +73,6 @@ namespace NanoboyAdvance
         void ARMExecute(uint instruction, int type);
         int THUMBDecode(ushort instruction);
         void THUMBExecute(ushort instruction, int type);
-
-        // Macro for easier register access
-        inline uint reg(int r) {
-        	return *gprs[r];
-        }
 
         // Alters the sign flag depending on the MSB of the value being set or not
         inline void calculate_sign(int n) {
