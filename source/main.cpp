@@ -31,7 +31,7 @@ using namespace NanoboyAdvance;
 
 SDL_Surface* screen { };
 uint32_t* buffer { };
-GBAMemory memory("bios.bin", "pageflip.gba");
+GBAMemory memory("bios.bin", "pkmnsmaragdde.gba");
 
 int getcolor(int n, int p)
 {

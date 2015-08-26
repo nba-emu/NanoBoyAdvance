@@ -18,7 +18,9 @@
  */
 
 #include "gba_memory.h"
-#include "common/log.h"
+#include "../common/log.h"
+
+using namespace std;
 
 namespace NanoboyAdvance
 {

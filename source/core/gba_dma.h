@@ -20,11 +20,9 @@
 #pragma once
 
 #include <iostream>
-#include "common/types.h"
+#include "../common/types.h"
 #include "memory.h"
 #include "gba_io.h"
-
-using namespace std;
 
 namespace NanoboyAdvance
 {
@@ -45,18 +43,18 @@ namespace NanoboyAdvance
         void DMA3();
     public:
         bool irq;
-        uint dma0_source;
-        uint dma1_source;
-        uint dma2_source;
-        uint dma3_source;
-        uint dma0_destination;
-        uint dma1_destination;
-        uint dma2_destination;
-        uint dma3_destination;
-        ushort dma0_count;
-        ushort dma1_count;
-        ushort dma2_count;
-        ushort dma3_count;
+        uint dma0_source { 0 };
+        uint dma1_source { 0 };
+        uint dma2_source { 0 };
+        uint dma3_source { 0 };
+        uint dma0_destination { 0 };
+        uint dma1_destination { 0 };
+        uint dma2_destination { 0 };
+        uint dma3_destination { 0 };
+        ushort dma0_count { 0 };
+        ushort dma1_count { 0 };
+        ushort dma2_count { 0 };
+        ushort dma3_count { 0 };
         GBADMA(Memory* memory, GBAIO* gba_io);
         void Step();
     };

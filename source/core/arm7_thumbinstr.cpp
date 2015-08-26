@@ -393,7 +393,7 @@ void ARM7::THUMBExecute(ushort instruction, int type)
 			uint result = reg(reg_dest);
 			if (amount != 0)
 			{
-				for (int i = 1; i <= amount; i++)
+				for (uint i = 1; i <= amount; i++)
 				{
 					uint high_bit = (result & 1) << 31;
 					result = (result >> 1) | high_bit;

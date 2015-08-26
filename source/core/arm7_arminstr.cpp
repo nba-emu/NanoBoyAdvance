@@ -1054,7 +1054,7 @@ void ARM7::ARMExecute(uint instruction, int type)
 			}
 			case 0b0111: // RSC
 			{
-				int carry2 { (cpsr >> 29) & 1 };
+				uint carry2 { (cpsr >> 29) & 1 };
 				uint result = operand2 - operand1 + carry2 - 1;
 				if (set_flags)
 				{
@@ -1227,7 +1227,7 @@ void ARM7::ARMExecute(uint instruction, int type)
 				// Rotate Right
 				// TODO: RRX
 				offset = shift_operand1;
-				for (int i = 1; i <= shift_operand2; i++)
+				for (uint i = 1; i <= shift_operand2; i++)
 				{
 					uint high_bit = (offset & 1) << 31;
 					offset = (offset >> 1) | high_bit;
