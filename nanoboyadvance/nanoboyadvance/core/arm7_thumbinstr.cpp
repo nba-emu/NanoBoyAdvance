@@ -480,6 +480,7 @@ namespace NanoboyAdvance
             // THUMB.5 Hi register operations/branch exchange
             int reg_dest = instruction & 7;
             int reg_source = (instruction >> 3) & 7;
+            uint operand;
 
             // Both reg_dest and reg_source can encode either a low register (r0-r7) or a high register (r8-r15)
             switch ((instruction >> 6) & 3)
@@ -497,35 +498,41 @@ namespace NanoboyAdvance
             }
 
             // TODO: Handle special case that one of the registers is r15
-            ASSERT(reg_source == 15, LOG_ERROR, "Hi register operations/branch exchange special case reg_source=r15 not implemented, r15=0x%x", r15);
+            //ASSERT(reg_source == 15, LOG_ERROR, "Hi register operations/branch exchange special case reg_source=r15 not implemented, r15=0x%x", r15);
+            operand = reg(reg_source);
+
+            if (reg_source == 15)
+            {
+                operand &= ~1;
+            }
 
             // Perform the actual operation
             switch ((instruction >> 8) & 3)
             {
             case 0b00: // ADD
-                reg(reg_dest) += reg(reg_source);
+                reg(reg_dest) += operand;
                 break;
             case 0b01: // CMP
             {
-                uint result = reg(reg_dest) - reg(reg_source);
-                assert_carry(reg(reg_dest) >= reg(reg_source));
-                calculate_overflow_sub(result, reg(reg_dest), reg(reg_source));
+                uint result = reg(reg_dest) - operand;
+                assert_carry(reg(reg_dest) >= operand);
+                calculate_overflow_sub(result, reg(reg_dest), operand);
                 calculate_sign(result);
                 calculate_zero(result);
                 break;
             }
             case 0b10: // MOV
-                reg(reg_dest) = reg(reg_source);
+                reg(reg_dest) = operand;
                 break;
             case 0b11: // BX
-                if (reg(reg_source) & 1)
+                if (operand & 1)
                 {
-                    r15 = reg(reg_source) & ~1;
+                    r15 = operand & ~1;
                 }
                 else
                 {
                     cpsr &= ~Thumb;
-                    r15 = reg(reg_source) & ~3;
+                    r15 = operand & ~3;
                 }
                 flush_pipe = true;
                 break;

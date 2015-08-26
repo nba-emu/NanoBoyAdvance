@@ -200,6 +200,10 @@ struct GBAIO_S
 #pragma pack(pop, r1)
 typedef struct GBAIO_S GBAIO;
 
+#define DMA0CNT_H 0xBA
+#define DMA1CNT_H 0xC6
+#define DMA2CNT_H 0xD2
+#define DMA3CNT_H 0xDE
 #define TM0CNT_L 0x100
 #define TM1CNT_L 0x104
 #define TM2CNT_L 0x108

@@ -50,6 +50,10 @@ namespace NanoboyAdvance
         // Testing
         r15 = 0x8000000;
         r13 = 0x3007F00;
+        r13_svc = 0x3007FE0;
+        r13_irq = 0x3007FA0;
+        cpsr = 0x5F;
+        RemapRegisters();
     }
     
     void ARM7::RemapRegisters()
