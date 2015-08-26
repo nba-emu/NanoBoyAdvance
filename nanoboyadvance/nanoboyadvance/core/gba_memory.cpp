@@ -59,7 +59,7 @@ namespace NanoboyAdvance
 
     ubyte GBAMemory::ReadByte(uint offset)
     {
-        int page = offset >> 24;
+        int page = (offset >> 24) & 0xF;
         uint internal_offset = offset & 0xFFFFFF;
         switch (page)
         {
@@ -109,7 +109,7 @@ namespace NanoboyAdvance
 
     void GBAMemory::WriteByte(uint offset, ubyte value)
     {
-        int page = offset >> 24;
+        int page = (offset >> 24) & 0xF;
         uint internal_offset = offset & 0xFFFFFF;
         switch (page)
         {
@@ -227,7 +227,7 @@ namespace NanoboyAdvance
 
     void GBAMemory::WriteHWord(uint offset, ushort value)
     {
-        int page = offset >> 24;
+        int page = (offset >> 24) & 0xF;
         uint internal_offset = offset & 0xFFFFFF;
         switch (page)
         {
