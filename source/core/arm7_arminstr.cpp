@@ -927,7 +927,7 @@ void ARM7::ARMExecute(uint instruction, int type)
 					// Rotate Right
 					if (amount != 0)
 					{
-						for (int i = 1; i <= amount; i++)
+						for (uint i = 1; i <= amount; i++)
 						{
 							uint high_bit = (operand2 & 1) << 31;
 							operand2 = (operand2 >> 1) | high_bit;
@@ -1025,7 +1025,7 @@ void ARM7::ARMExecute(uint instruction, int type)
 			}
 			case 0b0101: // ADC
 			{
-				int carry2 { (cpsr >> 29) & 1 };
+				uint carry2 { (cpsr >> 29) & 1 };
 				uint result = operand1 + operand2 + carry2;
 				if (set_flags)
 				{
@@ -1040,7 +1040,7 @@ void ARM7::ARMExecute(uint instruction, int type)
 			}
 			case 0b0110: // SBC
 			{
-				int carry2 { (cpsr >> 29) & 1 };
+				uint carry2 { (cpsr >> 29) & 1 };
 				uint result = operand1 - operand2 + carry2 - 1;
 				if (set_flags)
 				{

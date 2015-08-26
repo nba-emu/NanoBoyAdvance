@@ -93,8 +93,10 @@ int main(int argc, char **argv)
         for (int i = 0; i < 280896; i++)
         {
             arm->Step();
-            memory.timer->Step();
+            memory.gba_io->tm3cnt_l = (memory.gba_io->tm3cnt_l + 1) % 0xFFFE;
+            //memory.timer->Step();
             memory.video->Step();
+            memory.dma->Step();
             if (memory.video->render_scanline)
             {
 				int y { memory.gba_io->vcount };
@@ -105,7 +107,7 @@ int main(int argc, char **argv)
                     setpixel(x, y, color_rgb);
                 }
             }
-            if (memory.gba_io->ime != 0 && (memory.video->irq || memory.timer->irq))
+            if (memory.gba_io->ime != 0 && (memory.video->irq || memory.timer->irq || memory.dma->irq))
             {
                 //LOG(LOG_INFO, "I shall IRQ..");
                 arm->FireIRQ();

@@ -20,35 +20,44 @@
 #pragma once
 
 #include <iostream>
-#include <fstream>
-#include "../common/types.h"
+#include "common/types.h"
 #include "memory.h"
 #include "gba_io.h"
-#include "gba_dma.h"
-#include "gba_timer.h"
-#include "gba_video.h"
+
+using namespace std;
 
 namespace NanoboyAdvance
 {
-    class GBAMemory : public Memory
+    class GBADMA
     {
-        ubyte* bios;
-        ubyte wram[0x40000];
-        ubyte iram[0x8000];
-        ubyte io[0x3FF];
-        ubyte* rom;
-        static ubyte* ReadFile(std::string filename);
-    public:
+        enum AddressControl
+        {
+            Increment = 0,
+            Decrement = 1,
+            Fixed = 2,
+            IncrementAndReload = 3
+        };
+        Memory* memory;
         GBAIO* gba_io;
-        GBADMA* dma;
-        GBATimer* timer;
-        GBAVideo* video;
-        ubyte ReadByte(uint offset);
-        ushort ReadHWord(uint offset);
-        uint ReadWord(uint offset);
-        void WriteByte(uint offset, ubyte value);
-        void WriteHWord(uint offset, ushort value);
-        void WriteWord(uint offset, uint value);
-        GBAMemory(std::string bios_file, std::string rom_file);
+        void DMA0();
+        void DMA1();
+        void DMA2();
+        void DMA3();
+    public:
+        bool irq;
+        uint dma0_source;
+        uint dma1_source;
+        uint dma2_source;
+        uint dma3_source;
+        uint dma0_destination;
+        uint dma1_destination;
+        uint dma2_destination;
+        uint dma3_destination;
+        ushort dma0_count;
+        ushort dma1_count;
+        ushort dma2_count;
+        ushort dma3_count;
+        GBADMA(Memory* memory, GBAIO* gba_io);
+        void Step();
     };
 }

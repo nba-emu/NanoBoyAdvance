@@ -200,6 +200,10 @@ struct GBAIO_S
 #pragma pack(pop, r1)
 typedef struct GBAIO_S GBAIO;
 
+constexpr auto DMA0CNT_H = 0xBA;
+constexpr auto DMA1CNT_H = 0xC6;
+constexpr auto DMA2CNT_H = 0xD2;
+constexpr auto DMA3CNT_H = 0xDE;
 constexpr auto TM0CNT_L = 0x100;
 constexpr auto TM1CNT_L = 0x104;
 constexpr auto TM2CNT_L = 0x108;

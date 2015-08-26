@@ -366,7 +366,7 @@ void ARM7::THUMBExecute(ushort instruction, int type)
 		}
 		case 0b0101: // ADC
 		{
-			int carry { (cpsr >> 29) & 1 };
+			uint carry { (cpsr >> 29) & 1 };
 			uint result = reg(reg_dest) + reg(reg_source) + carry;
 			ulong result_long = (ulong)(reg(reg_dest)) + (ulong)(reg(reg_source)) + (ulong)carry;
 			assert_carry(result_long & 0x100000000);
@@ -378,7 +378,7 @@ void ARM7::THUMBExecute(ushort instruction, int type)
 		}
 		case 0b0110: // SBC
 		{
-			int carry { (cpsr >> 29) & 1 };
+			uint carry { (cpsr >> 29) & 1 };
 			uint result = reg(reg_dest) - reg(reg_source) + carry - 1;
 			assert_carry(reg(reg_dest) >= reg(reg_source) + carry - 1);
 			calculate_overflow_sub(result, reg(reg_dest), (reg(reg_source) + carry - 1));
