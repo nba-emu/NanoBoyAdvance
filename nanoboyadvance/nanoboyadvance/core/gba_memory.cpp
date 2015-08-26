@@ -77,10 +77,15 @@ namespace NanoboyAdvance
             ASSERT(internal_offset >= 0x3FF, LOG_ERROR, "IO read: offset out of bounds");
             return io[internal_offset];
         case 5:
-            ASSERT(internal_offset >= 0x400, LOG_ERROR, "PAL read: offset out of bounds");
-            return video->pal[internal_offset];
+            //ASSERT(internal_offset >= 0x400, LOG_ERROR, "PAL read: offset out of bounds");
+            return video->pal[internal_offset % 0x400];
         case 6:
-            ASSERT(internal_offset >= 0x18000, LOG_ERROR, "VRAM read: offset out of bounds");
+            //ASSERT(internal_offset >= 0x18000, LOG_ERROR, "VRAM read: offset out of bounds");
+            internal_offset %= 0x20000;
+            if (internal_offset >= 0x18000)
+            {
+                internal_offset -= 0x8000;
+            }
             return video->vram[internal_offset];
         case 7:
             ASSERT(internal_offset >= 0x400, LOG_ERROR, "OAM read: offset out of bounds");
@@ -232,12 +237,17 @@ namespace NanoboyAdvance
         switch (page)
         {
         case 5: 
-            ASSERT(internal_offset + 1 >= 0x400, LOG_ERROR, "PAL write: offset out of bounds");
-            video->pal[internal_offset] = value & 0xFF;
-            video->pal[internal_offset + 1] = (value >> 8) & 0xFF;
+            //ASSERT(internal_offset + 1 >= 0x400, LOG_ERROR, "PAL write: offset out of bounds");
+            video->pal[internal_offset % 0x400] = value & 0xFF;
+            video->pal[(internal_offset + 1) % 0x400] = (value >> 8) & 0xFF;
             break;
         case 6: 
-            ASSERT(internal_offset + 1 >= 0x18000, LOG_ERROR, "VRAM write: offset out of bounds");
+            //ASSERT(internal_offset + 1 >= 0x18000, LOG_ERROR, "VRAM write: offset out of bounds");
+            internal_offset %= 0x20000;
+            if (internal_offset >= 0x18000)
+            {
+                internal_offset -= 0x8000;
+            }
             video->vram[internal_offset] = value & 0xFF;
             video->vram[internal_offset + 1] = (value >> 8) & 0xFF;
             break;
