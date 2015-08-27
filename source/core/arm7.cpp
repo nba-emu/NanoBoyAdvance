@@ -31,7 +31,7 @@ namespace NanoboyAdvance
         r13_abt = r14_abt = 0;
         r13_irq = r14_irq = 0;
         r13_und = r14_und = 0;
-        spsr_fiq = spsr_svc = spsr_abt = spsr_irq = spsr_und, spsr_def = 0;
+        spsr_fiq = spsr_svc = spsr_abt = spsr_irq = spsr_und = spsr_def = 0;
         pipe_status = 0;
         flush_pipe = false;
         // Map the static registers r0-r7, r15
