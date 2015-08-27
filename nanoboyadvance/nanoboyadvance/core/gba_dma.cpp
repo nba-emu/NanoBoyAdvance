@@ -49,9 +49,9 @@ namespace NanoboyAdvance
                     memory->WriteHWord(dma0_destination, memory->ReadHWord(dma0_source));
                 }
                 // Update dest address
-                switch (dest_control) { case Increment: case IncrementAndReload: dma0_destination += transfer_words ? 4 : 2; case Decrement: dma0_destination -= transfer_words ? 4 : 2; }
+                switch (dest_control) { case Increment: case IncrementAndReload: dma0_destination += transfer_words ? 4 : 2; break; case Decrement: dma0_destination -= transfer_words ? 4 : 2; break; }
                 // Update source address
-                switch (source_control) { case Increment: case IncrementAndReload: dma0_source += transfer_words ? 4 : 2; case Decrement: dma0_source -= transfer_words ? 4 : 2; }
+                switch (source_control) { case Increment: case IncrementAndReload: dma0_source += transfer_words ? 4 : 2; break; case Decrement: dma0_source -= transfer_words ? 4 : 2; break; }
                 // Update count
                 dma0_count--;
             }
@@ -100,9 +100,9 @@ namespace NanoboyAdvance
                     memory->WriteHWord(dma1_destination, memory->ReadHWord(dma1_source));
                 }
                 // Update dest address
-                switch (dest_control) { case Increment: case IncrementAndReload: dma1_destination += transfer_words ? 4 : 2; case Decrement: dma1_destination -= transfer_words ? 4 : 2; }
+                switch (dest_control) { case Increment: case IncrementAndReload: dma1_destination += transfer_words ? 4 : 2; break; case Decrement: dma1_destination -= transfer_words ? 4 : 2; break; }
                 // Update source address
-                switch (source_control) { case Increment: case IncrementAndReload: dma1_source += transfer_words ? 4 : 2; case Decrement: dma1_source -= transfer_words ? 4 : 2; }
+                switch (source_control) { case Increment: case IncrementAndReload: dma1_source += transfer_words ? 4 : 2; break; case Decrement: dma1_source -= transfer_words ? 4 : 2; break; }
                 // Update count
                 dma1_count--;
             }
@@ -151,9 +151,9 @@ namespace NanoboyAdvance
                     memory->WriteHWord(dma2_destination, memory->ReadHWord(dma2_source));
                 }
                 // Update dest address
-                switch (dest_control) { case Increment: case IncrementAndReload: dma2_destination += transfer_words ? 4 : 2; case Decrement: dma2_destination -= transfer_words ? 4 : 2; }
+                switch (dest_control) { case Increment: case IncrementAndReload: dma2_destination += transfer_words ? 4 : 2; break; case Decrement: dma2_destination -= transfer_words ? 4 : 2; break; }
                 // Update source address
-                switch (source_control) { case Increment: case IncrementAndReload: dma2_source += transfer_words ? 4 : 2; case Decrement: dma2_source -= transfer_words ? 4 : 2; }
+                switch (source_control) { case Increment: case IncrementAndReload: dma2_source += transfer_words ? 4 : 2; break; case Decrement: dma2_source -= transfer_words ? 4 : 2; break; }
                 // Update count
                 dma2_count--;
             }
@@ -202,9 +202,9 @@ namespace NanoboyAdvance
                     memory->WriteHWord(dma3_destination, memory->ReadHWord(dma3_source));
                 }
                 // Update dest address
-                switch (dest_control) { case Increment: case IncrementAndReload: dma3_destination += transfer_words ? 4 : 2; case Decrement: dma3_destination -= transfer_words ? 4 : 2; }
+                switch (dest_control) { case Increment: case IncrementAndReload: dma3_destination += transfer_words ? 4 : 2; break; case Decrement: dma3_destination -= transfer_words ? 4 : 2; break; }
                 // Update source address
-                switch (source_control) { case Increment: case IncrementAndReload: dma3_source += transfer_words ? 4 : 2; case Decrement: dma3_source -= transfer_words ? 4 : 2; }
+                switch (source_control) { case Increment: case IncrementAndReload: dma3_source += transfer_words ? 4 : 2; break; case Decrement: dma3_source -= transfer_words ? 4 : 2; break; }
                 // Update count
                 dma3_count--;
             }
