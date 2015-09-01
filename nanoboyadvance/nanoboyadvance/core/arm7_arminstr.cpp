@@ -1188,7 +1188,7 @@ namespace NanoboyAdvance
                 int shift = (instruction >> 5) & 3;
                 ASSERT(reg_offset == 15, LOG_WARN, "Single Data Transfer, thou shall not use r15 as offset, r15=0x%x", r15);
 
-                // We can safe some work by ensuring that we do not shift by zero bits
+                // Perform the actual shift
                 switch (shift)
                 {
                 case 0b00:
@@ -1223,12 +1223,19 @@ namespace NanoboyAdvance
                 case 0b11:
                 {
                     // Rotate Right
-                    // TODO: RRX
                     offset = shift_operand1;
-                    for (int i = 1; i <= shift_operand2; i++)
+                    if (shift_operand2 == 0)
                     {
-                        uint high_bit = (offset & 1) << 31;
-                        offset = (offset >> 1) | high_bit;
+                        uint tmp_carry = offset & 1 ? 0x80000000 : 0;
+                        offset = (offset >> 1) | tmp_carry;
+                    }
+                    else
+                    {
+                        for (int i = 1; i <= shift_operand2; i++)
+                        {
+                            uint high_bit = (offset & 1) << 31;
+                            offset = (offset >> 1) | high_bit;
+                        }
                     }
                     break;
                 }
@@ -1327,6 +1334,7 @@ namespace NanoboyAdvance
             {
                 // Writeback must not be activated in this case
                 ASSERT(write_back, LOG_WARN, "Block Data Transfer, thou shall not do user bank transfer with writeback, r15=0x%x", r15);
+                //write_back = false;
 
                 // Save current mode and enter user mode
                 old_mode = cpsr & 0x1F;

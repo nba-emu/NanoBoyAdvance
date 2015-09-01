@@ -124,6 +124,9 @@ namespace NanoboyAdvance
         int pipe_status;
         bool flush_pipe;
 
+        // Handle special cases (GBA specific!! remove if emulating other system!)
+        uint last_fetched_bios;
+
         inline void RemapRegisters();
         ubyte ReadByte(uint offset);
         ushort ReadHWord(uint offset);

@@ -52,8 +52,6 @@ namespace NanoboyAdvance
         r13 = 0x3007F00;
         r13_svc = 0x3007FE0;
         r13_irq = 0x3007FA0;
-        cpsr = 0x5F;
-        RemapRegisters();
     }
     
     void ARM7::RemapRegisters()
@@ -135,17 +133,32 @@ namespace NanoboyAdvance
 
     ubyte ARM7::ReadByte(uint offset)
     {
+        // GBA specific case
+        if (offset < 0x4000)
+        {
+            return last_fetched_bios & 0xFF;
+        }
         return memory->ReadByte(offset);
     }
 
     ushort ARM7::ReadHWord(uint offset)
     {
         // TODO: Proper handling (Mis-aligned LDRH,LDRSH)
+        // GBA specific case
+        if ((offset & ~1) < 0x4000)
+        {
+            return last_fetched_bios & 0xFFFF;
+        }
         return memory->ReadHWord(offset & ~1);
     }
 
     uint ARM7::ReadWord(uint offset)
     {
+        // GBA specific case
+        if ((offset & ~3) < 0x4000)
+        {
+            return last_fetched_bios;
+        }
         return memory->ReadWord(offset & ~3);
     }
 
@@ -153,6 +166,13 @@ namespace NanoboyAdvance
     {
         uint value = memory->ReadWord(offset & ~3);
         int amount = (offset & 3) * 8;
+
+        // GBA specific case
+        if ((offset & ~3) < 0x4000)
+        {
+            return last_fetched_bios;
+        }
+
         if (amount != 0)
         {
             return (value >> amount) | (value << (32 - amount));
@@ -181,29 +201,38 @@ namespace NanoboyAdvance
     void ARM7::Step()
     {
         bool thumb = (cpsr & Thumb) == Thumb;
+        if (r15 == 0x080002ae + 4)
+        {
+            cout << "xD" << endl;
+        }
         if (thumb)
         {
             switch (pipe_status)
             {
             case 0:
                 pipe_opcode[0] = memory->ReadHWord(r15);
+                last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[0] : last_fetched_bios;
                 break;
             case 1:
                 pipe_opcode[1] = memory->ReadHWord(r15);
+                last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[1] : last_fetched_bios;
                 pipe_decode[0] = THUMBDecode(pipe_opcode[0]);
                 break;
             case 2:
                 pipe_opcode[2] = memory->ReadHWord(r15);
+                last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[2] : last_fetched_bios;
                 pipe_decode[1] = THUMBDecode(pipe_opcode[1]);
                 THUMBExecute(pipe_opcode[0], pipe_decode[0]);
                 break;
             case 3:
                 pipe_opcode[0] = memory->ReadHWord(r15);
+                last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[0] : last_fetched_bios;
                 pipe_decode[2] = THUMBDecode(pipe_opcode[2]);
                 THUMBExecute(pipe_opcode[1], pipe_decode[1]);
                 break;
             case 4:
                 pipe_opcode[1] = memory->ReadHWord(r15);
+                last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[1] : last_fetched_bios;
                 pipe_decode[0] = THUMBDecode(pipe_opcode[0]);
                 THUMBExecute(pipe_opcode[2], pipe_decode[2]);
                 break;
@@ -215,23 +244,28 @@ namespace NanoboyAdvance
             {
             case 0:
                 pipe_opcode[0] = memory->ReadWord(r15);
+                last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[0] : last_fetched_bios;
                 break;
             case 1:
                 pipe_opcode[1] = memory->ReadWord(r15);
+                last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[1] : last_fetched_bios;
                 pipe_decode[0] = ARMDecode(pipe_opcode[0]);
                 break;
             case 2:
                 pipe_opcode[2] = memory->ReadWord(r15);
+                last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[2] : last_fetched_bios;
                 pipe_decode[1] = ARMDecode(pipe_opcode[1]);
                 ARMExecute(pipe_opcode[0], pipe_decode[0]);
                 break;
             case 3:
                 pipe_opcode[0] = memory->ReadWord(r15);
+                last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[0] : last_fetched_bios;
                 pipe_decode[2] = ARMDecode(pipe_opcode[2]);
                 ARMExecute(pipe_opcode[1], pipe_decode[1]);
                 break;
             case 4:
                 pipe_opcode[1] = memory->ReadWord(r15);
+                last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[1] : last_fetched_bios;
                 pipe_decode[0] = ARMDecode(pipe_opcode[0]);
                 ARMExecute(pipe_opcode[2], pipe_decode[2]);
                 break;
@@ -256,8 +290,8 @@ namespace NanoboyAdvance
         {
             r14_irq = r15 - ((cpsr & Thumb) ? 2 : 4);
             spsr_irq = cpsr;
-            RemapRegisters();
             cpsr = (cpsr & ~0x3F) | IRQ | IRQDisable;
+            RemapRegisters();
             r15 = 0x18;
             flush_pipe = true;
         }

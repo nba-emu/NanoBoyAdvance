@@ -65,7 +65,10 @@ namespace NanoboyAdvance
         {
         case 0:
             ASSERT(internal_offset >= 0x4000, LOG_ERROR, "BIOS read: offset out of bounds");
-            if (internal_offset >= 0x4000) return 0;
+            if (internal_offset >= 0x4000)
+            {
+                return 0;
+            }
             return bios[internal_offset];
         case 2:
             //ASSERT(internal_offset >= 0x40000, LOG_ERROR, "WRAM read: offset out of bounds");

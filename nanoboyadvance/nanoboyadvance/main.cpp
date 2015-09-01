@@ -89,12 +89,14 @@ int main(int argc, char **argv)
         joypad |= kb_state[SDLK_s] ? 0 : (1 << 8);
         joypad |= kb_state[SDLK_a] ? 0 : (1 << 9);
         memory.gba_io->keyinput = joypad;
-
         for (int i = 0; i < 280896; i++)
         {
             arm->Step();
-            memory.gba_io->tm3cnt_l = (memory.gba_io->tm3cnt_l + 1) % 0xFFFE;
             //memory.timer->Step();
+            memory.gba_io->tm0cnt_l = (memory.gba_io->tm0cnt_l + 1) % 0x10000;
+            memory.gba_io->tm1cnt_l = (memory.gba_io->tm1cnt_l + 1) % 0x10000;
+            memory.gba_io->tm2cnt_l = (memory.gba_io->tm2cnt_l + 1) % 0x10000;
+            memory.gba_io->tm3cnt_l = (memory.gba_io->tm3cnt_l + 1) % 0x10000;
             memory.video->Step();
             memory.dma->Step();
             if (memory.video->render_scanline)
@@ -109,7 +111,6 @@ int main(int argc, char **argv)
             }
             if (memory.gba_io->ime != 0 && (memory.video->irq || memory.timer->irq || memory.dma->irq))
             {
-                //LOG(LOG_INFO, "I shall IRQ..");
                 arm->FireIRQ();
             }
         }
