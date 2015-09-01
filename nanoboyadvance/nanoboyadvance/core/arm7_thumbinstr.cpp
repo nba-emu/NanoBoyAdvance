@@ -480,6 +480,7 @@ namespace NanoboyAdvance
             // THUMB.5 Hi register operations/branch exchange
             int reg_dest = instruction & 7;
             int reg_source = (instruction >> 3) & 7;
+            bool compare = false;
             uint operand;
 
             // Both reg_dest and reg_source can encode either a low register (r0-r7) or a high register (r8-r15)
@@ -519,6 +520,7 @@ namespace NanoboyAdvance
                 calculate_overflow_sub(result, reg(reg_dest), operand);
                 calculate_sign(result);
                 calculate_zero(result);
+                compare = true;
                 break;
             }
             case 0b10: // MOV
@@ -538,7 +540,7 @@ namespace NanoboyAdvance
                 break;
             }
 
-            if (reg_dest == 15)
+            if (reg_dest == 15 && !compare)
             {
                 reg(reg_dest) &= ~1;
                 flush_pipe = true;

@@ -201,12 +201,9 @@ namespace NanoboyAdvance
     void ARM7::Step()
     {
         bool thumb = (cpsr & Thumb) == Thumb;
-        if (r15 == 0x080002ae + 4)
-        {
-            cout << "xD" << endl;
-        }
         if (thumb)
         {
+            r15 &= ~1;
             switch (pipe_status)
             {
             case 0:
@@ -240,6 +237,7 @@ namespace NanoboyAdvance
         }
         else 
         {
+            r15 &= ~3;
             switch (pipe_status)
             {
             case 0:
