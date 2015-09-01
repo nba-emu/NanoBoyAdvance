@@ -1330,7 +1330,6 @@ namespace NanoboyAdvance
             {
                 // Writeback must not be activated in this case
                 ASSERT(write_back, LOG_WARN, "Block Data Transfer, thou shall not do user bank transfer with writeback, r15=0x%x", r15);
-                //write_back = false;
 
                 // Save current mode and enter user mode
                 old_mode = cpsr & 0x1F;
@@ -1370,9 +1369,8 @@ namespace NanoboyAdvance
                         // Perform the actual load / store operation
                         if (load)
                         {
-                            // Loading the base disables writeback
-                            // TODO: Check if it only disables writeback if the base is the first register in the list
-                            if (i == reg_base)
+                            // Overwriting the base when the base is not the first register in the list disables writeback
+                            if (i == reg_base && i != first_register)
                             {
                                 write_back = false;
                             }
@@ -1440,9 +1438,8 @@ namespace NanoboyAdvance
                         // Perform the actual load / store operation
                         if (load)
                         {
-                            // Loading the base disables writeback
-                            // TODO: Check if it only disables writeback if the base is the first register in the list
-                            if (i == reg_base)
+                            // Overwriting the base when the base is not the first register in the list disables writeback
+                            if (i == reg_base && i != first_register)
                             {
                                 write_back = false;
                             }
