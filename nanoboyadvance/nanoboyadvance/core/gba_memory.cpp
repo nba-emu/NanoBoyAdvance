@@ -83,6 +83,10 @@ namespace NanoboyAdvance
                 internal_offset &= 0xFFFF;
             }
             ASSERT(internal_offset >= 0x3FF, LOG_ERROR, "IO read: offset out of bounds");
+            if (internal_offset >= 0x3FF)
+            {
+                return 0;
+            }
             return io[internal_offset];
         case 5:
             //ASSERT(internal_offset >= 0x400, LOG_ERROR, "PAL read: offset out of bounds");

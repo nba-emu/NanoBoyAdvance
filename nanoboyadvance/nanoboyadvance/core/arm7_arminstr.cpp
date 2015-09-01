@@ -1233,8 +1233,8 @@ namespace NanoboyAdvance
                     {
                         for (int i = 1; i <= shift_operand2; i++)
                         {
-                            uint high_bit = (offset & 1) << 31;
-                            offset = (offset >> 1) | high_bit;
+                            uint old_carry = (cpsr & CarryFlag) ? 0x80000000 : 0;
+                            offset = (offset >> 1) | old_carry;
                         }
                     }
                     break;
