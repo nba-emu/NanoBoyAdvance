@@ -403,13 +403,13 @@ namespace NanoboyAdvance
                         }
                     }
                 }
-                else
+                /*else
                 {
                     // TODO: According to ARM docs this should be correct but armwrestler complains
                     uint old_carry = (cpsr & CarryFlag) ? 0x80000000 : 0;
                     assert_carry(result & 1);
                     result = (result >> 1) | old_carry;
-                }
+                }*/
                 reg(reg_dest) = result;
                 calculate_sign(reg(reg_dest));
                 calculate_zero(reg(reg_dest));

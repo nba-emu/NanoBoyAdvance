@@ -1159,7 +1159,7 @@ namespace NanoboyAdvance
         case ARM_9:
         {
             // ARM.9 Load/store register/unsigned byte (Single Data Transfer)
-            // TODO: Force user mode when instruction is post-indexed and has writeback bit
+            // TODO: Force user mode when instruction is post-indexed and has writeback bit (in system mode only?)
             uint offset;
             int reg_dest = (instruction >> 12) & 0xF;
             int reg_base = (instruction >> 16) & 0xF;
@@ -1289,20 +1289,16 @@ namespace NanoboyAdvance
             }
 
             // When the instruction either is pre-indexed and has the write-back bit or it's post-indexed we must writeback the calculated address 
-            if ((write_back || !pre_indexed) && reg_base != reg_dest)
+            if (reg_base != reg_dest)
             {
                 if (!pre_indexed)
                 {
-                    if (add_to_base)
-                    {
-                        address += offset;
-                    }
-                    else
-                    {
-                        address -= offset;
-                    }
+                    reg(reg_base) += add_to_base ? offset : -offset;
                 }
-                reg(reg_base) = address;
+                else if (write_back)
+                {
+                    reg(reg_base) = address;
+                }
             }
             break;
         }
