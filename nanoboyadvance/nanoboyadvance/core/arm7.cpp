@@ -131,6 +131,67 @@ namespace NanoboyAdvance
         }
     }
 
+    void ARM7::LSL(uint& operand, uint amount, bool& carry)
+    {
+        // Nothing is done when the shift amount equals zero
+        if (amount != 0)
+        {
+            // This way we easily bypass the 32 bits restriction on x86
+            for (int i = 0; i < amount; i++)
+            {
+                carry = operand & 0x80000000 ? true : false;
+                operand <<= 1;
+            }
+        }
+    }
+
+    void ARM7::LSR(uint& operand, uint amount, bool& carry)
+    {
+        // LSR #0 equals to LSR #32
+        amount = amount == 0 ? 32 : amount;
+        
+        // Perform shift
+        for (int i = 0; i < amount; i++)
+        {
+            carry = operand & 1 ? true : false;
+            operand >>= 1;
+        }
+    }
+
+    void ARM7::ASR(uint& operand, uint amount, bool& carry)
+    {
+        uint sign_bit = operand & 0x80000000;
+        // ASR #0 equals to ASR #32
+        amount = amount == 0 ? 32 : amount;
+
+        // Perform shift
+        for (int i = 0; i < amount; i++)
+        {
+            carry = operand & 1 ? true : false;
+            operand = (operand >> 1) | sign_bit;
+        }
+    }
+
+    void ARM7::ROR(uint& operand, uint amount, bool& carry, bool thumb)
+    {
+        // In ARM mode RRX is performed when shift amount equals zero
+        if (amount != 0 || thumb)
+        {
+            for (int i = 1; i <= amount; i++)
+            {
+                uint high_bit = (operand & 1) ? 0x80000000 : 0;
+                operand = (operand >> 1) | high_bit;
+                carry = high_bit == 0x80000000;
+            }
+        }
+        else
+        {
+            bool old_carry = carry;
+            carry = (operand & 1) ? true : false;
+            operand = (operand >> 1) | old_carry ? 0x80000000 : 0;
+        }
+    }
+
     ubyte ARM7::ReadByte(uint offset)
     {
         // GBA specific case

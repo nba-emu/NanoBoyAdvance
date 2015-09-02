@@ -179,39 +179,26 @@ namespace NanoboyAdvance
             int reg_source = (instruction >> 3) & 7;
             uint immediate_value = (instruction >> 6) & 0x1F;
             int opcode = (instruction >> 11) & 3;
+            bool carry = (cpsr & CarryFlag) ? true : false;
 
-            // In case of lsr and asr a 32 bit shift is performed if the immediate value is zero.
-            if (immediate_value == 0 && opcode != 0)
-            {
-                immediate_value = 32;
-            }
+            reg(reg_dest) = reg(reg_source);
 
-            // Perform the actual shift
-            if (immediate_value != 0)
+            switch (opcode)
             {
-                switch (opcode)
-                {
-                case 0b00: // LSL
-                    assert_carry((reg(reg_source) << (immediate_value - 1)) & 0x80000000);
-                    reg(reg_dest) = immediate_value >= 32 ? 0 : reg(reg_source) << immediate_value;
-                    break;
-                case 0b01: // LSR
-                    assert_carry((reg(reg_source) >> (immediate_value - 1)) & 1);
-                    reg(reg_dest) = immediate_value >= 32 ? 0 : reg(reg_source) >> immediate_value;
-                    break;
-                case 0b10: // ASR
-                {
-                    sint extended = (reg(reg_source) & 0x80000000) == 0x80000000 ? 0xFFFFFFFF : 0;
-                    sint result = immediate_value >= 32 ? extended : (sint)reg(reg_source) >> (sint)immediate_value;
-                    assert_carry((reg(reg_source) >> (immediate_value - 1)) & 1);
-                    reg(reg_dest) = (uint)result;
-                    break;
-                }
-                }
+            case 0b00: // LSL
+                LSL(reg(reg_dest), immediate_value, carry);
+                assert_carry(carry);
+                break;
+            case 0b01: // LSR
+                LSR(reg(reg_dest), immediate_value, carry);
+                assert_carry(carry);
+                break;
+            case 0b10: // ASR
+            {
+                ASR(reg(reg_dest), immediate_value, carry);
+                assert_carry(carry);
+                break;
             }
-            else
-            {
-                reg(reg_dest) = reg(reg_source);
             }
 
             // Update sign and zero flag
@@ -303,12 +290,12 @@ namespace NanoboyAdvance
             }
             break;
         }
-        // TODO: It seems like I was pretty tired when writing this... check and look for bugs carefully...
         case THUMB_4:
         {
             // THUMB.4 ALU operations
             int reg_dest = instruction & 7;
             int reg_source = (instruction >> 3) & 7;
+
             switch ((instruction >> 6) & 0xF)
             {
             case 0b0000: // AND
@@ -324,12 +311,9 @@ namespace NanoboyAdvance
             case 0b0010: // LSL
             {
                 uint amount = reg(reg_source);
-                if (amount == 0) amount = 32;
-                if (amount != 0)
-                {
-                    assert_carry((reg(reg_dest) << (amount - 1)) & 0x80000000);
-                    reg(reg_dest) = amount >= 32 ? 0 : reg(reg_dest) << amount;
-                }
+                bool carry = (cpsr & CarryFlag) ? true : false;
+                LSL(reg(reg_dest), amount, carry);
+                assert_carry(carry);
                 calculate_sign(reg(reg_dest));
                 calculate_zero(reg(reg_dest));
                 break;
@@ -337,29 +321,19 @@ namespace NanoboyAdvance
             case 0b0011: // LSR
             {
                 uint amount = reg(reg_source);
-                if (amount == 0)
-                {
-                    amount = 32;
-                }
-                assert_carry((reg(reg_dest) >> (amount - 1)) & 1);
-                reg(reg_dest) = amount >= 32 ? 0 : reg(reg_dest) << amount;
+                bool carry = (cpsr & CarryFlag) ? true : false;
+                LSR(reg(reg_dest), amount, carry);
+                assert_carry(carry);
                 calculate_sign(reg(reg_dest));
                 calculate_zero(reg(reg_dest));
                 break;
             }
             case 0b0100: // ASR
             {
-                sint extended;
-                sint result;
                 uint amount = reg(reg_source);
-                if (amount == 0)
-                {
-                    amount = 32;
-                }
-                extended = (reg(reg_source) & 0x80000000) == 0x80000000 ? 0xFFFFFFFF : 0;
-                result = amount >= 32 ? extended : (sint)(reg(reg_dest)) >> (sint)amount;
-                assert_carry((reg(reg_dest) >> (amount - 1)) & 1);
-                reg(reg_dest) = result;
+                bool carry = (cpsr & CarryFlag) ? true : false;
+                ASR(reg(reg_dest), amount, carry);
+                assert_carry(carry);
                 calculate_sign(reg(reg_dest));
                 calculate_zero(reg(reg_dest));
                 break;
@@ -390,20 +364,9 @@ namespace NanoboyAdvance
             case 0b0111: // ROR
             {
                 uint amount = reg(reg_source);
-                uint result = reg(reg_dest);
-                if (amount != 0)
-                {
-                    for (int i = 1; i <= amount; i++)
-                    {
-                        uint high_bit = (result & 1) << 31;
-                        result = (result >> 1) | high_bit;
-                        if (i == amount)
-                        {
-                            assert_carry(high_bit == 0x80000000);
-                        }
-                    }
-                }
-                reg(reg_dest) = result;
+                bool carry = (cpsr & CarryFlag) ? true : false;
+                ROR(reg(reg_dest), amount, carry, true);
+                assert_carry(carry);
                 calculate_sign(reg(reg_dest));
                 calculate_zero(reg(reg_dest));
                 break;

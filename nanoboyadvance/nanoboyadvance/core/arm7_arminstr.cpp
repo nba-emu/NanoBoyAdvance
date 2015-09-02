@@ -854,27 +854,20 @@ namespace NanoboyAdvance
                     uint amount;
                     operand2 = reg(reg_operand2);
 
-                    // When r15 is used as operand and operand2 is not immediate its value will be 12 bytes ahead instead of 8 bytes 
-                    if (reg_operand1 == 15)
-                    {
-                        operand1 += 4;
-                    }
-                    if (reg_operand2 == 15)
-                    {
-                        operand2 += 4;
-                    }
-
                     // The amount is either the value of a register or a 5 bit immediate
                     if (instruction & (1 << 4))
                     {
                         int reg_shift = (instruction >> 8) & 0xF;
                         amount = reg(reg_shift);
 
-                        // When r15 is used as operand and operand2 is not immediate its value will be 12 bytes ahead instead of 8 bytes 
-                        // TODO: Check if this is actually done in this case
-                        if (reg_shift == 15)
+                        // When using a register to specify the shift amount r15 will be 12 bytes ahead instead of 8 bytes
+                        if (reg_operand1 == 15)
                         {
-                            amount += 4;
+                            operand1 += 4;
+                        }
+                        if (reg_operand2 == 15)
+                        {
+                            operand2 += 4;
                         }
                     }
                     else
@@ -887,60 +880,21 @@ namespace NanoboyAdvance
                     {
                     case 0b00:
                         // Logical Shift Left
-                        if (amount != 0)
-                        {
-                            uint result = amount >= 32 ? 0 : operand2 << amount;
-                            carry = (operand2 << (amount - 1)) & 0x80000000 ? true : false;
-                            operand2 = result;
-                        }
+                        LSL(operand2, amount, carry);
                         break;
                     case 0b01:
-                    {
                         // Logical Shift Right
-                        uint result;
-                        if (amount == 0)
-                        {
-                            amount = 32;
-                        }
-                        result = amount >= 32 ? 0 : operand2 >> amount;
-                        carry = (operand2 >> (amount - 1)) & 1 ? true : false;
-                        operand2 = result;
+                        LSR(operand2, amount, carry);
                         break;
-                    }
                     case 0b10:
                     {
                         // Arithmetic Shift Right
-                        sint result;
-                        sint extended = (operand2 & 0x80000000) == 0x80000000 ? 0xFFFFFFFF : 0;
-                        if (amount == 0)
-                        {
-                            amount = 32;
-                        }
-                        result = amount >= 32 ? extended : (sint)operand2 >> (sint)amount;
-                        carry = (operand2 >> (amount - 1)) & 1 ? true : false;
-                        operand2 = result;
+                        ASR(operand2, amount, carry);
                         break;
                     }
                     case 0b11:
                         // Rotate Right
-                        if (amount != 0)
-                        {
-                            for (int i = 1; i <= amount; i++)
-                            {
-                                uint high_bit = (operand2 & 1) << 31;
-                                operand2 = (operand2 >> 1) | high_bit;
-                                if (i == amount)
-                                {
-                                    carry = high_bit == 0x80000000;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            bool old_carry = carry;
-                            carry = (operand2 & 1) == 1;
-                            operand2 = (operand2 >> 1) | old_carry ? 0x80000000 : 0;
-                        }
+                        ROR(operand2, amount, carry, false);
                         break;
                     }
                 }
@@ -1183,10 +1137,13 @@ namespace NanoboyAdvance
             else
             {
                 int reg_offset = instruction & 0xF;
-                uint shift_operand1 = reg(reg_offset);
-                uint shift_operand2 = (instruction >> 7) & 0x1F;
+                uint amount = (instruction >> 7) & 0x1F;
                 int shift = (instruction >> 5) & 3;
+                bool carry; // this is not actually used but we need a var for carry out.
+
                 ASSERT(reg_offset == 15, LOG_WARN, "Single Data Transfer, thou shall not use r15 as offset, r15=0x%x", r15);
+
+                offset = reg(reg_offset);
 
                 // Perform the actual shift
                 switch (shift)
@@ -1194,49 +1151,26 @@ namespace NanoboyAdvance
                 case 0b00:
                 {
                     // Logical Shift Left
-                    offset = shift_operand2 >= 32 ? 0 : shift_operand1 << shift_operand2;
+                    LSL(offset, amount, carry);
                     break;
                 }
                 case 0b01:
                 {
                     // Logical Shift Right
-                    if (shift_operand2 == 0)
-                    {
-                        shift_operand2 = 32;
-                    }
-                    offset = shift_operand2 >= 32 ? 0 : shift_operand1 >> shift_operand2;
+                    LSR(offset, amount, carry);
                     break;
                 }
                 case 0b10:
                 {
                     // Arithmetic Shift Right
-                    sint result;
-                    sint extended = (shift_operand1 & 0x80000000) == 0x80000000 ? 0xFFFFFFFF : 0;
-                    if (shift_operand2 == 0)
-                    {
-                        shift_operand2 = 32;
-                    }
-                    result = shift_operand2 >= 32 ? extended : (sint)shift_operand1 >> (sint)shift_operand2;
-                    offset = (uint)result;
+                    ASR(offset, amount, carry);
                     break;
                 }
                 case 0b11:
                 {
                     // Rotate Right
-                    offset = shift_operand1;
-                    if (shift_operand2 == 0)
-                    {
-                        uint tmp_carry = offset & 1 ? 0x80000000 : 0;
-                        offset = (offset >> 1) | tmp_carry;
-                    }
-                    else
-                    {
-                        for (int i = 1; i <= shift_operand2; i++)
-                        {
-                            uint old_carry = (cpsr & CarryFlag) ? 0x80000000 : 0;
-                            offset = (offset >> 1) | old_carry;
-                        }
-                    }
+                    carry = (cpsr & CarryFlag) ? true : false;
+                    ROR(offset, amount, carry, false);
                     break;
                 }
                 }
@@ -1309,6 +1243,9 @@ namespace NanoboyAdvance
         case ARM_11:
         {
             // ARM.11 Block Data Transfer
+            // TODO: Handle empty register list
+            //       Correct transfer order for stm (this is needed for some io transfers)
+            //       See gbatek for both
             bool pc_in_list = (instruction & (1 << 15)) == (1 << 15);
             int reg_base = (instruction >> 16) & 0xF;
             bool load = (instruction & (1 << 20)) == (1 << 20);
@@ -1369,8 +1306,8 @@ namespace NanoboyAdvance
                         // Perform the actual load / store operation
                         if (load)
                         {
-                            // Overwriting the base when the base is not the first register in the list disables writeback
-                            if (i == reg_base && i != first_register)
+                            // Overwriting the base disables writeback
+                            if (i == reg_base)
                             {
                                 write_back = false;
                             }
@@ -1381,8 +1318,6 @@ namespace NanoboyAdvance
                             // If r15 is overwritten, the pipeline must be flushed
                             if (i == 15)
                             {
-                                // NOTICE: Here the bad return happens
-                                //         Check why this is happening
                                 // If the s bit is set a mode switch is performed
                                 if (s_bit)
                                 {
@@ -1438,8 +1373,8 @@ namespace NanoboyAdvance
                         // Perform the actual load / store operation
                         if (load)
                         {
-                            // Overwriting the base when the base is not the first register in the list disables writeback
-                            if (i == reg_base && i != first_register)
+                            // Overwriting the base disables writeback
+                            if (i == reg_base)
                             {
                                 write_back = false;
                             }
