@@ -26,7 +26,6 @@ namespace NanoboyAdvance
     {
         this->memory = memory;
         this->gba_io = gba_io;
-        irq = false;
     }
 
     void GBADMA::DMA0()
@@ -75,7 +74,7 @@ namespace NanoboyAdvance
             // Check irq bit
             if (gba_io->dma0cnt_h & (1 < 14))
             {
-                irq = true;
+                gba_io->if_ |= (1 << 8);
             }
         }
     }
@@ -126,7 +125,7 @@ namespace NanoboyAdvance
             // Check irq bit
             if (gba_io->dma1cnt_h & (1 < 14))
             {
-                irq = true;
+                gba_io->if_ |= (1 << 9);
             }
         }
     }
@@ -177,7 +176,7 @@ namespace NanoboyAdvance
             // Check irq bit
             if (gba_io->dma2cnt_h & (1 < 14))
             {
-                irq = true;
+                gba_io->if_ |= (1 << 10);
             }
         }
     }
@@ -228,14 +227,13 @@ namespace NanoboyAdvance
             // Check irq bit
             if (gba_io->dma3cnt_h & (1 < 14))
             {
-                irq = true;
+                gba_io->if_ |= (1 << 11);
             }
         }
     }
 
     void GBADMA::Step()
     {
-        irq = false;
         DMA0();
         DMA1();
         DMA2();

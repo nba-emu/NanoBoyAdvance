@@ -44,7 +44,6 @@ namespace NanoboyAdvance
         void DMA2();
         void DMA3();
     public:
-        bool irq;
         uint dma0_source;
         uint dma1_source;
         uint dma2_source;

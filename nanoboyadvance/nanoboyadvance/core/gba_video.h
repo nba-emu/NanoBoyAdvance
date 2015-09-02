@@ -41,7 +41,6 @@ namespace NanoboyAdvance
         int ticks;
     public:
         bool render_scanline;
-        bool irq;
         ubyte pal[0x400];
         ubyte vram[0x18000];
         ubyte obj[0x400];

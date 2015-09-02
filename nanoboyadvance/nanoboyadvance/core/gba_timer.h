@@ -35,7 +35,6 @@ namespace NanoboyAdvance
         int timer2_ticks;
         int timer3_ticks;
     public:
-        bool irq;
         ushort timer0_reload;
         ushort timer1_reload;
         ushort timer2_reload;

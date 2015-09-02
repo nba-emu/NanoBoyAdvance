@@ -28,7 +28,6 @@ namespace NanoboyAdvance
         this->gba_io = gba_io;
         timer0_reload = timer1_reload = timer2_reload = timer3_reload = 0;
         timer0_ticks = timer1_ticks = timer2_ticks = timer3_ticks = 0;
-        irq = false;
     }
 
     void GBATimer::Step()
@@ -47,9 +46,6 @@ namespace NanoboyAdvance
         bool timer0_overflow = false;
         bool timer1_overflow = false;
         bool timer2_overflow = false;
-        
-        // Always reset the irq flag
-        irq = false;
 
         // Handle Timer 0
         if (timer0_enabled && ++timer0_ticks >= timer0_clock)
@@ -63,7 +59,7 @@ namespace NanoboyAdvance
             {
                 if (gba_io->tm0cnt_h & (1 << 6))
                 {
-                    irq = true;
+                    gba_io->if_ |= (1 << 3);
                 }
                 gba_io->tm0cnt_l = timer0_reload;
                 timer0_overflow = true;
@@ -82,7 +78,7 @@ namespace NanoboyAdvance
             {
                 if (gba_io->tm1cnt_h & (1 << 6))
                 {
-                    irq = true;
+                    gba_io->if_ |= (1 << 4);
                 }
                 gba_io->tm1cnt_l = timer1_reload;
                 timer1_overflow = true;
@@ -101,7 +97,7 @@ namespace NanoboyAdvance
             {
                 if (gba_io->tm2cnt_h & (1 << 6))
                 {
-                    irq = true;
+                    gba_io->if_ |= (1 << 5);
                 }
                 gba_io->tm2cnt_l = timer2_reload;
                 timer2_overflow = true;
@@ -120,7 +116,7 @@ namespace NanoboyAdvance
             {
                 if (gba_io->tm3cnt_h & (1 << 6))
                 {
-                    irq = true;
+                    gba_io->if_ |= (1 << 6);
                 }
                 gba_io->tm3cnt_l = timer3_reload;
             }

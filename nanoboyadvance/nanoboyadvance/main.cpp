@@ -109,7 +109,7 @@ int main(int argc, char **argv)
                     setpixel(x, y, color_rgb);
                 }
             }
-            if (memory.gba_io->ime != 0 && (memory.video->irq || memory.timer->irq || memory.dma->irq))
+            if (memory.gba_io->ime != 0 && memory.gba_io->if_ != 0)
             {
                 arm->FireIRQ();
             }

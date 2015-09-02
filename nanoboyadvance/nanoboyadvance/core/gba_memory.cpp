@@ -71,10 +71,8 @@ namespace NanoboyAdvance
             }
             return bios[internal_offset];
         case 2:
-            //ASSERT(internal_offset >= 0x40000, LOG_ERROR, "WRAM read: offset out of bounds");
             return wram[internal_offset % 0x40000];
         case 3:
-            //ASSERT(internal_offset >= 0x8000 && internal_offset <= 0xFFFF00, LOG_ERROR, "IRAM read: offset out of bounds");
             return iram[internal_offset % 0x8000];
         case 4:
             // Emulate IO mirror at 04xx0800
@@ -82,17 +80,15 @@ namespace NanoboyAdvance
             {
                 internal_offset &= 0xFFFF;
             }
-            ASSERT(internal_offset >= 0x3FF, LOG_ERROR, "IO read: offset out of bounds");
+            //ASSERT(internal_offset >= 0x3FF, LOG_ERROR, "IO read: offset out of bounds");
             if (internal_offset >= 0x3FF)
             {
                 return 0;
             }
             return io[internal_offset];
         case 5:
-            //ASSERT(internal_offset >= 0x400, LOG_ERROR, "PAL read: offset out of bounds");
             return video->pal[internal_offset % 0x400];
         case 6:
-            //ASSERT(internal_offset >= 0x18000, LOG_ERROR, "VRAM read: offset out of bounds");
             internal_offset %= 0x20000;
             if (internal_offset >= 0x18000)
             {
@@ -100,7 +96,6 @@ namespace NanoboyAdvance
             }
             return video->vram[internal_offset];
         case 7:
-            //ASSERT(internal_offset >= 0x400, LOG_ERROR, "OAM read: offset out of bounds");
             return video->obj[internal_offset % 0x400];
         case 8:
             // TODO: Prevent out of bounds read, we should save the rom size somewhere
@@ -131,24 +126,22 @@ namespace NanoboyAdvance
         switch (page)
         {
         case 0:
-            //LOG(LOG_ERROR, "Write into BIOS memory not allowed (0x%x)", offset);
+            LOG(LOG_ERROR, "Write into BIOS memory not allowed (0x%x)", offset);
             break;
         case 2: 
-            //ASSERT(internal_offset >= 0x40000, LOG_ERROR, "WRAM write: offset out of bounds");
             wram[internal_offset % 0x40000] = value;
             break;
         case 3:
-            //ASSERT(internal_offset >= 0x8000 && internal_offset <= 0xFFFF00, LOG_ERROR, "IRAM write: offset out of bounds");
             iram[internal_offset % 0x8000] = value;
             break;
         case 4:
         {
             bool write = true;
-            ASSERT(internal_offset >= 0x3FF, LOG_ERROR, "IO write: offset out of bounds");
             
             // If the address it out of bounds we should exit now
-            if (internal_offset >= 0x3FF)
+            if (internal_offset >= 0x3FF && (internal_offset & 0xFFFF) != 0x800)
             {
+                LOG(LOG_ERROR, "IO write: offset out of bounds");
                 break;
             }
 
@@ -260,12 +253,10 @@ namespace NanoboyAdvance
         switch (page)
         {
         case 5: 
-            //ASSERT(internal_offset + 1 >= 0x400, LOG_ERROR, "PAL write: offset out of bounds");
             video->pal[internal_offset % 0x400] = value & 0xFF;
             video->pal[(internal_offset + 1) % 0x400] = (value >> 8) & 0xFF;
             break;
         case 6: 
-            //ASSERT(internal_offset + 1 >= 0x18000, LOG_ERROR, "VRAM write: offset out of bounds");
             internal_offset %= 0x20000;
             if (internal_offset >= 0x18000)
             {
@@ -275,7 +266,6 @@ namespace NanoboyAdvance
             video->vram[internal_offset + 1] = (value >> 8) & 0xFF;
             break;
         case 7: 
-            //ASSERT(internal_offset + 1 >= 0x400, LOG_ERROR, "OAM write: offset out of bounds");
             video->obj[internal_offset % 0x400] = value & 0xFF;
             video->obj[(internal_offset + 1) % 0x400] = (value >> 8) & 0xFF;
             break;
@@ -288,7 +278,7 @@ namespace NanoboyAdvance
 
     void GBAMemory::WriteWord(uint offset, uint value)
     {
-        //ASSERT(offset == 0x4000100 || offset == 0x4000104 || offset == 0x4000108 || offset == 0x400010C, LOG_WARN, "Unimplemented case 32 bit write to timer register");
+        ASSERT(offset == 0x4000100 || offset == 0x4000104 || offset == 0x4000108 || offset == 0x400010C, LOG_WARN, "Unimplemented case 32 bit write to timer register");
         WriteHWord(offset, value & 0xFFFF);
         WriteHWord(offset + 2, (value >> 16) & 0xFFFF);
     }

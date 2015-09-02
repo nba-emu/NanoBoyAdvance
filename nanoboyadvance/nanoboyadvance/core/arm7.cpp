@@ -195,7 +195,7 @@ namespace NanoboyAdvance
     ubyte ARM7::ReadByte(uint offset)
     {
         // GBA specific case
-        if (offset < 0x4000)
+        if (r15 > 0x4000 && offset < 0x4000)
         {
             return last_fetched_bios & 0xFF;
         }
@@ -206,7 +206,7 @@ namespace NanoboyAdvance
     {
         // TODO: Proper handling (Mis-aligned LDRH,LDRSH)
         // GBA specific case
-        if ((offset & ~1) < 0x4000)
+        if (r15 > 0x4000 && (offset & ~1) < 0x4000)
         {
             return last_fetched_bios & 0xFFFF;
         }
@@ -216,7 +216,7 @@ namespace NanoboyAdvance
     uint ARM7::ReadWord(uint offset)
     {
         // GBA specific case
-        if ((offset & ~3) < 0x4000)
+        if (r15 > 0x4000 && (offset & ~3) < 0x4000)
         {
             return last_fetched_bios;
         }
@@ -229,7 +229,7 @@ namespace NanoboyAdvance
         int amount = (offset & 3) * 8;
 
         // GBA specific case
-        if ((offset & ~3) < 0x4000)
+        if (r15 > 0x4000 && (offset & ~3) < 0x4000)
         {
             return last_fetched_bios;
         }
@@ -262,6 +262,14 @@ namespace NanoboyAdvance
     void ARM7::Step()
     {
         bool thumb = (cpsr & Thumb) == Thumb;
+        uint pc_page = r15 >> 24;
+        uint old_pc = r15;
+
+        if (pc_page != 0 && pc_page != 3 && pc_page != 6 && pc_page != 8)
+        {
+            LOG(LOG_ERROR, "Whoops! PC in suspicious area! This shouldn't happen!!! r15=0x%x", r15);
+        }
+
         if (thumb)
         {
             r15 &= ~1;
@@ -347,7 +355,7 @@ namespace NanoboyAdvance
     {
         if ((cpsr & IRQDisable) == 0)
         {
-            r14_irq = r15 - ((cpsr & Thumb) ? 2 : 4);
+            r14_irq = r15 + 4; 
             spsr_irq = cpsr;
             cpsr = (cpsr & ~0x3F) | IRQ | IRQDisable;
             RemapRegisters();
