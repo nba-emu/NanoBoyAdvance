@@ -30,7 +30,7 @@ namespace NanoboyAdvance
         memset(pal, 0, 0x400);
         memset(vram, 0, 0x18000);
         memset(obj, 0, 0x400);
-		memset(buffer, 0, 240 * 160);
+		memset(buffer, 0, 240 * 160 * 4);
     }
 
 	inline uint GBAVideo::DecodeRGB5(ushort color)
@@ -81,6 +81,7 @@ namespace NanoboyAdvance
 					buffer[line * 240 + x] = DecodeRGB5(rgb5);
 				}
 			}
+			break;
 		}
 	}
 
