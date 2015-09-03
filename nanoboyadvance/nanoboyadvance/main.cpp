@@ -31,17 +31,6 @@ using namespace NanoboyAdvance;
 
 SDL_Surface* screen;
 uint32_t* buffer;
-GBAMemory memory("bios.bin", "armwrestler_new.gba");
-
-int getcolor(int n, int p)
-{
-    ushort v = memory.ReadHWord(0x5000000 + p * 32 + n * 2);
-    uint r = 0xFF000000;
-    r |= ((v & 0x1F) * 8) << 16;
-    r |= (((v >> 5) & 0x1f) * 8) << 8;
-    r |= ((v >> 10) & 0x1f) * 8;
-    return r;
-}
 
 #define plotpixel(x,y,c) buffer[(y) * 480 + (x)] = c;
 void setpixel(int x, int y, int color)
@@ -55,8 +44,27 @@ void setpixel(int x, int y, int color)
 int main(int argc, char **argv)
 {
     SDL_Event event;
-    ARM7* arm = new ARM7(&memory);
+	GBAMemory* memory;
+	ARM7* arm;
     bool running = true;
+
+	if (argc > 1)
+	{
+		memory = new GBAMemory("bios.bin", argv[1]);
+	}
+	else
+	{
+		string rom;
+		cout << "Please specify a rom: ";
+		cin >> rom;
+		if (rom.empty())
+		{
+			return 0;
+		}
+		memory = new GBAMemory("bios.bin", rom);
+	}
+
+	arm = new ARM7(memory);
 
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
     {
@@ -88,33 +96,31 @@ int main(int argc, char **argv)
         joypad |= kb_state[SDLK_DOWN] ? 0 : (1 << 7);
         joypad |= kb_state[SDLK_s] ? 0 : (1 << 8);
         joypad |= kb_state[SDLK_a] ? 0 : (1 << 9);
-        memory.gba_io->keyinput = joypad;
+        memory->gba_io->keyinput = joypad;
         for (int i = 0; i < 280896; i++)
         {
             arm->Step();
             //memory.timer->Step();
-            memory.gba_io->tm0cnt_l = (memory.gba_io->tm0cnt_l + 1) % 0x10000;
-            memory.gba_io->tm1cnt_l = (memory.gba_io->tm1cnt_l + 1) % 0x10000;
-            memory.gba_io->tm2cnt_l = (memory.gba_io->tm2cnt_l + 1) % 0x10000;
-            memory.gba_io->tm3cnt_l = (memory.gba_io->tm3cnt_l + 1) % 0x10000;
-            memory.video->Step();
-            memory.dma->Step();
-            if (memory.video->render_scanline)
+            memory->gba_io->tm0cnt_l = (memory->gba_io->tm0cnt_l + 1) % 0x10000;
+            memory->gba_io->tm1cnt_l = (memory->gba_io->tm1cnt_l + 1) % 0x10000;
+            memory->gba_io->tm2cnt_l = (memory->gba_io->tm2cnt_l + 1) % 0x10000;
+            memory->gba_io->tm3cnt_l = (memory->gba_io->tm3cnt_l + 1) % 0x10000;
+            memory->video->Step();
+            memory->dma->Step();
+            if (memory->video->render_scanline)
             {
-                int y = memory.gba_io->vcount;
+                int y = memory->gba_io->vcount;
                 for (int x = 0; x < 240; x++)
                 {
-                    ubyte color = memory.ReadByte((memory.gba_io->dispcnt & 0x10 ? 0x0600A000 : 0x06000000) + (y * 240) + x);
-                    int color_rgb = getcolor(color & 0xF, (color >> 4) & 0xF);
-                    setpixel(x, y, color_rgb);
+					setpixel(x, y, memory->video->buffer[y * 240 + x]);
                 }
             }
-            if (memory.gba_io->ime != 0 && (memory.gba_io->if_ & memory.gba_io->ie) != 0)
+            if (memory->gba_io->ime != 0 && (memory->gba_io->if_ & memory->gba_io->ie) != 0)
             {
                 arm->FireIRQ();
             }
         }
-        for (int pal = 0; pal < 32; pal++)
+        /*for (int pal = 0; pal < 32; pal++)
         {
             for (int color = 0; color < 16; color++)
             {
@@ -127,7 +133,7 @@ int main(int argc, char **argv)
                     }
                 }
             }
-        }
+        }*/
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT)

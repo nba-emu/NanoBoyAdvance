@@ -39,11 +39,14 @@ namespace NanoboyAdvance
         GBAIO* gba_io;
         GBAVideoState state;
         int ticks;
+		inline uint DecodeRGB5(ushort color);
+		void Render(int line);
     public:
         bool render_scanline;
         ubyte pal[0x400];
         ubyte vram[0x18000];
         ubyte obj[0x400];
+		uint buffer[240 * 160];
         GBAVideo(GBAIO* gba_io);
         void Step();
     };

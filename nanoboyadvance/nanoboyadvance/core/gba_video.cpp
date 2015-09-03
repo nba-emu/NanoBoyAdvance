@@ -21,7 +21,7 @@
 
 namespace NanoboyAdvance
 {
-    GBAVideo::GBAVideo(GBAIO* gba_io)
+	GBAVideo::GBAVideo(GBAIO* gba_io)
     {
         this->gba_io = gba_io;
         state = GBAVideoState::Scanline;
@@ -30,12 +30,64 @@ namespace NanoboyAdvance
         memset(pal, 0, 0x400);
         memset(vram, 0, 0x18000);
         memset(obj, 0, 0x400);
+		memset(buffer, 0, 240 * 160);
     }
 
-    // TODO: Coincidence interrupt
+	inline uint GBAVideo::DecodeRGB5(ushort color)
+	{
+		uint argb = 0xFF000000 |
+					(((color & 0x1F) * 8) << 16) |
+					((((color >> 5) & 0x1f) * 8) << 8) |
+					(((color >> 10) & 0x1f) * 8);
+		return argb;
+	}
+
+	void GBAVideo::Render(int line)
+	{
+		int mode = gba_io->dispcnt & 7;
+		bool bg0_enable = (gba_io->dispcnt & (1 << 8)) ? true : false;
+		bool bg1_enable = (gba_io->dispcnt & (1 << 9)) ? true : false;
+		bool bg2_enable = (gba_io->dispcnt & (1 << 10)) ? true : false;
+		bool bg3_enable = (gba_io->dispcnt & (1 << 11)) ? true : false;
+
+		ASSERT(mode > 5, LOG_ERROR, "Invalid video mode %d: cannot render", mode);
+
+		// Call mode specific rendering logic
+		switch (mode)
+		{
+		case 3:
+			// BG Mode 3 - 240x160 pixels, 32768 colors
+			// Bitmap modes are rendered on BG2 which means we must check if it is enabled
+			if (bg2_enable)
+			{
+				uint offset = line * 240 * 2;
+				for (int x = 0; x < 240; x++)
+				{
+					buffer[line * 240 + x] = DecodeRGB5((vram[offset + 1] << 8) | vram[offset]);
+					offset += 2;
+				}
+			}
+			break;
+		case 4:
+			// BG Mode 4 - 240x160 pixels, 256 colors (out of 32768 colors)
+			// Bitmap modes are rendered on BG2 which means we must check if it is enabled
+			if (bg2_enable)
+			{
+				uint page = gba_io->dispcnt & 0x10 ? 0xA000 : 0;
+				for (int x = 0; x < 240; x++)
+				{
+					ubyte index = vram[page + line * 240 + x];
+					ushort rgb5 = pal[index * 2] | (pal[index * 2 + 1] << 8);
+					buffer[line * 240 + x] = DecodeRGB5(rgb5);
+				}
+			}
+		}
+	}
+
     void NanoboyAdvance::GBAVideo::Step()
     {
         int lyc = gba_io->dispstat >> 8;
+        bool vcounter_irq_enable = (gba_io->dispstat & (1 << 5)) == (1 << 5);
 
         // Update tickcount
         ticks++;
@@ -44,8 +96,8 @@ namespace NanoboyAdvance
         render_scanline = false;
 
         // Handle V-Count Setting (LYC)
-        //gba_io->dispstat &= ~(1 << 2);
-        //gba_io->dispstat |= gba_io->vcount == lyc ? (1 << 2) : 0;
+        gba_io->dispstat &= ~(1 << 2);
+        gba_io->dispstat |= gba_io->vcount == lyc ? (1 << 2) : 0;
 
         switch (state)
         {
@@ -60,7 +112,9 @@ namespace NanoboyAdvance
                 {
                     gba_io->if_ |= 2;
                 }
-                // This is the point where the scanline should be rendered
+                // Render the current scanline only
+				Render(gba_io->vcount);
+				// Notify that the screen must be updated
                 render_scanline = true;
                 ticks = 0;
             }
@@ -71,6 +125,10 @@ namespace NanoboyAdvance
             {
                 gba_io->dispstat = gba_io->dispstat & ~2; // clear hblank bit
                 gba_io->vcount++;
+                if (gba_io->vcount == lyc && vcounter_irq_enable)
+                {
+                    gba_io->if_ |= 4;
+                }
                 if (gba_io->vcount == 160)
                 {
                     gba_io->dispstat = (gba_io->dispstat & ~3) | 1; // set vblank bit
@@ -89,6 +147,10 @@ namespace NanoboyAdvance
             if (ticks >= 1232)
             {
                 gba_io->vcount++;
+                if (gba_io->vcount == lyc && vcounter_irq_enable)
+                {
+                    gba_io->if_ |= 4;
+                }
                 if (vblank_irq_enable && gba_io->vcount == 161)
                 {
                     gba_io->if_ |= 1;
