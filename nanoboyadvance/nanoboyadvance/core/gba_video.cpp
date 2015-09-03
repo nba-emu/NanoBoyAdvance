@@ -82,6 +82,28 @@ namespace NanoboyAdvance
 				}
 			}
 			break;
+		case 5:
+			// BG Mode 5 - 160x128 pixels, 32768 colors
+			// Bitmap modes are rendered on BG2 which means we must check if it is enabled
+			if (bg2_enable)
+			{
+				uint offset = (gba_io->dispcnt & 0x10 ? 0xA000 : 0) + line * 160 * 2;
+				for (int x = 0; x < 240; x++)
+				{
+					if (x < 160 && line < 128)
+					{
+						buffer[line * 240 + x] = DecodeRGB5((vram[offset + 1] << 8) | vram[offset]);
+						offset += 2;
+					}
+					else
+					{
+						// The unused space is filled with the first color from pal ram as far as I can see
+						ushort rgb5 = pal[0] | (pal[1] << 8);
+						buffer[line * 240 + x] = DecodeRGB5(rgb5);
+					}
+				}
+			}
+			break;
 		}
 	}
 
