@@ -76,15 +76,18 @@ namespace NanoboyAdvance
             return iram[internal_offset % 0x8000];
         case 4:
             // Emulate IO mirror at 04xx0800
+            // TODO: Fix?
             if ((internal_offset & 0xFFFF) == 0x800)
             {
                 internal_offset &= 0xFFFF;
             }
-            //ASSERT(internal_offset >= 0x3FF, LOG_ERROR, "IO read: offset out of bounds");
             if (internal_offset >= 0x3FF)
             {
+                LOG(LOG_ERROR, "IO read: offset out of bounds");
                 return 0;
             }
+            if (internal_offset < 0x200 && internal_offset > 0x203)
+            LOG(LOG_INFO, "IO read: 0x%x", offset);
             return io[internal_offset];
         case 5:
             return video->pal[internal_offset % 0x400];
@@ -103,6 +106,9 @@ namespace NanoboyAdvance
         case 9:
             // TODO: Prevent out of bounds read, we should save the rom size somewhere
             return rom[0x1000000 + internal_offset];
+        default:
+            LOG(LOG_ERROR, "Read from invalid/unimplemented address (0x%x)", offset);
+            break;
         }
         return 0;
     }

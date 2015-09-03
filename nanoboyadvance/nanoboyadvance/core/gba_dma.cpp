@@ -79,6 +79,7 @@ namespace NanoboyAdvance
         }
     }
 
+    // TODO: Sepcial mode
     void GBADMA::DMA1()
     {
         // Check enable bit
@@ -130,6 +131,7 @@ namespace NanoboyAdvance
         }
     }
 
+    // TODO: Sepcial mode
     void GBADMA::DMA2()
     {
         // Check enable bit
@@ -234,9 +236,116 @@ namespace NanoboyAdvance
 
     void GBADMA::Step()
     {
-        DMA0();
-        DMA1();
-        DMA2();
-        DMA3();
+        // TODO: Only check if enable bit is set?
+        //       Do only trigger once per HBlank/Scanline?
+        bool vblank = gba_io->dispstat & 1 ? true : false;
+        bool hblank = gba_io->dispstat & 2 ? true : false;
+
+        // DMA0
+        switch ((gba_io->dma0cnt_h >> 12) & 3)
+        {
+        case 0:
+            // Immediatly
+            DMA0();
+            break;
+        case 1:
+            // VBlank
+            if (vblank)
+            {
+                DMA0();
+            }
+            break;
+        case 2:
+            // HBlank
+            if (hblank)
+            {
+                DMA0();
+            }
+            break;
+        case 3:
+            LOG(LOG_ERROR, "Special not allowed for DMA0");
+            break;
+        }
+
+        // DMA1
+        switch ((gba_io->dma1cnt_h >> 12) & 3)
+        {
+        case 0:
+            // Immediatly
+            DMA1();
+            break;
+        case 1:
+            // VBlank
+            if (vblank)
+            {
+                DMA1();
+            }
+            break;
+        case 2:
+            // HBlank
+            if (hblank)
+            {
+                DMA1();
+            }
+            break;
+        case 3:
+            //LOG(LOG_ERROR, "Unimplemented special for DMA1");
+            break;
+        }
+
+        // DMA2
+        switch ((gba_io->dma2cnt_h >> 12) & 3)
+        {
+        case 0:
+            // Immediatly
+            DMA2();
+            break;
+        case 1:
+            // VBlank
+            if (vblank)
+            {
+                DMA2();
+            }
+            break;
+        case 2:
+            // HBlank
+            if (hblank)
+            {
+                DMA2();
+            }
+            break;
+        case 3:
+            //LOG(LOG_ERROR, "Unimplemented special for DMA2");
+            break;
+        }
+
+        // DMA3
+        switch ((gba_io->dma3cnt_h >> 12) & 3)
+        {
+        case 0:
+            // Immediatly
+            DMA3();
+            break;
+        case 1:
+            // VBlank
+            if (vblank)
+            {
+                DMA3();
+            }
+            break;
+        case 2:
+            // HBlank
+            if (hblank)
+            {
+                DMA3();
+            }
+            break;
+        case 3:
+            if (hblank && gba_io->vcount >= 2 && gba_io->vcount <= 162)
+            {
+                DMA3();
+            }
+            break;
+        }
     }
 }

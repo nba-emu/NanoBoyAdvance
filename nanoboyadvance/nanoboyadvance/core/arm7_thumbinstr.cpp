@@ -704,7 +704,22 @@ namespace NanoboyAdvance
         case THUMB_15:
         {
             // THUMB.15 Multiple load/store
+            // TODO: Handle empty register list
             int reg_base = (instruction >> 8) & 7;
+            bool write_back = true;
+            uint address = reg(reg_base);
+            int first_register;
+
+            // Find the first register
+            for (int i = 0; i < 8; i++)
+            {
+                if (instruction & (1 << i))
+                {
+                    first_register = i;
+                    break;
+                }
+            }
+
             if (instruction & (1 << 11))
             {
                 // LDMIA
@@ -712,8 +727,16 @@ namespace NanoboyAdvance
                 {
                     if (instruction & (1 << i))
                     {
-                        reg(i) = ReadWord(reg(reg_base));
-                        reg(reg_base) += 4;
+                        if (i == reg_base)
+                        {
+                            write_back = false;
+                        }
+                        reg(i) = ReadWord(address);
+                        address += 4;
+                        if (write_back)
+                        {
+                            reg(reg_base) = address;
+                        }
                     }
                 }
             }
@@ -724,7 +747,14 @@ namespace NanoboyAdvance
                 {
                     if (instruction & (1 << i))
                     {
-                        WriteWord(reg(reg_base), reg(i));
+                        if (i == reg_base && i == first_register)
+                        {
+                            WriteWord(reg(reg_base), address);
+                        }
+                        else
+                        {
+                            WriteWord(reg(reg_base), reg(i));
+                        }
                         reg(reg_base) += 4;
                     }
                 }
