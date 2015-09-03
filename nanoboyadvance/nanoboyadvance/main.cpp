@@ -120,20 +120,6 @@ int main(int argc, char **argv)
                 arm->FireIRQ();
             }
         }
-        /*for (int pal = 0; pal < 32; pal++)
-        {
-            for (int color = 0; color < 16; color++)
-            {
-                int rgb = getcolor(color, pal);
-                for (int y = 0; y < 4; y++)
-                {
-                    for (int x = 0; x < 4; x++)
-                    {
-                        setpixel(color * 4 + x, pal * 4 + y, rgb);
-                    }
-                }
-            }
-        }*/
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT)
