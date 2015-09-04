@@ -802,7 +802,7 @@ namespace NanoboyAdvance
         case THUMB_17:
             // THUMB.17 Software Interrupt
             // TODO: I-bit?
-            reg(14) = r15 - 2;
+            r14_svc = r15 - 2;
             spsr_svc = cpsr;
             r15 = 8;
             cpsr &= ~Thumb;
