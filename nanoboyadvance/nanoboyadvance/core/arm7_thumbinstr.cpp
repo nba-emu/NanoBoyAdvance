@@ -801,14 +801,17 @@ namespace NanoboyAdvance
         }
         case THUMB_17:
             // THUMB.17 Software Interrupt
-            // TODO: I-bit?
-            r14_svc = r15 - 2;
-            spsr_svc = cpsr;
-            r15 = 8;
-            cpsr &= ~Thumb;
-            cpsr = (cpsr & ~0x1F) | SVC;
-            RemapRegisters();
-            flush_pipe = true;
+            // TODO: Do we need I-bit or not?
+            if ((cpsr & IRQDisable) == 0)
+            {
+                r14_svc = r15 - 2;
+                spsr_svc = cpsr;
+                r15 = 8;
+                cpsr &= ~Thumb;
+                cpsr = (cpsr & ~0x1F) | SVC | IRQDisable;
+                RemapRegisters();
+                flush_pipe = true;
+            }
             break;
         case THUMB_18:
         {

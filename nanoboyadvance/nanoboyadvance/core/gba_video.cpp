@@ -21,7 +21,7 @@
 
 namespace NanoboyAdvance
 {
-	GBAVideo::GBAVideo(GBAIO* gba_io)
+    GBAVideo::GBAVideo(GBAIO* gba_io)
     {
         this->gba_io = gba_io;
         state = GBAVideoState::Scanline;
@@ -30,82 +30,114 @@ namespace NanoboyAdvance
         memset(pal, 0, 0x400);
         memset(vram, 0, 0x18000);
         memset(obj, 0, 0x400);
-		memset(buffer, 0, 240 * 160 * 4);
+        memset(buffer, 0, 240 * 160 * 4);
     }
 
-	inline uint GBAVideo::DecodeRGB5(ushort color)
-	{
-		uint argb = 0xFF000000 |
-					(((color & 0x1F) * 8) << 16) |
-					((((color >> 5) & 0x1f) * 8) << 8) |
-					(((color >> 10) & 0x1f) * 8);
-		return argb;
-	}
+    inline uint GBAVideo::DecodeRGB5(ushort color)
+    {
+        uint argb = 0xFF000000 |
+                    (((color & 0x1F) * 8) << 16) |
+                    ((((color >> 5) & 0x1F) * 8) << 8) |
+                    (((color >> 10) & 0x1F) * 8);
+        return argb;
+    }
 
-	void GBAVideo::Render(int line)
-	{
-		int mode = gba_io->dispcnt & 7;
-		bool bg0_enable = (gba_io->dispcnt & (1 << 8)) ? true : false;
-		bool bg1_enable = (gba_io->dispcnt & (1 << 9)) ? true : false;
-		bool bg2_enable = (gba_io->dispcnt & (1 << 10)) ? true : false;
-		bool bg3_enable = (gba_io->dispcnt & (1 << 11)) ? true : false;
+    inline uint* GBAVideo::DecodeTileLine4BPP(uint block_base, uint palette_base, int number, int line)
+    {
+        uint offset = block_base + number * 32 + line * 4;
+        uint data[8];
 
-		ASSERT(mode > 5, LOG_ERROR, "Invalid video mode %d: cannot render", mode);
+        for (int i = 0; i < 4; i++)
+        {
+            ubyte value = vram[offset + i];
+            int left_index = value & 0xF;
+            int right_index = value >> 4;
+            data[i * 2] = DecodeRGB5((pal[palette_base + left_index * 2 + 1] << 8) | pal[palette_base + left_index * 2]);
+            data[i * 2 + 1] = DecodeRGB5((pal[palette_base + right_index * 2 + 1] << 8) | pal[palette_base + right_index * 2]);
+        }
 
-		// Call mode specific rendering logic
-		switch (mode)
-		{
-		case 3:
-			// BG Mode 3 - 240x160 pixels, 32768 colors
-			// Bitmap modes are rendered on BG2 which means we must check if it is enabled
-			if (bg2_enable)
-			{
-				uint offset = line * 240 * 2;
-				for (int x = 0; x < 240; x++)
-				{
-					buffer[line * 240 + x] = DecodeRGB5((vram[offset + 1] << 8) | vram[offset]);
-					offset += 2;
-				}
-			}
-			break;
-		case 4:
-			// BG Mode 4 - 240x160 pixels, 256 colors (out of 32768 colors)
-			// Bitmap modes are rendered on BG2 which means we must check if it is enabled
-			if (bg2_enable)
-			{
-				uint page = gba_io->dispcnt & 0x10 ? 0xA000 : 0;
-				for (int x = 0; x < 240; x++)
-				{
-					ubyte index = vram[page + line * 240 + x];
-					ushort rgb5 = pal[index * 2] | (pal[index * 2 + 1] << 8);
-					buffer[line * 240 + x] = DecodeRGB5(rgb5);
-				}
-			}
-			break;
-		case 5:
-			// BG Mode 5 - 160x128 pixels, 32768 colors
-			// Bitmap modes are rendered on BG2 which means we must check if it is enabled
-			if (bg2_enable)
-			{
-				uint offset = (gba_io->dispcnt & 0x10 ? 0xA000 : 0) + line * 160 * 2;
-				for (int x = 0; x < 240; x++)
-				{
-					if (x < 160 && line < 128)
-					{
-						buffer[line * 240 + x] = DecodeRGB5((vram[offset + 1] << 8) | vram[offset]);
-						offset += 2;
-					}
-					else
-					{
-						// The unused space is filled with the first color from pal ram as far as I can see
-						ushort rgb5 = pal[0] | (pal[1] << 8);
-						buffer[line * 240 + x] = DecodeRGB5(rgb5);
-					}
-				}
-			}
-			break;
-		}
-	}
+        return data;
+    }
+
+    inline uint* GBAVideo::DecodeTileLine8PP(uint block_base, int number, int line, bool sprite)
+    {
+        uint offset = block_base + number * 64 + line * 8;
+        uint palette_base = sprite ? 0x200 : 0x0;
+        uint data[8];
+
+        for (int i = 0; i < 8; i++)
+        {
+            ubyte value = vram[offset + i];
+            data[i] = DecodeRGB5((pal[palette_base + value * 2 + 1] << 8) | pal[palette_base + value * 2]);
+        }
+
+        return data;
+    }
+
+    void GBAVideo::Render(int line)
+    {
+        int mode = gba_io->dispcnt & 7;
+        bool bg0_enable = (gba_io->dispcnt & (1 << 8)) ? true : false;
+        bool bg1_enable = (gba_io->dispcnt & (1 << 9)) ? true : false;
+        bool bg2_enable = (gba_io->dispcnt & (1 << 10)) ? true : false;
+        bool bg3_enable = (gba_io->dispcnt & (1 << 11)) ? true : false;
+
+        ASSERT(mode > 5, LOG_ERROR, "Invalid video mode %d: cannot render", mode);
+
+        // Call mode specific rendering logic
+        switch (mode)
+        {
+        case 3:
+            // BG Mode 3 - 240x160 pixels, 32768 colors
+            // Bitmap modes are rendered on BG2 which means we must check if it is enabled
+            if (bg2_enable)
+            {
+                uint offset = line * 240 * 2;
+                for (int x = 0; x < 240; x++)
+                {
+                    buffer[line * 240 + x] = DecodeRGB5((vram[offset + 1] << 8) | vram[offset]);
+                    offset += 2;
+                }
+            }
+            break;
+        case 4:
+            // BG Mode 4 - 240x160 pixels, 256 colors (out of 32768 colors)
+            // Bitmap modes are rendered on BG2 which means we must check if it is enabled
+            if (bg2_enable)
+            {
+                uint page = gba_io->dispcnt & 0x10 ? 0xA000 : 0;
+                for (int x = 0; x < 240; x++)
+                {
+                    ubyte index = vram[page + line * 240 + x];
+                    ushort rgb5 = pal[index * 2] | (pal[index * 2 + 1] << 8);
+                    buffer[line * 240 + x] = DecodeRGB5(rgb5);
+                }
+            }
+            break;
+        case 5:
+            // BG Mode 5 - 160x128 pixels, 32768 colors
+            // Bitmap modes are rendered on BG2 which means we must check if it is enabled
+            if (bg2_enable)
+            {
+                uint offset = (gba_io->dispcnt & 0x10 ? 0xA000 : 0) + line * 160 * 2;
+                for (int x = 0; x < 240; x++)
+                {
+                    if (x < 160 && line < 128)
+                    {
+                        buffer[line * 240 + x] = DecodeRGB5((vram[offset + 1] << 8) | vram[offset]);
+                        offset += 2;
+                    }
+                    else
+                    {
+                        // The unused space is filled with the first color from pal ram as far as I can see
+                        ushort rgb5 = pal[0] | (pal[1] << 8);
+                        buffer[line * 240 + x] = DecodeRGB5(rgb5);
+                    }
+                }
+            }
+            break;
+        }
+    }
 
     void NanoboyAdvance::GBAVideo::Step()
     {
@@ -136,8 +168,8 @@ namespace NanoboyAdvance
                     gba_io->if_ |= 2;
                 }
                 // Render the current scanline only
-				Render(gba_io->vcount);
-				// Notify that the screen must be updated
+                Render(gba_io->vcount);
+                // Notify that the screen must be updated
                 render_scanline = true;
                 ticks = 0;
             }
