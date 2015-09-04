@@ -118,7 +118,7 @@ namespace NanoboyAdvance
             // THUMB.15 Multiple load/store
             return THUMB_15;
         }
-        else if ((instruction & 0xF000) == 0xD000)
+        else if ((instruction & 0xFF00) < 0xDF00)
         {
             // THUMB.16 Conditional Branch
             return THUMB_16;
