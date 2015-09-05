@@ -85,6 +85,7 @@ namespace NanoboyAdvance
         int tile_internal_y;
         int row;
         uint* line_full;
+        uint* line_visible = new uint[240];
         uint offset;
 
         // Decode screen size
@@ -112,6 +113,12 @@ namespace NanoboyAdvance
             int number = value & 0x3FF;
             uint* tile_data;
 
+            // Apply vertical flip
+            if (value & (1 << 11))
+            {
+                tile_internal_y = 7 - tile_internal_y;
+            }
+
             // Depending on the color resolution the tiles are decoded different..
             if (color_mode)
             {
@@ -124,17 +131,30 @@ namespace NanoboyAdvance
             }
 
             // Copy rendered tile line to background line buffer
-            // TODO: memcpy
+            // We must take care of horizontal flip
             for (int i = 0; i < 8; i++)
             {
-                line_full[x * 8 + i] = tile_data[i];
+                if (value & (1 << 10))
+                {
+                    line_full[x * 8 + 7 - i] = tile_data[i];
+                }
+                else
+                {
+                    line_full[x * 8 + i] = tile_data[i];
+                }
             }
             offset += 2;
         }
 
-        // TODO: Create a new array only containing the visible area with wraparound and scroll x
+        // Copy the visible area with wraparound
+        for (int i = 0; i < 240; i++)
+        {
+            line_visible[i] = line_full[(scroll_x + i) % width];
+        }
 
-        return line_full;
+        delete[] line_full;
+
+        return line_visible;
     }
 
     void GBAVideo::Render(int line)
@@ -160,6 +180,7 @@ namespace NanoboyAdvance
                 {
                     buffer[line * 240 + i] = bg_line[i];
                 }
+                delete[] bg_line;
             }
             break;
         }
