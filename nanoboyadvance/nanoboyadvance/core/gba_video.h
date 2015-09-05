@@ -42,6 +42,7 @@ namespace NanoboyAdvance
 		inline uint DecodeRGB5(ushort color);
 		inline uint* DecodeTileLine4BPP(uint block_base, uint palette_base, int number, int line);
 		inline uint* DecodeTileLine8PP(uint block_base, int number, int line, bool sprite);
+        inline uint* RenderBackgroundMode0(ushort bg_control, int line, int scroll_x, int scroll_y);
 		void Render(int line);
     public:
         bool render_scanline;

@@ -74,19 +74,95 @@ namespace NanoboyAdvance
         return data;
     }
 
+    inline uint* GBAVideo::RenderBackgroundMode0(ushort bg_control, int line, int scroll_x, int scroll_y)
+    {
+        uint tile_block_base = ((bg_control >> 2) & 3) * 0x4000;
+        uint map_block_base = ((bg_control >> 8) & 0x1F) * 0x800;
+        bool color_mode = bg_control & (1 << 7) ? true : false; // true = 256, false = 16 colors
+        int width;
+        int height;
+        int wrap_y;
+        int tile_internal_y;
+        int row;
+        uint* line_full;
+        uint offset;
+
+        // Decode screen size
+        switch (bg_control >> 14)
+        {
+        case 0: width = 256; height = 256; break;
+        case 1: width = 512; height = 256; break;
+        case 2: width = 256; height = 512; break;
+        case 3: width = 512; height = 512; break;
+        }
+
+        // We need to calculate which row (in tiles) will be renderend and which specific line of it
+        wrap_y = (line + scroll_y) % height;
+        tile_internal_y = wrap_y % 8;
+        row = (wrap_y - tile_internal_y) / 8;
+        offset = map_block_base + (width / 4) * row; // div 4 because one tile occupies two bytes
+
+        // We will render the entire first line and the copy the visible area from it
+        line_full = new uint[width];
+
+        // TODO: HFlip and VFlip
+        for (int x = 0; x < width / 8; x++)
+        {
+            ushort value = (vram[offset + 1] << 8) | vram[offset];
+            int number = value & 0x3FF;
+            uint* tile_data;
+
+            // Depending on the color resolution the tiles are decoded different..
+            if (color_mode)
+            {
+                tile_data = DecodeTileLine8PP(tile_block_base, number, tile_internal_y, false);
+            }
+            else
+            {
+                int palette = value >> 12;
+                tile_data = DecodeTileLine4BPP(tile_block_base, palette * 0x20, number, tile_internal_y);
+            }
+
+            // Copy rendered tile line to background line buffer
+            // TODO: memcpy
+            for (int i = 0; i < 8; i++)
+            {
+                line_full[x * 8 + i] = tile_data[i];
+            }
+            offset += 2;
+        }
+
+        // TODO: Create a new array only containing the visible area with wraparound and scroll x
+
+        return line_full;
+    }
+
     void GBAVideo::Render(int line)
     {
         int mode = gba_io->dispcnt & 7;
-        bool bg0_enable = (gba_io->dispcnt & (1 << 8)) ? true : false;
-        bool bg1_enable = (gba_io->dispcnt & (1 << 9)) ? true : false;
-        bool bg2_enable = (gba_io->dispcnt & (1 << 10)) ? true : false;
-        bool bg3_enable = (gba_io->dispcnt & (1 << 11)) ? true : false;
+        bool bg0_enable = gba_io->dispcnt & (1 << 8) ? true : false;
+        bool bg1_enable = gba_io->dispcnt & (1 << 9) ? true : false;
+        bool bg2_enable = gba_io->dispcnt & (1 << 10) ? true : false;
+        bool bg3_enable = gba_io->dispcnt & (1 << 11) ? true : false;
 
         ASSERT(mode > 5, LOG_ERROR, "Invalid video mode %d: cannot render", mode);
 
         // Call mode specific rendering logic
         switch (mode)
         {
+        case 0:
+        {
+            // BG Mode 0 Tile/Map based Text mode
+            //if (bg0_enable)
+            {
+                uint* bg_line = RenderBackgroundMode0(gba_io->bg0cnt, line, gba_io->bg0hofs, gba_io->bg0vofs);
+                for (int i = 0; i < 240; i++)
+                {
+                    buffer[line * 240 + i] = bg_line[i];
+                }
+            }
+            break;
+        }
         case 3:
             // BG Mode 3 - 240x160 pixels, 32768 colors
             // Bitmap modes are rendered on BG2 which means we must check if it is enabled
