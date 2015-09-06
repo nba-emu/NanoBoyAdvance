@@ -40,9 +40,10 @@ namespace NanoboyAdvance
         GBAVideoState state;
         int ticks;
 		inline uint DecodeRGB5(ushort color);
-		inline uint* DecodeTileLine4BPP(uint block_base, uint palette_base, int number, int line);
-		inline uint* DecodeTileLine8PP(uint block_base, int number, int line, bool sprite);
-        inline uint* RenderBackgroundMode0(ushort bg_control, int line, int scroll_x, int scroll_y);
+		inline uint* DecodeTileLine4BPP(uint block_base, uint palette_base, int number, int line, bool transparent);
+		inline uint* DecodeTileLine8PP(uint block_base, int number, int line, bool sprite, bool transparent);
+        inline uint* RenderBackgroundMode0(ushort bg_control, int line, int scroll_x, int scroll_y, bool transparent);
+        inline void DrawLineToBuffer(uint* line_buffer, int line);
 		void Render(int line);
     public:
         bool render_scanline;

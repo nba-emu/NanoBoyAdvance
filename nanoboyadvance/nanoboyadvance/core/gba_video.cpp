@@ -42,39 +42,56 @@ namespace NanoboyAdvance
         return argb;
     }
 
-    inline uint* GBAVideo::DecodeTileLine4BPP(uint block_base, uint palette_base, int number, int line)
+    inline uint* GBAVideo::DecodeTileLine4BPP(uint block_base, uint palette_base, int number, int line, bool transparent)
     {
         uint offset = block_base + number * 32 + line * 4;
         uint data[8];
+
+        // We don't want to have random data in the buffer
+        memset(data, 0, 32);
 
         for (int i = 0; i < 4; i++)
         {
             ubyte value = vram[offset + i];
             int left_index = value & 0xF;
             int right_index = value >> 4;
-            data[i * 2] = DecodeRGB5((pal[palette_base + left_index * 2 + 1] << 8) | pal[palette_base + left_index * 2]);
-            data[i * 2 + 1] = DecodeRGB5((pal[palette_base + right_index * 2 + 1] << 8) | pal[palette_base + right_index * 2]);
+
+            if (left_index != 0 || !transparent)
+            {
+                data[i * 2] = DecodeRGB5((pal[palette_base + left_index * 2 + 1] << 8) | pal[palette_base + left_index * 2]);
+            }
+
+            if (right_index != 0 || !transparent)
+            {
+                data[i * 2 + 1] = DecodeRGB5((pal[palette_base + right_index * 2 + 1] << 8) | pal[palette_base + right_index * 2]);
+            }
         }
 
         return data;
     }
 
-    inline uint* GBAVideo::DecodeTileLine8PP(uint block_base, int number, int line, bool sprite)
+    inline uint* GBAVideo::DecodeTileLine8PP(uint block_base, int number, int line, bool sprite, bool transparent)
     {
         uint offset = block_base + number * 64 + line * 8;
         uint palette_base = sprite ? 0x200 : 0x0;
         uint data[8];
 
+        // We don't want to have random data in the buffer
+        memset(data, 0, 32);
+
         for (int i = 0; i < 8; i++)
         {
             ubyte value = vram[offset + i];
-            data[i] = DecodeRGB5((pal[palette_base + value * 2 + 1] << 8) | pal[palette_base + value * 2]);
+            if (value != 0)
+            {
+                data[i] = DecodeRGB5((pal[palette_base + value * 2 + 1] << 8) | pal[palette_base + value * 2]);
+            }
         }
 
         return data;
     }
 
-    inline uint* GBAVideo::RenderBackgroundMode0(ushort bg_control, int line, int scroll_x, int scroll_y)
+    inline uint* GBAVideo::RenderBackgroundMode0(ushort bg_control, int line, int scroll_x, int scroll_y, bool transparent)
     {
         uint tile_block_base = ((bg_control >> 2) & 3) * 0x4000;
         uint map_block_base = ((bg_control >> 8) & 0x1F) * 0x800;
@@ -122,12 +139,12 @@ namespace NanoboyAdvance
             // Depending on the color resolution the tiles are decoded different..
             if (color_mode)
             {
-                tile_data = DecodeTileLine8PP(tile_block_base, number, tile_internal_y, false);
+                tile_data = DecodeTileLine8PP(tile_block_base, number, tile_internal_y, false, transparent);
             }
             else
             {
                 int palette = value >> 12;
-                tile_data = DecodeTileLine4BPP(tile_block_base, palette * 0x20, number, tile_internal_y);
+                tile_data = DecodeTileLine4BPP(tile_block_base, palette * 0x20, number, tile_internal_y, transparent);
             }
 
             // Copy rendered tile line to background line buffer
@@ -157,6 +174,17 @@ namespace NanoboyAdvance
         return line_visible;
     }
 
+    inline void GBAVideo::DrawLineToBuffer(uint* line_buffer, int line)
+    {
+        for (int i = 0; i < 240; i++)
+        {
+            if (line_buffer[i] != 0)
+            {
+                buffer[line * 240 + i] = line_buffer[i];
+            }
+        }
+    }
+
     void GBAVideo::Render(int line)
     {
         int mode = gba_io->dispcnt & 7;
@@ -182,15 +210,38 @@ namespace NanoboyAdvance
         {
         case 0:
         {
-            // BG Mode 0 Tile/Map based Text mode
-            if (bg0_enable)
+            bool first_background = true;
+            int bg0_priority = gba_io->bg0cnt & 3;
+            int bg1_priority = gba_io->bg1cnt & 3;
+            int bg2_priority = gba_io->bg2cnt & 3;
+            int bg3_priority = gba_io->bg3cnt & 3;
+
+            for (int i = 3; i >= 0; i--)
             {
-                uint* bg_line = RenderBackgroundMode0(gba_io->bg0cnt, line, gba_io->bg0hofs, gba_io->bg0vofs);
-                for (int i = 0; i < 240; i++)
+                if (bg3_enable && bg3_priority == i)
                 {
-                    buffer[line * 240 + i] = bg_line[i];
+                    uint* bg_buffer = RenderBackgroundMode0(gba_io->bg3cnt, line, gba_io->bg3hofs, gba_io->bg3vofs, !first_background);
+                    DrawLineToBuffer(bg_buffer, line);
+                    first_background = false;
                 }
-                delete[] bg_line;
+                if (bg2_enable && bg2_priority == i)
+                {
+                    uint* bg_buffer = RenderBackgroundMode0(gba_io->bg2cnt, line, gba_io->bg2hofs, gba_io->bg2vofs, !first_background);
+                    DrawLineToBuffer(bg_buffer, line);
+                    first_background = false;
+                }
+                if (bg1_enable && bg1_priority == i)
+                {
+                    uint* bg_buffer = RenderBackgroundMode0(gba_io->bg1cnt, line, gba_io->bg1hofs, gba_io->bg1vofs, !first_background);
+                    DrawLineToBuffer(bg_buffer, line);
+                    first_background = false;
+                }
+                if (bg0_enable && bg0_priority == i)
+                {
+                    uint* bg_buffer = RenderBackgroundMode0(gba_io->bg0cnt, line, gba_io->bg0hofs, gba_io->bg0vofs, !first_background);
+                    DrawLineToBuffer(bg_buffer, line);
+                    first_background = false;
+                }
             }
             break;
         }
