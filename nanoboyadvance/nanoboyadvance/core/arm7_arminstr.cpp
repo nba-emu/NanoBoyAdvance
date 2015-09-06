@@ -257,43 +257,33 @@ namespace NanoboyAdvance
             if (!set_flags && opcode >= 0b1000 && opcode <= 0b1011)
             {
                 // PSR transfer 
-                switch ((instruction >> 16) & 0x3F)
+                bool immediate = instruction & (1 << 25) ? true : false;
+                bool use_spsr = instruction & (1 << 22) ? true : false;
+                
+                if (instruction & (1 << 21))
                 {
-                    // MRS (transfer PSR contents to a register) 
-                case 0b001111:
-                {
-                    int rd = (instruction >> 12) & 0xF;
-                    mmemonic << "mrs" << condition << " r" << rd << (instruction & (1 << 22) ? ", spsr_fsxc" : ", cpsr"); // is the _fsxc really correct? (vba appends this)
-                    break;
-                }
-                // MSR (transfer register contents to PSR) 
-                case 0b101001:
-                {
-                    int rm = instruction & 0xF;
-                    mmemonic << "msr" << condition << (instruction & (1 << 22) ? " spsr_fc, r" : " cpsr_fc, r") << rm; // is the _fc really correct? (vba appends this)
-                    break;
-                }
-                // MSR (transfer register contents or immediate value to PSR flag bits only) 
-                case 0b101000:
-                {
-                    mmemonic << "msr" << condition << (instruction & (1 << 22) ? " spsr_f, " : " cpsr_f, "); // is the _f really correct? (vba appends this)
+                    // MSR
+                    mmemonic << "msr" << condition << " " << (use_spsr ? "spsr_" : "cpsr_");
+                    if (instruction & (1 << 16)) mmemonic << "c";
+                    if (instruction & (1 << 17)) mmemonic << "x";
+                    if (instruction & (1 << 18)) mmemonic << "s";
+                    if (instruction & (1 << 19)) mmemonic << "f";
                     if (immediate)
                     {
                         int imm = instruction & 0xFF;
                         int ror = ((instruction >> 8) & 0xF) * 2;
                         uint result = (imm >> ror) | (imm << (32 - ror));
-                        mmemonic << "#0x" << hex << result << dec;
+                        mmemonic << ", #0x" << hex << result << dec;
                     }
                     else
                     {
-                        mmemonic << "r" << (instruction & 0xF);
+                        mmemonic << ", r" << (instruction & 0xF);
                     }
-                    break;
                 }
-                // Undefined operation 
-                default:
-                    mmemonic << "<brokenpsr>";
-                    break;
+                else
+                {
+                    // MSR
+                    mmemonic << "mrs" << condition << " r" << ((instruction >> 12) & 0xF) << ", " << (use_spsr ? "spsr_fsxc" : "cpsr_fsxc");
                 }
             }
             else
@@ -1388,7 +1378,7 @@ namespace NanoboyAdvance
                                 // If the s bit is set a mode switch is performed
                                 if (s_bit)
                                 {
-                                    // spsr_<mode> must not be copied to cpsr in user mode because user mode has not such a register
+                                    // spsr_<mode> must not be copied to cpsr in user mode because user mode has no such a register
                                     ASSERT((cpsr & 0x1F) == User, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r15);
 
                                     cpsr = *pspsr;
