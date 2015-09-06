@@ -166,7 +166,6 @@ namespace NanoboyAdvance
                     dma->dma0_source = gba_io->dma0sad;
                     dma->dma0_destination = gba_io->dma0dad;
                     dma->dma0_count = gba_io->dma0cnt_l;
-                    LOG(LOG_INFO, "DMA0 source=0x%x dest=0x%x count=0x%x", dma->dma0_source, dma->dma0_destination, dma->dma0_count);
                 }
                 break;
             case DMA1CNT_H + 1:
@@ -175,7 +174,6 @@ namespace NanoboyAdvance
                     dma->dma1_source = gba_io->dma1sad;
                     dma->dma1_destination = gba_io->dma1dad;
                     dma->dma1_count = gba_io->dma1cnt_l;
-                    LOG(LOG_INFO, "DMA1 source=0x%x dest=0x%x count=0x%x", dma->dma1_source, dma->dma1_destination, dma->dma1_count);
                 }
                 break;
             case DMA2CNT_H + 1:
@@ -184,7 +182,6 @@ namespace NanoboyAdvance
                     dma->dma2_source = gba_io->dma2sad;
                     dma->dma2_destination = gba_io->dma2dad;
                     dma->dma2_count = gba_io->dma2cnt_l;
-                    LOG(LOG_INFO, "DMA2 source=0x%x dest=0x%x count=0x%x", dma->dma2_source, dma->dma2_destination, dma->dma2_count);
                 }
                 break;
             case DMA3CNT_H + 1:
@@ -193,7 +190,7 @@ namespace NanoboyAdvance
                     dma->dma3_source = gba_io->dma3sad;
                     dma->dma3_destination = gba_io->dma3dad;
                     dma->dma3_count = gba_io->dma3cnt_l;
-                    LOG(LOG_INFO, "DMA3 source=0x%x dest=0x%x count=0x%x", dma->dma3_source, dma->dma3_destination, dma->dma3_count);
+                    //LOG(LOG_INFO, "DMA3 source=0x%x dest=0x%x count=0x%x", dma->dma3_source, dma->dma3_destination, dma->dma3_count);
                 }
                 break;
             case TM0CNT_L:
@@ -284,7 +281,24 @@ namespace NanoboyAdvance
 
     void GBAMemory::WriteWord(uint offset, uint value)
     {
-        ASSERT(offset == 0x4000100 || offset == 0x4000104 || offset == 0x4000108 || offset == 0x400010C, LOG_WARN, "Unimplemented case 32 bit write to timer register");
+        if (value & (1 << 23))
+        {
+            switch (offset)
+            {
+            case 0x04000100:
+                gba_io->tm0cnt_l = value & 0xFFFF;
+                break;
+            case 0x04000104:
+                gba_io->tm1cnt_l = value & 0xFFFF;
+                break;
+            case 0x04000108:
+                gba_io->tm2cnt_l = value & 0xFFFF;
+                break;
+            case 0x0400010C:
+                gba_io->tm3cnt_l = value & 0xFFFF;
+                break;
+            }
+        }
         WriteHWord(offset, value & 0xFFFF);
         WriteHWord(offset + 2, (value >> 16) & 0xFFFF);
     }

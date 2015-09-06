@@ -67,7 +67,7 @@ namespace NanoboyAdvance
         }
 
         // Handle Timer 1
-        if (timer1_enabled && ((timer1_countup && timer0_overflow) || ++timer1_ticks >= timer1_clock))
+        if (timer1_enabled && ((timer1_countup && timer0_overflow) || (!timer1_countup && ++timer1_ticks >= timer1_clock)))
         {
             timer1_ticks = 0;
             if (gba_io->tm1cnt_l != 0xFFFF)
@@ -86,7 +86,7 @@ namespace NanoboyAdvance
         }
 
         // Handle Timer 2
-        if (timer2_enabled && ((timer2_countup && timer1_overflow) || ++timer2_ticks >= timer2_clock))
+        if (timer2_enabled && ((timer2_countup && timer1_overflow) || (!timer2_countup && ++timer2_ticks >= timer2_clock)))
         {
             timer2_ticks = 0;
             if (gba_io->tm2cnt_l != 0xFFFF)
@@ -105,7 +105,7 @@ namespace NanoboyAdvance
         }
 
         // Handle Timer 3
-        if (timer3_enabled && ((timer3_countup && timer2_overflow) || ++timer3_ticks >= timer3_clock))
+        if (timer3_enabled && ((timer3_countup && timer2_overflow) || (!timer3_countup && ++timer3_ticks >= timer3_clock)))
         {
             timer3_ticks = 0;
             if (gba_io->tm3cnt_l != 0xFFFF)

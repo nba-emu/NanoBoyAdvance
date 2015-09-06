@@ -167,13 +167,23 @@ namespace NanoboyAdvance
 
         ASSERT(mode > 5, LOG_ERROR, "Invalid video mode %d: cannot render", mode);
 
+        // Emulate the effect caused by "Forced Blank"
+        if (gba_io->dispcnt & (1 << 7))
+        {
+            for (int i = 0; i < 240; i++)
+            {
+                buffer[line * 240 + i] = 0xFFF8F8F8;
+            }
+            return;
+        }
+
         // Call mode specific rendering logic
         switch (mode)
         {
         case 0:
         {
             // BG Mode 0 Tile/Map based Text mode
-            //if (bg0_enable)
+            if (bg0_enable)
             {
                 uint* bg_line = RenderBackgroundMode0(gba_io->bg0cnt, line, gba_io->bg0hofs, gba_io->bg0vofs);
                 for (int i = 0; i < 240; i++)

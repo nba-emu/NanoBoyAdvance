@@ -599,12 +599,12 @@ namespace NanoboyAdvance
             int reg_address = instruction & 0xF;
             if (reg(reg_address) & 1)
             {
-                r15 = reg(reg_address) & ~(1);
+                r15 = reg(reg_address) & ~1;
                 cpsr |= Thumb;
             }
             else
             {
-                r15 = reg(reg_address) & ~(3);
+                r15 = reg(reg_address) & ~3;
             }
             flush_pipe = true;
             break;

@@ -165,10 +165,26 @@ namespace NanoboyAdvance
         amount = amount == 0 ? 32 : amount;
 
         // Perform shift
-        for (int i = 0; i < amount; i++)
+        if (amount != 0)
         {
-            carry = operand & 1 ? true : false;
-            operand = (operand >> 1) | sign_bit;
+            for (int i = 0; i < amount; i++)
+            {
+                carry = operand & 1 ? true : false;
+                operand = (operand >> 1) | sign_bit;
+            }
+        }
+        else
+        {
+            if (sign_bit)
+            {
+                operand = 0xFFFFFFFF;
+                carry = true;
+            }
+            else
+            {
+                operand = 0;
+                carry = false;
+            }
         }
     }
 
@@ -263,9 +279,8 @@ namespace NanoboyAdvance
     {
         bool thumb = (cpsr & Thumb) == Thumb;
         uint pc_page = r15 >> 24;
-        uint old_pc = r15;
 
-        if (pc_page != 0 && pc_page != 3 && pc_page != 6 && pc_page != 8)
+        if (pc_page != 0 && pc_page != 2 && pc_page != 3 && pc_page != 6 && pc_page != 8)
         {
             LOG(LOG_ERROR, "Whoops! PC in suspicious area! This shouldn't happen!!! r15=0x%x", r15);
         }
