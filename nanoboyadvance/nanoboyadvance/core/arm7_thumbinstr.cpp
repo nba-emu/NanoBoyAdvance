@@ -804,6 +804,7 @@ namespace NanoboyAdvance
             // TODO: Do we need I-bit or not?
             if ((cpsr & IRQDisable) == 0)
             {
+                LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x", ReadByte(r15 - 4), r0, r1, r2, r3);
                 r14_svc = r15 - 2;
                 spsr_svc = cpsr;
                 r15 = 8;

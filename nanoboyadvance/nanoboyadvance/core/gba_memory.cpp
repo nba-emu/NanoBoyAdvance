@@ -190,7 +190,6 @@ namespace NanoboyAdvance
                     dma->dma3_source = gba_io->dma3sad;
                     dma->dma3_destination = gba_io->dma3dad;
                     dma->dma3_count = gba_io->dma3cnt_l;
-                    //LOG(LOG_INFO, "DMA3 source=0x%x dest=0x%x count=0x%x", dma->dma3_source, dma->dma3_destination, dma->dma3_count);
                 }
                 break;
             case TM0CNT_L:
