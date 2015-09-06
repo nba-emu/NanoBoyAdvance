@@ -754,67 +754,51 @@ namespace NanoboyAdvance
             if (!set_flags && opcode >= 0b1000 && opcode <= 0b1011)
             {
                 // PSR transfer
-                bool use_spsr = (instruction & (1 << 22)) == (1 << 22);
-                switch ((instruction >> 16) & 0x3F)
+                bool immediate = instruction & (1 << 25) ? true : false;
+                bool use_spsr = instruction & (1 << 22) ? true : false;
+                bool msr = instruction & (1 << 21) ? true : false;
+
+                if (msr)
                 {
-                case 0b001111:
-                {
-                    // MRS (transfer PSR contents to a register) 
-                    int reg_dest = (instruction >> 12) & 0xF;
-                    reg(reg_dest) = use_spsr ? *pspsr : cpsr;
-                    break;
-                }
-                case 0b101001:
-                {
-                    // MSR (transfer register contents to PSR) 
-                    int reg_source = instruction & 0xF;
-                    if (use_spsr)
-                    {
-                        *pspsr = reg(reg_source);
-                    }
-                    else
-                    {
-                        if ((cpsr & 0x1F) == User)
-                        {
-                            cpsr = (cpsr & 0x0FFFFFFF) | (reg(reg_source) & 0xF0000000);
-                        }
-                        else
-                        {
-                            cpsr = reg(reg_source);
-                            RemapRegisters();
-                        }
-                    }
-                    break;
-                }
-                case 0b101000:
-                {
-                    // MSR (transfer register contents or immediate value to PSR flag bits only) 
-                    bool immediate = (instruction & (1 << 25)) == (1 << 25);
+                    // MSR
+                    uint mask = 0;
                     uint operand;
+
+                    // Depending of the fsxc bits some bits are overwritten or not
+                    if (instruction & (1 << 16)) mask |= 0x000000FF;
+                    if (instruction & (1 << 17)) mask |= 0x0000FF00;
+                    if (instruction & (1 << 18)) mask |= 0x00FF0000;
+                    if (instruction & (1 << 19)) mask |= 0xFF000000;
+
+                    // Decode the value written to cpsr/spsr
                     if (immediate)
                     {
-                        int immediate_value = instruction & 0xFF;
-                        int amount = ((instruction >> 8) & 0xF) << 1;
-                        operand = (immediate_value >> amount) | (immediate_value << (32 - amount));
+                        int imm = instruction & 0xFF;
+                        int ror = ((instruction >> 8) & 0xF) << 1;
+                        operand = (imm >> ror) | (imm << (32 - ror));
                     }
                     else
                     {
                         int reg_source = instruction & 0xF;
                         operand = reg(reg_source);
                     }
+
+                    // Write
                     if (use_spsr)
                     {
-                        *pspsr = (*pspsr & 0x0FFFFFFF) | (operand & 0xF0000000);
+                        *pspsr = (*pspsr & ~mask) | (operand & mask);
                     }
                     else
                     {
-                        cpsr = (cpsr & 0x0FFFFFFF) | (operand & 0xF0000000);
+                        cpsr = (cpsr & ~mask) | (operand & mask);
+                        RemapRegisters();
                     }
-                    break;
                 }
-                default:
-                    LOG(LOG_ERROR, "Malformed PSR transfer instruction, r15=0x%x", r15);
-                    break;
+                else
+                {
+                    // MRS
+                    int reg_dest = (instruction >> 12) & 0xF;
+                    reg(reg_dest) = use_spsr ? *pspsr : cpsr;
                 }
             }
             else
