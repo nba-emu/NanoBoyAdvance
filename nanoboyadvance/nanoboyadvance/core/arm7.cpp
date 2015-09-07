@@ -204,7 +204,7 @@ namespace NanoboyAdvance
         {
             bool old_carry = carry;
             carry = (operand & 1) ? true : false;
-            operand = (operand >> 1) | old_carry ? 0x80000000 : 0;
+            operand = (operand >> 1) | (old_carry ? 0x80000000 : 0);
         }
     }
 
