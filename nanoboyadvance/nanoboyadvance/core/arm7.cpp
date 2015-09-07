@@ -165,26 +165,10 @@ namespace NanoboyAdvance
         amount = amount == 0 ? 32 : amount;
 
         // Perform shift
-        if (amount != 0)
+        for (int i = 0; i < amount; i++)
         {
-            for (int i = 0; i < amount; i++)
-            {
-                carry = operand & 1 ? true : false;
-                operand = (operand >> 1) | sign_bit;
-            }
-        }
-        else
-        {
-            if (sign_bit)
-            {
-                operand = 0xFFFFFFFF;
-                carry = true;
-            }
-            else
-            {
-                operand = 0;
-                carry = false;
-            }
+            carry = operand & 1 ? true : false;
+            operand = (operand >> 1) | sign_bit;
         }
     }
 
