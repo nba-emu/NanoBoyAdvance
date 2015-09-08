@@ -1202,7 +1202,14 @@ namespace NanoboyAdvance
             {
                 if (!pre_indexed)
                 {
-                    reg(reg_base) += add_to_base ? offset : -offset;
+                    if (add_to_base)
+                    {
+                        reg(reg_base) += offset;
+                    }
+                    else
+                    {
+                        reg(reg_base) -= offset;
+                    }
                 }
                 else if (write_back)
                 {

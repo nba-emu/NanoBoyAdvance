@@ -45,7 +45,7 @@ namespace NanoboyAdvance
     inline uint* GBAVideo::DecodeTileLine4BPP(uint block_base, uint palette_base, int number, int line, bool transparent)
     {
         uint offset = block_base + number * 32 + line * 4;
-        uint data[8];
+        uint* data = new uint[8];
 
         // We don't want to have random data in the buffer
         memset(data, 0, 32);
@@ -74,7 +74,7 @@ namespace NanoboyAdvance
     {
         uint offset = block_base + number * 64 + line * 8;
         uint palette_base = sprite ? 0x200 : 0x0;
-        uint data[8];
+        uint* data = new uint[8];
 
         // We don't want to have random data in the buffer
         memset(data, 0, 32);
@@ -123,7 +123,6 @@ namespace NanoboyAdvance
         // We will render the entire first line and the copy the visible area from it
         line_full = new uint[width];
 
-        // TODO: HFlip and VFlip
         for (int x = 0; x < width / 8; x++)
         {
             ushort value = (vram[offset + 1] << 8) | vram[offset];
@@ -160,6 +159,8 @@ namespace NanoboyAdvance
                     line_full[x * 8 + i] = tile_data[i];
                 }
             }
+
+            delete[] tile_data;
             offset += 2;
         }
 
