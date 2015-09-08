@@ -824,12 +824,17 @@ namespace NanoboyAdvance
                 }
                 else
                 {
+                    bool shift_immediate = (instruction & (1 << 4)) ? false : true;
                     int reg_operand2 = instruction & 0xF;
                     uint amount;
                     operand2 = reg(reg_operand2);
 
                     // The amount is either the value of a register or a 5 bit immediate
-                    if (instruction & (1 << 4))
+                    if (shift_immediate)
+                    {
+                        amount = (instruction >> 7) & 0x1F;
+                    }
+                    else
                     {
                         int reg_shift = (instruction >> 8) & 0xF;
                         amount = reg(reg_shift);
@@ -844,10 +849,6 @@ namespace NanoboyAdvance
                             operand2 += 4;
                         }
                     }
-                    else
-                    {
-                        amount = (instruction >> 7) & 0x1F;
-                    }
 
                     // Perform the actual shift/rotate
                     switch ((instruction >> 5) & 3)
@@ -858,17 +859,17 @@ namespace NanoboyAdvance
                         break;
                     case 0b01:
                         // Logical Shift Right
-                        LSR(operand2, amount, carry);
+                        LSR(operand2, amount, carry, shift_immediate);
                         break;
                     case 0b10:
                     {
                         // Arithmetic Shift Right
-                        ASR(operand2, amount, carry);
+                        ASR(operand2, amount, carry, shift_immediate);
                         break;
                     }
                     case 0b11:
                         // Rotate Right
-                        ROR(operand2, amount, carry, false);
+                        ROR(operand2, amount, carry, shift_immediate);
                         break;
                     }
                 }
@@ -1131,20 +1132,20 @@ namespace NanoboyAdvance
                 case 0b01:
                 {
                     // Logical Shift Right
-                    LSR(offset, amount, carry);
+                    LSR(offset, amount, carry, true);
                     break;
                 }
                 case 0b10:
                 {
                     // Arithmetic Shift Right
-                    ASR(offset, amount, carry);
+                    ASR(offset, amount, carry, true);
                     break;
                 }
                 case 0b11:
                 {
                     // Rotate Right
                     carry = (cpsr & CarryFlag) ? true : false;
-                    ROR(offset, amount, carry, false);
+                    ROR(offset, amount, carry, true);
                     break;
                 }
                 }

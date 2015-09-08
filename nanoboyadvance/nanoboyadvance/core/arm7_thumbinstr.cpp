@@ -190,12 +190,12 @@ namespace NanoboyAdvance
                 assert_carry(carry);
                 break;
             case 0b01: // LSR
-                LSR(reg(reg_dest), immediate_value, carry);
+                LSR(reg(reg_dest), immediate_value, carry, true);
                 assert_carry(carry);
                 break;
             case 0b10: // ASR
             {
-                ASR(reg(reg_dest), immediate_value, carry);
+                ASR(reg(reg_dest), immediate_value, carry, true);
                 assert_carry(carry);
                 break;
             }
@@ -322,7 +322,7 @@ namespace NanoboyAdvance
             {
                 uint amount = reg(reg_source);
                 bool carry = (cpsr & CarryFlag) ? true : false;
-                LSR(reg(reg_dest), amount, carry);
+                LSR(reg(reg_dest), amount, carry, false);
                 assert_carry(carry);
                 calculate_sign(reg(reg_dest));
                 calculate_zero(reg(reg_dest));
@@ -332,7 +332,7 @@ namespace NanoboyAdvance
             {
                 uint amount = reg(reg_source);
                 bool carry = (cpsr & CarryFlag) ? true : false;
-                ASR(reg(reg_dest), amount, carry);
+                ASR(reg(reg_dest), amount, carry, false);
                 assert_carry(carry);
                 calculate_sign(reg(reg_dest));
                 calculate_zero(reg(reg_dest));
@@ -365,7 +365,7 @@ namespace NanoboyAdvance
             {
                 uint amount = reg(reg_source);
                 bool carry = (cpsr & CarryFlag) ? true : false;
-                ROR(reg(reg_dest), amount, carry, true);
+                ROR(reg(reg_dest), amount, carry, false);
                 assert_carry(carry);
                 calculate_sign(reg(reg_dest));
                 calculate_zero(reg(reg_dest));
@@ -805,53 +805,6 @@ namespace NanoboyAdvance
             if ((cpsr & IRQDisable) == 0)
             {
                 LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x", ReadByte(r15 - 4), r0, r1, r2, r3);
-                if (ReadByte(r15 - 4) == 0x12)
-                {
-                    int amount = memory->ReadWord(reg(0)) >> 8;
-                    int processed = 0;
-                    uint source = reg(0) + 4;
-                    uint dest = reg(1);
-                    while (amount > 0)
-                    {
-                        ubyte encoder = memory->ReadByte(source++);
-                        // Process 8 blocks encoded by the encoder
-                        for (int i = 7; i >= 0; i--)
-                        {
-                            if (encoder & (1 << i))
-                            {
-                                // Compressed
-                                ushort value = memory->ReadHWord(source);
-                                uint disp = (value >> 8) | ((value & 0xF) << 8);
-                                uint n = ((value >> 4) & 0xF) + 3;
-                                source += 2;
-
-                                for (int j = 0; j < n; j++)
-                                {
-                                    ushort value = memory->ReadByte(dest - disp - 1);
-                                    memory->WriteHWord(dest, (value << 8) | value);
-                                    dest++;
-                                    amount--;
-                                    if (amount == 0)
-                                    {
-                                        return;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                // Uncompressed
-                                ubyte value = memory->ReadByte(source++);
-                                memory->WriteHWord(dest++, (value << 8) | value);
-                                amount--;
-                                if (amount == 0)
-                                {
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                    return;
-                }
                 r14_svc = r15 - 2;
                 spsr_svc = cpsr;
                 r15 = 8;

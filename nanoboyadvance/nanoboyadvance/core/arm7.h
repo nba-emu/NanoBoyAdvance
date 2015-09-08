@@ -129,9 +129,9 @@ namespace NanoboyAdvance
 
         inline void RemapRegisters();
         void LSL(uint& operand, uint amount, bool& carry);
-        void LSR(uint& operand, uint amount, bool& carry);
-        void ASR(uint& operand, uint amount, bool& carry);
-        void ROR(uint& operand, uint amount, bool& carry, bool thumb);
+        void LSR(uint& operand, uint amount, bool& carry, bool immediate);
+        void ASR(uint& operand, uint amount, bool& carry, bool immediate);
+        void ROR(uint& operand, uint amount, bool& carry, bool immediate);
         ubyte ReadByte(uint offset);
         ushort ReadHWord(uint offset);
         uint ReadWord(uint offset);

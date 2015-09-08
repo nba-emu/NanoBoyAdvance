@@ -145,10 +145,10 @@ namespace NanoboyAdvance
         }
     }
 
-    void ARM7::LSR(uint& operand, uint amount, bool& carry)
+    void ARM7::LSR(uint& operand, uint amount, bool& carry, bool immediate)
     {
         // LSR #0 equals to LSR #32
-        amount = amount == 0 ? 32 : amount;
+        amount = immediate & (amount == 0) ? 32 : amount;
         
         // Perform shift
         for (int i = 0; i < amount; i++)
@@ -158,11 +158,12 @@ namespace NanoboyAdvance
         }
     }
 
-    void ARM7::ASR(uint& operand, uint amount, bool& carry)
+    void ARM7::ASR(uint& operand, uint amount, bool& carry, bool immediate)
     {
         uint sign_bit = operand & 0x80000000;
+
         // ASR #0 equals to ASR #32
-        amount = amount == 0 ? 32 : amount;
+        amount = immediate & (amount == 0) ? 32 : amount;
 
         // Perform shift
         for (int i = 0; i < amount; i++)
@@ -172,10 +173,10 @@ namespace NanoboyAdvance
         }
     }
 
-    void ARM7::ROR(uint& operand, uint amount, bool& carry, bool thumb)
+    void ARM7::ROR(uint& operand, uint amount, bool& carry, bool immediate)
     {
-        // In ARM mode RRX is performed when shift amount equals zero
-        if (amount != 0 || thumb)
+        // ROR #0 equals to RRX #1
+        if (amount != 0 || !immediate)
         {
             for (int i = 1; i <= amount; i++)
             {
@@ -354,7 +355,7 @@ namespace NanoboyAdvance
     {
         if ((cpsr & IRQDisable) == 0)
         {
-            r14_irq = r15 + 4; 
+            r14_irq = r15 - (cpsr & Thumb ? 2 : 4) + 4; 
             spsr_irq = cpsr;
             cpsr = (cpsr & ~0x3F) | IRQ | IRQDisable;
             RemapRegisters();
