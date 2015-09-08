@@ -137,7 +137,7 @@ namespace NanoboyAdvance
         if (amount != 0)
         {
             // This way we easily bypass the 32 bits restriction on x86
-            for (int i = 0; i < amount; i++)
+            for (uint i = 0; i < amount; i++)
             {
                 carry = operand & 0x80000000 ? true : false;
                 operand <<= 1;
@@ -151,7 +151,7 @@ namespace NanoboyAdvance
         amount = immediate & (amount == 0) ? 32 : amount;
         
         // Perform shift
-        for (int i = 0; i < amount; i++)
+        for (uint i = 0; i < amount; i++)
         {
             carry = operand & 1 ? true : false;
             operand >>= 1;
@@ -166,7 +166,7 @@ namespace NanoboyAdvance
         amount = immediate & (amount == 0) ? 32 : amount;
 
         // Perform shift
-        for (int i = 0; i < amount; i++)
+        for (uint i = 0; i < amount; i++)
         {
             carry = operand & 1 ? true : false;
             operand = (operand >> 1) | sign_bit;
@@ -178,7 +178,7 @@ namespace NanoboyAdvance
         // ROR #0 equals to RRX #1
         if (amount != 0 || !immediate)
         {
-            for (int i = 1; i <= amount; i++)
+            for (uint i = 1; i <= amount; i++)
             {
                 uint high_bit = (operand & 1) ? 0x80000000 : 0;
                 operand = (operand >> 1) | high_bit;
@@ -355,7 +355,7 @@ namespace NanoboyAdvance
     {
         if ((cpsr & IRQDisable) == 0)
         {
-            r14_irq = r15 - (cpsr & Thumb ? 2 : 4) + 4; 
+            r14_irq = r15 - (cpsr & Thumb ? 2 : 4) + 4;
             spsr_irq = cpsr;
             cpsr = (cpsr & ~0x3F) | IRQ | IRQDisable;
             RemapRegisters();
