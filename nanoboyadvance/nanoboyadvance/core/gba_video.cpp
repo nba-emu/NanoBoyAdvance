@@ -229,7 +229,7 @@ namespace NanoboyAdvance
         return line_visible;
     }
 
-    inline uint* GBAVideo::RenderSprites(uint tile_base, int priority)
+    inline uint* GBAVideo::RenderSprites(uint tile_base, int line, int priority)
     {
         uint* line_buffer = new uint[240];
         uint offset = 0;
@@ -245,11 +245,58 @@ namespace NanoboyAdvance
             ushort attribute1 = (obj[offset + 3] << 8) | obj[offset + 2];
             ushort attribute2 = (obj[offset + 5] << 8) | obj[offset + 4];
 
-            // Only render those who have matching priority
+            // Only render those which have matching priority
             if (((attribute2 >> 10) & 3) == priority)
             {
+                int width;
+                int height;
                 int x = attribute1 & 0x1FF;
                 int y = attribute0 & 0xFF;
+                bool rotate_scale = attribute0 & (1 << 8) ? true : false;
+                bool color_mode = attribute0 & (1 << 13) ? true : false;
+                GBAVideoSpriteShape shape = static_cast<GBAVideoSpriteShape>(attribute0 >> 14);
+                int size = attribute1 >> 14;
+
+                // Decode width and height
+                switch (shape)
+                {
+                case GBAVideoSpriteShape::Square:
+                    switch (size)
+                    {
+                    case 0: width = 8; height = 8; break;
+                    case 1: width = 16; height = 16; break;
+                    case 2: width = 32; height = 32; break;
+                    case 3: width = 64; height = 64; break;
+                    }
+                    break;
+                case GBAVideoSpriteShape::Horizontal:
+                    switch (size)
+                    {
+                    case 0: width = 16; height = 8; break;
+                    case 1: width = 32; height = 8; break;
+                    case 2: width = 32; height = 16; break;
+                    case 3: width = 64; height = 32; break;
+                    }
+                    break;
+                case GBAVideoSpriteShape::Vertical:
+                    switch (size)
+                    {
+                    case 0: width = 8; height = 16; break;
+                    case 1: width = 8; height = 32; break;
+                    case 2: width = 16; height = 32; break;
+                    case 3: width = 32; height = 64; break;
+                    }
+                    break;
+                case GBAVideoSpriteShape::Prohibited:
+                    width = 0;
+                    height = 0;
+                    break;
+                }
+
+                // Determine if there is something to render for this sprite
+                if (line >= y && line <= y + height)
+                {
+                }
             }
 
             // Update offset to current entry
@@ -334,7 +381,7 @@ namespace NanoboyAdvance
                 }
                 if (obj_enable)
                 {
-                    uint* obj_buffer = RenderSprites(0x10000, i);
+                    uint* obj_buffer = RenderSprites(0x10000, line, i);
                     DrawLineToBuffer(obj_buffer, line);
                     delete[] obj_buffer;
                 }

@@ -36,6 +36,13 @@ namespace NanoboyAdvance
             HBlank,
             VBlank
         };
+        enum class GBAVideoSpriteShape
+        {
+            Square = 0,
+            Horizontal = 1,
+            Vertical = 2,
+            Prohibited = 3
+        };
         GBAIO* gba_io;
         GBAVideoState state;
         int ticks;
@@ -43,7 +50,7 @@ namespace NanoboyAdvance
 		inline uint* DecodeTileLine4BPP(uint block_base, uint palette_base, int number, int line, bool transparent);
 		inline uint* DecodeTileLine8PP(uint block_base, int number, int line, bool sprite, bool transparent);
         inline uint* RenderBackgroundMode0(ushort bg_control, int line, int scroll_x, int scroll_y, bool transparent);
-        inline uint* RenderSprites(uint tile_base, int priority);
+        inline uint* RenderSprites(uint tile_base, int line, int priority);
         inline void DrawLineToBuffer(uint* line_buffer, int line);
 		void Render(int line);
     public:
