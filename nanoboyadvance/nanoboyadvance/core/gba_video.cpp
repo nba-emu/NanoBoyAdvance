@@ -229,6 +229,36 @@ namespace NanoboyAdvance
         return line_visible;
     }
 
+    inline uint* GBAVideo::RenderSprites(uint tile_base, int priority)
+    {
+        uint* line_buffer = new uint[240];
+        uint offset = 0;
+        bool one_dimensional = gba_io->dispcnt & (1 << 6) ? true : false;
+
+        // We dont want garbage data in the buffer
+        memset(line_buffer, 0, 240 * 4);
+
+        // Walk all entries
+        for (int i = 0; i < 128; i++)
+        {
+            ushort attribute0 = (obj[offset + 1] << 8) | obj[offset];
+            ushort attribute1 = (obj[offset + 3] << 8) | obj[offset + 2];
+            ushort attribute2 = (obj[offset + 5] << 8) | obj[offset + 4];
+
+            // Only render those who have matching priority
+            if (((attribute2 >> 10) & 3) == priority)
+            {
+                int x = attribute1 & 0x1FF;
+                int y = attribute0 & 0xFF;
+            }
+
+            // Update offset to current entry
+            offset += 8;
+        }
+
+        return line_buffer;
+    }
+
     inline void GBAVideo::DrawLineToBuffer(uint* line_buffer, int line)
     {
         for (int i = 0; i < 240; i++)
@@ -247,6 +277,7 @@ namespace NanoboyAdvance
         bool bg1_enable = gba_io->dispcnt & (1 << 9) ? true : false;
         bool bg2_enable = gba_io->dispcnt & (1 << 10) ? true : false;
         bool bg3_enable = gba_io->dispcnt & (1 << 11) ? true : false;
+        bool obj_enable = gba_io->dispcnt & (1 << 12) ? true : false;
 
         ASSERT(mode > 5, LOG_ERROR, "Invalid video mode %d: cannot render", mode);
 
@@ -300,6 +331,12 @@ namespace NanoboyAdvance
                     DrawLineToBuffer(bg_buffer, line);
                     first_background = false;
                     delete[] bg_buffer;
+                }
+                if (obj_enable)
+                {
+                    uint* obj_buffer = RenderSprites(0x10000, i);
+                    DrawLineToBuffer(obj_buffer, line);
+                    delete[] obj_buffer;
                 }
             }
             break;
