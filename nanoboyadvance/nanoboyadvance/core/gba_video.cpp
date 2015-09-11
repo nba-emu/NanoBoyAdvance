@@ -93,20 +93,43 @@ namespace NanoboyAdvance
 
     inline uint* GBAVideo::RenderBackgroundMode0(ushort bg_control, int line, int scroll_x, int scroll_y, bool transparent)
     {
+        // Base addresses for character *and* map data
         uint tile_block_base = ((bg_control >> 2) & 3) * 0x4000;
         uint map_block_base = ((bg_control >> 8) & 0x1F) * 0x800;
-        bool color_mode = bg_control & (1 << 7) ? true : false; // true = 256, false = 16 colors
+
+        // Mode 0 support both 16 and 256 color
+        // true = 256 colors, false = 16 colors
+        bool color_mode = bg_control & (1 << 7) ? true : false;
+
+        // A value encoding the bounds of the background
+        int screen_size = bg_control >> 14;
+
+        // The actual width and height of the background
         int width;
         int height;
+        
+        // The actual line to be rendered with scrolling and wrapround factored
         int wrap_y;
+        
+        // The concrete line of the tiles to be rendered
         int tile_internal_y;
+
+        // The current row measured in tiles
         int row;
+
+        // Rendering buffers
         uint* line_full;
         uint* line_visible = new uint[240];
+        
+        // Contains the offset of the current tile
         uint offset;
 
+        // There are two areas which possibly get rendered (the left is always renderend, the right only if the width is 512)
+        int left_area;
+        int right_area;
+
         // Decode screen size
-        switch (bg_control >> 14)
+        switch (screen_size)
         {
         case 0: width = 256; height = 256; break;
         case 1: width = 512; height = 256; break;
@@ -118,10 +141,28 @@ namespace NanoboyAdvance
         wrap_y = (line + scroll_y) % height;
         tile_internal_y = wrap_y % 8;
         row = (wrap_y - tile_internal_y) / 8;
-        offset = map_block_base + (width / 4) * row; // div 4 because one tile occupies two bytes
 
         // We will render the entire first line and the copy the visible area from it
         line_full = new uint[width];
+
+        // Determine the areas (left and right) to render (this is a little bit hacky nevertheless it works)
+        if (row >= 32)
+        {
+            switch (screen_size)
+            {
+            case 2: left_area = 1; right_area = 0; break;
+            case 3: left_area = 2; right_area = 3; break;
+            }
+            row -= 32;
+        }
+        else
+        {
+            left_area = 0;
+            right_area = 1;
+        }
+
+        // Calculate the start address
+        offset = map_block_base + left_area * 0x800 + 64 * row;
 
         for (int x = 0; x < width / 8; x++)
         {
@@ -152,7 +193,7 @@ namespace NanoboyAdvance
             {
                 if (value & (1 << 10))
                 {
-                    line_full[x * 8 + 7 - i] = tile_data[i];
+                    line_full[x * 8 + i] = tile_data[7 - i];
                 }
                 else
                 {
@@ -160,8 +201,20 @@ namespace NanoboyAdvance
                 }
             }
 
+            // We don't need this anymore
             delete[] tile_data;
-            offset += 2;
+            
+            // Have we just finished the left area?
+            if (x == 31)
+            {
+                // If so we must recalculate the offset to point to the first tile of the right area
+                offset = map_block_base + right_area * 0x800 + 64 * row;
+            }
+            else
+            {
+                // If not just update the offset as usual
+                offset += 2;
+            }
         }
 
         // Copy the visible area with wraparound
@@ -170,6 +223,7 @@ namespace NanoboyAdvance
             line_visible[i] = line_full[(scroll_x + i) % width];
         }
 
+        // If we don't delete this now, it'll never get deleted
         delete[] line_full;
 
         return line_visible;

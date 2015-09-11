@@ -617,7 +617,7 @@ namespace NanoboyAdvance
             int reg_base = (instruction >> 16) & 0xF;
             bool swap_byte = (instruction & (1 << 22)) == (1 << 22);
             uint memory_value;
-            ASSERT(reg_source == 15 || reg_dest == 15 || reg_base == 15, LOG_WARN, "Single Data Transfer, thou shall not use r15, r15=0x%x", r15);
+            ASSERT(reg_source == 15 || reg_dest == 15 || reg_base == 15, LOG_WARN, "Single Data Swap, thou shall not use r15, r15=0x%x", r15);
             if (swap_byte)
             {
                 memory_value = ReadByte(reg(reg_base)) & 0xFF;
@@ -1450,6 +1450,7 @@ namespace NanoboyAdvance
             // ARM.16 Software interrupt
             if ((cpsr & IRQDisable) == 0)
             {
+                LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (arm)", ReadByte(r15 - 4), r0, r1, r2, r3, reg(14), r15);
                 r14_svc = r15 - 4;
                 r15 = 0x8;
                 flush_pipe = true;

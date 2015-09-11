@@ -801,10 +801,96 @@ namespace NanoboyAdvance
         }
         case THUMB_17:
             // THUMB.17 Software Interrupt
-            // TODO: Do we need I-bit or not?
             if ((cpsr & IRQDisable) == 0)
             {
-                LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x", ReadByte(r15 - 4), r0, r1, r2, r3);
+                LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (thumb)", ReadByte(r15 - 4), r0, r1, r2, r3, reg(14), r15);
+                if (ReadByte(r15 - 4) == 0x0B)
+                {
+                    uint source = reg(0);
+                    uint dest = reg(1);
+                    uint length = reg(2) & 0xFFFFF;
+                    bool fixed = reg(2) & (1 << 24) ? true : false;
+                    if (reg(2) & (1 << 26))
+                    {
+                        for (int i = 0; i < length; i++)
+                        {
+                            WriteWord(dest, ReadWord(source));
+                            dest += 4;
+                            if (!fixed) source += 4;
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < length; i++)
+                        {
+                            WriteHWord(dest, ReadHWord(source));
+                            dest += 2;
+                            if (!fixed) source += 2;
+                        }
+                    }
+                    return;
+                }
+                if (ReadByte(r15 - 4) == 0x0C)
+                {
+                    uint source = reg(0);
+                    uint dest = reg(1);
+                    uint length = reg(2) & 0xFFFFF;
+                    bool fixed = reg(2) & (1 << 24) ? true : false;
+                    for (int i = 0; i < length; i++)
+                    {
+                        WriteWord(dest, ReadWord(source));
+                        dest += 4;
+                        if (!fixed) source += 4;
+                    }
+                    return;
+                }
+                if (ReadByte(r15 - 4) == 0x12)
+                {
+                    int amount = memory->ReadWord(reg(0)) >> 8;
+                    int processed = 0;
+                    uint source = reg(0) + 4;
+                    uint dest = reg(1);
+                    while (amount > 0)
+                    {
+                        ubyte encoder = memory->ReadByte(source++);
+                        // Process 8 blocks encoded by the encoder
+                        for (int i = 7; i >= 0; i--)
+                        {
+                            if (encoder & (1 << i))
+                            {
+                                // Compressed
+                                ushort value = memory->ReadHWord(source);
+                                uint disp = (value >> 8) | ((value & 0xF) << 8);
+                                uint n = ((value >> 4) & 0xF) + 3;
+                                source += 2;
+
+                                for (int j = 0; j < n; j++)
+                                {
+                                    ushort value = memory->ReadByte(dest - disp - 1);
+                                    memory->WriteHWord(dest, /*(value << 8) |*/ value);
+                                    dest++;
+                                    amount--;
+                                    if (amount == 0)
+                                    {
+                                        return;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // Uncompressed
+                                ubyte value = memory->ReadByte(source++);
+                                memory->WriteHWord(dest++, /*(value << 8) |*/ value);
+                                amount--;
+                                if (amount == 0)
+                                {
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    return;
+                }
                 r14_svc = r15 - 2;
                 spsr_svc = cpsr;
                 r15 = 8;
