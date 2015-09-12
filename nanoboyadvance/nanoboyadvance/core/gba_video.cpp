@@ -252,8 +252,6 @@ namespace NanoboyAdvance
                 int height;
                 int x = attribute1 & 0x1FF;
                 int y = attribute0 & 0xFF;
-                bool rotate_scale = attribute0 & (1 << 8) ? true : false;
-                bool color_mode = attribute0 & (1 << 13) ? true : false;
                 GBAVideoSpriteShape shape = static_cast<GBAVideoSpriteShape>(attribute0 >> 14);
                 int size = attribute1 >> 14;
 
@@ -296,10 +294,16 @@ namespace NanoboyAdvance
                 // Determine if there is something to render for this sprite
                 if (line >= y && line <= y + height)
                 {
-                    int row = (line - y) / 8;
+                    int internal_line = line - y;
+                    int displacement_y = internal_line % 8;
+                    int row = (internal_line - displacement_y) / 8;//(line - y) / 8;
                     int tiles_per_row = width / 8;
                     int tile_number = (attribute2 & 0x3FF) * 2;
                     int palette_number = attribute2 >> 12;
+                    bool rotate_scale = attribute0 & (1 << 8) ? true : false;
+                    bool horizontal_flip = !rotate_scale && (attribute1 & (1 << 12));
+                    bool vertical_flip = !rotate_scale && (attribute1 & (1 << 13));
+                    bool color_mode = attribute0 & (1 << 13) ? true : false;
 
                     // Render all visible tiles of the sprite
                     for (int j = 0; j < tiles_per_row; j++)
@@ -314,19 +318,19 @@ namespace NanoboyAdvance
                         }
                         else
                         {
-                            current_tile_number = 32 * row + (tile_number % 32) + j;
+                            current_tile_number = tile_number + row * 32 + j;
                         }
 
                         // Render either in 256 colors or 16 colors mode
                         if (color_mode)
                         {
                             // 256 colors
-                            tile_data = DecodeTileLine8PP(tile_base, current_tile_number, (line - y) % 8, true, true);
+                            tile_data = DecodeTileLine8PP(tile_base, current_tile_number, displacement_y, true, true);
                         }
                         else
                         {
                             // 16 colors (use palette_nummer)
-                            tile_data = DecodeTileLine4BPP(tile_base, 0x200 + palette_number * 0x20, current_tile_number, (line - y) % 8, true);
+                            tile_data = DecodeTileLine4BPP(tile_base, 0x200 + palette_number * 0x20, current_tile_number, displacement_y, true);
                         }
 
                         // Copy data
