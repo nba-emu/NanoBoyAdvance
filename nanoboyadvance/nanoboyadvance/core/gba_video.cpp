@@ -296,6 +296,51 @@ namespace NanoboyAdvance
                 // Determine if there is something to render for this sprite
                 if (line >= y && line <= y + height)
                 {
+                    int row = (line - y) / 8;
+                    int tiles_per_row = width / 8;
+                    int tile_number = (attribute2 & 0x3FF) * 2;
+                    int palette_number = attribute2 >> 12;
+
+                    // Render all visible tiles of the sprite
+                    for (int j = 0; j < tiles_per_row; j++)
+                    {
+                        int current_tile_number;
+                        uint* tile_data;
+
+                        // Determine the tile to render
+                        if (one_dimensional)
+                        {
+                            current_tile_number = tile_number + row * tiles_per_row + j;
+                        }
+                        else
+                        {
+                            current_tile_number = 32 * row + (tile_number % 32) + j;
+                        }
+
+                        // Render either in 256 colors or 16 colors mode
+                        if (color_mode)
+                        {
+                            // 256 colors
+                            tile_data = DecodeTileLine8PP(tile_base, current_tile_number, (line - y) % 8, true, true);
+                        }
+                        else
+                        {
+                            // 16 colors (use palette_nummer)
+                            tile_data = DecodeTileLine4BPP(tile_base, 0x200 + palette_number * 0x20, current_tile_number, (line - y) % 8, true);
+                        }
+
+                        // Copy data
+                        for (int k = 0; k < 8; k++)
+                        {
+                            if (tile_data[k] != 0 && (x + j * 8 + k) < 240)
+                            {
+                                line_buffer[x + j * 8 + k] = tile_data[k];
+                            }
+                        }
+
+                        // We don't need that memory anymore
+                        delete[] tile_data;
+                    }
                 }
             }
 
