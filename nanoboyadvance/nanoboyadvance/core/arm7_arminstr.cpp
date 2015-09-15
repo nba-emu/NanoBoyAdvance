@@ -551,8 +551,8 @@ namespace NanoboyAdvance
             {
                 reg(reg_dest) += reg(reg_operand3);
             }
-            calculate_sign(reg(reg_dest));
-            calculate_zero(reg(reg_dest));
+            CalculateSign(reg(reg_dest));
+            CalculateZero(reg(reg_dest));
             break;
         }
         case ARM_2:
@@ -589,8 +589,8 @@ namespace NanoboyAdvance
             }
             reg(reg_dest_low) = result & 0xFFFFFFFF;
             reg(reg_dest_high) = result >> 32;
-            calculate_sign(reg(reg_dest_high));
-            calculate_zero(result);
+            CalculateSign(reg(reg_dest_high));
+            CalculateZero(result);
             break;
         }
         case ARM_3:
@@ -891,9 +891,9 @@ namespace NanoboyAdvance
                     uint result = operand1 & operand2;
                     if (set_flags)
                     {
-                        calculate_sign(result);
-                        calculate_zero(result);
-                        assert_carry(carry);
+                        CalculateSign(result);
+                        CalculateZero(result);
+                        AssertCarry(carry);
                     }
                     reg(reg_dest) = result;
                     break;
@@ -903,9 +903,9 @@ namespace NanoboyAdvance
                     uint result = operand1 ^ operand2;
                     if (set_flags)
                     {
-                        calculate_sign(result);
-                        calculate_zero(result);
-                        assert_carry(carry);
+                        CalculateSign(result);
+                        CalculateZero(result);
+                        AssertCarry(carry);
                     }
                     reg(reg_dest) = result;
                     break;
@@ -915,10 +915,10 @@ namespace NanoboyAdvance
                     uint result = operand1 - operand2;
                     if (set_flags)
                     {
-                        assert_carry(operand1 >= operand2);
-                        calculate_overflow_sub(result, operand1, operand2);
-                        calculate_sign(result);
-                        calculate_zero(result);
+                        AssertCarry(operand1 >= operand2);
+                        CalculateOverflowSub(result, operand1, operand2);
+                        CalculateSign(result);
+                        CalculateZero(result);
                     }
                     reg(reg_dest) = result;
                     break;
@@ -928,10 +928,10 @@ namespace NanoboyAdvance
                     uint result = operand2 - operand1;
                     if (set_flags)
                     {
-                        assert_carry(operand2 >= operand1);
-                        calculate_overflow_sub(result, operand2, operand1);
-                        calculate_sign(result);
-                        calculate_zero(result);
+                        AssertCarry(operand2 >= operand1);
+                        CalculateOverflowSub(result, operand2, operand1);
+                        CalculateSign(result);
+                        CalculateZero(result);
                     }
                     reg(reg_dest) = result;
                     break;
@@ -942,10 +942,10 @@ namespace NanoboyAdvance
                     if (set_flags)
                     {
                         ulong result_long = (ulong)operand1 + (ulong)operand2;
-                        assert_carry(result_long & 0x100000000);
-                        calculate_overflow_add(result, operand1, operand2);
-                        calculate_sign(result);
-                        calculate_zero(result);
+                        AssertCarry((result_long & 0x100000000) ? true : false);
+                        CalculateOverflowAdd(result, operand1, operand2);
+                        CalculateSign(result);
+                        CalculateZero(result);
                     }
                     reg(reg_dest) = result;
                     break;
@@ -957,10 +957,10 @@ namespace NanoboyAdvance
                     if (set_flags)
                     {
                         ulong result_long = (ulong)operand1 + (ulong)operand2 + (ulong)carry2;
-                        assert_carry(result_long & 0x100000000);
-                        calculate_overflow_add(result, operand1, operand2 + carry2);
-                        calculate_sign(result);
-                        calculate_zero(result);
+                        AssertCarry((result_long & 0x100000000) ? true : false);
+                        CalculateOverflowAdd(result, operand1, operand2 + carry2);
+                        CalculateSign(result);
+                        CalculateZero(result);
                     }
                     reg(reg_dest) = result;
                     break;
@@ -971,10 +971,10 @@ namespace NanoboyAdvance
                     uint result = operand1 - operand2 + carry2 - 1;
                     if (set_flags)
                     {
-                        assert_carry(operand1 >= (operand2 + carry2 - 1));
-                        calculate_overflow_sub(result, operand1, (operand2 + carry2 - 1));
-                        calculate_sign(result);
-                        calculate_zero(result);
+                        AssertCarry(operand1 >= (operand2 + carry2 - 1));
+                        CalculateOverflowSub(result, operand1, (operand2 + carry2 - 1));
+                        CalculateSign(result);
+                        CalculateZero(result);
                     }
                     reg(reg_dest) = result;
                     break;
@@ -985,10 +985,10 @@ namespace NanoboyAdvance
                     uint result = operand2 - operand1 + carry2 - 1;
                     if (set_flags)
                     {
-                        assert_carry(operand2 >= (operand1 + carry2 - 1));
-                        calculate_overflow_sub(result, operand2, (operand1 + carry2 - 1));
-                        calculate_sign(result);
-                        calculate_zero(result);
+                        AssertCarry(operand2 >= (operand1 + carry2 - 1));
+                        CalculateOverflowSub(result, operand2, (operand1 + carry2 - 1));
+                        CalculateSign(result);
+                        CalculateZero(result);
                     }
                     reg(reg_dest) = result;
                     break;
@@ -996,36 +996,36 @@ namespace NanoboyAdvance
                 case 0b1000: // TST
                 {
                     uint result = operand1 & operand2;
-                    calculate_sign(result);
-                    calculate_zero(result);
-                    assert_carry(carry);
+                    CalculateSign(result);
+                    CalculateZero(result);
+                    AssertCarry(carry);
                     break;
                 }
                 case 0b1001: // TEQ
                 {
                     uint result = operand1 ^ operand2;
-                    calculate_sign(result);
-                    calculate_zero(result);
-                    assert_carry(carry);
+                    CalculateSign(result);
+                    CalculateZero(result);
+                    AssertCarry(carry);
                     break;
                 }
                 case 0b1010: // CMP
                 {
                     uint result = operand1 - operand2;
-                    assert_carry(operand1 >= operand2);
-                    calculate_overflow_sub(result, operand1, operand2);
-                    calculate_sign(result);
-                    calculate_zero(result);
+                    AssertCarry(operand1 >= operand2);
+                    CalculateOverflowSub(result, operand1, operand2);
+                    CalculateSign(result);
+                    CalculateZero(result);
                     break;
                 }
                 case 0b1011: // CMN
                 {
                     uint result = operand1 + operand2;
                     ulong result_long = (ulong)operand1 + (ulong)operand2;
-                    assert_carry(result_long & 0x100000000);
-                    calculate_overflow_add(result, operand1, operand2);
-                    calculate_sign(result);
-                    calculate_zero(result);
+                    AssertCarry((result_long & 0x100000000) ? true : false);
+                    CalculateOverflowAdd(result, operand1, operand2);
+                    CalculateSign(result);
+                    CalculateZero(result);
                     break;
                 }
                 case 0b1100: // ORR
@@ -1033,9 +1033,9 @@ namespace NanoboyAdvance
                     uint result = operand1 | operand2;
                     if (set_flags)
                     {
-                        calculate_sign(result);
-                        calculate_zero(result);
-                        assert_carry(carry);
+                        CalculateSign(result);
+                        CalculateZero(result);
+                        AssertCarry(carry);
                     }
                     reg(reg_dest) = result;
                     break;
@@ -1044,9 +1044,9 @@ namespace NanoboyAdvance
                 {
                     if (set_flags)
                     {
-                        calculate_sign(operand2);
-                        calculate_zero(operand2);
-                        assert_carry(carry);
+                        CalculateSign(operand2);
+                        CalculateZero(operand2);
+                        AssertCarry(carry);
                     }
                     reg(reg_dest) = operand2;
                     break;
@@ -1056,9 +1056,9 @@ namespace NanoboyAdvance
                     uint result = operand1 & ~operand2;
                     if (set_flags)
                     {
-                        calculate_sign(result);
-                        calculate_zero(result);
-                        assert_carry(carry);
+                        CalculateSign(result);
+                        CalculateZero(result);
+                        AssertCarry(carry);
                     }
                     reg(reg_dest) = result;
                     break;
@@ -1068,9 +1068,9 @@ namespace NanoboyAdvance
                     uint not_operand2 = ~operand2;
                     if (set_flags)
                     {
-                        calculate_sign(not_operand2);
-                        calculate_zero(not_operand2);
-                        assert_carry(carry);
+                        CalculateSign(not_operand2);
+                        CalculateZero(not_operand2);
+                        AssertCarry(carry);
                     }
                     reg(reg_dest) = not_operand2;
                     break;

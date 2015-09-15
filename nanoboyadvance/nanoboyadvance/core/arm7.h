@@ -30,67 +30,6 @@
 // Macro for easier register access
 #define reg(r) *gprs[r]
 
-// TODO: We can create inlined methods for these
-// Alters the sign flag depending on the MSB of the value being set or not
-#define calculate_sign(n) {\
-    if ((n) & 0x80000000)\
-    {\
-        cpsr |= SignFlag;\
-    }\
-    else\
-    {\
-        cpsr &= ~SignFlag;\
-    }\
-}
-
-// Alters the zero flag depending on the value being zero or not
-#define calculate_zero(n) {\
-    if ((n) == 0)\
-    {\
-        cpsr |= ZeroFlag;\
-    }\
-    else\
-    {\
-        cpsr &= ~ZeroFlag;\
-    }\
-}
-
-// Sets or unsets the carry flag depending on the given condition being true or false
-#define assert_carry(n) {\
-    if ((n))\
-    {\
-        cpsr |= CarryFlag;\
-    }\
-    else\
-    {\
-        cpsr &= ~CarryFlag;\
-    }\
-}
-
-// Alters the overflow flag depending on the result and the operands of an addition
-#define calculate_overflow_add(result, operand1, operand2) {\
-    if (((operand1) >> 31 == (operand2) >> 31) && ((result) >> 31 != (operand2) >> 31))\
-    {\
-        cpsr |= OverflowFlag;\
-    }\
-    else\
-    {\
-        cpsr &= ~OverflowFlag;\
-    }\
-}
-
-// Alters the overflow flag depending on the result and the operands of a subtraction
-#define calculate_overflow_sub(result, operand1, operand2) {\
-    if (((operand1) >> 31 != (operand2) >> 31) && ((result) >> 31 == (operand2) >> 31))\
-    {\
-        cpsr |= OverflowFlag;\
-    }\
-    else\
-    {\
-        cpsr &= ~OverflowFlag;\
-    }\
-}
-
 using namespace std;
 
 namespace NanoboyAdvance
@@ -135,13 +74,41 @@ namespace NanoboyAdvance
         // Maps the visible registers (according to cpsr) to gprs
         inline void RemapRegisters();
         
-        // Shifter functions
+        // Condition code altering methods
+        inline void CalculateSign(uint result)
+        {
+            cpsr = result & 0x80000000 ? (cpsr | SignFlag) : (cpsr & ~SignFlag); 
+        }
+
+        inline void CalculateZero(ulong result)
+        {
+            cpsr = result == 0 ? (cpsr | ZeroFlag) : (cpsr & ~ZeroFlag);
+        }
+
+        inline void AssertCarry(bool carry)
+        {
+            cpsr = carry ? (cpsr | CarryFlag) : (cpsr & ~CarryFlag);
+        }
+
+        inline void CalculateOverflowAdd(uint result, uint operand1, uint operand2)
+        {
+            bool overflow = ((operand1) >> 31 == (operand2) >> 31) && ((result) >> 31 != (operand2) >> 31);
+            cpsr = overflow ? (cpsr | OverflowFlag) : (cpsr & ~OverflowFlag);
+        }
+
+        inline void CalculateOverflowSub(uint result, uint operand1, uint operand2)
+        {
+            bool overflow = ((operand1) >> 31 != (operand2) >> 31) && ((result) >> 31 == (operand2) >> 31);
+            cpsr = overflow ? (cpsr | OverflowFlag) : (cpsr & ~OverflowFlag);
+        }
+
+        // Shifter methods
         void LSL(uint& operand, uint amount, bool& carry);
         void LSR(uint& operand, uint amount, bool& carry, bool immediate);
         void ASR(uint& operand, uint amount, bool& carry, bool immediate);
         void ROR(uint& operand, uint amount, bool& carry, bool immediate);
         
-        // Memory functions
+        // Memory methods
         ubyte ReadByte(uint offset);
         ushort ReadHWord(uint offset);
         uint ReadWord(uint offset);
@@ -159,7 +126,6 @@ namespace NanoboyAdvance
         // Used to emulate software interrupts
         void SWI(int number);
     public:
-        // TODO: Maybe use a traditional define?
         enum ARM7Mode
         {
             User = 0x10,

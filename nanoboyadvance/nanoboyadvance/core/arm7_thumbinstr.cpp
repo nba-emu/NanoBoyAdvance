@@ -187,23 +187,23 @@ namespace NanoboyAdvance
             {
             case 0b00: // LSL
                 LSL(reg(reg_dest), immediate_value, carry);
-                assert_carry(carry);
+                AssertCarry(carry);
                 break;
             case 0b01: // LSR
                 LSR(reg(reg_dest), immediate_value, carry, true);
-                assert_carry(carry);
+                AssertCarry(carry);
                 break;
             case 0b10: // ASR
             {
                 ASR(reg(reg_dest), immediate_value, carry, true);
-                assert_carry(carry);
+                AssertCarry(carry);
                 break;
             }
             }
 
             // Update sign and zero flag
-            calculate_sign(reg(reg_dest));
-            calculate_zero(reg(reg_dest));
+            CalculateSign(reg(reg_dest));
+            CalculateZero(reg(reg_dest));
             break;
         }
         case THUMB_2:
@@ -227,20 +227,20 @@ namespace NanoboyAdvance
             if (instruction & (1 << 9))
             {
                 uint result = reg(reg_source) - operand;
-                assert_carry(reg(reg_source) >= operand);
-                calculate_overflow_sub(result, reg(reg_source), operand);
-                calculate_sign(result);
-                calculate_zero(result);
+                AssertCarry(reg(reg_source) >= operand);
+                CalculateOverflowSub(result, reg(reg_source), operand);
+                CalculateSign(result);
+                CalculateZero(result);
                 reg(reg_dest) = result;
             }
             else
             {
                 uint result = reg(reg_source) + operand;
                 ulong result_long = (ulong)(reg(reg_source)) + (ulong)operand;
-                assert_carry(result_long & 0x100000000);
-                calculate_overflow_add(result, reg(reg_source), operand);
-                calculate_sign(result);
-                calculate_zero(result);
+                AssertCarry((result_long & 0x100000000) ? true : false);
+                CalculateOverflowAdd(result, reg(reg_source), operand);
+                CalculateSign(result);
+                CalculateZero(result);
                 reg(reg_dest) = result;
             }
             break;
@@ -253,37 +253,37 @@ namespace NanoboyAdvance
             switch ((instruction >> 11) & 3)
             {
             case 0b00: // MOV
-                calculate_sign(0);
-                calculate_zero(immediate_value);
+                CalculateSign(0);
+                CalculateZero(immediate_value);
                 reg(reg_dest) = immediate_value;
                 break;
             case 0b01: // CMP
             {
                 uint result = reg(reg_dest) - immediate_value;
-                assert_carry(reg(reg_dest) >= immediate_value);
-                calculate_overflow_sub(result, reg(reg_dest), immediate_value);
-                calculate_sign(result);
-                calculate_zero(result);
+                AssertCarry(reg(reg_dest) >= immediate_value);
+                CalculateOverflowSub(result, reg(reg_dest), immediate_value);
+                CalculateSign(result);
+                CalculateZero(result);
                 break;
             }
             case 0b10: // ADD
             {
                 uint result = reg(reg_dest) + immediate_value;
                 ulong result_long = (ulong)(reg(reg_dest)) + (ulong)immediate_value;
-                assert_carry(result_long & 0x100000000);
-                calculate_overflow_add(result, reg(reg_dest), immediate_value);
-                calculate_sign(result);
-                calculate_zero(result);
+                AssertCarry((result_long & 0x100000000) ? true : false);
+                CalculateOverflowAdd(result, reg(reg_dest), immediate_value);
+                CalculateSign(result);
+                CalculateZero(result);
                 reg(reg_dest) = result;
                 break;
             }
             case 0b11: // SUB
             {
                 uint result = reg(reg_dest) - immediate_value;
-                assert_carry(reg(reg_dest) >= immediate_value);
-                calculate_overflow_sub(result, reg(reg_dest), immediate_value);
-                calculate_sign(result);
-                calculate_zero(result);
+                AssertCarry(reg(reg_dest) >= immediate_value);
+                CalculateOverflowSub(result, reg(reg_dest), immediate_value);
+                CalculateSign(result);
+                CalculateZero(result);
                 reg(reg_dest) = result;
                 break;
             }
@@ -300,22 +300,22 @@ namespace NanoboyAdvance
             {
             case 0b0000: // AND
                 reg(reg_dest) &= reg(reg_source);
-                calculate_sign(reg(reg_dest));
-                calculate_zero(reg(reg_dest));
+                CalculateSign(reg(reg_dest));
+                CalculateZero(reg(reg_dest));
                 break;
             case 0b0001: // EOR
                 reg(reg_dest) ^= reg(reg_source);
-                calculate_sign(reg(reg_dest));
-                calculate_zero(reg(reg_dest));
+                CalculateSign(reg(reg_dest));
+                CalculateZero(reg(reg_dest));
                 break;
             case 0b0010: // LSL
             {
                 uint amount = reg(reg_source);
                 bool carry = (cpsr & CarryFlag) ? true : false;
                 LSL(reg(reg_dest), amount, carry);
-                assert_carry(carry);
-                calculate_sign(reg(reg_dest));
-                calculate_zero(reg(reg_dest));
+                AssertCarry(carry);
+                CalculateSign(reg(reg_dest));
+                CalculateZero(reg(reg_dest));
                 break;
             }
             case 0b0011: // LSR
@@ -323,9 +323,9 @@ namespace NanoboyAdvance
                 uint amount = reg(reg_source);
                 bool carry = (cpsr & CarryFlag) ? true : false;
                 LSR(reg(reg_dest), amount, carry, false);
-                assert_carry(carry);
-                calculate_sign(reg(reg_dest));
-                calculate_zero(reg(reg_dest));
+                AssertCarry(carry);
+                CalculateSign(reg(reg_dest));
+                CalculateZero(reg(reg_dest));
                 break;
             }
             case 0b0100: // ASR
@@ -333,9 +333,9 @@ namespace NanoboyAdvance
                 uint amount = reg(reg_source);
                 bool carry = (cpsr & CarryFlag) ? true : false;
                 ASR(reg(reg_dest), amount, carry, false);
-                assert_carry(carry);
-                calculate_sign(reg(reg_dest));
-                calculate_zero(reg(reg_dest));
+                AssertCarry(carry);
+                CalculateSign(reg(reg_dest));
+                CalculateZero(reg(reg_dest));
                 break;
             }
             case 0b0101: // ADC
@@ -343,10 +343,10 @@ namespace NanoboyAdvance
                 int carry = (cpsr >> 29) & 1;
                 uint result = reg(reg_dest) + reg(reg_source) + carry;
                 ulong result_long = (ulong)(reg(reg_dest)) + (ulong)(reg(reg_source)) + (ulong)carry;
-                assert_carry(result_long & 0x100000000);
-                calculate_overflow_add(result, reg(reg_dest), reg(reg_source) + carry);
-                calculate_sign(result);
-                calculate_zero(result);
+                AssertCarry((result_long & 0x100000000) ? true : false);
+                CalculateOverflowAdd(result, reg(reg_dest), reg(reg_source) + carry);
+                CalculateSign(result);
+                CalculateZero(result);
                 reg(reg_dest) = result;
                 break;
             }
@@ -354,10 +354,10 @@ namespace NanoboyAdvance
             {
                 int carry = (cpsr >> 29) & 1;
                 uint result = reg(reg_dest) - reg(reg_source) + carry - 1;
-                assert_carry(reg(reg_dest) >= reg(reg_source) + carry - 1);
-                calculate_overflow_sub(result, reg(reg_dest), (reg(reg_source) + carry - 1));
-                calculate_sign(result);
-                calculate_zero(result);
+                AssertCarry(reg(reg_dest) >= reg(reg_source) + carry - 1);
+                CalculateOverflowSub(result, reg(reg_dest), (reg(reg_source) + carry - 1));
+                CalculateSign(result);
+                CalculateZero(result);
                 reg(reg_dest) = result;
                 break;
             }
@@ -366,67 +366,67 @@ namespace NanoboyAdvance
                 uint amount = reg(reg_source);
                 bool carry = (cpsr & CarryFlag) ? true : false;
                 ROR(reg(reg_dest), amount, carry, false);
-                assert_carry(carry);
-                calculate_sign(reg(reg_dest));
-                calculate_zero(reg(reg_dest));
+                AssertCarry(carry);
+                CalculateSign(reg(reg_dest));
+                CalculateZero(reg(reg_dest));
                 break;
             }
             case 0b1000: // TST
             {
                 uint result = reg(reg_dest) & reg(reg_source);
-                calculate_sign(result);
-                calculate_zero(result);
+                CalculateSign(result);
+                CalculateZero(result);
                 break;
             }
             case 0b1001: // NEG
             {
                 uint result = 0 - reg(reg_source);
-                assert_carry(0 >= reg(reg_source));
-                calculate_overflow_sub(result, 0, reg(reg_source));
-                calculate_sign(result);
-                calculate_zero(result);
+                AssertCarry(0 >= reg(reg_source));
+                CalculateOverflowSub(result, 0, reg(reg_source));
+                CalculateSign(result);
+                CalculateZero(result);
                 reg(reg_dest) = result;
                 break;
             }
             case 0b1010: // CMP
             {
                 uint result = reg(reg_dest) - reg(reg_source);
-                assert_carry(reg(reg_dest) >= reg(reg_source));
-                calculate_overflow_sub(result, reg(reg_dest), reg(reg_source));
-                calculate_sign(result);
-                calculate_zero(result);
+                AssertCarry(reg(reg_dest) >= reg(reg_source));
+                CalculateOverflowSub(result, reg(reg_dest), reg(reg_source));
+                CalculateSign(result);
+                CalculateZero(result);
                 break;
             }
             case 0b1011: // CMN
             {
                 uint result = reg(reg_dest) + reg(reg_source);
                 ulong result_long = (ulong)(reg(reg_dest)) + (ulong)(reg(reg_source));
-                assert_carry(result_long & 0x100000000);
-                calculate_overflow_add(result, reg(reg_dest), reg(reg_source));
-                calculate_sign(result);
-                calculate_zero(result);
+                AssertCarry((result_long & 0x100000000) ? true : false);
+                CalculateOverflowAdd(result, reg(reg_dest), reg(reg_source));
+                CalculateSign(result);
+                CalculateZero(result);
                 break;
             }
             case 0b1100: // ORR
                 reg(reg_dest) |= reg(reg_source);
-                calculate_sign(reg(reg_dest));
-                calculate_zero(reg(reg_dest));
+                CalculateSign(reg(reg_dest));
+                CalculateZero(reg(reg_dest));
                 break;
             case 0b1101: // MUL
                 reg(reg_dest) *= reg(reg_source);
-                calculate_sign(reg(reg_dest));
-                calculate_zero(reg(reg_dest));
-                assert_carry(false);
+                CalculateSign(reg(reg_dest));
+                CalculateZero(reg(reg_dest));
+                AssertCarry(false);
                 break;
             case 0b1110: // BIC
                 reg(reg_dest) &= ~(reg(reg_source));
-                calculate_sign(reg(reg_dest));
-                calculate_zero(reg(reg_dest));
+                CalculateSign(reg(reg_dest));
+                CalculateZero(reg(reg_dest));
                 break;
             case 0b1111: // MVN
                 reg(reg_dest) = ~(reg(reg_source));
-                calculate_sign(reg(reg_dest));
-                calculate_zero(reg(reg_dest));
+                CalculateSign(reg(reg_dest));
+                CalculateZero(reg(reg_dest));
                 break;
             }
             break;
@@ -472,10 +472,10 @@ namespace NanoboyAdvance
             case 0b01: // CMP
             {
                 uint result = reg(reg_dest) - operand;
-                assert_carry(reg(reg_dest) >= operand);
-                calculate_overflow_sub(result, reg(reg_dest), operand);
-                calculate_sign(result);
-                calculate_zero(result);
+                AssertCarry(reg(reg_dest) >= operand);
+                CalculateOverflowSub(result, reg(reg_dest), operand);
+                CalculateSign(result);
+                CalculateZero(result);
                 compare = true;
                 break;
             }
