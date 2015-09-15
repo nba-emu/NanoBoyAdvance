@@ -203,31 +203,17 @@ namespace NanoboyAdvance
     ubyte ARM7::ReadByte(uint offset)
     {
         // GBA specific case
-        if (r15 > 0x4000 && offset < 0x4000)
-        {
-            return last_fetched_bios & 0xFF;
-        }
         return memory->ReadByte(offset);
     }
 
     ushort ARM7::ReadHWord(uint offset)
     {
         // TODO: Proper handling (Mis-aligned LDRH,LDRSH)
-        // GBA specific case
-        if (r15 > 0x4000 && (offset & ~1) < 0x4000)
-        {
-            return last_fetched_bios & 0xFFFF;
-        }
         return memory->ReadHWord(offset & ~1);
     }
 
     uint ARM7::ReadWord(uint offset)
     {
-        // GBA specific case
-        if (r15 > 0x4000 && (offset & ~3) < 0x4000)
-        {
-            return last_fetched_bios;
-        }
         return memory->ReadWord(offset & ~3);
     }
 
@@ -235,12 +221,6 @@ namespace NanoboyAdvance
     {
         uint value = memory->ReadWord(offset & ~3);
         int amount = (offset & 3) * 8;
-
-        // GBA specific case
-        if (r15 > 0x4000 && (offset & ~3) < 0x4000)
-        {
-            return last_fetched_bios;
-        }
 
         if (amount != 0)
         {
@@ -378,13 +358,13 @@ namespace NanoboyAdvance
         // CpuSet
         case 0x0B:
         {
-            uint source = reg(0);
-            uint dest = reg(1);
-            uint length = reg(2) & 0xFFFFF;
-            bool fixed = reg(2) & (1 << 24) ? true : false;
-            if (reg(2) & (1 << 26))
+            uint source = r0;
+            uint dest = r1;
+            uint length = r2 & 0xFFFFF;
+            bool fixed = r2 & (1 << 24) ? true : false;
+            if (r2 & (1 << 26))
             {
-                for (int i = 0; i < length; i++)
+                for (uint i = 0; i < length; i++)
                 {
                     WriteWord(dest, ReadWord(source));
                     dest += 4;
@@ -393,7 +373,7 @@ namespace NanoboyAdvance
             }
             else
             {
-                for (int i = 0; i < length; i++)
+                for (uint i = 0; i < length; i++)
                 {
                     WriteHWord(dest, ReadHWord(source));
                     dest += 2;
@@ -405,11 +385,11 @@ namespace NanoboyAdvance
         // CpuFastSet
         case 0x0C:
         {
-            uint source = reg(0);
-            uint dest = reg(1);
-            uint length = reg(2) & 0xFFFFF;
-            bool fixed = reg(2) & (1 << 24) ? true : false;
-            for (int i = 0; i < length; i++)
+            uint source = r0;
+            uint dest = r1;
+            uint length = r2 & 0xFFFFF;
+            bool fixed = r2 & (1 << 24) ? true : false;
+            for (uint i = 0; i < length; i++)
             {
                 WriteWord(dest, ReadWord(source));
                 dest += 4;
@@ -417,13 +397,14 @@ namespace NanoboyAdvance
             }
             break;
         }
-        // LZ77UncompVRAM
+        // LZ77UncompVRAM / LZ77UncompWRAM
+        case 0x11:
         case 0x12:
         {
-            int amount = memory->ReadWord(reg(0)) >> 8;
+            int amount = memory->ReadWord(r0) >> 8;
             int processed = 0;
-            uint source = reg(0) + 4;
-            uint dest = reg(1);
+            uint source = r0 + 4;
+            uint dest = r1;
             while (amount > 0)
             {
                 ubyte encoder = memory->ReadByte(source++);

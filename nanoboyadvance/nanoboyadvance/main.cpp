@@ -99,6 +99,10 @@ int main(int argc, char **argv)
         memory->gba_io->keyinput = joypad;
         for (int i = 0; i < 280896; i++)
         {
+            if (memory->gba_io->ime != 0 && memory->gba_io->if_ != 0)
+            {
+                arm->FireIRQ();
+            }
             arm->Step();
             memory->timer->Step();
             /*memory->gba_io->tm0cnt_l = (memory->gba_io->tm0cnt_l + 1) % 0x10000;
@@ -115,10 +119,7 @@ int main(int argc, char **argv)
 					setpixel(x, y, memory->video->buffer[y * 240 + x]);
                 }
             }
-            if (memory->gba_io->ime != 0 && memory->gba_io->if_ != 0)
-            {
-                arm->FireIRQ();
-            }
+
         }
         while (SDL_PollEvent(&event))
         {
