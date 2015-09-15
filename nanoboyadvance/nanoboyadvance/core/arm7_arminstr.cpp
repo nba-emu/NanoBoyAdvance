@@ -1450,13 +1450,20 @@ namespace NanoboyAdvance
             // ARM.16 Software interrupt
             if ((cpsr & IRQDisable) == 0)
             {
-                LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (arm)", ReadByte(r15 - 4), r0, r1, r2, r3, reg(14), r15);
-                r14_svc = r15 - 4;
-                r15 = 0x8;
-                flush_pipe = true;
-                spsr_svc = cpsr;
-                cpsr = (cpsr & ~0x1F) | SVC | IRQDisable;
-                RemapRegisters();
+                LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (arm)", ReadByte(r15 - 6), r0, r1, r2, r3, reg(14), r15);
+                if (hle)
+                {
+                    SWI(ReadByte(r15 - 6));
+                }
+                else
+                {
+                    r14_svc = r15 - 4;
+                    r15 = 0x8;
+                    flush_pipe = true;
+                    spsr_svc = cpsr;
+                    cpsr = (cpsr & ~0x1F) | SVC | IRQDisable;
+                    RemapRegisters();
+                }
             }
             break;
         }

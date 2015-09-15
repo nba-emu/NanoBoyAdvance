@@ -21,9 +21,10 @@
 
 namespace NanoboyAdvance
 {
-    ARM7::ARM7(Memory* memory)
+    ARM7::ARM7(Memory* memory, bool use_bios)
     {
         this->memory = memory;
+
         // Zero-initialize stuff
         r0 = r1 = r2 = r3 = r4 = r5 = r6 = r7 = r8 = r9 = r10 = r11 = r12 = r13 = r14 = r15 = 0;
         r8_fiq = r9_fiq = r10_fiq = r11_fiq = r12_fiq = r13_fiq = r14_fiq = 0;
@@ -34,6 +35,7 @@ namespace NanoboyAdvance
         spsr_fiq = spsr_svc = spsr_abt = spsr_irq = spsr_und = spsr_def = 0;
         pipe_status = 0;
         flush_pipe = false;
+
         // Map the static registers r0-r7, r15
         gprs[0] = &r0;
         gprs[1] = &r1;
@@ -44,14 +46,19 @@ namespace NanoboyAdvance
         gprs[6] = &r6;
         gprs[7] = &r7;
         gprs[15] = &r15;
+
         // Set the mode (system, thumb disabled)
         cpsr = System;
         RemapRegisters();
-        // Testing
+
+        // Skip bios boot logo
         r15 = 0x8000000;
         r13 = 0x3007F00;
         r13_svc = 0x3007FE0;
         r13_irq = 0x3007FA0;
+
+        // Set hle flag
+        hle = !use_bios;
     }
     
     void ARM7::RemapRegisters()
@@ -361,6 +368,107 @@ namespace NanoboyAdvance
             RemapRegisters();
             r15 = 0x18;
             flush_pipe = true;
+        }
+    }
+
+    void NanoboyAdvance::ARM7::SWI(int number)
+    {
+        switch (number)
+        {
+        // CpuSet
+        case 0x0B:
+        {
+            uint source = reg(0);
+            uint dest = reg(1);
+            uint length = reg(2) & 0xFFFFF;
+            bool fixed = reg(2) & (1 << 24) ? true : false;
+            if (reg(2) & (1 << 26))
+            {
+                for (int i = 0; i < length; i++)
+                {
+                    WriteWord(dest, ReadWord(source));
+                    dest += 4;
+                    if (!fixed) source += 4;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < length; i++)
+                {
+                    WriteHWord(dest, ReadHWord(source));
+                    dest += 2;
+                    if (!fixed) source += 2;
+                }
+            }
+            break;
+        }
+        // CpuFastSet
+        case 0x0C:
+        {
+            uint source = reg(0);
+            uint dest = reg(1);
+            uint length = reg(2) & 0xFFFFF;
+            bool fixed = reg(2) & (1 << 24) ? true : false;
+            for (int i = 0; i < length; i++)
+            {
+                WriteWord(dest, ReadWord(source));
+                dest += 4;
+                if (!fixed) source += 4;
+            }
+            break;
+        }
+        // LZ77UncompVRAM
+        case 0x12:
+        {
+            int amount = memory->ReadWord(reg(0)) >> 8;
+            int processed = 0;
+            uint source = reg(0) + 4;
+            uint dest = reg(1);
+            while (amount > 0)
+            {
+                ubyte encoder = memory->ReadByte(source++);
+
+                // Process 8 blocks encoded by the encoder
+                for (int i = 7; i >= 0; i--)
+                {
+                    if (encoder & (1 << i))
+                    {
+                        // Compressed
+                        ushort value = memory->ReadHWord(source);
+                        uint disp = (value >> 8) | ((value & 0xF) << 8);
+                        uint n = ((value >> 4) & 0xF) + 3;
+                        source += 2;
+
+                        for (int j = 0; j < n; j++)
+                        {
+                            ushort value = memory->ReadByte(dest - disp - 1);
+                            memory->WriteHWord(dest, value);
+                            dest++;
+                            amount--;
+                            if (amount == 0)
+                            {
+                                return;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Uncompressed
+                        ubyte value = memory->ReadByte(source++);
+                        memory->WriteHWord(dest++, value);
+                        amount--;
+                        if (amount == 0)
+                        {
+                            return;
+                        }
+                    }
+                }
+            }
+            break;
+        }
+        default:
+            LOG(LOG_ERROR, "Unimplemented software interrupt 0x%x", number);
+            break;
         }
     }
 }

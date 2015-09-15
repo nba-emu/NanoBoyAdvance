@@ -318,7 +318,7 @@ namespace NanoboyAdvance
                         }
                         else
                         {
-                            current_tile_number = tile_number + row * 32 + j;
+                            current_tile_number = tile_number + row * (color_mode ? 16 : 32) + j;
                         }
 
                         // Render either in 256 colors or 16 colors mode

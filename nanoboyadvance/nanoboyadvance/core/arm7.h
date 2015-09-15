@@ -115,6 +115,7 @@ namespace NanoboyAdvance
         // Current program status register (contains status flags)
         uint cpsr;
         uint spsr_fiq, spsr_svc, spsr_abt, spsr_irq, spsr_und, spsr_def;
+
         // A pointer pointing on the Saved program status register of the current mode
         uint* pspsr;
         
@@ -124,14 +125,23 @@ namespace NanoboyAdvance
         int pipe_status;
         bool flush_pipe;
 
-        // Handle special cases (GBA specific!! remove if emulating other system!)
+        // Some games seem to read from bios
         uint last_fetched_bios;
 
+        // Indicates wether interrupts and swi should be processed using
+        // the bios or using a hle attempt
+        bool hle;
+
+        // Maps the visible registers (according to cpsr) to gprs
         inline void RemapRegisters();
+        
+        // Shifter functions
         void LSL(uint& operand, uint amount, bool& carry);
         void LSR(uint& operand, uint amount, bool& carry, bool immediate);
         void ASR(uint& operand, uint amount, bool& carry, bool immediate);
         void ROR(uint& operand, uint amount, bool& carry, bool immediate);
+        
+        // Memory functions
         ubyte ReadByte(uint offset);
         ushort ReadHWord(uint offset);
         uint ReadWord(uint offset);
@@ -139,10 +149,15 @@ namespace NanoboyAdvance
         void WriteByte(uint offset, ubyte value);
         void WriteHWord(uint offset, ushort value);
         void WriteWord(uint offset, uint value);
+        
+        // Command processing
         int ARMDecode(uint instruction);
         void ARMExecute(uint instruction, int type);
         int THUMBDecode(ushort instruction);
         void THUMBExecute(ushort instruction, int type);
+        
+        // Used to emulate software interrupts
+        void SWI(int number);
     public:
         // TODO: Maybe use a traditional define?
         enum ARM7Mode
@@ -165,7 +180,7 @@ namespace NanoboyAdvance
             ZeroFlag = 0x40000000,
             SignFlag = 0x80000000
         };
-        ARM7(Memory* memory);
+        ARM7(Memory* memory, bool use_bios);
         void Step();
         void FireIRQ();
         string ARMDisasm(uint base, uint instruction);

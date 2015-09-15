@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 		memory = new GBAMemory("bios.bin", rom);
 	}
 
-	arm = new ARM7(memory);
+	arm = new ARM7(memory, false);
 
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
     {
