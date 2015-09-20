@@ -119,7 +119,6 @@ int main(int argc, char **argv)
 					setpixel(x, y, memory->video->buffer[y * 240 + x]);
                 }
             }
-
         }
         while (SDL_PollEvent(&event))
         {

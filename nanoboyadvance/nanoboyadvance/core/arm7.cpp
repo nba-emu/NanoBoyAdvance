@@ -35,6 +35,7 @@ namespace NanoboyAdvance
         spsr_fiq = spsr_svc = spsr_abt = spsr_irq = spsr_und = spsr_def = 0;
         pipe_status = 0;
         flush_pipe = false;
+        in_interrupt = false;
 
         // Map the static registers r0-r7, r15
         gprs[0] = &r0;
@@ -252,6 +253,7 @@ namespace NanoboyAdvance
         bool thumb = (cpsr & Thumb) == Thumb;
         uint pc_page = r15 >> 24;
 
+        // Log when the program counter is in an unusual area        
         if (pc_page != 0 && pc_page != 2 && pc_page != 3 && pc_page != 6 && pc_page != 8)
         {
             LOG(LOG_ERROR, "Whoops! PC in suspicious area! This shouldn't happen!!! r15=0x%x", r15);
@@ -325,6 +327,13 @@ namespace NanoboyAdvance
                 break;
             }
         }
+        
+        // We need to catch the irq handler returning to the "bios"
+        if (hle && r15 == 0xC0FF1E00)
+        {
+            LeaveIrqHLE();
+        }
+
         if (flush_pipe)
         {
             pipe_status = 0;
@@ -342,12 +351,19 @@ namespace NanoboyAdvance
     {
         if ((cpsr & IRQDisable) == 0)
         {
-            r14_irq = r15 - (cpsr & Thumb ? 2 : 4) + 4;
-            spsr_irq = cpsr;
-            cpsr = (cpsr & ~0x3F) | IRQ | IRQDisable;
-            RemapRegisters();
-            r15 = 0x18;
-            flush_pipe = true;
+            if (hle && !in_interrupt)
+            {
+                EnterIrqHLE();
+            }
+            else
+            {
+                r14_irq = r15 - (cpsr & Thumb ? 2 : 4) + 4;
+                spsr_irq = cpsr;
+                cpsr = (cpsr & ~0x3F) | IRQ | IRQDisable;
+                RemapRegisters();
+                r15 = 0x18;
+                flush_pipe = true;
+            }
         }
     }
 
@@ -451,5 +467,74 @@ namespace NanoboyAdvance
             LOG(LOG_ERROR, "Unimplemented software interrupt 0x%x", number);
             break;
         }
+    }
+
+    void ARM7::EnterIrqHLE()
+    {
+        // Perform mode switch
+        r14_irq = r15 - (cpsr & Thumb ? 2 : 4) + 4;
+        spsr_irq = cpsr;
+        cpsr = (cpsr & ~0x3F) | IRQ | IRQDisable;
+        RemapRegisters();
+
+        // Save registers
+        r13_irq -= 4; //24;
+        WriteWord(r13_irq, r14_irq);
+
+        r13_irq -= 4;
+        WriteWord(r13_irq, r12);
+
+        r13_irq -= 4;
+        WriteWord(r13_irq, r3);
+
+        r13_irq -= 4;
+        WriteWord(r13_irq, r2);
+
+        r13_irq -= 4;
+        WriteWord(r13_irq, r1);
+
+        r13_irq -= 4;
+        WriteWord(r13_irq, r0);
+
+        // Set identifier in r14_irq
+        r14_irq = 0xC0FF1E00;
+
+        // Set r15 to isr routine of rom
+        r15 = memory->ReadWord(0x03007FFC);
+        flush_pipe = true;
+
+        // Block other pending interrupts for now
+        in_interrupt = true;
+    }
+
+    void ARM7::LeaveIrqHLE()
+    {
+        // Restore registers
+        r0 = ReadWord(r13_irq);
+        r13_irq += 4;
+
+        r1 = ReadWord(r13_irq);
+        r13_irq += 4;
+
+        r2 = ReadWord(r13_irq);
+        r13_irq += 4;
+
+        r3 = ReadWord(r13_irq);
+        r13_irq += 4;
+
+        r12 = ReadWord(r13_irq);
+        r13_irq += 4;
+
+        r14_irq = ReadWord(r13_irq);
+        r13_irq += 4;
+
+        // Restore mode and return
+        cpsr = *pspsr;
+        r15 = r14_irq - 4;
+        flush_pipe = true;
+        RemapRegisters();
+
+        // Allow further interrupts
+        in_interrupt = false;
     }
 }

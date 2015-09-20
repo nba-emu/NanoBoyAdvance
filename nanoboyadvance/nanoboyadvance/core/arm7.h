@@ -71,8 +71,11 @@ namespace NanoboyAdvance
         // the bios or using a hle attempt
         bool hle;
 
+        // Flag indicating that no other interrupts should be handled
+        bool in_interrupt;
+
         // Maps the visible registers (according to cpsr) to gprs
-        inline void RemapRegisters();
+        void RemapRegisters();
         
         // Condition code altering methods
         inline void CalculateSign(uint result)
@@ -125,6 +128,8 @@ namespace NanoboyAdvance
         
         // Used to emulate software interrupts
         void SWI(int number);
+        void EnterIrqHLE();
+        void LeaveIrqHLE();
     public:
         enum ARM7Mode
         {
