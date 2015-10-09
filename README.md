@@ -34,7 +34,7 @@ dumpstck [count]: displays a given amount of stack entries
 frame: run until the first line of the next frame gets rendered
 c: continues execution
 ```
-The commands may change in future. 
+The commands may change in future. <b>Also I will add disassembling capability</b>.
 
 ## About me
 I'm a 19 years old computer engineering student from Germany who loves computers and magical lowlevel stuff. Is there really anything more to tell? Computers are awesome. They're perfect, humans not.
