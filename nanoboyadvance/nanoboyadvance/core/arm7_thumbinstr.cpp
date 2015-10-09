@@ -803,7 +803,13 @@ namespace NanoboyAdvance
             // THUMB.17 Software Interrupt
             if ((cpsr & IRQDisable) == 0)
             {
-                LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (thumb)", ReadByte(r15 - 4), r0, r1, r2, r3, reg(14), r15);
+                //LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (thumb)", ReadByte(r15 - 4), r0, r1, r2, r3, reg(14), r15);
+                ubyte bios_call = ReadByte(r15 - 4);
+
+                // See if we must trigger a breakpoint (and do it)
+                TriggerSVCBreakpoint(bios_call);
+
+                // Actual emulation
                 if (hle)
                 {
                     SWI(ReadByte(r15 - 4));

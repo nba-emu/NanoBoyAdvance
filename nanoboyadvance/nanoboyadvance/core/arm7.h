@@ -21,9 +21,11 @@
 
 #include <iostream>
 #include <sstream>
+#include <vector>
 #include "common/types.h"
 #include "common/log.h"
 #include "memory.h"
+#include "arm7_breakpoint.h"
 
 //#define CPU_LOG
 
@@ -122,6 +124,10 @@ namespace NanoboyAdvance
         void ARMExecute(uint instruction, int type);
         int THUMBDecode(ushort instruction);
         void THUMBExecute(ushort instruction, int type);
+
+        // Debugging
+        void TriggerMemoryBreakpoint(bool write, uint address, int size);
+        void TriggerSVCBreakpoint(uint bios_call);
         
         // Used to emulate software interrupts
         void SWI(int number);
@@ -146,9 +152,28 @@ namespace NanoboyAdvance
             ZeroFlag = 0x40000000,
             SignFlag = 0x80000000
         };
+
+        // Debugging
+        vector<ARM7Breakpoint*> breakpoints;
+        ARM7Breakpoint* last_breakpoint;
+        bool hit_breakpoint;
+
+        // Constructor
         ARM7(Memory* memory, bool use_bios);
+
+        // Schedule pipeline
         void Step();
+
+        // Trigger IRQ exception
         void FireIRQ();
+
+        // Register getter / setters
+        uint GetGeneralRegister(int number);
+        void SetGeneralRegister(int number, uint value);
+        uint GetStatusRegister();
+        uint GetSavedStatusRegister();
+
+        // ARM disassembler (put in another class?)
         string ARMDisasm(uint base, uint instruction);
     };
 }

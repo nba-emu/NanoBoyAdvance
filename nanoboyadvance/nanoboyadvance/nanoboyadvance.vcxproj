@@ -166,6 +166,7 @@
     <ClInclude Include="common\log.h" />
     <ClInclude Include="common\types.h" />
     <ClInclude Include="core\arm7.h" />
+    <ClInclude Include="core\arm7_breakpoint.h" />
     <ClInclude Include="core\gba_dma.h" />
     <ClInclude Include="core\gba_io.h" />
     <ClInclude Include="core\gba_memory.h" />

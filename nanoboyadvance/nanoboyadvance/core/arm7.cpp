@@ -25,7 +25,7 @@ namespace NanoboyAdvance
     {
         this->memory = memory;
 
-        // Zero-initialize stuff
+        // Zero-initialize stuff (this stuff should be in the header...)
         r0 = r1 = r2 = r3 = r4 = r5 = r6 = r7 = r8 = r9 = r10 = r11 = r12 = r13 = r14 = r15 = 0;
         r8_fiq = r9_fiq = r10_fiq = r11_fiq = r12_fiq = r13_fiq = r14_fiq = 0;
         r13_svc = r14_svc = 0;
@@ -35,6 +35,8 @@ namespace NanoboyAdvance
         spsr_fiq = spsr_svc = spsr_abt = spsr_irq = spsr_und = spsr_def = 0;
         pipe_status = 0;
         flush_pipe = false;
+        hit_breakpoint = false;
+        last_breakpoint = nullptr;
 
         // Map the static registers r0-r7, r15
         gprs[0] = &r0;
@@ -202,60 +204,113 @@ namespace NanoboyAdvance
 
     ubyte ARM7::ReadByte(uint offset)
     {
-        // GBA specific case
+        TriggerMemoryBreakpoint(false, offset, 1);
         return memory->ReadByte(offset);
     }
 
     ushort ARM7::ReadHWord(uint offset)
     {
         // TODO: Proper handling (Mis-aligned LDRH,LDRSH)
-        return memory->ReadHWord(offset & ~1);
+        offset &= ~1;
+        TriggerMemoryBreakpoint(false, offset, 2);
+        return memory->ReadHWord(offset);
     }
 
     uint ARM7::ReadWord(uint offset)
     {
-        return memory->ReadWord(offset & ~3);
+        offset &= ~3;
+        TriggerMemoryBreakpoint(false, offset, 4);
+        return memory->ReadWord(offset);
     }
 
     uint ARM7::ReadWordRotated(uint offset)
     {
         uint value = memory->ReadWord(offset & ~3);
         int amount = (offset & 3) * 8;
-
-        if (amount != 0)
-        {
-            return (value >> amount) | (value << (32 - amount));
-        }
-        else
-        {
-            return value;
-        }
+        TriggerMemoryBreakpoint(false, offset, 4);
+        return amount == 0 ? value : ((value >> amount) | (value << (32 - amount)));
     }
 
     void ARM7::WriteByte(uint offset, ubyte value)
     {
+        TriggerMemoryBreakpoint(true, offset, 1);
         memory->WriteByte(offset, value);
     }
 
     void ARM7::WriteHWord(uint offset, ushort value)
     {
-        memory->WriteHWord(offset & ~1, value);
+        offset &= ~1;
+        TriggerMemoryBreakpoint(true, offset, 2);
+        memory->WriteHWord(offset, value);
     }
 
     void ARM7::WriteWord(uint offset, uint value)
     {
-        memory->WriteWord(offset & ~3, value);
+        offset &= ~3;
+        TriggerMemoryBreakpoint(true, offset, 4);
+        memory->WriteWord(offset, value);
     }
     
+    void NanoboyAdvance::ARM7::TriggerMemoryBreakpoint(bool write, uint address, int size)
+    {
+        for (int i = 0; i < breakpoints.size(); i++)
+        {
+            if ((breakpoints[i]->concerned_address >= address && breakpoints[i]->concerned_address <= address + size - 1) &&
+                (
+                 (breakpoints[i]->breakpoint_type == ARM7Breakpoint::ARM7BreakpointType::Access) ||
+                 (breakpoints[i]->breakpoint_type == ARM7Breakpoint::ARM7BreakpointType::Read && !write) ||
+                 (breakpoints[i]->breakpoint_type == ARM7Breakpoint::ARM7BreakpointType::Write && write)
+                )
+            )
+            {
+                hit_breakpoint = true;
+                last_breakpoint = breakpoints[i];
+                return;
+            }
+        }
+    }
+
+    void ARM7::TriggerSVCBreakpoint(uint bios_call)
+    {
+        for (int i = 0; i < breakpoints.size(); i++)
+        {
+            ARM7Breakpoint* breakpoint = breakpoints[i];
+
+            // Breakpoint bios call and type matching
+            if (breakpoint->bios_call == bios_call && breakpoint->breakpoint_type == ARM7Breakpoint::ARM7BreakpointType::SVC)
+            {
+                hit_breakpoint = true;
+                last_breakpoint = breakpoint;
+            }
+        }
+    }
+
     void ARM7::Step()
     {
         bool thumb = (cpsr & Thumb) == Thumb;
         uint pc_page = r15 >> 24;
 
+        // *Unset* breakpoint flag
+        hit_breakpoint = false;
+
         // Log when the program counter is in an unusual area        
         if (pc_page != 0 && pc_page != 2 && pc_page != 3 && pc_page != 6 && pc_page != 8)
         {
             LOG(LOG_ERROR, "Whoops! PC in suspicious area! This shouldn't happen!!! r15=0x%x", r15);
+        }
+
+        // Handle code breakpoints
+        for (int i = 0; i < breakpoints.size(); i++)
+        {
+            if (breakpoints[i]->breakpoint_type == ARM7Breakpoint::ARM7BreakpointType::Execute &&
+                breakpoints[i]->thumb_mode == thumb && 
+                (r15 - (thumb ? 8 : 4)) == breakpoints[i]->concerned_address &&
+                pipe_status >= 2)
+            {
+                hit_breakpoint = true;
+                last_breakpoint = breakpoints[i];
+                return;
+            }
         }
 
         if (thumb)
@@ -330,6 +385,14 @@ namespace NanoboyAdvance
         {
             pipe_status = 0;
             flush_pipe = false;
+            for (int i = 0; i < breakpoints.size(); i++)
+            {
+                if (breakpoints[i]->breakpoint_type == ARM7Breakpoint::ARM7BreakpointType::StepOver)
+                { 
+                    hit_breakpoint = true;
+                    last_breakpoint = breakpoints[i];
+                }
+            }
             return;
         }
         r15 += thumb ? 2 : 4;
@@ -350,6 +413,26 @@ namespace NanoboyAdvance
             r15 = 0x18;
             flush_pipe = true;
         }
+    }
+
+    uint ARM7::GetGeneralRegister(int number)
+    {
+        return reg(number);
+    }
+
+    void ARM7::SetGeneralRegister(int number, uint value)
+    {
+        reg(number) = value;
+    }
+
+    uint ARM7::GetStatusRegister()
+    {
+        return cpsr;
+    }
+
+    uint ARM7::GetSavedStatusRegister()
+    {
+        return *pspsr;
     }
 
     void NanoboyAdvance::ARM7::SWI(int number)

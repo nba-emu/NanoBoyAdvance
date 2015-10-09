@@ -1450,7 +1450,13 @@ namespace NanoboyAdvance
             // ARM.16 Software interrupt
             if ((cpsr & IRQDisable) == 0)
             {
-                LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (arm)", ReadByte(r15 - 6), r0, r1, r2, r3, reg(14), r15);
+                //LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (arm)", ReadByte(r15 - 6), r0, r1, r2, r3, reg(14), r15);
+                uint bios_call = ReadByte(r15 - 6);
+
+                // See if we must trigger a breakpoint (and do it)
+                TriggerSVCBreakpoint(bios_call);
+
+                // Actual emulation
                 if (hle)
                 {
                     SWI(ReadByte(r15 - 6));
