@@ -132,13 +132,13 @@ void debugger(ARM7* arm, GBAMemory* memory)
         switch (breakpoint->breakpoint_type)
         {
         case ARM7Breakpoint::ARM7BreakpointType::Execute:
-            cout << "Hit hardware breakpoint @ " << display_word << breakpoint->concerned_address << endl << endl;
+            cout << "Hit hardware breakpoint 0x" << display_word << breakpoint->concerned_address << endl << endl;
             break;
         case ARM7Breakpoint::ARM7BreakpointType::Read:
-            cout << "Read from " << display_word << breakpoint->concerned_address << endl << endl;
+            cout << "Read from 0x" << display_word << breakpoint->concerned_address << endl << endl;
             break;
         case ARM7Breakpoint::ARM7BreakpointType::Write:
-            cout << "Write to " << display_word << breakpoint->concerned_address << endl << endl;
+            cout << "Write to 0x" << display_word << breakpoint->concerned_address << endl << endl;
             break;
         case ARM7Breakpoint::ARM7BreakpointType::Access:
             // TODO
