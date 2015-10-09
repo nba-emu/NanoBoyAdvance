@@ -4,8 +4,9 @@ NanoboyAdvance is an experimental GBA emulator written using a mixture of c++ an
 
 ## Media
 
-<img width="409" height="299" src="https://raw.githubusercontent.com/fredericmeyer/nanoboyadvance/master/screenshots/kirby_logo.png" alt="kirby_logo">
-<img width="409" height="299" src="https://raw.githubusercontent.com/fredericmeyer/nanoboyadvance/master/screenshots/kirby_ingame.png" alt="kirby_ingame">
+<img src="https://raw.githubusercontent.com/fredericmeyer/nanoboyadvance/master/screenshots/kirby_ingame.png" alt="kirby_ingame">
+
+<b>Disclaimer:</b> I wanted to show you more pictures, but I though it would look ugly if I stack the pictures.
 
 ## Debugging
 
@@ -36,4 +37,4 @@ c: continues execution
 The commands may change in future. 
 
 ## About me
-I'm a 19 years old computer engineering student from Germany who loves computers and magical lowlevel stuff. Is there really anything more to tell? Computers are awesome.
+I'm a 19 years old computer engineering student from Germany who loves computers and magical lowlevel stuff. Is there really anything more to tell? Computers are awesome. They're perfect, humans not.
