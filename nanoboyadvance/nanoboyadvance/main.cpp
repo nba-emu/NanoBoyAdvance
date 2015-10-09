@@ -201,7 +201,6 @@ void debugger(ARM7* arm, GBAMemory* memory)
                 continue;
             }
             cout << "help: displays this text" << endl;
-            cout << "c: continues execution" << endl;
             cout << "showregs: displays all cpu registers" << endl;
             cout << "setreg [register] [value]: sets the value of a general purpose register" << endl;
             cout << "bpa [address]: sets an arm mode execution breakpoint" << endl;
@@ -215,6 +214,7 @@ void debugger(ARM7* arm, GBAMemory* memory)
             cout << "setmemw [offset] [word]: writes a word to a given memory address" << endl;
             cout << "dumpstck [count]: displays a given amount of stack entries" << endl;
             cout << "frame: run until the first line of the next frame gets rendered" << endl;
+            cout << "c: continues execution" << endl;
             cout << endl;
         }
         else if (tokens[0] == "showregs")
@@ -500,23 +500,22 @@ int main(int argc, char **argv)
                 debugger(arm, memory);
             }
             
-            // Display next scanline if ready
-            if (memory->video->render_scanline)
+            // Copy the finished frame to SDLs pixel buffer
+            if (memory->video->render_scanline && memory->gba_io->vcount == 159)
             {
-                int y = memory->gba_io->vcount;
-                
-                // Check if the debugger must be called
-                // TODO: When we call the debugger the first line already was rendered internally...
-                if (step_frame && y == 159)
+                if (step_frame)
                 { 
                     step_frame = false; // do only break for the current frame
                     debugger(arm, memory);
                 }
                 
                 // Copy data to screen
-                for (int x = 0; x < 240; x++)
+                for (int y = 0; y < 160; y++)
                 {
-					setpixel(x, y, memory->video->buffer[y * 240 + x]);
+                    for (int x = 0; x < 240; x++)
+                    {
+                        setpixel(x, y, memory->video->buffer[y * 240 + x]);
+                    }
                 }
             }
         }
