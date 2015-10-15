@@ -163,6 +163,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="arm7_callstack.h" />
     <ClInclude Include="common\log.h" />
     <ClInclude Include="common\types.h" />
     <ClInclude Include="core\arm7.h" />

@@ -26,6 +26,7 @@ bpt [address]: sets a thumb mode execution breakpoint
 bpr [offset]: breakpoint on read
 bpw [offset]: breakpoint on write
 bpsvc [bios_call]: halt *after* executing a swi instruction with the given call number
+cbp: remove all breakpoints
 memdump [offset] [length]: displays memory in a formatted way
 setmemb [offset] [byte]: writes a byte to a given memory address
 setmemh [offset] [hword]: writes a hword to a given memory address

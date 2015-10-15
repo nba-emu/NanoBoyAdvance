@@ -48,6 +48,9 @@
     <ClInclude Include="core\arm7_breakpoint.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="arm7_callstack.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core\arm7.cpp">
