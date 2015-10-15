@@ -26,6 +26,7 @@
 #include "common/log.h"
 #include "memory.h"
 #include "arm7_breakpoint.h"
+#include "arm7_callstack.h"
 
 //#define CPU_LOG
 
