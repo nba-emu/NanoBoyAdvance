@@ -37,6 +37,7 @@ namespace NanoboyAdvance
         flush_pipe = false;
         hit_breakpoint = false;
         last_breakpoint = nullptr;
+        crashed = false;
 
         // Map the static registers r0-r7, r15
         gprs[0] = &r0;
@@ -290,13 +291,15 @@ namespace NanoboyAdvance
         bool thumb = (cpsr & Thumb) == Thumb;
         uint pc_page = r15 >> 24;
 
-        // *Unset* breakpoint flag
+        // *Unset* breakpoint and crashed flag
         hit_breakpoint = false;
+        crashed = false;
 
-        // Log when the program counter is in an unusual area        
+        // Debug when the program counter is in an unusual area        
         if (pc_page != 0 && pc_page != 2 && pc_page != 3 && pc_page != 6 && pc_page != 8)
         {
-            LOG(LOG_ERROR, "Whoops! PC in suspicious area! This shouldn't happen!!! r15=0x%x", r15);
+            crashed = true;
+            crash_reason = CrashReason::BadPC;
         }
 
         // Handle code breakpoints

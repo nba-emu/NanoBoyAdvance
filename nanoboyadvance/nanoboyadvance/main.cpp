@@ -152,6 +152,15 @@ void debugger(ARM7* arm, GBAMemory* memory)
             break;
         }
     }
+    else if (arm->crashed)
+    {
+        switch (arm->crash_reason)
+        {
+        case ARM7::CrashReason::BadPC:
+            cout << "Program Counter in unusual / bad memory area (0x" << display_word << arm->GetGeneralRegister(15) << ")" << endl;
+            break;
+        }
+    }
 
     // Display registers
     arm_print_registers(arm);
@@ -208,6 +217,7 @@ void debugger(ARM7* arm, GBAMemory* memory)
             cout << "bpr [offset]: breakpoint on read" << endl;
             cout << "bpw [offset]: breakpoint on write" << endl;
             cout << "bpsvc [bios_call]: halt *after* executing a swi instruction with the given call number" << endl;
+            cout << "cbp: remove all breakpoints" << endl;
             cout << "memdump [offset] [length]: displays memory in a formatted way" << endl;
             cout << "setmemb [offset] [byte]: writes a byte to a given memory address" << endl;
             cout << "setmemh [offset] [hword]: writes a hword to a given memory address" << endl;
@@ -308,6 +318,10 @@ void debugger(ARM7* arm, GBAMemory* memory)
                 cout << e.what() << endl;
             }
         }
+        else if (tokens[0] == "cbp")
+        {
+            arm->breakpoints.clear();
+        }
         else if (tokens[0] == "memdump")
         {
             uint offset;
@@ -353,7 +367,7 @@ void debugger(ARM7* arm, GBAMemory* memory)
 
             // Catch case too many / few parameters
             if (tokens.size() != 3)
-            {
+            { 
                 cout << "Invalid amount of parameters. See \"help\" for help." << endl;
                 continue;
             }
@@ -403,7 +417,11 @@ void debugger(ARM7* arm, GBAMemory* memory)
                 // Actual dumping
                 for (uint i = 0; i < count; i++)
                 {
-                    cout << "[0x" << display_word << stack_ptr << "+0x" << (i * 4) << "]: 0x" << display_word << memory->ReadWord(stack_ptr + i * 4) << dec << endl;
+                    uint value = memory->ReadWord(stack_ptr + i * 4);
+                    cout << "[0x" << display_word << stack_ptr << "+0x" << (i * 4) << "]: 0x" << 
+                            display_word << value << dec << 
+                            (((value >> 24) >= 8 && (value >> 24) <= 9) ? " (*)" : "") << /* mark entries which (could) point to the rom */
+                            endl;
                 }
             }
             catch (exception& e)
@@ -494,8 +512,8 @@ int main(int argc, char **argv)
         {
             step(arm, memory);
 
-            // Call debugger if we hit a breakpoint
-            if (arm->hit_breakpoint)
+            // Call debugger if we hit a breakpoint or the processor crashed
+            if (arm->hit_breakpoint || arm->crashed)
             {
                 debugger(arm, memory);
             }

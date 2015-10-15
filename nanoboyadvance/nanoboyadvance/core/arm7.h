@@ -152,11 +152,18 @@ namespace NanoboyAdvance
             ZeroFlag = 0x40000000,
             SignFlag = 0x80000000
         };
+        enum CrashReason
+        {
+            BadPC,
+            BadMemory
+        };
 
         // Debugging
         vector<ARM7Breakpoint*> breakpoints;
         ARM7Breakpoint* last_breakpoint;
         bool hit_breakpoint;
+        bool crashed;
+        CrashReason crash_reason;
 
         // Constructor
         ARM7(Memory* memory, bool use_bios);
