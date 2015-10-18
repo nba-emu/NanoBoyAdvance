@@ -3,11 +3,10 @@
 if [ "$1" != "" ]; then
 	MESSAGE="$1"
 else
-	echo "Usage: ./commit.sh $message $push (y/N)"
+	echo "Usage: ./commit.sh message push (y/N)"
 	exit
 fi
 
-echo "Commiting with message: $MESSAGE"
 git add .
 git commit -m "$MESSAGE"
 
