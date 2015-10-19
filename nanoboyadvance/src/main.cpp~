@@ -441,81 +441,32 @@ void debugger(ARM7* arm, GBAMemory* memory)
     }
 }
 
-// Called when none or invalid arguments are passed
-void usage()
-{
-    cout << "Usage: ./nanoboyadvance [--debug] [--bios bios_file] rom_file" << endl;
-}
-
-// This is our main function / entry point. It gets called when the emulator is started.
 int main(int argc, char **argv)
 {
     SDL_Event event;
 	GBAMemory* memory;
 	ARM7* arm;
     bool running = true;
-    bool use_bios = false;
-    bool run_debugger = false;
-    char* bios_file = "bios.bin";
-    char* rom_file = "";
 
     step_frame = false;
 
 	if (argc > 1)
 	{
-        int current_argument = 1;
-
-        // Process arguments
-        while (current_argument < argc)
-        {
-            bool parameter_no_option = false;
-
-            // Handle optional parameters
-            if (strcmp(argv[current_argument], "--bios") == 0)
-            {
-                use_bios = true;
-                if (argc > current_argument + 1)
-                {
-                    bios_file = argv[++current_argument];
-                }
-                else
-                {
-                    usage();
-                    return 0;
-                }
-            }
-            else if (strcmp(argv[current_argument], "--debug") == 0)
-            {
-                run_debugger = true;
-            }
-            else
-            {
-                parameter_no_option = true;           
-            }
-
-            // Get rom path
-            if (current_argument == argc - 1)
-            {
-                if (!parameter_no_option)
-                {
-                    usage();
-                    return 0;
-                }
-                rom_file = argv[current_argument];
-            }
-
-            current_argument++;
-        }
-        
-        // Initialize memory and ARM interpreter core
-		memory = new GBAMemory(bios_file, rom_file);
-	    arm = new ARM7(memory, use_bios);
+		memory = new GBAMemory("bios.bin", argv[1]);
 	}
 	else
 	{
-		usage();
-        return 0;
+		string rom;
+		cout << "Please specify a rom: ";
+		cin >> rom;
+		if (rom.empty())
+		{
+			return 0;
+		}
+		memory = new GBAMemory("bios.bin", rom);
 	}
+
+	arm = new ARM7(memory, true);
 
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
     {
@@ -533,12 +484,6 @@ int main(int argc, char **argv)
 
     SDL_WM_SetCaption("NanoBoyAdvance", "NanoBoyAdvance");
     
-    // Run debugger if stated so
-    if (run_debugger)
-    {
-        debugger(arm, memory);
-    }
-
     while (running)
     {
         ubyte* kb_state = SDL_GetKeyState(NULL);
