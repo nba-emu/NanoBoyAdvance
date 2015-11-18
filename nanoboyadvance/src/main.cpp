@@ -161,6 +161,14 @@ void debugger(ARM7* arm, GBAMemory* memory)
             break;
         }
     }
+    else if (memory->bad_read)
+    {
+        cout << "Bad read from 0x" << display_word << memory->bad_address << endl;
+    }
+    else if (memory->bad_write)
+    {
+        cout << "Bad write to 0x" << display_word << memory->bad_address << " (0x" << display_word << memory->bad_value << ")" << endl;
+    }
 
     // Display registers
     arm_print_registers(arm);
@@ -454,7 +462,7 @@ int main(int argc, char **argv)
 	GBAMemory* memory;
 	ARM7* arm;
     bool running = true;
-    bool use_bios = false;
+    bool emulate_bios = true;
     bool run_debugger = false;
     char* bios_file = "bios.bin";
     char* rom_file = "";
@@ -473,7 +481,7 @@ int main(int argc, char **argv)
             // Handle optional parameters
             if (strcmp(argv[current_argument], "--bios") == 0)
             {
-                use_bios = true;
+                emulate_bios = false;
                 if (argc > current_argument + 1)
                 {
                     bios_file = argv[++current_argument];
@@ -509,7 +517,7 @@ int main(int argc, char **argv)
         
         // Initialize memory and ARM interpreter core
 		memory = new GBAMemory(bios_file, rom_file);
-	    arm = new ARM7(memory, use_bios);
+	    arm = new ARM7(memory, emulate_bios);
 	}
 	else
 	{
@@ -531,7 +539,7 @@ int main(int argc, char **argv)
     }
     buffer = (uint32_t*)screen->pixels;
 
-    SDL_WM_SetCaption("NanoBoyAdvance", "NanoBoyAdvance");
+    SDL_WM_SetCaption("NanoboyAdvance", "NanoboyAdvance");
     
     // Run debugger if stated so
     if (run_debugger)
@@ -539,6 +547,7 @@ int main(int argc, char **argv)
         debugger(arm, memory);
     }
 
+    // Main loop
     while (running)
     {
         ubyte* kb_state = SDL_GetKeyState(NULL);
@@ -568,7 +577,7 @@ int main(int argc, char **argv)
             step(arm, memory);
 
             // Call debugger if we hit a breakpoint or the processor crashed
-            if (arm->hit_breakpoint || arm->crashed)
+            if (arm->hit_breakpoint || arm->crashed || memory->bad_read || memory->bad_write)
             {
                 debugger(arm, memory);
             }

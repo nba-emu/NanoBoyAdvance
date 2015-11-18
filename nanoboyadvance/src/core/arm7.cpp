@@ -21,23 +21,10 @@
 
 namespace NanoboyAdvance
 {
-    ARM7::ARM7(Memory* memory, bool use_bios)
+    ARM7::ARM7(Memory* memory, bool hle)
     {
+        // Assign given memory instance to core
         this->memory = memory;
-
-        // Zero-initialize stuff (this stuff should be in the header...)
-        r0 = r1 = r2 = r3 = r4 = r5 = r6 = r7 = r8 = r9 = r10 = r11 = r12 = r13 = r14 = r15 = 0;
-        r8_fiq = r9_fiq = r10_fiq = r11_fiq = r12_fiq = r13_fiq = r14_fiq = 0;
-        r13_svc = r14_svc = 0;
-        r13_abt = r14_abt = 0;
-        r13_irq = r14_irq = 0;
-        r13_und = r14_und = 0;
-        spsr_fiq = spsr_svc = spsr_abt = spsr_irq = spsr_und = spsr_def = 0;
-        pipe_status = 0;
-        flush_pipe = false;
-        hit_breakpoint = false;
-        last_breakpoint = nullptr;
-        crashed = false;
 
         // Map the static registers r0-r7, r15
         gprs[0] = &r0;
@@ -49,9 +36,6 @@ namespace NanoboyAdvance
         gprs[6] = &r6;
         gprs[7] = &r7;
         gprs[15] = &r15;
-
-        // Set the mode (system, thumb disabled)
-        cpsr = System;
         RemapRegisters();
 
         // Skip bios boot logo
@@ -61,7 +45,7 @@ namespace NanoboyAdvance
         r13_irq = 0x3007FA0;
 
         // Set hle flag
-        hle = !use_bios;
+        this->hle = hle;
     }
     
     void ARM7::RemapRegisters()

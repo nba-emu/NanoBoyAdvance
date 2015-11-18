@@ -45,6 +45,10 @@ namespace NanoboyAdvance
         GBADMA* dma;
         GBATimer* timer;
         GBAVideo* video;
+        bool bad_read;
+        bool bad_write;
+        uint bad_address;
+        uint bad_value;
         ubyte ReadByte(uint offset);
         ushort ReadHWord(uint offset);
         uint ReadWord(uint offset);

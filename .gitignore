@@ -31,3 +31,9 @@
 *.bin
 *.gba
 *.agb
+
+# Backup files
+*.h~
+*.hpp~
+*.c~
+*.cpp~

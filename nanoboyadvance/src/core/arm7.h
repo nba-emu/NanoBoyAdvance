@@ -44,31 +44,31 @@ namespace NanoboyAdvance
         
         // The ARM7TMDI-S has 31 32-bit general purpose register of
         // which 16 are visible at one time.
-        uint r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15;
-        uint r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq, r13_fiq, r14_fiq;
-        uint r13_svc, r14_svc;
-        uint r13_abt, r14_abt;
-        uint r13_irq, r14_irq;
-        uint r13_und, r14_und;
+        uint r0 {0}, r1 {0}, r2 {0}, r3 {0}, r4 {0}, r5 {0}, r6 {0}, r7 {0}, r8 {0}, r9 {0}, r10 {0}, r11 {0}, r12 {0}, r13 {0}, r14 {0}, r15 {0};
+        uint r8_fiq {0}, r9_fiq {0}, r10_fiq {0}, r11_fiq {0}, r12_fiq {0}, r13_fiq {0}, r14_fiq {0};
+        uint r13_svc {0}, r14_svc {0};
+        uint r13_abt {0}, r14_abt {0};
+        uint r13_irq {0}, r14_irq {0};
+        uint r13_und {0}, r14_und {0};
         
         // Mapping array for visible general purpose registers
         uint* gprs[16];
         
         // Current program status register (contains status flags)
-        uint cpsr;
-        uint spsr_fiq, spsr_svc, spsr_abt, spsr_irq, spsr_und, spsr_def;
+        uint cpsr {System};
+        uint spsr_fiq {0}, spsr_svc {0}, spsr_abt {0}, spsr_irq {0}, spsr_und {0}, spsr_def {0};
 
         // A pointer pointing on the Saved program status register of the current mode
-        uint* pspsr;
+        uint* pspsr {nullptr};
         
         // In some way emulate the processor's pipeline
         uint pipe_opcode[3];
         int pipe_decode[3];
-        int pipe_status;
-        bool flush_pipe;
+        int pipe_status {0};
+        bool flush_pipe {false};
 
         // Some games seem to read from bios
-        uint last_fetched_bios;
+        uint last_fetched_bios {0};
 
         // Indicates wether interrupts and swi should be processed using
         // the bios or using a hle attempt
@@ -161,9 +161,9 @@ namespace NanoboyAdvance
 
         // Debugging
         vector<ARM7Breakpoint*> breakpoints;
-        ARM7Breakpoint* last_breakpoint;
-        bool hit_breakpoint;
-        bool crashed;
+        ARM7Breakpoint* last_breakpoint {nullptr};
+        bool hit_breakpoint {false};
+        bool crashed {false};
         CrashReason crash_reason;
 
         // Constructor
@@ -180,8 +180,5 @@ namespace NanoboyAdvance
         void SetGeneralRegister(int number, uint value);
         uint GetStatusRegister();
         uint GetSavedStatusRegister();
-
-        // ARM disassembler (put in another class?)
-        string ARMDisasm(uint base, uint instruction);
     };
 }

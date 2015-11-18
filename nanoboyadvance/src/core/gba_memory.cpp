@@ -34,6 +34,9 @@ namespace NanoboyAdvance
         memset(iram, 0, 0x8000);
         memset(io, 0, 0x3FF);
         io[0x130] = 0xFF;
+        bad_read = bad_write = false;
+        bad_address = 0;
+        bad_value = 0;
     }
 
     ubyte* GBAMemory::ReadFile(string filename)
@@ -61,6 +64,7 @@ namespace NanoboyAdvance
     {
         int page = (offset >> 24) & 0xF;
         uint internal_offset = offset & 0xFFFFFF;
+        bad_read = false;
         switch (page)
         {
         case 0:
@@ -106,7 +110,15 @@ namespace NanoboyAdvance
         case 9:
             // TODO: Prevent out of bounds read, we should save the rom size somewhere
             return rom[0x1000000 + internal_offset];
+        case 0xE:
+            LOG(LOG_WARN, "Unhandled read from SRAM.");
+            return 0;
         default:
+            // Indicate to the debugger that we read a bad address            
+            bad_read = true;
+            bad_address = offset;
+
+            // Also log the error to the console
             LOG(LOG_ERROR, "Read from invalid/unimplemented address (0x%x)", offset);
             break;
         }
@@ -129,6 +141,11 @@ namespace NanoboyAdvance
     {
         int page = (offset >> 24);
         uint internal_offset = offset & 0xFFFFFF;
+
+        // Reset error indicator
+        bad_write = false;
+
+        // Perform write
         switch (page)
         {
         case 0:
@@ -240,9 +257,24 @@ namespace NanoboyAdvance
             break;
         case 8:
         case 9:
+            // Indicate to the debugger that we've a failure
+            bad_write = true;
+            bad_address = offset;
+            bad_value = value;
+
+            // Also log the error to the console
             LOG(LOG_ERROR, "Write into ROM memory not allowed (0x%x)", offset);
             break;
+        case 0xE:
+            LOG(LOG_WARN, "Unhandled write to SRAM.");
+            break;
         default:
+            // Indicate to the debugger that we've a failure
+            bad_write = true;
+            bad_address = offset;
+            bad_value = value;
+
+            // Also log the error to the console
             LOG(LOG_ERROR, "Write to invalid/unimplemented address (0x%x)", offset);
             break;
         }
