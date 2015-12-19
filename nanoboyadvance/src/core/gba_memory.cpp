@@ -34,9 +34,6 @@ namespace NanoboyAdvance
         memset(iram, 0, 0x8000);
         memset(io, 0, 0x3FF);
         io[0x130] = 0xFF;
-        bad_read = bad_write = false;
-        bad_address = 0;
-        bad_value = 0;
     }
 
     ubyte* GBAMemory::ReadFile(string filename)
@@ -114,7 +111,7 @@ namespace NanoboyAdvance
             LOG(LOG_WARN, "Unhandled read from SRAM.");
             return 0;
         default:
-            // Indicate to the debugger that we read a bad address            
+            // Indicate to the debugger that we read a bad address
             bad_read = true;
             bad_address = offset;
 
@@ -151,7 +148,7 @@ namespace NanoboyAdvance
         case 0:
             LOG(LOG_ERROR, "Write into BIOS memory not allowed (0x%x)", offset);
             break;
-        case 2: 
+        case 2:
             wram[internal_offset % 0x40000] = value;
             break;
         case 3:
@@ -160,7 +157,7 @@ namespace NanoboyAdvance
         case 4:
         {
             bool write = true;
-            
+
             // If the address it out of bounds we should exit now
             if (internal_offset >= 0x3FF && (internal_offset & 0xFFFF) != 0x800)
             {
@@ -241,6 +238,10 @@ namespace NanoboyAdvance
                 timer->timer3_reload = (timer->timer3_reload & 0x00FF) | (value << 8);
                 write = false;
                 break;
+            case IF:
+                gba_io->if_ &= ~value;
+                write = false;
+                break;
             }
 
             if (write)
@@ -286,11 +287,11 @@ namespace NanoboyAdvance
         uint internal_offset = offset & 0xFFFFFF;
         switch (page)
         {
-        case 5: 
+        case 5:
             video->pal[internal_offset % 0x400] = value & 0xFF;
             video->pal[(internal_offset + 1) % 0x400] = (value >> 8) & 0xFF;
             break;
-        case 6: 
+        case 6:
             internal_offset %= 0x20000;
             if (internal_offset >= 0x18000)
             {
@@ -299,7 +300,7 @@ namespace NanoboyAdvance
             video->vram[internal_offset] = value & 0xFF;
             video->vram[internal_offset + 1] = (value >> 8) & 0xFF;
             break;
-        case 7: 
+        case 7:
             video->obj[internal_offset % 0x400] = value & 0xFF;
             video->obj[(internal_offset + 1) % 0x400] = (value >> 8) & 0xFF;
             break;

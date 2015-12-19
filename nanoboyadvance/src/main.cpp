@@ -116,7 +116,7 @@ uint take_word(string parameter)
     return stoul(parameter, nullptr, 0);
 }
 
-void debugger(ARM7* arm, GBAMemory* memory)
+void debugger(ARM7* arm, GBAMemory* memory, bool complain)
 {
     bool debugging = true;
 
@@ -161,11 +161,11 @@ void debugger(ARM7* arm, GBAMemory* memory)
             break;
         }
     }
-    else if (memory->bad_read)
+    else if (memory->bad_read && complain)
     {
         cout << "Bad read from 0x" << display_word << memory->bad_address << endl;
     }
-    else if (memory->bad_write)
+    else if (memory->bad_write && complain)
     {
         cout << "Bad write to 0x" << display_word << memory->bad_address << " (0x" << display_word << memory->bad_value << ")" << endl;
     }
@@ -233,6 +233,7 @@ void debugger(ARM7* arm, GBAMemory* memory)
             cout << "dumpstck [count]: displays a given amount of stack entries" << endl;
             cout << "frame: run until the first line of the next frame gets rendered" << endl;
             cout << "c: continues execution" << endl;
+            cout << "q: quit nanoboyadvance" << endl;
             cout << endl;
         }
         else if (tokens[0] == "showregs")
@@ -241,8 +242,8 @@ void debugger(ARM7* arm, GBAMemory* memory)
         }
         else if (tokens[0] == "setreg")
         {
-            uint reg;
-            uint value;
+            uint reg = 0;
+            uint value = 0;
 
             // Catch case of too many / few parameters
             if (tokens.size() != 3)
@@ -271,7 +272,7 @@ void debugger(ARM7* arm, GBAMemory* memory)
         }
         else if (tokens[0] == "bpt" || tokens[0] == "bpa" || tokens[0] == "bpw" || tokens[0] == "bpr")
         {
-            uint offset;
+            uint offset = 0;
             ARM7Breakpoint* breakpoint;
 
             // Catch case of too many / few parameters
@@ -359,11 +360,11 @@ void debugger(ARM7* arm, GBAMemory* memory)
                 for (int i = 0; i < 16; i++)
                 {
                     ubyte value = memory->ReadByte(offset);
-                    cout << display_byte << (int)memory->ReadByte(offset) << " ";
+                    cout << display_byte << (int)value << " ";
                     if (--count == 0)
                     {
                         break;
-                    } 
+                    }
                     offset++;
                 }
                 cout << endl;
@@ -375,7 +376,7 @@ void debugger(ARM7* arm, GBAMemory* memory)
 
             // Catch case too many / few parameters
             if (tokens.size() != 3)
-            { 
+            {
                 cout << "Invalid amount of parameters. See \"help\" for help." << endl;
                 continue;
             }
@@ -426,8 +427,8 @@ void debugger(ARM7* arm, GBAMemory* memory)
                 for (uint i = 0; i < count; i++)
                 {
                     uint value = memory->ReadWord(stack_ptr + i * 4);
-                    cout << "[0x" << display_word << stack_ptr << "+0x" << (i * 4) << "]: 0x" << 
-                            display_word << value << dec << 
+                    cout << "[0x" << display_word << stack_ptr << "+0x" << (i * 4) << "]: 0x" <<
+                            display_word << value << dec <<
                             (((value >> 24) >= 8 && (value >> 24) <= 9) ? " (*)" : "") << /* mark entries which (could) point to the rom */
                             endl;
                 }
@@ -442,6 +443,10 @@ void debugger(ARM7* arm, GBAMemory* memory)
             step_frame = true;
             debugging = false;
         }
+        else if (tokens[0] == "q")
+        {
+            exit(0);
+        }
         else
         {
             cout << "Uhh! I don't know that. Try \"help\" for help." << endl;
@@ -452,7 +457,7 @@ void debugger(ARM7* arm, GBAMemory* memory)
 // Called when none or invalid arguments are passed
 void usage()
 {
-    cout << "Usage: ./nanoboyadvance [--debug] [--bios bios_file] rom_file" << endl;
+    cout << "Usage: ./nanoboyadvance [--debug] [--complain] [--bios bios_file] rom_file" << endl;
 }
 
 // This is our main function / entry point. It gets called when the emulator is started.
@@ -464,8 +469,9 @@ int main(int argc, char **argv)
     bool running = true;
     bool emulate_bios = true;
     bool run_debugger = false;
-    char* bios_file = "bios.bin";
-    char* rom_file = "";
+    bool complain = false; // determines wether the emulator will enter debug state on bad memory accesses.
+    string bios_file = "bios.bin";
+    string rom_file = "";
 
     step_frame = false;
 
@@ -496,9 +502,13 @@ int main(int argc, char **argv)
             {
                 run_debugger = true;
             }
+            else if (strcmp(argv[current_argument], "--complain") == 0)
+            {
+                complain = true;
+            }
             else
             {
-                parameter_no_option = true;           
+                parameter_no_option = true;
             }
 
             // Get rom path
@@ -514,7 +524,7 @@ int main(int argc, char **argv)
 
             current_argument++;
         }
-        
+
         // Initialize memory and ARM interpreter core
 		memory = new GBAMemory(bios_file, rom_file);
 	    arm = new ARM7(memory, emulate_bios);
@@ -530,7 +540,7 @@ int main(int argc, char **argv)
         printf("SDL_Init Error: %s\n", SDL_GetError());
         return 1;
     }
-    
+
     screen = SDL_SetVideoMode(480, 320, 32, SDL_SWSURFACE);
     if (screen == NULL)
     {
@@ -540,11 +550,11 @@ int main(int argc, char **argv)
     buffer = (uint32_t*)screen->pixels;
 
     SDL_WM_SetCaption("NanoboyAdvance", "NanoboyAdvance");
-    
+
     // Run debugger if stated so
     if (run_debugger)
     {
-        debugger(arm, memory);
+        debugger(arm, memory, complain);
     }
 
     // Main loop
@@ -569,7 +579,7 @@ int main(int argc, char **argv)
         // Schedule VBA-SDL-H like console interface debugger
         if (kb_state[SDLK_F11])
         {
-            debugger(arm, memory);
+            debugger(arm, memory, complain);
         }
 
         for (int i = 0; i < 280896; i++)
@@ -579,18 +589,18 @@ int main(int argc, char **argv)
             // Call debugger if we hit a breakpoint or the processor crashed
             if (arm->hit_breakpoint || arm->crashed || memory->bad_read || memory->bad_write)
             {
-                debugger(arm, memory);
+                debugger(arm, memory, complain);
             }
-            
+
             // Copy the finished frame to SDLs pixel buffer
             if (memory->video->render_scanline && memory->gba_io->vcount == 159)
             {
                 if (step_frame)
-                { 
+                {
                     step_frame = false; // do only break for the current frame
-                    debugger(arm, memory);
+                    debugger(arm, memory, complain);
                 }
-                
+
                 // Copy data to screen
                 for (int y = 0; y < 160; y++)
                 {

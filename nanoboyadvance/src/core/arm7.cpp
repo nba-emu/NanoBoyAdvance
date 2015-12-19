@@ -238,7 +238,7 @@ namespace NanoboyAdvance
     
     void NanoboyAdvance::ARM7::TriggerMemoryBreakpoint(bool write, uint address, int size)
     {
-        for (int i = 0; i < breakpoints.size(); i++)
+        for (uint i = 0; i < breakpoints.size(); i++)
         {
             if ((breakpoints[i]->concerned_address >= address && breakpoints[i]->concerned_address <= address + size - 1) &&
                 (
@@ -257,7 +257,7 @@ namespace NanoboyAdvance
 
     void ARM7::TriggerSVCBreakpoint(uint bios_call)
     {
-        for (int i = 0; i < breakpoints.size(); i++)
+        for (uint i = 0; i < breakpoints.size(); i++)
         {
             ARM7Breakpoint* breakpoint = breakpoints[i];
 
@@ -287,7 +287,7 @@ namespace NanoboyAdvance
         }
 
         // Handle code breakpoints
-        for (int i = 0; i < breakpoints.size(); i++)
+        for (uint i = 0; i < breakpoints.size(); i++)
         {
             if (breakpoints[i]->breakpoint_type == ARM7Breakpoint::ARM7BreakpointType::Execute &&
                 breakpoints[i]->thumb_mode == thumb && 
@@ -372,7 +372,7 @@ namespace NanoboyAdvance
         {
             pipe_status = 0;
             flush_pipe = false;
-            for (int i = 0; i < breakpoints.size(); i++)
+            for (uint i = 0; i < breakpoints.size(); i++)
             {
                 if (breakpoints[i]->breakpoint_type == ARM7Breakpoint::ARM7BreakpointType::StepOver)
                 { 
@@ -482,7 +482,6 @@ namespace NanoboyAdvance
         case 0x12:
         {
             int amount = memory->ReadWord(r0) >> 8;
-            int processed = 0;
             uint source = r0 + 4;
             uint dest = r1;
             while (amount > 0)
@@ -500,7 +499,7 @@ namespace NanoboyAdvance
                         uint n = ((value >> 4) & 0xF) + 3;
                         source += 2;
 
-                        for (int j = 0; j < n; j++)
+                        for (uint j = 0; j < n; j++)
                         {
                             ushort value = memory->ReadByte(dest - disp - 1);
                             memory->WriteHWord(dest, value);

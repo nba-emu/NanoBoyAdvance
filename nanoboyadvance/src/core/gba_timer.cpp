@@ -25,9 +25,8 @@ namespace NanoboyAdvance
 
     GBATimer::GBATimer(GBAIO* gba_io)
     {
+        // Assign our IO interface to the object
         this->gba_io = gba_io;
-        timer0_reload = timer1_reload = timer2_reload = timer3_reload = 0;
-        timer0_ticks = timer1_ticks = timer2_ticks = timer3_ticks = 0;
     }
 
     void GBATimer::Step()

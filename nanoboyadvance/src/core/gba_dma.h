@@ -21,6 +21,7 @@
 
 #include <iostream>
 #include "common/types.h"
+#include "common/log.h"
 #include "memory.h"
 #include "gba_io.h"
 

@@ -708,7 +708,7 @@ namespace NanoboyAdvance
             int reg_base = (instruction >> 8) & 7;
             bool write_back = true;
             uint address = reg(reg_base);
-            int first_register;
+            int first_register = 0;
 
             // Find the first register
             for (int i = 0; i < 8; i++)

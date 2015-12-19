@@ -48,7 +48,7 @@ namespace NanoboyAdvance
                     memory->WriteHWord(dma0_destination, memory->ReadHWord(dma0_source));
                 }
                 // Update dest address
-                switch (dest_control) { case Increment: case IncrementAndReload: dma0_destination += transfer_words ? 4 : 2; break; case Decrement: dma0_destination -= transfer_words ? 4 : 2; break; }
+                switch (dest_control) { case Increment: case IncrementAndReload: dma0_destination += transfer_words ? 4 : 2; break; case Decrement: dma0_destination -= transfer_words ? 4 : 2; break;  }
                 // Update source address
                 switch (source_control) { case Increment: case IncrementAndReload: dma0_source += transfer_words ? 4 : 2; break; case Decrement: dma0_source -= transfer_words ? 4 : 2; break; }
                 // Update count

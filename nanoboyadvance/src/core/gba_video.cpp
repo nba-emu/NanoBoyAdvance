@@ -23,10 +23,10 @@ namespace NanoboyAdvance
 {
     GBAVideo::GBAVideo(GBAIO* gba_io)
     {
+        // Assign our IO interface to the object
         this->gba_io = gba_io;
-        state = GBAVideoState::Scanline;
-        ticks = 0;
-        render_scanline = false;
+
+        // Zero init memory buffers
         memset(pal, 0, 0x400);
         memset(vram, 0, 0x18000);
         memset(obj, 0, 0x400);
@@ -125,8 +125,8 @@ namespace NanoboyAdvance
         uint offset;
 
         // There are two areas which possibly get rendered (the left is always renderend, the right only if the width is 512)
-        int left_area;
-        int right_area;
+        int left_area = 0;
+        int right_area = 0;
 
         // Decode screen size
         switch (screen_size)
@@ -300,9 +300,9 @@ namespace NanoboyAdvance
                     int tiles_per_row = width / 8;
                     int tile_number = (attribute2 & 0x3FF) * 2;
                     int palette_number = attribute2 >> 12;
-                    bool rotate_scale = attribute0 & (1 << 8) ? true : false;
-                    bool horizontal_flip = !rotate_scale && (attribute1 & (1 << 12));
-                    bool vertical_flip = !rotate_scale && (attribute1 & (1 << 13));
+                    //bool rotate_scale = attribute0 & (1 << 8) ? true : false;
+                    //bool horizontal_flip = !rotate_scale && (attribute1 & (1 << 12));
+                    //bool vertical_flip = !rotate_scale && (attribute1 & (1 << 13));
                     bool color_mode = attribute0 & (1 << 13) ? true : false;
 
                     // Render all visible tiles of the sprite

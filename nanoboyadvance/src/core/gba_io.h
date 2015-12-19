@@ -208,3 +208,4 @@ typedef struct GBAIO_S GBAIO;
 #define TM1CNT_L 0x104
 #define TM2CNT_L 0x108
 #define TM3CNT_L 0x10C
+#define IF 0x202

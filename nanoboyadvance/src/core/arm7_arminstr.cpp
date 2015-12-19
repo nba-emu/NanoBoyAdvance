@@ -885,7 +885,7 @@ namespace NanoboyAdvance
             uint old_address = address;
             bool switched_mode = false;
             int old_mode;
-            int first_register;
+            int first_register = 0;
 
             // Base register must not be r15
             ASSERT(reg_base == 15, LOG_WARN, "Block Data Tranfser, thou shall not take r15 as base register, r15=0x%x", r15);
