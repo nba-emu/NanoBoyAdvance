@@ -31,7 +31,7 @@ memdump [offset] [length]: displays memory in a formatted way
 setmemb [offset] [byte]: writes a byte to a given memory address
 setmemh [offset] [hword]: writes a hword to a given memory address
 setmemw [offset] [word]: writes a word to a given memory address
-dumpstck [count]: displays a given amount of stack entries
+dumpstck [count] [mode] (usr, sys, svc, irq): displays a given amount of stack entries. the mode parameter is optional
 frame: run until the first line of the next frame gets rendered
 c: continues execution
 q: quit nanoboyadvance (useful in case of game crashing)

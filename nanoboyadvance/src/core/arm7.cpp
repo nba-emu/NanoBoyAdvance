@@ -401,7 +401,7 @@ namespace NanoboyAdvance
             flush_pipe = true;
             LOG(LOG_INFO, "Issued interrupt, r14_irq=0x%x", r14_irq);
         }
-        else { LOG(LOG_INFO, "Interrupt(s) requested but blocked (either by interrupt or swi)") }
+        //else { LOG(LOG_INFO, "Interrupt(s) requested but blocked (either by interrupt or swi)") }
     }
 
     uint ARM7::GetGeneralRegister(int number)
@@ -422,6 +422,25 @@ namespace NanoboyAdvance
     uint ARM7::GetSavedStatusRegister()
     {
         return *pspsr;
+    }
+
+    uint ARM7::GetStackPointerMode(int mode)
+    {
+        switch ((ARM7Mode)mode)
+        {
+        case User:
+        case System:
+            return r13;
+        case FIQ:
+            return r13_fiq;
+        case IRQ:
+            return r13_irq;
+        case Abort:
+            return r13_abt;
+        case Undefined:
+            return r13_und;
+        }
+        return 0;
     }
 
     void NanoboyAdvance::ARM7::SWI(int number)

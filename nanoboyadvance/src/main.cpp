@@ -230,7 +230,7 @@ void debugger(ARM7* arm, GBAMemory* memory, bool complain)
             cout << "setmemb [offset] [byte]: writes a byte to a given memory address" << endl;
             cout << "setmemh [offset] [hword]: writes a hword to a given memory address" << endl;
             cout << "setmemw [offset] [word]: writes a word to a given memory address" << endl;
-            cout << "dumpstck [count]: displays a given amount of stack entries" << endl;
+            cout << "dumpstck [count] [mode] (usr, sys, svc, irq): displays a given amount of stack entries. the mode parameter is optional" << endl;
             cout << "frame: run until the first line of the next frame gets rendered" << endl;
             cout << "c: continues execution" << endl;
             cout << "q: quit nanoboyadvance" << endl;
@@ -408,7 +408,7 @@ void debugger(ARM7* arm, GBAMemory* memory, bool complain)
             uint count;
 
             // Catch too many / few parameters
-            if (tokens.size() != 2)
+            if (tokens.size() != 2 && tokens.size() != 3)
             {
                 cout << "Invalid amount of parameters. See \"help\" for help." << endl;
                 continue;
@@ -417,8 +417,33 @@ void debugger(ARM7* arm, GBAMemory* memory, bool complain)
             // Parse parameter and dump
             try
             {
-                uint stack_ptr = arm->GetGeneralRegister(13) + 4;
+                uint stack_ptr; //= arm->GetGeneralRegister(13) + 4;
                 count = take_word(tokens[1]);
+
+                if (tokens.size() == 3)
+                {
+                    if (tokens[2] == "sys" || tokens[2] == "usr")
+                    {
+                        stack_ptr = arm->GetStackPointerMode(0x10);
+                    }
+                    else if (tokens[2] == "svc")
+                    {
+                        stack_ptr = arm->GetStackPointerMode(0x13);
+                    }
+                    else if (tokens[2] == "irq")
+                    {
+                        stack_ptr = arm->GetStackPointerMode(0x12);
+                    }
+                    else
+                    {
+                        cout << "Invalid mode provided. See \"help\" for help." << endl;
+                        continue;
+                    }
+                }
+                else
+                {
+                    stack_ptr = arm->GetGeneralRegister(13) + 4;
+                }
 
                 // Message
                 cout << "Dumping stack from 0x" << display_word << stack_ptr << dec << " (r13 + 4):" << endl;

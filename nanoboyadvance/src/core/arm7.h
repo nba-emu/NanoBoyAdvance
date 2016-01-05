@@ -41,7 +41,7 @@ namespace NanoboyAdvance
     {
         // Grants the processor access to the emulated mmu
         Memory* memory;
-        
+
         // The ARM7TMDI-S has 31 32-bit general purpose register of
         // which 16 are visible at one time.
         uint r0 {0}, r1 {0}, r2 {0}, r3 {0}, r4 {0}, r5 {0}, r6 {0}, r7 {0}, r8 {0}, r9 {0}, r10 {0}, r11 {0}, r12 {0}, r13 {0}, r14 {0}, r15 {0};
@@ -50,17 +50,17 @@ namespace NanoboyAdvance
         uint r13_abt {0}, r14_abt {0};
         uint r13_irq {0}, r14_irq {0};
         uint r13_und {0}, r14_und {0};
-        
+
         // Mapping array for visible general purpose registers
         uint* gprs[16];
-        
+
         // Current program status register (contains status flags)
         uint cpsr {System};
         uint spsr_fiq {0}, spsr_svc {0}, spsr_abt {0}, spsr_irq {0}, spsr_und {0}, spsr_def {0};
 
         // A pointer pointing on the Saved program status register of the current mode
         uint* pspsr {nullptr};
-        
+
         // In some way emulate the processor's pipeline
         uint pipe_opcode[3];
         int pipe_decode[3];
@@ -76,11 +76,11 @@ namespace NanoboyAdvance
 
         // Maps the visible registers (according to cpsr) to gprs
         void RemapRegisters();
-        
+
         // Condition code altering methods
         inline void CalculateSign(uint result)
         {
-            cpsr = result & 0x80000000 ? (cpsr | SignFlag) : (cpsr & ~SignFlag); 
+            cpsr = result & 0x80000000 ? (cpsr | SignFlag) : (cpsr & ~SignFlag);
         }
 
         inline void CalculateZero(ulong result)
@@ -110,7 +110,7 @@ namespace NanoboyAdvance
         void LSR(uint& operand, uint amount, bool& carry, bool immediate);
         void ASR(uint& operand, uint amount, bool& carry, bool immediate);
         void ROR(uint& operand, uint amount, bool& carry, bool immediate);
-        
+
         // Memory methods
         ubyte ReadByte(uint offset);
         ushort ReadHWord(uint offset);
@@ -119,7 +119,7 @@ namespace NanoboyAdvance
         void WriteByte(uint offset, ubyte value);
         void WriteHWord(uint offset, ushort value);
         void WriteWord(uint offset, uint value);
-        
+
         // Command processing
         int ARMDecode(uint instruction);
         void ARMExecute(uint instruction, int type);
@@ -129,7 +129,7 @@ namespace NanoboyAdvance
         // Debugging
         void TriggerMemoryBreakpoint(bool write, uint address, int size);
         void TriggerSVCBreakpoint(uint bios_call);
-        
+
         // Used to emulate software interrupts
         void SWI(int number);
     public:
@@ -180,5 +180,6 @@ namespace NanoboyAdvance
         void SetGeneralRegister(int number, uint value);
         uint GetStatusRegister();
         uint GetSavedStatusRegister();
+        uint GetStackPointerMode(int mode);
     };
 }
