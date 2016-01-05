@@ -205,7 +205,11 @@ typedef struct GBAIO_S GBAIO;
 #define DMA2CNT_H 0xD2
 #define DMA3CNT_H 0xDE
 #define TM0CNT_L 0x100
+#define TM0CNT_H 0x102
 #define TM1CNT_L 0x104
+#define TM1CNT_H 0x106
 #define TM2CNT_L 0x108
+#define TM2CNT_H 0x10A
 #define TM3CNT_L 0x10C
+#define TM3CNT_H 0x10E
 #define IF 0x202

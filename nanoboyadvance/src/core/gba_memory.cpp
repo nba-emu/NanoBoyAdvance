@@ -207,36 +207,52 @@ namespace NanoboyAdvance
                 }
                 break;
             case TM0CNT_L:
-                timer->timer0_reload = (timer->timer0_reload & 0xFF00) | value;
+                timer->timer_reload[0] = (timer->timer_reload[0]  & 0xFF00) | value;
                 write = false;
                 break;
             case TM0CNT_L+1:
-                timer->timer0_reload = (timer->timer0_reload & 0x00FF) | (value << 8);
+                timer->timer_reload[0] = (timer->timer_reload[0] & 0x00FF) | (value << 8);
                 write = false;
                 break;
+            case TM0CNT_H:
+            case TM0CNT_H+1:
+                timer->timer0_altered = true;
+                break;
             case TM1CNT_L:
-                timer->timer1_reload = (timer->timer1_reload & 0xFF00) | value;
+                timer->timer_reload[1]  = (timer->timer_reload[1] & 0xFF00) | value;
                 write = false;
                 break;
             case TM1CNT_L+1:
-                timer->timer1_reload = (timer->timer1_reload & 0x00FF) | (value << 8);
+                timer->timer_reload[1] = (timer->timer_reload[1] & 0x00FF) | (value << 8);
                 write = false;
                 break;
+            case TM1CNT_H:
+            case TM1CNT_H+1:
+                timer->timer1_altered = true;
+                break;
             case TM2CNT_L:
-                timer->timer2_reload = (timer->timer2_reload & 0xFF00) | value;
+                timer->timer_reload[2] = (timer->timer_reload[2] & 0xFF00) | value;
                 write = false;
                 break;
             case TM2CNT_L+1:
-                timer->timer2_reload = (timer->timer2_reload & 0x00FF) | (value << 8);
+                timer->timer_reload[2] = (timer->timer_reload[2] & 0x00FF) | (value << 8);
                 write = false;
                 break;
+            case TM2CNT_H:
+            case TM2CNT_H+1:
+                timer->timer2_altered = true;
+                break;
             case TM3CNT_L:
-                timer->timer3_reload = (timer->timer3_reload & 0xFF00) | value;
+                timer->timer_reload[3] = (timer->timer_reload[3] & 0xFF00) | value;
                 write = false;
                 break;
             case TM3CNT_L+1:
-                timer->timer3_reload = (timer->timer3_reload & 0x00FF) | (value << 8);
+                timer->timer_reload[3] = (timer->timer_reload[3] & 0x00FF) | (value << 8);
                 write = false;
+                break;
+            case TM3CNT_H:
+            case TM3CNT_H+1:
+                timer->timer3_altered = true;
                 break;
             case IF:
                 gba_io->if_ &= ~value;

@@ -17,6 +17,7 @@
 * along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <string.h>
 #include "gba_timer.h"
 
 namespace NanoboyAdvance
@@ -27,98 +28,87 @@ namespace NanoboyAdvance
     {
         // Assign our IO interface to the object
         this->gba_io = gba_io;
+
+        // Zero-init memory
+        memset(timer_enabled, 0, 4 * sizeof(bool));
+        memset(timer_countup, 0, 4 * sizeof(bool));
+        memset(timer_interrupt, 0, 4 * sizeof(bool));
+        memset(timer_clock, 0, 4 * sizeof(int));
+        memset(timer_ticks, 0, 4 * sizeof(int));
+        memset(timer_reload, 0, 4 * sizeof(ushort));
+
+        // Timer0 has now countup...
+        timer_countup[0] = false;
+    }
+
+    void GBATimer::ScheduleTimer(int index, ushort& counter, bool& overflow)
+    {
+        if ((timer_countup[index] && overflow) || (!timer_countup[index] && ++timer_ticks[index] >= timer_clock[index]))
+        {
+            timer_ticks[index] = 0;
+            if (counter != 0xFFFF)
+            {
+                counter++;
+            }
+            else
+            {
+                if (timer_interrupt[index])
+                {
+                    gba_io->if_ |= (1 << (3 + index));
+                }
+                counter = timer_reload[index];
+                overflow = true;
+            }
+        }
     }
 
     void GBATimer::Step()
     {
-        bool timer0_enabled = (gba_io->tm0cnt_h & (1 << 7)) == (1 << 7);
-        bool timer1_enabled = (gba_io->tm1cnt_h & (1 << 7)) == (1 << 7);
-        bool timer2_enabled = (gba_io->tm2cnt_h & (1 << 7)) == (1 << 7);
-        bool timer3_enabled = (gba_io->tm3cnt_h & (1 << 7)) == (1 << 7);
-        bool timer1_countup = (gba_io->tm1cnt_h & (1 << 2)) == (1 << 2);
-        bool timer2_countup = (gba_io->tm2cnt_h & (1 << 2)) == (1 << 2);
-        bool timer3_countup = (gba_io->tm3cnt_h & (1 << 2)) == (1 << 2);
-        int timer0_clock = timings[gba_io->tm0cnt_h & 3];
-        int timer1_clock = timings[gba_io->tm1cnt_h & 3];
-        int timer2_clock = timings[gba_io->tm2cnt_h & 3];
-        int timer3_clock = timings[gba_io->tm3cnt_h & 3];
-        bool timer0_overflow = false;
-        bool timer1_overflow = false;
-        bool timer2_overflow = false;
+        bool overflow = false;
 
-        // Handle Timer 0
-        if (timer0_enabled && ++timer0_ticks >= timer0_clock)
+        // Detect if timer0 settings where altered. If so reload its settings.
+        if (timer0_altered)
         {
-            timer0_ticks = 0;
-            if (gba_io->tm0cnt_l != 0xFFFF)
-            {
-                gba_io->tm0cnt_l++;
-            }
-            else
-            {
-                if (gba_io->tm0cnt_h & (1 << 6))
-                {
-                    gba_io->if_ |= (1 << 3);
-                }
-                gba_io->tm0cnt_l = timer0_reload;
-                timer0_overflow = true;
-            }
+            timer_enabled[0] = (gba_io->tm0cnt_h & (1 << 7)) == (1 << 7);
+            timer_interrupt[0] = (gba_io->tm0cnt_h & (1 << 6)) == (1 << 6);
+            timer_clock[0] = timings[gba_io->tm0cnt_h & 3];
+            timer0_altered = false;
         }
 
-        // Handle Timer 1
-        if (timer1_enabled && ((timer1_countup && timer0_overflow) || (!timer1_countup && ++timer1_ticks >= timer1_clock)))
+        // Detect if timer1 settings where altered. If so reload its settings.
+        if (timer1_altered)
         {
-            timer1_ticks = 0;
-            if (gba_io->tm1cnt_l != 0xFFFF)
-            {
-                gba_io->tm1cnt_l++;
-            }
-            else
-            {
-                if (gba_io->tm1cnt_h & (1 << 6))
-                {
-                    gba_io->if_ |= (1 << 4);
-                }
-                gba_io->tm1cnt_l = timer1_reload;
-                timer1_overflow = true;
-            }
+            timer_enabled[1] = (gba_io->tm1cnt_h & (1 << 7)) == (1 << 7);
+            timer_countup[1] = (gba_io->tm1cnt_h & (1 << 2)) == (1 << 2);
+            timer_interrupt[1] = (gba_io->tm1cnt_h & (1 << 6)) == (1 << 6);
+            timer_clock[1] = timings[gba_io->tm1cnt_h & 3];
+            timer1_altered = false;
         }
 
-        // Handle Timer 2
-        if (timer2_enabled && ((timer2_countup && timer1_overflow) || (!timer2_countup && ++timer2_ticks >= timer2_clock)))
+        // Detect if timer2 settings where altered. If so reload its settings.
+        if (timer2_altered)
         {
-            timer2_ticks = 0;
-            if (gba_io->tm2cnt_l != 0xFFFF)
-            {
-                gba_io->tm2cnt_l++;
-            }
-            else
-            {
-                if (gba_io->tm2cnt_h & (1 << 6))
-                {
-                    gba_io->if_ |= (1 << 5);
-                }
-                gba_io->tm2cnt_l = timer2_reload;
-                timer2_overflow = true;
-            }
+            timer_enabled[2] = (gba_io->tm2cnt_h & (1 << 7)) == (1 << 7);
+            timer_countup[2] = (gba_io->tm2cnt_h & (1 << 2)) == (1 << 2);
+            timer_interrupt[2] = (gba_io->tm2cnt_h & (1 << 6)) == (1 << 6);
+            timer_clock[2] = timings[gba_io->tm2cnt_h & 3];
+            timer2_altered = false;
         }
 
-        // Handle Timer 3
-        if (timer3_enabled && ((timer3_countup && timer2_overflow) || (!timer3_countup && ++timer3_ticks >= timer3_clock)))
+        // Detect if timer3 settings where altered. If so reload its settings.
+        if (timer3_altered)
         {
-            timer3_ticks = 0;
-            if (gba_io->tm3cnt_l != 0xFFFF)
-            {
-                gba_io->tm3cnt_l++;
-            }
-            else
-            {
-                if (gba_io->tm3cnt_h & (1 << 6))
-                {
-                    gba_io->if_ |= (1 << 6);
-                }
-                gba_io->tm3cnt_l = timer3_reload;
-            }
+            timer_enabled[3] = (gba_io->tm3cnt_h & (1 << 7)) == (1 << 7);
+            timer_countup[3] = (gba_io->tm3cnt_h & (1 << 2)) == (1 << 2);
+            timer_interrupt[3] = (gba_io->tm3cnt_h & (1 << 6)) == (1 << 6);
+            timer_clock[3] = timings[gba_io->tm3cnt_h & 3];
+            timer3_altered = false;
         }
+
+        // Run all the *enabled* timers
+        if (timer_enabled[0]) ScheduleTimer(0, gba_io->tm0cnt_l, overflow);
+        if (timer_enabled[1]) ScheduleTimer(1, gba_io->tm1cnt_l, overflow);
+        if (timer_enabled[2]) ScheduleTimer(2, gba_io->tm2cnt_l, overflow);
+        if (timer_enabled[3]) ScheduleTimer(3, gba_io->tm3cnt_l, overflow);
     }
 }

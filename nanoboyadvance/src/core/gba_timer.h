@@ -30,16 +30,17 @@ namespace NanoboyAdvance
     {
         GBAIO* gba_io;
         static const int timings[4];
-        int timer0_ticks {0};
-        int timer1_ticks {0};
-        int timer2_ticks {0};
-        int timer3_ticks {0};
+        bool timer_enabled[4];
+        bool timer_countup[4];
+        bool timer_interrupt[4];
+        int timer_clock[4];
+        int timer_ticks[4];
+        void ScheduleTimer(int index, ushort& counter, bool& overflow);
     public:
-        ushort timer0_reload {0};
-        ushort timer1_reload {0};
-        ushort timer2_reload {0};
-        ushort timer3_reload {0};
+        bool timer0_altered {false}, timer1_altered {false}, timer2_altered {false}, timer3_altered {false};
+        ushort timer_reload[4];
         GBATimer(GBAIO* gba_io);
         void Step();
+        void StepOld();
     };
 }
