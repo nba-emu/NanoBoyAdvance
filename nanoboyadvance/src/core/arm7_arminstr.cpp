@@ -48,72 +48,72 @@ namespace NanoboyAdvance
         case 0b00:
             if (opcode & (1 << 25))
             {
-                // ARM.8 Data processing and PSR transfer ... immediate 
+                // ARM.8 Data processing and PSR transfer ... immediate
                 section = ARM_8;
             }
-            // TODO: Check if we really must check all that bits 
+            // TODO: Check if we really must check all that bits
             else if ((opcode & 0xFFFFFF0) == 0x12FFF10)
             {
-                // ARM.3 Branch and exchange 
+                // ARM.3 Branch and exchange
                 section = ARM_3;
             }
             else if ((opcode & 0x10000F0) == 0x90)
             {
-                // ARM.1 Multiply (accumulate), ARM.2 Multiply (accumulate) long 
+                // ARM.1 Multiply (accumulate), ARM.2 Multiply (accumulate) long
                 section = opcode & (1 << 23) ? ARM_2 : ARM_1;
             }
             else if ((opcode & 0x10000F0) == 0x1000090)
             {
-                // ARM.4 Single data swap 
+                // ARM.4 Single data swap
                 section = ARM_4;
             }
             else if ((opcode & 0x4000F0) == 0xB0)
             {
-                // ARM.5 Halfword data transfer, register offset 
+                // ARM.5 Halfword data transfer, register offset
                 section = ARM_5;
             }
             else if ((opcode & 0x4000F0) == 0x4000B0)
             {
-                // ARM.6 Halfword data transfer, immediate offset 
+                // ARM.6 Halfword data transfer, immediate offset
                 section = ARM_6;
             }
             else if ((opcode & 0xD0) == 0xD0)
             {
-                // ARM.7 Signed data transfer (byte/halfword) 
+                // ARM.7 Signed data transfer (byte/halfword)
                 section = ARM_7;
             }
             else
             {
-                // ARM.8 Data processing and PSR transfer 
+                // ARM.8 Data processing and PSR transfer
                 section = ARM_8;
             }
             break;
         case 0b01:
-            // ARM.9 Single data transfer, ARM.10 Undefined 
+            // ARM.9 Single data transfer, ARM.10 Undefined
             section = (opcode & 0x2000010) == 0x2000010 ? ARM_10 : ARM_9;
             break;
         case 0b10:
-            // ARM.11 Block data transfer, ARM.12 Branch 
+            // ARM.11 Block data transfer, ARM.12 Branch
             section = opcode & (1 << 25) ? ARM_12 : ARM_11;
             break;
         case 0b11:
-            // TODO: Optimize with a switch? 
+            // TODO: Optimize with a switch?
             if (opcode & (1 << 25))
             {
                 if (opcode & (1 << 24))
                 {
-                    // ARM.16 Software interrupt 
+                    // ARM.16 Software interrupt
                     section = ARM_16;
                 }
                 else
                 {
-                    // ARM.14 Coprocessor data operation, ARM.15 Coprocessor register transfer 
+                    // ARM.14 Coprocessor data operation, ARM.15 Coprocessor register transfer
                     section = opcode & 0x10 ? ARM_15 : ARM_14;
                 }
             }
             else
             {
-                // ARM.13 Coprocessor data transfer 
+                // ARM.13 Coprocessor data transfer
                 section = ARM_13;
             }
             break;
@@ -372,7 +372,7 @@ namespace NanoboyAdvance
                 }
             }
 
-            // When the instruction either is pre-indexed and has the write-back bit or it's post-indexed we must writeback the calculated address 
+            // When the instruction either is pre-indexed and has the write-back bit or it's post-indexed we must writeback the calculated address
             if ((write_back || !pre_indexed) && reg_base != reg_dest)
             {
                 if (!pre_indexed)
@@ -843,7 +843,7 @@ namespace NanoboyAdvance
                 }
             }
 
-            // When the instruction either is pre-indexed and has the write-back bit or it's post-indexed we must writeback the calculated address 
+            // When the instruction either is pre-indexed and has the write-back bit or it's post-indexed we must writeback the calculated address
             if (reg_base != reg_dest)
             {
                 if (!pre_indexed)
@@ -866,7 +866,7 @@ namespace NanoboyAdvance
         }
         case ARM_10:
             // ARM.10 Undefined
-            LOG(LOG_ERROR, "Undefined instruction, r15=0x%x", r15);
+            LOG(LOG_ERROR, "Undefined instruction (0x%x), r15=0x%x", instruction, r15);
             break;
         case ARM_11:
         {
@@ -1091,7 +1091,7 @@ namespace NanoboyAdvance
             LOG(LOG_ERROR, "Unimplemented coprocessor register transfer, r15=0x%x", r15);
             break;
         // TODO: Check wether swi is still executed when IRQ is disabled
-        //       Implement HLE version 
+        //       Implement HLE version
         case ARM_16:
             // ARM.16 Software interrupt
             if ((cpsr & IRQDisable) == 0)

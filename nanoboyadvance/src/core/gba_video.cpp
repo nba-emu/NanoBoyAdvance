@@ -107,10 +107,10 @@ namespace NanoboyAdvance
         // The actual width and height of the background
         int width;
         int height;
-        
+
         // The actual line to be rendered with scrolling and wrapround factored
         int wrap_y;
-        
+
         // The concrete line of the tiles to be rendered
         int tile_internal_y;
 
@@ -120,7 +120,7 @@ namespace NanoboyAdvance
         // Rendering buffers
         uint* line_full;
         uint* line_visible = new uint[240];
-        
+
         // Contains the offset of the current tile
         uint offset;
 
@@ -203,7 +203,7 @@ namespace NanoboyAdvance
 
             // We don't need this anymore
             delete[] tile_data;
-            
+
             // Have we just finished the left area?
             if (x == 31)
             {
@@ -496,7 +496,7 @@ namespace NanoboyAdvance
 
         // Update tickcount
         ticks++;
-        
+
         // Reset flags
         render_scanline = false;
 

@@ -168,7 +168,7 @@ namespace NanoboyAdvance
         case SVC: cout << "SVC" << endl; break;
         default: cout << "n.n." << endl; break;
         }
-#endif 
+#endif
         // Actual execution
         switch (type)
         {
@@ -668,7 +668,7 @@ namespace NanoboyAdvance
                 for (int i = 0; i <= 7; i++)
                 {
                     if (instruction & (1 << i))
-                    { 
+                    {
                         reg(i) = ReadWord(reg(13));
                         reg(13) += 4;
                     }
@@ -846,7 +846,7 @@ namespace NanoboyAdvance
                 // BH
                 uint temp_pc = r15 - 2;
                 uint value = reg(14) + (immediate_value << 1);
-                
+
                 // This was mostly written by looking at shonumis code lol
                 value &= 0x7FFFFF;
                 r15 &= ~0x7FFFFF;

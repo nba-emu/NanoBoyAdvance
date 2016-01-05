@@ -47,7 +47,7 @@ namespace NanoboyAdvance
         // Set hle flag
         this->hle = hle;
     }
-    
+
     void ARM7::RemapRegisters()
     {
         switch (cpsr & 0x1F)
@@ -143,7 +143,7 @@ namespace NanoboyAdvance
     {
         // LSR #0 equals to LSR #32
         amount = immediate & (amount == 0) ? 32 : amount;
-        
+
         // Perform shift
         for (uint i = 0; i < amount; i++)
         {
@@ -235,7 +235,7 @@ namespace NanoboyAdvance
         TriggerMemoryBreakpoint(true, offset, 4);
         memory->WriteWord(offset, value);
     }
-    
+
     void NanoboyAdvance::ARM7::TriggerMemoryBreakpoint(bool write, uint address, int size)
     {
         for (uint i = 0; i < breakpoints.size(); i++)
@@ -279,7 +279,7 @@ namespace NanoboyAdvance
         hit_breakpoint = false;
         crashed = false;
 
-        // Debug when the program counter is in an unusual area        
+        // Debug when the program counter is in an unusual area
         if (pc_page != 0 && pc_page != 2 && pc_page != 3 && pc_page != 6 && pc_page != 8)
         {
             crashed = true;
@@ -290,7 +290,7 @@ namespace NanoboyAdvance
         for (uint i = 0; i < breakpoints.size(); i++)
         {
             if (breakpoints[i]->breakpoint_type == ARM7Breakpoint::ARM7BreakpointType::Execute &&
-                breakpoints[i]->thumb_mode == thumb && 
+                breakpoints[i]->thumb_mode == thumb &&
                 (r15 - (thumb ? 8 : 4)) == breakpoints[i]->concerned_address &&
                 pipe_status >= 2)
             {
@@ -334,7 +334,7 @@ namespace NanoboyAdvance
                 break;
             }
         }
-        else 
+        else
         {
             r15 &= ~3;
             switch (pipe_status)
@@ -375,7 +375,7 @@ namespace NanoboyAdvance
             for (uint i = 0; i < breakpoints.size(); i++)
             {
                 if (breakpoints[i]->breakpoint_type == ARM7Breakpoint::ARM7BreakpointType::StepOver)
-                { 
+                {
                     hit_breakpoint = true;
                     last_breakpoint = breakpoints[i];
                 }
