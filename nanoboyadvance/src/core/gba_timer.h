@@ -41,6 +41,5 @@ namespace NanoboyAdvance
         ushort timer_reload[4];
         GBATimer(GBAIO* gba_io);
         void Step();
-        void StepOld();
     };
 }
