@@ -37,7 +37,7 @@ namespace NanoboyAdvance
         memset(timer_ticks, 0, 4 * sizeof(int));
         memset(timer_reload, 0, 4 * sizeof(ushort));
 
-        // Timer0 has now countup...
+        // Timer0 has no countup...
         timer_countup[0] = false;
     }
 
@@ -66,7 +66,7 @@ namespace NanoboyAdvance
     {
         bool overflow = false;
 
-        // Detect if timer0 settings where altered. If so reload its settings.
+        // Detect if timer0 settings were altered. If so reload its settings.
         if (timer0_altered)
         {
             timer_enabled[0] = (gba_io->tm0cnt_h & (1 << 7)) == (1 << 7);
@@ -75,7 +75,7 @@ namespace NanoboyAdvance
             timer0_altered = false;
         }
 
-        // Detect if timer1 settings where altered. If so reload its settings.
+        // Detect if timer1 settings were altered. If so reload its settings.
         if (timer1_altered)
         {
             timer_enabled[1] = (gba_io->tm1cnt_h & (1 << 7)) == (1 << 7);
@@ -85,7 +85,7 @@ namespace NanoboyAdvance
             timer1_altered = false;
         }
 
-        // Detect if timer2 settings where altered. If so reload its settings.
+        // Detect if timer2 settings were altered. If so reload its settings.
         if (timer2_altered)
         {
             timer_enabled[2] = (gba_io->tm2cnt_h & (1 << 7)) == (1 << 7);
@@ -95,7 +95,7 @@ namespace NanoboyAdvance
             timer2_altered = false;
         }
 
-        // Detect if timer3 settings where altered. If so reload its settings.
+        // Detect if timer3 settings were altered. If so reload its settings.
         if (timer3_altered)
         {
             timer_enabled[3] = (gba_io->tm3cnt_h & (1 << 7)) == (1 << 7);
