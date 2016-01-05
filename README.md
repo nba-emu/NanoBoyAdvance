@@ -1,6 +1,6 @@
 # NanoboyAdvance
 
-NanoboyAdvance is an experimental GBA emulator written using a mixture of c++ and c. Even though it's far away from being usable, it get's better and better with each commit. 
+NanoboyAdvance is an experimental GBA emulator written using a mixture of c++ and c. Even though it's far away from being usable, it get's better and better with each commit.
 
 ## Media
 
@@ -34,6 +34,7 @@ setmemw [offset] [word]: writes a word to a given memory address
 dumpstck [count]: displays a given amount of stack entries
 frame: run until the first line of the next frame gets rendered
 c: continues execution
+q: quit nanoboyadvance (useful in case of game crashing)
 ```
 The commands may change in future. <b>Also I will add disassembling capability</b>.
 
