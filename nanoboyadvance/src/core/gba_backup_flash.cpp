@@ -121,7 +121,7 @@ namespace NanoboyAdvance
             command_phase = 0;
         }
         else if (enable_erase && static_cast<GBAFlashCommand>(value) == GBAFlashCommand::ERASE_SECTOR && (
-                     offset & ~0xF000) == 0x0E000000)
+                     offset & ~0xF000) == 0x0E000000 && command_phase == 2)
         {
             int base_offset = offset & 0xF000;
             for (int i = 0; i < 0x1000; i++)
@@ -129,6 +129,7 @@ namespace NanoboyAdvance
                 memory[memory_bank][base_offset + i] = 0xFF;
             }
             enable_erase = false;
+            command_phase = 0;
         }
         // todo: allow single byte write only if affected sector was erased beforehand.
         else if (enable_byte_write) { memory[memory_bank][offset & 0xFFFF] = value; enable_byte_write = false; } 
