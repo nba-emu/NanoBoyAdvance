@@ -801,10 +801,13 @@ namespace NanoboyAdvance
         }
         case THUMB_17:
             // THUMB.17 Software Interrupt
-            if ((cpsr & IRQDisable) == 0)
+            //if ((cpsr & IRQDisable) == 0)
             {
                 //LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (thumb)", ReadByte(r15 - 4), r0, r1, r2, r3, reg(14), r15);
                 ubyte bios_call = ReadByte(r15 - 4);
+
+                // Log to the console that we're issuing an interrupt.
+                LOG(LOG_INFO, "Running software interrupt (0x%x) (thumb)", bios_call);
 
                 // See if we must trigger a breakpoint (and do it)
                 TriggerSVCBreakpoint(bios_call);
@@ -819,8 +822,8 @@ namespace NanoboyAdvance
                     r14_svc = r15 - 2;
                     spsr_svc = cpsr;
                     r15 = 8;
-                    cpsr &= ~Thumb;
-                    cpsr = (cpsr & ~0x1F) | SVC | IRQDisable;
+                    //cpsr &= ~Thumb;
+                    cpsr = (cpsr & ~0x3F) | SVC | IRQDisable;
                     RemapRegisters();
                     flush_pipe = true;
                 }

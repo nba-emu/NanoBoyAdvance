@@ -1,6 +1,6 @@
 # NanoboyAdvance
 
-NanoboyAdvance is an experimental GBA emulator written using a mixture of c++ and c. Even though it's far away from being usable, it get's better and better with each commit.
+NanoboyAdvance is an experimental GBA emulator written using a mixture of c++ and c. Even though it's far away from being usable, it gets better and better with each commit.
 
 ## Media
 

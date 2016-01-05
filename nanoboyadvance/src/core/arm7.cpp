@@ -399,7 +399,9 @@ namespace NanoboyAdvance
             RemapRegisters();
             r15 = 0x18;
             flush_pipe = true;
+            LOG(LOG_INFO, "Issued interrupt, r14_irq=0x%x", r14_irq);
         }
+        else { LOG(LOG_INFO, "Interrupt(s) requested but blocked (either by interrupt or swi)") }
     }
 
     uint ARM7::GetGeneralRegister(int number)
