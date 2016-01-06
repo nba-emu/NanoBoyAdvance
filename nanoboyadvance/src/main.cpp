@@ -147,8 +147,8 @@ int main(int argc, char** argv)
     SDL_Event event;
     bool running = true;
 
-	if (argc > 1)
-	{
+    if (argc > 1)
+    {
         cmdline = parse_parameters(argc, argv);
 
         // Check for parsing errors
@@ -159,14 +159,14 @@ int main(int argc, char** argv)
         }
 
         // Initialize memory and ARM interpreter core
-		memory = new GBAMemory(cmdline->bios_file, cmdline->rom_file);
-	    arm = new ARM7(memory, !cmdline->use_bios);
-	}
-	else
-	{
-		usage();
+        memory = new GBAMemory(cmdline->bios_file, cmdline->rom_file);
+        arm = new ARM7(memory, !cmdline->use_bios);
+    }
+    else
+    {
+        usage();
         return 0;
-	}
+    }
 
     // Initialize SDL and create window
     create_window(240 * cmdline->scale, 160 * cmdline->scale);
