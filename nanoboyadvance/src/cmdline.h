@@ -25,6 +25,7 @@ typedef struct {
     bool use_bios;
     bool debug;
     bool strict;
+    int scale;
 } CmdLine;
 
 void usage();

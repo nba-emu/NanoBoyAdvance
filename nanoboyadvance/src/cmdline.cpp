@@ -17,6 +17,7 @@
 * along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include "cmdline.h"
@@ -40,6 +41,7 @@ CmdLine* parse_parameters(int argc, char** argv)
     cmdline->use_bios = false;
     cmdline->debug = false;
     cmdline->strict = false;
+    cmdline->scale = 2;
 
     // Process arguments
     while (current_argument < argc)
@@ -56,8 +58,7 @@ CmdLine* parse_parameters(int argc, char** argv)
             }
             else
             {
-                usage();
-                return 0;
+                return NULL;
             }
         }
         else if (strcmp(argv[current_argument], "--debug") == 0)
@@ -67,6 +68,21 @@ CmdLine* parse_parameters(int argc, char** argv)
         else if (strcmp(argv[current_argument], "--strict") == 0)
         {
             cmdline->strict = true;
+        }
+        else if (strcmp(argv[current_argument], "--scale") == 0)
+        {
+            if (argc > current_argument + 1)
+            {
+                cmdline->scale = atoi(argv[++current_argument]);
+                if (cmdline->scale == 0)
+                {
+                    return NULL;
+                }
+            }
+            else
+            {
+                return NULL;
+            }
         }
         else
         {
@@ -78,8 +94,7 @@ CmdLine* parse_parameters(int argc, char** argv)
         {
             if (!no_switch)
             {
-                usage();
-                return 0;
+                return NULL;
             }
             cmdline->rom_file = argv[current_argument];
         }
