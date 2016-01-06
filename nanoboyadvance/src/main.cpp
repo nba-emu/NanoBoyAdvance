@@ -48,7 +48,7 @@ void setpixel(int x, int y, int color)
     plotpixel(x * 2 + 1, y * 2 + 1, color);
 }
 
-void arm_print_registers(ARM7* arm)
+/*void arm_print_registers(ARM7* arm)
 {
     // First line
     cout << "r0=0x" << display_word << arm->GetGeneralRegister(0) << "\t";
@@ -77,7 +77,7 @@ void arm_print_registers(ARM7* arm)
     // Fifth line
     cout << "cpsr=0x" << display_word << arm->GetStatusRegister() << "\t";
     cout << "spsr_<mode>=0x" << display_word << arm->GetSavedStatusRegister() << endl;
-}
+}*/
 
 void step(ARM7* arm, GBAMemory* memory)
 {
@@ -91,7 +91,7 @@ void step(ARM7* arm, GBAMemory* memory)
     memory->dma->Step();
 }
 
-ubyte take_byte(string parameter)
+/*ubyte take_byte(string parameter)
 {
     ubyte result = static_cast<ubyte>(stoul(parameter, nullptr, 0));
     if (result > 0xFF)
@@ -114,369 +114,11 @@ ushort take_hword(string parameter)
 uint take_word(string parameter)
 {
     return stoul(parameter, nullptr, 0);
-}
+}*/
 
 void debugger(ARM7* arm, GBAMemory* memory, bool complain)
 {
-    bool debugging = true;
-
-    // Welcome message
-    cout << "Nanoboy Shell (nsh)" << endl << endl;
-
-    // TODO: Handle step over breakpoint
-    if (arm->hit_breakpoint)
-    {
-        ARM7Breakpoint* breakpoint = arm->last_breakpoint;
-
-        // Breakpoint type specific code
-        switch (breakpoint->breakpoint_type)
-        {
-        case ARM7Breakpoint::ARM7BreakpointType::Execute:
-            cout << "Hit hardware breakpoint 0x" << display_word << breakpoint->concerned_address << endl << endl;
-            break;
-        case ARM7Breakpoint::ARM7BreakpointType::Read:
-            cout << "Read from 0x" << display_word << breakpoint->concerned_address << endl << endl;
-            break;
-        case ARM7Breakpoint::ARM7BreakpointType::Write:
-            cout << "Write to 0x" << display_word << breakpoint->concerned_address << endl << endl;
-            break;
-        case ARM7Breakpoint::ARM7BreakpointType::Access:
-            // TODO
-            break;
-        case ARM7Breakpoint::ARM7BreakpointType::StepOver:
-            debugging = false;
-            // TODO...
-            return;
-        case ARM7Breakpoint::ARM7BreakpointType::SVC:
-            cout << "Software Interrupt 0x" << display_byte << breakpoint->bios_call << endl << endl;
-            break;
-        }
-    }
-    else if (arm->crashed)
-    {
-        switch (arm->crash_reason)
-        {
-        case ARM7::CrashReason::BadPC:
-            cout << "Program Counter in unusual / bad memory area (0x" << display_word << arm->GetGeneralRegister(15) << ")" << endl;
-            break;
-        }
-    }
-    else if (memory->bad_read && complain)
-    {
-        cout << "Bad read from 0x" << display_word << memory->bad_address << endl;
-    }
-    else if (memory->bad_write && complain)
-    {
-        cout << "Bad write to 0x" << display_word << memory->bad_address << " (0x" << display_word << memory->bad_value << ")" << endl;
-    }
-
-    // Display registers
-    arm_print_registers(arm);
-
-    // Process commands until user continues execution
-    while (debugging)
-    {
-        string command;
-        vector<string> tokens;
-
-        // Get next command
-        cout << "nanoboy ~# ";
-        getline(cin, command);
-
-        // Don't process empty input
-        if (command.length() == 0)
-        {
-            continue;
-        }
-
-        // Tokenize
-        while (command.length() > 0)
-        {
-            int position = command.find(" ");
-            if (position != -1)
-            {
-                tokens.push_back(command.substr(0, position));
-                command = command.substr(position + 1, command.length() - position - 1);
-            }
-            else
-            {
-                tokens.push_back(command);
-                command = "";
-            }
-        }
-
-        // Execute the command
-        if (tokens[0] == "c")
-        {
-            debugging = false;
-        }
-        else if (tokens[0] == "help")
-        {
-            if (tokens.size() > 1)
-            {
-                cout << "Invalid amount of parameters. See \"help\" for help (jk)." << endl;
-                continue;
-            }
-            cout << "help: displays this text" << endl;
-            cout << "showregs: displays all cpu registers" << endl;
-            cout << "setreg [register] [value]: sets the value of a general purpose register" << endl;
-            cout << "bpa [address]: sets an arm mode execution breakpoint" << endl;
-            cout << "bpt [address]: sets a thumb mode execution breakpoint" << endl;
-            cout << "bpr [offset]: breakpoint on read" << endl;
-            cout << "bpw [offset]: breakpoint on write" << endl;
-            cout << "bpsvc [bios_call]: halt *after* executing a swi instruction with the given call number" << endl;
-            cout << "cbp: remove all breakpoints" << endl;
-            cout << "memdump [offset] [length]: displays memory in a formatted way" << endl;
-            cout << "setmemb [offset] [byte]: writes a byte to a given memory address" << endl;
-            cout << "setmemh [offset] [hword]: writes a hword to a given memory address" << endl;
-            cout << "setmemw [offset] [word]: writes a word to a given memory address" << endl;
-            cout << "dumpstck [count] [mode] (usr, sys, svc, irq): displays a given amount of stack entries. the mode parameter is optional" << endl;
-            cout << "frame: run until the first line of the next frame gets rendered" << endl;
-            cout << "c: continues execution" << endl;
-            cout << "q: quit nanoboyadvance" << endl;
-            cout << endl;
-        }
-        else if (tokens[0] == "showregs")
-        {
-            arm_print_registers(arm);
-        }
-        else if (tokens[0] == "setreg")
-        {
-            uint reg = 0;
-            uint value = 0;
-
-            // Catch case of too many / few parameters
-            if (tokens.size() != 3)
-            {
-                cout << "Invalid amount of parameters. See \"help\" for help." << endl;
-                continue;
-            }
-
-            // Parse parameters
-            try
-            {
-                reg = take_word(tokens[1]);
-                value = take_word(tokens[2]);
-                if (reg > 0xF)
-                {
-                    throw new out_of_range("Parameter exceeds amount of registers");
-                }
-            }
-            catch (exception& e)
-            {
-                cout << e.what() << endl;
-            }
-
-            // Set register
-            arm->SetGeneralRegister(reg, value);
-        }
-        else if (tokens[0] == "bpt" || tokens[0] == "bpa" || tokens[0] == "bpw" || tokens[0] == "bpr")
-        {
-            uint offset = 0;
-            ARM7Breakpoint* breakpoint;
-
-            // Catch case of too many / few parameters
-            if (tokens.size() != 2)
-            {
-                cout << "Invalid amount of parameters. See \"help\" for help." << endl;
-                continue;
-            }
-
-            breakpoint = new ARM7Breakpoint();
-
-            // Parse parameter
-            try
-            {
-                offset = take_word(tokens[1]);
-            }
-            catch (exception& e)
-            {
-                cout << e.what() << endl;
-            }
-
-            // Create breakpoint object
-            breakpoint->breakpoint_type = (tokens[0] == "bpt" || tokens[0] == "bpa") ? ARM7Breakpoint::ARM7BreakpointType::Execute : (tokens[0] == "bpw" ? ARM7Breakpoint::ARM7BreakpointType::Write : ARM7Breakpoint::ARM7BreakpointType::Read);
-            breakpoint->concerned_address = offset;
-            if (tokens[0] != "bpt" && tokens[0] != "bpa")
-            {
-                breakpoint->thumb_mode = tokens[0] == "bpt";
-            }
-
-            // Pass it to the processor
-            arm->breakpoints.push_back(breakpoint);
-        }
-        else if (tokens[0] == "bpsvc")
-        {
-            // Catch too many / few parameters
-            if (tokens.size() != 2)
-            {
-                cout << "Invalid amount of parameters. See \"help\" for help." << endl;
-                continue;
-            }
-
-            // Handle command
-            try
-            {
-                ARM7Breakpoint* breakpoint = new ARM7Breakpoint();
-                breakpoint->breakpoint_type = ARM7Breakpoint::ARM7BreakpointType::SVC;
-                breakpoint->bios_call = take_byte(tokens[1]);
-                arm->breakpoints.push_back(breakpoint);
-            }
-            catch (exception& e)
-            {
-                cout << e.what() << endl;
-            }
-        }
-        else if (tokens[0] == "cbp")
-        {
-            arm->breakpoints.clear();
-        }
-        else if (tokens[0] == "memdump")
-        {
-            uint offset;
-            int count;
-
-            // Catch too many / few parameters
-            if (tokens.size() != 3)
-            {
-                cout << "Invalid amount of parameters. See \"help\" for help." << endl;// use macro
-                continue;
-            }
-
-            // Parse parameters
-            try
-            {
-                offset = take_word(tokens[1]);
-                count = take_word(tokens[2]);
-            }
-            catch (exception& e)
-            {
-                cout << e.what() << endl;
-            }
-
-            // Display memory
-            while (count != 0)
-            {
-                for (int i = 0; i < 16; i++)
-                {
-                    ubyte value = memory->ReadByte(offset);
-                    cout << display_byte << (int)value << " ";
-                    if (--count == 0)
-                    {
-                        break;
-                    }
-                    offset++;
-                }
-                cout << endl;
-            }
-        }
-        else if (tokens[0] == "setmemb" || tokens[0] == "setmemh" || tokens[0] == "setmemw")
-        {
-            uint offset;
-
-            // Catch case too many / few parameters
-            if (tokens.size() != 3)
-            {
-                cout << "Invalid amount of parameters. See \"help\" for help." << endl;
-                continue;
-            }
-
-            // Parse parameters and perform write
-            try
-            {
-                offset = take_word(tokens[1]);
-                switch (tokens[0][6])
-                {
-                case 'b':
-                    memory->WriteByte(offset, take_byte(tokens[2]));
-                    break;
-                case 'h':
-                    memory->WriteHWord(offset, take_hword(tokens[2]));
-                    break;
-                case 'w':
-                    memory->WriteWord(offset, take_word(tokens[2]));
-                    break;
-                }
-            }
-            catch (exception& e)
-            {
-                cout << e.what() << endl;
-            }
-        }
-        else if (tokens[0] == "dumpstck")
-        {
-            uint count;
-
-            // Catch too many / few parameters
-            if (tokens.size() != 2 && tokens.size() != 3)
-            {
-                cout << "Invalid amount of parameters. See \"help\" for help." << endl;
-                continue;
-            }
-
-            // Parse parameter and dump
-            try
-            {
-                uint stack_ptr; //= arm->GetGeneralRegister(13) + 4;
-                count = take_word(tokens[1]);
-
-                if (tokens.size() == 3)
-                {
-                    if (tokens[2] == "sys" || tokens[2] == "usr")
-                    {
-                        stack_ptr = arm->GetStackPointerMode(0x10);
-                    }
-                    else if (tokens[2] == "svc")
-                    {
-                        stack_ptr = arm->GetStackPointerMode(0x13);
-                    }
-                    else if (tokens[2] == "irq")
-                    {
-                        stack_ptr = arm->GetStackPointerMode(0x12);
-                    }
-                    else
-                    {
-                        cout << "Invalid mode provided. See \"help\" for help." << endl;
-                        continue;
-                    }
-                }
-                else
-                {
-                    stack_ptr = arm->GetGeneralRegister(13) + 4;
-                }
-
-                // Message
-                cout << "Dumping stack from 0x" << display_word << stack_ptr << dec << " (r13 + 4):" << endl;
-
-                // Actual dumping
-                for (uint i = 0; i < count; i++)
-                {
-                    uint value = memory->ReadWord(stack_ptr + i * 4);
-                    cout << "[0x" << display_word << stack_ptr << "+0x" << (i * 4) << "]: 0x" <<
-                            display_word << value << dec <<
-                            (((value >> 24) >= 8 && (value >> 24) <= 9) ? " (*)" : "") << /* mark entries which (could) point to the rom */
-                            endl;
-                }
-            }
-            catch (exception& e)
-            {
-                cout << e.what() << endl;
-            }
-        }
-        else if (tokens[0] == "frame")
-        {
-            step_frame = true;
-            debugging = false;
-        }
-        else if (tokens[0] == "q")
-        {
-            exit(0);
-        }
-        else
-        {
-            cout << "Uhh! I don't know that. Try \"help\" for help." << endl;
-        }
-    }
+    puts("About to be reimplemented :/");
 }
 
 // Called when none or invalid arguments are passed
@@ -610,12 +252,6 @@ int main(int argc, char **argv)
         for (int i = 0; i < 280896; i++)
         {
             step(arm, memory);
-
-            // Call debugger if we hit a breakpoint or the processor crashed
-            if (arm->hit_breakpoint || arm->crashed || memory->bad_read || memory->bad_write)
-            {
-                debugger(arm, memory, complain);
-            }
 
             // Copy the finished frame to SDLs pixel buffer
             if (memory->video->render_scanline && memory->gba_io->vcount == 159)

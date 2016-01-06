@@ -189,7 +189,6 @@ namespace NanoboyAdvance
 
     ubyte ARM7::ReadByte(uint offset)
     {
-        TriggerMemoryBreakpoint(false, offset, 1);
         return memory->ReadByte(offset);
     }
 
@@ -197,14 +196,12 @@ namespace NanoboyAdvance
     {
         // TODO: Proper handling (Mis-aligned LDRH,LDRSH)
         offset &= ~1;
-        TriggerMemoryBreakpoint(false, offset, 2);
         return memory->ReadHWord(offset);
     }
 
     uint ARM7::ReadWord(uint offset)
     {
         offset &= ~3;
-        TriggerMemoryBreakpoint(false, offset, 4);
         return memory->ReadWord(offset);
     }
 
@@ -212,62 +209,24 @@ namespace NanoboyAdvance
     {
         uint value = memory->ReadWord(offset & ~3);
         int amount = (offset & 3) * 8;
-        TriggerMemoryBreakpoint(false, offset, 4);
         return amount == 0 ? value : ((value >> amount) | (value << (32 - amount)));
     }
 
     void ARM7::WriteByte(uint offset, ubyte value)
     {
-        TriggerMemoryBreakpoint(true, offset, 1);
         memory->WriteByte(offset, value);
     }
 
     void ARM7::WriteHWord(uint offset, ushort value)
     {
         offset &= ~1;
-        TriggerMemoryBreakpoint(true, offset, 2);
         memory->WriteHWord(offset, value);
     }
 
     void ARM7::WriteWord(uint offset, uint value)
     {
         offset &= ~3;
-        TriggerMemoryBreakpoint(true, offset, 4);
         memory->WriteWord(offset, value);
-    }
-
-    void NanoboyAdvance::ARM7::TriggerMemoryBreakpoint(bool write, uint address, int size)
-    {
-        for (uint i = 0; i < breakpoints.size(); i++)
-        {
-            if ((breakpoints[i]->concerned_address >= address && breakpoints[i]->concerned_address <= address + size - 1) &&
-                (
-                 (breakpoints[i]->breakpoint_type == ARM7Breakpoint::ARM7BreakpointType::Access) ||
-                 (breakpoints[i]->breakpoint_type == ARM7Breakpoint::ARM7BreakpointType::Read && !write) ||
-                 (breakpoints[i]->breakpoint_type == ARM7Breakpoint::ARM7BreakpointType::Write && write)
-                )
-            )
-            {
-                hit_breakpoint = true;
-                last_breakpoint = breakpoints[i];
-                return;
-            }
-        }
-    }
-
-    void ARM7::TriggerSVCBreakpoint(uint bios_call)
-    {
-        for (uint i = 0; i < breakpoints.size(); i++)
-        {
-            ARM7Breakpoint* breakpoint = breakpoints[i];
-
-            // Breakpoint bios call and type matching
-            if (breakpoint->bios_call == bios_call && breakpoint->breakpoint_type == ARM7Breakpoint::ARM7BreakpointType::SVC)
-            {
-                hit_breakpoint = true;
-                last_breakpoint = breakpoint;
-            }
-        }
     }
 
     void ARM7::Step()
@@ -276,28 +235,14 @@ namespace NanoboyAdvance
         uint pc_page = r15 >> 24;
 
         // *Unset* breakpoint and crashed flag
-        hit_breakpoint = false;
-        crashed = false;
+        //hit_breakpoint = false;
+        //crashed = false;
 
         // Debug when the program counter is in an unusual area
         if (pc_page != 0 && pc_page != 2 && pc_page != 3 && pc_page != 6 && pc_page != 8)
         {
-            crashed = true;
-            crash_reason = CrashReason::BadPC;
-        }
-
-        // Handle code breakpoints
-        for (uint i = 0; i < breakpoints.size(); i++)
-        {
-            if (breakpoints[i]->breakpoint_type == ARM7Breakpoint::ARM7BreakpointType::Execute &&
-                breakpoints[i]->thumb_mode == thumb &&
-                (r15 - (thumb ? 8 : 4)) == breakpoints[i]->concerned_address &&
-                pipe_status >= 2)
-            {
-                hit_breakpoint = true;
-                last_breakpoint = breakpoints[i];
-                return;
-            }
+            /*crashed = true;
+            crash_reason = CrashReason::BadPC;*/
         }
 
         if (thumb)
@@ -372,14 +317,6 @@ namespace NanoboyAdvance
         {
             pipe_status = 0;
             flush_pipe = false;
-            for (uint i = 0; i < breakpoints.size(); i++)
-            {
-                if (breakpoints[i]->breakpoint_type == ARM7Breakpoint::ARM7BreakpointType::StepOver)
-                {
-                    hit_breakpoint = true;
-                    last_breakpoint = breakpoints[i];
-                }
-            }
             return;
         }
         r15 += thumb ? 2 : 4;
@@ -402,45 +339,6 @@ namespace NanoboyAdvance
             LOG(LOG_INFO, "Issued interrupt, r14_irq=0x%x", r14_irq);
         }
         //else { LOG(LOG_INFO, "Interrupt(s) requested but blocked (either by interrupt or swi)") }
-    }
-
-    uint ARM7::GetGeneralRegister(int number)
-    {
-        return reg(number);
-    }
-
-    void ARM7::SetGeneralRegister(int number, uint value)
-    {
-        reg(number) = value;
-    }
-
-    uint ARM7::GetStatusRegister()
-    {
-        return cpsr;
-    }
-
-    uint ARM7::GetSavedStatusRegister()
-    {
-        return *pspsr;
-    }
-
-    uint ARM7::GetStackPointerMode(int mode)
-    {
-        switch ((ARM7Mode)mode)
-        {
-        case User:
-        case System:
-            return r13;
-        case FIQ:
-            return r13_fiq;
-        case IRQ:
-            return r13_irq;
-        case Abort:
-            return r13_abt;
-        case Undefined:
-            return r13_und;
-        }
-        return 0;
     }
 
     void NanoboyAdvance::ARM7::SWI(int number)

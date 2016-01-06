@@ -21,7 +21,6 @@
 
 #include <iostream>
 #include <sstream>
-#include <vector>
 #include "common/types.h"
 #include "common/log.h"
 #include "memory.h"
@@ -153,18 +152,6 @@ namespace NanoboyAdvance
             ZeroFlag = 0x40000000,
             SignFlag = 0x80000000
         };
-        enum CrashReason
-        {
-            BadPC,
-            BadMemory
-        };
-
-        // Debugging
-        vector<ARM7Breakpoint*> breakpoints;
-        ARM7Breakpoint* last_breakpoint {nullptr};
-        bool hit_breakpoint {false};
-        bool crashed {false};
-        CrashReason crash_reason;
 
         // Constructor
         ARM7(Memory* memory, bool use_bios);
@@ -174,12 +161,5 @@ namespace NanoboyAdvance
 
         // Trigger IRQ exception
         void FireIRQ();
-
-        // Register getter / setters
-        uint GetGeneralRegister(int number);
-        void SetGeneralRegister(int number, uint value);
-        uint GetStatusRegister();
-        uint GetSavedStatusRegister();
-        uint GetStackPointerMode(int mode);
     };
 }

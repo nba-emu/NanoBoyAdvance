@@ -809,9 +809,6 @@ namespace NanoboyAdvance
                 // Log to the console that we're issuing an interrupt.
                 LOG(LOG_INFO, "Running software interrupt (0x%x) (thumb)", bios_call);
 
-                // See if we must trigger a breakpoint (and do it)
-                TriggerSVCBreakpoint(bios_call);
-
                 // Actual emulation
                 if (hle)
                 {
