@@ -60,7 +60,7 @@ void setpixel(int x, int y, int color)
 // Read key input from SDL and feed it into the GBA
 void schedule_keyinput()
 {
-    ubyte* kb_state = SDL_GetKeyState(NULL);
+    u8* kb_state = SDL_GetKeyState(NULL);
     ushort joypad = 0;
 
     // Check which keys are pressed and set corresponding bits (0 = pressed, 1 = vice versa)
@@ -187,7 +187,7 @@ int main(int argc, char** argv)
     // Main loop
     while (running)
     {
-        ubyte* kb_state = SDL_GetKeyState(NULL);
+        u8* kb_state = SDL_GetKeyState(NULL);
         
         // Check if cli debugger is requested and run if needed
         if (cmdline->debug && kb_state[SDLK_F11])

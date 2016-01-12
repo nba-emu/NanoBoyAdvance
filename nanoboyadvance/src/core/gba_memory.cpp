@@ -42,17 +42,17 @@ namespace NanoboyAdvance
         memory_hook = callback;
     }
     
-    ubyte* GBAMemory::ReadFile(string filename)
+    u8* GBAMemory::ReadFile(string filename)
     {
         ifstream ifs(filename, ios::in | ios::binary | ios::ate);
         size_t filesize;
-        ubyte* data = 0;
+        u8* data = 0;
         if (ifs.is_open())
         {
             ifs.seekg(0, ios::end);
             filesize = ifs.tellg();
             ifs.seekg(0, ios::beg);
-            data = new ubyte[filesize];
+            data = new u8[filesize];
             ifs.read((char*)data, filesize);
         }
         else
@@ -63,10 +63,10 @@ namespace NanoboyAdvance
         return data;
     }
 
-    ubyte GBAMemory::ReadByte(uint offset)
+    u8 GBAMemory::ReadByte(u32 offset)
     {
         int page = (offset >> 24) & 0xF;
-        uint internal_offset = offset & 0xFFFFFF;
+        u32 internal_offset = offset & 0xFFFFFF;
         switch (page)
         {
         case 0:
@@ -120,22 +120,22 @@ namespace NanoboyAdvance
         return 0;
     }
 
-    ushort GBAMemory::ReadHWord(uint offset)
+    u16 GBAMemory::ReadHWord(u32 offset)
     {
         // TODO: Handle special case SRAM
         return ReadByte(offset) | (ReadByte(offset + 1) << 8);
     }
 
-    uint GBAMemory::ReadWord(uint offset)
+    u32 GBAMemory::ReadWord(u32 offset)
     {
         // TODO: Handle special case SRAM
         return ReadByte(offset) | (ReadByte(offset + 1) << 8) | (ReadByte(offset + 2) << 16) | (ReadByte(offset + 3) << 24);
     }
 
-    void GBAMemory::WriteByte(uint offset, ubyte value)
+    void GBAMemory::WriteByte(u32 offset, u8 value)
     {
         int page = (offset >> 24);
-        uint internal_offset = offset & 0xFFFFFF;
+        u32 internal_offset = offset & 0xFFFFFF;
 
         // Perform write
         switch (page)
@@ -282,10 +282,10 @@ namespace NanoboyAdvance
         }
     }
 
-    void GBAMemory::WriteHWord(uint offset, ushort value)
+    void GBAMemory::WriteHWord(u32 offset, u16 value)
     {
         int page = (offset >> 24) & 0xF;
-        uint internal_offset = offset & 0xFFFFFF;
+        u32 internal_offset = offset & 0xFFFFFF;
         switch (page)
         {
         case 5:
@@ -312,7 +312,7 @@ namespace NanoboyAdvance
         }
     }
 
-    void GBAMemory::WriteWord(uint offset, uint value)
+    void GBAMemory::WriteWord(u32 offset, u32 value)
     {
         if (value & (1 << 23))
         {

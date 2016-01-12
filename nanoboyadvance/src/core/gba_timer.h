@@ -35,10 +35,10 @@ namespace NanoboyAdvance
         bool timer_interrupt[4];
         int timer_clock[4];
         int timer_ticks[4];
-        void ScheduleTimer(int index, ushort& counter, bool& overflow);
+        void ScheduleTimer(int index, u16& counter, bool& overflow);
     public:
         bool timer0_altered {false}, timer1_altered {false}, timer2_altered {false}, timer3_altered {false};
-        ushort timer_reload[4];
+        u16 timer_reload[4];
         GBATimer(GBAIO* gba_io);
         void Step();
     };

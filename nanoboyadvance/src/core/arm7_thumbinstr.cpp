@@ -41,7 +41,7 @@
 
 namespace NanoboyAdvance
 {
-    int ARM7::THUMBDecode(ushort instruction)
+    int ARM7::THUMBDecode(u16 instruction)
     {
         if ((instruction & 0xF800) < 0x1800)
         {
@@ -141,7 +141,7 @@ namespace NanoboyAdvance
         return 0;
     }
 
-    void ARM7::THUMBExecute(ushort instruction, int type)
+    void ARM7::THUMBExecute(u16 instruction, int type)
     {
         // Actual execution
         switch (type)
@@ -151,7 +151,7 @@ namespace NanoboyAdvance
             // THUMB.1 Move shifted register
             int reg_dest = instruction & 7;
             int reg_source = (instruction >> 3) & 7;
-            uint immediate_value = (instruction >> 6) & 0x1F;
+            u32 immediate_value = (instruction >> 6) & 0x1F;
             int opcode = (instruction >> 11) & 3;
             bool carry = (cpsr & CarryFlag) ? true : false;
 
@@ -185,7 +185,7 @@ namespace NanoboyAdvance
             // THUMB.2 Add/subtract
             int reg_dest = instruction & 7;
             int reg_source = (instruction >> 3) & 7;
-            uint operand;
+            u32 operand;
 
             // The operand can either be the value of a register or a 3 bit immediate value
             if (instruction & (1 << 10))
@@ -200,7 +200,7 @@ namespace NanoboyAdvance
             // Determine wether to subtract or add
             if (instruction & (1 << 9))
             {
-                uint result = reg(reg_source) - operand;
+                u32 result = reg(reg_source) - operand;
                 AssertCarry(reg(reg_source) >= operand);
                 CalculateOverflowSub(result, reg(reg_source), operand);
                 CalculateSign(result);
@@ -209,8 +209,8 @@ namespace NanoboyAdvance
             }
             else
             {
-                uint result = reg(reg_source) + operand;
-                ulong result_long = (ulong)(reg(reg_source)) + (ulong)operand;
+                u32 result = reg(reg_source) + operand;
+                u64 result_long = (u64)(reg(reg_source)) + (u64)operand;
                 AssertCarry((result_long & 0x100000000) ? true : false);
                 CalculateOverflowAdd(result, reg(reg_source), operand);
                 CalculateSign(result);
@@ -222,7 +222,7 @@ namespace NanoboyAdvance
         case THUMB_3:
         {
             // THUMB.3 Move/compare/add/subtract immediate
-            uint immediate_value = instruction & 0xFF;
+            u32 immediate_value = instruction & 0xFF;
             int reg_dest = (instruction >> 8) & 7;
             switch ((instruction >> 11) & 3)
             {
@@ -233,7 +233,7 @@ namespace NanoboyAdvance
                 break;
             case 0b01: // CMP
             {
-                uint result = reg(reg_dest) - immediate_value;
+                u32 result = reg(reg_dest) - immediate_value;
                 AssertCarry(reg(reg_dest) >= immediate_value);
                 CalculateOverflowSub(result, reg(reg_dest), immediate_value);
                 CalculateSign(result);
@@ -242,8 +242,8 @@ namespace NanoboyAdvance
             }
             case 0b10: // ADD
             {
-                uint result = reg(reg_dest) + immediate_value;
-                ulong result_long = (ulong)(reg(reg_dest)) + (ulong)immediate_value;
+                u32 result = reg(reg_dest) + immediate_value;
+                u64 result_long = (u64)(reg(reg_dest)) + (u64)immediate_value;
                 AssertCarry((result_long & 0x100000000) ? true : false);
                 CalculateOverflowAdd(result, reg(reg_dest), immediate_value);
                 CalculateSign(result);
@@ -253,7 +253,7 @@ namespace NanoboyAdvance
             }
             case 0b11: // SUB
             {
-                uint result = reg(reg_dest) - immediate_value;
+                u32 result = reg(reg_dest) - immediate_value;
                 AssertCarry(reg(reg_dest) >= immediate_value);
                 CalculateOverflowSub(result, reg(reg_dest), immediate_value);
                 CalculateSign(result);
@@ -284,7 +284,7 @@ namespace NanoboyAdvance
                 break;
             case 0b0010: // LSL
             {
-                uint amount = reg(reg_source);
+                u32 amount = reg(reg_source);
                 bool carry = (cpsr & CarryFlag) ? true : false;
                 LSL(reg(reg_dest), amount, carry);
                 AssertCarry(carry);
@@ -294,7 +294,7 @@ namespace NanoboyAdvance
             }
             case 0b0011: // LSR
             {
-                uint amount = reg(reg_source);
+                u32 amount = reg(reg_source);
                 bool carry = (cpsr & CarryFlag) ? true : false;
                 LSR(reg(reg_dest), amount, carry, false);
                 AssertCarry(carry);
@@ -304,7 +304,7 @@ namespace NanoboyAdvance
             }
             case 0b0100: // ASR
             {
-                uint amount = reg(reg_source);
+                u32 amount = reg(reg_source);
                 bool carry = (cpsr & CarryFlag) ? true : false;
                 ASR(reg(reg_dest), amount, carry, false);
                 AssertCarry(carry);
@@ -315,8 +315,8 @@ namespace NanoboyAdvance
             case 0b0101: // ADC
             {
                 int carry = (cpsr >> 29) & 1;
-                uint result = reg(reg_dest) + reg(reg_source) + carry;
-                ulong result_long = (ulong)(reg(reg_dest)) + (ulong)(reg(reg_source)) + (ulong)carry;
+                u32 result = reg(reg_dest) + reg(reg_source) + carry;
+                u64 result_long = (u64)(reg(reg_dest)) + (u64)(reg(reg_source)) + (u64)carry;
                 AssertCarry((result_long & 0x100000000) ? true : false);
                 CalculateOverflowAdd(result, reg(reg_dest), reg(reg_source) + carry);
                 CalculateSign(result);
@@ -327,7 +327,7 @@ namespace NanoboyAdvance
             case 0b0110: // SBC
             {
                 int carry = (cpsr >> 29) & 1;
-                uint result = reg(reg_dest) - reg(reg_source) + carry - 1;
+                u32 result = reg(reg_dest) - reg(reg_source) + carry - 1;
                 AssertCarry(reg(reg_dest) >= reg(reg_source) + carry - 1);
                 CalculateOverflowSub(result, reg(reg_dest), (reg(reg_source) + carry - 1));
                 CalculateSign(result);
@@ -337,7 +337,7 @@ namespace NanoboyAdvance
             }
             case 0b0111: // ROR
             {
-                uint amount = reg(reg_source);
+                u32 amount = reg(reg_source);
                 bool carry = (cpsr & CarryFlag) ? true : false;
                 ROR(reg(reg_dest), amount, carry, false);
                 AssertCarry(carry);
@@ -347,14 +347,14 @@ namespace NanoboyAdvance
             }
             case 0b1000: // TST
             {
-                uint result = reg(reg_dest) & reg(reg_source);
+                u32 result = reg(reg_dest) & reg(reg_source);
                 CalculateSign(result);
                 CalculateZero(result);
                 break;
             }
             case 0b1001: // NEG
             {
-                uint result = 0 - reg(reg_source);
+                u32 result = 0 - reg(reg_source);
                 AssertCarry(0 >= reg(reg_source));
                 CalculateOverflowSub(result, 0, reg(reg_source));
                 CalculateSign(result);
@@ -364,7 +364,7 @@ namespace NanoboyAdvance
             }
             case 0b1010: // CMP
             {
-                uint result = reg(reg_dest) - reg(reg_source);
+                u32 result = reg(reg_dest) - reg(reg_source);
                 AssertCarry(reg(reg_dest) >= reg(reg_source));
                 CalculateOverflowSub(result, reg(reg_dest), reg(reg_source));
                 CalculateSign(result);
@@ -373,8 +373,8 @@ namespace NanoboyAdvance
             }
             case 0b1011: // CMN
             {
-                uint result = reg(reg_dest) + reg(reg_source);
-                ulong result_long = (ulong)(reg(reg_dest)) + (ulong)(reg(reg_source));
+                u32 result = reg(reg_dest) + reg(reg_source);
+                u64 result_long = (u64)(reg(reg_dest)) + (u64)(reg(reg_source));
                 AssertCarry((result_long & 0x100000000) ? true : false);
                 CalculateOverflowAdd(result, reg(reg_dest), reg(reg_source));
                 CalculateSign(result);
@@ -411,7 +411,7 @@ namespace NanoboyAdvance
             int reg_dest = instruction & 7;
             int reg_source = (instruction >> 3) & 7;
             bool compare = false;
-            uint operand;
+            u32 operand;
 
             // Both reg_dest and reg_source can encode either a low register (r0-r7) or a high register (r8-r15)
             switch ((instruction >> 6) & 3)
@@ -445,7 +445,7 @@ namespace NanoboyAdvance
                 break;
             case 0b01: // CMP
             {
-                uint result = reg(reg_dest) - operand;
+                u32 result = reg(reg_dest) - operand;
                 AssertCarry(reg(reg_dest) >= operand);
                 CalculateOverflowSub(result, reg(reg_dest), operand);
                 CalculateSign(result);
@@ -480,7 +480,7 @@ namespace NanoboyAdvance
         case THUMB_6:
         {
             // THUMB.6 PC-relative load
-            uint immediate_value = instruction & 0xFF;
+            u32 immediate_value = instruction & 0xFF;
             int reg_dest = (instruction >> 8) & 7;
             // TODO: I'm pretty sure we don't even need the "Rotated" because address will always be aligned
             reg(reg_dest) = ReadWordRotated((r15 & ~2) + (immediate_value << 2));
@@ -492,7 +492,7 @@ namespace NanoboyAdvance
             int reg_dest = instruction & 7;
             int reg_base = (instruction >> 3) & 7;
             int reg_offset = (instruction >> 6) & 7;
-            uint address = reg(reg_base) + reg(reg_offset);
+            u32 address = reg(reg_base) + reg(reg_offset);
             switch ((instruction >> 10) & 3)
             {
             case 0b00: // STR
@@ -516,7 +516,7 @@ namespace NanoboyAdvance
             int reg_dest = instruction & 7;
             int reg_base = (instruction >> 3) & 7;
             int reg_offset = (instruction >> 6) & 7;
-            uint address = reg(reg_base) + reg(reg_offset);
+            u32 address = reg(reg_base) + reg(reg_offset);
             switch ((instruction >> 10) & 3)
             {
             case 0b00: // STRH
@@ -548,7 +548,7 @@ namespace NanoboyAdvance
             // THUMB.9 Load store with immediate offset
             int reg_dest = instruction & 7;
             int reg_base = (instruction >> 3) & 7;
-            uint immediate_value = (instruction >> 6) & 0x1F;
+            u32 immediate_value = (instruction >> 6) & 0x1F;
             switch ((instruction >> 11) & 3)
             {
             case 0b00: // STR
@@ -571,7 +571,7 @@ namespace NanoboyAdvance
             // THUMB.10 Load/store halfword
             int reg_dest = instruction & 7;
             int reg_base = (instruction >> 3) & 7;
-            uint immediate_value = (instruction >> 6) & 0x1F;
+            u32 immediate_value = (instruction >> 6) & 0x1F;
             if (instruction & (1 << 11))
             {
                 // LDRH
@@ -588,7 +588,7 @@ namespace NanoboyAdvance
         case THUMB_11:
         {
             // THUMB.11 SP-relative load/store
-            uint immediate_value = instruction & 0xFF;
+            u32 immediate_value = instruction & 0xFF;
             int reg_dest = (instruction >> 8) & 7;
             if (instruction & (1 << 11))
             {
@@ -605,7 +605,7 @@ namespace NanoboyAdvance
         case THUMB_12:
         {
             // THUMB.12 Load address
-            uint immediate_value = instruction & 0xFF;
+            u32 immediate_value = instruction & 0xFF;
             int reg_dest = (instruction >> 8) & 7;
             if (instruction & (1 << 11))
             {
@@ -622,7 +622,7 @@ namespace NanoboyAdvance
         case THUMB_13:
         {
             // THUMB.13 Add offset to stack pointer
-            uint immediate_value = (instruction & 0x7F) << 2;
+            u32 immediate_value = (instruction & 0x7F) << 2;
             if (instruction & 0x80)
             {
                 reg(13) -= immediate_value;
@@ -681,7 +681,7 @@ namespace NanoboyAdvance
             // TODO: Handle empty register list
             int reg_base = (instruction >> 8) & 7;
             bool write_back = true;
-            uint address = reg(reg_base);
+            u32 address = reg(reg_base);
             int first_register = 0;
 
             // Find the first register
@@ -738,7 +738,7 @@ namespace NanoboyAdvance
         case THUMB_16:
         {
             // THUMB.16 Conditional branch
-            uint signed_immediate = instruction & 0xFF;
+            u32 signed_immediate = instruction & 0xFF;
             bool execute = false;
 
             // Evaluate the condition
@@ -778,7 +778,7 @@ namespace NanoboyAdvance
             //if ((cpsr & IRQDisable) == 0)
             {
                 //LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (thumb)", ReadByte(r15 - 4), r0, r1, r2, r3, reg(14), r15);
-                ubyte bios_call = ReadByte(r15 - 4);
+                u8 bios_call = ReadByte(r15 - 4);
 
                 // Log to the console that we're issuing an interrupt.
                 LOG(LOG_INFO, "Running software interrupt (0x%x) (thumb)", bios_call);
@@ -803,7 +803,7 @@ namespace NanoboyAdvance
         case THUMB_18:
         {
             // THUMB.18 Unconditional branch
-            uint immediate_value = (instruction & 0x3FF) << 1;
+            u32 immediate_value = (instruction & 0x3FF) << 1;
             if (instruction & 0x400)
             {
                 immediate_value |= 0xFFFFF800;
@@ -814,12 +814,12 @@ namespace NanoboyAdvance
         }
         case THUMB_19:
         {
-            uint immediate_value = instruction & 0x7FF;
+            u32 immediate_value = instruction & 0x7FF;
             if (instruction & (1 << 11))
             {
                 // BH
-                uint temp_pc = r15 - 2;
-                uint value = reg(14) + (immediate_value << 1);
+                u32 temp_pc = r15 - 2;
+                u32 value = reg(14) + (immediate_value << 1);
 
                 // This was mostly written by looking at shonumis code lol
                 value &= 0x7FFFFF;

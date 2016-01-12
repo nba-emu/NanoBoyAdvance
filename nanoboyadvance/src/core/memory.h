@@ -28,11 +28,11 @@ namespace NanoboyAdvance
     class Memory
     { 
     public:
-        virtual ubyte ReadByte(uint offset) { return 0; }
-        virtual ushort ReadHWord(uint offset) { return 0; }
-        virtual uint ReadWord(uint offset) { return 0; }
-        virtual void WriteByte(uint offset, ubyte value) {}
-        virtual void WriteHWord(uint offset, ushort value) {}
-        virtual void WriteWord(uint offset, uint value) {}
+        virtual u8 ReadByte(u32 offset) { return 0; }
+        virtual u16 ReadHWord(u32 offset) { return 0; }
+        virtual u32 ReadWord(u32 offset) { return 0; }
+        virtual void WriteByte(u32 offset, u8 value) {}
+        virtual void WriteHWord(u32 offset, u16 value) {}
+        virtual void WriteWord(u32 offset, u32 value) {}
     };
 }

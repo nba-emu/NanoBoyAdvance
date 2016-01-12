@@ -38,7 +38,7 @@ static const int ARM_CALLBACK_RET = 6;
 
 typedef struct 
 {
-    uint address;
+    u32 address;
     bool thumb;
 } ARMCallbackExecute;
 
@@ -55,31 +55,31 @@ namespace NanoboyAdvance
 
         // The ARM7TMDI-S has 31 32-bit general purpose register of
         // which 16 are visible at one time.
-        uint r0 {0}, r1 {0}, r2 {0}, r3 {0}, r4 {0}, r5 {0}, r6 {0}, r7 {0}, r8 {0}, r9 {0}, r10 {0}, r11 {0}, r12 {0}, r13 {0}, r14 {0}, r15 {0};
-        uint r8_fiq {0}, r9_fiq {0}, r10_fiq {0}, r11_fiq {0}, r12_fiq {0}, r13_fiq {0}, r14_fiq {0};
-        uint r13_svc {0}, r14_svc {0};
-        uint r13_abt {0}, r14_abt {0};
-        uint r13_irq {0}, r14_irq {0};
-        uint r13_und {0}, r14_und {0};
+        u32 r0 {0}, r1 {0}, r2 {0}, r3 {0}, r4 {0}, r5 {0}, r6 {0}, r7 {0}, r8 {0}, r9 {0}, r10 {0}, r11 {0}, r12 {0}, r13 {0}, r14 {0}, r15 {0};
+        u32 r8_fiq {0}, r9_fiq {0}, r10_fiq {0}, r11_fiq {0}, r12_fiq {0}, r13_fiq {0}, r14_fiq {0};
+        u32 r13_svc {0}, r14_svc {0};
+        u32 r13_abt {0}, r14_abt {0};
+        u32 r13_irq {0}, r14_irq {0};
+        u32 r13_und {0}, r14_und {0};
 
         // Mapping array for visible general purpose registers
-        uint* gprs[16];
+        u32* gprs[16];
 
         // Current program status register (contains status flags)
-        uint cpsr {System};
-        uint spsr_fiq {0}, spsr_svc {0}, spsr_abt {0}, spsr_irq {0}, spsr_und {0}, spsr_def {0};
+        u32 cpsr {System};
+        u32 spsr_fiq {0}, spsr_svc {0}, spsr_abt {0}, spsr_irq {0}, spsr_und {0}, spsr_def {0};
 
         // A pointer pointing on the Saved program status register of the current mode
-        uint* pspsr {nullptr};
+        u32* pspsr {nullptr};
 
         // In some way emulate the processor's pipeline
-        uint pipe_opcode[3];
+        u32 pipe_opcode[3];
         int pipe_decode[3];
         int pipe_status {0};
         bool flush_pipe {false};
 
         // Some games seem to read from bios
-        uint last_fetched_bios {0};
+        u32 last_fetched_bios {0};
 
         // Gets called on certain events like instruction execution, swi, etc.
         // Do not ever call this directly! Use safe DebugHook instead!
@@ -102,12 +102,12 @@ namespace NanoboyAdvance
         }
 
         // Condition code altering methods
-        inline void CalculateSign(uint result)
+        inline void CalculateSign(u32 result)
         {
             cpsr = result & 0x80000000 ? (cpsr | SignFlag) : (cpsr & ~SignFlag);
         }
 
-        inline void CalculateZero(ulong result)
+        inline void CalculateZero(u64 result)
         {
             cpsr = result == 0 ? (cpsr | ZeroFlag) : (cpsr & ~ZeroFlag);
         }
@@ -117,38 +117,38 @@ namespace NanoboyAdvance
             cpsr = carry ? (cpsr | CarryFlag) : (cpsr & ~CarryFlag);
         }
 
-        inline void CalculateOverflowAdd(uint result, uint operand1, uint operand2)
+        inline void CalculateOverflowAdd(u32 result, u32 operand1, u32 operand2)
         {
             bool overflow = ((operand1) >> 31 == (operand2) >> 31) && ((result) >> 31 != (operand2) >> 31);
             cpsr = overflow ? (cpsr | OverflowFlag) : (cpsr & ~OverflowFlag);
         }
 
-        inline void CalculateOverflowSub(uint result, uint operand1, uint operand2)
+        inline void CalculateOverflowSub(u32 result, u32 operand1, u32 operand2)
         {
             bool overflow = ((operand1) >> 31 != (operand2) >> 31) && ((result) >> 31 == (operand2) >> 31);
             cpsr = overflow ? (cpsr | OverflowFlag) : (cpsr & ~OverflowFlag);
         }
 
         // Shifter methods
-        void LSL(uint& operand, uint amount, bool& carry);
-        void LSR(uint& operand, uint amount, bool& carry, bool immediate);
-        void ASR(uint& operand, uint amount, bool& carry, bool immediate);
-        void ROR(uint& operand, uint amount, bool& carry, bool immediate);
+        void LSL(u32& operand, u32 amount, bool& carry);
+        void LSR(u32& operand, u32 amount, bool& carry, bool immediate);
+        void ASR(u32& operand, u32 amount, bool& carry, bool immediate);
+        void ROR(u32& operand, u32 amount, bool& carry, bool immediate);
 
         // Memory methods
-        ubyte ReadByte(uint offset);
-        ushort ReadHWord(uint offset);
-        uint ReadWord(uint offset);
-        uint ReadWordRotated(uint offset);
-        void WriteByte(uint offset, ubyte value);
-        void WriteHWord(uint offset, ushort value);
-        void WriteWord(uint offset, uint value);
+        u8 ReadByte(u32 offset);
+        u16 ReadHWord(u32 offset);
+        u32 ReadWord(u32 offset);
+        u32 ReadWordRotated(u32 offset);
+        void WriteByte(u32 offset, u8 value);
+        void WriteHWord(u32 offset, u16 value);
+        void WriteWord(u32 offset, u32 value);
 
         // Command processing
-        int ARMDecode(uint instruction);
-        void ARMExecute(uint instruction, int type);
-        int THUMBDecode(ushort instruction);
-        void THUMBExecute(ushort instruction, int type);
+        int ARMDecode(u32 instruction);
+        void ARMExecute(u32 instruction, int type);
+        int THUMBDecode(u16 instruction);
+        void THUMBExecute(u16 instruction, int type);
 
         // Used to emulate software interrupts
         void SWI(int number);

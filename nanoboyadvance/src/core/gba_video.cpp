@@ -33,26 +33,26 @@ namespace NanoboyAdvance
         memset(buffer, 0, 240 * 160 * 4);
     }
 
-    inline uint GBAVideo::DecodeRGB5(ushort color)
+    inline u32 GBAVideo::DecodeRGB5(u16 color)
     {
-        uint argb = 0xFF000000 |
+        u32 argb = 0xFF000000 |
                     (((color & 0x1F) * 8) << 16) |
                     ((((color >> 5) & 0x1F) * 8) << 8) |
                     (((color >> 10) & 0x1F) * 8);
         return argb;
     }
 
-    inline uint* GBAVideo::DecodeTileLine4BPP(uint block_base, uint palette_base, int number, int line, bool transparent)
+    inline u32* GBAVideo::DecodeTileLine4BPP(u32 block_base, u32 palette_base, int number, int line, bool transparent)
     {
-        uint offset = block_base + number * 32 + line * 4;
-        uint* data = new uint[8];
+        u32 offset = block_base + number * 32 + line * 4;
+        u32* data = new u32[8];
 
         // We don't want to have random data in the buffer
         memset(data, 0, 32);
 
         for (int i = 0; i < 4; i++)
         {
-            ubyte value = vram[offset + i];
+            u8 value = vram[offset + i];
             int left_index = value & 0xF;
             int right_index = value >> 4;
 
@@ -70,18 +70,18 @@ namespace NanoboyAdvance
         return data;
     }
 
-    inline uint* GBAVideo::DecodeTileLine8PP(uint block_base, int number, int line, bool sprite, bool transparent)
+    inline u32* GBAVideo::DecodeTileLine8PP(u32 block_base, int number, int line, bool sprite, bool transparent)
     {
-        uint offset = block_base + number * 64 + line * 8;
-        uint palette_base = sprite ? 0x200 : 0x0;
-        uint* data = new uint[8];
+        u32 offset = block_base + number * 64 + line * 8;
+        u32 palette_base = sprite ? 0x200 : 0x0;
+        u32* data = new u32[8];
 
         // We don't want to have random data in the buffer
         memset(data, 0, 32);
 
         for (int i = 0; i < 8; i++)
         {
-            ubyte value = vram[offset + i];
+            u8 value = vram[offset + i];
             if (value != 0)
             {
                 data[i] = DecodeRGB5((pal[palette_base + value * 2 + 1] << 8) | pal[palette_base + value * 2]);
@@ -91,11 +91,11 @@ namespace NanoboyAdvance
         return data;
     }
 
-    inline uint* GBAVideo::RenderBackgroundMode0(ushort bg_control, int line, int scroll_x, int scroll_y, bool transparent)
+    inline u32* GBAVideo::RenderBackgroundMode0(u16 bg_control, int line, int scroll_x, int scroll_y, bool transparent)
     {
         // Base addresses for character *and* map data
-        uint tile_block_base = ((bg_control >> 2) & 3) * 0x4000;
-        uint map_block_base = ((bg_control >> 8) & 0x1F) * 0x800;
+        u32 tile_block_base = ((bg_control >> 2) & 3) * 0x4000;
+        u32 map_block_base = ((bg_control >> 8) & 0x1F) * 0x800;
 
         // Mode 0 support both 16 and 256 color
         // true = 256 colors, false = 16 colors
@@ -118,11 +118,11 @@ namespace NanoboyAdvance
         int row;
 
         // Rendering buffers
-        uint* line_full;
-        uint* line_visible = new uint[240];
+        u32* line_full;
+        u32* line_visible = new u32[240];
 
         // Contains the offset of the current tile
-        uint offset;
+        u32 offset;
 
         // There are two areas which possibly get rendered (the left is always renderend, the right only if the width is 512)
         int left_area = 0;
@@ -143,7 +143,7 @@ namespace NanoboyAdvance
         row = (wrap_y - tile_internal_y) / 8;
 
         // We will render the entire first line and the copy the visible area from it
-        line_full = new uint[width];
+        line_full = new u32[width];
 
         // Determine the areas (left and right) to render (this is a little bit hacky nevertheless it works)
         if (row >= 32)
@@ -166,9 +166,9 @@ namespace NanoboyAdvance
 
         for (int x = 0; x < width / 8; x++)
         {
-            ushort value = (vram[offset + 1] << 8) | vram[offset];
+            u16 value = (vram[offset + 1] << 8) | vram[offset];
             int number = value & 0x3FF;
-            uint* tile_data;
+            u32* tile_data;
 
             // Apply vertical flip
             if (value & (1 << 11))
@@ -229,10 +229,10 @@ namespace NanoboyAdvance
         return line_visible;
     }
 
-    inline uint* GBAVideo::RenderSprites(uint tile_base, int line, int priority)
+    inline u32* GBAVideo::RenderSprites(u32 tile_base, int line, int priority)
     {
-        uint* line_buffer = new uint[240];
-        uint offset = 0;
+        u32* line_buffer = new u32[240];
+        u32 offset = 0;
         bool one_dimensional = gba_io->dispcnt & (1 << 6) ? true : false;
 
         // We dont want garbage data in the buffer
@@ -241,9 +241,9 @@ namespace NanoboyAdvance
         // Walk all entries
         for (int i = 0; i < 128; i++)
         {
-            ushort attribute0 = (obj[offset + 1] << 8) | obj[offset];
-            ushort attribute1 = (obj[offset + 3] << 8) | obj[offset + 2];
-            ushort attribute2 = (obj[offset + 5] << 8) | obj[offset + 4];
+            u16 attribute0 = (obj[offset + 1] << 8) | obj[offset];
+            u16 attribute1 = (obj[offset + 3] << 8) | obj[offset + 2];
+            u16 attribute2 = (obj[offset + 5] << 8) | obj[offset + 4];
 
             // Only render those which have matching priority
             if (((attribute2 >> 10) & 3) == priority)
@@ -309,7 +309,7 @@ namespace NanoboyAdvance
                     for (int j = 0; j < tiles_per_row; j++)
                     {
                         int current_tile_number;
-                        uint* tile_data;
+                        u32* tile_data;
 
                         // Determine the tile to render
                         if (one_dimensional)
@@ -355,7 +355,7 @@ namespace NanoboyAdvance
         return line_buffer;
     }
 
-    inline void GBAVideo::DrawLineToBuffer(uint* line_buffer, int line)
+    inline void GBAVideo::DrawLineToBuffer(u32* line_buffer, int line)
     {
         for (int i = 0; i < 240; i++)
         {
@@ -402,35 +402,35 @@ namespace NanoboyAdvance
             {
                 if (bg3_enable && bg3_priority == i)
                 {
-                    uint* bg_buffer = RenderBackgroundMode0(gba_io->bg3cnt, line, gba_io->bg3hofs, gba_io->bg3vofs, !first_background);
+                    u32* bg_buffer = RenderBackgroundMode0(gba_io->bg3cnt, line, gba_io->bg3hofs, gba_io->bg3vofs, !first_background);
                     DrawLineToBuffer(bg_buffer, line);
                     first_background = false;
                     delete[] bg_buffer;
                 }
                 if (bg2_enable && bg2_priority == i)
                 {
-                    uint* bg_buffer = RenderBackgroundMode0(gba_io->bg2cnt, line, gba_io->bg2hofs, gba_io->bg2vofs, !first_background);
+                    u32* bg_buffer = RenderBackgroundMode0(gba_io->bg2cnt, line, gba_io->bg2hofs, gba_io->bg2vofs, !first_background);
                     DrawLineToBuffer(bg_buffer, line);
                     first_background = false;
                     delete[] bg_buffer;
                 }
                 if (bg1_enable && bg1_priority == i)
                 {
-                    uint* bg_buffer = RenderBackgroundMode0(gba_io->bg1cnt, line, gba_io->bg1hofs, gba_io->bg1vofs, !first_background);
+                    u32* bg_buffer = RenderBackgroundMode0(gba_io->bg1cnt, line, gba_io->bg1hofs, gba_io->bg1vofs, !first_background);
                     DrawLineToBuffer(bg_buffer, line);
                     first_background = false;
                     delete[] bg_buffer;
                 }
                 if (bg0_enable && bg0_priority == i)
                 {
-                    uint* bg_buffer = RenderBackgroundMode0(gba_io->bg0cnt, line, gba_io->bg0hofs, gba_io->bg0vofs, !first_background);
+                    u32* bg_buffer = RenderBackgroundMode0(gba_io->bg0cnt, line, gba_io->bg0hofs, gba_io->bg0vofs, !first_background);
                     DrawLineToBuffer(bg_buffer, line);
                     first_background = false;
                     delete[] bg_buffer;
                 }
                 if (obj_enable)
                 {
-                    uint* obj_buffer = RenderSprites(0x10000, line, i);
+                    u32* obj_buffer = RenderSprites(0x10000, line, i);
                     DrawLineToBuffer(obj_buffer, line);
                     delete[] obj_buffer;
                 }
@@ -442,7 +442,7 @@ namespace NanoboyAdvance
             // Bitmap modes are rendered on BG2 which means we must check if it is enabled
             if (bg2_enable)
             {
-                uint offset = line * 240 * 2;
+                u32 offset = line * 240 * 2;
                 for (int x = 0; x < 240; x++)
                 {
                     buffer[line * 240 + x] = DecodeRGB5((vram[offset + 1] << 8) | vram[offset]);
@@ -455,11 +455,11 @@ namespace NanoboyAdvance
             // Bitmap modes are rendered on BG2 which means we must check if it is enabled
             if (bg2_enable)
             {
-                uint page = gba_io->dispcnt & 0x10 ? 0xA000 : 0;
+                u32 page = gba_io->dispcnt & 0x10 ? 0xA000 : 0;
                 for (int x = 0; x < 240; x++)
                 {
-                    ubyte index = vram[page + line * 240 + x];
-                    ushort rgb5 = pal[index * 2] | (pal[index * 2 + 1] << 8);
+                    u8 index = vram[page + line * 240 + x];
+                    u16 rgb5 = pal[index * 2] | (pal[index * 2 + 1] << 8);
                     buffer[line * 240 + x] = DecodeRGB5(rgb5);
                 }
             }
@@ -469,7 +469,7 @@ namespace NanoboyAdvance
             // Bitmap modes are rendered on BG2 which means we must check if it is enabled
             if (bg2_enable)
             {
-                uint offset = (gba_io->dispcnt & 0x10 ? 0xA000 : 0) + line * 160 * 2;
+                u32 offset = (gba_io->dispcnt & 0x10 ? 0xA000 : 0) + line * 160 * 2;
                 for (int x = 0; x < 240; x++)
                 {
                     if (x < 160 && line < 128)
@@ -480,7 +480,7 @@ namespace NanoboyAdvance
                     else
                     {
                         // The unused space is filled with the first color from pal ram as far as I can see
-                        ushort rgb5 = pal[0] | (pal[1] << 8);
+                        u16 rgb5 = pal[0] | (pal[1] << 8);
                         buffer[line * 240 + x] = DecodeRGB5(rgb5);
                     }
                 }

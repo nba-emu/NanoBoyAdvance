@@ -130,13 +130,13 @@ namespace NanoboyAdvance
         }
     }
 
-    void ARM7::LSL(uint& operand, uint amount, bool& carry)
+    void ARM7::LSL(u32& operand, u32 amount, bool& carry)
     {
         // Nothing is done when the shift amount equals zero
         if (amount != 0)
         {
             // This way we easily bypass the 32 bits restriction on x86
-            for (uint i = 0; i < amount; i++)
+            for (u32 i = 0; i < amount; i++)
             {
                 carry = operand & 0x80000000 ? true : false;
                 operand <<= 1;
@@ -144,42 +144,42 @@ namespace NanoboyAdvance
         }
     }
 
-    void ARM7::LSR(uint& operand, uint amount, bool& carry, bool immediate)
+    void ARM7::LSR(u32& operand, u32 amount, bool& carry, bool immediate)
     {
         // LSR #0 equals to LSR #32
         amount = immediate & (amount == 0) ? 32 : amount;
 
         // Perform shift
-        for (uint i = 0; i < amount; i++)
+        for (u32 i = 0; i < amount; i++)
         {
             carry = operand & 1 ? true : false;
             operand >>= 1;
         }
     }
 
-    void ARM7::ASR(uint& operand, uint amount, bool& carry, bool immediate)
+    void ARM7::ASR(u32& operand, u32 amount, bool& carry, bool immediate)
     {
-        uint sign_bit = operand & 0x80000000;
+        u32 sign_bit = operand & 0x80000000;
 
         // ASR #0 equals to ASR #32
         amount = immediate & (amount == 0) ? 32 : amount;
 
         // Perform shift
-        for (uint i = 0; i < amount; i++)
+        for (u32 i = 0; i < amount; i++)
         {
             carry = operand & 1 ? true : false;
             operand = (operand >> 1) | sign_bit;
         }
     }
 
-    void ARM7::ROR(uint& operand, uint amount, bool& carry, bool immediate)
+    void ARM7::ROR(u32& operand, u32 amount, bool& carry, bool immediate)
     {
         // ROR #0 equals to RRX #1
         if (amount != 0 || !immediate)
         {
-            for (uint i = 1; i <= amount; i++)
+            for (u32 i = 1; i <= amount; i++)
             {
-                uint high_bit = (operand & 1) ? 0x80000000 : 0;
+                u32 high_bit = (operand & 1) ? 0x80000000 : 0;
                 operand = (operand >> 1) | high_bit;
                 carry = high_bit == 0x80000000;
             }
@@ -192,43 +192,43 @@ namespace NanoboyAdvance
         }
     }
 
-    ubyte ARM7::ReadByte(uint offset)
+    u8 ARM7::ReadByte(u32 offset)
     {
         return memory->ReadByte(offset);
     }
 
-    ushort ARM7::ReadHWord(uint offset)
+    u16 ARM7::ReadHWord(u32 offset)
     {
         // TODO: Proper handling (Mis-aligned LDRH,LDRSH)
         offset &= ~1;
         return memory->ReadHWord(offset);
     }
 
-    uint ARM7::ReadWord(uint offset)
+    u32 ARM7::ReadWord(u32 offset)
     {
         offset &= ~3;
         return memory->ReadWord(offset);
     }
 
-    uint ARM7::ReadWordRotated(uint offset)
+    u32 ARM7::ReadWordRotated(u32 offset)
     {
-        uint value = memory->ReadWord(offset & ~3);
+        u32 value = memory->ReadWord(offset & ~3);
         int amount = (offset & 3) * 8;
         return amount == 0 ? value : ((value >> amount) | (value << (32 - amount)));
     }
 
-    void ARM7::WriteByte(uint offset, ubyte value)
+    void ARM7::WriteByte(u32 offset, u8 value)
     {
         memory->WriteByte(offset, value);
     }
 
-    void ARM7::WriteHWord(uint offset, ushort value)
+    void ARM7::WriteHWord(u32 offset, u16 value)
     {
         offset &= ~1;
         memory->WriteHWord(offset, value);
     }
 
-    void ARM7::WriteWord(uint offset, uint value)
+    void ARM7::WriteWord(u32 offset, u32 value)
     {
         offset &= ~3;
         memory->WriteWord(offset, value);
@@ -237,7 +237,7 @@ namespace NanoboyAdvance
     void ARM7::Step()
     {
         bool thumb = (cpsr & Thumb) == Thumb;
-        uint pc_page = r15 >> 24;
+        u32 pc_page = r15 >> 24;
         ARMCallbackExecute* data = (ARMCallbackExecute*)malloc(sizeof(ARMCallbackExecute));
         
         // Tell the debugger which instruction we're currently at
@@ -356,8 +356,8 @@ namespace NanoboyAdvance
         // DIV
         case 0x06:
         {
-            uint mod = r0 % r1;
-            uint div = r0 / r1;
+            u32 mod = r0 % r1;
+            u32 div = r0 / r1;
             r0 = div;
             r1 = mod;
             break;
@@ -365,13 +365,13 @@ namespace NanoboyAdvance
         // CpuSet
         case 0x0B:
         {
-            uint source = r0;
-            uint dest = r1;
-            uint length = r2 & 0xFFFFF;
+            u32 source = r0;
+            u32 dest = r1;
+            u32 length = r2 & 0xFFFFF;
             bool fixed = r2 & (1 << 24) ? true : false;
             if (r2 & (1 << 26))
             {
-                for (uint i = 0; i < length; i++)
+                for (u32 i = 0; i < length; i++)
                 {
                     WriteWord(dest, ReadWord(source));
                     dest += 4;
@@ -380,7 +380,7 @@ namespace NanoboyAdvance
             }
             else
             {
-                for (uint i = 0; i < length; i++)
+                for (u32 i = 0; i < length; i++)
                 {
                     WriteHWord(dest, ReadHWord(source));
                     dest += 2;
@@ -392,11 +392,11 @@ namespace NanoboyAdvance
         // CpuFastSet
         case 0x0C:
         {
-            uint source = r0;
-            uint dest = r1;
-            uint length = r2 & 0xFFFFF;
+            u32 source = r0;
+            u32 dest = r1;
+            u32 length = r2 & 0xFFFFF;
             bool fixed = r2 & (1 << 24) ? true : false;
-            for (uint i = 0; i < length; i++)
+            for (u32 i = 0; i < length; i++)
             {
                 WriteWord(dest, ReadWord(source));
                 dest += 4;
@@ -409,11 +409,11 @@ namespace NanoboyAdvance
         case 0x12:
         {
             int amount = memory->ReadWord(r0) >> 8;
-            uint source = r0 + 4;
-            uint dest = r1;
+            u32 source = r0 + 4;
+            u32 dest = r1;
             while (amount > 0)
             {
-                ubyte encoder = memory->ReadByte(source++);
+                u8 encoder = memory->ReadByte(source++);
 
                 // Process 8 blocks encoded by the encoder
                 for (int i = 7; i >= 0; i--)
@@ -421,14 +421,14 @@ namespace NanoboyAdvance
                     if (encoder & (1 << i))
                     {
                         // Compressed
-                        ushort value = memory->ReadHWord(source);
-                        uint disp = (value >> 8) | ((value & 0xF) << 8);
-                        uint n = ((value >> 4) & 0xF) + 3;
+                        u16 value = memory->ReadHWord(source);
+                        u32 disp = (value >> 8) | ((value & 0xF) << 8);
+                        u32 n = ((value >> 4) & 0xF) + 3;
                         source += 2;
 
-                        for (uint j = 0; j < n; j++)
+                        for (u32 j = 0; j < n; j++)
                         {
-                            ushort value = memory->ReadByte(dest - disp - 1);
+                            u16 value = memory->ReadByte(dest - disp - 1);
                             memory->WriteHWord(dest, value);
                             dest++;
                             amount--;
@@ -441,7 +441,7 @@ namespace NanoboyAdvance
                     else
                     {
                         // Uncompressed
-                        ubyte value = memory->ReadByte(source++);
+                        u8 value = memory->ReadByte(source++);
                         memory->WriteHWord(dest++, value);
                         amount--;
                         if (amount == 0)

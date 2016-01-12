@@ -31,31 +31,31 @@
 using namespace std;
 
 // TODO: Using C-style callbacks in C++ is bad practice I guess..
-typedef void (*MemoryCallback)(uint address, int size, bool write, bool invalid);
+typedef void (*MemoryCallback)(u32 address, int size, bool write, bool invalid);
 
 namespace NanoboyAdvance
 {
     class GBAMemory : public Memory
     {
-        ubyte* bios;
-        ubyte wram[0x40000];
-        ubyte iram[0x8000];
-        ubyte io[0x3FF];
-        ubyte* rom;
+        u8* bios;
+        u8 wram[0x40000];
+        u8 iram[0x8000];
+        u8 io[0x3FF];
+        u8* rom;
         MemoryCallback memory_hook;
-        static ubyte* ReadFile(string filename);
+        static u8* ReadFile(string filename);
     public:
         GBAIO* gba_io;
         GBADMA* dma;
         GBATimer* timer;
         GBAVideo* video;
         void SetCallback(MemoryCallback callback);
-        ubyte ReadByte(uint offset);
-        ushort ReadHWord(uint offset);
-        uint ReadWord(uint offset);
-        void WriteByte(uint offset, ubyte value);
-        void WriteHWord(uint offset, ushort value);
-        void WriteWord(uint offset, uint value);
+        u8 ReadByte(u32 offset);
+        u16 ReadHWord(u32 offset);
+        u32 ReadWord(u32 offset);
+        void WriteByte(u32 offset, u8 value);
+        void WriteHWord(u32 offset, u16 value);
+        void WriteWord(u32 offset, u32 value);
         GBAMemory(string bios_file, string rom_file);
     };
 }

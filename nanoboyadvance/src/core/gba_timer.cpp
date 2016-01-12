@@ -35,13 +35,13 @@ namespace NanoboyAdvance
         memset(timer_interrupt, 0, 4 * sizeof(bool));
         memset(timer_clock, 0, 4 * sizeof(int));
         memset(timer_ticks, 0, 4 * sizeof(int));
-        memset(timer_reload, 0, 4 * sizeof(ushort));
+        memset(timer_reload, 0, 4 * sizeof(u16));
 
         // Timer0 has no countup...
         timer_countup[0] = false;
     }
 
-    void GBATimer::ScheduleTimer(int index, ushort& counter, bool& overflow)
+    void GBATimer::ScheduleTimer(int index, u16& counter, bool& overflow)
     {
         if ((timer_countup[index] && overflow) || (!timer_countup[index] && ++timer_ticks[index] >= timer_clock[index]))
         {

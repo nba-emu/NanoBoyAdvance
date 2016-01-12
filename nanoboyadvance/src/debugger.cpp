@@ -41,15 +41,15 @@ catch (exception& e)\
 
 typedef struct
 {
-    uint address;
+    u32 address;
     bool thumb;
 } GBAExecuteBreakpoint;
 
 vector<GBAExecuteBreakpoint*> code_breakpoints;
 
-static ubyte debugger_take_byte(string parameter)
+static u8 debugger_take_byte(string parameter)
 {
-    ubyte result = static_cast<ubyte>(stoul(parameter, nullptr, 0));
+    u8 result = static_cast<u8>(stoul(parameter, nullptr, 0));
     if (result > 0xFF)
     {
         //throw new runtime_error("Parameters exceeds max. limit of byte.");
@@ -57,9 +57,9 @@ static ubyte debugger_take_byte(string parameter)
     return result;
 }
 
-static ushort debugger_take_hword(string parameter)
+static u16 debugger_take_hword(string parameter)
 {
-    ushort result = static_cast<ushort>(stoul(parameter, nullptr, 0));
+    u16 result = static_cast<u16>(stoul(parameter, nullptr, 0));
     if (result > 0xFFFF)
     {
         //throw new runtime_error("Parameters exceeds max. limit of byte.");
@@ -67,7 +67,7 @@ static ushort debugger_take_hword(string parameter)
     return result;
 }
 
-static uint debugger_take_word(string parameter)
+static u32 debugger_take_word(string parameter)
 {
     return stoul(parameter, nullptr, 0);
 }

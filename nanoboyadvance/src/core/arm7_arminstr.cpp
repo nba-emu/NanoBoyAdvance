@@ -39,9 +39,9 @@
 
 namespace NanoboyAdvance
 {
-    int ARM7::ARMDecode(uint instruction)
+    int ARM7::ARMDecode(u32 instruction)
     {
-        uint opcode = instruction & 0x0FFFFFFF;
+        u32 opcode = instruction & 0x0FFFFFFF;
         int section = ARM_ERR;
         switch (opcode >> 26)
         {
@@ -121,7 +121,7 @@ namespace NanoboyAdvance
         return section;
     }
 
-    void ARM7::ARMExecute(uint instruction, int type)
+    void ARM7::ARMExecute(u32 instruction, int type)
     {
         int condition = instruction >> 28;
         bool execute = false;
@@ -184,23 +184,23 @@ namespace NanoboyAdvance
             bool set_flags = (instruction & (1 << 20)) == (1 << 20);
             bool accumulate = (instruction & (1 << 21)) == (1 << 21);
             bool sign_extend = (instruction & (1 << 22)) == (1 << 22);
-            slong result;
+            s64 result;
             if (sign_extend)
             {
-                slong operand1 = reg(reg_operand1);
-                slong operand2 = reg(reg_operand2);
+                s64 operand1 = reg(reg_operand1);
+                s64 operand2 = reg(reg_operand2);
                 operand1 |= operand1 & 0x80000000 ? 0xFFFFFFFF00000000 : 0;
                 operand2 |= operand2 & 0x80000000 ? 0xFFFFFFFF00000000 : 0;
                 result = operand1 * operand2;
             }
             else
             {
-                ulong uresult = (ulong)reg(reg_operand1) * (ulong)reg(reg_operand2);
+                u64 uresult = (u64)reg(reg_operand1) * (u64)reg(reg_operand2);
                 result = uresult;
             }
             if (accumulate)
             {
-                slong value = reg(reg_dest_high);
+                s64 value = reg(reg_dest_high);
                 value <<= 16;
                 value <<= 16;
                 value |= reg(reg_dest_low);
@@ -235,7 +235,7 @@ namespace NanoboyAdvance
             int reg_dest = (instruction >> 12) & 0xF;
             int reg_base = (instruction >> 16) & 0xF;
             bool swap_byte = (instruction & (1 << 22)) == (1 << 22);
-            uint memory_value;
+            u32 memory_value;
             ASSERT(reg_source == 15 || reg_dest == 15 || reg_base == 15, LOG_WARN, "Single Data Swap, thou shall not use r15, r15=0x%x", r15);
             if (swap_byte)
             {
@@ -260,7 +260,7 @@ namespace NanoboyAdvance
             // ARM.6 Halfword data transfer, immediate offset
             // ARM.7 Signed data transfer (byte/halfword)
             // TODO: Proper alignment handling
-            uint offset;
+            u32 offset;
             int reg_dest = (instruction >> 12) & 0xF;
             int reg_base = (instruction >> 16) & 0xF;
             bool load = (instruction & (1 << 20)) == (1 << 20);
@@ -268,7 +268,7 @@ namespace NanoboyAdvance
             bool immediate = (instruction & (1 << 22)) == (1 << 22);
             bool add_to_base = (instruction & (1 << 23)) == (1 << 23);
             bool pre_indexed = (instruction & (1 << 24)) == (1 << 24);
-            uint address = reg(reg_base);
+            u32 address = reg(reg_base);
 
             // Instructions neither write back if base register is r15 nor should they have the write-back bit set when being post-indexed (post-indexing automatically writes back the address)
             ASSERT(reg_base == 15 && write_back, LOG_WARN, "Halfword and Signed Data Transfer, thou shall not writeback to r15, r15=0x%x", r15);
@@ -309,7 +309,7 @@ namespace NanoboyAdvance
                 if (type == ARM_7)
                 {
                     bool halfword = (instruction & (1 << 5)) == (1 << 5);
-                    uint value;
+                    u32 value;
                     if (halfword)
                     {
                         value = ReadHWord(address);
@@ -380,8 +380,8 @@ namespace NanoboyAdvance
                 if (msr)
                 {
                     // MSR
-                    uint mask = 0;
-                    uint operand;
+                    u32 mask = 0;
+                    u32 operand;
 
                     // Depending of the fsxc bits some bits are overwritten or not
                     if (instruction & (1 << 16)) mask |= 0x000000FF;
@@ -426,8 +426,8 @@ namespace NanoboyAdvance
                 int reg_dest = (instruction >> 12) & 0xF;
                 int reg_operand1 = (instruction >> 16) & 0xF;
                 bool immediate = (instruction & (1 << 25)) == (1 << 25);
-                uint operand1 = reg(reg_operand1);
-                uint operand2;
+                u32 operand1 = reg(reg_operand1);
+                u32 operand2;
                 bool carry = (cpsr & CarryFlag) == CarryFlag;
 
                 // Operand 2 can either be an 8 bit immediate value rotated right by 4 bit value or the value of a register shifted by a specific amount
@@ -445,7 +445,7 @@ namespace NanoboyAdvance
                 {
                     bool shift_immediate = (instruction & (1 << 4)) ? false : true;
                     int reg_operand2 = instruction & 0xF;
-                    uint amount;
+                    u32 amount;
                     operand2 = reg(reg_operand2);
 
                     // The amount is either the value of a register or a 5 bit immediate
@@ -518,7 +518,7 @@ namespace NanoboyAdvance
                 {
                 case 0b0000: // AND
                 {
-                    uint result = operand1 & operand2;
+                    u32 result = operand1 & operand2;
                     if (set_flags)
                     {
                         CalculateSign(result);
@@ -530,7 +530,7 @@ namespace NanoboyAdvance
                 }
                 case 0b0001: // EOR
                 {
-                    uint result = operand1 ^ operand2;
+                    u32 result = operand1 ^ operand2;
                     if (set_flags)
                     {
                         CalculateSign(result);
@@ -542,7 +542,7 @@ namespace NanoboyAdvance
                 }
                 case 0b0010: // SUB
                 {
-                    uint result = operand1 - operand2;
+                    u32 result = operand1 - operand2;
                     if (set_flags)
                     {
                         AssertCarry(operand1 >= operand2);
@@ -555,7 +555,7 @@ namespace NanoboyAdvance
                 }
                 case 0b0011: // RSB
                 {
-                    uint result = operand2 - operand1;
+                    u32 result = operand2 - operand1;
                     if (set_flags)
                     {
                         AssertCarry(operand2 >= operand1);
@@ -568,10 +568,10 @@ namespace NanoboyAdvance
                 }
                 case 0b0100: // ADD
                 {
-                    uint result = operand1 + operand2;
+                    u32 result = operand1 + operand2;
                     if (set_flags)
                     {
-                        ulong result_long = (ulong)operand1 + (ulong)operand2;
+                        u64 result_long = (u64)operand1 + (u64)operand2;
                         AssertCarry((result_long & 0x100000000) ? true : false);
                         CalculateOverflowAdd(result, operand1, operand2);
                         CalculateSign(result);
@@ -583,10 +583,10 @@ namespace NanoboyAdvance
                 case 0b0101: // ADC
                 {
                     int carry2 = (cpsr >> 29) & 1;
-                    uint result = operand1 + operand2 + carry2;
+                    u32 result = operand1 + operand2 + carry2;
                     if (set_flags)
                     {
-                        ulong result_long = (ulong)operand1 + (ulong)operand2 + (ulong)carry2;
+                        u64 result_long = (u64)operand1 + (u64)operand2 + (u64)carry2;
                         AssertCarry((result_long & 0x100000000) ? true : false);
                         CalculateOverflowAdd(result, operand1, operand2 + carry2);
                         CalculateSign(result);
@@ -598,7 +598,7 @@ namespace NanoboyAdvance
                 case 0b0110: // SBC
                 {
                     int carry2 = (cpsr >> 29) & 1;
-                    uint result = operand1 - operand2 + carry2 - 1;
+                    u32 result = operand1 - operand2 + carry2 - 1;
                     if (set_flags)
                     {
                         AssertCarry(operand1 >= (operand2 + carry2 - 1));
@@ -612,7 +612,7 @@ namespace NanoboyAdvance
                 case 0b0111: // RSC
                 {
                     int carry2 = (cpsr >> 29) & 1;
-                    uint result = operand2 - operand1 + carry2 - 1;
+                    u32 result = operand2 - operand1 + carry2 - 1;
                     if (set_flags)
                     {
                         AssertCarry(operand2 >= (operand1 + carry2 - 1));
@@ -625,7 +625,7 @@ namespace NanoboyAdvance
                 }
                 case 0b1000: // TST
                 {
-                    uint result = operand1 & operand2;
+                    u32 result = operand1 & operand2;
                     CalculateSign(result);
                     CalculateZero(result);
                     AssertCarry(carry);
@@ -633,7 +633,7 @@ namespace NanoboyAdvance
                 }
                 case 0b1001: // TEQ
                 {
-                    uint result = operand1 ^ operand2;
+                    u32 result = operand1 ^ operand2;
                     CalculateSign(result);
                     CalculateZero(result);
                     AssertCarry(carry);
@@ -641,7 +641,7 @@ namespace NanoboyAdvance
                 }
                 case 0b1010: // CMP
                 {
-                    uint result = operand1 - operand2;
+                    u32 result = operand1 - operand2;
                     AssertCarry(operand1 >= operand2);
                     CalculateOverflowSub(result, operand1, operand2);
                     CalculateSign(result);
@@ -650,8 +650,8 @@ namespace NanoboyAdvance
                 }
                 case 0b1011: // CMN
                 {
-                    uint result = operand1 + operand2;
-                    ulong result_long = (ulong)operand1 + (ulong)operand2;
+                    u32 result = operand1 + operand2;
+                    u64 result_long = (u64)operand1 + (u64)operand2;
                     AssertCarry((result_long & 0x100000000) ? true : false);
                     CalculateOverflowAdd(result, operand1, operand2);
                     CalculateSign(result);
@@ -660,7 +660,7 @@ namespace NanoboyAdvance
                 }
                 case 0b1100: // ORR
                 {
-                    uint result = operand1 | operand2;
+                    u32 result = operand1 | operand2;
                     if (set_flags)
                     {
                         CalculateSign(result);
@@ -683,7 +683,7 @@ namespace NanoboyAdvance
                 }
                 case 0b1110: // BIC
                 {
-                    uint result = operand1 & ~operand2;
+                    u32 result = operand1 & ~operand2;
                     if (set_flags)
                     {
                         CalculateSign(result);
@@ -695,7 +695,7 @@ namespace NanoboyAdvance
                 }
                 case 0b1111: // MVN
                 {
-                    uint not_operand2 = ~operand2;
+                    u32 not_operand2 = ~operand2;
                     if (set_flags)
                     {
                         CalculateSign(not_operand2);
@@ -720,7 +720,7 @@ namespace NanoboyAdvance
         {
             // ARM.9 Load/store register/unsigned byte (Single Data Transfer)
             // TODO: Force user mode when instruction is post-indexed and has writeback bit (in system mode only?)
-            uint offset;
+            u32 offset;
             int reg_dest = (instruction >> 12) & 0xF;
             int reg_base = (instruction >> 16) & 0xF;
             bool load = (instruction & (1 << 20)) == (1 << 20);
@@ -729,7 +729,7 @@ namespace NanoboyAdvance
             bool add_to_base = (instruction & (1 << 23)) == (1 << 23);
             bool pre_indexed = (instruction & (1 << 24)) == (1 << 24);
             bool immediate = (instruction & (1 << 25)) == 0;
-            uint address = reg(reg_base);
+            u32 address = reg(reg_base);
 
             // Instructions neither write back if base register is r15 nor should they have the write-back bit set when being post-indexed (post-indexing automatically writes back the address)
             ASSERT(reg_base == 15 && write_back, LOG_WARN, "Single Data Transfer, thou shall not writeback to r15, r15=0x%x", r15);
@@ -743,7 +743,7 @@ namespace NanoboyAdvance
             else
             {
                 int reg_offset = instruction & 0xF;
-                uint amount = (instruction >> 7) & 0x1F;
+                u32 amount = (instruction >> 7) & 0x1F;
                 int shift = (instruction >> 5) & 3;
                 bool carry; // this is not actually used but we need a var for carry out.
 
@@ -813,7 +813,7 @@ namespace NanoboyAdvance
             }
             else
             {
-                uint value = reg(reg_dest);
+                u32 value = reg(reg_dest);
                 if (reg_dest == 15)
                 {
                     value += 4;
@@ -866,8 +866,8 @@ namespace NanoboyAdvance
             bool s_bit = (instruction & (1 << 22)) == (1 << 22); // TODO: Give this a meaningful name
             bool add_to_base = (instruction & (1 << 23)) == (1 << 23);
             bool pre_indexed = (instruction & (1 << 24)) == (1 << 24);
-            uint address = reg(reg_base);
-            uint old_address = address;
+            u32 address = reg(reg_base);
+            u32 old_address = address;
             bool switched_mode = false;
             int old_mode;
             int first_register = 0;
@@ -1050,7 +1050,7 @@ namespace NanoboyAdvance
         {
             // ARM.12 Branch
             bool link = (instruction & (1 << 24)) == (1 << 24);
-            uint offset = instruction & 0xFFFFFF;
+            u32 offset = instruction & 0xFFFFFF;
             if (offset & 0x800000)
             {
                 offset |= 0xFF000000;
@@ -1082,7 +1082,7 @@ namespace NanoboyAdvance
             //if ((cpsr & IRQDisable) == 0)
             {
                 //LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (arm)", ReadByte(r15 - 6), r0, r1, r2, r3, reg(14), r15);
-                uint bios_call = ReadByte(r15 - 6);
+                u32 bios_call = ReadByte(r15 - 6);
 
                 // Log to the console that we're issuing an interrupt.
                 LOG(LOG_INFO, "Running software interrupt (0x%x)", bios_call);
