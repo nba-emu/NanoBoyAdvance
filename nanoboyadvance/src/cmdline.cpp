@@ -27,7 +27,7 @@ using namespace std;
 // Called when none or invalid arguments are passed
 void usage()
 {
-    cout << "Usage: ./nanoboyadvance [--debug] [--strict] [--bios bios_file] rom_file" << endl;
+    cout << "Usage: ./nanoboyadvance [--debug] [--debug-imm] [--strict] [--bios bios_file] [--scale factor] rom_file" << endl;
 }
 
 // Takes commandline parameters and parses them
@@ -40,6 +40,7 @@ CmdLine* parse_parameters(int argc, char** argv)
     cmdline->bios_file = (char*)"bios.bin";
     cmdline->use_bios = false;
     cmdline->debug = false;
+    cmdline->debug_immediatly = false;
     cmdline->strict = false;
     cmdline->scale = 2;
 
@@ -64,6 +65,10 @@ CmdLine* parse_parameters(int argc, char** argv)
         else if (strcmp(argv[current_argument], "--debug") == 0)
         {
             cmdline->debug = true;
+        }
+        else if (strcmp(argv[current_argument], "--debug-imm") == 0)
+        {
+            cmdline->debug_immediatly = true;
         }
         else if (strcmp(argv[current_argument], "--strict") == 0)
         {

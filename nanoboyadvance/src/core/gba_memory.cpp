@@ -30,12 +30,18 @@ namespace NanoboyAdvance
         dma = new GBADMA(this, gba_io);
         timer = new GBATimer(gba_io);
         video = new GBAVideo(gba_io);
+        memory_hook = NULL;
         memset(wram, 0, 0x40000);
         memset(iram, 0, 0x8000);
         memset(io, 0, 0x3FF);
         io[0x130] = 0xFF;
     }
 
+    void GBAMemory::SetCallback(MemoryCallback callback)
+    {
+        memory_hook = callback;
+    }
+    
     ubyte* GBAMemory::ReadFile(string filename)
     {
         ifstream ifs(filename, ios::in | ios::binary | ios::ate);
@@ -83,11 +89,9 @@ namespace NanoboyAdvance
             }
             if (internal_offset >= 0x3FF)
             {
-                LOG(LOG_ERROR, "IO read: offset out of bounds");
+                LOG(LOG_ERROR, "IO read: offset out of bounds"); 
                 return 0;
             }
-            if (internal_offset < 0x200 && internal_offset > 0x203)
-            LOG(LOG_INFO, "IO read: 0x%x", offset);
             return io[internal_offset];
         case 5:
             return video->pal[internal_offset % 0x400];
@@ -110,7 +114,6 @@ namespace NanoboyAdvance
             LOG(LOG_WARN, "Unhandled read from SRAM.");
             return 0;
         default:
-            // Also log the error to the console
             LOG(LOG_ERROR, "Read from invalid/unimplemented address (0x%x)", offset);
             break;
         }
@@ -262,7 +265,7 @@ namespace NanoboyAdvance
         case 6:
         case 7:
             // We cannot write a single byte. Therefore the byte will be duplicated in the data bus and a halfword write will be performed
-            WriteHWord(offset & ~1, (value << 8) | value);
+            WriteHWord(offset/* & ~1*/, (value << 8) | value);
             break;
         case 8:
         case 9:

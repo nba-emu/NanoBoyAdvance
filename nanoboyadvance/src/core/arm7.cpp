@@ -48,6 +48,11 @@ namespace NanoboyAdvance
         this->hle = hle;
     }
 
+    void ARM7::SetCallback(ARMCallback hook)
+    {
+        debug_hook = hook;
+    }
+    
     void ARM7::RemapRegisters()
     {
         switch (cpsr & 0x1F)
@@ -233,18 +238,15 @@ namespace NanoboyAdvance
     {
         bool thumb = (cpsr & Thumb) == Thumb;
         uint pc_page = r15 >> 24;
-
-        // *Unset* breakpoint and crashed flag
-        //hit_breakpoint = false;
-        //crashed = false;
-
-        // Debug when the program counter is in an unusual area
-        if (pc_page != 0 && pc_page != 2 && pc_page != 3 && pc_page != 6 && pc_page != 8)
-        {
-            /*crashed = true;
-            crash_reason = CrashReason::BadPC;*/
-        }
-
+        ARMCallbackExecute* data = (ARMCallbackExecute*)malloc(sizeof(ARMCallbackExecute));
+        
+        // Tell the debugger which instruction we're currently at
+        data->address = r15 - (thumb ? 4 : 8);
+        data->thumb = thumb;
+        DebugHook(ARM_CALLBACK_EXECUTE, data);
+        free(data);
+        
+        // Determine if the cpu runs in arm or thumb mode and do corresponding work
         if (thumb)
         {
             r15 &= ~1;
@@ -313,13 +315,19 @@ namespace NanoboyAdvance
                 break;
             }
         }
+        
+        // Clear the pipeline if required
         if (flush_pipe)
         {
             pipe_status = 0;
             flush_pipe = false;
             return;
         }
+        
+        // Update instruction pointer
         r15 += thumb ? 2 : 4;
+        
+        // Update pipeline status
         if (++pipe_status == 5)
         {
             pipe_status = 2;

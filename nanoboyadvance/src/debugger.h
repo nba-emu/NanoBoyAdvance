@@ -19,15 +19,8 @@
 
 #pragma once
 
-typedef struct {
-    char* rom_file;
-    char* bios_file;
-    bool use_bios;
-    bool debug;
-    bool debug_immediatly;
-    bool strict;
-    int scale;
-} CmdLine;
+#include "core/arm7.h"
+#include "core/gba_memory.h"
 
-void usage();
-CmdLine* parse_parameters(int argc, char** argv);
+void debugger_shell();
+void debugger_attach(NanoboyAdvance::ARM7* arm, NanoboyAdvance::GBAMemory* memory);

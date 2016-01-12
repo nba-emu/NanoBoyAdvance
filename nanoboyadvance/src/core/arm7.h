@@ -28,6 +28,22 @@
 // Macro for easier register access
 #define reg(r) *gprs[r]
 
+static const int ARM_CALLBACK_EXECUTE = 0;
+static const int ARM_CALLBACK_SWI = 1;
+static const int ARM_CALLBACK_IRQ = 2;
+static const int ARM_CALLBACK_SWI_RET = 3;
+static const int ARM_CALLBACK_IRQ_RET = 4;
+static const int ARM_CALLBACK_CALL = 5;
+static const int ARM_CALLBACK_RET = 6;
+
+typedef struct 
+{
+    uint address;
+    bool thumb;
+} ARMCallbackExecute;
+
+typedef void (*ARMCallback)(int reason, void* data);
+
 using namespace std;
 
 namespace NanoboyAdvance
@@ -65,12 +81,25 @@ namespace NanoboyAdvance
         // Some games seem to read from bios
         uint last_fetched_bios {0};
 
+        // Gets called on certain events like instruction execution, swi, etc.
+        // Do not ever call this directly! Use safe DebugHook instead!
+        ARMCallback debug_hook { NULL };
+        
         // Indicates wether interrupts and swi should be processed using
         // the bios or using a hle attempt
         bool hle;
 
         // Maps the visible registers (according to cpsr) to gprs
         void RemapRegisters();
+        
+        // Pointer-safe call to debug_hook (avoid nullpointer)
+        inline void DebugHook(int reason, void* data)
+        {
+            if (debug_hook != NULL)
+            {
+                debug_hook(reason, data);
+            }
+        }
 
         // Condition code altering methods
         inline void CalculateSign(uint result)
@@ -121,10 +150,6 @@ namespace NanoboyAdvance
         int THUMBDecode(ushort instruction);
         void THUMBExecute(ushort instruction, int type);
 
-        // Debugging
-        void TriggerMemoryBreakpoint(bool write, uint address, int size);
-        void TriggerSVCBreakpoint(uint bios_call);
-
         // Used to emulate software interrupts
         void SWI(int number);
     public:
@@ -152,6 +177,9 @@ namespace NanoboyAdvance
         // Constructor
         ARM7(Memory* memory, bool use_bios);
 
+        // Set debug callback
+        void SetCallback(ARMCallback hook);
+        
         // Schedule pipeline
         void Step();
 

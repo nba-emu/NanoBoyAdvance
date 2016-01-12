@@ -30,6 +30,9 @@
 
 using namespace std;
 
+// TODO: Using C-style callbacks in C++ is bad practice I guess..
+typedef void (*MemoryCallback)(uint address, int size, bool write, bool invalid);
+
 namespace NanoboyAdvance
 {
     class GBAMemory : public Memory
@@ -39,12 +42,14 @@ namespace NanoboyAdvance
         ubyte iram[0x8000];
         ubyte io[0x3FF];
         ubyte* rom;
+        MemoryCallback memory_hook;
         static ubyte* ReadFile(string filename);
     public:
         GBAIO* gba_io;
         GBADMA* dma;
         GBATimer* timer;
         GBAVideo* video;
+        void SetCallback(MemoryCallback callback);
         ubyte ReadByte(uint offset);
         ushort ReadHWord(uint offset);
         uint ReadWord(uint offset);

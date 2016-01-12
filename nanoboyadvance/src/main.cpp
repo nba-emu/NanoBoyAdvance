@@ -22,6 +22,7 @@
 #include "core/gba_video.h"
 #include "common/log.h"
 #include "cmdline.h"
+#include "debugger.h"
 #include <SDL/SDL.h>
 #include <iostream>
 #undef main
@@ -161,6 +162,12 @@ int main(int argc, char** argv)
         // Initialize memory and ARM interpreter core
         memory = new GBAMemory(cmdline->bios_file, cmdline->rom_file);
         arm = new ARM7(memory, !cmdline->use_bios);
+        
+        // Append debugger if desired
+        if (cmdline->debug)
+        {
+            debugger_attach(arm, memory);
+        }
     }
     else
     {
@@ -171,9 +178,23 @@ int main(int argc, char** argv)
     // Initialize SDL and create window
     create_window(240 * cmdline->scale, 160 * cmdline->scale);
 
+    // Run debugger immediatly if specified so
+    if (cmdline->debug && cmdline->debug_immediatly)
+    {
+        debugger_shell();
+    }
+    
     // Main loop
     while (running)
     {
+        ubyte* kb_state = SDL_GetKeyState(NULL);
+        
+        // Check if cli debugger is requested and run if needed
+        if (cmdline->debug && kb_state[SDLK_F11])
+        {
+            debugger_shell();
+        }
+        
         // Feed keyboard input and generate exactly one frame
         schedule_keyinput();
         schedule_frame();
