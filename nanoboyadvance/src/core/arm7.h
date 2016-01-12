@@ -24,10 +24,6 @@
 #include "common/types.h"
 #include "common/log.h"
 #include "memory.h"
-#include "arm7_breakpoint.h"
-#include "arm7_callstack.h"
-
-//#define CPU_LOG
 
 // Macro for easier register access
 #define reg(r) *gprs[r]

@@ -126,33 +126,6 @@ namespace NanoboyAdvance
         int condition = instruction >> 28;
         bool execute = false;
 
-#ifdef CPU_LOG
-        // Log our status for debug reasons
-        LOG(LOG_INFO, "Executing %s, r15=0x%x", ARMDisasm(r15 - 8, instruction).c_str(), r15);
-        for (int i = 0; i < 16; i++)
-        {
-            if (i == 15)
-            {
-                cout << "r" << i << " = 0x" << std::hex << reg(i) << " (0x" << (reg(i) - 8) << ")" << std::dec << endl;
-            }
-            else
-            {
-                cout << "r" << i << " = 0x" << std::hex << reg(i) << std::dec << endl;
-            }
-        }
-        cout << "cpsr = 0x" << std::hex << cpsr << std::dec << endl;
-        cout << "spsr = 0x" << std::hex << *pspsr << std::dec << endl;
-        cout << "mode = ";
-        switch (cpsr & 0x1F)
-        {
-        case User: cout << "User" << endl; break;
-        case System: cout << "System" << endl; break;
-        case IRQ: cout << "IRQ" << endl; break;
-        case SVC: cout << "SVC" << endl; break;
-        default: cout << "n.n." << endl; break;
-        }
-#endif
-
         // Check if the instruction will be executed
         switch (condition)
         {
