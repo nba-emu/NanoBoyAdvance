@@ -7,7 +7,7 @@ else
 	exit
 fi
 
-git add .
+git add --all .
 git commit -m "$MESSAGE"
 
 if [ "$2" == "y" ]; then
