@@ -246,6 +246,13 @@ namespace NanoboyAdvance
         DebugHook(ARM_CALLBACK_EXECUTE, data);
         free(data);
         
+        // Determine if emulator is shitty
+        if (pc_page == 0xFF) {
+            cout << "Emulator is shitty, pipe_status=" << pipe_status << endl;
+            string lol;
+            cin >> lol;
+        }
+
         // Determine if the cpu runs in arm or thumb mode and do corresponding work
         if (thumb)
         {
@@ -343,8 +350,8 @@ namespace NanoboyAdvance
             cpsr = (cpsr & ~0x3F) | IRQ | IRQDisable;
             RemapRegisters();
             r15 = 0x18;
-            flush_pipe = true;
-            LOG(LOG_INFO, "Issued interrupt, r14_irq=0x%x", r14_irq);
+            pipe_status = 0;
+            LOG(LOG_INFO, "Issued interrupt, r14_irq=0x%x, r15=%x", r14_irq, r15);
         }
         //else { LOG(LOG_INFO, "Interrupt(s) requested but blocked (either by interrupt or swi)") }
     }
