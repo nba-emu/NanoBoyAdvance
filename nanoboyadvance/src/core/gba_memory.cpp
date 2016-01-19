@@ -34,6 +34,7 @@ namespace NanoboyAdvance
         memset(wram, 0, 0x40000);
         memset(iram, 0, 0x8000);
         memset(io, 0, 0x3FF);
+        memset(sram, 0, 0x10000);
         io[0x130] = 0xFF;
     }
 
@@ -111,8 +112,9 @@ namespace NanoboyAdvance
             // TODO: Prevent out of bounds read, we should save the rom size somewhere
             return rom[0x1000000 + internal_offset];
         case 0xE:
-            LOG(LOG_WARN, "Unhandled read from SRAM.");
-            return 0;
+            //LOG(LOG_WARN, "Unhandled read from SRAM.");
+            return sram[internal_offset];
+            //return 0;
         default:
             LOG(LOG_ERROR, "Read from invalid/unimplemented address (0x%x)", offset);
             break;
@@ -265,7 +267,7 @@ namespace NanoboyAdvance
         case 6:
         case 7:
             // We cannot write a single byte. Therefore the byte will be duplicated in the data bus and a halfword write will be performed
-            WriteHWord(offset/* & ~1*/, (value << 8) | value);
+            WriteHWord(offset & ~1, (value << 8) | value);
             break;
         case 8:
         case 9:
@@ -273,7 +275,8 @@ namespace NanoboyAdvance
             LOG(LOG_ERROR, "Write into ROM memory not allowed (0x%x)", offset);
             break;
         case 0xE:
-            LOG(LOG_WARN, "Unhandled write to SRAM.");
+            //LOG(LOG_WARN, "Unhandled write to SRAM.");
+            sram[internal_offset] = value;            
             break;
         default:
             // Also log the error to the console

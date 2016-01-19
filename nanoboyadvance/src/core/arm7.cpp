@@ -345,13 +345,13 @@ namespace NanoboyAdvance
     {
         if ((cpsr & IRQDisable) == 0)
         {
-            r14_irq = r15 - (cpsr & Thumb ? 2 : 4) + 4;
+            r14_irq = r15 - (cpsr & Thumb ? 4 : 8) + 4;
             spsr_irq = cpsr;
             cpsr = (cpsr & ~0x3F) | IRQ | IRQDisable;
             RemapRegisters();
             r15 = 0x18;
             pipe_status = 0;
-            LOG(LOG_INFO, "Issued interrupt, r14_irq=0x%x, r15=%x", r14_irq, r15);
+            //LOG(LOG_INFO, "Issued interrupt, r14_irq=0x%x, r15=0x%x", r14_irq, r15);
         }
         //else { LOG(LOG_INFO, "Interrupt(s) requested but blocked (either by interrupt or swi)") }
     }

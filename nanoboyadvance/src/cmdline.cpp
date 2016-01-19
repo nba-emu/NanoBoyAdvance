@@ -27,7 +27,7 @@ using namespace std;
 // Called when none or invalid arguments are passed
 void usage()
 {
-    cout << "Usage: ./nanoboyadvance [--debug] [--debug-imm] [--strict] [--bios bios_file] [--scale factor] rom_file" << endl;
+    cout << "Usage: ./nanoboyadvance [--debug] [--debug-imm] [--strict] [--bios bios_file] [--scale factor] [--frameskip frames] rom_file" << endl;
 }
 
 // Takes commandline parameters and parses them
@@ -80,6 +80,21 @@ CmdLine* parse_parameters(int argc, char** argv)
             {
                 cmdline->scale = atoi(argv[++current_argument]);
                 if (cmdline->scale == 0)
+                {
+                    return NULL;
+                }
+            }
+            else
+            {
+                return NULL;
+            }
+        }
+        else if (strcmp(argv[current_argument], "--frameskip") == 0) 
+        {
+            if (argc > current_argument + 1) 
+            {
+                cmdline->frameskip = atoi(argv[++current_argument]);
+                if (cmdline->frameskip == 0)
                 {
                     return NULL;
                 }

@@ -60,7 +60,7 @@
 MY_CFLAGS = -Isrc/ -std=gnu++11
 
 # The linker options.
-MY_LIBS   = -lSDL
+MY_LIBS   = -lSDL -lpng
 
 # The pre-processor options used by the cpp (man cpp for more).
 CPPFLAGS  = -Wall
@@ -88,8 +88,8 @@ HDREXTS = .h .H .hh .hpp .HPP .h++ .hxx .hp
 
 # The pre-processor and compiler options.
 # Users can override those variables from the command line.
-CFLAGS  = -g -O2
-CXXFLAGS= -g -O2
+CFLAGS  = -g -Ofast
+CXXFLAGS= -g -Ofast
 
 # The C program compiler.
 #CC     = gcc

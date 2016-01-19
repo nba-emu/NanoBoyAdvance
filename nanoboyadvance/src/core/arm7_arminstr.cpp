@@ -500,14 +500,14 @@ namespace NanoboyAdvance
                     set_flags = false;
 
                     // Log if we're returning from swi or interrupt, useful for debugging
-                    if ((cpsr & 0x1F) == SVC)
-                    {
-                        LOG(LOG_INFO, "Finished swi!");
-                    }
-                    else if ((cpsr & 0x1F) == IRQ)
-                    {
-                        LOG(LOG_INFO, "Finished interrupt!");
-                    }
+                    //if ((cpsr & 0x1F) == SVC)
+                    //{
+                    //    LOG(LOG_INFO, "Finished swi!");
+                    //}
+                    //else if ((cpsr & 0x1F) == IRQ)
+                    //{
+                    //    LOG(LOG_INFO, "Finished interrupt!");
+                    //}
 
                     cpsr = *pspsr;
                     RemapRegisters();
@@ -711,7 +711,7 @@ namespace NanoboyAdvance
                 if (reg_dest == 15)
                 {
                     flush_pipe = true;
-                    LOG(LOG_INFO, "Returned to 0x%x", r15);
+                    //LOG(LOG_INFO, "Returned to 0x%x", r15);
                 }
             }
             break;
@@ -1085,7 +1085,7 @@ namespace NanoboyAdvance
                 u32 bios_call = ReadByte(r15 - 6);
 
                 // Log to the console that we're issuing an interrupt.
-                LOG(LOG_INFO, "Running software interrupt (0x%x)", bios_call);
+                //LOG(LOG_INFO, "Running software interrupt (0x%x)", bios_call);
 
                 // Actual emulation
                 if (hle)

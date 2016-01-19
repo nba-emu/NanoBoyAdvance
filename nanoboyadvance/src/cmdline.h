@@ -27,6 +27,7 @@ typedef struct {
     bool debug_immediatly;
     bool strict;
     int scale;
+    int frameskip;
 } CmdLine;
 
 void usage();

@@ -42,6 +42,7 @@ namespace NanoboyAdvance
         u8 iram[0x8000];
         u8 io[0x3FF];
         u8* rom;
+        u8 sram[0x10000];
         MemoryCallback memory_hook;
         static u8* ReadFile(string filename);
     public:

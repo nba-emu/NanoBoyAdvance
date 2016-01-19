@@ -1,0 +1,63 @@
+
+         --------------------------------------------------------
+       //                                                        \\
+      ||       TTT          q                                    ||
+      ||      TT            qq    cc        bb                   ||
+      ||      TT            qq   c  c      b  b                  ||
+      ||      TT     ooo  qqq    c  c      b  b i   i nnn        ||
+      ||      TT    o       q     cc       b  b i  i     n       ||
+      ||      TT    o       q    c  c      b  b  ii    nn        ||
+      ||    TTTTTTT  ooo    q   c ccc    b b    i i      n       ||
+      ||                                  bb    i i   nnn        ||
+      ||                                        ii               ||
+      ||                                                         ||
+      ||=========================================================||
+      ||                                                         ||
+      ||             Tonc bin: tonc project binaries             ||
+      ||                         v1.4.2                          ||
+      ||              2003-10-01 - 2013-03-24, J Vijn            ||
+      ||                                                         ||
+       \\_______________________________________________________//
+
+       
+// === Description ===
+  Tonc is a tutorial for learning how to program for the GameBoy Advance
+(GBA). It covers most aspects of the GBA, often in great detail and 
+from an efficiency orientated viewpoint. Among other things, you'll 
+see all video modes (0-6), sprites, simple and advanced button 
+handling, Rotation/Scaling for backgrounds and sprites (covered the 
+_right_ way for a change), mode 7 and programming in ARM assembly.
+
+  Tonc consists of 3 parts: text, code and binaries. Tonc is part of
+http://www.coranac.com/ where you can find the on-line text, as
+well as zips for the three parts. This readme belongs to the code 
+part of the set.
+
+NOTE: this is still a only a beta, though should be close to the
+final version.
+
+// === Tonc binaries (tonc-bin.zip) ---
+These are the binaries of all the tonc-code projects, compiled to 
+multi-bootable form. They should run on emulators and hardware 
+alike.
+
+// === Recent changes ===
+
+- 2013-03-24, jv:
+  + made ready for DKA r41 (uses arm-none-eabi iso arm-eabi-)
+
+bigmap	: NEW! Scrolling through a big map and sprite animation
+brin_demo	: NEW! Basic tilemap demo
+dma_demo	: as good as new: circular windows with HDMA
+irq_demo	: as good as new: showing off prioritized, nested interrupts
+m3_demo	: NEW! Some mode 3 drawing routines
+m7_ex	: new graphics, new blending, sprite sorting and animation
+octtest	: NEW! Finding the octant of a point.
+
+// === Contact Info ===
+
+  J.Vijn
+  cearn@coranac.com
+  http://www.coranac.com
+
+

@@ -24,6 +24,7 @@
 #include "cmdline.h"
 #include "debugger.h"
 #include <SDL/SDL.h>
+#include <png.h>
 #include <iostream>
 #undef main
 
@@ -40,6 +41,7 @@ SDL_Surface* window;
 uint32_t* buffer;
 int window_width;
 int window_height;
+int frameskip_counter;
 
 #define plotpixel(x,y,c) buffer[(y) * window_width + (x)] = c;
 void setpixel(int x, int y, int color)
@@ -84,28 +86,25 @@ void schedule_frame()
 {
     for (int i = 0; i < 280896; i++)
     {
-        // Raise an IRQ if neccessary
-        if (memory->gba_io->ime != 0 && memory->gba_io->if_ != 0)
-        {
-            arm->FireIRQ();
-        }
-
         // Run the hardware's components
         arm->Step();
         memory->timer->Step();
         memory->video->Step();
         memory->dma->Step();
 
-        // Copy the finished frame to SDLs pixel buffer
-        if (memory->video->render_scanline && memory->gba_io->vcount == 159)
+        // Raise an IRQ if neccessary
+        if (memory->gba_io->ime != 0 && memory->gba_io->if_ != 0)
         {
-            // Copy data to screen
-            for (int y = 0; y < 160; y++)
+            arm->FireIRQ();
+        }
+
+        // Copy the rendered line (if any) to SDLs pixel buffer
+        if (memory->video->render_scanline)
+        {
+            int y = memory->gba_io->vcount;
+            for (int x = 0; x < 240; x++)
             {
-                for (int x = 0; x < 240; x++)
-                {
-                    setpixel(x, y, memory->video->buffer[y * 240 + x]);
-                }
+                setpixel(x, y, memory->video->buffer[y * 240 + x]);
             }
         }
     }
@@ -142,11 +141,55 @@ void create_window(int width, int height)
     window_height = height;
 }
 
+void create_screenshot() 
+{
+    FILE* fp = fopen("screenshot.png", "wb");
+    png_structp png_ptr = NULL;
+    png_infop info_ptr = NULL;
+    png_byte** rows = NULL;
+    png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    info_ptr = png_create_info_struct(png_ptr);
+    png_set_IHDR(png_ptr,
+                 info_ptr,
+                 window_width,
+                 window_height,
+                 8,
+                 PNG_COLOR_TYPE_RGBA,
+                 PNG_INTERLACE_NONE,
+                 PNG_COMPRESSION_TYPE_DEFAULT,
+                 PNG_FILTER_TYPE_DEFAULT);
+    rows = (png_byte**)png_malloc(png_ptr, window_height * sizeof(png_byte*));
+    for (int y = 0; y < window_height; y++)
+    {
+        png_byte* row = (png_byte*)png_malloc(png_ptr, window_width * sizeof(u32));
+        rows[y] = row;
+        for (int x = 0; x < window_width; x++) 
+        {
+            u32 argb = buffer[y * window_width + x];
+            *row++ = (argb >> 16) & 0xFF;
+            *row++ = (argb >> 8) & 0xFF;
+            *row++ = argb & 0xFF;
+            *row++ = (argb >> 24) & 0xFF;
+        }
+    }
+    png_init_io(png_ptr, fp);
+    png_set_rows(png_ptr, info_ptr, rows);
+    png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
+    for (int y = 0; y < window_height; y++) 
+    {
+        png_free(png_ptr, rows[y]);
+    }    
+    png_free(png_ptr, rows);
+    png_destroy_write_struct(&png_ptr, &info_ptr);
+    fclose(fp);
+}
+
 // This is our main function / entry point. It gets called when the emulator is started.
 int main(int argc, char** argv)
 {
     SDL_Event event;
     bool running = true;
+    frameskip_counter = 0;
 
     if (argc > 1)
     {
@@ -194,6 +237,9 @@ int main(int argc, char** argv)
         {
             debugger_shell();
         }
+
+        // Dump screenshot on F10
+        if (kb_state[SDLK_F10]) create_screenshot();
         
         // Feed keyboard input and generate exactly one frame
         schedule_keyinput();

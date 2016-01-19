@@ -517,10 +517,11 @@ namespace NanoboyAdvance
                 {
                     gba_io->if_ |= 2;
                 }
-                // Render the current scanline only
-                Render(gba_io->vcount);
-                // Notify that the screen must be updated
-                render_scanline = true;
+                //if (!render_disable)
+                {
+                    Render(gba_io->vcount);
+                    render_scanline = true;
+                }
                 ticks = 0;
             }
             break;

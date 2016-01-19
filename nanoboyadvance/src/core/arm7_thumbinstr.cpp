@@ -781,7 +781,7 @@ namespace NanoboyAdvance
                 u8 bios_call = ReadByte(r15 - 4);
 
                 // Log to the console that we're issuing an interrupt.
-                LOG(LOG_INFO, "Running software interrupt (0x%x) (thumb)", bios_call);
+                //LOG(LOG_INFO, "Running software interrupt (0x%x) (thumb)", bios_call);
 
                 // Actual emulation
                 if (hle)
