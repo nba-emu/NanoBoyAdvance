@@ -199,9 +199,28 @@ namespace NanoboyAdvance
 
     u16 ARM7::ReadHWord(u32 offset)
     {
-        // TODO: Proper handling (Mis-aligned LDRH,LDRSH)
-        offset &= ~1;
+        if (offset & 1)
+        {
+            u16 value = memory->ReadHWord(offset & ~1);
+            return (value >> 8) | (value << 24); 
+        }        
         return memory->ReadHWord(offset);
+    }
+
+    u16 ARM7::ReadHWordSigned(u32 offset)
+    {
+        u16 value = 0;        
+        if (offset & 1) 
+        {
+            value = memory->ReadByte(offset & 1);
+            if (value & 0x80) value &= 0xFFFFFF00;
+        }
+        else 
+        {
+            value = memory->ReadHWord(offset);
+            if (value & 0x8000) value &= 0xFFFF0000;
+        }
+        return value;
     }
 
     u32 ARM7::ReadWord(u32 offset)
@@ -345,7 +364,7 @@ namespace NanoboyAdvance
     {
         if ((cpsr & IRQDisable) == 0)
         {
-            r14_irq = r15 - (cpsr & Thumb ? 4 : 8) + 4;
+            r14_irq = r15 - ((cpsr & Thumb) ? 4 : 8) + 4;
             spsr_irq = cpsr;
             cpsr = (cpsr & ~0x3F) | IRQ | IRQDisable;
             RemapRegisters();
@@ -360,6 +379,8 @@ namespace NanoboyAdvance
     {
         switch (number)
         {
+        case 0x01: LOG(LOG_INFO, "RegisterRamReset"); break;
+        case 0x02: LOG(LOG_INFO, "HALTCNT"); break;
         // DIV
         case 0x06:
         {
@@ -461,7 +482,14 @@ namespace NanoboyAdvance
             break;
         }
         default:
-            LOG(LOG_ERROR, "Unimplemented software interrupt 0x%x", number);
+            //LOG(LOG_ERROR, "Unimplemented software interrupt 0x%x", number);
+            // Fallback to bios
+            r14_svc = r15 - ((cpsr & Thumb) ? 2 : 4);
+            r15 = 0x8;
+            flush_pipe = true;
+            spsr_svc = cpsr;
+            cpsr = (cpsr & ~0x3F) | SVC | IRQDisable;
+            RemapRegisters(); 
             break;
         }
     }

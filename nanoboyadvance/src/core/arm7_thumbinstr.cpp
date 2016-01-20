@@ -529,16 +529,11 @@ namespace NanoboyAdvance
                     reg(reg_dest) |= 0xFFFFFF00;
                 }
                 break;
-            // TODO: Proper alignment handling
             case 0b10: // LDRH
                 reg(reg_dest) = ReadHWord(address);
                 break;
             case 0b11: // LDSH
-                reg(reg_dest) = ReadHWord(address);
-                if (reg(reg_dest) & 0x8000)
-                {
-                    reg(reg_dest) |= 0xFFFF0000;
-                }
+                reg(reg_dest) = ReadHWordSigned(address);
                 break;
             }
             break;
@@ -781,7 +776,7 @@ namespace NanoboyAdvance
                 u8 bios_call = ReadByte(r15 - 4);
 
                 // Log to the console that we're issuing an interrupt.
-                //LOG(LOG_INFO, "Running software interrupt (0x%x) (thumb)", bios_call);
+                LOG(LOG_INFO, "Running software interrupt (0x%x) (thumb)", bios_call);
 
                 // Actual emulation
                 if (hle)
@@ -837,8 +832,5 @@ namespace NanoboyAdvance
             break;
         }
         }
-#ifdef CPU_LOG
-        cin.get();
-#endif
     }
 }

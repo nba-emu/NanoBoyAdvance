@@ -90,7 +90,7 @@ namespace NanoboyAdvance
             }
             if (internal_offset >= 0x3FF)
             {
-                LOG(LOG_ERROR, "IO read: offset out of bounds"); 
+                LOG(LOG_ERROR, "IO read: offset out of bounds (0x%x)", offset); 
                 return 0;
             }
             return io[internal_offset];
@@ -158,7 +158,7 @@ namespace NanoboyAdvance
             // If the address it out of bounds we should exit now
             if (internal_offset >= 0x3FF && (internal_offset & 0xFFFF) != 0x800)
             {
-                LOG(LOG_ERROR, "IO write: offset out of bounds");
+                LOG(LOG_ERROR, "IO write: offset out of bounds (0x%x)", offset);
                 break;
             }
 

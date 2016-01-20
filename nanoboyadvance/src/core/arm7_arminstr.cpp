@@ -259,7 +259,6 @@ namespace NanoboyAdvance
             // ARM.5 Halfword data transfer, register offset
             // ARM.6 Halfword data transfer, immediate offset
             // ARM.7 Signed data transfer (byte/halfword)
-            // TODO: Proper alignment handling
             u32 offset;
             int reg_dest = (instruction >> 12) & 0xF;
             int reg_base = (instruction >> 16) & 0xF;
@@ -312,11 +311,7 @@ namespace NanoboyAdvance
                     u32 value;
                     if (halfword)
                     {
-                        value = ReadHWord(address);
-                        if (value & 0x8000)
-                        {
-                            value |= 0xFFFF0000;
-                        }
+                        value = ReadHWordSigned(address);
                     }
                     else
                     {
@@ -1085,7 +1080,7 @@ namespace NanoboyAdvance
                 u32 bios_call = ReadByte(r15 - 6);
 
                 // Log to the console that we're issuing an interrupt.
-                //LOG(LOG_INFO, "Running software interrupt (0x%x)", bios_call);
+                LOG(LOG_INFO, "Running software interrupt (0x%x)", bios_call);
 
                 // Actual emulation
                 if (hle)
