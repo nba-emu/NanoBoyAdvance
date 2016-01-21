@@ -138,7 +138,7 @@ namespace NanoboyAdvance
         // Memory methods
         u8 ReadByte(u32 offset);
         u16 ReadHWord(u32 offset);
-        u16 ReadHWordSigned(u32 offset);
+        u32 ReadHWordSigned(u32 offset);
         u32 ReadWord(u32 offset);
         u32 ReadWordRotated(u32 offset);
         void WriteByte(u32 offset, u8 value);

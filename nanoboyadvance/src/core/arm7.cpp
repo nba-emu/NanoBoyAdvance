@@ -207,7 +207,7 @@ namespace NanoboyAdvance
         return memory->ReadHWord(offset);
     }
 
-    u16 ARM7::ReadHWordSigned(u32 offset)
+    u32 ARM7::ReadHWordSigned(u32 offset)
     {
         u16 value = 0;        
         if (offset & 1) 
