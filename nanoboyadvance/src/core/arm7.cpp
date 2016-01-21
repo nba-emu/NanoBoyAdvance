@@ -209,7 +209,7 @@ namespace NanoboyAdvance
 
     u32 ARM7::ReadHWordSigned(u32 offset)
     {
-        u16 value = 0;        
+        u32 value = 0;        
         if (offset & 1) 
         {
             value = memory->ReadByte(offset & ~1);
