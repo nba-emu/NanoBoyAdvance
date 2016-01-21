@@ -212,13 +212,13 @@ namespace NanoboyAdvance
         u16 value = 0;        
         if (offset & 1) 
         {
-            value = memory->ReadByte(offset & 1);
-            if (value & 0x80) value &= 0xFFFFFF00;
+            value = memory->ReadByte(offset & ~1);
+            if (value & 0x80) value |= 0xFFFFFF00;
         }
         else 
         {
             value = memory->ReadHWord(offset);
-            if (value & 0x8000) value &= 0xFFFF0000;
+            if (value & 0x8000) value |= 0xFFFF0000;
         }
         return value;
     }
