@@ -25,6 +25,9 @@
 #include "common/log.h"
 #include "memory.h"
 
+#define ARM7_FASTHAX
+#define arm_pack_instr(i) ((i) & 0xFFF) | (((i) & 0x0FF00000) >> 8)
+
 // Macro for easier register access
 #define reg(r) *gprs[r]
 
@@ -72,13 +75,18 @@ namespace NanoboyAdvance
         // A pointer pointing on the Saved program status register of the current mode
         u32* pspsr {nullptr};
 
+        #ifdef ARM7_FASTHAX
+        int thumb_decode[0x10000];
+        int arm_decode[0x100000];
+        #endif
+
         // In some way emulate the processor's pipeline
         u32 pipe_opcode[3];
         int pipe_decode[3];
         int pipe_status {0};
         bool flush_pipe {false};
 
-        // Some games seem to read from bios
+        // Emulate "unpredictable" behaviour
         u32 last_fetched_bios {0};
 
         // Gets called on certain events like instruction execution, swi, etc.

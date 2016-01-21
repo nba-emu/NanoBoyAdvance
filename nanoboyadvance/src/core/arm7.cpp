@@ -46,6 +46,18 @@ namespace NanoboyAdvance
 
         // Set hle flag
         this->hle = hle;
+
+        // If speedup switch (ARM7_FASTHAX) is set, we need to build the decode caches
+        #ifdef ARM7_FASTHAX
+        for (int i = 0; i <= 0xFFFF; i++)
+        {
+            thumb_decode[i] = THUMBDecode(i);      
+        }
+        for (int i = 0; i <= 0xFFFFF; i++)
+        {
+            arm_decode[i] = ARMDecode((i & 0xFFF) | ((i & 0xFF000) << 8));
+        }
+        #endif
     }
 
     void ARM7::SetCallback(ARMCallback hook)
@@ -285,24 +297,40 @@ namespace NanoboyAdvance
             case 1:
                 pipe_opcode[1] = memory->ReadHWord(r15);
                 last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[1] : last_fetched_bios;
+                #ifdef ARM7_FASTHAX
+                pipe_decode[0] = thumb_decode[pipe_opcode[0]];
+                #else
                 pipe_decode[0] = THUMBDecode(pipe_opcode[0]);
+                #endif                
                 break;
             case 2:
                 pipe_opcode[2] = memory->ReadHWord(r15);
                 last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[2] : last_fetched_bios;
+                #ifdef ARM7_FASTHAX
+                pipe_decode[1] = thumb_decode[pipe_opcode[1]];
+                #else
                 pipe_decode[1] = THUMBDecode(pipe_opcode[1]);
+                #endif    
                 THUMBExecute(pipe_opcode[0], pipe_decode[0]);
                 break;
             case 3:
                 pipe_opcode[0] = memory->ReadHWord(r15);
                 last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[0] : last_fetched_bios;
+                #ifdef ARM7_FASTHAX
+                pipe_decode[2] = thumb_decode[pipe_opcode[2]];
+                #else
                 pipe_decode[2] = THUMBDecode(pipe_opcode[2]);
+                #endif    
                 THUMBExecute(pipe_opcode[1], pipe_decode[1]);
                 break;
             case 4:
                 pipe_opcode[1] = memory->ReadHWord(r15);
                 last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[1] : last_fetched_bios;
+                #ifdef ARM7_FASTHAX
+                pipe_decode[0] = thumb_decode[pipe_opcode[0]];
+                #else
                 pipe_decode[0] = THUMBDecode(pipe_opcode[0]);
+                #endif    
                 THUMBExecute(pipe_opcode[2], pipe_decode[2]);
                 break;
             }
@@ -319,24 +347,40 @@ namespace NanoboyAdvance
             case 1:
                 pipe_opcode[1] = memory->ReadWord(r15);
                 last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[1] : last_fetched_bios;
+                #ifdef ARM7_FASTHAX
+                pipe_decode[0] = arm_decode[arm_pack_instr(pipe_opcode[0])];
+                #else
                 pipe_decode[0] = ARMDecode(pipe_opcode[0]);
+                #endif                
                 break;
             case 2:
                 pipe_opcode[2] = memory->ReadWord(r15);
                 last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[2] : last_fetched_bios;
+                #ifdef ARM7_FASTHAX
+                pipe_decode[1] = arm_decode[arm_pack_instr(pipe_opcode[1])];
+                #else
                 pipe_decode[1] = ARMDecode(pipe_opcode[1]);
+                #endif 
                 ARMExecute(pipe_opcode[0], pipe_decode[0]);
                 break;
             case 3:
                 pipe_opcode[0] = memory->ReadWord(r15);
                 last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[0] : last_fetched_bios;
+                #ifdef ARM7_FASTHAX
+                pipe_decode[2] = arm_decode[arm_pack_instr(pipe_opcode[2])];
+                #else
                 pipe_decode[2] = ARMDecode(pipe_opcode[2]);
+                #endif 
                 ARMExecute(pipe_opcode[1], pipe_decode[1]);
                 break;
             case 4:
                 pipe_opcode[1] = memory->ReadWord(r15);
                 last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[1] : last_fetched_bios;
+                #ifdef ARM7_FASTHAX
+                pipe_decode[0] = arm_decode[arm_pack_instr(pipe_opcode[0])];
+                #else
                 pipe_decode[0] = ARMDecode(pipe_opcode[0]);
+                #endif 
                 ARMExecute(pipe_opcode[2], pipe_decode[2]);
                 break;
             }

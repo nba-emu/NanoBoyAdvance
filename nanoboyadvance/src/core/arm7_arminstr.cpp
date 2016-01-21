@@ -52,7 +52,7 @@ namespace NanoboyAdvance
                 section = ARM_8;
             }
             // TODO: Check if we really must check all that bits
-            else if ((opcode & 0xFFFFFF0) == 0x12FFF10)
+            else if ((opcode & 0xFF00FF0) == 0x1200F10)
             {
                 // ARM.3 Branch and exchange
                 section = ARM_3;
@@ -1080,7 +1080,7 @@ namespace NanoboyAdvance
                 u32 bios_call = ReadByte(r15 - 6);
 
                 // Log to the console that we're issuing an interrupt.
-                LOG(LOG_INFO, "Running software interrupt (0x%x)", bios_call);
+                //LOG(LOG_INFO, "Running software interrupt (0x%x)", bios_call);
 
                 // Actual emulation
                 if (hle)
