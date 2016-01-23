@@ -4,7 +4,7 @@ NanoboyAdvance is an experimental GBA emulator written using a mixture of c++ an
 
 ## Media
 
-<img src="https://raw.githubusercontent.com/fredericmeyer/nanoboyadvance/master/screenshots/kirby_ingame.png" alt="kirby_ingame">
+<img src="https://raw.githubusercontent.com/fredericmeyer/nanoboyadvance/master/screenshots/scr02.png" alt="kirby_ingame">
 
 <b>Disclaimer:</b> I wanted to show you more pictures, but I though it would look ugly if I stack the pictures.
 
@@ -12,6 +12,8 @@ NanoboyAdvance is an experimental GBA emulator written using a mixture of c++ an
 
 #### Great register overview
 <img src="https://raw.githubusercontent.com/fredericmeyer/nanoboyadvance/master/screenshots/nsh.png" alt="nsh">
+
+<b>The debugger is currently not implemented anymore (only partially). Have to rewrite it :)</b>
 
 NanoboyAdvance has a great console interface based debugger which has been designed both for reverse engineers and emulator developers.
 

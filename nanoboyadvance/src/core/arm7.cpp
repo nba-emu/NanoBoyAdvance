@@ -424,7 +424,7 @@ namespace NanoboyAdvance
             RemapRegisters();
             r15 = 0x18;
             pipe_status = 0;
-            //LOG(LOG_INFO, "Issued interrupt, r14_irq=0x%x, r15=0x%x", r14_irq, r15);
+            LOG(LOG_INFO, "Issued interrupt, r14_irq=0x%x, r15=0x%x", r14_irq, r15);
         }
         //else { LOG(LOG_INFO, "Interrupt(s) requested but blocked (either by interrupt or swi)") }
     }
@@ -433,8 +433,8 @@ namespace NanoboyAdvance
     {
         switch (number)
         {
-        case 0x01: LOG(LOG_INFO, "RegisterRamReset"); break;
-        case 0x02: LOG(LOG_INFO, "HALTCNT"); break;
+        case 0x01: break;
+        case 0x02: break;
         // DIV
         case 0x06:
         {
@@ -536,14 +536,7 @@ namespace NanoboyAdvance
             break;
         }
         default:
-            //LOG(LOG_ERROR, "Unimplemented software interrupt 0x%x", number);
-            // Fallback to bios
-            r14_svc = r15 - ((cpsr & Thumb) ? 2 : 4);
-            r15 = 0x8;
-            flush_pipe = true;
-            spsr_svc = cpsr;
-            cpsr = (cpsr & ~0x3F) | SVC | IRQDisable;
-            RemapRegisters(); 
+            LOG(LOG_ERROR, "Unimplemented software interrupt 0x%x", number);
             break;
         }
     }
