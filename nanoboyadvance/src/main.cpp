@@ -86,11 +86,24 @@ void schedule_frame()
 {
     for (int i = 0; i < 280896; i++)
     {
+        // Only pause as long as (IE & IF) != 0
+        if (memory->halt_state != GBAMemory::GBAHaltState::None && 
+            (memory->gba_io->ie & memory->gba_io->if_) != 0)
+        {
+            memory->halt_state = GBAMemory::GBAHaltState::None;
+        }
+
         // Run the hardware's components
-        arm->Step();
-        memory->timer->Step();
-        memory->video->Step();
-        memory->dma->Step();
+        if (memory->halt_state != GBAMemory::GBAHaltState::Stop)
+        {
+            if (memory->halt_state != GBAMemory::GBAHaltState::Halt)
+            {            
+                arm->Step();
+            }
+            memory->timer->Step();
+            memory->video->Step();
+            memory->dma->Step();
+        }
 
         // Raise an IRQ if neccessary
         if (memory->gba_io->ime != 0 && memory->gba_io->if_ != 0)

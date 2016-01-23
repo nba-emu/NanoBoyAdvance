@@ -256,6 +256,10 @@ namespace NanoboyAdvance
                 gba_io->if_ &= ~value;
                 write = false;
                 break;
+            case HALTCNT:
+                halt_state = (value & 0x80) ? GBAHaltState::Stop : GBAHaltState::Halt;
+                write = false;
+                break;
             }
 
             if (write)

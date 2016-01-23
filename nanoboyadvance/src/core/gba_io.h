@@ -45,14 +45,14 @@ struct GBAIO_S
     u16 bg2pb;
     u16 bg2pc;
     u16 bg2pd;
-    u32   bg2x;
-    u32   bg2y;
+    u32 bg2x;
+    u32 bg2y;
     u16 bg3pa;
     u16 bg3pb;
     u16 bg3pc;
     u16 bg3pd;
-    u32   bg3x;
-    u32   bg3y;
+    u32 bg3x;
+    u32 bg3y;
     u16 win0h;
     u16 win1h;
     u16 win0v;
@@ -89,7 +89,7 @@ struct GBAIO_S
     u16 soundcnt_x;
     u16 unused10;
     u16 soundbias;
-    u32   unused11;
+    u32 unused11;
     u16 unused12;
     u8  _wave_ram1;
     u8  _wave_ram2;
@@ -107,31 +107,31 @@ struct GBAIO_S
     u8  _wave_ram14;
     u8  _wave_ram15;
     u8  _wave_ram16;
-    u32   fifo_a;
-    u32   fifo_b;
+    u32 fifo_a;
+    u32 fifo_b;
     u64  unused13;
 
     // DMA Transfer Channels
-    u32   dma0sad;
-    u32   dma0dad;
+    u32 dma0sad;
+    u32 dma0dad;
     u16 dma0cnt_l;
     u16 dma0cnt_h;
-    u32   dma1sad;
-    u32   dma1dad;
+    u32 dma1sad;
+    u32 dma1dad;
     u16 dma1cnt_l;
     u16 dma1cnt_h;
-    u32   dma2sad;
-    u32   dma2dad;
+    u32 dma2sad;
+    u32 dma2dad;
     u16 dma2cnt_l;
     u16 dma2cnt_h;
-    u32   dma3sad;
-    u32   dma3dad;
+    u32 dma3sad;
+    u32 dma3dad;
     u16 dma3cnt_l;
     u16 dma3cnt_h;
-    u64  unused14;
-    u64  unused15;
-    u64  unused16;
-    u64  unused17;
+    u64 unused14;
+    u64 unused15;
+    u64 unused16;
+    u64 unused17;
 
     // Timer Registers
     u16 tm0cnt_l;
@@ -142,14 +142,14 @@ struct GBAIO_S
     u16 tm2cnt_h;
     u16 tm3cnt_l;
     u16 tm3cnt_h;
-    u64  unused18;
-    u64  unused19;
+    u64 unused18;
+    u64 unused19;
 
     // Serial Communication (1)
     // TODO: Implement SIO registers
-    u64  sio0;
-    u32   sio1;
-    u32   unused20;
+    u64 sio0;
+    u32 sio1;
+    u32 unused20;
 
     // Keypad Input
     u16 keyinput;
@@ -158,35 +158,35 @@ struct GBAIO_S
     // Serial Communication (2)
     u16 rcnt;
     u16 ir;
-    u64  unused21;
+    u64 unused21;
     u16 joycnt;
-    u64  unused22;
-    u32   unused23;
+    u64 unused22;
+    u32 unused23;
     u16 unused24;
-    u32   joy_recv;
-    u32   joy_trans;
+    u32 joy_recv;
+    u32 joy_trans;
     u16 joy_stat;
-    u64  unused25;
-    u64  unused26;
-    u64  unused27;
-    u64  unused28;
-    u64  unused29;
-    u64  unused30;
-    u64  unused31;
-    u64  unused32;
-    u64  unused33;
-    u64  unused34;
-    u64  unused35;
-    u64  unused36;
-    u64  unused37;
-    u64  unused38;
-    u64  unused39;
-    u64  unused40;
-    u64  unused41;
-    u64  unused42;
-    u64  unused43;
-    u64  unused44;
-    u32   unused45;
+    u64 unused25;
+    u64 unused26;
+    u64 unused27;
+    u64 unused28;
+    u64 unused29;
+    u64 unused30;
+    u64 unused31;
+    u64 unused32;
+    u64 unused33;
+    u64 unused34;
+    u64 unused35;
+    u64 unused36;
+    u64 unused37;
+    u64 unused38;
+    u64 unused39;
+    u64 unused40;
+    u64 unused41;
+    u64 unused42;
+    u64 unused43;
+    u64 unused44;
+    u32 unused45;
     u16 unused46;
 
     // Interrupt, Waitstate, and Power-Down Control
@@ -213,3 +213,4 @@ typedef struct GBAIO_S GBAIO;
 #define TM3CNT_L 0x10C
 #define TM3CNT_H 0x10E
 #define IF 0x202
+#define HALTCNT 0x301

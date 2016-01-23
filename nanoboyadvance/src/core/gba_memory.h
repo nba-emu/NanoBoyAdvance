@@ -51,6 +51,15 @@ namespace NanoboyAdvance
         GBADMA* dma;
         GBATimer* timer;
         GBAVideo* video;
+
+        // Flags
+        enum class GBAHaltState
+        {
+            None,
+            Stop,
+            Halt
+        };
+        GBAHaltState halt_state { GBAHaltState::None };
  
         // Sets an callback that gets called each time memory is accessed (unimpemented)
         void SetCallback(MemoryCallback callback);
