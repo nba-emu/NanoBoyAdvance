@@ -495,11 +495,11 @@ namespace NanoboyAdvance
                     set_flags = false;
 
                     // Log if we're returning from swi or interrupt, useful for debugging
-                    if ((cpsr & 0x1F) == SVC)
+                    if ((cpsr & 0x1F) == (u32)ARM7Mode::SVC)
                     {
                         LOG(LOG_INFO, "Finished swi!");
                     }
-                    else if ((cpsr & 0x1F) == IRQ)
+                    else if ((cpsr & 0x1F) == (u32)ARM7Mode::IRQ)
                     {
                         LOG(LOG_INFO, "Finished interrupt!");
                     }
@@ -878,7 +878,7 @@ namespace NanoboyAdvance
 
                 // Save current mode and enter user mode
                 old_mode = cpsr & 0x1F;
-                cpsr = (cpsr & ~0x1F) | User;
+                cpsr = (cpsr & ~0x1F) | (u32)ARM7Mode::User;
                 RemapRegisters();
 
                 // Mark that we switched to user mode
@@ -930,7 +930,7 @@ namespace NanoboyAdvance
                                 if (s_bit)
                                 {
                                     // spsr_<mode> must not be copied to cpsr in user mode because user mode has not such a register
-                                    ASSERT((cpsr & 0x1F) == User, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r15);
+                                    ASSERT((cpsr & 0x1F) == (u32)ARM7Mode::User, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r15);
 
                                     cpsr = *pspsr;
                                     RemapRegisters();
@@ -997,7 +997,7 @@ namespace NanoboyAdvance
                                 if (s_bit)
                                 {
                                     // spsr_<mode> must not be copied to cpsr in user mode because user mode has no such a register
-                                    ASSERT((cpsr & 0x1F) == User, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r15);
+                                    ASSERT((cpsr & 0x1F) == (u32)ARM7Mode::User, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r15);
 
                                     cpsr = *pspsr;
                                     RemapRegisters();
@@ -1092,7 +1092,7 @@ namespace NanoboyAdvance
                     r15 = 0x8;
                     flush_pipe = true;
                     spsr_svc = cpsr;
-                    cpsr = (cpsr & ~0x1F) | SVC | IRQDisable;
+                    cpsr = (cpsr & ~0x1F) | (u32)ARM7Mode::SVC | IRQDisable;
                     RemapRegisters();
                 }
             }

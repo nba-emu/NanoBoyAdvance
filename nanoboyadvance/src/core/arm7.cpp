@@ -59,17 +59,74 @@ namespace NanoboyAdvance
         }
         #endif
     }
+    
+    u32 ARM7::GetGeneralRegister(ARM7Mode mode, int r)
+    {
+        ARM7Mode old_mode = (ARM7Mode)(cpsr & 0x1F); // this code is quite hacky but it works
+        u32 value;
+        cpsr = (cpsr & ~0x1F) | (u32)mode;
+        RemapRegisters();
+        value = reg(r);
+        cpsr = (cpsr & ~0x1F) | (u32)old_mode;
+        RemapRegisters();
+        return value;
+    }
+
+    u32 ARM7::GetCurrentStatusRegister()
+    {
+        return cpsr;
+    }
+
+    u32 ARM7::GetSavedStatusRegister(ARM7Mode mode)
+    {
+        switch (mode)
+        {
+        case ARM7Mode::FIQ: return spsr_fiq;
+        case ARM7Mode::SVC: return spsr_svc;
+        case ARM7Mode::Abort: return spsr_abt;
+        case ARM7Mode::IRQ: return spsr_irq;
+        case ARM7Mode::Undefined: return spsr_und;        
+        }
+        return 0;
+    }
 
     void ARM7::SetCallback(ARMCallback hook)
     {
         debug_hook = hook;
+    }
+
+    void ARM7::SetGeneralRegister(ARM7Mode mode, int r, u32 value)
+    {
+        ARM7Mode old_mode = (ARM7Mode)(cpsr & 0x1F); // this code is quite hacky but it works
+        cpsr = (cpsr & ~0x1F) | (u32)mode;
+        RemapRegisters();
+        reg(r) = value;
+        cpsr = (cpsr & ~0x1F) | (u32)old_mode;
+        RemapRegisters();
+    }
+
+    void ARM7::SetCurrentStatusRegister(u32 value)
+    {
+        cpsr = value;
+    }
+    
+    void ARM7::SetSavedStatusRegister(ARM7Mode mode, u32 value)
+    {
+        switch (mode)
+        {
+        case ARM7Mode::FIQ: spsr_fiq = value; break;
+        case ARM7Mode::SVC: spsr_svc = value; break;
+        case ARM7Mode::Abort: spsr_abt = value; break;
+        case ARM7Mode::IRQ: spsr_irq = value; break;
+        case ARM7Mode::Undefined: spsr_und = value; break;        
+        }
     }
     
     void ARM7::RemapRegisters()
     {
         switch (cpsr & 0x1F)
         {
-        case User:
+        case (u32)ARM7Mode::User:
             gprs[8] = &r8;
             gprs[9] = &r9;
             gprs[10] = &r10;
@@ -79,7 +136,7 @@ namespace NanoboyAdvance
             gprs[14] = &r14;
             pspsr = &spsr_def;
             break;
-        case FIQ:
+        case (u32)ARM7Mode::FIQ:
             gprs[8] = &r8_fiq;
             gprs[9] = &r9_fiq;
             gprs[10] = &r10_fiq;
@@ -89,7 +146,7 @@ namespace NanoboyAdvance
             gprs[14] = &r14_fiq;
             pspsr = &spsr_fiq;
             break;
-        case IRQ:
+        case (u32)ARM7Mode::IRQ:
             gprs[8] = &r8;
             gprs[9] = &r9;
             gprs[10] = &r10;
@@ -99,7 +156,7 @@ namespace NanoboyAdvance
             gprs[14] = &r14_irq;
             pspsr = &spsr_irq;
             break;
-        case SVC:
+        case (u32)ARM7Mode::SVC:
             gprs[8] = &r8;
             gprs[9] = &r9;
             gprs[10] = &r10;
@@ -109,7 +166,7 @@ namespace NanoboyAdvance
             gprs[14] = &r14_svc;
             pspsr = &spsr_svc;
             break;
-        case Abort:
+        case (u32)ARM7Mode::Abort:
             gprs[8] = &r8;
             gprs[9] = &r9;
             gprs[10] = &r10;
@@ -119,7 +176,7 @@ namespace NanoboyAdvance
             gprs[14] = &r14_abt;
             pspsr = &spsr_abt;
             break;
-        case Undefined:
+        case (u32)ARM7Mode::Undefined:
             gprs[8] = &r8;
             gprs[9] = &r9;
             gprs[10] = &r10;
@@ -129,7 +186,7 @@ namespace NanoboyAdvance
             gprs[14] = &r14_und;
             pspsr = &spsr_und;
             break;
-        case System:
+        case (u32)ARM7Mode::System:
             gprs[8] = &r8;
             gprs[9] = &r9;
             gprs[10] = &r10;
@@ -420,7 +477,7 @@ namespace NanoboyAdvance
         {
             r14_irq = r15 - ((cpsr & Thumb) ? 4 : 8) + 4;
             spsr_irq = cpsr;
-            cpsr = (cpsr & ~0x3F) | IRQ | IRQDisable;
+            cpsr = (cpsr & ~0x3F) | (u32)ARM7Mode::IRQ | IRQDisable;
             RemapRegisters();
             r15 = 0x18;
             pipe_status = 0;

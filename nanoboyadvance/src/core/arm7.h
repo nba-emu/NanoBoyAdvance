@@ -69,7 +69,7 @@ namespace NanoboyAdvance
         u32* gprs[16];
 
         // Current program status register (contains status flags)
-        u32 cpsr {System};
+        u32 cpsr { (u32)ARM7Mode::System};
         u32 spsr_fiq {0}, spsr_svc {0}, spsr_abt {0}, spsr_irq {0}, spsr_und {0}, spsr_def {0};
 
         // A pointer pointing on the Saved program status register of the current mode
@@ -164,7 +164,7 @@ namespace NanoboyAdvance
         // Used to emulate software interrupts
         void SWI(int number);
     public:
-        enum ARM7Mode
+        enum class ARM7Mode
         {
             User = 0x10,
             FIQ = 0x11,
@@ -174,7 +174,7 @@ namespace NanoboyAdvance
             Undefined = 0x1B,
             System = 0x1F
         };
-        enum CPSRFlags
+        enum CPSRFlags // TODO: enum class
         {
             Thumb = 0x20,
             FIQDisable = 0x40,
@@ -187,14 +187,18 @@ namespace NanoboyAdvance
 
         // Constructor
         ARM7(GBAMemory* memory, bool use_bios);
-
-        // Set debug callback
-        void SetCallback(ARMCallback hook);
         
-        // Schedule pipeline
-        void Step();
+        // Execution functions
+        void Step(); // schedule pipeline
+        void FireIRQ(); // enter bios irq handler
 
-        // Trigger IRQ exception
-        void FireIRQ();
+        // Debugging
+        u32 GetGeneralRegister(ARM7Mode mode, int r);
+        u32 GetCurrentStatusRegister();
+        u32 GetSavedStatusRegister(ARM7Mode mode);  
+        void SetCallback(ARMCallback hook);
+        void SetGeneralRegister(ARM7Mode mode, int r, u32 value);
+        void SetCurrentStatusRegister(u32 value);
+        void SetSavedStatusRegister(ARM7Mode mode, u32 value);     
     };
 }

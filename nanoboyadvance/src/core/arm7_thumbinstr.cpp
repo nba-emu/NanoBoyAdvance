@@ -787,8 +787,7 @@ namespace NanoboyAdvance
                     r14_svc = r15 - 2;
                     spsr_svc = cpsr;
                     r15 = 8;
-                    //cpsr &= ~Thumb;
-                    cpsr = (cpsr & ~0x3F) | SVC | IRQDisable;
+                    cpsr = (cpsr & ~0x3F) | (u32)ARM7Mode::SVC | IRQDisable;
                     RemapRegisters();
                     flush_pipe = true;
                 }
