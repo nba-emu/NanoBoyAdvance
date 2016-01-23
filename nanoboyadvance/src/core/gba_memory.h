@@ -46,17 +46,24 @@ namespace NanoboyAdvance
         MemoryCallback memory_hook;
         static u8* ReadFile(string filename);
     public:
+        // Hardware / IO accessible through memory
         GBAIO* gba_io;
         GBADMA* dma;
         GBATimer* timer;
         GBAVideo* video;
+ 
+        // Sets an callback that gets called each time memory is accessed (unimpemented)
         void SetCallback(MemoryCallback callback);
+
+        // Read / Write access methods
         u8 ReadByte(u32 offset);
         u16 ReadHWord(u32 offset);
         u32 ReadWord(u32 offset);
         void WriteByte(u32 offset, u8 value);
         void WriteHWord(u32 offset, u16 value);
         void WriteWord(u32 offset, u32 value);
+
+        // Constructor
         GBAMemory(string bios_file, string rom_file);
     };
 }

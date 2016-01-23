@@ -71,6 +71,7 @@ namespace NanoboyAdvance
         switch (page)
         {
         case 0:
+        case 1:
             ASSERT(internal_offset >= 0x4000, LOG_ERROR, "BIOS read: offset out of bounds");
             if (internal_offset >= 0x4000)
             {

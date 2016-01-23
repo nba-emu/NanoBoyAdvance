@@ -121,7 +121,7 @@ void create_window(int width, int height)
     }
 
     // Create surface / window
-    window = SDL_SetVideoMode(width, height, 32, SDL_SWSURFACE);
+    window = SDL_SetVideoMode(width, height, 32, SDL_HWSURFACE);
 
     // Check for errors during window creation
     if (window == NULL)

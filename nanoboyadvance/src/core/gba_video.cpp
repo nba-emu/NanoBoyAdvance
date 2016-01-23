@@ -82,7 +82,7 @@ namespace NanoboyAdvance
         for (int i = 0; i < 8; i++)
         {
             u8 value = vram[offset + i];
-            if (value != 0)
+            if (value != 0 || !transparent)
             {
                 data[i] = DecodeRGB5((pal[palette_base + value * 2 + 1] << 8) | pal[palette_base + value * 2]);
             }

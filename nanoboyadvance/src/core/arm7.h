@@ -23,7 +23,7 @@
 #include <sstream>
 #include "common/types.h"
 #include "common/log.h"
-#include "memory.h"
+#include "gba_memory.h"
 
 #define ARM7_FASTHAX
 #define arm_pack_instr(i) ((i) & 0xFFF) | (((i) & 0x0FF00000) >> 8)
@@ -54,7 +54,7 @@ namespace NanoboyAdvance
     class ARM7
     {
         // Grants the processor access to the emulated mmu
-        Memory* memory;
+        GBAMemory* memory;
 
         // The ARM7TMDI-S has 31 32-bit general purpose register of
         // which 16 are visible at one time.
@@ -87,7 +87,9 @@ namespace NanoboyAdvance
         bool flush_pipe {false};
 
         // Emulate "unpredictable" behaviour
-        u32 last_fetched_bios {0};
+        u32 last_fetched_opcode {0};
+        u32 last_fetched_offset {0};
+        u32 last_bios_offset {0};
 
         // Gets called on certain events like instruction execution, swi, etc.
         // Do not ever call this directly! Use safe DebugHook instead!
@@ -184,7 +186,7 @@ namespace NanoboyAdvance
         };
 
         // Constructor
-        ARM7(Memory* memory, bool use_bios);
+        ARM7(GBAMemory* memory, bool use_bios);
 
         // Set debug callback
         void SetCallback(ARMCallback hook);

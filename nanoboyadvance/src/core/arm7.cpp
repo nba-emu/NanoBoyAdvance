@@ -21,7 +21,7 @@
 
 namespace NanoboyAdvance
 {
-    ARM7::ARM7(Memory* memory, bool hle)
+    ARM7::ARM7(GBAMemory* memory, bool hle)
     {
         // Assign given memory instance to core
         this->memory = memory;
@@ -237,13 +237,28 @@ namespace NanoboyAdvance
 
     u32 ARM7::ReadWord(u32 offset)
     {
-        offset &= ~3;
-        return memory->ReadWord(offset);
+        if (offset < 0x4000 && last_fetched_offset >= 0x4000)
+        {
+            return memory->ReadWord(last_bios_offset);
+        }
+        if (offset >= 0x4000 && offset < 0x2000000)
+        {
+            if (cpsr & Thumb)
+            {
+                // TODO: Handle special cases
+                return (last_fetched_opcode << 16) | last_fetched_opcode;
+            }
+            else
+            {
+                return last_fetched_opcode;
+            }
+        }
+        return memory->ReadWord(offset & ~3);
     }
 
     u32 ARM7::ReadWordRotated(u32 offset)
     {
-        u32 value = memory->ReadWord(offset & ~3);
+        u32 value = ReadWord(offset & ~3);
         int amount = (offset & 3) * 8;
         return amount == 0 ? value : ((value >> amount) | (value << (32 - amount)));
     }
@@ -292,11 +307,9 @@ namespace NanoboyAdvance
             {
             case 0:
                 pipe_opcode[0] = memory->ReadHWord(r15);
-                last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[0] : last_fetched_bios;
                 break;
             case 1:
                 pipe_opcode[1] = memory->ReadHWord(r15);
-                last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[1] : last_fetched_bios;
                 #ifdef ARM7_FASTHAX
                 pipe_decode[0] = thumb_decode[pipe_opcode[0]];
                 #else
@@ -305,7 +318,6 @@ namespace NanoboyAdvance
                 break;
             case 2:
                 pipe_opcode[2] = memory->ReadHWord(r15);
-                last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[2] : last_fetched_bios;
                 #ifdef ARM7_FASTHAX
                 pipe_decode[1] = thumb_decode[pipe_opcode[1]];
                 #else
@@ -315,7 +327,6 @@ namespace NanoboyAdvance
                 break;
             case 3:
                 pipe_opcode[0] = memory->ReadHWord(r15);
-                last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[0] : last_fetched_bios;
                 #ifdef ARM7_FASTHAX
                 pipe_decode[2] = thumb_decode[pipe_opcode[2]];
                 #else
@@ -325,7 +336,6 @@ namespace NanoboyAdvance
                 break;
             case 4:
                 pipe_opcode[1] = memory->ReadHWord(r15);
-                last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[1] : last_fetched_bios;
                 #ifdef ARM7_FASTHAX
                 pipe_decode[0] = thumb_decode[pipe_opcode[0]];
                 #else
@@ -342,11 +352,9 @@ namespace NanoboyAdvance
             {
             case 0:
                 pipe_opcode[0] = memory->ReadWord(r15);
-                last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[0] : last_fetched_bios;
                 break;
             case 1:
                 pipe_opcode[1] = memory->ReadWord(r15);
-                last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[1] : last_fetched_bios;
                 #ifdef ARM7_FASTHAX
                 pipe_decode[0] = arm_decode[arm_pack_instr(pipe_opcode[0])];
                 #else
@@ -355,7 +363,6 @@ namespace NanoboyAdvance
                 break;
             case 2:
                 pipe_opcode[2] = memory->ReadWord(r15);
-                last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[2] : last_fetched_bios;
                 #ifdef ARM7_FASTHAX
                 pipe_decode[1] = arm_decode[arm_pack_instr(pipe_opcode[1])];
                 #else
@@ -365,7 +372,6 @@ namespace NanoboyAdvance
                 break;
             case 3:
                 pipe_opcode[0] = memory->ReadWord(r15);
-                last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[0] : last_fetched_bios;
                 #ifdef ARM7_FASTHAX
                 pipe_decode[2] = arm_decode[arm_pack_instr(pipe_opcode[2])];
                 #else
@@ -375,7 +381,6 @@ namespace NanoboyAdvance
                 break;
             case 4:
                 pipe_opcode[1] = memory->ReadWord(r15);
-                last_fetched_bios = r15 <= 0x3FFF ? pipe_opcode[1] : last_fetched_bios;
                 #ifdef ARM7_FASTHAX
                 pipe_decode[0] = arm_decode[arm_pack_instr(pipe_opcode[0])];
                 #else
@@ -385,7 +390,12 @@ namespace NanoboyAdvance
                 break;
             }
         }
-        
+
+        // Emulate "unpredictable" behaviour
+        last_fetched_opcode = (cpsr & Thumb) ? ReadHWord(r15) : ReadWord(r15);
+        last_fetched_offset = r15;
+        if (r15 < 0x4000) last_bios_offset = r15;
+
         // Clear the pipeline if required
         if (flush_pipe)
         {
