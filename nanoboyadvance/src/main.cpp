@@ -222,7 +222,7 @@ int main(int argc, char** argv)
         // Append debugger if desired
         if (cmdline->debug)
         {
-            debugger_attach(arm, memory);
+            debugger_attach(cmdline, arm, memory);
         }
     }
     else

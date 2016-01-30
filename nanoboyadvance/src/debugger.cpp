@@ -46,8 +46,16 @@ typedef struct
     bool thumb;
 } GBAExecuteBreakpoint;
 
+typedef struct
+{
+    u32 address;
+    bool write;
+} GBAMemoryBreakpoint;
+
+CmdLine* cmd;
 ARM7* arm_cpu;
 vector<GBAExecuteBreakpoint*> code_breakpoints;
+vector<GBAMemoryBreakpoint*> memory_breakpoints;
 
 static u8 debugger_take_byte(string parameter)
 {
@@ -98,6 +106,25 @@ static void debugger_bp_code(vector<string> tokens, bool thumb)
     )
 }
 
+static void debugger_bp_mem(vector<string> tokens, bool write) 
+{
+    GBAMemoryBreakpoint* breakpoint = (GBAMemoryBreakpoint*)malloc(sizeof(GBAMemoryBreakpoint));
+
+    // Catch too many / few parameters
+    if (tokens.size() != 2)
+    {
+        wrong_param_amount;
+        return;
+    }
+
+    // Try to add breakpoint
+    debugger_try(
+        breakpoint->address = debugger_take_word(tokens[1]);
+        breakpoint->write = write;
+        memory_breakpoints.push_back(breakpoint);
+    )
+}
+
 static void debugger_showregs(vector<string> tokens)
 {
     // Catch too many / few parameters
@@ -111,7 +138,6 @@ static void debugger_showregs(vector<string> tokens)
     debugger_try(
         if (tokens.size() == 2) 
         {
-            ARM7::ARM7Mode mode;
             if (tokens[1] == "fiq") 
             {
                 for (int i = 0; i < 8; i++) cout << "r" << i << ": " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::User, i) << dec << endl;
@@ -203,6 +229,8 @@ void debugger_shell()
         if (tokens[0] == "help") debugger_help();
         else if (tokens[0] == "bpa") debugger_bp_code(tokens, false);
         else if (tokens[0] == "bpt") debugger_bp_code(tokens, true);
+        else if (tokens[0] == "bpr") debugger_bp_mem(tokens, false);
+        else if (tokens[0] == "bpw") debugger_bp_mem(tokens, true);
         else if (tokens[0] == "showregs") debugger_showregs(tokens);
         else if (tokens[0] == "c") break;
         else cout << "Invalid command. See \"help\" for help." << endl;
@@ -220,7 +248,7 @@ static void debugger_cpu_hook(int reason, void* data)
         {
             if ((*it)->address == execute->address && (*it)->thumb == execute->thumb)
             {
-                cout << "Hit code breakpoint 0x" << display_word << execute->address << (execute->thumb ? " (thumb)" : " (arm)") << endl;
+                cout << "Hit code breakpoint 0x" << display_word << execute->address << (execute->thumb ? " (thumb)" : " (arm)") << dec << endl;
                 debugger_shell();
                 return;
             }
@@ -230,8 +258,29 @@ static void debugger_cpu_hook(int reason, void* data)
     }
 }
 
-void debugger_attach(ARM7* arm, GBAMemory* memory)
+static void debugger_mem_hook(u32 address, bool write, bool invalid) 
+{
+    if (invalid)
+    {
+        cout << "Invalid " << (write ? "write" : "read") << " to address 0x" << display_word << address << dec << endl;
+        if (cmdline->strict) debugger_shell();     
+        return;    
+    }
+    for (vector<GBAMemoryBreakpoint*>::iterator it = memory_breakpoints.begin(); it != memory_breakpoints.end(); ++it)
+    {
+        if ((*it)->address == address && (*it)->write == write) 
+        {
+            cout << "Hit memory breakpoint on " << (write ? "write" : "read") << " 0x" <<display_word << address << dec << endl;
+            debugger_shell();
+            return;
+        }
+    }
+}
+
+void debugger_attach(CmdLine* cmdline, ARM7* arm, GBAMemory* memory)
 {
     arm->SetCallback(debugger_cpu_hook);
+    memory->SetCallback(debugger_mem_hook);
     arm_cpu = arm;
+    cmd = cmdline;
 }

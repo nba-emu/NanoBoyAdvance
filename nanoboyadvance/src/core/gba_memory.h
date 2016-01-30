@@ -31,7 +31,7 @@
 using namespace std;
 
 // TODO: Using C-style callbacks in C++ is bad practice I guess..
-typedef void (*MemoryCallback)(u32 address, int size, bool write, bool invalid);
+typedef void (*MemoryCallback)(u32 address, bool write, bool invalid);
 
 namespace NanoboyAdvance
 {
@@ -44,6 +44,14 @@ namespace NanoboyAdvance
         u8* rom;
         u8 sram[0x10000];
         MemoryCallback memory_hook;
+        // Pointer-safe call to debug_hook (avoid nullpointer)
+        inline void MemoryHook(u32 address, bool write, bool invalid)
+        {
+            if (memory_hook != NULL)
+            {
+                memory_hook(address, write, invalid);
+            }
+        }
         static u8* ReadFile(string filename);
     public:
         // Hardware / IO accessible through memory

@@ -19,8 +19,9 @@
 
 #pragma once
 
+#include "cmdline.h"
 #include "core/arm7.h"
 #include "core/gba_memory.h"
 
 void debugger_shell();
-void debugger_attach(NanoboyAdvance::ARM7* arm, NanoboyAdvance::GBAMemory* memory);
+void debugger_attach(CmdLine* cmdline, NanoboyAdvance::ARM7* arm, NanoboyAdvance::GBAMemory* memory);

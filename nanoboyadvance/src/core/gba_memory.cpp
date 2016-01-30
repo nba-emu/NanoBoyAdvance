@@ -20,6 +20,12 @@
 #include "gba_memory.h"
 #include "common/log.h"
 
+/**
+ * TODO: Refactor code for more beauty and check if memory busses
+ * are handled correct accordingly to GBATEK. Also pass invalid=true to the 
+ * debugger when accessing memory out of bounds of a valid page. 
+ */
+
 namespace NanoboyAdvance
 {
     GBAMemory::GBAMemory(string bios_file, string rom_file)
@@ -67,7 +73,9 @@ namespace NanoboyAdvance
     u8 GBAMemory::ReadByte(u32 offset)
     {
         int page = (offset >> 24) & 0xF;
-        u32 internal_offset = offset & 0xFFFFFF;
+        bool invalid = false;
+        u32 internal_offset = offset & 0xFFFFFF;        
+
         switch (page)
         {
         case 0:
@@ -82,9 +90,7 @@ namespace NanoboyAdvance
             return wram[internal_offset % 0x40000];
         case 3:
             return iram[internal_offset % 0x8000];
-        case 4:
-            // Emulate IO mirror at 04xx0800
-            // TODO: Fix?
+        case 4: 
             if ((internal_offset & 0xFFFF) == 0x800)
             {
                 internal_offset &= 0xFFFF;
@@ -118,8 +124,10 @@ namespace NanoboyAdvance
             //return 0;
         default:
             LOG(LOG_ERROR, "Read from invalid/unimplemented address (0x%x)", offset);
+            invalid = true;
             break;
         }
+        MemoryHook(offset, false, invalid);
         return 0;
     }
 
@@ -139,12 +147,13 @@ namespace NanoboyAdvance
     {
         int page = (offset >> 24);
         u32 internal_offset = offset & 0xFFFFFF;
+        bool invalid = false;
 
-        // Perform write
         switch (page)
         {
         case 0:
             LOG(LOG_ERROR, "Write into BIOS memory not allowed (0x%x)", offset);
+            invalid = true;            
             break;
         case 2:
             wram[internal_offset % 0x40000] = value;
@@ -276,24 +285,26 @@ namespace NanoboyAdvance
             break;
         case 8:
         case 9:
-            // Also log the error to the console
             LOG(LOG_ERROR, "Write into ROM memory not allowed (0x%x)", offset);
+            invalid = true;            
             break;
         case 0xE:
             //LOG(LOG_WARN, "Unhandled write to SRAM.");
             sram[internal_offset] = value;            
             break;
         default:
-            // Also log the error to the console
             LOG(LOG_ERROR, "Write to invalid/unimplemented address (0x%x)", offset);
+            invalid = true;            
             break;
         }
+        MemoryHook(offset, true, invalid);
     }
 
     void GBAMemory::WriteHWord(u32 offset, u16 value)
     {
         int page = (offset >> 24) & 0xF;
         u32 internal_offset = offset & 0xFFFFFF;
+
         switch (page)
         {
         case 5:
@@ -316,8 +327,9 @@ namespace NanoboyAdvance
         default:
             WriteByte(offset, value & 0xFF);
             WriteByte(offset + 1, (value >> 8) & 0xFF);
-            break;
+            return; // bypass MemoryHook call
         }
+        MemoryHook(offset, true, false);
     }
 
     void GBAMemory::WriteWord(u32 offset, u32 value)
