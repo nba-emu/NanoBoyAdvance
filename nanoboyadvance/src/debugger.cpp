@@ -263,7 +263,7 @@ static void debugger_mem_hook(u32 address, bool write, bool invalid)
     if (invalid)
     {
         cout << "Invalid " << (write ? "write" : "read") << " to address 0x" << display_word << address << dec << endl;
-        if (cmdline->strict) debugger_shell();     
+        if (cmd->strict) debugger_shell();     
         return;    
     }
     for (vector<GBAMemoryBreakpoint*>::iterator it = memory_breakpoints.begin(); it != memory_breakpoints.end(); ++it)
