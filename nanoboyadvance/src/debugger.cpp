@@ -30,6 +30,7 @@ using namespace NanoboyAdvance;
 #define display_byte setfill('0') << setw(2) << hex
 
 #define wrong_param_amount cout << "Too many or few parameters. See \"help\" for help." << endl;
+#define wrong_param(n) cout << "Cannot parse parameter #" << (n) << "\"" << tokens[n] << "\"" << endl;
 #define debugger_try(code) try\
 {\
 code\
@@ -45,6 +46,7 @@ typedef struct
     bool thumb;
 } GBAExecuteBreakpoint;
 
+ARM7* arm_cpu;
 vector<GBAExecuteBreakpoint*> code_breakpoints;
 
 static u8 debugger_take_byte(string parameter)
@@ -96,6 +98,72 @@ static void debugger_bp_code(vector<string> tokens, bool thumb)
     )
 }
 
+static void debugger_showregs(vector<string> tokens)
+{
+    // Catch too many / few parameters
+    if (tokens.size() > 2)
+    {
+        wrong_param_amount;
+        return;
+    }
+
+    // Parse and display registers
+    debugger_try(
+        if (tokens.size() == 2) 
+        {
+            ARM7::ARM7Mode mode;
+            if (tokens[1] == "fiq") 
+            {
+                for (int i = 0; i < 8; i++) cout << "r" << i << ": " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::User, i) << dec << endl;
+                for (int i = 8; i < 15; i++) cout << "r" << i << "_<fiq>: " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::FIQ, i) << dec << endl;
+                cout << "r15: " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::User, 15) << dec << endl;
+                return;
+            }
+            else if (tokens[1] == "svc")
+            {
+                for (int i = 0; i < 13; i++) cout << "r" << i << ": " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::User, i) << dec << endl;
+                for (int i = 13; i < 15; i++) cout << "r" << i << "_<svc>: " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::SVC, i) << dec << endl;
+                cout << "r15: " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::User, 15) << dec << endl;
+                return;
+            }
+            else if (tokens[1] == "abt")
+            {
+                for (int i = 0; i < 13; i++) cout << "r" << i << ": " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::User, i) << dec << endl;
+                for (int i = 13; i < 15; i++) cout << "r" << i << "_<abt>: " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::Abort, i) << dec << endl;
+                cout << "r15: " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::User, 15) << dec << endl;
+                return;
+            }
+            else if (tokens[1] == "irq")
+            {
+                for (int i = 0; i < 13; i++) cout << "r" << i << ": " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::User, i) << dec << endl;
+                for (int i = 13; i < 15; i++) cout << "r" << i << "_<irq>: " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::IRQ, i) << dec << endl;
+                cout << "r15: " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::User, 15) << dec << endl;
+                return;
+            }
+            else if (tokens[1] == "und")
+            {
+                for (int i = 0; i < 13; i++) cout << "r" << i << ": " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::User, i) << dec << endl;
+                for (int i = 13; i < 15; i++) cout << "r" << i << "_<und>: " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::Undefined, i) << dec << endl;
+                cout << "r15: " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::User, 15) << dec << endl;
+                return;
+            }
+            else
+            {
+                wrong_param(1);
+                return;
+            }
+        }
+
+        // Print all registers
+        for (int i = 0; i < 16; i++) cout << "r" << i << ": " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::User, i) << dec << endl;
+        for (int i = 8; i < 15; i++) cout << "r" << i << "_<fiq>: " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::FIQ, i) << dec << endl;
+        for (int i = 13; i < 15; i++) cout << "r" << i << "_<svc>: " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::SVC, i) << dec << endl;
+        for (int i = 13; i < 15; i++) cout << "r" << i << "_<abt>: " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::Abort, i) << dec << endl;
+        for (int i = 13; i < 15; i++) cout << "r" << i << "_<irq>: " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::IRQ, i) << dec << endl;
+        for (int i = 13; i < 15; i++) cout << "r" << i << "_<und>: " << display_word << arm_cpu->GetGeneralRegister(ARM7::ARM7Mode::Undefined, i) << dec << endl;
+    )
+}
+
 void debugger_shell()
 {
     bool debugging = true;
@@ -135,6 +203,7 @@ void debugger_shell()
         if (tokens[0] == "help") debugger_help();
         else if (tokens[0] == "bpa") debugger_bp_code(tokens, false);
         else if (tokens[0] == "bpt") debugger_bp_code(tokens, true);
+        else if (tokens[0] == "showregs") debugger_showregs(tokens);
         else if (tokens[0] == "c") break;
         else cout << "Invalid command. See \"help\" for help." << endl;
     }
@@ -164,4 +233,5 @@ static void debugger_cpu_hook(int reason, void* data)
 void debugger_attach(ARM7* arm, GBAMemory* memory)
 {
     arm->SetCallback(debugger_cpu_hook);
+    arm_cpu = arm;
 }
