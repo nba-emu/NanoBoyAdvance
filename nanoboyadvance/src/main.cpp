@@ -23,7 +23,7 @@
 #include "common/log.h"
 #include "cmdline.h"
 #include "debugger.h"
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 #include <png.h>
 #include <iostream>
 #undef main
@@ -37,7 +37,10 @@ ARM7* arm;
 CmdLine* cmdline;
 
 // SDL related globals
-SDL_Surface* window;
+SDL_Window* window;
+SDL_Renderer* renderer;
+SDL_Surface* surface;
+SDL_Texture* texture;
 uint32_t* buffer;
 int window_width;
 int window_height;
@@ -62,20 +65,20 @@ void setpixel(int x, int y, int color)
 // Read key input from SDL and feed it into the GBA
 void schedule_keyinput()
 {
-    u8* kb_state = SDL_GetKeyState(NULL);
+    u8* kb_state = (u8*)SDL_GetKeyboardState(NULL);
     ushort joypad = 0;
 
     // Check which keys are pressed and set corresponding bits (0 = pressed, 1 = vice versa)
-    joypad |= kb_state[SDLK_y] ? 0 : 1;
-    joypad |= kb_state[SDLK_x] ? 0 : (1 << 1);
-    joypad |= kb_state[SDLK_BACKSPACE] ? 0 : (1 << 2);
-    joypad |= kb_state[SDLK_RETURN] ? 0 : (1 << 3);
-    joypad |= kb_state[SDLK_RIGHT] ? 0 : (1 << 4);
-    joypad |= kb_state[SDLK_LEFT] ? 0 : (1 << 5);
-    joypad |= kb_state[SDLK_UP] ? 0 : (1 << 6);
-    joypad |= kb_state[SDLK_DOWN] ? 0 : (1 << 7);
-    joypad |= kb_state[SDLK_s] ? 0 : (1 << 8);
-    joypad |= kb_state[SDLK_a] ? 0 : (1 << 9);
+    joypad |= kb_state[SDL_SCANCODE_Y] ? 0 : 1;
+    joypad |= kb_state[SDL_SCANCODE_X] ? 0 : (1 << 1);
+    joypad |= kb_state[SDL_SCANCODE_BACKSPACE] ? 0 : (1 << 2);
+    joypad |= kb_state[SDL_SCANCODE_RETURN] ? 0 : (1 << 3);
+    joypad |= kb_state[SDL_SCANCODE_RIGHT] ? 0 : (1 << 4);
+    joypad |= kb_state[SDL_SCANCODE_LEFT] ? 0 : (1 << 5);
+    joypad |= kb_state[SDL_SCANCODE_UP] ? 0 : (1 << 6);
+    joypad |= kb_state[SDL_SCANCODE_DOWN] ? 0 : (1 << 7);
+    joypad |= kb_state[SDL_SCANCODE_S] ? 0 : (1 << 8);
+    joypad |= kb_state[SDL_SCANCODE_A] ? 0 : (1 << 9);
 
     // Write the generated value to IO ram
     memory->gba_io->keyinput = joypad;
@@ -123,8 +126,8 @@ void schedule_frame()
     }
 }
 
-// Creates a new SDL window with given size
-void create_window(int width, int height)
+// Initializes SDL2 and stuff
+void sdl_init(int width, int height)
 {
     // Initialize SDL
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
@@ -132,22 +135,56 @@ void create_window(int width, int height)
         printf("SDL_Init Error: %s\n", SDL_GetError());
         SDL_Quit();
     }
+    
+    // Create SDL2 Window
+    window = SDL_CreateWindow("NanoboyAdvance", 100, 100, width, height, SDL_WINDOW_SHOWN);
+    
+    // Check for errors during window creation
+    if (window == nullptr) 
+    {
+        cout << "SDL_CreateWindow Error: " << SDL_GetError() << endl;
+        SDL_Quit();
+    }
+    
+    // Create renderer
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    
+    // Check for errors during renderer creation
+    if (renderer == nullptr)
+    {
+        SDL_DestroyWindow(window);
+        cout << "SDL_CreateRenderer Error: " << SDL_GetError()  << endl;
+        SDL_Quit();
+    }
 
-    // Create surface / window
-    window = SDL_SetVideoMode(width, height, 32, SDL_HWSURFACE);
+    // Create SDL surface
+    surface = SDL_CreateRGBSurface(0, width, height, 32, 
+                                   0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
 
     // Check for errors during window creation
-    if (window == NULL)
+    if (surface == nullptr)
     {
-        printf("SDL_SetVideoMode Error: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        cout << "SDL_CreateRGBSurface Error: " << SDL_GetError()  << endl;
+        SDL_Quit();
+    }
+
+    // Create SDL texture
+    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
+
+    // Check for errors...
+    if (texture == nullptr) 
+    {
+        SDL_FreeSurface(surface);
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        cout << "SDL_CreateTexture Error: " << SDL_GetError()  << endl;
         SDL_Quit();
     }
 
     // Get pixelbuffer
-    buffer = (uint32_t*)window->pixels;
-
-    // Set window caption
-    SDL_WM_SetCaption("NanoboyAdvance", "NanoboyAdvance");
+    buffer = (uint32_t*)surface->pixels;
 
     // Set width and height globals
     window_width = width;
@@ -231,8 +268,8 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    // Initialize SDL and create window
-    create_window(240 * cmdline->scale, 160 * cmdline->scale);
+    // Initialize SDL and create window, texture etc..
+    sdl_init(240 * cmdline->scale, 160 * cmdline->scale);
 
     // Run debugger immediatly if specified so
     if (cmdline->debug && cmdline->debug_immediatly)
@@ -243,20 +280,28 @@ int main(int argc, char** argv)
     // Main loop
     while (running)
     {
-        u8* kb_state = SDL_GetKeyState(NULL);
+        u8* kb_state = (u8*)SDL_GetKeyboardState(NULL);
         
         // Check if cli debugger is requested and run if needed
-        if (cmdline->debug && kb_state[SDLK_F11])
+        if (cmdline->debug && kb_state[SDL_SCANCODE_F11])
         {
             debugger_shell();
         }
 
         // Dump screenshot on F10
-        if (kb_state[SDLK_F10]) create_screenshot();
+        if (kb_state[SDL_SCANCODE_F10]) create_screenshot();
         
         // Feed keyboard input and generate exactly one frame
         schedule_keyinput();
         schedule_frame();
+
+        // Update texture
+        SDL_UpdateTexture(texture, (const SDL_Rect*)&surface->clip_rect, surface->pixels, surface->pitch);
+
+        // Draw =)
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, texture, NULL, NULL);
+        SDL_RenderPresent(renderer);
 
         // We must process SDL events
         while (SDL_PollEvent(&event))
@@ -266,11 +311,11 @@ int main(int argc, char** argv)
                 running = false;
             }
         }
-
-        // Switch buffers
-        SDL_Flip(window);
     }
 
-    SDL_FreeSurface(window);
+    SDL_DestroyTexture(texture);
+    SDL_FreeSurface(surface);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
     return 0;
 }

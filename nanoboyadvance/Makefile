@@ -60,7 +60,7 @@
 MY_CFLAGS = -Isrc/ -std=gnu++11
 
 # The linker options.
-MY_LIBS   = -lSDL -lpng
+MY_LIBS   = -lSDL2 -lpng
 
 # The pre-processor options used by the cpp (man cpp for more).
 CPPFLAGS  = -Wall

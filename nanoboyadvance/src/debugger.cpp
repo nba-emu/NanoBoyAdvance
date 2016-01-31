@@ -231,6 +231,8 @@ void debugger_shell()
         else if (tokens[0] == "bpt") debugger_bp_code(tokens, true);
         else if (tokens[0] == "bpr") debugger_bp_mem(tokens, false);
         else if (tokens[0] == "bpw") debugger_bp_mem(tokens, true);
+        else if (tokens[0] == "cbpx") code_breakpoints.clear();
+        else if (tokens[0] == "cpbm") memory_breakpoints.clear();
         else if (tokens[0] == "showregs") debugger_showregs(tokens);
         else if (tokens[0] == "c") break;
         else cout << "Invalid command. See \"help\" for help." << endl;
