@@ -900,7 +900,7 @@ namespace NanoboyAdvance
             //       Remove code redundancy
             if (add_to_base)
             {
-                for (int i = 0; i < 16; i++)
+                for (int i = first_register; i < 16; i++)
                 {
                     // Determine if the current register will be loaded/saved
                     if (instruction & (1 << i))
@@ -967,7 +967,7 @@ namespace NanoboyAdvance
             }
             else
             {
-                for (int i = 15; i >= 0; i--)
+                for (int i = 15; i >= first_register; i--)
                 {
                     // Determine if the current register will be loaded/saved
                     if (instruction & (1 << i))
@@ -1070,8 +1070,6 @@ namespace NanoboyAdvance
             // ARM.15 Coprocessor register transfer
             LOG(LOG_ERROR, "Unimplemented coprocessor register transfer, r15=0x%x", r15);
             break;
-        // TODO: Check wether swi is still executed when IRQ is disabled
-        //       Implement HLE version
         case ARM_16:
             // ARM.16 Software interrupt
             //if ((cpsr & IRQDisable) == 0)

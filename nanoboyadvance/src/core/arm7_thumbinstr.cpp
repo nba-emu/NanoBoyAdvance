@@ -482,8 +482,7 @@ namespace NanoboyAdvance
             // THUMB.6 PC-relative load
             u32 immediate_value = instruction & 0xFF;
             int reg_dest = (instruction >> 8) & 7;
-            // TODO: I'm pretty sure we don't even need the "Rotated" because address will always be aligned
-            reg(reg_dest) = ReadWordRotated((r15 & ~2) + (immediate_value << 2));
+            reg(reg_dest) = ReadWord((r15 & ~2) + (immediate_value << 2));
             break;
         }
         case THUMB_7:

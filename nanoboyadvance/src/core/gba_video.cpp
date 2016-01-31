@@ -168,30 +168,33 @@ namespace NanoboyAdvance
         {
             u16 value = (vram[offset + 1] << 8) | vram[offset];
             int number = value & 0x3FF;
+            bool horizontal_flip = (value & (1 << 10)) ? true : false;
+            bool vertical_flip = (value & (1 << 11)) ? true : false;
+            int this_tile_y = tile_internal_y;            
             u32* tile_data;
 
             // Apply vertical flip
-            if (value & (1 << 11))
+            if (vertical_flip)
             {
-                tile_internal_y = 7 - tile_internal_y;
+                this_tile_y = 7 - this_tile_y;
             }
 
             // Depending on the color resolution the tiles are decoded different..
             if (color_mode)
             {
-                tile_data = DecodeTileLine8PP(tile_block_base, number, tile_internal_y, false, transparent);
+                tile_data = DecodeTileLine8PP(tile_block_base, number, this_tile_y, false, transparent);
             }
             else
             {
                 int palette = value >> 12;
-                tile_data = DecodeTileLine4BPP(tile_block_base, palette * 0x20, number, tile_internal_y, transparent);
+                tile_data = DecodeTileLine4BPP(tile_block_base, palette * 0x20, number, this_tile_y, transparent);
             }
 
             // Copy rendered tile line to background line buffer
             // We must take care of horizontal flip
             for (int i = 0; i < 8; i++)
             {
-                if (value & (1 << 10))
+                if (horizontal_flip)
                 {
                     line_full[x * 8 + i] = tile_data[7 - i];
                 }
