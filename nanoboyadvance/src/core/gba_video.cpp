@@ -298,15 +298,32 @@ namespace NanoboyAdvance
                 if (line >= y && line <= y + height)
                 {
                     int internal_line = line - y;
-                    int displacement_y = internal_line % 8;
-                    int row = (internal_line - displacement_y) / 8;//(line - y) / 8;
+                    int displacement_y;// = internal_line % 8;
+                    int row;// = (internal_line - displacement_y) / 8;//(line - y) / 8;
                     int tiles_per_row = width / 8;
                     int tile_number = (attribute2 & 0x3FF) * 2;
                     int palette_number = attribute2 >> 12;
-                    //bool rotate_scale = attribute0 & (1 << 8) ? true : false;
-                    //bool horizontal_flip = !rotate_scale && (attribute1 & (1 << 12));
-                    //bool vertical_flip = !rotate_scale && (attribute1 & (1 << 13));
+                    bool rotate_scale = attribute0 & (1 << 8) ? true : false;
+                    bool horizontal_flip = !rotate_scale && (attribute1 & (1 << 12));
+                    bool vertical_flip = !rotate_scale && (attribute1 & (1 << 13));
                     bool color_mode = attribute0 & (1 << 13) ? true : false;
+
+                    // Apply (outer) vertical flip if required
+                    if (vertical_flip) 
+                    {
+                        internal_line = height - internal_line;                    
+                    }
+
+                    // Calculate some stuff
+                    displacement_y = internal_line % 8;
+                    row = (internal_line - displacement_y) / 8;
+
+                    // Apply (inner) vertical flip
+                    if (vertical_flip)
+                    {
+                        displacement_y = 7 - displacement_y;
+                        row = (height / 8) - row;
+                    }
 
                     // Render all visible tiles of the sprite
                     for (int j = 0; j < tiles_per_row; j++)
@@ -317,11 +334,11 @@ namespace NanoboyAdvance
                         // Determine the tile to render
                         if (one_dimensional)
                         {
-                            current_tile_number = tile_number + row * tiles_per_row + j;
+                            current_tile_number = tile_number + row * tiles_per_row + j * (color_mode ? 2 : 1);
                         }
                         else
                         {
-                            current_tile_number = tile_number + row * (color_mode ? 16 : 32) + j;
+                            current_tile_number = tile_number + row * 32 + j * (color_mode ? 2 : 1);
                         }
 
                         // Render either in 256 colors or 16 colors mode
