@@ -253,7 +253,7 @@ int main(int argc, char** argv)
         }
 
         // Initialize memory and ARM interpreter core
-        memory = new GBAMemory(cmdline->bios_file, cmdline->rom_file);
+        memory = new GBAMemory(cmdline->bios_file, cmdline->rom_file, "test.sav");
         arm = new ARM7(memory, !cmdline->use_bios);
         
         // Append debugger if desired

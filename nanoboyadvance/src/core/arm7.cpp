@@ -360,20 +360,28 @@ namespace NanoboyAdvance
         if (thumb)
         {
             r15 &= ~1;
-            switch (pipe_status)
-            {
-            case 0:
+            //switch (pipe_status)
+            //{
+            //case 0:
+            if (pipe_status == 0)
+            {            
                 pipe_opcode[0] = memory->ReadHWord(r15);
-                break;
-            case 1:
+                //break;
+            }            
+            //case 1:
+            else if (pipe_status == 1)
+            {            
                 pipe_opcode[1] = memory->ReadHWord(r15);
                 #ifdef ARM7_FASTHAX
                 pipe_decode[0] = thumb_decode[pipe_opcode[0]];
                 #else
                 pipe_decode[0] = THUMBDecode(pipe_opcode[0]);
                 #endif                
-                break;
-            case 2:
+                //break;
+            }
+            //case 2:
+            else if (pipe_status == 2)
+            {
                 pipe_opcode[2] = memory->ReadHWord(r15);
                 #ifdef ARM7_FASTHAX
                 pipe_decode[1] = thumb_decode[pipe_opcode[1]];
@@ -381,8 +389,11 @@ namespace NanoboyAdvance
                 pipe_decode[1] = THUMBDecode(pipe_opcode[1]);
                 #endif    
                 THUMBExecute(pipe_opcode[0], pipe_decode[0]);
-                break;
-            case 3:
+                //break;
+            }
+            //case 3:
+            else if (pipe_status == 3)
+            {
                 pipe_opcode[0] = memory->ReadHWord(r15);
                 #ifdef ARM7_FASTHAX
                 pipe_decode[2] = thumb_decode[pipe_opcode[2]];
@@ -390,8 +401,11 @@ namespace NanoboyAdvance
                 pipe_decode[2] = THUMBDecode(pipe_opcode[2]);
                 #endif    
                 THUMBExecute(pipe_opcode[1], pipe_decode[1]);
-                break;
-            case 4:
+                //break;
+            }
+            //case 4:
+            else 
+            {
                 pipe_opcode[1] = memory->ReadHWord(r15);
                 #ifdef ARM7_FASTHAX
                 pipe_decode[0] = thumb_decode[pipe_opcode[0]];
@@ -399,7 +413,7 @@ namespace NanoboyAdvance
                 pipe_decode[0] = THUMBDecode(pipe_opcode[0]);
                 #endif    
                 THUMBExecute(pipe_opcode[2], pipe_decode[2]);
-                break;
+                //break;
             }
         }
         else
@@ -481,7 +495,7 @@ namespace NanoboyAdvance
             RemapRegisters();
             r15 = 0x18;
             pipe_status = 0;
-            LOG(LOG_INFO, "Issued interrupt, r14_irq=0x%x, r15=0x%x", r14_irq, r15);
+            //LOG(LOG_INFO, "Issued interrupt, r14_irq=0x%x, r15=0x%x", r14_irq, r15);
         }
         //else { LOG(LOG_INFO, "Interrupt(s) requested but blocked (either by interrupt or swi)") }
     }

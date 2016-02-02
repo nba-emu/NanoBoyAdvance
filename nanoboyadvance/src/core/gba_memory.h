@@ -27,6 +27,7 @@
 #include "gba_dma.h"
 #include "gba_timer.h"
 #include "gba_video.h"
+#include "gba_backup.h"
 
 using namespace std;
 
@@ -42,7 +43,9 @@ namespace NanoboyAdvance
         u8 iram[0x8000];
         u8 io[0x3FF];
         u8* rom;
-        u8 sram[0x10000];
+        int rom_size;
+        u8 sram[0x10000];      
+
         MemoryCallback memory_hook;
         // Pointer-safe call to debug_hook (avoid nullpointer)
         inline void MemoryHook(u32 address, bool write, bool invalid)
@@ -53,12 +56,14 @@ namespace NanoboyAdvance
             }
         }
         static u8* ReadFile(string filename);
+        static int GetFileSize(string filename);
     public:
         // Hardware / IO accessible through memory
         GBAIO* gba_io;
         GBADMA* dma;
         GBATimer* timer;
         GBAVideo* video;
+        GBABackup* backup;
 
         // Flags
         enum class GBAHaltState
@@ -68,7 +73,17 @@ namespace NanoboyAdvance
             Halt
         };
         GBAHaltState halt_state { GBAHaltState::None };
- 
+
+        enum class GBASaveType
+        {
+            EEPROM,
+            SRAM,
+            FLASH,
+            FLASH512,
+            FLASH1M
+        };
+        GBASaveType save_type { GBASaveType::SRAM };
+
         // Sets an callback that gets called each time memory is accessed (unimpemented)
         void SetCallback(MemoryCallback callback);
 
@@ -81,6 +96,6 @@ namespace NanoboyAdvance
         void WriteWord(u32 offset, u32 value);
 
         // Constructor
-        GBAMemory(string bios_file, string rom_file);
+        GBAMemory(string bios_file, string rom_file, string save_file);
     };
 }

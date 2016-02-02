@@ -28,20 +28,71 @@
 
 namespace NanoboyAdvance
 {
-    GBAMemory::GBAMemory(string bios_file, string rom_file)
+    GBAMemory::GBAMemory(string bios_file, string rom_file, string save_file)
     {
+        bool found_save_type = false;
+
+        // Read files and init hardware
         bios = ReadFile(bios_file);
         rom = ReadFile(rom_file);
+        rom_size = GetFileSize(rom_file);
         gba_io = (GBAIO*)io;
         dma = new GBADMA(this, gba_io);
         timer = new GBATimer(gba_io);
         video = new GBAVideo(gba_io);
         memory_hook = NULL;
+
+        // Init some memory
         memset(wram, 0, 0x40000);
         memset(iram, 0, 0x8000);
         memset(io, 0, 0x3FF);
         memset(sram, 0, 0x10000);
         io[0x130] = 0xFF;
+
+        // Detect savetype
+        for (int i = 0; i < rom_size; i += 4)
+        {
+            if (memcmp(rom + i, "EEPROM_V", 8) == 0)
+            {
+                save_type = GBASaveType::EEPROM;
+                found_save_type = true;
+                cout << "EEPROM" << endl;
+            }
+            else if (memcmp(rom + i, "SRAM_V", 6) == 0)
+            {
+                save_type = GBASaveType::SRAM;
+                found_save_type = true;
+                cout << "SRAM" << endl;
+            }
+            else if (memcmp(rom + i, "FLASH_V", 7) == 0)
+            {
+                save_type = GBASaveType::FLASH;
+                found_save_type = true;
+                cout << "FLASH" << endl;
+            }
+            else if (memcmp(rom + i, "FLASH512_V", 10) == 0)
+            {
+                save_type = GBASaveType::FLASH512;
+                found_save_type = true;
+                cout << "FLASH512" << endl;
+            }
+            else if (memcmp(rom + i, "FLASH1M_V", 9) == 0)
+            {
+                save_type = GBASaveType::FLASH1M;
+                found_save_type = true;
+                cout << "FLASH1M" << endl;
+            }
+        }
+
+        // Log if we could't determine the savetype
+        if (!found_save_type)
+        {
+            cout << "No savetype detected, defaulting to SRAM..." << endl;
+        }
+
+        // FLASH Hack, remove if implemented properly
+        sram[0] = 0xC2;
+        sram[1] = 0x09;
     }
 
     void GBAMemory::SetCallback(MemoryCallback callback)
@@ -68,6 +119,17 @@ namespace NanoboyAdvance
             return NULL;
         }
         return data;
+    }
+
+    int GBAMemory::GetFileSize(string filename) 
+    {
+        ifstream ifs(filename, ios::in | ios::binary | ios::ate);
+        if (ifs.is_open())
+        {
+            ifs.seekg(0, ios::end);
+            return ifs.tellg();
+        }
+        return 0;
     }
 
     u8 GBAMemory::ReadByte(u32 offset)
@@ -119,9 +181,8 @@ namespace NanoboyAdvance
             // TODO: Prevent out of bounds read, we should save the rom size somewhere
             return rom[0x1000000 + internal_offset];
         case 0xE:
-            //LOG(LOG_WARN, "Unhandled read from SRAM.");
+            LOG(LOG_WARN, "Read from sram area: 0x%x", offset);
             return sram[internal_offset];
-            //return 0;
         default:
             LOG(LOG_ERROR, "Read from invalid/unimplemented address (0x%x)", offset);
             invalid = true;
@@ -289,7 +350,7 @@ namespace NanoboyAdvance
             invalid = true;            
             break;
         case 0xE:
-            //LOG(LOG_WARN, "Unhandled write to SRAM.");
+            LOG(LOG_WARN, "Write to sram area: 0x%x = 0x%x", offset, value);
             sram[internal_offset] = value;            
             break;
         default:
