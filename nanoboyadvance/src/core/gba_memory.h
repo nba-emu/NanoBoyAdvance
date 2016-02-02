@@ -27,7 +27,7 @@
 #include "gba_dma.h"
 #include "gba_timer.h"
 #include "gba_video.h"
-#include "gba_backup.h"
+#include "gba_backup_flash.h"
 
 using namespace std;
 
@@ -45,6 +45,7 @@ namespace NanoboyAdvance
         u8* rom;
         int rom_size;
         u8 sram[0x10000];      
+        GBABackup* backup;
 
         MemoryCallback memory_hook;
         // Pointer-safe call to debug_hook (avoid nullpointer)
@@ -63,7 +64,6 @@ namespace NanoboyAdvance
         GBADMA* dma;
         GBATimer* timer;
         GBAVideo* video;
-        GBABackup* backup;
 
         // Flags
         enum class GBAHaltState
@@ -78,9 +78,8 @@ namespace NanoboyAdvance
         {
             EEPROM,
             SRAM,
-            FLASH,
-            FLASH512,
-            FLASH1M
+            FLASH64,
+            FLASH128
         };
         GBASaveType save_type { GBASaveType::SRAM };
 

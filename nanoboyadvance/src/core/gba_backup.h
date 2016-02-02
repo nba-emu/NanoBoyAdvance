@@ -26,7 +26,7 @@ namespace NanoboyAdvance
     class GBABackup
     {
     public:
-        u8 ReadByte(u32 offset);
-        void WriteByte(u32 offset, u8 value);
+        virtual u8 ReadByte(u32 offset) { return 0; }
+        virtual void WriteByte(u32 offset, u8 value) {}
     };
 };

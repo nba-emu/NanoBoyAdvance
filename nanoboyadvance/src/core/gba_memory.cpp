@@ -66,21 +66,24 @@ namespace NanoboyAdvance
             }
             else if (memcmp(rom + i, "FLASH_V", 7) == 0)
             {
-                save_type = GBASaveType::FLASH;
+                save_type = GBASaveType::FLASH64;
                 found_save_type = true;
                 cout << "FLASH" << endl;
+                backup = new GBAFlash(save_file, false);
             }
             else if (memcmp(rom + i, "FLASH512_V", 10) == 0)
             {
-                save_type = GBASaveType::FLASH512;
+                save_type = GBASaveType::FLASH64;
                 found_save_type = true;
                 cout << "FLASH512" << endl;
+                backup = new GBAFlash(save_file, false);
             }
             else if (memcmp(rom + i, "FLASH1M_V", 9) == 0)
             {
-                save_type = GBASaveType::FLASH1M;
+                save_type = GBASaveType::FLASH128;
                 found_save_type = true;
                 cout << "FLASH1M" << endl;
+                backup = new GBAFlash(save_file, true);
             }
         }
 
@@ -91,8 +94,8 @@ namespace NanoboyAdvance
         }
 
         // FLASH Hack, remove if implemented properly
-        sram[0] = 0xC2;
-        sram[1] = 0x09;
+        //sram[0] = 0xC2;
+        //sram[1] = 0x09;
     }
 
     void GBAMemory::SetCallback(MemoryCallback callback)
@@ -181,7 +184,11 @@ namespace NanoboyAdvance
             // TODO: Prevent out of bounds read, we should save the rom size somewhere
             return rom[0x1000000 + internal_offset];
         case 0xE:
-            LOG(LOG_WARN, "Read from sram area: 0x%x", offset);
+            LOG(LOG_INFO, "Read from sram area: 0x%x", offset);
+            if (save_type == GBASaveType::FLASH64 || save_type == GBASaveType::FLASH128)
+            {
+                return backup->ReadByte(offset);
+            }
             return sram[internal_offset];
         default:
             LOG(LOG_ERROR, "Read from invalid/unimplemented address (0x%x)", offset);
@@ -351,6 +358,11 @@ namespace NanoboyAdvance
             break;
         case 0xE:
             LOG(LOG_WARN, "Write to sram area: 0x%x = 0x%x", offset, value);
+            if (save_type == GBASaveType::FLASH64 || save_type == GBASaveType::FLASH128)
+            {
+                backup->WriteByte(offset, value);
+                return;
+            }
             sram[internal_offset] = value;            
             break;
         default:
