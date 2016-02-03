@@ -121,83 +121,6 @@ namespace NanoboyAdvance
         case ARM7Mode::Undefined: spsr_und = value; break;        
         }
     }
-    
-    void ARM7::RemapRegisters()
-    {
-        switch (cpsr & 0x1F)
-        {
-        case (u32)ARM7Mode::User:
-            gprs[8] = &r8;
-            gprs[9] = &r9;
-            gprs[10] = &r10;
-            gprs[11] = &r11;
-            gprs[12] = &r12;
-            gprs[13] = &r13;
-            gprs[14] = &r14;
-            pspsr = &spsr_def;
-            break;
-        case (u32)ARM7Mode::FIQ:
-            gprs[8] = &r8_fiq;
-            gprs[9] = &r9_fiq;
-            gprs[10] = &r10_fiq;
-            gprs[11] = &r11_fiq;
-            gprs[12] = &r12_fiq;
-            gprs[13] = &r13_fiq;
-            gprs[14] = &r14_fiq;
-            pspsr = &spsr_fiq;
-            break;
-        case (u32)ARM7Mode::IRQ:
-            gprs[8] = &r8;
-            gprs[9] = &r9;
-            gprs[10] = &r10;
-            gprs[11] = &r11;
-            gprs[12] = &r12;
-            gprs[13] = &r13_irq;
-            gprs[14] = &r14_irq;
-            pspsr = &spsr_irq;
-            break;
-        case (u32)ARM7Mode::SVC:
-            gprs[8] = &r8;
-            gprs[9] = &r9;
-            gprs[10] = &r10;
-            gprs[11] = &r11;
-            gprs[12] = &r12;
-            gprs[13] = &r13_svc;
-            gprs[14] = &r14_svc;
-            pspsr = &spsr_svc;
-            break;
-        case (u32)ARM7Mode::Abort:
-            gprs[8] = &r8;
-            gprs[9] = &r9;
-            gprs[10] = &r10;
-            gprs[11] = &r11;
-            gprs[12] = &r12;
-            gprs[13] = &r13_abt;
-            gprs[14] = &r14_abt;
-            pspsr = &spsr_abt;
-            break;
-        case (u32)ARM7Mode::Undefined:
-            gprs[8] = &r8;
-            gprs[9] = &r9;
-            gprs[10] = &r10;
-            gprs[11] = &r11;
-            gprs[12] = &r12;
-            gprs[13] = &r13_und;
-            gprs[14] = &r14_und;
-            pspsr = &spsr_und;
-            break;
-        case (u32)ARM7Mode::System:
-            gprs[8] = &r8;
-            gprs[9] = &r9;
-            gprs[10] = &r10;
-            gprs[11] = &r11;
-            gprs[12] = &r12;
-            gprs[13] = &r13;
-            gprs[14] = &r14;
-            pspsr = &spsr_def;
-            break;
-        }
-    }
 
     void ARM7::Step()
     {
@@ -222,28 +145,19 @@ namespace NanoboyAdvance
         if (thumb)
         {
             r15 &= ~1;
-            //switch (pipe_status)
-            //{
-            //case 0:
-            if (pipe_status == 0)
-            {            
+            switch (pipe_status)
+           {            
                 pipe_opcode[0] = memory->ReadHWord(r15);
-                //break;
-            }            
-            //case 1:
-            else if (pipe_status == 1)
-            {            
+                break;            
+            case 1:
                 pipe_opcode[1] = memory->ReadHWord(r15);
                 #ifdef ARM7_FASTHAX
                 pipe_decode[0] = thumb_decode[pipe_opcode[0]];
                 #else
                 pipe_decode[0] = THUMBDecode(pipe_opcode[0]);
                 #endif                
-                //break;
-            }
-            //case 2:
-            else if (pipe_status == 2)
-            {
+                break;
+            case 2:
                 pipe_opcode[2] = memory->ReadHWord(r15);
                 #ifdef ARM7_FASTHAX
                 pipe_decode[1] = thumb_decode[pipe_opcode[1]];
@@ -251,11 +165,8 @@ namespace NanoboyAdvance
                 pipe_decode[1] = THUMBDecode(pipe_opcode[1]);
                 #endif    
                 THUMBExecute(pipe_opcode[0], pipe_decode[0]);
-                //break;
-            }
-            //case 3:
-            else if (pipe_status == 3)
-            {
+                break;
+            case 3:
                 pipe_opcode[0] = memory->ReadHWord(r15);
                 #ifdef ARM7_FASTHAX
                 pipe_decode[2] = thumb_decode[pipe_opcode[2]];
@@ -263,11 +174,8 @@ namespace NanoboyAdvance
                 pipe_decode[2] = THUMBDecode(pipe_opcode[2]);
                 #endif    
                 THUMBExecute(pipe_opcode[1], pipe_decode[1]);
-                //break;
-            }
-            //case 4:
-            else 
-            {
+                break;
+            case 4:
                 pipe_opcode[1] = memory->ReadHWord(r15);
                 #ifdef ARM7_FASTHAX
                 pipe_decode[0] = thumb_decode[pipe_opcode[0]];
@@ -275,7 +183,7 @@ namespace NanoboyAdvance
                 pipe_decode[0] = THUMBDecode(pipe_opcode[0]);
                 #endif    
                 THUMBExecute(pipe_opcode[2], pipe_decode[2]);
-                //break;
+                break;
             }
         }
         else

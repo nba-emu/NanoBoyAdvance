@@ -100,7 +100,82 @@ namespace NanoboyAdvance
         bool hle;
 
         // Maps the visible registers (according to cpsr) to gprs
-        void RemapRegisters();
+        inline void RemapRegisters()
+        {
+            switch (cpsr & 0x1F)
+            {
+            case (u32)ARM7Mode::User:
+                gprs[8] = &r8;
+                gprs[9] = &r9;
+                gprs[10] = &r10;
+                gprs[11] = &r11;
+                gprs[12] = &r12;
+                gprs[13] = &r13;
+                gprs[14] = &r14;
+                pspsr = &spsr_def;
+                break;
+            case (u32)ARM7Mode::FIQ:
+                gprs[8] = &r8_fiq;
+                gprs[9] = &r9_fiq;
+                gprs[10] = &r10_fiq;
+                gprs[11] = &r11_fiq;
+                gprs[12] = &r12_fiq;
+                gprs[13] = &r13_fiq;
+                gprs[14] = &r14_fiq;
+                pspsr = &spsr_fiq;
+                break;
+            case (u32)ARM7Mode::IRQ:
+                gprs[8] = &r8;
+                gprs[9] = &r9;
+                gprs[10] = &r10;
+                gprs[11] = &r11;
+                gprs[12] = &r12;
+                gprs[13] = &r13_irq;
+                gprs[14] = &r14_irq;
+                pspsr = &spsr_irq;
+                break;
+            case (u32)ARM7Mode::SVC:
+                gprs[8] = &r8;
+                gprs[9] = &r9;
+                gprs[10] = &r10;
+                gprs[11] = &r11;
+                gprs[12] = &r12;
+                gprs[13] = &r13_svc;
+                gprs[14] = &r14_svc;
+                pspsr = &spsr_svc;
+                break;
+            case (u32)ARM7Mode::Abort:
+                gprs[8] = &r8;
+                gprs[9] = &r9;
+                gprs[10] = &r10;
+                gprs[11] = &r11;
+                gprs[12] = &r12;
+                gprs[13] = &r13_abt;
+                gprs[14] = &r14_abt;
+                pspsr = &spsr_abt;
+                break;
+            case (u32)ARM7Mode::Undefined:
+                gprs[8] = &r8;
+                gprs[9] = &r9;
+                gprs[10] = &r10;
+                gprs[11] = &r11;
+                gprs[12] = &r12;
+                gprs[13] = &r13_und;
+                gprs[14] = &r14_und;
+                pspsr = &spsr_und;
+                break;
+            case (u32)ARM7Mode::System:
+                gprs[8] = &r8;
+                gprs[9] = &r9;
+                gprs[10] = &r10;
+                gprs[11] = &r11;
+                gprs[12] = &r12;
+                gprs[13] = &r13;
+                gprs[14] = &r14;
+                pspsr = &spsr_def;
+                break;
+            }
+        }
         
         // Pointer-safe call to debug_hook (avoid nullpointer)
         inline void DebugHook(int reason, void* data)
@@ -159,7 +234,7 @@ namespace NanoboyAdvance
             }
         }
 
-        void LSR(u32& operand, u32 amount, bool& carry, bool immediate)
+        inline void LSR(u32& operand, u32 amount, bool& carry, bool immediate)
         {
             // LSR #0 equals to LSR #32
             amount = immediate & (amount == 0) ? 32 : amount;
@@ -177,7 +252,7 @@ namespace NanoboyAdvance
             #endif
         }
 
-        void ASR(u32& operand, u32 amount, bool& carry, bool immediate)
+        inline void ASR(u32& operand, u32 amount, bool& carry, bool immediate)
         {
             u32 sign_bit = operand & 0x80000000;
 
@@ -192,7 +267,7 @@ namespace NanoboyAdvance
             }
         }
 
-        void ROR(u32& operand, u32 amount, bool& carry, bool immediate)
+        inline void ROR(u32& operand, u32 amount, bool& carry, bool immediate)
         {
             // ROR #0 equals to RRX #1
             if (amount != 0 || !immediate)
