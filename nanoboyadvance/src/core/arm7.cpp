@@ -146,7 +146,8 @@ namespace NanoboyAdvance
         {
             r15 &= ~1;
             switch (pipe_status)
-           {            
+           {
+            case 0:            
                 pipe_opcode[0] = memory->ReadHWord(r15);
                 break;            
             case 1:
