@@ -428,21 +428,21 @@ namespace NanoboyAdvance
                     first_background = false;
                     delete[] bg_buffer;
                 }
-                else if (bg2_enable && bg2_priority == i)
+                if (bg2_enable && bg2_priority == i)
                 {
                     u32* bg_buffer = RenderBackgroundMode0(gba_io->bg2cnt, line, gba_io->bg2hofs, gba_io->bg2vofs, !first_background);
                     DrawLineToBuffer(bg_buffer, line);
                     first_background = false;
                     delete[] bg_buffer;
                 }
-                else if (bg1_enable && bg1_priority == i)
+                if (bg1_enable && bg1_priority == i)
                 {
                     u32* bg_buffer = RenderBackgroundMode0(gba_io->bg1cnt, line, gba_io->bg1hofs, gba_io->bg1vofs, !first_background);
                     DrawLineToBuffer(bg_buffer, line);
                     first_background = false;
                     delete[] bg_buffer;
                 }
-                else if (bg0_enable && bg0_priority == i)
+                if (bg0_enable && bg0_priority == i)
                 {
                     u32* bg_buffer = RenderBackgroundMode0(gba_io->bg0cnt, line, gba_io->bg0hofs, gba_io->bg0vofs, !first_background);
                     DrawLineToBuffer(bg_buffer, line);

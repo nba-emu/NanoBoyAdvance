@@ -140,20 +140,154 @@ namespace NanoboyAdvance
         }
 
         // Shifter methods
-        void LSL(u32& operand, u32 amount, bool& carry);
-        void LSR(u32& operand, u32 amount, bool& carry, bool immediate);
-        void ASR(u32& operand, u32 amount, bool& carry, bool immediate);
-        void ROR(u32& operand, u32 amount, bool& carry, bool immediate);
+        inline void LSL(u32& operand, u32 amount, bool& carry)
+        {
+            // Nothing is done when the shift amount equals zero
+            if (amount != 0)
+            {
+                #ifndef __i386__
+                carry = (operand << (amount - 1)) & 0x80000000 ? true : false;
+                operand <<= amount;
+                #else 
+                // This way we easily bypass the 32 bits restriction on x86
+                for (u32 i = 0; i < amount; i++)
+                {
+                    carry = operand & 0x80000000 ? true : false;
+                    operand <<= 1;
+                }
+                #endif
+            }
+        }
+
+        void LSR(u32& operand, u32 amount, bool& carry, bool immediate)
+        {
+            // LSR #0 equals to LSR #32
+            amount = immediate & (amount == 0) ? 32 : amount;
+
+            // Perform shift
+            #ifndef __i386__
+            carry = (operand >> (amount - 1)) & 1;
+            operand >>= amount;
+            #else
+            for (u32 i = 0; i < amount; i++)
+            {
+                carry = operand & 1 ? true : false;
+                operand >>= 1;
+            }
+            #endif
+        }
+
+        void ASR(u32& operand, u32 amount, bool& carry, bool immediate)
+        {
+            u32 sign_bit = operand & 0x80000000;
+
+            // ASR #0 equals to ASR #32
+            amount = immediate & (amount == 0) ? 32 : amount;
+
+            // Perform shift
+            for (u32 i = 0; i < amount; i++)
+            {
+                carry = operand & 1 ? true : false;
+                operand = (operand >> 1) | sign_bit;
+            }
+        }
+
+        void ROR(u32& operand, u32 amount, bool& carry, bool immediate)
+        {
+            // ROR #0 equals to RRX #1
+            if (amount != 0 || !immediate)
+            {
+                for (u32 i = 1; i <= amount; i++)
+                {
+                    u32 high_bit = (operand & 1) ? 0x80000000 : 0;
+                    operand = (operand >> 1) | high_bit;
+                    carry = high_bit == 0x80000000;
+                }
+            }
+            else
+            {
+                bool old_carry = carry;
+                carry = (operand & 1) ? true : false;
+                operand = (operand >> 1) | (old_carry ? 0x80000000 : 0);
+            }
+        }
 
         // Memory methods
-        u8 ReadByte(u32 offset);
-        u16 ReadHWord(u32 offset);
-        u32 ReadHWordSigned(u32 offset);
-        u32 ReadWord(u32 offset);
-        u32 ReadWordRotated(u32 offset);
-        void WriteByte(u32 offset, u8 value);
-        void WriteHWord(u32 offset, u16 value);
-        void WriteWord(u32 offset, u32 value);
+        inline u8 ReadByte(u32 offset)
+        {
+            return memory->ReadByte(offset);
+        }
+
+        inline u16 ReadHWord(u32 offset)
+        {
+            if (offset & 1)
+            {
+                u16 value = memory->ReadHWord(offset & ~1);
+                return (value >> 8) | (value << 24); 
+            }        
+            return memory->ReadHWord(offset);
+        }
+
+        inline u32 ReadHWordSigned(u32 offset)
+        {
+            u32 value = 0;        
+            if (offset & 1) 
+            {
+                value = memory->ReadByte(offset & ~1);
+                if (value & 0x80) value |= 0xFFFFFF00;
+            }
+            else 
+            {
+                value = memory->ReadHWord(offset);
+                if (value & 0x8000) value |= 0xFFFF0000;
+            }
+            return value;
+        }
+
+        inline u32 ReadWord(u32 offset)
+        {
+            if (offset < 0x4000 && last_fetched_offset >= 0x4000)
+            {
+                return memory->ReadWord(last_bios_offset);
+            }
+            if (offset >= 0x4000 && offset < 0x2000000)
+            {
+                if (cpsr & Thumb)
+                {
+                    // TODO: Handle special cases
+                    return (last_fetched_opcode << 16) | last_fetched_opcode;
+                }
+                else
+                {
+                    return last_fetched_opcode;
+                }
+            }
+            return memory->ReadWord(offset & ~3);
+        }
+
+        inline u32 ReadWordRotated(u32 offset)
+        {
+            u32 value = ReadWord(offset & ~3);
+            int amount = (offset & 3) * 8;
+            return amount == 0 ? value : ((value >> amount) | (value << (32 - amount)));
+        }
+
+        inline void WriteByte(u32 offset, u8 value)
+        {
+            memory->WriteByte(offset, value);
+        }
+
+        inline void WriteHWord(u32 offset, u16 value)
+        {
+            offset &= ~1;
+            memory->WriteHWord(offset, value);
+        }
+
+        inline void WriteWord(u32 offset, u32 value)
+        {
+            offset &= ~3;
+            memory->WriteWord(offset, value);
+        }
 
         // Command processing
         int ARMDecode(u32 instruction);
