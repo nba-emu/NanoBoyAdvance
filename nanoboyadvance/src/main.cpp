@@ -312,7 +312,12 @@ int main(int argc, char** argv)
             }
         }
     }
+    
+    // Free stuff (emulator)
+    delete arm;
+    delete memory;
 
+    // Free stuff (SDL)
     SDL_DestroyTexture(texture);
     SDL_FreeSurface(surface);
     SDL_DestroyRenderer(renderer);

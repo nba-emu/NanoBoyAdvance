@@ -26,6 +26,7 @@ namespace NanoboyAdvance
 {
     class GBAFlash : public GBABackup
     {
+        std::string save_file;
         bool second_bank { false }; // FLASH64 = false, FLASH128 = true
         u8 memory[2][65536]; // contains the savedata
         int memory_bank { 0 };  
@@ -46,6 +47,7 @@ namespace NanoboyAdvance
         };
     public:
         GBAFlash(std::string save_file, bool second_bank);
+        ~GBAFlash();
         u8 ReadByte(u32 offset);
         void WriteByte(u32 offset, u8 value);
     };

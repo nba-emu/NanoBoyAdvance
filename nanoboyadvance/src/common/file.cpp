@@ -25,6 +25,14 @@ using namespace std;
 
 namespace NanoboyAdvance
 {
+    bool File::Exists(string filename)
+    {
+        ifstream ifs(filename);
+        bool exists = ifs.is_open();
+        ifs.close();
+        return exists;
+    }
+
     u8* File::ReadFile(string filename)
     {
         ifstream ifs(filename, ios::in | ios::binary | ios::ate);
@@ -37,6 +45,7 @@ namespace NanoboyAdvance
             ifs.seekg(0, ios::beg);
             data = new u8[filesize];
             ifs.read((char*)data, filesize);
+            ifs.close();
         }
         else
         {
@@ -44,6 +53,21 @@ namespace NanoboyAdvance
             return NULL;
         }
         return data;
+    }
+
+    void File::WriteFile(string filename, u8* data, int size)
+    {
+        ofstream ofs(filename, ios::out | ios::binary);
+        if (ofs.is_open())
+        {
+            //ofs.seekg(0, ios::beg); // not sure if required
+            ofs.write((char*)data, size);
+            ofs.close();
+        }
+        else
+        {
+            cout << "Cannot write file " << filename.c_str();
+        }
     }
 
     int File::GetFileSize(string filename) 

@@ -95,42 +95,18 @@ namespace NanoboyAdvance
         }
     }
 
+    GBAMemory::~GBAMemory()
+    {
+        delete backup;
+        delete dma;
+        delete timer;
+        delete video;
+    }
+
     void GBAMemory::SetCallback(MemoryCallback callback)
     {
         memory_hook = callback;
     }
-    
-    /*u8* GBAMemory::ReadFile(string filename)
-    {
-        ifstream ifs(filename, ios::in | ios::binary | ios::ate);
-        size_t filesize;
-        u8* data = 0;
-        if (ifs.is_open())
-        {
-            ifs.seekg(0, ios::end);
-            filesize = ifs.tellg();
-            ifs.seekg(0, ios::beg);
-            data = new u8[filesize];
-            ifs.read((char*)data, filesize);
-        }
-        else
-        {
-            cout << "Cannot open file " << filename.c_str();
-            return NULL;
-        }
-        return data;
-    }
-
-    int GBAMemory::GetFileSize(string filename) 
-    {
-        ifstream ifs(filename, ios::in | ios::binary | ios::ate);
-        if (ifs.is_open())
-        {
-            ifs.seekg(0, ios::end);
-            return ifs.tellg();
-        }
-        return 0;
-    }*/
 
     u8 GBAMemory::ReadByte(u32 offset)
     {

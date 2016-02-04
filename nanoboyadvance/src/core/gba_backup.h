@@ -28,5 +28,6 @@ namespace NanoboyAdvance
     public:
         virtual u8 ReadByte(u32 offset) { return 0; }
         virtual void WriteByte(u32 offset, u8 value) {}
+        virtual ~GBABackup() {}
     };
 };

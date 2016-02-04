@@ -56,8 +56,6 @@ namespace NanoboyAdvance
                 memory_hook(address, write, invalid);
             }
         }
-        //static u8* ReadFile(string filename);
-        //static int GetFileSize(string filename);
     public:
         // Hardware / IO accessible through memory
         GBAIO* gba_io;
@@ -94,7 +92,8 @@ namespace NanoboyAdvance
         void WriteHWord(u32 offset, u16 value);
         void WriteWord(u32 offset, u32 value);
 
-        // Constructor
+        // Constructor and Destructor
         GBAMemory(string bios_file, string rom_file, string save_file);
+        ~GBAMemory();
     };
 }

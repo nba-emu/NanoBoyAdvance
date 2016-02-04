@@ -26,7 +26,9 @@ namespace NanoboyAdvance
     class File
     {
     public:
+        static bool Exists(std::string filename);
         static u8* ReadFile(std::string filename);
+        static void WriteFile(std::string filename, u8* data, int size);
         static int GetFileSize(std::string filename);
     };
 };

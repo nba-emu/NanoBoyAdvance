@@ -19,6 +19,7 @@
 
 #include "gba_backup_flash.h"
 #include "common/log.h"
+#include "common/file.h"
 
 using namespace std;
 
@@ -26,13 +27,54 @@ namespace NanoboyAdvance
 {
     GBAFlash::GBAFlash(string save_file, bool second_bank)
     {
+        u8* save_data;
+
+        // Save save file path and flash type
+        this->save_file = save_file;        
         this->second_bank = second_bank;
-        for (int i = 0; i < 65536; i++) // loop is propably more efficient than calling memset twice
+
+        // Check if save file already exists, sanitize and load if so        
+        if (File::Exists(save_file))
+        {
+            int size = File::GetFileSize(save_file);
+            if (size == (second_bank ? 131072 : 65536))
+            {
+                save_data = File::ReadFile(save_file);
+                for (int i = 0; i < 65536; i++)
+                {
+                    memory[0][i] = save_data[i];
+                    memory[1][i] = second_bank ? save_data[65536 + i] : 0;
+                }
+                return;
+            }
+            else { LOG(LOG_ERROR, "Save file size is invalid"); }
+        }
+
+        // If loading a save file failed, init save with FFh, just like if the chip was erased
+        for (int i = 0; i < 65536; i++)
         {    
             memory[0][i] = 0xFF;
-            memory[1][i] = 0xFF; // do it even if chip is FLASH64, we spare an extra branch
+            memory[1][i] = 0xFF;
         }
     }
+
+    GBAFlash::~GBAFlash()
+    {
+        if (second_bank)
+        {
+            u8 buffer[131072];
+            for (int i = 0; i < 65536; i++)
+            {
+                buffer[i] = memory[0][i];
+                buffer[65536 + i] = memory[1][i];
+            }
+            File::WriteFile(save_file, buffer, 131072);
+        }
+        else
+        {
+            File::WriteFile(save_file, memory[0], 65536);
+        }
+    }   
 
     u8 GBAFlash::ReadByte(u32 offset)
     {
@@ -89,7 +131,7 @@ namespace NanoboyAdvance
             }
             enable_erase = false;
         }
-        // TODO: allow single byte write only if affected sector was erased beforehand.
+        // todo: allow single byte write only if affected sector was erased beforehand.
         else if (enable_byte_write) { memory[memory_bank][offset & 0xFFFF] = value; enable_byte_write = false; } 
         else if (enable_bank_select && offset == 0x0E000000) { memory_bank = value & 1; enable_bank_select = false;  }
     }
