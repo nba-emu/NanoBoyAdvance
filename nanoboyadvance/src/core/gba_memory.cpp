@@ -19,6 +19,7 @@
 
 #include "gba_memory.h"
 #include "common/log.h"
+#include "common/file.h"
 
 /**
  * TODO: Refactor code for more beauty and check if memory busses
@@ -33,9 +34,9 @@ namespace NanoboyAdvance
         bool found_save_type = false;
 
         // Read files and init hardware
-        bios = ReadFile(bios_file);
-        rom = ReadFile(rom_file);
-        rom_size = GetFileSize(rom_file);
+        bios = File::ReadFile(bios_file);
+        rom = File::ReadFile(rom_file);
+        rom_size = File::GetFileSize(rom_file);
         gba_io = (GBAIO*)io;
         dma = new GBADMA(this, gba_io);
         timer = new GBATimer(gba_io);
@@ -92,10 +93,6 @@ namespace NanoboyAdvance
         {
             cout << "No savetype detected, defaulting to SRAM..." << endl;
         }
-
-        // FLASH Hack, remove if implemented properly
-        //sram[0] = 0xC2;
-        //sram[1] = 0x09;
     }
 
     void GBAMemory::SetCallback(MemoryCallback callback)
@@ -103,7 +100,7 @@ namespace NanoboyAdvance
         memory_hook = callback;
     }
     
-    u8* GBAMemory::ReadFile(string filename)
+    /*u8* GBAMemory::ReadFile(string filename)
     {
         ifstream ifs(filename, ios::in | ios::binary | ios::ate);
         size_t filesize;
@@ -133,7 +130,7 @@ namespace NanoboyAdvance
             return ifs.tellg();
         }
         return 0;
-    }
+    }*/
 
     u8 GBAMemory::ReadByte(u32 offset)
     {

@@ -20,7 +20,6 @@
 #pragma once
 
 #include <iostream>
-#include <fstream>
 #include "common/types.h"
 #include "memory.h"
 #include "gba_io.h"
@@ -48,6 +47,7 @@ namespace NanoboyAdvance
         GBABackup* backup;
 
         MemoryCallback memory_hook;
+
         // Pointer-safe call to debug_hook (avoid nullpointer)
         inline void MemoryHook(u32 address, bool write, bool invalid)
         {
@@ -56,8 +56,8 @@ namespace NanoboyAdvance
                 memory_hook(address, write, invalid);
             }
         }
-        static u8* ReadFile(string filename);
-        static int GetFileSize(string filename);
+        //static u8* ReadFile(string filename);
+        //static int GetFileSize(string filename);
     public:
         // Hardware / IO accessible through memory
         GBAIO* gba_io;
