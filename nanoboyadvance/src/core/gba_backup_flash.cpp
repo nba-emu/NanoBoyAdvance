@@ -93,8 +93,7 @@ namespace NanoboyAdvance
 
     void GBAFlash::WriteByte(u32 offset, u8 value)
     {
-        // todo: if single byte write is pending, prioritize it before command initiation
-        if (offset == 0x0E005555 && value == 0xAA) { command_phase = 1; LOG(LOG_INFO, " Phase 1"); }
+        if (!enable_byte_write && offset == 0x0E005555 && value == 0xAA) { command_phase = 1; LOG(LOG_INFO, " Phase 1"); }
         else if (offset == 0x0E002AAA && value == 0x55 && command_phase == 1) { command_phase = 2; LOG(LOG_INFO, "Phase 2"); }
         else if (offset == 0x0E005555 && command_phase == 2) 
         {
