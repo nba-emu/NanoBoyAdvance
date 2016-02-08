@@ -540,18 +540,10 @@ namespace NanoboyAdvance
                     u32 result = operand1 - operand2;
                     if (set_flags)
                     {
-                        #ifdef __arm__
-                        asm volatile("subs r0, %[operand1], %[operand2]\n"
-                                                "mrs r0, cpsr\n"
-                                                "and r0, r0, #0xF0000000\n"
-                                                "bic %[cpsr], %[cpsr], #0xF0000000\n"
-                                                "orr %[cpsr], %[cpsr], r0" : [cpsr] "=r" (cpsr) : [operand1] "r" (operand1), [operand2] "r" (operand2) : "r0", "cc");
-                        #else
                         AssertCarry(operand1 >= operand2);
                         CalculateOverflowSub(result, operand1, operand2);
                         CalculateSign(result);
                         CalculateZero(result);
-                        #endif
                     }
                     reg(reg_dest) = result;
                     break;
@@ -561,18 +553,10 @@ namespace NanoboyAdvance
                     u32 result = operand2 - operand1;
                     if (set_flags)
                     {
-                        #ifdef __arm__
-                        asm volatile("rsbs r0, %[operand1], %[operand2]\n"
-                                                "mrs r0, cpsr\n"
-                                                "and r0, r0, #0xF0000000\n"
-                                                "bic %[cpsr], %[cpsr], #0xF0000000\n"
-                                                "orr %[cpsr], %[cpsr], r0" : [cpsr] "=r" (cpsr) : [operand1] "r" (operand1), [operand2] "r" (operand2) : "r0", "cc");
-                        #else
                         AssertCarry(operand2 >= operand1);
                         CalculateOverflowSub(result, operand2, operand1);
                         CalculateSign(result);
                         CalculateZero(result);
-                        #endif
                     }
                     reg(reg_dest) = result;
                     break;
@@ -582,19 +566,11 @@ namespace NanoboyAdvance
                     u32 result = operand1 + operand2;
                     if (set_flags)
                     {
-                        #ifdef __arm__
-                        asm volatile("adds r0, %[operand1], %[operand2]\n"
-                                                "mrs r0, cpsr\n"
-                                                "and r0, r0, #0xF0000000\n"
-                                                "bic %[cpsr], %[cpsr], #0xF0000000\n"
-                                                "orr %[cpsr], %[cpsr], r0" : [cpsr] "=r" (cpsr) : [operand1] "r" (operand1), [operand2] "r" (operand2) : "r0", "cc");
-                        #else
                         u64 result_long = (u64)operand1 + (u64)operand2;
                         AssertCarry((result_long & 0x100000000) ? true : false);
                         CalculateOverflowAdd(result, operand1, operand2);
                         CalculateSign(result);
                         CalculateZero(result);
-                        #endif
                     }
                     reg(reg_dest) = result;
                     break;
