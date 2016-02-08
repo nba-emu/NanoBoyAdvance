@@ -148,10 +148,7 @@ namespace NanoboyAdvance
         }
 
         // If it will not be executed return now
-        if (!execute)
-        {
-            return;
-        }
+        if (!execute) return;
 
         // Perform the actual execution
         switch (type)
@@ -159,31 +156,34 @@ namespace NanoboyAdvance
         case ARM_1:
         {
             // ARM.1 Multiply (accumulate)
-            int reg_operand1 = instruction & 0xF;
-            int reg_operand2 = (instruction >> 8) & 0xF;
-            int reg_operand3 = (instruction >> 12) & 0xF;
-            int reg_dest = (instruction >> 16) & 0xF;
-            bool set_flags = (instruction & (1 << 20)) == (1 << 20);
-            bool accumulate = (instruction & (1 << 21)) == (1 << 21);
+            const int reg_operand1 = instruction & 0xF;
+            const int reg_operand2 = (instruction >> 8) & 0xF;
+            const int reg_operand3 = (instruction >> 12) & 0xF;
+            const int reg_dest = (instruction >> 16) & 0xF;
+            const bool set_flags = (instruction & (1 << 20)) == (1 << 20);
+            const bool accumulate = (instruction & (1 << 21)) == (1 << 21);
             reg(reg_dest) = reg(reg_operand1) * reg(reg_operand2);
             if (accumulate)
             {
                 reg(reg_dest) += reg(reg_operand3);
             }
-            CalculateSign(reg(reg_dest));
-            CalculateZero(reg(reg_dest));
-            break;
+            if (set_flags)
+            {
+                CalculateSign(reg(reg_dest));
+                CalculateZero(reg(reg_dest));
+            }
+            return;
         }
         case ARM_2:
         {
             // ARM.2 Multiply (accumulate) long
-            int reg_operand1 = instruction & 0xF;
-            int reg_operand2 = (instruction >> 8) & 0xF;
-            int reg_dest_low = (instruction >> 12) & 0xF;
-            int reg_dest_high = (instruction >> 16) & 0xF;
-            bool set_flags = (instruction & (1 << 20)) == (1 << 20);
-            bool accumulate = (instruction & (1 << 21)) == (1 << 21);
-            bool sign_extend = (instruction & (1 << 22)) == (1 << 22);
+            const int reg_operand1 = instruction & 0xF;
+            const int reg_operand2 = (instruction >> 8) & 0xF;
+            const int reg_dest_low = (instruction >> 12) & 0xF;
+            const int reg_dest_high = (instruction >> 16) & 0xF;
+            const bool set_flags = (instruction & (1 << 20)) == (1 << 20);
+            const bool accumulate = (instruction & (1 << 21)) == (1 << 21);
+            const bool sign_extend = (instruction & (1 << 22)) == (1 << 22);
             s64 result;
             if (sign_extend)
             {
@@ -208,14 +208,17 @@ namespace NanoboyAdvance
             }
             reg(reg_dest_low) = result & 0xFFFFFFFF;
             reg(reg_dest_high) = result >> 32;
-            CalculateSign(reg(reg_dest_high));
-            CalculateZero(result);
-            break;
+            if (set_flags)
+            {
+                CalculateSign(reg(reg_dest_high));
+                CalculateZero(result);
+            }            
+            return;
         }
         case ARM_3:
         {
             // ARM.3 Branch and exchange
-            int reg_address = instruction & 0xF;
+            const int reg_address = instruction & 0xF;
             if (reg(reg_address) & 1)
             {
                 r15 = reg(reg_address) & ~1;
@@ -226,17 +229,21 @@ namespace NanoboyAdvance
                 r15 = reg(reg_address) & ~3;
             }
             flush_pipe = true;
-            break;
+            return;
         }
         case ARM_4:
         {
             // ARM.4 Single data swap
-            int reg_source = instruction & 0xF;
-            int reg_dest = (instruction >> 12) & 0xF;
-            int reg_base = (instruction >> 16) & 0xF;
-            bool swap_byte = (instruction & (1 << 22)) == (1 << 22);
+            const int reg_source = instruction & 0xF;
+            const int reg_dest = (instruction >> 12) & 0xF;
+            const int reg_base = (instruction >> 16) & 0xF;
+            const bool swap_byte = (instruction & (1 << 22)) == (1 << 22);
             u32 memory_value;
+
+            #ifdef DEBUG
             ASSERT(reg_source == 15 || reg_dest == 15 || reg_base == 15, LOG_WARN, "Single Data Swap, thou shall not use r15, r15=0x%x", r15);
+            #endif 
+
             if (swap_byte)
             {
                 memory_value = ReadByte(reg(reg_base)) & 0xFF;
@@ -249,7 +256,7 @@ namespace NanoboyAdvance
                 WriteWord(reg(reg_base), reg(reg_source));
                 reg(reg_dest) = memory_value;
             }
-            break;
+            return;
         }
         // TODO: Recheck for correctness and look for possabilities to optimize this bunch of code
         case ARM_5:
@@ -260,21 +267,23 @@ namespace NanoboyAdvance
             // ARM.6 Halfword data transfer, immediate offset
             // ARM.7 Signed data transfer (byte/halfword)
             u32 offset;
-            int reg_dest = (instruction >> 12) & 0xF;
-            int reg_base = (instruction >> 16) & 0xF;
-            bool load = (instruction & (1 << 20)) == (1 << 20);
-            bool write_back = (instruction & (1 << 21)) == (1 << 21);
-            bool immediate = (instruction & (1 << 22)) == (1 << 22);
-            bool add_to_base = (instruction & (1 << 23)) == (1 << 23);
-            bool pre_indexed = (instruction & (1 << 24)) == (1 << 24);
+            const int reg_dest = (instruction >> 12) & 0xF;
+            const int reg_base = (instruction >> 16) & 0xF;
+            const bool load = (instruction & (1 << 20)) == (1 << 20);
+            const bool write_back = (instruction & (1 << 21)) == (1 << 21);
+            const bool immediate = (instruction & (1 << 22)) == (1 << 22);
+            const bool add_to_base = (instruction & (1 << 23)) == (1 << 23);
+            const bool pre_indexed = (instruction & (1 << 24)) == (1 << 24);
             u32 address = reg(reg_base);
 
+            #ifdef DEBUG
             // Instructions neither write back if base register is r15 nor should they have the write-back bit set when being post-indexed (post-indexing automatically writes back the address)
             ASSERT(reg_base == 15 && write_back, LOG_WARN, "Halfword and Signed Data Transfer, thou shall not writeback to r15, r15=0x%x", r15);
             ASSERT(write_back && !pre_indexed, LOG_WARN, "Halfword and Signed Data Transfer, thou shall not have write-back bit if being post-indexed, r15=0x%x", r15);
 
             // Load-bit shall not be unset when signed transfer is selected
             ASSERT(type == ARM_7 && !load, LOG_WARN, "Halfword and Signed Data Transfer, thou shall not store in signed mode, r15=0x%x", r15);
+            #endif
 
             // If the instruction is immediate take an 8-bit immediate value as offset, otherwise take the contents of a register as offset
             if (immediate)
@@ -284,7 +293,9 @@ namespace NanoboyAdvance
             else
             {
                 int reg_offset = instruction & 0xF;
+                #ifdef DEBUG
                 ASSERT(reg_offset == 15, LOG_WARN, "Halfword and Signed Data Transfer, thou shall not take r15 as offset, r15=0x%x", r15);
+                #endif
                 offset = reg(reg_offset);
             }
 
@@ -356,21 +367,21 @@ namespace NanoboyAdvance
                 }
                 reg(reg_base) = address;
             }
-            break;
+            return;
         }
         case ARM_8:
         {
             // ARM.8 Data processing and PSR transfer
             bool set_flags = (instruction & (1 << 20)) == (1 << 20);
-            int opcode = (instruction >> 21) & 0xF;
+            const int opcode = (instruction >> 21) & 0xF;
 
             // Determine wether the instruction is data processing or psr transfer
             if (!set_flags && opcode >= 0b1000 && opcode <= 0b1011)
             {
                 // PSR transfer
-                bool immediate = instruction & (1 << 25) ? true : false;
-                bool use_spsr = instruction & (1 << 22) ? true : false;
-                bool msr = instruction & (1 << 21) ? true : false;
+                const bool immediate = instruction & (1 << 25) ? true : false;
+                const bool use_spsr = instruction & (1 << 22) ? true : false;
+                const bool msr = instruction & (1 << 21) ? true : false;
 
                 if (msr)
                 {
@@ -418,9 +429,9 @@ namespace NanoboyAdvance
             else
             {
                 // Data processing
-                int reg_dest = (instruction >> 12) & 0xF;
-                int reg_operand1 = (instruction >> 16) & 0xF;
-                bool immediate = (instruction & (1 << 25)) == (1 << 25);
+                const int reg_dest = (instruction >> 12) & 0xF;
+                const int reg_operand1 = (instruction >> 16) & 0xF;
+                const bool immediate = (instruction & (1 << 25)) == (1 << 25);
                 u32 operand1 = reg(reg_operand1);
                 u32 operand2;
                 bool carry = (cpsr & CarryFlag) == CarryFlag;
@@ -428,8 +439,8 @@ namespace NanoboyAdvance
                 // Operand 2 can either be an 8 bit immediate value rotated right by 4 bit value or the value of a register shifted by a specific amount
                 if (immediate)
                 {
-                    int immediate_value = instruction & 0xFF;
-                    int amount = ((instruction >> 8) & 0xF) << 1;
+                    const int immediate_value = instruction & 0xFF;
+                    const int amount = ((instruction >> 8) & 0xF) << 1;
                     operand2 = (immediate_value >> amount) | (immediate_value << (32 - amount));
                     if (amount != 0)
                     {
@@ -438,8 +449,8 @@ namespace NanoboyAdvance
                 }
                 else
                 {
-                    bool shift_immediate = (instruction & (1 << 4)) ? false : true;
-                    int reg_operand2 = instruction & 0xF;
+                    const bool shift_immediate = (instruction & (1 << 4)) ? false : true;
+                    const int reg_operand2 = instruction & 0xF;
                     u32 amount;
                     operand2 = reg(reg_operand2);
 
@@ -493,17 +504,6 @@ namespace NanoboyAdvance
                 if (reg_dest == 15 && set_flags)
                 {
                     set_flags = false;
-
-                    // Log if we're returning from swi or interrupt, useful for debugging
-                    //if ((cpsr & 0x1F) == (u32)ARM7Mode::SVC)
-                    //{
-                    //    LOG(LOG_INFO, "Finished swi!");
-                    //}
-                    //else if ((cpsr & 0x1F) == (u32)ARM7Mode::IRQ)
-                    //{
-                    //    LOG(LOG_INFO, "Finished interrupt!");
-                    //}
-
                     cpsr = *pspsr;
                     RemapRegisters();
                 }
@@ -540,10 +540,18 @@ namespace NanoboyAdvance
                     u32 result = operand1 - operand2;
                     if (set_flags)
                     {
+                        #ifdef __arm__
+                        asm volatile("subs r0, %[operand1], %[operand2]\n"
+                                                "mrs r0, cpsr\n"
+                                                "and r0, r0, #0xF0000000\n"
+                                                "bic %[cpsr], %[cpsr], #0xF0000000\n"
+                                                "orr %[cpsr], %[cpsr], r0" : [cpsr] "=r" (cpsr) : [operand1] "r" (operand1), [operand2] "r" (operand2) : "r0", "cc");
+                        #else
                         AssertCarry(operand1 >= operand2);
                         CalculateOverflowSub(result, operand1, operand2);
                         CalculateSign(result);
                         CalculateZero(result);
+                        #endif
                     }
                     reg(reg_dest) = result;
                     break;
@@ -553,24 +561,40 @@ namespace NanoboyAdvance
                     u32 result = operand2 - operand1;
                     if (set_flags)
                     {
+                        #ifdef __arm__
+                        asm volatile("rsbs r0, %[operand1], %[operand2]\n"
+                                                "mrs r0, cpsr\n"
+                                                "and r0, r0, #0xF0000000\n"
+                                                "bic %[cpsr], %[cpsr], #0xF0000000\n"
+                                                "orr %[cpsr], %[cpsr], r0" : [cpsr] "=r" (cpsr) : [operand1] "r" (operand1), [operand2] "r" (operand2) : "r0", "cc");
+                        #else
                         AssertCarry(operand2 >= operand1);
                         CalculateOverflowSub(result, operand2, operand1);
                         CalculateSign(result);
                         CalculateZero(result);
+                        #endif
                     }
                     reg(reg_dest) = result;
                     break;
                 }
                 case 0b0100: // ADD
-                {
+                {        
                     u32 result = operand1 + operand2;
                     if (set_flags)
                     {
+                        #ifdef __arm__
+                        asm volatile("adds r0, %[operand1], %[operand2]\n"
+                                                "mrs r0, cpsr\n"
+                                                "and r0, r0, #0xF0000000\n"
+                                                "bic %[cpsr], %[cpsr], #0xF0000000\n"
+                                                "orr %[cpsr], %[cpsr], r0" : [cpsr] "=r" (cpsr) : [operand1] "r" (operand1), [operand2] "r" (operand2) : "r0", "cc");
+                        #else
                         u64 result_long = (u64)operand1 + (u64)operand2;
                         AssertCarry((result_long & 0x100000000) ? true : false);
                         CalculateOverflowAdd(result, operand1, operand2);
                         CalculateSign(result);
                         CalculateZero(result);
+                        #endif
                     }
                     reg(reg_dest) = result;
                     break;
@@ -706,29 +730,30 @@ namespace NanoboyAdvance
                 if (reg_dest == 15)
                 {
                     flush_pipe = true;
-                    //LOG(LOG_INFO, "Returned to 0x%x", r15);
                 }
             }
-            break;
+            return;
         }
         case ARM_9:
         {
             // ARM.9 Load/store register/unsigned byte (Single Data Transfer)
             // TODO: Force user mode when instruction is post-indexed and has writeback bit (in system mode only?)
             u32 offset;
-            int reg_dest = (instruction >> 12) & 0xF;
-            int reg_base = (instruction >> 16) & 0xF;
-            bool load = (instruction & (1 << 20)) == (1 << 20);
-            bool write_back = (instruction & (1 << 21)) == (1 << 21);
-            bool transfer_byte = (instruction & (1 << 22)) == (1 << 22);
-            bool add_to_base = (instruction & (1 << 23)) == (1 << 23);
-            bool pre_indexed = (instruction & (1 << 24)) == (1 << 24);
-            bool immediate = (instruction & (1 << 25)) == 0;
+            const int reg_dest = (instruction >> 12) & 0xF;
+            const int reg_base = (instruction >> 16) & 0xF;
+            const bool load = (instruction & (1 << 20)) == (1 << 20);
+            const bool write_back = (instruction & (1 << 21)) == (1 << 21);
+            const bool transfer_byte = (instruction & (1 << 22)) == (1 << 22);
+            const bool add_to_base = (instruction & (1 << 23)) == (1 << 23);
+            const bool pre_indexed = (instruction & (1 << 24)) == (1 << 24);
+            const bool immediate = (instruction & (1 << 25)) == 0;
             u32 address = reg(reg_base);
 
+            #ifdef DEBUG
             // Instructions neither write back if base register is r15 nor should they have the write-back bit set when being post-indexed (post-indexing automatically writes back the address)
             ASSERT(reg_base == 15 && write_back, LOG_WARN, "Single Data Transfer, thou shall not writeback to r15, r15=0x%x", r15);
             ASSERT(write_back && !pre_indexed, LOG_WARN, "Single Data Transfer, thou shall not have write-back bit if being post-indexed, r15=0x%x", r15);
+            #endif
 
             // The offset added to the base address can either be an 12 bit immediate value or a register shifted by 5 bit immediate value
             if (immediate)
@@ -742,7 +767,9 @@ namespace NanoboyAdvance
                 int shift = (instruction >> 5) & 3;
                 bool carry; // this is not actually used but we need a var for carry out.
 
+                #ifdef DEBUG
                 ASSERT(reg_offset == 15, LOG_WARN, "Single Data Transfer, thou shall not use r15 as offset, r15=0x%x", r15);
+                #endif
 
                 offset = reg(reg_offset);
 
@@ -842,39 +869,45 @@ namespace NanoboyAdvance
                     reg(reg_base) = address;
                 }
             }
-            break;
+            return;
         }
         case ARM_10:
             // ARM.10 Undefined
+            #ifdef DEBUG
             LOG(LOG_ERROR, "Undefined instruction (0x%x), r15=0x%x", instruction, r15);
-            break;
+            #endif
+            return;
         case ARM_11:
         {
             // ARM.11 Block Data Transfer
             // TODO: Handle empty register list
             //       Correct transfer order for stm (this is needed for some io transfers)
             //       See gbatek for both
-            bool pc_in_list = (instruction & (1 << 15)) == (1 << 15);
-            int reg_base = (instruction >> 16) & 0xF;
-            bool load = (instruction & (1 << 20)) == (1 << 20);
+            const bool pc_in_list = (instruction & (1 << 15)) == (1 << 15);
+            const int reg_base = (instruction >> 16) & 0xF;
+            const bool load = (instruction & (1 << 20)) == (1 << 20);
             bool write_back = (instruction & (1 << 21)) == (1 << 21);
-            bool s_bit = (instruction & (1 << 22)) == (1 << 22); // TODO: Give this a meaningful name
-            bool add_to_base = (instruction & (1 << 23)) == (1 << 23);
-            bool pre_indexed = (instruction & (1 << 24)) == (1 << 24);
+            const bool s_bit = (instruction & (1 << 22)) == (1 << 22); // TODO: Give this a meaningful name
+            const bool add_to_base = (instruction & (1 << 23)) == (1 << 23);
+            const bool pre_indexed = (instruction & (1 << 24)) == (1 << 24);
             u32 address = reg(reg_base);
             u32 old_address = address;
             bool switched_mode = false;
             int old_mode;
             int first_register = 0;
 
+            #ifdef DEBUG
             // Base register must not be r15
             ASSERT(reg_base == 15, LOG_WARN, "Block Data Tranfser, thou shall not take r15 as base register, r15=0x%x", r15);
+            #endif
 
             // If the s bit is set and the instruction is either a store or r15 is not in the list switch to user mode
             if (s_bit && (!load || !pc_in_list))
             {
+                #ifdef DEBUG
                 // Writeback must not be activated in this case
                 ASSERT(write_back, LOG_WARN, "Block Data Transfer, thou shall not do user bank transfer with writeback, r15=0x%x", r15);
+                #endif
 
                 // Save current mode and enter user mode
                 old_mode = cpsr & 0x1F;
@@ -929,9 +962,10 @@ namespace NanoboyAdvance
                                 // If the s bit is set a mode switch is performed
                                 if (s_bit)
                                 {
+                                    #ifdef DEBUG
                                     // spsr_<mode> must not be copied to cpsr in user mode because user mode has not such a register
                                     ASSERT((cpsr & 0x1F) == (u32)ARM7Mode::User, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r15);
-
+                                    #endif
                                     cpsr = *pspsr;
                                     RemapRegisters();
                                 }
@@ -996,9 +1030,10 @@ namespace NanoboyAdvance
                                 // If the s bit is set a mode switch is performed
                                 if (s_bit)
                                 {
+                                    #ifdef DEBUG
                                     // spsr_<mode> must not be copied to cpsr in user mode because user mode has no such a register
                                     ASSERT((cpsr & 0x1F) == (u32)ARM7Mode::User, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r15);
-
+                                    #endif
                                     cpsr = *pspsr;
                                     RemapRegisters();
                                 }
@@ -1039,12 +1074,12 @@ namespace NanoboyAdvance
                 cpsr = (cpsr & ~0x1F) | old_mode;
                 RemapRegisters();
             }
-            break;
+            return;
         }
         case ARM_12:
         {
             // ARM.12 Branch
-            bool link = (instruction & (1 << 24)) == (1 << 24);
+            const bool link = (instruction & (1 << 24)) == (1 << 24);
             u32 offset = instruction & 0xFFFFFF;
             if (offset & 0x800000)
             {
@@ -1056,20 +1091,26 @@ namespace NanoboyAdvance
             }
             r15 += offset << 2;
             flush_pipe = true;
-            break;
+            return;
         }
         case ARM_13:
+            #ifdef DEBUG
             // ARM.13 Coprocessor data transfer
             LOG(LOG_ERROR, "Unimplemented coprocessor data transfer, r15=0x%x", r15);
-            break;
+            #endif
+            return;
         case ARM_14:
+            #ifdef DEBUG
             // ARM.14 Coprocessor data operation
             LOG(LOG_ERROR, "Unimplemented coprocessor data operation, r15=0x%x", r15);
-            break;
+            #endif
+            return;
         case ARM_15:
+            #ifdef DEBUG
             // ARM.15 Coprocessor register transfer
             LOG(LOG_ERROR, "Unimplemented coprocessor register transfer, r15=0x%x", r15);
-            break;
+            #endif            
+            return;
         case ARM_16:
             // ARM.16 Software interrupt
             //if ((cpsr & IRQDisable) == 0)
@@ -1094,7 +1135,7 @@ namespace NanoboyAdvance
                     RemapRegisters();
                 }
             }
-            break;
+            return;
         }
     }
 }

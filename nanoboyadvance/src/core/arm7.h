@@ -221,8 +221,14 @@ namespace NanoboyAdvance
             if (amount != 0)
             {
                 #ifndef __i386__
+                #ifdef __arm__
+                asm volatile("movs %0, %2, lsl %3\n"
+                                        "movcs %1, #1\n"
+                                        "movcc %1, #0" : "=r" (operand), "=r" (carry) : "r" (operand), "r" (amount) : "cc"); 
+                #else
                 carry = (operand << (amount - 1)) & 0x80000000 ? true : false;
                 operand <<= amount;
+                #endif
                 #else 
                 // This way we easily bypass the 32 bits restriction on x86
                 for (u32 i = 0; i < amount; i++)
@@ -241,8 +247,14 @@ namespace NanoboyAdvance
 
             // Perform shift
             #ifndef __i386__
+            #ifdef __arm__
+            asm volatile("movs %0, %2, lsr %3\n"
+                                    "movcs %1, #1\n"
+                                    "movcc %1, #0" : "=r" (operand), "=r" (carry) : "r" (operand), "r" (amount) : "cc"); 
+            #else
             carry = (operand >> (amount - 1)) & 1;
             operand >>= amount;
+            #endif
             #else
             for (u32 i = 0; i < amount; i++)
             {
@@ -260,11 +272,17 @@ namespace NanoboyAdvance
             amount = immediate & (amount == 0) ? 32 : amount;
 
             // Perform shift
+            #ifdef __arm__
+            asm volatile("movs %0, %2, asr %3\n"
+                                    "movcs %1, #1\n"
+                                    "movcc %1, #0" : "=r" (operand), "=r" (carry) : "r" (operand), "r" (amount) : "cc"); 
+            #else
             for (u32 i = 0; i < amount; i++)
             {
                 carry = operand & 1 ? true : false;
                 operand = (operand >> 1) | sign_bit;
             }
+            #endif
         }
 
         inline void ROR(u32& operand, u32 amount, bool& carry, bool immediate)
@@ -272,16 +290,23 @@ namespace NanoboyAdvance
             // ROR #0 equals to RRX #1
             if (amount != 0 || !immediate)
             {
+                //#ifdef __arm__
+                //// todo: fix arm version
+                //asm volatile("movs %0, %2, ror %3\n"
+                //                        "movcs %1, #1\n"
+                //                        "movcc %1, #0" : "=r" (operand), "=r" (carry) : "r" (operand), "r" (amount) : "cc"); 
+                //#else
                 for (u32 i = 1; i <= amount; i++)
                 {
                     u32 high_bit = (operand & 1) ? 0x80000000 : 0;
                     operand = (operand >> 1) | high_bit;
                     carry = high_bit == 0x80000000;
                 }
+                //#endif
             }
             else
             {
-                bool old_carry = carry;
+                bool old_carry = carry; // todo: optimize with inline asm
                 carry = (operand & 1) ? true : false;
                 operand = (operand >> 1) | (old_carry ? 0x80000000 : 0);
             }

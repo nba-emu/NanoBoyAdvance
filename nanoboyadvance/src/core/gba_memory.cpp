@@ -118,7 +118,9 @@ namespace NanoboyAdvance
         {
         case 0:
         case 1:
+            #ifdef DEBUG
             ASSERT(internal_offset >= 0x4000, LOG_ERROR, "BIOS read: offset out of bounds");
+            #endif            
             if (internal_offset >= 0x4000)
             {
                 return 0;
@@ -135,7 +137,9 @@ namespace NanoboyAdvance
             }
             if (internal_offset >= 0x3FF)
             {
+                #ifdef DEBUG
                 LOG(LOG_ERROR, "IO read: offset out of bounds (0x%x)", offset); 
+                #endif                
                 return 0;
             }
             return io[internal_offset];
@@ -157,14 +161,15 @@ namespace NanoboyAdvance
             // TODO: Prevent out of bounds read, we should save the rom size somewhere
             return rom[0x1000000 + internal_offset];
         case 0xE:
-            LOG(LOG_INFO, "Read from sram area: 0x%x", offset);
             if (save_type == GBASaveType::FLASH64 || save_type == GBASaveType::FLASH128)
             {
                 return backup->ReadByte(offset);
             }
             return sram[internal_offset];
         default:
+            #ifdef DEBUG
             LOG(LOG_ERROR, "Read from invalid/unimplemented address (0x%x)", offset);
+            #endif            
             invalid = true;
             break;
         }
@@ -193,7 +198,9 @@ namespace NanoboyAdvance
         switch (page)
         {
         case 0:
+            #ifdef DEBUG
             LOG(LOG_ERROR, "Write into BIOS memory not allowed (0x%x)", offset);
+            #endif
             invalid = true;            
             break;
         case 2:
@@ -209,7 +216,9 @@ namespace NanoboyAdvance
             // If the address it out of bounds we should exit now
             if (internal_offset >= 0x3FF && (internal_offset & 0xFFFF) != 0x800)
             {
+                #ifdef DEBUG
                 LOG(LOG_ERROR, "IO write: offset out of bounds (0x%x)", offset);
+                #endif
                 break;
             }
 
@@ -311,7 +320,6 @@ namespace NanoboyAdvance
                 write = false;
                 break;
             }
-
             if (write)
             {
                 io[internal_offset] = value;
@@ -326,11 +334,12 @@ namespace NanoboyAdvance
             break;
         case 8:
         case 9:
+            #ifdef DEBUG
             LOG(LOG_ERROR, "Write into ROM memory not allowed (0x%x)", offset);
+            #endif            
             invalid = true;            
             break;
         case 0xE:
-            LOG(LOG_WARN, "Write to sram area: 0x%x = 0x%x", offset, value);
             if (save_type == GBASaveType::FLASH64 || save_type == GBASaveType::FLASH128)
             {
                 backup->WriteByte(offset, value);
@@ -339,7 +348,9 @@ namespace NanoboyAdvance
             sram[internal_offset] = value;            
             break;
         default:
+            #ifdef DEBUG
             LOG(LOG_ERROR, "Write to invalid/unimplemented address (0x%x)", offset);
+            #endif
             invalid = true;            
             break;
         }

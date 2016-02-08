@@ -79,6 +79,8 @@ namespace NanoboyAdvance
     u8 GBAFlash::ReadByte(u32 offset)
     {
         offset &= 0xFFFF;
+        // todo: vba-sdl-h source codes suggests chip id being mirrored each 100h bytes
+        // however gbatek doesn't mention this (?)        
         if (enable_chip_id && offset < 2)
         {
             // Chip identifier for FLASH64: D4BF (SST 64K)
