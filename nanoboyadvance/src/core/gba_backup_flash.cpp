@@ -123,7 +123,7 @@ namespace NanoboyAdvance
             command_phase = 0;
         }
         else if (enable_erase && static_cast<GBAFlashCommand>(value) == GBAFlashCommand::ERASE_SECTOR && (
-                     offset & ~0xF000) == 0x0E000000 && command_phase == 2)
+                 offset & ~0xF000) == 0x0E000000 && command_phase == 2)
         {
             int base_offset = offset & 0xF000;
             for (int i = 0; i < 0x1000; i++)

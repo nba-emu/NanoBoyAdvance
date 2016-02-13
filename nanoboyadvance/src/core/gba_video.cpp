@@ -235,7 +235,7 @@ namespace NanoboyAdvance
     inline u32* GBAVideo::RenderSprites(u32 tile_base, int line, int priority)
     {
         u32* line_buffer = new u32[240];
-        u32 offset = 0;
+        u32 offset = 127 * 8; // process OBJ127 first, because OBJ0 has highest priority (OBJ0 overlays OBJ127, not vice versa)
         bool one_dimensional = gba_io->dispcnt & (1 << 6) ? true : false;
 
         // We dont want garbage data in the buffer
@@ -301,12 +301,19 @@ namespace NanoboyAdvance
                     int displacement_y;// = internal_line % 8;
                     int row;// = (internal_line - displacement_y) / 8;//(line - y) / 8;
                     int tiles_per_row = width / 8;
-                    int tile_number = (attribute2 & 0x3FF) * 2;
+                    int tile_number = attribute2 & 0x3FF;
                     int palette_number = attribute2 >> 12;
                     bool rotate_scale = attribute0 & (1 << 8) ? true : false;
                     bool horizontal_flip = !rotate_scale && (attribute1 & (1 << 12));
                     bool vertical_flip = !rotate_scale && (attribute1 & (1 << 13));
                     bool color_mode = attribute0 & (1 << 13) ? true : false;
+                    
+                    // It seems like the tile number is divided by two in 256 color mode
+                    // Though we should check this because I cannot find information about this in GBATEK
+                    if (color_mode)
+                    {
+                        tile_number /= 2;
+                    }
 
                     // Apply (outer) vertical flip if required
                     if (vertical_flip) 
@@ -334,11 +341,11 @@ namespace NanoboyAdvance
                         // Determine the tile to render
                         if (one_dimensional)
                         {
-                            current_tile_number = tile_number + row * tiles_per_row + j * (color_mode ? 2 : 1);
+                            current_tile_number = tile_number + row * tiles_per_row + j;
                         }
                         else
                         {
-                            current_tile_number = tile_number + row * 32 + j * (color_mode ? 2 : 1);
+                            current_tile_number = tile_number + row * 32 + j;
                         }
 
                         // Render either in 256 colors or 16 colors mode
@@ -354,11 +361,27 @@ namespace NanoboyAdvance
                         }
 
                         // Copy data
-                        for (int k = 0; k < 8; k++)
+                        if (horizontal_flip) // not very beautiful but faster
                         {
-                            if (tile_data[k] != 0 && (x + j * 8 + k) < 240)
+                            for (int k = 0; k < 8; k++)
                             {
-                                line_buffer[x + j * 8 + k] = tile_data[k];
+                                int dst_index = x + (tiles_per_row - j - 1) * 8 + (7 - k);
+                                if (tile_data[k] != 0 && dst_index < 240)
+                                {
+                                    line_buffer[dst_index] = tile_data[k];
+                                }
+                            }
+
+                        }
+                        else
+                        {
+                            for (int k = 0; k < 8; k++)
+                            {
+                                int dst_index = x + j * 8 + k;
+                                if (tile_data[k] != 0 && dst_index < 240)
+                                {
+                                    line_buffer[dst_index] = tile_data[k];
+                                }
                             }
                         }
 
@@ -368,8 +391,8 @@ namespace NanoboyAdvance
                 }
             }
 
-            // Update offset to current entry
-            offset += 8;
+            // Update offset to the next entry
+            offset -= 8;
         }
 
         return line_buffer;
@@ -435,7 +458,7 @@ namespace NanoboyAdvance
                     first_background = false;
                     delete[] bg_buffer;
                 }
-                if (bg1_enable && bg1_priority == i)
+                    if (bg1_enable && bg1_priority == i)
                 {
                     u32* bg_buffer = RenderBackgroundMode0(gba_io->bg1cnt, line, gba_io->bg1hofs, gba_io->bg1vofs, !first_background);
                     DrawLineToBuffer(bg_buffer, line);
