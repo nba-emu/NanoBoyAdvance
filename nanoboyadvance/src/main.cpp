@@ -89,11 +89,17 @@ void schedule_frame()
 {
     for (int i = 0; i < 280896; i++)
     {
+        u32 interrupts = memory->gba_io->ie & memory->gba_io->if_; // interrutps that are enabled *and* pending
+        
         // Only pause as long as (IE & IF) != 0
-        if (memory->halt_state != GBAMemory::GBAHaltState::None && 
-            (memory->gba_io->ie & memory->gba_io->if_) != 0)
+        if (memory->halt_state != GBAMemory::GBAHaltState::None && interrupts != 0)
         {
-            memory->halt_state = GBAMemory::GBAHaltState::None;
+            // If IntrWait only resume if requested interrupt is encountered
+            if (!memory->intr_wait || (interrupts & memory->intr_wait_mask) != 0)
+            {
+                memory->halt_state = GBAMemory::GBAHaltState::None;
+                memory->intr_wait = false;
+            }
         }
 
         // Run the hardware's components

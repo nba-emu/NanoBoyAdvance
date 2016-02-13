@@ -92,10 +92,10 @@ CFLAGS  = -g -Ofast
 CXXFLAGS= -g -Ofast
 
 # The C program compiler.
-CC     = clang
+#CC     = clang
 
 # The C++ program compiler.
-CXX    = clang++
+#CXX    = clang++
 
 # Un-comment the following line to compile C programs as C++ ones.
 #CC     = $(CXX)

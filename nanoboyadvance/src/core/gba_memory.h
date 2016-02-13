@@ -71,6 +71,8 @@ namespace NanoboyAdvance
             Halt
         };
         GBAHaltState halt_state { GBAHaltState::None };
+        bool intr_wait { false };
+        bool intr_wait_mask { 0 };
 
         enum class GBASaveType
         {
