@@ -126,20 +126,6 @@ namespace NanoboyAdvance
     {
         bool thumb = (cpsr & Thumb) == Thumb;
         u32 pc_page = r15 >> 24;
-        ARMCallbackExecute* data = (ARMCallbackExecute*)malloc(sizeof(ARMCallbackExecute));
-        
-        // Tell the debugger which instruction we're currently at
-        data->address = r15 - (thumb ? 4 : 8);
-        data->thumb = thumb;
-        DebugHook(ARM_CALLBACK_EXECUTE, data);
-        free(data);
-        
-        // Determine if emulator is shitty
-        if (pc_page == 0xFF) {
-            cout << "Emulator is shitty, pipe_status=" << pipe_status << endl;
-            string lol;
-            cin >> lol;
-        }
 
         // Determine if the cpu runs in arm or thumb mode and do corresponding work
         if (thumb)
@@ -151,39 +137,31 @@ namespace NanoboyAdvance
                 pipe_opcode[0] = memory->ReadHWord(r15);
                 break;            
             case 1:
-                pipe_opcode[1] = memory->ReadHWord(r15);
-                #ifdef ARM7_FASTHAX
-                pipe_decode[0] = thumb_decode[pipe_opcode[0]];
-                #else
-                pipe_decode[0] = THUMBDecode(pipe_opcode[0]);
-                #endif                
+                pipe_opcode[1] = memory->ReadHWord(r15);               
                 break;
             case 2:
                 pipe_opcode[2] = memory->ReadHWord(r15);
                 #ifdef ARM7_FASTHAX
-                pipe_decode[1] = thumb_decode[pipe_opcode[1]];
+                    THUMBExecute(pipe_opcode[0], thumb_decode[pipe_opcode[0]]);
                 #else
-                pipe_decode[1] = THUMBDecode(pipe_opcode[1]);
-                #endif    
-                THUMBExecute(pipe_opcode[0], pipe_decode[0]);
+                    THUMBExecute(pipe_opcode[0], THUMBDecode(pipe_opcode[0]));
+                #endif
                 break;
             case 3:
                 pipe_opcode[0] = memory->ReadHWord(r15);
                 #ifdef ARM7_FASTHAX
-                pipe_decode[2] = thumb_decode[pipe_opcode[2]];
+                    THUMBExecute(pipe_opcode[1], thumb_decode[pipe_opcode[1]]);
                 #else
-                pipe_decode[2] = THUMBDecode(pipe_opcode[2]);
-                #endif    
-                THUMBExecute(pipe_opcode[1], pipe_decode[1]);
+                    THUMBExecute(pipe_opcode[1], THUMBDecode(pipe_opcode[1]));
+                #endif
                 break;
             case 4:
                 pipe_opcode[1] = memory->ReadHWord(r15);
                 #ifdef ARM7_FASTHAX
-                pipe_decode[0] = thumb_decode[pipe_opcode[0]];
+                    THUMBExecute(pipe_opcode[2], thumb_decode[pipe_opcode[2]]);
                 #else
-                pipe_decode[0] = THUMBDecode(pipe_opcode[0]);
-                #endif    
-                THUMBExecute(pipe_opcode[2], pipe_decode[2]);
+                    THUMBExecute(pipe_opcode[2], THUMBDecode(pipe_opcode[2]));
+                #endif
                 break;
             }
         }
@@ -196,39 +174,31 @@ namespace NanoboyAdvance
                 pipe_opcode[0] = memory->ReadWord(r15);
                 break;
             case 1:
-                pipe_opcode[1] = memory->ReadWord(r15);
-                #ifdef ARM7_FASTHAX
-                pipe_decode[0] = arm_decode[arm_pack_instr(pipe_opcode[0])];
-                #else
-                pipe_decode[0] = ARMDecode(pipe_opcode[0]);
-                #endif                
+                pipe_opcode[1] = memory->ReadWord(r15);              
                 break;
             case 2:
                 pipe_opcode[2] = memory->ReadWord(r15);
                 #ifdef ARM7_FASTHAX
-                pipe_decode[1] = arm_decode[arm_pack_instr(pipe_opcode[1])];
+                    ARMExecute(pipe_opcode[0], arm_decode[arm_pack_instr(pipe_opcode[0])]);
                 #else
-                pipe_decode[1] = ARMDecode(pipe_opcode[1]);
+                    ARMExecute(pipe_opcode[0], ARMDecode(pipe_opcode[0]));
                 #endif 
-                ARMExecute(pipe_opcode[0], pipe_decode[0]);
                 break;
             case 3:
                 pipe_opcode[0] = memory->ReadWord(r15);
                 #ifdef ARM7_FASTHAX
-                pipe_decode[2] = arm_decode[arm_pack_instr(pipe_opcode[2])];
+                    ARMExecute(pipe_opcode[1], arm_decode[arm_pack_instr(pipe_opcode[1])]);
                 #else
-                pipe_decode[2] = ARMDecode(pipe_opcode[2]);
+                    ARMExecute(pipe_opcode[1], ARMDecode(pipe_opcode[1]));
                 #endif 
-                ARMExecute(pipe_opcode[1], pipe_decode[1]);
                 break;
             case 4:
                 pipe_opcode[1] = memory->ReadWord(r15);
                 #ifdef ARM7_FASTHAX
-                pipe_decode[0] = arm_decode[arm_pack_instr(pipe_opcode[0])];
+                    ARMExecute(pipe_opcode[2], arm_decode[arm_pack_instr(pipe_opcode[2])]);
                 #else
-                pipe_decode[0] = ARMDecode(pipe_opcode[0]);
+                    ARMExecute(pipe_opcode[2], ARMDecode(pipe_opcode[2]));
                 #endif 
-                ARMExecute(pipe_opcode[2], pipe_decode[2]);
                 break;
             }
         }
@@ -394,3 +364,4 @@ namespace NanoboyAdvance
         }
     }
 }
+

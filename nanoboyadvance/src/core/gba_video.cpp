@@ -36,9 +36,9 @@ namespace NanoboyAdvance
     inline u32 GBAVideo::DecodeRGB5(u16 color)
     {
         u32 argb = 0xFF000000 |
-                    (((color & 0x1F) * 8) << 16) |
-                    ((((color >> 5) & 0x1F) * 8) << 8) |
-                    (((color >> 10) & 0x1F) * 8);
+                   (((color & 0x1F) * 8) << 16) |
+                   ((((color >> 5) & 0x1F) * 8) << 8) |
+                   (((color >> 10) & 0x1F) * 8);
         return argb;
     }
 
@@ -91,148 +91,74 @@ namespace NanoboyAdvance
         return data;
     }
 
-    inline u32* GBAVideo::RenderBackgroundMode0(u16 bg_control, int line, int scroll_x, int scroll_y, bool transparent)
+    u32* GBAVideo::RenderBackgroundMode0(u16 bg_control, int line, int scx, int scy, bool transparent)
     {
-        // Base addresses for character *and* map data
-        u32 tile_block_base = ((bg_control >> 2) & 3) * 0x4000;
+        u32 tile_block_base = ((bg_control >> 2) & 0x03) * 0x4000;
         u32 map_block_base = ((bg_control >> 8) & 0x1F) * 0x800;
-
-        // Mode 0 support both 16 and 256 color
-        // true = 256 colors, false = 16 colors
-        bool color_mode = bg_control & (1 << 7) ? true : false;
-
-        // A value encoding the bounds of the background
-        int screen_size = bg_control >> 14;
-
-        // The actual width and height of the background
-        int width;
-        int height;
-
-        // The actual line to be rendered with scrolling and wrapround factored
-        int wrap_y;
-
-        // The concrete line of the tiles to be rendered
-        int tile_internal_y;
-
-        // The current row measured in tiles
-        int row;
-
-        // Rendering buffers
-        u32* line_full;
-        u32* line_visible = new u32[240];
-
-        // Contains the offset of the current tile
+        bool color_mode = bg_control & (1 << 7);
+        int width = (((bg_control >> 14) & 1) + 1) << 8;
+        int height = ((bg_control >> 15) + 1) << 8;
+        int map_line = (line + scy) % height;
+        int tile_line = map_line % 8;
+        int map_row = (map_line - tile_line) / 8;
+        u32* line_buffer_full = new u32[width];
+        u32* line_buffer_visible = new u32[240];
+        int left_area;
+        int right_area;
         u32 offset;
-
-        // There are two areas which possibly get rendered (the left is always renderend, the right only if the width is 512)
-        int left_area = 0;
-        int right_area = 0;
-
-        // Decode screen size
-        switch (screen_size)
-        {
-        case 0: width = 256; height = 256; break;
-        case 1: width = 512; height = 256; break;
-        case 2: width = 256; height = 512; break;
-        case 3: width = 512; height = 512; break;
-        }
-
-        // We need to calculate which row (in tiles) will be renderend and which specific line of it
-        wrap_y = (line + scroll_y) % height;
-        tile_internal_y = wrap_y % 8;
-        row = (wrap_y - tile_internal_y) / 8;
-
-        // We will render the entire first line and the copy the visible area from it
-        line_full = new u32[width];
-
-        // Determine the areas (left and right) to render (this is a little bit hacky nevertheless it works)
-        if (row >= 32)
-        {
-            switch (screen_size)
-            {
-            case 2: left_area = 1; right_area = 0; break;
-            case 3: left_area = 2; right_area = 3; break;
-            }
-            row -= 32;
-        }
-        else
-        {
+        
+        // Map may consist of 1 to max. 4 screen areas, 1 or 2 will be rendered.
+        if (map_row >= 32) {
+            left_area = width == 512 ? 2 : 1;
+            right_area = 3;
+            map_row -= 32;
+        } else {
             left_area = 0;
             right_area = 1;
         }
-
-        // Calculate the start address
-        offset = map_block_base + left_area * 0x800 + 64 * row;
-
-        for (int x = 0; x < width / 8; x++)
-        {
-            u16 value = (vram[offset + 1] << 8) | vram[offset];
-            int number = value & 0x3FF;
-            bool horizontal_flip = (value & (1 << 10)) ? true : false;
-            bool vertical_flip = (value & (1 << 11)) ? true : false;
-            int this_tile_y = tile_internal_y;            
+        
+        // Calculate the offset of the first tile encoder.
+        offset = map_block_base + left_area * 0x800 + 64 * map_row;
+        
+        // Decode tile information for each tile in the row and render them.
+        for (int x = 0; x < width / 8; x++) {
+            u16 tile_encoder = (vram[offset + 1] << 8) | vram[offset];
+            int tile_number = tile_encoder & 0x3FF;
+            bool horizontal_flip = tile_encoder & (1 << 10);
+            bool vertical_flip = tile_encoder & (1 << 11);       
             u32* tile_data;
-
-            // Apply vertical flip
-            if (vertical_flip)
-            {
-                this_tile_y = 7 - this_tile_y;
+            
+            // Background may be either 16 or 256 colors, render the given tile.
+            if (color_mode) {
+                tile_data = DecodeTileLine8PP(tile_block_base, tile_number, (vertical_flip ? (7 - tile_line) : tile_line), false, transparent);
+            } else {
+                int palette = tile_encoder >> 12;
+                tile_data = DecodeTileLine4BPP(tile_block_base, palette * 0x20, tile_number, (vertical_flip ? (7 - tile_line) : tile_line), transparent);
             }
-
-            // Depending on the color resolution the tiles are decoded different..
-            if (color_mode)
-            {
-                tile_data = DecodeTileLine8PP(tile_block_base, number, this_tile_y, false, transparent);
+            
+            // Copy rendered tile to line buffer.
+            for (int i = 0; i < 8; i++) {
+                line_buffer_full[x * 8 + i] = tile_data[horizontal_flip ? (7 - i) : i];
             }
-            else
-            {
-                int palette = value >> 12;
-                tile_data = DecodeTileLine4BPP(tile_block_base, palette * 0x20, number, this_tile_y, transparent);
-            }
-
-            // Copy rendered tile line to background line buffer
-            // We must take care of horizontal flip
-            for (int i = 0; i < 8; i++)
-            {
-                if (horizontal_flip)
-                {
-                    line_full[x * 8 + i] = tile_data[7 - i];
-                }
-                else
-                {
-                    line_full[x * 8 + i] = tile_data[i];
-                }
-            }
-
-            // We don't need this anymore
+            
             delete[] tile_data;
-
-            // Have we just finished the left area?
-            if (x == 31)
-            {
-                // If so we must recalculate the offset to point to the first tile of the right area
-                offset = map_block_base + right_area * 0x800 + 64 * row;
-            }
-            else
-            {
-                // If not just update the offset as usual
-                offset += 2;
-            }
+            
+            // Update offset.
+            if (x == 31) offset = map_block_base + right_area * 0x800 + 64 * map_row;
+            else offset += 2;
+        }
+        
+        // Copy *visible* pixels with wraparound.
+        for (int i = 0; i < 240; i++) {
+            line_buffer_visible[i] = line_buffer_full[(scx + i) % width];
         }
 
-        // Copy the visible area with wraparound
-        for (int i = 0; i < 240; i++)
-        {
-            line_visible[i] = line_full[(scroll_x + i) % width];
-        }
+        delete[] line_buffer_full;
 
-        // If we don't delete this now, it'll never get deleted
-        delete[] line_full;
-
-        return line_visible;
+        return line_buffer_visible;
     }
 
-    inline u32* GBAVideo::RenderSprites(u32 tile_base, int line, int priority)
+    u32* GBAVideo::RenderSprites(u32 tile_base, int line, int priority)
     {
         u32* line_buffer = new u32[240];
         u32 offset = 127 * 8; // process OBJ127 first, because OBJ0 has highest priority (OBJ0 overlays OBJ127, not vice versa)
@@ -298,8 +224,8 @@ namespace NanoboyAdvance
                 if (line >= y && line <= y + height)
                 {
                     int internal_line = line - y;
-                    int displacement_y;// = internal_line % 8;
-                    int row;// = (internal_line - displacement_y) / 8;//(line - y) / 8;
+                    int displacement_y;
+                    int row;
                     int tiles_per_row = width / 8;
                     int tile_number = attribute2 & 0x3FF;
                     int palette_number = attribute2 >> 12;
@@ -557,6 +483,7 @@ namespace NanoboyAdvance
                 bool hblank_irq_enable = (gba_io->dispstat & (1 << 4)) == (1 << 4);
                 gba_io->dispstat = (gba_io->dispstat & ~3) | 2; // set hblank bit
                 state = GBAVideoState::HBlank;
+
                 if (hblank_irq_enable)
                 {
                     gba_io->if_ |= 2;

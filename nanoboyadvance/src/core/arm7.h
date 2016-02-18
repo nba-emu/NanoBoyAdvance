@@ -82,7 +82,6 @@ namespace NanoboyAdvance
 
         // In some way emulate the processor's pipeline
         u32 pipe_opcode[3];
-        int pipe_decode[3];
         int pipe_status {0};
         bool flush_pipe {false};
 
