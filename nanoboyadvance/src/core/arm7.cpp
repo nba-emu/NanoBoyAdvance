@@ -135,7 +135,7 @@ namespace NanoboyAdvance
            {
             case 0:            
                 pipe_opcode[0] = memory->ReadHWord(r15);
-                break;            
+                break;
             case 1:
                 pipe_opcode[1] = memory->ReadHWord(r15);               
                 break;

@@ -19,6 +19,25 @@
 
 #pragma once
 
+#define BG2X 0x28
+#define BG2Y 0x2C
+#define BG3X 0x30
+#define BG3Y 0x24
+#define DMA0CNT_H 0xBA
+#define DMA1CNT_H 0xC6
+#define DMA2CNT_H 0xD2
+#define DMA3CNT_H 0xDE
+#define TM0CNT_L 0x100
+#define TM0CNT_H 0x102
+#define TM1CNT_L 0x104
+#define TM1CNT_H 0x106
+#define TM2CNT_L 0x108
+#define TM2CNT_H 0x10A
+#define TM3CNT_L 0x10C
+#define TM3CNT_H 0x10E
+#define IF 0x202
+#define HALTCNT 0x301
+
 // Fields with prefixed underscore shouldn't be accessed per GBAIO interface
 // because they are implemented in a special manner (they are placeholders).
 #pragma pack(push, r1, 1)
@@ -199,18 +218,3 @@ struct GBAIO_S
 };
 #pragma pack(pop, r1)
 typedef struct GBAIO_S GBAIO;
-
-#define DMA0CNT_H 0xBA
-#define DMA1CNT_H 0xC6
-#define DMA2CNT_H 0xD2
-#define DMA3CNT_H 0xDE
-#define TM0CNT_L 0x100
-#define TM0CNT_H 0x102
-#define TM1CNT_L 0x104
-#define TM1CNT_H 0x106
-#define TM2CNT_L 0x108
-#define TM2CNT_H 0x10A
-#define TM3CNT_L 0x10C
-#define TM3CNT_H 0x10E
-#define IF 0x202
-#define HALTCNT 0x301

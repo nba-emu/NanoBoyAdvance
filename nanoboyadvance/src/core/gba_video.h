@@ -46,10 +46,14 @@ namespace NanoboyAdvance
         GBAIO* gba_io;
         GBAVideoState state {GBAVideoState::Scanline};
         int ticks {0};
-		inline u32 DecodeRGB5(u16 color);
+        inline float DecodeGBAFloat32(u32 number);
+        inline float DecodeGBAFloat16(u16 number);
+        inline u32 EncodeGBAFloat32(float number);
+        inline u32 DecodeRGB5(u16 color);
 		inline u32* DecodeTileLine4BPP(u32 block_base, u32 palette_base, int number, int line, bool transparent);
 		inline u32* DecodeTileLine8PP(u32 block_base, int number, int line, bool sprite, bool transparent);
         u32* RenderBackgroundMode0(u16 bg_control, int line, int scx, int scy, bool transparent);
+        u32* RenderBackgroundMode1(u16 bg_control, int line, u32 bgx_internal, u32 bgy_internal, u16 bgpa, u16 bgpb, u16 bgpc, u16 bgpd, bool transparent);
         u32* RenderSprites(u32 tile_base, int line, int priority);
         inline void DrawLineToBuffer(u32* line_buffer, int line);
 		void Render(int line);
@@ -59,6 +63,10 @@ namespace NanoboyAdvance
         u8 vram[0x18000];
         u8 obj[0x400];
 		u32 buffer[240 * 160];
+        u32 bg2x_internal;
+        u32 bg2y_internal;
+        u32 bg3x_internal;
+        u32 bg3y_internal;
         GBAVideo(GBAIO* gba_io);
         void Step();
     };

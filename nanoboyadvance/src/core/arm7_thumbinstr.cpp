@@ -153,7 +153,7 @@ namespace NanoboyAdvance
             const int reg_source = (instruction >> 3) & 7;
             const u32 immediate_value = (instruction >> 6) & 0x1F;
             const int opcode = (instruction >> 11) & 3;
-            bool carry = (cpsr & CarryFlag) ? true : false;
+            bool carry = cpsr & CarryFlag;
 
             reg(reg_dest) = reg(reg_source);
 
@@ -211,7 +211,7 @@ namespace NanoboyAdvance
             {
                 u32 result = reg(reg_source) + operand;
                 u64 result_long = (u64)(reg(reg_source)) + (u64)operand;
-                AssertCarry((result_long & 0x100000000) ? true : false);
+                AssertCarry(result_long & 0x100000000);
                 CalculateOverflowAdd(result, reg(reg_source), operand);
                 CalculateSign(result);
                 CalculateZero(result);
@@ -244,7 +244,7 @@ namespace NanoboyAdvance
             {
                 u32 result = reg(reg_dest) + immediate_value;
                 u64 result_long = (u64)(reg(reg_dest)) + (u64)immediate_value;
-                AssertCarry((result_long & 0x100000000) ? true : false);
+                AssertCarry(result_long & 0x100000000);
                 CalculateOverflowAdd(result, reg(reg_dest), immediate_value);
                 CalculateSign(result);
                 CalculateZero(result);
@@ -285,7 +285,7 @@ namespace NanoboyAdvance
             case 0b0010: // LSL
             {
                 const u32 amount = reg(reg_source);
-                bool carry = (cpsr & CarryFlag) ? true : false;
+                bool carry = cpsr & CarryFlag;
                 LSL(reg(reg_dest), amount, carry);
                 AssertCarry(carry);
                 CalculateSign(reg(reg_dest));
@@ -295,7 +295,7 @@ namespace NanoboyAdvance
             case 0b0011: // LSR
             {
                 const u32 amount = reg(reg_source);
-                bool carry = (cpsr & CarryFlag) ? true : false;
+                bool carry = cpsr & CarryFlag;
                 LSR(reg(reg_dest), amount, carry, false);
                 AssertCarry(carry);
                 CalculateSign(reg(reg_dest));
@@ -305,7 +305,7 @@ namespace NanoboyAdvance
             case 0b0100: // ASR
             {
                 const u32 amount = reg(reg_source);
-                bool carry = (cpsr & CarryFlag) ? true : false;
+                bool carry = cpsr & CarryFlag;
                 ASR(reg(reg_dest), amount, carry, false);
                 AssertCarry(carry);
                 CalculateSign(reg(reg_dest));
@@ -317,7 +317,7 @@ namespace NanoboyAdvance
                 int carry = (cpsr >> 29) & 1;
                 const u32 result = reg(reg_dest) + reg(reg_source) + carry;
                 const u64 result_long = (u64)(reg(reg_dest)) + (u64)(reg(reg_source)) + (u64)carry;
-                AssertCarry((result_long & 0x100000000) ? true : false);
+                AssertCarry(result_long & 0x100000000);
                 CalculateOverflowAdd(result, reg(reg_dest), reg(reg_source) + carry);
                 CalculateSign(result);
                 CalculateZero(result);
@@ -338,7 +338,7 @@ namespace NanoboyAdvance
             case 0b0111: // ROR
             {
                 const u32 amount = reg(reg_source);
-                bool carry = (cpsr & CarryFlag) ? true : false;
+                bool carry = cpsr & CarryFlag;
                 ROR(reg(reg_dest), amount, carry, false);
                 AssertCarry(carry);
                 CalculateSign(reg(reg_dest));
@@ -375,7 +375,7 @@ namespace NanoboyAdvance
             {
                 const u32 result = reg(reg_dest) + reg(reg_source);
                 const u64 result_long = (u64)(reg(reg_dest)) + (u64)(reg(reg_source));
-                AssertCarry((result_long & 0x100000000) ? true : false);
+                AssertCarry(result_long & 0x100000000);
                 CalculateOverflowAdd(result, reg(reg_dest), reg(reg_source));
                 CalculateSign(result);
                 CalculateZero(result);

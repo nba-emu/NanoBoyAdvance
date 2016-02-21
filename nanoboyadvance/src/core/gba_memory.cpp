@@ -231,6 +231,54 @@ namespace NanoboyAdvance
             // Writing to some registers causes special behaviour which must be emulated
             switch (internal_offset)
             {
+            case BG2X:
+                video->bg2x_internal = (video->bg2x_internal & ~0xFF) | value;
+                break;
+            case BG2X+1:
+                video->bg2x_internal = (video->bg2x_internal & ~0xFF00) | (value << 8);
+                break;
+            case BG2X+2:
+                video->bg2x_internal = (video->bg2x_internal & ~0xFF0000) | (value << 16);
+                break;
+            case BG2X+3:
+                video->bg2x_internal = (video->bg2x_internal & ~0xFF000000) | (value << 24);
+                break;
+            case BG2Y:
+                video->bg2y_internal = (video->bg2y_internal & ~0xFF) | value;
+                break;
+            case BG2Y+1:
+                video->bg2y_internal = (video->bg2y_internal & ~0xFF00) | (value << 8);
+                break;
+            case BG2Y+2:
+                video->bg2y_internal = (video->bg2y_internal & ~0xFF0000) | (value << 16);
+                break;
+            case BG2Y+3:
+                video->bg2y_internal = (video->bg2y_internal & ~0xFF000000) | (value << 24);
+                break;
+            case BG3X:
+                video->bg3x_internal = (video->bg3x_internal & ~0xFF) | value;
+                break;
+            case BG3X+1:
+                video->bg3x_internal = (video->bg3x_internal & ~0xFF00) | (value << 8);
+                break;
+            case BG3X+2:
+                video->bg3x_internal = (video->bg3x_internal & ~0xFF0000) | (value << 16);
+                break;
+            case BG3X+3:
+                video->bg3x_internal = (video->bg3x_internal & ~0xFF000000) | (value << 24);
+                break;
+            case BG3Y:
+                video->bg3y_internal = (video->bg3y_internal & ~0xFF) | value;
+                break;
+            case BG3Y+1:
+                video->bg3y_internal = (video->bg3y_internal & ~0xFF00) | (value << 8);
+                break;
+            case BG3Y+2:
+                video->bg3y_internal = (video->bg3y_internal & ~0xFF0000) | (value << 16);
+                break;
+            case BG3Y+3:
+                video->bg3y_internal = (video->bg3y_internal & ~0xFF000000) | (value << 24);
+                break;
             case DMA0CNT_H+1:
                 if (value & (1 << 7))
                 {
@@ -239,7 +287,7 @@ namespace NanoboyAdvance
                     dma->dma0_count = gba_io->dma0cnt_l;
                 }
                 break;
-            case DMA1CNT_H + 1:
+            case DMA1CNT_H+1:
                 if (value & (1 << 7))
                 {
                     dma->dma1_source = gba_io->dma1sad;
@@ -247,7 +295,7 @@ namespace NanoboyAdvance
                     dma->dma1_count = gba_io->dma1cnt_l;
                 }
                 break;
-            case DMA2CNT_H + 1:
+            case DMA2CNT_H+1:
                 if (value & (1 << 7))
                 {
                     dma->dma2_source = gba_io->dma2sad;
@@ -255,7 +303,7 @@ namespace NanoboyAdvance
                     dma->dma2_count = gba_io->dma2cnt_l;
                 }
                 break;
-            case DMA3CNT_H + 1:
+            case DMA3CNT_H+1:
                 if (value & (1 << 7))
                 {
                     dma->dma3_source = gba_io->dma3sad;

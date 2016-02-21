@@ -160,8 +160,8 @@ namespace NanoboyAdvance
             const int reg_operand2 = (instruction >> 8) & 0xF;
             const int reg_operand3 = (instruction >> 12) & 0xF;
             const int reg_dest = (instruction >> 16) & 0xF;
-            const bool set_flags = (instruction & (1 << 20)) == (1 << 20);
-            const bool accumulate = (instruction & (1 << 21)) == (1 << 21);
+            const bool set_flags = instruction & (1 << 20);
+            const bool accumulate = instruction & (1 << 21);
             reg(reg_dest) = reg(reg_operand1) * reg(reg_operand2);
             if (accumulate)
             {
@@ -181,9 +181,9 @@ namespace NanoboyAdvance
             const int reg_operand2 = (instruction >> 8) & 0xF;
             const int reg_dest_low = (instruction >> 12) & 0xF;
             const int reg_dest_high = (instruction >> 16) & 0xF;
-            const bool set_flags = (instruction & (1 << 20)) == (1 << 20);
-            const bool accumulate = (instruction & (1 << 21)) == (1 << 21);
-            const bool sign_extend = (instruction & (1 << 22)) == (1 << 22);
+            const bool set_flags = instruction & (1 << 20);
+            const bool accumulate = instruction & (1 << 21);
+            const bool sign_extend = instruction & (1 << 22);
             s64 result;
             if (sign_extend)
             {
@@ -237,7 +237,7 @@ namespace NanoboyAdvance
             const int reg_source = instruction & 0xF;
             const int reg_dest = (instruction >> 12) & 0xF;
             const int reg_base = (instruction >> 16) & 0xF;
-            const bool swap_byte = (instruction & (1 << 22)) == (1 << 22);
+            const bool swap_byte = instruction & (1 << 22);
             u32 memory_value;
 
             #ifdef DEBUG
@@ -269,11 +269,11 @@ namespace NanoboyAdvance
             u32 offset;
             const int reg_dest = (instruction >> 12) & 0xF;
             const int reg_base = (instruction >> 16) & 0xF;
-            const bool load = (instruction & (1 << 20)) == (1 << 20);
-            const bool write_back = (instruction & (1 << 21)) == (1 << 21);
-            const bool immediate = (instruction & (1 << 22)) == (1 << 22);
-            const bool add_to_base = (instruction & (1 << 23)) == (1 << 23);
-            const bool pre_indexed = (instruction & (1 << 24)) == (1 << 24);
+            const bool load = instruction & (1 << 20);
+            const bool write_back = instruction & (1 << 21);
+            const bool immediate = instruction & (1 << 22);
+            const bool add_to_base = instruction & (1 << 23);
+            const bool pre_indexed = instruction & (1 << 24);
             u32 address = reg(reg_base);
 
             #ifdef DEBUG
@@ -318,7 +318,7 @@ namespace NanoboyAdvance
                 // TODO: Check if pipeline is flushed when reg_dest is r15
                 if (type == ARM_7)
                 {
-                    bool halfword = (instruction & (1 << 5)) == (1 << 5);
+                    bool halfword = instruction & (1 << 5);
                     u32 value;
                     if (halfword)
                     {
@@ -372,16 +372,16 @@ namespace NanoboyAdvance
         case ARM_8:
         {
             // ARM.8 Data processing and PSR transfer
-            bool set_flags = (instruction & (1 << 20)) == (1 << 20);
+            bool set_flags = instruction & (1 << 20);
             const int opcode = (instruction >> 21) & 0xF;
 
             // Determine wether the instruction is data processing or psr transfer
             if (!set_flags && opcode >= 0b1000 && opcode <= 0b1011)
             {
                 // PSR transfer
-                const bool immediate = instruction & (1 << 25) ? true : false;
-                const bool use_spsr = instruction & (1 << 22) ? true : false;
-                const bool msr = instruction & (1 << 21) ? true : false;
+                const bool immediate = instruction & (1 << 25);
+                const bool use_spsr = instruction & (1 << 22);
+                const bool msr = instruction & (1 << 21);
 
                 if (msr)
                 {
@@ -431,10 +431,10 @@ namespace NanoboyAdvance
                 // Data processing
                 const int reg_dest = (instruction >> 12) & 0xF;
                 const int reg_operand1 = (instruction >> 16) & 0xF;
-                const bool immediate = (instruction & (1 << 25)) == (1 << 25);
+                const bool immediate = instruction & (1 << 25);
                 u32 operand1 = reg(reg_operand1);
                 u32 operand2;
-                bool carry = (cpsr & CarryFlag) == CarryFlag;
+                bool carry = cpsr & CarryFlag; // == CarryFlag;
 
                 // Operand 2 can either be an 8 bit immediate value rotated right by 4 bit value or the value of a register shifted by a specific amount
                 if (immediate)
@@ -444,7 +444,7 @@ namespace NanoboyAdvance
                     operand2 = (immediate_value >> amount) | (immediate_value << (32 - amount));
                     if (amount != 0)
                     {
-                        carry = (immediate_value >> (amount - 1)) & 1 ? true : false;
+                        carry = (immediate_value >> (amount - 1)) & 1;
                     }
                 }
                 else
@@ -567,7 +567,7 @@ namespace NanoboyAdvance
                     if (set_flags)
                     {
                         u64 result_long = (u64)operand1 + (u64)operand2;
-                        AssertCarry((result_long & 0x100000000) ? true : false);
+                        AssertCarry(result_long & 0x100000000);
                         CalculateOverflowAdd(result, operand1, operand2);
                         CalculateSign(result);
                         CalculateZero(result);
@@ -582,7 +582,7 @@ namespace NanoboyAdvance
                     if (set_flags)
                     {
                         u64 result_long = (u64)operand1 + (u64)operand2 + (u64)carry2;
-                        AssertCarry((result_long & 0x100000000) ? true : false);
+                        AssertCarry(result_long & 0x100000000);
                         CalculateOverflowAdd(result, operand1, operand2 + carry2);
                         CalculateSign(result);
                         CalculateZero(result);
@@ -647,7 +647,7 @@ namespace NanoboyAdvance
                 {
                     u32 result = operand1 + operand2;
                     u64 result_long = (u64)operand1 + (u64)operand2;
-                    AssertCarry((result_long & 0x100000000) ? true : false);
+                    AssertCarry(result_long & 0x100000000);
                     CalculateOverflowAdd(result, operand1, operand2);
                     CalculateSign(result);
                     CalculateZero(result);
@@ -717,11 +717,11 @@ namespace NanoboyAdvance
             u32 offset;
             const int reg_dest = (instruction >> 12) & 0xF;
             const int reg_base = (instruction >> 16) & 0xF;
-            const bool load = (instruction & (1 << 20)) == (1 << 20);
-            const bool write_back = (instruction & (1 << 21)) == (1 << 21);
-            const bool transfer_byte = (instruction & (1 << 22)) == (1 << 22);
-            const bool add_to_base = (instruction & (1 << 23)) == (1 << 23);
-            const bool pre_indexed = (instruction & (1 << 24)) == (1 << 24);
+            const bool load = instruction & (1 << 20);
+            const bool write_back = instruction & (1 << 21);
+            const bool transfer_byte = instruction & (1 << 22);
+            const bool add_to_base = instruction & (1 << 23);
+            const bool pre_indexed = instruction & (1 << 24);
             const bool immediate = (instruction & (1 << 25)) == 0;
             u32 address = reg(reg_base);
 
@@ -773,7 +773,7 @@ namespace NanoboyAdvance
                 case 0b11:
                 {
                     // Rotate Right
-                    carry = (cpsr & CarryFlag) ? true : false;
+                    carry = cpsr & CarryFlag;
                     ROR(offset, amount, carry, true);
                     break;
                 }
@@ -859,13 +859,13 @@ namespace NanoboyAdvance
             // TODO: Handle empty register list
             //       Correct transfer order for stm (this is needed for some io transfers)
             //       See gbatek for both
-            const bool pc_in_list = (instruction & (1 << 15)) == (1 << 15);
+            const bool pc_in_list = instruction & (1 << 15);
             const int reg_base = (instruction >> 16) & 0xF;
-            const bool load = (instruction & (1 << 20)) == (1 << 20);
-            bool write_back = (instruction & (1 << 21)) == (1 << 21);
-            const bool s_bit = (instruction & (1 << 22)) == (1 << 22); // TODO: Give this a meaningful name
-            const bool add_to_base = (instruction & (1 << 23)) == (1 << 23);
-            const bool pre_indexed = (instruction & (1 << 24)) == (1 << 24);
+            const bool load = instruction & (1 << 20);
+            bool write_back = instruction & (1 << 21);
+            const bool s_bit = instruction & (1 << 22); // TODO: Give this a meaningful name
+            const bool add_to_base = instruction & (1 << 23);
+            const bool pre_indexed = instruction & (1 << 24);
             u32 address = reg(reg_base);
             u32 old_address = address;
             bool switched_mode = false;
@@ -1055,7 +1055,7 @@ namespace NanoboyAdvance
         case ARM_12:
         {
             // ARM.12 Branch
-            const bool link = (instruction & (1 << 24)) == (1 << 24);
+            const bool link = instruction & (1 << 24);
             u32 offset = instruction & 0xFFFFFF;
             if (offset & 0x800000)
             {
