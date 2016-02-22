@@ -51,7 +51,8 @@ namespace NanoboyAdvance
         inline u32 EncodeGBAFloat32(float number);
         inline u32 DecodeRGB5(u16 color);
 		inline u32* DecodeTileLine4BPP(u32 block_base, u32 palette_base, int number, int line, bool transparent);
-		inline u32* DecodeTileLine8PP(u32 block_base, int number, int line, bool sprite, bool transparent);
+		inline u32* DecodeTileLine8BPP(u32 block_base, int number, int line, bool sprite, bool transparent);
+        inline u32 DecodeTilePixel8BPP(u32 block_base, int number, int line, int column, bool sprite, bool transparent);
         u32* RenderBackgroundMode0(u16 bg_control, int line, int scx, int scy, bool transparent);
         u32* RenderBackgroundMode1(u16 bg_control, int line, u32 bgx_internal, u32 bgy_internal, u16 bgpa, u16 bgpb, u16 bgpc, u16 bgpd, bool transparent);
         u32* RenderSprites(u32 tile_base, int line, int priority);

@@ -95,7 +95,7 @@ namespace NanoboyAdvance
         return data;
     }
 
-    inline u32* GBAVideo::DecodeTileLine8PP(u32 block_base, int number, int line, bool sprite, bool transparent)
+    inline u32* GBAVideo::DecodeTileLine8BPP(u32 block_base, int number, int line, bool sprite, bool transparent)
     {
         u32 offset = block_base + number * 64 + line * 8;
         u32 palette_base = sprite ? 0x200 : 0x0;
@@ -119,6 +119,16 @@ namespace NanoboyAdvance
         }
 
         return data;
+    }
+    
+    inline u32 GBAVideo::DecodeTilePixel8BPP(u32 block_base, int number, int line, int column, bool sprite, bool transparent)
+    {
+        u8 value = vram[block_base + number * 64 + line * 8 + column];
+        u32 palette_base = sprite ? 0x200 : 0x0;
+        if (value != 0 || !transparent) {
+            return DecodeRGB5((pal[palette_base + value * 2 + 1] << 8) | pal[palette_base + value * 2]);
+        }
+        return 0;
     }
 
     u32* GBAVideo::RenderBackgroundMode0(u16 bg_control, int line, int scx, int scy, bool transparent)
@@ -160,7 +170,7 @@ namespace NanoboyAdvance
             
             // Background may be either 16 or 256 colors, render the given tile.
             if (color_mode) {
-                tile_data = DecodeTileLine8PP(tile_block_base, tile_number, (vertical_flip ? (7 - tile_line) : tile_line), false, transparent);
+                tile_data = DecodeTileLine8BPP(tile_block_base, tile_number, (vertical_flip ? (7 - tile_line) : tile_line), false, transparent);
             } else {
                 int palette = tile_encoder >> 12;
                 tile_data = DecodeTileLine4BPP(tile_block_base, palette * 0x20, tile_number, (vertical_flip ? (7 - tile_line) : tile_line), transparent);
@@ -212,7 +222,6 @@ namespace NanoboyAdvance
             int tile_row;
             int tile_column;
             int tile_number;
-            u32* tile_data; // todo: write function to get *single* pixel from tile, will be faster
             
             if ((x >= size) || (y >= size)) {
                 if (wraparound) {
@@ -247,10 +256,7 @@ namespace NanoboyAdvance
             if (tile_row < 0) LOG(LOG_INFO, "Tile row fuckd up");
             if (tile_column < 0) LOG(LOG_INFO, "Tile column fuckd up");
             tile_number = vram[map_block_base + tile_row * blocks + tile_column];
-            tile_data = DecodeTileLine8PP(tile_block_base, tile_number, tile_internal_line, false, transparent);
-            mybuffer[i] = tile_data[tile_internal_x];
-            
-            delete[] tile_data;
+            mybuffer[i] = DecodeTilePixel8BPP(tile_block_base, tile_number, tile_internal_line, tile_internal_x, false, transparent);
         }
         
         return mybuffer;
@@ -376,7 +382,7 @@ namespace NanoboyAdvance
                         if (color_mode)
                         {
                             // 256 colors
-                            tile_data = DecodeTileLine8PP(tile_base, current_tile_number, displacement_y, true, true);
+                            tile_data = DecodeTileLine8BPP(tile_base, current_tile_number, displacement_y, true, true);
                         }
                         else
                         {
