@@ -1,6 +1,6 @@
 #/bin/sh
 
 cd nanoboyadvance
-make distclean && make
+make
 cd ..
 ln -s nanoboyadvance/nanoboyadvance nba
