@@ -110,7 +110,7 @@ namespace NanoboyAdvance
 
     u8 GBAMemory::ReadByte(u32 offset)
     {
-        int page = (offset >> 24) & 0xF;
+        int page = offset >> 24;
         bool invalid = false;
         u32 internal_offset = offset & 0xFFFFFF;        
 
@@ -191,7 +191,7 @@ namespace NanoboyAdvance
 
     void GBAMemory::WriteByte(u32 offset, u8 value)
     {
-        int page = (offset >> 24);
+        int page = offset >> 24;
         u32 internal_offset = offset & 0xFFFFFF;
         bool invalid = false;
 

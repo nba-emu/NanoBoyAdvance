@@ -125,7 +125,6 @@ namespace NanoboyAdvance
     void ARM7::Step()
     {
         bool thumb = (cpsr & Thumb) == Thumb;
-        u32 pc_page = r15 >> 24;
 
         // Determine if the cpu runs in arm or thumb mode and do corresponding work
         if (thumb)
