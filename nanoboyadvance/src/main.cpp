@@ -69,8 +69,8 @@ void schedule_keyinput()
     ushort joypad = 0;
 
     // Check which keys are pressed and set corresponding bits (0 = pressed, 1 = vice versa)
-    joypad |= kb_state[SDL_SCANCODE_Y] ? 0 : 1;
-    joypad |= kb_state[SDL_SCANCODE_X] ? 0 : (1 << 1);
+    joypad |= kb_state[SDL_SCANCODE_A] ? 0 : 1;
+    joypad |= kb_state[SDL_SCANCODE_S] ? 0 : (1 << 1);
     joypad |= kb_state[SDL_SCANCODE_BACKSPACE] ? 0 : (1 << 2);
     joypad |= kb_state[SDL_SCANCODE_RETURN] ? 0 : (1 << 3);
     joypad |= kb_state[SDL_SCANCODE_RIGHT] ? 0 : (1 << 4);

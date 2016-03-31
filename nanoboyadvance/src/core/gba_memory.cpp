@@ -232,52 +232,52 @@ namespace NanoboyAdvance
             switch (internal_offset)
             {
             case BG2X:
-                video->bg2x_internal = (video->bg2x_internal & ~0xFF) | value;
+                video->bgx_int[2] = (video->bgx_int[2] & ~0xFF) | value;
                 break;
             case BG2X+1:
-                video->bg2x_internal = (video->bg2x_internal & ~0xFF00) | (value << 8);
+                video->bgx_int[2] = (video->bgx_int[2] & ~0xFF00) | (value << 8);
                 break;
             case BG2X+2:
-                video->bg2x_internal = (video->bg2x_internal & ~0xFF0000) | (value << 16);
+                video->bgx_int[2] = (video->bgx_int[2] & ~0xFF0000) | (value << 16);
                 break;
             case BG2X+3:
-                video->bg2x_internal = (video->bg2x_internal & ~0xFF000000) | (value << 24);
+                video->bgx_int[2] = (video->bgx_int[2] & ~0xFF000000) | (value << 24);
                 break;
             case BG2Y:
-                video->bg2y_internal = (video->bg2y_internal & ~0xFF) | value;
+                video->bgy_int[2] = (video->bgy_int[2] & ~0xFF) | value;
                 break;
             case BG2Y+1:
-                video->bg2y_internal = (video->bg2y_internal & ~0xFF00) | (value << 8);
+                video->bgy_int[2] = (video->bgy_int[2] & ~0xFF00) | (value << 8);
                 break;
             case BG2Y+2:
-                video->bg2y_internal = (video->bg2y_internal & ~0xFF0000) | (value << 16);
+                video->bgy_int[2] = (video->bgy_int[2] & ~0xFF0000) | (value << 16);
                 break;
             case BG2Y+3:
-                video->bg2y_internal = (video->bg2y_internal & ~0xFF000000) | (value << 24);
+                video->bgy_int[2] = (video->bgy_int[2] & ~0xFF000000) | (value << 24);
                 break;
             case BG3X:
-                video->bg3x_internal = (video->bg3x_internal & ~0xFF) | value;
+                video->bgx_int[3] = (video->bgx_int[3] & ~0xFF) | value;
                 break;
             case BG3X+1:
-                video->bg3x_internal = (video->bg3x_internal & ~0xFF00) | (value << 8);
+                video->bgx_int[3] = (video->bgx_int[3] & ~0xFF00) | (value << 8);
                 break;
             case BG3X+2:
-                video->bg3x_internal = (video->bg3x_internal & ~0xFF0000) | (value << 16);
+                video->bgx_int[3] = (video->bgx_int[3] & ~0xFF0000) | (value << 16);
                 break;
             case BG3X+3:
-                video->bg3x_internal = (video->bg3x_internal & ~0xFF000000) | (value << 24);
+                video->bgx_int[3] = (video->bgx_int[3] & ~0xFF000000) | (value << 24);
                 break;
             case BG3Y:
-                video->bg3y_internal = (video->bg3y_internal & ~0xFF) | value;
+                video->bgy_int[3] = (video->bgy_int[3] & ~0xFF) | value;
                 break;
             case BG3Y+1:
-                video->bg3y_internal = (video->bg3y_internal & ~0xFF00) | (value << 8);
+                video->bgy_int[3] = (video->bgy_int[3] & ~0xFF00) | (value << 8);
                 break;
             case BG3Y+2:
-                video->bg3y_internal = (video->bg3y_internal & ~0xFF0000) | (value << 16);
+                video->bgy_int[3] = (video->bgy_int[3] & ~0xFF0000) | (value << 16);
                 break;
             case BG3Y+3:
-                video->bg3y_internal = (video->bg3y_internal & ~0xFF000000) | (value << 24);
+                video->bgy_int[3] = (video->bgy_int[3] & ~0xFF000000) | (value << 24);
                 break;
             case DMA0CNT_H+1:
                 if (value & (1 << 7))

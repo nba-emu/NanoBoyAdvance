@@ -33,6 +33,32 @@ namespace NanoboyAdvance
         memset(vram, 0, 0x18000);
         memset(obj, 0, 0x400);
         memset(buffer, 0, 240 * 160 * 4);
+        
+        // Init bgNcnt mapping
+        bgcnt[0] = &gba_io->bg0cnt;
+        bgcnt[1] = &gba_io->bg1cnt;
+        bgcnt[2] = &gba_io->bg2cnt;
+        bgcnt[3] = &gba_io->bg3cnt;
+        
+        // Init bgN[h/v]ofs mapping
+        bghofs[0] = &gba_io->bg0hofs;
+        bghofs[1] = &gba_io->bg1hofs;
+        bghofs[2] = &gba_io->bg2hofs;
+        bghofs[3] = &gba_io->bg3hofs;
+        bgvofs[0] = &gba_io->bg0vofs;
+        bgvofs[1] = &gba_io->bg1vofs;
+        bgvofs[2] = &gba_io->bg2vofs;
+        bgvofs[3] = &gba_io->bg3vofs;
+        
+        // Init bgNp[a/b/c/d] mapping
+        bgpa[2] = &gba_io->bg2pa;
+        bgpa[3] = &gba_io->bg3pa;
+        bgpb[2] = &gba_io->bg2pb;
+        bgpb[3] = &gba_io->bg3pb;
+        bgpc[2] = &gba_io->bg2pc;
+        bgpc[3] = &gba_io->bg3pc;
+        bgpd[2] = &gba_io->bg2pd;
+        bgpd[3] = &gba_io->bg3pd;
     }
 
     inline float GBAVideo::DecodeGBAFloat32(u32 number)
@@ -103,12 +129,7 @@ namespace NanoboyAdvance
 
         // We don't want to have random data in the buffer
         memset(data, 0, 32);
-        if (offset > 0x18000 || offset < 0) {
-            LOG(LOG_INFO, "bb: %x", block_base);
-            LOG(LOG_INFO, "tn: %d", number);
-            LOG(LOG_INFO, "line: %d", line);
-            LOG(LOG_INFO, "offset: %d", offset);
-        }
+
         for (int i = 0; i < 8; i++)
         {
             u8 value = vram[offset + i];
@@ -131,8 +152,14 @@ namespace NanoboyAdvance
         return 0;
     }
 
-    u32* GBAVideo::RenderBackgroundMode0(u16 bg_control, int line, int scx, int scy, bool transparent)
+    u32* GBAVideo::RenderBackgroundMode0(int id, int line, bool transparent)
     {
+        // IO-register values
+        u16 bg_control = *bgcnt[id];
+        u16 scx = *bghofs[id];
+        u16 scy = *bgvofs[id];
+        
+        // Rendering variables
         u32 tile_block_base = ((bg_control >> 2) & 0x03) * 0x4000;
         u32 map_block_base = ((bg_control >> 8) & 0x1F) * 0x800;
         bool color_mode = bg_control & (1 << 7);
@@ -198,8 +225,18 @@ namespace NanoboyAdvance
         return line_buffer_visible;
     }
 
-    u32* GBAVideo::RenderBackgroundMode1(u16 bg_control, int line, u32 bgx_internal, u32 bgy_internal, u16 bgpa, u16 bgpb, u16 bgpc, u16 bgpd, bool transparent)
+    u32* GBAVideo::RenderBackgroundMode1(int id, int line, bool transparent)
     {
+        // IO-register values
+        u16 bg_control = *bgcnt[id];
+        u32 bgx_internal = bgx_int[id];
+        u32 bgy_internal = bgy_int[id];
+        u16 bgpa = *this->bgpa[id];
+        u16 bgpb = *this->bgpb[id];
+        u16 bgpc = *this->bgpc[id];
+        u16 bgpd = *this->bgpd[id];
+        
+        // Rendering variables
         u32 tile_block_base = ((bg_control >> 2) & 0x03) * 0x4000;
         u32 map_block_base = ((bg_control >> 8) & 0x1F) * 0x800;
         bool wraparound = bg_control & (1 << 13);
@@ -253,8 +290,6 @@ namespace NanoboyAdvance
             tile_internal_x = x % 8;
             tile_row = (y - tile_internal_line) / 8;
             tile_column = (x - tile_internal_x) / 8;
-            if (tile_row < 0) LOG(LOG_INFO, "Tile row fuckd up");
-            if (tile_column < 0) LOG(LOG_INFO, "Tile column fuckd up");
             tile_number = vram[map_block_base + tile_row * blocks + tile_column];
             mybuffer[i] = DecodeTilePixel8BPP(tile_block_base, tile_number, tile_internal_line, tile_internal_x, false, transparent);
         }
@@ -448,8 +483,6 @@ namespace NanoboyAdvance
         bool bg3_enable = gba_io->dispcnt & (1 << 11) ? true : false;
         bool obj_enable = gba_io->dispcnt & (1 << 12) ? true : false;
 
-        ASSERT(mode > 5, LOG_ERROR, "Invalid video mode %d: cannot render", mode);
-
         // Emulate the effect caused by "Forced Blank"
         if (gba_io->dispcnt & (1 << 7))
         {
@@ -476,7 +509,7 @@ namespace NanoboyAdvance
             {
                 if (bg3_enable && bg3_priority == i)
                 {
-                    u32* bg_buffer = RenderBackgroundMode0(gba_io->bg3cnt, line, gba_io->bg3hofs, gba_io->bg3vofs, !first_background);
+                    u32* bg_buffer = RenderBackgroundMode0(3, line, !first_background);
                     DrawLineToBuffer(bg_buffer, line);
                     first_background = false;
                     delete[] bg_buffer;
@@ -485,24 +518,23 @@ namespace NanoboyAdvance
                 {
                     u32* bg_buffer;
                     if (mode == 0)
-                        bg_buffer = RenderBackgroundMode0(gba_io->bg2cnt, line, gba_io->bg2hofs, gba_io->bg2vofs, !first_background);
+                        bg_buffer = RenderBackgroundMode0(2, line, !first_background);
                     else
-                        bg_buffer = RenderBackgroundMode1(gba_io->bg2cnt, line, bg2x_internal, bg2y_internal, 
-                                                          gba_io->bg2pa, gba_io->bg2pb, gba_io->bg2pc, gba_io->bg2pd, !first_background);
+                        bg_buffer = RenderBackgroundMode1(2, line, !first_background);
                     DrawLineToBuffer(bg_buffer, line);
                     first_background = false;
                     delete[] bg_buffer;
                 }
                 if (bg1_enable && bg1_priority == i)
                 {
-                    u32* bg_buffer = RenderBackgroundMode0(gba_io->bg1cnt, line, gba_io->bg1hofs, gba_io->bg1vofs, !first_background);
+                    u32* bg_buffer = RenderBackgroundMode0(1, line, !first_background);
                     DrawLineToBuffer(bg_buffer, line);
                     first_background = false;
                     delete[] bg_buffer;
                 }
                 if (bg0_enable && bg0_priority == i)
                 {
-                    u32* bg_buffer = RenderBackgroundMode0(gba_io->bg0cnt, line, gba_io->bg0hofs, gba_io->bg0vofs, !first_background);
+                    u32* bg_buffer = RenderBackgroundMode0(0, line, !first_background);
                     DrawLineToBuffer(bg_buffer, line);
                     first_background = false;
                     delete[] bg_buffer;
@@ -526,16 +558,14 @@ namespace NanoboyAdvance
             {
                 if (bg3_enable && bg3_priority == i)
                 {
-                    u32* bg_buffer = RenderBackgroundMode1(gba_io->bg3cnt, line, bg3x_internal, bg3y_internal, 
-                                                           gba_io->bg3pa, gba_io->bg3pb, gba_io->bg3pc, gba_io->bg3pd, !first_background);
+                    u32* bg_buffer = RenderBackgroundMode1(3, line, !first_background);
                     DrawLineToBuffer(bg_buffer, line);
                     first_background = false;
                     delete[] bg_buffer;
                 }
                 if (bg2_enable && bg2_priority == i)
                 {
-                    u32* bg_buffer = RenderBackgroundMode1(gba_io->bg2cnt, line, bg2x_internal, bg2y_internal, 
-                                                           gba_io->bg2pa, gba_io->bg2pb, gba_io->bg2pc, gba_io->bg2pd, !first_background);
+                    u32* bg_buffer = RenderBackgroundMode1(2, line, !first_background);
                     DrawLineToBuffer(bg_buffer, line);
                     first_background = false;
                     delete[] bg_buffer;
@@ -657,10 +687,10 @@ namespace NanoboyAdvance
                 if (gba_io->vcount == 160)
                 {
                     gba_io->dispstat = (gba_io->dispstat & ~3) | 1; // set vblank bit
-                    bg2x_internal = gba_io->bg2x;
-                    bg2y_internal = gba_io->bg2y;
-                    bg3x_internal = gba_io->bg3x;
-                    bg3y_internal = gba_io->bg3y;
+                    bgx_int[2] = gba_io->bg2x;
+                    bgy_int[2] = gba_io->bg2y;
+                    bgx_int[3] = gba_io->bg3x;
+                    bgy_int[3] = gba_io->bg3y;
                     state = GBAVideoState::VBlank;
                 }
                 else

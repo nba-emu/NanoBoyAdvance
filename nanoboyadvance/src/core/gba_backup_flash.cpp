@@ -95,16 +95,15 @@ namespace NanoboyAdvance
 
     void GBAFlash::WriteByte(u32 offset, u8 value)
     {
-        if (!enable_byte_write && offset == 0x0E005555 && value == 0xAA) { command_phase = 1; LOG(LOG_INFO, " Phase 1"); }
-        else if (offset == 0x0E002AAA && value == 0x55 && command_phase == 1) { command_phase = 2; LOG(LOG_INFO, "Phase 2"); }
+        if (!enable_byte_write && offset == 0x0E005555 && value == 0xAA) { command_phase = 1; }
+        else if (offset == 0x0E002AAA && value == 0x55 && command_phase == 1) { command_phase = 2; }
         else if (offset == 0x0E005555 && command_phase == 2) 
         {
-            LOG(LOG_INFO, "Interpreting command...");
             // interpret command
             switch (static_cast<GBAFlashCommand>(value)) 
             {
-            case GBAFlashCommand::READ_CHIP_ID: enable_chip_id = true; LOG(LOG_INFO, "Enabling chip id"); break;
-            case GBAFlashCommand::FINISH_CHIP_ID: enable_chip_id = false; LOG(LOG_INFO, "Disabling chip id"); break;
+            case GBAFlashCommand::READ_CHIP_ID: enable_chip_id = true; break;
+            case GBAFlashCommand::FINISH_CHIP_ID: enable_chip_id = false; break;
             case GBAFlashCommand::ERASE: enable_erase = true; break;
             case GBAFlashCommand::ERASE_CHIP: 
                 if (enable_erase)
