@@ -77,8 +77,8 @@ void schedule_keyinput()
     joypad |= kb_state[SDL_SCANCODE_LEFT] ? 0 : (1 << 5);
     joypad |= kb_state[SDL_SCANCODE_UP] ? 0 : (1 << 6);
     joypad |= kb_state[SDL_SCANCODE_DOWN] ? 0 : (1 << 7);
-    joypad |= kb_state[SDL_SCANCODE_S] ? 0 : (1 << 8);
-    joypad |= kb_state[SDL_SCANCODE_A] ? 0 : (1 << 9);
+    joypad |= kb_state[SDL_SCANCODE_Q] ? 0 : (1 << 8);
+    joypad |= kb_state[SDL_SCANCODE_W] ? 0 : (1 << 9);
 
     // Write the generated value to IO ram
     memory->gba_io->keyinput = joypad;
