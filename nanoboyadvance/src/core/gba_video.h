@@ -62,6 +62,10 @@ namespace NanoboyAdvance
         u16* bgpc[4];
         u16* bgpd[4];
         
+        // Buffers the various layers
+        u32 bg_buffer[4][240];
+        u32 obj_buffer[4][240];
+        
         // Internal tick-counter
         int ticks {0};
         
@@ -72,17 +76,17 @@ namespace NanoboyAdvance
         
         // Methods for color and tile decoding
         inline u32 DecodeRGB5(u16 color);
-		inline u32* DecodeTileLine4BPP(u32 block_base, u32 palette_base, int number, int line, bool transparent);
-		inline u32* DecodeTileLine8BPP(u32 block_base, int number, int line, bool sprite, bool transparent);
-        inline u32 DecodeTilePixel8BPP(u32 block_base, int number, int line, int column, bool sprite, bool transparent);
+		inline u32* DecodeTileLine4BPP(u32 block_base, u32 palette_base, int number, int line);
+		inline u32* DecodeTileLine8BPP(u32 block_base, int number, int line, bool sprite);
+        inline u32 DecodeTilePixel8BPP(u32 block_base, int number, int line, int column, bool sprite);
         
         // Renderers
-        u32* RenderBackgroundMode0(int id, int line, bool transparent);
-        u32* RenderBackgroundMode1(int id, int line, bool transparent);
-        u32* RenderSprites(u32 tile_base, int line, int priority);
+        void RenderBackgroundMode0(int id, int line);
+        void RenderBackgroundMode1(int id, int line);
+        void RenderSprites(int priority, int line, u32 tile_base);
         
         // Misc
-        inline void DrawLineToBuffer(u32* line_buffer, int line);
+        inline void DrawLineToBuffer(u32* line_buffer, int line, bool backdrop);
         
         // Renders one entire line
 		void Render(int line);
