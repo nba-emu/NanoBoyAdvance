@@ -188,6 +188,10 @@ namespace NanoboyAdvance
         u32 bgx_int[4];
         u32 bgy_int[4];
         
+        // DMA indicators
+        bool hblank_dma {false};
+        bool vblank_dma {false};
+        
         // Output buffer
         u32 buffer[240 * 160];
         

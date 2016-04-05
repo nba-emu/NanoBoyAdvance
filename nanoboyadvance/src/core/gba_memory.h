@@ -21,9 +21,7 @@
 
 #include <iostream>
 #include "common/types.h"
-#include "memory.h"
 #include "gba_io.h"
-#include "gba_dma.h"
 #include "gba_timer.h"
 #include "gba_video.h"
 #include "gba_backup_flash.h"
@@ -35,7 +33,7 @@ typedef void (*MemoryCallback)(u32 address, bool write, bool invalid);
 
 namespace NanoboyAdvance
 {
-    class GBAMemory : public Memory
+    class GBAMemory
     {
         u8* bios;
         u8 wram[0x40000];
@@ -45,10 +43,26 @@ namespace NanoboyAdvance
         int rom_size;
         u8 sram[0x10000];      
         GBABackup* backup;
-
+        
+        // DMA related
+        enum AddressControl
+        {
+            Increment = 0,
+            Decrement = 1,
+            Fixed = 2,
+            IncrementAndReload = 3
+        };
+        
+        // DMA (internal) IO
+        u32 dma_src[4];
+        u32 dma_dst[4];
+        u32 dma_cnt[4];
+        u16* dma_cntl[4];
+        
+        // Debugging related callback
         MemoryCallback memory_hook;
-
-        // Pointer-safe call to debug_hook (avoid nullpointer)
+        
+        // Pointer-safe call to memory_hook (avoid nullpointer)
         inline void MemoryHook(u32 address, bool write, bool invalid)
         {
             if (memory_hook != NULL)
@@ -59,7 +73,6 @@ namespace NanoboyAdvance
     public:
         // Hardware / IO accessible through memory
         GBAIO* gba_io;
-        GBADMA* dma;
         GBATimer* timer;
         GBAVideo* video;
 
@@ -86,6 +99,9 @@ namespace NanoboyAdvance
         // Sets an callback that gets called each time memory is accessed (unimpemented)
         void SetCallback(MemoryCallback callback);
 
+        // Schedules DMA
+        void Step();
+        
         // Read / Write access methods
         u8 ReadByte(u32 offset);
         u16 ReadHWord(u32 offset);
@@ -93,7 +109,7 @@ namespace NanoboyAdvance
         void WriteByte(u32 offset, u8 value);
         void WriteHWord(u32 offset, u16 value);
         void WriteWord(u32 offset, u32 value);
-
+        
         // Constructor and Destructor
         GBAMemory(string bios_file, string rom_file, string save_file);
         ~GBAMemory();

@@ -38,7 +38,6 @@ namespace NanoboyAdvance
         rom = File::ReadFile(rom_file);
         rom_size = File::GetFileSize(rom_file);
         gba_io = (GBAIO*)io;
-        dma = new GBADMA(this, gba_io);
         timer = new GBATimer(gba_io);
         video = new GBAVideo(gba_io);
         memory_hook = NULL;
@@ -49,7 +48,13 @@ namespace NanoboyAdvance
         memset(io, 0, 0x3FF);
         memset(sram, 0, 0x10000);
         io[0x130] = 0xFF;
-
+        
+        // Setup dmacnt_h pointers
+        dma_cntl[0] = &gba_io->dma0cnt_h;
+        dma_cntl[1] = &gba_io->dma1cnt_h;
+        dma_cntl[2] = &gba_io->dma2cnt_h;
+        dma_cntl[3] = &gba_io->dma3cnt_h;
+        
         // Detect savetype
         for (int i = 0; i < rom_size; i += 4)
         {
@@ -98,7 +103,6 @@ namespace NanoboyAdvance
     GBAMemory::~GBAMemory()
     {
         delete backup;
-        delete dma;
         delete timer;
         delete video;
     }
@@ -106,6 +110,143 @@ namespace NanoboyAdvance
     void GBAMemory::SetCallback(MemoryCallback callback)
     {
         memory_hook = callback;
+    }
+    
+    void GBAMemory::Step()
+    {
+        // run though all dma channels
+        for (int i = 0; i < 4; i++) {
+            // is the current dma active?
+            if (*dma_cntl[i] & (1 << 15)) {
+                int start_time = (*dma_cntl[i] >> 12) & 3;
+                bool start = false;
+                
+                // Determine if DMA will be initiated
+                switch (start_time) {
+                // Immediatly
+                case 0:
+                    start = true;
+                    break;
+                // VBlank
+                case 1:
+                    if (video->vblank_dma) {
+                        start = true;
+                        video->vblank_dma = false;
+                    }
+                    break;
+                // HBlank
+                case 2:
+                    if (video->hblank_dma) {
+                        start = true;
+                        video->hblank_dma = false;
+                    }
+                    break;
+                // Special
+                case 3:
+                    // TODO: 1) Video Capture Mode
+                    //       2) DMA1/2 Sound FIFO
+                    if (i == 3) {
+                        LOG(LOG_ERROR, "DMA: Video Capture Mode not supported.");
+                    }
+                    break;
+                }
+                
+                // Run if determined so
+                if (start) {
+                    AddressControl dst_cntl = static_cast<AddressControl>((*dma_cntl[i] >> 5) & 3);
+                    AddressControl src_cntl = static_cast<AddressControl>((*dma_cntl[i] >> 7) & 3);
+                    bool transfer_words = *dma_cntl[i] & (1 << 10);
+                    
+                    // Throw error if unsupported Game Pag DRQ is requested
+                    if (*dma_cntl[i] & (1 << 11)) {
+                        LOG(LOG_ERROR, "Game Pak DRQ not supported.");
+                    }
+                    
+                    // TODO: FIFO A/B special transfer
+                    // Run as long as there is data to transfer
+                    while (dma_cnt[i] != 0) {
+                        // Transfer either Word or HWord
+                        if (transfer_words) {
+                            WriteWord(dma_dst[i], ReadWord(dma_src[i]));
+                        } else {
+                            WriteHWord(dma_dst[i], ReadHWord(dma_src[i]));
+                        }
+                        
+                        // Update destination address
+                        if (dst_cntl == Increment || dst_cntl == IncrementAndReload) {
+                            dma_dst[i] += transfer_words ? 4 : 2;
+                        } else if (dst_cntl == Decrement) {
+                            dma_dst[i] -= transfer_words ? 4 : 2;
+                        }
+                        
+                        // Update source address
+                        if (src_cntl == Increment || src_cntl == IncrementAndReload) {
+                            dma_src[i] += transfer_words ? 4 : 2;
+                        } else if (src_cntl == Decrement) {
+                            dma_src[i] -= transfer_words ? 4 : 2;
+                        }
+                        
+                        // Update count
+                        dma_cnt[i]--;
+                    }
+                    
+                    // Reload dma_cnt, dma_src and dma_dst as specified
+                    if (*dma_cntl[i] & (1 << 9)) {
+                        // TODO: Find a more beautiful(?) solution.
+                        switch (i) {
+                        case 0:
+                            dma_cnt[0] = gba_io->dma0cnt_l & 0x3FFF;
+                            if (dma_cnt[0] == 0) {
+                                dma_cnt[0] = 0x4000;
+                            }
+                            if (dst_cntl == IncrementAndReload) {
+                                dma_src[0] = gba_io->dma0sad & 0x07FFFFFF;
+                                dma_dst[0] = gba_io->dma0dad & 0x07FFFFFF;
+                            }
+                            break;
+                        case 1:
+                            dma_cnt[1] = gba_io->dma1cnt_l & 0x3FFF;
+                            if (dma_cnt[1] == 0) {
+                                dma_cnt[1] = 0x4000;
+                            }
+                            if (dst_cntl == IncrementAndReload) {
+                                dma_src[1] = gba_io->dma1sad & 0x0FFFFFFF;
+                                dma_dst[1] = gba_io->dma1dad & 0x07FFFFFF;
+                            }
+                            break;
+                        case 2:
+                            dma_cnt[2] = gba_io->dma2cnt_l & 0x3FFF;
+                            if (dma_cnt[2] == 0) {
+                                dma_cnt[2] = 0x4000;
+                            }
+                            if (dst_cntl == IncrementAndReload) {
+                                dma_src[2] = gba_io->dma2sad & 0x0FFFFFFF;
+                                dma_dst[2] = gba_io->dma2dad & 0x07FFFFFF;
+                            }
+                            break;
+                        case 3:
+                            dma_cnt[3] = gba_io->dma3cnt_l;
+                            if (dma_cnt[3] == 0) {
+                                dma_cnt[3] = 0x10000;
+                            }
+                            if (dst_cntl == IncrementAndReload) {
+                                dma_src[3] = gba_io->dma3sad & 0x0FFFFFFF;
+                                dma_dst[3] = gba_io->dma3dad & 0x0FFFFFFF;
+                            }
+                            break;
+                        }
+                    } else {
+                        // Clear enable bit
+                        *dma_cntl[i] &= ~(1 << 15);
+                    }
+                    
+                    // Raise DMA IRQ if specified
+                    if (*dma_cntl[i] & (1 << 14)) {
+                        gba_io->if_ |= (1 << (8 + i));
+                    }
+                }
+            }
+        }
     }
 
     u8 GBAMemory::ReadByte(u32 offset)
@@ -280,35 +421,43 @@ namespace NanoboyAdvance
                 video->bgy_int[3] = (video->bgy_int[3] & ~0xFF000000) | (value << 24);
                 break;
             case DMA0CNT_H+1:
-                if (value & (1 << 7))
-                {
-                    dma->dma0_source = gba_io->dma0sad;
-                    dma->dma0_destination = gba_io->dma0dad;
-                    dma->dma0_count = gba_io->dma0cnt_l;
+                if (value & (1 << 7)) {
+                    dma_src[0] = gba_io->dma0sad & 0x07FFFFFF;
+                    dma_dst[0] = gba_io->dma0dad & 0x07FFFFFF;
+                    dma_cnt[0] = gba_io->dma0cnt_l & 0x3FFF;
+                    if (dma_cnt[0] == 0) {
+                        dma_cnt[0] = 0x4000;
+                    }
                 }
                 break;
             case DMA1CNT_H+1:
-                if (value & (1 << 7))
-                {
-                    dma->dma1_source = gba_io->dma1sad;
-                    dma->dma1_destination = gba_io->dma1dad;
-                    dma->dma1_count = gba_io->dma1cnt_l;
+                if (value & (1 << 7)) {
+                    dma_src[1] = gba_io->dma1sad & 0x0FFFFFFF;
+                    dma_dst[1] = gba_io->dma1dad & 0x07FFFFFF;
+                    dma_cnt[1] = gba_io->dma1cnt_l & 0x3FFF;
+                    if (dma_cnt[1] == 0) {
+                        dma_cnt[1] = 0x4000;
+                    }
                 }
                 break;
             case DMA2CNT_H+1:
-                if (value & (1 << 7))
-                {
-                    dma->dma2_source = gba_io->dma2sad;
-                    dma->dma2_destination = gba_io->dma2dad;
-                    dma->dma2_count = gba_io->dma2cnt_l;
+                if (value & (1 << 7)) {
+                    dma_src[2] = gba_io->dma2sad & 0x0FFFFFFF;
+                    dma_dst[2] = gba_io->dma2dad & 0x07FFFFFF;
+                    dma_cnt[2] = gba_io->dma2cnt_l & 0x3FFF;
+                    if (dma_cnt[2] == 0) {
+                        dma_cnt[2] = 0x4000;
+                    }
                 }
                 break;
             case DMA3CNT_H+1:
-                if (value & (1 << 7))
-                {
-                    dma->dma3_source = gba_io->dma3sad;
-                    dma->dma3_destination = gba_io->dma3dad;
-                    dma->dma3_count = gba_io->dma3cnt_l;
+                if (value & (1 << 7)) {
+                    dma_src[3] = gba_io->dma3sad & 0x0FFFFFFF;
+                    dma_dst[3] = gba_io->dma3dad & 0x0FFFFFFF;
+                    dma_cnt[3] = gba_io->dma3cnt_l;
+                    if (dma_cnt[3] == 0) {
+                        dma_cnt[3] = 0x10000;
+                    }
                 }
                 break;
             case TM0CNT_L:
