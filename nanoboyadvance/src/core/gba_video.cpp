@@ -377,6 +377,7 @@ namespace NanoboyAdvance
         bool win_enable[2];
         bool win_obj_enable;
         bool win_none;
+        bool bg_winout[4];
         int bg_priority[4];
         bool bg_enable[4];
         bool obj_enable;
@@ -401,7 +402,7 @@ namespace NanoboyAdvance
         }
         
         if (win_enable[1]) {
-            // Decode window0 coordinates
+            // Decode window1 coordinates
             win_left[1] = gba_io->win1h >> 8;
             win_right[1] = (gba_io->win1h & 0xFF) - 1;
             win_bottom[1] = (gba_io->win1v & 0xFF) - 1;
@@ -410,6 +411,14 @@ namespace NanoboyAdvance
             // Fix window1 garbage values
             if (win_right[1] > 240 || win_left[1] > win_right[1]) win_right[1] = 240;
             if (win_bottom[1] > 160 || win_top[1] > win_bottom[1]) win_bottom[1] = 160;
+        }
+        
+        // Decode WINOUT bg display
+        if (win_enable[0] || win_enable[1] || win_obj_enable) {
+            bg_winout[0] = gba_io->winout & 1;
+            bg_winout[1] = gba_io->winout & 2;
+            bg_winout[2] = gba_io->winout & 4;
+            bg_winout[3] = gba_io->winout & 8;
         }
         
         // Decode background priorities
@@ -537,7 +546,7 @@ namespace NanoboyAdvance
             RenderSprites(2, line, 0x10000);
             RenderSprites(3, line, 0x10000);
         }
-        
+    
         // Compose the picture *outside* the window
         for (int i = 3; i >= 0; i--) {
             for (int k = 3; k >= 0; k--) {
@@ -606,6 +615,7 @@ namespace NanoboyAdvance
             {
                 bool hblank_irq_enable = (gba_io->dispstat & (1 << 4)) == (1 << 4);
                 gba_io->dispstat = (gba_io->dispstat & ~3) | 2; // set hblank bit
+                hblank_dma = true;
                 state = GBAVideoState::HBlank;
                 
                 // Increment bg2x, bg2y, bg3x and bg3y by corresponding dmx/dmy after each scanline
@@ -618,11 +628,10 @@ namespace NanoboyAdvance
                 {
                     gba_io->if_ |= 2;
                 }
-                //if (!render_disable)
-                {
-                    Render(gba_io->vcount);
-                    render_scanline = true;
-                }
+
+                Render(gba_io->vcount);
+                render_scanline = true;
+                
                 ticks = 0;
             }
             break;
@@ -643,10 +652,12 @@ namespace NanoboyAdvance
                     bgy_int[2] = gba_io->bg2y;
                     bgx_int[3] = gba_io->bg3x;
                     bgy_int[3] = gba_io->bg3y;
+                    vblank_dma = true;
                     state = GBAVideoState::VBlank;
                 }
                 else
                 {
+                    hblank_dma = false;
                     state = GBAVideoState::Scanline;
                 }
                 ticks = 0;
@@ -668,6 +679,7 @@ namespace NanoboyAdvance
                 }
                 if (gba_io->vcount >= 227) // check wether this must be 227 or 228
                 {
+                    vblank_dma = false;
                     state = GBAVideoState::Scanline;
                     gba_io->dispstat = gba_io->dispstat & ~3; // clear vblank and hblank bit
                     gba_io->vcount = 0;

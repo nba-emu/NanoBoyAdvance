@@ -111,7 +111,8 @@ void schedule_frame()
             }
             memory->timer->Step();
             memory->video->Step();
-            memory->dma->Step();
+            //memory->dma->Step();
+            memory->Step();
         }
 
         // Raise an IRQ if neccessary
