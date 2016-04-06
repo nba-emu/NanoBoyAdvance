@@ -495,7 +495,7 @@ namespace NanoboyAdvance
                 u32 offset = line * 240 * 2;
                 for (int x = 0; x < 240; x++)
                 {
-                    bg_buffer[2][line * 240 + x] = DecodeRGB5((vram[offset + 1] << 8) | vram[offset]);
+                    bg_buffer[2][x] = DecodeRGB5((vram[offset + 1] << 8) | vram[offset]);
                     offset += 2;
                 }
             }
@@ -510,7 +510,7 @@ namespace NanoboyAdvance
                 {
                     u8 index = vram[page + line * 240 + x];
                     u16 rgb5 = pal[index * 2] | (pal[index * 2 + 1] << 8);
-                    bg_buffer[2][line * 240 + x] = DecodeRGB5(rgb5);
+                    bg_buffer[2][x] = DecodeRGB5(rgb5);
                 }
             }
             break;
@@ -524,14 +524,14 @@ namespace NanoboyAdvance
                 {
                     if (x < 160 && line < 128)
                     {
-                        bg_buffer[2][line * 240 + x] = DecodeRGB5((vram[offset + 1] << 8) | vram[offset]);
+                        bg_buffer[2][x] = DecodeRGB5((vram[offset + 1] << 8) | vram[offset]);
                         offset += 2;
                     }
                     else
                     {
                         // The unused space is filled with the first color from pal ram as far as I can see
                         u16 rgb5 = pal[0] | (pal[1] << 8);
-                        bg_buffer[2][line * 240 + x] = DecodeRGB5(rgb5);
+                        bg_buffer[2][x] = DecodeRGB5(rgb5);
                     }
                 }
             }
@@ -589,6 +589,13 @@ namespace NanoboyAdvance
                     }
                 }
             }
+        }
+        
+        // Debug
+        if (win_left[0] >= 0 && win_left[0] < 240 &&
+            win_right[0] >= 0 && win_right[0] < 240) {
+            buffer[line*240+win_left[0]] = 0xFFFF0000;
+            buffer[line*240+win_right[0]] = 0xFF00FF00;
         }
     }
 

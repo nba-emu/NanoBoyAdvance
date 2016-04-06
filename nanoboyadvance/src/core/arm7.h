@@ -25,7 +25,6 @@
 #include "common/log.h"
 #include "gba_memory.h"
 
-#define ARM7_FASTHAX
 #define arm_pack_instr(i) ((i) & 0xFFF) | (((i) & 0x0FF00000) >> 8)
 
 // Macro for easier register access
