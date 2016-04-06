@@ -126,6 +126,12 @@ namespace NanoboyAdvance
     {
         bool thumb = (cpsr & Thumb) == Thumb;
 
+        if (r15 == 0x0807EFD8) {
+            puts("Yay");
+            LOG(LOG_INFO, "r0=%x", r0);
+            while (1) ;
+        }
+        
         // Determine if the cpu runs in arm or thumb mode and do corresponding work
         if (thumb)
         {
