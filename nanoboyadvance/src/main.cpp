@@ -115,7 +115,7 @@ void schedule_frame()
         }
 
         // Raise an IRQ if neccessary
-        if (memory->gba_io->ime != 0 && memory->gba_io->if_ != 0)
+        if (memory->gba_io->ime && memory->gba_io->if_)
         {
             arm->FireIRQ();
         }
