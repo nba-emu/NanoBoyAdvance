@@ -124,7 +124,7 @@ namespace NanoboyAdvance
 
     void ARM7::Step()
     {
-        bool thumb = (cpsr & Thumb) == Thumb;
+        bool thumb = cpsr & Thumb;
 
         if (r15 == 0x0807EFD8) {
             puts("Yay");
@@ -241,6 +241,7 @@ namespace NanoboyAdvance
             RemapRegisters();
             r15 = 0x18;
             pipe_status = 0;
+            flush_pipe = false;
             //LOG(LOG_INFO, "Issued interrupt, r14_irq=0x%x, r15=0x%x", r14_irq, r15);
         }
         //else { LOG(LOG_INFO, "Interrupt(s) requested but blocked (either by interrupt or swi)") }
