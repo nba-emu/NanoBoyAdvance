@@ -591,12 +591,12 @@ namespace NanoboyAdvance
             }
         }
         
-        // Debug
+        /*// Debug
         if (win_left[0] >= 0 && win_left[0] < 240 &&
             win_right[0] >= 0 && win_right[0] < 240) {
             buffer[line*240+win_left[0]] = 0xFFFF0000;
             buffer[line*240+win_right[0]] = 0xFF00FF00;
-        }
+        }*/
     }
 
     void NanoboyAdvance::GBAVideo::Step()

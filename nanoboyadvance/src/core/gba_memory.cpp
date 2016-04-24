@@ -161,13 +161,7 @@ namespace NanoboyAdvance
                     if (*dma_cntl[i] & (1 << 11)) {
                         LOG(LOG_ERROR, "Game Pak DRQ not supported.");
                     }
-                    
-                    // DMA0 Debug Log
-                    if (i == 0) {
-                        u32 value = ReadHWord(dma_src[0]);
-                        LOG(LOG_INFO, "DMA0: s=%x d=%x c=%x count=%x l=%d v=%x", dma_src[0], dma_dst[0], *dma_cntl[0], dma_cnt[0], gba_io->vcount, value);
-                    }
-                    
+                                        
                     // TODO: FIFO A/B special transfer
                     // Run as long as there is data to transfer
                     while (dma_cnt[i] != 0) {
