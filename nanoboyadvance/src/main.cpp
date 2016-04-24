@@ -117,6 +117,9 @@ void schedule_frame()
         // Raise an IRQ if neccessary
         if (memory->gba_io->ime && memory->gba_io->if_)
         {
+            #ifdef HARDCORE_DEBUG
+            LOG(LOG_INFO, "Run interrupt handler if=0x%x", memory->gba_io->if_);
+            #endif
             arm->FireIRQ();
         }
 
