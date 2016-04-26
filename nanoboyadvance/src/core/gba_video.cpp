@@ -713,6 +713,7 @@ namespace NanoboyAdvance
                     bgy_int[2] = gba_io->bg2y;
                     bgx_int[3] = gba_io->bg3x;
                     bgy_int[3] = gba_io->bg3y;
+                    hblank_dma = false;
                     vblank_dma = true;
                     state = GBAVideoState::VBlank;
                 }
