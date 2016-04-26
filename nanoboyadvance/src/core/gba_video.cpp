@@ -582,7 +582,6 @@ namespace NanoboyAdvance
             
             // Compose inner window[0/1] area
             for (int i = 1; i >= 0; i--) {
-                //if (win_enable[i] && line >= win_top[i] && line <= win_bottom[i]) {
                 if (win_enable[i] && (
                     (win_top[i] <= win_bottom[i] && line >= win_top[i] && line <= win_bottom[i]) ||
                     (win_top[i] > win_bottom[i] && !(line <= win_top[i] && line >= win_bottom[i]))
@@ -607,7 +606,7 @@ namespace NanoboyAdvance
                     }
 
                     // Make the window buffer transparent in the outer area
-                    if (win_left[i] <= win_right[i]) {
+                    if (win_left[i] <= win_right[i] + 1) {
                         for (int j = 0; j <= win_left[i]; j++) {
                             if (j < 240) {
                                 win_buffer[j] = 0;
