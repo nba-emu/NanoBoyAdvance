@@ -376,10 +376,10 @@ namespace NanoboyAdvance
     void GBAVideo::Render(int line)
     {
         int mode = gba_io->dispcnt & 7;
-        int win_left[2];
-        int win_right[2];
-        int win_top[2];
-        int win_bottom[2];
+        s32 win_left[2];
+        s32 win_right[2];
+        s32 win_top[2];
+        s32 win_bottom[2];
         bool win_enable[2];
         bool win_obj_enable;
         bool win_none;
@@ -408,10 +408,6 @@ namespace NanoboyAdvance
                 win_right[i] = (*winh[i] & 0xFF) - 1;
                 win_bottom[i] = (*winv[i] & 0xFF) - 1;
                 win_top[i] = *winv[i] >> 8;
-
-                // Fix window garbage values
-                if (win_right[i] > 240 || win_left[i] > win_right[i]) win_right[i] = 240;
-                if (win_bottom[i] > 160 || win_top[i] > win_bottom[i]) win_bottom[i] = 160;
 
                 // Decode window inside
                 bg_winin[i][0] = gba_io->winin & (1 << ((i == 1) ? 8 : 0));
@@ -586,71 +582,55 @@ namespace NanoboyAdvance
             
             // Compose inner window[0/1] area
             for (int i = 1; i >= 0; i--) {
-                if (win_enable[i] && line >= win_top[i] && line <= win_bottom[i]) {
-                    u32 backdrop[240];
-
-                    // Zero-init backdrop buffer
-                    memset(backdrop, 0, sizeof(u32) * 240);
-
-                    // Fill the window area with black color since the window
-                    // shall not have a transparent background.
-                    for (int j = win_left[i]; j <= win_right[i]; j++) {
-                        if (j >= 0 && j < 240) {
-                            backdrop[j] = 0xFF000000;
-                        }
+                //if (win_enable[i] && line >= win_top[i] && line <= win_bottom[i]) {
+                if (win_enable[i] && (
+                    (win_top[i] <= win_bottom[i] && line >= win_top[i] && line <= win_bottom[i]) ||
+                    (win_top[i] > win_bottom[i] && !(line <= win_top[i] && line >= win_bottom[i]))
+                )) {
+                    u32 win_buffer[240];
+                    
+                    // Anything that is not covered by bg and obj will be black
+                    for (int j = 0; j < 240; j++) {
+                        win_buffer[j] = 0xFF000000;
                     }
-
-                    // Draw backdrop
-                    DrawLineToBuffer(backdrop, line, false);
 
                     // Draw backgrounds and sprites if any
                     for (int j = 3; j >= 0; j--) {
                         for (int k = 3; k >= 0; k--) {
                             if (bg_enable[k] && bg_priority[k] == j && bg_winin[i][k]) {
-                                u32 inside[240];
-                                
-                                // Clear buffer and copy visible area
-                                memset(inside, 0, sizeof(u32) * 240);
-                                /*memcpy((u32*)(inside + win_left[i]), 
-                                       (u32*)(bg_buffer[k] + win_left[i]), 
-                                       sizeof(u32) * (win_right[i] - win_left[i] + 1));*/
-                                for (int m = win_left[i]; m <= win_right[i]; m++) {
-                                    if (m >= 0 && m < 240) {
-                                        inside[m] = bg_buffer[k][m];
-                                    }
-                                }
-
-                                // Draw line
-                                DrawLineToBuffer(inside, line, false);
+                                OverlayLineBuffers(win_buffer, bg_buffer[k]);
                             }
                         }
                         if (obj_enable && obj_winin[i]) {
-                            u32 inside[240];
-
-                            // Zero-init buffer (we don't want garbage)
-                            memset(inside, 0, sizeof(u32) * 240);
-
-                            // Copy visible area
-                            for (int k = win_left[i]; k <= win_right[i]; k++) {
-                                if (k >= 0 && k < 240) {
-                                    inside[k] = obj_buffer[j][k];
-                                }
-                            }
-                            
-                            // Draw line
-                            DrawLineToBuffer(inside, line, false);
+                            OverlayLineBuffers(win_buffer, obj_buffer[j]);
                         }
                     }
+
+                    // Make the window buffer transparent in the outer area
+                    if (win_left[i] <= win_right[i]) {
+                        for (int j = 0; j <= win_left[i]; j++) {
+                            if (j < 240) {
+                                win_buffer[j] = 0;
+                            }
+                        }
+                        for (int j = win_right[i]; j < 240; j++) {
+                            if (j >= 0) {
+                                win_buffer[j] = 0;
+                            }
+                        }
+                    } else {
+                        for (int j = win_right[i]; j <= win_left[i]; j++) {
+                            if (j >= 0 && j < 240) {
+                                win_buffer[j] = 0;
+                            }
+                        }
+                    }
+                    
+                    // Draw the window buffer
+                    DrawLineToBuffer(win_buffer, line, false);
                 }
             }
         }
-        
-        /*// Debug
-        if (win_left[0] >= 0 && win_left[0] < 240 &&
-            win_right[0] >= 0 && win_right[0] < 240) {
-            buffer[line*240+win_left[0]] = 0xFFFF0000;
-            buffer[line*240+win_right[0]] = 0xFF00FF00;
-        }*/
     }
 
     void NanoboyAdvance::GBAVideo::Step()
