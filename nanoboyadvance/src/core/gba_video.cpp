@@ -376,10 +376,10 @@ namespace NanoboyAdvance
     void GBAVideo::Render(int line)
     {
         int mode = gba_io->dispcnt & 7;
-        s32 win_left[2];
-        s32 win_right[2];
-        s32 win_top[2];
-        s32 win_bottom[2];
+        int win_left[2];
+        int win_right[2];
+        int win_top[2];
+        int win_bottom[2];
         bool win_enable[2];
         bool win_obj_enable;
         bool win_none;
