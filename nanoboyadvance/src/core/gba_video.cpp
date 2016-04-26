@@ -64,6 +64,12 @@ namespace NanoboyAdvance
         bgpc[3] = &gba_io->bg3pc;
         bgpd[2] = &gba_io->bg2pd;
         bgpd[3] = &gba_io->bg3pd;
+
+        // Init winN[h/v] mapping
+        winh[0] = &gba_io->win0h;
+        winh[1] = &gba_io->win1h;
+        winv[0] = &gba_io->win0v;
+        winv[1] = &gba_io->win1v;
     }
 
     void GBAVideo::RenderBackgroundMode0(int id, int line)
@@ -377,40 +383,43 @@ namespace NanoboyAdvance
         bool win_enable[2];
         bool win_obj_enable;
         bool win_none;
+        bool bg_winin[2][4];
+        bool obj_winin[2];            
         bool bg_winout[4];
+        bool obj_winout;
         int bg_priority[4];
         bool bg_enable[4];
         bool obj_enable;
         bool first_bg = true;
         
+        // TODO: In the long run I should write some IO register invalidation mechanism
+        //       which  only (re-)decodes registers when their value changes.
+
         // Decode win display/enable values
         win_enable[0] = gba_io->dispcnt & (1 << 13);
         win_enable[1] = gba_io->dispcnt & (1 << 14);
         win_obj_enable = gba_io->dispcnt & (1 << 15);
         win_none = !win_enable[0] && !win_enable[1] && !win_obj_enable;
         
-        if (win_enable[0]) {
-            // Decode window0 coordinates
-            win_left[0] = gba_io->win0h >> 8;
-            win_right[0] = (gba_io->win0h & 0xFF) - 1;
-            win_bottom[0] = (gba_io->win0v & 0xFF) - 1;
-            win_top[0] = gba_io->win0v >> 8;
+        for (int i = 0; i < 2; i++) {
+            if (win_enable[i]) {
+                // Decode window coordinates
+                win_left[i] = *winh[i] >> 8;
+                win_right[i] = (*winh[i] & 0xFF) - 1;
+                win_bottom[i] = (*winv[i] & 0xFF) - 1;
+                win_top[i] = *winv[i] >> 8;
 
-            // Fix window0 garbage values
-            if (win_right[0] > 240 || win_left[0] > win_right[0]) win_right[0] = 240;
-            if (win_bottom[0] > 160 || win_top[0] > win_bottom[0]) win_bottom[0] = 160;
-        }
-        
-        if (win_enable[1]) {
-            // Decode window1 coordinates
-            win_left[1] = gba_io->win1h >> 8;
-            win_right[1] = (gba_io->win1h & 0xFF) - 1;
-            win_bottom[1] = (gba_io->win1v & 0xFF) - 1;
-            win_top[1] = gba_io->win1v >> 8;
-            
-            // Fix window1 garbage values
-            if (win_right[1] > 240 || win_left[1] > win_right[1]) win_right[1] = 240;
-            if (win_bottom[1] > 160 || win_top[1] > win_bottom[1]) win_bottom[1] = 160;
+                // Fix window garbage values
+                if (win_right[i] > 240 || win_left[i] > win_right[i]) win_right[i] = 240;
+                if (win_bottom[i] > 160 || win_top[i] > win_bottom[i]) win_bottom[i] = 160;
+
+                // Decode window inside
+                bg_winin[i][0] = gba_io->winin & (1 << ((i == 1) ? 8 : 0));
+                bg_winin[i][1] = gba_io->winin & (2 << ((i == 1) ? 8 : 0));
+                bg_winin[i][2] = gba_io->winin & (4 << ((i == 1) ? 8 : 0));
+                bg_winin[i][3] = gba_io->winin & (8 << ((i == 1) ? 8 : 0));
+                obj_winin[i] = gba_io->winin & (16 << ((i == 1) ? 8 : 0));
+            }
         }
         
         // Decode WINOUT bg display
@@ -419,6 +428,7 @@ namespace NanoboyAdvance
             bg_winout[1] = gba_io->winout & 2;
             bg_winout[2] = gba_io->winout & 4;
             bg_winout[3] = gba_io->winout & 8;
+            obj_winout = gba_io->winout & 16;
         }
         
         // Decode background priorities
@@ -429,17 +439,17 @@ namespace NanoboyAdvance
         bg_priority[3] = *bgcnt[3] & 3;
         
         // Find out which layers are enabled
-        bg_enable[0] = gba_io->dispcnt & (1 << 8) ? true : false;
-        bg_enable[1] = gba_io->dispcnt & (1 << 9) ? true : false;
-        bg_enable[2] = gba_io->dispcnt & (1 << 10) ? true : false;
-        bg_enable[3] = gba_io->dispcnt & (1 << 11) ? true : false;
-        obj_enable = gba_io->dispcnt & (1 << 12) ? true : false;
+        bg_enable[0] = gba_io->dispcnt & (1 << 8);
+        bg_enable[1] = gba_io->dispcnt & (1 << 9);
+        bg_enable[2] = gba_io->dispcnt & (1 << 10);
+        bg_enable[3] = gba_io->dispcnt & (1 << 11);
+        obj_enable = gba_io->dispcnt & (1 << 12);
         
         // Reset obj buffers
-        memset(obj_buffer[0], 0, 4*240);
-        memset(obj_buffer[1], 0, 4*240);
-        memset(obj_buffer[2], 0, 4*240);
-        memset(obj_buffer[3], 0, 4*240);
+        memset(obj_buffer[0], 0, sizeof(u32)*240);
+        memset(obj_buffer[1], 0, sizeof(u32)*240);
+        memset(obj_buffer[2], 0, sizeof(u32)*240);
+        memset(obj_buffer[3], 0, sizeof(u32)*240);
 
         // Emulate the effect caused by "Forced Blank"
         if (gba_io->dispcnt & (1 << 7)) {
@@ -547,45 +557,89 @@ namespace NanoboyAdvance
             RenderSprites(3, line, 0x10000);
         }
     
-        // Compose the picture *outside* the window
-        for (int i = 3; i >= 0; i--) {
-            for (int k = 3; k >= 0; k--) {
-                // Is background visible and priority matches?
-                if (bg_enable[k] && bg_priority[k] == i) {
-                    // Draw line
-                    if (win_none || gba_io->winout & (1 << k)) {
-                        DrawLineToBuffer(bg_buffer[k], line, first_bg);
+        // Compose screen
+        if (win_none) {
+            for (int i = 3; i >= 0; i--) {
+                for (int j = 3; j >= 0; j--) {
+                    if (bg_enable[j] && bg_priority[j] == i) {
+                        DrawLineToBuffer(bg_buffer[j], line, first_bg);
+                        first_bg = false;
                     }
-                    first_bg = false;
+                }
+                if (obj_enable) {
+                    DrawLineToBuffer(obj_buffer[i], line, false);
                 }
             }
-            if (obj_enable && (win_none || gba_io->winout & (1 << 4))) {
-                DrawLineToBuffer(obj_buffer[i], line, false);
-            }
-        }
-        
-        // Compose window[0/1]
-        for (int i = 1; i >= 0; i--) {
-            if (win_enable[i] && line >= win_top[i] && line <= win_bottom[i]) {
+        } else {
+            // Compose outer window area
+            for (int i = 3; i >= 0; i--) {
                 for (int j = 3; j >= 0; j--) {
-                    for (int k = 3; k >= 0; k--) {
-                        // Is background visible and priority matches?
-                        if (bg_enable[k] && bg_priority[k] == j && 
-                            (gba_io->winin & (1 << (k + ((i == 1) ? 8 : 0))))) {
-                            u32 inside[240];
+                    if (bg_enable[j] && bg_priority[j] == i && bg_winout[j]) {
+                        DrawLineToBuffer(bg_buffer[j], line, first_bg);
+                        first_bg = false;
+                    }
+                }
+                if (obj_enable && obj_winout) {
+                    DrawLineToBuffer(obj_buffer[i], line, false);
+                }
+            }
+            
+            // Compose inner window[0/1] area
+            for (int i = 1; i >= 0; i--) {
+                if (win_enable[i] && line >= win_top[i] && line <= win_bottom[i]) {
+                    u32 backdrop[240];
 
-                            // Clear buffer and copy visible area
-                            memset(inside, 0, sizeof(u32) * 240);
-                            memcpy((u32*)(inside + win_left[i]), (u32*)(bg_buffer[k] + win_left[i]), sizeof(u32) * (win_right[i] - win_left[i] + 1));
+                    // Zero-init backdrop buffer
+                    memset(backdrop, 0, sizeof(u32) * 240);
 
-                            // Draw line
-                            DrawLineToBuffer(inside, line, first_bg);
-                            first_bg = false;
+                    // Fill the window area with black color since the window
+                    // shall not have a transparent background.
+                    for (int j = win_left[i]; j <= win_right[i]; j++) {
+                        if (j >= 0 && j < 240) {
+                            backdrop[j] = 0xFF000000;
                         }
                     }
-                    if (obj_enable && 
-                        (gba_io->winin & (1 << ((i == 1) ? 12 : 4)))) {
-                        DrawLineToBuffer(obj_buffer[j], line, false);
+
+                    // Draw backdrop
+                    DrawLineToBuffer(backdrop, line, false);
+
+                    // Draw backgrounds and sprites if any
+                    for (int j = 3; j >= 0; j--) {
+                        for (int k = 3; k >= 0; k--) {
+                            if (bg_enable[k] && bg_priority[k] == j && bg_winin[i][k]) {
+                                u32 inside[240];
+                                
+                                // Clear buffer and copy visible area
+                                memset(inside, 0, sizeof(u32) * 240);
+                                /*memcpy((u32*)(inside + win_left[i]), 
+                                       (u32*)(bg_buffer[k] + win_left[i]), 
+                                       sizeof(u32) * (win_right[i] - win_left[i] + 1));*/
+                                for (int m = win_left[i]; m <= win_right[i]; m++) {
+                                    if (m >= 0 && m < 240) {
+                                        inside[m] = bg_buffer[k][m];
+                                    }
+                                }
+
+                                // Draw line
+                                DrawLineToBuffer(inside, line, false);
+                            }
+                        }
+                        if (obj_enable && obj_winin[i]) {
+                            u32 inside[240];
+
+                            // Zero-init buffer (we don't want garbage)
+                            memset(inside, 0, sizeof(u32) * 240);
+
+                            // Copy visible area
+                            for (int k = win_left[i]; k <= win_right[i]; k++) {
+                                if (k >= 0 && k < 240) {
+                                    inside[k] = obj_buffer[j][k];
+                                }
+                            }
+                            
+                            // Draw line
+                            DrawLineToBuffer(inside, line, false);
+                        }
                     }
                 }
             }

@@ -61,6 +61,10 @@ namespace NanoboyAdvance
         u16* bgpb[4];
         u16* bgpc[4];
         u16* bgpd[4];
+
+        // WIN-io mappings
+        u16* winv[2];
+        u16* winh[2];
         
         // Buffers the various layers
         u32 bg_buffer[4][240];
