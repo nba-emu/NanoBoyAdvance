@@ -156,6 +156,12 @@ namespace NanoboyAdvance
                     AddressControl dst_cntl = static_cast<AddressControl>((*dma_cntl[i] >> 5) & 3);
                     AddressControl src_cntl = static_cast<AddressControl>((*dma_cntl[i] >> 7) & 3);
                     bool transfer_words = *dma_cntl[i] & (1 << 10);
+
+                    /*// DMA Debug Log
+                    #if DEBUG
+                        u32 value = ReadHWord(dma_src[i]);
+                        LOG(LOG_INFO, "DMA%d: s=%x d=%x c=%x count=%x l=%d v=%x", i, dma_src[i], dma_dst[i], *dma_cntl[i], dma_cnt[i], gba_io->vcount, value);
+                    #endif*/
                     
                     // Throw error if unsupported Game Pag DRQ is requested
                     if (*dma_cntl[i] & (1 << 11)) {
@@ -190,7 +196,7 @@ namespace NanoboyAdvance
                         dma_cnt[i]--;
                     }
                     
-                    // Reload dma_cnt, dma_src and dma_dst as specified
+                    // Reload dma_cnt and dma_dst as specified
                     if (*dma_cntl[i] & (1 << 9)) {
                         // TODO: Find a more beautiful(?) solution.
                         switch (i) {
@@ -200,7 +206,6 @@ namespace NanoboyAdvance
                                 dma_cnt[0] = 0x4000;
                             }
                             if (dst_cntl == IncrementAndReload) {
-                                dma_src[0] = gba_io->dma0sad & 0x07FFFFFF;
                                 dma_dst[0] = gba_io->dma0dad & 0x07FFFFFF;
                             }
                             break;
@@ -210,7 +215,6 @@ namespace NanoboyAdvance
                                 dma_cnt[1] = 0x4000;
                             }
                             if (dst_cntl == IncrementAndReload) {
-                                dma_src[1] = gba_io->dma1sad & 0x0FFFFFFF;
                                 dma_dst[1] = gba_io->dma1dad & 0x07FFFFFF;
                             }
                             break;
@@ -220,7 +224,6 @@ namespace NanoboyAdvance
                                 dma_cnt[2] = 0x4000;
                             }
                             if (dst_cntl == IncrementAndReload) {
-                                dma_src[2] = gba_io->dma2sad & 0x0FFFFFFF;
                                 dma_dst[2] = gba_io->dma2dad & 0x07FFFFFF;
                             }
                             break;
@@ -230,7 +233,6 @@ namespace NanoboyAdvance
                                 dma_cnt[3] = 0x10000;
                             }
                             if (dst_cntl == IncrementAndReload) {
-                                dma_src[3] = gba_io->dma3sad & 0x0FFFFFFF;
                                 dma_dst[3] = gba_io->dma3dad & 0x0FFFFFFF;
                             }
                             break;
