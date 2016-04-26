@@ -26,14 +26,14 @@
 #define LOG_ERROR 2
 
 // Fix memory bug
-#define LOG(loglevel, ...) { int line = __LINE__;\
+#define LOG(loglevel, ...) { int _line = __LINE__;\
     char message[512];\
     sprintf(message, __VA_ARGS__);\
     switch (loglevel)\
     {\
-    case LOG_INFO: printf("[INFO] %s:%d: %s\n", __FILE__, line, message); break;\
-    case LOG_WARN: printf("[WARN] %s:%d: %s\n", __FILE__, line, message); break;\
-    case LOG_ERROR: printf("[ERROR] %s:%d: %s\n", __FILE__, line, message); break;\
+    case LOG_INFO: printf("[INFO] %s:%d: %s\n", __FILE__, _line, message); break;\
+    case LOG_WARN: printf("[WARN] %s:%d: %s\n", __FILE__, _line, message); break;\
+    case LOG_ERROR: printf("[ERROR] %s:%d: %s\n", __FILE__, _line, message); break;\
     }\
 }
 

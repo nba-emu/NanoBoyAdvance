@@ -166,6 +166,15 @@ namespace NanoboyAdvance
         void RenderSprites(int priority, int line, u32 tile_base);
         
         // Misc
+        inline void OverlayLineBuffers(u32* dst, u32* src) {
+            for (int i = 0; i < 240; i++) {
+                u32 color = src[i];
+                if ((color >> 24) != 0) {
+                    dst[i] = src[i] | 0xFF000000;
+                }
+            }
+        }
+
         inline void DrawLineToBuffer(u32* line_buffer, int line, bool backdrop)
         {
             for (int i = 0; i < 240; i++) {
