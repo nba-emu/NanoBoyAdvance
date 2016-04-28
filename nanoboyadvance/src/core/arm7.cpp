@@ -250,10 +250,14 @@ namespace NanoboyAdvance
         // DIV
         case 0x06:
         {
-            u32 mod = r0 % r1;
-            u32 div = r0 / r1;
-            r0 = div;
-            r1 = mod;
+            if (r1 != 0) {
+                u32 mod = r0 % r1;
+                u32 div = r0 / r1;
+                r0 = div;
+                r1 = mod;
+            } else {
+                LOG(LOG_ERROR, "Attempted division by zero.");
+            }
             break;
         }
         // VBlankIntrWait

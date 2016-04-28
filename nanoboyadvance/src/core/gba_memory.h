@@ -22,6 +22,7 @@
 #include <iostream>
 #include "common/types.h"
 #include "gba_io.h"
+#include "gba_interrupt.h"
 #include "gba_timer.h"
 #include "gba_video.h"
 #include "gba_backup_flash.h"
@@ -54,10 +55,20 @@ namespace NanoboyAdvance
         };
         
         // DMA (internal) IO
+        u32 dma_src_int[4];
+        u32 dma_dst_int[4];
+        u32 dma_count_int[4];
         u32 dma_src[4];
         u32 dma_dst[4];
-        u32 dma_cnt[4];
-        u16* dma_cntl[4];
+        u16 dma_count[4];
+        AddressControl dma_dst_cntl[4];
+        AddressControl dma_src_cntl[4];
+        bool dma_repeat[4];
+        bool dma_words[4];
+        bool dma_gp_drq[4];
+        int dma_time[4];
+        bool dma_irq[4];
+        bool dma_enable[4];
         
         // Debugging related callback
         MemoryCallback memory_hook;
@@ -73,9 +84,10 @@ namespace NanoboyAdvance
     public:
         // Hardware / IO accessible through memory
         GBAIO* gba_io;
+        GBAInterrupt* interrupt;
         GBATimer* timer;
         GBAVideo* video;
-
+        
         // Flags
         enum class GBAHaltState
         {

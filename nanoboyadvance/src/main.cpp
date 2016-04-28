@@ -89,7 +89,8 @@ void schedule_frame()
 {
     for (int i = 0; i < 280896; i++)
     {
-        u32 interrupts = memory->gba_io->ie & memory->gba_io->if_; // interrutps that are enabled *and* pending
+        // Interrutps that are enabled *and* pending
+        u32 interrupts = memory->interrupt->ie & memory->interrupt->if_;
         
         // Only pause as long as (IE & IF) != 0
         if (memory->halt_state != GBAMemory::GBAHaltState::None && interrupts != 0)
@@ -115,10 +116,10 @@ void schedule_frame()
         }
 
         // Raise an IRQ if neccessary
-        if (memory->gba_io->ime && (memory->gba_io->if_ & memory->gba_io->ie))
+        if (memory->interrupt->ime && (memory->interrupt->if_ & memory->interrupt->ie))
         {
             #ifdef HARDCORE_DEBUG
-            LOG(LOG_INFO, "Run interrupt handler if=0x%x", memory->gba_io->if_);
+            LOG(LOG_INFO, "Run interrupt handler if=0x%x", memory->interrupt->if_);
             #endif
             arm->FireIRQ();
         }
@@ -126,7 +127,7 @@ void schedule_frame()
         // Copy the rendered line (if any) to SDLs pixel buffer
         if (memory->video->render_scanline)
         {
-            int y = memory->gba_io->vcount;
+            int y = memory->video->vcount;
             for (int x = 0; x < 240; x++)
             {
                 setpixel(x, y, memory->video->buffer[y * 240 + x]);

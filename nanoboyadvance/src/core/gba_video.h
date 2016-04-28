@@ -22,7 +22,7 @@
 #include <cstring>
 #include "common/types.h"
 #include "common/log.h"
-#include "gba_io.h"
+#include "gba_interrupt.h"
 
 using namespace std;
 
@@ -46,60 +46,32 @@ namespace NanoboyAdvance
             Vertical = 2,
             Prohibited = 3
         };
-        
-        // IO-interface
-        GBAIO* gba_io;
+ 
+        // Special Effects
+        enum class GBASpecialEffect
+        {
+            None = 0,
+            AlphaBlend = 1,
+            Increase = 2,
+            Decrease = 3
+        };
+       
+        // Interrupt interface
+        GBAInterrupt* interrupt;
         
         // Current PPU state
         GBAVideoState state {GBAVideoState::Scanline};
         
-        // BG-io mappings
-        u16* bgcnt[4];
-        u16* bghofs[4];
-        u16* bgvofs[4];
-        u16* bgpa[4];
-        u16* bgpb[4];
-        u16* bgpc[4];
-        u16* bgpd[4];
-
-        // WIN-io mappings
-        u16* winv[2];
-        u16* winh[2];
-        
         // Buffers the various layers
+        u32 bd_buffer[240];
         u32 bg_buffer[4][240];
         u32 obj_buffer[4][240];
         
         // Internal tick-counter
         int ticks {0};
         
-        /* !! GBA-float encoders / decoders !! */
-        
-        inline float DecodeGBAFloat32(u32 number)
-        {
-            bool is_negative = number & (1 << 27);
-            s32 int_part = ((number & ~0xF0000000) >> 8) | (is_negative ? 0xFFF00000 : 0);
-            float frac_part = static_cast<float>(number & 0xFF) / 256;
-            return static_cast<float>(int_part) + (is_negative ? -frac_part : frac_part);
-        }
-
-        inline float DecodeGBAFloat16(u16 number)
-        {
-            bool is_negative = number & (1 << 15);
-            s32 int_part = (number >> 8) | (is_negative ? 0xFFFFFF00 : 0);
-            float frac_part = static_cast<float>(number & 0xFF) / 256;
-            return static_cast<float>(int_part) + (is_negative ? -frac_part : frac_part);        
-        }
-
-        inline u32 EncodeGBAFloat32(float number)
-        {
-            s32 int_part = static_cast<s32>(number);
-            u8 frac_part = static_cast<u8>((number - int_part) * (number >= 0 ? 256 : -256)); // optimize
-            return (u32)(int_part << 8 | frac_part);
-        }
-        
         /* !! Methods for color and tile decoding !! */
-        
+
         inline u32 DecodeRGB5(u16 color)
         {
             u32 argb = 0xFF000000 |
@@ -165,6 +137,9 @@ namespace NanoboyAdvance
         void RenderBackgroundMode1(int id, int line);
         void RenderSprites(int priority, int line, u32 tile_base);
         
+        // SFX
+        u32* ApplySFX(int buffer_id);
+
         // Misc
         inline void OverlayLineBuffers(u32* dst, u32* src) {
             for (int i = 0; i < 240; i++) {
@@ -198,8 +173,8 @@ namespace NanoboyAdvance
         u8 obj[0x400];
         
         // Internal bgN[x/y] copies
-        u32 bgx_int[4];
-        u32 bgy_int[4];
+        float bg_x_int[4];
+        float bg_y_int[4];
         
         // DMA indicators
         bool hblank_dma {false};
@@ -208,10 +183,98 @@ namespace NanoboyAdvance
         // Output buffer
         u32 buffer[240 * 160];
         
+        /* !!!! Decoded IO registers !!!! */
+        // DISPCNT
+        int video_mode {0};
+        bool frame_select {false};
+        bool oam_access {false}; // HBlank Interval Free
+        bool oam_mapping {false};
+        bool forced_blank {false};
+        bool bg_enable[4] {false, false, false, false};
+        bool obj_enable {false};
+        bool win_enable[2] {false, false};
+        bool obj_win_enable {false};
+        
+        // DISPSTAT
+        bool vblank_flag {false};
+        bool hblank_flag {false};
+        bool vcount_flag {false};
+        bool vblank_irq {false};
+        bool hblank_irq {false};
+        bool vcount_irq {false};
+        u8 vcount_setting {0};
+        
+        // VCOUNT
+        u16 vcount;
+        
+        // BGNCNT
+        int bg_priority[4] {0, 0, 0, 0};
+        u32 bg_tile_base[4] {0, 0, 0, 0};
+        bool bg_mosaic[4] {false, false, false, false};
+        bool bg_pal_256[4] {false, false, false, false};
+        u32 bg_map_base[4] {0, 0, 0, 0};
+        bool bg_wraparound[4] {false, false, false, false};
+        int bg_size[4] {0, 0, 0, 0};
+        
+        // BGN[H/V]OFS
+        u16 bg_hofs[4] {0, 0, 0, 0};
+        u16 bg_vofs[4] {0, 0, 0, 0};
+        
+        // BGN[X/Y]
+        u32 bg_x[4] {0, 0, 0, 0};
+        u32 bg_y[4] {0, 0, 0, 0};
+        
+        // BGNP[A/B/C/D]
+        u16 bg_pa[4] {0, 0, 0, 0};
+        u16 bg_pb[4] {0, 0, 0, 0};
+        u16 bg_pc[4] {0, 0, 0, 0};
+        u16 bg_pd[4] {0, 0, 0, 0};
+        
+        // WINN[H/V]
+        u16 win_left[2] {0, 0};
+        u16 win_right[2] {0, 0};
+        u16 win_top[2] {0, 0};
+        u16 win_bottom[2] {0, 0};
+        
+        // WININ and WINOUT
+        bool bg_winin[2][4];
+        bool bg_winout[4];
+        bool obj_winin[2];
+        bool obj_winout;
+        bool sfx_winin[2];
+        bool sfx_winout;
+        /* !!!! End decoded IO registers !!!! */
+        
         // Constructor
-        GBAVideo(GBAIO* gba_io);
+        GBAVideo(GBAInterrupt* interrupt);
         
         // Runs the PPU for exactly one tick
         void Step();
+        
+                
+        /* !! GBA-float encoders / decoders !! */
+        
+        static inline float DecodeGBAFloat32(u32 number)
+        {
+            bool is_negative = number & (1 << 27);
+            s32 int_part = ((number & ~0xF0000000) >> 8) | (is_negative ? 0xFFF00000 : 0);
+            float frac_part = static_cast<float>(number & 0xFF) / 256;
+            return static_cast<float>(int_part) + (is_negative ? -frac_part : frac_part);
+        }
+
+        static inline float DecodeGBAFloat16(u16 number)
+        {
+            bool is_negative = number & (1 << 15);
+            s32 int_part = (number >> 8) | (is_negative ? 0xFFFFFF00 : 0);
+            float frac_part = static_cast<float>(number & 0xFF) / 256;
+            return static_cast<float>(int_part) + (is_negative ? -frac_part : frac_part);        
+        }
+
+        static inline u32 EncodeGBAFloat32(float number)
+        {
+            s32 int_part = static_cast<s32>(number);
+            u8 frac_part = static_cast<u8>((number - int_part) * (number >= 0 ? 256 : -256)); // optimize
+            return (u32)(int_part << 8 | frac_part);
+        }
     };
 }
