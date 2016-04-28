@@ -28,63 +28,30 @@
 
 namespace NanoboyAdvance
 {
-    GBAVideo::GBAVideo(GBAIO* gba_io)
+    GBAVideo::GBAVideo(GBAInterrupt* interrupt)
     {
-        // Assign our IO interface to the object
-        this->gba_io = gba_io;
+        // Assign interrupt struct to video device
+        this->interrupt = interrupt;
 
         // Zero init memory buffers
         memset(pal, 0, 0x400);
         memset(vram, 0, 0x18000);
         memset(obj, 0, 0x400);
         memset(buffer, 0, 240 * 160 * 4);
-        
-        // Init bgNcnt mapping
-        bgcnt[0] = &gba_io->bg0cnt;
-        bgcnt[1] = &gba_io->bg1cnt;
-        bgcnt[2] = &gba_io->bg2cnt;
-        bgcnt[3] = &gba_io->bg3cnt;
-        
-        // Init bgN[h/v]ofs mapping
-        bghofs[0] = &gba_io->bg0hofs;
-        bghofs[1] = &gba_io->bg1hofs;
-        bghofs[2] = &gba_io->bg2hofs;
-        bghofs[3] = &gba_io->bg3hofs;
-        bgvofs[0] = &gba_io->bg0vofs;
-        bgvofs[1] = &gba_io->bg1vofs;
-        bgvofs[2] = &gba_io->bg2vofs;
-        bgvofs[3] = &gba_io->bg3vofs;
-        
-        // Init bgNp[a/b/c/d] mapping
-        bgpa[2] = &gba_io->bg2pa;
-        bgpa[3] = &gba_io->bg3pa;
-        bgpb[2] = &gba_io->bg2pb;
-        bgpb[3] = &gba_io->bg3pb;
-        bgpc[2] = &gba_io->bg2pc;
-        bgpc[3] = &gba_io->bg3pc;
-        bgpd[2] = &gba_io->bg2pd;
-        bgpd[3] = &gba_io->bg3pd;
-
-        // Init winN[h/v] mapping
-        winh[0] = &gba_io->win0h;
-        winh[1] = &gba_io->win1h;
-        winv[0] = &gba_io->win0v;
-        winv[1] = &gba_io->win1v;
     }
 
     void GBAVideo::RenderBackgroundMode0(int id, int line)
     {
         // IO-register values
-        u16 bg_control = *bgcnt[id];
-        u16 scx = *bghofs[id];
-        u16 scy = *bgvofs[id];
+        u16 scx = bg_hofs[id];
+        u16 scy = bg_vofs[id];
         
         // Rendering variables
-        u32 tile_block_base = ((bg_control >> 2) & 0x03) * 0x4000;
-        u32 map_block_base = ((bg_control >> 8) & 0x1F) * 0x800;
-        bool color_mode = bg_control & (1 << 7);
-        int width = (((bg_control >> 14) & 1) + 1) << 8;
-        int height = ((bg_control >> 15) + 1) << 8;
+        u32 tile_block_base = bg_tile_base[id];
+        u32 map_block_base = bg_map_base[id];
+        bool color_mode = bg_pal_256[id];
+        int width = ((bg_size[id] & 1) + 1) << 8;
+        int height = ((bg_size[id] >> 1) + 1) << 8;
         int map_line = (line + scy) % height;
         int tile_line = map_line % 8;
         int map_row = (map_line - tile_line) / 8;
@@ -144,29 +111,20 @@ namespace NanoboyAdvance
 
     void GBAVideo::RenderBackgroundMode1(int id, int line)
     {
-        // IO-register values
-        u16 bg_control = *bgcnt[id];
-        u32 bgx_internal = bgx_int[id];
-        u32 bgy_internal = bgy_int[id];
-        u16 bgpa = *this->bgpa[id];
-        u16 bgpb = *this->bgpb[id];
-        u16 bgpc = *this->bgpc[id];
-        u16 bgpd = *this->bgpd[id];
-        
         // Rendering variables
-        u32 tile_block_base = ((bg_control >> 2) & 0x03) * 0x4000;
-        u32 map_block_base = ((bg_control >> 8) & 0x1F) * 0x800;
-        bool wraparound = bg_control & (1 << 13);
-        int blocks = ((bg_control >> 14) + 1) << 4;
+        u32 tile_block_base = bg_tile_base[id];
+        u32 map_block_base = bg_map_base[id];
+        bool wraparound = bg_wraparound[id];
+        int blocks = ((bg_size[id]) + 1) << 4;
         int size = blocks * 8;
         
         for (int i = 0; i < 240; i++) {
-            float dec_bgx = DecodeGBAFloat32(bgx_internal);
-            float dec_bgy = DecodeGBAFloat32(bgy_internal);
-            float dec_bgpa = DecodeGBAFloat16(bgpa);
-            float dec_bgpb = DecodeGBAFloat16(bgpb);
-            float dec_bgpc = DecodeGBAFloat16(bgpc);
-            float dec_bgpd = DecodeGBAFloat16(bgpd);
+            float dec_bgx = bg_x_int[id];
+            float dec_bgy = bg_y_int[id];
+            float dec_bgpa = DecodeGBAFloat16(bg_pa[id]);
+            float dec_bgpb = DecodeGBAFloat16(bg_pb[id]);
+            float dec_bgpc = DecodeGBAFloat16(bg_pc[id]);
+            float dec_bgpd = DecodeGBAFloat16(bg_pd[id]);
             int x = dec_bgx + (dec_bgpa * i) + (dec_bgpb * line);
             int y = dec_bgy + (dec_bgpc * i) + (dec_bgpd * line);
             int tile_internal_line;
@@ -214,7 +172,6 @@ namespace NanoboyAdvance
     {
         // Process OBJ127 first, because OBJ0 has highest priority (OBJ0 overlays OBJ127, not vice versa)
         u32 offset = 127 * 8;
-        bool one_dimensional = gba_io->dispcnt & (1 << 6) ? true : false;
 
         // Walk all entries
         for (int i = 0; i < 128; i++)
@@ -314,7 +271,7 @@ namespace NanoboyAdvance
                         u32* tile_data;
 
                         // Determine the tile to render
-                        if (one_dimensional)
+                        if (oam_mapping)
                         {
                             current_tile_number = tile_number + row * tiles_per_row + j;
                         }
@@ -372,74 +329,16 @@ namespace NanoboyAdvance
             offset -= 8;
         }
     }
+
+    u32* GBAVideo::ApplySFX(int buffer_id)
+    {
+        return nullptr;        
+    }
     
     void GBAVideo::Render(int line)
     {
-        int mode = gba_io->dispcnt & 7;
-        int win_left[2];
-        int win_right[2];
-        int win_top[2];
-        int win_bottom[2];
-        bool win_enable[2];
-        bool win_obj_enable;
-        bool win_none;
-        bool bg_winin[2][4];
-        bool obj_winin[2];            
-        bool bg_winout[4];
-        bool obj_winout;
-        int bg_priority[4];
-        bool bg_enable[4];
-        bool obj_enable;
         bool first_bg = true;
-        
-        // TODO: In the long run I should write some IO register invalidation mechanism
-        //       which  only (re-)decodes registers when their value changes.
-
-        // Decode win display/enable values
-        win_enable[0] = gba_io->dispcnt & (1 << 13);
-        win_enable[1] = gba_io->dispcnt & (1 << 14);
-        win_obj_enable = gba_io->dispcnt & (1 << 15);
-        win_none = !win_enable[0] && !win_enable[1] && !win_obj_enable;
-        
-        for (int i = 0; i < 2; i++) {
-            if (win_enable[i]) {
-                // Decode window coordinates
-                win_left[i] = *winh[i] >> 8;
-                win_right[i] = (*winh[i] & 0xFF) - 1;
-                win_bottom[i] = (*winv[i] & 0xFF) - 1;
-                win_top[i] = *winv[i] >> 8;
-
-                // Decode window inside
-                bg_winin[i][0] = gba_io->winin & (1 << ((i == 1) ? 8 : 0));
-                bg_winin[i][1] = gba_io->winin & (2 << ((i == 1) ? 8 : 0));
-                bg_winin[i][2] = gba_io->winin & (4 << ((i == 1) ? 8 : 0));
-                bg_winin[i][3] = gba_io->winin & (8 << ((i == 1) ? 8 : 0));
-                obj_winin[i] = gba_io->winin & (16 << ((i == 1) ? 8 : 0));
-            }
-        }
-        
-        // Decode WINOUT bg display
-        if (win_enable[0] || win_enable[1] || win_obj_enable) {
-            bg_winout[0] = gba_io->winout & 1;
-            bg_winout[1] = gba_io->winout & 2;
-            bg_winout[2] = gba_io->winout & 4;
-            bg_winout[3] = gba_io->winout & 8;
-            obj_winout = gba_io->winout & 16;
-        }
-        
-        // Decode background priorities
-        // TODO: Decode only if background is enabled (extra boost)
-        bg_priority[0] = *bgcnt[0] & 3;
-        bg_priority[1] = *bgcnt[1] & 3;
-        bg_priority[2] = *bgcnt[2] & 3;
-        bg_priority[3] = *bgcnt[3] & 3;
-        
-        // Find out which layers are enabled
-        bg_enable[0] = gba_io->dispcnt & (1 << 8);
-        bg_enable[1] = gba_io->dispcnt & (1 << 9);
-        bg_enable[2] = gba_io->dispcnt & (1 << 10);
-        bg_enable[3] = gba_io->dispcnt & (1 << 11);
-        obj_enable = gba_io->dispcnt & (1 << 12);
+        bool win_none = !win_enable[0] && !win_enable[1] && !obj_win_enable;
         
         // Reset obj buffers
         memset(obj_buffer[0], 0, sizeof(u32)*240);
@@ -448,7 +347,7 @@ namespace NanoboyAdvance
         memset(obj_buffer[3], 0, sizeof(u32)*240);
 
         // Emulate the effect caused by "Forced Blank"
-        if (gba_io->dispcnt & (1 << 7)) {
+        if (forced_blank) {
             for (int i = 0; i < 240; i++) {
                 buffer[line * 240 + i] = 0xFFF8F8F8;
             }
@@ -456,7 +355,7 @@ namespace NanoboyAdvance
         }
 
         // Call mode specific rendering logic
-        switch (mode) {
+        switch (video_mode) {
         case 0:
         {
             // BG Mode 0 - 240x160 pixels, Text mode
@@ -511,7 +410,7 @@ namespace NanoboyAdvance
             // Bitmap modes are rendered on BG2 which means we must check if it is enabled
             if (bg_enable[2])
             {
-                u32 page = gba_io->dispcnt & 0x10 ? 0xA000 : 0;
+                u32 page = frame_select ? 0xA000 : 0;
                 for (int x = 0; x < 240; x++)
                 {
                     u8 index = vram[page + line * 240 + x];
@@ -525,7 +424,7 @@ namespace NanoboyAdvance
             // Bitmap modes are rendered on BG2 which means we must check if it is enabled
             if (bg_enable[2])
             {
-                u32 offset = (gba_io->dispcnt & 0x10 ? 0xA000 : 0) + line * 160 * 2;
+                u32 offset = (frame_select ? 0xA000 : 0) + line * 160 * 2;
                 for (int x = 0; x < 240; x++)
                 {
                     if (x < 160 && line < 128)
@@ -634,9 +533,6 @@ namespace NanoboyAdvance
 
     void NanoboyAdvance::GBAVideo::Step()
     {
-        int lyc = gba_io->dispstat >> 8;
-        bool vcounter_irq_enable = (gba_io->dispstat & (1 << 5)) == (1 << 5);
-
         // Update tickcount
         ticks++;
 
@@ -644,8 +540,7 @@ namespace NanoboyAdvance
         render_scanline = false;
 
         // Handle V-Count Setting (LYC)
-        gba_io->dispstat &= ~(1 << 2);
-        gba_io->dispstat |= gba_io->vcount == lyc ? (1 << 2) : 0;
+        vcount_flag = vcount == vcount_setting;
 
         switch (state)
         {
@@ -653,8 +548,8 @@ namespace NanoboyAdvance
         {
             if (ticks >= 960)
             {
-                bool hblank_irq_enable = (gba_io->dispstat & (1 << 4)) == (1 << 4);
-                gba_io->dispstat = (gba_io->dispstat & ~3) | 2; // set hblank bit
+                vblank_flag = false;//?
+                hblank_flag = true;
                 hblank_dma = true;
                 state = GBAVideoState::HBlank;
                 
@@ -664,12 +559,12 @@ namespace NanoboyAdvance
                 //bg3x_internal = EncodeGBAFloat32(DecodeGBAFloat32(bg3x_internal) + DecodeGBAFloat16(gba_io->bg3pb));
                 //bg3y_internal = EncodeGBAFloat32(DecodeGBAFloat32(bg3y_internal) + DecodeGBAFloat16(gba_io->bg3pd));
                 
-                if (hblank_irq_enable)
+                if (hblank_irq)
                 {
-                    gba_io->if_ |= 2;
+                    interrupt->if_ |= 2;
                 }
 
-                Render(gba_io->vcount);
+                Render(vcount);
                 render_scanline = true;
                 
                 ticks = 0;
@@ -679,19 +574,19 @@ namespace NanoboyAdvance
         case GBAVideoState::HBlank:
             if (ticks >= 272)
             {
-                gba_io->dispstat = gba_io->dispstat & ~2; // clear hblank bit
-                gba_io->vcount++;
-                if (gba_io->vcount == lyc && vcounter_irq_enable)
+                hblank_flag = false;
+                vcount++;
+                if (vcount_flag && vcount_irq)
                 {
-                    gba_io->if_ |= 4;
+                    interrupt->if_ |= 4;
                 }
-                if (gba_io->vcount == 160)
+                if (vcount == 160)
                 {
-                    gba_io->dispstat = (gba_io->dispstat & ~3) | 1; // set vblank bit
-                    bgx_int[2] = gba_io->bg2x;
-                    bgy_int[2] = gba_io->bg2y;
-                    bgx_int[3] = gba_io->bg3x;
-                    bgy_int[3] = gba_io->bg3y;
+                    vblank_flag = true;
+                    bg_x_int[2] = DecodeGBAFloat32(bg_x[2]);
+                    bg_y_int[2] = DecodeGBAFloat32(bg_y[2]);
+                    bg_x_int[3] = DecodeGBAFloat32(bg_x[3]);
+                    bg_y_int[3] = DecodeGBAFloat32(bg_y[3]);
                     hblank_dma = false;
                     vblank_dma = true;
                     state = GBAVideoState::VBlank;
@@ -706,24 +601,24 @@ namespace NanoboyAdvance
             break;
         case GBAVideoState::VBlank:
         {
-            bool vblank_irq_enable = (gba_io->dispstat & (1 << 3)) == (1 << 3);
             if (ticks >= 1232)
             {
-                gba_io->vcount++;
-                if (gba_io->vcount == lyc && vcounter_irq_enable)
+                vcount++;
+                if (vcount_flag && vcount_irq)
                 {
-                    gba_io->if_ |= 4;
+                    interrupt->if_ |= 4;
                 }
-                if (vblank_irq_enable && gba_io->vcount == 161)
+                if (vblank_irq && vcount == 161)
                 {
-                    gba_io->if_ |= 1;
+                    interrupt->if_ |= 1;
                 }
-                if (gba_io->vcount >= 227) // check wether this must be 227 or 228
+                if (vcount >= 227) // check wether this must be 227 or 228
                 {
                     vblank_dma = false;
                     state = GBAVideoState::Scanline;
-                    gba_io->dispstat = gba_io->dispstat & ~3; // clear vblank and hblank bit
-                    gba_io->vcount = 0;
+                    vblank_flag = false;
+                    hblank_flag = false;
+                    vcount = 0;
                 }
                 ticks = 0;
             }
