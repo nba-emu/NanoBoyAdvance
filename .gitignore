@@ -28,7 +28,7 @@
 *.app
 
 # NanoboyAdvance specific
-roms/*.bin
+*.bin
 roms/*.gba
 roms/*.agb
 *.sav
