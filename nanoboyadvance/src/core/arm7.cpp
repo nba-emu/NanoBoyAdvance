@@ -265,8 +265,8 @@ namespace NanoboyAdvance
             r0 = 1;
             r1 = 1; // fallthrough to swi IntrWait
         case 0x04:
-            memory->gba_io->ime = 1; // forcefully set ime=1
-            if (r0 == 1) memory->gba_io->if_ = 0;
+            memory->interrupt->ime = 1; // forcefully set ime=1
+            if (r0 == 1) memory->interrupt->if_ = 0;
             memory->intr_wait = true;
             memory->intr_wait_mask = r1;
             memory->halt_state = GBAMemory::GBAHaltState::Halt;

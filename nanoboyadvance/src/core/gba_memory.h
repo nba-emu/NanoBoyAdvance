@@ -23,7 +23,6 @@
 #include "common/types.h"
 #include "gba_io.h"
 #include "gba_interrupt.h"
-#include "gba_timer.h"
 #include "gba_video.h"
 #include "gba_backup_flash.h"
 
@@ -36,14 +35,14 @@ namespace NanoboyAdvance
 {
     class GBAMemory
     {
-        u8* bios;
+        static const int tmr_cycles[4];
+    
         u8 wram[0x40000];
         u8 iram[0x8000];
-        u8 io[0x3FF];
+        u8 sram[0x10000];
+        u8* bios;
         u8* rom;
         int rom_size;
-        u8 sram[0x10000];      
-        GBABackup* backup;
         
         // DMA related
         enum AddressControl
@@ -70,6 +69,15 @@ namespace NanoboyAdvance
         bool dma_irq[4];
         bool dma_enable[4];
         
+        // Timer IO
+        u16 tmr_count[4] {0, 0, 0, 0};
+        u16 tmr_reload[4];
+        int tmr_clock[4];
+        int tmr_ticks[4];
+        bool tmr_enable[4];
+        bool tmr_countup[4];
+        bool tmr_irq[4];
+        
         // Debugging related callback
         MemoryCallback memory_hook;
         
@@ -83,10 +91,12 @@ namespace NanoboyAdvance
         }
     public:
         // Hardware / IO accessible through memory
-        GBAIO* gba_io;
         GBAInterrupt* interrupt;
-        GBATimer* timer;
         GBAVideo* video;
+        GBABackup* backup;
+        
+        // Keypad IO
+        u16 keyinput {256};
         
         // Flags
         enum class GBAHaltState
