@@ -34,10 +34,7 @@ roms/*.agb
 *.sav
 
 # Backup files
-*.h~
-*.hpp~
-*.c~
-*.cpp~
+*~
 
 # Make
 *.d

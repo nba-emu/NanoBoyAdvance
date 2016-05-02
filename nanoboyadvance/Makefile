@@ -92,10 +92,10 @@ CFLAGS  = -g -Ofast -DDEBUG -DARM7_FASTHAX
 CXXFLAGS= -g -Ofast -DDEBUG -DARM7_FASTHAX
 
 # The C program compiler.
-CC     = clang
+CC     = gcc
 
 # The C++ program compiler.
-CXX    = clang++
+CXX    = g++
 
 # Un-comment the following line to compile C programs as C++ ones.
 #CC     = $(CXX)

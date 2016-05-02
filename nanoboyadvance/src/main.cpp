@@ -81,7 +81,7 @@ void schedule_keyinput()
     joypad |= kb_state[SDL_SCANCODE_W] ? 0 : (1 << 9);
 
     // Write the generated value to IO ram
-    memory->gba_io->keyinput = joypad;
+    memory->keyinput = joypad;
 }
 
 // Schedules the GBA and generates exactly one frame
@@ -110,7 +110,6 @@ void schedule_frame()
             {            
                 arm->Step();
             }
-            memory->timer->Step();
             memory->video->Step();
             memory->Step();
         }

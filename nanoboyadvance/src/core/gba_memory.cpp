@@ -29,6 +29,8 @@
 
 namespace NanoboyAdvance
 {
+    const int GBAMemory::tmr_cycles[4] = { 1, 64, 256, 1024 };
+
     GBAMemory::GBAMemory(string bios_file, string rom_file, string save_file)
     {
         bool found_save_type = false;
@@ -37,12 +39,10 @@ namespace NanoboyAdvance
         bios = File::ReadFile(bios_file);
         rom = File::ReadFile(rom_file);
         rom_size = File::GetFileSize(rom_file);
-        gba_io = (GBAIO*)io;
         interrupt = new GBAInterrupt();
         interrupt->ie = 0;
         interrupt->if_ = 0;
         interrupt->ime = 0;
-        timer = new GBATimer(gba_io);
         video = new GBAVideo(interrupt);
         
         // Reset debug hook
@@ -51,9 +51,7 @@ namespace NanoboyAdvance
         // Init some memory
         memset(wram, 0, 0x40000);
         memset(iram, 0, 0x8000);
-        memset(io, 0, 0x3FF);
         memset(sram, 0, 0x10000);
-        io[0x130] = 0xFF;
         
         // Detect savetype
         for (int i = 0; i < rom_size; i += 4)
@@ -103,7 +101,6 @@ namespace NanoboyAdvance
     GBAMemory::~GBAMemory()
     {
         delete backup;
-        delete timer;
         delete video;
         delete interrupt;
     }
@@ -115,8 +112,31 @@ namespace NanoboyAdvance
     
     void GBAMemory::Step()
     {
-        // run though all dma channels
+        bool tmr_overflow = false;
+    
+        // run through all dma channels and timers
         for (int i = 0; i < 4; i++) {
+            // is the current timer active?
+            if (tmr_enable[i]) {
+                if ((tmr_countup[i] && tmr_overflow) || (!tmr_countup[i] && ++tmr_ticks[i] >= tmr_cycles[tmr_clock[i]])) {
+                    // reset tick counter
+                    tmr_ticks[i] = 0;
+                    
+                    // increment timer or overflow
+                    if (tmr_count[i] != 0xFFFF) {
+                        tmr_count[i]++;
+                        tmr_overflow = false;
+                    }
+                    else {
+                        if (tmr_irq[i]) {
+                            interrupt->if_ |= (1 << (3 + i));
+                        }
+                        tmr_count[i] = tmr_reload[i];
+                        tmr_overflow = true;
+                    }
+                }
+            }
+        
             // is the current dma active?
             if (dma_enable[i]) {
                 bool start = false;
@@ -253,8 +273,8 @@ namespace NanoboyAdvance
     u8 GBAMemory::ReadByte(u32 offset)
     {
         int page = offset >> 24;
-        bool invalid = false;
         u32 internal_offset = offset & 0xFFFFFF;        
+        bool invalid = false;
 
         switch (page)
         {
@@ -273,13 +293,11 @@ namespace NanoboyAdvance
         case 3:
             return iram[internal_offset % 0x8000];
         case 4:
-            if ((internal_offset & 0xFFFF) == 0x800)
-            {
+            if ((internal_offset & 0xFFFF) == 0x800) {
                 internal_offset &= 0xFFFF;
             }
             
-            /*if (internal_offset >= 0x3FF)
-            {
+            /*if (internal_offset >= 0x3FF) {
                 #ifdef DEBUG
                 LOG(LOG_ERROR, "IO read: offset out of bounds (0x%x)", offset); 
                 #endif                
@@ -356,6 +374,38 @@ namespace NanoboyAdvance
             case WINOUT+1:
                 // TODO: OBJWIN
                 return 0;
+            // TODO: Certain DMA registers are readable
+            case TM0CNT_L:
+                return tmr_count[0] & 0xFF;
+            case TM0CNT_L+1:
+                return tmr_count[0] >> 8;
+            case TM1CNT_L:
+                return tmr_count[1] & 0xFF;
+            case TM1CNT_L+1:
+                return tmr_count[1] >> 8;
+            case TM2CNT_L:
+                return tmr_count[2] & 0xFF;
+            case TM2CNT_L+1:
+                return tmr_count[2] >> 8;
+            case TM3CNT_L:
+                return tmr_count[3] & 0xFF;
+            case TM3CNT_L+1:
+                return tmr_count[3] >> 8;
+            case TM0CNT_H:
+            case TM1CNT_H:
+            case TM2CNT_H:
+            case TM3CNT_H:
+            {
+                int n = (internal_offset - TM0CNT_H) / 4;
+                return tmr_clock[n] |
+                       (tmr_countup[n] ? 4 : 0) |
+                       (tmr_irq[n] ? 64 : 0) |
+                       (tmr_enable[n] ? 128 : 0);
+            }
+            case KEYINPUT: 
+                return keyinput & 0xFF;
+            case KEYINPUT+1:
+                return keyinput >> 8;
             case IE:
                 return interrupt->ie & 0xFF;
              case IE+1:
@@ -369,8 +419,7 @@ namespace NanoboyAdvance
             case IME+1:
                 return interrupt->ime >> 8;
             }
-            //return 0;
-            return io[internal_offset];
+            return 0;
         case 5:
             return video->pal[internal_offset % 0x400];
         case 6:
@@ -904,6 +953,42 @@ namespace NanoboyAdvance
                 break;
             }
             case TM0CNT_L:
+                tmr_reload[0] = (tmr_reload[0] & 0xFF00) | value;
+                break;
+            case TM0CNT_L+1:
+                tmr_reload[0] = (tmr_reload[0] & 0x00FF) | (value << 8);
+                break;
+            case TM1CNT_L:
+                tmr_reload[1] = (tmr_reload[1] & 0xFF00) | value;
+                break;
+            case TM1CNT_L+1:
+                tmr_reload[1] = (tmr_reload[1] & 0x00FF) | (value << 8);
+                break;
+            case TM2CNT_L:
+                tmr_reload[2] = (tmr_reload[2] & 0xFF00) | value;
+                break;
+            case TM2CNT_L+1:
+                tmr_reload[2] = (tmr_reload[2] & 0x00FF) | (value << 8);
+                break;
+            case TM3CNT_L:
+                tmr_reload[3] = (tmr_reload[3] & 0xFF00) | value;
+                break;
+            case TM3CNT_L+1:
+                tmr_reload[3] = (tmr_reload[3] & 0x00FF) | (value << 8);
+                break;
+             case TM0CNT_H:
+             case TM1CNT_H:
+             case TM2CNT_H:
+             case TM3CNT_H:
+             {
+                int n = (internal_offset - TM0CNT_H) / 4;
+                tmr_clock[n] = value & 3;
+                tmr_countup[n] = value & 4;
+                tmr_irq[n] = value & 64;
+                tmr_enable[n] = value & 128;
+                break;
+             }
+            /*case TM0CNT_L:
                 timer->timer_reload[0] = (timer->timer_reload[0]  & 0xFF00) | value;
                 write = false;
                 break;
@@ -950,7 +1035,7 @@ namespace NanoboyAdvance
             case TM3CNT_H:
             case TM3CNT_H+1:
                 timer->timer3_altered = true;
-                break;
+                break;*/
             case IE:
                 interrupt->ie = (interrupt->ie & 0xFF00) | value;
                 break;
@@ -1037,24 +1122,26 @@ namespace NanoboyAdvance
 
     void GBAMemory::WriteWord(u32 offset, u32 value)
     {
+        WriteHWord(offset, value & 0xFFFF);
+        WriteHWord(offset + 2, (value >> 16) & 0xFFFF);
+        
+        // Handle special timer behaviour
         if (value & (1 << 23)) {
             switch (offset) {
-            case 0x04000100:
-                gba_io->tm0cnt_l = value & 0xFFFF;
+            case TM0CNT_L|0x04000000:
+                tmr_count[0] = tmr_reload[0];
                 break;
-            case 0x04000104:
-                gba_io->tm1cnt_l = value & 0xFFFF;
+            case TM1CNT_L|0x04000000:
+                tmr_count[1] = tmr_reload[1];
                 break;
-            case 0x04000108:
-                gba_io->tm2cnt_l = value & 0xFFFF;
+            case TM2CNT_L|0x04000000:
+                tmr_count[2] = tmr_reload[2];
                 break;
-            case 0x0400010C:
-                gba_io->tm3cnt_l = value & 0xFFFF;
+            case TM3CNT_L|0x04000000:
+                tmr_count[3] = tmr_reload[3];
                 break;
             }
         }
-        WriteHWord(offset, value & 0xFFFF);
-        WriteHWord(offset + 2, (value >> 16) & 0xFFFF);
     }
 
 }
