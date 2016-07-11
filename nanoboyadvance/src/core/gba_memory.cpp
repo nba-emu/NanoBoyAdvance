@@ -270,6 +270,46 @@ namespace NanoboyAdvance
         }
     }
 
+    int GBAMemory::SequentialAccess(u32 offset, AccessSize size) 
+    {
+        int page = offset >> 24;
+
+        // TODO: We need to implement waitstates for more accurate
+        //       memory bus timings.
+
+        if (page == 2) {
+            if (size == Word) 
+                return 6;
+            return 3;
+        }
+
+        if (page == 5 || page == 6) {
+            if (size == Word)
+                return 2;
+            return 1;
+        }
+
+        if (page == 8) {
+            if (size == Word)
+                return 8;
+            return 5;
+        }
+
+        if (page == 0xE) {
+            if (size == Word && save_type != GBASaveType::SRAM)
+                return 8;
+            return 5;
+        }
+
+        return 1;
+    }
+
+    int GBAMemory::NonSequentialAccess(u32 offset, AccessSize size)
+    {
+        // TODO...
+        return SequentialAccess(offset, size);
+    }
+
     u8 GBAMemory::ReadByte(u32 offset)
     {
         int page = offset >> 24;
