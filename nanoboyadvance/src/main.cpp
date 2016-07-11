@@ -46,6 +46,10 @@ int window_width;
 int window_height;
 int frameskip_counter;
 
+// FPS counter
+int ticks_start;
+int frames;
+
 #define plotpixel(x,y,c) buffer[(y) * window_width + (x)] = c;
 void setpixel(int x, int y, int color)
 {
@@ -206,8 +210,10 @@ void create_screenshot()
     png_structp png_ptr = NULL;
     png_infop info_ptr = NULL;
     png_byte** rows = NULL;
+
     png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     info_ptr = png_create_info_struct(png_ptr);
+
     png_set_IHDR(png_ptr,
                  info_ptr,
                  window_width,
@@ -217,11 +223,14 @@ void create_screenshot()
                  PNG_INTERLACE_NONE,
                  PNG_COMPRESSION_TYPE_DEFAULT,
                  PNG_FILTER_TYPE_DEFAULT);
+
     rows = (png_byte**)png_malloc(png_ptr, window_height * sizeof(png_byte*));
+
     for (int y = 0; y < window_height; y++)
     {
         png_byte* row = (png_byte*)png_malloc(png_ptr, window_width * sizeof(u32));
         rows[y] = row;
+
         for (int x = 0; x < window_width; x++) 
         {
             u32 argb = buffer[y * window_width + x];
@@ -231,13 +240,16 @@ void create_screenshot()
             *row++ = (argb >> 24) & 0xFF;
         }
     }
+
     png_init_io(png_ptr, fp);
     png_set_rows(png_ptr, info_ptr, rows);
     png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
+
     for (int y = 0; y < window_height; y++) 
     {
         png_free(png_ptr, rows[y]);
-    }    
+    }
+
     png_free(png_ptr, rows);
     png_destroy_write_struct(&png_ptr, &info_ptr);
     fclose(fp);
@@ -286,11 +298,16 @@ int main(int argc, char** argv)
         debugger_shell();
     }
     
+    // Initially setup the frame counter
+    frames = 0;
+    ticks_start = SDL_GetTicks();
+
     // Main loop
     while (running)
     {
+        int ticks_now;
         u8* kb_state = (u8*)SDL_GetKeyboardState(NULL);
-        
+
         // Check if cli debugger is requested and run if needed
         if (cmdline->debug && kb_state[SDL_SCANCODE_F11])
         {
@@ -303,6 +320,19 @@ int main(int argc, char** argv)
         // Feed keyboard input and generate exactly one frame
         schedule_keyinput();
         schedule_frame();
+        frames++;
+
+        // FPS counter
+        ticks_now = SDL_GetTicks();
+        if (ticks_now - ticks_start >= 1000) 
+        {
+            char title_buffer[25]; // 25 characters should be sufficient
+            snprintf(title_buffer, 25, "NanoboyAdvance [%dfps]", frames);
+
+            SDL_SetWindowTitle(window, title_buffer);
+            ticks_start = SDL_GetTicks();
+            frames = 0;
+        }
 
         // Update texture
         SDL_UpdateTexture(texture, (const SDL_Rect*)&surface->clip_rect, surface->pixels, surface->pitch);
@@ -331,5 +361,6 @@ int main(int argc, char** argv)
     SDL_FreeSurface(surface);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+
     return 0;
 }
