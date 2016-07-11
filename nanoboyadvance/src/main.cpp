@@ -66,7 +66,7 @@ void setpixel(int x, int y, int color)
 void schedule_keyinput()
 {
     u8* kb_state = (u8*)SDL_GetKeyboardState(NULL);
-    ushort joypad = 0;
+    u16 joypad = 0;
 
     // Check which keys are pressed and set corresponding bits (0 = pressed, 1 = vice versa)
     joypad |= kb_state[SDL_SCANCODE_A] ? 0 : 1;

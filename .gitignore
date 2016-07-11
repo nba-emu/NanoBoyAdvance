@@ -29,8 +29,8 @@
 
 # NanoboyAdvance specific
 *.bin
-roms/*.gba
-roms/*.agb
+*.gba
+*.agb
 *.sav
 
 # Backup files
