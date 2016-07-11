@@ -31,6 +31,8 @@
 using namespace std;
 using namespace NanoboyAdvance;
 
+#define FRAME_CYCLES 280896
+
 // Emulation related globals
 GBAMemory* memory;
 ARM7* arm;
@@ -89,9 +91,9 @@ void schedule_keyinput()
 }
 
 // Schedules the GBA and generates exactly one frame
-void schedule_frame()
+inline void schedule_frame()
 {
-    for (int i = 0; i < 280896; i++)
+    for (int i = 0; i < FRAME_CYCLES; i++)
     {
         // Interrutps that are enabled *and* pending
         u32 interrupts = memory->interrupt->ie & memory->interrupt->if_;
