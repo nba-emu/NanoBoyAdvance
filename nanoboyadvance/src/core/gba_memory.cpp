@@ -378,7 +378,8 @@ namespace NanoboyAdvance
                 return (video->bg_priority[n]) | 
                        ((video->bg_tile_base[n] / 0x4000) << 2) |
                        (video->bg_mosaic[n] ? 64 : 0) |
-                       (video->bg_pal_256[n] ? 128 : 0);
+                       (video->bg_pal_256[n] ? 128 : 0) |
+                       (3 << 4); // bits 4-5 are always 1
             }
             case BG0CNT+1:
             case BG1CNT+1:
@@ -388,7 +389,7 @@ namespace NanoboyAdvance
                 int n = (internal_offset - BG0CNT - 1) / 2;
                 return (video->bg_map_base[n] / 0x800) |
                        (video->bg_wraparound[n] ? 32 : 0) |
-                       (video->bg_size[n] << 14);
+                       (video->bg_size[n] << 6);
             }
             case WININ:
                 return (video->bg_winin[0][0] ? 1 : 0) |
@@ -588,8 +589,11 @@ namespace NanoboyAdvance
             {
                 int n = (internal_offset - BG0CNT - 1) / 2;
                 video->bg_map_base[n] = (value & 31) * 0x800;
-                video->bg_wraparound[n] = value & 32;
-                video->bg_size[n] = value >> 14;
+
+                if (n == 2 || n == 3)
+                    video->bg_wraparound[n] = value & 32;
+
+                video->bg_size[n] = value >> 6;
                 break;
             }
             case BG0HOFS:
