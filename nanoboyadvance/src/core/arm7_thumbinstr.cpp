@@ -149,10 +149,10 @@ namespace NanoboyAdvance
         case THUMB_1:
         {
             // THUMB.1 Move shifted register
-            const int reg_dest = instruction & 7;
-            const int reg_source = (instruction >> 3) & 7;
-            const u32 immediate_value = (instruction >> 6) & 0x1F;
-            const int opcode = (instruction >> 11) & 3;
+            int reg_dest = instruction & 7;
+            int reg_source = (instruction >> 3) & 7;
+            u32 immediate_value = (instruction >> 6) & 0x1F;
+            int opcode = (instruction >> 11) & 3;
             bool carry = cpsr & CarryFlag;
 
             reg(reg_dest) = reg(reg_source);
@@ -186,8 +186,8 @@ namespace NanoboyAdvance
         case THUMB_2:
         {
             // THUMB.2 Add/subtract
-            const int reg_dest = instruction & 7;
-            const int reg_source = (instruction >> 3) & 7;
+            int reg_dest = instruction & 7;
+            int reg_source = (instruction >> 3) & 7;
             u32 operand;
 
             // The operand can either be the value of a register or a 3 bit immediate value
@@ -228,8 +228,8 @@ namespace NanoboyAdvance
         case THUMB_3:
         {
             // THUMB.3 Move/compare/add/subtract immediate
-            const u32 immediate_value = instruction & 0xFF;
-            const int reg_dest = (instruction >> 8) & 7;
+            u32 immediate_value = instruction & 0xFF;
+            int reg_dest = (instruction >> 8) & 7;
             switch ((instruction >> 11) & 3)
             {
             case 0b00: // MOV
@@ -276,8 +276,8 @@ namespace NanoboyAdvance
         case THUMB_4:
         {
             // THUMB.4 ALU operations
-            const int reg_dest = instruction & 7;
-            const int reg_source = (instruction >> 3) & 7;
+            int reg_dest = instruction & 7;
+            int reg_source = (instruction >> 3) & 7;
 
             switch ((instruction >> 6) & 0xF)
             {
@@ -293,7 +293,7 @@ namespace NanoboyAdvance
                 break;
             case 0b0010: // LSL
             {
-                const u32 amount = reg(reg_source);
+                u32 amount = reg(reg_source);
                 bool carry = cpsr & CarryFlag;
                 LSL(reg(reg_dest), amount, carry);
                 AssertCarry(carry);
@@ -303,7 +303,7 @@ namespace NanoboyAdvance
             }
             case 0b0011: // LSR
             {
-                const u32 amount = reg(reg_source);
+                u32 amount = reg(reg_source);
                 bool carry = cpsr & CarryFlag;
                 LSR(reg(reg_dest), amount, carry, false);
                 AssertCarry(carry);
@@ -313,7 +313,7 @@ namespace NanoboyAdvance
             }
             case 0b0100: // ASR
             {
-                const u32 amount = reg(reg_source);
+                u32 amount = reg(reg_source);
                 bool carry = cpsr & CarryFlag;
                 ASR(reg(reg_dest), amount, carry, false);
                 AssertCarry(carry);
@@ -324,8 +324,8 @@ namespace NanoboyAdvance
             case 0b0101: // ADC
             {
                 int carry = (cpsr >> 29) & 1;
-                const u32 result = reg(reg_dest) + reg(reg_source) + carry;
-                const u64 result_long = (u64)(reg(reg_dest)) + (u64)(reg(reg_source)) + (u64)carry;
+                u32 result = reg(reg_dest) + reg(reg_source) + carry;
+                u64 result_long = (u64)(reg(reg_dest)) + (u64)(reg(reg_source)) + (u64)carry;
                 AssertCarry(result_long & 0x100000000);
                 CalculateOverflowAdd(result, reg(reg_dest), reg(reg_source) + carry);
                 CalculateSign(result);
@@ -336,7 +336,7 @@ namespace NanoboyAdvance
             case 0b0110: // SBC
             {
                 int carry = (cpsr >> 29) & 1;
-                const u32 result = reg(reg_dest) - reg(reg_source) + carry - 1;
+                u32 result = reg(reg_dest) - reg(reg_source) + carry - 1;
                 AssertCarry(reg(reg_dest) >= reg(reg_source) + carry - 1);
                 CalculateOverflowSub(result, reg(reg_dest), (reg(reg_source) + carry - 1));
                 CalculateSign(result);
@@ -346,7 +346,7 @@ namespace NanoboyAdvance
             }
             case 0b0111: // ROR
             {
-                const u32 amount = reg(reg_source);
+                u32 amount = reg(reg_source);
                 bool carry = cpsr & CarryFlag;
                 ROR(reg(reg_dest), amount, carry, false);
                 AssertCarry(carry);
@@ -356,14 +356,14 @@ namespace NanoboyAdvance
             }
             case 0b1000: // TST
             {
-                const u32 result = reg(reg_dest) & reg(reg_source);
+                u32 result = reg(reg_dest) & reg(reg_source);
                 CalculateSign(result);
                 CalculateZero(result);
                 break;
             }
             case 0b1001: // NEG
             {
-                const u32 result = 0 - reg(reg_source);
+                u32 result = 0 - reg(reg_source);
                 AssertCarry(0 >= reg(reg_source));
                 CalculateOverflowSub(result, 0, reg(reg_source));
                 CalculateSign(result);
@@ -373,7 +373,7 @@ namespace NanoboyAdvance
             }
             case 0b1010: // CMP
             {
-                const u32 result = reg(reg_dest) - reg(reg_source);
+                u32 result = reg(reg_dest) - reg(reg_source);
                 AssertCarry(reg(reg_dest) >= reg(reg_source));
                 CalculateOverflowSub(result, reg(reg_dest), reg(reg_source));
                 CalculateSign(result);
@@ -382,8 +382,8 @@ namespace NanoboyAdvance
             }
             case 0b1011: // CMN
             {
-                const u32 result = reg(reg_dest) + reg(reg_source);
-                const u64 result_long = (u64)(reg(reg_dest)) + (u64)(reg(reg_source));
+                u32 result = reg(reg_dest) + reg(reg_source);
+                u64 result_long = (u64)(reg(reg_dest)) + (u64)(reg(reg_source));
                 AssertCarry(result_long & 0x100000000);
                 CalculateOverflowAdd(result, reg(reg_dest), reg(reg_source));
                 CalculateSign(result);
@@ -440,8 +440,6 @@ namespace NanoboyAdvance
                 break;
             }
 
-            // TODO: Handle special case that one of the registers is r15
-            //ASSERT(reg_source == 15, LOG_ERROR, "Hi register operations/branch exchange special case reg_source=r15 not implemented, r15=0x%x", r15);
             operand = reg(reg_source);
 
             if (reg_source == 15)
@@ -514,8 +512,8 @@ namespace NanoboyAdvance
         case THUMB_6:
         {
             // THUMB.6 PC-relative load
-            const u32 immediate_value = instruction & 0xFF;
-            const int reg_dest = (instruction >> 8) & 7;
+            u32 immediate_value = instruction & 0xFF;
+            int reg_dest = (instruction >> 8) & 7;
             u32 address = (r15 & ~2) + (immediate_value << 2);
 
             reg(reg_dest) = ReadWord(address);
@@ -528,10 +526,10 @@ namespace NanoboyAdvance
         {
             // THUMB.7 Load/store with register offset
             // TODO: check LDR(B) timings.
-            const int reg_dest = instruction & 7;
-            const int reg_base = (instruction >> 3) & 7;
-            const int reg_offset = (instruction >> 6) & 7;
-            const u32 address = reg(reg_base) + reg(reg_offset);
+            int reg_dest = instruction & 7;
+            int reg_base = (instruction >> 3) & 7;
+            int reg_offset = (instruction >> 6) & 7;
+            u32 address = reg(reg_base) + reg(reg_offset);
 
             switch ((instruction >> 10) & 3)
             {
@@ -562,9 +560,9 @@ namespace NanoboyAdvance
         case THUMB_8:
         {
             // THUMB.8 Load/store sign-extended byte/halfword
-            const int reg_dest = instruction & 7;
-            const int reg_base = (instruction >> 3) & 7;
-            const int reg_offset = (instruction >> 6) & 7;
+            int reg_dest = instruction & 7;
+            int reg_base = (instruction >> 3) & 7;
+            int reg_offset = (instruction >> 6) & 7;
             u32 address = reg(reg_base) + reg(reg_offset);
 
             switch ((instruction >> 10) & 3)
@@ -603,9 +601,9 @@ namespace NanoboyAdvance
         case THUMB_9:
         {
             // THUMB.9 Load store with immediate offset
-            const int reg_dest = instruction & 7;
-            const int reg_base = (instruction >> 3) & 7;
-            const u32 immediate_value = (instruction >> 6) & 0x1F;
+            int reg_dest = instruction & 7;
+            int reg_base = (instruction >> 3) & 7;
+            u32 immediate_value = (instruction >> 6) & 0x1F;
 
             switch ((instruction >> 11) & 3)
             {
@@ -616,75 +614,100 @@ namespace NanoboyAdvance
                           memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
                 break;
             }
-            case 0b01: // LDR
-                reg(reg_dest) = ReadWordRotated(reg(reg_base) + (immediate_value << 2));
+            case 0b01: { // LDR
+                u32 address = reg(reg_base) + (immediate_value << 2);
+                reg(reg_dest) = ReadWordRotated(address);
+                cycles += 1 + memory->SequentialAccess(r15,  GBAMemory::AccessSize::Hword) + 
+                              memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
                 break;
-            case 0b10: // STRB
-                WriteByte(reg(reg_base) + immediate_value, reg(reg_dest));
+            }
+            case 0b10: { // STRB
+                u32 address = reg(reg_base) + immediate_value;
+                WriteByte(address, reg(reg_dest));
+                cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
+                          memory->NonSequentialAccess(address, GBAMemory::AccessSize::Byte);
                 break;
-            case 0b11: // LDRB
-                reg(reg_dest) = ReadByte(reg(reg_base) + immediate_value);
+            }
+            case 0b11: { // LDRB
+                u32 address = reg(reg_base) + immediate_value;
+                reg(reg_dest) = ReadByte(address);
+                cycles += 1 + memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword) + 
+                              memory->NonSequentialAccess(address, GBAMemory::AccessSize::Byte);
                 break;
+            }
             }
             break;
         }
         case THUMB_10:
         {
             // THUMB.10 Load/store halfword
-            const int reg_dest = instruction & 7;
-            const int reg_base = (instruction >> 3) & 7;
-            const u32 immediate_value = (instruction >> 6) & 0x1F;
+            int reg_dest = instruction & 7;
+            int reg_base = (instruction >> 3) & 7;
+            u32 immediate_value = (instruction >> 6) & 0x1F;
+            u32 address = reg(reg_base) + (immediate_value << 1);
+
+            // Is the load bit set? (ldr)
             if (instruction & (1 << 11))
             {
-                // LDRH
-                // TODO: Alignment handling
-                reg(reg_dest) = ReadHWord(reg(reg_base) + (immediate_value << 1));
+                reg(reg_dest) = ReadHWord(address); // todo: alignment?
+                cycles += 1 + memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword) +
+                              memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
             }
             else
             {
-                // STRH
-                WriteHWord(reg(reg_base) + (immediate_value << 1), reg(reg_dest));
+                WriteHWord(address, reg(reg_dest));
+                cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
+                          memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
             }
             break;
         }
         case THUMB_11:
         {
             // THUMB.11 SP-relative load/store
-            const u32 immediate_value = instruction & 0xFF;
-            const int reg_dest = (instruction >> 8) & 7;
+            u32 immediate_value = instruction & 0xFF;
+            int reg_dest = (instruction >> 8) & 7;
+            u32 address = reg(13) + (immediate_value << 2);
+
+            // Is the load bit set? (ldr)
             if (instruction & (1 << 11))
             {
-                // LDR
-                reg(reg_dest) = ReadWordRotated(reg(13) + (immediate_value << 2));
+                reg(reg_dest) = ReadWordRotated(address);
+                cycles += 1 + memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword) +
+                              memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
             }
             else
             {
-                // STR
-                WriteWord(reg(13) + (immediate_value << 2), reg(reg_dest));
+                WriteWord(address, reg(reg_dest));
+                cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
+                          memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
             }
             break;
         }
         case THUMB_12:
         {
             // THUMB.12 Load address
-            const u32 immediate_value = instruction & 0xFF;
-            const int reg_dest = (instruction >> 8) & 7;
-            if (instruction & (1 << 11))
+            u32 immediate_value = instruction & 0xFF;
+            int reg_dest = (instruction >> 8) & 7;
+
+            // Use stack pointer as base?
+            if (instruction & (1 << 11)) 
             {
-                // SP
-                reg(reg_dest) = reg(13) + (immediate_value << 2);
+                reg(reg_dest) = reg(13) + (immediate_value << 2); // sp
             }
             else
             {
-                // PC
-                reg(reg_dest) = (r15 & ~2) + (immediate_value << 2);
+                reg(reg_dest) = (r15 & ~2) + (immediate_value << 2); // pc
             }
+
+            cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
             break;
         }
         case THUMB_13:
         {
             // THUMB.13 Add offset to stack pointer
-            const u32 immediate_value = (instruction & 0x7F) << 2;
+            u32 immediate_value = (instruction & 0x7F) << 2;
+            
+            // Immediate-value is negative?
             if (instruction & 0x80)
             {
                 reg(13) -= immediate_value;
@@ -693,45 +716,117 @@ namespace NanoboyAdvance
             {
                 reg(13) += immediate_value;
             }
+
+            cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
             break;
         }
         case THUMB_14:
         {
             // THUMB.14 push/pop registers
+            // TODO: how to handle an empty register list?
+            bool first_access = true;
+
+            // One non-sequential prefetch cycle
+            cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword);
+
+            // Is this a POP instruction?
             if (instruction & (1 << 11))
             {
-                // POP
+                // Iterate through the entire register list
                 for (int i = 0; i <= 7; i++)
                 {
+                    // Pop into this register?
                     if (instruction & (1 << i))
                     {
+                        u32 address = reg(13);
+
+                        // Read word and update SP.
                         reg(i) = ReadWord(reg(13));
                         reg(13) += 4;
+                        
+                        // Time the access based on if it's a first access
+                        if (first_access) 
+                        {
+                            cycles += memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
+                            first_access = false;
+                        }
+                        else
+                        {
+                            cycles += memory->SequentialAccess(address, GBAMemory::AccessSize::Word);
+                        }
                     }
                 }
-                // Restore r15 if neccessary
+
+                // Also pop r15/pc if neccessary
                 if (instruction & (1 << 8))
                 {
+                    u32 address = reg(13);
+
+                    // Read word and update SP.
                     r15 = ReadWord(reg(13)) & ~1;
-                    flush_pipe = true;
                     reg(13) += 4;
+
+                    // Time the access based on if it's a first access
+                    if (first_access) 
+                    {
+                        cycles += memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
+                        first_access = false;
+                    }
+                    else
+                    {
+                        cycles += memory->SequentialAccess(address, GBAMemory::AccessSize::Word);
+                    }
+
+                    flush_pipe = true;
                 }
             }
             else
             {
-                // PUSH
-                // Store r14 if neccessary
+                // Push r14/lr if neccessary
                 if (instruction & (1 << 8))
                 {
+                    u32 address;
+
+                    // Write word and update SP.
                     reg(13) -= 4;
-                    WriteWord(reg(13), reg(14));
+                    address = reg(13);
+                    WriteWord(address, reg(14));
+
+                    // Time the access based on if it's a first access
+                    if (first_access) 
+                    {
+                        cycles += memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
+                        first_access = false;
+                    }
+                    else
+                    {
+                        cycles += memory->SequentialAccess(address, GBAMemory::AccessSize::Word);
+                    }
                 }
+
+                // Iterate through the entire register list
                 for (int i = 7; i >= 0; i--)
                 {
+                    // Push this register?
                     if (instruction & (1 << i))
                     {
+                        u32 address;
+
+                        // Write word and update SP.
                         reg(13) -= 4;
-                        WriteWord(reg(13), reg(i));
+                        address = reg(13);
+                        WriteWord(address, reg(i));
+
+                        // Time the access based on if it's a first access
+                        if (first_access) 
+                        {
+                            cycles += memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
+                            first_access = false;
+                        }
+                        else
+                        {
+                            cycles += memory->SequentialAccess(address, GBAMemory::AccessSize::Word);
+                        }
                     }
                 }
             }
@@ -741,7 +836,7 @@ namespace NanoboyAdvance
         {
             // THUMB.15 Multiple load/store
             // TODO: Handle empty register list
-            const int reg_base = (instruction >> 8) & 7;
+            int reg_base = (instruction >> 8) & 7;
             bool write_back = true;
             u32 address = reg(reg_base);
             int first_register = 0;
@@ -874,7 +969,7 @@ namespace NanoboyAdvance
         }
         case THUMB_19:
         {
-            const u32 immediate_value = instruction & 0x7FF;
+            u32 immediate_value = instruction & 0x7FF;
             if (instruction & (1 << 11))
             {
                 // BH
