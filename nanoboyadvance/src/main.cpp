@@ -112,12 +112,32 @@ inline void schedule_frame()
         // Run the hardware's components
         if (memory->halt_state != GBAMemory::GBAHaltState::Stop)
         {
+            int forward_steps = 0;
+
             if (memory->halt_state != GBAMemory::GBAHaltState::Halt)
             {            
+                arm->cycles = 0;
                 arm->Step();
+                forward_steps = arm->cycles - 1;
             }
-            memory->video->Step();
-            memory->Step();
+
+            for (int j = 0; j < forward_steps + 1; j++) 
+            {
+                memory->video->Step();
+                memory->Step();
+
+                // Copy the rendered line (if any) to SDLs pixel buffer
+                if (memory->video->render_scanline)
+                {
+                    int y = memory->video->vcount;
+                    for (int x = 0; x < 240; x++)
+                    {
+                        setpixel(x, y, memory->video->buffer[y * 240 + x]);
+                    }
+                }
+            }
+
+            i += forward_steps;
         }
 
         // Raise an IRQ if neccessary
@@ -127,16 +147,6 @@ inline void schedule_frame()
             LOG(LOG_INFO, "Run interrupt handler if=0x%x", memory->interrupt->if_);
             #endif
             arm->FireIRQ();
-        }
-
-        // Copy the rendered line (if any) to SDLs pixel buffer
-        if (memory->video->render_scanline)
-        {
-            int y = memory->video->vcount;
-            for (int x = 0; x < 240; x++)
-            {
-                setpixel(x, y, memory->video->buffer[y * 240 + x]);
-            }
         }
     }
 }
@@ -328,10 +338,9 @@ int main(int argc, char** argv)
         ticks_now = SDL_GetTicks();
         if (ticks_now - ticks_start >= 1000) 
         {
-            char title_buffer[25]; // 25 characters should be sufficient
-            snprintf(title_buffer, 25, "NanoboyAdvance [%dfps]", frames);
+            string title = "NanoboyAdvance [" + std::to_string(frames) + "fps]";
+            SDL_SetWindowTitle(window, title.c_str());
 
-            SDL_SetWindowTitle(window, title_buffer);
             ticks_start = SDL_GetTicks();
             frames = 0;
         }

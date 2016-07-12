@@ -278,25 +278,25 @@ namespace NanoboyAdvance
         //       memory bus timings.
 
         if (page == 2) {
-            if (size == Word) 
+            if (size == AccessSize::Word) 
                 return 6;
             return 3;
         }
 
         if (page == 5 || page == 6) {
-            if (size == Word)
+            if (size == AccessSize::Word)
                 return 2;
             return 1;
         }
 
         if (page == 8) {
-            if (size == Word)
+            if (size == AccessSize::Word)
                 return 8;
             return 5;
         }
 
         if (page == 0xE) {
-            if (size == Word && save_type != GBASaveType::SRAM)
+            if (size == AccessSize::Word && save_type != GBASaveType::SRAM)
                 return 8;
             return 5;
         }

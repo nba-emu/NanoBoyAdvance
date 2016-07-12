@@ -371,6 +371,9 @@ namespace NanoboyAdvance
         // Used to emulate software interrupts
         void SWI(int number);
     public:
+        // Keep track of cpu cycles
+        int cycles {0};
+
         enum class ARM7Mode
         {
             User = 0x10,
