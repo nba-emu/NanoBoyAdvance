@@ -192,13 +192,9 @@ namespace NanoboyAdvance
 
             // The operand can either be the value of a register or a 3 bit immediate value
             if (instruction & (1 << 10))
-            {
                 operand = (instruction >> 6) & 7;
-            }
             else
-            {
                 operand = reg((instruction >> 6) & 7);
-            }
 
             // Determine wether to subtract or add
             if (instruction & (1 << 9))
@@ -443,9 +439,7 @@ namespace NanoboyAdvance
             operand = reg(reg_source);
 
             if (reg_source == 15)
-            {
                 operand &= ~1;
-            }
 
             // Perform the actual operation
             switch ((instruction >> 8) & 3)
@@ -498,9 +492,7 @@ namespace NanoboyAdvance
 
             // Update cycles for non-BX instructions
             if (!flush_pipe) 
-            {
                 cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
-            }
 
             if (reg_dest == 15 && !compare)
             {
@@ -574,10 +566,10 @@ namespace NanoboyAdvance
                 break;
             case 0b01: // LDSB
                 reg(reg_dest) = ReadByte(address);
+
                 if (reg(reg_dest) & 0x80)
-                {
                     reg(reg_dest) |= 0xFFFFFF00;
-                }
+                
                 cycles += 1 + memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword) + 
                               memory->NonSequentialAccess(address, GBAMemory::AccessSize::Byte); 
                 break;
@@ -691,13 +683,9 @@ namespace NanoboyAdvance
 
             // Use stack pointer as base?
             if (instruction & (1 << 11)) 
-            {
                 reg(reg_dest) = reg(13) + (immediate_value << 2); // sp
-            }
             else
-            {
                 reg(reg_dest) = (r15 & ~2) + (immediate_value << 2); // pc
-            }
 
             cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
             break;
@@ -709,13 +697,9 @@ namespace NanoboyAdvance
             
             // Immediate-value is negative?
             if (instruction & 0x80)
-            {
                 reg(13) -= immediate_value;
-            }
             else
-            {
                 reg(13) += immediate_value;
-            }
 
             cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
             break;
@@ -741,7 +725,7 @@ namespace NanoboyAdvance
                         u32 address = reg(13);
 
                         // Read word and update SP.
-                        reg(i) = ReadWord(reg(13));
+                        reg(i) = ReadWord(address);
                         reg(13) += 4;
                         
                         // Time the access based on if it's a first access
@@ -839,53 +823,74 @@ namespace NanoboyAdvance
             int reg_base = (instruction >> 8) & 7;
             bool write_back = true;
             u32 address = reg(reg_base);
-            int first_register = 0;
 
-            // Find the first register
-            for (int i = 0; i < 8; i++)
-            {
-                if (instruction & (1 << i))
-                {
-                    first_register = i;
-                    break;
-                }
-            }
-
+            // Is the load bit set? (ldmia or stmia)
             if (instruction & (1 << 11))
             {
-                // LDMIA
+                cycles += 1 + memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
+                              memory->SequentialAccess(r15 + 2, GBAMemory::AccessSize::Hword);
+
+                // Iterate through the entire register list
                 for (int i = 0; i <= 7; i++)
                 {
+                    // Load to this register?
                     if (instruction & (1 << i))
                     {
-                        if (i == reg_base)
-                        {
-                            write_back = false;
-                        }
                         reg(i) = ReadWord(address);
+                        cycles += memory->SequentialAccess(address, GBAMemory::AccessSize::Word);
                         address += 4;
-                        if (write_back)
-                        {
-                            reg(reg_base) = address;
-                        }
                     }
+                }
+
+                // Write back address into the base register if specified
+                // and the base register is not in the register list
+                if (write_back && !(instruction & (1 << reg_base)))
+                {
+                    reg(reg_base) = address;
                 }
             }
             else
             {
-                // STMIA
-                for (int i = 0; i <= 7; i++)
+                int first_register = 0;
+                bool first_access = true;
+
+                cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword);
+
+                // Find the first register
+                for (int i = 0; i < 8; i++)
                 {
                     if (instruction & (1 << i))
                     {
+                        first_register = i;
+                        break;
+                    }
+                }
+
+                // Iterate through the entire register list
+                for (int i = 0; i <= 7; i++)
+                {
+                    // Store this register?
+                    if (instruction & (1 << i))
+                    {
+                        // Write register to the base address. If the current register is the
+                        // base register and also the first register instead the original base is written.
                         if (i == reg_base && i == first_register)
-                        {
                             WriteWord(reg(reg_base), address);
+                        else
+                            WriteWord(reg(reg_base), reg(i));
+
+                        // Time the access based on if it's a first access
+                        if (first_access)
+                        {
+                            cycles += memory->NonSequentialAccess(reg(reg_base), GBAMemory::AccessSize::Word);
+                            first_access = false;
                         }
                         else
                         {
-                            WriteWord(reg(reg_base), reg(i));
+                            cycles += memory->SequentialAccess(reg(reg_base), GBAMemory::AccessSize::Word);
                         }
+
+                        // Update base address
                         reg(reg_base) += 4;
                     }
                 }
@@ -897,6 +902,8 @@ namespace NanoboyAdvance
             // THUMB.16 Conditional branch
             u32 signed_immediate = instruction & 0xFF;
             bool execute = false;
+
+            cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
 
             // Evaluate the condition
             switch ((instruction >> 8) & 0xF)
@@ -922,27 +929,40 @@ namespace NanoboyAdvance
             {
                 // Sign-extend the immediate value if neccessary
                 if (signed_immediate & 0x80)
-                {
                     signed_immediate |= 0xFFFFFF00;
-                }
+                
+                // Update r15/pc and flush pipe
                 r15 += (signed_immediate << 1);
                 flush_pipe = true;
+
+                // Emulate pipeline refill timings
+                cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
+                          memory->SequentialAccess(r15 + 2, GBAMemory::AccessSize::Hword);
             }
             break;
         }
         case THUMB_17:
             // THUMB.17 Software Interrupt
+            // TODO: move exception vectors to enum.
             //if ((cpsr & IRQDisable) == 0)
             {
                 u8 bios_call = ReadByte(r15 - 4);
 
-                // Log to the console that we're issuing an interrupt.
-                //LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (thumb)", bios_call, r0, r1, r2, r3, reg(14), r15);
+                // Log SWI to the console
+                #ifdef DEBUG
+                LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (thumb)", 
+                    bios_call, r0, r1, r2, r3, reg(14), r15);
+                #endif
 
-                // Actual emulation
+                // "Useless" prefetch from r15 and pipeline refill timing.
+                cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword) +
+                          memory->NonSequentialAccess(8, GBAMemory::AccessSize::Word) +
+                          memory->SequentialAccess(12, GBAMemory::AccessSize::Word);
+
+                // Dispatch interrupt.
                 if (hle)
                 {
-                    SWI(ReadByte(r15 - 4));
+                    SWI(bios_call);
                 }
                 else
                 {
@@ -959,35 +979,51 @@ namespace NanoboyAdvance
         {
             // THUMB.18 Unconditional branch
             u32 immediate_value = (instruction & 0x3FF) << 1;
+
+            cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
+
+            // Sign-extend r15/pc displacement
             if (instruction & 0x400)
-            {
                 immediate_value |= 0xFFFFF800;
-            }
+
+            // Update r15/pc and flush pipe
             r15 += immediate_value;
             flush_pipe = true;
+
+            //Emulate pipeline refill timings
+            cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
+                      memory->SequentialAccess(r15 + 2, GBAMemory::AccessSize::Hword);
             break;
         }
         case THUMB_19:
         {
             u32 immediate_value = instruction & 0x7FF;
+
+            // Branch with link consists of two instructions.
             if (instruction & (1 << 11))
             {
-                // BH
                 u32 temp_pc = r15 - 2;
                 u32 value = reg(14) + (immediate_value << 1);
 
-                // This was mostly written by looking at shonumis code lol
+                cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
+
+                // Update r15/pc
                 value &= 0x7FFFFF;
                 r15 &= ~0x7FFFFF;
                 r15 |= value & ~1;
 
+                // Store return address and flush pipe.
                 reg(14) = temp_pc | 1;
                 flush_pipe = true;
+
+                //Emulate pipeline refill timings
+                cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
+                          memory->SequentialAccess(r15 + 2, GBAMemory::AccessSize::Hword);
             }
             else
             {
-                // BL
                 reg(14) = r15 + (immediate_value << 12);
+                cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
             }
             break;
         }
