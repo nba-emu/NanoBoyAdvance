@@ -44,8 +44,8 @@ namespace NanoboyAdvance
         u8* rom;
         int rom_size;
 
-        // DMA related
-        enum class AddressControl
+        // DMA related (todo: enums have class)
+        enum AddressControl
         {
             Increment = 0,
             Decrement = 1,
@@ -104,7 +104,7 @@ namespace NanoboyAdvance
             Byte,
             Hword,
             Word
-        }
+        };
 
         // Flags
         enum class GBAHaltState
@@ -133,8 +133,8 @@ namespace NanoboyAdvance
         void Step();
 
         // Cycle measurement methods
-        int GBAMemory::SequentialAccess(u32 offset, AccessSize size);
-        int GBAMemory::NonSequentialAccess(u32 offset, AccessSize size);
+        int SequentialAccess(u32 offset, AccessSize size);
+        int NonSequentialAccess(u32 offset, AccessSize size);
         
         // Read / Write access methods
         u8 ReadByte(u32 offset);

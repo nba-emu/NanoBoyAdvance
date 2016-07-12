@@ -43,6 +43,7 @@ namespace NanoboyAdvance
     {
         u32 opcode = instruction & 0x0FFFFFFF;
         int section = ARM_ERR;
+
         switch (opcode >> 26)
         {
         case 0b00:
@@ -125,6 +126,8 @@ namespace NanoboyAdvance
     {
         int condition = instruction >> 28;
         bool execute = false;
+
+        cycles += 1; // just assume it'll take one cycle for now.
 
         // Check if the instruction will be executed
         switch (condition)
