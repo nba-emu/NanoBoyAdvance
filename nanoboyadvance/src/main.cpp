@@ -109,13 +109,22 @@ inline void schedule_frame()
             }
         }
 
+        // Raise an IRQ if neccessary
+        if (memory->interrupt->ime && (memory->interrupt->if_ & memory->interrupt->ie))
+        {
+            #ifdef HARDCORE_DEBUG
+            LOG(LOG_INFO, "Run interrupt handler if=0x%x", memory->interrupt->if_);
+            #endif
+            arm->FireIRQ();
+        }
+
         // Run the hardware's components
         if (memory->halt_state != GBAMemory::GBAHaltState::Stop)
         {
             int forward_steps = 0;
 
             if (memory->halt_state != GBAMemory::GBAHaltState::Halt)
-            {            
+            {
                 arm->cycles = 0;
                 arm->Step();
                 forward_steps = arm->cycles - 1;
@@ -138,15 +147,6 @@ inline void schedule_frame()
             }
 
             i += forward_steps;
-        }
-
-        // Raise an IRQ if neccessary
-        if (memory->interrupt->ime && (memory->interrupt->if_ & memory->interrupt->ie))
-        {
-            #ifdef HARDCORE_DEBUG
-            LOG(LOG_INFO, "Run interrupt handler if=0x%x", memory->interrupt->if_);
-            #endif
-            arm->FireIRQ();
         }
     }
 }

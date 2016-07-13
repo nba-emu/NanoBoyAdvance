@@ -611,7 +611,7 @@ namespace NanoboyAdvance
             case BG3HOFS+1:
             {
                 int n = (internal_offset - BG0HOFS - 1) / 4;
-                video->bg_hofs[n] = (video->bg_hofs[n] & 0xFF) | (value << 8);
+                video->bg_hofs[n] = (video->bg_hofs[n] & 0xFF) | ((value & 1) << 8);
                 break;
             }
             case BG0VOFS:
@@ -629,7 +629,7 @@ namespace NanoboyAdvance
             case BG3VOFS+1:
             {
                 int n = (internal_offset - BG0VOFS - 1) / 4;
-                video->bg_vofs[n] = (video->bg_vofs[n] & 0xFF) | (value << 8);
+                video->bg_vofs[n] = (video->bg_vofs[n] & 0xFF) | ((value & 1) << 8);
                 break;
             }
             case BG2X:
@@ -1032,54 +1032,6 @@ namespace NanoboyAdvance
                 tmr_enable[n] = value & 128;
                 break;
              }
-            /*case TM0CNT_L:
-                timer->timer_reload[0] = (timer->timer_reload[0]  & 0xFF00) | value;
-                write = false;
-                break;
-            case TM0CNT_L+1:
-                timer->timer_reload[0] = (timer->timer_reload[0] & 0x00FF) | (value << 8);
-                write = false;
-                break;
-            case TM0CNT_H:
-            case TM0CNT_H+1:
-                timer->timer0_altered = true;
-                break;
-            case TM1CNT_L:
-                timer->timer_reload[1]  = (timer->timer_reload[1] & 0xFF00) | value;
-                write = false;
-                break;
-            case TM1CNT_L+1:
-                timer->timer_reload[1] = (timer->timer_reload[1] & 0x00FF) | (value << 8);
-                write = false;
-                break;
-            case TM1CNT_H:
-            case TM1CNT_H+1:
-                timer->timer1_altered = true;
-                break;
-            case TM2CNT_L:
-                timer->timer_reload[2] = (timer->timer_reload[2] & 0xFF00) | value;
-                write = false;
-                break;
-            case TM2CNT_L+1:
-                timer->timer_reload[2] = (timer->timer_reload[2] & 0x00FF) | (value << 8);
-                write = false;
-                break;
-            case TM2CNT_H:
-            case TM2CNT_H+1:
-                timer->timer2_altered = true;
-                break;
-            case TM3CNT_L:
-                timer->timer_reload[3] = (timer->timer_reload[3] & 0xFF00) | value;
-                write = false;
-                break;
-            case TM3CNT_L+1:
-                timer->timer_reload[3] = (timer->timer_reload[3] & 0x00FF) | (value << 8);
-                write = false;
-                break;
-            case TM3CNT_H:
-            case TM3CNT_H+1:
-                timer->timer3_altered = true;
-                break;*/
             case IE:
                 interrupt->ie = (interrupt->ie & 0xFF00) | value;
                 break;

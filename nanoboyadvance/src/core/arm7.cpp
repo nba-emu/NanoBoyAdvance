@@ -229,13 +229,28 @@ namespace NanoboyAdvance
     {
         if ((cpsr & IRQDisable) == 0)
         {
-            r14_irq = r15 - ((cpsr & Thumb) ? 4 : 8) + 4;
+            bool thumb = cpsr & Thumb;
+
+            // "Useless" pipeline prefetch
+            cycles += memory->SequentialAccess(r15, thumb ? GBAMemory::AccessSize::Hword : 
+                                                            GBAMemory::AccessSize::Word);
+
+            // Store return address in r14<irq>
+            r14_irq = r15 - (thumb ? 4 : 8) + 4;
+
+            // Save program status and switch mode
             spsr_irq = cpsr;
             cpsr = (cpsr & ~0x3F) | (u32)ARM7Mode::IRQ | IRQDisable;
             RemapRegisters();
+
+            // Jump to exception vector and flush pipeline
             r15 = 0x18;
             pipe_status = 0;
             flush_pipe = false;
+
+            // Emulate pipeline refill timings
+            cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Word) +
+                      memory->SequentialAccess(r15 + 4, GBAMemory::AccessSize::Word);
             //LOG(LOG_INFO, "Issued interrupt, r14_irq=0x%x, r15=0x%x", r14_irq, r15);
         }
         //else { LOG(LOG_INFO, "Interrupt(s) requested but blocked (either by interrupt or swi)") }

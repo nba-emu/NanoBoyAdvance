@@ -190,7 +190,7 @@ namespace NanoboyAdvance
             int reg_source = (instruction >> 3) & 7;
             u32 operand;
 
-            // The operand can either be the value of a register or a 3 bit immediate value
+            // Either a register or an immediate
             if (instruction & (1 << 10))
                 operand = (instruction >> 6) & 7;
             else
@@ -226,6 +226,7 @@ namespace NanoboyAdvance
             // THUMB.3 Move/compare/add/subtract immediate
             u32 immediate_value = instruction & 0xFF;
             int reg_dest = (instruction >> 8) & 7;
+
             switch ((instruction >> 11) & 3)
             {
             case 0b00: // MOV
@@ -295,6 +296,7 @@ namespace NanoboyAdvance
                 AssertCarry(carry);
                 CalculateSign(reg(reg_dest));
                 CalculateZero(reg(reg_dest));
+                cycles++;
                 break;
             }
             case 0b0011: // LSR
@@ -305,6 +307,7 @@ namespace NanoboyAdvance
                 AssertCarry(carry);
                 CalculateSign(reg(reg_dest));
                 CalculateZero(reg(reg_dest));
+                cycles++;
                 break;
             }
             case 0b0100: // ASR
@@ -315,6 +318,7 @@ namespace NanoboyAdvance
                 AssertCarry(carry);
                 CalculateSign(reg(reg_dest));
                 CalculateZero(reg(reg_dest));
+                cycles++;
                 break;
             }
             case 0b0101: // ADC
@@ -348,6 +352,7 @@ namespace NanoboyAdvance
                 AssertCarry(carry);
                 CalculateSign(reg(reg_dest));
                 CalculateZero(reg(reg_dest));
+                cycles++;
                 break;
             }
             case 0b1000: // TST
@@ -392,6 +397,7 @@ namespace NanoboyAdvance
                 CalculateZero(reg(reg_dest));
                 break;
             case 0b1101: // MUL
+                // TODO: how to calc. the internal cycles?
                 reg(reg_dest) *= reg(reg_source);
                 CalculateSign(reg(reg_dest));
                 CalculateZero(reg(reg_dest));
@@ -418,6 +424,7 @@ namespace NanoboyAdvance
             // THUMB.5 Hi register operations/branch exchange
             int reg_dest = instruction & 7;
             int reg_source = (instruction >> 3) & 7;
+            int opcode = (instruction >> 8) & 3;
             bool compare = false;
             u32 operand;
 
@@ -441,8 +448,11 @@ namespace NanoboyAdvance
             if (reg_source == 15)
                 operand &= ~1;
 
+            // Time next pipeline prefetch
+            cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
+
             // Perform the actual operation
-            switch ((instruction >> 8) & 3)
+            switch (opcode)
             {
             case 0b00: // ADD
                 reg(reg_dest) += operand;
@@ -461,9 +471,6 @@ namespace NanoboyAdvance
                 reg(reg_dest) = operand;
                 break;
             case 0b11: // BX
-                // Completely unusable prefetch
-                cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword);
-
                 // Switch instruction set?
                 if (operand & 1)
                 {
@@ -471,7 +478,7 @@ namespace NanoboyAdvance
                     r15 = operand & ~1;
 
                     // Emulate pipeline refill cycles
-                    cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword) +
+                    cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
                               memory->SequentialAccess(r15 + 2, GBAMemory::AccessSize::Hword);
                 }
                 else
@@ -481,7 +488,7 @@ namespace NanoboyAdvance
                     r15 = operand & ~3;
 
                     // Emulate pipeline refill cycles
-                    cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Word) +
+                    cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Word) +
                               memory->SequentialAccess(r15 + 2, GBAMemory::AccessSize::Word);
                 }
 
@@ -490,14 +497,15 @@ namespace NanoboyAdvance
                 break;
             }
 
-            // Update cycles for non-BX instructions
-            if (!flush_pipe) 
-                cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
-
-            if (reg_dest == 15 && !compare)
+            if (reg_dest == 15 && !compare && opcode != 0b11)
             {
+                // Flush pipeline
                 reg(reg_dest) &= ~1;
                 flush_pipe = true;
+
+                // Emulate pipeline refill cycles
+                cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
+                          memory->SequentialAccess(r15 + 2, GBAMemory::AccessSize::Hword);
             }
             break;
         }
