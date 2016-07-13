@@ -853,9 +853,7 @@ namespace NanoboyAdvance
                 // Write back address into the base register if specified
                 // and the base register is not in the register list
                 if (write_back && !(instruction & (1 << reg_base)))
-                {
                     reg(reg_base) = address;
-                }
             }
             else
             {
