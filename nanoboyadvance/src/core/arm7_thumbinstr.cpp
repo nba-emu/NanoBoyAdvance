@@ -914,20 +914,20 @@ namespace NanoboyAdvance
             // Evaluate the condition
             switch ((instruction >> 8) & 0xF)
             {
-            case 0x0: execute = (cpsr & ZeroFlag) == ZeroFlag; break;
-            case 0x1: execute = (cpsr & ZeroFlag) != ZeroFlag; break;
-            case 0x2: execute = (cpsr & CarryFlag) == CarryFlag; break;
-            case 0x3: execute = (cpsr & CarryFlag) != CarryFlag; break;
-            case 0x4: execute = (cpsr & SignFlag) == SignFlag; break;
-            case 0x5: execute = (cpsr & SignFlag) != SignFlag; break;
-            case 0x6: execute = (cpsr & OverflowFlag) == OverflowFlag; break;
-            case 0x7: execute = (cpsr & OverflowFlag) != OverflowFlag; break;
-            case 0x8: execute = ((cpsr & CarryFlag) == CarryFlag) & ((cpsr & ZeroFlag) != ZeroFlag); break;
-            case 0x9: execute = ((cpsr & CarryFlag) != CarryFlag) || ((cpsr & ZeroFlag) == ZeroFlag); break;
-            case 0xA: execute = ((cpsr & SignFlag) == SignFlag) == ((cpsr & OverflowFlag) == OverflowFlag); break;
-            case 0xB: execute = ((cpsr & SignFlag) == SignFlag) != ((cpsr & OverflowFlag) == OverflowFlag); break;
-            case 0xC: execute = ((cpsr & ZeroFlag) != ZeroFlag) && (((cpsr & SignFlag) == SignFlag) == ((cpsr & OverflowFlag) == OverflowFlag)); break;
-            case 0xD: execute = ((cpsr & ZeroFlag) == ZeroFlag) || (((cpsr & SignFlag) == SignFlag) != ((cpsr & OverflowFlag) == OverflowFlag)); break;
+            case 0x0: execute = (cpsr & ZeroFlag); break;
+            case 0x1: execute = !(cpsr & ZeroFlag); break;
+            case 0x2: execute = (cpsr & CarryFlag); break;
+            case 0x3: execute = !(cpsr & CarryFlag); break;
+            case 0x4: execute = (cpsr & SignFlag); break;
+            case 0x5: execute = !(cpsr & SignFlag); break;
+            case 0x6: execute = (cpsr & OverflowFlag); break;
+            case 0x7: execute = !(cpsr & OverflowFlag); break;
+            case 0x8: execute = (cpsr & CarryFlag) && !(cpsr & ZeroFlag); break;
+            case 0x9: execute = !(cpsr & CarryFlag) || (cpsr & ZeroFlag); break;
+            case 0xA: execute = (cpsr & SignFlag) == (cpsr & OverflowFlag); break;
+            case 0xB: execute = (cpsr & SignFlag) != (cpsr & OverflowFlag); break;
+            case 0xC: execute = !(cpsr & ZeroFlag) && ((cpsr & SignFlag) == (cpsr & OverflowFlag)); break;
+            case 0xD: execute = (cpsr & ZeroFlag) || ((cpsr & SignFlag) != (cpsr & OverflowFlag)); break;
             }
 
             // Perform the branch if the condition is met
