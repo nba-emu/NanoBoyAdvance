@@ -488,11 +488,14 @@ namespace NanoboyAdvance
         case 7:
             return video->obj[internal_offset % 0x400];
         case 8:
-            // TODO: Prevent out of bounds read, we should save the rom size somewhere
+            if (internal_offset >= rom_size)
+                return 0;
             return rom[internal_offset];
         case 9:
-            // TODO: Prevent out of bounds read, we should save the rom size somewhere
-            return rom[0x1000000 + internal_offset];
+            internal_offset += 0x1000000;
+            if (internal_offset >= rom_size)
+                return 0;
+            return rom[internal_offset];
         case 0xE:
             if (save_type == GBASaveType::FLASH64 || save_type == GBASaveType::FLASH128)
             {
