@@ -548,8 +548,6 @@ namespace NanoboyAdvance
         {
             if (ticks >= 960)
             {
-                vblank_flag = false;//?
-                hblank_flag = true;
                 hblank_dma = true;
                 state = GBAVideoState::HBlank;
                 
@@ -574,7 +572,6 @@ namespace NanoboyAdvance
         case GBAVideoState::HBlank:
             if (ticks >= 272)
             {
-                hblank_flag = false;
                 vcount++;
                 if (vcount_flag && vcount_irq)
                 {
@@ -582,7 +579,6 @@ namespace NanoboyAdvance
                 }
                 if (vcount == 160)
                 {
-                    vblank_flag = true;
                     bg_x_int[2] = DecodeGBAFloat32(bg_x[2]);
                     bg_y_int[2] = DecodeGBAFloat32(bg_y[2]);
                     bg_x_int[3] = DecodeGBAFloat32(bg_x[3]);
@@ -616,8 +612,6 @@ namespace NanoboyAdvance
                 {
                     vblank_dma = false;
                     state = GBAVideoState::Scanline;
-                    vblank_flag = false;
-                    hblank_flag = false;
                     vcount = 0;
                 }
                 ticks = 0;

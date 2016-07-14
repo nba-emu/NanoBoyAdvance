@@ -29,15 +29,7 @@ using namespace std;
 namespace NanoboyAdvance
 {
     class GBAVideo
-    {
-        // Enumerating all video states
-        enum class GBAVideoState
-        {
-            Scanline,
-            HBlank,
-            VBlank
-        };
-        
+    {   
         // Enumerating the possible sprite shapes
         enum class GBAVideoSpriteShape
         {
@@ -58,9 +50,6 @@ namespace NanoboyAdvance
        
         // Interrupt interface
         GBAInterrupt* interrupt;
-        
-        // Current PPU state
-        GBAVideoState state {GBAVideoState::Scanline};
         
         // Buffers the various layers
         u32 bd_buffer[240];
@@ -164,6 +153,17 @@ namespace NanoboyAdvance
         // Renders one entire line
 		void Render(int line);
     public:
+        // Enumerating all video states
+        enum class GBAVideoState
+        {
+            Scanline,
+            HBlank,
+            VBlank
+        };
+
+        // Current PPU state
+        GBAVideoState state {GBAVideoState::Scanline};
+
         // Scanline indicator
         bool render_scanline {false};
         
@@ -196,8 +196,6 @@ namespace NanoboyAdvance
         bool obj_win_enable {false};
         
         // DISPSTAT
-        bool vblank_flag {false};
-        bool hblank_flag {false};
         bool vcount_flag {false};
         bool vblank_irq {false};
         bool hblank_irq {false};
@@ -205,7 +203,7 @@ namespace NanoboyAdvance
         u8 vcount_setting {0};
         
         // VCOUNT
-        u16 vcount;
+        u16 vcount {0};
         
         // BGNCNT
         int bg_priority[4] {0, 0, 0, 0};
@@ -237,12 +235,12 @@ namespace NanoboyAdvance
         u16 win_bottom[2] {0, 0};
         
         // WININ and WINOUT
-        bool bg_winin[2][4];
-        bool bg_winout[4];
-        bool obj_winin[2];
-        bool obj_winout;
-        bool sfx_winin[2];
-        bool sfx_winout;
+        bool bg_winin[2][4] {{0, 0, 0, 0}, {0, 0, 0, 0}};
+        bool bg_winout[4] {0, 0, 0, 0};
+        bool obj_winin[2] {0, 0};
+        bool obj_winout {0};
+        bool sfx_winin[2] {0, 0};
+        bool sfx_winout {0};
         /* !!!! End decoded IO registers !!!! */
         
         // Constructor
