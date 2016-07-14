@@ -197,9 +197,9 @@ namespace NanoboyAdvance
                     while (dma_count_int[i] != 0) {
                         // Transfer either Word or HWord
                         if (transfer_words) {
-                            WriteWord(dma_dst_int[i], ReadWord(dma_src_int[i]));
+                            WriteWord(dma_dst_int[i] & ~3, ReadWord(dma_src_int[i] & ~3));
                         } else {
-                            WriteHWord(dma_dst_int[i], ReadHWord(dma_src_int[i]));
+                            WriteHWord(dma_dst_int[i] & ~1, ReadHWord(dma_src_int[i] & ~1));
                         }
                         
                         // Update destination address
