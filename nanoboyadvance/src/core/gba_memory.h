@@ -36,6 +36,10 @@ namespace NanoboyAdvance
     class GBAMemory
     {
         static const int tmr_cycles[4];
+        static const int ws_table[4];
+        static const int ws0_table[2];
+        static const int ws1_table[2];
+        static const int ws2_table[2];
     
         u8 wram[0x40000];
         u8 iram[0x8000];
@@ -53,6 +57,12 @@ namespace NanoboyAdvance
             IncrementAndReload = 3
         };
         
+        // WAITCNT IO
+        int ws_sram {0};
+        int ws_first[3] {0, 0, 0};
+        int ws_second[3] {0, 0, 0};
+        bool gp_prefetch {false};
+
         // DMA (internal) IO
         u32 dma_src_int[4];
         u32 dma_dst_int[4];

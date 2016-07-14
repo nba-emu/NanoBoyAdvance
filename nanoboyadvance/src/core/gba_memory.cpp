@@ -30,6 +30,10 @@
 namespace NanoboyAdvance
 {
     const int GBAMemory::tmr_cycles[4] = { 1, 64, 256, 1024 };
+    const int GBAMemory::ws_table[4] = { 4, 3, 2, 8 };
+    const int GBAMemory::ws0_table[2] = { 2, 1 };
+    const int GBAMemory::ws1_table[2] = { 4, 1 };
+    const int GBAMemory::ws2_table[2] = { 8, 1 };
 
     GBAMemory::GBAMemory(string bios_file, string rom_file, string save_file)
     {
@@ -274,9 +278,7 @@ namespace NanoboyAdvance
     {
         int page = offset >> 24;
 
-        // TODO: We need to implement waitstates for more accurate
-        //       memory bus timings.
-
+        // TODO: waitstates?
         if (page == 2) {
             if (size == AccessSize::Word) 
                 return 6;
@@ -291,10 +293,11 @@ namespace NanoboyAdvance
 
         if (page == 8) {
             if (size == AccessSize::Word)
-                return 8;
-            return 5;
+                return 1 + 2 * ws_table[ws_first[0]];
+            return 1 + ws_table[ws_first[0]];
         }
 
+        // TODO: waitstates
         if (page == 0xE) {
             if (size == AccessSize::Word && save_type != GBASaveType::SRAM)
                 return 8;
@@ -306,7 +309,15 @@ namespace NanoboyAdvance
 
     int GBAMemory::NonSequentialAccess(u32 offset, AccessSize size)
     {
-        // TODO...
+        int page = offset >> 24;
+
+        if (page == 8) 
+        {
+            if (size == AccessSize::Word)
+                return 1 + ws0_table[ws_second[0]] + ws_table[ws_first[0]];
+            return 1 + ws0_table[ws_second[0]];
+        }
+
         return SequentialAccess(offset, size);
     }
 
@@ -321,7 +332,7 @@ namespace NanoboyAdvance
         case 0:
         case 1:
             #ifdef DEBUG
-            ASSERT(internal_offset >= 0x4000, LOG_ERROR, "BIOS read: offset out of bounds");
+            //ASSERT(internal_offset >= 0x4000, LOG_ERROR, "BIOS read: offset out of bounds");
             #endif            
             if (internal_offset >= 0x4000)
             {
@@ -336,13 +347,6 @@ namespace NanoboyAdvance
             if ((internal_offset & 0xFFFF) == 0x800) {
                 internal_offset &= 0xFFFF;
             }
-            
-            /*if (internal_offset >= 0x3FF) {
-                #ifdef DEBUG
-                LOG(LOG_ERROR, "IO read: offset out of bounds (0x%x)", offset); 
-                #endif                
-                return 0;
-            }*/
             
             switch (internal_offset) {
             case DISPCNT:
@@ -361,8 +365,8 @@ namespace NanoboyAdvance
                        (video->win_enable[1] ? 64 : 0) |
                        (video->obj_win_enable ? 128 : 0);
             case DISPSTAT:
-                return (video->vblank_flag ? 1 : 0) |
-                       (video->hblank_flag ? 2 : 0) |
+                return ((video->state == GBAVideo::GBAVideoState::VBlank) ? 1 : 0) |
+                       ((video->state == GBAVideo::GBAVideoState::HBlank) ? 2 : 0) |
                        (video->vcount_flag ? 4 : 0) |
                        (video->vblank_irq ? 8 : 0) |
                        (video->hblank_irq ? 16 : 0) |
@@ -455,6 +459,17 @@ namespace NanoboyAdvance
                 return interrupt->if_ & 0xFF;
             case IF+1:
                 return interrupt->if_ >> 8;
+            case WAITCNT:
+                return ws_sram |
+                       (ws_first[0] << 2) |
+                       (ws_second[0] << 4) |
+                       (ws_first[1] << 5) |
+                       (ws_second[1] << 7);
+            case WAITCNT+1:
+                return ws_first[2] |
+                       (ws_second[2] << 2) |
+                       (gp_prefetch ? 64 : 0) |
+                       (1 << 7);
             case IME:
                 return interrupt->ime & 0xFF;
             case IME+1:
@@ -516,7 +531,7 @@ namespace NanoboyAdvance
         switch (page) {
         case 0:
             #ifdef DEBUG
-            LOG(LOG_ERROR, "Write into BIOS memory not allowed (0x%x)", offset);
+            //LOG(LOG_ERROR, "Write into BIOS memory not allowed (0x%x)", offset);
             #endif
             invalid = true;            
             break;
@@ -1043,6 +1058,18 @@ namespace NanoboyAdvance
                 break;
             case IF+1:
                 interrupt->if_ &= ~(value << 8);
+                break;
+            case WAITCNT:
+                ws_sram = value & 3;
+                ws_first[0] = (value >> 2) & 3;
+                ws_second[0] = (value >> 4) & 1;
+                ws_first[1] = (value >> 5) & 3;
+                ws_second[1] = value >> 7;
+                break;
+            case WAITCNT+1:
+                ws_first[2] = value & 3;
+                ws_second[2] = (value >> 2) & 1;
+                gp_prefetch = value & 64;
                 break;
             case IME:
                 interrupt->ime = (interrupt->ime & 0xFF00) | value;

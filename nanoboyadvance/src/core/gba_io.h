@@ -79,6 +79,7 @@
 #define KEYINPUT 0x130
 #define IE 0x200
 #define IF 0x202
+#define WAITCNT 0x204
 #define IME 0x208
 #define HALTCNT 0x301
 
