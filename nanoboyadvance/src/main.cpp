@@ -130,7 +130,7 @@ inline void schedule_frame()
                 forward_steps = arm->cycles - 1;
             }
 
-            //for (int j = 0; j <= forward_steps; j++) 
+            for (int j = 0; j <= forward_steps; j++) 
             {
                 memory->video->Step();
                 memory->Step();
@@ -146,7 +146,7 @@ inline void schedule_frame()
                 }
             }
 
-            //i += forward_steps;
+            i += forward_steps;
         }
     }
 }
