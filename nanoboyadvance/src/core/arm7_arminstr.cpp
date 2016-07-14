@@ -1097,12 +1097,14 @@ namespace NanoboyAdvance
                 u32 bios_call = ReadByte(r15 - 6);
 
                 // Log to the console that we're issuing an interrupt.
-                //LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (arm)", bios_call, r0, r1, r2, r3, reg(14), r15);
+                #ifdef DEBUG
+                LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (arm)", bios_call, r0, r1, r2, r3, reg(14), r15);
+                #endif
 
                 // Actual emulation
                 if (hle)
                 {
-                    SWI(ReadByte(r15 - 6));
+                    SWI(bios_call);
                 }
                 else
                 {

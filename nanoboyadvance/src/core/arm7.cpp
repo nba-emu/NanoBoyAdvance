@@ -125,7 +125,7 @@ namespace NanoboyAdvance
     void ARM7::Step()
     {
         bool thumb = cpsr & Thumb;
-        
+
         // Determine if the cpu runs in arm or thumb mode and do corresponding work
         if (thumb)
         {
@@ -214,7 +214,7 @@ namespace NanoboyAdvance
             flush_pipe = false;
             return;
         }
-        
+
         // Update instruction pointer
         r15 += thumb ? 2 : 4;
         
