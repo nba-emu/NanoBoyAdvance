@@ -179,9 +179,7 @@ namespace NanoboyAdvance
         inline void DebugHook(int reason, void* data)
         {
             if (debug_hook != NULL)
-            {
                 debug_hook(reason, data);
-            }
         }
 
         // Condition code altering methods
@@ -218,17 +216,12 @@ namespace NanoboyAdvance
             // Nothing is done when the shift amount equals zero
             if (amount != 0)
             {
-                //#ifndef __i386__
-                //carry = (operand << (amount - 1)) & 0x80000000 ? true : false;
-                //operand <<= amount;
-                //#else 
                 // This way we easily bypass the 32 bits restriction on x86
                 for (u32 i = 0; i < amount; i++)
                 {
                     carry = operand & 0x80000000 ? true : false;
                     operand <<= 1;
                 }
-                //#endif
             }
         }
 
@@ -238,16 +231,11 @@ namespace NanoboyAdvance
             amount = immediate & (amount == 0) ? 32 : amount;
 
             // Perform shift
-            //#ifndef __i386__
-            //carry = (operand >> (amount - 1)) & 1;
-            //operand >>= amount;
-            //#else
             for (u32 i = 0; i < amount; i++)
             {
                 carry = operand & 1 ? true : false;
                 operand >>= 1;
             }
-            //#endif
         }
 
         inline void ASR(u32& operand, u32 amount, bool& carry, bool immediate)
@@ -291,11 +279,11 @@ namespace NanoboyAdvance
             return memory->ReadByte(offset);
         }
 
-        inline u16 ReadHWord(u32 offset)
+        inline u32 ReadHWord(u32 offset)
         {
             if (offset & 1)
             {
-                u16 value = memory->ReadHWord(offset & ~1);
+                u32 value = memory->ReadHWord(offset & ~1);
                 return (value >> 8) | (value << 24); 
             }        
             return memory->ReadHWord(offset);
@@ -306,7 +294,7 @@ namespace NanoboyAdvance
             u32 value = 0;        
             if (offset & 1) 
             {
-                value = memory->ReadByte(offset & ~1);
+                value = memory->ReadByte(offset);
                 if (value & 0x80) value |= 0xFFFFFF00;
             }
             else 
