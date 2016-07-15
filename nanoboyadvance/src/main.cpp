@@ -113,12 +113,12 @@ inline void schedule_frame()
         if (memory->interrupt->ime && (memory->interrupt->if_ & memory->interrupt->ie))
         {
             #ifdef HARDCORE_DEBUG
-            LOG(LOG_INFO, "Run interrupt handler if=0x%x", memory->interrupt->if_);
+            LOG(LOG_INFO, "Possible interrupts detected if=0x%x", memory->interrupt->if_);
             #endif
             arm->FireIRQ();
         }
 
-        // Run the hardware's components
+        // Run the hardware components
         if (memory->halt_state != GBAMemory::GBAHaltState::Stop)
         {
             int forward_steps = 0;
@@ -130,7 +130,7 @@ inline void schedule_frame()
                 forward_steps = arm->cycles - 1;
             }
 
-            for (int j = 0; j <= forward_steps; j++) 
+            for (int j = 0; j < forward_steps + 1; j++) 
             {
                 memory->video->Step();
                 memory->Step();

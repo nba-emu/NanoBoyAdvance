@@ -327,7 +327,7 @@ namespace NanoboyAdvance
                 u32 result = reg(reg_dest) + reg(reg_source) + carry;
                 u64 result_long = (u64)(reg(reg_dest)) + (u64)(reg(reg_source)) + (u64)carry;
                 AssertCarry(result_long & 0x100000000);
-                CalculateOverflowAdd(result, reg(reg_dest), reg(reg_source) + carry);
+                CalculateOverflowAdd(result, reg(reg_dest), reg(reg_source));
                 CalculateSign(result);
                 CalculateZero(result);
                 reg(reg_dest) = result;
@@ -337,8 +337,8 @@ namespace NanoboyAdvance
             {
                 int carry = (cpsr >> 29) & 1;
                 u32 result = reg(reg_dest) - reg(reg_source) + carry - 1;
-                AssertCarry(reg(reg_dest) >= reg(reg_source) + carry - 1);
-                CalculateOverflowSub(result, reg(reg_dest), (reg(reg_source) + carry - 1));
+                AssertCarry(reg(reg_dest) >= (reg(reg_source) + carry - 1));
+                CalculateOverflowSub(result, reg(reg_dest), reg(reg_source));
                 CalculateSign(result);
                 CalculateZero(result);
                 reg(reg_dest) = result;

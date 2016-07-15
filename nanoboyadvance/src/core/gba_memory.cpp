@@ -117,7 +117,7 @@ namespace NanoboyAdvance
     void GBAMemory::Step()
     {
         bool tmr_overflow = false;
-    
+
         // run through all dma channels and timers
         for (int i = 0; i < 4; i++) {
             // is the current timer active?
@@ -183,8 +183,8 @@ namespace NanoboyAdvance
 
                     // DMA Debug Log
                     #if DEBUG
-                        u32 value = ReadHWord(dma_src[i]);
-                        LOG(LOG_INFO, "DMA%d: s=%x d=%x c=%x count=%x l=%d v=%x", i, dma_src_int[i], dma_dst_int[i], 0, dma_count_int[i], video->vcount, value);
+                    u32 value = ReadHWord(dma_src[i]);
+                    LOG(LOG_INFO, "DMA%d: s=%x d=%x c=%x count=%x l=%d v=%x", i, dma_src_int[i], dma_dst_int[i], 0, dma_count_int[i], video->vcount, value);
                     #endif
                     
                     // Throw error if unsupported Game Pack DRQ is requested

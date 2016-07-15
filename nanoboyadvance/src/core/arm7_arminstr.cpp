@@ -586,7 +586,7 @@ namespace NanoboyAdvance
                     {
                         u64 result_long = (u64)operand1 + (u64)operand2 + (u64)carry2;
                         AssertCarry(result_long & 0x100000000);
-                        CalculateOverflowAdd(result, operand1, operand2 + carry2);
+                        CalculateOverflowAdd(result, operand1, operand2);
                         CalculateSign(result);
                         CalculateZero(result);
                     }
@@ -600,7 +600,7 @@ namespace NanoboyAdvance
                     if (set_flags)
                     {
                         AssertCarry(operand1 >= (operand2 + carry2 - 1));
-                        CalculateOverflowSub(result, operand1, (operand2 + carry2 - 1));
+                        CalculateOverflowSub(result, operand1, operand2);
                         CalculateSign(result);
                         CalculateZero(result);
                     }
@@ -614,7 +614,7 @@ namespace NanoboyAdvance
                     if (set_flags)
                     {
                         AssertCarry(operand2 >= (operand1 + carry2 - 1));
-                        CalculateOverflowSub(result, operand2, (operand1 + carry2 - 1));
+                        CalculateOverflowSub(result, operand2, operand1);
                         CalculateSign(result);
                         CalculateZero(result);
                     }
