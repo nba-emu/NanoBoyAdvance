@@ -231,6 +231,10 @@ namespace NanoboyAdvance
         {
             bool thumb = cpsr & Thumb;
 
+            #ifdef HARDCORE_DEBUG
+            LOG(LOG_INFO, "Issued interrupt, r14_irq=0x%x, r15=0x%x", r14_irq, r15);
+            #endif
+
             // "Useless" pipeline prefetch
             cycles += memory->SequentialAccess(r15, thumb ? GBAMemory::AccessSize::Hword : 
                                                             GBAMemory::AccessSize::Word);
@@ -251,7 +255,6 @@ namespace NanoboyAdvance
             // Emulate pipeline refill timings
             cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Word) +
                       memory->SequentialAccess(r15 + 4, GBAMemory::AccessSize::Word);
-            //LOG(LOG_INFO, "Issued interrupt, r14_irq=0x%x, r15=0x%x", r14_irq, r15);
         }
         //else { LOG(LOG_INFO, "Interrupt(s) requested but blocked (either by interrupt or swi)") }
     }
