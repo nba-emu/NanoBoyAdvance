@@ -17,7 +17,7 @@
 * along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "arm7.h"
+#include "arm.h"
 
 #define ARM_ERR 0
 #define ARM_1 1
