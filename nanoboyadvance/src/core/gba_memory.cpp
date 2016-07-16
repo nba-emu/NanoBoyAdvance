@@ -23,27 +23,31 @@
 
 namespace NanoboyAdvance
 {
-    const int GBAMemory::tmr_cycles[4] = { 1, 64, 256, 1024 };
-    const int GBAMemory::wsn_table[4] = { 4, 3, 2, 8 };
-    const int GBAMemory::wss0_table[2] = { 2, 1 };
-    const int GBAMemory::wss1_table[2] = { 4, 1 };
-    const int GBAMemory::wss2_table[2] = { 8, 1 };
+    const int GBAMemory::dma_count_mask[4] = {0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF};
+    const int GBAMemory::dma_dest_mask[4] = {0x7FFFFFF, 0x7FFFFFF, 0x7FFFFFF, 0xFFFFFFF};
+    const int GBAMemory::dma_source_mask[4] = {0x7FFFFFF, 0xFFFFFFF, 0xFFFFFFF, 0xFFFFFFF};
+    const int GBAMemory::tmr_cycles[4] = {1, 64, 256, 1024};
+    const int GBAMemory::wsn_table[4] = {4, 3, 2, 8};
+    const int GBAMemory::wss0_table[2] = {2, 1};
+    const int GBAMemory::wss1_table[2] = {4, 1};
+    const int GBAMemory::wss2_table[2] = {8, 1};
 
     GBAMemory::GBAMemory(string bios_file, string rom_file, string save_file)
     {
-        bool found_save_type = false;
-
-        // Read files and init hardware
+        // Read files
         bios = File::ReadFile(bios_file);
         rom = File::ReadFile(rom_file);
         rom_size = File::GetFileSize(rom_file);
+        bios_size = File::GetFileSize(bios_file);
+
+        // Setup Video and Interrupt hardware
         interrupt = new GBAInterrupt();
         interrupt->ie = 0;
         interrupt->if_ = 0;
         interrupt->ime = 0;
         video = new GBAVideo(interrupt);
 
-        // Init some memory
+        // Init memory buffers
         memset(wram, 0, 0x40000);
         memset(iram, 0, 0x8000);
         memset(sram, 0, 0x10000);
@@ -53,43 +57,38 @@ namespace NanoboyAdvance
         {
             if (memcmp(rom + i, "EEPROM_V", 8) == 0)
             {
-                save_type = GBASaveType::EEPROM;
-                found_save_type = true;
-                cout << "EEPROM" << endl;
+                save_type = SaveType::EEPROM;
+                LOG(LOG_INFO, "Found save type: EEPROM (unsupported)");
             }
             else if (memcmp(rom + i, "SRAM_V", 6) == 0)
             {
-                save_type = GBASaveType::SRAM;
-                found_save_type = true;
-                cout << "SRAM" << endl;
+                save_type = SaveType::SRAM;
+                LOG(LOG_INFO, "Found save type: SRAM (unsupported)");
             }
             else if (memcmp(rom + i, "FLASH_V", 7) == 0)
             {
-                save_type = GBASaveType::FLASH64;
-                found_save_type = true;
-                cout << "FLASH" << endl;
+                save_type = SaveType::FLASH64;
                 backup = new GBAFlash(save_file, false);
+                LOG(LOG_INFO, "Found save type: FLASH64");
             }
             else if (memcmp(rom + i, "FLASH512_V", 10) == 0)
             {
-                save_type = GBASaveType::FLASH64;
-                found_save_type = true;
-                cout << "FLASH512" << endl;
+                save_type = SaveType::FLASH64;
                 backup = new GBAFlash(save_file, false);
+                LOG(LOG_INFO, "Found save type: FLASH64");
             }
             else if (memcmp(rom + i, "FLASH1M_V", 9) == 0)
             {
-                save_type = GBASaveType::FLASH128;
-                found_save_type = true;
-                cout << "FLASH1M" << endl;
+                save_type = SaveType::FLASH128;
                 backup = new GBAFlash(save_file, true);
+                LOG(LOG_INFO, "Found save type: FLASH128");
             }
         }
 
-        // Log if we could't determine the savetype
-        if (!found_save_type)
+        if (save_type == SaveType::NONE)
         {
-            cout << "No savetype detected, defaulting to SRAM..." << endl;
+            save_type = SaveType::SRAM;
+            LOG(LOG_WARN, "Save type not determinable, default to SRAM.");
         }
     }
 
@@ -100,162 +99,123 @@ namespace NanoboyAdvance
         delete interrupt;
     }
     
-    void GBAMemory::Step()
+    void GBAMemory::RunTimer()
     {
-        bool tmr_overflow = false;
+        bool overflow = false;
+        
+        for (int i = 0; i < 4; i++)
+        {
+            if (!timer[i].enable) continue;
 
-        // run through all dma channels and timers
-        for (int i = 0; i < 4; i++) {
-            // is the current timer active?
-            if (tmr_enable[i]) {
-                if ((tmr_countup[i] && tmr_overflow) || (!tmr_countup[i] && ++tmr_ticks[i] >= tmr_cycles[tmr_clock[i]])) {
-                    // reset tick counter
-                    tmr_ticks[i] = 0;
-                    
-                    // increment timer or overflow
-                    if (tmr_count[i] != 0xFFFF) {
-                        tmr_count[i]++;
-                        tmr_overflow = false;
-                    }
-                    else {
-                        if (tmr_irq[i]) {
-                            interrupt->if_ |= (1 << (3 + i));
-                        }
-                        tmr_count[i] = tmr_reload[i];
-                        tmr_overflow = true;
-                    }
+            if ((timer[i].countup && overflow) || 
+                (!timer[i].countup && ++timer[i].ticks >= tmr_cycles[timer[i].clock]))
+            {
+                timer[i].ticks = 0;
+            
+                if (timer[i].count != 0xFFFF)
+                {
+                    timer[i].count++;
+                    overflow = false;
+                }
+                else 
+                {
+                    if (timer[i].interrupt) interrupt->if_ |= 8 << i;
+                    timer[i].count = timer[i].reload;
+                    overflow = true;
                 }
             }
-        
-            // is the current dma active?
-            if (dma_enable[i]) {
-                bool start = false;
-                
-                // Determine if DMA will be initiated
-                switch (dma_time[i]) {
-                // Immediatly
-                case 0:
-                    start = true;
-                    break;
-                // VBlank
-                case 1:
-                    if (video->vblank_dma) {
-                        start = true;
-                        video->vblank_dma = false;
-                    }
-                    break;
-                // HBlank
-                case 2:
-                    if (video->hblank_dma) {
-                        start = true;
-                        video->hblank_dma = false;
-                    }
-                    break;
-                // Special
-                case 3:
-                    // TODO: 1) Video Capture Mode
-                    //       2) DMA1/2 Sound FIFO
-                    if (i == 3) {
-                        LOG(LOG_ERROR, "DMA: Video Capture Mode not supported.");
-                    }
-                    break;
-                }
-                
-                // Run if determined so
-                if (start) {
-                    AddressControl dst_cntl = dma_dst_cntl[i];
-                    AddressControl src_cntl = dma_src_cntl[i];
-                    bool transfer_words = dma_words[i];
+        }
+    }
 
-                    // DMA Debug Log
-                    #if DEBUG
-                    u32 value = ReadHWord(dma_src[i]);
-                    LOG(LOG_INFO, "DMA%d: s=%x d=%x c=%x count=%x l=%d v=%x", i, dma_src_int[i], dma_dst_int[i], 0, dma_count_int[i], video->vcount, value);
-                    #endif
-                    
-                    // Throw error if unsupported Game Pack DRQ is requested
-                    if (dma_gp_drq[i]) {
-                        LOG(LOG_ERROR, "Game Pak DRQ not supported.");
-                    }
-                                        
-                    // TODO: FIFO A/B special transfer
-                    // Run as long as there is data to transfer
-                    while (dma_count_int[i] != 0) {
-                        // Transfer either Word or HWord
-                        if (transfer_words) {
-                            WriteWord(dma_dst_int[i] & ~3, ReadWord(dma_src_int[i] & ~3));
-                        } else {
-                            WriteHWord(dma_dst_int[i] & ~1, ReadHWord(dma_src_int[i] & ~1));
-                        }
-                        
-                        // Update destination address
-                        if (dst_cntl == Increment || dst_cntl == IncrementAndReload) {
-                            dma_dst_int[i] += transfer_words ? 4 : 2;
-                        } else if (dst_cntl == Decrement) {
-                            dma_dst_int[i] -= transfer_words ? 4 : 2;
-                        }
-                        
-                        // Update source address
-                        if (src_cntl == Increment || src_cntl == IncrementAndReload) {
-                            dma_src_int[i] += transfer_words ? 4 : 2;
-                        } else if (src_cntl == Decrement) {
-                            dma_src_int[i] -= transfer_words ? 4 : 2;
-                        }
-                        
-                        // Update count
-                        dma_count_int[i]--;
-                    }
-                    
-                    // Reload dma_count_int and dma_dst_int as specified
-                    if (dma_repeat[i]) {
-                        // TODO: Find a more beautiful(?) solution.
-                        switch (i) {
-                        case 0:
-                            dma_count_int[0] = dma_count[0] & 0x3FFF;
-                            if (dma_count_int[0] == 0) {
-                                dma_count_int[0] = 0x4000;
-                            }
-                            if (dst_cntl == IncrementAndReload) {
-                                dma_dst_int[0] = dma_dst[0] & 0x07FFFFFF;
-                            }
-                            break;
-                        case 1:
-                            dma_count_int[1] = dma_count[1] & 0x3FFF;
-                            if (dma_count_int[1] == 0) {
-                                dma_count_int[1] = 0x4000;
-                            }
-                            if (dst_cntl == IncrementAndReload) {
-                                dma_dst_int[1] = dma_dst[1] & 0x07FFFFFF;
-                            }
-                            break;
-                        case 2:
-                            dma_count_int[2] = dma_count[2] & 0x3FFF;
-                            if (dma_count_int[2] == 0) {
-                                dma_count_int[2] = 0x4000;
-                            }
-                            if (dst_cntl == IncrementAndReload) {
-                                dma_dst_int[2] = dma_dst[2] & 0x07FFFFFF;
-                            }
-                            break;
-                        case 3:
-                            dma_count_int[3] = dma_count[3];
-                            if (dma_count_int[3] == 0) {
-                                dma_count_int[3] = 0x10000;
-                            }
-                            if (dst_cntl == IncrementAndReload) {
-                                dma_dst_int[3] = dma_dst[3] & 0x0FFFFFFF;
-                            }
-                            break;
-                        }
-                    } else {
-                        dma_enable[i] = false;
-                    }
-                    
-                    // Raise DMA IRQ if specified
-                    if (dma_irq[i]) {
-                        interrupt->if_ |= (1 << (8 + i));
-                    }
+    void GBAMemory::RunDMA()
+    {
+        // TODO: FIFO A/B and Video Capture
+        for (int i = 0; i < 4; i++)
+        {
+            bool start = false;
+
+            if (!dma[i].enable) continue;
+                
+            switch (dma[i].start_time) 
+            {
+            case StartTime::Immediate:
+                start = true;
+                break;
+            case StartTime::VBlank:
+                if (video->vblank_dma)
+                {
+                    start = true;
+                    video->vblank_dma = false;
                 }
+                break;
+            case StartTime::HBlank:
+                if (video->hblank_dma)
+                {
+                    start = true;
+                    video->hblank_dma = false;
+                }
+                break;
+            case StartTime::Special:
+                #ifdef DEBUG
+                ASSERT(i == 3, LOG_ERROR, "DMA: Video Capture Mode not supported.");
+                #endif
+                break;
+            }
+                
+            if (start)
+            {
+                AddressControl dest_control = dma[i].dest_control;
+                AddressControl source_control = dma[i].source_control;
+                bool transfer_words = dma[i].size == TransferSize::Word;
+
+                #if DEBUG
+                u32 value = ReadHWord(dma[i].source);
+                LOG(LOG_INFO, "DMA%d: s=%x d=%x c=%x count=%x l=%d v=%x", i, dma[i].source_int,
+                               dma[i].dest_int, 0, dma[i].count_int, video->vcount, value);
+                ASSERT(dma[i].gamepack_drq, LOG_ERROR, "Game Pak DRQ not supported.");
+                #endif
+                                        
+                // Run as long as there is data to transfer
+                while (dma[i].count_int != 0)
+                {
+                    // Transfer either Word or HWord
+                    if (transfer_words) 
+                        WriteWord(dma[i].dest_int & ~3, ReadWord(dma[i].source_int & ~3));
+                    else 
+                        WriteHWord(dma[i].dest_int & ~1, ReadHWord(dma[i].source_int & ~1));
+                        
+                    // Update destination address
+                    if (dest_control == AddressControl::Increment || dest_control == AddressControl::Reload)
+                        dma[i].dest_int += transfer_words ? 4 : 2;
+                    else if (dest_control == AddressControl::Decrement)
+                        dma[i].dest_int -= transfer_words ? 4 : 2;
+                        
+                    // Update source address
+                    if (source_control == AddressControl::Increment || source_control == AddressControl::Reload)
+                        dma[i].source_int += transfer_words ? 4 : 2;
+                    else if (source_control == AddressControl::Decrement)
+                        dma[i].source_int -= transfer_words ? 4 : 2;
+                        
+                    // Update count
+                    dma[i].count_int--;
+                }
+                
+                // Reschedule the DMA as specified or disable it
+                if (dma[i].repeat)
+                {
+                    dma[i].count_int = dma[i].count & dma_count_mask[i];
+                    if (dma[i].count_int == 0)
+                        dma[i].count_int = dma_count_mask[i] + 1;
+                    if (dest_control == AddressControl::Reload)
+                        dma[i].dest_int  = dma[i].dest & dma_dest_mask[i];
+                } 
+                else 
+                {
+                    dma[i].enable = false;
+                }
+                    
+                // Raise DMA interrupt if enabled
+                if (dma[i].interrupt) interrupt->if_ |= 256 << i;
             }
         }
     }
@@ -264,29 +224,28 @@ namespace NanoboyAdvance
     {
         int page = offset >> 24;
 
-        // TODO: waitstates?
-        if (page == 2) {
-            if (size == AccessSize::Word) 
-                return 6;
+        if (page == 2) 
+        {
+            if (size == AccessSize::Word) return 6;
             return 3;
         }
 
-        if (page == 5 || page == 6) {
-            if (size == AccessSize::Word)
-                return 2;
+        if (page == 5 || page == 6)
+        {
+            if (size == AccessSize::Word) return 2;
             return 1;
         }
 
-        if (page == 8) {
-            if (size == AccessSize::Word)
-                return 1 + 2 * wsn_table[ws_first[0]];
-            return 1 + wsn_table[ws_first[0]];
+        if (page == 8)
+        {
+            if (size == AccessSize::Word) 
+                return 1 + 2 * wsn_table[waitstate.first[0]];
+            return 1 + wsn_table[waitstate.first[0]];
         }
 
-        // TODO: waitstates
-        if (page == 0xE) {
-            if (size == AccessSize::Word && save_type != GBASaveType::SRAM)
-                return 8;
+        if (page == 0xE)
+        {
+            if (size == AccessSize::Word && save_type != SaveType::SRAM) return 8;
             return 5;
         }
 
@@ -300,8 +259,8 @@ namespace NanoboyAdvance
         if (page == 8) 
         {
             if (size == AccessSize::Word)
-                return 1 + wss0_table[ws_second[0]] + wsn_table[ws_first[0]];
-            return 1 + wss0_table[ws_second[0]];
+                return 1 + wss0_table[waitstate.second[0]] + wsn_table[waitstate.first[0]];
+            return 1 + wss0_table[waitstate.second[0]];
         }
 
         return SequentialAccess(offset, size);
@@ -318,20 +277,17 @@ namespace NanoboyAdvance
         case 1:
             #ifdef DEBUG
             ASSERT(internal_offset >= 0x4000, LOG_ERROR, "BIOS read: offset out of bounds");
+            ASSERT(internal_offset >= bios_size, LOG_ERROR, "BIOS read: offset out of buffer");
             #endif            
-            if (internal_offset >= 0x4000)
-            {
-                return 0;
-            }
-            return bios[internal_offset];
+            if (internal_offset >= 0x4000) return 0;
+            return bios[internal_offset % bios_size];
         case 2:
             return wram[internal_offset % 0x40000];
         case 3:
             return iram[internal_offset % 0x8000];
         case 4:
-            if ((internal_offset & 0xFFFF) == 0x800) {
+            if ((internal_offset & 0xFFFF) == 0x800) 
                 internal_offset &= 0xFFFF;
-            }
             
             switch (internal_offset) {
             case DISPCNT:
@@ -404,33 +360,32 @@ namespace NanoboyAdvance
             case WINOUT+1:
                 // TODO: OBJWIN
                 return 0;
-            // TODO: Certain DMA registers are readable
             case TM0CNT_L:
-                return tmr_count[0] & 0xFF;
+                return timer[0].count & 0xFF;
             case TM0CNT_L+1:
-                return tmr_count[0] >> 8;
+                return timer[0].count >> 8;
             case TM1CNT_L:
-                return tmr_count[1] & 0xFF;
+                return timer[1].count & 0xFF;
             case TM1CNT_L+1:
-                return tmr_count[1] >> 8;
+                return timer[1].count >> 8;
             case TM2CNT_L:
-                return tmr_count[2] & 0xFF;
+                return timer[2].count & 0xFF;
             case TM2CNT_L+1:
-                return tmr_count[2] >> 8;
+                return timer[2].count >> 8;
             case TM3CNT_L:
-                return tmr_count[3] & 0xFF;
+                return timer[3].count & 0xFF;
             case TM3CNT_L+1:
-                return tmr_count[3] >> 8;
+                return timer[3].count >> 8;
             case TM0CNT_H:
             case TM1CNT_H:
             case TM2CNT_H:
             case TM3CNT_H:
             {
                 int n = (internal_offset - TM0CNT_H) / 4;
-                return tmr_clock[n] |
-                       (tmr_countup[n] ? 4 : 0) |
-                       (tmr_irq[n] ? 64 : 0) |
-                       (tmr_enable[n] ? 128 : 0);
+                return timer[n].clock |
+                       (timer[n].countup ? 4 : 0) |
+                       (timer[n].interrupt ? 64 : 0) |
+                       (timer[n].enable ? 128 : 0);
             }
             case KEYINPUT: 
                 return keyinput & 0xFF;
@@ -445,15 +400,15 @@ namespace NanoboyAdvance
             case IF+1:
                 return interrupt->if_ >> 8;
             case WAITCNT:
-                return ws_sram |
-                       (ws_first[0] << 2) |
-                       (ws_second[0] << 4) |
-                       (ws_first[1] << 5) |
-                       (ws_second[1] << 7);
+                return waitstate.sram |
+                       (waitstate.first[0] << 2) |
+                       (waitstate.second[0] << 4) |
+                       (waitstate.first[1] << 5) |
+                       (waitstate.second[1] << 7);
             case WAITCNT+1:
-                return ws_first[2] |
-                       (ws_second[2] << 2) |
-                       (gp_prefetch ? 64 : 0) |
+                return waitstate.first[2] |
+                       (waitstate.second[2] << 2) |
+                       (waitstate.prefetch ? 64 : 0) |
                        (1 << 7);
             case IME:
                 return interrupt->ime & 0xFF;
@@ -466,26 +421,20 @@ namespace NanoboyAdvance
         case 6:
             internal_offset %= 0x20000;
             if (internal_offset >= 0x18000)
-            {
                 internal_offset -= 0x8000;
-            }
             return video->vram[internal_offset];
         case 7:
             return video->obj[internal_offset % 0x400];
         case 8:
-            if (internal_offset >= rom_size)
-                return 0;
+            if (internal_offset >= rom_size) return 0;
             return rom[internal_offset];
         case 9:
             internal_offset += 0x1000000;
-            if (internal_offset >= rom_size)
-                return 0;
+            if (internal_offset >= rom_size) return 0;
             return rom[internal_offset];
         case 0xE:
-            if (save_type == GBASaveType::FLASH64 || save_type == GBASaveType::FLASH128)
-            {
+            if (save_type == SaveType::FLASH64 || save_type == SaveType::FLASH128)
                 return backup->ReadByte(offset);
-            }
             return sram[internal_offset];
         default:
             #ifdef DEBUG
@@ -498,14 +447,16 @@ namespace NanoboyAdvance
 
     u16 GBAMemory::ReadHWord(u32 offset)
     {
-        // TODO: Handle special case SRAM
-        return ReadByte(offset) | (ReadByte(offset + 1) << 8);
+        return ReadByte(offset) | 
+               (ReadByte(offset + 1) << 8);
     }
 
     u32 GBAMemory::ReadWord(u32 offset)
     {
-        // TODO: Handle special case SRAM
-        return ReadByte(offset) | (ReadByte(offset + 1) << 8) | (ReadByte(offset + 2) << 16) | (ReadByte(offset + 3) << 24);
+        return ReadByte(offset) |
+               (ReadByte(offset + 1) << 8) |
+               (ReadByte(offset + 2) << 16) |
+               (ReadByte(offset + 3) << 24);
     }
 
     void GBAMemory::WriteByte(u32 offset, u8 value)
@@ -513,7 +464,8 @@ namespace NanoboyAdvance
         int page = offset >> 24;
         u32 internal_offset = offset & 0xFFFFFF;
 
-        switch (page) {
+        switch (page) 
+        {
         case 0:
             #ifdef DEBUG
             LOG(LOG_ERROR, "Write into BIOS memory not allowed (0x%x)", offset);
@@ -528,7 +480,8 @@ namespace NanoboyAdvance
         case 4:
         {
             // If the address it out of bounds we should exit now
-            if (internal_offset >= 0x3FF && (internal_offset & 0xFFFF) != 0x800) {
+            if (internal_offset >= 0x3FF && (internal_offset & 0xFFFF) != 0x800)
+            {
                 #ifdef DEBUG
                 LOG(LOG_ERROR, "IO write: offset out of bounds (0x%x)", offset);
                 #endif
@@ -536,12 +489,12 @@ namespace NanoboyAdvance
             }
 
             // Emulate IO mirror at 04xx0800
-            if ((internal_offset & 0xFFFF) == 0x800) {
+            if ((internal_offset & 0xFFFF) == 0x800)
                 internal_offset &= 0xFFFF;
-            }
+            
 
-            // Writing to some registers causes special behaviour which must be emulated
-            switch (internal_offset) {
+            switch (internal_offset)
+            {
             case DISPCNT:
                 video->video_mode = value & 7;
                 video->frame_select = value & 16;
@@ -779,7 +732,7 @@ namespace NanoboyAdvance
             case DMA0SAD+3:
             {
                 int n = (internal_offset - DMA0SAD) * 8;
-                dma_src[0] = (dma_src[0] & ~(0xFF << n)) | (value << n);
+                dma[0].source = (dma[0].source & ~(0xFF << n)) | (value << n);
                 break;
             }
             case DMA1SAD:
@@ -788,7 +741,7 @@ namespace NanoboyAdvance
             case DMA1SAD+3:
             {
                 int n = (internal_offset - DMA1SAD) * 8;
-                dma_src[1] = (dma_src[1] & ~(0xFF << n)) | (value << n);
+                dma[1].source = (dma[1].source & ~(0xFF << n)) | (value << n);
                 break;
             }
             case DMA2SAD:
@@ -797,7 +750,7 @@ namespace NanoboyAdvance
             case DMA2SAD+3:
             {
                 int n = (internal_offset - DMA2SAD) * 8;
-                dma_src[2] = (dma_src[2] & ~(0xFF << n)) | (value << n);
+                dma[2].source = (dma[2].source & ~(0xFF << n)) | (value << n);
                 break;
             }
             case DMA3SAD:
@@ -806,7 +759,7 @@ namespace NanoboyAdvance
             case DMA3SAD+3:
             {
                 int n = (internal_offset - DMA3SAD) * 8;
-                dma_src[3] = (dma_src[3] & ~(0xFF << n)) | (value << n);
+                dma[3].source = (dma[3].source & ~(0xFF << n)) | (value << n);
                 break;
             }
             case DMA0DAD:
@@ -815,7 +768,7 @@ namespace NanoboyAdvance
             case DMA0DAD+3:
             {
                 int n = (internal_offset - DMA0DAD) * 8;
-                dma_dst[0] = (dma_dst[0] & ~(0xFF << n)) | (value << n);
+                dma[0].dest = (dma[0].dest & ~(0xFF << n)) | (value << n);
                 break;
             }
             case DMA1DAD:
@@ -824,7 +777,7 @@ namespace NanoboyAdvance
             case DMA1DAD+3:
             {
                 int n = (internal_offset - DMA1DAD) * 8;
-                dma_dst[1] = (dma_dst[1] & ~(0xFF << n)) | (value << n);
+                dma[1].dest = (dma[1].dest & ~(0xFF << n)) | (value << n);
                 break;
             }
             case DMA2DAD:
@@ -833,7 +786,7 @@ namespace NanoboyAdvance
             case DMA2DAD+3:
             {
                 int n = (internal_offset - DMA2DAD) * 8;
-                dma_dst[2] = (dma_dst[2] & ~(0xFF << n)) | (value << n);
+                dma[2].dest = (dma[2].dest & ~(0xFF << n)) | (value << n);
                 break;
             }
             case DMA3DAD:
@@ -842,180 +795,184 @@ namespace NanoboyAdvance
             case DMA3DAD+3:
             {
                 int n = (internal_offset - DMA3DAD) * 8;
-                dma_dst[3] = (dma_dst[3] & ~(0xFF << n)) | (value << n);
+                dma[3].dest = (dma[3].dest & ~(0xFF << n)) | (value << n);
                 break;
             }
             case DMA0CNT_L:
-                dma_count[0] = (dma_count[0] & 0xFF00) | value;
+                dma[0].count = (dma[0].count & 0xFF00) | value;
                 break;
             case DMA0CNT_L+1:
-                dma_count[0] = (dma_count[0] & 0x00FF) | (value << 8);
+                dma[0].count = (dma[0].count & 0x00FF) | (value << 8);
                 break;
             case DMA1CNT_L:
-                dma_count[1] = (dma_count[1] & 0xFF00) | value;
+                dma[1].count = (dma[1].count & 0xFF00) | value;
                 break;
             case DMA1CNT_L+1:
-                dma_count[1] = (dma_count[1] & 0x00FF) | (value << 8);
+                dma[1].count = (dma[1].count & 0x00FF) | (value << 8);
                 break;
             case DMA2CNT_L:
-                dma_count[2] = (dma_count[2] & 0xFF00) | value;
+                dma[2].count = (dma[2].count & 0xFF00) | value;
                 break;
             case DMA2CNT_L+1:
-                dma_count[2] = (dma_count[2] & 0x00FF) | (value << 8);
+                dma[2].count = (dma[2].count & 0x00FF) | (value << 8);
                 break;
             case DMA3CNT_L:
-                dma_count[3] = (dma_count[3] & 0xFF00) | value;
+                dma[3].count = (dma[3].count & 0xFF00) | value;
                 break;
             case DMA3CNT_L+1:
-                dma_count[3] = (dma_count[3] & 0x00FF) | (value << 8);
+                dma[3].count = (dma[3].count & 0x00FF) | (value << 8);
                 break;
             case DMA0CNT_H:
             {
                 // the upper bit is in the next byte...
-                int src_cntl = static_cast<int>(dma_src_cntl[0]);
-                src_cntl = (src_cntl & 2) | ((value >> 7) & 1);
-                dma_src_cntl[0] = static_cast<AddressControl>(src_cntl);
-                dma_dst_cntl[0] = static_cast<AddressControl>((value >> 5) & 3);
+                int source_control = static_cast<int>(dma[0].source_control);
+                source_control = (source_control & 2) | ((value >> 7) & 1);
+                dma[0].source_control = static_cast<AddressControl>(source_control);
+                dma[0].dest_control = static_cast<AddressControl>((value >> 5) & 3);
                 break;
             }
             case DMA0CNT_H+1:
             {
-                int src_cntl = static_cast<int>(dma_src_cntl[0]);
-                src_cntl = (src_cntl & ~3) | ((value & 1) << 1);
-                dma_src_cntl[0] = static_cast<AddressControl>(src_cntl);
-                dma_repeat[0] = value & 2;
-                dma_words[0] = value & 4;
-                dma_gp_drq[0] = value & 8;
-                dma_time[0] = (value >> 4) & 3;
-                dma_irq[0] = value & 64;
-                dma_enable[0] = value & 128;
+                int source_control = static_cast<int>(dma[0].source_control);
+                source_control = (source_control & ~3) | ((value & 1) << 1);
+                dma[0].source_control = static_cast<AddressControl>(source_control);
+                dma[0].repeat = value & 2;
+                dma[0].size = static_cast<TransferSize>((value >> 2) & 1);
+                dma[0].gamepack_drq = value & 8;
+                dma[0].start_time = static_cast<StartTime>((value >> 4) & 3);
+                dma[0].interrupt = value & 64;
+                dma[0].enable = value & 128;
             
-                if (value & 128) {
-                    dma_src_int[0] = dma_src[0] & 0x07FFFFFF;
-                    dma_dst_int[0] = dma_dst[0] & 0x07FFFFFF;
-                    dma_count_int[0] = dma_count[0] & 0x3FFF;
-                    if (dma_count_int[0] == 0) {
-                        dma_count_int[0] = 0x4000;
-                    }
+                if (dma[0].enable) 
+                {
+                    dma[0].source_int = dma[0].source & dma_source_mask[0];
+                    dma[0].dest_int = dma[0].dest & dma_dest_mask[0];
+                    dma[0].count_int = dma[0].count & dma_count_mask[0];
+
+                    if (dma[0].count_int == 0) 
+                        dma[0].count_int = dma_count_mask[0] + 1;
                 }
                 break;
             }
             case DMA1CNT_H:
             {
                 // the upper bit is in the next byte...
-                int src_cntl = static_cast<int>(dma_src_cntl[1]);
-                src_cntl = (src_cntl & 2) | ((value >> 7) & 1);
-                dma_src_cntl[1] = static_cast<AddressControl>(src_cntl);
-                dma_dst_cntl[1] = static_cast<AddressControl>((value >> 5) & 3);
+                int source_control = static_cast<int>(dma[1].source_control);
+                source_control = (source_control & 2) | ((value >> 7) & 1);
+                dma[1].source_control = static_cast<AddressControl>(source_control);
+                dma[1].dest_control = static_cast<AddressControl>((value >> 5) & 3);
                 break;
             }
             case DMA1CNT_H+1:
             {
-                int src_cntl = static_cast<int>(dma_src_cntl[1]);
-                src_cntl = (src_cntl & ~3) | ((value & 1) << 1);
-                dma_src_cntl[1] = static_cast<AddressControl>(src_cntl);
-                dma_repeat[1] = value & 2;
-                dma_words[1] = value & 4;
-                dma_gp_drq[1] = value & 8;
-                dma_time[1] = (value >> 4) & 3;
-                dma_irq[1] = value & 64;
-                dma_enable[1] = value & 128;
+                int source_control = static_cast<int>(dma[1].source_control);
+                source_control = (source_control & ~3) | ((value & 1) << 1);
+                dma[1].source_control = static_cast<AddressControl>(source_control);
+                dma[1].repeat = value & 2;
+                dma[1].size = static_cast<TransferSize>((value >> 2) & 1);
+                dma[1].gamepack_drq = value & 8;
+                dma[1].start_time = static_cast<StartTime>((value >> 4) & 3);
+                dma[1].interrupt = value & 64;
+                dma[1].enable = value & 128;
                 
-                if (value & 128) {
-                    dma_src_int[1] = dma_src[1] & 0x0FFFFFFF;
-                    dma_dst_int[1] = dma_dst[1] & 0x07FFFFFF;
-                    dma_count_int[1] = dma_count[1] & 0x3FFF;
-                    if (dma_count_int[1] == 0) {
-                        dma_count_int[1] = 0x4000;
-                    }
+                if (dma[1].enable) 
+                {
+                    dma[1].source_int = dma[1].source & dma_source_mask[1];
+                    dma[1].dest_int = dma[1].dest & dma_dest_mask[1];
+                    dma[1].count_int = dma[1].count & dma_count_mask[1];
+
+                    if (dma[1].count_int == 0) 
+                        dma[1].count_int = dma_count_mask[1] + 1;
                 }
                 break;
             }
             case DMA2CNT_H:
             {
                 // the upper bit is in the next byte...
-                int src_cntl = static_cast<int>(dma_src_cntl[2]);
-                src_cntl = (src_cntl & 2) | ((value >> 7) & 1);
-                dma_src_cntl[2] = static_cast<AddressControl>(src_cntl);
-                dma_dst_cntl[2] = static_cast<AddressControl>((value >> 5) & 3);
+                int source_control = static_cast<int>(dma[2].source_control);
+                source_control = (source_control & 2) | ((value >> 7) & 1);
+                dma[2].source_control = static_cast<AddressControl>(source_control);
+                dma[2].dest_control = static_cast<AddressControl>((value >> 5) & 3);
                 break;
             }
             case DMA2CNT_H+1:
             {
-                int src_cntl = static_cast<int>(dma_src_cntl[2]);
-                src_cntl = (src_cntl & ~3) | ((value & 1) << 1);
-                dma_src_cntl[2] = static_cast<AddressControl>(src_cntl);
-                dma_repeat[2] = value & 2;
-                dma_words[2] = value & 4;
-                dma_gp_drq[2] = value & 8;
-                dma_time[2] = (value >> 4) & 3;
-                dma_irq[2] = value & 64;
-                dma_enable[2] = value & 128;
+                int source_control = static_cast<int>(dma[2].source_control);
+                source_control = (source_control & ~3) | ((value & 1) << 1);
+                dma[2].source_control = static_cast<AddressControl>(source_control);
+                dma[2].repeat = value & 2;
+                dma[2].size = static_cast<TransferSize>((value >> 2) & 1);
+                dma[2].gamepack_drq = value & 8;
+                dma[2].start_time = static_cast<StartTime>((value >> 4) & 3);
+                dma[2].interrupt = value & 64;
+                dma[2].enable = value & 128;
                 
-                if (value & 128) {
-                    dma_src_int[2] = dma_src[2] & 0x0FFFFFFF;
-                    dma_dst_int[2] = dma_dst[2] & 0x07FFFFFF;
-                    dma_count_int[2] = dma_count[2] & 0x3FFF;
-                    if (dma_count_int[2] == 0) {
-                        dma_count_int[2] = 0x4000;
-                    }
+                if (dma[2].enable) 
+                {
+                    dma[2].source_int = dma[2].source & dma_source_mask[2];
+                    dma[2].dest_int = dma[2].dest & dma_dest_mask[2];
+                    dma[2].count_int = dma[2].count & dma_count_mask[2];
+
+                    if (dma[2].count_int == 0) 
+                        dma[2].count_int = dma_count_mask[2] + 1;
                 }
                 break;
             }
             case DMA3CNT_H:
             {
                 // the upper bit is in the next byte...
-                int src_cntl = static_cast<int>(dma_src_cntl[3]);
-                src_cntl = (src_cntl & 2) | ((value >> 7) & 1);
-                dma_src_cntl[3] = static_cast<AddressControl>(src_cntl);
-                dma_dst_cntl[3] = static_cast<AddressControl>((value >> 5) & 3);
+                int source_control = static_cast<int>(dma[3].source_control);
+                source_control = (source_control & 2) | ((value >> 7) & 1);
+                dma[3].source_control = static_cast<AddressControl>(source_control);
+                dma[3].dest_control = static_cast<AddressControl>((value >> 5) & 3);
                 break;
             }
             case DMA3CNT_H+1:
             {
-                int src_cntl = static_cast<int>(dma_src_cntl[3]);
-                src_cntl = (src_cntl & ~3) | ((value & 1) << 1);
-                dma_src_cntl[3] = static_cast<AddressControl>(src_cntl);
-                dma_repeat[3] = value & 2;
-                dma_words[3] = value & 4;
-                dma_gp_drq[3] = value & 8;
-                dma_time[3] = (value >> 4) & 3;
-                dma_irq[3] = value & 64;
-                dma_enable[3] = value & 128;
+                int source_control = static_cast<int>(dma[3].source_control);
+                source_control = (source_control & ~3) | ((value & 1) << 1);
+                dma[3].source_control = static_cast<AddressControl>(source_control);
+                dma[3].repeat = value & 2;
+                dma[3].size = static_cast<TransferSize>((value >> 2) & 1);
+                dma[3].gamepack_drq = value & 8;
+                dma[3].start_time = static_cast<StartTime>((value >> 4) & 3);
+                dma[3].interrupt = value & 64;
+                dma[3].enable = value & 128;
                 
-                if (value & 128) {
-                    dma_src_int[3] = dma_src[3] & 0x0FFFFFFF;
-                    dma_dst_int[3] = dma_dst[3] & 0x0FFFFFFF;
-                    dma_count_int[3] = dma_count[3];
-                    if (dma_count_int[3] == 0) {
-                        dma_count_int[3] = 0x10000;
-                    }
+                if (dma[3].enable) 
+                {
+                    dma[3].source_int = dma[3].source & dma_source_mask[3];
+                    dma[3].dest_int = dma[3].dest & dma_dest_mask[3];
+                    dma[3].count_int = dma[3].count & dma_count_mask[3];
+
+                    if (dma[3].count_int == 0) 
+                        dma[3].count_int = dma_count_mask[3] + 1;
                 }
                 break;
             }
             case TM0CNT_L:
-                tmr_reload[0] = (tmr_reload[0] & 0xFF00) | value;
+                timer[0].reload = (timer[0].reload & 0xFF00) | value;
                 break;
             case TM0CNT_L+1:
-                tmr_reload[0] = (tmr_reload[0] & 0x00FF) | (value << 8);
+                timer[0].reload = (timer[0].reload & 0x00FF) | (value << 8);
                 break;
             case TM1CNT_L:
-                tmr_reload[1] = (tmr_reload[1] & 0xFF00) | value;
+                timer[1].reload = (timer[1].reload & 0xFF00) | value;
                 break;
             case TM1CNT_L+1:
-                tmr_reload[1] = (tmr_reload[1] & 0x00FF) | (value << 8);
+                timer[1].reload = (timer[1].reload & 0x00FF) | (value << 8);
                 break;
             case TM2CNT_L:
-                tmr_reload[2] = (tmr_reload[2] & 0xFF00) | value;
+                timer[2].reload = (timer[2].reload & 0xFF00) | value;
                 break;
             case TM2CNT_L+1:
-                tmr_reload[2] = (tmr_reload[2] & 0x00FF) | (value << 8);
+                timer[2].reload = (timer[2].reload & 0x00FF) | (value << 8);
                 break;
             case TM3CNT_L:
-                tmr_reload[3] = (tmr_reload[3] & 0xFF00) | value;
+                timer[3].reload = (timer[3].reload & 0xFF00) | value;
                 break;
             case TM3CNT_L+1:
-                tmr_reload[3] = (tmr_reload[3] & 0x00FF) | (value << 8);
+                timer[3].reload = (timer[3].reload & 0x00FF) | (value << 8);
                 break;
              case TM0CNT_H:
              case TM1CNT_H:
@@ -1023,10 +980,10 @@ namespace NanoboyAdvance
              case TM3CNT_H:
              {
                 int n = (internal_offset - TM0CNT_H) / 4;
-                tmr_clock[n] = value & 3;
-                tmr_countup[n] = value & 4;
-                tmr_irq[n] = value & 64;
-                tmr_enable[n] = value & 128;
+                timer[n].clock = value & 3;
+                timer[n].countup = value & 4;
+                timer[n].interrupt = value & 64;
+                timer[n].enable = value & 128;
                 break;
              }
             case IE:
@@ -1042,16 +999,16 @@ namespace NanoboyAdvance
                 interrupt->if_ &= ~(value << 8);
                 break;
             case WAITCNT:
-                ws_sram = value & 3;
-                ws_first[0] = (value >> 2) & 3;
-                ws_second[0] = (value >> 4) & 1;
-                ws_first[1] = (value >> 5) & 3;
-                ws_second[1] = value >> 7;
+                waitstate.sram = value & 3;
+                waitstate.first[0] = (value >> 2) & 3;
+                waitstate.second[0] = (value >> 4) & 1;
+                waitstate.first[1] = (value >> 5) & 3;
+                waitstate.second[1] = value >> 7;
                 break;
             case WAITCNT+1:
-                ws_first[2] = value & 3;
-                ws_second[2] = (value >> 2) & 1;
-                gp_prefetch = value & 64;
+                waitstate.first[2] = value & 3;
+                waitstate.second[2] = (value >> 2) & 1;
+                waitstate.prefetch = value & 64;
                 break;
             case IME:
                 interrupt->ime = (interrupt->ime & 0xFF00) | value;
@@ -1060,7 +1017,7 @@ namespace NanoboyAdvance
                 interrupt->ime = (interrupt->ime & 0x00FF) | (value << 8);
                 break;
             case HALTCNT:
-                halt_state = (value & 0x80) ? GBAHaltState::Stop : GBAHaltState::Halt;
+                halt_state = (value & 0x80) ? HaltState::Stop : HaltState::Halt;
                 break;
             }
             break;
@@ -1068,7 +1025,6 @@ namespace NanoboyAdvance
         case 5:
         case 6:
         case 7:
-            // We cannot write a single byte. Therefore the byte will be duplicated in the data bus and a halfword write will be performed
             WriteHWord(offset & ~1, (value << 8) | value);
             break;
         case 8:
@@ -1078,7 +1034,8 @@ namespace NanoboyAdvance
             #endif                       
             break;
         case 0xE:
-            if (save_type == GBASaveType::FLASH64 || save_type == GBASaveType::FLASH128) {
+            if (save_type == SaveType::FLASH64 || save_type == SaveType::FLASH128)
+            {
                 backup->WriteByte(offset, value);
                 return;
             }
@@ -1097,16 +1054,18 @@ namespace NanoboyAdvance
         int page = (offset >> 24) & 0xF;
         u32 internal_offset = offset & 0xFFFFFF;
 
-        switch (page) {
+        switch (page)
+        {
         case 5:
             video->pal[internal_offset % 0x400] = value & 0xFF;
             video->pal[(internal_offset + 1) % 0x400] = (value >> 8) & 0xFF;
             return;
         case 6:
             internal_offset %= 0x20000;
-            if (internal_offset >= 0x18000) {
+
+            if (internal_offset >= 0x18000)
                 internal_offset -= 0x8000;
-            }
+            
             video->vram[internal_offset] = value & 0xFF;
             video->vram[internal_offset + 1] = (value >> 8) & 0xFF;
             return;
@@ -1127,19 +1086,21 @@ namespace NanoboyAdvance
         WriteHWord(offset + 2, (value >> 16) & 0xFFFF);
         
         // Handle special timer behaviour
-        if (value & (1 << 23)) {
-            switch (offset) {
+        if (value & (1 << 23))
+        {
+            switch (offset) 
+            {
             case TM0CNT_L|0x04000000:
-                tmr_count[0] = tmr_reload[0];
+                timer[0].count = timer[0].reload;
                 break;
             case TM1CNT_L|0x04000000:
-                tmr_count[1] = tmr_reload[1];
+                timer[1].count = timer[1].reload;
                 break;
             case TM2CNT_L|0x04000000:
-                tmr_count[2] = tmr_reload[2];
+                timer[2].count = timer[2].reload;
                 break;
             case TM3CNT_L|0x04000000:
-                tmr_count[3] = tmr_reload[3];
+                timer[3].count = timer[3].reload;
                 break;
             }
         }

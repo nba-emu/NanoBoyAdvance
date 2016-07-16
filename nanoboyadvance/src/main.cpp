@@ -98,12 +98,12 @@ inline void schedule_frame()
         u32 interrupts = memory->interrupt->ie & memory->interrupt->if_;
         
         // Only pause as long as (IE & IF) != 0
-        if (memory->halt_state != GBAMemory::GBAHaltState::None && interrupts != 0)
+        if (memory->halt_state != GBAMemory::HaltState::None && interrupts != 0)
         {
             // If IntrWait only resume if requested interrupt is encountered
             if (!memory->intr_wait || (interrupts & memory->intr_wait_mask) != 0)
             {
-                memory->halt_state = GBAMemory::GBAHaltState::None;
+                memory->halt_state = GBAMemory::HaltState::None;
                 memory->intr_wait = false;
             }
         }
@@ -118,11 +118,11 @@ inline void schedule_frame()
         }
 
         // Run the hardware components
-        if (memory->halt_state != GBAMemory::GBAHaltState::Stop)
+        if (memory->halt_state != GBAMemory::HaltState::Stop)
         {
             int forward_steps = 0;
 
-            if (memory->halt_state != GBAMemory::GBAHaltState::Halt)
+            if (memory->halt_state != GBAMemory::HaltState::Halt)
             {
                 arm->cycles = 0;
                 arm->Step();
@@ -132,7 +132,8 @@ inline void schedule_frame()
             for (int j = 0; j < forward_steps + 1; j++) 
             {
                 memory->video->Step();
-                memory->Step();
+                memory->RunTimer();
+                memory->RunDMA();
 
                 // Copy the rendered line (if any) to SDLs pixel buffer
                 if (memory->video->render_scanline)

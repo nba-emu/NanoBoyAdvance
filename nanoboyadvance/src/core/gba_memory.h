@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2015 Frederic Meyer
+* Copyright (C) 2016 Frederic Meyer
 *
 * This file is part of nanoboyadvance.
 *
@@ -32,68 +32,85 @@ namespace NanoboyAdvance
 {
     class GBAMemory
     {
+        static const int dma_count_mask[4];
+        static const int dma_dest_mask[4];
+        static const int dma_source_mask[4];
         static const int tmr_cycles[4];
         static const int wsn_table[4];
         static const int wss0_table[2];
         static const int wss1_table[2];
         static const int wss2_table[2];
-    
-        u8 wram[0x40000];
-        u8 iram[0x8000];
-        u8 sram[0x10000];
-        u8* bios;
-        u8* rom;
-        int rom_size;
 
-        // DMA related (todo: enums have class)
-        enum AddressControl
+        enum class AddressControl
         {
             Increment = 0,
             Decrement = 1,
             Fixed = 2,
-            IncrementAndReload = 3
+            Reload = 3
         };
-        
-        // WAITCNT IO
-        int ws_sram {0};
-        int ws_first[3] {0, 0, 0};
-        int ws_second[3] {0, 0, 0};
-        bool gp_prefetch {false};
 
-        // DMA (internal) IO
-        u32 dma_src_int[4];
-        u32 dma_dst_int[4];
-        u32 dma_count_int[4];
-        u32 dma_src[4];
-        u32 dma_dst[4];
-        u16 dma_count[4];
-        AddressControl dma_dst_cntl[4];
-        AddressControl dma_src_cntl[4];
-        bool dma_repeat[4];
-        bool dma_words[4];
-        bool dma_gp_drq[4];
-        int dma_time[4];
-        bool dma_irq[4];
-        bool dma_enable[4];
-        
+        enum class StartTime
+        {
+            Immediate = 0,
+            VBlank = 1,
+            HBlank = 2,
+            Special = 3
+        };
+
+        enum class TransferSize
+        {
+            HWord = 0,
+            Word = 1
+        };
+
+        u8* rom;
+        u8* bios;
+        int rom_size;
+        int bios_size;
+        u8 wram[0x40000];
+        u8 iram[0x8000];
+        u8 sram[0x10000];
+
+        // DMA IO
+        struct DMA
+        {
+            u32 dest {0};
+            u32 source {0};
+            u16 count {0};
+            u32 dest_int {0};
+            u32 source_int {0};
+            u16 count_int {0};
+            AddressControl dest_control {AddressControl::Increment};
+            AddressControl source_control {AddressControl::Increment};
+            StartTime start_time {StartTime::Immediate};
+            TransferSize size {TransferSize::HWord};
+            bool repeat {false};
+            bool gamepack_drq {false};
+            bool interrupt {false};
+            bool enable {false};
+        } dma[4];
+
         // Timer IO
-        u16 tmr_count[4] {0, 0, 0, 0};
-        u16 tmr_reload[4];
-        int tmr_clock[4];
-        int tmr_ticks[4];
-        bool tmr_enable[4];
-        bool tmr_countup[4];
-        bool tmr_irq[4];
+        struct Timer
+        {
+            u16 count {0};
+            u16 reload {0};
+            int clock {0};
+            int ticks {0};
+            bool enable {false};
+            bool countup {false};
+            bool interrupt {false};
+        } timer[4];
+
+        // Waitstate IO
+        struct
+        {
+            int sram {0};
+            int first[3] {0, 0, 0};
+            int second[3] {0, 0, 0};
+            bool prefetch {false};
+        } waitstate;
     public:
-        // Hardware / IO accessible through memory
-        GBAInterrupt* interrupt;
-        GBAVideo* video;
-        GBABackup* backup;
-        
-        // Keypad IO
-        u16 keyinput {256};
-        
-        // Timing related
         enum class AccessSize
         {
             Byte,
@@ -101,28 +118,42 @@ namespace NanoboyAdvance
             Word
         };
 
-        // Flags
-        enum class GBAHaltState
+        enum class HaltState
         {
             None,
             Stop,
             Halt
         };
-        GBAHaltState halt_state { GBAHaltState::None };
-        bool intr_wait { false };
-        bool intr_wait_mask { 0 };
 
-        enum class GBASaveType
+        enum class SaveType
         {
+            NONE,
             EEPROM,
             SRAM,
             FLASH64,
             FLASH128
         };
-        GBASaveType save_type { GBASaveType::SRAM };
 
-        // Schedules DMA
-        void Step();
+        GBAInterrupt* interrupt;
+        GBAVideo* video;
+        GBABackup* backup {NULL};
+        SaveType save_type {SaveType::NONE};
+
+        // Keypad IO
+        u16 keyinput {256};
+        
+        HaltState halt_state {HaltState::None};
+        bool intr_wait {false};
+        bool intr_wait_mask {0};
+
+        
+        // Constructor and Destructor
+        GBAMemory(string bios_file, string rom_file, string save_file);
+        ~GBAMemory();
+
+        // Update timer and DMA methods
+        void RunTimer();
+        void RunDMA();
 
         // Cycle measurement methods
         int SequentialAccess(u32 offset, AccessSize size);
@@ -135,9 +166,5 @@ namespace NanoboyAdvance
         void WriteByte(u32 offset, u8 value);
         void WriteHWord(u32 offset, u16 value);
         void WriteWord(u32 offset, u32 value);
-        
-        // Constructor and Destructor
-        GBAMemory(string bios_file, string rom_file, string save_file);
-        ~GBAMemory();
     };
 }
