@@ -24,10 +24,10 @@
 namespace NanoboyAdvance
 {
     const int GBAMemory::tmr_cycles[4] = { 1, 64, 256, 1024 };
-    const int GBAMemory::ws_table[4] = { 4, 3, 2, 8 };
-    const int GBAMemory::ws0_table[2] = { 2, 1 };
-    const int GBAMemory::ws1_table[2] = { 4, 1 };
-    const int GBAMemory::ws2_table[2] = { 8, 1 };
+    const int GBAMemory::wsn_table[4] = { 4, 3, 2, 8 };
+    const int GBAMemory::wss0_table[2] = { 2, 1 };
+    const int GBAMemory::wss1_table[2] = { 4, 1 };
+    const int GBAMemory::wss2_table[2] = { 8, 1 };
 
     GBAMemory::GBAMemory(string bios_file, string rom_file, string save_file)
     {
@@ -279,8 +279,8 @@ namespace NanoboyAdvance
 
         if (page == 8) {
             if (size == AccessSize::Word)
-                return 1 + 2 * ws_table[ws_first[0]];
-            return 1 + ws_table[ws_first[0]];
+                return 1 + 2 * wsn_table[ws_first[0]];
+            return 1 + wsn_table[ws_first[0]];
         }
 
         // TODO: waitstates
@@ -300,8 +300,8 @@ namespace NanoboyAdvance
         if (page == 8) 
         {
             if (size == AccessSize::Word)
-                return 1 + ws0_table[ws_second[0]] + ws_table[ws_first[0]];
-            return 1 + ws0_table[ws_second[0]];
+                return 1 + wss0_table[ws_second[0]] + wsn_table[ws_first[0]];
+            return 1 + wss0_table[ws_second[0]];
         }
 
         return SequentialAccess(offset, size);

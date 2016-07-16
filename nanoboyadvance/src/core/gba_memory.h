@@ -33,10 +33,10 @@ namespace NanoboyAdvance
     class GBAMemory
     {
         static const int tmr_cycles[4];
-        static const int ws_table[4];
-        static const int ws0_table[2];
-        static const int ws1_table[2];
-        static const int ws2_table[2];
+        static const int wsn_table[4];
+        static const int wss0_table[2];
+        static const int wss1_table[2];
+        static const int wss2_table[2];
     
         u8 wram[0x40000];
         u8 iram[0x8000];
