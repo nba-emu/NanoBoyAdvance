@@ -30,22 +30,6 @@
 // Macro for easier register access
 #define reg(r) *gprs[r]
 
-static const int ARM_CALLBACK_EXECUTE = 0;
-static const int ARM_CALLBACK_SWI = 1;
-static const int ARM_CALLBACK_IRQ = 2;
-static const int ARM_CALLBACK_SWI_RET = 3;
-static const int ARM_CALLBACK_IRQ_RET = 4;
-static const int ARM_CALLBACK_CALL = 5;
-static const int ARM_CALLBACK_RET = 6;
-
-typedef struct 
-{
-    u32 address;
-    bool thumb;
-} ARMCallbackExecute;
-
-typedef void (*ARMCallback)(int reason, void* data);
-
 using namespace std;
 
 namespace NanoboyAdvance
@@ -88,10 +72,6 @@ namespace NanoboyAdvance
         u32 last_fetched_opcode {0};
         u32 last_fetched_offset {0};
         u32 last_bios_offset {0};
-
-        // Gets called on certain events like instruction execution, swi, etc.
-        // Do not ever call this directly! Use safe DebugHook instead!
-        ARMCallback debug_hook { NULL };
         
         // Indicates wether interrupts and swi should be processed using
         // the bios or using a hle attempt
@@ -173,13 +153,6 @@ namespace NanoboyAdvance
                 pspsr = &spsr_def;
                 break;
             }
-        }
-        
-        // Pointer-safe call to debug_hook (avoid nullpointer)
-        inline void DebugHook(int reason, void* data)
-        {
-            if (debug_hook != NULL)
-                debug_hook(reason, data);
         }
 
         // Condition code altering methods
@@ -394,7 +367,6 @@ namespace NanoboyAdvance
         u32 GetGeneralRegister(ARM7Mode mode, int r);
         u32 GetCurrentStatusRegister();
         u32 GetSavedStatusRegister(ARM7Mode mode);  
-        void SetCallback(ARMCallback hook);
         void SetGeneralRegister(ARM7Mode mode, int r, u32 value);
         void SetCurrentStatusRegister(u32 value);
         void SetSavedStatusRegister(ARM7Mode mode, u32 value);     
