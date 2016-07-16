@@ -90,11 +90,6 @@ namespace NanoboyAdvance
         return 0;
     }
 
-    void ARM7::SetCallback(ARMCallback hook)
-    {
-        debug_hook = hook;
-    }
-
     void ARM7::SetGeneralRegister(ARM7Mode mode, int r, u32 value)
     {
         ARM7Mode old_mode = (ARM7Mode)(cpsr & 0x1F); // this code is quite hacky but it works
