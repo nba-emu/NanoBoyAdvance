@@ -100,12 +100,12 @@ namespace NanoboyAdvance
         else if (offset == 0x0E005555 && command_phase == 2) 
         {
             // Interpret command
-            switch (static_cast<GBAFlashCommand>(value)) 
+            switch (static_cast<FlashCommand>(value)) 
             {
-            case GBAFlashCommand::READ_CHIP_ID: enable_chip_id = true; break;
-            case GBAFlashCommand::FINISH_CHIP_ID: enable_chip_id = false; break;
-            case GBAFlashCommand::ERASE: enable_erase = true; break;
-            case GBAFlashCommand::ERASE_CHIP: 
+            case FlashCommand::READ_CHIP_ID: enable_chip_id = true; break;
+            case FlashCommand::FINISH_CHIP_ID: enable_chip_id = false; break;
+            case FlashCommand::ERASE: enable_erase = true; break;
+            case FlashCommand::ERASE_CHIP: 
                 if (enable_erase)
                 {
                     for (int i = 0; i < 65536; i++)
@@ -117,12 +117,12 @@ namespace NanoboyAdvance
                     enable_erase = false;
                 } 
                 break;
-            case GBAFlashCommand::WRITE_BYTE: enable_byte_write = true;
-            case GBAFlashCommand::SELECT_BANK: if (second_bank) enable_bank_select = true;
+            case FlashCommand::WRITE_BYTE: enable_byte_write = true;
+            case FlashCommand::SELECT_BANK: if (second_bank) enable_bank_select = true;
             }
             command_phase = 0;
         }
-        else if (enable_erase && static_cast<GBAFlashCommand>(value) == GBAFlashCommand::ERASE_SECTOR && (
+        else if (enable_erase && static_cast<FlashCommand>(value) == FlashCommand::ERASE_SECTOR && (
                  offset & ~0xF000) == 0x0E000000 && command_phase == 2)
         {
             int base_offset = offset & 0xF000;
