@@ -227,7 +227,7 @@ namespace NanoboyAdvance
 
     void ARM7::FireIRQ()
     {
-        if ((cpsr & IRQDisable) == 0)
+        if (((cpsr & IRQDisable) == 0) && pipe_status >= 2)
         {
             bool thumb = cpsr & Thumb;
 
@@ -256,7 +256,6 @@ namespace NanoboyAdvance
             cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Word) +
                       memory->SequentialAccess(r15 + 4, GBAMemory::AccessSize::Word);
         }
-        //else { LOG(LOG_INFO, "Interrupt(s) requested but blocked (either by interrupt or swi)") }
     }
 
     void NanoboyAdvance::ARM7::SWI(int number)
