@@ -28,6 +28,7 @@
 *.app
 
 # NanoboyAdvance specific
+bin
 *.bin
 *.gba
 *.agb

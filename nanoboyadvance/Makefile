@@ -74,7 +74,7 @@ SRCDIRS   = src src/common src/gba
 
 # The executable file name.
 # If not specified, current directory name or `a.out' will be used.
-PROGRAM   =
+PROGRAM   = bin/nanoboyadvance
 
 ## Implicit Section: change the following only when necessary.
 ##==========================================================================
