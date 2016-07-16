@@ -375,7 +375,9 @@ namespace NanoboyAdvance
             break;
         }
         default:
+            #ifdef DEBUG
             LOG(LOG_ERROR, "Unimplemented software interrupt 0x%x", number);
+            #endif
             break;
         }
     }
