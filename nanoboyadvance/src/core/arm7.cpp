@@ -281,7 +281,7 @@ namespace NanoboyAdvance
             if (r0 == 1) memory->interrupt->if_ = 0;
             memory->intr_wait = true;
             memory->intr_wait_mask = r1;
-            memory->halt_state = GBAMemory::GBAHaltState::Halt;
+            memory->halt_state = GBAMemory::HaltState::Halt;
             break;
         // CpuSet
         case 0x0B:
