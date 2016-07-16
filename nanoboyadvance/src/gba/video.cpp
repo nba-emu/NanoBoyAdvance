@@ -17,7 +17,7 @@
 * along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "gba_video.h"
+#include "video.h"
 
 /* TODO: 1) Improve RenderSprites method and allow for OBJWIN
  *          mask generation

@@ -17,7 +17,7 @@
 * along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "gba_memory.h"
+#include "memory.h"
 #include "common/log.h"
 #include "common/file.h"
 

@@ -23,7 +23,7 @@
 #include <sstream>
 #include "common/types.h"
 #include "common/log.h"
-#include "gba_memory.h"
+#include "memory.h"
 
 #define arm_pack_instr(i) ((i) & 0xFFF) | (((i) & 0x0FF00000) >> 8)
 

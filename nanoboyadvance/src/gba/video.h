@@ -22,7 +22,7 @@
 #include <cstring>
 #include "common/types.h"
 #include "common/log.h"
-#include "gba_interrupt.h"
+#include "interrupt.h"
 
 using namespace std;
 
