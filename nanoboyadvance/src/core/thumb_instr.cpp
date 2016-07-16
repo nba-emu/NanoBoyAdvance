@@ -17,7 +17,7 @@
 * along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "arm7.h"
+#include "arm.h"
 
 #define THUMB_1 1
 #define THUMB_2 2
