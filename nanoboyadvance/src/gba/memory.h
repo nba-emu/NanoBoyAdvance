@@ -21,10 +21,10 @@
 
 #include <iostream>
 #include "common/types.h"
-#include "gba_io.h"
-#include "gba_interrupt.h"
-#include "gba_video.h"
-#include "gba_backup_flash.h"
+#include "iodef.h"
+#include "interrupt.h"
+#include "video.h"
+#include "flash.h"
 
 using namespace std;
 

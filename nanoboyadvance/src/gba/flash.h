@@ -18,7 +18,7 @@
 */
 
 #include <string>
-#include "gba_backup.h"
+#include "backup.h"
 
 #pragma once
 

@@ -17,9 +17,8 @@
 * along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "core/arm.h"
-#include "core/gba_memory.h"
-#include "core/gba_video.h"
+#include "gba/arm.h"
+#include "gba/memory.h"
 #include "common/log.h"
 #include "cmdline.h"
 #include <SDL2/SDL.h>
