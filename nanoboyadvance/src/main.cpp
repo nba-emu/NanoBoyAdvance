@@ -110,7 +110,7 @@ inline void schedule_frame()
         }
 
         // Raise an IRQ if neccessary
-        if (memory->interrupt->ime && (memory->interrupt->if_ & memory->interrupt->ie))
+        if (memory->interrupt->ime && interrupts)
         {
             #ifdef HARDCORE_DEBUG
             LOG(LOG_INFO, "Possible interrupts detected if=0x%x", memory->interrupt->if_);
