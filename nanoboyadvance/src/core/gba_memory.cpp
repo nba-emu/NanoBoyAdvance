@@ -21,12 +21,6 @@
 #include "common/log.h"
 #include "common/file.h"
 
-/**
- * TODO: Refactor code for more beauty and check if memory busses
- * are handled correct accordingly to GBATEK. Also pass invalid=true to the 
- * debugger when accessing memory out of bounds of a valid page. 
- */
-
 namespace NanoboyAdvance
 {
     const int GBAMemory::tmr_cycles[4] = { 1, 64, 256, 1024 };
@@ -48,9 +42,6 @@ namespace NanoboyAdvance
         interrupt->if_ = 0;
         interrupt->ime = 0;
         video = new GBAVideo(interrupt);
-        
-        // Reset debug hook
-        memory_hook = NULL;
 
         // Init some memory
         memset(wram, 0, 0x40000);
@@ -107,11 +98,6 @@ namespace NanoboyAdvance
         delete backup;
         delete video;
         delete interrupt;
-    }
-
-    void GBAMemory::SetCallback(MemoryCallback callback)
-    {
-        memory_hook = callback;
     }
     
     void GBAMemory::Step()
@@ -324,15 +310,14 @@ namespace NanoboyAdvance
     u8 GBAMemory::ReadByte(u32 offset)
     {
         int page = offset >> 24;
-        u32 internal_offset = offset & 0xFFFFFF;        
-        bool invalid = false;
+        u32 internal_offset = offset & 0xFFFFFF;
 
         switch (page)
         {
         case 0:
         case 1:
             #ifdef DEBUG
-            //ASSERT(internal_offset >= 0x4000, LOG_ERROR, "BIOS read: offset out of bounds");
+            ASSERT(internal_offset >= 0x4000, LOG_ERROR, "BIOS read: offset out of bounds");
             #endif            
             if (internal_offset >= 0x4000)
             {
@@ -505,11 +490,9 @@ namespace NanoboyAdvance
         default:
             #ifdef DEBUG
             LOG(LOG_ERROR, "Read from invalid/unimplemented address (0x%x)", offset);
-            #endif            
-            invalid = true;
+            #endif
             break;
         }
-        MemoryHook(offset, false, invalid);
         return 0;
     }
 
@@ -529,14 +512,12 @@ namespace NanoboyAdvance
     {
         int page = offset >> 24;
         u32 internal_offset = offset & 0xFFFFFF;
-        bool invalid = false;
 
         switch (page) {
         case 0:
             #ifdef DEBUG
-            //LOG(LOG_ERROR, "Write into BIOS memory not allowed (0x%x)", offset);
-            #endif
-            invalid = true;            
+            LOG(LOG_ERROR, "Write into BIOS memory not allowed (0x%x)", offset);
+            #endif           
             break;
         case 2:
             wram[internal_offset % 0x40000] = value;
@@ -546,8 +527,6 @@ namespace NanoboyAdvance
             break;
         case 4:
         {
-            bool write = true;
-
             // If the address it out of bounds we should exit now
             if (internal_offset >= 0x3FF && (internal_offset & 0xFFFF) != 0x800) {
                 #ifdef DEBUG
@@ -1096,8 +1075,7 @@ namespace NanoboyAdvance
         case 9:
             #ifdef DEBUG
             LOG(LOG_ERROR, "Write into ROM memory not allowed (0x%x)", offset);
-            #endif            
-            invalid = true;            
+            #endif                       
             break;
         case 0xE:
             if (save_type == GBASaveType::FLASH64 || save_type == GBASaveType::FLASH128) {
@@ -1109,11 +1087,9 @@ namespace NanoboyAdvance
         default:
             #ifdef DEBUG
             LOG(LOG_ERROR, "Write to invalid/unimplemented address (0x%x)", offset);
-            #endif
-            invalid = true;            
+            #endif           
             break;
         }
-        MemoryHook(offset, true, invalid);
     }
 
     void GBAMemory::WriteHWord(u32 offset, u16 value)
@@ -1125,7 +1101,7 @@ namespace NanoboyAdvance
         case 5:
             video->pal[internal_offset % 0x400] = value & 0xFF;
             video->pal[(internal_offset + 1) % 0x400] = (value >> 8) & 0xFF;
-            break;
+            return;
         case 6:
             internal_offset %= 0x20000;
             if (internal_offset >= 0x18000) {
@@ -1133,17 +1109,16 @@ namespace NanoboyAdvance
             }
             video->vram[internal_offset] = value & 0xFF;
             video->vram[internal_offset + 1] = (value >> 8) & 0xFF;
-            break;
+            return;
         case 7:
             video->obj[internal_offset % 0x400] = value & 0xFF;
             video->obj[(internal_offset + 1) % 0x400] = (value >> 8) & 0xFF;
-            break;
+            return;
         default:
             WriteByte(offset, value & 0xFF);
             WriteByte(offset + 1, (value >> 8) & 0xFF);
-            return; // bypass MemoryHook call
+            return;
         }
-        MemoryHook(offset, true, false);
     }
 
     void GBAMemory::WriteWord(u32 offset, u32 value)

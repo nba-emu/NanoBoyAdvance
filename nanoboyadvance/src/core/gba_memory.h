@@ -28,9 +28,6 @@
 
 using namespace std;
 
-// TODO: Using C-style callbacks in C++ is bad practice I guess..
-typedef void (*MemoryCallback)(u32 address, bool write, bool invalid);
-
 namespace NanoboyAdvance
 {
     class GBAMemory
@@ -87,18 +84,6 @@ namespace NanoboyAdvance
         bool tmr_enable[4];
         bool tmr_countup[4];
         bool tmr_irq[4];
-        
-        // Debugging related callback
-        MemoryCallback memory_hook;
-        
-        // Pointer-safe call to memory_hook (avoid nullpointer)
-        inline void MemoryHook(u32 address, bool write, bool invalid)
-        {
-            if (memory_hook != NULL)
-            {
-                memory_hook(address, write, invalid);
-            }
-        }
     public:
         // Hardware / IO accessible through memory
         GBAInterrupt* interrupt;
@@ -135,9 +120,6 @@ namespace NanoboyAdvance
             FLASH128
         };
         GBASaveType save_type { GBASaveType::SRAM };
-
-        // Sets an callback that gets called each time memory is accessed (unimpemented)
-        void SetCallback(MemoryCallback callback);
 
         // Schedules DMA
         void Step();
