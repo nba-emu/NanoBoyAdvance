@@ -79,7 +79,7 @@ namespace NanoboyAdvance
     u8 GBAFlash::ReadByte(u32 offset)
     {
         offset &= 0xFFFF;
-        // todo: vba-sdl-h source codes suggests chip id being mirrored each 100h bytes
+        // TODO: vba-sdl-h source codes suggests chip id being mirrored each 100h bytes
         // however gbatek doesn't mention this (?)        
         if (enable_chip_id && offset < 2)
         {
@@ -99,7 +99,7 @@ namespace NanoboyAdvance
         else if (offset == 0x0E002AAA && value == 0x55 && command_phase == 1) { command_phase = 2; }
         else if (offset == 0x0E005555 && command_phase == 2) 
         {
-            // interpret command
+            // Interpret command
             switch (static_cast<GBAFlashCommand>(value)) 
             {
             case GBAFlashCommand::READ_CHIP_ID: enable_chip_id = true; break;
@@ -108,10 +108,11 @@ namespace NanoboyAdvance
             case GBAFlashCommand::ERASE_CHIP: 
                 if (enable_erase)
                 {
-                    for (int i = 0; i < 65536; i++) // loop is propably more efficient than calling memset twice
+                    for (int i = 0; i < 65536; i++)
                     {
                         memory[0][i] = 0xFF;
-                        memory[1][i] = 0xFF; // do it even if chip is FLASH64, we spare an extra branch
+                        if (second_bank)
+                            memory[1][i] = 0xFF;
                     }
                     enable_erase = false;
                 } 
@@ -125,15 +126,22 @@ namespace NanoboyAdvance
                  offset & ~0xF000) == 0x0E000000 && command_phase == 2)
         {
             int base_offset = offset & 0xF000;
+
             for (int i = 0; i < 0x1000; i++)
-            {
                 memory[memory_bank][base_offset + i] = 0xFF;
-            }
+
             enable_erase = false;
             command_phase = 0;
         }
-        // todo: allow single byte write only if affected sector was erased beforehand.
-        else if (enable_byte_write) { memory[memory_bank][offset & 0xFFFF] = value; enable_byte_write = false; } 
-        else if (enable_bank_select && offset == 0x0E000000) { memory_bank = value & 1; enable_bank_select = false;  }
+        else if (enable_byte_write) 
+        { 
+            memory[memory_bank][offset & 0xFFFF] = value;
+            enable_byte_write = false; 
+        } 
+        else if (enable_bank_select && offset == 0x0E000000)
+        {
+            memory_bank = value & 1;
+            enable_bank_select = false;
+        }
     }
 }

@@ -26,16 +26,7 @@ namespace NanoboyAdvance
 {
     class GBAFlash : public GBABackup
     {
-        std::string save_file;
-        bool second_bank { false }; // FLASH64 = false, FLASH128 = true
-        u8 memory[2][65536]; // contains the savedata
-        int memory_bank { 0 };  
-        int command_phase { 0 };
-        bool enable_chip_id { false };
-        bool enable_erase { false };
-        bool enable_byte_write { false };
-        bool enable_bank_select { false };
-        enum class GBAFlashCommand
+        enum class FlashCommand
         {
             READ_CHIP_ID = 0x90,
             FINISH_CHIP_ID = 0xF0,
@@ -45,9 +36,27 @@ namespace NanoboyAdvance
             WRITE_BYTE = 0xA0,
             SELECT_BANK = 0xB0
         };
+
+        // Path to the save file
+        std::string save_file;
+
+        // Memory
+        bool second_bank { false };
+        u8 memory[2][65536];
+        int memory_bank { 0 };  
+
+        // Command processing
+        int command_phase { 0 };
+        bool enable_chip_id { false };
+        bool enable_erase { false };
+        bool enable_byte_write { false };
+        bool enable_bank_select { false };
     public:
+        // Constructor and Destructor
         GBAFlash(std::string save_file, bool second_bank);
         ~GBAFlash();
+
+        // Read and write access
         u8 ReadByte(u32 offset);
         void WriteByte(u32 offset, u8 value);
     };
