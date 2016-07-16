@@ -88,8 +88,6 @@ HDREXTS = .h .H .hh .hpp .HPP .h++ .hxx .hp
 
 # The pre-processor and compiler options.
 # Users can override those variables from the command line.
-CFLAGS  = -g -Ofast -DDEBUG -DARM7_FASTHAX
-CXXFLAGS= -g -Ofast -DDEBUG -DARM7_FASTHAX
 
 # The C program compiler.
 CC     = gcc
