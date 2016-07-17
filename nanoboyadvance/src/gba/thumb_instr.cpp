@@ -41,7 +41,7 @@
 
 namespace NanoboyAdvance
 {
-    int ARM7::THUMBDecode(u16 instruction)
+    int ARM7::DecodeThumb(u16 instruction)
     {
         if ((instruction & 0xF800) < 0x1800)
         {
@@ -141,7 +141,7 @@ namespace NanoboyAdvance
         return 0;
     }
 
-    void ARM7::THUMBExecute(u16 instruction, int type)
+    void ARM7::ExecuteThumb(u16 instruction, int type)
     {
         // Actual execution
         switch (type)
@@ -484,7 +484,7 @@ namespace NanoboyAdvance
                 else
                 {
                     // Switch to ARM and update r15
-                    cpsr &= ~Thumb;
+                    cpsr &= ~ThumbFlag;
                     r15 = operand & ~3;
 
                     // Emulate pipeline refill cycles
@@ -493,7 +493,7 @@ namespace NanoboyAdvance
                 }
 
                 // Flush pipeline
-                flush_pipe = true;
+                pipe.flush = true;
                 break;
             }
 
@@ -501,7 +501,7 @@ namespace NanoboyAdvance
             {
                 // Flush pipeline
                 reg(reg_dest) &= ~1;
-                flush_pipe = true;
+                pipe.flush = true;
 
                 // Emulate pipeline refill cycles
                 cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
@@ -769,7 +769,7 @@ namespace NanoboyAdvance
                         cycles += memory->SequentialAccess(address, GBAMemory::AccessSize::Word);
                     }
 
-                    flush_pipe = true;
+                    pipe.flush = true;
                 }
             }
             else
@@ -939,7 +939,7 @@ namespace NanoboyAdvance
                 
                 // Update r15/pc and flush pipe
                 r15 += (signed_immediate << 1);
-                flush_pipe = true;
+                pipe.flush = true;
 
                 // Emulate pipeline refill timings
                 cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
@@ -948,39 +948,42 @@ namespace NanoboyAdvance
             break;
         }
         case THUMB_17:
+        {
             // THUMB.17 Software Interrupt
-            // TODO: move exception vectors to enum.
-            //if ((cpsr & IRQDisable) == 0)
+            u8 bios_call = ReadByte(r15 - 4);
+
+            // Log SWI to the console
+            #ifdef DEBUG
+            LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (thumb)", 
+                bios_call, r0, r1, r2, r3, reg(14), r15);
+            #endif
+
+            // "Useless" prefetch from r15 and pipeline refill timing.
+            cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword) +
+                      memory->NonSequentialAccess(8, GBAMemory::AccessSize::Word) +
+                      memory->SequentialAccess(12, GBAMemory::AccessSize::Word);
+
+            // Dispatch SWI, either HLE or BIOS.
+            if (hle)
             {
-                u8 bios_call = ReadByte(r15 - 4);
+                SWI(bios_call);
+            }
+            else
+            {
+                // Store return address in r14<svc>
+                r14_svc = r15 - 2;
 
-                // Log SWI to the console
-                #ifdef DEBUG
-                LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (thumb)", 
-                    bios_call, r0, r1, r2, r3, reg(14), r15);
-                #endif
+                // Save program status and switch mode
+                spsr_svc = cpsr;
+                cpsr = (cpsr & ~(ModeField | ThumbFlag)) | (u32)Mode::SVC | IrqDisable;
+                RemapRegisters();
 
-                // "Useless" prefetch from r15 and pipeline refill timing.
-                cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword) +
-                          memory->NonSequentialAccess(8, GBAMemory::AccessSize::Word) +
-                          memory->SequentialAccess(12, GBAMemory::AccessSize::Word);
-
-                // Dispatch interrupt.
-                if (hle)
-                {
-                    SWI(bios_call);
-                }
-                else
-                {
-                    r14_svc = r15 - 2;
-                    spsr_svc = cpsr;
-                    r15 = 8;
-                    cpsr = (cpsr & ~0x3F) | (u32)ARM7Mode::SVC | IRQDisable;
-                    RemapRegisters();
-                    flush_pipe = true;
-                }
+                // Jump to exception vector
+                r15 = (u32)Exception::SoftwareInterrupt;
+                pipe.flush = true;
             }
             break;
+        }
         case THUMB_18:
         {
             // THUMB.18 Unconditional branch
@@ -994,7 +997,7 @@ namespace NanoboyAdvance
 
             // Update r15/pc and flush pipe
             r15 += immediate_value;
-            flush_pipe = true;
+            pipe.flush = true;
 
             //Emulate pipeline refill timings
             cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
@@ -1020,7 +1023,7 @@ namespace NanoboyAdvance
 
                 // Store return address and flush pipe.
                 reg(14) = temp_pc | 1;
-                flush_pipe = true;
+                pipe.flush = true;
 
                 //Emulate pipeline refill timings
                 cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
