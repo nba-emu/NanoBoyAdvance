@@ -38,6 +38,7 @@ namespace NanoboyAdvance
         ifstream ifs(filename, ios::in | ios::binary | ios::ate);
         size_t filesize;
         u8* data = 0;
+
         if (ifs.is_open())
         {
             ifs.seekg(0, ios::end);
@@ -52,15 +53,16 @@ namespace NanoboyAdvance
             cout << "Cannot open file " << filename.c_str();
             return NULL;
         }
+
         return data;
     }
 
     void File::WriteFile(string filename, u8* data, int size)
     {
         ofstream ofs(filename, ios::out | ios::binary);
+
         if (ofs.is_open())
         {
-            //ofs.seekg(0, ios::beg); // not sure if required
             ofs.write((char*)data, size);
             ofs.close();
         }
@@ -73,11 +75,13 @@ namespace NanoboyAdvance
     int File::GetFileSize(string filename) 
     {
         ifstream ifs(filename, ios::in | ios::binary | ios::ate);
+
         if (ifs.is_open())
         {
             ifs.seekg(0, ios::end);
             return ifs.tellg();
         }
+        
         return 0;
     }
 };
