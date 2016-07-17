@@ -27,15 +27,15 @@ namespace NanoboyAdvance
         this->memory = memory;
 
         // Map the static registers r0-r7, r15
-        gprs[0] = &r0;
-        gprs[1] = &r1;
-        gprs[2] = &r2;
-        gprs[3] = &r3;
-        gprs[4] = &r4;
-        gprs[5] = &r5;
-        gprs[6] = &r6;
-        gprs[7] = &r7;
-        gprs[15] = &r15;
+        gpr[0] = &r0;
+        gpr[1] = &r1;
+        gpr[2] = &r2;
+        gpr[3] = &r3;
+        gpr[4] = &r4;
+        gpr[5] = &r5;
+        gpr[6] = &r6;
+        gpr[7] = &r7;
+        gpr[15] = &r15;
         RemapRegisters();
 
         // Skip bios boot logo
@@ -46,29 +46,22 @@ namespace NanoboyAdvance
 
         // Set hle flag
         this->hle = hle;
-
-        // If speedup switch (ARM7_FASTHAX) is set, we need to build the decode caches
-        #ifdef ARM7_FASTHAX
-        for (int i = 0; i <= 0xFFFF; i++)
-        {
-            thumb_decode[i] = THUMBDecode(i);      
-        }
-        for (int i = 0; i <= 0xFFFFF; i++)
-        {
-            arm_decode[i] = ARMDecode((i & 0xFFF) | ((i & 0xFF000) << 8));
-        }
-        #endif
     }
     
-    u32 ARM7::GetGeneralRegister(ARM7Mode mode, int r)
+    u32 ARM7::GetGeneralRegister(Mode mode, int r)
     {
-        ARM7Mode old_mode = (ARM7Mode)(cpsr & 0x1F); // this code is quite hacky but it works
+        Mode old_mode = (Mode)(cpsr & ModeField);
         u32 value;
-        cpsr = (cpsr & ~0x1F) | (u32)mode;
+
+        // Temporary switch to requested mode
+        cpsr = (cpsr & ~ModeField) | (u32)mode;
         RemapRegisters();
+
+        // Get value and switch back to correct mode
         value = reg(r);
-        cpsr = (cpsr & ~0x1F) | (u32)old_mode;
+        cpsr = (cpsr & ~ModeField) | (u32)old_mode;
         RemapRegisters();
+
         return value;
     }
 
@@ -77,26 +70,30 @@ namespace NanoboyAdvance
         return cpsr;
     }
 
-    u32 ARM7::GetSavedStatusRegister(ARM7Mode mode)
+    u32 ARM7::GetSavedStatusRegister(Mode mode)
     {
         switch (mode)
         {
-        case ARM7Mode::FIQ: return spsr_fiq;
-        case ARM7Mode::SVC: return spsr_svc;
-        case ARM7Mode::Abort: return spsr_abt;
-        case ARM7Mode::IRQ: return spsr_irq;
-        case ARM7Mode::Undefined: return spsr_und;        
+        case Mode::FIQ: return spsr_fiq;
+        case Mode::SVC: return spsr_svc;
+        case Mode::ABT: return spsr_abt;
+        case Mode::IRQ: return spsr_irq;
+        case Mode::UND: return spsr_und;        
         }
         return 0;
     }
 
-    void ARM7::SetGeneralRegister(ARM7Mode mode, int r, u32 value)
+    void ARM7::SetGeneralRegister(Mode mode, int r, u32 value)
     {
-        ARM7Mode old_mode = (ARM7Mode)(cpsr & 0x1F); // this code is quite hacky but it works
-        cpsr = (cpsr & ~0x1F) | (u32)mode;
+        Mode old_mode = (Mode)(cpsr & ModeField);
+
+        // Temporary switch to requested mode
+        cpsr = (cpsr & ~ModeField) | (u32)mode;
         RemapRegisters();
+
+        // Write register and switch back
         reg(r) = value;
-        cpsr = (cpsr & ~0x1F) | (u32)old_mode;
+        cpsr = (cpsr & ~ModeField) | (u32)old_mode;
         RemapRegisters();
     }
 
@@ -105,126 +102,155 @@ namespace NanoboyAdvance
         cpsr = value;
     }
     
-    void ARM7::SetSavedStatusRegister(ARM7Mode mode, u32 value)
+    void ARM7::SetSavedStatusRegister(Mode mode, u32 value)
     {
         switch (mode)
         {
-        case ARM7Mode::FIQ: spsr_fiq = value; break;
-        case ARM7Mode::SVC: spsr_svc = value; break;
-        case ARM7Mode::Abort: spsr_abt = value; break;
-        case ARM7Mode::IRQ: spsr_irq = value; break;
-        case ARM7Mode::Undefined: spsr_und = value; break;        
+        case Mode::FIQ: spsr_fiq = value; break;
+        case Mode::SVC: spsr_svc = value; break;
+        case Mode::ABT: spsr_abt = value; break;
+        case Mode::IRQ: spsr_irq = value; break;
+        case Mode::UND: spsr_und = value; break;        
         }
     }
 
     void ARM7::Step()
     {
-        bool thumb = cpsr & Thumb;
+        bool thumb = cpsr & ThumbFlag;
 
-        // Determine if the cpu runs in arm or thumb mode and do corresponding work
-        if (thumb)
+        // Forcibly align r15
+        r15 &= thumb ? ~1 : ~3;
+
+        // Dispatch instruction loading and execution
+        switch (pipe.status)
         {
-            r15 &= ~1;
-            switch (pipe_status)
-           {
-            case 0:            
-                pipe_opcode[0] = memory->ReadHWord(r15);
-                break;
-            case 1:
-                pipe_opcode[1] = memory->ReadHWord(r15);               
-                break;
-            case 2:
-                pipe_opcode[2] = memory->ReadHWord(r15);
-                #ifdef ARM7_FASTHAX
-                    THUMBExecute(pipe_opcode[0], thumb_decode[pipe_opcode[0]]);
-                #else
-                    THUMBExecute(pipe_opcode[0], THUMBDecode(pipe_opcode[0]));
-                #endif
-                break;
-            case 3:
-                pipe_opcode[0] = memory->ReadHWord(r15);
-                #ifdef ARM7_FASTHAX
-                    THUMBExecute(pipe_opcode[1], thumb_decode[pipe_opcode[1]]);
-                #else
-                    THUMBExecute(pipe_opcode[1], THUMBDecode(pipe_opcode[1]));
-                #endif
-                break;
-            case 4:
-                pipe_opcode[1] = memory->ReadHWord(r15);
-                #ifdef ARM7_FASTHAX
-                    THUMBExecute(pipe_opcode[2], thumb_decode[pipe_opcode[2]]);
-                #else
-                    THUMBExecute(pipe_opcode[2], THUMBDecode(pipe_opcode[2]));
-                #endif
-                break;
-            }
-        }
-        else
-        {
-            r15 &= ~3;
-            switch (pipe_status)
+        case 0:    
+            pipe.opcode[0] = thumb ? memory->ReadHWord(r15) : memory->ReadWord(r15);
+            break;
+        case 1:
+            pipe.opcode[1] = thumb ? memory->ReadHWord(r15) : memory->ReadWord(r15);               
+            break;
+        case 2:
+            if (thumb)
             {
-            case 0:
-                pipe_opcode[0] = memory->ReadWord(r15);
-                break;
-            case 1:
-                pipe_opcode[1] = memory->ReadWord(r15);              
-                break;
-            case 2:
-                pipe_opcode[2] = memory->ReadWord(r15);
-                #ifdef ARM7_FASTHAX
-                    ARMExecute(pipe_opcode[0], arm_decode[arm_pack_instr(pipe_opcode[0])]);
-                #else
-                    ARMExecute(pipe_opcode[0], ARMDecode(pipe_opcode[0]));
-                #endif 
-                break;
-            case 3:
-                pipe_opcode[0] = memory->ReadWord(r15);
-                #ifdef ARM7_FASTHAX
-                    ARMExecute(pipe_opcode[1], arm_decode[arm_pack_instr(pipe_opcode[1])]);
-                #else
-                    ARMExecute(pipe_opcode[1], ARMDecode(pipe_opcode[1]));
-                #endif 
-                break;
-            case 4:
-                pipe_opcode[1] = memory->ReadWord(r15);
-                #ifdef ARM7_FASTHAX
-                    ARMExecute(pipe_opcode[2], arm_decode[arm_pack_instr(pipe_opcode[2])]);
-                #else
-                    ARMExecute(pipe_opcode[2], ARMDecode(pipe_opcode[2]));
-                #endif 
+                pipe.opcode[2] = memory->ReadHWord(r15);
+                ExecuteThumb(pipe.opcode[0], DecodeThumb(pipe.opcode[0]));
                 break;
             }
+            pipe.opcode[2] = memory->ReadWord(r15);
+            Execute(pipe.opcode[0], Decode(pipe.opcode[0]));
+            break;
+        case 3:
+            if (thumb)
+            {
+                pipe.opcode[0] = memory->ReadHWord(r15);
+                ExecuteThumb(pipe.opcode[1], DecodeThumb(pipe.opcode[1]));
+                break;
+            }
+            pipe.opcode[0] = memory->ReadWord(r15);
+            Execute(pipe.opcode[1], Decode(pipe.opcode[1]));
+            break;
+        case 4:
+            if (thumb)
+            {
+                pipe.opcode[1] = memory->ReadHWord(r15);
+                ExecuteThumb(pipe.opcode[2], DecodeThumb(pipe.opcode[2]));
+                break;
+            }
+            pipe.opcode[1] = memory->ReadWord(r15);
+            Execute(pipe.opcode[2], Decode(pipe.opcode[2]));
+            break;
         }
-
-        // Emulate "unpredictable" behaviour
-        last_fetched_opcode = (cpsr & Thumb) ? ReadHWord(r15) : ReadWord(r15);
-        last_fetched_offset = r15;
-        if (r15 < 0x4000) last_bios_offset = r15;
 
         // Clear the pipeline if required
-        if (flush_pipe)
+        if (pipe.flush)
         {
-            pipe_status = 0;
-            flush_pipe = false;
+            pipe.status = 0;
+            pipe.flush = false;
             return;
         }
 
+        // Update pipeline status
+        if (++pipe.status == 5) 
+            pipe.status = 2;
+
         // Update instruction pointer
         r15 += thumb ? 2 : 4;
-        
-        // Update pipeline status
-        if (++pipe_status == 5)
+    }
+
+    void ARM7::RemapRegisters()
+    {
+        switch (static_cast<Mode>(cpsr & ModeField))
         {
-            pipe_status = 2;
+        case Mode::USR:
+        case Mode::SYS:
+            gpr[8] = &r8;
+            gpr[9] = &r9;
+            gpr[10] = &r10;
+            gpr[11] = &r11;
+            gpr[12] = &r12;
+            gpr[13] = &r13;
+            gpr[14] = &r14;
+            pspsr = &spsr_def;
+            break;
+        case Mode::FIQ:
+            gpr[8] = &r8_fiq;
+            gpr[9] = &r9_fiq;
+            gpr[10] = &r10_fiq;
+            gpr[11] = &r11_fiq;
+            gpr[12] = &r12_fiq;
+            gpr[13] = &r13_fiq;
+            gpr[14] = &r14_fiq;
+            pspsr = &spsr_fiq;
+            break;
+        case Mode::IRQ:
+            gpr[8] = &r8;
+            gpr[9] = &r9;
+            gpr[10] = &r10;
+            gpr[11] = &r11;
+            gpr[12] = &r12;
+            gpr[13] = &r13_irq;
+            gpr[14] = &r14_irq;
+            pspsr = &spsr_irq;
+            break;
+        case Mode::SVC:
+            gpr[8] = &r8;
+            gpr[9] = &r9;
+            gpr[10] = &r10;
+            gpr[11] = &r11;
+            gpr[12] = &r12;
+            gpr[13] = &r13_svc;
+            gpr[14] = &r14_svc;
+            pspsr = &spsr_svc;
+            break;
+        case Mode::ABT:
+            gpr[8] = &r8;
+            gpr[9] = &r9;
+            gpr[10] = &r10;
+            gpr[11] = &r11;
+            gpr[12] = &r12;
+            gpr[13] = &r13_abt;
+            gpr[14] = &r14_abt;
+            pspsr = &spsr_abt;
+            break;
+        case Mode::UND:
+            gpr[8] = &r8;
+            gpr[9] = &r9;
+            gpr[10] = &r10;
+            gpr[11] = &r11;
+            gpr[12] = &r12;
+            gpr[13] = &r13_und;
+            gpr[14] = &r14_und;
+            pspsr = &spsr_und;
+            break;
         }
     }
 
-    void ARM7::FireIRQ()
+    void ARM7::RaiseIRQ()
     {
-        if (((cpsr & IRQDisable) == 0) && pipe_status >= 2)
+        if (((cpsr & IrqDisable) == 0) && pipe.status >= 2)
         {
-            bool thumb = cpsr & Thumb;
+            bool thumb = cpsr & ThumbFlag;
 
             #ifdef HARDCORE_DEBUG
             LOG(LOG_INFO, "Issued interrupt, r14_irq=0x%x, r15=0x%x", r14_irq, r15);
@@ -239,13 +265,13 @@ namespace NanoboyAdvance
 
             // Save program status and switch mode
             spsr_irq = cpsr;
-            cpsr = (cpsr & ~0x3F) | (u32)ARM7Mode::IRQ | IRQDisable;
+            cpsr = (cpsr & ~(ModeField | ThumbFlag)) | (u32)Mode::IRQ | IrqDisable;
             RemapRegisters();
 
-            // Jump to exception vector and flush pipeline
-            r15 = 0x18;
-            pipe_status = 0;
-            flush_pipe = false;
+            // Jump to exception vector
+            r15 = (u32)Exception::Interrupt;
+            pipe.status = 0;
+            pipe.flush = false;
 
             // Emulate pipeline refill timings
             cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Word) +
@@ -257,39 +283,42 @@ namespace NanoboyAdvance
     {
         switch (number)
         {
-        case 0x01: break;
-        case 0x02: break;
-        // DIV
         case 0x06:
         {
-            if (r1 != 0) {
+            if (r1 != 0)
+            {
                 u32 mod = r0 % r1;
                 u32 div = r0 / r1;
                 r0 = div;
                 r1 = mod;
-            } else {
+            } else 
+            {
                 LOG(LOG_ERROR, "Attempted division by zero.");
             }
             break;
         }
-        // VBlankIntrWait
         case 0x05:
             r0 = 1;
-            r1 = 1; // fallthrough to swi IntrWait
+            r1 = 1;
         case 0x04:
-            memory->interrupt->ime = 1; // forcefully set ime=1
-            if (r0 == 1) memory->interrupt->if_ = 0;
+            memory->interrupt->ime = 1;
+
+            // If r0 is one IF must be cleared
+            if (r0 == 1)
+                memory->interrupt->if_ = 0;
+
+            // Sets GBA into halt state, waiting for specific interrupt(s) to occur.
             memory->intr_wait = true;
             memory->intr_wait_mask = r1;
             memory->halt_state = GBAMemory::HaltState::Halt;
             break;
-        // CpuSet
         case 0x0B:
         {
             u32 source = r0;
             u32 dest = r1;
             u32 length = r2 & 0xFFFFF;
             bool fixed = r2 & (1 << 24) ? true : false;
+
             if (r2 & (1 << 26))
             {
                 for (u32 i = 0; i < length; i++)
@@ -310,13 +339,13 @@ namespace NanoboyAdvance
             }
             break;
         }
-        // CpuFastSet
         case 0x0C:
         {
             u32 source = r0;
             u32 dest = r1;
             u32 length = r2 & 0xFFFFF;
             bool fixed = r2 & (1 << 24) ? true : false;
+
             for (u32 i = 0; i < length; i++)
             {
                 WriteWord(dest, ReadWord(source));
@@ -325,13 +354,13 @@ namespace NanoboyAdvance
             }
             break;
         }
-        // LZ77UncompVRAM / LZ77UncompWRAM
         case 0x11:
         case 0x12:
         {
             int amount = memory->ReadWord(r0) >> 8;
             u32 source = r0 + 4;
             u32 dest = r1;
+
             while (amount > 0)
             {
                 u8 encoder = memory->ReadByte(source++);
@@ -354,9 +383,7 @@ namespace NanoboyAdvance
                             dest++;
                             amount--;
                             if (amount == 0)
-                            {
                                 return;
-                            }
                         }
                     }
                     else
@@ -366,9 +393,7 @@ namespace NanoboyAdvance
                         memory->WriteHWord(dest++, value);
                         amount--;
                         if (amount == 0)
-                        {
                             return;
-                        }
                     }
                 }
             }

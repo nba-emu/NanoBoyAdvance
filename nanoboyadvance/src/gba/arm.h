@@ -25,185 +25,95 @@
 #include "common/log.h"
 #include "memory.h"
 
-#define arm_pack_instr(i) ((i) & 0xFFF) | (((i) & 0x0FF00000) >> 8)
-
-// Macro for easier register access
-#define reg(r) *gprs[r]
-
 using namespace std;
 
 namespace NanoboyAdvance
 {
     class ARM7
     {
-        // Grants the processor access to the emulated mmu
         GBAMemory* memory;
+        
+        // General Purpose Registers
+        u32 r0 {0};
+        u32 r1 {0};
+        u32 r2 {0};
+        u32 r3 {0};
+        u32 r4 {0};
+        u32 r5 {0};
+        u32 r6 {0};
+        u32 r7 {0};
+        u32 r8 {0}, r8_fiq {0};
+        u32 r9 {0}, r9_fiq {0};
+        u32 r10 {0}, r10_fiq {0};
+        u32 r11 {0}, r11_fiq {0};
+        u32 r12 {0}, r12_fiq {0};
+        u32 r13 {0}, r13_fiq {0}, r13_svc {0}, r13_abt {0}, r13_irq {0}, r13_und {0};
+        u32 r14 {0}, r14_fiq {0}, r14_svc {0}, r14_abt {0}, r14_irq {0}, r14_und {0};
+        u32 r15 {0};
 
-        // The ARM7TMDI-S has 31 32-bit general purpose register of
-        // which 16 are visible at one time.
-        u32 r0 {0}, r1 {0}, r2 {0}, r3 {0}, r4 {0}, r5 {0}, r6 {0}, r7 {0}, r8 {0}, r9 {0}, r10 {0}, r11 {0}, r12 {0}, r13 {0}, r14 {0}, r15 {0};
-        u32 r8_fiq {0}, r9_fiq {0}, r10_fiq {0}, r11_fiq {0}, r12_fiq {0}, r13_fiq {0}, r14_fiq {0};
-        u32 r13_svc {0}, r14_svc {0};
-        u32 r13_abt {0}, r14_abt {0};
-        u32 r13_irq {0}, r14_irq {0};
-        u32 r13_und {0}, r14_und {0};
+        // Maps visible registers via pointers
+        u32* gpr[16];
+        #define reg(r) *gpr[r]
 
-        // Mapping array for visible general purpose registers
-        u32* gprs[16];
+        // Program Status Registers
+        u32 cpsr { (u32)Mode::SYS};
+        u32 spsr_fiq {0};
+        u32 spsr_svc {0};
+        u32 spsr_abt {0};
+        u32 spsr_irq {0};
+        u32 spsr_und {0};
+        u32 spsr_def {0};
 
-        // Current program status register (contains status flags)
-        u32 cpsr { (u32)ARM7Mode::System};
-        u32 spsr_fiq {0}, spsr_svc {0}, spsr_abt {0}, spsr_irq {0}, spsr_und {0}, spsr_def {0};
-
-        // A pointer pointing on the Saved program status register of the current mode
+        // Points to current SPSR
         u32* pspsr {nullptr};
 
-        #ifdef ARM7_FASTHAX
-        int thumb_decode[0x10000];
-        int arm_decode[0x100000];
-        #endif
-
-        // In some way emulate the processor's pipeline
-        u32 pipe_opcode[3];
-        int pipe_status {0};
-        bool flush_pipe {false};
-
-        // Emulate "unpredictable" behaviour
-        u32 last_fetched_opcode {0};
-        u32 last_fetched_offset {0};
-        u32 last_bios_offset {0};
+        // Stores pipeline state
+        struct Pipeline
+        {
+            u32 opcode[3];
+            int status {0};
+            bool flush {false};
+        } pipe;
         
-        // Indicates wether interrupts and swi should be processed using
-        // the bios or using a hle attempt
         bool hle;
-
-        // Maps the visible registers (according to cpsr) to gprs
-        inline void RemapRegisters()
-        {
-            switch (cpsr & 0x1F)
-            {
-            case (u32)ARM7Mode::User:
-                gprs[8] = &r8;
-                gprs[9] = &r9;
-                gprs[10] = &r10;
-                gprs[11] = &r11;
-                gprs[12] = &r12;
-                gprs[13] = &r13;
-                gprs[14] = &r14;
-                pspsr = &spsr_def;
-                break;
-            case (u32)ARM7Mode::FIQ:
-                gprs[8] = &r8_fiq;
-                gprs[9] = &r9_fiq;
-                gprs[10] = &r10_fiq;
-                gprs[11] = &r11_fiq;
-                gprs[12] = &r12_fiq;
-                gprs[13] = &r13_fiq;
-                gprs[14] = &r14_fiq;
-                pspsr = &spsr_fiq;
-                break;
-            case (u32)ARM7Mode::IRQ:
-                gprs[8] = &r8;
-                gprs[9] = &r9;
-                gprs[10] = &r10;
-                gprs[11] = &r11;
-                gprs[12] = &r12;
-                gprs[13] = &r13_irq;
-                gprs[14] = &r14_irq;
-                pspsr = &spsr_irq;
-                break;
-            case (u32)ARM7Mode::SVC:
-                gprs[8] = &r8;
-                gprs[9] = &r9;
-                gprs[10] = &r10;
-                gprs[11] = &r11;
-                gprs[12] = &r12;
-                gprs[13] = &r13_svc;
-                gprs[14] = &r14_svc;
-                pspsr = &spsr_svc;
-                break;
-            case (u32)ARM7Mode::Abort:
-                gprs[8] = &r8;
-                gprs[9] = &r9;
-                gprs[10] = &r10;
-                gprs[11] = &r11;
-                gprs[12] = &r12;
-                gprs[13] = &r13_abt;
-                gprs[14] = &r14_abt;
-                pspsr = &spsr_abt;
-                break;
-            case (u32)ARM7Mode::Undefined:
-                gprs[8] = &r8;
-                gprs[9] = &r9;
-                gprs[10] = &r10;
-                gprs[11] = &r11;
-                gprs[12] = &r12;
-                gprs[13] = &r13_und;
-                gprs[14] = &r14_und;
-                pspsr = &spsr_und;
-                break;
-            case (u32)ARM7Mode::System:
-                gprs[8] = &r8;
-                gprs[9] = &r9;
-                gprs[10] = &r10;
-                gprs[11] = &r11;
-                gprs[12] = &r12;
-                gprs[13] = &r13;
-                gprs[14] = &r14;
-                pspsr = &spsr_def;
-                break;
-            }
-        }
-
-        // Condition code altering methods
+        
         inline void CalculateSign(u32 result)
-        {
-            cpsr = result & 0x80000000 ? (cpsr | SignFlag) : (cpsr & ~SignFlag);
-        }
+            { cpsr = result & 0x80000000 ? (cpsr | SignFlag) : (cpsr & ~SignFlag); }
 
         inline void CalculateZero(u64 result)
-        {
-            cpsr = result == 0 ? (cpsr | ZeroFlag) : (cpsr & ~ZeroFlag);
-        }
+            { cpsr = result == 0 ? (cpsr | ZeroFlag) : (cpsr & ~ZeroFlag); }
 
         inline void AssertCarry(bool carry)
-        {
-            cpsr = carry ? (cpsr | CarryFlag) : (cpsr & ~CarryFlag);
-        }
+            { cpsr = carry ? (cpsr | CarryFlag) : (cpsr & ~CarryFlag); }
 
         inline void CalculateOverflowAdd(u32 result, u32 operand1, u32 operand2)
         {
-            bool overflow = ((operand1) >> 31 == (operand2) >> 31) && ((result) >> 31 != (operand2) >> 31);
+            bool overflow = !(((operand1) ^ (operand2)) >> 31) && ((result) ^ (operand2)) >> 31;
             cpsr = overflow ? (cpsr | OverflowFlag) : (cpsr & ~OverflowFlag);
         }
 
         inline void CalculateOverflowSub(u32 result, u32 operand1, u32 operand2)
         {
-            bool overflow = ((operand1) >> 31 != (operand2) >> 31) && ((result) >> 31 == (operand2) >> 31);
+            bool overflow = ((operand1) ^ (operand2)) >> 31 && !(((result) ^ (operand2)) >> 31);
             cpsr = overflow ? (cpsr | OverflowFlag) : (cpsr & ~OverflowFlag);
         }
 
-        // Shifter methods
-        inline void LSL(u32& operand, u32 amount, bool& carry)
+        static inline void LSL(u32& operand, u32 amount, bool& carry)
         {
-            // Nothing is done when the shift amount equals zero
-            if (amount != 0)
+            if (amount == 0) return;
+
+            for (u32 i = 0; i < amount; i++)
             {
-                // This way we easily bypass the 32 bits restriction on x86
-                for (u32 i = 0; i < amount; i++)
-                {
-                    carry = operand & 0x80000000 ? true : false;
-                    operand <<= 1;
-                }
+                carry = operand & 0x80000000 ? true : false;
+                operand <<= 1;
             }
         }
 
-        inline void LSR(u32& operand, u32 amount, bool& carry, bool immediate)
+        static inline void LSR(u32& operand, u32 amount, bool& carry, bool immediate)
         {
             // LSR #0 equals to LSR #32
             amount = immediate & (amount == 0) ? 32 : amount;
 
-            // Perform shift
             for (u32 i = 0; i < amount; i++)
             {
                 carry = operand & 1 ? true : false;
@@ -211,14 +121,13 @@ namespace NanoboyAdvance
             }
         }
 
-        inline void ASR(u32& operand, u32 amount, bool& carry, bool immediate)
+        static inline void ASR(u32& operand, u32 amount, bool& carry, bool immediate)
         {
             u32 sign_bit = operand & 0x80000000;
 
             // ASR #0 equals to ASR #32
             amount = (immediate && (amount == 0)) ? 32 : amount;
 
-            // Perform shift
             for (u32 i = 0; i < amount; i++)
             {
                 carry = operand & 1 ? true : false;
@@ -226,7 +135,7 @@ namespace NanoboyAdvance
             }
         }
 
-        inline void ROR(u32& operand, u32 amount, bool& carry, bool immediate)
+        static inline void ROR(u32& operand, u32 amount, bool& carry, bool immediate)
         {
             // ROR #0 equals to RRX #1
             if (amount != 0 || !immediate)
@@ -240,17 +149,14 @@ namespace NanoboyAdvance
             }
             else
             {
-                bool old_carry = carry; // todo: optimize with inline asm
+                bool old_carry = carry;
                 carry = (operand & 1) ? true : false;
                 operand = (operand >> 1) | (old_carry ? 0x80000000 : 0);
             }
         }
 
-        // Memory methods
         inline u8 ReadByte(u32 offset)
-        {
-            return memory->ReadByte(offset);
-        }
+            { return memory->ReadByte(offset); }
 
         inline u32 ReadHWord(u32 offset)
         {
@@ -268,36 +174,20 @@ namespace NanoboyAdvance
             if (offset & 1) 
             {
                 value = memory->ReadByte(offset);
-                if (value & 0x80) value |= 0xFFFFFF00;
+                if (value & 0x80) 
+                    value |= 0xFFFFFF00;
             }
             else 
             {
                 value = memory->ReadHWord(offset);
-                if (value & 0x8000) value |= 0xFFFF0000;
+                if (value & 0x8000)
+                    value |= 0xFFFF0000;
             }
             return value;
         }
 
         inline u32 ReadWord(u32 offset)
-        {
-            if (offset < 0x4000 && last_fetched_offset >= 0x4000)
-            {
-                return memory->ReadWord(last_bios_offset);
-            }
-            if (offset >= 0x4000 && offset < 0x2000000)
-            {
-                if (cpsr & Thumb)
-                {
-                    // TODO: Handle special cases
-                    return (last_fetched_opcode << 16) | last_fetched_opcode;
-                }
-                else
-                {
-                    return last_fetched_opcode;
-                }
-            }
-            return memory->ReadWord(offset & ~3);
-        }
+            { return memory->ReadWord(offset & ~3); }
 
         inline u32 ReadWordRotated(u32 offset)
         {
@@ -307,9 +197,7 @@ namespace NanoboyAdvance
         }
 
         inline void WriteByte(u32 offset, u8 value)
-        {
-            memory->WriteByte(offset, value);
-        }
+            { memory->WriteByte(offset, value); }
 
         inline void WriteHWord(u32 offset, u16 value)
         {
@@ -323,52 +211,68 @@ namespace NanoboyAdvance
             memory->WriteWord(offset, value);
         }
 
-        // Command processing
-        int ARMDecode(u32 instruction);
-        void ARMExecute(u32 instruction, int type);
-        int THUMBDecode(u16 instruction);
-        void THUMBExecute(u16 instruction, int type);
+        // Updates map of visible registers
+        void RemapRegisters();
 
-        // Used to emulate software interrupts
+        // Command processing
+        int Decode(u32 instruction);
+        void Execute(u32 instruction, int type);
+        int DecodeThumb(u16 instruction);
+        void ExecuteThumb(u16 instruction, int type);
+
+        // HLE-emulation
         void SWI(int number);
     public:
-        // Keep track of cpu cycles
-        int cycles {0};
-
-        enum class ARM7Mode
+        enum class Mode
         {
-            User = 0x10,
+            USR = 0x10,
             FIQ = 0x11,
             IRQ = 0x12,
             SVC = 0x13,
-            Abort = 0x17,
-            Undefined = 0x1B,
-            System = 0x1F
+            ABT = 0x17,
+            UND = 0x1B,
+            SYS = 0x1F
         };
-        enum CPSRFlags // TODO: enum class
+
+        enum PSRMask
         {
-            Thumb = 0x20,
-            FIQDisable = 0x40,
-            IRQDisable = 0x80,
+            ModeField = 0x1F,
+            ThumbFlag = 0x20,
+            FiqDisable = 0x40,
+            IrqDisable = 0x80,
             OverflowFlag = 0x10000000,
             CarryFlag = 0x20000000,
             ZeroFlag = 0x40000000,
             SignFlag = 0x80000000
         };
 
+        enum class Exception
+        {
+            Reset = 0x00,
+            UndefinedInstruction = 0x04,
+            SoftwareInterrupt = 0x08,
+            PrefetchAbort = 0x0C,
+            DataAbort = 0x10,
+            Interrupt = 0x18,
+            FastInterrupt = 0x1C
+        };
+
+        // CPU-cyle counter
+        int cycles {0};
+
         // Constructor
         ARM7(GBAMemory* memory, bool use_bios);
         
         // Execution functions
-        void Step(); // schedule pipeline
-        void FireIRQ(); // enter bios irq handler
+        void Step();
+        void RaiseIRQ();
 
-        // Debugging
-        u32 GetGeneralRegister(ARM7Mode mode, int r);
+        // Register read and write access methods
+        u32 GetGeneralRegister(Mode mode, int r);
         u32 GetCurrentStatusRegister();
-        u32 GetSavedStatusRegister(ARM7Mode mode);  
-        void SetGeneralRegister(ARM7Mode mode, int r, u32 value);
+        u32 GetSavedStatusRegister(Mode mode);  
+        void SetGeneralRegister(Mode mode, int r, u32 value);
         void SetCurrentStatusRegister(u32 value);
-        void SetSavedStatusRegister(ARM7Mode mode, u32 value);     
+        void SetSavedStatusRegister(Mode mode, u32 value);     
     };
 }

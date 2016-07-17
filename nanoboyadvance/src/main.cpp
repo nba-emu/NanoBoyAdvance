@@ -113,7 +113,7 @@ inline void schedule_frame()
             #ifdef HARDCORE_DEBUG
             LOG(LOG_INFO, "Possible interrupts detected if=0x%x", memory->interrupt->if_);
             #endif
-            arm->FireIRQ();
+            arm->RaiseIRQ();
         }
 
         // Run the hardware components

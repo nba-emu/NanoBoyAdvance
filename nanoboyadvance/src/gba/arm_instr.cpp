@@ -39,7 +39,7 @@
 
 namespace NanoboyAdvance
 {
-    int ARM7::ARMDecode(u32 instruction)
+    int ARM7::Decode(u32 instruction)
     {
         u32 opcode = instruction & 0x0FFFFFFF;
         int section = ARM_ERR;
@@ -122,7 +122,7 @@ namespace NanoboyAdvance
         return section;
     }
 
-    void ARM7::ARMExecute(u32 instruction, int type)
+    void ARM7::Execute(u32 instruction, int type)
     {
         int condition = instruction >> 28;
         bool execute = false;
@@ -225,13 +225,13 @@ namespace NanoboyAdvance
             if (reg(reg_address) & 1)
             {
                 r15 = reg(reg_address) & ~1;
-                cpsr |= Thumb;
+                cpsr |= ThumbFlag;
             }
             else
             {
                 r15 = reg(reg_address) & ~3;
             }
-            flush_pipe = true;
+            pipe.flush = true;
             return;
         }
         case ARM_4:
@@ -708,7 +708,7 @@ namespace NanoboyAdvance
                 // When writing to r15 initiate pipeline flush
                 if (reg_dest == 15)
                 {
-                    flush_pipe = true;
+                    pipe.flush = true;
                 }
             }
             return;
@@ -809,7 +809,7 @@ namespace NanoboyAdvance
                 }
                 if (reg_dest == 15)
                 {
-                    flush_pipe = true;
+                    pipe.flush = true;
                 }
             }
             else
@@ -889,8 +889,8 @@ namespace NanoboyAdvance
                 #endif
 
                 // Save current mode and enter user mode
-                old_mode = cpsr & 0x1F;
-                cpsr = (cpsr & ~0x1F) | (u32)ARM7Mode::User;
+                old_mode = cpsr & ModeField;
+                cpsr = (cpsr & ~ModeField) | (u32)Mode::USR;
                 RemapRegisters();
 
                 // Mark that we switched to user mode
@@ -943,12 +943,12 @@ namespace NanoboyAdvance
                                 {
                                     #ifdef DEBUG
                                     // spsr_<mode> must not be copied to cpsr in user mode because user mode has not such a register
-                                    ASSERT((cpsr & 0x1F) == (u32)ARM7Mode::User, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r15);
+                                    ASSERT((cpsr & ModeField) == (u32)Mode::USR, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r15);
                                     #endif
                                     cpsr = *pspsr;
                                     RemapRegisters();
                                 }
-                                flush_pipe = true;
+                                pipe.flush = true;
                             }
                         }
                         else
@@ -1011,12 +1011,12 @@ namespace NanoboyAdvance
                                 {
                                     #ifdef DEBUG
                                     // spsr_<mode> must not be copied to cpsr in user mode because user mode has no such a register
-                                    ASSERT((cpsr & 0x1F) == (u32)ARM7Mode::User, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r15);
+                                    ASSERT((cpsr & ModeField) == (u32)Mode::USR, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r15);
                                     #endif
                                     cpsr = *pspsr;
                                     RemapRegisters();
                                 }
-                                flush_pipe = true;
+                                pipe.flush = true;
                             }
                         }
                         else
@@ -1050,7 +1050,7 @@ namespace NanoboyAdvance
             // If we switched mode it's time now to restore the previous mode
             if (switched_mode)
             {
-                cpsr = (cpsr & ~0x1F) | old_mode;
+                cpsr = (cpsr & ~ModeField) | old_mode;
                 RemapRegisters();
             }
             return;
@@ -1069,7 +1069,7 @@ namespace NanoboyAdvance
                 reg(14) = r15 - 4;
             }
             r15 += offset << 2;
-            flush_pipe = true;
+            pipe.flush = true;
             return;
         }
         case ARM_13:
@@ -1091,32 +1091,36 @@ namespace NanoboyAdvance
             #endif            
             return;
         case ARM_16:
+        {
             // ARM.16 Software interrupt
-            //if ((cpsr & IRQDisable) == 0)
+            u32 bios_call = ReadByte(r15 - 6);
+
+            // Log to the console that we're issuing an interrupt.
+            #ifdef DEBUG
+            LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (arm)", bios_call, r0, r1, r2, r3, reg(14), r15);
+            #endif
+
+            // Dispatch SWI, either HLE or BIOS.
+            if (hle)
             {
-                u32 bios_call = ReadByte(r15 - 6);
+                SWI(bios_call);
+            }
+            else
+            {
+                // Store return address in r14<svc>
+                r14_svc = r15 - 4;
 
-                // Log to the console that we're issuing an interrupt.
-                #ifdef DEBUG
-                LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (arm)", bios_call, r0, r1, r2, r3, reg(14), r15);
-                #endif
+                // Save program status and switch mode
+                spsr_svc = cpsr;
+                cpsr = (cpsr & ~ModeField) | (u32)Mode::SVC | IrqDisable;
+                RemapRegisters();
 
-                // Actual emulation
-                if (hle)
-                {
-                    SWI(bios_call);
-                }
-                else
-                {
-                    r14_svc = r15 - 4;
-                    r15 = 0x8;
-                    flush_pipe = true;
-                    spsr_svc = cpsr;
-                    cpsr = (cpsr & ~0x1F) | (u32)ARM7Mode::SVC | IRQDisable;
-                    RemapRegisters();
-                }
+                // Jump to exception vector
+                r15 = (u32)Exception::SoftwareInterrupt;
+                pipe.flush = true;
             }
             return;
+        }
         }
     }
 }
