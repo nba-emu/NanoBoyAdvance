@@ -43,11 +43,7 @@ namespace NanoboyAdvance
             if (size == SAVE_SIZE)
             {
                 save_data = File::ReadFile(save_file);
-
-                for (int i = 0; i < 65536; i++)
-                {
-                    memory[i] = save_data[i];
-                }
+                memcpy(memory, save_data, SAVE_SIZE);
                 return;
             }
             else { LOG(LOG_ERROR, "Save file size is invalid"); }
