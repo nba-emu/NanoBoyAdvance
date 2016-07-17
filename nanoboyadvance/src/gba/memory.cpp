@@ -20,6 +20,8 @@
 #include "memory.h"
 #include "common/log.h"
 #include "common/file.h"
+#include "flash.h"
+#include "sram.h"
 
 namespace NanoboyAdvance
 {
@@ -50,7 +52,6 @@ namespace NanoboyAdvance
         // Init memory buffers
         memset(wram, 0, 0x40000);
         memset(iram, 0, 0x8000);
-        memset(sram, 0, 0x10000);
         
         // Detect savetype
         for (int i = 0; i < rom_size; i += 4)
@@ -63,7 +64,8 @@ namespace NanoboyAdvance
             else if (memcmp(rom + i, "SRAM_V", 6) == 0)
             {
                 save_type = SaveType::SRAM;
-                LOG(LOG_INFO, "Found save type: SRAM (unsupported)");
+                backup = new SRAM(save_file);
+                LOG(LOG_INFO, "Found save type: SRAM");
             }
             else if (memcmp(rom + i, "FLASH_V", 7) == 0)
             {
@@ -433,9 +435,7 @@ namespace NanoboyAdvance
             if (internal_offset >= rom_size) return 0;
             return rom[internal_offset];
         case 0xE:
-            if (save_type == SaveType::FLASH64 || save_type == SaveType::FLASH128)
-                return backup->ReadByte(offset);
-            return sram[internal_offset];
+            return backup->ReadByte(offset);
         default:
             #ifdef DEBUG
             LOG(LOG_ERROR, "Read from invalid/unimplemented address (0x%x)", offset);
@@ -1034,12 +1034,7 @@ namespace NanoboyAdvance
             #endif                       
             break;
         case 0xE:
-            if (save_type == SaveType::FLASH64 || save_type == SaveType::FLASH128)
-            {
-                backup->WriteByte(offset, value);
-                return;
-            }
-            sram[internal_offset] = value;            
+            backup->WriteByte(offset, value); 
             break;
         default:
             #ifdef DEBUG

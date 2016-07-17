@@ -24,7 +24,7 @@
 #include "iodef.h"
 #include "interrupt.h"
 #include "video.h"
-#include "flash.h"
+#include "backup.h"
 
 using namespace std;
 
@@ -69,7 +69,6 @@ namespace NanoboyAdvance
         int bios_size;
         u8 wram[0x40000];
         u8 iram[0x8000];
-        u8 sram[0x10000];
 
         // DMA IO
         struct DMA
