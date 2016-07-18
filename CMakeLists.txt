@@ -20,10 +20,10 @@ endif()
 #    )
 
 # Frontend selection
-option(QT_GUI "Build Qt based frontend" OFF)
+option(QT_GUI "Build Qt based frontend" ON)
 option(SDL2 "Build SDL2 based frontend" ON)
 if (NOT QT_GUI AND NOT SDL2)
-    message(FATAL_ERROR "No frontend selected. Enable atleast QT_GUI or SDL2.")
+    message(FATAL_ERROR "No frontend selected. Enable QT_GUI or SDL2.")
 endif()
 
 # Add SDL2 if neccessary
@@ -47,9 +47,12 @@ if (SDL2)
     endif()
 endif()
 
-# Add Qt - no such code yet so throw error
+# Add Qt if neccessary
 if (QT_GUI)
-    message(FATAL_ERROR "QT_GUI selected but not implemented yet.")
+    # TODO: also support Qt4
+    find_package(Qt5Gui REQUIRED)
+    find_package(Qt5Widgets REQUIRED)
+    set(QT_DEPS Qt5::Gui Qt5::Widgets)
 endif()
 
 add_subdirectory(src)
