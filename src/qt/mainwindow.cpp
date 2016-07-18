@@ -18,10 +18,28 @@
 */
 
 #include "mainwindow.h"
+#include <QVBoxLayout>
 
 MainWindow::MainWindow(QWidget* parent) : QWidget(parent)
 {
+    QVBoxLayout* layout = new QVBoxLayout;
+
     // Set title and size
     setWindowTitle("NanoboyAdvance");
-    setFixedSize(240, 160);
+    setFixedSize(480, 320);
+
+    // Setup menu
+    menubar = new QMenuBar(this);
+    file_menu = menubar->addMenu(tr("&File"));
+    help_menu = menubar->addMenu(tr("&?"));
+
+    // Create status bar
+    statusbar = new QStatusBar(this);
+    statusbar->showMessage(tr("Idle..."));
+
+    // Window layout
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setMenuBar(menubar);
+    layout->addWidget(statusbar);
+    setLayout(layout);
 }
