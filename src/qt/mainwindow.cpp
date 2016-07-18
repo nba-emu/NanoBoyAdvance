@@ -19,6 +19,7 @@
 
 #include "mainwindow.h"
 #include "util/file.h"
+#include <QApplication>
 #include <QVBoxLayout>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -37,8 +38,10 @@ MainWindow::MainWindow(QWidget* parent) : QWidget(parent)
     help_menu = menubar->addMenu(tr("&?"));
 
     // Setup file menu
-    file_open = file_menu->addAction(tr("&Open"));
-    connect(file_open, SIGNAL(triggered()), this, SLOT(openGame()));
+    open_file = file_menu->addAction(tr("&Open"));
+    close_app = file_menu->addAction(tr("&Close"));
+    connect(open_file, SIGNAL(triggered()), this, SLOT(openGame()));
+    connect(close_app, SIGNAL(triggered()), this, SLOT(closeApp()));
 
     // Setup GL screen
     screen = new Screen(this);
@@ -81,4 +84,9 @@ void MainWindow::openGame()
         box.exec();
         return;
     }
+}
+
+void MainWindow::closeApp()
+{
+    QApplication::quit();
 }
