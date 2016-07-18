@@ -31,18 +31,50 @@ namespace NanoboyAdvance
     const int GBAMemory::dma_dest_mask[4] = {0x7FFFFFF, 0x7FFFFFF, 0x7FFFFFF, 0xFFFFFFF};
     const int GBAMemory::dma_source_mask[4] = {0x7FFFFFF, 0xFFFFFFF, 0xFFFFFFF, 0xFFFFFFF};
     const int GBAMemory::tmr_cycles[4] = {1, 64, 256, 1024};
+    
     const int GBAMemory::wsn_table[4] = {4, 3, 2, 8};
     const int GBAMemory::wss0_table[2] = {2, 1};
     const int GBAMemory::wss1_table[2] = {4, 1};
     const int GBAMemory::wss2_table[2] = {8, 1};
+    
+    const u8 GBAMemory::hle_bios[0x40] = {
+        0x06, 0x00, 0x00, 0xEA, 0x00, 0x00, 0xA0, 0xE1,
+        0x00, 0x00, 0xA0, 0xE1, 0x00, 0x00, 0xA0, 0xE1,
+        0x00, 0x00, 0xA0, 0xE1, 0x00, 0x00, 0xA0, 0xE1,
+        0x01, 0x00, 0x00, 0xEA, 0x00, 0x00, 0xA0, 0xE1,
+        0x02, 0xF3, 0xA0, 0xE3, 0x0F, 0x50, 0x2D, 0xE9,
+        0x01, 0x03, 0xA0, 0xE3, 0x00, 0xE0, 0x8F, 0xE2,
+        0x04, 0xF0, 0x10, 0xE5, 0x0F, 0x50, 0xBD, 0xE8,
+        0x04, 0xF0, 0x5E, 0xE2, 0x00, 0x00, 0xA0, 0xE1   
+    };
 
-    GBAMemory::GBAMemory(string bios_file, string rom_file, string save_file)
+    GBAMemory::GBAMemory(string rom_file, string save_file) : GBAMemory(rom_file, save_file, nullptr, 0)
+    {}
+
+    GBAMemory::GBAMemory(string rom_file, string save_file, u8* bios, size_t bios_size)
     {
-        // Read files
-        bios = File::ReadFile(bios_file);
+        // Init memory buffers
+        memset(this->bios, 0, 0x4000);
+        memset(wram, 0, 0x40000);
+        memset(iram, 0, 0x8000);
+
+        // Load BIOS memory
+        if (bios != nullptr)
+        {
+            if (bios_size > 0x4000)
+                throw new runtime_error("BIOS file is too big.");
+            memcpy(this->bios, bios, bios_size);
+        }
+        else
+        {
+            memcpy(this->bios, hle_bios, sizeof(hle_bios));
+        }
+
+        if (!File::Exists(rom_file))
+            throw new runtime_error("Cannot open ROM.");
+
         rom = File::ReadFile(rom_file);
         rom_size = File::GetFileSize(rom_file);
-        bios_size = File::GetFileSize(bios_file);
 
         // Setup Video and Interrupt hardware
         interrupt = new GBAInterrupt();
@@ -50,10 +82,6 @@ namespace NanoboyAdvance
         interrupt->if_ = 0;
         interrupt->ime = 0;
         video = new GBAVideo(interrupt);
-
-        // Init memory buffers
-        memset(wram, 0, 0x40000);
-        memset(iram, 0, 0x8000);
         
         // Detect savetype
         for (int i = 0; i < rom_size; i += 4)
@@ -276,10 +304,10 @@ namespace NanoboyAdvance
         case 1:
             #ifdef DEBUG
             ASSERT(internal_offset >= 0x4000, LOG_ERROR, "BIOS read: offset out of bounds");
-            ASSERT(internal_offset >= bios_size, LOG_ERROR, "BIOS read: offset out of buffer");
             #endif            
-            if (internal_offset >= 0x4000) return 0;
-            return bios[internal_offset % bios_size];
+            if (internal_offset >= 0x4000) 
+                return 0;
+            return bios[internal_offset];
         case 2:
             return wram[internal_offset % 0x40000];
         case 3:

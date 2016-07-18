@@ -30,14 +30,20 @@ namespace NanoboyAdvance
 {
     class GBAMemory
     {
+        // DMA and Timer constants
         static const int dma_count_mask[4];
         static const int dma_dest_mask[4];
         static const int dma_source_mask[4];
         static const int tmr_cycles[4];
+
+        // Waitstate constants
         static const int wsn_table[4];
         static const int wss0_table[2];
         static const int wss1_table[2];
         static const int wss2_table[2];
+
+        // BIOS-stub for HLE-emulation.
+        static const u8 hle_bios[0x40];
 
         enum class AddressControl
         {
@@ -62,9 +68,8 @@ namespace NanoboyAdvance
         };
 
         u8* rom;
-        u8* bios;
-        int rom_size;
-        int bios_size;
+        size_t rom_size;
+        u8 bios[0x4000];
         u8 wram[0x40000];
         u8 iram[0x8000];
 
@@ -143,9 +148,9 @@ namespace NanoboyAdvance
         bool intr_wait {false};
         bool intr_wait_mask {0};
 
-        
-        // Constructor and Destructor
-        GBAMemory(std::string bios_file, std::string rom_file, std::string save_file);
+        // Constructors and Destructor
+        GBAMemory(std::string rom_file, std::string save_file);
+        GBAMemory(std::string rom_file, std::string save_file, u8* bios, size_t bios_size);
         ~GBAMemory();
 
         // Update timer and DMA methods
