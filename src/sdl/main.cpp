@@ -20,6 +20,7 @@
 #include "gba/arm.h"
 #include "gba/memory.h"
 #include "util/log.h"
+#include "util/file.h"
 #include "cmdline.h"
 #include <SDL2/SDL.h>
 #include <png.h>
@@ -285,7 +286,9 @@ int main(int argc, char** argv)
         }
 
         // Initialize memory and ARM interpreter core
-        memory = new GBAMemory(cmdline->bios_file, cmdline->rom_file, "test.sav");
+        u8* bios = File::ReadFile(cmdline->bios_file);
+        size_t bios_size = File::GetFileSize(cmdline->bios_file);
+        memory = new GBAMemory(cmdline->rom_file, "test.sav", bios, bios_size);
         arm = new ARM7(memory, !cmdline->use_bios);
     }
     else
