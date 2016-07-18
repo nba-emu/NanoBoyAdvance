@@ -8,4 +8,4 @@ set(HEADERS
     types.h
 )
 
-add_library(common STATIC ${SRCS} ${HEADERS})
+add_library(util STATIC ${SRCS} ${HEADERS})

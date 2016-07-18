@@ -20,4 +20,4 @@ set(HEADERS
 )
 
 add_library(gba STATIC ${SRCS} ${HEADERS})
-target_link_libraries(gba common)
+target_link_libraries(gba util)

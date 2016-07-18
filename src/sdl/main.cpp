@@ -19,7 +19,7 @@
 
 #include "gba/arm.h"
 #include "gba/memory.h"
-#include "common/log.h"
+#include "util/log.h"
 #include "cmdline.h"
 #include <SDL2/SDL.h>
 #include <png.h>

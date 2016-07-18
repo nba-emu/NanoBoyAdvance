@@ -20,13 +20,11 @@
 #pragma once
 
 #include <iostream>
-#include "common/types.h"
+#include "util/types.h"
 #include "iodef.h"
 #include "interrupt.h"
 #include "video.h"
 #include "backup.h"
-
-using namespace std;
 
 namespace NanoboyAdvance
 {
@@ -147,7 +145,7 @@ namespace NanoboyAdvance
 
         
         // Constructor and Destructor
-        GBAMemory(string bios_file, string rom_file, string save_file);
+        GBAMemory(std::string bios_file, std::string rom_file, std::string save_file);
         ~GBAMemory();
 
         // Update timer and DMA methods
