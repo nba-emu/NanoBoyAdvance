@@ -18,6 +18,8 @@
 */
 
 #include <QWidget>
+#include <QMenuBar>
+#include <QStatusBar>
 
 #pragma once
 
@@ -25,6 +27,11 @@ class MainWindow : public QWidget
 {
     Q_OBJECT
 
+    QMenu* file_menu;
+    QMenu* help_menu;
+    QMenuBar* menubar;
+
+    QStatusBar* statusbar;
 public:
     MainWindow(QWidget* parent = 0);
 };
