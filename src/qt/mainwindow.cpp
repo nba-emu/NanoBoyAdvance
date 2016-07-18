@@ -18,28 +18,67 @@
 */
 
 #include "mainwindow.h"
+#include "util/file.h"
 #include <QVBoxLayout>
+#include <QFileDialog>
+#include <QMessageBox>
+
+using namespace NanoboyAdvance;
 
 MainWindow::MainWindow(QWidget* parent) : QWidget(parent)
 {
     QVBoxLayout* layout = new QVBoxLayout;
 
-    // Set title and size
     setWindowTitle("NanoboyAdvance");
-    setFixedSize(480, 320);
 
     // Setup menu
     menubar = new QMenuBar(this);
     file_menu = menubar->addMenu(tr("&File"));
     help_menu = menubar->addMenu(tr("&?"));
 
+    // Setup file menu
+    file_open = file_menu->addAction(tr("&Open"));
+    connect(file_open, SIGNAL(triggered()), this, SLOT(openGame()));
+
+    // Setup GL screen
+    screen = new Screen(this);
+
     // Create status bar
     statusbar = new QStatusBar(this);
     statusbar->showMessage(tr("Idle..."));
 
     // Window layout
+    screen->setBaseSize(480, 320);
+    screen->setFixedSize(480, 320);
+    screen->setSizeIncrement(1, 1);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setMenuBar(menubar);
+    layout->addWidget(screen);
     layout->addWidget(statusbar);
     setLayout(layout);
+}
+
+void MainWindow::openGame()
+{
+    QString file;
+    QFileDialog dialog(this);
+
+    dialog.setAcceptMode(QFileDialog::AcceptOpen);
+    dialog.setFileMode(QFileDialog::AnyFile);
+    dialog.setNameFilter("GameBoy Advance ROMs (*.gba *.agb)");
+
+    if (!dialog.exec())
+        return;
+
+    file = dialog.selectedFiles().at(0);
+
+    if (!File::Exists(file.toStdString()))
+    {
+        QMessageBox box(this);
+        box.setIcon(QMessageBox::Critical);
+        box.setText(tr("Cannot find file ") + QFileInfo(file).baseName());
+        box.setWindowTitle(tr("File error"));
+        box.exec();
+        return;
+    }
 }

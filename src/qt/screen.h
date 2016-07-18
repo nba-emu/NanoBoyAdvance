@@ -17,26 +17,31 @@
 * along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "screen.h"
-#include <QWidget>
-#include <QMenuBar>
-#include <QStatusBar>
-
 #pragma once
 
-class MainWindow : public QWidget
+#include <QGLWidget>
+
+class Screen : public QGLWidget
 {
     Q_OBJECT
-
-    QAction* file_open;
-    QMenu* file_menu;
-    QMenu* help_menu;
-    QMenuBar* menubar;
-
-    QStatusBar* statusbar;
-    Screen* screen;
-public slots:
-    void openGame();
 public:
-    MainWindow(QWidget* parent = 0);
+    Screen(QWidget* parent = 0);
+    ~Screen();
+
+    void setTextureSize(int width, int height);
+signals:
+
+public slots:
+
+protected:
+    void initializeGL();
+    void paintGL();
+    void resizeGL(int width, int height);
+
+private:
+    int texture_width {240};
+    int texture_height {160};
+    GLuint texture;
+
+    void draw();
 };
