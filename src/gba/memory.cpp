@@ -69,13 +69,8 @@ namespace NanoboyAdvance
                 backup = new SRAM(save_file);
                 LOG(LOG_INFO, "Found save type: SRAM");
             }
-            else if (memcmp(rom + i, "FLASH_V", 7) == 0)
-            {
-                save_type = SaveType::FLASH64;
-                backup = new GBAFlash(save_file, false);
-                LOG(LOG_INFO, "Found save type: FLASH64");
-            }
-            else if (memcmp(rom + i, "FLASH512_V", 10) == 0)
+            else if (memcmp(rom + i, "FLASH_V", 7) == 0 ||
+                     memcmp(rom + i, "FLASH512_V", 10) == 0)
             {
                 save_type = SaveType::FLASH64;
                 backup = new GBAFlash(save_file, false);
