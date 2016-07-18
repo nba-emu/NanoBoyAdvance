@@ -18,8 +18,8 @@
 */
 
 #include "sram.h"
-#include "common/log.h"
-#include "common/file.h"
+#include "util/log.h"
+#include "util/file.h"
 #include <cstring>
 
 using namespace std;

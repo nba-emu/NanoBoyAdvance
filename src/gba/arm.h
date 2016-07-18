@@ -19,13 +19,9 @@
 
 #pragma once
 
-#include <iostream>
-#include <sstream>
-#include "common/types.h"
-#include "common/log.h"
+#include "util/types.h"
+#include "util/log.h"
 #include "memory.h"
-
-using namespace std;
 
 namespace NanoboyAdvance
 {

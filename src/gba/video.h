@@ -19,12 +19,10 @@
 
 #pragma once
 
-#include <cstring>
-#include "common/types.h"
-#include "common/log.h"
+#include "util/types.h"
+#include "util/log.h"
 #include "interrupt.h"
-
-using namespace std;
+#include <cstring>
 
 namespace NanoboyAdvance
 {

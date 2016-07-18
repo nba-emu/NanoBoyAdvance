@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "common/types.h"
+#include "util/types.h"
 
 namespace NanoboyAdvance
 {

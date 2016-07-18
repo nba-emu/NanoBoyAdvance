@@ -17,8 +17,8 @@
 * along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <string>
 #include "backup.h"
+#include <string>
 
 #pragma once
 

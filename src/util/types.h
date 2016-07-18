@@ -21,16 +21,6 @@
 
 #include <cstdint>
 
-/*
-typedef uint8_t ubyte;
-typedef uint16_t ushort;
-typedef uint32_t uint;
-typedef uint64_t ulong;
-typedef int8_t sbyte;
-typedef int16_t sshort;
-typedef int32_t sint;
-typedef int64_t slong;*/
-
 typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
