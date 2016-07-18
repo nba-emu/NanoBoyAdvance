@@ -28,7 +28,8 @@ class MainWindow : public QWidget
 {
     Q_OBJECT
 
-    QAction* file_open;
+    QAction* open_file;
+    QAction* close_app;
     QMenu* file_menu;
     QMenu* help_menu;
     QMenuBar* menubar;
@@ -37,6 +38,7 @@ class MainWindow : public QWidget
     Screen* screen;
 public slots:
     void openGame();
+    void closeApp();
 public:
     MainWindow(QWidget* parent = 0);
 };
