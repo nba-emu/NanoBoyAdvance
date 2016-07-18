@@ -50,9 +50,11 @@ endif()
 # Add Qt if neccessary
 if (QT_GUI)
     # TODO: also support Qt4
+    find_package(OpenGL REQUIRED)
     find_package(Qt5Gui REQUIRED)
     find_package(Qt5Widgets REQUIRED)
-    set(QT_DEPS Qt5::Gui Qt5::Widgets)
+    find_package(Qt5OpenGL REQUIRED)
+    set(QT_DEPS Qt5::Gui Qt5::Widgets Qt5::OpenGL)
 endif()
 
 add_subdirectory(src)
