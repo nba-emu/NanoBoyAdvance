@@ -24,6 +24,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
+using namespace std;
 using namespace NanoboyAdvance;
 
 MainWindow::MainWindow(QWidget* parent) : QWidget(parent)
@@ -59,6 +60,41 @@ MainWindow::MainWindow(QWidget* parent) : QWidget(parent)
     layout->addWidget(screen);
     layout->addWidget(statusbar);
     setLayout(layout);
+
+    // Create emulator timer
+    timer = new QTimer(this);
+    timer->setSingleShot(false);
+    timer->setInterval(16);
+    connect(timer, SIGNAL(timeout()), this, SLOT(timerTick()));
+}
+
+MainWindow::~MainWindow()
+{
+    if (gba != nullptr)
+        delete gba;
+}
+
+void MainWindow::runGame(string rom_file)
+{
+    // TODO: maybe there is a Qt way to do this
+    string save_file = rom_file.substr(0, rom_file.find_last_of(".")) + ".sav";
+
+    if (gba != nullptr)
+        delete gba;
+
+    try
+    {
+        gba = new GBA(rom_file, save_file, "bios.bin");
+        timer->start();
+    }
+    catch (runtime_error& e)
+    {
+        QMessageBox box(this);
+        box.setIcon(QMessageBox::Critical);
+        box.setText(tr(e.what()));
+        box.setWindowTitle(tr("Runtime error"));
+        box.exec();
+    }
 }
 
 void MainWindow::openGame()
@@ -84,9 +120,16 @@ void MainWindow::openGame()
         box.exec();
         return;
     }
+
+    runGame(file.toStdString());
 }
 
 void MainWindow::closeApp()
 {
     QApplication::quit();
+}
+
+void MainWindow::timerTick()
+{
+    free(gba->Frame());
 }
