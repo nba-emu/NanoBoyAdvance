@@ -460,7 +460,10 @@ namespace NanoboyAdvance
             if (internal_offset >= rom_size) return 0;
             return rom[internal_offset];
         case 0xE:
-            return backup->ReadByte(offset);
+            if (backup != nullptr && (save_type == SaveType::FLASH64 || 
+                    save_type == SaveType::FLASH128 || 
+                    save_type == SaveType::SRAM))
+                return backup->ReadByte(offset);
         default:
             #ifdef DEBUG
             LOG(LOG_ERROR, "Read from invalid/unimplemented address (0x%x)", offset);
@@ -1059,7 +1062,10 @@ namespace NanoboyAdvance
             #endif                       
             break;
         case 0xE:
-            backup->WriteByte(offset, value); 
+            if (backup != nullptr && (save_type == SaveType::FLASH64 || 
+                    save_type == SaveType::FLASH128 || 
+                    save_type == SaveType::SRAM))
+                backup->WriteByte(offset, value); 
             break;
         default:
             #ifdef DEBUG
