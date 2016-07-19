@@ -17,10 +17,13 @@
 * along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "gba/gba.h"
 #include "screen.h"
+#include <string>
 #include <QWidget>
 #include <QMenuBar>
 #include <QStatusBar>
+#include <QTimer>
 
 #pragma once
 
@@ -36,9 +39,16 @@ class MainWindow : public QWidget
 
     QStatusBar* statusbar;
     Screen* screen;
+
+    QTimer* timer;
+    NanoboyAdvance::GBA* gba {nullptr};
+
+    void runGame(std::string rom_file);
 public slots:
     void openGame();
     void closeApp();
+    void timerTick();
 public:
     MainWindow(QWidget* parent = 0);
+    ~MainWindow();
 };
