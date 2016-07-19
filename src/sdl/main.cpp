@@ -184,9 +184,9 @@ int main(int argc, char** argv)
         save_file = rom_file.substr(0, rom_file.find_last_of(".")) + ".sav";
 
         if (args->use_bios)
-            gba = new GBA(args->rom_file, save_file, args->bios_file);
+            gba = new GBA(rom_file, save_file, args->bios_file);
         else
-            gba = new GBA(args->rom_file, save_file);
+            gba = new GBA(rom_file, save_file);
     }
     else
     {
