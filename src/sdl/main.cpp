@@ -17,25 +17,20 @@
 * along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "gba/arm.h"
-#include "gba/memory.h"
-#include "util/log.h"
+#include "gba/gba.h"
 #include "util/file.h"
-#include "cmdline.h"
+#include "arguments.h"
 #include <SDL2/SDL.h>
 #include <png.h>
 #include <iostream>
+#include <string>
 #undef main
 
 using namespace std;
 using namespace NanoboyAdvance;
 
-#define FRAME_CYCLES 280896
-
-// Emulation related globals
-GBAMemory* memory;
-ARM7* arm;
-CmdLine* cmdline;
+GBA* gba;
+Arguments* args;
 
 // SDL related globals
 SDL_Window* window;
@@ -52,102 +47,15 @@ int ticks_start;
 int frames;
 
 #define plotpixel(x,y,c) buffer[(y) * window_width + (x)] = c;
-void setpixel(int x, int y, int color)
+inline void setpixel(int x, int y, int color)
 {
     int scale_x = window_width / 240;
     int scale_y = window_height / 160;
 
-    // Plot the neccessary amount of pixels
     for (int i = 0; i < scale_x; i++)
     {
         for (int j = 0; j < scale_y; j++)
-        {
             plotpixel(x * scale_x + i, y * scale_y + j, color);
-        }
-    }
-}
-
-// Read key input from SDL and feed it into the GBA
-void schedule_keyinput()
-{
-    u8* kb_state = (u8*)SDL_GetKeyboardState(NULL);
-    u16 joypad = 0;
-
-    // Check which keys are pressed and set corresponding bits (0 = pressed, 1 = vice versa)
-    joypad |= kb_state[SDL_SCANCODE_A] ? 0 : 1;
-    joypad |= kb_state[SDL_SCANCODE_S] ? 0 : (1 << 1);
-    joypad |= kb_state[SDL_SCANCODE_BACKSPACE] ? 0 : (1 << 2);
-    joypad |= kb_state[SDL_SCANCODE_RETURN] ? 0 : (1 << 3);
-    joypad |= kb_state[SDL_SCANCODE_RIGHT] ? 0 : (1 << 4);
-    joypad |= kb_state[SDL_SCANCODE_LEFT] ? 0 : (1 << 5);
-    joypad |= kb_state[SDL_SCANCODE_UP] ? 0 : (1 << 6);
-    joypad |= kb_state[SDL_SCANCODE_DOWN] ? 0 : (1 << 7);
-    joypad |= kb_state[SDL_SCANCODE_Q] ? 0 : (1 << 8);
-    joypad |= kb_state[SDL_SCANCODE_W] ? 0 : (1 << 9);
-
-    // Write the generated value to IO ram
-    memory->keyinput = joypad;
-}
-
-// Schedules the GBA and generates exactly one frame
-inline void schedule_frame()
-{
-    for (int i = 0; i < FRAME_CYCLES; i++)
-    {
-        // Interrutps that are enabled *and* pending
-        u32 interrupts = memory->interrupt->ie & memory->interrupt->if_;
-        
-        // Only pause as long as (IE & IF) != 0
-        if (memory->halt_state != GBAMemory::HaltState::None && interrupts != 0)
-        {
-            // If IntrWait only resume if requested interrupt is encountered
-            if (!memory->intr_wait || (interrupts & memory->intr_wait_mask) != 0)
-            {
-                memory->halt_state = GBAMemory::HaltState::None;
-                memory->intr_wait = false;
-            }
-        }
-
-        // Raise an IRQ if neccessary
-        if (memory->interrupt->ime && interrupts)
-        {
-            #ifdef HARDCORE_DEBUG
-            LOG(LOG_INFO, "Possible interrupts detected if=0x%x", memory->interrupt->if_);
-            #endif
-            arm->RaiseIRQ();
-        }
-
-        // Run the hardware components
-        if (memory->halt_state != GBAMemory::HaltState::Stop)
-        {
-            int forward_steps = 0;
-
-            if (memory->halt_state != GBAMemory::HaltState::Halt)
-            {
-                arm->cycles = 0;
-                arm->Step();
-                forward_steps = arm->cycles - 1;
-            }
-
-            for (int j = 0; j < forward_steps + 1; j++) 
-            {
-                memory->video->Step();
-                memory->RunTimer();
-                memory->RunDMA();
-
-                // Copy the rendered line (if any) to SDLs pixel buffer
-                if (memory->video->render_scanline)
-                {
-                    int y = memory->video->vcount;
-                    for (int x = 0; x < 240; x++)
-                    {
-                        setpixel(x, y, memory->video->buffer[y * 240 + x]);
-                    }
-                }
-            }
-
-            i += forward_steps;
-        }
     }
 }
 
@@ -163,8 +71,6 @@ void sdl_init(int width, int height)
     
     // Create SDL2 Window
     window = SDL_CreateWindow("NanoboyAdvance", 100, 100, width, height, SDL_WINDOW_SHOWN);
-    
-    // Check for errors during window creation
     if (window == nullptr) 
     {
         cout << "SDL_CreateWindow Error: " << SDL_GetError() << endl;
@@ -173,8 +79,6 @@ void sdl_init(int width, int height)
     
     // Create renderer
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    
-    // Check for errors during renderer creation
     if (renderer == nullptr)
     {
         SDL_DestroyWindow(window);
@@ -185,8 +89,6 @@ void sdl_init(int width, int height)
     // Create SDL surface
     surface = SDL_CreateRGBSurface(0, width, height, 32, 
                                    0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
-
-    // Check for errors during window creation
     if (surface == nullptr)
     {
         SDL_DestroyRenderer(renderer);
@@ -197,8 +99,6 @@ void sdl_init(int width, int height)
 
     // Create SDL texture
     texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
-
-    // Check for errors...
     if (texture == nullptr) 
     {
         SDL_FreeSurface(surface);
@@ -208,10 +108,7 @@ void sdl_init(int width, int height)
         SDL_Quit();
     }
 
-    // Get pixelbuffer
     buffer = (uint32_t*)surface->pixels;
-
-    // Set width and height globals
     window_width = width;
     window_height = height;
 }
@@ -258,16 +155,13 @@ void create_screenshot()
     png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
 
     for (int y = 0; y < window_height; y++) 
-    {
         png_free(png_ptr, rows[y]);
-    }
 
     png_free(png_ptr, rows);
     png_destroy_write_struct(&png_ptr, &info_ptr);
     fclose(fp);
 }
 
-// This is our main function / entry point. It gets called when the emulator is started.
 int main(int argc, char** argv)
 {
     SDL_Event event;
@@ -276,20 +170,23 @@ int main(int argc, char** argv)
 
     if (argc > 1)
     {
-        cmdline = parse_parameters(argc, argv);
+        string rom_file;
+        string save_file;
 
-        // Check for parsing errors
-        if (cmdline == NULL)
+        args = parse_args(argc, argv);
+        if (args == nullptr)
         {
             usage();
             return 0;
         }
 
-        // Initialize memory and ARM interpreter core
-        u8* bios = File::ReadFile(cmdline->bios_file);
-        size_t bios_size = File::GetFileSize(cmdline->bios_file);
-        memory = new GBAMemory(cmdline->rom_file, "test.sav", bios, bios_size);
-        arm = new ARM7(memory, !cmdline->use_bios);
+        rom_file = string(args->rom_file);
+        save_file = rom_file.substr(0, rom_file.find_last_of(".")) + ".sav";
+
+        if (args->use_bios)
+            gba = new GBA(args->rom_file, save_file, args->bios_file);
+        else
+            gba = new GBA(args->rom_file, save_file);
     }
     else
     {
@@ -298,27 +195,48 @@ int main(int argc, char** argv)
     }
 
     // Initialize SDL and create window, texture etc..
-    sdl_init(240 * cmdline->scale, 160 * cmdline->scale);
-    
-    // Initially setup the frame counter
+    sdl_init(240 * args->scale, 160 * args->scale);
+
+    // Initialize framecounter
     frames = 0;
     ticks_start = SDL_GetTicks();
 
     // Main loop
     while (running)
     {
+        u32* screen;
         int ticks_now;
         u8* kb_state = (u8*)SDL_GetKeyboardState(NULL);
 
         // Dump screenshot on F10
-        if (kb_state[SDL_SCANCODE_F10]) create_screenshot();
+        if (kb_state[SDL_SCANCODE_F10])
+            create_screenshot();
         
-        // Feed keyboard input and generate exactly one frame
-        schedule_keyinput();
-        schedule_frame();
+        // Update Keypad Input
+        gba->SetKeyState(GBA::Key::A,      kb_state[SDL_SCANCODE_A]);
+        gba->SetKeyState(GBA::Key::B,      kb_state[SDL_SCANCODE_S]);
+        gba->SetKeyState(GBA::Key::Select, kb_state[SDL_SCANCODE_BACKSPACE]);
+        gba->SetKeyState(GBA::Key::Start,  kb_state[SDL_SCANCODE_RETURN]);
+        gba->SetKeyState(GBA::Key::Right,  kb_state[SDL_SCANCODE_RIGHT]);
+        gba->SetKeyState(GBA::Key::Left,   kb_state[SDL_SCANCODE_LEFT]);
+        gba->SetKeyState(GBA::Key::Up,     kb_state[SDL_SCANCODE_UP]);
+        gba->SetKeyState(GBA::Key::Down,   kb_state[SDL_SCANCODE_DOWN]);
+        gba->SetKeyState(GBA::Key::R,      kb_state[SDL_SCANCODE_W]);
+        gba->SetKeyState(GBA::Key::L,      kb_state[SDL_SCANCODE_Q]);
+
+        // Emulate for one frame
+        screen = gba->Frame();
         frames++;
 
-        // FPS counter
+        // Copy screen data
+        for (int y = 0; y < 160; y++)
+        {
+            for (int x = 0; x < 240; x++)
+                setpixel(x, y, screen[y * 240 + x]);
+        }
+        free(screen);
+
+        // Update FPS counter
         ticks_now = SDL_GetTicks();
         if (ticks_now - ticks_start >= 1000) 
         {
@@ -329,27 +247,22 @@ int main(int argc, char** argv)
             frames = 0;
         }
 
-        // Update texture
+        // Update texture and draw
         SDL_UpdateTexture(texture, (const SDL_Rect*)&surface->clip_rect, surface->pixels, surface->pitch);
-
-        // Draw =)
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, texture, NULL, NULL);
         SDL_RenderPresent(renderer);
 
-        // We must process SDL events
+        // Process SDL events
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT)
-            {
                 running = false;
-            }
         }
     }
     
     // Free stuff (emulator)
-    delete arm;
-    delete memory;
+    delete gba;
 
     // Free stuff (SDL)
     SDL_DestroyTexture(texture);
