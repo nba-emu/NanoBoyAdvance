@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2015 Frederic Meyer
+* Copyright (C) 2016 Frederic Meyer
 *
 * This file is part of nanoboyadvance.
 *
@@ -23,12 +23,8 @@ typedef struct {
     char* rom_file;
     char* bios_file;
     bool use_bios;
-    bool debug;
-    bool debug_immediatly;
-    bool strict;
     int scale;
-    int frameskip;
-} CmdLine;
+} Arguments;
 
 void usage();
-CmdLine* parse_parameters(int argc, char** argv);
+Arguments* parse_args(int argc, char** argv);

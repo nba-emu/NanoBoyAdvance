@@ -1,10 +1,10 @@
 set(SRCS
-    cmdline.cpp
+    arguments.cpp
     main.cpp
 )
 
 set(HEADERS
-    cmdline.h
+    arguments.h
 )
 
 add_executable(nanoboyadvance ${SRCS} ${HEADERS})
