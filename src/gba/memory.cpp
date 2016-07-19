@@ -121,6 +121,7 @@ namespace NanoboyAdvance
 
     GBAMemory::~GBAMemory()
     {
+        delete rom;
         delete backup;
         delete video;
         delete interrupt;
