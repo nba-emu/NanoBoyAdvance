@@ -142,7 +142,7 @@ namespace NanoboyAdvance
         SaveType save_type {SaveType::NONE};
 
         // Keypad IO
-        u16 keyinput {256};
+        u16 keyinput {0x3FF};
         
         HaltState halt_state {HaltState::None};
         bool intr_wait {false};

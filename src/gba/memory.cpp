@@ -31,7 +31,7 @@ namespace NanoboyAdvance
     const int GBAMemory::dma_dest_mask[4] = {0x7FFFFFF, 0x7FFFFFF, 0x7FFFFFF, 0xFFFFFFF};
     const int GBAMemory::dma_source_mask[4] = {0x7FFFFFF, 0xFFFFFFF, 0xFFFFFFF, 0xFFFFFFF};
     const int GBAMemory::tmr_cycles[4] = {1, 64, 256, 1024};
-    
+
     const int GBAMemory::wsn_table[4] = {4, 3, 2, 8};
     const int GBAMemory::wss0_table[2] = {2, 1};
     const int GBAMemory::wss1_table[2] = {4, 1};
@@ -71,7 +71,7 @@ namespace NanoboyAdvance
         }
 
         if (!File::Exists(rom_file))
-            throw new runtime_error("Cannot open ROM.");
+            throw new runtime_error("Cannot open ROM file.");
 
         rom = File::ReadFile(rom_file);
         rom_size = File::GetFileSize(rom_file);
