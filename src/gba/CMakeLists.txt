@@ -1,4 +1,5 @@
 set(SRCS
+    gba.cpp
     arm.cpp
     arm_instr.cpp
     thumb_instr.cpp
@@ -9,6 +10,7 @@ set(SRCS
 )
 
 set(HEADERS
+    gba.h
     arm.h
     iodef.h
     interrupt.h

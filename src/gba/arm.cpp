@@ -252,10 +252,6 @@ namespace NanoboyAdvance
         {
             bool thumb = cpsr & ThumbFlag;
 
-            #ifdef HARDCORE_DEBUG
-            LOG(LOG_INFO, "Issued interrupt, r14_irq=0x%x, r15=0x%x", r14_irq, r15);
-            #endif
-
             // "Useless" pipeline prefetch
             cycles += memory->SequentialAccess(r15, thumb ? GBAMemory::AccessSize::Hword : 
                                                             GBAMemory::AccessSize::Word);
