@@ -46,17 +46,16 @@ MainWindow::MainWindow(QWidget* parent) : QWidget(parent)
 
     // Setup GL screen
     screen = new Screen(this);
+    screen->resize(480, 320);
     connect(screen, SIGNAL(keyPress(int)), this, SLOT(keyPress(int)));
     connect(screen, SIGNAL(keyRelease(int)), this, SLOT(keyRelease(int)));
 
     // Create status bar
     statusbar = new QStatusBar(this);
+    statusbar->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
     statusbar->showMessage(tr("Idle..."));
 
     // Window layout
-    screen->setBaseSize(480, 320);
-    screen->setFixedSize(480, 320);
-    screen->setSizeIncrement(1, 1);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setMenuBar(menubar);
     layout->addWidget(screen);
