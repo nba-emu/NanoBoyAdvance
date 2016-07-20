@@ -43,7 +43,7 @@ class MainWindow : public QWidget
     QTimer* timer;
     NanoboyAdvance::GBA* gba {nullptr};
 
-    void runGame(std::string rom_file);
+    void runGame(QString rom_file);
     NanoboyAdvance::GBA::Key keyToGBA(int key);
 public slots:
     void openGame();

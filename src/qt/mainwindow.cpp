@@ -33,6 +33,9 @@ MainWindow::MainWindow(QWidget* parent) : QWidget(parent)
 
     setWindowTitle("NanoboyAdvance");
 
+    // TODO: spawn window at another location, maybe in the middle or depending of the cursor location?
+    this->setGeometry(0, 0, 480, 320);
+
     // Setup menu
     menubar = new QMenuBar(this);
     file_menu = menubar->addMenu(tr("&File"));
@@ -75,17 +78,16 @@ MainWindow::~MainWindow()
         delete gba;
 }
 
-void MainWindow::runGame(string rom_file)
+void MainWindow::runGame(QString rom_file)
 {
-    // TODO: maybe there is a Qt way to do this
-    string save_file = rom_file.substr(0, rom_file.find_last_of(".")) + ".sav";
+    QString save_file = QFileInfo(rom_file).baseName() + ".sav";
 
     if (gba != nullptr)
         delete gba;
 
     try
     {
-        gba = new GBA(rom_file, save_file, "bios.bin");
+        gba = new GBA(rom_file.toStdString(), save_file.toStdString(), "bios.bin");
         timer->start();
         screen->grabKeyboard();
     }
@@ -131,8 +133,7 @@ void MainWindow::openGame()
         return;
 
     file = dialog.selectedFiles().at(0);
-
-    if (!File::Exists(file.toStdString()))
+    if (!QFile::exists(file))
     {
         QMessageBox box(this);
         box.setIcon(QMessageBox::Critical);
@@ -142,7 +143,7 @@ void MainWindow::openGame()
         return;
     }
 
-    runGame(file.toStdString());
+    runGame(file);
 }
 
 void MainWindow::closeApp()
