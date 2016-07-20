@@ -46,6 +46,8 @@ MainWindow::MainWindow(QWidget* parent) : QWidget(parent)
 
     // Setup GL screen
     screen = new Screen(this);
+    connect(screen, SIGNAL(keyPress(int)), this, SLOT(keyPress(int)));
+    connect(screen, SIGNAL(keyRelease(int)), this, SLOT(keyRelease(int)));
 
     // Create status bar
     statusbar = new QStatusBar(this);
@@ -86,6 +88,7 @@ void MainWindow::runGame(string rom_file)
     {
         gba = new GBA(rom_file, save_file, "bios.bin");
         timer->start();
+        screen->grabKeyboard();
     }
     catch (runtime_error& e)
     {
@@ -95,6 +98,25 @@ void MainWindow::runGame(string rom_file)
         box.setWindowTitle(tr("Runtime error"));
         box.exec();
     }
+}
+
+GBA::Key MainWindow::keyToGBA(int key)
+{
+    switch (key)
+    {
+    case Qt::Key_A: return GBA::Key::A;
+    case Qt::Key_S: return GBA::Key::B;
+    case Qt::Key_Backspace: return GBA::Key::Select;
+    case Qt::Key_Return: return GBA::Key::Start;
+    case Qt::Key_Right: return GBA::Key::Right;
+    case Qt::Key_Left: return GBA::Key::Left;
+    case Qt::Key_Up: return GBA::Key::Up;
+    case Qt::Key_Down: return GBA::Key::Down;
+    case Qt::Key_W: return GBA::Key::R;
+    case Qt::Key_Q: return GBA::Key::L;
+    }
+
+    return GBA::Key::None;
 }
 
 void MainWindow::openGame()
@@ -134,4 +156,14 @@ void MainWindow::timerTick()
     u32* frame = gba->Frame();
     screen->updateTexture(frame, 240, 160);
     free(frame);
+}
+
+void MainWindow::keyPress(int key)
+{
+    gba->SetKeyState(keyToGBA(key), true);
+}
+
+void MainWindow::keyRelease(int key)
+{
+    gba->SetKeyState(keyToGBA(key), false);
 }

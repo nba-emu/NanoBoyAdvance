@@ -36,6 +36,7 @@ namespace NanoboyAdvance
     public:
         enum class Key
         {
+            None = 0,
             A = 1,
             B = 2,
             Select = 4,
