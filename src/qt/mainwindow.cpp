@@ -75,8 +75,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::runGame(QString rom_file)
 {
-    QString save_file = QFileInfo(rom_file).baseName() + ".sav";
-
+    QFileInfo rom_info(rom_file);
+    QString save_file = rom_info.path() + "\\" + rom_info.completeBaseName() + ".sav";
     if (gba != nullptr)
         delete gba;
 
@@ -132,7 +132,7 @@ void MainWindow::openGame()
     {
         QMessageBox box(this);
         box.setIcon(QMessageBox::Critical);
-        box.setText(tr("Cannot find file ") + QFileInfo(file).baseName());
+        box.setText(tr("Cannot find file ") + QFileInfo(file).fileName());
         box.setWindowTitle(tr("File error"));
         box.exec();
         return;
