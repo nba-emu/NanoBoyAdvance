@@ -50,6 +50,7 @@ void Screen::paintGL()
 {
     float w = (float)width();
     float h = (float)height();
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
     
@@ -77,4 +78,14 @@ void Screen::resizeGL(int width, int height)
     glOrtho(0, width, height, 0, -1, 1);
     glViewport(0, 0, width, height);
     glMatrixMode(GL_MODELVIEW);
+}
+
+void Screen::keyPressEvent(QKeyEvent* event)
+{
+    emit keyPress(event->key());
+}
+
+void Screen::keyReleaseEvent(QKeyEvent* event)
+{
+    emit keyRelease(event->key());
 }

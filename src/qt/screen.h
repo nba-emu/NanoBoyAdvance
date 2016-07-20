@@ -30,13 +30,17 @@ public:
 
     void updateTexture(unsigned int* pixels, int width, int height);
 signals:
+    void keyPress(int key);
+    void keyRelease(int key);
 
 public slots:
-
+    
 protected:
     void initializeGL();
     void paintGL();
     void resizeGL(int width, int height);
+    void keyPressEvent(QKeyEvent* event);
+    void keyReleaseEvent(QKeyEvent* event);
 
 private:
     GLuint texture;

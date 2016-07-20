@@ -44,10 +44,13 @@ class MainWindow : public QWidget
     NanoboyAdvance::GBA* gba {nullptr};
 
     void runGame(std::string rom_file);
+    NanoboyAdvance::GBA::Key keyToGBA(int key);
 public slots:
     void openGame();
     void closeApp();
     void timerTick();
+    void keyPress(int key);
+    void keyRelease(int key);
 public:
     MainWindow(QWidget* parent = 0);
     ~MainWindow();
