@@ -28,7 +28,7 @@ public:
     Screen(QWidget* parent = 0);
     ~Screen();
 
-    void setTextureSize(int width, int height);
+    void updateTexture(unsigned int* pixels, int width, int height);
 signals:
 
 public slots:
@@ -39,9 +39,5 @@ protected:
     void resizeGL(int width, int height);
 
 private:
-    int texture_width {240};
-    int texture_height {160};
     GLuint texture;
-
-    void draw();
 };

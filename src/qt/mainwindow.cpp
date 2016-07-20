@@ -131,5 +131,6 @@ void MainWindow::closeApp()
 
 void MainWindow::timerTick()
 {
-    free(gba->Frame());
+    u32* frame = gba->Frame();
+    free(frame);
 }
