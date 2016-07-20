@@ -32,9 +32,6 @@ MainWindow::MainWindow(QWidget* parent) : QWidget(parent)
 
     setWindowTitle("NanoboyAdvance");
 
-    // TODO: spawn window at another location, maybe in the middle or depending of the cursor location?
-    this->setGeometry(0, 0, 480, 320);
-
     // Setup menu
     menubar = new QMenuBar(this);
     file_menu = menubar->addMenu(tr("&File"));
@@ -48,7 +45,6 @@ MainWindow::MainWindow(QWidget* parent) : QWidget(parent)
 
     // Setup GL screen
     screen = new Screen(this);
-    screen->resize(480, 320);
     connect(screen, SIGNAL(keyPress(int)), this, SLOT(keyPress(int)));
     connect(screen, SIGNAL(keyRelease(int)), this, SLOT(keyRelease(int)));
 

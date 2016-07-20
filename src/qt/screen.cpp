@@ -35,6 +35,11 @@ void Screen::updateTexture(unsigned int* pixels, int width, int height)
     updateGL();
 }
 
+QSize Screen::sizeHint() const
+{
+    return QSize(480, 320);
+}
+
 void Screen::initializeGL()
 {
     qglClearColor(Qt::black);

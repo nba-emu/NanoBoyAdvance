@@ -29,6 +29,7 @@ public:
     ~Screen();
 
     void updateTexture(unsigned int* pixels, int width, int height);
+    QSize sizeHint() const;
 signals:
     void keyPress(int key);
     void keyRelease(int key);
