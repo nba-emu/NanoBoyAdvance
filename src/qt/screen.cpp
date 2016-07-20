@@ -22,67 +22,59 @@
 #include <QtOpenGL>
 
 Screen::Screen(QWidget* parent) : QGLWidget(parent)
-{
-    /*glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    // Testing
-    float pixels[] = {
-        0.0f, 0.0f, 0.0f,   1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 0.0f
-    };
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2, 0, GL_RGB, GL_FLOAT, pixels);*/
-    updateGL();
-}
+{}
 
 Screen::~Screen()
 {
+    glDeleteTextures(1, &texture);
 }
 
-void Screen::setTextureSize(int width, int height)
+void Screen::updateTexture(unsigned int* pixels, int width, int height)
 {
-    texture_width = width;
-    texture_height = height;
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
+    updateGL();
 }
 
 void Screen::initializeGL()
 {
     qglClearColor(Qt::black);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glShadeModel(GL_SMOOTH);
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
+    glEnable(GL_TEXTURE_2D);
 
-    static GLfloat lightPosition[4] = { 0, 0, 10, 1.0 };
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 }
 
 void Screen::paintGL()
 {
+    float w = (float)width();
+    float h = (float)height();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
-    draw();
+    
+    glBegin(GL_QUADS);
+    {
+        glTexCoord2f(0, 0);
+        glVertex2f(0, 0);
+        
+        glTexCoord2f(1.0f, 0);
+        glVertex2f(w, 0);
+
+        glTexCoord2f(1.0f, 1.0f);
+        glVertex2f(w, h);
+
+        glTexCoord2f(0, 1.0f);
+        glVertex2f(0, h);
+    }
+    glEnd();
 }
 
 void Screen::resizeGL(int width, int height)
 {
-    glViewport(0, height, width, height);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+    glViewport(0, 0, width, height);
     glMatrixMode(GL_MODELVIEW);
-}
-
-void Screen::draw()
-{
-    qglColor(Qt::blue);
-    glBegin(GL_TRIANGLES);
-        glVertex2f(0, 0);
-        glVertex2f(64, 0);
-        glVertex2f(64, 64);
-        glVertex2f(0, 64);
-    glEnd();
-    puts("draw()");
 }
