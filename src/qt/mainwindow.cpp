@@ -77,6 +77,7 @@ void MainWindow::runGame(QString rom_file)
 {
     QFileInfo rom_info(rom_file);
     QString save_file = rom_info.path() + "\\" + rom_info.completeBaseName() + ".sav";
+    
     if (gba != nullptr)
         delete gba;
 
