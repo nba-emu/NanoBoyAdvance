@@ -18,7 +18,6 @@
 */
 
 #include "mainwindow.h"
-#include "util/file.h"
 #include <QApplication>
 #include <QVBoxLayout>
 #include <QFileDialog>
