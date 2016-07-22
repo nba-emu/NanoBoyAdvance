@@ -28,7 +28,6 @@ namespace NanoboyAdvance
 {
     class GBAVideo
     {   
-        // Enumerating the possible sprite shapes
         enum class GBAVideoSpriteShape
         {
             Square = 0,
@@ -36,8 +35,7 @@ namespace NanoboyAdvance
             Vertical = 2,
             Prohibited = 3
         };
- 
-        // Special Effects
+
         enum class GBASpecialEffect
         {
             None = 0,
@@ -45,35 +43,33 @@ namespace NanoboyAdvance
             Increase = 2,
             Decrease = 3
         };
-       
-        // Interrupt interface
+        
         GBAInterrupt* interrupt;
         
-        // Buffers the various layers
+        // Rendering buffers
         u32 bd_buffer[240];
         u32 bg_buffer[4][240];
         u32 obj_buffer[4][240];
         
-        // Internal tick-counter
+        // Tick counter
         int ticks {0};
-        
-        /* !! Methods for color and tile decoding !! */
 
+        // Decodes GBA RGB555 to ARGB8888 format.
         inline u32 DecodeRGB5(u16 color)
         {
-            u32 argb = 0xFF000000 |
-                       (((color & 0x1F) * 8) << 16) |
-                       ((((color >> 5) & 0x1F) * 8) << 8) |
-                       (((color >> 10) & 0x1F) * 8);
-            return argb;
+            return 0xFF000000 |
+                   (((color & 0x1F) * 8) << 16) |
+                   ((((color >> 5) & 0x1F) * 8) << 8) |
+                   (((color >> 10) & 0x1F) * 8);
         }
 
+        // Decodes a single 4-bit tile line.
         inline u32* DecodeTileLine4BPP(u32 block_base, u32 palette_base, int number, int line)
         {
             u32 offset = block_base + number * 32 + line * 4;
             u32* data = new u32[8];
 
-            // We don't want to have random data in the buffer
+            // Empty buffer.
             memset(data, 0, 32);
 
             for (int i = 0; i < 4; i++)
@@ -81,8 +77,10 @@ namespace NanoboyAdvance
                 u8 value = vram[offset + i];
                 int left_index = value & 0xF;
                 int right_index = value >> 4;
-                u32 left_color = DecodeRGB5((pal[palette_base + left_index * 2 + 1] << 8) | pal[palette_base + left_index * 2]);
-                u32 right_color = DecodeRGB5((pal[palette_base + right_index * 2 + 1] << 8) | pal[palette_base + right_index * 2]);
+                u32 left_color = DecodeRGB5((pal[palette_base + left_index * 2 + 1] << 8) | 
+                                             pal[palette_base + left_index * 2]);
+                u32 right_color = DecodeRGB5((pal[palette_base + right_index * 2 + 1] << 8) | 
+                                              pal[palette_base + right_index * 2]);
 
                 // Copy left and right pixel to buffer
                 data[i * 2] = (left_index == 0) ? (left_color & ~0xFF000000) : left_color;
@@ -92,62 +90,67 @@ namespace NanoboyAdvance
             return data;
         }
 
+        // Decodes a single 8-bit tile line
         inline u32* DecodeTileLine8BPP(u32 block_base, int number, int line, bool sprite)
         {
             u32 offset = block_base + number * 64 + line * 8;
             u32 palette_base = sprite ? 0x200 : 0x0;
             u32* data = new u32[8];
 
-            // We don't want to have random data in the buffer
+            // Empty buffer.
             memset(data, 0, 32);
 
             for (int i = 0; i < 8; i++)
             {
                 u8 value = vram[offset + i];
-                u32 color = DecodeRGB5((pal[palette_base + value * 2 + 1] << 8) | pal[palette_base + value * 2]);
+                u32 color = DecodeRGB5((pal[palette_base + value * 2 + 1] << 8) | 
+                                        pal[palette_base + value * 2]);
+
                 data[i] = (value == 0) ? (color & ~0xFF000000) : color;
             }
 
             return data;
         }
 
+        // Decodes a single 8-bit tile pixel
         inline u32 DecodeTilePixel8BPP(u32 block_base, int number, int line, int column, bool sprite)
         {
             u8 value = vram[block_base + number * 64 + line * 8 + column];
             u32 palette_base = sprite ? 0x200 : 0x0;
-            u32 color = DecodeRGB5((pal[palette_base + value * 2 + 1] << 8) | pal[palette_base + value * 2]);
+            u32 color = DecodeRGB5((pal[palette_base + value * 2 + 1] << 8) | 
+                                    pal[palette_base + value * 2]);
+            
             return (value == 0) ? (color & ~0xFF000000) : color;
+        }
+
+        // Copies src buffer on dst buffer
+        inline void OverlayLineBuffers(u32* dst, u32* src)
+        {
+            for (int i = 0; i < 240; i++) 
+            {
+                u32 color = src[i];
+
+                if ((color >> 24) != 0)
+                    dst[i] = color | 0xFF000000;
+            }
+        }
+
+        inline void DrawLineToBuffer(u32* line_buffer, int line, bool backdrop)
+        {
+            for (int i = 0; i < 240; i++)
+            {
+                u32 color = line_buffer[i];
+
+                if (backdrop || (color >> 24) != 0)
+                    buffer[line * 240 + i] = line_buffer[i] | 0xFF000000;
+            }
         }
         
         // Renderers
         void RenderBackgroundMode0(int id, int line);
         void RenderBackgroundMode1(int id, int line);
         void RenderSprites(int priority, int line, u32 tile_base);
-        
-        // SFX
-        u32* ApplySFX(int buffer_id);
 
-        // Misc
-        inline void OverlayLineBuffers(u32* dst, u32* src) {
-            for (int i = 0; i < 240; i++) {
-                u32 color = src[i];
-                if ((color >> 24) != 0) {
-                    dst[i] = src[i] | 0xFF000000;
-                }
-            }
-        }
-
-        inline void DrawLineToBuffer(u32* line_buffer, int line, bool backdrop)
-        {
-            for (int i = 0; i < 240; i++) {
-                u32 color = line_buffer[i];
-                if (backdrop || (color >> 24) != 0) {
-                    // TODO: we shouldn't set MSB to 0xFF if it's already set to that value
-                    buffer[line * 240 + i] = line_buffer[i] | 0xFF000000;
-                }
-            }
-        }
-        
         // Renders one entire line
 		void Render(int line);
     public:
@@ -244,20 +247,12 @@ namespace NanoboyAdvance
             // TODO...
         } objwin;
         
-        // Constructor
-        GBAVideo(GBAInterrupt* interrupt);
-        
-        // Runs the PPU for exactly one tick
-        void Step();
-        
-                
-        /* !! GBA-float encoders / decoders !! */
-        
         static inline float DecodeGBAFloat32(u32 number)
         {
             bool is_negative = number & (1 << 27);
             s32 int_part = ((number & ~0xF0000000) >> 8) | (is_negative ? 0xFFF00000 : 0);
             float frac_part = static_cast<float>(number & 0xFF) / 256;
+
             return static_cast<float>(int_part) + (is_negative ? -frac_part : frac_part);
         }
 
@@ -266,6 +261,7 @@ namespace NanoboyAdvance
             bool is_negative = number & (1 << 15);
             s32 int_part = (number >> 8) | (is_negative ? 0xFFFFFF00 : 0);
             float frac_part = static_cast<float>(number & 0xFF) / 256;
+
             return static_cast<float>(int_part) + (is_negative ? -frac_part : frac_part);        
         }
 
@@ -273,7 +269,14 @@ namespace NanoboyAdvance
         {
             s32 int_part = static_cast<s32>(number);
             u8 frac_part = static_cast<u8>((number - int_part) * (number >= 0 ? 256 : -256)); // optimize
+
             return (u32)(int_part << 8 | frac_part);
         }
+
+        // Constructor
+        GBAVideo(GBAInterrupt* interrupt);
+        
+        // Update PPU state
+        void Step();
     };
 }
