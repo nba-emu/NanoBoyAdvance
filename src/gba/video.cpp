@@ -43,15 +43,15 @@ namespace NanoboyAdvance
     void GBAVideo::RenderBackgroundMode0(int id, int line)
     {
         // IO-register values
-        u16 scx = bg_hofs[id];
-        u16 scy = bg_vofs[id];
+        u16 scx = bg[id].x;
+        u16 scy = bg[id].y;
         
         // Rendering variables
-        u32 tile_block_base = bg_tile_base[id];
-        u32 map_block_base = bg_map_base[id];
-        bool color_mode = bg_pal_256[id];
-        int width = ((bg_size[id] & 1) + 1) << 8;
-        int height = ((bg_size[id] >> 1) + 1) << 8;
+        u32 tile_block_base = bg[id].tile_base;
+        u32 map_block_base = bg[id].map_base;
+        bool color_mode = bg[id].true_color;
+        int width = ((bg[id].size & 1) + 1) << 8;
+        int height = ((bg[id].size >> 1) + 1) << 8;
         int map_line = (line + scy) % height;
         int tile_line = map_line % 8;
         int map_row = (map_line - tile_line) / 8;
@@ -112,19 +112,19 @@ namespace NanoboyAdvance
     void GBAVideo::RenderBackgroundMode1(int id, int line)
     {
         // Rendering variables
-        u32 tile_block_base = bg_tile_base[id];
-        u32 map_block_base = bg_map_base[id];
-        bool wraparound = bg_wraparound[id];
-        int blocks = ((bg_size[id]) + 1) << 4;
+        u32 tile_block_base = bg[id].tile_base;
+        u32 map_block_base = bg[id].map_base;
+        bool wraparound = bg[id].wraparound;
+        int blocks = ((bg[id].size) + 1) << 4;
         int size = blocks * 8;
         
         for (int i = 0; i < 240; i++) {
             float dec_bgx = bg_x_int[id];
             float dec_bgy = bg_y_int[id];
-            float dec_bgpa = DecodeGBAFloat16(bg_pa[id]);
-            float dec_bgpb = DecodeGBAFloat16(bg_pb[id]);
-            float dec_bgpc = DecodeGBAFloat16(bg_pc[id]);
-            float dec_bgpd = DecodeGBAFloat16(bg_pd[id]);
+            float dec_bgpa = DecodeGBAFloat16(bg[id].pa);
+            float dec_bgpb = DecodeGBAFloat16(bg[id].pb);
+            float dec_bgpc = DecodeGBAFloat16(bg[id].pc);
+            float dec_bgpd = DecodeGBAFloat16(bg[id].pd);
             int x = dec_bgx + (dec_bgpa * i) + (dec_bgpb * line);
             int y = dec_bgy + (dec_bgpc * i) + (dec_bgpd * line);
             int tile_internal_line;
@@ -361,7 +361,7 @@ namespace NanoboyAdvance
             // BG Mode 0 - 240x160 pixels, Text mode
             // TODO: Consider using no loop
             for (int i = 0; i < 4; i++) {
-                if (bg_enable[i]) {
+                if (bg[i].enable) {
                     RenderBackgroundMode0(i, line);
                 }
             }
@@ -370,13 +370,13 @@ namespace NanoboyAdvance
         case 1:
         {        
             // BG Mode 1 - 240x160 pixels, Text and RS mode mixed
-            if (bg_enable[0]) {
+            if (bg[0].enable) {
                 RenderBackgroundMode0(0, line);
             }
-            if (bg_enable[1]) {
+            if (bg[1].enable) {
                 RenderBackgroundMode0(1, line);
             }
-            if (bg_enable[2]) {
+            if (bg[2].enable) {
                 RenderBackgroundMode1(2, line);
             }
             break;
@@ -384,10 +384,10 @@ namespace NanoboyAdvance
         case 2:
         {
             // BG Mode 2 - 240x160 pixels, RS mode
-            if (bg_enable[2]) {
+            if (bg[2].enable) {
                 RenderBackgroundMode1(2, line);
             }
-            if (bg_enable[3]) {
+            if (bg[3].enable) {
                 RenderBackgroundMode1(3, line);
             }
             break;
@@ -395,7 +395,7 @@ namespace NanoboyAdvance
         case 3:
             // BG Mode 3 - 240x160 pixels, 32768 colors
             // Bitmap modes are rendered on BG2 which means we must check if it is enabled
-            if (bg_enable[2])
+            if (bg[2].enable)
             {
                 u32 offset = line * 240 * 2;
                 for (int x = 0; x < 240; x++)
@@ -408,7 +408,7 @@ namespace NanoboyAdvance
         case 4:
             // BG Mode 4 - 240x160 pixels, 256 colors (out of 32768 colors)
             // Bitmap modes are rendered on BG2 which means we must check if it is enabled
-            if (bg_enable[2])
+            if (bg[2].enable)
             {
                 u32 page = frame_select ? 0xA000 : 0;
                 for (int x = 0; x < 240; x++)
@@ -422,7 +422,7 @@ namespace NanoboyAdvance
         case 5:
             // BG Mode 5 - 160x128 pixels, 32768 colors
             // Bitmap modes are rendered on BG2 which means we must check if it is enabled
-            if (bg_enable[2])
+            if (bg[2].enable)
             {
                 u32 offset = (frame_select ? 0xA000 : 0) + line * 160 * 2;
                 for (int x = 0; x < 240; x++)
@@ -456,7 +456,7 @@ namespace NanoboyAdvance
         if (win_none) {
             for (int i = 3; i >= 0; i--) {
                 for (int j = 3; j >= 0; j--) {
-                    if (bg_enable[j] && bg_priority[j] == i) {
+                    if (bg[j].enable && bg[j].priority == i) {
                         DrawLineToBuffer(bg_buffer[j], line, first_bg);
                         first_bg = false;
                     }
@@ -469,7 +469,7 @@ namespace NanoboyAdvance
             // Compose outer window area
             for (int i = 3; i >= 0; i--) {
                 for (int j = 3; j >= 0; j--) {
-                    if (bg_enable[j] && bg_priority[j] == i && bg_winout[j]) {
+                    if (bg[j].enable && bg[j].priority == i && bg_winout[j]) {
                         DrawLineToBuffer(bg_buffer[j], line, first_bg);
                         first_bg = false;
                     }
@@ -495,7 +495,7 @@ namespace NanoboyAdvance
                     // Draw backgrounds and sprites if any
                     for (int j = 3; j >= 0; j--) {
                         for (int k = 3; k >= 0; k--) {
-                            if (bg_enable[k] && bg_priority[k] == j && bg_winin[i][k]) {
+                            if (bg[k].enable && bg[k].priority == j && bg_winin[i][k]) {
                                 OverlayLineBuffers(win_buffer, bg_buffer[k]);
                             }
                         }
@@ -579,10 +579,10 @@ namespace NanoboyAdvance
                 }
                 if (vcount == 160)
                 {
-                    bg_x_int[2] = DecodeGBAFloat32(bg_x[2]);
-                    bg_y_int[2] = DecodeGBAFloat32(bg_y[2]);
-                    bg_x_int[3] = DecodeGBAFloat32(bg_x[3]);
-                    bg_y_int[3] = DecodeGBAFloat32(bg_y[3]);
+                    bg_x_int[2] = DecodeGBAFloat32(bg[2].x_ref);
+                    bg_y_int[2] = DecodeGBAFloat32(bg[2].y_ref);
+                    bg_x_int[3] = DecodeGBAFloat32(bg[3].x_ref);
+                    bg_y_int[3] = DecodeGBAFloat32(bg[3].y_ref);
                     hblank_dma = false;
                     vblank_dma = true;
                     state = GBAVideoState::VBlank;

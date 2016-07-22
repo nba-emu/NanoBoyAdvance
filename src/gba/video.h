@@ -181,18 +181,14 @@ namespace NanoboyAdvance
         // Output buffer
         u32 buffer[240 * 160];
         
-        /* !!!! Decoded IO registers !!!! */
         // DISPCNT
         int video_mode {0};
         bool frame_select {false};
         bool oam_access {false}; // HBlank Interval Free
         bool oam_mapping {false};
         bool forced_blank {false};
-        bool bg_enable[4] {false, false, false, false};
         bool obj_enable {false};
-        bool win_enable[2] {false, false};
-        bool obj_win_enable {false};
-        
+
         // DISPSTAT
         bool vcount_flag {false};
         bool vblank_irq {false};
@@ -202,44 +198,51 @@ namespace NanoboyAdvance
         
         // VCOUNT
         u16 vcount {0};
-        
-        // BGNCNT
-        int bg_priority[4] {0, 0, 0, 0};
-        u32 bg_tile_base[4] {0, 0, 0, 0};
-        bool bg_mosaic[4] {false, false, false, false};
-        bool bg_pal_256[4] {false, false, false, false};
-        u32 bg_map_base[4] {0, 0, 0, 0};
-        bool bg_wraparound[4] {false, false, false, false};
-        int bg_size[4] {0, 0, 0, 0};
-        
-        // BGN[H/V]OFS
-        u16 bg_hofs[4] {0, 0, 0, 0};
-        u16 bg_vofs[4] {0, 0, 0, 0};
-        
-        // BGN[X/Y]
-        u32 bg_x[4] {0, 0, 0, 0};
-        u32 bg_y[4] {0, 0, 0, 0};
-        
-        // BGNP[A/B/C/D]
-        u16 bg_pa[4] {0, 0, 0, 0};
-        u16 bg_pb[4] {0, 0, 0, 0};
-        u16 bg_pc[4] {0, 0, 0, 0};
-        u16 bg_pd[4] {0, 0, 0, 0};
-        
-        // WINN[H/V]
-        u16 win_left[2] {0, 0};
-        u16 win_right[2] {0, 0};
-        u16 win_top[2] {0, 0};
-        u16 win_bottom[2] {0, 0};
-        
-        // WININ and WINOUT
-        bool bg_winin[2][4] {{0, 0, 0, 0}, {0, 0, 0, 0}};
-        bool bg_winout[4] {0, 0, 0, 0};
-        bool obj_winin[2] {0, 0};
-        bool obj_winout {0};
-        bool sfx_winin[2] {0, 0};
-        bool sfx_winout {0};
-        /* !!!! End decoded IO registers !!!! */
+
+        struct Background
+        {
+            bool enable {false};
+            bool mosaic {false};
+            bool true_color {false};
+            bool wraparound {false};
+            int priority {0};
+            int size {0}; 
+            u32 tile_base {0};
+            u32 map_base {0};
+            u32 x {0};
+            u32 y {0};
+            u16 x_ref {0};
+            u16 y_ref {0};
+            u16 pa {0};
+            u16 pb {0};
+            u16 pc {0};
+            u16 pd {0};
+        } bg[4];
+
+        struct Window
+        {
+            bool enable {false};
+            bool bg_in[4] {false, false, false, false};
+            bool obj_in {false};
+            bool sfx_in {false};
+            u16 left {0};
+            u16 right {0};
+            u16 top {0};
+            u16 bottom {0};
+        } win[2];
+
+        struct WindowOuter
+        {
+            bool bg[4] {false, false, false, false};
+            bool obj {false};
+            bool sfx {false};
+        } winout;
+
+        struct ObjectWindow
+        {
+            bool enable {false};
+            // TODO...
+        } objwin;
         
         // Constructor
         GBAVideo(GBAInterrupt* interrupt);
