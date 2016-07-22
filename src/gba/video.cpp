@@ -329,11 +329,6 @@ namespace NanoboyAdvance
             offset -= 8;
         }
     }
-
-    u32* GBAVideo::ApplySFX(int buffer_id)
-    {
-        return nullptr;        
-    }
     
     void GBAVideo::Render(int line)
     {
