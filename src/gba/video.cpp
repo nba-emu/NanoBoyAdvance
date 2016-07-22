@@ -338,7 +338,7 @@ namespace NanoboyAdvance
     void GBAVideo::Render(int line)
     {
         bool first_bg = true;
-        bool win_none = !win_enable[0] && !win_enable[1] && !obj_win_enable;
+        bool win_none = !win[0].enable && !win[1].enable && !objwin.enable;
         
         // Reset obj buffers
         memset(obj_buffer[0], 0, sizeof(u32)*240);
@@ -469,21 +469,21 @@ namespace NanoboyAdvance
             // Compose outer window area
             for (int i = 3; i >= 0; i--) {
                 for (int j = 3; j >= 0; j--) {
-                    if (bg[j].enable && bg[j].priority == i && bg_winout[j]) {
+                    if (bg[j].enable && bg[j].priority == i && winout.bg[j]) {
                         DrawLineToBuffer(bg_buffer[j], line, first_bg);
                         first_bg = false;
                     }
                 }
-                if (obj_enable && obj_winout) {
+                if (obj_enable && winout.obj) {
                     DrawLineToBuffer(obj_buffer[i], line, false);
                 }
             }
             
             // Compose inner window[0/1] area
             for (int i = 1; i >= 0; i--) {
-                if (win_enable[i] && (
-                    (win_top[i] <= win_bottom[i] && line >= win_top[i] && line <= win_bottom[i]) ||
-                    (win_top[i] > win_bottom[i] && !(line <= win_top[i] && line >= win_bottom[i]))
+                if (win[i].enable && (
+                    (win[i].top <= win[i].bottom && line >= win[i].top && line <= win[i].bottom) ||
+                    (win[i].top > win[i].bottom && !(line <= win[i].top && line >= win[i].bottom))
                 )) {
                     u32 win_buffer[240];
                     
@@ -495,29 +495,29 @@ namespace NanoboyAdvance
                     // Draw backgrounds and sprites if any
                     for (int j = 3; j >= 0; j--) {
                         for (int k = 3; k >= 0; k--) {
-                            if (bg[k].enable && bg[k].priority == j && bg_winin[i][k]) {
+                            if (bg[k].enable && bg[k].priority == j && win[i].bg_in[k]) {
                                 OverlayLineBuffers(win_buffer, bg_buffer[k]);
                             }
                         }
-                        if (obj_enable && obj_winin[i]) {
+                        if (obj_enable && win[i].obj_in) {
                             OverlayLineBuffers(win_buffer, obj_buffer[j]);
                         }
                     }
 
                     // Make the window buffer transparent in the outer area
-                    if (win_left[i] <= win_right[i] + 1) {
-                        for (int j = 0; j <= win_left[i]; j++) {
+                    if (win[i].left <= win[i].right + 1) {
+                        for (int j = 0; j <= win[i].left; j++) {
                             if (j < 240) {
                                 win_buffer[j] = 0;
                             }
                         }
-                        for (int j = win_right[i]; j < 240; j++) {
+                        for (int j = win[i].right; j < 240; j++) {
                             if (j >= 0) {
                                 win_buffer[j] = 0;
                             }
                         }
                     } else {
-                        for (int j = win_right[i]; j <= win_left[i]; j++) {
+                        for (int j = win[i].right; j <= win[i].left; j++) {
                             if (j >= 0 && j < 240) {
                                 win_buffer[j] = 0;
                             }
