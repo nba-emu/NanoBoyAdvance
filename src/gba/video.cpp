@@ -46,71 +46,66 @@ namespace NanoboyAdvance
 
     void GBAVideo::RenderBackgroundMode0(int id, int line)
     {
-        // IO-register values
-        u16 scx = bg[id].x;
-        u16 scy = bg[id].y;
-        
-        // Rendering variables
-        u32 tile_block_base = bg[id].tile_base;
-        u32 map_block_base = bg[id].map_base;
-        bool color_mode = bg[id].true_color;
-        int width = ((bg[id].size & 1) + 1) << 8;
-        int height = ((bg[id].size >> 1) + 1) << 8;
-        int map_line = (line + scy) % height;
-        int tile_line = map_line % 8;
-        int map_row = (map_line - tile_line) / 8;
-        u32* line_buffer = new u32[width];
-        int left_area;
-        int right_area;
+        struct Background bg = this->bg[id];
+
+        int width = ((bg.size & 1) + 1) * 256;
+        int height = ((bg.size >> 1) + 1) * 256;
+        int y_scrolled = (line + bg.y) % height;
+        int row = y_scrolled / 8;
+        int row_rmdr = y_scrolled % 8;
+        int left_area = 0;
+        int right_area = 1;
+        u32 line_buffer[width];
         u32 offset;
-        
-        // Map may consist of 1 to max. 4 screen areas, 1 or 2 will be rendered.
-        if (map_row >= 32) {
-            left_area = width == 512 ? 2 : 1;
+
+        if (row >= 32)
+        {
+            left_area = (bg.size & 1) + 1;
             right_area = 3;
-            map_row -= 32;
-        } else {
-            left_area = 0;
-            right_area = 1;
-        }
-        
-        // Calculate the offset of the first tile encoder.
-        offset = map_block_base + left_area * 0x800 + 64 * map_row;
-        
-        // Decode tile information for each tile in the row and render them.
-        for (int x = 0; x < width / 8; x++) {
-            u16 tile_encoder = (vram[offset + 1] << 8) | vram[offset];
-            int tile_number = tile_encoder & 0x3FF;
-            bool horizontal_flip = tile_encoder & (1 << 10);
-            bool vertical_flip = tile_encoder & (1 << 11);       
-            u32* tile_data;
-            
-            // Background may be either 16 or 256 colors, render the given tile.
-            if (color_mode) {
-                tile_data = DecodeTileLine8BPP(tile_block_base, tile_number, (vertical_flip ? (7 - tile_line) : tile_line), false);
-            } else {
-                int palette = tile_encoder >> 12;
-                tile_data = DecodeTileLine4BPP(tile_block_base, palette * 0x20, tile_number, (vertical_flip ? (7 - tile_line) : tile_line));
-            }
-            
-            // Copy rendered tile to line buffer.
-            for (int i = 0; i < 8; i++) {
-                line_buffer[x * 8 + i] = tile_data[horizontal_flip ? (7 - i) : i];
-            }
-            
-            delete[] tile_data;
-            
-            // Update offset.
-            if (x == 31) offset = map_block_base + right_area * 0x800 + 64 * map_row;
-            else offset += 2;
-        }
-        
-        // Copy *visible* pixels with wraparound.
-        for (int i = 0; i < 240; i++) {
-            bg_buffer[id][i] = line_buffer[(scx + i) % width];
+            row -= 32;
         }
 
-        delete[] line_buffer;
+        offset = bg.map_base + left_area * 0x800 + 64 * row;
+
+        for (int x = 0; x < width / 8; x++)
+        {
+            u16 tile_encoder = (vram[offset + 1] << 8) | 
+                                vram[offset];
+            int tile_number = tile_encoder & 0x3FF;
+            bool horizontal_flip = tile_encoder & (1 << 10);
+            bool vertical_flip = tile_encoder & (1 << 11); 
+            int row_rmdr_flip = row_rmdr;
+            u32* tile_data;
+
+            if (vertical_flip)
+                row_rmdr_flip = 7 - row_rmdr_flip;
+
+            if (bg.true_color)
+            {
+                tile_data = DecodeTileLine8BPP(bg.tile_base, tile_number, row_rmdr_flip, false);
+            } else 
+            {
+                int palette = tile_encoder >> 12;
+                tile_data = DecodeTileLine4BPP(bg.tile_base, palette * 0x20, tile_number, row_rmdr_flip);
+            }
+
+            if (horizontal_flip)
+                for (int i = 0; i < 8; i++)
+                    line_buffer[x * 8 + i] = tile_data[7 - i];
+            else
+                for (int i = 0; i < 8; i++)
+                    line_buffer[x * 8 + i] = tile_data[i];
+
+            delete[] tile_data;
+            
+            if (x == 31) 
+                offset = bg.map_base + right_area * 0x800 + 64 * row;
+            else
+                offset += 2;
+        }
+
+        for (int i = 0; i < 240; i++)
+            bg_buffer[id][i] = line_buffer[(bg.x + i) % width];
     }
 
     void GBAVideo::RenderBackgroundMode1(int id, int line)
