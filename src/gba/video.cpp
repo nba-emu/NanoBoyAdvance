@@ -460,7 +460,7 @@ namespace NanoboyAdvance
                         first_bg = false;
                     }
                 }
-                if (obj.two_dimensional) {
+                if (obj.enable) {
                     DrawLineToBuffer(obj_buffer[i], line, false);
                 }
             }
@@ -473,7 +473,7 @@ namespace NanoboyAdvance
                         first_bg = false;
                     }
                 }
-                if (obj.two_dimensional && winout.obj) {
+                if (obj.enable && winout.obj) {
                     DrawLineToBuffer(obj_buffer[i], line, false);
                 }
             }
@@ -498,7 +498,7 @@ namespace NanoboyAdvance
                                 OverlayLineBuffers(win_buffer, bg_buffer[k]);
                             }
                         }
-                        if (obj.two_dimensional && win[i].obj_in) {
+                        if (obj.enable && win[i].obj_in) {
                             OverlayLineBuffers(win_buffer, obj_buffer[j]);
                         }
                     }
