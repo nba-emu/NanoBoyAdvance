@@ -28,6 +28,10 @@
 
 namespace NanoboyAdvance
 {
+    const int GBAVideo::VBLANK_INTERRUPT = 1;
+    const int GBAVideo::HBLANK_INTERRUPT = 2;
+    const int GBAVideo::VCOUNT_INTERRUPT = 4;
+
     GBAVideo::GBAVideo(GBAInterrupt* interrupt)
     {
         // Assign interrupt struct to video device
@@ -528,13 +532,8 @@ namespace NanoboyAdvance
 
     void NanoboyAdvance::GBAVideo::Step()
     {
-        // Update tickcount
         ticks++;
-
-        // Reset flags
         render_scanline = false;
-
-        // Handle V-Count Setting (LYC)
         vcount_flag = vcount == vcount_setting;
 
         switch (state)
@@ -546,16 +545,8 @@ namespace NanoboyAdvance
                 hblank_dma = true;
                 state = GBAVideoState::HBlank;
                 
-                // Increment bg2x, bg2y, bg3x and bg3y by corresponding dmx/dmy after each scanline
-                //bg2x_internal = EncodeGBAFloat32(DecodeGBAFloat32(bg2x_internal) + DecodeGBAFloat16(gba_io->bg2pb));
-                //bg2y_internal = EncodeGBAFloat32(DecodeGBAFloat32(bg2y_internal) + DecodeGBAFloat16(gba_io->bg2pd));
-                //bg3x_internal = EncodeGBAFloat32(DecodeGBAFloat32(bg3x_internal) + DecodeGBAFloat16(gba_io->bg3pb));
-                //bg3y_internal = EncodeGBAFloat32(DecodeGBAFloat32(bg3y_internal) + DecodeGBAFloat16(gba_io->bg3pd));
-                
                 if (hblank_irq)
-                {
-                    interrupt->if_ |= 2;
-                }
+                    interrupt->if_ |= HBLANK_INTERRUPT;
 
                 Render(vcount);
                 render_scanline = true;
@@ -568,25 +559,30 @@ namespace NanoboyAdvance
             if (ticks >= 272)
             {
                 vcount++;
+
                 if (vcount_flag && vcount_irq)
-                {
-                    interrupt->if_ |= 4;
-                }
+                    interrupt->if_ |= VCOUNT_INTERRUPT;
+                
                 if (vcount == 160)
                 {
                     bg[2].x_ref_int = DecodeGBAFloat32(bg[2].x_ref);
                     bg[2].y_ref_int = DecodeGBAFloat32(bg[2].y_ref);
                     bg[3].x_ref_int = DecodeGBAFloat32(bg[3].x_ref);
                     bg[3].y_ref_int = DecodeGBAFloat32(bg[3].y_ref);
+
                     hblank_dma = false;
                     vblank_dma = true;
                     state = GBAVideoState::VBlank;
+
+                    if (vblank_irq)
+                        interrupt->if_ |= VBLANK_INTERRUPT;
                 }
                 else
                 {
                     hblank_dma = false;
                     state = GBAVideoState::Scanline;
                 }
+
                 ticks = 0;
             }
             break;
@@ -595,20 +591,17 @@ namespace NanoboyAdvance
             if (ticks >= 1232)
             {
                 vcount++;
+
                 if (vcount_flag && vcount_irq)
-                {
-                    interrupt->if_ |= 4;
-                }
-                if (vblank_irq && vcount == 161)
-                {
-                    interrupt->if_ |= 1;
-                }
-                if (vcount >= 227) // check wether this must be 227 or 228
+                    interrupt->if_ |= VCOUNT_INTERRUPT;
+
+                if (vcount == 227)
                 {
                     vblank_dma = false;
                     state = GBAVideoState::Scanline;
                     vcount = 0;
                 }
+
                 ticks = 0;
             }
             break;

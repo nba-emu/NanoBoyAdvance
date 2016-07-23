@@ -28,6 +28,10 @@ namespace NanoboyAdvance
 {
     class GBAVideo
     {   
+        static const int VBLANK_INTERRUPT;
+        static const int HBLANK_INTERRUPT;
+        static const int VCOUNT_INTERRUPT;
+
         enum class GBAVideoSpriteShape
         {
             Square = 0,
