@@ -152,9 +152,8 @@ namespace NanoboyAdvance
         void RenderSprites(int priority, int line, u32 tile_base);
 
         // Renders one entire line
-		void Render(int line);
+        void Render(int line);
     public:
-        // Enumerating all video states
         enum class GBAVideoState
         {
             Scanline,
@@ -171,11 +170,7 @@ namespace NanoboyAdvance
         // PPU memory
         u8 pal[0x400];
         u8 vram[0x18000];
-        u8 obj[0x400];
-        
-        // Internal bgN[x/y] copies
-        float bg_x_int[4];
-        float bg_y_int[4];
+        u8 oam[0x400];
         
         // DMA indicators
         bool hblank_dma {false};
@@ -183,24 +178,16 @@ namespace NanoboyAdvance
         
         // Output buffer
         u32 buffer[240 * 160];
-        
-        // DISPCNT
+
+        u16 vcount {0};
         int video_mode {0};
         bool frame_select {false};
-        bool oam_access {false}; // HBlank Interval Free
-        bool oam_mapping {false};
         bool forced_blank {false};
-        bool obj_enable {false};
-
-        // DISPSTAT
         bool vcount_flag {false};
         bool vblank_irq {false};
         bool hblank_irq {false};
         bool vcount_irq {false};
         u8 vcount_setting {0};
-        
-        // VCOUNT
-        u16 vcount {0};
 
         struct Background
         {
@@ -216,11 +203,20 @@ namespace NanoboyAdvance
             u32 y {0};
             u16 x_ref {0};
             u16 y_ref {0};
+            u16 x_ref_int {0};
+            u16 y_ref_int {0};
             u16 pa {0};
             u16 pb {0};
             u16 pc {0};
             u16 pd {0};
         } bg[4];
+
+        struct Object
+        {
+            bool enable {false};
+            bool hblank_access {false};
+            bool two_dimensional {false};
+        } obj;
 
         struct Window
         {

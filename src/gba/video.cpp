@@ -36,7 +36,7 @@ namespace NanoboyAdvance
         // Zero init memory buffers
         memset(pal, 0, 0x400);
         memset(vram, 0, 0x18000);
-        memset(obj, 0, 0x400);
+        memset(oam, 0, 0x400);
         memset(buffer, 0, 240 * 160 * 4);
     }
 
@@ -119,8 +119,8 @@ namespace NanoboyAdvance
         int size = blocks * 8;
         
         for (int i = 0; i < 240; i++) {
-            float dec_bgx = bg_x_int[id];
-            float dec_bgy = bg_y_int[id];
+            float dec_bgx = bg[id].x_ref_int;
+            float dec_bgy = bg[id].y_ref_int;
             float dec_bgpa = DecodeGBAFloat16(bg[id].pa);
             float dec_bgpb = DecodeGBAFloat16(bg[id].pb);
             float dec_bgpc = DecodeGBAFloat16(bg[id].pc);
@@ -176,9 +176,9 @@ namespace NanoboyAdvance
         // Walk all entries
         for (int i = 0; i < 128; i++)
         {
-            u16 attribute0 = (obj[offset + 1] << 8) | obj[offset];
-            u16 attribute1 = (obj[offset + 3] << 8) | obj[offset + 2];
-            u16 attribute2 = (obj[offset + 5] << 8) | obj[offset + 4];
+            u16 attribute0 = (oam[offset + 1] << 8) | oam[offset];
+            u16 attribute1 = (oam[offset + 3] << 8) | oam[offset + 2];
+            u16 attribute2 = (oam[offset + 5] << 8) | oam[offset + 4];
 
             // Only render those which have matching priority
             if (((attribute2 >> 10) & 3) == priority)
@@ -271,7 +271,7 @@ namespace NanoboyAdvance
                         u32* tile_data;
 
                         // Determine the tile to render
-                        if (oam_mapping)
+                        if (obj.two_dimensional)
                         {
                             current_tile_number = tile_number + row * tiles_per_row + j;
                         }
@@ -439,7 +439,7 @@ namespace NanoboyAdvance
         }
         
         // Check if objects are enabled..
-        if (obj_enable) {
+        if (obj.enable) {
             // .. and render all of them to their buffers if so
             RenderSprites(0, line, 0x10000);
             RenderSprites(1, line, 0x10000);
@@ -456,7 +456,7 @@ namespace NanoboyAdvance
                         first_bg = false;
                     }
                 }
-                if (obj_enable) {
+                if (obj.two_dimensional) {
                     DrawLineToBuffer(obj_buffer[i], line, false);
                 }
             }
@@ -469,7 +469,7 @@ namespace NanoboyAdvance
                         first_bg = false;
                     }
                 }
-                if (obj_enable && winout.obj) {
+                if (obj.two_dimensional && winout.obj) {
                     DrawLineToBuffer(obj_buffer[i], line, false);
                 }
             }
@@ -494,7 +494,7 @@ namespace NanoboyAdvance
                                 OverlayLineBuffers(win_buffer, bg_buffer[k]);
                             }
                         }
-                        if (obj_enable && win[i].obj_in) {
+                        if (obj.two_dimensional && win[i].obj_in) {
                             OverlayLineBuffers(win_buffer, obj_buffer[j]);
                         }
                     }
@@ -574,10 +574,10 @@ namespace NanoboyAdvance
                 }
                 if (vcount == 160)
                 {
-                    bg_x_int[2] = DecodeGBAFloat32(bg[2].x_ref);
-                    bg_y_int[2] = DecodeGBAFloat32(bg[2].y_ref);
-                    bg_x_int[3] = DecodeGBAFloat32(bg[3].x_ref);
-                    bg_y_int[3] = DecodeGBAFloat32(bg[3].y_ref);
+                    bg[2].x_ref_int = DecodeGBAFloat32(bg[2].x_ref);
+                    bg[2].y_ref_int = DecodeGBAFloat32(bg[2].y_ref);
+                    bg[3].x_ref_int = DecodeGBAFloat32(bg[3].x_ref);
+                    bg[3].y_ref_int = DecodeGBAFloat32(bg[3].y_ref);
                     hblank_dma = false;
                     vblank_dma = true;
                     state = GBAVideoState::VBlank;

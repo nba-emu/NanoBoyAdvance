@@ -321,15 +321,15 @@ namespace NanoboyAdvance
             case DISPCNT:
                 return (video->video_mode) |
                        (video->frame_select ? 16 : 0) | 
-                       (video->oam_access ? 32 : 0) |
-                       (video->oam_mapping ? 64 : 0) |
+                       (video->obj.hblank_access ? 32 : 0) |
+                       (video->obj.two_dimensional ? 64 : 0) |
                        (video->forced_blank ? 128 : 0);
             case DISPCNT+1:
                 return (video->bg[0].enable ? 1 : 0) |
                        (video->bg[1].enable ? 2 : 0) |
                        (video->bg[2].enable ? 4 : 0) |
                        (video->bg[3].enable ? 8 : 0) |
-                       (video->obj_enable ? 16 : 0) |
+                       (video->obj.enable ? 16 : 0) |
                        (video->win[0].enable ? 32 : 0) |
                        (video->win[1].enable ? 64 : 0) |
                        (video->objwin.enable ? 128 : 0);
@@ -452,7 +452,7 @@ namespace NanoboyAdvance
                 internal_offset -= 0x8000;
             return video->vram[internal_offset];
         case 7:
-            return video->obj[internal_offset % 0x400];
+            return video->oam[internal_offset % 0x400];
         case 8:
             if (internal_offset >= rom_size) return 0;
             return rom[internal_offset];
@@ -527,8 +527,8 @@ namespace NanoboyAdvance
             case DISPCNT:
                 video->video_mode = value & 7;
                 video->frame_select = value & 16;
-                video->oam_access = value & 32;
-                video->oam_mapping = value & 64;
+                video->obj.hblank_access = value & 32;
+                video->obj.two_dimensional = value & 64;
                 video->forced_blank = value & 128;
                 break;
             case DISPCNT+1:
@@ -536,7 +536,7 @@ namespace NanoboyAdvance
                 video->bg[1].enable = value & 2;
                 video->bg[2].enable = value & 4;
                 video->bg[3].enable = value & 8;
-                video->obj_enable = value & 16;
+                video->obj.enable = value & 16;
                 video->win[0].enable = value & 32;
                 video->win[1].enable = value & 64;
                 video->objwin.enable = value & 128;
@@ -619,7 +619,7 @@ namespace NanoboyAdvance
                 int n = (internal_offset - BG2X) * 8;
                 u32 v = (video->bg[2].x_ref & ~(0xFF << n)) | (value << n);
                 video->bg[2].x_ref = v;
-                video->bg_x_int[2] = GBAVideo::DecodeGBAFloat32(v);
+                video->bg[2].x_ref_int = GBAVideo::DecodeGBAFloat32(v);
                 break;
             }
             case BG3X:
@@ -630,7 +630,7 @@ namespace NanoboyAdvance
                 int n = (internal_offset - BG3X) * 8;
                 u32 v = (video->bg[3].x_ref & ~(0xFF << n)) | (value << n);
                 video->bg[3].x_ref = v;
-                video->bg_x_int[3] = GBAVideo::DecodeGBAFloat32(v);
+                video->bg[3].x_ref_int = GBAVideo::DecodeGBAFloat32(v);
                 break;
             }
             case BG2Y:
@@ -641,7 +641,7 @@ namespace NanoboyAdvance
                 int n = (internal_offset - BG2Y) * 8;
                 u32 v = (video->bg[2].y_ref & ~(0xFF << n)) | (value << n);
                 video->bg[2].y_ref = v;
-                video->bg_y_int[2] = GBAVideo::DecodeGBAFloat32(v);
+                video->bg[2].y_ref_int = GBAVideo::DecodeGBAFloat32(v);
                 break;
             }
             case BG3Y:
@@ -652,7 +652,7 @@ namespace NanoboyAdvance
                 int n = (internal_offset - BG3Y) * 8;
                 u32 v = (video->bg[3].y_ref & ~(0xFF << n)) | (value << n);
                 video->bg[3].y_ref = v;
-                video->bg_y_int[3] = GBAVideo::DecodeGBAFloat32(v);
+                video->bg[3].y_ref_int = GBAVideo::DecodeGBAFloat32(v);
                 break;
             }
             case BG2PA:
@@ -1104,8 +1104,8 @@ namespace NanoboyAdvance
             video->vram[internal_offset + 1] = (value >> 8) & 0xFF;
             return;
         case 7:
-            video->obj[internal_offset % 0x400] = value & 0xFF;
-            video->obj[(internal_offset + 1) % 0x400] = (value >> 8) & 0xFF;
+            video->oam[internal_offset % 0x400] = value & 0xFF;
+            video->oam[(internal_offset + 1) % 0x400] = (value >> 8) & 0xFF;
             return;
         default:
             WriteByte(offset, value & 0xFF);
