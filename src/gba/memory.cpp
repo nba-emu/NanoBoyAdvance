@@ -243,7 +243,8 @@ namespace NanoboyAdvance
                 }
                     
                 // Raise DMA interrupt if enabled
-                if (dma[i].interrupt) interrupt->if_ |= 256 << i;
+                if (dma[i].interrupt)
+                    interrupt->if_ |= 256 << i;
             }
         }
     }
