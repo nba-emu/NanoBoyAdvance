@@ -43,101 +43,51 @@ namespace NanoboyAdvance
 {
     int ARM7::DecodeThumb(u16 instruction)
     {
-        if ((instruction & 0xF800) < 0x1800)
+        switch (instruction >> 12)
         {
-            // THUMB.1 Move shifted register
+        case 0x1:
+            if (instruction & 0x800)
+                return THUMB_2;
+        case 0x0:
             return THUMB_1;
-        }
-        else if ((instruction & 0xF800) == 0x1800)
-        {
-            // THUMB.2 Add/subtract
-            return THUMB_2;
-        }
-        else if ((instruction & 0xE000) == 0x2000)
-        {
-            // THUMB.3 Move/compare/add/subtract immediate
+        case 0x2:
+        case 0x3:
             return THUMB_3;
-        }
-        else if ((instruction & 0xFC00) == 0x4000)
-        {
-            // THUMB.4 ALU operations
+        case 0x4:
+            if (instruction & 0x800)
+                return THUMB_6;
+            if (instruction & 0x400)
+                return THUMB_5;
             return THUMB_4;
-        }
-        else if ((instruction & 0xFC00) == 0x4400)
-        {
-            // THUMB.5 Hi register operations/branch exchange
-            return THUMB_5;
-        }
-        else if ((instruction & 0xF800) == 0x4800)
-        {
-            // THUMB.6 PC-relative load
-            return THUMB_6;
-        }
-        else if ((instruction & 0xF200) == 0x5000)
-        {
-            // THUMB.7 Load/store with register offset
+        case 0x5:
+            if (instruction & 0x200)
+                return THUMB_8;
             return THUMB_7;
-        }
-        else if ((instruction & 0xF200) == 0x5200)
-        {
-            // THUMB.8 Load/store sign-extended byte/halfword
-            return THUMB_8;
-        }
-        else if ((instruction & 0xE000) == 0x6000)
-        {
-            // THUMB.9 Load store with immediate offset
+        case 0x6:
+        case 0x7:
             return THUMB_9;
-        }
-        else if ((instruction & 0xF000) == 0x8000)
-        {
-            // THUMB.10 Load/store halfword
+        case 0x8:
             return THUMB_10;
-        }
-        else if ((instruction & 0xF000) == 0x9000)
-        {
-            // THUMB.11 SP-relative load/store
+        case 0x9:
             return THUMB_11;
-        }
-        else if ((instruction & 0xF000) == 0xA000)
-        {
-            // THUMB.12 Load address
+        case 0xA:
             return THUMB_12;
-        }
-        else if ((instruction & 0xFF00) == 0xB000)
-        {
-            // THUMB.13 Add offset to stack pointer
+        case 0xB:
+            if (instruction & 0x400)
+                return THUMB_14;
             return THUMB_13;
-        }
-        else if ((instruction & 0xF600) == 0xB400)
-        {
-            // THUMB.14 push/pop registers
-            return THUMB_14;
-        }
-        else if ((instruction & 0xF000) == 0xC000)
-        {
-            // THUMB.15 Multiple load/store
+        case 0xC:
             return THUMB_15;
-        }
-        else if ((instruction & 0xFF00) < 0xDF00)
-        {
-            // THUMB.16 Conditional Branch
+        case 0xD:
+            if ((instruction & 0xF00) == 0xF00)
+                return THUMB_17;
             return THUMB_16;
-        }
-        else if ((instruction & 0xFF00) == 0xDF00)
-        {
-            // THUMB.17 Software Interrupt
-            return THUMB_17;
-        }
-        else if ((instruction & 0xF800) == 0xE000)
-        {
-            // THUMB.18 Unconditional Branch
+        case 0xE:
             return THUMB_18;
-        }
-        else if ((instruction & 0xF000) == 0xF000)
-        {
-            // THUMB.19 Long branch with link
+        case 0xF:
             return THUMB_19;
         }
+        
         return 0;
     }
 
