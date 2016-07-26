@@ -6,7 +6,7 @@ option(DEBUG "Build for debug purposes" ON)
 if (DEBUG)
     add_definitions(-std=c++11 -g -O0 -DDEBUG)
 else()
-    add_definitions(-std=c++11 -Ofast -funroll-loops)
+    add_definitions(-std=c++11 -O2 -funroll-loops -finline-functions)
 endif()
 
 # The version number.
