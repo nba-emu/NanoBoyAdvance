@@ -134,7 +134,7 @@ namespace NanoboyAdvance
             if (thumb)
             {
                 pipe.opcode[2] = memory->ReadHWord(r15);
-                ExecuteThumb(pipe.opcode[0], DecodeThumb(pipe.opcode[0]));
+                ExecuteThumb(pipe.opcode[0]);
                 break;
             }
             pipe.opcode[2] = memory->ReadWord(r15);
@@ -144,7 +144,7 @@ namespace NanoboyAdvance
             if (thumb)
             {
                 pipe.opcode[0] = memory->ReadHWord(r15);
-                ExecuteThumb(pipe.opcode[1], DecodeThumb(pipe.opcode[1]));
+                ExecuteThumb(pipe.opcode[1]);
                 break;
             }
             pipe.opcode[0] = memory->ReadWord(r15);
@@ -154,7 +154,7 @@ namespace NanoboyAdvance
             if (thumb)
             {
                 pipe.opcode[1] = memory->ReadHWord(r15);
-                ExecuteThumb(pipe.opcode[2], DecodeThumb(pipe.opcode[2]));
+                ExecuteThumb(pipe.opcode[2]);
                 break;
             }
             pipe.opcode[1] = memory->ReadWord(r15);
