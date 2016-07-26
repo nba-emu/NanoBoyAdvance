@@ -213,8 +213,7 @@ namespace NanoboyAdvance
         // Command processing
         int Decode(u32 instruction);
         void Execute(u32 instruction, int type);
-        int DecodeThumb(u16 instruction);
-        void ExecuteThumb(u16 instruction, int type);
+        void ExecuteThumb(u16 instruction);
 
         // HLE-emulation
         void SWI(int number);
