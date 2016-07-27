@@ -91,7 +91,6 @@ namespace NanoboyAdvance
             bool interrupt {false};
             bool enable {false};
         } dma[4];
-        int next_dma {0};
 
         // Timer IO
         struct Timer
