@@ -52,7 +52,6 @@ namespace NanoboyAdvance
                 // ARM.8 Data processing and PSR transfer ... immediate
                 section = ARM_8;
             }
-            // TODO: Check if we really must check all that bits
             else if ((opcode & 0xFF00FF0) == 0x1200F10)
             {
                 // ARM.3 Branch and exchange
@@ -99,7 +98,7 @@ namespace NanoboyAdvance
             break;
         case 0b11:
             // TODO: Optimize with a switch?
-            if (opcode & (1 << 25))
+            //if (opcode & (1 << 25))
             {
                 if (opcode & (1 << 24))
                 {
@@ -112,11 +111,11 @@ namespace NanoboyAdvance
                     section = opcode & 0x10 ? ARM_15 : ARM_14;
                 }
             }
-            else
-            {
+            //else
+            //{
                 // ARM.13 Coprocessor data transfer
-                section = ARM_13;
-            }
+            //    section = ARM_13;
+            //}
             break;
         }
         return section;
@@ -127,7 +126,7 @@ namespace NanoboyAdvance
         int condition = instruction >> 28;
         bool execute = false;
 
-        cycles += 3; // assume cycle count
+        cycles += 6; // assume cycle count
 
         // Check if the instruction will be executed
         switch (condition)
@@ -1072,24 +1071,6 @@ namespace NanoboyAdvance
             pipe.flush = true;
             return;
         }
-        case ARM_13:
-            #ifdef DEBUG
-            // ARM.13 Coprocessor data transfer
-            LOG(LOG_ERROR, "Unimplemented coprocessor data transfer, r15=0x%x", r15);
-            #endif
-            return;
-        case ARM_14:
-            #ifdef DEBUG
-            // ARM.14 Coprocessor data operation
-            LOG(LOG_ERROR, "Unimplemented coprocessor data operation, r15=0x%x", r15);
-            #endif
-            return;
-        case ARM_15:
-            #ifdef DEBUG
-            // ARM.15 Coprocessor register transfer
-            LOG(LOG_ERROR, "Unimplemented coprocessor register transfer, r15=0x%x", r15);
-            #endif            
-            return;
         case ARM_16:
         {
             // ARM.16 Software interrupt

@@ -43,6 +43,7 @@ namespace NanoboyAdvance
         r13 = 0x3007F00;
         r13_svc = 0x3007FE0;
         r13_irq = 0x3007FA0;
+        RefillPipeline();
 
         // Set hle flag
         this->hle = hle;
@@ -124,13 +125,7 @@ namespace NanoboyAdvance
         // Dispatch instruction loading and execution
         switch (pipe.status)
         {
-        case 0:    
-            pipe.opcode[0] = thumb ? memory->ReadHWord(r15) : memory->ReadWord(r15);
-            break;
-        case 1:
-            pipe.opcode[1] = thumb ? memory->ReadHWord(r15) : memory->ReadWord(r15);               
-            break;
-        case 2:
+        case 0:
             if (thumb)
             {
                 pipe.opcode[2] = memory->ReadHWord(r15);
@@ -140,7 +135,7 @@ namespace NanoboyAdvance
             pipe.opcode[2] = memory->ReadWord(r15);
             Execute(pipe.opcode[0], Decode(pipe.opcode[0]));
             break;
-        case 3:
+        case 1:
             if (thumb)
             {
                 pipe.opcode[0] = memory->ReadHWord(r15);
@@ -150,7 +145,7 @@ namespace NanoboyAdvance
             pipe.opcode[0] = memory->ReadWord(r15);
             Execute(pipe.opcode[1], Decode(pipe.opcode[1]));
             break;
-        case 4:
+        case 2:
             if (thumb)
             {
                 pipe.opcode[1] = memory->ReadHWord(r15);
@@ -162,17 +157,16 @@ namespace NanoboyAdvance
             break;
         }
 
-        // Clear the pipeline if required
         if (pipe.flush)
         {
             pipe.status = 0;
             pipe.flush = false;
+            RefillPipeline();
             return;
         }
 
         // Update pipeline status
-        if (++pipe.status == 5) 
-            pipe.status = 2;
+        pipe.status = (pipe.status + 1) % 3;
 
         // Update instruction pointer
         r15 += thumb ? 2 : 4;
@@ -248,7 +242,7 @@ namespace NanoboyAdvance
 
     void ARM7::RaiseIRQ()
     {
-        if (((cpsr & IrqDisable) == 0) && pipe.status >= 2)
+        if ((cpsr & IrqDisable) == 0)
         {
             bool thumb = cpsr & ThumbFlag;
 
@@ -268,6 +262,7 @@ namespace NanoboyAdvance
             r15 = (u32)Exception::Interrupt;
             pipe.status = 0;
             pipe.flush = false;
+            RefillPipeline();
 
             // Emulate pipeline refill timings
             cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Word) +
