@@ -158,7 +158,7 @@ namespace NanoboyAdvance
     void GBAMemory::RunDMA()
     {
         // TODO: FIFO A/B and Video Capture
-        for (int i = next_dma; i < 4; i++)
+        for (int i = 0; i < 4; i++)
         {
             bool start = false;
 
@@ -256,10 +256,6 @@ namespace NanoboyAdvance
                 // Raise DMA interrupt if enabled
                 if (dma[i].interrupt)
                     interrupt->if_ |= 256 << i;
-
-                // Only emulate one DMA, enough for now
-                next_dma = (i + 1) % 4;
-                return;
             }
         }
     }
