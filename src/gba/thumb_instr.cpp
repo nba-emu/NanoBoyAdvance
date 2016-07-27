@@ -61,7 +61,7 @@ namespace NanoboyAdvance
                 }
 
                 // Update cycle counter
-                cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
+                cycles += memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword);
                 return;
             }
         case 0x0:
@@ -98,7 +98,7 @@ namespace NanoboyAdvance
             CalculateZero(reg(reg_dest));
 
             // Update cycle counter
-            cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
+            cycles += memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword);
             return;
         }
         case 0x2:
@@ -148,7 +148,7 @@ namespace NanoboyAdvance
             }
 
             // Update cycle counter
-            cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
+            cycles += memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword);
             return;
         }
         case 0x4:
@@ -157,11 +157,11 @@ namespace NanoboyAdvance
                 // THUMB.6 PC-relative load
                 u32 immediate_value = instruction & 0xFF;
                 int reg_dest = (instruction >> 8) & 7;
-                u32 address = (r15 & ~2) + (immediate_value << 2);
+                u32 address = (r[15] & ~2) + (immediate_value << 2);
 
                 reg(reg_dest) = ReadWord(address);
 
-                cycles += 1 + memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword) + 
+                cycles += 1 + memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword) + 
                               memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
             }
             else if (instruction & 0x400)
@@ -194,7 +194,7 @@ namespace NanoboyAdvance
                     operand &= ~1;
 
                 // Time next pipeline prefetch
-                cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
+                cycles += memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword);
 
                 // Perform the actual operation
                 switch (opcode)
@@ -220,21 +220,21 @@ namespace NanoboyAdvance
                     if (operand & 1)
                     {
                         // Update r15
-                        r15 = operand & ~1;
+                        r[15] = operand & ~1;
 
                         // Emulate pipeline refill cycles
-                        cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
-                                memory->SequentialAccess(r15 + 2, GBAMemory::AccessSize::Hword);
+                        cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Hword) +
+                                memory->SequentialAccess(r[15] + 2, GBAMemory::AccessSize::Hword);
                     }
                     else
                     {
                         // Switch to ARM and update r15
                         cpsr &= ~ThumbFlag;
-                        r15 = operand & ~3;
+                        r[15] = operand & ~3;
 
                         // Emulate pipeline refill cycles
-                        cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Word) +
-                                memory->SequentialAccess(r15 + 2, GBAMemory::AccessSize::Word);
+                        cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Word) +
+                                memory->SequentialAccess(r[15] + 2, GBAMemory::AccessSize::Word);
                     }
 
                     // Flush pipeline
@@ -249,8 +249,8 @@ namespace NanoboyAdvance
                     pipe.flush = true;
 
                     // Emulate pipeline refill cycles
-                    cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
-                            memory->SequentialAccess(r15 + 2, GBAMemory::AccessSize::Hword);
+                    cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Hword) +
+                            memory->SequentialAccess(r[15] + 2, GBAMemory::AccessSize::Hword);
                 }
             }
             else
@@ -399,7 +399,7 @@ namespace NanoboyAdvance
                 }
 
                 // Update cycle counter
-                cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
+                cycles += memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword);
             }
             return;
         case 0x5:
@@ -415,7 +415,7 @@ namespace NanoboyAdvance
                 {
                 case 0b00: // STRH
                     WriteHWord(address, reg(reg_dest));
-                    cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) + 
+                    cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Hword) + 
                             memory->NonSequentialAccess(address, GBAMemory::AccessSize::Hword);
                     break;
                 case 0b01: // LDSB
@@ -424,12 +424,12 @@ namespace NanoboyAdvance
                     if (reg(reg_dest) & 0x80)
                         reg(reg_dest) |= 0xFFFFFF00;
                     
-                    cycles += 1 + memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword) + 
+                    cycles += 1 + memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword) + 
                                 memory->NonSequentialAccess(address, GBAMemory::AccessSize::Byte); 
                     break;
                 case 0b10: // LDRH
                     reg(reg_dest) = ReadHWord(address);
-                    cycles += 1 + memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword) + 
+                    cycles += 1 + memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword) + 
                                 memory->NonSequentialAccess(address, GBAMemory::AccessSize::Hword);
                     break;
                 case 0b11: // LDSH
@@ -437,7 +437,7 @@ namespace NanoboyAdvance
 
                     // Uff... we should check wether ReadHWordSigned reads a
                     // byte or a hword. However this should never really make difference.
-                    cycles += 1 + memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword) + 
+                    cycles += 1 + memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword) + 
                                 memory->NonSequentialAccess(address, GBAMemory::AccessSize::Hword);
                     break;
                 }
@@ -455,22 +455,22 @@ namespace NanoboyAdvance
                 {
                 case 0b00: // STR
                     WriteWord(address, reg(reg_dest));
-                    cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) + 
+                    cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Hword) + 
                             memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
                     break;
                 case 0b01: // STRB
                     WriteByte(address, reg(reg_dest) & 0xFF);
-                    cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) + 
+                    cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Hword) + 
                             memory->NonSequentialAccess(address, GBAMemory::AccessSize::Byte);
                     break;
                 case 0b10: // LDR
                     reg(reg_dest) = ReadWordRotated(address);
-                    cycles += 1 + memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword) + 
+                    cycles += 1 + memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword) + 
                                 memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
                     break;
                 case 0b11: // LDRB
                     reg(reg_dest) = ReadByte(address);
-                    cycles += 1 + memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword) + 
+                    cycles += 1 + memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword) + 
                                 memory->NonSequentialAccess(address, GBAMemory::AccessSize::Byte);
                     break;
                 }
@@ -489,28 +489,28 @@ namespace NanoboyAdvance
             case 0b00: { // STR
                 u32 address = reg(reg_base) + (immediate_value << 2);
                 WriteWord(address, reg(reg_dest));
-                cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) + 
+                cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Hword) + 
                           memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
                 break;
             }
             case 0b01: { // LDR
                 u32 address = reg(reg_base) + (immediate_value << 2);
                 reg(reg_dest) = ReadWordRotated(address);
-                cycles += 1 + memory->SequentialAccess(r15,  GBAMemory::AccessSize::Hword) + 
+                cycles += 1 + memory->SequentialAccess(r[15],  GBAMemory::AccessSize::Hword) + 
                               memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
                 break;
             }
             case 0b10: { // STRB
                 u32 address = reg(reg_base) + immediate_value;
                 WriteByte(address, reg(reg_dest));
-                cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
+                cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Hword) +
                           memory->NonSequentialAccess(address, GBAMemory::AccessSize::Byte);
                 break;
             }
             case 0b11: { // LDRB
                 u32 address = reg(reg_base) + immediate_value;
                 reg(reg_dest) = ReadByte(address);
-                cycles += 1 + memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword) + 
+                cycles += 1 + memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword) + 
                               memory->NonSequentialAccess(address, GBAMemory::AccessSize::Byte);
                 break;
             }
@@ -530,13 +530,13 @@ namespace NanoboyAdvance
             if (instruction & (1 << 11))
             {
                 reg(reg_dest) = ReadHWord(address); // todo: alignment?
-                cycles += 1 + memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword) +
+                cycles += 1 + memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword) +
                               memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
             }
             else
             {
                 WriteHWord(address, reg(reg_dest));
-                cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
+                cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Hword) +
                           memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
             }
 
@@ -553,13 +553,13 @@ namespace NanoboyAdvance
             if (instruction & (1 << 11))
             {
                 reg(reg_dest) = ReadWordRotated(address);
-                cycles += 1 + memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword) +
+                cycles += 1 + memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword) +
                               memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
             }
             else
             {
                 WriteWord(address, reg(reg_dest));
-                cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
+                cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Hword) +
                           memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
             }
 
@@ -575,9 +575,9 @@ namespace NanoboyAdvance
             if (instruction & (1 << 11)) 
                 reg(reg_dest) = reg(13) + (immediate_value << 2); // sp
             else
-                reg(reg_dest) = (r15 & ~2) + (immediate_value << 2); // pc
+                reg(reg_dest) = (r[15] & ~2) + (immediate_value << 2); // pc
 
-            cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
+            cycles += memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword);
 
             return;
         }
@@ -589,7 +589,7 @@ namespace NanoboyAdvance
                 bool first_access = true;
 
                 // One non-sequential prefetch cycle
-                cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword);
+                cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Hword);
 
                 // Is this a POP instruction?
                 if (instruction & (1 << 11))
@@ -625,7 +625,7 @@ namespace NanoboyAdvance
                         u32 address = reg(13);
 
                         // Read word and update SP.
-                        r15 = ReadWord(reg(13)) & ~1;
+                        r[15] = ReadWord(reg(13)) & ~1;
                         reg(13) += 4;
 
                         // Time the access based on if it's a first access
@@ -704,7 +704,7 @@ namespace NanoboyAdvance
                 else
                     reg(13) += immediate_value;
 
-                cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
+                cycles += memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword);
             }
             return;
         case 0xC:
@@ -718,8 +718,8 @@ namespace NanoboyAdvance
             // Is the load bit set? (ldmia or stmia)
             if (instruction & (1 << 11))
             {
-                cycles += 1 + memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
-                              memory->SequentialAccess(r15 + 2, GBAMemory::AccessSize::Hword);
+                cycles += 1 + memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Hword) +
+                              memory->SequentialAccess(r[15] + 2, GBAMemory::AccessSize::Hword);
 
                 // Iterate through the entire register list
                 for (int i = 0; i <= 7; i++)
@@ -743,7 +743,7 @@ namespace NanoboyAdvance
                 int first_register = 0;
                 bool first_access = true;
 
-                cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword);
+                cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Hword);
 
                 // Find the first register
                 for (int i = 0; i < 8; i++)
@@ -790,16 +790,16 @@ namespace NanoboyAdvance
             if ((instruction & 0xF00) == 0xF00)
             {
                 // THUMB.17 Software Interrupt
-                u8 bios_call = ReadByte(r15 - 4);
+                u8 bios_call = ReadByte(r[15] - 4);
 
                 // Log SWI to the console
                 #ifdef DEBUG
                 LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (thumb)", 
-                    bios_call, r0, r1, r2, r3, reg(14), r15);
+                    bios_call, r0, r1, r2, r3, reg(14), r[15]);
                 #endif
 
                 // "Useless" prefetch from r15 and pipeline refill timing.
-                cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword) +
+                cycles += memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword) +
                         memory->NonSequentialAccess(8, GBAMemory::AccessSize::Word) +
                         memory->SequentialAccess(12, GBAMemory::AccessSize::Word);
 
@@ -811,15 +811,16 @@ namespace NanoboyAdvance
                 else
                 {
                     // Store return address in r14<svc>
-                    r14_svc = r15 - 2;
+                    r14_svc = r[15] - 2;
 
                     // Save program status and switch mode
+                    SaveRegisters();
                     spsr_svc = cpsr;
                     cpsr = (cpsr & ~(ModeField | ThumbFlag)) | (u32)Mode::SVC | IrqDisable;
-                    RemapRegisters();
+                    LoadRegisters();
 
                     // Jump to exception vector
-                    r15 = (u32)Exception::SoftwareInterrupt;
+                    r[15] = (u32)Exception::SoftwareInterrupt;
                     pipe.flush = true;
                 }
             }
@@ -829,7 +830,7 @@ namespace NanoboyAdvance
                 u32 signed_immediate = instruction & 0xFF;
                 bool execute = false;
 
-                cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
+                cycles += memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword);
 
                 // Evaluate the condition
                 switch ((instruction >> 8) & 0xF)
@@ -858,12 +859,12 @@ namespace NanoboyAdvance
                         signed_immediate |= 0xFFFFFF00;
                     
                     // Update r15/pc and flush pipe
-                    r15 += (signed_immediate << 1);
+                    r[15] += (signed_immediate << 1);
                     pipe.flush = true;
 
                     // Emulate pipeline refill timings
-                    cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
-                            memory->SequentialAccess(r15 + 2, GBAMemory::AccessSize::Hword);
+                    cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Hword) +
+                            memory->SequentialAccess(r[15] + 2, GBAMemory::AccessSize::Hword);
                 }
             }
             return;
@@ -872,19 +873,19 @@ namespace NanoboyAdvance
             // THUMB.18 Unconditional branch
             u32 immediate_value = (instruction & 0x3FF) << 1;
 
-            cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
+            cycles += memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword);
 
             // Sign-extend r15/pc displacement
             if (instruction & 0x400)
                 immediate_value |= 0xFFFFF800;
 
             // Update r15/pc and flush pipe
-            r15 += immediate_value;
+            r[15] += immediate_value;
             pipe.flush = true;
 
             //Emulate pipeline refill timings
-            cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
-                      memory->SequentialAccess(r15 + 2, GBAMemory::AccessSize::Hword);
+            cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Hword) +
+                      memory->SequentialAccess(r[15] + 2, GBAMemory::AccessSize::Hword);
             return;
         }
         case 0xF:
@@ -894,28 +895,28 @@ namespace NanoboyAdvance
             // Branch with link consists of two instructions.
             if (instruction & (1 << 11))
             {
-                u32 temp_pc = r15 - 2;
+                u32 temp_pc = r[15] - 2;
                 u32 value = reg(14) + (immediate_value << 1);
 
-                cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
+                cycles += memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword);
 
                 // Update r15/pc
                 value &= 0x7FFFFF;
-                r15 &= ~0x7FFFFF;
-                r15 |= value & ~1;
+                r[15] &= ~0x7FFFFF;
+                r[15] |= value & ~1;
 
                 // Store return address and flush pipe.
                 reg(14) = temp_pc | 1;
                 pipe.flush = true;
 
                 //Emulate pipeline refill timings
-                cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Hword) +
-                          memory->SequentialAccess(r15 + 2, GBAMemory::AccessSize::Hword);
+                cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Hword) +
+                          memory->SequentialAccess(r[15] + 2, GBAMemory::AccessSize::Hword);
             }
             else
             {
-                reg(14) = r15 + (immediate_value << 12);
-                cycles += memory->SequentialAccess(r15, GBAMemory::AccessSize::Hword);
+                reg(14) = r[15] + (immediate_value << 12);
+                cycles += memory->SequentialAccess(r[15], GBAMemory::AccessSize::Hword);
             }
 
             return;
