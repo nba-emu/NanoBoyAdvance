@@ -30,26 +30,17 @@ namespace NanoboyAdvance
         GBAMemory* memory;
         
         // General Purpose Registers
-        u32 r0 {0};
-        u32 r1 {0};
-        u32 r2 {0};
-        u32 r3 {0};
-        u32 r4 {0};
-        u32 r5 {0};
-        u32 r6 {0};
-        u32 r7 {0};
-        u32 r8 {0}, r8_fiq {0};
-        u32 r9 {0}, r9_fiq {0};
-        u32 r10 {0}, r10_fiq {0};
-        u32 r11 {0}, r11_fiq {0};
-        u32 r12 {0}, r12_fiq {0};
-        u32 r13 {0}, r13_fiq {0}, r13_svc {0}, r13_abt {0}, r13_irq {0}, r13_und {0};
-        u32 r14 {0}, r14_fiq {0}, r14_svc {0}, r14_abt {0}, r14_irq {0}, r14_und {0};
-        u32 r15 {0};
+        u32 r[16] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        u32 r8_usr {0}, r8_fiq {0};
+        u32 r9_usr {0}, r9_fiq {0};
+        u32 r10_usr {0}, r10_fiq {0};
+        u32 r11_usr {0}, r11_fiq {0};
+        u32 r12_usr {0}, r12_fiq {0};
+        u32 r13_usr {0}, r13_fiq {0}, r13_svc {0}, r13_abt {0}, r13_irq {0}, r13_und {0};
+        u32 r14_usr {0}, r14_fiq {0}, r14_svc {0}, r14_abt {0}, r14_irq {0}, r14_und {0};
 
-        // Maps visible registers via pointers
-        u32* gpr[16];
-        #define reg(r) *gpr[r]
+        // Artifact of old code. Remove when I got time.
+        #define reg(i) this->r[i]
 
         // Program Status Registers
         u32 cpsr { (u32)Mode::SYS};
@@ -211,20 +202,21 @@ namespace NanoboyAdvance
         {
             if (cpsr & ThumbFlag)
             {
-                pipe.opcode[0] = memory->ReadHWord(r15);
-                pipe.opcode[1] = memory->ReadHWord(r15 + 2);
-                r15 += 4;
+                pipe.opcode[0] = memory->ReadHWord(r[15]);
+                pipe.opcode[1] = memory->ReadHWord(r[15] + 2);
+                r[15] += 4;
             }
             else
             {
-                pipe.opcode[0] = memory->ReadWord(r15);
-                pipe.opcode[1] = memory->ReadWord(r15 + 4);
-                r15 += 8;
+                pipe.opcode[0] = memory->ReadWord(r[15]);
+                pipe.opcode[1] = memory->ReadWord(r[15] + 4);
+                r[15] += 8;
             }
         }
 
-        // Updates map of visible registers
-        void RemapRegisters();
+        // Saves/loads registers of current mode
+        void SaveRegisters();
+        void LoadRegisters();
 
         // Command processing
         int Decode(u32 instruction);

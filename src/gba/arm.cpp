@@ -27,7 +27,7 @@ namespace NanoboyAdvance
         this->memory = memory;
 
         // Map the static registers r0-r7, r15
-        gpr[0] = &r0;
+        /*gpr[0] = &r0;
         gpr[1] = &r1;
         gpr[2] = &r2;
         gpr[3] = &r3;
@@ -36,13 +36,14 @@ namespace NanoboyAdvance
         gpr[6] = &r6;
         gpr[7] = &r7;
         gpr[15] = &r15;
-        RemapRegisters();
+        LoadRegisters();*/
 
         // Skip bios boot logo
-        r15 = 0x8000000;
-        r13 = 0x3007F00;
+        r[15] = 0x8000000;
+        r13_usr = 0x3007F00;
         r13_svc = 0x3007FE0;
         r13_irq = 0x3007FA0;
+        LoadRegisters();
         RefillPipeline();
 
         // Set hle flag
@@ -55,13 +56,14 @@ namespace NanoboyAdvance
         u32 value;
 
         // Temporary switch to requested mode
+        SaveRegisters();
         cpsr = (cpsr & ~ModeField) | (u32)mode;
-        RemapRegisters();
+        LoadRegisters();
 
         // Get value and switch back to correct mode
         value = reg(r);
         cpsr = (cpsr & ~ModeField) | (u32)old_mode;
-        RemapRegisters();
+        LoadRegisters();
 
         return value;
     }
@@ -89,13 +91,15 @@ namespace NanoboyAdvance
         Mode old_mode = (Mode)(cpsr & ModeField);
 
         // Temporary switch to requested mode
+        SaveRegisters();
         cpsr = (cpsr & ~ModeField) | (u32)mode;
-        RemapRegisters();
+        LoadRegisters();
 
         // Write register and switch back
         reg(r) = value;
+        SaveRegisters();
         cpsr = (cpsr & ~ModeField) | (u32)old_mode;
-        RemapRegisters();
+        LoadRegisters();
     }
 
     void ARM7::SetCurrentStatusRegister(u32 value)
@@ -120,7 +124,7 @@ namespace NanoboyAdvance
         bool thumb = cpsr & ThumbFlag;
 
         // Forcibly align r15
-        r15 &= thumb ? ~1 : ~3;
+        r[15] &= thumb ? ~1 : ~3;
 
         // Dispatch instruction loading and execution
         switch (pipe.status)
@@ -128,31 +132,31 @@ namespace NanoboyAdvance
         case 0:
             if (thumb)
             {
-                pipe.opcode[2] = memory->ReadHWord(r15);
+                pipe.opcode[2] = memory->ReadHWord(r[15]);
                 ExecuteThumb(pipe.opcode[0]);
                 break;
             }
-            pipe.opcode[2] = memory->ReadWord(r15);
+            pipe.opcode[2] = memory->ReadWord(r[15]);
             Execute(pipe.opcode[0], Decode(pipe.opcode[0]));
             break;
         case 1:
             if (thumb)
             {
-                pipe.opcode[0] = memory->ReadHWord(r15);
+                pipe.opcode[0] = memory->ReadHWord(r[15]);
                 ExecuteThumb(pipe.opcode[1]);
                 break;
             }
-            pipe.opcode[0] = memory->ReadWord(r15);
+            pipe.opcode[0] = memory->ReadWord(r[15]);
             Execute(pipe.opcode[1], Decode(pipe.opcode[1]));
             break;
         case 2:
             if (thumb)
             {
-                pipe.opcode[1] = memory->ReadHWord(r15);
+                pipe.opcode[1] = memory->ReadHWord(r[15]);
                 ExecuteThumb(pipe.opcode[2]);
                 break;
             }
-            pipe.opcode[1] = memory->ReadWord(r15);
+            pipe.opcode[1] = memory->ReadWord(r[15]);
             Execute(pipe.opcode[2], Decode(pipe.opcode[2]));
             break;
         }
@@ -169,72 +173,134 @@ namespace NanoboyAdvance
         pipe.status = (pipe.status + 1) % 3;
 
         // Update instruction pointer
-        r15 += thumb ? 2 : 4;
+        r[15] += thumb ? 2 : 4;
     }
 
-    void ARM7::RemapRegisters()
+    void ARM7::SaveRegisters()
     {
         switch (static_cast<Mode>(cpsr & ModeField))
         {
         case Mode::USR:
         case Mode::SYS:
-            gpr[8] = &r8;
-            gpr[9] = &r9;
-            gpr[10] = &r10;
-            gpr[11] = &r11;
-            gpr[12] = &r12;
-            gpr[13] = &r13;
-            gpr[14] = &r14;
+            r8_usr = r[8];
+            r9_usr = r[9];
+            r10_usr = r[10];
+            r11_usr = r[11];
+            r12_usr = r[12];
+            r13_usr = r[13];
+            r14_usr = r[14];
+            break;
+        case Mode::FIQ:
+            r8_fiq = r[8];
+            r9_fiq = r[9];
+            r10_fiq = r[10];
+            r11_fiq = r[11];
+            r12_fiq = r[12];
+            r13_fiq = r[13];
+            r14_fiq = r[14];
+            break;
+        case Mode::IRQ:
+            r8_usr = r[8];
+            r9_usr = r[9];
+            r10_usr = r[10];
+            r11_usr = r[11];
+            r12_usr = r[12];
+            r13_irq = r[13];
+            r14_irq = r[14];
+            break;
+        case Mode::SVC:
+            r8_usr = r[8];
+            r9_usr = r[9];
+            r10_usr = r[10];
+            r11_usr = r[11];
+            r12_usr = r[12];
+            r13_svc = r[13];
+            r14_svc = r[14];
+            break;
+        case Mode::ABT:
+            r8_usr = r[8];
+            r9_usr = r[9];
+            r10_usr = r[10];
+            r11_usr = r[11];
+            r12_usr = r[12];
+            r13_abt = r[13];
+            r14_abt = r[14];
+            break;
+        case Mode::UND:
+            r8_usr = r[8];
+            r9_usr = r[9];
+            r10_usr = r[10];
+            r11_usr = r[11];
+            r12_usr = r[12];
+            r13_und = r[13];
+            r14_und = r[14];
+            break;
+        }
+    }
+
+    void ARM7::LoadRegisters()
+    {
+        switch (static_cast<Mode>(cpsr & ModeField))
+        {
+        case Mode::USR:
+        case Mode::SYS:
+            r[8] = r8_usr;
+            r[9] = r9_usr;
+            r[10] = r10_usr;
+            r[11] = r11_usr;
+            r[12] = r12_usr;
+            r[13] = r13_usr;
+            r[14] = r14_usr;
             pspsr = &spsr_def;
             break;
         case Mode::FIQ:
-            gpr[8] = &r8_fiq;
-            gpr[9] = &r9_fiq;
-            gpr[10] = &r10_fiq;
-            gpr[11] = &r11_fiq;
-            gpr[12] = &r12_fiq;
-            gpr[13] = &r13_fiq;
-            gpr[14] = &r14_fiq;
+            r[8] = r8_fiq;
+            r[9] = r9_fiq;
+            r[10] = r10_fiq;
+            r[11] = r11_fiq;
+            r[12] = r12_fiq;
+            r[13] = r13_fiq;
+            r[14] = r14_fiq;
             pspsr = &spsr_fiq;
             break;
         case Mode::IRQ:
-            gpr[8] = &r8;
-            gpr[9] = &r9;
-            gpr[10] = &r10;
-            gpr[11] = &r11;
-            gpr[12] = &r12;
-            gpr[13] = &r13_irq;
-            gpr[14] = &r14_irq;
+            r[8] = r8_usr;
+            r[9] = r9_usr;
+            r[10] = r10_usr;
+            r[11] = r11_usr;
+            r[12] = r12_usr;
+            r[13] = r13_irq;
+            r[14] = r14_irq;
             pspsr = &spsr_irq;
             break;
         case Mode::SVC:
-            gpr[8] = &r8;
-            gpr[9] = &r9;
-            gpr[10] = &r10;
-            gpr[11] = &r11;
-            gpr[12] = &r12;
-            gpr[13] = &r13_svc;
-            gpr[14] = &r14_svc;
+            r[8] = r8_usr;
+            r[9] = r9_usr;
+            r[10] = r10_usr;
+            r[11] = r11_usr;
+            r[12] = r12_usr;
+            r[13] = r13_svc;
+            r[14] = r14_svc;
             pspsr = &spsr_svc;
             break;
         case Mode::ABT:
-            gpr[8] = &r8;
-            gpr[9] = &r9;
-            gpr[10] = &r10;
-            gpr[11] = &r11;
-            gpr[12] = &r12;
-            gpr[13] = &r13_abt;
-            gpr[14] = &r14_abt;
+            r[8] = r8_usr;
+            r[9] = r9_usr;
+            r[10] = r10_usr;
+            r[11] = r11_usr;
+            r[12] = r12_usr;
+            r[13] = r13_abt;
+            r[14] = r14_abt;
             pspsr = &spsr_abt;
             break;
         case Mode::UND:
-            gpr[8] = &r8;
-            gpr[9] = &r9;
-            gpr[10] = &r10;
-            gpr[11] = &r11;
-            gpr[12] = &r12;
-            gpr[13] = &r13_und;
-            gpr[14] = &r14_und;
+            r[8] = r8_usr;
+            r[9] = r9_usr;
+            r[10] = r10_usr;
+            r[11] = r11_usr;
+            r[12] = r12_usr;
+            r[13] = r13_und;
+            r[14] = r14_und;
             pspsr = &spsr_und;
             break;
         }
@@ -247,26 +313,27 @@ namespace NanoboyAdvance
             bool thumb = cpsr & ThumbFlag;
 
             // "Useless" pipeline prefetch
-            cycles += memory->SequentialAccess(r15, thumb ? GBAMemory::AccessSize::Hword : 
+            cycles += memory->SequentialAccess(r[15], thumb ? GBAMemory::AccessSize::Hword : 
                                                             GBAMemory::AccessSize::Word);
 
             // Store return address in r14<irq>
-            r14_irq = r15 - (thumb ? 4 : 8) + 4;
+            r14_irq = r[15] - (thumb ? 4 : 8) + 4;
 
             // Save program status and switch mode
             spsr_irq = cpsr;
+            SaveRegisters();
             cpsr = (cpsr & ~(ModeField | ThumbFlag)) | (u32)Mode::IRQ | IrqDisable;
-            RemapRegisters();
+            LoadRegisters();
 
             // Jump to exception vector
-            r15 = (u32)Exception::Interrupt;
+            r[15] = (u32)Exception::Interrupt;
             pipe.status = 0;
             pipe.flush = false;
             RefillPipeline();
 
             // Emulate pipeline refill timings
-            cycles += memory->NonSequentialAccess(r15, GBAMemory::AccessSize::Word) +
-                      memory->SequentialAccess(r15 + 4, GBAMemory::AccessSize::Word);
+            cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Word) +
+                      memory->SequentialAccess(r[15] + 4, GBAMemory::AccessSize::Word);
         }
     }
 
@@ -276,12 +343,12 @@ namespace NanoboyAdvance
         {
         case 0x06:
         {
-            if (r1 != 0)
+            if (r[1] != 0)
             {
-                u32 mod = r0 % r1;
-                u32 div = r0 / r1;
-                r0 = div;
-                r1 = mod;
+                u32 mod = r[0] % r[1];
+                u32 div = r[0] / r[1];
+                r[0] = div;
+                r[1] = mod;
             } else 
             {
                 LOG(LOG_ERROR, "Attempted division by zero.");
@@ -289,28 +356,28 @@ namespace NanoboyAdvance
             break;
         }
         case 0x05:
-            r0 = 1;
-            r1 = 1;
+            r[0] = 1;
+            r[1] = 1;
         case 0x04:
             memory->interrupt->ime = 1;
 
             // If r0 is one IF must be cleared
-            if (r0 == 1)
+            if (r[0] == 1)
                 memory->interrupt->if_ = 0;
 
             // Sets GBA into halt state, waiting for specific interrupt(s) to occur.
             memory->intr_wait = true;
-            memory->intr_wait_mask = r1;
+            memory->intr_wait_mask = r[1];
             memory->halt_state = GBAMemory::HaltState::Halt;
             break;
         case 0x0B:
         {
-            u32 source = r0;
-            u32 dest = r1;
-            u32 length = r2 & 0xFFFFF;
-            bool fixed = r2 & (1 << 24) ? true : false;
+            u32 source = r[0];
+            u32 dest = r[1];
+            u32 length = r[2] & 0xFFFFF;
+            bool fixed = r[2] & (1 << 24) ? true : false;
 
-            if (r2 & (1 << 26))
+            if (r[2] & (1 << 26))
             {
                 for (u32 i = 0; i < length; i++)
                 {
@@ -332,10 +399,10 @@ namespace NanoboyAdvance
         }
         case 0x0C:
         {
-            u32 source = r0;
-            u32 dest = r1;
-            u32 length = r2 & 0xFFFFF;
-            bool fixed = r2 & (1 << 24) ? true : false;
+            u32 source = r[0];
+            u32 dest = r[1];
+            u32 length = r[2] & 0xFFFFF;
+            bool fixed = r[2] & (1 << 24) ? true : false;
 
             for (u32 i = 0; i < length; i++)
             {
@@ -348,9 +415,9 @@ namespace NanoboyAdvance
         case 0x11:
         case 0x12:
         {
-            int amount = memory->ReadWord(r0) >> 8;
-            u32 source = r0 + 4;
-            u32 dest = r1;
+            int amount = memory->ReadWord(r[0]) >> 8;
+            u32 source = r[0] + 4;
+            u32 dest = r[1];
 
             while (amount > 0)
             {

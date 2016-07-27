@@ -126,7 +126,7 @@ namespace NanoboyAdvance
         int condition = instruction >> 28;
         bool execute = false;
 
-        cycles += 6; // assume cycle count
+        cycles += 2; // assume cycle count
 
         // Check if the instruction will be executed
         switch (condition)
@@ -223,12 +223,12 @@ namespace NanoboyAdvance
             const int reg_address = instruction & 0xF;
             if (reg(reg_address) & 1)
             {
-                r15 = reg(reg_address) & ~1;
+                r[15] = reg(reg_address) & ~1;
                 cpsr |= ThumbFlag;
             }
             else
             {
-                r15 = reg(reg_address) & ~3;
+                r[15] = reg(reg_address) & ~3;
             }
             pipe.flush = true;
             return;
@@ -243,7 +243,7 @@ namespace NanoboyAdvance
             u32 memory_value;
 
             #ifdef DEBUG
-            ASSERT(reg_source == 15 || reg_dest == 15 || reg_base == 15, LOG_WARN, "Single Data Swap, thou shall not use r15, r15=0x%x", r15);
+            ASSERT(reg_source == 15 || reg_dest == 15 || reg_base == 15, LOG_WARN, "Single Data Swap, thou shall not use r15, r15=0x%x", r[15]);
             #endif 
 
             if (swap_byte)
@@ -280,11 +280,11 @@ namespace NanoboyAdvance
 
             #ifdef DEBUG
             // Instructions neither write back if base register is r15 nor should they have the write-back bit set when being post-indexed (post-indexing automatically writes back the address)
-            ASSERT(reg_base == 15 && write_back, LOG_WARN, "Halfword and Signed Data Transfer, thou shall not writeback to r15, r15=0x%x", r15);
-            ASSERT(write_back && !pre_indexed, LOG_WARN, "Halfword and Signed Data Transfer, thou shall not have write-back bit if being post-indexed, r15=0x%x", r15);
+            ASSERT(reg_base == 15 && write_back, LOG_WARN, "Halfword and Signed Data Transfer, thou shall not writeback to r15, r15=0x%x", r[15]);
+            ASSERT(write_back && !pre_indexed, LOG_WARN, "Halfword and Signed Data Transfer, thou shall not have write-back bit if being post-indexed, r15=0x%x", r[15]);
 
             // Load-bit shall not be unset when signed transfer is selected
-            ASSERT(type == ARM_7 && !load, LOG_WARN, "Halfword and Signed Data Transfer, thou shall not store in signed mode, r15=0x%x", r15);
+            ASSERT(type == ARM_7 && !load, LOG_WARN, "Halfword and Signed Data Transfer, thou shall not store in signed mode, r15=0x%x", r[15]);
             #endif
 
             // If the instruction is immediate take an 8-bit immediate value as offset, otherwise take the contents of a register as offset
@@ -296,7 +296,7 @@ namespace NanoboyAdvance
             {
                 int reg_offset = instruction & 0xF;
                 #ifdef DEBUG
-                ASSERT(reg_offset == 15, LOG_WARN, "Halfword and Signed Data Transfer, thou shall not take r15 as offset, r15=0x%x", r15);
+                ASSERT(reg_offset == 15, LOG_WARN, "Halfword and Signed Data Transfer, thou shall not take r15 as offset, r15=0x%x", r[15]);
                 #endif
                 offset = reg(reg_offset);
             }
@@ -345,7 +345,7 @@ namespace NanoboyAdvance
             {
                 if (reg_dest == 15)
                 {
-                    WriteHWord(address, r15 + 4);
+                    WriteHWord(address, r[15] + 4);
                 }
                 else
                 {
@@ -417,8 +417,9 @@ namespace NanoboyAdvance
                     }
                     else
                     {
+                        SaveRegisters();
                         cpsr = (cpsr & ~mask) | (operand & mask);
-                        RemapRegisters();
+                        LoadRegisters();
                     }
                 }
                 else
@@ -506,8 +507,9 @@ namespace NanoboyAdvance
                 if (reg_dest == 15 && set_flags)
                 {
                     set_flags = false;
+                    SaveRegisters();
                     cpsr = *pspsr;
-                    RemapRegisters();
+                    LoadRegisters();
                 }
 
                 // Perform the actual operation
@@ -729,8 +731,8 @@ namespace NanoboyAdvance
 
             #ifdef DEBUG
             // Instructions neither write back if base register is r15 nor should they have the write-back bit set when being post-indexed (post-indexing automatically writes back the address)
-            ASSERT(reg_base == 15 && write_back, LOG_WARN, "Single Data Transfer, thou shall not writeback to r15, r15=0x%x", r15);
-            ASSERT(write_back && !pre_indexed, LOG_WARN, "Single Data Transfer, thou shall not have write-back bit if being post-indexed, r15=0x%x", r15);
+            ASSERT(reg_base == 15 && write_back, LOG_WARN, "Single Data Transfer, thou shall not writeback to r15, r15=0x%x", r[15]);
+            ASSERT(write_back && !pre_indexed, LOG_WARN, "Single Data Transfer, thou shall not have write-back bit if being post-indexed, r15=0x%x", r[15]);
             #endif
 
             // The offset added to the base address can either be an 12 bit immediate value or a register shifted by 5 bit immediate value
@@ -746,7 +748,7 @@ namespace NanoboyAdvance
                 bool carry; // this is not actually used but we need a var for carry out.
 
                 #ifdef DEBUG
-                ASSERT(reg_offset == 15, LOG_WARN, "Single Data Transfer, thou shall not use r15 as offset, r15=0x%x", r15);
+                ASSERT(reg_offset == 15, LOG_WARN, "Single Data Transfer, thou shall not use r15 as offset, r15=0x%x", r[15]);
                 #endif
 
                 offset = reg(reg_offset);
@@ -852,7 +854,7 @@ namespace NanoboyAdvance
         case ARM_10:
             // ARM.10 Undefined
             #ifdef DEBUG
-            LOG(LOG_ERROR, "Undefined instruction (0x%x), r15=0x%x", instruction, r15);
+            LOG(LOG_ERROR, "Undefined instruction (0x%x), r15=0x%x", instruction, r[15]);
             #endif
             return;
         case ARM_11:
@@ -876,7 +878,7 @@ namespace NanoboyAdvance
 
             #ifdef DEBUG
             // Base register must not be r15
-            ASSERT(reg_base == 15, LOG_WARN, "Block Data Tranfser, thou shall not take r15 as base register, r15=0x%x", r15);
+            ASSERT(reg_base == 15, LOG_WARN, "Block Data Tranfser, thou shall not take r15 as base register, r15=0x%x", r[15]);
             #endif
 
             // If the s bit is set and the instruction is either a store or r15 is not in the list switch to user mode
@@ -884,13 +886,14 @@ namespace NanoboyAdvance
             {
                 #ifdef DEBUG
                 // Writeback must not be activated in this case
-                ASSERT(write_back, LOG_WARN, "Block Data Transfer, thou shall not do user bank transfer with writeback, r15=0x%x", r15);
+                ASSERT(write_back, LOG_WARN, "Block Data Transfer, thou shall not do user bank transfer with writeback, r15=0x%x", r[15]);
                 #endif
 
                 // Save current mode and enter user mode
                 old_mode = cpsr & ModeField;
+                SaveRegisters();
                 cpsr = (cpsr & ~ModeField) | (u32)Mode::USR;
-                RemapRegisters();
+                LoadRegisters();
 
                 // Mark that we switched to user mode
                 switched_mode = true;
@@ -942,10 +945,11 @@ namespace NanoboyAdvance
                                 {
                                     #ifdef DEBUG
                                     // spsr_<mode> must not be copied to cpsr in user mode because user mode has not such a register
-                                    ASSERT((cpsr & ModeField) == (u32)Mode::USR, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r15);
+                                    ASSERT((cpsr & ModeField) == (u32)Mode::USR, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r[15]);
                                     #endif
+                                    SaveRegisters();
                                     cpsr = *pspsr;
-                                    RemapRegisters();
+                                    LoadRegisters();
                                 }
                                 pipe.flush = true;
                             }
@@ -1010,10 +1014,11 @@ namespace NanoboyAdvance
                                 {
                                     #ifdef DEBUG
                                     // spsr_<mode> must not be copied to cpsr in user mode because user mode has no such a register
-                                    ASSERT((cpsr & ModeField) == (u32)Mode::USR, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r15);
+                                    ASSERT((cpsr & ModeField) == (u32)Mode::USR, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r[15]);
                                     #endif
+                                    SaveRegisters();
                                     cpsr = *pspsr;
-                                    RemapRegisters();
+                                    LoadRegisters();
                                 }
                                 pipe.flush = true;
                             }
@@ -1049,8 +1054,9 @@ namespace NanoboyAdvance
             // If we switched mode it's time now to restore the previous mode
             if (switched_mode)
             {
+                SaveRegisters();
                 cpsr = (cpsr & ~ModeField) | old_mode;
-                RemapRegisters();
+                LoadRegisters();
             }
             return;
         }
@@ -1065,20 +1071,20 @@ namespace NanoboyAdvance
             }
             if (link)
             {
-                reg(14) = r15 - 4;
+                reg(14) = r[15] - 4;
             }
-            r15 += offset << 2;
+            r[15] += offset << 2;
             pipe.flush = true;
             return;
         }
         case ARM_16:
         {
             // ARM.16 Software interrupt
-            u32 bios_call = ReadByte(r15 - 6);
+            u32 bios_call = ReadByte(r[15] - 6);
 
             // Log to the console that we're issuing an interrupt.
             #ifdef DEBUG
-            LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (arm)", bios_call, r0, r1, r2, r3, reg(14), r15);
+            LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (arm)", bios_call, r0, r1, r2, r3, reg(14), r[15]);
             #endif
 
             // Dispatch SWI, either HLE or BIOS.
@@ -1089,15 +1095,16 @@ namespace NanoboyAdvance
             else
             {
                 // Store return address in r14<svc>
-                r14_svc = r15 - 4;
+                r14_svc = r[15] - 4;
 
                 // Save program status and switch mode
                 spsr_svc = cpsr;
+                SaveRegisters();
                 cpsr = (cpsr & ~ModeField) | (u32)Mode::SVC | IrqDisable;
-                RemapRegisters();
+                LoadRegisters();
 
                 // Jump to exception vector
-                r15 = (u32)Exception::SoftwareInterrupt;
+                r[15] = (u32)Exception::SoftwareInterrupt;
                 pipe.flush = true;
             }
             return;
