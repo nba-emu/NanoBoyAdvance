@@ -207,6 +207,22 @@ namespace NanoboyAdvance
             memory->WriteWord(offset, value);
         }
 
+        inline void RefillPipeline()
+        {
+            if (cpsr & ThumbFlag)
+            {
+                pipe.opcode[0] = memory->ReadHWord(r15);
+                pipe.opcode[1] = memory->ReadHWord(r15 + 2);
+                r15 += 4;
+            }
+            else
+            {
+                pipe.opcode[0] = memory->ReadWord(r15);
+                pipe.opcode[1] = memory->ReadWord(r15 + 4);
+                r15 += 8;
+            }
+        }
+
         // Updates map of visible registers
         void RemapRegisters();
 

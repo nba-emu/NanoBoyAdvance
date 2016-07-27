@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2015 Frederic Meyer
+* Copyright (C) 2016 Frederic Meyer
 *
 * This file is part of nanoboyadvance.
 *
