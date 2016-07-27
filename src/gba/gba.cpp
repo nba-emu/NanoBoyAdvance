@@ -80,6 +80,9 @@ namespace NanoboyAdvance
             {
                 int forward_steps = 0;
 
+                // Do next pending DMA transfer
+                memory->RunDMA();
+
                 if (memory->halt_state != GBAMemory::HaltState::Halt)
                 {
                     arm->cycles = 0;
@@ -91,7 +94,6 @@ namespace NanoboyAdvance
                 {
                     memory->video->Step();
                     memory->RunTimer();
-                    memory->RunDMA();
 
                     if (memory->video->render_scanline)
                     {

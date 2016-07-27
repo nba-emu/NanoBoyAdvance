@@ -158,7 +158,7 @@ namespace NanoboyAdvance
     void GBAMemory::RunDMA()
     {
         // TODO: FIFO A/B and Video Capture
-        for (int i = 0; i < 4; i++)
+        for (int i = next_dma; i < 4; i++)
         {
             bool start = false;
 
@@ -189,7 +189,10 @@ namespace NanoboyAdvance
                 #endif
                 break;
             }
-                
+            
+            did_transfer = start;
+            dma_cycles = 2;
+
             if (start)
             {
                 AddressControl dest_control = dma[i].dest_control;
@@ -207,10 +210,18 @@ namespace NanoboyAdvance
                 while (dma[i].count_int != 0)
                 {
                     // Transfer either Word or HWord
-                    if (transfer_words) 
+                    if (transfer_words)
+                    {
                         WriteWord(dma[i].dest_int & ~3, ReadWord(dma[i].source_int & ~3));
-                    else 
+                        dma_cycles += SequentialAccess(dma[i].dest_int, AccessSize::Word) + 
+                                      SequentialAccess(dma[i].source_int, AccessSize::Word);
+                    }
+                    else
+                    {
                         WriteHWord(dma[i].dest_int & ~1, ReadHWord(dma[i].source_int & ~1));
+                        dma_cycles += SequentialAccess(dma[i].dest_int, AccessSize::Hword) + 
+                                      SequentialAccess(dma[i].source_int, AccessSize::Hword);
+                    }
                         
                     // Update destination address
                     if (dest_control == AddressControl::Increment || dest_control == AddressControl::Reload)
@@ -245,6 +256,10 @@ namespace NanoboyAdvance
                 // Raise DMA interrupt if enabled
                 if (dma[i].interrupt)
                     interrupt->if_ |= 256 << i;
+
+                // Only emulate one DMA, enough for now
+                next_dma = (i + 1) % 4;
+                return;
             }
         }
     }
