@@ -91,6 +91,7 @@ namespace NanoboyAdvance
             bool interrupt {false};
             bool enable {false};
         } dma[4];
+        int next_dma {0};
 
         // Timer IO
         struct Timer
@@ -147,6 +148,10 @@ namespace NanoboyAdvance
         HaltState halt_state {HaltState::None};
         bool intr_wait {false};
         bool intr_wait_mask {0};
+
+        // DMA publics
+        bool did_transfer {false};
+        int dma_cycles {0};
 
         // Constructors and Destructor
         GBAMemory(std::string rom_file, std::string save_file);
