@@ -1,4 +1,4 @@
-IDI_ICON1 ICON DISCARDABLE "${CMAKE_SOURCE_DIR}/res/app_48x48.ico"
+IDI_ICON1 ICON DISCARDABLE "${CMAKE_SOURCE_DIR}/res/app.ico"
 
 #include <windows.h>
 
