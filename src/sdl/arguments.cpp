@@ -76,6 +76,10 @@ Arguments* parse_args(int argc, char** argv)
                 if (args->speedup == 0)
                     return nullptr;
             }
+            else
+            {
+                return nullptr;
+            }
         }
         else
         {

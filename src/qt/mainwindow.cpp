@@ -156,10 +156,14 @@ void MainWindow::timerTick()
 
 void MainWindow::keyPress(int key)
 {
+    if (key == Qt::Key_Space)
+        gba->SetSpeedUp(10);
     gba->SetKeyState(keyToGBA(key), true);
 }
 
 void MainWindow::keyRelease(int key)
 {
+    if (key == Qt::Key_Space)
+        gba->SetSpeedUp(1);
     gba->SetKeyState(keyToGBA(key), false);
 }
