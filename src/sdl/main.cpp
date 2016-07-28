@@ -187,6 +187,8 @@ int main(int argc, char** argv)
             gba = new GBA(rom_file, save_file, args->bios_file);
         else
             gba = new GBA(rom_file, save_file);
+
+        gba->SetSpeedUp(args->speedup);
     }
     else
     {

@@ -543,7 +543,7 @@ namespace NanoboyAdvance
                 if (hblank_irq)
                     interrupt->if_ |= HBLANK_INTERRUPT;
 
-                Render(vcount);
+                //Render(vcount);
                 render_scanline = true;
                 
                 ticks = 0;
