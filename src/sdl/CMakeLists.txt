@@ -7,6 +7,6 @@ set(HEADERS
     arguments.h
 )
 
-add_executable(nanoboyadvance ${SRCS} ${HEADERS})
-target_link_libraries(nanoboyadvance gba)
-target_link_libraries(nanoboyadvance ${SDL2_LIBRARY} ${PNG_LIBRARY})
+add_executable(NanoboyAdvance-SDL ${SRCS} ${HEADERS})
+target_link_libraries(NanoboyAdvance-SDL gba)
+target_link_libraries(NanoboyAdvance-SDL ${SDL2_LIBRARY} ${PNG_LIBRARY})
