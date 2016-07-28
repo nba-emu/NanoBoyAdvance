@@ -56,7 +56,7 @@ namespace NanoboyAdvance
     {
         u32* buffer = (u32*)malloc(240 * 160 * sizeof(u32));
 
-        for (int i = 0; i < FRAME_CYCLES; i++)
+        for (int i = 0; i < FRAME_CYCLES * speed_multiplier; i++)
         {
             u32 interrupts = memory->interrupt->ie & memory->interrupt->if_;
             
@@ -95,9 +95,10 @@ namespace NanoboyAdvance
                     memory->video->Step();
                     memory->RunTimer();
 
-                    if (memory->video->render_scanline)
+                    if (memory->video->render_scanline && (i / FRAME_CYCLES) == speed_multiplier - 1)
                     {
                         int y = memory->video->vcount;
+                        memory->video->Render(y);
                         memcpy(&buffer[y * 240], &memory->video->buffer[y * 240], 240 * sizeof(u32));
                     }
                 }
@@ -115,5 +116,10 @@ namespace NanoboyAdvance
             memory->keyinput &= ~(int)key;
         else
             memory->keyinput |= (int)key;
+    }
+
+    void GBA::SetSpeedUp(int multiplier)
+    {
+        speed_multiplier = multiplier;
     }
 };

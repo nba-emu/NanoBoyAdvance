@@ -154,9 +154,6 @@ namespace NanoboyAdvance
         void RenderBackgroundMode0(int id, int line);
         void RenderBackgroundMode1(int id, int line);
         void RenderSprites(int priority, int line, u32 tile_base);
-
-        // Renders one entire line
-        void Render(int line);
     public:
         enum class GBAVideoState
         {
@@ -278,5 +275,8 @@ namespace NanoboyAdvance
         
         // Update PPU state
         void Step();
+
+        // Renders one entire line
+        void Render(int line);
     };
 }

@@ -30,6 +30,8 @@ namespace NanoboyAdvance
     class GBA
     {
         static const int FRAME_CYCLES;
+        
+        int speed_multiplier {1};
 
         ARM7* arm;
         GBAMemory* memory;
@@ -55,5 +57,6 @@ namespace NanoboyAdvance
 
         u32* Frame();
         void SetKeyState(Key key, bool pressed);
+        void SetSpeedUp(int multiplier);
     };
 };

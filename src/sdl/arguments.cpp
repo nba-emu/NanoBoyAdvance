@@ -26,7 +26,7 @@ using namespace std;
 
 void usage()
 {
-    cout << "Usage: ./nanoboyadvance [--bios bios_file] [--scale factor] rom" << endl;
+    cout << "Usage: ./nanoboyadvance [--bios bios_file] [--scale factor] [--speedup multiplier] rom" << endl;
 }
 
 Arguments* parse_args(int argc, char** argv)
@@ -38,6 +38,7 @@ Arguments* parse_args(int argc, char** argv)
     args->bios_file = (char*)"bios.bin";
     args->use_bios = false;
     args->scale = 2;
+    args->speedup = 1;
 
     // Process arguments
     while (i < argc)
@@ -65,6 +66,15 @@ Arguments* parse_args(int argc, char** argv)
             else
             {
                 return nullptr;
+            }
+        }
+        else if (strcmp(argv[i], "--speedup") == 0)
+        {
+            if (argc > i + 1)
+            {
+                args->speedup = atoi(argv[++i]);
+                if (args->speedup == 0)
+                    return nullptr;
             }
         }
         else

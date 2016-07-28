@@ -24,6 +24,7 @@ typedef struct {
     char* bios_file;
     bool use_bios;
     int scale;
+    int speedup;
 } Arguments;
 
 void usage();
