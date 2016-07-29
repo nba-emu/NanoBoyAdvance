@@ -166,6 +166,8 @@ int main(int argc, char** argv)
 {
     SDL_Event event;
     bool running = true;
+    u32* video_buffer;
+
     frameskip_counter = 0;
 
     if (argc > 1)
@@ -189,6 +191,7 @@ int main(int argc, char** argv)
             gba = new GBA(rom_file, save_file);
 
         gba->SetSpeedUp(args->speedup);
+        video_buffer = gba->GetVideoBuffer();
     }
     else
     {
@@ -233,7 +236,7 @@ int main(int argc, char** argv)
         for (int y = 0; y < 160; y++)
         {
             for (int x = 0; x < 240; x++)
-                setpixel(x, y, gba->pixel_buffer[y * 240 + x]);
+                setpixel(x, y, video_buffer[y * 240 + x]);
         }
 
         // Update FPS counter
