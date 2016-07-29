@@ -32,6 +32,7 @@ namespace NanoboyAdvance
         static const int FRAME_CYCLES;
         
         int speed_multiplier {1};
+        bool did_render {false};
 
         ARM7* arm;
         GBAMemory* memory;
@@ -59,5 +60,6 @@ namespace NanoboyAdvance
         void SetKeyState(Key key, bool pressed);
         void SetSpeedUp(int multiplier);
         u32* GetVideoBuffer();
+        bool HasRendered();
     };
 };

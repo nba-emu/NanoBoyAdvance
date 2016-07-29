@@ -56,6 +56,8 @@ namespace NanoboyAdvance
     {
         u32* buffer = (u32*)malloc(240 * 160 * sizeof(u32));
 
+        did_render = false;
+
         for (int i = 0; i < FRAME_CYCLES * speed_multiplier; i++)
         {
             u32 interrupts = memory->interrupt->ie & memory->interrupt->if_;
@@ -96,7 +98,10 @@ namespace NanoboyAdvance
                     memory->RunTimer();
 
                     if (memory->video->render_scanline && (i / FRAME_CYCLES) == speed_multiplier - 1)
+                    {
                         memory->video->Render(memory->video->vcount);
+                        did_render = true;
+                    }
                 }
 
                 i += forward_steps;
@@ -120,5 +125,10 @@ namespace NanoboyAdvance
     u32* GBA::GetVideoBuffer()
     {
         return memory->video->buffer;
+    }
+
+    bool GBA::HasRendered()
+    {
+        return did_render;
     }
 };
