@@ -51,11 +51,13 @@ namespace NanoboyAdvance
             L = 512
         };
 
+        u32 pixel_buffer[240 * 160];
+
         GBA(std::string rom_file, std::string save_file);
         GBA(std::string rom_file, std::string save_file, std::string bios_file);
         ~GBA();
 
-        u32* Frame();
+        void Frame();
         void SetKeyState(Key key, bool pressed);
         void SetSpeedUp(int multiplier);
     };

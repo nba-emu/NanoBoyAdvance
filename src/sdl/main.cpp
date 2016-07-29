@@ -206,7 +206,6 @@ int main(int argc, char** argv)
     // Main loop
     while (running)
     {
-        u32* screen;
         int ticks_now;
         u8* kb_state = (u8*)SDL_GetKeyboardState(NULL);
 
@@ -227,16 +226,15 @@ int main(int argc, char** argv)
         gba->SetKeyState(GBA::Key::L,      kb_state[SDL_SCANCODE_Q]);
 
         // Emulate for one frame
-        screen = gba->Frame();
+        gba->Frame();
         frames++;
 
         // Copy screen data
         for (int y = 0; y < 160; y++)
         {
             for (int x = 0; x < 240; x++)
-                setpixel(x, y, screen[y * 240 + x]);
+                setpixel(x, y, gba->pixel_buffer[y * 240 + x]);
         }
-        free(screen);
 
         // Update FPS counter
         ticks_now = SDL_GetTicks();

@@ -52,7 +52,7 @@ namespace NanoboyAdvance
         delete memory;
     }
 
-    u32* GBA::Frame()
+    void GBA::Frame()
     {
         u32* buffer = (u32*)malloc(240 * 160 * sizeof(u32));
 
@@ -99,15 +99,13 @@ namespace NanoboyAdvance
                     {
                         int y = memory->video->vcount;
                         memory->video->Render(y);
-                        memcpy(&buffer[y * 240], &memory->video->buffer[y * 240], 240 * sizeof(u32));
+                        memcpy(&pixel_buffer[y * 240], &memory->video->buffer[y * 240], 240 * sizeof(u32));
                     }
                 }
 
                 i += forward_steps;
             }
         }
-
-        return buffer;
     }
 
     void GBA::SetKeyState(Key key, bool pressed)
