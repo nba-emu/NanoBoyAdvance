@@ -4,7 +4,7 @@ project(NanoboyAdvance)
 # Compiler settings
 option(DEBUG "Build for debug purposes" ON)
 if (DEBUG)
-    add_definitions(-std=c++11 -O0 -DDEBUG)
+    add_definitions(-std=c++11 -g -O0 -DDEBUG)
 else()
     add_definitions(-std=c++11 -Ofast -finline-functions)
 endif()
