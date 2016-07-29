@@ -96,11 +96,7 @@ namespace NanoboyAdvance
                     memory->RunTimer();
 
                     if (memory->video->render_scanline && (i / FRAME_CYCLES) == speed_multiplier - 1)
-                    {
-                        int y = memory->video->vcount;
-                        memory->video->Render(y);
-                        memcpy(&pixel_buffer[y * 240], &memory->video->buffer[y * 240], 240 * sizeof(u32));
-                    }
+                        memory->video->Render(memory->video->vcount);
                 }
 
                 i += forward_steps;
@@ -119,5 +115,10 @@ namespace NanoboyAdvance
     void GBA::SetSpeedUp(int multiplier)
     {
         speed_multiplier = multiplier;
+    }
+
+    u32* GBA::GetVideoBuffer()
+    {
+        return memory->video->buffer;
     }
 };

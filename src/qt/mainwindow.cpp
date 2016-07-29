@@ -84,6 +84,7 @@ void MainWindow::runGame(QString rom_file)
     try
     {
         gba = new GBA(rom_file.toStdString(), save_file.toStdString(), "bios.bin");
+        buffer = gba->GetVideoBuffer();
         timer->start();
         screen->grabKeyboard();
     }
@@ -150,7 +151,7 @@ void MainWindow::closeApp()
 void MainWindow::timerTick()
 {
     gba->Frame();
-    screen->updateTexture(gba->pixel_buffer, 240, 160);
+    screen->updateTexture(buffer, 240, 160);
 }
 
 void MainWindow::keyPress(int key)
