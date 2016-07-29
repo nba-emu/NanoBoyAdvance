@@ -149,9 +149,8 @@ void MainWindow::closeApp()
 
 void MainWindow::timerTick()
 {
-    u32* frame = gba->Frame();
-    screen->updateTexture(frame, 240, 160);
-    free(frame);
+    gba->Frame();
+    screen->updateTexture(gba->pixel_buffer, 240, 160);
 }
 
 void MainWindow::keyPress(int key)
