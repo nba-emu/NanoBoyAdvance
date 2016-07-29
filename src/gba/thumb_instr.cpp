@@ -795,7 +795,7 @@ namespace NanoboyAdvance
                 // Log SWI to the console
                 #ifdef DEBUG
                 LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (thumb)", 
-                    bios_call, r0, r1, r2, r3, reg(14), r[15]);
+                    bios_call, r[0], r[1], r[2], r[3], reg(14), r[15]);
                 #endif
 
                 // "Useless" prefetch from r15 and pipeline refill timing.
