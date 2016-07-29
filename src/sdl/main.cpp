@@ -233,10 +233,13 @@ int main(int argc, char** argv)
         frames++;
 
         // Copy screen data
-        for (int y = 0; y < 160; y++)
+        if (gba->HasRendered())
         {
-            for (int x = 0; x < 240; x++)
-                setpixel(x, y, video_buffer[y * 240 + x]);
+            for (int y = 0; y < 160; y++)
+            {
+                for (int x = 0; x < 240; x++)
+                    setpixel(x, y, video_buffer[y * 240 + x]);
+            }
         }
 
         // Update FPS counter

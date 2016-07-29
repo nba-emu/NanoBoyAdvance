@@ -151,7 +151,8 @@ void MainWindow::closeApp()
 void MainWindow::timerTick()
 {
     gba->Frame();
-    screen->updateTexture(buffer, 240, 160);
+    if (gba->HasRendered())
+        screen->updateTexture(buffer, 240, 160);
 }
 
 void MainWindow::keyPress(int key)
