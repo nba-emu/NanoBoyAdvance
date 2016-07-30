@@ -139,21 +139,21 @@ namespace NanoboyAdvance
             }
         }
 
-        inline void DrawLineToBuffer(u32* line_buffer, int line, bool backdrop)
+        inline void DrawLineToBuffer(u32* line_buffer, bool backdrop)
         {
             for (int i = 0; i < 240; i++)
             {
                 u32 color = line_buffer[i];
 
                 if (backdrop || (color >> 24) != 0)
-                    buffer[line * 240 + i] = line_buffer[i] | 0xFF000000;
+                    buffer[vcount * 240 + i] = line_buffer[i] | 0xFF000000;
             }
         }
         
         // Renderers
-        void RenderBackgroundMode0(int id, int line);
-        void RenderBackgroundMode1(int id, int line);
-        void RenderSprites(int priority, int line, u32 tile_base);
+        void RenderBackgroundMode0(int id);
+        void RenderBackgroundMode1(int id);
+        void RenderSprites(int priority, u32 tile_base);
     public:
         enum class GBAVideoState
         {
@@ -277,6 +277,6 @@ namespace NanoboyAdvance
         void Step();
 
         // Renders one entire line
-        void Render(int line);
+        void Render();
     };
 }
