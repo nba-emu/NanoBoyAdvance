@@ -44,13 +44,13 @@ namespace NanoboyAdvance
         memset(buffer, 0, 240 * 160 * 4);
     }
 
-    void GBAVideo::RenderBackgroundMode0(int id, int line)
+    void GBAVideo::RenderBackgroundMode0(int id)
     {
         struct Background bg = this->bg[id];
 
         int width = ((bg.size & 1) + 1) * 256;
         int height = ((bg.size >> 1) + 1) * 256;
-        int y_scrolled = (line + bg.y) % height;
+        int y_scrolled = (vcount + bg.y) % height;
         int row = y_scrolled / 8;
         int row_rmdr = y_scrolled % 8;
         int left_area = 0;
@@ -108,7 +108,7 @@ namespace NanoboyAdvance
             bg_buffer[id][i] = line_buffer[(bg.x + i) % width];
     }
 
-    void GBAVideo::RenderBackgroundMode1(int id, int line)
+    void GBAVideo::RenderBackgroundMode1(int id)
     {
         // Rendering variables
         u32 tile_block_base = bg[id].tile_base;
@@ -124,8 +124,8 @@ namespace NanoboyAdvance
             float dec_bgpb = DecodeGBAFloat16(bg[id].pb);
             float dec_bgpc = DecodeGBAFloat16(bg[id].pc);
             float dec_bgpd = DecodeGBAFloat16(bg[id].pd);
-            int x = dec_bgx + (dec_bgpa * i) + (dec_bgpb * line);
-            int y = dec_bgy + (dec_bgpc * i) + (dec_bgpd * line);
+            int x = dec_bgx + (dec_bgpa * i) + (dec_bgpb * vcount);
+            int y = dec_bgy + (dec_bgpc * i) + (dec_bgpd * vcount);
             int tile_internal_line;
             int tile_internal_x;
             int tile_row;
@@ -167,7 +167,7 @@ namespace NanoboyAdvance
         }
     }
     
-    void GBAVideo::RenderSprites(int priority, int line, u32 tile_base)
+    void GBAVideo::RenderSprites(int priority, u32 tile_base)
     {
         // Process OBJ127 first, because OBJ0 has highest priority (OBJ0 overlays OBJ127, not vice versa)
         u32 offset = 127 * 8;
@@ -226,9 +226,9 @@ namespace NanoboyAdvance
                 }
 
                 // Determine if there is something to render for this sprite
-                if (line >= y && line <= y + height - 1)
+                if (vcount >= y && vcount <= y + height - 1)
                 {
-                    int internal_line = line - y;
+                    int internal_line = vcount - y;
                     int displacement_y;
                     int row;
                     int tiles_per_row = width / 8;
@@ -329,7 +329,7 @@ namespace NanoboyAdvance
         }
     }
     
-    void GBAVideo::Render(int line)
+    void GBAVideo::Render()
     {
         bool first_bg = true;
         bool win_none = !win[0].enable && !win[1].enable && !objwin.enable;
@@ -343,7 +343,7 @@ namespace NanoboyAdvance
         // Emulate the effect caused by "Forced Blank"
         if (forced_blank) {
             for (int i = 0; i < 240; i++) {
-                buffer[line * 240 + i] = 0xFFF8F8F8;
+                buffer[vcount * 240 + i] = 0xFFF8F8F8;
             }
             return;
         }
@@ -356,7 +356,7 @@ namespace NanoboyAdvance
             // TODO: Consider using no loop
             for (int i = 0; i < 4; i++) {
                 if (bg[i].enable) {
-                    RenderBackgroundMode0(i, line);
+                    RenderBackgroundMode0(i);
                 }
             }
             break;
@@ -365,13 +365,13 @@ namespace NanoboyAdvance
         {        
             // BG Mode 1 - 240x160 pixels, Text and RS mode mixed
             if (bg[0].enable) {
-                RenderBackgroundMode0(0, line);
+                RenderBackgroundMode0(0);
             }
             if (bg[1].enable) {
-                RenderBackgroundMode0(1, line);
+                RenderBackgroundMode0(1);
             }
             if (bg[2].enable) {
-                RenderBackgroundMode1(2, line);
+                RenderBackgroundMode1(2);
             }
             break;
         }
@@ -379,10 +379,10 @@ namespace NanoboyAdvance
         {
             // BG Mode 2 - 240x160 pixels, RS mode
             if (bg[2].enable) {
-                RenderBackgroundMode1(2, line);
+                RenderBackgroundMode1(2);
             }
             if (bg[3].enable) {
-                RenderBackgroundMode1(3, line);
+                RenderBackgroundMode1(3);
             }
             break;
         }
@@ -391,7 +391,7 @@ namespace NanoboyAdvance
             // Bitmap modes are rendered on BG2 which means we must check if it is enabled
             if (bg[2].enable)
             {
-                u32 offset = line * 240 * 2;
+                u32 offset = vcount * 240 * 2;
                 for (int x = 0; x < 240; x++)
                 {
                     bg_buffer[2][x] = DecodeRGB5((vram[offset + 1] << 8) | vram[offset]);
@@ -407,7 +407,7 @@ namespace NanoboyAdvance
                 u32 page = frame_select ? 0xA000 : 0;
                 for (int x = 0; x < 240; x++)
                 {
-                    u8 index = vram[page + line * 240 + x];
+                    u8 index = vram[page + vcount * 240 + x];
                     u16 rgb5 = pal[index * 2] | (pal[index * 2 + 1] << 8);
                     bg_buffer[2][x] = DecodeRGB5(rgb5);
                 }
@@ -418,10 +418,10 @@ namespace NanoboyAdvance
             // Bitmap modes are rendered on BG2 which means we must check if it is enabled
             if (bg[2].enable)
             {
-                u32 offset = (frame_select ? 0xA000 : 0) + line * 160 * 2;
+                u32 offset = (frame_select ? 0xA000 : 0) + vcount * 160 * 2;
                 for (int x = 0; x < 240; x++)
                 {
-                    if (x < 160 && line < 128)
+                    if (x < 160 && vcount < 128)
                     {
                         bg_buffer[2][x] = DecodeRGB5((vram[offset + 1] << 8) | vram[offset]);
                         offset += 2;
@@ -440,10 +440,10 @@ namespace NanoboyAdvance
         // Check if objects are enabled..
         if (obj.enable) {
             // .. and render all of them to their buffers if so
-            RenderSprites(0, line, 0x10000);
-            RenderSprites(1, line, 0x10000);
-            RenderSprites(2, line, 0x10000);
-            RenderSprites(3, line, 0x10000);
+            RenderSprites(0, 0x10000);
+            RenderSprites(1, 0x10000);
+            RenderSprites(2, 0x10000);
+            RenderSprites(3, 0x10000);
         }
     
         // Compose screen
@@ -451,12 +451,12 @@ namespace NanoboyAdvance
             for (int i = 3; i >= 0; i--) {
                 for (int j = 3; j >= 0; j--) {
                     if (bg[j].enable && bg[j].priority == i) {
-                        DrawLineToBuffer(bg_buffer[j], line, first_bg);
+                        DrawLineToBuffer(bg_buffer[j], first_bg);
                         first_bg = false;
                     }
                 }
                 if (obj.enable) {
-                    DrawLineToBuffer(obj_buffer[i], line, false);
+                    DrawLineToBuffer(obj_buffer[i], false);
                 }
             }
         } else {
@@ -464,20 +464,20 @@ namespace NanoboyAdvance
             for (int i = 3; i >= 0; i--) {
                 for (int j = 3; j >= 0; j--) {
                     if (bg[j].enable && bg[j].priority == i && winout.bg[j]) {
-                        DrawLineToBuffer(bg_buffer[j], line, first_bg);
+                        DrawLineToBuffer(bg_buffer[j], first_bg);
                         first_bg = false;
                     }
                 }
                 if (obj.enable && winout.obj) {
-                    DrawLineToBuffer(obj_buffer[i], line, false);
+                    DrawLineToBuffer(obj_buffer[i], false);
                 }
             }
             
             // Compose inner window[0/1] area
             for (int i = 1; i >= 0; i--) {
                 if (win[i].enable && (
-                    (win[i].top <= win[i].bottom && line >= win[i].top && line <= win[i].bottom) ||
-                    (win[i].top > win[i].bottom && !(line <= win[i].top && line >= win[i].bottom))
+                    (win[i].top <= win[i].bottom && vcount >= win[i].top && vcount <= win[i].bottom) ||
+                    (win[i].top > win[i].bottom && !(vcount <= win[i].top && vcount >= win[i].bottom))
                 )) {
                     u32 win_buffer[240];
                     
@@ -519,7 +519,7 @@ namespace NanoboyAdvance
                     }
                     
                     // Draw the window buffer
-                    DrawLineToBuffer(win_buffer, line, false);
+                    DrawLineToBuffer(win_buffer, false);
                 }
             }
         }
