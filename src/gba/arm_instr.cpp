@@ -123,8 +123,6 @@ namespace NanoboyAdvance
         int condition = instruction >> 28;
         bool execute = false;
 
-        cycles += 1; // assume cycle count
-
         // Check if the instruction will be executed
         switch (condition)
         {
@@ -492,29 +490,36 @@ namespace NanoboyAdvance
                 int reg_dest = (instruction >> 12) & 0xF;
                 int reg_operand1 = (instruction >> 16) & 0xF;
                 bool immediate = instruction & (1 << 25);
+                bool carry = cpsr & CarryFlag;
                 u32 operand1 = reg(reg_operand1);
                 u32 operand2;
-                bool carry = cpsr & CarryFlag; // == CarryFlag;
 
-                // Operand 2 can either be an 8 bit immediate value rotated right by 4 bit value or the value of a register shifted by a specific amount
+                // Instruction prefetch timing
+                cycles += memory->SequentialAccess(r[15], GBAMemory::AccessSize::Word);
+
+                // Operand 2 may be an immediate value or a shifted register.
                 if (immediate)
                 {
                     int immediate_value = instruction & 0xFF;
                     int amount = ((instruction >> 8) & 0xF) << 1;
+
+                    // Apply hardcoded rotation
                     operand2 = (immediate_value >> amount) | (immediate_value << (32 - amount));
+
+                    // Rotation also overwrites the carry flag
                     if (amount != 0)
-                    {
                         carry = (immediate_value >> (amount - 1)) & 1;
-                    }
                 }
                 else
                 {
-                    bool shift_immediate = (instruction & (1 << 4)) ? false : true;
-                    int reg_operand2 = instruction & 0xF;
                     u32 amount;
+                    int reg_operand2 = instruction & 0xF;
+                    bool shift_immediate = (instruction & (1 << 4)) ? false : true;
+
+                    // Get operand raw value
                     operand2 = reg(reg_operand2);
 
-                    // The amount is either the value of a register or a 5 bit immediate
+                    // Get amount of shift.
                     if (shift_immediate)
                     {
                         amount = (instruction >> 7) & 0x1F;
@@ -524,46 +529,40 @@ namespace NanoboyAdvance
                         int reg_shift = (instruction >> 8) & 0xF;
                         amount = reg(reg_shift);
 
-                        // When using a register to specify the shift amount r15 will be 12 bytes ahead instead of 8 bytes
-                        if (reg_operand1 == 15)
-                        {
-                            operand1 += 4;
-                        }
-                        if (reg_operand2 == 15)
-                        {
-                            operand2 += 4;
-                        }
+                        // Internal cycle
+                        cycles++;
+
+                        // Due to the internal shift cycle r15 will be 12 bytes ahead, not 8.
+                        if (reg_operand1 == 15) operand1 += 4;
+                        if (reg_operand2 == 15) operand2 += 4;
                     }
 
-                    // Perform the actual shift/rotate
+                    // Apply shift by "amount" bits to raw value.
                     switch ((instruction >> 5) & 3)
                     {
                     case 0b00:
-                        // Logical Shift Left
                         LSL(operand2, amount, carry);
                         break;
                     case 0b01:
-                        // Logical Shift Right
                         LSR(operand2, amount, carry, shift_immediate);
                         break;
                     case 0b10:
-                    {
-                        // Arithmetic Shift Right
                         ASR(operand2, amount, carry, shift_immediate);
                         break;
-                    }
                     case 0b11:
-                        // Rotate Right
                         ROR(operand2, amount, carry, shift_immediate);
                         break;
                     }
                 }
 
-                // When destination register is r15 and s bit is set rather than updating the flags restore cpsr
-                // This is allows for restoring r15 and cpsr at the same time
+                // The combination rDEST=15 and S-bit=1 triggers a CPU mode switch
+                // effectivly switchting back to the saved mode (CPSR = SPSR).
                 if (reg_dest == 15 && set_flags)
                 {
+                    // Flags will no longer be updated.
                     set_flags = false;
+
+                    // Switches back to saved mode.
                     SaveRegisters();
                     cpsr = *pspsr;
                     LoadRegisters();
@@ -572,33 +571,41 @@ namespace NanoboyAdvance
                 // Perform the actual operation
                 switch (opcode)
                 {
-                case 0b0000: // AND
+                case 0b0000:
                 {
+                    // Bitwise AND (AND)
                     u32 result = operand1 & operand2;
+
                     if (set_flags)
                     {
                         CalculateSign(result);
                         CalculateZero(result);
                         AssertCarry(carry);
                     }
+
                     reg(reg_dest) = result;
                     break;
                 }
-                case 0b0001: // EOR
+                case 0b0001:
                 {
+                    // Bitwise EXOR (EOR)
                     u32 result = operand1 ^ operand2;
+
                     if (set_flags)
                     {
                         CalculateSign(result);
                         CalculateZero(result);
                         AssertCarry(carry);
                     }
+
                     reg(reg_dest) = result;
                     break;
                 }
-                case 0b0010: // SUB
+                case 0b0010:
                 {
+                    // Subtraction (SUB)
                     u32 result = operand1 - operand2;
+
                     if (set_flags)
                     {
                         AssertCarry(operand1 >= operand2);
@@ -606,12 +613,15 @@ namespace NanoboyAdvance
                         CalculateSign(result);
                         CalculateZero(result);
                     }
+
                     reg(reg_dest) = result;
                     break;
                 }
-                case 0b0011: // RSB
+                case 0b0011:
                 {
+                    // Reverse subtraction (RSB)
                     u32 result = operand2 - operand1;
+
                     if (set_flags)
                     {
                         AssertCarry(operand2 >= operand1);
@@ -619,42 +629,53 @@ namespace NanoboyAdvance
                         CalculateSign(result);
                         CalculateZero(result);
                     }
+
                     reg(reg_dest) = result;
                     break;
                 }
-                case 0b0100: // ADD
-                {        
+                case 0b0100:
+                {
+                    // Addition (ADD)
                     u32 result = operand1 + operand2;
+
                     if (set_flags)
                     {
                         u64 result_long = (u64)operand1 + (u64)operand2;
+
                         AssertCarry(result_long & 0x100000000);
                         CalculateOverflowAdd(result, operand1, operand2);
                         CalculateSign(result);
                         CalculateZero(result);
                     }
+
                     reg(reg_dest) = result;
                     break;
                 }
-                case 0b0101: // ADC
+                case 0b0101:
                 {
+                    // Addition with Carry
                     int carry2 = (cpsr >> 29) & 1;
                     u32 result = operand1 + operand2 + carry2;
+
                     if (set_flags)
                     {
                         u64 result_long = (u64)operand1 + (u64)operand2 + (u64)carry2;
+
                         AssertCarry(result_long & 0x100000000);
                         CalculateOverflowAdd(result, operand1, operand2);
                         CalculateSign(result);
                         CalculateZero(result);
                     }
+
                     reg(reg_dest) = result;
                     break;
                 }
-                case 0b0110: // SBC
+                case 0b0110:
                 {
+                    // Subtraction with Carry
                     int carry2 = (cpsr >> 29) & 1;
                     u32 result = operand1 - operand2 + carry2 - 1;
+
                     if (set_flags)
                     {
                         AssertCarry(operand1 >= (operand2 + carry2 - 1));
@@ -662,13 +683,16 @@ namespace NanoboyAdvance
                         CalculateSign(result);
                         CalculateZero(result);
                     }
+
                     reg(reg_dest) = result;
                     break;
                 }
-                case 0b0111: // RSC
+                case 0b0111:
                 {
+                    // Reverse Substraction with Carry
                     int carry2 = (cpsr >> 29) & 1;
                     u32 result = operand2 - operand1 + carry2 - 1;
+
                     if (set_flags)
                     {
                         AssertCarry(operand2 >= (operand1 + carry2 - 1));
@@ -676,97 +700,121 @@ namespace NanoboyAdvance
                         CalculateSign(result);
                         CalculateZero(result);
                     }
+
                     reg(reg_dest) = result;
                     break;
                 }
-                case 0b1000: // TST
+                case 0b1000:
                 {
+                    // Bitwise AND flags only (TST)
                     u32 result = operand1 & operand2;
+
                     CalculateSign(result);
                     CalculateZero(result);
                     AssertCarry(carry);
                     break;
                 }
-                case 0b1001: // TEQ
+                case 0b1001:
                 {
+                    // Bitwise EXOR flags only (TEQ)
                     u32 result = operand1 ^ operand2;
+
                     CalculateSign(result);
                     CalculateZero(result);
                     AssertCarry(carry);
                     break;
                 }
-                case 0b1010: // CMP
+                case 0b1010:
                 {
+                    // Subtraction flags only (CMP)
                     u32 result = operand1 - operand2;
+
                     AssertCarry(operand1 >= operand2);
                     CalculateOverflowSub(result, operand1, operand2);
                     CalculateSign(result);
                     CalculateZero(result);
                     break;
                 }
-                case 0b1011: // CMN
+                case 0b1011:
                 {
+                    // Addition flags only (CMN)
                     u32 result = operand1 + operand2;
                     u64 result_long = (u64)operand1 + (u64)operand2;
+
                     AssertCarry(result_long & 0x100000000);
                     CalculateOverflowAdd(result, operand1, operand2);
                     CalculateSign(result);
                     CalculateZero(result);
                     break;
                 }
-                case 0b1100: // ORR
+                case 0b1100:
                 {
+                    // Bitwise OR (ORR)
                     u32 result = operand1 | operand2;
+
                     if (set_flags)
                     {
                         CalculateSign(result);
                         CalculateZero(result);
                         AssertCarry(carry);
                     }
+
                     reg(reg_dest) = result;
                     break;
                 }
-                case 0b1101: // MOV
+                case 0b1101:
                 {
+                    // Move into register (MOV)
                     if (set_flags)
                     {
                         CalculateSign(operand2);
                         CalculateZero(operand2);
                         AssertCarry(carry);
                     }
+
                     reg(reg_dest) = operand2;
                     break;
                 }
-                case 0b1110: // BIC
+                case 0b1110:
                 {
+                    // Bit Clear (BIC)
                     u32 result = operand1 & ~operand2;
+
                     if (set_flags)
                     {
                         CalculateSign(result);
                         CalculateZero(result);
                         AssertCarry(carry);
                     }
+
                     reg(reg_dest) = result;
                     break;
                 }
-                case 0b1111: // MVN
+                case 0b1111: 
                 {
+                    // Move into register negated (MVN)
                     u32 not_operand2 = ~operand2;
+
                     if (set_flags)
                     {
                         CalculateSign(not_operand2);
                         CalculateZero(not_operand2);
                         AssertCarry(carry);
                     }
+
                     reg(reg_dest) = not_operand2;
                     break;
                 }
                 }
 
-                // When writing to r15 initiate pipeline flush
+                // Clear pipeline if r15 updated
                 if (reg_dest == 15)
                 {
                     pipe.flush = true;
+
+                    // Emulate pipeline flush timings
+                    cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Word) +
+                              memory->SequentialAccess(r[15] + 4, GBAMemory::AccessSize::Word);
                 }
             }
             return;
@@ -774,7 +822,8 @@ namespace NanoboyAdvance
         case ARM_9:
         {
             // ARM.9 Load/store register/unsigned byte (Single Data Transfer)
-            // TODO: Force user mode when instruction is post-indexed and has writeback bit (in system mode only?)
+            // TODO: Force user mode when instruction is post-indexed
+            //       and has writeback bit (in system mode only?)
             u32 offset;
             int reg_dest = (instruction >> 12) & 0xF;
             int reg_base = (instruction >> 16) & 0xF;
@@ -787,119 +836,128 @@ namespace NanoboyAdvance
             u32 address = reg(reg_base);
 
             #ifdef DEBUG
-            // Instructions neither write back if base register is r15 nor should they have the write-back bit set when being post-indexed (post-indexing automatically writes back the address)
-            ASSERT(reg_base == 15 && write_back, LOG_WARN, "Single Data Transfer, thou shall not writeback to r15, r15=0x%x", r[15]);
-            ASSERT(write_back && !pre_indexed, LOG_WARN, "Single Data Transfer, thou shall not have write-back bit if being post-indexed, r15=0x%x", r[15]);
+            // Writeback may not be used when rBASE=15 or post-indexed is enabled.
+            ASSERT(reg_base == 15 && write_back, LOG_WARN, 
+                   "Single Data Transfer, writeback to r15, r15=0x%x", r[15]);
+            ASSERT(write_back && !pre_indexed, LOG_WARN,
+                   "Single Data Transfer, writeback and post-indexed, r15=0x%x", r[15]);
             #endif
 
-            // The offset added to the base address can either be an 12 bit immediate value or a register shifted by 5 bit immediate value
+            // Decode offset.
             if (immediate)
             {
+                // Immediate offset
                 offset = instruction & 0xFFF;
             }
             else
             {
+                // Register offset shifted by immediate value.
                 int reg_offset = instruction & 0xF;
                 u32 amount = (instruction >> 7) & 0x1F;
                 int shift = (instruction >> 5) & 3;
-                bool carry; // this is not actually used but we need a var for carry out.
+                bool carry;
 
                 #ifdef DEBUG
-                ASSERT(reg_offset == 15, LOG_WARN, "Single Data Transfer, thou shall not use r15 as offset, r15=0x%x", r[15]);
+                ASSERT(reg_offset == 15, LOG_WARN, "Single Data Transfer, r15 used as offset, r15=0x%x", r[15]);
                 #endif
 
                 offset = reg(reg_offset);
 
-                // Perform the actual shift
+                // Apply shift
                 switch (shift)
                 {
                 case 0b00:
-                {
-                    // Logical Shift Left
                     LSL(offset, amount, carry);
                     break;
-                }
                 case 0b01:
-                {
-                    // Logical Shift Right
                     LSR(offset, amount, carry, true);
                     break;
-                }
                 case 0b10:
-                {
-                    // Arithmetic Shift Right
                     ASR(offset, amount, carry, true);
                     break;
-                }
                 case 0b11:
-                {
-                    // Rotate Right
                     carry = cpsr & CarryFlag;
                     ROR(offset, amount, carry, true);
                     break;
                 }
-                }
             }
 
-            // If the instruction is pre-indexed we must add/subtract the offset beforehand
+            // Handle pre-indexing
             if (pre_indexed)
             {
                 if (add_to_base)
-                {
                     address += offset;
-                }
                 else
-                {
                     address -= offset;
-                }
             }
 
-            // Perform the actual load / store operation
+            // Actual memory access.
             if (load)
             {
+                // Load byte or word.
                 if (transfer_byte)
                 {
                     reg(reg_dest) = ReadByte(address);
+
+                    // Calculate instruction timing
+                    cycles += 1 + memory->SequentialAccess(r[15], GBAMemory::AccessSize::Word) +
+                                  memory->NonSequentialAccess(address, GBAMemory::AccessSize::Byte);
                 }
                 else
                 {
                     reg(reg_dest) = ReadWordRotated(address);
+
+                    // Calculate instruction timing
+                    cycles += 1 + memory->SequentialAccess(r[15], GBAMemory::AccessSize::Word) +
+                                  memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
                 }
+
+                // Writing to r15 causes a pipeline-flush.    
                 if (reg_dest == 15)
                 {
                     pipe.flush = true;
+
+                    // Emulate pipeline refill timings
+                    cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Word) +
+                              memory->SequentialAccess(r[15] + 4, GBAMemory::AccessSize::Word);
                 }
             }
             else
             {
                 u32 value = reg(reg_dest);
+
+                // r15 is +12 ahead in this cycle.
                 if (reg_dest == 15)
-                {
                     value += 4;
-                }
+                
+                // Write byte or word.
                 if (transfer_byte)
                 {
                     WriteByte(address, value & 0xFF);
+
+                    // Calculate instruction timing
+                    cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Word) +
+                              memory->NonSequentialAccess(address, GBAMemory::AccessSize::Byte);
                 }
                 else
                 {
                     WriteWord(address, value);
+
+                    // Calculate instruction timing
+                    cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Word) +
+                              memory->NonSequentialAccess(address, GBAMemory::AccessSize::Word);
                 }
             }
 
-            // When the instruction either is pre-indexed and has the write-back bit or it's post-indexed we must writeback the calculated address
+            // Handle post-indexing and writeback
             if (reg_base != reg_dest)
             {
                 if (!pre_indexed)
                 {
                     if (add_to_base)
-                    {
                         reg(reg_base) += offset;
-                    }
                     else
-                    {
                         reg(reg_base) -= offset;
-                    }
                 }
                 else if (write_back)
                 {
