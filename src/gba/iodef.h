@@ -1,23 +1,30 @@
-/*
-* Copyright (C) 2015 Frederic Meyer
-*
-* This file is part of nanoboyadvance.
-*
-* nanoboyadvance is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 2 of the License, or
-* (at your option) any later version.
-*
-* nanoboyadvance is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
-*/
+///////////////////////////////////////////////////////////////////////////////////
+//
+//  NanoboyAdvance is a modern Game Boy Advance emulator written in C++
+//  with performance, platform independency and reasonable accuracy in mind.
+//  Copyright (C) 2016 Frederic Meyer
+//
+//  This file is part of nanoboyadvance.
+//
+//  nanoboyadvance is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 2 of the License, or
+//  (at your option) any later version.
+//
+//  nanoboyadvance is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
+//
+///////////////////////////////////////////////////////////////////////////////////
 
-#pragma once
+
+#ifndef __NBA_IODEF_H__
+#define __NBA_IODEF_H__
+
 
 const int DISPCNT = 0x0;
 const int DISPSTAT = 0x4;
@@ -83,3 +90,5 @@ const int WAITCNT = 0x204;
 const int IME = 0x208;
 const int HALTCNT = 0x301;
 
+
+#endif  // __NBA_IODEF_H__

@@ -1,23 +1,29 @@
-/*
-* Copyright (C) 2015 Frederic Meyer
-*
-* This file is part of nanoboyadvance.
-*
-* nanoboyadvance is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 2 of the License, or
-* (at your option) any later version.
-*
-* nanoboyadvance is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
-*/
+///////////////////////////////////////////////////////////////////////////////////
+//
+//  NanoboyAdvance is a modern Game Boy Advance emulator written in C++
+//  with performance, platform independency and reasonable accuracy in mind.
+//  Copyright (C) 2016 Frederic Meyer
+//
+//  This file is part of nanoboyadvance.
+//
+//  nanoboyadvance is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 2 of the License, or
+//  (at your option) any later version.
+//
+//  nanoboyadvance is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
+//
+///////////////////////////////////////////////////////////////////////////////////
+
 
 #include "arm.h"
+
 
 namespace NanoboyAdvance
 {
@@ -359,16 +365,16 @@ namespace NanoboyAdvance
             r[0] = 1;
             r[1] = 1;
         case 0x04:
-            memory->interrupt->ime = 1;
+            memory->m_Interrupt->ime = 1;
 
             // If r0 is one IF must be cleared
             if (r[0] == 1)
-                memory->interrupt->if_ = 0;
+                memory->m_Interrupt->if_ = 0;
 
             // Sets GBA into halt state, waiting for specific interrupt(s) to occur.
-            memory->intr_wait = true;
-            memory->intr_wait_mask = r[1];
-            memory->halt_state = GBAMemory::HaltState::Halt;
+            memory->m_IntrWait = true;
+            memory->m_IntrWaitMask = r[1];
+            memory->m_HaltState = GBAMemory::HaltState::Halt;
             break;
         case 0x0B:
         {
