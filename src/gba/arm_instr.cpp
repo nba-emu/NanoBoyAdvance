@@ -454,12 +454,13 @@ namespace NanoboyAdvance
                     {
                         int imm = instruction & 0xFF;
                         int ror = ((instruction >> 8) & 0xF) << 1;
+
+                        // Apply immediate ROR-shift.
                         operand = (imm >> ror) | (imm << (32 - ror));
                     }
                     else
                     {
-                        int reg_source = instruction & 0xF;
-                        operand = reg(reg_source);
+                        operand = reg(instruction & 0xF);
                     }
 
                     // Finally write either to SPSR or CPSR.
@@ -993,7 +994,7 @@ namespace NanoboyAdvance
 
             #ifdef DEBUG
             // Base register must not be r15
-            ASSERT(reg_base == 15, LOG_WARN, "Block Data Tranfser, thou shall not take r15 as base register, r15=0x%x", r[15]);
+            ASSERT(reg_base == 15, LOG_ERROR, "Block Data Tranfser, r15 used as base register, r15=0x%x", r[15]);
             #endif
 
             // If the s bit is set and the instruction is either a store or r15 is not in the list switch to user mode
