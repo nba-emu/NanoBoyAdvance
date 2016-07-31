@@ -1,23 +1,29 @@
-/*
-* Copyright (C) 2015 Frederic Meyer
-*
-* This file is part of nanoboyadvance.
-*
-* nanoboyadvance is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 2 of the License, or
-* (at your option) any later version.
-*
-* nanoboyadvance is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
-*/
+///////////////////////////////////////////////////////////////////////////////////
+//
+//  NanoboyAdvance is a modern Game Boy Advance emulator written in C++
+//  with performance, platform independency and reasonable accuracy in mind.
+//  Copyright (C) 2016 Frederic Meyer
+//
+//  This file is part of nanoboyadvance.
+//
+//  nanoboyadvance is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 2 of the License, or
+//  (at your option) any later version.
+//
+//  nanoboyadvance is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
+//
+///////////////////////////////////////////////////////////////////////////////////
+
 
 #include "video.h"
+
 
 /* TODO: 1) Improve RenderSprites method and allow for OBJWIN
  *          mask generation
@@ -32,25 +38,39 @@ namespace NanoboyAdvance
     const int GBAVideo::HBLANK_INTERRUPT = 2;
     const int GBAVideo::VCOUNT_INTERRUPT = 4;
 
+
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \date    July 31th, 2016
+    /// \fn      Constructor
+    ///
+    ///////////////////////////////////////////////////////////
     GBAVideo::GBAVideo(GBAInterrupt* interrupt)
     {
         // Assign interrupt struct to video device
-        this->interrupt = interrupt;
+        this->m_Interrupt = interrupt;
 
         // Zero init memory buffers
-        memset(pal, 0, 0x400);
-        memset(vram, 0, 0x18000);
-        memset(oam, 0, 0x400);
-        memset(buffer, 0, 240 * 160 * 4);
+        memset(m_PAL, 0, 0x400);
+        memset(m_VRAM, 0, 0x18000);
+        memset(m_OAM, 0, 0x400);
+        memset(m_Buffer, 0, 240 * 160 * 4);
     }
 
+
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \date    July 31th, 2016
+    /// \fn      RenderBackgroundMode0
+    ///
+    ///////////////////////////////////////////////////////////
     void GBAVideo::RenderBackgroundMode0(int id)
     {
-        struct Background bg = this->bg[id];
+        struct Background bg = this->m_BG[id];
 
         int width = ((bg.size & 1) + 1) * 256;
         int height = ((bg.size >> 1) + 1) * 256;
-        int y_scrolled = (vcount + bg.y) % height;
+        int y_scrolled = (m_VCount + bg.y) % height;
         int row = y_scrolled / 8;
         int row_rmdr = y_scrolled % 8;
         int left_area = 0;
@@ -69,8 +89,8 @@ namespace NanoboyAdvance
 
         for (int x = 0; x < width / 8; x++)
         {
-            u16 tile_encoder = (vram[offset + 1] << 8) | 
-                                vram[offset];
+            u16 tile_encoder = (m_VRAM[offset + 1] << 8) | 
+                                m_VRAM[offset];
             int tile_number = tile_encoder & 0x3FF;
             bool horizontal_flip = tile_encoder & (1 << 10);
             bool vertical_flip = tile_encoder & (1 << 11); 
@@ -105,27 +125,33 @@ namespace NanoboyAdvance
         }
 
         for (int i = 0; i < 240; i++)
-            bg_buffer[id][i] = line_buffer[(bg.x + i) % width];
+            m_BgBuffer[id][i] = line_buffer[(bg.x + i) % width];
     }
 
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \date    July 31th, 2016
+    /// \fn      RenderBackgroundMode1
+    ///
+    ///////////////////////////////////////////////////////////
     void GBAVideo::RenderBackgroundMode1(int id)
     {
         // Rendering variables
-        u32 tile_block_base = bg[id].tile_base;
-        u32 map_block_base = bg[id].map_base;
-        bool wraparound = bg[id].wraparound;
-        int blocks = ((bg[id].size) + 1) << 4;
+        u32 tile_block_base = m_BG[id].tile_base;
+        u32 map_block_base = m_BG[id].map_base;
+        bool wraparound = m_BG[id].wraparound;
+        int blocks = ((m_BG[id].size) + 1) << 4;
         int size = blocks * 8;
         
         for (int i = 0; i < 240; i++) {
-            float dec_bgx = bg[id].x_ref_int;
-            float dec_bgy = bg[id].y_ref_int;
-            float dec_bgpa = DecodeGBAFloat16(bg[id].pa);
-            float dec_bgpb = DecodeGBAFloat16(bg[id].pb);
-            float dec_bgpc = DecodeGBAFloat16(bg[id].pc);
-            float dec_bgpd = DecodeGBAFloat16(bg[id].pd);
-            int x = dec_bgx + (dec_bgpa * i) + (dec_bgpb * vcount);
-            int y = dec_bgy + (dec_bgpc * i) + (dec_bgpd * vcount);
+            float dec_bgx = m_BG[id].x_ref_int;
+            float dec_bgy = m_BG[id].y_ref_int;
+            float dec_bgpa = DecodeGBAFloat16(m_BG[id].pa);
+            float dec_bgpb = DecodeGBAFloat16(m_BG[id].pb);
+            float dec_bgpc = DecodeGBAFloat16(m_BG[id].pc);
+            float dec_bgpd = DecodeGBAFloat16(m_BG[id].pd);
+            int x = dec_bgx + (dec_bgpa * i) + (dec_bgpb * m_VCount);
+            int y = dec_bgy + (dec_bgpc * i) + (dec_bgpd * m_VCount);
             int tile_internal_line;
             int tile_internal_x;
             int tile_row;
@@ -137,7 +163,7 @@ namespace NanoboyAdvance
                     x = x % size;
                     y = y % size;
                 } else {
-                    bg_buffer[id][i] = 0;
+                    m_BgBuffer[id][i] = 0;
                     continue;
                 }
             }
@@ -145,7 +171,7 @@ namespace NanoboyAdvance
                 if (wraparound) {
                     x = (size + x) % size;
                 } else {
-                    bg_buffer[id][i] = 0;
+                    m_BgBuffer[id][i] = 0;
                     continue;
                 }
             }
@@ -153,7 +179,7 @@ namespace NanoboyAdvance
                 if (wraparound) {
                     y = (size + y) % size;
                 } else {
-                    bg_buffer[id][i] = 0;
+                    m_BgBuffer[id][i] = 0;
                     continue;
                 }
             }
@@ -162,11 +188,17 @@ namespace NanoboyAdvance
             tile_internal_x = x % 8;
             tile_row = (y - tile_internal_line) / 8;
             tile_column = (x - tile_internal_x) / 8;
-            tile_number = vram[map_block_base + tile_row * blocks + tile_column];
-            bg_buffer[id][i] = DecodeTilePixel8BPP(tile_block_base, tile_number, tile_internal_line, tile_internal_x, false);
+            tile_number = m_VRAM[map_block_base + tile_row * blocks + tile_column];
+            m_BgBuffer[id][i] = DecodeTilePixel8BPP(tile_block_base, tile_number, tile_internal_line, tile_internal_x, false);
         }
     }
-    
+       
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \date    July 31th, 2016
+    /// \fn      RenderSprites
+    ///
+    ///////////////////////////////////////////////////////////
     void GBAVideo::RenderSprites(int priority, u32 tile_base)
     {
         // Process OBJ127 first, because OBJ0 has highest priority (OBJ0 overlays OBJ127, not vice versa)
@@ -175,9 +207,9 @@ namespace NanoboyAdvance
         // Walk all entries
         for (int i = 0; i < 128; i++)
         {
-            u16 attribute0 = (oam[offset + 1] << 8) | oam[offset];
-            u16 attribute1 = (oam[offset + 3] << 8) | oam[offset + 2];
-            u16 attribute2 = (oam[offset + 5] << 8) | oam[offset + 4];
+            u16 attribute0 = (m_OAM[offset + 1] << 8) | m_OAM[offset];
+            u16 attribute1 = (m_OAM[offset + 3] << 8) | m_OAM[offset + 2];
+            u16 attribute2 = (m_OAM[offset + 5] << 8) | m_OAM[offset + 4];
 
             // Only render those which have matching priority
             if (((attribute2 >> 10) & 3) == priority)
@@ -226,9 +258,9 @@ namespace NanoboyAdvance
                 }
 
                 // Determine if there is something to render for this sprite
-                if (vcount >= y && vcount <= y + height - 1)
+                if (m_VCount >= y && m_VCount <= y + height - 1)
                 {
-                    int internal_line = vcount - y;
+                    int internal_line = m_VCount - y;
                     int displacement_y;
                     int row;
                     int tiles_per_row = width / 8;
@@ -270,7 +302,7 @@ namespace NanoboyAdvance
                         u32* tile_data;
 
                         // Determine the tile to render
-                        if (obj.two_dimensional)
+                        if (m_Obj.two_dimensional)
                         {
                             current_tile_number = tile_number + row * tiles_per_row + j;
                         }
@@ -300,7 +332,7 @@ namespace NanoboyAdvance
                                 u32 color = tile_data[k];
                                 if ((color >> 24) != 0 && dst_index < 240)
                                 {
-                                    obj_buffer[priority][dst_index] = color;
+                                    m_ObjBuffer[priority][dst_index] = color;
                                 }
                             }
 
@@ -313,7 +345,7 @@ namespace NanoboyAdvance
                                 u32 color = tile_data[k];
                                 if ((color >> 24) != 0 && dst_index < 240)
                                 {
-                                    obj_buffer[priority][dst_index] = tile_data[k];
+                                    m_ObjBuffer[priority][dst_index] = tile_data[k];
                                 }
                             }
                         }
@@ -327,35 +359,41 @@ namespace NanoboyAdvance
             // Update offset to the next entry
             offset -= 8;
         }
-    }
-    
+    }    
+
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \date    July 31th, 2016
+    /// \fn      Render
+    ///
+    ///////////////////////////////////////////////////////////
     void GBAVideo::Render()
     {
         bool first_bg = true;
-        bool win_none = !win[0].enable && !win[1].enable && !objwin.enable;
+        bool win_none = !m_Win[0].enable && !m_Win[1].enable && !m_ObjWin.enable;
         
         // Reset obj buffers
-        memset(obj_buffer[0], 0, sizeof(u32)*240);
-        memset(obj_buffer[1], 0, sizeof(u32)*240);
-        memset(obj_buffer[2], 0, sizeof(u32)*240);
-        memset(obj_buffer[3], 0, sizeof(u32)*240);
+        memset(m_ObjBuffer[0], 0, sizeof(u32)*240);
+        memset(m_ObjBuffer[1], 0, sizeof(u32)*240);
+        memset(m_ObjBuffer[2], 0, sizeof(u32)*240);
+        memset(m_ObjBuffer[3], 0, sizeof(u32)*240);
 
         // Emulate the effect caused by "Forced Blank"
-        if (forced_blank) {
+        if (m_ForcedBlank) {
             for (int i = 0; i < 240; i++) {
-                buffer[vcount * 240 + i] = 0xFFF8F8F8;
+                m_Buffer[m_VCount * 240 + i] = 0xFFF8F8F8;
             }
             return;
         }
 
         // Call mode specific rendering logic
-        switch (video_mode) {
+        switch (m_VideoMode) {
         case 0:
         {
             // BG Mode 0 - 240x160 pixels, Text mode
             // TODO: Consider using no loop
             for (int i = 0; i < 4; i++) {
-                if (bg[i].enable) {
+                if (m_BG[i].enable) {
                     RenderBackgroundMode0(i);
                 }
             }
@@ -364,13 +402,13 @@ namespace NanoboyAdvance
         case 1:
         {        
             // BG Mode 1 - 240x160 pixels, Text and RS mode mixed
-            if (bg[0].enable) {
+            if (m_BG[0].enable) {
                 RenderBackgroundMode0(0);
             }
-            if (bg[1].enable) {
+            if (m_BG[1].enable) {
                 RenderBackgroundMode0(1);
             }
-            if (bg[2].enable) {
+            if (m_BG[2].enable) {
                 RenderBackgroundMode1(2);
             }
             break;
@@ -378,10 +416,10 @@ namespace NanoboyAdvance
         case 2:
         {
             // BG Mode 2 - 240x160 pixels, RS mode
-            if (bg[2].enable) {
+            if (m_BG[2].enable) {
                 RenderBackgroundMode1(2);
             }
-            if (bg[3].enable) {
+            if (m_BG[3].enable) {
                 RenderBackgroundMode1(3);
             }
             break;
@@ -389,12 +427,12 @@ namespace NanoboyAdvance
         case 3:
             // BG Mode 3 - 240x160 pixels, 32768 colors
             // Bitmap modes are rendered on BG2 which means we must check if it is enabled
-            if (bg[2].enable)
+            if (m_BG[2].enable)
             {
-                u32 offset = vcount * 240 * 2;
+                u32 offset = m_VCount * 240 * 2;
                 for (int x = 0; x < 240; x++)
                 {
-                    bg_buffer[2][x] = DecodeRGB5((vram[offset + 1] << 8) | vram[offset]);
+                    m_BgBuffer[2][x] = DecodeRGB5((m_VRAM[offset + 1] << 8) | m_VRAM[offset]);
                     offset += 2;
                 }
             }
@@ -402,35 +440,35 @@ namespace NanoboyAdvance
         case 4:
             // BG Mode 4 - 240x160 pixels, 256 colors (out of 32768 colors)
             // Bitmap modes are rendered on BG2 which means we must check if it is enabled
-            if (bg[2].enable)
+            if (m_BG[2].enable)
             {
-                u32 page = frame_select ? 0xA000 : 0;
+                u32 page = m_FrameSelect ? 0xA000 : 0;
                 for (int x = 0; x < 240; x++)
                 {
-                    u8 index = vram[page + vcount * 240 + x];
-                    u16 rgb5 = pal[index * 2] | (pal[index * 2 + 1] << 8);
-                    bg_buffer[2][x] = DecodeRGB5(rgb5);
+                    u8 index = m_VRAM[page + m_VCount * 240 + x];
+                    u16 rgb5 = m_PAL[index * 2] | (m_PAL[index * 2 + 1] << 8);
+                    m_BgBuffer[2][x] = DecodeRGB5(rgb5);
                 }
             }
             break;
         case 5:
             // BG Mode 5 - 160x128 pixels, 32768 colors
             // Bitmap modes are rendered on BG2 which means we must check if it is enabled
-            if (bg[2].enable)
+            if (m_BG[2].enable)
             {
-                u32 offset = (frame_select ? 0xA000 : 0) + vcount * 160 * 2;
+                u32 offset = (m_FrameSelect ? 0xA000 : 0) + m_VCount * 160 * 2;
                 for (int x = 0; x < 240; x++)
                 {
-                    if (x < 160 && vcount < 128)
+                    if (x < 160 && m_VCount < 128)
                     {
-                        bg_buffer[2][x] = DecodeRGB5((vram[offset + 1] << 8) | vram[offset]);
+                        m_BgBuffer[2][x] = DecodeRGB5((m_VRAM[offset + 1] << 8) | m_VRAM[offset]);
                         offset += 2;
                     }
                     else
                     {
                         // The unused space is filled with the first color from pal ram as far as I can see
-                        u16 rgb5 = pal[0] | (pal[1] << 8);
-                        bg_buffer[2][x] = DecodeRGB5(rgb5);
+                        u16 rgb5 = m_PAL[0] | (m_PAL[1] << 8);
+                        m_BgBuffer[2][x] = DecodeRGB5(rgb5);
                     }
                 }
             }
@@ -438,7 +476,7 @@ namespace NanoboyAdvance
         }
         
         // Check if objects are enabled..
-        if (obj.enable) {
+        if (m_Obj.enable) {
             // .. and render all of them to their buffers if so
             RenderSprites(0, 0x10000);
             RenderSprites(1, 0x10000);
@@ -450,34 +488,34 @@ namespace NanoboyAdvance
         if (win_none) {
             for (int i = 3; i >= 0; i--) {
                 for (int j = 3; j >= 0; j--) {
-                    if (bg[j].enable && bg[j].priority == i) {
-                        DrawLineToBuffer(bg_buffer[j], first_bg);
+                    if (m_BG[j].enable && m_BG[j].priority == i) {
+                        DrawLineToBuffer(m_BgBuffer[j], first_bg);
                         first_bg = false;
                     }
                 }
-                if (obj.enable) {
-                    DrawLineToBuffer(obj_buffer[i], false);
+                if (m_Obj.enable) {
+                    DrawLineToBuffer(m_ObjBuffer[i], false);
                 }
             }
         } else {
             // Compose outer window area
             for (int i = 3; i >= 0; i--) {
                 for (int j = 3; j >= 0; j--) {
-                    if (bg[j].enable && bg[j].priority == i && winout.bg[j]) {
-                        DrawLineToBuffer(bg_buffer[j], first_bg);
+                    if (m_BG[j].enable && m_BG[j].priority == i && m_WinOut.bg[j]) {
+                        DrawLineToBuffer(m_BgBuffer[j], first_bg);
                         first_bg = false;
                     }
                 }
-                if (obj.enable && winout.obj) {
-                    DrawLineToBuffer(obj_buffer[i], false);
+                if (m_Obj.enable && m_WinOut.obj) {
+                    DrawLineToBuffer(m_ObjBuffer[i], false);
                 }
             }
             
             // Compose inner window[0/1] area
             for (int i = 1; i >= 0; i--) {
-                if (win[i].enable && (
-                    (win[i].top <= win[i].bottom && vcount >= win[i].top && vcount <= win[i].bottom) ||
-                    (win[i].top > win[i].bottom && !(vcount <= win[i].top && vcount >= win[i].bottom))
+                if (m_Win[i].enable && (
+                    (m_Win[i].top <= m_Win[i].bottom && m_VCount >= m_Win[i].top && m_VCount <= m_Win[i].bottom) ||
+                    (m_Win[i].top > m_Win[i].bottom && !(m_VCount <= m_Win[i].top && m_VCount >= m_Win[i].bottom))
                 )) {
                     u32 win_buffer[240];
                     
@@ -489,29 +527,29 @@ namespace NanoboyAdvance
                     // Draw backgrounds and sprites if any
                     for (int j = 3; j >= 0; j--) {
                         for (int k = 3; k >= 0; k--) {
-                            if (bg[k].enable && bg[k].priority == j && win[i].bg_in[k]) {
-                                OverlayLineBuffers(win_buffer, bg_buffer[k]);
+                            if (m_BG[k].enable && m_BG[k].priority == j && m_Win[i].bg_in[k]) {
+                                OverlayLineBuffers(win_buffer, m_BgBuffer[k]);
                             }
                         }
-                        if (obj.enable && win[i].obj_in) {
-                            OverlayLineBuffers(win_buffer, obj_buffer[j]);
+                        if (m_Obj.enable && m_Win[i].obj_in) {
+                            OverlayLineBuffers(win_buffer, m_ObjBuffer[j]);
                         }
                     }
 
                     // Make the window buffer transparent in the outer area
-                    if (win[i].left <= win[i].right + 1) {
-                        for (int j = 0; j <= win[i].left; j++) {
+                    if (m_Win[i].left <= m_Win[i].right + 1) {
+                        for (int j = 0; j <= m_Win[i].left; j++) {
                             if (j < 240) {
                                 win_buffer[j] = 0;
                             }
                         }
-                        for (int j = win[i].right; j < 240; j++) {
+                        for (int j = m_Win[i].right; j < 240; j++) {
                             if (j >= 0) {
                                 win_buffer[j] = 0;
                             }
                         }
                     } else {
-                        for (int j = win[i].right; j <= win[i].left; j++) {
+                        for (int j = m_Win[i].right; j <= m_Win[i].left; j++) {
                             if (j >= 0 && j < 240) {
                                 win_buffer[j] = 0;
                             }
@@ -525,79 +563,84 @@ namespace NanoboyAdvance
         }
     }
 
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \date    July 31th, 2016
+    /// \fn      Step
+    ///
+    ///////////////////////////////////////////////////////////
     void NanoboyAdvance::GBAVideo::Step()
     {
-        ticks++;
-        render_scanline = false;
-        vcount_flag = vcount == vcount_setting;
+        m_Ticks++;
+        m_RenderScanline = false;
+        m_VCountFlag = m_VCount == m_VCountSetting;
 
-        switch (state)
+        switch (m_State)
         {
         case GBAVideoState::Scanline:
         {
-            if (ticks >= 960)
+            if (m_Ticks >= 960)
             {
-                hblank_dma = true;
-                state = GBAVideoState::HBlank;
+                m_HBlankDMA = true;
+                m_State = GBAVideoState::HBlank;
                 
-                if (hblank_irq)
-                    interrupt->if_ |= HBLANK_INTERRUPT;
+                if (m_HBlankIRQ)
+                    m_Interrupt->if_ |= HBLANK_INTERRUPT;
 
                 //Render(vcount);
-                render_scanline = true;
-                
-                ticks = 0;
+                m_RenderScanline = true;
+                m_Ticks = 0;
             }
             break;
         }
         case GBAVideoState::HBlank:
-            if (ticks >= 272)
+            if (m_Ticks >= 272)
             {
-                vcount++;
+                m_VCount++;
 
-                if (vcount_flag && vcount_irq)
-                    interrupt->if_ |= VCOUNT_INTERRUPT;
+                if (m_VCountFlag && m_VCountIRQ)
+                    m_Interrupt->if_ |= VCOUNT_INTERRUPT;
                 
-                if (vcount == 160)
+                if (m_VCount == 160)
                 {
-                    bg[2].x_ref_int = DecodeGBAFloat32(bg[2].x_ref);
-                    bg[2].y_ref_int = DecodeGBAFloat32(bg[2].y_ref);
-                    bg[3].x_ref_int = DecodeGBAFloat32(bg[3].x_ref);
-                    bg[3].y_ref_int = DecodeGBAFloat32(bg[3].y_ref);
+                    m_BG[2].x_ref_int = DecodeGBAFloat32(m_BG[2].x_ref);
+                    m_BG[2].y_ref_int = DecodeGBAFloat32(m_BG[2].y_ref);
+                    m_BG[3].x_ref_int = DecodeGBAFloat32(m_BG[3].x_ref);
+                    m_BG[3].y_ref_int = DecodeGBAFloat32(m_BG[3].y_ref);
 
-                    hblank_dma = false;
-                    vblank_dma = true;
-                    state = GBAVideoState::VBlank;
+                    m_HBlankDMA = false;
+                    m_VBlankDMA = true;
+                    m_State = GBAVideoState::VBlank;
 
-                    if (vblank_irq)
-                        interrupt->if_ |= VBLANK_INTERRUPT;
+                    if (m_VBlankIRQ)
+                        m_Interrupt->if_ |= VBLANK_INTERRUPT;
                 }
                 else
                 {
-                    hblank_dma = false;
-                    state = GBAVideoState::Scanline;
+                    m_HBlankDMA = false;
+                    m_State = GBAVideoState::Scanline;
                 }
 
-                ticks = 0;
+                m_Ticks = 0;
             }
             break;
         case GBAVideoState::VBlank:
         {
-            if (ticks >= 1232)
+            if (m_Ticks >= 1232)
             {
-                vcount++;
+                m_VCount++;
 
-                if (vcount_flag && vcount_irq)
-                    interrupt->if_ |= VCOUNT_INTERRUPT;
+                if (m_VCountFlag && m_VCountIRQ)
+                    m_Interrupt->if_ |= VCOUNT_INTERRUPT;
 
-                if (vcount == 227)
+                if (m_VCount == 227)
                 {
-                    vblank_dma = false;
-                    state = GBAVideoState::Scanline;
-                    vcount = 0;
+                    m_VBlankDMA = false;
+                    m_State = GBAVideoState::Scanline;
+                    m_VCount = 0;
                 }
 
-                ticks = 0;
+                m_Ticks = 0;
             }
             break;
         }

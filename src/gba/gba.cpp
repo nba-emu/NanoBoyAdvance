@@ -1,36 +1,57 @@
-/*
-* Copyright (C) 2016 Frederic Meyer
-*
-* This file is part of nanoboyadvance.
-*
-* nanoboyadvance is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 2 of the License, or
-* (at your option) any later version.
-*
-* nanoboyadvance is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
-*/
+///////////////////////////////////////////////////////////////////////////////////
+//
+//  NanoboyAdvance is a modern Game Boy Advance emulator written in C++
+//  with performance, platform independency and reasonable accuracy in mind.
+//  Copyright (C) 2016 Frederic Meyer
+//
+//  This file is part of nanoboyadvance.
+//
+//  nanoboyadvance is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 2 of the License, or
+//  (at your option) any later version.
+//
+//  nanoboyadvance is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
+//
+///////////////////////////////////////////////////////////////////////////////////
+
 
 #include "gba.h"
 
+
 using namespace std;
+
 
 namespace NanoboyAdvance
 {
+    // Defines the amount of cycles per frame
     const int GBA::FRAME_CYCLES = 280896;
 
+
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \date    July 31th, 2016
+    /// \fn      Constructor, 1
+    ///
+    ///////////////////////////////////////////////////////////
     GBA::GBA(string rom_file, string save_file)
     {
-        memory = new GBAMemory(rom_file, save_file);
-        arm = new ARM7(memory, true);
+        m_Memory = new GBAMemory(rom_file, save_file);
+        m_ARM = new ARM7(m_Memory, true);
     }
 
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \date    July 31th, 2016
+    /// \fn      Constructor, 2
+    ///
+    ///////////////////////////////////////////////////////////
     GBA::GBA(string rom_file, string save_file, string bios_file)
     {
         u8* bios;
@@ -42,63 +63,76 @@ namespace NanoboyAdvance
         bios = File::ReadFile(bios_file);
         bios_size = File::GetFileSize(bios_file);
 
-        memory = new GBAMemory(rom_file, save_file, bios, bios_size);
-        arm = new ARM7(memory, false);
+        m_Memory = new GBAMemory(rom_file, save_file, bios, bios_size);
+        m_ARM = new ARM7(m_Memory, false);
     }
 
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \date    July 31th, 2016
+    /// \fn      Destructor
+    ///
+    ///////////////////////////////////////////////////////////
     GBA::~GBA()
     {
-        delete arm;
-        delete memory;
+        delete m_ARM;
+        delete m_Memory;
     }
 
+
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \date    July 31th, 2016
+    /// \fn      Frame
+    ///
+    ///////////////////////////////////////////////////////////
     void GBA::Frame()
     {
-        did_render = false;
+        m_DidRender = false;
 
-        for (int i = 0; i < FRAME_CYCLES * speed_multiplier; i++)
+        for (int i = 0; i < FRAME_CYCLES * m_SpeedMultiplier; i++)
         {
-            u32 interrupts = memory->interrupt->ie & memory->interrupt->if_;
+            u32 interrupts = m_Memory->m_Interrupt->ie & m_Memory->m_Interrupt->if_;
             
             // Only pause as long as (IE & IF) != 0
-            if (memory->halt_state != GBAMemory::HaltState::None && interrupts != 0)
+            if (m_Memory->m_HaltState != GBAMemory::HaltState::None && interrupts != 0)
             {
                 // If IntrWait only resume if requested interrupt is encountered
-                if (!memory->intr_wait || (interrupts & memory->intr_wait_mask) != 0)
+                if (!m_Memory->m_IntrWait || (interrupts & m_Memory->m_IntrWaitMask) != 0)
                 {
-                    memory->halt_state = GBAMemory::HaltState::None;
-                    memory->intr_wait = false;
+                    m_Memory->m_HaltState = GBAMemory::HaltState::None;
+                    m_Memory->m_IntrWait = false;
                 }
             }
 
             // Raise an IRQ if neccessary
-            if (memory->interrupt->ime && interrupts)
-                arm->RaiseIRQ();
+            if (m_Memory->m_Interrupt->ime && interrupts)
+                m_ARM->RaiseIRQ();
 
             // Run the hardware components
-            if (memory->halt_state != GBAMemory::HaltState::Stop)
+            if (m_Memory->m_HaltState != GBAMemory::HaltState::Stop)
             {
                 int forward_steps = 0;
 
                 // Do next pending DMA transfer
-                memory->RunDMA();
+                m_Memory->RunDMA();
 
-                if (memory->halt_state != GBAMemory::HaltState::Halt)
+                if (m_Memory->m_HaltState != GBAMemory::HaltState::Halt)
                 {
-                    arm->cycles = 0;
-                    arm->Step();
-                    forward_steps = arm->cycles - 1;
+                    m_ARM->cycles = 0;
+                    m_ARM->Step();
+                    forward_steps = m_ARM->cycles - 1;
                 }
 
                 for (int j = 0; j < forward_steps + 1; j++) 
                 {
-                    memory->video->Step();
-                    memory->RunTimer();
+                    m_Memory->m_Video->Step();
+                    m_Memory->RunTimer();
 
-                    if (memory->video->render_scanline && (i / FRAME_CYCLES) == speed_multiplier - 1)
+                    if (m_Memory->m_Video->m_RenderScanline && (i / FRAME_CYCLES) == m_SpeedMultiplier - 1)
                     {
-                        memory->video->Render();
-                        did_render = true;
+                        m_Memory->m_Video->Render();
+                        m_DidRender = true;
                     }
                 }
 
@@ -107,26 +141,50 @@ namespace NanoboyAdvance
         }
     }
 
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \date    July 31th, 2016
+    /// \fn      SetKeyState
+    ///
+    ///////////////////////////////////////////////////////////
     void GBA::SetKeyState(Key key, bool pressed)
     {
         if (pressed)
-            memory->keyinput &= ~(int)key;
+            m_Memory->m_KeyInput &= ~(int)key;
         else
-            memory->keyinput |= (int)key;
+            m_Memory->m_KeyInput |= (int)key;
     }
 
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \date    July 31th, 2016
+    /// \fn      SetSpeedUp
+    ///
+    ///////////////////////////////////////////////////////////
     void GBA::SetSpeedUp(int multiplier)
     {
-        speed_multiplier = multiplier;
+        m_SpeedMultiplier = multiplier;
     }
 
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \date    July 31th, 2016
+    /// \fn      GetVideoBuffer
+    ///
+    ///////////////////////////////////////////////////////////
     u32* GBA::GetVideoBuffer()
     {
-        return memory->video->buffer;
+        return m_Memory->m_Video->m_Buffer;
     }
 
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \date    July 31th, 2016
+    /// \fn      HasRendered
+    ///
+    ///////////////////////////////////////////////////////////
     bool GBA::HasRendered()
     {
-        return did_render;
+        return m_DidRender;
     }
-};
+}

@@ -2,11 +2,11 @@ cmake_minimum_required (VERSION 2.6)
 project(NanoboyAdvance)
 
 # Compiler settings
-option(DEBUG "Build for debug purposes" ON)
+option(DEBUG "Build for debug purposes" OFF)
 if (DEBUG)
-    add_definitions(-std=c++11 -g -O0 -DDEBUG)
+    add_definitions(-std=c++11 -static-libgcc -static-libstdc++ -g -O0 -DDEBUG)
 else()
-    add_definitions(-std=c++11 -Ofast -finline-functions)
+    add_definitions(-std=c++11 -static-libgcc -static-libstdc++ -Ofast -finline-functions)
 endif()
 
 # The version number.
