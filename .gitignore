@@ -27,6 +27,9 @@
 *.out
 *.app
 
+# Qt Creator
+*.user
+
 # NanoboyAdvance specific
 *.bin
 *.gba
