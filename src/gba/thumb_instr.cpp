@@ -216,10 +216,10 @@ namespace NanoboyAdvance
                     reg(reg_dest) = operand;
                     break;
                 case 0b11: // BX
-                    // Switch instruction set?
+                    // Bit0 being set in the address indicates
+                    // that the destination instruction is in THUMB mode.
                     if (operand & 1)
                     {
-                        // Update r15
                         r[15] = operand & ~1;
 
                         // Emulate pipeline refill cycles
@@ -228,13 +228,12 @@ namespace NanoboyAdvance
                     }
                     else
                     {
-                        // Switch to ARM and update r15
                         cpsr &= ~ThumbFlag;
                         r[15] = operand & ~3;
 
                         // Emulate pipeline refill cycles
                         cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Word) +
-                                memory->SequentialAccess(r[15] + 2, GBAMemory::AccessSize::Word);
+                                memory->SequentialAccess(r[15] + 4, GBAMemory::AccessSize::Word);
                     }
 
                     // Flush pipeline
