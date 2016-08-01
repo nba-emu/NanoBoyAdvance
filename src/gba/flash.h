@@ -37,17 +37,18 @@ namespace NanoboyAdvance
     /// \author  Frederic Meyer
     /// \date    July 31th, 2016
     /// \class   GBAFlash
-    /// \brief   Defines components of the flash memory.
+    /// \brief   Emulates FLASH64/128 backup memory.
     ///
     ///////////////////////////////////////////////////////////
     class GBAFlash : public GBABackup
     {
+    private:
         ///////////////////////////////////////////////////////////
         /// \author Frederic Meyer
         /// \date   July 31th, 2016
         /// \enum   FlashCommand
         ///
-        /// Defines all possible flash commands.
+        /// Defines all possible FLASH commands.
         ///
         ///////////////////////////////////////////////////////////
         enum class FlashCommand
@@ -68,9 +69,11 @@ namespace NanoboyAdvance
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
         /// \fn      Constructor
+        /// \param   save_file        Path to the underlying save file.
+        /// \param   second_bank      True for FLASH128.
         ///
         ///////////////////////////////////////////////////////////
-        GBAFlash(std::string m_SaveFile, bool second_bank);
+        GBAFlash(std::string save_file, bool second_bank);
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
@@ -88,6 +91,9 @@ namespace NanoboyAdvance
         ///
         /// Reads a byte at specified offset of the flash memory.
         ///
+        /// \param   offset  FLASH address to read from.
+        /// \return  The read value.
+        ///
         ///////////////////////////////////////////////////////////
         u8 ReadByte(u32 offset);
 
@@ -98,11 +104,13 @@ namespace NanoboyAdvance
         ///
         /// Writes a byte at specified offset of the flash memory.
         ///
+        /// \param  offset  FLASH address to write to.
+        /// \param  value   Value to write to the bus.
         ///////////////////////////////////////////////////////////
         void WriteByte(u32 offset, u8 value);
 
 
-    public:
+    private:
 
         ///////////////////////////////////////////////////////////////////////////////////
         // Class members (memory)
