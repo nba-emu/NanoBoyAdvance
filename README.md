@@ -10,11 +10,17 @@ have some work to do until a first release targeted at users. NanoboyAdvance wil
 ## Status:
 
 ARM: 99%
+
 Memory: 99%
+
 Video: ~85% (however, will be rewritten since software rendering sucks)
+
 Audio: 0%
+
 Flash Support: yes
+
 SRAM Support: yes
+
 EEPROM Support: no
 
 ## Compiling
