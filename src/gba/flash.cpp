@@ -43,8 +43,8 @@ namespace NanoboyAdvance
         u8* save_data;
 
         // Save save file path and flash type
-        this->m_SaveFile = save_file;
-        this->m_SecondBank = second_bank;
+        m_SaveFile = save_file;
+        m_SecondBank = second_bank;
 
         // Check if save file already exists, sanitize and load if so        
         if (File::Exists(save_file))

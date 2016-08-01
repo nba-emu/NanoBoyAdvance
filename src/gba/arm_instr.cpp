@@ -129,6 +129,8 @@ namespace NanoboyAdvance
         int condition = instruction >> 28;
         bool execute = false;
 
+        cycles += 1;
+
         // Check if the instruction will be executed
         switch (condition)
         {
