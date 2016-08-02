@@ -111,6 +111,9 @@ namespace NanoboyAdvance
         /// \fn      SetKeyState
         /// \brief   Sets the key either pressed or released.
         ///
+        /// \param   key      The key being updated.
+        /// \param   pressed  True for pressed.
+        ///
         ///////////////////////////////////////////////////////////
         void SetKeyState(Key key, bool pressed);
 
@@ -119,6 +122,8 @@ namespace NanoboyAdvance
         /// \date    July 31th, 2016
         /// \fn      SetSpeedUp
         /// \brief   Changes the emulation speed.
+        ///
+        /// \param  multiplier  The multiple of emulation speed.
         ///
         ///////////////////////////////////////////////////////////
         void SetSpeedUp(int multiplier);
@@ -142,7 +147,7 @@ namespace NanoboyAdvance
         bool HasRendered();
 
 
-    public:
+    private:
 
         static const int FRAME_CYCLES;
 
