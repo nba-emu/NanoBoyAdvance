@@ -383,7 +383,7 @@ namespace NanoboyAdvance
     private:
 
         ///////////////////////////////////////////////////////////
-        // Class members
+        // Class members (Memory)
         //
         ///////////////////////////////////////////////////////////
         u8* m_ROM;
@@ -393,15 +393,29 @@ namespace NanoboyAdvance
         u8 m_IRAM[0x8000];
         GBABackup* m_Backup         {NULL};
         SaveType m_SaveType         {SaveType::NONE};
+
+        ///////////////////////////////////////////////////////////
+        // Class members (DMA, Timer, Waitstate)
+        //
+        ///////////////////////////////////////////////////////////
         struct DMA  m_DMA[4];
         struct Timer m_Timer[4];
         struct Waitstate m_Waitstate;
     public:
-        GBAVideo* m_Video;
+        ///////////////////////////////////////////////////////////
+        // Class members (Interrupts)
+        //
+        ///////////////////////////////////////////////////////////
         GBAInterrupt* m_Interrupt;
         HaltState m_HaltState       {HaltState::None};
         bool m_IntrWait             {false};
         bool m_IntrWaitMask         {0};
+
+        ///////////////////////////////////////////////////////////
+        // Class members (misc.)
+        //
+        ///////////////////////////////////////////////////////////
+        GBAVideo* m_Video;
         bool m_DidTransfer          {false};
         int m_DMACycles             {0};
         u16 m_KeyInput              {0x3FF};
