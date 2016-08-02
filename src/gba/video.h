@@ -479,11 +479,21 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         GBAInterrupt* m_Interrupt;
         int m_Ticks {0};
+
+        ///////////////////////////////////////////////////////////
+        // Class members (Buffers)
+        //
+        ///////////////////////////////////////////////////////////
         u32 m_BdBuffer[240];
         u32 m_BgBuffer[4][240];
         u32 m_ObjBuffer[4][240];
 
     public:
+
+        ///////////////////////////////////////////////////////////
+        // Class members (IO)
+        //
+        ///////////////////////////////////////////////////////////
         GBAVideoState m_State       {GBAVideoState::Scanline};
         Background m_BG[4];
         Object m_Obj;
@@ -491,21 +501,36 @@ namespace NanoboyAdvance
         WindowOuter m_WinOut;
         ObjectWindow m_ObjWin;
         int m_VideoMode {0};
-        u32 m_Buffer[240 * 160];
         u16 m_VCount {0};
         u8 m_VCountSetting          {0};
-        u8 m_PAL[0x400];
-        u8 m_VRAM[0x18000];
-        u8 m_OAM[0x400];
         bool m_FrameSelect          {false};
         bool m_ForcedBlank          {false};
         bool m_VCountFlag           {false};
         bool m_VBlankIRQ            {false};
         bool m_HBlankIRQ            {false};
         bool m_VCountIRQ            {false};
+
+        ///////////////////////////////////////////////////////////
+        // Class members (Memory)
+        //
+        ///////////////////////////////////////////////////////////
+        u8 m_PAL[0x400];
+        u8 m_VRAM[0x18000];
+        u8 m_OAM[0x400];
+
+        ///////////////////////////////////////////////////////////
+        // Class members (misc. flags)
+        //
+        ///////////////////////////////////////////////////////////
         bool m_HBlankDMA            {false};
         bool m_VBlankDMA            {false};
         bool m_RenderScanline       {false};
+
+        ///////////////////////////////////////////////////////////
+        // Class members (Buffers)
+        //
+        ///////////////////////////////////////////////////////////
+        u32 m_Buffer[240 * 160];
     };
 }
 
