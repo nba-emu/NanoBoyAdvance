@@ -4,6 +4,8 @@ set(SRCS
     arm_instr.cpp
     thumb_instr.cpp
     memory.cpp
+    dma.cpp
+    timer.cpp
     video.cpp
     flash.cpp
     sram.cpp
