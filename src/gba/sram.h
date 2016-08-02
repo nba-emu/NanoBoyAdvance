@@ -69,6 +69,10 @@ namespace NanoboyAdvance
         /// \date    July 31th, 2016
         /// \fn      ReadByte
         ///
+        /// Reads one byte from SRAM memory.
+        ///
+        /// \param  offset  The address to read from.
+        ///
         ///////////////////////////////////////////////////////////
         u8 ReadByte(u32 offset);
 
@@ -77,11 +81,16 @@ namespace NanoboyAdvance
         /// \date    July 31th, 2016
         /// \fn      WriteByte
         ///
+        /// Writes one byte into SRAM memory.
+        ///
+        /// \param  offset  The address to write to.
+        /// \param  value   The value being written.
+        ///
         ///////////////////////////////////////////////////////////
         void WriteByte(u32 offset, u8 value);
 
 
-    public:
+    private:
 
         ///////////////////////////////////////////////////////////
         // Class members
