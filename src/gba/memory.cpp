@@ -94,8 +94,8 @@ namespace NanoboyAdvance
         if (!File::Exists(rom_file))
             throw new runtime_error("Cannot open ROM file.");
 
-        m_Rom = File::ReadFile(rom_file);
-        m_RomSize = File::GetFileSize(rom_file);
+        m_ROM = File::ReadFile(rom_file);
+        m_ROMSize = File::GetFileSize(rom_file);
 
         // Setup Video and Interrupt hardware
         m_Interrupt = new GBAInterrupt();
@@ -105,27 +105,27 @@ namespace NanoboyAdvance
         m_Video = new GBAVideo(m_Interrupt);
         
         // Detect savetype
-        for (int i = 0; i < m_RomSize; i += 4)
+        for (int i = 0; i < m_ROMSize; i += 4)
         {
-            if (memcmp(m_Rom + i, "EEPROM_V", 8) == 0)
+            if (memcmp(m_ROM + i, "EEPROM_V", 8) == 0)
             {
                 m_SaveType = SaveType::EEPROM;
                 LOG(LOG_INFO, "Found save type: EEPROM (unsupported)");
             }
-            else if (memcmp(m_Rom + i, "SRAM_V", 6) == 0)
+            else if (memcmp(m_ROM + i, "SRAM_V", 6) == 0)
             {
                 m_SaveType = SaveType::SRAM;
                 m_Backup = new SRAM(save_file);
                 LOG(LOG_INFO, "Found save type: SRAM");
             }
-            else if (memcmp(m_Rom + i, "FLASH_V", 7) == 0 ||
-                     memcmp(m_Rom + i, "FLASH512_V", 10) == 0)
+            else if (memcmp(m_ROM + i, "FLASH_V", 7) == 0 ||
+                     memcmp(m_ROM + i, "FLASH512_V", 10) == 0)
             {
                 m_SaveType = SaveType::FLASH64;
                 m_Backup = new GBAFlash(save_file, false);
                 LOG(LOG_INFO, "Found save type: FLASH64");
             }
-            else if (memcmp(m_Rom + i, "FLASH1M_V", 9) == 0)
+            else if (memcmp(m_ROM + i, "FLASH1M_V", 9) == 0)
             {
                 m_SaveType = SaveType::FLASH128;
                 m_Backup = new GBAFlash(save_file, true);
@@ -148,7 +148,7 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     GBAMemory::~GBAMemory()
     {
-        delete m_Rom;
+        delete m_ROM;
         delete m_Backup;
         delete m_Video;
         delete m_Interrupt;
@@ -525,12 +525,12 @@ namespace NanoboyAdvance
         case 7:
             return m_Video->m_OAM[internal_offset % 0x400];
         case 8:
-            if (internal_offset >= m_RomSize) return 0;
-            return m_Rom[internal_offset];
+            if (internal_offset >= m_ROMSize) return 0;
+            return m_ROM[internal_offset];
         case 9:
             internal_offset += 0x1000000;
-            if (internal_offset >= m_RomSize) return 0;
-            return m_Rom[internal_offset];
+            if (internal_offset >= m_ROMSize) return 0;
+            return m_ROM[internal_offset];
         case 0xE:
             if (m_Backup != nullptr && (m_SaveType == SaveType::FLASH64 || 
                     m_SaveType == SaveType::FLASH128 || 

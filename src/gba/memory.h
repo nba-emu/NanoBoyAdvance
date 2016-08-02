@@ -69,7 +69,7 @@ namespace NanoboyAdvance
         /// \date   July 31th, 2016
         /// \enum   AddressControl
         ///
-        /// Defines all possible address functionalities.
+        /// Defines all possible DMA address functionalities.
         ///
         ///////////////////////////////////////////////////////////
         enum class AddressControl
@@ -101,7 +101,7 @@ namespace NanoboyAdvance
         /// \date   July 31th, 2016
         /// \enum   TransferSize
         ///
-        /// Defines the DMA transfer mode.
+        /// Defines the DMA transfer size.
         ///
         ///////////////////////////////////////////////////////////
         enum class TransferSize
@@ -114,6 +114,8 @@ namespace NanoboyAdvance
         /// \author Frederic Meyer
         /// \date   July 31th, 2016
         /// \enum   AccessSize
+        ///
+        /// Defines different memory access sizes.
         ///
         ///////////////////////////////////////////////////////////
         enum class AccessSize
@@ -128,6 +130,8 @@ namespace NanoboyAdvance
         /// \date   July 31th, 2016
         /// \enum   HaltState
         ///
+        /// Defines system execution states.
+        ///
         ///////////////////////////////////////////////////////////
         enum class HaltState
         {
@@ -140,6 +144,8 @@ namespace NanoboyAdvance
         /// \author Frederic Meyer
         /// \date   July 31th, 2016
         /// \enum   SaveType
+        ///
+        /// Defined cartridge backup/save types.
         ///
         ///////////////////////////////////////////////////////////
         enum class SaveType
@@ -156,7 +162,7 @@ namespace NanoboyAdvance
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
         /// \struct  DMA
-        /// \brief   Defines one DMA queue entry.
+        /// \brief   Defines one DMA channel.
         ///
         ///////////////////////////////////////////////////////////
         struct DMA
@@ -181,7 +187,7 @@ namespace NanoboyAdvance
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
         /// \struct  Timer
-        /// \brief   Defines one DMA timer entry
+        /// \brief   Defines one timer.
         ///
         ///////////////////////////////////////////////////////////
         struct Timer
@@ -198,10 +204,12 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
-        /// \struct  waitstate
+        /// \struct  Waitstate
+        ///
+        /// Holds waitstate configuration info.
         ///
         ///////////////////////////////////////////////////////////
-        struct waitstate
+        struct Waitstate
         {
             int sram        {0};
             int first[3]    {0, 0, 0};
@@ -216,6 +224,8 @@ namespace NanoboyAdvance
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
         /// \fn      Constructor, 1
+        /// \param   rom_file         Path to the game dump.
+        /// \param   save_file        Path to the save file.
         ///
         ///////////////////////////////////////////////////////////
         GBAMemory(std::string rom_file, std::string save_file);
@@ -224,9 +234,13 @@ namespace NanoboyAdvance
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
         /// \fn      Constructor, 2
+        /// \param   rom_file         Path to the game dump.
+        /// \param   save_file        Path to the save file.
+        /// \param   bios             BIOS-rom buffer.
+        /// \param   bios_size        Size of the BIOS-rom buffer.
         ///
         ///////////////////////////////////////////////////////////
-        GBAMemory(std::string rom_file, std::string save_file, u8* m_BIOS, size_t bios_size);
+        GBAMemory(std::string rom_file, std::string save_file, u8* bios, size_t bios_size);
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
@@ -242,6 +256,8 @@ namespace NanoboyAdvance
         /// \date    July 31th, 2016
         /// \fn      RunTimer
         ///
+        /// Updates all timers and timer-driven audio.
+        ///
         ///////////////////////////////////////////////////////////
         void RunTimer();
 
@@ -250,7 +266,7 @@ namespace NanoboyAdvance
         /// \date    July 31th, 2016
         /// \fn      RunDMA
         ///
-        /// Processes all queued DMA entries.
+        /// Processes all DMA channels.
         ///
         ///////////////////////////////////////////////////////////
         void RunDMA();
@@ -261,6 +277,12 @@ namespace NanoboyAdvance
         /// \date    July 31th, 2016
         /// \fn      SequentialAccess
         ///
+        /// Calculates sequential access cycles for a given access.
+        ///
+        /// \param    offset  The address that is accessed.
+        /// \param    size    The access size (byte/hword/word).
+        /// \returns  The amount of cycles.
+        ///
         ///////////////////////////////////////////////////////////
         int SequentialAccess(u32 offset, AccessSize size);
 
@@ -269,40 +291,117 @@ namespace NanoboyAdvance
         /// \date    July 31th, 2016
         /// \fn      NonSequentialAccess
         ///
+        /// Calculates non-sequential access cycles for a given access.
+        ///
+        /// \param    offset  The address that is accessed.
+        /// \param    size    The access size (byte/hword/word).
+        /// \returns  The amount of cycles.
+        ///
         ///////////////////////////////////////////////////////////
         int NonSequentialAccess(u32 offset, AccessSize size);
 
         
-        // Read / Write access methods
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    August 2th, 2016
+        /// \fn      ReadByte
+        ///
+        /// Reads one byte from a given address.
+        ///
+        /// \param    offset  The address to read from.
+        /// \returns  The byte being read.
+        ///
+        ///////////////////////////////////////////////////////////
         u8 ReadByte(u32 offset);
+
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    August 2th, 2016
+        /// \fn      ReadHWord
+        ///
+        /// Reads one hword from a given address.
+        ///
+        /// \param    offset  The address to read from.
+        /// \returns  The hword being read.
+        ///
+        ///////////////////////////////////////////////////////////
         u16 ReadHWord(u32 offset);
+
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    August 2th, 2016
+        /// \fn      ReadWord
+        ///
+        /// Reads one word from a given address.
+        ///
+        /// \param    offset  The address to read from.
+        /// \returns  The word being read.
+        ///
+        ///////////////////////////////////////////////////////////
         u32 ReadWord(u32 offset);
+
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    August 2th, 2016
+        /// \fn      WriteByte
+        ///
+        /// Writes one byte to a given address.
+        ///
+        /// \param  offset  The address to write to.
+        /// \param  value   The byte to write to the address.
+        ///
+        ///////////////////////////////////////////////////////////
         void WriteByte(u32 offset, u8 value);
+
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    August 2th, 2016
+        /// \fn      WriteHWord
+        ///
+        /// Writes one hword to a given address.
+        ///
+        /// \param  offset  The address to write to.
+        /// \param  value   The hword to write to the address.
+        ///
+        ///////////////////////////////////////////////////////////
         void WriteHWord(u32 offset, u16 value);
+
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    August 2th, 2016
+        /// \fn      WriteWord
+        ///
+        /// Writes one word to a given address.
+        ///
+        /// \param  offset  The address to write to.
+        /// \param  value   The word to write to the address.
+        ///
+        ///////////////////////////////////////////////////////////
         void WriteWord(u32 offset, u32 value);
 
 
-    public:
+    private:
 
         ///////////////////////////////////////////////////////////
         // Class members
         //
         ///////////////////////////////////////////////////////////
-        u8* m_Rom;
-        size_t m_RomSize;
+        u8* m_ROM;
+        size_t m_ROMSize;
         u8 m_BIOS[0x4000];
         u8 m_WRAM[0x40000];
         u8 m_IRAM[0x8000];
-        GBAInterrupt* m_Interrupt;
-        GBAVideo* m_Video;
         GBABackup* m_Backup         {NULL};
         SaveType m_SaveType         {SaveType::NONE};
-        u16 m_KeyInput              {0x3FF};
+    public:
+        GBAVideo* m_Video;
+        GBAInterrupt* m_Interrupt;
         HaltState m_HaltState       {HaltState::None};
         bool m_IntrWait             {false};
         bool m_IntrWaitMask         {0};
         bool m_DidTransfer          {false};
         int m_DMACycles             {0};
+        u16 m_KeyInput              {0x3FF};
     };
 }
 
