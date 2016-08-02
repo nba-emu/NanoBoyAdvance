@@ -44,7 +44,7 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     class GBAVideo
     {   
-    public:
+    private:
 
         static const int VBLANK_INTERRUPT;
         static const int HBLANK_INTERRUPT;
@@ -55,6 +55,8 @@ namespace NanoboyAdvance
         /// \author Frederic Meyer
         /// \date   July 31th, 2016
         /// \enum   GBAVideoSpriteShape
+        ///
+        /// Defines all possible sprite shapes.
         ///
         ///////////////////////////////////////////////////////////
         enum class GBAVideoSpriteShape
@@ -70,6 +72,8 @@ namespace NanoboyAdvance
         /// \date   July 31th, 2016
         /// \enum   GBASpecialEffect
         ///
+        /// Defines GBA Special Effects (SFX).
+        ///
         ///////////////////////////////////////////////////////////
         enum class GBASpecialEffect
         {
@@ -80,23 +84,11 @@ namespace NanoboyAdvance
         };
 
         ///////////////////////////////////////////////////////////
-        /// \author Frederic Meyer
-        /// \date   July 31th, 2016
-        /// \enum   GBAVideoState
-        ///
-        ///////////////////////////////////////////////////////////
-        enum class GBAVideoState
-        {
-            Scanline,
-            HBlank,
-            VBlank
-        };
-
-
-        ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
         /// \struct  Background
+        ///
+        /// Describes one Background.
         ///
         ///////////////////////////////////////////////////////////
         struct Background
@@ -119,12 +111,14 @@ namespace NanoboyAdvance
             u16 pb {0};
             u16 pc {0};
             u16 pd {0};
-        } m_BG[4];
+        };
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
         /// \struct  Object
+        ///
+        /// Holds OBJ-system settings.
         ///
         ///////////////////////////////////////////////////////////
         struct Object
@@ -132,12 +126,14 @@ namespace NanoboyAdvance
             bool enable {false};
             bool hblank_access {false};
             bool two_dimensional {false};
-        } m_Obj;
+        };
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
         /// \struct  Window
+        ///
+        /// Defines one Window.
         ///
         ///////////////////////////////////////////////////////////
         struct Window
@@ -150,12 +146,14 @@ namespace NanoboyAdvance
             u16 right {0};
             u16 top {0};
             u16 bottom {0};
-        } m_Win[2];
+        };
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
         /// \struct  WindowOuter
+        ///
+        /// Defines the outer area of windows.
         ///
         ///////////////////////////////////////////////////////////
         struct WindowOuter
@@ -163,19 +161,21 @@ namespace NanoboyAdvance
             bool bg[4] {false, false, false, false};
             bool obj {false};
             bool sfx {false};
-        } m_WinOut;
+        };
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
         /// \struct  ObjectWindow
         ///
+        /// Defines the object window.
+        ///
         ///////////////////////////////////////////////////////////
         struct ObjectWindow
         {
             bool enable {false};
             // TODO...
-        } m_ObjWin;
+        };
 
 
         ///////////////////////////////////////////////////////////
@@ -183,6 +183,9 @@ namespace NanoboyAdvance
         /// \date    July 31th, 2016
         /// \fn      DecodeRGB5
         /// \brief   Decodes GBA RGB555 to ARGB32 format.
+        ///
+        /// \param    color  RGB555 color value to decode.
+        /// \returns  The decoded ARGB32 value.
         ///
         ///////////////////////////////////////////////////////////
         inline u32 DecodeRGB5(u16 color)
@@ -198,6 +201,12 @@ namespace NanoboyAdvance
         /// \date    July 31th, 2016
         /// \fn      DecodeTileLine4BPP
         /// \brief   Decodes a single 4-bit tile line.
+        ///
+        /// \param    block_base    Address of block/tile data.
+        /// \param    palette_base  Palette address.
+        /// \param    number        Tile index number.
+        /// \param    line          The line to decode.
+        /// \returns  The decoded line in ARGB32 format.
         ///
         ///////////////////////////////////////////////////////////
         inline u32* DecodeTileLine4BPP(u32 block_base, u32 palette_base, int number, int line)
@@ -232,6 +241,12 @@ namespace NanoboyAdvance
         /// \fn      DecodeTileLine8BPP
         /// \brief   Decodes a single 8-bit tile line.
         ///
+        /// \param    block_base  Address of block/tile data
+        /// \param    number      Tile index number.
+        /// \param    line        The line to decode.
+        /// \param    sprite      Wether to use the sprite palette.
+        /// \returns  The decoded line in ARGB32 format.
+        ///
         ///////////////////////////////////////////////////////////
         inline u32* DecodeTileLine8BPP(u32 block_base, int number, int line, bool sprite)
         {
@@ -260,6 +275,13 @@ namespace NanoboyAdvance
         /// \fn      DecodeTilePixel8BPP
         /// \brief   Decodes a single 8-bit tile pixel
         ///
+        /// \param    block_base  Address of block/tile data
+        /// \param    number      Tile index number.
+        /// \param    line        Pixel y-Coordinate.
+        /// \param    column      Pixel x-Coordinate.
+        /// \param    sprite      Wether to use the sprite palette.
+        /// \returns  The decoded pixel in ARGB32 pixel.
+        ///
         ///////////////////////////////////////////////////////////
         inline u32 DecodeTilePixel8BPP(u32 block_base, int number, int line, int column, bool sprite)
         {
@@ -275,7 +297,10 @@ namespace NanoboyAdvance
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
         /// \fn      OverlayLineBuffers
-        /// \brief   Copies src buffer on dst buffer
+        /// \brief   Copies a source buffer on the destination buffer.
+        ///
+        /// \param  dst  Destination Buffer
+        /// \param  src  Source Buffer
         ///
         ///////////////////////////////////////////////////////////
         inline void OverlayLineBuffers(u32* dst, u32* src)
@@ -293,7 +318,10 @@ namespace NanoboyAdvance
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
         /// \fn      DrawLineToBuffer
-        /// \brief   Draws a scan-line to the buffer
+        /// \brief   Draws a line to the screen buffer
+        ///
+        /// \param  line_buffer  The line to draw.
+        /// \param  backdrop     Disables transparency.
         ///
         ///////////////////////////////////////////////////////////
         inline void DrawLineToBuffer(u32* line_buffer, bool backdrop)
@@ -314,14 +342,18 @@ namespace NanoboyAdvance
         /// \fn      RenderBackgroundMode0
         /// \brief   Performs rendering in BG mode 0.
         ///
+        /// \param  id  ID of the background to render.
+        ///
         ///////////////////////////////////////////////////////////
         void RenderBackgroundMode0(int id);
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
-        /// \fn      RenderBackgroundMode0
+        /// \fn      RenderBackgroundMode1
         /// \brief   Performs rendering in BG mode 1.
+        ///
+        /// \param  id  ID of the background to render.
         ///
         ///////////////////////////////////////////////////////////
         void RenderBackgroundMode1(int id);
@@ -329,8 +361,11 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
-        /// \fn      RenderBackgroundMode0
+        /// \fn      RenderSprites
         /// \brief   Performs rendering of OAM sprites.
+        ///
+        /// \param  priority   Priority filter.
+        /// \param  tile_base  Address of block/tile data.
         ///
         ///////////////////////////////////////////////////////////
         void RenderSprites(int priority, u32 tile_base);
@@ -338,22 +373,11 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
-        /// \fn      DecodeGBAFloat32
-        ///
-        ///////////////////////////////////////////////////////////
-        static inline float DecodeGBAFloat32(u32 number)
-        {
-            bool is_negative = number & (1 << 27);
-            s32 int_part = ((number & ~0xF0000000) >> 8) | (is_negative ? 0xFFF00000 : 0);
-            float frac_part = static_cast<float>(number & 0xFF) / 256;
-
-            return static_cast<float>(int_part) + (is_negative ? -frac_part : frac_part);
-        }
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
         /// \fn      DecodeGBAFloat16
+        /// \brief   Decodes the GBAFloat16 format to native float.
+        ///
+        /// \param    number  The GBAFloat16 value to decode.
+        /// \returns  The native float value.
         ///
         ///////////////////////////////////////////////////////////
         static inline float DecodeGBAFloat16(u16 number)
@@ -369,6 +393,10 @@ namespace NanoboyAdvance
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
         /// \fn      EncodeGBAFloat32
+        /// \brief   Encodes a native float into GBAFloat32 format.
+        ///
+        /// \param    The native float to encode.
+        /// \returns  The encoded GBAFloat32 value.
         ///
         ///////////////////////////////////////////////////////////
         static inline u32 EncodeGBAFloat32(float number)
@@ -379,6 +407,41 @@ namespace NanoboyAdvance
             return (u32)(int_part << 8 | frac_part);
         }
 
+    public:
+
+        ///////////////////////////////////////////////////////////
+        /// \author Frederic Meyer
+        /// \date   July 31th, 2016
+        /// \enum   GBAVideoState
+        ///
+        /// Defines all phases of video rendering.
+        ///
+        ///////////////////////////////////////////////////////////
+        enum class GBAVideoState
+        {
+            Scanline,
+            HBlank,
+            VBlank
+        };
+
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    July 31th, 2016
+        /// \fn      DecodeGBAFloat32
+        /// \brief   Decodes the GBAFloat32 format to native float.
+        ///
+        /// \param    number  The GBAFloat32 value to decode.
+        /// \returns  The native float value.
+        ///
+        ///////////////////////////////////////////////////////////
+        static inline float DecodeGBAFloat32(u32 number)
+        {
+            bool is_negative = number & (1 << 27);
+            s32 int_part = ((number & ~0xF0000000) >> 8) | (is_negative ? 0xFFF00000 : 0);
+            float frac_part = static_cast<float>(number & 0xFF) / 256;
+
+            return static_cast<float>(int_part) + (is_negative ? -frac_part : frac_part);
+        }
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
@@ -387,12 +450,13 @@ namespace NanoboyAdvance
         ///
         ///////////////////////////////////////////////////////////
         GBAVideo(GBAInterrupt* m_Interrupt);
-        
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
         /// \fn      Step
+        ///
+        /// Updates PPU/Video state.
         ///
         ///////////////////////////////////////////////////////////
         void Step();
@@ -402,38 +466,46 @@ namespace NanoboyAdvance
         /// \date    July 31th, 2016
         /// \fn      Render
         ///
+        /// Renders the current scanline.
+        ///
         ///////////////////////////////////////////////////////////
         void Render();
 
-
-    public:
+    private:
 
         ///////////////////////////////////////////////////////////
         // Class members
         //
         ///////////////////////////////////////////////////////////
         GBAInterrupt* m_Interrupt;
+        int m_Ticks {0};
         u32 m_BdBuffer[240];
         u32 m_BgBuffer[4][240];
         u32 m_ObjBuffer[4][240];
-        int m_Ticks {0};
+
+    public:
         GBAVideoState m_State       {GBAVideoState::Scanline};
-        bool m_RenderScanline       {false};
+        Background m_BG[4];
+        Object m_Obj;
+        Window m_Win[2];
+        WindowOuter m_WinOut;
+        ObjectWindow m_ObjWin;
+        int m_VideoMode {0};
+        u32 m_Buffer[240 * 160];
+        u16 m_VCount {0};
+        u8 m_VCountSetting          {0};
         u8 m_PAL[0x400];
         u8 m_VRAM[0x18000];
         u8 m_OAM[0x400];
-        bool m_HBlankDMA            {false};
-        bool m_VBlankDMA            {false};
-        u32 m_Buffer[240 * 160];
-        u16 m_VCount {0};
-        int m_VideoMode {0};
         bool m_FrameSelect          {false};
         bool m_ForcedBlank          {false};
         bool m_VCountFlag           {false};
         bool m_VBlankIRQ            {false};
         bool m_HBlankIRQ            {false};
         bool m_VCountIRQ            {false};
-        u8 m_VCountSetting          {0};
+        bool m_HBlankDMA            {false};
+        bool m_VBlankDMA            {false};
+        bool m_RenderScanline       {false};
     };
 }
 

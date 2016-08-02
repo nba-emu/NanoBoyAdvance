@@ -46,7 +46,7 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     class GBAMemory
     {
-    public:
+    private:
 
         // DMA and Timer constants
         static const int dma_count_mask[4];
@@ -108,36 +108,6 @@ namespace NanoboyAdvance
         {
             HWord       = 0,
             Word        = 1
-        };
-
-        ///////////////////////////////////////////////////////////
-        /// \author Frederic Meyer
-        /// \date   July 31th, 2016
-        /// \enum   AccessSize
-        ///
-        /// Defines different memory access sizes.
-        ///
-        ///////////////////////////////////////////////////////////
-        enum class AccessSize
-        {
-            Byte,
-            Hword,
-            Word
-        };
-
-        ///////////////////////////////////////////////////////////
-        /// \author Frederic Meyer
-        /// \date   July 31th, 2016
-        /// \enum   HaltState
-        ///
-        /// Defines system execution states.
-        ///
-        ///////////////////////////////////////////////////////////
-        enum class HaltState
-        {
-            None,
-            Stop,
-            Halt
         };
 
         ///////////////////////////////////////////////////////////
@@ -219,6 +189,36 @@ namespace NanoboyAdvance
 
 
     public:
+
+        ///////////////////////////////////////////////////////////
+        /// \author Frederic Meyer
+        /// \date   July 31th, 2016
+        /// \enum   AccessSize
+        ///
+        /// Defines different memory access sizes.
+        ///
+        ///////////////////////////////////////////////////////////
+        enum class AccessSize
+        {
+            Byte,
+            Hword,
+            Word
+        };
+
+        ///////////////////////////////////////////////////////////
+        /// \author Frederic Meyer
+        /// \date   July 31th, 2016
+        /// \enum   HaltState
+        ///
+        /// Defines system execution states.
+        ///
+        ///////////////////////////////////////////////////////////
+        enum class HaltState
+        {
+            None,
+            Stop,
+            Halt
+        };
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
