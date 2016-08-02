@@ -181,7 +181,7 @@ namespace NanoboyAdvance
             bool gamepack_drq   {false};
             bool interrupt      {false};
             bool enable         {false};
-        } m_DMA[4];
+        };
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
@@ -199,7 +199,7 @@ namespace NanoboyAdvance
             bool enable {false};
             bool countup {false};
             bool interrupt {false};
-        } m_Timer[4];
+        };
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
@@ -215,7 +215,7 @@ namespace NanoboyAdvance
             int first[3]    {0, 0, 0};
             int second[3]   {0, 0, 0};
             bool prefetch   {false};
-        } m_Waitstate;
+        };
 
 
     public:
@@ -393,6 +393,9 @@ namespace NanoboyAdvance
         u8 m_IRAM[0x8000];
         GBABackup* m_Backup         {NULL};
         SaveType m_SaveType         {SaveType::NONE};
+        struct DMA  m_DMA[4];
+        struct Timer m_Timer[4];
+        struct Waitstate m_Waitstate;
     public:
         GBAVideo* m_Video;
         GBAInterrupt* m_Interrupt;
