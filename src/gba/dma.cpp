@@ -78,10 +78,10 @@ namespace NanoboyAdvance
                 bool transfer_words = m_DMA[i].size == TransferSize::Word;
 
                 #if DEBUG
-                u32 value = ReadHWord(dma[i].source);
-                LOG(LOG_INFO, "DMA%d: s=%x d=%x c=%x count=%x l=%d v=%x", i, dma[i].source_int,
-                               dma[i].dest_int, 0, dma[i].count_int, video->vcount, value);
-                ASSERT(dma[i].gamepack_drq, LOG_ERROR, "Game Pak DRQ not supported.");
+                u32 value = ReadHWord(m_DMA[i].source);
+                LOG(LOG_INFO, "DMA%d: s=%x d=%x c=%x count=%x l=%d v=%x", i, m_DMA[i].source_int,
+                               m_DMA[i].dest_int, 0, m_DMA[i].count_int, m_Video->m_VCount, value);
+                ASSERT(m_DMA[i].gamepack_drq, LOG_ERROR, "Game Pak DRQ not supported.");
                 #endif
 
                 // Run as long as there is data to transfer

@@ -32,18 +32,6 @@ namespace NanoboyAdvance
         // Assign given memory instance to core
         this->memory = memory;
 
-        // Map the static registers r0-r7, r15
-        /*gpr[0] = &r0;
-        gpr[1] = &r1;
-        gpr[2] = &r2;
-        gpr[3] = &r3;
-        gpr[4] = &r4;
-        gpr[5] = &r5;
-        gpr[6] = &r6;
-        gpr[7] = &r7;
-        gpr[15] = &r15;
-        LoadRegisters();*/
-
         // Skip bios boot logo
         r[15] = 0x8000000;
         r13_usr = 0x3007F00;
