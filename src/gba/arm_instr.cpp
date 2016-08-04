@@ -984,33 +984,31 @@ namespace NanoboyAdvance
         case ARM_11:
         {
             // ARM.11 Block Data Transfer
-            // TODO: Handle empty register list
-            //       Correct transfer order for stm (this is needed for some io transfers)
-            //       See gbatek for both
-            bool pc_in_list = instruction & (1 << 15);
-            int reg_base = (instruction >> 16) & 0xF;
-            bool load = instruction & (1 << 20);
+            int register_list = instruction & 0xFFFF;
+            int base_register = (instruction >> 16) & 0xF;
+            bool load_instr = instruction & (1 << 20);
             bool write_back = instruction & (1 << 21);
-            bool s_bit = instruction & (1 << 22); // TODO: Give this a meaningful name
-            bool add_to_base = instruction & (1 << 23);
+            bool force_user_mode = instruction & (1 << 22);
+            bool increment_base = instruction & (1 << 23);
             bool pre_indexed = instruction & (1 << 24);
-            u32 address = reg(reg_base);
-            u32 old_address = address;
             bool switched_mode = false;
-            int old_mode;
+            bool first_access = false;
+            u32 address = r[base_register];
+            u32 address_old = address;
             int first_register = 0;
+            int register_count = 0;
+            int old_mode = 0;
 
             #ifdef DEBUG
             // Base register must not be r15
-            ASSERT(reg_base == 15, LOG_ERROR, "Block Data Tranfser, r15 used as base register, r15=0x%x", r[15]);
+            ASSERT(base_register == 15, LOG_ERROR, "ARM.11, rB=15, r15=0x%x", r[15]);
             #endif
 
-            // If the s bit is set and the instruction is either a store or r15 is not in the list switch to user mode
-            if (s_bit && (!load || !pc_in_list))
+            // Switch to User mode if neccessary
+            if (force_user_mode && (!load_instr || !(register_list & (1 << 15))))
             {
                 #ifdef DEBUG
-                // Writeback must not be activated in this case
-                ASSERT(write_back, LOG_WARN, "Block Data Transfer, thou shall not do user bank transfer with writeback, r15=0x%x", r[15]);
+                ASSERT(write_back, LOG_ERROR, "ARM.11, writeback and modeswitch, r15=0x%x", r[15]);
                 #endif
 
                 // Save current mode and enter user mode
@@ -1023,54 +1021,47 @@ namespace NanoboyAdvance
                 switched_mode = true;
             }
 
-            // Find the first register
+            // Find the first register and count registers
             for (int i = 0; i < 16; i++)
             {
-                if (instruction & (1 << i))
+                if (register_list & (1 << i))
                 {
                     first_register = i;
+                    register_count++;
+
+                    // Continue to count registers
+                    for (int j = i + 1; j < 16; j++)
+                    {
+                        if (register_list & (1 << j))
+                            register_count++;
+                    }
                     break;
                 }
             }
 
-            // Walk through the register list
-            // TODO: Start with the first register (?)
-            //       Remove code redundancy
-            if (add_to_base)
+            // One non-sequential prefetch cycle
+            cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Hword);
+
+            if (increment_base)
             {
                 for (int i = first_register; i < 16; i++)
                 {
-                    // Determine if the current register will be loaded/saved
-                    if (instruction & (1 << i))
+                    if (register_list & (1 << i))
                     {
-                        // If instruction is pre-indexed we must update address beforehand
                         if (pre_indexed)
-                        {
                             address += 4;
-                        }
 
-                        // Perform the actual load / store operation
-                        if (load)
+                        if (load_instr)
                         {
-                            // Overwriting the base disables writeback
-                            if (i == reg_base)
-                            {
+                            if (i == base_register)
                                 write_back = false;
-                            }
 
-                            // Load the register
-                            reg(i) = ReadWord(address);
+                            r[i] = ReadWord(address);
 
-                            // If r15 is overwritten, the pipeline must be flushed
                             if (i == 15)
                             {
-                                // If the s bit is set a mode switch is performed
-                                if (s_bit)
+                                if (force_user_mode)
                                 {
-                                    #ifdef DEBUG
-                                    // spsr_<mode> must not be copied to cpsr in user mode because user mode has not such a register
-                                    ASSERT((cpsr & ModeField) == (u32)Mode::USR, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r[15]);
-                                    #endif
                                     SaveRegisters();
                                     cpsr = *pspsr;
                                     LoadRegisters();
@@ -1080,28 +1071,17 @@ namespace NanoboyAdvance
                         }
                         else
                         {
-                            // When the base register is the first register in the list its original value is written
-                            if (i == first_register && i == reg_base)
-                            {
-                                WriteWord(address, old_address);
-                            }
+                            if (i == first_register && i == base_register)
+                                WriteWord(address, address_old);
                             else
-                            {
-                                WriteWord(address, reg(i));
-                            }
+                                WriteWord(address, r[i]);
                         }
 
-                        // If instruction is not pre-indexed we must update address afterwards
                         if (!pre_indexed)
-                        {
                             address += 4;
-                        }
 
-                        // If the writeback is specified the base register must be updated after each register
                         if (write_back)
-                        {
-                            reg(reg_base) = address;
-                        }
+                            r[base_register] = address;
                     }
                 }
             }
@@ -1109,37 +1089,22 @@ namespace NanoboyAdvance
             {
                 for (int i = 15; i >= first_register; i--)
                 {
-                    // Determine if the current register will be loaded/saved
-                    if (instruction & (1 << i))
+                    if (register_list & (1 << i))
                     {
-                        // If instruction is pre-indexed we must update address beforehand
                         if (pre_indexed)
-                        {
                             address -= 4;
-                        }
 
-                        // Perform the actual load / store operation
-                        if (load)
+                        if (load_instr)
                         {
-                            // Overwriting the base disables writeback
-                            if (i == reg_base)
-                            {
+                            if (i == base_register)
                                 write_back = false;
-                            }
 
-                            // Load the register
-                            reg(i) = ReadWord(address);
+                            r[i] = ReadWord(address);
 
-                            // If r15 is overwritten, the pipeline must be flushed
                             if (i == 15)
                             {
-                                // If the s bit is set a mode switch is performed
-                                if (s_bit)
+                                if (force_user_mode)
                                 {
-                                    #ifdef DEBUG
-                                    // spsr_<mode> must not be copied to cpsr in user mode because user mode has no such a register
-                                    ASSERT((cpsr & ModeField) == (u32)Mode::USR, LOG_ERROR, "Block Data Transfer is about to copy spsr_<mode> to cpsr, however we are in user mode, r15=0x%x", r[15]);
-                                    #endif
                                     SaveRegisters();
                                     cpsr = *pspsr;
                                     LoadRegisters();
@@ -1149,33 +1114,22 @@ namespace NanoboyAdvance
                         }
                         else
                         {
-                            // When the base register is the first register in the list its original value is written
-                            if (i == first_register && i == reg_base)
-                            {
-                                WriteWord(address, old_address);
-                            }
+                            if (i == first_register && i == base_register)
+                                WriteWord(address, address_old);
                             else
-                            {
-                                WriteWord(address, reg(i));
-                            }
+                                WriteWord(address, r[i]);
                         }
 
-                        // If instruction is not pre-indexed we must update address afterwards
                         if (!pre_indexed)
-                        {
                             address -= 4;
-                        }
 
-                        // If the writeback is specified the base register must be updated after each register
                         if (write_back)
-                        {
-                            reg(reg_base) = address;
-                        }
+                            r[base_register] = address;
                     }
                 }
             }
 
-            // If we switched mode it's time now to restore the previous mode
+            // Switch back to original mode.
             if (switched_mode)
             {
                 SaveRegisters();
