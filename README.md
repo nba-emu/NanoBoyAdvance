@@ -47,3 +47,9 @@ Replace `%SOURCE_PATH%` with the path where you extracted the source / cloned th
 Are you a developer and think you an help us out? We're always looking for motivated and skilled developers who want to support us. If you're interested in helping us out, please write me an e-mail to `fredericmeyer1337@yahoo.de`. We don't have an IRC channel yet.
 
 Also if you do happen to own a flashcard for the Game Boy Advance and don't need it anymore I'd be thankful if you'd donate it to me as I don't have one and these things get harder and harder to get. A flashcard would allow me to do research on the actual hardware of which the overall accuracy of NanoboyAdvance would benefit. I create this emulator solely based on unofficial documentation (mostly GBATEK and CowBite spec) which often only barely describe the nasty details. If you consider donating your flashcard please contact me via this e-mail `fredericmeyer1337@yahoo.de`.
+
+
+
+
+
+PS: FUCK YOU MICROSOFT. I HAD TO DO THIS COMMIT BECUZ I CANNOT FUCKNG WORK BECUZ MICROSOFT WINDOZE UPDATE BROKE MY SYSTEM SO I DONT BREAK MY COMMIT STREAK :( HOPE U UNDERSTAND.
