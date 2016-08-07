@@ -83,6 +83,7 @@ namespace NanoboyAdvance
             Decrease        = 3
         };
 
+    public:
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
@@ -177,7 +178,7 @@ namespace NanoboyAdvance
             // TODO...
         };
 
-
+    private:
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016

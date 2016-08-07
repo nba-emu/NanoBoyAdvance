@@ -21,6 +21,7 @@ set(HEADERS
     backup.h
     flash.h
     sram.h
+    composer.h
 )
 
 add_library(gba STATIC ${SRCS} ${HEADERS})
