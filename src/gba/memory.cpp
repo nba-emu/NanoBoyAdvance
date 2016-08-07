@@ -83,7 +83,7 @@ namespace NanoboyAdvance
         if (bios != nullptr)
         {
             if (bios_size > 0x4000)
-                throw new runtime_error("BIOS file is too big.");
+                throw runtime_error("BIOS file is too big.");
             memcpy(this->m_BIOS, bios, bios_size);
         }
         else
@@ -92,7 +92,7 @@ namespace NanoboyAdvance
         }
 
         if (!File::Exists(rom_file))
-            throw new runtime_error("Cannot open ROM file.");
+            throw runtime_error("Cannot open ROM file.");
 
         m_ROM = File::ReadFile(rom_file);
         m_ROMSize = File::GetFileSize(rom_file);

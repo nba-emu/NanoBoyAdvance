@@ -58,7 +58,7 @@ namespace NanoboyAdvance
         size_t bios_size;
 
         if (!File::Exists(bios_file))
-            throw new runtime_error("Cannot open BIOS file.");
+            throw runtime_error("Cannot open BIOS file.");
 
         bios = File::ReadFile(bios_file);
         bios_size = File::GetFileSize(bios_file);
