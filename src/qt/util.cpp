@@ -23,12 +23,15 @@
 
 #include "util.h"
 
-namespace qtUtil {
-    QDir appDir() {
+namespace qtUtil
+{
+    QDir appDir()
+    {
         return QDir {QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)};
     }
 
-    QString biosFilePath() {
+    QString biosFilePath()
+    {
         return appDir().absolutePath() + QDir::separator() + "bios.bin";
     }
 }

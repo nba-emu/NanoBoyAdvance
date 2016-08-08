@@ -29,12 +29,15 @@
 #include <QMessageBox>
 
 
-SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent) {
+SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent)
+{
     setModal(true);
     unsavedSettings = new QMap<QString, QVariant>;
 
-    if (!qtUtil::appDir().exists()) {
-        if (!qtUtil::appDir().mkpath(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))) {
+    if (!qtUtil::appDir().exists())
+    {
+        if (!qtUtil::appDir().mkpath(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)))
+        {
             QMessageBox::critical(parent, tr("Permission error"), tr("The settings directory is not writable. Aborting."));
             return;
         }
@@ -48,36 +51,49 @@ SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent) {
     QSettings settings {"nba-emu", "nanoboyadvance"};
     useBiosFileCheckbox->setChecked(settings.value("useBiosEnabled", false).toBool());
 
-    connect(useBiosFileCheckbox, &QCheckBox::stateChanged, [this](int state) {
-        if (state == Qt::Checked) {
-            // User clicked checkbox Ask for bios file.
-            if (QFile::exists(qtUtil::appDir().absolutePath() + QDir::separator() + "bios.bin")) {
-                // User previously entered bios file. Reuse that.
-                (*unsavedSettings)["useBiosEnabled"] = true;
-            } else {
-                // User has never before entered bios file.
-                QString biosPath = QFileDialog::getOpenFileName(this, tr("Open Bios file"), QDir::homePath(),
-                                                                tr("Bios File (*.bin)"));
-                if (biosPath.isNull()) {
-                    // User cancelled.
-                    useBiosFileCheckbox->setChecked(false);
-                } else {
-                    // User successfully selected file. Try to copy it to application directory.
-                    if (!QFile::copy(biosPath, qtUtil::biosFilePath())) {
-                        // Saving the bios failed.
-                        useBiosFileCheckbox->setChecked(false);
-                        QMessageBox::critical(this, tr("Copy error"), tr("Failed to save the bios."));
-                    } else {
-                        // The bios was successfully updated. Update the setings.
+    connect(useBiosFileCheckbox, &QCheckBox::stateChanged,
+            [this](int state)
+            {
+                if (state == Qt::Checked)
+                {
+                    // User clicked checkbox Ask for bios file.
+                    if (QFile::exists(qtUtil::appDir().absolutePath() + QDir::separator() + "bios.bin"))
+                    {
+                        // User previously entered bios file. Reuse that.
                         (*unsavedSettings)["useBiosEnabled"] = true;
                     }
+                    else
+                    {
+                        // User has never before entered bios file.
+                        QString biosPath = QFileDialog::getOpenFileName(this, tr("Open Bios file"), QDir::homePath(), tr("Bios File (*.bin)"));
+                        if (biosPath.isNull())
+                        {
+                            // User cancelled.
+                            useBiosFileCheckbox->setChecked(false);
+                        }
+                        else
+                        {
+                            // User successfully selected file. Try to copy it to application directory.
+                            if (!QFile::copy(biosPath, qtUtil::biosFilePath())) {
+                                // Saving the bios failed.
+                                useBiosFileCheckbox->setChecked(false);
+                                QMessageBox::critical(this, tr("Copy error"), tr("Failed to save the bios."));
+                            }
+                            else
+                            {
+                                // The bios was successfully updated. Update the setings.
+                                (*unsavedSettings)["useBiosEnabled"] = true;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    // User no longer wants to use bios.
+                    (*unsavedSettings)["useBiosEnabled"] = false;
                 }
             }
-        } else {
-            // User no longer wants to use bios.
-            (*unsavedSettings)["useBiosEnabled"] = false;
-        }
-    });
+    );
     settingsLayout->addWidget(useBiosFileCheckbox);
     settingsLayout->addStretch();
 
@@ -90,21 +106,24 @@ SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent) {
     initialized = true;
 }
 
-SettingsDialog::~SettingsDialog() {
+SettingsDialog::~SettingsDialog()
+{
     delete unsavedSettings;
 }
 
-void SettingsDialog::accept() {
+void SettingsDialog::accept()
+{
     QSettings settings {"nba-emu", "nanoboyadvance"};
-    for (auto i = unsavedSettings->constBegin(); i != unsavedSettings->constEnd(); ++i) {
+    for (auto i = unsavedSettings->constBegin(); i != unsavedSettings->constEnd(); ++i)
+    {
         settings.setValue(i.key(), i.value());
     }
     QDialog::accept();
 }
 
-int SettingsDialog::exec() {
-    if (!initialized) {
+int SettingsDialog::exec()
+{
+    if (!initialized)
         return -1;
-    }
     return QDialog::exec();
 }
