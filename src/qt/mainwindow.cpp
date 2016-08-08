@@ -74,8 +74,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     connect(m_AboutQtAction, &QAction::triggered, this, &QApplication::aboutQt);
 
     // Create status bar
+    m_StatusMessage = new QLabel(this);
     m_StatusBar = new QStatusBar(this);
-    m_StatusBar->showMessage(tr("Idle..."));
+    m_StatusMessage->setText(tr("Idle..."));
+    m_StatusBar->addPermanentWidget(m_StatusMessage);
     setStatusBar(m_StatusBar);
 
     // Setup GL screen
@@ -87,8 +89,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     // Create emulator timer
     m_Timer = new QTimer {this};
     m_Timer->setSingleShot(false);
-    m_Timer->setInterval(16);
+    m_Timer->setInterval(17);
     connect(m_Timer, &QTimer::timeout, this, &MainWindow::timerTick);
+
+    // Create FPS counting timer
+    m_FPSTimer = new QTimer {this};
+    m_FPSTimer->setSingleShot(false);
+    m_FPSTimer->setInterval(1000);
+    connect(m_FPSTimer, &QTimer::timeout, this, &MainWindow::fpsTimerTick);
 }
 
 MainWindow::~MainWindow()
@@ -107,6 +115,7 @@ void MainWindow::runGame(const QString &rom_file)
         m_GBA = new GBA {rom_file.toStdString(), save_file.toStdString(), "bios.bin"};
         m_Buffer = m_GBA->GetVideoBuffer();
         m_Timer->start();
+        m_FPSTimer->start();
         m_Screen->grabKeyboard();
     }
     catch (const std::runtime_error& e)
@@ -176,7 +185,17 @@ void MainWindow::timerTick()
 {
     m_GBA->Frame();
     if (m_GBA->HasRendered())
+    {
         m_Screen->updateTexture(m_Buffer, 240, 160);
+        m_Frames++;
+    }
+}
+
+void MainWindow::fpsTimerTick()
+{
+    std::string message = std::to_string(m_Frames) + " FPS";
+    m_StatusMessage->setText(QString(message.c_str()));
+    m_Frames = 0;
 }
 
 void MainWindow::keyPress(int key)
