@@ -225,7 +225,7 @@ namespace NanoboyAdvance
         //
         ///////////////////////////////////////////////////////////
         u16* m_VCount;
-        u16* m_BdColor;
+        u16* m_BdColor; //<<< TODO: big endian support
         u16* m_BgBuffer[4];
         u16* m_ObjBuffer[4];
         u8* m_WinMask[2];
