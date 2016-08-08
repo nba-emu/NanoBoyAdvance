@@ -151,7 +151,7 @@ private:
     // Class members
     //
     ///////////////////////////////////////////////////////////
-    GLuint texture;
+    GLuint m_Texture;
 };
 
 

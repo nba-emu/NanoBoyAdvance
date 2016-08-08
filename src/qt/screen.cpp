@@ -43,7 +43,7 @@ Screen::Screen(QWidget* parent) : QGLWidget(parent)
 ///////////////////////////////////////////////////////////
 Screen::~Screen()
 {
-    glDeleteTextures(1, &texture);
+    glDeleteTextures(1, &m_Texture);
 }
 
 ///////////////////////////////////////////////////////////
@@ -80,8 +80,8 @@ void Screen::initializeGL()
     qglClearColor(Qt::black);
     glEnable(GL_TEXTURE_2D);
 
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glGenTextures(1, &m_Texture);
+    glBindTexture(GL_TEXTURE_2D, m_Texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 }
