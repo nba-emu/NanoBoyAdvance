@@ -1,12 +1,21 @@
 cmake_minimum_required (VERSION 2.6)
 project(NanoboyAdvance)
 
+# Statically link stdlibs?
+option(STATIC_STDLIB "Link libgcc and libg++ statically" OFF)
+if (WIN32)
+    set(STATIC_STDLIB ON)
+endif()
+
 # Compiler settings
 option(DEBUG "Build for debug purposes" OFF)
 if (DEBUG)
-    add_definitions(-std=c++11 -static-libgcc -static-libstdc++ -g -O0 -DDEBUG)
+    add_definitions(-std=c++11 -g -O0 -DDEBUG)
 else()
-    add_definitions(-std=c++11 -static-libgcc -static-libstdc++ -Ofast -finline-functions)
+    add_definitions(-std=c++11 -Ofast -finline-functions)
+endif()
+if (STATIC_STDLIB)
+    add_definitions(-static-libgcc -static-libstdc++)
 endif()
 
 # The version number.
