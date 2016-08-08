@@ -31,6 +31,12 @@
 
 using namespace NanoboyAdvance;
 
+///////////////////////////////////////////////////////////
+/// \author Frederic Meyer
+/// \date   August 8th, 2016
+/// \fn     Constructor
+///
+///////////////////////////////////////////////////////////
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     setWindowTitle("NanoboyAdvance");
@@ -128,11 +134,23 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         });
 }
 
+///////////////////////////////////////////////////////////
+/// \author Frederic Meyer
+/// \date   August 8th, 2016
+/// \fn     Destructor
+///
+///////////////////////////////////////////////////////////
 MainWindow::~MainWindow()
 {
     delete m_GBA;
 }
 
+///////////////////////////////////////////////////////////
+/// \author Frederic Meyer
+/// \date   August 8th, 2016
+/// \fn     runGame
+///
+///////////////////////////////////////////////////////////
 void MainWindow::runGame(const QString &rom_file)
 {
     QFileInfo rom_info {rom_file};
@@ -157,6 +175,12 @@ void MainWindow::runGame(const QString &rom_file)
     }
 }
 
+///////////////////////////////////////////////////////////
+/// \author Frederic Meyer
+/// \date   August 8th, 2016
+/// \fn     keyToGBA
+///
+///////////////////////////////////////////////////////////
 GBA::Key MainWindow::keyToGBA(int key) {
     switch (key)
     {
@@ -185,6 +209,12 @@ GBA::Key MainWindow::keyToGBA(int key) {
     }
 }
 
+///////////////////////////////////////////////////////////
+/// \author Frederic Meyer
+/// \date   August 8th, 2016
+/// \fn     openGame
+///
+///////////////////////////////////////////////////////////
 void MainWindow::openGame()
 {
     QFileDialog dialog {this};

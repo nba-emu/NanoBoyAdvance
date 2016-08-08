@@ -26,24 +26,57 @@
 
 #include "screen.h"
 
+///////////////////////////////////////////////////////////
+/// \author Frederic Meyer
+/// \date   August 8th, 2016
+/// \fn     Constructor
+///
+///////////////////////////////////////////////////////////
+Screen::Screen(QWidget* parent) : QGLWidget(parent)
+{ }
 
-Screen::Screen(QWidget* parent) : QGLWidget(parent) {
-}
-
-Screen::~Screen() {
+///////////////////////////////////////////////////////////
+/// \author Frederic Meyer
+/// \date   August 8th, 2016
+/// \fn     Destructor
+///
+///////////////////////////////////////////////////////////
+Screen::~Screen()
+{
     glDeleteTextures(1, &texture);
 }
 
-void Screen::updateTexture(unsigned int *pixels, int width, int height) {
+///////////////////////////////////////////////////////////
+/// \author Frederic Meyer
+/// \date   August 8th, 2016
+/// \fn     updateTexture
+///
+///////////////////////////////////////////////////////////
+void Screen::updateTexture(unsigned int *pixels, int width, int height)
+{
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
     updateGL();
 }
 
-QSize Screen::sizeHint() const {
+///////////////////////////////////////////////////////////
+/// \author Frederic Meyer
+/// \date   August 8th, 2016
+/// \fn     sizeHint
+///
+///////////////////////////////////////////////////////////
+QSize Screen::sizeHint() const
+{
     return QSize {480, 320};
 }
 
-void Screen::initializeGL() {
+///////////////////////////////////////////////////////////
+/// \author Frederic Meyer
+/// \date   August 8th, 2016
+/// \fn     initializeGL
+///
+///////////////////////////////////////////////////////////
+void Screen::initializeGL()
+{
     qglClearColor(Qt::black);
     glEnable(GL_TEXTURE_2D);
 
@@ -53,7 +86,14 @@ void Screen::initializeGL() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 }
 
-void Screen::paintGL() {
+///////////////////////////////////////////////////////////
+/// \author Frederic Meyer
+/// \date   August 8th, 2016
+/// \fn     paintGL
+///
+///////////////////////////////////////////////////////////
+void Screen::paintGL()
+{
     float w = static_cast<float>(width());
     float h = static_cast<float>(height());
 
@@ -77,7 +117,14 @@ void Screen::paintGL() {
     glEnd();
 }
 
-void Screen::resizeGL(int width, int height) {
+///////////////////////////////////////////////////////////
+/// \author Frederic Meyer
+/// \date   August 8th, 2016
+/// \fn     resizeGL
+///
+///////////////////////////////////////////////////////////
+void Screen::resizeGL(int width, int height)
+{
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, width, height, 0, -1, 1);
@@ -85,10 +132,24 @@ void Screen::resizeGL(int width, int height) {
     glMatrixMode(GL_MODELVIEW);
 }
 
-void Screen::keyPressEvent(QKeyEvent* event) {
+///////////////////////////////////////////////////////////
+/// \author Frederic Meyer
+/// \date   August 8th, 2016
+/// \fn     keyPressEvent
+///
+///////////////////////////////////////////////////////////
+void Screen::keyPressEvent(QKeyEvent* event)
+{
     emit keyPress(event->key());
 }
 
-void Screen::keyReleaseEvent(QKeyEvent* event) {
+///////////////////////////////////////////////////////////
+/// \author Frederic Meyer
+/// \date   August 8th, 2016
+/// \fn     keyReleaseEvent
+///
+///////////////////////////////////////////////////////////
+void Screen::keyReleaseEvent(QKeyEvent* event)
+{
     emit keyRelease(event->key());
 }
