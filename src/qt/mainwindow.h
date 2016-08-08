@@ -29,6 +29,7 @@
 #include <QMainWindow>
 #include <QMenuBar>
 #include <QStatusBar>
+#include <QLabel>
 #include <QTimer>
 
 #include "gba/gba.h"
@@ -86,6 +87,15 @@ public slots:
     ///////////////////////////////////////////////////////////
     /// \author  Frederic Meyer
     /// \data    August 8th, 2016
+    /// \fn      fpsTimerTick
+    /// \brief   Ticks once per second, assists FPS counting.
+    ///
+    ///////////////////////////////////////////////////////////
+    void fpsTimerTick();
+
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \data    August 8th, 2016
     /// \fn      keyPress
     /// \brief   Handles key press event.
     ///
@@ -137,8 +147,10 @@ private:
     QMenu* m_HelpMenu;
     QMenuBar* m_MenuBar;
     QStatusBar* m_StatusBar;
+    QLabel* m_StatusMessage;
     Screen* m_Screen;
     QTimer* m_Timer;
+    QTimer* m_FPSTimer;
 
     ///////////////////////////////////////////////////////////
     // Class members (Emulator)
@@ -146,6 +158,7 @@ private:
     ///////////////////////////////////////////////////////////
     NanoboyAdvance::GBA* m_GBA {nullptr};
     u32* m_Buffer;
+    int m_Frames {0};
 };
 
 
