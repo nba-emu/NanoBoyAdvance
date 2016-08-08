@@ -38,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     fileMenu = menuBar->addMenu(tr("&File"));
     editMenu = menuBar->addMenu(tr("&Edit"));
     helpMenu = menuBar->addMenu(tr("&?"));
+    setMenuBar(menuBar);
 
     // Setup file menu
     openFileAction = fileMenu->addAction(tr("&Open"));
@@ -85,14 +86,16 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 }
 
 MainWindow::~MainWindow() {
-    delete gba;
+    if (gba != nullptr)
+        delete gba;
 }
 
 void MainWindow::runGame(const QString &rom_file) {
     QFileInfo rom_info {rom_file};
     QString save_file = rom_info.path() + QDir::separator() + rom_info.completeBaseName() + ".sav";
     
-    delete gba;
+    if (gba != nullptr)
+        delete gba;
 
     try {
         gba = new NanoboyAdvance::GBA {rom_file.toStdString(), save_file.toStdString(), "bios.bin"};

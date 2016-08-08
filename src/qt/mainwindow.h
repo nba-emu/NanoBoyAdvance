@@ -63,7 +63,7 @@ private:
     Screen *screen;
 
     QTimer *timer;
-    NanoboyAdvance::GBA *gba;
+    NanoboyAdvance::GBA *gba {nullptr};
     u32 *buffer;
 
     void runGame(const QString &rom_file);
