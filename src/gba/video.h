@@ -365,11 +365,10 @@ namespace NanoboyAdvance
         /// \fn      RenderSprites
         /// \brief   Performs rendering of OAM sprites.
         ///
-        /// \param  priority   Priority filter.
         /// \param  tile_base  Address of block/tile data.
         ///
         ///////////////////////////////////////////////////////////
-        void RenderSprites(int priority, u32 tile_base);
+        void RenderSprites(u32 tile_base);
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer

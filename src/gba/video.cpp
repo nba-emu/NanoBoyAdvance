@@ -199,7 +199,7 @@ namespace NanoboyAdvance
     /// \fn      RenderSprites
     ///
     ///////////////////////////////////////////////////////////
-    void GBAVideo::RenderSprites(int priority, u32 tile_base)
+    void GBAVideo::RenderSprites(u32 tile_base)
     {
         // Process OBJ127 first, because OBJ0 has highest priority (OBJ0 overlays OBJ127, not vice versa)
         u32 offset = 127 * 8;
@@ -212,7 +212,7 @@ namespace NanoboyAdvance
             u16 attribute2 = (m_OAM[offset + 5] << 8) | m_OAM[offset + 4];
 
             // Only render those which have matching priority
-            if (((attribute2 >> 10) & 3) == priority)
+            //if (((attribute2 >> 10) & 3) == priority)
             {
                 int width;
                 int height;
@@ -220,6 +220,7 @@ namespace NanoboyAdvance
                 int y = attribute0 & 0xFF;
                 GBAVideoSpriteShape shape = static_cast<GBAVideoSpriteShape>(attribute0 >> 14);
                 int size = attribute1 >> 14;
+                int priority = (attribute2 >> 10) & 3;
 
                 // Decode width and height
                 switch (shape)
@@ -478,10 +479,7 @@ namespace NanoboyAdvance
         // Check if objects are enabled..
         if (m_Obj.enable) {
             // .. and render all of them to their buffers if so
-            RenderSprites(0, 0x10000);
-            RenderSprites(1, 0x10000);
-            RenderSprites(2, 0x10000);
-            RenderSprites(3, 0x10000);
+            RenderSprites(0x10000);
         }
     
         // Compose screen
