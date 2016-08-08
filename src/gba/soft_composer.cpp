@@ -37,7 +37,7 @@ namespace NanoboyAdvance
             if (m_BG[i]->enable)
             {
                 for (int j = 0; j < 240; j++)
-                    m_BgFinalBuffer[i][line_start + j] = DecodeRGB555(m_BgBuffer[i][j]);
+                    m_BgFinalBuffer[i][line_start + j] = m_BgBuffer[i][j];
             }
         }
 
@@ -46,16 +46,47 @@ namespace NanoboyAdvance
         {
             for (int i = 0; i < 240; i++)
             {
-                m_ObjFinalBuffer[0][line_start + i] = DecodeRGB555(m_ObjBuffer[0][i]);
-                m_ObjFinalBuffer[1][line_start + i] = DecodeRGB555(m_ObjBuffer[1][i]);
-                m_ObjFinalBuffer[2][line_start + i] = DecodeRGB555(m_ObjBuffer[2][i]);
-                m_ObjFinalBuffer[3][line_start + i] = DecodeRGB555(m_ObjBuffer[3][i]);
+                m_ObjFinalBuffer[0][line_start + i] = m_ObjBuffer[0][i];
+                m_ObjFinalBuffer[1][line_start + i] = m_ObjBuffer[1][i];
+                m_ObjFinalBuffer[2][line_start + i] = m_ObjBuffer[2][i];
+                m_ObjFinalBuffer[3][line_start + i] = m_ObjBuffer[3][i];
             }
         }
     }
 
     void GBASoftComposer::Compose()
     {
+        u16 backdrop_color = *m_BdColor;
 
+        // Clear rendering buffer
+        memset(m_OutputBuffer, 0, 240 * 160 * sizeof(u16));
+
+        // Put everything layer-wise together.
+        for (int i = 3; i >= 0; i--)
+        {
+            for (int j = 3; j >= 0; j--)
+            {
+                if (m_BG[j]->enable && m_BG[j]->priority == i)
+                {
+                    DrawLayer(m_BgBuffer[j]);
+                    break;
+                }
+            }
+
+            if (m_Obj->enable)
+                DrawLayer(m_ObjBuffer[i]);
+        }
+
+        // Fill any free spots with the BD color.
+        for (int k = 0; k < 240 * 160; k++)
+        {
+            if (m_OutputBuffer[k] == 0x8000)
+                m_OutputBuffer[k] = backdrop_color;
+        }
+    }
+
+    u16* GBASoftComposer::GetOutputBuffer()
+    {
+        return m_OutputBuffer;
     }
 }

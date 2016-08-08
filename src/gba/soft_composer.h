@@ -38,13 +38,23 @@ namespace NanoboyAdvance
                    ((((color >> 5) & 0x1F) * 8) << 8) |
                    (((color >> 10) & 0x1F) * 8);
         }
+
+        inline void DrawLayer(u16* layer)
+        {
+            for (int k = 0; k < 240 * 160; k++)
+            {
+                if (layer[k] != 0x8000)
+                    m_OutputBuffer[k] = layer[k];
+            }
+        }
     public:
         void Update();
         void Compose();
+        u16* GetOutputBuffer();
     private:
-        u32 m_OutputBuffer[240 * 160];
-        u32 m_BgFinalBuffer[4][240 * 160];
-        u32 m_ObjFinalBuffer[4][240 * 160];
+        u16 m_OutputBuffer[240 * 160];
+        u16 m_BgFinalBuffer[4][240 * 160];
+        u16 m_ObjFinalBuffer[4][240 * 160];
     };
 }
 

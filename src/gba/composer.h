@@ -56,6 +56,20 @@ namespace NanoboyAdvance
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
+        /// \date    August 8th, 2016
+        /// \fn      SetBackdropColor
+        /// \brief   Sets the reference to the backdrop color.
+        ///
+        /// \param  color  Pointer to the backdrop color.
+        ///
+        ///////////////////////////////////////////////////////////
+        inline void SetBackdropColor(u16* color)
+        {
+            m_BdColor = color;
+        }
+
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
         /// \date    August 6th, 2016
         /// \fn      SetBackgroundBuffer
         /// \brief   Sets the input buffer for a given background.
@@ -211,6 +225,7 @@ namespace NanoboyAdvance
         //
         ///////////////////////////////////////////////////////////
         u16* m_VCount;
+        u16* m_BdColor;
         u16* m_BgBuffer[4];
         u16* m_ObjBuffer[4];
         u8* m_WinMask[2];
