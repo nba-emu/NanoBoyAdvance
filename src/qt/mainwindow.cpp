@@ -82,21 +82,48 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
     // Setup GL screen
     m_Screen = new Screen {this};
-    connect(m_Screen, &Screen::keyPress, this, &MainWindow::keyPress);
-    connect(m_Screen, &Screen::keyRelease, this, &MainWindow::keyRelease);
     setCentralWidget(m_Screen);
+    connect(m_Screen, &Screen::keyPress, this,
+        {
+            if (key == Qt::Key_Space)
+                m_GBA->SetSpeedUp(10);
+            else
+                m_GBA->SetKeyState(keyToGBA(key), true);
+        });
+    connect(m_Screen, &Screen::keyRelease, this,
+        {
+            if (key == Qt::Key_Space)
+                m_GBA->SetSpeedUp(1);
+            else
+                m_GBA->SetKeyState(keyToGBA(key), false);
+        });
 
     // Create emulator timer
     m_Timer = new QTimer {this};
     m_Timer->setSingleShot(false);
     m_Timer->setInterval(17);
-    connect(m_Timer, &QTimer::timeout, this, &MainWindow::timerTick);
+    connect(m_Timer, &QTimer::timeout, this,
+        [this]
+        {
+            m_GBA->Frame();
+            if (m_GBA->HasRendered())
+            {
+                m_Screen->updateTexture(m_Buffer, 240, 160);
+                m_Frames++;
+            }
+        });
 
     // Create FPS counting timer
     m_FPSTimer = new QTimer {this};
     m_FPSTimer->setSingleShot(false);
     m_FPSTimer->setInterval(1000);
-    connect(m_FPSTimer, &QTimer::timeout, this, &MainWindow::fpsTimerTick);
+    connect(m_FPSTimer, &QTimer::timeout, this,
+        [this]
+        {
+            std::string message = std::to_string(m_Frames) + " FPS";
+            m_StatusMessage->setText(QString(message.c_str()));
+            m_Frames = 0;
+        });
 }
 
 MainWindow::~MainWindow()
@@ -179,37 +206,4 @@ void MainWindow::openGame()
     }
 
     runGame(file);
-}
-
-void MainWindow::timerTick()
-{
-    m_GBA->Frame();
-    if (m_GBA->HasRendered())
-    {
-        m_Screen->updateTexture(m_Buffer, 240, 160);
-        m_Frames++;
-    }
-}
-
-void MainWindow::fpsTimerTick()
-{
-    std::string message = std::to_string(m_Frames) + " FPS";
-    m_StatusMessage->setText(QString(message.c_str()));
-    m_Frames = 0;
-}
-
-void MainWindow::keyPress(int key)
-{
-    if (key == Qt::Key_Space)
-        m_GBA->SetSpeedUp(10);
-    else
-        m_GBA->SetKeyState(keyToGBA(key), true);
-}
-
-void MainWindow::keyRelease(int key)
-{
-    if (key == Qt::Key_Space)
-        m_GBA->SetSpeedUp(1);
-    else
-        m_GBA->SetKeyState(keyToGBA(key), false);
 }
