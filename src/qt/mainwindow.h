@@ -35,7 +35,8 @@
 #include "screen.h"
 
 
-class MainWindow : public QMainWindow {
+class MainWindow : public QMainWindow
+{
     Q_OBJECT
 
 public:
@@ -49,22 +50,22 @@ public slots:
     void keyRelease(int key);
 
 private:
-    QAction *openFileAction;
-    QAction *closeAction;
-    QAction *openSettingsAction;
-    QAction *aboutNanoboyAdvanceAction;
-    QAction *aboutQtAction;
-    QMenu *fileMenu;
-    QMenu *editMenu;
-    QMenu *helpMenu;
-    QMenuBar *menuBar;
+    QAction* m_OpenFileAction;
+    QAction* m_CloseAction;
+    QAction* m_OpenSettingsAction;
+    QAction* m_AboutAppAction;
+    QAction* m_AboutQtAction;
+    QMenu* m_FileMenu;
+    QMenu* m_EditMenu;
+    QMenu* m_HelpMenu;
+    QMenuBar* m_MenuBar;
 
-    QStatusBar *statusBar;
-    Screen *screen;
+    QStatusBar* m_StatusBar;
+    Screen* m_Screen;
 
-    QTimer *timer;
-    NanoboyAdvance::GBA *gba {nullptr};
-    u32 *buffer;
+    QTimer* m_Timer;
+    NanoboyAdvance::GBA* m_GBA {nullptr};
+    u32* m_Buffer;
 
     void runGame(const QString &rom_file);
     NanoboyAdvance::GBA::Key keyToGBA(int key);
