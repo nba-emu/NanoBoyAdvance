@@ -26,43 +26,48 @@
 #define __NBA_MAINWINDOW_H__
 
 
-#include "gba/gba.h"
-#include "screen.h"
-#include <string>
-#include <QWidget>
+#include <QMainWindow>
 #include <QMenuBar>
 #include <QStatusBar>
 #include <QTimer>
 
+#include "gba/gba.h"
+#include "screen.h"
 
-class MainWindow : public QWidget
-{
+
+class MainWindow : public QMainWindow {
     Q_OBJECT
 
-    QAction* open_file;
-    QAction* close_app;
-    QMenu* file_menu;
-    QMenu* help_menu;
-    QMenuBar* menubar;
+public:
+    MainWindow(QWidget *parent = 0);
+    ~MainWindow();
 
-    QStatusBar* statusbar;
-    Screen* screen;
-
-    QTimer* timer;
-    NanoboyAdvance::GBA* gba {nullptr};
-    u32* buffer;
-
-    void runGame(QString rom_file);
-    NanoboyAdvance::GBA::Key keyToGBA(int key);
 public slots:
     void openGame();
-    void closeApp();
     void timerTick();
     void keyPress(int key);
     void keyRelease(int key);
-public:
-    MainWindow(QWidget* parent = 0);
-    ~MainWindow();
+
+private:
+    QAction *openFileAction;
+    QAction *closeAction;
+    QAction *openSettingsAction;
+    QAction *aboutNanoboyAdvanceAction;
+    QAction *aboutQtAction;
+    QMenu *fileMenu;
+    QMenu *editMenu;
+    QMenu *helpMenu;
+    QMenuBar *menuBar;
+
+    QStatusBar *statusBar;
+    Screen *screen;
+
+    QTimer *timer;
+    NanoboyAdvance::GBA *gba;
+    u32 *buffer;
+
+    void runGame(const QString &rom_file);
+    NanoboyAdvance::GBA::Key keyToGBA(int key);
 };
 
 
