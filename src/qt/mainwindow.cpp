@@ -51,20 +51,24 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     // Setup edit menu
     m_OpenSettingsAction = m_EditMenu->addAction(tr("Settings"));
     m_OpenSettingsAction->setMenuRole(QAction::PreferencesRole);
-    connect(m_OpenSettingsAction, &QAction::triggered, [this] {
-        QMessageBox box {this};
-        box.setIcon(QMessageBox::Information);
-        box.setText(tr("The settings dialog is not yet implemented."));
-        box.setWindowTitle(tr("Error"));
-        box.exec();
-    });
+    connect(m_OpenSettingsAction, &QAction::triggered,
+        [this]
+        {
+            QMessageBox box {this};
+            box.setIcon(QMessageBox::Information);
+            box.setText(tr("The settings dialog is not yet implemented."));
+            box.setWindowTitle(tr("Error"));
+            box.exec();
+        });
 
     // Setup help menu
     m_AboutAppAction = m_HelpMenu->addAction(tr("About NanoboyAdvance"));
     m_AboutAppAction->setMenuRole(QAction::AboutRole);
-    connect(m_AboutAppAction, &QAction::triggered, [this] {
-        QMessageBox::information(this, tr("About NanoboyAdvance"), tr("A fast, modern GBA emulator."));
-    });
+    connect(m_AboutAppAction, &QAction::triggered,
+        [this]
+        {
+            QMessageBox::information(this, tr("About NanoboyAdvance"), tr("A fast, modern GBA emulator."));
+        });
     m_AboutQtAction = m_HelpMenu->addAction(tr("About Qt"));
     m_AboutQtAction->setMenuRole(QAction::AboutQtRole);
     connect(m_AboutQtAction, &QAction::triggered, this, &QApplication::aboutQt);
