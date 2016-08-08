@@ -34,7 +34,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     setWindowTitle("NanoboyAdvance");
 
     // Setup menu
-    menuBar = new QMenuBar(this);
+    menuBar = new QMenuBar {this};
     fileMenu = menuBar->addMenu(tr("&File"));
     editMenu = menuBar->addMenu(tr("&Edit"));
     helpMenu = menuBar->addMenu(tr("&?"));
@@ -49,7 +49,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     openSettingsAction = editMenu->addAction(tr("Settings"));
     openSettingsAction->setMenuRole(QAction::PreferencesRole);
     connect(openSettingsAction, &QAction::triggered, [this] {
-        QMessageBox box(this);
+        QMessageBox box {this};
         box.setIcon(QMessageBox::Information);
         box.setText(tr("The settings dialog is not yet implemented."));
         box.setWindowTitle(tr("Error"));
@@ -72,13 +72,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     setStatusBar(statusBar);
 
     // Setup GL screen
-    screen = new Screen(this);
+    screen = new Screen {this};
     connect(screen, &Screen::keyPress, this, &MainWindow::keyPress);
     connect(screen, &Screen::keyRelease, this, &MainWindow::keyRelease);
     setCentralWidget(screen);
 
     // Create emulator timer
-    timer = new QTimer(this);
+    timer = new QTimer {this};
     timer->setSingleShot(false);
     timer->setInterval(16);
     connect(timer, &QTimer::timeout, this, &MainWindow::timerTick);
@@ -89,18 +89,18 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::runGame(const QString &rom_file) {
-    QFileInfo rom_info(rom_file);
+    QFileInfo rom_info {rom_file};
     QString save_file = rom_info.path() + QDir::separator() + rom_info.completeBaseName() + ".sav";
     
     delete gba;
 
     try {
-        gba = new NanoboyAdvance::GBA(rom_file.toStdString(), save_file.toStdString(), "bios.bin");
+        gba = new NanoboyAdvance::GBA {rom_file.toStdString(), save_file.toStdString(), "bios.bin"};
         buffer = gba->GetVideoBuffer();
         timer->start();
         screen->grabKeyboard();
     } catch (const std::runtime_error& e) {
-        QMessageBox box(this);
+        QMessageBox box {this};
         box.setIcon(QMessageBox::Critical);
         box.setText(tr(e.what()));
         box.setWindowTitle(tr("Runtime error"));
@@ -136,8 +136,7 @@ NanoboyAdvance::GBA::Key MainWindow::keyToGBA(int key) {
 }
 
 void MainWindow::openGame() {
-    QString file;
-    QFileDialog dialog(this);
+    QFileDialog dialog {this};
 
     dialog.setAcceptMode(QFileDialog::AcceptOpen);
     dialog.setFileMode(QFileDialog::AnyFile);
@@ -146,9 +145,9 @@ void MainWindow::openGame() {
     if (!dialog.exec())
         return;
 
-    file = dialog.selectedFiles().at(0);
+    QString file = dialog.selectedFiles().at(0);
     if (!QFile::exists(file)) {
-        QMessageBox box(this);
+        QMessageBox box {this};
         box.setIcon(QMessageBox::Critical);
         box.setText(tr("Cannot find file ") + QFileInfo(file).fileName());
         box.setWindowTitle(tr("File error"));
