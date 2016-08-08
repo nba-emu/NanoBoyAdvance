@@ -4,11 +4,15 @@ set(SRCS
     main.cpp
     mainwindow.cpp
     screen.cpp
+    settingsdialog.cpp
+    util.cpp
 )
 
 set(HEADERS
     mainwindow.h
     screen.h
+    settingsdialog.h
+    util.h
 )
 
 if (WIN32)
