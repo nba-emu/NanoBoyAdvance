@@ -89,20 +89,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
 MainWindow::~MainWindow()
 {
-    if (m_GBA != nullptr)
-        delete m_GBA;
+    delete m_GBA;
 }
 
 void MainWindow::runGame(const QString &rom_file)
 {
     QFileInfo rom_info {rom_file};
     QString save_file = rom_info.path() + QDir::separator() + rom_info.completeBaseName() + ".sav";
-    
-    if (m_GBA != nullptr)
-        delete m_GBA;
 
     try
     {
+        delete m_GBA;
         m_GBA = new GBA {rom_file.toStdString(), save_file.toStdString(), "bios.bin"};
         m_Buffer = m_GBA->GetVideoBuffer();
         m_Timer->start();
