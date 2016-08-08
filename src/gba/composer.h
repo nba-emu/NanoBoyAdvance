@@ -123,7 +123,7 @@ namespace NanoboyAdvance
         /// \param  background  Background Information
         ///
         ///////////////////////////////////////////////////////////
-        inline void SetBackgroundInfo(int id, struct Background* background)
+        inline void SetBackgroundInfo(int id, struct GBAVideo::Background* background)
         {
             m_BG[id] = background;
         }
@@ -137,7 +137,7 @@ namespace NanoboyAdvance
         /// \param  object  Object Information
         ///
         ///////////////////////////////////////////////////////////
-        inline void SetObjectInfo(struct Object* object)
+        inline void SetObjectInfo(struct GBAVideo::Object* object)
         {
             m_Obj = object;
         }
@@ -151,7 +151,7 @@ namespace NanoboyAdvance
         /// \param  window  Window Information
         ///
         ///////////////////////////////////////////////////////////
-        inline void SetWindowInfo(int id, struct Window* window)
+        inline void SetWindowInfo(int id, struct GBAVideo::Window* window)
         {
             m_Win[id] = window;
         }
@@ -165,7 +165,7 @@ namespace NanoboyAdvance
         /// \param  object_window  Object Window Information
         ///
         ///////////////////////////////////////////////////////////
-        inline void SetObjectWindowInfo(struct ObjectWindow* object_window)
+        inline void SetObjectWindowInfo(struct GBAVideo::ObjectWindow* object_window)
         {
             m_ObjWin = object_window;
         }
@@ -179,7 +179,7 @@ namespace NanoboyAdvance
         /// \param  window_outer  Outer Window Information
         ///
         ///////////////////////////////////////////////////////////
-        inline void SetWindowOuterInfo(struct WindowOuter* window_outer)
+        inline void SetWindowOuterInfo(struct GBAVideo::WindowOuter* window_outer)
         {
             m_WinOut = window_outer;
         }
@@ -215,11 +215,11 @@ namespace NanoboyAdvance
         u16* m_ObjBuffer[4];
         u8* m_WinMask[2];
         u8* m_ObjWinMask;
-        struct Background* m_BG[4];
-        struct Object* m_Obj;
-        struct Window* m_Win[2];
-        struct ObjectWindow* m_ObjWin;
-        struct WindowOuter* m_WinOut;
+        struct GBAVideo::Background* m_BG[4];
+        struct GBAVideo::Object* m_Obj;
+        struct GBAVideo::Window* m_Win[2];
+        struct GBAVideo::ObjectWindow* m_ObjWin;
+        struct GBAVideo::WindowOuter* m_WinOut;
     };
 }
 
