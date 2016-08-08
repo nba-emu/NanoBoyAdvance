@@ -34,22 +34,99 @@
 #include "gba/gba.h"
 #include "screen.h"
 
-
+///////////////////////////////////////////////////////////
+/// \file    mainwindow.h
+/// \author  Frederic Meyer
+/// \date    August 8th, 2016
+/// \class   MainWindow
+/// \brief   Main Window of the Qt frontend.
+///
+///////////////////////////////////////////////////////////
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \date    August 8th, 2016
+    /// \fn      Constructor
+    /// \param   parent            The parent widget.
+    ///
+    ///////////////////////////////////////////////////////////
     MainWindow(QWidget *parent = 0);
+
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \date    August 8th, 2016
+    /// \fn      Destructor
+    ///
+    ///////////////////////////////////////////////////////////
     ~MainWindow();
 
 public slots:
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \data    August 8th, 2016
+    /// \fn      openGame
+    /// \brief   Asks the user to open a ROM and runs it.
+    ///
+    ///////////////////////////////////////////////////////////
     void openGame();
+
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \data    August 8th, 2016
+    /// \fn      timerTick
+    /// \brief   Ticks 60 times per second, draws one new frame.
+    ///
+    ///////////////////////////////////////////////////////////
     void timerTick();
+
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \data    August 8th, 2016
+    /// \fn      keyPress
+    /// \brief   Handles key press event.
+    ///
+    ///////////////////////////////////////////////////////////
     void keyPress(int key);
+
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \data    August 8th, 2016
+    /// \fn      keyRelease
+    /// \brief   Handles key release event.
+    ///
+    ///////////////////////////////////////////////////////////
     void keyRelease(int key);
 
 private:
+
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \data    August 8th, 2016
+    /// \fn      runGame
+    /// \brief   Loads a specific ROM in the emulator.
+    ///
+    /// \param  rom_file  ROM path.
+    ///
+    ///////////////////////////////////////////////////////////
+    void runGame(const QString &rom_file);
+
+    ///////////////////////////////////////////////////////////
+    /// \author  Frederic Meyer
+    /// \data    August 8th, 2016
+    /// \fn      keyToGBA
+    /// \brief   Converts a Qt key to the GBA::Key enum.
+    ///
+    ///////////////////////////////////////////////////////////
+    NanoboyAdvance::GBA::Key keyToGBA(int key);
+
+    ///////////////////////////////////////////////////////////
+    // Class members (Widgets)
+    //
+    ///////////////////////////////////////////////////////////
     QAction* m_OpenFileAction;
     QAction* m_CloseAction;
     QAction* m_OpenSettingsAction;
@@ -59,16 +136,16 @@ private:
     QMenu* m_EditMenu;
     QMenu* m_HelpMenu;
     QMenuBar* m_MenuBar;
-
     QStatusBar* m_StatusBar;
     Screen* m_Screen;
-
     QTimer* m_Timer;
+
+    ///////////////////////////////////////////////////////////
+    // Class members (Emulator)
+    //
+    ///////////////////////////////////////////////////////////
     NanoboyAdvance::GBA* m_GBA {nullptr};
     u32* m_Buffer;
-
-    void runGame(const QString &rom_file);
-    NanoboyAdvance::GBA::Key keyToGBA(int key);
 };
 
 
