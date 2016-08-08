@@ -28,6 +28,8 @@
 
 
 #include "mainwindow.h"
+#include "settingsdialog.h"
+#include "util.h"
 
 using namespace NanoboyAdvance;
 
@@ -60,11 +62,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     connect(m_OpenSettingsAction, &QAction::triggered,
         [this]
         {
-            QMessageBox box {this};
-            box.setIcon(QMessageBox::Information);
-            box.setText(tr("The settings dialog is not yet implemented."));
-            box.setWindowTitle(tr("Error"));
-            box.exec();
+            SettingsDialog dlg {this};
+            dlg.exec();
         });
 
     // Setup help menu
@@ -159,7 +158,7 @@ void MainWindow::runGame(const QString &rom_file)
     try
     {
         delete m_GBA;
-        m_GBA = new GBA {rom_file.toStdString(), save_file.toStdString(), "bios.bin"};
+        m_GBA = new GBA {rom_file.toStdString(), save_file.toStdString(), qtUtil::biosFilePath().toStdString()};
         m_Buffer = m_GBA->GetVideoBuffer();
         m_Timer->start();
         m_FPSTimer->start();
