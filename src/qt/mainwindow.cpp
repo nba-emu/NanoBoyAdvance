@@ -84,6 +84,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     m_Screen = new Screen {this};
     setCentralWidget(m_Screen);
     connect(m_Screen, &Screen::keyPress, this,
+        [this] (int key)
         {
             if (key == Qt::Key_Space)
                 m_GBA->SetSpeedUp(10);
@@ -91,6 +92,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
                 m_GBA->SetKeyState(keyToGBA(key), true);
         });
     connect(m_Screen, &Screen::keyRelease, this,
+        [this] (int key)
         {
             if (key == Qt::Key_Space)
                 m_GBA->SetSpeedUp(1);
