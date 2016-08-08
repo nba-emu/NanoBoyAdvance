@@ -22,32 +22,28 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 
-#include "screen.h"
 #include <QtWidgets>
-#include <QtOpenGL>
+
+#include "screen.h"
 
 
-Screen::Screen(QWidget* parent) : QGLWidget(parent)
-{}
+Screen::Screen(QWidget* parent) : QGLWidget(parent) {
+}
 
-Screen::~Screen()
-{
+Screen::~Screen() {
     glDeleteTextures(1, &texture);
 }
 
-void Screen::updateTexture(unsigned int* pixels, int width, int height)
-{
+void Screen::updateTexture(unsigned int *pixels, int width, int height) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
     updateGL();
 }
 
-QSize Screen::sizeHint() const
-{
+QSize Screen::sizeHint() const {
     return QSize(480, 320);
 }
 
-void Screen::initializeGL()
-{
+void Screen::initializeGL() {
     qglClearColor(Qt::black);
     glEnable(GL_TEXTURE_2D);
 
@@ -57,10 +53,9 @@ void Screen::initializeGL()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 }
 
-void Screen::paintGL()
-{
-    float w = (float)width();
-    float h = (float)height();
+void Screen::paintGL() {
+    float w = static_cast<float>(width());
+    float h = static_cast<float>(height());
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
@@ -82,8 +77,7 @@ void Screen::paintGL()
     glEnd();
 }
 
-void Screen::resizeGL(int width, int height)
-{
+void Screen::resizeGL(int width, int height) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, width, height, 0, -1, 1);
@@ -91,12 +85,10 @@ void Screen::resizeGL(int width, int height)
     glMatrixMode(GL_MODELVIEW);
 }
 
-void Screen::keyPressEvent(QKeyEvent* event)
-{
+void Screen::keyPressEvent(QKeyEvent* event) {
     emit keyPress(event->key());
 }
 
-void Screen::keyReleaseEvent(QKeyEvent* event)
-{
+void Screen::keyReleaseEvent(QKeyEvent* event) {
     emit keyRelease(event->key());
 }

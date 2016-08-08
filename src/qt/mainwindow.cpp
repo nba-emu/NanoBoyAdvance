@@ -22,82 +22,84 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 
-#include "mainwindow.h"
 #include <QApplication>
-#include <QVBoxLayout>
 #include <QFileDialog>
 #include <QMessageBox>
-#include <QDir>
 
 
-using namespace std;
-using namespace NanoboyAdvance;
+#include "mainwindow.h"
 
 
-MainWindow::MainWindow(QWidget* parent) : QWidget(parent)
-{
-    QVBoxLayout* layout = new QVBoxLayout;
-
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     setWindowTitle("NanoboyAdvance");
 
     // Setup menu
-    menubar = new QMenuBar(this);
-    file_menu = menubar->addMenu(tr("&File"));
-    help_menu = menubar->addMenu(tr("&?"));
+    menuBar = new QMenuBar(this);
+    fileMenu = menuBar->addMenu(tr("&File"));
+    editMenu = menuBar->addMenu(tr("&Edit"));
+    helpMenu = menuBar->addMenu(tr("&?"));
 
     // Setup file menu
-    open_file = file_menu->addAction(tr("&Open"));
-    close_app = file_menu->addAction(tr("&Close"));
-    connect(open_file, SIGNAL(triggered()), this, SLOT(openGame()));
-    connect(close_app, SIGNAL(triggered()), this, SLOT(closeApp()));
+    openFileAction = fileMenu->addAction(tr("&Open"));
+    closeAction = fileMenu->addAction(tr("&Quit"));
+    connect(openFileAction, &QAction::triggered, this, &MainWindow::openGame);
+    connect(closeAction, &QAction::triggered, this, &QApplication::quit);
+
+    // Setup edit menu
+    openSettingsAction = editMenu->addAction(tr("Settings"));
+    openSettingsAction->setMenuRole(QAction::PreferencesRole);
+    connect(openSettingsAction, &QAction::triggered, [this] {
+        QMessageBox box(this);
+        box.setIcon(QMessageBox::Information);
+        box.setText(tr("The settings dialog is not yet implemented."));
+        box.setWindowTitle(tr("Error"));
+        box.exec();
+    });
+
+    // Setup help menu
+    aboutNanoboyAdvanceAction = helpMenu->addAction(tr("About NanoboyAdvance"));
+    aboutNanoboyAdvanceAction->setMenuRole(QAction::AboutRole);
+    connect(aboutNanoboyAdvanceAction, &QAction::triggered, [this] {
+        QMessageBox::information(this, tr("About Nanoboy Advance"), tr("A fast, modern GBA emulator."));
+    });
+    aboutQtAction = helpMenu->addAction(tr("About Qt"));
+    aboutQtAction->setMenuRole(QAction::AboutQtRole);
+    connect(aboutQtAction, &QAction::triggered, this, &QApplication::aboutQt);
+
+    // Create status bar
+    statusBar = new QStatusBar(this);
+    statusBar->showMessage(tr("Idle..."));
+    setStatusBar(statusBar);
 
     // Setup GL screen
     screen = new Screen(this);
-    connect(screen, SIGNAL(keyPress(int)), this, SLOT(keyPress(int)));
-    connect(screen, SIGNAL(keyRelease(int)), this, SLOT(keyRelease(int)));
-
-    // Create status bar
-    statusbar = new QStatusBar(this);
-    statusbar->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
-    statusbar->showMessage(tr("Idle..."));
-
-    // Window layout
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setMenuBar(menubar);
-    layout->addWidget(screen);
-    layout->addWidget(statusbar);
-    setLayout(layout);
+    connect(screen, &Screen::keyPress, this, &MainWindow::keyPress);
+    connect(screen, &Screen::keyRelease, this, &MainWindow::keyRelease);
+    setCentralWidget(screen);
 
     // Create emulator timer
     timer = new QTimer(this);
     timer->setSingleShot(false);
     timer->setInterval(16);
-    connect(timer, SIGNAL(timeout()), this, SLOT(timerTick()));
+    connect(timer, &QTimer::timeout, this, &MainWindow::timerTick);
 }
 
-MainWindow::~MainWindow()
-{
-    if (gba != nullptr)
-        delete gba;
+MainWindow::~MainWindow() {
+    delete gba;
 }
 
-void MainWindow::runGame(QString rom_file)
-{
+void MainWindow::runGame(const QString &rom_file) {
     QFileInfo rom_info(rom_file);
     QString save_file = rom_info.path() + QDir::separator() + rom_info.completeBaseName() + ".sav";
     
-    if (gba != nullptr)
-        delete gba;
+    delete gba;
 
-    try
-    {
-        gba = new GBA(rom_file.toStdString(), save_file.toStdString(), "bios.bin");
+    try {
+        gba = new NanoboyAdvance::GBA(rom_file.toStdString(), save_file.toStdString(), "bios.bin");
         buffer = gba->GetVideoBuffer();
         timer->start();
         screen->grabKeyboard();
-    }
-    catch (runtime_error& e)
-    {
+    } catch (const std::runtime_error& e) {
         QMessageBox box(this);
         box.setIcon(QMessageBox::Critical);
         box.setText(tr(e.what()));
@@ -106,27 +108,34 @@ void MainWindow::runGame(QString rom_file)
     }
 }
 
-GBA::Key MainWindow::keyToGBA(int key)
-{
-    switch (key)
-    {
-    case Qt::Key_A:             return GBA::Key::A;
-    case Qt::Key_S:             return GBA::Key::B;
-    case Qt::Key_Backspace:     return GBA::Key::Select;
-    case Qt::Key_Return:        return GBA::Key::Start;
-    case Qt::Key_Right:         return GBA::Key::Right;
-    case Qt::Key_Left:          return GBA::Key::Left;
-    case Qt::Key_Up:            return GBA::Key::Up;
-    case Qt::Key_Down:          return GBA::Key::Down;
-    case Qt::Key_W:             return GBA::Key::R;
-    case Qt::Key_Q:             return GBA::Key::L;
+NanoboyAdvance::GBA::Key MainWindow::keyToGBA(int key) {
+    switch (key) {
+        case Qt::Key_A:
+            return NanoboyAdvance::GBA::Key::A;
+        case Qt::Key_S:
+            return NanoboyAdvance::GBA::Key::B;
+        case Qt::Key_Backspace:
+            return NanoboyAdvance::GBA::Key::Select;
+        case Qt::Key_Return:
+            return NanoboyAdvance::GBA::Key::Start;
+        case Qt::Key_Right:
+            return NanoboyAdvance::GBA::Key::Right;
+        case Qt::Key_Left:
+            return NanoboyAdvance::GBA::Key::Left;
+        case Qt::Key_Up:
+            return NanoboyAdvance::GBA::Key::Up;
+        case Qt::Key_Down:
+            return NanoboyAdvance::GBA::Key::Down;
+        case Qt::Key_W:
+            return NanoboyAdvance::GBA::Key::R;
+        case Qt::Key_Q:
+            return NanoboyAdvance::GBA::Key::L;
+        default:
+            return NanoboyAdvance::GBA::Key::None;
     }
-
-    return GBA::Key::None;
 }
 
-void MainWindow::openGame()
-{
+void MainWindow::openGame() {
     QString file;
     QFileDialog dialog(this);
 
@@ -138,8 +147,7 @@ void MainWindow::openGame()
         return;
 
     file = dialog.selectedFiles().at(0);
-    if (!QFile::exists(file))
-    {
+    if (!QFile::exists(file)) {
         QMessageBox box(this);
         box.setIcon(QMessageBox::Critical);
         box.setText(tr("Cannot find file ") + QFileInfo(file).fileName());
@@ -151,28 +159,25 @@ void MainWindow::openGame()
     runGame(file);
 }
 
-void MainWindow::closeApp()
-{
-    QApplication::quit();
-}
-
-void MainWindow::timerTick()
-{
+void MainWindow::timerTick() {
     gba->Frame();
-    if (gba->HasRendered())
+    if (gba->HasRendered()) {
         screen->updateTexture(buffer, 240, 160);
+    }
 }
 
-void MainWindow::keyPress(int key)
-{
-    if (key == Qt::Key_Space)
+void MainWindow::keyPress(int key) {
+    if (key == Qt::Key_Space) {
         gba->SetSpeedUp(10);
-    gba->SetKeyState(keyToGBA(key), true);
+    } else {
+        gba->SetKeyState(keyToGBA(key), true);
+    }
 }
 
-void MainWindow::keyRelease(int key)
-{
-    if (key == Qt::Key_Space)
+void MainWindow::keyRelease(int key) {
+    if (key == Qt::Key_Space) {
         gba->SetSpeedUp(1);
-    gba->SetKeyState(keyToGBA(key), false);
+    } else {
+        gba->SetKeyState(keyToGBA(key), false);
+    }
 }
