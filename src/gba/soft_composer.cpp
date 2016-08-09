@@ -69,13 +69,13 @@ namespace NanoboyAdvance
             {
                 if (m_BG[j]->enable && m_BG[j]->priority == i)
                 {
-                    DrawLayer(m_BgBuffer[j]);
+                    DrawLayer(m_BgFinalBuffer[j]);
                     break;
                 }
             }
 
             if (m_Obj->enable)
-                DrawLayer(m_ObjBuffer[i]);
+                DrawLayer(m_ObjFinalBuffer[i]);
         }
 
         // Fill any free spots with the BD color.
