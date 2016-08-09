@@ -30,6 +30,7 @@
 #include "util/log.h"
 #include "interrupt.h"
 #include "video_structs.h"
+#include "composer.h"
 #include <cstring>
 
 
@@ -307,6 +308,16 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
+        /// \fn      Render
+        ///
+        /// Renders the current scanline.
+        ///
+        ///////////////////////////////////////////////////////////
+        void Render();
+
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    July 31th, 2016
         /// \fn      Step
         ///
         /// Updates PPU/Video state.
@@ -316,13 +327,15 @@ namespace NanoboyAdvance
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      Render
+        /// \date    August 9th, 2016
+        /// \fn      SetupComposer
         ///
-        /// Renders the current scanline.
+        /// Setups a GBAComposer derived object for composing.
+        ///
+        /// \param  composer  The composer.
         ///
         ///////////////////////////////////////////////////////////
-        void Render();
+        void SetupComposer(GBAComposer* composer);
 
     private:
 

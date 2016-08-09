@@ -543,4 +543,18 @@ namespace NanoboyAdvance
         }
         }
     }
+
+    void GBAVideo::SetupComposer(GBAComposer* composer)
+    {
+        composer->SetVerticalCounter(&m_VCount);
+        composer->SetBackdropColor((u16*)&m_PAL);
+        composer->SetObjectInfo(&m_Obj);
+
+        for (int i = 0; i < 4; i++)
+        {
+            composer->SetBackgroundInfo(i, &m_BG[i]);
+            composer->SetBackgroundBuffer(i, m_BgBuffer[i]);
+            composer->SetObjectBuffer(i, m_ObjBuffer[i]);
+        }
+    }
 }
