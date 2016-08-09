@@ -23,6 +23,7 @@
 
 
 #include "soft_composer.h"
+#include <cstring>
 
 
 namespace NanoboyAdvance

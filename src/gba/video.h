@@ -29,6 +29,7 @@
 #include "util/types.h"
 #include "util/log.h"
 #include "interrupt.h"
+#include "video_structs.h"
 #include <cstring>
 
 
@@ -82,103 +83,6 @@ namespace NanoboyAdvance
             Increase        = 2,
             Decrease        = 3
         };
-
-    public:
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \struct  Background
-        ///
-        /// Describes one Background.
-        ///
-        ///////////////////////////////////////////////////////////
-        struct Background
-        {
-            bool enable {false};
-            bool mosaic {false};
-            bool true_color {false};
-            bool wraparound {false};
-            int priority {0};
-            int size {0};
-            u32 tile_base {0};
-            u32 map_base {0};
-            u32 x {0};
-            u32 y {0};
-            u16 x_ref {0};
-            u16 y_ref {0};
-            u16 x_ref_int {0};
-            u16 y_ref_int {0};
-            u16 pa {0};
-            u16 pb {0};
-            u16 pc {0};
-            u16 pd {0};
-        };
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \struct  Object
-        ///
-        /// Holds OBJ-system settings.
-        ///
-        ///////////////////////////////////////////////////////////
-        struct Object
-        {
-            bool enable {false};
-            bool hblank_access {false};
-            bool two_dimensional {false};
-        };
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \struct  Window
-        ///
-        /// Defines one Window.
-        ///
-        ///////////////////////////////////////////////////////////
-        struct Window
-        {
-            bool enable {false};
-            bool bg_in[4] {false, false, false, false};
-            bool obj_in {false};
-            bool sfx_in {false};
-            u16 left {0};
-            u16 right {0};
-            u16 top {0};
-            u16 bottom {0};
-        };
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \struct  WindowOuter
-        ///
-        /// Defines the outer area of windows.
-        ///
-        ///////////////////////////////////////////////////////////
-        struct WindowOuter
-        {
-            bool bg[4] {false, false, false, false};
-            bool obj {false};
-            bool sfx {false};
-        };
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \struct  ObjectWindow
-        ///
-        /// Defines the object window.
-        ///
-        ///////////////////////////////////////////////////////////
-        struct ObjectWindow
-        {
-            bool enable {false};
-            // TODO...
-        };
-
-    private:
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
@@ -433,8 +337,8 @@ namespace NanoboyAdvance
         // Class members (Buffers)
         //
         ///////////////////////////////////////////////////////////
-        u32 m_BgBuffer[4][240];
-        u32 m_ObjBuffer[4][240];
+        u16 m_BgBuffer[4][240];
+        u16 m_ObjBuffer[4][240];
 
     public:
 
