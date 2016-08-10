@@ -368,6 +368,44 @@ namespace NanoboyAdvance
         memset(m_ObjBuffer[2], 0, sizeof(u16)*240);
         memset(m_ObjBuffer[3], 0, sizeof(u16)*240);
 
+        // Update window buffers
+        for (int i = 0; i < 2; i++)
+        {
+            if (!m_Win[i].enable)
+                continue;
+
+            if (m_Win[i].top <= m_Win[i].bottom &&
+                    (m_VCount < m_Win[i].top ||
+                     m_VCount > m_Win[i].bottom))
+            {
+                memset(m_WinMask[i], 0, 240);
+                continue;
+            }
+
+            if (m_Win[i].top > m_Win[i].bottom &&
+                    !(m_VCount >= m_Win[i].top ||
+                      m_VCount <= m_Win[i].bottom))
+            {
+                memset(m_WinMask[i], 0, 240);
+                continue;
+            }
+
+            if (m_Win[i].left <= m_Win[i].right + 1)
+            {
+                for (int j = m_Win[i].left; j <= m_Win[i].right; j++)
+                    if (j >= 0 && j < 240)
+                        m_WinMask[i][j] = 1;
+            }
+            else
+            {
+                for (int j = 0; j <= m_Win[i].right && j < 240; j++)
+                    m_WinMask[i][j] = 1;
+                for (int j = m_Win[i].left; j < 240; j++)
+                    if (j >= 0)
+                        m_WinMask[i][j] = 1;
+            }
+        }
+
         // Call mode specific rendering logic
         switch (m_VideoMode)
         {
@@ -554,5 +592,11 @@ namespace NanoboyAdvance
             composer->SetBackgroundBuffer(i, m_BgBuffer[i]);
             composer->SetObjectBuffer(i, m_ObjBuffer[i]);
         }
+
+        composer->SetWindowMaskBuffer(0, m_WinMask[0]);
+        composer->SetWindowMaskBuffer(1, m_WinMask[1]);
+        composer->SetWindowInfo(0, &m_Win[0]);
+        composer->SetWindowInfo(1, &m_Win[1]);
+        composer->SetWindowOuterInfo(&m_WinOut);
     }
 }
