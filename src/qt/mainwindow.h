@@ -121,7 +121,7 @@ private:
     //
     ///////////////////////////////////////////////////////////
     NanoboyAdvance::GBA* m_GBA {nullptr};
-    u32* m_Buffer;
+    u16* m_Buffer;
     int m_Frames {0};
 };
 

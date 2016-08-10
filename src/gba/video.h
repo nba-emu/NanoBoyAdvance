@@ -395,7 +395,7 @@ namespace NanoboyAdvance
         // Class members (Buffers)
         //
         ///////////////////////////////////////////////////////////
-        u32 m_Buffer[240 * 160];
+        u16 m_Buffer[240 * 160];
     };
 }
 

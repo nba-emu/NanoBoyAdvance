@@ -458,6 +458,9 @@ namespace NanoboyAdvance
         // Render sprites if enabled
         if (m_Obj.enable)
             RenderSprites(0x10000);
+
+        for (int i = 0; i < 240; i++)
+            m_Buffer[m_VCount * 240 + i] = m_BgBuffer[0][i];
     }
 
     ///////////////////////////////////////////////////////////
@@ -484,7 +487,6 @@ namespace NanoboyAdvance
                 if (m_HBlankIRQ)
                     m_Interrupt->if_ |= HBLANK_INTERRUPT;
 
-                //Render(vcount);
                 m_RenderScanline = true;
                 m_Ticks = 0;
             }

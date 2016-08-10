@@ -116,7 +116,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
             m_GBA->Frame();
             if (m_GBA->HasRendered())
             {
-                m_Screen->updateTexture(m_Buffer, 240, 160);
+                /*u32 buffer[240 * 160];
+
+                for (int i = 0; i < 240 * 160; i++)
+                    buffer[i] = (u32)m_Buffer[i] | 0xFF000000;
+
+                m_Screen->updateTexture(buffer, 240, 160);*/
                 m_Frames++;
             }
         });

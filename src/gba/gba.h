@@ -28,6 +28,7 @@
 
 #include "arm.h"
 #include "memory.h"
+#include "soft_composer.h"
 #include "util/types.h"
 #include "util/file.h"
 #include <string>
@@ -135,7 +136,7 @@ namespace NanoboyAdvance
         /// \brief   Retrieves the video pixel buffer.
         ///
         ///////////////////////////////////////////////////////////
-        u32* GetVideoBuffer();
+        u16* GetVideoBuffer();
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
@@ -163,8 +164,9 @@ namespace NanoboyAdvance
         // Class members (misc)
         //
         ///////////////////////////////////////////////////////////
-        int m_SpeedMultiplier {1};      ///< Holds the emulation speed
-        bool m_DidRender      {false};  ///< Has frame already been rendered?
+        int m_SpeedMultiplier        {1};      ///< Holds the emulation speed
+        bool m_DidRender             {false};  ///< Has frame already been rendered?
+        GBASoftComposer* m_Composer;           ///< Final picture composer
     };
 }
 

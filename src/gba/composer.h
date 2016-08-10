@@ -230,11 +230,11 @@ namespace NanoboyAdvance
         u16* m_ObjBuffer[4];
         u8* m_WinMask[2];
         u8* m_ObjWinMask;
-        struct Background* m_BG[4];
-        struct Object* m_Obj;
-        struct Window* m_Win[2];
-        struct ObjectWindow* m_ObjWin;
-        struct WindowOuter* m_WinOut;
+        Background* m_BG[4];
+        Object* m_Obj;
+        Window* m_Win[2];
+        ObjectWindow* m_ObjWin;
+        WindowOuter* m_WinOut;
     };
 }
 
