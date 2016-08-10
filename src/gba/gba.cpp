@@ -137,7 +137,7 @@ namespace NanoboyAdvance
                     if (m_Memory->m_Video->m_RenderScanline && (i / FRAME_CYCLES) == m_SpeedMultiplier - 1)
                     {
                         m_Memory->m_Video->Render();
-                        //m_Composer->Update();
+                        m_Composer->Update();
                         m_DidRender = true;
                     }
                 }
@@ -147,7 +147,7 @@ namespace NanoboyAdvance
         }
 
         // Compose frame
-        //m_Composer->Compose();
+        m_Composer->Compose();
     }
 
     ///////////////////////////////////////////////////////////
@@ -183,8 +183,7 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     u16* GBA::GetVideoBuffer()
     {
-        //return m_Composer->m_OutputBuffer;
-        return m_Memory->m_Video->m_Buffer;
+        return m_Composer->m_OutputBuffer;
     }
 
     ///////////////////////////////////////////////////////////

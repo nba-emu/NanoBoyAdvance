@@ -47,7 +47,6 @@ namespace NanoboyAdvance
         memset(m_PAL, 0, 0x400);
         memset(m_VRAM, 0, 0x18000);
         memset(m_OAM, 0, 0x400);
-        memset(m_Buffer, 0, 240 * 160 * 4);
     }
 
 
@@ -364,10 +363,10 @@ namespace NanoboyAdvance
     void GBAVideo::Render()
     {
         // Reset obj buffers
-        memset(m_ObjBuffer[0], 0, sizeof(u32)*240);
-        memset(m_ObjBuffer[1], 0, sizeof(u32)*240);
-        memset(m_ObjBuffer[2], 0, sizeof(u32)*240);
-        memset(m_ObjBuffer[3], 0, sizeof(u32)*240);
+        memset(m_ObjBuffer[0], 0, sizeof(u16)*240);
+        memset(m_ObjBuffer[1], 0, sizeof(u16)*240);
+        memset(m_ObjBuffer[2], 0, sizeof(u16)*240);
+        memset(m_ObjBuffer[3], 0, sizeof(u16)*240);
 
         // Call mode specific rendering logic
         switch (m_VideoMode)
@@ -458,9 +457,6 @@ namespace NanoboyAdvance
         // Render sprites if enabled
         if (m_Obj.enable)
             RenderSprites(0x10000);
-
-        for (int i = 0; i < 240; i++)
-            m_Buffer[m_VCount * 240 + i] = m_BgBuffer[0][i];
     }
 
     ///////////////////////////////////////////////////////////
