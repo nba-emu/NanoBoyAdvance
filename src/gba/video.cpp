@@ -397,17 +397,23 @@ namespace NanoboyAdvance
 
             if (m_Win[i].left <= m_Win[i].right + 1)
             {
-                for (int j = m_Win[i].left; j <= m_Win[i].right; j++)
-                    if (j >= 0 && j < 240)
+                for (int j = 0; j < 240; j++)
+                {
+                    if (j >= m_Win[i].left && j <= m_Win[i].right)
                         m_WinMask[i][j] = 1;
+                    else
+                        m_WinMask[i][j] = 0;
+                }
             }
             else
             {
-                for (int j = 0; j <= m_Win[i].right && j < 240; j++)
-                    m_WinMask[i][j] = 1;
-                for (int j = m_Win[i].left; j < 240; j++)
-                    if (j >= 0)
+                for (int j = 0; j < 240; j++)
+                {
+                    if (j <= m_Win[i].right || j >= m_Win[i].left)
                         m_WinMask[i][j] = 1;
+                    else
+                        m_WinMask[i][j] = 0;
+                }
             }
         }
 
