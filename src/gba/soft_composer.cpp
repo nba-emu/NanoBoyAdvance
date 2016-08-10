@@ -53,6 +53,16 @@ namespace NanoboyAdvance
                 m_ObjFinalBuffer[3][line_start + i] = m_ObjBuffer[3][i];
             }
         }
+
+        // Update window masks
+        for (int i = 0; i < 2; i++)
+        {
+            if (m_Win[i]->enable)
+            {
+                for (int j = 0; j < 240; j++)
+                    m_WinFinalMask[i][line_start + j] = m_WinMask[i][j];
+            }
+        }
     }
 
     void GBASoftComposer::Compose()
@@ -69,11 +79,17 @@ namespace NanoboyAdvance
             for (int j = 3; j >= 0; j--)
             {
                 if (m_BG[j]->enable && m_BG[j]->priority == i)
-                    DrawLayer(m_BgFinalBuffer[j]);
+                {
+                    bool window_inside[3] = { m_Win[0]->bg_in[j], m_Win[1]->bg_in[j], false };
+                    DrawLayer(m_BgFinalBuffer[j], window_inside, m_WinOut->bg[j]);
+                }
             }
 
-            /*if (m_Obj->enable)
-                DrawLayer(m_ObjFinalBuffer[i]);*/
+            if (m_Obj->enable)
+            {
+                bool window_inside[3] = { m_Win[0]->obj_in, m_Win[1]->obj_in, false };
+                DrawLayer(m_ObjFinalBuffer[i], window_inside, m_WinOut->obj);
+            }
         }
 
         // Fill any free spots with the BD color.

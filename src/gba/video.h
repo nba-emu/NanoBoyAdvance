@@ -370,6 +370,7 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         u16 m_BgBuffer[4][240];
         u16 m_ObjBuffer[4][240];
+        u8 m_WinMask[2][240];
 
     public:
 
