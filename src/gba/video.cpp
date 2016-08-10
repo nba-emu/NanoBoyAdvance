@@ -128,7 +128,7 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     void GBAVideo::RenderBackgroundMode1(int id)
     {
-        /*// Rendering variables
+        // Rendering variables
         u32 tile_block_base = m_BG[id].tile_base;
         u32 map_block_base = m_BG[id].map_base;
         bool wraparound = m_BG[id].wraparound;
@@ -182,7 +182,7 @@ namespace NanoboyAdvance
             tile_column = (x - tile_internal_x) / 8;
             tile_number = m_VRAM[map_block_base + tile_row * blocks + tile_column];
             m_BgBuffer[id][i] = DecodeTilePixel8BPP(tile_block_base, tile_number, tile_internal_line, tile_internal_x, false);
-        }*/
+        }
     }
        
     ///////////////////////////////////////////////////////////
@@ -193,7 +193,7 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     void GBAVideo::RenderSprites(u32 tile_base)
     {
-        /*// Process OBJ127 first, because OBJ0 has highest priority (OBJ0 overlays OBJ127, not vice versa)
+        // Process OBJ127 first, because OBJ0 has highest priority (OBJ0 overlays OBJ127, not vice versa)
         u32 offset = 127 * 8;
 
         // Walk all entries
@@ -292,7 +292,7 @@ namespace NanoboyAdvance
                     for (int j = 0; j < tiles_per_row; j++)
                     {
                         int current_tile_number;
-                        u32* tile_data;
+                        u16* tile_data;
 
                         // Determine the tile to render
                         if (m_Obj.two_dimensional)
@@ -322,8 +322,9 @@ namespace NanoboyAdvance
                             for (int k = 0; k < 8; k++)
                             {
                                 int dst_index = x + (tiles_per_row - j - 1) * 8 + (7 - k);
-                                u32 color = tile_data[k];
-                                if ((color >> 24) != 0 && dst_index < 240)
+                                u16 color = tile_data[k];
+
+                                if (color != COLOR_BACKDROP && dst_index < 240)
                                 {
                                     m_ObjBuffer[priority][dst_index] = color;
                                 }
@@ -335,8 +336,9 @@ namespace NanoboyAdvance
                             for (int k = 0; k < 8; k++)
                             {
                                 int dst_index = x + j * 8 + k;
-                                u32 color = tile_data[k];
-                                if ((color >> 24) != 0 && dst_index < 240)
+                                u16 color = tile_data[k];
+
+                                if (color != COLOR_BACKDROP && dst_index < 240)
                                 {
                                     m_ObjBuffer[priority][dst_index] = tile_data[k];
                                 }
@@ -351,7 +353,7 @@ namespace NanoboyAdvance
 
             // Update offset to the next entry
             offset -= 8;
-        }*/
+        }
     }    
 
     ///////////////////////////////////////////////////////////
@@ -363,10 +365,13 @@ namespace NanoboyAdvance
     void GBAVideo::Render()
     {
         // Reset obj buffers
-        memset(m_ObjBuffer[0], 0, sizeof(u16)*240);
-        memset(m_ObjBuffer[1], 0, sizeof(u16)*240);
-        memset(m_ObjBuffer[2], 0, sizeof(u16)*240);
-        memset(m_ObjBuffer[3], 0, sizeof(u16)*240);
+        for (int i = 0; i < 240; i++)
+        {
+            m_ObjBuffer[0][i] = 0x8000;
+            m_ObjBuffer[1][i] = 0x8000;
+            m_ObjBuffer[2][i] = 0x8000;
+            m_ObjBuffer[3][i] = 0x8000;
+        }
 
         // Update window buffers
         for (int i = 0; i < 2; i++)
