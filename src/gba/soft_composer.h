@@ -28,17 +28,9 @@
 
 namespace NanoboyAdvance
 {
-    class GBASoftComposer : GBAComposer
+    class GBASoftComposer : public GBAComposer
     {
     private:
-        inline u32 DecodeRGB555(u16 color)
-        {
-            return 0xFF000000 |
-                   (((color & 0x1F) * 8) << 16) |
-                   ((((color >> 5) & 0x1F) * 8) << 8) |
-                   (((color >> 10) & 0x1F) * 8);
-        }
-
         inline void DrawLayer(u16* layer)
         {
             for (int k = 0; k < 240 * 160; k++)
@@ -51,8 +43,8 @@ namespace NanoboyAdvance
         void Update();
         void Compose();
         u16* GetOutputBuffer();
-    private:
         u16 m_OutputBuffer[240 * 160];
+    private:
         u16 m_BgFinalBuffer[4][240 * 160];
         u16 m_ObjFinalBuffer[4][240 * 160];
     };

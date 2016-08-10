@@ -173,7 +173,7 @@ int main(int argc, char** argv)
 {
     SDL_Event event;
     bool running = true;
-    u32* video_buffer;
+    u16* video_buffer;
 
     frameskip_counter = 0;
 
