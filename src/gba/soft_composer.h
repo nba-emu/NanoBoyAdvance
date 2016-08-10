@@ -35,9 +35,12 @@ namespace NanoboyAdvance
         {
             for (int k = 0; k < 240 * 160; k++)
             {
-                if (layer[k] != 0x8000)
+                if (layer[k] != 0x8000 || m_FirstLayer)
                     m_OutputBuffer[k] = layer[k];
             }
+
+            if (m_FirstLayer)
+                m_FirstLayer = false;
         }
     public:
         void Update();
@@ -45,6 +48,7 @@ namespace NanoboyAdvance
         u16* GetOutputBuffer();
         u16 m_OutputBuffer[240 * 160];
     private:
+        bool m_FirstLayer {false};
         u16 m_BgFinalBuffer[4][240 * 160];
         u16 m_ObjFinalBuffer[4][240 * 160];
     };

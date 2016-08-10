@@ -61,6 +61,7 @@ namespace NanoboyAdvance
 
         // Clear rendering buffer
         memset(m_OutputBuffer, 0, 240 * 160 * sizeof(u16));
+        m_FirstLayer = true;
 
         // Put everything layer-wise together.
         for (int i = 3; i >= 0; i--)
@@ -68,14 +69,11 @@ namespace NanoboyAdvance
             for (int j = 3; j >= 0; j--)
             {
                 if (m_BG[j]->enable && m_BG[j]->priority == i)
-                {
                     DrawLayer(m_BgFinalBuffer[j]);
-                    break;
-                }
             }
 
-            if (m_Obj->enable)
-                DrawLayer(m_ObjFinalBuffer[i]);
+            /*if (m_Obj->enable)
+                DrawLayer(m_ObjFinalBuffer[i]);*/
         }
 
         // Fill any free spots with the BD color.
