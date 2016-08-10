@@ -44,6 +44,8 @@ namespace NanoboyAdvance
     {
         m_Memory = new GBAMemory(rom_file, save_file);
         m_ARM = new ARM7(m_Memory, true);
+        m_Composer = new GBASoftComposer();
+        m_Memory->m_Video->SetupComposer(m_Composer);
     }
 
     ///////////////////////////////////////////////////////////
@@ -65,6 +67,8 @@ namespace NanoboyAdvance
 
         m_Memory = new GBAMemory(rom_file, save_file, bios, bios_size);
         m_ARM = new ARM7(m_Memory, false);
+        m_Composer = new GBASoftComposer();
+        m_Memory->m_Video->SetupComposer(m_Composer);
     }
 
     ///////////////////////////////////////////////////////////
@@ -77,6 +81,7 @@ namespace NanoboyAdvance
     {
         delete m_ARM;
         delete m_Memory;
+        delete m_Composer;
     }
 
 
@@ -132,6 +137,7 @@ namespace NanoboyAdvance
                     if (m_Memory->m_Video->m_RenderScanline && (i / FRAME_CYCLES) == m_SpeedMultiplier - 1)
                     {
                         m_Memory->m_Video->Render();
+                        m_Composer->Update();
                         m_DidRender = true;
                     }
                 }
@@ -139,6 +145,9 @@ namespace NanoboyAdvance
                 i += forward_steps;
             }
         }
+
+        // Compose frame
+        m_Composer->Compose();
     }
 
     ///////////////////////////////////////////////////////////
@@ -172,9 +181,9 @@ namespace NanoboyAdvance
     /// \fn      GetVideoBuffer
     ///
     ///////////////////////////////////////////////////////////
-    u32* GBA::GetVideoBuffer()
+    u16* GBA::GetVideoBuffer()
     {
-        return m_Memory->m_Video->m_Buffer;
+        return m_Composer->m_OutputBuffer;
     }
 
     ///////////////////////////////////////////////////////////

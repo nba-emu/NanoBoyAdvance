@@ -29,6 +29,8 @@
 #include "util/types.h"
 #include "util/log.h"
 #include "interrupt.h"
+#include "video_structs.h"
+#include "composer.h"
 #include <cstring>
 
 
@@ -49,7 +51,7 @@ namespace NanoboyAdvance
         static const int VBLANK_INTERRUPT;
         static const int HBLANK_INTERRUPT;
         static const int VCOUNT_INTERRUPT;
-
+        static const u16 COLOR_BACKDROP;
 
         ///////////////////////////////////////////////////////////
         /// \author Frederic Meyer
@@ -83,120 +85,6 @@ namespace NanoboyAdvance
             Decrease        = 3
         };
 
-    public:
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \struct  Background
-        ///
-        /// Describes one Background.
-        ///
-        ///////////////////////////////////////////////////////////
-        struct Background
-        {
-            bool enable {false};
-            bool mosaic {false};
-            bool true_color {false};
-            bool wraparound {false};
-            int priority {0};
-            int size {0};
-            u32 tile_base {0};
-            u32 map_base {0};
-            u32 x {0};
-            u32 y {0};
-            u16 x_ref {0};
-            u16 y_ref {0};
-            u16 x_ref_int {0};
-            u16 y_ref_int {0};
-            u16 pa {0};
-            u16 pb {0};
-            u16 pc {0};
-            u16 pd {0};
-        };
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \struct  Object
-        ///
-        /// Holds OBJ-system settings.
-        ///
-        ///////////////////////////////////////////////////////////
-        struct Object
-        {
-            bool enable {false};
-            bool hblank_access {false};
-            bool two_dimensional {false};
-        };
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \struct  Window
-        ///
-        /// Defines one Window.
-        ///
-        ///////////////////////////////////////////////////////////
-        struct Window
-        {
-            bool enable {false};
-            bool bg_in[4] {false, false, false, false};
-            bool obj_in {false};
-            bool sfx_in {false};
-            u16 left {0};
-            u16 right {0};
-            u16 top {0};
-            u16 bottom {0};
-        };
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \struct  WindowOuter
-        ///
-        /// Defines the outer area of windows.
-        ///
-        ///////////////////////////////////////////////////////////
-        struct WindowOuter
-        {
-            bool bg[4] {false, false, false, false};
-            bool obj {false};
-            bool sfx {false};
-        };
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \struct  ObjectWindow
-        ///
-        /// Defines the object window.
-        ///
-        ///////////////////////////////////////////////////////////
-        struct ObjectWindow
-        {
-            bool enable {false};
-            // TODO...
-        };
-
-    private:
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      DecodeRGB5
-        /// \brief   Decodes GBA RGB555 to ARGB32 format.
-        ///
-        /// \param    color  RGB555 color value to decode.
-        /// \returns  The decoded ARGB32 value.
-        ///
-        ///////////////////////////////////////////////////////////
-        inline u32 DecodeRGB5(u16 color)
-        {
-            return 0xFF000000 |
-                   (((color & 0x1F) * 8) << 16) |
-                   ((((color >> 5) & 0x1F) * 8) << 8) |
-                   (((color >> 10) & 0x1F) * 8);
-        }
-
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
@@ -207,30 +95,33 @@ namespace NanoboyAdvance
         /// \param    palette_base  Palette address.
         /// \param    number        Tile index number.
         /// \param    line          The line to decode.
-        /// \returns  The decoded line in ARGB32 format.
+        /// \returns  The decoded line.
         ///
         ///////////////////////////////////////////////////////////
-        inline u32* DecodeTileLine4BPP(u32 block_base, u32 palette_base, int number, int line)
+        inline u16* DecodeTileLine4BPP(u32 block_base, u32 palette_base, int number, int line)
         {
+            u16* data = new u16[8];
             u32 offset = block_base + number * 32 + line * 4;
-            u32* data = new u32[8];
 
-            // Empty buffer.
-            memset(data, 0, 32);
+            memset(data, 0, 16);
 
             for (int i = 0; i < 4; i++)
             {
                 u8 value = m_VRAM[offset + i];
                 int left_index = value & 0xF;
                 int right_index = value >> 4;
-                u32 left_color = DecodeRGB5((m_PAL[palette_base + left_index * 2 + 1] << 8) |
-                                             m_PAL[palette_base + left_index * 2]);
-                u32 right_color = DecodeRGB5((m_PAL[palette_base + right_index * 2 + 1] << 8) |
-                                              m_PAL[palette_base + right_index * 2]);
 
-                // Copy left and right pixel to buffer
-                data[i * 2] = (left_index == 0) ? (left_color & ~0xFF000000) : left_color;
-                data[i * 2 + 1] = (right_index == 0) ? (right_color & ~0xFF000000) : right_color;
+                if (left_index != 0)
+                    data[i * 2] = (m_PAL[palette_base + left_index * 2 + 1] << 8) |
+                                   m_PAL[palette_base + left_index * 2];
+                else
+                    data[i * 2] = COLOR_BACKDROP;
+
+                if (right_index != 0)
+                    data[i * 2 + 1] = (m_PAL[palette_base + right_index * 2 + 1] << 8) |
+                                       m_PAL[palette_base + right_index * 2];
+                else
+                    data[i * 2 + 1] = COLOR_BACKDROP;
             }
 
             return data;
@@ -246,25 +137,29 @@ namespace NanoboyAdvance
         /// \param    number      Tile index number.
         /// \param    line        The line to decode.
         /// \param    sprite      Wether to use the sprite palette.
-        /// \returns  The decoded line in ARGB32 format.
+        /// \returns  The decoded line.
         ///
         ///////////////////////////////////////////////////////////
-        inline u32* DecodeTileLine8BPP(u32 block_base, int number, int line, bool sprite)
+        inline u16* DecodeTileLine8BPP(u32 block_base, int number, int line, bool sprite)
         {
+            u16* data = new u16[8];
             u32 offset = block_base + number * 64 + line * 8;
             u32 palette_base = sprite ? 0x200 : 0x0;
-            u32* data = new u32[8];
 
-            // Empty buffer.
-            memset(data, 0, 32);
+            memset(data, 0, 16);
 
             for (int i = 0; i < 8; i++)
             {
                 u8 value = m_VRAM[offset + i];
-                u32 color = DecodeRGB5((m_PAL[palette_base + value * 2 + 1] << 8) |
-                                        m_PAL[palette_base + value * 2]);
 
-                data[i] = (value == 0) ? (color & ~0xFF000000) : color;
+                if (value == 0)
+                {
+                    data[i] = COLOR_BACKDROP;
+                    continue;
+                }
+
+                data[i] = (m_PAL[palette_base + value * 2 + 1] << 8) |
+                           m_PAL[palette_base + value * 2];
             }
 
             return data;
@@ -281,61 +176,20 @@ namespace NanoboyAdvance
         /// \param    line        Pixel y-Coordinate.
         /// \param    column      Pixel x-Coordinate.
         /// \param    sprite      Wether to use the sprite palette.
-        /// \returns  The decoded pixel in ARGB32 pixel.
+        /// \returns  The decoded pixel.
         ///
         ///////////////////////////////////////////////////////////
-        inline u32 DecodeTilePixel8BPP(u32 block_base, int number, int line, int column, bool sprite)
+        inline u16 DecodeTilePixel8BPP(u32 block_base, int number, int line, int column, bool sprite)
         {
             u8 value = m_VRAM[block_base + number * 64 + line * 8 + column];
             u32 palette_base = sprite ? 0x200 : 0x0;
-            u32 color = DecodeRGB5((m_PAL[palette_base + value * 2 + 1] << 8) |
-                                    m_PAL[palette_base + value * 2]);
-            
-            return (value == 0) ? (color & ~0xFF000000) : color;
+
+            if (value == 0)
+                return COLOR_BACKDROP;
+
+            return (m_PAL[palette_base + value * 2 + 1] << 8) |
+                    m_PAL[palette_base + value * 2];
         }
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      OverlayLineBuffers
-        /// \brief   Copies a source buffer on the destination buffer.
-        ///
-        /// \param  dst  Destination Buffer
-        /// \param  src  Source Buffer
-        ///
-        ///////////////////////////////////////////////////////////
-        inline void OverlayLineBuffers(u32* dst, u32* src)
-        {
-            for (int i = 0; i < 240; i++) 
-            {
-                u32 color = src[i];
-
-                if ((color >> 24) != 0)
-                    dst[i] = color | 0xFF000000;
-            }
-        }
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      DrawLineToBuffer
-        /// \brief   Draws a line to the screen buffer
-        ///
-        /// \param  line_buffer  The line to draw.
-        /// \param  backdrop     Disables transparency.
-        ///
-        ///////////////////////////////////////////////////////////
-        inline void DrawLineToBuffer(u32* line_buffer, bool backdrop)
-        {
-            for (int i = 0; i < 240; i++)
-            {
-                u32 color = line_buffer[i];
-
-                if (backdrop || (color >> 24) != 0)
-                    m_Buffer[m_VCount * 240 + i] = line_buffer[i] | 0xFF000000;
-            }
-        }
-        
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
@@ -427,6 +281,24 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
+        /// \fn      DecodeRGB555
+        /// \brief   Decodes GBA RGB555 to ARGB32 format.
+        ///
+        /// \param    color  RGB555 color value to decode.
+        /// \returns  The decoded ARGB32 value.
+        ///
+        ///////////////////////////////////////////////////////////
+        static inline u32 DecodeRGB555(u16 color)
+        {
+            return 0xFF000000 |
+                   (((color & 0x1F) * 8) << 16) |
+                   ((((color >> 5) & 0x1F) * 8) << 8) |
+                   (((color >> 10) & 0x1F) * 8);
+        }
+
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    July 31th, 2016
         /// \fn      DecodeGBAFloat32
         /// \brief   Decodes the GBAFloat32 format to native float.
         ///
@@ -454,6 +326,16 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
+        /// \fn      Render
+        ///
+        /// Renders the current scanline.
+        ///
+        ///////////////////////////////////////////////////////////
+        void Render();
+
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    July 31th, 2016
         /// \fn      Step
         ///
         /// Updates PPU/Video state.
@@ -463,13 +345,15 @@ namespace NanoboyAdvance
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      Render
+        /// \date    August 9th, 2016
+        /// \fn      SetupComposer
         ///
-        /// Renders the current scanline.
+        /// Setups a GBAComposer derived object for composing.
+        ///
+        /// \param  composer  The composer.
         ///
         ///////////////////////////////////////////////////////////
-        void Render();
+        void SetupComposer(GBAComposer* composer);
 
     private:
 
@@ -484,9 +368,9 @@ namespace NanoboyAdvance
         // Class members (Buffers)
         //
         ///////////////////////////////////////////////////////////
-        u32 m_BdBuffer[240];
-        u32 m_BgBuffer[4][240];
-        u32 m_ObjBuffer[4][240];
+        u16 m_BgBuffer[4][240];
+        u16 m_ObjBuffer[4][240];
+        u8 m_WinMask[2][240];
 
     public:
 
@@ -525,12 +409,6 @@ namespace NanoboyAdvance
         bool m_HBlankDMA            {false};
         bool m_VBlankDMA            {false};
         bool m_RenderScanline       {false};
-
-        ///////////////////////////////////////////////////////////
-        // Class members (Buffers)
-        //
-        ///////////////////////////////////////////////////////////
-        u32 m_Buffer[240 * 160];
     };
 }
 

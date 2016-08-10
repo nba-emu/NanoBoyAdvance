@@ -25,19 +25,12 @@
 #include "video.h"
 
 
-/* TODO: 1) Improve RenderSprites method and allow for OBJWIN
- *          mask generation
- *       2) Implement OBJWIN
- *       3) Lookup if offset to RenderSprites is always constant
- *       4) Fix rotate-scale logic and apply to RenderSprites and Mode3-5
- */
-
 namespace NanoboyAdvance
 {
     const int GBAVideo::VBLANK_INTERRUPT = 1;
     const int GBAVideo::HBLANK_INTERRUPT = 2;
     const int GBAVideo::VCOUNT_INTERRUPT = 4;
-
+    const u16 GBAVideo::COLOR_BACKDROP = 0x8000;
 
     ///////////////////////////////////////////////////////////
     /// \author  Frederic Meyer
@@ -54,7 +47,6 @@ namespace NanoboyAdvance
         memset(m_PAL, 0, 0x400);
         memset(m_VRAM, 0, 0x18000);
         memset(m_OAM, 0, 0x400);
-        memset(m_Buffer, 0, 240 * 160 * 4);
     }
 
 
@@ -75,7 +67,7 @@ namespace NanoboyAdvance
         int row_rmdr = y_scrolled % 8;
         int left_area = 0;
         int right_area = 1;
-        u32 line_buffer[width];
+        u16 line_buffer[width];
         u32 offset;
 
         if (row >= 32)
@@ -95,7 +87,7 @@ namespace NanoboyAdvance
             bool horizontal_flip = tile_encoder & (1 << 10);
             bool vertical_flip = tile_encoder & (1 << 11); 
             int row_rmdr_flip = row_rmdr;
-            u32* tile_data;
+            u16* tile_data;
 
             if (vertical_flip)
                 row_rmdr_flip = 7 - row_rmdr_flip;
@@ -300,7 +292,7 @@ namespace NanoboyAdvance
                     for (int j = 0; j < tiles_per_row; j++)
                     {
                         int current_tile_number;
-                        u32* tile_data;
+                        u16* tile_data;
 
                         // Determine the tile to render
                         if (m_Obj.two_dimensional)
@@ -330,8 +322,9 @@ namespace NanoboyAdvance
                             for (int k = 0; k < 8; k++)
                             {
                                 int dst_index = x + (tiles_per_row - j - 1) * 8 + (7 - k);
-                                u32 color = tile_data[k];
-                                if ((color >> 24) != 0 && dst_index < 240)
+                                u16 color = tile_data[k];
+
+                                if (color != COLOR_BACKDROP && dst_index < 240)
                                 {
                                     m_ObjBuffer[priority][dst_index] = color;
                                 }
@@ -343,8 +336,9 @@ namespace NanoboyAdvance
                             for (int k = 0; k < 8; k++)
                             {
                                 int dst_index = x + j * 8 + k;
-                                u32 color = tile_data[k];
-                                if ((color >> 24) != 0 && dst_index < 240)
+                                u16 color = tile_data[k];
+
+                                if (color != COLOR_BACKDROP && dst_index < 240)
                                 {
                                     m_ObjBuffer[priority][dst_index] = tile_data[k];
                                 }
@@ -370,195 +364,142 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     void GBAVideo::Render()
     {
-        bool first_bg = true;
-        bool win_none = !m_Win[0].enable && !m_Win[1].enable && !m_ObjWin.enable;
-        
         // Reset obj buffers
-        memset(m_ObjBuffer[0], 0, sizeof(u32)*240);
-        memset(m_ObjBuffer[1], 0, sizeof(u32)*240);
-        memset(m_ObjBuffer[2], 0, sizeof(u32)*240);
-        memset(m_ObjBuffer[3], 0, sizeof(u32)*240);
+        for (int i = 0; i < 240; i++)
+        {
+            m_ObjBuffer[0][i] = 0x8000;
+            m_ObjBuffer[1][i] = 0x8000;
+            m_ObjBuffer[2][i] = 0x8000;
+            m_ObjBuffer[3][i] = 0x8000;
+        }
 
-        // Emulate the effect caused by "Forced Blank"
-        if (m_ForcedBlank) {
-            for (int i = 0; i < 240; i++) {
-                m_Buffer[m_VCount * 240 + i] = 0xFFF8F8F8;
+        // Update window buffers
+        for (int i = 0; i < 2; i++)
+        {
+            if (!m_Win[i].enable)
+                continue;
+
+            if (m_Win[i].top <= m_Win[i].bottom &&
+                    (m_VCount < m_Win[i].top ||
+                     m_VCount > m_Win[i].bottom))
+            {
+                memset(m_WinMask[i], 0, 240);
+                continue;
             }
-            return;
+
+            if (m_Win[i].top > m_Win[i].bottom &&
+                    !(m_VCount >= m_Win[i].top ||
+                      m_VCount <= m_Win[i].bottom))
+            {
+                memset(m_WinMask[i], 0, 240);
+                continue;
+            }
+
+            if (m_Win[i].left <= m_Win[i].right + 1)
+            {
+                for (int j = m_Win[i].left; j <= m_Win[i].right; j++)
+                    if (j >= 0 && j < 240)
+                        m_WinMask[i][j] = 1;
+            }
+            else
+            {
+                for (int j = 0; j <= m_Win[i].right && j < 240; j++)
+                    m_WinMask[i][j] = 1;
+                for (int j = m_Win[i].left; j < 240; j++)
+                    if (j >= 0)
+                        m_WinMask[i][j] = 1;
+            }
         }
 
         // Call mode specific rendering logic
-        switch (m_VideoMode) {
+        switch (m_VideoMode)
+        {
         case 0:
         {
             // BG Mode 0 - 240x160 pixels, Text mode
-            // TODO: Consider using no loop
-            for (int i = 0; i < 4; i++) {
-                if (m_BG[i].enable) {
+            for (int i = 0; i < 4; i++)
+            {
+                if (m_BG[i].enable)
                     RenderBackgroundMode0(i);
-                }
             }
             break;
         }
         case 1:
         {        
             // BG Mode 1 - 240x160 pixels, Text and RS mode mixed
-            if (m_BG[0].enable) {
+            if (m_BG[0].enable)
                 RenderBackgroundMode0(0);
-            }
-            if (m_BG[1].enable) {
+
+            if (m_BG[1].enable)
                 RenderBackgroundMode0(1);
-            }
-            if (m_BG[2].enable) {
+
+            if (m_BG[2].enable)
                 RenderBackgroundMode1(2);
-            }
+
             break;
         }
         case 2:
         {
             // BG Mode 2 - 240x160 pixels, RS mode
-            if (m_BG[2].enable) {
+            if (m_BG[2].enable)
                 RenderBackgroundMode1(2);
-            }
-            if (m_BG[3].enable) {
+
+            if (m_BG[3].enable)
                 RenderBackgroundMode1(3);
-            }
+
             break;
         }
         case 3:
             // BG Mode 3 - 240x160 pixels, 32768 colors
-            // Bitmap modes are rendered on BG2 which means we must check if it is enabled
             if (m_BG[2].enable)
             {
                 u32 offset = m_VCount * 240 * 2;
+
                 for (int x = 0; x < 240; x++)
                 {
-                    m_BgBuffer[2][x] = DecodeRGB5((m_VRAM[offset + 1] << 8) | m_VRAM[offset]);
+                    m_BgBuffer[2][x] = (m_VRAM[offset + 1] << 8) | m_VRAM[offset];
                     offset += 2;
                 }
             }
             break;
         case 4:
             // BG Mode 4 - 240x160 pixels, 256 colors (out of 32768 colors)
-            // Bitmap modes are rendered on BG2 which means we must check if it is enabled
             if (m_BG[2].enable)
             {
                 u32 page = m_FrameSelect ? 0xA000 : 0;
+
                 for (int x = 0; x < 240; x++)
                 {
                     u8 index = m_VRAM[page + m_VCount * 240 + x];
-                    u16 rgb5 = m_PAL[index * 2] | (m_PAL[index * 2 + 1] << 8);
-                    m_BgBuffer[2][x] = DecodeRGB5(rgb5);
+                    m_BgBuffer[2][x] = m_PAL[index * 2] | (m_PAL[index * 2 + 1] << 8);
                 }
             }
             break;
         case 5:
             // BG Mode 5 - 160x128 pixels, 32768 colors
-            // Bitmap modes are rendered on BG2 which means we must check if it is enabled
             if (m_BG[2].enable)
             {
                 u32 offset = (m_FrameSelect ? 0xA000 : 0) + m_VCount * 160 * 2;
+
                 for (int x = 0; x < 240; x++)
                 {
                     if (x < 160 && m_VCount < 128)
                     {
-                        m_BgBuffer[2][x] = DecodeRGB5((m_VRAM[offset + 1] << 8) | m_VRAM[offset]);
+                        m_BgBuffer[2][x] = (m_VRAM[offset + 1] << 8) | m_VRAM[offset];
                         offset += 2;
                     }
                     else
                     {
-                        // The unused space is filled with the first color from pal ram as far as I can see
-                        u16 rgb5 = m_PAL[0] | (m_PAL[1] << 8);
-                        m_BgBuffer[2][x] = DecodeRGB5(rgb5);
+                        m_BgBuffer[2][x] = 0x8000;
                     }
                 }
             }
             break;
         }
         
-        // Check if objects are enabled..
-        if (m_Obj.enable) {
-            // .. and render all of them to their buffers if so
+        // Render sprites if enabled
+        if (m_Obj.enable)
             RenderSprites(0x10000);
-        }
-    
-        // Compose screen
-        if (win_none) {
-            for (int i = 3; i >= 0; i--) {
-                for (int j = 3; j >= 0; j--) {
-                    if (m_BG[j].enable && m_BG[j].priority == i) {
-                        DrawLineToBuffer(m_BgBuffer[j], first_bg);
-                        first_bg = false;
-                    }
-                }
-                if (m_Obj.enable) {
-                    DrawLineToBuffer(m_ObjBuffer[i], false);
-                }
-            }
-        } else {
-            // Compose outer window area
-            for (int i = 3; i >= 0; i--) {
-                for (int j = 3; j >= 0; j--) {
-                    if (m_BG[j].enable && m_BG[j].priority == i && m_WinOut.bg[j]) {
-                        DrawLineToBuffer(m_BgBuffer[j], first_bg);
-                        first_bg = false;
-                    }
-                }
-                if (m_Obj.enable && m_WinOut.obj) {
-                    DrawLineToBuffer(m_ObjBuffer[i], false);
-                }
-            }
-            
-            // Compose inner window[0/1] area
-            for (int i = 1; i >= 0; i--) {
-                if (m_Win[i].enable && (
-                    (m_Win[i].top <= m_Win[i].bottom && m_VCount >= m_Win[i].top && m_VCount <= m_Win[i].bottom) ||
-                    (m_Win[i].top > m_Win[i].bottom && !(m_VCount <= m_Win[i].top && m_VCount >= m_Win[i].bottom))
-                )) {
-                    u32 win_buffer[240];
-                    
-                    // Anything that is not covered by bg and obj will be black
-                    for (int j = 0; j < 240; j++) {
-                        win_buffer[j] = 0xFF000000;
-                    }
-
-                    // Draw backgrounds and sprites if any
-                    for (int j = 3; j >= 0; j--) {
-                        for (int k = 3; k >= 0; k--) {
-                            if (m_BG[k].enable && m_BG[k].priority == j && m_Win[i].bg_in[k]) {
-                                OverlayLineBuffers(win_buffer, m_BgBuffer[k]);
-                            }
-                        }
-                        if (m_Obj.enable && m_Win[i].obj_in) {
-                            OverlayLineBuffers(win_buffer, m_ObjBuffer[j]);
-                        }
-                    }
-
-                    // Make the window buffer transparent in the outer area
-                    if (m_Win[i].left <= m_Win[i].right + 1) {
-                        for (int j = 0; j <= m_Win[i].left; j++) {
-                            if (j < 240) {
-                                win_buffer[j] = 0;
-                            }
-                        }
-                        for (int j = m_Win[i].right; j < 240; j++) {
-                            if (j >= 0) {
-                                win_buffer[j] = 0;
-                            }
-                        }
-                    } else {
-                        for (int j = m_Win[i].right; j <= m_Win[i].left; j++) {
-                            if (j >= 0 && j < 240) {
-                                win_buffer[j] = 0;
-                            }
-                        }
-                    }
-                    
-                    // Draw the window buffer
-                    DrawLineToBuffer(win_buffer, false);
-                }
-            }
-        }
     }
 
     ///////////////////////////////////////////////////////////
@@ -585,7 +526,6 @@ namespace NanoboyAdvance
                 if (m_HBlankIRQ)
                     m_Interrupt->if_ |= HBLANK_INTERRUPT;
 
-                //Render(vcount);
                 m_RenderScanline = true;
                 m_Ticks = 0;
             }
@@ -643,5 +583,25 @@ namespace NanoboyAdvance
             break;
         }
         }
+    }
+
+    void GBAVideo::SetupComposer(GBAComposer* composer)
+    {
+        composer->SetVerticalCounter(&m_VCount);
+        composer->SetBackdropColor((u16*)&m_PAL);
+        composer->SetObjectInfo(&m_Obj);
+
+        for (int i = 0; i < 4; i++)
+        {
+            composer->SetBackgroundInfo(i, &m_BG[i]);
+            composer->SetBackgroundBuffer(i, m_BgBuffer[i]);
+            composer->SetObjectBuffer(i, m_ObjBuffer[i]);
+        }
+
+        composer->SetWindowMaskBuffer(0, m_WinMask[0]);
+        composer->SetWindowMaskBuffer(1, m_WinMask[1]);
+        composer->SetWindowInfo(0, &m_Win[0]);
+        composer->SetWindowInfo(1, &m_Win[1]);
+        composer->SetWindowOuterInfo(&m_WinOut);
     }
 }

@@ -25,7 +25,7 @@
 #define __NBA_COMPOSER_H__
 
 #include "util/types.h"
-#include "video.h"
+#include "video_structs.h"
 
 namespace NanoboyAdvance
 {
@@ -52,6 +52,20 @@ namespace NanoboyAdvance
         inline void SetVerticalCounter(u16* vcount)
         {
             m_VCount = vcount;
+        }
+
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    August 8th, 2016
+        /// \fn      SetBackdropColor
+        /// \brief   Sets the reference to the backdrop color.
+        ///
+        /// \param  color  Pointer to the backdrop color.
+        ///
+        ///////////////////////////////////////////////////////////
+        inline void SetBackdropColor(u16* color)
+        {
+            m_BdColor = color;
         }
 
         ///////////////////////////////////////////////////////////
@@ -211,15 +225,16 @@ namespace NanoboyAdvance
         //
         ///////////////////////////////////////////////////////////
         u16* m_VCount;
+        u16* m_BdColor; //<<< TODO: big endian support
         u16* m_BgBuffer[4];
         u16* m_ObjBuffer[4];
         u8* m_WinMask[2];
         u8* m_ObjWinMask;
-        struct Background* m_BG[4];
-        struct Object* m_Obj;
-        struct Window* m_Win[2];
-        struct ObjectWindow* m_ObjWin;
-        struct WindowOuter* m_WinOut;
+        Background* m_BG[4];
+        Object* m_Obj;
+        Window* m_Win[2];
+        ObjectWindow* m_ObjWin;
+        WindowOuter* m_WinOut;
     };
 }
 
