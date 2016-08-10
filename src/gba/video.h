@@ -390,12 +390,6 @@ namespace NanoboyAdvance
         bool m_HBlankDMA            {false};
         bool m_VBlankDMA            {false};
         bool m_RenderScanline       {false};
-
-        ///////////////////////////////////////////////////////////
-        // Class members (Buffers)
-        //
-        ///////////////////////////////////////////////////////////
-        u16 m_Buffer[240 * 160];
     };
 }
 
