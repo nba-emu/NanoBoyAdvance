@@ -22,14 +22,15 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 
+#include "gba/video.h"
+#include "mainwindow.h"
 #include <QApplication>
 #include <QFileDialog>
 #include <QMessageBox>
 
 
-#include "mainwindow.h"
-
 using namespace NanoboyAdvance;
+
 
 ///////////////////////////////////////////////////////////
 /// \author Frederic Meyer
@@ -119,7 +120,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
                 u32 buffer[240 * 160];
 
                 for (int i = 0; i < 240 * 160; i++)
-                    buffer[i] = (u32)m_Buffer[i] | 0xFF000000;
+                    buffer[i] = GBAVideo::DecodeRGB555(m_Buffer[i]);
 
                 m_Screen->updateTexture(buffer, 240, 160);
                 m_Frames++;
