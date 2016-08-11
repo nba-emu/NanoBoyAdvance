@@ -44,10 +44,10 @@ struct Background
     u32 map_base {0};
     u32 x {0};
     u32 y {0};
-    u16 x_ref {0};
-    u16 y_ref {0};
-    u16 x_ref_int {0};
-    u16 y_ref_int {0};
+    u32 x_ref {0};
+    u32 y_ref {0};
+    float x_ref_int {0};
+    float y_ref_int {0};
     u16 pa {0};
     u16 pb {0};
     u16 pc {0};

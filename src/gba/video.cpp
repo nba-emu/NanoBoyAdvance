@@ -138,10 +138,12 @@ namespace NanoboyAdvance
         for (int i = 0; i < 240; i++) {
             float dec_bgx = m_BG[id].x_ref_int;
             float dec_bgy = m_BG[id].y_ref_int;
+
             float dec_bgpa = DecodeGBAFloat16(m_BG[id].pa);
             float dec_bgpb = DecodeGBAFloat16(m_BG[id].pb);
             float dec_bgpc = DecodeGBAFloat16(m_BG[id].pc);
             float dec_bgpd = DecodeGBAFloat16(m_BG[id].pd);
+
             int x = dec_bgx + (dec_bgpa * i) + (dec_bgpb * m_VCount);
             int y = dec_bgy + (dec_bgpc * i) + (dec_bgpd * m_VCount);
             int tile_internal_line;
@@ -528,6 +530,11 @@ namespace NanoboyAdvance
             {
                 m_HBlankDMA = true;
                 m_State = GBAVideoState::HBlank;
+
+                /*m_BG[2].x_ref_int += DecodeGBAFloat16(m_BG[2].pb);
+                m_BG[2].y_ref_int += DecodeGBAFloat16(m_BG[2].pd);
+                m_BG[3].x_ref_int += DecodeGBAFloat16(m_BG[3].pb);
+                m_BG[3].y_ref_int += DecodeGBAFloat16(m_BG[3].pd);*/
                 
                 if (m_HBlankIRQ)
                     m_Interrupt->if_ |= HBLANK_INTERRUPT;
