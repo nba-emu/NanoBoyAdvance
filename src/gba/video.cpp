@@ -144,8 +144,8 @@ namespace NanoboyAdvance
             float dec_bgpc = DecodeGBAFloat16(m_BG[id].pc);
             float dec_bgpd = DecodeGBAFloat16(m_BG[id].pd);
 
-            int x = dec_bgx + (dec_bgpa * i) + (dec_bgpb * m_VCount);
-            int y = dec_bgy + (dec_bgpc * i) + (dec_bgpd * m_VCount);
+            int x = dec_bgx + (dec_bgpa * i) + dec_bgpb;
+            int y = dec_bgy + (dec_bgpc * i) + dec_bgpd;
             int tile_internal_line;
             int tile_internal_x;
             int tile_row;
@@ -157,7 +157,7 @@ namespace NanoboyAdvance
                     x = x % size;
                     y = y % size;
                 } else {
-                    m_BgBuffer[id][i] = 0;
+                    m_BgBuffer[id][i] = COLOR_BACKDROP;
                     continue;
                 }
             }
@@ -165,7 +165,7 @@ namespace NanoboyAdvance
                 if (wraparound) {
                     x = (size + x) % size;
                 } else {
-                    m_BgBuffer[id][i] = 0;
+                    m_BgBuffer[id][i] = COLOR_BACKDROP;
                     continue;
                 }
             }
@@ -173,7 +173,7 @@ namespace NanoboyAdvance
                 if (wraparound) {
                     y = (size + y) % size;
                 } else {
-                    m_BgBuffer[id][i] = 0;
+                    m_BgBuffer[id][i] = COLOR_BACKDROP;
                     continue;
                 }
             }
@@ -531,10 +531,10 @@ namespace NanoboyAdvance
                 m_HBlankDMA = true;
                 m_State = GBAVideoState::HBlank;
 
-                /*m_BG[2].x_ref_int += DecodeGBAFloat16(m_BG[2].pb);
+                m_BG[2].x_ref_int += DecodeGBAFloat16(m_BG[2].pb);
                 m_BG[2].y_ref_int += DecodeGBAFloat16(m_BG[2].pd);
                 m_BG[3].x_ref_int += DecodeGBAFloat16(m_BG[3].pb);
-                m_BG[3].y_ref_int += DecodeGBAFloat16(m_BG[3].pd);*/
+                m_BG[3].y_ref_int += DecodeGBAFloat16(m_BG[3].pd);
                 
                 if (m_HBlankIRQ)
                     m_Interrupt->if_ |= HBLANK_INTERRUPT;
