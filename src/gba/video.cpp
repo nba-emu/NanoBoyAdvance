@@ -148,12 +148,10 @@ namespace NanoboyAdvance
             float dec_bgy = m_BG[id].y_ref_int;
 
             float dec_bgpa = DecodeGBAFloat16(m_BG[id].pa);
-            float dec_bgpb = DecodeGBAFloat16(m_BG[id].pb);
             float dec_bgpc = DecodeGBAFloat16(m_BG[id].pc);
-            float dec_bgpd = DecodeGBAFloat16(m_BG[id].pd);
 
-            int x = dec_bgx + (dec_bgpa * i) + dec_bgpb;
-            int y = dec_bgy + (dec_bgpc * i) + dec_bgpd;
+            int x = dec_bgx + dec_bgpa * i;
+            int y = dec_bgy + dec_bgpc * i;
             int tile_internal_line;
             int tile_internal_x;
             int tile_row;

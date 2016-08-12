@@ -240,25 +240,7 @@ namespace NanoboyAdvance
             s32 int_part = (number >> 8) | (is_negative ? 0xFFFFFF00 : 0);
             float frac_part = static_cast<float>(number & 0xFF) / 256;
 
-            return static_cast<float>(int_part) + (is_negative ? -frac_part : frac_part);        
-        }
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      EncodeGBAFloat32
-        /// \brief   Encodes a native float into GBAFloat32 format.
-        ///
-        /// \param    The native float to encode.
-        /// \returns  The encoded GBAFloat32 value.
-        ///
-        ///////////////////////////////////////////////////////////
-        static inline u32 EncodeGBAFloat32(float number)
-        {
-            s32 int_part = static_cast<s32>(number);
-            u8 frac_part = static_cast<u8>((number - int_part) * (number >= 0 ? 256 : -256)); // optimize
-
-            return (u32)(int_part << 8 | frac_part);
+            return static_cast<float>(int_part) + frac_part;
         }
 
     public:
@@ -312,7 +294,7 @@ namespace NanoboyAdvance
             s32 int_part = ((number & ~0xF0000000) >> 8) | (is_negative ? 0xFFF00000 : 0);
             float frac_part = static_cast<float>(number & 0xFF) / 256;
 
-            return static_cast<float>(int_part) + (is_negative ? -frac_part : frac_part);
+            return static_cast<float>(int_part) + frac_part;
         }
 
         ///////////////////////////////////////////////////////////
