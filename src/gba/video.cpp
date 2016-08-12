@@ -132,9 +132,17 @@ namespace NanoboyAdvance
         u32 tile_block_base = m_BG[id].tile_base;
         u32 map_block_base = m_BG[id].map_base;
         bool wraparound = m_BG[id].wraparound;
-        int blocks = ((m_BG[id].size) + 1) << 4;
-        int size = blocks * 8;
-        
+        int size;
+        int blocks;
+
+        switch (m_BG[id].size)
+        {
+        case 0: size = 128; blocks = 16; break;
+        case 1: size = 256; blocks = 32; break;
+        case 2: size = 512; blocks = 64; break;
+        case 3: size = 1024; blocks = 128; break;
+        }
+
         for (int i = 0; i < 240; i++) {
             float dec_bgx = m_BG[id].x_ref_int;
             float dec_bgy = m_BG[id].y_ref_int;
