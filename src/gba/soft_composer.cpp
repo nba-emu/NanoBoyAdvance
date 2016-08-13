@@ -93,10 +93,10 @@ namespace NanoboyAdvance
         }
 
         // Fill any free spots with the BD color.
-        for (int k = 0; k < 240 * 160; k++)
+        for (int i = 0; i < 240 * 160; i++)
         {
-            if (m_OutputBuffer[k] == 0x8000)
-                m_OutputBuffer[k] = backdrop_color;
+            if (m_OutputBuffer[i] == 0x8000)
+                m_OutputBuffer[i] = backdrop_color;
         }
     }
 
