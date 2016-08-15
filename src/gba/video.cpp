@@ -201,48 +201,167 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     void GBAVideo::RenderSprites(u32 tile_base)
     {
+        // Process OBJ127 first, because OBJ0 has highest priority (OBJ0 overlays OBJ127, not vice versa)
         u32 offset = 127 * 8;
 
+        // Walk all entries
         for (int i = 0; i < 128; i++)
         {
             u16 attribute0 = (m_OAM[offset + 1] << 8) | m_OAM[offset];
             u16 attribute1 = (m_OAM[offset + 3] << 8) | m_OAM[offset + 2];
             u16 attribute2 = (m_OAM[offset + 5] << 8) | m_OAM[offset + 4];
 
-            int x = attribute1 & 0x1FF;
-            int y = attribute0 & 0xFF;
-            int width = (attribute1 >> 14) * 8;
-            int height = width;
-            int shape = attribute0 >> 14;
-
-            // Calculate "actual" sprite dimensions.
-            if (shape == 1) width *= 2;
-            else if (shape == 2) height *= 2;
-            else continue;
-
-            bool is_rotate_scale = attribute0 & (1 << 8);
-
-            if (is_rotate_scale)
+            // Only render those which have matching priority
+            //if (((attribute2 >> 10) & 3) == priority)
             {
-                // Handle double size flag
-                if (attribute0 & (1 << 9))
+                int width;
+                int height;
+                int x = attribute1 & 0x1FF;
+                int y = attribute0 & 0xFF;
+                GBAVideoSpriteShape shape = static_cast<GBAVideoSpriteShape>(attribute0 >> 14);
+                int size = attribute1 >> 14;
+                int priority = (attribute2 >> 10) & 3;
+
+                // Decode width and height
+                switch (shape)
                 {
-                    width *= 2;
-                    height *= 2;
+                case GBAVideoSpriteShape::Square:
+                    switch (size)
+                    {
+                    case 0: width = 8; height = 8; break;
+                    case 1: width = 16; height = 16; break;
+                    case 2: width = 32; height = 32; break;
+                    case 3: width = 64; height = 64; break;
+                    }
+                    break;
+                case GBAVideoSpriteShape::Horizontal:
+                    switch (size)
+                    {
+                    case 0: width = 16; height = 8; break;
+                    case 1: width = 32; height = 8; break;
+                    case 2: width = 32; height = 16; break;
+                    case 3: width = 64; height = 32; break;
+                    }
+                    break;
+                case GBAVideoSpriteShape::Vertical:
+                    switch (size)
+                    {
+                    case 0: width = 8; height = 16; break;
+                    case 1: width = 8; height = 32; break;
+                    case 2: width = 16; height = 32; break;
+                    case 3: width = 32; height = 64; break;
+                    }
+                    break;
+                case GBAVideoSpriteShape::Prohibited:
+                    width = 0;
+                    height = 0;
+                    break;
+                }
+
+                // Determine if there is something to render for this sprite
+                if (m_VCount >= y && m_VCount <= y + height - 1)
+                {
+                    int internal_line = m_VCount - y;
+                    int displacement_y;
+                    int row;
+                    int tiles_per_row = width / 8;
+                    int tile_number = attribute2 & 0x3FF;
+                    int palette_number = attribute2 >> 12;
+                    bool rotate_scale = attribute0 & (1 << 8) ? true : false;
+                    bool horizontal_flip = !rotate_scale && (attribute1 & (1 << 12));
+                    bool vertical_flip = !rotate_scale && (attribute1 & (1 << 13));
+                    bool color_mode = attribute0 & (1 << 13) ? true : false;
+                    
+                    // It seems like the tile number is divided by two in 256 color mode
+                    // Though we should check this because I cannot find information about this in GBATEK
+                    if (color_mode)
+                    {
+                        tile_number /= 2;
+                    }
+
+                    // Apply (outer) vertical flip if required
+                    if (vertical_flip) 
+                    {
+                        internal_line = height - internal_line;                    
+                    }
+
+                    // Calculate some stuff
+                    displacement_y = internal_line % 8;
+                    row = (internal_line - displacement_y) / 8;
+
+                    // Apply (inner) vertical flip
+                    if (vertical_flip)
+                    {
+                        displacement_y = 7 - displacement_y;
+                        row = (height / 8) - row;
+                    }
+
+                    // Render all visible tiles of the sprite
+                    for (int j = 0; j < tiles_per_row; j++)
+                    {
+                        int current_tile_number;
+                        u16* tile_data;
+
+                        // Determine the tile to render
+                        if (m_Obj.two_dimensional)
+                        {
+                            current_tile_number = tile_number + row * tiles_per_row + j;
+                        }
+                        else
+                        {
+                            current_tile_number = tile_number + row * 32 + j;
+                        }
+
+                        // Render either in 256 colors or 16 colors mode
+                        if (color_mode)
+                        {
+                            // 256 colors
+                            tile_data = DecodeTileLine8BPP(tile_base, current_tile_number, displacement_y, true);
+                        }
+                        else
+                        {
+                            // 16 colors (use palette_nummer)
+                            tile_data = DecodeTileLine4BPP(tile_base, 0x200 + palette_number * 0x20, current_tile_number, displacement_y);
+                        }
+
+                        // Copy data
+                        if (horizontal_flip) // not very beautiful but faster
+                        {
+                            for (int k = 0; k < 8; k++)
+                            {
+                                int dst_index = x + (tiles_per_row - j - 1) * 8 + (7 - k);
+                                u16 color = tile_data[k];
+
+                                if (color != COLOR_BACKDROP && dst_index < 240)
+                                {
+                                    m_ObjBuffer[priority][dst_index] = color;
+                                }
+                            }
+
+                        }
+                        else
+                        {
+                            for (int k = 0; k < 8; k++)
+                            {
+                                int dst_index = x + j * 8 + k;
+                                u16 color = tile_data[k];
+
+                                if (color != COLOR_BACKDROP && dst_index < 240)
+                                {
+                                    m_ObjBuffer[priority][dst_index] = tile_data[k];
+                                }
+                            }
+                        }
+
+                        // We don't need that memory anymore
+                        delete[] tile_data;
+                    }
                 }
             }
-            else
-            {
-                // Handle hidden flag
-                if (attribute0 & (1 << 9))
-                    continue;
 
-
-            }
-
+            // Update offset to the next entry
             offset -= 8;
         }
-
     }    
 
     ///////////////////////////////////////////////////////////
