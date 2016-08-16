@@ -128,68 +128,76 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     void GBAVideo::RenderBackgroundMode1(int id)
     {
-        // Rendering variables
-        u32 tile_block_base = m_BG[id].tile_base;
-        u32 map_block_base = m_BG[id].map_base;
+        u32 tile_base = m_BG[id].tile_base;
+        u32 map_base = m_BG[id].map_base;
         bool wraparound = m_BG[id].wraparound;
-        int size;
-        int blocks;
+        float parameter_a = DecodeGBAFloat16(m_BG[id].pa);
+        float parameter_c = DecodeGBAFloat16(m_BG[id].pc);
+        int x_ref = m_BG[id].x_ref_int;
+        int y_ref = m_BG[id].y_ref_int;
+        u16* buffer = m_BgBuffer[id];
+        int size, block_width;
 
+        // Decode size and block width of the map.
         switch (m_BG[id].size)
         {
-        case 0: size = 128; blocks = 16; break;
-        case 1: size = 256; blocks = 32; break;
-        case 2: size = 512; blocks = 64; break;
-        case 3: size = 1024; blocks = 128; break;
+        case 0: size = 128; block_width = 16; break;
+        case 1: size = 256; block_width = 32; break;
+        case 2: size = 512; block_width = 64; break;
+        case 3: size = 1024; block_width = 128; break;
         }
 
-        for (int i = 0; i < 240; i++) {
-            float dec_bgx = m_BG[id].x_ref_int;
-            float dec_bgy = m_BG[id].y_ref_int;
+        // Draw exactly one line.
+        for (int i = 0; i < 240; i++)
+        {
+            int x = x_ref + i * parameter_a;
+            int y = y_ref + i * parameter_c;
+            bool is_backdrop = false;
 
-            float dec_bgpa = DecodeGBAFloat16(m_BG[id].pa);
-            float dec_bgpc = DecodeGBAFloat16(m_BG[id].pc);
+            // Handles x-Coord over-/underflow
+            if (x >= size)
+            {
+                if (wraparound) x = x % size;
+                else is_backdrop = true;
+            }
+            else if (x < 0)
+            {
+                if (wraparound) x = (size + x) % size;
+                else is_backdrop = true;
+            }
 
-            int x = dec_bgx + dec_bgpa * i;
-            int y = dec_bgy + dec_bgpc * i;
-            int tile_internal_line;
-            int tile_internal_x;
-            int tile_row;
-            int tile_column;
-            int tile_number;
-            
-            if ((x >= size) || (y >= size)) {
-                if (wraparound) {
-                    x = x % size;
-                    y = y % size;
-                } else {
-                    m_BgBuffer[id][i] = COLOR_BACKDROP;
-                    continue;
-                }
+            // Handles y-Coord over-/underflow
+            if (y >= size)
+            {
+                if (wraparound) y = y % size;
+                else is_backdrop = true;
             }
-            if (x < 0) {
-                if (wraparound) {
-                    x = (size + x) % size;
-                } else {
-                    m_BgBuffer[id][i] = COLOR_BACKDROP;
-                    continue;
-                }
+            else if (y < 0)
+            {
+                if (wraparound) y = (size + y) % size;
+                else is_backdrop = true;
             }
-            if (y < 0) {
-                if (wraparound) {
-                    y = (size + y) % size;
-                } else {
-                    m_BgBuffer[id][i] = COLOR_BACKDROP;
-                    continue;
-                }
+
+            // Handles empty spots.
+            if (is_backdrop)
+            {
+                buffer[i] = COLOR_BACKDROP;
+                continue;
             }
-            
-            tile_internal_line = y % 8;
-            tile_internal_x = x % 8;
-            tile_row = (y - tile_internal_line) / 8;
-            tile_column = (x - tile_internal_x) / 8;
-            tile_number = m_VRAM[map_block_base + tile_row * blocks + tile_column];
-            m_BgBuffer[id][i] = DecodeTilePixel8BPP(tile_block_base, tile_number, tile_internal_line, tile_internal_x, false);
+
+            // Raster-position of the tile.
+            int map_column = x / 8;
+            int map_row = y / 8;
+
+            // Position of the wanted pixel inside the tile.
+            int tile_column = x % 8;
+            int tile_row = y % 8;
+
+            // Get the tile number from the map using the raster-position
+            int tile_number = m_VRAM[map_base + map_row * block_width + map_column];
+
+            // Get the wanted pixel.
+            buffer[i] = DecodeTilePixel8BPP(tile_base, tile_number, tile_row, tile_column, false);
         }
     }
        
