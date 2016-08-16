@@ -133,8 +133,8 @@ namespace NanoboyAdvance
         bool wraparound = m_BG[id].wraparound;
         float parameter_a = DecodeGBAFloat16(m_BG[id].pa);
         float parameter_c = DecodeGBAFloat16(m_BG[id].pc);
-        int x_ref = m_BG[id].x_ref_int;
-        int y_ref = m_BG[id].y_ref_int;
+        float x_ref = m_BG[id].x_ref_int;
+        float y_ref = m_BG[id].y_ref_int;
         u16* buffer = m_BgBuffer[id];
         int size, block_width;
 
