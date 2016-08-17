@@ -59,6 +59,7 @@ namespace NanoboyAdvance
     void GBAVideo::RenderBackgroundMode0(int id)
     {
         struct Background bg = this->m_BG[id];
+        u16* buffer = m_BgBuffer[id];
 
         int width = ((bg.size & 1) + 1) * 256;
         int height = ((bg.size >> 1) + 1) * 256;
@@ -117,7 +118,7 @@ namespace NanoboyAdvance
         }
 
         for (int i = 0; i < 240; i++)
-            m_BgBuffer[id][i] = line_buffer[(bg.x + i) % width];
+            buffer[i] = line_buffer[(bg.x + i) % width];
     }
 
     ///////////////////////////////////////////////////////////
@@ -186,18 +187,18 @@ namespace NanoboyAdvance
             }
 
             // Raster-position of the tile.
-            int map_column = x / 8;
-            int map_row = y / 8;
+            int map_x = x / 8;
+            int map_y = y / 8;
 
             // Position of the wanted pixel inside the tile.
-            int tile_column = x % 8;
-            int tile_row = y % 8;
+            int tile_x = x % 8;
+            int tile_y = y % 8;
 
             // Get the tile number from the map using the raster-position
-            int tile_number = m_VRAM[map_base + map_row * block_width + map_column];
+            int tile_number = m_VRAM[map_base + map_y * block_width + map_x];
 
             // Get the wanted pixel.
-            buffer[i] = DecodeTilePixel8BPP(tile_base, tile_number, tile_row, tile_column, false);
+            buffer[i] = DecodeTilePixel8BPP(tile_base, tile_number, tile_y, tile_x, false);
         }
     }
        
