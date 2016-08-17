@@ -59,6 +59,7 @@ const int WIN0V = 0x44;
 const int WIN1V = 0x46;
 const int WININ = 0x48;
 const int WINOUT = 0x4A;
+const int SOUNDBIAS = 0x88;
 const int DMA0SAD = 0xB0;
 const int DMA0DAD = 0xB4;
 const int DMA0CNT_L = 0xB8;

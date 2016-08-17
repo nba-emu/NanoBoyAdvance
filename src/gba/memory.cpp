@@ -313,6 +313,14 @@ namespace NanoboyAdvance
             case WINOUT+1:
                 // TODO: OBJWIN
                 return 0;
+            case SOUNDBIAS:
+            case SOUNDBIAS+1:
+            case SOUNDBIAS+2:
+            case SOUNDBIAS+3:
+            {
+                int n = (internal_offset - SOUNDBIAS) * 8;
+                return (m_SOUNDBIAS >> n) & 0xFF;
+            }
             case TM0CNT_L:
                 return m_Timer[0].count & 0xFF;
             case TM0CNT_L+1:
@@ -705,6 +713,15 @@ namespace NanoboyAdvance
             case WINOUT+1:
                 // TODO: OBJWIN
                 break;
+            case SOUNDBIAS:
+            case SOUNDBIAS+1:
+            case SOUNDBIAS+2:
+            case SOUNDBIAS+3:
+            {
+                int n = (internal_offset - SOUNDBIAS) * 8;
+                m_SOUNDBIAS = (m_SOUNDBIAS & ~(0xFF << n)) | (value << n);
+                break;
+            }
             case DMA0SAD:
             case DMA0SAD+1:
             case DMA0SAD+2:

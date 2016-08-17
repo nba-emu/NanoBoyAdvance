@@ -401,6 +401,7 @@ namespace NanoboyAdvance
         struct DMA  m_DMA[4];
         struct Timer m_Timer[4];
         struct Waitstate m_Waitstate;
+        u32 m_SOUNDBIAS {0}; // preliminary SOUNDBIAS implementation.
     public:
         ///////////////////////////////////////////////////////////
         // Class members (Interrupts)
