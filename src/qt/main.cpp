@@ -21,15 +21,18 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-
+#include "mainwindow.h"
 #include <QApplication>
 
-#include "mainwindow.h"
-
-
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     QApplication app(argc, argv);
     MainWindow window;
+
+    // Setup vendor information
+    QCoreApplication::setOrganizationName("NanoboyAdvance Group");
+    QCoreApplication::setApplicationName("NanoboyAdvance");
+
     window.show();
     return app.exec();
 }

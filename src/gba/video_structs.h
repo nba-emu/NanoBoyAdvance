@@ -118,4 +118,32 @@ struct ObjectWindow
     // TODO...
 };
 
+///////////////////////////////////////////////////////////
+/// \author  Frederic Meyer
+/// \date    August 20th, 2016
+/// \struct  SpecialEffects
+///
+/// Describes the state of special effect registers.
+///
+///////////////////////////////////////////////////////////
+struct SpecialEffect
+{
+    bool bg_select[2][4] {{false, false, false, false},
+                          {false, false, false, false}};
+    bool obj_select[2] {false, false};
+    bool bd_select[2] {false, false};
+
+    enum Effect
+    {
+        SFX_NONE = 0,
+        SFX_ALPHABLEND = 1,
+        SFX_INCREASE = 2,
+        SFX_DECREASE = 3
+    } effect {SFX_NONE};
+
+    int eva {0};
+    int evb {0};
+    int evy {0};
+};
+
 #endif // __NBA_VIDEO_STRUCTS_H__

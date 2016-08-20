@@ -366,6 +366,7 @@ namespace NanoboyAdvance
         Window m_Win[2];
         WindowOuter m_WinOut;
         ObjectWindow m_ObjWin;
+        SpecialEffect m_SFX;
         int m_VideoMode {0};
         u16 m_VCount {0};
         u8 m_VCountSetting          {0};

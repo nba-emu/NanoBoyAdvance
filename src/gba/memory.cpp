@@ -313,6 +313,21 @@ namespace NanoboyAdvance
             case WINOUT+1:
                 // TODO: OBJWIN
                 return 0;
+            case BLDCNT:
+                return (m_Video->m_SFX.bg_select[0][0] ? 1 : 0) |
+                       (m_Video->m_SFX.bg_select[0][1] ? 2 : 0) |
+                       (m_Video->m_SFX.bg_select[0][2] ? 4 : 0) |
+                       (m_Video->m_SFX.bg_select[0][3] ? 8 : 0) |
+                       (m_Video->m_SFX.obj_select[0] ? 16 : 0) |
+                       (m_Video->m_SFX.bd_select[0] ? 32 : 0) |
+                       (m_Video->m_SFX.effect << 6);
+            case BLDCNT+1:
+                return (m_Video->m_SFX.bg_select[1][0] ? 1 : 0) |
+                       (m_Video->m_SFX.bg_select[1][1] ? 2 : 0) |
+                       (m_Video->m_SFX.bg_select[1][2] ? 4 : 0) |
+                       (m_Video->m_SFX.bg_select[1][3] ? 8 : 0) |
+                       (m_Video->m_SFX.obj_select[1] ? 16 : 0) |
+                       (m_Video->m_SFX.bd_select[1] ? 32 : 0);
             case SOUNDBIAS:
             case SOUNDBIAS+1:
             case SOUNDBIAS+2:
@@ -712,6 +727,32 @@ namespace NanoboyAdvance
                 break;
             case WINOUT+1:
                 // TODO: OBJWIN
+                break;
+            case BLDCNT:
+                m_Video->m_SFX.bg_select[0][0] = value & 1;
+                m_Video->m_SFX.bg_select[0][1] = value & 2;
+                m_Video->m_SFX.bg_select[0][2] = value & 4;
+                m_Video->m_SFX.bg_select[0][3] = value & 8;
+                m_Video->m_SFX.obj_select[0] = value & 16;
+                m_Video->m_SFX.bd_select[0] = value & 32;
+                m_Video->m_SFX.effect = static_cast<SpecialEffect::Effect>(value >> 6);
+                break;
+            case BLDCNT+1:
+                m_Video->m_SFX.bg_select[1][0] = value & 1;
+                m_Video->m_SFX.bg_select[1][1] = value & 2;
+                m_Video->m_SFX.bg_select[1][2] = value & 4;
+                m_Video->m_SFX.bg_select[1][3] = value & 8;
+                m_Video->m_SFX.obj_select[1] = value & 16;
+                m_Video->m_SFX.bd_select[1] = value & 32;
+                break;
+            case BLDALPHA:
+                m_Video->m_SFX.eva = value & 0x1F;
+                break;
+            case BLDALPHA+1:
+                m_Video->m_SFX.evb = value & 0x1F;
+                break;
+            case BLDY:
+                m_Video->m_SFX.evy = value & 0x1F;
                 break;
             case SOUNDBIAS:
             case SOUNDBIAS+1:
