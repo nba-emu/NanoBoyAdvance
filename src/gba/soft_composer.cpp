@@ -71,32 +71,50 @@ namespace NanoboyAdvance
 
         // Clear rendering buffer
         memset(m_OutputBuffer, 0, 240 * 160 * sizeof(u16));
-        m_FirstLayer = true;
 
-        // Put everything layer-wise together.
-        for (int i = 3; i >= 0; i--)
+        for (int i = 0; i < 240 * 160; i++)
         {
+            u16 pixel_out = backdrop_color;
+            int last_priority = 4;
+
             for (int j = 3; j >= 0; j--)
             {
-                if (m_BG[j]->enable && m_BG[j]->priority == i)
+                u16 pixel;
+
+                if (!m_BG[j]->enable)
+                    continue;
+
+                pixel = m_BgFinalBuffer[j][i];
+
+                // Confusing but "0" means highest priority while "3" means lowest.
+                if (m_BG[j]->priority <= last_priority && pixel != 0x8000)
                 {
-                    bool window_inside[3] = { m_Win[0]->bg_in[j], m_Win[1]->bg_in[j], false };
-                    DrawLayer(m_BgFinalBuffer[j], window_inside, m_WinOut->bg[j]);
+                    bool bg_inside[3] = { m_Win[0]->bg_in[j], m_Win[1]->bg_in[j], false };
+
+                    if (IsVisible(i, bg_inside, m_WinOut->bg[j]))
+                    {
+                        pixel_out = pixel;
+                        last_priority = m_BG[j]->priority;
+                    }
                 }
             }
 
             if (m_Obj->enable)
             {
-                bool window_inside[3] = { m_Win[0]->obj_in, m_Win[1]->obj_in, false };
-                DrawLayer(m_ObjFinalBuffer[i], window_inside, m_WinOut->obj);
-            }
-        }
+                bool obj_inside[3] = { m_Win[0]->obj_in, m_Win[1]->obj_in, false };
 
-        // Fill any free spots with the BD color.
-        for (int i = 0; i < 240 * 160; i++)
-        {
-            if (m_OutputBuffer[i] == 0x8000)
-                m_OutputBuffer[i] = backdrop_color;
+                if (IsVisible(i, obj_inside, m_WinOut->obj))
+                {
+                    for (int j = 0; j <= last_priority && j < 4; j++)
+                    {
+                        u16 pixel = m_ObjFinalBuffer[j][i];
+                        if (pixel != 0x8000)
+                            pixel_out = pixel;
+                    }
+                }
+            }
+
+            m_OutputBuffer[i] = pixel_out;
         }
     }
 

@@ -31,39 +31,27 @@ namespace NanoboyAdvance
     class GBASoftComposer : public GBAComposer
     {
     private:
-        inline void DrawLayer(u16* layer, bool inside[3], bool outside)
+        inline bool IsVisible(int i, bool inside[3], bool outside)
         {
-            for (int k = 0; k < 240 * 160; k++)
+            if (m_Win[0]->enable || m_Win[1]->enable)
             {
-                bool enabled = true;
-
-                if (m_Win[0]->enable || m_Win[1]->enable)
-                {
-                    if (m_Win[0]->enable && m_WinFinalMask[0][k] == 1)
-                        enabled = inside[0];
-                    else if (m_Win[1]->enable && m_WinFinalMask[1][k] == 1)
-                        enabled = inside[1];
-                    else
-                        enabled = outside;
-                }
-
-                if (!enabled)
-                    continue;
-
-                if (layer[k] != 0x8000 || m_FirstLayer)
-                    m_OutputBuffer[k] = layer[k];
+                if (m_Win[0]->enable && m_WinFinalMask[0][i] == 1)
+                    return inside[0];
+                else if (m_Win[1]->enable && m_WinFinalMask[1][i] == 1)
+                    return inside[1];
+                else
+                    return outside;
             }
 
-            if (m_FirstLayer)
-                m_FirstLayer = false;
+            return true;
         }
+
     public:
         void Update();
         void Compose();
         u16* GetOutputBuffer();
         u16 m_OutputBuffer[240 * 160];
     private:
-        bool m_FirstLayer {false};
         u16 m_BgFinalBuffer[4][240 * 160];
         u16 m_ObjFinalBuffer[4][240 * 160];
         u8 m_WinFinalMask[2][240 * 160];
