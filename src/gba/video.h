@@ -29,7 +29,7 @@
 #include "util/types.h"
 #include "util/log.h"
 #include "interrupt.h"
-#include "video_structs.h"
+#include "video_extra.h"
 #include "composer.h"
 #include <cstring>
 
@@ -51,7 +51,6 @@ namespace NanoboyAdvance
         static const int VBLANK_INTERRUPT;
         static const int HBLANK_INTERRUPT;
         static const int VCOUNT_INTERRUPT;
-        static const u16 COLOR_BACKDROP;
 
         ///////////////////////////////////////////////////////////
         /// \author Frederic Meyer
@@ -67,22 +66,6 @@ namespace NanoboyAdvance
             Horizontal      = 1,
             Vertical        = 2,
             Prohibited      = 3
-        };
-
-        ///////////////////////////////////////////////////////////
-        /// \author Frederic Meyer
-        /// \date   July 31th, 2016
-        /// \enum   GBASpecialEffect
-        ///
-        /// Defines GBA Special Effects (SFX).
-        ///
-        ///////////////////////////////////////////////////////////
-        enum class GBASpecialEffect
-        {
-            None            = 0,
-            AlphaBlend      = 1,
-            Increase        = 2,
-            Decrease        = 3
         };
 
         ///////////////////////////////////////////////////////////
@@ -115,13 +98,13 @@ namespace NanoboyAdvance
                     data[i * 2] = (m_PAL[palette_base + left_index * 2 + 1] << 8) |
                                    m_PAL[palette_base + left_index * 2];
                 else
-                    data[i * 2] = COLOR_BACKDROP;
+                    data[i * 2] = COLOR_TRANSPARENT;
 
                 if (right_index != 0)
                     data[i * 2 + 1] = (m_PAL[palette_base + right_index * 2 + 1] << 8) |
                                        m_PAL[palette_base + right_index * 2];
                 else
-                    data[i * 2 + 1] = COLOR_BACKDROP;
+                    data[i * 2 + 1] = COLOR_TRANSPARENT;
             }
 
             return data;
@@ -154,7 +137,7 @@ namespace NanoboyAdvance
 
                 if (value == 0)
                 {
-                    data[i] = COLOR_BACKDROP;
+                    data[i] = COLOR_TRANSPARENT;
                     continue;
                 }
 
@@ -185,7 +168,7 @@ namespace NanoboyAdvance
             u32 palette_base = sprite ? 0x200 : 0x0;
 
             if (value == 0)
-                return COLOR_BACKDROP;
+                return COLOR_TRANSPARENT;
 
             return (m_PAL[palette_base + value * 2 + 1] << 8) |
                     m_PAL[palette_base + value * 2];

@@ -126,57 +126,99 @@ namespace NanoboyAdvance
         {
             int last_priority = 4;
             u16 pixel_out = backdrop_color;
-            bool sfx_target1 = m_SFX->bd_select[0];
-            u16 second_target = m_SFX->bd_select[1] ? backdrop_color : 0;
 
+            // Wether the topmost pixel is the first SFX target.
+            bool sfx_required = false;
+
+            // Wether SFX is visible or has been disabled through windows.
+            bool sfx_visible = IsVisible(i, sfx_inside, m_WinOut->sfx);
+
+            u16 second_target = 0;
+
+            // Buffer for possible second SFX targets, indexed by priority.
+            u16 second_targets[4] = {
+                COLOR_TRANSPARENT, COLOR_TRANSPARENT, COLOR_TRANSPARENT, COLOR_TRANSPARENT
+            };
+
+            // Initialize SFX variables if needed.
+            if (sfx_visible && m_SFX->effect != SpecialEffect::SFX_NONE)
+            {
+                sfx_required = m_SFX->bd_select[0];
+                second_target = m_SFX->bd_select[1] ? backdrop_color : 0;
+            }
+
+            // Handle backgrounds.
             for (int j = 3; j >= 0; j--)
             {
-                u16 pixel;
-
                 if (!m_BG[j]->enable)
                     continue;
 
-                pixel = m_BgFinalBuffer[j][i];
+                bool bg_inside[3] = { m_Win[0]->bg_in[j], m_Win[1]->bg_in[j], false };
+
+                if (!IsVisible(i, bg_inside, m_WinOut->bg[j]))
+                    continue;
+
+                u16 pixel = m_BgFinalBuffer[j][i];
 
                 // Confusing but "0" means highest priority while "3" means lowest.
-                if (m_BG[j]->priority <= last_priority && pixel != 0x8000)
+                // Checks if the current bg pixel is non-transparent and has higher priority,
+                // updates output pixel, last priority and wether SFX will be applied if so.
+                if (m_BG[j]->priority <= last_priority && pixel != COLOR_TRANSPARENT)
                 {
-                    bool bg_inside[3] = { m_Win[0]->bg_in[j], m_Win[1]->bg_in[j], false };
+                    pixel_out = pixel;
+                    last_priority = m_BG[j]->priority;
 
-                    if (IsVisible(i, bg_inside, m_WinOut->bg[j]))
-                    {
-                        pixel_out = pixel;
-                        last_priority = m_BG[j]->priority;
-
-                        if (m_SFX->effect != SpecialEffect::SFX_NONE)
-                            sfx_target1 = m_SFX->bg_select[0][j];
-                    }
+                    if (sfx_visible && m_SFX->effect != SpecialEffect::SFX_NONE)
+                        sfx_required = m_SFX->bg_select[0][j];
                 }
 
-                if (m_SFX->effect == SpecialEffect::SFX_ALPHABLEND &&
-                         m_SFX->bg_select[1][j])
-                    second_target = pixel;
+                // If alpha-blending is enabled and the current pixel is non-transparent and
+                // selected as SFX 2nd target, store it as a possible 2nd target.
+                if (sfx_visible && m_SFX->effect == SpecialEffect::SFX_ALPHABLEND &&
+                        m_SFX->bg_select[1][j] && pixel != COLOR_TRANSPARENT)
+                    second_targets[m_BG[j]->priority] = pixel;
             }
 
-            if (m_Obj->enable)
+            // Handle any sprites if such are enabled and visible (i.e. not masked out by windows).
+            if (m_Obj->enable && IsVisible(i, obj_inside, m_WinOut->obj))
             {
-                if (IsVisible(i, obj_inside, m_WinOut->obj))
+                for (int j = 3; j >= 0; j--)
                 {
-                    for (int j = 0; j <= last_priority && j < 4; j++)
+                    u16 pixel = m_ObjFinalBuffer[j][i];
+
+                    if (pixel != COLOR_TRANSPARENT)
                     {
-                        u16 pixel = m_ObjFinalBuffer[j][i];
-                        if (pixel != 0x8000)
+                        if (j <= last_priority)
                         {
                             pixel_out = pixel;
-                            sfx_target1 = m_SFX->obj_select[0];
-                            break;
+                            sfx_required = m_SFX->obj_select[0];
+                        }
+                        else if (m_SFX->obj_select[1])
+                        {
+                            second_targets[j] = pixel;
                         }
                     }
                 }
             }
 
-            if (sfx_target1 && IsVisible(i, sfx_inside, m_WinOut->sfx))
+            // Apply SFX only if the topmost pixel is the first SFX target
+            // and SFX has not been disabled through any window region.
+            if (sfx_required && sfx_visible)
+            {
+                // Searches for the second topmost SFX 2nd target.
+                for (int j = last_priority + 1; j <= 3; j++)
+                {
+                    u16 pixel = second_targets[j];
+
+                    if (pixel != COLOR_TRANSPARENT)
+                    {
+                        second_target = pixel;
+                        break;
+                    }
+                }
+
                 ApplySFX(&pixel_out, second_target);
+            }
 
             m_OutputBuffer[i] = pixel_out;
         }

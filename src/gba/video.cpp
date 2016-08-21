@@ -30,7 +30,6 @@ namespace NanoboyAdvance
     const int GBAVideo::VBLANK_INTERRUPT = 1;
     const int GBAVideo::HBLANK_INTERRUPT = 2;
     const int GBAVideo::VCOUNT_INTERRUPT = 4;
-    const u16 GBAVideo::COLOR_BACKDROP = 0x8000;
 
     ///////////////////////////////////////////////////////////
     /// \author  Frederic Meyer
@@ -182,7 +181,7 @@ namespace NanoboyAdvance
             // Handles empty spots.
             if (is_backdrop)
             {
-                buffer[i] = COLOR_BACKDROP;
+                buffer[i] = COLOR_TRANSPARENT;
                 continue;
             }
 
@@ -341,7 +340,7 @@ namespace NanoboyAdvance
                                 int dst_index = x + (tiles_per_row - j - 1) * 8 + (7 - k);
                                 u16 color = tile_data[k];
 
-                                if (color != COLOR_BACKDROP && dst_index < 240)
+                                if (color != COLOR_TRANSPARENT && dst_index < 240)
                                 {
                                     m_ObjBuffer[priority][dst_index] = color;
                                 }
@@ -355,7 +354,7 @@ namespace NanoboyAdvance
                                 int dst_index = x + j * 8 + k;
                                 u16 color = tile_data[k];
 
-                                if (color != COLOR_BACKDROP && dst_index < 240)
+                                if (color != COLOR_TRANSPARENT && dst_index < 240)
                                 {
                                     m_ObjBuffer[priority][dst_index] = tile_data[k];
                                 }
@@ -397,16 +396,16 @@ namespace NanoboyAdvance
                 continue;
 
             if (m_Win[i].top <= m_Win[i].bottom &&
-                    (m_VCount < m_Win[i].top ||
-                     m_VCount > m_Win[i].bottom))
+                (m_VCount < m_Win[i].top ||
+                 m_VCount > m_Win[i].bottom))
             {
                 memset(m_WinMask[i], 0, 240);
                 continue;
             }
 
             if (m_Win[i].top > m_Win[i].bottom &&
-                    !(m_VCount >= m_Win[i].top ||
-                      m_VCount <= m_Win[i].bottom))
+                !(m_VCount >= m_Win[i].top ||
+                  m_VCount <= m_Win[i].bottom))
             {
                 memset(m_WinMask[i], 0, 240);
                 continue;

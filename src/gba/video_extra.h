@@ -21,8 +21,15 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifndef __NBA_VIDEO_STRUCTS_H__
-#define __NBA_VIDEO_STRUCTS_H__
+#ifndef __NBA_VIDEO_EXTRA_H__
+#define __NBA_VIDEO_EXTRA_H__
+
+
+#include "util/types.h"
+
+
+const u16 COLOR_TRANSPARENT = 0x8000;
+
 
 ///////////////////////////////////////////////////////////
 /// \author  Frederic Meyer
@@ -146,4 +153,4 @@ struct SpecialEffect
     int evy {0};
 };
 
-#endif // __NBA_VIDEO_STRUCTS_H__
+#endif // __NBA_VIDEO_EXTRA_H__
