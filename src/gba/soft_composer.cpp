@@ -126,14 +126,13 @@ namespace NanoboyAdvance
         {
             int last_priority = 4;
             u16 pixel_out = backdrop_color;
+            u16 second_target = 0;
 
             // Wether the topmost pixel is the first SFX target.
             bool sfx_required = false;
 
             // Wether SFX is visible or has been disabled through windows.
             bool sfx_visible = IsVisible(i, sfx_inside, m_WinOut->sfx);
-
-            u16 second_target = 0;
 
             // Buffer for possible second SFX targets, indexed by priority.
             u16 second_targets[4] = {
@@ -205,19 +204,29 @@ namespace NanoboyAdvance
             // and SFX has not been disabled through any window region.
             if (sfx_required && sfx_visible)
             {
-                // Searches for the second topmost SFX 2nd target.
-                for (int j = last_priority + 1; j <= 3; j++)
+                if (m_SFX->effect == SpecialEffect::SFX_ALPHABLEND)
                 {
-                    u16 pixel = second_targets[j];
-
-                    if (pixel != COLOR_TRANSPARENT)
+                    // Searches for the second topmost SFX 2nd target.
+                    for (int j = last_priority; j <= 3; j++)
                     {
-                        second_target = pixel;
-                        break;
-                    }
-                }
+                        u16 pixel = second_targets[j];
 
-                ApplySFX(&pixel_out, second_target);
+                        if (pixel != COLOR_TRANSPARENT)
+                        {
+                            second_target = pixel;
+                            break;
+                        }
+                    }
+
+                    // Finally apply alpha blending.
+                    if (second_target != 0)
+                        ApplySFX(&pixel_out, second_target);
+                }
+                else
+                {
+                    // No 2nd target, apply blending straight away.
+                    ApplySFX(&pixel_out, 0);
+                }
             }
 
             m_OutputBuffer[i] = pixel_out;
