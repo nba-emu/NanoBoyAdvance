@@ -127,12 +127,14 @@ namespace NanoboyAdvance
             int last_priority = 4;
             u16 pixel_out = backdrop_color;
             u16 second_target = 0;
+            int top_sfx_bg = -1;
 
             // Wether the topmost pixel is the first SFX target.
             bool sfx_required = false;
 
-            // Wether SFX is visible or has been disabled through windows.
-            bool sfx_visible = IsVisible(i, sfx_inside, m_WinOut->sfx);
+            // Wether SFX is enabled for this pixel.
+            bool sfx_enabled = IsVisible(i, sfx_inside, m_WinOut->sfx) &&
+                               m_SFX->effect != SpecialEffect::SFX_NONE;
 
             // Buffer for possible second SFX targets, indexed by priority.
             u16 second_targets[4] = {
@@ -140,7 +142,7 @@ namespace NanoboyAdvance
             };
 
             // Initialize SFX variables if needed.
-            if (sfx_visible && m_SFX->effect != SpecialEffect::SFX_NONE)
+            if (sfx_enabled)
             {
                 sfx_required = m_SFX->bd_select[0];
                 second_target = m_SFX->bd_select[1] ? backdrop_color : 0;
@@ -166,14 +168,15 @@ namespace NanoboyAdvance
                 {
                     pixel_out = pixel;
                     last_priority = m_BG[j]->priority;
+                    top_sfx_bg = j;
 
-                    if (sfx_visible && m_SFX->effect != SpecialEffect::SFX_NONE)
+                    if (sfx_enabled)
                         sfx_required = m_SFX->bg_select[0][j];
                 }
 
                 // If alpha-blending is enabled and the current pixel is non-transparent and
                 // selected as SFX 2nd target, store it as a possible 2nd target.
-                if (sfx_visible && m_SFX->effect == SpecialEffect::SFX_ALPHABLEND &&
+                if (sfx_enabled && m_SFX->effect == SpecialEffect::SFX_ALPHABLEND &&
                         m_SFX->bg_select[1][j] && pixel != COLOR_TRANSPARENT)
                     second_targets[m_BG[j]->priority] = pixel;
             }
@@ -190,9 +193,14 @@ namespace NanoboyAdvance
                         if (j <= last_priority)
                         {
                             pixel_out = pixel;
-                            sfx_required = m_SFX->obj_select[0];
+
+                            if (sfx_enabled)
+                            {
+                                sfx_required = m_SFX->obj_select[0];
+                                top_sfx_bg = -1;
+                            }
                         }
-                        else if (m_SFX->obj_select[1])
+                        else if (sfx_enabled && m_SFX->obj_select[1])
                         {
                             second_targets[j] = pixel;
                         }
@@ -202,18 +210,19 @@ namespace NanoboyAdvance
 
             // Apply SFX only if the topmost pixel is the first SFX target
             // and SFX has not been disabled through any window region.
-            if (sfx_required && sfx_visible)
+            if (sfx_required && sfx_enabled)
             {
                 if (m_SFX->effect == SpecialEffect::SFX_ALPHABLEND)
                 {
                     // Searches for the second topmost SFX 2nd target.
-                    for (int j = last_priority; j <= 3; j++)
+                    for (int j = last_priority + 1; j <= 3; j++)
                     {
                         u16 pixel = second_targets[j];
 
-                        if (pixel != COLOR_TRANSPARENT)
+                        if (pixel != COLOR_TRANSPARENT && j != top_sfx_bg)
                         {
                             second_target = pixel;
+                            //pixel_out = 0x1F << ((j-1) * 5);
                             break;
                         }
                     }
