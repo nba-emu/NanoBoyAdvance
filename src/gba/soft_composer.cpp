@@ -184,6 +184,9 @@ namespace NanoboyAdvance
             // Handle any sprites if such are enabled and visible (i.e. not masked out by windows).
             if (m_Obj->enable && IsVisible(i, obj_inside, m_WinOut->obj))
             {
+                // TODO: Not sure if any pixels lower than the topmost OBJ pixel
+                //       should be considered as 2nd target. GBATEK suggests that only
+                //       the topmost pixels are extracted and considered for SFX.
                 for (int j = 3; j >= 0; j--)
                 {
                     u16 pixel = m_ObjFinalBuffer[j][i];
@@ -215,14 +218,13 @@ namespace NanoboyAdvance
                 if (m_SFX->effect == SpecialEffect::SFX_ALPHABLEND)
                 {
                     // Searches for the second topmost SFX 2nd target.
-                    for (int j = last_priority + 1; j <= 3; j++)
+                    for (int j = last_priority; j <= 3; j++)
                     {
                         u16 pixel = second_targets[j];
 
                         if (pixel != COLOR_TRANSPARENT && j != top_sfx_bg)
                         {
                             second_target = pixel;
-                            //pixel_out = 0x1F << ((j-1) * 5);
                             break;
                         }
                     }
