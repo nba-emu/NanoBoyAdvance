@@ -629,6 +629,7 @@ namespace NanoboyAdvance
         composer->SetWindowMaskBuffer(1, m_WinMask[1]);
         composer->SetWindowInfo(0, &m_Win[0]);
         composer->SetWindowInfo(1, &m_Win[1]);
+        composer->SetObjectWindowInfo(&m_ObjWin);
         composer->SetWindowOuterInfo(&m_WinOut);
         composer->SetSFXInfo(&m_SFX);
     }

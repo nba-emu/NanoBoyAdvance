@@ -33,7 +33,7 @@ namespace NanoboyAdvance
     private:
         inline bool IsVisible(int i, bool inside[3], bool outside)
         {
-            if (m_Win[0]->enable || m_Win[1]->enable)
+            if (m_Win[0]->enable || m_Win[1]->enable || m_ObjWin->enable)
             {
                 if (m_Win[0]->enable && m_WinFinalMask[0][i] == 1)
                     return inside[0];
