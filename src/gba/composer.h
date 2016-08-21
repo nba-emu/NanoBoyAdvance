@@ -198,8 +198,19 @@ namespace NanoboyAdvance
             m_WinOut = window_outer;
         }
 
-        //void SetAlphaBlendBuffer(...);
-        //void SetBrightnessBuffer(...);
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    August 20th, 2016
+        /// \fn      SetSFXInfo
+        /// \brief   Sets information for Special Effects (SFX).
+        ///
+        /// \param  sfx  Special Effect Information
+        ///
+        ///////////////////////////////////////////////////////////
+        inline void SetSFXInfo(struct SpecialEffect* sfx)
+        {
+            m_SFX = sfx;
+        }
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
@@ -235,6 +246,7 @@ namespace NanoboyAdvance
         Window* m_Win[2];
         ObjectWindow* m_ObjWin;
         WindowOuter* m_WinOut;
+        SpecialEffect* m_SFX;
     };
 }
 

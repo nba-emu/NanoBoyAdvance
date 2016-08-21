@@ -46,6 +46,7 @@ namespace NanoboyAdvance
             return true;
         }
 
+        void ApplySFX(u16* target1, u16 target2);
     public:
         void Update();
         void Compose();

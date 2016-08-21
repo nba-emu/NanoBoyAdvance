@@ -631,5 +631,6 @@ namespace NanoboyAdvance
         composer->SetWindowInfo(0, &m_Win[0]);
         composer->SetWindowInfo(1, &m_Win[1]);
         composer->SetWindowOuterInfo(&m_WinOut);
+        composer->SetSFXInfo(&m_SFX);
     }
 }
