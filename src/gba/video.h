@@ -47,7 +47,6 @@ namespace NanoboyAdvance
     class GBAVideo
     {   
     private:
-
         static const int VBLANK_INTERRUPT;
         static const int HBLANK_INTERRUPT;
         static const int VCOUNT_INTERRUPT;
@@ -68,6 +67,23 @@ namespace NanoboyAdvance
             Prohibited      = 3
         };
 
+    public:
+        ///////////////////////////////////////////////////////////
+        /// \author Frederic Meyer
+        /// \date   July 31th, 2016
+        /// \enum   GBAVideoState
+        ///
+        /// Defines all phases of video rendering.
+        ///
+        ///////////////////////////////////////////////////////////
+        enum class GBAVideoState
+        {
+            Scanline,
+            HBlank,
+            VBlank
+        };
+
+    private:
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
@@ -177,6 +193,55 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
+        /// \fn      DecodeGBAFloat16
+        /// \brief   Decodes the GBAFloat16 format to native float.
+        ///
+        /// \param    number  The GBAFloat16 value to decode.
+        /// \returns  The native float value.
+        ///
+        ///////////////////////////////////////////////////////////
+        static inline float DecodeGBAFloat16(u16 number)
+        {
+            bool is_negative = number & (1 << 15);
+            s32 int_part = (number >> 8) | (is_negative ? 0xFFFFFF00 : 0);
+            float frac_part = static_cast<float>(number & 0xFF) / 256;
+
+            return static_cast<float>(int_part) + frac_part;
+        }
+
+    public:
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    July 31th, 2016
+        /// \fn      DecodeGBAFloat32
+        /// \brief   Decodes the GBAFloat32 format to native float.
+        ///
+        /// \param    number  The GBAFloat32 value to decode.
+        /// \returns  The native float value.
+        ///
+        ///////////////////////////////////////////////////////////
+        static inline float DecodeGBAFloat32(u32 number)
+        {
+            bool is_negative = number & (1 << 27);
+            s32 int_part = ((number & ~0xF0000000) >> 8) | (is_negative ? 0xFFF00000 : 0);
+            float frac_part = static_cast<float>(number & 0xFF) / 256;
+
+            return static_cast<float>(int_part) + frac_part;
+        }
+
+    public:
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    July 31th, 2016
+        /// \fn      Constructor
+        ///
+        ///////////////////////////////////////////////////////////
+        GBAVideo(GBAInterrupt* m_Interrupt);
+
+    private:
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    July 31th, 2016
         /// \fn      RenderBackgroundMode0
         /// \brief   Performs rendering in BG mode 0.
         ///
@@ -207,69 +272,7 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         void RenderSprites(u32 tile_base);
 
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      DecodeGBAFloat16
-        /// \brief   Decodes the GBAFloat16 format to native float.
-        ///
-        /// \param    number  The GBAFloat16 value to decode.
-        /// \returns  The native float value.
-        ///
-        ///////////////////////////////////////////////////////////
-        static inline float DecodeGBAFloat16(u16 number)
-        {
-            bool is_negative = number & (1 << 15);
-            s32 int_part = (number >> 8) | (is_negative ? 0xFFFFFF00 : 0);
-            float frac_part = static_cast<float>(number & 0xFF) / 256;
-
-            return static_cast<float>(int_part) + frac_part;
-        }
-
     public:
-
-        ///////////////////////////////////////////////////////////
-        /// \author Frederic Meyer
-        /// \date   July 31th, 2016
-        /// \enum   GBAVideoState
-        ///
-        /// Defines all phases of video rendering.
-        ///
-        ///////////////////////////////////////////////////////////
-        enum class GBAVideoState
-        {
-            Scanline,
-            HBlank,
-            VBlank
-        };
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      DecodeGBAFloat32
-        /// \brief   Decodes the GBAFloat32 format to native float.
-        ///
-        /// \param    number  The GBAFloat32 value to decode.
-        /// \returns  The native float value.
-        ///
-        ///////////////////////////////////////////////////////////
-        static inline float DecodeGBAFloat32(u32 number)
-        {
-            bool is_negative = number & (1 << 27);
-            s32 int_part = ((number & ~0xF0000000) >> 8) | (is_negative ? 0xFFF00000 : 0);
-            float frac_part = static_cast<float>(number & 0xFF) / 256;
-
-            return static_cast<float>(int_part) + frac_part;
-        }
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      Constructor
-        ///
-        ///////////////////////////////////////////////////////////
-        GBAVideo(GBAInterrupt* m_Interrupt);
-
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
@@ -303,7 +306,6 @@ namespace NanoboyAdvance
         void SetupComposer(GBAComposer* composer);
 
     private:
-
         ///////////////////////////////////////////////////////////
         // Class members
         //
@@ -320,7 +322,6 @@ namespace NanoboyAdvance
         u8 m_WinMask[2][240];
 
     public:
-
         ///////////////////////////////////////////////////////////
         // Class members (IO)
         //
