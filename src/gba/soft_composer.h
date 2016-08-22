@@ -31,6 +31,14 @@ namespace NanoboyAdvance
     class GBASoftComposer : public GBAComposer
     {
     private:
+        static inline u32 DecodeRGB555(u16 color)
+        {
+            return 0xFF000000 |
+                   (((color & 0x1F) * 8) << 16) |
+                   ((((color >> 5) & 0x1F) * 8) << 8) |
+                   (((color >> 10) & 0x1F) * 8);
+        }
+
         inline bool IsVisible(int i, bool inside[3], bool outside)
         {
             if (m_Win[0]->enable || m_Win[1]->enable || m_ObjWin->enable)
@@ -50,10 +58,10 @@ namespace NanoboyAdvance
     public:
         void Update();
         void Compose();
-        u16* GetOutputBuffer();
-        u16 m_OutputBuffer[240 * 160];
+        u32* GetOutputBuffer();
+        u32 m_OutputBuffer[240 * 160];
     private:
-        u16 m_BgFinalBuffer[4][240 * 160];
+        u32 m_BgFinalBuffer[4][240 * 160];
         u16 m_ObjFinalBuffer[4][240 * 160];
         u8 m_WinFinalMask[2][240 * 160];
     };

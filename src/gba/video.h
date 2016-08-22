@@ -246,24 +246,6 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
-        /// \fn      DecodeRGB555
-        /// \brief   Decodes GBA RGB555 to ARGB32 format.
-        ///
-        /// \param    color  RGB555 color value to decode.
-        /// \returns  The decoded ARGB32 value.
-        ///
-        ///////////////////////////////////////////////////////////
-        static inline u32 DecodeRGB555(u16 color)
-        {
-            return 0xFF000000 |
-                   (((color & 0x1F) * 8) << 16) |
-                   ((((color >> 5) & 0x1F) * 8) << 8) |
-                   (((color >> 10) & 0x1F) * 8);
-        }
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
         /// \fn      DecodeGBAFloat32
         /// \brief   Decodes the GBAFloat32 format to native float.
         ///

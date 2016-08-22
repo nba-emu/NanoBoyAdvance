@@ -173,7 +173,7 @@ int main(int argc, char** argv)
 {
     SDL_Event event;
     bool running = true;
-    u16* video_buffer;
+    u32* video_buffer;
 
     frameskip_counter = 0;
 
@@ -245,7 +245,7 @@ int main(int argc, char** argv)
             for (int y = 0; y < 160; y++)
             {
                 for (int x = 0; x < 240; x++)
-                    setpixel(x, y, GBAVideo::DecodeRGB555(video_buffer[y * 240 + x]));
+                    setpixel(x, y, video_buffer[y * 240 + x]);
             }
         }
 

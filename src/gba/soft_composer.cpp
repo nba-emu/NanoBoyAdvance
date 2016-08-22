@@ -173,11 +173,11 @@ namespace NanoboyAdvance
                     ApplySFX(&pixel[0], pixel[1]);
             }
 
-            m_OutputBuffer[i] = pixel[0];
+            m_OutputBuffer[i] = DecodeRGB555(pixel[0]);
         }
     }
 
-    u16* GBASoftComposer::GetOutputBuffer()
+    u32* GBASoftComposer::GetOutputBuffer()
     {
         return m_OutputBuffer;
     }

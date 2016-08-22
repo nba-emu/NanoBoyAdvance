@@ -136,7 +136,7 @@ namespace NanoboyAdvance
         /// \brief   Retrieves the video pixel buffer.
         ///
         ///////////////////////////////////////////////////////////
-        u16* GetVideoBuffer();
+        u32* GetVideoBuffer();
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer

@@ -181,7 +181,7 @@ namespace NanoboyAdvance
     /// \fn      GetVideoBuffer
     ///
     ///////////////////////////////////////////////////////////
-    u16* GBA::GetVideoBuffer()
+    u32* GBA::GetVideoBuffer()
     {
         return m_Composer->m_OutputBuffer;
     }
