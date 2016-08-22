@@ -215,20 +215,20 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    August 6th, 2016
-        /// \fn      Update
-        /// \brief   Process buffers.
+        /// \fn      Scanline
+        /// \brief   Composes the final scanline.
         ///
         ///////////////////////////////////////////////////////////
-        virtual void Update() {}
+        virtual void Scanline() {}
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
-        /// \date    August 6th, 2016
-        /// \fn      Compose
-        /// \brief   Composes the final image.
+        /// \date    August 22th, 2016
+        /// \fn      Draw
+        /// \brief   Draws the finished frame.
         ///
         ///////////////////////////////////////////////////////////
-        virtual void Compose() {}
+        virtual void Frame() {}
 
     protected:
         ///////////////////////////////////////////////////////////

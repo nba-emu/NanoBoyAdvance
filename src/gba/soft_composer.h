@@ -43,9 +43,9 @@ namespace NanoboyAdvance
         {
             if (m_Win[0]->enable || m_Win[1]->enable || m_ObjWin->enable)
             {
-                if (m_Win[0]->enable && m_WinFinalMask[0][i] == 1)
+                if (m_Win[0]->enable && m_WinMask[0][i] == 1)
                     return inside[0];
-                else if (m_Win[1]->enable && m_WinFinalMask[1][i] == 1)
+                else if (m_Win[1]->enable && m_WinMask[1][i] == 1)
                     return inside[1];
                 else
                     return outside;
@@ -56,14 +56,9 @@ namespace NanoboyAdvance
 
         void ApplySFX(u16* target1, u16 target2);
     public:
-        void Update();
-        void Compose();
+        void Scanline();
         u32* GetOutputBuffer();
         u32 m_OutputBuffer[240 * 160];
-    private:
-        u32 m_BgFinalBuffer[4][240 * 160];
-        u16 m_ObjFinalBuffer[4][240 * 160];
-        u8 m_WinFinalMask[2][240 * 160];
     };
 }
 

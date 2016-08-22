@@ -79,50 +79,13 @@ namespace NanoboyAdvance
         }
     }
 
-    void GBASoftComposer::Update()
-    {
-        int line_start = *m_VCount * 240;
-
-        // Update background buffers.
-        for (int i = 0; i < 4; i++)
-        {
-            if (m_BG[i]->enable)
-            {
-                for (int j = 0; j < 240; j++)
-                    m_BgFinalBuffer[i][line_start + j] = m_BgBuffer[i][j];
-            }
-        }
-
-        // Update object (oam) buffers.
-        if (m_Obj->enable)
-        {
-            for (int i = 0; i < 240; i++)
-            {
-                m_ObjFinalBuffer[0][line_start + i] = m_ObjBuffer[0][i];
-                m_ObjFinalBuffer[1][line_start + i] = m_ObjBuffer[1][i];
-                m_ObjFinalBuffer[2][line_start + i] = m_ObjBuffer[2][i];
-                m_ObjFinalBuffer[3][line_start + i] = m_ObjBuffer[3][i];
-            }
-        }
-
-        // Update window masks
-        for (int i = 0; i < 2; i++)
-        {
-            if (m_Win[i]->enable)
-            {
-                for (int j = 0; j < 240; j++)
-                    m_WinFinalMask[i][line_start + j] = m_WinMask[i][j];
-            }
-        }
-    }
-
-    void GBASoftComposer::Compose()
+    void GBASoftComposer::Scanline()
     {
         u16 backdrop_color = *m_BdColor;
         bool obj_inside[3] = { m_Win[0]->obj_in, m_Win[1]->obj_in, false };
         bool sfx_inside[3] = { m_Win[0]->sfx_in, m_Win[1]->sfx_in, false };
 
-        for (int i = 0; i < 240 * 160; i++)
+        for (int i = 0; i < 240; i++)
         {
             int layer[2] = {5, 5};
             u16 pixel[2] = {backdrop_color, 0};
@@ -131,7 +94,7 @@ namespace NanoboyAdvance
             {
                 for (int k = 3; k >= 0; k--)
                 {
-                    u16 new_pixel = m_BgFinalBuffer[k][i];
+                    u16 new_pixel = m_BgBuffer[k][i];
                     bool bg_inside[3] = { m_Win[0]->bg_in[k], m_Win[1]->bg_in[k], false };
 
                     if (new_pixel != COLOR_TRANSPARENT && m_BG[k]->enable && m_BG[k]->priority == j &&
@@ -146,7 +109,7 @@ namespace NanoboyAdvance
 
                 if (m_Obj->enable && IsVisible(i, obj_inside, m_WinOut->obj))
                 {
-                    u16 new_pixel = m_ObjFinalBuffer[j][i];
+                    u16 new_pixel = m_ObjBuffer[j][i];
 
                     if (new_pixel != COLOR_TRANSPARENT)
                     {
@@ -173,7 +136,7 @@ namespace NanoboyAdvance
                     ApplySFX(&pixel[0], pixel[1]);
             }
 
-            m_OutputBuffer[i] = DecodeRGB555(pixel[0]);
+            m_OutputBuffer[*m_VCount * 240 + i] = DecodeRGB555(pixel[0]);
         }
     }
 
