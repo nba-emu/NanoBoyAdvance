@@ -52,10 +52,10 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     /// \author  Frederic Meyer
     /// \date    July 31th, 2016
-    /// \fn      RenderBackgroundMode0
+    /// \fn      RenderTextModeBG
     ///
     ///////////////////////////////////////////////////////////
-    void GBAVideo::RenderBackgroundMode0(int id)
+    void GBAVideo::RenderTextModeBG(int id)
     {
         struct Background bg = this->m_BG[id];
         u16* buffer = m_BgBuffer[id];
@@ -123,10 +123,10 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     /// \author  Frederic Meyer
     /// \date    July 31th, 2016
-    /// \fn      RenderBackgroundMode1
+    /// \fn      RenderRotateScaleBG
     ///
     ///////////////////////////////////////////////////////////
-    void GBAVideo::RenderBackgroundMode1(int id)
+    void GBAVideo::RenderRotateScaleBG(int id)
     {
         u32 tile_base = m_BG[id].tile_base;
         u32 map_base = m_BG[id].map_base;
@@ -204,10 +204,10 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     /// \author  Frederic Meyer
     /// \date    July 31th, 2016
-    /// \fn      RenderSprites
+    /// \fn      RenderOAM
     ///
     ///////////////////////////////////////////////////////////
-    void GBAVideo::RenderSprites(u32 tile_base)
+    void GBAVideo::RenderOAM(u32 tile_base)
     {
         // Process OBJ127 first, because OBJ0 has highest priority (OBJ0 overlays OBJ127, not vice versa)
         u32 offset = 127 * 8;
@@ -442,7 +442,7 @@ namespace NanoboyAdvance
             for (int i = 0; i < 4; i++)
             {
                 if (m_BG[i].enable)
-                    RenderBackgroundMode0(i);
+                    RenderTextModeBG(i);
             }
             break;
         }
@@ -450,13 +450,13 @@ namespace NanoboyAdvance
         {        
             // BG Mode 1 - 240x160 pixels, Text and RS mode mixed
             if (m_BG[0].enable)
-                RenderBackgroundMode0(0);
+                RenderTextModeBG(0);
 
             if (m_BG[1].enable)
-                RenderBackgroundMode0(1);
+                RenderTextModeBG(1);
 
             if (m_BG[2].enable)
-                RenderBackgroundMode1(2);
+                RenderRotateScaleBG(2);
 
             break;
         }
@@ -464,10 +464,10 @@ namespace NanoboyAdvance
         {
             // BG Mode 2 - 240x160 pixels, RS mode
             if (m_BG[2].enable)
-                RenderBackgroundMode1(2);
+                RenderRotateScaleBG(2);
 
             if (m_BG[3].enable)
-                RenderBackgroundMode1(3);
+                RenderRotateScaleBG(3);
 
             break;
         }
@@ -521,7 +521,7 @@ namespace NanoboyAdvance
         
         // Render sprites if enabled
         if (m_Obj.enable)
-            RenderSprites(0x10000);
+            RenderOAM(0x10000);
     }
 
     ///////////////////////////////////////////////////////////

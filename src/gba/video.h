@@ -242,35 +242,35 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
-        /// \fn      RenderBackgroundMode0
-        /// \brief   Performs rendering in BG mode 0.
+        /// \fn      RenderTextModeBG
+        /// \brief   Performs rendering for BG text mode.
         ///
         /// \param  id  ID of the background to render.
         ///
         ///////////////////////////////////////////////////////////
-        void RenderBackgroundMode0(int id);
+        void RenderTextModeBG(int id);
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
-        /// \fn      RenderBackgroundMode1
-        /// \brief   Performs rendering in BG mode 1.
+        /// \fn      RenderRotateScaleBG
+        /// \brief   Performs rendering for BG rotate/scale mode.
         ///
         /// \param  id  ID of the background to render.
         ///
         ///////////////////////////////////////////////////////////
-        void RenderBackgroundMode1(int id);
+        void RenderRotateScaleBG(int id);
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
-        /// \fn      RenderSprites
+        /// \fn      RenderOAM
         /// \brief   Performs rendering of OAM sprites.
         ///
         /// \param  tile_base  Address of block/tile data.
         ///
         ///////////////////////////////////////////////////////////
-        void RenderSprites(u32 tile_base);
+        void RenderOAM(u32 tile_base);
 
     public:
         ///////////////////////////////////////////////////////////
