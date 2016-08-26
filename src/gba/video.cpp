@@ -397,15 +397,15 @@ namespace NanoboyAdvance
 
             if (m_Win[i].top <= m_Win[i].bottom &&
                 (m_VCount < m_Win[i].top ||
-                 m_VCount > m_Win[i].bottom))
+                 m_VCount >= m_Win[i].bottom))
             {
                 memset(m_WinMask[i], 0, 240);
                 continue;
             }
 
             if (m_Win[i].top > m_Win[i].bottom &&
-                !(m_VCount >= m_Win[i].top ||
-                  m_VCount <= m_Win[i].bottom))
+                (m_VCount < m_Win[i].top &&
+                 m_VCount >= m_Win[i].bottom))
             {
                 memset(m_WinMask[i], 0, 240);
                 continue;
@@ -415,7 +415,7 @@ namespace NanoboyAdvance
             {
                 for (int j = 0; j < 240; j++)
                 {
-                    if (j >= m_Win[i].left && j <= m_Win[i].right)
+                    if (j >= m_Win[i].left && j < m_Win[i].right)
                         m_WinMask[i][j] = 1;
                     else
                         m_WinMask[i][j] = 0;
@@ -425,7 +425,7 @@ namespace NanoboyAdvance
             {
                 for (int j = 0; j < 240; j++)
                 {
-                    if (j <= m_Win[i].right || j >= m_Win[i].left)
+                    if (j < m_Win[i].right || j >= m_Win[i].left)
                         m_WinMask[i][j] = 1;
                     else
                         m_WinMask[i][j] = 0;

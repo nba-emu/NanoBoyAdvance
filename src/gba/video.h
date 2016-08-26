@@ -102,8 +102,6 @@ namespace NanoboyAdvance
             u16* data = new u16[8];
             u32 offset = block_base + number * 32 + line * 4;
 
-            memset(data, 0, 16);
-
             for (int i = 0; i < 4; i++)
             {
                 u8 value = m_VRAM[offset + i];
@@ -144,8 +142,6 @@ namespace NanoboyAdvance
             u16* data = new u16[8];
             u32 offset = block_base + number * 64 + line * 8;
             u32 palette_base = sprite ? 0x200 : 0x0;
-
-            memset(data, 0, 16);
 
             for (int i = 0; i < 8; i++)
             {

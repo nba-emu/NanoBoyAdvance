@@ -52,7 +52,7 @@ Screen::~Screen()
 /// \fn     updateTexture
 ///
 ///////////////////////////////////////////////////////////
-void Screen::updateTexture(unsigned int *pixels, int width, int height)
+void Screen::updateTexture(u32* pixels, int width, int height)
 {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
     updateGL();

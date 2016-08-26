@@ -87,8 +87,8 @@ namespace NanoboyAdvance
 
         for (int i = 0; i < 240; i++)
         {
-            int layer[2] = {5, 5};
-            u16 pixel[2] = {backdrop_color, 0};
+            int layer[2] = { 5, 5 };
+            u16 pixel[2] = { backdrop_color, 0 };
 
             for (int j = 3; j >= 0; j--)
             {
@@ -123,7 +123,7 @@ namespace NanoboyAdvance
 
             if (m_SFX->effect != SpecialEffect::SFX_NONE && IsVisible(i, sfx_inside, m_WinOut->sfx))
             {
-                bool is_target[2] = {false, false};
+                bool is_target[2] = { false, false };
 
                 for (int j = 0; j < 2; j++)
                 {

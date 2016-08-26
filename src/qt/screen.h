@@ -26,6 +26,7 @@
 #define __NBA_SCREEN_H__
 
 
+#include "util/types.h"
 #include <QGLWidget>
 
 
@@ -62,7 +63,7 @@ public:
     /// \param  height  Texture height
     ///
     ///////////////////////////////////////////////////////////
-    void updateTexture(unsigned int *pixels, int width, int height);
+    void updateTexture(u32* pixels, int width, int height);
 
     ///////////////////////////////////////////////////////////
     /// \author  Frederic Meyer
