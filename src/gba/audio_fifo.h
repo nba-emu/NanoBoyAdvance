@@ -22,43 +22,48 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 
-#include "memory.h"
+#ifndef __NBA_AUDIO_FIFO_H__
+#define __NBA_AUDIO_FIFO_H__
 
+#include "util/types.h"
 
 namespace NanoboyAdvance
 {
-    ///////////////////////////////////////////////////////////
-    /// \author Frederic Meyer
-    /// \date   July 31th, 2016
-    /// \fn     RunTimer
-    ///
-    ///////////////////////////////////////////////////////////
-    void GBAMemory::RunTimer()
+    class AudioFIFO
     {
-        bool overflow = false;
-
-        for (int i = 0; i < 4; i++)
+    public:
+        inline bool RequiresData()
         {
-            if (!m_Timer[i].enable) continue;
-
-            if ((m_Timer[i].countup && overflow) ||
-                (!m_Timer[i].countup && ++m_Timer[i].ticks >= tmr_cycles[m_Timer[i].clock]))
-            {
-                m_Timer[i].ticks = 0;
-
-                if (m_Timer[i].count != 0xFFFF)
-                {
-                    m_Timer[i].count++;
-                    overflow = false;
-                }
-                else
-                {
-                    if (m_Timer[i].interrupt) m_Interrupt->if_ |= 8 << i;
-                    m_Timer[i].count = m_Timer[i].reload;
-                    m_Timer[i].overflow = true;
-                    overflow = true;
-                }
-            }
+            return m_BufferIndex <= 16;
         }
-    }
+
+        inline void Enqueue(u8 data)
+        {
+            if (m_BufferIndex < 32)
+                m_Buffer[m_BufferIndex++] = (s8)data;
+        }
+
+        inline s8 Dequeue()
+        {
+            s8 value;
+
+            if (m_BufferIndex == 0)
+                return 0;
+
+            value = m_Buffer[0];
+
+            for (int i = 1; i < m_BufferIndex; i++)
+                m_Buffer[i - 1] = m_Buffer[i];
+
+            m_BufferIndex--;
+
+            return value;
+        }
+
+    private:
+        s8 m_Buffer[32];
+        int m_BufferIndex { 0 };
+    };
 }
+
+#endif // __NBA_AUDIO_FIFO_H__

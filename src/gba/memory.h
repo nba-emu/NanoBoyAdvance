@@ -32,6 +32,7 @@
 #include "interrupt.h"
 #include "video.h"
 #include "backup.h"
+#include "audio_fifo.h"
 
 
 namespace NanoboyAdvance
@@ -169,6 +170,7 @@ namespace NanoboyAdvance
             bool enable {false};
             bool countup {false};
             bool interrupt {false};
+            bool overflow {false};
         };
 
         ///////////////////////////////////////////////////////////
@@ -187,6 +189,18 @@ namespace NanoboyAdvance
             bool prefetch   {false};
         };
 
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    August 27th, 2016
+        /// \struct  SoundControl
+        ///
+        /// Holds SOUNDCNT information
+        ///
+        ///////////////////////////////////////////////////////////
+        struct SoundControl
+        {
+
+        };
 
     public:
 
@@ -395,12 +409,13 @@ namespace NanoboyAdvance
         SaveType m_SaveType         {SaveType::NONE};
 
         ///////////////////////////////////////////////////////////
-        // Class members (DMA, Timer, Waitstate)
+        // Class members (DMA, Timer, Waitstate, Audio)
         //
         ///////////////////////////////////////////////////////////
         struct DMA  m_DMA[4];
         struct Timer m_Timer[4];
         struct Waitstate m_Waitstate;
+        AudioFIFO m_FIFO[2];
         u32 m_SOUNDBIAS {0}; // preliminary SOUNDBIAS implementation.
     public:
         ///////////////////////////////////////////////////////////

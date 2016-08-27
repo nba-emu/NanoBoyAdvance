@@ -25,6 +25,7 @@ set(HEADERS
     composer.h
     soft_composer.h
     video_extra.h
+    audio_fifo.h
 )
 
 add_library(gba STATIC ${SRCS} ${HEADERS})

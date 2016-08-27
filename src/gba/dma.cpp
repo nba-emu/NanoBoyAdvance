@@ -62,6 +62,32 @@ namespace NanoboyAdvance
                 }
                 break;
             case StartTime::Special:
+                if (i == 1 || i == 2 && m_DMA[i].repeat)
+                {
+                    int fifo;
+
+                    if (m_DMA[i].dest_int == (0x04000000 | FIFO_A_L))
+                        fifo = 0;
+                    else if (m_DMA[i].dest_int == (0x04000000 | FIFO_B_L))
+                        fifo = 1;
+                    else
+                        break;
+
+                    if (!m_Timer[0].overflow)
+                        continue;
+                    else
+                        m_Timer[0].overflow = false;
+
+                    if (m_FIFO[fifo].RequiresData())
+                    {
+                        for (int j = 0; j < 4; j++)
+                        {
+                            u32 value = ReadWord((m_DMA[i].source_int & ~3) + j * 4);
+                            WriteWord(m_DMA[i].dest_int, value);
+                        }
+                    }
+                }
+
                 #ifdef DEBUG
                 ASSERT(i == 3, LOG_ERROR, "DMA: Video Capture Mode not supported.");
                 #endif
