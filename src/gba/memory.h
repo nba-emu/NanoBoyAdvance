@@ -199,7 +199,7 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         struct SoundControl
         {
-
+            int master_volume[2] {0, 0};
         };
 
     public:

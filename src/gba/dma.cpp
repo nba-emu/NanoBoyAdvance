@@ -82,10 +82,13 @@ namespace NanoboyAdvance
                     {
                         for (int j = 0; j < 4; j++)
                         {
-                            u32 value = ReadWord((m_DMA[i].source_int & ~3) + j * 4);
+                            u32 value = ReadWord((m_DMA[i].source_int & ~3));
                             WriteWord(m_DMA[i].dest_int, value);
+                            m_DMA[i].source_int += 4;
                         }
                     }
+
+                    continue;
                 }
 
                 #ifdef DEBUG

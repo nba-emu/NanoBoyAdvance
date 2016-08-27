@@ -23,7 +23,7 @@
 
 
 #include "memory.h"
-
+#include <fstream>
 
 namespace NanoboyAdvance
 {
@@ -57,6 +57,18 @@ namespace NanoboyAdvance
                     m_Timer[i].count = m_Timer[i].reload;
                     m_Timer[i].overflow = true;
                     overflow = true;
+
+                    if (i == 0)
+                    {
+                        std::ofstream os1("fifo_a.raw", std::ofstream::out | std::ofstream::app | std::ofstream::binary);
+                        std::ofstream os2("fifo_b.raw", std::ofstream::out | std::ofstream::app | std::ofstream::binary);
+                        os1 << m_FIFO[0].Dequeue();
+                        os2 << m_FIFO[1].Dequeue();
+                        os1.close();
+                        os2.close();
+//                        LOG(LOG_INFO, "FIFOA: %d", m_FIFO[0].Dequeue());
+//                        LOG(LOG_INFO, "FIFOB: %d", m_FIFO[1].Dequeue());
+                    }
                 }
             }
         }

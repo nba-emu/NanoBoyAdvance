@@ -25,24 +25,61 @@
 #ifndef __NBA_AUDIO_FIFO_H__
 #define __NBA_AUDIO_FIFO_H__
 
+
 #include "util/types.h"
+
 
 namespace NanoboyAdvance
 {
+    ///////////////////////////////////////////////////////////
+    /// \file    audio_fifo.h
+    /// \author  Frederic Meyer
+    /// \date    August 27th, 2016
+    /// \class   AudioFIFO
+    /// \brief   Serves as DMA Audio FIFO.
+    ///
+    ///////////////////////////////////////////////////////////
     class AudioFIFO
     {
     public:
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    August 27th, 2016
+        /// \fn      RequiresData
+        /// \brief   Determines if the FIFO must be refilled.
+        ///
+        /// \returns  Wether the FIFO must be refilled.
+        ///
+        ///////////////////////////////////////////////////////////
         inline bool RequiresData()
         {
             return m_BufferIndex <= 16;
         }
 
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    August 27th, 2016
+        /// \fn      Enqueue
+        /// \brief   Enqueues one sample to the FIFO.
+        ///
+        /// \param  data  The sample.
+        ///
+        ///////////////////////////////////////////////////////////
         inline void Enqueue(u8 data)
         {
             if (m_BufferIndex < 32)
                 m_Buffer[m_BufferIndex++] = (s8)data;
         }
 
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    August 27th, 2016
+        /// \fn      Dequeue
+        /// \brief   Dequeues one sample from the FIFO.
+        ///
+        /// \returns  The sample.
+        ///
+        ///////////////////////////////////////////////////////////
         inline s8 Dequeue()
         {
             s8 value;
@@ -61,6 +98,10 @@ namespace NanoboyAdvance
         }
 
     private:
+        ///////////////////////////////////////////////////////////
+        /// Class members
+        ///
+        ///////////////////////////////////////////////////////////
         s8 m_Buffer[32];
         int m_BufferIndex { 0 };
     };
