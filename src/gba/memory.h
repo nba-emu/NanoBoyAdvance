@@ -227,11 +227,11 @@ namespace NanoboyAdvance
         /// Defines system execution states.
         ///
         ///////////////////////////////////////////////////////////
-        enum class HaltState
+        enum HaltState
         {
-            None,
-            Stop,
-            Halt
+            HALTSTATE_NONE,
+            HALTSTATE_STOP,
+            HALTSTATE_HALT
         };
 
         ///////////////////////////////////////////////////////////
@@ -422,7 +422,7 @@ namespace NanoboyAdvance
         //
         ///////////////////////////////////////////////////////////
         GBAInterrupt m_Interrupt;
-        HaltState    m_HaltState       {HaltState::None};
+        HaltState    m_HaltState       {HALTSTATE_NONE};
         bool         m_IntrWait        {false};
         bool         m_IntrWaitMask    {0};
 

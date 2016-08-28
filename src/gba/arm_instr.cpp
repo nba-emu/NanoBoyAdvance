@@ -127,33 +127,32 @@ namespace NanoboyAdvance
     void ARM7::Execute(u32 instruction, int type)
     {
         int condition = instruction >> 28;
-        bool execute = false;
 
         cycles += 1;
 
         // Check if the instruction will be executed
-        switch (condition)
+        if (condition != 0xE)
         {
-        case 0x0: execute = (cpsr & ZeroFlag); break;
-        case 0x1: execute = !(cpsr & ZeroFlag); break;
-        case 0x2: execute = (cpsr & CarryFlag); break;
-        case 0x3: execute = !(cpsr & CarryFlag); break;
-        case 0x4: execute = (cpsr & SignFlag); break;
-        case 0x5: execute = !(cpsr & SignFlag); break;
-        case 0x6: execute = (cpsr & OverflowFlag); break;
-        case 0x7: execute = !(cpsr & OverflowFlag); break;
-        case 0x8: execute = (cpsr & CarryFlag) && !(cpsr & ZeroFlag); break;
-        case 0x9: execute = !(cpsr & CarryFlag) || (cpsr & ZeroFlag); break;
-        case 0xA: execute = (cpsr & SignFlag) == (cpsr & OverflowFlag); break;
-        case 0xB: execute = (cpsr & SignFlag) != (cpsr & OverflowFlag); break;
-        case 0xC: execute = !(cpsr & ZeroFlag) && ((cpsr & SignFlag) == (cpsr & OverflowFlag)); break;
-        case 0xD: execute = (cpsr & ZeroFlag) || ((cpsr & SignFlag) != (cpsr & OverflowFlag)); break;
-        case 0xE: execute = true; break;
-        case 0xF: execute = false; break;
+            switch (condition)
+            {
+            case 0x0: if (!(cpsr & ZeroFlag))     return; break;
+            case 0x1: if (  cpsr & ZeroFlag)      return; break;
+            case 0x2: if (!(cpsr & CarryFlag))    return; break;
+            case 0x3: if (  cpsr & CarryFlag)     return; break;
+            case 0x4: if (!(cpsr & SignFlag))     return; break;
+            case 0x5: if (  cpsr & SignFlag)      return; break;
+            case 0x6: if (!(cpsr & OverflowFlag)) return; break;
+            case 0x7: if (  cpsr & OverflowFlag)  return; break;
+            case 0x8: if (!(cpsr & CarryFlag) ||  (cpsr & ZeroFlag)) return; break;
+            case 0x9: if ( (cpsr & CarryFlag) && !(cpsr & ZeroFlag)) return; break;
+            case 0xA: if ((cpsr & SignFlag) != (cpsr & OverflowFlag)) return; break;
+            case 0xB: if ((cpsr & SignFlag) == (cpsr & OverflowFlag)) return; break;
+            case 0xC: if ((cpsr & ZeroFlag) || ((cpsr & SignFlag) != (cpsr & OverflowFlag))) return; break;
+            case 0xD: if (!(cpsr & ZeroFlag) && ((cpsr & SignFlag) == (cpsr & OverflowFlag))) return; break;
+            case 0xE: break;
+            case 0xF: return;
+            }
         }
-
-        if (!execute) 
-            return;
 
         // Perform the actual execution
         switch (type)

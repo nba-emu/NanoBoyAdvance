@@ -225,6 +225,27 @@ namespace NanoboyAdvance
         void SaveRegisters();
         void LoadRegisters();
 
+        // Thumb Instructions
+        void Thumb1(u16 instruction);
+        void Thumb2(u16 instruction);
+        void Thumb3(u16 instruction);
+        void Thumb4(u16 instruction);
+        void Thumb5(u16 instruction);
+        void Thumb6(u16 instruction);
+        void Thumb7(u16 instruction);
+        void Thumb8(u16 instruction);
+        void Thumb9(u16 instruction);
+        void Thumb10(u16 instruction);
+        void Thumb11(u16 instruction);
+        void Thumb12(u16 instruction);
+        void Thumb13(u16 instruction);
+        void Thumb14(u16 instruction);
+        void Thumb15(u16 instruction);
+        void Thumb16(u16 instruction);
+        void Thumb17(u16 instruction);
+        void Thumb18(u16 instruction);
+        void Thumb19(u16 instruction);
+
         // Command processing
         int Decode(u32 instruction);
         void Execute(u32 instruction, int type);

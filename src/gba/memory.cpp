@@ -1061,7 +1061,7 @@ namespace NanoboyAdvance
                 m_Interrupt.ime = (m_Interrupt.ime & 0x00FF) | (value << 8);
                 break;
             case HALTCNT:
-                m_HaltState = (value & 0x80) ? HaltState::Stop : HaltState::Halt;
+                m_HaltState = (value & 0x80) ? HALTSTATE_STOP : HALTSTATE_HALT;
                 break;
             }
             break;

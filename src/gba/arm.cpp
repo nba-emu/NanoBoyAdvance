@@ -345,7 +345,7 @@ namespace NanoboyAdvance
             // Sets GBA into halt state, waiting for specific interrupt(s) to occur.
             memory->m_IntrWait = true;
             memory->m_IntrWaitMask = r[1];
-            memory->m_HaltState = GBAMemory::HaltState::Halt;
+            memory->m_HaltState = GBAMemory::HALTSTATE_HALT;
             break;
         case 0x0B:
         {

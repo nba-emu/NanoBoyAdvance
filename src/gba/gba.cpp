@@ -86,12 +86,12 @@ namespace NanoboyAdvance
             u32 interrupts = m_Memory.m_Interrupt.ie & m_Memory.m_Interrupt.if_;
             
             // Only pause as long as (IE & IF) != 0
-            if (m_Memory.m_HaltState != GBAMemory::HaltState::None && interrupts != 0)
+            if (m_Memory.m_HaltState != GBAMemory::HALTSTATE_NONE && interrupts != 0)
             {
                 // If IntrWait only resume if requested interrupt is encountered
                 if (!m_Memory.m_IntrWait || (interrupts & m_Memory.m_IntrWaitMask) != 0)
                 {
-                    m_Memory.m_HaltState = GBAMemory::HaltState::None;
+                    m_Memory.m_HaltState = GBAMemory::HALTSTATE_NONE;
                     m_Memory.m_IntrWait = false;
                 }
             }
@@ -101,14 +101,14 @@ namespace NanoboyAdvance
                 m_ARM.RaiseIRQ();
 
             // Run the hardware components
-            if (m_Memory.m_HaltState != GBAMemory::HaltState::Stop)
+            if (m_Memory.m_HaltState != GBAMemory::HALTSTATE_STOP)
             {
                 int forward_steps = 0;
 
                 // Do next pending DMA transfer
                 m_Memory.RunDMA();
 
-                if (m_Memory.m_HaltState != GBAMemory::HaltState::Halt)
+                if (m_Memory.m_HaltState != GBAMemory::HALTSTATE_HALT)
                 {
                     m_ARM.cycles = 0;
                     m_ARM.Step();
