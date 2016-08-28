@@ -106,33 +106,33 @@ namespace NanoboyAdvance
         {
             if (memcmp(m_ROM + i, "EEPROM_V", 8) == 0)
             {
-                m_SaveType = SaveType::EEPROM;
+                m_SaveType = SAVE_EEPROM;
                 LOG(LOG_INFO, "Found save type: EEPROM (unsupported)");
             }
             else if (memcmp(m_ROM + i, "SRAM_V", 6) == 0)
             {
-                m_SaveType = SaveType::SRAM;
+                m_SaveType = SAVE_SRAM;
                 m_Backup = new SRAM(save_file);
                 LOG(LOG_INFO, "Found save type: SRAM");
             }
             else if (memcmp(m_ROM + i, "FLASH_V", 7) == 0 ||
                      memcmp(m_ROM + i, "FLASH512_V", 10) == 0)
             {
-                m_SaveType = SaveType::FLASH64;
+                m_SaveType = SAVE_FLASH64;
                 m_Backup = new GBAFlash(save_file, false);
                 LOG(LOG_INFO, "Found save type: FLASH64");
             }
             else if (memcmp(m_ROM + i, "FLASH1M_V", 9) == 0)
             {
-                m_SaveType = SaveType::FLASH128;
+                m_SaveType = SAVE_FLASH128;
                 m_Backup = new GBAFlash(save_file, true);
                 LOG(LOG_INFO, "Found save type: FLASH128");
             }
         }
 
-        if (m_SaveType == SaveType::NONE)
+        if (m_SaveType == SAVE_NONE)
         {
-            m_SaveType = SaveType::SRAM;
+            m_SaveType = SAVE_SRAM;
             LOG(LOG_WARN, "Save type not determinable, default to SRAM.");
         }
     }
@@ -161,26 +161,26 @@ namespace NanoboyAdvance
 
         if (page == 2) 
         {
-            if (size == AccessSize::Word) return 6;
+            if (size == ACCESS_WORD) return 6;
             return 3;
         }
 
         if (page == 5 || page == 6)
         {
-            if (size == AccessSize::Word) return 2;
+            if (size == ACCESS_WORD) return 2;
             return 1;
         }
 
         if (page == 8)
         {
-            if (size == AccessSize::Word) 
+            if (size == ACCESS_WORD)
                 return 1 + 2 * wsn_table[m_Waitstate.first[0]];
             return 1 + wsn_table[m_Waitstate.first[0]];
         }
 
         if (page == 0xE)
         {
-            if (size == AccessSize::Word && m_SaveType != SaveType::SRAM) return 8;
+            if (size == ACCESS_WORD && m_SaveType != SAVE_SRAM) return 8;
             return 5;
         }
 
@@ -199,7 +199,7 @@ namespace NanoboyAdvance
 
         if (page == 8) 
         {
-            if (size == AccessSize::Word)
+            if (size == ACCESS_WORD)
                 return 1 + wss0_table[m_Waitstate.second[0]] + wsn_table[m_Waitstate.first[0]];
             return 1 + wss0_table[m_Waitstate.second[0]];
         }
@@ -404,9 +404,9 @@ namespace NanoboyAdvance
             if (internal_offset >= m_ROMSize) return 0;
             return m_ROM[internal_offset];
         case 0xE:
-            if (m_Backup != nullptr && (m_SaveType == SaveType::FLASH64 || 
-                    m_SaveType == SaveType::FLASH128 || 
-                    m_SaveType == SaveType::SRAM))
+            if (m_Backup != nullptr && (m_SaveType == SAVE_FLASH64 ||
+                    m_SaveType == SAVE_FLASH128 ||
+                    m_SaveType == SAVE_SRAM))
                 return m_Backup->ReadByte(offset);
         default:
             #ifdef DEBUG
@@ -1078,9 +1078,9 @@ namespace NanoboyAdvance
             #endif                       
             break;
         case 0xE:
-            if (m_Backup != nullptr && (m_SaveType == SaveType::FLASH64 || 
-                    m_SaveType == SaveType::FLASH128 || 
-                    m_SaveType == SaveType::SRAM))
+            if (m_Backup != nullptr && (m_SaveType == SAVE_FLASH64 ||
+                    m_SaveType == SAVE_FLASH128 ||
+                    m_SaveType == SAVE_SRAM))
                 m_Backup->WriteByte(offset, value); 
             break;
         default:

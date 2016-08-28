@@ -50,6 +50,7 @@ namespace NanoboyAdvance
         static const int VBLANK_INTERRUPT;
         static const int HBLANK_INTERRUPT;
         static const int VCOUNT_INTERRUPT;
+        static const int EVENT_WAIT_CYCLES[3];
 
         ///////////////////////////////////////////////////////////
         /// \author Frederic Meyer
@@ -78,9 +79,9 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         enum class GBAVideoState
         {
-            Scanline,
-            HBlank,
-            VBlank
+            Scanline = 0,
+            HBlank = 1,
+            VBlank = 2
         };
 
     private:
@@ -307,7 +308,6 @@ namespace NanoboyAdvance
         //
         ///////////////////////////////////////////////////////////
         GBAInterrupt* m_Interrupt;
-        int m_Ticks {0};
 
         ///////////////////////////////////////////////////////////
         // Class members (Buffers)
@@ -354,6 +354,7 @@ namespace NanoboyAdvance
         bool m_HBlankDMA            {false};
         bool m_VBlankDMA            {false};
         bool m_RenderScanline       {false};
+        int  m_WaitCycles           { EVENT_WAIT_CYCLES[0] };
     };
 }
 

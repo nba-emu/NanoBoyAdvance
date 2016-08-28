@@ -73,12 +73,12 @@ namespace NanoboyAdvance
         /// Defines all possible DMA address functionalities.
         ///
         ///////////////////////////////////////////////////////////
-        enum class AddressControl
+        enum AddressControl
         {
-            Increment   = 0,
-            Decrement   = 1,
-            Fixed       = 2,
-            Reload      = 3
+            DMA_INCREMENT   = 0,
+            DMA_DECREMENT   = 1,
+            DMA_FIXED       = 2,
+            DMA_RELOAD      = 3
         };
 
         ///////////////////////////////////////////////////////////
@@ -89,12 +89,12 @@ namespace NanoboyAdvance
         /// Defines the start times for the DMA to copy memory.
         ///
         ///////////////////////////////////////////////////////////
-        enum class StartTime
+        enum StartTime
         {
-            Immediate   = 0,
-            VBlank      = 1,
-            HBlank      = 2,
-            Special     = 3
+            DMA_IMMEDIATE   = 0,
+            DMA_VBLANK      = 1,
+            DMA_HBLANK      = 2,
+            DMA_SPECIAL     = 3
         };
 
         ///////////////////////////////////////////////////////////
@@ -105,10 +105,10 @@ namespace NanoboyAdvance
         /// Defines the DMA transfer size.
         ///
         ///////////////////////////////////////////////////////////
-        enum class TransferSize
+        enum TransferSize
         {
-            HWord       = 0,
-            Word        = 1
+            DMA_HWORD       = 0,
+            DMA_WORD        = 1
         };
 
         ///////////////////////////////////////////////////////////
@@ -119,13 +119,13 @@ namespace NanoboyAdvance
         /// Defined cartridge backup/save types.
         ///
         ///////////////////////////////////////////////////////////
-        enum class SaveType
+        enum SaveType
         {
-            NONE,
-            EEPROM,
-            SRAM,
-            FLASH64,
-            FLASH128
+            SAVE_NONE,
+            SAVE_EEPROM,
+            SAVE_SRAM,
+            SAVE_FLASH64,
+            SAVE_FLASH128
         };
 
 
@@ -144,10 +144,10 @@ namespace NanoboyAdvance
             u32 dest_int    {0};
             u32 source_int  {0};
             u16 count_int   {0};
-            AddressControl dest_control     {AddressControl::Increment};
-            AddressControl source_control   {AddressControl::Increment};
-            StartTime start_time            {StartTime::Immediate};
-            TransferSize size               {TransferSize::HWord};
+            AddressControl  dest_control     { DMA_INCREMENT };
+            AddressControl  source_control   { DMA_INCREMENT };
+            StartTime       start_time       { DMA_IMMEDIATE };
+            TransferSize    size             { DMA_HWORD };
             bool repeat         {false};
             bool gamepack_drq   {false};
             bool interrupt      {false};
@@ -163,14 +163,14 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         struct Timer
         {
-            u16 count {0};
+            u16 count  {0};
             u16 reload {0};
-            int clock {0};
-            int ticks {0};
-            bool enable {false};
-            bool countup {false};
+            int clock  {0};
+            int ticks  {0};
+            bool enable    {false};
+            bool countup   {false};
             bool interrupt {false};
-            bool overflow {false};
+            bool overflow  {false};
         };
 
         ///////////////////////////////////////////////////////////
@@ -212,11 +212,11 @@ namespace NanoboyAdvance
         /// Defines different memory access sizes.
         ///
         ///////////////////////////////////////////////////////////
-        enum class AccessSize
+        enum AccessSize
         {
-            Byte,
-            Hword,
-            Word
+            ACCESS_BYTE,
+            ACCESS_HWORD,
+            ACCESS_WORD
         };
 
         ///////////////////////////////////////////////////////////
@@ -405,15 +405,15 @@ namespace NanoboyAdvance
         u8 m_BIOS[0x4000];
         u8 m_WRAM[0x40000];
         u8 m_IRAM[0x8000];
-        GBABackup* m_Backup         {NULL};
-        SaveType m_SaveType         {SaveType::NONE};
+        GBABackup* m_Backup           {NULL};
+        SaveType   m_SaveType         {SAVE_NONE};
 
         ///////////////////////////////////////////////////////////
         // Class members (DMA, Timer, Waitstate, Audio)
         //
         ///////////////////////////////////////////////////////////
-        struct DMA  m_DMA[4];
-        struct Timer m_Timer[4];
+        struct DMA       m_DMA[4];
+        struct Timer     m_Timer[4];
         struct Waitstate m_Waitstate;
         u32 m_SOUNDBIAS {0}; // preliminary SOUNDBIAS implementation.
     public:
@@ -422,9 +422,9 @@ namespace NanoboyAdvance
         //
         ///////////////////////////////////////////////////////////
         GBAInterrupt m_Interrupt;
-        HaltState m_HaltState       {HaltState::None};
-        bool m_IntrWait             {false};
-        bool m_IntrWaitMask         {0};
+        HaltState    m_HaltState       {HaltState::None};
+        bool         m_IntrWait        {false};
+        bool         m_IntrWaitMask    {0};
 
         ///////////////////////////////////////////////////////////
         // Class members (misc.)

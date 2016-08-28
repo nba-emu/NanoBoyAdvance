@@ -30,6 +30,7 @@ namespace NanoboyAdvance
     const int GBAVideo::VBLANK_INTERRUPT = 1;
     const int GBAVideo::HBLANK_INTERRUPT = 2;
     const int GBAVideo::VCOUNT_INTERRUPT = 4;
+    const int GBAVideo::EVENT_WAIT_CYCLES[3] = { 960, 272, 1232 };
 
     ///////////////////////////////////////////////////////////
     /// \author  Frederic Meyer
@@ -532,83 +533,72 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     void NanoboyAdvance::GBAVideo::Step()
     {
-        m_Ticks++;
         m_RenderScanline = false;
         m_VCountFlag = m_VCount == m_VCountSetting;
 
         switch (m_State)
         {
         case GBAVideoState::Scanline:
-        {
-            if (m_Ticks >= 960)
-            {
-                m_HBlankDMA = true;
-                m_State = GBAVideoState::HBlank;
+            m_HBlankDMA = true;
+            m_State = GBAVideoState::HBlank;
+            m_WaitCycles = EVENT_WAIT_CYCLES[1];
 
-                m_BG[2].x_ref_int += DecodeGBAFloat16(m_BG[2].pb);
-                m_BG[2].y_ref_int += DecodeGBAFloat16(m_BG[2].pd);
-                m_BG[3].x_ref_int += DecodeGBAFloat16(m_BG[3].pb);
-                m_BG[3].y_ref_int += DecodeGBAFloat16(m_BG[3].pd);
+            m_BG[2].x_ref_int += DecodeGBAFloat16(m_BG[2].pb);
+            m_BG[2].y_ref_int += DecodeGBAFloat16(m_BG[2].pd);
+            m_BG[3].x_ref_int += DecodeGBAFloat16(m_BG[3].pb);
+            m_BG[3].y_ref_int += DecodeGBAFloat16(m_BG[3].pd);
                 
-                if (m_HBlankIRQ)
-                    m_Interrupt->if_ |= HBLANK_INTERRUPT;
+            if (m_HBlankIRQ)
+                m_Interrupt->if_ |= HBLANK_INTERRUPT;
 
-                m_RenderScanline = true;
-                m_Ticks = 0;
-            }
-            break;
-        }
+            m_RenderScanline = true;
+            return;
         case GBAVideoState::HBlank:
-            if (m_Ticks >= 272)
-            {
-                m_VCount++;
+            m_VCount++;
 
-                if (m_VCountFlag && m_VCountIRQ)
-                    m_Interrupt->if_ |= VCOUNT_INTERRUPT;
+            if (m_VCountFlag && m_VCountIRQ)
+                m_Interrupt->if_ |= VCOUNT_INTERRUPT;
                 
-                if (m_VCount == 160)
-                {
-                    m_BG[2].x_ref_int = DecodeGBAFloat32(m_BG[2].x_ref);
-                    m_BG[2].y_ref_int = DecodeGBAFloat32(m_BG[2].y_ref);
-                    m_BG[3].x_ref_int = DecodeGBAFloat32(m_BG[3].x_ref);
-                    m_BG[3].y_ref_int = DecodeGBAFloat32(m_BG[3].y_ref);
-
-                    m_HBlankDMA = false;
-                    m_VBlankDMA = true;
-                    m_State = GBAVideoState::VBlank;
-
-                    if (m_VBlankIRQ)
-                        m_Interrupt->if_ |= VBLANK_INTERRUPT;
-                }
-                else
-                {
-                    m_HBlankDMA = false;
-                    m_State = GBAVideoState::Scanline;
-                }
-
-                m_Ticks = 0;
-            }
-            break;
-        case GBAVideoState::VBlank:
-        {
-            if (m_Ticks >= 1232)
+            if (m_VCount == 160)
             {
-                m_VCount++;
+                m_BG[2].x_ref_int = DecodeGBAFloat32(m_BG[2].x_ref);
+                m_BG[2].y_ref_int = DecodeGBAFloat32(m_BG[2].y_ref);
+                m_BG[3].x_ref_int = DecodeGBAFloat32(m_BG[3].x_ref);
+                m_BG[3].y_ref_int = DecodeGBAFloat32(m_BG[3].y_ref);
 
-                if (m_VCountFlag && m_VCountIRQ)
-                    m_Interrupt->if_ |= VCOUNT_INTERRUPT;
+                m_HBlankDMA = false;
+                m_VBlankDMA = true;
+                m_State = GBAVideoState::VBlank;
+                m_WaitCycles = EVENT_WAIT_CYCLES[2];
 
-                if (m_VCount == 227)
-                {
-                    m_VBlankDMA = false;
-                    m_State = GBAVideoState::Scanline;
-                    m_VCount = 0;
-                }
-
-                m_Ticks = 0;
+                if (m_VBlankIRQ)
+                    m_Interrupt->if_ |= VBLANK_INTERRUPT;
             }
-            break;
-        }
+            else
+            {
+                m_HBlankDMA = false;
+                m_State = GBAVideoState::Scanline;
+                m_WaitCycles = EVENT_WAIT_CYCLES[0];
+            }
+            return;
+        case GBAVideoState::VBlank:
+            m_VCount++;
+
+            if (m_VCountFlag && m_VCountIRQ)
+                m_Interrupt->if_ |= VCOUNT_INTERRUPT;
+
+            if (m_VCount == 227)
+            {
+                m_VBlankDMA = false;
+                m_State = GBAVideoState::Scanline;
+                m_WaitCycles = EVENT_WAIT_CYCLES[0];
+                m_VCount = 0;
+            }
+            else
+            {
+                m_WaitCycles = EVENT_WAIT_CYCLES[2];
+            }
+            return;
         }
     }
 

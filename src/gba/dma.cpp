@@ -44,24 +44,24 @@ namespace NanoboyAdvance
 
             switch (m_DMA[i].start_time)
             {
-            case StartTime::Immediate:
+            case DMA_IMMEDIATE:
                 start = true;
                 break;
-            case StartTime::VBlank:
+            case DMA_VBLANK:
                 if (m_Video.m_VBlankDMA)
                 {
                     start = true;
                     m_Video.m_VBlankDMA = false;
                 }
                 break;
-            case StartTime::HBlank:
+            case DMA_HBLANK:
                 if (m_Video.m_HBlankDMA)
                 {
                     start = true;
                     m_Video.m_HBlankDMA = false;
                 }
                 break;
-            case StartTime::Special:
+            case DMA_SPECIAL:
                 if (i == 1 || i == 2 && m_DMA[i].repeat)
                 {
                     int fifo;
@@ -100,7 +100,7 @@ namespace NanoboyAdvance
             {
                 AddressControl dest_control = m_DMA[i].dest_control;
                 AddressControl source_control = m_DMA[i].source_control;
-                bool transfer_words = m_DMA[i].size == TransferSize::Word;
+                bool transfer_words = m_DMA[i].size == DMA_WORD;
 
                 #if DEBUG
                 u32 value = ReadHWord(m_DMA[i].source);
@@ -116,26 +116,26 @@ namespace NanoboyAdvance
                     if (transfer_words)
                     {
                         WriteWord(m_DMA[i].dest_int & ~3, ReadWord(m_DMA[i].source_int & ~3));
-                        m_DMACycles += SequentialAccess(m_DMA[i].dest_int, AccessSize::Word) +
-                                      SequentialAccess(m_DMA[i].source_int, AccessSize::Word);
+                        //m_DMACycles += SequentialAccess(m_DMA[i].dest_int, ACCESS_WORD) +
+                        //              SequentialAccess(m_DMA[i].source_int, ACCESS_WORD);
                     }
                     else
                     {
                         WriteHWord(m_DMA[i].dest_int & ~1, ReadHWord(m_DMA[i].source_int & ~1));
-                        m_DMACycles += SequentialAccess(m_DMA[i].dest_int, AccessSize::Hword) +
-                                      SequentialAccess(m_DMA[i].source_int, AccessSize::Hword);
+                        //m_DMACycles += SequentialAccess(m_DMA[i].dest_int, ACCESS_HWORD) +
+                        //              SequentialAccess(m_DMA[i].source_int, ACCESS_HWORD);
                     }
 
                     // Update destination address
-                    if (dest_control == AddressControl::Increment || dest_control == AddressControl::Reload)
+                    if (dest_control == DMA_INCREMENT || dest_control == DMA_RELOAD)
                         m_DMA[i].dest_int += transfer_words ? 4 : 2;
-                    else if (dest_control == AddressControl::Decrement)
+                    else if (dest_control == DMA_DECREMENT)
                         m_DMA[i].dest_int -= transfer_words ? 4 : 2;
 
                     // Update source address
-                    if (source_control == AddressControl::Increment || source_control == AddressControl::Reload)
+                    if (source_control == DMA_INCREMENT || source_control == DMA_RELOAD)
                         m_DMA[i].source_int += transfer_words ? 4 : 2;
-                    else if (source_control == AddressControl::Decrement)
+                    else if (source_control == DMA_DECREMENT)
                         m_DMA[i].source_int -= transfer_words ? 4 : 2;
 
                     // Update count
@@ -148,7 +148,7 @@ namespace NanoboyAdvance
                     m_DMA[i].count_int = m_DMA[i].count & dma_count_mask[i];
                     if (m_DMA[i].count_int == 0)
                         m_DMA[i].count_int = dma_count_mask[i] + 1;
-                    if (dest_control == AddressControl::Reload)
+                    if (dest_control == DMA_RELOAD)
                         m_DMA[i].dest_int  = m_DMA[i].dest & dma_dest_mask[i];
                 }
                 else
@@ -159,8 +159,6 @@ namespace NanoboyAdvance
                 // Raise DMA interrupt if enabled
                 if (m_DMA[i].interrupt)
                     m_Interrupt.if_ |= 256 << i;
-
-                break;
             }
         }
 

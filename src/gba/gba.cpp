@@ -74,20 +74,6 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     /// \author  Frederic Meyer
     /// \date    July 31th, 2016
-    /// \fn      Destructor
-    ///
-    ///////////////////////////////////////////////////////////
-    GBA::~GBA()
-    {
-        //delete m_ARM;
-        //delete m_Memory;
-        //delete m_Composer;
-    }
-
-
-    ///////////////////////////////////////////////////////////
-    /// \author  Frederic Meyer
-    /// \date    July 31th, 2016
     /// \fn      Frame
     ///
     ///////////////////////////////////////////////////////////
@@ -111,8 +97,8 @@ namespace NanoboyAdvance
             }
 
             // Raise an IRQ if neccessary
-            //if (m_Memory.m_Interrupt.ime && interrupts)
-            //    m_ARM.RaiseIRQ();
+            if (m_Memory.m_Interrupt.ime && interrupts)
+                m_ARM.RaiseIRQ();
 
             // Run the hardware components
             if (m_Memory.m_HaltState != GBAMemory::HaltState::Stop)
@@ -120,7 +106,7 @@ namespace NanoboyAdvance
                 int forward_steps = 0;
 
                 // Do next pending DMA transfer
-                //m_Memory.RunDMA();
+                m_Memory.RunDMA();
 
                 if (m_Memory.m_HaltState != GBAMemory::HaltState::Halt)
                 {
@@ -129,19 +115,24 @@ namespace NanoboyAdvance
                     forward_steps = m_ARM.cycles - 1;
                 }
 
-//                m_Memory.m_Video.Step();
                 for (int j = 0; j < forward_steps + 1; j++) 
                 {
-                    //m_Memory.m_Video.Step();
-                    //m_Memory.m_Audio.Step();
-                    //m_Memory.RunTimer();
-
-                    /*if (m_Memory.m_Video.m_RenderScanline && (i / FRAME_CYCLES) == m_SpeedMultiplier - 1)
+                    if (m_Memory.m_Video.m_WaitCycles == 0)
                     {
-                        m_Memory.m_Video.Render();
-                        m_Composer.Scanline();
-                        m_DidRender = true;
-                    }*/
+                        m_Memory.m_Video.Step();
+
+                        if (m_Memory.m_Video.m_RenderScanline && (i / FRAME_CYCLES) == m_SpeedMultiplier - 1)
+                        {
+                            m_Memory.m_Video.Render();
+                            m_Composer.Scanline();
+                            m_DidRender = true;
+                        }
+                    }
+                    else
+                        m_Memory.m_Video.m_WaitCycles--;
+
+                    m_Memory.m_Audio.Step();
+                    m_Memory.RunTimer();
                 }
 
                 i += forward_steps;

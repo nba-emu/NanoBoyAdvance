@@ -290,8 +290,8 @@ namespace NanoboyAdvance
             bool thumb = cpsr & ThumbFlag;
 
             // "Useless" pipeline prefetch
-            cycles += memory->SequentialAccess(r[15], thumb ? GBAMemory::AccessSize::Hword :
-                                                            GBAMemory::AccessSize::Word);
+            cycles += memory->SequentialAccess(r[15], thumb ? GBAMemory::ACCESS_HWORD :
+                                                            GBAMemory::ACCESS_WORD);
 
             // Store return address in r14<irq>
             r14_irq = r[15] - (thumb ? 4 : 8) + 4;
@@ -309,8 +309,8 @@ namespace NanoboyAdvance
             RefillPipeline();
 
             // Emulate pipeline refill timings
-            cycles += memory->NonSequentialAccess(r[15], GBAMemory::AccessSize::Word) +
-                      memory->SequentialAccess(r[15] + 4, GBAMemory::AccessSize::Word);
+            cycles += memory->NonSequentialAccess(r[15], GBAMemory::ACCESS_WORD) +
+                      memory->SequentialAccess(r[15] + 4, GBAMemory::ACCESS_WORD);
         }
     }
 

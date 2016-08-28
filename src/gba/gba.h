@@ -91,15 +91,6 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
-        /// \fn      Destructor
-        ///
-        ///////////////////////////////////////////////////////////
-        ~GBA();
-
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
         /// \fn      Frame
         /// \brief   Executes one frame within the GBA.
         ///
