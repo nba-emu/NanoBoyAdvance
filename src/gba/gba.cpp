@@ -132,6 +132,7 @@ namespace NanoboyAdvance
                 for (int j = 0; j < forward_steps + 1; j++) 
                 {
                     m_Memory->m_Video->Step();
+                    m_Memory->m_Audio.Step();
                     m_Memory->RunTimer();
 
                     if (m_Memory->m_Video->m_RenderScanline && (i / FRAME_CYCLES) == m_SpeedMultiplier - 1)

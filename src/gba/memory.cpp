@@ -151,6 +151,7 @@ namespace NanoboyAdvance
         delete m_ROM;
         delete m_Backup;
         delete m_Video;
+        delete &m_Audio;
         delete m_Interrupt;
     }
 
@@ -767,13 +768,13 @@ namespace NanoboyAdvance
             case FIFO_A_L+1:
             case FIFO_A_H:
             case FIFO_A_H+1:
-                m_FIFO[0].Enqueue(value);
+                m_Audio.m_FIFO[0].Enqueue(value);
                 break;
             case FIFO_B_L:
             case FIFO_B_L+1:
             case FIFO_B_H:
             case FIFO_B_H+1:
-                m_FIFO[1].Enqueue(value);
+                m_Audio.m_FIFO[1].Enqueue(value);
                 break;
             case DMA0SAD:
             case DMA0SAD+1:

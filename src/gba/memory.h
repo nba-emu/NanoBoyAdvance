@@ -32,7 +32,7 @@
 #include "interrupt.h"
 #include "video.h"
 #include "backup.h"
-#include "audio_fifo.h"
+#include "audio.h"
 
 
 namespace NanoboyAdvance
@@ -415,7 +415,6 @@ namespace NanoboyAdvance
         struct DMA  m_DMA[4];
         struct Timer m_Timer[4];
         struct Waitstate m_Waitstate;
-        AudioFIFO m_FIFO[2];
         u32 m_SOUNDBIAS {0}; // preliminary SOUNDBIAS implementation.
     public:
         ///////////////////////////////////////////////////////////
@@ -432,6 +431,7 @@ namespace NanoboyAdvance
         //
         ///////////////////////////////////////////////////////////
         GBAVideo* m_Video;
+        Audio m_Audio;
         bool m_DidTransfer          {false};
         int m_DMACycles             {0};
         u16 m_KeyInput              {0x3FF};

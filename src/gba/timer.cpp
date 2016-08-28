@@ -23,7 +23,7 @@
 
 
 #include "memory.h"
-#include <fstream>
+
 
 namespace NanoboyAdvance
 {
@@ -60,14 +60,16 @@ namespace NanoboyAdvance
 
                     if (i == 0)
                     {
-                        std::ofstream os1("fifo_a.raw", std::ofstream::out | std::ofstream::app | std::ofstream::binary);
+                        m_Audio.FifoLoadSample(0);
+                        m_Audio.FifoLoadSample(1);
+                        /*std::ofstream os1("fifo_a.raw", std::ofstream::out | std::ofstream::app | std::ofstream::binary);
                         std::ofstream os2("fifo_b.raw", std::ofstream::out | std::ofstream::app | std::ofstream::binary);
-                        os1 << m_FIFO[0].Dequeue();
-                        os2 << m_FIFO[1].Dequeue();
+                        os1 << m_Audio.m_FIFO[0].Dequeue();
+                        os2 << m_Audio.m_FIFO[1].Dequeue();
                         os1.close();
-                        os2.close();
-//                        LOG(LOG_INFO, "FIFOA: %d", m_FIFO[0].Dequeue());
-//                        LOG(LOG_INFO, "FIFOB: %d", m_FIFO[1].Dequeue());
+                        os2.close();*/
+//                        LOG(LOG_INFO, "FIFOA: %d", m_Audio.m_FIFO[0].Dequeue());
+//                        LOG(LOG_INFO, "FIFOB: %d", m_Audio.m_FIFO[1].Dequeue());
                     }
                 }
             }

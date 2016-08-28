@@ -10,6 +10,7 @@ set(SRCS
     flash.cpp
     sram.cpp
     soft_composer.cpp
+    audio.cpp
 )
 
 set(HEADERS
@@ -25,7 +26,8 @@ set(HEADERS
     composer.h
     soft_composer.h
     video_extra.h
-    audio_fifo.h
+    audio.h
+    fifo.h
 )
 
 add_library(gba STATIC ${SRCS} ${HEADERS})

@@ -133,6 +133,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
             m_StatusMessage->setText(QString(message.c_str()));
             m_Frames = 0;
         });
+
+    // Check if a ROM file was already passed as argument.
+    QStringList args = QCoreApplication::arguments();
+    if (args.count() == 2)
+        runGame(args[1]);
 }
 
 ///////////////////////////////////////////////////////////

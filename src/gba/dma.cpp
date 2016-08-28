@@ -75,10 +75,8 @@ namespace NanoboyAdvance
 
                     if (!m_Timer[0].overflow)
                         continue;
-                    else
-                        m_Timer[0].overflow = false;
 
-                    if (m_FIFO[fifo].RequiresData())
+                    if (m_Audio.m_FIFO[fifo].RequiresData())
                     {
                         for (int j = 0; j < 4; j++)
                         {
@@ -87,8 +85,6 @@ namespace NanoboyAdvance
                             m_DMA[i].source_int += 4;
                         }
                     }
-
-                    continue;
                 }
 
                 #ifdef DEBUG
@@ -165,5 +161,7 @@ namespace NanoboyAdvance
                     m_Interrupt->if_ |= 256 << i;
             }
         }
+
+        m_Timer[0].overflow = false;
     }
 }

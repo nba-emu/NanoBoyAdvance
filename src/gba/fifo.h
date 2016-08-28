@@ -35,11 +35,11 @@ namespace NanoboyAdvance
     /// \file    audio_fifo.h
     /// \author  Frederic Meyer
     /// \date    August 27th, 2016
-    /// \class   AudioFIFO
+    /// \class   FIFO
     /// \brief   Serves as DMA Audio FIFO.
     ///
     ///////////////////////////////////////////////////////////
-    class AudioFIFO
+    class FIFO
     {
     public:
         ///////////////////////////////////////////////////////////
