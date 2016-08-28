@@ -232,7 +232,7 @@ namespace NanoboyAdvance
         /// \fn      Constructor
         ///
         ///////////////////////////////////////////////////////////
-        GBAVideo(GBAInterrupt* m_Interrupt);
+        void Init(GBAInterrupt* m_Interrupt);
 
     private:
         ///////////////////////////////////////////////////////////
@@ -348,7 +348,7 @@ namespace NanoboyAdvance
         u8 m_OAM[0x400];
 
         ///////////////////////////////////////////////////////////
-        // Class members (misc. flags)
+        // Class members (misc.)
         //
         ///////////////////////////////////////////////////////////
         bool m_HBlankDMA            {false};

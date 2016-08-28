@@ -27,7 +27,7 @@
 
 namespace NanoboyAdvance
 {
-    ARM7::ARM7(GBAMemory* memory, bool hle)
+    void ARM7::Init(GBAMemory* memory, bool hle)
     {
         // Assign given memory instance to core
         this->memory = memory;
@@ -121,38 +121,21 @@ namespace NanoboyAdvance
         r[15] &= thumb ? ~1 : ~3;
 
         // Dispatch instruction loading and execution
-        switch (pipe.status)
+        if (thumb)
         {
-        case 0:
-            if (thumb)
-            {
+            if (pipe.status == 0)
                 pipe.opcode[2] = memory->ReadHWord(r[15]);
-                ExecuteThumb(pipe.opcode[0]);
-                break;
-            }
-            pipe.opcode[2] = memory->ReadWord(r[15]);
-            Execute(pipe.opcode[0], Decode(pipe.opcode[0]));
-            break;
-        case 1:
-            if (thumb)
-            {
-                pipe.opcode[0] = memory->ReadHWord(r[15]);
-                ExecuteThumb(pipe.opcode[1]);
-                break;
-            }
-            pipe.opcode[0] = memory->ReadWord(r[15]);
-            Execute(pipe.opcode[1], Decode(pipe.opcode[1]));
-            break;
-        case 2:
-            if (thumb)
-            {
-                pipe.opcode[1] = memory->ReadHWord(r[15]);
-                ExecuteThumb(pipe.opcode[2]);
-                break;
-            }
-            pipe.opcode[1] = memory->ReadWord(r[15]);
-            Execute(pipe.opcode[2], Decode(pipe.opcode[2]));
-            break;
+            else
+                pipe.opcode[pipe.status - 1] = memory->ReadHWord(r[15]);
+            ExecuteThumb(pipe.opcode[pipe.status]);
+        }
+        else
+        {
+            if (pipe.status == 0)
+                pipe.opcode[2] = memory->ReadWord(r[15]);
+            else
+                pipe.opcode[pipe.status - 1] = memory->ReadWord(r[15]);
+            Execute(pipe.opcode[pipe.status], Decode(pipe.opcode[pipe.status]));
         }
 
         if (pipe.flush)
@@ -307,7 +290,7 @@ namespace NanoboyAdvance
             bool thumb = cpsr & ThumbFlag;
 
             // "Useless" pipeline prefetch
-            cycles += memory->SequentialAccess(r[15], thumb ? GBAMemory::AccessSize::Hword : 
+            cycles += memory->SequentialAccess(r[15], thumb ? GBAMemory::AccessSize::Hword :
                                                             GBAMemory::AccessSize::Word);
 
             // Store return address in r14<irq>
@@ -353,11 +336,11 @@ namespace NanoboyAdvance
             r[0] = 1;
             r[1] = 1;
         case 0x04:
-            memory->m_Interrupt->ime = 1;
+            memory->m_Interrupt.ime = 1;
 
             // If r0 is one IF must be cleared
             if (r[0] == 1)
-                memory->m_Interrupt->if_ = 0;
+                memory->m_Interrupt.if_ = 0;
 
             // Sets GBA into halt state, waiting for specific interrupt(s) to occur.
             memory->m_IntrWait = true;

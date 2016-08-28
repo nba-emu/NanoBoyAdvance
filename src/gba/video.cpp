@@ -37,7 +37,7 @@ namespace NanoboyAdvance
     /// \fn      Constructor
     ///
     ///////////////////////////////////////////////////////////
-    GBAVideo::GBAVideo(GBAInterrupt* interrupt)
+    void GBAVideo::Init(GBAInterrupt* interrupt)
     {
         // Assign interrupt struct to video device
         this->m_Interrupt = interrupt;

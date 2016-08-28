@@ -156,8 +156,8 @@ namespace NanoboyAdvance
         // Class members (gba slaves)
         //
         ///////////////////////////////////////////////////////////
-        ARM7* m_ARM;            ///< Current processor instance
-        GBAMemory* m_Memory;    ///< Current memory instance
+        ARM7 m_ARM;             ///< Current processor instance
+        GBAMemory m_Memory;     ///< Current memory instance
 
 
         ///////////////////////////////////////////////////////////
@@ -166,7 +166,7 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         int m_SpeedMultiplier        {1};      ///< Holds the emulation speed
         bool m_DidRender             {false};  ///< Has frame already been rendered?
-        GBASoftComposer* m_Composer;           ///< Final picture composer
+        GBASoftComposer m_Composer;            ///< Final picture composer
     };
 }
 

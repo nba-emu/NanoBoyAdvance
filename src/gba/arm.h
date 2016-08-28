@@ -270,8 +270,8 @@ namespace NanoboyAdvance
         // CPU-cyle counter
         int cycles {0};
 
-        // Constructor
-        ARM7(GBAMemory* memory, bool use_bios);
+        // Constructors
+        void Init(GBAMemory* memory, bool use_bios);
         
         // Execution functions
         void Step();

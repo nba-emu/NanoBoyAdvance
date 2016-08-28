@@ -48,17 +48,17 @@ namespace NanoboyAdvance
                 start = true;
                 break;
             case StartTime::VBlank:
-                if (m_Video->m_VBlankDMA)
+                if (m_Video.m_VBlankDMA)
                 {
                     start = true;
-                    m_Video->m_VBlankDMA = false;
+                    m_Video.m_VBlankDMA = false;
                 }
                 break;
             case StartTime::HBlank:
-                if (m_Video->m_HBlankDMA)
+                if (m_Video.m_HBlankDMA)
                 {
                     start = true;
-                    m_Video->m_HBlankDMA = false;
+                    m_Video.m_HBlankDMA = false;
                 }
                 break;
             case StartTime::Special:
@@ -105,7 +105,7 @@ namespace NanoboyAdvance
                 #if DEBUG
                 u32 value = ReadHWord(m_DMA[i].source);
                 LOG(LOG_INFO, "DMA%d: s=%x d=%x c=%x count=%x l=%d v=%x", i, m_DMA[i].source_int,
-                               m_DMA[i].dest_int, 0, m_DMA[i].count_int, m_Video->m_VCount, value);
+                               m_DMA[i].dest_int, 0, m_DMA[i].count_int, m_Video.m_VCount, value);
                 ASSERT(m_DMA[i].gamepack_drq, LOG_ERROR, "Game Pak DRQ not supported.");
                 #endif
 
@@ -158,7 +158,9 @@ namespace NanoboyAdvance
 
                 // Raise DMA interrupt if enabled
                 if (m_DMA[i].interrupt)
-                    m_Interrupt->if_ |= 256 << i;
+                    m_Interrupt.if_ |= 256 << i;
+
+                break;
             }
         }
 

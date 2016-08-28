@@ -42,10 +42,11 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     GBA::GBA(string rom_file, string save_file)
     {
-        m_Memory = new GBAMemory(rom_file, save_file);
-        m_ARM = new ARM7(m_Memory, true);
-        m_Composer = new GBASoftComposer();
-        m_Memory->m_Video->SetupComposer(m_Composer);
+        //m_Memory = new GBAMemory(rom_file, save_file);
+        //m_ARM = new ARM7(m_Memory, true);
+        m_Memory.Init(rom_file, save_file);
+        m_ARM.Init(&m_Memory, true);
+        m_Memory.m_Video.SetupComposer(&m_Composer);
     }
 
     ///////////////////////////////////////////////////////////
@@ -65,10 +66,9 @@ namespace NanoboyAdvance
         bios = File::ReadFile(bios_file);
         bios_size = File::GetFileSize(bios_file);
 
-        m_Memory = new GBAMemory(rom_file, save_file, bios, bios_size);
-        m_ARM = new ARM7(m_Memory, false);
-        m_Composer = new GBASoftComposer();
-        m_Memory->m_Video->SetupComposer(m_Composer);
+        m_Memory.Init(rom_file, save_file, bios, bios_size);
+        m_ARM.Init(&m_Memory, false);
+        m_Memory.m_Video.SetupComposer(&m_Composer);
     }
 
     ///////////////////////////////////////////////////////////
@@ -79,9 +79,9 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     GBA::~GBA()
     {
-        delete m_ARM;
-        delete m_Memory;
-        delete m_Composer;
+        //delete m_ARM;
+        //delete m_Memory;
+        //delete m_Composer;
     }
 
 
@@ -97,57 +97,58 @@ namespace NanoboyAdvance
 
         for (int i = 0; i < FRAME_CYCLES * m_SpeedMultiplier; i++)
         {
-            u32 interrupts = m_Memory->m_Interrupt->ie & m_Memory->m_Interrupt->if_;
+            u32 interrupts = m_Memory.m_Interrupt.ie & m_Memory.m_Interrupt.if_;
             
             // Only pause as long as (IE & IF) != 0
-            if (m_Memory->m_HaltState != GBAMemory::HaltState::None && interrupts != 0)
+            if (m_Memory.m_HaltState != GBAMemory::HaltState::None && interrupts != 0)
             {
                 // If IntrWait only resume if requested interrupt is encountered
-                if (!m_Memory->m_IntrWait || (interrupts & m_Memory->m_IntrWaitMask) != 0)
+                if (!m_Memory.m_IntrWait || (interrupts & m_Memory.m_IntrWaitMask) != 0)
                 {
-                    m_Memory->m_HaltState = GBAMemory::HaltState::None;
-                    m_Memory->m_IntrWait = false;
+                    m_Memory.m_HaltState = GBAMemory::HaltState::None;
+                    m_Memory.m_IntrWait = false;
                 }
             }
 
             // Raise an IRQ if neccessary
-            if (m_Memory->m_Interrupt->ime && interrupts)
-                m_ARM->RaiseIRQ();
+            //if (m_Memory.m_Interrupt.ime && interrupts)
+            //    m_ARM.RaiseIRQ();
 
             // Run the hardware components
-            if (m_Memory->m_HaltState != GBAMemory::HaltState::Stop)
+            if (m_Memory.m_HaltState != GBAMemory::HaltState::Stop)
             {
                 int forward_steps = 0;
 
                 // Do next pending DMA transfer
-                m_Memory->RunDMA();
+                //m_Memory.RunDMA();
 
-                if (m_Memory->m_HaltState != GBAMemory::HaltState::Halt)
+                if (m_Memory.m_HaltState != GBAMemory::HaltState::Halt)
                 {
-                    m_ARM->cycles = 0;
-                    m_ARM->Step();
-                    forward_steps = m_ARM->cycles - 1;
+                    m_ARM.cycles = 0;
+                    m_ARM.Step();
+                    forward_steps = m_ARM.cycles - 1;
                 }
 
+//                m_Memory.m_Video.Step();
                 for (int j = 0; j < forward_steps + 1; j++) 
                 {
-                    m_Memory->m_Video->Step();
-                    m_Memory->m_Audio.Step();
-                    m_Memory->RunTimer();
+                    //m_Memory.m_Video.Step();
+                    //m_Memory.m_Audio.Step();
+                    //m_Memory.RunTimer();
 
-                    if (m_Memory->m_Video->m_RenderScanline && (i / FRAME_CYCLES) == m_SpeedMultiplier - 1)
+                    /*if (m_Memory.m_Video.m_RenderScanline && (i / FRAME_CYCLES) == m_SpeedMultiplier - 1)
                     {
-                        m_Memory->m_Video->Render();
-                        m_Composer->Scanline();
+                        m_Memory.m_Video.Render();
+                        m_Composer.Scanline();
                         m_DidRender = true;
-                    }
+                    }*/
                 }
 
                 i += forward_steps;
             }
         }
 
-        m_Composer->Frame();
+        m_Composer.Frame();
     }
 
     ///////////////////////////////////////////////////////////
@@ -159,9 +160,9 @@ namespace NanoboyAdvance
     void GBA::SetKeyState(Key key, bool pressed)
     {
         if (pressed)
-            m_Memory->m_KeyInput &= ~(int)key;
+            m_Memory.m_KeyInput &= ~(int)key;
         else
-            m_Memory->m_KeyInput |= (int)key;
+            m_Memory.m_KeyInput |= (int)key;
     }
 
     ///////////////////////////////////////////////////////////
@@ -183,7 +184,7 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     u32* GBA::GetVideoBuffer()
     {
-        return m_Composer->m_OutputBuffer;
+        return m_Composer.m_OutputBuffer;
     }
 
     ///////////////////////////////////////////////////////////

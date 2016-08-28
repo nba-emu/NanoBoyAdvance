@@ -242,7 +242,7 @@ namespace NanoboyAdvance
         /// \param   save_file        Path to the save file.
         ///
         ///////////////////////////////////////////////////////////
-        GBAMemory(std::string rom_file, std::string save_file);
+        void Init(std::string rom_file, std::string save_file);
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
@@ -254,7 +254,7 @@ namespace NanoboyAdvance
         /// \param   bios_size        Size of the BIOS-rom buffer.
         ///
         ///////////////////////////////////////////////////////////
-        GBAMemory(std::string rom_file, std::string save_file, u8* bios, size_t bios_size);
+        void Init(std::string rom_file, std::string save_file, u8* bios, size_t bios_size);
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
@@ -421,7 +421,7 @@ namespace NanoboyAdvance
         // Class members (Interrupts)
         //
         ///////////////////////////////////////////////////////////
-        GBAInterrupt* m_Interrupt;
+        GBAInterrupt m_Interrupt;
         HaltState m_HaltState       {HaltState::None};
         bool m_IntrWait             {false};
         bool m_IntrWaitMask         {0};
@@ -430,7 +430,7 @@ namespace NanoboyAdvance
         // Class members (misc.)
         //
         ///////////////////////////////////////////////////////////
-        GBAVideo* m_Video;
+        GBAVideo m_Video;
         Audio m_Audio;
         bool m_DidTransfer          {false};
         int m_DMACycles             {0};

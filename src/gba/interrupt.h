@@ -39,9 +39,9 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     struct GBAInterrupt
     {
-        u16 if_;
-        u16 ie;
-        u16 ime;
+        u16 if_ {0};
+        u16 ie {0};
+        u16 ime {0};
     };
 }
 

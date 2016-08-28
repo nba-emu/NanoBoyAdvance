@@ -62,8 +62,9 @@ namespace NanoboyAdvance
     /// \fn     Constructor, 1
     ///
     ///////////////////////////////////////////////////////////
-    GBAMemory::GBAMemory(string rom_file, string save_file) : GBAMemory(rom_file, save_file, nullptr, 0)
+    void GBAMemory::Init(string rom_file, string save_file)
     {
+        Init(rom_file, save_file, nullptr, 0);
     }
 
     ///////////////////////////////////////////////////////////
@@ -72,7 +73,7 @@ namespace NanoboyAdvance
     /// \fn     Constructor, 2
     ///
     ///////////////////////////////////////////////////////////
-    GBAMemory::GBAMemory(string rom_file, string save_file, u8* bios, size_t bios_size)
+    void GBAMemory::Init(string rom_file, string save_file, u8* bios, size_t bios_size)
     {
         // Init memory buffers
         memset(this->m_BIOS, 0, 0x4000);
@@ -97,12 +98,8 @@ namespace NanoboyAdvance
         m_ROM = File::ReadFile(rom_file);
         m_ROMSize = File::GetFileSize(rom_file);
 
-        // Setup Video and Interrupt hardware
-        m_Interrupt = new GBAInterrupt();
-        m_Interrupt->ie = 0;
-        m_Interrupt->if_ = 0;
-        m_Interrupt->ime = 0;
-        m_Video = new GBAVideo(m_Interrupt);
+        // Setup Video controller
+        m_Video.Init(&m_Interrupt);
         
         // Detect savetype
         for (int i = 0; i < m_ROMSize; i += 4)
@@ -150,9 +147,6 @@ namespace NanoboyAdvance
     {
         delete m_ROM;
         delete m_Backup;
-        delete m_Video;
-        delete &m_Audio;
-        delete m_Interrupt;
     }
 
     ///////////////////////////////////////////////////////////
@@ -245,39 +239,39 @@ namespace NanoboyAdvance
             
             switch (internal_offset) {
             case DISPCNT:
-                return (m_Video->m_VideoMode) |
-                       (m_Video->m_FrameSelect ? 16 : 0) | 
-                       (m_Video->m_Obj.hblank_access ? 32 : 0) |
-                       (m_Video->m_Obj.two_dimensional ? 64 : 0) |
-                       (m_Video->m_ForcedBlank ? 128 : 0);
+                return (m_Video.m_VideoMode) |
+                       (m_Video.m_FrameSelect ? 16 : 0) |
+                       (m_Video.m_Obj.hblank_access ? 32 : 0) |
+                       (m_Video.m_Obj.two_dimensional ? 64 : 0) |
+                       (m_Video.m_ForcedBlank ? 128 : 0);
             case DISPCNT+1:
-                return (m_Video->m_BG[0].enable ? 1 : 0) |
-                       (m_Video->m_BG[1].enable ? 2 : 0) |
-                       (m_Video->m_BG[2].enable ? 4 : 0) |
-                       (m_Video->m_BG[3].enable ? 8 : 0) |
-                       (m_Video->m_Obj.enable ? 16 : 0) |
-                       (m_Video->m_Win[0].enable ? 32 : 0) |
-                       (m_Video->m_Win[1].enable ? 64 : 0) |
-                       (m_Video->m_ObjWin.enable ? 128 : 0);
+                return (m_Video.m_BG[0].enable ? 1 : 0) |
+                       (m_Video.m_BG[1].enable ? 2 : 0) |
+                       (m_Video.m_BG[2].enable ? 4 : 0) |
+                       (m_Video.m_BG[3].enable ? 8 : 0) |
+                       (m_Video.m_Obj.enable ? 16 : 0) |
+                       (m_Video.m_Win[0].enable ? 32 : 0) |
+                       (m_Video.m_Win[1].enable ? 64 : 0) |
+                       (m_Video.m_ObjWin.enable ? 128 : 0);
             case DISPSTAT:
-                return ((m_Video->m_State == GBAVideo::GBAVideoState::VBlank) ? 1 : 0) |
-                       ((m_Video->m_State == GBAVideo::GBAVideoState::HBlank) ? 2 : 0) |
-                       (m_Video->m_VCountFlag ? 4 : 0) |
-                       (m_Video->m_VBlankIRQ ? 8 : 0) |
-                       (m_Video->m_HBlankIRQ ? 16 : 0) |
-                       (m_Video->m_VCountIRQ ? 32 : 0);
+                return ((m_Video.m_State == GBAVideo::GBAVideoState::VBlank) ? 1 : 0) |
+                       ((m_Video.m_State == GBAVideo::GBAVideoState::HBlank) ? 2 : 0) |
+                       (m_Video.m_VCountFlag ? 4 : 0) |
+                       (m_Video.m_VBlankIRQ ? 8 : 0) |
+                       (m_Video.m_HBlankIRQ ? 16 : 0) |
+                       (m_Video.m_VCountIRQ ? 32 : 0);
             case VCOUNT:
-                return m_Video->m_VCount;
+                return m_Video.m_VCount;
             case BG0CNT:
             case BG1CNT:
             case BG2CNT:
             case BG3CNT:
             {
                 int n = (internal_offset - BG0CNT) / 2;    
-                return (m_Video->m_BG[n].priority) | 
-                       ((m_Video->m_BG[n].tile_base / 0x4000) << 2) |
-                       (m_Video->m_BG[n].mosaic ? 64 : 0) |
-                       (m_Video->m_BG[n].true_color ? 128 : 0) |
+                return (m_Video.m_BG[n].priority) |
+                       ((m_Video.m_BG[n].tile_base / 0x4000) << 2) |
+                       (m_Video.m_BG[n].mosaic ? 64 : 0) |
+                       (m_Video.m_BG[n].true_color ? 128 : 0) |
                        (3 << 4); // bits 4-5 are always 1
             }
             case BG0CNT+1:
@@ -286,49 +280,49 @@ namespace NanoboyAdvance
             case BG3CNT+1:
             {
                 int n = (internal_offset - BG0CNT - 1) / 2;
-                return (m_Video->m_BG[n].map_base / 0x800) |
-                       (m_Video->m_BG[n].wraparound ? 32 : 0) |
-                       (m_Video->m_BG[n].size << 6);
+                return (m_Video.m_BG[n].map_base / 0x800) |
+                       (m_Video.m_BG[n].wraparound ? 32 : 0) |
+                       (m_Video.m_BG[n].size << 6);
             }
             case WININ:
-                return (m_Video->m_Win[0].bg_in[0] ? 1 : 0) |
-                       (m_Video->m_Win[0].bg_in[1] ? 2 : 0) |
-                       (m_Video->m_Win[0].bg_in[2] ? 4 : 0) |
-                       (m_Video->m_Win[0].bg_in[3] ? 8 : 0) |
-                       (m_Video->m_Win[0].obj_in ? 16 : 0) |
-                       (m_Video->m_Win[0].sfx_in ? 32 : 0);
+                return (m_Video.m_Win[0].bg_in[0] ? 1 : 0) |
+                       (m_Video.m_Win[0].bg_in[1] ? 2 : 0) |
+                       (m_Video.m_Win[0].bg_in[2] ? 4 : 0) |
+                       (m_Video.m_Win[0].bg_in[3] ? 8 : 0) |
+                       (m_Video.m_Win[0].obj_in ? 16 : 0) |
+                       (m_Video.m_Win[0].sfx_in ? 32 : 0);
             case WININ+1:
-                return (m_Video->m_Win[1].bg_in[0] ? 1 : 0) |
-                       (m_Video->m_Win[1].bg_in[1] ? 2 : 0) |
-                       (m_Video->m_Win[1].bg_in[2] ? 4 : 0) |
-                       (m_Video->m_Win[1].bg_in[3] ? 8 : 0) |
-                       (m_Video->m_Win[1].obj_in ? 16 : 0) |
-                       (m_Video->m_Win[1].sfx_in ? 32 : 0);
+                return (m_Video.m_Win[1].bg_in[0] ? 1 : 0) |
+                       (m_Video.m_Win[1].bg_in[1] ? 2 : 0) |
+                       (m_Video.m_Win[1].bg_in[2] ? 4 : 0) |
+                       (m_Video.m_Win[1].bg_in[3] ? 8 : 0) |
+                       (m_Video.m_Win[1].obj_in ? 16 : 0) |
+                       (m_Video.m_Win[1].sfx_in ? 32 : 0);
             case WINOUT:
-                return (m_Video->m_WinOut.bg[0] ? 1 : 0) |
-                       (m_Video->m_WinOut.bg[1] ? 2 : 0) |
-                       (m_Video->m_WinOut.bg[2] ? 4 : 0) |
-                       (m_Video->m_WinOut.bg[3] ? 8 : 0) |
-                       (m_Video->m_WinOut.obj ? 16 : 0) |
-                       (m_Video->m_WinOut.sfx ? 32 : 0);
+                return (m_Video.m_WinOut.bg[0] ? 1 : 0) |
+                       (m_Video.m_WinOut.bg[1] ? 2 : 0) |
+                       (m_Video.m_WinOut.bg[2] ? 4 : 0) |
+                       (m_Video.m_WinOut.bg[3] ? 8 : 0) |
+                       (m_Video.m_WinOut.obj ? 16 : 0) |
+                       (m_Video.m_WinOut.sfx ? 32 : 0);
             case WINOUT+1:
                 // TODO: OBJWIN
                 return 0;
             case BLDCNT:
-                return (m_Video->m_SFX.bg_select[0][0] ? 1 : 0) |
-                       (m_Video->m_SFX.bg_select[0][1] ? 2 : 0) |
-                       (m_Video->m_SFX.bg_select[0][2] ? 4 : 0) |
-                       (m_Video->m_SFX.bg_select[0][3] ? 8 : 0) |
-                       (m_Video->m_SFX.obj_select[0] ? 16 : 0) |
-                       (m_Video->m_SFX.bd_select[0] ? 32 : 0) |
-                       (m_Video->m_SFX.effect << 6);
+                return (m_Video.m_SFX.bg_select[0][0] ? 1 : 0) |
+                       (m_Video.m_SFX.bg_select[0][1] ? 2 : 0) |
+                       (m_Video.m_SFX.bg_select[0][2] ? 4 : 0) |
+                       (m_Video.m_SFX.bg_select[0][3] ? 8 : 0) |
+                       (m_Video.m_SFX.obj_select[0] ? 16 : 0) |
+                       (m_Video.m_SFX.bd_select[0] ? 32 : 0) |
+                       (m_Video.m_SFX.effect << 6);
             case BLDCNT+1:
-                return (m_Video->m_SFX.bg_select[1][0] ? 1 : 0) |
-                       (m_Video->m_SFX.bg_select[1][1] ? 2 : 0) |
-                       (m_Video->m_SFX.bg_select[1][2] ? 4 : 0) |
-                       (m_Video->m_SFX.bg_select[1][3] ? 8 : 0) |
-                       (m_Video->m_SFX.obj_select[1] ? 16 : 0) |
-                       (m_Video->m_SFX.bd_select[1] ? 32 : 0);
+                return (m_Video.m_SFX.bg_select[1][0] ? 1 : 0) |
+                       (m_Video.m_SFX.bg_select[1][1] ? 2 : 0) |
+                       (m_Video.m_SFX.bg_select[1][2] ? 4 : 0) |
+                       (m_Video.m_SFX.bg_select[1][3] ? 8 : 0) |
+                       (m_Video.m_SFX.obj_select[1] ? 16 : 0) |
+                       (m_Video.m_SFX.bd_select[1] ? 32 : 0);
             case SOUNDBIAS:
             case SOUNDBIAS+1:
             case SOUNDBIAS+2:
@@ -369,13 +363,13 @@ namespace NanoboyAdvance
             case KEYINPUT+1:
                 return m_KeyInput >> 8;
             case IE:
-                return m_Interrupt->ie & 0xFF;
+                return m_Interrupt.ie & 0xFF;
              case IE+1:
-                return m_Interrupt->ie >> 8;
+                return m_Interrupt.ie >> 8;
             case IF:
-                return m_Interrupt->if_ & 0xFF;
+                return m_Interrupt.if_ & 0xFF;
             case IF+1:
-                return m_Interrupt->if_ >> 8;
+                return m_Interrupt.if_ >> 8;
             case WAITCNT:
                 return m_Waitstate.sram |
                        (m_Waitstate.first[0] << 2) |
@@ -388,20 +382,20 @@ namespace NanoboyAdvance
                        (m_Waitstate.prefetch ? 64 : 0) |
                        (1 << 7);
             case IME:
-                return m_Interrupt->ime & 0xFF;
+                return m_Interrupt.ime & 0xFF;
             case IME+1:
-                return m_Interrupt->ime >> 8;
+                return m_Interrupt.ime >> 8;
             }
             return 0;
         case 5:
-            return m_Video->m_PAL[internal_offset % 0x400];
+            return m_Video.m_PAL[internal_offset % 0x400];
         case 6:
             internal_offset %= 0x20000;
             if (internal_offset >= 0x18000)
                 internal_offset -= 0x8000;
-            return m_Video->m_VRAM[internal_offset];
+            return m_Video.m_VRAM[internal_offset];
         case 7:
-            return m_Video->m_OAM[internal_offset % 0x400];
+            return m_Video.m_OAM[internal_offset % 0x400];
         case 8:
             if (internal_offset >= m_ROMSize) return 0;
             return m_ROM[internal_offset];
@@ -492,29 +486,29 @@ namespace NanoboyAdvance
             switch (internal_offset)
             {
             case DISPCNT:
-                m_Video->m_VideoMode = value & 7;
-                m_Video->m_FrameSelect = value & 16;
-                m_Video->m_Obj.hblank_access = value & 32;
-                m_Video->m_Obj.two_dimensional = value & 64;
-                m_Video->m_ForcedBlank = value & 128;
+                m_Video.m_VideoMode = value & 7;
+                m_Video.m_FrameSelect = value & 16;
+                m_Video.m_Obj.hblank_access = value & 32;
+                m_Video.m_Obj.two_dimensional = value & 64;
+                m_Video.m_ForcedBlank = value & 128;
                 break;
             case DISPCNT+1:
-                m_Video->m_BG[0].enable = value & 1;
-                m_Video->m_BG[1].enable = value & 2;
-                m_Video->m_BG[2].enable = value & 4;
-                m_Video->m_BG[3].enable = value & 8;
-                m_Video->m_Obj.enable = value & 16;
-                m_Video->m_Win[0].enable = value & 32;
-                m_Video->m_Win[1].enable = value & 64;
-                m_Video->m_ObjWin.enable = value & 128;
+                m_Video.m_BG[0].enable = value & 1;
+                m_Video.m_BG[1].enable = value & 2;
+                m_Video.m_BG[2].enable = value & 4;
+                m_Video.m_BG[3].enable = value & 8;
+                m_Video.m_Obj.enable = value & 16;
+                m_Video.m_Win[0].enable = value & 32;
+                m_Video.m_Win[1].enable = value & 64;
+                m_Video.m_ObjWin.enable = value & 128;
                 break;
             case DISPSTAT:
-                m_Video->m_VBlankIRQ = value & 8;
-                m_Video->m_HBlankIRQ = value & 16;
-                m_Video->m_VCountIRQ = value & 32;
+                m_Video.m_VBlankIRQ = value & 8;
+                m_Video.m_HBlankIRQ = value & 16;
+                m_Video.m_VCountIRQ = value & 32;
                 break;
             case DISPSTAT+1:
-                m_Video->m_VCountSetting = value;
+                m_Video.m_VCountSetting = value;
                 break;
             case BG0CNT:
             case BG1CNT:
@@ -522,10 +516,10 @@ namespace NanoboyAdvance
             case BG3CNT:
             {
                 int n = (internal_offset - BG0CNT) / 2;    
-                m_Video->m_BG[n].priority = value & 3; 
-                m_Video->m_BG[n].tile_base = ((value >> 2) & 3) * 0x4000;
-                m_Video->m_BG[n].mosaic = value & 64;
-                m_Video->m_BG[n].true_color = value & 128;
+                m_Video.m_BG[n].priority = value & 3;
+                m_Video.m_BG[n].tile_base = ((value >> 2) & 3) * 0x4000;
+                m_Video.m_BG[n].mosaic = value & 64;
+                m_Video.m_BG[n].true_color = value & 128;
                 break;
             }
             case BG0CNT+1:
@@ -534,12 +528,12 @@ namespace NanoboyAdvance
             case BG3CNT+1:
             {
                 int n = (internal_offset - BG0CNT - 1) / 2;
-                m_Video->m_BG[n].map_base = (value & 31) * 0x800;
+                m_Video.m_BG[n].map_base = (value & 31) * 0x800;
 
                 if (n == 2 || n == 3)
-                    m_Video->m_BG[n].wraparound = value & 32;
+                    m_Video.m_BG[n].wraparound = value & 32;
 
-                m_Video->m_BG[n].size = value >> 6;
+                m_Video.m_BG[n].size = value >> 6;
                 break;
             }
             case BG0HOFS:
@@ -548,7 +542,7 @@ namespace NanoboyAdvance
             case BG3HOFS:
             {
                 int n = (internal_offset - BG0HOFS) / 4;
-                m_Video->m_BG[n].x = (m_Video->m_BG[n].x & 0x100) | value;
+                m_Video.m_BG[n].x = (m_Video.m_BG[n].x & 0x100) | value;
                 break;
             }
             case BG0HOFS+1:
@@ -557,7 +551,7 @@ namespace NanoboyAdvance
             case BG3HOFS+1:
             {
                 int n = (internal_offset - BG0HOFS - 1) / 4;
-                m_Video->m_BG[n].x = (m_Video->m_BG[n].x & 0xFF) | ((value & 1) << 8);
+                m_Video.m_BG[n].x = (m_Video.m_BG[n].x & 0xFF) | ((value & 1) << 8);
                 break;
             }
             case BG0VOFS:
@@ -566,7 +560,7 @@ namespace NanoboyAdvance
             case BG3VOFS:
             {
                 int n = (internal_offset - BG0VOFS) / 4;
-                m_Video->m_BG[n].y = (m_Video->m_BG[n].y & 0x100) | value;
+                m_Video.m_BG[n].y = (m_Video.m_BG[n].y & 0x100) | value;
                 break;
             }
             case BG0VOFS+1:
@@ -575,7 +569,7 @@ namespace NanoboyAdvance
             case BG3VOFS+1:
             {
                 int n = (internal_offset - BG0VOFS - 1) / 4;
-                m_Video->m_BG[n].y = (m_Video->m_BG[n].y & 0xFF) | ((value & 1) << 8);
+                m_Video.m_BG[n].y = (m_Video.m_BG[n].y & 0xFF) | ((value & 1) << 8);
                 break;
             }
             case BG2X:
@@ -584,9 +578,9 @@ namespace NanoboyAdvance
             case BG2X+3:
             {
                 int n = (internal_offset - BG2X) * 8;
-                u32 v = (m_Video->m_BG[2].x_ref & ~(0xFF << n)) | (value << n);
-                m_Video->m_BG[2].x_ref = v;
-                m_Video->m_BG[2].x_ref_int = GBAVideo::DecodeGBAFloat32(v);
+                u32 v = (m_Video.m_BG[2].x_ref & ~(0xFF << n)) | (value << n);
+                m_Video.m_BG[2].x_ref = v;
+                m_Video.m_BG[2].x_ref_int = GBAVideo::DecodeGBAFloat32(v);
                 break;
             }
             case BG3X:
@@ -595,9 +589,9 @@ namespace NanoboyAdvance
             case BG3X+3:
             {
                 int n = (internal_offset - BG3X) * 8;
-                u32 v = (m_Video->m_BG[3].x_ref & ~(0xFF << n)) | (value << n);
-                m_Video->m_BG[3].x_ref = v;
-                m_Video->m_BG[3].x_ref_int = GBAVideo::DecodeGBAFloat32(v);
+                u32 v = (m_Video.m_BG[3].x_ref & ~(0xFF << n)) | (value << n);
+                m_Video.m_BG[3].x_ref = v;
+                m_Video.m_BG[3].x_ref_int = GBAVideo::DecodeGBAFloat32(v);
                 break;
             }
             case BG2Y:
@@ -606,9 +600,9 @@ namespace NanoboyAdvance
             case BG2Y+3:
             {
                 int n = (internal_offset - BG2Y) * 8;
-                u32 v = (m_Video->m_BG[2].y_ref & ~(0xFF << n)) | (value << n);
-                m_Video->m_BG[2].y_ref = v;
-                m_Video->m_BG[2].y_ref_int = GBAVideo::DecodeGBAFloat32(v);
+                u32 v = (m_Video.m_BG[2].y_ref & ~(0xFF << n)) | (value << n);
+                m_Video.m_BG[2].y_ref = v;
+                m_Video.m_BG[2].y_ref_int = GBAVideo::DecodeGBAFloat32(v);
                 break;
             }
             case BG3Y:
@@ -617,143 +611,143 @@ namespace NanoboyAdvance
             case BG3Y+3:
             {
                 int n = (internal_offset - BG3Y) * 8;
-                u32 v = (m_Video->m_BG[3].y_ref & ~(0xFF << n)) | (value << n);
-                m_Video->m_BG[3].y_ref = v;
-                m_Video->m_BG[3].y_ref_int = GBAVideo::DecodeGBAFloat32(v);
+                u32 v = (m_Video.m_BG[3].y_ref & ~(0xFF << n)) | (value << n);
+                m_Video.m_BG[3].y_ref = v;
+                m_Video.m_BG[3].y_ref_int = GBAVideo::DecodeGBAFloat32(v);
                 break;
             }
             case BG2PA:
             case BG2PA+1:
             {
                 int n = (internal_offset - BG2PA) * 8;
-                m_Video->m_BG[2].pa = (m_Video->m_BG[2].pa & ~(0xFF << n)) | (value << n);
+                m_Video.m_BG[2].pa = (m_Video.m_BG[2].pa & ~(0xFF << n)) | (value << n);
                 break;
             }
             case BG3PA:
             case BG3PA+1:
             {
                 int n = (internal_offset - BG3PA) * 8;
-                m_Video->m_BG[3].pa = (m_Video->m_BG[3].pa & ~(0xFF << n)) | (value << n);
+                m_Video.m_BG[3].pa = (m_Video.m_BG[3].pa & ~(0xFF << n)) | (value << n);
                 break;
             }
             case BG2PB:
             case BG2PB+1:
             {
                 int n = (internal_offset - BG2PB) * 8;
-                m_Video->m_BG[2].pb = (m_Video->m_BG[2].pb & ~(0xFF << n)) | (value << n);
+                m_Video.m_BG[2].pb = (m_Video.m_BG[2].pb & ~(0xFF << n)) | (value << n);
                 break;
             }
             case BG3PB:
             case BG3PB+1:
             {
                 int n = (internal_offset - BG3PB) * 8;
-                m_Video->m_BG[3].pb = (m_Video->m_BG[3].pb & ~(0xFF << n)) | (value << n);
+                m_Video.m_BG[3].pb = (m_Video.m_BG[3].pb & ~(0xFF << n)) | (value << n);
                 break;
             }
             case BG2PC:
             case BG2PC+1:
             {
                 int n = (internal_offset - BG2PC) * 8;
-                m_Video->m_BG[2].pc = (m_Video->m_BG[2].pc & ~(0xFF << n)) | (value << n);
+                m_Video.m_BG[2].pc = (m_Video.m_BG[2].pc & ~(0xFF << n)) | (value << n);
                 break;
             }
             case BG3PC:
             case BG3PC+1:
             {
                 int n = (internal_offset - BG3PC) * 8;
-                m_Video->m_BG[3].pc = (m_Video->m_BG[3].pc & ~(0xFF << n)) | (value << n);
+                m_Video.m_BG[3].pc = (m_Video.m_BG[3].pc & ~(0xFF << n)) | (value << n);
                 break;
             }
             case BG2PD:
             case BG2PD+1:
             {
                 int n = (internal_offset - BG2PD) * 8;
-                m_Video->m_BG[2].pd = (m_Video->m_BG[2].pd & ~(0xFF << n)) | (value << n);
+                m_Video.m_BG[2].pd = (m_Video.m_BG[2].pd & ~(0xFF << n)) | (value << n);
                 break;
             }
             case BG3PD:
             case BG3PD+1:
             {
                 int n = (internal_offset - BG3PD) * 8;
-                m_Video->m_BG[3].pd = (m_Video->m_BG[3].pd & ~(0xFF << n)) | (value << n);
+                m_Video.m_BG[3].pd = (m_Video.m_BG[3].pd & ~(0xFF << n)) | (value << n);
                 break;
             }
             case WIN0H:
-                m_Video->m_Win[0].right = value;
+                m_Video.m_Win[0].right = value;
                 break;
             case WIN0H+1:
-                m_Video->m_Win[0].left = value;
+                m_Video.m_Win[0].left = value;
                 break;
             case WIN1H:
-                m_Video->m_Win[1].right = value;
+                m_Video.m_Win[1].right = value;
                 break;
             case WIN1H+1:
-                m_Video->m_Win[1].left = value;
+                m_Video.m_Win[1].left = value;
                 break;
             case WIN0V:
-                m_Video->m_Win[0].bottom = value;
+                m_Video.m_Win[0].bottom = value;
                 break;
             case WIN0V+1:
-                m_Video->m_Win[0].top = value;
+                m_Video.m_Win[0].top = value;
                 break;
             case WIN1V:
-                m_Video->m_Win[1].bottom = value;
+                m_Video.m_Win[1].bottom = value;
                 break;
             case WIN1V+1:
-                m_Video->m_Win[1].top = value;
+                m_Video.m_Win[1].top = value;
                 break;
             case WININ:
-                m_Video->m_Win[0].bg_in[0] = value & 1;
-                m_Video->m_Win[0].bg_in[1] = value & 2;
-                m_Video->m_Win[0].bg_in[2] = value & 4;
-                m_Video->m_Win[0].bg_in[3] = value & 8;
-                m_Video->m_Win[0].obj_in = value & 16;
-                m_Video->m_Win[0].sfx_in = value & 32;
+                m_Video.m_Win[0].bg_in[0] = value & 1;
+                m_Video.m_Win[0].bg_in[1] = value & 2;
+                m_Video.m_Win[0].bg_in[2] = value & 4;
+                m_Video.m_Win[0].bg_in[3] = value & 8;
+                m_Video.m_Win[0].obj_in = value & 16;
+                m_Video.m_Win[0].sfx_in = value & 32;
                 break;
             case WININ+1:
-                m_Video->m_Win[1].bg_in[0] = value & 1;
-                m_Video->m_Win[1].bg_in[1] = value & 2;
-                m_Video->m_Win[1].bg_in[2] = value & 4;
-                m_Video->m_Win[1].bg_in[3] = value & 8;
-                m_Video->m_Win[1].obj_in = value & 16;
-                m_Video->m_Win[1].sfx_in = value & 32;
+                m_Video.m_Win[1].bg_in[0] = value & 1;
+                m_Video.m_Win[1].bg_in[1] = value & 2;
+                m_Video.m_Win[1].bg_in[2] = value & 4;
+                m_Video.m_Win[1].bg_in[3] = value & 8;
+                m_Video.m_Win[1].obj_in = value & 16;
+                m_Video.m_Win[1].sfx_in = value & 32;
                 break;
             case WINOUT:
-                m_Video->m_WinOut.bg[0] = value & 1;
-                m_Video->m_WinOut.bg[1] = value & 2;
-                m_Video->m_WinOut.bg[2] = value & 4;
-                m_Video->m_WinOut.bg[3] = value & 8;
-                m_Video->m_WinOut.obj = value & 16;
-                m_Video->m_WinOut.sfx = value & 32;
+                m_Video.m_WinOut.bg[0] = value & 1;
+                m_Video.m_WinOut.bg[1] = value & 2;
+                m_Video.m_WinOut.bg[2] = value & 4;
+                m_Video.m_WinOut.bg[3] = value & 8;
+                m_Video.m_WinOut.obj = value & 16;
+                m_Video.m_WinOut.sfx = value & 32;
                 break;
             case WINOUT+1:
                 // TODO: OBJWIN
                 break;
             case BLDCNT:
-                m_Video->m_SFX.bg_select[0][0] = value & 1;
-                m_Video->m_SFX.bg_select[0][1] = value & 2;
-                m_Video->m_SFX.bg_select[0][2] = value & 4;
-                m_Video->m_SFX.bg_select[0][3] = value & 8;
-                m_Video->m_SFX.obj_select[0] = value & 16;
-                m_Video->m_SFX.bd_select[0] = value & 32;
-                m_Video->m_SFX.effect = static_cast<SpecialEffect::Effect>(value >> 6);
+                m_Video.m_SFX.bg_select[0][0] = value & 1;
+                m_Video.m_SFX.bg_select[0][1] = value & 2;
+                m_Video.m_SFX.bg_select[0][2] = value & 4;
+                m_Video.m_SFX.bg_select[0][3] = value & 8;
+                m_Video.m_SFX.obj_select[0] = value & 16;
+                m_Video.m_SFX.bd_select[0] = value & 32;
+                m_Video.m_SFX.effect = static_cast<SpecialEffect::Effect>(value >> 6);
                 break;
             case BLDCNT+1:
-                m_Video->m_SFX.bg_select[1][0] = value & 1;
-                m_Video->m_SFX.bg_select[1][1] = value & 2;
-                m_Video->m_SFX.bg_select[1][2] = value & 4;
-                m_Video->m_SFX.bg_select[1][3] = value & 8;
-                m_Video->m_SFX.obj_select[1] = value & 16;
-                m_Video->m_SFX.bd_select[1] = value & 32;
+                m_Video.m_SFX.bg_select[1][0] = value & 1;
+                m_Video.m_SFX.bg_select[1][1] = value & 2;
+                m_Video.m_SFX.bg_select[1][2] = value & 4;
+                m_Video.m_SFX.bg_select[1][3] = value & 8;
+                m_Video.m_SFX.obj_select[1] = value & 16;
+                m_Video.m_SFX.bd_select[1] = value & 32;
                 break;
             case BLDALPHA:
-                m_Video->m_SFX.eva = value & 0x1F;
+                m_Video.m_SFX.eva = value & 0x1F;
                 break;
             case BLDALPHA+1:
-                m_Video->m_SFX.evb = value & 0x1F;
+                m_Video.m_SFX.evb = value & 0x1F;
                 break;
             case BLDY:
-                m_Video->m_SFX.evy = value & 0x1F;
+                m_Video.m_SFX.evy = value & 0x1F;
                 break;
             case SOUNDBIAS:
             case SOUNDBIAS+1:
@@ -1037,16 +1031,16 @@ namespace NanoboyAdvance
                 break;
              }
             case IE:
-                m_Interrupt->ie = (m_Interrupt->ie & 0xFF00) | value;
+                m_Interrupt.ie = (m_Interrupt.ie & 0xFF00) | value;
                 break;
             case IE+1:
-                m_Interrupt->ie = (m_Interrupt->ie & 0x00FF) | (value << 8);
+                m_Interrupt.ie = (m_Interrupt.ie & 0x00FF) | (value << 8);
                 break;
             case IF:
-                m_Interrupt->if_ &= ~value;
+                m_Interrupt.if_ &= ~value;
                 break;
             case IF+1:
-                m_Interrupt->if_ &= ~(value << 8);
+                m_Interrupt.if_ &= ~(value << 8);
                 break;
             case WAITCNT:
                 m_Waitstate.sram = value & 3;
@@ -1061,10 +1055,10 @@ namespace NanoboyAdvance
                 m_Waitstate.prefetch = value & 64;
                 break;
             case IME:
-                m_Interrupt->ime = (m_Interrupt->ime & 0xFF00) | value;
+                m_Interrupt.ime = (m_Interrupt.ime & 0xFF00) | value;
                 break;
             case IME+1:
-                m_Interrupt->ime = (m_Interrupt->ime & 0x00FF) | (value << 8);
+                m_Interrupt.ime = (m_Interrupt.ime & 0x00FF) | (value << 8);
                 break;
             case HALTCNT:
                 m_HaltState = (value & 0x80) ? HaltState::Stop : HaltState::Halt;
@@ -1111,8 +1105,8 @@ namespace NanoboyAdvance
         switch (page)
         {
         case 5:
-            m_Video->m_PAL[internal_offset % 0x400] = value & 0xFF;
-            m_Video->m_PAL[(internal_offset + 1) % 0x400] = (value >> 8) & 0xFF;
+            m_Video.m_PAL[internal_offset % 0x400] = value & 0xFF;
+            m_Video.m_PAL[(internal_offset + 1) % 0x400] = (value >> 8) & 0xFF;
             return;
         case 6:
             internal_offset %= 0x20000;
@@ -1120,12 +1114,12 @@ namespace NanoboyAdvance
             if (internal_offset >= 0x18000)
                 internal_offset -= 0x8000;
             
-            m_Video->m_VRAM[internal_offset] = value & 0xFF;
-            m_Video->m_VRAM[internal_offset + 1] = (value >> 8) & 0xFF;
+            m_Video.m_VRAM[internal_offset] = value & 0xFF;
+            m_Video.m_VRAM[internal_offset + 1] = (value >> 8) & 0xFF;
             return;
         case 7:
-            m_Video->m_OAM[internal_offset % 0x400] = value & 0xFF;
-            m_Video->m_OAM[(internal_offset + 1) % 0x400] = (value >> 8) & 0xFF;
+            m_Video.m_OAM[internal_offset % 0x400] = value & 0xFF;
+            m_Video.m_OAM[(internal_offset + 1) % 0x400] = (value >> 8) & 0xFF;
             return;
         default:
             WriteByte(offset, value & 0xFF);
