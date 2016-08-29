@@ -29,16 +29,34 @@ namespace NanoboyAdvance
 {
     const ARM7::ThumbInstruction ARM7::thumb_table[1024] =
     {
-        &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1,
-        &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1,
-        &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1,
-        &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1,
-        &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1,
-        &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1,
-        &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1,
-        &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1,
-        &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1,
-        &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb2, &Thumb2, &Thumb2, &Thumb2,
+        /* THUMB.1 Move shifted register */
+        &Thumb1<0,0>,  &Thumb1<1,0>,  &Thumb1<2,0>,  &Thumb1<3,0>,
+        &Thumb1<4,0>,  &Thumb1<5,0>,  &Thumb1<6,0>,  &Thumb1<7,0>,
+        &Thumb1<8,0>,  &Thumb1<9,0>,  &Thumb1<10,0>, &Thumb1<11,0>,
+        &Thumb1<12,0>, &Thumb1<13,0>, &Thumb1<14,0>, &Thumb1<15,0>,
+        &Thumb1<16,0>, &Thumb1<17,0>, &Thumb1<18,0>, &Thumb1<19,0>,
+        &Thumb1<20,0>, &Thumb1<21,0>, &Thumb1<22,0>, &Thumb1<23,0>,
+        &Thumb1<24,0>, &Thumb1<25,0>, &Thumb1<26,0>, &Thumb1<27,0>,
+        &Thumb1<28,0>, &Thumb1<29,0>, &Thumb1<30,0>, &Thumb1<31,0>,
+        &Thumb1<0,1>,  &Thumb1<1,1>,  &Thumb1<2,1>,  &Thumb1<3,1>,
+        &Thumb1<4,1>,  &Thumb1<5,1>,  &Thumb1<6,1>,  &Thumb1<7,1>,
+        &Thumb1<8,1>,  &Thumb1<9,1>,  &Thumb1<10,1>, &Thumb1<11,1>,
+        &Thumb1<12,1>, &Thumb1<13,1>, &Thumb1<14,1>, &Thumb1<15,1>,
+        &Thumb1<16,1>, &Thumb1<17,1>, &Thumb1<18,1>, &Thumb1<19,1>,
+        &Thumb1<20,1>, &Thumb1<21,1>, &Thumb1<22,1>, &Thumb1<23,1>,
+        &Thumb1<24,1>, &Thumb1<25,1>, &Thumb1<26,1>, &Thumb1<27,1>,
+        &Thumb1<28,1>, &Thumb1<29,1>, &Thumb1<30,1>, &Thumb1<31,1>,
+        &Thumb1<0,2>,  &Thumb1<1,2>,  &Thumb1<2,2>,  &Thumb1<3,2>,
+        &Thumb1<4,2>,  &Thumb1<5,2>,  &Thumb1<6,2>,  &Thumb1<7,2>,
+        &Thumb1<8,2>,  &Thumb1<9,2>,  &Thumb1<10,2>, &Thumb1<11,2>,
+        &Thumb1<12,2>, &Thumb1<13,2>, &Thumb1<14,2>, &Thumb1<15,2>,
+        &Thumb1<16,2>, &Thumb1<17,2>, &Thumb1<18,2>, &Thumb1<19,2>,
+        &Thumb1<20,2>, &Thumb1<21,2>, &Thumb1<22,2>, &Thumb1<23,2>,
+        &Thumb1<24,2>, &Thumb1<25,2>, &Thumb1<26,2>, &Thumb1<27,2>,
+        &Thumb1<28,2>, &Thumb1<29,2>, &Thumb1<30,2>, &Thumb1<31,2>,
+
+        /* THUMB.2 Add / subtract */
+        &Thumb2, &Thumb2, &Thumb2, &Thumb2,
         &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2,
         &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2,
         &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb3, &Thumb3,
@@ -134,30 +152,29 @@ namespace NanoboyAdvance
         &Thumb19, &Thumb19, &Thumb19, &Thumb19
     };
 
+    template <int imm, int type>
     void ARM7::Thumb1(u16 instruction)
     {
         // THUMB.1 Move shifted register
         int reg_dest = instruction & 7;
         int reg_source = (instruction >> 3) & 7;
-        u32 immediate_value = (instruction >> 6) & 0x1F;
-        int opcode = (instruction >> 11) & 3;
         bool carry = cpsr & CarryFlag;
 
         reg(reg_dest) = reg(reg_source);
 
-        switch (opcode)
+        switch (type)
         {
-        case 0b00: // LSL
-            LSL(reg(reg_dest), immediate_value, carry);
+        case 0: // LSL
+            LSL(reg(reg_dest), imm, carry);
             AssertCarry(carry);
             break;
-        case 0b01: // LSR
-            LSR(reg(reg_dest), immediate_value, carry, true);
+        case 1: // LSR
+            LSR(reg(reg_dest), imm, carry, true);
             AssertCarry(carry);
             break;
-        case 0b10: // ASR
+        case 2: // ASR
         {
-            ASR(reg(reg_dest), immediate_value, carry, true);
+            ASR(reg(reg_dest), imm, carry, true);
             AssertCarry(carry);
             break;
         }

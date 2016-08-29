@@ -229,6 +229,7 @@ namespace NanoboyAdvance
         void LoadRegisters();
 
         // Thumb Instructions
+        template <int imm, int type>
         void Thumb1(u16 instruction);
         void Thumb2(u16 instruction);
         void Thumb3(u16 instruction);
