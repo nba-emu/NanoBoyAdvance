@@ -23,6 +23,7 @@
 
 
 #include "gba.h"
+#include <stdexcept>
 
 
 using namespace std;

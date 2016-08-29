@@ -27,6 +27,7 @@
 #include "util/file.h"
 #include "flash.h"
 #include "sram.h"
+#include <stdexcept>
 
 
 using namespace std;
