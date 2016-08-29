@@ -265,7 +265,7 @@ namespace NanoboyAdvance
         void Execute(u32 instruction, int type);
         inline void ExecuteThumb(u16 instruction)
         {
-            (*this.*thumb_table[instruction >> 6])(instruction);
+            (this->*thumb_table[instruction >> 6])(instruction);
         }
 
         // HLE-emulation
