@@ -99,13 +99,27 @@ namespace NanoboyAdvance
         &Thumb3<3,6>, &Thumb3<3,6>, &Thumb3<3,6>, &Thumb3<3,6>,
         &Thumb3<3,7>, &Thumb3<3,7>, &Thumb3<3,7>, &Thumb3<3,7>,
 
-        &Thumb4, &Thumb4, &Thumb4, &Thumb4,
-        &Thumb4, &Thumb4, &Thumb4, &Thumb4, &Thumb4, &Thumb4, &Thumb4, &Thumb4, &Thumb4, &Thumb4,
-        &Thumb4, &Thumb4, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5,
-        &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb6, &Thumb6,
-        &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6,
-        &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6,
-        &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6,
+        /* THUMB.4 ALU operations */
+        &Thumb4<0>, &Thumb4<1>, &Thumb4<2>,  &Thumb4<3>,  &Thumb4<4>,  &Thumb4<5>,  &Thumb4<6>,  &Thumb4<7>,
+        &Thumb4<8>, &Thumb4<9>, &Thumb4<10>, &Thumb4<11>, &Thumb4<12>, &Thumb4<13>, &Thumb4<14>, &Thumb4<15>,
+
+        /* THUMB.5 High register operations/branch exchange
+         * TODO: Eventually move BX into it's own method. */
+        &Thumb5<0,false,false>, &Thumb5<0,false,true>, &Thumb5<0,true,false>, &Thumb5<0,true,true>,
+        &Thumb5<1,false,false>, &Thumb5<1,false,true>, &Thumb5<1,true,false>, &Thumb5<1,true,true>,
+        &Thumb5<2,false,false>, &Thumb5<2,false,true>, &Thumb5<2,true,false>, &Thumb5<2,true,true>,
+        &Thumb5<3,false,false>, &Thumb5<3,false,true>, &Thumb5<3,true,false>, &Thumb5<3,true,true>,
+
+        /* THUMB.6 PC-relative load */
+        &Thumb6<0>, &Thumb6<0>, &Thumb6<0>, &Thumb6<0>,
+        &Thumb6<1>, &Thumb6<1>, &Thumb6<1>, &Thumb6<1>,
+        &Thumb6<2>, &Thumb6<2>, &Thumb6<2>, &Thumb6<2>,
+        &Thumb6<3>, &Thumb6<3>, &Thumb6<3>, &Thumb6<3>,
+        &Thumb6<4>, &Thumb6<4>, &Thumb6<4>, &Thumb6<4>,
+        &Thumb6<5>, &Thumb6<5>, &Thumb6<5>, &Thumb6<5>,
+        &Thumb6<6>, &Thumb6<6>, &Thumb6<6>, &Thumb6<6>,
+        &Thumb6<7>, &Thumb6<7>, &Thumb6<7>, &Thumb6<7>,
+
         &Thumb7, &Thumb7, &Thumb7, &Thumb7, &Thumb7, &Thumb7, &Thumb7, &Thumb7, &Thumb8, &Thumb8,
         &Thumb8, &Thumb8, &Thumb8, &Thumb8, &Thumb8, &Thumb8, &Thumb7, &Thumb7, &Thumb7, &Thumb7,
         &Thumb7, &Thumb7, &Thumb7, &Thumb7, &Thumb8, &Thumb8, &Thumb8, &Thumb8, &Thumb8, &Thumb8,
@@ -309,13 +323,14 @@ namespace NanoboyAdvance
         cycles += memory->SequentialAccess(r[15], GBAMemory::ACCESS_HWORD);
     }
 
+    template <int op>
     void ARM7::Thumb4(u16 instruction)
     {
         // THUMB.4 ALU operations
         int reg_dest = instruction & 7;
         int reg_source = (instruction >> 3) & 7;
 
-        switch ((instruction >> 6) & 0xF)
+        switch (op)
         {
         case 0b0000: // AND
             reg(reg_dest) &= reg(reg_source);
@@ -458,45 +473,31 @@ namespace NanoboyAdvance
         cycles += memory->SequentialAccess(r[15], GBAMemory::ACCESS_HWORD);
     }
 
+    template <int op, bool high1, bool high2>
     void ARM7::Thumb5(u16 instruction)
     {
         // THUMB.5 Hi register operations/branch exchange
         int reg_dest = instruction & 7;
         int reg_source = (instruction >> 3) & 7;
-        int opcode = (instruction >> 8) & 3;
         bool compare = false;
         u32 operand;
 
-        // Both reg_dest and reg_source can encode either a low register (r0-r7) or a high register (r8-r15)
-        switch ((instruction >> 6) & 3)
-        {
-        case 0b01:
-            reg_source += 8;
-            break;
-        case 0b10:
-            reg_dest += 8;
-            break;
-        case 0b11:
-            reg_dest += 8;
-            reg_source += 8;
-            break;
-        }
+        if (high1) reg_dest += 8;
+        if (high2) reg_source += 8;
 
         operand = reg(reg_source);
-
-        if (reg_source == 15)
-            operand &= ~1;
+        if (reg_source == 15) operand &= ~1;
 
         // Time next pipeline prefetch
         cycles += memory->SequentialAccess(r[15], GBAMemory::ACCESS_HWORD);
 
         // Perform the actual operation
-        switch (opcode)
+        switch (op)
         {
-        case 0b00: // ADD
+        case 0: // ADD
             reg(reg_dest) += operand;
             break;
-        case 0b01: // CMP
+        case 1: // CMP
         {
             u32 result = reg(reg_dest) - operand;
             AssertCarry(reg(reg_dest) >= operand);
@@ -506,10 +507,10 @@ namespace NanoboyAdvance
             compare = true;
             break;
         }
-        case 0b10: // MOV
+        case 2: // MOV
             reg(reg_dest) = operand;
             break;
-        case 0b11: // BX
+        case 3: // BX
             // Bit0 being set in the address indicates
             // that the destination instruction is in THUMB mode.
             if (operand & 1)
@@ -535,7 +536,7 @@ namespace NanoboyAdvance
             break;
         }
 
-        if (reg_dest == 15 && !compare && opcode != 0b11)
+        if (reg_dest == 15 && !compare && op != 0b11)
         {
             // Flush pipeline
             reg(reg_dest) &= ~1;
@@ -547,17 +548,17 @@ namespace NanoboyAdvance
         }
     }
 
+    template <int reg_dest>
     void ARM7::Thumb6(u16 instruction)
     {
         // THUMB.6 PC-relative load
         u32 immediate_value = instruction & 0xFF;
-        int reg_dest = (instruction >> 8) & 7;
         u32 address = (r[15] & ~2) + (immediate_value << 2);
 
         reg(reg_dest) = ReadWord(address);
 
         cycles += 1 + memory->SequentialAccess(r[15], GBAMemory::ACCESS_HWORD) +
-        memory->NonSequentialAccess(address, GBAMemory::ACCESS_WORD);
+                      memory->NonSequentialAccess(address, GBAMemory::ACCESS_WORD);
     }
 
     void ARM7::Thumb7(u16 instruction)
@@ -1069,8 +1070,8 @@ namespace NanoboyAdvance
         }
     }
 
-    void ARM7::ExecuteThumb(u16 instruction)
+    /*void ARM7::ExecuteThumb(u16 instruction)
     {
         (*this.*thumb_table[instruction >> 6])(instruction);
-    }
+    }*/
 }

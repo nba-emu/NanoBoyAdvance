@@ -237,8 +237,14 @@ namespace NanoboyAdvance
 
         template <int op, int reg_dest>
         void Thumb3(u16 instruction);
+
+        template <int op>
         void Thumb4(u16 instruction);
+
+        template <int op, bool high1, bool high2>
         void Thumb5(u16 instruction);
+
+        template <int reg_dest>
         void Thumb6(u16 instruction);
         void Thumb7(u16 instruction);
         void Thumb8(u16 instruction);
@@ -257,7 +263,10 @@ namespace NanoboyAdvance
         // Command processing
         int Decode(u32 instruction);
         void Execute(u32 instruction, int type);
-        void ExecuteThumb(u16 instruction);
+        inline void ExecuteThumb(u16 instruction)
+        {
+            (*this.*thumb_table[instruction >> 6])(instruction);
+        }
 
         // HLE-emulation
         void SWI(int number);
