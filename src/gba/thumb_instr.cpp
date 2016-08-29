@@ -56,29 +56,50 @@ namespace NanoboyAdvance
         &Thumb1<28,2>, &Thumb1<29,2>, &Thumb1<30,2>, &Thumb1<31,2>,
 
         /* THUMB.2 Add / subtract */
-        &Thumb2<false, false, 0>, &Thumb2<false, false, 1>, &Thumb2<false, false, 2>, &Thumb2<false, false, 3>,
-        &Thumb2<false, false, 4>, &Thumb2<false, false, 5>, &Thumb2<false, false, 6>, &Thumb2<false, false, 7>,
-        &Thumb2<false, true, 0>,  &Thumb2<false, true, 1>,  &Thumb2<false, true, 2>,  &Thumb2<false, true, 3>,
-        &Thumb2<false, true, 4>,  &Thumb2<false, true, 5>,  &Thumb2<false, true, 6>,  &Thumb2<false, true, 7>,
-        &Thumb2<true, false, 0>,  &Thumb2<true, false, 1>,  &Thumb2<true, false, 2>,  &Thumb2<true, false, 3>,
-        &Thumb2<true, false, 4>,  &Thumb2<true, false, 5>,  &Thumb2<true, false, 6>,  &Thumb2<true, false, 7>,
-        &Thumb2<true, true, 0>,   &Thumb2<true, true, 1>,   &Thumb2<true, true, 2>,   &Thumb2<true, true, 3>,
-        &Thumb2<true, true, 4>,   &Thumb2<true, true, 5>,   &Thumb2<true, true, 6>,   &Thumb2<true, true, 7>,
+        &Thumb2<false,false,0>, &Thumb2<false,false,1>, &Thumb2<false,false,2>, &Thumb2<false,false,3>,
+        &Thumb2<false,false,4>, &Thumb2<false,false,5>, &Thumb2<false,false,6>, &Thumb2<false,false,7>,
+        &Thumb2<false,true,0>,  &Thumb2<false,true,1>,  &Thumb2<false,true,2>,  &Thumb2<false,true,3>,
+        &Thumb2<false,true,4>,  &Thumb2<false,true,5>,  &Thumb2<false,true,6>,  &Thumb2<false,true,7>,
+        &Thumb2<true,false,0>,  &Thumb2<true,false,1>,  &Thumb2<true,false,2>,  &Thumb2<true,false,3>,
+        &Thumb2<true,false,4>,  &Thumb2<true,false,5>,  &Thumb2<true,false,6>,  &Thumb2<true,false,7>,
+        &Thumb2<true,true,0>,   &Thumb2<true,true,1>,   &Thumb2<true,true,2>,   &Thumb2<true,true,3>,
+        &Thumb2<true,true,4>,   &Thumb2<true,true,5>,   &Thumb2<true,true,6>,   &Thumb2<true,true,7>,
 
-        &Thumb3, &Thumb3,
-        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
-        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
-        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
-        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
-        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
-        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
-        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
-        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
-        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
-        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
-        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
-        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
-        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb4, &Thumb4, &Thumb4, &Thumb4,
+        /* THUMB.3 Move/compare/add/subtract immediate */
+        &Thumb3<0,0>, &Thumb3<0,0>, &Thumb3<0,0>, &Thumb3<0,0>,
+        &Thumb3<0,1>, &Thumb3<0,1>, &Thumb3<0,1>, &Thumb3<0,1>,
+        &Thumb3<0,2>, &Thumb3<0,2>, &Thumb3<0,2>, &Thumb3<0,2>,
+        &Thumb3<0,3>, &Thumb3<0,3>, &Thumb3<0,3>, &Thumb3<0,3>,
+        &Thumb3<0,4>, &Thumb3<0,4>, &Thumb3<0,4>, &Thumb3<0,4>,
+        &Thumb3<0,5>, &Thumb3<0,5>, &Thumb3<0,5>, &Thumb3<0,5>,
+        &Thumb3<0,6>, &Thumb3<0,6>, &Thumb3<0,6>, &Thumb3<0,6>,
+        &Thumb3<0,7>, &Thumb3<0,7>, &Thumb3<0,7>, &Thumb3<0,7>,
+        &Thumb3<1,0>, &Thumb3<1,0>, &Thumb3<1,0>, &Thumb3<1,0>,
+        &Thumb3<1,1>, &Thumb3<1,1>, &Thumb3<1,1>, &Thumb3<1,1>,
+        &Thumb3<1,2>, &Thumb3<1,2>, &Thumb3<1,2>, &Thumb3<1,2>,
+        &Thumb3<1,3>, &Thumb3<1,3>, &Thumb3<1,3>, &Thumb3<1,3>,
+        &Thumb3<1,4>, &Thumb3<1,4>, &Thumb3<1,4>, &Thumb3<1,4>,
+        &Thumb3<1,5>, &Thumb3<1,5>, &Thumb3<1,5>, &Thumb3<1,5>,
+        &Thumb3<1,6>, &Thumb3<1,6>, &Thumb3<1,6>, &Thumb3<1,6>,
+        &Thumb3<1,7>, &Thumb3<1,7>, &Thumb3<1,7>, &Thumb3<1,7>,
+        &Thumb3<2,0>, &Thumb3<2,0>, &Thumb3<2,0>, &Thumb3<2,0>,
+        &Thumb3<2,1>, &Thumb3<2,1>, &Thumb3<2,1>, &Thumb3<2,1>,
+        &Thumb3<2,2>, &Thumb3<2,2>, &Thumb3<2,2>, &Thumb3<2,2>,
+        &Thumb3<2,3>, &Thumb3<2,3>, &Thumb3<2,3>, &Thumb3<2,3>,
+        &Thumb3<2,4>, &Thumb3<2,4>, &Thumb3<2,4>, &Thumb3<2,4>,
+        &Thumb3<2,5>, &Thumb3<2,5>, &Thumb3<2,5>, &Thumb3<2,5>,
+        &Thumb3<2,6>, &Thumb3<2,6>, &Thumb3<2,6>, &Thumb3<2,6>,
+        &Thumb3<2,7>, &Thumb3<2,7>, &Thumb3<2,7>, &Thumb3<2,7>,
+        &Thumb3<3,0>, &Thumb3<3,0>, &Thumb3<3,0>, &Thumb3<3,0>,
+        &Thumb3<3,1>, &Thumb3<3,1>, &Thumb3<3,1>, &Thumb3<3,1>,
+        &Thumb3<3,2>, &Thumb3<3,2>, &Thumb3<3,2>, &Thumb3<3,2>,
+        &Thumb3<3,3>, &Thumb3<3,3>, &Thumb3<3,3>, &Thumb3<3,3>,
+        &Thumb3<3,4>, &Thumb3<3,4>, &Thumb3<3,4>, &Thumb3<3,4>,
+        &Thumb3<3,5>, &Thumb3<3,5>, &Thumb3<3,5>, &Thumb3<3,5>,
+        &Thumb3<3,6>, &Thumb3<3,6>, &Thumb3<3,6>, &Thumb3<3,6>,
+        &Thumb3<3,7>, &Thumb3<3,7>, &Thumb3<3,7>, &Thumb3<3,7>,
+
+        &Thumb4, &Thumb4, &Thumb4, &Thumb4,
         &Thumb4, &Thumb4, &Thumb4, &Thumb4, &Thumb4, &Thumb4, &Thumb4, &Thumb4, &Thumb4, &Thumb4,
         &Thumb4, &Thumb4, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5,
         &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb6, &Thumb6,
@@ -239,13 +260,13 @@ namespace NanoboyAdvance
         cycles += memory->SequentialAccess(r[15], GBAMemory::ACCESS_HWORD);
     }
 
+    template <int op, int reg_dest>
     void ARM7::Thumb3(u16 instruction)
     {
         // THUMB.3 Move/compare/add/subtract immediate
         u32 immediate_value = instruction & 0xFF;
-        int reg_dest = (instruction >> 8) & 7;
 
-        switch ((instruction >> 11) & 3)
+        switch (op)
         {
         case 0b00: // MOV
             CalculateSign(0);

@@ -234,6 +234,8 @@ namespace NanoboyAdvance
 
         template <bool immediate, bool subtract, int field3>
         void Thumb2(u16 instruction);
+
+        template <int op, int reg_dest>
         void Thumb3(u16 instruction);
         void Thumb4(u16 instruction);
         void Thumb5(u16 instruction);
