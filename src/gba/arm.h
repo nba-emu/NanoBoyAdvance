@@ -231,6 +231,8 @@ namespace NanoboyAdvance
         // Thumb Instructions
         template <int imm, int type>
         void Thumb1(u16 instruction);
+
+        template <bool immediate, bool subtract, int field3>
         void Thumb2(u16 instruction);
         void Thumb3(u16 instruction);
         void Thumb4(u16 instruction);

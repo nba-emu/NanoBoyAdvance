@@ -56,10 +56,16 @@ namespace NanoboyAdvance
         &Thumb1<28,2>, &Thumb1<29,2>, &Thumb1<30,2>, &Thumb1<31,2>,
 
         /* THUMB.2 Add / subtract */
-        &Thumb2, &Thumb2, &Thumb2, &Thumb2,
-        &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2,
-        &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2,
-        &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb3, &Thumb3,
+        &Thumb2<false, false, 0>, &Thumb2<false, false, 1>, &Thumb2<false, false, 2>, &Thumb2<false, false, 3>,
+        &Thumb2<false, false, 4>, &Thumb2<false, false, 5>, &Thumb2<false, false, 6>, &Thumb2<false, false, 7>,
+        &Thumb2<false, true, 0>,  &Thumb2<false, true, 1>,  &Thumb2<false, true, 2>,  &Thumb2<false, true, 3>,
+        &Thumb2<false, true, 4>,  &Thumb2<false, true, 5>,  &Thumb2<false, true, 6>,  &Thumb2<false, true, 7>,
+        &Thumb2<true, false, 0>,  &Thumb2<true, false, 1>,  &Thumb2<true, false, 2>,  &Thumb2<true, false, 3>,
+        &Thumb2<true, false, 4>,  &Thumb2<true, false, 5>,  &Thumb2<true, false, 6>,  &Thumb2<true, false, 7>,
+        &Thumb2<true, true, 0>,   &Thumb2<true, true, 1>,   &Thumb2<true, true, 2>,   &Thumb2<true, true, 3>,
+        &Thumb2<true, true, 4>,   &Thumb2<true, true, 5>,   &Thumb2<true, true, 6>,   &Thumb2<true, true, 7>,
+
+        &Thumb3, &Thumb3,
         &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
         &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
         &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
@@ -188,6 +194,7 @@ namespace NanoboyAdvance
         cycles += memory->SequentialAccess(r[15], GBAMemory::ACCESS_HWORD);
     }
 
+    template <bool immediate, bool subtract, int field3>
     void ARM7::Thumb2(u16 instruction)
     {
         // THUMB.2 Add/subtract
@@ -196,13 +203,13 @@ namespace NanoboyAdvance
         u32 operand;
 
         // Either a register or an immediate
-        if (instruction & (1 << 10))
-            operand = (instruction >> 6) & 7;
+        if (immediate)
+            operand = field3;
         else
-            operand = reg((instruction >> 6) & 7);
+            operand = reg(field3);
 
         // Determine wether to subtract or add
-        if (instruction & (1 << 9))
+        if (subtract)
         {
             u32 result = reg(reg_source) - operand;
 
