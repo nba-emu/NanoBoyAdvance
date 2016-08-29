@@ -6,16 +6,23 @@ option(STATIC_STDLIB "Link libgcc and libg++ statically" OFF)
 if (WIN32)
     set(STATIC_STDLIB ON)
 endif()
+if (STATIC_STDLIB)
+    add_definitions(-static-libgcc -static-libstdc++)
+endif()
 
-# Compiler settings
+# Debug Mode?
 option(DEBUG "Build for debug purposes" OFF)
 if (DEBUG)
     add_definitions(-std=c++11 -g -O0 -fpermissive -DDEBUG)
 else()
     add_definitions(-std=c++11 -Ofast -fpermissive -finline-functions)
 endif()
-if (STATIC_STDLIB)
-    add_definitions(-static-libgcc -static-libstdc++)
+
+# Perform profiling?
+option(PROFILE "Collect GPROF sample data" OFF)
+if (PROFILE)
+    add_definitions(-pg)
+    set(CMAKE_EXE_LINKER_FLAGS -pg)
 endif()
 
 # The version number.

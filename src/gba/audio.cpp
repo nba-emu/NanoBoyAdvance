@@ -43,63 +43,59 @@ namespace NanoboyAdvance
 
     void Audio::Step()
     {
+        u8 out = 0;
 
-        if (m_Ticks++ == (16780000 / m_SampleRate))
+        m_Buffer.push_back(0);
+
+        if (m_Buffer.size() == m_BufferSize)
         {
-            u8 out = 0;
+            double ratio[2];
+            double source_index[2] {0, 0};
 
-            m_Buffer.push_back(0);
+            ratio[0] = (double)m_FifoBuffer[0].size() / (double)m_BufferSize;
+            ratio[1] = (double)m_FifoBuffer[1].size() / (double)m_BufferSize;
 
-            if (m_Buffer.size() == m_BufferSize)
+            for (int i = 0; i < m_BufferSize; i++)
             {
-                double ratio[2];
-                double source_index[2] {0, 0};
+                s8 output = m_Buffer[i];
 
-                ratio[0] = (double)m_FifoBuffer[0].size() / (double)m_BufferSize;
-                ratio[1] = (double)m_FifoBuffer[1].size() / (double)m_BufferSize;
-
-                for (int i = 0; i < m_BufferSize; i++)
+                for (int j = 0; j < 2; j++)
                 {
-                    s8 output = m_Buffer[i];
+                    // Get integral and fractional part of input index
+                    double integral;
+                    double fractional = modf(source_index[j], &integral);
 
-                    for (int j = 0; j < 2; j++)
+                    if (integral >= m_FifoBuffer[j].size())
+                        continue;
+
+                    // Get current input sample
+                    int8_t current = m_FifoBuffer[j][(int)integral];
+                    int8_t between = current;
+
+                    // Only if there is another sample
+                    if (integral < m_FifoBuffer[j].size() - 1)
                     {
-                        // Get integral and fractional part of input index
-                        double integral;
-                        double fractional = modf(source_index[j], &integral);
+                        // Get the next sample
+                        int8_t next = m_FifoBuffer[j][(int)integral + 1];
 
-                        if (integral >= m_FifoBuffer[j].size())
-                            continue;
-
-                        // Get current input sample
-                        int8_t current = m_FifoBuffer[j][(int)integral];
-                        int8_t between = current;
-
-                        // Only if there is another sample
-                        if (integral < m_FifoBuffer[j].size() - 1)
-                        {
-                            // Get the next sample
-                            int8_t next = m_FifoBuffer[j][(int)integral + 1];
-
-                            // Perform Cosinus Interpolation
-                            fractional = (1 - cos(fractional * 3.141596)) / 2;
-                            between = (current * (1 - fractional)) + (next * fractional);
-                        }
-
-                        output += between;
-                        source_index[j] += ratio[j];
+                        // Perform Cosinus Interpolation
+                        fractional = (1 - cos(fractional * 3.141596)) / 2;
+                        between = (current * (1 - fractional)) + (next * fractional);
                     }
 
-                    //*os[0] << output;
+                    output += between;
+                    source_index[j] += ratio[j];
                 }
 
-                m_FifoBuffer[0].clear();
-                m_FifoBuffer[1].clear();
-                m_Buffer.clear();
+                *os[0] << output;
             }
 
-            m_Ticks = 0;
+            m_FifoBuffer[0].clear();
+            m_FifoBuffer[1].clear();
+            m_Buffer.clear();
         }
+
+        m_WaitCycles = 16780000 / m_SampleRate;
     }
 
     void Audio::FifoLoadSample(int fifo)

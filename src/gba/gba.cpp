@@ -132,7 +132,11 @@ namespace NanoboyAdvance
                     else
                         m_Memory.m_Video.m_WaitCycles--;
 
-                    m_Memory.m_Audio.Step();
+                    if (m_Memory.m_Audio.m_WaitCycles == 0)
+                        m_Memory.m_Audio.Step();
+                    else
+                        m_Memory.m_Audio.m_WaitCycles--;
+                        
                     m_Memory.RunTimer();
                 }
 

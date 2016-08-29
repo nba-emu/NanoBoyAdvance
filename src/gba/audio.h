@@ -85,7 +85,6 @@ namespace NanoboyAdvance
         int m_SampleRate { 32768 };
         int m_BufferSize { 4096 };
         std::vector<s8> m_Buffer;
-        int m_Ticks {0};
 
         ///////////////////////////////////////////////////////////
         /// Class members (FIFOs)
@@ -96,6 +95,7 @@ namespace NanoboyAdvance
         std::ofstream* os[2];
     public:
         FIFO m_FIFO[2];
+        int m_WaitCycles { 0 };
     };
 }
 
