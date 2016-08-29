@@ -27,6 +27,113 @@
 
 namespace NanoboyAdvance
 {
+    const ARM7::ThumbInstruction ARM7::thumb_table[1024] =
+    {
+        &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1,
+        &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1,
+        &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1,
+        &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1,
+        &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1,
+        &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1,
+        &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1,
+        &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1,
+        &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1,
+        &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb1, &Thumb2, &Thumb2, &Thumb2, &Thumb2,
+        &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2,
+        &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2,
+        &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb2, &Thumb3, &Thumb3,
+        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
+        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
+        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
+        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
+        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
+        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
+        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
+        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
+        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
+        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
+        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
+        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3,
+        &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb3, &Thumb4, &Thumb4, &Thumb4, &Thumb4,
+        &Thumb4, &Thumb4, &Thumb4, &Thumb4, &Thumb4, &Thumb4, &Thumb4, &Thumb4, &Thumb4, &Thumb4,
+        &Thumb4, &Thumb4, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5,
+        &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb5, &Thumb6, &Thumb6,
+        &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6,
+        &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6,
+        &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6, &Thumb6,
+        &Thumb7, &Thumb7, &Thumb7, &Thumb7, &Thumb7, &Thumb7, &Thumb7, &Thumb7, &Thumb8, &Thumb8,
+        &Thumb8, &Thumb8, &Thumb8, &Thumb8, &Thumb8, &Thumb8, &Thumb7, &Thumb7, &Thumb7, &Thumb7,
+        &Thumb7, &Thumb7, &Thumb7, &Thumb7, &Thumb8, &Thumb8, &Thumb8, &Thumb8, &Thumb8, &Thumb8,
+        &Thumb8, &Thumb8, &Thumb7, &Thumb7, &Thumb7, &Thumb7, &Thumb7, &Thumb7, &Thumb7, &Thumb7,
+        &Thumb8, &Thumb8, &Thumb8, &Thumb8, &Thumb8, &Thumb8, &Thumb8, &Thumb8, &Thumb7, &Thumb7,
+        &Thumb7, &Thumb7, &Thumb7, &Thumb7, &Thumb7, &Thumb7, &Thumb8, &Thumb8, &Thumb8, &Thumb8,
+        &Thumb8, &Thumb8, &Thumb8, &Thumb8, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9,
+        &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9,
+        &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9,
+        &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9,
+        &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9,
+        &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9,
+        &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9,
+        &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9,
+        &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9,
+        &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9,
+        &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9,
+        &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9,
+        &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9, &Thumb9,
+        &Thumb9, &Thumb9, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10,
+        &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10,
+        &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10,
+        &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10,
+        &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10,
+        &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10,
+        &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb10, &Thumb11, &Thumb11, &Thumb11, &Thumb11,
+        &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11,
+        &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11,
+        &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11,
+        &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11,
+        &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11,
+        &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11, &Thumb11,
+        &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12,
+        &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12,
+        &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12,
+        &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12,
+        &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12,
+        &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb12,
+        &Thumb12, &Thumb12, &Thumb12, &Thumb12, &Thumb13, &Thumb13, &Thumb13, &Thumb13, &Thumb13, &Thumb13,
+        &Thumb13, &Thumb13, &Thumb13, &Thumb13, &Thumb13, &Thumb13, &Thumb13, &Thumb13, &Thumb13, &Thumb13,
+        &Thumb14, &Thumb14, &Thumb14, &Thumb14, &Thumb14, &Thumb14, &Thumb14, &Thumb14, &Thumb14, &Thumb14,
+        &Thumb14, &Thumb14, &Thumb14, &Thumb14, &Thumb14, &Thumb14, &Thumb13, &Thumb13, &Thumb13, &Thumb13,
+        &Thumb13, &Thumb13, &Thumb13, &Thumb13, &Thumb13, &Thumb13, &Thumb13, &Thumb13, &Thumb13, &Thumb13,
+        &Thumb13, &Thumb13, &Thumb14, &Thumb14, &Thumb14, &Thumb14, &Thumb14, &Thumb14, &Thumb14, &Thumb14,
+        &Thumb14, &Thumb14, &Thumb14, &Thumb14, &Thumb14, &Thumb14, &Thumb14, &Thumb14, &Thumb15, &Thumb15,
+        &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15,
+        &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15,
+        &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15,
+        &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15,
+        &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15,
+        &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15, &Thumb15,
+        &Thumb15, &Thumb15, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16,
+        &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16,
+        &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16,
+        &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16,
+        &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16,
+        &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16, &Thumb16,
+        &Thumb16, &Thumb16, &Thumb17, &Thumb17, &Thumb17, &Thumb17, &Thumb18, &Thumb18, &Thumb18, &Thumb18,
+        &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18,
+        &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18,
+        &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18,
+        &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18,
+        &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18,
+        &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18, &Thumb18,
+        &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19,
+        &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19,
+        &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19,
+        &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19,
+        &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19,
+        &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19, &Thumb19,
+        &Thumb19, &Thumb19, &Thumb19, &Thumb19
+    };
+
     void ARM7::Thumb1(u16 instruction)
     {
         // THUMB.1 Move shifted register
@@ -919,105 +1026,6 @@ namespace NanoboyAdvance
 
     void ARM7::ExecuteThumb(u16 instruction)
     {
-        switch (instruction >> 12)
-        {
-        case 0x1:
-            if (instruction & 0x800)
-            {
-                Thumb2(instruction);
-                return;
-            }
-        case 0x0:
-        {
-            Thumb1(instruction);
-            return;
-        }
-        case 0x2:
-        case 0x3:
-        {
-            Thumb3(instruction);
-            return;
-        }
-        case 0x4:
-            if (instruction & 0x800)
-            {
-                Thumb6(instruction);
-            }
-            else if (instruction & 0x400)
-            {
-                Thumb5(instruction);
-            }
-            else
-            {
-                Thumb4(instruction);
-            }
-            return;
-        case 0x5:
-            if (instruction & 0x200)
-            {
-                Thumb8(instruction);
-            }
-            else
-            {
-                Thumb7(instruction);
-            }
-            return;
-        case 0x6:
-        case 0x7:
-        {
-            Thumb9(instruction);
-            return;
-        }
-        case 0x8:
-        {
-            Thumb10(instruction);
-            return;
-        }
-        case 0x9:
-        {
-            Thumb11(instruction);
-            return;
-        }
-        case 0xA:
-        {
-            Thumb12(instruction);
-            return;
-        }
-        case 0xB:
-            if (instruction & 0x400)
-            {
-                Thumb14(instruction);
-            }
-            else
-            {
-                Thumb13(instruction);
-            }
-            return;
-        case 0xC:
-        {
-            Thumb15(instruction);
-            return;
-        }
-        case 0xD:
-            if ((instruction & 0xF00) == 0xF00)
-            {
-                Thumb17(instruction);
-            }
-            else
-            {
-                Thumb16(instruction);
-            }
-            return;
-        case 0xE:
-        {
-            Thumb18(instruction);
-            return;
-        }
-        case 0xF:
-        {
-            Thumb19(instruction);
-            return;
-        }
-        }
+        (*this.*thumb_table[instruction >> 6])(instruction);
     }
 }

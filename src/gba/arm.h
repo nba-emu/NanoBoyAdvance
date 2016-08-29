@@ -34,6 +34,9 @@ namespace NanoboyAdvance
 {
     class ARM7
     {
+        typedef void (ARM7::*ThumbInstruction)(u16);
+        static const ThumbInstruction thumb_table[1024];
+
         GBAMemory* memory;
         
         // General Purpose Registers
