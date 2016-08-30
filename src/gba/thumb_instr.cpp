@@ -107,10 +107,14 @@ namespace NanoboyAdvance
 
         /* THUMB.5 High register operations/branch exchange
          * TODO: Eventually move BX into it's own method. */
-        &ARM7::Thumb5<0,false,false>, &ARM7::Thumb5<0,false,true>, &ARM7::Thumb5<0,true,false>, &ARM7::Thumb5<0,true,true>,
-        &ARM7::Thumb5<1,false,false>, &ARM7::Thumb5<1,false,true>, &ARM7::Thumb5<1,true,false>, &ARM7::Thumb5<1,true,true>,
-        &ARM7::Thumb5<2,false,false>, &ARM7::Thumb5<2,false,true>, &ARM7::Thumb5<2,true,false>, &ARM7::Thumb5<2,true,true>,
-        &ARM7::Thumb5<3,false,false>, &ARM7::Thumb5<3,false,true>, &ARM7::Thumb5<3,true,false>, &ARM7::Thumb5<3,true,true>,
+        &ARM7::Thumb5<0,false,false>, &ARM7::Thumb5<0,false,true>,
+        &ARM7::Thumb5<0,true,false>,  &ARM7::Thumb5<0,true,true>,
+        &ARM7::Thumb5<1,false,false>, &ARM7::Thumb5<1,false,true>,
+        &ARM7::Thumb5<1,true,false>,  &ARM7::Thumb5<1,true,true>,
+        &ARM7::Thumb5<2,false,false>, &ARM7::Thumb5<2,false,true>,
+        &ARM7::Thumb5<2,true,false>,  &ARM7::Thumb5<2,true,true>,
+        &ARM7::Thumb5<3,false,false>, &ARM7::Thumb5<3,false,true>,
+        &ARM7::Thumb5<3,true,false>,  &ARM7::Thumb5<3,true,true>,
 
         /* THUMB.6 PC-relative load */
         &ARM7::Thumb6<0>, &ARM7::Thumb6<0>, &ARM7::Thumb6<0>, &ARM7::Thumb6<0>,
@@ -122,77 +126,205 @@ namespace NanoboyAdvance
         &ARM7::Thumb6<6>, &ARM7::Thumb6<6>, &ARM7::Thumb6<6>, &ARM7::Thumb6<6>,
         &ARM7::Thumb6<7>, &ARM7::Thumb6<7>, &ARM7::Thumb6<7>, &ARM7::Thumb6<7>,
 
-        &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb8, &ARM7::Thumb8,
-        &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb7,
-        &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb8,
-        &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb7,
-        &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb7, &ARM7::Thumb7,
-        &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb7, &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb8,
-        &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb8, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9,
-        &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9,
-        &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9,
-        &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9,
-        &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9,
-        &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9,
-        &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9,
-        &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9,
-        &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9,
-        &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9,
-        &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9,
-        &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9,
-        &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb9,
-        &ARM7::Thumb9, &ARM7::Thumb9, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10,
-        &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10,
-        &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10,
-        &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10,
-        &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10,
-        &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10,
-        &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb10, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11,
-        &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11,
-        &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11,
-        &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11,
-        &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11,
-        &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11,
-        &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11, &ARM7::Thumb11,
-        &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12,
-        &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12,
-        &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12,
-        &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12,
-        &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12,
-        &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12,
-        &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb12, &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13,
-        &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13,
-        &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14,
-        &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13,
-        &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb13,
-        &ARM7::Thumb13, &ARM7::Thumb13, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14,
-        &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb14, &ARM7::Thumb15, &ARM7::Thumb15,
-        &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15,
-        &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15,
-        &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15,
-        &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15,
-        &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15,
-        &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb15,
-        &ARM7::Thumb15, &ARM7::Thumb15, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16,
-        &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16,
-        &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16,
-        &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16,
-        &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16,
-        &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb16,
-        &ARM7::Thumb16, &ARM7::Thumb16, &ARM7::Thumb17, &ARM7::Thumb17, &ARM7::Thumb17, &ARM7::Thumb17, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
-        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
-        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
-        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
-        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
-        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
-        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
-        &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19,
-        &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19,
-        &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19,
-        &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19,
-        &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19,
-        &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19,
-        &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19, &ARM7::Thumb19
+        /* THUMB.7 Load/store with register offset, 
+           THUMB.8 Load/store sign-extended byte/halfword */
+        &ARM7::Thumb7<0,0>, &ARM7::Thumb7<0,1>, &ARM7::Thumb7<0,2>, &ARM7::Thumb7<0,3>,
+        &ARM7::Thumb7<0,4>, &ARM7::Thumb7<0,5>, &ARM7::Thumb7<0,6>, &ARM7::Thumb7<0,7>,
+        &ARM7::Thumb8<0,0>, &ARM7::Thumb8<0,1>, &ARM7::Thumb8<0,2>, &ARM7::Thumb8<0,3>,
+        &ARM7::Thumb8<0,4>, &ARM7::Thumb8<0,5>, &ARM7::Thumb8<0,6>, &ARM7::Thumb8<0,7>,
+        &ARM7::Thumb7<1,0>, &ARM7::Thumb7<1,1>, &ARM7::Thumb7<1,2>, &ARM7::Thumb7<1,3>,
+        &ARM7::Thumb7<1,4>, &ARM7::Thumb7<1,5>, &ARM7::Thumb7<1,6>, &ARM7::Thumb7<1,7>,
+        &ARM7::Thumb8<1,0>, &ARM7::Thumb8<1,1>, &ARM7::Thumb8<1,2>, &ARM7::Thumb8<1,3>,
+        &ARM7::Thumb8<1,4>, &ARM7::Thumb8<1,5>, &ARM7::Thumb8<1,6>, &ARM7::Thumb8<1,7>,
+        &ARM7::Thumb7<2,0>, &ARM7::Thumb7<2,1>, &ARM7::Thumb7<2,2>, &ARM7::Thumb7<2,3>,
+        &ARM7::Thumb7<2,4>, &ARM7::Thumb7<2,5>, &ARM7::Thumb7<2,6>, &ARM7::Thumb7<2,7>, 
+        &ARM7::Thumb8<2,0>, &ARM7::Thumb8<2,1>, &ARM7::Thumb8<2,2>, &ARM7::Thumb8<2,3>,
+        &ARM7::Thumb8<2,4>, &ARM7::Thumb8<2,5>, &ARM7::Thumb8<2,6>, &ARM7::Thumb8<2,7>, 
+        &ARM7::Thumb7<3,0>, &ARM7::Thumb7<3,1>, &ARM7::Thumb7<3,2>, &ARM7::Thumb7<3,3>,
+        &ARM7::Thumb7<3,4>, &ARM7::Thumb7<3,5>, &ARM7::Thumb7<3,6>, &ARM7::Thumb7<3,7>,   
+        &ARM7::Thumb8<3,0>, &ARM7::Thumb8<3,1>, &ARM7::Thumb8<3,2>, &ARM7::Thumb8<3,3>,
+        &ARM7::Thumb8<3,4>, &ARM7::Thumb8<3,5>, &ARM7::Thumb8<3,6>, &ARM7::Thumb8<3,7>, 
+
+        /* THUMB.9 Load/store with immediate offset */
+        &ARM7::Thumb9<0,0>,  &ARM7::Thumb9<0,1>,  &ARM7::Thumb9<0,2>,  &ARM7::Thumb9<0,3>, 
+        &ARM7::Thumb9<0,4>,  &ARM7::Thumb9<0,5>,  &ARM7::Thumb9<0,6>,  &ARM7::Thumb9<0,7>, 
+        &ARM7::Thumb9<0,8>,  &ARM7::Thumb9<0,9>,  &ARM7::Thumb9<0,10>, &ARM7::Thumb9<0,11>,
+        &ARM7::Thumb9<0,12>, &ARM7::Thumb9<0,13>, &ARM7::Thumb9<0,14>, &ARM7::Thumb9<0,15>,
+        &ARM7::Thumb9<0,16>, &ARM7::Thumb9<0,17>, &ARM7::Thumb9<0,18>, &ARM7::Thumb9<0,19>,
+        &ARM7::Thumb9<0,20>, &ARM7::Thumb9<0,21>, &ARM7::Thumb9<0,22>, &ARM7::Thumb9<0,23>, 
+        &ARM7::Thumb9<0,24>, &ARM7::Thumb9<0,25>, &ARM7::Thumb9<0,26>, &ARM7::Thumb9<0,27>,
+        &ARM7::Thumb9<0,28>, &ARM7::Thumb9<0,29>, &ARM7::Thumb9<0,30>, &ARM7::Thumb9<0,31>,
+        &ARM7::Thumb9<1,0>,  &ARM7::Thumb9<1,1>,  &ARM7::Thumb9<1,2>,  &ARM7::Thumb9<1,3>,
+        &ARM7::Thumb9<1,4>,  &ARM7::Thumb9<1,5>,  &ARM7::Thumb9<1,6>,  &ARM7::Thumb9<1,7>, 
+        &ARM7::Thumb9<1,8>,  &ARM7::Thumb9<1,9>,  &ARM7::Thumb9<1,10>, &ARM7::Thumb9<1,11>,
+        &ARM7::Thumb9<1,12>, &ARM7::Thumb9<1,13>, &ARM7::Thumb9<1,14>, &ARM7::Thumb9<1,15>,
+        &ARM7::Thumb9<1,16>, &ARM7::Thumb9<1,17>, &ARM7::Thumb9<1,18>, &ARM7::Thumb9<1,19>,
+        &ARM7::Thumb9<1,20>, &ARM7::Thumb9<1,21>, &ARM7::Thumb9<1,22>, &ARM7::Thumb9<1,23>, 
+        &ARM7::Thumb9<1,24>, &ARM7::Thumb9<1,25>, &ARM7::Thumb9<1,26>, &ARM7::Thumb9<1,27>,
+        &ARM7::Thumb9<1,28>, &ARM7::Thumb9<1,29>, &ARM7::Thumb9<1,30>, &ARM7::Thumb9<1,31>,
+        &ARM7::Thumb9<2,0>,  &ARM7::Thumb9<2,1>,  &ARM7::Thumb9<2,2>,  &ARM7::Thumb9<2,3>,
+        &ARM7::Thumb9<2,4>,  &ARM7::Thumb9<2,5>,  &ARM7::Thumb9<2,6>,  &ARM7::Thumb9<2,7>, 
+        &ARM7::Thumb9<2,8>,  &ARM7::Thumb9<2,9>,  &ARM7::Thumb9<2,10>, &ARM7::Thumb9<2,11>,
+        &ARM7::Thumb9<2,12>, &ARM7::Thumb9<2,13>, &ARM7::Thumb9<2,14>, &ARM7::Thumb9<2,15>,
+        &ARM7::Thumb9<2,16>, &ARM7::Thumb9<2,17>, &ARM7::Thumb9<2,18>, &ARM7::Thumb9<2,19>,
+        &ARM7::Thumb9<2,20>, &ARM7::Thumb9<2,21>, &ARM7::Thumb9<2,22>, &ARM7::Thumb9<2,23>, 
+        &ARM7::Thumb9<2,24>, &ARM7::Thumb9<2,25>, &ARM7::Thumb9<2,26>, &ARM7::Thumb9<2,27>,
+        &ARM7::Thumb9<2,28>, &ARM7::Thumb9<2,29>, &ARM7::Thumb9<2,30>, &ARM7::Thumb9<2,31>,
+        &ARM7::Thumb9<3,0>,  &ARM7::Thumb9<3,1>,  &ARM7::Thumb9<3,2>,  &ARM7::Thumb9<3,3>,
+        &ARM7::Thumb9<3,4>,  &ARM7::Thumb9<3,5>,  &ARM7::Thumb9<3,6>,  &ARM7::Thumb9<3,7>, 
+        &ARM7::Thumb9<3,8>,  &ARM7::Thumb9<3,9>,  &ARM7::Thumb9<3,10>, &ARM7::Thumb9<3,11>,
+        &ARM7::Thumb9<3,12>, &ARM7::Thumb9<3,13>, &ARM7::Thumb9<3,14>, &ARM7::Thumb9<3,15>,
+        &ARM7::Thumb9<3,16>, &ARM7::Thumb9<3,17>, &ARM7::Thumb9<3,18>, &ARM7::Thumb9<3,19>,
+        &ARM7::Thumb9<3,20>, &ARM7::Thumb9<3,21>, &ARM7::Thumb9<3,22>, &ARM7::Thumb9<3,23>, 
+        &ARM7::Thumb9<3,24>, &ARM7::Thumb9<3,25>, &ARM7::Thumb9<3,26>, &ARM7::Thumb9<3,27>,
+        &ARM7::Thumb9<3,28>, &ARM7::Thumb9<3,29>, &ARM7::Thumb9<3,30>, &ARM7::Thumb9<3,31>,
+        
+        /* THUMB.10 Load/store halfword */
+        &ARM7::Thumb10<false,0>,  &ARM7::Thumb10<false,1>,  &ARM7::Thumb10<false,2>,  &ARM7::Thumb10<false,3>,
+        &ARM7::Thumb10<false,4>,  &ARM7::Thumb10<false,5>,  &ARM7::Thumb10<false,6>,  &ARM7::Thumb10<false,7>,
+        &ARM7::Thumb10<false,8>,  &ARM7::Thumb10<false,9>,  &ARM7::Thumb10<false,10>, &ARM7::Thumb10<false,11>,
+        &ARM7::Thumb10<false,12>, &ARM7::Thumb10<false,13>, &ARM7::Thumb10<false,14>, &ARM7::Thumb10<false,15>,
+        &ARM7::Thumb10<false,16>, &ARM7::Thumb10<false,17>, &ARM7::Thumb10<false,18>, &ARM7::Thumb10<false,19>,
+        &ARM7::Thumb10<false,20>, &ARM7::Thumb10<false,21>, &ARM7::Thumb10<false,22>, &ARM7::Thumb10<false,23>,
+        &ARM7::Thumb10<false,24>, &ARM7::Thumb10<false,25>, &ARM7::Thumb10<false,26>, &ARM7::Thumb10<false,27>,
+        &ARM7::Thumb10<false,28>, &ARM7::Thumb10<false,29>, &ARM7::Thumb10<false,30>, &ARM7::Thumb10<false,31>,
+        &ARM7::Thumb10<true,0>,  &ARM7::Thumb10<true,1>,  &ARM7::Thumb10<true,2>,  &ARM7::Thumb10<true,3>,
+        &ARM7::Thumb10<true,4>,  &ARM7::Thumb10<true,5>,  &ARM7::Thumb10<true,6>,  &ARM7::Thumb10<true,7>,
+        &ARM7::Thumb10<true,8>,  &ARM7::Thumb10<true,9>,  &ARM7::Thumb10<true,10>, &ARM7::Thumb10<true,11>,
+        &ARM7::Thumb10<true,12>, &ARM7::Thumb10<true,13>, &ARM7::Thumb10<true,14>, &ARM7::Thumb10<true,15>,
+        &ARM7::Thumb10<true,16>, &ARM7::Thumb10<true,17>, &ARM7::Thumb10<true,18>, &ARM7::Thumb10<true,19>,
+        &ARM7::Thumb10<true,20>, &ARM7::Thumb10<true,21>, &ARM7::Thumb10<true,22>, &ARM7::Thumb10<true,23>,
+        &ARM7::Thumb10<true,24>, &ARM7::Thumb10<true,25>, &ARM7::Thumb10<true,26>, &ARM7::Thumb10<true,27>,
+        &ARM7::Thumb10<true,28>, &ARM7::Thumb10<true,29>, &ARM7::Thumb10<true,30>, &ARM7::Thumb10<true,31>,
+        
+        /* THUMB.11 SP-relative load/store */
+        &ARM7::Thumb11<false,0>, &ARM7::Thumb11<false,0>, &ARM7::Thumb11<false,0>, &ARM7::Thumb11<false,0>,
+        &ARM7::Thumb11<false,1>, &ARM7::Thumb11<false,1>, &ARM7::Thumb11<false,1>, &ARM7::Thumb11<false,1>,
+        &ARM7::Thumb11<false,2>, &ARM7::Thumb11<false,2>, &ARM7::Thumb11<false,2>, &ARM7::Thumb11<false,2>,
+        &ARM7::Thumb11<false,3>, &ARM7::Thumb11<false,3>, &ARM7::Thumb11<false,3>, &ARM7::Thumb11<false,3>,
+        &ARM7::Thumb11<false,4>, &ARM7::Thumb11<false,4>, &ARM7::Thumb11<false,4>, &ARM7::Thumb11<false,4>,
+        &ARM7::Thumb11<false,5>, &ARM7::Thumb11<false,5>, &ARM7::Thumb11<false,5>, &ARM7::Thumb11<false,5>,
+        &ARM7::Thumb11<false,6>, &ARM7::Thumb11<false,6>, &ARM7::Thumb11<false,6>, &ARM7::Thumb11<false,6>,
+        &ARM7::Thumb11<false,7>, &ARM7::Thumb11<false,7>, &ARM7::Thumb11<false,7>, &ARM7::Thumb11<false,7>,
+        &ARM7::Thumb11<true,0>, &ARM7::Thumb11<true,0>, &ARM7::Thumb11<true,0>, &ARM7::Thumb11<true,0>,
+        &ARM7::Thumb11<true,1>, &ARM7::Thumb11<true,1>, &ARM7::Thumb11<true,1>, &ARM7::Thumb11<true,1>,
+        &ARM7::Thumb11<true,2>, &ARM7::Thumb11<true,2>, &ARM7::Thumb11<true,2>, &ARM7::Thumb11<true,2>,
+        &ARM7::Thumb11<true,3>, &ARM7::Thumb11<true,3>, &ARM7::Thumb11<true,3>, &ARM7::Thumb11<true,3>,
+        &ARM7::Thumb11<true,4>, &ARM7::Thumb11<true,4>, &ARM7::Thumb11<true,4>, &ARM7::Thumb11<true,4>,
+        &ARM7::Thumb11<true,5>, &ARM7::Thumb11<true,5>, &ARM7::Thumb11<true,5>, &ARM7::Thumb11<true,5>,
+        &ARM7::Thumb11<true,6>, &ARM7::Thumb11<true,6>, &ARM7::Thumb11<true,6>, &ARM7::Thumb11<true,6>,
+        &ARM7::Thumb11<true,7>, &ARM7::Thumb11<true,7>, &ARM7::Thumb11<true,7>, &ARM7::Thumb11<true,7>,
+
+        /* THUMB.12 Load address */
+        &ARM7::Thumb12<false,0>, &ARM7::Thumb12<false,0>, &ARM7::Thumb12<false,0>, &ARM7::Thumb12<false,0>,
+        &ARM7::Thumb12<false,1>, &ARM7::Thumb12<false,1>, &ARM7::Thumb12<false,1>, &ARM7::Thumb12<false,1>,
+        &ARM7::Thumb12<false,2>, &ARM7::Thumb12<false,2>, &ARM7::Thumb12<false,2>, &ARM7::Thumb12<false,2>,
+        &ARM7::Thumb12<false,3>, &ARM7::Thumb12<false,3>, &ARM7::Thumb12<false,3>, &ARM7::Thumb12<false,3>,
+        &ARM7::Thumb12<false,4>, &ARM7::Thumb12<false,4>, &ARM7::Thumb12<false,4>, &ARM7::Thumb12<false,4>,
+        &ARM7::Thumb12<false,5>, &ARM7::Thumb12<false,5>, &ARM7::Thumb12<false,5>, &ARM7::Thumb12<false,5>,
+        &ARM7::Thumb12<false,6>, &ARM7::Thumb12<false,6>, &ARM7::Thumb12<false,6>, &ARM7::Thumb12<false,6>,
+        &ARM7::Thumb12<false,7>, &ARM7::Thumb12<false,7>, &ARM7::Thumb12<false,7>, &ARM7::Thumb12<false,7>,
+        &ARM7::Thumb12<true,0>,  &ARM7::Thumb12<true,0>,  &ARM7::Thumb12<true,0>,  &ARM7::Thumb12<true,0>,
+        &ARM7::Thumb12<true,1>,  &ARM7::Thumb12<true,1>,  &ARM7::Thumb12<true,1>,  &ARM7::Thumb12<true,1>,
+        &ARM7::Thumb12<true,2>,  &ARM7::Thumb12<true,2>,  &ARM7::Thumb12<true,2>,  &ARM7::Thumb12<true,2>,
+        &ARM7::Thumb12<true,3>,  &ARM7::Thumb12<true,3>,  &ARM7::Thumb12<true,3>,  &ARM7::Thumb12<true,3>,
+        &ARM7::Thumb12<true,4>,  &ARM7::Thumb12<true,4>,  &ARM7::Thumb12<true,4>,  &ARM7::Thumb12<true,4>,
+        &ARM7::Thumb12<true,5>,  &ARM7::Thumb12<true,5>,  &ARM7::Thumb12<true,5>,  &ARM7::Thumb12<true,5>,
+        &ARM7::Thumb12<true,6>,  &ARM7::Thumb12<true,6>,  &ARM7::Thumb12<true,6>,  &ARM7::Thumb12<true,6>,
+        &ARM7::Thumb12<true,7>,  &ARM7::Thumb12<true,7>,  &ARM7::Thumb12<true,7>,  &ARM7::Thumb12<true,7>,
+        
+        /* THUMB.13 Add offset to stack pointer,
+           THUMB.14 Push/pop registers */
+        &ARM7::Thumb13<false>,       &ARM7::Thumb13<false>,       &ARM7::Thumb13<true>,        &ARM7::Thumb13<true>,
+        &ARM7::Thumb13<false>,       &ARM7::Thumb13<false>,       &ARM7::Thumb13<true>,        &ARM7::Thumb13<true>,
+        &ARM7::Thumb13<false>,       &ARM7::Thumb13<false>,       &ARM7::Thumb13<true>,        &ARM7::Thumb13<true>,
+        &ARM7::Thumb13<false>,       &ARM7::Thumb13<false>,       &ARM7::Thumb13<true>,        &ARM7::Thumb13<true>,
+        &ARM7::Thumb14<false,false>, &ARM7::Thumb14<false,false>, &ARM7::Thumb14<false,false>, &ARM7::Thumb14<false,false>,
+        &ARM7::Thumb14<false,true>,  &ARM7::Thumb14<false,true>,  &ARM7::Thumb14<false,true>,  &ARM7::Thumb14<false,true>,
+        &ARM7::Thumb14<false,false>, &ARM7::Thumb14<false,false>, &ARM7::Thumb14<false,false>, &ARM7::Thumb14<false,false>,
+        &ARM7::Thumb14<false,true>,  &ARM7::Thumb14<false,true>,  &ARM7::Thumb14<false,true>,  &ARM7::Thumb14<false,true>,
+        &ARM7::Thumb13<false>,       &ARM7::Thumb13<false>,      &ARM7::Thumb13<true>,         &ARM7::Thumb13<true>,
+        &ARM7::Thumb13<false>,       &ARM7::Thumb13<false>,       &ARM7::Thumb13<true>,        &ARM7::Thumb13<true>,
+        &ARM7::Thumb13<false>,       &ARM7::Thumb13<false>,       &ARM7::Thumb13<true>,        &ARM7::Thumb13<true>,
+        &ARM7::Thumb13<false>,       &ARM7::Thumb13<false>,       &ARM7::Thumb13<true>,        &ARM7::Thumb13<true>,
+        &ARM7::Thumb14<true,false>,  &ARM7::Thumb14<true,false>,  &ARM7::Thumb14<true,false>,  &ARM7::Thumb14<true,false>,
+        &ARM7::Thumb14<true,true>,   &ARM7::Thumb14<true,true>,   &ARM7::Thumb14<true,true>,   &ARM7::Thumb14<true,true>,
+        &ARM7::Thumb14<true,false>,  &ARM7::Thumb14<true,false>,  &ARM7::Thumb14<true,false>,  &ARM7::Thumb14<true,false>,
+        &ARM7::Thumb14<true,true>,   &ARM7::Thumb14<true,true>,   &ARM7::Thumb14<true,true>,   &ARM7::Thumb14<true,true>,
+        
+        /* THUMB.15 Multiple load/store */
+        &ARM7::Thumb15<false,0>, &ARM7::Thumb15<false,0>, &ARM7::Thumb15<false,0>, &ARM7::Thumb15<false,0>,
+        &ARM7::Thumb15<false,1>, &ARM7::Thumb15<false,1>, &ARM7::Thumb15<false,1>, &ARM7::Thumb15<false,1>,
+        &ARM7::Thumb15<false,2>, &ARM7::Thumb15<false,2>, &ARM7::Thumb15<false,2>, &ARM7::Thumb15<false,2>,
+        &ARM7::Thumb15<false,3>, &ARM7::Thumb15<false,3>, &ARM7::Thumb15<false,3>, &ARM7::Thumb15<false,3>,
+        &ARM7::Thumb15<false,4>, &ARM7::Thumb15<false,4>, &ARM7::Thumb15<false,4>, &ARM7::Thumb15<false,4>,
+        &ARM7::Thumb15<false,5>, &ARM7::Thumb15<false,5>, &ARM7::Thumb15<false,5>, &ARM7::Thumb15<false,5>,
+        &ARM7::Thumb15<false,6>, &ARM7::Thumb15<false,6>, &ARM7::Thumb15<false,6>, &ARM7::Thumb15<false,6>,
+        &ARM7::Thumb15<false,7>, &ARM7::Thumb15<false,7>, &ARM7::Thumb15<false,7>, &ARM7::Thumb15<false,7>,
+        &ARM7::Thumb15<true,0>,  &ARM7::Thumb15<true,0>,  &ARM7::Thumb15<true,0>,  &ARM7::Thumb15<true,0>,
+        &ARM7::Thumb15<true,1>,  &ARM7::Thumb15<true,1>,  &ARM7::Thumb15<true,1>,  &ARM7::Thumb15<true,1>,
+        &ARM7::Thumb15<true,2>,  &ARM7::Thumb15<true,2>,  &ARM7::Thumb15<true,2>,  &ARM7::Thumb15<true,2>,
+        &ARM7::Thumb15<true,3>,  &ARM7::Thumb15<true,3>,  &ARM7::Thumb15<true,3>,  &ARM7::Thumb15<true,3>,
+        &ARM7::Thumb15<true,4>,  &ARM7::Thumb15<true,4>,  &ARM7::Thumb15<true,4>,  &ARM7::Thumb15<true,4>,
+        &ARM7::Thumb15<true,5>,  &ARM7::Thumb15<true,5>,  &ARM7::Thumb15<true,5>,  &ARM7::Thumb15<true,5>,
+        &ARM7::Thumb15<true,6>,  &ARM7::Thumb15<true,6>,  &ARM7::Thumb15<true,6>,  &ARM7::Thumb15<true,6>,
+        &ARM7::Thumb15<true,7>,  &ARM7::Thumb15<true,7>,  &ARM7::Thumb15<true,7>,  &ARM7::Thumb15<true,7>,
+        
+        /* THUMB.16 Conditional branch */
+        &ARM7::Thumb16<0>,  &ARM7::Thumb16<0>,  &ARM7::Thumb16<0>,  &ARM7::Thumb16<0>, 
+        &ARM7::Thumb16<1>,  &ARM7::Thumb16<1>,  &ARM7::Thumb16<1>,  &ARM7::Thumb16<1>,
+        &ARM7::Thumb16<2>,  &ARM7::Thumb16<2>,  &ARM7::Thumb16<2>,  &ARM7::Thumb16<2>, 
+        &ARM7::Thumb16<3>,  &ARM7::Thumb16<3>,  &ARM7::Thumb16<3>,  &ARM7::Thumb16<3>, 
+        &ARM7::Thumb16<4>,  &ARM7::Thumb16<4>,  &ARM7::Thumb16<4>,  &ARM7::Thumb16<4>,
+        &ARM7::Thumb16<5>,  &ARM7::Thumb16<5>,  &ARM7::Thumb16<5>,  &ARM7::Thumb16<5>, 
+        &ARM7::Thumb16<6>,  &ARM7::Thumb16<6>,  &ARM7::Thumb16<6>,  &ARM7::Thumb16<6>,
+        &ARM7::Thumb16<7>,  &ARM7::Thumb16<7>,  &ARM7::Thumb16<7>,  &ARM7::Thumb16<7>, 
+        &ARM7::Thumb16<8>,  &ARM7::Thumb16<8>,  &ARM7::Thumb16<8>,  &ARM7::Thumb16<8>, 
+        &ARM7::Thumb16<9>,  &ARM7::Thumb16<9>,  &ARM7::Thumb16<9>,  &ARM7::Thumb16<9>, 
+        &ARM7::Thumb16<10>, &ARM7::Thumb16<10>, &ARM7::Thumb16<10>, &ARM7::Thumb16<10>, 
+        &ARM7::Thumb16<11>, &ARM7::Thumb16<11>, &ARM7::Thumb16<11>, &ARM7::Thumb16<11>,
+        &ARM7::Thumb16<12>, &ARM7::Thumb16<12>, &ARM7::Thumb16<12>, &ARM7::Thumb16<12>, 
+        &ARM7::Thumb16<13>, &ARM7::Thumb16<13>, &ARM7::Thumb16<13>, &ARM7::Thumb16<13>, 
+        &ARM7::Thumb16<14>, &ARM7::Thumb16<14>, &ARM7::Thumb16<14>, &ARM7::Thumb16<14>, 
+        
+        /* THUMB.17 Software Interrupt */
+        &ARM7::Thumb17, &ARM7::Thumb17, &ARM7::Thumb17, &ARM7::Thumb17, 
+        
+        /* THUMB.18 Unconditional branch */
+        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
+        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
+        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
+        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
+        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
+        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
+        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
+        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
+        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
+        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
+        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
+        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
+        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
+        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
+        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
+        &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18, &ARM7::Thumb18,
+
+        /* THUMB.19 Long branch with link */
+        &ARM7::Thumb19<false>, &ARM7::Thumb19<false>, &ARM7::Thumb19<false>, &ARM7::Thumb19<false>,
+        &ARM7::Thumb19<false>, &ARM7::Thumb19<false>, &ARM7::Thumb19<false>, &ARM7::Thumb19<false>,
+        &ARM7::Thumb19<false>, &ARM7::Thumb19<false>, &ARM7::Thumb19<false>, &ARM7::Thumb19<false>,
+        &ARM7::Thumb19<false>, &ARM7::Thumb19<false>, &ARM7::Thumb19<false>, &ARM7::Thumb19<false>,
+        &ARM7::Thumb19<false>, &ARM7::Thumb19<false>, &ARM7::Thumb19<false>, &ARM7::Thumb19<false>,
+        &ARM7::Thumb19<false>, &ARM7::Thumb19<false>, &ARM7::Thumb19<false>, &ARM7::Thumb19<false>,
+        &ARM7::Thumb19<false>, &ARM7::Thumb19<false>, &ARM7::Thumb19<false>, &ARM7::Thumb19<false>,
+        &ARM7::Thumb19<false>, &ARM7::Thumb19<false>, &ARM7::Thumb19<false>, &ARM7::Thumb19<false>,
+        &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,
+        &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,
+        &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,
+        &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,
+        &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,
+        &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,
+        &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,
+        &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,  &ARM7::Thumb19<true>,
     };
 
     template <int imm, int type>
@@ -563,49 +695,49 @@ namespace NanoboyAdvance
                       memory->NonSequentialAccess(address, GBAMemory::ACCESS_WORD);
     }
 
+    template <int op, int reg_offset>
     void ARM7::Thumb7(u16 instruction)
     {
         // THUMB.7 Load/store with register offset
         // TODO: check LDR(B) timings.
         int reg_dest = instruction & 7;
         int reg_base = (instruction >> 3) & 7;
-        int reg_offset = (instruction >> 6) & 7;
         u32 address = reg(reg_base) + reg(reg_offset);
 
-        switch ((instruction >> 10) & 3)
+        switch (op)
         {
         case 0b00: // STR
             WriteWord(address, reg(reg_dest));
             cycles += memory->NonSequentialAccess(r[15], GBAMemory::ACCESS_HWORD) +
-                    memory->NonSequentialAccess(address, GBAMemory::ACCESS_WORD);
+                      memory->NonSequentialAccess(address, GBAMemory::ACCESS_WORD);
             break;
         case 0b01: // STRB
             WriteByte(address, reg(reg_dest) & 0xFF);
             cycles += memory->NonSequentialAccess(r[15], GBAMemory::ACCESS_HWORD) +
-                    memory->NonSequentialAccess(address, GBAMemory::ACCESS_BYTE);
+                      memory->NonSequentialAccess(address, GBAMemory::ACCESS_BYTE);
             break;
         case 0b10: // LDR
             reg(reg_dest) = ReadWordRotated(address);
             cycles += 1 + memory->SequentialAccess(r[15], GBAMemory::ACCESS_HWORD) +
-                        memory->NonSequentialAccess(address, GBAMemory::ACCESS_WORD);
+                          memory->NonSequentialAccess(address, GBAMemory::ACCESS_WORD);
             break;
         case 0b11: // LDRB
             reg(reg_dest) = ReadByte(address);
             cycles += 1 + memory->SequentialAccess(r[15], GBAMemory::ACCESS_HWORD) +
-                        memory->NonSequentialAccess(address, GBAMemory::ACCESS_BYTE);
+                          memory->NonSequentialAccess(address, GBAMemory::ACCESS_BYTE);
             break;
         }
     }
 
+    template <int op, int reg_offset>
     void ARM7::Thumb8(u16 instruction)
     {
         // THUMB.8 Load/store sign-extended byte/halfword
         int reg_dest = instruction & 7;
         int reg_base = (instruction >> 3) & 7;
-        int reg_offset = (instruction >> 6) & 7;
         u32 address = reg(reg_base) + reg(reg_offset);
 
-        switch ((instruction >> 10) & 3)
+        switch (op)
         {
         case 0b00: // STRH
             WriteHWord(address, reg(reg_dest));
@@ -637,38 +769,38 @@ namespace NanoboyAdvance
         }
     }
 
+    template <int op, int imm>
     void ARM7::Thumb9(u16 instruction)
     {
         // THUMB.9 Load store with immediate offset
         int reg_dest = instruction & 7;
         int reg_base = (instruction >> 3) & 7;
-        u32 immediate_value = (instruction >> 6) & 0x1F;
 
-        switch ((instruction >> 11) & 3)
+        switch (op)
         {
         case 0b00: { // STR
-            u32 address = reg(reg_base) + (immediate_value << 2);
+            u32 address = reg(reg_base) + (imm << 2);
             WriteWord(address, reg(reg_dest));
             cycles += memory->NonSequentialAccess(r[15], GBAMemory::ACCESS_HWORD) +
                       memory->NonSequentialAccess(address, GBAMemory::ACCESS_WORD);
             break;
         }
         case 0b01: { // LDR
-            u32 address = reg(reg_base) + (immediate_value << 2);
+            u32 address = reg(reg_base) + (imm << 2);
             reg(reg_dest) = ReadWordRotated(address);
             cycles += 1 + memory->SequentialAccess(r[15],  GBAMemory::ACCESS_HWORD) +
                           memory->NonSequentialAccess(address, GBAMemory::ACCESS_WORD);
             break;
         }
         case 0b10: { // STRB
-            u32 address = reg(reg_base) + immediate_value;
+            u32 address = reg(reg_base) + imm;
             WriteByte(address, reg(reg_dest));
             cycles += memory->NonSequentialAccess(r[15], GBAMemory::ACCESS_HWORD) +
                       memory->NonSequentialAccess(address, GBAMemory::ACCESS_BYTE);
             break;
         }
         case 0b11: { // LDRB
-            u32 address = reg(reg_base) + immediate_value;
+            u32 address = reg(reg_base) + imm;
             reg(reg_dest) = ReadByte(address);
             cycles += 1 + memory->SequentialAccess(r[15], GBAMemory::ACCESS_HWORD) +
                           memory->NonSequentialAccess(address, GBAMemory::ACCESS_BYTE);
@@ -677,18 +809,17 @@ namespace NanoboyAdvance
         }
     }
 
+    template <bool load, int imm> 
     void ARM7::Thumb10(u16 instruction)
     {
         // THUMB.10 Load/store halfword
         int reg_dest = instruction & 7;
         int reg_base = (instruction >> 3) & 7;
-        u32 immediate_value = (instruction >> 6) & 0x1F;
-        u32 address = reg(reg_base) + (immediate_value << 1);
+        u32 address = reg(reg_base) + (imm << 1);
 
-        // Is the load bit set? (ldr)
-        if (instruction & (1 << 11))
+        if (load)
         {
-            reg(reg_dest) = ReadHWord(address); // todo: alignment?
+            reg(reg_dest) = ReadHWord(address); // TODO: alignment?
             cycles += 1 + memory->SequentialAccess(r[15], GBAMemory::ACCESS_HWORD) +
                           memory->NonSequentialAccess(address, GBAMemory::ACCESS_WORD);
         }
@@ -700,15 +831,15 @@ namespace NanoboyAdvance
         }
     }
 
+    template <bool load, int reg_dest>
     void ARM7::Thumb11(u16 instruction)
     {
         // THUMB.11 SP-relative load/store
         u32 immediate_value = instruction & 0xFF;
-        int reg_dest = (instruction >> 8) & 7;
         u32 address = reg(13) + (immediate_value << 2);
 
         // Is the load bit set? (ldr)
-        if (instruction & (1 << 11))
+        if (load)
         {
             reg(reg_dest) = ReadWordRotated(address);
             cycles += 1 + memory->SequentialAccess(r[15], GBAMemory::ACCESS_HWORD) +
@@ -722,14 +853,14 @@ namespace NanoboyAdvance
         }
     }
 
+    template <bool stackptr, int reg_dest>
     void ARM7::Thumb12(u16 instruction)
     {
         // THUMB.12 Load address
         u32 immediate_value = instruction & 0xFF;
-        int reg_dest = (instruction >> 8) & 7;
 
         // Use stack pointer as base?
-        if (instruction & (1 << 11))
+        if (stackptr)
             reg(reg_dest) = reg(13) + (immediate_value << 2); // sp
         else
             reg(reg_dest) = (r[15] & ~2) + (immediate_value << 2); // pc
@@ -737,13 +868,14 @@ namespace NanoboyAdvance
         cycles += memory->SequentialAccess(r[15], GBAMemory::ACCESS_HWORD);
     }
 
+    template <bool sub>
     void ARM7::Thumb13(u16 instruction)
     {
         // THUMB.13 Add offset to stack pointer
         u32 immediate_value = (instruction & 0x7F) << 2;
 
         // Immediate-value is negative?
-        if (instruction & 0x80)
+        if (sub)
             reg(13) -= immediate_value;
         else
             reg(13) += immediate_value;
@@ -751,6 +883,7 @@ namespace NanoboyAdvance
         cycles += memory->SequentialAccess(r[15], GBAMemory::ACCESS_HWORD);
     }
 
+    template <bool pop, bool rbit>
     void ARM7::Thumb14(u16 instruction)
     {
         // THUMB.14 push/pop registers
@@ -761,7 +894,7 @@ namespace NanoboyAdvance
         cycles += memory->NonSequentialAccess(r[15], GBAMemory::ACCESS_HWORD);
 
         // Is this a POP instruction?
-        if (instruction & (1 << 11))
+        if (pop)
         {
             // Iterate through the entire register list
             for (int i = 0; i <= 7; i++)
@@ -789,7 +922,7 @@ namespace NanoboyAdvance
             }
 
             // Also pop r15/pc if neccessary
-            if (instruction & (1 << 8))
+            if (rbit)
             {
                 u32 address = reg(13);
 
@@ -814,7 +947,7 @@ namespace NanoboyAdvance
         else
         {
             // Push r14/lr if neccessary
-            if (instruction & (1 << 8))
+            if (rbit)
             {
                 u32 address;
 
@@ -863,16 +996,16 @@ namespace NanoboyAdvance
         }
     }
 
+    template <bool load, int reg_base>
     void ARM7::Thumb15(u16 instruction)
     {
         // THUMB.15 Multiple load/store
         // TODO: Handle empty register list
-        int reg_base = (instruction >> 8) & 7;
         bool write_back = true;
         u32 address = reg(reg_base);
 
         // Is the load bit set? (ldmia or stmia)
-        if (instruction & (1 << 11))
+        if (load)
         {
             cycles += 1 + memory->NonSequentialAccess(r[15], GBAMemory::ACCESS_HWORD) +
                           memory->SequentialAccess(r[15] + 2, GBAMemory::ACCESS_HWORD);
@@ -942,6 +1075,7 @@ namespace NanoboyAdvance
         }
     }
 
+    template <int cond>
     void ARM7::Thumb16(u16 instruction)
     {
         // THUMB.16 Conditional branch
@@ -950,7 +1084,7 @@ namespace NanoboyAdvance
         cycles += memory->SequentialAccess(r[15], GBAMemory::ACCESS_HWORD);
 
         // Check if the instruction will be executed
-        switch ((instruction >> 8) & 0xF)
+        switch (cond)
         {
         case 0x0: if (!(cpsr & ZeroFlag))     return; break;
         case 0x1: if (  cpsr & ZeroFlag)      return; break;
@@ -1039,13 +1173,14 @@ namespace NanoboyAdvance
                   memory->SequentialAccess(r[15] + 2, GBAMemory::ACCESS_HWORD);
     }
 
+    template <bool h>
     void ARM7::Thumb19(u16 instruction)
     {
         // THUMB.19 Long branch with link.
         u32 immediate_value = instruction & 0x7FF;
 
         // Branch with link consists of two instructions.
-        if (instruction & (1 << 11))
+        if (h)
         {
             u32 temp_pc = r[15] - 2;
             u32 value = reg(14) + (immediate_value << 1);

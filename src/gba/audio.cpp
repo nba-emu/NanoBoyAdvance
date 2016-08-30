@@ -87,7 +87,7 @@ namespace NanoboyAdvance
                     source_index[j] += ratio[j];
                 }
 
-                *os[0] << output;
+                //*os[0] << output;
             }
 
             m_FifoBuffer[0].clear();
