@@ -39,6 +39,9 @@ build/
 # Qt Creator
 *.user
 
+# VS Code
+.vscode
+
 # NanoboyAdvance specific
 *.bin
 *.gba

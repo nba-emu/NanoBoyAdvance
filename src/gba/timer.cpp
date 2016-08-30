@@ -33,38 +33,32 @@ namespace NanoboyAdvance
     /// \fn     RunTimer
     ///
     ///////////////////////////////////////////////////////////
-    void GBAMemory::RunTimer()
+    void GBAMemory::RunTimer(int id, bool& overflow)
     {
-        bool overflow = false;
+        m_Timer[id].ticks = 0;
 
-        for (int i = 0; i < 4; i++)
+        if (m_Timer[id].count != 0xFFFF)
         {
-            if (!m_Timer[i].enable) continue;
+            m_Timer[id].count++;
+            return;
+        }
 
-            if ((m_Timer[i].countup && overflow) ||
-                (!m_Timer[i].countup && ++m_Timer[i].ticks >= tmr_cycles[m_Timer[i].clock]))
-            {
-                m_Timer[i].ticks = 0;
+        // Fires Interrupt if specified
+        if (m_Timer[id].interrupt)
+            m_Interrupt.if_ |= 8 << id;
 
-                if (m_Timer[i].count != 0xFFFF)
-                {
-                    m_Timer[i].count++;
-                    overflow = false;
-                }
-                else
-                {
-                    if (m_Timer[i].interrupt) m_Interrupt.if_ |= 8 << i;
-                    m_Timer[i].count = m_Timer[i].reload;
-                    m_Timer[i].overflow = true;
-                    overflow = true;
+        // Reset timer to its initial state
+        m_Timer[id].count = m_Timer[id].reload;
+        m_Timer[id].overflow = overflow = true;
 
-                    if (i == 0)
-                    {
-                        m_Audio.FifoLoadSample(0);
-                        m_Audio.FifoLoadSample(1);
-                    }
-                }
-            }
+        // Checks wether the current timer is a DMA FIFO clock.
+        // If so transfer sample(s) of the controlled FIFO(s) to the audio chip.
+        if (id == 0)
+        {
+            m_Audio.FifoLoadSample(0);
+            m_Audio.FifoLoadSample(1);
+
+            // TODO: Schedule DMA transfer here if FIFO needs refill.
         }
     }
 }

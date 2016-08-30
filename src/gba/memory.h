@@ -269,11 +269,36 @@ namespace NanoboyAdvance
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
         /// \fn      RunTimer
-        ///
-        /// Updates all timers and timer-driven audio.
+        /// \brief   Updates all timers and timer-driven audio.
+        /// \param   id        Timer ID.
+        /// \param   overflow  Overflow Flag for the previous timer.
         ///
         ///////////////////////////////////////////////////////////
-        void RunTimer();
+        void RunTimer(int id, bool& overflow);
+
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    August 30th, 2016
+        /// \fn      TimerRequiresRun
+        /// \brief   Checks wether a Timer needs to be scheduled.
+        /// \param   id        Timer ID.
+        /// \param   overflow  Overflow Flag for the previous timer.
+        ///
+        ///////////////////////////////////////////////////////////
+        inline bool TimerRequiresRun(int id, bool overflow)
+        {
+            //bool overflow = (id == 0) ? false : m_Timer[id - 1].overflow;
+
+            if (!m_Timer[id].enable)
+                return false;
+
+            if (m_Timer[id].countup && overflow) return true;
+            if (!m_Timer[id].countup &&
+                ++m_Timer[id].ticks >= tmr_cycles[m_Timer[id].clock])
+                    return true;
+
+            return false;
+        }
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
@@ -314,7 +339,7 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         int NonSequentialAccess(u32 offset, AccessSize size);
 
-        
+
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    August 2th, 2016

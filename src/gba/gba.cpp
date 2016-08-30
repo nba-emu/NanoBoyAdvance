@@ -85,7 +85,7 @@ namespace NanoboyAdvance
         for (int i = 0; i < FRAME_CYCLES * m_SpeedMultiplier; i++)
         {
             u32 interrupts = m_Memory.m_Interrupt.ie & m_Memory.m_Interrupt.if_;
-            
+
             // Only pause as long as (IE & IF) != 0
             if (m_Memory.m_HaltState != GBAMemory::HALTSTATE_NONE && interrupts != 0)
             {
@@ -116,7 +116,7 @@ namespace NanoboyAdvance
                     forward_steps = m_ARM.cycles - 1;
                 }
 
-                for (int j = 0; j < forward_steps + 1; j++) 
+                for (int j = 0; j < forward_steps + 1; j++)
                 {
                     if (m_Memory.m_Video.m_WaitCycles == 0)
                     {
@@ -136,8 +136,13 @@ namespace NanoboyAdvance
                         m_Memory.m_Audio.Step();
                     else
                         m_Memory.m_Audio.m_WaitCycles--;
-                        
-                    m_Memory.RunTimer();
+
+                    //m_Memory.RunTimer();
+                    bool overflow = false;
+                    if (m_Memory.TimerRequiresRun(0, false))    m_Memory.RunTimer(0, overflow);
+                    if (m_Memory.TimerRequiresRun(1, overflow)) m_Memory.RunTimer(1, overflow);
+                    if (m_Memory.TimerRequiresRun(2, overflow)) m_Memory.RunTimer(2, overflow);
+                    if (m_Memory.TimerRequiresRun(3, overflow)) m_Memory.RunTimer(3, overflow);
                 }
 
                 i += forward_steps;
