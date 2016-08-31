@@ -22,6 +22,10 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 
+#ifndef __NBA_SDL_AUDIO_ADAPTER_H__
+#define __NBA_SDL_AUDIO_ADAPTER_H__
+
+
 #include "sdl_adapter.h"
 #include "util/log.h"
 #include <SDL2/SDL.h>
@@ -64,3 +68,6 @@ namespace NanoboyAdvance
         SDL_PauseAudio(0);
     }
 }
+
+
+#endif

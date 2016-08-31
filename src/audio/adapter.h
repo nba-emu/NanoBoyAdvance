@@ -22,6 +22,10 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 
+#ifndef __NBA_AUDIO_ADAPTER_H__
+#define __NBA_AUDIO_ADAPTER_H__
+
+
 #include "gba/audio.h"
 
 
@@ -66,3 +70,6 @@ namespace NanoboyAdvance
         virtual void Resume() {}
     };
 }
+
+
+#endif
