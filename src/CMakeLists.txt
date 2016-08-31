@@ -3,8 +3,9 @@ include_directories(.)
 # Add core libs
 add_subdirectory(util)
 add_subdirectory(gba)
+add_subdirectory(audio)
 
-if (SDL2)
+if (SDL2_GUI)
     add_subdirectory(sdl)
 endif()
 

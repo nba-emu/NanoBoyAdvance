@@ -21,57 +21,48 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifndef __NBA_AUDIO_H__
-#define __NBA_AUDIO_H__
 
-
-#include "fifo.h"
-#include <fstream>
-#include <vector>
+#include "gba/audio.h"
 
 
 namespace NanoboyAdvance
 {
     ///////////////////////////////////////////////////////////
-    /// \file    audio.h
-    /// \class   Audio
-    /// \brief   Serves as Audio controller.
+    /// \file    adapter.h
+    /// \class   AudioAdapter
+    /// \brief   Generic Audio Adapter interface.
     ///
     ///////////////////////////////////////////////////////////
-    class Audio
+    class AudioAdapter
     {
     public:
         ///////////////////////////////////////////////////////////
-        /// \fn      Step
-        /// \brief   Perforn audio cyclic tasks.
+        /// \fn     Init
+        /// \brief  Setup audio.
+        /// \param  audio  Audio controller.
         ///
         ///////////////////////////////////////////////////////////
-        void Step();
+        virtual void Init(Audio* audio) {}
 
         ///////////////////////////////////////////////////////////
-        /// \fn      FifoLoadSample
-        /// \brief   Load a sample from the given FIFO.
+        /// \fn     Deinit
+        /// \brief  Closes audio.
         ///
         ///////////////////////////////////////////////////////////
-        void FifoLoadSample(int fifo);
+        virtual void Deinit() {}
 
-    public:
         ///////////////////////////////////////////////////////////
-        /// Class members
+        /// \fn     Pause
+        /// \brief  Temporarly pauses audio.
         ///
         ///////////////////////////////////////////////////////////
-        FIFO m_FIFO[2];
-        std::vector<s8> m_Buffer;
-        std::vector<s8> m_FifoBuffer[2];
-        int m_WaitCycles { 0 };
+        virtual void Pause() {}
+
+        ///////////////////////////////////////////////////////////
+        /// \fn     Resume
+        /// \brief  Resumes audio.
+        ///
+        ///////////////////////////////////////////////////////////
+        virtual void Resume() {}
     };
-
-    ///////////////////////////////////////////////////////////
-    /// \fn AudioCallback
-    /// \brief  Called by an Audio Adapter to request audio data.
-    ///
-    ///////////////////////////////////////////////////////////
-    void AudioCallback(Audio* audio, s8* stream, int length);
 }
-
-#endif // __NBA_AUDIO_H__

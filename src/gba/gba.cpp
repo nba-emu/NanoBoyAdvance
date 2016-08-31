@@ -23,6 +23,7 @@
 
 
 #include "gba.h"
+#include "audio/sdl_adapter.h"
 #include <stdexcept>
 
 
@@ -43,11 +44,13 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     GBA::GBA(string rom_file, string save_file)
     {
-        //m_Memory = new GBAMemory(rom_file, save_file);
-        //m_ARM = new ARM7(m_Memory, true);
         m_Memory.Init(rom_file, save_file);
         m_ARM.Init(&m_Memory, true);
         m_Memory.m_Video.SetupComposer(&m_Composer);
+
+        // Rudimentary Audio setup
+        SDL2AudioAdapter adapter;
+        adapter.Init(&m_Memory.m_Audio);
     }
 
     ///////////////////////////////////////////////////////////

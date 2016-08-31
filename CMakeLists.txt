@@ -37,30 +37,25 @@ set(VERSION_MINOR 1)
 
 # Frontend selection
 option(QT_GUI "Build Qt based frontend" ON)
-option(SDL2 "Build SDL2 based frontend" ON)
-if (NOT QT_GUI AND NOT SDL2)
-    message(FATAL_ERROR "No frontend selected. Enable QT_GUI or SDL2.")
+option(SDL2_GUI "Build SDL2 based GUI" ON)
+
+# Add SDL2
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
+include (FindSDL2 REQUIRED)
+find_package(SDL2 REQUIRED)
+find_package(PNG REQUIRED)
+
+if (SDL2_FOUND)
+    include_directories(${SDL2_INCLUDE_DIRS})
+else()
+    message(FATAL_ERROR "SDL2 not found.")
 endif()
 
-# Add SDL2 if neccessary
-if (SDL2)
-    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
-    include (FindSDL2 REQUIRED)
-    find_package(SDL2 REQUIRED)
-    find_package(PNG REQUIRED)
-    
-    if (SDL2_FOUND)
-        include_directories(${SDL2_INCLUDE_DIRS})
-    else()
-        message(FATAL_ERROR "SDL2 not found.")
-    endif()
-
-    if (PNG_FOUND)
-        include_directories(${PNG_INCLUDE_DIRS})
-    else()
-        # TODO: just built without screenshot support then
-        message(FATAL_ERROR "PNG not found.")
-    endif()
+if (PNG_FOUND)
+    include_directories(${PNG_INCLUDE_DIRS})
+else()
+    # TODO: just built without screenshot support then
+    message(FATAL_ERROR "PNG not found.")
 endif()
 
 # Add Qt if neccessary
