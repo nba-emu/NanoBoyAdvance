@@ -24,7 +24,9 @@
 
 #include "gba.h"
 #include "audio/sdl_adapter.h"
+#include "config/config.h"
 #include <stdexcept>
+#include <iostream>
 
 
 using namespace std;
@@ -73,6 +75,10 @@ namespace NanoboyAdvance
         m_Memory.Init(rom_file, save_file, bios, bios_size);
         m_ARM.Init(&m_Memory, false);
         m_Memory.m_Video.SetupComposer(&m_Composer);
+
+        // Rudimentary Audio setup
+        SDL2AudioAdapter adapter;
+        adapter.Init(&m_Memory.m_Audio);
     }
 
     ///////////////////////////////////////////////////////////

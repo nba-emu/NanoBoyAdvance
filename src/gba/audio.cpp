@@ -24,15 +24,22 @@
 
 #include "audio.h"
 #include "util/log.h"
+#include "config/config.h"
 #include <math.h>
 
 
 namespace NanoboyAdvance
 {
+    Audio::Audio()
+    {
+        Config config("config.sml");
+        m_SampleRate = config.ReadInt("Audio::Quality", "SampleRate");
+    }
+
     void Audio::Step()
     {
         m_Buffer.push_back(0);
-        m_WaitCycles = 16780000 / 32768;
+        m_WaitCycles = 16780000 / m_SampleRate;
     }
 
     void Audio::FifoLoadSample(int fifo)

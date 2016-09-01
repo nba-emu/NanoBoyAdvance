@@ -42,6 +42,13 @@ namespace NanoboyAdvance
     {
     public:
         ///////////////////////////////////////////////////////////
+        /// \fn      Audio
+        /// \brief   Constructor
+        ///
+        ///////////////////////////////////////////////////////////
+        Audio();
+
+        ///////////////////////////////////////////////////////////
         /// \fn      Step
         /// \brief   Perforn audio cyclic tasks.
         ///
@@ -64,6 +71,8 @@ namespace NanoboyAdvance
         std::vector<s8> m_Buffer;
         std::vector<s8> m_FifoBuffer[2];
         int m_WaitCycles { 0 };
+    private:
+        int m_SampleRate { 0 };
     };
 
     ///////////////////////////////////////////////////////////

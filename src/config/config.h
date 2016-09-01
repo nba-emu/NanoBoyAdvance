@@ -22,53 +22,29 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef __NBA_SDL_AUDIO_ADAPTER_H__
-#define __NBA_SDL_AUDIO_ADAPTER_H__
+#ifndef __NBA_CONFIG_H__
+#define __NBA_CONFIG_H__
 
 
-#include "sdl_adapter.h"
-#include "config/config.h"
-#include "util/log.h"
-#include <SDL2/SDL.h>
+#include <string>
 
 
 namespace NanoboyAdvance
 {
-    void SDL2AudioAdapter::Init(Audio* audio)
+    class Config
     {
-        SDL_AudioSpec spec;
-        Config config("config.sml");
+    public:
+        Config(std::string path);
 
-        spec.freq = config.ReadInt("Audio::Quality", "SampleRate");
-        spec.samples = config.ReadInt("Audio::Quality", "BufferSize");
-        spec.format = AUDIO_S8;
-        spec.channels = 1;
-        spec.callback = AudioCallback;
-        spec.userdata = audio;
+        int ReadInt(std::string category, std::string key);
+        bool ReadBool(std::string category, std::string key);
+        std::string Read(std::string category, std::string key);
 
-        if (SDL_Init(SDL_INIT_AUDIO) < 0)
-            LOG(LOG_ERROR, "SDL_Init(SDL_INIT_AUDIO) failed");
+        void Write(std::string category, std::string key, std::string value);
 
-        if (SDL_OpenAudio(&spec, NULL) < 0)
-            LOG(LOG_ERROR, "SDL_OpenAudio failed.");
-
-        SDL_PauseAudio(0);
-    }
-
-    void SDL2AudioAdapter::Deinit()
-    {
-        SDL_CloseAudio();
-    }
-
-    void SDL2AudioAdapter::Pause()
-    {
-        SDL_PauseAudio(1);
-    }
-
-    void SDL2AudioAdapter::Resume()
-    {
-        SDL_PauseAudio(0);
-    }
+    private:
+        std::string m_File;
+    };
 }
 
 

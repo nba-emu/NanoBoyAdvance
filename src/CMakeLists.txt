@@ -4,6 +4,7 @@ include_directories(.)
 add_subdirectory(util)
 add_subdirectory(gba)
 add_subdirectory(audio)
+add_subdirectory(config)
 
 if (SDL2_GUI)
     add_subdirectory(sdl)
