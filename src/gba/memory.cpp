@@ -35,17 +35,17 @@ using namespace std;
 
 namespace NanoboyAdvance
 {
-    constexpr int GBAMemory::DMA_COUNT_MASK[4];
-    constexpr int GBAMemory::DMA_DEST_MASK[4];
-    constexpr int GBAMemory::DMA_SOURCE_MASK[4];
-    constexpr int GBAMemory::TMR_CYCLES[4];
+    constexpr int Memory::DMA_COUNT_MASK[4];
+    constexpr int Memory::DMA_DEST_MASK[4];
+    constexpr int Memory::DMA_SOURCE_MASK[4];
+    constexpr int Memory::TMR_CYCLES[4];
 
-    constexpr int GBAMemory::WSN_TABLE[4];
-    constexpr int GBAMemory::WSS0_TABLE[2];
-    constexpr int GBAMemory::WSS1_TABLE[2];
-    constexpr int GBAMemory::WSS2_TABLE[2];
+    constexpr int Memory::WSN_TABLE[4];
+    constexpr int Memory::WSS0_TABLE[2];
+    constexpr int Memory::WSS1_TABLE[2];
+    constexpr int Memory::WSS2_TABLE[2];
     
-    const u8 GBAMemory::HLE_BIOS[0x40] = {
+    const u8 Memory::HLE_BIOS[0x40] = {
         0x06, 0x00, 0x00, 0xEA, 0x00, 0x00, 0xA0, 0xE1,
         0x00, 0x00, 0xA0, 0xE1, 0x00, 0x00, 0xA0, 0xE1,
         0x00, 0x00, 0xA0, 0xE1, 0x00, 0x00, 0xA0, 0xE1,
@@ -63,7 +63,7 @@ namespace NanoboyAdvance
     /// \fn     Constructor, 1
     ///
     ///////////////////////////////////////////////////////////
-    void GBAMemory::Init(string rom_file, string save_file)
+    void Memory::Init(string rom_file, string save_file)
     {
         Init(rom_file, save_file, nullptr, 0);
     }
@@ -74,7 +74,7 @@ namespace NanoboyAdvance
     /// \fn     Constructor, 2
     ///
     ///////////////////////////////////////////////////////////
-    void GBAMemory::Init(string rom_file, string save_file, u8* bios, size_t bios_size)
+    void Memory::Init(string rom_file, string save_file, u8* bios, size_t bios_size)
     {
         // Init memory buffers
         memset(this->m_BIOS, 0, 0x4000);
@@ -120,13 +120,13 @@ namespace NanoboyAdvance
                      memcmp(m_ROM + i, "FLASH512_V", 10) == 0)
             {
                 m_SaveType = SAVE_FLASH64;
-                m_Backup = new GBAFlash(save_file, false);
+                m_Backup = new Flash(save_file, false);
                 LOG(LOG_INFO, "Found save type: FLASH64");
             }
             else if (memcmp(m_ROM + i, "FLASH1M_V", 9) == 0)
             {
                 m_SaveType = SAVE_FLASH128;
-                m_Backup = new GBAFlash(save_file, true);
+                m_Backup = new Flash(save_file, true);
                 LOG(LOG_INFO, "Found save type: FLASH128");
             }
         }
@@ -144,7 +144,7 @@ namespace NanoboyAdvance
     /// \fn     Destructor
     ///
     ///////////////////////////////////////////////////////////
-    GBAMemory::~GBAMemory()
+    Memory::~Memory()
     {
         delete m_ROM;
         delete m_Backup;
@@ -156,7 +156,7 @@ namespace NanoboyAdvance
     /// \fn     SequentialAccess
     ///
     ///////////////////////////////////////////////////////////
-    int GBAMemory::SequentialAccess(u32 offset, AccessSize size) 
+    int Memory::SequentialAccess(u32 offset, AccessSize size)
     {
         int page = offset >> 24;
 
@@ -194,7 +194,7 @@ namespace NanoboyAdvance
     /// \fn     NonSequentialAccess
     ///
     ///////////////////////////////////////////////////////////
-    int GBAMemory::NonSequentialAccess(u32 offset, AccessSize size)
+    int Memory::NonSequentialAccess(u32 offset, AccessSize size)
     {
         int page = offset >> 24;
 
@@ -215,7 +215,7 @@ namespace NanoboyAdvance
     /// \fn     ReadByte
     ///
     ///////////////////////////////////////////////////////////
-    u8 GBAMemory::ReadByte(u32 offset)
+    u8 Memory::ReadByte(u32 offset)
     {
         int page = offset >> 24;
         u32 internal_offset = offset & 0xFFFFFF;
@@ -255,8 +255,8 @@ namespace NanoboyAdvance
                        (m_Video.m_Win[1].enable ? 64 : 0) |
                        (m_Video.m_ObjWin.enable ? 128 : 0);
             case DISPSTAT:
-                return ((m_Video.m_State == GBAVideo::GBAVideoState::VBlank) ? 1 : 0) |
-                       ((m_Video.m_State == GBAVideo::GBAVideoState::HBlank) ? 2 : 0) |
+                return ((m_Video.m_State == Video::RenderingPhase::VBlank) ? 1 : 0) |
+                       ((m_Video.m_State == Video::RenderingPhase::HBlank) ? 2 : 0) |
                        (m_Video.m_VCountFlag ? 4 : 0) |
                        (m_Video.m_VBlankIRQ ? 8 : 0) |
                        (m_Video.m_HBlankIRQ ? 16 : 0) |
@@ -447,7 +447,7 @@ namespace NanoboyAdvance
     /// \fn     ReadHWord
     ///
     ///////////////////////////////////////////////////////////
-    u16 GBAMemory::ReadHWord(u32 offset)
+    u16 Memory::ReadHWord(u32 offset)
     {
         return ReadByte(offset) | 
                (ReadByte(offset + 1) << 8);
@@ -459,7 +459,7 @@ namespace NanoboyAdvance
     /// \fn     ReadWord
     ///
     ///////////////////////////////////////////////////////////
-    u32 GBAMemory::ReadWord(u32 offset)
+    u32 Memory::ReadWord(u32 offset)
     {
         return ReadByte(offset) |
                (ReadByte(offset + 1) << 8) |
@@ -473,7 +473,7 @@ namespace NanoboyAdvance
     /// \fn     WriteByte
     ///
     ///////////////////////////////////////////////////////////
-    void GBAMemory::WriteByte(u32 offset, u8 value)
+    void Memory::WriteByte(u32 offset, u8 value)
     {
         int page = offset >> 24;
         u32 internal_offset = offset & 0xFFFFFF;
@@ -604,7 +604,7 @@ namespace NanoboyAdvance
                 int n = (internal_offset - BG2X) * 8;
                 u32 v = (m_Video.m_BG[2].x_ref & ~(0xFF << n)) | (value << n);
                 m_Video.m_BG[2].x_ref = v;
-                m_Video.m_BG[2].x_ref_int = GBAVideo::DecodeGBAFloat32(v);
+                m_Video.m_BG[2].x_ref_int = Video::DecodeGBAFloat32(v);
                 break;
             }
             case BG3X:
@@ -615,7 +615,7 @@ namespace NanoboyAdvance
                 int n = (internal_offset - BG3X) * 8;
                 u32 v = (m_Video.m_BG[3].x_ref & ~(0xFF << n)) | (value << n);
                 m_Video.m_BG[3].x_ref = v;
-                m_Video.m_BG[3].x_ref_int = GBAVideo::DecodeGBAFloat32(v);
+                m_Video.m_BG[3].x_ref_int = Video::DecodeGBAFloat32(v);
                 break;
             }
             case BG2Y:
@@ -626,7 +626,7 @@ namespace NanoboyAdvance
                 int n = (internal_offset - BG2Y) * 8;
                 u32 v = (m_Video.m_BG[2].y_ref & ~(0xFF << n)) | (value << n);
                 m_Video.m_BG[2].y_ref = v;
-                m_Video.m_BG[2].y_ref_int = GBAVideo::DecodeGBAFloat32(v);
+                m_Video.m_BG[2].y_ref_int = Video::DecodeGBAFloat32(v);
                 break;
             }
             case BG3Y:
@@ -637,7 +637,7 @@ namespace NanoboyAdvance
                 int n = (internal_offset - BG3Y) * 8;
                 u32 v = (m_Video.m_BG[3].y_ref & ~(0xFF << n)) | (value << n);
                 m_Video.m_BG[3].y_ref = v;
-                m_Video.m_BG[3].y_ref_int = GBAVideo::DecodeGBAFloat32(v);
+                m_Video.m_BG[3].y_ref_int = Video::DecodeGBAFloat32(v);
                 break;
             }
             case BG2PA:
@@ -1151,7 +1151,7 @@ namespace NanoboyAdvance
     /// \fn     WriteHWord
     ///
     ///////////////////////////////////////////////////////////
-    void GBAMemory::WriteHWord(u32 offset, u16 value)
+    void Memory::WriteHWord(u32 offset, u16 value)
     {
         int page = (offset >> 24) & 0xF;
         u32 internal_offset = offset & 0xFFFFFF;
@@ -1188,7 +1188,7 @@ namespace NanoboyAdvance
     /// \fn     WriteWord
     ///
     ///////////////////////////////////////////////////////////
-    void GBAMemory::WriteWord(u32 offset, u32 value)
+    void Memory::WriteWord(u32 offset, u32 value)
     {
         WriteHWord(offset, value & 0xFFFF);
         WriteHWord(offset + 2, (value >> 16) & 0xFFFF);

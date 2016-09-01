@@ -40,7 +40,7 @@ namespace NanoboyAdvance
     /// \brief   Defines the SRAM memory save type.
     ///
     ///////////////////////////////////////////////////////////
-    class SRAM : public GBABackup
+    class SRAM : public Backup
     {
         static const int SAVE_SIZE;
 

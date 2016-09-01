@@ -36,11 +36,11 @@ namespace NanoboyAdvance
     /// \file    flash.h
     /// \author  Frederic Meyer
     /// \date    July 31th, 2016
-    /// \class   GBAFlash
+    /// \class   Flash
     /// \brief   Emulates FLASH64/128 backup memory.
     ///
     ///////////////////////////////////////////////////////////
-    class GBAFlash : public GBABackup
+    class Flash : public Backup
     {
     private:
         ///////////////////////////////////////////////////////////
@@ -73,7 +73,7 @@ namespace NanoboyAdvance
         /// \param   second_bank      True for FLASH128.
         ///
         ///////////////////////////////////////////////////////////
-        GBAFlash(std::string save_file, bool second_bank);
+        Flash(std::string save_file, bool second_bank);
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
@@ -81,7 +81,7 @@ namespace NanoboyAdvance
         /// \fn      Destructor
         ///
         ///////////////////////////////////////////////////////////
-        ~GBAFlash();
+        ~Flash();
 
 
         ///////////////////////////////////////////////////////////

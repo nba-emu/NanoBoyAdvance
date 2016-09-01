@@ -34,10 +34,10 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     /// \author Frederic Meyer
     /// \date   July 31th, 2016
-    /// \enum   GBAInterrupt
+    /// \enum   Interrupt
     ///
     ///////////////////////////////////////////////////////////
-    struct GBAInterrupt
+    struct Interrupt
     {
         u16 if_ {0};
         u16 ie {0};

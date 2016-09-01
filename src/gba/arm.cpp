@@ -27,7 +27,7 @@
 
 namespace NanoboyAdvance
 {
-    void ARM7::Init(GBAMemory* memory, bool hle)
+    void ARM7::Init(Memory* memory, bool hle)
     {
         // Assign given memory instance to core
         this->memory = memory;
@@ -290,8 +290,8 @@ namespace NanoboyAdvance
             bool thumb = cpsr & ThumbFlag;
 
             // "Useless" pipeline prefetch
-            cycles += memory->SequentialAccess(r[15], thumb ? GBAMemory::ACCESS_HWORD :
-                                                            GBAMemory::ACCESS_WORD);
+            cycles += memory->SequentialAccess(r[15], thumb ? Memory::ACCESS_HWORD :
+                                                              Memory::ACCESS_WORD);
 
             // Store return address in r14<irq>
             r14_irq = r[15] - (thumb ? 4 : 8) + 4;
@@ -309,8 +309,8 @@ namespace NanoboyAdvance
             RefillPipeline();
 
             // Emulate pipeline refill timings
-            cycles += memory->NonSequentialAccess(r[15], GBAMemory::ACCESS_WORD) +
-                      memory->SequentialAccess(r[15] + 4, GBAMemory::ACCESS_WORD);
+            cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_WORD) +
+                      memory->SequentialAccess(r[15] + 4, Memory::ACCESS_WORD);
         }
     }
 
@@ -345,7 +345,7 @@ namespace NanoboyAdvance
             // Sets GBA into halt state, waiting for specific interrupt(s) to occur.
             memory->m_IntrWait = true;
             memory->m_IntrWaitMask = r[1];
-            memory->m_HaltState = GBAMemory::HALTSTATE_HALT;
+            memory->m_HaltState = Memory::HALTSTATE_HALT;
             break;
         case 0x0B:
         {

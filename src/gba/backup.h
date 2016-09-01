@@ -35,17 +35,17 @@ namespace NanoboyAdvance
     /// \file    backup.h
     /// \author  Frederic Meyer
     /// \date    July 31th, 2016
-    /// \class   GBABackup
+    /// \class   Backup
     /// \brief   Serves as a base class for GBA memory types.
     ///
     ///////////////////////////////////////////////////////////
-    class GBABackup
+    class Backup
     {
     public:
 
         virtual u8 ReadByte(u32 offset) { return 0; }
         virtual void WriteByte(u32 offset, u8 value) {}
-        virtual ~GBABackup() {}
+        virtual ~Backup() {}
     };
 }
 

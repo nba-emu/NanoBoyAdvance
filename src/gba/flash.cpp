@@ -38,7 +38,7 @@ namespace NanoboyAdvance
     /// \fn      Constructor
     ///
     ///////////////////////////////////////////////////////////
-    GBAFlash::GBAFlash(string save_file, bool second_bank)
+    Flash::Flash(string save_file, bool second_bank)
     {
         u8* save_data;
 
@@ -77,7 +77,7 @@ namespace NanoboyAdvance
     /// \fn      Destructor
     ///
     ///////////////////////////////////////////////////////////
-    GBAFlash::~GBAFlash()
+    Flash::~Flash()
     {
         if (m_SecondBank)
         {
@@ -102,7 +102,7 @@ namespace NanoboyAdvance
     /// \fn      ReadByte
     ///
     ///////////////////////////////////////////////////////////
-    u8 GBAFlash::ReadByte(u32 offset)
+    u8 Flash::ReadByte(u32 offset)
     {
         offset &= 0xFFFF;
         // TODO: vba-sdl-h source codes suggests chip id being mirrored each 100h bytes
@@ -125,7 +125,7 @@ namespace NanoboyAdvance
     /// \fn      WriteByte
     ///
     ///////////////////////////////////////////////////////////
-    void GBAFlash::WriteByte(u32 offset, u8 value)
+    void Flash::WriteByte(u32 offset, u8 value)
     {
         if (!m_EnableByteWrite && offset == 0x0E005555 && value == 0xAA) { m_CommandPhase = 1; }
         else if (offset == 0x0E002AAA && value == 0x55 && m_CommandPhase == 1) { m_CommandPhase = 2; }

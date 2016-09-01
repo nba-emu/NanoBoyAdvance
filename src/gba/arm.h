@@ -37,7 +37,7 @@ namespace NanoboyAdvance
         typedef void (ARM7::*ThumbInstruction)(u16);
         static const ThumbInstruction thumb_table[1024];
 
-        GBAMemory* memory;
+        Memory* memory;
         
         // General Purpose Registers
         u32 r[16] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -332,7 +332,7 @@ namespace NanoboyAdvance
         int cycles {0};
 
         // Constructors
-        void Init(GBAMemory* memory, bool use_bios);
+        void Init(Memory* memory, bool use_bios);
         
         // Execution functions
         void Step();

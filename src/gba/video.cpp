@@ -27,10 +27,10 @@
 
 namespace NanoboyAdvance
 {
-    const int GBAVideo::VBLANK_INTERRUPT = 1;
-    const int GBAVideo::HBLANK_INTERRUPT = 2;
-    const int GBAVideo::VCOUNT_INTERRUPT = 4;
-    const int GBAVideo::EVENT_WAIT_CYCLES[3] = { 960, 272, 1232 };
+    const int Video::VBLANK_INTERRUPT = 1;
+    const int Video::HBLANK_INTERRUPT = 2;
+    const int Video::VCOUNT_INTERRUPT = 4;
+    const int Video::EVENT_WAIT_CYCLES[3] = { 960, 272, 1232 };
 
     ///////////////////////////////////////////////////////////
     /// \author  Frederic Meyer
@@ -38,7 +38,7 @@ namespace NanoboyAdvance
     /// \fn      Constructor
     ///
     ///////////////////////////////////////////////////////////
-    void GBAVideo::Init(GBAInterrupt* interrupt)
+    void Video::Init(Interrupt* interrupt)
     {
         // Assign interrupt struct to video device
         this->m_Interrupt = interrupt;
@@ -56,7 +56,7 @@ namespace NanoboyAdvance
     /// \fn      RenderTextModeBG
     ///
     ///////////////////////////////////////////////////////////
-    void GBAVideo::RenderTextModeBG(int id)
+    void Video::RenderTextModeBG(int id)
     {
         struct Background bg = this->m_BG[id];
         u16* buffer = m_BgBuffer[id];
@@ -127,7 +127,7 @@ namespace NanoboyAdvance
     /// \fn      RenderRotateScaleBG
     ///
     ///////////////////////////////////////////////////////////
-    void GBAVideo::RenderRotateScaleBG(int id)
+    void Video::RenderRotateScaleBG(int id)
     {
         u32 tile_base = m_BG[id].tile_base;
         u32 map_base = m_BG[id].map_base;
@@ -208,7 +208,7 @@ namespace NanoboyAdvance
     /// \fn      RenderOAM
     ///
     ///////////////////////////////////////////////////////////
-    void GBAVideo::RenderOAM(u32 tile_base)
+    void Video::RenderOAM(u32 tile_base)
     {
         // Process OBJ127 first, because OBJ0 has highest priority (OBJ0 overlays OBJ127, not vice versa)
         u32 offset = 127 * 8;
@@ -227,14 +227,14 @@ namespace NanoboyAdvance
                 int height;
                 int x = attribute1 & 0x1FF;
                 int y = attribute0 & 0xFF;
-                GBAVideoSpriteShape shape = static_cast<GBAVideoSpriteShape>(attribute0 >> 14);
+                SpriteShape shape = static_cast<SpriteShape>(attribute0 >> 14);
                 int size = attribute1 >> 14;
                 int priority = (attribute2 >> 10) & 3;
 
                 // Decode width and height
                 switch (shape)
                 {
-                case GBAVideoSpriteShape::Square:
+                case SPRITE_SQUARE:
                     switch (size)
                     {
                     case 0: width = 8; height = 8; break;
@@ -243,7 +243,7 @@ namespace NanoboyAdvance
                     case 3: width = 64; height = 64; break;
                     }
                     break;
-                case GBAVideoSpriteShape::Horizontal:
+                case SPRITE_HORIZONTAL:
                     switch (size)
                     {
                     case 0: width = 16; height = 8; break;
@@ -252,7 +252,7 @@ namespace NanoboyAdvance
                     case 3: width = 64; height = 32; break;
                     }
                     break;
-                case GBAVideoSpriteShape::Vertical:
+                case SPRITE_VERTICAL:
                     switch (size)
                     {
                     case 0: width = 8; height = 16; break;
@@ -261,7 +261,7 @@ namespace NanoboyAdvance
                     case 3: width = 32; height = 64; break;
                     }
                     break;
-                case GBAVideoSpriteShape::Prohibited:
+                case SPRITE_PROHIBITED:
                     width = 0;
                     height = 0;
                     break;
@@ -379,7 +379,7 @@ namespace NanoboyAdvance
     /// \fn      Render
     ///
     ///////////////////////////////////////////////////////////
-    void GBAVideo::Render()
+    void Video::Render()
     {
         // Reset obj buffers
         for (int i = 0; i < 240; i++)
@@ -531,16 +531,16 @@ namespace NanoboyAdvance
     /// \fn      Step
     ///
     ///////////////////////////////////////////////////////////
-    void NanoboyAdvance::GBAVideo::Step()
+    void NanoboyAdvance::Video::Step()
     {
         m_RenderScanline = false;
         m_VCountFlag = m_VCount == m_VCountSetting;
 
         switch (m_State)
         {
-        case GBAVideoState::Scanline:
+        case RenderingPhase::Scanline:
             m_HBlankDMA = true;
-            m_State = GBAVideoState::HBlank;
+            m_State = RenderingPhase::HBlank;
             m_WaitCycles = EVENT_WAIT_CYCLES[1];
 
             m_BG[2].x_ref_int += DecodeGBAFloat16(m_BG[2].pb);
@@ -553,7 +553,7 @@ namespace NanoboyAdvance
 
             m_RenderScanline = true;
             return;
-        case GBAVideoState::HBlank:
+        case RenderingPhase::HBlank:
             m_VCount++;
 
             if (m_VCountFlag && m_VCountIRQ)
@@ -568,7 +568,7 @@ namespace NanoboyAdvance
 
                 m_HBlankDMA = false;
                 m_VBlankDMA = true;
-                m_State = GBAVideoState::VBlank;
+                m_State = RenderingPhase::VBlank;
                 m_WaitCycles = EVENT_WAIT_CYCLES[2];
 
                 if (m_VBlankIRQ)
@@ -577,11 +577,11 @@ namespace NanoboyAdvance
             else
             {
                 m_HBlankDMA = false;
-                m_State = GBAVideoState::Scanline;
+                m_State = RenderingPhase::Scanline;
                 m_WaitCycles = EVENT_WAIT_CYCLES[0];
             }
             return;
-        case GBAVideoState::VBlank:
+        case RenderingPhase::VBlank:
             m_VCount++;
 
             if (m_VCountFlag && m_VCountIRQ)
@@ -590,7 +590,7 @@ namespace NanoboyAdvance
             if (m_VCount == 227)
             {
                 m_VBlankDMA = false;
-                m_State = GBAVideoState::Scanline;
+                m_State = RenderingPhase::Scanline;
                 m_WaitCycles = EVENT_WAIT_CYCLES[0];
                 m_VCount = 0;
             }
@@ -602,7 +602,7 @@ namespace NanoboyAdvance
         }
     }
 
-    void GBAVideo::SetupComposer(GBAComposer* composer)
+    void Video::SetupComposer(GBAComposer* composer)
     {
         composer->SetVerticalCounter(&m_VCount);
         composer->SetBackdropColor((u16*)&m_PAL);

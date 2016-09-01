@@ -41,11 +41,11 @@ namespace NanoboyAdvance
     /// \file    memory.h
     /// \author  Frederic Meyer
     /// \date    July 31th, 2016
-    /// \class   GBAMemory
+    /// \class   Memory
     /// \brief   Defines components of the vanilla memory.
     ///
     ///////////////////////////////////////////////////////////
-    class GBAMemory
+    class Memory
     {
     private:
 
@@ -253,7 +253,7 @@ namespace NanoboyAdvance
         /// \fn      Destructor
         ///
         ///////////////////////////////////////////////////////////
-        ~GBAMemory();
+        ~Memory();
 
 
         ///////////////////////////////////////////////////////////
@@ -421,7 +421,7 @@ namespace NanoboyAdvance
         u8 m_BIOS[0x4000];
         u8 m_WRAM[0x40000];
         u8 m_IRAM[0x8000];
-        GBABackup* m_Backup           {NULL};
+        Backup* m_Backup           {NULL};
         SaveType   m_SaveType         {SAVE_NONE};
 
         ///////////////////////////////////////////////////////////
@@ -437,7 +437,7 @@ namespace NanoboyAdvance
         // Class members (Interrupts)
         //
         ///////////////////////////////////////////////////////////
-        GBAInterrupt m_Interrupt;
+        Interrupt m_Interrupt;
         HaltState    m_HaltState       {HALTSTATE_NONE};
         bool         m_IntrWait        {false};
         bool         m_IntrWaitMask    {0};
@@ -446,7 +446,7 @@ namespace NanoboyAdvance
         // Class members (misc.)
         //
         ///////////////////////////////////////////////////////////
-        GBAVideo m_Video;
+        Video m_Video;
         Audio m_Audio;
         bool m_DidTransfer          {false};
         int m_DMACycles             {0};

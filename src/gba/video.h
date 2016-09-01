@@ -40,11 +40,11 @@ namespace NanoboyAdvance
     /// \file    video.h
     /// \author  Frederic Meyer
     /// \date    July 31th, 2016
-    /// \class   GBAVideo
+    /// \class   Video
     /// \brief   Provides methods for rendering several modes.
     ///
     ///////////////////////////////////////////////////////////
-    class GBAVideo
+    class Video
     {   
     private:
         static const int VBLANK_INTERRUPT;
@@ -55,29 +55,29 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         /// \author Frederic Meyer
         /// \date   July 31th, 2016
-        /// \enum   GBAVideoSpriteShape
+        /// \enum   SpriteShape
         ///
         /// Defines all possible sprite shapes.
         ///
         ///////////////////////////////////////////////////////////
-        enum class GBAVideoSpriteShape
+        enum SpriteShape
         {
-            Square          = 0,
-            Horizontal      = 1,
-            Vertical        = 2,
-            Prohibited      = 3
+            SPRITE_SQUARE          = 0,
+            SPRITE_HORIZONTAL      = 1,
+            SPRITE_VERTICAL        = 2,
+            SPRITE_PROHIBITED      = 3
         };
 
     public:
         ///////////////////////////////////////////////////////////
         /// \author Frederic Meyer
         /// \date   July 31th, 2016
-        /// \enum   GBAVideoState
+        /// \enum   RenderingPhase
         ///
         /// Defines all phases of video rendering.
         ///
         ///////////////////////////////////////////////////////////
-        enum class GBAVideoState
+        enum class RenderingPhase
         {
             Scanline = 0,
             HBlank = 1,
@@ -233,7 +233,7 @@ namespace NanoboyAdvance
         /// \fn      Constructor
         ///
         ///////////////////////////////////////////////////////////
-        void Init(GBAInterrupt* m_Interrupt);
+        void Init(Interrupt* m_Interrupt);
 
     private:
         ///////////////////////////////////////////////////////////
@@ -307,7 +307,7 @@ namespace NanoboyAdvance
         // Class members
         //
         ///////////////////////////////////////////////////////////
-        GBAInterrupt* m_Interrupt;
+        Interrupt* m_Interrupt;
 
         ///////////////////////////////////////////////////////////
         // Class members (Buffers)
@@ -322,7 +322,7 @@ namespace NanoboyAdvance
         // Class members (IO)
         //
         ///////////////////////////////////////////////////////////
-        GBAVideoState m_State       {GBAVideoState::Scanline};
+        RenderingPhase m_State       {RenderingPhase::Scanline};
         Background m_BG[4];
         Object m_Obj;
         Window m_Win[2];

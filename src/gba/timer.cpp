@@ -33,7 +33,7 @@ namespace NanoboyAdvance
     /// \fn     RunTimer
     ///
     ///////////////////////////////////////////////////////////
-    void GBAMemory::RunTimer(int id, bool& overflow)
+    void Memory::RunTimer(int id, bool& overflow)
     {
         m_Timer[id].ticks = 0;
 

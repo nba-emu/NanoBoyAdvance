@@ -33,7 +33,7 @@ namespace NanoboyAdvance
     /// \fn     RunDMA
     ///
     ///////////////////////////////////////////////////////////
-    void GBAMemory::RunDMA()
+    void Memory::RunDMA()
     {
         // TODO: FIFO A/B and Video Capture
         for (int i = 0; i < 4; i++)

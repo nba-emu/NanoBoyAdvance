@@ -147,8 +147,8 @@ namespace NanoboyAdvance
         // Class members (gba slaves)
         //
         ///////////////////////////////////////////////////////////
-        ARM7 m_ARM;             ///< Current processor instance
-        GBAMemory m_Memory;     ///< Current memory instance
+        ARM7 m_ARM;             ///< Processor instance
+        Memory m_Memory;        ///< Memory instance
 
 
         ///////////////////////////////////////////////////////////
