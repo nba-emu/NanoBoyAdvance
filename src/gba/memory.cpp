@@ -324,6 +324,29 @@ namespace NanoboyAdvance
                        (m_Video.m_SFX.bg_select[1][3] ? 8 : 0) |
                        (m_Video.m_SFX.obj_select[1] ? 16 : 0) |
                        (m_Video.m_SFX.bd_select[1] ? 32 : 0);
+            case SOUNDCNT_L:
+                return m_Audio.m_SoundControl.master_volume_right |
+                       (m_Audio.m_SoundControl.master_volume_left << 4);
+            case SOUNDCNT_L+1:
+                return (m_Audio.m_SoundControl.enable_right[0] ? 1 : 0) |
+                       (m_Audio.m_SoundControl.enable_right[1] ? 2 : 0) |
+                       (m_Audio.m_SoundControl.enable_right[2] ? 4 : 0) |
+                       (m_Audio.m_SoundControl.enable_right[3] ? 8 : 0) |
+                       (m_Audio.m_SoundControl.enable_left[0] ? 16 : 0) |
+                       (m_Audio.m_SoundControl.enable_left[1] ? 32 : 0) |
+                       (m_Audio.m_SoundControl.enable_left[2] ? 64 : 0) |
+                       (m_Audio.m_SoundControl.enable_left[3] ? 128 : 0);
+            case SOUNDCNT_H:
+                return (m_Audio.m_SoundControl.volume) |
+                       (m_Audio.m_SoundControl.dma_volume[0] ? 4 : 0) |
+                       (m_Audio.m_SoundControl.dma_volume[1] ? 8 : 0);
+            case SOUNDCNT_H+1:
+                return (m_Audio.m_SoundControl.dma_enable_right[0] ?  1 : 0) |
+                       (m_Audio.m_SoundControl.dma_enable_left[0]  ?  2 : 0) |
+                       (m_Audio.m_SoundControl.dma_timer[0]        ?  4 : 0) |
+                       (m_Audio.m_SoundControl.dma_enable_right[1] ? 16 : 0) |
+                       (m_Audio.m_SoundControl.dma_enable_left[1]  ? 32 : 0) |
+                       (m_Audio.m_SoundControl.dma_timer[1]        ? 64 : 0);
             case SOUNDBIAS:
             case SOUNDBIAS+1:
             case SOUNDBIAS+2:
@@ -749,6 +772,36 @@ namespace NanoboyAdvance
                 break;
             case BLDY:
                 m_Video.m_SFX.evy = value & 0x1F;
+                break;
+            case SOUNDCNT_L:
+                m_Audio.m_SoundControl.master_volume_right = value & 7;
+                m_Audio.m_SoundControl.master_volume_left = (value >> 4) & 7;
+                break;
+            case SOUNDCNT_L+1:
+                m_Audio.m_SoundControl.enable_right[0] = value & 1;
+                m_Audio.m_SoundControl.enable_right[1] = value & 2;
+                m_Audio.m_SoundControl.enable_right[2] = value & 4;
+                m_Audio.m_SoundControl.enable_right[3] = value & 8;
+                m_Audio.m_SoundControl.enable_left[0] = value & 16;
+                m_Audio.m_SoundControl.enable_left[1] = value & 32;
+                m_Audio.m_SoundControl.enable_left[2] = value & 64;
+                m_Audio.m_SoundControl.enable_left[3] = value & 128;
+                break;
+            case SOUNDCNT_H:
+                m_Audio.m_SoundControl.volume = value & 3;
+                m_Audio.m_SoundControl.dma_volume[0] = (value >> 2) & 1;
+                m_Audio.m_SoundControl.dma_volume[1] = (value >> 3) & 1;
+                break;
+            case SOUNDCNT_H+1:
+                m_Audio.m_SoundControl.dma_enable_right[0] = value & 1;
+                m_Audio.m_SoundControl.dma_enable_left[0] = value & 2;
+                m_Audio.m_SoundControl.dma_timer[0] = value & 4;
+                m_Audio.m_SoundControl.dma_enable_right[1] = value & 16;
+                m_Audio.m_SoundControl.dma_enable_left[1] = value & 32;
+                m_Audio.m_SoundControl.dma_timer[1] = value & 64;
+
+                if (value & 8) m_Audio.m_FIFO[0].Reset();
+                if (value & 128) m_Audio.m_FIFO[1].Reset();
                 break;
             case SOUNDBIAS:
             case SOUNDBIAS+1:

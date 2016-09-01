@@ -93,7 +93,7 @@ namespace NanoboyAdvance
                     between = (current * (1 - fractional)) + (next * fractional);
                 }
 
-                output += between;
+                output += between / 2;
                 source_index[j] += ratio[j];
             }
 

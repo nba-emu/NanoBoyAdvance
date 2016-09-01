@@ -189,19 +189,6 @@ namespace NanoboyAdvance
             bool prefetch   {false};
         };
 
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    August 27th, 2016
-        /// \struct  SoundControl
-        ///
-        /// Holds SOUNDCNT information
-        ///
-        ///////////////////////////////////////////////////////////
-        struct SoundControl
-        {
-            int master_volume[2] {0, 0};
-        };
-
     public:
 
         ///////////////////////////////////////////////////////////

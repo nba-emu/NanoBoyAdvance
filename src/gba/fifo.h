@@ -97,6 +97,16 @@ namespace NanoboyAdvance
             return value;
         }
 
+        ///////////////////////////////////////////////////////////
+        /// \fn      Reset
+        /// \brief   Resets the FIFO state.
+        ///
+        ///////////////////////////////////////////////////////////
+        inline void Reset()
+        {
+            m_BufferIndex = 0;
+        }
+
     private:
         ///////////////////////////////////////////////////////////
         /// Class members

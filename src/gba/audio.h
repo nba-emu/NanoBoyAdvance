@@ -42,6 +42,24 @@ namespace NanoboyAdvance
     {
     public:
         ///////////////////////////////////////////////////////////
+        /// \struct  SoundControl
+        /// \brief   Holds SOUNDCNT information
+        ///
+        ///////////////////////////////////////////////////////////
+        struct SoundControl
+        {
+            int  volume                 { 0 };
+            int  master_volume_left     { 0 };
+            int  master_volume_right    { 0 };
+            bool enable_left[4]         { false, false, false, false };
+            bool enable_right[4]        { false, false, false, false };
+            int  dma_timer[2]           { 0, 0 };
+            int  dma_volume[2]          { 0, 0 };
+            bool dma_enable_left[2]     { false, false };
+            bool dma_enable_right[2]    { false, false };
+        };
+
+        ///////////////////////////////////////////////////////////
         /// \fn      Audio
         /// \brief   Constructor
         ///
@@ -68,6 +86,7 @@ namespace NanoboyAdvance
         ///
         ///////////////////////////////////////////////////////////
         FIFO m_FIFO[2];
+        SoundControl m_SoundControl;
         std::vector<s8> m_Buffer;
         std::vector<s8> m_FifoBuffer[2];
         int m_WaitCycles { 0 };
@@ -76,7 +95,7 @@ namespace NanoboyAdvance
     };
 
     ///////////////////////////////////////////////////////////
-    /// \fn AudioCallback
+    /// \fn     AudioCallback
     /// \brief  Called by an Audio Adapter to request audio data.
     ///
     ///////////////////////////////////////////////////////////
