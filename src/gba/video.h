@@ -77,11 +77,11 @@ namespace NanoboyAdvance
         /// Defines all phases of video rendering.
         ///
         ///////////////////////////////////////////////////////////
-        enum class RenderingPhase
+        enum RenderingPhase
         {
-            Scanline = 0,
-            HBlank = 1,
-            VBlank = 2
+            PHASE_SCANLINE = 0,
+            PHASE_HBLANK = 1,
+            PHASE_VBLANK = 2
         };
 
     private:
@@ -322,7 +322,7 @@ namespace NanoboyAdvance
         // Class members (IO)
         //
         ///////////////////////////////////////////////////////////
-        RenderingPhase m_State       {RenderingPhase::Scanline};
+        RenderingPhase m_State       {PHASE_SCANLINE};
         Background m_BG[4];
         Object m_Obj;
         Window m_Win[2];

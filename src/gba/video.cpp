@@ -538,9 +538,9 @@ namespace NanoboyAdvance
 
         switch (m_State)
         {
-        case RenderingPhase::Scanline:
+        case PHASE_SCANLINE:
             m_HBlankDMA = true;
-            m_State = RenderingPhase::HBlank;
+            m_State = PHASE_HBLANK;
             m_WaitCycles = EVENT_WAIT_CYCLES[1];
 
             m_BG[2].x_ref_int += DecodeGBAFloat16(m_BG[2].pb);
@@ -553,7 +553,7 @@ namespace NanoboyAdvance
 
             m_RenderScanline = true;
             return;
-        case RenderingPhase::HBlank:
+        case PHASE_HBLANK:
             m_VCount++;
 
             if (m_VCountFlag && m_VCountIRQ)
@@ -568,7 +568,7 @@ namespace NanoboyAdvance
 
                 m_HBlankDMA = false;
                 m_VBlankDMA = true;
-                m_State = RenderingPhase::VBlank;
+                m_State = PHASE_VBLANK;
                 m_WaitCycles = EVENT_WAIT_CYCLES[2];
 
                 if (m_VBlankIRQ)
@@ -577,11 +577,11 @@ namespace NanoboyAdvance
             else
             {
                 m_HBlankDMA = false;
-                m_State = RenderingPhase::Scanline;
+                m_State = PHASE_SCANLINE;
                 m_WaitCycles = EVENT_WAIT_CYCLES[0];
             }
             return;
-        case RenderingPhase::VBlank:
+        case PHASE_VBLANK:
             m_VCount++;
 
             if (m_VCountFlag && m_VCountIRQ)
@@ -590,7 +590,7 @@ namespace NanoboyAdvance
             if (m_VCount == 227)
             {
                 m_VBlankDMA = false;
-                m_State = RenderingPhase::Scanline;
+                m_State = PHASE_SCANLINE;
                 m_WaitCycles = EVENT_WAIT_CYCLES[0];
                 m_VCount = 0;
             }
