@@ -1206,9 +1206,4 @@ namespace NanoboyAdvance
             cycles += memory->SequentialAccess(r[15], Memory::ACCESS_HWORD);
         }
     }
-
-    /*void ARM7::ExecuteThumb(u16 instruction)
-    {
-        (*this.*thumb_table[instruction >> 6])(instruction);
-    }*/
 }

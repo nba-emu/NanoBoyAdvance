@@ -84,6 +84,10 @@ namespace NanoboyAdvance
                             WriteWord(m_DMA[i].dest_int, value);
                             m_DMA[i].source_int += 4;
                         }
+
+                        // Raise DMA interrupt if enabled
+                        if (m_DMA[i].interrupt)
+                            m_Interrupt.if_ |= 256 << i;
                     }
                 }
 
