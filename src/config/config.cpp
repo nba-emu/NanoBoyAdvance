@@ -24,7 +24,6 @@
 
 #include "config.h"
 #include "util/log.h"
-#include <boost/algorithm/string.hpp>
 #include <fstream>
 #include <stack>
 
@@ -32,6 +31,21 @@ using namespace std;
 
 namespace NanoboyAdvance
 {
+    const string Trim(const string& s)
+    {
+      string::size_type first = s.find_first_not_of(" \t");
+
+      if(first == string::npos)
+      {
+        return s;
+      }
+      else
+      {
+        string::size_type last = s.find_last_not_of(" \t");
+        return s.substr( first, last - first + 1);
+      }
+    }
+
     Config::Config(string path)
     {
         m_File = path;
@@ -68,8 +82,8 @@ namespace NanoboyAdvance
             int seperator = 0;
             char first_char;
 
-            // Remove any intendation
-            boost::trim_left(line);
+            // Remove any whitespaces/tabs
+            line = Trim(line);
 
             // Don't parse empty lines...
             if (line.size() == 0) continue;
@@ -124,8 +138,7 @@ namespace NanoboyAdvance
                 if (part1 == key && current_category == category)
                 {
                     stream.close();
-                    boost::trim_right(part2);
-                    return part2;
+                    return Trim(part2);
                 }
 
                 continue;

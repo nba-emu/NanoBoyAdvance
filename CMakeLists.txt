@@ -25,8 +25,9 @@ if (PROFILE)
     set(CMAKE_EXE_LINKER_FLAGS -pg)
 endif()
 
-# Search for the BOOST library
-find_package(Boost REQUIRED)
+# The version number.
+set(VERSION_MAJOR 0)
+set(VERSION_MINOR 1)
 
 # Frontend selection
 option(QT_GUI "Build Qt based frontend" ON)
