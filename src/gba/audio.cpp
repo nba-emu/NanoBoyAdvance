@@ -56,21 +56,27 @@ namespace NanoboyAdvance
         ratio[0] = (double)audio->m_FifoBuffer[0].size() / (double)actual_length;
         ratio[1] = (double)audio->m_FifoBuffer[1].size() / (double)actual_length;
 
-        for (int i = 0; i < length; i++)
+        for (int i = 0; i < length / 2; i++)
         {
-            s8 output;
+            s8 output[2];
 
             if (i >= actual_length)
             {
                 // TODO: Fill rest of the buffer and exit directly.
-                stream[i] = 0;
+                stream[i * 2] = 0;
+                stream[i * 2 + 1] = 0;
                 continue;
             }
 
-            output = audio->m_Buffer[i];
+            //output[0] = audio->m_Buffer[i];
+            output[0] = output[1] = 0;
 
             for (int j = 0; j < 2; j++)
             {
+                if (!audio->m_SoundControl.dma_enable_left[j] &&
+                    !audio->m_SoundControl.dma_enable_right[j])
+                    continue;
+
                 // Get integral and fractional part of input index
                 double integral;
                 double fractional = modf(source_index[j], &integral);
@@ -93,11 +99,17 @@ namespace NanoboyAdvance
                     between = (current * (1 - fractional)) + (next * fractional);
                 }
 
-                output += between / 2;
+                if (audio->m_SoundControl.dma_enable_left[j])
+                    output[0] += between / (2 - audio->m_SoundControl.dma_volume[j]);
+
+                if (audio->m_SoundControl.dma_enable_right[j])
+                    output[1] += between / (2 - audio->m_SoundControl.dma_volume[j]);
+
                 source_index[j] += ratio[j];
             }
 
-            stream[i] = output;
+            stream[i * 2] = output[0];
+            stream[i * 2 + 1] = output[1];
         }
 
         if (actual_length > length)
