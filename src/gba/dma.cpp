@@ -145,11 +145,11 @@ namespace NanoboyAdvance
                 // Reschedule the DMA as specified or disable it
                 if (m_DMA[i].repeat)
                 {
-                    m_DMA[i].count_int = m_DMA[i].count & dma_count_mask[i];
+                    m_DMA[i].count_int = m_DMA[i].count & DMA_COUNT_MASK[i];
                     if (m_DMA[i].count_int == 0)
-                        m_DMA[i].count_int = dma_count_mask[i] + 1;
+                        m_DMA[i].count_int = DMA_COUNT_MASK[i] + 1;
                     if (dest_control == DMA_RELOAD)
-                        m_DMA[i].dest_int  = m_DMA[i].dest & dma_dest_mask[i];
+                        m_DMA[i].dest_int  = m_DMA[i].dest & DMA_DEST_MASK[i];
                 }
                 else
                 {
