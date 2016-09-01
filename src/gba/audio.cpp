@@ -53,10 +53,11 @@ namespace NanoboyAdvance
         double source_index[2] {0, 0};
         int actual_length = audio->m_Buffer.size();
 
+        length = length / 2; // we have two channels, but we want the actual sample count.
         ratio[0] = (double)audio->m_FifoBuffer[0].size() / (double)actual_length;
         ratio[1] = (double)audio->m_FifoBuffer[1].size() / (double)actual_length;
 
-        for (int i = 0; i < length / 2; i++)
+        for (int i = 0; i < length; i++)
         {
             s8 output[2];
 
