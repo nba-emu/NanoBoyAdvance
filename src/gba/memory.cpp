@@ -35,17 +35,17 @@ using namespace std;
 
 namespace NanoboyAdvance
 {
-    const int GBAMemory::dma_count_mask[4] = {0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF};
-    const int GBAMemory::dma_dest_mask[4] = {0x7FFFFFF, 0x7FFFFFF, 0x7FFFFFF, 0xFFFFFFF};
-    const int GBAMemory::dma_source_mask[4] = {0x7FFFFFF, 0xFFFFFFF, 0xFFFFFFF, 0xFFFFFFF};
-    const int GBAMemory::tmr_cycles[4] = {1, 64, 256, 1024};
+    constexpr int GBAMemory::DMA_COUNT_MASK[4];
+    constexpr int GBAMemory::DMA_DEST_MASK[4];
+    constexpr int GBAMemory::DMA_SOURCE_MASK[4];
+    constexpr int GBAMemory::TMR_CYCLES[4];
 
-    const int GBAMemory::wsn_table[4] = {4, 3, 2, 8};
-    const int GBAMemory::wss0_table[2] = {2, 1};
-    const int GBAMemory::wss1_table[2] = {4, 1};
-    const int GBAMemory::wss2_table[2] = {8, 1};
+    constexpr int GBAMemory::WSN_TABLE[4];
+    constexpr int GBAMemory::WSS0_TABLE[2];
+    constexpr int GBAMemory::WSS1_TABLE[2];
+    constexpr int GBAMemory::WSS2_TABLE[2];
     
-    const u8 GBAMemory::hle_bios[0x40] = {
+    const u8 GBAMemory::HLE_BIOS[0x40] = {
         0x06, 0x00, 0x00, 0xEA, 0x00, 0x00, 0xA0, 0xE1,
         0x00, 0x00, 0xA0, 0xE1, 0x00, 0x00, 0xA0, 0xE1,
         0x00, 0x00, 0xA0, 0xE1, 0x00, 0x00, 0xA0, 0xE1,
@@ -90,7 +90,7 @@ namespace NanoboyAdvance
         }
         else
         {
-            memcpy(this->m_BIOS, hle_bios, sizeof(hle_bios));
+            memcpy(this->m_BIOS, HLE_BIOS, sizeof(HLE_BIOS));
         }
 
         if (!File::Exists(rom_file))
@@ -175,8 +175,8 @@ namespace NanoboyAdvance
         if (page == 8)
         {
             if (size == ACCESS_WORD)
-                return 1 + 2 * wsn_table[m_Waitstate.first[0]];
-            return 1 + wsn_table[m_Waitstate.first[0]];
+                return 1 + 2 * WSN_TABLE[m_Waitstate.first[0]];
+            return 1 + WSN_TABLE[m_Waitstate.first[0]];
         }
 
         if (page == 0xE)
@@ -201,8 +201,8 @@ namespace NanoboyAdvance
         if (page == 8) 
         {
             if (size == ACCESS_WORD)
-                return 1 + wss0_table[m_Waitstate.second[0]] + wsn_table[m_Waitstate.first[0]];
-            return 1 + wss0_table[m_Waitstate.second[0]];
+                return 1 + WSS0_TABLE[m_Waitstate.second[0]] + WSN_TABLE[m_Waitstate.first[0]];
+            return 1 + WSS0_TABLE[m_Waitstate.second[0]];
         }
 
         return SequentialAccess(offset, size);
@@ -943,12 +943,12 @@ namespace NanoboyAdvance
             
                 if (m_DMA[0].enable) 
                 {
-                    m_DMA[0].source_int = m_DMA[0].source & dma_source_mask[0];
-                    m_DMA[0].dest_int = m_DMA[0].dest & dma_dest_mask[0];
-                    m_DMA[0].count_int = m_DMA[0].count & dma_count_mask[0];
+                    m_DMA[0].source_int = m_DMA[0].source & DMA_SOURCE_MASK[0];
+                    m_DMA[0].dest_int = m_DMA[0].dest & DMA_DEST_MASK[0];
+                    m_DMA[0].count_int = m_DMA[0].count & DMA_COUNT_MASK[0];
 
                     if (m_DMA[0].count_int == 0) 
-                        m_DMA[0].count_int = dma_count_mask[0] + 1;
+                        m_DMA[0].count_int = DMA_COUNT_MASK[0] + 1;
                 }
                 break;
             }
@@ -975,12 +975,12 @@ namespace NanoboyAdvance
                 
                 if (m_DMA[1].enable) 
                 {
-                    m_DMA[1].source_int = m_DMA[1].source & dma_source_mask[1];
-                    m_DMA[1].dest_int = m_DMA[1].dest & dma_dest_mask[1];
-                    m_DMA[1].count_int = m_DMA[1].count & dma_count_mask[1];
+                    m_DMA[1].source_int = m_DMA[1].source & DMA_SOURCE_MASK[1];
+                    m_DMA[1].dest_int = m_DMA[1].dest & DMA_DEST_MASK[1];
+                    m_DMA[1].count_int = m_DMA[1].count & DMA_COUNT_MASK[1];
 
                     if (m_DMA[1].count_int == 0) 
-                        m_DMA[1].count_int = dma_count_mask[1] + 1;
+                        m_DMA[1].count_int = DMA_COUNT_MASK[1] + 1;
                 }
                 break;
             }
@@ -1007,12 +1007,12 @@ namespace NanoboyAdvance
                 
                 if (m_DMA[2].enable) 
                 {
-                    m_DMA[2].source_int = m_DMA[2].source & dma_source_mask[2];
-                    m_DMA[2].dest_int = m_DMA[2].dest & dma_dest_mask[2];
-                    m_DMA[2].count_int = m_DMA[2].count & dma_count_mask[2];
+                    m_DMA[2].source_int = m_DMA[2].source & DMA_SOURCE_MASK[2];
+                    m_DMA[2].dest_int = m_DMA[2].dest & DMA_DEST_MASK[2];
+                    m_DMA[2].count_int = m_DMA[2].count & DMA_COUNT_MASK[2];
 
                     if (m_DMA[2].count_int == 0) 
-                        m_DMA[2].count_int = dma_count_mask[2] + 1;
+                        m_DMA[2].count_int = DMA_COUNT_MASK[2] + 1;
                 }
                 break;
             }
@@ -1039,12 +1039,12 @@ namespace NanoboyAdvance
                 
                 if (m_DMA[3].enable) 
                 {
-                    m_DMA[3].source_int = m_DMA[3].source & dma_source_mask[3];
-                    m_DMA[3].dest_int = m_DMA[3].dest & dma_dest_mask[3];
-                    m_DMA[3].count_int = m_DMA[3].count & dma_count_mask[3];
+                    m_DMA[3].source_int = m_DMA[3].source & DMA_SOURCE_MASK[3];
+                    m_DMA[3].dest_int = m_DMA[3].dest & DMA_DEST_MASK[3];
+                    m_DMA[3].count_int = m_DMA[3].count & DMA_COUNT_MASK[3];
 
                     if (m_DMA[3].count_int == 0) 
-                        m_DMA[3].count_int = dma_count_mask[3] + 1;
+                        m_DMA[3].count_int = DMA_COUNT_MASK[3] + 1;
                 }
                 break;
             }

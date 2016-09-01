@@ -50,19 +50,23 @@ namespace NanoboyAdvance
     private:
 
         // DMA and Timer constants
-        static const int dma_count_mask[4];
-        static const int dma_dest_mask[4];
-        static const int dma_source_mask[4];
-        static const int tmr_cycles[4];
+        static constexpr int DMA_COUNT_MASK[4] =
+            { 0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF };
+        static constexpr int DMA_DEST_MASK[4] =
+            { 0x7FFFFFF, 0x7FFFFFF, 0x7FFFFFF, 0xFFFFFFF };
+        static constexpr int DMA_SOURCE_MASK[4] =
+            { 0x7FFFFFF, 0xFFFFFFF, 0xFFFFFFF, 0xFFFFFFF };
+        static constexpr int TMR_CYCLES[4] =
+            { 1, 64, 256, 1024 };
 
         // Waitstate constants
-        static const int wsn_table[4];
-        static const int wss0_table[2];
-        static const int wss1_table[2];
-        static const int wss2_table[2];
+        static constexpr int WSN_TABLE[4] = {4, 3, 2, 8};
+        static constexpr int WSS0_TABLE[2] = {2, 1};
+        static constexpr int WSS1_TABLE[2] = {4, 1};
+        static constexpr int WSS2_TABLE[2] = {8, 1};
 
         // BIOS-stub for HLE-emulation.
-        static const u8 hle_bios[0x40];
+        static const u8 HLE_BIOS[0x40];
 
 
         ///////////////////////////////////////////////////////////
@@ -281,7 +285,7 @@ namespace NanoboyAdvance
 
             if (m_Timer[id].countup && overflow) return true;
             if (!m_Timer[id].countup &&
-                ++m_Timer[id].ticks >= tmr_cycles[m_Timer[id].clock])
+                ++m_Timer[id].ticks >= TMR_CYCLES[m_Timer[id].clock])
                     return true;
 
             return false;
