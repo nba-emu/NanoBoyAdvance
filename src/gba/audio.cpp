@@ -38,7 +38,12 @@ namespace NanoboyAdvance
 
     void Audio::Step()
     {
-        m_Buffer.push_back(0);
+        s8 channel_out = 0;
+
+        channel_out = 127 * m_QuadChannel[0].m_Enable ? m_QuadChannel[0].Next(m_SampleRate) : 0;
+        channel_out += 127 * m_QuadChannel[1].m_Enable ? m_QuadChannel[1].Next(m_SampleRate) : 0;
+        m_Buffer.push_back(channel_out);
+
         m_WaitCycles = 16780000 / m_SampleRate;
     }
 
@@ -47,19 +52,20 @@ namespace NanoboyAdvance
         m_FifoBuffer[fifo].push_back(m_FIFO[fifo].Dequeue());
     }
 
-    void AudioCallback(Audio* audio, s8* stream, int length)
+    void AudioCallback(Audio* audio, s16* stream, int length)
     {
         double ratio[2];
         double source_index[2] {0, 0};
         int actual_length = audio->m_Buffer.size();
 
-        length = length / 2; // we have two channels, but we want the actual sample count.
+        //length = length / 2; // we have two channels, but we want the actual sample count.
+        length = length / 4;
         ratio[0] = (double)audio->m_FifoBuffer[0].size() / (double)actual_length;
         ratio[1] = (double)audio->m_FifoBuffer[1].size() / (double)actual_length;
 
         for (int i = 0; i < length; i++)
         {
-            s8 output[2];
+            s16 output[2];
 
             if (i >= actual_length)
             {
@@ -69,8 +75,9 @@ namespace NanoboyAdvance
                 continue;
             }
 
-            //output[0] = audio->m_Buffer[i];
-            output[0] = output[1] = 0;
+            output[0] = audio->m_Buffer[i];
+            output[1] = output[0];
+            //output[0] = output[1] = 0;
 
             for (int j = 0; j < 2; j++)
             {
@@ -97,7 +104,7 @@ namespace NanoboyAdvance
 
                     // Perform Cosinus Interpolation
                     fractional = (1 - cos(fractional * 3.141596)) / 2;
-                    between = (current * (1 - fractional)) + (next * fractional);
+                    between = ((current * (1 - fractional)) + (next * fractional)) * 2;
                 }
 
                 if (audio->m_SoundControl.dma_enable_left[j])
@@ -129,5 +136,10 @@ namespace NanoboyAdvance
             audio->m_FifoBuffer[1].clear();
             audio->m_Buffer.clear();
         }
+    }
+
+    float Audio::ConvertFrequency(int frequency)
+    {
+        return 131072 / (2048 - frequency);
     }
 }

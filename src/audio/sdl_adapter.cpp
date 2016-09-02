@@ -41,7 +41,7 @@ namespace NanoboyAdvance
 
         spec.freq = config.ReadInt("Audio::Quality", "SampleRate");
         spec.samples = config.ReadInt("Audio::Quality", "BufferSize");
-        spec.format = AUDIO_S8;
+        spec.format = AUDIO_S16;
         spec.channels = 2;
         spec.callback = AudioCallback;
         spec.userdata = audio;

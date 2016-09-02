@@ -26,6 +26,7 @@
 
 
 #include "fifo.h"
+#include "quadchannel.h"
 #include <fstream>
 #include <vector>
 
@@ -76,9 +77,17 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         /// \fn      FifoLoadSample
         /// \brief   Load a sample from the given FIFO.
+        /// \param   fifo  FIFO ID
         ///
         ///////////////////////////////////////////////////////////
         void FifoLoadSample(int fifo);
+
+        ///////////////////////////////////////////////////////////
+        /// \fn      ConvertFrequency
+        /// \brief   Load a sample from the given FIFO.
+        ///
+        ///////////////////////////////////////////////////////////
+        static float ConvertFrequency(int frequency);
 
     public:
         ///////////////////////////////////////////////////////////
@@ -86,6 +95,7 @@ namespace NanoboyAdvance
         ///
         ///////////////////////////////////////////////////////////
         FIFO m_FIFO[2];
+        QuadChannel m_QuadChannel[2];
         SoundControl m_SoundControl;
         std::vector<s8> m_Buffer;
         std::vector<s8> m_FifoBuffer[2];
@@ -99,7 +109,7 @@ namespace NanoboyAdvance
     /// \brief  Called by an Audio Adapter to request audio data.
     ///
     ///////////////////////////////////////////////////////////
-    void AudioCallback(Audio* audio, s8* stream, int length);
+    void AudioCallback(Audio* audio, s16* stream, int length);
 }
 
 #endif // __NBA_AUDIO_H__

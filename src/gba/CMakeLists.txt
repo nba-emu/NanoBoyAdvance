@@ -11,6 +11,7 @@ set(SRCS
     sram.cpp
     soft_composer.cpp
     audio.cpp
+    quadchannel.cpp
 )
 
 set(HEADERS
@@ -28,6 +29,7 @@ set(HEADERS
     video_extra.h
     audio.h
     fifo.h
+    quadchannel.h
 )
 
 add_library(gba STATIC ${SRCS} ${HEADERS})

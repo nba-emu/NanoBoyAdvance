@@ -324,6 +324,29 @@ namespace NanoboyAdvance
                        (m_Video.m_SFX.bg_select[1][3] ? 8 : 0) |
                        (m_Video.m_SFX.obj_select[1] ? 16 : 0) |
                        (m_Video.m_SFX.bd_select[1] ? 32 : 0);
+            case SOUND1CNT_L: // NR10 Channel 1 Sweep register
+                return  m_Audio.m_QuadChannel[0].m_SweepShift |
+                       ((int)m_Audio.m_QuadChannel[0].m_SweepDirection << 3) |
+                       (m_Audio.m_QuadChannel[0].m_SweepTime << 4);
+            case SOUND1CNT_H: // NR11 Channel 1 Sound length/Wave pattern duty
+                return  m_Audio.m_QuadChannel[0].m_Length |
+                       (m_Audio.m_QuadChannel[0].m_WavePatternDuty << 6);
+            case SOUND1CNT_H+1: // NR12 Channel 1 Volume Envelope
+                return  m_Audio.m_QuadChannel[0].GetEnvelopeSweep() |
+                       ((int)m_Audio.m_QuadChannel[0].m_EnvelopeDirection << 3) |
+                       (m_Audio.m_QuadChannel[0].GetVolume() << 4);
+            case SOUND1CNT_X+1: // NR14 Channel 1 Frequency hi
+                return m_Audio.m_QuadChannel[0].m_StopOnExpire ? 0x40 : 0x00;
+
+            case SOUND2CNT_L: // NR11 Channel 1 Sound length/Wave pattern duty
+                return  m_Audio.m_QuadChannel[1].m_Length |
+                       (m_Audio.m_QuadChannel[1].m_WavePatternDuty << 6);
+            case SOUND2CNT_L+1: // NR12 Channel 1 Volume Envelope
+                return  m_Audio.m_QuadChannel[1].GetEnvelopeSweep() |
+                       ((int)m_Audio.m_QuadChannel[1].m_EnvelopeDirection << 3) |
+                       (m_Audio.m_QuadChannel[1].GetVolume() << 4);
+            case SOUND2CNT_H+1: // NR14 Channel 1 Frequency hi
+                return m_Audio.m_QuadChannel[1].m_StopOnExpire ? 0x40 : 0x00;
             case SOUNDCNT_L:
                 return m_Audio.m_SoundControl.master_volume_right |
                        (m_Audio.m_SoundControl.master_volume_left << 4);
@@ -772,6 +795,51 @@ namespace NanoboyAdvance
                 break;
             case BLDY:
                 m_Video.m_SFX.evy = value & 0x1F;
+                break;
+            case SOUND1CNT_L:
+                m_Audio.m_QuadChannel[0].m_SweepShift = value & 7;
+                m_Audio.m_QuadChannel[0].m_SweepDirection = (QuadChannel::SweepDirection)((value >> 3) & 1);
+                m_Audio.m_QuadChannel[0].m_SweepTime = (value >> 4) & 7;
+                break;
+            case SOUND1CNT_H:
+                m_Audio.m_QuadChannel[0].m_Length = value & 0x3F;
+                m_Audio.m_QuadChannel[0].m_WavePatternDuty = (value >> 6) & 3;
+                break;
+            case SOUND1CNT_H+1:
+                m_Audio.m_QuadChannel[0].SetEnvelopeSweep(value & 7);
+                m_Audio.m_QuadChannel[0].m_EnvelopeDirection = (QuadChannel::EnvelopeDirection)((value >> 3) & 1);
+                m_Audio.m_QuadChannel[0].SetVolume((value >> 4) & 0xF);
+                break;
+            case SOUND1CNT_X:
+                m_Audio.m_QuadChannel[0].SetFrequency((m_Audio.m_QuadChannel[0].GetFrequency() & 0x700) | value);
+                break;
+            case SOUND1CNT_X+1:
+                m_Audio.m_QuadChannel[0].SetFrequency((m_Audio.m_QuadChannel[0].GetFrequency() & 0xFF) | ((value & 7) << 8));
+                m_Audio.m_QuadChannel[0].m_StopOnExpire = (value & 0x40) == 0x40;
+
+                if ((value & 0x80) == 0x80)
+                    m_Audio.m_QuadChannel[0].Restart();
+
+                break;
+            case SOUND2CNT_L:
+                m_Audio.m_QuadChannel[1].m_Length = value & 0x3F;
+                m_Audio.m_QuadChannel[1].m_WavePatternDuty = (value >> 6) & 3;
+                break;
+            case SOUND2CNT_L+1:
+                m_Audio.m_QuadChannel[1].SetEnvelopeSweep(value & 7);
+                m_Audio.m_QuadChannel[1].m_EnvelopeDirection = (QuadChannel::EnvelopeDirection)((value >> 3) & 1);
+                m_Audio.m_QuadChannel[1].SetVolume((value >> 4) & 0xF);
+                break;
+            case SOUND2CNT_H:
+                m_Audio.m_QuadChannel[1].SetFrequency((m_Audio.m_QuadChannel[1].GetFrequency() & 0x700) | value);
+                break;
+            case SOUND2CNT_H+1:
+                m_Audio.m_QuadChannel[1].SetFrequency((m_Audio.m_QuadChannel[1].GetFrequency() & 0xFF) | ((value & 7) << 8));
+                m_Audio.m_QuadChannel[1].m_StopOnExpire = (value & 0x40) == 0x40;
+
+                if ((value & 0x80) == 0x80)
+                    m_Audio.m_QuadChannel[1].Restart();
+
                 break;
             case SOUNDCNT_L:
                 m_Audio.m_SoundControl.master_volume_right = value & 7;
