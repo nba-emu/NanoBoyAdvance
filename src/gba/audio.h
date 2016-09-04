@@ -43,6 +43,10 @@ namespace NanoboyAdvance
     class Audio
     {
     public:
+        static constexpr float PSG_VOLUME[] = { 0.25, 0.5, 1, 1 };
+        static constexpr float DMA_VOLUME[] = { 0.5, 1 };
+        static const int DMA_SCALE = 4;
+
         ///////////////////////////////////////////////////////////
         /// \struct  SoundControl
         /// \brief   Holds SOUNDCNT information

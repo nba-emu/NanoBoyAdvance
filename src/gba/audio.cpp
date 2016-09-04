@@ -30,6 +30,10 @@
 
 namespace NanoboyAdvance
 {
+    constexpr float Audio::PSG_VOLUME[];
+    constexpr float Audio::DMA_VOLUME[];
+    const int Audio::DMA_SCALE;
+
     Audio::Audio()
     {
         Config config("config.sml");
@@ -44,7 +48,7 @@ namespace NanoboyAdvance
         float volume_right = (float)m_SoundControl.master_volume_right / 7;
 
         s16 psg1 = m_QuadChannel[0].m_Enable ? m_QuadChannel[0].Next(m_SampleRate) : 0;
-        s16 psg2 = m_QuadChannel[0].m_Enable ? m_QuadChannel[1].Next(m_SampleRate) : 0;
+        s16 psg2 = m_QuadChannel[1].m_Enable ? m_QuadChannel[1].Next(m_SampleRate) : 0;
 
         m_Mutex.lock();
 
@@ -97,8 +101,8 @@ namespace NanoboyAdvance
                 continue;
             }
 
-            output[0] = audio->m_PsgBuffer[0][i];
-            output[1] = audio->m_PsgBuffer[1][i];
+            output[0] = audio->m_PsgBuffer[0][i] * audio->PSG_VOLUME[audio->m_SoundControl.volume];
+            output[1] = audio->m_PsgBuffer[1][i] * audio->PSG_VOLUME[audio->m_SoundControl.volume];
 
             for (int j = 0; j < 2; j++)
             {
@@ -115,7 +119,7 @@ namespace NanoboyAdvance
 
                 // Get current input sample
                 int8_t current = audio->m_FifoBuffer[j][(int)integral];
-                int8_t between = current;
+                int8_t sample = current;
 
                 // Only if there is another sample
                 if (integral < audio->m_FifoBuffer[j].size() - 1)
@@ -125,14 +129,14 @@ namespace NanoboyAdvance
 
                     // Perform Cosinus Interpolation
                     fractional = (1 - cos(fractional * 3.141596)) / 2;
-                    between = (current * (1 - fractional)) + (next * fractional);
+                    sample = (current * (1 - fractional)) + (next * fractional);
                 }
 
                 if (audio->m_SoundControl.dma_enable_left[j])
-                    output[0] += (between * 4) / (2 - audio->m_SoundControl.dma_volume[j]);
+                    output[0] += sample * audio->DMA_SCALE * audio->DMA_VOLUME[audio->m_SoundControl.dma_volume[j]];
 
                 if (audio->m_SoundControl.dma_enable_right[j])
-                    output[1] += (between * 4) / (2 - audio->m_SoundControl.dma_volume[j]);
+                    output[1] += sample * audio->DMA_SCALE * audio->DMA_VOLUME[audio->m_SoundControl.dma_volume[j]];
 
                 source_index[j] += ratio[j];
             }
