@@ -76,6 +76,7 @@ namespace NanoboyAdvance
         double ratio[2];
         int actual_length;
         double source_index[2] {0, 0};
+        u16 last_sample[2];
 
         audio->m_Mutex.lock();
 
@@ -91,8 +92,8 @@ namespace NanoboyAdvance
             if (i >= actual_length)
             {
                 // TODO: Fill rest of the buffer and exit directly.
-                stream[i * 2]     = 0;
-                stream[i * 2 + 1] = 0;
+                stream[i * 2]     = last_sample[0];
+                stream[i * 2 + 1] = last_sample[1];
                 continue;
             }
 
@@ -144,8 +145,8 @@ namespace NanoboyAdvance
             if (output[0] > 0x3FF) output[0] = 0x3FF;
             if (output[1] > 0x3FF) output[1] = 0x3FF;
 
-            stream[i * 2]     = (u16)output[0] * 64;
-            stream[i * 2 + 1] = (u16)output[1] * 64;
+            stream[i * 2]     = last_sample[0] = (u16)output[0] * 64;
+            stream[i * 2 + 1] = last_sample[1] = (u16)output[1] * 64;
         }
 
         if (actual_length > length)
