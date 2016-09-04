@@ -421,8 +421,8 @@ namespace NanoboyAdvance
         u8 m_BIOS[0x4000];
         u8 m_WRAM[0x40000];
         u8 m_IRAM[0x8000];
-        Backup* m_Backup           {NULL};
-        SaveType   m_SaveType         {SAVE_NONE};
+        Backup* m_Backup            {NULL};
+        SaveType m_SaveType         {SAVE_NONE};
 
         ///////////////////////////////////////////////////////////
         // Class members (DMA, Timer, Waitstate, Audio)
@@ -431,7 +431,6 @@ namespace NanoboyAdvance
         struct DMA       m_DMA[4];
         struct Timer     m_Timer[4];
         struct Waitstate m_Waitstate;
-        u32 m_SOUNDBIAS {0}; // preliminary SOUNDBIAS implementation.
     public:
         ///////////////////////////////////////////////////////////
         // Class members (Interrupts)

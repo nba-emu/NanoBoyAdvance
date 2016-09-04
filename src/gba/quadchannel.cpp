@@ -38,7 +38,7 @@ namespace NanoboyAdvance
     void QuadChannel::Step()
     {
         int sweep_clock = SWEEP_CLOCK_TABLE[m_SweepTime];
-        int envelope_clock = (int)((float)m_EnvelopeSweep * (float)(1.0 / 16.0));
+        int envelope_clock = (int)(m_EnvelopeSweep * (1.0 / 64.0) * 4194304.0);
 
         // Apply sound frequency sweep/modulation.
         if (sweep_clock != 0)
@@ -57,7 +57,7 @@ namespace NanoboyAdvance
             }
         }
 
-        /*// Apply sound amplitude sweep/modulation.
+        // Apply sound amplitude sweep/modulation.
         if (m_EnvelopeSweep != 0)
         {
             m_EnvelopeCycles++;
@@ -75,7 +75,7 @@ namespace NanoboyAdvance
                     if (m_CurrentVolume != 0) m_CurrentVolume--;
                 }
             }
-        }*/
+        }
 
         if (m_StopOnExpire) m_LengthCycles++;
     }
@@ -90,21 +90,19 @@ namespace NanoboyAdvance
 
     float QuadChannel::Next(int sample_rate)
     {
-        if (m_StopOnExpire && m_LengthCycles > ((64 - m_Length) * (1.0 / 256.0) * 16780000))
+        int max_cycles = (64 - m_Length) * (1.0 / 256.0) * 4194304;
+
+        if (m_StopOnExpire && m_LengthCycles > max_cycles)
             return 0;
 
-        float amplitude = (float)m_LastWrittenVolume * (1.0 / 16.0);
-
-        if (m_CurrentVolume != 0 && amplitude == 0.0)
-            LOG(LOG_INFO, "%d - %f", m_CurrentVolume, amplitude);
-
+        float amplitude = (float)m_CurrentVolume * (1.0 / 16.0);
         float frequency = Audio::ConvertFrequency(m_CurrentFrequency);
         float sample_position = (float)((2 * M_PI * m_Sample * frequency) / sample_rate);
         float value = (float)(Generate(sample_position, WAVE_DUTY_TABLE[m_WavePatternDuty]));
 
         if (++m_Sample >= sample_rate) m_Sample = 0;
 
-        return value;
+        return amplitude * value;
     }
 
     float QuadChannel::Generate(float t, float duty)
@@ -112,7 +110,7 @@ namespace NanoboyAdvance
         t = std::fmod(t, 2 * M_PI);
 
         if (t <= 2 * M_PI * duty)
-            return 1;
-        return -1;
+            return 127;
+        return -128;
     }
 }

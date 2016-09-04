@@ -29,6 +29,7 @@
 #include "quadchannel.h"
 #include <fstream>
 #include <vector>
+#include <mutex>
 
 
 namespace NanoboyAdvance
@@ -97,8 +98,10 @@ namespace NanoboyAdvance
         FIFO m_FIFO[2];
         QuadChannel m_QuadChannel[2];
         SoundControl m_SoundControl;
-        std::vector<s8> m_Buffer;
+        std::vector<s16> m_PsgBuffer[2];
         std::vector<s8> m_FifoBuffer[2];
+        std::mutex m_Mutex;
+        u32 m_SOUNDBIAS  { 0x200 }; // preliminary SOUNDBIAS implementation.
         int m_WaitCycles { 0 };
     private:
         int m_SampleRate { 0 };
@@ -109,7 +112,7 @@ namespace NanoboyAdvance
     /// \brief  Called by an Audio Adapter to request audio data.
     ///
     ///////////////////////////////////////////////////////////
-    void AudioCallback(Audio* audio, s16* stream, int length);
+    void AudioCallback(Audio* audio, u16* stream, int length);
 }
 
 #endif // __NBA_AUDIO_H__

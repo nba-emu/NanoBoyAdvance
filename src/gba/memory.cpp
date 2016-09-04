@@ -376,7 +376,7 @@ namespace NanoboyAdvance
             case SOUNDBIAS+3:
             {
                 int n = (internal_offset - SOUNDBIAS) * 8;
-                return (m_SOUNDBIAS >> n) & 0xFF;
+                return (m_Audio.m_SOUNDBIAS >> n) & 0xFF;
             }
             case TM0CNT_L:
                 return m_Timer[0].count & 0xFF;
@@ -877,7 +877,7 @@ namespace NanoboyAdvance
             case SOUNDBIAS+3:
             {
                 int n = (internal_offset - SOUNDBIAS) * 8;
-                m_SOUNDBIAS = (m_SOUNDBIAS & ~(0xFF << n)) | (value << n);
+                m_Audio.m_SOUNDBIAS = (m_Audio.m_SOUNDBIAS & ~(0xFF << n)) | (value << n);
                 break;
             }
             case FIFO_A_L:

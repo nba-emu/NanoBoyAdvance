@@ -38,28 +38,49 @@ namespace NanoboyAdvance
 
     void Audio::Step()
     {
-        s8 channel_out = 0;
+        s16 out = 0;
 
-        channel_out = 127 * m_QuadChannel[0].m_Enable ? m_QuadChannel[0].Next(m_SampleRate) : 0;
-        channel_out += 127 * m_QuadChannel[1].m_Enable ? m_QuadChannel[1].Next(m_SampleRate) : 0;
-        m_Buffer.push_back(channel_out);
+        float volume_left = (float)m_SoundControl.master_volume_left / 7;
+        float volume_right = (float)m_SoundControl.master_volume_right / 7;
+
+        s16 psg1 = m_QuadChannel[0].m_Enable ? m_QuadChannel[0].Next(m_SampleRate) : 0;
+        s16 psg2 = m_QuadChannel[0].m_Enable ? m_QuadChannel[1].Next(m_SampleRate) : 0;
+
+        m_Mutex.lock();
+
+        // Mix left channel
+        if (m_SoundControl.enable_left[0]) out += psg1;
+        if (m_SoundControl.enable_left[1]) out += psg2;
+        m_PsgBuffer[0].push_back(out * volume_left);
+        out = 0;
+
+        // Mix right channel
+        if (m_SoundControl.enable_right[0]) out += psg1;
+        if (m_SoundControl.enable_right[1]) out += psg2;
+        m_PsgBuffer[1].push_back(out * volume_right);
+
+        m_Mutex.unlock();
 
         m_WaitCycles = 16780000 / m_SampleRate;
     }
 
     void Audio::FifoLoadSample(int fifo)
     {
+        m_Mutex.lock();
         m_FifoBuffer[fifo].push_back(m_FIFO[fifo].Dequeue());
+        m_Mutex.unlock();
     }
 
-    void AudioCallback(Audio* audio, s16* stream, int length)
+    void AudioCallback(Audio* audio, u16* stream, int length)
     {
         double ratio[2];
+        int actual_length;
         double source_index[2] {0, 0};
-        int actual_length = audio->m_Buffer.size();
 
-        //length = length / 2; // we have two channels, but we want the actual sample count.
-        length = length / 4;
+        audio->m_Mutex.lock();
+
+        length = length / 4; // 2 channels and length is in bytes, while we want in hwords.
+        actual_length = audio->m_PsgBuffer[0].size();
         ratio[0] = (double)audio->m_FifoBuffer[0].size() / (double)actual_length;
         ratio[1] = (double)audio->m_FifoBuffer[1].size() / (double)actual_length;
 
@@ -70,14 +91,13 @@ namespace NanoboyAdvance
             if (i >= actual_length)
             {
                 // TODO: Fill rest of the buffer and exit directly.
-                stream[i * 2] = 0;
+                stream[i * 2]     = 0;
                 stream[i * 2 + 1] = 0;
                 continue;
             }
 
-            output[0] = audio->m_Buffer[i];
-            output[1] = output[0];
-            //output[0] = output[1] = 0;
+            output[0] = audio->m_PsgBuffer[0][i];
+            output[1] = audio->m_PsgBuffer[1][i];
 
             for (int j = 0; j < 2; j++)
             {
@@ -104,20 +124,28 @@ namespace NanoboyAdvance
 
                     // Perform Cosinus Interpolation
                     fractional = (1 - cos(fractional * 3.141596)) / 2;
-                    between = ((current * (1 - fractional)) + (next * fractional)) * 2;
+                    between = (current * (1 - fractional)) + (next * fractional);
                 }
 
                 if (audio->m_SoundControl.dma_enable_left[j])
-                    output[0] += between / (2 - audio->m_SoundControl.dma_volume[j]);
+                    output[0] += (between * 4) / (2 - audio->m_SoundControl.dma_volume[j]);
 
                 if (audio->m_SoundControl.dma_enable_right[j])
-                    output[1] += between / (2 - audio->m_SoundControl.dma_volume[j]);
+                    output[1] += (between * 4) / (2 - audio->m_SoundControl.dma_volume[j]);
 
                 source_index[j] += ratio[j];
             }
 
-            stream[i * 2] = output[0];
-            stream[i * 2 + 1] = output[1];
+            // Makeup gain (BIAS) and clipping emulation.
+            output[0] += (audio->m_SOUNDBIAS & 0x3FF);
+            output[1] += (audio->m_SOUNDBIAS & 0x3FF);
+            if (output[0] < 0)     output[0] = 0;
+            if (output[1] < 0)     output[1] = 0;
+            if (output[0] > 0x3FF) output[0] = 0x3FF;
+            if (output[1] > 0x3FF) output[1] = 0x3FF;
+
+            stream[i * 2]     = (u16)output[0] * 64;
+            stream[i * 2 + 1] = (u16)output[1] * 64;
         }
 
         if (actual_length > length)
@@ -128,14 +156,18 @@ namespace NanoboyAdvance
             if (audio->m_FifoBuffer[1].size() > source_index[1])
                 audio->m_FifoBuffer[1].erase(audio->m_FifoBuffer[1].begin(), audio->m_FifoBuffer[1].begin()+source_index[1]);
 
-            audio->m_Buffer.erase(audio->m_Buffer.begin(), audio->m_Buffer.begin()+length);
+            audio->m_PsgBuffer[0].erase(audio->m_PsgBuffer[0].begin(), audio->m_PsgBuffer[0].begin()+length);
+            audio->m_PsgBuffer[1].erase(audio->m_PsgBuffer[1].begin(), audio->m_PsgBuffer[1].begin()+length);
         }
         else
         {
             audio->m_FifoBuffer[0].clear();
             audio->m_FifoBuffer[1].clear();
-            audio->m_Buffer.clear();
+            audio->m_PsgBuffer[0].clear();
+            audio->m_PsgBuffer[1].clear();
         }
+
+        audio->m_Mutex.unlock();
     }
 
     float Audio::ConvertFrequency(int frequency)
