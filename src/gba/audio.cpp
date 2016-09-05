@@ -150,6 +150,11 @@ namespace NanoboyAdvance
             if (output[0] > 0x3FF) output[0] = 0x3FF;
             if (output[1] > 0x3FF) output[1] = 0x3FF;
 
+            // Bitcrush audio
+            int crush_amount = (audio->m_SOUNDBIAS >> 14) & 3;
+            output[0] = (output[0] >> crush_amount) << crush_amount;
+            output[1] = (output[1] >> crush_amount) << crush_amount;
+
             stream[i * 2]     = last_sample[0] = (u16)output[0] * 64;
             stream[i * 2 + 1] = last_sample[1] = (u16)output[1] * 64;
         }

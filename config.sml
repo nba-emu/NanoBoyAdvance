@@ -29,5 +29,5 @@
     Driver: 1
 
     +Quality
-        SampleRate: 32768
-        BufferSize: 4096
+        SampleRate: 44100
+        BufferSize: 1024
