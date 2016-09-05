@@ -24,7 +24,6 @@
 
 #define _USE_MATH_DEFINES
 #include "quadchannel.h"
-#include "util/log.h"
 #include <cmath>
 
 
@@ -84,6 +83,7 @@ namespace NanoboyAdvance
     {
         m_CurrentFrequency = m_InitialFrequency;
         m_SweepCycles = 0;
+        m_CurrentVolume = m_LastWrittenVolume;
         m_LengthCycles = 0;
         m_EnvelopeCycles = 0;
     }

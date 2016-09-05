@@ -93,9 +93,10 @@ namespace NanoboyAdvance
         {
             s16 output[2];
 
+            // If more data is requested than we have, fill the ramaining samples
+            // atleast with the last sample to prevent annoying clicking.
             if (i >= actual_length)
             {
-                // TODO: Fill rest of the buffer and exit directly.
                 stream[i * 2]     = last_sample[0];
                 stream[i * 2 + 1] = last_sample[1];
                 continue;

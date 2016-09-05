@@ -12,6 +12,7 @@ set(SRCS
     soft_composer.cpp
     audio.cpp
     quadchannel.cpp
+    wavechannel.cpp
 )
 
 set(HEADERS
@@ -30,6 +31,7 @@ set(HEADERS
     audio.h
     fifo.h
     quadchannel.h
+    wavechannel.h
 )
 
 add_library(gba STATIC ${SRCS} ${HEADERS})

@@ -152,7 +152,6 @@ namespace NanoboyAdvance
                     else
                         m_Memory.m_Audio.m_WaitCycles--;
 
-                    //m_Memory.RunTimer();
                     bool overflow = false;
                     if (m_Memory.TimerRequiresRun(0, false))    m_Memory.RunTimer(0, overflow);
                     if (m_Memory.TimerRequiresRun(1, overflow)) m_Memory.RunTimer(1, overflow);
