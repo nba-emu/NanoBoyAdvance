@@ -44,7 +44,7 @@ namespace NanoboyAdvance
     constexpr int Memory::WSS0_TABLE[2];
     constexpr int Memory::WSS1_TABLE[2];
     constexpr int Memory::WSS2_TABLE[2];
-    
+
     const u8 Memory::HLE_BIOS[0x40] = {
         0x06, 0x00, 0x00, 0xEA, 0x00, 0x00, 0xA0, 0xE1,
         0x00, 0x00, 0xA0, 0xE1, 0x00, 0x00, 0xA0, 0xE1,
@@ -53,7 +53,7 @@ namespace NanoboyAdvance
         0x02, 0xF3, 0xA0, 0xE3, 0x0F, 0x50, 0x2D, 0xE9,
         0x01, 0x03, 0xA0, 0xE3, 0x00, 0xE0, 0x8F, 0xE2,
         0x04, 0xF0, 0x10, 0xE5, 0x0F, 0x50, 0xBD, 0xE8,
-        0x04, 0xF0, 0x5E, 0xE2, 0x00, 0x00, 0xA0, 0xE1   
+        0x04, 0xF0, 0x5E, 0xE2, 0x00, 0x00, 0xA0, 0xE1
     };
 
 
@@ -101,7 +101,7 @@ namespace NanoboyAdvance
 
         // Setup Video controller
         m_Video.Init(&m_Interrupt);
-        
+
         // Detect savetype
         for (int i = 0; i < m_ROMSize; i += 4)
         {
@@ -160,7 +160,7 @@ namespace NanoboyAdvance
     {
         int page = offset >> 24;
 
-        if (page == 2) 
+        if (page == 2)
         {
             if (size == ACCESS_WORD) return 6;
             return 3;
@@ -198,7 +198,7 @@ namespace NanoboyAdvance
     {
         int page = offset >> 24;
 
-        if (page == 8) 
+        if (page == 8)
         {
             if (size == ACCESS_WORD)
                 return 1 + WSS0_TABLE[m_Waitstate.second[0]] + WSN_TABLE[m_Waitstate.first[0]];
@@ -226,8 +226,8 @@ namespace NanoboyAdvance
         case 1:
             #ifdef DEBUG
             ASSERT(internal_offset >= 0x4000, LOG_ERROR, "BIOS read: offset out of bounds");
-            #endif            
-            if (internal_offset >= 0x4000) 
+            #endif
+            if (internal_offset >= 0x4000)
                 return 0;
             return m_BIOS[internal_offset];
         case 2:
@@ -235,9 +235,9 @@ namespace NanoboyAdvance
         case 3:
             return m_IRAM[internal_offset % 0x8000];
         case 4:
-            if ((internal_offset & 0xFFFF) == 0x800) 
+            if ((internal_offset & 0xFFFF) == 0x800)
                 internal_offset &= 0xFFFF;
-            
+
             switch (internal_offset) {
             case DISPCNT:
                 return (m_Video.m_VideoMode) |
@@ -268,7 +268,7 @@ namespace NanoboyAdvance
             case BG2CNT:
             case BG3CNT:
             {
-                int n = (internal_offset - BG0CNT) / 2;    
+                int n = (internal_offset - BG0CNT) / 2;
                 return (m_Video.m_BG[n].priority) |
                        ((m_Video.m_BG[n].tile_base / 0x4000) << 2) |
                        (m_Video.m_BG[n].mosaic ? 64 : 0) |
@@ -405,7 +405,7 @@ namespace NanoboyAdvance
                        (m_Timer[n].interrupt ? 64 : 0) |
                        (m_Timer[n].enable ? 128 : 0);
             }
-            case KEYINPUT: 
+            case KEYINPUT:
                 return m_KeyInput & 0xFF;
             case KEYINPUT+1:
                 return m_KeyInput >> 8;
@@ -426,8 +426,7 @@ namespace NanoboyAdvance
             case WAITCNT+1:
                 return m_Waitstate.first[2] |
                        (m_Waitstate.second[2] << 2) |
-                       (m_Waitstate.prefetch ? 64 : 0) |
-                       (1 << 7);
+                       (m_Waitstate.prefetch ? 64 : 0);
             case IME:
                 return m_Interrupt.ime & 0xFF;
             case IME+1:
@@ -472,7 +471,7 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     u16 Memory::ReadHWord(u32 offset)
     {
-        return ReadByte(offset) | 
+        return ReadByte(offset) |
                (ReadByte(offset + 1) << 8);
     }
 
@@ -501,12 +500,12 @@ namespace NanoboyAdvance
         int page = offset >> 24;
         u32 internal_offset = offset & 0xFFFFFF;
 
-        switch (page) 
+        switch (page)
         {
         case 0:
             #ifdef DEBUG
             LOG(LOG_ERROR, "Write into BIOS memory not allowed (0x%x)", offset);
-            #endif           
+            #endif
             break;
         case 2:
             m_WRAM[internal_offset % 0x40000] = value;
@@ -528,7 +527,7 @@ namespace NanoboyAdvance
             // Emulate IO mirror at 04xx0800
             if ((internal_offset & 0xFFFF) == 0x800)
                 internal_offset &= 0xFFFF;
-            
+
 
             switch (internal_offset)
             {
@@ -562,7 +561,7 @@ namespace NanoboyAdvance
             case BG2CNT:
             case BG3CNT:
             {
-                int n = (internal_offset - BG0CNT) / 2;    
+                int n = (internal_offset - BG0CNT) / 2;
                 m_Video.m_BG[n].priority = value & 3;
                 m_Video.m_BG[n].tile_base = ((value >> 2) & 3) * 0x4000;
                 m_Video.m_BG[n].mosaic = value & 64;
@@ -1008,14 +1007,14 @@ namespace NanoboyAdvance
                 m_DMA[0].start_time = static_cast<StartTime>((value >> 4) & 3);
                 m_DMA[0].interrupt = value & 64;
                 m_DMA[0].enable = value & 128;
-            
-                if (m_DMA[0].enable) 
+
+                if (m_DMA[0].enable)
                 {
                     m_DMA[0].source_int = m_DMA[0].source & DMA_SOURCE_MASK[0];
                     m_DMA[0].dest_int = m_DMA[0].dest & DMA_DEST_MASK[0];
                     m_DMA[0].count_int = m_DMA[0].count & DMA_COUNT_MASK[0];
 
-                    if (m_DMA[0].count_int == 0) 
+                    if (m_DMA[0].count_int == 0)
                         m_DMA[0].count_int = DMA_COUNT_MASK[0] + 1;
                 }
                 break;
@@ -1040,14 +1039,14 @@ namespace NanoboyAdvance
                 m_DMA[1].start_time = static_cast<StartTime>((value >> 4) & 3);
                 m_DMA[1].interrupt = value & 64;
                 m_DMA[1].enable = value & 128;
-                
-                if (m_DMA[1].enable) 
+
+                if (m_DMA[1].enable)
                 {
                     m_DMA[1].source_int = m_DMA[1].source & DMA_SOURCE_MASK[1];
                     m_DMA[1].dest_int = m_DMA[1].dest & DMA_DEST_MASK[1];
                     m_DMA[1].count_int = m_DMA[1].count & DMA_COUNT_MASK[1];
 
-                    if (m_DMA[1].count_int == 0) 
+                    if (m_DMA[1].count_int == 0)
                         m_DMA[1].count_int = DMA_COUNT_MASK[1] + 1;
                 }
                 break;
@@ -1072,14 +1071,14 @@ namespace NanoboyAdvance
                 m_DMA[2].start_time = static_cast<StartTime>((value >> 4) & 3);
                 m_DMA[2].interrupt = value & 64;
                 m_DMA[2].enable = value & 128;
-                
-                if (m_DMA[2].enable) 
+
+                if (m_DMA[2].enable)
                 {
                     m_DMA[2].source_int = m_DMA[2].source & DMA_SOURCE_MASK[2];
                     m_DMA[2].dest_int = m_DMA[2].dest & DMA_DEST_MASK[2];
                     m_DMA[2].count_int = m_DMA[2].count & DMA_COUNT_MASK[2];
 
-                    if (m_DMA[2].count_int == 0) 
+                    if (m_DMA[2].count_int == 0)
                         m_DMA[2].count_int = DMA_COUNT_MASK[2] + 1;
                 }
                 break;
@@ -1104,14 +1103,14 @@ namespace NanoboyAdvance
                 m_DMA[3].start_time = static_cast<StartTime>((value >> 4) & 3);
                 m_DMA[3].interrupt = value & 64;
                 m_DMA[3].enable = value & 128;
-                
-                if (m_DMA[3].enable) 
+
+                if (m_DMA[3].enable)
                 {
                     m_DMA[3].source_int = m_DMA[3].source & DMA_SOURCE_MASK[3];
                     m_DMA[3].dest_int = m_DMA[3].dest & DMA_DEST_MASK[3];
                     m_DMA[3].count_int = m_DMA[3].count & DMA_COUNT_MASK[3];
 
-                    if (m_DMA[3].count_int == 0) 
+                    if (m_DMA[3].count_int == 0)
                         m_DMA[3].count_int = DMA_COUNT_MASK[3] + 1;
                 }
                 break;
@@ -1197,18 +1196,18 @@ namespace NanoboyAdvance
         case 9:
             #ifdef DEBUG
             LOG(LOG_ERROR, "Write into ROM memory not allowed (0x%x)", offset);
-            #endif                       
+            #endif
             break;
         case 0xE:
             if (m_Backup != nullptr && (m_SaveType == SAVE_FLASH64 ||
                     m_SaveType == SAVE_FLASH128 ||
                     m_SaveType == SAVE_SRAM))
-                m_Backup->WriteByte(offset, value); 
+                m_Backup->WriteByte(offset, value);
             break;
         default:
             #ifdef DEBUG
             LOG(LOG_ERROR, "Write to invalid/unimplemented address (0x%x)", offset);
-            #endif           
+            #endif
             break;
         }
     }
@@ -1235,7 +1234,7 @@ namespace NanoboyAdvance
 
             if (internal_offset >= 0x18000)
                 internal_offset -= 0x8000;
-            
+
             m_Video.m_VRAM[internal_offset] = value & 0xFF;
             m_Video.m_VRAM[internal_offset + 1] = (value >> 8) & 0xFF;
             return;
@@ -1260,11 +1259,11 @@ namespace NanoboyAdvance
     {
         WriteHWord(offset, value & 0xFFFF);
         WriteHWord(offset + 2, (value >> 16) & 0xFFFF);
-        
+
         // Handle special timer behaviour
         if (value & (1 << 23))
         {
-            switch (offset) 
+            switch (offset)
             {
             case TM0CNT_L|0x04000000:
                 m_Timer[0].count = m_Timer[0].reload;
