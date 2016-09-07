@@ -27,6 +27,7 @@
 
 #include "fifo.h"
 #include "quadchannel.h"
+#include "wavechannel.h"
 #include <fstream>
 #include <vector>
 #include <mutex>
@@ -101,6 +102,7 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         FIFO m_FIFO[2];
         QuadChannel m_QuadChannel[2];
+        WaveChannel m_WaveChannel;
         SoundControl m_SoundControl;
         std::vector<s16> m_PsgBuffer[2];
         std::vector<s8> m_FifoBuffer[2];

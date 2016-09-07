@@ -75,6 +75,7 @@ const int SOUND4CNT_H = 0x7C;
 const int SOUNDCNT_L = 0x80;
 const int SOUNDCNT_H = 0x82;
 const int SOUNDBIAS = 0x88;
+const int WAVE_RAM = 0x90;
 const int FIFO_A_L = 0xA0;
 const int FIFO_A_H = 0xA2;
 const int FIFO_B_L = 0xA4;

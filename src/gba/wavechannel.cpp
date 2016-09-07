@@ -48,10 +48,12 @@ namespace NanoboyAdvance
         if (!m_Playback) return 0;
         if (m_StopOnExpire && m_LengthCycles > m_Length) return 0;
 
-        float frequency = Audio::ConvertFrequency(m_Frequency);
-        float index = fmod((5.093108 * m_Sample * frequency * M_PI) / sample_rate, 32);
+        float frequency = ConvertFrequency(m_Frequency);
+        float index = fmod((32 * m_Sample * frequency) / (float)sample_rate, 32);
+
+        if (++m_Sample >= sample_rate) m_Sample = 0;
 
         // Find better scaling algorithm...
-        return (float)(m_WaveRAM[(int)index] - 7) * 16;
+        return (float)(m_WaveRAM[(int)index] * WAVE_VOLUME[m_Volume]) * 16;
     }
 }

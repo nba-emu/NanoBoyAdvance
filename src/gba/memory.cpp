@@ -840,6 +840,27 @@ namespace NanoboyAdvance
                     m_Audio.m_QuadChannel[1].Restart();
 
                 break;
+            case SOUND3CNT_L:
+                // TODO: WRAM select
+                m_Audio.m_WaveChannel.m_Playback = value & 0x80;
+                break;
+            case SOUND3CNT_H:
+                m_Audio.m_WaveChannel.m_Length = value;
+                break;
+            case SOUND3CNT_H+1:
+                m_Audio.m_WaveChannel.m_Volume = (value >> 5) & 3;
+                break;
+            case SOUND3CNT_X:
+                m_Audio.m_WaveChannel.m_Frequency = (m_Audio.m_WaveChannel.m_Frequency & 0x700) | value;
+                break;
+            case SOUND3CNT_X+1:
+                m_Audio.m_WaveChannel.m_Frequency = (m_Audio.m_WaveChannel.m_Frequency & 0xFF) | ((value & 7) << 8);
+                m_Audio.m_WaveChannel.m_StopOnExpire = value & 0x40;
+
+                if ((value & 0x80) == 0x80)
+                    m_Audio.m_WaveChannel.Restart();
+
+                break;
             case SOUNDCNT_L:
                 m_Audio.m_SoundControl.master_volume_right = value & 7;
                 m_Audio.m_SoundControl.master_volume_left = (value >> 4) & 7;
@@ -879,6 +900,26 @@ namespace NanoboyAdvance
                 m_Audio.m_SOUNDBIAS = (m_Audio.m_SOUNDBIAS & ~(0xFF << n)) | (value << n);
                 break;
             }
+
+            case WAVE_RAM:
+            case WAVE_RAM+1:
+            case WAVE_RAM+2:
+            case WAVE_RAM+3:
+            case WAVE_RAM+4:
+            case WAVE_RAM+5:
+            case WAVE_RAM+6:
+            case WAVE_RAM+7:
+            case WAVE_RAM+8:
+            case WAVE_RAM+9:
+            case WAVE_RAM+10:
+            case WAVE_RAM+11:
+            case WAVE_RAM+12:
+            case WAVE_RAM+13:
+            case WAVE_RAM+14:
+            case WAVE_RAM+15:
+                m_Audio.m_WaveChannel.WriteWaveRAM(offset, value);
+                break;
+
             case FIFO_A_L:
             case FIFO_A_L+1:
             case FIFO_A_H:

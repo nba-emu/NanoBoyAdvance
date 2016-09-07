@@ -36,7 +36,24 @@ namespace NanoboyAdvance
     private:
         static constexpr float WAVE_VOLUME[] = { 0, 1, 0.5, 0.25 };
 
+        inline float ConvertFrequency(int frequency)
+        {
+            return 65536 / (2048 - frequency);
+        }
+
     public:
+        inline u8 ReadWaveRAM(int address)
+        {
+            return (m_WaveRAM[(address & 0xF) << 1] << 4) |
+                    m_WaveRAM[((address & 0xF) << 1) + 1];
+        }
+
+        inline void WriteWaveRAM(int address, u8 value)
+        {
+            m_WaveRAM[(address & 0xF) * 2] =     value >> 4;
+            m_WaveRAM[(address & 0xF) * 2 + 1] = value & 0xF;
+        }
+
         void Step();
         void Restart();
         float Next(int sample_rate);

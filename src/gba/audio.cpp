@@ -49,18 +49,21 @@ namespace NanoboyAdvance
 
         s16 psg1 = m_QuadChannel[0].m_Enable ? m_QuadChannel[0].Next(m_SampleRate) : 0;
         s16 psg2 = m_QuadChannel[1].m_Enable ? m_QuadChannel[1].Next(m_SampleRate) : 0;
+        s16 psg3 = m_WaveChannel.m_Enable ? m_WaveChannel.Next(m_SampleRate) : 0;
 
         m_Mutex.lock();
 
         // Mix left channel
         if (m_SoundControl.enable_left[0]) out += psg1;
         if (m_SoundControl.enable_left[1]) out += psg2;
+        if (m_SoundControl.enable_left[2]) out += psg3;
         m_PsgBuffer[0].push_back(out * volume_left);
         out = 0;
 
         // Mix right channel
         if (m_SoundControl.enable_right[0]) out += psg1;
         if (m_SoundControl.enable_right[1]) out += psg2;
+        if (m_SoundControl.enable_right[2]) out += psg3;
         m_PsgBuffer[1].push_back(out * volume_right);
 
         m_Mutex.unlock();
@@ -81,6 +84,7 @@ namespace NanoboyAdvance
         int actual_length;
         double source_index[2] {0, 0};
         u16 last_sample[2];
+        float psg_amplitude = audio->PSG_VOLUME[audio->m_SoundControl.volume];
 
         audio->m_Mutex.lock();
 
@@ -102,8 +106,8 @@ namespace NanoboyAdvance
                 continue;
             }
 
-            output[0] = audio->m_PsgBuffer[0][i] * audio->PSG_VOLUME[audio->m_SoundControl.volume];
-            output[1] = audio->m_PsgBuffer[1][i] * audio->PSG_VOLUME[audio->m_SoundControl.volume];
+            output[0] = audio->m_PsgBuffer[0][i] * psg_amplitude;
+            output[1] = audio->m_PsgBuffer[1][i] * psg_amplitude;
 
             for (int j = 0; j < 2; j++)
             {
@@ -133,11 +137,14 @@ namespace NanoboyAdvance
                     sample = (current * (1 - fractional)) + (next * fractional);
                 }
 
+                float sample_amplitude = audio->DMA_SCALE *
+                        audio->DMA_VOLUME[audio->m_SoundControl.dma_volume[j]];
+
                 if (audio->m_SoundControl.dma_enable_left[j])
-                    output[0] += sample * audio->DMA_SCALE * audio->DMA_VOLUME[audio->m_SoundControl.dma_volume[j]];
+                    output[0] += sample * sample_amplitude;
 
                 if (audio->m_SoundControl.dma_enable_right[j])
-                    output[1] += sample * audio->DMA_SCALE * audio->DMA_VOLUME[audio->m_SoundControl.dma_volume[j]];
+                    output[1] += sample * sample_amplitude;
 
                 source_index[j] += ratio[j];
             }
