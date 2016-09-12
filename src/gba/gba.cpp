@@ -127,6 +127,8 @@ namespace NanoboyAdvance
 
                 for (int j = 0; j < forward_steps + 1; j++)
                 {
+                    m_Memory.RunTimer();
+
                     if (m_Memory.m_Video.m_WaitCycles == 0)
                     {
                         m_Memory.m_Video.Step();
@@ -152,8 +154,6 @@ namespace NanoboyAdvance
                         m_Memory.m_Audio.Step();
                     else
                         m_Memory.m_Audio.m_WaitCycles--;
-
-                    m_Memory.RunTimer();
                 }
 
                 i += forward_steps;

@@ -39,6 +39,8 @@ namespace NanoboyAdvance
 
         for (int i = 0; i < 4; i++)
         {
+            m_Timer[i].overflow = overflow = false;
+
             if (!m_Timer[i].enable ||
                     (m_Timer[i].countup && !overflow) ||
                     (!m_Timer[i].countup && ++m_Timer[i].ticks < TMR_CYCLES[m_Timer[i].clock]))
@@ -59,7 +61,6 @@ namespace NanoboyAdvance
             else
             {
                 m_Timer[i].count++;
-                m_Timer[i].overflow = overflow = false;
             }
         }
     }

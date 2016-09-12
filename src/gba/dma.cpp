@@ -165,7 +165,5 @@ namespace NanoboyAdvance
                     m_Interrupt.if_ |= 256 << i;
             }
         }
-
-        m_Timer[0].overflow = false;
     }
 }

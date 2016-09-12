@@ -48,6 +48,68 @@ namespace NanoboyAdvance
     class Memory
     {
     private:
+        typedef u8   (Memory::*ReadFunction) (u32 address);
+        typedef void (Memory::*WriteFunction)(u32 address, u8 value);
+
+        u8 ReadBIOS(u32 address);
+        u8 ReadWRAM(u32 address);
+        u8 ReadIRAM(u32 address);
+        u8 ReadIO(u32 address);
+        u8 ReadPAL(u32 address);
+        u8 ReadVRAM(u32 address);
+        u8 ReadOAM(u32 address);
+        u8 ReadROM(u32 address);
+        u8 ReadPageE(u32 address);
+        u8 ReadInvalid(u32 address);
+
+        void WriteWRAM(u32 address, u8 value);
+        void WriteIRAM(u32 address, u8 value);
+        void WriteIO(u32 address, u8 value);
+        void WritePAL(u32 address, u8 value);
+        void WriteVRAM(u32 address, u8 value);
+        void WriteOAM(u32 address, u8 value);
+        void WritePageE(u32 address, u8 value);
+        void WriteInvalid(u32 address, u8 value);
+
+        // Memory Read Byte methods
+        static constexpr ReadFunction READ_TABLE[16] = {
+            &ReadBIOS,
+            &Memory::ReadInvalid,
+            &Memory::ReadWRAM,
+            &Memory::ReadIRAM,
+            &Memory::ReadIO,
+            &Memory::ReadPAL,
+            &Memory::ReadVRAM,
+            &Memory::ReadOAM,
+            &Memory::ReadROM,
+            &Memory::ReadROM,
+            &Memory::ReadInvalid,
+            &Memory::ReadInvalid,
+            &Memory::ReadInvalid,
+            &Memory::ReadInvalid,
+            &Memory::ReadPageE,
+            &Memory::ReadInvalid
+        };
+
+        // Memory Write Byte methods
+        static constexpr WriteFunction WRITE_TABLE[16] = {
+            &Memory::WriteInvalid,
+            &Memory::WriteInvalid,
+            &Memory::WriteWRAM,
+            &Memory::WriteIRAM,
+            &Memory::WriteIO,
+            &Memory::WritePAL,
+            &Memory::WriteVRAM,
+            &Memory::WriteOAM,
+            &Memory::WriteInvalid,
+            &Memory::WriteInvalid,
+            &Memory::WriteInvalid,
+            &Memory::WriteInvalid,
+            &Memory::WriteInvalid,
+            &Memory::WriteInvalid,
+            &Memory::WritePageE,
+            &Memory::WriteInvalid
+        };
 
         // DMA and Timer constants
         static constexpr int DMA_COUNT_MASK[4] =
@@ -303,7 +365,6 @@ namespace NanoboyAdvance
         ///
         ///////////////////////////////////////////////////////////
         int NonSequentialAccess(u32 offset, AccessSize size);
-
 
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
