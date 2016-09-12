@@ -143,7 +143,7 @@ namespace NanoboyAdvance
                     else
                         m_Memory.m_Video.m_WaitCycles--;
 
-                    if ((i % 4) == 0)
+                    if (((i + j) % 4) == 0)
                     {
                         m_Memory.m_Audio.m_QuadChannel[0].Step();
                         m_Memory.m_Audio.m_QuadChannel[1].Step();

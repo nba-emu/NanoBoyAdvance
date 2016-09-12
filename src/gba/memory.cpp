@@ -510,7 +510,7 @@ namespace NanoboyAdvance
             m_Video.m_Obj.hblank_access = value & 32;
             m_Video.m_Obj.two_dimensional = value & 64;
             m_Video.m_ForcedBlank = value & 128;
-            break;
+            return;
         case DISPCNT+1:
             m_Video.m_BG[0].enable = value & 1;
             m_Video.m_BG[1].enable = value & 2;
@@ -520,15 +520,15 @@ namespace NanoboyAdvance
             m_Video.m_Win[0].enable = value & 32;
             m_Video.m_Win[1].enable = value & 64;
             m_Video.m_ObjWin.enable = value & 128;
-            break;
+            return;
         case DISPSTAT:
             m_Video.m_VBlankIRQ = value & 8;
             m_Video.m_HBlankIRQ = value & 16;
             m_Video.m_VCountIRQ = value & 32;
-            break;
+            return;
         case DISPSTAT+1:
             m_Video.m_VCountSetting = value;
-            break;
+            return;
         case BG0CNT:
         case BG1CNT:
         case BG2CNT:
@@ -539,7 +539,7 @@ namespace NanoboyAdvance
             m_Video.m_BG[n].tile_base = ((value >> 2) & 3) * 0x4000;
             m_Video.m_BG[n].mosaic = value & 64;
             m_Video.m_BG[n].true_color = value & 128;
-            break;
+            return;
         }
         case BG0CNT+1:
         case BG1CNT+1:
@@ -553,7 +553,7 @@ namespace NanoboyAdvance
                 m_Video.m_BG[n].wraparound = value & 32;
 
             m_Video.m_BG[n].size = value >> 6;
-            break;
+            return;
         }
         case BG0HOFS:
         case BG1HOFS:
@@ -562,7 +562,7 @@ namespace NanoboyAdvance
         {
             int n = (address - BG0HOFS) / 4;
             m_Video.m_BG[n].x = (m_Video.m_BG[n].x & 0x100) | value;
-            break;
+            return;
         }
         case BG0HOFS+1:
         case BG1HOFS+1:
@@ -571,7 +571,7 @@ namespace NanoboyAdvance
         {
             int n = (address - BG0HOFS - 1) / 4;
             m_Video.m_BG[n].x = (m_Video.m_BG[n].x & 0xFF) | ((value & 1) << 8);
-            break;
+            return;
         }
         case BG0VOFS:
         case BG1VOFS:
@@ -580,7 +580,7 @@ namespace NanoboyAdvance
         {
             int n = (address - BG0VOFS) / 4;
             m_Video.m_BG[n].y = (m_Video.m_BG[n].y & 0x100) | value;
-            break;
+            return;
         }
         case BG0VOFS+1:
         case BG1VOFS+1:
@@ -589,7 +589,7 @@ namespace NanoboyAdvance
         {
             int n = (address - BG0VOFS - 1) / 4;
             m_Video.m_BG[n].y = (m_Video.m_BG[n].y & 0xFF) | ((value & 1) << 8);
-            break;
+            return;
         }
         case BG2X:
         case BG2X+1:
@@ -600,7 +600,7 @@ namespace NanoboyAdvance
             u32 v = (m_Video.m_BG[2].x_ref & ~(0xFF << n)) | (value << n);
             m_Video.m_BG[2].x_ref = v;
             m_Video.m_BG[2].x_ref_int = Video::DecodeGBAFloat32(v);
-            break;
+            return;
         }
         case BG3X:
         case BG3X+1:
@@ -611,7 +611,7 @@ namespace NanoboyAdvance
             u32 v = (m_Video.m_BG[3].x_ref & ~(0xFF << n)) | (value << n);
             m_Video.m_BG[3].x_ref = v;
             m_Video.m_BG[3].x_ref_int = Video::DecodeGBAFloat32(v);
-            break;
+            return;
         }
         case BG2Y:
         case BG2Y+1:
@@ -622,7 +622,7 @@ namespace NanoboyAdvance
             u32 v = (m_Video.m_BG[2].y_ref & ~(0xFF << n)) | (value << n);
             m_Video.m_BG[2].y_ref = v;
             m_Video.m_BG[2].y_ref_int = Video::DecodeGBAFloat32(v);
-            break;
+            return;
         }
         case BG3Y:
         case BG3Y+1:
@@ -633,88 +633,88 @@ namespace NanoboyAdvance
             u32 v = (m_Video.m_BG[3].y_ref & ~(0xFF << n)) | (value << n);
             m_Video.m_BG[3].y_ref = v;
             m_Video.m_BG[3].y_ref_int = Video::DecodeGBAFloat32(v);
-            break;
+            return;
         }
         case BG2PA:
         case BG2PA+1:
         {
             int n = (address - BG2PA) * 8;
             m_Video.m_BG[2].pa = (m_Video.m_BG[2].pa & ~(0xFF << n)) | (value << n);
-            break;
+            return;
         }
         case BG3PA:
         case BG3PA+1:
         {
             int n = (address - BG3PA) * 8;
             m_Video.m_BG[3].pa = (m_Video.m_BG[3].pa & ~(0xFF << n)) | (value << n);
-            break;
+            return;
         }
         case BG2PB:
         case BG2PB+1:
         {
             int n = (address - BG2PB) * 8;
             m_Video.m_BG[2].pb = (m_Video.m_BG[2].pb & ~(0xFF << n)) | (value << n);
-            break;
+            return;
         }
         case BG3PB:
         case BG3PB+1:
         {
             int n = (address - BG3PB) * 8;
             m_Video.m_BG[3].pb = (m_Video.m_BG[3].pb & ~(0xFF << n)) | (value << n);
-            break;
+            return;
         }
         case BG2PC:
         case BG2PC+1:
         {
             int n = (address - BG2PC) * 8;
             m_Video.m_BG[2].pc = (m_Video.m_BG[2].pc & ~(0xFF << n)) | (value << n);
-            break;
+            return;
         }
         case BG3PC:
         case BG3PC+1:
         {
             int n = (address - BG3PC) * 8;
             m_Video.m_BG[3].pc = (m_Video.m_BG[3].pc & ~(0xFF << n)) | (value << n);
-            break;
+            return;
         }
         case BG2PD:
         case BG2PD+1:
         {
             int n = (address - BG2PD) * 8;
             m_Video.m_BG[2].pd = (m_Video.m_BG[2].pd & ~(0xFF << n)) | (value << n);
-            break;
+            return;
         }
         case BG3PD:
         case BG3PD+1:
         {
             int n = (address - BG3PD) * 8;
             m_Video.m_BG[3].pd = (m_Video.m_BG[3].pd & ~(0xFF << n)) | (value << n);
-            break;
+            return;
         }
         case WIN0H:
             m_Video.m_Win[0].right = value;
-            break;
+            return;
         case WIN0H+1:
             m_Video.m_Win[0].left = value;
-            break;
+            return;
         case WIN1H:
             m_Video.m_Win[1].right = value;
-            break;
+            return;
         case WIN1H+1:
             m_Video.m_Win[1].left = value;
-            break;
+            return;
         case WIN0V:
             m_Video.m_Win[0].bottom = value;
-            break;
+            return;
         case WIN0V+1:
             m_Video.m_Win[0].top = value;
-            break;
+            return;
         case WIN1V:
             m_Video.m_Win[1].bottom = value;
-            break;
+            return;
         case WIN1V+1:
             m_Video.m_Win[1].top = value;
-            break;
+            return;
         case WININ:
             m_Video.m_Win[0].bg_in[0] = value & 1;
             m_Video.m_Win[0].bg_in[1] = value & 2;
@@ -722,7 +722,7 @@ namespace NanoboyAdvance
             m_Video.m_Win[0].bg_in[3] = value & 8;
             m_Video.m_Win[0].obj_in = value & 16;
             m_Video.m_Win[0].sfx_in = value & 32;
-            break;
+            return;
         case WININ+1:
             m_Video.m_Win[1].bg_in[0] = value & 1;
             m_Video.m_Win[1].bg_in[1] = value & 2;
@@ -730,7 +730,7 @@ namespace NanoboyAdvance
             m_Video.m_Win[1].bg_in[3] = value & 8;
             m_Video.m_Win[1].obj_in = value & 16;
             m_Video.m_Win[1].sfx_in = value & 32;
-            break;
+            return;
         case WINOUT:
             m_Video.m_WinOut.bg[0] = value & 1;
             m_Video.m_WinOut.bg[1] = value & 2;
@@ -738,10 +738,10 @@ namespace NanoboyAdvance
             m_Video.m_WinOut.bg[3] = value & 8;
             m_Video.m_WinOut.obj = value & 16;
             m_Video.m_WinOut.sfx = value & 32;
-            break;
+            return;
         case WINOUT+1:
             // TODO: OBJWIN
-            break;
+            return;
         case BLDCNT:
             m_Video.m_SFX.bg_select[0][0] = value & 1;
             m_Video.m_SFX.bg_select[0][1] = value & 2;
@@ -750,7 +750,7 @@ namespace NanoboyAdvance
             m_Video.m_SFX.obj_select[0] = value & 16;
             m_Video.m_SFX.bd_select[0] = value & 32;
             m_Video.m_SFX.effect = static_cast<SpecialEffect::Effect>(value >> 6);
-            break;
+            return;
         case BLDCNT+1:
             m_Video.m_SFX.bg_select[1][0] = value & 1;
             m_Video.m_SFX.bg_select[1][1] = value & 2;
@@ -758,33 +758,33 @@ namespace NanoboyAdvance
             m_Video.m_SFX.bg_select[1][3] = value & 8;
             m_Video.m_SFX.obj_select[1] = value & 16;
             m_Video.m_SFX.bd_select[1] = value & 32;
-            break;
+            return;
         case BLDALPHA:
             m_Video.m_SFX.eva = value & 0x1F;
-            break;
+            return;
         case BLDALPHA+1:
             m_Video.m_SFX.evb = value & 0x1F;
-            break;
+            return;
         case BLDY:
             m_Video.m_SFX.evy = value & 0x1F;
-            break;
+            return;
         case SOUND1CNT_L:
             m_Audio.m_QuadChannel[0].m_SweepShift = value & 7;
             m_Audio.m_QuadChannel[0].m_SweepDirection = (QuadChannel::SweepDirection)((value >> 3) & 1);
             m_Audio.m_QuadChannel[0].m_SweepTime = (value >> 4) & 7;
-            break;
+            return;
         case SOUND1CNT_H:
             m_Audio.m_QuadChannel[0].m_Length = value & 0x3F;
             m_Audio.m_QuadChannel[0].m_WavePatternDuty = (value >> 6) & 3;
-            break;
+            return;
         case SOUND1CNT_H+1:
             m_Audio.m_QuadChannel[0].SetEnvelopeSweep(value & 7);
             m_Audio.m_QuadChannel[0].m_EnvelopeDirection = (QuadChannel::EnvelopeDirection)((value >> 3) & 1);
             m_Audio.m_QuadChannel[0].SetVolume((value >> 4) & 0xF);
-            break;
+            return;
         case SOUND1CNT_X:
             m_Audio.m_QuadChannel[0].SetFrequency((m_Audio.m_QuadChannel[0].GetFrequency() & 0x700) | value);
-            break;
+            return;
         case SOUND1CNT_X+1:
             m_Audio.m_QuadChannel[0].SetFrequency((m_Audio.m_QuadChannel[0].GetFrequency() & 0xFF) | ((value & 7) << 8));
             m_Audio.m_QuadChannel[0].m_StopOnExpire = (value & 0x40) == 0x40;
@@ -792,19 +792,19 @@ namespace NanoboyAdvance
             if ((value & 0x80) == 0x80)
                 m_Audio.m_QuadChannel[0].Restart();
 
-            break;
+            return;
         case SOUND2CNT_L:
             m_Audio.m_QuadChannel[1].m_Length = value & 0x3F;
             m_Audio.m_QuadChannel[1].m_WavePatternDuty = (value >> 6) & 3;
-            break;
+            return;
         case SOUND2CNT_L+1:
             m_Audio.m_QuadChannel[1].SetEnvelopeSweep(value & 7);
             m_Audio.m_QuadChannel[1].m_EnvelopeDirection = (QuadChannel::EnvelopeDirection)((value >> 3) & 1);
             m_Audio.m_QuadChannel[1].SetVolume((value >> 4) & 0xF);
-            break;
+            return;
         case SOUND2CNT_H:
             m_Audio.m_QuadChannel[1].SetFrequency((m_Audio.m_QuadChannel[1].GetFrequency() & 0x700) | value);
-            break;
+            return;
         case SOUND2CNT_H+1:
             m_Audio.m_QuadChannel[1].SetFrequency((m_Audio.m_QuadChannel[1].GetFrequency() & 0xFF) | ((value & 7) << 8));
             m_Audio.m_QuadChannel[1].m_StopOnExpire = (value & 0x40) == 0x40;
@@ -812,20 +812,20 @@ namespace NanoboyAdvance
             if ((value & 0x80) == 0x80)
                 m_Audio.m_QuadChannel[1].Restart();
 
-            break;
+            return;
         case SOUND3CNT_L:
             // TODO: WRAM select
             m_Audio.m_WaveChannel.m_Playback = value & 0x80;
-            break;
+            return;
         case SOUND3CNT_H:
             m_Audio.m_WaveChannel.m_Length = value;
-            break;
+            return;
         case SOUND3CNT_H+1:
             m_Audio.m_WaveChannel.m_Volume = (value >> 5) & 3;
-            break;
+            return;
         case SOUND3CNT_X:
             m_Audio.m_WaveChannel.m_Frequency = (m_Audio.m_WaveChannel.m_Frequency & 0x700) | value;
-            break;
+            return;
         case SOUND3CNT_X+1:
             m_Audio.m_WaveChannel.m_Frequency = (m_Audio.m_WaveChannel.m_Frequency & 0xFF) | ((value & 7) << 8);
             m_Audio.m_WaveChannel.m_StopOnExpire = value & 0x40;
@@ -833,11 +833,11 @@ namespace NanoboyAdvance
             if ((value & 0x80) == 0x80)
                 m_Audio.m_WaveChannel.Restart();
 
-            break;
+            return;
         case SOUNDCNT_L:
             m_Audio.m_SoundControl.master_volume_right = value & 7;
             m_Audio.m_SoundControl.master_volume_left = (value >> 4) & 7;
-            break;
+            return;
         case SOUNDCNT_L+1:
             m_Audio.m_SoundControl.enable_right[0] = value & 1;
             m_Audio.m_SoundControl.enable_right[1] = value & 2;
@@ -847,12 +847,12 @@ namespace NanoboyAdvance
             m_Audio.m_SoundControl.enable_left[1] = value & 32;
             m_Audio.m_SoundControl.enable_left[2] = value & 64;
             m_Audio.m_SoundControl.enable_left[3] = value & 128;
-            break;
+            return;
         case SOUNDCNT_H:
             m_Audio.m_SoundControl.volume = value & 3;
             m_Audio.m_SoundControl.dma_volume[0] = (value >> 2) & 1;
             m_Audio.m_SoundControl.dma_volume[1] = (value >> 3) & 1;
-            break;
+            return;
         case SOUNDCNT_H+1:
             m_Audio.m_SoundControl.dma_enable_right[0] = value & 1;
             m_Audio.m_SoundControl.dma_enable_left[0] = value & 2;
@@ -863,7 +863,7 @@ namespace NanoboyAdvance
 
             if (value & 8) m_Audio.m_FIFO[0].Reset();
             if (value & 128) m_Audio.m_FIFO[1].Reset();
-            break;
+            return;
         case SOUNDBIAS:
         case SOUNDBIAS+1:
         case SOUNDBIAS+2:
@@ -871,7 +871,7 @@ namespace NanoboyAdvance
         {
             int n = (address - SOUNDBIAS) * 8;
             m_Audio.m_SOUNDBIAS = (m_Audio.m_SOUNDBIAS & ~(0xFF << n)) | (value << n);
-            break;
+            return;
         }
 
         case WAVE_RAM:
@@ -891,20 +891,20 @@ namespace NanoboyAdvance
         case WAVE_RAM+14:
         case WAVE_RAM+15:
             m_Audio.m_WaveChannel.WriteWaveRAM(address, value);
-            break;
+            return;
 
         case FIFO_A_L:
         case FIFO_A_L+1:
         case FIFO_A_H:
         case FIFO_A_H+1:
             m_Audio.m_FIFO[0].Enqueue(value);
-            break;
+            return;
         case FIFO_B_L:
         case FIFO_B_L+1:
         case FIFO_B_H:
         case FIFO_B_H+1:
             m_Audio.m_FIFO[1].Enqueue(value);
-            break;
+            return;
         case DMA0SAD:
         case DMA0SAD+1:
         case DMA0SAD+2:
@@ -912,7 +912,7 @@ namespace NanoboyAdvance
         {
             int n = (address - DMA0SAD) * 8;
             m_DMA[0].source = (m_DMA[0].source & ~(0xFF << n)) | (value << n);
-            break;
+            return;
         }
         case DMA1SAD:
         case DMA1SAD+1:
@@ -921,7 +921,7 @@ namespace NanoboyAdvance
         {
             int n = (address - DMA1SAD) * 8;
             m_DMA[1].source = (m_DMA[1].source & ~(0xFF << n)) | (value << n);
-            break;
+            return;
         }
         case DMA2SAD:
         case DMA2SAD+1:
@@ -930,7 +930,7 @@ namespace NanoboyAdvance
         {
             int n = (address - DMA2SAD) * 8;
             m_DMA[2].source = (m_DMA[2].source & ~(0xFF << n)) | (value << n);
-            break;
+            return;
         }
         case DMA3SAD:
         case DMA3SAD+1:
@@ -939,7 +939,7 @@ namespace NanoboyAdvance
         {
             int n = (address - DMA3SAD) * 8;
             m_DMA[3].source = (m_DMA[3].source & ~(0xFF << n)) | (value << n);
-            break;
+            return;
         }
         case DMA0DAD:
         case DMA0DAD+1:
@@ -948,7 +948,7 @@ namespace NanoboyAdvance
         {
             int n = (address - DMA0DAD) * 8;
             m_DMA[0].dest = (m_DMA[0].dest & ~(0xFF << n)) | (value << n);
-            break;
+            return;
         }
         case DMA1DAD:
         case DMA1DAD+1:
@@ -957,7 +957,7 @@ namespace NanoboyAdvance
         {
             int n = (address - DMA1DAD) * 8;
             m_DMA[1].dest = (m_DMA[1].dest & ~(0xFF << n)) | (value << n);
-            break;
+            return;
         }
         case DMA2DAD:
         case DMA2DAD+1:
@@ -966,7 +966,7 @@ namespace NanoboyAdvance
         {
             int n = (address - DMA2DAD) * 8;
             m_DMA[2].dest = (m_DMA[2].dest & ~(0xFF << n)) | (value << n);
-            break;
+            return;
         }
         case DMA3DAD:
         case DMA3DAD+1:
@@ -975,32 +975,32 @@ namespace NanoboyAdvance
         {
             int n = (address - DMA3DAD) * 8;
             m_DMA[3].dest = (m_DMA[3].dest & ~(0xFF << n)) | (value << n);
-            break;
+            return;
         }
         case DMA0CNT_L:
             m_DMA[0].count = (m_DMA[0].count & 0xFF00) | value;
-            break;
+            return;
         case DMA0CNT_L+1:
             m_DMA[0].count = (m_DMA[0].count & 0x00FF) | (value << 8);
-            break;
+            return;
         case DMA1CNT_L:
             m_DMA[1].count = (m_DMA[1].count & 0xFF00) | value;
-            break;
+            return;
         case DMA1CNT_L+1:
             m_DMA[1].count = (m_DMA[1].count & 0x00FF) | (value << 8);
-            break;
+            return;
         case DMA2CNT_L:
             m_DMA[2].count = (m_DMA[2].count & 0xFF00) | value;
-            break;
+            return;
         case DMA2CNT_L+1:
             m_DMA[2].count = (m_DMA[2].count & 0x00FF) | (value << 8);
-            break;
+            return;
         case DMA3CNT_L:
             m_DMA[3].count = (m_DMA[3].count & 0xFF00) | value;
-            break;
+            return;
         case DMA3CNT_L+1:
             m_DMA[3].count = (m_DMA[3].count & 0x00FF) | (value << 8);
-            break;
+            return;
         case DMA0CNT_H:
         {
             // the upper bit is in the next byte...
@@ -1008,7 +1008,7 @@ namespace NanoboyAdvance
             source_control = (source_control & 2) | ((value >> 7) & 1);
             m_DMA[0].source_control = static_cast<AddressControl>(source_control);
             m_DMA[0].dest_control = static_cast<AddressControl>((value >> 5) & 3);
-            break;
+            return;
         }
         case DMA0CNT_H+1:
         {
@@ -1031,7 +1031,7 @@ namespace NanoboyAdvance
                 if (m_DMA[0].count_int == 0)
                     m_DMA[0].count_int = DMA_COUNT_MASK[0] + 1;
             }
-            break;
+            return;
         }
         case DMA1CNT_H:
         {
@@ -1040,7 +1040,7 @@ namespace NanoboyAdvance
             source_control = (source_control & 2) | ((value >> 7) & 1);
             m_DMA[1].source_control = static_cast<AddressControl>(source_control);
             m_DMA[1].dest_control = static_cast<AddressControl>((value >> 5) & 3);
-            break;
+            return;
         }
         case DMA1CNT_H+1:
         {
@@ -1063,7 +1063,7 @@ namespace NanoboyAdvance
                 if (m_DMA[1].count_int == 0)
                     m_DMA[1].count_int = DMA_COUNT_MASK[1] + 1;
             }
-            break;
+            return;
         }
         case DMA2CNT_H:
         {
@@ -1072,7 +1072,7 @@ namespace NanoboyAdvance
             source_control = (source_control & 2) | ((value >> 7) & 1);
             m_DMA[2].source_control = static_cast<AddressControl>(source_control);
             m_DMA[2].dest_control = static_cast<AddressControl>((value >> 5) & 3);
-            break;
+            return;
         }
         case DMA2CNT_H+1:
         {
@@ -1095,7 +1095,7 @@ namespace NanoboyAdvance
                 if (m_DMA[2].count_int == 0)
                     m_DMA[2].count_int = DMA_COUNT_MASK[2] + 1;
             }
-            break;
+            return;
         }
         case DMA3CNT_H:
         {
@@ -1104,7 +1104,7 @@ namespace NanoboyAdvance
             source_control = (source_control & 2) | ((value >> 7) & 1);
             m_DMA[3].source_control = static_cast<AddressControl>(source_control);
             m_DMA[3].dest_control = static_cast<AddressControl>((value >> 5) & 3);
-            break;
+            return;
         }
         case DMA3CNT_H+1:
         {
@@ -1127,32 +1127,32 @@ namespace NanoboyAdvance
                 if (m_DMA[3].count_int == 0)
                     m_DMA[3].count_int = DMA_COUNT_MASK[3] + 1;
             }
-            break;
+            return;
         }
         case TM0CNT_L:
             m_Timer[0].reload = (m_Timer[0].reload & 0xFF00) | value;
-            break;
+            return;
         case TM0CNT_L+1:
             m_Timer[0].reload = (m_Timer[0].reload & 0x00FF) | (value << 8);
-            break;
+            return;
         case TM1CNT_L:
             m_Timer[1].reload = (m_Timer[1].reload & 0xFF00) | value;
-            break;
+            return;
         case TM1CNT_L+1:
             m_Timer[1].reload = (m_Timer[1].reload & 0x00FF) | (value << 8);
-            break;
+            return;
         case TM2CNT_L:
             m_Timer[2].reload = (m_Timer[2].reload & 0xFF00) | value;
-            break;
+            return;
         case TM2CNT_L+1:
             m_Timer[2].reload = (m_Timer[2].reload & 0x00FF) | (value << 8);
-            break;
+            return;
         case TM3CNT_L:
             m_Timer[3].reload = (m_Timer[3].reload & 0xFF00) | value;
-            break;
+            return;
         case TM3CNT_L+1:
             m_Timer[3].reload = (m_Timer[3].reload & 0x00FF) | (value << 8);
-            break;
+            return;
          case TM0CNT_H:
          case TM1CNT_H:
          case TM2CNT_H:
@@ -1169,41 +1169,41 @@ namespace NanoboyAdvance
             // Load reload value into counter on rising edge
             if (!old_enable && m_Timer[n].enable)
                 m_Timer[n].count = m_Timer[n].reload;
-            break;
+            return;
          }
         case IE:
             m_Interrupt.ie = (m_Interrupt.ie & 0xFF00) | value;
-            break;
+            return;
         case IE+1:
             m_Interrupt.ie = (m_Interrupt.ie & 0x00FF) | (value << 8);
-            break;
+            return;
         case IF:
             m_Interrupt.if_ &= ~value;
-            break;
+            return;
         case IF+1:
             m_Interrupt.if_ &= ~(value << 8);
-            break;
+            return;
         case WAITCNT:
             m_Waitstate.sram = value & 3;
             m_Waitstate.first[0] = (value >> 2) & 3;
             m_Waitstate.second[0] = (value >> 4) & 1;
             m_Waitstate.first[1] = (value >> 5) & 3;
             m_Waitstate.second[1] = value >> 7;
-            break;
+            return;
         case WAITCNT+1:
             m_Waitstate.first[2] = value & 3;
             m_Waitstate.second[2] = (value >> 2) & 1;
             m_Waitstate.prefetch = value & 64;
-            break;
+            return;
         case IME:
             m_Interrupt.ime = (m_Interrupt.ime & 0xFF00) | value;
-            break;
+            return;
         case IME+1:
             m_Interrupt.ime = (m_Interrupt.ime & 0x00FF) | (value << 8);
-            break;
+            return;
         case HALTCNT:
             m_HaltState = (value & 0x80) ? HALTSTATE_STOP : HALTSTATE_HALT;
-            break;
+            return;
         default:
 #ifdef DEBUG
             LOG(LOG_ERROR, "Read invalid IO register: 0x%x", address);
