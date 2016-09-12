@@ -431,6 +431,11 @@ namespace NanoboyAdvance
                 return m_Interrupt.ime & 0xFF;
             case IME+1:
                 return m_Interrupt.ime >> 8;
+            default:
+#ifdef DEBUG
+                LOG(LOG_ERROR, "Read invalid IO register: 0x%x", internal_offset);
+#endif
+                return 0;
             }
             return 0;
         case 5:
@@ -1225,6 +1230,11 @@ namespace NanoboyAdvance
             case HALTCNT:
                 m_HaltState = (value & 0x80) ? HALTSTATE_STOP : HALTSTATE_HALT;
                 break;
+            default:
+#ifdef DEBUG
+                LOG(LOG_ERROR, "Read invalid IO register: 0x%x", internal_offset);
+#endif
+                return;
             }
             break;
         }
