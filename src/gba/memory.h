@@ -30,7 +30,7 @@
 #include "common/types.h"
 #include "iodef.h"
 #include "interrupt.h"
-#include "video.h"
+#include "video/video.h"
 #include "backup/backup.h"
 #include "audio/audio.h"
 

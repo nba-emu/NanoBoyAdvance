@@ -28,7 +28,7 @@
 
 #include "arm/arm.h"
 #include "memory.h"
-#include "soft_composer.h"
+#include "video/soft_composer.h"
 #include "common/types.h"
 #include "common/file.h"
 #include <string>

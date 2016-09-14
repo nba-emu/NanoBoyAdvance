@@ -22,7 +22,7 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 
-#include "gba/video.h"
+#include "gba/video/video.h"
 #include "mainwindow.h"
 #include <QApplication>
 #include <QFileDialog>

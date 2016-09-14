@@ -6,10 +6,10 @@ set(SRCS
     memory.cpp
     dma.cpp
     timer.cpp
-    video.cpp
+    video/video.cpp
     backup/flash.cpp
     backup/sram.cpp
-    soft_composer.cpp
+    video/soft_composer.cpp
     audio/audio.cpp
     audio/quadchannel.cpp
     audio/wavechannel.cpp
@@ -21,13 +21,13 @@ set(HEADERS
     iodef.h
     interrupt.h
     memory.h
-    video.h
+    video/video.h
     backup/backup.h
     backup/flash.h
     backup/sram.h
-    composer.h
-    soft_composer.h
-    video_extra.h
+    video/composer.h
+    video/soft_composer.h
+    video/video_extra.h
     audio/audio.h
     audio/fifo.h
     audio/quadchannel.h

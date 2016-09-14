@@ -28,7 +28,7 @@
 
 #include "common/types.h"
 #include "common/log.h"
-#include "interrupt.h"
+#include "../interrupt.h"
 #include "video_extra.h"
 #include "composer.h"
 #include <cstring>
