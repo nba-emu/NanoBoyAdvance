@@ -293,7 +293,7 @@ namespace NanoboyAdvance
 
         void ApplySFX(u16* target1, u16 target2);
 
-        void FinalizeScanline();
+        void ComposeScanline();
 
     public:
         ///////////////////////////////////////////////////////////
