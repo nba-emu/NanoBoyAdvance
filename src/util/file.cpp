@@ -30,17 +30,32 @@
 using namespace std;
 
 
-namespace NanoboyAdvance
+namespace File
 {
-    bool File::Exists(string filename)
+    bool Exists(string filename)
     {
         ifstream ifs(filename);
         bool exists = ifs.is_open();
+
         ifs.close();
+
         return exists;
     }
 
-    u8* File::ReadFile(string filename)
+    int GetFileSize(string filename)
+    {
+        ifstream ifs(filename, ios::in | ios::binary | ios::ate);
+
+        if (ifs.is_open())
+        {
+            ifs.seekg(0, ios::end);
+            return ifs.tellg();
+        }
+
+        return 0;
+    }
+
+    u8* ReadFile(string filename)
     {
         ifstream ifs(filename, ios::in | ios::binary | ios::ate);
         size_t filesize;
@@ -64,7 +79,7 @@ namespace NanoboyAdvance
         return data;
     }
 
-    void File::WriteFile(string filename, u8* data, int size)
+    void WriteFile(string filename, u8* data, int size)
     {
         ofstream ofs(filename, ios::out | ios::binary);
 
@@ -77,18 +92,5 @@ namespace NanoboyAdvance
         {
             cout << "Cannot write file " << filename.c_str();
         }
-    }
-
-    int File::GetFileSize(string filename) 
-    {
-        ifstream ifs(filename, ios::in | ios::binary | ios::ate);
-
-        if (ifs.is_open())
-        {
-            ifs.seekg(0, ios::end);
-            return ifs.tellg();
-        }
-        
-        return 0;
     }
 }
