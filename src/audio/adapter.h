@@ -26,7 +26,7 @@
 #define __NBA_AUDIO_ADAPTER_H__
 
 
-#include "gba/audio.h"
+#include "gba/audio/audio.h"
 
 
 namespace NanoboyAdvance

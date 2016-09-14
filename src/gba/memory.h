@@ -32,7 +32,7 @@
 #include "interrupt.h"
 #include "video.h"
 #include "backup.h"
-#include "audio.h"
+#include "audio/audio.h"
 
 
 namespace NanoboyAdvance
