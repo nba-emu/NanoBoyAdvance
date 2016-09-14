@@ -10,6 +10,7 @@ set(SRCS
     backup/flash.cpp
     backup/sram.cpp
     video/video.cpp
+    video/composite.cpp
     video/renderers/text_mode.cpp
     video/renderers/rotate_scale.cpp
     video/renderers/sprite.cpp
