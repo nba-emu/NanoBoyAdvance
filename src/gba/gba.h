@@ -26,7 +26,7 @@
 #define __NBA_GBA_H__
 
 
-#include "arm.h"
+#include "arm/arm.h"
 #include "memory.h"
 #include "soft_composer.h"
 #include "common/types.h"
