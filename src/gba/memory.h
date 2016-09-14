@@ -27,7 +27,7 @@
 
 
 #include <iostream>
-#include "util/types.h"
+#include "common/types.h"
 #include "iodef.h"
 #include "interrupt.h"
 #include "video.h"

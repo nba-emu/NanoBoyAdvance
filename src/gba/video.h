@@ -26,8 +26,8 @@
 #define __NBA_VIDEO_H__
 
 
-#include "util/types.h"
-#include "util/log.h"
+#include "common/types.h"
+#include "common/log.h"
 #include "interrupt.h"
 #include "video_extra.h"
 #include "composer.h"

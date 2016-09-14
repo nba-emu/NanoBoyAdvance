@@ -23,8 +23,8 @@
 
 
 #include "memory.h"
-#include "util/log.h"
-#include "util/file.h"
+#include "common/log.h"
+#include "common/file.h"
 #include "flash.h"
 #include "sram.h"
 #include <stdexcept>

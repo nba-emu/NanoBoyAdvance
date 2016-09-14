@@ -26,7 +26,7 @@
 #define __NBA_SCREEN_H__
 
 
-#include "util/types.h"
+#include "common/types.h"
 #include <QGLWidget>
 
 

@@ -25,7 +25,7 @@
 #define __NBA_VIDEO_EXTRA_H__
 
 
-#include "util/types.h"
+#include "common/types.h"
 
 
 const u16 COLOR_TRANSPARENT = 0x8000;

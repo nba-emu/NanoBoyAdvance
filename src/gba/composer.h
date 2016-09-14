@@ -24,7 +24,7 @@
 #ifndef __NBA_COMPOSER_H__
 #define __NBA_COMPOSER_H__
 
-#include "util/types.h"
+#include "common/types.h"
 #include "video_extra.h"
 
 namespace NanoboyAdvance

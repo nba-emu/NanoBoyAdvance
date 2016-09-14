@@ -25,8 +25,8 @@
 #pragma once
 
 
-#include "util/types.h"
-#include "util/log.h"
+#include "common/types.h"
+#include "common/log.h"
 #include "memory.h"
 
 

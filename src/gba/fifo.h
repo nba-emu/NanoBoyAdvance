@@ -26,7 +26,7 @@
 #define __NBA_AUDIO_FIFO_H__
 
 
-#include "util/types.h"
+#include "common/types.h"
 
 
 namespace NanoboyAdvance
