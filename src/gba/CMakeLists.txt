@@ -29,6 +29,7 @@ set(HEADERS
     backup/flash.h
     backup/sram.h
     video/video.h
+    video/video.inl
     video/video_extra.h
     audio/audio.h
     audio/fifo.h

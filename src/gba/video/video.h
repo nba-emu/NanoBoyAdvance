@@ -35,14 +35,6 @@
 
 namespace NanoboyAdvance
 {
-    ///////////////////////////////////////////////////////////
-    /// \file    video.h
-    /// \author  Frederic Meyer
-    /// \date    July 31th, 2016
-    /// \class   Video
-    /// \brief   Provides methods for rendering several modes.
-    ///
-    ///////////////////////////////////////////////////////////
     class Video
     {   
     private:
@@ -51,14 +43,6 @@ namespace NanoboyAdvance
         static const int VCOUNT_INTERRUPT;
         static const int EVENT_WAIT_CYCLES[3];
 
-        ///////////////////////////////////////////////////////////
-        /// \author Frederic Meyer
-        /// \date   July 31th, 2016
-        /// \enum   SpriteShape
-        ///
-        /// Defines all possible sprite shapes.
-        ///
-        ///////////////////////////////////////////////////////////
         enum SpriteShape
         {
             SPRITE_SQUARE          = 0,
@@ -68,14 +52,6 @@ namespace NanoboyAdvance
         };
 
     public:
-        ///////////////////////////////////////////////////////////
-        /// \author Frederic Meyer
-        /// \date   July 31th, 2016
-        /// \enum   RenderingPhase
-        ///
-        /// Defines all phases of video rendering.
-        ///
-        ///////////////////////////////////////////////////////////
         enum RenderingPhase
         {
             PHASE_SCANLINE = 0,
@@ -83,240 +59,25 @@ namespace NanoboyAdvance
             PHASE_VBLANK = 2
         };
 
-    private:
-        static inline u32 DecodeRGB555(u16 color)
-        {
-            return 0xFF000000 |
-                   (((color & 0x1F) * 8) << 16) |
-                   ((((color >> 5) & 0x1F) * 8) << 8) |
-                   (((color >> 10) & 0x1F) * 8);
-        }
-
-        inline bool IsVisible(int i, bool inside[3], bool outside)
-        {
-            if (m_Win[0].enable || m_Win[1].enable || m_ObjWin.enable)
-            {
-                if (m_Win[0].enable && m_WinMask[0][i] == 1)
-                    return inside[0];
-                else if (m_Win[1].enable && m_WinMask[1][i] == 1)
-                    return inside[1];
-                else
-                    return outside;
-            }
-
-            return true;
-        }
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      DecodeTileLine4BPP
-        /// \brief   Decodes a single 4-bit tile line.
-        ///
-        /// \param    block_base    Address of block/tile data.
-        /// \param    palette_base  Palette address.
-        /// \param    number        Tile index number.
-        /// \param    line          The line to decode.
-        /// \returns  The decoded line.
-        ///
-        ///////////////////////////////////////////////////////////
-        inline u16* DecodeTileLine4BPP(u32 block_base, u32 palette_base, int number, int line)
-        {
-            u16* data = new u16[8];
-            u32 offset = block_base + number * 32 + line * 4;
-
-            for (int i = 0; i < 4; i++)
-            {
-                u8 value = m_VRAM[offset + i];
-                int left_index = value & 0xF;
-                int right_index = value >> 4;
-
-                if (left_index != 0)
-                    data[i * 2] = (m_PAL[palette_base + left_index * 2 + 1] << 8) |
-                                   m_PAL[palette_base + left_index * 2];
-                else
-                    data[i * 2] = COLOR_TRANSPARENT;
-
-                if (right_index != 0)
-                    data[i * 2 + 1] = (m_PAL[palette_base + right_index * 2 + 1] << 8) |
-                                       m_PAL[palette_base + right_index * 2];
-                else
-                    data[i * 2 + 1] = COLOR_TRANSPARENT;
-            }
-
-            return data;
-        }
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      DecodeTileLine8BPP
-        /// \brief   Decodes a single 8-bit tile line.
-        ///
-        /// \param    block_base  Address of block/tile data
-        /// \param    number      Tile index number.
-        /// \param    line        The line to decode.
-        /// \param    sprite      Wether to use the sprite palette.
-        /// \returns  The decoded line.
-        ///
-        ///////////////////////////////////////////////////////////
-        inline u16* DecodeTileLine8BPP(u32 block_base, int number, int line, bool sprite)
-        {
-            u16* data = new u16[8];
-            u32 offset = block_base + number * 64 + line * 8;
-            u32 palette_base = sprite ? 0x200 : 0x0;
-
-            for (int i = 0; i < 8; i++)
-            {
-                u8 value = m_VRAM[offset + i];
-
-                if (value == 0)
-                {
-                    data[i] = COLOR_TRANSPARENT;
-                    continue;
-                }
-
-                data[i] = (m_PAL[palette_base + value * 2 + 1] << 8) |
-                           m_PAL[palette_base + value * 2];
-            }
-
-            return data;
-        }
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      DecodeTilePixel8BPP
-        /// \brief   Decodes a single 8-bit tile pixel
-        ///
-        /// \param    block_base  Address of block/tile data
-        /// \param    number      Tile index number.
-        /// \param    line        Pixel y-Coordinate.
-        /// \param    column      Pixel x-Coordinate.
-        /// \param    sprite      Wether to use the sprite palette.
-        /// \returns  The decoded pixel.
-        ///
-        ///////////////////////////////////////////////////////////
-        inline u16 DecodeTilePixel8BPP(u32 block_base, int number, int line, int column, bool sprite)
-        {
-            u8 value = m_VRAM[block_base + number * 64 + line * 8 + column];
-            u32 palette_base = sprite ? 0x200 : 0x0;
-
-            if (value == 0)
-                return COLOR_TRANSPARENT;
-
-            return (m_PAL[palette_base + value * 2 + 1] << 8) |
-                    m_PAL[palette_base + value * 2];
-        }
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      DecodeGBAFloat16
-        /// \brief   Decodes the GBAFloat16 format to native float.
-        ///
-        /// \param    number  The GBAFloat16 value to decode.
-        /// \returns  The native float value.
-        ///
-        ///////////////////////////////////////////////////////////
-        static inline float DecodeGBAFloat16(u16 number)
-        {
-            bool is_negative = number & (1 << 15);
-            s32 int_part = (number >> 8) | (is_negative ? 0xFFFFFF00 : 0);
-            float frac_part = static_cast<float>(number & 0xFF) / 256;
-
-            return static_cast<float>(int_part) + frac_part;
-        }
-
-    public:
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      DecodeGBAFloat32
-        /// \brief   Decodes the GBAFloat32 format to native float.
-        ///
-        /// \param    number  The GBAFloat32 value to decode.
-        /// \returns  The native float value.
-        ///
-        ///////////////////////////////////////////////////////////
-        static inline float DecodeGBAFloat32(u32 number)
-        {
-            bool is_negative = number & (1 << 27);
-            s32 int_part = ((number & ~0xF0000000) >> 8) | (is_negative ? 0xFFF00000 : 0);
-            float frac_part = static_cast<float>(number & 0xFF) / 256;
-
-            return static_cast<float>(int_part) + frac_part;
-        }
-
-    public:
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      Constructor
-        ///
-        ///////////////////////////////////////////////////////////
         void Init(Interrupt* m_Interrupt);
 
+        void Step();
+        void Render();
+        static float DecodeGBAFloat32(u32 number);
+
     private:
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      RenderTextModeBG
-        /// \brief   Performs rendering for BG text mode.
-        ///
-        /// \param  id  ID of the background to render.
-        ///
-        ///////////////////////////////////////////////////////////
+        static float DecodeGBAFloat16(u16 number);
+        static u32 DecodeRGB555(u16 color);
+        u16* DecodeTileLine4BPP(u32 block_base, u32 palette_base, int number, int line);
+        u16* DecodeTileLine8BPP(u32 block_base, int number, int line, bool sprite);
+        u16 DecodeTilePixel8BPP(u32 block_base, int number, int line, int column, bool sprite);
+        bool IsVisible(int i, bool inside[3], bool outside);
         void RenderTextModeBG(int id);
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      RenderRotateScaleBG
-        /// \brief   Performs rendering for BG rotate/scale mode.
-        ///
-        /// \param  id  ID of the background to render.
-        ///
-        ///////////////////////////////////////////////////////////
         void RenderRotateScaleBG(int id);
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      RenderOAM
-        /// \brief   Performs rendering of OAM sprites.
-        ///
-        /// \param  tile_base  Address of block/tile data.
-        ///
-        ///////////////////////////////////////////////////////////
         void RenderOAM(u32 tile_base);
-
         void ApplySFX(u16* target1, u16 target2);
-
         void ComposeScanline();
 
-    public:
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      Render
-        ///
-        /// Renders the current scanline.
-        ///
-        ///////////////////////////////////////////////////////////
-        void Render();
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      Step
-        ///
-        /// Updates PPU/Video state.
-        ///
-        ///////////////////////////////////////////////////////////
-        void Step();
-
-    private:
         ///////////////////////////////////////////////////////////
         // Class members
         //
@@ -372,6 +133,9 @@ namespace NanoboyAdvance
         u32 m_OutputBuffer[240 * 160];
     };
 }
+
+
+#include "video.inl"
 
 
 #endif  // __NBA_VIDEO_H__
