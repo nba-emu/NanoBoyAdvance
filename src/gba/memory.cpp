@@ -25,8 +25,8 @@
 #include "memory.h"
 #include "common/log.h"
 #include "common/file.h"
-#include "flash.h"
-#include "sram.h"
+#include "backup/flash.h"
+#include "backup/sram.h"
 #include <stdexcept>
 
 

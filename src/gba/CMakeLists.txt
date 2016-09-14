@@ -7,8 +7,8 @@ set(SRCS
     dma.cpp
     timer.cpp
     video.cpp
-    flash.cpp
-    sram.cpp
+    backup/flash.cpp
+    backup/sram.cpp
     soft_composer.cpp
     audio/audio.cpp
     audio/quadchannel.cpp
@@ -22,9 +22,9 @@ set(HEADERS
     interrupt.h
     memory.h
     video.h
-    backup.h
-    flash.h
-    sram.h
+    backup/backup.h
+    backup/flash.h
+    backup/sram.h
     composer.h
     soft_composer.h
     video_extra.h
