@@ -30,6 +30,8 @@
 using namespace std;
 
 
+namespace Common
+{
 namespace File
 {
     bool Exists(string filename)
@@ -93,4 +95,5 @@ namespace File
             cout << "Cannot write file " << filename.c_str();
         }
     }
-}
+} // File
+} // Common

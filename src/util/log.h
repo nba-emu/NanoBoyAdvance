@@ -26,6 +26,8 @@
 #define __NBA_LOG_H__
 
 
+// TODO: Depreciate this crap.
+
 #include <cstdio>
 
 
