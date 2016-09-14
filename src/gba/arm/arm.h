@@ -27,7 +27,7 @@
 
 #include "common/types.h"
 #include "common/log.h"
-#include "memory.h"
+#include "../memory.h"
 
 
 namespace NanoboyAdvance
