@@ -28,6 +28,7 @@
 #include "backup/flash.h"
 #include "backup/sram.h"
 #include <stdexcept>
+#include <cstring>
 
 
 using namespace std;

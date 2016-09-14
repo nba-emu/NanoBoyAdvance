@@ -30,7 +30,6 @@ set(HEADERS
     backup/sram.h
     video/video.h
     video/video.inl
-    video/video_extra.h
     audio/audio.h
     audio/fifo.h
     audio/quadchannel.h

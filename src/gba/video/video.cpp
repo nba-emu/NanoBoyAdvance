@@ -23,6 +23,7 @@
 
 
 #include "video.h"
+#include <cstring>
 
 
 namespace NanoboyAdvance
@@ -31,6 +32,7 @@ namespace NanoboyAdvance
     const int Video::HBLANK_INTERRUPT = 2;
     const int Video::VCOUNT_INTERRUPT = 4;
     const int Video::EVENT_WAIT_CYCLES[3] = { 960, 272, 1232 };
+    const u16 Video::COLOR_TRANSPARENT = 0x8000;
 
     ///////////////////////////////////////////////////////////
     /// \author  Frederic Meyer

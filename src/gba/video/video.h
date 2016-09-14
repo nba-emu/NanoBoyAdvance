@@ -29,12 +29,84 @@
 #include "common/types.h"
 #include "common/log.h"
 #include "../interrupt.h"
-#include "video_extra.h"
-#include <cstring>
 
 
 namespace NanoboyAdvance
 {
+    struct Background
+    {
+        bool enable {false};
+        bool mosaic {false};
+        bool true_color {false};
+        bool wraparound {false};
+        int priority {0};
+        int size {0};
+        u32 tile_base {0};
+        u32 map_base {0};
+        u32 x {0};
+        u32 y {0};
+        u32 x_ref {0};
+        u32 y_ref {0};
+        float x_ref_int {0};
+        float y_ref_int {0};
+        u16 pa {0};
+        u16 pb {0};
+        u16 pc {0};
+        u16 pd {0};
+    };
+
+    struct Object
+    {
+        bool enable {false};
+        bool hblank_access {false};
+        bool two_dimensional {false};
+    };
+
+    struct Window
+    {
+        bool enable {false};
+        bool bg_in[4] {false, false, false, false};
+        bool obj_in {false};
+        bool sfx_in {false};
+        u16 left {0};
+        u16 right {0};
+        u16 top {0};
+        u16 bottom {0};
+    };
+
+    struct WindowOuter
+    {
+        bool bg[4] {false, false, false, false};
+        bool obj {false};
+        bool sfx {false};
+    };
+
+    struct ObjectWindow
+    {
+        bool enable {false};
+        // TODO...
+    };
+
+    struct SpecialEffect
+    {
+        bool bg_select[2][4] {{false, false, false, false},
+                              {false, false, false, false}};
+        bool obj_select[2] {false, false};
+        bool bd_select[2] {false, false};
+
+        enum Effect
+        {
+            SFX_NONE = 0,
+            SFX_ALPHABLEND = 1,
+            SFX_INCREASE = 2,
+            SFX_DECREASE = 3
+        } effect {SFX_NONE};
+
+        int eva {0};
+        int evb {0};
+        int evy {0};
+    };
+
     class Video
     {   
     private:
@@ -42,6 +114,7 @@ namespace NanoboyAdvance
         static const int HBLANK_INTERRUPT;
         static const int VCOUNT_INTERRUPT;
         static const int EVENT_WAIT_CYCLES[3];
+        static const u16 COLOR_TRANSPARENT;
 
         enum SpriteShape
         {
