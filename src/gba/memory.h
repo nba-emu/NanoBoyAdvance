@@ -28,7 +28,6 @@
 
 #include <iostream>
 #include "common/types.h"
-#include "iodef.h"
 #include "interrupt.h"
 #include "video/video.h"
 #include "backup/backup.h"

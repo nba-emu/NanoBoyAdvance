@@ -4,6 +4,7 @@ set(SRCS
     arm/arm_instr.cpp
     arm/thumb_instr.cpp
     memory.cpp
+    io.cpp
     dma.cpp
     timer.cpp
     video/video.cpp
@@ -18,7 +19,7 @@ set(SRCS
 set(HEADERS
     gba.h
     arm/arm.h
-    iodef.h
+    io.h
     interrupt.h
     memory.h
     video/video.h

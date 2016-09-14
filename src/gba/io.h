@@ -22,8 +22,8 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef __NBA_IODEF_H__
-#define __NBA_IODEF_H__
+#ifndef __NBA_IO_H__
+#define __NBA_IO_H__
 
 
 const int DISPCNT = 0x0;
@@ -112,4 +112,4 @@ const int IME = 0x208;
 const int HALTCNT = 0x301;
 
 
-#endif  // __NBA_IODEF_H__
+#endif  // __NBA_IO_H__
