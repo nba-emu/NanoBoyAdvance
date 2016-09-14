@@ -28,7 +28,6 @@
 
 #include "arm/arm.h"
 #include "memory.h"
-#include "video/soft_composer.h"
 #include "common/types.h"
 #include "common/file.h"
 #include <string>
@@ -157,7 +156,6 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         int m_SpeedMultiplier        {1};      ///< Holds the emulation speed
         bool m_DidRender             {false};  ///< Has frame already been rendered?
-        GBASoftComposer m_Composer;            ///< Final picture composer
     };
 }
 

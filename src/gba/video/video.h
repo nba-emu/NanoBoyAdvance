@@ -30,7 +30,6 @@
 #include "common/log.h"
 #include "../interrupt.h"
 #include "video_extra.h"
-#include "composer.h"
 #include <cstring>
 
 
@@ -85,6 +84,29 @@ namespace NanoboyAdvance
         };
 
     private:
+        static inline u32 DecodeRGB555(u16 color)
+        {
+            return 0xFF000000 |
+                   (((color & 0x1F) * 8) << 16) |
+                   ((((color >> 5) & 0x1F) * 8) << 8) |
+                   (((color >> 10) & 0x1F) * 8);
+        }
+
+        inline bool IsVisible(int i, bool inside[3], bool outside)
+        {
+            if (m_Win[0].enable || m_Win[1].enable || m_ObjWin.enable)
+            {
+                if (m_Win[0].enable && m_WinMask[0][i] == 1)
+                    return inside[0];
+                else if (m_Win[1].enable && m_WinMask[1][i] == 1)
+                    return inside[1];
+                else
+                    return outside;
+            }
+
+            return true;
+        }
+
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
         /// \date    July 31th, 2016
@@ -269,6 +291,10 @@ namespace NanoboyAdvance
         ///////////////////////////////////////////////////////////
         void RenderOAM(u32 tile_base);
 
+        void ApplySFX(u16* target1, u16 target2);
+
+        void FinalizeScanline();
+
     public:
         ///////////////////////////////////////////////////////////
         /// \author  Frederic Meyer
@@ -289,18 +315,6 @@ namespace NanoboyAdvance
         ///
         ///////////////////////////////////////////////////////////
         void Step();
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    August 9th, 2016
-        /// \fn      SetupComposer
-        ///
-        /// Setups a GBAComposer derived object for composing.
-        ///
-        /// \param  composer  The composer.
-        ///
-        ///////////////////////////////////////////////////////////
-        void SetupComposer(GBAComposer* composer);
 
     private:
         ///////////////////////////////////////////////////////////
@@ -355,6 +369,7 @@ namespace NanoboyAdvance
         bool m_VBlankDMA            {false};
         bool m_RenderScanline       {false};
         int  m_WaitCycles           { EVENT_WAIT_CYCLES[0] };
+        u32 m_OutputBuffer[240 * 160];
     };
 }
 

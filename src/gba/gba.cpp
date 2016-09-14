@@ -49,7 +49,6 @@ namespace NanoboyAdvance
     {
         m_Memory.Init(rom_file, save_file);
         m_ARM.Init(&m_Memory, true);
-        m_Memory.m_Video.SetupComposer(&m_Composer);
 
         // Rudimentary Audio setup
         SDL2AudioAdapter adapter;
@@ -75,7 +74,6 @@ namespace NanoboyAdvance
 
         m_Memory.Init(rom_file, save_file, bios, bios_size);
         m_ARM.Init(&m_Memory, false);
-        m_Memory.m_Video.SetupComposer(&m_Composer);
 
         // Rudimentary Audio setup
         SDL2AudioAdapter adapter;
@@ -137,7 +135,6 @@ namespace NanoboyAdvance
                         if (m_Memory.m_Video.m_RenderScanline && (i / FRAME_CYCLES) == m_SpeedMultiplier - 1)
                         {
                             m_Memory.m_Video.Render();
-                            m_Composer.Scanline();
                             m_DidRender = true;
                         }
                     }
@@ -160,8 +157,6 @@ namespace NanoboyAdvance
                 i += forward_steps;
             }
         }
-
-        m_Composer.Frame();
     }
 
     ///////////////////////////////////////////////////////////
@@ -197,7 +192,7 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     u32* GBA::GetVideoBuffer()
     {
-        return m_Composer.m_OutputBuffer;
+        return m_Memory.m_Video.m_OutputBuffer;
     }
 
     ///////////////////////////////////////////////////////////
