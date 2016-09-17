@@ -59,28 +59,25 @@ namespace GBA
             bool horizontal_flip = tile_encoder & (1 << 10);
             bool vertical_flip = tile_encoder & (1 << 11);
             int row_rmdr_flip = row_rmdr;
-            u16* tile_data;
 
             if (vertical_flip)
                 row_rmdr_flip = 7 - row_rmdr_flip;
 
             if (bg.true_color)
             {
-                tile_data = DecodeTileLine8BPP(bg.tile_base, tile_number, row_rmdr_flip, false);
+                DecodeTileLine8BPP(bg.tile_base, tile_number, row_rmdr_flip, false);
             } else
             {
                 int palette = tile_encoder >> 12;
-                tile_data = DecodeTileLine4BPP(bg.tile_base, palette * 0x20, tile_number, row_rmdr_flip);
+                DecodeTileLine4BPP(bg.tile_base, palette * 0x20, tile_number, row_rmdr_flip);
             }
 
             if (horizontal_flip)
                 for (int i = 0; i < 8; i++)
-                    line_buffer[x * 8 + i] = tile_data[7 - i];
+                    line_buffer[x * 8 + i] = m_TileBuffer[7 - i];
             else
                 for (int i = 0; i < 8; i++)
-                    line_buffer[x * 8 + i] = tile_data[i];
-
-            delete[] tile_data;
+                    line_buffer[x * 8 + i] = m_TileBuffer[i];
 
             if (x == 31)
                 offset = bg.map_base + right_area * 0x800 + 64 * row;

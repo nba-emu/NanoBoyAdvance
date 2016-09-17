@@ -88,9 +88,11 @@ namespace GBA
     ///////////////////////////////////////////////////////////
     void GBA::Frame()
     {
+        int total_cycles = FRAME_CYCLES * m_SpeedMultiplier;
+
         m_DidRender = false;
 
-        for (int i = 0; i < FRAME_CYCLES * m_SpeedMultiplier; i++)
+        for (int i = 0; i < total_cycles; ++i)
         {
             u32 interrupts = m_Memory.m_Interrupt.ie & m_Memory.m_Interrupt.if_;
 

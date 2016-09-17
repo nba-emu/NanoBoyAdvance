@@ -128,7 +128,6 @@ namespace GBA
                     for (int j = 0; j < tiles_per_row; j++)
                     {
                         int current_tile_number;
-                        u16* tile_data;
 
                         // Determine the tile to render
                         if (m_Obj.two_dimensional)
@@ -143,13 +142,11 @@ namespace GBA
                         // Render either in 256 colors or 16 colors mode
                         if (color_mode)
                         {
-                            // 256 colors
-                            tile_data = DecodeTileLine8BPP(tile_base, current_tile_number, displacement_y, true);
+                            DecodeTileLine8BPP(tile_base, current_tile_number, displacement_y, true);
                         }
                         else
                         {
-                            // 16 colors (use palette_nummer)
-                            tile_data = DecodeTileLine4BPP(tile_base, 0x200 + palette_number * 0x20, current_tile_number, displacement_y);
+                            DecodeTileLine4BPP(tile_base, 0x200 + palette_number * 0x20, current_tile_number, displacement_y);
                         }
 
                         // Copy data
@@ -158,12 +155,10 @@ namespace GBA
                             for (int k = 0; k < 8; k++)
                             {
                                 int dst_index = x + (tiles_per_row - j - 1) * 8 + (7 - k);
-                                u16 color = tile_data[k];
+                                u16 color = m_TileBuffer[k];
 
                                 if (color != COLOR_TRANSPARENT && dst_index < 240)
-                                {
                                     m_ObjBuffer[priority][dst_index] = color;
-                                }
                             }
 
                         }
@@ -172,17 +167,12 @@ namespace GBA
                             for (int k = 0; k < 8; k++)
                             {
                                 int dst_index = x + j * 8 + k;
-                                u16 color = tile_data[k];
+                                u16 color = m_TileBuffer[k];
 
                                 if (color != COLOR_TRANSPARENT && dst_index < 240)
-                                {
-                                    m_ObjBuffer[priority][dst_index] = tile_data[k];
-                                }
+                                    m_ObjBuffer[priority][dst_index] = color;
                             }
                         }
-
-                        // We don't need that memory anymore
-                        delete[] tile_data;
                     }
                 }
             }

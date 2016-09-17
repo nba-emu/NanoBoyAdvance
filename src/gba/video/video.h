@@ -141,8 +141,8 @@ namespace GBA
     private:
         static float DecodeGBAFloat16(u16 number);
         static u32 DecodeRGB555(u16 color);
-        u16* DecodeTileLine4BPP(u32 block_base, u32 palette_base, int number, int line);
-        u16* DecodeTileLine8BPP(u32 block_base, int number, int line, bool sprite);
+        void DecodeTileLine4BPP(u32 block_base, u32 palette_base, int number, int line);
+        void DecodeTileLine8BPP(u32 block_base, int number, int line, bool sprite);
         u16 DecodeTilePixel8BPP(u32 block_base, int number, int line, int column, bool sprite);
         bool IsVisible(int i, bool inside[3], bool outside);
         void RenderTextModeBG(int id);
@@ -164,6 +164,7 @@ namespace GBA
         u16 m_BgBuffer[4][240];
         u16 m_ObjBuffer[4][240];
         u8 m_WinMask[2][240];
+        u32 m_TileBuffer[8];
 
     public:
         ///////////////////////////////////////////////////////////

@@ -51,36 +51,34 @@ namespace GBA
         return true;
     }
 
-    inline u16* Video::DecodeTileLine4BPP(u32 block_base, u32 palette_base, int number, int line)
+    inline void Video::DecodeTileLine4BPP(u32 block_base, u32 palette_base, int number, int line)
     {
-        u16* data = new u16[8];
         u32 offset = block_base + number * 32 + line * 4;
+        u8* block_ptr   = m_VRAM + offset;
+        u8* palette_ptr = m_PAL + palette_base;
 
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 4; ++i)
         {
-            u8 value = m_VRAM[offset + i];
+            u8 value = block_ptr[i];
             int left_index = value & 0xF;
             int right_index = value >> 4;
 
             if (left_index != 0)
-                data[i * 2] = (m_PAL[palette_base + left_index * 2 + 1] << 8) |
-                               m_PAL[palette_base + left_index * 2];
+                m_TileBuffer[i * 2] = (palette_ptr[left_index * 2 + 1] << 8) |
+                                       palette_ptr[left_index * 2];
             else
-                data[i * 2] = COLOR_TRANSPARENT;
+                m_TileBuffer[i * 2] = COLOR_TRANSPARENT;
 
             if (right_index != 0)
-                data[i * 2 + 1] = (m_PAL[palette_base + right_index * 2 + 1] << 8) |
-                                   m_PAL[palette_base + right_index * 2];
+                m_TileBuffer[i * 2 + 1] = (palette_ptr[right_index * 2 + 1] << 8) |
+                                           palette_ptr[right_index * 2];
             else
-                data[i * 2 + 1] = COLOR_TRANSPARENT;
+                m_TileBuffer[i * 2 + 1] = COLOR_TRANSPARENT;
         }
-
-        return data;
     }
 
-    inline u16* Video::DecodeTileLine8BPP(u32 block_base, int number, int line, bool sprite)
+    inline void Video::DecodeTileLine8BPP(u32 block_base, int number, int line, bool sprite)
     {
-        u16* data = new u16[8];
         u32 offset = block_base + number * 64 + line * 8;
         u32 palette_base = sprite ? 0x200 : 0x0;
 
@@ -90,15 +88,13 @@ namespace GBA
 
             if (value == 0)
             {
-                data[i] = COLOR_TRANSPARENT;
+                m_TileBuffer[i] = COLOR_TRANSPARENT;
                 continue;
             }
 
-            data[i] = (m_PAL[palette_base + value * 2 + 1] << 8) |
-                       m_PAL[palette_base + value * 2];
+            m_TileBuffer[i] = (m_PAL[palette_base + value * 2 + 1] << 8) |
+                               m_PAL[palette_base + value * 2];
         }
-
-        return data;
     }
 
     inline u16 Video::DecodeTilePixel8BPP(u32 block_base, int number, int line, int column, bool sprite)
