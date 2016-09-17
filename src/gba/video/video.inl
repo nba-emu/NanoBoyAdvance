@@ -81,10 +81,12 @@ namespace GBA
     {
         u32 offset = block_base + number * 64 + line * 8;
         u32 palette_base = sprite ? 0x200 : 0x0;
+        u8* block_ptr   = m_VRAM + offset;
+        u8* palette_ptr = m_PAL + palette_base;
 
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < 8; ++i)
         {
-            u8 value = m_VRAM[offset + i];
+            u8 value = block_ptr[i];
 
             if (value == 0)
             {
@@ -92,8 +94,8 @@ namespace GBA
                 continue;
             }
 
-            m_TileBuffer[i] = (m_PAL[palette_base + value * 2 + 1] << 8) |
-                               m_PAL[palette_base + value * 2];
+            m_TileBuffer[i] = (palette_ptr[value * 2 + 1] << 8) |
+                               palette_ptr[value * 2];
         }
     }
 
