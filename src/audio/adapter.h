@@ -29,7 +29,7 @@
 #include "gba/audio/audio.h"
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     ///////////////////////////////////////////////////////////
     /// \file    adapter.h

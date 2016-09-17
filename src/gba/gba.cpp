@@ -33,7 +33,7 @@ using namespace std;
 using namespace Common;
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     // Defines the amount of cycles per frame
     const int GBA::FRAME_CYCLES = 280896;

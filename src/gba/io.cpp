@@ -26,7 +26,7 @@
 #include "memory.h"
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     u8 Memory::ReadIO(u32 address)
     {

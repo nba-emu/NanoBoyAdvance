@@ -26,7 +26,7 @@
 #include "memory.h"
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     ///////////////////////////////////////////////////////////
     /// \author Frederic Meyer

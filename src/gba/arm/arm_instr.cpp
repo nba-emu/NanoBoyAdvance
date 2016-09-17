@@ -42,7 +42,7 @@ const int ARM_14 = 14;
 const int ARM_15 = 15;
 const int ARM_16 = 16;
 
-namespace NanoboyAdvance
+namespace GBA
 {
     int ARM7::Decode(u32 instruction)
     {

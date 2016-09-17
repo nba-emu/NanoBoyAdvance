@@ -30,7 +30,7 @@
 #include <string>
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     ///////////////////////////////////////////////////////////
     /// \file    flash.h

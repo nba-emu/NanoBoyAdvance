@@ -26,7 +26,7 @@
 #include <cstring>
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     const int Video::VBLANK_INTERRUPT = 1;
     const int Video::HBLANK_INTERRUPT = 2;
@@ -211,7 +211,7 @@ namespace NanoboyAdvance
     /// \fn      Step
     ///
     ///////////////////////////////////////////////////////////
-    void NanoboyAdvance::Video::Step()
+    void Video::Step()
     {
         m_RenderScanline = false;
         m_VCountFlag = m_VCount == m_VCountSetting;

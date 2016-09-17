@@ -32,7 +32,7 @@ using namespace std;
 using namespace Common;
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     // Defines the max save size of the SRAM (64kB)
     const int SRAM::SAVE_SIZE = 65536;

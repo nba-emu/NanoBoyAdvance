@@ -34,7 +34,7 @@
 #include "audio/audio.h"
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     ///////////////////////////////////////////////////////////
     /// \file    memory.h

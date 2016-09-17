@@ -31,7 +31,7 @@ using namespace std;
 using namespace Common;
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     ///////////////////////////////////////////////////////////
     /// \author  Frederic Meyer

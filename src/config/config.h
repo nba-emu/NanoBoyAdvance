@@ -29,7 +29,7 @@
 #include <string>
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     class Config
     {

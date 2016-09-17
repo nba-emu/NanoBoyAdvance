@@ -26,7 +26,7 @@
 #define __NBA_QUADCHANNEL_H__
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     class QuadChannel
     {

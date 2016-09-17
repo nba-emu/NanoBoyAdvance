@@ -25,7 +25,7 @@
 #include "adapter.h"
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     ///////////////////////////////////////////////////////////
     /// \file    sdl_adapter.h

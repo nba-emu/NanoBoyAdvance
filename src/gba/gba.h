@@ -33,7 +33,7 @@
 #include <string>
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     ///////////////////////////////////////////////////////////
     /// \file    gba.h

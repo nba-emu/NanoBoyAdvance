@@ -29,7 +29,7 @@
 #include "common/types.h"
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     class WaveChannel
     {

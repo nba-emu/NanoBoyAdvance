@@ -27,7 +27,7 @@
 #include <cmath>
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     class Audio { public: static float ConvertFrequency(int frequency); };
 

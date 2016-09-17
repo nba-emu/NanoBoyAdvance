@@ -25,7 +25,7 @@
 #include "arm.h"
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     const ARM7::ThumbInstruction ARM7::thumb_table[1024] =
     {

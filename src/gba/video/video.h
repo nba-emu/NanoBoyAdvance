@@ -31,7 +31,7 @@
 #include "../interrupt.h"
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     struct Background
     {

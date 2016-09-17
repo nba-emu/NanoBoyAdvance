@@ -33,7 +33,7 @@
 #include <mutex>
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     ///////////////////////////////////////////////////////////
     /// \file    audio.h

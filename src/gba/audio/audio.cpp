@@ -28,7 +28,7 @@
 #include <math.h>
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     constexpr float Audio::PSG_VOLUME[];
     constexpr float Audio::DMA_VOLUME[];

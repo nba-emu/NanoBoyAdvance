@@ -25,7 +25,7 @@
 #include "video.h"
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     void Video::ApplySFX(u16 *target1, u16 target2)
     {

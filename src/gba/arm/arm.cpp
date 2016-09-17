@@ -25,7 +25,7 @@
 #include "arm.h"
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     void ARM7::Init(Memory* memory, bool hle)
     {
@@ -314,7 +314,7 @@ namespace NanoboyAdvance
         }
     }
 
-    void NanoboyAdvance::ARM7::SWI(int number)
+    void ARM7::SWI(int number)
     {
         switch (number)
         {

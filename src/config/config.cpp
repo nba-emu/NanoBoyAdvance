@@ -29,7 +29,7 @@
 
 using namespace std;
 
-namespace NanoboyAdvance
+namespace GBA
 {
     const string Trim(const string& s)
     {

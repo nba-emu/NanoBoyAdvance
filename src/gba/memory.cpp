@@ -35,7 +35,7 @@ using namespace std;
 using namespace Common;
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     constexpr Memory::ReadFunction  Memory::READ_TABLE[16];
     constexpr Memory::WriteFunction Memory::WRITE_TABLE[16];

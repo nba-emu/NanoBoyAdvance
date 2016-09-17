@@ -25,7 +25,7 @@
 #include "../video.h"
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     void Video::RenderTextModeBG(int id)
     {

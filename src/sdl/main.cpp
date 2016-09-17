@@ -33,10 +33,10 @@
 
 
 using namespace std;
-using namespace NanoboyAdvance;
+using namespace GBA;
 
 
-GBA* gba;
+GBA::GBA* gba;
 Arguments* args;
 
 // SDL related globals
@@ -193,9 +193,9 @@ int main(int argc, char** argv)
         save_file = rom_file.substr(0, rom_file.find_last_of(".")) + ".sav";
 
         if (args->use_bios)
-            gba = new GBA(rom_file, save_file, args->bios_file);
+            gba = new GBA::GBA(rom_file, save_file, args->bios_file);
         else
-            gba = new GBA(rom_file, save_file);
+            gba = new GBA::GBA(rom_file, save_file);
 
         gba->SetSpeedUp(args->speedup);
         video_buffer = gba->GetVideoBuffer();
@@ -224,16 +224,16 @@ int main(int argc, char** argv)
             create_screenshot();
         
         // Update Keypad Input
-        gba->SetKeyState(GBA::Key::A,      kb_state[SDL_SCANCODE_A]);
-        gba->SetKeyState(GBA::Key::B,      kb_state[SDL_SCANCODE_S]);
-        gba->SetKeyState(GBA::Key::Select, kb_state[SDL_SCANCODE_BACKSPACE]);
-        gba->SetKeyState(GBA::Key::Start,  kb_state[SDL_SCANCODE_RETURN]);
-        gba->SetKeyState(GBA::Key::Right,  kb_state[SDL_SCANCODE_RIGHT]);
-        gba->SetKeyState(GBA::Key::Left,   kb_state[SDL_SCANCODE_LEFT]);
-        gba->SetKeyState(GBA::Key::Up,     kb_state[SDL_SCANCODE_UP]);
-        gba->SetKeyState(GBA::Key::Down,   kb_state[SDL_SCANCODE_DOWN]);
-        gba->SetKeyState(GBA::Key::R,      kb_state[SDL_SCANCODE_W]);
-        gba->SetKeyState(GBA::Key::L,      kb_state[SDL_SCANCODE_Q]);
+        gba->SetKeyState(GBA::GBA::Key::A,           kb_state[SDL_SCANCODE_A]);
+        gba->SetKeyState(GBA::GBA::Key::B,      kb_state[SDL_SCANCODE_S]);
+        gba->SetKeyState(GBA::GBA::Key::Select, kb_state[SDL_SCANCODE_BACKSPACE]);
+        gba->SetKeyState(GBA::GBA::Key::Start,  kb_state[SDL_SCANCODE_RETURN]);
+        gba->SetKeyState(GBA::GBA::Key::Right,  kb_state[SDL_SCANCODE_RIGHT]);
+        gba->SetKeyState(GBA::GBA::Key::Left,   kb_state[SDL_SCANCODE_LEFT]);
+        gba->SetKeyState(GBA::GBA::Key::Up,     kb_state[SDL_SCANCODE_UP]);
+        gba->SetKeyState(GBA::GBA::Key::Down,   kb_state[SDL_SCANCODE_DOWN]);
+        gba->SetKeyState(GBA::GBA::Key::R,      kb_state[SDL_SCANCODE_W]);
+        gba->SetKeyState(GBA::GBA::Key::L,      kb_state[SDL_SCANCODE_Q]);
 
         // Emulate for one frame
         gba->Frame();

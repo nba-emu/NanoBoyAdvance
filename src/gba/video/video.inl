@@ -26,7 +26,7 @@
 #define __NBA_VIDEO_INL__
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     inline u32 Video::DecodeRGB555(u16 color)
     {

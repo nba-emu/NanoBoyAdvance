@@ -32,7 +32,7 @@
 #include <SDL2/SDL.h>
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     void SDL2AudioAdapter::Init(Audio* audio)
     {

@@ -95,7 +95,7 @@ private:
     /// \brief   Converts a Qt key to the GBA::Key enum.
     ///
     ///////////////////////////////////////////////////////////
-    NanoboyAdvance::GBA::Key keyToGBA(int key);
+    GBA::GBA::Key keyToGBA(int key);
 
     ///////////////////////////////////////////////////////////
     // Class members (Widgets)
@@ -120,7 +120,7 @@ private:
     // Class members (Emulator)
     //
     ///////////////////////////////////////////////////////////
-    NanoboyAdvance::GBA* m_GBA {nullptr};
+    GBA::GBA* m_GBA {nullptr};
     u32* m_Buffer;
     int m_Frames {0};
 };

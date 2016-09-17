@@ -30,7 +30,7 @@
 #include "../memory.h"
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     class ARM7
     {

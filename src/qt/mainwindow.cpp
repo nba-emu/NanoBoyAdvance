@@ -29,7 +29,7 @@
 #include <QMessageBox>
 
 
-using namespace NanoboyAdvance;
+using namespace GBA;
 
 
 ///////////////////////////////////////////////////////////
@@ -165,7 +165,7 @@ void MainWindow::runGame(const QString &rom_file)
     try
     {
         delete m_GBA;
-        m_GBA = new GBA {rom_file.toStdString(), save_file.toStdString(), "bios.bin"};
+        m_GBA = new GBA::GBA {rom_file.toStdString(), save_file.toStdString(), "bios.bin"};
         m_Buffer = m_GBA->GetVideoBuffer();
         m_Timer->start();
         m_FPSTimer->start();
@@ -187,31 +187,31 @@ void MainWindow::runGame(const QString &rom_file)
 /// \fn     keyToGBA
 ///
 ///////////////////////////////////////////////////////////
-GBA::Key MainWindow::keyToGBA(int key) {
+GBA::GBA::Key MainWindow::keyToGBA(int key) {
     switch (key)
     {
         case Qt::Key_A:
-            return GBA::Key::A;
+            return GBA::GBA::Key::A;
         case Qt::Key_S:
-            return GBA::Key::B;
+            return GBA::GBA::Key::B;
         case Qt::Key_Backspace:
-            return GBA::Key::Select;
+            return GBA::GBA::Key::Select;
         case Qt::Key_Return:
-            return GBA::Key::Start;
+            return GBA::GBA::Key::Start;
         case Qt::Key_Right:
-            return GBA::Key::Right;
+            return GBA::GBA::Key::Right;
         case Qt::Key_Left:
-            return GBA::Key::Left;
+            return GBA::GBA::Key::Left;
         case Qt::Key_Up:
-            return GBA::Key::Up;
+            return GBA::GBA::Key::Up;
         case Qt::Key_Down:
-            return GBA::Key::Down;
+            return GBA::GBA::Key::Down;
         case Qt::Key_W:
-            return GBA::Key::R;
+            return GBA::GBA::Key::R;
         case Qt::Key_Q:
-            return GBA::Key::L;
+            return GBA::GBA::Key::L;
         default:
-            return GBA::Key::None;
+            return GBA::GBA::Key::None;
     }
 }
 
