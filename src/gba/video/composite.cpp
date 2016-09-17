@@ -83,6 +83,7 @@ namespace GBA
         u16 backdrop_color = (m_PAL[1] << 8) | m_PAL[0];
         bool obj_inside[3] = { m_Win[0].obj_in, m_Win[1].obj_in, false };
         bool sfx_inside[3] = { m_Win[0].sfx_in, m_Win[1].sfx_in, false };
+        u32* line_buffer = m_OutputBuffer + m_VCount * 240;
 
         for (int i = 0; i < 240; i++)
         {
@@ -135,7 +136,7 @@ namespace GBA
                     ApplySFX(&pixel[0], pixel[1]);
             }
 
-            m_OutputBuffer[m_VCount * 240 + i] = DecodeRGB555(pixel[0]);
+            line_buffer[i] = DecodeRGB555(pixel[0]);
         }
     }
 }
