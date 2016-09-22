@@ -23,13 +23,13 @@
 
 
 #include "config.h"
-#include "util/log.h"
+#include "common/log.h"
 #include <fstream>
 #include <stack>
 
 using namespace std;
 
-namespace NanoboyAdvance
+namespace GBA
 {
     const string Trim(const string& s)
     {

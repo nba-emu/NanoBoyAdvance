@@ -30,9 +30,10 @@
 
 
 using namespace std;
+using namespace Common;
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     // Defines the amount of cycles per frame
     const int GBA::FRAME_CYCLES = 280896;
@@ -48,7 +49,6 @@ namespace NanoboyAdvance
     {
         m_Memory.Init(rom_file, save_file);
         m_ARM.Init(&m_Memory, true);
-        m_Memory.m_Video.SetupComposer(&m_Composer);
 
         // Rudimentary Audio setup
         SDL2AudioAdapter adapter;
@@ -74,7 +74,6 @@ namespace NanoboyAdvance
 
         m_Memory.Init(rom_file, save_file, bios, bios_size);
         m_ARM.Init(&m_Memory, false);
-        m_Memory.m_Video.SetupComposer(&m_Composer);
 
         // Rudimentary Audio setup
         SDL2AudioAdapter adapter;
@@ -89,9 +88,11 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     void GBA::Frame()
     {
+        int total_cycles = FRAME_CYCLES * m_SpeedMultiplier;
+
         m_DidRender = false;
 
-        for (int i = 0; i < FRAME_CYCLES * m_SpeedMultiplier; i++)
+        for (int i = 0; i < total_cycles; ++i)
         {
             u32 interrupts = m_Memory.m_Interrupt.ie & m_Memory.m_Interrupt.if_;
 
@@ -136,7 +137,6 @@ namespace NanoboyAdvance
                         if (m_Memory.m_Video.m_RenderScanline && (i / FRAME_CYCLES) == m_SpeedMultiplier - 1)
                         {
                             m_Memory.m_Video.Render();
-                            m_Composer.Scanline();
                             m_DidRender = true;
                         }
                     }
@@ -159,8 +159,6 @@ namespace NanoboyAdvance
                 i += forward_steps;
             }
         }
-
-        m_Composer.Frame();
     }
 
     ///////////////////////////////////////////////////////////
@@ -196,7 +194,7 @@ namespace NanoboyAdvance
     ///////////////////////////////////////////////////////////
     u32* GBA::GetVideoBuffer()
     {
-        return m_Composer.m_OutputBuffer;
+        return m_Memory.m_Video.m_OutputBuffer;
     }
 
     ///////////////////////////////////////////////////////////

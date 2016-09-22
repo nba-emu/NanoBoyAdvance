@@ -22,46 +22,32 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 
-#include "memory.h"
+#ifndef __NBA_BACKUP_H__
+#define __NBA_BACKUP_H__
+
+
+#include "common/types.h"
 
 
 namespace GBA
 {
     ///////////////////////////////////////////////////////////
-    /// \author Frederic Meyer
-    /// \date   July 31th, 2016
-    /// \fn     RunTimer
+    /// \file    backup.h
+    /// \author  Frederic Meyer
+    /// \date    July 31th, 2016
+    /// \class   Backup
+    /// \brief   Serves as a base class for GBA memory types.
     ///
     ///////////////////////////////////////////////////////////
-    void Memory::RunTimer()
+    class Backup
     {
-        bool overflow = false;
+    public:
 
-        for (int i = 0; i < 4; i++)
-        {
-            m_Timer[i].overflow = overflow = false;
-
-            if (!m_Timer[i].enable ||
-                    (m_Timer[i].countup && !overflow) ||
-                    (!m_Timer[i].countup && ++m_Timer[i].ticks < TMR_CYCLES[m_Timer[i].clock]))
-                continue;
-
-            m_Timer[i].ticks = 0;
-
-            if (m_Timer[i].count == 0xFFFF)
-            {
-                if (m_Timer[i].interrupt) m_Interrupt.if_ |= 8 << i;
-
-                m_Timer[i].count    = m_Timer[i].reload;
-                m_Timer[i].overflow = overflow = true;
-
-                if (i == m_Audio.m_SoundControl.dma_timer[0]) m_Audio.FifoLoadSample(0);
-                if (i == m_Audio.m_SoundControl.dma_timer[1]) m_Audio.FifoLoadSample(1);
-            }
-            else
-            {
-                m_Timer[i].count++;
-            }
-        }
-    }
+        virtual u8 ReadByte(u32 offset) { return 0; }
+        virtual void WriteByte(u32 offset, u8 value) {}
+        virtual ~Backup() {}
+    };
 }
+
+
+#endif  // __NBA_BACKUP_H__

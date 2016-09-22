@@ -22,54 +22,39 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef __NBA_SDL_AUDIO_ADAPTER_H__
-#define __NBA_SDL_AUDIO_ADAPTER_H__
+#ifndef __NBA_FILE_H__
+#define __NBA_FILE_H__
 
 
-#include "sdl_adapter.h"
-#include "config/config.h"
-#include "common/log.h"
-#include <SDL2/SDL.h>
+#include "types.h"
 
 
-namespace GBA
+namespace Common
 {
-    void SDL2AudioAdapter::Init(Audio* audio)
-    {
-        SDL_AudioSpec spec;
-        Config config("config.sml");
+namespace File
+{
+    /// Determines wether a file exists.
+    /// @param    filename  the file to check.
+    /// @returns  wether the file exists.
+    bool Exists(std::string filename);
 
-        spec.freq = config.ReadInt("Audio::Quality", "SampleRate");
-        spec.samples = config.ReadInt("Audio::Quality", "BufferSize");
-        spec.format = AUDIO_U16;
-        spec.channels = 2;
-        spec.callback = AudioCallback;
-        spec.userdata = audio;
+    /// Determines file size.
+    /// @param    filename  the file to get the size from.
+    /// @returns  the file size.
+    int GetFileSize(std::string filename);
 
-        if (SDL_Init(SDL_INIT_AUDIO) < 0)
-            LOG(LOG_ERROR, "SDL_Init(SDL_INIT_AUDIO) failed");
+    /// Reads a file into a byte array.
+    /// @param    filename  the file to read.
+    /// @returns  the byte array.
+    u8* ReadFile(std::string filename);
 
-        if (SDL_OpenAudio(&spec, NULL) < 0)
-            LOG(LOG_ERROR, "SDL_OpenAudio failed.");
-
-        SDL_PauseAudio(0);
-    }
-
-    void SDL2AudioAdapter::Deinit()
-    {
-        SDL_CloseAudio();
-    }
-
-    void SDL2AudioAdapter::Pause()
-    {
-        SDL_PauseAudio(1);
-    }
-
-    void SDL2AudioAdapter::Resume()
-    {
-        SDL_PauseAudio(0);
-    }
-}
+    /// Writes a byte array to a file.
+    /// @param  filename  the file to write
+    /// @param  data      the byte array
+    /// @param  size      the size of the array
+    void WriteFile(std::string filename, u8* data, int size);
+} // File
+} // Common
 
 
-#endif
+#endif  // __NBA_FILE_H__

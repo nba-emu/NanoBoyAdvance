@@ -22,54 +22,21 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef __NBA_SDL_AUDIO_ADAPTER_H__
-#define __NBA_SDL_AUDIO_ADAPTER_H__
+#ifndef __NBA_TYPES_H__
+#define __NBA_TYPES_H__
 
 
-#include "sdl_adapter.h"
-#include "config/config.h"
-#include "common/log.h"
-#include <SDL2/SDL.h>
+#include <cstdint>
 
 
-namespace GBA
-{
-    void SDL2AudioAdapter::Init(Audio* audio)
-    {
-        SDL_AudioSpec spec;
-        Config config("config.sml");
-
-        spec.freq = config.ReadInt("Audio::Quality", "SampleRate");
-        spec.samples = config.ReadInt("Audio::Quality", "BufferSize");
-        spec.format = AUDIO_U16;
-        spec.channels = 2;
-        spec.callback = AudioCallback;
-        spec.userdata = audio;
-
-        if (SDL_Init(SDL_INIT_AUDIO) < 0)
-            LOG(LOG_ERROR, "SDL_Init(SDL_INIT_AUDIO) failed");
-
-        if (SDL_OpenAudio(&spec, NULL) < 0)
-            LOG(LOG_ERROR, "SDL_OpenAudio failed.");
-
-        SDL_PauseAudio(0);
-    }
-
-    void SDL2AudioAdapter::Deinit()
-    {
-        SDL_CloseAudio();
-    }
-
-    void SDL2AudioAdapter::Pause()
-    {
-        SDL_PauseAudio(1);
-    }
-
-    void SDL2AudioAdapter::Resume()
-    {
-        SDL_PauseAudio(0);
-    }
-}
+typedef std::uint8_t  u8;
+typedef std::uint16_t u16;
+typedef std::uint32_t u32;
+typedef std::uint64_t u64;
+typedef std::int8_t   s8;
+typedef std::int16_t  s16;
+typedef std::int32_t  s32;
+typedef std::int64_t  s64;
 
 
-#endif
+#endif  // __NBA_TYPES_H__

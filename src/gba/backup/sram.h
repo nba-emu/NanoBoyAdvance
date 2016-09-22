@@ -22,54 +22,84 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef __NBA_AUDIO_ADAPTER_H__
-#define __NBA_AUDIO_ADAPTER_H__
+#ifndef __NBA_SRAM_H__
+#define __NBA_SRAM_H__
 
 
-#include "gba/audio/audio.h"
+#include "backup.h"
+#include <string>
 
 
 namespace GBA
 {
     ///////////////////////////////////////////////////////////
-    /// \file    adapter.h
-    /// \class   AudioAdapter
-    /// \brief   Generic Audio Adapter interface.
+    /// \file    sram.h
+    /// \author  Frederic Meyer
+    /// \date    July 31th, 2016
+    /// \class   SRAM
+    /// \brief   Defines the SRAM memory save type.
     ///
     ///////////////////////////////////////////////////////////
-    class AudioAdapter
+    class SRAM : public Backup
     {
+        static const int SAVE_SIZE;
+
+
     public:
-        ///////////////////////////////////////////////////////////
-        /// \fn     Init
-        /// \brief  Setup audio.
-        /// \param  audio  Audio controller.
-        ///
-        ///////////////////////////////////////////////////////////
-        virtual void Init(Audio* audio) {}
 
         ///////////////////////////////////////////////////////////
-        /// \fn     Deinit
-        /// \brief  Closes audio.
+        /// \author  Frederic Meyer
+        /// \date    July 31th, 2016
+        /// \fn      Constructor
         ///
         ///////////////////////////////////////////////////////////
-        virtual void Deinit() {}
+        SRAM(std::string m_SaveFile);
 
         ///////////////////////////////////////////////////////////
-        /// \fn     Pause
-        /// \brief  Temporarly pauses audio.
+        /// \author  Frederic Meyer
+        /// \date    July 31th, 2016
+        /// \fn      Destructor
         ///
         ///////////////////////////////////////////////////////////
-        virtual void Pause() {}
+        ~SRAM();
+
 
         ///////////////////////////////////////////////////////////
-        /// \fn     Resume
-        /// \brief  Resumes audio.
+        /// \author  Frederic Meyer
+        /// \date    July 31th, 2016
+        /// \fn      ReadByte
+        ///
+        /// Reads one byte from SRAM memory.
+        ///
+        /// \param  offset  The address to read from.
         ///
         ///////////////////////////////////////////////////////////
-        virtual void Resume() {}
+        u8 ReadByte(u32 offset);
+
+        ///////////////////////////////////////////////////////////
+        /// \author  Frederic Meyer
+        /// \date    July 31th, 2016
+        /// \fn      WriteByte
+        ///
+        /// Writes one byte into SRAM memory.
+        ///
+        /// \param  offset  The address to write to.
+        /// \param  value   The value being written.
+        ///
+        ///////////////////////////////////////////////////////////
+        void WriteByte(u32 offset, u8 value);
+
+
+    private:
+
+        ///////////////////////////////////////////////////////////
+        // Class members
+        //
+        ///////////////////////////////////////////////////////////
+        std::string m_SaveFile;
+        u8 m_Memory[65536];
     };
 }
 
 
-#endif
+#endif  // __NBA_SRAM_H__

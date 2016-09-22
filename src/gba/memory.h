@@ -27,15 +27,14 @@
 
 
 #include <iostream>
-#include "util/types.h"
-#include "iodef.h"
+#include "common/types.h"
 #include "interrupt.h"
-#include "video.h"
-#include "backup.h"
-#include "audio.h"
+#include "video/video.h"
+#include "backup/backup.h"
+#include "audio/audio.h"
 
 
-namespace NanoboyAdvance
+namespace GBA
 {
     ///////////////////////////////////////////////////////////
     /// \file    memory.h

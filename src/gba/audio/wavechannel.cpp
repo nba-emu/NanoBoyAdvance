@@ -22,54 +22,38 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef __NBA_SDL_AUDIO_ADAPTER_H__
-#define __NBA_SDL_AUDIO_ADAPTER_H__
-
-
-#include "sdl_adapter.h"
-#include "config/config.h"
-#include "common/log.h"
-#include <SDL2/SDL.h>
+#define _USE_MATH_DEFINES
+#include "wavechannel.h"
+#include <cmath>
 
 
 namespace GBA
 {
-    void SDL2AudioAdapter::Init(Audio* audio)
+    class Audio { public: static float ConvertFrequency(int frequency); };
+
+    constexpr float WaveChannel::WAVE_VOLUME[];
+
+    void WaveChannel::Step()
     {
-        SDL_AudioSpec spec;
-        Config config("config.sml");
-
-        spec.freq = config.ReadInt("Audio::Quality", "SampleRate");
-        spec.samples = config.ReadInt("Audio::Quality", "BufferSize");
-        spec.format = AUDIO_U16;
-        spec.channels = 2;
-        spec.callback = AudioCallback;
-        spec.userdata = audio;
-
-        if (SDL_Init(SDL_INIT_AUDIO) < 0)
-            LOG(LOG_ERROR, "SDL_Init(SDL_INIT_AUDIO) failed");
-
-        if (SDL_OpenAudio(&spec, NULL) < 0)
-            LOG(LOG_ERROR, "SDL_OpenAudio failed.");
-
-        SDL_PauseAudio(0);
+        if (m_StopOnExpire) m_LengthCycles++;
     }
 
-    void SDL2AudioAdapter::Deinit()
+    void WaveChannel::Restart()
     {
-        SDL_CloseAudio();
+        m_LengthCycles = 0;
     }
 
-    void SDL2AudioAdapter::Pause()
+    float WaveChannel::Next(int sample_rate)
     {
-        SDL_PauseAudio(1);
-    }
+        if (!m_Playback) return 0;
+        if (m_StopOnExpire && m_LengthCycles > m_Length) return 0;
 
-    void SDL2AudioAdapter::Resume()
-    {
-        SDL_PauseAudio(0);
+        float frequency = ConvertFrequency(m_Frequency);
+        float index = fmod((32 * m_Sample * frequency) / (float)sample_rate, 32);
+
+        if (++m_Sample >= sample_rate) m_Sample = 0;
+
+        // Find better scaling algorithm...
+        return (float)(m_WaveRAM[(int)index] * WAVE_VOLUME[m_Volume]) * 16;
     }
 }
-
-
-#endif

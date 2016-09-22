@@ -22,54 +22,33 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef __NBA_SDL_AUDIO_ADAPTER_H__
-#define __NBA_SDL_AUDIO_ADAPTER_H__
+#ifndef __NBA_LOG_H__
+#define __NBA_LOG_H__
 
 
-#include "sdl_adapter.h"
-#include "config/config.h"
-#include "common/log.h"
-#include <SDL2/SDL.h>
+// TODO: Depreciate this crap.
+
+#include <cstdio>
 
 
-namespace GBA
-{
-    void SDL2AudioAdapter::Init(Audio* audio)
-    {
-        SDL_AudioSpec spec;
-        Config config("config.sml");
+#define LOG_INFO 0
+#define LOG_WARN 1
+#define LOG_ERROR 2
 
-        spec.freq = config.ReadInt("Audio::Quality", "SampleRate");
-        spec.samples = config.ReadInt("Audio::Quality", "BufferSize");
-        spec.format = AUDIO_U16;
-        spec.channels = 2;
-        spec.callback = AudioCallback;
-        spec.userdata = audio;
 
-        if (SDL_Init(SDL_INIT_AUDIO) < 0)
-            LOG(LOG_ERROR, "SDL_Init(SDL_INIT_AUDIO) failed");
-
-        if (SDL_OpenAudio(&spec, NULL) < 0)
-            LOG(LOG_ERROR, "SDL_OpenAudio failed.");
-
-        SDL_PauseAudio(0);
-    }
-
-    void SDL2AudioAdapter::Deinit()
-    {
-        SDL_CloseAudio();
-    }
-
-    void SDL2AudioAdapter::Pause()
-    {
-        SDL_PauseAudio(1);
-    }
-
-    void SDL2AudioAdapter::Resume()
-    {
-        SDL_PauseAudio(0);
-    }
+// Fix memory bug
+#define LOG(loglevel, ...) { int _line = __LINE__;\
+    char message[512];\
+    sprintf(message, __VA_ARGS__);\
+    switch (loglevel)\
+    {\
+    case LOG_INFO: printf("[INFO] %s:%d: %s\n", __FILE__, _line, message); break;\
+    case LOG_WARN: printf("[WARN] %s:%d: %s\n", __FILE__, _line, message); break;\
+    case LOG_ERROR: printf("[ERROR] %s:%d: %s\n", __FILE__, _line, message); break;\
+    }\
 }
 
+#define ASSERT(condition, loglevel, ...) { if (condition) LOG(loglevel, __VA_ARGS__) }
 
-#endif
+
+#endif  // __NBA_LOG_H__
