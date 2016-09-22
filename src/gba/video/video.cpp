@@ -214,27 +214,28 @@ namespace GBA
     void Video::Step()
     {
         m_RenderScanline = false;
-        m_VCountFlag = m_VCount == m_VCountSetting;
 
         switch (m_State)
         {
         case PHASE_SCANLINE:
             m_HBlankDMA = true;
             m_State = PHASE_HBLANK;
-            m_WaitCycles = EVENT_WAIT_CYCLES[1];
+            m_WaitCycles = EVENT_WAIT_CYCLES[PHASE_HBLANK];
 
+            if (m_HBlankIRQ)
+                m_Interrupt->if_ |= HBLANK_INTERRUPT;
+
+            // Update BG2/3 RS reference coordinates.
             m_BG[2].x_ref_int += DecodeGBAFloat16(m_BG[2].pb);
             m_BG[2].y_ref_int += DecodeGBAFloat16(m_BG[2].pd);
             m_BG[3].x_ref_int += DecodeGBAFloat16(m_BG[3].pb);
             m_BG[3].y_ref_int += DecodeGBAFloat16(m_BG[3].pd);
-                
-            if (m_HBlankIRQ)
-                m_Interrupt->if_ |= HBLANK_INTERRUPT;
 
             m_RenderScanline = true;
             return;
         case PHASE_HBLANK:
-            m_VCount++;
+            // Update vertical counter and its matching flag.
+            m_VCountFlag = ++m_VCount == m_VCountSetting;
 
             if (m_VCountFlag && m_VCountIRQ)
                 m_Interrupt->if_ |= VCOUNT_INTERRUPT;
@@ -249,7 +250,7 @@ namespace GBA
                 m_HBlankDMA = false;
                 m_VBlankDMA = true;
                 m_State = PHASE_VBLANK;
-                m_WaitCycles = EVENT_WAIT_CYCLES[2];
+                m_WaitCycles = EVENT_WAIT_CYCLES[PHASE_VBLANK];
 
                 if (m_VBlankIRQ)
                     m_Interrupt->if_ |= VBLANK_INTERRUPT;
@@ -258,26 +259,31 @@ namespace GBA
             {
                 m_HBlankDMA = false;
                 m_State = PHASE_SCANLINE;
-                m_WaitCycles = EVENT_WAIT_CYCLES[0];
+                m_WaitCycles = EVENT_WAIT_CYCLES[PHASE_SCANLINE];
             }
             return;
         case PHASE_VBLANK:
-            m_VCount++;
-
-            if (m_VCountFlag && m_VCountIRQ)
-                m_Interrupt->if_ |= VCOUNT_INTERRUPT;
-
             if (m_VCount == 227)
             {
                 m_VBlankDMA = false;
                 m_State = PHASE_SCANLINE;
-                m_WaitCycles = EVENT_WAIT_CYCLES[0];
+                m_WaitCycles = EVENT_WAIT_CYCLES[PHASE_SCANLINE];
+
+                // Reset vertical counter and update its matching flag
                 m_VCount = 0;
+                m_VCountFlag = m_VCountSetting == 0;
             }
             else
             {
-                m_WaitCycles = EVENT_WAIT_CYCLES[2];
+                m_WaitCycles = EVENT_WAIT_CYCLES[PHASE_VBLANK];
+
+                // Update vertical counter and its matching flag.
+                m_VCountFlag = ++m_VCount == m_VCountSetting;
             }
+
+            if (m_VCountFlag && m_VCountIRQ)
+                m_Interrupt->if_ |= VCOUNT_INTERRUPT;
+
             return;
         }
     }

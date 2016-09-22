@@ -203,7 +203,7 @@ namespace GBA
         bool m_HBlankDMA            {false};
         bool m_VBlankDMA            {false};
         bool m_RenderScanline       {false};
-        int  m_WaitCycles           { EVENT_WAIT_CYCLES[0] };
+        int  m_WaitCycles           { EVENT_WAIT_CYCLES[PHASE_SCANLINE] };
         u32 m_OutputBuffer[240 * 160];
     };
 }
