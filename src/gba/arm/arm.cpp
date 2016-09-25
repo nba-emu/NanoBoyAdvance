@@ -287,8 +287,7 @@ namespace GBA
             bool thumb = cpsr & ThumbFlag;
 
             // "Useless" pipeline prefetch
-            cycles += Memory::SequentialAccess(r[15], thumb ? Memory::ACCESS_HWORD :
-                                                              Memory::ACCESS_WORD);
+            cycles += Memory::SequentialAccess(r[15], thumb ? ACCESS_HWORD : ACCESS_WORD);
 
             // Store return address in r14<irq>
             r14_irq = r[15] - (thumb ? 4 : 8) + 4;
@@ -306,8 +305,8 @@ namespace GBA
             RefillPipeline();
 
             // Emulate pipeline refill timings
-            cycles += Memory::NonSequentialAccess(r[15], Memory::ACCESS_WORD) +
-                      Memory::SequentialAccess(r[15] + 4, Memory::ACCESS_WORD);
+            cycles += Memory::NonSequentialAccess(r[15], ACCESS_WORD) +
+                      Memory::SequentialAccess(r[15] + 4, ACCESS_WORD);
         }
     }
 
@@ -342,7 +341,7 @@ namespace GBA
             // Sets GBA into halt state, waiting for specific interrupt(s) to occur.
             Memory::m_IntrWait = true;
             Memory::m_IntrWaitMask = r[1];
-            Memory::m_HaltState = Memory::HALTSTATE_HALT;
+            Memory::m_HaltState = HALTSTATE_HALT;
             break;
         case 0x0B:
         {

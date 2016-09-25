@@ -24,6 +24,8 @@ set(HEADERS
     arm/arm.h
     io.h
     interrupt.h
+    dma.h
+    timer.h
     memory.h
     backup/backup.h
     backup/flash.h

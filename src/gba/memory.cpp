@@ -68,14 +68,14 @@ namespace GBA
     u8 Memory::m_WRAM[0x40000];
     u8 Memory::m_IRAM[0x8000];
     Backup* Memory::m_Backup = nullptr;
-    Memory::SaveType Memory::m_SaveType = SAVE_NONE;
+    SaveType Memory::m_SaveType = SAVE_NONE;
 
-    Memory::DMA       Memory::m_DMA[4];
-    Memory::Timer     Memory::m_Timer[4];
-    Memory::Waitstate Memory::m_Waitstate;
+    DMA   Memory::m_DMA[4];
+    Timer Memory::m_Timer[4];
+    Waitstate Memory::m_Waitstate;
 
     Interrupt Memory::m_Interrupt;
-    Memory::HaltState Memory::m_HaltState = HALTSTATE_NONE;
+    HaltState Memory::m_HaltState = HALTSTATE_NONE;
     bool Memory::m_IntrWait = false;
     bool Memory::m_IntrWaitMask = 0;
 

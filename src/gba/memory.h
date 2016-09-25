@@ -28,6 +28,8 @@
 
 #include <iostream>
 #include "common/types.h"
+#include "dma.h"
+#include "timer.h"
 #include "interrupt.h"
 #include "video/video.h"
 #include "backup/backup.h"
@@ -36,6 +38,37 @@
 
 namespace GBA
 {
+    enum AccessSize
+    {
+        ACCESS_BYTE,
+        ACCESS_HWORD,
+        ACCESS_WORD
+    };
+
+    enum HaltState
+    {
+        HALTSTATE_NONE,
+        HALTSTATE_STOP,
+        HALTSTATE_HALT
+    };
+
+    enum SaveType
+    {
+        SAVE_NONE,
+        SAVE_EEPROM,
+        SAVE_SRAM,
+        SAVE_FLASH64,
+        SAVE_FLASH128
+    };
+
+    struct Waitstate
+    {
+        int sram        {0};
+        int first[3]    {0, 0, 0};
+        int second[3]   {0, 0, 0};
+        bool prefetch   {false};
+    };
+
     class Memory
     {
     private:
@@ -117,89 +150,7 @@ namespace GBA
         // BIOS-stub for HLE-emulation.
         static const u8 HLE_BIOS[0x40];
 
-        enum AddressControl
-        {
-            DMA_INCREMENT   = 0,
-            DMA_DECREMENT   = 1,
-            DMA_FIXED       = 2,
-            DMA_RELOAD      = 3
-        };
-
-        enum StartTime
-        {
-            DMA_IMMEDIATE   = 0,
-            DMA_VBLANK      = 1,
-            DMA_HBLANK      = 2,
-            DMA_SPECIAL     = 3
-        };
-
-        enum TransferSize
-        {
-            DMA_HWORD       = 0,
-            DMA_WORD        = 1
-        };
-
-        enum SaveType
-        {
-            SAVE_NONE,
-            SAVE_EEPROM,
-            SAVE_SRAM,
-            SAVE_FLASH64,
-            SAVE_FLASH128
-        };
-
-        struct DMA
-        {
-            u32 dest        {0};
-            u32 source      {0};
-            u16 count       {0};
-            u32 dest_int    {0};
-            u32 source_int  {0};
-            u16 count_int   {0};
-            AddressControl  dest_control     { DMA_INCREMENT };
-            AddressControl  source_control   { DMA_INCREMENT };
-            StartTime       start_time       { DMA_IMMEDIATE };
-            TransferSize    size             { DMA_HWORD };
-            bool repeat         {false};
-            bool gamepack_drq   {false};
-            bool interrupt      {false};
-            bool enable         {false};
-        };
-
-        struct Timer
-        {
-            u16 count  {0};
-            u16 reload {0};
-            int clock  {0};
-            int ticks  {0};
-            bool enable    {false};
-            bool countup   {false};
-            bool interrupt {false};
-            bool overflow  {false};
-        };
-
-        struct Waitstate
-        {
-            int sram        {0};
-            int first[3]    {0, 0, 0};
-            int second[3]   {0, 0, 0};
-            bool prefetch   {false};
-        };
-
     public:
-        enum AccessSize
-        {
-            ACCESS_BYTE,
-            ACCESS_HWORD,
-            ACCESS_WORD
-        };
-
-        enum HaltState
-        {
-            HALTSTATE_NONE,
-            HALTSTATE_STOP,
-            HALTSTATE_HALT
-        };
 
         static void Init(std::string rom_file, std::string save_file);
         static void Init(std::string rom_file, std::string save_file, u8* bios, size_t bios_size);

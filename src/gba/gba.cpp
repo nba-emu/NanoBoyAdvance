@@ -102,12 +102,12 @@ namespace GBA
             u32 interrupts = Memory::m_Interrupt.ie & Memory::m_Interrupt.if_;
 
             // Only pause as long as (IE & IF) != 0
-            if (Memory::m_HaltState != Memory::HALTSTATE_NONE && interrupts != 0)
+            if (Memory::m_HaltState != HALTSTATE_NONE && interrupts != 0)
             {
                 // If IntrWait only resume if requested interrupt is encountered
                 if (!Memory::m_IntrWait || (interrupts & Memory::m_IntrWaitMask) != 0)
                 {
-                    Memory::m_HaltState = Memory::HALTSTATE_NONE;
+                    Memory::m_HaltState = HALTSTATE_NONE;
                     Memory::m_IntrWait = false;
                 }
             }
@@ -117,14 +117,14 @@ namespace GBA
                 m_ARM.RaiseIRQ();
 
             // Run the hardware components
-            if (Memory::m_HaltState != Memory::HALTSTATE_STOP)
+            if (Memory::m_HaltState != HALTSTATE_STOP)
             {
                 int forward_steps = 0;
 
                 // Do next pending DMA transfer
                 Memory::RunDMA();
 
-                if (Memory::m_HaltState != Memory::HALTSTATE_HALT)
+                if (Memory::m_HaltState != HALTSTATE_HALT)
                 {
                     m_ARM.cycles = 0;
                     m_ARM.Step();
