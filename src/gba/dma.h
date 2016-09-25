@@ -52,20 +52,20 @@ namespace GBA
 
     struct DMA
     {
-        u32 dest        {0};
-        u32 source      {0};
-        u16 count       {0};
-        u32 dest_int    {0};
-        u32 source_int  {0};
-        u16 count_int   {0};
-        AddressControl  dest_control     { DMA_INCREMENT };
-        AddressControl  source_control   { DMA_INCREMENT };
-        StartTime       start_time       { DMA_IMMEDIATE };
-        TransferSize    size             { DMA_HWORD };
-        bool repeat         {false};
-        bool gamepack_drq   {false};
-        bool interrupt      {false};
-        bool enable         {false};
+        u32 dest;
+        u32 source;
+        u16 count;
+        u32 dest_int;
+        u32 source_int;
+        u16 count_int;
+        AddressControl dest_control;
+        AddressControl source_control;
+        StartTime      start_time;
+        TransferSize   size;
+        bool repeat;
+        bool gamepack_drq;
+        bool interrupt;
+        bool enable;
     };
 }
 
