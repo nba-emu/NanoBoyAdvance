@@ -301,7 +301,7 @@ namespace GBA
             LoadRegisters();
 
             // Jump to exception vector
-            m_State.m_R[15] = (u32)Exception::Interrupt;
+            m_State.m_R[15] = EXCPT_INTERRUPT;
             m_Pipe.m_Index = 0;
             m_Pipe.m_Flush = false;
             RefillPipeline();

@@ -1148,7 +1148,7 @@ namespace GBA
             LoadRegisters();
 
             // Jump to exception vector
-            m_State.m_R[15] = (u32)Exception::SoftwareInterrupt;
+            m_State.m_R[15] = EXCPT_SWI;
             m_Pipe.m_Flush = true;
         }
     }

@@ -27,92 +27,12 @@
 
 #include "common/types.h"
 #include "common/log.h"
+#include "state.h"
 #include "../memory.h"
-#include <cstring>
 
 
 namespace GBA
 {
-    enum Mode
-    {
-        MODE_USR = 0x10,
-        MODE_FIQ = 0x11,
-        MODE_IRQ = 0x12,
-        MODE_SVC = 0x13,
-        MODE_ABT = 0x17,
-        MODE_UND = 0x1B,
-        MODE_SYS = 0x1F
-    };
-
-    enum StatusMask
-    {
-        MASK_MODE  = 0x1F,
-        MASK_THUMB = 0x20,
-        MASK_FIQD  = 0x40,
-        MASK_IRQD  = 0x80,
-        MASK_VFLAG = 0x10000000,
-        MASK_CFLAG = 0x20000000,
-        MASK_ZFLAG = 0x40000000,
-        MASK_NFLAG = 0x80000000
-    };
-
-    enum class Exception
-    {
-        Reset = 0x00,
-        UndefinedInstruction = 0x04,
-        SoftwareInterrupt = 0x08,
-        PrefetchAbort = 0x0C,
-        DataAbort = 0x10,
-        Interrupt = 0x18,
-        FastInterrupt = 0x1C
-    };
-
-    enum SPSR
-    {
-        SPSR_FIQ = 0,
-        SPSR_SVC = 1,
-        SPSR_ABT = 2,
-        SPSR_IRQ = 3,
-        SPSR_UND = 4,
-        SPSR_DEF = 5,
-        SPSR_COUNT = 6
-    };
-
-    struct ARMState
-    {
-        u32 m_R[16];
-
-        struct
-        {
-            u32 m_R8;
-            u32 m_R9;
-            u32 m_R10;
-            u32 m_R11;
-            u32 m_R12;
-            u32 m_R13;
-            u32 m_R14;
-        } m_USR, m_FIQ;
-
-        struct
-        {
-            u32 m_R13;
-            u32 m_R14;
-        } m_SVC, m_ABT, m_IRQ, m_UND;
-
-        u32 m_CPSR;
-        u32 m_SPSR[SPSR_COUNT];
-        u32* m_PSPSR; // pointer to current SPSR.
-
-        ARMState() { Reset(); }
-
-        void Reset()
-        {
-            std::memset(this, 0, sizeof(ARMState));
-            m_CPSR = MODE_SYS;
-            m_PSPSR = &m_SPSR[SPSR_DEF];
-        }
-    };
-
     class ARM7
     {
         typedef void (ARM7::*ThumbInstruction)(u16);

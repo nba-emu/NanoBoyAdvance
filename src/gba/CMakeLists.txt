@@ -23,6 +23,7 @@ set(HEADERS
     gba.h
     arm/arm.h
     arm/arm.inl
+    arm/state.h
     io.h
     interrupt.h
     dma.h
