@@ -83,23 +83,11 @@ namespace GBA
     Audio Memory::m_Audio;
     u16   Memory::m_KeyInput = 0x3FF;
 
-    ///////////////////////////////////////////////////////////
-    /// \author Frederic Meyer
-    /// \date   July 31th, 2016
-    /// \fn     Constructor, 1
-    ///
-    ///////////////////////////////////////////////////////////
     void Memory::Init(string rom_file, string save_file)
     {
         Init(rom_file, save_file, nullptr, 0);
     }
 
-    ///////////////////////////////////////////////////////////
-    /// \author Frederic Meyer
-    /// \date   July 31th, 2016
-    /// \fn     Constructor, 2
-    ///
-    ///////////////////////////////////////////////////////////
     void Memory::Init(string rom_file, string save_file, u8* bios, size_t bios_size)
     {
         Reset();
@@ -164,17 +152,27 @@ namespace GBA
 
     void Memory::Reset()
     {
-        // Reset member state.
+        // Reset interrupt system.
         m_HaltState = HALTSTATE_NONE;
         m_IntrWait = false;
         m_IntrWaitMask = 0;
-        m_KeyInput = 0x3FF;
-        m_SaveType = SAVE_NONE;
+        memset(&m_Interrupt, 0, sizeof(Interrupt));
 
-        // Reset memory buffers
+        // Reset DMAs and Timers.
+        for (int i = 0; i < 4; i++)
+        {
+            memset(&m_DMA[i], 0, sizeof(DMA));
+            memset(&m_Timer[i], 0, sizeof(Timer));
+        }
+
+        // Reset memory buffers.
         memset(m_BIOS, 0, 0x4000);
         memset(m_WRAM, 0, 0x40000);
         memset(m_IRAM, 0, 0x8000);
+
+        // Reset misc.
+        m_KeyInput = 0x3FF;
+        m_SaveType = SAVE_NONE;
     }
 
     void Memory::Shutdown()
@@ -183,12 +181,6 @@ namespace GBA
         delete m_Backup;
     }
 
-    ///////////////////////////////////////////////////////////
-    /// \author Frederic Meyer
-    /// \date   July 31th, 2016
-    /// \fn     SequentialAccess
-    ///
-    ///////////////////////////////////////////////////////////
     int Memory::SequentialAccess(u32 offset, AccessSize size)
     {
         int page = offset >> 24;
@@ -221,12 +213,6 @@ namespace GBA
         return 1;
     }
 
-    ///////////////////////////////////////////////////////////
-    /// \author Frederic Meyer
-    /// \date   July 31th, 2016
-    /// \fn     NonSequentialAccess
-    ///
-    ///////////////////////////////////////////////////////////
     int Memory::NonSequentialAccess(u32 offset, AccessSize size)
     {
         int page = offset >> 24;
@@ -349,53 +335,29 @@ namespace GBA
 #endif
     }
 
-    ///////////////////////////////////////////////////////////
-    /// \author Frederic Meyer
-    /// \date   July 31th, 2016
-    /// \fn     ReadByte
-    ///
-    ///////////////////////////////////////////////////////////
     u8 Memory::ReadByte(u32 offset)
     {
-        return (*READ_TABLE[(offset >> 24) & 15])(offset);
+        return READ_TABLE[(offset >> 24) & 15](offset);
     }
 
-    ///////////////////////////////////////////////////////////
-    /// \author Frederic Meyer
-    /// \date   July 31th, 2016
-    /// \fn     ReadHWord
-    ///
-    ///////////////////////////////////////////////////////////
     u16 Memory::ReadHWord(u32 offset)
     {
         register ReadFunction func = READ_TABLE[(offset >> 24) & 15];
 
-        return (*func)(offset) |
-               ((*func)(offset + 1) << 8);
+        return func(offset) |
+               (func(offset + 1) << 8);
     }
 
-    ///////////////////////////////////////////////////////////
-    /// \author Frederic Meyer
-    /// \date   July 31th, 2016
-    /// \fn     ReadWord
-    ///
-    ///////////////////////////////////////////////////////////
     u32 Memory::ReadWord(u32 offset)
     {
         register ReadFunction func = READ_TABLE[(offset >> 24) & 15];
 
-        return (*func)(offset) |
-               ((*func)(offset + 1) << 8) |
-               ((*func)(offset + 2) << 16) |
-               ((*func)(offset + 3) << 24);
+        return func(offset) |
+               (func(offset + 1) << 8) |
+               (func(offset + 2) << 16) |
+               (func(offset + 3) << 24);
     }
 
-    ///////////////////////////////////////////////////////////
-    /// \author Frederic Meyer
-    /// \date   July 31th, 2016
-    /// \fn     WriteByte
-    ///
-    ///////////////////////////////////////////////////////////
     void Memory::WriteByte(u32 offset, u8 value)
     {
         register int page = (offset >> 24) & 15;
@@ -404,42 +366,30 @@ namespace GBA
         // Handle writes to memory that has 16-bit data bus only.
         if (page == 5 || page == 6 || page == 7)
         {
-            (*func)(offset & ~1      , value);
-            (*func)((offset & ~1) + 1, value);
+            func(offset & ~1      , value);
+            func((offset & ~1) + 1, value);
             return;
         }
 
-        (*func)(offset, value);
+        func(offset, value);
     }
 
-    ///////////////////////////////////////////////////////////
-    /// \author Frederic Meyer
-    /// \date   July 31th, 2016
-    /// \fn     WriteHWord
-    ///
-    ///////////////////////////////////////////////////////////
     void Memory::WriteHWord(u32 offset, u16 value)
     {
         register WriteFunction func = WRITE_TABLE[(offset >> 24) & 15];
 
-        (*func)(offset    , value & 0xFF);
-        (*func)(offset + 1, (value >> 8) & 0xFF);
+        func(offset    , value & 0xFF);
+        func(offset + 1, (value >> 8) & 0xFF);
     }
 
-    ///////////////////////////////////////////////////////////
-    /// \author Frederic Meyer
-    /// \date   July 31th, 2016
-    /// \fn     WriteWord
-    ///
-    ///////////////////////////////////////////////////////////
     void Memory::WriteWord(u32 offset, u32 value)
     {
         register WriteFunction func = WRITE_TABLE[(offset >> 24) & 15];
 
-        (*func)(offset    , value);
-        (*func)(offset + 1, (value >> 8) & 0xFF);
-        (*func)(offset + 2, (value >> 16) & 0xFF);
-        (*func)(offset + 3, (value >> 24) & 0xFF);
+        func(offset    , value);
+        func(offset + 1, (value >> 8) & 0xFF);
+        func(offset + 2, (value >> 16) & 0xFF);
+        func(offset + 3, (value >> 24) & 0xFF);
     }
 
 }

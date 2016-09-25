@@ -5,14 +5,14 @@ namespace GBA
 {
     struct Timer
     {
-        u16 count  {0};
-        u16 reload {0};
-        int clock  {0};
-        int ticks  {0};
-        bool enable    {false};
-        bool countup   {false};
-        bool interrupt {false};
-        bool overflow  {false};
+        u16 count;
+        u16 reload;
+        int clock;
+        int ticks;
+        bool enable;
+        bool countup;
+        bool interrupt;
+        bool overflow;
     };
 }
 

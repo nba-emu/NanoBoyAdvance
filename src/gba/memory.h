@@ -170,7 +170,6 @@ namespace GBA
         static void WriteHWord(u32 offset, u16 value);
         static void WriteWord(u32 offset, u32 value);
 
-
     private:
 
         ///////////////////////////////////////////////////////////
