@@ -29,6 +29,8 @@ namespace GBA
 {
     void ARM7::Init(bool hle)
     {
+        m_Pipe.m_Index = 0;
+
         // Skip bios boot logo
         m_State.m_R[15] = 0x8000000;
         m_State.m_USR.m_R13 = 0x3007F00;

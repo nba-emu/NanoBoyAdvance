@@ -28,6 +28,7 @@
 #include "common/types.h"
 #include "common/log.h"
 #include "../memory.h"
+#include <cstring>
 
 
 namespace GBA
@@ -101,6 +102,15 @@ namespace GBA
         u32 m_CPSR;
         u32 m_SPSR[SPSR_COUNT];
         u32* m_PSPSR; // pointer to current SPSR.
+
+        ARMState() { Reset(); }
+
+        void Reset()
+        {
+            std::memset(this, 0, sizeof(ARMState));
+            m_CPSR = MODE_SYS;
+            m_PSPSR = &m_SPSR[SPSR_DEF];
+        }
     };
 
     class ARM7
