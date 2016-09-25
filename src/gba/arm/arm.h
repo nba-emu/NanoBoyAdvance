@@ -32,43 +32,59 @@
 
 namespace GBA
 {
+    enum SPSR
+    {
+        SPSR_FIQ = 0,
+        SPSR_SVC = 1,
+        SPSR_ABT = 2,
+        SPSR_IRQ = 3,
+        SPSR_UND = 4,
+        SPSR_DEF = 5,
+        SPSR_COUNT = 6
+    };
+
+    struct ARMState
+    {
+        u32 m_R[16];
+
+        struct
+        {
+            u32 m_R8;
+            u32 m_R9;
+            u32 m_R10;
+            u32 m_R11;
+            u32 m_R12;
+            u32 m_R13;
+            u32 m_R14;
+        } m_USR, m_FIQ;
+
+        struct
+        {
+            u32 m_R13;
+            u32 m_R14;
+        } m_SVC, m_ABT, m_IRQ, m_UND;
+
+        u32 m_CPSR;
+        u32 m_SPSR[SPSR_COUNT];
+        u32* m_PSPSR; // pointer to current SPSR.
+    };
+
     class ARM7
     {
         typedef void (ARM7::*ThumbInstruction)(u16);
         static const ThumbInstruction thumb_table[1024];
-        
-        // General Purpose Registers
-        u32 r[16] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-        u32 r8_usr {0}, r8_fiq {0};
-        u32 r9_usr {0}, r9_fiq {0};
-        u32 r10_usr {0}, r10_fiq {0};
-        u32 r11_usr {0}, r11_fiq {0};
-        u32 r12_usr {0}, r12_fiq {0};
-        u32 r13_usr {0}, r13_fiq {0}, r13_svc {0}, r13_abt {0}, r13_irq {0}, r13_und {0};
-        u32 r14_usr {0}, r14_fiq {0}, r14_svc {0}, r14_abt {0}, r14_irq {0}, r14_und {0};
 
         // Artifact of old code. Remove when I got time.
-        #define reg(i) this->r[i]
+        #define reg(i) this->m_State.m_R[i]
 
-        // Program Status Registers
-        u32 cpsr { (u32)Mode::SYS};
-        u32 spsr_fiq {0};
-        u32 spsr_svc {0};
-        u32 spsr_abt {0};
-        u32 spsr_irq {0};
-        u32 spsr_und {0};
-        u32 spsr_def {0};
+        ARMState m_State;
 
-        // Points to current SPSR
-        u32* pspsr {nullptr};
-
-        // Stores pipeline state
-        struct Pipeline
+        struct
         {
-            u32 opcode[3];
-            int status {0};
-            bool flush {false};
-        } pipe;
+            u32 m_Opcode[3];
+            int m_Index;
+            bool m_Flush;
+        } m_Pipe;
         
         bool hle;
         

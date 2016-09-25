@@ -30,29 +30,29 @@ namespace GBA
 {
     inline void ARM7::CalculateSign(u32 result)
     {
-        cpsr = result & 0x80000000 ? (cpsr | SignFlag) : (cpsr & ~SignFlag);
+        m_State.m_CPSR = result & 0x80000000 ? (m_State.m_CPSR | SignFlag) : (m_State.m_CPSR & ~SignFlag);
     }
 
     inline void ARM7::CalculateZero(u64 result)
     {
-        cpsr = result == 0 ? (cpsr | ZeroFlag) : (cpsr & ~ZeroFlag);
+        m_State.m_CPSR = result == 0 ? (m_State.m_CPSR | ZeroFlag) : (m_State.m_CPSR & ~ZeroFlag);
     }
 
     inline void ARM7::AssertCarry(bool carry)
     {
-        cpsr = carry ? (cpsr | CarryFlag) : (cpsr & ~CarryFlag);
+        m_State.m_CPSR = carry ? (m_State.m_CPSR | CarryFlag) : (m_State.m_CPSR & ~CarryFlag);
     }
 
     inline void ARM7::CalculateOverflowAdd(u32 result, u32 operand1, u32 operand2)
     {
         bool overflow = !(((operand1) ^ (operand2)) >> 31) && ((result) ^ (operand2)) >> 31;
-        cpsr = overflow ? (cpsr | OverflowFlag) : (cpsr & ~OverflowFlag);
+        m_State.m_CPSR = overflow ? (m_State.m_CPSR | OverflowFlag) : (m_State.m_CPSR & ~OverflowFlag);
     }
 
     inline void ARM7::CalculateOverflowSub(u32 result, u32 operand1, u32 operand2)
     {
         bool overflow = ((operand1) ^ (operand2)) >> 31 && !(((result) ^ (operand2)) >> 31);
-        cpsr = overflow ? (cpsr | OverflowFlag) : (cpsr & ~OverflowFlag);
+        m_State.m_CPSR = overflow ? (m_State.m_CPSR | OverflowFlag) : (m_State.m_CPSR & ~OverflowFlag);
     }
 
     inline void ARM7::LSL(u32& operand, u32 amount, bool& carry)
@@ -179,17 +179,17 @@ namespace GBA
 
     inline void ARM7::RefillPipeline()
     {
-        if (cpsr & ThumbFlag)
+        if (m_State.m_CPSR & ThumbFlag)
         {
-            pipe.opcode[0] = Memory::ReadHWord(r[15]);
-            pipe.opcode[1] = Memory::ReadHWord(r[15] + 2);
-            r[15] += 4;
+            m_Pipe.m_Opcode[0] = Memory::ReadHWord(m_State.m_R[15]);
+            m_Pipe.m_Opcode[1] = Memory::ReadHWord(m_State.m_R[15] + 2);
+            m_State.m_R[15] += 4;
         }
         else
         {
-            pipe.opcode[0] = Memory::ReadWord(r[15]);
-            pipe.opcode[1] = Memory::ReadWord(r[15] + 4);
-            r[15] += 8;
+            m_Pipe.m_Opcode[0] = Memory::ReadWord(m_State.m_R[15]);
+            m_Pipe.m_Opcode[1] = Memory::ReadWord(m_State.m_R[15] + 4);
+            m_State.m_R[15] += 8;
         }
     }
 }
