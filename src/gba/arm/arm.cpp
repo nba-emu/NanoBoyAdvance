@@ -54,7 +54,7 @@ namespace GBA
         LoadRegisters();
 
         // Get value and switch back to correct mode
-        value = reg(r);
+        value = m_State.m_R[r];
         m_State.m_CPSR = (m_State.m_CPSR & ~MASK_MODE) | (u32)old_mode;
         LoadRegisters();
 
@@ -89,7 +89,7 @@ namespace GBA
         LoadRegisters();
 
         // Write register and switch back
-        reg(r) = value;
+        m_State.m_R[r] = value;
         SaveRegisters();
         m_State.m_CPSR = (m_State.m_CPSR & ~MASK_MODE) | (u32)old_mode;
         LoadRegisters();

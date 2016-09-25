@@ -27,8 +27,8 @@
 
 #include "common/types.h"
 #include "common/log.h"
-#include "state.h"
 #include "../memory.h"
+#include "state.h"
 
 
 namespace GBA
@@ -37,9 +37,6 @@ namespace GBA
     {
         typedef void (ARM7::*ThumbInstruction)(u16);
         static const ThumbInstruction thumb_table[1024];
-
-        // Artifact of old code. Remove when I got time.
-        #define reg(i) this->m_State.m_R[i]
 
         ARMState m_State;
 

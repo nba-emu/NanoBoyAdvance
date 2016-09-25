@@ -25,6 +25,9 @@
 #include "arm.h"
 
 
+// Artifact of old code. Remove when I got time.
+#define reg(i) this->m_State.m_R[i]
+
 namespace GBA
 {
     const ARM7::ThumbInstruction ARM7::thumb_table[1024] =

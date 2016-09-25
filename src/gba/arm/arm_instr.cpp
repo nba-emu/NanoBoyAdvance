@@ -25,6 +25,9 @@
 #include "arm.h"
 
 
+// Artifact of old code. Remove when I got time.
+#define reg(i) this->m_State.m_R[i]
+
 const int ARM_1 = 1;
 const int ARM_2 = 2;
 const int ARM_3 = 3;
