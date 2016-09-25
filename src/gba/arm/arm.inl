@@ -30,29 +30,29 @@ namespace GBA
 {
     inline void ARM7::CalculateSign(u32 result)
     {
-        m_State.m_CPSR = result & 0x80000000 ? (m_State.m_CPSR | SignFlag) : (m_State.m_CPSR & ~SignFlag);
+        m_State.m_CPSR = result & 0x80000000 ? (m_State.m_CPSR | MASK_NFLAG) : (m_State.m_CPSR & ~MASK_NFLAG);
     }
 
     inline void ARM7::CalculateZero(u64 result)
     {
-        m_State.m_CPSR = result == 0 ? (m_State.m_CPSR | ZeroFlag) : (m_State.m_CPSR & ~ZeroFlag);
+        m_State.m_CPSR = result == 0 ? (m_State.m_CPSR | MASK_ZFLAG) : (m_State.m_CPSR & ~MASK_ZFLAG);
     }
 
     inline void ARM7::AssertCarry(bool carry)
     {
-        m_State.m_CPSR = carry ? (m_State.m_CPSR | CarryFlag) : (m_State.m_CPSR & ~CarryFlag);
+        m_State.m_CPSR = carry ? (m_State.m_CPSR | MASK_CFLAG) : (m_State.m_CPSR & ~MASK_CFLAG);
     }
 
     inline void ARM7::CalculateOverflowAdd(u32 result, u32 operand1, u32 operand2)
     {
         bool overflow = !(((operand1) ^ (operand2)) >> 31) && ((result) ^ (operand2)) >> 31;
-        m_State.m_CPSR = overflow ? (m_State.m_CPSR | OverflowFlag) : (m_State.m_CPSR & ~OverflowFlag);
+        m_State.m_CPSR = overflow ? (m_State.m_CPSR | MASK_VFLAG) : (m_State.m_CPSR & ~MASK_VFLAG);
     }
 
     inline void ARM7::CalculateOverflowSub(u32 result, u32 operand1, u32 operand2)
     {
         bool overflow = ((operand1) ^ (operand2)) >> 31 && !(((result) ^ (operand2)) >> 31);
-        m_State.m_CPSR = overflow ? (m_State.m_CPSR | OverflowFlag) : (m_State.m_CPSR & ~OverflowFlag);
+        m_State.m_CPSR = overflow ? (m_State.m_CPSR | MASK_VFLAG) : (m_State.m_CPSR & ~MASK_VFLAG);
     }
 
     inline void ARM7::LSL(u32& operand, u32 amount, bool& carry)
@@ -179,7 +179,7 @@ namespace GBA
 
     inline void ARM7::RefillPipeline()
     {
-        if (m_State.m_CPSR & ThumbFlag)
+        if (m_State.m_CPSR & MASK_THUMB)
         {
             m_Pipe.m_Opcode[0] = Memory::ReadHWord(m_State.m_R[15]);
             m_Pipe.m_Opcode[1] = Memory::ReadHWord(m_State.m_R[15] + 2);

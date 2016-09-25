@@ -135,20 +135,20 @@ namespace GBA
         {
             switch (condition)
             {
-            case 0x0: if (!(m_State.m_CPSR & ZeroFlag))     return; break;
-            case 0x1: if (  m_State.m_CPSR & ZeroFlag)      return; break;
-            case 0x2: if (!(m_State.m_CPSR & CarryFlag))    return; break;
-            case 0x3: if (  m_State.m_CPSR & CarryFlag)     return; break;
-            case 0x4: if (!(m_State.m_CPSR & SignFlag))     return; break;
-            case 0x5: if (  m_State.m_CPSR & SignFlag)      return; break;
-            case 0x6: if (!(m_State.m_CPSR & OverflowFlag)) return; break;
-            case 0x7: if (  m_State.m_CPSR & OverflowFlag)  return; break;
-            case 0x8: if (!(m_State.m_CPSR & CarryFlag) ||  (m_State.m_CPSR & ZeroFlag)) return; break;
-            case 0x9: if ( (m_State.m_CPSR & CarryFlag) && !(m_State.m_CPSR & ZeroFlag)) return; break;
-            case 0xA: if ((m_State.m_CPSR & SignFlag) != (m_State.m_CPSR & OverflowFlag)) return; break;
-            case 0xB: if ((m_State.m_CPSR & SignFlag) == (m_State.m_CPSR & OverflowFlag)) return; break;
-            case 0xC: if ((m_State.m_CPSR & ZeroFlag) || ((m_State.m_CPSR & SignFlag) != (m_State.m_CPSR & OverflowFlag))) return; break;
-            case 0xD: if (!(m_State.m_CPSR & ZeroFlag) && ((m_State.m_CPSR & SignFlag) == (m_State.m_CPSR & OverflowFlag))) return; break;
+            case 0x0: if (!(m_State.m_CPSR & MASK_ZFLAG))     return; break;
+            case 0x1: if (  m_State.m_CPSR & MASK_ZFLAG)      return; break;
+            case 0x2: if (!(m_State.m_CPSR & MASK_CFLAG))    return; break;
+            case 0x3: if (  m_State.m_CPSR & MASK_CFLAG)     return; break;
+            case 0x4: if (!(m_State.m_CPSR & MASK_NFLAG))     return; break;
+            case 0x5: if (  m_State.m_CPSR & MASK_NFLAG)      return; break;
+            case 0x6: if (!(m_State.m_CPSR & MASK_VFLAG)) return; break;
+            case 0x7: if (  m_State.m_CPSR & MASK_VFLAG)  return; break;
+            case 0x8: if (!(m_State.m_CPSR & MASK_CFLAG) ||  (m_State.m_CPSR & MASK_ZFLAG)) return; break;
+            case 0x9: if ( (m_State.m_CPSR & MASK_CFLAG) && !(m_State.m_CPSR & MASK_ZFLAG)) return; break;
+            case 0xA: if ((m_State.m_CPSR & MASK_NFLAG) != (m_State.m_CPSR & MASK_VFLAG)) return; break;
+            case 0xB: if ((m_State.m_CPSR & MASK_NFLAG) == (m_State.m_CPSR & MASK_VFLAG)) return; break;
+            case 0xC: if ((m_State.m_CPSR & MASK_ZFLAG) || ((m_State.m_CPSR & MASK_NFLAG) != (m_State.m_CPSR & MASK_VFLAG))) return; break;
+            case 0xD: if (!(m_State.m_CPSR & MASK_ZFLAG) && ((m_State.m_CPSR & MASK_NFLAG) == (m_State.m_CPSR & MASK_VFLAG))) return; break;
             case 0xE: break;
             case 0xF: return;
             }
@@ -256,7 +256,7 @@ namespace GBA
             if (reg(reg_address) & 1)
             {
                 m_State.m_R[15] = reg(reg_address) & ~1;
-                m_State.m_CPSR |= ThumbFlag;
+                m_State.m_CPSR |= MASK_THUMB;
 
                 // Emulate pipeline refill cycles
                 cycles += Memory::NonSequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
@@ -498,7 +498,7 @@ namespace GBA
                 int reg_dest = (instruction >> 12) & 0xF;
                 int reg_operand1 = (instruction >> 16) & 0xF;
                 bool immediate = instruction & (1 << 25);
-                bool carry = m_State.m_CPSR & CarryFlag;
+                bool carry = m_State.m_CPSR & MASK_CFLAG;
                 u32 operand1 = reg(reg_operand1);
                 u32 operand2;
 
@@ -884,7 +884,7 @@ namespace GBA
                     ASR(offset, amount, carry, true);
                     break;
                 case 0b11:
-                    carry = m_State.m_CPSR & CarryFlag;
+                    carry = m_State.m_CPSR & MASK_CFLAG;
                     ROR(offset, amount, carry, true);
                     break;
                 }
@@ -1011,9 +1011,9 @@ namespace GBA
                 #endif
 
                 // Save current mode and enter user mode
-                old_mode = m_State.m_CPSR & ModeField;
+                old_mode = m_State.m_CPSR & MASK_MODE;
                 SaveRegisters();
-                m_State.m_CPSR = (m_State.m_CPSR & ~ModeField) | (u32)Mode::USR;
+                m_State.m_CPSR = (m_State.m_CPSR & ~MASK_MODE) | MODE_USR;
                 LoadRegisters();
 
                 // Mark that we switched to user mode
@@ -1132,7 +1132,7 @@ namespace GBA
             if (switched_mode)
             {
                 SaveRegisters();
-                m_State.m_CPSR = (m_State.m_CPSR & ~ModeField) | old_mode;
+                m_State.m_CPSR = (m_State.m_CPSR & ~MASK_MODE) | old_mode;
                 LoadRegisters();
             }
             return;
@@ -1161,7 +1161,8 @@ namespace GBA
 
             // Log to the console that we're issuing an interrupt.
             #ifdef DEBUG
-            LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (arm)", bios_call, r[0], r[1], r[2], r[3], reg(14), m_State.m_R[15]);
+            LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (arm)",
+                bios_call, m_State.m_R[0], m_State.m_R[1], m_State.m_R[2], m_State.m_R[3], reg(14), m_State.m_R[15]);
             #endif
 
             // Dispatch SWI, either HLE or BIOS.
@@ -1177,7 +1178,7 @@ namespace GBA
                 // Save program status and switch mode
                 m_State.m_SPSR[SPSR_SVC] = m_State.m_CPSR;
                 SaveRegisters();
-                m_State.m_CPSR = (m_State.m_CPSR & ~ModeField) | (u32)Mode::SVC | IrqDisable;
+                m_State.m_CPSR = (m_State.m_CPSR & ~MASK_MODE) | MODE_SVC | MASK_IRQD;
                 LoadRegisters();
 
                 // Jump to exception vector

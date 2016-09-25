@@ -32,6 +32,40 @@
 
 namespace GBA
 {
+    enum Mode
+    {
+        MODE_USR = 0x10,
+        MODE_FIQ = 0x11,
+        MODE_IRQ = 0x12,
+        MODE_SVC = 0x13,
+        MODE_ABT = 0x17,
+        MODE_UND = 0x1B,
+        MODE_SYS = 0x1F
+    };
+
+    enum StatusMask
+    {
+        MASK_MODE  = 0x1F,
+        MASK_THUMB = 0x20,
+        MASK_FIQD  = 0x40,
+        MASK_IRQD  = 0x80,
+        MASK_VFLAG = 0x10000000,
+        MASK_CFLAG = 0x20000000,
+        MASK_ZFLAG = 0x40000000,
+        MASK_NFLAG = 0x80000000
+    };
+
+    enum class Exception
+    {
+        Reset = 0x00,
+        UndefinedInstruction = 0x04,
+        SoftwareInterrupt = 0x08,
+        PrefetchAbort = 0x0C,
+        DataAbort = 0x10,
+        Interrupt = 0x18,
+        FastInterrupt = 0x1C
+    };
+
     enum SPSR
     {
         SPSR_FIQ = 0,
@@ -179,40 +213,6 @@ namespace GBA
         // HLE-emulation
         void SWI(int number);
     public:
-        enum class Mode
-        {
-            USR = 0x10,
-            FIQ = 0x11,
-            IRQ = 0x12,
-            SVC = 0x13,
-            ABT = 0x17,
-            UND = 0x1B,
-            SYS = 0x1F
-        };
-
-        enum PSRMask
-        {
-            ModeField = 0x1F,
-            ThumbFlag = 0x20,
-            FiqDisable = 0x40,
-            IrqDisable = 0x80,
-            OverflowFlag = 0x10000000,
-            CarryFlag = 0x20000000,
-            ZeroFlag = 0x40000000,
-            SignFlag = 0x80000000
-        };
-
-        enum class Exception
-        {
-            Reset = 0x00,
-            UndefinedInstruction = 0x04,
-            SoftwareInterrupt = 0x08,
-            PrefetchAbort = 0x0C,
-            DataAbort = 0x10,
-            Interrupt = 0x18,
-            FastInterrupt = 0x1C
-        };
-
         // CPU-cyle counter
         int cycles {0};
 

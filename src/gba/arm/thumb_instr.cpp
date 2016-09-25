@@ -333,7 +333,7 @@ namespace GBA
         // THUMB.1 Move shifted register
         int reg_dest = instruction & 7;
         int reg_source = (instruction >> 3) & 7;
-        bool carry = m_State.m_CPSR & CarryFlag;
+        bool carry = m_State.m_CPSR & MASK_CFLAG;
 
         reg(reg_dest) = reg(reg_source);
 
@@ -479,7 +479,7 @@ namespace GBA
         case 0b0010: // LSL
         {
             u32 amount = reg(reg_source);
-            bool carry = m_State.m_CPSR & CarryFlag;
+            bool carry = m_State.m_CPSR & MASK_CFLAG;
             LSL(reg(reg_dest), amount, carry);
             AssertCarry(carry);
             CalculateSign(reg(reg_dest));
@@ -490,7 +490,7 @@ namespace GBA
         case 0b0011: // LSR
         {
             u32 amount = reg(reg_source);
-            bool carry = m_State.m_CPSR & CarryFlag;
+            bool carry = m_State.m_CPSR & MASK_CFLAG;
             LSR(reg(reg_dest), amount, carry, false);
             AssertCarry(carry);
             CalculateSign(reg(reg_dest));
@@ -501,7 +501,7 @@ namespace GBA
         case 0b0100: // ASR
         {
             u32 amount = reg(reg_source);
-            bool carry = m_State.m_CPSR & CarryFlag;
+            bool carry = m_State.m_CPSR & MASK_CFLAG;
             ASR(reg(reg_dest), amount, carry, false);
             AssertCarry(carry);
             CalculateSign(reg(reg_dest));
@@ -535,7 +535,7 @@ namespace GBA
         case 0b0111: // ROR
         {
             u32 amount = reg(reg_source);
-            bool carry = m_State.m_CPSR & CarryFlag;
+            bool carry = m_State.m_CPSR & MASK_CFLAG;
             ROR(reg(reg_dest), amount, carry, false);
             AssertCarry(carry);
             CalculateSign(reg(reg_dest));
@@ -657,7 +657,7 @@ namespace GBA
             }
             else
             {
-                m_State.m_CPSR &= ~ThumbFlag;
+                m_State.m_CPSR &= ~MASK_THUMB;
                 m_State.m_R[15] = operand & ~3;
 
                 // Emulate pipeline refill cycles
@@ -1086,20 +1086,20 @@ namespace GBA
         // Check if the instruction will be executed
         switch (cond)
         {
-        case 0x0: if (!(m_State.m_CPSR & ZeroFlag))     return; break;
-        case 0x1: if (  m_State.m_CPSR & ZeroFlag)      return; break;
-        case 0x2: if (!(m_State.m_CPSR & CarryFlag))    return; break;
-        case 0x3: if (  m_State.m_CPSR & CarryFlag)     return; break;
-        case 0x4: if (!(m_State.m_CPSR & SignFlag))     return; break;
-        case 0x5: if (  m_State.m_CPSR & SignFlag)      return; break;
-        case 0x6: if (!(m_State.m_CPSR & OverflowFlag)) return; break;
-        case 0x7: if (  m_State.m_CPSR & OverflowFlag)  return; break;
-        case 0x8: if (!(m_State.m_CPSR & CarryFlag) ||  (m_State.m_CPSR & ZeroFlag)) return; break;
-        case 0x9: if ( (m_State.m_CPSR & CarryFlag) && !(m_State.m_CPSR & ZeroFlag)) return; break;
-        case 0xA: if ((m_State.m_CPSR & SignFlag) != (m_State.m_CPSR & OverflowFlag)) return; break;
-        case 0xB: if ((m_State.m_CPSR & SignFlag) == (m_State.m_CPSR & OverflowFlag)) return; break;
-        case 0xC: if ((m_State.m_CPSR & ZeroFlag) || ((m_State.m_CPSR & SignFlag) != (m_State.m_CPSR & OverflowFlag))) return; break;
-        case 0xD: if (!(m_State.m_CPSR & ZeroFlag) && ((m_State.m_CPSR & SignFlag) == (m_State.m_CPSR & OverflowFlag))) return; break;
+        case 0x0: if (!(m_State.m_CPSR & MASK_ZFLAG))     return; break;
+        case 0x1: if (  m_State.m_CPSR & MASK_ZFLAG)      return; break;
+        case 0x2: if (!(m_State.m_CPSR & MASK_CFLAG))    return; break;
+        case 0x3: if (  m_State.m_CPSR & MASK_CFLAG)     return; break;
+        case 0x4: if (!(m_State.m_CPSR & MASK_NFLAG))     return; break;
+        case 0x5: if (  m_State.m_CPSR & MASK_NFLAG)      return; break;
+        case 0x6: if (!(m_State.m_CPSR & MASK_VFLAG)) return; break;
+        case 0x7: if (  m_State.m_CPSR & MASK_VFLAG)  return; break;
+        case 0x8: if (!(m_State.m_CPSR & MASK_CFLAG) ||  (m_State.m_CPSR & MASK_ZFLAG)) return; break;
+        case 0x9: if ( (m_State.m_CPSR & MASK_CFLAG) && !(m_State.m_CPSR & MASK_ZFLAG)) return; break;
+        case 0xA: if ((m_State.m_CPSR & MASK_NFLAG) != (m_State.m_CPSR & MASK_VFLAG)) return; break;
+        case 0xB: if ((m_State.m_CPSR & MASK_NFLAG) == (m_State.m_CPSR & MASK_VFLAG)) return; break;
+        case 0xC: if ((m_State.m_CPSR & MASK_ZFLAG) || ((m_State.m_CPSR & MASK_NFLAG) != (m_State.m_CPSR & MASK_VFLAG))) return; break;
+        case 0xD: if (!(m_State.m_CPSR & MASK_ZFLAG) && ((m_State.m_CPSR & MASK_NFLAG) == (m_State.m_CPSR & MASK_VFLAG))) return; break;
         }
 
         // Sign-extend the immediate value if neccessary
@@ -1123,7 +1123,7 @@ namespace GBA
         // Log SWI to the console
         #ifdef DEBUG
         LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (thumb)",
-            bios_call, r[0], r[1], r[2], r[3], reg(14), m_State.m_R[15]);
+            bios_call, m_State.m_R[0], m_State.m_R[1], m_State.m_R[2], m_State.m_R[3], reg(14), m_State.m_R[15]);
         #endif
 
         // "Useless" prefetch from r15 and pipeline refill timing.
@@ -1144,7 +1144,7 @@ namespace GBA
             // Save program status and switch mode
             SaveRegisters();
             m_State.m_SPSR[SPSR_SVC] = m_State.m_CPSR;
-            m_State.m_CPSR = (m_State.m_CPSR & ~(ModeField | ThumbFlag)) | (u32)Mode::SVC | IrqDisable;
+            m_State.m_CPSR = (m_State.m_CPSR & ~(MASK_MODE | MASK_THUMB)) | MODE_SVC | MASK_IRQD;
             LoadRegisters();
 
             // Jump to exception vector

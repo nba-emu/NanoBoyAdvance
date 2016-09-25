@@ -43,17 +43,17 @@ namespace GBA
     
     u32 ARM7::GetGeneralRegister(Mode mode, int r)
     {
-        Mode old_mode = (Mode)(m_State.m_CPSR & ModeField);
         u32 value;
+        Mode old_mode = (Mode)(m_State.m_CPSR & MASK_MODE);
 
         // Temporary switch to requested mode
         SaveRegisters();
-        m_State.m_CPSR = (m_State.m_CPSR & ~ModeField) | (u32)mode;
+        m_State.m_CPSR = (m_State.m_CPSR & ~MASK_MODE) | (u32)mode;
         LoadRegisters();
 
         // Get value and switch back to correct mode
         value = reg(r);
-        m_State.m_CPSR = (m_State.m_CPSR & ~ModeField) | (u32)old_mode;
+        m_State.m_CPSR = (m_State.m_CPSR & ~MASK_MODE) | (u32)old_mode;
         LoadRegisters();
 
         return value;
@@ -68,28 +68,28 @@ namespace GBA
     {
         switch (mode)
         {
-        case Mode::FIQ: return m_State.m_SPSR[SPSR_FIQ];
-        case Mode::SVC: return m_State.m_SPSR[SPSR_SVC];
-        case Mode::ABT: return m_State.m_SPSR[SPSR_ABT];
-        case Mode::IRQ: return m_State.m_SPSR[SPSR_IRQ];
-        case Mode::UND: return m_State.m_SPSR[SPSR_UND];
+        case MODE_FIQ: return m_State.m_SPSR[SPSR_FIQ];
+        case MODE_SVC: return m_State.m_SPSR[SPSR_SVC];
+        case MODE_ABT: return m_State.m_SPSR[SPSR_ABT];
+        case MODE_IRQ: return m_State.m_SPSR[SPSR_IRQ];
+        case MODE_UND: return m_State.m_SPSR[SPSR_UND];
         }
         return 0;
     }
 
     void ARM7::SetGeneralRegister(Mode mode, int r, u32 value)
     {
-        Mode old_mode = (Mode)(m_State.m_CPSR & ModeField);
+        Mode old_mode = (Mode)(m_State.m_CPSR & MASK_MODE);
 
         // Temporary switch to requested mode
         SaveRegisters();
-        m_State.m_CPSR = (m_State.m_CPSR & ~ModeField) | (u32)mode;
+        m_State.m_CPSR = (m_State.m_CPSR & ~MASK_MODE) | (u32)mode;
         LoadRegisters();
 
         // Write register and switch back
         reg(r) = value;
         SaveRegisters();
-        m_State.m_CPSR = (m_State.m_CPSR & ~ModeField) | (u32)old_mode;
+        m_State.m_CPSR = (m_State.m_CPSR & ~MASK_MODE) | (u32)old_mode;
         LoadRegisters();
     }
 
@@ -102,17 +102,17 @@ namespace GBA
     {
         switch (mode)
         {
-        case Mode::FIQ: m_State.m_SPSR[SPSR_FIQ] = value; break;
-        case Mode::SVC: m_State.m_SPSR[SPSR_SVC] = value; break;
-        case Mode::ABT: m_State.m_SPSR[SPSR_ABT] = value; break;
-        case Mode::IRQ: m_State.m_SPSR[SPSR_IRQ] = value; break;
-        case Mode::UND: m_State.m_SPSR[SPSR_UND] = value; break;
+        case MODE_FIQ: m_State.m_SPSR[SPSR_FIQ] = value; break;
+        case MODE_SVC: m_State.m_SPSR[SPSR_SVC] = value; break;
+        case MODE_ABT: m_State.m_SPSR[SPSR_ABT] = value; break;
+        case MODE_IRQ: m_State.m_SPSR[SPSR_IRQ] = value; break;
+        case MODE_UND: m_State.m_SPSR[SPSR_UND] = value; break;
         }
     }
 
     void ARM7::Step()
     {
-        bool thumb = m_State.m_CPSR & ThumbFlag;
+        bool thumb = m_State.m_CPSR & MASK_THUMB;
 
         // Forcibly align r15
         m_State.m_R[15] &= thumb ? ~1 : ~3;
@@ -152,10 +152,10 @@ namespace GBA
 
     void ARM7::SaveRegisters()
     {
-        switch (static_cast<Mode>(m_State.m_CPSR & ModeField))
+        switch (m_State.m_CPSR & MASK_MODE)
         {
-        case Mode::USR:
-        case Mode::SYS:
+        case MODE_USR:
+        case MODE_SYS:
             m_State.m_USR.m_R8 = m_State.m_R[8];
             m_State.m_USR.m_R9 = m_State.m_R[9];
             m_State.m_USR.m_R10 = m_State.m_R[10];
@@ -164,7 +164,7 @@ namespace GBA
             m_State.m_USR.m_R13 = m_State.m_R[13];
             m_State.m_USR.m_R14 = m_State.m_R[14];
             break;
-        case Mode::FIQ:
+        case MODE_FIQ:
             m_State.m_FIQ.m_R8 = m_State.m_R[8];
             m_State.m_FIQ.m_R9 = m_State.m_R[9];
             m_State.m_FIQ.m_R10 = m_State.m_R[10];
@@ -173,7 +173,7 @@ namespace GBA
             m_State.m_FIQ.m_R13 = m_State.m_R[13];
             m_State.m_FIQ.m_R14 = m_State.m_R[14];
             break;
-        case Mode::IRQ:
+        case MODE_IRQ:
             m_State.m_USR.m_R8 = m_State.m_R[8];
             m_State.m_USR.m_R9 = m_State.m_R[9];
             m_State.m_USR.m_R10 = m_State.m_R[10];
@@ -182,7 +182,7 @@ namespace GBA
             m_State.m_IRQ.m_R13 = m_State.m_R[13];
             m_State.m_IRQ.m_R14 = m_State.m_R[14];
             break;
-        case Mode::SVC:
+        case MODE_SVC:
             m_State.m_USR.m_R8 = m_State.m_R[8];
             m_State.m_USR.m_R9 = m_State.m_R[9];
             m_State.m_USR.m_R10 = m_State.m_R[10];
@@ -191,7 +191,7 @@ namespace GBA
             m_State.m_SVC.m_R13 = m_State.m_R[13];
             m_State.m_SVC.m_R14 = m_State.m_R[14];
             break;
-        case Mode::ABT:
+        case MODE_ABT:
             m_State.m_USR.m_R8 = m_State.m_R[8];
             m_State.m_USR.m_R9 = m_State.m_R[9];
             m_State.m_USR.m_R10 = m_State.m_R[10];
@@ -200,7 +200,7 @@ namespace GBA
             m_State.m_ABT.m_R13 = m_State.m_R[13];
             m_State.m_ABT.m_R14 = m_State.m_R[14];
             break;
-        case Mode::UND:
+        case MODE_UND:
             m_State.m_USR.m_R8 = m_State.m_R[8];
             m_State.m_USR.m_R9 = m_State.m_R[9];
             m_State.m_USR.m_R10 = m_State.m_R[10];
@@ -214,10 +214,10 @@ namespace GBA
 
     void ARM7::LoadRegisters()
     {
-        switch (static_cast<Mode>(m_State.m_CPSR & ModeField))
+        switch (m_State.m_CPSR & MASK_MODE)
         {
-        case Mode::USR:
-        case Mode::SYS:
+        case MODE_USR:
+        case MODE_SYS:
             m_State.m_R[8] = m_State.m_USR.m_R8;
             m_State.m_R[9] = m_State.m_USR.m_R9;
             m_State.m_R[10] = m_State.m_USR.m_R10;
@@ -227,7 +227,7 @@ namespace GBA
             m_State.m_R[14] = m_State.m_USR.m_R14;
             m_State.m_PSPSR = &m_State.m_SPSR[SPSR_DEF];
             break;
-        case Mode::FIQ:
+        case MODE_FIQ:
             m_State.m_R[8] = m_State.m_FIQ.m_R8;
             m_State.m_R[9] = m_State.m_FIQ.m_R9;
             m_State.m_R[10] = m_State.m_FIQ.m_R10;
@@ -237,7 +237,7 @@ namespace GBA
             m_State.m_R[14] = m_State.m_FIQ.m_R14;
             m_State.m_PSPSR = &m_State.m_SPSR[SPSR_FIQ];
             break;
-        case Mode::IRQ:
+        case MODE_IRQ:
             m_State.m_R[8] = m_State.m_USR.m_R8;
             m_State.m_R[9] = m_State.m_USR.m_R9;
             m_State.m_R[10] = m_State.m_USR.m_R10;
@@ -247,7 +247,7 @@ namespace GBA
             m_State.m_R[14] = m_State.m_IRQ.m_R14;
             m_State.m_PSPSR = &m_State.m_SPSR[SPSR_IRQ];
             break;
-        case Mode::SVC:
+        case MODE_SVC:
             m_State.m_R[8] = m_State.m_USR.m_R8;
             m_State.m_R[9] = m_State.m_USR.m_R9;
             m_State.m_R[10] = m_State.m_USR.m_R10;
@@ -257,7 +257,7 @@ namespace GBA
             m_State.m_R[14] = m_State.m_SVC.m_R14;
             m_State.m_PSPSR = &m_State.m_SPSR[SPSR_SVC];
             break;
-        case Mode::ABT:
+        case MODE_ABT:
             m_State.m_R[8] = m_State.m_USR.m_R8;
             m_State.m_R[9] = m_State.m_USR.m_R9;
             m_State.m_R[10] = m_State.m_USR.m_R10;
@@ -267,7 +267,7 @@ namespace GBA
             m_State.m_R[14] = m_State.m_ABT.m_R14;
             m_State.m_PSPSR = &m_State.m_SPSR[SPSR_ABT];
             break;
-        case Mode::UND:
+        case MODE_UND:
             m_State.m_R[8] = m_State.m_USR.m_R8;
             m_State.m_R[9] = m_State.m_USR.m_R9;
             m_State.m_R[10] = m_State.m_USR.m_R10;
@@ -282,9 +282,9 @@ namespace GBA
 
     void ARM7::RaiseIRQ()
     {
-        if ((m_State.m_CPSR & IrqDisable) == 0)
+        if ((m_State.m_CPSR & MASK_IRQD) == 0)
         {
-            bool thumb = m_State.m_CPSR & ThumbFlag;
+            bool thumb = m_State.m_CPSR & MASK_THUMB;
 
             // "Useless" pipeline prefetch
             cycles += Memory::SequentialAccess(m_State.m_R[15], thumb ? ACCESS_HWORD : ACCESS_WORD);
@@ -295,7 +295,7 @@ namespace GBA
             // Save program status and switch mode
             m_State.m_SPSR[SPSR_IRQ] = m_State.m_CPSR;
             SaveRegisters();
-            m_State.m_CPSR = (m_State.m_CPSR & ~(ModeField | ThumbFlag)) | (u32)Mode::IRQ | IrqDisable;
+            m_State.m_CPSR = (m_State.m_CPSR & ~(MASK_MODE | MASK_THUMB)) | MODE_IRQ | MASK_IRQD;
             LoadRegisters();
 
             // Jump to exception vector
