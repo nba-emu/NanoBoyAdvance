@@ -30,7 +30,7 @@
 
 namespace GBA
 {
-    const ARM7::ThumbInstruction ARM7::thumb_table[1024] =
+    const ARM7::ThumbInstruction ARM7::THUMB_TABLE[1024] =
     {
         /* THUMB.1 Move shifted register */
         &ARM7::Thumb1<0,0>,  &ARM7::Thumb1<1,0>,  &ARM7::Thumb1<2,0>,  &ARM7::Thumb1<3,0>,

@@ -126,7 +126,10 @@ namespace GBA
                 m_Pipe.m_Opcode[2] = Memory::ReadHWord(m_State.m_R[15]);
             else
                 m_Pipe.m_Opcode[m_Pipe.m_Index - 1] = Memory::ReadHWord(m_State.m_R[15]);
-            ExecuteThumb(m_Pipe.m_Opcode[m_Pipe.m_Index]);
+
+            // Execute the thumb instruction via a method lut.
+            u16 instruction = m_Pipe.m_Opcode[m_Pipe.m_Index];
+            (this->*THUMB_TABLE[instruction >> 6])(instruction);
         }
         else
         {
@@ -134,6 +137,7 @@ namespace GBA
                 m_Pipe.m_Opcode[2] = Memory::ReadWord(m_State.m_R[15]);
             else
                 m_Pipe.m_Opcode[m_Pipe.m_Index - 1] = Memory::ReadWord(m_State.m_R[15]);
+
             Execute(m_Pipe.m_Opcode[m_Pipe.m_Index], Decode(m_Pipe.m_Opcode[m_Pipe.m_Index]));
         }
 

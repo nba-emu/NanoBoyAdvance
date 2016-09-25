@@ -36,7 +36,7 @@ namespace GBA
     class ARM7
     {
         typedef void (ARM7::*ThumbInstruction)(u16);
-        static const ThumbInstruction thumb_table[1024];
+        static const ThumbInstruction THUMB_TABLE[1024];
 
         ARMState m_State;
 
@@ -132,11 +132,6 @@ namespace GBA
         int Decode(u32 instruction);
         void Execute(u32 instruction, int type);
 
-        inline void ExecuteThumb(u16 instruction)
-        {
-            (this->*thumb_table[instruction >> 6])(instruction);
-        }
-
         // HLE-emulation
         void SWI(int number);
     public:
@@ -153,10 +148,10 @@ namespace GBA
         // Register read and write access methods
         u32 GetGeneralRegister(Mode mode, int r);
         u32 GetCurrentStatusRegister();
-        u32 GetSavedStatusRegister(Mode mode);  
+        u32 GetSavedStatusRegister(Mode mode);
         void SetGeneralRegister(Mode mode, int r, u32 value);
         void SetCurrentStatusRegister(u32 value);
-        void SetSavedStatusRegister(Mode mode, u32 value);     
+        void SetSavedStatusRegister(Mode mode, u32 value);
     };
 }
 
