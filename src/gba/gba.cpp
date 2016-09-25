@@ -47,12 +47,12 @@ namespace GBA
     ///////////////////////////////////////////////////////////
     GBA::GBA(string rom_file, string save_file)
     {
-        m_Memory.Init(rom_file, save_file);
-        m_ARM.Init(&m_Memory, true);
+        Memory::Init(rom_file, save_file);
+        m_ARM.Init(true);
 
         // Rudimentary Audio setup
         SDL2AudioAdapter adapter;
-        adapter.Init(&m_Memory.m_Audio);
+        adapter.Init(&Memory::m_Audio);
     }
 
     ///////////////////////////////////////////////////////////
@@ -72,12 +72,17 @@ namespace GBA
         bios = File::ReadFile(bios_file);
         bios_size = File::GetFileSize(bios_file);
 
-        m_Memory.Init(rom_file, save_file, bios, bios_size);
-        m_ARM.Init(&m_Memory, false);
+        Memory::Init(rom_file, save_file, bios, bios_size);
+        m_ARM.Init(false);
 
         // Rudimentary Audio setup
         SDL2AudioAdapter adapter;
-        adapter.Init(&m_Memory.m_Audio);
+        adapter.Init(&Memory::m_Audio);
+    }
+
+    GBA::~GBA()
+    {
+        Memory::Shutdown();
     }
 
     ///////////////////////////////////////////////////////////
@@ -94,32 +99,32 @@ namespace GBA
 
         for (int i = 0; i < total_cycles; ++i)
         {
-            u32 interrupts = m_Memory.m_Interrupt.ie & m_Memory.m_Interrupt.if_;
+            u32 interrupts = Memory::m_Interrupt.ie & Memory::m_Interrupt.if_;
 
             // Only pause as long as (IE & IF) != 0
-            if (m_Memory.m_HaltState != Memory::HALTSTATE_NONE && interrupts != 0)
+            if (Memory::m_HaltState != Memory::HALTSTATE_NONE && interrupts != 0)
             {
                 // If IntrWait only resume if requested interrupt is encountered
-                if (!m_Memory.m_IntrWait || (interrupts & m_Memory.m_IntrWaitMask) != 0)
+                if (!Memory::m_IntrWait || (interrupts & Memory::m_IntrWaitMask) != 0)
                 {
-                    m_Memory.m_HaltState = Memory::HALTSTATE_NONE;
-                    m_Memory.m_IntrWait = false;
+                    Memory::m_HaltState = Memory::HALTSTATE_NONE;
+                    Memory::m_IntrWait = false;
                 }
             }
 
             // Raise an IRQ if neccessary
-            if (m_Memory.m_Interrupt.ime && interrupts)
+            if (Memory::m_Interrupt.ime && interrupts)
                 m_ARM.RaiseIRQ();
 
             // Run the hardware components
-            if (m_Memory.m_HaltState != Memory::HALTSTATE_STOP)
+            if (Memory::m_HaltState != Memory::HALTSTATE_STOP)
             {
                 int forward_steps = 0;
 
                 // Do next pending DMA transfer
-                m_Memory.RunDMA();
+                Memory::RunDMA();
 
-                if (m_Memory.m_HaltState != Memory::HALTSTATE_HALT)
+                if (Memory::m_HaltState != Memory::HALTSTATE_HALT)
                 {
                     m_ARM.cycles = 0;
                     m_ARM.Step();
@@ -128,32 +133,32 @@ namespace GBA
 
                 for (int j = 0; j < forward_steps + 1; j++)
                 {
-                    m_Memory.RunTimer();
+                    Memory::RunTimer();
 
-                    if (m_Memory.m_Video.m_WaitCycles == 0)
+                    if (Memory::m_Video.m_WaitCycles == 0)
                     {
-                        m_Memory.m_Video.Step();
+                        Memory::m_Video.Step();
 
-                        if (m_Memory.m_Video.m_RenderScanline && (i / FRAME_CYCLES) == m_SpeedMultiplier - 1)
+                        if (Memory::m_Video.m_RenderScanline && (i / FRAME_CYCLES) == m_SpeedMultiplier - 1)
                         {
-                            m_Memory.m_Video.Render();
+                            Memory::m_Video.Render();
                             m_DidRender = true;
                         }
                     }
                     else
-                        m_Memory.m_Video.m_WaitCycles--;
+                        Memory::m_Video.m_WaitCycles--;
 
                     if (((i + j) % 4) == 0)
                     {
-                        m_Memory.m_Audio.m_QuadChannel[0].Step();
-                        m_Memory.m_Audio.m_QuadChannel[1].Step();
-                        m_Memory.m_Audio.m_WaveChannel.Step();
+                        Memory::m_Audio.m_QuadChannel[0].Step();
+                        Memory::m_Audio.m_QuadChannel[1].Step();
+                        Memory::m_Audio.m_WaveChannel.Step();
                     }
 
-                    if (m_Memory.m_Audio.m_WaitCycles == 0)
-                        m_Memory.m_Audio.Step();
+                    if (Memory::m_Audio.m_WaitCycles == 0)
+                        Memory::m_Audio.Step();
                     else
-                        m_Memory.m_Audio.m_WaitCycles--;
+                        Memory::m_Audio.m_WaitCycles--;
                 }
 
                 i += forward_steps;
@@ -161,48 +166,24 @@ namespace GBA
         }
     }
 
-    ///////////////////////////////////////////////////////////
-    /// \author  Frederic Meyer
-    /// \date    July 31th, 2016
-    /// \fn      SetKeyState
-    ///
-    ///////////////////////////////////////////////////////////
     void GBA::SetKeyState(Key key, bool pressed)
     {
         if (pressed)
-            m_Memory.m_KeyInput &= ~(int)key;
+            Memory::m_KeyInput &= ~(int)key;
         else
-            m_Memory.m_KeyInput |= (int)key;
+            Memory::m_KeyInput |= (int)key;
     }
 
-    ///////////////////////////////////////////////////////////
-    /// \author  Frederic Meyer
-    /// \date    July 31th, 2016
-    /// \fn      SetSpeedUp
-    ///
-    ///////////////////////////////////////////////////////////
     void GBA::SetSpeedUp(int multiplier)
     {
         m_SpeedMultiplier = multiplier;
     }
 
-    ///////////////////////////////////////////////////////////
-    /// \author  Frederic Meyer
-    /// \date    July 31th, 2016
-    /// \fn      GetVideoBuffer
-    ///
-    ///////////////////////////////////////////////////////////
     u32* GBA::GetVideoBuffer()
     {
-        return m_Memory.m_Video.m_OutputBuffer;
+        return Memory::m_Video.m_OutputBuffer;
     }
 
-    ///////////////////////////////////////////////////////////
-    /// \author  Frederic Meyer
-    /// \date    July 31th, 2016
-    /// \fn      HasRendered
-    ///
-    ///////////////////////////////////////////////////////////
     bool GBA::HasRendered()
     {
         return m_DidRender;

@@ -61,6 +61,27 @@ namespace GBA
         0x04, 0xF0, 0x5E, 0xE2, 0x00, 0x00, 0xA0, 0xE1
     };
 
+    u8*    Memory::m_ROM;
+    size_t Memory::m_ROMSize;
+
+    u8 Memory::m_BIOS[0x4000];
+    u8 Memory::m_WRAM[0x40000];
+    u8 Memory::m_IRAM[0x8000];
+    Backup* Memory::m_Backup = nullptr;
+    Memory::SaveType Memory::m_SaveType = SAVE_NONE;
+
+    Memory::DMA       Memory::m_DMA[4];
+    Memory::Timer     Memory::m_Timer[4];
+    Memory::Waitstate Memory::m_Waitstate;
+
+    Interrupt Memory::m_Interrupt;
+    Memory::HaltState Memory::m_HaltState = HALTSTATE_NONE;
+    bool Memory::m_IntrWait = false;
+    bool Memory::m_IntrWaitMask = 0;
+
+    Video Memory::m_Video;
+    Audio Memory::m_Audio;
+    u16   Memory::m_KeyInput = 0x3FF;
 
     ///////////////////////////////////////////////////////////
     /// \author Frederic Meyer
@@ -81,21 +102,18 @@ namespace GBA
     ///////////////////////////////////////////////////////////
     void Memory::Init(string rom_file, string save_file, u8* bios, size_t bios_size)
     {
-        // Init memory buffers
-        memset(this->m_BIOS, 0, 0x4000);
-        memset(m_WRAM, 0, 0x40000);
-        memset(m_IRAM, 0, 0x8000);
+        Reset();
 
         // Load BIOS memory
         if (bios != nullptr)
         {
             if (bios_size > 0x4000)
                 throw runtime_error("BIOS file is too big.");
-            memcpy(this->m_BIOS, bios, bios_size);
+            memcpy(m_BIOS, bios, bios_size);
         }
         else
         {
-            memcpy(this->m_BIOS, HLE_BIOS, sizeof(HLE_BIOS));
+            memcpy(m_BIOS, HLE_BIOS, sizeof(HLE_BIOS));
         }
 
         if (!File::Exists(rom_file))
@@ -139,17 +157,27 @@ namespace GBA
         if (m_SaveType == SAVE_NONE)
         {
             m_SaveType = SAVE_SRAM;
+            m_Backup = new SRAM(save_file);
             LOG(LOG_WARN, "Save type not determinable, default to SRAM.");
         }
     }
 
-    ///////////////////////////////////////////////////////////
-    /// \author Frederic Meyer
-    /// \date   July 31th, 2016
-    /// \fn     Destructor
-    ///
-    ///////////////////////////////////////////////////////////
-    Memory::~Memory()
+    void Memory::Reset()
+    {
+        // Reset member state.
+        m_HaltState = HALTSTATE_NONE;
+        m_IntrWait = false;
+        m_IntrWaitMask = 0;
+        m_KeyInput = 0x3FF;
+        m_SaveType = SAVE_NONE;
+
+        // Reset memory buffers
+        memset(m_BIOS, 0, 0x4000);
+        memset(m_WRAM, 0, 0x40000);
+        memset(m_IRAM, 0, 0x8000);
+    }
+
+    void Memory::Shutdown()
     {
         delete m_ROM;
         delete m_Backup;
@@ -329,7 +357,7 @@ namespace GBA
     ///////////////////////////////////////////////////////////
     u8 Memory::ReadByte(u32 offset)
     {
-        return (this->*READ_TABLE[(offset >> 24) & 15])(offset);
+        return (*READ_TABLE[(offset >> 24) & 15])(offset);
     }
 
     ///////////////////////////////////////////////////////////
@@ -342,8 +370,8 @@ namespace GBA
     {
         register ReadFunction func = READ_TABLE[(offset >> 24) & 15];
 
-        return (this->*func)(offset) |
-               ((this->*func)(offset + 1) << 8);
+        return (*func)(offset) |
+               ((*func)(offset + 1) << 8);
     }
 
     ///////////////////////////////////////////////////////////
@@ -356,10 +384,10 @@ namespace GBA
     {
         register ReadFunction func = READ_TABLE[(offset >> 24) & 15];
 
-        return (this->*func)(offset) |
-               ((this->*func)(offset + 1) << 8) |
-               ((this->*func)(offset + 2) << 16) |
-               ((this->*func)(offset + 3) << 24);
+        return (*func)(offset) |
+               ((*func)(offset + 1) << 8) |
+               ((*func)(offset + 2) << 16) |
+               ((*func)(offset + 3) << 24);
     }
 
     ///////////////////////////////////////////////////////////
@@ -376,12 +404,12 @@ namespace GBA
         // Handle writes to memory that has 16-bit data bus only.
         if (page == 5 || page == 6 || page == 7)
         {
-            (this->*func)(offset & ~1      , value);
-            (this->*func)((offset & ~1) + 1, value);
+            (*func)(offset & ~1      , value);
+            (*func)((offset & ~1) + 1, value);
             return;
         }
 
-        (this->*func)(offset, value);
+        (*func)(offset, value);
     }
 
     ///////////////////////////////////////////////////////////
@@ -394,8 +422,8 @@ namespace GBA
     {
         register WriteFunction func = WRITE_TABLE[(offset >> 24) & 15];
 
-        (this->*func)(offset    , value & 0xFF);
-        (this->*func)(offset + 1, (value >> 8) & 0xFF);
+        (*func)(offset    , value & 0xFF);
+        (*func)(offset + 1, (value >> 8) & 0xFF);
     }
 
     ///////////////////////////////////////////////////////////
@@ -408,10 +436,10 @@ namespace GBA
     {
         register WriteFunction func = WRITE_TABLE[(offset >> 24) & 15];
 
-        (this->*func)(offset    , value);
-        (this->*func)(offset + 1, (value >> 8) & 0xFF);
-        (this->*func)(offset + 2, (value >> 16) & 0xFF);
-        (this->*func)(offset + 3, (value >> 24) & 0xFF);
+        (*func)(offset    , value);
+        (*func)(offset + 1, (value >> 8) & 0xFF);
+        (*func)(offset + 2, (value >> 16) & 0xFF);
+        (*func)(offset + 3, (value >> 24) & 0xFF);
     }
 
 }

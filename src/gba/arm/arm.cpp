@@ -27,11 +27,8 @@
 
 namespace GBA
 {
-    void ARM7::Init(Memory* memory, bool hle)
+    void ARM7::Init(bool hle)
     {
-        // Assign given memory instance to core
-        this->memory = memory;
-
         // Skip bios boot logo
         r[15] = 0x8000000;
         r13_usr = 0x3007F00;
@@ -124,17 +121,17 @@ namespace GBA
         if (thumb)
         {
             if (pipe.status == 0)
-                pipe.opcode[2] = memory->ReadHWord(r[15]);
+                pipe.opcode[2] = Memory::ReadHWord(r[15]);
             else
-                pipe.opcode[pipe.status - 1] = memory->ReadHWord(r[15]);
+                pipe.opcode[pipe.status - 1] = Memory::ReadHWord(r[15]);
             ExecuteThumb(pipe.opcode[pipe.status]);
         }
         else
         {
             if (pipe.status == 0)
-                pipe.opcode[2] = memory->ReadWord(r[15]);
+                pipe.opcode[2] = Memory::ReadWord(r[15]);
             else
-                pipe.opcode[pipe.status - 1] = memory->ReadWord(r[15]);
+                pipe.opcode[pipe.status - 1] = Memory::ReadWord(r[15]);
             Execute(pipe.opcode[pipe.status], Decode(pipe.opcode[pipe.status]));
         }
 
@@ -290,7 +287,7 @@ namespace GBA
             bool thumb = cpsr & ThumbFlag;
 
             // "Useless" pipeline prefetch
-            cycles += memory->SequentialAccess(r[15], thumb ? Memory::ACCESS_HWORD :
+            cycles += Memory::SequentialAccess(r[15], thumb ? Memory::ACCESS_HWORD :
                                                               Memory::ACCESS_WORD);
 
             // Store return address in r14<irq>
@@ -309,8 +306,8 @@ namespace GBA
             RefillPipeline();
 
             // Emulate pipeline refill timings
-            cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_WORD) +
-                      memory->SequentialAccess(r[15] + 4, Memory::ACCESS_WORD);
+            cycles += Memory::NonSequentialAccess(r[15], Memory::ACCESS_WORD) +
+                      Memory::SequentialAccess(r[15] + 4, Memory::ACCESS_WORD);
         }
     }
 
@@ -336,16 +333,16 @@ namespace GBA
             r[0] = 1;
             r[1] = 1;
         case 0x04:
-            memory->m_Interrupt.ime = 1;
+            Memory::m_Interrupt.ime = 1;
 
             // If r0 is one IF must be cleared
             if (r[0] == 1)
-                memory->m_Interrupt.if_ = 0;
+                Memory::m_Interrupt.if_ = 0;
 
             // Sets GBA into halt state, waiting for specific interrupt(s) to occur.
-            memory->m_IntrWait = true;
-            memory->m_IntrWaitMask = r[1];
-            memory->m_HaltState = Memory::HALTSTATE_HALT;
+            Memory::m_IntrWait = true;
+            Memory::m_IntrWaitMask = r[1];
+            Memory::m_HaltState = Memory::HALTSTATE_HALT;
             break;
         case 0x0B:
         {
@@ -392,13 +389,13 @@ namespace GBA
         case 0x11:
         case 0x12:
         {
-            int amount = memory->ReadWord(r[0]) >> 8;
+            int amount = Memory::ReadWord(r[0]) >> 8;
             u32 source = r[0] + 4;
             u32 dest = r[1];
 
             while (amount > 0)
             {
-                u8 encoder = memory->ReadByte(source++);
+                u8 encoder = Memory::ReadByte(source++);
 
                 // Process 8 blocks encoded by the encoder
                 for (int i = 7; i >= 0; i--)
@@ -406,15 +403,15 @@ namespace GBA
                     if (encoder & (1 << i))
                     {
                         // Compressed
-                        u16 value = memory->ReadHWord(source);
+                        u16 value = Memory::ReadHWord(source);
                         u32 disp = (value >> 8) | ((value & 0xF) << 8);
                         u32 n = ((value >> 4) & 0xF) + 3;
                         source += 2;
 
                         for (u32 j = 0; j < n; j++)
                         {
-                            u16 value = memory->ReadByte(dest - disp - 1);
-                            memory->WriteHWord(dest, value);
+                            u16 value = Memory::ReadByte(dest - disp - 1);
+                            Memory::WriteHWord(dest, value);
                             dest++;
                             amount--;
                             if (amount == 0)
@@ -424,8 +421,8 @@ namespace GBA
                     else
                     {
                         // Uncompressed
-                        u8 value = memory->ReadByte(source++);
-                        memory->WriteHWord(dest++, value);
+                        u8 value = Memory::ReadByte(source++);
+                        Memory::WriteHWord(dest++, value);
                         amount--;
                         if (amount == 0)
                             return;

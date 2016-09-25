@@ -183,7 +183,7 @@ namespace GBA
             }
 
             // Calculate instruction timing
-            cycles += memory->SequentialAccess(r[15], Memory::ACCESS_WORD);
+            cycles += Memory::SequentialAccess(r[15], Memory::ACCESS_WORD);
             return;
         }
         case ARM_2:
@@ -243,7 +243,7 @@ namespace GBA
             }         
             
             // Calculate instruction timing
-            cycles += memory->SequentialAccess(r[15], Memory::ACCESS_WORD);
+            cycles += Memory::SequentialAccess(r[15], Memory::ACCESS_WORD);
             return;
         }
         case ARM_3:
@@ -259,16 +259,16 @@ namespace GBA
                 cpsr |= ThumbFlag;
 
                 // Emulate pipeline refill cycles
-                cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                          memory->SequentialAccess(r[15] + 2, Memory::ACCESS_HWORD);
+                cycles += Memory::NonSequentialAccess(r[15], Memory::ACCESS_HWORD) +
+                          Memory::SequentialAccess(r[15] + 2, Memory::ACCESS_HWORD);
             }
             else
             {
                 r[15] = reg(reg_address) & ~3;
 
                 // Emulate pipeline refill cycles
-                cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_WORD) +
-                          memory->SequentialAccess(r[15] + 4, Memory::ACCESS_WORD);
+                cycles += Memory::NonSequentialAccess(r[15], Memory::ACCESS_WORD) +
+                          Memory::SequentialAccess(r[15] + 4, Memory::ACCESS_WORD);
             }
 
             // Flush pipeline
@@ -299,9 +299,9 @@ namespace GBA
                 reg(reg_dest) = memory_value;
 
                 // Calculate instruction timing
-                cycles += 1 + memory->SequentialAccess(r[15], Memory::ACCESS_WORD) +
-                              memory->NonSequentialAccess(reg(reg_base), Memory::ACCESS_BYTE) +
-                              memory->NonSequentialAccess(reg(reg_source), Memory::ACCESS_BYTE);
+                cycles += 1 + Memory::SequentialAccess(r[15], Memory::ACCESS_WORD) +
+                              Memory::NonSequentialAccess(reg(reg_base), Memory::ACCESS_BYTE) +
+                              Memory::NonSequentialAccess(reg(reg_source), Memory::ACCESS_BYTE);
             }
             else
             {
@@ -312,9 +312,9 @@ namespace GBA
                 reg(reg_dest) = memory_value;
 
                 // Calculate instruction timing
-                cycles += 1 + memory->SequentialAccess(r[15], Memory::ACCESS_WORD) +
-                              memory->NonSequentialAccess(reg(reg_base), Memory::ACCESS_WORD) +
-                              memory->NonSequentialAccess(reg(reg_source), Memory::ACCESS_WORD);
+                cycles += 1 + Memory::SequentialAccess(r[15], Memory::ACCESS_WORD) +
+                              Memory::NonSequentialAccess(reg(reg_base), Memory::ACCESS_WORD) +
+                              Memory::NonSequentialAccess(reg(reg_source), Memory::ACCESS_WORD);
             }
             return;
         }
@@ -375,8 +375,8 @@ namespace GBA
                     value = ReadHWordSigned(address);
 
                     // Calculate instruction timing
-                    cycles += 1 + memory->SequentialAccess(r[15], Memory::ACCESS_WORD) +
-                                  memory->NonSequentialAccess(address, Memory::ACCESS_HWORD);
+                    cycles += 1 + Memory::SequentialAccess(r[15], Memory::ACCESS_WORD) +
+                                  Memory::NonSequentialAccess(address, Memory::ACCESS_HWORD);
                 }
                 else
                 {
@@ -387,8 +387,8 @@ namespace GBA
                         value |= 0xFFFFFF00;
 
                     // Calculate instruction timing
-                    cycles += 1 + memory->SequentialAccess(r[15], Memory::ACCESS_WORD) +
-                                  memory->NonSequentialAccess(address, Memory::ACCESS_BYTE);
+                    cycles += 1 + Memory::SequentialAccess(r[15], Memory::ACCESS_WORD) +
+                                  Memory::NonSequentialAccess(address, Memory::ACCESS_BYTE);
                 }
                     
                 // Write result to rDEST.
@@ -399,8 +399,8 @@ namespace GBA
                 reg(reg_dest) = ReadHWord(address);
 
                 // Calculate instruction timing
-                cycles += 1 + memory->SequentialAccess(r[15], Memory::ACCESS_WORD) +
-                              memory->NonSequentialAccess(address, Memory::ACCESS_HWORD);
+                cycles += 1 + Memory::SequentialAccess(r[15], Memory::ACCESS_WORD) +
+                              Memory::NonSequentialAccess(address, Memory::ACCESS_HWORD);
             }
             else
             {
@@ -410,8 +410,8 @@ namespace GBA
                     WriteHWord(address, reg(reg_dest));
 
                 // Calculate instruction timing
-                cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_WORD) +
-                          memory->NonSequentialAccess(address, Memory::ACCESS_HWORD);
+                cycles += Memory::NonSequentialAccess(r[15], Memory::ACCESS_WORD) +
+                          Memory::NonSequentialAccess(address, Memory::ACCESS_HWORD);
             }
 
             // When the instruction either is pre-indexed and has the write-back bit
@@ -490,7 +490,7 @@ namespace GBA
                 }
 
                 // Calculate instruction timing
-                cycles += memory->SequentialAccess(r[15], Memory::ACCESS_WORD);
+                cycles += Memory::SequentialAccess(r[15], Memory::ACCESS_WORD);
             }
             else
             {
@@ -503,7 +503,7 @@ namespace GBA
                 u32 operand2;
 
                 // Instruction prefetch timing
-                cycles += memory->SequentialAccess(r[15], Memory::ACCESS_WORD);
+                cycles += Memory::SequentialAccess(r[15], Memory::ACCESS_WORD);
 
                 // Operand 2 may be an immediate value or a shifted register.
                 if (immediate)
@@ -821,8 +821,8 @@ namespace GBA
                     pipe.flush = true;
 
                     // Emulate pipeline flush timings
-                    cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_WORD) +
-                              memory->SequentialAccess(r[15] + 4, Memory::ACCESS_WORD);
+                    cycles += Memory::NonSequentialAccess(r[15], Memory::ACCESS_WORD) +
+                              Memory::SequentialAccess(r[15] + 4, Memory::ACCESS_WORD);
                 }
             }
             return;
@@ -908,16 +908,16 @@ namespace GBA
                     reg(reg_dest) = ReadByte(address);
 
                     // Calculate instruction timing
-                    cycles += 1 + memory->SequentialAccess(r[15], Memory::ACCESS_WORD) +
-                                  memory->NonSequentialAccess(address, Memory::ACCESS_BYTE);
+                    cycles += 1 + Memory::SequentialAccess(r[15], Memory::ACCESS_WORD) +
+                                  Memory::NonSequentialAccess(address, Memory::ACCESS_BYTE);
                 }
                 else
                 {
                     reg(reg_dest) = ReadWordRotated(address);
 
                     // Calculate instruction timing
-                    cycles += 1 + memory->SequentialAccess(r[15], Memory::ACCESS_WORD) +
-                                  memory->NonSequentialAccess(address, Memory::ACCESS_WORD);
+                    cycles += 1 + Memory::SequentialAccess(r[15], Memory::ACCESS_WORD) +
+                                  Memory::NonSequentialAccess(address, Memory::ACCESS_WORD);
                 }
 
                 // Writing to r15 causes a pipeline-flush.    
@@ -926,8 +926,8 @@ namespace GBA
                     pipe.flush = true;
 
                     // Emulate pipeline refill timings
-                    cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_WORD) +
-                              memory->SequentialAccess(r[15] + 4, Memory::ACCESS_WORD);
+                    cycles += Memory::NonSequentialAccess(r[15], Memory::ACCESS_WORD) +
+                              Memory::SequentialAccess(r[15] + 4, Memory::ACCESS_WORD);
                 }
             }
             else
@@ -944,16 +944,16 @@ namespace GBA
                     WriteByte(address, value & 0xFF);
 
                     // Calculate instruction timing
-                    cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_WORD) +
-                              memory->NonSequentialAccess(address, Memory::ACCESS_BYTE);
+                    cycles += Memory::NonSequentialAccess(r[15], Memory::ACCESS_WORD) +
+                              Memory::NonSequentialAccess(address, Memory::ACCESS_BYTE);
                 }
                 else
                 {
                     WriteWord(address, value);
 
                     // Calculate instruction timing
-                    cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_WORD) +
-                              memory->NonSequentialAccess(address, Memory::ACCESS_WORD);
+                    cycles += Memory::NonSequentialAccess(r[15], Memory::ACCESS_WORD) +
+                              Memory::NonSequentialAccess(address, Memory::ACCESS_WORD);
                 }
             }
 
@@ -1039,7 +1039,7 @@ namespace GBA
             }
 
             // One non-sequential prefetch cycle
-            cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_HWORD);
+            cycles += Memory::NonSequentialAccess(r[15], Memory::ACCESS_HWORD);
 
             if (increment_base)
             {

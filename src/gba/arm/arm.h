@@ -36,8 +36,6 @@ namespace GBA
     {
         typedef void (ARM7::*ThumbInstruction)(u16);
         static const ThumbInstruction thumb_table[1024];
-
-        Memory* memory;
         
         // General Purpose Registers
         u32 r[16] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -153,16 +151,16 @@ namespace GBA
         }
 
         inline u8 ReadByte(u32 offset)
-            { return memory->ReadByte(offset); }
+            { return Memory::ReadByte(offset); }
 
         inline u32 ReadHWord(u32 offset)
         {
             if (offset & 1)
             {
-                u32 value = memory->ReadHWord(offset & ~1);
+                u32 value = Memory::ReadHWord(offset & ~1);
                 return (value >> 8) | (value << 24); 
             }        
-            return memory->ReadHWord(offset);
+            return Memory::ReadHWord(offset);
         }
 
         inline u32 ReadHWordSigned(u32 offset)
@@ -170,13 +168,13 @@ namespace GBA
             u32 value = 0;        
             if (offset & 1) 
             {
-                value = memory->ReadByte(offset);
+                value = Memory::ReadByte(offset);
                 if (value & 0x80) 
                     value |= 0xFFFFFF00;
             }
             else 
             {
-                value = memory->ReadHWord(offset);
+                value = Memory::ReadHWord(offset);
                 if (value & 0x8000)
                     value |= 0xFFFF0000;
             }
@@ -184,7 +182,7 @@ namespace GBA
         }
 
         inline u32 ReadWord(u32 offset)
-            { return memory->ReadWord(offset & ~3); }
+            { return Memory::ReadWord(offset & ~3); }
 
         inline u32 ReadWordRotated(u32 offset)
         {
@@ -194,32 +192,32 @@ namespace GBA
         }
 
         inline void WriteByte(u32 offset, u8 value)
-            { memory->WriteByte(offset, value); }
+            { Memory::WriteByte(offset, value); }
 
         inline void WriteHWord(u32 offset, u16 value)
         {
             offset &= ~1;
-            memory->WriteHWord(offset, value);
+            Memory::WriteHWord(offset, value);
         }
 
         inline void WriteWord(u32 offset, u32 value)
         {
             offset &= ~3;
-            memory->WriteWord(offset, value);
+            Memory::WriteWord(offset, value);
         }
 
         inline void RefillPipeline()
         {
             if (cpsr & ThumbFlag)
             {
-                pipe.opcode[0] = memory->ReadHWord(r[15]);
-                pipe.opcode[1] = memory->ReadHWord(r[15] + 2);
+                pipe.opcode[0] = Memory::ReadHWord(r[15]);
+                pipe.opcode[1] = Memory::ReadHWord(r[15] + 2);
                 r[15] += 4;
             }
             else
             {
-                pipe.opcode[0] = memory->ReadWord(r[15]);
-                pipe.opcode[1] = memory->ReadWord(r[15] + 4);
+                pipe.opcode[0] = Memory::ReadWord(r[15]);
+                pipe.opcode[1] = Memory::ReadWord(r[15] + 4);
                 r[15] += 8;
             }
         }
@@ -332,7 +330,7 @@ namespace GBA
         int cycles {0};
 
         // Constructors
-        void Init(Memory* memory, bool use_bios);
+        void Init(bool use_bios);
         
         // Execution functions
         void Step();
