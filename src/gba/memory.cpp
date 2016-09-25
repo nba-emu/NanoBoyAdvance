@@ -391,5 +391,4 @@ namespace GBA
         func(offset + 2, (value >> 16) & 0xFF);
         func(offset + 3, (value >> 24) & 0xFF);
     }
-
 }

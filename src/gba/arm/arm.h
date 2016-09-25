@@ -72,155 +72,25 @@ namespace GBA
         
         bool hle;
         
-        inline void CalculateSign(u32 result)
-            { cpsr = result & 0x80000000 ? (cpsr | SignFlag) : (cpsr & ~SignFlag); }
+        void CalculateSign(u32 result);
+        void CalculateZero(u64 result);
+        void AssertCarry(bool carry);
+        void CalculateOverflowAdd(u32 result, u32 operand1, u32 operand2);
+        void CalculateOverflowSub(u32 result, u32 operand1, u32 operand2);
+        static void LSL(u32& operand, u32 amount, bool& carry);
+        static void LSR(u32& operand, u32 amount, bool& carry, bool immediate);
+        static void ASR(u32& operand, u32 amount, bool& carry, bool immediate);
+        static void ROR(u32& operand, u32 amount, bool& carry, bool immediate);
 
-        inline void CalculateZero(u64 result)
-            { cpsr = result == 0 ? (cpsr | ZeroFlag) : (cpsr & ~ZeroFlag); }
-
-        inline void AssertCarry(bool carry)
-            { cpsr = carry ? (cpsr | CarryFlag) : (cpsr & ~CarryFlag); }
-
-        inline void CalculateOverflowAdd(u32 result, u32 operand1, u32 operand2)
-        {
-            bool overflow = !(((operand1) ^ (operand2)) >> 31) && ((result) ^ (operand2)) >> 31;
-            cpsr = overflow ? (cpsr | OverflowFlag) : (cpsr & ~OverflowFlag);
-        }
-
-        inline void CalculateOverflowSub(u32 result, u32 operand1, u32 operand2)
-        {
-            bool overflow = ((operand1) ^ (operand2)) >> 31 && !(((result) ^ (operand2)) >> 31);
-            cpsr = overflow ? (cpsr | OverflowFlag) : (cpsr & ~OverflowFlag);
-        }
-
-        static inline void LSL(u32& operand, u32 amount, bool& carry)
-        {
-            if (amount == 0) return;
-
-            for (u32 i = 0; i < amount; i++)
-            {
-                carry = operand & 0x80000000 ? true : false;
-                operand <<= 1;
-            }
-        }
-
-        static inline void LSR(u32& operand, u32 amount, bool& carry, bool immediate)
-        {
-            // LSR #0 equals to LSR #32
-            amount = immediate & (amount == 0) ? 32 : amount;
-
-            for (u32 i = 0; i < amount; i++)
-            {
-                carry = operand & 1 ? true : false;
-                operand >>= 1;
-            }
-        }
-
-        static inline void ASR(u32& operand, u32 amount, bool& carry, bool immediate)
-        {
-            u32 sign_bit = operand & 0x80000000;
-
-            // ASR #0 equals to ASR #32
-            amount = (immediate && (amount == 0)) ? 32 : amount;
-
-            for (u32 i = 0; i < amount; i++)
-            {
-                carry = operand & 1 ? true : false;
-                operand = (operand >> 1) | sign_bit;
-            }
-        }
-
-        static inline void ROR(u32& operand, u32 amount, bool& carry, bool immediate)
-        {
-            // ROR #0 equals to RRX #1
-            if (amount != 0 || !immediate)
-            {
-                for (u32 i = 1; i <= amount; i++)
-                {
-                    u32 high_bit = (operand & 1) ? 0x80000000 : 0;
-                    operand = (operand >> 1) | high_bit;
-                    carry = high_bit == 0x80000000;
-                }
-            }
-            else
-            {
-                bool old_carry = carry;
-                carry = (operand & 1) ? true : false;
-                operand = (operand >> 1) | (old_carry ? 0x80000000 : 0);
-            }
-        }
-
-        inline u8 ReadByte(u32 offset)
-            { return Memory::ReadByte(offset); }
-
-        inline u32 ReadHWord(u32 offset)
-        {
-            if (offset & 1)
-            {
-                u32 value = Memory::ReadHWord(offset & ~1);
-                return (value >> 8) | (value << 24); 
-            }        
-            return Memory::ReadHWord(offset);
-        }
-
-        inline u32 ReadHWordSigned(u32 offset)
-        {
-            u32 value = 0;        
-            if (offset & 1) 
-            {
-                value = Memory::ReadByte(offset);
-                if (value & 0x80) 
-                    value |= 0xFFFFFF00;
-            }
-            else 
-            {
-                value = Memory::ReadHWord(offset);
-                if (value & 0x8000)
-                    value |= 0xFFFF0000;
-            }
-            return value;
-        }
-
-        inline u32 ReadWord(u32 offset)
-            { return Memory::ReadWord(offset & ~3); }
-
-        inline u32 ReadWordRotated(u32 offset)
-        {
-            u32 value = ReadWord(offset & ~3);
-            int amount = (offset & 3) * 8;
-            return amount == 0 ? value : ((value >> amount) | (value << (32 - amount)));
-        }
-
-        inline void WriteByte(u32 offset, u8 value)
-            { Memory::WriteByte(offset, value); }
-
-        inline void WriteHWord(u32 offset, u16 value)
-        {
-            offset &= ~1;
-            Memory::WriteHWord(offset, value);
-        }
-
-        inline void WriteWord(u32 offset, u32 value)
-        {
-            offset &= ~3;
-            Memory::WriteWord(offset, value);
-        }
-
-        inline void RefillPipeline()
-        {
-            if (cpsr & ThumbFlag)
-            {
-                pipe.opcode[0] = Memory::ReadHWord(r[15]);
-                pipe.opcode[1] = Memory::ReadHWord(r[15] + 2);
-                r[15] += 4;
-            }
-            else
-            {
-                pipe.opcode[0] = Memory::ReadWord(r[15]);
-                pipe.opcode[1] = Memory::ReadWord(r[15] + 4);
-                r[15] += 8;
-            }
-        }
+        u8 ReadByte(u32 offset);
+        u32 ReadHWord(u32 offset);
+        u32 ReadHWordSigned(u32 offset);
+        u32 ReadWord(u32 offset);
+        u32 ReadWordRotated(u32 offset);
+        void WriteByte(u32 offset, u8 value);
+        void WriteHWord(u32 offset, u16 value);
+        void WriteWord(u32 offset, u32 value);
+        void RefillPipeline();
 
         // Saves/loads registers of current mode
         void SaveRegisters();
@@ -284,6 +154,7 @@ namespace GBA
         // Command processing
         int Decode(u32 instruction);
         void Execute(u32 instruction, int type);
+
         inline void ExecuteThumb(u16 instruction)
         {
             (this->*thumb_table[instruction >> 6])(instruction);
@@ -345,3 +216,5 @@ namespace GBA
         void SetSavedStatusRegister(Mode mode, u32 value);     
     };
 }
+
+#include "arm.inl"

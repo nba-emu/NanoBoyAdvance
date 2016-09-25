@@ -22,6 +22,7 @@ set(SRCS
 set(HEADERS
     gba.h
     arm/arm.h
+    arm/arm.inl
     io.h
     interrupt.h
     dma.h

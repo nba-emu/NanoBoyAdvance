@@ -69,4 +69,5 @@ namespace GBA
     };
 }
 
+
 #endif // __NBA_DMA_H__
