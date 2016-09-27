@@ -25,9 +25,12 @@
 #include "arm.h"
 
 
+// Artifact of old code. Remove when I got time.
+#define reg(i) this->m_State.m_R[i]
+
 namespace GBA
 {
-    const ARM7::ThumbInstruction ARM7::thumb_table[1024] =
+    const ARM7::ThumbInstruction ARM7::THUMB_TABLE[1024] =
     {
         /* THUMB.1 Move shifted register */
         &ARM7::Thumb1<0,0>,  &ARM7::Thumb1<1,0>,  &ARM7::Thumb1<2,0>,  &ARM7::Thumb1<3,0>,
@@ -333,7 +336,7 @@ namespace GBA
         // THUMB.1 Move shifted register
         int reg_dest = instruction & 7;
         int reg_source = (instruction >> 3) & 7;
-        bool carry = cpsr & CarryFlag;
+        bool carry = m_State.m_CPSR & MASK_CFLAG;
 
         reg(reg_dest) = reg(reg_source);
 
@@ -360,7 +363,7 @@ namespace GBA
         CalculateZero(reg(reg_dest));
 
         // Update cycle counter
-        cycles += memory->SequentialAccess(r[15], Memory::ACCESS_HWORD);
+        cycles += Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD);
     }
 
     template <bool immediate, bool subtract, int field3>
@@ -405,7 +408,7 @@ namespace GBA
         }
 
         // Update cycle counter
-        cycles += memory->SequentialAccess(r[15], Memory::ACCESS_HWORD);
+        cycles += Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD);
     }
 
     template <int op, int reg_dest>
@@ -454,7 +457,7 @@ namespace GBA
         }
 
         // Update cycle counter
-        cycles += memory->SequentialAccess(r[15], Memory::ACCESS_HWORD);
+        cycles += Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD);
     }
 
     template <int op>
@@ -479,7 +482,7 @@ namespace GBA
         case 0b0010: // LSL
         {
             u32 amount = reg(reg_source);
-            bool carry = cpsr & CarryFlag;
+            bool carry = m_State.m_CPSR & MASK_CFLAG;
             LSL(reg(reg_dest), amount, carry);
             AssertCarry(carry);
             CalculateSign(reg(reg_dest));
@@ -490,7 +493,7 @@ namespace GBA
         case 0b0011: // LSR
         {
             u32 amount = reg(reg_source);
-            bool carry = cpsr & CarryFlag;
+            bool carry = m_State.m_CPSR & MASK_CFLAG;
             LSR(reg(reg_dest), amount, carry, false);
             AssertCarry(carry);
             CalculateSign(reg(reg_dest));
@@ -501,7 +504,7 @@ namespace GBA
         case 0b0100: // ASR
         {
             u32 amount = reg(reg_source);
-            bool carry = cpsr & CarryFlag;
+            bool carry = m_State.m_CPSR & MASK_CFLAG;
             ASR(reg(reg_dest), amount, carry, false);
             AssertCarry(carry);
             CalculateSign(reg(reg_dest));
@@ -511,7 +514,7 @@ namespace GBA
         }
         case 0b0101: // ADC
         {
-            int carry = (cpsr >> 29) & 1;
+            int carry = (m_State.m_CPSR >> 29) & 1;
             u32 result = reg(reg_dest) + reg(reg_source) + carry;
             u64 result_long = (u64)(reg(reg_dest)) + (u64)(reg(reg_source)) + (u64)carry;
             AssertCarry(result_long & 0x100000000);
@@ -523,7 +526,7 @@ namespace GBA
         }
         case 0b0110: // SBC
         {
-            int carry = (cpsr >> 29) & 1;
+            int carry = (m_State.m_CPSR >> 29) & 1;
             u32 result = reg(reg_dest) - reg(reg_source) + carry - 1;
             AssertCarry(reg(reg_dest) >= (reg(reg_source) + carry - 1));
             CalculateOverflowSub(result, reg(reg_dest), reg(reg_source));
@@ -535,7 +538,7 @@ namespace GBA
         case 0b0111: // ROR
         {
             u32 amount = reg(reg_source);
-            bool carry = cpsr & CarryFlag;
+            bool carry = m_State.m_CPSR & MASK_CFLAG;
             ROR(reg(reg_dest), amount, carry, false);
             AssertCarry(carry);
             CalculateSign(reg(reg_dest));
@@ -604,7 +607,7 @@ namespace GBA
         }
 
         // Update cycle counter
-        cycles += memory->SequentialAccess(r[15], Memory::ACCESS_HWORD);
+        cycles += Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD);
     }
 
     template <int op, bool high1, bool high2>
@@ -623,7 +626,7 @@ namespace GBA
         if (reg_source == 15) operand &= ~1;
 
         // Time next pipeline prefetch
-        cycles += memory->SequentialAccess(r[15], Memory::ACCESS_HWORD);
+        cycles += Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD);
 
         // Perform the actual operation
         switch (op)
@@ -649,24 +652,24 @@ namespace GBA
             // that the destination instruction is in THUMB mode.
             if (operand & 1)
             {
-                r[15] = operand & ~1;
+                m_State.m_R[15] = operand & ~1;
 
                 // Emulate pipeline refill cycles
-                cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                        memory->SequentialAccess(r[15] + 2, Memory::ACCESS_HWORD);
+                cycles += Memory::NonSequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                          Memory::SequentialAccess(m_State.m_R[15] + 2, ACCESS_HWORD);
             }
             else
             {
-                cpsr &= ~ThumbFlag;
-                r[15] = operand & ~3;
+                m_State.m_CPSR &= ~MASK_THUMB;
+                m_State.m_R[15] = operand & ~3;
 
                 // Emulate pipeline refill cycles
-                cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_WORD) +
-                        memory->SequentialAccess(r[15] + 4, Memory::ACCESS_WORD);
+                cycles += Memory::NonSequentialAccess(m_State.m_R[15], ACCESS_WORD) +
+                          Memory::SequentialAccess(m_State.m_R[15] + 4, ACCESS_WORD);
             }
 
             // Flush pipeline
-            pipe.flush = true;
+            m_Pipe.m_Flush = true;
             break;
         }
 
@@ -674,11 +677,11 @@ namespace GBA
         {
             // Flush pipeline
             reg(reg_dest) &= ~1;
-            pipe.flush = true;
+            m_Pipe.m_Flush = true;
 
             // Emulate pipeline refill cycles
-            cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                    memory->SequentialAccess(r[15] + 2, Memory::ACCESS_HWORD);
+            cycles += Memory::NonSequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                      Memory::SequentialAccess(m_State.m_R[15] + 2, ACCESS_HWORD);
         }
     }
 
@@ -687,12 +690,12 @@ namespace GBA
     {
         // THUMB.6 PC-relative load
         u32 immediate_value = instruction & 0xFF;
-        u32 address = (r[15] & ~2) + (immediate_value << 2);
+        u32 address = (m_State.m_R[15] & ~2) + (immediate_value << 2);
 
         reg(reg_dest) = ReadWord(address);
 
-        cycles += 1 + memory->SequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                      memory->NonSequentialAccess(address, Memory::ACCESS_WORD);
+        cycles += 1 + Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                      Memory::NonSequentialAccess(address, ACCESS_WORD);
     }
 
     template <int op, int reg_offset>
@@ -708,23 +711,23 @@ namespace GBA
         {
         case 0b00: // STR
             WriteWord(address, reg(reg_dest));
-            cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                      memory->NonSequentialAccess(address, Memory::ACCESS_WORD);
+            cycles += Memory::NonSequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                      Memory::NonSequentialAccess(address, ACCESS_WORD);
             break;
         case 0b01: // STRB
             WriteByte(address, reg(reg_dest) & 0xFF);
-            cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                      memory->NonSequentialAccess(address, Memory::ACCESS_BYTE);
+            cycles += Memory::NonSequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                      Memory::NonSequentialAccess(address, ACCESS_BYTE);
             break;
         case 0b10: // LDR
             reg(reg_dest) = ReadWordRotated(address);
-            cycles += 1 + memory->SequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                          memory->NonSequentialAccess(address, Memory::ACCESS_WORD);
+            cycles += 1 + Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                          Memory::NonSequentialAccess(address, ACCESS_WORD);
             break;
         case 0b11: // LDRB
             reg(reg_dest) = ReadByte(address);
-            cycles += 1 + memory->SequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                          memory->NonSequentialAccess(address, Memory::ACCESS_BYTE);
+            cycles += 1 + Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                          Memory::NonSequentialAccess(address, ACCESS_BYTE);
             break;
         }
     }
@@ -741,8 +744,8 @@ namespace GBA
         {
         case 0b00: // STRH
             WriteHWord(address, reg(reg_dest));
-            cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                    memory->NonSequentialAccess(address, Memory::ACCESS_HWORD);
+            cycles += Memory::NonSequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                    Memory::NonSequentialAccess(address, ACCESS_HWORD);
             break;
         case 0b01: // LDSB
             reg(reg_dest) = ReadByte(address);
@@ -750,21 +753,21 @@ namespace GBA
             if (reg(reg_dest) & 0x80)
                 reg(reg_dest) |= 0xFFFFFF00;
 
-            cycles += 1 + memory->SequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                        memory->NonSequentialAccess(address, Memory::ACCESS_BYTE);
+            cycles += 1 + Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                        Memory::NonSequentialAccess(address, ACCESS_BYTE);
             break;
         case 0b10: // LDRH
             reg(reg_dest) = ReadHWord(address);
-            cycles += 1 + memory->SequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                        memory->NonSequentialAccess(address, Memory::ACCESS_HWORD);
+            cycles += 1 + Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                        Memory::NonSequentialAccess(address, ACCESS_HWORD);
             break;
         case 0b11: // LDSH
             reg(reg_dest) = ReadHWordSigned(address);
 
             // Uff... we should check wether ReadHWordSigned reads a
             // byte or a hword. However this should never really make difference.
-            cycles += 1 + memory->SequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                        memory->NonSequentialAccess(address, Memory::ACCESS_HWORD);
+            cycles += 1 + Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                        Memory::NonSequentialAccess(address, ACCESS_HWORD);
             break;
         }
     }
@@ -781,29 +784,29 @@ namespace GBA
         case 0b00: { // STR
             u32 address = reg(reg_base) + (imm << 2);
             WriteWord(address, reg(reg_dest));
-            cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                      memory->NonSequentialAccess(address, Memory::ACCESS_WORD);
+            cycles += Memory::NonSequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                      Memory::NonSequentialAccess(address, ACCESS_WORD);
             break;
         }
         case 0b01: { // LDR
             u32 address = reg(reg_base) + (imm << 2);
             reg(reg_dest) = ReadWordRotated(address);
-            cycles += 1 + memory->SequentialAccess(r[15],  Memory::ACCESS_HWORD) +
-                          memory->NonSequentialAccess(address, Memory::ACCESS_WORD);
+            cycles += 1 + Memory::SequentialAccess(m_State.m_R[15],  ACCESS_HWORD) +
+                          Memory::NonSequentialAccess(address, ACCESS_WORD);
             break;
         }
         case 0b10: { // STRB
             u32 address = reg(reg_base) + imm;
             WriteByte(address, reg(reg_dest));
-            cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                      memory->NonSequentialAccess(address, Memory::ACCESS_BYTE);
+            cycles += Memory::NonSequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                      Memory::NonSequentialAccess(address, ACCESS_BYTE);
             break;
         }
         case 0b11: { // LDRB
             u32 address = reg(reg_base) + imm;
             reg(reg_dest) = ReadByte(address);
-            cycles += 1 + memory->SequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                          memory->NonSequentialAccess(address, Memory::ACCESS_BYTE);
+            cycles += 1 + Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                          Memory::NonSequentialAccess(address, ACCESS_BYTE);
             break;
         }
         }
@@ -820,14 +823,14 @@ namespace GBA
         if (load)
         {
             reg(reg_dest) = ReadHWord(address); // TODO: alignment?
-            cycles += 1 + memory->SequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                          memory->NonSequentialAccess(address, Memory::ACCESS_WORD);
+            cycles += 1 + Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                          Memory::NonSequentialAccess(address, ACCESS_WORD);
         }
         else
         {
             WriteHWord(address, reg(reg_dest));
-            cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                      memory->NonSequentialAccess(address, Memory::ACCESS_WORD);
+            cycles += Memory::NonSequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                      Memory::NonSequentialAccess(address, ACCESS_WORD);
         }
     }
 
@@ -842,14 +845,14 @@ namespace GBA
         if (load)
         {
             reg(reg_dest) = ReadWordRotated(address);
-            cycles += 1 + memory->SequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                          memory->NonSequentialAccess(address, Memory::ACCESS_WORD);
+            cycles += 1 + Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                          Memory::NonSequentialAccess(address, ACCESS_WORD);
         }
         else
         {
             WriteWord(address, reg(reg_dest));
-            cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                      memory->NonSequentialAccess(address, Memory::ACCESS_WORD);
+            cycles += Memory::NonSequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                      Memory::NonSequentialAccess(address, ACCESS_WORD);
         }
     }
 
@@ -863,9 +866,9 @@ namespace GBA
         if (stackptr)
             reg(reg_dest) = reg(13) + (immediate_value << 2); // sp
         else
-            reg(reg_dest) = (r[15] & ~2) + (immediate_value << 2); // pc
+            reg(reg_dest) = (m_State.m_R[15] & ~2) + (immediate_value << 2); // pc
 
-        cycles += memory->SequentialAccess(r[15], Memory::ACCESS_HWORD);
+        cycles += Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD);
     }
 
     template <bool sub>
@@ -880,7 +883,7 @@ namespace GBA
         else
             reg(13) += immediate_value;
 
-        cycles += memory->SequentialAccess(r[15], Memory::ACCESS_HWORD);
+        cycles += Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD);
     }
 
     template <bool pop, bool rbit>
@@ -891,7 +894,7 @@ namespace GBA
         bool first_access = true;
 
         // One non-sequential prefetch cycle
-        cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_HWORD);
+        cycles += Memory::NonSequentialAccess(m_State.m_R[15], ACCESS_HWORD);
 
         // Is this a POP instruction?
         if (pop)
@@ -911,12 +914,12 @@ namespace GBA
                     // Time the access based on if it's a first access
                     if (first_access)
                     {
-                        cycles += memory->NonSequentialAccess(address, Memory::ACCESS_WORD);
+                        cycles += Memory::NonSequentialAccess(address, ACCESS_WORD);
                         first_access = false;
                     }
                     else
                     {
-                        cycles += memory->SequentialAccess(address, Memory::ACCESS_WORD);
+                        cycles += Memory::SequentialAccess(address, ACCESS_WORD);
                     }
                 }
             }
@@ -927,21 +930,21 @@ namespace GBA
                 u32 address = reg(13);
 
                 // Read word and update SP.
-                r[15] = ReadWord(reg(13)) & ~1;
+                m_State.m_R[15] = ReadWord(reg(13)) & ~1;
                 reg(13) += 4;
 
                 // Time the access based on if it's a first access
                 if (first_access)
                 {
-                    cycles += memory->NonSequentialAccess(address, Memory::ACCESS_WORD);
+                    cycles += Memory::NonSequentialAccess(address, ACCESS_WORD);
                     first_access = false;
                 }
                 else
                 {
-                    cycles += memory->SequentialAccess(address, Memory::ACCESS_WORD);
+                    cycles += Memory::SequentialAccess(address, ACCESS_WORD);
                 }
 
-                pipe.flush = true;
+                m_Pipe.m_Flush = true;
             }
         }
         else
@@ -959,12 +962,12 @@ namespace GBA
                 // Time the access based on if it's a first access
                 if (first_access)
                 {
-                    cycles += memory->NonSequentialAccess(address, Memory::ACCESS_WORD);
+                    cycles += Memory::NonSequentialAccess(address, ACCESS_WORD);
                     first_access = false;
                 }
                 else
                 {
-                    cycles += memory->SequentialAccess(address, Memory::ACCESS_WORD);
+                    cycles += Memory::SequentialAccess(address, ACCESS_WORD);
                 }
             }
 
@@ -984,12 +987,12 @@ namespace GBA
                     // Time the access based on if it's a first access
                     if (first_access)
                     {
-                        cycles += memory->NonSequentialAccess(address, Memory::ACCESS_WORD);
+                        cycles += Memory::NonSequentialAccess(address, ACCESS_WORD);
                         first_access = false;
                     }
                     else
                     {
-                        cycles += memory->SequentialAccess(address, Memory::ACCESS_WORD);
+                        cycles += Memory::SequentialAccess(address, ACCESS_WORD);
                     }
                 }
             }
@@ -1007,8 +1010,8 @@ namespace GBA
         // Is the load bit set? (ldmia or stmia)
         if (load)
         {
-            cycles += 1 + memory->NonSequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                          memory->SequentialAccess(r[15] + 2, Memory::ACCESS_HWORD);
+            cycles += 1 + Memory::NonSequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                          Memory::SequentialAccess(m_State.m_R[15] + 2, ACCESS_HWORD);
 
             // Iterate through the entire register list
             for (int i = 0; i <= 7; i++)
@@ -1017,7 +1020,7 @@ namespace GBA
                 if (instruction & (1 << i))
                 {
                     reg(i) = ReadWord(address);
-                    cycles += memory->SequentialAccess(address, Memory::ACCESS_WORD);
+                    cycles += Memory::SequentialAccess(address, ACCESS_WORD);
                     address += 4;
                 }
             }
@@ -1032,7 +1035,7 @@ namespace GBA
             int first_register = 0;
             bool first_access = true;
 
-            cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_HWORD);
+            cycles += Memory::NonSequentialAccess(m_State.m_R[15], ACCESS_HWORD);
 
             // Find the first register
             for (int i = 0; i < 8; i++)
@@ -1060,12 +1063,12 @@ namespace GBA
                     // Time the access based on if it's a first access
                     if (first_access)
                     {
-                        cycles += memory->NonSequentialAccess(reg(reg_base), Memory::ACCESS_WORD);
+                        cycles += Memory::NonSequentialAccess(reg(reg_base), ACCESS_WORD);
                         first_access = false;
                     }
                     else
                     {
-                        cycles += memory->SequentialAccess(reg(reg_base), Memory::ACCESS_WORD);
+                        cycles += Memory::SequentialAccess(reg(reg_base), ACCESS_WORD);
                     }
 
                     // Update base address
@@ -1081,25 +1084,25 @@ namespace GBA
         // THUMB.16 Conditional branch
         u32 signed_immediate = instruction & 0xFF;
 
-        cycles += memory->SequentialAccess(r[15], Memory::ACCESS_HWORD);
+        cycles += Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD);
 
         // Check if the instruction will be executed
         switch (cond)
         {
-        case 0x0: if (!(cpsr & ZeroFlag))     return; break;
-        case 0x1: if (  cpsr & ZeroFlag)      return; break;
-        case 0x2: if (!(cpsr & CarryFlag))    return; break;
-        case 0x3: if (  cpsr & CarryFlag)     return; break;
-        case 0x4: if (!(cpsr & SignFlag))     return; break;
-        case 0x5: if (  cpsr & SignFlag)      return; break;
-        case 0x6: if (!(cpsr & OverflowFlag)) return; break;
-        case 0x7: if (  cpsr & OverflowFlag)  return; break;
-        case 0x8: if (!(cpsr & CarryFlag) ||  (cpsr & ZeroFlag)) return; break;
-        case 0x9: if ( (cpsr & CarryFlag) && !(cpsr & ZeroFlag)) return; break;
-        case 0xA: if ((cpsr & SignFlag) != (cpsr & OverflowFlag)) return; break;
-        case 0xB: if ((cpsr & SignFlag) == (cpsr & OverflowFlag)) return; break;
-        case 0xC: if ((cpsr & ZeroFlag) || ((cpsr & SignFlag) != (cpsr & OverflowFlag))) return; break;
-        case 0xD: if (!(cpsr & ZeroFlag) && ((cpsr & SignFlag) == (cpsr & OverflowFlag))) return; break;
+        case 0x0: if (!(m_State.m_CPSR & MASK_ZFLAG))     return; break;
+        case 0x1: if (  m_State.m_CPSR & MASK_ZFLAG)      return; break;
+        case 0x2: if (!(m_State.m_CPSR & MASK_CFLAG))    return; break;
+        case 0x3: if (  m_State.m_CPSR & MASK_CFLAG)     return; break;
+        case 0x4: if (!(m_State.m_CPSR & MASK_NFLAG))     return; break;
+        case 0x5: if (  m_State.m_CPSR & MASK_NFLAG)      return; break;
+        case 0x6: if (!(m_State.m_CPSR & MASK_VFLAG)) return; break;
+        case 0x7: if (  m_State.m_CPSR & MASK_VFLAG)  return; break;
+        case 0x8: if (!(m_State.m_CPSR & MASK_CFLAG) ||  (m_State.m_CPSR & MASK_ZFLAG)) return; break;
+        case 0x9: if ( (m_State.m_CPSR & MASK_CFLAG) && !(m_State.m_CPSR & MASK_ZFLAG)) return; break;
+        case 0xA: if ((m_State.m_CPSR & MASK_NFLAG) != (m_State.m_CPSR & MASK_VFLAG)) return; break;
+        case 0xB: if ((m_State.m_CPSR & MASK_NFLAG) == (m_State.m_CPSR & MASK_VFLAG)) return; break;
+        case 0xC: if ((m_State.m_CPSR & MASK_ZFLAG) || ((m_State.m_CPSR & MASK_NFLAG) != (m_State.m_CPSR & MASK_VFLAG))) return; break;
+        case 0xD: if (!(m_State.m_CPSR & MASK_ZFLAG) && ((m_State.m_CPSR & MASK_NFLAG) == (m_State.m_CPSR & MASK_VFLAG))) return; break;
         }
 
         // Sign-extend the immediate value if neccessary
@@ -1107,29 +1110,29 @@ namespace GBA
             signed_immediate |= 0xFFFFFF00;
 
         // Update r15/pc and flush pipe
-        r[15] += (signed_immediate << 1);
-        pipe.flush = true;
+        m_State.m_R[15] += (signed_immediate << 1);
+        m_Pipe.m_Flush = true;
 
         // Emulate pipeline refill timings
-        cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                  memory->SequentialAccess(r[15] + 2, Memory::ACCESS_HWORD);
+        cycles += Memory::NonSequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                  Memory::SequentialAccess(m_State.m_R[15] + 2, ACCESS_HWORD);
     }
 
     void ARM7::Thumb17(u16 instruction)
     {
         // THUMB.17 Software Interrupt
-        u8 bios_call = ReadByte(r[15] - 4);
+        u8 bios_call = ReadByte(m_State.m_R[15] - 4);
 
         // Log SWI to the console
         #ifdef DEBUG
         LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (thumb)",
-            bios_call, r[0], r[1], r[2], r[3], reg(14), r[15]);
+            bios_call, m_State.m_R[0], m_State.m_R[1], m_State.m_R[2], m_State.m_R[3], reg(14), m_State.m_R[15]);
         #endif
 
         // "Useless" prefetch from r15 and pipeline refill timing.
-        cycles += memory->SequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                memory->NonSequentialAccess(8, Memory::ACCESS_WORD) +
-                memory->SequentialAccess(12, Memory::ACCESS_WORD);
+        cycles += Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                Memory::NonSequentialAccess(8, ACCESS_WORD) +
+                Memory::SequentialAccess(12, ACCESS_WORD);
 
         // Dispatch SWI, either HLE or BIOS.
         if (hle)
@@ -1139,17 +1142,17 @@ namespace GBA
         else
         {
             // Store return address in r14<svc>
-            r14_svc = r[15] - 2;
+            m_State.m_SVC.m_R14 = m_State.m_R[15] - 2;
 
             // Save program status and switch mode
             SaveRegisters();
-            spsr_svc = cpsr;
-            cpsr = (cpsr & ~(ModeField | ThumbFlag)) | (u32)Mode::SVC | IrqDisable;
+            m_State.m_SPSR[SPSR_SVC] = m_State.m_CPSR;
+            m_State.m_CPSR = (m_State.m_CPSR & ~(MASK_MODE | MASK_THUMB)) | MODE_SVC | MASK_IRQD;
             LoadRegisters();
 
             // Jump to exception vector
-            r[15] = (u32)Exception::SoftwareInterrupt;
-            pipe.flush = true;
+            m_State.m_R[15] = EXCPT_SWI;
+            m_Pipe.m_Flush = true;
         }
     }
 
@@ -1158,19 +1161,19 @@ namespace GBA
         // THUMB.18 Unconditional branch
         u32 immediate_value = (instruction & 0x3FF) << 1;
 
-        cycles += memory->SequentialAccess(r[15], Memory::ACCESS_HWORD);
+        cycles += Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD);
 
         // Sign-extend r15/pc displacement
         if (instruction & 0x400)
             immediate_value |= 0xFFFFF800;
 
         // Update r15/pc and flush pipe
-        r[15] += immediate_value;
-        pipe.flush = true;
+        m_State.m_R[15] += immediate_value;
+        m_Pipe.m_Flush = true;
 
         //Emulate pipeline refill timings
-        cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                  memory->SequentialAccess(r[15] + 2, Memory::ACCESS_HWORD);
+        cycles += Memory::NonSequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                  Memory::SequentialAccess(m_State.m_R[15] + 2, ACCESS_HWORD);
     }
 
     template <bool h>
@@ -1182,28 +1185,28 @@ namespace GBA
         // Branch with link consists of two instructions.
         if (h)
         {
-            u32 temp_pc = r[15] - 2;
+            u32 temp_pc = m_State.m_R[15] - 2;
             u32 value = reg(14) + (immediate_value << 1);
 
-            cycles += memory->SequentialAccess(r[15], Memory::ACCESS_HWORD);
+            cycles += Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD);
 
             // Update r15/pc
             value &= 0x7FFFFF;
-            r[15] &= ~0x7FFFFF;
-            r[15] |= value & ~1;
+            m_State.m_R[15] &= ~0x7FFFFF;
+            m_State.m_R[15] |= value & ~1;
 
             // Store return address and flush pipe.
             reg(14) = temp_pc | 1;
-            pipe.flush = true;
+            m_Pipe.m_Flush = true;
 
             //Emulate pipeline refill timings
-            cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_HWORD) +
-                      memory->SequentialAccess(r[15] + 2, Memory::ACCESS_HWORD);
+            cycles += Memory::NonSequentialAccess(m_State.m_R[15], ACCESS_HWORD) +
+                      Memory::SequentialAccess(m_State.m_R[15] + 2, ACCESS_HWORD);
         }
         else
         {
-            reg(14) = r[15] + (immediate_value << 12);
-            cycles += memory->SequentialAccess(r[15], Memory::ACCESS_HWORD);
+            reg(14) = m_State.m_R[15] + (immediate_value << 12);
+            cycles += Memory::SequentialAccess(m_State.m_R[15], ACCESS_HWORD);
         }
     }
 }

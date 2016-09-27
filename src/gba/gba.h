@@ -46,15 +46,6 @@ namespace GBA
     class GBA
     {
     public:
-
-        ///////////////////////////////////////////////////////////
-        /// \author Frederic Meyer
-        /// \date   July 31th, 2016
-        /// \enum   Key
-        ///
-        /// Bitfield for all GBA keys (0x3FF)
-        ///
-        ///////////////////////////////////////////////////////////
         enum class Key
         {
             None        = 0,
@@ -70,90 +61,22 @@ namespace GBA
             L           = 512
         };
 
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      Constructor, 1
-        ///
-        ///////////////////////////////////////////////////////////
         GBA(std::string rom_file, std::string save_file);
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      Constructor, 2
-        ///
-        ///////////////////////////////////////////////////////////
         GBA(std::string rom_file, std::string save_file, std::string bios_file);
+        ~GBA();
 
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      Frame
-        /// \brief   Executes one frame within the GBA.
-        ///
-        ///////////////////////////////////////////////////////////
         void Frame();
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      SetKeyState
-        /// \brief   Sets the key either pressed or released.
-        ///
-        /// \param   key      The key being updated.
-        /// \param   pressed  True for pressed.
-        ///
-        ///////////////////////////////////////////////////////////
         void SetKeyState(Key key, bool pressed);
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      SetSpeedUp
-        /// \brief   Changes the emulation speed.
-        ///
-        /// \param  multiplier  The multiple of emulation speed.
-        ///
-        ///////////////////////////////////////////////////////////
         void SetSpeedUp(int multiplier);
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      GetVideoBuffer
-        /// \brief   Retrieves the video pixel buffer.
-        ///
-        ///////////////////////////////////////////////////////////
         u32* GetVideoBuffer();
-
-        ///////////////////////////////////////////////////////////
-        /// \author  Frederic Meyer
-        /// \date    July 31th, 2016
-        /// \fn      HasRendered
-        /// \brief   Determines whether the frame was rendered.
-        ///
-        ///////////////////////////////////////////////////////////
         bool HasRendered();
-
 
     private:
 
         static const int FRAME_CYCLES;
 
-        ///////////////////////////////////////////////////////////
-        // Class members (gba slaves)
-        //
-        ///////////////////////////////////////////////////////////
-        ARM7 m_ARM;             ///< Processor instance
-        Memory m_Memory;        ///< Memory instance
-
-
-        ///////////////////////////////////////////////////////////
-        // Class members (misc)
-        //
-        ///////////////////////////////////////////////////////////
+        ARM7 m_ARM;
+        Memory m_Memory;
         int m_SpeedMultiplier        {1};      ///< Holds the emulation speed
         bool m_DidRender             {false};  ///< Has frame already been rendered?
     };

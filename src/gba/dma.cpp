@@ -98,9 +98,6 @@ namespace GBA
                 break;
             }
 
-            m_DidTransfer = start;
-            m_DMACycles = 2;
-
             if (start)
             {
                 AddressControl dest_control = m_DMA[i].dest_control;

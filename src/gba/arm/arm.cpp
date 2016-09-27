@@ -27,16 +27,15 @@
 
 namespace GBA
 {
-    void ARM7::Init(Memory* memory, bool hle)
+    void ARM7::Init(bool hle)
     {
-        // Assign given memory instance to core
-        this->memory = memory;
+        m_Pipe.m_Index = 0;
 
         // Skip bios boot logo
-        r[15] = 0x8000000;
-        r13_usr = 0x3007F00;
-        r13_svc = 0x3007FE0;
-        r13_irq = 0x3007FA0;
+        m_State.m_R[15] = 0x8000000;
+        m_State.m_USR.m_R13 = 0x3007F00;
+        m_State.m_SVC.m_R13 = 0x3007FE0;
+        m_State.m_IRQ.m_R13 = 0x3007FA0;
         LoadRegisters();
         RefillPipeline();
 
@@ -46,17 +45,17 @@ namespace GBA
     
     u32 ARM7::GetGeneralRegister(Mode mode, int r)
     {
-        Mode old_mode = (Mode)(cpsr & ModeField);
         u32 value;
+        Mode old_mode = (Mode)(m_State.m_CPSR & MASK_MODE);
 
         // Temporary switch to requested mode
         SaveRegisters();
-        cpsr = (cpsr & ~ModeField) | (u32)mode;
+        m_State.m_CPSR = (m_State.m_CPSR & ~MASK_MODE) | (u32)mode;
         LoadRegisters();
 
         // Get value and switch back to correct mode
-        value = reg(r);
-        cpsr = (cpsr & ~ModeField) | (u32)old_mode;
+        value = m_State.m_R[r];
+        m_State.m_CPSR = (m_State.m_CPSR & ~MASK_MODE) | (u32)old_mode;
         LoadRegisters();
 
         return value;
@@ -64,253 +63,256 @@ namespace GBA
 
     u32 ARM7::GetCurrentStatusRegister()
     {
-        return cpsr;
+        return m_State.m_CPSR;
     }
 
     u32 ARM7::GetSavedStatusRegister(Mode mode)
     {
         switch (mode)
         {
-        case Mode::FIQ: return spsr_fiq;
-        case Mode::SVC: return spsr_svc;
-        case Mode::ABT: return spsr_abt;
-        case Mode::IRQ: return spsr_irq;
-        case Mode::UND: return spsr_und;        
+        case MODE_FIQ: return m_State.m_SPSR[SPSR_FIQ];
+        case MODE_SVC: return m_State.m_SPSR[SPSR_SVC];
+        case MODE_ABT: return m_State.m_SPSR[SPSR_ABT];
+        case MODE_IRQ: return m_State.m_SPSR[SPSR_IRQ];
+        case MODE_UND: return m_State.m_SPSR[SPSR_UND];
         }
         return 0;
     }
 
     void ARM7::SetGeneralRegister(Mode mode, int r, u32 value)
     {
-        Mode old_mode = (Mode)(cpsr & ModeField);
+        Mode old_mode = (Mode)(m_State.m_CPSR & MASK_MODE);
 
         // Temporary switch to requested mode
         SaveRegisters();
-        cpsr = (cpsr & ~ModeField) | (u32)mode;
+        m_State.m_CPSR = (m_State.m_CPSR & ~MASK_MODE) | (u32)mode;
         LoadRegisters();
 
         // Write register and switch back
-        reg(r) = value;
+        m_State.m_R[r] = value;
         SaveRegisters();
-        cpsr = (cpsr & ~ModeField) | (u32)old_mode;
+        m_State.m_CPSR = (m_State.m_CPSR & ~MASK_MODE) | (u32)old_mode;
         LoadRegisters();
     }
 
     void ARM7::SetCurrentStatusRegister(u32 value)
     {
-        cpsr = value;
+        m_State.m_CPSR = value;
     }
     
     void ARM7::SetSavedStatusRegister(Mode mode, u32 value)
     {
         switch (mode)
         {
-        case Mode::FIQ: spsr_fiq = value; break;
-        case Mode::SVC: spsr_svc = value; break;
-        case Mode::ABT: spsr_abt = value; break;
-        case Mode::IRQ: spsr_irq = value; break;
-        case Mode::UND: spsr_und = value; break;        
+        case MODE_FIQ: m_State.m_SPSR[SPSR_FIQ] = value; break;
+        case MODE_SVC: m_State.m_SPSR[SPSR_SVC] = value; break;
+        case MODE_ABT: m_State.m_SPSR[SPSR_ABT] = value; break;
+        case MODE_IRQ: m_State.m_SPSR[SPSR_IRQ] = value; break;
+        case MODE_UND: m_State.m_SPSR[SPSR_UND] = value; break;
         }
     }
 
     void ARM7::Step()
     {
-        bool thumb = cpsr & ThumbFlag;
+        bool thumb = m_State.m_CPSR & MASK_THUMB;
 
         // Forcibly align r15
-        r[15] &= thumb ? ~1 : ~3;
+        m_State.m_R[15] &= thumb ? ~1 : ~3;
 
         // Dispatch instruction loading and execution
         if (thumb)
         {
-            if (pipe.status == 0)
-                pipe.opcode[2] = memory->ReadHWord(r[15]);
+            if (m_Pipe.m_Index == 0)
+                m_Pipe.m_Opcode[2] = Memory::ReadHWord(m_State.m_R[15]);
             else
-                pipe.opcode[pipe.status - 1] = memory->ReadHWord(r[15]);
-            ExecuteThumb(pipe.opcode[pipe.status]);
+                m_Pipe.m_Opcode[m_Pipe.m_Index - 1] = Memory::ReadHWord(m_State.m_R[15]);
+
+            // Execute the thumb instruction via a method lut.
+            u16 instruction = m_Pipe.m_Opcode[m_Pipe.m_Index];
+            (this->*THUMB_TABLE[instruction >> 6])(instruction);
         }
         else
         {
-            if (pipe.status == 0)
-                pipe.opcode[2] = memory->ReadWord(r[15]);
+            if (m_Pipe.m_Index == 0)
+                m_Pipe.m_Opcode[2] = Memory::ReadWord(m_State.m_R[15]);
             else
-                pipe.opcode[pipe.status - 1] = memory->ReadWord(r[15]);
-            Execute(pipe.opcode[pipe.status], Decode(pipe.opcode[pipe.status]));
+                m_Pipe.m_Opcode[m_Pipe.m_Index - 1] = Memory::ReadWord(m_State.m_R[15]);
+
+            Execute(m_Pipe.m_Opcode[m_Pipe.m_Index], Decode(m_Pipe.m_Opcode[m_Pipe.m_Index]));
         }
 
-        if (pipe.flush)
+        if (m_Pipe.m_Flush)
         {
-            pipe.status = 0;
-            pipe.flush = false;
+            m_Pipe.m_Index = 0;
+            m_Pipe.m_Flush = false;
             RefillPipeline();
             return;
         }
 
         // Update pipeline status
-        pipe.status = (pipe.status + 1) % 3;
+        m_Pipe.m_Index = (m_Pipe.m_Index + 1) % 3;
 
         // Update instruction pointer
-        r[15] += thumb ? 2 : 4;
+        m_State.m_R[15] += thumb ? 2 : 4;
     }
 
     void ARM7::SaveRegisters()
     {
-        switch (static_cast<Mode>(cpsr & ModeField))
+        switch (m_State.m_CPSR & MASK_MODE)
         {
-        case Mode::USR:
-        case Mode::SYS:
-            r8_usr = r[8];
-            r9_usr = r[9];
-            r10_usr = r[10];
-            r11_usr = r[11];
-            r12_usr = r[12];
-            r13_usr = r[13];
-            r14_usr = r[14];
+        case MODE_USR:
+        case MODE_SYS:
+            m_State.m_USR.m_R8 = m_State.m_R[8];
+            m_State.m_USR.m_R9 = m_State.m_R[9];
+            m_State.m_USR.m_R10 = m_State.m_R[10];
+            m_State.m_USR.m_R11 = m_State.m_R[11];
+            m_State.m_USR.m_R12 = m_State.m_R[12];
+            m_State.m_USR.m_R13 = m_State.m_R[13];
+            m_State.m_USR.m_R14 = m_State.m_R[14];
             break;
-        case Mode::FIQ:
-            r8_fiq = r[8];
-            r9_fiq = r[9];
-            r10_fiq = r[10];
-            r11_fiq = r[11];
-            r12_fiq = r[12];
-            r13_fiq = r[13];
-            r14_fiq = r[14];
+        case MODE_FIQ:
+            m_State.m_FIQ.m_R8 = m_State.m_R[8];
+            m_State.m_FIQ.m_R9 = m_State.m_R[9];
+            m_State.m_FIQ.m_R10 = m_State.m_R[10];
+            m_State.m_FIQ.m_R11 = m_State.m_R[11];
+            m_State.m_FIQ.m_R12 = m_State.m_R[12];
+            m_State.m_FIQ.m_R13 = m_State.m_R[13];
+            m_State.m_FIQ.m_R14 = m_State.m_R[14];
             break;
-        case Mode::IRQ:
-            r8_usr = r[8];
-            r9_usr = r[9];
-            r10_usr = r[10];
-            r11_usr = r[11];
-            r12_usr = r[12];
-            r13_irq = r[13];
-            r14_irq = r[14];
+        case MODE_IRQ:
+            m_State.m_USR.m_R8 = m_State.m_R[8];
+            m_State.m_USR.m_R9 = m_State.m_R[9];
+            m_State.m_USR.m_R10 = m_State.m_R[10];
+            m_State.m_USR.m_R11 = m_State.m_R[11];
+            m_State.m_USR.m_R12 = m_State.m_R[12];
+            m_State.m_IRQ.m_R13 = m_State.m_R[13];
+            m_State.m_IRQ.m_R14 = m_State.m_R[14];
             break;
-        case Mode::SVC:
-            r8_usr = r[8];
-            r9_usr = r[9];
-            r10_usr = r[10];
-            r11_usr = r[11];
-            r12_usr = r[12];
-            r13_svc = r[13];
-            r14_svc = r[14];
+        case MODE_SVC:
+            m_State.m_USR.m_R8 = m_State.m_R[8];
+            m_State.m_USR.m_R9 = m_State.m_R[9];
+            m_State.m_USR.m_R10 = m_State.m_R[10];
+            m_State.m_USR.m_R11 = m_State.m_R[11];
+            m_State.m_USR.m_R12 = m_State.m_R[12];
+            m_State.m_SVC.m_R13 = m_State.m_R[13];
+            m_State.m_SVC.m_R14 = m_State.m_R[14];
             break;
-        case Mode::ABT:
-            r8_usr = r[8];
-            r9_usr = r[9];
-            r10_usr = r[10];
-            r11_usr = r[11];
-            r12_usr = r[12];
-            r13_abt = r[13];
-            r14_abt = r[14];
+        case MODE_ABT:
+            m_State.m_USR.m_R8 = m_State.m_R[8];
+            m_State.m_USR.m_R9 = m_State.m_R[9];
+            m_State.m_USR.m_R10 = m_State.m_R[10];
+            m_State.m_USR.m_R11 = m_State.m_R[11];
+            m_State.m_USR.m_R12 = m_State.m_R[12];
+            m_State.m_ABT.m_R13 = m_State.m_R[13];
+            m_State.m_ABT.m_R14 = m_State.m_R[14];
             break;
-        case Mode::UND:
-            r8_usr = r[8];
-            r9_usr = r[9];
-            r10_usr = r[10];
-            r11_usr = r[11];
-            r12_usr = r[12];
-            r13_und = r[13];
-            r14_und = r[14];
+        case MODE_UND:
+            m_State.m_USR.m_R8 = m_State.m_R[8];
+            m_State.m_USR.m_R9 = m_State.m_R[9];
+            m_State.m_USR.m_R10 = m_State.m_R[10];
+            m_State.m_USR.m_R11 = m_State.m_R[11];
+            m_State.m_USR.m_R12 = m_State.m_R[12];
+            m_State.m_UND.m_R13 = m_State.m_R[13];
+            m_State.m_UND.m_R14 = m_State.m_R[14];
             break;
         }
     }
 
     void ARM7::LoadRegisters()
     {
-        switch (static_cast<Mode>(cpsr & ModeField))
+        switch (m_State.m_CPSR & MASK_MODE)
         {
-        case Mode::USR:
-        case Mode::SYS:
-            r[8] = r8_usr;
-            r[9] = r9_usr;
-            r[10] = r10_usr;
-            r[11] = r11_usr;
-            r[12] = r12_usr;
-            r[13] = r13_usr;
-            r[14] = r14_usr;
-            pspsr = &spsr_def;
+        case MODE_USR:
+        case MODE_SYS:
+            m_State.m_R[8] = m_State.m_USR.m_R8;
+            m_State.m_R[9] = m_State.m_USR.m_R9;
+            m_State.m_R[10] = m_State.m_USR.m_R10;
+            m_State.m_R[11] = m_State.m_USR.m_R11;
+            m_State.m_R[12] = m_State.m_USR.m_R12;
+            m_State.m_R[13] = m_State.m_USR.m_R13;
+            m_State.m_R[14] = m_State.m_USR.m_R14;
+            m_State.m_PSPSR = &m_State.m_SPSR[SPSR_DEF];
             break;
-        case Mode::FIQ:
-            r[8] = r8_fiq;
-            r[9] = r9_fiq;
-            r[10] = r10_fiq;
-            r[11] = r11_fiq;
-            r[12] = r12_fiq;
-            r[13] = r13_fiq;
-            r[14] = r14_fiq;
-            pspsr = &spsr_fiq;
+        case MODE_FIQ:
+            m_State.m_R[8] = m_State.m_FIQ.m_R8;
+            m_State.m_R[9] = m_State.m_FIQ.m_R9;
+            m_State.m_R[10] = m_State.m_FIQ.m_R10;
+            m_State.m_R[11] = m_State.m_FIQ.m_R11;
+            m_State.m_R[12] = m_State.m_FIQ.m_R12;
+            m_State.m_R[13] = m_State.m_FIQ.m_R13;
+            m_State.m_R[14] = m_State.m_FIQ.m_R14;
+            m_State.m_PSPSR = &m_State.m_SPSR[SPSR_FIQ];
             break;
-        case Mode::IRQ:
-            r[8] = r8_usr;
-            r[9] = r9_usr;
-            r[10] = r10_usr;
-            r[11] = r11_usr;
-            r[12] = r12_usr;
-            r[13] = r13_irq;
-            r[14] = r14_irq;
-            pspsr = &spsr_irq;
+        case MODE_IRQ:
+            m_State.m_R[8] = m_State.m_USR.m_R8;
+            m_State.m_R[9] = m_State.m_USR.m_R9;
+            m_State.m_R[10] = m_State.m_USR.m_R10;
+            m_State.m_R[11] = m_State.m_USR.m_R11;
+            m_State.m_R[12] = m_State.m_USR.m_R12;
+            m_State.m_R[13] = m_State.m_IRQ.m_R13;
+            m_State.m_R[14] = m_State.m_IRQ.m_R14;
+            m_State.m_PSPSR = &m_State.m_SPSR[SPSR_IRQ];
             break;
-        case Mode::SVC:
-            r[8] = r8_usr;
-            r[9] = r9_usr;
-            r[10] = r10_usr;
-            r[11] = r11_usr;
-            r[12] = r12_usr;
-            r[13] = r13_svc;
-            r[14] = r14_svc;
-            pspsr = &spsr_svc;
+        case MODE_SVC:
+            m_State.m_R[8] = m_State.m_USR.m_R8;
+            m_State.m_R[9] = m_State.m_USR.m_R9;
+            m_State.m_R[10] = m_State.m_USR.m_R10;
+            m_State.m_R[11] = m_State.m_USR.m_R11;
+            m_State.m_R[12] = m_State.m_USR.m_R12;
+            m_State.m_R[13] = m_State.m_SVC.m_R13;
+            m_State.m_R[14] = m_State.m_SVC.m_R14;
+            m_State.m_PSPSR = &m_State.m_SPSR[SPSR_SVC];
             break;
-        case Mode::ABT:
-            r[8] = r8_usr;
-            r[9] = r9_usr;
-            r[10] = r10_usr;
-            r[11] = r11_usr;
-            r[12] = r12_usr;
-            r[13] = r13_abt;
-            r[14] = r14_abt;
-            pspsr = &spsr_abt;
+        case MODE_ABT:
+            m_State.m_R[8] = m_State.m_USR.m_R8;
+            m_State.m_R[9] = m_State.m_USR.m_R9;
+            m_State.m_R[10] = m_State.m_USR.m_R10;
+            m_State.m_R[11] = m_State.m_USR.m_R11;
+            m_State.m_R[12] = m_State.m_USR.m_R12;
+            m_State.m_R[13] = m_State.m_ABT.m_R13;
+            m_State.m_R[14] = m_State.m_ABT.m_R14;
+            m_State.m_PSPSR = &m_State.m_SPSR[SPSR_ABT];
             break;
-        case Mode::UND:
-            r[8] = r8_usr;
-            r[9] = r9_usr;
-            r[10] = r10_usr;
-            r[11] = r11_usr;
-            r[12] = r12_usr;
-            r[13] = r13_und;
-            r[14] = r14_und;
-            pspsr = &spsr_und;
+        case MODE_UND:
+            m_State.m_R[8] = m_State.m_USR.m_R8;
+            m_State.m_R[9] = m_State.m_USR.m_R9;
+            m_State.m_R[10] = m_State.m_USR.m_R10;
+            m_State.m_R[11] = m_State.m_USR.m_R11;
+            m_State.m_R[12] = m_State.m_USR.m_R12;
+            m_State.m_R[13] = m_State.m_UND.m_R13;
+            m_State.m_R[14] = m_State.m_UND.m_R14;
+            m_State.m_PSPSR = &m_State.m_SPSR[SPSR_UND];
             break;
         }
     }
 
     void ARM7::RaiseIRQ()
     {
-        if ((cpsr & IrqDisable) == 0)
+        if ((m_State.m_CPSR & MASK_IRQD) == 0)
         {
-            bool thumb = cpsr & ThumbFlag;
+            bool thumb = m_State.m_CPSR & MASK_THUMB;
 
             // "Useless" pipeline prefetch
-            cycles += memory->SequentialAccess(r[15], thumb ? Memory::ACCESS_HWORD :
-                                                              Memory::ACCESS_WORD);
+            cycles += Memory::SequentialAccess(m_State.m_R[15], thumb ? ACCESS_HWORD : ACCESS_WORD);
 
             // Store return address in r14<irq>
-            r14_irq = r[15] - (thumb ? 4 : 8) + 4;
+            m_State.m_IRQ.m_R14 = m_State.m_R[15] - (thumb ? 4 : 8) + 4;
 
             // Save program status and switch mode
-            spsr_irq = cpsr;
+            m_State.m_SPSR[SPSR_IRQ] = m_State.m_CPSR;
             SaveRegisters();
-            cpsr = (cpsr & ~(ModeField | ThumbFlag)) | (u32)Mode::IRQ | IrqDisable;
+            m_State.m_CPSR = (m_State.m_CPSR & ~(MASK_MODE | MASK_THUMB)) | MODE_IRQ | MASK_IRQD;
             LoadRegisters();
 
             // Jump to exception vector
-            r[15] = (u32)Exception::Interrupt;
-            pipe.status = 0;
-            pipe.flush = false;
+            m_State.m_R[15] = EXCPT_INTERRUPT;
+            m_Pipe.m_Index = 0;
+            m_Pipe.m_Flush = false;
             RefillPipeline();
 
             // Emulate pipeline refill timings
-            cycles += memory->NonSequentialAccess(r[15], Memory::ACCESS_WORD) +
-                      memory->SequentialAccess(r[15] + 4, Memory::ACCESS_WORD);
+            cycles += Memory::NonSequentialAccess(m_State.m_R[15], ACCESS_WORD) +
+                      Memory::SequentialAccess(m_State.m_R[15] + 4, ACCESS_WORD);
         }
     }
 
@@ -320,46 +322,47 @@ namespace GBA
         {
         case 0x06:
         {
-            if (r[1] != 0)
+            if (m_State.m_R[1] != 0)
             {
-                u32 mod = r[0] % r[1];
-                u32 div = r[0] / r[1];
-                r[0] = div;
-                r[1] = mod;
+                u32 mod = m_State.m_R[0] % m_State.m_R[1];
+                u32 div = m_State.m_R[0] / m_State.m_R[1];
+                m_State.m_R[0] = div;
+                m_State.m_R[1] = mod;
             } else 
             {
-                LOG(LOG_ERROR, "Attempted division by zero.");
+                LOG(LOG_ERROR, "SWI6h: Attempted division by zero.");
             }
             break;
         }
         case 0x05:
-            r[0] = 1;
-            r[1] = 1;
+            m_State.m_R[0] = 1;
+            m_State.m_R[1] = 1;
         case 0x04:
-            memory->m_Interrupt.ime = 1;
+            Memory::m_Interrupt.ime = 1;
 
             // If r0 is one IF must be cleared
-            if (r[0] == 1)
-                memory->m_Interrupt.if_ = 0;
+            if (m_State.m_R[0] == 1)
+                Memory::m_Interrupt.if_ = 0;
 
             // Sets GBA into halt state, waiting for specific interrupt(s) to occur.
-            memory->m_IntrWait = true;
-            memory->m_IntrWaitMask = r[1];
-            memory->m_HaltState = Memory::HALTSTATE_HALT;
+            Memory::m_IntrWait = true;
+            Memory::m_IntrWaitMask = m_State.m_R[1];
+            Memory::m_HaltState = HALTSTATE_HALT;
             break;
         case 0x0B:
         {
-            u32 source = r[0];
-            u32 dest = r[1];
-            u32 length = r[2] & 0xFFFFF;
-            bool fixed = r[2] & (1 << 24) ? true : false;
+            u32 source = m_State.m_R[0];
+            u32 dest = m_State.m_R[1];
+            u32 length = m_State.m_R[2] & 0xFFFFF;
+            bool fixed = m_State.m_R[2] & (1 << 24) ? true : false;
 
-            if (r[2] & (1 << 26))
+            if (m_State.m_R[2] & (1 << 26))
             {
                 for (u32 i = 0; i < length; i++)
                 {
                     WriteWord(dest, ReadWord(source));
                     dest += 4;
+
                     if (!fixed) source += 4;
                 }
             }
@@ -369,6 +372,7 @@ namespace GBA
                 {
                     WriteHWord(dest, ReadHWord(source));
                     dest += 2;
+
                     if (!fixed) source += 2;
                 }
             }
@@ -376,10 +380,10 @@ namespace GBA
         }
         case 0x0C:
         {
-            u32 source = r[0];
-            u32 dest = r[1];
-            u32 length = r[2] & 0xFFFFF;
-            bool fixed = r[2] & (1 << 24) ? true : false;
+            u32 source = m_State.m_R[0];
+            u32 dest = m_State.m_R[1];
+            u32 length = m_State.m_R[2] & 0xFFFFF;
+            bool fixed = m_State.m_R[2] & (1 << 24) ? true : false;
 
             for (u32 i = 0; i < length; i++)
             {
@@ -392,13 +396,13 @@ namespace GBA
         case 0x11:
         case 0x12:
         {
-            int amount = memory->ReadWord(r[0]) >> 8;
-            u32 source = r[0] + 4;
-            u32 dest = r[1];
+            int amount = Memory::ReadWord(m_State.m_R[0]) >> 8;
+            u32 source = m_State.m_R[0] + 4;
+            u32 dest = m_State.m_R[1];
 
             while (amount > 0)
             {
-                u8 encoder = memory->ReadByte(source++);
+                u8 encoder = Memory::ReadByte(source++);
 
                 // Process 8 blocks encoded by the encoder
                 for (int i = 7; i >= 0; i--)
@@ -406,29 +410,27 @@ namespace GBA
                     if (encoder & (1 << i))
                     {
                         // Compressed
-                        u16 value = memory->ReadHWord(source);
+                        u16 value = Memory::ReadHWord(source);
                         u32 disp = (value >> 8) | ((value & 0xF) << 8);
                         u32 n = ((value >> 4) & 0xF) + 3;
                         source += 2;
 
                         for (u32 j = 0; j < n; j++)
                         {
-                            u16 value = memory->ReadByte(dest - disp - 1);
-                            memory->WriteHWord(dest, value);
+                            u16 value = Memory::ReadByte(dest - disp - 1);
+                            Memory::WriteHWord(dest, value);
                             dest++;
-                            amount--;
-                            if (amount == 0)
-                                return;
+
+                            if (--amount == 0) return;
                         }
                     }
                     else
                     {
                         // Uncompressed
-                        u8 value = memory->ReadByte(source++);
-                        memory->WriteHWord(dest++, value);
-                        amount--;
-                        if (amount == 0)
-                            return;
+                        u8 value = Memory::ReadByte(source++);
+                        Memory::WriteHWord(dest++, value);
+
+                        if (--amount == 0) return;
                     }
                 }
             }
