@@ -13,9 +13,9 @@ ARM: 99%
 
 Memory: 99%
 
-Video: ~85% (however, will be rewritten since software rendering sucks)
+Video: ~92%
 
-Audio: 0%
+Audio: 90%
 
 Flash Support: yes
 
@@ -42,8 +42,8 @@ Replace `%SOURCE_PATH%` with the path where you extracted the source / cloned th
 
 `QT_GUI`: Enables Qt5 frontend
 
+`PROFILE`: Compiles for profiling with GNU gprof.
+
 ## Contributing
 
 Are you a developer and think you an help us out? We're always looking for motivated and skilled developers who want to support us. If you're interested in helping us out, please write me an e-mail to `fredericmeyer1337@yahoo.de`. We don't have an IRC channel yet.
-
-Also if you do happen to own a flashcard for the Game Boy Advance and don't need it anymore I'd be thankful if you'd donate it to me as I don't have one and these things get harder and harder to get. A flashcard would allow me to do research on the actual hardware of which the overall accuracy of NanoboyAdvance would benefit. I create this emulator solely based on unofficial documentation (mostly GBATEK and CowBite spec) which often only barely describe the nasty details. If you consider donating your flashcard please contact me via this e-mail `fredericmeyer1337@yahoo.de`.
