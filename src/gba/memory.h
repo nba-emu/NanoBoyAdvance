@@ -83,7 +83,7 @@ namespace GBA
         static u8 ReadVRAM(u32 address);
         static u8 ReadOAM(u32 address);
         static u8 ReadROM(u32 address);
-        static u8 ReadPageE(u32 address);
+        static u8 ReadSave(u32 address);
         static u8 ReadInvalid(u32 address);
 
         static void WriteWRAM(u32 address, u8 value);
@@ -92,7 +92,7 @@ namespace GBA
         static void WritePAL(u32 address, u8 value);
         static void WriteVRAM(u32 address, u8 value);
         static void WriteOAM(u32 address, u8 value);
-        static void WritePageE(u32 address, u8 value);
+        static void WriteSave(u32 address, u8 value);
         static void WriteInvalid(u32 address, u8 value);
 
         // Memory Read Byte methods
@@ -111,7 +111,7 @@ namespace GBA
             &Memory::ReadInvalid,
             &Memory::ReadInvalid,
             &Memory::ReadInvalid,
-            &Memory::ReadPageE,
+            &Memory::ReadSave,
             &Memory::ReadInvalid
         };
 
@@ -131,7 +131,7 @@ namespace GBA
             &Memory::WriteInvalid,
             &Memory::WriteInvalid,
             &Memory::WriteInvalid,
-            &Memory::WritePageE,
+            &Memory::WriteSave,
             &Memory::WriteInvalid
         };
 

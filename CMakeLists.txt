@@ -13,9 +13,9 @@ endif()
 # Debug Mode?
 option(DEBUG "Build for debug purposes" OFF)
 if (DEBUG)
-    add_definitions(-std=c++14 -g -O0 -fpermissive -DDEBUG)
+    add_definitions(-std=c++11 -g -O0 -fpermissive -DDEBUG)
 else()
-    add_definitions(-std=c++14 -Ofast -fpermissive -finline-functions)
+    add_definitions(-std=c++11 -Ofast -fpermissive -finline-functions)
 endif()
 
 # Perform profiling?

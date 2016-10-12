@@ -272,7 +272,7 @@ namespace GBA
         return m_ROM[address];
     }
 
-    u8 Memory::ReadPageE(u32 address)
+    u8 Memory::ReadSave(u32 address)
     {
         if (m_Backup != nullptr && (m_SaveType == SAVE_FLASH64 ||
                 m_SaveType == SAVE_FLASH128 ||
@@ -320,7 +320,7 @@ namespace GBA
         m_Video.m_OAM[address] = value;
     }
 
-    void Memory::WritePageE(u32 address, u8 value)
+    void Memory::WriteSave(u32 address, u8 value)
     {
         if (m_Backup != nullptr && (m_SaveType == SAVE_FLASH64 ||
                 m_SaveType == SAVE_FLASH128 ||
