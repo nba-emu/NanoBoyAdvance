@@ -29,7 +29,7 @@
 #include <iostream>
 #include "common/types.h"
 #include "dma.h"
-#include "timer.h"
+#include "timer.hpp"
 #include "interrupt.h"
 #include "video/video.h"
 #include "backup/backup.h"
@@ -139,7 +139,6 @@ namespace GBA
         static constexpr int DMA_COUNT_MASK[4]  = { 0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF };
         static constexpr int DMA_DEST_MASK[4]   = { 0x7FFFFFF, 0x7FFFFFF, 0x7FFFFFF, 0xFFFFFFF };
         static constexpr int DMA_SOURCE_MASK[4] = { 0x7FFFFFF, 0xFFFFFFF, 0xFFFFFFF, 0xFFFFFFF };
-        static constexpr int TMR_CYCLES[4]      = { 1, 64, 256, 1024 };
 
         // Waitstate constants
         static constexpr int WSN_TABLE[4] = {4, 3, 2, 8};
@@ -157,7 +156,6 @@ namespace GBA
         static void Reset();
         static void Shutdown();
 
-        static void RunTimer();
         static void RunDMA();
 
         static int SequentialAccess(u32 offset, AccessSize size);
@@ -184,6 +182,7 @@ namespace GBA
         static Backup* m_Backup;
         static SaveType m_SaveType;
 
+    public:
         ///////////////////////////////////////////////////////////
         // Class members (DMA, Timer, Waitstate, Audio)
         //
@@ -191,7 +190,7 @@ namespace GBA
         static DMA       m_DMA[4];
         static Timer     m_Timer[4];
         static Waitstate m_Waitstate;
-    public:
+
         ///////////////////////////////////////////////////////////
         // Class members (Interrupts)
         //

@@ -74,7 +74,7 @@ namespace GBA
                     else
                         break;
 
-                    if (!m_Timer[0].overflow)
+                    if (!m_Timer[0].GetOverflow())
                         continue;
 
                     if (m_Audio.m_FIFO[fifo].RequiresData())

@@ -27,7 +27,7 @@ set(HEADERS
     io.h
     interrupt.h
     dma.h
-    timer.h
+    timer.hpp
     memory.h
     backup/backup.h
     backup/flash.h

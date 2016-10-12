@@ -133,7 +133,11 @@ namespace GBA
 
                 for (int j = 0; j < forward_steps + 1; j++)
                 {
-                    Memory::RunTimer();
+                    bool overflow = false;
+                    Memory::m_Timer[0].Step(overflow);
+                    Memory::m_Timer[1].Step(overflow);
+                    Memory::m_Timer[2].Step(overflow);
+                    Memory::m_Timer[3].Step(overflow);
 
                     if (Memory::m_Video.m_WaitCycles == 0)
                     {

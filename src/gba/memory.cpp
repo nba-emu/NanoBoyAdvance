@@ -43,7 +43,6 @@ namespace GBA
     constexpr int Memory::DMA_COUNT_MASK[4];
     constexpr int Memory::DMA_DEST_MASK[4];
     constexpr int Memory::DMA_SOURCE_MASK[4];
-    constexpr int Memory::TMR_CYCLES[4];
 
     constexpr int Memory::WSN_TABLE[4];
     constexpr int Memory::WSS0_TABLE[2];
@@ -162,7 +161,8 @@ namespace GBA
         for (int i = 0; i < 4; i++)
         {
             memset(&m_DMA[i], 0, sizeof(DMA));
-            memset(&m_Timer[i], 0, sizeof(Timer));
+            m_Timer[i].Reset();
+            m_Timer[i].AssignID(i);
         }
 
         // Reset memory buffers.

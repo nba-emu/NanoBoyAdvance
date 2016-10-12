@@ -27,41 +27,26 @@
 
 namespace GBA
 {
-    ///////////////////////////////////////////////////////////
-    /// \author Frederic Meyer
-    /// \date   July 31th, 2016
-    /// \fn     RunTimer
-    ///
-    ///////////////////////////////////////////////////////////
-    void Memory::RunTimer()
+    constexpr int Timer::TMR_CYCLES[4];
+
+    void Timer::Increment(bool& overflow)
     {
-        bool overflow = false;
+        m_ticks = 0;
 
-        for (int i = 0; i < 4; i++)
+        if (m_count == 0xFFFF)
         {
-            m_Timer[i].overflow = overflow = false;
+            if (m_interrupt) Memory::m_Interrupt.if_ |= 8 << m_id;
 
-            if (!m_Timer[i].enable ||
-                    (m_Timer[i].countup && !overflow) ||
-                    (!m_Timer[i].countup && ++m_Timer[i].ticks < TMR_CYCLES[m_Timer[i].clock]))
-                continue;
+            m_count    = m_reload;
+            m_overflow = overflow = true;
 
-            m_Timer[i].ticks = 0;
-
-            if (m_Timer[i].count == 0xFFFF)
-            {
-                if (m_Timer[i].interrupt) m_Interrupt.if_ |= 8 << i;
-
-                m_Timer[i].count    = m_Timer[i].reload;
-                m_Timer[i].overflow = overflow = true;
-
-                if (i == m_Audio.m_SoundControl.dma_timer[0]) m_Audio.FifoLoadSample(0);
-                if (i == m_Audio.m_SoundControl.dma_timer[1]) m_Audio.FifoLoadSample(1);
-            }
-            else
-            {
-                m_Timer[i].count++;
-            }
+            if (m_id == Memory::m_Audio.m_SoundControl.dma_timer[0]) Memory::m_Audio.FifoLoadSample(0);
+            if (m_id == Memory::m_Audio.m_SoundControl.dma_timer[1]) Memory::m_Audio.FifoLoadSample(1);
+        }
+        else
+        {
+            m_count++;
+            m_overflow = overflow = false;
         }
     }
 }

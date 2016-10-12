@@ -176,33 +176,18 @@ namespace GBA
             int n = (address - SOUNDBIAS) * 8;
             return (m_Audio.m_SOUNDBIAS >> n) & 0xFF;
         }
-        case TM0CNT_L:
-            return m_Timer[0].count & 0xFF;
-        case TM0CNT_L+1:
-            return m_Timer[0].count >> 8;
-        case TM1CNT_L:
-            return m_Timer[1].count & 0xFF;
-        case TM1CNT_L+1:
-            return m_Timer[1].count >> 8;
-        case TM2CNT_L:
-            return m_Timer[2].count & 0xFF;
-        case TM2CNT_L+1:
-            return m_Timer[2].count >> 8;
-        case TM3CNT_L:
-            return m_Timer[3].count & 0xFF;
-        case TM3CNT_L+1:
-            return m_Timer[3].count >> 8;
-        case TM0CNT_H:
-        case TM1CNT_H:
-        case TM2CNT_H:
-        case TM3CNT_H:
-        {
-            int n = (address - TM0CNT_H) / 4;
-            return m_Timer[n].clock |
-                   (m_Timer[n].countup ? 4 : 0) |
-                   (m_Timer[n].interrupt ? 64 : 0) |
-                   (m_Timer[n].enable ? 128 : 0);
-        }
+        case TM0CNT_L: return m_Timer[0].ReadCounterLow();
+        case TM1CNT_L: return m_Timer[1].ReadCounterLow();
+        case TM2CNT_L: return m_Timer[2].ReadCounterLow();
+        case TM3CNT_L: return m_Timer[3].ReadCounterLow();
+        case TM0CNT_L+1: return m_Timer[0].ReadCounterHigh();
+        case TM1CNT_L+1: return m_Timer[1].ReadCounterHigh();
+        case TM2CNT_L+1: return m_Timer[2].ReadCounterHigh();
+        case TM3CNT_L+1: return m_Timer[3].ReadCounterHigh();
+        case TM0CNT_H: return m_Timer[0].ReadControlRegister();
+        case TM1CNT_H: return m_Timer[1].ReadControlRegister();
+        case TM2CNT_H: return m_Timer[2].ReadControlRegister();
+        case TM3CNT_H: return m_Timer[3].ReadControlRegister();
         case KEYINPUT:
             return m_KeyInput & 0xFF;
         case KEYINPUT+1:
@@ -874,48 +859,18 @@ namespace GBA
             }
             return;
         }
-        case TM0CNT_L:
-            m_Timer[0].reload = (m_Timer[0].reload & 0xFF00) | value;
-            return;
-        case TM0CNT_L+1:
-            m_Timer[0].reload = (m_Timer[0].reload & 0x00FF) | (value << 8);
-            return;
-        case TM1CNT_L:
-            m_Timer[1].reload = (m_Timer[1].reload & 0xFF00) | value;
-            return;
-        case TM1CNT_L+1:
-            m_Timer[1].reload = (m_Timer[1].reload & 0x00FF) | (value << 8);
-            return;
-        case TM2CNT_L:
-            m_Timer[2].reload = (m_Timer[2].reload & 0xFF00) | value;
-            return;
-        case TM2CNT_L+1:
-            m_Timer[2].reload = (m_Timer[2].reload & 0x00FF) | (value << 8);
-            return;
-        case TM3CNT_L:
-            m_Timer[3].reload = (m_Timer[3].reload & 0xFF00) | value;
-            return;
-        case TM3CNT_L+1:
-            m_Timer[3].reload = (m_Timer[3].reload & 0x00FF) | (value << 8);
-            return;
-         case TM0CNT_H:
-         case TM1CNT_H:
-         case TM2CNT_H:
-         case TM3CNT_H:
-         {
-            int n = (address - TM0CNT_H) / 4;
-            bool old_enable = m_Timer[n].enable;
-
-            m_Timer[n].clock = value & 3;
-            m_Timer[n].countup = value & 4;
-            m_Timer[n].interrupt = value & 64;
-            m_Timer[n].enable = value & 128;
-
-            // Load reload value into counter on rising edge
-            if (!old_enable && m_Timer[n].enable)
-                m_Timer[n].count = m_Timer[n].reload;
-            return;
-         }
+        case TM0CNT_L: m_Timer[0].WriteReloadLow(value); break;
+        case TM1CNT_L: m_Timer[1].WriteReloadLow(value); break;
+        case TM2CNT_L: m_Timer[2].WriteReloadLow(value); break;
+        case TM3CNT_L: m_Timer[3].WriteReloadLow(value); break;
+        case TM0CNT_L+1: m_Timer[0].WriteReloadHigh(value); break;
+        case TM1CNT_L+1: m_Timer[1].WriteReloadHigh(value); break;
+        case TM2CNT_L+1: m_Timer[2].WriteReloadHigh(value); break;
+        case TM3CNT_L+1: m_Timer[3].WriteReloadHigh(value); break;
+        case TM0CNT_H: m_Timer[0].WriteControlRegister(value); break;
+        case TM1CNT_H: m_Timer[1].WriteControlRegister(value); break;
+        case TM2CNT_H: m_Timer[2].WriteControlRegister(value); break;
+        case TM3CNT_H: m_Timer[3].WriteControlRegister(value); break;
         case IE:
             m_Interrupt.ie = (m_Interrupt.ie & 0xFF00) | value;
             return;
