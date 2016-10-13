@@ -42,7 +42,7 @@ namespace GBA
         // Set hle flag
         this->hle = hle;
     }
-    
+
     u32 ARM7::GetGeneralRegister(Mode mode, int r)
     {
         u32 value;
@@ -99,7 +99,7 @@ namespace GBA
     {
         m_State.m_CPSR = value;
     }
-    
+
     void ARM7::SetSavedStatusRegister(Mode mode, u32 value)
     {
         switch (mode)
@@ -328,7 +328,7 @@ namespace GBA
                 u32 div = m_State.m_R[0] / m_State.m_R[1];
                 m_State.m_R[0] = div;
                 m_State.m_R[1] = mod;
-            } else 
+            } else
             {
                 LOG(LOG_ERROR, "SWI6h: Attempted division by zero.");
             }
@@ -338,11 +338,15 @@ namespace GBA
             m_State.m_R[0] = 1;
             m_State.m_R[1] = 1;
         case 0x04:
-            Memory::m_Interrupt.ime = 1;
+            Interrupt::WriteMasterEnableLow(1);
+            Interrupt::WriteMasterEnableHigh(0);
 
             // If r0 is one IF must be cleared
             if (m_State.m_R[0] == 1)
-                Memory::m_Interrupt.if_ = 0;
+            {
+                Interrupt::WriteInterruptFlagLow(0);
+                Interrupt::WriteInterruptFlagHigh(0);
+            }
 
             // Sets GBA into halt state, waiting for specific interrupt(s) to occur.
             Memory::m_IntrWait = true;
@@ -444,4 +448,3 @@ namespace GBA
         }
     }
 }
-

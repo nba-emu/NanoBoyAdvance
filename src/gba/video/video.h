@@ -25,11 +25,8 @@
 #ifndef __NBA_VIDEO_H__
 #define __NBA_VIDEO_H__
 
-
 #include "common/types.h"
 #include "common/log.h"
-#include "../interrupt.h"
-
 
 namespace GBA
 {
@@ -108,7 +105,7 @@ namespace GBA
     };
 
     class Video
-    {   
+    {
     private:
         static const int VBLANK_INTERRUPT;
         static const int HBLANK_INTERRUPT;
@@ -132,7 +129,7 @@ namespace GBA
             PHASE_VBLANK = 2
         };
 
-        void Init(Interrupt* m_Interrupt);
+        void Init();
 
         void Step();
         void Render();
@@ -150,12 +147,6 @@ namespace GBA
         void RenderOAM(u32 tile_base);
         void ApplySFX(u16* target1, u16 target2);
         void ComposeScanline();
-
-        ///////////////////////////////////////////////////////////
-        // Class members
-        //
-        ///////////////////////////////////////////////////////////
-        Interrupt* m_Interrupt;
 
         ///////////////////////////////////////////////////////////
         // Class members (Buffers)

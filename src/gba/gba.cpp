@@ -99,13 +99,13 @@ namespace GBA
 
         for (int i = 0; i < total_cycles; ++i)
         {
-            u32 interrupts = Memory::m_Interrupt.ie & Memory::m_Interrupt.if_;
+            u32 requested_and_enabled = Interrupt::GetRequestedAndEnabled();
 
             // Only pause as long as (IE & IF) != 0
-            if (Memory::m_HaltState != HALTSTATE_NONE && interrupts != 0)
+            if (Memory::m_HaltState != HALTSTATE_NONE && requested_and_enabled != 0)
             {
                 // If IntrWait only resume if requested interrupt is encountered
-                if (!Memory::m_IntrWait || (interrupts & Memory::m_IntrWaitMask) != 0)
+                if (!Memory::m_IntrWait || (requested_and_enabled & Memory::m_IntrWaitMask) != 0)
                 {
                     Memory::m_HaltState = HALTSTATE_NONE;
                     Memory::m_IntrWait = false;
@@ -113,7 +113,7 @@ namespace GBA
             }
 
             // Raise an IRQ if neccessary
-            if (Memory::m_Interrupt.ime && interrupts)
+            if (Interrupt::GetMasterEnable() && requested_and_enabled)
                 m_ARM.RaiseIRQ();
 
             // Run the hardware components

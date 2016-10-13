@@ -35,7 +35,7 @@ namespace GBA
 
         if (m_count == 0xFFFF)
         {
-            if (m_interrupt) Memory::m_Interrupt.if_ |= 8 << m_id;
+            if (m_interrupt) Interrupt::RequestInterrupt(3 + m_id);
 
             m_count    = m_reload;
             m_overflow = overflow = true;

@@ -23,14 +23,15 @@
 
 
 #include "video.h"
+#include "../interrupt.hpp"
 #include <cstring>
 
 
 namespace GBA
 {
-    const int Video::VBLANK_INTERRUPT = 1;
-    const int Video::HBLANK_INTERRUPT = 2;
-    const int Video::VCOUNT_INTERRUPT = 4;
+    const int Video::VBLANK_INTERRUPT = 0;
+    const int Video::HBLANK_INTERRUPT = 1;
+    const int Video::VCOUNT_INTERRUPT = 2;
     const int Video::EVENT_WAIT_CYCLES[3] = { 960, 272, 1232 };
     const u16 Video::COLOR_TRANSPARENT = 0x8000;
 
@@ -40,11 +41,8 @@ namespace GBA
     /// \fn      Constructor
     ///
     ///////////////////////////////////////////////////////////
-    void Video::Init(Interrupt* interrupt)
+    void Video::Init()
     {
-        // Assign interrupt struct to video device
-        this->m_Interrupt = interrupt;
-
         // Zero init memory buffers
         memset(m_PAL, 0, 0x400);
         memset(m_VRAM, 0, 0x18000);
@@ -126,7 +124,7 @@ namespace GBA
             break;
         }
         case 1:
-        {        
+        {
             // BG Mode 1 - 240x160 pixels, Text and RS mode mixed
             if (m_BG[0].enable)
                 RenderTextModeBG(0);
@@ -197,7 +195,7 @@ namespace GBA
             }
             break;
         }
-        
+
         // Render sprites if enabled
         if (m_Obj.enable)
             RenderOAM(0x10000);
@@ -223,7 +221,7 @@ namespace GBA
             m_WaitCycles = EVENT_WAIT_CYCLES[PHASE_HBLANK];
 
             if (m_HBlankIRQ)
-                m_Interrupt->if_ |= HBLANK_INTERRUPT;
+                Interrupt::RequestInterrupt(HBLANK_INTERRUPT);
 
             // Update BG2/3 RS reference coordinates.
             m_BG[2].x_ref_int += DecodeGBAFloat16(m_BG[2].pb);
@@ -238,8 +236,8 @@ namespace GBA
             m_VCountFlag = ++m_VCount == m_VCountSetting;
 
             if (m_VCountFlag && m_VCountIRQ)
-                m_Interrupt->if_ |= VCOUNT_INTERRUPT;
-                
+                Interrupt::RequestInterrupt(VCOUNT_INTERRUPT);
+
             if (m_VCount == 160)
             {
                 m_BG[2].x_ref_int = DecodeGBAFloat32(m_BG[2].x_ref);
@@ -253,7 +251,7 @@ namespace GBA
                 m_WaitCycles = EVENT_WAIT_CYCLES[PHASE_VBLANK];
 
                 if (m_VBlankIRQ)
-                    m_Interrupt->if_ |= VBLANK_INTERRUPT;
+                    Interrupt::RequestInterrupt(VBLANK_INTERRUPT);
             }
             else
             {
@@ -282,7 +280,7 @@ namespace GBA
             }
 
             if (m_VCountFlag && m_VCountIRQ)
-                m_Interrupt->if_ |= VCOUNT_INTERRUPT;
+                Interrupt::RequestInterrupt(VCOUNT_INTERRUPT);
 
             return;
         }

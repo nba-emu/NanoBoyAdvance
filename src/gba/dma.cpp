@@ -22,7 +22,7 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 
-#include "io.h"
+#include "io.hpp"
 #include "memory.h"
 
 
@@ -88,7 +88,7 @@ namespace GBA
 
                         // Raise DMA interrupt if enabled
                         if (m_DMA[i].interrupt)
-                            m_Interrupt.if_ |= 256 << i;
+                            Interrupt::RequestInterrupt(7 + i);
                     }
                 }
 
@@ -160,7 +160,7 @@ namespace GBA
 
                 // Raise DMA interrupt if enabled
                 if (m_DMA[i].interrupt)
-                    m_Interrupt.if_ |= 256 << i;
+                    Interrupt::RequestInterrupt(7 + i);
             }
         }
     }

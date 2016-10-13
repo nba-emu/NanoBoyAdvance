@@ -21,30 +21,11 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-
-#ifndef __NBA_INTERRUPT_H__
-#define __NBA_INTERRUPT_H__
-
-
-#include "common/types.h"
-
+#include "interrupt.hpp"
 
 namespace GBA
 {
-    ///////////////////////////////////////////////////////////
-    /// \author Frederic Meyer
-    /// \date   July 31th, 2016
-    /// \enum   Interrupt
-    ///
-    ///////////////////////////////////////////////////////////
-    struct Interrupt
-    {
-        u16 if_ {0};
-        u16 ie {0};
-        u16 ime {0};
-    };
+    u16 Interrupt::m_master_enable = 0;
+    u16 Interrupt::m_interrupt_flag = 0;
+    u16 Interrupt::m_interrupt_enable = 0;
 }
-
-
-#endif  // __NBA_INTERRUPT_H__
-

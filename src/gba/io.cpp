@@ -22,7 +22,7 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 
-#include "io.h"
+#include "io.hpp"
 #include "memory.h"
 
 
@@ -192,14 +192,10 @@ namespace GBA
             return m_KeyInput & 0xFF;
         case KEYINPUT+1:
             return m_KeyInput >> 8;
-        case IE:
-            return m_Interrupt.ie & 0xFF;
-         case IE+1:
-            return m_Interrupt.ie >> 8;
-        case IF:
-            return m_Interrupt.if_ & 0xFF;
-        case IF+1:
-            return m_Interrupt.if_ >> 8;
+        case IE:   return Interrupt::ReadInterruptEnableLow();
+        case IE+1: return Interrupt::ReadInterruptEnableHigh();
+        case IF:   return Interrupt::ReadInterruptFlagLow();
+        case IF+1: return Interrupt::ReadInterruptFlagHigh();
         case WAITCNT:
             return m_Waitstate.sram |
                    (m_Waitstate.first[0] << 2) |
@@ -210,10 +206,8 @@ namespace GBA
             return m_Waitstate.first[2] |
                    (m_Waitstate.second[2] << 2) |
                    (m_Waitstate.prefetch ? 64 : 0);
-        case IME:
-            return m_Interrupt.ime & 0xFF;
-        case IME+1:
-            return m_Interrupt.ime >> 8;
+        case IME:   return Interrupt::ReadMasterEnableLow();
+        case IME+1: return Interrupt::ReadMasterEnableHigh();
         default:
     #ifdef DEBUG
             LOG(LOG_ERROR, "Read invalid IO register: 0x%x", address);
@@ -871,18 +865,10 @@ namespace GBA
         case TM1CNT_H: m_Timer[1].WriteControlRegister(value); break;
         case TM2CNT_H: m_Timer[2].WriteControlRegister(value); break;
         case TM3CNT_H: m_Timer[3].WriteControlRegister(value); break;
-        case IE:
-            m_Interrupt.ie = (m_Interrupt.ie & 0xFF00) | value;
-            return;
-        case IE+1:
-            m_Interrupt.ie = (m_Interrupt.ie & 0x00FF) | (value << 8);
-            return;
-        case IF:
-            m_Interrupt.if_ &= ~value;
-            return;
-        case IF+1:
-            m_Interrupt.if_ &= ~(value << 8);
-            return;
+        case IE:   Interrupt::WriteInterruptEnableLow(value); break;
+        case IE+1: Interrupt::WriteInterruptEnableHigh(value); break;
+        case IF:   Interrupt::WriteInterruptFlagLow(value); break;
+        case IF+1: Interrupt::WriteInterruptFlagHigh(value); break;
         case WAITCNT:
             m_Waitstate.sram = value & 3;
             m_Waitstate.first[0] = (value >> 2) & 3;
@@ -895,12 +881,8 @@ namespace GBA
             m_Waitstate.second[2] = (value >> 2) & 1;
             m_Waitstate.prefetch = value & 64;
             return;
-        case IME:
-            m_Interrupt.ime = (m_Interrupt.ime & 0xFF00) | value;
-            return;
-        case IME+1:
-            m_Interrupt.ime = (m_Interrupt.ime & 0x00FF) | (value << 8);
-            return;
+        case IME:   Interrupt::WriteMasterEnableLow(value); break;
+        case IME+1: Interrupt::WriteMasterEnableHigh(value); break;
         case HALTCNT:
             m_HaltState = (value & 0x80) ? HALTSTATE_STOP : HALTSTATE_HALT;
             return;

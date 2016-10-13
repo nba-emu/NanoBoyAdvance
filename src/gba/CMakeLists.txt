@@ -4,6 +4,7 @@ set(SRCS
     arm/arm_instr.cpp
     arm/thumb_instr.cpp
     io.cpp
+    interrupt.cpp
     dma.cpp
     timer.cpp
     memory.cpp
@@ -24,8 +25,8 @@ set(HEADERS
     arm/arm.h
     arm/arm.inl
     arm/state.h
-    io.h
-    interrupt.h
+    io.hpp
+    interrupt.hpp
     dma.h
     timer.hpp
     memory.h

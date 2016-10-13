@@ -73,7 +73,6 @@ namespace GBA
     Timer Memory::m_Timer[4];
     Waitstate Memory::m_Waitstate;
 
-    Interrupt Memory::m_Interrupt;
     HaltState Memory::m_HaltState = HALTSTATE_NONE;
     bool Memory::m_IntrWait = false;
     bool Memory::m_IntrWaitMask = 0;
@@ -110,7 +109,7 @@ namespace GBA
         m_ROMSize = File::GetFileSize(rom_file);
 
         // Setup Video controller
-        m_Video.Init(&m_Interrupt);
+        m_Video.Init();
 
         // Detect savetype
         for (int i = 0; i < m_ROMSize; i += 4)
@@ -155,7 +154,7 @@ namespace GBA
         m_HaltState = HALTSTATE_NONE;
         m_IntrWait = false;
         m_IntrWaitMask = 0;
-        memset(&m_Interrupt, 0, sizeof(Interrupt));
+        Interrupt::Reset();
 
         // Reset DMAs and Timers.
         for (int i = 0; i < 4; i++)

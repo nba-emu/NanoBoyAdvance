@@ -30,7 +30,7 @@
 #include "common/types.h"
 #include "dma.h"
 #include "timer.hpp"
-#include "interrupt.h"
+#include "interrupt.hpp"
 #include "video/video.h"
 #include "backup/backup.h"
 #include "audio/audio.h"
@@ -195,7 +195,6 @@ namespace GBA
         // Class members (Interrupts)
         //
         ///////////////////////////////////////////////////////////
-        static Interrupt m_Interrupt;
         static HaltState m_HaltState;
         static bool      m_IntrWait;
         static bool      m_IntrWaitMask;
