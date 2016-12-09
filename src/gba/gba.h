@@ -28,8 +28,8 @@
 
 #include "arm/arm.h"
 #include "memory.h"
-#include "common/types.h"
-#include "common/file.h"
+#include "util/integer.hpp"
+#include "util/file.hpp"
 #include <string>
 
 

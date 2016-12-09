@@ -26,7 +26,7 @@
 #define __NBA_BACKUP_H__
 
 
-#include "common/types.h"
+#include "util/integer.hpp"
 
 
 namespace GBA

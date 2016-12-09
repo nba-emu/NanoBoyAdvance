@@ -23,12 +23,12 @@
 
 
 #include "flash.h"
-#include "common/log.h"
-#include "common/file.h"
+#include "util/log.h"
+#include "util/file.hpp"
 
 
 using namespace std;
-using namespace Common;
+using namespace util;
 
 
 namespace GBA
@@ -48,12 +48,12 @@ namespace GBA
         m_SecondBank = second_bank;
 
         // Check if save file already exists, sanitize and load if so        
-        if (File::Exists(save_file))
+        if (file::exists(save_file))
         {
-            int size = File::GetFileSize(save_file);
+            int size = file::get_size(save_file);
             if (size == (second_bank ? 131072 : 65536))
             {
-                save_data = File::ReadFile(save_file);
+                save_data = file::read_data(save_file);
                 for (int i = 0; i < 65536; i++)
                 {
                     m_Memory[0][i] = save_data[i];
@@ -88,11 +88,11 @@ namespace GBA
                 buffer[i] = m_Memory[0][i];
                 buffer[65536 + i] = m_Memory[1][i];
             }
-            File::WriteFile(m_SaveFile, buffer, 131072);
+            file::write_data(m_SaveFile, buffer, 131072);
         }
         else
         {
-            File::WriteFile(m_SaveFile, m_Memory[0], 65536);
+            file::write_data(m_SaveFile, m_Memory[0], 65536);
         }
     }   
 

@@ -23,13 +23,13 @@
 
 
 #include "sram.h"
-#include "common/log.h"
-#include "common/file.h"
+#include "util/log.h"
+#include "util/file.hpp"
 #include <cstring>
 
 
 using namespace std;
-using namespace Common;
+using namespace util;
 
 
 namespace GBA
@@ -52,13 +52,13 @@ namespace GBA
         this->m_SaveFile = save_file;        
 
         // Check if save file already exists, sanitize and load if so        
-        if (File::Exists(save_file))
+        if (file::exists(save_file))
         {
-            int size = File::GetFileSize(save_file);
+            int size = file::get_size(save_file);
 
             if (size == SAVE_SIZE)
             {
-                save_data = File::ReadFile(save_file);
+                save_data = file::read_data(save_file);
                 memcpy(m_Memory, save_data, SAVE_SIZE);
                 return;
             }
@@ -77,7 +77,7 @@ namespace GBA
     ///////////////////////////////////////////////////////////
     SRAM::~SRAM()
     {
-        File::WriteFile(m_SaveFile, m_Memory, SAVE_SIZE);
+        file::write_data(m_SaveFile, m_Memory, SAVE_SIZE);
     }   
 
 

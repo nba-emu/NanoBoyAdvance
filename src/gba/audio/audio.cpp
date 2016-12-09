@@ -23,7 +23,7 @@
 
 
 #include "audio.h"
-#include "common/log.h"
+#include "util/log.h"
 #include "config/config.h"
 #include <math.h>
 

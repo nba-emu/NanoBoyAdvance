@@ -30,7 +30,7 @@
 
 
 using namespace std;
-using namespace Common;
+using namespace util;
 
 
 namespace GBA
@@ -66,11 +66,11 @@ namespace GBA
         u8* bios;
         size_t bios_size;
 
-        if (!File::Exists(bios_file))
+        if (!file::exists(bios_file))
             throw runtime_error("Cannot open BIOS file.");
 
-        bios = File::ReadFile(bios_file);
-        bios_size = File::GetFileSize(bios_file);
+        bios = file::read_data(bios_file);
+        bios_size = file::get_size(bios_file);
 
         Memory::Init(rom_file, save_file, bios, bios_size);
         m_ARM.Init(false);

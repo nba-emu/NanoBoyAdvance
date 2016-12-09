@@ -42,4 +42,4 @@ set(HEADERS
 )
 
 add_library(gba STATIC ${SRCS} ${HEADERS})
-target_link_libraries(gba common audio config)
+target_link_libraries(gba util audio config)

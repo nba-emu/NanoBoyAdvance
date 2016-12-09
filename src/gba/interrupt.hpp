@@ -25,7 +25,7 @@
 #ifndef __NBA_INTERRUPT_HPP__
 #define __NBA_INTERRUPT_HPP__
 
-#include "common/types.h"
+#include "util/integer.hpp"
 
 namespace GBA
 {

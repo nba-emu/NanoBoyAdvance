@@ -28,7 +28,7 @@
 
 #include "sdl_adapter.h"
 #include "config/config.h"
-#include "common/log.h"
+#include "util/log.h"
 #include <SDL2/SDL.h>
 
 

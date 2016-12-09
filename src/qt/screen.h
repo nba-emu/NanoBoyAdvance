@@ -26,7 +26,7 @@
 #define __NBA_SCREEN_H__
 
 
-#include "common/types.h"
+#include "util/integer.hpp"
 #include <QGLWidget>
 
 
@@ -96,7 +96,7 @@ signals:
     ///
     ///////////////////////////////////////////////////////////
     void keyRelease(int key);
-    
+
 protected:
     ///////////////////////////////////////////////////////////
     /// \author  Frederic Meyer

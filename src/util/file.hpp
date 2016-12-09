@@ -21,22 +21,36 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
+#ifndef __NBA_FILE_HPP__
+#define __NBA_FILE_HPP__
 
-#ifndef __NBA_TYPES_H__
-#define __NBA_TYPES_H__
+#include "integer.hpp"
 
+namespace util
+{
+    namespace file
+    {
+        /// Determines wether a file exists.
+        /// @param    filename  the file to check.
+        /// @returns  wether the file exists.
+        bool exists(std::string filename);
 
-#include <cstdint>
+        /// Determines file size.
+        /// @param    filename  the file to get the size from.
+        /// @returns  the file size.
+        int get_size(std::string filename);
 
+        /// Reads a file into a byte array.
+        /// @param    filename  the file to read.
+        /// @returns  the byte array.
+        u8* read_data(std::string filename);
 
-typedef std::uint8_t  u8;
-typedef std::uint16_t u16;
-typedef std::uint32_t u32;
-typedef std::uint64_t u64;
-typedef std::int8_t   s8;
-typedef std::int16_t  s16;
-typedef std::int32_t  s32;
-typedef std::int64_t  s64;
+        /// Writes a byte array to a file.
+        /// @param  filename  the file to write
+        /// @param  data      the byte array
+        /// @param  size      the size of the array
+        void write_data(std::string filename, u8* data, int size);
+    }
+}
 
-
-#endif  // __NBA_TYPES_H__
+#endif  // __NBA_FILE_HPP__

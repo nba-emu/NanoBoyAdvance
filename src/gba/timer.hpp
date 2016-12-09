@@ -25,7 +25,7 @@
 #ifndef __NBA_TIMER_HPP__
 #define __NBA_TIMER_HPP__
 
-#include "common/log.h"
+#include "util/log.h"
 namespace GBA
 {
     // TODO: there seems to be a bug with the timer demo.

@@ -25,8 +25,8 @@
 #ifndef __NBA_VIDEO_H__
 #define __NBA_VIDEO_H__
 
-#include "common/types.h"
-#include "common/log.h"
+#include "util/integer.hpp"
+#include "util/log.h"
 
 namespace GBA
 {

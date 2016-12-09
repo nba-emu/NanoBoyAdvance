@@ -23,7 +23,7 @@
 
 
 #include "gba/gba.h"
-#include "common/file.h"
+#include "util/file.hpp"
 #include "arguments.h"
 #include <SDL2/SDL.h>
 #include <png.h>

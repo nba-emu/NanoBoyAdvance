@@ -25,8 +25,8 @@
 #pragma once
 
 
-#include "common/types.h"
-#include "common/log.h"
+#include "util/integer.hpp"
+#include "util/log.h"
 #include "../memory.h"
 #include "state.h"
 
@@ -46,9 +46,9 @@ namespace GBA
             int m_Index;
             bool m_Flush;
         } m_Pipe;
-        
+
         bool hle;
-        
+
         void CalculateSign(u32 result);
         void CalculateZero(u64 result);
         void AssertCarry(bool carry);
@@ -140,7 +140,7 @@ namespace GBA
 
         // Constructors
         void Init(bool use_bios);
-        
+
         // Execution functions
         void Step();
         void RaiseIRQ();

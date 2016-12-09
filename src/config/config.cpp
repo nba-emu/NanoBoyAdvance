@@ -23,7 +23,7 @@
 
 
 #include "config.h"
-#include "common/log.h"
+#include "util/log.h"
 #include <fstream>
 #include <stack>
 

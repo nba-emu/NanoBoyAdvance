@@ -27,7 +27,7 @@
 
 
 #include <iostream>
-#include "common/types.h"
+#include "util/integer.hpp"
 #include "dma.h"
 #include "timer.hpp"
 #include "interrupt.hpp"

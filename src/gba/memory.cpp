@@ -23,8 +23,8 @@
 
 
 #include "memory.h"
-#include "common/log.h"
-#include "common/file.h"
+#include "util/log.h"
+#include "util/file.hpp"
 #include "backup/flash.h"
 #include "backup/sram.h"
 #include <stdexcept>
@@ -32,7 +32,7 @@
 
 
 using namespace std;
-using namespace Common;
+using namespace util;
 
 
 namespace GBA
@@ -102,11 +102,11 @@ namespace GBA
             memcpy(m_BIOS, HLE_BIOS, sizeof(HLE_BIOS));
         }
 
-        if (!File::Exists(rom_file))
+        if (!file::exists(rom_file))
             throw runtime_error("Cannot open ROM file.");
 
-        m_ROM = File::ReadFile(rom_file);
-        m_ROMSize = File::GetFileSize(rom_file);
+        m_ROM = file::read_data(rom_file);
+        m_ROMSize = file::get_size(rom_file);
 
         // Setup Video controller
         m_Video.Init();
