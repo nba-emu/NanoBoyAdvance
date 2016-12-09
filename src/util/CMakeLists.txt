@@ -4,8 +4,9 @@ set(SRCS
 
 set(HEADERS
     file.hpp
-    log.h
     integer.hpp
+    bit.hpp
+    log.h
 )
 
 add_library(util STATIC ${SRCS} ${HEADERS})
