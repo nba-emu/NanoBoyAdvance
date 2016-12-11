@@ -26,7 +26,7 @@
 #define __NBA_GBA_H__
 
 
-#include "arm/arm.h"
+#include "arm/arm.hpp"
 #include "memory.h"
 #include "util/integer.hpp"
 #include "util/file.hpp"
@@ -75,7 +75,7 @@ namespace GBA
 
         static const int FRAME_CYCLES;
 
-        ARM7 m_ARM;
+        arm m_ARM;
         Memory m_Memory;
         int m_SpeedMultiplier        {1};      ///< Holds the emulation speed
         bool m_DidRender             {false};  ///< Has frame already been rendered?

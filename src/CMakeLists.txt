@@ -7,9 +7,9 @@ add_subdirectory(audio)
 add_subdirectory(config)
 
 if (SDL2_GUI)
-    add_subdirectory(targets/sdl)
+    add_subdirectory(sdl)
 endif()
 
 if (QT_GUI)
-    add_subdirectory(targets/qt)
+    add_subdirectory(qt)
 endif()

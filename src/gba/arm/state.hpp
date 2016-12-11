@@ -21,17 +21,13 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-
-#ifndef __NBA_STATE_H__
-#define __NBA_STATE_H__
-
+#pragma once
 
 #include <cstring>
 
-
 namespace GBA
 {
-    enum Mode
+    enum cpu_mode
     {
         MODE_USR = 0x10,
         MODE_FIQ = 0x11,
@@ -42,7 +38,7 @@ namespace GBA
         MODE_SYS = 0x1F
     };
 
-    enum StatusMask
+    enum status_mask
     {
         MASK_MODE  = 0x1F,
         MASK_THUMB = 0x20,
@@ -54,7 +50,7 @@ namespace GBA
         MASK_NFLAG = 0x80000000
     };
 
-    enum ExceptionVector
+    enum exception_vector
     {
         EXCPT_RESET     = 0x00,
         EXCPT_UNDEFINED = 0x04,
@@ -65,7 +61,7 @@ namespace GBA
         EXCPT_FAST_INTERRUPT = 0x1C
     };
 
-    enum SPSR
+    enum saved_status_register
     {
         SPSR_FIQ = 0,
         SPSR_SVC = 1,
@@ -76,41 +72,38 @@ namespace GBA
         SPSR_COUNT = 6
     };
 
-    struct ARMState
+    struct state
     {
-        u32 m_R[16];
+        u32 m_reg[16];
 
         struct
         {
-            u32 m_R8;
-            u32 m_R9;
-            u32 m_R10;
-            u32 m_R11;
-            u32 m_R12;
-            u32 m_R13;
-            u32 m_R14;
-        } m_USR, m_FIQ;
+            u32 m_r8;
+            u32 m_r9;
+            u32 m_r10;
+            u32 m_r11;
+            u32 m_r12;
+            u32 m_r13;
+            u32 m_r14;
+        } m_usr, m_fiq;
 
         struct
         {
-            u32 m_R13;
-            u32 m_R14;
-        } m_SVC, m_ABT, m_IRQ, m_UND;
+            u32 m_r13;
+            u32 m_r14;
+        } m_svc, m_abt, m_irq, m_und;
 
-        u32 m_CPSR;
-        u32 m_SPSR[SPSR_COUNT];
-        u32* m_PSPSR; // pointer to current SPSR.
+        u32 m_cpsr;
+        u32 m_spsr[SPSR_COUNT];
+        u32* m_spsr_ptr; // pointer to current SPSR.
 
-        ARMState() { Reset(); }
+        state() { reset(); }
 
-        void Reset()
+        void reset()
         {
-            std::memset(this, 0, sizeof(ARMState));
-            m_CPSR = MODE_SYS;
-            m_PSPSR = &m_SPSR[SPSR_DEF];
+            std::memset(this, 0, sizeof(state));
+            m_cpsr = MODE_SYS;
+            m_spsr_ptr = &m_spsr[SPSR_DEF];
         }
     };
 }
-
-
-#endif // __NBA_STATE_H__

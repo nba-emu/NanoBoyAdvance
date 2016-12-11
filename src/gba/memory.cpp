@@ -60,8 +60,8 @@ namespace GBA
         0x04, 0xF0, 0x5E, 0xE2, 0x00, 0x00, 0xA0, 0xE1
     };
 
-    u8*    Memory::m_ROM;
-    size_t Memory::m_ROMSize;
+    u8*    Memory::m_regOM;
+    size_t Memory::m_regOMSize;
 
     u8 Memory::m_BIOS[0x4000];
     u8 Memory::m_WRAM[0x40000];
@@ -105,34 +105,34 @@ namespace GBA
         if (!file::exists(rom_file))
             throw runtime_error("Cannot open ROM file.");
 
-        m_ROM = file::read_data(rom_file);
-        m_ROMSize = file::get_size(rom_file);
+        m_regOM = file::read_data(rom_file);
+        m_regOMSize = file::get_size(rom_file);
 
         // Setup Video controller
         m_Video.Init();
 
         // Detect savetype
-        for (int i = 0; i < m_ROMSize; i += 4)
+        for (int i = 0; i < m_regOMSize; i += 4)
         {
-            if (memcmp(m_ROM + i, "EEPROM_V", 8) == 0)
+            if (memcmp(m_regOM + i, "EEPROM_V", 8) == 0)
             {
                 m_SaveType = SAVE_EEPROM;
                 LOG(LOG_INFO, "Found save type: EEPROM (unsupported)");
             }
-            else if (memcmp(m_ROM + i, "SRAM_V", 6) == 0)
+            else if (memcmp(m_regOM + i, "SRAM_V", 6) == 0)
             {
                 m_SaveType = SAVE_SRAM;
                 m_Backup = new SRAM(save_file);
                 LOG(LOG_INFO, "Found save type: SRAM");
             }
-            else if (memcmp(m_ROM + i, "FLASH_V", 7) == 0 ||
-                     memcmp(m_ROM + i, "FLASH512_V", 10) == 0)
+            else if (memcmp(m_regOM + i, "FLASH_V", 7) == 0 ||
+                     memcmp(m_regOM + i, "FLASH512_V", 10) == 0)
             {
                 m_SaveType = SAVE_FLASH64;
                 m_Backup = new Flash(save_file, false);
                 LOG(LOG_INFO, "Found save type: FLASH64");
             }
-            else if (memcmp(m_ROM + i, "FLASH1M_V", 9) == 0)
+            else if (memcmp(m_regOM + i, "FLASH1M_V", 9) == 0)
             {
                 m_SaveType = SAVE_FLASH128;
                 m_Backup = new Flash(save_file, true);
@@ -176,7 +176,7 @@ namespace GBA
 
     void Memory::Shutdown()
     {
-        delete m_ROM;
+        delete m_regOM;
         delete m_Backup;
     }
 
@@ -266,9 +266,9 @@ namespace GBA
     {
         address &= 0x1FFFFFF;
 
-        if (address >= m_ROMSize) return 0;
+        if (address >= m_regOMSize) return 0;
 
-        return m_ROM[address];
+        return m_regOM[address];
     }
 
     u8 Memory::ReadSave(u32 address)

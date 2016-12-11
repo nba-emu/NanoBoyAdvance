@@ -33,9 +33,9 @@
 
 namespace GBA
 {
-    class ARM7
+    class arm
     {
-        typedef void (ARM7::*ThumbInstruction)(u16);
+        typedef void (arm::*ThumbInstruction)(u16);
         static const ThumbInstruction THUMB_TABLE[1024];
 
         ARMState m_State;
@@ -49,11 +49,11 @@ namespace GBA
 
         bool hle;
 
-        void CalculateSign(u32 result);
-        void CalculateZero(u64 result);
-        void AssertCarry(bool carry);
-        void CalculateOverflowAdd(u32 result, u32 operand1, u32 operand2);
-        void CalculateOverflowSub(u32 result, u32 operand1, u32 operand2);
+        void update_sign(u32 result);
+        void update_zero(u64 result);
+        void set_carry(bool carry);
+        void update_overflow_add(u32 result, u32 operand1, u32 operand2);
+        void update_overflow_sub(u32 result, u32 operand1, u32 operand2);
         static void LSL(u32& operand, u32 amount, bool& carry);
         static void LSR(u32& operand, u32 amount, bool& carry, bool immediate);
         static void ASR(u32& operand, u32 amount, bool& carry, bool immediate);

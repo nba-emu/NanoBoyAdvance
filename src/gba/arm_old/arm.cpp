@@ -43,10 +43,10 @@ namespace GBA
         this->hle = hle;
     }
 
-    u32 arm::GetGeneralRegister(cpu_mode mode, int r)
+    u32 arm::GetGeneralRegister(Mode mode, int r)
     {
         u32 value;
-        cpu_mode old_mode = (cpu_mode)(m_State.m_cpsr & MASK_MODE);
+        Mode old_mode = (Mode)(m_State.m_cpsr & MASK_MODE);
 
         // Temporary switch to requested mode
         SaveRegisters();
@@ -66,7 +66,7 @@ namespace GBA
         return m_State.m_cpsr;
     }
 
-    u32 arm::GetSavedStatusRegister(cpu_mode mode)
+    u32 arm::GetSavedStatusRegister(Mode mode)
     {
         switch (mode)
         {
@@ -79,9 +79,9 @@ namespace GBA
         return 0;
     }
 
-    void arm::SetGeneralRegister(cpu_mode mode, int r, u32 value)
+    void arm::SetGeneralRegister(Mode mode, int r, u32 value)
     {
-        cpu_mode old_mode = (cpu_mode)(m_State.m_cpsr & MASK_MODE);
+        Mode old_mode = (Mode)(m_State.m_cpsr & MASK_MODE);
 
         // Temporary switch to requested mode
         SaveRegisters();
@@ -100,7 +100,7 @@ namespace GBA
         m_State.m_cpsr = value;
     }
 
-    void arm::SetSavedStatusRegister(cpu_mode mode, u32 value)
+    void arm::SetSavedStatusRegister(Mode mode, u32 value)
     {
         switch (mode)
         {

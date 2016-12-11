@@ -143,7 +143,7 @@ namespace GBA
                     {
                         Memory::m_Video.Step();
 
-                        if (Memory::m_Video.m_RenderScanline && (i / FRAME_CYCLES) == m_SpeedMultiplier - 1)
+                        if (Memory::m_Video.m_regenderScanline && (i / FRAME_CYCLES) == m_SpeedMultiplier - 1)
                         {
                             Memory::m_Video.Render();
                             m_DidRender = true;

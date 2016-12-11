@@ -21,7 +21,10 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#pragma once
+
+#ifndef __NBA_ARM_INL__
+#define __NBA_ARM_INL__
+
 
 namespace GBA
 {
@@ -190,3 +193,6 @@ namespace GBA
         }
     }
 }
+
+
+#endif // __NBA_ARM_INL__

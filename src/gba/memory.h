@@ -174,8 +174,8 @@ namespace GBA
         // Class members (Memory)
         //
         ///////////////////////////////////////////////////////////
-        static u8* m_ROM;
-        static size_t m_ROMSize;
+        static u8* m_regOM;
+        static size_t m_regOMSize;
         static u8 m_BIOS[0x4000];
         static u8 m_WRAM[0x40000];
         static u8 m_IRAM[0x8000];
