@@ -26,7 +26,7 @@
 
 
 // Artifact of old code. Remove when I got time.
-#define reg(i) this->m_State.m_reg[i]
+#define reg(i) this->m_state.m_reg[i]
 
 const int ARM_1 = 1;
 const int ARM_2 = 2;
@@ -138,20 +138,20 @@ namespace GBA
         {
             switch (condition)
             {
-            case 0x0: if (!(m_State.m_cpsr & MASK_ZFLAG))     return; break;
-            case 0x1: if (  m_State.m_cpsr & MASK_ZFLAG)      return; break;
-            case 0x2: if (!(m_State.m_cpsr & MASK_CFLAG))    return; break;
-            case 0x3: if (  m_State.m_cpsr & MASK_CFLAG)     return; break;
-            case 0x4: if (!(m_State.m_cpsr & MASK_NFLAG))     return; break;
-            case 0x5: if (  m_State.m_cpsr & MASK_NFLAG)      return; break;
-            case 0x6: if (!(m_State.m_cpsr & MASK_VFLAG)) return; break;
-            case 0x7: if (  m_State.m_cpsr & MASK_VFLAG)  return; break;
-            case 0x8: if (!(m_State.m_cpsr & MASK_CFLAG) ||  (m_State.m_cpsr & MASK_ZFLAG)) return; break;
-            case 0x9: if ( (m_State.m_cpsr & MASK_CFLAG) && !(m_State.m_cpsr & MASK_ZFLAG)) return; break;
-            case 0xA: if ((m_State.m_cpsr & MASK_NFLAG) != (m_State.m_cpsr & MASK_VFLAG)) return; break;
-            case 0xB: if ((m_State.m_cpsr & MASK_NFLAG) == (m_State.m_cpsr & MASK_VFLAG)) return; break;
-            case 0xC: if ((m_State.m_cpsr & MASK_ZFLAG) || ((m_State.m_cpsr & MASK_NFLAG) != (m_State.m_cpsr & MASK_VFLAG))) return; break;
-            case 0xD: if (!(m_State.m_cpsr & MASK_ZFLAG) && ((m_State.m_cpsr & MASK_NFLAG) == (m_State.m_cpsr & MASK_VFLAG))) return; break;
+            case 0x0: if (!(m_state.m_cpsr & MASK_ZFLAG))     return; break;
+            case 0x1: if (  m_state.m_cpsr & MASK_ZFLAG)      return; break;
+            case 0x2: if (!(m_state.m_cpsr & MASK_CFLAG))    return; break;
+            case 0x3: if (  m_state.m_cpsr & MASK_CFLAG)     return; break;
+            case 0x4: if (!(m_state.m_cpsr & MASK_NFLAG))     return; break;
+            case 0x5: if (  m_state.m_cpsr & MASK_NFLAG)      return; break;
+            case 0x6: if (!(m_state.m_cpsr & MASK_VFLAG)) return; break;
+            case 0x7: if (  m_state.m_cpsr & MASK_VFLAG)  return; break;
+            case 0x8: if (!(m_state.m_cpsr & MASK_CFLAG) ||  (m_state.m_cpsr & MASK_ZFLAG)) return; break;
+            case 0x9: if ( (m_state.m_cpsr & MASK_CFLAG) && !(m_state.m_cpsr & MASK_ZFLAG)) return; break;
+            case 0xA: if ((m_state.m_cpsr & MASK_NFLAG) != (m_state.m_cpsr & MASK_VFLAG)) return; break;
+            case 0xB: if ((m_state.m_cpsr & MASK_NFLAG) == (m_state.m_cpsr & MASK_VFLAG)) return; break;
+            case 0xC: if ((m_state.m_cpsr & MASK_ZFLAG) || ((m_state.m_cpsr & MASK_NFLAG) != (m_state.m_cpsr & MASK_VFLAG))) return; break;
+            case 0xD: if (!(m_state.m_cpsr & MASK_ZFLAG) && ((m_state.m_cpsr & MASK_NFLAG) == (m_state.m_cpsr & MASK_VFLAG))) return; break;
             case 0xE: break;
             case 0xF: return;
             }
@@ -186,7 +186,7 @@ namespace GBA
             }
 
             // Calculate instruction timing
-            cycles += Memory::SequentialAccess(m_State.m_reg[15], ACCESS_WORD);
+            cycles += Memory::SequentialAccess(m_state.m_reg[15], ACCESS_WORD);
             return;
         }
         case ARM_2:
@@ -246,7 +246,7 @@ namespace GBA
             }
 
             // Calculate instruction timing
-            cycles += Memory::SequentialAccess(m_State.m_reg[15], ACCESS_WORD);
+            cycles += Memory::SequentialAccess(m_state.m_reg[15], ACCESS_WORD);
             return;
         }
         case ARM_3:
@@ -258,20 +258,20 @@ namespace GBA
             // that the destination instruction is in THUMB mode.
             if (reg(reg_address) & 1)
             {
-                m_State.m_reg[15] = reg(reg_address) & ~1;
-                m_State.m_cpsr |= MASK_THUMB;
+                m_state.m_reg[15] = reg(reg_address) & ~1;
+                m_state.m_cpsr |= MASK_THUMB;
 
                 // Emulate pipeline refill cycles
-                cycles += Memory::NonSequentialAccess(m_State.m_reg[15], ACCESS_HWORD) +
-                          Memory::SequentialAccess(m_State.m_reg[15] + 2, ACCESS_HWORD);
+                cycles += Memory::NonSequentialAccess(m_state.m_reg[15], ACCESS_HWORD) +
+                          Memory::SequentialAccess(m_state.m_reg[15] + 2, ACCESS_HWORD);
             }
             else
             {
-                m_State.m_reg[15] = reg(reg_address) & ~3;
+                m_state.m_reg[15] = reg(reg_address) & ~3;
 
                 // Emulate pipeline refill cycles
-                cycles += Memory::NonSequentialAccess(m_State.m_reg[15], ACCESS_WORD) +
-                          Memory::SequentialAccess(m_State.m_reg[15] + 4, ACCESS_WORD);
+                cycles += Memory::NonSequentialAccess(m_state.m_reg[15], ACCESS_WORD) +
+                          Memory::SequentialAccess(m_state.m_reg[15] + 4, ACCESS_WORD);
             }
 
             // Flush pipeline
@@ -290,7 +290,7 @@ namespace GBA
 
             #ifdef DEBUG
             ASSERT(reg_source == 15 || reg_dest == 15 || reg_base == 15, LOG_WARN,
-                   "Single Data Swap, thou shall not use r15, r15=0x%x", m_State.m_reg[15]);
+                   "Single Data Swap, thou shall not use r15, r15=0x%x", m_state.m_reg[15]);
             #endif
 
             if (swap_byte)
@@ -302,7 +302,7 @@ namespace GBA
                 reg(reg_dest) = memory_value;
 
                 // Calculate instruction timing
-                cycles += 1 + Memory::SequentialAccess(m_State.m_reg[15], ACCESS_WORD) +
+                cycles += 1 + Memory::SequentialAccess(m_state.m_reg[15], ACCESS_WORD) +
                               Memory::NonSequentialAccess(reg(reg_base), ACCESS_BYTE) +
                               Memory::NonSequentialAccess(reg(reg_source), ACCESS_BYTE);
             }
@@ -315,7 +315,7 @@ namespace GBA
                 reg(reg_dest) = memory_value;
 
                 // Calculate instruction timing
-                cycles += 1 + Memory::SequentialAccess(m_State.m_reg[15], ACCESS_WORD) +
+                cycles += 1 + Memory::SequentialAccess(m_state.m_reg[15], ACCESS_WORD) +
                               Memory::NonSequentialAccess(reg(reg_base), ACCESS_WORD) +
                               Memory::NonSequentialAccess(reg(reg_source), ACCESS_WORD);
             }
@@ -342,13 +342,13 @@ namespace GBA
             // Instructions neither write back if base register is r15
             // nor should they have the write-back bit set when being post-indexed.
             ASSERT(reg_base == 15 && write_back, LOG_ERrotate_right,
-                   "Halfword and Signed Data Transfer, writeback to r15, r15=0x%x", m_State.m_reg[15]);
+                   "Halfword and Signed Data Transfer, writeback to r15, r15=0x%x", m_state.m_reg[15]);
             ASSERT(write_back && !pre_indexed, LOG_ERrotate_right,
-                   "Halfword and Signed Data Transfer, writeback and post-indexed, r15=0x%x", m_State.m_reg[15]);
+                   "Halfword and Signed Data Transfer, writeback and post-indexed, r15=0x%x", m_state.m_reg[15]);
 
             // Load-bit must be set when signed transfer is selected
             ASSERT(type == ARM_7 && !load, LOG_ERrotate_right,
-                   "Halfword and Signed Data Transfer, signed bit and store bit set, r15=0x%x", m_State.m_reg[15]);
+                   "Halfword and Signed Data Transfer, signed bit and store bit set, r15=0x%x", m_state.m_reg[15]);
             #endif
 
             // Decode immediate/register offset
@@ -378,7 +378,7 @@ namespace GBA
                     value = ReadHWordSigned(address);
 
                     // Calculate instruction timing
-                    cycles += 1 + Memory::SequentialAccess(m_State.m_reg[15], ACCESS_WORD) +
+                    cycles += 1 + Memory::SequentialAccess(m_state.m_reg[15], ACCESS_WORD) +
                                   Memory::NonSequentialAccess(address, ACCESS_HWORD);
                 }
                 else
@@ -390,7 +390,7 @@ namespace GBA
                         value |= 0xFFFFFF00;
 
                     // Calculate instruction timing
-                    cycles += 1 + Memory::SequentialAccess(m_State.m_reg[15], ACCESS_WORD) +
+                    cycles += 1 + Memory::SequentialAccess(m_state.m_reg[15], ACCESS_WORD) +
                                   Memory::NonSequentialAccess(address, ACCESS_BYTE);
                 }
 
@@ -402,18 +402,18 @@ namespace GBA
                 reg(reg_dest) = ReadHWord(address);
 
                 // Calculate instruction timing
-                cycles += 1 + Memory::SequentialAccess(m_State.m_reg[15], ACCESS_WORD) +
+                cycles += 1 + Memory::SequentialAccess(m_state.m_reg[15], ACCESS_WORD) +
                               Memory::NonSequentialAccess(address, ACCESS_HWORD);
             }
             else
             {
                 if (reg_dest == 15)
-                    WriteHWord(address, m_State.m_reg[15] + 4);
+                    WriteHWord(address, m_state.m_reg[15] + 4);
                 else
                     WriteHWord(address, reg(reg_dest));
 
                 // Calculate instruction timing
-                cycles += Memory::NonSequentialAccess(m_State.m_reg[15], ACCESS_WORD) +
+                cycles += Memory::NonSequentialAccess(m_state.m_reg[15], ACCESS_WORD) +
                           Memory::NonSequentialAccess(address, ACCESS_HWORD);
             }
 
@@ -459,7 +459,7 @@ namespace GBA
                     if (instruction & (1 << 18)) mask |= 0x00FF0000;
                     if (instruction & (1 << 19)) mask |= 0xFF000000;
 
-                    // Decode the value written to m_State.m_cpsr/spsr
+                    // Decode the value written to m_state.m_cpsr/spsr
                     if (immediate)
                     {
                         int imm = instruction & 0xFF;
@@ -473,32 +473,32 @@ namespace GBA
                         operand = reg(instruction & 0xF);
                     }
 
-                    // Finally write either to SPSR or m_State.m_cpsr.
+                    // Finally write either to SPSR or m_state.m_cpsr.
                     if (use_spsr)
                     {
-                        *m_State.m_spsr_ptr = (*m_State.m_spsr_ptr & ~mask) | (operand & mask);
+                        *m_state.m_spsr_ptr = (*m_state.m_spsr_ptr & ~mask) | (operand & mask);
                     }
                     else
                     {
                         ////SaveRegisters();
-                        ////m_State.m_cpsr = (m_State.m_cpsr & ~mask) | (operand & mask);
+                        ////m_state.m_cpsr = (m_state.m_cpsr & ~mask) | (operand & mask);
                         ////LoadRegisters();
                         u32 value = operand & mask;
 
                         // todo: make sure that mode might actually be affected.
-                        m_State.switch_mode(static_cast<cpu_mode>(value & MASK_MODE));
-                        m_State.m_cpsr = (m_State.m_cpsr & ~mask) | value;
+                        m_state.switch_mode(static_cast<cpu_mode>(value & MASK_MODE));
+                        m_state.m_cpsr = (m_state.m_cpsr & ~mask) | value;
                     }
                 }
                 else
                 {
                     // Move satus register to register.
                     int reg_dest = (instruction >> 12) & 0xF;
-                    reg(reg_dest) = use_spsr ? *m_State.m_spsr_ptr : m_State.m_cpsr;
+                    reg(reg_dest) = use_spsr ? *m_state.m_spsr_ptr : m_state.m_cpsr;
                 }
 
                 // Calculate instruction timing
-                cycles += Memory::SequentialAccess(m_State.m_reg[15], ACCESS_WORD);
+                cycles += Memory::SequentialAccess(m_state.m_reg[15], ACCESS_WORD);
             }
             else
             {
@@ -506,12 +506,12 @@ namespace GBA
                 int reg_dest = (instruction >> 12) & 0xF;
                 int reg_operand1 = (instruction >> 16) & 0xF;
                 bool immediate = instruction & (1 << 25);
-                bool carry = m_State.m_cpsr & MASK_CFLAG;
+                bool carry = m_state.m_cpsr & MASK_CFLAG;
                 u32 operand1 = reg(reg_operand1);
                 u32 operand2;
 
                 // Instruction prefetch timing
-                cycles += Memory::SequentialAccess(m_State.m_reg[15], ACCESS_WORD);
+                cycles += Memory::SequentialAccess(m_state.m_reg[15], ACCESS_WORD);
 
                 // Operand 2 may be an immediate value or a shifted register.
                 if (immediate)
@@ -572,7 +572,7 @@ namespace GBA
                 }
 
                 // The combination rDEST=15 and S-bit=1 triggers a CPU mode switch
-                // effectivly switchting back to the saved mode (m_State.m_cpsr = SPSR).
+                // effectivly switchting back to the saved mode (m_state.m_cpsr = SPSR).
                 if (reg_dest == 15 && set_flags)
                 {
                     // Flags will no longer be updated.
@@ -580,11 +580,11 @@ namespace GBA
 
                     // Switches back to saved mode.
                     ////SaveRegisters();
-                    ////m_State.m_cpsr = *m_State.m_spsr_ptr;
+                    ////m_state.m_cpsr = *m_state.m_spsr_ptr;
                     ////LoadRegisters();
-                    u32 spsr = *m_State.m_spsr_ptr;
-                    m_State.switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
-                    m_State.m_cpsr = spsr;
+                    u32 spsr = *m_state.m_spsr_ptr;
+                    m_state.switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
+                    m_state.m_cpsr = spsr;
                 }
 
                 // Perform the actual operation
@@ -673,7 +673,7 @@ namespace GBA
                 case 0b0101:
                 {
                     // Addition with Carry
-                    int carry2 = (m_State.m_cpsr >> 29) & 1;
+                    int carry2 = (m_state.m_cpsr >> 29) & 1;
                     u32 result = operand1 + operand2 + carry2;
 
                     if (set_flags)
@@ -692,7 +692,7 @@ namespace GBA
                 case 0b0110:
                 {
                     // Subtraction with Carry
-                    int carry2 = (m_State.m_cpsr >> 29) & 1;
+                    int carry2 = (m_state.m_cpsr >> 29) & 1;
                     u32 result = operand1 - operand2 + carry2 - 1;
 
                     if (set_flags)
@@ -709,7 +709,7 @@ namespace GBA
                 case 0b0111:
                 {
                     // Reverse Substraction with Carry
-                    int carry2 = (m_State.m_cpsr >> 29) & 1;
+                    int carry2 = (m_state.m_cpsr >> 29) & 1;
                     u32 result = operand2 - operand1 + carry2 - 1;
 
                     if (set_flags)
@@ -832,8 +832,8 @@ namespace GBA
                     m_Pipe.m_Flush = true;
 
                     // Emulate pipeline flush timings
-                    cycles += Memory::NonSequentialAccess(m_State.m_reg[15], ACCESS_WORD) +
-                              Memory::SequentialAccess(m_State.m_reg[15] + 4, ACCESS_WORD);
+                    cycles += Memory::NonSequentialAccess(m_state.m_reg[15], ACCESS_WORD) +
+                              Memory::SequentialAccess(m_state.m_reg[15] + 4, ACCESS_WORD);
                 }
             }
             return;
@@ -857,9 +857,9 @@ namespace GBA
             #ifdef DEBUG
             // Writeback may not be used when rBASE=15 or post-indexed is enabled.
             ASSERT(reg_base == 15 && write_back, LOG_WARN,
-                   "Single Data Transfer, writeback to r15, r15=0x%x", m_State.m_reg[15]);
+                   "Single Data Transfer, writeback to r15, r15=0x%x", m_state.m_reg[15]);
             ASSERT(write_back && !pre_indexed, LOG_WARN,
-                   "Single Data Transfer, writeback and post-indexed, r15=0x%x", m_State.m_reg[15]);
+                   "Single Data Transfer, writeback and post-indexed, r15=0x%x", m_state.m_reg[15]);
             #endif
 
             // Decode offset.
@@ -877,7 +877,7 @@ namespace GBA
                 bool carry;
 
                 #ifdef DEBUG
-                ASSERT(reg_offset == 15, LOG_WARN, "Single Data Transfer, r15 used as offset, r15=0x%x", m_State.m_reg[15]);
+                ASSERT(reg_offset == 15, LOG_WARN, "Single Data Transfer, r15 used as offset, r15=0x%x", m_state.m_reg[15]);
                 #endif
 
                 offset = reg(reg_offset);
@@ -895,7 +895,7 @@ namespace GBA
                     arithmetic_shift_right(offset, amount, carry, true);
                     break;
                 case 0b11:
-                    carry = m_State.m_cpsr & MASK_CFLAG;
+                    carry = m_state.m_cpsr & MASK_CFLAG;
                     rotate_right(offset, amount, carry, true);
                     break;
                 }
@@ -919,7 +919,7 @@ namespace GBA
                     reg(reg_dest) = ReadByte(address);
 
                     // Calculate instruction timing
-                    cycles += 1 + Memory::SequentialAccess(m_State.m_reg[15], ACCESS_WORD) +
+                    cycles += 1 + Memory::SequentialAccess(m_state.m_reg[15], ACCESS_WORD) +
                                   Memory::NonSequentialAccess(address, ACCESS_BYTE);
                 }
                 else
@@ -927,7 +927,7 @@ namespace GBA
                     reg(reg_dest) = ReadWordRotated(address);
 
                     // Calculate instruction timing
-                    cycles += 1 + Memory::SequentialAccess(m_State.m_reg[15], ACCESS_WORD) +
+                    cycles += 1 + Memory::SequentialAccess(m_state.m_reg[15], ACCESS_WORD) +
                                   Memory::NonSequentialAccess(address, ACCESS_WORD);
                 }
 
@@ -937,8 +937,8 @@ namespace GBA
                     m_Pipe.m_Flush = true;
 
                     // Emulate pipeline refill timings
-                    cycles += Memory::NonSequentialAccess(m_State.m_reg[15], ACCESS_WORD) +
-                              Memory::SequentialAccess(m_State.m_reg[15] + 4, ACCESS_WORD);
+                    cycles += Memory::NonSequentialAccess(m_state.m_reg[15], ACCESS_WORD) +
+                              Memory::SequentialAccess(m_state.m_reg[15] + 4, ACCESS_WORD);
                 }
             }
             else
@@ -955,7 +955,7 @@ namespace GBA
                     WriteByte(address, value & 0xFF);
 
                     // Calculate instruction timing
-                    cycles += Memory::NonSequentialAccess(m_State.m_reg[15], ACCESS_WORD) +
+                    cycles += Memory::NonSequentialAccess(m_state.m_reg[15], ACCESS_WORD) +
                               Memory::NonSequentialAccess(address, ACCESS_BYTE);
                 }
                 else
@@ -963,7 +963,7 @@ namespace GBA
                     WriteWord(address, value);
 
                     // Calculate instruction timing
-                    cycles += Memory::NonSequentialAccess(m_State.m_reg[15], ACCESS_WORD) +
+                    cycles += Memory::NonSequentialAccess(m_state.m_reg[15], ACCESS_WORD) +
                               Memory::NonSequentialAccess(address, ACCESS_WORD);
                 }
             }
@@ -988,7 +988,7 @@ namespace GBA
         case ARM_10:
             // ARM.10 Undefined
             #ifdef DEBUG
-            LOG(LOG_ERrotate_right, "Undefined instruction (0x%x), r15=0x%x", instruction, m_State.m_reg[15]);
+            LOG(LOG_ERrotate_right, "Undefined instruction (0x%x), r15=0x%x", instruction, m_state.m_reg[15]);
             #endif
             return;
         case ARM_11:
@@ -1003,7 +1003,7 @@ namespace GBA
             bool pre_indexed = instruction & (1 << 24);
             bool switched_mode = false;
             bool first_access = false;
-            u32 address = m_State.m_reg[base_register];
+            u32 address = m_state.m_reg[base_register];
             u32 address_old = address;
             int first_register = 0;
             int register_count = 0;
@@ -1011,22 +1011,22 @@ namespace GBA
 
             #ifdef DEBUG
             // Base register must not be r15
-            ASSERT(base_register == 15, LOG_ERrotate_right, "ARM.11, rB=15, r15=0x%x", m_State.m_reg[15]);
+            ASSERT(base_register == 15, LOG_ERrotate_right, "ARM.11, rB=15, r15=0x%x", m_state.m_reg[15]);
             #endif
 
             // Switch to User mode if neccessary
             if (force_user_mode && (!load_instr || !(register_list & (1 << 15))))
             {
                 #ifdef DEBUG
-                ASSERT(write_back, LOG_ERrotate_right, "ARM.11, writeback and modeswitch, r15=0x%x", m_State.m_reg[15]);
+                ASSERT(write_back, LOG_ERrotate_right, "ARM.11, writeback and modeswitch, r15=0x%x", m_state.m_reg[15]);
                 #endif
 
                 // Save current mode and enter user mode
-                old_mode = m_State.m_cpsr & MASK_MODE;
+                old_mode = m_state.m_cpsr & MASK_MODE;
                 ////SaveRegisters();
-                ////m_State.m_cpsr = (m_State.m_cpsr & ~MASK_MODE) | MODE_USR;
+                ////m_state.m_cpsr = (m_state.m_cpsr & ~MASK_MODE) | MODE_USR;
                 ////LoadRegisters();
-                m_State.switch_mode(MODE_USR);
+                m_state.switch_mode(MODE_USR);
 
                 // Mark that we switched to user mode
                 switched_mode = true;
@@ -1051,7 +1051,7 @@ namespace GBA
             }
 
             // One non-sequential prefetch cycle
-            cycles += Memory::NonSequentialAccess(m_State.m_reg[15], ACCESS_HWORD);
+            cycles += Memory::NonSequentialAccess(m_state.m_reg[15], ACCESS_HWORD);
 
             if (increment_base)
             {
@@ -1067,16 +1067,16 @@ namespace GBA
                             if (i == base_register)
                                 write_back = false;
 
-                            m_State.m_reg[i] = ReadWord(address);
+                            m_state.m_reg[i] = ReadWord(address);
 
                             if (i == 15)
                             {
                                 if (force_user_mode)
                                 {
-                                    u32 spsr = *m_State.m_spsr_ptr;
+                                    u32 spsr = *m_state.m_spsr_ptr;
 
-                                    m_State.switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
-                                    m_State.m_cpsr = spsr;
+                                    m_state.switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
+                                    m_state.m_cpsr = spsr;
                                 }
                                 m_Pipe.m_Flush = true;
                             }
@@ -1086,14 +1086,14 @@ namespace GBA
                             if (i == first_register && i == base_register)
                                 WriteWord(address, address_old);
                             else
-                                WriteWord(address, m_State.m_reg[i]);
+                                WriteWord(address, m_state.m_reg[i]);
                         }
 
                         if (!pre_indexed)
                             address += 4;
 
                         if (write_back)
-                            m_State.m_reg[base_register] = address;
+                            m_state.m_reg[base_register] = address;
                     }
                 }
             }
@@ -1111,19 +1111,19 @@ namespace GBA
                             if (i == base_register)
                                 write_back = false;
 
-                            m_State.m_reg[i] = ReadWord(address);
+                            m_state.m_reg[i] = ReadWord(address);
 
                             if (i == 15)
                             {
                                 if (force_user_mode)
                                 {
                                     ////SaveRegisters();
-                                    ////m_State.m_cpsr = *m_State.m_spsr_ptr;
+                                    ////m_state.m_cpsr = *m_state.m_spsr_ptr;
                                     ////LoadRegisters();
-                                    u32 spsr = *m_State.m_spsr_ptr;
+                                    u32 spsr = *m_state.m_spsr_ptr;
 
-                                    m_State.switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
-                                    m_State.m_cpsr = spsr;
+                                    m_state.switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
+                                    m_state.m_cpsr = spsr;
                                 }
                                 m_Pipe.m_Flush = true;
                             }
@@ -1133,14 +1133,14 @@ namespace GBA
                             if (i == first_register && i == base_register)
                                 WriteWord(address, address_old);
                             else
-                                WriteWord(address, m_State.m_reg[i]);
+                                WriteWord(address, m_state.m_reg[i]);
                         }
 
                         if (!pre_indexed)
                             address -= 4;
 
                         if (write_back)
-                            m_State.m_reg[base_register] = address;
+                            m_state.m_reg[base_register] = address;
                     }
                 }
             }
@@ -1149,9 +1149,9 @@ namespace GBA
             if (switched_mode)
             {
                 ////SaveRegisters();
-                ////m_State.m_cpsr = (m_State.m_cpsr & ~MASK_MODE) | old_mode;
+                ////m_state.m_cpsr = (m_state.m_cpsr & ~MASK_MODE) | old_mode;
                 ////LoadRegisters();
-                m_State.switch_mode(static_cast<cpu_mode>(old_mode));
+                m_state.switch_mode(static_cast<cpu_mode>(old_mode));
             }
             return;
         }
@@ -1166,21 +1166,21 @@ namespace GBA
             }
             if (link)
             {
-                reg(14) = m_State.m_reg[15] - 4;
+                reg(14) = m_state.m_reg[15] - 4;
             }
-            m_State.m_reg[15] += offset << 2;
+            m_state.m_reg[15] += offset << 2;
             m_Pipe.m_Flush = true;
             return;
         }
         case ARM_16:
         {
             // ARM.16 Software interrupt
-            u32 bios_call = ReadByte(m_State.m_reg[15] - 6);
+            u32 bios_call = ReadByte(m_state.m_reg[15] - 6);
 
             // Log to the console that we're issuing an interrupt.
             #ifdef DEBUG
             LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (arm)",
-                bios_call, m_State.m_reg[0], m_State.m_reg[1], m_State.m_reg[2], m_State.m_reg[3], reg(14), m_State.m_reg[15]);
+                bios_call, m_state.m_reg[0], m_state.m_reg[1], m_state.m_reg[2], m_state.m_reg[3], reg(14), m_state.m_reg[15]);
             #endif
 
             // Dispatch SWI, either HLE or BIOS.
@@ -1191,19 +1191,19 @@ namespace GBA
             else
             {
                 // Store return address in r14<svc>
-                ////m_State.m_svc.m_r14 = m_State.m_reg[15] - 4;
-                m_State.m_bank[BANK_SVC][BANK_R14] = m_State.m_reg[15] - 4;
+                ////m_state.m_svc.m_r14 = m_state.m_reg[15] - 4;
+                m_state.m_bank[BANK_SVC][BANK_R14] = m_state.m_reg[15] - 4;
 
                 // Save program status and switch mode
-                m_State.m_spsr[SPSR_SVC] = m_State.m_cpsr;
+                m_state.m_spsr[SPSR_SVC] = m_state.m_cpsr;
                 ////SaveRegisters();
-                ////m_State.m_cpsr = (m_State.m_cpsr & ~MASK_MODE) | MODE_SVC | MASK_IRQD;
+                ////m_state.m_cpsr = (m_state.m_cpsr & ~MASK_MODE) | MODE_SVC | MASK_IRQD;
                 ////LoadRegisters();
-                m_State.switch_mode(MODE_SVC);
-                m_State.m_cpsr |= MASK_IRQD;
+                m_state.switch_mode(MODE_SVC);
+                m_state.m_cpsr |= MASK_IRQD;
 
                 // Jump to exception vector
-                m_State.m_reg[15] = EXCPT_SWI;
+                m_state.m_reg[15] = EXCPT_SWI;
                 m_Pipe.m_Flush = true;
             }
             return;

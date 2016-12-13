@@ -162,7 +162,7 @@ namespace GBA
         // Class members (IO)
         //
         ///////////////////////////////////////////////////////////
-        RenderingPhase m_State       {PHASE_SCANLINE};
+        RenderingPhase m_state       {PHASE_SCANLINE};
         Background m_BG[4];
         Object m_Obj;
         Window m_Win[2];

@@ -21,7 +21,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-
 #pragma once
 
 #include "util/integer.hpp"
@@ -36,7 +35,7 @@ namespace GBA
         typedef void (arm::*ThumbInstruction)(u16);
         static const ThumbInstruction THUMB_TABLE[1024];
 
-        state m_State;
+        state m_state;
 
         struct
         {

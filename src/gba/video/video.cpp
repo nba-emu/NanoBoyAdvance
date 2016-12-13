@@ -213,11 +213,11 @@ namespace GBA
     {
         m_regenderScanline = false;
 
-        switch (m_State)
+        switch (m_state)
         {
         case PHASE_SCANLINE:
             m_HBlankDMA = true;
-            m_State = PHASE_HBLANK;
+            m_state = PHASE_HBLANK;
             m_WaitCycles = EVENT_WAIT_CYCLES[PHASE_HBLANK];
 
             if (m_HBlankIRQ)
@@ -247,7 +247,7 @@ namespace GBA
 
                 m_HBlankDMA = false;
                 m_VBlankDMA = true;
-                m_State = PHASE_VBLANK;
+                m_state = PHASE_VBLANK;
                 m_WaitCycles = EVENT_WAIT_CYCLES[PHASE_VBLANK];
 
                 if (m_VBlankIRQ)
@@ -256,7 +256,7 @@ namespace GBA
             else
             {
                 m_HBlankDMA = false;
-                m_State = PHASE_SCANLINE;
+                m_state = PHASE_SCANLINE;
                 m_WaitCycles = EVENT_WAIT_CYCLES[PHASE_SCANLINE];
             }
             return;
@@ -264,7 +264,7 @@ namespace GBA
             if (m_VCount == 227)
             {
                 m_VBlankDMA = false;
-                m_State = PHASE_SCANLINE;
+                m_state = PHASE_SCANLINE;
                 m_WaitCycles = EVENT_WAIT_CYCLES[PHASE_SCANLINE];
 
                 // Reset vertical counter and update its matching flag

@@ -53,8 +53,8 @@ namespace GBA
                    (m_Video.m_Win[1].enable ? 64 : 0) |
                    (m_Video.m_ObjWin.enable ? 128 : 0);
         case DISPSTAT:
-            return ((m_Video.m_State == Video::PHASE_VBLANK) ? 1 : 0) |
-                   ((m_Video.m_State == Video::PHASE_HBLANK) ? 2 : 0) |
+            return ((m_Video.m_state == Video::PHASE_VBLANK) ? 1 : 0) |
+                   ((m_Video.m_state == Video::PHASE_HBLANK) ? 2 : 0) |
                    (m_Video.m_VCountFlag ? 4 : 0) |
                    (m_Video.m_VBlankIRQ ? 8 : 0) |
                    (m_Video.m_HBlankIRQ ? 16 : 0) |
