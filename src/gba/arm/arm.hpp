@@ -52,10 +52,10 @@ namespace GBA
         void set_carry(bool carry);
         void update_overflow_add(u32 result, u32 operand1, u32 operand2);
         void update_overflow_sub(u32 result, u32 operand1, u32 operand2);
-        static void LSL(u32& operand, u32 amount, bool& carry);
-        static void LSR(u32& operand, u32 amount, bool& carry, bool immediate);
-        static void ASR(u32& operand, u32 amount, bool& carry, bool immediate);
-        static void ROR(u32& operand, u32 amount, bool& carry, bool immediate);
+        static void logical_shift_left(u32& operand, u32 amount, bool& carry);
+        static void logical_shift_right(u32& operand, u32 amount, bool& carry, bool immediate);
+        static void arithmetic_shift_right(u32& operand, u32 amount, bool& carry, bool immediate);
+        static void rotate_right(u32& operand, u32 amount, bool& carry, bool immediate);
 
         u8 ReadByte(u32 offset);
         u32 ReadHWord(u32 offset);
@@ -66,10 +66,6 @@ namespace GBA
         void WriteHWord(u32 offset, u16 value);
         void WriteWord(u32 offset, u32 value);
         void RefillPipeline();
-
-        // Saves/loads registers of current mode
-        void SaveRegisters();
-        void LoadRegisters();
 
         // Thumb Instructions
         template <int imm, int type>
@@ -142,14 +138,6 @@ namespace GBA
         // Execution functions
         void Step();
         void RaiseIRQ();
-
-        // Register read and write access methods
-        u32 GetGeneralRegister(cpu_mode mode, int r);
-        u32 GetCurrentStatusRegister();
-        u32 GetSavedStatusRegister(cpu_mode mode);
-        void SetGeneralRegister(cpu_mode mode, int r, u32 value);
-        void SetCurrentStatusRegister(u32 value);
-        void SetSavedStatusRegister(cpu_mode mode, u32 value);
     };
 }
 

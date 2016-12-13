@@ -230,7 +230,7 @@ namespace GBA
                 value <<= 16;
                 value <<= 16;
                 value |= reg(reg_dest_low);
-                
+
                 result += value;
             }
 
@@ -243,8 +243,8 @@ namespace GBA
             {
                 update_sign(reg(reg_dest_high));
                 update_zero(result);
-            }         
-            
+            }
+
             // Calculate instruction timing
             cycles += Memory::SequentialAccess(m_State.m_reg[15], ACCESS_WORD);
             return;
@@ -289,14 +289,14 @@ namespace GBA
             u32 memory_value;
 
             #ifdef DEBUG
-            ASSERT(reg_source == 15 || reg_dest == 15 || reg_base == 15, LOG_WARN, 
+            ASSERT(reg_source == 15 || reg_dest == 15 || reg_base == 15, LOG_WARN,
                    "Single Data Swap, thou shall not use r15, r15=0x%x", m_State.m_reg[15]);
-            #endif 
+            #endif
 
             if (swap_byte)
             {
                 // Reads one byte at rBASE into rDEST and overwrites
-                // the byte at rBASE with the LSB of rSOURCE. 
+                // the byte at rBASE with the LSB of rSOURCE.
                 memory_value = ReadByte(reg(reg_base));
                 WriteByte(reg(reg_base), (u8)reg(reg_source));
                 reg(reg_dest) = memory_value;
@@ -341,13 +341,13 @@ namespace GBA
             #ifdef DEBUG
             // Instructions neither write back if base register is r15
             // nor should they have the write-back bit set when being post-indexed.
-            ASSERT(reg_base == 15 && write_back, LOG_ERROR, 
+            ASSERT(reg_base == 15 && write_back, LOG_ERrotate_right,
                    "Halfword and Signed Data Transfer, writeback to r15, r15=0x%x", m_State.m_reg[15]);
-            ASSERT(write_back && !pre_indexed, LOG_ERROR, 
+            ASSERT(write_back && !pre_indexed, LOG_ERrotate_right,
                    "Halfword and Signed Data Transfer, writeback and post-indexed, r15=0x%x", m_State.m_reg[15]);
 
             // Load-bit must be set when signed transfer is selected
-            ASSERT(type == ARM_7 && !load, LOG_ERROR, 
+            ASSERT(type == ARM_7 && !load, LOG_ERrotate_right,
                    "Halfword and Signed Data Transfer, signed bit and store bit set, r15=0x%x", m_State.m_reg[15]);
             #endif
 
@@ -371,7 +371,7 @@ namespace GBA
             {
                 u32 value;
                 bool halfword = instruction & (1 << 5);
-                    
+
                 // Read either a sign-extended byte or hword.
                 if (halfword)
                 {
@@ -393,7 +393,7 @@ namespace GBA
                     cycles += 1 + Memory::SequentialAccess(m_State.m_reg[15], ACCESS_WORD) +
                                   Memory::NonSequentialAccess(address, ACCESS_BYTE);
                 }
-                    
+
                 // Write result to rDEST.
                 reg(reg_dest) = value;
             }
@@ -465,7 +465,7 @@ namespace GBA
                         int imm = instruction & 0xFF;
                         int ror = ((instruction >> 8) & 0xF) << 1;
 
-                        // Apply immediate ROR-shift.
+                        // Apply immediate rotate_right-shift.
                         operand = (imm >> ror) | (imm << (32 - ror));
                     }
                     else
@@ -480,9 +480,14 @@ namespace GBA
                     }
                     else
                     {
-                        SaveRegisters();
-                        m_State.m_cpsr = (m_State.m_cpsr & ~mask) | (operand & mask);
-                        LoadRegisters();
+                        ////SaveRegisters();
+                        ////m_State.m_cpsr = (m_State.m_cpsr & ~mask) | (operand & mask);
+                        ////LoadRegisters();
+                        u32 value = operand & mask;
+
+                        // todo: make sure that mode might actually be affected.
+                        m_State.switch_mode(static_cast<cpu_mode>(value & MASK_MODE));
+                        m_State.m_cpsr = (m_State.m_cpsr & ~mask) | value;
                     }
                 }
                 else
@@ -552,16 +557,16 @@ namespace GBA
                     switch ((instruction >> 5) & 3)
                     {
                     case 0b00:
-                        LSL(operand2, amount, carry);
+                        logical_shift_left(operand2, amount, carry);
                         break;
                     case 0b01:
-                        LSR(operand2, amount, carry, shift_immediate);
+                        logical_shift_right(operand2, amount, carry, shift_immediate);
                         break;
                     case 0b10:
-                        ASR(operand2, amount, carry, shift_immediate);
+                        arithmetic_shift_right(operand2, amount, carry, shift_immediate);
                         break;
                     case 0b11:
-                        ROR(operand2, amount, carry, shift_immediate);
+                        rotate_right(operand2, amount, carry, shift_immediate);
                         break;
                     }
                 }
@@ -574,9 +579,12 @@ namespace GBA
                     set_flags = false;
 
                     // Switches back to saved mode.
-                    SaveRegisters();
-                    m_State.m_cpsr = *m_State.m_spsr_ptr;
-                    LoadRegisters();
+                    ////SaveRegisters();
+                    ////m_State.m_cpsr = *m_State.m_spsr_ptr;
+                    ////LoadRegisters();
+                    u32 spsr = *m_State.m_spsr_ptr;
+                    m_State.switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
+                    m_State.m_cpsr = spsr;
                 }
 
                 // Perform the actual operation
@@ -801,7 +809,7 @@ namespace GBA
                     reg(reg_dest) = result;
                     break;
                 }
-                case 0b1111: 
+                case 0b1111:
                 {
                     // Move into register negated (MVN)
                     u32 not_operand2 = ~operand2;
@@ -848,7 +856,7 @@ namespace GBA
 
             #ifdef DEBUG
             // Writeback may not be used when rBASE=15 or post-indexed is enabled.
-            ASSERT(reg_base == 15 && write_back, LOG_WARN, 
+            ASSERT(reg_base == 15 && write_back, LOG_WARN,
                    "Single Data Transfer, writeback to r15, r15=0x%x", m_State.m_reg[15]);
             ASSERT(write_back && !pre_indexed, LOG_WARN,
                    "Single Data Transfer, writeback and post-indexed, r15=0x%x", m_State.m_reg[15]);
@@ -878,17 +886,17 @@ namespace GBA
                 switch (shift)
                 {
                 case 0b00:
-                    LSL(offset, amount, carry);
+                    logical_shift_left(offset, amount, carry);
                     break;
                 case 0b01:
-                    LSR(offset, amount, carry, true);
+                    logical_shift_right(offset, amount, carry, true);
                     break;
                 case 0b10:
-                    ASR(offset, amount, carry, true);
+                    arithmetic_shift_right(offset, amount, carry, true);
                     break;
                 case 0b11:
                     carry = m_State.m_cpsr & MASK_CFLAG;
-                    ROR(offset, amount, carry, true);
+                    rotate_right(offset, amount, carry, true);
                     break;
                 }
             }
@@ -923,7 +931,7 @@ namespace GBA
                                   Memory::NonSequentialAccess(address, ACCESS_WORD);
                 }
 
-                // Writing to r15 causes a pipeline-flush.    
+                // Writing to r15 causes a pipeline-flush.
                 if (reg_dest == 15)
                 {
                     m_Pipe.m_Flush = true;
@@ -940,7 +948,7 @@ namespace GBA
                 // r15 is +12 ahead in this cycle.
                 if (reg_dest == 15)
                     value += 4;
-                
+
                 // Write byte or word.
                 if (transfer_byte)
                 {
@@ -980,7 +988,7 @@ namespace GBA
         case ARM_10:
             // ARM.10 Undefined
             #ifdef DEBUG
-            LOG(LOG_ERROR, "Undefined instruction (0x%x), r15=0x%x", instruction, m_State.m_reg[15]);
+            LOG(LOG_ERrotate_right, "Undefined instruction (0x%x), r15=0x%x", instruction, m_State.m_reg[15]);
             #endif
             return;
         case ARM_11:
@@ -1003,21 +1011,22 @@ namespace GBA
 
             #ifdef DEBUG
             // Base register must not be r15
-            ASSERT(base_register == 15, LOG_ERROR, "ARM.11, rB=15, r15=0x%x", m_State.m_reg[15]);
+            ASSERT(base_register == 15, LOG_ERrotate_right, "ARM.11, rB=15, r15=0x%x", m_State.m_reg[15]);
             #endif
 
             // Switch to User mode if neccessary
             if (force_user_mode && (!load_instr || !(register_list & (1 << 15))))
             {
                 #ifdef DEBUG
-                ASSERT(write_back, LOG_ERROR, "ARM.11, writeback and modeswitch, r15=0x%x", m_State.m_reg[15]);
+                ASSERT(write_back, LOG_ERrotate_right, "ARM.11, writeback and modeswitch, r15=0x%x", m_State.m_reg[15]);
                 #endif
 
                 // Save current mode and enter user mode
                 old_mode = m_State.m_cpsr & MASK_MODE;
-                SaveRegisters();
-                m_State.m_cpsr = (m_State.m_cpsr & ~MASK_MODE) | MODE_USR;
-                LoadRegisters();
+                ////SaveRegisters();
+                ////m_State.m_cpsr = (m_State.m_cpsr & ~MASK_MODE) | MODE_USR;
+                ////LoadRegisters();
+                m_State.switch_mode(MODE_USR);
 
                 // Mark that we switched to user mode
                 switched_mode = true;
@@ -1064,9 +1073,10 @@ namespace GBA
                             {
                                 if (force_user_mode)
                                 {
-                                    SaveRegisters();
-                                    m_State.m_cpsr = *m_State.m_spsr_ptr;
-                                    LoadRegisters();
+                                    u32 spsr = *m_State.m_spsr_ptr;
+
+                                    m_State.switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
+                                    m_State.m_cpsr = spsr;
                                 }
                                 m_Pipe.m_Flush = true;
                             }
@@ -1107,9 +1117,13 @@ namespace GBA
                             {
                                 if (force_user_mode)
                                 {
-                                    SaveRegisters();
-                                    m_State.m_cpsr = *m_State.m_spsr_ptr;
-                                    LoadRegisters();
+                                    ////SaveRegisters();
+                                    ////m_State.m_cpsr = *m_State.m_spsr_ptr;
+                                    ////LoadRegisters();
+                                    u32 spsr = *m_State.m_spsr_ptr;
+
+                                    m_State.switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
+                                    m_State.m_cpsr = spsr;
                                 }
                                 m_Pipe.m_Flush = true;
                             }
@@ -1134,9 +1148,10 @@ namespace GBA
             // Switch back to original mode.
             if (switched_mode)
             {
-                SaveRegisters();
-                m_State.m_cpsr = (m_State.m_cpsr & ~MASK_MODE) | old_mode;
-                LoadRegisters();
+                ////SaveRegisters();
+                ////m_State.m_cpsr = (m_State.m_cpsr & ~MASK_MODE) | old_mode;
+                ////LoadRegisters();
+                m_State.switch_mode(static_cast<cpu_mode>(old_mode));
             }
             return;
         }
@@ -1176,13 +1191,16 @@ namespace GBA
             else
             {
                 // Store return address in r14<svc>
-                m_State.m_svc.m_r14 = m_State.m_reg[15] - 4;
+                ////m_State.m_svc.m_r14 = m_State.m_reg[15] - 4;
+                m_State.m_bank[BANK_SVC][BANK_R14] = m_State.m_reg[15] - 4;
 
                 // Save program status and switch mode
                 m_State.m_spsr[SPSR_SVC] = m_State.m_cpsr;
-                SaveRegisters();
-                m_State.m_cpsr = (m_State.m_cpsr & ~MASK_MODE) | MODE_SVC | MASK_IRQD;
-                LoadRegisters();
+                ////SaveRegisters();
+                ////m_State.m_cpsr = (m_State.m_cpsr & ~MASK_MODE) | MODE_SVC | MASK_IRQD;
+                ////LoadRegisters();
+                m_State.switch_mode(MODE_SVC);
+                m_State.m_cpsr |= MASK_IRQD;
 
                 // Jump to exception vector
                 m_State.m_reg[15] = EXCPT_SWI;

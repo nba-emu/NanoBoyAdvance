@@ -283,7 +283,7 @@ namespace GBA
     u8 Memory::ReadInvalid(u32 address)
     {
 #ifdef DEBUG
-        LOG(LOG_ERROR, "Read from invalid address: 0x%x", address);
+        LOG(LOG_ERrotate_right, "Read from invalid address: 0x%x", address);
 #endif
         return 0;
     }
@@ -330,7 +330,7 @@ namespace GBA
     void Memory::WriteInvalid(u32 address, u8 value)
     {
 #ifdef DEBUG
-        LOG(LOG_ERROR, "Write to invalid address: 0x%x = 0x%x", address, value);
+        LOG(LOG_ERrotate_right, "Write to invalid address: 0x%x = 0x%x", address, value);
 #endif
     }
 

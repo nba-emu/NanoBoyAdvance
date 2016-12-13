@@ -33,83 +33,14 @@ namespace GBA
 
         // Skip bios boot logo
         m_State.m_reg[15] = 0x8000000;
-        m_State.m_usr.m_r13 = 0x3007F00;
-        m_State.m_svc.m_r13 = 0x3007FE0;
-        m_State.m_irq.m_r13 = 0x3007FA0;
-        LoadRegisters();
+        m_State.m_reg[13] = 0x3007F00;
+        m_State.m_bank[BANK_SVC][BANK_R13] = 0x3007FE0;
+        m_State.m_bank[BANK_IRQ][BANK_R13] = 0x3007FA0;
+        ////LoadRegisters();
         RefillPipeline();
 
         // Set hle flag
         this->hle = hle;
-    }
-
-    u32 arm::GetGeneralRegister(cpu_mode mode, int r)
-    {
-        u32 value;
-        cpu_mode old_mode = (cpu_mode)(m_State.m_cpsr & MASK_MODE);
-
-        // Temporary switch to requested mode
-        SaveRegisters();
-        m_State.m_cpsr = (m_State.m_cpsr & ~MASK_MODE) | (u32)mode;
-        LoadRegisters();
-
-        // Get value and switch back to correct mode
-        value = m_State.m_reg[r];
-        m_State.m_cpsr = (m_State.m_cpsr & ~MASK_MODE) | (u32)old_mode;
-        LoadRegisters();
-
-        return value;
-    }
-
-    u32 arm::GetCurrentStatusRegister()
-    {
-        return m_State.m_cpsr;
-    }
-
-    u32 arm::GetSavedStatusRegister(cpu_mode mode)
-    {
-        switch (mode)
-        {
-        case MODE_FIQ: return m_State.m_spsr[SPSR_FIQ];
-        case MODE_SVC: return m_State.m_spsr[SPSR_SVC];
-        case MODE_ABT: return m_State.m_spsr[SPSR_ABT];
-        case MODE_IRQ: return m_State.m_spsr[SPSR_IRQ];
-        case MODE_UND: return m_State.m_spsr[SPSR_UND];
-        }
-        return 0;
-    }
-
-    void arm::SetGeneralRegister(cpu_mode mode, int r, u32 value)
-    {
-        cpu_mode old_mode = (cpu_mode)(m_State.m_cpsr & MASK_MODE);
-
-        // Temporary switch to requested mode
-        SaveRegisters();
-        m_State.m_cpsr = (m_State.m_cpsr & ~MASK_MODE) | (u32)mode;
-        LoadRegisters();
-
-        // Write register and switch back
-        m_State.m_reg[r] = value;
-        SaveRegisters();
-        m_State.m_cpsr = (m_State.m_cpsr & ~MASK_MODE) | (u32)old_mode;
-        LoadRegisters();
-    }
-
-    void arm::SetCurrentStatusRegister(u32 value)
-    {
-        m_State.m_cpsr = value;
-    }
-
-    void arm::SetSavedStatusRegister(cpu_mode mode, u32 value)
-    {
-        switch (mode)
-        {
-        case MODE_FIQ: m_State.m_spsr[SPSR_FIQ] = value; break;
-        case MODE_SVC: m_State.m_spsr[SPSR_SVC] = value; break;
-        case MODE_ABT: m_State.m_spsr[SPSR_ABT] = value; break;
-        case MODE_IRQ: m_State.m_spsr[SPSR_IRQ] = value; break;
-        case MODE_UND: m_State.m_spsr[SPSR_UND] = value; break;
-        }
     }
 
     void arm::Step()
@@ -156,136 +87,6 @@ namespace GBA
         m_State.m_reg[15] += thumb ? 2 : 4;
     }
 
-    void arm::SaveRegisters()
-    {
-        switch (m_State.m_cpsr & MASK_MODE)
-        {
-        case MODE_USR:
-        case MODE_SYS:
-            m_State.m_usr.m_r8 = m_State.m_reg[8];
-            m_State.m_usr.m_r9 = m_State.m_reg[9];
-            m_State.m_usr.m_r10 = m_State.m_reg[10];
-            m_State.m_usr.m_r11 = m_State.m_reg[11];
-            m_State.m_usr.m_r12 = m_State.m_reg[12];
-            m_State.m_usr.m_r13 = m_State.m_reg[13];
-            m_State.m_usr.m_r14 = m_State.m_reg[14];
-            break;
-        case MODE_FIQ:
-            m_State.m_fiq.m_r8 = m_State.m_reg[8];
-            m_State.m_fiq.m_r9 = m_State.m_reg[9];
-            m_State.m_fiq.m_r10 = m_State.m_reg[10];
-            m_State.m_fiq.m_r11 = m_State.m_reg[11];
-            m_State.m_fiq.m_r12 = m_State.m_reg[12];
-            m_State.m_fiq.m_r13 = m_State.m_reg[13];
-            m_State.m_fiq.m_r14 = m_State.m_reg[14];
-            break;
-        case MODE_IRQ:
-            m_State.m_usr.m_r8 = m_State.m_reg[8];
-            m_State.m_usr.m_r9 = m_State.m_reg[9];
-            m_State.m_usr.m_r10 = m_State.m_reg[10];
-            m_State.m_usr.m_r11 = m_State.m_reg[11];
-            m_State.m_usr.m_r12 = m_State.m_reg[12];
-            m_State.m_irq.m_r13 = m_State.m_reg[13];
-            m_State.m_irq.m_r14 = m_State.m_reg[14];
-            break;
-        case MODE_SVC:
-            m_State.m_usr.m_r8 = m_State.m_reg[8];
-            m_State.m_usr.m_r9 = m_State.m_reg[9];
-            m_State.m_usr.m_r10 = m_State.m_reg[10];
-            m_State.m_usr.m_r11 = m_State.m_reg[11];
-            m_State.m_usr.m_r12 = m_State.m_reg[12];
-            m_State.m_svc.m_r13 = m_State.m_reg[13];
-            m_State.m_svc.m_r14 = m_State.m_reg[14];
-            break;
-        case MODE_ABT:
-            m_State.m_usr.m_r8 = m_State.m_reg[8];
-            m_State.m_usr.m_r9 = m_State.m_reg[9];
-            m_State.m_usr.m_r10 = m_State.m_reg[10];
-            m_State.m_usr.m_r11 = m_State.m_reg[11];
-            m_State.m_usr.m_r12 = m_State.m_reg[12];
-            m_State.m_abt.m_r13 = m_State.m_reg[13];
-            m_State.m_abt.m_r14 = m_State.m_reg[14];
-            break;
-        case MODE_UND:
-            m_State.m_usr.m_r8 = m_State.m_reg[8];
-            m_State.m_usr.m_r9 = m_State.m_reg[9];
-            m_State.m_usr.m_r10 = m_State.m_reg[10];
-            m_State.m_usr.m_r11 = m_State.m_reg[11];
-            m_State.m_usr.m_r12 = m_State.m_reg[12];
-            m_State.m_und.m_r13 = m_State.m_reg[13];
-            m_State.m_und.m_r14 = m_State.m_reg[14];
-            break;
-        }
-    }
-
-    void arm::LoadRegisters()
-    {
-        switch (m_State.m_cpsr & MASK_MODE)
-        {
-        case MODE_USR:
-        case MODE_SYS:
-            m_State.m_reg[8] = m_State.m_usr.m_r8;
-            m_State.m_reg[9] = m_State.m_usr.m_r9;
-            m_State.m_reg[10] = m_State.m_usr.m_r10;
-            m_State.m_reg[11] = m_State.m_usr.m_r11;
-            m_State.m_reg[12] = m_State.m_usr.m_r12;
-            m_State.m_reg[13] = m_State.m_usr.m_r13;
-            m_State.m_reg[14] = m_State.m_usr.m_r14;
-            m_State.m_spsr_ptr = &m_State.m_spsr[SPSR_DEF];
-            break;
-        case MODE_FIQ:
-            m_State.m_reg[8] = m_State.m_fiq.m_r8;
-            m_State.m_reg[9] = m_State.m_fiq.m_r9;
-            m_State.m_reg[10] = m_State.m_fiq.m_r10;
-            m_State.m_reg[11] = m_State.m_fiq.m_r11;
-            m_State.m_reg[12] = m_State.m_fiq.m_r12;
-            m_State.m_reg[13] = m_State.m_fiq.m_r13;
-            m_State.m_reg[14] = m_State.m_fiq.m_r14;
-            m_State.m_spsr_ptr = &m_State.m_spsr[SPSR_FIQ];
-            break;
-        case MODE_IRQ:
-            m_State.m_reg[8] = m_State.m_usr.m_r8;
-            m_State.m_reg[9] = m_State.m_usr.m_r9;
-            m_State.m_reg[10] = m_State.m_usr.m_r10;
-            m_State.m_reg[11] = m_State.m_usr.m_r11;
-            m_State.m_reg[12] = m_State.m_usr.m_r12;
-            m_State.m_reg[13] = m_State.m_irq.m_r13;
-            m_State.m_reg[14] = m_State.m_irq.m_r14;
-            m_State.m_spsr_ptr = &m_State.m_spsr[SPSR_IRQ];
-            break;
-        case MODE_SVC:
-            m_State.m_reg[8] = m_State.m_usr.m_r8;
-            m_State.m_reg[9] = m_State.m_usr.m_r9;
-            m_State.m_reg[10] = m_State.m_usr.m_r10;
-            m_State.m_reg[11] = m_State.m_usr.m_r11;
-            m_State.m_reg[12] = m_State.m_usr.m_r12;
-            m_State.m_reg[13] = m_State.m_svc.m_r13;
-            m_State.m_reg[14] = m_State.m_svc.m_r14;
-            m_State.m_spsr_ptr = &m_State.m_spsr[SPSR_SVC];
-            break;
-        case MODE_ABT:
-            m_State.m_reg[8] = m_State.m_usr.m_r8;
-            m_State.m_reg[9] = m_State.m_usr.m_r9;
-            m_State.m_reg[10] = m_State.m_usr.m_r10;
-            m_State.m_reg[11] = m_State.m_usr.m_r11;
-            m_State.m_reg[12] = m_State.m_usr.m_r12;
-            m_State.m_reg[13] = m_State.m_abt.m_r13;
-            m_State.m_reg[14] = m_State.m_abt.m_r14;
-            m_State.m_spsr_ptr = &m_State.m_spsr[SPSR_ABT];
-            break;
-        case MODE_UND:
-            m_State.m_reg[8] = m_State.m_usr.m_r8;
-            m_State.m_reg[9] = m_State.m_usr.m_r9;
-            m_State.m_reg[10] = m_State.m_usr.m_r10;
-            m_State.m_reg[11] = m_State.m_usr.m_r11;
-            m_State.m_reg[12] = m_State.m_usr.m_r12;
-            m_State.m_reg[13] = m_State.m_und.m_r13;
-            m_State.m_reg[14] = m_State.m_und.m_r14;
-            m_State.m_spsr_ptr = &m_State.m_spsr[SPSR_UND];
-            break;
-        }
-    }
-
     void arm::RaiseIRQ()
     {
         if ((m_State.m_cpsr & MASK_IRQD) == 0)
@@ -296,13 +97,15 @@ namespace GBA
             cycles += Memory::SequentialAccess(m_State.m_reg[15], thumb ? ACCESS_HWORD : ACCESS_WORD);
 
             // Store return address in r14<irq>
-            m_State.m_irq.m_r14 = m_State.m_reg[15] - (thumb ? 4 : 8) + 4;
+            m_State.m_bank[BANK_IRQ][BANK_R14] = m_State.m_reg[15] - (thumb ? 4 : 8) + 4;
 
             // Save program status and switch mode
             m_State.m_spsr[SPSR_IRQ] = m_State.m_cpsr;
-            SaveRegisters();
-            m_State.m_cpsr = (m_State.m_cpsr & ~(MASK_MODE | MASK_THUMB)) | MODE_IRQ | MASK_IRQD;
-            LoadRegisters();
+            m_State.switch_mode(MODE_IRQ);
+            m_State.m_cpsr = (m_State.m_cpsr & ~MASK_THUMB) | MASK_IRQD;
+            ////SaveRegisters();
+            ////m_State.m_cpsr = (m_State.m_cpsr & ~(MASK_MODE | MASK_THUMB)) | MODE_IRQ | MASK_IRQD;
+            ////LoadRegisters();
 
             // Jump to exception vector
             m_State.m_reg[15] = EXCPT_INTERRUPT;
@@ -330,7 +133,7 @@ namespace GBA
                 m_State.m_reg[1] = mod;
             } else
             {
-                LOG(LOG_ERROR, "SWI6h: Attempted division by zero.");
+                LOG(LOG_ERrotate_right, "SWI6h: Attempted division by zero.");
             }
             break;
         }
@@ -442,7 +245,7 @@ namespace GBA
         }
         default:
             #ifdef DEBUG
-            LOG(LOG_ERROR, "Unimplemented software interrupt 0x%x", number);
+            LOG(LOG_ERrotate_right, "Unimplemented software interrupt 0x%x", number);
             #endif
             break;
         }

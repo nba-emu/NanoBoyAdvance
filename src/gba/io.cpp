@@ -210,7 +210,7 @@ namespace GBA
         case IME+1: return Interrupt::ReadMasterEnableHigh();
         default:
     #ifdef DEBUG
-            LOG(LOG_ERROR, "Read invalid IO register: 0x%x", address);
+            LOG(LOG_ERrotate_right, "Read invalid IO register: 0x%x", address);
     #endif
             return 0;
         }
@@ -888,7 +888,7 @@ namespace GBA
             return;
         default:
     #ifdef DEBUG
-            LOG(LOG_ERROR, "Read invalid IO register: 0x%x", address);
+            LOG(LOG_ERrotate_right, "Read invalid IO register: 0x%x", address);
     #endif
             return;
         }

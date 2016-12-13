@@ -129,7 +129,7 @@ namespace GBA
         &arm::Thumb6<6>, &arm::Thumb6<6>, &arm::Thumb6<6>, &arm::Thumb6<6>,
         &arm::Thumb6<7>, &arm::Thumb6<7>, &arm::Thumb6<7>, &arm::Thumb6<7>,
 
-        /* THUMB.7 Load/store with register offset, 
+        /* THUMB.7 Load/store with register offset,
            THUMB.8 Load/store sign-extended byte/halfword */
         &arm::Thumb7<0,0>, &arm::Thumb7<0,1>, &arm::Thumb7<0,2>, &arm::Thumb7<0,3>,
         &arm::Thumb7<0,4>, &arm::Thumb7<0,5>, &arm::Thumb7<0,6>, &arm::Thumb7<0,7>,
@@ -140,48 +140,48 @@ namespace GBA
         &arm::Thumb8<1,0>, &arm::Thumb8<1,1>, &arm::Thumb8<1,2>, &arm::Thumb8<1,3>,
         &arm::Thumb8<1,4>, &arm::Thumb8<1,5>, &arm::Thumb8<1,6>, &arm::Thumb8<1,7>,
         &arm::Thumb7<2,0>, &arm::Thumb7<2,1>, &arm::Thumb7<2,2>, &arm::Thumb7<2,3>,
-        &arm::Thumb7<2,4>, &arm::Thumb7<2,5>, &arm::Thumb7<2,6>, &arm::Thumb7<2,7>, 
+        &arm::Thumb7<2,4>, &arm::Thumb7<2,5>, &arm::Thumb7<2,6>, &arm::Thumb7<2,7>,
         &arm::Thumb8<2,0>, &arm::Thumb8<2,1>, &arm::Thumb8<2,2>, &arm::Thumb8<2,3>,
-        &arm::Thumb8<2,4>, &arm::Thumb8<2,5>, &arm::Thumb8<2,6>, &arm::Thumb8<2,7>, 
+        &arm::Thumb8<2,4>, &arm::Thumb8<2,5>, &arm::Thumb8<2,6>, &arm::Thumb8<2,7>,
         &arm::Thumb7<3,0>, &arm::Thumb7<3,1>, &arm::Thumb7<3,2>, &arm::Thumb7<3,3>,
-        &arm::Thumb7<3,4>, &arm::Thumb7<3,5>, &arm::Thumb7<3,6>, &arm::Thumb7<3,7>,   
+        &arm::Thumb7<3,4>, &arm::Thumb7<3,5>, &arm::Thumb7<3,6>, &arm::Thumb7<3,7>,
         &arm::Thumb8<3,0>, &arm::Thumb8<3,1>, &arm::Thumb8<3,2>, &arm::Thumb8<3,3>,
-        &arm::Thumb8<3,4>, &arm::Thumb8<3,5>, &arm::Thumb8<3,6>, &arm::Thumb8<3,7>, 
+        &arm::Thumb8<3,4>, &arm::Thumb8<3,5>, &arm::Thumb8<3,6>, &arm::Thumb8<3,7>,
 
         /* THUMB.9 Load/store with immediate offset */
-        &arm::Thumb9<0,0>,  &arm::Thumb9<0,1>,  &arm::Thumb9<0,2>,  &arm::Thumb9<0,3>, 
-        &arm::Thumb9<0,4>,  &arm::Thumb9<0,5>,  &arm::Thumb9<0,6>,  &arm::Thumb9<0,7>, 
+        &arm::Thumb9<0,0>,  &arm::Thumb9<0,1>,  &arm::Thumb9<0,2>,  &arm::Thumb9<0,3>,
+        &arm::Thumb9<0,4>,  &arm::Thumb9<0,5>,  &arm::Thumb9<0,6>,  &arm::Thumb9<0,7>,
         &arm::Thumb9<0,8>,  &arm::Thumb9<0,9>,  &arm::Thumb9<0,10>, &arm::Thumb9<0,11>,
         &arm::Thumb9<0,12>, &arm::Thumb9<0,13>, &arm::Thumb9<0,14>, &arm::Thumb9<0,15>,
         &arm::Thumb9<0,16>, &arm::Thumb9<0,17>, &arm::Thumb9<0,18>, &arm::Thumb9<0,19>,
-        &arm::Thumb9<0,20>, &arm::Thumb9<0,21>, &arm::Thumb9<0,22>, &arm::Thumb9<0,23>, 
+        &arm::Thumb9<0,20>, &arm::Thumb9<0,21>, &arm::Thumb9<0,22>, &arm::Thumb9<0,23>,
         &arm::Thumb9<0,24>, &arm::Thumb9<0,25>, &arm::Thumb9<0,26>, &arm::Thumb9<0,27>,
         &arm::Thumb9<0,28>, &arm::Thumb9<0,29>, &arm::Thumb9<0,30>, &arm::Thumb9<0,31>,
         &arm::Thumb9<1,0>,  &arm::Thumb9<1,1>,  &arm::Thumb9<1,2>,  &arm::Thumb9<1,3>,
-        &arm::Thumb9<1,4>,  &arm::Thumb9<1,5>,  &arm::Thumb9<1,6>,  &arm::Thumb9<1,7>, 
+        &arm::Thumb9<1,4>,  &arm::Thumb9<1,5>,  &arm::Thumb9<1,6>,  &arm::Thumb9<1,7>,
         &arm::Thumb9<1,8>,  &arm::Thumb9<1,9>,  &arm::Thumb9<1,10>, &arm::Thumb9<1,11>,
         &arm::Thumb9<1,12>, &arm::Thumb9<1,13>, &arm::Thumb9<1,14>, &arm::Thumb9<1,15>,
         &arm::Thumb9<1,16>, &arm::Thumb9<1,17>, &arm::Thumb9<1,18>, &arm::Thumb9<1,19>,
-        &arm::Thumb9<1,20>, &arm::Thumb9<1,21>, &arm::Thumb9<1,22>, &arm::Thumb9<1,23>, 
+        &arm::Thumb9<1,20>, &arm::Thumb9<1,21>, &arm::Thumb9<1,22>, &arm::Thumb9<1,23>,
         &arm::Thumb9<1,24>, &arm::Thumb9<1,25>, &arm::Thumb9<1,26>, &arm::Thumb9<1,27>,
         &arm::Thumb9<1,28>, &arm::Thumb9<1,29>, &arm::Thumb9<1,30>, &arm::Thumb9<1,31>,
         &arm::Thumb9<2,0>,  &arm::Thumb9<2,1>,  &arm::Thumb9<2,2>,  &arm::Thumb9<2,3>,
-        &arm::Thumb9<2,4>,  &arm::Thumb9<2,5>,  &arm::Thumb9<2,6>,  &arm::Thumb9<2,7>, 
+        &arm::Thumb9<2,4>,  &arm::Thumb9<2,5>,  &arm::Thumb9<2,6>,  &arm::Thumb9<2,7>,
         &arm::Thumb9<2,8>,  &arm::Thumb9<2,9>,  &arm::Thumb9<2,10>, &arm::Thumb9<2,11>,
         &arm::Thumb9<2,12>, &arm::Thumb9<2,13>, &arm::Thumb9<2,14>, &arm::Thumb9<2,15>,
         &arm::Thumb9<2,16>, &arm::Thumb9<2,17>, &arm::Thumb9<2,18>, &arm::Thumb9<2,19>,
-        &arm::Thumb9<2,20>, &arm::Thumb9<2,21>, &arm::Thumb9<2,22>, &arm::Thumb9<2,23>, 
+        &arm::Thumb9<2,20>, &arm::Thumb9<2,21>, &arm::Thumb9<2,22>, &arm::Thumb9<2,23>,
         &arm::Thumb9<2,24>, &arm::Thumb9<2,25>, &arm::Thumb9<2,26>, &arm::Thumb9<2,27>,
         &arm::Thumb9<2,28>, &arm::Thumb9<2,29>, &arm::Thumb9<2,30>, &arm::Thumb9<2,31>,
         &arm::Thumb9<3,0>,  &arm::Thumb9<3,1>,  &arm::Thumb9<3,2>,  &arm::Thumb9<3,3>,
-        &arm::Thumb9<3,4>,  &arm::Thumb9<3,5>,  &arm::Thumb9<3,6>,  &arm::Thumb9<3,7>, 
+        &arm::Thumb9<3,4>,  &arm::Thumb9<3,5>,  &arm::Thumb9<3,6>,  &arm::Thumb9<3,7>,
         &arm::Thumb9<3,8>,  &arm::Thumb9<3,9>,  &arm::Thumb9<3,10>, &arm::Thumb9<3,11>,
         &arm::Thumb9<3,12>, &arm::Thumb9<3,13>, &arm::Thumb9<3,14>, &arm::Thumb9<3,15>,
         &arm::Thumb9<3,16>, &arm::Thumb9<3,17>, &arm::Thumb9<3,18>, &arm::Thumb9<3,19>,
-        &arm::Thumb9<3,20>, &arm::Thumb9<3,21>, &arm::Thumb9<3,22>, &arm::Thumb9<3,23>, 
+        &arm::Thumb9<3,20>, &arm::Thumb9<3,21>, &arm::Thumb9<3,22>, &arm::Thumb9<3,23>,
         &arm::Thumb9<3,24>, &arm::Thumb9<3,25>, &arm::Thumb9<3,26>, &arm::Thumb9<3,27>,
         &arm::Thumb9<3,28>, &arm::Thumb9<3,29>, &arm::Thumb9<3,30>, &arm::Thumb9<3,31>,
-        
+
         /* THUMB.10 Load/store halfword */
         &arm::Thumb10<false,0>,  &arm::Thumb10<false,1>,  &arm::Thumb10<false,2>,  &arm::Thumb10<false,3>,
         &arm::Thumb10<false,4>,  &arm::Thumb10<false,5>,  &arm::Thumb10<false,6>,  &arm::Thumb10<false,7>,
@@ -199,7 +199,7 @@ namespace GBA
         &arm::Thumb10<true,20>, &arm::Thumb10<true,21>, &arm::Thumb10<true,22>, &arm::Thumb10<true,23>,
         &arm::Thumb10<true,24>, &arm::Thumb10<true,25>, &arm::Thumb10<true,26>, &arm::Thumb10<true,27>,
         &arm::Thumb10<true,28>, &arm::Thumb10<true,29>, &arm::Thumb10<true,30>, &arm::Thumb10<true,31>,
-        
+
         /* THUMB.11 SP-relative load/store */
         &arm::Thumb11<false,0>, &arm::Thumb11<false,0>, &arm::Thumb11<false,0>, &arm::Thumb11<false,0>,
         &arm::Thumb11<false,1>, &arm::Thumb11<false,1>, &arm::Thumb11<false,1>, &arm::Thumb11<false,1>,
@@ -235,7 +235,7 @@ namespace GBA
         &arm::Thumb12<true,5>,  &arm::Thumb12<true,5>,  &arm::Thumb12<true,5>,  &arm::Thumb12<true,5>,
         &arm::Thumb12<true,6>,  &arm::Thumb12<true,6>,  &arm::Thumb12<true,6>,  &arm::Thumb12<true,6>,
         &arm::Thumb12<true,7>,  &arm::Thumb12<true,7>,  &arm::Thumb12<true,7>,  &arm::Thumb12<true,7>,
-        
+
         /* THUMB.13 Add offset to stack pointer,
            THUMB.14 Push/pop registers */
         &arm::Thumb13<false>,       &arm::Thumb13<false>,       &arm::Thumb13<true>,        &arm::Thumb13<true>,
@@ -254,7 +254,7 @@ namespace GBA
         &arm::Thumb14<true,true>,   &arm::Thumb14<true,true>,   &arm::Thumb14<true,true>,   &arm::Thumb14<true,true>,
         &arm::Thumb14<true,false>,  &arm::Thumb14<true,false>,  &arm::Thumb14<true,false>,  &arm::Thumb14<true,false>,
         &arm::Thumb14<true,true>,   &arm::Thumb14<true,true>,   &arm::Thumb14<true,true>,   &arm::Thumb14<true,true>,
-        
+
         /* THUMB.15 Multiple load/store */
         &arm::Thumb15<false,0>, &arm::Thumb15<false,0>, &arm::Thumb15<false,0>, &arm::Thumb15<false,0>,
         &arm::Thumb15<false,1>, &arm::Thumb15<false,1>, &arm::Thumb15<false,1>, &arm::Thumb15<false,1>,
@@ -272,27 +272,27 @@ namespace GBA
         &arm::Thumb15<true,5>,  &arm::Thumb15<true,5>,  &arm::Thumb15<true,5>,  &arm::Thumb15<true,5>,
         &arm::Thumb15<true,6>,  &arm::Thumb15<true,6>,  &arm::Thumb15<true,6>,  &arm::Thumb15<true,6>,
         &arm::Thumb15<true,7>,  &arm::Thumb15<true,7>,  &arm::Thumb15<true,7>,  &arm::Thumb15<true,7>,
-        
+
         /* THUMB.16 Conditional branch */
-        &arm::Thumb16<0>,  &arm::Thumb16<0>,  &arm::Thumb16<0>,  &arm::Thumb16<0>, 
+        &arm::Thumb16<0>,  &arm::Thumb16<0>,  &arm::Thumb16<0>,  &arm::Thumb16<0>,
         &arm::Thumb16<1>,  &arm::Thumb16<1>,  &arm::Thumb16<1>,  &arm::Thumb16<1>,
-        &arm::Thumb16<2>,  &arm::Thumb16<2>,  &arm::Thumb16<2>,  &arm::Thumb16<2>, 
-        &arm::Thumb16<3>,  &arm::Thumb16<3>,  &arm::Thumb16<3>,  &arm::Thumb16<3>, 
+        &arm::Thumb16<2>,  &arm::Thumb16<2>,  &arm::Thumb16<2>,  &arm::Thumb16<2>,
+        &arm::Thumb16<3>,  &arm::Thumb16<3>,  &arm::Thumb16<3>,  &arm::Thumb16<3>,
         &arm::Thumb16<4>,  &arm::Thumb16<4>,  &arm::Thumb16<4>,  &arm::Thumb16<4>,
-        &arm::Thumb16<5>,  &arm::Thumb16<5>,  &arm::Thumb16<5>,  &arm::Thumb16<5>, 
+        &arm::Thumb16<5>,  &arm::Thumb16<5>,  &arm::Thumb16<5>,  &arm::Thumb16<5>,
         &arm::Thumb16<6>,  &arm::Thumb16<6>,  &arm::Thumb16<6>,  &arm::Thumb16<6>,
-        &arm::Thumb16<7>,  &arm::Thumb16<7>,  &arm::Thumb16<7>,  &arm::Thumb16<7>, 
-        &arm::Thumb16<8>,  &arm::Thumb16<8>,  &arm::Thumb16<8>,  &arm::Thumb16<8>, 
-        &arm::Thumb16<9>,  &arm::Thumb16<9>,  &arm::Thumb16<9>,  &arm::Thumb16<9>, 
-        &arm::Thumb16<10>, &arm::Thumb16<10>, &arm::Thumb16<10>, &arm::Thumb16<10>, 
+        &arm::Thumb16<7>,  &arm::Thumb16<7>,  &arm::Thumb16<7>,  &arm::Thumb16<7>,
+        &arm::Thumb16<8>,  &arm::Thumb16<8>,  &arm::Thumb16<8>,  &arm::Thumb16<8>,
+        &arm::Thumb16<9>,  &arm::Thumb16<9>,  &arm::Thumb16<9>,  &arm::Thumb16<9>,
+        &arm::Thumb16<10>, &arm::Thumb16<10>, &arm::Thumb16<10>, &arm::Thumb16<10>,
         &arm::Thumb16<11>, &arm::Thumb16<11>, &arm::Thumb16<11>, &arm::Thumb16<11>,
-        &arm::Thumb16<12>, &arm::Thumb16<12>, &arm::Thumb16<12>, &arm::Thumb16<12>, 
-        &arm::Thumb16<13>, &arm::Thumb16<13>, &arm::Thumb16<13>, &arm::Thumb16<13>, 
-        &arm::Thumb16<14>, &arm::Thumb16<14>, &arm::Thumb16<14>, &arm::Thumb16<14>, 
-        
+        &arm::Thumb16<12>, &arm::Thumb16<12>, &arm::Thumb16<12>, &arm::Thumb16<12>,
+        &arm::Thumb16<13>, &arm::Thumb16<13>, &arm::Thumb16<13>, &arm::Thumb16<13>,
+        &arm::Thumb16<14>, &arm::Thumb16<14>, &arm::Thumb16<14>, &arm::Thumb16<14>,
+
         /* THUMB.17 Software Interrupt */
-        &arm::Thumb17, &arm::Thumb17, &arm::Thumb17, &arm::Thumb17, 
-        
+        &arm::Thumb17, &arm::Thumb17, &arm::Thumb17, &arm::Thumb17,
+
         /* THUMB.18 Unconditional branch */
         &arm::Thumb18, &arm::Thumb18, &arm::Thumb18, &arm::Thumb18,
         &arm::Thumb18, &arm::Thumb18, &arm::Thumb18, &arm::Thumb18,
@@ -343,16 +343,16 @@ namespace GBA
         switch (type)
         {
         case 0: // LSL
-            LSL(reg(reg_dest), imm, carry);
+            logical_shift_left(reg(reg_dest), imm, carry);
             set_carry(carry);
             break;
         case 1: // LSR
-            LSR(reg(reg_dest), imm, carry, true);
+            logical_shift_right(reg(reg_dest), imm, carry, true);
             set_carry(carry);
             break;
         case 2: // ASR
         {
-            ASR(reg(reg_dest), imm, carry, true);
+            arithmetic_shift_right(reg(reg_dest), imm, carry, true);
             set_carry(carry);
             break;
         }
@@ -483,7 +483,7 @@ namespace GBA
         {
             u32 amount = reg(reg_source);
             bool carry = m_State.m_cpsr & MASK_CFLAG;
-            LSL(reg(reg_dest), amount, carry);
+            logical_shift_left(reg(reg_dest), amount, carry);
             set_carry(carry);
             update_sign(reg(reg_dest));
             update_zero(reg(reg_dest));
@@ -494,7 +494,7 @@ namespace GBA
         {
             u32 amount = reg(reg_source);
             bool carry = m_State.m_cpsr & MASK_CFLAG;
-            LSR(reg(reg_dest), amount, carry, false);
+            logical_shift_right(reg(reg_dest), amount, carry, false);
             set_carry(carry);
             update_sign(reg(reg_dest));
             update_zero(reg(reg_dest));
@@ -505,7 +505,7 @@ namespace GBA
         {
             u32 amount = reg(reg_source);
             bool carry = m_State.m_cpsr & MASK_CFLAG;
-            ASR(reg(reg_dest), amount, carry, false);
+            arithmetic_shift_right(reg(reg_dest), amount, carry, false);
             set_carry(carry);
             update_sign(reg(reg_dest));
             update_zero(reg(reg_dest));
@@ -539,7 +539,7 @@ namespace GBA
         {
             u32 amount = reg(reg_source);
             bool carry = m_State.m_cpsr & MASK_CFLAG;
-            ROR(reg(reg_dest), amount, carry, false);
+            rotate_right(reg(reg_dest), amount, carry, false);
             set_carry(carry);
             update_sign(reg(reg_dest));
             update_zero(reg(reg_dest));
@@ -812,7 +812,7 @@ namespace GBA
         }
     }
 
-    template <bool load, int imm> 
+    template <bool load, int imm>
     void arm::Thumb10(u16 instruction)
     {
         // THUMB.10 Load/store halfword
@@ -1142,13 +1142,16 @@ namespace GBA
         else
         {
             // Store return address in r14<svc>
-            m_State.m_svc.m_r14 = m_State.m_reg[15] - 2;
+            ////m_State.m_svc.m_r14 = m_State.m_reg[15] - 2;
+            m_State.m_bank[BANK_SVC][BANK_R14] = m_State.m_reg[15] - 2;
 
             // Save program status and switch mode
-            SaveRegisters();
+            ////SaveRegisters();
             m_State.m_spsr[SPSR_SVC] = m_State.m_cpsr;
-            m_State.m_cpsr = (m_State.m_cpsr & ~(MASK_MODE | MASK_THUMB)) | MODE_SVC | MASK_IRQD;
-            LoadRegisters();
+            m_State.switch_mode(MODE_SVC);
+            m_State.m_cpsr = (m_State.m_cpsr & ~MASK_THUMB) | MASK_IRQD;
+            ////m_State.m_cpsr = (m_State.m_cpsr & ~(MASK_MODE | MASK_THUMB)) | MODE_SVC | MASK_IRQD;
+            ////LoadRegisters();
 
             // Jump to exception vector
             m_State.m_reg[15] = EXCPT_SWI;

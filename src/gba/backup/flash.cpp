@@ -61,7 +61,7 @@ namespace GBA
                 }
                 return;
             }
-            else { LOG(LOG_ERROR, "Save file size is invalid"); }
+            else { LOG(LOG_ERrotate_right, "Save file size is invalid"); }
         }
 
         // If loading a save file failed, init save with FFh, just like if the chip was erased

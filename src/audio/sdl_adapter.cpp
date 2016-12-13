@@ -47,10 +47,10 @@ namespace GBA
         spec.userdata = audio;
 
         if (SDL_Init(SDL_INIT_AUDIO) < 0)
-            LOG(LOG_ERROR, "SDL_Init(SDL_INIT_AUDIO) failed");
+            LOG(LOG_ERrotate_right, "SDL_Init(SDL_INIT_AUDIO) failed");
 
         if (SDL_OpenAudio(&spec, NULL) < 0)
-            LOG(LOG_ERROR, "SDL_OpenAudio failed.");
+            LOG(LOG_ERrotate_right, "SDL_OpenAudio failed.");
 
         SDL_PauseAudio(0);
     }

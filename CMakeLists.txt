@@ -42,14 +42,14 @@ find_package(PNG REQUIRED)
 if (SDL2_FOUND)
     include_directories(${SDL2_INCLUDE_DIRS})
 else()
-    message(FATAL_ERROR "SDL2 not found.")
+    message(FATAL_ERrotate_right "SDL2 not found.")
 endif()
 
 if (PNG_FOUND)
     include_directories(${PNG_INCLUDE_DIRS})
 else()
     # TODO: just built without screenshot support then
-    message(FATAL_ERROR "PNG not found.")
+    message(FATAL_ERrotate_right "PNG not found.")
 endif()
 
 # Add Qt if neccessary

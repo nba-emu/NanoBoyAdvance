@@ -33,7 +33,7 @@
 
 #define LOG_INFO 0
 #define LOG_WARN 1
-#define LOG_ERROR 2
+#define LOG_ERrotate_right 2
 
 
 // Fix memory bug
@@ -44,7 +44,7 @@
     {\
     case LOG_INFO: printf("[INFO] %s:%d: %s\n", __FILE__, _line, message); break;\
     case LOG_WARN: printf("[WARN] %s:%d: %s\n", __FILE__, _line, message); break;\
-    case LOG_ERROR: printf("[ERROR] %s:%d: %s\n", __FILE__, _line, message); break;\
+    case LOG_ERrotate_right: printf("[ERrotate_right] %s:%d: %s\n", __FILE__, _line, message); break;\
     }\
 }
 

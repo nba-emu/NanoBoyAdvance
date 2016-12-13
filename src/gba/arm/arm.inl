@@ -52,7 +52,7 @@ namespace GBA
         m_State.m_cpsr = overflow ? (m_State.m_cpsr | MASK_VFLAG) : (m_State.m_cpsr & ~MASK_VFLAG);
     }
 
-    inline void arm::LSL(u32& operand, u32 amount, bool& carry)
+    inline void arm::logical_shift_left(u32& operand, u32 amount, bool& carry)
     {
         if (amount == 0) return;
 
@@ -63,7 +63,7 @@ namespace GBA
         }
     }
 
-    inline void arm::LSR(u32& operand, u32 amount, bool& carry, bool immediate)
+    inline void arm::logical_shift_right(u32& operand, u32 amount, bool& carry, bool immediate)
     {
         // LSR #0 equals to LSR #32
         amount = immediate & (amount == 0) ? 32 : amount;
@@ -75,7 +75,7 @@ namespace GBA
         }
     }
 
-    inline void arm::ASR(u32& operand, u32 amount, bool& carry, bool immediate)
+    inline void arm::arithmetic_shift_right(u32& operand, u32 amount, bool& carry, bool immediate)
     {
         u32 sign_bit = operand & 0x80000000;
 
@@ -89,7 +89,7 @@ namespace GBA
         }
     }
 
-    inline void arm::ROR(u32& operand, u32 amount, bool& carry, bool immediate)
+    inline void arm::rotate_right(u32& operand, u32 amount, bool& carry, bool immediate)
     {
         // ROR #0 equals to RRX #1
         if (amount != 0 || !immediate)

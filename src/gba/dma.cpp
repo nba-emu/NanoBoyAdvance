@@ -93,7 +93,7 @@ namespace GBA
                 }
 
                 #ifdef DEBUG
-                ASSERT(i == 3, LOG_ERROR, "DMA: Video Capture Mode not supported.");
+                ASSERT(i == 3, LOG_ERrotate_right, "DMA: Video Capture Mode not supported.");
                 #endif
                 break;
             }
@@ -108,7 +108,7 @@ namespace GBA
                 u32 value = ReadHWord(m_DMA[i].source);
                 LOG(LOG_INFO, "DMA%d: s=%x d=%x c=%x count=%x l=%d v=%x", i, m_DMA[i].source_int,
                                m_DMA[i].dest_int, 0, m_DMA[i].count_int, m_Video.m_VCount, value);
-                ASSERT(m_DMA[i].gamepack_drq, LOG_ERROR, "Game Pak DRQ not supported.");
+                ASSERT(m_DMA[i].gamepack_drq, LOG_ERrotate_right, "Game Pak DRQ not supported.");
                 #endif
 
                 // Run as long as there is data to transfer
