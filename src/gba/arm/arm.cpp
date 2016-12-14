@@ -21,99 +21,148 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
+#include <cstring>
 #include "arm.hpp"
 
 namespace GBA
 {
-    void arm::Init(bool hle)
+    void arm::Init(bool swi_hle)
     {
-        m_state.m_pipeline.m_index = 0;
+        m_pipeline.m_index = 0;
+
+        std::memset(m_reg, 0, sizeof(m_reg));
+        std::memset(m_bank, 0, sizeof(m_bank));
+        m_cpsr = MODE_SYS;
+        m_spsr_ptr = &m_spsr[SPSR_DEF];
 
         // Skip bios boot logo
-        m_state.m_reg[15] = 0x8000000;
-        m_state.m_reg[13] = 0x3007F00;
-        m_state.m_bank[BANK_SVC][BANK_R13] = 0x3007FE0;
-        m_state.m_bank[BANK_IRQ][BANK_R13] = 0x3007FA0;
-        ////LoadRegisters();
+        m_reg[15] = 0x8000000;
+        m_reg[13] = 0x3007F00;
+        m_bank[BANK_SVC][BANK_R13] = 0x3007FE0;
+        m_bank[BANK_IRQ][BANK_R13] = 0x3007FA0;
         RefillPipeline();
 
-        // Set hle flag
-        this->hle = hle;
+        m_swi_hle = swi_hle;
     }
 
-    void arm::Step()
+    // Based on mGBA (endrift's) approach to banking.
+    // https://github.com/mgba-emu/mgba/blob/master/src/arm/arm.c
+    void arm::switch_mode(cpu_mode new_mode)
     {
-        bool thumb = m_state.m_cpsr & MASK_THUMB;
+        cpu_mode old_mode = static_cast<cpu_mode>(m_cpsr & MASK_MODE);
+
+        if (new_mode == old_mode) return;
+
+        cpu_bank new_bank = mode_to_bank(new_mode);
+        cpu_bank old_bank = mode_to_bank(old_mode);
+
+        if (new_bank != old_bank)
+        {
+            if (new_bank == BANK_FIQ || old_bank == BANK_FIQ)
+            {
+                int old_fiq_bank = old_bank == BANK_FIQ;
+                int new_fiq_bank = new_bank == BANK_FIQ;
+
+                // save general purpose registers to current bank.
+                m_bank[old_fiq_bank][2] = m_reg[8];
+                m_bank[old_fiq_bank][3] = m_reg[9];
+                m_bank[old_fiq_bank][4] = m_reg[10];
+                m_bank[old_fiq_bank][5] = m_reg[11];
+                m_bank[old_fiq_bank][6] = m_reg[12];
+
+                // restore general purpose registers from new bank.
+                m_reg[8] = m_bank[new_fiq_bank][2];
+                m_reg[9] = m_bank[new_fiq_bank][3];
+                m_reg[10] = m_bank[new_fiq_bank][4];
+                m_reg[11] = m_bank[new_fiq_bank][5];
+                m_reg[12] = m_bank[new_fiq_bank][6];
+            }
+
+            // save SP and LR to current bank.
+            m_bank[old_bank][BANK_R13] = m_reg[13];
+            m_bank[old_bank][BANK_R14] = m_reg[14];
+
+            // restore SP and LR from new bank.
+            m_reg[13] = m_bank[new_bank][BANK_R13];
+            m_reg[14] = m_bank[new_bank][BANK_R14];
+
+            m_spsr_ptr = &m_spsr[new_bank];
+        }
+
+        // todo: use bit-utils for this
+        m_cpsr = (m_cpsr & ~MASK_MODE) | (u32)new_mode;
+    }
+
+    void arm::step()
+    {
+        bool thumb = m_cpsr & MASK_THUMB;
 
         // Forcibly align r15
-        m_state.m_reg[15] &= thumb ? ~1 : ~3;
+        m_reg[15] &= thumb ? ~1 : ~3;
 
         // Dispatch instruction loading and execution
         if (thumb)
         {
-            if (m_state.m_pipeline.m_index == 0)
-                m_state.m_pipeline.m_opcode[2] = Memory::ReadHWord(m_state.m_reg[15]);
+            if (m_pipeline.m_index == 0)
+                m_pipeline.m_opcode[2] = Memory::ReadHWord(m_reg[15]);
             else
-                m_state.m_pipeline.m_opcode[m_state.m_pipeline.m_index - 1] = Memory::ReadHWord(m_state.m_reg[15]);
+                m_pipeline.m_opcode[m_pipeline.m_index - 1] = Memory::ReadHWord(m_reg[15]);
 
             // Execute the thumb instruction via a method lut.
-            u16 instruction = m_state.m_pipeline.m_opcode[m_state.m_pipeline.m_index];
+            u16 instruction = m_pipeline.m_opcode[m_pipeline.m_index];
             (this->*THUMB_TABLE[instruction >> 6])(instruction);
         }
         else
         {
-            if (m_state.m_pipeline.m_index == 0)
-                m_state.m_pipeline.m_opcode[2] = Memory::ReadWord(m_state.m_reg[15]);
+            if (m_pipeline.m_index == 0)
+                m_pipeline.m_opcode[2] = Memory::ReadWord(m_reg[15]);
             else
-                m_state.m_pipeline.m_opcode[m_state.m_pipeline.m_index - 1] = Memory::ReadWord(m_state.m_reg[15]);
+                m_pipeline.m_opcode[m_pipeline.m_index - 1] = Memory::ReadWord(m_reg[15]);
 
-            Execute(m_state.m_pipeline.m_opcode[m_state.m_pipeline.m_index], Decode(m_state.m_pipeline.m_opcode[m_state.m_pipeline.m_index]));
+            Execute(m_pipeline.m_opcode[m_pipeline.m_index], Decode(m_pipeline.m_opcode[m_pipeline.m_index]));
         }
 
-        if (m_state.m_pipeline.m_needs_flush)
+        if (m_pipeline.m_needs_flush)
         {
-            m_state.m_pipeline.m_index = 0;
-            m_state.m_pipeline.m_needs_flush = false;
+            m_pipeline.m_index = 0;
+            m_pipeline.m_needs_flush = false;
             RefillPipeline();
             return;
         }
 
         // Update pipeline status
-        m_state.m_pipeline.m_index = (m_state.m_pipeline.m_index + 1) % 3;
+        m_pipeline.m_index = (m_pipeline.m_index + 1) % 3;
 
         // Update instruction pointer
-        m_state.m_reg[15] += thumb ? 2 : 4;
+        m_reg[15] += thumb ? 2 : 4;
     }
 
-    void arm::RaiseIRQ()
+    void arm::raise_irq()
     {
-        if ((m_state.m_cpsr & MASK_IRQD) == 0)
+        if ((m_cpsr & MASK_IRQD) == 0)
         {
-            bool thumb = m_state.m_cpsr & MASK_THUMB;
+            bool thumb = m_cpsr & MASK_THUMB;
 
             // "Useless" pipeline prefetch
-            cycles += Memory::SequentialAccess(m_state.m_reg[15], thumb ? ACCESS_HWORD : ACCESS_WORD);
+            cycles += Memory::SequentialAccess(m_reg[15], thumb ? ACCESS_HWORD : ACCESS_WORD);
 
             // Store return address in r14<irq>
-            m_state.m_bank[BANK_IRQ][BANK_R14] = m_state.m_reg[15] - (thumb ? 4 : 8) + 4;
+            m_bank[BANK_IRQ][BANK_R14] = m_reg[15] - (thumb ? 4 : 8) + 4;
 
             // Save program status and switch mode
-            m_state.m_spsr[SPSR_IRQ] = m_state.m_cpsr;
-            m_state.switch_mode(MODE_IRQ);
-            m_state.m_cpsr = (m_state.m_cpsr & ~MASK_THUMB) | MASK_IRQD;
-            ////SaveRegisters();
-            ////m_state.m_cpsr = (m_state.m_cpsr & ~(MASK_MODE | MASK_THUMB)) | MODE_IRQ | MASK_IRQD;
-            ////LoadRegisters();
+            m_spsr[SPSR_IRQ] = m_cpsr;
+            switch_mode(MODE_IRQ);
+            m_cpsr = (m_cpsr & ~MASK_THUMB) | MASK_IRQD;
 
             // Jump to exception vector
-            m_state.m_reg[15] = EXCPT_INTERRUPT;
-            m_state.m_pipeline.m_index = 0;
-            m_state.m_pipeline.m_needs_flush = false;
+            m_reg[15] = EXCPT_INTERRUPT;
+            m_pipeline.m_index = 0;
+            m_pipeline.m_needs_flush = false;
             RefillPipeline();
 
             // Emulate pipeline refill timings
-            cycles += Memory::NonSequentialAccess(m_state.m_reg[15], ACCESS_WORD) +
-                      Memory::SequentialAccess(m_state.m_reg[15] + 4, ACCESS_WORD);
+            cycles += Memory::NonSequentialAccess(m_reg[15], ACCESS_WORD) +
+                      Memory::SequentialAccess(m_reg[15] + 4, ACCESS_WORD);
         }
     }
 
@@ -123,12 +172,12 @@ namespace GBA
         {
         case 0x06:
         {
-            if (m_state.m_reg[1] != 0)
+            if (m_reg[1] != 0)
             {
-                u32 mod = m_state.m_reg[0] % m_state.m_reg[1];
-                u32 div = m_state.m_reg[0] / m_state.m_reg[1];
-                m_state.m_reg[0] = div;
-                m_state.m_reg[1] = mod;
+                u32 mod = m_reg[0] % m_reg[1];
+                u32 div = m_reg[0] / m_reg[1];
+                m_reg[0] = div;
+                m_reg[1] = mod;
             } else
             {
                 LOG(LOG_ERROR, "SWI6h: Attempted division by zero.");
@@ -136,14 +185,14 @@ namespace GBA
             break;
         }
         case 0x05:
-            m_state.m_reg[0] = 1;
-            m_state.m_reg[1] = 1;
+            m_reg[0] = 1;
+            m_reg[1] = 1;
         case 0x04:
             Interrupt::WriteMasterEnableLow(1);
             Interrupt::WriteMasterEnableHigh(0);
 
             // If r0 is one IF must be cleared
-            if (m_state.m_reg[0] == 1)
+            if (m_reg[0] == 1)
             {
                 Interrupt::WriteInterruptFlagLow(0);
                 Interrupt::WriteInterruptFlagHigh(0);
@@ -151,17 +200,17 @@ namespace GBA
 
             // Sets GBA into halt state, waiting for specific interrupt(s) to occur.
             Memory::m_IntrWait = true;
-            Memory::m_IntrWaitMask = m_state.m_reg[1];
+            Memory::m_IntrWaitMask = m_reg[1];
             Memory::m_HaltState = HALTSTATE_HALT;
             break;
         case 0x0B:
         {
-            u32 source = m_state.m_reg[0];
-            u32 dest = m_state.m_reg[1];
-            u32 length = m_state.m_reg[2] & 0xFFFFF;
-            bool fixed = m_state.m_reg[2] & (1 << 24) ? true : false;
+            u32 source = m_reg[0];
+            u32 dest = m_reg[1];
+            u32 length = m_reg[2] & 0xFFFFF;
+            bool fixed = m_reg[2] & (1 << 24) ? true : false;
 
-            if (m_state.m_reg[2] & (1 << 26))
+            if (m_reg[2] & (1 << 26))
             {
                 for (u32 i = 0; i < length; i++)
                 {
@@ -185,10 +234,10 @@ namespace GBA
         }
         case 0x0C:
         {
-            u32 source = m_state.m_reg[0];
-            u32 dest = m_state.m_reg[1];
-            u32 length = m_state.m_reg[2] & 0xFFFFF;
-            bool fixed = m_state.m_reg[2] & (1 << 24) ? true : false;
+            u32 source = m_reg[0];
+            u32 dest = m_reg[1];
+            u32 length = m_reg[2] & 0xFFFFF;
+            bool fixed = m_reg[2] & (1 << 24) ? true : false;
 
             for (u32 i = 0; i < length; i++)
             {
@@ -201,9 +250,9 @@ namespace GBA
         case 0x11:
         case 0x12:
         {
-            int amount = Memory::ReadWord(m_state.m_reg[0]) >> 8;
-            u32 source = m_state.m_reg[0] + 4;
-            u32 dest = m_state.m_reg[1];
+            int amount = Memory::ReadWord(m_reg[0]) >> 8;
+            u32 source = m_reg[0] + 4;
+            u32 dest = m_reg[1];
 
             while (amount > 0)
             {

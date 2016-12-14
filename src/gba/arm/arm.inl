@@ -27,29 +27,29 @@ namespace GBA
 {
     inline void arm::update_sign(u32 result)
     {
-        m_state.m_cpsr = result & 0x80000000 ? (m_state.m_cpsr | MASK_NFLAG) : (m_state.m_cpsr & ~MASK_NFLAG);
+        m_cpsr = result & 0x80000000 ? (m_cpsr | MASK_NFLAG) : (m_cpsr & ~MASK_NFLAG);
     }
 
     inline void arm::update_zero(u64 result)
     {
-        m_state.m_cpsr = result == 0 ? (m_state.m_cpsr | MASK_ZFLAG) : (m_state.m_cpsr & ~MASK_ZFLAG);
+        m_cpsr = result == 0 ? (m_cpsr | MASK_ZFLAG) : (m_cpsr & ~MASK_ZFLAG);
     }
 
     inline void arm::set_carry(bool carry)
     {
-        m_state.m_cpsr = carry ? (m_state.m_cpsr | MASK_CFLAG) : (m_state.m_cpsr & ~MASK_CFLAG);
+        m_cpsr = carry ? (m_cpsr | MASK_CFLAG) : (m_cpsr & ~MASK_CFLAG);
     }
 
     inline void arm::update_overflow_add(u32 result, u32 operand1, u32 operand2)
     {
         bool overflow = !(((operand1) ^ (operand2)) >> 31) && ((result) ^ (operand2)) >> 31;
-        m_state.m_cpsr = overflow ? (m_state.m_cpsr | MASK_VFLAG) : (m_state.m_cpsr & ~MASK_VFLAG);
+        m_cpsr = overflow ? (m_cpsr | MASK_VFLAG) : (m_cpsr & ~MASK_VFLAG);
     }
 
     inline void arm::update_overflow_sub(u32 result, u32 operand1, u32 operand2)
     {
         bool overflow = ((operand1) ^ (operand2)) >> 31 && !(((result) ^ (operand2)) >> 31);
-        m_state.m_cpsr = overflow ? (m_state.m_cpsr | MASK_VFLAG) : (m_state.m_cpsr & ~MASK_VFLAG);
+        m_cpsr = overflow ? (m_cpsr | MASK_VFLAG) : (m_cpsr & ~MASK_VFLAG);
     }
 
     inline void arm::logical_shift_left(u32& operand, u32 amount, bool& carry)
@@ -106,6 +106,29 @@ namespace GBA
             bool old_carry = carry;
             carry = (operand & 1) ? true : false;
             operand = (operand >> 1) | (old_carry ? 0x80000000 : 0);
+        }
+    }
+
+    inline cpu_bank arm::mode_to_bank(cpu_mode mode)
+    {
+        switch (mode)
+        {
+        case MODE_USR:
+        case MODE_SYS:
+            return BANK_NONE;
+        case MODE_FIQ:
+            return BANK_FIQ;
+        case MODE_IRQ:
+            return BANK_IRQ;
+        case MODE_SVC:
+            return BANK_SVC;
+        case MODE_ABT:
+            return BANK_ABT;
+        case MODE_UND:
+            return BANK_UND;
+        default:
+            // TODO: log error
+            return BANK_NONE;
         }
     }
 
@@ -176,17 +199,17 @@ namespace GBA
 
     inline void arm::RefillPipeline()
     {
-        if (m_state.m_cpsr & MASK_THUMB)
+        if (m_cpsr & MASK_THUMB)
         {
-            m_state.m_pipeline.m_opcode[0] = Memory::ReadHWord(m_state.m_reg[15]);
-            m_state.m_pipeline.m_opcode[1] = Memory::ReadHWord(m_state.m_reg[15] + 2);
-            m_state.m_reg[15] += 4;
+            m_pipeline.m_opcode[0] = Memory::ReadHWord(m_reg[15]);
+            m_pipeline.m_opcode[1] = Memory::ReadHWord(m_reg[15] + 2);
+            m_reg[15] += 4;
         }
         else
         {
-            m_state.m_pipeline.m_opcode[0] = Memory::ReadWord(m_state.m_reg[15]);
-            m_state.m_pipeline.m_opcode[1] = Memory::ReadWord(m_state.m_reg[15] + 4);
-            m_state.m_reg[15] += 8;
+            m_pipeline.m_opcode[0] = Memory::ReadWord(m_reg[15]);
+            m_pipeline.m_opcode[1] = Memory::ReadWord(m_reg[15] + 4);
+            m_reg[15] += 8;
         }
     }
 }

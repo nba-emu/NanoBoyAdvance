@@ -26,15 +26,99 @@
 #include "util/integer.hpp"
 #include "util/log.h"
 #include "../memory.h"
-#include "state.hpp"
 
 namespace GBA
 {
+    enum cpu_mode
+    {
+        MODE_USR = 0x10,
+        MODE_FIQ = 0x11,
+        MODE_IRQ = 0x12,
+        MODE_SVC = 0x13,
+        MODE_ABT = 0x17,
+        MODE_UND = 0x1B,
+        MODE_SYS = 0x1F
+    };
+
+    enum cpu_bank
+    {
+        BANK_NONE,
+        BANK_FIQ,
+        BANK_SVC,
+        BANK_ABT,
+        BANK_IRQ,
+        BANK_UND,
+        BANK_COUNT
+    };
+
+    enum cpu_bank_register
+    {
+        BANK_R13 = 0,
+        BANK_R14 = 1
+    };
+
+    enum status_mask
+    {
+        MASK_MODE  = 0x1F,
+        MASK_THUMB = 0x20,
+        MASK_FIQD  = 0x40,
+        MASK_IRQD  = 0x80,
+        MASK_VFLAG = 0x10000000,
+        MASK_CFLAG = 0x20000000,
+        MASK_ZFLAG = 0x40000000,
+        MASK_NFLAG = 0x80000000
+    };
+
+    enum exception_vector
+    {
+        EXCPT_RESET     = 0x00,
+        EXCPT_UNDEFINED = 0x04,
+        EXCPT_SWI       = 0x08,
+        EXCPT_PREFETCH_ABORT = 0x0C,
+        EXCPT_DATA_ABORT     = 0x10,
+        EXCPT_INTERRUPT      = 0x18,
+        EXCPT_FAST_INTERRUPT = 0x1C
+    };
+
+    enum saved_status_register
+    {
+        SPSR_DEF = 0,
+        SPSR_FIQ = 1,
+        SPSR_SVC = 2,
+        SPSR_ABT = 3,
+        SPSR_IRQ = 4,
+        SPSR_UND = 5,
+        SPSR_COUNT = 6
+    };
+
     class arm
     {
-        state m_state;
+    public:
+        int cycles {0};
 
-        bool hle;
+        void Init(bool use_bios);
+        void step();
+        void raise_irq();
+    protected:
+        u32 m_reg[16];
+
+        u32 m_bank[BANK_COUNT][7];
+
+        u32 m_cpsr;
+        u32 m_spsr[SPSR_COUNT];
+        u32* m_spsr_ptr;
+
+        struct
+        {
+            u32 m_opcode[3];
+            int m_index;
+            bool m_needs_flush;
+        } m_pipeline;
+
+        bool m_swi_hle;
+
+        cpu_bank mode_to_bank(cpu_mode mode);
+        void switch_mode(cpu_mode new_mode);
 
         void update_sign(u32 result);
         void update_zero(u64 result);
@@ -65,16 +149,6 @@ namespace GBA
 
         // HLE-emulation
         void SWI(int number);
-    public:
-        // CPU-cyle counter
-        int cycles {0};
-
-        // Constructors
-        void Init(bool use_bios);
-
-        // Execution functions
-        void Step();
-        void RaiseIRQ();
     };
 }
 

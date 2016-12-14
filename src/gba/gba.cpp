@@ -114,7 +114,7 @@ namespace GBA
 
             // Raise an IRQ if neccessary
             if (Interrupt::GetMasterEnable() && requested_and_enabled)
-                m_ARM.RaiseIRQ();
+                m_ARM.raise_irq();
 
             // Run the hardware components
             if (Memory::m_HaltState != HALTSTATE_STOP)
@@ -127,7 +127,7 @@ namespace GBA
                 if (Memory::m_HaltState != HALTSTATE_HALT)
                 {
                     m_ARM.cycles = 0;
-                    m_ARM.Step();
+                    m_ARM.step();
                     forward_steps = m_ARM.cycles - 1;
                 }
 
@@ -143,7 +143,7 @@ namespace GBA
                     {
                         Memory::m_Video.Step();
 
-                        if (Memory::m_Video.m_regenderScanline && (i / FRAME_CYCLES) == m_SpeedMultiplier - 1)
+                        if (Memory::m_Video.m_RenderScanline && (i / FRAME_CYCLES) == m_SpeedMultiplier - 1)
                         {
                             Memory::m_Video.Render();
                             m_DidRender = true;

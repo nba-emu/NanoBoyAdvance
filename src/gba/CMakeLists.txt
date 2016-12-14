@@ -24,7 +24,6 @@ set(HEADERS
     gba.h
     arm/arm.hpp
     arm/arm.inl
-    arm/state.hpp
     arm/thumb_emu.hpp
     io.hpp
     interrupt.hpp

@@ -124,7 +124,7 @@ namespace GBA
 
     void arm::Execute(u32 instruction, int type)
     {
-        auto reg = m_state.m_reg;
+        auto reg = m_reg;
         int condition = instruction >> 28;
 
         cycles += 1;
@@ -134,20 +134,20 @@ namespace GBA
         {
             switch (condition)
             {
-            case 0x0: if (!(m_state.m_cpsr & MASK_ZFLAG))     return; break;
-            case 0x1: if (  m_state.m_cpsr & MASK_ZFLAG)      return; break;
-            case 0x2: if (!(m_state.m_cpsr & MASK_CFLAG))    return; break;
-            case 0x3: if (  m_state.m_cpsr & MASK_CFLAG)     return; break;
-            case 0x4: if (!(m_state.m_cpsr & MASK_NFLAG))     return; break;
-            case 0x5: if (  m_state.m_cpsr & MASK_NFLAG)      return; break;
-            case 0x6: if (!(m_state.m_cpsr & MASK_VFLAG)) return; break;
-            case 0x7: if (  m_state.m_cpsr & MASK_VFLAG)  return; break;
-            case 0x8: if (!(m_state.m_cpsr & MASK_CFLAG) ||  (m_state.m_cpsr & MASK_ZFLAG)) return; break;
-            case 0x9: if ( (m_state.m_cpsr & MASK_CFLAG) && !(m_state.m_cpsr & MASK_ZFLAG)) return; break;
-            case 0xA: if ((m_state.m_cpsr & MASK_NFLAG) != (m_state.m_cpsr & MASK_VFLAG)) return; break;
-            case 0xB: if ((m_state.m_cpsr & MASK_NFLAG) == (m_state.m_cpsr & MASK_VFLAG)) return; break;
-            case 0xC: if ((m_state.m_cpsr & MASK_ZFLAG) || ((m_state.m_cpsr & MASK_NFLAG) != (m_state.m_cpsr & MASK_VFLAG))) return; break;
-            case 0xD: if (!(m_state.m_cpsr & MASK_ZFLAG) && ((m_state.m_cpsr & MASK_NFLAG) == (m_state.m_cpsr & MASK_VFLAG))) return; break;
+            case 0x0: if (!(m_cpsr & MASK_ZFLAG))     return; break;
+            case 0x1: if (  m_cpsr & MASK_ZFLAG)      return; break;
+            case 0x2: if (!(m_cpsr & MASK_CFLAG))    return; break;
+            case 0x3: if (  m_cpsr & MASK_CFLAG)     return; break;
+            case 0x4: if (!(m_cpsr & MASK_NFLAG))     return; break;
+            case 0x5: if (  m_cpsr & MASK_NFLAG)      return; break;
+            case 0x6: if (!(m_cpsr & MASK_VFLAG)) return; break;
+            case 0x7: if (  m_cpsr & MASK_VFLAG)  return; break;
+            case 0x8: if (!(m_cpsr & MASK_CFLAG) ||  (m_cpsr & MASK_ZFLAG)) return; break;
+            case 0x9: if ( (m_cpsr & MASK_CFLAG) && !(m_cpsr & MASK_ZFLAG)) return; break;
+            case 0xA: if ((m_cpsr & MASK_NFLAG) != (m_cpsr & MASK_VFLAG)) return; break;
+            case 0xB: if ((m_cpsr & MASK_NFLAG) == (m_cpsr & MASK_VFLAG)) return; break;
+            case 0xC: if ((m_cpsr & MASK_ZFLAG) || ((m_cpsr & MASK_NFLAG) != (m_cpsr & MASK_VFLAG))) return; break;
+            case 0xD: if (!(m_cpsr & MASK_ZFLAG) && ((m_cpsr & MASK_NFLAG) == (m_cpsr & MASK_VFLAG))) return; break;
             case 0xE: break;
             case 0xF: return;
             }
@@ -255,7 +255,7 @@ namespace GBA
             if (reg[reg_address] & 1)
             {
                 reg[15] = reg[reg_address] & ~1;
-                m_state.m_cpsr |= MASK_THUMB;
+                m_cpsr |= MASK_THUMB;
 
                 // Emulate pipeline refill cycles
                 cycles += Memory::NonSequentialAccess(reg[15], ACCESS_HWORD) +
@@ -271,7 +271,7 @@ namespace GBA
             }
 
             // Flush pipeline
-            m_state.m_pipeline.m_needs_flush = true;
+            m_pipeline.m_needs_flush = true;
 
             return;
         }
@@ -455,7 +455,7 @@ namespace GBA
                     if (instruction & (1 << 18)) mask |= 0x00FF0000;
                     if (instruction & (1 << 19)) mask |= 0xFF000000;
 
-                    // Decode the value written to m_state.m_cpsr/spsr
+                    // Decode the value written to m_cpsr/spsr
                     if (immediate)
                     {
                         int imm = instruction & 0xFF;
@@ -469,28 +469,28 @@ namespace GBA
                         operand = reg[instruction & 0xF];
                     }
 
-                    // Finally write either to SPSR or m_state.m_cpsr.
+                    // Finally write either to SPSR or m_cpsr.
                     if (use_spsr)
                     {
-                        *m_state.m_spsr_ptr = (*m_state.m_spsr_ptr & ~mask) | (operand & mask);
+                        *m_spsr_ptr = (*m_spsr_ptr & ~mask) | (operand & mask);
                     }
                     else
                     {
                         ////SaveRegisters();
-                        ////m_state.m_cpsr = (m_state.m_cpsr & ~mask) | (operand & mask);
+                        ////m_cpsr = (m_cpsr & ~mask) | (operand & mask);
                         ////LoadRegisters();
                         u32 value = operand & mask;
 
                         // todo: make sure that mode might actually be affected.
-                        m_state.switch_mode(static_cast<cpu_mode>(value & MASK_MODE));
-                        m_state.m_cpsr = (m_state.m_cpsr & ~mask) | value;
+                        switch_mode(static_cast<cpu_mode>(value & MASK_MODE));
+                        m_cpsr = (m_cpsr & ~mask) | value;
                     }
                 }
                 else
                 {
                     // Move satus register to register.
                     int reg_dest = (instruction >> 12) & 0xF;
-                    reg[reg_dest] = use_spsr ? *m_state.m_spsr_ptr : m_state.m_cpsr;
+                    reg[reg_dest] = use_spsr ? *m_spsr_ptr : m_cpsr;
                 }
 
                 // Calculate instruction timing
@@ -502,7 +502,7 @@ namespace GBA
                 int reg_dest = (instruction >> 12) & 0xF;
                 int reg_operand1 = (instruction >> 16) & 0xF;
                 bool immediate = instruction & (1 << 25);
-                bool carry = m_state.m_cpsr & MASK_CFLAG;
+                bool carry = m_cpsr & MASK_CFLAG;
                 u32 operand1 = reg[reg_operand1];
                 u32 operand2;
 
@@ -568,7 +568,7 @@ namespace GBA
                 }
 
                 // The combination rDEST=15 and S-bit=1 triggers a CPU mode switch
-                // effectivly switchting back to the saved mode (m_state.m_cpsr = SPSR).
+                // effectivly switchting back to the saved mode (m_cpsr = SPSR).
                 if (reg_dest == 15 && set_flags)
                 {
                     // Flags will no longer be updated.
@@ -576,11 +576,11 @@ namespace GBA
 
                     // Switches back to saved mode.
                     ////SaveRegisters();
-                    ////m_state.m_cpsr = *m_state.m_spsr_ptr;
+                    ////m_cpsr = *m_spsr_ptr;
                     ////LoadRegisters();
-                    u32 spsr = *m_state.m_spsr_ptr;
-                    m_state.switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
-                    m_state.m_cpsr = spsr;
+                    u32 spsr = *m_spsr_ptr;
+                    switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
+                    m_cpsr = spsr;
                 }
 
                 // Perform the actual operation
@@ -669,7 +669,7 @@ namespace GBA
                 case 0b0101:
                 {
                     // Addition with Carry
-                    int carry2 = (m_state.m_cpsr >> 29) & 1;
+                    int carry2 = (m_cpsr >> 29) & 1;
                     u32 result = operand1 + operand2 + carry2;
 
                     if (set_flags)
@@ -688,7 +688,7 @@ namespace GBA
                 case 0b0110:
                 {
                     // Subtraction with Carry
-                    int carry2 = (m_state.m_cpsr >> 29) & 1;
+                    int carry2 = (m_cpsr >> 29) & 1;
                     u32 result = operand1 - operand2 + carry2 - 1;
 
                     if (set_flags)
@@ -705,7 +705,7 @@ namespace GBA
                 case 0b0111:
                 {
                     // Reverse Substraction with Carry
-                    int carry2 = (m_state.m_cpsr >> 29) & 1;
+                    int carry2 = (m_cpsr >> 29) & 1;
                     u32 result = operand2 - operand1 + carry2 - 1;
 
                     if (set_flags)
@@ -825,7 +825,7 @@ namespace GBA
                 // Clear pipeline if r15 updated
                 if (reg_dest == 15)
                 {
-                    m_state.m_pipeline.m_needs_flush = true;
+                    m_pipeline.m_needs_flush = true;
 
                     // Emulate pipeline flush timings
                     cycles += Memory::NonSequentialAccess(reg[15], ACCESS_WORD) +
@@ -891,7 +891,7 @@ namespace GBA
                     arithmetic_shift_right(offset, amount, carry, true);
                     break;
                 case 0b11:
-                    carry = m_state.m_cpsr & MASK_CFLAG;
+                    carry = m_cpsr & MASK_CFLAG;
                     rotate_right(offset, amount, carry, true);
                     break;
                 }
@@ -930,7 +930,7 @@ namespace GBA
                 // Writing to r15 causes a pipeline-flush.
                 if (reg_dest == 15)
                 {
-                    m_state.m_pipeline.m_needs_flush = true;
+                    m_pipeline.m_needs_flush = true;
 
                     // Emulate pipeline refill timings
                     cycles += Memory::NonSequentialAccess(reg[15], ACCESS_WORD) +
@@ -1018,11 +1018,11 @@ namespace GBA
                 #endif
 
                 // Save current mode and enter user mode
-                old_mode = m_state.m_cpsr & MASK_MODE;
+                old_mode = m_cpsr & MASK_MODE;
                 ////SaveRegisters();
-                ////m_state.m_cpsr = (m_state.m_cpsr & ~MASK_MODE) | MODE_USR;
+                ////m_cpsr = (m_cpsr & ~MASK_MODE) | MODE_USR;
                 ////LoadRegisters();
-                m_state.switch_mode(MODE_USR);
+                switch_mode(MODE_USR);
 
                 // Mark that we switched to user mode
                 switched_mode = true;
@@ -1069,12 +1069,12 @@ namespace GBA
                             {
                                 if (force_user_mode)
                                 {
-                                    u32 spsr = *m_state.m_spsr_ptr;
+                                    u32 spsr = *m_spsr_ptr;
 
-                                    m_state.switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
-                                    m_state.m_cpsr = spsr;
+                                    switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
+                                    m_cpsr = spsr;
                                 }
-                                m_state.m_pipeline.m_needs_flush = true;
+                                m_pipeline.m_needs_flush = true;
                             }
                         }
                         else
@@ -1114,14 +1114,14 @@ namespace GBA
                                 if (force_user_mode)
                                 {
                                     ////SaveRegisters();
-                                    ////m_state.m_cpsr = *m_state.m_spsr_ptr;
+                                    ////m_cpsr = *m_spsr_ptr;
                                     ////LoadRegisters();
-                                    u32 spsr = *m_state.m_spsr_ptr;
+                                    u32 spsr = *m_spsr_ptr;
 
-                                    m_state.switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
-                                    m_state.m_cpsr = spsr;
+                                    switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
+                                    m_cpsr = spsr;
                                 }
-                                m_state.m_pipeline.m_needs_flush = true;
+                                m_pipeline.m_needs_flush = true;
                             }
                         }
                         else
@@ -1145,9 +1145,9 @@ namespace GBA
             if (switched_mode)
             {
                 ////SaveRegisters();
-                ////m_state.m_cpsr = (m_state.m_cpsr & ~MASK_MODE) | old_mode;
+                ////m_cpsr = (m_cpsr & ~MASK_MODE) | old_mode;
                 ////LoadRegisters();
-                m_state.switch_mode(static_cast<cpu_mode>(old_mode));
+                switch_mode(static_cast<cpu_mode>(old_mode));
             }
             return;
         }
@@ -1165,7 +1165,7 @@ namespace GBA
                 reg[14] = reg[15] - 4;
             }
             reg[15] += offset << 2;
-            m_state.m_pipeline.m_needs_flush = true;
+            m_pipeline.m_needs_flush = true;
             return;
         }
         case ARM_16:
@@ -1180,27 +1180,27 @@ namespace GBA
             #endif
 
             // Dispatch SWI, either HLE or BIOS.
-            if (hle)
+            if (m_swi_hle)
             {
                 SWI(bios_call);
             }
             else
             {
                 // Store return address in r14<svc>
-                ////m_state.m_svc.m_r14 = reg[15] - 4;
-                m_state.m_bank[BANK_SVC][BANK_R14] = reg[15] - 4;
+                ////m_svc.m_r14 = reg[15] - 4;
+                m_bank[BANK_SVC][BANK_R14] = reg[15] - 4;
 
                 // Save program status and switch mode
-                m_state.m_spsr[SPSR_SVC] = m_state.m_cpsr;
+                m_spsr[SPSR_SVC] = m_cpsr;
                 ////SaveRegisters();
-                ////m_state.m_cpsr = (m_state.m_cpsr & ~MASK_MODE) | MODE_SVC | MASK_IRQD;
+                ////m_cpsr = (m_cpsr & ~MASK_MODE) | MODE_SVC | MASK_IRQD;
                 ////LoadRegisters();
-                m_state.switch_mode(MODE_SVC);
-                m_state.m_cpsr |= MASK_IRQD;
+                switch_mode(MODE_SVC);
+                m_cpsr |= MASK_IRQD;
 
                 // Jump to exception vector
                 reg[15] = EXCPT_SWI;
-                m_state.m_pipeline.m_needs_flush = true;
+                m_pipeline.m_needs_flush = true;
             }
             return;
         }

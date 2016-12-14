@@ -211,7 +211,7 @@ namespace GBA
     ///////////////////////////////////////////////////////////
     void Video::Step()
     {
-        m_regenderScanline = false;
+        m_RenderScanline = false;
 
         switch (m_state)
         {
@@ -229,7 +229,7 @@ namespace GBA
             m_BG[3].x_ref_int += DecodeGBAFloat16(m_BG[3].pb);
             m_BG[3].y_ref_int += DecodeGBAFloat16(m_BG[3].pd);
 
-            m_regenderScanline = true;
+            m_RenderScanline = true;
             return;
         case PHASE_HBLANK:
             // Update vertical counter and its matching flag.
