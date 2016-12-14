@@ -27,7 +27,7 @@ namespace GBA
 {
     void arm::Init(bool hle)
     {
-        m_Pipe.m_Index = 0;
+        m_state.m_pipeline.m_index = 0;
 
         // Skip bios boot logo
         m_state.m_reg[15] = 0x8000000;
@@ -51,35 +51,35 @@ namespace GBA
         // Dispatch instruction loading and execution
         if (thumb)
         {
-            if (m_Pipe.m_Index == 0)
-                m_Pipe.m_Opcode[2] = Memory::ReadHWord(m_state.m_reg[15]);
+            if (m_state.m_pipeline.m_index == 0)
+                m_state.m_pipeline.m_opcode[2] = Memory::ReadHWord(m_state.m_reg[15]);
             else
-                m_Pipe.m_Opcode[m_Pipe.m_Index - 1] = Memory::ReadHWord(m_state.m_reg[15]);
+                m_state.m_pipeline.m_opcode[m_state.m_pipeline.m_index - 1] = Memory::ReadHWord(m_state.m_reg[15]);
 
             // Execute the thumb instruction via a method lut.
-            u16 instruction = m_Pipe.m_Opcode[m_Pipe.m_Index];
+            u16 instruction = m_state.m_pipeline.m_opcode[m_state.m_pipeline.m_index];
             (this->*THUMB_TABLE[instruction >> 6])(instruction);
         }
         else
         {
-            if (m_Pipe.m_Index == 0)
-                m_Pipe.m_Opcode[2] = Memory::ReadWord(m_state.m_reg[15]);
+            if (m_state.m_pipeline.m_index == 0)
+                m_state.m_pipeline.m_opcode[2] = Memory::ReadWord(m_state.m_reg[15]);
             else
-                m_Pipe.m_Opcode[m_Pipe.m_Index - 1] = Memory::ReadWord(m_state.m_reg[15]);
+                m_state.m_pipeline.m_opcode[m_state.m_pipeline.m_index - 1] = Memory::ReadWord(m_state.m_reg[15]);
 
-            Execute(m_Pipe.m_Opcode[m_Pipe.m_Index], Decode(m_Pipe.m_Opcode[m_Pipe.m_Index]));
+            Execute(m_state.m_pipeline.m_opcode[m_state.m_pipeline.m_index], Decode(m_state.m_pipeline.m_opcode[m_state.m_pipeline.m_index]));
         }
 
-        if (m_Pipe.m_Flush)
+        if (m_state.m_pipeline.m_needs_flush)
         {
-            m_Pipe.m_Index = 0;
-            m_Pipe.m_Flush = false;
+            m_state.m_pipeline.m_index = 0;
+            m_state.m_pipeline.m_needs_flush = false;
             RefillPipeline();
             return;
         }
 
         // Update pipeline status
-        m_Pipe.m_Index = (m_Pipe.m_Index + 1) % 3;
+        m_state.m_pipeline.m_index = (m_state.m_pipeline.m_index + 1) % 3;
 
         // Update instruction pointer
         m_state.m_reg[15] += thumb ? 2 : 4;
@@ -107,8 +107,8 @@ namespace GBA
 
             // Jump to exception vector
             m_state.m_reg[15] = EXCPT_INTERRUPT;
-            m_Pipe.m_Index = 0;
-            m_Pipe.m_Flush = false;
+            m_state.m_pipeline.m_index = 0;
+            m_state.m_pipeline.m_needs_flush = false;
             RefillPipeline();
 
             // Emulate pipeline refill timings

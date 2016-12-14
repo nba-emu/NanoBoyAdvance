@@ -271,7 +271,7 @@ namespace GBA
             }
 
             // Flush pipeline
-            m_Pipe.m_Flush = true;
+            m_state.m_pipeline.m_needs_flush = true;
 
             return;
         }
@@ -825,7 +825,7 @@ namespace GBA
                 // Clear pipeline if r15 updated
                 if (reg_dest == 15)
                 {
-                    m_Pipe.m_Flush = true;
+                    m_state.m_pipeline.m_needs_flush = true;
 
                     // Emulate pipeline flush timings
                     cycles += Memory::NonSequentialAccess(reg[15], ACCESS_WORD) +
@@ -930,7 +930,7 @@ namespace GBA
                 // Writing to r15 causes a pipeline-flush.
                 if (reg_dest == 15)
                 {
-                    m_Pipe.m_Flush = true;
+                    m_state.m_pipeline.m_needs_flush = true;
 
                     // Emulate pipeline refill timings
                     cycles += Memory::NonSequentialAccess(reg[15], ACCESS_WORD) +
@@ -1074,7 +1074,7 @@ namespace GBA
                                     m_state.switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
                                     m_state.m_cpsr = spsr;
                                 }
-                                m_Pipe.m_Flush = true;
+                                m_state.m_pipeline.m_needs_flush = true;
                             }
                         }
                         else
@@ -1121,7 +1121,7 @@ namespace GBA
                                     m_state.switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
                                     m_state.m_cpsr = spsr;
                                 }
-                                m_Pipe.m_Flush = true;
+                                m_state.m_pipeline.m_needs_flush = true;
                             }
                         }
                         else
@@ -1165,7 +1165,7 @@ namespace GBA
                 reg[14] = reg[15] - 4;
             }
             reg[15] += offset << 2;
-            m_Pipe.m_Flush = true;
+            m_state.m_pipeline.m_needs_flush = true;
             return;
         }
         case ARM_16:
@@ -1200,7 +1200,7 @@ namespace GBA
 
                 // Jump to exception vector
                 reg[15] = EXCPT_SWI;
-                m_Pipe.m_Flush = true;
+                m_state.m_pipeline.m_needs_flush = true;
             }
             return;
         }

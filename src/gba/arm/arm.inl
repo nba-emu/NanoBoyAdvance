@@ -178,14 +178,14 @@ namespace GBA
     {
         if (m_state.m_cpsr & MASK_THUMB)
         {
-            m_Pipe.m_Opcode[0] = Memory::ReadHWord(m_state.m_reg[15]);
-            m_Pipe.m_Opcode[1] = Memory::ReadHWord(m_state.m_reg[15] + 2);
+            m_state.m_pipeline.m_opcode[0] = Memory::ReadHWord(m_state.m_reg[15]);
+            m_state.m_pipeline.m_opcode[1] = Memory::ReadHWord(m_state.m_reg[15] + 2);
             m_state.m_reg[15] += 4;
         }
         else
         {
-            m_Pipe.m_Opcode[0] = Memory::ReadWord(m_state.m_reg[15]);
-            m_Pipe.m_Opcode[1] = Memory::ReadWord(m_state.m_reg[15] + 4);
+            m_state.m_pipeline.m_opcode[0] = Memory::ReadWord(m_state.m_reg[15]);
+            m_state.m_pipeline.m_opcode[1] = Memory::ReadWord(m_state.m_reg[15] + 4);
             m_state.m_reg[15] += 8;
         }
     }

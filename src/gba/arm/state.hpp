@@ -99,6 +99,13 @@ namespace GBA
         u32 m_spsr[SPSR_COUNT];
         u32* m_spsr_ptr; // pointer to current SPSR.
 
+        struct
+        {
+            u32 m_opcode[3];
+            int m_index;
+            bool m_needs_flush;
+        } m_pipeline;
+
         state() { reset(); }
 
         void reset()

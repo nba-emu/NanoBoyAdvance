@@ -1,8 +1,8 @@
 set(SRCS
     gba.cpp
     arm/arm.cpp
-    arm/arm_instr.cpp
-    arm/thumb_instr.cpp
+    arm/arm_emu.cpp
+    arm/thumb_emu.cpp
     io.cpp
     interrupt.cpp
     dma.cpp
@@ -25,6 +25,7 @@ set(HEADERS
     arm/arm.hpp
     arm/arm.inl
     arm/state.hpp
+    arm/thumb_emu.hpp
     io.hpp
     interrupt.hpp
     dma.h

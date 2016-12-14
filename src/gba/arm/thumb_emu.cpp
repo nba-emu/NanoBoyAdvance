@@ -664,7 +664,7 @@ namespace GBA
             }
 
             // Flush pipeline
-            m_Pipe.m_Flush = true;
+            m_state.m_pipeline.m_needs_flush = true;
             break;
         }
 
@@ -672,7 +672,7 @@ namespace GBA
         {
             // Flush pipeline
             m_state.m_reg[reg_dest] &= ~1;
-            m_Pipe.m_Flush = true;
+            m_state.m_pipeline.m_needs_flush = true;
 
             // Emulate pipeline refill cycles
             cycles += Memory::NonSequentialAccess(m_state.m_reg[15], ACCESS_HWORD) +
@@ -939,7 +939,7 @@ namespace GBA
                     cycles += Memory::SequentialAccess(address, ACCESS_WORD);
                 }
 
-                m_Pipe.m_Flush = true;
+                m_state.m_pipeline.m_needs_flush = true;
             }
         }
         else
@@ -1106,7 +1106,7 @@ namespace GBA
 
         // Update r15/pc and flush pipe
         m_state.m_reg[15] += (signed_immediate << 1);
-        m_Pipe.m_Flush = true;
+        m_state.m_pipeline.m_needs_flush = true;
 
         // Emulate pipeline refill timings
         cycles += Memory::NonSequentialAccess(m_state.m_reg[15], ACCESS_HWORD) +
@@ -1150,7 +1150,7 @@ namespace GBA
 
             // Jump to exception vector
             m_state.m_reg[15] = EXCPT_SWI;
-            m_Pipe.m_Flush = true;
+            m_state.m_pipeline.m_needs_flush = true;
         }
     }
 
@@ -1167,7 +1167,7 @@ namespace GBA
 
         // Update r15/pc and flush pipe
         m_state.m_reg[15] += immediate_value;
-        m_Pipe.m_Flush = true;
+        m_state.m_pipeline.m_needs_flush = true;
 
         //Emulate pipeline refill timings
         cycles += Memory::NonSequentialAccess(m_state.m_reg[15], ACCESS_HWORD) +
@@ -1195,7 +1195,7 @@ namespace GBA
 
             // Store return address and flush pipe.
             m_state.m_reg[14] = temp_pc | 1;
-            m_Pipe.m_Flush = true;
+            m_state.m_pipeline.m_needs_flush = true;
 
             //Emulate pipeline refill timings
             cycles += Memory::NonSequentialAccess(m_state.m_reg[15], ACCESS_HWORD) +
