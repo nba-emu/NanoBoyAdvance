@@ -341,13 +341,13 @@ namespace GBA
             #ifdef DEBUG
             // Instructions neither write back if base register is r15
             // nor should they have the write-back bit set when being post-indexed.
-            ASSERT(reg_base == 15 && write_back, LOG_ERrotate_right,
+            ASSERT(reg_base == 15 && write_back, LOG_ERROR,
                    "Halfword and Signed Data Transfer, writeback to r15, r15=0x%x", m_state.m_reg[15]);
-            ASSERT(write_back && !pre_indexed, LOG_ERrotate_right,
+            ASSERT(write_back && !pre_indexed, LOG_ERROR,
                    "Halfword and Signed Data Transfer, writeback and post-indexed, r15=0x%x", m_state.m_reg[15]);
 
             // Load-bit must be set when signed transfer is selected
-            ASSERT(type == ARM_7 && !load, LOG_ERrotate_right,
+            ASSERT(type == ARM_7 && !load, LOG_ERROR,
                    "Halfword and Signed Data Transfer, signed bit and store bit set, r15=0x%x", m_state.m_reg[15]);
             #endif
 
@@ -988,7 +988,7 @@ namespace GBA
         case ARM_10:
             // ARM.10 Undefined
             #ifdef DEBUG
-            LOG(LOG_ERrotate_right, "Undefined instruction (0x%x), r15=0x%x", instruction, m_state.m_reg[15]);
+            LOG(LOG_ERROR, "Undefined instruction (0x%x), r15=0x%x", instruction, m_state.m_reg[15]);
             #endif
             return;
         case ARM_11:
@@ -1011,14 +1011,14 @@ namespace GBA
 
             #ifdef DEBUG
             // Base register must not be r15
-            ASSERT(base_register == 15, LOG_ERrotate_right, "ARM.11, rB=15, r15=0x%x", m_state.m_reg[15]);
+            ASSERT(base_register == 15, LOG_ERROR, "ARM.11, rB=15, r15=0x%x", m_state.m_reg[15]);
             #endif
 
             // Switch to User mode if neccessary
             if (force_user_mode && (!load_instr || !(register_list & (1 << 15))))
             {
                 #ifdef DEBUG
-                ASSERT(write_back, LOG_ERrotate_right, "ARM.11, writeback and modeswitch, r15=0x%x", m_state.m_reg[15]);
+                ASSERT(write_back, LOG_ERROR, "ARM.11, writeback and modeswitch, r15=0x%x", m_state.m_reg[15]);
                 #endif
 
                 // Save current mode and enter user mode

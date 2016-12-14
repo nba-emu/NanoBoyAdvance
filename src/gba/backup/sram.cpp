@@ -62,7 +62,7 @@ namespace GBA
                 memcpy(m_Memory, save_data, SAVE_SIZE);
                 return;
             }
-            else { LOG(LOG_ERrotate_right, "Save file size is invalid"); }
+            else { LOG(LOG_ERROR, "Save file size is invalid"); }
         }
 
         // Zero-init if loading failed

@@ -21,9 +21,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-
 #include "arm.hpp"
-
 
 namespace GBA
 {
@@ -133,7 +131,7 @@ namespace GBA
                 m_state.m_reg[1] = mod;
             } else
             {
-                LOG(LOG_ERrotate_right, "SWI6h: Attempted division by zero.");
+                LOG(LOG_ERROR, "SWI6h: Attempted division by zero.");
             }
             break;
         }
@@ -245,7 +243,7 @@ namespace GBA
         }
         default:
             #ifdef DEBUG
-            LOG(LOG_ERrotate_right, "Unimplemented software interrupt 0x%x", number);
+            LOG(LOG_ERROR, "Unimplemented software interrupt 0x%x", number);
             #endif
             break;
         }

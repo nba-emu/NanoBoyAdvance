@@ -95,6 +95,20 @@ namespace GBA
 
         u32 m_bank[BANK_COUNT][7];
 
+        u32 m_cpsr;
+        u32 m_spsr[SPSR_COUNT];
+        u32* m_spsr_ptr; // pointer to current SPSR.
+
+        state() { reset(); }
+
+        void reset()
+        {
+            std::memset(this, 0, sizeof(state));
+
+            m_cpsr = MODE_SYS;
+            m_spsr_ptr = &m_spsr[SPSR_DEF];
+        }
+
         // Inspired by mGBA (endrift's) approach to banking.
         // https://github.com/mgba-emu/mgba/blob/master/src/arm/arm.c
         cpu_bank mode_to_bank(cpu_mode mode)
@@ -164,37 +178,6 @@ namespace GBA
 
             // todo: use bit-utils for this
             m_cpsr = (m_cpsr & ~MASK_MODE) | (u32)new_mode;
-        }
-
-        /*struct
-        {
-            u32 m_r8;
-            u32 m_r9;
-            u32 m_r10;
-            u32 m_r11;
-            u32 m_r12;
-            u32 m_r13;
-            u32 m_r14;
-        } m_usr, m_fiq;
-
-        struct
-        {
-            u32 m_r13;
-            u32 m_r14;
-        } m_svc, m_abt, m_irq, m_und;*/
-
-        u32 m_cpsr;
-        u32 m_spsr[SPSR_COUNT];
-        u32* m_spsr_ptr; // pointer to current SPSR.
-
-        state() { reset(); }
-
-        void reset()
-        {
-            std::memset(this, 0, sizeof(state));
-
-            m_cpsr = MODE_SYS;
-            m_spsr_ptr = &m_spsr[SPSR_DEF];
         }
     };
 }

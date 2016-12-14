@@ -64,7 +64,7 @@ namespace GBA
         if (result == "true" || result == "1") return true;
         if (result == "false" || result == "0") return false;
 
-        LOG(LOG_ERrotate_right, "%s::%s: Invalid format. Expected bool.", category.c_str(), key.c_str());
+        LOG(LOG_ERROR, "%s::%s: Invalid format. Expected bool.", category.c_str(), key.c_str());
 
         return false;
     }
@@ -113,7 +113,7 @@ namespace GBA
             {
                 if (category_stack.empty())
                 {
-                    LOG(LOG_ERrotate_right, "Closing sub-category, but no such.");
+                    LOG(LOG_ERROR, "Closing sub-category, but no such.");
                     return "{error}";
                 }
 
@@ -127,7 +127,7 @@ namespace GBA
             {
                 if (current_category == "")
                 {
-                    LOG(LOG_ERrotate_right, "Not in a namespace/node yet");
+                    LOG(LOG_ERROR, "Not in a namespace/node yet");
                     return "{error}";
                 }
 
@@ -144,7 +144,7 @@ namespace GBA
                 continue;
             }
 
-            LOG(LOG_ERrotate_right, "Config parse error in line: %s", line.c_str());
+            LOG(LOG_ERROR, "Config parse error in line: %s", line.c_str());
             stream.close();
             return "{error}";
         }
