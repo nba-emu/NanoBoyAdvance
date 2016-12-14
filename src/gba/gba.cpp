@@ -48,7 +48,7 @@ namespace GBA
     GBA::GBA(string rom_file, string save_file)
     {
         Memory::Init(rom_file, save_file);
-        m_ARM.Init(true);
+        m_ARM.set_hle(true);
 
         // Rudimentary Audio setup
         SDL2AudioAdapter adapter;
@@ -73,7 +73,7 @@ namespace GBA
         bios_size = file::get_size(bios_file);
 
         Memory::Init(rom_file, save_file, bios, bios_size);
-        m_ARM.Init(false);
+        m_ARM.set_hle(false);
 
         // Rudimentary Audio setup
         SDL2AudioAdapter adapter;

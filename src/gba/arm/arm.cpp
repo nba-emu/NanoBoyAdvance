@@ -26,7 +26,12 @@
 
 namespace GBA
 {
-    void arm::Init(bool swi_hle)
+    arm::arm()
+    {
+        reset();
+    }
+
+    void arm::reset()
     {
         m_pipeline.m_index = 0;
 
@@ -41,8 +46,6 @@ namespace GBA
         m_bank[BANK_SVC][BANK_R13] = 0x3007FE0;
         m_bank[BANK_IRQ][BANK_R13] = 0x3007FA0;
         RefillPipeline();
-
-        m_swi_hle = swi_hle;
     }
 
     // Based on mGBA (endrift's) approach to banking.
@@ -166,7 +169,7 @@ namespace GBA
         }
     }
 
-    void arm::SWI(int number)
+    void arm::software_interrupt(int number)
     {
         switch (number)
         {

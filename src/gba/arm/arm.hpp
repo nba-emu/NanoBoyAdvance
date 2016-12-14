@@ -23,82 +23,27 @@
 
 #pragma once
 
+#include "arm_enums.hpp"
 #include "util/integer.hpp"
 #include "util/log.h"
 #include "../memory.h"
 
 namespace GBA
 {
-    enum cpu_mode
-    {
-        MODE_USR = 0x10,
-        MODE_FIQ = 0x11,
-        MODE_IRQ = 0x12,
-        MODE_SVC = 0x13,
-        MODE_ABT = 0x17,
-        MODE_UND = 0x1B,
-        MODE_SYS = 0x1F
-    };
-
-    enum cpu_bank
-    {
-        BANK_NONE,
-        BANK_FIQ,
-        BANK_SVC,
-        BANK_ABT,
-        BANK_IRQ,
-        BANK_UND,
-        BANK_COUNT
-    };
-
-    enum cpu_bank_register
-    {
-        BANK_R13 = 0,
-        BANK_R14 = 1
-    };
-
-    enum status_mask
-    {
-        MASK_MODE  = 0x1F,
-        MASK_THUMB = 0x20,
-        MASK_FIQD  = 0x40,
-        MASK_IRQD  = 0x80,
-        MASK_VFLAG = 0x10000000,
-        MASK_CFLAG = 0x20000000,
-        MASK_ZFLAG = 0x40000000,
-        MASK_NFLAG = 0x80000000
-    };
-
-    enum exception_vector
-    {
-        EXCPT_RESET     = 0x00,
-        EXCPT_UNDEFINED = 0x04,
-        EXCPT_SWI       = 0x08,
-        EXCPT_PREFETCH_ABORT = 0x0C,
-        EXCPT_DATA_ABORT     = 0x10,
-        EXCPT_INTERRUPT      = 0x18,
-        EXCPT_FAST_INTERRUPT = 0x1C
-    };
-
-    enum saved_status_register
-    {
-        SPSR_DEF = 0,
-        SPSR_FIQ = 1,
-        SPSR_SVC = 2,
-        SPSR_ABT = 3,
-        SPSR_IRQ = 4,
-        SPSR_UND = 5,
-        SPSR_COUNT = 6
-    };
-
     class arm
     {
     public:
         int cycles {0};
 
-        void Init(bool use_bios);
+        arm();
+
+        void reset();
         void step();
         void raise_irq();
+
+        bool get_hle() { return m_hle; }
+        void set_hle(bool hle) { m_hle = hle; }
+
     protected:
         u32 m_reg[16];
 
@@ -115,9 +60,12 @@ namespace GBA
             bool m_needs_flush;
         } m_pipeline;
 
-        bool m_swi_hle;
+        bool m_hle;
 
-        cpu_bank mode_to_bank(cpu_mode mode);
+        virtual void software_interrupt(int number);
+
+    private:
+        static cpu_bank mode_to_bank(cpu_mode mode);
         void switch_mode(cpu_mode new_mode);
 
         void update_sign(u32 result);
@@ -143,12 +91,9 @@ namespace GBA
         // methods that emulate thumb instructions
         #include "thumb_emu.hpp"
 
-        // Command processing
+        // ARM command processing
         int Decode(u32 instruction);
         void Execute(u32 instruction, int type);
-
-        // HLE-emulation
-        void SWI(int number);
     };
 }
 

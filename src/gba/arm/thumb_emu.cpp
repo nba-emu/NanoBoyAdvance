@@ -1130,9 +1130,9 @@ namespace GBA
                 Memory::SequentialAccess(12, ACCESS_WORD);
 
         // Dispatch SWI, either HLE or BIOS.
-        if (m_swi_hle)
+        if (m_hle)
         {
-            SWI(bios_call);
+            software_interrupt(bios_call);
         }
         else
         {
