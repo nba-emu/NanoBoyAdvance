@@ -687,7 +687,7 @@ namespace GBA
         u32 immediate_value = instruction & 0xFF;
         u32 address = (m_reg[15] & ~2) + (immediate_value << 2);
 
-        m_reg[reg_dest] = ReadWord(address);
+        m_reg[reg_dest] = read_word(address);
 
         cycles += 1 + Memory::SequentialAccess(m_reg[15], ACCESS_HWORD) +
                       Memory::NonSequentialAccess(address, ACCESS_WORD);
@@ -705,22 +705,22 @@ namespace GBA
         switch (op)
         {
         case 0b00: // STR
-            WriteWord(address, m_reg[reg_dest]);
+            write_word(address, m_reg[reg_dest]);
             cycles += Memory::NonSequentialAccess(m_reg[15], ACCESS_HWORD) +
                       Memory::NonSequentialAccess(address, ACCESS_WORD);
             break;
         case 0b01: // STRB
-            WriteByte(address, m_reg[reg_dest] & 0xFF);
+            bus_write_byte(address, m_reg[reg_dest] & 0xFF);
             cycles += Memory::NonSequentialAccess(m_reg[15], ACCESS_HWORD) +
                       Memory::NonSequentialAccess(address, ACCESS_BYTE);
             break;
         case 0b10: // LDR
-            m_reg[reg_dest] = ReadWordRotated(address);
+            m_reg[reg_dest] = read_word_rotated(address);
             cycles += 1 + Memory::SequentialAccess(m_reg[15], ACCESS_HWORD) +
                           Memory::NonSequentialAccess(address, ACCESS_WORD);
             break;
         case 0b11: // LDRB
-            m_reg[reg_dest] = ReadByte(address);
+            m_reg[reg_dest] = bus_read_byte(address);
             cycles += 1 + Memory::SequentialAccess(m_reg[15], ACCESS_HWORD) +
                           Memory::NonSequentialAccess(address, ACCESS_BYTE);
             break;
@@ -738,12 +738,12 @@ namespace GBA
         switch (op)
         {
         case 0b00: // STRH
-            WriteHWord(address, m_reg[reg_dest]);
+            write_hword(address, m_reg[reg_dest]);
             cycles += Memory::NonSequentialAccess(m_reg[15], ACCESS_HWORD) +
                     Memory::NonSequentialAccess(address, ACCESS_HWORD);
             break;
         case 0b01: // LDSB
-            m_reg[reg_dest] = ReadByte(address);
+            m_reg[reg_dest] = bus_read_byte(address);
 
             if (m_reg[reg_dest] & 0x80)
                 m_reg[reg_dest] |= 0xFFFFFF00;
@@ -752,14 +752,14 @@ namespace GBA
                         Memory::NonSequentialAccess(address, ACCESS_BYTE);
             break;
         case 0b10: // LDRH
-            m_reg[reg_dest] = ReadHWord(address);
+            m_reg[reg_dest] = read_hword(address);
             cycles += 1 + Memory::SequentialAccess(m_reg[15], ACCESS_HWORD) +
                         Memory::NonSequentialAccess(address, ACCESS_HWORD);
             break;
         case 0b11: // LDSH
-            m_reg[reg_dest] = ReadHWordSigned(address);
+            m_reg[reg_dest] = read_hword_signed(address);
 
-            // Uff... we should check wether ReadHWordSigned reads a
+            // Uff... we should check wether read_hword_signed reads a
             // byte or a hword. However this should never really make difference.
             cycles += 1 + Memory::SequentialAccess(m_reg[15], ACCESS_HWORD) +
                         Memory::NonSequentialAccess(address, ACCESS_HWORD);
@@ -778,28 +778,28 @@ namespace GBA
         {
         case 0b00: { // STR
             u32 address = m_reg[reg_base] + (imm << 2);
-            WriteWord(address, m_reg[reg_dest]);
+            write_word(address, m_reg[reg_dest]);
             cycles += Memory::NonSequentialAccess(m_reg[15], ACCESS_HWORD) +
                       Memory::NonSequentialAccess(address, ACCESS_WORD);
             break;
         }
         case 0b01: { // LDR
             u32 address = m_reg[reg_base] + (imm << 2);
-            m_reg[reg_dest] = ReadWordRotated(address);
+            m_reg[reg_dest] = read_word_rotated(address);
             cycles += 1 + Memory::SequentialAccess(m_reg[15],  ACCESS_HWORD) +
                           Memory::NonSequentialAccess(address, ACCESS_WORD);
             break;
         }
         case 0b10: { // STRB
             u32 address = m_reg[reg_base] + imm;
-            WriteByte(address, m_reg[reg_dest]);
+            bus_write_byte(address, m_reg[reg_dest]);
             cycles += Memory::NonSequentialAccess(m_reg[15], ACCESS_HWORD) +
                       Memory::NonSequentialAccess(address, ACCESS_BYTE);
             break;
         }
         case 0b11: { // LDRB
             u32 address = m_reg[reg_base] + imm;
-            m_reg[reg_dest] = ReadByte(address);
+            m_reg[reg_dest] = bus_read_byte(address);
             cycles += 1 + Memory::SequentialAccess(m_reg[15], ACCESS_HWORD) +
                           Memory::NonSequentialAccess(address, ACCESS_BYTE);
             break;
@@ -817,13 +817,13 @@ namespace GBA
 
         if (load)
         {
-            m_reg[reg_dest] = ReadHWord(address); // TODO: alignment?
+            m_reg[reg_dest] = read_hword(address); // TODO: alignment?
             cycles += 1 + Memory::SequentialAccess(m_reg[15], ACCESS_HWORD) +
                           Memory::NonSequentialAccess(address, ACCESS_WORD);
         }
         else
         {
-            WriteHWord(address, m_reg[reg_dest]);
+            write_hword(address, m_reg[reg_dest]);
             cycles += Memory::NonSequentialAccess(m_reg[15], ACCESS_HWORD) +
                       Memory::NonSequentialAccess(address, ACCESS_WORD);
         }
@@ -839,13 +839,13 @@ namespace GBA
         // Is the load bit set? (ldr)
         if (load)
         {
-            m_reg[reg_dest] = ReadWordRotated(address);
+            m_reg[reg_dest] = read_word_rotated(address);
             cycles += 1 + Memory::SequentialAccess(m_reg[15], ACCESS_HWORD) +
                           Memory::NonSequentialAccess(address, ACCESS_WORD);
         }
         else
         {
-            WriteWord(address, m_reg[reg_dest]);
+            write_word(address, m_reg[reg_dest]);
             cycles += Memory::NonSequentialAccess(m_reg[15], ACCESS_HWORD) +
                       Memory::NonSequentialAccess(address, ACCESS_WORD);
         }
@@ -903,7 +903,7 @@ namespace GBA
                     u32 address = m_reg[13];
 
                     // Read word and update SP.
-                    m_reg[i] = ReadWord(address);
+                    m_reg[i] = read_word(address);
                     m_reg[13] += 4;
 
                     // Time the access based on if it's a first access
@@ -925,7 +925,7 @@ namespace GBA
                 u32 address = m_reg[13];
 
                 // Read word and update SP.
-                m_reg[15] = ReadWord(m_reg[13]) & ~1;
+                m_reg[15] = read_word(m_reg[13]) & ~1;
                 m_reg[13] += 4;
 
                 // Time the access based on if it's a first access
@@ -952,7 +952,7 @@ namespace GBA
                 // Write word and update SP.
                 m_reg[13] -= 4;
                 address = m_reg[13];
-                WriteWord(address, m_reg[14]);
+                write_word(address, m_reg[14]);
 
                 // Time the access based on if it's a first access
                 if (first_access)
@@ -977,7 +977,7 @@ namespace GBA
                     // Write word and update SP.
                     m_reg[13] -= 4;
                     address = m_reg[13];
-                    WriteWord(address, m_reg[i]);
+                    write_word(address, m_reg[i]);
 
                     // Time the access based on if it's a first access
                     if (first_access)
@@ -1014,7 +1014,7 @@ namespace GBA
                 // Load to this register?
                 if (instruction & (1 << i))
                 {
-                    m_reg[i] = ReadWord(address);
+                    m_reg[i] = read_word(address);
                     cycles += Memory::SequentialAccess(address, ACCESS_WORD);
                     address += 4;
                 }
@@ -1051,9 +1051,9 @@ namespace GBA
                     // Write register to the base address. If the current register is the
                     // base register and also the first register instead the original base is written.
                     if (i == reg_base && i == first_register)
-                        WriteWord(m_reg[reg_base], address);
+                        write_word(m_reg[reg_base], address);
                     else
-                        WriteWord(m_reg[reg_base], m_reg[i]);
+                        write_word(m_reg[reg_base], m_reg[i]);
 
                     // Time the access based on if it's a first access
                     if (first_access)
@@ -1116,7 +1116,7 @@ namespace GBA
     void arm::Thumb17(u16 instruction)
     {
         // THUMB.17 Software Interrupt
-        u8 bios_call = ReadByte(m_reg[15] - 4);
+        u8 bios_call = bus_read_byte(m_reg[15] - 4);
 
         // Log SWI to the console
         #ifdef DEBUG

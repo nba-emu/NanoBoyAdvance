@@ -62,6 +62,14 @@ namespace GBA
 
         bool m_hle;
 
+        // memory bus methods
+        virtual u8 bus_read_byte(u32 address) { return 0; }
+        virtual u16 bus_read_hword(u32 address) { return 0; }
+        virtual u32 bus_read_word(u32 address) { return 0; }
+        virtual void bus_write_byte(u32 address, u8 value) {}
+        virtual void bus_write_hword(u32 address, u16 value) {}
+        virtual void bus_write_word(u32 address, u32 value) {}
+
         virtual void software_interrupt(int number);
 
     private:
@@ -81,22 +89,12 @@ namespace GBA
         static void arithmetic_shift_right(u32& operand, u32 amount, bool& carry, bool immediate);
         static void rotate_right(u32& operand, u32 amount, bool& carry, bool immediate);
 
-        // memory bus methods
-        virtual u8 bus_read_byte(u32 address) { return 0; }
-        virtual u16 bus_read_hword(u32 address) { return 0; }
-        virtual u32 bus_read_word(u32 address) { return 0; }
-        virtual void bus_write_byte(u32 address, u8 value) {}
-        virtual void bus_write_hword(u32 address, u16 value) {}
-        virtual void bus_write_word(u32 address, u32 value) {}
-
-        u8 ReadByte(u32 offset);
-        u32 ReadHWord(u32 offset);
-        u32 ReadHWordSigned(u32 offset);
-        u32 ReadWord(u32 offset);
-        u32 ReadWordRotated(u32 offset);
-        void WriteByte(u32 offset, u8 value);
-        void WriteHWord(u32 offset, u16 value);
-        void WriteWord(u32 offset, u32 value);
+        u32 read_hword(u32 offset);
+        u32 read_hword_signed(u32 offset);
+        u32 read_word(u32 offset);
+        u32 read_word_rotated(u32 offset);
+        void write_hword(u32 offset, u16 value);
+        void write_word(u32 offset, u32 value);
         void RefillPipeline();
 
         // methods that emulate thumb instructions

@@ -293,8 +293,8 @@ namespace GBA
             {
                 // Reads one byte at rBASE into rDEST and overwrites
                 // the byte at rBASE with the LSB of rSOURCE.
-                memory_value = ReadByte(reg[reg_base]);
-                WriteByte(reg[reg_base], (u8)reg[reg_source]);
+                memory_value = bus_read_byte(reg[reg_base]);
+                bus_write_byte(reg[reg_base], (u8)reg[reg_source]);
                 reg[reg_dest] = memory_value;
 
                 // Calculate instruction timing
@@ -306,8 +306,8 @@ namespace GBA
             {
                 // Reads one word at rBASE into rDEST and overwrites
                 // the word at rBASE with rSOURCE.
-                memory_value = ReadWordRotated(reg[reg_base]);
-                WriteWord(reg[reg_base], reg[reg_source]);
+                memory_value = read_word_rotated(reg[reg_base]);
+                write_word(reg[reg_base], reg[reg_source]);
                 reg[reg_dest] = memory_value;
 
                 // Calculate instruction timing
@@ -371,7 +371,7 @@ namespace GBA
                 // Read either a sign-extended byte or hword.
                 if (halfword)
                 {
-                    value = ReadHWordSigned(address);
+                    value = read_hword_signed(address);
 
                     // Calculate instruction timing
                     cycles += 1 + Memory::SequentialAccess(reg[15], ACCESS_WORD) +
@@ -379,7 +379,7 @@ namespace GBA
                 }
                 else
                 {
-                    value = ReadByte(address);
+                    value = bus_read_byte(address);
 
                     // Sign-extend the read byte.
                     if (value & 0x80)
@@ -395,7 +395,7 @@ namespace GBA
             }
             else if (load)
             {
-                reg[reg_dest] = ReadHWord(address);
+                reg[reg_dest] = read_hword(address);
 
                 // Calculate instruction timing
                 cycles += 1 + Memory::SequentialAccess(reg[15], ACCESS_WORD) +
@@ -404,9 +404,9 @@ namespace GBA
             else
             {
                 if (reg_dest == 15)
-                    WriteHWord(address, reg[15] + 4);
+                    write_hword(address, reg[15] + 4);
                 else
-                    WriteHWord(address, reg[reg_dest]);
+                    write_hword(address, reg[reg_dest]);
 
                 // Calculate instruction timing
                 cycles += Memory::NonSequentialAccess(reg[15], ACCESS_WORD) +
@@ -912,7 +912,7 @@ namespace GBA
                 // Load byte or word.
                 if (transfer_byte)
                 {
-                    reg[reg_dest] = ReadByte(address);
+                    reg[reg_dest] = bus_read_byte(address);
 
                     // Calculate instruction timing
                     cycles += 1 + Memory::SequentialAccess(reg[15], ACCESS_WORD) +
@@ -920,7 +920,7 @@ namespace GBA
                 }
                 else
                 {
-                    reg[reg_dest] = ReadWordRotated(address);
+                    reg[reg_dest] = read_word_rotated(address);
 
                     // Calculate instruction timing
                     cycles += 1 + Memory::SequentialAccess(reg[15], ACCESS_WORD) +
@@ -948,7 +948,7 @@ namespace GBA
                 // Write byte or word.
                 if (transfer_byte)
                 {
-                    WriteByte(address, value & 0xFF);
+                    bus_write_byte(address, value & 0xFF);
 
                     // Calculate instruction timing
                     cycles += Memory::NonSequentialAccess(reg[15], ACCESS_WORD) +
@@ -956,7 +956,7 @@ namespace GBA
                 }
                 else
                 {
-                    WriteWord(address, value);
+                    write_word(address, value);
 
                     // Calculate instruction timing
                     cycles += Memory::NonSequentialAccess(reg[15], ACCESS_WORD) +
@@ -1063,7 +1063,7 @@ namespace GBA
                             if (i == base_register)
                                 write_back = false;
 
-                            reg[i] = ReadWord(address);
+                            reg[i] = read_word(address);
 
                             if (i == 15)
                             {
@@ -1080,9 +1080,9 @@ namespace GBA
                         else
                         {
                             if (i == first_register && i == base_register)
-                                WriteWord(address, address_old);
+                                write_word(address, address_old);
                             else
-                                WriteWord(address, reg[i]);
+                                write_word(address, reg[i]);
                         }
 
                         if (!pre_indexed)
@@ -1107,7 +1107,7 @@ namespace GBA
                             if (i == base_register)
                                 write_back = false;
 
-                            reg[i] = ReadWord(address);
+                            reg[i] = read_word(address);
 
                             if (i == 15)
                             {
@@ -1127,9 +1127,9 @@ namespace GBA
                         else
                         {
                             if (i == first_register && i == base_register)
-                                WriteWord(address, address_old);
+                                write_word(address, address_old);
                             else
-                                WriteWord(address, reg[i]);
+                                write_word(address, reg[i]);
                         }
 
                         if (!pre_indexed)
@@ -1171,7 +1171,7 @@ namespace GBA
         case ARM_16:
         {
             // ARM.16 Software interrupt
-            u32 bios_call = ReadByte(reg[15] - 6);
+            u32 bios_call = bus_read_byte(reg[15] - 6);
 
             // Log to the console that we're issuing an interrupt.
             #ifdef DEBUG

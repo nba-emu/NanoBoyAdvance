@@ -3,6 +3,7 @@ set(SRCS
     arm/arm.cpp
     arm/arm_emu.cpp
     arm/thumb_emu.cpp
+    arm_gba.cpp
     io.cpp
     interrupt.cpp
     dma.cpp
@@ -26,6 +27,7 @@ set(HEADERS
     arm/arm.inl
     arm/arm_enums.hpp
     arm/thumb_emu.hpp
+    arm_gba.hpp
     io.hpp
     interrupt.hpp
     dma.h

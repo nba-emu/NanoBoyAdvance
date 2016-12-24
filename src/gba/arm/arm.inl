@@ -132,36 +132,31 @@ namespace GBA
         }
     }
 
-    inline u8 arm::ReadByte(u32 offset)
-    {
-        return Memory::ReadByte(offset);
-    }
-
-    inline u32 arm::ReadHWord(u32 offset)
+    inline u32 arm::read_hword(u32 offset)
     {
         if (offset & 1)
         {
-            u32 value = Memory::ReadHWord(offset & ~1);
+            u32 value = bus_read_hword(offset & ~1);
 
             return (value >> 8) | (value << 24);
         }
 
-        return Memory::ReadHWord(offset);
+        return bus_read_hword(offset);
     }
 
-    inline u32 arm::ReadHWordSigned(u32 offset)
+    inline u32 arm::read_hword_signed(u32 offset)
     {
         u32 value = 0;
 
         if (offset & 1)
         {
-            value = Memory::ReadByte(offset);
+            value = bus_read_byte(offset);
 
             if (value & 0x80) value |= 0xFFFFFF00;
         }
         else
         {
-            value = Memory::ReadHWord(offset);
+            value = bus_read_hword(offset);
 
             if (value & 0x8000) value |= 0xFFFF0000;
         }
@@ -169,32 +164,27 @@ namespace GBA
         return value;
     }
 
-    inline u32 arm::ReadWord(u32 offset)
+    inline u32 arm::read_word(u32 offset)
     {
-        return Memory::ReadWord(offset & ~3);
+        return bus_read_word(offset & ~3);
     }
 
-    inline u32 arm::ReadWordRotated(u32 offset)
+    inline u32 arm::read_word_rotated(u32 offset)
     {
-        u32 value = ReadWord(offset);
+        u32 value = read_word(offset);
         int amount = (offset & 3) * 8;
 
         return amount == 0 ? value : ((value >> amount) | (value << (32 - amount)));
     }
 
-    inline void arm::WriteByte(u32 offset, u8 value)
+    inline void arm::write_hword(u32 offset, u16 value)
     {
-        Memory::WriteByte(offset, value);
+        bus_write_hword(offset & ~1, value);
     }
 
-    inline void arm::WriteHWord(u32 offset, u16 value)
+    inline void arm::write_word(u32 offset, u32 value)
     {
-        Memory::WriteHWord(offset & ~1, value);
-    }
-
-    inline void arm::WriteWord(u32 offset, u32 value)
-    {
-        Memory::WriteWord(offset & ~3, value);
+        bus_write_word(offset & ~3, value);
     }
 
     inline void arm::RefillPipeline()

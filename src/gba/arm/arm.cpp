@@ -217,7 +217,7 @@ namespace GBA
             {
                 for (u32 i = 0; i < length; i++)
                 {
-                    WriteWord(dest, ReadWord(source));
+                    write_word(dest, read_word(source));
                     dest += 4;
 
                     if (!fixed) source += 4;
@@ -227,7 +227,7 @@ namespace GBA
             {
                 for (u32 i = 0; i < length; i++)
                 {
-                    WriteHWord(dest, ReadHWord(source));
+                    write_hword(dest, read_hword(source));
                     dest += 2;
 
                     if (!fixed) source += 2;
@@ -244,7 +244,7 @@ namespace GBA
 
             for (u32 i = 0; i < length; i++)
             {
-                WriteWord(dest, ReadWord(source));
+                write_word(dest, read_word(source));
                 dest += 4;
                 if (!fixed) source += 4;
             }
