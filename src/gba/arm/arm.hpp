@@ -68,16 +68,26 @@ namespace GBA
         static cpu_bank mode_to_bank(cpu_mode mode);
         void switch_mode(cpu_mode new_mode);
 
+        // arithmetic flag calculation
         void update_sign(u32 result);
         void update_zero(u64 result);
         void set_carry(bool carry);
         void update_overflow_add(u32 result, u32 operand1, u32 operand2);
         void update_overflow_sub(u32 result, u32 operand1, u32 operand2);
 
+        // shifting helpers
         static void logical_shift_left(u32& operand, u32 amount, bool& carry);
         static void logical_shift_right(u32& operand, u32 amount, bool& carry, bool immediate);
         static void arithmetic_shift_right(u32& operand, u32 amount, bool& carry, bool immediate);
         static void rotate_right(u32& operand, u32 amount, bool& carry, bool immediate);
+
+        // memory bus methods
+        virtual u8 bus_read_byte(u32 address) { return 0; }
+        virtual u16 bus_read_hword(u32 address) { return 0; }
+        virtual u32 bus_read_word(u32 address) { return 0; }
+        virtual void bus_write_byte(u32 address, u8 value) {}
+        virtual void bus_write_hword(u32 address, u16 value) {}
+        virtual void bus_write_word(u32 address, u32 value) {}
 
         u8 ReadByte(u32 offset);
         u32 ReadHWord(u32 offset);
