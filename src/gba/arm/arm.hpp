@@ -73,6 +73,7 @@ namespace GBA
         void set_carry(bool carry);
         void update_overflow_add(u32 result, u32 operand1, u32 operand2);
         void update_overflow_sub(u32 result, u32 operand1, u32 operand2);
+
         static void logical_shift_left(u32& operand, u32 amount, bool& carry);
         static void logical_shift_right(u32& operand, u32 amount, bool& carry, bool immediate);
         static void arithmetic_shift_right(u32& operand, u32 amount, bool& carry, bool immediate);
