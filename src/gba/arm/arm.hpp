@@ -70,7 +70,7 @@ namespace GBA
         virtual void bus_write_hword(u32 address, u16 value) {}
         virtual void bus_write_word(u32 address, u32 value) {}
 
-        virtual void software_interrupt(int number);
+        virtual void software_interrupt(int number) {}
 
     private:
         static cpu_bank mode_to_bank(cpu_mode mode);

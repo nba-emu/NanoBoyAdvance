@@ -13,5 +13,7 @@ namespace GBA
         void bus_write_byte(u32 address, u8 value);
         void bus_write_hword(u32 address, u16 value);
         void bus_write_word(u32 address, u32 value);
+        
+        void software_interrupt(int number);
     };
 }
