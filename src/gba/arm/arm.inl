@@ -191,14 +191,14 @@ namespace GBA
     {
         if (m_cpsr & MASK_THUMB)
         {
-            m_pipeline.m_opcode[0] = Memory::ReadHWord(m_reg[15]);
-            m_pipeline.m_opcode[1] = Memory::ReadHWord(m_reg[15] + 2);
+            m_pipeline.m_opcode[0] = read_hword(m_reg[15]);
+            m_pipeline.m_opcode[1] = read_hword(m_reg[15] + 2);
             m_reg[15] += 4;
         }
         else
         {
-            m_pipeline.m_opcode[0] = Memory::ReadWord(m_reg[15]);
-            m_pipeline.m_opcode[1] = Memory::ReadWord(m_reg[15] + 4);
+            m_pipeline.m_opcode[0] = read_word(m_reg[15]);
+            m_pipeline.m_opcode[1] = read_word(m_reg[15] + 4);
             m_reg[15] += 8;
         }
     }

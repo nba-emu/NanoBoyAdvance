@@ -92,24 +92,23 @@ namespace GBA
             m_spsr_ptr = &m_spsr[new_bank];
         }
 
-        // todo: use bit-utils for this
         m_cpsr = (m_cpsr & ~MASK_MODE) | (u32)new_mode;
     }
 
     void arm::step()
     {
         bool thumb = m_cpsr & MASK_THUMB;
-
-        // Forcibly align r15
-        m_reg[15] &= thumb ? ~1 : ~3;
+        cycles++; /* NOTE: preliminary */
 
         // Dispatch instruction loading and execution
         if (thumb)
         {
+            m_reg[15] &= ~1;
+
             if (m_pipeline.m_index == 0)
-                m_pipeline.m_opcode[2] = Memory::ReadHWord(m_reg[15]);
+                m_pipeline.m_opcode[2] = read_hword(m_reg[15]);
             else
-                m_pipeline.m_opcode[m_pipeline.m_index - 1] = Memory::ReadHWord(m_reg[15]);
+                m_pipeline.m_opcode[m_pipeline.m_index - 1] = read_hword(m_reg[15]);
 
             // Execute the thumb instruction via a method lut.
             u16 instruction = m_pipeline.m_opcode[m_pipeline.m_index];
@@ -117,10 +116,12 @@ namespace GBA
         }
         else
         {
+            m_reg[15] &= ~3;
+
             if (m_pipeline.m_index == 0)
-                m_pipeline.m_opcode[2] = Memory::ReadWord(m_reg[15]);
+                m_pipeline.m_opcode[2] = read_word(m_reg[15]);
             else
-                m_pipeline.m_opcode[m_pipeline.m_index - 1] = Memory::ReadWord(m_reg[15]);
+                m_pipeline.m_opcode[m_pipeline.m_index - 1] = read_word(m_reg[15]);
 
             Execute(m_pipeline.m_opcode[m_pipeline.m_index], Decode(m_pipeline.m_opcode[m_pipeline.m_index]));
         }
@@ -142,30 +143,22 @@ namespace GBA
 
     void arm::raise_irq()
     {
-        if ((m_cpsr & MASK_IRQD) == 0)
-        {
-            bool thumb = m_cpsr & MASK_THUMB;
+        if (m_cpsr & MASK_IRQD) return;
 
-            // "Useless" pipeline prefetch
-            cycles += Memory::SequentialAccess(m_reg[15], thumb ? ACCESS_HWORD : ACCESS_WORD);
+        bool thumb = m_cpsr & MASK_THUMB;
 
-            // Store return address in r14<irq>
-            m_bank[BANK_IRQ][BANK_R14] = m_reg[15] - (thumb ? 4 : 8) + 4;
+        // Store return address in r14<irq>
+        m_bank[BANK_IRQ][BANK_R14] = m_reg[15] - (thumb ? 4 : 8) + 4;
 
-            // Save program status and switch mode
-            m_spsr[SPSR_IRQ] = m_cpsr;
-            switch_mode(MODE_IRQ);
-            m_cpsr = (m_cpsr & ~MASK_THUMB) | MASK_IRQD;
+        // Save program status and switch mode
+        m_spsr[SPSR_IRQ] = m_cpsr;
+        switch_mode(MODE_IRQ);
+        m_cpsr = (m_cpsr & ~MASK_THUMB) | MASK_IRQD;
 
-            // Jump to exception vector
-            m_reg[15] = EXCPT_INTERRUPT;
-            m_pipeline.m_index = 0;
-            m_pipeline.m_needs_flush = false;
-            RefillPipeline();
-
-            // Emulate pipeline refill timings
-            cycles += Memory::NonSequentialAccess(m_reg[15], ACCESS_WORD) +
-                      Memory::SequentialAccess(m_reg[15] + 4, ACCESS_WORD);
-        }
+        // Jump to exception vector
+        m_reg[15] = EXCPT_INTERRUPT;
+        m_pipeline.m_index = 0;
+        m_pipeline.m_needs_flush = false;
+        RefillPipeline();
     }
 }

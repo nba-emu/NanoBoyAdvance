@@ -127,8 +127,6 @@ namespace GBA
         auto reg = m_reg;
         int condition = instruction >> 28;
 
-        cycles += 1;
-
         // Check if the instruction will be executed
         if (condition != 0xE)
         {
@@ -180,9 +178,6 @@ namespace GBA
                 update_sign(reg[reg_dest]);
                 update_zero(reg[reg_dest]);
             }
-
-            // Calculate instruction timing
-            cycles += Memory::SequentialAccess(reg[15], ACCESS_WORD);
             return;
         }
         case ARM_2:
@@ -241,8 +236,6 @@ namespace GBA
                 update_zero(result);
             }
 
-            // Calculate instruction timing
-            cycles += Memory::SequentialAccess(reg[15], ACCESS_WORD);
             return;
         }
         case ARM_3:
@@ -256,18 +249,10 @@ namespace GBA
             {
                 reg[15] = reg[reg_address] & ~1;
                 m_cpsr |= MASK_THUMB;
-
-                // Emulate pipeline refill cycles
-                cycles += Memory::NonSequentialAccess(reg[15], ACCESS_HWORD) +
-                          Memory::SequentialAccess(reg[15] + 2, ACCESS_HWORD);
             }
             else
             {
                 reg[15] = reg[reg_address] & ~3;
-
-                // Emulate pipeline refill cycles
-                cycles += Memory::NonSequentialAccess(reg[15], ACCESS_WORD) +
-                          Memory::SequentialAccess(reg[15] + 4, ACCESS_WORD);
             }
 
             // Flush pipeline
@@ -296,11 +281,6 @@ namespace GBA
                 memory_value = bus_read_byte(reg[reg_base]);
                 bus_write_byte(reg[reg_base], (u8)reg[reg_source]);
                 reg[reg_dest] = memory_value;
-
-                // Calculate instruction timing
-                cycles += 1 + Memory::SequentialAccess(reg[15], ACCESS_WORD) +
-                              Memory::NonSequentialAccess(reg[reg_base], ACCESS_BYTE) +
-                              Memory::NonSequentialAccess(reg[reg_source], ACCESS_BYTE);
             }
             else
             {
@@ -309,11 +289,6 @@ namespace GBA
                 memory_value = read_word_rotated(reg[reg_base]);
                 write_word(reg[reg_base], reg[reg_source]);
                 reg[reg_dest] = memory_value;
-
-                // Calculate instruction timing
-                cycles += 1 + Memory::SequentialAccess(reg[15], ACCESS_WORD) +
-                              Memory::NonSequentialAccess(reg[reg_base], ACCESS_WORD) +
-                              Memory::NonSequentialAccess(reg[reg_source], ACCESS_WORD);
             }
             return;
         }
@@ -372,10 +347,6 @@ namespace GBA
                 if (halfword)
                 {
                     value = read_hword_signed(address);
-
-                    // Calculate instruction timing
-                    cycles += 1 + Memory::SequentialAccess(reg[15], ACCESS_WORD) +
-                                  Memory::NonSequentialAccess(address, ACCESS_HWORD);
                 }
                 else
                 {
@@ -384,10 +355,6 @@ namespace GBA
                     // Sign-extend the read byte.
                     if (value & 0x80)
                         value |= 0xFFFFFF00;
-
-                    // Calculate instruction timing
-                    cycles += 1 + Memory::SequentialAccess(reg[15], ACCESS_WORD) +
-                                  Memory::NonSequentialAccess(address, ACCESS_BYTE);
                 }
 
                 // Write result to rDEST.
@@ -396,10 +363,6 @@ namespace GBA
             else if (load)
             {
                 reg[reg_dest] = read_hword(address);
-
-                // Calculate instruction timing
-                cycles += 1 + Memory::SequentialAccess(reg[15], ACCESS_WORD) +
-                              Memory::NonSequentialAccess(address, ACCESS_HWORD);
             }
             else
             {
@@ -407,10 +370,6 @@ namespace GBA
                     write_hword(address, reg[15] + 4);
                 else
                     write_hword(address, reg[reg_dest]);
-
-                // Calculate instruction timing
-                cycles += Memory::NonSequentialAccess(reg[15], ACCESS_WORD) +
-                          Memory::NonSequentialAccess(address, ACCESS_HWORD);
             }
 
             // When the instruction either is pre-indexed and has the write-back bit
@@ -492,9 +451,6 @@ namespace GBA
                     int reg_dest = (instruction >> 12) & 0xF;
                     reg[reg_dest] = use_spsr ? *m_spsr_ptr : m_cpsr;
                 }
-
-                // Calculate instruction timing
-                cycles += Memory::SequentialAccess(reg[15], ACCESS_WORD);
             }
             else
             {
@@ -505,9 +461,6 @@ namespace GBA
                 bool carry = m_cpsr & MASK_CFLAG;
                 u32 operand1 = reg[reg_operand1];
                 u32 operand2;
-
-                // Instruction prefetch timing
-                cycles += Memory::SequentialAccess(reg[15], ACCESS_WORD);
 
                 // Operand 2 may be an immediate value or a shifted register.
                 if (immediate)
@@ -826,10 +779,6 @@ namespace GBA
                 if (reg_dest == 15)
                 {
                     m_pipeline.m_needs_flush = true;
-
-                    // Emulate pipeline flush timings
-                    cycles += Memory::NonSequentialAccess(reg[15], ACCESS_WORD) +
-                              Memory::SequentialAccess(reg[15] + 4, ACCESS_WORD);
                 }
             }
             return;
@@ -913,28 +862,16 @@ namespace GBA
                 if (transfer_byte)
                 {
                     reg[reg_dest] = bus_read_byte(address);
-
-                    // Calculate instruction timing
-                    cycles += 1 + Memory::SequentialAccess(reg[15], ACCESS_WORD) +
-                                  Memory::NonSequentialAccess(address, ACCESS_BYTE);
                 }
                 else
                 {
                     reg[reg_dest] = read_word_rotated(address);
-
-                    // Calculate instruction timing
-                    cycles += 1 + Memory::SequentialAccess(reg[15], ACCESS_WORD) +
-                                  Memory::NonSequentialAccess(address, ACCESS_WORD);
                 }
 
                 // Writing to r15 causes a pipeline-flush.
                 if (reg_dest == 15)
                 {
                     m_pipeline.m_needs_flush = true;
-
-                    // Emulate pipeline refill timings
-                    cycles += Memory::NonSequentialAccess(reg[15], ACCESS_WORD) +
-                              Memory::SequentialAccess(reg[15] + 4, ACCESS_WORD);
                 }
             }
             else
@@ -949,18 +886,10 @@ namespace GBA
                 if (transfer_byte)
                 {
                     bus_write_byte(address, value & 0xFF);
-
-                    // Calculate instruction timing
-                    cycles += Memory::NonSequentialAccess(reg[15], ACCESS_WORD) +
-                              Memory::NonSequentialAccess(address, ACCESS_BYTE);
                 }
                 else
                 {
                     write_word(address, value);
-
-                    // Calculate instruction timing
-                    cycles += Memory::NonSequentialAccess(reg[15], ACCESS_WORD) +
-                              Memory::NonSequentialAccess(address, ACCESS_WORD);
                 }
             }
 
@@ -1045,9 +974,6 @@ namespace GBA
                     break;
                 }
             }
-
-            // One non-sequential prefetch cycle
-            cycles += Memory::NonSequentialAccess(reg[15], ACCESS_HWORD);
 
             if (increment_base)
             {
