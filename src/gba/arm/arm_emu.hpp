@@ -26,3 +26,5 @@ void arm_execute(u32 instruction, int type);
 
 void arm_multiply(u32 instruction, bool accumulate, bool set_flags);
 void arm_multiply_long(u32 instruction, bool sign_extend, bool accumulate, bool set_flags);
+void arm_single_data_swap(u32 instrution, bool swap_byte);
+void arm_branch_exchange(u32 instruction);

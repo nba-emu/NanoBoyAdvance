@@ -194,6 +194,44 @@ namespace GBA
         }
     }
 
+    void arm::arm_single_data_swap(u32 instruction, bool swap_byte)
+    {
+        u32 tmp;
+        int src = instruction & 0xF;
+        int dst = (instruction >> 12) & 0xF;
+        int base = (instruction >> 16) & 0xF;
+
+        if (swap_byte)
+        {
+            tmp = bus_read_byte(m_reg[base]);
+            bus_write_byte(m_reg[base], (u8)m_reg[src]);
+        }
+        else
+        {
+            tmp = read_word_rotated(m_reg[base]);
+            write_word(m_reg[base], m_reg[src]);
+        }
+
+        m_reg[dst] = tmp;
+    }
+
+    void arm::arm_branch_exchange(u32 instruction)
+    {
+        u32 addr = m_reg[instruction & 0xF];
+
+        m_pipeline.m_needs_flush = true;
+
+        if (addr & 1)
+        {
+            m_reg[15] = addr & ~1;
+            m_cpsr |= MASK_THUMB;
+        }
+        else
+        {
+            m_reg[15] = addr & ~3;
+        }
+    }
+
     void arm::arm_execute(u32 instruction, int type)
     {
         auto reg = m_reg;
@@ -243,56 +281,13 @@ namespace GBA
         }
         case ARM_3:
         {
-            // ARM.3 Branch and exchange
-            int reg_address = instruction & 0xF;
-
-            // Bit0 being set in the address indicates
-            // that the destination instruction is in THUMB mode.
-            if (reg[reg_address] & 1)
-            {
-                reg[15] = reg[reg_address] & ~1;
-                m_cpsr |= MASK_THUMB;
-            }
-            else
-            {
-                reg[15] = reg[reg_address] & ~3;
-            }
-
-            // Flush pipeline
-            m_pipeline.m_needs_flush = true;
-
+            arm_branch_exchange(instruction);
             return;
         }
         case ARM_4:
         {
-            // ARM.4 Single data swap
-            int reg_source = instruction & 0xF;
-            int reg_dest = (instruction >> 12) & 0xF;
-            int reg_base = (instruction >> 16) & 0xF;
             bool swap_byte = instruction & (1 << 22);
-            u32 memory_value;
-
-            #ifdef DEBUG
-            ASSERT(reg_source == 15 || reg_dest == 15 || reg_base == 15, LOG_WARN,
-                   "Single Data Swap, thou shall not use r15, r15=0x%x", reg[15]);
-            #endif
-
-            if (swap_byte)
-            {
-                // Reads one byte at rBASE into rDEST and overwrites
-                // the byte at rBASE with the LSB of rSOURCE.
-                memory_value = bus_read_byte(reg[reg_base]);
-                bus_write_byte(reg[reg_base], (u8)reg[reg_source]);
-                reg[reg_dest] = memory_value;
-            }
-            else
-            {
-                // Reads one word at rBASE into rDEST and overwrites
-                // the word at rBASE with rSOURCE.
-                memory_value = read_word_rotated(reg[reg_base]);
-                write_word(reg[reg_base], reg[reg_source]);
-                reg[reg_dest] = memory_value;
-            }
+            arm_single_data_swap(instruction, swap_byte);
             return;
         }
         case ARM_5:
