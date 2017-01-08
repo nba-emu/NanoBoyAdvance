@@ -28,3 +28,4 @@ void arm_multiply(u32 instruction, bool accumulate, bool set_flags);
 void arm_multiply_long(u32 instruction, bool sign_extend, bool accumulate, bool set_flags);
 void arm_single_data_swap(u32 instrution, bool swap_byte);
 void arm_branch_exchange(u32 instruction);
+void arm_halfword_signed_transfer(u32 instruction, bool pre_indexed, bool base_increment, bool immediate, bool write_back, bool load, int opcode);

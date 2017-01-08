@@ -159,8 +159,8 @@ namespace GBA
             s64 op2_value = m_reg[op2];
 
             // sign-extend operands
-            op1_value |= op1_value & 0x80000000 ? 0xFFFFFFFF00000000 : 0;
-            op2_value |= op2_value & 0x80000000 ? 0xFFFFFFFF00000000 : 0;
+            if (op1_value & 0x80000000) op1_value |= 0xFFFFFFFF00000000;
+            if (op2_value & 0x80000000) op2_value |= 0xFFFFFFFF00000000;
 
             result = op1_value * op2_value;
         }
@@ -232,6 +232,71 @@ namespace GBA
         }
     }
 
+    void arm::arm_halfword_signed_transfer(u32 instruction, bool pre_indexed, bool base_increment, bool immediate, bool write_back, bool load, int opcode)
+    {
+        u32 off;
+        int dst = (instruction >> 12) & 0xF;
+        int base = (instruction >> 16) & 0xF;
+        u32 addr = m_reg[base];
+
+        if (immediate)
+            off = (instruction & 0xF) | ((instruction >> 4) & 0xF0);
+        else
+            off = m_reg[instruction & 0xF];
+
+        if (pre_indexed)
+            addr += base_increment ? off : -off;
+
+        switch (opcode)
+        {
+        case 1:
+            // load/store halfword
+            if (load)
+            {
+                m_reg[dst] = read_hword(addr);
+            }
+            else
+            {
+                u32 value = m_reg[dst];
+
+                // r15 is $+12 instead of $+8 because of internal prefetch.
+                if (dst == 15) value += 4;
+
+                write_hword(addr, value);
+            }
+            break;
+        case 2:
+        {
+            // load signed byte
+            u32 value = bus_read_byte(addr);
+
+            // sign-extends the byte to 32-bit.
+            if (value & 0x80) value |= 0xFFFFFF00;
+
+            m_reg[dst] = value;
+            break;
+        }
+        case 3:
+        {
+            // load signed halfword
+            u32 value = read_hword(addr);
+
+            // sign-extends the halfword to 32-bit.
+            if (value & 0x8000) value |= 0xFFFF0000;
+
+            m_reg[dst] = value;
+            break;
+        }
+        }
+
+        if ((write_back || !pre_indexed) && base != dst)
+        {
+            if (!pre_indexed)
+                addr += base_increment ? off : -off;
+            m_reg[base] = addr;
+        }
+    }
+
     void arm::arm_execute(u32 instruction, int type)
     {
         auto reg = m_reg;
@@ -294,95 +359,15 @@ namespace GBA
         case ARM_6:
         case ARM_7:
         {
-            // ARM.5 Halfword data transfer, register offset
-            // ARM.6 Halfword data transfer, immediate offset
-            // ARM.7 Signed data transfer (byte/halfword)
-            u32 offset;
-            int reg_dest = (instruction >> 12) & 0xF;
-            int reg_base = (instruction >> 16) & 0xF;
-            bool load = instruction & (1 << 20);
-            bool write_back = instruction & (1 << 21);
-            bool immediate = instruction & (1 << 22);
-            bool add_to_base = instruction & (1 << 23);
             bool pre_indexed = instruction & (1 << 24);
-            u32 address = reg[reg_base];
+            bool base_increment = instruction & (1 << 23);
+            bool immediate = instruction & (1 << 22);
+            bool write_back = instruction & (1 << 21);
+            bool load = instruction & (1 << 20);
+            int opcode = (instruction >> 5) & 3;
 
-            #ifdef DEBUG
-            // Instructions neither write back if base register is r15
-            // nor should they have the write-back bit set when being post-indexed.
-            ASSERT(reg_base == 15 && write_back, LOG_ERROR,
-                   "Halfword and Signed Data Transfer, writeback to r15, r15=0x%x", reg[15]);
-            ASSERT(write_back && !pre_indexed, LOG_ERROR,
-                   "Halfword and Signed Data Transfer, writeback and post-indexed, r15=0x%x", reg[15]);
+            arm_halfword_signed_transfer(instruction, pre_indexed, base_increment, immediate, write_back, load, opcode);
 
-            // Load-bit must be set when signed transfer is selected
-            ASSERT(type == ARM_7 && !load, LOG_ERROR,
-                   "Halfword and Signed Data Transfer, signed bit and store bit set, r15=0x%x", reg[15]);
-            #endif
-
-            // Decode immediate/register offset
-            if (immediate)
-                offset = (instruction & 0xF) | ((instruction >> 4) & 0xF0);
-            else
-                offset = reg[instruction & 0xF];
-
-            // Handle pre-indexing
-            if (pre_indexed)
-            {
-                if (add_to_base)
-                    address += offset;
-                else
-                    address -= offset;
-            }
-
-            // Handle ARM.7 signed reads or ARM.5/6 reads and writes.
-            if (type == ARM_7)
-            {
-                u32 value;
-                bool halfword = instruction & (1 << 5);
-
-                // Read either a sign-extended byte or hword.
-                if (halfword)
-                {
-                    value = read_hword_signed(address);
-                }
-                else
-                {
-                    value = bus_read_byte(address);
-
-                    // Sign-extend the read byte.
-                    if (value & 0x80)
-                        value |= 0xFFFFFF00;
-                }
-
-                // Write result to rDEST.
-                reg[reg_dest] = value;
-            }
-            else if (load)
-            {
-                reg[reg_dest] = read_hword(address);
-            }
-            else
-            {
-                if (reg_dest == 15)
-                    write_hword(address, reg[15] + 4);
-                else
-                    write_hword(address, reg[reg_dest]);
-            }
-
-            // When the instruction either is pre-indexed and has the write-back bit
-            // or it's post-indexed we must writeback the calculated address
-            if ((write_back || !pre_indexed) && reg_base != reg_dest)
-            {
-                if (!pre_indexed)
-                {
-                    if (add_to_base)
-                        address += offset;
-                    else
-                        address -= offset;
-                }
-                reg[reg_base] = address;
-            }
             return;
         }
         case ARM_8:
