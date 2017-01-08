@@ -42,7 +42,7 @@ const int ARM_16 = 16;
 
 namespace GBA
 {
-    int arm::Decode(u32 instruction)
+    int arm::arm_decode(u32 instruction)
     {
         u32 opcode = instruction & 0x0FFFFFFF;
 
@@ -97,8 +97,7 @@ namespace GBA
             // ARM.11 Block data transfer, ARM.12 Branch
             return opcode & (1 << 25) ? ARM_12 : ARM_11;
         case 0b11:
-            // TODO: Optimize with a switch?
-            //if (opcode & (1 << 25))
+            if (opcode & (1 << 25))
             {
                 if (opcode & (1 << 24))
                 {
@@ -111,18 +110,91 @@ namespace GBA
                     return opcode & 0x10 ? ARM_15 : ARM_14;
                 }
             }
-            //else
-            //{
+            else
+            {
                 // ARM.13 Coprocessor data transfer
-            //    return ARM_13;
-            //}
+                return ARM_13;
+            }
             break;
         }
 
         return 0;
     }
 
-    void arm::Execute(u32 instruction, int type)
+    void arm::arm_multiply(u32 instruction, bool accumulate, bool set_flags)
+    {
+        u32 result;
+        int op1 = instruction & 0xF;
+        int op2 = (instruction >> 8) & 0xF;
+        int dst = (instruction >> 16) & 0xF;
+
+        result = m_reg[op1] * m_reg[op2];
+
+        if (accumulate)
+        {
+            int op3 = (instruction >> 12) & 0xF;
+            result += m_reg[op3];
+        }
+
+        if (set_flags)
+        {
+            update_sign(result);
+            update_zero(result);
+        }
+
+        m_reg[dst] = result;
+    }
+
+    void arm::arm_multiply_long(u32 instruction, bool sign_extend, bool accumulate, bool set_flags)
+    {
+        s64 result;
+        int op1 = instruction & 0xF;
+        int op2 = (instruction >> 8) & 0xF;
+        int dst_lo = (instruction >> 12) & 0xF;
+        int dst_hi = (instruction >> 16) & 0xF;
+
+        if (sign_extend)
+        {
+            s64 op1_value = m_reg[op1];
+            s64 op2_value = m_reg[op2];
+
+            // sign-extend operands
+            op1_value |= op1_value & 0x80000000 ? 0xFFFFFFFF00000000 : 0;
+            op2_value |= op2_value & 0x80000000 ? 0xFFFFFFFF00000000 : 0;
+
+            result = op1_value * op2_value;
+        }
+        else
+        {
+            u64 uresult = (u64)m_reg[op1] * (u64)m_reg[op2];
+            result = uresult;
+        }
+
+        if (accumulate)
+        {
+            s64 value = m_reg[dst_hi];
+
+            // workaround required by x86.
+            value <<= 16;
+            value <<= 16;
+            value |= m_reg[dst_lo];
+
+            result += value;
+        }
+
+        u32 result_hi = result >> 32;
+
+        m_reg[dst_lo] = result & 0xFFFFFFFF;
+        m_reg[dst_hi] = result_hi;
+
+        if (set_flags)
+        {
+            update_sign(result_hi);
+            update_zero(result);
+        }
+    }
+
+    void arm::arm_execute(u32 instruction, int type)
     {
         auto reg = m_reg;
         int condition = instruction >> 28;
@@ -156,86 +228,17 @@ namespace GBA
         {
         case ARM_1:
         {
-            // ARM.1 Multiply (accumulate)
-            int reg_operand1 = instruction & 0xF;
-            int reg_operand2 = (instruction >> 8) & 0xF;
-            int reg_operand3 = (instruction >> 12) & 0xF;
-            int reg_dest = (instruction >> 16) & 0xF;
-            bool set_flags = instruction & (1 << 20);
             bool accumulate = instruction & (1 << 21);
-
-            // Multiply the two operand and store result
-            reg[reg_dest] = reg[reg_operand1] * reg[reg_operand2];
-
-            // When the accumulate bit is set another register
-            // may be added to the result register
-            if (accumulate)
-                reg[reg_dest] += reg[reg_operand3];
-
-            // Update flags
-            if (set_flags)
-            {
-                update_sign(reg[reg_dest]);
-                update_zero(reg[reg_dest]);
-            }
+            bool set_flags = instruction & (1 << 20);
+            arm_multiply(instruction, accumulate, set_flags);
             return;
         }
         case ARM_2:
         {
-            // ARM.2 Multiply (accumulate) long
-            int reg_operand1 = instruction & 0xF;
-            int reg_operand2 = (instruction >> 8) & 0xF;
-            int reg_dest_low = (instruction >> 12) & 0xF;
-            int reg_dest_high = (instruction >> 16) & 0xF;
-            bool set_flags = instruction & (1 << 20);
-            bool accumulate = instruction & (1 << 21);
             bool sign_extend = instruction & (1 << 22);
-            s64 result;
-
-            if (sign_extend)
-            {
-                s64 operand1 = reg[reg_operand1];
-                s64 operand2 = reg[reg_operand2];
-
-                // Sign-extend operands
-                operand1 |= operand1 & 0x80000000 ? 0xFFFFFFFF00000000 : 0;
-                operand2 |= operand2 & 0x80000000 ? 0xFFFFFFFF00000000 : 0;
-
-                // Calculate result
-                result = operand1 * operand2;
-            }
-            else
-            {
-                u64 uresult = (u64)reg[reg_operand1] * (u64)reg[reg_operand2];
-                result = uresult;
-            }
-
-            // When the accumulate bit is set another long value
-            // formed by the original value of the destination registers
-            // will be added to the result.
-            if (accumulate)
-            {
-                s64 value = reg[reg_dest_high];
-
-                // x86-compatible way for (rHIGH << 32) | rLOW
-                value <<= 16;
-                value <<= 16;
-                value |= reg[reg_dest_low];
-
-                result += value;
-            }
-
-            // Split and store result into the destination registers
-            reg[reg_dest_low] = result & 0xFFFFFFFF;
-            reg[reg_dest_high] = result >> 32;
-
-            // Update flags
-            if (set_flags)
-            {
-                update_sign(reg[reg_dest_high]);
-                update_zero(result);
-            }
-
+            bool accumulate = instruction & (1 << 21);
+            bool set_flags = instruction & (1 << 20);
+            arm_multiply_long(instruction, sign_extend, accumulate, set_flags);
             return;
         }
         case ARM_3:

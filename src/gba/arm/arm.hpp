@@ -97,12 +97,8 @@ namespace GBA
         void write_word(u32 offset, u32 value);
         void RefillPipeline();
 
-        // methods that emulate thumb instructions
+        #include "arm_emu.hpp"
         #include "thumb_emu.hpp"
-
-        // ARM command processing
-        int Decode(u32 instruction);
-        void Execute(u32 instruction, int type);
     };
 }
 
