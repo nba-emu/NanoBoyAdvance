@@ -121,6 +121,52 @@ namespace GBA
         return 0;
     }
 
+    void arm::arm_psr_transfer(u32 instruction, bool immediate, bool use_spsr, bool to_status)
+    {
+        if (to_status)
+        {
+            u32 op;
+            u32 mask = 0;
+
+            // create mask based on fsxc-bits.
+            if (instruction & (1 << 16)) mask |= 0x000000FF;
+            if (instruction & (1 << 17)) mask |= 0x0000FF00;
+            if (instruction & (1 << 18)) mask |= 0x00FF0000;
+            if (instruction & (1 << 19)) mask |= 0xFF000000;
+
+            // decode source operand
+            if (immediate)
+            {
+                int imm = instruction & 0xFF;
+                int amount = ((instruction >> 8) & 0xF) << 1;
+                op = (imm >> amount) | (imm << (32 - amount));
+            }
+            else
+            {
+                op = m_reg[instruction & 0xF];
+            }
+
+            u32 value = op & mask;
+
+            // write to cpsr or spsr
+            if (!use_spsr)
+            {
+                // todo: check that mode is affected?
+                switch_mode(static_cast<cpu_mode>(value & MASK_MODE));
+                m_cpsr = (m_cpsr & ~mask) | value;
+            }
+            else
+            {
+                *m_spsr_ptr = (*m_spsr_ptr & ~mask) | value;
+            }
+        }
+        else
+        {
+            int dst = (instruction >> 12) & 0xF;
+            m_reg[dst] = use_spsr ? *m_spsr_ptr : m_cpsr;
+        }
+    }
+
     void arm::arm_multiply(u32 instruction, bool accumulate, bool set_flags)
     {
         u32 result;
@@ -366,7 +412,6 @@ namespace GBA
 
     void arm::arm_undefined(u32 instruction)
     {
-        // todo
     }
 
     void arm::arm_block_transfer(u32 instruction, bool pre_indexed, bool base_increment, bool user_mode, bool write_back, bool load)
@@ -581,55 +626,7 @@ namespace GBA
                 bool use_spsr = instruction & (1 << 22);
                 bool to_status = instruction & (1 << 21);
 
-                if (to_status)
-                {
-                    // Move register to status register.
-                    u32 mask = 0;
-                    u32 operand;
-
-                    // Depending of the fsxc bits some bits are overwritten or not
-                    if (instruction & (1 << 16)) mask |= 0x000000FF;
-                    if (instruction & (1 << 17)) mask |= 0x0000FF00;
-                    if (instruction & (1 << 18)) mask |= 0x00FF0000;
-                    if (instruction & (1 << 19)) mask |= 0xFF000000;
-
-                    // Decode the value written to m_cpsr/spsr
-                    if (immediate)
-                    {
-                        int imm = instruction & 0xFF;
-                        int ror = ((instruction >> 8) & 0xF) << 1;
-
-                        // Apply immediate rotate_right-shift.
-                        operand = (imm >> ror) | (imm << (32 - ror));
-                    }
-                    else
-                    {
-                        operand = reg[instruction & 0xF];
-                    }
-
-                    // Finally write either to SPSR or m_cpsr.
-                    if (use_spsr)
-                    {
-                        *m_spsr_ptr = (*m_spsr_ptr & ~mask) | (operand & mask);
-                    }
-                    else
-                    {
-                        ////SaveRegisters();
-                        ////m_cpsr = (m_cpsr & ~mask) | (operand & mask);
-                        ////LoadRegisters();
-                        u32 value = operand & mask;
-
-                        // todo: make sure that mode might actually be affected.
-                        switch_mode(static_cast<cpu_mode>(value & MASK_MODE));
-                        m_cpsr = (m_cpsr & ~mask) | value;
-                    }
-                }
-                else
-                {
-                    // Move satus register to register.
-                    int reg_dest = (instruction >> 12) & 0xF;
-                    reg[reg_dest] = use_spsr ? *m_spsr_ptr : m_cpsr;
-                }
+                arm_psr_transfer(instruction, immediate, use_spsr, to_status);
             }
             else
             {

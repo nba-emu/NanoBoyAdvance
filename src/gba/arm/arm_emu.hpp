@@ -24,6 +24,7 @@
 int arm_decode(u32 instruction);
 void arm_execute(u32 instruction, int type);
 
+void arm_psr_transfer(u32 instruction, bool immediate, bool use_spsr, bool to_status);
 void arm_multiply(u32 instruction, bool accumulate, bool set_flags);
 void arm_multiply_long(u32 instruction, bool sign_extend, bool accumulate, bool set_flags);
 void arm_single_data_swap(u32 instrution, bool swap_byte);
