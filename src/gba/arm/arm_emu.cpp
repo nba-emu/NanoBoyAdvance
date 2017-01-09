@@ -470,6 +470,30 @@ namespace GBA
         m_pipeline.m_needs_flush = true;
     }
 
+    void arm::arm_swi(u32 instruction)
+    {
+        u32 call_number = bus_read_byte(m_reg[15] - 6);
+
+        if (!m_hle)
+        {
+            // save return address and program status
+            m_bank[BANK_SVC][BANK_R14] = m_reg[15] - 4;
+            m_spsr[SPSR_SVC] = m_cpsr;
+
+            // switch to SVC mode and disable interrupts
+            switch_mode(MODE_SVC);
+            m_cpsr |= MASK_IRQD;
+
+            // jump to execution vector
+            m_reg[15] = EXCPT_SWI;
+            m_pipeline.m_needs_flush = true;
+        }
+        else
+        {
+            software_interrupt(call_number);
+        }
+    }
+
     void arm::arm_execute(u32 instruction, int type)
     {
         auto reg = m_reg;
@@ -974,38 +998,7 @@ namespace GBA
         }
         case ARM_16:
         {
-            // ARM.16 Software interrupt
-            u32 bios_call = bus_read_byte(reg[15] - 6);
-
-            // Log to the console that we're issuing an interrupt.
-            #ifdef DEBUG
-            LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (arm)",
-                bios_call, reg[0], reg[1], reg[2], reg[3], reg[14], reg[15]);
-            #endif
-
-            // Dispatch SWI, either HLE or BIOS.
-            if (m_hle)
-            {
-                software_interrupt(bios_call);
-            }
-            else
-            {
-                // Store return address in r14<svc>
-                ////m_svc.m_r14 = reg[15] - 4;
-                m_bank[BANK_SVC][BANK_R14] = reg[15] - 4;
-
-                // Save program status and switch mode
-                m_spsr[SPSR_SVC] = m_cpsr;
-                ////SaveRegisters();
-                ////m_cpsr = (m_cpsr & ~MASK_MODE) | MODE_SVC | MASK_IRQD;
-                ////LoadRegisters();
-                switch_mode(MODE_SVC);
-                m_cpsr |= MASK_IRQD;
-
-                // Jump to exception vector
-                reg[15] = EXCPT_SWI;
-                m_pipeline.m_needs_flush = true;
-            }
+            arm_swi(instruction);
             return;
         }
         }
