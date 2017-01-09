@@ -369,6 +369,93 @@ namespace GBA
         // todo
     }
 
+    void arm::arm_block_transfer(u32 instruction, bool pre_indexed, bool base_increment, bool user_mode, bool write_back, bool load)
+    {
+        int first_register;
+        int register_count = 0;
+        int register_list = instruction & 0xFFFF;
+        bool transfer_r15 = register_list & (1 << 15);
+
+        int base = (instruction >> 16) & 0xF;
+
+        cpu_mode old_mode;
+        bool mode_switched = false;
+
+        if (user_mode && (!load || !transfer_r15))
+        {
+            old_mode = static_cast<cpu_mode>(m_cpsr & MASK_MODE);
+            switch_mode(MODE_USR);
+            mode_switched = true;
+        }
+
+        for (int i = 15; i >= 0; i--)
+        {
+            if (~register_list & (1 << i)) continue;
+
+            first_register = i;
+            register_count++;
+        }
+
+        u32 addr = m_reg[base];
+        u32 addr_old = addr;
+
+        if (!base_increment)
+        {
+            /*if (pre_indexed)
+            {
+                addr -= register_count * 4;
+                pre_indexed = false;
+            }
+            else
+            {
+                addr -= register_count * 4;
+                pre_indexed = true;
+            }*/
+            addr -= register_count * 4;
+            m_reg[base] = addr;
+            write_back = false;
+            pre_indexed = !pre_indexed;
+        }
+
+        for (int i = first_register; i < 16; i++)
+        {
+            if (~register_list & (1 << i)) continue;
+
+            if (pre_indexed) addr += 4;
+
+            if (load)
+            {
+                if (i == base) write_back = false;
+
+                m_reg[i] = read_word(addr);
+
+                if (i == 15)
+                {
+                    if (user_mode)
+                    {
+                        u32 spsr = *m_spsr_ptr;
+                        switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
+                        m_cpsr = spsr;
+                    }
+                    m_pipeline.m_needs_flush = true;
+                }
+            }
+            else
+            {
+                if (i == first_register && i == base)
+                    write_word(addr, addr_old);
+                else
+                    write_word(addr, m_reg[i]);
+            }
+
+            if (!pre_indexed) addr += 4;
+
+            if (write_back) m_reg[base] = addr;
+        }
+
+        if (mode_switched) switch_mode(old_mode);
+    }
+
     void arm::arm_execute(u32 instruction, int type)
     {
         auto reg = m_reg;
@@ -847,7 +934,6 @@ namespace GBA
             bool load = instruction & (1 << 20);
 
             arm_single_transfer(instruction, immediate, pre_indexed, add_to_base, transfer_byte, write_back, load);
-
             return;
         }
         case ARM_10:
@@ -858,163 +944,12 @@ namespace GBA
             return;
         case ARM_11:
         {
-            // ARM.11 Block Data Transfer
-            int register_list = instruction & 0xFFFF;
-            int base_register = (instruction >> 16) & 0xF;
-            bool load_instr = instruction & (1 << 20);
-            bool write_back = instruction & (1 << 21);
-            bool force_user_mode = instruction & (1 << 22);
-            bool increment_base = instruction & (1 << 23);
             bool pre_indexed = instruction & (1 << 24);
-            bool switched_mode = false;
-            bool first_access = false;
-            u32 address = reg[base_register];
-            u32 address_old = address;
-            int first_register = 0;
-            int register_count = 0;
-            int old_mode = 0;
-
-            #ifdef DEBUG
-            // Base register must not be r15
-            ASSERT(base_register == 15, LOG_ERROR, "ARM.11, rB=15, r15=0x%x", reg[15]);
-            #endif
-
-            // Switch to User mode if neccessary
-            if (force_user_mode && (!load_instr || !(register_list & (1 << 15))))
-            {
-                #ifdef DEBUG
-                ASSERT(write_back, LOG_ERROR, "ARM.11, writeback and modeswitch, r15=0x%x", reg[15]);
-                #endif
-
-                // Save current mode and enter user mode
-                old_mode = m_cpsr & MASK_MODE;
-                ////SaveRegisters();
-                ////m_cpsr = (m_cpsr & ~MASK_MODE) | MODE_USR;
-                ////LoadRegisters();
-                switch_mode(MODE_USR);
-
-                // Mark that we switched to user mode
-                switched_mode = true;
-            }
-
-            // Find the first register and count registers
-            for (int i = 0; i < 16; i++)
-            {
-                if (register_list & (1 << i))
-                {
-                    first_register = i;
-                    register_count++;
-
-                    // Continue to count registers
-                    for (int j = i + 1; j < 16; j++)
-                    {
-                        if (register_list & (1 << j))
-                            register_count++;
-                    }
-                    break;
-                }
-            }
-
-            if (increment_base)
-            {
-                for (int i = first_register; i < 16; i++)
-                {
-                    if (register_list & (1 << i))
-                    {
-                        if (pre_indexed)
-                            address += 4;
-
-                        if (load_instr)
-                        {
-                            if (i == base_register)
-                                write_back = false;
-
-                            reg[i] = read_word(address);
-
-                            if (i == 15)
-                            {
-                                if (force_user_mode)
-                                {
-                                    u32 spsr = *m_spsr_ptr;
-
-                                    switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
-                                    m_cpsr = spsr;
-                                }
-                                m_pipeline.m_needs_flush = true;
-                            }
-                        }
-                        else
-                        {
-                            if (i == first_register && i == base_register)
-                                write_word(address, address_old);
-                            else
-                                write_word(address, reg[i]);
-                        }
-
-                        if (!pre_indexed)
-                            address += 4;
-
-                        if (write_back)
-                            reg[base_register] = address;
-                    }
-                }
-            }
-            else
-            {
-                for (int i = 15; i >= first_register; i--)
-                {
-                    if (register_list & (1 << i))
-                    {
-                        if (pre_indexed)
-                            address -= 4;
-
-                        if (load_instr)
-                        {
-                            if (i == base_register)
-                                write_back = false;
-
-                            reg[i] = read_word(address);
-
-                            if (i == 15)
-                            {
-                                if (force_user_mode)
-                                {
-                                    ////SaveRegisters();
-                                    ////m_cpsr = *m_spsr_ptr;
-                                    ////LoadRegisters();
-                                    u32 spsr = *m_spsr_ptr;
-
-                                    switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
-                                    m_cpsr = spsr;
-                                }
-                                m_pipeline.m_needs_flush = true;
-                            }
-                        }
-                        else
-                        {
-                            if (i == first_register && i == base_register)
-                                write_word(address, address_old);
-                            else
-                                write_word(address, reg[i]);
-                        }
-
-                        if (!pre_indexed)
-                            address -= 4;
-
-                        if (write_back)
-                            reg[base_register] = address;
-                    }
-                }
-            }
-
-            // Switch back to original mode.
-            if (switched_mode)
-            {
-                ////SaveRegisters();
-                ////m_cpsr = (m_cpsr & ~MASK_MODE) | old_mode;
-                ////LoadRegisters();
-                switch_mode(static_cast<cpu_mode>(old_mode));
-            }
+            bool increment_base = instruction & (1 << 23);
+            bool force_user_mode = instruction & (1 << 22);
+            bool write_back = instruction & (1 << 21);
+            bool load_instr = instruction & (1 << 20);
+            arm_block_transfer(instruction, pre_indexed, increment_base, force_user_mode, write_back, load_instr);
             return;
         }
         case ARM_12:
