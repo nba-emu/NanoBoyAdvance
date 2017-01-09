@@ -381,6 +381,16 @@ namespace GBA
         cpu_mode old_mode;
         bool mode_switched = false;
 
+        // hardware corner case. not sure if emulated correctly.
+        if (register_list == 0)
+        {
+            if (load)
+                m_reg[15] = read_word(m_reg[base]);
+            else
+                write_word(m_reg[base], m_reg[15]);
+            m_reg[base] += base_increment ? 64 : -64;
+        }
+
         if (user_mode && (!load || !transfer_r15))
         {
             old_mode = static_cast<cpu_mode>(m_cpsr & MASK_MODE);
@@ -388,6 +398,7 @@ namespace GBA
             mode_switched = true;
         }
 
+        // find first register in list and also count them.
         for (int i = 15; i >= 0; i--)
         {
             if (~register_list & (1 << i)) continue;
@@ -399,24 +410,16 @@ namespace GBA
         u32 addr = m_reg[base];
         u32 addr_old = addr;
 
+        // instruction internally works with incrementing addresses.
         if (!base_increment)
         {
-            /*if (pre_indexed)
-            {
-                addr -= register_count * 4;
-                pre_indexed = false;
-            }
-            else
-            {
-                addr -= register_count * 4;
-                pre_indexed = true;
-            }*/
             addr -= register_count * 4;
             m_reg[base] = addr;
             write_back = false;
             pre_indexed = !pre_indexed;
         }
 
+        // process register list starting with the lowest address and register.
         for (int i = first_register; i < 16; i++)
         {
             if (~register_list & (1 << i)) continue;
