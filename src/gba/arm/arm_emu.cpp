@@ -459,6 +459,17 @@ namespace GBA
         if (mode_switched) switch_mode(old_mode);
     }
 
+    void arm::arm_branch(u32 instruction, bool link)
+    {
+        u32 off = instruction & 0xFFFFFF;
+
+        if (off & 0x800000) off |= 0xFF000000;
+        if (link) m_reg[14] = m_reg[15] - 4;
+
+        m_reg[15] += off << 2;
+        m_pipeline.m_needs_flush = true;
+    }
+
     void arm::arm_execute(u32 instruction, int type)
     {
         auto reg = m_reg;
@@ -957,19 +968,8 @@ namespace GBA
         }
         case ARM_12:
         {
-            // ARM.12 Branch
             bool link = instruction & (1 << 24);
-            u32 offset = instruction & 0xFFFFFF;
-            if (offset & 0x800000)
-            {
-                offset |= 0xFF000000;
-            }
-            if (link)
-            {
-                reg[14] = reg[15] - 4;
-            }
-            reg[15] += offset << 2;
-            m_pipeline.m_needs_flush = true;
+            arm_branch(instruction, link);
             return;
         }
         case ARM_16:

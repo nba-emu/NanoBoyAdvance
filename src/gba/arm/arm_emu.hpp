@@ -32,3 +32,4 @@ void arm_halfword_signed_transfer(u32 instruction, bool pre_indexed, bool base_i
 void arm_single_transfer(u32 instruction, bool immediate, bool pre_indexed, bool base_increment, bool byte, bool write_back, bool load);
 void arm_undefined(u32 instruction);
 void arm_block_transfer(u32 instruction, bool pre_indexed, bool base_increment, bool user_mode, bool write_back, bool load);
+void arm_branch(u32 instruction, bool link);
