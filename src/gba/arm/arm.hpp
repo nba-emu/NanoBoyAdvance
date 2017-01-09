@@ -88,6 +88,7 @@ namespace GBA
         static void logical_shift_right(u32& operand, u32 amount, bool& carry, bool immediate);
         static void arithmetic_shift_right(u32& operand, u32 amount, bool& carry, bool immediate);
         static void rotate_right(u32& operand, u32 amount, bool& carry, bool immediate);
+        static void perform_shift(int shift, u32& operand, u32 amount, bool& carry, bool immediate);
 
         u32 read_hword(u32 offset);
         u32 read_hword_signed(u32 offset);

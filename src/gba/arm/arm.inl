@@ -109,6 +109,24 @@ namespace GBA
         }
     }
 
+    inline void arm::perform_shift(int shift, u32& operand, u32 amount, bool& carry, bool immediate)
+    {
+        switch (shift)
+        {
+        case 0:
+            logical_shift_left(operand, amount, carry);
+            return;
+        case 1:
+            logical_shift_right(operand, amount, carry, immediate);
+            return;
+        case 2:
+            arithmetic_shift_right(operand, amount, carry, immediate);
+            return;
+        case 3:
+            rotate_right(operand, amount, carry, immediate);
+        }
+    }
+
     inline cpu_bank arm::mode_to_bank(cpu_mode mode)
     {
         switch (mode)

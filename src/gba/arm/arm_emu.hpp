@@ -29,3 +29,5 @@ void arm_multiply_long(u32 instruction, bool sign_extend, bool accumulate, bool 
 void arm_single_data_swap(u32 instrution, bool swap_byte);
 void arm_branch_exchange(u32 instruction);
 void arm_halfword_signed_transfer(u32 instruction, bool pre_indexed, bool base_increment, bool immediate, bool write_back, bool load, int opcode);
+void arm_single_transfer(u32 instruction, bool immediate, bool pre_indexed, bool base_increment, bool byte, bool write_back, bool load);
+void arm_undefined(u32 instruction);

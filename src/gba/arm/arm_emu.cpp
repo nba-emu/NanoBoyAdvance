@@ -297,6 +297,78 @@ namespace GBA
         }
     }
 
+    void arm::arm_single_transfer(u32 instruction, bool immediate, bool pre_indexed, bool base_increment, bool byte, bool write_back, bool load)
+    {
+        u32 off;
+        cpu_mode old_mode;
+        int dst = (instruction >> 12) & 0xF;
+        int base = (instruction >> 16) & 0xF;
+        u32 addr = m_reg[base];
+
+        // post-indexing implicitly performs a write back.
+        // in that case W-bit indicates wether user-mode register access should be enforced.
+        if (!pre_indexed && write_back)
+        {
+            old_mode = static_cast<cpu_mode>(m_cpsr & MASK_MODE);
+            switch_mode(MODE_USR);
+        }
+
+        // get address offset.
+        if (immediate)
+        {
+            off = instruction & 0xFFF;
+        }
+        else
+        {
+            bool carry = m_cpsr & MASK_CFLAG;
+            int shift = (instruction >> 5) & 3;
+            u32 amount = (instruction >> 7) & 0x1F;
+
+            off = m_reg[instruction & 0xF];
+            perform_shift(shift, off, amount, carry, true);
+        }
+
+        if (pre_indexed) addr += base_increment ? off : -off;
+
+        if (load)
+        {
+            m_reg[dst] = byte ? bus_read_byte(addr) : read_word_rotated(addr);
+
+            // writes to r15 require a pipeline flush.
+            if (dst == 15) m_pipeline.m_needs_flush = true;
+        }
+        else
+        {
+            u32 value = m_reg[dst];
+
+            // r15 is $+12 now due to internal prefetch cycle.
+            if (dst == 15) value += 4;
+
+            byte ? bus_write_byte(addr, (u8)value) : write_word(addr, value);
+        }
+
+        // writeback operation may not overwrite the destination register.
+        if (base != dst)
+        {
+            if (!pre_indexed)
+            {
+                m_reg[base] += base_increment ? off : -off;
+
+                // if user-mode was enforced, return to previous mode.
+                if (write_back) switch_mode(old_mode);
+            }
+            else if (write_back)
+            {
+                m_reg[base] = addr;
+            }
+        }
+    }
+
+    void arm::arm_undefined(u32 instruction)
+    {
+        // todo
+    }
+
     void arm::arm_execute(u32 instruction, int type)
     {
         auto reg = m_reg;
@@ -367,7 +439,6 @@ namespace GBA
             int opcode = (instruction >> 5) & 3;
 
             arm_halfword_signed_transfer(instruction, pre_indexed, base_increment, immediate, write_back, load, opcode);
-
             return;
         }
         case ARM_8:
@@ -768,129 +839,15 @@ namespace GBA
         }
         case ARM_9:
         {
-            // ARM.9 Load/store register/unsigned byte (Single Data Transfer)
-            // TODO: Force user mode when instruction is post-indexed
-            //       and has writeback bit (in system mode only?)
-            u32 offset;
-            int reg_dest = (instruction >> 12) & 0xF;
-            int reg_base = (instruction >> 16) & 0xF;
-            bool load = instruction & (1 << 20);
-            bool write_back = instruction & (1 << 21);
-            bool transfer_byte = instruction & (1 << 22);
-            bool add_to_base = instruction & (1 << 23);
-            bool pre_indexed = instruction & (1 << 24);
             bool immediate = (instruction & (1 << 25)) == 0;
-            u32 address = reg[reg_base];
+            bool pre_indexed = instruction & (1 << 24);
+            bool add_to_base = instruction & (1 << 23);
+            bool transfer_byte = instruction & (1 << 22);
+            bool write_back = instruction & (1 << 21);
+            bool load = instruction & (1 << 20);
 
-            #ifdef DEBUG
-            // Writeback may not be used when rBASE=15 or post-indexed is enabled.
-            ASSERT(reg_base == 15 && write_back, LOG_WARN,
-                   "Single Data Transfer, writeback to r15, r15=0x%x", reg[15]);
-            ASSERT(write_back && !pre_indexed, LOG_WARN,
-                   "Single Data Transfer, writeback and post-indexed, r15=0x%x", reg[15]);
-            #endif
+            arm_single_transfer(instruction, immediate, pre_indexed, add_to_base, transfer_byte, write_back, load);
 
-            // Decode offset.
-            if (immediate)
-            {
-                // Immediate offset
-                offset = instruction & 0xFFF;
-            }
-            else
-            {
-                // Register offset shifted by immediate value.
-                int reg_offset = instruction & 0xF;
-                u32 amount = (instruction >> 7) & 0x1F;
-                int shift = (instruction >> 5) & 3;
-                bool carry;
-
-                #ifdef DEBUG
-                ASSERT(reg_offset == 15, LOG_WARN, "Single Data Transfer, r15 used as offset, r15=0x%x", reg[15]);
-                #endif
-
-                offset = reg[reg_offset];
-
-                // Apply shift
-                switch (shift)
-                {
-                case 0b00:
-                    logical_shift_left(offset, amount, carry);
-                    break;
-                case 0b01:
-                    logical_shift_right(offset, amount, carry, true);
-                    break;
-                case 0b10:
-                    arithmetic_shift_right(offset, amount, carry, true);
-                    break;
-                case 0b11:
-                    carry = m_cpsr & MASK_CFLAG;
-                    rotate_right(offset, amount, carry, true);
-                    break;
-                }
-            }
-
-            // Handle pre-indexing
-            if (pre_indexed)
-            {
-                if (add_to_base)
-                    address += offset;
-                else
-                    address -= offset;
-            }
-
-            // Actual memory access.
-            if (load)
-            {
-                // Load byte or word.
-                if (transfer_byte)
-                {
-                    reg[reg_dest] = bus_read_byte(address);
-                }
-                else
-                {
-                    reg[reg_dest] = read_word_rotated(address);
-                }
-
-                // Writing to r15 causes a pipeline-flush.
-                if (reg_dest == 15)
-                {
-                    m_pipeline.m_needs_flush = true;
-                }
-            }
-            else
-            {
-                u32 value = reg[reg_dest];
-
-                // r15 is +12 ahead in this cycle.
-                if (reg_dest == 15)
-                    value += 4;
-
-                // Write byte or word.
-                if (transfer_byte)
-                {
-                    bus_write_byte(address, value & 0xFF);
-                }
-                else
-                {
-                    write_word(address, value);
-                }
-            }
-
-            // Handle post-indexing and writeback
-            if (reg_base != reg_dest)
-            {
-                if (!pre_indexed)
-                {
-                    if (add_to_base)
-                        reg[reg_base] += offset;
-                    else
-                        reg[reg_base] -= offset;
-                }
-                else if (write_back)
-                {
-                    reg[reg_base] = address;
-                }
-            }
             return;
         }
         case ARM_10:
