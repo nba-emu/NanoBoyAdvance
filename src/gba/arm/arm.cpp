@@ -123,7 +123,8 @@ namespace GBA
             else
                 m_pipeline.m_opcode[m_pipeline.m_index - 1] = read_word(m_reg[15]);
 
-            arm_execute(m_pipeline.m_opcode[m_pipeline.m_index], arm_decode(m_pipeline.m_opcode[m_pipeline.m_index]));
+            //arm_execute(m_pipeline.m_opcode[m_pipeline.m_index], arm_decode(m_pipeline.m_opcode[m_pipeline.m_index]));
+            arm_execute(m_pipeline.m_opcode[m_pipeline.m_index]);
         }
 
         if (m_pipeline.m_needs_flush)

@@ -21,18 +21,41 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-int arm_decode(u32 instruction);
-void arm_execute(u32 instruction, int type);
+typedef void (arm::*arm_instruction)(u32);
 
-void arm_data_processing(u32 instruction, bool immediate, int opcode, bool set_flags, int field4);
-void arm_psr_transfer(u32 instruction, bool immediate, bool use_spsr, bool to_status);
-void arm_multiply(u32 instruction, bool accumulate, bool set_flags);
-void arm_multiply_long(u32 instruction, bool sign_extend, bool accumulate, bool set_flags);
-void arm_single_data_swap(u32 instrution, bool swap_byte);
+static const arm_instruction arm_lut[4096];
+
+void arm_execute(u32 instruction);
+
+template <bool immediate, int opcode, bool _set_flags, int field4>
+void arm_data_processing(u32 instruction);
+
+template <bool immediate, bool use_spsr, bool to_status>
+void arm_psr_transfer(u32 instruction);
+
+template <bool accumulate, bool set_flags>
+void arm_multiply(u32 instruction);
+
+template <bool sign_extend, bool accumulate, bool set_flags>
+void arm_multiply_long(u32 instruction);
+
+template <bool swap_byte>
+void arm_single_data_swap(u32 instruction);
+
 void arm_branch_exchange(u32 instruction);
-void arm_halfword_signed_transfer(u32 instruction, bool pre_indexed, bool base_increment, bool immediate, bool write_back, bool load, int opcode);
-void arm_single_transfer(u32 instruction, bool immediate, bool pre_indexed, bool base_increment, bool byte, bool write_back, bool load);
+
+template <bool pre_indexed, bool base_increment, bool immediate, bool write_back, bool load, int opcode>
+void arm_halfword_signed_transfer(u32 instruction);
+
+template <bool immediate, bool pre_indexed, bool base_increment, bool byte, bool write_back, bool load>
+void arm_single_transfer(u32 instruction);
+
 void arm_undefined(u32 instruction);
-void arm_block_transfer(u32 instruction, bool pre_indexed, bool base_increment, bool user_mode, bool write_back, bool load);
-void arm_branch(u32 instruction, bool link);
+
+template <bool _pre_indexed, bool base_increment, bool user_mode, bool _write_back, bool load>
+void arm_block_transfer(u32 instruction);
+
+template <bool link>
+void arm_branch(u32 instruction);
+
 void arm_swi(u32 instruction);

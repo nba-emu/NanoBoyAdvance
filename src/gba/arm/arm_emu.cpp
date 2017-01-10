@@ -23,110 +23,49 @@
 
 #include "arm.hpp"
 
-const int ARM_1 = 1;
-const int ARM_2 = 2;
-const int ARM_3 = 3;
-const int ARM_4 = 4;
-const int ARM_5 = 5;
-const int ARM_6 = 6;
-const int ARM_7 = 7;
-const int ARM_8 = 8;
-const int ARM_9 = 9;
-const int ARM_10 = 10;
-const int ARM_11 = 11;
-const int ARM_12 = 12;
-const int ARM_13 = 13;
-const int ARM_14 = 14;
-const int ARM_15 = 15;
-const int ARM_16 = 16;
-
 namespace GBA
 {
-    int arm::arm_decode(u32 instruction)
-    {
-        u32 opcode = instruction & 0x0FFFFFFF;
+    #include "arm_lut.hpp"
 
-        switch (opcode >> 26)
+    void arm::arm_execute(u32 instruction)
+    {
+        int condition = instruction >> 28;
+
+        if (condition != 0xE)
         {
-        case 0b00:
-            if (opcode & (1 << 25))
+            switch (condition)
             {
-                // ARM.8 Data processing and PSR transfer ... immediate
-                return ARM_8;
+            case 0x0: if (!(m_cpsr & MASK_ZFLAG))     return; break;
+            case 0x1: if (  m_cpsr & MASK_ZFLAG)      return; break;
+            case 0x2: if (!(m_cpsr & MASK_CFLAG))    return; break;
+            case 0x3: if (  m_cpsr & MASK_CFLAG)     return; break;
+            case 0x4: if (!(m_cpsr & MASK_NFLAG))     return; break;
+            case 0x5: if (  m_cpsr & MASK_NFLAG)      return; break;
+            case 0x6: if (!(m_cpsr & MASK_VFLAG)) return; break;
+            case 0x7: if (  m_cpsr & MASK_VFLAG)  return; break;
+            case 0x8: if (!(m_cpsr & MASK_CFLAG) ||  (m_cpsr & MASK_ZFLAG)) return; break;
+            case 0x9: if ( (m_cpsr & MASK_CFLAG) && !(m_cpsr & MASK_ZFLAG)) return; break;
+            case 0xA: if ((m_cpsr & MASK_NFLAG) != (m_cpsr & MASK_VFLAG)) return; break;
+            case 0xB: if ((m_cpsr & MASK_NFLAG) == (m_cpsr & MASK_VFLAG)) return; break;
+            case 0xC: if ((m_cpsr & MASK_ZFLAG) || ((m_cpsr & MASK_NFLAG) != (m_cpsr & MASK_VFLAG))) return; break;
+            case 0xD: if (!(m_cpsr & MASK_ZFLAG) && ((m_cpsr & MASK_NFLAG) == (m_cpsr & MASK_VFLAG))) return; break;
+            case 0xE: break;
+            case 0xF: return;
             }
-            else if ((opcode & 0xFF00FF0) == 0x1200F10)
-            {
-                // ARM.3 Branch and exchange
-                return ARM_3;
-            }
-            else if ((opcode & 0x10000F0) == 0x90)
-            {
-                // ARM.1 Multiply (accumulate), ARM.2 Multiply (accumulate) long
-                return opcode & (1 << 23) ? ARM_2 : ARM_1;
-            }
-            else if ((opcode & 0x10000F0) == 0x1000090)
-            {
-                // ARM.4 Single data swap
-                return ARM_4;
-            }
-            else if ((opcode & 0x4000F0) == 0xB0)
-            {
-                // ARM.5 Halfword data transfer, register offset
-                return ARM_5;
-            }
-            else if ((opcode & 0x4000F0) == 0x4000B0)
-            {
-                // ARM.6 Halfword data transfer, immediate offset
-                return ARM_6;
-            }
-            else if ((opcode & 0xD0) == 0xD0)
-            {
-                // ARM.7 Signed data transfer (byte/halfword)
-                return ARM_7;
-            }
-            else
-            {
-                // ARM.8 Data processing and PSR transfer
-                return ARM_8;
-            }
-            break;
-        case 0b01:
-            // ARM.9 Single data transfer, ARM.10 Undefined
-            return (opcode & 0x2000010) == 0x2000010 ? ARM_10 : ARM_9;
-        case 0b10:
-            // ARM.11 Block data transfer, ARM.12 Branch
-            return opcode & (1 << 25) ? ARM_12 : ARM_11;
-        case 0b11:
-            if (opcode & (1 << 25))
-            {
-                if (opcode & (1 << 24))
-                {
-                    // ARM.16 Software interrupt
-                    return ARM_16;
-                }
-                else
-                {
-                    // ARM.14 Coprocessor data operation, ARM.15 Coprocessor register transfer
-                    return opcode & 0x10 ? ARM_15 : ARM_14;
-                }
-            }
-            else
-            {
-                // ARM.13 Coprocessor data transfer
-                return ARM_13;
-            }
-            break;
         }
 
-        return 0;
+        int index = ((instruction >> 16) & 0xFF0) | ((instruction >> 4) & 0xF);
+        (this->*arm_lut[index])(instruction);
     }
 
-    void arm::arm_data_processing(u32 instruction, bool immediate, int opcode, bool set_flags, int field4)
+    template <bool immediate, int opcode, bool _set_flags, int field4>
+    void arm::arm_data_processing(u32 instruction)
     {
         u32 op1, op2;
         bool carry = m_cpsr & MASK_CFLAG;
         int reg_dst = (instruction >> 12) & 0xF;
         int reg_op1 = (instruction >> 16) & 0xF;
+        bool set_flags = _set_flags;
 
         op1 = m_reg[reg_op1];
 
@@ -420,7 +359,8 @@ namespace GBA
         }
     }
 
-    void arm::arm_psr_transfer(u32 instruction, bool immediate, bool use_spsr, bool to_status)
+    template <bool immediate, bool use_spsr, bool to_status>
+    void arm::arm_psr_transfer(u32 instruction)
     {
         if (to_status)
         {
@@ -466,7 +406,8 @@ namespace GBA
         }
     }
 
-    void arm::arm_multiply(u32 instruction, bool accumulate, bool set_flags)
+    template <bool accumulate, bool set_flags>
+    void arm::arm_multiply(u32 instruction)
     {
         u32 result;
         int op1 = instruction & 0xF;
@@ -490,7 +431,8 @@ namespace GBA
         m_reg[dst] = result;
     }
 
-    void arm::arm_multiply_long(u32 instruction, bool sign_extend, bool accumulate, bool set_flags)
+    template <bool sign_extend, bool accumulate, bool set_flags>
+    void arm::arm_multiply_long(u32 instruction)
     {
         s64 result;
         int op1 = instruction & 0xF;
@@ -539,7 +481,8 @@ namespace GBA
         }
     }
 
-    void arm::arm_single_data_swap(u32 instruction, bool swap_byte)
+    template <bool swap_byte>
+    void arm::arm_single_data_swap(u32 instruction)
     {
         u32 tmp;
         int src = instruction & 0xF;
@@ -577,7 +520,8 @@ namespace GBA
         }
     }
 
-    void arm::arm_halfword_signed_transfer(u32 instruction, bool pre_indexed, bool base_increment, bool immediate, bool write_back, bool load, int opcode)
+    template <bool pre_indexed, bool base_increment, bool immediate, bool write_back, bool load, int opcode>
+    void arm::arm_halfword_signed_transfer(u32 instruction)
     {
         u32 off;
         int dst = (instruction >> 12) & 0xF;
@@ -642,7 +586,8 @@ namespace GBA
         }
     }
 
-    void arm::arm_single_transfer(u32 instruction, bool immediate, bool pre_indexed, bool base_increment, bool byte, bool write_back, bool load)
+    template <bool immediate, bool pre_indexed, bool base_increment, bool byte, bool write_back, bool load>
+    void arm::arm_single_transfer(u32 instruction)
     {
         u32 off;
         cpu_mode old_mode;
@@ -713,12 +658,15 @@ namespace GBA
     {
     }
 
-    void arm::arm_block_transfer(u32 instruction, bool pre_indexed, bool base_increment, bool user_mode, bool write_back, bool load)
+    template <bool _pre_indexed, bool base_increment, bool user_mode, bool _write_back, bool load>
+    void arm::arm_block_transfer(u32 instruction)
     {
         int first_register;
         int register_count = 0;
         int register_list = instruction & 0xFFFF;
         bool transfer_r15 = register_list & (1 << 15);
+        bool pre_indexed = _pre_indexed;
+        bool write_back = _write_back;
 
         int base = (instruction >> 16) & 0xF;
 
@@ -803,7 +751,8 @@ namespace GBA
         if (mode_switched) switch_mode(old_mode);
     }
 
-    void arm::arm_branch(u32 instruction, bool link)
+    template <bool link>
+    void arm::arm_branch(u32 instruction)
     {
         u32 off = instruction & 0xFFFFFF;
 
@@ -835,146 +784,6 @@ namespace GBA
         else
         {
             software_interrupt(call_number);
-        }
-    }
-
-    void arm::arm_execute(u32 instruction, int type)
-    {
-        auto reg = m_reg;
-        int condition = instruction >> 28;
-
-        // Check if the instruction will be executed
-        if (condition != 0xE)
-        {
-            switch (condition)
-            {
-            case 0x0: if (!(m_cpsr & MASK_ZFLAG))     return; break;
-            case 0x1: if (  m_cpsr & MASK_ZFLAG)      return; break;
-            case 0x2: if (!(m_cpsr & MASK_CFLAG))    return; break;
-            case 0x3: if (  m_cpsr & MASK_CFLAG)     return; break;
-            case 0x4: if (!(m_cpsr & MASK_NFLAG))     return; break;
-            case 0x5: if (  m_cpsr & MASK_NFLAG)      return; break;
-            case 0x6: if (!(m_cpsr & MASK_VFLAG)) return; break;
-            case 0x7: if (  m_cpsr & MASK_VFLAG)  return; break;
-            case 0x8: if (!(m_cpsr & MASK_CFLAG) ||  (m_cpsr & MASK_ZFLAG)) return; break;
-            case 0x9: if ( (m_cpsr & MASK_CFLAG) && !(m_cpsr & MASK_ZFLAG)) return; break;
-            case 0xA: if ((m_cpsr & MASK_NFLAG) != (m_cpsr & MASK_VFLAG)) return; break;
-            case 0xB: if ((m_cpsr & MASK_NFLAG) == (m_cpsr & MASK_VFLAG)) return; break;
-            case 0xC: if ((m_cpsr & MASK_ZFLAG) || ((m_cpsr & MASK_NFLAG) != (m_cpsr & MASK_VFLAG))) return; break;
-            case 0xD: if (!(m_cpsr & MASK_ZFLAG) && ((m_cpsr & MASK_NFLAG) == (m_cpsr & MASK_VFLAG))) return; break;
-            case 0xE: break;
-            case 0xF: return;
-            }
-        }
-
-        // Perform the actual execution
-        switch (type)
-        {
-        case ARM_1:
-        {
-            bool accumulate = instruction & (1 << 21);
-            bool set_flags = instruction & (1 << 20);
-            arm_multiply(instruction, accumulate, set_flags);
-            return;
-        }
-        case ARM_2:
-        {
-            bool sign_extend = instruction & (1 << 22);
-            bool accumulate = instruction & (1 << 21);
-            bool set_flags = instruction & (1 << 20);
-            arm_multiply_long(instruction, sign_extend, accumulate, set_flags);
-            return;
-        }
-        case ARM_3:
-        {
-            arm_branch_exchange(instruction);
-            return;
-        }
-        case ARM_4:
-        {
-            bool swap_byte = instruction & (1 << 22);
-            arm_single_data_swap(instruction, swap_byte);
-            return;
-        }
-        case ARM_5:
-        case ARM_6:
-        case ARM_7:
-        {
-            bool pre_indexed = instruction & (1 << 24);
-            bool base_increment = instruction & (1 << 23);
-            bool immediate = instruction & (1 << 22);
-            bool write_back = instruction & (1 << 21);
-            bool load = instruction & (1 << 20);
-            int opcode = (instruction >> 5) & 3;
-
-            arm_halfword_signed_transfer(instruction, pre_indexed, base_increment, immediate, write_back, load, opcode);
-            return;
-        }
-        case ARM_8:
-        {
-            // ARM.8 Data processing and PSR transfer
-            bool set_flags = instruction & (1 << 20);
-            int opcode = (instruction >> 21) & 0xF;
-
-            // Decide wether the instruction is data processing or psr transfer
-            // Look at official ARM docs to understand this condition!
-            if (!set_flags && opcode >= 0b1000 && opcode <= 0b1011)
-            {
-                // PSR transfer
-                bool immediate = instruction & (1 << 25);
-                bool use_spsr = instruction & (1 << 22);
-                bool to_status = instruction & (1 << 21);
-
-                arm_psr_transfer(instruction, immediate, use_spsr, to_status);
-            }
-            else
-            {
-                int field4 = (instruction >> 4) & 0xF;
-                bool immediate = instruction & (1 << 25);
-
-                arm_data_processing(instruction, immediate, opcode, set_flags, field4);
-            }
-            return;
-        }
-        case ARM_9:
-        {
-            bool immediate = (instruction & (1 << 25)) == 0;
-            bool pre_indexed = instruction & (1 << 24);
-            bool add_to_base = instruction & (1 << 23);
-            bool transfer_byte = instruction & (1 << 22);
-            bool write_back = instruction & (1 << 21);
-            bool load = instruction & (1 << 20);
-
-            arm_single_transfer(instruction, immediate, pre_indexed, add_to_base, transfer_byte, write_back, load);
-            return;
-        }
-        case ARM_10:
-            // ARM.10 Undefined
-            #ifdef DEBUG
-            LOG(LOG_ERROR, "Undefined instruction (0x%x), r15=0x%x", instruction, reg[15]);
-            #endif
-            return;
-        case ARM_11:
-        {
-            bool pre_indexed = instruction & (1 << 24);
-            bool increment_base = instruction & (1 << 23);
-            bool force_user_mode = instruction & (1 << 22);
-            bool write_back = instruction & (1 << 21);
-            bool load_instr = instruction & (1 << 20);
-            arm_block_transfer(instruction, pre_indexed, increment_base, force_user_mode, write_back, load_instr);
-            return;
-        }
-        case ARM_12:
-        {
-            bool link = instruction & (1 << 24);
-            arm_branch(instruction, link);
-            return;
-        }
-        case ARM_16:
-        {
-            arm_swi(instruction);
-            return;
-        }
         }
     }
 }
