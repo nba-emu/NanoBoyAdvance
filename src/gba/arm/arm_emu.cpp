@@ -121,6 +121,305 @@ namespace GBA
         return 0;
     }
 
+    void arm::arm_data_processing(u32 instruction, bool immediate, int opcode, bool set_flags, int field4)
+    {
+        u32 op1, op2;
+        bool carry = m_cpsr & MASK_CFLAG;
+        int reg_dst = (instruction >> 12) & 0xF;
+        int reg_op1 = (instruction >> 16) & 0xF;
+
+        op1 = m_reg[reg_op1];
+
+        if (immediate)
+        {
+            int imm = instruction & 0xFF;
+            int amount = ((instruction >> 8) & 0xF) << 1;
+
+            if (amount != 0)
+            {
+                carry = (imm >> (amount -1)) & 1;
+                op2 = (imm >> amount) | (imm << (32 - amount));
+            }
+            else
+            {
+                op2 = imm;
+            }
+        }
+        else
+        {
+            u32 amount;
+            int reg_op2 = instruction & 0xF;
+            int shift_type = (field4 >> 1) & 3;
+            bool shift_immediate = (field4 & 1) ? false : true;
+
+            op2 = m_reg[reg_op2];
+
+            if (!shift_immediate)
+            {
+                amount = m_reg[(instruction >> 8) & 0xF];
+                if (reg_op1 == 15) op1 += 4;
+                if (reg_op2 == 15) op2 += 4;
+                cycles++;
+            }
+            else
+            {
+                amount = (instruction >> 7) & 0x1F;
+            }
+
+            perform_shift(shift_type, op2, amount, carry, shift_immediate);
+        }
+
+        if (reg_dst == 15)
+        {
+            if (set_flags)
+            {
+                u32 spsr = *m_spsr_ptr;
+                switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
+                m_cpsr = spsr;
+                set_flags = false;
+            }
+            m_pipeline.m_needs_flush = true;
+        }
+
+        switch (opcode)
+        {
+        case 0b0000:
+        {
+            // Bitwise AND (AND)
+            u32 result = op1 & op2;
+
+            if (set_flags)
+            {
+                update_sign(result);
+                update_zero(result);
+                set_carry(carry);
+            }
+
+            m_reg[reg_dst] = result;
+            break;
+        }
+        case 0b0001:
+        {
+            // Bitwise EXOR (EOR)
+            u32 result = op1 ^ op2;
+
+            if (set_flags)
+            {
+                update_sign(result);
+                update_zero(result);
+                set_carry(carry);
+            }
+
+            m_reg[reg_dst] = result;
+            break;
+        }
+        case 0b0010:
+        {
+            // Subtraction (SUB)
+            u32 result = op1 - op2;
+
+            if (set_flags)
+            {
+                set_carry(op1 >= op2);
+                update_overflow_sub(result, op1, op2);
+                update_sign(result);
+                update_zero(result);
+            }
+
+            m_reg[reg_dst] = result;
+            break;
+        }
+        case 0b0011:
+        {
+            // Reverse subtraction (RSB)
+            u32 result = op2 - op1;
+
+            if (set_flags)
+            {
+                set_carry(op2 >= op1);
+                update_overflow_sub(result, op2, op1);
+                update_sign(result);
+                update_zero(result);
+            }
+
+            m_reg[reg_dst] = result;
+            break;
+        }
+        case 0b0100:
+        {
+            // Addition (ADD)
+            u32 result = op1 + op2;
+
+            if (set_flags)
+            {
+                u64 result_long = (u64)op1 + (u64)op2;
+
+                set_carry(result_long & 0x100000000);
+                update_overflow_add(result, op1, op2);
+                update_sign(result);
+                update_zero(result);
+            }
+
+            m_reg[reg_dst] = result;
+            break;
+        }
+        case 0b0101:
+        {
+            // Addition with Carry
+            int carry2 = (m_cpsr >> 29) & 1;
+            u32 result = op1 + op2 + carry2;
+
+            if (set_flags)
+            {
+                u64 result_long = (u64)op1 + (u64)op2 + (u64)carry2;
+
+                set_carry(result_long & 0x100000000);
+                update_overflow_add(result, op1, op2);
+                update_sign(result);
+                update_zero(result);
+            }
+
+            m_reg[reg_dst] = result;
+            break;
+        }
+        case 0b0110:
+        {
+            // Subtraction with Carry
+            int carry2 = (m_cpsr >> 29) & 1;
+            u32 result = op1 - op2 + carry2 - 1;
+
+            if (set_flags)
+            {
+                set_carry(op1 >= (op2 + carry2 - 1));
+                update_overflow_sub(result, op1, op2);
+                update_sign(result);
+                update_zero(result);
+            }
+
+            m_reg[reg_dst] = result;
+            break;
+        }
+        case 0b0111:
+        {
+            // Reverse Substraction with Carry
+            int carry2 = (m_cpsr >> 29) & 1;
+            u32 result = op2 - op1 + carry2 - 1;
+
+            if (set_flags)
+            {
+                set_carry(op2 >= (op1 + carry2 - 1));
+                update_overflow_sub(result, op2, op1);
+                update_sign(result);
+                update_zero(result);
+            }
+
+            m_reg[reg_dst] = result;
+            break;
+        }
+        case 0b1000:
+        {
+            // Bitwise AND flags only (TST)
+            u32 result = op1 & op2;
+
+            update_sign(result);
+            update_zero(result);
+            set_carry(carry);
+            break;
+        }
+        case 0b1001:
+        {
+            // Bitwise EXOR flags only (TEQ)
+            u32 result = op1 ^ op2;
+
+            update_sign(result);
+            update_zero(result);
+            set_carry(carry);
+            break;
+        }
+        case 0b1010:
+        {
+            // Subtraction flags only (CMP)
+            u32 result = op1 - op2;
+
+            set_carry(op1 >= op2);
+            update_overflow_sub(result, op1, op2);
+            update_sign(result);
+            update_zero(result);
+            break;
+        }
+        case 0b1011:
+        {
+            // Addition flags only (CMN)
+            u32 result = op1 + op2;
+            u64 result_long = (u64)op1 + (u64)op2;
+
+            set_carry(result_long & 0x100000000);
+            update_overflow_add(result, op1, op2);
+            update_sign(result);
+            update_zero(result);
+            break;
+        }
+        case 0b1100:
+        {
+            // Bitwise OR (ORR)
+            u32 result = op1 | op2;
+
+            if (set_flags)
+            {
+                update_sign(result);
+                update_zero(result);
+                set_carry(carry);
+            }
+
+            m_reg[reg_dst] = result;
+            break;
+        }
+        case 0b1101:
+        {
+            // Move into register (MOV)
+            if (set_flags)
+            {
+                update_sign(op2);
+                update_zero(op2);
+                set_carry(carry);
+            }
+
+            m_reg[reg_dst] = op2;
+            break;
+        }
+        case 0b1110:
+        {
+            // Bit Clear (BIC)
+            u32 result = op1 & ~op2;
+
+            if (set_flags)
+            {
+                update_sign(result);
+                update_zero(result);
+                set_carry(carry);
+            }
+
+            m_reg[reg_dst] = result;
+            break;
+        }
+        case 0b1111:
+        {
+            // Move into register negated (MVN)
+            u32 not_op2 = ~op2;
+
+            if (set_flags)
+            {
+                update_sign(not_op2);
+                update_zero(not_op2);
+                set_carry(carry);
+            }
+
+            m_reg[reg_dst] = not_op2;
+            break;
+        }
+        }
+    }
+
     void arm::arm_psr_transfer(u32 instruction, bool immediate, bool use_spsr, bool to_status)
     {
         if (to_status)
@@ -630,332 +929,10 @@ namespace GBA
             }
             else
             {
-                // Data processing
-                int reg_dest = (instruction >> 12) & 0xF;
-                int reg_operand1 = (instruction >> 16) & 0xF;
+                int field4 = (instruction >> 4) & 0xF;
                 bool immediate = instruction & (1 << 25);
-                bool carry = m_cpsr & MASK_CFLAG;
-                u32 operand1 = reg[reg_operand1];
-                u32 operand2;
 
-                // Operand 2 may be an immediate value or a shifted register.
-                if (immediate)
-                {
-                    int immediate_value = instruction & 0xFF;
-                    int amount = ((instruction >> 8) & 0xF) << 1;
-
-                    // Apply hardcoded rotation
-                    operand2 = (immediate_value >> amount) | (immediate_value << (32 - amount));
-
-                    // Rotation also overwrites the carry flag
-                    if (amount != 0)
-                        carry = (immediate_value >> (amount - 1)) & 1;
-                }
-                else
-                {
-                    u32 amount;
-                    int reg_operand2 = instruction & 0xF;
-                    bool shift_immediate = (instruction & (1 << 4)) ? false : true;
-
-                    // Get operand raw value
-                    operand2 = reg[reg_operand2];
-
-                    // Get amount of shift.
-                    if (shift_immediate)
-                    {
-                        amount = (instruction >> 7) & 0x1F;
-                    }
-                    else
-                    {
-                        int reg_shift = (instruction >> 8) & 0xF;
-                        amount = reg[reg_shift];
-
-                        // Internal cycle
-                        cycles++;
-
-                        // Due to the internal shift cycle r15 will be 12 bytes ahead, not 8.
-                        if (reg_operand1 == 15) operand1 += 4;
-                        if (reg_operand2 == 15) operand2 += 4;
-                    }
-
-                    // Apply shift by "amount" bits to raw value.
-                    switch ((instruction >> 5) & 3)
-                    {
-                    case 0b00:
-                        logical_shift_left(operand2, amount, carry);
-                        break;
-                    case 0b01:
-                        logical_shift_right(operand2, amount, carry, shift_immediate);
-                        break;
-                    case 0b10:
-                        arithmetic_shift_right(operand2, amount, carry, shift_immediate);
-                        break;
-                    case 0b11:
-                        rotate_right(operand2, amount, carry, shift_immediate);
-                        break;
-                    }
-                }
-
-                // The combination rDEST=15 and S-bit=1 triggers a CPU mode switch
-                // effectivly switchting back to the saved mode (m_cpsr = SPSR).
-                if (reg_dest == 15 && set_flags)
-                {
-                    // Flags will no longer be updated.
-                    set_flags = false;
-
-                    // Switches back to saved mode.
-                    ////SaveRegisters();
-                    ////m_cpsr = *m_spsr_ptr;
-                    ////LoadRegisters();
-                    u32 spsr = *m_spsr_ptr;
-                    switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
-                    m_cpsr = spsr;
-                }
-
-                // Perform the actual operation
-                switch (opcode)
-                {
-                case 0b0000:
-                {
-                    // Bitwise AND (AND)
-                    u32 result = operand1 & operand2;
-
-                    if (set_flags)
-                    {
-                        update_sign(result);
-                        update_zero(result);
-                        set_carry(carry);
-                    }
-
-                    reg[reg_dest] = result;
-                    break;
-                }
-                case 0b0001:
-                {
-                    // Bitwise EXOR (EOR)
-                    u32 result = operand1 ^ operand2;
-
-                    if (set_flags)
-                    {
-                        update_sign(result);
-                        update_zero(result);
-                        set_carry(carry);
-                    }
-
-                    reg[reg_dest] = result;
-                    break;
-                }
-                case 0b0010:
-                {
-                    // Subtraction (SUB)
-                    u32 result = operand1 - operand2;
-
-                    if (set_flags)
-                    {
-                        set_carry(operand1 >= operand2);
-                        update_overflow_sub(result, operand1, operand2);
-                        update_sign(result);
-                        update_zero(result);
-                    }
-
-                    reg[reg_dest] = result;
-                    break;
-                }
-                case 0b0011:
-                {
-                    // Reverse subtraction (RSB)
-                    u32 result = operand2 - operand1;
-
-                    if (set_flags)
-                    {
-                        set_carry(operand2 >= operand1);
-                        update_overflow_sub(result, operand2, operand1);
-                        update_sign(result);
-                        update_zero(result);
-                    }
-
-                    reg[reg_dest] = result;
-                    break;
-                }
-                case 0b0100:
-                {
-                    // Addition (ADD)
-                    u32 result = operand1 + operand2;
-
-                    if (set_flags)
-                    {
-                        u64 result_long = (u64)operand1 + (u64)operand2;
-
-                        set_carry(result_long & 0x100000000);
-                        update_overflow_add(result, operand1, operand2);
-                        update_sign(result);
-                        update_zero(result);
-                    }
-
-                    reg[reg_dest] = result;
-                    break;
-                }
-                case 0b0101:
-                {
-                    // Addition with Carry
-                    int carry2 = (m_cpsr >> 29) & 1;
-                    u32 result = operand1 + operand2 + carry2;
-
-                    if (set_flags)
-                    {
-                        u64 result_long = (u64)operand1 + (u64)operand2 + (u64)carry2;
-
-                        set_carry(result_long & 0x100000000);
-                        update_overflow_add(result, operand1, operand2);
-                        update_sign(result);
-                        update_zero(result);
-                    }
-
-                    reg[reg_dest] = result;
-                    break;
-                }
-                case 0b0110:
-                {
-                    // Subtraction with Carry
-                    int carry2 = (m_cpsr >> 29) & 1;
-                    u32 result = operand1 - operand2 + carry2 - 1;
-
-                    if (set_flags)
-                    {
-                        set_carry(operand1 >= (operand2 + carry2 - 1));
-                        update_overflow_sub(result, operand1, operand2);
-                        update_sign(result);
-                        update_zero(result);
-                    }
-
-                    reg[reg_dest] = result;
-                    break;
-                }
-                case 0b0111:
-                {
-                    // Reverse Substraction with Carry
-                    int carry2 = (m_cpsr >> 29) & 1;
-                    u32 result = operand2 - operand1 + carry2 - 1;
-
-                    if (set_flags)
-                    {
-                        set_carry(operand2 >= (operand1 + carry2 - 1));
-                        update_overflow_sub(result, operand2, operand1);
-                        update_sign(result);
-                        update_zero(result);
-                    }
-
-                    reg[reg_dest] = result;
-                    break;
-                }
-                case 0b1000:
-                {
-                    // Bitwise AND flags only (TST)
-                    u32 result = operand1 & operand2;
-
-                    update_sign(result);
-                    update_zero(result);
-                    set_carry(carry);
-                    break;
-                }
-                case 0b1001:
-                {
-                    // Bitwise EXOR flags only (TEQ)
-                    u32 result = operand1 ^ operand2;
-
-                    update_sign(result);
-                    update_zero(result);
-                    set_carry(carry);
-                    break;
-                }
-                case 0b1010:
-                {
-                    // Subtraction flags only (CMP)
-                    u32 result = operand1 - operand2;
-
-                    set_carry(operand1 >= operand2);
-                    update_overflow_sub(result, operand1, operand2);
-                    update_sign(result);
-                    update_zero(result);
-                    break;
-                }
-                case 0b1011:
-                {
-                    // Addition flags only (CMN)
-                    u32 result = operand1 + operand2;
-                    u64 result_long = (u64)operand1 + (u64)operand2;
-
-                    set_carry(result_long & 0x100000000);
-                    update_overflow_add(result, operand1, operand2);
-                    update_sign(result);
-                    update_zero(result);
-                    break;
-                }
-                case 0b1100:
-                {
-                    // Bitwise OR (ORR)
-                    u32 result = operand1 | operand2;
-
-                    if (set_flags)
-                    {
-                        update_sign(result);
-                        update_zero(result);
-                        set_carry(carry);
-                    }
-
-                    reg[reg_dest] = result;
-                    break;
-                }
-                case 0b1101:
-                {
-                    // Move into register (MOV)
-                    if (set_flags)
-                    {
-                        update_sign(operand2);
-                        update_zero(operand2);
-                        set_carry(carry);
-                    }
-
-                    reg[reg_dest] = operand2;
-                    break;
-                }
-                case 0b1110:
-                {
-                    // Bit Clear (BIC)
-                    u32 result = operand1 & ~operand2;
-
-                    if (set_flags)
-                    {
-                        update_sign(result);
-                        update_zero(result);
-                        set_carry(carry);
-                    }
-
-                    reg[reg_dest] = result;
-                    break;
-                }
-                case 0b1111:
-                {
-                    // Move into register negated (MVN)
-                    u32 not_operand2 = ~operand2;
-
-                    if (set_flags)
-                    {
-                        update_sign(not_operand2);
-                        update_zero(not_operand2);
-                        set_carry(carry);
-                    }
-
-                    reg[reg_dest] = not_operand2;
-                    break;
-                }
-                }
-
-                // Clear pipeline if r15 updated
-                if (reg_dest == 15)
-                {
-                    m_pipeline.m_needs_flush = true;
-                }
+                arm_data_processing(instruction, immediate, opcode, set_flags, field4);
             }
             return;
         }
