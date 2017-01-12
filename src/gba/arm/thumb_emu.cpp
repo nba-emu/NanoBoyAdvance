@@ -31,251 +31,242 @@ namespace GBA
     void arm::thumb_1(u16 instruction)
     {
         // THUMB.1 Move shifted register
-        int reg_dest = instruction & 7;
-        int reg_source = (instruction >> 3) & 7;
+        int dst = instruction & 7;
+        int src = (instruction >> 3) & 7;
         bool carry = m_cpsr & MASK_CFLAG;
 
-        m_reg[reg_dest] = m_reg[reg_source];
+        m_reg[dst] = m_reg[src];
 
-        perform_shift(type, m_reg[reg_dest], imm, carry, true);
+        perform_shift(type, m_reg[dst], imm, carry, true);
 
-        // Update carry, sign and zero flag
+        // update carry, sign and zero flag
         set_carry(carry);
-        update_sign(m_reg[reg_dest]);
-        update_zero(m_reg[reg_dest]);
+        update_sign(m_reg[dst]);
+        update_zero(m_reg[dst]);
     }
 
     template <bool immediate, bool subtract, int field3>
     void arm::thumb_2(u16 instruction)
     {
         // THUMB.2 Add/subtract
-        int reg_dest = instruction & 7;
-        int reg_source = (instruction >> 3) & 7;
-        u32 operand;
+        u32 operand, result;
+        int dst = instruction & 7;
+        int src = (instruction >> 3) & 7;
 
-        // Either a register or an immediate
-        if (immediate)
-            operand = field3;
-        else
-            operand = m_reg[field3];
+        // either a register or an immediate value
+        operand = immediate ? field3 : m_reg[field3];
 
-        // Determine wether to subtract or add
         if (subtract)
         {
-            u32 result = m_reg[reg_source] - operand;
+            result = m_reg[src] - operand;
 
-            // Calculate flags
-            set_carry(m_reg[reg_source] >= operand);
-            update_overflow_sub(result, m_reg[reg_source], operand);
-            update_sign(result);
-            update_zero(result);
-
-            m_reg[reg_dest] = result;
+            set_carry(m_reg[src] >= operand);
+            update_overflow_sub(result, m_reg[src], operand);
         }
         else
         {
-            u32 result = m_reg[reg_source] + operand;
-            u64 result_long = (u64)(m_reg[reg_source]) + (u64)operand;
+            u64 result_long = (u64)(m_reg[src]) + (u64)operand;
 
-            // Calculate flags
+            result = (u32)result_long;
             set_carry(result_long & 0x100000000);
-            update_overflow_add(result, m_reg[reg_source], operand);
-            update_sign(result);
-            update_zero(result);
-
-            m_reg[reg_dest] = result;
+            update_overflow_add(result, m_reg[src], operand);
         }
+
+        update_sign(result);
+        update_zero(result);
+
+        m_reg[dst] = result;
     }
 
-    template <int op, int reg_dest>
+    template <int op, int dst>
     void arm::thumb_3(u16 instruction)
     {
         // THUMB.3 Move/compare/add/subtract immediate
+        u32 result;
         u32 immediate_value = instruction & 0xFF;
 
         switch (op)
         {
         case 0b00: // MOV
+            m_reg[dst] = immediate_value;
             update_sign(0);
             update_zero(immediate_value);
-            m_reg[reg_dest] = immediate_value;
-            break;
+            return;//important!
+
         case 0b01: // CMP
-        {
-            u32 result = m_reg[reg_dest] - immediate_value;
-            set_carry(m_reg[reg_dest] >= immediate_value);
-            update_overflow_sub(result, m_reg[reg_dest], immediate_value);
-            update_sign(result);
-            update_zero(result);
+            result = m_reg[dst] - immediate_value;
+
+            set_carry(m_reg[dst] >= immediate_value);
+            update_overflow_sub(result, m_reg[dst], immediate_value);
             break;
-        }
         case 0b10: // ADD
         {
-            u32 result = m_reg[reg_dest] + immediate_value;
-            u64 result_long = (u64)m_reg[reg_dest] + (u64)immediate_value;
+            u64 result_long = (u64)m_reg[dst] + (u64)immediate_value;
+            result = (u32)result_long;
+
             set_carry(result_long & 0x100000000);
-            update_overflow_add(result, m_reg[reg_dest], immediate_value);
-            update_sign(result);
-            update_zero(result);
-            m_reg[reg_dest] = result;
+            update_overflow_add(result, m_reg[dst], immediate_value);
+
+            m_reg[dst] = result;
             break;
         }
         case 0b11: // SUB
-        {
-            u32 result = m_reg[reg_dest] - immediate_value;
-            set_carry(m_reg[reg_dest] >= immediate_value);
-            update_overflow_sub(result, m_reg[reg_dest], immediate_value);
-            update_sign(result);
-            update_zero(result);
-            m_reg[reg_dest] = result;
+            result = m_reg[dst] - immediate_value;
+
+            set_carry(m_reg[dst] >= immediate_value);
+            update_overflow_sub(result, m_reg[dst], immediate_value);
+
+            m_reg[dst] = result;
             break;
         }
-        }
+
+        update_sign(result);
+        update_zero(result);
     }
 
     template <int op>
     void arm::thumb_4(u16 instruction)
     {
         // THUMB.4 ALU operations
-        int reg_dest = instruction & 7;
-        int reg_source = (instruction >> 3) & 7;
+        int dst = instruction & 7;
+        int src = (instruction >> 3) & 7;
 
         switch (op)
         {
         case 0b0000: // AND
-            m_reg[reg_dest] &= m_reg[reg_source];
-            update_sign(m_reg[reg_dest]);
-            update_zero(m_reg[reg_dest]);
+            m_reg[dst] &= m_reg[src];
+            update_sign(m_reg[dst]);
+            update_zero(m_reg[dst]);
             break;
         case 0b0001: // EOR
-            m_reg[reg_dest] ^= m_reg[reg_source];
-            update_sign(m_reg[reg_dest]);
-            update_zero(m_reg[reg_dest]);
+            m_reg[dst] ^= m_reg[src];
+            update_sign(m_reg[dst]);
+            update_zero(m_reg[dst]);
             break;
         case 0b0010: // LSL
         {
-            u32 amount = m_reg[reg_source];
+            u32 amount = m_reg[src];
             bool carry = m_cpsr & MASK_CFLAG;
-            logical_shift_left(m_reg[reg_dest], amount, carry);
+            logical_shift_left(m_reg[dst], amount, carry);
             set_carry(carry);
-            update_sign(m_reg[reg_dest]);
-            update_zero(m_reg[reg_dest]);
+            update_sign(m_reg[dst]);
+            update_zero(m_reg[dst]);
             cycles++;
             break;
         }
         case 0b0011: // LSR
         {
-            u32 amount = m_reg[reg_source];
+            u32 amount = m_reg[src];
             bool carry = m_cpsr & MASK_CFLAG;
-            logical_shift_right(m_reg[reg_dest], amount, carry, false);
+            logical_shift_right(m_reg[dst], amount, carry, false);
             set_carry(carry);
-            update_sign(m_reg[reg_dest]);
-            update_zero(m_reg[reg_dest]);
+            update_sign(m_reg[dst]);
+            update_zero(m_reg[dst]);
             cycles++;
             break;
         }
         case 0b0100: // ASR
         {
-            u32 amount = m_reg[reg_source];
+            u32 amount = m_reg[src];
             bool carry = m_cpsr & MASK_CFLAG;
-            arithmetic_shift_right(m_reg[reg_dest], amount, carry, false);
+            arithmetic_shift_right(m_reg[dst], amount, carry, false);
             set_carry(carry);
-            update_sign(m_reg[reg_dest]);
-            update_zero(m_reg[reg_dest]);
+            update_sign(m_reg[dst]);
+            update_zero(m_reg[dst]);
             cycles++;
             break;
         }
         case 0b0101: // ADC
         {
             int carry = (m_cpsr >> 29) & 1;
-            u32 result = m_reg[reg_dest] + m_reg[reg_source] + carry;
-            u64 result_long = (u64)(m_reg[reg_dest]) + (u64)(m_reg[reg_source]) + (u64)carry;
+            u32 result = m_reg[dst] + m_reg[src] + carry;
+            u64 result_long = (u64)(m_reg[dst]) + (u64)(m_reg[src]) + (u64)carry;
             set_carry(result_long & 0x100000000);
-            update_overflow_add(result, m_reg[reg_dest], m_reg[reg_source]);
+            update_overflow_add(result, m_reg[dst], m_reg[src]);
             update_sign(result);
             update_zero(result);
-            m_reg[reg_dest] = result;
+            m_reg[dst] = result;
             break;
         }
         case 0b0110: // SBC
         {
             int carry = (m_cpsr >> 29) & 1;
-            u32 result = m_reg[reg_dest] - m_reg[reg_source] + carry - 1;
-            set_carry(m_reg[reg_dest] >= (m_reg[reg_source] + carry - 1));
-            update_overflow_sub(result, m_reg[reg_dest], m_reg[reg_source]);
+            u32 result = m_reg[dst] - m_reg[src] + carry - 1;
+            set_carry(m_reg[dst] >= (m_reg[src] + carry - 1));
+            update_overflow_sub(result, m_reg[dst], m_reg[src]);
             update_sign(result);
             update_zero(result);
-            m_reg[reg_dest] = result;
+            m_reg[dst] = result;
             break;
         }
         case 0b0111: // ROR
         {
-            u32 amount = m_reg[reg_source];
+            u32 amount = m_reg[src];
             bool carry = m_cpsr & MASK_CFLAG;
-            rotate_right(m_reg[reg_dest], amount, carry, false);
+            rotate_right(m_reg[dst], amount, carry, false);
             set_carry(carry);
-            update_sign(m_reg[reg_dest]);
-            update_zero(m_reg[reg_dest]);
+            update_sign(m_reg[dst]);
+            update_zero(m_reg[dst]);
             cycles++;
             break;
         }
         case 0b1000: // TST
         {
-            u32 result = m_reg[reg_dest] & m_reg[reg_source];
+            u32 result = m_reg[dst] & m_reg[src];
             update_sign(result);
             update_zero(result);
             break;
         }
         case 0b1001: // NEG
         {
-            u32 result = 0 - m_reg[reg_source];
-            set_carry(0 >= m_reg[reg_source]);
-            update_overflow_sub(result, 0, m_reg[reg_source]);
+            u32 result = 0 - m_reg[src];
+            set_carry(0 >= m_reg[src]);
+            update_overflow_sub(result, 0, m_reg[src]);
             update_sign(result);
             update_zero(result);
-            m_reg[reg_dest] = result;
+            m_reg[dst] = result;
             break;
         }
         case 0b1010: // CMP
         {
-            u32 result = m_reg[reg_dest] - m_reg[reg_source];
-            set_carry(m_reg[reg_dest] >= m_reg[reg_source]);
-            update_overflow_sub(result, m_reg[reg_dest], m_reg[reg_source]);
+            u32 result = m_reg[dst] - m_reg[src];
+            set_carry(m_reg[dst] >= m_reg[src]);
+            update_overflow_sub(result, m_reg[dst], m_reg[src]);
             update_sign(result);
             update_zero(result);
             break;
         }
         case 0b1011: // CMN
         {
-            u32 result = m_reg[reg_dest] + m_reg[reg_source];
-            u64 result_long = (u64)(m_reg[reg_dest]) + (u64)(m_reg[reg_source]);
+            u32 result = m_reg[dst] + m_reg[src];
+            u64 result_long = (u64)(m_reg[dst]) + (u64)(m_reg[src]);
             set_carry(result_long & 0x100000000);
-            update_overflow_add(result, m_reg[reg_dest], m_reg[reg_source]);
+            update_overflow_add(result, m_reg[dst], m_reg[src]);
             update_sign(result);
             update_zero(result);
             break;
         }
         case 0b1100: // ORR
-            m_reg[reg_dest] |= m_reg[reg_source];
-            update_sign(m_reg[reg_dest]);
-            update_zero(m_reg[reg_dest]);
+            m_reg[dst] |= m_reg[src];
+            update_sign(m_reg[dst]);
+            update_zero(m_reg[dst]);
             break;
         case 0b1101: // MUL
             // TODO: how to calc. the internal cycles?
-            m_reg[reg_dest] *= m_reg[reg_source];
-            update_sign(m_reg[reg_dest]);
-            update_zero(m_reg[reg_dest]);
+            m_reg[dst] *= m_reg[src];
+            update_sign(m_reg[dst]);
+            update_zero(m_reg[dst]);
             set_carry(false);
             break;
         case 0b1110: // BIC
-            m_reg[reg_dest] &= ~(m_reg[reg_source]);
-            update_sign(m_reg[reg_dest]);
-            update_zero(m_reg[reg_dest]);
+            m_reg[dst] &= ~(m_reg[src]);
+            update_sign(m_reg[dst]);
+            update_zero(m_reg[dst]);
             break;
         case 0b1111: // MVN
-            m_reg[reg_dest] = ~(m_reg[reg_source]);
-            update_sign(m_reg[reg_dest]);
-            update_zero(m_reg[reg_dest]);
+            m_reg[dst] = ~(m_reg[src]);
+            update_sign(m_reg[dst]);
+            update_zero(m_reg[dst]);
             break;
         }
     }
@@ -284,39 +275,36 @@ namespace GBA
     void arm::thumb_5(u16 instruction)
     {
         // THUMB.5 Hi register operations/branch exchange
-        int reg_dest = instruction & 7;
-        int reg_source = (instruction >> 3) & 7;
-        bool compare = false;
         u32 operand;
+        bool compare = false;
+        int dst = instruction & 7;
+        int src = (instruction >> 3) & 7;
 
-        if (high1) reg_dest += 8;
-        if (high2) reg_source += 8;
+        if (high1) dst |= 8;
+        if (high2) src |= 8;
 
-        operand = m_reg[reg_source];
-        if (reg_source == 15) operand &= ~1;
+        operand = m_reg[src];
+        if (src == 15) operand &= ~1;
 
-        // Perform the actual operation
         switch (op)
         {
         case 0: // ADD
-            m_reg[reg_dest] += operand;
+            m_reg[dst] += operand;
             break;
         case 1: // CMP
         {
-            u32 result = m_reg[reg_dest] - operand;
-            set_carry(m_reg[reg_dest] >= operand);
-            update_overflow_sub(result, m_reg[reg_dest], operand);
+            u32 result = m_reg[dst] - operand;
+            set_carry(m_reg[dst] >= operand);
+            update_overflow_sub(result, m_reg[dst], operand);
             update_sign(result);
             update_zero(result);
             compare = true;
             break;
         }
         case 2: // MOV
-            m_reg[reg_dest] = operand;
+            m_reg[dst] = operand;
             break;
         case 3: // BX
-            // Bit0 being set in the address indicates
-            // that the destination instruction is in THUMB mode.
             if (operand & 1)
             {
                 m_reg[15] = operand & ~1;
@@ -326,79 +314,76 @@ namespace GBA
                 m_cpsr &= ~MASK_THUMB;
                 m_reg[15] = operand & ~3;
             }
-
-            // Flush pipeline
             m_pipeline.m_needs_flush = true;
             break;
         }
 
-        if (reg_dest == 15 && !compare && op != 0b11)
+        if (dst == 15 && !compare && op != 0b11)
         {
-            // Flush pipeline
-            m_reg[reg_dest] &= ~1;
+            m_reg[dst] &= ~1;
             m_pipeline.m_needs_flush = true;
         }
     }
 
-    template <int reg_dest>
+    template <int dst>
     void arm::thumb_6(u16 instruction)
     {
         // THUMB.6 PC-relative load
         u32 immediate_value = instruction & 0xFF;
         u32 address = (m_reg[15] & ~2) + (immediate_value << 2);
 
-        m_reg[reg_dest] = read_word(address);
+        m_reg[dst] = read_word(address);
     }
 
-    template <int op, int reg_offset>
+    template <int op, int off>
     void arm::thumb_7(u16 instruction)
     {
         // THUMB.7 Load/store with register offset
-        int reg_dest = instruction & 7;
-        int reg_base = (instruction >> 3) & 7;
-        u32 address = m_reg[reg_base] + m_reg[reg_offset];
+        int dst = instruction & 7;
+        int base = (instruction >> 3) & 7;
+        u32 address = m_reg[base] + m_reg[off];
 
         switch (op)
         {
         case 0b00: // STR
-            write_word(address, m_reg[reg_dest]);
+            write_word(address, m_reg[dst]);
             break;
         case 0b01: // STRB
-            bus_write_byte(address, m_reg[reg_dest] & 0xFF);
+            bus_write_byte(address, m_reg[dst] & 0xFF);
             break;
         case 0b10: // LDR
-            m_reg[reg_dest] = read_word_rotated(address);
+            m_reg[dst] = read_word_rotated(address);
             break;
         case 0b11: // LDRB
-            m_reg[reg_dest] = bus_read_byte(address);
+            m_reg[dst] = bus_read_byte(address);
             break;
         }
     }
 
-    template <int op, int reg_offset>
+    template <int op, int off>
     void arm::thumb_8(u16 instruction)
     {
         // THUMB.8 Load/store sign-extended byte/halfword
-        int reg_dest = instruction & 7;
-        int reg_base = (instruction >> 3) & 7;
-        u32 address = m_reg[reg_base] + m_reg[reg_offset];
+        int dst = instruction & 7;
+        int base = (instruction >> 3) & 7;
+        u32 address = m_reg[base] + m_reg[off];
 
         switch (op)
         {
         case 0b00: // STRH
-            write_hword(address, m_reg[reg_dest]);
+            write_hword(address, m_reg[dst]);
             break;
         case 0b01: // LDSB
-            m_reg[reg_dest] = bus_read_byte(address);
+            m_reg[dst] = bus_read_byte(address);
 
-            if (m_reg[reg_dest] & 0x80)
-                m_reg[reg_dest] |= 0xFFFFFF00;
+            if (m_reg[dst] & 0x80)
+                m_reg[dst] |= 0xFFFFFF00;
             break;
         case 0b10: // LDRH
-            m_reg[reg_dest] = read_hword(address);
+            m_reg[dst] = read_hword(address);
             break;
         case 0b11: // LDSH
-            m_reg[reg_dest] = read_hword_signed(address);
+            m_reg[dst] = read_hword_signed(address);
             break;
         }
     }
@@ -407,29 +392,29 @@ namespace GBA
     void arm::thumb_9(u16 instruction)
     {
         // THUMB.9 Load store with immediate offset
-        int reg_dest = instruction & 7;
-        int reg_base = (instruction >> 3) & 7;
+        int dst = instruction & 7;
+        int base = (instruction >> 3) & 7;
 
         switch (op)
         {
         case 0b00: { // STR
-            u32 address = m_reg[reg_base] + (imm << 2);
-            write_word(address, m_reg[reg_dest]);
+            u32 address = m_reg[base] + (imm << 2);
+            write_word(address, m_reg[dst]);
             break;
         }
         case 0b01: { // LDR
-            u32 address = m_reg[reg_base] + (imm << 2);
-            m_reg[reg_dest] = read_word_rotated(address);
+            u32 address = m_reg[base] + (imm << 2);
+            m_reg[dst] = read_word_rotated(address);
             break;
         }
         case 0b10: { // STRB
-            u32 address = m_reg[reg_base] + imm;
-            bus_write_byte(address, m_reg[reg_dest]);
+            u32 address = m_reg[base] + imm;
+            bus_write_byte(address, m_reg[dst]);
             break;
         }
         case 0b11: { // LDRB
-            u32 address = m_reg[reg_base] + imm;
-            m_reg[reg_dest] = bus_read_byte(address);
+            u32 address = m_reg[base] + imm;
+            m_reg[dst] = bus_read_byte(address);
             break;
         }
         }
@@ -439,21 +424,21 @@ namespace GBA
     void arm::thumb_10(u16 instruction)
     {
         // THUMB.10 Load/store halfword
-        int reg_dest = instruction & 7;
-        int reg_base = (instruction >> 3) & 7;
-        u32 address = m_reg[reg_base] + (imm << 1);
+        int dst = instruction & 7;
+        int base = (instruction >> 3) & 7;
+        u32 address = m_reg[base] + (imm << 1);
 
         if (load)
         {
-            m_reg[reg_dest] = read_hword(address); // TODO: alignment?
+            m_reg[dst] = read_hword(address); // TODO: alignment?
         }
         else
         {
-            write_hword(address, m_reg[reg_dest]);
+            write_hword(address, m_reg[dst]);
         }
     }
 
-    template <bool load, int reg_dest>
+    template <bool load, int dst>
     void arm::thumb_11(u16 instruction)
     {
         // THUMB.11 SP-relative load/store
@@ -463,15 +448,15 @@ namespace GBA
         // Is the load bit set? (ldr)
         if (load)
         {
-            m_reg[reg_dest] = read_word_rotated(address);
+            m_reg[dst] = read_word_rotated(address);
         }
         else
         {
-            write_word(address, m_reg[reg_dest]);
+            write_word(address, m_reg[dst]);
         }
     }
 
-    template <bool stackptr, int reg_dest>
+    template <bool stackptr, int dst>
     void arm::thumb_12(u16 instruction)
     {
         // THUMB.12 Load address
@@ -479,9 +464,9 @@ namespace GBA
 
         // Use stack pointer as base?
         if (stackptr)
-            m_reg[reg_dest] = m_reg[13] + (immediate_value << 2); // sp
+            m_reg[dst] = m_reg[13] + (immediate_value << 2); // sp
         else
-            m_reg[reg_dest] = (m_reg[15] & ~2) + (immediate_value << 2); // pc
+            m_reg[dst] = (m_reg[15] & ~2) + (immediate_value << 2); // pc
     }
 
     template <bool sub>
@@ -562,13 +547,13 @@ namespace GBA
         }
     }
 
-    template <bool load, int reg_base>
+    template <bool load, int base>
     void arm::thumb_15(u16 instruction)
     {
         // THUMB.15 Multiple load/store
         // TODO: Handle empty register list
         bool write_back = true;
-        u32 address = m_reg[reg_base];
+        u32 address = m_reg[base];
 
         // Is the load bit set? (ldmia or stmia)
         if (load)
@@ -586,8 +571,8 @@ namespace GBA
 
             // Write back address into the base register if specified
             // and the base register is not in the register list
-            if (write_back && !(instruction & (1 << reg_base)))
-                m_reg[reg_base] = address;
+            if (write_back && !(instruction & (1 << base)))
+                m_reg[base] = address;
         }
         else
         {
@@ -611,13 +596,13 @@ namespace GBA
                 {
                     // Write register to the base address. If the current register is the
                     // base register and also the first register instead the original base is written.
-                    if (i == reg_base && i == first_register)
-                        write_word(m_reg[reg_base], address);
+                    if (i == base && i == first_register)
+                        write_word(m_reg[base], address);
                     else
-                        write_word(m_reg[reg_base], m_reg[i]);
+                        write_word(m_reg[base], m_reg[i]);
 
                     // Update base address
-                    m_reg[reg_base] += 4;
+                    m_reg[base] += 4;
                 }
             }
         }
