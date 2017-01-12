@@ -37,25 +37,10 @@ namespace GBA
 
         m_reg[reg_dest] = m_reg[reg_source];
 
-        switch (type)
-        {
-        case 0: // LSL
-            logical_shift_left(m_reg[reg_dest], imm, carry);
-            set_carry(carry);
-            break;
-        case 1: // LSR
-            logical_shift_right(m_reg[reg_dest], imm, carry, true);
-            set_carry(carry);
-            break;
-        case 2: // ASR
-        {
-            arithmetic_shift_right(m_reg[reg_dest], imm, carry, true);
-            set_carry(carry);
-            break;
-        }
-        }
+        perform_shift(type, m_reg[reg_dest], imm, carry, true);
 
-        // Update sign and zero flag
+        // Update carry, sign and zero flag
+        set_carry(carry);
         update_sign(m_reg[reg_dest]);
         update_zero(m_reg[reg_dest]);
     }
