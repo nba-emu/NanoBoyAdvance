@@ -26,7 +26,6 @@
 #include "arm_enums.hpp"
 #include "util/integer.hpp"
 #include "util/log.h"
-#include "../memory.h"
 
 namespace GBA
 {

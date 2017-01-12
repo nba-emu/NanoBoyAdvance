@@ -28,7 +28,7 @@ namespace GBA
     #include "thumb_lut.hpp"
 
     template <int imm, int type>
-    void arm::Thumb1(u16 instruction)
+    void arm::thumb_1(u16 instruction)
     {
         // THUMB.1 Move shifted register
         int reg_dest = instruction & 7;
@@ -61,7 +61,7 @@ namespace GBA
     }
 
     template <bool immediate, bool subtract, int field3>
-    void arm::Thumb2(u16 instruction)
+    void arm::thumb_2(u16 instruction)
     {
         // THUMB.2 Add/subtract
         int reg_dest = instruction & 7;
@@ -103,7 +103,7 @@ namespace GBA
     }
 
     template <int op, int reg_dest>
-    void arm::Thumb3(u16 instruction)
+    void arm::thumb_3(u16 instruction)
     {
         // THUMB.3 Move/compare/add/subtract immediate
         u32 immediate_value = instruction & 0xFF;
@@ -149,7 +149,7 @@ namespace GBA
     }
 
     template <int op>
-    void arm::Thumb4(u16 instruction)
+    void arm::thumb_4(u16 instruction)
     {
         // THUMB.4 ALU operations
         int reg_dest = instruction & 7;
@@ -296,7 +296,7 @@ namespace GBA
     }
 
     template <int op, bool high1, bool high2>
-    void arm::Thumb5(u16 instruction)
+    void arm::thumb_5(u16 instruction)
     {
         // THUMB.5 Hi register operations/branch exchange
         int reg_dest = instruction & 7;
@@ -356,7 +356,7 @@ namespace GBA
     }
 
     template <int reg_dest>
-    void arm::Thumb6(u16 instruction)
+    void arm::thumb_6(u16 instruction)
     {
         // THUMB.6 PC-relative load
         u32 immediate_value = instruction & 0xFF;
@@ -366,10 +366,9 @@ namespace GBA
     }
 
     template <int op, int reg_offset>
-    void arm::Thumb7(u16 instruction)
+    void arm::thumb_7(u16 instruction)
     {
         // THUMB.7 Load/store with register offset
-        // TODO: check LDR(B) timings.
         int reg_dest = instruction & 7;
         int reg_base = (instruction >> 3) & 7;
         u32 address = m_reg[reg_base] + m_reg[reg_offset];
@@ -392,7 +391,7 @@ namespace GBA
     }
 
     template <int op, int reg_offset>
-    void arm::Thumb8(u16 instruction)
+    void arm::thumb_8(u16 instruction)
     {
         // THUMB.8 Load/store sign-extended byte/halfword
         int reg_dest = instruction & 7;
@@ -420,7 +419,7 @@ namespace GBA
     }
 
     template <int op, int imm>
-    void arm::Thumb9(u16 instruction)
+    void arm::thumb_9(u16 instruction)
     {
         // THUMB.9 Load store with immediate offset
         int reg_dest = instruction & 7;
@@ -452,7 +451,7 @@ namespace GBA
     }
 
     template <bool load, int imm>
-    void arm::Thumb10(u16 instruction)
+    void arm::thumb_10(u16 instruction)
     {
         // THUMB.10 Load/store halfword
         int reg_dest = instruction & 7;
@@ -470,7 +469,7 @@ namespace GBA
     }
 
     template <bool load, int reg_dest>
-    void arm::Thumb11(u16 instruction)
+    void arm::thumb_11(u16 instruction)
     {
         // THUMB.11 SP-relative load/store
         u32 immediate_value = instruction & 0xFF;
@@ -488,7 +487,7 @@ namespace GBA
     }
 
     template <bool stackptr, int reg_dest>
-    void arm::Thumb12(u16 instruction)
+    void arm::thumb_12(u16 instruction)
     {
         // THUMB.12 Load address
         u32 immediate_value = instruction & 0xFF;
@@ -501,7 +500,7 @@ namespace GBA
     }
 
     template <bool sub>
-    void arm::Thumb13(u16 instruction)
+    void arm::thumb_13(u16 instruction)
     {
         // THUMB.13 Add offset to stack pointer
         u32 immediate_value = (instruction & 0x7F) << 2;
@@ -514,7 +513,7 @@ namespace GBA
     }
 
     template <bool pop, bool rbit>
-    void arm::Thumb14(u16 instruction)
+    void arm::thumb_14(u16 instruction)
     {
         // THUMB.14 push/pop registers
         // TODO: how to handle an empty register list?
@@ -579,7 +578,7 @@ namespace GBA
     }
 
     template <bool load, int reg_base>
-    void arm::Thumb15(u16 instruction)
+    void arm::thumb_15(u16 instruction)
     {
         // THUMB.15 Multiple load/store
         // TODO: Handle empty register list
@@ -640,12 +639,10 @@ namespace GBA
     }
 
     template <int cond>
-    void arm::Thumb16(u16 instruction)
+    void arm::thumb_16(u16 instruction)
     {
         // THUMB.16 Conditional branch
         u32 signed_immediate = instruction & 0xFF;
-
-        cycles += Memory::SequentialAccess(m_reg[15], ACCESS_HWORD);
 
         // Check if the instruction will be executed
         switch (cond)
@@ -675,7 +672,7 @@ namespace GBA
         m_pipeline.m_needs_flush = true;
     }
 
-    void arm::Thumb17(u16 instruction)
+    void arm::thumb_17(u16 instruction)
     {
         // THUMB.17 Software Interrupt
         u8 bios_call = bus_read_byte(m_reg[15] - 4);
@@ -711,7 +708,7 @@ namespace GBA
         }
     }
 
-    void arm::Thumb18(u16 instruction)
+    void arm::thumb_18(u16 instruction)
     {
         // THUMB.18 Unconditional branch
         u32 immediate_value = (instruction & 0x3FF) << 1;
@@ -726,7 +723,7 @@ namespace GBA
     }
 
     template <bool h>
-    void arm::Thumb19(u16 instruction)
+    void arm::thumb_19(u16 instruction)
     {
         // THUMB.19 Long branch with link.
         u32 immediate_value = instruction & 0x7FF;
