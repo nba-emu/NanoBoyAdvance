@@ -112,7 +112,7 @@ namespace GBA
 
             // Execute the thumb instruction via a method lut.
             u16 instruction = m_pipeline.m_opcode[m_pipeline.m_index];
-            (this->*THUMB_TABLE[instruction >> 6])(instruction);
+            (this->*thumb_lut[instruction >> 6])(instruction);
         }
         else
         {

@@ -29,6 +29,7 @@ set(HEADERS
     arm/arm_emu.hpp
     arm/arm_lut.hpp
     arm/thumb_emu.hpp
+    arm/thumb_lut.hpp
     arm_gba.hpp
     io.hpp
     interrupt.hpp

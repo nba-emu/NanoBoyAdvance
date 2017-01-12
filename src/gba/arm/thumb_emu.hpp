@@ -1,5 +1,5 @@
-typedef void (arm::*ThumbInstruction)(u16);
-static const ThumbInstruction THUMB_TABLE[1024];
+typedef void (arm::*thumb_instruction)(u16);
+static const thumb_instruction thumb_lut[1024];
 
 template <int imm, int type>
 void Thumb1(u16 instruction);
