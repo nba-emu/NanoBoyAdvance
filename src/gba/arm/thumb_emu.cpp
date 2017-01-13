@@ -95,7 +95,6 @@ namespace GBA
 
         case 0b01: // CMP
             result = m_reg[dst] - immediate_value;
-
             set_carry(m_reg[dst] >= immediate_value);
             update_overflow_sub(result, m_reg[dst], immediate_value);
             break;
@@ -103,19 +102,15 @@ namespace GBA
         {
             u64 result_long = (u64)m_reg[dst] + (u64)immediate_value;
             result = (u32)result_long;
-
             set_carry(result_long & 0x100000000);
             update_overflow_add(result, m_reg[dst], immediate_value);
-
             m_reg[dst] = result;
             break;
         }
         case 0b11: // SUB
             result = m_reg[dst] - immediate_value;
-
             set_carry(m_reg[dst] >= immediate_value);
             update_overflow_sub(result, m_reg[dst], immediate_value);
-
             m_reg[dst] = result;
             break;
         }
@@ -276,7 +271,7 @@ namespace GBA
     {
         // THUMB.5 Hi register operations/branch exchange
         u32 operand;
-        bool compare = false;
+        bool perform_check = true;
         int dst = instruction & 7;
         int src = (instruction >> 3) & 7;
 
@@ -298,7 +293,7 @@ namespace GBA
             update_overflow_sub(result, m_reg[dst], operand);
             update_sign(result);
             update_zero(result);
-            compare = true;
+            perform_check = false;
             break;
         }
         case 2: // MOV
@@ -315,10 +310,11 @@ namespace GBA
                 m_reg[15] = operand & ~3;
             }
             m_pipeline.m_needs_flush = true;
+            perform_check = false;
             break;
         }
 
-        if (dst == 15 && !compare && op != 0b11)
+        if (perform_check && dst == 15)
         {
             m_reg[dst] &= ~1;
             m_pipeline.m_needs_flush = true;
@@ -349,7 +345,7 @@ namespace GBA
             write_word(address, m_reg[dst]);
             break;
         case 0b01: // STRB
-            bus_write_byte(address, m_reg[dst] & 0xFF);
+            bus_write_byte(address, (u8)m_reg[dst]);
             break;
         case 0b10: // LDR
             m_reg[dst] = read_word_rotated(address);
@@ -429,13 +425,9 @@ namespace GBA
         u32 address = m_reg[base] + (imm << 1);
 
         if (load)
-        {
-            m_reg[dst] = read_hword(address); // TODO: alignment?
-        }
+            m_reg[dst] = read_hword(address);
         else
-        {
             write_hword(address, m_reg[dst]);
-        }
     }
 
     template <bool load, int dst>
@@ -445,28 +437,20 @@ namespace GBA
         u32 immediate_value = instruction & 0xFF;
         u32 address = m_reg[13] + (immediate_value << 2);
 
-        // Is the load bit set? (ldr)
         if (load)
-        {
             m_reg[dst] = read_word_rotated(address);
-        }
         else
-        {
             write_word(address, m_reg[dst]);
-        }
     }
 
     template <bool stackptr, int dst>
     void arm::thumb_12(u16 instruction)
     {
         // THUMB.12 Load address
-        u32 immediate_value = instruction & 0xFF;
+        u32 source_value = stackptr ? m_reg[13] : (m_reg[15] & ~2);
+        u32 immediate_value = (instruction & 0xFF) << 2;
 
-        // Use stack pointer as base?
-        if (stackptr)
-            m_reg[dst] = m_reg[13] + (immediate_value << 2); // sp
-        else
-            m_reg[dst] = (m_reg[15] & ~2) + (immediate_value << 2); // pc
+        m_reg[dst] = source_value + immediate_value;
     }
 
     template <bool sub>
@@ -475,76 +459,76 @@ namespace GBA
         // THUMB.13 Add offset to stack pointer
         u32 immediate_value = (instruction & 0x7F) << 2;
 
-        // Immediate-value is negative?
-        if (sub)
-            m_reg[13] -= immediate_value;
-        else
-            m_reg[13] += immediate_value;
+        m_reg[13] += sub ? -immediate_value : immediate_value;
     }
 
     template <bool pop, bool rbit>
     void arm::thumb_14(u16 instruction)
     {
         // THUMB.14 push/pop registers
-        // TODO: how to handle an empty register list?
+        u32 addr = m_reg[13];
+        const int register_list = instruction & 0xFF;
 
-        // Is this a POP instruction?
-        if (pop)
+        // hardware corner case. not sure if emulated correctly.
+        if (!rbit && register_list == 0)
         {
-            // Iterate through the entire register list
-            for (int i = 0; i <= 7; i++)
+            if (pop)
             {
-                // Pop into this register?
-                if (instruction & (1 << i))
-                {
-                    u32 address = m_reg[13];
-
-                    // Read word and update SP.
-                    m_reg[i] = read_word(address);
-                    m_reg[13] += 4;
-                }
-            }
-
-            // Also pop r15/pc if neccessary
-            if (rbit)
-            {
-                u32 address = m_reg[13];
-
-                // Read word and update SP.
-                m_reg[15] = read_word(m_reg[13]) & ~1;
-                m_reg[13] += 4;
-
+                m_reg[15] = read_word(addr);
                 m_pipeline.m_needs_flush = true;
             }
+            else
+            {
+                write_word(addr, m_reg[15]);
+            }
+            m_reg[13] += pop ? 64 : -64;
+            return;
         }
-        else
+
+        if (!pop) // i.e. push
         {
-            // Push r14/lr if neccessary
-            if (rbit)
-            {
-                u32 address;
+            int register_count = 0;
 
-                // Write word and update SP.
-                m_reg[13] -= 4;
-                address = m_reg[13];
-                write_word(address, m_reg[14]);
+            for (int i = 0; i <= 7; i++)
+            {
+                if (register_list & (1 << i))
+                    register_count++;
             }
 
-            // Iterate through the entire register list
-            for (int i = 7; i >= 0; i--)
-            {
-                // Push this register?
-                if (instruction & (1 << i))
-                {
-                    u32 address;
+            if (rbit) register_count++;
 
-                    // Write word and update SP.
-                    m_reg[13] -= 4;
-                    address = m_reg[13];
-                    write_word(address, m_reg[i]);
-                }
+            addr -= register_count * 4;
+            m_reg[13] = addr;
+        }
+
+        // perform load/store multiple
+        for (int i = 0; i <= 7; i++)
+        {
+            if (register_list & (1 << i))
+            {
+                if (pop)
+                    m_reg[i] = read_word(addr);
+                else
+                    write_word(addr, m_reg[i]);
+                addr += 4;
             }
         }
+
+        if (rbit)
+        {
+            if (pop)
+            {
+                m_reg[15] = read_word(addr) & ~1;
+                m_pipeline.m_needs_flush = true;
+            }
+            else
+            {
+                write_word(addr, m_reg[14]);
+            }
+            addr += 4;
+        }
+
+        if (pop) m_reg[13] = addr;
     }
 
     template <bool load, int base>

@@ -677,10 +677,16 @@ namespace GBA
         if (register_list == 0)
         {
             if (load)
+            {
                 m_reg[15] = read_word(m_reg[base]);
+                m_pipeline.m_needs_flush = true;
+            }
             else
+            {
                 write_word(m_reg[base], m_reg[15]);
+            }
             m_reg[base] += base_increment ? 64 : -64;
+            return;
         }
 
         if (user_mode && (!load || !transfer_r15))
