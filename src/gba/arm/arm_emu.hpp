@@ -25,7 +25,16 @@ typedef void (arm::*arm_instruction)(u32);
 
 static const arm_instruction arm_lut[4096];
 
-void arm_execute(u32 instruction);
+inline void arm_execute(u32 instruction)
+{
+    cpu_condition condition = static_cast<cpu_condition>(instruction >> 28);
+
+    if (check_condition(condition))
+    {
+        int index = ((instruction >> 16) & 0xFF0) | ((instruction >> 4) & 0xF);
+        (this->*arm_lut[index])(instruction);
+    }
+}
 
 template <bool immediate, int opcode, bool _set_flags, int field4>
 void arm_data_processing(u32 instruction);

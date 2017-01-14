@@ -40,7 +40,7 @@ namespace GBA
         m_cpsr = MODE_SYS;
         m_spsr_ptr = &m_spsr[SPSR_DEF];
 
-        // Skip bios boot logo
+        // skip bios boot logo
         m_reg[15] = 0x8000000;
         m_reg[13] = 0x3007F00;
         m_bank[BANK_SVC][BANK_R13] = 0x3007FE0;
@@ -110,9 +110,7 @@ namespace GBA
             else
                 m_pipeline.m_opcode[m_pipeline.m_index - 1] = read_hword(m_reg[15]);
 
-            // Execute the thumb instruction via a method lut.
-            u16 instruction = m_pipeline.m_opcode[m_pipeline.m_index];
-            (this->*thumb_lut[instruction >> 6])(instruction);
+            thumb_execute(m_pipeline.m_opcode[m_pipeline.m_index]);
         }
         else
         {
@@ -123,7 +121,6 @@ namespace GBA
             else
                 m_pipeline.m_opcode[m_pipeline.m_index - 1] = read_word(m_reg[15]);
 
-            //arm_execute(m_pipeline.m_opcode[m_pipeline.m_index], arm_decode(m_pipeline.m_opcode[m_pipeline.m_index]));
             arm_execute(m_pipeline.m_opcode[m_pipeline.m_index]);
         }
 
@@ -148,15 +145,15 @@ namespace GBA
 
         bool thumb = m_cpsr & MASK_THUMB;
 
-        // Store return address in r14<irq>
+        // store return address in r14<irq>
         m_bank[BANK_IRQ][BANK_R14] = m_reg[15] - (thumb ? 4 : 8) + 4;
 
-        // Save program status and switch mode
+        // save program status and switch mode
         m_spsr[SPSR_IRQ] = m_cpsr;
         switch_mode(MODE_IRQ);
         m_cpsr = (m_cpsr & ~MASK_THUMB) | MASK_IRQD;
 
-        // Jump to exception vector
+        // jump to exception vector
         m_reg[15] = EXCPT_INTERRUPT;
         m_pipeline.m_index = 0;
         m_pipeline.m_needs_flush = false;

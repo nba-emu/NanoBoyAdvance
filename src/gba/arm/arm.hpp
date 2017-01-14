@@ -75,6 +75,8 @@ namespace GBA
         static cpu_bank mode_to_bank(cpu_mode mode);
         void switch_mode(cpu_mode new_mode);
 
+        bool check_condition(cpu_condition condition);
+
         // arithmetic flag calculation
         void update_sign(u32 result);
         void update_zero(u64 result);

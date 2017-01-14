@@ -27,37 +27,6 @@ namespace GBA
 {
     #include "arm_lut.hpp"
 
-    void arm::arm_execute(u32 instruction)
-    {
-        int condition = instruction >> 28;
-
-        if (condition != 0xE)
-        {
-            switch (condition)
-            {
-            case 0x0: if (!(m_cpsr & MASK_ZFLAG))     return; break;
-            case 0x1: if (  m_cpsr & MASK_ZFLAG)      return; break;
-            case 0x2: if (!(m_cpsr & MASK_CFLAG))    return; break;
-            case 0x3: if (  m_cpsr & MASK_CFLAG)     return; break;
-            case 0x4: if (!(m_cpsr & MASK_NFLAG))     return; break;
-            case 0x5: if (  m_cpsr & MASK_NFLAG)      return; break;
-            case 0x6: if (!(m_cpsr & MASK_VFLAG)) return; break;
-            case 0x7: if (  m_cpsr & MASK_VFLAG)  return; break;
-            case 0x8: if (!(m_cpsr & MASK_CFLAG) ||  (m_cpsr & MASK_ZFLAG)) return; break;
-            case 0x9: if ( (m_cpsr & MASK_CFLAG) && !(m_cpsr & MASK_ZFLAG)) return; break;
-            case 0xA: if ((m_cpsr & MASK_NFLAG) != (m_cpsr & MASK_VFLAG)) return; break;
-            case 0xB: if ((m_cpsr & MASK_NFLAG) == (m_cpsr & MASK_VFLAG)) return; break;
-            case 0xC: if ((m_cpsr & MASK_ZFLAG) || ((m_cpsr & MASK_NFLAG) != (m_cpsr & MASK_VFLAG))) return; break;
-            case 0xD: if (!(m_cpsr & MASK_ZFLAG) && ((m_cpsr & MASK_NFLAG) == (m_cpsr & MASK_VFLAG))) return; break;
-            case 0xE: break;
-            case 0xF: return;
-            }
-        }
-
-        int index = ((instruction >> 16) & 0xFF0) | ((instruction >> 4) & 0xF);
-        (this->*arm_lut[index])(instruction);
-    }
-
     template <bool immediate, int opcode, bool _set_flags, int field4>
     void arm::arm_data_processing(u32 instruction)
     {
@@ -783,7 +752,7 @@ namespace GBA
             switch_mode(MODE_SVC);
             m_cpsr |= MASK_IRQD;
 
-            // jump to execution vector
+            // jump to exception vector
             m_reg[15] = EXCPT_SWI;
             m_pipeline.m_needs_flush = true;
         }

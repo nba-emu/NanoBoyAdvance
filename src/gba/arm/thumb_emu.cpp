@@ -596,69 +596,42 @@ namespace GBA
     void arm::thumb_16(u16 instruction)
     {
         // THUMB.16 Conditional branch
-        u32 signed_immediate = instruction & 0xFF;
-
-        // Check if the instruction will be executed
-        switch (cond)
+        if (check_condition(static_cast<cpu_condition>(cond)))
         {
-        case 0x0: if (!(m_cpsr & MASK_ZFLAG))     return; break;
-        case 0x1: if (  m_cpsr & MASK_ZFLAG)      return; break;
-        case 0x2: if (!(m_cpsr & MASK_CFLAG))    return; break;
-        case 0x3: if (  m_cpsr & MASK_CFLAG)     return; break;
-        case 0x4: if (!(m_cpsr & MASK_NFLAG))     return; break;
-        case 0x5: if (  m_cpsr & MASK_NFLAG)      return; break;
-        case 0x6: if (!(m_cpsr & MASK_VFLAG)) return; break;
-        case 0x7: if (  m_cpsr & MASK_VFLAG)  return; break;
-        case 0x8: if (!(m_cpsr & MASK_CFLAG) ||  (m_cpsr & MASK_ZFLAG)) return; break;
-        case 0x9: if ( (m_cpsr & MASK_CFLAG) && !(m_cpsr & MASK_ZFLAG)) return; break;
-        case 0xA: if ((m_cpsr & MASK_NFLAG) != (m_cpsr & MASK_VFLAG)) return; break;
-        case 0xB: if ((m_cpsr & MASK_NFLAG) == (m_cpsr & MASK_VFLAG)) return; break;
-        case 0xC: if ((m_cpsr & MASK_ZFLAG) || ((m_cpsr & MASK_NFLAG) != (m_cpsr & MASK_VFLAG))) return; break;
-        case 0xD: if (!(m_cpsr & MASK_ZFLAG) && ((m_cpsr & MASK_NFLAG) == (m_cpsr & MASK_VFLAG))) return; break;
+            u32 signed_immediate = instruction & 0xFF;
+
+            // Sign-extend the immediate value if neccessary
+            if (signed_immediate & 0x80)
+                signed_immediate |= 0xFFFFFF00;
+
+            // Update r15/pc and flush pipe
+            m_reg[15] += (signed_immediate << 1);
+            m_pipeline.m_needs_flush = true;
         }
-
-        // Sign-extend the immediate value if neccessary
-        if (signed_immediate & 0x80)
-            signed_immediate |= 0xFFFFFF00;
-
-        // Update r15/pc and flush pipe
-        m_reg[15] += (signed_immediate << 1);
-        m_pipeline.m_needs_flush = true;
     }
 
     void arm::thumb_17(u16 instruction)
     {
         // THUMB.17 Software Interrupt
-        u8 bios_call = bus_read_byte(m_reg[15] - 4);
+        u8 call_number = bus_read_byte(m_reg[15] - 4);
 
-        // Log SWI to the console
-        #ifdef DEBUG
-        LOG(LOG_INFO, "swi 0x%x r0=0x%x, r1=0x%x, r2=0x%x, r3=0x%x, lr=0x%x, pc=0x%x (thumb)",
-            bios_call, m_reg[0], m_reg[1], m_reg[2], m_reg[3], m_reg[14], m_reg[15]);
-        #endif
-
-        // Dispatch SWI, either HLE or BIOS.
-        if (m_hle)
+        if (!m_hle)
         {
-            software_interrupt(bios_call);
+            // save return address and program status
+            m_bank[BANK_SVC][BANK_R14] = m_reg[15] - 2;
+            m_spsr[SPSR_SVC] = m_cpsr;
+
+            // switch to SVC mode and disable interrupts
+            switch_mode(MODE_SVC);
+            m_cpsr = (m_cpsr & ~MASK_THUMB) | MASK_IRQD;
+
+            // jump to exception vector
+            m_reg[15] = EXCPT_SWI;
+            m_pipeline.m_needs_flush = true;
         }
         else
         {
-            // Store return address in r14<svc>
-            ////m_svc.m_r14 = m_reg[15] - 2;
-            m_bank[BANK_SVC][BANK_R14] = m_reg[15] - 2;
-
-            // Save program status and switch mode
-            ////SaveRegisters();
-            m_spsr[SPSR_SVC] = m_cpsr;
-            switch_mode(MODE_SVC);
-            m_cpsr = (m_cpsr & ~MASK_THUMB) | MASK_IRQD;
-            ////m_cpsr = (m_cpsr & ~(MASK_MODE | MASK_THUMB)) | MODE_SVC | MASK_IRQD;
-            ////LoadRegisters();
-
-            // Jump to exception vector
-            m_reg[15] = EXCPT_SWI;
-            m_pipeline.m_needs_flush = true;
+            software_interrupt(call_number);
         }
     }
 

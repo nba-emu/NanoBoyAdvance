@@ -75,15 +75,15 @@ void sdl_init(int width, int height)
         printf("SDL_Init Error: %s\n", SDL_GetError());
         SDL_Quit();
     }
-    
+
     // Create SDL2 Window
     window = SDL_CreateWindow("NanoboyAdvance", 100, 100, width, height, SDL_WINDOW_SHOWN);
-    if (window == nullptr) 
+    if (window == nullptr)
     {
         cout << "SDL_CreateWindow Error: " << SDL_GetError() << endl;
         SDL_Quit();
     }
-    
+
     // Create renderer
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (renderer == nullptr)
@@ -94,7 +94,7 @@ void sdl_init(int width, int height)
     }
 
     // Create SDL surface
-    surface = SDL_CreateRGBSurface(0, width, height, 32, 
+    surface = SDL_CreateRGBSurface(0, width, height, 32,
                                    0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
     if (surface == nullptr)
     {
@@ -106,7 +106,7 @@ void sdl_init(int width, int height)
 
     // Create SDL texture
     texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
-    if (texture == nullptr) 
+    if (texture == nullptr)
     {
         SDL_FreeSurface(surface);
         SDL_DestroyRenderer(renderer);
@@ -120,7 +120,7 @@ void sdl_init(int width, int height)
     window_height = height;
 }
 
-void create_screenshot() 
+void create_screenshot()
 {
     FILE* fp = fopen("screenshot.png", "wb");
     png_structp png_ptr = NULL;
@@ -147,7 +147,7 @@ void create_screenshot()
         png_byte* row = (png_byte*)png_malloc(png_ptr, window_width * sizeof(u32));
         rows[y] = row;
 
-        for (int x = 0; x < window_width; x++) 
+        for (int x = 0; x < window_width; x++)
         {
             u32 argb = buffer[y * window_width + x];
             *row++ = (argb >> 16) & 0xFF;
@@ -161,7 +161,7 @@ void create_screenshot()
     png_set_rows(png_ptr, info_ptr, rows);
     png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
 
-    for (int y = 0; y < window_height; y++) 
+    for (int y = 0; y < window_height; y++)
         png_free(png_ptr, rows[y]);
 
     png_free(png_ptr, rows);
@@ -222,7 +222,7 @@ int main(int argc, char** argv)
         // Dump screenshot on F10
         if (kb_state[SDL_SCANCODE_F10])
             create_screenshot();
-        
+
         // Update Keypad Input
         gba->SetKeyState(GBA::GBA::Key::A,           kb_state[SDL_SCANCODE_A]);
         gba->SetKeyState(GBA::GBA::Key::B,      kb_state[SDL_SCANCODE_S]);
@@ -251,7 +251,7 @@ int main(int argc, char** argv)
 
         // Update FPS counter
         ticks_now = SDL_GetTicks();
-        if (ticks_now - ticks_start >= 1000) 
+        if (ticks_now - ticks_start >= 1000)
         {
             string title = "NanoboyAdvance [" + std::to_string(frames) + "fps]";
             SDL_SetWindowTitle(window, title.c_str());
@@ -273,7 +273,7 @@ int main(int argc, char** argv)
                 running = false;
         }
     }
-    
+
     // Free stuff (emulator)
     delete gba;
 

@@ -150,6 +150,32 @@ namespace GBA
         }
     }
 
+    inline bool arm::check_condition(cpu_condition condition)
+    {
+        if (condition == COND_AL) return true;
+
+        switch (condition)
+        {
+        case COND_EQ: return m_cpsr & MASK_ZFLAG;
+        case COND_NE: return ~m_cpsr & MASK_ZFLAG;
+        case COND_CS: return m_cpsr & MASK_CFLAG;
+        case COND_CC: return ~m_cpsr & MASK_CFLAG;
+        case COND_MI: return m_cpsr & MASK_NFLAG;
+        case COND_PL: return ~m_cpsr & MASK_NFLAG;
+        case COND_VS: return m_cpsr & MASK_VFLAG;
+        case COND_VC: return ~m_cpsr & MASK_VFLAG;
+        case COND_HI: return (m_cpsr & MASK_CFLAG) && (~m_cpsr & MASK_ZFLAG);
+        case COND_LS: return (~m_cpsr & MASK_CFLAG) || (m_cpsr & MASK_ZFLAG);
+        case COND_GE: return (m_cpsr & MASK_NFLAG) == (m_cpsr & MASK_VFLAG);
+        case COND_LT: return (m_cpsr & MASK_NFLAG) != (m_cpsr & MASK_VFLAG);
+        case COND_GT: return (~m_cpsr & MASK_ZFLAG) && ((m_cpsr & MASK_NFLAG) == (m_cpsr & MASK_VFLAG));
+        case COND_LE: return (m_cpsr & MASK_ZFLAG) || ((m_cpsr & MASK_NFLAG) != (m_cpsr & MASK_VFLAG));
+        case COND_AL: return true; // dummy
+        case COND_NV: return false;
+        }
+        return false;
+    }
+
     inline u32 arm::read_hword(u32 offset)
     {
         if (offset & 1)
