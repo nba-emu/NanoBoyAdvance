@@ -50,9 +50,9 @@ namespace GBA
                 m_LastFrequency = m_CurrentFrequency;
 
                 if (m_SweepDirection == SWEEP_ADD)
-                    m_CurrentFrequency = m_LastFrequency + m_LastFrequency / (2 << m_SweepShift);
+                    m_CurrentFrequency = m_LastFrequency + m_LastFrequency / (1 << m_SweepShift);
                 else
-                    m_CurrentFrequency = m_LastFrequency - m_LastFrequency / (2 << m_SweepShift);
+                    m_CurrentFrequency = m_LastFrequency - m_LastFrequency / (1 << m_SweepShift);
             }
         }
 
