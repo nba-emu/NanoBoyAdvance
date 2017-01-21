@@ -25,7 +25,6 @@
 
 #include "arm_enums.hpp"
 #include "util/integer.hpp"
-#include "util/log.h"
 
 namespace GBA
 {
@@ -99,8 +98,8 @@ namespace GBA
         void write_word(u32 offset, u32 value);
         void refill_pipeline();
 
-        #include "arm_emu.hpp"
-        #include "thumb_emu.hpp"
+        #include "arm/arm_emu.hpp"
+        #include "thumb/thumb_emu.hpp"
     };
 }
 
