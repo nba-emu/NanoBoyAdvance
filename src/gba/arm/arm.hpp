@@ -23,8 +23,9 @@
 
 #pragma once
 
-#include "arm_enums.hpp"
+#include "enums.hpp"
 #include "util/integer.hpp"
+#define ARM_INCLUDE
 
 namespace GBA
 {
@@ -73,34 +74,23 @@ namespace GBA
     private:
         static cpu_bank mode_to_bank(cpu_mode mode);
         void switch_mode(cpu_mode new_mode);
-
-        bool check_condition(cpu_condition condition);
-
-        // arithmetic flag calculation
-        void update_sign(u32 result);
-        void update_zero(u64 result);
-        void set_carry(bool carry);
-        void update_overflow_add(u32 result, u32 operand1, u32 operand2);
-        void update_overflow_sub(u32 result, u32 operand1, u32 operand2);
-
-        // shifting helpers
-        static void logical_shift_left(u32& operand, u32 amount, bool& carry);
-        static void logical_shift_right(u32& operand, u32 amount, bool& carry, bool immediate);
-        static void arithmetic_shift_right(u32& operand, u32 amount, bool& carry, bool immediate);
-        static void rotate_right(u32& operand, u32 amount, bool& carry, bool immediate);
-        static void perform_shift(int shift, u32& operand, u32 amount, bool& carry, bool immediate);
-
-        u32 read_hword(u32 offset);
-        u32 read_hword_signed(u32 offset);
-        u32 read_word(u32 offset);
-        u32 read_word_rotated(u32 offset);
-        void write_hword(u32 offset, u16 value);
-        void write_word(u32 offset, u32 value);
         void refill_pipeline();
 
+        // conditional helpers
+        #include "flags.hpp"
+
+        // memory access helpers
+        #include "memory.hpp"
+
+        // shifting helpers
+        #include "shifting.hpp"
+
+        // ARM and THUMB interpreter cores
         #include "arm/arm_emu.hpp"
         #include "thumb/thumb_emu.hpp"
     };
 }
 
 #include "arm.inl"
+
+#undef ARM_INCLUDE

@@ -21,7 +21,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#pragma once
+#ifdef ARM_INCLUDE
 
 const arm::thumb_instruction arm::thumb_lut[1024] =
 {
@@ -318,3 +318,5 @@ const arm::thumb_instruction arm::thumb_lut[1024] =
     &arm::thumb_19<1>, &arm::thumb_19<1>, &arm::thumb_19<1>, &arm::thumb_19<1>,
     &arm::thumb_19<1>, &arm::thumb_19<1>, &arm::thumb_19<1>, &arm::thumb_19<1>
 };
+
+#endif

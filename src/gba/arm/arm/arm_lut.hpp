@@ -21,7 +21,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#pragma once
+#ifdef ARM_INCLUDE
 
 // build using this small hacked-together util: https://hastebin.com/ojadolidup.cpp
 const arm::arm_instruction arm::arm_lut[4096] =
@@ -4123,3 +4123,5 @@ const arm::arm_instruction arm::arm_lut[4096] =
     &arm::arm_swi,
     &arm::arm_swi
 };
+
+#endif
