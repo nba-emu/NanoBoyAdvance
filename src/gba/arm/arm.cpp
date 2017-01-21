@@ -24,7 +24,7 @@
 #include <cstring>
 #include "arm.hpp"
 
-namespace GBA
+namespace armigo
 {
     arm::arm()
     {

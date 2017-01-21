@@ -1,6 +1,6 @@
 #pragma once
 
-namespace GBA
+namespace armigo
 {
     enum cpu_mode
     {

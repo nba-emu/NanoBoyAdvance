@@ -27,7 +27,7 @@
 #include "util/integer.hpp"
 #define ARM_INCLUDE
 
-namespace GBA
+namespace armigo
 {
     class arm
     {

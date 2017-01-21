@@ -24,7 +24,7 @@
 #include "../arm.hpp"
 #define ARM_INCLUDE
 
-namespace GBA
+namespace armigo
 {
     #include "arm_lut.hpp"
 

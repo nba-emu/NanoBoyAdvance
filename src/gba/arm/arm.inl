@@ -23,7 +23,7 @@
 
 #pragma once
 
-namespace GBA
+namespace armigo
 {
     inline cpu_bank arm::mode_to_bank(cpu_mode mode)
     {
