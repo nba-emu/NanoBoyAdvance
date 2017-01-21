@@ -231,7 +231,7 @@ namespace GBA
         bus_write_word(offset & ~3, value);
     }
 
-    inline void arm::RefillPipeline()
+    inline void arm::refill_pipeline()
     {
         if (m_cpsr & MASK_THUMB)
         {

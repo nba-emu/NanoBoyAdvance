@@ -45,7 +45,7 @@ namespace GBA
         m_reg[13] = 0x3007F00;
         m_bank[BANK_SVC][BANK_R13] = 0x3007FE0;
         m_bank[BANK_IRQ][BANK_R13] = 0x3007FA0;
-        RefillPipeline();
+        refill_pipeline();
     }
 
     // Based on mGBA (endrift's) approach to banking.
@@ -128,7 +128,7 @@ namespace GBA
         {
             m_pipeline.m_index = 0;
             m_pipeline.m_needs_flush = false;
-            RefillPipeline();
+            refill_pipeline();
             return;
         }
 
@@ -157,6 +157,6 @@ namespace GBA
         m_reg[15] = EXCPT_INTERRUPT;
         m_pipeline.m_index = 0;
         m_pipeline.m_needs_flush = false;
-        RefillPipeline();
+        refill_pipeline();
     }
 }

@@ -97,7 +97,7 @@ namespace GBA
         u32 read_word_rotated(u32 offset);
         void write_hword(u32 offset, u16 value);
         void write_word(u32 offset, u32 value);
-        void RefillPipeline();
+        void refill_pipeline();
 
         #include "arm_emu.hpp"
         #include "thumb_emu.hpp"
