@@ -103,14 +103,10 @@ const arm::thumb_instruction arm::thumb_lut[1024] =
 
     /* THUMB.5 High register operations/branch exchange
      * TODO: Eventually move BX into it's own method. */
-    &arm::thumb_5<0,0,0>, &arm::thumb_5<0,0,1>,
-    &arm::thumb_5<0,1,0>, &arm::thumb_5<0,1,1>,
-    &arm::thumb_5<1,0,0>, &arm::thumb_5<1,0,1>,
-    &arm::thumb_5<1,1,0>, &arm::thumb_5<1,1,1>,
-    &arm::thumb_5<2,0,0>, &arm::thumb_5<2,0,1>,
-    &arm::thumb_5<2,1,0>, &arm::thumb_5<2,1,1>,
-    &arm::thumb_5<3,0,0>, &arm::thumb_5<3,0,1>,
-    &arm::thumb_5<3,1,0>, &arm::thumb_5<3,1,1>,
+    &arm::thumb_5<0,0,0>, &arm::thumb_5<0,0,1>, &arm::thumb_5<0,1,0>, &arm::thumb_5<0,1,1>,
+    &arm::thumb_5<1,0,0>, &arm::thumb_5<1,0,1>, &arm::thumb_5<1,1,0>, &arm::thumb_5<1,1,1>,
+    &arm::thumb_5<2,0,0>, &arm::thumb_5<2,0,1>, &arm::thumb_5<2,1,0>, &arm::thumb_5<2,1,1>,
+    &arm::thumb_5<3,0,0>, &arm::thumb_5<3,0,1>, &arm::thumb_5<3,1,0>, &arm::thumb_5<3,1,1>,
 
     /* THUMB.6 PC-relative load */
     &arm::thumb_6<0>, &arm::thumb_6<0>, &arm::thumb_6<0>, &arm::thumb_6<0>,
@@ -320,5 +316,5 @@ const arm::thumb_instruction arm::thumb_lut[1024] =
     &arm::thumb_19<1>, &arm::thumb_19<1>, &arm::thumb_19<1>, &arm::thumb_19<1>,
     &arm::thumb_19<1>, &arm::thumb_19<1>, &arm::thumb_19<1>, &arm::thumb_19<1>,
     &arm::thumb_19<1>, &arm::thumb_19<1>, &arm::thumb_19<1>, &arm::thumb_19<1>,
-    &arm::thumb_19<1>, &arm::thumb_19<1>, &arm::thumb_19<1>, &arm::thumb_19<1>,
+    &arm::thumb_19<1>, &arm::thumb_19<1>, &arm::thumb_19<1>, &arm::thumb_19<1>
 };
