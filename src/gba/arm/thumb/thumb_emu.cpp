@@ -604,11 +604,11 @@ namespace armigo
         {
             u32 signed_immediate = instruction & 0xFF;
 
-            // Sign-extend the immediate value if neccessary
+            // sign-extend the immediate value if neccessary
             if (signed_immediate & 0x80)
                 signed_immediate |= 0xFFFFFF00;
 
-            // Update r15/pc and flush pipe
+            // update r15/pc and flush pipe
             m_reg[15] += (signed_immediate << 1);
             m_pipeline.m_needs_flush = true;
         }
@@ -644,33 +644,32 @@ namespace armigo
         // THUMB.18 Unconditional branch
         u32 immediate_value = (instruction & 0x3FF) << 1;
 
-        // Sign-extend r15/pc displacement
+        // sign-extend r15/pc displacement
         if (instruction & 0x400)
             immediate_value |= 0xFFFFF800;
 
-        // Update r15/pc and flush pipe
+        // update r15/pc and flush pipe
         m_reg[15] += immediate_value;
         m_pipeline.m_needs_flush = true;
     }
 
-    template <bool h>
+    template <bool second_instruction>
     void arm::thumb_19(u16 instruction)
     {
         // THUMB.19 Long branch with link.
         u32 immediate_value = instruction & 0x7FF;
 
-        // Branch with link consists of two instructions.
-        if (h)
+        if (second_instruction)
         {
             u32 temp_pc = m_reg[15] - 2;
             u32 value = m_reg[14] + (immediate_value << 1);
 
-            // Update r15/pc
+            // update r15/pc
             value &= 0x7FFFFF;
             m_reg[15] &= ~0x7FFFFF;
             m_reg[15] |= value & ~1;
 
-            // Store return address and flush pipe.
+            // store return address and flush pipe.
             m_reg[14] = temp_pc | 1;
             m_pipeline.m_needs_flush = true;
         }

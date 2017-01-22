@@ -82,5 +82,5 @@ void thumb_17(u16 instruction);
 
 void thumb_18(u16 instruction);
 
-template <bool h>
+template <bool second_instruction>
 void thumb_19(u16 instruction);
