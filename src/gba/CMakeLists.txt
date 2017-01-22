@@ -24,8 +24,10 @@ set(SRCS
 set(HEADERS
     gba.h
     arm/arm.hpp
-    arm/arm.inl
-    arm/arm_enums.hpp
+    arm/enums.hpp
+    arm/flags.hpp
+    arm/memory.hpp
+    arm/shifting.hpp
     arm/arm/arm_emu.hpp
     arm/arm/arm_lut.hpp
     arm/thumb/thumb_emu.hpp

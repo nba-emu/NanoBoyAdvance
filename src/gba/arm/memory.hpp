@@ -78,4 +78,20 @@ inline void write_word(u32 offset, u32 value)
     bus_write_word(offset & ~3, value);
 }
 
+inline void refill_pipeline()
+{
+    if (m_cpsr & MASK_THUMB)
+    {
+        m_pipeline.m_opcode[0] = read_hword(m_reg[15]);
+        m_pipeline.m_opcode[1] = read_hword(m_reg[15] + 2);
+        m_reg[15] += 4;
+    }
+    else
+    {
+        m_pipeline.m_opcode[0] = read_word(m_reg[15]);
+        m_pipeline.m_opcode[1] = read_word(m_reg[15] + 4);
+        m_reg[15] += 8;
+    }
+}
+
 #endif

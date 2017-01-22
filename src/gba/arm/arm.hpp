@@ -69,12 +69,13 @@ namespace armigo
         virtual void bus_write_hword(u32 address, u16 value) {}
         virtual void bus_write_word(u32 address, u32 value) {}
 
+        // swi #nn HLE-handler
         virtual void software_interrupt(int number) {}
 
     private:
         static cpu_bank mode_to_bank(cpu_mode mode);
+        
         void switch_mode(cpu_mode new_mode);
-        void refill_pipeline();
 
         // conditional helpers
         #include "flags.hpp"
@@ -90,7 +91,5 @@ namespace armigo
         #include "thumb/thumb_emu.hpp"
     };
 }
-
-#include "arm.inl"
 
 #undef ARM_INCLUDE

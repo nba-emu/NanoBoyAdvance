@@ -48,6 +48,28 @@ namespace armigo
         refill_pipeline();
     }
 
+    inline cpu_bank arm::mode_to_bank(cpu_mode mode)
+    {
+        switch (mode)
+        {
+        case MODE_USR:
+        case MODE_SYS:
+            return BANK_NONE;
+        case MODE_FIQ:
+            return BANK_FIQ;
+        case MODE_IRQ:
+            return BANK_IRQ;
+        case MODE_SVC:
+            return BANK_SVC;
+        case MODE_ABT:
+            return BANK_ABT;
+        case MODE_UND:
+            return BANK_UND;
+        default:
+            return BANK_NONE;
+        }
+    }
+
     // Based on mGBA (endrift's) approach to banking.
     // https://github.com/mgba-emu/mgba/blob/master/src/arm/arm.c
     void arm::switch_mode(cpu_mode new_mode)
