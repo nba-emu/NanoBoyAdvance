@@ -536,57 +536,60 @@ namespace armigo
     void arm::thumb_15(u16 instruction)
     {
         // THUMB.15 Multiple load/store
-        // TODO: Handle empty register list
         bool write_back = true;
         u32 address = m_reg[base];
+        int register_list = instruction & 0xFF;
 
-        // Is the load bit set? (ldmia or stmia)
         if (load)
         {
-            // Iterate through the entire register list
+            if (register_list == 0)
+            {
+                m_reg[15] = read_word(address);
+                m_pipeline.m_needs_flush = true;
+                m_reg[base] += 64;
+                return;
+            }
+
             for (int i = 0; i <= 7; i++)
             {
-                // Load to this register?
-                if (instruction & (1 << i))
+                if (register_list & (1<<i))
                 {
                     m_reg[i] = read_word(address);
                     address += 4;
                 }
             }
 
-            // Write back address into the base register if specified
-            // and the base register is not in the register list
-            if (write_back && !(instruction & (1 << base)))
+            if (write_back && (~register_list & (1<<base)))
+            {
                 m_reg[base] = address;
+            }
         }
         else
         {
-            int first_register = 0;
+            int first_register = -1;
 
-            // Find the first register
-            for (int i = 0; i < 8; i++)
+            if (register_list == 0)
             {
-                if (instruction & (1 << i))
-                {
-                    first_register = i;
-                    break;
-                }
+                write_word(address, m_reg[15]);
+                m_reg[base] += 64;
+                return;
             }
 
-            // Iterate through the entire register list
             for (int i = 0; i <= 7; i++)
             {
-                // Store this register?
-                if (instruction & (1 << i))
+                if (register_list & (1<<i))
                 {
-                    // Write register to the base address. If the current register is the
-                    // base register and also the first register instead the original base is written.
-                    if (i == base && i == first_register)
-                        write_word(m_reg[base], address);
-                    else
-                        write_word(m_reg[base], m_reg[i]);
+                    if (first_register == -1) first_register = i;
 
-                    // Update base address
+                    if (i == base && i == first_register)
+                    {
+                        write_word(m_reg[base], address);
+                    }
+                    else
+                    {
+                        write_word(m_reg[base], m_reg[i]);
+                    }
+
                     m_reg[base] += 4;
                 }
             }
