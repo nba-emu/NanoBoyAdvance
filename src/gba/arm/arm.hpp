@@ -61,8 +61,6 @@ namespace armigo
 
         bool m_hle;
 
-#ifndef ARMIGO_NO_VIRTUAL
-
         // memory bus methods
         virtual u8 bus_read_byte(u32 address) { return 0; }
         virtual u16 bus_read_hword(u32 address) { return 0; }
@@ -73,21 +71,6 @@ namespace armigo
 
         // swi #nn HLE-handler
         virtual void software_interrupt(int number) {}
-
-#else
-
-        // memory bus methods
-        u8 bus_read_byte(u32 address);
-        u16 bus_read_hword(u32 address);
-        u32 bus_read_word(u32 address);
-        void bus_write_byte(u32 address, u8 value);
-        void bus_write_hword(u32 address, u16 value);
-        void bus_write_word(u32 address, u32 value);
-
-        // swi #nn HLE-handler
-        void software_interrupt(int number);
-
-#endif
 
     private:
         static cpu_bank mode_to_bank(cpu_mode mode);
