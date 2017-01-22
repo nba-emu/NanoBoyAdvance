@@ -21,7 +21,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifdef ARM_INCLUDE
+#ifdef ARMIGO_INCLUDE
 
 const arm::thumb_instruction arm::thumb_lut[1024] =
 {

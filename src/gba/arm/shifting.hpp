@@ -21,7 +21,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifdef ARM_INCLUDE
+#ifdef ARMIGO_INCLUDE
 
 inline void logical_shift_left(u32& operand, u32 amount, bool& carry)
 {

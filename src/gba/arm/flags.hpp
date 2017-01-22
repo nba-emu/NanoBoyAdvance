@@ -21,7 +21,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifdef ARM_INCLUDE
+#ifdef ARMIGO_INCLUDE
 
 inline bool check_condition(cpu_condition condition)
 {

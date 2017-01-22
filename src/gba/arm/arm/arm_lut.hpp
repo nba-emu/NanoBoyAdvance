@@ -21,7 +21,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifdef ARM_INCLUDE
+#ifdef ARMIGO_INCLUDE
 
 // build using this small hacked-together util: https://hastebin.com/ojadolidup.cpp
 const arm::arm_instruction arm::arm_lut[4096] =
