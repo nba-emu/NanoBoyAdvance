@@ -23,27 +23,34 @@
 
 #ifdef ARMIGO_INCLUDE
 
+#define Z_FLAG (m_cpsr & MASK_ZFLAG)
+#define C_FLAG (m_cpsr & MASK_CFLAG)
+#define N_FLAG (m_cpsr & MASK_NFLAG)
+#define V_FLAG (m_cpsr & MASK_VFLAG)
+
+#define XOR_BIT_31(a, b) (((a) ^ (b)) >> 31)
+
 inline bool check_condition(cpu_condition condition)
 {
     if (condition == COND_AL) return true;
 
     switch (condition)
     {
-    case COND_EQ: return m_cpsr & MASK_ZFLAG;
-    case COND_NE: return ~m_cpsr & MASK_ZFLAG;
-    case COND_CS: return m_cpsr & MASK_CFLAG;
-    case COND_CC: return ~m_cpsr & MASK_CFLAG;
-    case COND_MI: return m_cpsr & MASK_NFLAG;
-    case COND_PL: return ~m_cpsr & MASK_NFLAG;
-    case COND_VS: return m_cpsr & MASK_VFLAG;
-    case COND_VC: return ~m_cpsr & MASK_VFLAG;
-    case COND_HI: return (m_cpsr & MASK_CFLAG) && (~m_cpsr & MASK_ZFLAG);
-    case COND_LS: return (~m_cpsr & MASK_CFLAG) || (m_cpsr & MASK_ZFLAG);
-    case COND_GE: return (m_cpsr & MASK_NFLAG) == (m_cpsr & MASK_VFLAG);
-    case COND_LT: return (m_cpsr & MASK_NFLAG) != (m_cpsr & MASK_VFLAG);
-    case COND_GT: return (~m_cpsr & MASK_ZFLAG) && ((m_cpsr & MASK_NFLAG) == (m_cpsr & MASK_VFLAG));
-    case COND_LE: return (m_cpsr & MASK_ZFLAG) || ((m_cpsr & MASK_NFLAG) != (m_cpsr & MASK_VFLAG));
-    case COND_AL: return true; // dummy
+    case COND_EQ: return Z_FLAG;
+    case COND_NE: return !Z_FLAG;
+    case COND_CS: return C_FLAG;
+    case COND_CC: return !C_FLAG;
+    case COND_MI: return N_FLAG;
+    case COND_PL: return !N_FLAG;
+    case COND_VS: return V_FLAG;
+    case COND_VC: return !V_FLAG;
+    case COND_HI: return C_FLAG && !Z_FLAG;
+    case COND_LS: return !C_FLAG || Z_FLAG;
+    case COND_GE: return N_FLAG == V_FLAG;
+    case COND_LT: return N_FLAG != V_FLAG;
+    case COND_GT: return !Z_FLAG && (N_FLAG == V_FLAG);
+    case COND_LE: return Z_FLAG || (N_FLAG != V_FLAG);
+    case COND_AL: return true;
     case COND_NV: return false;
     }
     return false;
@@ -51,29 +58,66 @@ inline bool check_condition(cpu_condition condition)
 
 inline void update_sign(u32 result)
 {
-    m_cpsr = result & 0x80000000 ? (m_cpsr | MASK_NFLAG) : (m_cpsr & ~MASK_NFLAG);
+    if (result >> 31)
+    {
+        m_cpsr |= MASK_NFLAG;
+    }
+    else
+    {
+        m_cpsr &= ~MASK_NFLAG;
+    }
 }
 
 inline void update_zero(u64 result)
 {
-    m_cpsr = result == 0 ? (m_cpsr | MASK_ZFLAG) : (m_cpsr & ~MASK_ZFLAG);
+    if (result == 0)
+    {
+        m_cpsr |= MASK_ZFLAG;
+    }
+    else
+    {
+        m_cpsr &= ~MASK_ZFLAG;
+    }
 }
 
 inline void set_carry(bool carry)
 {
-    m_cpsr = carry ? (m_cpsr | MASK_CFLAG) : (m_cpsr & ~MASK_CFLAG);
+    if (carry)
+    {
+        m_cpsr |= MASK_CFLAG;
+    }
+    else
+    {
+        m_cpsr &= ~MASK_CFLAG;
+    }
 }
 
 inline void update_overflow_add(u32 result, u32 operand1, u32 operand2)
 {
-    bool overflow = !(((operand1) ^ (operand2)) >> 31) && ((result) ^ (operand2)) >> 31;
-    m_cpsr = overflow ? (m_cpsr | MASK_VFLAG) : (m_cpsr & ~MASK_VFLAG);
+    bool overflow = !XOR_BIT_31(operand1, operand2) && XOR_BIT_31(result, operand2);
+
+    if (overflow)
+    {
+        m_cpsr |= MASK_VFLAG;
+    }
+    else
+    {
+        m_cpsr &= ~MASK_VFLAG;
+    }
 }
 
 inline void update_overflow_sub(u32 result, u32 operand1, u32 operand2)
 {
-    bool overflow = ((operand1) ^ (operand2)) >> 31 && !(((result) ^ (operand2)) >> 31);
-    m_cpsr = overflow ? (m_cpsr | MASK_VFLAG) : (m_cpsr & ~MASK_VFLAG);
+    bool overflow = XOR_BIT_31(operand1, operand2) && !XOR_BIT_31(result, operand2);
+
+    if (overflow)
+    {
+        m_cpsr |= MASK_VFLAG;
+    }
+    else
+    {
+        m_cpsr &= ~MASK_VFLAG;
+    }
 }
 
 #endif
