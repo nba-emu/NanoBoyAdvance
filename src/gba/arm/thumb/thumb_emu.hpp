@@ -2,7 +2,7 @@
 //
 //  NanoboyAdvance is a modern Game Boy Advance emulator written in C++
 //  with performance, platform independency and reasonable accuracy in mind.
-//  Copyright (C) 2016 Frederic Meyer
+//  Copyright (C) 2017 Frederic Meyer
 //
 //  This file is part of nanoboyadvance.
 //
@@ -20,6 +20,8 @@
 //  along with nanoboyadvance. If not, see <http://www.gnu.org/licenses/>.
 //
 ///////////////////////////////////////////////////////////////////////////////////
+
+#ifdef ARMIGO_INCLUDE
 
 typedef void (arm::*thumb_instruction)(u16);
 
@@ -84,3 +86,5 @@ void thumb_18(u16 instruction);
 
 template <bool second_instruction>
 void thumb_19(u16 instruction);
+
+#endif

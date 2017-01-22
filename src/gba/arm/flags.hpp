@@ -2,7 +2,7 @@
 //
 //  NanoboyAdvance is a modern Game Boy Advance emulator written in C++
 //  with performance, platform independency and reasonable accuracy in mind.
-//  Copyright (C) 2016 Frederic Meyer
+//  Copyright (C) 2017 Frederic Meyer
 //
 //  This file is part of nanoboyadvance.
 //
