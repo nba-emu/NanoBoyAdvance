@@ -47,6 +47,7 @@ Replace `%SOURCE_PATH%` with the path where you extracted the source / cloned th
 ## Credits
 
 - endrift(mGBA): I adapted their banking algorithm in my new ARM interpreter.
+- fmtlib: format-library that is included in the source. https://github.com/fmtlib/fmt
 - nocash/Martin Korth: for the creation of GBATEK
 - VisualBoyAdvance Team: basically rocked my childhood and inspired me to write my own emulator.
 
