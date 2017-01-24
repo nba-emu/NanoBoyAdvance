@@ -2,7 +2,7 @@
 //
 //  NanoboyAdvance is a modern Game Boy Advance emulator written in C++
 //  with performance, platform independency and reasonable accuracy in mind.
-//  Copyright (C) 2016 Frederic Meyer
+//  Copyright (C) 2017 Frederic Meyer
 //
 //  This file is part of nanoboyadvance.
 //
@@ -21,8 +21,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifndef __NBA_FILE_HPP__
-#define __NBA_FILE_HPP__
+#pragma once
 
 #include "integer.hpp"
 
@@ -52,5 +51,3 @@ namespace util
         void write_data(std::string filename, u8* data, int size);
     }
 }
-
-#endif  // __NBA_FILE_HPP__
