@@ -34,6 +34,7 @@
 
 
 using namespace std;
+using namespace util;
 //using namespace GBA;
 
 
@@ -193,9 +194,21 @@ int main(int argc, char** argv)
         rom_file = string(args->rom_file);
         save_file = rom_file.substr(0, rom_file.find_last_of(".")) + ".sav";
 
-        gba::cpu cpu;
-        cpu.step();
+        if (file::exists(rom_file))
+        {
+            u8* rom = file::read_data(rom_file);
+            size_t rom_size = file::get_size(rom_file);
+            u8* bios = file::read_data(string(args->bios_file));
+            size_t bios_size = file::get_size(string(args->bios_file));
 
+            gba::cpu cpu;
+
+            cpu.set_bios(bios, bios_size);
+            cpu.set_game(rom, rom_size);
+            cpu.reset();
+
+            while (1) cpu.step();
+        }
         /*if (args->use_bios)
             gba = new GBA::GBA(rom_file, save_file, args->bios_file);
         else

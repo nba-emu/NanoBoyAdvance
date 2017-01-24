@@ -37,7 +37,7 @@ namespace armigo
         arm();
 
         /// Resets the CPU state.
-        void reset();
+        virtual void reset();
 
         /// Executes exactly one instruction.
         void step();
@@ -78,6 +78,9 @@ namespace armigo
         // swi #nn HLE-handler
         virtual void software_interrupt(int number) {}
 
+        // memory access helpers
+        #include "memory.hpp"
+
     private:
         static cpu_bank mode_to_bank(cpu_mode mode);
 
@@ -85,9 +88,6 @@ namespace armigo
 
         // conditional helpers
         #include "flags.hpp"
-
-        // memory access helpers
-        #include "memory.hpp"
 
         // shifting helpers
         #include "shifting.hpp"

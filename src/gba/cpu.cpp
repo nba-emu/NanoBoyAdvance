@@ -21,6 +21,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
+#include <stdexcept>
 #include "cpu.hpp"
 #include "util/logger.hpp"
 
@@ -33,7 +34,43 @@ namespace gba
 
     cpu::cpu()
     {
-        logger::log<LOG_TRACE>("cpu constructor called");
+        reset();
+    }
+
+    void cpu::reset()
+    {
+        arm::reset();
+
+        // clear out all memory
+        memset(m_wram, 0, 0x40000);
+        memset(m_iram, 0, 0x8000);
+
+        set_hle(true);
+
+        if (m_hle)
+        {
+            m_reg[15] = 0x08000000;
+            m_reg[13] = 0x03007F00;
+            m_bank[BANK_SVC][BANK_R13] = 0x03007FE0;
+            m_bank[BANK_IRQ][BANK_R13] = 0x03007FA0;
+            refill_pipeline();
+        }
+    }
+
+    void cpu::set_bios(u8* data, size_t size)
+    {
+        if (size <= sizeof(m_bios))
+        {
+            memcpy(m_bios, data, size);
+            return;
+        }
+        throw std::runtime_error("bios file is too big.");
+    }
+
+    void cpu::set_game(u8* data, size_t size)
+    {
+        m_rom = data;
+        m_rom_size = size;
     }
 
     u8 cpu::read_bios(u32 address)

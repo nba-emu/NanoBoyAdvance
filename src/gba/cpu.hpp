@@ -91,7 +91,10 @@ namespace gba
 
     public:
         cpu();
+        void reset();
 
+        void set_bios(u8* data, size_t size);
+        void set_game(u8* data, size_t size);
     protected:
         u8 bus_read_byte(u32 address) final;
         u16 bus_read_hword(u32 address) final;
