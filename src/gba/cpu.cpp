@@ -22,12 +22,18 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 #include "cpu.hpp"
+#include "util/logger.hpp"
+
+using namespace util;
 
 namespace gba
 {
+    constexpr cpu::read_func cpu::m_read_table[16];
+    constexpr cpu::write_func cpu::m_write_table[16];
+
     cpu::cpu()
     {
-
+        logger::log<LOG_TRACE>("cpu constructor called");
     }
 
     u8 cpu::read_bios(u32 address)
@@ -61,7 +67,9 @@ namespace gba
 
     u8 cpu::read_invalid(u32 address)
     {
-        return 0x77; // debug code
+        logger::log<LOG_ERROR>("illegal read from 0x{0:x}", address);
+
+        return 0;
     }
 
     void cpu::write_wram(u32 address, u8 value)
@@ -75,7 +83,9 @@ namespace gba
     }
 
     void cpu::write_invalid(u32 address, u8 value)
-    {}
+    {
+        logger::log<LOG_ERROR>("illegal write to 0x{0:x} = 0x{1:x}", address, value);
+    }
 
     u8 cpu::bus_read_byte(u32 address)
     {

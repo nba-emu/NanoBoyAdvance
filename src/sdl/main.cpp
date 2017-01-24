@@ -23,6 +23,7 @@
 
 
 //#include "gba/gba.h"
+#include "gba/cpu.hpp"
 #include "util/file.hpp"
 #include "arguments.h"
 #include <SDL2/SDL.h>
@@ -191,6 +192,9 @@ int main(int argc, char** argv)
 
         rom_file = string(args->rom_file);
         save_file = rom_file.substr(0, rom_file.find_last_of(".")) + ".sav";
+
+        gba::cpu cpu;
+        cpu.step();
 
         /*if (args->use_bios)
             gba = new GBA::GBA(rom_file, save_file, args->bios_file);
