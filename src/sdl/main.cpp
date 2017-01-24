@@ -22,7 +22,7 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 
-#include "gba/gba.h"
+//#include "gba/gba.h"
 #include "util/file.hpp"
 #include "arguments.h"
 #include <SDL2/SDL.h>
@@ -33,10 +33,10 @@
 
 
 using namespace std;
-using namespace GBA;
+//using namespace GBA;
 
 
-GBA::GBA* gba;
+//GBA::GBA* gba;
 Arguments* args;
 
 // SDL related globals
@@ -192,13 +192,13 @@ int main(int argc, char** argv)
         rom_file = string(args->rom_file);
         save_file = rom_file.substr(0, rom_file.find_last_of(".")) + ".sav";
 
-        if (args->use_bios)
+        /*if (args->use_bios)
             gba = new GBA::GBA(rom_file, save_file, args->bios_file);
         else
             gba = new GBA::GBA(rom_file, save_file);
 
         gba->SetSpeedUp(args->speedup);
-        video_buffer = gba->GetVideoBuffer();
+        video_buffer = gba->GetVideoBuffer();*/
     }
     else
     {
@@ -224,7 +224,7 @@ int main(int argc, char** argv)
             create_screenshot();
 
         // Update Keypad Input
-        gba->SetKeyState(GBA::GBA::Key::A,           kb_state[SDL_SCANCODE_A]);
+        /*gba->SetKeyState(GBA::GBA::Key::A,           kb_state[SDL_SCANCODE_A]);
         gba->SetKeyState(GBA::GBA::Key::B,      kb_state[SDL_SCANCODE_S]);
         gba->SetKeyState(GBA::GBA::Key::Select, kb_state[SDL_SCANCODE_BACKSPACE]);
         gba->SetKeyState(GBA::GBA::Key::Start,  kb_state[SDL_SCANCODE_RETURN]);
@@ -247,7 +247,7 @@ int main(int argc, char** argv)
                 for (int x = 0; x < 240; x++)
                     setpixel(x, y, video_buffer[y * 240 + x]);
             }
-        }
+        }*/
 
         // Update FPS counter
         ticks_now = SDL_GetTicks();
@@ -275,7 +275,7 @@ int main(int argc, char** argv)
     }
 
     // Free stuff (emulator)
-    delete gba;
+    ///delete gba;
 
     // Free stuff (SDL)
     SDL_DestroyTexture(texture);

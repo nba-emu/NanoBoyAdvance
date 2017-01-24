@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <string>
 #include "integer.hpp"
 
 namespace util

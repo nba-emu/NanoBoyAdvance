@@ -22,14 +22,14 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 
-#include "gba/video/video.h"
+//#include "gba/video/video.h"
 #include "mainwindow.h"
 #include <QApplication>
 #include <QFileDialog>
 #include <QMessageBox>
 
 
-using namespace GBA;
+//using namespace GBA;
 
 
 ///////////////////////////////////////////////////////////
@@ -90,7 +90,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     // Setup GL screen
     m_Screen = new Screen {this};
     setCentralWidget(m_Screen);
-    connect(m_Screen, &Screen::keyPress, this,
+    /*connect(m_Screen, &Screen::keyPress, this,
         [this] (int key)
         {
             if (key == Qt::Key_Space)
@@ -105,13 +105,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
                 m_GBA->SetSpeedUp(1);
             else
                 m_GBA->SetKeyState(keyToGBA(key), false);
-        });
+        });*/
 
     // Create emulator timer
     m_Timer = new QTimer {this};
     m_Timer->setSingleShot(false);
     m_Timer->setInterval(17);
-    connect(m_Timer, &QTimer::timeout, this,
+    /*connect(m_Timer, &QTimer::timeout, this,
         [this]
         {
             m_GBA->Frame();
@@ -120,7 +120,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
                 m_Screen->updateTexture(m_Buffer, 240, 160);
                 m_Frames++;
             }
-        });
+        });*/
 
     // Create FPS counting timer
     m_FPSTimer = new QTimer {this};
@@ -148,7 +148,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 ///////////////////////////////////////////////////////////
 MainWindow::~MainWindow()
 {
-    delete m_GBA;
+    //delete m_GBA;
 }
 
 ///////////////////////////////////////////////////////////
@@ -164,9 +164,9 @@ void MainWindow::runGame(const QString &rom_file)
 
     try
     {
-        delete m_GBA;
-        m_GBA = new GBA::GBA {rom_file.toStdString(), save_file.toStdString(), "bios.bin"};
-        m_Buffer = m_GBA->GetVideoBuffer();
+        //delete m_GBA;
+        //m_GBA = new GBA::GBA {rom_file.toStdString(), save_file.toStdString(), "bios.bin"};
+        //m_Buffer = m_GBA->GetVideoBuffer();
         m_Timer->start();
         m_FPSTimer->start();
         m_Screen->grabKeyboard();
@@ -187,7 +187,7 @@ void MainWindow::runGame(const QString &rom_file)
 /// \fn     keyToGBA
 ///
 ///////////////////////////////////////////////////////////
-GBA::GBA::Key MainWindow::keyToGBA(int key) {
+/*GBA::GBA::Key MainWindow::keyToGBA(int key) {
     switch (key)
     {
         case Qt::Key_A:
@@ -213,7 +213,7 @@ GBA::GBA::Key MainWindow::keyToGBA(int key) {
         default:
             return GBA::GBA::Key::None;
     }
-}
+}*/
 
 ///////////////////////////////////////////////////////////
 /// \author Frederic Meyer
