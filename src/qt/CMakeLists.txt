@@ -29,4 +29,4 @@ add_executable(NanoboyAdvance ${SRCS} ${HEADERS} ${RESOURCES})
 target_link_libraries(NanoboyAdvance gba)
 target_link_libraries(NanoboyAdvance ${QT_DEPS} ${OPENGL_gl_LIBRARY})
 
-file(COPY "${PROJECT_SOURCE_DIR}/config.sml" DESTINATION "${PROJECT_BINARY_DIR}/src/qt/")
+#file(COPY "${PROJECT_SOURCE_DIR}/config.sml" DESTINATION "${PROJECT_BINARY_DIR}/src/qt/")
