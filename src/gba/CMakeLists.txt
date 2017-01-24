@@ -1,8 +1,5 @@
 set(SRCS
     gba.cpp
-    arm/arm.cpp
-    arm/arm/arm_emu.cpp
-    arm/thumb/thumb_emu.cpp
     arm_gba.cpp
     io.cpp
     interrupt.cpp
@@ -23,15 +20,6 @@ set(SRCS
 
 set(HEADERS
     gba.h
-    arm/arm.hpp
-    arm/enums.hpp
-    arm/flags.hpp
-    arm/memory.hpp
-    arm/shifting.hpp
-    arm/arm/arm_emu.hpp
-    arm/arm/arm_lut.hpp
-    arm/thumb/thumb_emu.hpp
-    arm/thumb/thumb_lut.hpp
     arm_gba.hpp
     io.hpp
     interrupt.hpp
@@ -50,4 +38,4 @@ set(HEADERS
 )
 
 add_library(gba STATIC ${SRCS} ${HEADERS})
-target_link_libraries(gba util audio config)
+target_link_libraries(gba armigo util audio config)
