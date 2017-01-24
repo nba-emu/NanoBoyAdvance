@@ -310,7 +310,7 @@ namespace armigo
                 m_cpsr &= ~MASK_THUMB;
                 m_reg[15] = operand & ~3;
             }
-            m_pipeline.m_needs_flush = true;
+            m_flush = true;
             perform_check = false;
             break;
         }
@@ -318,7 +318,7 @@ namespace armigo
         if (perform_check && dst == 15)
         {
             m_reg[dst] &= ~1;
-            m_pipeline.m_needs_flush = true;
+            m_flush = true;
         }
     }
 
@@ -476,7 +476,7 @@ namespace armigo
             if (pop)
             {
                 m_reg[15] = read_word(addr);
-                m_pipeline.m_needs_flush = true;
+                m_flush = true;
             }
             else
             {
@@ -520,7 +520,7 @@ namespace armigo
             if (pop)
             {
                 m_reg[15] = read_word(addr) & ~1;
-                m_pipeline.m_needs_flush = true;
+                m_flush = true;
             }
             else
             {
@@ -545,7 +545,7 @@ namespace armigo
             if (register_list == 0)
             {
                 m_reg[15] = read_word(address);
-                m_pipeline.m_needs_flush = true;
+                m_flush = true;
                 m_reg[base] += 64;
                 return;
             }
@@ -610,7 +610,7 @@ namespace armigo
 
             // update r15/pc and flush pipe
             m_reg[15] += (signed_immediate << 1);
-            m_pipeline.m_needs_flush = true;
+            m_flush = true;
         }
     }
 
@@ -631,7 +631,7 @@ namespace armigo
 
             // jump to exception vector
             m_reg[15] = EXCPT_SWI;
-            m_pipeline.m_needs_flush = true;
+            m_flush = true;
         }
         else
         {
@@ -650,7 +650,7 @@ namespace armigo
 
         // update r15/pc and flush pipe
         m_reg[15] += immediate_value;
-        m_pipeline.m_needs_flush = true;
+        m_flush = true;
     }
 
     template <bool second_instruction>
@@ -671,7 +671,7 @@ namespace armigo
 
             // store return address and flush pipe.
             m_reg[14] = temp_pc | 1;
-            m_pipeline.m_needs_flush = true;
+            m_flush = true;
         }
         else
         {

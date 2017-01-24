@@ -82,16 +82,18 @@ inline void refill_pipeline()
 {
     if (m_cpsr & MASK_THUMB)
     {
-        m_pipeline.m_opcode[0] = read_hword(m_reg[15]);
-        m_pipeline.m_opcode[1] = read_hword(m_reg[15] + 2);
+        m_opcode[0] = read_hword(m_reg[15]);
+        m_opcode[1] = read_hword(m_reg[15] + 2);
         m_reg[15] += 4;
     }
     else
     {
-        m_pipeline.m_opcode[0] = read_word(m_reg[15]);
-        m_pipeline.m_opcode[1] = read_word(m_reg[15] + 4);
+        m_opcode[0] = read_word(m_reg[15]);
+        m_opcode[1] = read_word(m_reg[15] + 4);
         m_reg[15] += 8;
     }
+    m_index = 0;
+    m_flush = false;
 }
 
 #endif

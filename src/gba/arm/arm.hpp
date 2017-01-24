@@ -52,12 +52,9 @@ namespace armigo
         u32 m_spsr[SPSR_COUNT];
         u32* m_spsr_ptr;
 
-        struct
-        {
-            u32 m_opcode[3];
-            int m_index;
-            bool m_needs_flush;
-        } m_pipeline;
+        int m_index;
+        bool m_flush;
+        u32 m_opcode[3];
 
         bool m_hle;
 

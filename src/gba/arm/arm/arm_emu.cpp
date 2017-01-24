@@ -87,7 +87,7 @@ namespace armigo
                 m_cpsr = spsr;
                 set_flags = false;
             }
-            m_pipeline.m_needs_flush = true;
+            m_flush = true;
         }
 
         switch (opcode)
@@ -477,7 +477,7 @@ namespace armigo
     {
         u32 addr = m_reg[instruction & 0xF];
 
-        m_pipeline.m_needs_flush = true;
+        m_flush = true;
 
         if (addr & 1)
         {
@@ -595,7 +595,7 @@ namespace armigo
             m_reg[dst] = byte ? bus_read_byte(addr) : read_word_rotated(addr);
 
             // writes to r15 require a pipeline flush.
-            if (dst == 15) m_pipeline.m_needs_flush = true;
+            if (dst == 15) m_flush = true;
         }
         else
         {
@@ -649,7 +649,7 @@ namespace armigo
             if (load)
             {
                 m_reg[15] = read_word(m_reg[base]);
-                m_pipeline.m_needs_flush = true;
+                m_flush = true;
             }
             else
             {
@@ -708,7 +708,7 @@ namespace armigo
                         switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
                         m_cpsr = spsr;
                     }
-                    m_pipeline.m_needs_flush = true;
+                    m_flush = true;
                 }
             }
             else
@@ -736,7 +736,7 @@ namespace armigo
         if (link) m_reg[14] = m_reg[15] - 4;
 
         m_reg[15] += off << 2;
-        m_pipeline.m_needs_flush = true;
+        m_flush = true;
     }
 
     void arm::arm_swi(u32 instruction)
@@ -755,7 +755,7 @@ namespace armigo
 
             // jump to exception vector
             m_reg[15] = EXCPT_SWI;
-            m_pipeline.m_needs_flush = true;
+            m_flush = true;
         }
         else
         {

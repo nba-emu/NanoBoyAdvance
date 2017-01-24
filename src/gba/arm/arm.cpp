@@ -33,7 +33,7 @@ namespace armigo
 
     void arm::reset()
     {
-        m_pipeline.m_index = 0;
+        m_index = 0;
 
         std::memset(m_reg, 0, sizeof(m_reg));
         std::memset(m_bank, 0, sizeof(m_bank));
@@ -122,40 +122,37 @@ namespace armigo
         bool thumb = m_cpsr & MASK_THUMB;
         cycles++; /* NOTE: preliminary */
 
-        // Dispatch instruction loading and execution
         if (thumb)
         {
             m_reg[15] &= ~1;
 
-            if (m_pipeline.m_index == 0)
-                m_pipeline.m_opcode[2] = read_hword(m_reg[15]);
+            if (m_index == 0)
+                m_opcode[2] = read_hword(m_reg[15]);
             else
-                m_pipeline.m_opcode[m_pipeline.m_index - 1] = read_hword(m_reg[15]);
+                m_opcode[m_index - 1] = read_hword(m_reg[15]);
 
-            thumb_execute(m_pipeline.m_opcode[m_pipeline.m_index]);
+            thumb_execute(m_opcode[m_index]);
         }
         else
         {
             m_reg[15] &= ~3;
 
-            if (m_pipeline.m_index == 0)
-                m_pipeline.m_opcode[2] = read_word(m_reg[15]);
+            if (m_index == 0)
+                m_opcode[2] = read_word(m_reg[15]);
             else
-                m_pipeline.m_opcode[m_pipeline.m_index - 1] = read_word(m_reg[15]);
+                m_opcode[m_index - 1] = read_word(m_reg[15]);
 
-            arm_execute(m_pipeline.m_opcode[m_pipeline.m_index]);
+            arm_execute(m_opcode[m_index]);
         }
 
-        if (m_pipeline.m_needs_flush)
+        if (m_flush)
         {
-            m_pipeline.m_index = 0;
-            m_pipeline.m_needs_flush = false;
             refill_pipeline();
             return;
         }
 
         // Update pipeline status
-        m_pipeline.m_index = (m_pipeline.m_index + 1) % 3;
+        m_index = (m_index + 1) % 3;
 
         // Update instruction pointer
         m_reg[15] += thumb ? 2 : 4;
@@ -163,22 +160,21 @@ namespace armigo
 
     void arm::raise_irq()
     {
-        if (m_cpsr & MASK_IRQD) return;
+        if (~m_cpsr & MASK_IRQD)
+        {
+            bool thumb = m_cpsr & MASK_THUMB;
 
-        bool thumb = m_cpsr & MASK_THUMB;
+            // store return address in r14<irq>
+            m_bank[BANK_IRQ][BANK_R14] = m_reg[15] - (thumb ? 4 : 8) + 4;
 
-        // store return address in r14<irq>
-        m_bank[BANK_IRQ][BANK_R14] = m_reg[15] - (thumb ? 4 : 8) + 4;
+            // save program status and switch mode
+            m_spsr[SPSR_IRQ] = m_cpsr;
+            switch_mode(MODE_IRQ);
+            m_cpsr = (m_cpsr & ~MASK_THUMB) | MASK_IRQD;
 
-        // save program status and switch mode
-        m_spsr[SPSR_IRQ] = m_cpsr;
-        switch_mode(MODE_IRQ);
-        m_cpsr = (m_cpsr & ~MASK_THUMB) | MASK_IRQD;
-
-        // jump to exception vector
-        m_reg[15] = EXCPT_INTERRUPT;
-        m_pipeline.m_index = 0;
-        m_pipeline.m_needs_flush = false;
-        refill_pipeline();
+            // jump to exception vector
+            m_reg[15] = EXCPT_INTERRUPT;
+            refill_pipeline();
+        }
     }
 }
