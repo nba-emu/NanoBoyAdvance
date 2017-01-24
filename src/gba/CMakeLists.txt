@@ -1,9 +1,9 @@
 set(SOURCES
-
+    cpu.cpp
 )
 
 set(HEADERS
-
+    cpu.hpp
 )
 
 add_library(gba STATIC ${SOURCES} ${HEADERS})
