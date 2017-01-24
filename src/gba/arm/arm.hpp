@@ -34,13 +34,23 @@ namespace armigo
     public:
         int cycles {0};
 
+        /// Constructor
         arm();
 
+        /// Resets the CPU state.
         void reset();
+
+        /// Executes exactly one instruction.
         void step();
+
+        /// Tries to raise an IRQ exception.
         void raise_irq();
 
+        /// HLE-flag getter
         bool get_hle() { return m_hle; }
+
+        /// HLE-flag setter
+        /// @param  hle  HLE-flag
         void set_hle(bool hle) { m_hle = hle; }
 
     protected:

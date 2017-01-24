@@ -39,12 +39,7 @@ namespace armigo
         std::memset(m_bank, 0, sizeof(m_bank));
         m_cpsr = MODE_SYS;
         m_spsr_ptr = &m_spsr[SPSR_DEF];
-
-        // skip bios boot logo
-        m_reg[15] = 0x8000000;
-        m_reg[13] = 0x3007F00;
-        m_bank[BANK_SVC][BANK_R13] = 0x3007FE0;
-        m_bank[BANK_IRQ][BANK_R13] = 0x3007FA0;
+        
         refill_pipeline();
     }
 
