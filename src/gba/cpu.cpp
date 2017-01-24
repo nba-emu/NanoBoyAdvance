@@ -25,6 +25,11 @@
 
 namespace gba
 {
+    cpu::cpu()
+    {
+
+    }
+
     u8 cpu::read_bios(u32 address)
     {
         if (address >= 0x4000) return 0;
@@ -132,6 +137,6 @@ namespace gba
 
     void cpu::software_interrupt(int number)
     {
-        
+
     }
 }
