@@ -1,7 +1,7 @@
 # NanoboyAdvance
 
 NanoboyAdvance is a modern Game Boy Advance emulator written in C++ with performance, platform independency and reasonable accuracy in mind. This emulator is actively being developed on to reach the goals we're aiming for. However currently we still
-have some work to do until a first release targeted at users. NanoboyAdvance will eventually target a great range of hardware and devices and will make use of efficient code and GPU-based hardware acceleration for the best emulation experience on low power devices while maintaining a clean and understandable code base. 
+have some work to do until a first release targeted at users. NanoboyAdvance will eventually target a great range of hardware and devices and will make use of efficient code and GPU-based hardware acceleration for the best emulation experience on low power devices while maintaining a clean and understandable code base.
 
 ## Media
 
@@ -43,6 +43,12 @@ Replace `%SOURCE_PATH%` with the path where you extracted the source / cloned th
 `QT_GUI`: Enables Qt5 frontend
 
 `PROFILE`: Compiles for profiling with GNU gprof.
+
+## Credits
+
+- endrift(mGBA): I adapted their banking algorithm in my new ARM interpreter.
+- nocash/Martin Korth: for the creation of GBATEK
+- VisualBoyAdvance: basically rocked my childhood and inspired me to write my own emulator.
 
 ## Contributing
 
