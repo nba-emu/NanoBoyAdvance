@@ -48,7 +48,7 @@ Replace `%SOURCE_PATH%` with the path where you extracted the source / cloned th
 
 - endrift(mGBA): I adapted their banking algorithm in my new ARM interpreter.
 - nocash/Martin Korth: for the creation of GBATEK
-- VisualBoyAdvance: basically rocked my childhood and inspired me to write my own emulator.
+- VisualBoyAdvance Team: basically rocked my childhood and inspired me to write my own emulator.
 
 ## Contributing
 
