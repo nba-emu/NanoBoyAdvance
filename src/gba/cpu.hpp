@@ -50,6 +50,7 @@ namespace gba
         u8 read_bios(u32 address);
         u8 read_wram(u32 address);
         u8 read_iram(u32 address);
+        u8 read_io(u32 address);
         u8 read_pal(u32 address);
         u8 read_vram(u32 address);
         u8 read_oam(u32 address);
@@ -58,6 +59,7 @@ namespace gba
 
         void write_wram(u32 address, u8 value);
         void write_iram(u32 address, u8 value);
+        void write_io(u32 address, u8 value);
         void write_pal(u32 address, u8 value);
         void write_vram(u32 address, u8 value);
         void write_oam(u32 address, u8 value);
@@ -68,7 +70,7 @@ namespace gba
             &cpu::read_invalid,
             &cpu::read_wram,
             &cpu::read_iram,
-            &cpu::read_invalid,
+            &cpu::read_io,
             &cpu::read_pal,
             &cpu::read_vram,
             &cpu::read_oam,
@@ -87,7 +89,7 @@ namespace gba
             &cpu::write_invalid,
             &cpu::write_wram,
             &cpu::write_iram,
-            &cpu::write_invalid,
+            &cpu::write_io,
             &cpu::write_pal,
             &cpu::write_vram,
             &cpu::write_oam,

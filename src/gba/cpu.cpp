@@ -99,6 +99,21 @@ namespace gba
         return m_iram[address % 0x8000];
     }
 
+    u8 cpu::read_io(u32 address)
+    {
+        logger::log<LOG_INFO>("IO read from 0x{0:x} r15={1:x}", address, m_reg[15]);
+
+        switch (address)
+        {
+        case 0x4000004:
+            return m_ppu.read_dispstat_low();
+        case 0x4000005:
+            return m_ppu.read_dispstat_high();
+        }
+
+        return 0;
+    }
+
     u8 cpu::read_pal(u32 address)
     {
         return m_pal[address % 0x400];
@@ -148,6 +163,11 @@ namespace gba
         m_iram[address % 0x8000] = value;
     }
 
+    void cpu::write_io(u32 address, u8 value)
+    {
+
+    }
+
     void cpu::write_pal(u32 address, u8 value)
     {
         m_pal[address % 0x400] = value;
@@ -155,6 +175,8 @@ namespace gba
 
     void cpu::write_vram(u32 address, u8 value)
     {
+        logger::log<LOG_INFO>("vram write address={0:x} value={1:x}", address, value);
+
         address %= 0x20000;
 
         if (address >= 0x18000)
