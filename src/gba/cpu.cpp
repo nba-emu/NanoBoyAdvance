@@ -39,6 +39,7 @@ namespace gba
     void cpu::reset()
     {
         arm::reset();
+        m_ppu.reset();
 
         // clear out all memory
         memset(m_wram, 0, 0x40000);

@@ -21,12 +21,17 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-/*u8 ppu::status_reg::operator[](int index)
+#include "ppu.hpp"
+
+namespace gba
 {
-    return 0;
+    /*u8 ppu::status_reg::operator[](int index)
+    {
+        return 0;
+    }
+
+    void ppu::status_reg::operator[](int index, u8 value)
+    {
+
+    }*/
 }
-
-void ppu::status_reg::operator[](int index, u8 value)
-{
-
-}*/

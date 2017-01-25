@@ -21,7 +21,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#pragma once
+#ifdef PPU_INCLUDE
 
 struct io
 {
@@ -38,4 +38,6 @@ struct io
         //u8 operator[](int index);
         //void operator[](int index, u8 value);
     } status;
-};
+} m_io;
+
+#endif
