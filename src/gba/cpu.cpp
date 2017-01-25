@@ -44,6 +44,9 @@ namespace gba
         // clear out all memory
         memset(m_wram, 0, 0x40000);
         memset(m_iram, 0, 0x8000);
+        memset(m_pal, 0, 0x400);
+        memset(m_oam, 0, 0x400);
+        memset(m_vram, 0, 0x18000);
 
         set_hle(true);
 
@@ -71,6 +74,11 @@ namespace gba
     {
         m_rom = data;
         m_rom_size = size;
+    }
+
+    void cpu::frame()
+    {
+        // todo
     }
 
     u8 cpu::read_bios(u32 address)

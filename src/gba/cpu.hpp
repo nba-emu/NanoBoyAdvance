@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include "ppu.hpp"
 #include "arm/arm.hpp"
 
 using namespace armigo;
@@ -40,6 +41,11 @@ namespace gba
         u8 m_bios[0x4000];
         u8 m_wram[0x40000];
         u8 m_iram[0x8000];
+        u8 m_pal[0x400];
+        u8 m_oam[0x400];
+        u8 m_vram[0x18000];
+
+        ppu m_ppu;
 
         u8 read_bios(u32 address);
         u8 read_wram(u32 address);
@@ -91,10 +97,13 @@ namespace gba
 
     public:
         cpu();
+
         void reset();
 
         void set_bios(u8* data, size_t size);
         void set_game(u8* data, size_t size);
+
+        void frame();
     protected:
         u8 bus_read_byte(u32 address) final;
         u16 bus_read_hword(u32 address) final;
