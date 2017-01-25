@@ -21,20 +21,14 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#pragma once
-
-#include "util/integer.hpp"
+#include "ppu.hpp"
 
 namespace gba
 {
-    class ppu
+    void ppu::set_memory(u8* pal, u8* oam, u8* vram)
     {
-    private:
-        u8* m_pal;
-        u8* m_oam;
-        u8* m_vram;
-
-    public:
-        void set_memory(u8* pal, u8* oam, u8* vram);
-    };
+        m_pal = pal;
+        m_oam = oam;
+        m_vram = vram;
+    }
 }

@@ -50,11 +50,17 @@ namespace gba
         u8 read_bios(u32 address);
         u8 read_wram(u32 address);
         u8 read_iram(u32 address);
+        u8 read_pal(u32 address);
+        u8 read_vram(u32 address);
+        u8 read_oam(u32 address);
         u8 read_rom(u32 address);
         u8 read_invalid(u32 address);
 
         void write_wram(u32 address, u8 value);
         void write_iram(u32 address, u8 value);
+        void write_pal(u32 address, u8 value);
+        void write_vram(u32 address, u8 value);
+        void write_oam(u32 address, u8 value);
         void write_invalid(u32 address, u8 value);
 
         static constexpr read_func m_read_table[16] = {
@@ -63,9 +69,9 @@ namespace gba
             &cpu::read_wram,
             &cpu::read_iram,
             &cpu::read_invalid,
-            &cpu::read_invalid,
-            &cpu::read_invalid,
-            &cpu::read_invalid,
+            &cpu::read_pal,
+            &cpu::read_vram,
+            &cpu::read_oam,
             &cpu::read_rom,
             &cpu::read_rom,
             &cpu::read_invalid,
@@ -82,9 +88,9 @@ namespace gba
             &cpu::write_wram,
             &cpu::write_iram,
             &cpu::write_invalid,
-            &cpu::write_invalid,
-            &cpu::write_invalid,
-            &cpu::write_invalid,
+            &cpu::write_pal,
+            &cpu::write_vram,
+            &cpu::write_oam,
             &cpu::write_invalid,
             &cpu::write_invalid,
             &cpu::write_invalid,

@@ -35,6 +35,7 @@ namespace gba
     cpu::cpu()
     {
         reset();
+        m_ppu.set_memory(m_pal, m_oam, m_vram);
     }
 
     void cpu::reset()
@@ -98,6 +99,26 @@ namespace gba
         return m_iram[address % 0x8000];
     }
 
+    u8 cpu::read_pal(u32 address)
+    {
+        return m_pal[address % 0x400];
+    }
+
+    u8 cpu::read_vram(u32 address)
+    {
+        address %= 0x20000;
+
+        if (address >= 0x18000)
+            address &= ~0x8000;
+
+        return m_vram[address];
+    }
+
+    u8 cpu::read_oam(u32 address)
+    {
+        return m_oam[address % 0x400];
+    }
+
     u8 cpu::read_rom(u32 address)
     {
         address &= 0x1FFFFFF;
@@ -125,6 +146,26 @@ namespace gba
     void cpu::write_iram(u32 address, u8 value)
     {
         m_iram[address % 0x8000] = value;
+    }
+
+    void cpu::write_pal(u32 address, u8 value)
+    {
+        m_pal[address % 0x400] = value;
+    }
+
+    void cpu::write_vram(u32 address, u8 value)
+    {
+        address %= 0x20000;
+
+        if (address >= 0x18000)
+            address &= ~0x8000;
+
+        m_vram[address] = value;
+    }
+
+    void cpu::write_oam(u32 address, u8 value)
+    {
+        m_oam[address % 0x400] = value;
     }
 
     void cpu::write_invalid(u32 address, u8 value)
