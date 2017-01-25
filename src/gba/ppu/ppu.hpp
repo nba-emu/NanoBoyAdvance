@@ -27,11 +27,7 @@
 
 namespace gba
 {
-    struct dispcnt
-    {
-    };
-
-    struct dispstat
+    /*struct dispstat
     {
         bool vblank_flag;
         bool hblank_flag;
@@ -40,7 +36,7 @@ namespace gba
         bool hblank_interrupt;
         bool vcount_interrupt;
         int vcount_setting;
-    };
+    };*/
 
     class ppu
     {
@@ -48,9 +44,11 @@ namespace gba
         u8* m_pal;
         u8* m_oam;
         u8* m_vram;
-        int m_vcount;
+        /*int m_vcount;
         struct dispcnt m_dispcnt;
-        struct dispstat m_dispstat;
+        struct dispstat m_dispstat;*/
+
+        #include "io.hpp"
 
     public:
         ppu();
@@ -59,7 +57,7 @@ namespace gba
 
         void set_memory(u8* pal, u8* oam, u8* vram);
 
-        u8 read_dispstat_low()
+        /*u8 read_dispstat_low()
         {
             return (m_dispstat.vblank_flag ? 1 : 0) |
                    (m_dispstat.hblank_flag ? 2 : 0) |
@@ -87,6 +85,6 @@ namespace gba
         void write_dispstat_high(u8 value)
         {
             m_dispstat.vcount_setting = value;
-        }
+        }*/
     };
 }

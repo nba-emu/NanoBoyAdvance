@@ -21,31 +21,12 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#include "ppu.hpp"
+#include "cpu.hpp"
 
 namespace gba
 {
-    ppu::ppu()
+    void cpu::software_interrupt(int number)
     {
-        reset();
-    }
 
-    void ppu::reset()
-    {
-        m_vcount = 0;
-        m_dispstat.vblank_flag = true;
-        m_dispstat.hblank_flag = false;
-        m_dispstat.vcount_flag = false;
-        m_dispstat.vblank_interrupt = false;
-        m_dispstat.hblank_interrupt = false;
-        m_dispstat.vcount_interrupt = false;
-        m_dispstat.vcount_setting = 0;
-    }
-
-    void ppu::set_memory(u8* pal, u8* oam, u8* vram)
-    {
-        m_pal = pal;
-        m_oam = oam;
-        m_vram = vram;
     }
 }

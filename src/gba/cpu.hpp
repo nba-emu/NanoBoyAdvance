@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "ppu.hpp"
 #include "arm/arm.hpp"
+#include "ppu/ppu.hpp"
 
 using namespace armigo;
 

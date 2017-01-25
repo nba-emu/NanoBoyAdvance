@@ -1,11 +1,15 @@
 set(SOURCES
     cpu.cpp
-    ppu.cpp
+    bios.cpp
+    memory.cpp
+    ppu/io.cpp
+    ppu/ppu.cpp
 )
 
 set(HEADERS
     cpu.hpp
-    ppu.hpp
+    ppu/io.hpp
+    ppu/ppu.hpp
 )
 
 add_library(gba STATIC ${SOURCES} ${HEADERS})
