@@ -25,7 +25,16 @@
 
 struct io
 {
+    // JOYPAD
     u16 keyinput;
+
+    // INTERRUPT CONTROL
+    struct interrupt_io
+    {
+        u16 enable;
+        u16 request;
+        u16 master_enable;
+    } interrupt;
 } m_io;
 
 #endif

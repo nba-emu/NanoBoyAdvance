@@ -51,6 +51,24 @@ namespace gba
             return m_io.keyinput & 0xFF;
         case 0x04000131:
             return m_io.keyinput >> 8;
+
+        // IE
+        case 0x04000200:
+            return m_io.interrupt.enable & 0xFF;
+        case 0x04000201:
+            return m_io.interrupt.enable >> 8;
+
+        // IF
+        case 0x04000202:
+            return m_io.interrupt.request & 0xFF;
+        case 0x04000203:
+            return m_io.interrupt.request >> 8;
+
+        // IME
+        case 0x04000208:
+            return m_io.interrupt.master_enable & 0xFF;
+        case 0x04000209:
+            return m_io.interrupt.master_enable >> 8;
         }
 
         return 0;
@@ -64,9 +82,37 @@ namespace gba
         {
         // DISPSTAT
         case 0x04000004:
-            return m_ppu.get_io().status.write(0, value);
+            m_ppu.get_io().status.write(0, value);
         case 0x04000005:
-            return m_ppu.get_io().status.write(1, value);
+            m_ppu.get_io().status.write(1, value);
+
+        // IE
+        case 0x04000200:
+            m_io.interrupt.enable &= 0xFF00;
+            m_io.interrupt.enable |= value;
+            break;
+        case 0x04000201:
+            m_io.interrupt.enable &= 0x00FF;
+            m_io.interrupt.enable |= (value << 8);
+            break;
+
+        // IF
+        case 0x04000202:
+            m_io.interrupt.request &= ~value;
+            break;
+        case 0x04000203:
+            m_io.interrupt.request &= ~(value << 8);
+            break;
+
+        // IME
+        case 0x04000208:
+            m_io.interrupt.master_enable &= 0xFF00;
+            m_io.interrupt.master_enable |= value;
+            break;
+        case 0x04000209:
+            m_io.interrupt.master_enable &= 0x00FF;
+            m_io.interrupt.master_enable |= (value << 8);
+            break;
         }
     }
 }

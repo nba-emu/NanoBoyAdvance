@@ -34,8 +34,13 @@ namespace gba
     {
         reset();
 
-        // IO-reset
+        // reset JOYPAD
         m_io.keyinput = 0x3FF;
+
+        // reset interrupt controller
+        m_io.interrupt.enable = 0;
+        m_io.interrupt.request = 0;
+        m_io.interrupt.master_enable = 0;
 
         // feed PPU with important data.
         m_ppu.set_memory(m_pal, m_oam, m_vram);
