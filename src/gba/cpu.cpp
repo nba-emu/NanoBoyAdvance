@@ -24,6 +24,9 @@
 #include <cstring>
 #include <stdexcept>
 #include "cpu.hpp"
+#include "util/logger.hpp"
+
+using namespace util;
 
 namespace gba
 {
@@ -41,6 +44,9 @@ namespace gba
         m_io.interrupt.enable = 0;
         m_io.interrupt.request = 0;
         m_io.interrupt.master_enable = 0;
+
+        // setup interrupt controller
+        m_interrupt.set_flag_register(&m_io.interrupt.request);
 
         // feed PPU with important data.
         m_ppu.set_memory(m_pal, m_oam, m_vram);
@@ -124,6 +130,14 @@ namespace gba
     void cpu::run_for(int cycles)
     {
         // assumes IPC of 1/8 for now.
-        for (int cycle = 0; cycle < cycles; cycle += 8) step();
+        for (int cycle = 0; cycle < cycles; cycle += 8)
+        {
+            if (m_io.interrupt.master_enable && (m_io.interrupt.enable && m_io.interrupt.request))
+            {
+                raise_irq();
+                //logger::log<LOG_TRACE>("triggering IRQ");
+            }
+            step();
+        }
     }
 }

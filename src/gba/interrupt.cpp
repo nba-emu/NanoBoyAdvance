@@ -30,6 +30,12 @@ namespace gba
 {
     void interrupt::request(interrupt_type type)
     {
+        *interrupt_flag |= static_cast<int>(type);
         logger::log<LOG_DEBUG>("requested interrupt with id={0}", static_cast<int>(type));
+    }
+
+    void interrupt::set_flag_register(u16* io_reg)
+    {
+        interrupt_flag = io_reg;
     }
 }

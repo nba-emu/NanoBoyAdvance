@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include "util/integer.hpp"
+
 namespace gba
 {
     enum interrupt_type
@@ -45,7 +47,11 @@ namespace gba
 
     class interrupt
     {
+    private:
+        u16* interrupt_flag;
+
     public:
         void request(interrupt_type type);
+        void set_flag_register(u16* io_reg);
     };
 }
