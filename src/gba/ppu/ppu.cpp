@@ -79,19 +79,8 @@ namespace gba
         m_io.status.vblank_flag = true;
         m_io.status.hblank_flag = false;
 
-        if (m_io.vcount == 0) // eh...
-        {
-            if (m_io.status.vblank_interrupt)
-                m_interrupt->request(INTERRUPT_VBLANK);
-        }
-        else if (m_io.vcount == 227)
-        {
-
-        }
-        else
-        {
-
-        }
+        if (m_io.status.vblank_interrupt)
+            m_interrupt->request(INTERRUPT_VBLANK);
     }
 
     void ppu::scanline()
