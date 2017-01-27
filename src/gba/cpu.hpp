@@ -25,6 +25,7 @@
 
 #include "arm/arm.hpp"
 #include "ppu/ppu.hpp"
+#include "interrupt.hpp"
 #define CPU_INCLUDE
 
 using namespace armigo;
@@ -49,6 +50,7 @@ namespace gba
         #include "io.hpp"
 
         ppu m_ppu;
+        interrupt m_interrupt;
 
         u8 read_bios(u32 address);
         u8 read_wram(u32 address);

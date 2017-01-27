@@ -22,6 +22,9 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 #include "ppu.hpp"
+#include "util/logger.hpp"
+
+using namespace util;
 
 namespace gba
 {
@@ -57,21 +60,37 @@ namespace gba
         m_vram = vram;
     }
 
+    void ppu::set_interrupt(interrupt* interrupt)
+    {
+        m_interrupt = interrupt;
+    }
+
     void ppu::hblank()
     {
         m_io.status.vblank_flag = false;
         m_io.status.hblank_flag = true;
+
+        if (m_io.status.hblank_interrupt)
+            m_interrupt->request(INTERRUPT_HBLANK);
     }
 
     void ppu::vblank()
     {
-        if (m_io.vcount == 227)
+        m_io.status.vblank_flag = true;
+        m_io.status.hblank_flag = false;
+
+        if (m_io.vcount == 0) // eh...
+        {
+            if (m_io.status.vblank_interrupt)
+                m_interrupt->request(INTERRUPT_VBLANK);
+        }
+        else if (m_io.vcount == 227)
         {
 
         }
         else
         {
-            
+
         }
     }
 
@@ -89,6 +108,15 @@ namespace gba
 
             m_framebuffer[m_io.vcount * 240 + x] = argb;
         }
-        m_io.vcount = (m_io.vcount + 1) % 160;
+    }
+
+    void ppu::next_line()
+    {
+        bool vcount_flag = m_io.vcount == m_io.status.vcount_setting;
+        m_io.vcount = (m_io.vcount + 1) % 228;
+        m_io.status.vcount_flag = vcount_flag;
+
+        if (vcount_flag && m_io.status.vcount_interrupt)
+            m_interrupt->request(INTERRUPT_VCOUNT);
     }
 }

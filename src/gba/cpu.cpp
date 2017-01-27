@@ -37,7 +37,9 @@ namespace gba
         // IO-reset
         m_io.keyinput = 0x3FF;
 
+        // feed PPU with important data.
         m_ppu.set_memory(m_pal, m_oam, m_vram);
+        m_ppu.set_interrupt(&m_interrupt);
     }
 
     void cpu::reset()
@@ -100,6 +102,8 @@ namespace gba
 
             m_ppu.hblank();
             run_for(272);
+
+            m_ppu.next_line();
         }
 
         // 68 invisible lines, VBLANK period.
@@ -107,6 +111,8 @@ namespace gba
         {
             m_ppu.vblank();
             run_for(1232);
+
+            m_ppu.next_line();
         }
     }
 

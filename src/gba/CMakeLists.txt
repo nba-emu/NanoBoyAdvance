@@ -1,6 +1,7 @@
 set(SOURCES
     cpu.cpp
     bios.cpp
+    interrupt.cpp
     memory.cpp
     mmio.cpp
     ppu/io.cpp

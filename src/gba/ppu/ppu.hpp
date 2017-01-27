@@ -24,6 +24,7 @@
 #pragma once
 
 #include "util/integer.hpp"
+#include "../interrupt.hpp"
 #define PPU_INCLUDE
 
 namespace gba
@@ -35,6 +36,7 @@ namespace gba
         u8* m_oam;
         u8* m_vram;
         u32 m_framebuffer[240*160];
+        interrupt* m_interrupt = nullptr;
 
         #include "io.hpp"
 
@@ -50,10 +52,12 @@ namespace gba
 
         u32* get_framebuffer();
         void set_memory(u8* pal, u8* oam, u8* vram);
+        void set_interrupt(interrupt* interrupt);
 
         void hblank();
         void vblank();
         void scanline();
+        void next_line();
     };
 }
 
