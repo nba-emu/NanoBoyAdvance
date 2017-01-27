@@ -59,10 +59,20 @@ namespace gba
 
     void ppu::hblank()
     {
+        m_io.status.vblank_flag = false;
+        m_io.status.hblank_flag = true;
     }
 
     void ppu::vblank()
     {
+        if (m_io.vcount == 227)
+        {
+
+        }
+        else
+        {
+            
+        }
     }
 
     void ppu::scanline()

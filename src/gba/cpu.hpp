@@ -117,6 +117,7 @@ namespace gba
         void set_game(u8* data, size_t size);
 
         void frame();
+        void run_for(int cycles);
     protected:
         u8 bus_read_byte(u32 address) final;
         u16 bus_read_hword(u32 address) final;

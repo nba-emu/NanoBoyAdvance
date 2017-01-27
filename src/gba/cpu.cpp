@@ -92,14 +92,29 @@ namespace gba
 
     void cpu::frame()
     {
-        for (int y = 0; y < 160; y++)
+        // 160 visible lines, alternating SCANLINE and HBLANK.
+        for (int line = 0; line < 160; line++)
         {
-            // very unrealistic/inaccurate but should work for now.
-            for (int cycles = 0; cycles < 1232 / 8; cycles++) // divided by eight, because of ROM fetch timings
-                this->step();
-
             m_ppu.scanline();
+            run_for(960);
+
+            m_ppu.hblank();
+            run_for(272);
         }
+
+        // 68 invisible lines, VBLANK period.
+        for (int line = 0; line < 68; line++)
+        {
+            m_ppu.vblank();
+            run_for(1232);
+        }
+    }
+
+    // TODO: should be in ARMigo core and replace step-method
+    void cpu::run_for(int cycles)
+    {
+        // assumes IPC of 1/8 for now.
+        for (int cycle = 0; cycle < cycles; cycle += 8) step();
     }
 
     u8 cpu::bus_read_byte(u32 address)

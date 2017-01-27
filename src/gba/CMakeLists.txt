@@ -10,6 +10,7 @@ set(SOURCES
 set(HEADERS
     io.hpp
     cpu.hpp
+    interrupt.hpp
     ppu/io.hpp
     ppu/ppu.hpp
 )
