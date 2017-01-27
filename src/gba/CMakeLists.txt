@@ -7,6 +7,7 @@ set(SOURCES
 )
 
 set(HEADERS
+    io.hpp
     cpu.hpp
     ppu/io.hpp
     ppu/ppu.hpp
