@@ -30,7 +30,7 @@ namespace gba
 {
     u8 cpu::read_mmio(u32 address)
     {
-        logger::log<LOG_INFO>("IO read from 0x{0:x} r15={1:x}", address, m_reg[15]);
+        //logger::log<LOG_INFO>("IO read from 0x{0:x} r15={1:x}", address, m_reg[15]);
 
         switch (address)
         {
@@ -58,7 +58,7 @@ namespace gba
 
     void cpu::write_mmio(u32 address, u8 value)
     {
-        logger::log<LOG_INFO>("IO write to 0x{0:x}={1:x} r15={2:x}", address, value, m_reg[15]);
+        //logger::log<LOG_INFO>("IO write to 0x{0:x}={1:x} r15={2:x}", address, value, m_reg[15]);
 
         switch (address)
         {
