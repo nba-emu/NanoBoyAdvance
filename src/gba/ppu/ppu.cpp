@@ -63,9 +63,9 @@ namespace gba
             u16 abgr = m_pal[index << 1] | (m_pal[(index << 1) + 1] << 8);
             u32 argb = 0xFF000000;
 
-            argb |= ((abgr & 0x1F) << 4) << 16;
-            argb |= (((abgr >> 5) & 0x1F) << 4) << 8;
-            argb |= ((abgr >> 10) & 0x1F) << 4;
+            argb |= ((abgr & 0x1F) << 3) << 16;
+            argb |= (((abgr >> 5) & 0x1F) << 3) << 8;
+            argb |= ((abgr >> 10) & 0x1F) << 3;
 
             m_framebuffer[m_io.vcount * 240 + x] = argb;
         }
