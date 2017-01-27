@@ -35,8 +35,8 @@ struct io
         bool vcount_interrupt;
         int vcount_setting;
 
-        //u8 operator[](int index);
-        //void operator[](int index, u8 value);
+        u8 read(int offset);
+        void write(int offset, u8 value);
     } status;
 
     int vcount;

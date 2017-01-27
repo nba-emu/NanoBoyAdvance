@@ -25,13 +25,34 @@
 
 namespace gba
 {
-    /*u8 ppu::status_reg::operator[](int index)
+    u8 ppu::io::status_reg::read(int offset)
     {
-        return 0;
+        switch (offset)
+        {
+        case 0:
+            return (vblank_flag ? 1 : 0) |
+                   (hblank_flag ? 2 : 0) |
+                   (vcount_flag ? 4 : 0) |
+                   (vblank_interrupt ? 8 : 0) |
+                   (hblank_interrupt ? 16 : 0) |
+                   (vcount_interrupt ? 32 : 0);
+        case 1:
+            return vcount_setting;
+        }
     }
 
-    void ppu::status_reg::operator[](int index, u8 value)
+    void ppu::io::status_reg::write(int offset, u8 value)
     {
-
-    }*/
+        switch (offset)
+        {
+        case 0:
+            vblank_interrupt = value & 8;
+            hblank_interrupt = value & 16;
+            vcount_interrupt = value & 32;
+            break;
+        case 1:
+            vcount_setting = value;
+            break;
+        }
+    }
 }

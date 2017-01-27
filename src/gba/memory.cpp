@@ -51,6 +51,18 @@ namespace gba
 
         switch (address)
         {
+        // DISPSTAT
+        case 0x04000004:
+            return m_ppu.get_io().status.read(0);
+        case 0x04000005:
+            return m_ppu.get_io().status.read(1);
+
+        // VCOUNT
+        case 0x04000006:
+            return m_ppu.get_io().vcount & 0xFF;
+        case 0x04000007:
+            return m_ppu.get_io().vcount >> 8;
+
         // KEYINPUT
         case 0x04000130:
             return m_io.keyinput & 0xFF;
@@ -112,7 +124,16 @@ namespace gba
 
     void cpu::write_io(u32 address, u8 value)
     {
+        logger::log<LOG_INFO>("IO write to 0x{0:x}={1:x} r15={2:x}", address, value, m_reg[15]);
 
+        switch (address)
+        {
+        // DISPSTAT
+        case 0x04000004:
+            return m_ppu.get_io().status.write(0, value);
+        case 0x04000005:
+            return m_ppu.get_io().status.write(1, value);
+        }
     }
 
     void cpu::write_pal(u32 address, u8 value)

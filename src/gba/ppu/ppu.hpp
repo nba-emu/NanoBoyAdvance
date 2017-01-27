@@ -43,6 +43,11 @@ namespace gba
 
         void reset();
 
+        io& get_io()
+        {
+            return m_io;
+        }
+
         u32* get_framebuffer();
         void set_memory(u8* pal, u8* oam, u8* vram);
 
