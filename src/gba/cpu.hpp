@@ -25,6 +25,7 @@
 
 #include "arm/arm.hpp"
 #include "ppu/ppu.hpp"
+#define CPU_INCLUDE
 
 using namespace armigo;
 
@@ -44,6 +45,8 @@ namespace gba
         u8 m_pal[0x400];
         u8 m_oam[0x400];
         u8 m_vram[0x18000];
+
+        #include "io.hpp"
 
         ppu m_ppu;
 
@@ -108,6 +111,8 @@ namespace gba
 
         void reset();
 
+        u16& get_keypad();
+        u32* get_framebuffer(); // eh..
         void set_bios(u8* data, size_t size);
         void set_game(u8* data, size_t size);
 
@@ -123,3 +128,5 @@ namespace gba
         void software_interrupt(int number) final;
     };
 }
+
+#undef CPU_INCLUDE

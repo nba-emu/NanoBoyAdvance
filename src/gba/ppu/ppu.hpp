@@ -34,6 +34,7 @@ namespace gba
         u8* m_pal;
         u8* m_oam;
         u8* m_vram;
+        u32 m_framebuffer[240*160];
 
         #include "io.hpp"
 
@@ -42,7 +43,12 @@ namespace gba
 
         void reset();
 
+        u32* get_framebuffer();
         void set_memory(u8* pal, u8* oam, u8* vram);
+
+        void hblank();
+        void vblank();
+        void scanline();
     };
 }
 

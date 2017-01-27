@@ -49,13 +49,14 @@ namespace gba
     {
         logger::log<LOG_INFO>("IO read from 0x{0:x} r15={1:x}", address, m_reg[15]);
 
-        /*switch (address)
+        switch (address)
         {
-        case 0x4000004:
-            return m_ppu.read_dispstat_low();
-        case 0x4000005:
-            return m_ppu.read_dispstat_high();
-        }*/
+        // KEYINPUT
+        case 0x04000130:
+            return m_io.keyinput & 0xFF;
+        case 0x04000131:
+            return m_io.keyinput >> 8;
+        }
 
         return 0;
     }
@@ -121,7 +122,7 @@ namespace gba
 
     void cpu::write_vram(u32 address, u8 value)
     {
-        logger::log<LOG_INFO>("vram write address={0:x} value={1:x}", address, value);
+        //logger::log<LOG_INFO>("vram write address={0:x} value={1:x}", address, value);
 
         address %= 0x20000;
 

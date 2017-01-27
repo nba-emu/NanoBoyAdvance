@@ -38,6 +38,8 @@ struct io
         //u8 operator[](int index);
         //void operator[](int index, u8 value);
     } status;
+
+    int vcount;
 } m_io;
 
 #endif

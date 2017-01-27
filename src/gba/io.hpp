@@ -21,54 +21,11 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#include "ppu.hpp"
+#ifdef CPU_INCLUDE
 
-namespace gba
+struct io
 {
-    ppu::ppu()
-    {
-        reset();
-    }
+    u16 keyinput;
+} m_io;
 
-    void ppu::reset()
-    {
-        m_io.vcount = 0;
-    }
-
-    u32* ppu::get_framebuffer()
-    {
-        return m_framebuffer;
-    }
-
-    void ppu::set_memory(u8* pal, u8* oam, u8* vram)
-    {
-        m_pal = pal;
-        m_oam = oam;
-        m_vram = vram;
-    }
-
-    void ppu::hblank()
-    {
-    }
-
-    void ppu::vblank()
-    {
-    }
-
-    void ppu::scanline()
-    {
-        for (int x = 0; x < 240; x++)
-        {
-            int index = m_vram[m_io.vcount * 240 + x];
-            u16 abgr = m_pal[index << 1] | (m_pal[(index << 1) + 1] << 8);
-            u32 argb = 0xFF000000;
-
-            argb |= ((abgr & 0x1F) << 4) << 16;
-            argb |= (((abgr >> 5) & 0x1F) << 4) << 8;
-            argb |= ((abgr >> 10) & 0x1F) << 4;
-
-            m_framebuffer[m_io.vcount * 240 + x] = argb;
-        }
-        m_io.vcount = (m_io.vcount + 1) % 160;
-    }
-}
+#endif

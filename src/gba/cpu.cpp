@@ -33,6 +33,10 @@ namespace gba
     cpu::cpu()
     {
         reset();
+
+        // IO-reset
+        m_io.keyinput = 0x3FF;
+
         m_ppu.set_memory(m_pal, m_oam, m_vram);
     }
 
@@ -60,6 +64,16 @@ namespace gba
         }
     }
 
+    u16& cpu::get_keypad()
+    {
+        return m_io.keyinput;
+    }
+
+    u32* cpu::get_framebuffer()
+    {
+        return m_ppu.get_framebuffer(); // super eh...
+    }
+
     void cpu::set_bios(u8* data, size_t size)
     {
         if (size <= sizeof(m_bios))
@@ -78,7 +92,14 @@ namespace gba
 
     void cpu::frame()
     {
-        // todo
+        for (int y = 0; y < 160; y++)
+        {
+            // very unrealistic/inaccurate but should work for now.
+            for (int cycles = 0; cycles < 1232 / 8; cycles++) // divided by eight, because of ROM fetch timings
+                this->step();
+
+            m_ppu.scanline();
+        }
     }
 
     u8 cpu::bus_read_byte(u32 address)
