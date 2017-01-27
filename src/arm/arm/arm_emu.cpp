@@ -625,6 +625,17 @@ namespace armigo
 
     void arm::arm_undefined(u32 instruction)
     {
+        // save return address and program status
+        m_bank[BANK_SVC][BANK_R14] = m_reg[15] - 4;
+        m_spsr[SPSR_SVC] = m_cpsr;
+
+        // switch to UND mode and disable interrupts
+        switch_mode(MODE_UND);
+        m_cpsr |= MASK_IRQD;
+
+        // jump to exception vector
+        m_reg[15] = EXCPT_UNDEFINED;
+        m_flush = true;
     }
 
     template <bool _pre_indexed, bool base_increment, bool user_mode, bool _write_back, bool load>
