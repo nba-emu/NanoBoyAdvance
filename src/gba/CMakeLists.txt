@@ -2,6 +2,7 @@ set(SOURCES
     cpu.cpp
     bios.cpp
     memory.cpp
+    mmio.cpp
     ppu/io.cpp
     ppu/ppu.cpp
 )
