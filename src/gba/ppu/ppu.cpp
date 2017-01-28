@@ -37,10 +37,17 @@ namespace gba
     {
         m_io.vcount = 0;
 
+        // reset DISPCNT and DISPCNT
         m_io.control.reset();
         m_io.status.reset();
 
-        for (int i = 0; i < 4; i++) m_io.bgcnt[i].reset();
+        // reset all backgrounds
+        for (int i = 0; i < 4; i++)
+        {
+            m_io.bghofs[i] = 0;
+            m_io.bgvofs[i] = 0;
+            m_io.bgcnt[i].reset();
+        }
     }
 
     u32* ppu::get_framebuffer()

@@ -72,6 +72,9 @@ struct io
         auto read(int offset) -> u8;
         void write(int offset, u8 value);
     } bgcnt[4];
+
+    u16 bghofs[4];
+    u16 bgvofs[4];
 } m_io;
 
 #endif

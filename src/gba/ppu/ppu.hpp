@@ -47,7 +47,7 @@ namespace gba
         #include "io.hpp"
         #include "helpers.hpp"
 
-        void render_textmode(int bg);
+        void render_textmode(int id);
         void render_bitmap_1();
         void render_bitmap_2();
         void render_bitmap_3();

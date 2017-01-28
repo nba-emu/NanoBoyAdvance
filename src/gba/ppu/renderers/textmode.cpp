@@ -25,7 +25,18 @@
 
 namespace gba
 {
-    void ppu::render_textmode(int bg)
+    void ppu::render_textmode(int id)
     {
+        u16* buffer = m_buffer[id];
+        auto bg = m_io.bgcnt[id];
+
+        // background dimensions
+        int width = ((bg.screen_size & 1) + 1) << 8;
+        int height = ((bg.screen_size >> 1) + 1) << 8;
+
+        for (int x = 0; x < 240; x++)
+        {
+            buffer[x] = 0x1F;
+        }
     }
 }
