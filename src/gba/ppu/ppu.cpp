@@ -65,6 +65,8 @@ namespace gba
         m_interrupt = interrupt;
     }
 
+    // TODO: VBlank/HBlank flag toggling is in no way optimal.
+
     void ppu::hblank()
     {
         m_io.status.vblank_flag = false;

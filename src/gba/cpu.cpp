@@ -37,14 +37,6 @@ namespace gba
     {
         reset();
 
-        // reset JOYPAD
-        m_io.keyinput = 0x3FF;
-
-        // reset interrupt controller
-        m_io.interrupt.enable = 0;
-        m_io.interrupt.request = 0;
-        m_io.interrupt.master_enable = 0;
-
         // setup interrupt controller
         m_interrupt.set_flag_register(&m_io.interrupt.request);
 
@@ -64,6 +56,14 @@ namespace gba
         memset(m_pal, 0, 0x400);
         memset(m_oam, 0, 0x400);
         memset(m_vram, 0, 0x18000);
+
+        // reset JOYPAD
+        m_io.keyinput = 0x3FF;
+
+        // reset interrupt controller
+        m_io.interrupt.enable = 0;
+        m_io.interrupt.request = 0;
+        m_io.interrupt.master_enable = 0;
 
         set_hle(false);
 
@@ -126,7 +126,7 @@ namespace gba
         }
     }
 
-    // TODO: should be in ARMigo core and replace step-method
+    // TODO: should be in ARMigo core and replace step-method maybe
     void cpu::run_for(int cycles)
     {
         // assumes IPC of 1/8 for now.
