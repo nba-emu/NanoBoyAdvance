@@ -21,53 +21,49 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#pragma once
-
-#include "util/integer.hpp"
-#include "../interrupt.hpp"
-#define PPU_INCLUDE
+#include "../ppu.hpp"
 
 namespace gba
 {
-    class ppu
+    void ppu::render_bitmap_1()
     {
-    private:
-        u8* m_pal;
-        u8* m_oam;
-        u8* m_vram;
-        interrupt* m_interrupt = nullptr;
+        u32 offset = m_io.vcount * 480;
 
-        // rendering buffers
-        u32 m_buffer[5][240];
-        u32 m_win_mask[2][240];
-        u32 m_framebuffer[240*160];
-
-        #include "io.hpp"
-
-        void render_textmode(int bg);
-        void render_bitmap_1();
-        void render_bitmap_2();
-        void render_bitmap_3();
-
-    public:
-        ppu();
-
-        void reset();
-
-        io& get_io()
+        for (int x = 0; x < 240; x++)
         {
-            return m_io;
+            m_buffer[2][x] = (m_vram[offset + 1] << 8) | m_vram[offset];
+            offset += 2;
         }
+    }
 
-        u32* get_framebuffer();
-        void set_memory(u8* pal, u8* oam, u8* vram);
-        void set_interrupt(interrupt* interrupt);
+    void ppu::render_bitmap_2()
+    {
+        u32 page = m_io.control.frame_select ? 0xA000 : 0;
+        u32 offset = page + m_io.vcount * 240;
 
-        void hblank();
-        void vblank();
-        void scanline();
-        void next_line();
-    };
+        for (int x = 0; x < 240; x++)
+        {
+            int index = m_vram[offset + x];
+            m_buffer[2][x] = (m_pal[(index * 2) + 1] << 8) | m_pal[index << 1];
+        }
+    }
+
+    void ppu::render_bitmap_3()
+    {
+        u32 page = m_io.control.frame_select ? 0xA000 : 0;
+        u32 offset = page + m_io.vcount * 320;
+
+        for (int x = 0; x < 240; x++)
+        {
+            if (x < 160 && m_io.vcount < 128)
+            {
+                m_buffer[2][x] = (m_vram[offset + 1] << 8) | m_vram[offset];
+                offset += 2;
+            }
+            else
+            {
+                m_buffer[2][x] = 0x8000; // transparent
+            }
+        }
+    }
 }
-
-#undef PPU_INCLUDE

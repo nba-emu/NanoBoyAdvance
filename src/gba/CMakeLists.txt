@@ -7,6 +7,8 @@ set(SOURCES
     mmio.cpp
     ppu/io.cpp
     ppu/ppu.cpp
+    ppu/renderers/bitmap.cpp
+    ppu/renderers/textmode.cpp
 )
 
 set(HEADERS

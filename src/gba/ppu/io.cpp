@@ -71,7 +71,7 @@ namespace gba
         switch (offset)
         {
         case 0:
-            mode = value & 3;
+            mode = value & 7;
             cgb_mode = value & 8;
             frame_select = (value >> 4) & 1;
             hblank_oam_access = value & 32;

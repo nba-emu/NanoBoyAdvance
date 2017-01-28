@@ -82,17 +82,43 @@ namespace gba
         m_io.status.vblank_flag = false;
         m_io.status.hblank_flag = false;
 
+        switch (m_io.control.mode)
+        {
+        case 0:
+            break;
+        case 3:
+            if (m_io.control.enable[2])
+            {
+                render_bitmap_1();
+            }
+            break;
+        case 4:
+            if (m_io.control.enable[2])
+            {
+                render_bitmap_2();
+            }
+            break;
+        case 5:
+            if (m_io.control.enable[2])
+            {
+                render_bitmap_3();
+            }
+            break;
+        default:
+            logger::log<LOG_ERROR>("unknown ppu mode: {0}", m_io.control.mode);
+        }
+
+        // test-wise
         for (int x = 0; x < 240; x++)
         {
-            int index = m_vram[m_io.vcount * 240 + x];
-            u16 abgr = m_pal[index << 1] | (m_pal[(index << 1) + 1] << 8);
+            u16 abgr = m_buffer[2][x];
             u32 argb = 0xFF000000;
 
             argb |= ((abgr & 0x1F) << 3) << 16;
             argb |= (((abgr >> 5) & 0x1F) << 3) << 8;
             argb |= ((abgr >> 10) & 0x1F) << 3;
 
-            m_framebuffer[m_io.vcount * 240 + x] = argb;
+            m_framebuffer[240*m_io.vcount + x] = argb;
         }
     }
 

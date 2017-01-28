@@ -21,53 +21,11 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#pragma once
-
-#include "util/integer.hpp"
-#include "../interrupt.hpp"
-#define PPU_INCLUDE
+#include "../ppu.hpp"
 
 namespace gba
 {
-    class ppu
+    void ppu::render_textmode(int bg)
     {
-    private:
-        u8* m_pal;
-        u8* m_oam;
-        u8* m_vram;
-        interrupt* m_interrupt = nullptr;
-
-        // rendering buffers
-        u32 m_buffer[5][240];
-        u32 m_win_mask[2][240];
-        u32 m_framebuffer[240*160];
-
-        #include "io.hpp"
-
-        void render_textmode(int bg);
-        void render_bitmap_1();
-        void render_bitmap_2();
-        void render_bitmap_3();
-
-    public:
-        ppu();
-
-        void reset();
-
-        io& get_io()
-        {
-            return m_io;
-        }
-
-        u32* get_framebuffer();
-        void set_memory(u8* pal, u8* oam, u8* vram);
-        void set_interrupt(interrupt* interrupt);
-
-        void hblank();
-        void vblank();
-        void scanline();
-        void next_line();
-    };
+    }
 }
-
-#undef PPU_INCLUDE
