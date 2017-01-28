@@ -30,21 +30,30 @@ namespace gba
 {
     u8 cpu::bus_read_byte(u32 address)
     {
-        register read_func func = m_read_table[(address >> 24) & 15];
+        register int page = (address >> 24) & 15;
+        register read_func func = m_read_table[page];
+
+        m_cycles -= m_mem_cycles8_16[page];
 
         return (this->*func)(address);
     }
 
     u16 cpu::bus_read_hword(u32 address)
     {
-        register read_func func = m_read_table[(address >> 24) & 15];
+        register int page = (address >> 24) & 15;
+        register read_func func = m_read_table[page];
+
+        m_cycles -= m_mem_cycles8_16[page];
 
         return (this->*func)(address) | ((this->*func)(address + 1) << 8);
     }
 
     u32 cpu::bus_read_word(u32 address)
     {
-        register read_func func = m_read_table[(address >> 24) & 15];
+        register int page = (address >> 24) & 15;
+        register read_func func = m_read_table[page];
+
+        m_cycles -= m_mem_cycles32[page];
 
         return (this->*func)(address) |
                ((this->*func)(address + 1) << 8) |
@@ -65,12 +74,17 @@ namespace gba
             return;
         }
 
+        m_cycles -= m_mem_cycles8_16[page];
+
         (this->*func)(address, value);
     }
 
     void cpu::bus_write_hword(u32 address, u16 value)
     {
-        register write_func func = m_write_table[(address >> 24) & 15];
+        register int page = (address >> 24) & 15;
+        register write_func func = m_write_table[page];
+
+        m_cycles -= m_mem_cycles8_16[page];
 
         (this->*func)(address, value & 0xFF);
         (this->*func)(address + 1, value >> 8);
@@ -78,7 +92,10 @@ namespace gba
 
     void cpu::bus_write_word(u32 address, u32 value)
     {
-        register write_func func = m_write_table[(address >> 24) & 15];
+        register int page = (address >> 24) & 15;
+        register write_func func = m_write_table[page];
+
+        m_cycles -= m_mem_cycles32[page];
 
         (this->*func)(address, value & 0xFF);
         (this->*func)(address + 1, (value >> 8) & 0xFF);

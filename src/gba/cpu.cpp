@@ -30,6 +30,8 @@ using namespace util;
 
 namespace gba
 {
+    constexpr int cpu::m_mem_cycles8_16[16];
+    constexpr int cpu::m_mem_cycles32[16];
     constexpr cpu::read_func cpu::m_read_table[16];
     constexpr cpu::write_func cpu::m_write_table[16];
 
@@ -126,8 +128,9 @@ namespace gba
     // TODO: should be in ARMigo core and replace step-method maybe
     void cpu::run_for(int cycles)
     {
-        // assumes IPC of 1/8 for now.
-        for (int cycle = 0; cycle < cycles; cycle += 8)
+        m_cycles += cycles;
+
+        while (m_cycles >= 0)
         {
             u32 requested_and_enabled = m_io.interrupt.request & m_io.interrupt.enable;
 
@@ -143,6 +146,10 @@ namespace gba
                     raise_irq();
                 }
                 step();
+            }
+            else
+            {
+                m_cycles--; // waste cycles
             }
         }
     }

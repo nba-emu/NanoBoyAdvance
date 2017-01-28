@@ -53,6 +53,8 @@ namespace gba
         ppu m_ppu;
         interrupt m_interrupt;
 
+        int m_cycles;
+
         u8 read_bios(u32 address);
         u8 read_wram(u32 address);
         u8 read_iram(u32 address);
@@ -70,6 +72,14 @@ namespace gba
         void write_vram(u32 address, u8 value);
         void write_oam(u32 address, u8 value);
         void write_invalid(u32 address, u8 value);
+
+        static constexpr int m_mem_cycles8_16[16] = {
+            1, 1, 3, 1, 1, 1, 1, 1, 5, 5, 1, 1, 1, 1, 5, 1
+        };
+
+        static constexpr int m_mem_cycles32[16] = {
+            1, 1, 6, 1, 1, 2, 2, 1, 8, 8, 1, 1, 1, 1, 5, 1
+        };
 
         static constexpr read_func m_read_table[16] = {
             &cpu::read_bios,
