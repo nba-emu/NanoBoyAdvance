@@ -67,7 +67,7 @@ namespace armigo
                 amount = m_reg[(instruction >> 8) & 0xF];
                 if (reg_op1 == 15) op1 += 4;
                 if (reg_op2 == 15) op2 += 4;
-                cycles++;
+                //cycles++;
             }
             else
             {

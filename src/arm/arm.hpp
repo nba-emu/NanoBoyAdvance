@@ -31,8 +31,6 @@ namespace armigo
     class arm
     {
     public:
-        int cycles {0};
-
         /// Constructor
         arm();
 

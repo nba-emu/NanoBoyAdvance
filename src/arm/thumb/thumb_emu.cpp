@@ -146,7 +146,6 @@ namespace armigo
             set_carry(carry);
             update_sign(m_reg[dst]);
             update_zero(m_reg[dst]);
-            cycles++;
             break;
         }
         case 0b0011: // LSR
@@ -157,7 +156,6 @@ namespace armigo
             set_carry(carry);
             update_sign(m_reg[dst]);
             update_zero(m_reg[dst]);
-            cycles++;
             break;
         }
         case 0b0100: // ASR
@@ -168,7 +166,6 @@ namespace armigo
             set_carry(carry);
             update_sign(m_reg[dst]);
             update_zero(m_reg[dst]);
-            cycles++;
             break;
         }
         case 0b0101: // ADC
@@ -202,7 +199,6 @@ namespace armigo
             set_carry(carry);
             update_sign(m_reg[dst]);
             update_zero(m_reg[dst]);
-            cycles++;
             break;
         }
         case 0b1000: // TST

@@ -114,7 +114,6 @@ namespace armigo
     void arm::step()
     {
         bool thumb = m_cpsr & MASK_THUMB;
-        cycles++; /* NOTE: preliminary */
 
         if (thumb)
         {
