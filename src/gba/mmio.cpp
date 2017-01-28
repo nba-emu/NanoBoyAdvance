@@ -33,60 +33,37 @@ namespace gba
 {
     u8 cpu::read_mmio(u32 address)
     {
-        //logger::log<LOG_INFO>("IO read from 0x{0:x} r15={1:x}", address, m_reg[15]);
         auto& ppu_io = m_ppu.get_io();
 
         switch (address)
         {
         // PPU
-        case DISPCNT:
-            return ppu_io.control.read(0);
-        case DISPCNT+1:
-            return ppu_io.control.read(1);
-        case DISPSTAT:
-            return ppu_io.status.read(0);
-        case DISPSTAT+1:
-            return ppu_io.status.read(1);
-        case VCOUNT:
-            return ppu_io.vcount & 0xFF;
-        case VCOUNT+1:
-            return ppu_io.vcount >> 8;
-        case BG0CNT:
-            return ppu_io.bgcnt[0].read(0);
-        case BG0CNT+1:
-            return ppu_io.bgcnt[0].read(1);
-        case BG1CNT:
-            return ppu_io.bgcnt[1].read(0);
-        case BG1CNT+1:
-            return ppu_io.bgcnt[1].read(1);
-        case BG2CNT:
-            return ppu_io.bgcnt[2].read(0);
-        case BG2CNT+1:
-            return ppu_io.bgcnt[2].read(1);
-        case BG3CNT:
-            return ppu_io.bgcnt[2].read(0);
-        case BG3CNT+1:
-            return ppu_io.bgcnt[2].read(1);
+        case DISPCNT:    return ppu_io.control.read(0);
+        case DISPCNT+1:  return ppu_io.control.read(1);
+        case DISPSTAT:   return ppu_io.status.read(0);
+        case DISPSTAT+1: return ppu_io.status.read(1);
+        case VCOUNT:     return ppu_io.vcount & 0xFF;
+        case VCOUNT+1:   return ppu_io.vcount >> 8;
+        case BG0CNT:     return ppu_io.bgcnt[0].read(0);
+        case BG0CNT+1:   return ppu_io.bgcnt[0].read(1);
+        case BG1CNT:     return ppu_io.bgcnt[1].read(0);
+        case BG1CNT+1:   return ppu_io.bgcnt[1].read(1);
+        case BG2CNT:     return ppu_io.bgcnt[2].read(0);
+        case BG2CNT+1:   return ppu_io.bgcnt[2].read(1);
+        case BG3CNT:     return ppu_io.bgcnt[2].read(0);
+        case BG3CNT+1:   return ppu_io.bgcnt[2].read(1);
 
         // JOYPAD
-        case KEYINPUT:
-            return m_io.keyinput & 0xFF;
-        case KEYINPUT+1:
-            return m_io.keyinput >> 8;
+        case KEYINPUT:   return m_io.keyinput & 0xFF;
+        case KEYINPUT+1: return m_io.keyinput >> 8;
 
         // INTERRUPT
-        case IE:
-            return m_io.interrupt.enable & 0xFF;
-        case IE+1:
-            return m_io.interrupt.enable >> 8;
-        case IF:
-            return m_io.interrupt.request & 0xFF;
-        case IF+1:
-            return m_io.interrupt.request >> 8;
-        case IME:
-            return m_io.interrupt.master_enable & 0xFF;
-        case IME+1:
-            return m_io.interrupt.master_enable >> 8;
+        case IE:    return m_io.interrupt.enable & 0xFF;
+        case IE+1:  return m_io.interrupt.enable >> 8;
+        case IF:    return m_io.interrupt.request & 0xFF;
+        case IF+1:  return m_io.interrupt.request >> 8;
+        case IME:   return m_io.interrupt.master_enable & 0xFF;
+        case IME+1: return m_io.interrupt.master_enable >> 8;
         }
 
         return 0;
@@ -94,48 +71,24 @@ namespace gba
 
     void cpu::write_mmio(u32 address, u8 value)
     {
-        //logger::log<LOG_INFO>("IO write to 0x{0:x}={1:x} r15={2:x}", address, value, m_reg[15]);
         auto& ppu_io = m_ppu.get_io();
 
         switch (address)
         {
         // PPU
-        case DISPCNT:
-            ppu_io.control.write(0, value);
-            break;
-        case DISPCNT+1:
-            ppu_io.control.write(1, value);
-            break;
-        case DISPSTAT:
-            ppu_io.status.write(0, value);
-            break;
-        case DISPSTAT+1:
-            ppu_io.status.write(1, value);
-            break;
-        case BG0CNT:
-            ppu_io.bgcnt[0].write(0, value);
-            break;
-        case BG0CNT+1:
-            ppu_io.bgcnt[0].write(1, value);
-            break;
-        case BG1CNT:
-            ppu_io.bgcnt[1].write(0, value);
-            break;
-        case BG1CNT+1:
-            ppu_io.bgcnt[1].write(1, value);
-            break;
-        case BG2CNT:
-            ppu_io.bgcnt[2].write(0, value);
-            break;
-        case BG2CNT+1:
-            ppu_io.bgcnt[2].write(1, value);
-            break;
-        case BG3CNT:
-            ppu_io.bgcnt[3].write(0, value);
-            break;
-        case BG3CNT+1:
-            ppu_io.bgcnt[3].write(1, value);
-            break;
+        case DISPCNT:    ppu_io.control.write(0, value); break;
+        case DISPCNT+1:  ppu_io.control.write(1, value); break;
+        case DISPSTAT:   ppu_io.status.write(0, value); break;
+        case DISPSTAT+1: ppu_io.status.write(1, value); break;
+        case BG0CNT:     ppu_io.bgcnt[0].write(0, value); break;
+        case BG0CNT+1:   ppu_io.bgcnt[0].write(1, value); break;
+        case BG1CNT:     ppu_io.bgcnt[1].write(0, value); break;
+        case BG1CNT+1:   ppu_io.bgcnt[1].write(1, value); break;
+        case BG2CNT:     ppu_io.bgcnt[2].write(0, value); break;
+        case BG2CNT+1:   ppu_io.bgcnt[2].write(1, value); break;
+        case BG3CNT:     ppu_io.bgcnt[3].write(0, value); break;
+        case BG3CNT+1:   ppu_io.bgcnt[3].write(1, value); break;
+
         case BG0HOFS:
             ppu_io.bghofs[0] = (ppu_io.bghofs[0] & 0xFF00) | value;
             break;
