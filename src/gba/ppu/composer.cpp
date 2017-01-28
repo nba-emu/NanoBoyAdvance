@@ -21,58 +21,42 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#pragma once
-
-#include "util/integer.hpp"
-#include "../interrupt.hpp"
-#define PPU_INCLUDE
+#include "ppu.hpp"
 
 namespace gba
 {
-    const u16 COLOR_TRANSPARENT = 0x8000;
-
-    class ppu
+    void ppu::compose_scanline()
     {
-    private:
-        u8* m_pal;
-        u8* m_oam;
-        u8* m_vram;
-        interrupt* m_interrupt = nullptr;
+        u16 backdrop_color = (m_pal[1] << 8) | m_pal[0];
+        u32* line_buffer = m_framebuffer  + m_io.vcount * 240;
 
-        // rendering buffers
-        u8 m_win_mask[2][240];
-        u16 m_buffer[5][240];
-        u32 m_framebuffer[240*160];
-
-        #include "io.hpp"
-        #include "helpers.hpp"
-
-        void render_textmode(int id);
-        void render_bitmap_1();
-        void render_bitmap_2();
-        void render_bitmap_3();
-
-    public:
-        ppu();
-
-        void reset();
-
-        io& get_io()
+        for (int i = 0; i < 240; i++)
         {
-            return m_io;
+            int layer[2] = { 5, 5 };
+            u16 pixel[2] = { backdrop_color, 0 };
+
+            for (int j = 3; j >= 0; j--)
+            {
+                for (int k = 3; k >= 0; k--)
+                {
+                    u16 new_pixel = m_buffer[k][i];
+
+                    if (new_pixel != COLOR_TRANSPARENT && m_io.control.enable[k] &&
+                            m_io.bgcnt[k].priority == j)
+                    {
+                        layer[1] = layer[0];
+                        layer[0] = k;
+                        pixel[1] = pixel[0];
+                        pixel[0] = new_pixel;
+                    }
+                }
+
+                // object layer
+            }
+
+            // SFX code
+
+            line_buffer[i] = color_convert(pixel[0]);
         }
-
-        u32* get_framebuffer();
-        void set_memory(u8* pal, u8* oam, u8* vram);
-        void set_interrupt(interrupt* interrupt);
-
-        void hblank();
-        void vblank();
-        void scanline();
-        void next_line();
-
-        void compose_scanline();
-    };
+    }
 }
-
-#undef PPU_INCLUDE

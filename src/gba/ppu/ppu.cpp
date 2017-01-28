@@ -102,14 +102,6 @@ namespace gba
                 if (m_io.control.enable[i])
                     render_textmode(i);
             }
-            /*if (m_io.vcount < 32)
-            {
-                for (int i = 0; i < 16; i++)
-                {
-                    int index = (m_io.vcount * 16 + i) * 2;
-                    m_buffer[2][i] = (m_pal[index + 1] << 8) | m_pal[index];
-                }
-            }*/
             break;
         case 3:
             // BG Mode 3 - 240x160 pixels, 32768 colors
@@ -136,13 +128,7 @@ namespace gba
             logger::log<LOG_ERROR>("unknown ppu mode: {0}", m_io.control.mode);
         }
 
-        // test-wise
-        for (int x = 0; x < 240; x++)
-        {
-            u16 abgr = m_buffer[3][x];
-
-            m_framebuffer[240*m_io.vcount + x] = color_convert(abgr);
-        }
+        compose_scanline();
     }
 
     void ppu::next_line()
