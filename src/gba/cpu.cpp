@@ -65,9 +65,9 @@ namespace gba
         memset(m_oam, 0, 0x400);
         memset(m_vram, 0, 0x18000);
 
-        set_hle(true);
+        set_hle(false);
 
-        if (m_hle)
+        //if (m_hle)
         {
             m_reg[15] = 0x08000000;
             m_reg[13] = 0x03007F00;
@@ -135,7 +135,6 @@ namespace gba
             if (m_io.interrupt.master_enable && (m_io.interrupt.enable && m_io.interrupt.request))
             {
                 raise_irq();
-                //logger::log<LOG_TRACE>("triggering IRQ");
             }
             step();
         }
