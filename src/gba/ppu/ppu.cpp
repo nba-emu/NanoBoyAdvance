@@ -89,28 +89,29 @@ namespace gba
         switch (m_io.control.mode)
         {
         case 0:
-            if (m_io.vcount < 32)
+            // BG Mode 0 - 240x160 pixels, Text mode
+            for (int i = 0; i < 4; i++)
             {
-                for (int i = 0; i < 16; i++)
-                {
-                    int index = (m_io.vcount * 16 + i) * 2;
-                    m_buffer[2][i] = (m_pal[index + 1] << 8) | m_pal[index];
-                }
+                if (m_io.control.enable[i])
+                    render_textmode(i);
             }
             break;
         case 3:
+            // BG Mode 3 - 240x160 pixels, 32768 colors
             if (m_io.control.enable[2])
             {
                 render_bitmap_1();
             }
             break;
         case 4:
+            // BG Mode 4 - 240x160 pixels, 256 colors (out of 32768 colors)
             if (m_io.control.enable[2])
             {
                 render_bitmap_2();
             }
             break;
         case 5:
+            // BG Mode 5 - 160x128 pixels, 32768 colors
             if (m_io.control.enable[2])
             {
                 render_bitmap_3();
@@ -124,13 +125,8 @@ namespace gba
         for (int x = 0; x < 240; x++)
         {
             u16 abgr = m_buffer[2][x];
-            u32 argb = 0xFF000000;
 
-            argb |= ((abgr & 0x1F) << 3) << 16;
-            argb |= (((abgr >> 5) & 0x1F) << 3) << 8;
-            argb |= ((abgr >> 10) & 0x1F) << 3;
-
-            m_framebuffer[240*m_io.vcount + x] = argb;
+            m_framebuffer[240*m_io.vcount + x] = color_convert(abgr);
         }
     }
 

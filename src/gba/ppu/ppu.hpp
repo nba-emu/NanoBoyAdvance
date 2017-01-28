@@ -29,6 +29,8 @@
 
 namespace gba
 {
+    const u16 COLOR_TRANSPARENT = 0x8000;
+
     class ppu
     {
     private:
@@ -38,11 +40,12 @@ namespace gba
         interrupt* m_interrupt = nullptr;
 
         // rendering buffers
-        u32 m_buffer[5][240];
-        u32 m_win_mask[2][240];
+        u8 m_win_mask[2][240];
+        u16 m_buffer[5][240];
         u32 m_framebuffer[240*160];
 
         #include "io.hpp"
+        #include "helpers.hpp"
 
         void render_textmode(int bg);
         void render_bitmap_1();
