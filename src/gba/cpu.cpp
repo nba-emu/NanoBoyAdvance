@@ -60,6 +60,7 @@ namespace gba
         // reset IO-registers
         m_io.keyinput = 0x3FF;
         m_io.interrupt.reset();
+        m_io.haltcnt = SYSTEM_RUN;
 
         set_hle(false);
 
@@ -128,11 +129,21 @@ namespace gba
         // assumes IPC of 1/8 for now.
         for (int cycle = 0; cycle < cycles; cycle += 8)
         {
-            if (m_io.interrupt.master_enable && ((m_io.interrupt.enable & m_io.interrupt.request) != 0))
+            u32 requested_and_enabled = m_io.interrupt.request & m_io.interrupt.enable;
+
+            if (m_io.haltcnt == SYSTEM_HALT && requested_and_enabled)
             {
-                raise_irq();
+                m_io.haltcnt = SYSTEM_RUN;
             }
-            step();
+
+            if (m_io.haltcnt == SYSTEM_RUN)
+            {
+                if (m_io.interrupt.master_enable && requested_and_enabled)
+                {
+                    raise_irq();
+                }
+                step();
+            }
         }
     }
 }

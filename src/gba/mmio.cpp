@@ -161,6 +161,9 @@ namespace gba
             m_io.interrupt.master_enable &= 0x00FF;
             m_io.interrupt.master_enable |= (value << 8);
             break;
+        case HALTCNT:
+            m_io.haltcnt = (value & 0x80) ? SYSTEM_STOP : SYSTEM_HALT;
+            break;
         }
     }
 }

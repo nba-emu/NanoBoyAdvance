@@ -21,24 +21,14 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifdef CPU_INCLUDE
+#pragma once
 
-struct io
+namespace gba
 {
-    // JOYPAD
-    u16 keyinput;
-
-    // INTERRUPT CONTROL
-    struct interrupt_io
+    enum system_state
     {
-        u16 enable;
-        u16 request;
-        u16 master_enable;
-
-        void reset();
-    } interrupt;
-
-    system_state haltcnt;
-} m_io;
-
-#endif
+        SYSTEM_RUN,
+        SYSTEM_STOP,
+        SYSTEM_HALT
+    };
+}

@@ -25,6 +25,7 @@
 
 #include "arm/arm.hpp"
 #include "ppu/ppu.hpp"
+#include "enums.hpp"
 #include "interrupt.hpp"
 #define CPU_INCLUDE
 
