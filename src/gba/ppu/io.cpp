@@ -25,6 +25,72 @@
 
 namespace gba
 {
+    void ppu::io::control_reg::reset()
+    {
+        mode = 0;
+        cgb_mode = false;
+        frame_select = 0;
+        hblank_oam_access = false;
+        one_dimensional = false;
+        forced_blank = false;
+        enable[0] = false;
+        enable[1] = false;
+        enable[2] = false;
+        enable[3] = false;
+        enable[4] = false;
+        win_enable[0] = false;
+        win_enable[1] = false;
+        win_enable[2] = false;
+    }
+
+    u8 ppu::io::control_reg::read(int offset)
+    {
+        switch (offset)
+        {
+        case 0:
+            return mode |
+                   (cgb_mode ? 8 : 0) |
+                   (frame_select ? 16 : 0) |
+                   (hblank_oam_access ? 32 : 0) |
+                   (one_dimensional ? 64 : 0) |
+                   (forced_blank ? 128 : 0);
+        case 1:
+            return (enable[0] ? 1 : 0) |
+                   (enable[1] ? 2 : 0) |
+                   (enable[2] ? 4 : 0) |
+                   (enable[3] ? 8 : 0) |
+                   (enable[4] ? 16 : 0) |
+                   (win_enable[0] ? 32 : 0) |
+                   (win_enable[1] ? 64 : 0) |
+                   (win_enable[2] ? 128 : 0);
+        }
+    }
+
+    void ppu::io::control_reg::write(int offset, u8 value)
+    {
+        switch (offset)
+        {
+        case 0:
+            mode = value & 3;
+            cgb_mode = value & 8;
+            frame_select = (value >> 4) & 1;
+            hblank_oam_access = value & 32;
+            one_dimensional = value & 64;
+            forced_blank = value & 128;
+            break;
+        case 1:
+            enable[0] = value & 1;
+            enable[1] = value & 2;
+            enable[2] = value & 4;
+            enable[3] = value & 8;
+            enable[4] = value & 16;
+            win_enable[0] = value & 32;
+            win_enable[1] = value & 64;
+            win_enable[2] = value & 128;
+            break;
+        }
+    }
+
     void ppu::io::status_reg::reset()
     {
         vblank_flag = false;

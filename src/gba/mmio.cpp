@@ -34,6 +34,12 @@ namespace gba
 
         switch (address)
         {
+        // DISPCNT
+        case 0x04000000:
+            return m_ppu.get_io().control.read(0);
+        case 0x04000001:
+            return m_ppu.get_io().control.read(1);
+
         // DISPSTAT
         case 0x04000004:
             return m_ppu.get_io().status.read(0);
@@ -80,6 +86,14 @@ namespace gba
 
         switch (address)
         {
+        // DISPCNT
+        case 0x04000000:
+            m_ppu.get_io().control.write(0, value);
+            break;
+        case 0x04000001:
+            m_ppu.get_io().control.write(1, value);
+            break;
+
         // DISPSTAT
         case 0x04000004:
             m_ppu.get_io().status.write(0, value);

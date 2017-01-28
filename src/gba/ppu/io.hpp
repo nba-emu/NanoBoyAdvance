@@ -25,6 +25,22 @@
 
 struct io
 {
+    struct control_reg
+    {
+        int mode;
+        bool cgb_mode;
+        int frame_select;
+        bool hblank_oam_access;
+        bool one_dimensional;
+        bool forced_blank;
+        bool enable[5];
+        bool win_enable[3];
+
+        void reset();
+        u8 read(int offset);
+        void write(int offset, u8 value);
+    } control;
+
     struct status_reg
     {
         bool vblank_flag;
