@@ -132,7 +132,7 @@ namespace gba
         // assumes IPC of 1/8 for now.
         for (int cycle = 0; cycle < cycles; cycle += 8)
         {
-            if (m_io.interrupt.master_enable && (m_io.interrupt.enable && m_io.interrupt.request))
+            if (m_io.interrupt.master_enable && ((m_io.interrupt.enable & m_io.interrupt.request) != 0))
             {
                 raise_irq();
             }

@@ -85,6 +85,10 @@ namespace gba
 
     void ppu::scanline()
     {
+        // todo: maybe find a better way
+        m_io.status.vblank_flag = false;
+        m_io.status.hblank_flag = false;
+
         for (int x = 0; x < 240; x++)
         {
             int index = m_vram[m_io.vcount * 240 + x];
