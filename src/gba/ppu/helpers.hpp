@@ -44,8 +44,8 @@ inline void decode_tile_line_4bpp(u16* buffer, u32 block_base, u32 palette_base,
         int indices[2];
         int encoder = block_ptr[i];
 
-        indices[0] = encoder >> 4;
-        indices[1] = encoder & 0xF;
+        indices[0] = encoder & 0xF;
+        indices[1] = encoder >> 4;
 
         for (int j = 0; j < 2; j++)
         {
@@ -53,11 +53,11 @@ inline void decode_tile_line_4bpp(u16* buffer, u32 block_base, u32 palette_base,
 
             if (index == 0)
             {
-                buffer[i << 1] = COLOR_TRANSPARENT;
+                buffer[(i << 1) + j] = COLOR_TRANSPARENT;
                 continue;
             }
 
-            buffer[i << 1] = (palette_ptr[index | 1] << 8) | palette_ptr[index];
+            buffer[(i << 1) + j] = (palette_ptr[index + 1] << 8) | palette_ptr[index];
         }
     }
 }
@@ -79,7 +79,7 @@ inline void decode_tile_line_8bpp(u16* buffer, u32 block_base, int number, int l
             continue;
         }
 
-        buffer[i] = (palette_ptr[index | 1] << 8) | palette_ptr[index];
+        buffer[i] = (palette_ptr[index + 1] << 8) | palette_ptr[index];
     }
 }
 
