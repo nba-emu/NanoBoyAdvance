@@ -57,13 +57,9 @@ namespace gba
         memset(m_oam, 0, 0x400);
         memset(m_vram, 0, 0x18000);
 
-        // reset JOYPAD
+        // reset IO-registers
         m_io.keyinput = 0x3FF;
-
-        // reset interrupt controller
-        m_io.interrupt.enable = 0;
-        m_io.interrupt.request = 0;
-        m_io.interrupt.master_enable = 0;
+        m_io.interrupt.reset();
 
         set_hle(false);
 

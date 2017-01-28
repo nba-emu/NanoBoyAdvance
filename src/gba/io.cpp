@@ -21,22 +21,14 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifdef CPU_INCLUDE
+#include "cpu.hpp"
 
-struct io
+namespace gba
 {
-    // JOYPAD
-    u16 keyinput;
-
-    // INTERRUPT CONTROL
-    struct interrupt_io
+    void cpu::io::interrupt_io::reset()
     {
-        u16 enable;
-        u16 request;
-        u16 master_enable;
-
-        void reset();
-    } interrupt;
-} m_io;
-
-#endif
+        enable = 0;
+        request = 0;
+        master_enable = 0;
+    }
+}
