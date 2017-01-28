@@ -23,35 +23,25 @@
 
 #pragma once
 
+#include "enums.hpp"
 #include "util/integer.hpp"
 
 namespace gba
 {
-    enum interrupt_type
-    {
-        INTERRUPT_VBLANK  = 1,
-        INTERRUPT_HBLANK  = 2,
-        INTERRUPT_VCOUNT  = 4,
-        INTERRUPT_TIMER_0 = 8,
-        INTERRUPT_TIMER_1 = 16,
-        INTERRUPT_TIMER_2 = 32,
-        INTERRUPT_TIMER_3 = 64,
-        INTERRUPT_SERIAL  = 128,
-        INTERRUPT_DMA_0   = 256,
-        INTERRUPT_DMA_1   = 512,
-        INTERRUPT_DMA_2   = 1024,
-        INTERRUPT_DMA_3   = 2048,
-        INTERRUPT_KEYPAD  = 4096,
-        INTERRUPT_GAMEPAK = 8192
-    };
-
     class interrupt
     {
     private:
-        u16* interrupt_flag;
+        u16* m_interrupt_flag;
 
     public:
-        void request(interrupt_type type);
-        void set_flag_register(u16* io_reg);
+        void set_flag_register(u16* io_reg)
+        {
+            m_interrupt_flag = io_reg;
+        }
+
+        void request(interrupt_type type)
+        {
+            *m_interrupt_flag |= static_cast<int>(type);
+        }
     };
 }

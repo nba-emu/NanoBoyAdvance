@@ -2,7 +2,6 @@ set(SOURCES
     io.cpp
     cpu.cpp
     bios.cpp
-    interrupt.cpp
     memory.cpp
     mmio.cpp
     ppu/io.cpp
@@ -15,6 +14,7 @@ set(SOURCES
 set(HEADERS
     io.hpp
     cpu.hpp
+    enums.hpp
     interrupt.hpp
     mmio.hpp
     ppu/io.hpp
