@@ -31,6 +31,7 @@ namespace gba
     ppu::ppu()
     {
         reset();
+        m_frameskip = 0;
     }
 
     void ppu::reset()
@@ -48,11 +49,18 @@ namespace gba
             m_io.bgvofs[i] = 0;
             m_io.bgcnt[i].reset();
         }
+
+        m_frame_counter = 0;
     }
 
     u32* ppu::get_framebuffer()
     {
         return m_framebuffer;
+    }
+
+    void ppu::set_frameskip(int frames)
+    {
+        m_frameskip = frames;
     }
 
     void ppu::set_memory(u8* pal, u8* oam, u8* vram)
@@ -83,6 +91,11 @@ namespace gba
         m_io.status.vblank_flag = true;
         m_io.status.hblank_flag = false;
 
+        if (m_frameskip != 0)
+        {
+            m_frame_counter = (m_frame_counter + 1) % m_frameskip;
+        }
+
         if (m_io.status.vblank_interrupt)
             m_interrupt->request(INTERRUPT_VBLANK);
     }
@@ -93,50 +106,53 @@ namespace gba
         m_io.status.vblank_flag = false;
         m_io.status.hblank_flag = false;
 
-        if (m_io.control.forced_blank)
+        if (m_frameskip == 0 || m_frame_counter == 0)
         {
-            u32* line = m_framebuffer + m_io.vcount * 240;
-            for (int x = 0; x < 240; x++)
-                line[x] = color_convert(0x7FFF);
-            return;
-        }
+            if (m_io.control.forced_blank)
+            {
+                u32* line = m_framebuffer + m_io.vcount * 240;
+                for (int x = 0; x < 240; x++)
+                    line[x] = color_convert(0x7FFF);
+                return;
+            }
 
-        switch (m_io.control.mode)
-        {
-        case 0:
-            // BG Mode 0 - 240x160 pixels, Text mode
-            for (int i = 0; i < 4; i++)
+            switch (m_io.control.mode)
             {
-                if (m_io.control.enable[i])
-                    render_textmode(i);
+            case 0:
+                // BG Mode 0 - 240x160 pixels, Text mode
+                for (int i = 0; i < 4; i++)
+                {
+                    if (m_io.control.enable[i])
+                        render_textmode(i);
+                }
+                break;
+            case 3:
+                // BG Mode 3 - 240x160 pixels, 32768 colors
+                if (m_io.control.enable[2])
+                {
+                    render_bitmap_1();
+                }
+                break;
+            case 4:
+                // BG Mode 4 - 240x160 pixels, 256 colors (out of 32768 colors)
+                if (m_io.control.enable[2])
+                {
+                    render_bitmap_2();
+                }
+                break;
+            case 5:
+                // BG Mode 5 - 160x128 pixels, 32768 colors
+                if (m_io.control.enable[2])
+                {
+                    render_bitmap_3();
+                }
+                break;
+            default:
+                logger::log<LOG_ERROR>("unknown ppu mode: {0}", m_io.control.mode);
             }
-            break;
-        case 3:
-            // BG Mode 3 - 240x160 pixels, 32768 colors
-            if (m_io.control.enable[2])
-            {
-                render_bitmap_1();
-            }
-            break;
-        case 4:
-            // BG Mode 4 - 240x160 pixels, 256 colors (out of 32768 colors)
-            if (m_io.control.enable[2])
-            {
-                render_bitmap_2();
-            }
-            break;
-        case 5:
-            // BG Mode 5 - 160x128 pixels, 32768 colors
-            if (m_io.control.enable[2])
-            {
-                render_bitmap_3();
-            }
-            break;
-        default:
-            logger::log<LOG_ERROR>("unknown ppu mode: {0}", m_io.control.mode);
-        }
 
-        compose_scanline();
+            compose_scanline();
+        }
     }
 
     void ppu::next_line()

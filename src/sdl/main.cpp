@@ -176,8 +176,6 @@ int main(int argc, char** argv)
     u32* video_buffer;
     u16* keyinput;
 
-    frameskip_counter = 0;
-
     if (argc > 1)
     {
         string rom_file;
@@ -207,7 +205,11 @@ int main(int argc, char** argv)
             emu->reset();
 
             keyinput = &emu->get_keypad();
-            video_buffer = emu->get_framebuffer();
+
+            gba::ppu& ppu = emu->get_ppu();
+
+            ppu.set_frameskip(args->speedup);
+            video_buffer = ppu.get_framebuffer();
         }
     }
     else
@@ -264,7 +266,11 @@ int main(int argc, char** argv)
         ticks_now = SDL_GetTicks();
         if (ticks_now - ticks_start >= 1000)
         {
-            string title = "NanoboyAdvance [" + std::to_string(frames) + "fps]";
+            int percentage = (frames / 60.0) * 100;
+            int rendered_frames = frames / args->speedup;
+
+            string title = "NanoboyAdvance [" + std::to_string(percentage) + "% | " +
+                                                std::to_string(rendered_frames) + "fps]";
             SDL_SetWindowTitle(window, title.c_str());
 
             ticks_start = SDL_GetTicks();

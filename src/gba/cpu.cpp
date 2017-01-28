@@ -74,14 +74,14 @@ namespace gba
         }
     }
 
+    ppu& cpu::get_ppu()
+    {
+        return m_ppu;
+    }
+
     u16& cpu::get_keypad()
     {
         return m_io.keyinput;
-    }
-
-    u32* cpu::get_framebuffer()
-    {
-        return m_ppu.get_framebuffer(); // super eh...
     }
 
     void cpu::set_bios(u8* data, size_t size)

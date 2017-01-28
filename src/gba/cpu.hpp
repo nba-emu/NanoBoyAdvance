@@ -114,8 +114,8 @@ namespace gba
 
         void reset();
 
+        ppu& get_ppu();
         u16& get_keypad();
-        u32* get_framebuffer(); // eh..
         void set_bios(u8* data, size_t size);
         void set_game(u8* data, size_t size);
 

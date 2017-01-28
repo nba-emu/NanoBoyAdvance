@@ -44,6 +44,9 @@ namespace gba
         u16 m_buffer[5][240];
         u32 m_framebuffer[240*160];
 
+        int m_frameskip;
+        int m_frame_counter;
+
         #include "io.hpp"
         #include "helpers.hpp"
 
@@ -63,6 +66,7 @@ namespace gba
         }
 
         u32* get_framebuffer();
+        void set_frameskip(int frames);
         void set_memory(u8* pal, u8* oam, u8* vram);
         void set_interrupt(interrupt* interrupt);
 
