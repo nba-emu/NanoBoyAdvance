@@ -25,7 +25,7 @@
 
 namespace gba
 {
-    void ppu::io::control_reg::reset()
+    void ppu::io::dispcnt_reg::reset()
     {
         mode = 0;
         cgb_mode = false;
@@ -43,7 +43,7 @@ namespace gba
         win_enable[2] = false;
     }
 
-    u8 ppu::io::control_reg::read(int offset)
+    u8 ppu::io::dispcnt_reg::read(int offset)
     {
         switch (offset)
         {
@@ -66,7 +66,7 @@ namespace gba
         }
     }
 
-    void ppu::io::control_reg::write(int offset, u8 value)
+    void ppu::io::dispcnt_reg::write(int offset, u8 value)
     {
         switch (offset)
         {
@@ -91,7 +91,7 @@ namespace gba
         }
     }
 
-    void ppu::io::status_reg::reset()
+    void ppu::io::dispstat_reg::reset()
     {
         vblank_flag = false;
         hblank_flag = false;
@@ -102,7 +102,7 @@ namespace gba
         vcount_setting = 0;
     }
 
-    u8 ppu::io::status_reg::read(int offset)
+    u8 ppu::io::dispstat_reg::read(int offset)
     {
         switch (offset)
         {
@@ -118,7 +118,7 @@ namespace gba
         }
     }
 
-    void ppu::io::status_reg::write(int offset, u8 value)
+    void ppu::io::dispstat_reg::write(int offset, u8 value)
     {
         switch (offset)
         {
@@ -129,6 +129,51 @@ namespace gba
             break;
         case 1:
             vcount_setting = value;
+            break;
+        }
+    }
+
+    void ppu::io::bgxcnt_reg::reset()
+    {
+        priority = 0;
+        tile_block = 0;
+        mosaic_enable = false;
+        full_palette = false;
+        map_block = 0;
+        wraparound = false;
+        screen_size = 0;
+    }
+
+    u8 ppu::io::bgxcnt_reg::read(int offset)
+    {
+        switch (offset)
+        {
+        case 0:
+            return priority |
+                   (tile_block << 2) |
+                   (mosaic_enable ? 64 : 0) |
+                   (full_palette ? 128 : 0);
+        case 1:
+            return map_block |
+                   (wraparound ? 32 : 0) |
+                   (screen_size << 6);
+        }
+    }
+
+    void ppu::io::bgxcnt_reg::write(int offset, u8 value)
+    {
+        switch (offset)
+        {
+        case 0:
+            priority = value & 3;
+            tile_block = (value >> 2) & 3;
+            mosaic_enable = value & 64;
+            wraparound = value & 128;
+            break;
+        case 1:
+            map_block = value & 0x1F;
+            wraparound = value & 32;
+            screen_size = value >> 6;
             break;
         }
     }

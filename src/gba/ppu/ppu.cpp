@@ -85,6 +85,14 @@ namespace gba
         switch (m_io.control.mode)
         {
         case 0:
+            if (m_io.vcount < 32)
+            {
+                for (int i = 0; i < 16; i++)
+                {
+                    int index = (m_io.vcount * 16 + i) * 2;
+                    m_buffer[2][i] = (m_pal[index + 1] << 8) | m_pal[index];
+                }
+            }
             break;
         case 3:
             if (m_io.control.enable[2])

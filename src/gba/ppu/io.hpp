@@ -25,7 +25,7 @@
 
 struct io
 {
-    struct control_reg
+    struct dispcnt_reg
     {
         int mode;
         bool cgb_mode;
@@ -41,7 +41,7 @@ struct io
         void write(int offset, u8 value);
     } control;
 
-    struct status_reg
+    struct dispstat_reg
     {
         bool vblank_flag;
         bool hblank_flag;
@@ -57,6 +57,21 @@ struct io
     } status;
 
     int vcount;
+
+    struct bgxcnt_reg
+    {
+        int priority;
+        int tile_block;
+        bool mosaic_enable;
+        bool full_palette;//eh
+        int map_block;
+        bool wraparound;
+        int screen_size;
+
+        void reset();
+        u8 read(int offset);
+        void write(int offset, u8 value);
+    } bgcnt[4];
 } m_io;
 
 #endif

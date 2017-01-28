@@ -52,6 +52,27 @@ namespace gba
         case 0x04000007:
             return m_ppu.get_io().vcount >> 8;
 
+        // BG0CNT
+        case 0x04000008:
+            return m_ppu.get_io().bgcnt[0].read(0);
+        case 0x04000009:
+            return m_ppu.get_io().bgcnt[0].read(1);
+        // BG1CNT
+        case 0x0400000A:
+            return m_ppu.get_io().bgcnt[1].read(0);
+        case 0x0400000B:
+            return m_ppu.get_io().bgcnt[1].read(1);
+        // BG2CNT
+        case 0x0400000C:
+            return m_ppu.get_io().bgcnt[2].read(0);
+        case 0x0400000D:
+            return m_ppu.get_io().bgcnt[2].read(1);
+        // BG3CNT
+        case 0x0400000E:
+            return m_ppu.get_io().bgcnt[2].read(0);
+        case 0x0400000F:
+            return m_ppu.get_io().bgcnt[2].read(1);
+
         // KEYINPUT
         case 0x04000130:
             return m_io.keyinput & 0xFF;
@@ -100,6 +121,35 @@ namespace gba
             break;
         case 0x04000005:
             m_ppu.get_io().status.write(1, value);
+            break;
+
+        // BG0CNT
+        case 0x04000008:
+            m_ppu.get_io().bgcnt[0].write(0, value);
+            break;
+        case 0x04000009:
+            m_ppu.get_io().bgcnt[0].write(1, value);
+            break;
+        // BG1CNT
+        case 0x0400000A:
+            m_ppu.get_io().bgcnt[1].write(0, value);
+            break;
+        case 0x0400000B:
+            m_ppu.get_io().bgcnt[1].write(1, value);
+            break;
+        // BG2CNT
+        case 0x0400000C:
+            m_ppu.get_io().bgcnt[2].write(0, value);
+            break;
+        case 0x0400000D:
+            m_ppu.get_io().bgcnt[2].write(1, value);
+            break;
+        // BG3CNT
+        case 0x0400000E:
+            m_ppu.get_io().bgcnt[3].write(0, value);
+            break;
+        case 0x0400000F:
+            m_ppu.get_io().bgcnt[3].write(1, value);
             break;
 
         // IE
