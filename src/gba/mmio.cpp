@@ -83,8 +83,10 @@ namespace gba
         // DISPSTAT
         case 0x04000004:
             m_ppu.get_io().status.write(0, value);
+            break;
         case 0x04000005:
             m_ppu.get_io().status.write(1, value);
+            break;
 
         // IE
         case 0x04000200:
