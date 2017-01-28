@@ -36,7 +36,11 @@ namespace gba
     void ppu::reset()
     {
         m_io.vcount = 0;
+
+        m_io.control.reset();
         m_io.status.reset();
+
+        for (int i = 0; i < 4; i++) m_io.bgcnt[i].reset();
     }
 
     u32* ppu::get_framebuffer()
