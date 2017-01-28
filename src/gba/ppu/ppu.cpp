@@ -93,6 +93,14 @@ namespace gba
         m_io.status.vblank_flag = false;
         m_io.status.hblank_flag = false;
 
+        if (m_io.control.forced_blank)
+        {
+            u32* line = m_framebuffer + m_io.vcount * 240;
+            for (int x = 0; x < 240; x++)
+                line[x] = color_convert(0x7FFF);
+            return;
+        }
+
         switch (m_io.control.mode)
         {
         case 0:
