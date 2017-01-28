@@ -37,7 +37,7 @@ struct io
         bool win_enable[3];
 
         void reset();
-        u8 read(int offset);
+        auto read(int offset) -> u8;
         void write(int offset, u8 value);
     } control;
 
@@ -52,7 +52,7 @@ struct io
         int vcount_setting;
 
         void reset();
-        u8 read(int offset);
+        auto read(int offset) -> u8;
         void write(int offset, u8 value);
     } status;
 
@@ -69,7 +69,7 @@ struct io
         int screen_size;
 
         void reset();
-        u8 read(int offset);
+        auto read(int offset) -> u8;
         void write(int offset, u8 value);
     } bgcnt[4];
 } m_io;

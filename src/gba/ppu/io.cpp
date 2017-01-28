@@ -43,7 +43,7 @@ namespace gba
         win_enable[2] = false;
     }
 
-    u8 ppu::io::dispcnt_reg::read(int offset)
+    auto ppu::io::dispcnt_reg::read(int offset) -> u8
     {
         switch (offset)
         {
@@ -102,7 +102,7 @@ namespace gba
         vcount_setting = 0;
     }
 
-    u8 ppu::io::dispstat_reg::read(int offset)
+    auto ppu::io::dispstat_reg::read(int offset) -> u8
     {
         switch (offset)
         {
@@ -144,7 +144,7 @@ namespace gba
         screen_size = 0;
     }
 
-    u8 ppu::io::bgxcnt_reg::read(int offset)
+    auto ppu::io::bgxcnt_reg::read(int offset) -> u8
     {
         switch (offset)
         {
