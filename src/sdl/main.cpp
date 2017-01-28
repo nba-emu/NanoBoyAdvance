@@ -229,6 +229,10 @@ int main(int argc, char** argv)
         int ticks_now;
         u8* kb_state = (u8*)SDL_GetKeyboardState(NULL);
 
+        // Reset game on F9
+        if (kb_state[SDL_SCANCODE_F9])
+            emu->reset();
+
         // Dump screenshot on F10
         if (kb_state[SDL_SCANCODE_F10])
             create_screenshot();
