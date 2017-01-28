@@ -248,8 +248,11 @@ int main(int argc, char** argv)
         bit::set<u16,8>(*keyinput, !kb_state[SDL_SCANCODE_W]);
         bit::set<u16,9>(*keyinput, !kb_state[SDL_SCANCODE_Q]);
 
-        emu->frame();
-        frames++;
+        for (int i = 0; i < args->speedup; i++)
+        {
+            emu->frame();
+            frames++;
+        }
 
         for (int y = 0; y < 160; y++)
         {
