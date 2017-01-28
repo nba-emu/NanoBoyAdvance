@@ -35,17 +35,8 @@ namespace gba
 
     void ppu::reset()
     {
-        // reset DISPSTAT
-        m_io.status.vblank_flag = false;
-        m_io.status.hblank_flag = false;
-        m_io.status.vcount_flag = false;
-        m_io.status.vblank_interrupt = false;
-        m_io.status.hblank_interrupt = false;
-        m_io.status.vcount_interrupt = false;
-        m_io.status.vcount_setting = 0;
-
-        // reset vertical counter
         m_io.vcount = 0;
+        m_io.status.reset();
     }
 
     u32* ppu::get_framebuffer()

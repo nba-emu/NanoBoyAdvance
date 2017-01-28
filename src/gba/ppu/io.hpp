@@ -35,6 +35,7 @@ struct io
         bool vcount_interrupt;
         int vcount_setting;
 
+        void reset();
         u8 read(int offset);
         void write(int offset, u8 value);
     } status;

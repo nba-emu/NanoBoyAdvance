@@ -25,6 +25,17 @@
 
 namespace gba
 {
+    void ppu::io::status_reg::reset()
+    {
+        vblank_flag = false;
+        hblank_flag = false;
+        vcount_flag = false;
+        vblank_interrupt = false;
+        hblank_interrupt = false;
+        vcount_interrupt = false;
+        vcount_setting = 0;
+    }
+
     u8 ppu::io::status_reg::read(int offset)
     {
         switch (offset)
