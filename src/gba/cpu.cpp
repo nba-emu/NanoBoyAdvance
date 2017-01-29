@@ -149,7 +149,8 @@ namespace gba
             }
             else
             {
-                m_cycles--; // waste cycles
+                m_cycles = 0;
+                return;
             }
         }
     }
