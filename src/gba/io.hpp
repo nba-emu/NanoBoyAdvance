@@ -29,10 +29,10 @@ struct io
     {
         int id;
 
-        bool repeat;
-        bool gamepak;
-        bool interrupt;
         bool enable;
+        bool repeat;
+        bool interrupt;
+        bool gamepak;
 
         u16 length;
         u32 dst_addr;

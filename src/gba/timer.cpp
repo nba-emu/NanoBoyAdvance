@@ -47,6 +47,7 @@ namespace gba
                 {
                     timer.ticks += cycles;
 
+                    // optimize. m_timer_ticks creates an actual lookup.
                     if (timer.ticks >= m_timer_ticks[timer.control.frequency])
                     {
                         timer_increment(timer, overflow);

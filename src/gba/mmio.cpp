@@ -53,6 +53,16 @@ namespace gba
         case BG3CNT:     return ppu_io.bgcnt[2].read(0);
         case BG3CNT+1:   return ppu_io.bgcnt[2].read(1);
 
+        // DMA
+        case DMA0CNT_H:   return m_io.dma[0].read(10);
+        case DMA0CNT_H+1: return m_io.dma[0].read(11);
+        case DMA1CNT_H:   return m_io.dma[1].read(10);
+        case DMA1CNT_H+1: return m_io.dma[1].read(11);
+        case DMA2CNT_H:   return m_io.dma[2].read(10);
+        case DMA2CNT_H+1: return m_io.dma[2].read(11);
+        case DMA3CNT_H:   return m_io.dma[3].read(10);
+        case DMA3CNT_H+1: return m_io.dma[3].read(11);
+
         // TIMER
         case TM0CNT_L:   return m_io.timer[0].read(0);
         case TM0CNT_L+1: return m_io.timer[0].read(1);
@@ -151,6 +161,56 @@ namespace gba
         case BG3VOFS+1:
             ppu_io.bgvofs[3] = (ppu_io.bgvofs[3] & 0x00FF) | (value << 8);
             break;
+
+        // DMA
+        case DMA0SAD:     m_io.dma[0].write(0, value); break;
+        case DMA0SAD+1:   m_io.dma[0].write(1, value); break;
+        case DMA0SAD+2:   m_io.dma[0].write(2, value); break;
+        case DMA0SAD+3:   m_io.dma[0].write(3, value); break;
+        case DMA0DAD:     m_io.dma[0].write(4, value); break;
+        case DMA0DAD+1:   m_io.dma[0].write(5, value); break;
+        case DMA0DAD+2:   m_io.dma[0].write(6, value); break;
+        case DMA0DAD+3:   m_io.dma[0].write(7, value); break;
+        case DMA0CNT_L:   m_io.dma[0].write(8, value); break;
+        case DMA0CNT_L+1: m_io.dma[0].write(9, value); break;
+        case DMA0CNT_H:   m_io.dma[0].write(10, value); break;
+        case DMA0CNT_H+1: m_io.dma[0].write(11, value); break;
+        case DMA1SAD:     m_io.dma[1].write(0, value); break;
+        case DMA1SAD+1:   m_io.dma[1].write(1, value); break;
+        case DMA1SAD+2:   m_io.dma[1].write(2, value); break;
+        case DMA1SAD+3:   m_io.dma[1].write(3, value); break;
+        case DMA1DAD:     m_io.dma[1].write(4, value); break;
+        case DMA1DAD+1:   m_io.dma[1].write(5, value); break;
+        case DMA1DAD+2:   m_io.dma[1].write(6, value); break;
+        case DMA1DAD+3:   m_io.dma[1].write(7, value); break;
+        case DMA1CNT_L:   m_io.dma[1].write(8, value); break;
+        case DMA1CNT_L+1: m_io.dma[1].write(9, value); break;
+        case DMA1CNT_H:   m_io.dma[1].write(10, value); break;
+        case DMA1CNT_H+1: m_io.dma[1].write(11, value); break;
+        case DMA2SAD:     m_io.dma[2].write(0, value); break;
+        case DMA2SAD+1:   m_io.dma[2].write(1, value); break;
+        case DMA2SAD+2:   m_io.dma[2].write(2, value); break;
+        case DMA2SAD+3:   m_io.dma[2].write(3, value); break;
+        case DMA2DAD:     m_io.dma[2].write(4, value); break;
+        case DMA2DAD+1:   m_io.dma[2].write(5, value); break;
+        case DMA2DAD+2:   m_io.dma[2].write(6, value); break;
+        case DMA2DAD+3:   m_io.dma[2].write(7, value); break;
+        case DMA2CNT_L:   m_io.dma[2].write(8, value); break;
+        case DMA2CNT_L+1: m_io.dma[2].write(9, value); break;
+        case DMA2CNT_H:   m_io.dma[2].write(10, value); break;
+        case DMA2CNT_H+1: m_io.dma[2].write(11, value); break;
+        case DMA3SAD:     m_io.dma[3].write(0, value); break;
+        case DMA3SAD+1:   m_io.dma[3].write(1, value); break;
+        case DMA3SAD+2:   m_io.dma[3].write(2, value); break;
+        case DMA3SAD+3:   m_io.dma[3].write(3, value); break;
+        case DMA3DAD:     m_io.dma[3].write(4, value); break;
+        case DMA3DAD+1:   m_io.dma[3].write(5, value); break;
+        case DMA3DAD+2:   m_io.dma[3].write(6, value); break;
+        case DMA3DAD+3:   m_io.dma[3].write(7, value); break;
+        case DMA3CNT_L:   m_io.dma[3].write(8, value); break;
+        case DMA3CNT_L+1: m_io.dma[3].write(9, value); break;
+        case DMA3CNT_H:   m_io.dma[3].write(10, value); break;
+        case DMA3CNT_H+1: m_io.dma[3].write(11, value); break;
 
         // TIMER
         case TM0CNT_L:   m_io.timer[0].write(0, value); break;

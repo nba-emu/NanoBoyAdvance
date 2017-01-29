@@ -22,36 +22,101 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 #include "cpu.hpp"
+#include "util/logger.hpp"
+
+using namespace util;
 
 namespace gba
 {
     void cpu::io::dma::reset()
     {
-        repeat = false;
-        gamepak = false;
-        interrupt = false;
         enable = false;
+        repeat = false;
+        interrupt = false;
+        gamepak = false;
+
         length = 0;
         dst_addr = 0;
         src_addr = 0;
-        dst_cntl = DMA_INCREMENT;
-        src_cntl = DMA_INCREMENT;
-        time = DMA_IMMEDIATE;
-        size = DMA_HWORD;
         internal.length = 0;
         internal.dst_addr = 0;
         internal.src_addr = 0;
+
+        size = DMA_HWORD;
+        time = DMA_IMMEDIATE;
+        dst_cntl = DMA_INCREMENT;
+        src_cntl = DMA_INCREMENT;
     }
 
     auto cpu::io::dma::read(int offset) -> u8
     {
+        // TODO: are SAD/DAD/CNT_L readable?
         switch (offset)
         {
+        // DMAXCNT_H
+        case 10:
+            return (dst_cntl << 5) |
+                   (src_cntl << 7);
+        case 11:
+            return (src_cntl >> 1) |
+                   (repeat ? 2 : 0) |
+                   (size << 2) |
+                   (gamepak ? 8 : 0) |
+                   (time << 4);
+                   (interrupt ? 64 : 0) |
+                   (enable ? 128 : 0);
         }
     }
 
     void cpu::io::dma::write(int offset, u8 value)
     {
+        switch (offset)
+        {
+        // DMAXSAD
+        case 0: src_addr = (src_addr & 0xFFFFFF00) | value; break;
+        case 1: src_addr = (src_addr & 0xFFFF00FF) | (value<<8); break;
+        case 2: src_addr = (src_addr & 0xFF00FFFF) | (value<<16); break;
+        case 3: src_addr = (src_addr & 0x00FFFFFF) | (value<<24); break;
+
+        // DMAXDAD
+        case 4: dst_addr = (dst_addr & 0xFFFFFF00) | value; break;
+        case 5: dst_addr = (dst_addr & 0xFFFF00FF) | (value<<8); break;
+        case 6: dst_addr = (dst_addr & 0xFF00FFFF) | (value<<16); break;
+        case 7: dst_addr = (dst_addr & 0x00FFFFFF) | (value<<24); break;
+
+        // DMAXCNT_L
+        case 8: length = (length & 0xFF00) | value; break;
+        case 9: length = (length & 0x00FF) | (value<<8); break;
+
+        // DMAXCNT_H
+        case 10:
+            dst_cntl = static_cast<dma_control>((value >> 5) & 3);
+            src_cntl = static_cast<dma_control>((src_cntl & 0b10) | (value>>7));
+            break;
+        case 11:
+        {
+            bool enable_previous = enable;
+
+            src_cntl  = static_cast<dma_control>((src_cntl & 0b01) | ((value & 1)<<1));
+            size      = static_cast<dma_size>((value>>2) & 1);
+            time      = static_cast<dma_time>((value>>4) & 3);
+            repeat    = value & 2;
+            gamepak   = value & 8;
+            interrupt = value & 64;
+            enable    = value & 128;
+
+            if (!enable_previous && enable)
+            {
+                // TODO(accuracy): length, src/dst_addr must be masked.
+                internal.length = length;
+                internal.dst_addr = dst_addr;
+                internal.src_addr = src_addr;
+
+                logger::log<LOG_DEBUG>("DMA{0} src={1:x} dst={2:x} len={3}", id, src_addr, dst_addr, length);
+            }
+            break;
+        }
+        }
     }
 
     void cpu::io::timer::reset()
@@ -73,9 +138,9 @@ namespace gba
         case 1: return counter >> 8;
         case 2:
             return (control.frequency) |
-                   (control.cascade ? 4 : 0) |
-                   (control.interrupt ? 64 : 0) |
-                   (control.enable ? 128 : 0);
+                   (control.cascade   ? 4   : 0) |
+                   (control.interrupt ? 64  : 0) |
+                   (control.enable    ? 128 : 0);
         }
     }
 
@@ -90,9 +155,9 @@ namespace gba
             bool enable_previous = control.enable;
 
             control.frequency = value & 3;
-            control.cascade = value & 4;
+            control.cascade   = value & 4;
             control.interrupt = value & 64;
-            control.enable = value & 128;
+            control.enable    = value & 128;
 
             if (!enable_previous && control.enable)
             {
