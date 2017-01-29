@@ -35,6 +35,8 @@ namespace gba
     {
         auto& ppu_io = m_ppu.get_io();
 
+        logger::log<LOG_INFO>("io read address={0:x}", address);
+
         switch (address)
         {
         // PPU
@@ -96,6 +98,8 @@ namespace gba
     void cpu::write_mmio(u32 address, u8 value)
     {
         auto& ppu_io = m_ppu.get_io();
+
+        logger::log<LOG_INFO>("io write address={0:x} value={1:x}", address, value);
 
         switch (address)
         {
