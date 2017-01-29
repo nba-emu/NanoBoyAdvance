@@ -160,6 +160,7 @@ namespace gba
             }
             else
             {
+                // likely doesn't work like this because of interrupts.
                 timer_step(m_cycles);
                 m_cycles = 0;
                 return;
