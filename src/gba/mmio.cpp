@@ -35,7 +35,7 @@ namespace gba
     {
         auto& ppu_io = m_ppu.get_io();
 
-        logger::log<LOG_INFO>("io read address={0:x}", address);
+        //logger::log<LOG_INFO>("io read address={0:x}", address);
 
         switch (address)
         {
@@ -99,7 +99,7 @@ namespace gba
     {
         auto& ppu_io = m_ppu.get_io();
 
-        logger::log<LOG_INFO>("io write address={0:x} value={1:x}", address, value);
+        //logger::log<LOG_INFO>("io write address={0:x} value={1:x}", address, value);
 
         switch (address)
         {

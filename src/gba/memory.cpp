@@ -182,14 +182,14 @@ namespace gba
 
     void cpu::write_pal(u32 address, u8 value)
     {
-        logger::log<LOG_INFO>("pal write address={0:x} value={1:x}", address, value);
+        //logger::log<LOG_INFO>("pal write address={0:x} value={1:x}", address, value);
 
         m_pal[address % 0x400] = value;
     }
 
     void cpu::write_vram(u32 address, u8 value)
     {
-        logger::log<LOG_INFO>("vram write address={0:x} value={1:x}", address, value);
+        //logger::log<LOG_INFO>("vram write address={0:x} value={1:x}", address, value);
 
         address %= 0x20000;
 

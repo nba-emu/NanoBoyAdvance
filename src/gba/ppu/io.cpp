@@ -165,14 +165,14 @@ namespace gba
         switch (offset)
         {
         case 0:
-            priority = value & 3;
-            tile_block = (value >> 2) & 3;
+            priority      = value & 3;
+            tile_block    = (value >> 2) & 3;
             mosaic_enable = value & 64;
-            wraparound = value & 128;
+            full_palette  = value & 128;
             break;
         case 1:
-            map_block = value & 0x1F;
-            wraparound = value & 32;
+            map_block   = value & 0x1F;
+            wraparound  = value & 32;
             screen_size = value >> 6;
             break;
         }
