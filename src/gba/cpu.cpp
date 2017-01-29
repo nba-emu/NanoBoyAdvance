@@ -168,25 +168,33 @@ namespace gba
                 m_io.haltcnt = SYSTEM_RUN;
             }
 
-            if (m_io.haltcnt == SYSTEM_RUN)
+            //if (m_io.haltcnt == SYSTEM_RUN)
             {
                 cycles_previous = m_cycles;
 
-                if (m_io.interrupt.master_enable && requested_and_enabled)
+                if (!m_dma_active)
                 {
-                    raise_irq();
+                    if (m_io.interrupt.master_enable && requested_and_enabled)
+                    {
+                        raise_irq();
+                    }
+                    step();
+                }
+                else
+                {
+                    dma_transfer_unit();
                 }
 
-                step();
                 timer_step(cycles_previous - m_cycles);
             }
-            else
+            /*else
             {
+                // TODO: DMA
                 // likely doesn't work like this because of interrupts.
                 timer_step(m_cycles);
                 m_cycles = 0;
                 return;
-            }
+            }*/
         }
     }
 }
