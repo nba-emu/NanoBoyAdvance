@@ -63,6 +63,10 @@ namespace gba
         m_io.keyinput = 0x3FF;
         m_io.interrupt.reset();
         m_io.haltcnt = SYSTEM_RUN;
+        for (int i = 0; i < 4; i++)
+        {
+            m_io.timer[i].reset();
+        }
 
         set_hle(false);
 
@@ -128,6 +132,8 @@ namespace gba
     // TODO: should be in ARMigo core and replace step-method maybe
     void cpu::run_for(int cycles)
     {
+        int cycles_previous;
+
         m_cycles += cycles;
 
         while (m_cycles >= 0)
@@ -141,14 +147,19 @@ namespace gba
 
             if (m_io.haltcnt == SYSTEM_RUN)
             {
+                cycles_previous = m_cycles;
+
                 if (m_io.interrupt.master_enable && requested_and_enabled)
                 {
                     raise_irq();
                 }
+
                 step();
+                timer_step(cycles_previous - m_cycles);
             }
             else
             {
+                timer_step(m_cycles);
                 m_cycles = 0;
                 return;
             }

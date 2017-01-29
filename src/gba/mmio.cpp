@@ -53,6 +53,20 @@ namespace gba
         case BG3CNT:     return ppu_io.bgcnt[2].read(0);
         case BG3CNT+1:   return ppu_io.bgcnt[2].read(1);
 
+        // TIMER
+        case TM0CNT_L:   return m_io.timer[0].read(0);
+        case TM0CNT_L+1: return m_io.timer[0].read(1);
+        case TM0CNT_H:   return m_io.timer[0].read(2);
+        case TM1CNT_L:   return m_io.timer[1].read(0);
+        case TM1CNT_L+1: return m_io.timer[1].read(1);
+        case TM1CNT_H:   return m_io.timer[1].read(2);
+        case TM2CNT_L:   return m_io.timer[2].read(0);
+        case TM2CNT_L+1: return m_io.timer[2].read(1);
+        case TM2CNT_H:   return m_io.timer[2].read(2);
+        case TM3CNT_L:   return m_io.timer[3].read(0);
+        case TM3CNT_L+1: return m_io.timer[3].read(1);
+        case TM3CNT_H:   return m_io.timer[3].read(2);
+
         // JOYPAD
         case KEYINPUT:   return m_io.keyinput & 0xFF;
         case KEYINPUT+1: return m_io.keyinput >> 8;
@@ -137,6 +151,20 @@ namespace gba
         case BG3VOFS+1:
             ppu_io.bgvofs[3] = (ppu_io.bgvofs[3] & 0x00FF) | (value << 8);
             break;
+
+        // TIMER
+        case TM0CNT_L:   m_io.timer[0].write(0, value); break;
+        case TM0CNT_L+1: m_io.timer[0].write(1, value); break;
+        case TM0CNT_H:   m_io.timer[0].write(2, value); break;
+        case TM1CNT_L:   m_io.timer[1].write(0, value); break;
+        case TM1CNT_L+1: m_io.timer[1].write(1, value); break;
+        case TM1CNT_H:   m_io.timer[1].write(2, value); break;
+        case TM2CNT_L:   m_io.timer[2].write(0, value); break;
+        case TM2CNT_L+1: m_io.timer[2].write(1, value); break;
+        case TM2CNT_H:   m_io.timer[2].write(2, value); break;
+        case TM3CNT_L:   m_io.timer[3].write(0, value); break;
+        case TM3CNT_L+1: m_io.timer[3].write(1, value); break;
+        case TM3CNT_H:   m_io.timer[3].write(2, value); break;
 
         // INTERRUPT
         case IE:

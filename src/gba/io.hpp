@@ -25,6 +25,25 @@
 
 struct io
 {
+    struct timer
+    {
+        struct timer_control
+        {
+            int frequency;
+            bool cascade;
+            bool interrupt;
+            bool enable;
+        } control;
+
+        int ticks;
+        u16 reload;
+        u16 counter;
+
+        void reset();
+        auto read(int offset) -> u8;
+        void write(int offset, u8 value);
+    } timer[4];
+
     // JOYPAD
     u16 keyinput;
 

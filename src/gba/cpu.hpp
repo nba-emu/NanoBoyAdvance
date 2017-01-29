@@ -73,6 +73,10 @@ namespace gba
         void write_oam(u32 address, u8 value);
         void write_invalid(u32 address, u8 value);
 
+        void run_for(int cycles);
+        void timer_step(int cycles);
+        void timer_increment(timer& timer, bool& overflow);
+
         static constexpr int m_mem_cycles8_16[16] = {
             1, 1, 3, 1, 1, 1, 1, 1, 5, 5, 1, 1, 1, 1, 5, 1
         };
@@ -119,6 +123,8 @@ namespace gba
             &cpu::write_invalid
         };
 
+        static constexpr int m_timer_ticks[4] = { 1, 64, 256, 1024 };
+
     public:
         cpu();
 
@@ -130,8 +136,8 @@ namespace gba
         void set_game(u8* data, size_t size);
 
         void frame();
-        void run_for(int cycles);
     protected:
+
         u8 bus_read_byte(u32 address) final;
         u16 bus_read_hword(u32 address) final;
         u32 bus_read_word(u32 address) final;

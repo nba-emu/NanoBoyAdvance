@@ -4,6 +4,7 @@ set(SOURCES
     bios.cpp
     memory.cpp
     mmio.cpp
+    timer.cpp
     ppu/io.cpp
     ppu/ppu.cpp
     ppu/composer.cpp
