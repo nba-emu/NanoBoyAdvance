@@ -65,6 +65,7 @@ namespace gba
         u8 read_vram(u32 address);
         u8 read_oam(u32 address);
         u8 read_rom(u32 address);
+        u8 read_save(u32 address);
         u8 read_invalid(u32 address);
 
         void write_wram(u32 address, u8 value);
@@ -107,7 +108,7 @@ namespace gba
             &cpu::read_invalid,
             &cpu::read_invalid,
             &cpu::read_invalid,
-            &cpu::read_invalid,
+            &cpu::read_save,
             &cpu::read_invalid
         };
 

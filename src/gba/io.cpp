@@ -114,12 +114,12 @@ namespace gba
 
                 if (time == DMA_IMMEDIATE)
                 {
-                    // !!hacked!! sad flerovium
+                    // !!hacked!! sad flerovium :(
                     *dma_active = true;
                     *current_dma = id;
                 }
 
-                logger::log<LOG_DEBUG>("DMA{0} src={1:x} dst={2:x} len={3} time={4}", id, src_addr, dst_addr, length, time);
+                //logger::log<LOG_DEBUG>("DMA{0} src={1:x} dst={2:x} len={3} time={4}", id, src_addr, dst_addr, length, time);
             }
             break;
         }
