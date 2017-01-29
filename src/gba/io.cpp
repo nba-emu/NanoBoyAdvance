@@ -25,6 +25,35 @@
 
 namespace gba
 {
+    void cpu::io::dma::reset()
+    {
+        repeat = false;
+        gamepak = false;
+        interrupt = false;
+        enable = false;
+        length = 0;
+        dst_addr = 0;
+        src_addr = 0;
+        dst_cntl = DMA_INCREMENT;
+        src_cntl = DMA_INCREMENT;
+        time = DMA_IMMEDIATE;
+        size = DMA_HWORD;
+        internal.length = 0;
+        internal.dst_addr = 0;
+        internal.src_addr = 0;
+    }
+
+    auto cpu::io::dma::read(int offset) -> u8
+    {
+        switch (offset)
+        {
+        }
+    }
+
+    void cpu::io::dma::write(int offset, u8 value)
+    {
+    }
+
     void cpu::io::timer::reset()
     {
         ticks = 0;

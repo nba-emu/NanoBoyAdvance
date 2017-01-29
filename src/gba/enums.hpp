@@ -49,4 +49,26 @@ namespace gba
         SYSTEM_STOP,
         SYSTEM_HALT
     };
+
+    enum dma_control
+    {
+        DMA_INCREMENT = 0,
+        DMA_DECREMENT = 1,
+        DMA_FIXED     = 2,
+        DMA_RELOAD    = 3
+    };
+
+    enum dma_time
+    {
+        DMA_IMMEDIATE = 0,
+        DMA_VBLANK    = 1,
+        DMA_HBLANK    = 2,
+        DMA_SPECIAL   = 3
+    };
+
+    enum dma_size
+    {
+        DMA_HWORD = 0,
+        DMA_WORD  = 1
+    };
 }

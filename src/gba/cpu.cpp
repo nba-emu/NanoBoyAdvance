@@ -50,6 +50,7 @@ namespace gba
     void cpu::reset()
     {
         arm::reset();
+
         m_ppu.reset();
 
         // clear out all memory
@@ -63,8 +64,14 @@ namespace gba
         m_io.keyinput = 0x3FF;
         m_io.interrupt.reset();
         m_io.haltcnt = SYSTEM_RUN;
+
         for (int i = 0; i < 4; i++)
         {
+            // reset DMA channels
+            m_io.dma[i].id = i;
+            m_io.dma[i].reset();
+
+            // reset timers
             m_io.timer[i].id = i;
             m_io.timer[i].reset();
         }

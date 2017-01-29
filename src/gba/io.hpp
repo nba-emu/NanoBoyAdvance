@@ -25,6 +25,35 @@
 
 struct io
 {
+    struct dma
+    {
+        int id;
+
+        bool repeat;
+        bool gamepak;
+        bool interrupt;
+        bool enable;
+
+        u16 length;
+        u32 dst_addr;
+        u32 src_addr;
+        dma_control dst_cntl;
+        dma_control src_cntl;
+        dma_time time;
+        dma_size size;
+
+        struct dma_internal
+        {
+            u16 length;
+            u32 dst_addr;
+            u32 src_addr;
+        } internal;
+
+        void reset();
+        auto read(int offset) -> u8;
+        void write(int offset, u8 value);
+    } dma[4];
+
     struct timer
     {
         int id;
