@@ -59,12 +59,12 @@ namespace gba
                    (src_cntl << 7);
         case 11:
             return (src_cntl >> 1) |
-                   (repeat ? 2 : 0) |
-                   (size << 2) |
-                   (gamepak ? 8 : 0) |
-                   (time << 4);
-                   (interrupt ? 64 : 0) |
-                   (enable ? 128 : 0);
+                   (size     << 2) |
+                   (time     << 4) |
+                   (repeat    ? 2   : 0) |
+                   (gamepak   ? 8   : 0) |
+                   (interrupt ? 64  : 0) |
+                   (enable    ? 128 : 0);
         }
     }
 
