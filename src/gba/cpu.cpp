@@ -76,6 +76,10 @@ namespace gba
             m_io.timer[i].reset();
         }
 
+        m_cycles = 0;
+        m_dma_active = false;
+        m_current_dma = 0;
+
         set_hle(false);
 
         //if (m_hle)
@@ -119,10 +123,16 @@ namespace gba
         // 160 visible lines, alternating SCANLINE and HBLANK.
         for (int line = 0; line < 160; line++)
         {
+            // SCANLINE
             m_ppu.scanline();
             run_for(960);
 
+            // HBLANK
             m_ppu.hblank();
+            if (!m_dma_active)
+            {
+                dma_hblank();
+            }
             run_for(272);
 
             m_ppu.next_line();
@@ -130,6 +140,12 @@ namespace gba
 
         // 68 invisible lines, VBLANK period.
         m_ppu.vblank();
+        if (!m_dma_active)
+        {
+            // TODO(accuracy): find out if VBLANK dma may be started
+            // at a later point of time if e.g. another DMA interferes with VBLANK DMA.
+            dma_vblank();
+        }
         for (int line = 0; line < 68; line++)
         {
             run_for(1232);

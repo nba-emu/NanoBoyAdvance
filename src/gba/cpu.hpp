@@ -54,6 +54,8 @@ namespace gba
         interrupt m_interrupt;
 
         int m_cycles;
+        bool m_dma_active;
+        int  m_current_dma;
 
         u8 read_bios(u32 address);
         u8 read_wram(u32 address);
@@ -74,8 +76,13 @@ namespace gba
         void write_invalid(u32 address, u8 value);
 
         void run_for(int cycles);
+
         void timer_step(int cycles);
         void timer_increment(struct io::timer& timer, bool& overflow);
+
+        void dma_hblank();
+        void dma_vblank();
+        void dma_transfer_unit();
 
         static constexpr int m_mem_cycles8_16[16] = {
             1, 1, 3, 1, 1, 1, 1, 1, 5, 5, 1, 1, 1, 1, 5, 1

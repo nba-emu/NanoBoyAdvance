@@ -5,6 +5,7 @@ set(SOURCES
     memory.cpp
     mmio.cpp
     timer.cpp
+    dma.cpp
     ppu/io.cpp
     ppu/ppu.cpp
     ppu/composer.cpp
