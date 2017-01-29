@@ -130,7 +130,6 @@ namespace gba
         }
     }
 
-    // TODO: should be in ARMigo core and replace step-method maybe
     void cpu::run_for(int cycles)
     {
         int cycles_previous;
