@@ -154,7 +154,7 @@ namespace gba
 
     u8 cpu::read_save(u32 address)
     {
-        logger::log<LOG_ERROR>("what");
+        //logger::log<LOG_ERROR>("what");
         switch (address)
         {
         case 0: return 0xC2;
@@ -165,7 +165,7 @@ namespace gba
 
     u8 cpu::read_invalid(u32 address)
     {
-        logger::log<LOG_ERROR>("illegal read from 0x{0:x}", address);
+        //logger::log<LOG_ERROR>("illegal read from 0x{0:x}", address);
 
         return 0;
     }
@@ -206,6 +206,6 @@ namespace gba
 
     void cpu::write_invalid(u32 address, u8 value)
     {
-        logger::log<LOG_ERROR>("illegal write to 0x{0:x} = 0x{1:x}", address, value);
+        //logger::log<LOG_ERROR>("illegal write to 0x{0:x} = 0x{1:x}", address, value);
     }
 }
