@@ -70,6 +70,9 @@ namespace gba
             // reset DMA channels
             m_io.dma[i].id = i;
             m_io.dma[i].reset();
+            // !!hacked!! ouchy ouch
+            m_io.dma[i].dma_active  = &m_dma_active;
+            m_io.dma[i].current_dma = &m_current_dma;
 
             // reset timers
             m_io.timer[i].id = i;
@@ -168,7 +171,7 @@ namespace gba
                 m_io.haltcnt = SYSTEM_RUN;
             }
 
-            //if (m_io.haltcnt == SYSTEM_RUN)
+            if (m_io.haltcnt == SYSTEM_RUN)
             {
                 cycles_previous = m_cycles;
 
@@ -187,14 +190,20 @@ namespace gba
 
                 timer_step(cycles_previous - m_cycles);
             }
-            /*else
+            else
             {
-                // TODO: DMA
-                // likely doesn't work like this because of interrupts.
-                timer_step(m_cycles);
-                m_cycles = 0;
-                return;
-            }*/
+                if (m_dma_active)
+                {
+                    cycles_previous = m_cycles;
+                    dma_transfer_unit();
+                    timer_step(cycles_previous - m_cycles);
+                }
+                else
+                {
+                    timer_step(1);
+                    m_cycles--;
+                }
+            }
         }
     }
 }

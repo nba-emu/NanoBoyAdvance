@@ -49,6 +49,10 @@ struct io
             u32 src_addr;
         } internal;
 
+        // !!hacked!! much ouch
+        bool* dma_active;
+        int* current_dma;
+
         void reset();
         auto read(int offset) -> u8;
         void write(int offset, u8 value);
