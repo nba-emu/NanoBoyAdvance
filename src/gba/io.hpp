@@ -27,6 +27,8 @@ struct io
 {
     struct timer
     {
+        int id;
+
         struct timer_control
         {
             int frequency;

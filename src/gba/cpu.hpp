@@ -75,7 +75,7 @@ namespace gba
 
         void run_for(int cycles);
         void timer_step(int cycles);
-        void timer_increment(timer& timer, bool& overflow);
+        void timer_increment(struct io::timer& timer, bool& overflow);
 
         static constexpr int m_mem_cycles8_16[16] = {
             1, 1, 3, 1, 1, 1, 1, 1, 5, 5, 1, 1, 1, 1, 5, 1

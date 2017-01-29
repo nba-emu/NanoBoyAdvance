@@ -65,6 +65,7 @@ namespace gba
         m_io.haltcnt = SYSTEM_RUN;
         for (int i = 0; i < 4; i++)
         {
+            m_io.timer[i].id = i;
             m_io.timer[i].reset();
         }
 

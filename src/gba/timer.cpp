@@ -39,18 +39,26 @@ namespace gba
 
             if (timer.control.enable)
             {
-                if (timer.cascade && overflow)
+                if (timer.control.cascade && overflow)
                 {
                     timer_increment(timer, overflow);
                 }
-                else if (!timer.cascade)
+                else if (!timer.control.cascade)
                 {
                     timer.ticks += cycles;
 
-                    while (timer.ticks >= m_timer_ticks[timer.control.frequency])
+                    if (timer.ticks >= m_timer_ticks[timer.control.frequency])
                     {
                         timer_increment(timer, overflow);
                     }
+                    else
+                    {
+                        overflow = false;
+                    }
+                }
+                else
+                {
+                    overflow = false;
                 }
             }
             else
@@ -60,8 +68,23 @@ namespace gba
         }
     }
 
-    void cpu::timer_increment(timer& timer, bool& overflow)
+    void cpu::timer_increment(struct io::timer& timer, bool& overflow)
     {
+        timer.ticks = 0;
 
+        if (timer.counter == 0xFFFF)
+        {
+            if (timer.control.interrupt)
+            {
+                m_interrupt.request((interrupt_type)(INTERRUPT_TIMER_0 << timer.id));
+            }
+            overflow = true;
+            timer.counter = timer.reload;
+        }
+        else
+        {
+            overflow = false;
+            timer.counter++;
+        }
     }
 }
