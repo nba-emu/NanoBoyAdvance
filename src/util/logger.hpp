@@ -46,7 +46,9 @@ namespace util
         template <log_level level, typename... Parameters>
         void log(std::string message, Parameters... parameters)
         {
+#ifdef DEBUG
             fmt::print("[" + g_level_map[level] + "] " + message + "\n", parameters...);
+#endif
         }
     }
 }
