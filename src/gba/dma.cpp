@@ -107,10 +107,14 @@ namespace gba
 
         if (dma.repeat)
         {
-            // TODO(accuracy): length, dst/src_addr must be masked.
+            // TODO(accuracy): length, dst_addr must be masked.
             dma.internal.length = dma.length;
-            dma.internal.dst_addr = dma.dst_addr;
-            dma.internal.src_addr = dma.src_addr;
+
+            if (dst_cntl == DMA_RELOAD)
+            {
+                dma.internal.dst_addr = dma.dst_addr;
+            }
+            //dma.internal.src_addr = dma.src_addr;
 
             // even though DMA will be repeated, we have to wait for it to be rescheduled.
             if (dma.time != DMA_IMMEDIATE)

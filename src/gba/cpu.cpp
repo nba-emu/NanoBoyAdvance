@@ -93,6 +93,8 @@ namespace gba
             m_bank[BANK_IRQ][BANK_R13] = 0x03007FA0;
             refill_pipeline();
         }
+
+        m_sram[0] = 0xC2; m_sram[1] = 0x09;
     }
 
     ppu& cpu::get_ppu()
@@ -181,6 +183,7 @@ namespace gba
                     {
                         raise_irq();
                     }
+                    //logger::log<LOG_DEBUG>("r15={0:x}", m_reg[15]);
                     step();
                 }
                 else

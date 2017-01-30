@@ -48,6 +48,8 @@ namespace gba
         u8 m_oam[0x400];
         u8 m_vram[0x18000];
 
+        u8 m_sram[80000];
+
         #include "io.hpp"
 
         ppu m_ppu;
@@ -74,6 +76,7 @@ namespace gba
         void write_pal(u32 address, u8 value);
         void write_vram(u32 address, u8 value);
         void write_oam(u32 address, u8 value);
+        void write_save(u32 address, u8 value);
         void write_invalid(u32 address, u8 value);
 
         void run_for(int cycles);
@@ -127,7 +130,7 @@ namespace gba
             &cpu::write_invalid,
             &cpu::write_invalid,
             &cpu::write_invalid,
-            &cpu::write_invalid,
+            &cpu::write_save,
             &cpu::write_invalid
         };
 

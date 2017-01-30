@@ -155,12 +155,12 @@ namespace gba
     u8 cpu::read_save(u32 address)
     {
         //logger::log<LOG_ERROR>("what");
-        switch (address)
+        /*switch (address)
         {
         case 0: return 0xC2;
         case 1: return 0x09;
-        }
-        return 0;
+        }*/
+        return m_sram[address % 80000];
     }
 
     u8 cpu::read_invalid(u32 address)
@@ -202,6 +202,11 @@ namespace gba
     void cpu::write_oam(u32 address, u8 value)
     {
         m_oam[address % 0x400] = value;
+    }
+
+    void cpu::write_save(u32 address, u8 value)
+    {
+        m_sram[address % 80000] = value;
     }
 
     void cpu::write_invalid(u32 address, u8 value)
