@@ -22,75 +22,119 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 #include "../ppu.hpp"
+#include "util/logger.hpp"
+
+using namespace util;
 
 namespace gba
 {
     void ppu::render_textmode(int id)
     {
-        u16* buffer = m_buffer[id];
+        if (m_io.bgcnt[id].full_palette)
+        {
+            switch (id)
+            {
+            case 0: render_textmode_internal<true, 0>(); return;
+            case 1: render_textmode_internal<true, 1>(); return;
+            case 2: render_textmode_internal<true, 2>(); return;
+            case 3: render_textmode_internal<true, 3>(); return;
+            }
+        }
+        else
+        {
+            switch (id)
+            {
+            case 0: render_textmode_internal<false, 0>(); return;
+            case 1: render_textmode_internal<false, 1>(); return;
+            case 2: render_textmode_internal<false, 2>(); return;
+            case 3: render_textmode_internal<false, 3>(); return;
+            }
+        }
+    }
+
+    template <bool is_256, int id>
+    void ppu::render_textmode_internal()
+    {
         auto bg = m_io.bgcnt[id];
+        u16* buffer = m_buffer[id];
+        u32 tile_block = bg.tile_block << 14;
 
-        // background dimensions
-        int width = ((bg.screen_size & 1) + 1) << 8;
-        int height = ((bg.screen_size >> 1) + 1) << 8;
+        bool h_expand = bg.screen_size & 1;
+        bool v_expand = bg.screen_size & 3;
 
-        int line = (m_io.vcount + m_io.bgvofs[id]) % height;
-        int row = line / 8;
-        int row_rmdr = line % 8;
-        int left_area = 0;
-        int right_area = 1;
-        u16 tile_buffer[8];
-        u16 line_buffer[width];
-        u32 offset;
+        int line   = (m_io.vcount + m_io.bgvofs[id]) & (v_expand ? 0x1FF : 0xFF);
+        int row    = line >> 3;
+        int tile_y = line & 7;
 
-        if (row >= 32)
+        u32 offset = (bg.map_block << 11) + (row << (h_expand ? 7 : 6));
+
+        if (v_expand) offset += h_expand ? 0x1600 : 0x800;
+
+        int palette, number;
+        bool h_flip, v_flip;
+        int last_number = -1;
+        int last_tile_encoder = -1;
+        u8 tile_buffer[8];
+
+        for (int _x = 0; _x < 240; _x++)
         {
-            left_area = (bg.screen_size & 1) + 1;
-            right_area = 3;
-            row -= 32;
+            int x = (_x + m_io.bghofs[id]) & (h_expand ? 0x1FF : 0xFF);
+
+            int col    = x >> 3;
+            int tile_x = x & 7;
+
+            u32 tile_offset  = offset + (col << 1);
+            u16 tile_encoder = (m_vram[tile_offset + 1] << 8) | m_vram[tile_offset];
+            int _tile_y = tile_y;
+
+            if (tile_encoder != last_tile_encoder)
+            {
+                number  = tile_encoder & 0x3FF;
+                h_flip  = tile_encoder & (1 << 10);
+                v_flip  = tile_encoder & (1 << 11);
+                palette = tile_encoder >> 12;
+                last_tile_encoder = tile_encoder;
+            }
+
+            if (h_flip) tile_x ^= 7;
+            if (v_flip) _tile_y ^= 7;
+
+            if (is_256)
+            {
+                if (number != last_number)
+                {
+                    get_tile_line_8bpp(tile_buffer, bg.tile_block * 0x4000, number, _tile_y);
+                    last_number = number;
+                }
+
+                int index = tile_buffer[tile_x];
+
+                if (index == 0)
+                {
+                    buffer[_x] = COLOR_TRANSPARENT;
+                    continue;
+                }
+
+                buffer[_x] = (m_pal[(index<<1)+1] << 8) | m_pal[index<<1];
+            }
+            else
+            {
+                if (number != last_number)
+                {
+                    get_tile_line_4bpp(tile_buffer, bg.tile_block * 0x4000, number, _tile_y);
+                    last_number = number;
+                }
+
+                int index = tile_buffer[tile_x];
+
+                if (index == 0)
+                {
+                    buffer[_x] = COLOR_TRANSPARENT;
+                    continue;
+                }
+
+                buffer[_x] = (m_pal[(palette<<5)+(index<<1)+1] << 8) | m_pal[(palette<<5)+(index<<1)];
+            }
         }
-
-        offset = bg.map_block * 0x800 + left_area * 0x800 + 64 * row;
-
-        for (int x = 0; x < width / 8; x++)
-        {
-            u16 tile_encoder = (m_vram[offset + 1] << 8) | m_vram[offset];
-            int tile_number = tile_encoder & 0x3FF;
-            bool horizontal_flip = tile_encoder & (1 << 10);
-            bool vertical_flip = tile_encoder & (1 << 11);
-            int row_rmdr_flip = row_rmdr;
-
-            if (vertical_flip)
-                row_rmdr_flip = 7 - row_rmdr_flip;
-
-            if (bg.full_palette)
-            {
-                decode_tile_line_8bpp(tile_buffer, bg.tile_block * 0x4000, tile_number, row_rmdr_flip, false);
-            }
-            else
-            {
-                int palette = tile_encoder >> 12;
-                decode_tile_line_4bpp(tile_buffer, bg.tile_block * 0x4000, palette * 0x20, tile_number, row_rmdr_flip);
-            }
-
-            if (horizontal_flip)
-            {
-                for (int i = 0; i < 8; i++)
-                    line_buffer[x * 8 + i] = tile_buffer[7 - i];
-            }
-            else
-            {
-                for (int i = 0; i < 8; i++)
-                    line_buffer[x * 8 + i] = tile_buffer[i];
-            }
-
-            if (x == 31)
-                offset = bg.map_block * 0x800 + right_area * 0x800 + 64 * row;
-            else
-                offset += 2;
-        }
-
-        for (int i = 0; i < 240; i++)
-            buffer[i] = line_buffer[(m_io.bghofs[id] + i) % width];
     }
 }

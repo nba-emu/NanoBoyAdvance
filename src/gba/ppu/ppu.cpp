@@ -120,11 +120,10 @@ namespace gba
             {
             case 0:
                 // BG Mode 0 - 240x160 pixels, Text mode
-                for (int i = 0; i < 4; i++)
-                {
-                    if (m_io.control.enable[i])
-                        render_textmode(i);
-                }
+                if (m_io.control.enable[0]) render_textmode(0);
+                if (m_io.control.enable[1]) render_textmode(1);
+                if (m_io.control.enable[2]) render_textmode(2);
+                if (m_io.control.enable[3]) render_textmode(3);
                 break;
             case 3:
                 // BG Mode 3 - 240x160 pixels, 32768 colors

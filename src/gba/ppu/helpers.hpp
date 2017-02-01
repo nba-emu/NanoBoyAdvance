@@ -33,53 +33,25 @@ inline u32 color_convert(u16 color)
     return 0xFF000000 | (b << 3) | (g << 11) | (r << 19);
 }
 
-inline void decode_tile_line_4bpp(u16* buffer, u32 block_base, u32 palette_base, int number, int line)
+inline void get_tile_line_4bpp(u8* buffer, u32 base, int number, int y)
 {
-    u32 offset = block_base + (number << 5) + (line << 2);
-    u8* block_ptr   = m_vram + offset;
-    u8* palette_ptr = m_pal + palette_base;
+    u32 offset = base + (number<<5) + (y<<2);
 
     for (int i = 0; i < 4; i++)
     {
-        int indices[2];
-        int encoder = block_ptr[i];
-
-        indices[0] = encoder & 0xF;
-        indices[1] = encoder >> 4;
-
-        for (int j = 0; j < 2; j++)
-        {
-            int index = indices[j] << 1;
-
-            if (index == 0)
-            {
-                buffer[(i << 1) + j] = COLOR_TRANSPARENT;
-                continue;
-            }
-
-            buffer[(i << 1) + j] = (palette_ptr[index + 1] << 8) | palette_ptr[index];
-        }
+        int indices = m_vram[offset + i];
+        buffer[i<<1]     = indices & 0xF;
+        buffer[(i<<1)|1] = indices>>4;
     }
 }
 
-inline void decode_tile_line_8bpp(u16* buffer, u32 block_base, int number, int line, bool sprite)
+inline void get_tile_line_8bpp(u8* buffer, u32 base, int number, int y)
 {
-    u32 offset = block_base + (number << 6) + (line << 3);
-    u32 palette_base = sprite ? 0x200 : 0;
-    u8* block_ptr   = m_vram + offset;
-    u8* palette_ptr = m_pal + palette_base;
+    u32 offset = base + (number<<6) + (y<<3);
 
     for (int i = 0; i < 8; i++)
     {
-        int index = block_ptr[i] << 1;
-
-        if (index == 0)
-        {
-            buffer[i] = COLOR_TRANSPARENT;
-            continue;
-        }
-
-        buffer[i] = (palette_ptr[index + 1] << 8) | palette_ptr[index];
+        buffer[i] = m_vram[offset + i];
     }
 }
 

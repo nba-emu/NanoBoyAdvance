@@ -51,6 +51,10 @@ namespace gba
         #include "helpers.hpp"
 
         void render_textmode(int id);
+
+        template <bool is_256, int id>
+        void render_textmode_internal();
+
         void render_bitmap_1();
         void render_bitmap_2();
         void render_bitmap_3();
