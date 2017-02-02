@@ -60,7 +60,7 @@ namespace gba
         u32 tile_block = bg.tile_block << 14;
 
         bool h_expand = bg.screen_size & 1;
-        bool v_expand = bg.screen_size & 3;
+        bool v_expand = bg.screen_size & 2;
 
         int line   = (m_io.vcount + m_io.bgvofs[id]) & (v_expand ? 0x1FF : 0xFF);
         int row    = line >> 3;
@@ -68,7 +68,7 @@ namespace gba
 
         u32 offset = (bg.map_block << 11) + (row << (h_expand ? 7 : 6));
 
-        if (v_expand) offset += h_expand ? 0x1600 : 0x800;
+        //if (v_expand) offset += h_expand ? 0x1600 : 0x800;
 
         int palette, number;
         bool h_flip, v_flip;
