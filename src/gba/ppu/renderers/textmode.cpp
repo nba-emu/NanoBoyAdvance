@@ -103,7 +103,7 @@ namespace gba
             {
                 if (number != last_number)
                 {
-                    get_tile_line_8bpp(tile_buffer, bg.tile_block * 0x4000, number, _tile_y);
+                    get_tile_line_8bpp(tile_buffer, bg.tile_block<<14, number, _tile_y);
                     last_number = number;
                 }
 
@@ -121,7 +121,7 @@ namespace gba
             {
                 if (number != last_number)
                 {
-                    get_tile_line_4bpp(tile_buffer, bg.tile_block * 0x4000, number, _tile_y);
+                    get_tile_line_4bpp(tile_buffer, bg.tile_block<<14, number, _tile_y);
                     last_number = number;
                 }
 
@@ -133,7 +133,7 @@ namespace gba
                     continue;
                 }
 
-                buffer[_x] = (m_pal[(palette<<5)+(index<<1)+1] << 8) | m_pal[(palette<<5)+(index<<1)];
+                buffer[_x] = (m_pal[(palette<<5)+(index<<1)+1]<<8) | m_pal[(palette<<5)+(index<<1)];
             }
         }
     }
