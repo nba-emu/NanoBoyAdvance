@@ -201,7 +201,7 @@ int main(int argc, char** argv)
             emu = new gba::cpu();
 
             emu->set_bios(bios, bios_size);
-            emu->set_game(rom, rom_size);
+            emu->set_game(rom, rom_size, save_file);
             emu->reset();
 
             keyinput = &emu->get_keypad();

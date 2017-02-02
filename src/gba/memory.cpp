@@ -154,19 +154,12 @@ namespace gba
 
     u8 cpu::read_save(u32 address)
     {
-        //logger::log<LOG_ERROR>("what");
-        /*switch (address)
-        {
-        case 0: return 0xC2;
-        case 1: return 0x09;
-        }*/
-        return m_sram[address % 80000];
+        return m_backup->read_byte(address);
     }
 
     u8 cpu::read_invalid(u32 address)
     {
-        //logger::log<LOG_ERROR>("illegal read from 0x{0:x}", address);
-
+        logger::log<LOG_ERROR>("illegal read from 0x{0:x}", address);
         return 0;
     }
 
@@ -182,15 +175,11 @@ namespace gba
 
     void cpu::write_pal(u32 address, u8 value)
     {
-        //logger::log<LOG_INFO>("pal write address={0:x} value={1:x}", address, value);
-
         m_pal[address % 0x400] = value;
     }
 
     void cpu::write_vram(u32 address, u8 value)
     {
-        //logger::log<LOG_INFO>("vram write address={0:x} value={1:x}", address, value);
-
         address %= 0x20000;
 
         if (address >= 0x18000)
@@ -206,11 +195,11 @@ namespace gba
 
     void cpu::write_save(u32 address, u8 value)
     {
-        m_sram[address % 80000] = value;
+        m_backup->write_byte(address, value);
     }
 
     void cpu::write_invalid(u32 address, u8 value)
     {
-        //logger::log<LOG_ERROR>("illegal write to 0x{0:x} = 0x{1:x}", address, value);
+        logger::log<LOG_ERROR>("illegal write to 0x{0:x} = 0x{1:x}", address, value);
     }
 }

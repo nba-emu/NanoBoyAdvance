@@ -6,6 +6,7 @@ set(SOURCES
     mmio.cpp
     timer.cpp
     dma.cpp
+    flash.cpp
     ppu/io.cpp
     ppu/ppu.cpp
     ppu/composer.cpp
@@ -19,6 +20,8 @@ set(HEADERS
     enums.hpp
     interrupt.hpp
     mmio.hpp
+    cart_backup.hpp
+    flash.hpp
     ppu/io.hpp
     ppu/ppu.hpp
 )

@@ -23,10 +23,12 @@
 
 #pragma once
 
+#include <string>
 #include "arm/arm.hpp"
 #include "ppu/ppu.hpp"
 #include "enums.hpp"
 #include "interrupt.hpp"
+#include "cart_backup.hpp"
 #define CPU_INCLUDE
 
 using namespace armigo;
@@ -41,14 +43,14 @@ namespace gba
 
         u8* m_rom;
         size_t m_rom_size;
+        cart_backup* m_backup {nullptr};
+
         u8 m_bios[0x4000];
         u8 m_wram[0x40000];
         u8 m_iram[0x8000];
         u8 m_pal[0x400];
         u8 m_oam[0x400];
         u8 m_vram[0x18000];
-
-        u8 m_sram[80000];
 
         #include "io.hpp"
 
@@ -138,13 +140,14 @@ namespace gba
 
     public:
         cpu();
+        ~cpu();
 
         void reset();
 
         ppu& get_ppu();
         u16& get_keypad();
         void set_bios(u8* data, size_t size);
-        void set_game(u8* data, size_t size);
+        void set_game(u8* data, size_t size, std::string save_file);
 
         void frame();
     protected:

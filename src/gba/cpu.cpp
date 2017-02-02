@@ -24,6 +24,7 @@
 #include <cstring>
 #include <stdexcept>
 #include "cpu.hpp"
+#include "flash.hpp"
 #include "util/logger.hpp"
 
 using namespace util;
@@ -47,11 +48,25 @@ namespace gba
         m_ppu.set_interrupt(&m_interrupt);
     }
 
+    cpu::~cpu()
+    {
+        if (m_backup != nullptr)
+        {
+            delete m_backup;
+            m_backup = nullptr;
+        }
+    }
+
     void cpu::reset()
     {
         arm::reset();
 
         m_ppu.reset();
+
+        if (m_backup != nullptr)
+        {
+            m_backup->reset();
+        }
 
         // clear out all memory
         memset(m_wram, 0, 0x40000);
@@ -93,8 +108,6 @@ namespace gba
             m_bank[BANK_IRQ][BANK_R13] = 0x03007FA0;
             refill_pipeline();
         }
-
-        m_sram[0] = 0xC2; m_sram[1] = 0x09;
     }
 
     ppu& cpu::get_ppu()
@@ -117,10 +130,38 @@ namespace gba
         throw std::runtime_error("bios file is too big.");
     }
 
-    void cpu::set_game(u8* data, size_t size)
+    void cpu::set_game(u8* data, size_t size, std::string save_file)
     {
-        m_rom = data;
+        m_rom      = data;
         m_rom_size = size;
+
+        if (m_backup != nullptr)
+        {
+            delete m_backup;
+            m_backup = nullptr;
+        }
+
+        // detect save type...
+        for (int i = 0; i < size; i += 4)
+        {
+            if (memcmp(data + i, "EEPROM_V", 8) == 0)
+            {
+                // ...
+            }
+            else if (memcmp(data + i, "SRAM_V", 6) == 0)
+            {
+                // ...
+            }
+            else if (memcmp(data + i, "FLASH_V", 7) == 0 ||
+                     memcmp(data + i, "FLASH512_V", 10) == 0)
+            {
+                m_backup = new flash(save_file, false);
+            }
+            else if (memcmp(data + i, "FLASH1M_V", 9) == 0)
+            {
+                m_backup = new flash(save_file, true);
+            }
+        }
     }
 
     void cpu::frame()
@@ -203,6 +244,7 @@ namespace gba
                 }
                 else
                 {
+                    // TODO(optimization): run timers until first IRQ
                     timer_step(1);
                     m_cycles--;
                 }

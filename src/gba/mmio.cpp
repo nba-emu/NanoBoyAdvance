@@ -90,6 +90,8 @@ namespace gba
         case IF+1:  return m_io.interrupt.request >> 8;
         case IME:   return m_io.interrupt.master_enable & 0xFF;
         case IME+1: return m_io.interrupt.master_enable >> 8;
+
+        default: logger::log<LOG_DEBUG>("unknown IO read {0:X}", address);
         }
 
         return 0;
@@ -256,6 +258,8 @@ namespace gba
         case HALTCNT:
             m_io.haltcnt = (value & 0x80) ? SYSTEM_STOP : SYSTEM_HALT;
             break;
+
+        default: logger::log<LOG_DEBUG>("unknown IO write {0:X}", address);
         }
     }
 }
