@@ -154,7 +154,10 @@ namespace gba
 
     u8 cpu::read_save(u32 address)
     {
-        return m_backup->read_byte(address);
+        if (m_backup)
+        {
+            return m_backup->read_byte(address);
+        }
     }
 
     u8 cpu::read_invalid(u32 address)
@@ -195,7 +198,10 @@ namespace gba
 
     void cpu::write_save(u32 address, u8 value)
     {
-        m_backup->write_byte(address, value);
+        if (m_backup)
+        {
+            m_backup->write_byte(address, value);
+        }
     }
 
     void cpu::write_invalid(u32 address, u8 value)
