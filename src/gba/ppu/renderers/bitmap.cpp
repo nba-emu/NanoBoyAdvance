@@ -44,7 +44,7 @@ namespace gba
         for (int x = 0; x < 240; x++)
         {
             int index = m_vram[offset + x];
-            m_buffer[2][x] = (m_pal[(index * 2) + 1] << 8) | m_pal[index << 1];
+            m_buffer[2][x] = read_palette(0, index);
         }
     }
 

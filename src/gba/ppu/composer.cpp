@@ -51,7 +51,18 @@ namespace gba
                     }
                 }
 
-                // object layer
+                if (m_io.control.enable[4])
+                {
+                    u16 new_pixel = m_buffer[4 + j][i];
+
+                    if (new_pixel != COLOR_TRANSPARENT)
+                    {
+                        layer[1] = layer[0];
+                        layer[0] = 4;
+                        pixel[1] = pixel[0];
+                        pixel[0] = new_pixel;
+                    }
+                }
             }
 
             // SFX code

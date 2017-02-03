@@ -41,7 +41,7 @@ namespace gba
 
         // rendering buffers
         u8 m_win_mask[2][240];
-        u16 m_buffer[5][240];
+        u16 m_buffer[8][240];
         u32 m_framebuffer[240*160];
 
         int m_frameskip;
@@ -58,6 +58,7 @@ namespace gba
         void render_bitmap_1();
         void render_bitmap_2();
         void render_bitmap_3();
+        void render_sprites(u32 tile_base);
 
     public:
         ppu();

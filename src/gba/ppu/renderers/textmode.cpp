@@ -55,37 +55,42 @@ namespace gba
     template <bool is_256, int id>
     void ppu::render_textmode_internal()
     {
-        auto bg = m_io.bgcnt[id];
-        u16* buffer = m_buffer[id];
+        auto bg        = m_io.bgcnt[id];
+        u16* buffer    = m_buffer[id];
         u32 tile_block = bg.tile_block << 14;
 
-        bool h_expand = bg.screen_size & 1;
-        bool v_expand = bg.screen_size & 2;
+        int line     = m_io.vcount + m_io.bgvofs[id];
+        int row      = line >> 3;
+        int tile_y   = line & 7;
+        int screen_y = (row >> 5) & 1;
 
-        int line   = (m_io.vcount + m_io.bgvofs[id]) & (v_expand ? 0x1FF : 0xFF);
-        int row    = line >> 3;
-        int tile_y = line & 7;
-
-        u32 offset = (bg.map_block << 11) + (row << (h_expand ? 7 : 6));
-
-        //if (v_expand) offset += h_expand ? 0x1600 : 0x800;
-
+        u8 tile_buffer[8];
         int palette, number;
         bool h_flip, v_flip;
-        int last_number = -1;
+        int last_number       = -1;
         int last_tile_encoder = -1;
-        u8 tile_buffer[8];
+
+        u32 base_offset = (bg.map_block << 11) + ((row & 0x1F) << 6);
 
         for (int _x = 0; _x < 240; _x++)
         {
-            int x = (_x + m_io.bghofs[id]) & (h_expand ? 0x1FF : 0xFF);
+            int x = _x + m_io.bghofs[id];
 
-            int col    = x >> 3;
-            int tile_x = x & 7;
-
-            u32 tile_offset  = offset + (col << 1);
-            u16 tile_encoder = (m_vram[tile_offset + 1] << 8) | m_vram[tile_offset];
+            int col     = x >> 3;
+            int  tile_x = x & 7;
             int _tile_y = tile_y;
+
+            int screen_x = (col >> 5) & 1;
+            u32 offset   = base_offset + ((col & 0x1F) << 1);
+
+            switch (bg.screen_size)
+            {
+            case 1: offset += screen_x << 11; break;
+            case 2: offset += screen_y << 11; break;
+            case 3: offset += (screen_x << 11) + (screen_y << 12); break;
+            }
+
+            u16 tile_encoder = (m_vram[offset + 1] << 8) | m_vram[offset];
 
             if (tile_encoder != last_tile_encoder)
             {
@@ -96,44 +101,16 @@ namespace gba
                 last_tile_encoder = tile_encoder;
             }
 
-            if (h_flip) tile_x ^= 7;
+            if (h_flip)  tile_x ^= 7;
             if (v_flip) _tile_y ^= 7;
 
             if (is_256)
             {
-                if (number != last_number)
-                {
-                    get_tile_line_8bpp(tile_buffer, bg.tile_block<<14, number, _tile_y);
-                    last_number = number;
-                }
-
-                int index = tile_buffer[tile_x];
-
-                if (index == 0)
-                {
-                    buffer[_x] = COLOR_TRANSPARENT;
-                    continue;
-                }
-
-                buffer[_x] = (m_pal[(index<<1)+1] << 8) | m_pal[index<<1];
+                buffer[_x] = get_tile_pixel_8bpp(tile_block, number, tile_x, _tile_y);
             }
             else
             {
-                if (number != last_number)
-                {
-                    get_tile_line_4bpp(tile_buffer, bg.tile_block<<14, number, _tile_y);
-                    last_number = number;
-                }
-
-                int index = tile_buffer[tile_x];
-
-                if (index == 0)
-                {
-                    buffer[_x] = COLOR_TRANSPARENT;
-                    continue;
-                }
-
-                buffer[_x] = (m_pal[(palette<<5)+(index<<1)+1]<<8) | m_pal[(palette<<5)+(index<<1)];
+                buffer[_x] = get_tile_pixel_4bpp(tile_block, palette, number, tile_x, _tile_y);
             }
         }
     }

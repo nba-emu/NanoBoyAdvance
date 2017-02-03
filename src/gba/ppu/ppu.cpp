@@ -150,6 +150,12 @@ namespace gba
                 logger::log<LOG_ERROR>("unknown ppu mode: {0}", m_io.control.mode);
             }
 
+            if (m_io.control.enable[4])
+            {
+                // TODO(accuracy): tile base might not always be 0x10000?
+                render_sprites(0x10000);
+            }
+
             compose_scanline();
         }
     }

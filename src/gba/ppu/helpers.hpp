@@ -33,26 +33,38 @@ inline u32 color_convert(u16 color)
     return 0xFF000000 | (b << 3) | (g << 11) | (r << 19);
 }
 
-inline void get_tile_line_4bpp(u8* buffer, u32 base, int number, int y)
+inline u16 read_palette(int palette, int index)
 {
-    u32 offset = base + (number<<5) + (y<<2);
-
-    for (int i = 0; i < 4; i++)
-    {
-        int indices = m_vram[offset + i];
-        buffer[i<<1]     = indices & 0xF;
-        buffer[(i<<1)|1] = indices>>4;
-    }
+    return (m_pal[(palette << 5) + (index << 1) | 1] << 8) |
+            m_pal[(palette << 5) + (index << 1)];
 }
 
-inline void get_tile_line_8bpp(u8* buffer, u32 base, int number, int y)
+inline u16 get_tile_pixel_4bpp(u32 base, int palette, int number, int x, int y)
 {
-    u32 offset = base + (number<<6) + (y<<3);
+    u32 offset = base + (number << 5) + (y << 2) + (x >> 1);
 
-    for (int i = 0; i < 8; i++)
+    int tuple = m_vram[offset];
+    int index = (x & 1) ? (tuple >> 4) : (tuple & 0xF);
+
+    if (index == 0)
     {
-        buffer[i] = m_vram[offset + i];
+        return COLOR_TRANSPARENT;
     }
+
+    return read_palette(palette, index);
+}
+
+inline u16 get_tile_pixel_8bpp(u32 base, int number, int x, int y)
+{
+    u32 offset = base + (number << 6) + (y << 3) + x;
+    int index  = m_vram[offset];
+
+    if (index == 0)
+    {
+        return COLOR_TRANSPARENT;
+    }
+
+    return read_palette(0, index);
 }
 
 #endif

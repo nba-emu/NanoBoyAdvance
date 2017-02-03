@@ -12,6 +12,7 @@ set(SOURCES
     ppu/composer.cpp
     ppu/renderers/bitmap.cpp
     ppu/renderers/textmode.cpp
+    ppu/renderers/sprites.cpp
 )
 
 set(HEADERS
