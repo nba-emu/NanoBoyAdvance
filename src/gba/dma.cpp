@@ -66,6 +66,7 @@ namespace gba
 
     void cpu::dma_transfer_unit()
     {
+        // TODO(accuracy): limit transfer by IRQ and cycles
         auto& dma = m_io.dma[m_current_dma];
 
         dma_control src_cntl = dma.src_cntl;

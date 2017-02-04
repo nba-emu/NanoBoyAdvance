@@ -177,4 +177,21 @@ namespace gba
             break;
         }
     }
+
+    void ppu::io::bgref_reg::reset()
+    {
+        value = internal = 0;
+    }
+
+    void ppu::io::bgref_reg::write(int offset, u8 value)
+    {
+        switch (offset)
+        {
+        case 0: value = (value & 0xFFFFFF00) | (value << 0); break;
+        case 1: value = (value & 0xFFFF00FF) | (value << 8); break;
+        case 2: value = (value & 0xFF00FFFF) | (value << 16); break;
+        case 3: value = (value & 0x00FFFFFF) | (value << 24); break;
+        }
+        internal = ppu::decode_float32(value);
+    }
 }

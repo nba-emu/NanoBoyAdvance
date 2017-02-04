@@ -75,6 +75,20 @@ struct io
 
     u16 bghofs[4];
     u16 bgvofs[4];
+
+    struct bgref_reg
+    {
+        u32 value;
+        float internal;
+
+        void reset();
+        void write(int offset, u8 value);
+    } bgx[2], bgy[2];
+
+    u16 bgpa[2];
+    u16 bgpb[2];
+    u16 bgpc[2];
+    u16 bgpd[2];
 } m_io;
 
 #endif

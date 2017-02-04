@@ -13,6 +13,7 @@ set(SOURCES
     ppu/renderers/bitmap.cpp
     ppu/renderers/textmode.cpp
     ppu/renderers/sprites.cpp
+    ppu/renderers/rotate_scale.cpp
 )
 
 set(HEADERS

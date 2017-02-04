@@ -48,6 +48,15 @@ namespace gba
             m_io.bghofs[i] = 0;
             m_io.bgvofs[i] = 0;
             m_io.bgcnt[i].reset();
+            if (i < 2)
+            {
+                m_io.bgx[i].reset();
+                m_io.bgy[i].reset();
+                m_io.bgpa[i] = 0;
+                m_io.bgpb[i] = 0;
+                m_io.bgpc[i] = 0;
+                m_io.bgpd[i] = 0;
+            }
         }
 
         m_frame_counter = 0;
@@ -91,6 +100,11 @@ namespace gba
         m_io.status.vblank_flag = true;
         m_io.status.hblank_flag = false;
 
+        m_io.bgx[0].internal = ppu::decode_float32(m_io.bgx[0].value);
+        m_io.bgy[0].internal = ppu::decode_float32(m_io.bgy[0].value);
+        m_io.bgx[1].internal = ppu::decode_float32(m_io.bgx[1].value);
+        m_io.bgy[1].internal = ppu::decode_float32(m_io.bgy[1].value);
+
         if (m_frameskip != 0)
         {
             m_frame_counter = (m_frame_counter + 1) % m_frameskip;
@@ -105,6 +119,11 @@ namespace gba
         // todo: maybe find a better way
         m_io.status.vblank_flag = false;
         m_io.status.hblank_flag = false;
+
+        m_io.bgx[0].internal += ppu::decode_float16(m_io.bgpb[0]);
+        m_io.bgy[0].internal += ppu::decode_float16(m_io.bgpd[0]);
+        m_io.bgx[1].internal += ppu::decode_float16(m_io.bgpb[1]);
+        m_io.bgy[1].internal += ppu::decode_float16(m_io.bgpd[1]);
 
         if (m_frameskip == 0 || m_frame_counter == 0)
         {
@@ -124,6 +143,17 @@ namespace gba
                 if (m_io.control.enable[1]) render_textmode(1);
                 if (m_io.control.enable[2]) render_textmode(2);
                 if (m_io.control.enable[3]) render_textmode(3);
+                break;
+            case 1:
+                // BG Mode 1 - 240x160 pixels, Text and RS mode mixed
+                if (m_io.control.enable[0]) render_textmode(0);
+                if (m_io.control.enable[1]) render_textmode(1);
+                if (m_io.control.enable[2]) render_rotate_scale(0);
+                break;
+            case 2:
+                // BG Mode 2 - 240x160 pixels, RS mode
+                if (m_io.control.enable[2]) render_rotate_scale(0);
+                if (m_io.control.enable[2]) render_rotate_scale(1);
                 break;
             case 3:
                 // BG Mode 3 - 240x160 pixels, 32768 colors

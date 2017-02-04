@@ -168,6 +168,39 @@ namespace gba
             ppu_io.bgvofs[3] = (ppu_io.bgvofs[3] & 0x00FF) | (value << 8);
             break;
 
+        case BG2PA:   ppu_io.bgpa[0] = (ppu_io.bgpa[0] & 0xFF00) | (value << 0); break;
+        case BG2PA+1: ppu_io.bgpa[0] = (ppu_io.bgpa[0] & 0x00FF) | (value << 8); break;
+        case BG2PB:   ppu_io.bgpb[0] = (ppu_io.bgpb[0] & 0xFF00) | (value << 0); break;
+        case BG2PB+1: ppu_io.bgpb[0] = (ppu_io.bgpb[0] & 0x00FF) | (value << 8); break;
+        case BG2PC:   ppu_io.bgpc[0] = (ppu_io.bgpc[0] & 0xFF00) | (value << 0); break;
+        case BG2PC+1: ppu_io.bgpc[0] = (ppu_io.bgpc[0] & 0x00FF) | (value << 8); break;
+        case BG2PD:   ppu_io.bgpd[0] = (ppu_io.bgpd[0] & 0xFF00) | (value << 0); break;
+        case BG2PD+1: ppu_io.bgpd[0] = (ppu_io.bgpd[0] & 0x00FF) | (value << 8); break;
+        case BG2X:    ppu_io.bgx[0].write(0, value); break;
+        case BG2X+1:  ppu_io.bgx[0].write(1, value); break;
+        case BG2X+2:  ppu_io.bgx[0].write(2, value); break;
+        case BG2X+3:  ppu_io.bgx[0].write(3, value); break;
+        case BG2Y:    ppu_io.bgy[0].write(0, value); break;
+        case BG2Y+1:  ppu_io.bgy[0].write(1, value); break;
+        case BG2Y+2:  ppu_io.bgy[0].write(2, value); break;
+        case BG2Y+3:  ppu_io.bgy[0].write(3, value); break;
+        case BG3PA:   ppu_io.bgpa[1] = (ppu_io.bgpa[1] & 0xFF00) | (value << 0); break;
+        case BG3PA+1: ppu_io.bgpa[1] = (ppu_io.bgpa[1] & 0x00FF) | (value << 8); break;
+        case BG3PB:   ppu_io.bgpb[1] = (ppu_io.bgpb[1] & 0xFF00) | (value << 0); break;
+        case BG3PB+1: ppu_io.bgpb[1] = (ppu_io.bgpb[1] & 0x00FF) | (value << 8); break;
+        case BG3PC:   ppu_io.bgpc[1] = (ppu_io.bgpc[1] & 0xFF00) | (value << 0); break;
+        case BG3PC+1: ppu_io.bgpc[1] = (ppu_io.bgpc[1] & 0x00FF) | (value << 8); break;
+        case BG3PD:   ppu_io.bgpd[1] = (ppu_io.bgpd[1] & 0xFF00) | (value << 0); break;
+        case BG3PD+1: ppu_io.bgpd[1] = (ppu_io.bgpd[1] & 0x00FF) | (value << 8); break;
+        case BG3X:    ppu_io.bgx[1].write(0, value); break;
+        case BG3X+1:  ppu_io.bgx[1].write(1, value); break;
+        case BG3X+2:  ppu_io.bgx[1].write(2, value); break;
+        case BG3X+3:  ppu_io.bgx[1].write(3, value); break;
+        case BG3Y:    ppu_io.bgy[1].write(0, value); break;
+        case BG3Y+1:  ppu_io.bgy[1].write(1, value); break;
+        case BG3Y+2:  ppu_io.bgy[1].write(2, value); break;
+        case BG3Y+3:  ppu_io.bgy[1].write(3, value); break;
+
         // DMA
         case DMA0SAD:     m_io.dma[0].write(0, value); break;
         case DMA0SAD+1:   m_io.dma[0].write(1, value); break;

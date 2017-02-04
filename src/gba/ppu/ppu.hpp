@@ -51,15 +51,14 @@ namespace gba
         #include "helpers.hpp"
 
         void render_textmode(int id);
-
-        template <bool is_256, int id>
-        void render_textmode_internal();
-
+        void render_rotate_scale(int id);
         void render_bitmap_1();
         void render_bitmap_2();
         void render_bitmap_3();
         void render_sprites(u32 tile_base);
 
+        template <bool is_256, int id>
+        void render_textmode_internal();
     public:
         ppu();
 

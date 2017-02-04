@@ -67,4 +67,22 @@ inline u16 get_tile_pixel_8bpp(u32 base, int number, int x, int y)
     return read_palette(0, index);
 }
 
+static inline float decode_float16(u16 number)
+{
+    bool  is_negative = number & (1 << 15);
+    s32   int_part    = (number >> 8) | (is_negative ? 0xFFFFFF00 : 0);
+    float frac_part   = static_cast<float>(number & 0xFF) / 256;
+
+    return static_cast<float>(int_part) + frac_part;
+}
+
+static inline float decode_float32(u32 number)
+{
+    bool  is_negative = number & (1 << 27);
+    s32   int_part    = ((number & ~0xF0000000) >> 8) | (is_negative ? 0xFFF00000 : 0);
+    float frac_part   = static_cast<float>(number & 0xFF) / 256;
+
+    return static_cast<float>(int_part) + frac_part;
+}
+
 #endif
