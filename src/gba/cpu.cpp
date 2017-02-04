@@ -245,8 +245,11 @@ namespace gba
                 else
                 {
                     // TODO(optimization): run timers until first IRQ
-                    timer_step(1);
-                    m_cycles--;
+                    timer_step(m_cycles);
+                    m_cycles = 0;
+                    return;
+                    //timer_step(1);
+                    //m_cycles--;
                 }
             }
         }

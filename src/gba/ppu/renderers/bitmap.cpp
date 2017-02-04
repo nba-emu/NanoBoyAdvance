@@ -62,7 +62,7 @@ namespace gba
             }
             else
             {
-                m_buffer[2][x] = 0x8000; // transparent
+                m_buffer[2][x] = COLOR_TRANSPARENT;
             }
         }
     }
