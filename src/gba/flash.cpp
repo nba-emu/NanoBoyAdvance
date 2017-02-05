@@ -39,7 +39,7 @@ namespace gba
 
     flash::~flash()
     {
-        int size = m_second_bank ? 65536 : 131072;
+        int size = m_second_bank ? 131072 : 65536;
 
         file::write_data(m_save_file, (u8*)m_memory, size);
     }
@@ -111,7 +111,14 @@ namespace gba
 
     void flash::write_byte(u32 address, u8 value)
     {
-        if (!m_enable_write && address == 0x0E005555 && value == 0xAA)
+        if (m_enable_write)
+        {
+            m_memory[m_bank][address & 0xFFFF] = value;
+            m_enable_write = false;
+            return;
+        }
+
+        if (address == 0x0E005555 && value == 0xAA)
         {
             // first stage of command submission:
             // command transmission is initiated through setting 0x0E005555 = 0xAA.
@@ -166,11 +173,6 @@ namespace gba
 
             m_enable_erase = false;
             m_command_phase = 0;
-        }
-        else if (m_enable_write)
-        {
-            m_memory[m_bank][address & 0xFFFF] = value;
-            m_enable_write = false;
         }
         else if (m_enable_bank_select && address == 0x0E000000)
         {

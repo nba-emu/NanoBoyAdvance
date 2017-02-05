@@ -66,6 +66,8 @@ namespace gba
         register int page = (address >> 24) & 15;
         register write_func func = m_write_table[page];
 
+        m_cycles -= m_mem_cycles8_16[page];
+
         // handle 16-bit data busses. might reduce condition?
         if (page == 5 || page == 6 || page == 7)
         {
@@ -73,8 +75,6 @@ namespace gba
             (this->*func)((address & ~1) + 1, value);
             return;
         }
-
-        m_cycles -= m_mem_cycles8_16[page];
 
         (this->*func)(address, value);
     }

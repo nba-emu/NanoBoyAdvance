@@ -22,6 +22,7 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 #include "../ppu.hpp"
+#include "util/logger.hpp"
 
 namespace gba
 {
@@ -76,7 +77,7 @@ namespace gba
         for (int i = 0; i < 128; i++)
         {
             // TODO(performance): decode these on OAM writes already?
-            u16 attribute0 = (m_oam[offset + 1] << 8) | m_oam[offset];
+            u16 attribute0 = (m_oam[offset + 1] << 8) | m_oam[offset + 0];
             u16 attribute1 = (m_oam[offset + 3] << 8) | m_oam[offset + 2];
             u16 attribute2 = (m_oam[offset + 5] << 8) | m_oam[offset + 4];
 
