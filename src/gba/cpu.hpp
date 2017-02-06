@@ -88,7 +88,7 @@ namespace gba
 
         void dma_hblank();
         void dma_vblank();
-        void dma_transfer_unit();
+        void dma_transfer();
 
         static constexpr int m_mem_cycles8_16[16] = {
             1, 1, 3, 1, 1, 1, 1, 1, 5, 5, 1, 1, 1, 1, 5, 1

@@ -224,12 +224,11 @@ namespace gba
                     {
                         raise_irq();
                     }
-                    //logger::log<LOG_DEBUG>("r15={0:x}", m_reg[15]);
                     step();
                 }
                 else
                 {
-                    dma_transfer_unit();
+                    dma_transfer();
                 }
 
                 timer_step(cycles_previous - m_cycles);
@@ -239,7 +238,7 @@ namespace gba
                 if (m_dma_active)
                 {
                     cycles_previous = m_cycles;
-                    dma_transfer_unit();
+                    dma_transfer();
                     timer_step(cycles_previous - m_cycles);
                 }
                 else
@@ -251,5 +250,8 @@ namespace gba
                 }
             }
         }
+
+        //if (m_cycles < -10)
+        //    fmt::print("desync {0} cycles!\n", m_cycles*-1);
     }
 }

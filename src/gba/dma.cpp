@@ -64,9 +64,8 @@ namespace gba
         }
     }
 
-    void cpu::dma_transfer_unit()
+    void cpu::dma_transfer()
     {
-        // TODO(accuracy): limit transfer by IRQ and cycles
         auto& dma = m_io.dma[m_current_dma];
 
         dma_control src_cntl = dma.src_cntl;
@@ -75,6 +74,8 @@ namespace gba
 
         while (dma.internal.length != 0)
         {
+            if (m_cycles < 0) return; // do not desync
+
             if (words)
             {
                 write_word(dma.internal.dst_addr, read_word(dma.internal.src_addr));
@@ -135,60 +136,5 @@ namespace gba
         {
             m_interrupt.request((interrupt_type)(INTERRUPT_DMA_0 << dma.id));
         }
-
-        /*if (dma.internal.length != 0)
-        {
-            dma.size == DMA_WORD ? write_word(dma.internal.dst_addr, read_word(dma.internal.src_addr)) :
-                                   write_hword(dma.internal.dst_addr, read_hword(dma.internal.src_addr));
-
-            if (dma.dst_cntl == DMA_INCREMENT || dma.dst_cntl == DMA_RELOAD)
-            {
-                dma.internal.dst_addr += dma.size == DMA_WORD ? 4 : 2;
-            }
-            else if (dma.dst_cntl == DMA_DECREMENT)
-            {
-                dma.internal.dst_addr -= dma.size == DMA_WORD ? 4 : 2;
-            }
-
-            // TODO: DMA_RELOAD for src??
-            if (dma.src_cntl == DMA_INCREMENT || dma.src_cntl == DMA_RELOAD)
-            {
-                dma.internal.src_addr += dma.size == DMA_WORD ? 4 : 2;
-            }
-            else if (dma.src_cntl == DMA_DECREMENT)
-            {
-                dma.internal.src_addr -= dma.size == DMA_WORD ? 4 : 2;
-            }
-
-            dma.internal.length--;
-            if (dma.internal.length == 0)
-            {
-                if (dma.repeat)
-                {
-                    // TODO(accuracy): length, dst/src_addr must be masked.
-                    dma.internal.length = dma.length;
-                    dma.internal.dst_addr = dma.dst_addr;
-                    dma.internal.src_addr = dma.src_addr;
-
-                    // even though DMA will be repeated, we have to wait for it to be rescheduled.
-                    if (dma.time != DMA_IMMEDIATE)
-                    {
-                        m_dma_active = false;
-                        m_current_dma = -1;
-                    }
-                }
-                else
-                {
-                    dma.enable = false;
-                    m_dma_active = false;
-                    m_current_dma = -1;
-                }
-
-                if (dma.interrupt)
-                {
-                    m_interrupt.request((interrupt_type)(INTERRUPT_DMA_0 << dma.id));
-                }
-            }
-        }*/
     }
 }
