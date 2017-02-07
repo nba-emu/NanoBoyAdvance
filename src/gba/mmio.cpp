@@ -94,7 +94,7 @@ namespace gba
         default: logger::log<LOG_DEBUG>("unknown IO read {0:X}", address);
         }
 
-        return 0;
+        return m_mmio[address & 0x7FF];
     }
 
     void cpu::write_mmio(u32 address, u8 value)
@@ -292,7 +292,9 @@ namespace gba
             m_io.haltcnt = (value & 0x80) ? SYSTEM_STOP : SYSTEM_HALT;
             break;
 
-        default: logger::log<LOG_DEBUG>("unknown IO write {0:X}", address);
+        default:
+            logger::log<LOG_DEBUG>("unknown IO write {0:X}", address);
+            m_mmio[address & 0x7FF] = value;
         }
     }
 }

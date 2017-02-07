@@ -52,6 +52,8 @@ namespace gba
         u8 m_oam[0x400];
         u8 m_vram[0x18000];
 
+        u8 m_mmio[0x800];
+
         #include "io.hpp"
 
         ppu m_ppu;
