@@ -111,46 +111,6 @@ namespace armigo
         m_cpsr = (m_cpsr & ~MASK_MODE) | (u32)new_mode;
     }
 
-    void arm::step()
-    {
-        bool thumb = m_cpsr & MASK_THUMB;
-
-        if (thumb)
-        {
-            m_reg[15] &= ~1;
-
-            if (m_index == 0)
-                m_opcode[2] = read_hword(m_reg[15]);
-            else
-                m_opcode[m_index - 1] = read_hword(m_reg[15]);
-
-            thumb_execute(m_opcode[m_index]);
-        }
-        else
-        {
-            m_reg[15] &= ~3;
-
-            if (m_index == 0)
-                m_opcode[2] = read_word(m_reg[15]);
-            else
-                m_opcode[m_index - 1] = read_word(m_reg[15]);
-
-            arm_execute(m_opcode[m_index]);
-        }
-
-        if (m_flush)
-        {
-            refill_pipeline();
-            return;
-        }
-
-        // Update pipeline status
-        m_index = (m_index + 1) % 3;
-
-        // Update instruction pointer
-        m_reg[15] += thumb ? 2 : 4;
-    }
-
     void arm::raise_irq()
     {
         if (~m_cpsr & MASK_IRQD)
