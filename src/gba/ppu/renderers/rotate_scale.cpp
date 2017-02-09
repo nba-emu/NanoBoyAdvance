@@ -91,7 +91,7 @@ namespace gba
 
             int number = m_vram[(bg.map_block << 11) + map_y * block_width + map_x];
 
-            buffer[_x] = get_tile_pixel_8bpp(tile_block, number, tile_x, tile_y);
+            buffer[_x] = get_tile_pixel_8bpp(tile_block, 0, number, tile_x, tile_y);
         }
     }
 }

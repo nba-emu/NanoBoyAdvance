@@ -54,7 +54,7 @@ inline u16 get_tile_pixel_4bpp(u32 base, int palette, int number, int x, int y)
     return read_palette(palette, index);
 }
 
-inline u16 get_tile_pixel_8bpp(u32 base, int number, int x, int y)
+inline u16 get_tile_pixel_8bpp(u32 base, int palette, int number, int x, int y)
 {
     u32 offset = base + (number << 6) + (y << 3) + x;
     int index  = m_vram[offset];
@@ -64,7 +64,7 @@ inline u16 get_tile_pixel_8bpp(u32 base, int number, int x, int y)
         return COLOR_TRANSPARENT;
     }
 
-    return read_palette(0, index);
+    return read_palette(palette, index);
 }
 
 static inline float decode_float16(u16 number)

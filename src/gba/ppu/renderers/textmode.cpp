@@ -64,7 +64,6 @@ namespace gba
         int tile_y   = line & 7;
         int screen_y = (row >> 5) & 1;
 
-        u8 tile_buffer[8];
         int palette, number;
         bool h_flip, v_flip;
         int last_number       = -1;
@@ -106,7 +105,7 @@ namespace gba
 
             if (is_256)
             {
-                buffer[_x] = get_tile_pixel_8bpp(tile_block, number, tile_x, _tile_y);
+                buffer[_x] = get_tile_pixel_8bpp(tile_block, 0, number, tile_x, _tile_y);
             }
             else
             {

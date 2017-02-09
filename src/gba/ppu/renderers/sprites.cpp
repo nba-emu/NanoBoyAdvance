@@ -59,7 +59,6 @@ namespace gba
 
     void ppu::render_sprites(u32 tile_base)
     {
-        u8  tile_buffer[8];
         u32 offset = 127 << 3;
 
         // eh...
@@ -82,28 +81,40 @@ namespace gba
             u16 attribute2 = (m_oam[offset + 5] << 8) | m_oam[offset + 4];
 
             int width, height;
-            int x = attribute1 & 0x1FF;
+            s32 x = attribute1 & 0x1FF;
             int y = attribute0 & 0x0FF;
             int shape = attribute0 >> 14;
             int size  = attribute1 >> 14;
             int prio  = (attribute2 >> 10) & 3;
+
+            if (x & 0x100) x |= 0xFFFFFF00;
+            if (y & 0x080) y |= 0xFFFFFF00;
+
+            bool rotate_scale = attribute0 & 256;
+
+            /*if (rotate_scale)
+            {
+                int group = (attribute1 >> 9) & 0x1F;
+
+                u16 parameter_a = (m_oam[(group << 1) + 0x7 ] << 8) | m_oam[(group << 1) + 0x6 ];
+                u16 parameter_b = (m_oam[(group << 1) + 0xF ] << 8) | m_oam[(group << 1) + 0xE ];
+                u16 parameter_c = (m_oam[(group << 1) + 0x17] << 8) | m_oam[(group << 1) + 0x16];
+                u16 parameter_d = (m_oam[(group << 1) + 0x1F] << 8) | m_oam[(group << 1) + 0x1E];
+
+                y = ppu::decode_float16(parameter_c) * x + ppu::decode_float16(parameter_d) * y;
+            }*/
 
             width =  g_sprite_size[shape][size][0];
             height = g_sprite_size[shape][size][1];
 
             if (m_io.vcount >= y && m_io.vcount <= y + height - 1)
             {
-                for (int j = 0; j < width; j++)
-                {
-                    m_buffer[4 + prio][(x + j) % 240] = 0x7FFF;
-                }
-                /*int line = m_io.vcount - y;
+                int line = m_io.vcount - y;
 
                 int number  = attribute2 & 0x3FF;
-                int palette = attribute2 >> 12;
-                //bool rotate_scale = attribute0 & 256;
-                bool h_flip = attribute1 & (1 << 12);
-                bool v_flip = attribute1 & (1 << 13);
+                int palette = (attribute2 >> 12) + 16;
+                bool h_flip = !rotate_scale && (attribute1 & (1 << 12));
+                bool v_flip = !rotate_scale && (attribute1 & (1 << 13));
                 bool is_256 = attribute0 & (1 << 13);
 
                 if (is_256) number >>= 1;
@@ -113,22 +124,46 @@ namespace gba
                 int tile_row   = line >> 3;
                 int tile_count = width >> 3;
 
-                for (int j = 0; j < tile_count; j++)
+                if (v_flip)
                 {
-                    int _number;
+                    tile_y ^= 7;
+                    tile_row = (height >> 3) - tile_row;
+                }
 
-                    if (m_io.control.one_dimensional)
+                if (m_io.control.one_dimensional)
+                {
+                    number += tile_row * tile_count;
+                }
+                else
+                {
+                    number += tile_row << 5;
+                }
+
+                int pos = 0;
+
+                if (x < 0) pos = x * -1;
+
+                for (; pos < width && (x + pos) < 240; pos++)
+                {
+                    u16 pixel;
+                    int tile_x = pos & 7;
+                    int tile   = pos >> 3;
+
+                    if (is_256)
                     {
-                        _number = number + tile_row * tile_count + j;
+                        pixel = get_tile_pixel_8bpp(tile_base, 16, number + tile, tile_x, tile_y);
                     }
                     else
                     {
-                        _number = number + tile_row * 32 + j;
+                        pixel = get_tile_pixel_4bpp(tile_base, palette, number + tile, tile_x, tile_y);
                     }
-                }*/
 
-                offset -= 8;
+                    if (pixel != COLOR_TRANSPARENT)
+                        m_buffer[4 + prio][x + pos] = pixel;
+                }
             }
+
+            offset -= 8;
         }
     }
 }
