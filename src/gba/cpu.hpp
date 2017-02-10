@@ -154,12 +154,7 @@ namespace gba
         void frame();
     protected:
 
-        u8 bus_read_byte(u32 address) final;
-        u16 bus_read_hword(u32 address) final;
-        u32 bus_read_word(u32 address) final;
-        void bus_write_byte(u32 address, u8 value) final;
-        void bus_write_hword(u32 address, u16 value) final;
-        void bus_write_word(u32 address, u32 value) final;
+        #include "memory.hpp"
 
         void software_interrupt(int number) final;
     };

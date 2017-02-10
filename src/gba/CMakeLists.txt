@@ -22,6 +22,7 @@ set(HEADERS
     enums.hpp
     interrupt.hpp
     mmio.hpp
+    memory.hpp
     cart_backup.hpp
     flash.hpp
     ppu/io.hpp

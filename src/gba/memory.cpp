@@ -28,81 +28,6 @@ using namespace util;
 
 namespace gba
 {
-    u8 cpu::bus_read_byte(u32 address)
-    {
-        register int page = (address >> 24) & 15;
-        register read_func func = m_read_table[page];
-
-        m_cycles -= m_mem_cycles8_16[page];
-
-        return (this->*func)(address);
-    }
-
-    u16 cpu::bus_read_hword(u32 address)
-    {
-        register int page = (address >> 24) & 15;
-        register read_func func = m_read_table[page];
-
-        m_cycles -= m_mem_cycles8_16[page];
-
-        return (this->*func)(address) | ((this->*func)(address + 1) << 8);
-    }
-
-    u32 cpu::bus_read_word(u32 address)
-    {
-        register int page = (address >> 24) & 15;
-        register read_func func = m_read_table[page];
-
-        m_cycles -= m_mem_cycles32[page];
-
-        return (this->*func)(address) |
-               ((this->*func)(address + 1) << 8) |
-               ((this->*func)(address + 2) << 16) |
-               ((this->*func)(address + 3) << 24);
-    }
-
-    void cpu::bus_write_byte(u32 address, u8 value)
-    {
-        register int page = (address >> 24) & 15;
-        register write_func func = m_write_table[page];
-
-        m_cycles -= m_mem_cycles8_16[page];
-
-        // handle 16-bit data busses. might reduce condition?
-        if (page == 5 || page == 6 || page == 7)
-        {
-            (this->*func)(address & ~1, value);
-            (this->*func)((address & ~1) + 1, value);
-            return;
-        }
-
-        (this->*func)(address, value);
-    }
-
-    void cpu::bus_write_hword(u32 address, u16 value)
-    {
-        register int page = (address >> 24) & 15;
-        register write_func func = m_write_table[page];
-
-        m_cycles -= m_mem_cycles8_16[page];
-
-        (this->*func)(address, value & 0xFF);
-        (this->*func)(address + 1, value >> 8);
-    }
-
-    void cpu::bus_write_word(u32 address, u32 value)
-    {
-        register int page = (address >> 24) & 15;
-        register write_func func = m_write_table[page];
-
-        m_cycles -= m_mem_cycles32[page];
-
-        (this->*func)(address, value & 0xFF);
-        (this->*func)(address + 1, (value >> 8) & 0xFF);
-        (this->*func)(address + 2, (value >> 16) & 0xFF);
-        (this->*func)(address + 3, (value >> 24) & 0xFF);
-    }
-
     u8 cpu::read_bios(u32 address)
     {
         if (address >= 0x4000) return 0;
@@ -113,7 +38,6 @@ namespace gba
     {
         return m_wram[address % 0x40000];
     }
-
 
     u8 cpu::read_iram(u32 address)
     {
