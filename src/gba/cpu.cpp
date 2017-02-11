@@ -100,7 +100,7 @@ namespace gba
 
         set_hle(false);
 
-        //if (m_hle)
+        if (m_hle)
         {
             m_reg[15] = 0x08000000;
             m_reg[13] = 0x03007F00;
