@@ -31,7 +31,7 @@ using namespace util;
 
 namespace gba
 {
-    u8 cpu::read_mmio(u32 address)
+    u8 CPU::read_mmio(u32 address)
     {
         auto& ppu_io = m_ppu.get_io();
 
@@ -97,7 +97,7 @@ namespace gba
         return m_mmio[address & 0x7FF];
     }
 
-    void cpu::write_mmio(u32 address, u8 value)
+    void CPU::write_mmio(u32 address, u8 value)
     {
         auto& ppu_io = m_ppu.get_io();
 

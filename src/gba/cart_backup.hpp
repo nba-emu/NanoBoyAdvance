@@ -25,15 +25,13 @@
 
 #include "util/integer.hpp"
 
-namespace gba
-{
-    class cart_backup
-    {
+namespace gba {
+    class CartBackup {
     public:
         virtual void reset() {}
         virtual auto read_byte(u32 address) -> u8 { return 0; }
         virtual void write_byte(u32 address, u8 value) {}
 
-        virtual ~cart_backup() {}
+        virtual ~CartBackup() {}
     };
 }

@@ -28,7 +28,7 @@ using namespace util;
 
 namespace gba
 {
-    void cpu::io::dma::reset()
+    void CPU::io::dma::reset()
     {
         enable = false;
         repeat = false;
@@ -48,7 +48,7 @@ namespace gba
         src_cntl = DMA_INCREMENT;
     }
 
-    auto cpu::io::dma::read(int offset) -> u8
+    auto CPU::io::dma::read(int offset) -> u8
     {
         // TODO: are SAD/DAD/CNT_L readable?
         switch (offset)
@@ -68,7 +68,7 @@ namespace gba
         }
     }
 
-    void cpu::io::dma::write(int offset, u8 value)
+    void CPU::io::dma::write(int offset, u8 value)
     {
         switch (offset)
         {
@@ -127,7 +127,7 @@ namespace gba
         }
     }
 
-    void cpu::io::timer::reset()
+    void CPU::io::timer::reset()
     {
         ticks = 0;
         reload = 0;
@@ -138,7 +138,7 @@ namespace gba
         control.enable = false;
     }
 
-    auto cpu::io::timer::read(int offset) -> u8
+    auto CPU::io::timer::read(int offset) -> u8
     {
         switch (offset)
         {
@@ -152,7 +152,7 @@ namespace gba
         }
     }
 
-    void cpu::io::timer::write(int offset, u8 value)
+    void CPU::io::timer::write(int offset, u8 value)
     {
         switch (offset)
         {
@@ -175,7 +175,7 @@ namespace gba
         }
     }
 
-    void cpu::io::interrupt_io::reset()
+    void CPU::io::interrupt_io::reset()
     {
         enable = 0;
         request = 0;

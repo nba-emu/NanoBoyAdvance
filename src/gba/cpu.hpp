@@ -33,17 +33,15 @@
 
 using namespace ARMigo;
 
-namespace gba
-{
-    class cpu : public ARM
-    {
+namespace gba {
+    class CPU : public ARM {
     private:
-        typedef u8 (cpu::*read_func)(u32 address);
-        typedef void (cpu::*write_func)(u32 address, u8 value);
+        typedef u8 (CPU::*read_func)(u32 address);
+        typedef void (CPU::*write_func)(u32 address, u8 value);
 
         u8* m_rom;
         size_t m_rom_size;
-        cart_backup* m_backup {nullptr};
+        CartBackup* m_backup {nullptr};
 
         u8 m_bios[0x4000];
         u8 m_wram[0x40000];
@@ -101,48 +99,48 @@ namespace gba
         };
 
         static constexpr read_func m_read_table[16] = {
-            &cpu::read_bios,
-            &cpu::read_invalid,
-            &cpu::read_wram,
-            &cpu::read_iram,
-            &cpu::read_mmio,
-            &cpu::read_pal,
-            &cpu::read_vram,
-            &cpu::read_oam,
-            &cpu::read_rom,
-            &cpu::read_rom,
-            &cpu::read_invalid,
-            &cpu::read_invalid,
-            &cpu::read_invalid,
-            &cpu::read_invalid,
-            &cpu::read_save,
-            &cpu::read_invalid
+            &CPU::read_bios,
+            &CPU::read_invalid,
+            &CPU::read_wram,
+            &CPU::read_iram,
+            &CPU::read_mmio,
+            &CPU::read_pal,
+            &CPU::read_vram,
+            &CPU::read_oam,
+            &CPU::read_rom,
+            &CPU::read_rom,
+            &CPU::read_invalid,
+            &CPU::read_invalid,
+            &CPU::read_invalid,
+            &CPU::read_invalid,
+            &CPU::read_save,
+            &CPU::read_invalid
         };
 
         static constexpr write_func m_write_table[16] = {
-            &cpu::write_invalid,
-            &cpu::write_invalid,
-            &cpu::write_wram,
-            &cpu::write_iram,
-            &cpu::write_mmio,
-            &cpu::write_pal,
-            &cpu::write_vram,
-            &cpu::write_oam,
-            &cpu::write_invalid,
-            &cpu::write_invalid,
-            &cpu::write_invalid,
-            &cpu::write_invalid,
-            &cpu::write_invalid,
-            &cpu::write_invalid,
-            &cpu::write_save,
-            &cpu::write_invalid
+            &CPU::write_invalid,
+            &CPU::write_invalid,
+            &CPU::write_wram,
+            &CPU::write_iram,
+            &CPU::write_mmio,
+            &CPU::write_pal,
+            &CPU::write_vram,
+            &CPU::write_oam,
+            &CPU::write_invalid,
+            &CPU::write_invalid,
+            &CPU::write_invalid,
+            &CPU::write_invalid,
+            &CPU::write_invalid,
+            &CPU::write_invalid,
+            &CPU::write_save,
+            &CPU::write_invalid
         };
 
         static constexpr int m_timer_ticks[4] = { 1, 64, 256, 1024 };
 
     public:
-        cpu();
-        ~cpu();
+        CPU();
+        ~CPU();
 
         void reset();
 

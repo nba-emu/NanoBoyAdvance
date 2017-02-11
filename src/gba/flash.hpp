@@ -24,13 +24,10 @@
 #include <string>
 #include "cart_backup.hpp"
 
-namespace gba
-{
-    class flash : public cart_backup
-    {
+namespace gba {
+    class Flash : public CartBackup {
     private:
-        enum flash_command
-        {
+        enum FlashCommand {
             READ_CHIP_ID   = 0x90,
             FINISH_CHIP_ID = 0xF0,
             ERASE          = 0x80,
@@ -52,8 +49,8 @@ namespace gba
         std::string m_save_file;
 
     public:
-        flash(std::string save_file, bool second_bank);
-        ~flash();
+        Flash(std::string save_file, bool second_bank);
+        ~Flash();
 
         void reset();
         auto read_byte(u32 address) -> u8;

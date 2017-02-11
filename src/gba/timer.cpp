@@ -27,9 +27,9 @@ using namespace util;
 
 namespace gba
 {
-    constexpr int cpu::m_timer_ticks[4];
+    constexpr int CPU::m_timer_ticks[4];
 
-    void cpu::timer_step(int cycles)
+    void CPU::timer_step(int cycles)
     {
         bool overflow = false;
 
@@ -69,7 +69,7 @@ namespace gba
         }
     }
 
-    void cpu::timer_increment(struct io::timer& timer, bool& overflow)
+    void CPU::timer_increment(struct io::timer& timer, bool& overflow)
     {
         timer.ticks = 0;
 

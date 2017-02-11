@@ -29,15 +29,13 @@
 
 using namespace util;
 
-namespace gba
-{
-    constexpr int cpu::m_mem_cycles8_16[16];
-    constexpr int cpu::m_mem_cycles32[16];
-    constexpr cpu::read_func cpu::m_read_table[16];
-    constexpr cpu::write_func cpu::m_write_table[16];
+namespace gba {
+    constexpr int CPU::m_mem_cycles8_16[16];
+    constexpr int CPU::m_mem_cycles32[16];
+    constexpr CPU::read_func CPU::m_read_table[16];
+    constexpr CPU::write_func CPU::m_write_table[16];
 
-    cpu::cpu()
-    {
+    CPU::CPU() {
         reset();
 
         // setup interrupt controller
@@ -48,23 +46,19 @@ namespace gba
         m_ppu.set_interrupt(&m_interrupt);
     }
 
-    cpu::~cpu()
-    {
-        if (m_backup != nullptr)
-        {
+    CPU::~CPU() {
+        if (m_backup != nullptr) {
             delete m_backup;
             m_backup = nullptr;
         }
     }
 
-    void cpu::reset()
-    {
+    void CPU::reset() {
         ARM::reset();
 
         m_ppu.reset();
 
-        if (m_backup != nullptr)
-        {
+        if (m_backup != nullptr) {
             m_backup->reset();
         }
 
@@ -80,8 +74,7 @@ namespace gba
         m_io.interrupt.reset();
         m_io.haltcnt = SYSTEM_RUN;
 
-        for (int i = 0; i < 4; i++)
-        {
+        for (int i = 0; i < 4; i++) {
             // reset DMA channels
             m_io.dma[i].id = i;
             m_io.dma[i].reset();
@@ -95,13 +88,12 @@ namespace gba
         }
 
         m_cycles = 0;
-        m_dma_active = false;
+        m_dma_active  = false;
         m_current_dma = 0;
 
-        set_hle(false);
+        set_hle(false); // temporary
 
-        if (m_hle)
-        {
+        if (m_hle) {
             m_reg[15] = 0x08000000;
             m_reg[13] = 0x03007F00;
             m_bank[BANK_SVC][BANK_R13] = 0x03007FE0;
@@ -110,73 +102,56 @@ namespace gba
         }
     }
 
-    ppu& cpu::get_ppu()
-    {
+    ppu& CPU::get_ppu() {
         return m_ppu;
     }
 
-    u16& cpu::get_keypad()
-    {
+    u16& CPU::get_keypad() {
         return m_io.keyinput;
     }
 
-    void cpu::set_bios(u8* data, size_t size)
-    {
-        if (size <= sizeof(m_bios))
-        {
+    void CPU::set_bios(u8* data, size_t size) {
+        if (size <= sizeof(m_bios)) {
             memcpy(m_bios, data, size);
             return;
         }
         throw std::runtime_error("bios file is too big.");
     }
 
-    void cpu::set_game(u8* data, size_t size, std::string save_file)
-    {
+    void CPU::set_game(u8* data, size_t size, std::string save_file) {
         m_rom      = data;
         m_rom_size = size;
 
-        if (m_backup != nullptr)
-        {
+        if (m_backup != nullptr) {
             delete m_backup;
             m_backup = nullptr;
         }
 
         // detect save type...
-        for (int i = 0; i < size; i += 4)
-        {
-            if (memcmp(data + i, "EEPROM_V", 8) == 0)
-            {
+        for (int i = 0; i < size; i += 4) {
+            if (memcmp(data + i, "EEPROM_V", 8) == 0) {
                 // ...
-            }
-            else if (memcmp(data + i, "SRAM_V", 6) == 0)
-            {
+            } else if (memcmp(data + i, "SRAM_V", 6) == 0) {
                 // ...
-            }
-            else if (memcmp(data + i, "FLASH_V", 7) == 0 ||
-                     memcmp(data + i, "FLASH512_V", 10) == 0)
-            {
-                m_backup = new flash(save_file, false);
-            }
-            else if (memcmp(data + i, "FLASH1M_V", 9) == 0)
-            {
-                m_backup = new flash(save_file, true);
+            } else if (memcmp(data + i, "FLASH_V", 7) == 0 ||
+                     memcmp(data + i, "FLASH512_V", 10) == 0) {
+                m_backup = new Flash(save_file, false);
+            } else if (memcmp(data + i, "FLASH1M_V", 9) == 0) {
+                m_backup = new Flash(save_file, true);
             }
         }
     }
 
-    void cpu::frame()
-    {
+    void CPU::frame() {
         // 160 visible lines, alternating SCANLINE and HBLANK.
-        for (int line = 0; line < 160; line++)
-        {
+        for (int line = 0; line < 160; line++) {
             // SCANLINE
             m_ppu.scanline();
             run_for(960);
 
             // HBLANK
             m_ppu.hblank();
-            if (!m_dma_active)
-            {
+            if (!m_dma_active) {
                 dma_hblank();
             }
             run_for(272);
@@ -186,72 +161,58 @@ namespace gba
 
         // 68 invisible lines, VBLANK period.
         m_ppu.vblank();
-        if (!m_dma_active)
-        {
-            // TODO(accuracy): find out if VBLANK dma may be started
-            // at a later point of time if e.g. another DMA interferes with VBLANK DMA.
+        if (!m_dma_active) {
             dma_vblank();
         }
-        for (int line = 0; line < 68; line++)
-        {
+        for (int line = 0; line < 68; line++) {
             run_for(1232);
             m_ppu.next_line();
         }
     }
 
-    void cpu::run_for(int cycles)
-    {
+    void CPU::run_for(int cycles) {
         int cycles_previous;
 
         m_cycles += cycles;
 
-        while (m_cycles >= 0)
-        {
+        while (m_cycles >= 0) {
             u32 requested_and_enabled = m_io.interrupt.request & m_io.interrupt.enable;
 
-            if (m_io.haltcnt == SYSTEM_HALT && requested_and_enabled)
-            {
+            if (m_io.haltcnt == SYSTEM_HALT && requested_and_enabled) {
                 m_io.haltcnt = SYSTEM_RUN;
             }
 
-            if (m_io.haltcnt == SYSTEM_RUN)
-            {
+            if (m_io.haltcnt == SYSTEM_RUN) {
                 cycles_previous = m_cycles;
 
-                if (!m_dma_active)
-                {
-                    if (m_io.interrupt.master_enable && requested_and_enabled)
-                    {
+                if (!m_dma_active) {
+                    if (m_io.interrupt.master_enable && requested_and_enabled) {
                         raise_irq();
                     }
                     step();
-                }
-                else
-                {
+                } else {
                     dma_transfer();
                 }
 
                 timer_step(cycles_previous - m_cycles);
-            }
-            else
-            {
-                if (m_dma_active)
-                {
+            } else {
+                if (m_dma_active) {
                     cycles_previous = m_cycles;
+                    
                     dma_transfer();
                     timer_step(cycles_previous - m_cycles);
-                }
-                else
-                {
+                } else {
                     // TODO(accuracy): run timers only until first IRQ
                     timer_step(m_cycles);
+                    
                     m_cycles = 0;
                     return;
                 }
             }
         }
 
-        //if (m_cycles < -10)
+        //if (m_cycles < -10) {
         //    fmt::print("desync {0} cycles!\n", m_cycles*-1);
+        //}
     }
 }

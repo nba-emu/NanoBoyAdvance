@@ -23,10 +23,8 @@
 
 #include "cpu.hpp"
 
-namespace gba
-{
-    void cpu::software_interrupt(int number)
-    {
-
+namespace gba {
+    void CPU::software_interrupt(int number) {
+        // TODO...
     }
 }
