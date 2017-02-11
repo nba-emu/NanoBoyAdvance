@@ -22,67 +22,58 @@
 
 #ifdef ARMIGO_INCLUDE
 
-inline void logical_shift_left(u32& operand, u32 amount, bool& carry)
-{
-    if (amount == 0) return;
+inline void logical_shift_left(u32& operand, u32 amount, bool& carry) {
+    if (amount == 0) {
+        return;
+    }
 
-    for (u32 i = 0; i < amount; i++)
-    {
+    for (u32 i = 0; i < amount; i++) {
         carry = operand & 0x80000000 ? true : false;
         operand <<= 1;
     }
 }
 
-inline void logical_shift_right(u32& operand, u32 amount, bool& carry, bool immediate)
-{
+inline void logical_shift_right(u32& operand, u32 amount, bool& carry, bool immediate) {
     // LSR #0 equals to LSR #32
     amount = immediate & (amount == 0) ? 32 : amount;
 
-    for (u32 i = 0; i < amount; i++)
-    {
+    for (u32 i = 0; i < amount; i++) {
         carry = operand & 1 ? true : false;
         operand >>= 1;
     }
 }
 
-inline void arithmetic_shift_right(u32& operand, u32 amount, bool& carry, bool immediate)
-{
+inline void arithmetic_shift_right(u32& operand, u32 amount, bool& carry, bool immediate) {
     u32 sign_bit = operand & 0x80000000;
 
     // ASR #0 equals to ASR #32
     amount = (immediate && (amount == 0)) ? 32 : amount;
 
-    for (u32 i = 0; i < amount; i++)
-    {
-        carry = operand & 1 ? true : false;
+    for (u32 i = 0; i < amount; i++) {
+        carry   = operand & 1 ? true : false;
         operand = (operand >> 1) | sign_bit;
     }
 }
 
-inline void rotate_right(u32& operand, u32 amount, bool& carry, bool immediate)
-{
+inline void rotate_right(u32& operand, u32 amount, bool& carry, bool immediate) {
     // ROR #0 equals to RRX #1
-    if (amount != 0 || !immediate)
-    {
-        for (u32 i = 1; i <= amount; i++)
-        {
+    if (amount != 0 || !immediate) {
+        for (u32 i = 1; i <= amount; i++) {
             u32 high_bit = (operand & 1) ? 0x80000000 : 0;
+            
             operand = (operand >> 1) | high_bit;
-            carry = high_bit == 0x80000000;
+            carry   = high_bit == 0x80000000;
         }
-    }
-    else
-    {
+    } else {
         bool old_carry = carry;
-        carry = (operand & 1) ? true : false;
+        
+        carry   = (operand & 1) ? true : false;
         operand = (operand >> 1) | (old_carry ? 0x80000000 : 0);
     }
 }
 
-inline void perform_shift(int shift, u32& operand, u32 amount, bool& carry, bool immediate)
-{
-    switch (shift)
-    {
+inline void perform_shift(int shift, u32& operand, u32 amount, bool& carry, bool immediate) {
+    switch (shift) {
     case 0:
         logical_shift_left(operand, amount, carry);
         return;
