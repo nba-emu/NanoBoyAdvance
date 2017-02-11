@@ -53,19 +53,6 @@ int frameskip_counter;
 int ticks_start;
 int frames;
 
-#define plotpixel(x,y,c) buffer[(y) * window_width + (x)] = c;
-inline void setpixel(int x, int y, int color)
-{
-    int scale_x = window_width / 240;
-    int scale_y = window_height / 160;
-
-    for (int i = 0; i < scale_x; i++)
-    {
-        for (int j = 0; j < scale_y; j++)
-            plotpixel(x * scale_x + i, y * scale_y + j, color);
-    }
-}
-
 // Initializes SDL2 and stuff
 void sdl_init(int width, int height)
 {
@@ -225,6 +212,8 @@ int main(int argc, char** argv)
     frames = 0;
     ticks_start = SDL_GetTicks();
 
+    int scale = args->scale;
+
     // Main loop
     while (running)
     {
@@ -256,10 +245,14 @@ int main(int argc, char** argv)
             frames++;
         }
 
-        for (int y = 0; y < 160; y++)
+        for (int y = 0; y < window_height; y++)
         {
-            for (int x = 0; x < 240; x++)
-                setpixel(x, y, video_buffer[y * 240 + x]);
+            for (int x = 0; x < window_width; x++)
+            {
+                int src_x = x / scale;
+                int src_y = y / scale;
+                buffer[(y * window_width) + x] = video_buffer[(src_y * 240) + src_x];
+            }
         }
 
         // Update FPS counter
