@@ -23,15 +23,12 @@
 #include <cstring>
 #include "arm.hpp"
 
-namespace armigo
-{
-    arm::arm()
-    {
+namespace ARMigo {
+    ARM::ARM() {
         reset();
     }
 
-    void arm::reset()
-    {
+    void ARM::reset()  {
         m_index = 0;
 
         std::memset(m_reg, 0, sizeof(m_reg));
@@ -42,10 +39,8 @@ namespace armigo
         refill_pipeline();
     }
 
-    inline cpu_bank arm::mode_to_bank(cpu_mode mode)
-    {
-        switch (mode)
-        {
+    inline cpu_bank ARM::mode_to_bank(cpu_mode mode) {
+        switch (mode) {
         case MODE_USR:
         case MODE_SYS:
             return BANK_NONE;
@@ -66,19 +61,18 @@ namespace armigo
 
     // Based on mGBA (endrift's) approach to banking.
     // https://github.com/mgba-emu/mgba/blob/master/src/arm/arm.c
-    void arm::switch_mode(cpu_mode new_mode)
-    {
+    void ARM::switch_mode(cpu_mode new_mode) {
         cpu_mode old_mode = static_cast<cpu_mode>(m_cpsr & MASK_MODE);
 
-        if (new_mode == old_mode) return;
+        if (new_mode == old_mode) {
+            return;
+        }
 
         cpu_bank new_bank = mode_to_bank(new_mode);
         cpu_bank old_bank = mode_to_bank(old_mode);
 
-        if (new_bank != old_bank)
-        {
-            if (new_bank == BANK_FIQ || old_bank == BANK_FIQ)
-            {
+        if (new_bank != old_bank) {
+            if (new_bank == BANK_FIQ || old_bank == BANK_FIQ) {
                 int old_fiq_bank = old_bank == BANK_FIQ;
                 int new_fiq_bank = new_bank == BANK_FIQ;
 
@@ -111,10 +105,8 @@ namespace armigo
         m_cpsr = (m_cpsr & ~MASK_MODE) | (u32)new_mode;
     }
 
-    void arm::raise_irq()
-    {
-        if (~m_cpsr & MASK_IRQD)
-        {
+    void ARM::raise_irq() {
+        if (~m_cpsr & MASK_IRQD) {
             bool thumb = m_cpsr & MASK_THUMB;
 
             // store return address in r14<irq>

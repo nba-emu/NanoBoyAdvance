@@ -22,7 +22,7 @@
 
 #pragma once
 
-namespace armigo
+namespace ARMigo
 {
     enum cpu_mode
     {

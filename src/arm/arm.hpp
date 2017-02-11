@@ -26,55 +26,50 @@
 #include "util/integer.hpp"
 #define ARMIGO_INCLUDE
 
-namespace armigo
-{
-    class arm
-    {
+namespace ARMigo {
+    class ARM {
     public:
         /// Constructor
-        arm();
+        ARM();
 
         /// Resets the CPU state.
         virtual void reset();
 
         /// Executes exactly one instruction.
-        inline void step() /* TODO: move somewhere else... */
-        {
+        inline void step() {
             bool thumb = m_cpsr & MASK_THUMB;
 
-            if (thumb)
-            {
+            if (thumb) {
                 m_reg[15] &= ~1;
 
-                if (m_index == 0)
+                if (m_index == 0) {
                     m_opcode[2] = read_hword(m_reg[15]);
-                else
+                } else {
                     m_opcode[m_index - 1] = read_hword(m_reg[15]);
+                }
 
                 thumb_execute(m_opcode[m_index]);
-            }
-            else
-            {
+            } else {
                 m_reg[15] &= ~3;
 
-                if (m_index == 0)
+                if (m_index == 0) {
                     m_opcode[2] = read_word(m_reg[15]);
-                else
+                } else {
                     m_opcode[m_index - 1] = read_word(m_reg[15]);
+                }
 
                 arm_execute(m_opcode[m_index]);
             }
 
-            if (m_flush)
-            {
+            if (m_flush) {
                 refill_pipeline();
                 return;
             }
 
-            // Update pipeline status
+            // update pipeline status
             m_index = (m_index + 1) % 3;
 
-            // Update instruction pointer
+            // update instruction pointer
             m_reg[15] += thumb ? 2 : 4;
         }
 
@@ -104,12 +99,12 @@ namespace armigo
         bool m_hle;
 
         // memory bus methods
-        virtual u8 bus_read_byte(u32 address) { return 0; }
+        virtual u8  bus_read_byte(u32 address)  { return 0; }
         virtual u16 bus_read_hword(u32 address) { return 0; }
-        virtual u32 bus_read_word(u32 address) { return 0; }
+        virtual u32 bus_read_word(u32 address)  { return 0; }
         virtual void bus_write_byte(u32 address, u8 value) {}
         virtual void bus_write_hword(u32 address, u16 value) {}
-        virtual void bus_write_word(u32 address, u32 value) {}
+        virtual void bus_write_word (u32 address, u32 value) {}
 
         // swi #nn HLE-handler
         virtual void software_interrupt(int number) {}

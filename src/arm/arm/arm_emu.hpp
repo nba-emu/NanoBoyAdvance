@@ -22,16 +22,14 @@
 
 #ifdef ARMIGO_INCLUDE
 
-typedef void (arm::*arm_instruction)(u32);
+typedef void (ARM::*ARMInstruction)(u32);
 
-static const arm_instruction arm_lut[4096];
+static const ARMInstruction arm_lut[4096];
 
-inline void arm_execute(u32 instruction)
-{
+inline void arm_execute(u32 instruction) {
     cpu_condition condition = static_cast<cpu_condition>(instruction >> 28);
 
-    if (check_condition(condition))
-    {
+    if (check_condition(condition)) {
         int index = ((instruction >> 16) & 0xFF0) | ((instruction >> 4) & 0xF);
         (this->*arm_lut[index])(instruction);
     }

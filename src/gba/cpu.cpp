@@ -59,7 +59,7 @@ namespace gba
 
     void cpu::reset()
     {
-        arm::reset();
+        ARM::reset();
 
         m_ppu.reset();
 
@@ -71,8 +71,8 @@ namespace gba
         // clear out all memory
         memset(m_wram, 0, 0x40000);
         memset(m_iram, 0, 0x8000);
-        memset(m_pal, 0, 0x400);
-        memset(m_oam, 0, 0x400);
+        memset(m_pal,  0, 0x400);
+        memset(m_oam,  0, 0x400);
         memset(m_vram, 0, 0x18000);
 
         // reset IO-registers

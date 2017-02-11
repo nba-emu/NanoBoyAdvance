@@ -31,11 +31,11 @@
 #include "cart_backup.hpp"
 #define CPU_INCLUDE
 
-using namespace armigo;
+using namespace ARMigo;
 
 namespace gba
 {
-    class cpu : public arm
+    class cpu : public ARM
     {
     private:
         typedef u8 (cpu::*read_func)(u32 address);

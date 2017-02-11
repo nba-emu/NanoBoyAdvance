@@ -22,9 +22,9 @@
 
 #ifdef ARMIGO_INCLUDE
 
-typedef void (arm::*thumb_instruction)(u16);
+typedef void (ARM::*ThumbInstruction)(u16);
 
-static const thumb_instruction thumb_lut[1024];
+static const ThumbInstruction thumb_lut[1024];
 
 inline void thumb_execute(u32 instruction)
 {
