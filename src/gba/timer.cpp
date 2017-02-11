@@ -25,65 +25,49 @@
 
 using namespace util;
 
-namespace GameBoyAdvance
-{
+namespace GameBoyAdvance {
+    
     constexpr int CPU::m_timer_ticks[4];
 
-    void CPU::timer_step(int cycles)
-    {
+    void CPU::timer_step(int cycles) {
         bool overflow = false;
 
-        for (int i = 0; i < 4; ++i)
-        {
+        for (int i = 0; i < 4; ++i) {
             auto& timer = m_io.timer[i];
 
-            if (timer.control.enable)
-            {
-                if (timer.control.cascade && overflow)
-                {
+            if (timer.control.enable) {
+                if (timer.control.cascade && overflow) {
+                    
                     timer_increment(timer, overflow);
-                }
-                else if (!timer.control.cascade)
-                {
+                
+                } else if (!timer.control.cascade) {
                     timer.ticks += cycles;
 
                     // optimize. m_timer_ticks creates an actual lookup.
-                    if (timer.ticks >= m_timer_ticks[timer.control.frequency])
-                    {
+                    if (timer.ticks >= m_timer_ticks[timer.control.frequency]) {
                         timer_increment(timer, overflow);
-                    }
-                    else
-                    {
+                    } else {
                         overflow = false;
                     }
-                }
-                else
-                {
+                } else {
                     overflow = false;
                 }
-            }
-            else
-            {
+            } else {
                 overflow = false;
             }
         }
     }
 
-    void CPU::timer_increment(struct IO::Timer& timer, bool& overflow)
-    {
+    void CPU::timer_increment(struct IO::Timer& timer, bool& overflow) {
         timer.ticks = 0;
 
-        if (timer.counter == 0xFFFF)
-        {
-            if (timer.control.interrupt)
-            {
+        if (timer.counter == 0xFFFF) {
+            if (timer.control.interrupt) {
                 m_interrupt.request((InterruptType)(INTERRUPT_TIMER_0 << timer.id));
             }
             overflow = true;
             timer.counter = timer.reload;
-        }
-        else
-        {
+        } else {
             overflow = false;
             timer.counter++;
         }

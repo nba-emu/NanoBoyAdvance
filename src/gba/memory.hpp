@@ -25,8 +25,7 @@
 
 #ifdef CPU_INCLUDE
 
-u8 bus_read_byte(u32 address) final
-{
+u8 bus_read_byte(u32 address) final {
     register int page = (address >> 24) & 15;
     register read_func func = m_read_table[page];
 
@@ -35,8 +34,7 @@ u8 bus_read_byte(u32 address) final
     return (this->*func)(address);
 }
 
-u16 bus_read_hword(u32 address) final
-{
+u16 bus_read_hword(u32 address) final {
     register int page = (address >> 24) & 15;
     register read_func func = m_read_table[page];
 
@@ -45,8 +43,7 @@ u16 bus_read_hword(u32 address) final
     return (this->*func)(address) | ((this->*func)(address + 1) << 8);
 }
 
-u32 bus_read_word(u32 address) final
-{
+u32 bus_read_word(u32 address) final {
     register int page = (address >> 24) & 15;
     register read_func func = m_read_table[page];
 
@@ -58,16 +55,14 @@ u32 bus_read_word(u32 address) final
            ((this->*func)(address + 3) << 24);
 }
 
-void bus_write_byte(u32 address, u8 value) final
-{
+void bus_write_byte(u32 address, u8 value) final {
     register int page = (address >> 24) & 15;
     register write_func func = m_write_table[page];
 
     m_cycles -= m_mem_cycles8_16[page];
 
     // handle 16-bit data busses. might reduce condition?
-    if (page == 5 || page == 6 || page == 7)
-    {
+    if (page == 5 || page == 6 || page == 7) {
         (this->*func)(address & ~1, value);
         (this->*func)((address & ~1) + 1, value);
         return;
@@ -76,8 +71,7 @@ void bus_write_byte(u32 address, u8 value) final
     (this->*func)(address, value);
 }
 
-void bus_write_hword(u32 address, u16 value) final
-{
+void bus_write_hword(u32 address, u16 value) final {
     register int page = (address >> 24) & 15;
     register write_func func = m_write_table[page];
 
@@ -87,8 +81,7 @@ void bus_write_hword(u32 address, u16 value) final
     (this->*func)(address + 1, value >> 8);
 }
 
-void bus_write_word(u32 address, u32 value) final
-{
+void bus_write_word(u32 address, u32 value) final {
     register int page = (address >> 24) & 15;
     register write_func func = m_write_table[page];
 

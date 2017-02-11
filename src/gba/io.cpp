@@ -159,8 +159,7 @@ namespace GameBoyAdvance {
         }
     }
 
-    void CPU::IO::Interrupt::reset()
-    {
+    void CPU::IO::Interrupt::reset() {
         enable = 0;
         request = 0;
         master_enable = 0;
