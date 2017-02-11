@@ -73,7 +73,7 @@ namespace ARMigo {
         if (reg_dst == 15) {
             if (set_flags) {
                 u32 spsr = *m_spsr_ptr;
-                switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
+                switch_mode(static_cast<Mode>(spsr & MASK_MODE));
                 m_cpsr = spsr;
                 set_flags = false;
             }
@@ -316,7 +316,7 @@ namespace ARMigo {
             // write to cpsr or spsr
             if (!use_spsr) {
                 // todo: check that mode is affected?
-                switch_mode(static_cast<cpu_mode>(value & MASK_MODE));
+                switch_mode(static_cast<Mode>(value & MASK_MODE));
                 m_cpsr = (m_cpsr & ~mask) | value;
             } else {
                 *m_spsr_ptr = (*m_spsr_ptr & ~mask) | value;
@@ -495,7 +495,7 @@ namespace ARMigo {
     template <bool immediate, bool pre_indexed, bool base_increment, bool byte, bool write_back, bool load>
     void ARM::arm_single_transfer(u32 instruction) {
         u32 off;
-        cpu_mode old_mode;
+        Mode old_mode;
         int dst  = (instruction >> 12) & 0xF;
         int base = (instruction >> 16) & 0xF;
         u32 addr = m_reg[base];
@@ -503,7 +503,7 @@ namespace ARMigo {
         // post-indexing implicitly performs a write back.
         // in that case W-bit indicates wether user-mode register access should be enforced.
         if (!pre_indexed && write_back) {
-            old_mode = static_cast<cpu_mode>(m_cpsr & MASK_MODE);
+            old_mode = static_cast<Mode>(m_cpsr & MASK_MODE);
             switch_mode(MODE_USR);
         }
 
@@ -587,7 +587,7 @@ namespace ARMigo {
 
         int base = (instruction >> 16) & 0xF;
 
-        cpu_mode old_mode;
+        Mode old_mode;
         bool mode_switched = false;
 
         // hardware corner case. not sure if emulated correctly.
@@ -603,7 +603,7 @@ namespace ARMigo {
         }
 
         if (user_mode && (!load || !transfer_r15)) {
-            old_mode = static_cast<cpu_mode>(m_cpsr & MASK_MODE);
+            old_mode = static_cast<Mode>(m_cpsr & MASK_MODE);
             switch_mode(MODE_USR);
             mode_switched = true;
         }
@@ -649,7 +649,7 @@ namespace ARMigo {
                 if (i == 15) {
                     if (user_mode) {
                         u32 spsr = *m_spsr_ptr;
-                        switch_mode(static_cast<cpu_mode>(spsr & MASK_MODE));
+                        switch_mode(static_cast<Mode>(spsr & MASK_MODE));
                         m_cpsr = spsr;
                     }
                     m_flush = true;

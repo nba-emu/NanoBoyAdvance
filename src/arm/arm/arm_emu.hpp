@@ -27,7 +27,7 @@ typedef void (ARM::*ARMInstruction)(u32);
 static const ARMInstruction arm_lut[4096];
 
 inline void arm_execute(u32 instruction) {
-    cpu_condition condition = static_cast<cpu_condition>(instruction >> 28);
+    Condition condition = static_cast<Condition>(instruction >> 28);
 
     if (check_condition(condition)) {
         int index = ((instruction >> 16) & 0xFF0) | ((instruction >> 4) & 0xF);

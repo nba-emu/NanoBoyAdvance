@@ -39,7 +39,7 @@ namespace ARMigo {
         refill_pipeline();
     }
 
-    inline cpu_bank ARM::mode_to_bank(cpu_mode mode) {
+    inline Bank ARM::mode_to_bank(Mode mode) {
         switch (mode) {
         case MODE_USR:
         case MODE_SYS:
@@ -61,15 +61,15 @@ namespace ARMigo {
 
     // Based on mGBA (endrift's) approach to banking.
     // https://github.com/mgba-emu/mgba/blob/master/src/arm/arm.c
-    void ARM::switch_mode(cpu_mode new_mode) {
-        cpu_mode old_mode = static_cast<cpu_mode>(m_cpsr & MASK_MODE);
+    void ARM::switch_mode(Mode new_mode) {
+        Mode old_mode = static_cast<Mode>(m_cpsr & MASK_MODE);
 
         if (new_mode == old_mode) {
             return;
         }
 
-        cpu_bank new_bank = mode_to_bank(new_mode);
-        cpu_bank old_bank = mode_to_bank(old_mode);
+        Bank new_bank = mode_to_bank(new_mode);
+        Bank old_bank = mode_to_bank(old_mode);
 
         if (new_bank != old_bank) {
             if (new_bank == BANK_FIQ || old_bank == BANK_FIQ) {

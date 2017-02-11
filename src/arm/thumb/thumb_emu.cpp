@@ -553,7 +553,7 @@ namespace ARMigo {
     template <int cond>
     void ARM::thumb_16(u16 instruction) {
         // THUMB.16 Conditional branch
-        if (check_condition(static_cast<cpu_condition>(cond))) {
+        if (check_condition(static_cast<Condition>(cond))) {
             u32 signed_immediate = instruction & 0xFF;
 
             // sign-extend the immediate value if neccessary

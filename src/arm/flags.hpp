@@ -29,7 +29,7 @@
 
 #define XOR_BIT_31(a, b) (((a) ^ (b)) >> 31)
 
-inline bool check_condition(cpu_condition condition) {
+inline bool check_condition(Condition condition) {
     if (condition == COND_AL) {
         return true;
     }

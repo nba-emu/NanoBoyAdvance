@@ -22,10 +22,8 @@
 
 #pragma once
 
-namespace ARMigo
-{
-    enum cpu_mode
-    {
+namespace ARMigo {
+    enum Mode {
         MODE_USR = 0x10,
         MODE_FIQ = 0x11,
         MODE_IRQ = 0x12,
@@ -35,8 +33,32 @@ namespace ARMigo
         MODE_SYS = 0x1F
     };
 
-    enum cpu_condition
-    {
+    enum Bank {
+        BANK_NONE,
+        BANK_FIQ,
+        BANK_SVC,
+        BANK_ABT,
+        BANK_IRQ,
+        BANK_UND,
+        BANK_COUNT
+    };
+    
+    enum BankedRegister {
+        BANK_R13 = 0,
+        BANK_R14 = 1
+    };
+    
+    enum SavedStatusRegister {
+        SPSR_DEF = 0,
+        SPSR_FIQ = 1,
+        SPSR_SVC = 2,
+        SPSR_ABT = 3,
+        SPSR_IRQ = 4,
+        SPSR_UND = 5,
+        SPSR_COUNT = 6
+    };
+    
+    enum Condition {
         COND_EQ = 0,
         COND_NE = 1,
         COND_CS = 2,
@@ -55,25 +77,7 @@ namespace ARMigo
         COND_NV = 15
     };
 
-    enum cpu_bank
-    {
-        BANK_NONE,
-        BANK_FIQ,
-        BANK_SVC,
-        BANK_ABT,
-        BANK_IRQ,
-        BANK_UND,
-        BANK_COUNT
-    };
-
-    enum cpu_bank_register
-    {
-        BANK_R13 = 0,
-        BANK_R14 = 1
-    };
-
-    enum status_mask
-    {
+    enum StatusMask {
         MASK_MODE  = 0x1F,
         MASK_THUMB = 0x20,
         MASK_FIQD  = 0x40,
@@ -84,8 +88,7 @@ namespace ARMigo
         MASK_NFLAG = 0x80000000
     };
 
-    enum exception_vector
-    {
+    enum ExceptionVector {
         EXCPT_RESET     = 0x00,
         EXCPT_UNDEFINED = 0x04,
         EXCPT_SWI       = 0x08,
@@ -93,16 +96,5 @@ namespace ARMigo
         EXCPT_DATA_ABORT     = 0x10,
         EXCPT_INTERRUPT      = 0x18,
         EXCPT_FAST_INTERRUPT = 0x1C
-    };
-
-    enum saved_status_register
-    {
-        SPSR_DEF = 0,
-        SPSR_FIQ = 1,
-        SPSR_SVC = 2,
-        SPSR_ABT = 3,
-        SPSR_IRQ = 4,
-        SPSR_UND = 5,
-        SPSR_COUNT = 6
     };
 }

@@ -113,9 +113,9 @@ namespace ARMigo {
         #include "memory.hpp"
 
     private:
-        static cpu_bank mode_to_bank(cpu_mode mode);
+        static Bank mode_to_bank(Mode mode);
 
-        void switch_mode(cpu_mode new_mode);
+        void switch_mode(Mode new_mode);
 
         // conditional helpers
         #include "flags.hpp"
