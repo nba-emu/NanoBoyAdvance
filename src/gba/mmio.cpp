@@ -29,7 +29,7 @@
 
 using namespace util;
 
-namespace gba
+namespace GameBoyAdvance
 {
     u8 CPU::read_mmio(u32 address)
     {

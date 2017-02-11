@@ -23,10 +23,8 @@
 
 #pragma once
 
-namespace gba
-{
-    enum interrupt_type
-    {
+namespace GameBoyAdvance {
+    enum InterruptType {
         INTERRUPT_VBLANK  = 1,
         INTERRUPT_HBLANK  = 2,
         INTERRUPT_VCOUNT  = 4,
@@ -43,31 +41,27 @@ namespace gba
         INTERRUPT_GAMEPAK = 8192
     };
 
-    enum system_state
-    {
+    enum SystemState {
         SYSTEM_RUN,
         SYSTEM_STOP,
         SYSTEM_HALT
     };
 
-    enum dma_control
-    {
+    enum DMAControl {
         DMA_INCREMENT = 0,
         DMA_DECREMENT = 1,
         DMA_FIXED     = 2,
         DMA_RELOAD    = 3
     };
 
-    enum dma_time
-    {
+    enum DMATime {
         DMA_IMMEDIATE = 0,
         DMA_VBLANK    = 1,
         DMA_HBLANK    = 2,
         DMA_SPECIAL   = 3
     };
 
-    enum dma_size
-    {
+    enum DMASize {
         DMA_HWORD = 0,
         DMA_WORD  = 1
     };

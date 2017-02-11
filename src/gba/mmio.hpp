@@ -23,7 +23,7 @@
 
 #pragma once
 
-namespace gba
+namespace GameBoyAdvance
 {
     const int DISPCNT = 0x04000000;
     const int DISPSTAT = 0x04000004;

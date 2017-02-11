@@ -26,21 +26,17 @@
 #include "enums.hpp"
 #include "util/integer.hpp"
 
-namespace gba
-{
-    class interrupt
-    {
+namespace GameBoyAdvance {
+    class Interrupt {
     private:
         u16* m_interrupt_flag;
 
     public:
-        void set_flag_register(u16* io_reg)
-        {
+        void set_flag_register(u16* io_reg) {
             m_interrupt_flag = io_reg;
         }
 
-        void request(interrupt_type type)
-        {
+        void request(InterruptType type) {
             *m_interrupt_flag |= static_cast<int>(type);
         }
     };

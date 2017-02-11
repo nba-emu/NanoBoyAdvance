@@ -27,7 +27,7 @@
 
 using namespace util;
 
-namespace gba
+namespace GameBoyAdvance
 {
     Flash::Flash(std::string save_file, bool second_bank) {
         m_save_file   = save_file;

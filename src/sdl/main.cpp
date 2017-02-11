@@ -36,7 +36,7 @@
 using namespace std;
 using namespace util;
 
-gba::CPU* emu;
+GameBoyAdvance::CPU* emu;
 Arguments* args;
 
 // SDL related globals
@@ -185,7 +185,7 @@ int main(int argc, char** argv)
             u8* bios = file::read_data(string(args->bios_file));
             size_t bios_size = file::get_size(string(args->bios_file));
 
-            emu = new gba::CPU();
+            emu = new GameBoyAdvance::CPU();
 
             emu->set_bios(bios, bios_size);
             emu->set_game(rom, rom_size, save_file);
@@ -193,7 +193,7 @@ int main(int argc, char** argv)
 
             keyinput = &emu->get_keypad();
 
-            gba::ppu& ppu = emu->get_ppu();
+            GameBoyAdvance::ppu& ppu = emu->get_ppu();
 
             ppu.set_frameskip(args->speedup);
             video_buffer = ppu.get_framebuffer();

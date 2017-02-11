@@ -24,7 +24,7 @@
 #include <string>
 #include "cart_backup.hpp"
 
-namespace gba {
+namespace GameBoyAdvance {
     class Flash : public CartBackup {
     private:
         enum FlashCommand {

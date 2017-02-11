@@ -23,7 +23,7 @@
 
 #include "cpu.hpp"
 
-namespace gba {
+namespace GameBoyAdvance {
     void CPU::software_interrupt(int number) {
         // TODO...
     }

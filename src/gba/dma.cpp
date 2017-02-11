@@ -26,7 +26,7 @@
 
 using namespace util;
 
-namespace gba {
+namespace GameBoyAdvance {
     void CPU::dma_hblank() {
         for (int i = 0; i < 4; i++) {
             auto& dma = m_io.dma[i];
@@ -54,8 +54,8 @@ namespace gba {
     void CPU::dma_transfer() {
         auto& dma = m_io.dma[m_current_dma];
 
-        dma_control src_cntl = dma.src_cntl;
-        dma_control dst_cntl = dma.dst_cntl;
+        DMAControl src_cntl = dma.src_cntl;
+        DMAControl dst_cntl = dma.dst_cntl;
         bool words = dma.size == DMA_WORD;
 
         while (dma.internal.length != 0) {
@@ -105,7 +105,7 @@ namespace gba {
         }
 
         if (dma.interrupt) {
-            m_interrupt.request((interrupt_type)(INTERRUPT_DMA_0 << dma.id));
+            m_interrupt.request((InterruptType)(INTERRUPT_DMA_0 << dma.id));
         }
     }
 }

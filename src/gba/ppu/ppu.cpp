@@ -26,7 +26,7 @@
 
 using namespace util;
 
-namespace gba
+namespace GameBoyAdvance
 {
     ppu::ppu()
     {
@@ -79,7 +79,7 @@ namespace gba
         m_vram = vram;
     }
 
-    void ppu::set_interrupt(interrupt* interrupt)
+    void ppu::set_interrupt(Interrupt* interrupt)
     {
         m_interrupt = interrupt;
     }

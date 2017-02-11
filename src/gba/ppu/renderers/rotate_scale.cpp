@@ -26,7 +26,7 @@
 
 using namespace util;
 
-namespace gba
+namespace GameBoyAdvance
 {
     void ppu::render_rotate_scale(int id)
     {

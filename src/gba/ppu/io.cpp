@@ -23,7 +23,7 @@
 
 #include "ppu.hpp"
 
-namespace gba
+namespace GameBoyAdvance
 {
     void ppu::io::dispcnt_reg::reset()
     {

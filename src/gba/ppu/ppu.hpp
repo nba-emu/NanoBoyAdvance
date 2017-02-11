@@ -27,7 +27,7 @@
 #include "../interrupt.hpp"
 #define PPU_INCLUDE
 
-namespace gba
+namespace GameBoyAdvance
 {
     const u16 COLOR_TRANSPARENT = 0x8000;
 
@@ -37,7 +37,7 @@ namespace gba
         u8* m_pal;
         u8* m_oam;
         u8* m_vram;
-        interrupt* m_interrupt = nullptr;
+        Interrupt* m_interrupt = nullptr;
 
         // rendering buffers
         u8 m_win_mask[2][240];
@@ -72,7 +72,7 @@ namespace gba
         u32* get_framebuffer();
         void set_frameskip(int frames);
         void set_memory(u8* pal, u8* oam, u8* vram);
-        void set_interrupt(interrupt* interrupt);
+        void set_interrupt(Interrupt* interrupt);
 
         void hblank();
         void vblank();

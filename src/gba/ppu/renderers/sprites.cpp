@@ -24,7 +24,7 @@
 #include "../ppu.hpp"
 #include "util/logger.hpp"
 
-namespace gba
+namespace GameBoyAdvance
 {
     static constexpr int g_sprite_size[4][4][2] = {
         /* SQUARE */

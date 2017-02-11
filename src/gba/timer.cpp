@@ -25,7 +25,7 @@
 
 using namespace util;
 
-namespace gba
+namespace GameBoyAdvance
 {
     constexpr int CPU::m_timer_ticks[4];
 
@@ -69,7 +69,7 @@ namespace gba
         }
     }
 
-    void CPU::timer_increment(struct io::timer& timer, bool& overflow)
+    void CPU::timer_increment(struct IO::Timer& timer, bool& overflow)
     {
         timer.ticks = 0;
 
@@ -77,7 +77,7 @@ namespace gba
         {
             if (timer.control.interrupt)
             {
-                m_interrupt.request((interrupt_type)(INTERRUPT_TIMER_0 << timer.id));
+                m_interrupt.request((InterruptType)(INTERRUPT_TIMER_0 << timer.id));
             }
             overflow = true;
             timer.counter = timer.reload;

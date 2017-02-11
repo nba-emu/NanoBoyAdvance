@@ -33,7 +33,7 @@
 
 using namespace ARMigo;
 
-namespace gba {
+namespace GameBoyAdvance {
     class CPU : public ARM {
     private:
         typedef u8 (CPU::*read_func)(u32 address);
@@ -55,7 +55,7 @@ namespace gba {
         #include "io.hpp"
 
         ppu m_ppu;
-        interrupt m_interrupt;
+        Interrupt m_interrupt;
 
         int m_cycles;
         bool m_dma_active;
@@ -84,7 +84,7 @@ namespace gba {
         void run_for(int cycles);
 
         void timer_step(int cycles);
-        void timer_increment(struct io::timer& timer, bool& overflow);
+        void timer_increment(struct IO::Timer& timer, bool& overflow);
 
         void dma_hblank();
         void dma_vblank();

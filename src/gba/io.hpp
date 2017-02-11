@@ -23,10 +23,8 @@
 
 #ifdef CPU_INCLUDE
 
-struct io
-{
-    struct dma
-    {
+struct IO {
+    struct DMA {
         int id;
 
         bool enable;
@@ -37,13 +35,12 @@ struct io
         u16 length;
         u32 dst_addr;
         u32 src_addr;
-        dma_control dst_cntl;
-        dma_control src_cntl;
-        dma_time time;
-        dma_size size;
+        DMAControl dst_cntl;
+        DMAControl src_cntl;
+        DMATime time;
+        DMASize size;
 
-        struct dma_internal
-        {
+        struct Internal {
             u16 length;
             u32 dst_addr;
             u32 src_addr;
@@ -51,19 +48,17 @@ struct io
 
         // !!hacked!! much ouch
         bool* dma_active;
-        int* current_dma;
+        int*  current_dma;
 
         void reset();
         auto read(int offset) -> u8;
         void write(int offset, u8 value);
     } dma[4];
 
-    struct timer
-    {
+    struct Timer {
         int id;
 
-        struct timer_control
-        {
+        struct Control {
             int frequency;
             bool cascade;
             bool interrupt;
@@ -83,16 +78,16 @@ struct io
     u16 keyinput;
 
     // INTERRUPT CONTROL
-    struct interrupt_io
-    {
+    struct Interrupt {
         u16 enable;
         u16 request;
         u16 master_enable;
 
         void reset();
+        // todo: place read/write methods here!
     } interrupt;
 
-    system_state haltcnt;
+    SystemState haltcnt;
 } m_io;
 
 #endif

@@ -25,7 +25,7 @@
 
 #include "util/integer.hpp"
 
-namespace gba {
+namespace GameBoyAdvance {
     class CartBackup {
     public:
         virtual void reset() {}

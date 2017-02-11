@@ -23,7 +23,7 @@
 
 #include "ppu.hpp"
 
-namespace gba
+namespace GameBoyAdvance
 {
     void ppu::compose_scanline()
     {

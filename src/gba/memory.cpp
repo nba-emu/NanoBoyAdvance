@@ -26,7 +26,7 @@
 
 using namespace util;
 
-namespace gba
+namespace GameBoyAdvance
 {
     u8 CPU::read_bios(u32 address)
     {

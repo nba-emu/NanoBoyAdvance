@@ -26,7 +26,7 @@
 
 using namespace util;
 
-namespace gba
+namespace GameBoyAdvance
 {
     void ppu::render_textmode(int id)
     {
