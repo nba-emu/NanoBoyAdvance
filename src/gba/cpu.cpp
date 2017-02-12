@@ -139,18 +139,25 @@ namespace GameBoyAdvance {
     }
 
     void CPU::frame() {
+        const int VISIBLE_LINES   = 160;
+        const int INVISIBLE_LINES = 68;
+        
+        const int CYCLES_ACTIVE = 960;
+        const int CYCLES_HBLANK = 272;
+        const int CYCLES_ENTIRE = CYCLES_ACTIVE + CYCLES_HBLANK;
+        
         // 160 visible lines, alternating SCANLINE and HBLANK.
-        for (int line = 0; line < 160; line++) {
+        for (int line = 0; line < VISIBLE_LINES; line++) {
             // SCANLINE
             m_ppu.scanline();
-            run_for(960);
+            run_for(CYCLES_ACTIVE);
 
             // HBLANK
             m_ppu.hblank();
             if (!m_dma_active) {
                 dma_hblank();
             }
-            run_for(272);
+            run_for(CYCLES_HBLANK);
 
             m_ppu.next_line();
         }
@@ -160,8 +167,8 @@ namespace GameBoyAdvance {
         if (!m_dma_active) {
             dma_vblank();
         }
-        for (int line = 0; line < 68; line++) {
-            run_for(1232);
+        for (int line = 0; line < INVISIBLE_LINES; line++) {
+            run_for(CYCLES_ENTIRE);
             m_ppu.next_line();
         }
     }
