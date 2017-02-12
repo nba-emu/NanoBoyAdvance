@@ -30,7 +30,6 @@ set(VERSION_MAJOR 0)
 set(VERSION_MINOR 1)
 
 # Frontend selection
-option(QT_GUI "Build Qt based frontend" ON)
 option(SDL2_GUI "Build SDL2 based GUI" ON)
 
 # Add SDL2
@@ -50,16 +49,6 @@ if (PNG_FOUND)
 else()
     # TODO: just built without screenshot support then
     message(FATAL_ERROR "PNG not found.")
-endif()
-
-# Add Qt if neccessary
-if (QT_GUI)
-    # TODO: also support Qt4
-    find_package(OpenGL REQUIRED)
-    find_package(Qt5Gui REQUIRED)
-    find_package(Qt5Widgets REQUIRED)
-    find_package(Qt5OpenGL REQUIRED)
-    set(QT_DEPS Qt5::Gui Qt5::Widgets Qt5::OpenGL)
 endif()
 
 add_subdirectory(src)
