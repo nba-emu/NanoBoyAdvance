@@ -23,10 +23,9 @@
 
 #include "logger.hpp"
 
-namespace util
-{
-    namespace logger
-    {
+namespace Util {
+    
+    namespace Logger {
         std::map<int, std::string> g_level_map = {
             { LOG_TRACE, "TRACE" },
             { LOG_DEBUG, "DEBUG" },

@@ -23,7 +23,7 @@
 
 #pragma once
 
-namespace util
+namespace Util
 {
     namespace bit
     {

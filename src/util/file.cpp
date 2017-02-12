@@ -27,12 +27,12 @@
 
 using namespace std;
 
-namespace util
-{
-    namespace file
-    {
-        bool exists(string filename)
-        {
+namespace Util {
+    
+    namespace File {
+        
+        bool exists(string filename) {
+            
             ifstream ifs(filename);
             bool exists = ifs.is_open();
 
@@ -41,8 +41,8 @@ namespace util
             return exists;
         }
 
-        int get_size(string filename)
-        {
+        int get_size(string filename) {
+            
             ifstream ifs(filename, ios::in | ios::binary | ios::ate);
 
             if (ifs.is_open())
@@ -54,23 +54,20 @@ namespace util
             return 0;
         }
 
-        u8* read_data(string filename)
-        {
+        u8* read_data(string filename) {
+            
             ifstream ifs(filename, ios::in | ios::binary | ios::ate);
             size_t filesize;
             u8* data = 0;
 
-            if (ifs.is_open())
-            {
+            if (ifs.is_open()) {
                 ifs.seekg(0, ios::end);
                 filesize = ifs.tellg();
                 ifs.seekg(0, ios::beg);
                 data = new u8[filesize];
                 ifs.read((char*)data, filesize);
                 ifs.close();
-            }
-            else
-            {
+            } else {
                 cout << "Cannot open file " << filename.c_str();
                 return NULL;
             }
@@ -78,17 +75,13 @@ namespace util
             return data;
         }
 
-        void write_data(string filename, u8* data, int size)
-        {
+        void write_data(string filename, u8* data, int size) {
             ofstream ofs(filename, ios::out | ios::binary);
 
-            if (ofs.is_open())
-            {
+            if (ofs.is_open()) {
                 ofs.write((char*)data, size);
                 ofs.close();
-            }
-            else
-            {
+            } else {
                 cout << "Cannot write file " << filename.c_str();
             }
         }

@@ -27,25 +27,24 @@
 #include <string>
 #include "third_party/fmt/printf.h"
 
-namespace util
-{
-    enum log_level
-    {
+namespace Util {
+    
+    enum LogLevel {
         LOG_TRACE = 0,
         LOG_DEBUG = 1,
-        LOG_INFO = 2,
-        LOG_WARN = 3,
+        LOG_INFO  = 2,
+        LOG_WARN  = 3,
         LOG_ERROR = 4,
         LOG_FATAL = 5
     };
 
-    namespace logger
-    {
+    namespace Logger {
+        
         extern std::map<int, std::string> g_level_map;
 
-        template <log_level level, typename... Parameters>
-        void log(std::string message, Parameters... parameters)
-        {
+        template <LogLevel level, typename... Parameters>
+        void log(std::string message, Parameters... parameters) {
+        
 #ifdef DEBUG
             fmt::print("[" + g_level_map[level] + "] " + message + "\n", parameters...);
 #endif

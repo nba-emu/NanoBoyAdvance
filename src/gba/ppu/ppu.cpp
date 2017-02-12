@@ -20,7 +20,7 @@
 #include "ppu.hpp"
 #include "util/logger.hpp"
 
-using namespace util;
+using namespace Util;
 
 namespace GameBoyAdvance {
     
@@ -163,7 +163,7 @@ namespace GameBoyAdvance {
                     }
                     break;
                 default:
-                    logger::log<LOG_ERROR>("unknown ppu mode: {0}", m_io.control.mode);
+                    Logger::log<LOG_ERROR>("unknown ppu mode: {0}", m_io.control.mode);
             }
 
             if (m_io.control.enable[4]) {

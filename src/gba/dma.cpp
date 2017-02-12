@@ -20,7 +20,7 @@
 #include "cpu.hpp"
 #include "util/logger.hpp"
 
-using namespace util;
+using namespace Util;
 
 namespace GameBoyAdvance {
     

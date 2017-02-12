@@ -23,14 +23,14 @@
 #include "mmio.hpp"
 #include "util/logger.hpp"
 
-using namespace util;
+using namespace Util;
 
 namespace GameBoyAdvance {
     
     u8 CPU::read_mmio(u32 address) {
         auto& ppu_io = m_ppu.get_io();
 
-        logger::log<LOG_INFO>("io read address={0:x} pc={1:x} vcount={2}", address, m_reg[15], ppu_io.vcount);
+        Logger::log<LOG_INFO>("io read address={0:x} pc={1:x} vcount={2}", address, m_reg[15], ppu_io.vcount);
 
         switch (address) {
             // PPU
@@ -85,7 +85,7 @@ namespace GameBoyAdvance {
             case IME:   return m_io.interrupt.master_enable & 0xFF;
             case IME+1: return m_io.interrupt.master_enable >> 8;
 
-            default: logger::log<LOG_DEBUG>("unknown IO read {0:X}", address);
+            default: Logger::log<LOG_DEBUG>("unknown IO read {0:X}", address);
         }
 
         return m_mmio[address & 0x7FF];
@@ -94,7 +94,7 @@ namespace GameBoyAdvance {
     void CPU::write_mmio(u32 address, u8 value) {
         auto& ppu_io = m_ppu.get_io();
 
-        //logger::log<LOG_INFO>("io write address={0:x} value={1:x}", address, value);
+        //Logger::log<LOG_INFO>("io write address={0:x} value={1:x}", address, value);
 
         switch (address) {
             // PPU
@@ -285,7 +285,7 @@ namespace GameBoyAdvance {
                 break;
 
             default:
-                logger::log<LOG_DEBUG>("unknown IO write {0:X}", address);
+                Logger::log<LOG_DEBUG>("unknown IO write {0:X}", address);
                 m_mmio[address & 0x7FF] = value;
         }
     }

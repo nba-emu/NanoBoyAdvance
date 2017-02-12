@@ -26,10 +26,10 @@
 #include <string>
 #include "integer.hpp"
 
-namespace util
-{
-    namespace file
-    {
+namespace Util {
+    
+    namespace File {
+        
         /// Determines wether a file exists.
         /// @param    filename  the file to check.
         /// @returns  wether the file exists.

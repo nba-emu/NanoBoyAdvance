@@ -21,7 +21,7 @@
 #include "util/file.hpp"
 #include "util/logger.hpp"
 
-using namespace util;
+using namespace Util;
 
 namespace GameBoyAdvance
 {
@@ -35,7 +35,7 @@ namespace GameBoyAdvance
     Flash::~Flash() {
         int size = m_second_bank ? 131072 : 65536;
 
-        file::write_data(m_save_file, (u8*)m_memory, size);
+        File::write_data(m_save_file, (u8*)m_memory, size);
     }
 
     void Flash::reset() {
@@ -49,19 +49,19 @@ namespace GameBoyAdvance
         m_enable_write   = false;
         m_enable_bank_select = false;
 
-        if (file::exists(m_save_file)) {
-            int size = file::get_size(m_save_file);
+        if (File::exists(m_save_file)) {
+            int size = File::get_size(m_save_file);
 
             // validate save size
             if (size == (m_second_bank ? 131072 : 65536)) {
-                save_data = file::read_data(m_save_file);
+                save_data = File::read_data(m_save_file);
                 for (int i = 0; i < 65536; i++) {
                     m_memory[0][i] = save_data[i];
                     m_memory[1][i] = m_second_bank ? save_data[65536 + i] : 0;
                 }
                 return;
             } else {
-                logger::log<LOG_WARN>("insane save size: {0}. file contents will be truncated.", size);
+                Logger::log<LOG_WARN>("insane save size: {0}. file contents will be truncated.", size);
             }
         } else {
             // no save file was found - clear content

@@ -21,7 +21,7 @@
 #include "util/logger.hpp"
 #define ARMIGO_INCLUDE
 
-using namespace util;
+using namespace Util;
 
 namespace ARMigo {
     #include "thumb_lut.hpp"
@@ -568,7 +568,7 @@ namespace ARMigo {
         // THUMB.17 Software Interrupt
         u8 call_number = bus_read_byte(m_reg[15] - 4);
 
-        logger::log<LOG_DEBUG>("swi ${0:x} r0={1:x} r1={2:x} r2={3:x} pc={4:x} (thumb)", 
+        Logger::log<LOG_DEBUG>("swi ${0:x} r0={1:x} r1={2:x} r2={3:x} pc={4:x} (thumb)", 
                                call_number, m_reg[0], m_reg[1], m_reg[2], m_reg[15]);
         
         if (!m_hle) {

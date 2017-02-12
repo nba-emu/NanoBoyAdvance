@@ -20,7 +20,7 @@
 #include "cpu.hpp"
 #include "util/logger.hpp"
 
-using namespace util;
+using namespace Util;
 
 namespace GameBoyAdvance {
     
@@ -73,7 +73,7 @@ namespace GameBoyAdvance {
     }
 
     u8 CPU::read_invalid(u32 address) {
-        logger::log<LOG_ERROR>("illegal read from 0x{0:x}", address);
+        Logger::log<LOG_ERROR>("illegal read from 0x{0:x}", address);
         return 0;
     }
 
@@ -109,6 +109,6 @@ namespace GameBoyAdvance {
     }
 
     void CPU::write_invalid(u32 address, u8 value) {
-        logger::log<LOG_ERROR>("illegal write to 0x{0:x} = 0x{1:x}", address, value);
+        Logger::log<LOG_ERROR>("illegal write to 0x{0:x} = 0x{1:x}", address, value);
     }
 }

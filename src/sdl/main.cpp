@@ -34,7 +34,7 @@
 #undef main
 
 using namespace std;
-using namespace util;
+using namespace Util;
 
 GameBoyAdvance::CPU* emu;
 Arguments* args;
@@ -178,12 +178,12 @@ int main(int argc, char** argv)
         rom_file = string(args->rom_file);
         save_file = rom_file.substr(0, rom_file.find_last_of(".")) + ".sav";
 
-        if (file::exists(rom_file))
+        if (File::exists(rom_file))
         {
-            u8* rom = file::read_data(rom_file);
-            size_t rom_size = file::get_size(rom_file);
-            u8* bios = file::read_data(string(args->bios_file));
-            size_t bios_size = file::get_size(string(args->bios_file));
+            u8* rom = File::read_data(rom_file);
+            size_t rom_size = File::get_size(rom_file);
+            u8* bios = File::read_data(string(args->bios_file));
+            size_t bios_size = File::get_size(string(args->bios_file));
 
             emu = new GameBoyAdvance::CPU();
 

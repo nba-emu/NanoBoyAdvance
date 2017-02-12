@@ -23,12 +23,13 @@
 #include "flash.hpp"
 #include "util/logger.hpp"
 
-using namespace util;
+using namespace Util;
 
 namespace GameBoyAdvance {
+    
     constexpr int CPU::m_mem_cycles8_16[16];
     constexpr int CPU::m_mem_cycles32[16];
-    constexpr CPU::read_func CPU::m_read_table[16];
+    constexpr CPU::read_func  CPU::m_read_table[16];
     constexpr CPU::write_func CPU::m_write_table[16];
 
     CPU::CPU() {
