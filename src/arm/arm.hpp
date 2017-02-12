@@ -74,7 +74,7 @@ namespace ARMigo {
         }
 
         /// Tries to raise an IRQ exception.
-        void raise_irq();
+        void raise_interrupt();
 
         /// HLE-flag getter
         bool get_hle() { return m_hle; }

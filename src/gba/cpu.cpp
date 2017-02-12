@@ -187,7 +187,7 @@ namespace GameBoyAdvance {
 
                 if (!m_dma_active) {
                     if (m_io.interrupt.master_enable && requested_and_enabled) {
-                        raise_irq();
+                        raise_interrupt();
                     }
                     step();
                 } else {

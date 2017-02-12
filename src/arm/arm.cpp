@@ -105,7 +105,7 @@ namespace ARMigo {
         m_cpsr = (m_cpsr & ~MASK_MODE) | (u32)new_mode;
     }
 
-    void ARM::raise_irq() {
+    void ARM::raise_interrupt() {
         if (~m_cpsr & MASK_IRQD) {
             bool thumb = m_cpsr & MASK_THUMB;
 

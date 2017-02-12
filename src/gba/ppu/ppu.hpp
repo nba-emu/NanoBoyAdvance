@@ -27,12 +27,11 @@
 #include "../interrupt.hpp"
 #define PPU_INCLUDE
 
-namespace GameBoyAdvance
-{
+namespace GameBoyAdvance {
+    
     const u16 COLOR_TRANSPARENT = 0x8000;
 
-    class PPU
-    {
+    class PPU {
     private:
         u8* m_pal;
         u8* m_oam;
@@ -60,7 +59,7 @@ namespace GameBoyAdvance
         template <bool is_256, int id>
         void render_textmode_internal();
     public:
-        ppu();
+        PPU();
 
         void reset();
 
