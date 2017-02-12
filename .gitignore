@@ -1,0 +1,55 @@
+# build directory
+build/
+
+# JetBrains configs
+.idea/
+
+# OS X specific stuff
+.DS_Store
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Qt Creator
+*.user
+
+# VS Code
+.vscode
+
+# NanoboyAdvance specific
+*.bin
+*.gba
+*.agb
+*.sav
+
+# Backup files
+*~
+
+# Make
+*.d
