@@ -31,7 +31,7 @@ namespace GameBoyAdvance
 {
     const u16 COLOR_TRANSPARENT = 0x8000;
 
-    class ppu
+    class PPU
     {
     private:
         u8* m_pal;
@@ -64,8 +64,7 @@ namespace GameBoyAdvance
 
         void reset();
 
-        io& get_io()
-        {
+        IO& get_io() {
             return m_io;
         }
 

@@ -193,7 +193,7 @@ int main(int argc, char** argv)
 
             keyinput = &emu->get_keypad();
 
-            GameBoyAdvance::ppu& ppu = emu->get_ppu();
+            GameBoyAdvance::PPU& ppu = emu->get_ppu();
 
             ppu.set_frameskip(args->speedup);
             video_buffer = ppu.get_framebuffer();

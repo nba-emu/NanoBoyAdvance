@@ -28,13 +28,13 @@ using namespace util;
 
 namespace GameBoyAdvance
 {
-    ppu::ppu()
+    PPU::ppu()
     {
         reset();
         m_frameskip = 0;
     }
 
-    void ppu::reset()
+    void PPU::reset()
     {
         m_io.vcount = 0;
 
@@ -62,31 +62,31 @@ namespace GameBoyAdvance
         m_frame_counter = 0;
     }
 
-    u32* ppu::get_framebuffer()
+    u32* PPU::get_framebuffer()
     {
         return m_framebuffer;
     }
 
-    void ppu::set_frameskip(int frames)
+    void PPU::set_frameskip(int frames)
     {
         m_frameskip = frames;
     }
 
-    void ppu::set_memory(u8* pal, u8* oam, u8* vram)
+    void PPU::set_memory(u8* pal, u8* oam, u8* vram)
     {
         m_pal = pal;
         m_oam = oam;
         m_vram = vram;
     }
 
-    void ppu::set_interrupt(Interrupt* interrupt)
+    void PPU::set_interrupt(Interrupt* interrupt)
     {
         m_interrupt = interrupt;
     }
 
     // TODO: VBlank/HBlank flag toggling is in no way optimal.
 
-    void ppu::hblank()
+    void PPU::hblank()
     {
         m_io.status.vblank_flag = false;
         m_io.status.hblank_flag = true;
@@ -95,15 +95,15 @@ namespace GameBoyAdvance
             m_interrupt->request(INTERRUPT_HBLANK);
     }
 
-    void ppu::vblank()
+    void PPU::vblank()
     {
         m_io.status.vblank_flag = true;
         m_io.status.hblank_flag = false;
 
-        m_io.bgx[0].internal = ppu::decode_float32(m_io.bgx[0].value);
-        m_io.bgy[0].internal = ppu::decode_float32(m_io.bgy[0].value);
-        m_io.bgx[1].internal = ppu::decode_float32(m_io.bgx[1].value);
-        m_io.bgy[1].internal = ppu::decode_float32(m_io.bgy[1].value);
+        m_io.bgx[0].internal = PPU::decode_float32(m_io.bgx[0].value);
+        m_io.bgy[0].internal = PPU::decode_float32(m_io.bgy[0].value);
+        m_io.bgx[1].internal = PPU::decode_float32(m_io.bgx[1].value);
+        m_io.bgy[1].internal = PPU::decode_float32(m_io.bgy[1].value);
 
         if (m_frameskip != 0)
         {
@@ -114,16 +114,16 @@ namespace GameBoyAdvance
             m_interrupt->request(INTERRUPT_VBLANK);
     }
 
-    void ppu::scanline()
+    void PPU::scanline()
     {
         // todo: maybe find a better way
         m_io.status.vblank_flag = false;
         m_io.status.hblank_flag = false;
 
-        m_io.bgx[0].internal += ppu::decode_float16(m_io.bgpb[0]);
-        m_io.bgy[0].internal += ppu::decode_float16(m_io.bgpd[0]);
-        m_io.bgx[1].internal += ppu::decode_float16(m_io.bgpb[1]);
-        m_io.bgy[1].internal += ppu::decode_float16(m_io.bgpd[1]);
+        m_io.bgx[0].internal += PPU::decode_float16(m_io.bgpb[0]);
+        m_io.bgy[0].internal += PPU::decode_float16(m_io.bgpd[0]);
+        m_io.bgx[1].internal += PPU::decode_float16(m_io.bgpb[1]);
+        m_io.bgy[1].internal += PPU::decode_float16(m_io.bgpd[1]);
 
         if (m_frameskip == 0 || m_frame_counter == 0)
         {
@@ -190,7 +190,7 @@ namespace GameBoyAdvance
         }
     }
 
-    void ppu::next_line()
+    void PPU::next_line()
     {
         bool vcount_flag = m_io.vcount == m_io.status.vcount_setting;
         m_io.vcount = (m_io.vcount + 1) % 228;

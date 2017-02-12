@@ -23,27 +23,23 @@
 
 #include "ppu.hpp"
 
-namespace GameBoyAdvance
-{
-    void ppu::compose_scanline()
-    {
+namespace GameBoyAdvance {
+    
+    void PPU::compose_scanline() {
+        
         u16 backdrop_color = (m_pal[1] << 8) | m_pal[0];
         u32* line_buffer = m_framebuffer  + m_io.vcount * 240;
 
-        for (int i = 0; i < 240; i++)
-        {
+        for (int i = 0; i < 240; i++) {
             int layer[2] = { 5, 5 };
             u16 pixel[2] = { backdrop_color, 0 };
 
-            for (int j = 3; j >= 0; j--)
-            {
-                for (int k = 3; k >= 0; k--)
-                {
+            for (int j = 3; j >= 0; j--) {
+                for (int k = 3; k >= 0; k--) {
                     u16 new_pixel = m_buffer[k][i];
 
-                    if (new_pixel != COLOR_TRANSPARENT && m_io.control.enable[k] &&
-                            m_io.bgcnt[k].priority == j)
-                    {
+                    if (new_pixel != COLOR_TRANSPARENT && m_io.control.enable[k] && 
+                                m_io.bgcnt[k].priority == j) {
                         layer[1] = layer[0];
                         layer[0] = k;
                         pixel[1] = pixel[0];
@@ -51,12 +47,10 @@ namespace GameBoyAdvance
                     }
                 }
 
-                if (m_io.control.enable[4])
-                {
+                if (m_io.control.enable[4]) {
                     u16 new_pixel = m_buffer[4 + j][i];
 
-                    if (new_pixel != COLOR_TRANSPARENT)
-                    {
+                    if (new_pixel != COLOR_TRANSPARENT) {
                         layer[1] = layer[0];
                         layer[0] = 4;
                         pixel[1] = pixel[0];

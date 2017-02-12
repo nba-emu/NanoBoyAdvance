@@ -23,10 +23,8 @@
 
 #ifdef PPU_INCLUDE
 
-struct io
-{
-    struct dispcnt_reg
-    {
+struct IO {
+    struct DisplayControl {
         int mode;
         bool cgb_mode;
         int frame_select;
@@ -41,8 +39,7 @@ struct io
         void write(int offset, u8 value);
     } control;
 
-    struct dispstat_reg
-    {
+    struct DisplayStatus {
         bool vblank_flag;
         bool hblank_flag;
         bool vcount_flag;
@@ -58,33 +55,33 @@ struct io
 
     int vcount;
 
-    struct bgxcnt_reg
-    {
-        int priority;
-        int tile_block;
+    struct BackgroundControl {
+        int  priority;
+        int  tile_block;
         bool mosaic_enable;
         bool full_palette;//eh
-        int map_block;
+        int  map_block;
         bool wraparound;
-        int screen_size;
+        int  screen_size;
 
         void reset();
         auto read(int offset) -> u8;
         void write(int offset, u8 value);
     } bgcnt[4];
 
+    // horizontal and vertical scrolling info for each BG.
     u16 bghofs[4];
     u16 bgvofs[4];
 
-    struct bgref_reg
-    {
-        u32 value;
+    struct ReferencePoint {
+        u32   value;
         float internal;
 
         void reset();
         void write(int offset, u8 value);
     } bgx[2], bgy[2];
 
+    // rotate/scale parameters, PA/PB/PC/PD
     u16 bgpa[2];
     u16 bgpb[2];
     u16 bgpc[2];

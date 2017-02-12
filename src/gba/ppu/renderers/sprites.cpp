@@ -24,8 +24,8 @@
 #include "../ppu.hpp"
 #include "util/logger.hpp"
 
-namespace GameBoyAdvance
-{
+namespace GameBoyAdvance {
+    
     static constexpr int g_sprite_size[4][4][2] = {
         /* SQUARE */
         {
@@ -57,13 +57,12 @@ namespace GameBoyAdvance
         }
     };
 
-    void ppu::render_sprites(u32 tile_base)
-    {
+    void PPU::render_sprites(u32 tile_base) {
+        
         u32 offset = 127 << 3;
 
         // eh...
-        for (int i = 0; i < 240; i++)
-        {
+        for (int i = 0; i < 240; i++) {
             m_buffer[4][i] = COLOR_TRANSPARENT;
             m_buffer[5][i] = COLOR_TRANSPARENT;
             m_buffer[6][i] = COLOR_TRANSPARENT;
@@ -73,8 +72,8 @@ namespace GameBoyAdvance
         // TODO(performance):
         // we have to read OAM data in descending order but that
         // might affect dcache performance? not sure about impact.
-        for (int i = 0; i < 128; i++)
-        {
+        for (int i = 0; i < 128; i++) {
+            
             // TODO(performance): decode these on OAM writes already?
             u16 attribute0 = (m_oam[offset + 1] << 8) | m_oam[offset + 0];
             u16 attribute1 = (m_oam[offset + 3] << 8) | m_oam[offset + 2];
@@ -101,14 +100,14 @@ namespace GameBoyAdvance
                 u16 parameter_c = (m_oam[(group << 1) + 0x17] << 8) | m_oam[(group << 1) + 0x16];
                 u16 parameter_d = (m_oam[(group << 1) + 0x1F] << 8) | m_oam[(group << 1) + 0x1E];
 
-                y = ppu::decode_float16(parameter_c) * x + ppu::decode_float16(parameter_d) * y;
+                y = PPU::decode_float16(parameter_c) * x + PPU::decode_float16(parameter_d) * y;
             }*/
 
             width =  g_sprite_size[shape][size][0];
             height = g_sprite_size[shape][size][1];
 
-            if (m_io.vcount >= y && m_io.vcount <= y + height - 1)
-            {
+            if (m_io.vcount >= y && m_io.vcount <= y + height - 1) {
+                
                 int line = m_io.vcount - y;
 
                 int number  = attribute2 & 0x3FF;
@@ -124,42 +123,38 @@ namespace GameBoyAdvance
                 int tile_row   = line >> 3;
                 int tile_count = width >> 3;
 
-                if (v_flip)
-                {
+                if (v_flip) {
                     tile_y ^= 7;
                     tile_row = (height >> 3) - tile_row;
                 }
 
-                if (m_io.control.one_dimensional)
-                {
+                if (m_io.control.one_dimensional) {
                     number += tile_row * tile_count;
-                }
-                else
-                {
+                } else {
                     number += tile_row << 5;
                 }
 
                 int pos = 0;
 
-                if (x < 0) pos = x * -1;
+                if (x < 0) {
+                    pos = x * -1;
+                }
 
-                for (; pos < width && (x + pos) < 240; pos++)
-                {
+                for (; pos < width && (x + pos) < 240; pos++) {
+                    
                     u16 pixel;
                     int tile_x = pos & 7;
                     int tile   = pos >> 3;
 
-                    if (is_256)
-                    {
+                    if (is_256) {
                         pixel = get_tile_pixel_8bpp(tile_base, 16, number + tile, tile_x, tile_y);
-                    }
-                    else
-                    {
+                    } else {
                         pixel = get_tile_pixel_4bpp(tile_base, palette, number + tile, tile_x, tile_y);
                     }
 
-                    if (pixel != COLOR_TRANSPARENT)
+                    if (pixel != COLOR_TRANSPARENT) {
                         m_buffer[4 + prio][x + pos] = pixel;
+                    }
                 }
             }
 

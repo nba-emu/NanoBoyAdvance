@@ -54,7 +54,7 @@ namespace GameBoyAdvance {
 
         #include "io.hpp"
 
-        ppu m_ppu;
+        PPU m_ppu;
         Interrupt m_interrupt;
 
         int m_cycles;
@@ -144,7 +144,7 @@ namespace GameBoyAdvance {
 
         void reset();
 
-        ppu& get_ppu();
+        PPU& get_ppu();
         u16& get_keypad();
         void set_bios(u8* data, size_t size);
         void set_game(u8* data, size_t size, std::string save_file);

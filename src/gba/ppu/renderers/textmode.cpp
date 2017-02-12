@@ -26,35 +26,30 @@
 
 using namespace util;
 
-namespace GameBoyAdvance
-{
-    void ppu::render_textmode(int id)
-    {
-        if (m_io.bgcnt[id].full_palette)
-        {
-            switch (id)
-            {
-            case 0: render_textmode_internal<true, 0>(); return;
-            case 1: render_textmode_internal<true, 1>(); return;
-            case 2: render_textmode_internal<true, 2>(); return;
-            case 3: render_textmode_internal<true, 3>(); return;
+namespace GameBoyAdvance {
+    
+    void PPU::render_textmode(int id) {
+        
+        if (m_io.bgcnt[id].full_palette) {
+            switch (id) {
+                case 0: render_textmode_internal<true, 0>(); return;
+                case 1: render_textmode_internal<true, 1>(); return;
+                case 2: render_textmode_internal<true, 2>(); return;
+                case 3: render_textmode_internal<true, 3>(); return;
             }
-        }
-        else
-        {
-            switch (id)
-            {
-            case 0: render_textmode_internal<false, 0>(); return;
-            case 1: render_textmode_internal<false, 1>(); return;
-            case 2: render_textmode_internal<false, 2>(); return;
-            case 3: render_textmode_internal<false, 3>(); return;
+        } else {
+            switch (id) {
+                case 0: render_textmode_internal<false, 0>(); return;
+                case 1: render_textmode_internal<false, 1>(); return;
+                case 2: render_textmode_internal<false, 2>(); return;
+                case 3: render_textmode_internal<false, 3>(); return;
             }
         }
     }
 
     template <bool is_256, int id>
-    void ppu::render_textmode_internal()
-    {
+    void PPU::render_textmode_internal() {
+    
         auto bg        = m_io.bgcnt[id];
         u16* buffer    = m_buffer[id];
         u32 tile_block = bg.tile_block << 14;
@@ -71,8 +66,7 @@ namespace GameBoyAdvance
 
         u32 base_offset = (bg.map_block << 11) + ((row & 0x1F) << 6);
 
-        for (int _x = 0; _x < 240; _x++)
-        {
+        for (int _x = 0; _x < 240; _x++) {
             int x = _x + m_io.bghofs[id];
 
             int col     = x >> 3;
@@ -82,17 +76,15 @@ namespace GameBoyAdvance
             int screen_x = (col >> 5) & 1;
             u32 offset   = base_offset + ((col & 0x1F) << 1);
 
-            switch (bg.screen_size)
-            {
-            case 1: offset += screen_x << 11; break;
-            case 2: offset += screen_y << 11; break;
-            case 3: offset += (screen_x << 11) + (screen_y << 12); break;
+            switch (bg.screen_size) {
+                case 1: offset += screen_x << 11; break;
+                case 2: offset += screen_y << 11; break;
+                case 3: offset += (screen_x << 11) + (screen_y << 12); break;
             }
 
             u16 tile_encoder = (m_vram[offset + 1] << 8) | m_vram[offset];
 
-            if (tile_encoder != last_tile_encoder)
-            {
+            if (tile_encoder != last_tile_encoder) {
                 number  = tile_encoder & 0x3FF;
                 h_flip  = tile_encoder & (1 << 10);
                 v_flip  = tile_encoder & (1 << 11);
@@ -103,12 +95,9 @@ namespace GameBoyAdvance
             if (h_flip)  tile_x ^= 7;
             if (v_flip) _tile_y ^= 7;
 
-            if (is_256)
-            {
+            if (is_256) {
                 buffer[_x] = get_tile_pixel_8bpp(tile_block, 0, number, tile_x, _tile_y);
-            }
-            else
-            {
+            } else {
                 buffer[_x] = get_tile_pixel_4bpp(tile_block, palette, number, tile_x, _tile_y);
             }
         }

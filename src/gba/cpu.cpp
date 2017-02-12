@@ -102,7 +102,7 @@ namespace GameBoyAdvance {
         }
     }
 
-    ppu& CPU::get_ppu() {
+    PPU& CPU::get_ppu() {
         return m_ppu;
     }
 
