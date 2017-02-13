@@ -21,10 +21,10 @@
 
 #include <string>
 #include "arm/arm.hpp"
-#include "ppu/ppu.hpp"
 #include "enums.hpp"
 #include "interrupt.hpp"
-#include "cart_backup.hpp"
+#include "../ppu/ppu.hpp"
+#include "../cart/cart_backup.hpp"
 #define CPU_INCLUDE
 
 using namespace ARMigo;

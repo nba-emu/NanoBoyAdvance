@@ -20,7 +20,7 @@
 #pragma once
 
 #include "util/integer.hpp"
-#include "../interrupt.hpp"
+#include "../cpu/interrupt.hpp"
 #define PPU_INCLUDE
 
 namespace GameBoyAdvance {

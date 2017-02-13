@@ -1,12 +1,12 @@
 set(SOURCES
-    io.cpp
-    cpu.cpp
-    bios.cpp
-    memory.cpp
-    mmio.cpp
-    timer.cpp
-    dma.cpp
-    flash.cpp
+    cpu/io.cpp
+    cpu/cpu.cpp
+    cpu/bios.cpp
+    cpu/memory.cpp
+    cpu/mmio.cpp
+    cpu/timer.cpp
+    cpu/dma.cpp
+    cart/flash.cpp
     ppu/io.cpp
     ppu/ppu.cpp
     ppu/composer.cpp
@@ -17,14 +17,14 @@ set(SOURCES
 )
 
 set(HEADERS
-    io.hpp
-    cpu.hpp
-    enums.hpp
-    interrupt.hpp
-    mmio.hpp
-    memory.hpp
-    cart_backup.hpp
-    flash.hpp
+    cpu/io.hpp
+    cpu/cpu.hpp
+    cpu/enums.hpp
+    cpu/interrupt.hpp
+    cpu/mmio.hpp
+    cpu/memory.hpp
+    cart/cart_backup.hpp
+    cart/flash.hpp
     ppu/io.hpp
     ppu/ppu.hpp
 )

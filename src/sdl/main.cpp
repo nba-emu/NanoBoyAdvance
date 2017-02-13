@@ -19,7 +19,7 @@
 
 #include <string>
 #include <SDL2/SDL.h>
-#include "gba/cpu.hpp"
+#include "gba/cpu/cpu.hpp"
 #include "util/file.hpp"
 
 #include "argument_parser.hpp"

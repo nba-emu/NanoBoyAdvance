@@ -20,7 +20,7 @@
 #include <cstring>
 #include <stdexcept>
 #include "cpu.hpp"
-#include "flash.hpp"
+#include "../cart/flash.hpp"
 #include "util/logger.hpp"
 
 using namespace Util;
