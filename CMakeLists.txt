@@ -32,11 +32,11 @@ set(VERSION_MINOR 1)
 # Frontend selection
 option(SDL2_GUI "Build SDL2 based GUI" ON)
 
-# Add SDL2
+# Add all required libraries
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
 include (FindSDL2 REQUIRED)
 find_package(SDL2 REQUIRED)
-find_package(PNG REQUIRED)
+find_package(PNG  REQUIRED)
 
 if (SDL2_FOUND)
     include_directories(${SDL2_INCLUDE_DIRS})
