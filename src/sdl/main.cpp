@@ -69,7 +69,10 @@ void free_window() {
 
 int main(int argc, char** argv) {
     CPU emu;
+    PPU* ppu;
     u32* fbuffer;
+    u16* keyinput;
+    bool fast_forward = false;
     
     ArgumentParser parser;
     shared_ptr<ParsedArguments> args;
@@ -140,11 +143,10 @@ int main(int argc, char** argv) {
         emu.set_bios(bios_data, bios_size);
         emu.reset();
         
-        PPU& ppu = emu.get_ppu();
+        keyinput = &emu.get_keypad();
         
-        ppu.set_frameskip(config->speed);
-        
-        fbuffer = ppu.get_framebuffer();
+        ppu     = &emu.get_ppu();
+        fbuffer = ppu->get_framebuffer();
     } else {
         parser.print_usage(argv[0]);
         return -1;
@@ -158,21 +160,62 @@ int main(int argc, char** argv) {
     bool running = true;
     
     while (running) {
-        for (int frame = 0; frame < config->speed; frame++) {
+        if (fast_forward) {
+            for (int frame = 0; frame < config->speed; frame++) {
+                emu.frame();
+            }
+        } else {
             emu.frame();
         }
         
+        // send generated frame to texture
         SDL_UpdateTexture(g_texture, NULL, fbuffer, g_width * sizeof(u32));
+        
+        // tell SDL to draw the texture
+        SDL_RenderClear(g_renderer);
+        SDL_RenderCopy(g_renderer, g_texture, nullptr, nullptr);
+        SDL_RenderPresent(g_renderer);
         
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 running = false;
+            } else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
+                int  num;
+                bool released = event.type == SDL_KEYUP;
+                
+                SDL_KeyboardEvent* key_event = (SDL_KeyboardEvent*)(&event);
+                
+                switch (key_event->keysym.sym) {
+                    case SDLK_z:
+                    case SDLK_y:         num = (1<<0); break;
+                    case SDLK_x:         num = (1<<1); break;
+                    case SDLK_BACKSPACE: num = (1<<2); break;
+                    case SDLK_RETURN:    num = (1<<3); break;
+                    case SDLK_RIGHT:     num = (1<<4); break;
+                    case SDLK_LEFT:      num = (1<<5); break;
+                    case SDLK_UP:        num = (1<<6); break;
+                    case SDLK_DOWN:      num = (1<<7); break;
+                    case SDLK_w:         num = (1<<8); break;
+                    case SDLK_q:         num = (1<<9); break;
+                    case SDLK_SPACE:
+                        if (released) {
+                            fast_forward = false;
+                            ppu->set_frameskip(0);
+                        } else {
+                            fast_forward = true;
+                            ppu->set_frameskip(config->speed);
+                        }
+                    default: 
+                        continue;
+                }
+                
+                if (released) {
+                    *keyinput |= num;
+                } else {
+                    *keyinput &= ~num;
+                }
             }
         }
-        
-        SDL_RenderClear(g_renderer);
-        SDL_RenderCopy(g_renderer, g_texture, nullptr, nullptr);
-        SDL_RenderPresent(g_renderer);
     }
     
     free_window();
