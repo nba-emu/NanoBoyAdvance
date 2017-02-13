@@ -1,10 +1,9 @@
 set(SRCS
-    arguments.cpp
     main.cpp
 )
 
 set(HEADERS
-    arguments.h
+    argument_parser.hpp
 )
 
 add_executable(NanoboyAdvance-SDL ${SRCS} ${HEADERS})
