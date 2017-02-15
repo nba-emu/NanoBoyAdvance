@@ -19,23 +19,21 @@
 
 #pragma once
 
-#include "enums.hpp"
-#include "util/integer.hpp"
-
-// TODO: get rid of this crap
+#include "cpu/cpu.hpp"
+#include "core/emulator.hpp"
 
 namespace GameBoyAdvance {
-    class Interrupt {
+    
+    class Emulator : public Core::Emulator {
     private:
-        u16* m_interrupt_flag;
-
+        CPU m_cpu;
+        
     public:
-        void set_flag_register(u16* io_reg) {
-            m_interrupt_flag = io_reg;
+        void reset() final {
         }
-
-        void request(InterruptType type) {
-            *m_interrupt_flag |= static_cast<int>(type);
+        
+        void frame() final {
+            m_cpu.frame();
         }
-    };
+    }
 }

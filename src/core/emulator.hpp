@@ -23,13 +23,28 @@
 
 namespace Core {
     struct EmulatorConfig {
-        //void load();
-        //void save();
     };
     
-    struct Emulator {
-        void load_game(std::string rom_path);
+    class Emulator {
+    private:
+        std::string m_game;
+        std::string m_save;
+        EmulatorConfig m_config;
         
-        void frame();
+    public:
+        Emulator(EmulatorConfig config) {
+            m_config = config;
+        }
+        
+        void set_game_path(std::string path) {
+            m_game = path;
+        }
+        
+        void set_save_path(std::string path) {
+            m_save = path;
+        }
+        
+        virtual void reset();
+        virtual void frame();
     };    
 }

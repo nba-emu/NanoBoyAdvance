@@ -58,7 +58,7 @@ void setup_window() {
                                );
     
     g_renderer = SDL_CreateRenderer(g_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    g_texture  = SDL_CreateTexture(g_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, g_width, g_height);
+    g_texture  = SDL_CreateTexture(g_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 240, 160);
 }
 
 void free_window() {
@@ -159,17 +159,39 @@ int main(int argc, char** argv) {
     SDL_Event event;
     bool running = true;
     
+    int frames = 0;
+    int ticks1 = SDL_GetTicks();
+    
     while (running) {
         if (fast_forward) {
             for (int frame = 0; frame < config->speed; frame++) {
                 emu.frame();
+                frames++;
             }
         } else {
             emu.frame();
+            frames++;
+        }
+        
+        int ticks2 = SDL_GetTicks();
+        if (ticks2 - ticks1 >= 1000) {
+            int percentage = (frames / 60.0) * 100;
+            int rendered_frames = frames;
+            
+            if (fast_forward) {
+                rendered_frames /= config->speed;
+            }
+
+            string title = "NanoboyAdvance [" + std::to_string(percentage) + "% | " +
+                                                std::to_string(rendered_frames) + "fps]";
+            SDL_SetWindowTitle(g_window, title.c_str());
+            
+            ticks1 = ticks2;
+            frames = 0;
         }
         
         // send generated frame to texture
-        SDL_UpdateTexture(g_texture, NULL, fbuffer, g_width * sizeof(u32));
+        SDL_UpdateTexture(g_texture, NULL, fbuffer, 240 * sizeof(u32));
         
         // tell SDL to draw the texture
         SDL_RenderClear(g_renderer);
