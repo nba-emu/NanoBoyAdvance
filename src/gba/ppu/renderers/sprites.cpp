@@ -82,9 +82,10 @@ namespace GameBoyAdvance {
             int size  = attribute1 >> 14;
             int prio  = (attribute2 >> 10) & 3;
 
-            if (x & 0x100) x |= 0xFFFFFF00;
-            if (y & 0x080) y |= 0xFFFFFF00;
-
+            // can this be done more efficiently?
+            if (x >= 240) x -= 512;            
+            if (y >= 160) y -= 256;
+            
             bool rotate_scale = attribute0 & 256;
 
             /*if (rotate_scale)
@@ -101,7 +102,7 @@ namespace GameBoyAdvance {
 
             width =  g_sprite_size[shape][size][0];
             height = g_sprite_size[shape][size][1];
-
+            
             if (m_io.vcount >= y && m_io.vcount <= y + height - 1) {
                 
                 int line = m_io.vcount - y;
