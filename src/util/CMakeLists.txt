@@ -6,7 +6,6 @@ set(SRCS
 set(HEADERS
     file.hpp
     integer.hpp
-    bit.hpp
     logger.hpp
 )
 
