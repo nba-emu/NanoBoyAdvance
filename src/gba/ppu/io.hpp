@@ -21,9 +21,9 @@
 
 struct IO {
     struct DisplayControl {
-        int mode;
+        int  mode;
         bool cgb_mode;
-        int frame_select;
+        int  frame_select;
         bool hblank_oam_access;
         bool one_dimensional;
         bool forced_blank;
@@ -42,7 +42,7 @@ struct IO {
         bool vblank_interrupt;
         bool hblank_interrupt;
         bool vcount_interrupt;
-        int vcount_setting;
+        int  vcount_setting;
 
         void reset();
         auto read(int offset) -> u8;

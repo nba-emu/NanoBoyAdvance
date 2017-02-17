@@ -19,8 +19,6 @@
 
 #ifdef APU_INCLUDE
 
-#include "fifo.hpp"
-
 enum Side {
     SIDE_LEFT  = 0,
     SIDE_RIGHT = 1
@@ -33,6 +31,8 @@ enum DMANumber {
 
 struct IO {
     struct Control {
+        bool master_enable;
+        FIFO fifo[2]; // suboptimal...
         
         struct PSG {
             int  volume;    // 0=25% 1=50% 2=100% 3=forbidden
@@ -41,14 +41,24 @@ struct IO {
         } psg;
         
         struct DMA {
-            FIFO fifo;
-            
             int  volume; // 0=50%, 1=100%
             bool enable[2];
             int  timer_num;
         } dma[2];
-    };
+        
+        void reset();
+        auto read(int offset) -> u8;
+        void write(int offset, u8 value);
+    } control;
     
+    struct BIAS {
+        int level;
+        int resolution;
+        
+        void reset();
+        auto read(int offset) -> u8;
+        void write(int offset, u8 value);
+    } bias;
 } m_io;
 
 #endif

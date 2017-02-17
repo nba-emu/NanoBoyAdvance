@@ -17,6 +17,10 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
+#pragma once
+
+#include "util/integer.hpp"
+
 namespace GameBoyAdvance {
     const int FIFO_SIZE = 32;
     

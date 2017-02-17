@@ -14,6 +14,8 @@ set(SOURCES
     ppu/renderers/textmode.cpp
     ppu/renderers/sprites.cpp
     ppu/renderers/rotate_scale.cpp
+    apu/apu.cpp
+    apu/io.cpp
 )
 
 set(HEADERS
@@ -27,6 +29,9 @@ set(HEADERS
     cart/flash.hpp
     ppu/io.hpp
     ppu/ppu.hpp
+    apu/apu.hpp
+    apu/fifo.hpp
+    apu/io.hpp
 )
 
 add_library(gba STATIC ${SOURCES} ${HEADERS})

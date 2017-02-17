@@ -17,28 +17,16 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#pragma once
-
-#include "fifo.hpp"
-#include "util/integer.hpp"
-
-#define APU_INCLUDE
+#include "apu.hpp"
 
 namespace GameBoyAdvance {
     
-    class APU {
-    private:
-        #include "io.hpp"
+    APU::APU() {
+        reset();
+    }
     
-    public:
-        APU();
-        
-        void reset();
-        
-        IO& get_io() {
-            return m_io;
-        }
-    };
+    void APU::reset() {
+        m_io.bias.reset();
+        m_io.control.reset();
+    }
 }
-
-#undef APU_INCLUDE

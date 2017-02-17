@@ -24,6 +24,7 @@
 #include "enums.hpp"
 #include "interrupt.hpp"
 #include "../ppu/ppu.hpp"
+#include "../apu/apu.hpp"
 #include "../cart/cart_backup.hpp"
 #define CPU_INCLUDE
 
@@ -52,6 +53,7 @@ namespace GameBoyAdvance {
         #include "io.hpp"
 
         PPU m_ppu;
+        APU m_apu;
         Interrupt m_interrupt;
 
         int m_cycles;
@@ -142,6 +144,7 @@ namespace GameBoyAdvance {
         void reset();
 
         PPU& get_ppu();
+        APU& get_apu();
         u16& get_keypad();
         void set_bios(u8* data, size_t size);
         void set_game(u8* data, size_t size, std::string save_file);

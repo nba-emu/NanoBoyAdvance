@@ -54,6 +54,7 @@ namespace GameBoyAdvance {
         ARM::reset();
 
         m_ppu.reset();
+        m_apu.reset();
 
         if (m_backup != nullptr) {
             m_backup->reset();
@@ -103,6 +104,10 @@ namespace GameBoyAdvance {
         return m_ppu;
     }
 
+    APU& CPU::get_apu() {
+        return m_apu;
+    }
+    
     u16& CPU::get_keypad() {
         return m_io.keyinput;
     }
