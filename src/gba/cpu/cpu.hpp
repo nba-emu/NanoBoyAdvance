@@ -88,6 +88,7 @@ namespace GameBoyAdvance {
         void dma_hblank();
         void dma_vblank();
         void dma_transfer();
+        void dma_fill_fifo(int dma_id);
 
         static constexpr int m_mem_cycles8_16[16] = {
             1, 1, 3, 1, 1, 1, 1, 1, 5, 5, 1, 1, 1, 1, 5, 1

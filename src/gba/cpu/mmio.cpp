@@ -29,6 +29,7 @@ namespace GameBoyAdvance {
     
     u8 CPU::read_mmio(u32 address) {
         auto& ppu_io = m_ppu.get_io();
+        auto& apu_io = m_apu.get_io();
 
         Logger::log<LOG_INFO>("io read address={0:x} pc={1:x} vcount={2}", address, m_reg[15], ppu_io.vcount);
 
@@ -59,6 +60,13 @@ namespace GameBoyAdvance {
             case DMA3CNT_H:   return m_io.dma[3].read(10);
             case DMA3CNT_H+1: return m_io.dma[3].read(11);
 
+            // SOUND
+            case SOUNDCNT_L:   return apu_io.control.read(0);
+            case SOUNDCNT_L+1: return apu_io.control.read(1);
+            case SOUNDCNT_H:   return apu_io.control.read(2);
+            case SOUNDCNT_H+1: return apu_io.control.read(3);
+            case SOUNDCNT_X:   return apu_io.control.read(4);   
+            
             // TIMER
             case TM0CNT_L:   return m_io.timer[0].read(0);
             case TM0CNT_L+1: return m_io.timer[0].read(1);
@@ -93,7 +101,8 @@ namespace GameBoyAdvance {
 
     void CPU::write_mmio(u32 address, u8 value) {
         auto& ppu_io = m_ppu.get_io();
-
+        auto& apu_io = m_apu.get_io();
+        
         //Logger::log<LOG_INFO>("io write address={0:x} value={1:x}", address, value);
 
         switch (address) {
@@ -243,6 +252,21 @@ namespace GameBoyAdvance {
             case DMA3CNT_H:   m_io.dma[3].write(10, value); break;
             case DMA3CNT_H+1: m_io.dma[3].write(11, value); break;
 
+            // SOUND
+            case FIFO_A:
+            case FIFO_A+1:
+            case FIFO_A+2:
+            case FIFO_A+3: apu_io.fifo[0].enqueue(value); break;
+            case FIFO_B:
+            case FIFO_B+1:
+            case FIFO_B+2:
+            case FIFO_B+3: apu_io.fifo[1].enqueue(value); break;    
+            case SOUNDCNT_L:   apu_io.control.write(0, value); break;
+            case SOUNDCNT_L+1: apu_io.control.write(1, value); break;
+            case SOUNDCNT_H:   apu_io.control.write(2, value); break;
+            case SOUNDCNT_H+1: apu_io.control.write(3, value); break;
+            case SOUNDCNT_X:   apu_io.control.write(4, value); break; 
+                
             // TIMER
             case TM0CNT_L:   m_io.timer[0].write(0, value); break;
             case TM0CNT_L+1: m_io.timer[0].write(1, value); break;

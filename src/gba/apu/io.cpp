@@ -23,8 +23,6 @@ namespace GameBoyAdvance {
     
     void APU::IO::Control::reset() {
         master_enable = false;
-        fifo[0].reset();
-        fifo[1].reset();
         psg.volume = 0;
         psg.master[0] = 0;
         psg.master[1] = 0;
@@ -107,12 +105,15 @@ namespace GameBoyAdvance {
                 dma[DMA_B].timer_num          = (value >> 6) & 1;
                 
                 if (value & 0x08) {
-                    fifo[0].reset();
+                    fifo[0]->reset();
                 }
                 if (value & 0x80) {
-                    fifo[1].reset();
+                    fifo[1]->reset();
                 }
                 
+                break;
+            case 4:
+                master_enable = value & 128;
                 break;
         }
     }

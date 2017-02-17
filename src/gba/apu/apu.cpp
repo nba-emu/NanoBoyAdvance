@@ -22,10 +22,17 @@
 namespace GameBoyAdvance {
     
     APU::APU() {
+        // forward FIFO access to SOUNDCNT register (for FIFO resetting)
+        m_io.control.fifo[0] = &m_io.fifo[0];
+        m_io.control.fifo[1] = &m_io.fifo[1];
+        
+        // reset state
         reset();
     }
     
     void APU::reset() {
+        m_io.fifo[0].reset();
+        m_io.fifo[1].reset();
         m_io.bias.reset();
         m_io.control.reset();
     }

@@ -105,4 +105,20 @@ namespace GameBoyAdvance {
             m_interrupt.request((InterruptType)(INTERRUPT_DMA_0 << dma.id));
         }
     }
+    
+    void CPU::dma_fill_fifo(int dma_id) {
+        auto& dma = m_io.dma[dma_id];
+        
+        for (int i = 0; i < 4; i++) {
+            u32 value = read_word(dma.internal.src_addr & ~3);
+            
+            write_word(dma.internal.dst_addr, value);
+            
+            dma.internal.src_addr += 4;
+        }
+        
+        if (dma.interrupt) {
+            m_interrupt.request((InterruptType)(INTERRUPT_DMA_0 << dma.id));
+        }
+    }
 }

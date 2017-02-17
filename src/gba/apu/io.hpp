@@ -30,9 +30,11 @@ enum DMANumber {
 };
 
 struct IO {
+    FIFO fifo[2];
+    
     struct Control {
         bool master_enable;
-        FIFO fifo[2]; // suboptimal...
+        FIFO* fifo[2];
         
         struct PSG {
             int  volume;    // 0=25% 1=50% 2=100% 3=forbidden

@@ -28,6 +28,7 @@ namespace GameBoyAdvance {
     
     class APU {
     private:
+        
         #include "io.hpp"
     
     public:

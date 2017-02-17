@@ -19,6 +19,8 @@
 
 #include "cpu.hpp"
 #include "util/logger.hpp"
+#include <fstream>
+#include <string>
 
 using namespace Util;
 
@@ -64,6 +66,38 @@ namespace GameBoyAdvance {
             }
             overflow = true;
             timer.counter = timer.reload;
+            
+            // DMA FIFO handling
+            auto& apu_io  = m_apu.get_io();
+            auto& control = apu_io.control;
+            auto& dma1    = m_io.dma[1];
+            auto& dma2    = m_io.dma[2];
+            
+            if (control.master_enable) {
+                for (int i = 0; i < 2; i++) {
+                    if (control.dma[i].timer_num == timer.id) {
+                        auto& fifo = apu_io.fifo[i];
+                        
+                        std::string filename = (i == 0) ? "fifo_a.raw" : "fifo_b.raw";
+                        std::ofstream s(filename, std::ofstream::out | std::ofstream::binary | std::ofstream::app);
+                        
+                        s8 sample = fifo.dequeue();
+                        fmt::print("fifo{1}: {0:x}\n", sample, i);
+                        s << sample;
+                        s.close();
+                        
+                        if (fifo.requires_data()) {
+                            u32 address = (i == 0) ? 0x040000A0 : 0x040000A4; // eh...
+                            
+                            if (dma1.time == DMA_SPECIAL && dma1.dst_addr == address) {
+                                dma_fill_fifo(1);
+                            } else if (dma2.time == DMA_SPECIAL && dma2.dst_addr == address) {
+                                dma_fill_fifo(2);
+                            }
+                        }
+                    }
+                }
+            }
         } else {
             overflow = false;
             timer.counter++;

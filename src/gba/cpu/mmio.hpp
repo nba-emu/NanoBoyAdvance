@@ -69,12 +69,11 @@ namespace GameBoyAdvance {
     const int SOUND4CNT_H = 0x0400007C;
     const int SOUNDCNT_L = 0x04000080;
     const int SOUNDCNT_H = 0x04000082;
+    const int SOUNDCNT_X = 0x04000084;
     const int SOUNDBIAS = 0x04000088;
     const int WAVE_RAM = 0x04000090;
-    const int FIFO_A_L = 0x040000A0;
-    const int FIFO_A_H = 0x040000A2;
-    const int FIFO_B_L = 0x040000A4;
-    const int FIFO_B_H = 0x040000A6;
+    const int FIFO_A = 0x040000A0;
+    const int FIFO_B = 0x040000A4;
     const int DMA0SAD = 0x040000B0;
     const int DMA0DAD = 0x040000B4;
     const int DMA0CNT_L = 0x040000B8;
