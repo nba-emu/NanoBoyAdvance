@@ -83,8 +83,9 @@ namespace GameBoyAdvance {
         void run_for(int cycles);
 
         void timer_step(int cycles);
-        void timer_increment(struct IO::Timer& timer, bool& overflow);
-
+        void timer_increment(int timer_id);
+        void timer_fifo(int timer_id);
+        
         void dma_hblank();
         void dma_vblank();
         void dma_transfer();

@@ -116,7 +116,7 @@ namespace GameBoyAdvance {
     }
 
     void CPU::IO::Timer::reset() {
-        ticks = 0;
+        cycles = 0;
         reload = 0;
         counter = 0;
         control.frequency = 0;

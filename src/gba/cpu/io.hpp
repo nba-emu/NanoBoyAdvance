@@ -62,7 +62,7 @@ struct IO {
             bool enable;
         } control;
 
-        int ticks;
+        int cycles;
         u16 reload;
         u16 counter;
 
