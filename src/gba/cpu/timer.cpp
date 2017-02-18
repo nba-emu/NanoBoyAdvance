@@ -56,7 +56,9 @@ namespace GameBoyAdvance {
                         cycles_left = cycles_left % total_cycles;
                     }
                     
-                    timer_increment(i, increments);
+                    for (int x = 0; x < increments; x++) {
+                        timer_increment(i, 1);
+                    }
                 }
                 
                 timer.cycles += cycles_left;
@@ -108,19 +110,19 @@ namespace GameBoyAdvance {
                 auto& fifo = apu_io.fifo[i];
                         
                 //std::string filename = (i == 0) ? "fifo_a.raw" : "fifo_b.raw";
-                //std::ofstream s(filename, std::ofstream::out | std::ofstream::binary | std::ofstream::app);
-                        
-                s8 sample = fifo.dequeue();
+                //std::ofstream s(filename, std::ofstream::out | std::ofstream::binary | std::ofstream::app);        
+                //s8 sample = fifo.dequeue();
                 //fmt::print("fifo{1}: {0:x}\n", sample, i);
                 //s << sample;
                 //s.close();
+                m_apu.fifo_get_sample(i);
                         
                 if (fifo.requires_data()) {
                     u32 address = (i == 0) ? FIFO_A : FIFO_B;
                         
-                    if (dma1.time == DMA_SPECIAL && dma1.dst_addr == address) {
+                    if (dma1.enable && dma1.time == DMA_SPECIAL && dma1.dst_addr == address) {
                         dma_fill_fifo(1);
-                    } else if (dma2.time == DMA_SPECIAL && dma2.dst_addr == address) {
+                    } else if (dma2.enable && dma2.time == DMA_SPECIAL && dma2.dst_addr == address) {
                         dma_fill_fifo(2);
                     }
                 }

@@ -21,6 +21,8 @@
 
 #include "fifo.hpp"
 #include "util/integer.hpp"
+#include <vector>
+#include <mutex>
 
 #define APU_INCLUDE
 
@@ -31,6 +33,10 @@ namespace GameBoyAdvance {
         
         #include "io.hpp"
     
+        std::mutex m_mutex;
+        
+        std::vector<s8> m_fifo_buffer[2];
+        
     public:
         APU();
         
@@ -38,6 +44,17 @@ namespace GameBoyAdvance {
         
         IO& get_io() {
             return m_io;
+        }
+        
+        void fill_buffer(u16* stream, int length);
+        
+        void fifo_get_sample(int fifo_id) {
+            auto& fifo   = m_io.fifo[fifo_id];
+            auto& buffer = m_fifo_buffer[fifo_id];
+            
+            m_mutex.lock();
+            buffer.push_back(fifo.dequeue());
+            m_mutex.unlock();
         }
     };
 }

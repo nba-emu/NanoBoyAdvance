@@ -36,4 +36,37 @@ namespace GameBoyAdvance {
         m_io.bias.reset();
         m_io.control.reset();
     }
+    
+    void APU::fill_buffer(u16* stream, int length) {
+        
+        m_mutex.lock();
+        
+        for (int i = 0; i < length; i++) {
+            if (i >= m_fifo_buffer[0].size()) {
+                stream[i * 2] = 0;
+            } else {
+                stream[i * 2] = m_fifo_buffer[0][i];
+            }
+            
+            if (i >= m_fifo_buffer[1].size()) {
+                stream[i * 2 + 1] = 0;
+            } else {
+                stream[i * 2 + 1] = m_fifo_buffer[1][i];
+            }
+        }
+        
+        if (length >= m_fifo_buffer[0].size()) {
+            m_fifo_buffer[0].clear();
+        } else {
+            m_fifo_buffer[0].erase(m_fifo_buffer[0].begin(), m_fifo_buffer[0].begin()+length);
+        }
+        
+        if (length >= m_fifo_buffer[1].size()) {
+            m_fifo_buffer[1].clear();
+        } else {
+            m_fifo_buffer[1].erase(m_fifo_buffer[1].begin(), m_fifo_buffer[1].begin()+length);
+        }
+        
+        m_mutex.unlock();
+    }
 }

@@ -46,8 +46,27 @@ SDL_Window*   g_window;
 SDL_Texture*  g_texture;
 SDL_Renderer* g_renderer;
 
+void sound_cb(APU* apu, u16* stream, int length) {
+    apu->fill_buffer(stream, length);
+}
+
+void setup_sound(APU* apu) {
+    SDL_AudioSpec spec;
+    
+    spec.freq     = 13389;
+    spec.samples  = 1024;
+    spec.format   = AUDIO_U16;
+    spec.channels = 2;
+    spec.callback = sound_cb;
+    spec.userdata = apu;
+    
+    SDL_Init(SDL_INIT_AUDIO);
+    SDL_OpenAudio(&spec, NULL);
+    SDL_PauseAudio(0);
+}
+
 void setup_window() {
-    SDL_Init(SDL_INIT_EVERYTHING);
+    SDL_Init(SDL_INIT_VIDEO);
 
     g_window = SDL_CreateWindow("NanoboyAdvance", 
                                   SDL_WINDOWPOS_CENTERED, 
@@ -152,9 +171,13 @@ int main(int argc, char** argv) {
         return -1;
     }
     
+    // setup SDL window
     g_width  *= config->scale;
     g_height *= config->scale;
     setup_window();
+    
+    // setup SDL sound
+    setup_sound(&emu.get_apu());
     
     SDL_Event event;
     bool running = true;
