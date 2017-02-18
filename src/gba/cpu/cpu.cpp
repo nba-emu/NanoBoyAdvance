@@ -181,43 +181,31 @@ namespace GameBoyAdvance {
 
     void CPU::run_for(int cycles) {
         int cycles_previous;
-
+        
         m_cycles += cycles;
 
-        while (m_cycles >= 0) {
+        while (m_cycles > 0) {
             u32 requested_and_enabled = m_io.interrupt.request & m_io.interrupt.enable;
 
             if (m_io.haltcnt == SYSTEM_HALT && requested_and_enabled) {
                 m_io.haltcnt = SYSTEM_RUN;
             }
 
-            if (m_io.haltcnt == SYSTEM_RUN) {
-                cycles_previous = m_cycles;
-
-                if (!m_dma_active) {
-                    if (m_io.interrupt.master_enable && requested_and_enabled) {
-                        raise_interrupt();
-                    }
-                    step();
-                } else {
-                    dma_transfer();
+            cycles_previous = m_cycles;
+            
+            if (m_dma_active) {
+                dma_transfer();
+            } else if (m_io.haltcnt == SYSTEM_RUN) {
+                if (m_io.interrupt.master_enable && requested_and_enabled) {
+                    raise_interrupt();
                 }
-
-                timer_step(cycles_previous - m_cycles);
+                step();
             } else {
-                if (m_dma_active) {
-                    cycles_previous = m_cycles;
-                    
-                    dma_transfer();
-                    timer_step(cycles_previous - m_cycles);
-                } else {
-                    // TODO(accuracy): run timers only until first IRQ
-                    timer_step(m_cycles);
-                    
-                    m_cycles = 0;
-                    return;
-                }
+                //TODO: inaccurate because of timer interrupts
+                m_cycles = 0;
             }
+            
+            timer_step(cycles_previous - m_cycles);
         }
 
         //if (m_cycles < -10) {
