@@ -47,7 +47,7 @@ namespace GameBoyAdvance {
                     needed_cycles = total_cycles - timer.cycles;
                 }
                 
-                timer.cycles = cycles_left;
+                timer.cycles += cycles_left;
             }
         }
     }
