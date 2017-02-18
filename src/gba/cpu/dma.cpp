@@ -112,7 +112,7 @@ namespace GameBoyAdvance {
         for (int i = 0; i < 4; i++) {
             u32 value = read_word(dma.internal.src_addr & ~3);
             
-            write_word(dma.internal.dst_addr, value);
+            write_word(dma.internal.dst_addr & ~3, value);
             
             dma.internal.src_addr += 4;
         }
