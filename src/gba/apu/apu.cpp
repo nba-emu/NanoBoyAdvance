@@ -39,32 +39,36 @@ namespace GameBoyAdvance {
     
     void APU::fill_buffer(u16* stream, int length) {
         
+        double ratio = 13389.0 / 44100.0;
+        
         m_mutex.lock();
         
         for (int i = 0; i < length; i++) {
             if (i >= m_fifo_buffer[0].size()) {
                 stream[i * 2] = 0;
             } else {
-                stream[i * 2] = m_fifo_buffer[0][i];
+                stream[i * 2] = m_fifo_buffer[0][i * ratio];
             }
             
             if (i >= m_fifo_buffer[1].size()) {
                 stream[i * 2 + 1] = 0;
             } else {
-                stream[i * 2 + 1] = m_fifo_buffer[1][i];
+                stream[i * 2 + 1] = m_fifo_buffer[1][i * ratio];
             }
         }
         
-        if (length >= m_fifo_buffer[0].size()) {
+        int actual_length = length * ratio;
+        
+        if (actual_length >= m_fifo_buffer[0].size()) {
             m_fifo_buffer[0].clear();
         } else {
-            m_fifo_buffer[0].erase(m_fifo_buffer[0].begin(), m_fifo_buffer[0].begin()+length);
+            m_fifo_buffer[0].erase(m_fifo_buffer[0].begin(), m_fifo_buffer[0].begin()+actual_length);
         }
         
-        if (length >= m_fifo_buffer[1].size()) {
+        if (actual_length >= m_fifo_buffer[1].size()) {
             m_fifo_buffer[1].clear();
         } else {
-            m_fifo_buffer[1].erase(m_fifo_buffer[1].begin(), m_fifo_buffer[1].begin()+length);
+            m_fifo_buffer[1].erase(m_fifo_buffer[1].begin(), m_fifo_buffer[1].begin()+actual_length);
         }
         
         m_mutex.unlock();
