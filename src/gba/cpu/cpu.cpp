@@ -202,7 +202,9 @@ namespace GameBoyAdvance {
                 step();
             } else {
                 //TODO: inaccurate because of timer interrupts
+                timer_step(m_cycles);
                 m_cycles = 0;
+                return;
             }
             
             timer_step(cycles_previous - m_cycles);

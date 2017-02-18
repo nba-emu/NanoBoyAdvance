@@ -50,8 +50,7 @@ namespace GameBoyAdvance {
                     int increments = 1;
                     
                     cycles_left -= needed_cycles;
-                    timer.cycles = 0; // might not be needed but do it for now
-                    
+
                     if (cycles_left >= total_cycles) {
                         increments += cycles_left / total_cycles;
                         cycles_left = cycles_left % total_cycles;
@@ -71,6 +70,8 @@ namespace GameBoyAdvance {
         
         timer.cycles = 0;
         
+        // TODO(accuracy): if a game would let the timer run from e.g. 0xFFFE to 0xFFFF
+        //                 the current approach would be inaccuracte / too few overflow would be generated.
         if (timer.counter >= 0xFFFF) {
             
             if (timer.control.interrupt) {
