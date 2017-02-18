@@ -64,7 +64,7 @@ struct IO {
 
         int cycles;
         u16 reload;
-        u16 counter;
+        u32 counter;
 
         void reset();
         auto read(int offset) -> u8;

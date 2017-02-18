@@ -40,11 +40,24 @@ namespace GameBoyAdvance {
                 int total_cycles  = m_timer_ticks[control.frequency];
                 int needed_cycles = total_cycles - timer.cycles;
 
-                while (cycles_left >= needed_cycles) {
-                    timer_increment(i);
+                //while (cycles_left >= needed_cycles) {
+                //    timer_increment(i);
+                //    
+                //    cycles_left  -= needed_cycles;
+                //    needed_cycles = total_cycles - timer.cycles;
+                //}
+                if (cycles_left >= needed_cycles) {
+                    int increments = 1;
                     
-                    cycles_left  -= needed_cycles;
-                    needed_cycles = total_cycles - timer.cycles;
+                    cycles_left -= needed_cycles;
+                    timer.cycles = 0; // might not be needed but do it for now
+                    
+                    if (cycles_left >= total_cycles) {
+                        increments += cycles_left / total_cycles;
+                        cycles_left = cycles_left % total_cycles;
+                    }
+                    
+                    timer_increment(i, increments);
                 }
                 
                 timer.cycles += cycles_left;
@@ -52,13 +65,13 @@ namespace GameBoyAdvance {
         }
     }
 
-    void CPU::timer_increment(int timer_id) {
+    void CPU::timer_increment(int timer_id, int times) {
 
         auto& timer = m_io.timer[timer_id];
         
         timer.cycles = 0;
         
-        if (timer.counter == 0xFFFF) {
+        if (timer.counter >= 0xFFFF) {
             
             if (timer.control.interrupt) {
                 m_interrupt.request((InterruptType)(INTERRUPT_TIMER_0 << timer_id));
@@ -70,7 +83,7 @@ namespace GameBoyAdvance {
                 auto& timer2 = m_io.timer[timer_id + 1];
 
                 if (timer2.control.enable && timer2.control.cascade) {
-                    timer_increment(timer2.id);
+                    timer_increment(timer2.id, 1);
                 }
             }
             
@@ -78,7 +91,7 @@ namespace GameBoyAdvance {
                 timer_fifo(timer.id);        
             }
         } else {
-            timer.counter++;
+            timer.counter += times;
         }
     }
     
