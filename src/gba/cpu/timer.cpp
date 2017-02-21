@@ -40,12 +40,6 @@ namespace GameBoyAdvance {
                 int total_cycles  = m_timer_ticks[control.frequency];
                 int needed_cycles = total_cycles - timer.cycles;
 
-                //while (cycles_left >= needed_cycles) {
-                //    timer_increment(i);
-                //    
-                //    cycles_left  -= needed_cycles;
-                //    needed_cycles = total_cycles - timer.cycles;
-                //}
                 if (cycles_left >= needed_cycles) {
                     int increments = 1;
                     
@@ -56,9 +50,7 @@ namespace GameBoyAdvance {
                         cycles_left = cycles_left % total_cycles;
                     }
                     
-                    for (int x = 0; x < increments; x++) {
-                        timer_increment(i, 1);
-                    }
+                    timer_increment(i, increments);
                 }
                 
                 timer.cycles += cycles_left;
@@ -66,15 +58,14 @@ namespace GameBoyAdvance {
         }
     }
 
-    void CPU::timer_increment(int timer_id, int times) {
+    void CPU::timer_increment(int timer_id, int increment_count) {
 
-        auto& timer = m_io.timer[timer_id];
+        auto& timer         = m_io.timer[timer_id];
+        int   next_overflow = 0x10000 - timer.counter;
         
         timer.cycles = 0;
         
-        // TODO(accuracy): if a game would let the timer run from e.g. 0xFFFE to 0xFFFF
-        //                 the current approach would be inaccuracte / too few overflow would be generated.
-        if (timer.counter >= 0xFFFF) {
+        while (increment_count >= next_overflow) {
             
             if (timer.control.interrupt) {
                 m_interrupt.request((InterruptType)(INTERRUPT_TIMER_0 << timer_id));
@@ -86,15 +77,44 @@ namespace GameBoyAdvance {
                 auto& timer2 = m_io.timer[timer_id + 1];
 
                 if (timer2.control.enable && timer2.control.cascade) {
-                    timer_increment(timer2.id, 1);
+                    timer_increment_once(timer2);
                 }
             }
             
             if (m_apu.get_io().control.master_enable) {
                 timer_fifo(timer.id);        
             }
+            
+            increment_count -= next_overflow;
+            
+            next_overflow = 0x10000 - timer.counter;
+        }
+        
+        timer.counter += increment_count;
+    }
+    
+    void CPU::timer_increment_once(IO::Timer& timer) {
+        
+        if (timer.counter == 0xFFFF) {
+            timer.counter++;    
         } else {
-            timer.counter += times;
+            if (timer.control.interrupt) {
+                m_interrupt.request((InterruptType)(INTERRUPT_TIMER_0 << timer.id));
+            }
+            
+            timer.counter = timer.reload;
+            
+            if (timer.id != 3) {
+                auto& timer2 = m_io.timer[timer.id + 1];
+
+                if (timer2.control.enable && timer2.control.cascade) {
+                    timer_increment_once(timer2);
+                }
+            }
+            
+            if (m_apu.get_io().control.master_enable) {
+                timer_fifo(timer.id);        
+            }
         }
     }
     
@@ -109,12 +129,6 @@ namespace GameBoyAdvance {
             if (control.dma[i].timer_num == timer_id) {
                 auto& fifo = apu_io.fifo[i];
                         
-                //std::string filename = (i == 0) ? "fifo_a.raw" : "fifo_b.raw";
-                //std::ofstream s(filename, std::ofstream::out | std::ofstream::binary | std::ofstream::app);        
-                //s8 sample = fifo.dequeue();
-                //fmt::print("fifo{1}: {0:x}\n", sample, i);
-                //s << sample;
-                //s.close();
                 m_apu.fifo_get_sample(i);
                         
                 if (fifo.requires_data()) {
