@@ -95,7 +95,7 @@ namespace GameBoyAdvance {
     
     void CPU::timer_increment_once(IO::Timer& timer) {
         
-        if (timer.counter == 0xFFFF) {
+        if (timer.counter != 0xFFFF) {
             timer.counter++;    
         } else {
             if (timer.control.interrupt) {
