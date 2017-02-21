@@ -46,7 +46,7 @@ namespace GameBoyAdvance {
             return m_io;
         }
         
-        void fill_buffer(u16* stream, int length);
+        void fill_buffer(s8* stream, int length);
         
         void fifo_get_sample(int fifo_id) {
             auto& fifo   = m_io.fifo[fifo_id];

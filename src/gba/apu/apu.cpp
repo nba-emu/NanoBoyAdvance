@@ -37,20 +37,22 @@ namespace GameBoyAdvance {
         m_io.control.reset();
     }
     
-    void APU::fill_buffer(u16* stream, int length) {
+    void APU::fill_buffer(s8* stream, int length) {
         
         double ratio = 13389.0 / 44100.0;
         
         m_mutex.lock();
         
+        length /= 2; // length is in bytes plus 2 channels..
+        
         for (int i = 0; i < length; i++) {
-            if (i >= m_fifo_buffer[0].size()) {
+            if ((i * ratio) >= m_fifo_buffer[0].size()) {
                 stream[i * 2] = 0;
             } else {
                 stream[i * 2] = m_fifo_buffer[0][i * ratio];
             }
             
-            if (i >= m_fifo_buffer[1].size()) {
+            if ((i * ratio)  >= m_fifo_buffer[1].size()) {
                 stream[i * 2 + 1] = 0;
             } else {
                 stream[i * 2 + 1] = m_fifo_buffer[1][i * ratio];

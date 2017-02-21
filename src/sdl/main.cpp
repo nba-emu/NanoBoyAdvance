@@ -46,7 +46,7 @@ SDL_Window*   g_window;
 SDL_Texture*  g_texture;
 SDL_Renderer* g_renderer;
 
-void sound_cb(APU* apu, u16* stream, int length) {
+void sound_cb(APU* apu, s8* stream, int length) {
     apu->fill_buffer(stream, length);
 }
 
@@ -54,8 +54,8 @@ void setup_sound(APU* apu) {
     SDL_AudioSpec spec;
     
     spec.freq     = 44100;
-    spec.samples  = 4096;
-    spec.format   = AUDIO_U16;
+    spec.samples  = 8192;
+    spec.format   = AUDIO_S8;
     spec.channels = 2;
     spec.callback = sound_cb;
     spec.userdata = apu;
