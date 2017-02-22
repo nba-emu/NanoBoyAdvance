@@ -27,7 +27,12 @@ using namespace Util;
 
 namespace GameBoyAdvance {
     
-    constexpr int CPU::m_timer_ticks[4];
+    // cycles required for one increment
+    static constexpr int g_timer_ticks[4] = { 1, 64, 256, 1024 };
+        
+    // shift amount and mask for division/modulo by total_cycles
+    static constexpr int g_timer_shift[4] = { 0, 6, 8, 10 };
+    static constexpr int g_timer_mask [4] = { 0, 0x3F, 0xFF, 0x3FF };
 
     void CPU::timer_step(int cycles) {
         
@@ -38,7 +43,7 @@ namespace GameBoyAdvance {
             // handles only non-cascade timers directly
             if (control.enable && !control.cascade) {
                 int cycles_left   = cycles;
-                int total_cycles  = m_timer_ticks[control.frequency];
+                int total_cycles  = g_timer_ticks[control.frequency];
                 int needed_cycles = total_cycles - timer.cycles;
 
                 // does the cycle amount satifies an increment?
@@ -50,11 +55,17 @@ namespace GameBoyAdvance {
 
                     // check if more increments are still possible
                     if (cycles_left >= total_cycles) {
-                        // divide left amount of cycles to run by the total cycles needed for an increment
-                        // to calculate: a) furtherly satisfyable increments (quotient) and 
-                        //               b) amount of cycles left after doing them (remainder)
-                        increments += cycles_left / total_cycles;
-                        cycles_left = cycles_left % total_cycles;
+                        if (control.frequency == 0) {
+                            // in this case frequency = F/1 and we can take a shortcut
+                            increments += cycles_left;
+                            cycles_left = 0;
+                        } else {
+                            // divide left amount of cycles to run by the total cycles needed for an increment
+                            // to calculate: a) furtherly satisfyable increments (quotient) and 
+                            //               b) amount of cycles left after doing them (remainder)
+                            increments += cycles_left >> g_timer_shift[control.frequency];
+                            cycles_left = cycles_left  & g_timer_mask [control.frequency];
+                        }
                     }
                     
                     // increment timer by the calculated amount

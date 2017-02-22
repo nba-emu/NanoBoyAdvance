@@ -139,8 +139,6 @@ namespace GameBoyAdvance {
             &CPU::write_invalid
         };
 
-        static constexpr int m_timer_ticks[4] = { 1, 64, 256, 1024 };
-
     public:
         CPU();
         ~CPU();
