@@ -55,6 +55,9 @@ namespace GameBoyAdvance {
 
     void PPU::render_sprites(u32 tile_base) {
         
+        // affine 2x2 matrix
+        u16 pa, pb, pc, pd;
+        
         u32 offset = 127 << 3;
 
         // eh...
@@ -86,75 +89,129 @@ namespace GameBoyAdvance {
             if (x >= 240) x -= 512;            
             if (y >= 160) y -= 256;
             
-            bool rotate_scale = attribute0 & 256;
+            bool affine    = attribute0 & 256;
+            bool attr0bit9 = attribute0 & (1<<9);
+            
+            // check if OBJ is disabled
+            if (!affine && attr0bit9) {
+                offset -= 8;
+                continue;
+            }
 
-            /*if (rotate_scale)
-            {
-                int group = (attribute1 >> 9) & 0x1F;
-
-                u16 parameter_a = (m_oam[(group << 1) + 0x7 ] << 8) | m_oam[(group << 1) + 0x6 ];
-                u16 parameter_b = (m_oam[(group << 1) + 0xF ] << 8) | m_oam[(group << 1) + 0xE ];
-                u16 parameter_c = (m_oam[(group << 1) + 0x17] << 8) | m_oam[(group << 1) + 0x16];
-                u16 parameter_d = (m_oam[(group << 1) + 0x1F] << 8) | m_oam[(group << 1) + 0x1E];
-
-                y = PPU::decode_float16(parameter_c) * x + PPU::decode_float16(parameter_d) * y;
-            }*/
-
-            width =  g_sprite_size[shape][size][0];
+            // get width and height of OBJ
+            width  = g_sprite_size[shape][size][0];
             height = g_sprite_size[shape][size][1];
             
-            if (m_io.vcount >= y && m_io.vcount <= y + height - 1) {
-                
-                int line = m_io.vcount - y;
+            int rect_width  = width;
+            int rect_height = height;
+            
+            // move x/y to the *center* of the OBJ
+            x += width  >> 1;
+            y += height >> 1;
+            
+            // read rot/scale parameters
+            if (affine) {
+                int group = (attribute1 >> 9) & 0x1F;
 
+                pa = (m_oam[(group << 1) + 0x7 ] << 8) | m_oam[(group << 1) + 0x6 ];
+                pb = (m_oam[(group << 1) + 0xF ] << 8) | m_oam[(group << 1) + 0xE ];
+                pc = (m_oam[(group << 1) + 0x17] << 8) | m_oam[(group << 1) + 0x16];
+                pd = (m_oam[(group << 1) + 0x1F] << 8) | m_oam[(group << 1) + 0x1E];
+                
+                // double-size bit
+                if (attr0bit9) {
+                    x += width  >> 1;
+                    y += height >> 1;
+                    
+                    rect_width  <<= 1;
+                    rect_height <<= 1;
+                }
+                
+            } else {
+                // initialize P with identity matrix:
+                // [ 1  0 ]
+                // [ 0  1 ]
+                pa = 0x0100;
+                pb = 0x0000;
+                pc = 0x0000;
+                pd = 0x0100;
+            }
+            
+            // half the width and height of OBJ screen area
+            int half_width  = rect_width  >> 1;
+            int half_height = rect_height >> 1;
+
+            int line  = m_io.vcount;
+            int min_y = y - half_height;
+            int max_y = y + half_height;
+            
+            if (line >= min_y && line < max_y) {
+                
+                int rect_y = line - y;
+                
                 int number  = attribute2 & 0x3FF;
                 int palette = (attribute2 >> 12) + 16;
-                bool h_flip = !rotate_scale && (attribute1 & (1 << 12));
-                bool v_flip = !rotate_scale && (attribute1 & (1 << 13));
+                bool h_flip = !affine && (attribute1 & (1 << 12));
+                bool v_flip = !affine && (attribute1 & (1 << 13));
                 bool is_256 = attribute0 & (1 << 13);
+                
+                for (int rect_x = -half_width; rect_x < half_width; rect_x++) {
 
-                if (is_256) number >>= 1;
-                if (v_flip) line = height - line;
-
-                int tile_y     = line & 7;
-                int tile_row   = line >> 3;
-                int tile_count = width >> 3;
-
-                if (v_flip) {
-                    tile_y ^= 7;
-                    tile_row = (height >> 3) - tile_row;
-                }
-
-                if (m_io.control.one_dimensional) {
-                    number += tile_row * tile_count;
-                } else {
-                    number += tile_row << 5;
-                }
-
-                int pos = 0;
-
-                if (x < 0) {
-                    pos = x * -1;
-                }
-
-                for (; pos < width && (x + pos) < 240; pos++) {
+                    // get pixel eccetera...
+                    int screen_x = x + rect_x;
                     
-                    u16 pixel;
-                    int tile_x = pos & 7;
-                    int tile   = pos >> 3;
+                    // meh...
+                    if (screen_x >= 0 && screen_x < 240) {
+                        
+                        // texture coordinates
+                        int tex_x = PPU::decode_float16(pa) * rect_x + PPU::decode_float16(pb) * rect_y + (width  >> 1);
+                        int tex_y = PPU::decode_float16(pc) * rect_x + PPU::decode_float16(pd) * rect_y + (height >> 1);
+                        
+                        if (tex_x > width || tex_y > height || 
+                            tex_x < 0     || tex_y < 0     ) {
+                            
+                            m_buffer[4 + prio][screen_x] = COLOR_TRANSPARENT;
+                            continue;
+                        }
+                        
+                        if (h_flip) {
+                            tex_x = width  - tex_x;
+                        }
+                        
+                        if (v_flip) {
+                            tex_y = height - tex_y;
+                        }
+                        
+                        int tile_x  = tex_x  & 7;
+                        int tile_y  = tex_y  & 7;
+                        int block_x = tex_x >> 3;
+                        int block_y = tex_y >> 3;
+                        
+                        int tile_num = number;
+                        
+                        if (m_io.control.one_dimensional) {
+                            tile_num += block_y * (width >> 3);
+                        } else {
+                            tile_num += block_y << 5;
+                        }
+                        
+                        tile_num += block_x;
+                        
+                        u16 pixel;
+                        
+                        if (is_256) {
+                            pixel = get_tile_pixel_8bpp(tile_base, 16     , tile_num, tile_x, tile_y);
+                        } else {
+                            pixel = get_tile_pixel_4bpp(tile_base, palette, tile_num, tile_x, tile_y);
+                        }
 
-                    if (is_256) {
-                        pixel = get_tile_pixel_8bpp(tile_base, 16, number + tile, tile_x, tile_y);
-                    } else {
-                        pixel = get_tile_pixel_4bpp(tile_base, palette, number + tile, tile_x, tile_y);
-                    }
-
-                    if (pixel != COLOR_TRANSPARENT) {
-                        m_buffer[4 + prio][x + pos] = pixel;
+                        if (pixel != COLOR_TRANSPARENT) {
+                            m_buffer[4 + prio][screen_x] = pixel;
+                        }
                     }
                 }
             }
-
+            
             offset -= 8;
         }
     }

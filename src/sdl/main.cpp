@@ -54,7 +54,7 @@ void setup_sound(APU* apu) {
     SDL_AudioSpec spec;
     
     spec.freq     = 44100;
-    spec.samples  = 8192;
+    spec.samples  = 1024;
     spec.format   = AUDIO_S8;
     spec.channels = 2;
     spec.callback = sound_cb;

@@ -109,6 +109,7 @@ namespace GameBoyAdvance {
         m_io.status.vblank_flag = false;
         m_io.status.hblank_flag = false;
 
+        // off by one scanline?
         m_io.bgx[0].internal += PPU::decode_float16(m_io.bgpb[0]);
         m_io.bgy[0].internal += PPU::decode_float16(m_io.bgpd[0]);
         m_io.bgx[1].internal += PPU::decode_float16(m_io.bgpb[1]);
