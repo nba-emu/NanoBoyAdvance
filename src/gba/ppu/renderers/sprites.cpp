@@ -111,12 +111,12 @@ namespace GameBoyAdvance {
             
             // read rot/scale parameters
             if (affine) {
-                int group = (attribute1 >> 9) & 0x1F;
+                int group = ((attribute1 >> 9) & 0x1F) << 5;
 
-                pa = (m_oam[(group << 1) + 0x7 ] << 8) | m_oam[(group << 1) + 0x6 ];
-                pb = (m_oam[(group << 1) + 0xF ] << 8) | m_oam[(group << 1) + 0xE ];
-                pc = (m_oam[(group << 1) + 0x17] << 8) | m_oam[(group << 1) + 0x16];
-                pd = (m_oam[(group << 1) + 0x1F] << 8) | m_oam[(group << 1) + 0x1E];
+                pa = (m_oam[group + 0x7 ] << 8) | m_oam[group + 0x6 ];
+                pb = (m_oam[group + 0xF ] << 8) | m_oam[group + 0xE ];
+                pc = (m_oam[group + 0x17] << 8) | m_oam[group + 0x16];
+                pd = (m_oam[group + 0x1F] << 8) | m_oam[group + 0x1E];
                 
                 // double-size bit
                 if (attr0bit9) {
@@ -148,7 +148,7 @@ namespace GameBoyAdvance {
             if (line >= min_y && line < max_y) {
                 
                 int rect_y = line - y;
-                
+                 
                 int number  = attribute2 & 0x3FF;
                 int palette = (attribute2 >> 12) + 16;
                 bool h_flip = !affine && (attribute1 & (1 << 12));
