@@ -169,11 +169,9 @@ namespace GameBoyAdvance {
                         int tex_x = PPU::decode_float16(pa) * rect_x + PPU::decode_float16(pb) * rect_y + (width  >> 1);
                         int tex_y = PPU::decode_float16(pc) * rect_x + PPU::decode_float16(pd) * rect_y + (height >> 1);
                         
-                        if (tex_x > width || tex_y > height || 
-                            tex_x < 0     || tex_y < 0     ) {
-                            
-                            continue;
-                        }
+                        // are the coordinates inside the valid boundaries?
+                        if (tex_x >= width || tex_y >= height || 
+                            tex_x < 0      || tex_y < 0     ) { continue; }
                         
                         if (h_flip) {
                             tex_x = width  - tex_x;
@@ -193,7 +191,7 @@ namespace GameBoyAdvance {
                         if (m_io.control.one_dimensional) {
                             tile_num += block_y * (width >> 3);
                         } else {
-                            tile_num += block_y << 5;
+                            tile_num += block_y << (is_256? 4 : 5);
                         }
                         
                         tile_num += block_x;
