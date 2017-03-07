@@ -129,21 +129,21 @@ namespace GameBoyAdvance {
             switch (m_io.control.mode) {
                 case 0:
                     // BG Mode 0 - 240x160 pixels, Text mode
-                    if (m_io.control.enable[0]) render_textmode(0);
-                    if (m_io.control.enable[1]) render_textmode(1);
-                    if (m_io.control.enable[2]) render_textmode(2);
-                    if (m_io.control.enable[3]) render_textmode(3);
+                    if (m_io.control.enable[0]) render_text(0);
+                    if (m_io.control.enable[1]) render_text(1);
+                    if (m_io.control.enable[2]) render_text(2);
+                    if (m_io.control.enable[3]) render_text(3);
                     break;
                 case 1:
                     // BG Mode 1 - 240x160 pixels, Text and RS mode mixed
-                    if (m_io.control.enable[0]) render_textmode(0);
-                    if (m_io.control.enable[1]) render_textmode(1);
-                    if (m_io.control.enable[2]) render_rotate_scale(0);
+                    if (m_io.control.enable[0]) render_text(0);
+                    if (m_io.control.enable[1]) render_text(1);
+                    if (m_io.control.enable[2]) render_affine(0);
                     break;
                 case 2:
                     // BG Mode 2 - 240x160 pixels, RS mode
-                    if (m_io.control.enable[2]) render_rotate_scale(0);
-                    if (m_io.control.enable[2]) render_rotate_scale(1);
+                    if (m_io.control.enable[2]) render_affine(0);
+                    if (m_io.control.enable[2]) render_affine(1);
                     break;
                 case 3:
                     // BG Mode 3 - 240x160 pixels, 32768 colors
@@ -169,7 +169,7 @@ namespace GameBoyAdvance {
 
             if (m_io.control.enable[4]) {
                 // TODO(accuracy): tile base might not always be 0x10000?
-                render_sprites(0x10000);
+                render_obj(0x10000);
             }
 
             compose_scanline();

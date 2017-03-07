@@ -22,7 +22,7 @@
 
 namespace GameBoyAdvance {
     
-    static constexpr int g_sprite_size[4][4][2] = {
+    static constexpr int g_obj_size[4][4][2] = {
         /* SQUARE */
         {
             { 8 , 8  },
@@ -53,7 +53,7 @@ namespace GameBoyAdvance {
         }
     };
 
-    void PPU::render_sprites(u32 tile_base) {
+    void PPU::render_obj(u32 tile_base) {
         
         // affine 2x2 matrix
         u16 pa, pb, pc, pd;
@@ -99,8 +99,8 @@ namespace GameBoyAdvance {
             }
 
             // get width and height of OBJ
-            width  = g_sprite_size[shape][size][0];
-            height = g_sprite_size[shape][size][1];
+            width  = g_obj_size[shape][size][0];
+            height = g_obj_size[shape][size][1];
             
             int rect_width  = width;
             int rect_height = height;

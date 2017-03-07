@@ -24,27 +24,27 @@ using namespace Util;
 
 namespace GameBoyAdvance {
     
-    void PPU::render_textmode(int id) {
+    void PPU::render_text(int id) {
         
         if (m_io.bgcnt[id].full_palette) {
             switch (id) {
-                case 0: render_textmode_internal<true, 0>(); return;
-                case 1: render_textmode_internal<true, 1>(); return;
-                case 2: render_textmode_internal<true, 2>(); return;
-                case 3: render_textmode_internal<true, 3>(); return;
+                case 0: render_text_internal<true, 0>(); return;
+                case 1: render_text_internal<true, 1>(); return;
+                case 2: render_text_internal<true, 2>(); return;
+                case 3: render_text_internal<true, 3>(); return;
             }
         } else {
             switch (id) {
-                case 0: render_textmode_internal<false, 0>(); return;
-                case 1: render_textmode_internal<false, 1>(); return;
-                case 2: render_textmode_internal<false, 2>(); return;
-                case 3: render_textmode_internal<false, 3>(); return;
+                case 0: render_text_internal<false, 0>(); return;
+                case 1: render_text_internal<false, 1>(); return;
+                case 2: render_text_internal<false, 2>(); return;
+                case 3: render_text_internal<false, 3>(); return;
             }
         }
     }
 
     template <bool is_256, int id>
-    void PPU::render_textmode_internal() {
+    void PPU::render_text_internal() {
     
         auto bg        = m_io.bgcnt[id];
         u16* buffer    = m_buffer[id];

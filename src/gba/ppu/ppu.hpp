@@ -45,15 +45,16 @@ namespace GameBoyAdvance {
         #include "io.hpp"
         #include "helpers.hpp"
 
-        void render_textmode(int id);
-        void render_rotate_scale(int id);
+        void render_text(int id);
+        void render_affine(int id);
         void render_bitmap_1();
         void render_bitmap_2();
         void render_bitmap_3();
-        void render_sprites(u32 tile_base);
+        void render_obj(u32 tile_base);
 
         template <bool is_256, int id>
-        void render_textmode_internal();
+        void render_text_internal();
+        
     public:
         PPU();
 

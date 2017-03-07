@@ -11,9 +11,9 @@ set(SOURCES
     ppu/ppu.cpp
     ppu/composer.cpp
     ppu/renderers/bitmap.cpp
-    ppu/renderers/textmode.cpp
-    ppu/renderers/sprites.cpp
-    ppu/renderers/rotate_scale.cpp
+    ppu/renderers/text.cpp
+    ppu/renderers/obj.cpp
+    ppu/renderers/affine.cpp
     apu/apu.cpp
     apu/io.cpp
 )
