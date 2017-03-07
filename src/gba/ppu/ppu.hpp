@@ -19,8 +19,10 @@
 
 #pragma once
 
+#include "enums.hpp"
 #include "util/integer.hpp"
 #include "../cpu/interrupt.hpp"
+
 #define PPU_INCLUDE
 
 namespace GameBoyAdvance {
@@ -54,6 +56,8 @@ namespace GameBoyAdvance {
 
         template <bool is_256, int id>
         void render_text_internal();
+        
+        void apply_sfx(u16* target1, u16 target2);
         
     public:
         PPU();

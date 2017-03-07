@@ -179,4 +179,77 @@ namespace GameBoyAdvance {
         
         internal = PPU::decode_float32(this->value);
     }
+    
+    void PPU::IO::BlendControl::reset() {
+        sfx = SFX_NONE;
+        
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 6; j++) {
+                targets[i][j] = false;
+            }
+        }
+    }
+    
+    auto PPU::IO::BlendControl::read(int offset) -> u8 {
+        
+        switch (offset) {
+            case 0:
+                return (targets[0][SFX_BG0] ? 1  : 0) |
+                       (targets[0][SFX_BG1] ? 2  : 0) |
+                       (targets[0][SFX_BG2] ? 4  : 0) |
+                       (targets[0][SFX_BG3] ? 8  : 0) |
+                       (targets[0][SFX_OBJ] ? 16 : 0) |
+                       (targets[0][SFX_BD ] ? 32 : 0) |
+                       (sfx << 6);
+            case 1:
+                return (targets[1][SFX_BG0] ? 1  : 0) |
+                       (targets[1][SFX_BG1] ? 2  : 0) |
+                       (targets[1][SFX_BG2] ? 4  : 0) |
+                       (targets[1][SFX_BG3] ? 8  : 0) |
+                       (targets[1][SFX_OBJ] ? 16 : 0) |
+                       (targets[1][SFX_BD ] ? 32 : 0);
+        }
+    }
+    
+    void PPU::IO::BlendControl::write(int offset, u8 value) {
+        
+        switch (offset) {
+            case 0:
+                targets[0][SFX_BG0] = value & 1;
+                targets[0][SFX_BG1] = value & 2;
+                targets[0][SFX_BG2] = value & 4;
+                targets[0][SFX_BG3] = value & 8;
+                targets[0][SFX_OBJ] = value & 16;
+                targets[0][SFX_BD ] = value & 32;
+                sfx = static_cast<SpecialEffect>(value >> 6);
+                break;
+            case 1:
+                targets[1][SFX_BG0] = value & 1;
+                targets[1][SFX_BG1] = value & 2;
+                targets[1][SFX_BG2] = value & 4;
+                targets[1][SFX_BG3] = value & 8;
+                targets[1][SFX_OBJ] = value & 16;
+                targets[1][SFX_BD ] = value & 32;
+                break;
+        }
+    }
+    
+    void PPU::IO::BlendAlpha::reset() {
+        eva = evb = 0;
+    }
+    
+    void PPU::IO::BlendAlpha::write(int offset, u8 value) {
+        switch (offset) {
+            case 0: eva = value & 0x1F; break;
+            case 1: evb = value & 0x1F; break;
+        }
+    }
+    
+    void PPU::IO::BlendY::reset() {
+        evy = 0;
+    }
+    
+    void PPU::IO::BlendY::write(u8 value) {
+        evy = value & 0x1F;
+    }
 }

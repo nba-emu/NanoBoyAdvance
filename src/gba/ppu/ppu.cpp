@@ -53,6 +53,11 @@ namespace GameBoyAdvance {
                 m_io.bgpd[i] = 0;
             }
         }
+        
+        // reset blending registers
+        m_io.bldcnt.reset();
+        m_io.bldalpha.reset();
+        m_io.bldy.reset();
 
         m_frame_counter = 0;
     }

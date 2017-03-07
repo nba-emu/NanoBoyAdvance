@@ -82,6 +82,30 @@ struct IO {
     u16 bgpb[2];
     u16 bgpc[2];
     u16 bgpd[2];
+    
+    struct BlendControl {
+        SpecialEffect sfx;
+        bool targets[2][6];
+        
+        void reset();
+        auto read(int offset) -> u8;
+        void write(int offset, u8 value);
+    } bldcnt;
+    
+    struct BlendAlpha {
+        int eva;
+        int evb;
+        
+        void reset();
+        void write(int offset, u8 value);
+    } bldalpha;
+    
+    struct BlendY {
+        int evy;
+        
+        void reset();
+        void write(u8 value);
+    } bldy;
 } m_io;
 
 #endif

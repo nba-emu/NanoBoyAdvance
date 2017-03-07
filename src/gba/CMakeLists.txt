@@ -28,6 +28,7 @@ set(HEADERS
     cart/cart_backup.hpp
     cart/flash.hpp
     ppu/io.hpp
+    ppu/enums.hpp
     ppu/ppu.hpp
     apu/apu.hpp
     apu/fifo.hpp

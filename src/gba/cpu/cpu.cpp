@@ -66,6 +66,7 @@ namespace GameBoyAdvance {
         memset(m_pal,  0, 0x400);
         memset(m_oam,  0, 0x400);
         memset(m_vram, 0, 0x18000);
+        memset(m_mmio, 0, 0x800);
 
         // reset IO-registers
         m_io.keyinput = 0x3FF;

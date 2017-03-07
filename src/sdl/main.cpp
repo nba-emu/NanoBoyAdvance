@@ -250,6 +250,10 @@ int main(int argc, char** argv) {
                             fast_forward = true;
                             ppu->set_frameskip(config->speed);
                         }
+                        continue;
+                    case SDLK_F9:
+                        emu.reset();
+                        continue;
                     default: 
                         continue;
                 }
