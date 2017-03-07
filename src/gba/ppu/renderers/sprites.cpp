@@ -153,7 +153,9 @@ namespace GameBoyAdvance {
                 int palette = (attribute2 >> 12) + 16;
                 bool h_flip = !affine && (attribute1 & (1 << 12));
                 bool v_flip = !affine && (attribute1 & (1 << 13));
-                bool is_256 = attribute0 & (1 << 13);
+                bool is_256 = attribute0 & (1 << 13); 
+                
+                if (is_256) number >>= 1;
                 
                 for (int rect_x = -half_width; rect_x < half_width; rect_x++) {
 
@@ -170,7 +172,6 @@ namespace GameBoyAdvance {
                         if (tex_x > width || tex_y > height || 
                             tex_x < 0     || tex_y < 0     ) {
                             
-                            m_buffer[4 + prio][screen_x] = COLOR_TRANSPARENT;
                             continue;
                         }
                         
