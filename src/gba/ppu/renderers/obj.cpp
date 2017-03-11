@@ -67,6 +67,11 @@ namespace GameBoyAdvance {
             m_buffer[6][i] = COLOR_TRANSPARENT;
             m_buffer[7][i] = COLOR_TRANSPARENT;
         }
+        
+        // clear OBJWIN mask if required
+        if (m_io.control.win_enable[2]) {
+            memset(m_win_mask[2], 0, 240);
+        }
 
         // TODO(performance):
         // we have to read OAM data in descending order but that
@@ -84,6 +89,12 @@ namespace GameBoyAdvance {
             int shape = attribute0 >> 14;
             int size  = attribute1 >> 14;
             int prio  = (attribute2 >> 10) & 3;
+            int mode  = (attribute0 >> 10) & 3;
+            
+            if (mode == OBJ_PROHIBITED) {
+                offset -= 8;
+                continue;
+            }
 
             // can this be done more efficiently?
             if (x >= 240) x -= 512;            
@@ -205,7 +216,11 @@ namespace GameBoyAdvance {
                         }
 
                         if (pixel != COLOR_TRANSPARENT) {
-                            m_buffer[4 + prio][screen_x] = pixel;
+                            if (mode == OBJ_WINDOW) {
+                                m_win_mask[2][screen_x] = 1;
+                            } else {
+                                m_buffer[4 + prio][screen_x] = pixel;
+                            }
                         }
                     }
                 }

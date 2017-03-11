@@ -37,4 +37,11 @@ namespace GameBoyAdvance {
         SFX_INCREASE = 2,
         SFX_DECREASE = 3
     };
+    
+    enum ObjectMode {
+        OBJ_NORMAL     = 0,
+        OBJ_SEMI       = 1,
+        OBJ_WINDOW     = 2,
+        OBJ_PROHIBITED = 3
+    };
 }
