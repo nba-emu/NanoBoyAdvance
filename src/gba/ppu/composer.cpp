@@ -100,18 +100,18 @@ namespace GameBoyAdvance {
         auto outside = m_io.winout.enable[0];
         auto enable  = m_io.control.enable;
 
-        for (int i = 0; i < 240; i++) {
+        for (int x = 0; x < 240; x++) {
             int layer[2] = { LAYER_BD, LAYER_BD };
             u16 pixel[2] = { backdrop_color, 0 };
 
             for (int j = 3; j >= 0; j--) {
                 
                 for (int k = 3; k >= 0; k--) {
-                    bool visible = is_visible(i, inside[k], outside[k]);
+                    bool visible = is_visible(x, inside[k], outside[k]);
 
                     if (enable[k] && bgcnt[k].priority == j && visible) {
                         
-                        u16 new_pixel = m_buffer[k][i];
+                        u16 new_pixel = m_buffer[k][x];
                         
                         if (new_pixel != COLOR_TRANSPARENT) {
                             layer[1] = layer[0];
@@ -122,8 +122,8 @@ namespace GameBoyAdvance {
                     }
                 }
 
-                if (enable[LAYER_OBJ] && is_visible(i, inside[LAYER_OBJ], outside[LAYER_OBJ])) {
-                    u16 new_pixel = m_buffer[4 + j][i];
+                if (enable[LAYER_OBJ] && is_visible(x, inside[LAYER_OBJ], outside[LAYER_OBJ])) {
+                    u16 new_pixel = m_buffer[4 + j][x];
 
                     if (new_pixel != COLOR_TRANSPARENT) {
                         layer[1] = layer[0];
@@ -134,7 +134,7 @@ namespace GameBoyAdvance {
                 }
             }
 
-            if (m_io.bldcnt.sfx != SFX_NONE && is_visible(i, inside[LAYER_SFX], outside[LAYER_SFX])) {
+            if (m_io.bldcnt.sfx != SFX_NONE && is_visible(x, inside[LAYER_SFX], outside[LAYER_SFX])) {
                 bool is_target[2];
                 
                 is_target[0] = m_io.bldcnt.targets[0][layer[0]];
@@ -145,7 +145,7 @@ namespace GameBoyAdvance {
                 }
             }
 
-            line_buffer[i] = color_convert(pixel[0]);
+            line_buffer[x] = color_convert(pixel[0]);
         }
     }
 }
