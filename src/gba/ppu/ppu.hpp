@@ -37,9 +37,9 @@ namespace GameBoyAdvance {
         Interrupt* m_interrupt = nullptr;
 
         // rendering buffers
-        u8 m_win_mask[2][240];
-        u16 m_buffer[8][240];
-        u32 m_framebuffer[240*160];
+        u16  m_buffer[8][240];
+        u32  m_framebuffer[240*160];
+        bool m_win_mask[3][240];
 
         int m_frameskip;
         int m_frame_counter;
@@ -77,6 +77,8 @@ namespace GameBoyAdvance {
         void vblank();
         void scanline();
         void next_line();
+        
+        void render_window(int id);
 
         void compose_scanline();
     };

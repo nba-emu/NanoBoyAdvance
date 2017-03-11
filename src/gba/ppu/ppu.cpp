@@ -131,6 +131,14 @@ namespace GameBoyAdvance {
                 return;
             }
 
+            if (m_io.control.win_enable[0]) {
+                render_window(0);
+            }
+            
+            if (m_io.control.win_enable[1]) {
+                render_window(1);
+            }
+            
             switch (m_io.control.mode) {
                 case 0:
                     // BG Mode 0 - 240x160 pixels, Text mode
@@ -190,6 +198,33 @@ namespace GameBoyAdvance {
 
         if (vcount_flag && m_io.status.vcount_interrupt) {
             m_interrupt->request(INTERRUPT_VCOUNT);
+        }
+    }
+    
+    void PPU::render_window(int id) {
+        
+        int   line = m_io.vcount;
+        auto& winh = m_io.winh[id];
+        auto& winv = m_io.winv[id];
+        
+        auto buffer = m_win_mask[id];
+        
+        // meh.....
+        if ((winv.min <= winv.max && (line < winv.min || line >= winv.max)) ||
+            (winv.min >  winv.max && (line < winv.min && line >= winv.max))
+           ) {
+            memset(buffer, 0, 240); // meh...
+            return;
+        }
+        
+        if (winh.min < winh.max) {
+            for (int x = 0; x < 240; x++) {
+                buffer[x] = x >= winh.min && x < winh.max;
+            }
+        } else {
+            for (int x = 0; x < 240; x++) {
+                buffer[x] = x >= winh.min || x < winh.max;
+            }
         }
     }
 }

@@ -194,42 +194,83 @@ namespace GameBoyAdvance {
         
         switch (offset) {
             case 0:
-                return (targets[0][SFX_BG0] ? 1  : 0) |
-                       (targets[0][SFX_BG1] ? 2  : 0) |
-                       (targets[0][SFX_BG2] ? 4  : 0) |
-                       (targets[0][SFX_BG3] ? 8  : 0) |
-                       (targets[0][SFX_OBJ] ? 16 : 0) |
-                       (targets[0][SFX_BD ] ? 32 : 0) |
+                return (targets[0][LAYER_BG0] ? 1  : 0) |
+                       (targets[0][LAYER_BG1] ? 2  : 0) |
+                       (targets[0][LAYER_BG2] ? 4  : 0) |
+                       (targets[0][LAYER_BG3] ? 8  : 0) |
+                       (targets[0][LAYER_OBJ] ? 16 : 0) |
+                       (targets[0][LAYER_BD ] ? 32 : 0) |
                        (sfx << 6);
             case 1:
-                return (targets[1][SFX_BG0] ? 1  : 0) |
-                       (targets[1][SFX_BG1] ? 2  : 0) |
-                       (targets[1][SFX_BG2] ? 4  : 0) |
-                       (targets[1][SFX_BG3] ? 8  : 0) |
-                       (targets[1][SFX_OBJ] ? 16 : 0) |
-                       (targets[1][SFX_BD ] ? 32 : 0);
+                return (targets[1][LAYER_BG0] ? 1  : 0) |
+                       (targets[1][LAYER_BG1] ? 2  : 0) |
+                       (targets[1][LAYER_BG2] ? 4  : 0) |
+                       (targets[1][LAYER_BG3] ? 8  : 0) |
+                       (targets[1][LAYER_OBJ] ? 16 : 0) |
+                       (targets[1][LAYER_BD ] ? 32 : 0);
         }
+    }
+    
+    void PPU::IO::WindowRange::reset() {
+        min = max = 0;
+    }
+    
+    void PPU::IO::WindowRange::write(int offset, u8 value) {
+        
+        switch (offset) {
+            case 0: max = value & 0xFF; break;
+            case 1: min = value & 0xFF; break;
+        }
+    }
+    
+    void PPU::IO::WindowLayerSelect::reset() { 
+        
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 6; j++) {
+                enable[i][j] = false;
+            }
+        }
+    }
+    
+    auto PPU::IO::WindowLayerSelect::read(int offset) -> u8 {
+        
+        return (enable[offset][LAYER_BG0] ? 1  : 0) |
+               (enable[offset][LAYER_BG1] ? 2  : 0) |
+               (enable[offset][LAYER_BG2] ? 4  : 0) |
+               (enable[offset][LAYER_BG3] ? 8  : 0) |
+               (enable[offset][LAYER_OBJ] ? 16 : 0) |
+               (enable[offset][LAYER_SFX] ? 32 : 0);
+    }
+    
+    void PPU::IO::WindowLayerSelect::write(int offset, u8 value) {
+        
+        enable[offset][LAYER_BG0] = value & 1;
+        enable[offset][LAYER_BG1] = value & 2;
+        enable[offset][LAYER_BG2] = value & 4;
+        enable[offset][LAYER_BG3] = value & 8;
+        enable[offset][LAYER_OBJ] = value & 16;
+        enable[offset][LAYER_SFX] = value & 32;
     }
     
     void PPU::IO::BlendControl::write(int offset, u8 value) {
         
         switch (offset) {
             case 0:
-                targets[0][SFX_BG0] = value & 1;
-                targets[0][SFX_BG1] = value & 2;
-                targets[0][SFX_BG2] = value & 4;
-                targets[0][SFX_BG3] = value & 8;
-                targets[0][SFX_OBJ] = value & 16;
-                targets[0][SFX_BD ] = value & 32;
+                targets[0][LAYER_BG0] = value & 1;
+                targets[0][LAYER_BG1] = value & 2;
+                targets[0][LAYER_BG2] = value & 4;
+                targets[0][LAYER_BG3] = value & 8;
+                targets[0][LAYER_OBJ] = value & 16;
+                targets[0][LAYER_BD ] = value & 32;
                 sfx = static_cast<SpecialEffect>(value >> 6);
                 break;
             case 1:
-                targets[1][SFX_BG0] = value & 1;
-                targets[1][SFX_BG1] = value & 2;
-                targets[1][SFX_BG2] = value & 4;
-                targets[1][SFX_BG3] = value & 8;
-                targets[1][SFX_OBJ] = value & 16;
-                targets[1][SFX_BD ] = value & 32;
+                targets[1][LAYER_BG0] = value & 1;
+                targets[1][LAYER_BG1] = value & 2;
+                targets[1][LAYER_BG2] = value & 4;
+                targets[1][LAYER_BG3] = value & 8;
+                targets[1][LAYER_OBJ] = value & 16;
+                targets[1][LAYER_BD ] = value & 32;
                 break;
         }
     }

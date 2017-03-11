@@ -80,27 +80,49 @@ namespace GameBoyAdvance {
     
     void PPU::compose_scanline() {
         
+        auto win0in   = m_io.winin.enable[0];
+        auto win1in   = m_io.winin.enable[1];
+        auto objwinin = m_io.winout.enable[1];
+        
         u16 backdrop_color = (m_pal[1] << 8) | m_pal[0];
-        u32* line_buffer = m_framebuffer  + m_io.vcount * 240;
+        u32* line_buffer   = m_framebuffer  + m_io.vcount * 240;
+        
+        const bool inside[6][3] = {
+            { win0in[LAYER_BG0], win1in[LAYER_BG0], objwinin[LAYER_BG0] },
+            { win0in[LAYER_BG1], win1in[LAYER_BG1], objwinin[LAYER_BG1] },
+            { win0in[LAYER_BG2], win1in[LAYER_BG2], objwinin[LAYER_BG2] },
+            { win0in[LAYER_BG3], win1in[LAYER_BG3], objwinin[LAYER_BG3] },
+            { win0in[LAYER_OBJ], win1in[LAYER_OBJ], objwinin[LAYER_OBJ] },
+            { win0in[LAYER_SFX], win1in[LAYER_SFX], objwinin[LAYER_SFX] }
+        };
+       
+        auto bgcnt   = m_io.bgcnt;
+        auto outside = m_io.winout.enable[0];
+        auto enable  = m_io.control.enable;
 
         for (int i = 0; i < 240; i++) {
-            int layer[2] = { SFX_BD, SFX_BD };
+            int layer[2] = { LAYER_BD, LAYER_BD };
             u16 pixel[2] = { backdrop_color, 0 };
 
             for (int j = 3; j >= 0; j--) {
+                
                 for (int k = 3; k >= 0; k--) {
-                    u16 new_pixel = m_buffer[k][i];
+                    bool visible = is_visible(i, inside[k], outside[k]);
 
-                    if (new_pixel != COLOR_TRANSPARENT && m_io.control.enable[k] && 
-                                m_io.bgcnt[k].priority == j) {
-                        layer[1] = layer[0];
-                        layer[0] = k;
-                        pixel[1] = pixel[0];
-                        pixel[0] = new_pixel;
+                    if (enable[k] && bgcnt[k].priority == j && visible) {
+                        
+                        u16 new_pixel = m_buffer[k][i];
+                        
+                        if (new_pixel != COLOR_TRANSPARENT) {
+                            layer[1] = layer[0];
+                            layer[0] = k;
+                            pixel[1] = pixel[0];
+                            pixel[0] = new_pixel;
+                        }
                     }
                 }
 
-                if (m_io.control.enable[4]) {
+                if (enable[LAYER_OBJ] && is_visible(i, inside[LAYER_OBJ], outside[LAYER_OBJ])) {
                     u16 new_pixel = m_buffer[4 + j][i];
 
                     if (new_pixel != COLOR_TRANSPARENT) {
@@ -112,7 +134,7 @@ namespace GameBoyAdvance {
                 }
             }
 
-            if (m_io.bldcnt.sfx != SFX_NONE) {
+            if (m_io.bldcnt.sfx != SFX_NONE && is_visible(i, inside[LAYER_SFX], outside[LAYER_SFX])) {
                 bool is_target[2];
                 
                 is_target[0] = m_io.bldcnt.targets[0][layer[0]];

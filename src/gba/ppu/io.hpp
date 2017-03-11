@@ -20,6 +20,7 @@
 #ifdef PPU_INCLUDE
 
 struct IO {
+    
     struct DisplayControl {
         int  mode;
         bool cgb_mode;
@@ -99,6 +100,23 @@ struct IO {
         void reset();
         void write(int offset, u8 value);
     } bldalpha;
+    
+    struct WindowRange {
+        int min;
+        int max;
+        
+        void reset();
+        void write(int offset, u8 value);
+    } winh[2], winv[2];
+    
+    struct WindowLayerSelect {
+        bool enable[2][6];
+        
+        void reset();
+        auto read(int offset) -> u8;
+        void write(int offset, u8 value);
+    
+    } winin, winout;
     
     struct BlendY {
         int evy;

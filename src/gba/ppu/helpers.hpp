@@ -61,6 +61,28 @@ inline u16 get_tile_pixel_8bpp(u32 base, int palette, int number, int x, int y) 
     return read_palette(palette, index);
 }
 
+inline bool is_visible(int x, const bool inside[3], bool outside) {
+    
+    auto win_enable = m_io.control.win_enable;
+    
+    if (win_enable[0] || win_enable[1] || win_enable[2]) {
+        
+        for (int i = 0; i < 2; i++) {
+            if (win_enable[i] && m_win_mask[i][x]) {
+                return inside[i];
+            }
+        }
+        
+        /*if (win_enable[1] && m_win_mask[1][x]) {
+            return inside[1];
+        }*/
+        
+        return outside;
+    }
+    
+    return true;
+}
+
 static inline float decode_float16(u16 number) {
     
     bool  is_negative = number & (1 << 15);

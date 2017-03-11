@@ -49,6 +49,10 @@ namespace GameBoyAdvance {
             case BG2CNT+1:   return ppu_io.bgcnt[2].read(1);
             case BG3CNT:     return ppu_io.bgcnt[2].read(0);
             case BG3CNT+1:   return ppu_io.bgcnt[2].read(1);
+            case WININ:      return ppu_io.winin.read(0);
+            case WININ+1:    return ppu_io.winin.read(1);
+            case WINOUT:     return ppu_io.winout.read(0);
+            case WINOUT+1:   return ppu_io.winout.read(1);
             case BLDCNT:     return ppu_io.bldcnt.read(0);
             case BLDCNT+1:   return ppu_io.bldcnt.read(1);
 
@@ -203,6 +207,18 @@ namespace GameBoyAdvance {
             case BG3Y+1:     ppu_io.bgy[1].write(1, value); break;
             case BG3Y+2:     ppu_io.bgy[1].write(2, value); break;
             case BG3Y+3:     ppu_io.bgy[1].write(3, value); break;
+            case WIN0H:      ppu_io.winh[0].write(0, value); break;
+            case WIN0H+1:    ppu_io.winh[0].write(1, value); break;
+            case WIN1H:      ppu_io.winh[1].write(0, value); break;
+            case WIN1H+1:    ppu_io.winh[1].write(1, value); break;
+            case WIN0V:      ppu_io.winv[0].write(0, value); break;
+            case WIN0V+1:    ppu_io.winv[0].write(1, value); break;
+            case WIN1V:      ppu_io.winv[1].write(0, value); break;
+            case WIN1V+1:    ppu_io.winv[1].write(1, value); break;
+            case WININ:      ppu_io.winin.write(0, value); break;
+            case WININ+1:    ppu_io.winin.write(1, value); break;
+            case WINOUT:     ppu_io.winout.write(0, value); break;
+            case WINOUT+1:   ppu_io.winout.write(1, value); break;
             case BLDCNT:     ppu_io.bldcnt.write(0, value); break;
             case BLDCNT+1:   ppu_io.bldcnt.write(1, value); break;
             case BLDALPHA:   ppu_io.bldalpha.write(0, value); break;
