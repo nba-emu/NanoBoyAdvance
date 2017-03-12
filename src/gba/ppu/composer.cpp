@@ -138,20 +138,18 @@ namespace GameBoyAdvance {
                 }
             }
             
-            SpecialEffect sfx = m_io.bldcnt.sfx;
-            bool is_alpha_obj = layer[0] == LAYER_OBJ && obj.alpha; 
-            
-            if (is_alpha_obj) {
-                sfx = SFX_BLEND;
-            }
-            
-            if (sfx != SFX_NONE && is_visible(x, inside[LAYER_SFX], outside[LAYER_SFX])) {
-                bool is_target[2];
+            if (is_visible(x, inside[LAYER_SFX], outside[LAYER_SFX])) {
                 
-                is_target[0] = m_io.bldcnt.targets[0][layer[0]] || is_alpha_obj;
-                is_target[1] = m_io.bldcnt.targets[1][layer[1]];
+                SpecialEffect sfx = m_io.bldcnt.sfx;
+                bool is_alpha_obj = layer[0] == LAYER_OBJ && obj.alpha;
+                bool sfx_above    = m_io.bldcnt.targets[0][layer[0]] || is_alpha_obj;
+                bool sfx_below    = m_io.bldcnt.targets[1][layer[1]];
                 
-                if (is_target[0] && (is_target[1] || sfx != SFX_BLEND)) {
+                if (is_alpha_obj && sfx_below) {
+                    sfx = SFX_BLEND;
+                }
+                
+                if (sfx != SFX_NONE && sfx_above && (sfx_below || sfx != SFX_BLEND)) {
                     apply_sfx(&pixel[0], pixel[1], sfx);
                 }
             }
