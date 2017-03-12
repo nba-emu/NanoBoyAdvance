@@ -215,16 +215,13 @@ namespace GameBoyAdvance {
                         auto& p = m_obj_layer[screen_x];
                         
                         // second condition seems counter-intuitive but 0 = highest, 3 = lowest priority
-                        if (pixel != COLOR_TRANSPARENT && prio <= p.prio) {
-                            
-                            if (mode != OBJ_WINDOW) {
+                        if (pixel != COLOR_TRANSPARENT) {
+                            if (mode == OBJ_WINDOW) {
+                                p.window = true;
+                            } else if (prio <= p.prio) {
                                 p.prio   = prio;
                                 p.pixel  = pixel;
                                 p.alpha  = mode == OBJ_SEMI;
-                                //p.window = false;
-                            } else {
-                                p.alpha  = false;
-                                p.window = true;
                             }
                         }
                     }
