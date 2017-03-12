@@ -40,6 +40,7 @@ namespace GameBoyAdvance {
         u16  m_buffer[8][240];
         u32  m_framebuffer[240*160];
         bool m_win_mask[3][240];
+        bool m_obj_semi[240];
 
         int m_frameskip;
         int m_frame_counter;

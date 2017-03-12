@@ -66,6 +66,7 @@ namespace GameBoyAdvance {
             m_buffer[5][i] = COLOR_TRANSPARENT;
             m_buffer[6][i] = COLOR_TRANSPARENT;
             m_buffer[7][i] = COLOR_TRANSPARENT;
+            m_obj_semi[i] = false;
         }
         
         // clear OBJWIN mask if required
@@ -219,6 +220,9 @@ namespace GameBoyAdvance {
                             if (mode == OBJ_WINDOW) {
                                 m_win_mask[2][screen_x] = 1;
                             } else {
+                                if (mode == OBJ_SEMI) {
+                                    m_obj_semi[screen_x] = true;
+                                }
                                 m_buffer[4 + prio][screen_x] = pixel;
                             }
                         }

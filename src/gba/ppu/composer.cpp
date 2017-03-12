@@ -137,7 +137,12 @@ namespace GameBoyAdvance {
             if (m_io.bldcnt.sfx != SFX_NONE && is_visible(x, inside[LAYER_SFX], outside[LAYER_SFX])) {
                 bool is_target[2];
                 
-                is_target[0] = m_io.bldcnt.targets[0][layer[0]];
+                if (layer[0] == LAYER_OBJ) {
+                    is_target[0] = m_obj_semi[x] || m_io.bldcnt.targets[0][layer[0]];
+                } else {
+                    is_target[0] = m_io.bldcnt.targets[0][layer[0]];
+                }
+                
                 is_target[1] = m_io.bldcnt.targets[1][layer[1]];
                 
                 if (is_target[0] && (is_target[1] || m_io.bldcnt.sfx != SFX_BLEND)) {
