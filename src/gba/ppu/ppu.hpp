@@ -37,10 +37,16 @@ namespace GameBoyAdvance {
         Interrupt* m_interrupt = nullptr;
 
         // rendering buffers
-        u16  m_buffer[8][240];
+        u16  m_buffer[4][240];
         u32  m_framebuffer[240*160];
-        bool m_win_mask[3][240];
-        bool m_obj_semi[240];
+        bool m_win_mask[2][240];
+        
+        struct ObjectPixel {
+            u8  prio;
+            u16 pixel;
+            bool alpha;
+            bool window;
+        } m_obj_layer[240];
 
         int m_frameskip;
         int m_frame_counter;
@@ -58,7 +64,7 @@ namespace GameBoyAdvance {
         template <bool is_256, int id>
         void render_text_internal();
         
-        void apply_sfx(u16* target1, u16 target2);
+        void apply_sfx(u16* target1, u16 target2, SpecialEffect sfx);
         
     public:
         PPU();

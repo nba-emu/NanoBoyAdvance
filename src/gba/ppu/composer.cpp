@@ -21,13 +21,13 @@
 
 namespace GameBoyAdvance {
     
-    void PPU::apply_sfx(u16* target1, u16 target2) {
+    void PPU::apply_sfx(u16* target1, u16 target2, SpecialEffect sfx) {
         
         int r1 = (*target1 >> 0 ) & 0x1F;
         int g1 = (*target1 >> 5 ) & 0x1F;
         int b1 = (*target1 >> 10) & 0x1F;
         
-        switch (m_io.bldcnt.sfx) {
+        switch (sfx) {
             case SFX_BLEND: {
                 int eva = m_io.bldalpha.eva;
                 int evb = m_io.bldalpha.evb;
@@ -103,7 +103,7 @@ namespace GameBoyAdvance {
         for (int x = 0; x < 240; x++) {
             int layer[2] = { LAYER_BD, LAYER_BD };
             u16 pixel[2] = { backdrop_color, 0 };
-
+            
             for (int j = 3; j >= 0; j--) {
                 
                 for (int k = 3; k >= 0; k--) {
@@ -121,32 +121,38 @@ namespace GameBoyAdvance {
                         }
                     }
                 }
-
+                
                 if (enable[LAYER_OBJ] && is_visible(x, inside[LAYER_OBJ], outside[LAYER_OBJ])) {
-                    u16 new_pixel = m_buffer[4 + j][x];
-
-                    if (new_pixel != COLOR_TRANSPARENT) {
-                        layer[1] = layer[0];
-                        layer[0] = 4;
-                        pixel[1] = pixel[0];
-                        pixel[0] = new_pixel;
+                    
+                    auto& obj = m_obj_layer[x];
+                    
+                    if (obj.prio == j) {
+                        u16 new_pixel = obj.pixel;
+                        
+                        if (new_pixel != COLOR_TRANSPARENT) {
+                            layer[1] = layer[0];
+                            layer[0] = 4;
+                            pixel[1] = pixel[0];
+                            pixel[0] = new_pixel;
+                        }
                     }
+                    
                 }
             }
+            
+            // not sure what happens when layer[1] == LAYER_OBJ?
+            /*if (m_obj_semi[x] && layer[0] == LAYER_OBJ) {
+                apply_sfx(&pixel[1], pixel[0], SFX_BLEND);
+            }*/
 
             if (m_io.bldcnt.sfx != SFX_NONE && is_visible(x, inside[LAYER_SFX], outside[LAYER_SFX])) {
                 bool is_target[2];
                 
-                if (layer[0] == LAYER_OBJ) {
-                    is_target[0] = m_obj_semi[x] || m_io.bldcnt.targets[0][layer[0]];
-                } else {
-                    is_target[0] = m_io.bldcnt.targets[0][layer[0]];
-                }
-                
+                is_target[0] = m_io.bldcnt.targets[0][layer[0]];
                 is_target[1] = m_io.bldcnt.targets[1][layer[1]];
                 
                 if (is_target[0] && (is_target[1] || m_io.bldcnt.sfx != SFX_BLEND)) {
-                    apply_sfx(&pixel[0], pixel[1]);
+                    apply_sfx(&pixel[0], pixel[1], m_io.bldcnt.sfx);
                 }
             }
 

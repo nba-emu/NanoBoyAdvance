@@ -60,18 +60,14 @@ namespace GameBoyAdvance {
         
         u32 offset = 127 << 3;
 
-        // eh...
+        // (semi) eh...
         for (int i = 0; i < 240; i++) {
-            m_buffer[4][i] = COLOR_TRANSPARENT;
-            m_buffer[5][i] = COLOR_TRANSPARENT;
-            m_buffer[6][i] = COLOR_TRANSPARENT;
-            m_buffer[7][i] = COLOR_TRANSPARENT;
-            m_obj_semi[i] = false;
-        }
-        
-        // clear OBJWIN mask if required
-        if (m_io.control.win_enable[2]) {
-            memset(m_win_mask[2], 0, 240);
+            auto& obj = m_obj_layer[i];
+            
+            obj.prio   = 4;
+            obj.pixel  = COLOR_TRANSPARENT;
+            obj.alpha  = false;
+            obj.window = false;
         }
 
         // TODO(performance):
@@ -216,14 +212,19 @@ namespace GameBoyAdvance {
                             pixel = get_tile_pixel_4bpp(tile_base, palette, tile_num, tile_x, tile_y);
                         }
 
-                        if (pixel != COLOR_TRANSPARENT) {
-                            if (mode == OBJ_WINDOW) {
-                                m_win_mask[2][screen_x] = 1;
+                        auto& p = m_obj_layer[screen_x];
+                        
+                        // second condition seems counter-intuitive but 0 = highest, 3 = lowest priority
+                        if (pixel != COLOR_TRANSPARENT && prio <= p.prio) {
+                            
+                            if (mode != OBJ_WINDOW) {
+                                p.prio   = prio;
+                                p.pixel  = pixel;
+                                p.alpha  = mode == OBJ_SEMI;
+                                //p.window = false;
                             } else {
-                                if (mode == OBJ_SEMI) {
-                                    m_obj_semi[screen_x] = true;
-                                }
-                                m_buffer[4 + prio][screen_x] = pixel;
+                                p.alpha  = false;
+                                p.window = true;
                             }
                         }
                     }

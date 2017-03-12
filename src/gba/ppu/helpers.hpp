@@ -67,10 +67,14 @@ inline bool is_visible(int x, const bool inside[3], bool outside) {
     
     if (win_enable[0] || win_enable[1] || win_enable[2]) {
         
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 2; i++) {
             if (win_enable[i] && m_win_mask[i][x]) {
                 return inside[i];
             }
+        }
+        
+        if (win_enable[2] && m_obj_layer[x].window) {
+            return inside[2];
         }
         
         return outside;
