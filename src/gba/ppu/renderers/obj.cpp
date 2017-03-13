@@ -83,10 +83,11 @@ namespace GameBoyAdvance {
             int width, height;
             s32 x = attribute1 & 0x1FF;
             int y = attribute0 & 0x0FF;
-            int shape = attribute0 >> 14;
-            int size  = attribute1 >> 14;
-            int prio  = (attribute2 >> 10) & 3;
-            int mode  = (attribute0 >> 10) & 3;
+            int shape   = attribute0 >> 14;
+            int size    = attribute1 >> 14;
+            int prio    = (attribute2 >> 10) & 3;
+            int mode    = (attribute0 >> 10) & 3;
+            bool mosaic = attribute0 & (1 << 12);
             
             if (mode == OBJ_PROHIBITED) {
                 offset -= 8;

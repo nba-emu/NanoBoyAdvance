@@ -219,6 +219,8 @@ namespace GameBoyAdvance {
             case WININ+1:    ppu_io.winin.write(1, value); break;
             case WINOUT:     ppu_io.winout.write(0, value); break;
             case WINOUT+1:   ppu_io.winout.write(1, value); break;
+            case MOSAIC:     ppu_io.mosaic.write(0, value); break;
+            case MOSAIC+1:   ppu_io.mosaic.write(1, value); break;
             case BLDCNT:     ppu_io.bldcnt.write(0, value); break;
             case BLDCNT+1:   ppu_io.bldcnt.write(1, value); break;
             case BLDALPHA:   ppu_io.bldalpha.write(0, value); break;

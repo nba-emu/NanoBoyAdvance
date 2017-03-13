@@ -54,6 +54,7 @@ namespace GameBoyAdvance {
     const int WIN1V = 0x04000046;
     const int WININ = 0x04000048;
     const int WINOUT = 0x0400004A;
+    const int MOSAIC = 0x0400004C;
     const int BLDCNT = 0x04000050;
     const int BLDALPHA = 0x04000052;
     const int BLDY = 0x04000054;

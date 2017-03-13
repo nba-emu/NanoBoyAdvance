@@ -58,6 +58,8 @@ namespace GameBoyAdvance {
         m_io.bldcnt.reset();
         m_io.bldalpha.reset();
         m_io.bldy.reset();
+        
+        // TODO: reset window registers!
 
         m_frame_counter = 0;
     }

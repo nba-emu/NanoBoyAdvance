@@ -93,6 +93,16 @@ struct IO {
         void write(int offset, u8 value);
     } bldcnt;
     
+    struct Mosaic {
+        struct {
+            int h;
+            int v;
+        } bg, obj;
+        
+        void reset();
+        void write(int offset, u8 value);
+    } mosaic;
+    
     struct BlendAlpha {
         int eva;
         int evb;

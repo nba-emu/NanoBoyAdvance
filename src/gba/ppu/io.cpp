@@ -180,6 +180,20 @@ namespace GameBoyAdvance {
         internal = PPU::decode_float32(this->value);
     }
     
+    void PPU::IO::Mosaic::reset() {
+        bg.h  = 0;
+        bg.v  = 0;
+        obj.h = 0;
+        obj.v = 0;
+    }
+    
+    void PPU::IO::Mosaic::write(int offset, u8 value) {
+        switch (offset) {
+            case 0: bg.h  = value & 0xF; bg.v  = value >> 4; break;    
+            case 1: obj.h = value & 0xF; obj.v = value >> 4; break;    
+        }
+    }
+    
     void PPU::IO::BlendControl::reset() {
         sfx = SFX_NONE;
         
