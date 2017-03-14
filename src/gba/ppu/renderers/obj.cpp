@@ -56,7 +56,7 @@ namespace GameBoyAdvance {
     void PPU::render_obj(u32 tile_base) {
         
         // affine 2x2 matrix
-        u16 pa, pb, pc, pd;
+        float pa, pb, pc, pd;
         
         u32 offset = 127 << 3;
 
@@ -122,10 +122,10 @@ namespace GameBoyAdvance {
             if (affine) {
                 int group = ((attribute1 >> 9) & 0x1F) << 5;
 
-                pa = (m_oam[group + 0x7 ] << 8) | m_oam[group + 0x6 ];
-                pb = (m_oam[group + 0xF ] << 8) | m_oam[group + 0xE ];
-                pc = (m_oam[group + 0x17] << 8) | m_oam[group + 0x16];
-                pd = (m_oam[group + 0x1F] << 8) | m_oam[group + 0x1E];
+                pa = PPU::decode_float16((m_oam[group + 0x7 ] << 8) | m_oam[group + 0x6 ]);
+                pb = PPU::decode_float16((m_oam[group + 0xF ] << 8) | m_oam[group + 0xE ]);
+                pc = PPU::decode_float16((m_oam[group + 0x17] << 8) | m_oam[group + 0x16]);
+                pd = PPU::decode_float16((m_oam[group + 0x1F] << 8) | m_oam[group + 0x1E]);
                 
                 // double-size bit
                 if (attr0bit9) {
@@ -140,10 +140,10 @@ namespace GameBoyAdvance {
                 // initialize P with identity matrix:
                 // [ 1  0 ]
                 // [ 0  1 ]
-                pa = 0x0100;
-                pb = 0x0000;
-                pc = 0x0000;
-                pd = 0x0100;
+                pa = 1;
+                pb = 0;
+                pc = 0;
+                pd = 1;
             }
             
             // half the width and height of OBJ screen area
@@ -175,8 +175,8 @@ namespace GameBoyAdvance {
                     if (screen_x >= 0 && screen_x < 240) {
                         
                         // texture coordinates
-                        int tex_x = PPU::decode_float16(pa) * rect_x + PPU::decode_float16(pb) * rect_y + (width  >> 1);
-                        int tex_y = PPU::decode_float16(pc) * rect_x + PPU::decode_float16(pd) * rect_y + (height >> 1);
+                        int tex_x = pa * rect_x + pb * rect_y + (width  >> 1);
+                        int tex_y = pc * rect_x + pd * rect_y + (height >> 1);
                         
                         // are the coordinates inside the valid boundaries?
                         if (tex_x >= width || tex_y >= height || 
