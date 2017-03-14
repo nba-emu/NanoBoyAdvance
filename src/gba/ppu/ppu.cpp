@@ -215,7 +215,7 @@ namespace GameBoyAdvance {
         if ((winv.min <= winv.max && (line < winv.min || line >= winv.max)) ||
             (winv.min >  winv.max && (line < winv.min && line >= winv.max))
            ) {
-            memset(buffer, 0, 240); // meh...
+            memset(buffer, 0, 240 * sizeof(bool)); // meh...
             return;
         }
         

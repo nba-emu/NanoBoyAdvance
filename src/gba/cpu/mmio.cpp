@@ -109,7 +109,7 @@ namespace GameBoyAdvance {
         auto& ppu_io = m_ppu.get_io();
         auto& apu_io = m_apu.get_io();
         
-        //Logger::log<LOG_INFO>("io write address={0:x} value={1:x}", address, value);
+        Logger::log<LOG_INFO>("io write address={0:x} value={1:x}", address, value);
 
         switch (address) {
             // PPU
