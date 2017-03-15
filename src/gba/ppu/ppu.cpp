@@ -17,6 +17,7 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
+#include <cmath>
 #include "ppu.hpp"
 #include "util/logger.hpp"
 
@@ -27,6 +28,31 @@ namespace GameBoyAdvance {
     PPU::PPU() {
         reset();
         m_frameskip = 0;
+        
+        // build color LUT
+        for (int color = 0; color < 0x8000; color++) {
+            int r = (color >> 0 ) & 0x1F;
+            int g = (color >> 5 ) & 0x1F;
+            int b = (color >> 10) & 0x1F;
+            
+            m_color_lut[color] = 0xFF000000 | (b << 3) | (g << 11) | (r << 19);
+            /*
+            GAMMA CORRECTION!
+            
+            double r = ((color >> 0 ) & 0x1F) / 31.0;
+            double g = ((color >> 5 ) & 0x1F) / 31.0;
+            double b = ((color >> 10) & 0x1F) / 31.0;
+
+            r = std::pow(r, 4.0) * 48;
+            g = std::pow(g, 3.0) * 48;
+            b = std::pow(b, 1.4) * 48;
+            
+            m_color_lut[color] = 0xFF000000     | 
+                                 ((int)b << 0 ) | 
+                                 ((int)g << 8 ) | 
+                                 ((int)r << 16);
+            */
+        }
     }
 
     void PPU::reset() {

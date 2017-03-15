@@ -41,6 +41,8 @@ namespace GameBoyAdvance {
         u32  m_framebuffer[240*160];
         bool m_win_mask[2][240];
         
+        u32 m_color_lut[0x8000];
+        
         struct ObjectPixel {
             u8  prio;
             u16 pixel;

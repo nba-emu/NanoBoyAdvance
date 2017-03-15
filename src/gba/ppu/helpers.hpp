@@ -21,12 +21,7 @@
 
 // TODO: greenswap?
 inline u32 color_convert(u16 color) {
-    
-    int r = color & 0x1F;
-    int g = (color >> 5) & 0x1F;
-    int b = (color >> 10) & 0x1F;
-
-    return 0xFF000000 | (b << 3) | (g << 11) | (r << 19);
+    return m_color_lut[color & 0x7FFF];
 }
 
 inline u16 read_palette(int palette, int index) {
