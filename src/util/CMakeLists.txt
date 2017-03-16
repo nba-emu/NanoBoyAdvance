@@ -7,6 +7,7 @@ set(HEADERS
     file.hpp
     integer.hpp
     logger.hpp
+    prediction.hpp
 )
 
 add_library(util STATIC ${SRCS} ${HEADERS})

@@ -22,6 +22,7 @@
 #include "cpu.hpp"
 #include "../cart/flash.hpp"
 #include "util/logger.hpp"
+#include "util/prediction.hpp"
 
 using namespace Util;
 
@@ -194,9 +195,9 @@ namespace GameBoyAdvance {
 
             cycles_previous = m_cycles;
             
-            if (m_dma_active) {
+            if (UNLIKELY(m_dma_active)) {
                 dma_transfer();
-            } else if (m_io.haltcnt == SYSTEM_RUN) {
+            } else if (LIKELY(m_io.haltcnt == SYSTEM_RUN)) {
                 if (m_io.interrupt.master_enable && requested_and_enabled) {
                     raise_interrupt();
                 }
