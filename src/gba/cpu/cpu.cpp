@@ -22,7 +22,7 @@
 #include "cpu.hpp"
 #include "../cart/flash.hpp"
 #include "util/logger.hpp"
-#include "util/prediction.hpp"
+#include "util/likely.hpp"
 
 using namespace Util;
 
