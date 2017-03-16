@@ -83,8 +83,8 @@ namespace GameBoyAdvance {
         void run_for(int cycles);
 
         void timer_step(int cycles);
-        void timer_fifo(int timer_id);
-        void timer_overflow(IO::Timer& timer);
+        void timer_fifo(int timer_id, int times);
+        void timer_overflow(IO::Timer& timer, int times);
         void timer_increment(IO::Timer& timer, int increment_count);
         void timer_increment_once(IO::Timer& timer);
         

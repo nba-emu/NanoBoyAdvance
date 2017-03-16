@@ -20,8 +20,6 @@
 #include "cpu.hpp"
 #include "mmio.hpp"
 #include "util/logger.hpp"
-//#include <fstream>
-//#include <string>
 
 using namespace Util;
 
@@ -78,7 +76,7 @@ namespace GameBoyAdvance {
         }
     }
     
-    void CPU::timer_fifo(int timer_id) {
+    void CPU::timer_fifo(int timer_id, int times) {
         auto& apu_io  = m_apu.get_io();
         auto& control = apu_io.control;
         auto& dma1    = m_io.dma[1];
@@ -90,27 +88,29 @@ namespace GameBoyAdvance {
             // is the overflowing timer responsible for this FIFO?
             if (control.dma[i].timer_num == timer_id) {
                 auto& fifo = apu_io.fifo[i];
-                        
-                // transfers sample from FIFO to APU chip
-                m_apu.fifo_get_sample(i);
-    
-                // tries to trigger DMA transfer if FIFO requests more data
-                if (fifo.requires_data()) {
-                    
-                    u32 address = (i == 0) ? FIFO_A : FIFO_B;
-                    
-                    // eh...
-                    if (dma1.enable && dma1.time == DMA_SPECIAL && dma1.dst_addr == address) {
-                        dma_fill_fifo(1);
-                    } else if (dma2.enable && dma2.time == DMA_SPECIAL && dma2.dst_addr == address) {
-                        dma_fill_fifo(2);
+                
+                for (int j = 0; j < times; j++) {
+                    // transfers sample from FIFO to APU chip
+                    m_apu.fifo_get_sample(i);
+
+                    // tries to trigger DMA transfer if FIFO requests more data
+                    if (fifo.requires_data()) {
+
+                        u32 address = (i == 0) ? FIFO_A : FIFO_B;
+
+                        // eh...
+                        if (dma1.enable && dma1.time == DMA_SPECIAL && dma1.dst_addr == address) {
+                            dma_fill_fifo(1);
+                        } else if (dma2.enable && dma2.time == DMA_SPECIAL && dma2.dst_addr == address) {
+                            dma_fill_fifo(2);
+                        }
                     }
                 }
             }
         }
     }
 
-    void CPU::timer_overflow(IO::Timer& timer) {
+    void CPU::timer_overflow(IO::Timer& timer, int times) {
         
         // request timer overflow interrupt if needed
         if (timer.control.interrupt) {
@@ -125,13 +125,17 @@ namespace GameBoyAdvance {
             auto& timer2 = m_io.timer[timer.id + 1];
 
             if (timer2.control.enable && timer2.control.cascade) {
-                timer_increment_once(timer2);
+                if (times == 1) {
+                    timer_increment_once(timer2);
+                } else {
+                    timer_increment(timer2, times);
+                }
             }
         }
             
         // handle FIFO transfer if sound is enabled
         if (m_apu.get_io().control.master_enable) {
-            timer_fifo(timer.id);        
+            timer_fifo(timer.id, times);        
         }
     }
     
@@ -142,16 +146,22 @@ namespace GameBoyAdvance {
         // reset the timer's cycle counter
         timer.cycles = 0;
         
-        // run as long as the amount of increments to be done satify an overflow.
-        while (increment_count >= next_overflow) {
-            // perform one overflow...
-            timer_overflow(timer);
+        // does overflow happen at all?
+        if (increment_count >= next_overflow) {
+            int overflow_count = 1;
             
-            // and claim the increments for that overflow to have happened..
+            // "eat" the increments for the first overflow
             increment_count -= next_overflow;
             
-            // calculate the amount of increments needed for the next overflow
-            next_overflow = 0x10000 - timer.counter;
+            // if there are increments left
+            if (increment_count != 0) {
+                int required = 0x10000 - timer.reload;
+                
+                overflow_count += increment_count / required;
+                increment_count = increment_count % required;
+            }
+            
+            timer_overflow(timer, overflow_count);
         }
         
         // update the counter with the remaining increments
@@ -163,7 +173,7 @@ namespace GameBoyAdvance {
         if (timer.counter != 0xFFFF) {
             timer.counter++;    
         } else {
-            timer_overflow(timer);
+            timer_overflow(timer, 1);
         }
     }
 }
