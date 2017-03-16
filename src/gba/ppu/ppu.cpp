@@ -148,7 +148,7 @@ namespace GameBoyAdvance {
         m_io.bgx[1].internal += PPU::decode_float16(m_io.bgpb[1]);
         m_io.bgy[1].internal += PPU::decode_float16(m_io.bgpd[1]);
 
-        /*if (m_frameskip == 0 || m_frame_counter == 0) {
+        if (m_frameskip == 0 || m_frame_counter == 0) {
             
             if (m_io.control.forced_blank) {
                 u32* line = m_framebuffer + m_io.vcount * 240;
@@ -214,7 +214,7 @@ namespace GameBoyAdvance {
             }
 
             compose_scanline();
-        }*/
+        }
     }
 
     void PPU::next_line() {
