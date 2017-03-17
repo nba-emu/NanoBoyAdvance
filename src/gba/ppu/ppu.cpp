@@ -80,12 +80,21 @@ namespace GameBoyAdvance {
             }
         }
         
+        // reset MOSAIC register
+        m_io.mosaic.reset();
+        
         // reset blending registers
         m_io.bldcnt.reset();
         m_io.bldalpha.reset();
         m_io.bldy.reset();
         
-        // TODO: reset window registers!
+        // reset window registers
+        m_io.winin.reset();
+        m_io.winout.reset();
+        m_io.winh[0].reset();
+        m_io.winv[0].reset();
+        m_io.winh[1].reset();
+        m_io.winv[1].reset();
 
         m_frame_counter = 0;
     }
