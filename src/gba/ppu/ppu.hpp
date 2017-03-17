@@ -62,9 +62,6 @@ namespace GameBoyAdvance {
         void render_bitmap_2();
         void render_bitmap_3();
         void render_obj(u32 tile_base);
-
-        template <bool is_256, int id>
-        void render_text_internal();
         
         void apply_sfx(u16* target1, u16 target2, SpecialEffect sfx);
         

@@ -33,7 +33,7 @@ inline void logical_shift_left(u32& operand, u32 amount, bool& carry) {
 inline void logical_shift_right(u32& operand, u32 amount, bool& carry, bool immediate) {
     // LSR #0 equals to LSR #32
     amount = immediate & (amount == 0) ? 32 : amount;
-
+    
     for (u32 i = 0; i < amount; i++) {
         carry = operand & 1 ? true : false;
         operand >>= 1;

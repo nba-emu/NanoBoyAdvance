@@ -23,28 +23,8 @@
 using namespace Util;
 
 namespace GameBoyAdvance {
-    
-    void PPU::render_text(int id) {
-        
-        if (m_io.bgcnt[id].full_palette) {
-            switch (id) {
-                case 0: render_text_internal<true, 0>(); return;
-                case 1: render_text_internal<true, 1>(); return;
-                case 2: render_text_internal<true, 2>(); return;
-                case 3: render_text_internal<true, 3>(); return;
-            }
-        } else {
-            switch (id) {
-                case 0: render_text_internal<false, 0>(); return;
-                case 1: render_text_internal<false, 1>(); return;
-                case 2: render_text_internal<false, 2>(); return;
-                case 3: render_text_internal<false, 3>(); return;
-            }
-        }
-    }
 
-    template <bool is_256, int id>
-    void PPU::render_text_internal() {
+    void PPU::render_text(int id) {
     
         auto bg        = m_io.bgcnt[id];
         u16* buffer    = m_buffer[id];
@@ -61,6 +41,8 @@ namespace GameBoyAdvance {
         int last_tile_encoder = -1;
 
         u32 base_offset = (bg.map_block << 11) + ((row & 0x1F) << 6);
+        
+        bool is_256 = m_io.bgcnt[id].full_palette;
 
         for (int _x = 0; _x < 240; _x++) {
             int x = _x + m_io.bghofs[id];
