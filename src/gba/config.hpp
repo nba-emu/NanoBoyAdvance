@@ -23,11 +23,6 @@
 
 namespace GameBoyAdvance {
     
-    enum ColorScheme {
-        COLOR_NORMAL,
-        COLOR_DARKEN
-    };
-    
     enum SaveType {
         SAVE_DETECT,
         SAVE_SRAM,
@@ -37,14 +32,14 @@ namespace GameBoyAdvance {
     };
     
     struct Config {
-        int scale = 1;
-        int speed = 1;
+        int forward = 1;
         int frameskip = 0;
         
         bool use_bios = true;
         std::string bios_path;
         
-        SaveType    save_type    = SAVE_DETECT;
-        ColorScheme color_scheme = COLOR_NORMAL;
+        bool darken_screen = false;
+        
+        SaveType save_type = SAVE_DETECT;
     };
 }

@@ -25,33 +25,36 @@ using namespace Util;
 
 namespace GameBoyAdvance {
     
-    PPU::PPU() {
+    PPU::PPU(Config* config) : m_config(config), m_frameskip(0) {
         reset();
-        m_frameskip = 0;
+        load_config();
+    }
+    
+    void PPU::load_config() {
         
         // build color LUT
         for (int color = 0; color < 0x8000; color++) {
-            int r = (color >> 0 ) & 0x1F;
-            int g = (color >> 5 ) & 0x1F;
-            int b = (color >> 10) & 0x1F;
             
-            m_color_lut[color] = 0xFF000000 | (b << 3) | (g << 11) | (r << 19);
-            /*
-            GAMMA CORRECTION!
-            
-            double r = ((color >> 0 ) & 0x1F) / 31.0;
-            double g = ((color >> 5 ) & 0x1F) / 31.0;
-            double b = ((color >> 10) & 0x1F) / 31.0;
+            if (m_config->darken_screen) {
+                double r = ((color >> 0 ) & 0x1F) / 31.0;
+                double g = ((color >> 5 ) & 0x1F) / 31.0;
+                double b = ((color >> 10) & 0x1F) / 31.0;
 
-            r = std::pow(r, 4.0) * 48;
-            g = std::pow(g, 3.0) * 48;
-            b = std::pow(b, 1.4) * 48;
-            
-            m_color_lut[color] = 0xFF000000     | 
-                                 ((int)b << 0 ) | 
-                                 ((int)g << 8 ) | 
-                                 ((int)r << 16);
-            */
+                r = std::pow(r, 4.0) * 48;
+                g = std::pow(g, 3.0) * 48;
+                b = std::pow(b, 1.4) * 48;
+
+                m_color_lut[color] = 0xFF000000     | 
+                                     ((int)b << 0 ) | 
+                                     ((int)g << 8 ) | 
+                                     ((int)r << 16);
+            } else {
+                int r = (color >> 0 ) & 0x1F;
+                int g = (color >> 5 ) & 0x1F;
+                int b = (color >> 10) & 0x1F;
+
+                m_color_lut[color] = 0xFF000000 | (b << 3) | (g << 11) | (r << 19);
+            }
         }
     }
 

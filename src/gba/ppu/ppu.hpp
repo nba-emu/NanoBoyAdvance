@@ -22,6 +22,7 @@
 #include "enums.hpp"
 #include "util/integer.hpp"
 #include "../cpu/interrupt.hpp"
+#include "../config.hpp"
 
 #define PPU_INCLUDE
 
@@ -35,6 +36,8 @@ namespace GameBoyAdvance {
         u8* m_oam;
         u8* m_vram;
         Interrupt* m_interrupt = nullptr;
+        
+        Config* m_config;
 
         // rendering buffers
         u16  m_buffer[4][240];
@@ -66,10 +69,11 @@ namespace GameBoyAdvance {
         void apply_sfx(u16* target1, u16 target2, SpecialEffect sfx);
         
     public:
-        PPU();
+        PPU(Config* config);
 
         void reset();
-
+        void load_config();
+        
         IO& get_io() {
             return m_io;
         }

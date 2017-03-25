@@ -34,9 +34,7 @@ namespace GameBoyAdvance {
     constexpr CPU::read_func  CPU::m_read_table[16];
     constexpr CPU::write_func CPU::m_write_table[16];
 
-    CPU::CPU(Config* config) {
-        
-        m_config = config;
+    CPU::CPU(Config* config) : m_config(config), m_ppu(config) {
         
         reset();
 
@@ -143,6 +141,11 @@ namespace GameBoyAdvance {
         return m_io.keyinput;
     }
 
+    void CPU::load_config() {
+        m_ppu.load_config();
+        //m_apu.load_config();
+    }
+    
     void CPU::load_game(std::string rom_file, std::string save_file) {
         m_rom      = File::read_data(rom_file);
         m_rom_size = File::get_size(rom_file);

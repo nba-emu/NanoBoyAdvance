@@ -64,7 +64,7 @@ namespace GameBoyAdvance {
         int  m_current_dma;
 
         void load_game();
-        
+                
         u8 read_bios(u32 address);
         u8 read_wram(u32 address);
         u8 read_iram(u32 address);
@@ -153,9 +153,10 @@ namespace GameBoyAdvance {
         PPU& get_ppu();
         APU& get_apu();
         u16& get_keypad();
-        
-        void load_game(std::string rom_file, std::string save_file);
 
+        void load_config();
+        void load_game(std::string rom_file, std::string save_file);
+        
         void frame();
     protected:
 

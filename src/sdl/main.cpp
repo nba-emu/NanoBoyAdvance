@@ -83,10 +83,12 @@ int main(int argc, char** argv) {
     
     CPU emu(config);
     PPU* ppu;
+    
     u32* fbuffer;
     u16* keyinput;
     bool fast_forward = false;
     
+    int scale = 1;
     std::string rom_path;
     std::string save_path;
     
@@ -96,12 +98,14 @@ int main(int argc, char** argv) {
     Option bios_opt("bios", "path", false);
     Option save_opt("save", "path", true);
     Option scale_opt("scale", "factor", true);
-    Option speed_opt("speed", "multiplier", true);
+    Option speed_opt("forward", "multiplier", true);
+    Option darken_opt("darken", "", true);
     
     parser.add_option(bios_opt);
     parser.add_option(save_opt);
     parser.add_option(scale_opt);
     parser.add_option(speed_opt);
+    parser.add_option(darken_opt);
     
     parser.set_file_limit(1, 1);
     
@@ -123,26 +127,32 @@ int main(int argc, char** argv) {
         }
         
         if (args->option_exists("scale")) {
-            args->get_option_int("scale", config->scale);
+            args->get_option_int("scale", scale);
             
-            if (config->scale == 0) {
+            if (scale == 0) {
                 parser.print_usage(argv[0]);
                 return -1;
             }
         }
         
-        if (args->option_exists("speed")) {
-            args->get_option_int("speed", config->speed);
+        if (args->option_exists("forward")) {
+            args->get_option_int("forward", config->forward);
             
-            if (config->speed == 0) {
+            if (config->forward == 0) {
                 parser.print_usage(argv[0]);
                 return -1;
             }
+        }
+        
+        if (args->option_exists("darken")) {
+            args->get_option_bool("darken", config->darken_screen);
         }
     } catch (std::exception& e) {
         parser.print_usage(argv[0]);
         return -1;
     }
+    
+    emu.load_config();
     
     if (File::exists(rom_path) && File::exists(config->bios_path)) {
         
@@ -157,8 +167,8 @@ int main(int argc, char** argv) {
     }
     
     // setup SDL window
-    g_width  *= config->scale;
-    g_height *= config->scale;
+    g_width  *= scale;
+    g_height *= scale;
     setup_window();
     
     // setup SDL sound
@@ -172,7 +182,7 @@ int main(int argc, char** argv) {
     
     while (running) {
         if (fast_forward) {
-            for (int frame = 0; frame < config->speed; frame++) {
+            for (int frame = 0; frame < config->forward; frame++) {
                 emu.frame();
                 frames++;
             }
@@ -187,7 +197,7 @@ int main(int argc, char** argv) {
             int rendered_frames = frames;
             
             if (fast_forward) {
-                rendered_frames /= config->speed;
+                rendered_frames /= config->forward;
             }
 
             string title = "NanoboyAdvance [" + std::to_string(percentage) + "% | " +
@@ -233,7 +243,7 @@ int main(int argc, char** argv) {
                             ppu->set_frameskip(0);
                         } else {
                             fast_forward = true;
-                            ppu->set_frameskip(config->speed);
+                            ppu->set_frameskip(config->forward);
                         }
                         continue;
                     case SDLK_F9:
