@@ -19,6 +19,7 @@ set(SOURCES
 )
 
 set(HEADERS
+    config.hpp
     cpu/io.hpp
     cpu/cpu.hpp
     cpu/enums.hpp

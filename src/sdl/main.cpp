@@ -30,15 +30,6 @@ using namespace std;
 using namespace Util;
 using namespace GameBoyAdvance;
 
-struct GBAConfig {
-    std::string rom_path;
-    std::string save_path;
-    std::string bios_path;
-    
-    int scale = 1;
-    int speed = 1;
-};
-
 int g_width  = 240;
 int g_height = 160;
 
@@ -87,15 +78,20 @@ void free_window() {
 }
 
 int main(int argc, char** argv) {
-    CPU emu;
+    
+    Config* config = new Config();
+    
+    CPU emu(config);
     PPU* ppu;
     u32* fbuffer;
     u16* keyinput;
     bool fast_forward = false;
     
+    std::string rom_path;
+    std::string save_path;
+    
     ArgumentParser parser;
     shared_ptr<ParsedArguments> args;
-    shared_ptr<GBAConfig> config(new GBAConfig());
     
     Option bios_opt("bios", "path", false);
     Option save_opt("save", "path", true);
@@ -116,16 +112,14 @@ int main(int argc, char** argv) {
     }
     
     try {
-        std::string rom = args->files[0];
-        
-        config->rom_path = rom;
+        rom_path = args->files[0];
         
         args->get_option_string("bios", config->bios_path);
         
         if (args->option_exists("save")) {
-            args->get_option_string("save", config->save_path);
+            args->get_option_string("save", save_path);
         } else {
-            config->save_path = rom.substr(0, rom.find_last_of(".")) + ".sav";
+            save_path = rom_path.substr(0, rom_path.find_last_of(".")) + ".sav";
         }
         
         if (args->option_exists("scale")) {
@@ -150,22 +144,13 @@ int main(int argc, char** argv) {
         return -1;
     }
     
-    if (File::exists(config->rom_path) && File::exists(config->bios_path)) {
+    if (File::exists(rom_path) && File::exists(config->bios_path)) {
         
-        u8* rom_data = File::read_data(config->rom_path);
-        int rom_size = File::get_size (config->rom_path);
-        
-        u8* bios_data = File::read_data(config->bios_path);
-        int bios_size = File::get_size (config->bios_path);
-        
-        emu.set_game(rom_data,  rom_size, config->save_path);
-        emu.set_bios(bios_data, bios_size);
-        emu.reset();
+        emu.load_game(rom_path, save_path);
         
         keyinput = &emu.get_keypad();
-        
-        ppu     = &emu.get_ppu();
-        fbuffer = ppu->get_framebuffer();
+        ppu      = &emu.get_ppu();
+        fbuffer  = ppu->get_framebuffer();
     } else {
         parser.print_usage(argv[0]);
         return -1;

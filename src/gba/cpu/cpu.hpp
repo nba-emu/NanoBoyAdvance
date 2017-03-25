@@ -23,6 +23,7 @@
 #include "arm/arm.hpp"
 #include "enums.hpp"
 #include "interrupt.hpp"
+#include "../config.hpp"
 #include "../ppu/ppu.hpp"
 #include "../apu/apu.hpp"
 #include "../cart/cart_backup.hpp"
@@ -37,6 +38,8 @@ namespace GameBoyAdvance {
         typedef u8 (CPU::*read_func)(u32 address);
         typedef void (CPU::*write_func)(u32 address, u8 value);
 
+        Config* m_config;
+        
         u8* m_rom;
         size_t m_rom_size;
         CartBackup* m_backup {nullptr};
@@ -60,6 +63,8 @@ namespace GameBoyAdvance {
         bool m_dma_active;
         int  m_current_dma;
 
+        void load_game();
+        
         u8 read_bios(u32 address);
         u8 read_wram(u32 address);
         u8 read_iram(u32 address);
@@ -140,7 +145,7 @@ namespace GameBoyAdvance {
         };
 
     public:
-        CPU();
+        CPU(Config* config);
         ~CPU();
 
         void reset();
@@ -148,8 +153,8 @@ namespace GameBoyAdvance {
         PPU& get_ppu();
         APU& get_apu();
         u16& get_keypad();
-        void set_bios(u8* data, size_t size);
-        void set_game(u8* data, size_t size, std::string save_file);
+        
+        void load_game(std::string rom_file, std::string save_file);
 
         void frame();
     protected:

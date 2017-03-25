@@ -34,7 +34,7 @@ namespace GameBoyAdvance {
             reset();
         }
         
-        reset() {
+        void reset() {
             m_index = 0;
         }
         

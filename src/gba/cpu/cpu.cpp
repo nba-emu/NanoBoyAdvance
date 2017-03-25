@@ -21,6 +21,7 @@
 #include <stdexcept>
 #include "cpu.hpp"
 #include "../cart/flash.hpp"
+#include "util/file.hpp"
 #include "util/logger.hpp"
 #include "util/likely.hpp"
 
@@ -33,7 +34,10 @@ namespace GameBoyAdvance {
     constexpr CPU::read_func  CPU::m_read_table[16];
     constexpr CPU::write_func CPU::m_write_table[16];
 
-    CPU::CPU() {
+    CPU::CPU(Config* config) {
+        
+        m_config = config;
+        
         reset();
 
         // setup interrupt controller
@@ -54,9 +58,11 @@ namespace GameBoyAdvance {
     void CPU::reset() {
         ARM::reset();
 
+        // reset PPU und APU state
         m_ppu.reset();
         m_apu.reset();
 
+        // reset cartridge memory
         if (m_backup != nullptr) {
             m_backup->reset();
         }
@@ -78,6 +84,7 @@ namespace GameBoyAdvance {
             // reset DMA channels
             m_io.dma[i].id = i;
             m_io.dma[i].reset();
+            
             // !!hacked!! ouchy ouch
             m_io.dma[i].dma_active  = &m_dma_active;
             m_io.dma[i].current_dma = &m_current_dma;
@@ -91,14 +98,36 @@ namespace GameBoyAdvance {
         m_dma_active  = false;
         m_current_dma = 0;
 
-        set_hle(false); // temporary
+        set_hle(!m_config->use_bios);
 
-        if (m_hle) {
+        if (!m_config->use_bios) {
+            // TODO: load helper BIOS
+            
+            // set CPU entrypoint to ROM entrypoint
             m_reg[15] = 0x08000000;
             m_reg[13] = 0x03007F00;
+            
+            // set stack pointers to their respective addresses
             m_bank[BANK_SVC][BANK_R13] = 0x03007FE0;
             m_bank[BANK_IRQ][BANK_R13] = 0x03007FA0;
+            
+            // load first two ROM instructions
             refill_pipeline();
+        } else {
+            int size = File::get_size(m_config->bios_path);
+            u8* data = File::read_data(m_config->bios_path);
+            
+            if (size > 0x4000) {
+                throw std::runtime_error("bad BIOS image");
+            }
+            
+            // copy BIOS to local buffer
+            memcpy(m_bios, data, size);
+            
+            // reset r15 because of weird reason
+            m_reg[15] = 0x00000000;
+            
+            delete data;
         }
     }
 
@@ -114,36 +143,43 @@ namespace GameBoyAdvance {
         return m_io.keyinput;
     }
 
-    void CPU::set_bios(u8* data, size_t size) {
-        if (size <= sizeof(m_bios)) {
-            memcpy(m_bios, data, size);
-            return;
-        }
-        throw std::runtime_error("bios file is too big.");
-    }
-
-    void CPU::set_game(u8* data, size_t size, std::string save_file) {
-        m_rom      = data;
-        m_rom_size = size;
+    void CPU::load_game(std::string rom_file, std::string save_file) {
+        m_rom      = File::read_data(rom_file);
+        m_rom_size = File::get_size(rom_file);
 
         if (m_backup != nullptr) {
             delete m_backup;
             m_backup = nullptr;
         }
 
-        // detect save type...
-        for (int i = 0; i < size; i += 4) {
-            if (memcmp(data + i, "EEPROM_V", 8) == 0) {
-                // ...
-            } else if (memcmp(data + i, "SRAM_V", 6) == 0) {
-                // ...
-            } else if (memcmp(data + i, "FLASH_V", 7) == 0 ||
-                     memcmp(data + i, "FLASH512_V", 10) == 0) {
-                m_backup = new Flash(save_file, false);
-            } else if (memcmp(data + i, "FLASH1M_V", 9) == 0) {
-                m_backup = new Flash(save_file, true);
+        SaveType save_type = m_config->save_type;
+        
+        if (save_type == SAVE_DETECT) {
+            // Quick way for determining the save type.
+            // Might want to add an overwrite for nasty games that like to trick emulators
+            for (int i = 0; i < m_rom_size; i += 4) {
+                if (memcmp(m_rom + i, "EEPROM_V", 8) == 0) {
+                    save_type = SAVE_EEPROM;
+                } else if (memcmp(m_rom + i, "SRAM_V", 6) == 0) {
+                    save_type = SAVE_SRAM;
+                } else if (memcmp(m_rom + i, "FLASH_V"   , 7 ) == 0 ||
+                           memcmp(m_rom + i, "FLASH512_V", 10) == 0) {
+                    save_type = SAVE_FLASH64;
+                } else if (memcmp(m_rom + i, "FLASH1M_V", 9) == 0) {
+                    save_type = SAVE_FLASH128;
+                }
             }
         }
+        
+        switch (save_type) {
+            case SAVE_EEPROM:   break;
+            case SAVE_SRAM:     break;
+            case SAVE_FLASH64:  m_backup = new Flash(save_file, false); break;
+            case SAVE_FLASH128: m_backup = new Flash(save_file, true); break;
+        }
+        
+        // forced system reset...
+        reset();
     }
 
     void CPU::frame() {
