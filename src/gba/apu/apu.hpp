@@ -34,8 +34,23 @@ namespace GameBoyAdvance {
         
         #include "io.hpp"
     
+        static constexpr float m_wave_duty[4] = { 
+            0.125, 0.25, 0.5, 0.75 
+        };
+        static constexpr int m_sweep_clock[8] = { 
+            0, 32768, 65536, 98304, 131072, 163840, 196608, 229376 
+        };
+        static constexpr float m_psg_volume[] = { 
+            0.25, 0.5, 1, 1 
+        };
+        static constexpr float m_dma_volume[] = { 2, 4 };
+        
         std::mutex m_mutex;
+        std::vector<s8> m_psg_buffer[2];
         std::vector<s8> m_fifo_buffer[2];
+        
+        int m_cycle_count { 0 };
+        int m_sample_rate { 44100 };
         
         Config* m_config;
         
@@ -49,7 +64,16 @@ namespace GameBoyAdvance {
             return m_io;
         }
         
-        void fill_buffer(s8* stream, int length);
+        static auto convert_frequency(int freq) -> float;
+        
+        auto generate_quad(int id) -> float;
+        void update_quad(int step_cycles);
+        
+        void mix_samples(int samples);
+        
+        void step(int step_cycles);
+        
+        void fill_buffer(u16* stream, int length);
         
         void fifo_get_sample(int fifo_id) {
             auto& fifo   = m_io.fifo[fifo_id];

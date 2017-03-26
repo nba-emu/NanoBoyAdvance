@@ -67,11 +67,21 @@ namespace GameBoyAdvance {
             case DMA3CNT_H+1: return m_io.dma[3].read(11);
 
             // SOUND
-            case SOUNDCNT_L:   return apu_io.control.read(0);
-            case SOUNDCNT_L+1: return apu_io.control.read(1);
-            case SOUNDCNT_H:   return apu_io.control.read(2);
-            case SOUNDCNT_H+1: return apu_io.control.read(3);
-            case SOUNDCNT_X:   return apu_io.control.read(4);   
+            case SOUND1CNT_L:   return apu_io.tone[0].read(0);
+            case SOUND1CNT_L+1: return apu_io.tone[0].read(1);
+            case SOUND1CNT_H:   return apu_io.tone[0].read(2);
+            case SOUND1CNT_H+1: return apu_io.tone[0].read(3);
+            case SOUND1CNT_X:   return apu_io.tone[0].read(4);
+            case SOUND1CNT_X+1: return apu_io.tone[0].read(5);
+            case SOUND2CNT_L:   return apu_io.tone[1].read(2);
+            case SOUND2CNT_L+1: return apu_io.tone[1].read(3);
+            case SOUND2CNT_H:   return apu_io.tone[1].read(4);
+            case SOUND2CNT_H+1: return apu_io.tone[1].read(5);    
+            case SOUNDCNT_L:    return apu_io.control.read(0);
+            case SOUNDCNT_L+1:  return apu_io.control.read(1);
+            case SOUNDCNT_H:    return apu_io.control.read(2);
+            case SOUNDCNT_H+1:  return apu_io.control.read(3);
+            case SOUNDCNT_X:    return apu_io.control.read(4);   
             
             // TIMER
             case TM0CNT_L:   return m_io.timer[0].read(0);
@@ -278,6 +288,16 @@ namespace GameBoyAdvance {
             case DMA3CNT_H+1: m_io.dma[3].write(11, value); break;
 
             // SOUND
+            case SOUND1CNT_L:   apu_io.tone[0].write(0, value); break;
+            case SOUND1CNT_L+1: apu_io.tone[0].write(1, value); break;
+            case SOUND1CNT_H:   apu_io.tone[0].write(2, value); break;
+            case SOUND1CNT_H+1: apu_io.tone[0].write(3, value); break;
+            case SOUND1CNT_X:   apu_io.tone[0].write(4, value); break;
+            case SOUND1CNT_X+1: apu_io.tone[0].write(5, value); break;
+            case SOUND2CNT_L:   apu_io.tone[1].write(2, value); break;
+            case SOUND2CNT_L+1: apu_io.tone[1].write(3, value); break;
+            case SOUND2CNT_H:   apu_io.tone[1].write(4, value); break;
+            case SOUND2CNT_H+1: apu_io.tone[1].write(5, value); break;
             case FIFO_A:
             case FIFO_A+1:
             case FIFO_A+2:

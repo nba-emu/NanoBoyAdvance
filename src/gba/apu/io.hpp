@@ -29,8 +29,65 @@ enum DMANumber {
     DMA_B = 1
 };
 
+enum SweepDirection {
+    SWEEP_INC = 0,
+    SWEEP_DEC = 1
+};
+    
+enum EnvelopeDirection {
+    ENV_INC = 1,
+    ENV_DEC = 0
+};
+
 struct IO {
     FIFO fifo[2];
+    
+    struct VolumeEnvelope {
+        int time;
+        int initial;
+        int direction;
+    };
+    
+    struct ToneChannel {
+        
+        struct Sweep {
+            int time;
+            int shift;
+            int direction;
+        } sweep;
+        
+        VolumeEnvelope envelope;
+        
+        int frequency;
+        int wave_duty;
+        int sound_length;
+        bool apply_length;
+        
+        // not visible to the CPU
+        struct Internal {
+            int sample;
+            int volume;
+            int frequency;
+            
+            struct Cycles {
+                int sweep;
+                int length;
+                int envelope;
+            } cycles;
+        } internal;
+        
+        void reset();
+        auto read(int offset) -> u8;
+        void write(int offset, u8 value);
+    } tone[2];
+    
+    struct WaveChannel {
+        
+    } wave;
+    
+    struct NoiseChannel {
+        
+    } noise;
     
     struct Control {
         bool master_enable;

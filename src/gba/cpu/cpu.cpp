@@ -205,6 +205,7 @@ namespace GameBoyAdvance {
             run_for(CYCLES_HBLANK);
 
             m_ppu.next_line();
+            m_apu.step(CYCLES_ENTIRE);
         }
 
         // 68 invisible lines, VBLANK period.
@@ -215,6 +216,7 @@ namespace GameBoyAdvance {
         for (int line = 0; line < INVISIBLE_LINES; line++) {
             run_for(CYCLES_ENTIRE);
             m_ppu.next_line();
+            m_apu.step(CYCLES_ENTIRE);
         }
     }
 

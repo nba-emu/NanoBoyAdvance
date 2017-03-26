@@ -21,6 +21,118 @@
 
 namespace GameBoyAdvance {
     
+    void APU::IO::ToneChannel::reset() {
+        
+        // reset sweep info
+        sweep.time = 0;
+        sweep.shift = 0;
+        sweep.direction = SWEEP_INC;
+        
+        // reset envelope info
+        envelope.time = 0;
+        envelope.initial = 0;
+        envelope.direction = ENV_DEC;
+        
+        frequency = 0;
+        wave_duty = 0;
+        sound_length = 0;
+        apply_length = false;
+        
+        // reset internal state
+        internal.sample    = 0;
+        internal.volume    = 0;
+        internal.frequency = 0;
+        internal.cycles.sweep    = 0;
+        internal.cycles.length   = 0;
+        internal.cycles.envelope = 0;
+    }
+    
+    auto APU::IO::ToneChannel::read(int offset) -> u8 {
+        
+        switch (offset) {
+            // Sweep Register
+            case 0: {
+                return (sweep.shift     << 0) |
+                       (sweep.direction << 3) |
+                       (sweep.time      << 4);
+            }
+            case 1: { 
+                return 0; 
+            }
+                
+            // Duty/Len/Envelope
+            case 2: {
+                return /*(sound_length << 0) |*/
+                       (wave_duty    << 6);
+            }
+            case 3: {
+                return (envelope.time      << 0) |
+                       (envelope.direction << 3) |
+                       (envelope.initial   << 4);
+            }
+                
+            // Frequency/Control
+            case 4: {
+                return 0;
+            }
+            case 5: {
+                return apply_length ? 0x40 : 0;
+            }
+        }
+    }
+    
+    void APU::IO::ToneChannel::write(int offset, u8 value) {
+        
+        switch (offset) {
+            // Sweep Register
+            case 0: {
+                sweep.shift     = (value >> 0) & 3;
+                //sweep.direction = (value >> 3) & 1;
+                sweep.time      = (value >> 4);
+                break;
+            }
+            case 1: {
+                break;
+            }
+                
+            // Duty/Len/Envelope
+            case 2: {
+                sound_length = (value >> 0) & 63;
+                wave_duty    = (value >> 6) & 3;
+                break;
+            }
+            case 3: {
+                envelope.time      = (value >> 0) & 7;
+                //envelope.direction = (value >> 3) & 1;
+                envelope.initial   = (value >> 4);
+                break;
+            }
+                
+            // Frequency Control
+            case 4: {
+                frequency = (frequency & ~0xFF) | value;
+                break;
+            }
+            case 5: {
+                frequency = (frequency &  0xFF) | ((value & 7) << 8);
+                apply_length = value & 0x40;
+                
+                // on sound restart
+                if (value & 0x80) {
+                    // reload initial volume and frequency
+                    internal.volume    = envelope.initial;
+                    internal.frequency = frequency;
+                    
+                    // reset cycle counters
+                    internal.cycles.sweep    = 0;
+                    internal.cycles.length   = 0;
+                    internal.cycles.envelope = 0;
+                }
+                break;
+            }
+        }
+    }
+    
     void APU::IO::Control::reset() {
         master_enable = false;
         psg.volume = 0;
