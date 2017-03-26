@@ -20,6 +20,7 @@
 #pragma once
 
 #include "fifo.hpp"
+#include "../config.hpp"
 #include "util/integer.hpp"
 #include <vector>
 #include <mutex>
@@ -34,13 +35,15 @@ namespace GameBoyAdvance {
         #include "io.hpp"
     
         std::mutex m_mutex;
-        
         std::vector<s8> m_fifo_buffer[2];
         
+        Config* m_config;
+        
     public:
-        APU();
+        APU(Config* config);
         
         void reset();
+        void load_config();
         
         IO& get_io() {
             return m_io;

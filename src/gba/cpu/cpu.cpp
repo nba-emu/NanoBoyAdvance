@@ -34,7 +34,7 @@ namespace GameBoyAdvance {
     constexpr CPU::read_func  CPU::m_read_table[16];
     constexpr CPU::write_func CPU::m_write_table[16];
 
-    CPU::CPU(Config* config) : m_config(config), m_ppu(config) {
+    CPU::CPU(Config* config) : m_config(config), m_ppu(config), m_apu(config) {
         
         reset();
 
@@ -49,7 +49,9 @@ namespace GameBoyAdvance {
     CPU::~CPU() {
         if (m_backup != nullptr) {
             delete m_backup;
-            m_backup = nullptr;
+        }
+        if (m_rom != nullptr) {
+            delete m_rom;
         }
     }
 
@@ -139,7 +141,7 @@ namespace GameBoyAdvance {
 
     void CPU::load_config() {
         m_ppu.load_config();
-        //m_apu.load_config();
+        m_apu.load_config();
     }
     
     void CPU::load_game(std::string rom_file, std::string save_file) {
