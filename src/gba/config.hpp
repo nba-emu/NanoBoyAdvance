@@ -42,5 +42,9 @@ namespace GameBoyAdvance {
         int  frameskip     = 0;
         u32* framebuffer   = nullptr;
         bool darken_screen = false;
+        
+        // Misc.
+        int  multiplier   = 1;
+        bool fast_forward = false;
     };
 }

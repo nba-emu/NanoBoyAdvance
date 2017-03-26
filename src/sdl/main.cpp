@@ -86,11 +86,8 @@ int main(int argc, char** argv) {
 
     u16* keyinput;
     u32  fbuffer[240 * 160];
-    bool fast_forward = false;
     
     int scale = 1;
-    int forward = 1;
-    int frameskip = 0;
     std::string rom_path;
     std::string save_path;
     
@@ -140,17 +137,16 @@ int main(int argc, char** argv) {
         }
         
         if (args->option_exists("forward")) {
-            args->get_option_int("forward", forward);
+            args->get_option_int("forward", config->multiplier);
             
-            if (forward == 0) {
+            if (config->multiplier == 0) {
                 parser.print_usage(argv[0]);
                 return -1;
             }
         }
         
         if (args->option_exists("frameskip")) {
-            args->get_option_int("frameskip", frameskip);
-            config->frameskip = frameskip;
+            args->get_option_int("frameskip", config->frameskip);
         }
         
         if (args->option_exists("darken")) {
@@ -188,23 +184,20 @@ int main(int argc, char** argv) {
     int ticks1 = SDL_GetTicks();
     
     while (running) {
-        if (fast_forward) {
-            for (int frame = 0; frame < forward; frame++) {
-                emu.frame();
-                frames++;
-            }
-        } else {
-            emu.frame();
-            frames++;
-        }
+        
+        // generate frame(s)
+        emu.frame();
+        
+        // update frame counter
+        frames += config->fast_forward ? config->multiplier : 1;
         
         int ticks2 = SDL_GetTicks();
         if (ticks2 - ticks1 >= 1000) {
             int percentage = (frames / 60.0) * 100;
             int rendered_frames = frames;
             
-            if (fast_forward) {
-                rendered_frames /= forward;
+            if (config->fast_forward) {
+                rendered_frames /= config->multiplier;
             }
 
             string title = "NanoboyAdvance [" + std::to_string(percentage) + "% | " +
@@ -246,22 +239,17 @@ int main(int argc, char** argv) {
                     case SDLK_q:         num = (1<<9); break;
                     case SDLK_SPACE:
                         if (released) {
-                            fast_forward = false;
-                            config->frameskip = frameskip;
+                            config->fast_forward = false;
                         } else {
                             // prevent more than one update!
-                            if (fast_forward) {
+                            if (config->fast_forward) {
                                 continue;
                             }
-
-                            fast_forward = true;
-                            
-                            // is that correct duh?
-                            config->frameskip = (frameskip + 1) + forward; 
+                            config->fast_forward = true;
                         }
                         
-                        // make core adapt new settings
-                        emu.load_config();
+                        //// make core adapt new settings
+                        //emu.load_config();
                         
                         continue;
                     case SDLK_F9:

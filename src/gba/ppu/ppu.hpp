@@ -84,7 +84,7 @@ namespace GameBoyAdvance {
 
         void hblank();
         void vblank();
-        void scanline();
+        void scanline(bool render);
         void next_line();
         
         void render_window(int id);

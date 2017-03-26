@@ -191,32 +191,36 @@ namespace GameBoyAdvance {
         const int CYCLES_HBLANK = 272;
         const int CYCLES_ENTIRE = CYCLES_ACTIVE + CYCLES_HBLANK;
         
-        // 160 visible lines, alternating SCANLINE and HBLANK.
-        for (int line = 0; line < VISIBLE_LINES; line++) {
-            // SCANLINE
-            m_ppu.scanline();
-            run_for(CYCLES_ACTIVE);
+        int frame_count = m_config->fast_forward ? m_config->multiplier : 1;
+        
+        for (int frame = 0; frame < frame_count; frame++) { 
+            // 160 visible lines, alternating SCANLINE and HBLANK.
+            for (int line = 0; line < VISIBLE_LINES; line++) {
+                // SCANLINE
+                m_ppu.scanline(frame == 0);
+                run_for(CYCLES_ACTIVE);
 
-            // HBLANK
-            m_ppu.hblank();
-            if (!m_dma_active) {
-                dma_hblank();
+                // HBLANK
+                m_ppu.hblank();
+                if (!m_dma_active) {
+                    dma_hblank();
+                }
+                run_for(CYCLES_HBLANK);
+
+                m_ppu.next_line();
+                m_apu.step(CYCLES_ENTIRE);
             }
-            run_for(CYCLES_HBLANK);
 
-            m_ppu.next_line();
-            m_apu.step(CYCLES_ENTIRE);
-        }
-
-        // 68 invisible lines, VBLANK period.
-        m_ppu.vblank();
-        if (!m_dma_active) {
-            dma_vblank();
-        }
-        for (int line = 0; line < INVISIBLE_LINES; line++) {
-            run_for(CYCLES_ENTIRE);
-            m_ppu.next_line();
-            m_apu.step(CYCLES_ENTIRE);
+            // 68 invisible lines, VBLANK period.
+            m_ppu.vblank();
+            if (!m_dma_active) {
+                dma_vblank();
+            }
+            for (int line = 0; line < INVISIBLE_LINES; line++) {
+                run_for(CYCLES_ENTIRE);
+                m_ppu.next_line();
+                m_apu.step(CYCLES_ENTIRE);
+            }
         }
     }
 

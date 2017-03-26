@@ -208,7 +208,7 @@ namespace GameBoyAdvance {
         // buffer size that we strech the FIFO samples to
         int actual_length = m_psg_buffer[0].size();
         
-        const int fifo_size[2] = {
+        int fifo_size[2] = {
             (int)m_fifo_buffer[0].size(),    
             (int)m_fifo_buffer[1].size()    
         };
@@ -223,6 +223,24 @@ namespace GameBoyAdvance {
         // FIFO strechting ratios (need better mechanism)
         ratio[0] = (float)fifo_size[0] / (float)actual_length;
         ratio[1] = (float)fifo_size[1] / (float)actual_length;
+        
+        // handle fast forward. only keep 1/multiplier data of each buffer!
+        // TODO: this is a bit hacked-in currently.
+        //       we generate all the samples, just to drop most of them..
+        if (m_config->fast_forward && m_config->multiplier > 1) {
+            float ratio = 1 / (float)m_config->multiplier;
+            
+            // recalculate buffer sizes
+            actual_length *= ratio;
+            fifo_size[0]  *= ratio;
+            fifo_size[1]  *= ratio;
+            
+            // shrink buffers
+            m_psg_buffer[0].erase(m_psg_buffer[0].begin(), m_psg_buffer[0].begin() + actual_length * ratio);
+            m_psg_buffer[1].erase(m_psg_buffer[1].begin(), m_psg_buffer[1].begin() + actual_length * ratio);
+            m_fifo_buffer[0].erase(m_fifo_buffer[0].begin(), m_fifo_buffer[0].begin() + fifo_size[0] * ratio);
+            m_fifo_buffer[1].erase(m_fifo_buffer[1].begin(), m_fifo_buffer[1].begin() + fifo_size[1] * ratio);
+        }
         
         // divide length by four because:
         // 1) length is provided in bytes, while we work with hwords

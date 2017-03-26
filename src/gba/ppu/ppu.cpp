@@ -143,7 +143,7 @@ namespace GameBoyAdvance {
         }
     }
 
-    void PPU::scanline() {
+    void PPU::scanline(bool render) {
         
         // todo: maybe find a better way
         m_io.status.vblank_flag = false;
@@ -155,7 +155,7 @@ namespace GameBoyAdvance {
         m_io.bgx[1].internal += PPU::decode_float16(m_io.bgpb[1]);
         m_io.bgy[1].internal += PPU::decode_float16(m_io.bgpd[1]);
 
-        if (m_frameskip == 0 || m_frame_counter == 0) {
+        if (render && (m_frameskip == 0 || m_frame_counter == 0)) {
             
             if (m_io.control.forced_blank) {
                 u32* line = m_framebuffer + m_io.vcount * 240;
