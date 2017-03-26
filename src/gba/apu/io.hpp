@@ -83,6 +83,23 @@ struct IO {
     
     struct WaveChannel {
         
+        bool playback;
+        bool force_volume;
+        bool apply_length;
+
+        int volume;
+        int frequency;
+        int dimension;
+        int bank_number;
+        int sound_length;
+        
+        // internal
+        int length_cycles;
+        
+        void reset();
+        auto read(int offset) -> u8;
+        void write(int offset, u8 value);
+        
     } wave;
     
     struct NoiseChannel {

@@ -56,9 +56,7 @@ namespace GameBoyAdvance {
                        (sweep.direction << 3) |
                        (sweep.time      << 4);
             }
-            case 1: { 
-                return 0; 
-            }
+            case 1: { return 0; }
                 
             // Duty/Len/Envelope
             case 2: {
@@ -72,9 +70,7 @@ namespace GameBoyAdvance {
             }
                 
             // Frequency/Control
-            case 4: {
-                return 0;
-            }
+            case 4: { return 0; }
             case 5: {
                 return apply_length ? 0x40 : 0;
             }
@@ -91,9 +87,7 @@ namespace GameBoyAdvance {
                 sweep.time      = (value >> 4);
                 break;
             }
-            case 1: {
-                break;
-            }
+            case 1: { break; }
                 
             // Duty/Len/Envelope
             case 2: {
@@ -127,6 +121,85 @@ namespace GameBoyAdvance {
                     internal.cycles.sweep    = 0;
                     internal.cycles.length   = 0;
                     internal.cycles.envelope = 0;
+                }
+                break;
+            }
+        }
+    }
+    
+    void APU::IO::WaveChannel::reset() {
+        playback     = false;
+        force_volume = false;
+        apply_length = false;
+        
+        volume       = 0;
+        frequency    = 0;
+        dimension    = 0;
+        bank_number  = 0;
+        sound_length = 0;
+        
+        length_cycles = 0;
+    }
+    
+    auto APU::IO::WaveChannel::read(int offset) -> u8 {
+        switch (offset) {
+            // Stop/Wave RAM select
+            case 0: {
+                return (dimension   << 5       ) |
+                       (bank_number << 6       ) |
+                       (playback     ? 0x80 : 0);
+            }
+            case 1: { return 0; }
+                
+            // Length/Volume
+            case 2: { return 0; }
+            case 3: {
+                return (volume       << 5       ) |
+                       (force_volume  ? 0x80 : 0);
+            }
+                
+            // Frequency/Control
+            case 4: { return 0; }
+            case 5: {
+                return apply_length ? 0x40 : 0;
+            }
+        }
+    }
+    
+    void APU::IO::WaveChannel::write(int offset, u8 value) {
+        switch (offset) {
+            // Stop/Wave RAM select
+            case 0: {
+                dimension   = (value >> 5) & 1;
+                bank_number = (value >> 6) & 1;
+                playback    =  value & 0x80;
+                break;
+            }
+            case 1: { break; }
+            
+            // Length/Volume
+            case 2: {
+                sound_length = value;
+                break;
+            }
+            case 3: {
+                volume       = (value >> 5) & 3;
+                force_volume = value & 0x80;
+                break;
+            }
+                
+            // Frequency/Control
+            case 4: {
+                frequency = (frequency & ~0xFF) | value;
+                break;
+            }
+            case 5: {
+                frequency    = (frequency & 0xFF) | ((value & 7) << 8);
+                apply_length = value & 0x40;
+                
+                // on sound restart
+                if (value & 0x80) {
+                    length_cycles = 0;
                 }
                 break;
             }
