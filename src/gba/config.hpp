@@ -20,6 +20,7 @@
 #pragma once
 
 #include <string>
+#include "util/integer.hpp"
 
 namespace GameBoyAdvance {
     
@@ -32,14 +33,14 @@ namespace GameBoyAdvance {
     };
     
     struct Config {
-        int forward = 1;
-        int frameskip = 0;
-        
+        // Core
         bool use_bios = true;
         std::string bios_path;
-        
-        bool darken_screen = false;
-        
         SaveType save_type = SAVE_DETECT;
+        
+        // Graphics
+        int  frameskip     = 0;
+        u32* framebuffer   = nullptr;
+        bool darken_screen = false;
     };
 }

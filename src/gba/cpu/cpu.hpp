@@ -150,7 +150,6 @@ namespace GameBoyAdvance {
 
         void reset();
 
-        PPU& get_ppu();
         APU& get_apu();
         u16& get_keypad();
 

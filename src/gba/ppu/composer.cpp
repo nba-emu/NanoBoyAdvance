@@ -85,7 +85,7 @@ namespace GameBoyAdvance {
         auto objwinin = m_io.winout.enable[1];
         
         u16 backdrop_color = (m_pal[1] << 8) | m_pal[0];
-        u32* line_buffer   = m_framebuffer  + m_io.vcount * 240;
+        u32* line_buffer   = m_framebuffer + m_io.vcount * 240;
         
         const bool inside[6][3] = {
             { win0in[LAYER_BG0], win1in[LAYER_BG0], objwinin[LAYER_BG0] },

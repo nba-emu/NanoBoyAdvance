@@ -98,7 +98,7 @@ namespace GameBoyAdvance {
 
         set_hle(!m_config->use_bios);
 
-        if (!m_config->use_bios) {
+        if (!m_config->use_bios || !File::exists(m_config->bios_path)) {
             // TODO: load helper BIOS
             
             // set CPU entrypoint to ROM entrypoint
@@ -127,10 +127,6 @@ namespace GameBoyAdvance {
             
             delete data;
         }
-    }
-
-    PPU& CPU::get_ppu() {
-        return m_ppu;
     }
 
     APU& CPU::get_apu() {

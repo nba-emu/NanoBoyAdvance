@@ -18,6 +18,7 @@
   */
 
 #include <string>
+#include <iostream>
 #include <SDL2/SDL.h>
 #include "gba/cpu/cpu.hpp"
 #include "util/file.hpp"
@@ -82,13 +83,14 @@ int main(int argc, char** argv) {
     Config* config = new Config();
     
     CPU emu(config);
-    PPU* ppu;
-    
-    u32* fbuffer;
+
     u16* keyinput;
+    u32  fbuffer[240 * 160];
     bool fast_forward = false;
     
     int scale = 1;
+    int forward = 1;
+    int frameskip = 0;
     std::string rom_path;
     std::string save_path;
     
@@ -99,12 +101,14 @@ int main(int argc, char** argv) {
     Option save_opt("save", "path", true);
     Option scale_opt("scale", "factor", true);
     Option speed_opt("forward", "multiplier", true);
+    Option frameskip_opt("frameskip", "frames", true);
     Option darken_opt("darken", "", true);
     
     parser.add_option(bios_opt);
     parser.add_option(save_opt);
     parser.add_option(scale_opt);
     parser.add_option(speed_opt);
+    parser.add_option(frameskip_opt);
     parser.add_option(darken_opt);
     
     parser.set_file_limit(1, 1);
@@ -136,12 +140,17 @@ int main(int argc, char** argv) {
         }
         
         if (args->option_exists("forward")) {
-            args->get_option_int("forward", config->forward);
+            args->get_option_int("forward", forward);
             
-            if (config->forward == 0) {
+            if (forward == 0) {
                 parser.print_usage(argv[0]);
                 return -1;
             }
+        }
+        
+        if (args->option_exists("frameskip")) {
+            args->get_option_int("frameskip", frameskip);
+            config->frameskip = frameskip;
         }
         
         if (args->option_exists("darken")) {
@@ -152,15 +161,13 @@ int main(int argc, char** argv) {
         return -1;
     }
     
+    config->framebuffer = fbuffer;
+    
     emu.load_config();
     
     if (File::exists(rom_path) && File::exists(config->bios_path)) {
-        
         emu.load_game(rom_path, save_path);
-        
         keyinput = &emu.get_keypad();
-        ppu      = &emu.get_ppu();
-        fbuffer  = ppu->get_framebuffer();
     } else {
         parser.print_usage(argv[0]);
         return -1;
@@ -182,7 +189,7 @@ int main(int argc, char** argv) {
     
     while (running) {
         if (fast_forward) {
-            for (int frame = 0; frame < config->forward; frame++) {
+            for (int frame = 0; frame < forward; frame++) {
                 emu.frame();
                 frames++;
             }
@@ -197,7 +204,7 @@ int main(int argc, char** argv) {
             int rendered_frames = frames;
             
             if (fast_forward) {
-                rendered_frames /= config->forward;
+                rendered_frames /= forward;
             }
 
             string title = "NanoboyAdvance [" + std::to_string(percentage) + "% | " +
@@ -240,11 +247,22 @@ int main(int argc, char** argv) {
                     case SDLK_SPACE:
                         if (released) {
                             fast_forward = false;
-                            ppu->set_frameskip(0);
+                            config->frameskip = frameskip;
                         } else {
+                            // prevent more than one update!
+                            if (fast_forward) {
+                                continue;
+                            }
+
                             fast_forward = true;
-                            ppu->set_frameskip(config->forward);
+                            
+                            // is that correct duh?
+                            config->frameskip = (frameskip + 1) + forward; 
                         }
+                        
+                        // make core adapt new settings
+                        emu.load_config();
+                        
                         continue;
                     case SDLK_F9:
                         emu.reset();

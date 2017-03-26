@@ -21,8 +21,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#include <iostream>
 #include <fstream>
+#include <stdexcept>
 #include "file.hpp"
 
 using namespace std;
@@ -45,13 +45,12 @@ namespace Util {
             
             ifstream ifs(filename, ios::in | ios::binary | ios::ate);
 
-            if (ifs.is_open())
-            {
+            if (ifs.is_open()) {
                 ifs.seekg(0, ios::end);
                 return ifs.tellg();
+            } else {
+                throw std::runtime_error("unable to access file: " + filename);
             }
-
-            return 0;
         }
 
         u8* read_data(string filename) {
@@ -68,8 +67,7 @@ namespace Util {
                 ifs.read((char*)data, filesize);
                 ifs.close();
             } else {
-                cout << "Cannot open file " << filename.c_str();
-                return NULL;
+                throw std::runtime_error("unable to read file: " + filename);
             }
 
             return data;
@@ -82,7 +80,7 @@ namespace Util {
                 ofs.write((char*)data, size);
                 ofs.close();
             } else {
-                cout << "Cannot write file " << filename.c_str();
+                throw std::runtime_error("unable to write file: " + filename);
             }
         }
     }

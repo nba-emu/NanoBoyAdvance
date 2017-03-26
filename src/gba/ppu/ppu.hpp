@@ -37,13 +37,15 @@ namespace GameBoyAdvance {
         u8* m_vram;
         Interrupt* m_interrupt = nullptr;
         
+        int  m_frameskip;
+        u32* m_framebuffer;
         Config* m_config;
 
         // rendering buffers
         u16  m_buffer[4][240];
-        u32  m_framebuffer[240*160];
         bool m_win_mask[2][240];
         
+        // color conversion LUT
         u32 m_color_lut[0x8000];
         
         struct ObjectPixel {
@@ -53,7 +55,6 @@ namespace GameBoyAdvance {
             bool window;
         } m_obj_layer[240];
 
-        int m_frameskip;
         int m_frame_counter;
 
         #include "io.hpp"
@@ -78,8 +79,6 @@ namespace GameBoyAdvance {
             return m_io;
         }
 
-        u32* get_framebuffer();
-        void set_frameskip(int frames);
         void set_memory(u8* pal, u8* oam, u8* vram);
         void set_interrupt(Interrupt* interrupt);
 

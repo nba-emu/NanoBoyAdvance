@@ -25,12 +25,15 @@ using namespace Util;
 
 namespace GameBoyAdvance {
     
-    PPU::PPU(Config* config) : m_config(config), m_frameskip(0) {
+    PPU::PPU(Config* config) : m_config(config) {
         reset();
         load_config();
     }
     
     void PPU::load_config() {
+        
+        m_frameskip   = m_config->frameskip;
+        m_framebuffer = m_config->framebuffer;
         
         // build color LUT
         for (int color = 0; color < 0x8000; color++) {
@@ -102,14 +105,6 @@ namespace GameBoyAdvance {
         m_frame_counter = 0;
     }
 
-    u32* PPU::get_framebuffer() {
-        return m_framebuffer;
-    }
-
-    void PPU::set_frameskip(int frames) {
-        m_frameskip = frames;
-    }
-
     void PPU::set_memory(u8* pal, u8* oam, u8* vram) {
         m_pal  = pal;
         m_oam  = oam;
@@ -139,8 +134,8 @@ namespace GameBoyAdvance {
         m_io.bgx[1].internal = PPU::decode_float32(m_io.bgx[1].value);
         m_io.bgy[1].internal = PPU::decode_float32(m_io.bgy[1].value);
 
-        if (m_frameskip != 0) {
-            m_frame_counter = (m_frame_counter + 1) % m_frameskip;
+        if (m_config->frameskip != 0) {
+            m_frame_counter = (m_frame_counter + 1) % m_config->frameskip;
         }
 
         if (m_io.status.vblank_interrupt) {
