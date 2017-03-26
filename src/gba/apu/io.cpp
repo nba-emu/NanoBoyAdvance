@@ -87,7 +87,7 @@ namespace GameBoyAdvance {
             // Sweep Register
             case 0: {
                 sweep.shift     = (value >> 0) & 3;
-                //sweep.direction = (value >> 3) & 1;
+                sweep.direction = (value >> 3) & 1;
                 sweep.time      = (value >> 4);
                 break;
             }

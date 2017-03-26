@@ -228,6 +228,7 @@ namespace GameBoyAdvance {
         // TODO: this is a bit hacked-in currently.
         //       we generate all the samples, just to drop most of them..
         if (m_config->fast_forward && m_config->multiplier > 1) {
+            
             float ratio = 1 / (float)m_config->multiplier;
             
             // recalculate buffer sizes
@@ -236,10 +237,10 @@ namespace GameBoyAdvance {
             fifo_size[1]  *= ratio;
             
             // shrink buffers
-            m_psg_buffer[0].erase(m_psg_buffer[0].begin(), m_psg_buffer[0].begin() + actual_length * ratio);
-            m_psg_buffer[1].erase(m_psg_buffer[1].begin(), m_psg_buffer[1].begin() + actual_length * ratio);
-            m_fifo_buffer[0].erase(m_fifo_buffer[0].begin(), m_fifo_buffer[0].begin() + fifo_size[0] * ratio);
-            m_fifo_buffer[1].erase(m_fifo_buffer[1].begin(), m_fifo_buffer[1].begin() + fifo_size[1] * ratio);
+            m_psg_buffer[0].erase(m_psg_buffer[0].begin(), m_psg_buffer[0].begin() + actual_length);
+            m_psg_buffer[1].erase(m_psg_buffer[1].begin(), m_psg_buffer[1].begin() + actual_length);
+            m_fifo_buffer[0].erase(m_fifo_buffer[0].begin(), m_fifo_buffer[0].begin() + fifo_size[0]);
+            m_fifo_buffer[1].erase(m_fifo_buffer[1].begin(), m_fifo_buffer[1].begin() + fifo_size[1]);
         }
         
         // divide length by four because:
