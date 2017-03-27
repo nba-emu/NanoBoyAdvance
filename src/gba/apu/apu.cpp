@@ -22,6 +22,10 @@
 
 namespace GameBoyAdvance {
     
+    #ifndef M_PI
+    #define M_PI (3.14159265358979323846)
+    #endif
+    
     constexpr float APU::m_wave_duty[4];
     constexpr int   APU::m_sweep_clock[8];
     constexpr float APU::m_psg_volume[4];
