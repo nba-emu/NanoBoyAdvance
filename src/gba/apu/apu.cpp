@@ -137,7 +137,7 @@ namespace GameBoyAdvance {
             }
             
             if (channel.apply_length) {
-                cycles.length++;
+                cycles.length += step_cycles;
             }
         }
     }
