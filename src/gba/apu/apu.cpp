@@ -28,6 +28,7 @@ namespace GameBoyAdvance {
     
     constexpr float APU::m_wave_duty[4];
     constexpr int   APU::m_sweep_clock[8];
+    constexpr int   APU::m_envelope_clock[8];
     constexpr float APU::m_psg_volume[4];
     constexpr float APU::m_dma_volume[2];
     
@@ -103,11 +104,10 @@ namespace GameBoyAdvance {
             auto& cycles   = internal.cycles;
             auto& sweep    = channel.sweep;
             auto& envelope = channel.envelope;
-
-            int sweep_clock    = m_sweep_clock[sweep.time];
-            int envelope_clock = (int)(envelope.time * (1.0 / 64.0) * 16780000.0);
             
             if (sweep.time != 0) {
+                int sweep_clock = m_sweep_clock[sweep.time];
+                
                 cycles.sweep += step_cycles;
                 
                 // not very optimized - i suppose
@@ -125,6 +125,8 @@ namespace GameBoyAdvance {
             }
             
             if (envelope.time != 0) {
+                int envelope_clock = m_envelope_clock[envelope.time];
+                
                 cycles.envelope += step_cycles;
                 
                 // not very optimized - i suppose

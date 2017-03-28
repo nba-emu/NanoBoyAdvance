@@ -40,6 +40,9 @@ namespace GameBoyAdvance {
         static constexpr int m_sweep_clock[8] = {
             0, 130884, 261768, 392652, 523536, 654420, 785304, 916188
         };
+        static constexpr int m_envelope_clock[8] = {
+            0, 262187, 524375, 786562, 1048750, 1310937, 1573125, 1835312
+        };
         static constexpr float m_psg_volume[] = { 
             0.25, 0.5, 1, 1 
         };
