@@ -37,8 +37,8 @@ namespace GameBoyAdvance {
         static constexpr float m_wave_duty[4] = { 
             0.125, 0.25, 0.5, 0.75 
         };
-        static constexpr int m_sweep_clock[8] = { 
-            0, 32768, 65536, 98304, 131072, 163840, 196608, 229376 
+        static constexpr int m_sweep_clock[8] = {
+            0, 130884, 261768, 392652, 523536, 654420, 785304, 916188
         };
         static constexpr float m_psg_volume[] = { 
             0.25, 0.5, 1, 1 

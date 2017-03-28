@@ -66,7 +66,7 @@ namespace GameBoyAdvance {
         auto& cycles   = internal.cycles;
         
         if (channel.apply_length) {
-            int max_cycles = (64 - channel.sound_length) * (1.0 / 256.0) * 4194304;
+            int max_cycles = (64 - channel.sound_length) * (1.0 / 256.0) * 16780000;
             
             if (cycles.length >= max_cycles) {
                 return 0;
@@ -104,7 +104,7 @@ namespace GameBoyAdvance {
             auto& sweep    = channel.sweep;
             auto& envelope = channel.envelope;
 
-            int sweep_clock    = m_sweep_clock[sweep.time] << 2;
+            int sweep_clock    = m_sweep_clock[sweep.time];
             int envelope_clock = (int)(envelope.time * (1.0 / 64.0) * 16780000.0);
             
             if (sweep.time != 0) {
