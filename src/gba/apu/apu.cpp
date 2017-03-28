@@ -104,15 +104,15 @@ namespace GameBoyAdvance {
             auto& sweep    = channel.sweep;
             auto& envelope = channel.envelope;
 
-            int sweep_clock    = m_sweep_clock[sweep.time];
-            int envelope_clock = (int)(envelope.time * (1.0 / 64.0) * 4194304.0);
+            int sweep_clock    = m_sweep_clock[sweep.time] << 2;
+            int envelope_clock = (int)(envelope.time * (1.0 / 64.0) * 16780000.0);
             
             if (sweep.time != 0) {
                 cycles.sweep += step_cycles;
                 
                 // not very optimized - i suppose
                 while (cycles.sweep >= sweep_clock) {
-                    int shift = internal.frequency / (1 << sweep.shift);
+                    int shift = internal.frequency >> sweep.shift;
                     
                     if (sweep.direction == SWEEP_INC) {
                         internal.frequency += shift;
@@ -184,7 +184,7 @@ namespace GameBoyAdvance {
         
         int cycles_per_sample = 16780000 / m_sample_rate;
         
-        update_quad(step_cycles >> 2); // divide by four is quick hack
+        update_quad(step_cycles);
         
         m_cycle_count += step_cycles;
         

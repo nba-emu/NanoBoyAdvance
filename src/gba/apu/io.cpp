@@ -97,7 +97,7 @@ namespace GameBoyAdvance {
             }
             case 3: {
                 envelope.time      = (value >> 0) & 7;
-                //envelope.direction = (value >> 3) & 1;
+                envelope.direction = (value >> 3) & 1;
                 envelope.initial   = (value >> 4);
                 break;
             }
