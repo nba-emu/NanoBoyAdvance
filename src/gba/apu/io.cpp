@@ -82,7 +82,7 @@ namespace GameBoyAdvance {
         switch (offset) {
             // Sweep Register
             case 0: {
-                sweep.shift     = (value >> 0) & 3;
+                sweep.shift     = (value >> 0) & 7;
                 sweep.direction = (value >> 3) & 1;
                 sweep.time      = (value >> 4);
                 break;
