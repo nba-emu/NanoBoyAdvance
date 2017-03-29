@@ -252,7 +252,7 @@ namespace GameBoyAdvance {
             return;
         }
         
-        if (winh.min < winh.max) {
+        if (winh.min <= winh.max) {
             for (int x = 0; x < 240; x++) {
                 buffer[x] = x >= winh.min && x < winh.max;
             }
