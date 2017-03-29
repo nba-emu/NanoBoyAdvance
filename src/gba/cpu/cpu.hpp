@@ -161,7 +161,7 @@ namespace GameBoyAdvance {
 
         #include "memory.hpp"
 
-        void software_interrupt(int number) final;
+        void software_interrupt(int number) final {};
     };
 }
 

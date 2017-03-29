@@ -1,7 +1,6 @@
 set(SOURCES
     cpu/io.cpp
     cpu/cpu.cpp
-    cpu/bios.cpp
     cpu/memory.cpp
     cpu/mmio.cpp
     cpu/timer.cpp
