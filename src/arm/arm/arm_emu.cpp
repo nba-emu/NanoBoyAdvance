@@ -23,7 +23,7 @@
 
 using namespace Util;
 
-namespace ARMigo {
+namespace GameBoyAdvance {
     #include "arm_lut.hpp"
 
     template <bool immediate, int opcode, bool _set_flags, int field4>

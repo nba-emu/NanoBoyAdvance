@@ -29,8 +29,6 @@
 #include "../cart/cart_backup.hpp"
 #define CPU_INCLUDE
 
-using namespace ARMigo;
-
 namespace GameBoyAdvance {
     
     class CPU : public ARM {

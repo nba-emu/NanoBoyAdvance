@@ -20,7 +20,7 @@
 #include <cstring>
 #include "arm.hpp"
 
-namespace ARMigo {
+namespace GameBoyAdvance {
     ARM::ARM() {
         reset();
     }

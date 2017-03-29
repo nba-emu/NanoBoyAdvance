@@ -23,7 +23,7 @@
 
 using namespace Util;
 
-namespace ARMigo {
+namespace GameBoyAdvance {
     #include "thumb_lut.hpp"
 
     template <int imm, int type>

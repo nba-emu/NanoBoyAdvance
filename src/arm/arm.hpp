@@ -23,7 +23,7 @@
 #include "util/integer.hpp"
 #define ARMIGO_INCLUDE
 
-namespace ARMigo {
+namespace GameBoyAdvance {
     class ARM {
     public:
         /// Constructor
