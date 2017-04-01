@@ -79,7 +79,7 @@ namespace GameBoyAdvance {
         float position  = (float)((2 * M_PI * internal.sample * frequency) / m_sample_rate);
         float wave_duty = m_wave_duty[channel.wave_duty];
         
-        float value = 0;;
+        float value = 0;
         
         // generates sample based upon wave duty and sample position
         if (std::fmod(position, 2 * M_PI) <= 2 * M_PI * wave_duty) {
@@ -118,6 +118,12 @@ namespace GameBoyAdvance {
                         internal.frequency += shift;
                     } else {
                         internal.frequency -= shift;
+                    }
+                    
+                    if (internal.frequency >= 2048) {
+                        internal.frequency = 2047;
+                    } else if (internal.frequency < 0) {
+                        internal.frequency = 0;
                     }
                     
                     cycles.sweep -= sweep_clock;
