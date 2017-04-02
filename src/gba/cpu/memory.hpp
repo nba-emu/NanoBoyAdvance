@@ -23,27 +23,27 @@
 
 u8 bus_read_byte(u32 address) final {
     register int page = (address >> 24) & 15;
-    register read_func func = m_read_table[page];
+    register read_func func = s_read_table[page];
 
-    m_cycles -= m_mem_cycles8_16[page];
+    m_cycles -= s_mem_cycles8_16[page];
 
     return (this->*func)(address);
 }
 
 u16 bus_read_hword(u32 address) final {
     register int page = (address >> 24) & 15;
-    register read_func func = m_read_table[page];
+    register read_func func = s_read_table[page];
 
-    m_cycles -= m_mem_cycles8_16[page];
+    m_cycles -= s_mem_cycles8_16[page];
 
     return (this->*func)(address) | ((this->*func)(address + 1) << 8);
 }
 
 u32 bus_read_word(u32 address) final {
     register int page = (address >> 24) & 15;
-    register read_func func = m_read_table[page];
+    register read_func func = s_read_table[page];
 
-    m_cycles -= m_mem_cycles32[page];
+    m_cycles -= s_mem_cycles32[page];
 
     return (this->*func)(address) |
            ((this->*func)(address + 1) << 8) |
@@ -53,9 +53,9 @@ u32 bus_read_word(u32 address) final {
 
 void bus_write_byte(u32 address, u8 value) final {
     register int page = (address >> 24) & 15;
-    register write_func func = m_write_table[page];
+    register write_func func = s_write_table[page];
 
-    m_cycles -= m_mem_cycles8_16[page];
+    m_cycles -= s_mem_cycles8_16[page];
 
     // handle 16-bit data busses. might reduce condition?
     if (page == 5 || page == 6 || page == 7) {
@@ -69,9 +69,9 @@ void bus_write_byte(u32 address, u8 value) final {
 
 void bus_write_hword(u32 address, u16 value) final {
     register int page = (address >> 24) & 15;
-    register write_func func = m_write_table[page];
+    register write_func func = s_write_table[page];
 
-    m_cycles -= m_mem_cycles8_16[page];
+    m_cycles -= s_mem_cycles8_16[page];
 
     (this->*func)(address + 0, value & 0xFF);
     (this->*func)(address + 1, value >> 8);
@@ -79,9 +79,9 @@ void bus_write_hword(u32 address, u16 value) final {
 
 void bus_write_word(u32 address, u32 value) final {
     register int page = (address >> 24) & 15;
-    register write_func func = m_write_table[page];
+    register write_func func = s_write_table[page];
 
-    m_cycles -= m_mem_cycles32[page];
+    m_cycles -= s_mem_cycles32[page];
 
     (this->*func)(address + 0, (value >> 0) & 0xFF);
     (this->*func)(address + 1, (value >> 8) & 0xFF);

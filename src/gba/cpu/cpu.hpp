@@ -96,15 +96,15 @@ namespace GameBoyAdvance {
         void dma_transfer();
         void dma_fill_fifo(int dma_id);
 
-        static constexpr int m_mem_cycles8_16[16] = {
+        static constexpr int s_mem_cycles8_16[16] = {
             1, 1, 3, 1, 1, 1, 1, 1, 5, 5, 1, 1, 1, 1, 5, 1
         };
 
-        static constexpr int m_mem_cycles32[16] = {
+        static constexpr int s_mem_cycles32[16] = {
             1, 1, 6, 1, 1, 2, 2, 1, 8, 8, 1, 1, 1, 1, 5, 1
         };
 
-        static constexpr read_func m_read_table[16] = {
+        static constexpr read_func s_read_table[16] = {
             &CPU::read_bios,
             &CPU::read_invalid,
             &CPU::read_wram,
@@ -123,7 +123,7 @@ namespace GameBoyAdvance {
             &CPU::read_invalid
         };
 
-        static constexpr write_func m_write_table[16] = {
+        static constexpr write_func s_write_table[16] = {
             &CPU::write_invalid,
             &CPU::write_invalid,
             &CPU::write_wram,

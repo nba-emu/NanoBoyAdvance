@@ -26,11 +26,11 @@ namespace GameBoyAdvance {
     #define M_PI (3.14159265358979323846)
     #endif
     
-    constexpr float APU::m_wave_duty[4];
-    constexpr int   APU::m_sweep_clock[8];
-    constexpr int   APU::m_envelope_clock[8];
-    constexpr float APU::m_psg_volume[4];
-    constexpr float APU::m_dma_volume[2];
+    constexpr float APU::s_wave_duty[4];
+    constexpr int   APU::s_sweep_clock[8];
+    constexpr int   APU::s_envelope_clock[8];
+    constexpr float APU::s_psg_volume[4];
+    constexpr float APU::s_dma_volume[2];
     
     APU::APU(Config* config) : m_config(config) {
         
@@ -77,7 +77,7 @@ namespace GameBoyAdvance {
         float amplitude = (float)internal.volume * (1.0 / 16.0);
         float frequency = convert_frequency(internal.frequency);
         float position  = (float)((2 * M_PI * internal.sample * frequency) / m_sample_rate);
-        float wave_duty = m_wave_duty[channel.wave_duty];
+        float wave_duty = s_wave_duty[channel.wave_duty];
         
         float value = 0;
         
@@ -106,7 +106,7 @@ namespace GameBoyAdvance {
             auto& envelope = channel.envelope;
             
             if (sweep.time != 0) {
-                int sweep_clock = m_sweep_clock[sweep.time];
+                int sweep_clock = s_sweep_clock[sweep.time];
                 
                 cycles.sweep += step_cycles;
                 
@@ -131,7 +131,7 @@ namespace GameBoyAdvance {
             }
             
             if (envelope.time != 0) {
-                int envelope_clock = m_envelope_clock[envelope.time];
+                int envelope_clock = s_envelope_clock[envelope.time];
                 
                 cycles.envelope += step_cycles;
                 
@@ -213,7 +213,7 @@ namespace GameBoyAdvance {
         auto  dma  = m_io.control.dma;
         auto& bias = m_io.bias;
         
-        float psg_volume = m_psg_volume[psg.volume];
+        float psg_volume = s_psg_volume[psg.volume];
         
         m_mutex.lock();
         
@@ -226,8 +226,8 @@ namespace GameBoyAdvance {
         };
         
         const float fifo_amplitude[2] = {
-            APU::m_dma_volume[dma[0].volume],
-            APU::m_dma_volume[dma[1].volume]
+            APU::s_dma_volume[dma[0].volume],
+            APU::s_dma_volume[dma[1].volume]
         };
                 
         float ratio[2];

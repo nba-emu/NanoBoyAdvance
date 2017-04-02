@@ -34,19 +34,15 @@ namespace GameBoyAdvance {
         
         #include "io.hpp"
     
-        static constexpr float m_wave_duty[4] = { 
-            0.125, 0.25, 0.5, 0.75 
-        };
-        static constexpr int m_sweep_clock[8] = {
+        static constexpr float s_wave_duty[4] = { 0.125, 0.25, 0.5, 0.75 };
+        static constexpr int s_sweep_clock[8] = {
             0, 130884, 261768, 392652, 523536, 654420, 785304, 916188
         };
-        static constexpr int m_envelope_clock[8] = {
+        static constexpr int s_envelope_clock[8] = {
             0, 262187, 524375, 786562, 1048750, 1310937, 1573125, 1835312
         };
-        static constexpr float m_psg_volume[] = { 
-            0.25, 0.5, 1, 1 
-        };
-        static constexpr float m_dma_volume[] = { 2, 4 };
+        static constexpr float s_psg_volume[] = { 0.25, 0.5, 1, 1 };
+        static constexpr float s_dma_volume[] = { 2, 4 };
         
         std::mutex m_mutex;
         std::vector<s8> m_psg_buffer[2];
