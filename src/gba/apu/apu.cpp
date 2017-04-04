@@ -31,6 +31,7 @@ namespace GameBoyAdvance {
     constexpr int   APU::s_envelope_clock[8];
     constexpr float APU::s_psg_volume[4];
     constexpr float APU::s_dma_volume[2];
+    constexpr int   APU::s_wav_volume[4];
     
     APU::APU(Config* config) : m_config(config) {
         
@@ -47,6 +48,7 @@ namespace GameBoyAdvance {
         m_io.fifo[1].reset();
         m_io.tone[0].reset();
         m_io.tone[1].reset();
+        m_io.wave.reset();
         
         m_io.bias.reset();
         m_io.control.reset();
@@ -93,6 +95,31 @@ namespace GameBoyAdvance {
         }
         
         return amplitude * value;
+    }
+    
+    auto APU::generate_wave() -> float {
+        
+        auto& wave     = m_io.wave;
+        auto& wave_int = wave.internal; 
+        
+        if (!wave.playback) {
+            return 0;
+        }
+        
+        if (wave.apply_length) {
+            int max_cycles = (256 - wave.sound_length) * (1.0 / 256.0) * 16780000;
+            
+            if (wave_int.length_cycles >= max_cycles) {
+                return 0;
+            }
+        }
+         
+        u8 byte   = m_io.wave_ram[wave.bank_number][wave_int.sample_ptr >> 1];
+        u8 sample = (wave_int.sample_ptr & 1) ? (byte & 15) : (byte >> 4);
+        
+        int volume = wave.force_volume ? 12 : s_wav_volume[wave.volume];
+        
+        return (float)(sample * volume);
     }
     
     void APU::update_quad(int step_cycles) {
@@ -154,6 +181,41 @@ namespace GameBoyAdvance {
         }
     }
     
+    void APU::update_wave(int step_cycles) {
+        auto& wave     = m_io.wave;
+        auto& wave_int = wave.internal;
+        
+        // concert sample rate to cycles
+        int required = 16780000 / (2097152 / (2048 - wave.frequency));
+        
+        wave_int.sample_cycles += step_cycles;
+        
+        if (wave_int.sample_cycles >= required) {
+            int amount = wave_int.sample_cycles / required;
+            
+            wave_int.sample_ptr += amount;
+            
+            // check for wave RAM overflow
+            if (wave_int.sample_ptr >= 32) {
+                // wraparound sample pointer
+                wave_int.sample_ptr &= 0x1F;
+                
+                // 64-digit mode?
+                if (wave.dimension) {
+                    // toggle bank number
+                    wave.bank_number ^= 1;
+                }    
+            }
+            
+            // eat the cycles that were "consumed"
+            wave_int.sample_cycles -= amount * required;
+        }
+        
+        if (wave.apply_length) {
+            wave.internal.length_cycles += step_cycles;
+        }
+    }
+    
     void APU::mix_samples(int samples) {
         
         auto& psg = m_io.control.psg;
@@ -167,14 +229,17 @@ namespace GameBoyAdvance {
             
             s16 tone1 = (s16)generate_quad(0);
             s16 tone2 = (s16)generate_quad(1);
+            s16 wave  = (s16)generate_wave();
             
             // calculate left side
             if (psg.enable[SIDE_LEFT][0]) out1 += tone1;
             if (psg.enable[SIDE_LEFT][1]) out1 += tone2;
+            if (psg.enable[SIDE_LEFT][2]) out1 += wave;
             
             // calculate right side
             if (psg.enable[SIDE_RIGHT][0]) out2 += tone1;
             if (psg.enable[SIDE_RIGHT][1]) out2 += tone2;
+            if (psg.enable[SIDE_RIGHT][2]) out2 += wave;
             
             // prevent evil simultanious accesses
             m_mutex.lock();
@@ -193,6 +258,7 @@ namespace GameBoyAdvance {
         int cycles_per_sample = 16780000 / m_sample_rate;
         
         update_quad(step_cycles);
+        update_wave(step_cycles);
         
         m_cycle_count += step_cycles;
         

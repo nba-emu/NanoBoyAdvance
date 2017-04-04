@@ -138,7 +138,9 @@ namespace GameBoyAdvance {
         bank_number  = 0;
         sound_length = 0;
         
-        length_cycles = 0;
+        internal.sample_ptr    = 0;
+        internal.sample_cycles = 0;
+        internal.length_cycles = 0;
     }
     
     auto APU::IO::WaveChannel::read(int offset) -> u8 {
@@ -199,7 +201,12 @@ namespace GameBoyAdvance {
                 
                 // on sound restart
                 if (value & 0x80) {
-                    length_cycles = 0;
+                    internal.length_cycles = 0;
+                    
+                    // in 64-digit mode output starts with the first bank
+                    if (dimension) {
+                        bank_number = 0;
+                    }
                 }
                 break;
             }

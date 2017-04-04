@@ -93,14 +93,19 @@ struct IO {
         int bank_number;
         int sound_length;
         
-        // internal
-        int length_cycles;
+        struct Internal {
+            int sample_ptr;
+            int sample_cycles;
+            int length_cycles;
+        } internal;
         
         void reset();
         auto read(int offset) -> u8;
         void write(int offset, u8 value);
         
     } wave;
+    
+    u8 wave_ram[2][16];
     
     struct NoiseChannel {
         

@@ -76,7 +76,13 @@ namespace GameBoyAdvance {
             case SOUND2CNT_L:   return apu_io.tone[1].read(2);
             case SOUND2CNT_L+1: return apu_io.tone[1].read(3);
             case SOUND2CNT_H:   return apu_io.tone[1].read(4);
-            case SOUND2CNT_H+1: return apu_io.tone[1].read(5);    
+            case SOUND2CNT_H+1: return apu_io.tone[1].read(5);
+            case SOUND3CNT_L:   return apu_io.wave.read(0);
+            case SOUND3CNT_L+1: return apu_io.wave.read(1);
+            case SOUND3CNT_H:   return apu_io.wave.read(2);
+            case SOUND3CNT_H+1: return apu_io.wave.read(3);
+            case SOUND3CNT_X:   return apu_io.wave.read(4);
+            case SOUND3CNT_X+1: return apu_io.wave.read(5);
             case SOUNDCNT_L:    return apu_io.control.read(0);
             case SOUNDCNT_L+1:  return apu_io.control.read(1);
             case SOUNDCNT_H:    return apu_io.control.read(2);
@@ -298,6 +304,34 @@ namespace GameBoyAdvance {
             case SOUND2CNT_L+1: apu_io.tone[1].write(3, value); break;
             case SOUND2CNT_H:   apu_io.tone[1].write(4, value); break;
             case SOUND2CNT_H+1: apu_io.tone[1].write(5, value); break;
+            case SOUND3CNT_L:   apu_io.wave.write(0, value); break;
+            case SOUND3CNT_L+1: apu_io.wave.write(1, value); break;
+            case SOUND3CNT_H:   apu_io.wave.write(2, value); break;
+            case SOUND3CNT_H+1: apu_io.wave.write(3, value); break;
+            case SOUND3CNT_X:   apu_io.wave.write(4, value); break;
+            case SOUND3CNT_X+1: apu_io.wave.write(5, value); break;
+            case WAVE_RAM+0:
+            case WAVE_RAM+1:
+            case WAVE_RAM+2:
+            case WAVE_RAM+3:
+            case WAVE_RAM+4:
+            case WAVE_RAM+5:
+            case WAVE_RAM+6:
+            case WAVE_RAM+7:
+            case WAVE_RAM+8:
+            case WAVE_RAM+9:
+            case WAVE_RAM+10:
+            case WAVE_RAM+11:
+            case WAVE_RAM+12:
+            case WAVE_RAM+13:
+            case WAVE_RAM+14:
+            case WAVE_RAM+15: {
+                int index = address & 0xF;
+                int bank  = apu_io.wave.bank_number ^ 1;
+                
+                apu_io.wave_ram[bank][index] = value;
+                break;
+            }
             case FIFO_A:
             case FIFO_A+1:
             case FIFO_A+2:

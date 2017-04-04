@@ -43,6 +43,7 @@ namespace GameBoyAdvance {
         };
         static constexpr float s_psg_volume[] = { 0.25, 0.5, 1, 1 };
         static constexpr float s_dma_volume[] = { 2, 4 };
+        static constexpr int   s_wav_volume[] = { 0, 16, 8, 4 };
         
         std::mutex m_mutex;
         std::vector<s8> m_psg_buffer[2];
@@ -66,7 +67,9 @@ namespace GameBoyAdvance {
         static auto convert_frequency(int freq) -> float;
         
         auto generate_quad(int id) -> float;
+        auto generate_wave() -> float;
         void update_quad(int step_cycles);
+        void update_wave(int step_cycles);
         
         void mix_samples(int samples);
         
