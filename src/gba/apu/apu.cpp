@@ -20,6 +20,8 @@
 #include <cmath>
 #include "apu.hpp"
 
+#include "util/logger.hpp"
+
 namespace GameBoyAdvance {
     
     #ifndef M_PI
@@ -388,7 +390,7 @@ namespace GameBoyAdvance {
         // remove used samples from the buffers
         if (actual_length > length) {
             
-            if (m_fifo_buffer[0].size() > source_index[0]) {
+            /*if (m_fifo_buffer[0].size() > source_index[0]) {
                 m_fifo_buffer[0].erase(m_fifo_buffer[0].begin(), m_fifo_buffer[0].begin()+source_index[0]);    
             }
             
@@ -397,7 +399,19 @@ namespace GameBoyAdvance {
             }
             
             m_psg_buffer[0].erase(m_psg_buffer[0].begin(), m_psg_buffer[0].begin()+length);
-            m_psg_buffer[1].erase(m_psg_buffer[1].begin(), m_psg_buffer[1].begin()+length);
+            m_psg_buffer[1].erase(m_psg_buffer[1].begin(), m_psg_buffer[1].begin()+length);*/
+            auto& psg_buf = m_psg_buffer;
+            auto& fifo_buf = m_fifo_buffer;
+        
+            for (int i = 0; i < 2; i++) {
+                psg_buf[i].erase(psg_buf[i].begin(), psg_buf[i].end()-length);
+                
+                if (fifo_buf[i].size() > source_index[i]) {
+                    int disp = length * ratio[i];
+                    
+                    fifo_buf[i].erase(fifo_buf[i].begin(), fifo_buf[i].end()-disp);
+                }
+            }
         } else {
             m_psg_buffer[0].clear();
             m_psg_buffer[1].clear();
