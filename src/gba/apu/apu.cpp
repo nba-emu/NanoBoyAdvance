@@ -31,7 +31,7 @@ namespace GameBoyAdvance {
     constexpr int   APU::s_envelope_clock[8];
     constexpr float APU::s_psg_volume[4];
     constexpr float APU::s_dma_volume[2];
-    constexpr int   APU::s_wav_volume[4];
+    constexpr float APU::s_wav_volume[4];
     
     APU::APU(Config* config) : m_config(config) {
         
@@ -114,12 +114,12 @@ namespace GameBoyAdvance {
             }
         }
          
-        u8 byte   = m_io.wave_ram[wave.bank_number][wave_int.sample_ptr >> 1];
-        u8 sample = (wave_int.sample_ptr & 1) ? (byte & 15) : (byte >> 4);
+        u8  byte   = m_io.wave_ram[wave.bank_number][wave_int.sample_ptr >> 1];
+        int sample = (wave_int.sample_ptr & 1) ? (byte & 15) : (byte >> 4);
         
-        int volume = wave.force_volume ? 12 : s_wav_volume[wave.volume];
+        float volume = wave.force_volume ? 0.75 : s_wav_volume[wave.volume];
         
-        return (float)(sample * volume);
+        return (sample - 8) * volume * 8;
     }
     
     void APU::update_quad(int step_cycles) {

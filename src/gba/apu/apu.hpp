@@ -43,7 +43,7 @@ namespace GameBoyAdvance {
         };
         static constexpr float s_psg_volume[] = { 0.25, 0.5, 1, 1 };
         static constexpr float s_dma_volume[] = { 2, 4 };
-        static constexpr int   s_wav_volume[] = { 0, 16, 8, 4 };
+        static constexpr float s_wav_volume[] = { 0, 1, 0.5, 0.25 };
         
         std::mutex m_mutex;
         std::vector<s8> m_psg_buffer[2];
