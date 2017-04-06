@@ -46,6 +46,8 @@ namespace GameBoyAdvance {
     }
     
     void APU::reset() {
+        //TODO: clear buffers
+        
         m_io.fifo[0].reset();
         m_io.fifo[1].reset();
         m_io.tone[0].reset();
@@ -220,36 +222,79 @@ namespace GameBoyAdvance {
     
     void APU::mix_samples(int samples) {
         
-        auto& psg = m_io.control.psg;
+        auto& psg  = m_io.control.psg;
+        auto& dma  = m_io.control.dma;
+        auto& bias = m_io.bias;
+        
+        float psg_volume = s_psg_volume[psg.volume];
+        
+        const float fifo_volume[2] = {
+            APU::s_dma_volume[dma[0].volume],
+            APU::s_dma_volume[dma[1].volume]
+        };
         
         for (int sample = 0; sample < samples; sample++) {
-            s16 out1 = 0;
-            s16 out2 = 0;
+            s16 output[2] { 0, 0 };
             
             float volume_left  = (float)psg.master[SIDE_LEFT ] / 7.0;
             float volume_right = (float)psg.master[SIDE_RIGHT] / 7.0;
             
+            // generate PSG channels
             s16 tone1 = (s16)generate_quad(0);
             s16 tone2 = (s16)generate_quad(1);
             s16 wave  = (s16)generate_wave();
             
-            // calculate left side
-            if (psg.enable[SIDE_LEFT][0]) out1 += tone1;
-            if (psg.enable[SIDE_LEFT][1]) out1 += tone2;
-            if (psg.enable[SIDE_LEFT][2]) out1 += wave;
+            // mix PSGs on the left channel
+            if (psg.enable[SIDE_LEFT][0]) output[SIDE_LEFT] += tone1;
+            if (psg.enable[SIDE_LEFT][1]) output[SIDE_LEFT] += tone2;
+            if (psg.enable[SIDE_LEFT][2]) output[SIDE_LEFT] += wave;
             
-            // calculate right side
-            if (psg.enable[SIDE_RIGHT][0]) out2 += tone1;
-            if (psg.enable[SIDE_RIGHT][1]) out2 += tone2;
-            if (psg.enable[SIDE_RIGHT][2]) out2 += wave;
+            // mix PSGs on the right channel
+            if (psg.enable[SIDE_RIGHT][0]) output[SIDE_RIGHT] += tone1;
+            if (psg.enable[SIDE_RIGHT][1]) output[SIDE_RIGHT] += tone2;
+            if (psg.enable[SIDE_RIGHT][2]) output[SIDE_RIGHT] += wave;
+            
+            // apply master volume to the PSG channels
+            output[SIDE_LEFT ] *= psg_volume;
+            output[SIDE_RIGHT] *= psg_volume;
+            
+            // add FIFO audio samples
+            for (int fifo = 0; fifo < 2; fifo++) {
+                if (dma[fifo].enable[SIDE_LEFT]) {
+                    output[SIDE_LEFT ] += m_fifo_sample[fifo];
+                }
+                if (dma[fifo].enable[SIDE_RIGHT]) {
+                    output[SIDE_RIGHT] += m_fifo_sample[fifo];
+                }
+            }
+            
+            // makeup gain (BIAS) and clipping emulation
+            output[SIDE_LEFT ] += bias.level;
+            output[SIDE_RIGHT] += bias.level;
+            if (output[SIDE_LEFT ] < 0)     output[SIDE_LEFT ] = 0;
+            if (output[SIDE_RIGHT] < 0)     output[SIDE_RIGHT] = 0;
+            if (output[SIDE_LEFT ] > 0x3FF) output[SIDE_LEFT ] = 0x3FF;
+            if (output[SIDE_RIGHT] > 0x3FF) output[SIDE_RIGHT] = 0x3FF;
+            
+            // reduce amplitude resolution
+            output[SIDE_LEFT ] = (output[SIDE_LEFT ] >> bias.resolution) << bias.resolution;
+            output[SIDE_RIGHT] = (output[SIDE_RIGHT] >> bias.resolution) << bias.resolution;
             
             // prevent evil simultanious accesses
             m_mutex.lock();
             
-            m_psg_buffer[SIDE_LEFT ].push_back(out1 * volume_left);
-            m_psg_buffer[SIDE_RIGHT].push_back(out2 * volume_right);
+            m_output[SIDE_LEFT ].push_back(output[SIDE_LEFT ] * 64);
+            m_output[SIDE_RIGHT].push_back(output[SIDE_RIGHT] * 64);
             
             m_mutex.unlock();
+            
+            //// prevent evil simultanious accesses
+            //m_mutex.lock();
+            
+            //m_psg_buffer[SIDE_LEFT ].push_back(out1 * volume_left);
+            //m_psg_buffer[SIDE_RIGHT].push_back(out2 * volume_right);
+            
+            //m_mutex.unlock();
             
         }
         
@@ -276,150 +321,34 @@ namespace GameBoyAdvance {
     }
     
     void APU::fill_buffer(u16* stream, int length) {
-                
-        auto& psg  = m_io.control.psg;
-        auto  dma  = m_io.control.dma;
-        auto& bias = m_io.bias;
         
-        float psg_volume = s_psg_volume[psg.volume];
-        
-        m_mutex.lock();
-        
-        // buffer size that we strech the FIFO samples to
-        int actual_length = m_psg_buffer[0].size();
-        
-        int fifo_size[2] = {
-            (int)m_fifo_buffer[0].size(),    
-            (int)m_fifo_buffer[1].size()    
-        };
-        
-        const float fifo_amplitude[2] = {
-            APU::s_dma_volume[dma[0].volume],
-            APU::s_dma_volume[dma[1].volume]
-        };
-                
-        float ratio[2];
-        
-        // FIFO strechting ratios (need better mechanism)
-        ratio[0] = (float)fifo_size[0] / (float)actual_length;
-        ratio[1] = (float)fifo_size[1] / (float)actual_length;
-        
-        // handle fast forward. only keep 1/multiplier data of each buffer!
-        // TODO: this is a bit hacked-in currently.
-        //       we generate all the samples, just to drop most of them..
-        if (m_config->fast_forward && m_config->multiplier > 1) {
-            
-            float ratio = 1 / (float)m_config->multiplier;
-            
-            // recalculate buffer sizes
-            actual_length *= ratio;
-            fifo_size[0]  *= ratio;
-            fifo_size[1]  *= ratio;
-            
-            // shrink buffers
-            m_psg_buffer[0].erase(m_psg_buffer[0].begin(), m_psg_buffer[0].begin() + actual_length);
-            m_psg_buffer[1].erase(m_psg_buffer[1].begin(), m_psg_buffer[1].begin() + actual_length);
-            m_fifo_buffer[0].erase(m_fifo_buffer[0].begin(), m_fifo_buffer[0].begin() + fifo_size[0]);
-            m_fifo_buffer[1].erase(m_fifo_buffer[1].begin(), m_fifo_buffer[1].begin() + fifo_size[1]);
-        }
-        
+        int buffer_length = m_output[0].size();
+
         // divide length by four because:
         // 1) length is provided in bytes, while we work with hwords
         // 2) length is twice the actual length because of two stereo channels
         length >>= 2;
         
-        s16   output[2];
-        float source_index[2] { 0, 0 };
+        m_mutex.lock();
         
         for (int i = 0; i < length; i++) {
-            
-            // buffer range check
-            if (i >= actual_length) {
-                // TODO: prevent clicking
+            if (i >= buffer_length) {
                 stream[i * 2 + 0] = 0;
                 stream[i * 2 + 1] = 0;
                 continue;
             }
-            
-            // output PSG generated audio
-            output[SIDE_LEFT ] = m_psg_buffer[SIDE_LEFT ][i] * psg_volume;
-            output[SIDE_RIGHT] = m_psg_buffer[SIDE_RIGHT][i] * psg_volume;
-            
-            // add streched FIFO audio
-            for (int fifo = 0; fifo < 2; fifo++) {
-                
-                // FIFO is mixed on neither side? do nothing
-                if (!dma[fifo].enable[SIDE_LEFT] && 
-                    !dma[fifo].enable[SIDE_RIGHT]) { continue; }
-                
-                int sample_index = std::round(source_index[fifo]);
-                
-                // prevent FIFO buffer overrun
-                if (sample_index >= fifo_size[fifo]) {
-                    sample_index = fifo_size[fifo];
-                }
-                
-                s16 sample = m_fifo_buffer[fifo][sample_index] * fifo_amplitude[fifo];
-                
-                if (dma[fifo].enable[SIDE_LEFT]) {
-                    output[SIDE_LEFT ] += sample;
-                }
-                if (dma[fifo].enable[SIDE_RIGHT]) {
-                    output[SIDE_RIGHT] += sample;
-                }
-                
-                source_index[fifo] += ratio[fifo];
-            }
-            
-            // makeup gain (BIAS) and clipping emulation
-            output[SIDE_LEFT ] += bias.level;
-            output[SIDE_RIGHT] += bias.level;
-            if (output[SIDE_LEFT ] < 0)     output[SIDE_LEFT ] = 0;
-            if (output[SIDE_RIGHT] < 0)     output[SIDE_RIGHT] = 0;
-            if (output[SIDE_LEFT ] > 0x3FF) output[SIDE_LEFT ] = 0x3FF;
-            if (output[SIDE_RIGHT] > 0x3FF) output[SIDE_RIGHT] = 0x3FF;
-
-            // reduce amplitude resolution
-            output[SIDE_LEFT ] = (output[SIDE_LEFT ] >> bias.resolution) << bias.resolution;
-            output[SIDE_RIGHT] = (output[SIDE_RIGHT] >> bias.resolution) << bias.resolution;
-
-            stream[i * 2 + 0] = (u16)output[SIDE_LEFT ] * 64;
-            stream[i * 2 + 1] = (u16)output[SIDE_RIGHT] * 64;
+            stream[i * 2 + 0] = m_output[SIDE_LEFT ][i];
+            stream[i * 2 + 1] = m_output[SIDE_RIGHT][i];
         }
         
-        // remove used samples from the buffers
-        if (actual_length > length) {
-            
-            /*if (m_fifo_buffer[0].size() > source_index[0]) {
-                m_fifo_buffer[0].erase(m_fifo_buffer[0].begin(), m_fifo_buffer[0].begin()+source_index[0]);    
-            }
-            
-            if (m_fifo_buffer[1].size() > source_index[1]) {
-                m_fifo_buffer[1].erase(m_fifo_buffer[1].begin(), m_fifo_buffer[1].begin()+source_index[1]);    
-            }
-            
-            m_psg_buffer[0].erase(m_psg_buffer[0].begin(), m_psg_buffer[0].begin()+length);
-            m_psg_buffer[1].erase(m_psg_buffer[1].begin(), m_psg_buffer[1].begin()+length);*/
-            auto& psg_buf = m_psg_buffer;
-            auto& fifo_buf = m_fifo_buffer;
-        
-            for (int i = 0; i < 2; i++) {
-                psg_buf[i].erase(psg_buf[i].begin(), psg_buf[i].end()-length);
-                
-                if (fifo_buf[i].size() > source_index[i]) {
-                    int disp = length * ratio[i];
-                    
-                    fifo_buf[i].erase(fifo_buf[i].begin(), fifo_buf[i].end()-disp);
-                }
-            }
+        if (buffer_length > length) {
+            m_output[SIDE_LEFT].erase(m_output[SIDE_LEFT].begin(), m_output[SIDE_LEFT].begin()+length);
+            m_output[SIDE_RIGHT].erase(m_output[SIDE_RIGHT].begin(), m_output[SIDE_RIGHT].begin()+length);
         } else {
-            m_psg_buffer[0].clear();
-            m_psg_buffer[1].clear();
-            m_fifo_buffer[0].clear();
-            m_fifo_buffer[1].clear();
+            m_output[SIDE_LEFT].clear();
+            m_output[SIDE_RIGHT].clear();
         }
         
         m_mutex.unlock();
-        
     }
 }

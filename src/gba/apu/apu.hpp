@@ -46,8 +46,15 @@ namespace GameBoyAdvance {
         static constexpr float s_wav_volume[] = { 0, 1, 0.5, 0.25 };
         
         std::mutex m_mutex;
-        std::vector<s8> m_psg_buffer[2];
-        std::vector<s8> m_fifo_buffer[2];
+        
+        // stores latched FIFO samples
+        s8 m_fifo_sample[2];
+        
+        // stores audio output, stereo.
+        std::vector<u16> m_output[2];
+        
+        //std::vector<s16> m_psg_buffer[2];
+        //std::vector<s8> m_fifo_buffer[2];
         
         int m_cycle_count { 0 };
         int m_sample_rate { 44100 };
@@ -78,12 +85,7 @@ namespace GameBoyAdvance {
         void fill_buffer(u16* stream, int length);
         
         void fifo_get_sample(int fifo_id) {
-            auto& fifo   = m_io.fifo[fifo_id];
-            auto& buffer = m_fifo_buffer[fifo_id];
-            
-            m_mutex.lock();
-            buffer.push_back(fifo.dequeue());
-            m_mutex.unlock();
+            m_fifo_sample[fifo_id] = m_io.fifo[fifo_id].dequeue();
         }
     };
 }
