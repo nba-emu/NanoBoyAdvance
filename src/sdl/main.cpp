@@ -46,7 +46,7 @@ void setup_sound(APU* apu) {
     SDL_AudioSpec spec;
     
     spec.freq     = 44100;
-    spec.samples  = 4096;
+    spec.samples  = 1024;
     spec.format   = AUDIO_U16;
     spec.channels = 2;
     spec.callback = sound_cb;
