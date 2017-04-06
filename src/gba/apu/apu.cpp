@@ -46,7 +46,11 @@ namespace GameBoyAdvance {
     }
     
     void APU::reset() {
-        //TODO: clear buffers
+        // reset ringbuffer(s)
+        m_read_pos  = 0;
+        m_write_pos = 0;
+        memset(m_output[0], 0, 0x4000);
+        memset(m_output[1], 0, 0x4000);
         
         m_io.fifo[0].reset();
         m_io.fifo[1].reset();
@@ -261,10 +265,10 @@ namespace GameBoyAdvance {
             // add FIFO audio samples
             for (int fifo = 0; fifo < 2; fifo++) {
                 if (dma[fifo].enable[SIDE_LEFT]) {
-                    output[SIDE_LEFT ] += m_fifo_sample[fifo];
+                    output[SIDE_LEFT ] += m_fifo_sample[fifo] * fifo_volume[fifo];
                 }
                 if (dma[fifo].enable[SIDE_RIGHT]) {
-                    output[SIDE_RIGHT] += m_fifo_sample[fifo];
+                    output[SIDE_RIGHT] += m_fifo_sample[fifo] * fifo_volume[fifo];
                 }
             }
             
