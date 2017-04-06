@@ -283,19 +283,14 @@ namespace GameBoyAdvance {
             // prevent evil simultanious accesses
             m_mutex.lock();
             
-            m_output[SIDE_LEFT ].push_back(output[SIDE_LEFT ] * 64);
-            m_output[SIDE_RIGHT].push_back(output[SIDE_RIGHT] * 64);
+            // copy audio into the output ringbuffers
+            m_output[SIDE_LEFT ][m_write_pos] = output[SIDE_LEFT ] * 64;
+            m_output[SIDE_RIGHT][m_write_pos] = output[SIDE_RIGHT] * 64;
             
             m_mutex.unlock();
             
-            //// prevent evil simultanious accesses
-            //m_mutex.lock();
-            
-            //m_psg_buffer[SIDE_LEFT ].push_back(out1 * volume_left);
-            //m_psg_buffer[SIDE_RIGHT].push_back(out2 * volume_right);
-            
-            //m_mutex.unlock();
-            
+            // update write position
+            m_write_pos = (m_write_pos + 1) & 0x3FFF;
         }
         
     }
@@ -322,8 +317,6 @@ namespace GameBoyAdvance {
     
     void APU::fill_buffer(u16* stream, int length) {
         
-        int buffer_length = m_output[0].size();
-
         // divide length by four because:
         // 1) length is provided in bytes, while we work with hwords
         // 2) length is twice the actual length because of two stereo channels
@@ -332,21 +325,12 @@ namespace GameBoyAdvance {
         m_mutex.lock();
         
         for (int i = 0; i < length; i++) {
-            if (i >= buffer_length) {
-                stream[i * 2 + 0] = 0;
-                stream[i * 2 + 1] = 0;
-                continue;
-            }
-            stream[i * 2 + 0] = m_output[SIDE_LEFT ][i];
-            stream[i * 2 + 1] = m_output[SIDE_RIGHT][i];
-        }
-        
-        if (buffer_length > length) {
-            m_output[SIDE_LEFT].erase(m_output[SIDE_LEFT].begin(), m_output[SIDE_LEFT].begin()+length);
-            m_output[SIDE_RIGHT].erase(m_output[SIDE_RIGHT].begin(), m_output[SIDE_RIGHT].begin()+length);
-        } else {
-            m_output[SIDE_LEFT].clear();
-            m_output[SIDE_RIGHT].clear();
+            // copy left/right sample from ringbuffer to SDL buffer
+            stream[i * 2 + 0] = m_output[SIDE_LEFT ][m_read_pos];
+            stream[i * 2 + 1] = m_output[SIDE_RIGHT][m_read_pos];
+            
+            // update read position
+            m_read_pos = (m_read_pos + 1) & 0x3FFF;
         }
         
         m_mutex.unlock();

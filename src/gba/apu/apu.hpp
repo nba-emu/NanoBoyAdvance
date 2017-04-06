@@ -50,12 +50,11 @@ namespace GameBoyAdvance {
         // stores latched FIFO samples
         s8 m_fifo_sample[2];
         
-        // stores audio output, stereo.
-        std::vector<u16> m_output[2];
-        
-        //std::vector<s16> m_psg_buffer[2];
-        //std::vector<s8> m_fifo_buffer[2];
-        
+        // stereo output (ringbuffers)
+        u16 m_output[2][0x4000];
+        int m_read_pos  { 0 };
+        int m_write_pos { 0 };
+                
         int m_cycle_count { 0 };
         int m_sample_rate { 44100 };
         
