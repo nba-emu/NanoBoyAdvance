@@ -108,7 +108,26 @@ struct IO {
     u8 wave_ram[2][16];
     
     struct NoiseChannel {
+        VolumeEnvelope envelope;
         
+        int frequency;
+        int sound_length;
+        int divide_ratio;
+        
+        bool full_width;
+        bool apply_length;
+    
+        struct Internal {
+            u16 shift_reg;
+            
+            int volume;
+            int shift_cycles;
+            int length_cycles;
+        } internal;
+        
+        void reset();
+        auto read(int offset) -> u8;
+        void write(int offset, u8 value);
     } noise;
     
     struct Control {

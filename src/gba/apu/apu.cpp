@@ -52,11 +52,12 @@ namespace GameBoyAdvance {
         memset(m_output[0], 0, 0x4000);
         memset(m_output[1], 0, 0x4000);
         
-        m_io.fifo[0].reset();
-        m_io.fifo[1].reset();
-        m_io.tone[0].reset();
-        m_io.tone[1].reset();
+        for (int i = 0; i < 2; i++) {
+            m_io.fifo[i].reset();
+            m_io.tone[i].reset();
+        }
         m_io.wave.reset();
+        m_io.noise.reset();
         
         m_io.bias.reset();
         m_io.control.reset();

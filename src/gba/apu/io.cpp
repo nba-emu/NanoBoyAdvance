@@ -213,6 +213,83 @@ namespace GameBoyAdvance {
         }
     }
     
+    void APU::IO::NoiseChannel::reset() {
+        // reset envelope info
+        envelope.time      = 0;
+        envelope.initial   = 0;
+        envelope.direction = ENV_DEC;
+        
+        frequency    = 0;
+        sound_length = 0;
+        divide_ratio = 0;
+        
+        full_width   = false;
+        apply_length = false;
+        
+        internal.shift_reg     = 0;
+        internal.volume        = 0;
+        internal.shift_cycles  = 0;
+        internal.length_cycles = 0;
+    }
+    
+    auto APU::IO::NoiseChannel::read(int offset) -> u8 {
+        switch (offset) {
+            // Length/Envelope
+            case 0: {
+                return 0;
+            }
+            case 1: {
+                return (envelope.time      << 0) |
+                       (envelope.direction << 3) |
+                       (envelope.initial   << 4);
+            }
+            case 2: case 3: { return 0; }
+                
+            // Frequency/Control
+            case 4: {
+                return (divide_ratio << 0    ) |
+                       (full_width    ? 8 : 0) |
+                       (frequency    << 4    );
+            }
+            case 5: {
+                return apply_length ? 0x40 : 0;
+            }
+        }
+    }
+    
+    void APU::IO::NoiseChannel::write(int offset, u8 value) {
+        switch (offset) {
+            // Length/Envelope
+            case 0: {
+                sound_length = value & 63;
+                break;
+            }
+            case 1: {
+                envelope.time      = (value >> 0) & 7;
+                envelope.direction = (value >> 3) & 1;
+                envelope.initial   = (value >> 4);
+                break;
+            }
+                
+            // Frequency/Control
+            case 4: {
+                divide_ratio = value  & 7;
+                full_width   = value  & 8;
+                frequency    = value >> 4;
+                break;
+            }
+            case 5: {
+                apply_length = value & 0x40;
+                
+                // on sound restart
+                if (value & 0x80) {
+                    //...    
+                }
+                break;
+            }
+        }
+    }
+    
     void APU::IO::Control::reset() {
         master_enable = false;
         psg.volume = 0;
