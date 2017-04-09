@@ -74,8 +74,10 @@ namespace GameBoyAdvance {
         
         auto generate_quad(int id) -> float;
         auto generate_wave() -> float;
+        auto generate_noise() -> float;
         void update_quad(int step_cycles);
         void update_wave(int step_cycles);
+        void update_noise(int step_cycles);
         
         void mix_samples(int samples);
         

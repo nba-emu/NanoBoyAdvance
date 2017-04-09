@@ -118,6 +118,7 @@ struct IO {
         bool apply_length;
     
         struct Internal {
+            int output;
             u16 shift_reg;
             
             int volume;

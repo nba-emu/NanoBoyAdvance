@@ -131,6 +131,13 @@ namespace GameBoyAdvance {
         return (sample - 8) * volume * 8;
     }
     
+    auto APU::generate_noise() -> float {
+        auto& noise     = m_io.noise;
+        auto& noise_int = noise.internal;
+        
+        return noise_int.output ? 128 : 0;
+    }
+    
     void APU::update_quad(int step_cycles) {
         
         for (int i = 0; i < 2; i++) {
@@ -221,7 +228,46 @@ namespace GameBoyAdvance {
         }
         
         if (wave.apply_length) {
-            wave.internal.length_cycles += step_cycles;
+            wave_int.length_cycles += step_cycles;
+        }
+    }
+    
+    void APU::update_noise(int step_cycles) {
+        auto& noise     = m_io.noise;
+        auto& noise_int = noise.internal;
+        
+        // TODO: make this less shitty
+        int shift_freq = 524288;
+        
+        if (noise.divide_ratio == 0) {
+            shift_freq <<= 1;
+        } else {
+            shift_freq /= noise.divide_ratio;
+        }
+        
+        shift_freq >>= (noise.frequency + 1);
+
+        int needed_cycles = 16780000 / shift_freq;
+        
+        noise_int.shift_cycles += step_cycles;
+        
+        while (noise_int.shift_cycles >= needed_cycles) {
+            int carry = noise_int.shift_reg & 1;
+            
+            noise_int.shift_reg >>= 1;
+            
+            if (carry) {
+                noise_int.shift_reg ^= noise.full_width ? 0x6000 : 0x60;
+            }
+            
+            noise_int.output = carry;
+            
+            // consume shifting cycles
+            noise_int.shift_cycles -= needed_cycles;
+        }
+        
+        if (noise.apply_length) {
+            noise_int.length_cycles += step_cycles;
         }
     }
     
@@ -248,16 +294,19 @@ namespace GameBoyAdvance {
             s16 tone1 = (s16)generate_quad(0);
             s16 tone2 = (s16)generate_quad(1);
             s16 wave  = (s16)generate_wave();
+            s16 noise = (s16)generate_noise();
             
             // mix PSGs on the left channel
             if (psg.enable[SIDE_LEFT][0]) output[SIDE_LEFT] += tone1;
             if (psg.enable[SIDE_LEFT][1]) output[SIDE_LEFT] += tone2;
             if (psg.enable[SIDE_LEFT][2]) output[SIDE_LEFT] += wave;
+            if (psg.enable[SIDE_LEFT][3]) output[SIDE_LEFT] += noise;
             
             // mix PSGs on the right channel
             if (psg.enable[SIDE_RIGHT][0]) output[SIDE_RIGHT] += tone1;
             if (psg.enable[SIDE_RIGHT][1]) output[SIDE_RIGHT] += tone2;
             if (psg.enable[SIDE_RIGHT][2]) output[SIDE_RIGHT] += wave;
+            if (psg.enable[SIDE_RIGHT][3]) output[SIDE_RIGHT] += noise;
             
             // apply master volume to the PSG channels
             output[SIDE_LEFT ] *= psg_volume;
@@ -306,6 +355,7 @@ namespace GameBoyAdvance {
         
         update_quad(step_cycles);
         update_wave(step_cycles);
+        update_noise(step_cycles);
         
         m_cycle_count += step_cycles;
         

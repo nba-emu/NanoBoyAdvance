@@ -83,6 +83,10 @@ namespace GameBoyAdvance {
             case SOUND3CNT_H+1: return apu_io.wave.read(3);
             case SOUND3CNT_X:   return apu_io.wave.read(4);
             case SOUND3CNT_X+1: return apu_io.wave.read(5);
+            case SOUND4CNT_L:   return apu_io.noise.read(0);
+            case SOUND4CNT_L+1: return apu_io.noise.read(1);
+            case SOUND4CNT_H:   return apu_io.noise.read(4);
+            case SOUND4CNT_H+1: return apu_io.noise.read(5);
             case SOUNDCNT_L:    return apu_io.control.read(0);
             case SOUNDCNT_L+1:  return apu_io.control.read(1);
             case SOUNDCNT_H:    return apu_io.control.read(2);
@@ -310,6 +314,10 @@ namespace GameBoyAdvance {
             case SOUND3CNT_H+1: apu_io.wave.write(3, value); break;
             case SOUND3CNT_X:   apu_io.wave.write(4, value); break;
             case SOUND3CNT_X+1: apu_io.wave.write(5, value); break;
+            case SOUND4CNT_L:   apu_io.noise.write(0, value); break;
+            case SOUND4CNT_L+1: apu_io.noise.write(1, value); break;
+            case SOUND4CNT_H:   apu_io.noise.write(4, value); break;
+            case SOUND4CNT_H+1: apu_io.noise.write(5, value); break;
             case WAVE_RAM+0:
             case WAVE_RAM+1:
             case WAVE_RAM+2:
