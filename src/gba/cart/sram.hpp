@@ -22,33 +22,18 @@
 #include <string>
 #include "cart_backup.hpp"
 
+#define SRAM_SIZE 65536
+
 namespace GameBoyAdvance {
-    class Flash : public CartBackup {
+    class SRAM : public CartBackup {
     private:
-        enum FlashCommand {
-            READ_CHIP_ID   = 0x90,
-            FINISH_CHIP_ID = 0xF0,
-            ERASE          = 0x80,
-            ERASE_CHIP     = 0x10,
-            ERASE_SECTOR   = 0x30,
-            WRITE_BYTE     = 0xA0,
-            SELECT_BANK    = 0xB0
-        };
-
-        int  m_bank;
-        bool m_second_bank;
-        u8   m_memory[2][65536];
-        int  m_command_phase;
-        bool m_enable_chip_id;
-        bool m_enable_erase;
-        bool m_enable_write;
-        bool m_enable_bank_select;
-
+        
+        u8 m_memory[SRAM_SIZE];
         std::string m_save_file;
 
     public:
-        Flash(std::string save_file, bool second_bank);
-        ~Flash();
+        SRAM(std::string save_file);
+        ~SRAM();
 
         void reset();
         auto read_byte(u32 address) -> u8;

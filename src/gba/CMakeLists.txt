@@ -5,6 +5,7 @@ set(SOURCES
     cpu/mmio.cpp
     cpu/timer.cpp
     cpu/dma.cpp
+    cart/sram.cpp
     cart/flash.cpp
     ppu/io.cpp
     ppu/ppu.cpp
@@ -26,6 +27,7 @@ set(HEADERS
     cpu/mmio.hpp
     cpu/memory.hpp
     cart/cart_backup.hpp
+    cart/sram.hpp
     cart/flash.hpp
     ppu/io.hpp
     ppu/enums.hpp
