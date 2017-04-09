@@ -226,11 +226,12 @@ namespace GameBoyAdvance {
         full_width   = false;
         apply_length = false;
         
-        internal.output        = 0;
-        internal.shift_reg     = 0;
-        internal.volume        = 0;
-        internal.shift_cycles  = 0;
-        internal.length_cycles = 0;
+        internal.output          = 0;
+        internal.shift_reg       = 0;
+        internal.volume          = 0;
+        internal.shift_cycles    = 0;
+        internal.length_cycles   = 0;
+        internal.envelope_cycles = 0;
     }
     
     auto APU::IO::NoiseChannel::read(int offset) -> u8 {
@@ -284,11 +285,12 @@ namespace GameBoyAdvance {
                 
                 // on sound restart
                 if (value & 0x80) {
-                    internal.output        = 0;
-                    internal.shift_reg     = full_width ? 0x4000 : 0x40;
-                    internal.volume        = envelope.initial;    
-                    internal.shift_cycles  = 0;
-                    internal.length_cycles = 0;
+                    internal.output          = 0;
+                    internal.shift_reg       = full_width ? 0x4000 : 0x40;
+                    internal.volume          = envelope.initial;    
+                    internal.shift_cycles    = 0;
+                    internal.length_cycles   = 0;
+                    internal.envelope_cycles = 0;
                 }
                 break;
             }

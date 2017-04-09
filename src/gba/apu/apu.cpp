@@ -134,8 +134,18 @@ namespace GameBoyAdvance {
     auto APU::generate_noise() -> float {
         auto& noise     = m_io.noise;
         auto& noise_int = noise.internal;
+
+        if (noise.apply_length) {
+            int max_cycles = (64 - noise.sound_length) * (1.0 / 256.0) * 16780000;
+            
+            if (noise_int.length_cycles >= max_cycles) {
+                return 0;
+            }
+        }
         
-        return noise_int.output ? 128 : 0;
+        float amplitude = (float)noise_int.volume * (1.0 / 16.0);
+        
+        return amplitude * (noise_int.output ? 128 : -128);
     }
     
     void APU::update_quad(int step_cycles) {
@@ -235,6 +245,7 @@ namespace GameBoyAdvance {
     void APU::update_noise(int step_cycles) {
         auto& noise     = m_io.noise;
         auto& noise_int = noise.internal;
+        auto& envelope  = noise.envelope;
         
         // TODO: make this less shitty
         int shift_freq = 524288;
@@ -264,6 +275,26 @@ namespace GameBoyAdvance {
             
             // consume shifting cycles
             noise_int.shift_cycles -= needed_cycles;
+        }
+        
+        if (envelope.time != 0) {
+            int envelope_clock = s_envelope_clock[envelope.time];
+                
+            noise_int.envelope_cycles += step_cycles;
+                
+            // TODO:
+            // 1) not very optimized - i suppose
+            // 2) almost the same as QUAD envelope code
+            while (noise_int.envelope_cycles >= envelope_clock) {
+                
+                if (envelope.direction == ENV_INC) {
+                    if (noise_int.volume != 15) noise_int.volume++;
+                } else {
+                    if (noise_int.volume != 0 ) noise_int.volume--;
+                }
+                    
+                noise_int.envelope_cycles -= envelope_clock;
+            }
         }
         
         if (noise.apply_length) {

@@ -124,6 +124,7 @@ struct IO {
             int volume;
             int shift_cycles;
             int length_cycles;
+            int envelope_cycles;
         } internal;
         
         void reset();
