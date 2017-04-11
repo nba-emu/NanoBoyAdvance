@@ -22,8 +22,7 @@
 #include "screen.hpp"
 
 Screen::Screen() {
-    auto gl_config = Gdk::GL::Config::create(Gdk::GL::MODE_RGBA  |
-                                             Gdk::GL::MODE_DEPTH |
+    auto gl_config = Gdk::GL::Config::create(Gdk::GL::MODE_RGBA |
                                              Gdk::GL::MODE_DOUBLE);
     
     if (!gl_config) {
@@ -35,4 +34,47 @@ Screen::Screen() {
 
 void Screen::on_realize() {
     Gtk::DrawingArea::on_realize();
+    
+    auto gl_window = get_gl_window();
+    
+    if (!gl_window->gl_begin(get_gl_context())) {
+        return;
+    }
+    
+    // basic GL setup
+    glClearColor(0, 0, 0, 1);
+    glViewport(0, 0, get_width(), get_height());
+    
+    // setup matrices (load identity)
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    
+    gl_window->gl_end();
+}
+
+bool Screen::on_configure_event(GdkEventConfigure* event) {
+    auto gl_window = get_gl_window();
+
+    if (!gl_window->gl_begin(get_gl_context())) {
+        return false;
+    }
+    glViewport(0, 0, get_width(), get_height());
+    gl_window->gl_end();
+    
+    return true;
+}
+
+bool Screen::on_expose_event(GdkEventExpose* event) {
+    auto gl_window = get_gl_window();
+
+    if (!gl_window->gl_begin(get_gl_context())) {
+        return false;
+    }
+    glClear(GL_COLOR_BUFFER_BIT);
+    gl_window->swap_buffers();
+    gl_window->gl_end();
+    
+    return true;
 }

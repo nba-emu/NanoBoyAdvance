@@ -26,8 +26,8 @@ class Screen : public Gtk::DrawingArea,
                public Gtk::GL::Widget<Screen> {
 private:
     void on_realize();
-    //bool on_configure_event(GdkEventConfigure* event);
-    //bool on_expose_event(GdkEventExpose* event);
+    bool on_configure_event(GdkEventConfigure* event);
+    bool on_expose_event(GdkEventExpose* event);
     
 public:
     Screen();
