@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 2.6)
 project(NanoboyAdvance)
 
+# TODO: refactor this entire MESS
+
 # Statically link stdlibs?
 option(STATIC_STDLIB "Link libgcc and libg++ statically" OFF)
 if (WIN32)
@@ -30,19 +32,31 @@ set(VERSION_MAJOR 0)
 set(VERSION_MINOR 1)
 
 # Frontend selection
+option(GTK_GUI  "Build GTKMM GUI"      ON)
 option(SDL2_GUI "Build SDL2 based GUI" ON)
 
-# Add all required libraries
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
-include (FindSDL2 REQUIRED)
-find_package(SDL2 REQUIRED)
-find_package(PNG  REQUIRED)
-
-if (SDL2_FOUND)
-    include_directories(${SDL2_INCLUDE_DIRS})
-else()
-    message(FATAL_ERROR "SDL2 not found.")
+# GTKMM extra love
+if (GTK_GUI)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(GTKMM gtkmm-3.0)
 endif()
+
+# SDL2 related code
+if (SDL2_GUI)
+    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
+    
+    include (FindSDL2 REQUIRED)
+    find_package(SDL2 REQUIRED)
+
+    if (SDL2_FOUND)
+        include_directories(${SDL2_INCLUDE_DIRS})
+    else()
+        message(FATAL_ERROR "SDL2 not found.")
+    endif()
+endif()
+
+# libpng - required for screenshots
+find_package(PNG  REQUIRED)
 
 if (PNG_FOUND)
     include_directories(${PNG_INCLUDE_DIRS})

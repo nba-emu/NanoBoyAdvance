@@ -174,7 +174,7 @@ namespace GameBoyAdvance {
         }
         
         switch (save_type) {
-            case SAVE_EEPROM:   break;
+            case SAVE_EEPROM:   /*break;*/
             case SAVE_SRAM:     m_backup = new SRAM(save_file);         break;
             case SAVE_FLASH64:  m_backup = new Flash(save_file, false); break;
             case SAVE_FLASH128: m_backup = new Flash(save_file, true);  break;
