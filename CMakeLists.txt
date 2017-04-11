@@ -1,7 +1,30 @@
 cmake_minimum_required (VERSION 2.6)
+
+# === BASIC CMAKE SETUP === #
+
 project(NanoboyAdvance)
 
-# TODO: refactor this entire MESS
+# Set CMakeTests path
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
+
+# The version number.
+set(VERSION_MAJOR 0)
+set(VERSION_MINOR 1)
+
+# === FRONTENDS === #
+
+# Frontend selection
+option(GTK_GUI  "Build GTKMM GUI"      ON)
+option(SDL2_GUI "Build SDL2 based GUI" ON)
+
+# SDL2 - required *atleast* for sound
+include (FindSDL2 REQUIRED)
+find_package(SDL2 REQUIRED)
+
+# libpng - required for screenshots
+find_package(PNG  REQUIRED)
+
+# === COMPILATION MODES === #
 
 # Statically link stdlibs?
 option(STATIC_STDLIB "Link libgcc and libg++ statically" OFF)
@@ -25,44 +48,6 @@ option(PROFILE "Collect GPROF sample data" OFF)
 if (PROFILE)
     add_definitions(-pg)
     set(CMAKE_EXE_LINKER_FLAGS -pg)
-endif()
-
-# The version number.
-set(VERSION_MAJOR 0)
-set(VERSION_MINOR 1)
-
-# Frontend selection
-option(GTK_GUI  "Build GTKMM GUI"      ON)
-option(SDL2_GUI "Build SDL2 based GUI" ON)
-
-# GTKMM extra love
-if (GTK_GUI)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(GTKMM gtkmm-3.0)
-endif()
-
-# SDL2 related code
-if (SDL2_GUI)
-    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
-    
-    include (FindSDL2 REQUIRED)
-    find_package(SDL2 REQUIRED)
-
-    if (SDL2_FOUND)
-        include_directories(${SDL2_INCLUDE_DIRS})
-    else()
-        message(FATAL_ERROR "SDL2 not found.")
-    endif()
-endif()
-
-# libpng - required for screenshots
-find_package(PNG  REQUIRED)
-
-if (PNG_FOUND)
-    include_directories(${PNG_INCLUDE_DIRS})
-else()
-    # TODO: just built without screenshot support then
-    message(FATAL_ERROR "PNG not found.")
 endif()
 
 add_subdirectory(src)
