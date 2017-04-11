@@ -17,19 +17,22 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#pragma once
+#include <GL/gl.h>
+#include <stdexcept>
+#include "screen.hpp"
 
-#include <gtkmm.h>
-#include "controls/screen.hpp"
+Screen::Screen() {
+    auto gl_config = Gdk::GL::Config::create(Gdk::GL::MODE_RGBA  |
+                                             Gdk::GL::MODE_DEPTH |
+                                             Gdk::GL::MODE_DOUBLE);
+    
+    if (!gl_config) {
+        throw std::runtime_error("cannot create gl_config");
+    }
+    
+    set_gl_capability(gl_config);
+}
 
-class MainWindow : public Gtk::Window {
-    
-public:
-    MainWindow();
-    virtual ~MainWindow();
-    
-private:
-    // Controls
-    Screen    m_screen;
-    Gtk::VBox m_vbox;
-};
+void Screen::on_realize() {
+    Gtk::DrawingArea::on_realize();
+}

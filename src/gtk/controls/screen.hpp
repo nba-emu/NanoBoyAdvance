@@ -20,16 +20,15 @@
 #pragma once
 
 #include <gtkmm.h>
-#include "controls/screen.hpp"
+#include <gtkglmm.h>
 
-class MainWindow : public Gtk::Window {
+class Screen : public Gtk::DrawingArea,
+               public Gtk::GL::Widget<Screen> {
+private:
+    void on_realize();
+    //bool on_configure_event(GdkEventConfigure* event);
+    //bool on_expose_event(GdkEventExpose* event);
     
 public:
-    MainWindow();
-    virtual ~MainWindow();
-    
-private:
-    // Controls
-    Screen    m_screen;
-    Gtk::VBox m_vbox;
+    Screen();
 };
