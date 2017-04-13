@@ -17,9 +17,10 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#include <GL/gl.h>
 #include <stdexcept>
 #include "screen.hpp"
+#include "util/integer.hpp"
+#include <iostream>
 
 Screen::Screen() {
     auto gl_config = Gdk::GL::Config::create(Gdk::GL::MODE_RGBA |
@@ -30,6 +31,10 @@ Screen::Screen() {
     }
     
     set_gl_capability(gl_config);
+}
+
+Screen::~Screen() {
+    glDeleteTextures(1, &m_texture);
 }
 
 void Screen::on_realize() {
@@ -50,6 +55,13 @@ void Screen::on_realize() {
     glLoadIdentity();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+    
+    // setup texture
+    glEnable(GL_TEXTURE_2D);
+    glGenTextures(1, &m_texture);
+    glBindTexture(GL_TEXTURE_2D, m_texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     
     gl_window->gl_end();
 }
@@ -73,6 +85,28 @@ bool Screen::on_expose_event(GdkEventExpose* event) {
         return false;
     }
     glClear(GL_COLOR_BUFFER_BIT);
+    
+    //auto fb = m_framebuffer;
+    //
+    //if (fb != nullptr) {
+    //    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fb->get_width(), fb->get_height(), 
+    //                 0, GL_BGRA, GL_UNSIGNED_BYTE, fb->get_pixels());
+    //}
+    
+    glBegin(GL_QUADS);
+        glTexCoord2i(0, 0);
+        glVertex2i(-1, -1);
+        
+        glTexCoord2i(1, 0);
+        glVertex2i(1, -1);
+
+        glTexCoord2i(1, 1);
+        glVertex2i(1, 1);
+
+        glTexCoord2i(0, 1);
+        glVertex2i(-1, 1);
+    glEnd();
+    
     gl_window->swap_buffers();
     gl_window->gl_end();
     

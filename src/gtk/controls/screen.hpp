@@ -21,14 +21,18 @@
 
 #include <gtkmm.h>
 #include <gtkglmm.h>
+#include <GL/gl.h>
 
 class Screen : public Gtk::DrawingArea,
-               public Gtk::GL::Widget<Screen> {
+               public Gtk::GL::Widget<Screen>
+{
 private:
     void on_realize();
     bool on_configure_event(GdkEventConfigure* event);
-    bool on_expose_event(GdkEventExpose* event);
-    
+    bool on_expose_event(GdkEventExpose* event);               
+                   
+    GLuint       m_texture;
 public:
     Screen();
+    virtual ~Screen();
 };
