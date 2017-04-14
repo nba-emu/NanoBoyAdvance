@@ -31,7 +31,7 @@ private:
     bool on_configure_event(GdkEventConfigure* event);
     bool on_expose_event(GdkEventExpose* event);               
                    
-    GLuint       m_texture;
+    GLuint m_texture;
 public:
     Screen();
     virtual ~Screen();
