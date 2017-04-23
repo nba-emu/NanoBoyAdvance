@@ -1,4 +1,7 @@
 set(SOURCES
+    arm/arm.cpp
+    arm/arm/arm_emu.cpp
+    arm/thumb/thumb_emu.cpp
     cpu/io.cpp
     cpu/cpu.cpp
     cpu/memory.cpp
@@ -20,6 +23,15 @@ set(SOURCES
 
 set(HEADERS
     config.hpp
+    arm/arm.hpp
+    arm/enums.hpp
+    arm/flags.hpp
+    arm/memory.hpp
+    arm/shifting.hpp
+    arm/arm/arm_emu.hpp
+    arm/arm/arm_lut.hpp
+    arm/thumb/thumb_emu.hpp
+    arm/thumb/thumb_lut.hpp
     cpu/io.hpp
     cpu/cpu.hpp
     cpu/enums.hpp
@@ -38,4 +50,4 @@ set(HEADERS
 )
 
 add_library(gba STATIC ${SOURCES} ${HEADERS})
-target_link_libraries(gba armigo util)
+target_link_libraries(gba util)

@@ -20,7 +20,7 @@
 #pragma once
 
 #include <string>
-#include "arm/arm.hpp"
+#include "../arm/arm.hpp"
 #include "enums.hpp"
 #include "interrupt.hpp"
 #include "../config.hpp"
