@@ -24,6 +24,7 @@
 #define ARMIGO_INCLUDE
 
 namespace GameBoyAdvance {
+
     class ARM {
     public:
         /// Constructor

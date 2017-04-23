@@ -49,5 +49,5 @@ set(HEADERS
     apu/io.hpp
 )
 
-add_library(gba STATIC ${SOURCES} ${HEADERS})
-target_link_libraries(gba util)
+add_library(core STATIC ${SOURCES} ${HEADERS})
+target_link_libraries(core util)
