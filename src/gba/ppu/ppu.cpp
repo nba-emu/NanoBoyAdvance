@@ -129,10 +129,10 @@ namespace GameBoyAdvance {
         m_io.status.vblank_flag = true;
         m_io.status.hblank_flag = false;
 
-        m_io.bgx[0].internal = PPU::decode_float32(m_io.bgx[0].value);
-        m_io.bgy[0].internal = PPU::decode_float32(m_io.bgy[0].value);
-        m_io.bgx[1].internal = PPU::decode_float32(m_io.bgx[1].value);
-        m_io.bgy[1].internal = PPU::decode_float32(m_io.bgy[1].value);
+        m_io.bgx[0].internal = PPU::decode_fixed32(m_io.bgx[0].value);
+        m_io.bgy[0].internal = PPU::decode_fixed32(m_io.bgy[0].value);
+        m_io.bgx[1].internal = PPU::decode_fixed32(m_io.bgx[1].value);
+        m_io.bgy[1].internal = PPU::decode_fixed32(m_io.bgy[1].value);
 
         if (m_config->frameskip != 0) {
             m_frame_counter = (m_frame_counter + 1) % m_config->frameskip;
@@ -150,10 +150,10 @@ namespace GameBoyAdvance {
         m_io.status.hblank_flag = false;
 
         // off by one scanline?
-        m_io.bgx[0].internal += PPU::decode_float16(m_io.bgpb[0]);
-        m_io.bgy[0].internal += PPU::decode_float16(m_io.bgpd[0]);
-        m_io.bgx[1].internal += PPU::decode_float16(m_io.bgpb[1]);
-        m_io.bgy[1].internal += PPU::decode_float16(m_io.bgpd[1]);
+        m_io.bgx[0].internal += PPU::decode_fixed16(m_io.bgpb[0]);
+        m_io.bgy[0].internal += PPU::decode_fixed16(m_io.bgpd[0]);
+        m_io.bgx[1].internal += PPU::decode_fixed16(m_io.bgpb[1]);
+        m_io.bgy[1].internal += PPU::decode_fixed16(m_io.bgpd[1]);
 
         if (render && (m_frameskip == 0 || m_frame_counter == 0)) {
             

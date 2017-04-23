@@ -177,7 +177,7 @@ namespace GameBoyAdvance {
             case 3: this->value = (this->value & 0x00FFFFFF) | (value << 24); break;
         }
         
-        internal = PPU::decode_float32(this->value);
+        internal = PPU::decode_fixed32(this->value);
     }
     
     void PPU::IO::Mosaic::reset() {

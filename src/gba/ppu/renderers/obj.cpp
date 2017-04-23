@@ -122,10 +122,10 @@ namespace GameBoyAdvance {
             if (affine) {
                 int group = ((attribute1 >> 9) & 0x1F) << 5;
 
-                pa = PPU::decode_float16((m_oam[group + 0x7 ] << 8) | m_oam[group + 0x6 ]);
-                pb = PPU::decode_float16((m_oam[group + 0xF ] << 8) | m_oam[group + 0xE ]);
-                pc = PPU::decode_float16((m_oam[group + 0x17] << 8) | m_oam[group + 0x16]);
-                pd = PPU::decode_float16((m_oam[group + 0x1F] << 8) | m_oam[group + 0x1E]);
+                pa = PPU::decode_fixed16((m_oam[group + 0x7 ] << 8) | m_oam[group + 0x6 ]);
+                pb = PPU::decode_fixed16((m_oam[group + 0xF ] << 8) | m_oam[group + 0xE ]);
+                pc = PPU::decode_fixed16((m_oam[group + 0x17] << 8) | m_oam[group + 0x16]);
+                pd = PPU::decode_fixed16((m_oam[group + 0x1F] << 8) | m_oam[group + 0x1E]);
                 
                 // double-size bit
                 if (attr0bit9) {

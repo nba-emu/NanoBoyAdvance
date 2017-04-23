@@ -78,7 +78,7 @@ inline bool is_visible(int x, const bool inside[3], bool outside) {
     return true;
 }
 
-static inline float decode_float16(u16 number) {
+static inline float decode_fixed16(u16 number) {
     
     bool  is_negative = number & (1 << 15);
     s32   int_part    = (number >> 8) | (is_negative ? 0xFFFFFF00 : 0);
@@ -87,7 +87,7 @@ static inline float decode_float16(u16 number) {
     return static_cast<float>(int_part) + frac_part;
 }
 
-static inline float decode_float32(u32 number) {
+static inline float decode_fixed32(u32 number) {
     
     bool  is_negative = number & (1 << 27);
     s32   int_part    = ((number & ~0xF0000000) >> 8) | (is_negative ? 0xFFF00000 : 0);
