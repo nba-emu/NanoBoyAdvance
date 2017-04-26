@@ -36,6 +36,43 @@ namespace GameBoyAdvance {
         refill_pipeline();
     }
 
+	void ARM::step() {
+    	bool thumb = m_cpsr & MASK_THUMB;
+
+        if (thumb) {
+            m_reg[15] &= ~1;
+
+            if (m_index == 0) {
+                m_opcode[2] = read_hword(m_reg[15]);
+            } else {
+                m_opcode[m_index - 1] = read_hword(m_reg[15]);
+            }
+
+            thumb_execute(m_opcode[m_index]);
+        } else {
+            m_reg[15] &= ~3;
+
+            if (m_index == 0) {
+                m_opcode[2] = read_word(m_reg[15]);
+            } else {
+                m_opcode[m_index - 1] = read_word(m_reg[15]);
+            }
+
+            arm_execute(m_opcode[m_index]);
+        }
+
+        if (m_flush) {
+            refill_pipeline();
+            return;
+        }
+
+        // update pipeline status
+        m_index = (m_index + 1) % 3;
+
+        // update instruction pointer
+        m_reg[15] += thumb ? 2 : 4;
+    }
+
     inline Bank ARM::mode_to_bank(Mode mode) {
         switch (mode) {
         case MODE_USR:
