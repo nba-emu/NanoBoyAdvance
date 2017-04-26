@@ -106,9 +106,6 @@ namespace GameBoyAdvance {
                         *dma_active = true;
                         *current_dma = id;
                     }
-
-                    Logger::log<LOG_DEBUG>("DMA{0} src={1:x} dst={2:x} len={3} time={4} size={5} scntl={6} dcntl={7} i={8} r={9}",
-                        id, src_addr, dst_addr, length, time, size, src_cntl, dst_cntl, interrupt, repeat);
                 }
                 break;
             }

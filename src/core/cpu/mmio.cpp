@@ -31,8 +31,6 @@ namespace GameBoyAdvance {
         auto& ppu_io = m_ppu.get_io();
         auto& apu_io = m_apu.get_io();
 
-        Logger::log<LOG_INFO>("io read address={0:x} pc={1:x} vcount={2}", address, m_reg[15], ppu_io.vcount);
-
         switch (address) {
             // PPU
             case DISPCNT:    return ppu_io.control.read(0);
@@ -129,8 +127,6 @@ namespace GameBoyAdvance {
         auto& ppu_io = m_ppu.get_io();
         auto& apu_io = m_apu.get_io();
         
-        Logger::log<LOG_INFO>("io write address={0:x} value={1:x}", address, value);
-
         switch (address) {
             // PPU
             case DISPCNT:    ppu_io.control.write(0, value); break;
