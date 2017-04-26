@@ -19,8 +19,7 @@
 
 #pragma once
 
-#include "enums.hpp"
-#include "util/integer.hpp"
+#include "context.hpp"
 #define ARMIGO_INCLUDE
 
 namespace GameBoyAdvance {
@@ -47,17 +46,8 @@ namespace GameBoyAdvance {
         void set_hle(bool hle) { m_hle = hle; }
 
     protected:
-        u32 m_reg[16];
-
-        u32 m_bank[BANK_COUNT][7];
-
-        u32 m_cpsr;
-        u32 m_spsr[SPSR_COUNT];
-        u32* m_spsr_ptr;
-
-        int m_index;
-        bool m_flush;
-        u32 m_opcode[3];
+        
+        ARMContext ctx;
 
         bool m_hle;
 

@@ -27,6 +27,7 @@ set(HEADERS
     arm/enums.hpp
     arm/flags.hpp
     arm/memory.hpp
+    arm/context.hpp
     arm/shifting.hpp
     arm/arm/arm_emu.hpp
     arm/arm/arm_lut.hpp

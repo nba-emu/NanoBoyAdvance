@@ -19,10 +19,10 @@
 
 #ifdef ARMIGO_INCLUDE
 
-#define Z_FLAG (m_cpsr & MASK_ZFLAG)
-#define C_FLAG (m_cpsr & MASK_CFLAG)
-#define N_FLAG (m_cpsr & MASK_NFLAG)
-#define V_FLAG (m_cpsr & MASK_VFLAG)
+#define Z_FLAG (ctx.cpsr & MASK_ZFLAG)
+#define C_FLAG (ctx.cpsr & MASK_CFLAG)
+#define N_FLAG (ctx.cpsr & MASK_NFLAG)
+#define V_FLAG (ctx.cpsr & MASK_VFLAG)
 
 #define XOR_BIT_31(a, b) (((a) ^ (b)) >> 31)
 
@@ -55,25 +55,25 @@ inline bool check_condition(Condition condition) {
 
 inline void update_sign(u32 result) {
     if (result >> 31) {
-        m_cpsr |= MASK_NFLAG;
+        ctx.cpsr |= MASK_NFLAG;
     } else {
-        m_cpsr &= ~MASK_NFLAG;
+        ctx.cpsr &= ~MASK_NFLAG;
     }
 }
 
 inline void update_zero(u64 result) {
     if (result == 0) {
-        m_cpsr |= MASK_ZFLAG;
+        ctx.cpsr |= MASK_ZFLAG;
     } else {
-        m_cpsr &= ~MASK_ZFLAG;
+        ctx.cpsr &= ~MASK_ZFLAG;
     }
 }
 
 inline void set_carry(bool carry) {
     if (carry) {
-        m_cpsr |= MASK_CFLAG;
+        ctx.cpsr |= MASK_CFLAG;
     } else {
-        m_cpsr &= ~MASK_CFLAG;
+        ctx.cpsr &= ~MASK_CFLAG;
     }
 }
 
@@ -81,9 +81,9 @@ inline void update_overflow_add(u32 result, u32 operand1, u32 operand2) {
     bool overflow = !XOR_BIT_31(operand1, operand2) && XOR_BIT_31(result, operand2);
 
     if (overflow) {
-        m_cpsr |= MASK_VFLAG;
+        ctx.cpsr |= MASK_VFLAG;
     } else {
-        m_cpsr &= ~MASK_VFLAG;
+        ctx.cpsr &= ~MASK_VFLAG;
     }
 }
 
@@ -91,9 +91,9 @@ inline void update_overflow_sub(u32 result, u32 operand1, u32 operand2) {
     bool overflow = XOR_BIT_31(operand1, operand2) && !XOR_BIT_31(result, operand2);
 
     if (overflow) {
-        m_cpsr |= MASK_VFLAG;
+        ctx.cpsr |= MASK_VFLAG;
     } else {
-        m_cpsr &= ~MASK_VFLAG;
+        ctx.cpsr &= ~MASK_VFLAG;
     }
 }
 

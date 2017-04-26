@@ -26,51 +26,52 @@ namespace GameBoyAdvance {
     }
 
     void ARM::reset()  {
-        m_index = 0;
+        ctx.pipe.index = 0;
 
-        std::memset(m_reg, 0, sizeof(m_reg));
-        std::memset(m_bank, 0, sizeof(m_bank));
-        m_cpsr = MODE_SYS;
-        m_spsr_ptr = &m_spsr[SPSR_DEF];
+        std::memset(ctx.reg, 0, sizeof(ctx.reg));
+        std::memset(ctx.bank, 0, sizeof(ctx.bank));
+        ctx.cpsr = MODE_SYS;
+        ctx.p_spsr = &ctx.spsr[SPSR_DEF];
 
         refill_pipeline();
     }
 
 	void ARM::step() {
-    	bool thumb = m_cpsr & MASK_THUMB;
+        auto& pipe  = ctx.pipe;
+    	bool  thumb = ctx.cpsr & MASK_THUMB;
 
         if (thumb) {
-            m_reg[15] &= ~1;
+            ctx.r15 &= ~1;
 
-            if (m_index == 0) {
-                m_opcode[2] = read_hword(m_reg[15]);
+            if (pipe.index == 0) {
+                pipe.opcode[2] = read_hword(ctx.r15);
             } else {
-                m_opcode[m_index - 1] = read_hword(m_reg[15]);
+                pipe.opcode[pipe.index - 1] = read_hword(ctx.r15);
             }
 
-            thumb_execute(m_opcode[m_index]);
+            thumb_execute(pipe.opcode[pipe.index]);
         } else {
-            m_reg[15] &= ~3;
+            ctx.r15 &= ~3;
 
-            if (m_index == 0) {
-                m_opcode[2] = read_word(m_reg[15]);
+            if (pipe.index == 0) {
+                pipe.opcode[2] = read_word(ctx.r15);
             } else {
-                m_opcode[m_index - 1] = read_word(m_reg[15]);
+                pipe.opcode[pipe.index - 1] = read_word(ctx.r15);
             }
 
-            arm_execute(m_opcode[m_index]);
+            arm_execute(pipe.opcode[pipe.index]);
         }
 
-        if (m_flush) {
+        if (pipe.do_flush) {
             refill_pipeline();
             return;
         }
 
         // update pipeline status
-        m_index = (m_index + 1) % 3;
+        pipe.index = (pipe.index + 1) % 3;
 
         // update instruction pointer
-        m_reg[15] += thumb ? 2 : 4;
+        ctx.r15 += thumb ? 2 : 4;
     }
 
     inline Bank ARM::mode_to_bank(Mode mode) {
@@ -96,7 +97,7 @@ namespace GameBoyAdvance {
     // Based on mGBA (endrift's) approach to banking.
     // https://github.com/mgba-emu/mgba/blob/master/src/arm/arm.c
     void ARM::switch_mode(Mode new_mode) {
-        Mode old_mode = static_cast<Mode>(m_cpsr & MASK_MODE);
+        Mode old_mode = static_cast<Mode>(ctx.cpsr & MASK_MODE);
 
         if (new_mode == old_mode) {
             return;
@@ -111,48 +112,48 @@ namespace GameBoyAdvance {
                 int new_fiq_bank = new_bank == BANK_FIQ;
 
                 // save general purpose registers to current bank.
-                m_bank[old_fiq_bank][2] = m_reg[8];
-                m_bank[old_fiq_bank][3] = m_reg[9];
-                m_bank[old_fiq_bank][4] = m_reg[10];
-                m_bank[old_fiq_bank][5] = m_reg[11];
-                m_bank[old_fiq_bank][6] = m_reg[12];
+                ctx.bank[old_fiq_bank][2] = ctx.reg[8];
+                ctx.bank[old_fiq_bank][3] = ctx.reg[9];
+                ctx.bank[old_fiq_bank][4] = ctx.reg[10];
+                ctx.bank[old_fiq_bank][5] = ctx.reg[11];
+                ctx.bank[old_fiq_bank][6] = ctx.reg[12];
 
                 // restore general purpose registers from new bank.
-                m_reg[8] = m_bank[new_fiq_bank][2];
-                m_reg[9] = m_bank[new_fiq_bank][3];
-                m_reg[10] = m_bank[new_fiq_bank][4];
-                m_reg[11] = m_bank[new_fiq_bank][5];
-                m_reg[12] = m_bank[new_fiq_bank][6];
+                ctx.reg[8] = ctx.bank[new_fiq_bank][2];
+                ctx.reg[9] = ctx.bank[new_fiq_bank][3];
+                ctx.reg[10] = ctx.bank[new_fiq_bank][4];
+                ctx.reg[11] = ctx.bank[new_fiq_bank][5];
+                ctx.reg[12] = ctx.bank[new_fiq_bank][6];
             }
 
             // save SP and LR to current bank.
-            m_bank[old_bank][BANK_R13] = m_reg[13];
-            m_bank[old_bank][BANK_R14] = m_reg[14];
+            ctx.bank[old_bank][BANK_R13] = ctx.reg[13];
+            ctx.bank[old_bank][BANK_R14] = ctx.reg[14];
 
             // restore SP and LR from new bank.
-            m_reg[13] = m_bank[new_bank][BANK_R13];
-            m_reg[14] = m_bank[new_bank][BANK_R14];
+            ctx.reg[13] = ctx.bank[new_bank][BANK_R13];
+            ctx.reg[14] = ctx.bank[new_bank][BANK_R14];
 
-            m_spsr_ptr = &m_spsr[new_bank];
+            ctx.p_spsr = &ctx.spsr[new_bank];
         }
 
-        m_cpsr = (m_cpsr & ~MASK_MODE) | (u32)new_mode;
+        ctx.cpsr = (ctx.cpsr & ~MASK_MODE) | (u32)new_mode;
     }
 
     void ARM::raise_interrupt() {
-        if (~m_cpsr & MASK_IRQD) {
-            bool thumb = m_cpsr & MASK_THUMB;
+        if (~ctx.cpsr & MASK_IRQD) {
+            bool thumb = ctx.cpsr & MASK_THUMB;
 
             // store return address in r14<irq>
-            m_bank[BANK_IRQ][BANK_R14] = m_reg[15] - (thumb ? 4 : 8) + 4;
+            ctx.bank[BANK_IRQ][BANK_R14] = ctx.r15 - (thumb ? 4 : 8) + 4;
 
             // save program status and switch mode
-            m_spsr[SPSR_IRQ] = m_cpsr;
+            ctx.spsr[SPSR_IRQ] = ctx.cpsr;
             switch_mode(MODE_IRQ);
-            m_cpsr = (m_cpsr & ~MASK_THUMB) | MASK_IRQD;
+            ctx.cpsr = (ctx.cpsr & ~MASK_THUMB) | MASK_IRQD;
 
             // jump to exception vector
-            m_reg[15] = EXCPT_INTERRUPT;
+            ctx.r15 = EXCPT_INTERRUPT;
             refill_pipeline();
         }
     }

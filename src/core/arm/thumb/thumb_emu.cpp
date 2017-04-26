@@ -31,16 +31,16 @@ namespace GameBoyAdvance {
         // THUMB.1 Move shifted register
         int dst = instruction & 7;
         int src = (instruction >> 3) & 7;
-        bool carry = m_cpsr & MASK_CFLAG;
+        bool carry = ctx.cpsr & MASK_CFLAG;
 
-        m_reg[dst] = m_reg[src];
+        ctx.reg[dst] = ctx.reg[src];
 
-        perform_shift(type, m_reg[dst], imm, carry, true);
+        perform_shift(type, ctx.reg[dst], imm, carry, true);
 
         // update carry, sign and zero flag
         set_carry(carry);
-        update_sign(m_reg[dst]);
-        update_zero(m_reg[dst]);
+        update_sign(ctx.reg[dst]);
+        update_zero(ctx.reg[dst]);
     }
 
     template <bool immediate, bool subtract, int field3>
@@ -51,25 +51,25 @@ namespace GameBoyAdvance {
         int src = (instruction >> 3) & 7;
 
         // either a register or an immediate value
-        operand = immediate ? field3 : m_reg[field3];
+        operand = immediate ? field3 : ctx.reg[field3];
 
         if (subtract) {
-            result = m_reg[src] - operand;
+            result = ctx.reg[src] - operand;
 
-            set_carry(m_reg[src] >= operand);
-            update_overflow_sub(result, m_reg[src], operand);
+            set_carry(ctx.reg[src] >= operand);
+            update_overflow_sub(result, ctx.reg[src], operand);
         } else {
-            u64 result_long = (u64)(m_reg[src]) + (u64)operand;
+            u64 result_long = (u64)(ctx.reg[src]) + (u64)operand;
 
             result = (u32)result_long;
             set_carry(result_long & 0x100000000);
-            update_overflow_add(result, m_reg[src], operand);
+            update_overflow_add(result, ctx.reg[src], operand);
         }
 
         update_sign(result);
         update_zero(result);
 
-        m_reg[dst] = result;
+        ctx.reg[dst] = result;
     }
 
     template <int op, int dst>
@@ -80,29 +80,29 @@ namespace GameBoyAdvance {
 
         switch (op) {
         case 0b00: // MOV
-            m_reg[dst] = immediate_value;
+            ctx.reg[dst] = immediate_value;
             update_sign(0);
             update_zero(immediate_value);
             return;//important!
 
         case 0b01: // CMP
-            result = m_reg[dst] - immediate_value;
-            set_carry(m_reg[dst] >= immediate_value);
-            update_overflow_sub(result, m_reg[dst], immediate_value);
+            result = ctx.reg[dst] - immediate_value;
+            set_carry(ctx.reg[dst] >= immediate_value);
+            update_overflow_sub(result, ctx.reg[dst], immediate_value);
             break;
         case 0b10: { // ADD
-            u64 result_long = (u64)m_reg[dst] + (u64)immediate_value;
+            u64 result_long = (u64)ctx.reg[dst] + (u64)immediate_value;
             result = (u32)result_long;
             set_carry(result_long & 0x100000000);
-            update_overflow_add(result, m_reg[dst], immediate_value);
-            m_reg[dst] = result;
+            update_overflow_add(result, ctx.reg[dst], immediate_value);
+            ctx.reg[dst] = result;
             break;
         }
         case 0b11: // SUB
-            result = m_reg[dst] - immediate_value;
-            set_carry(m_reg[dst] >= immediate_value);
-            update_overflow_sub(result, m_reg[dst], immediate_value);
-            m_reg[dst] = result;
+            result = ctx.reg[dst] - immediate_value;
+            set_carry(ctx.reg[dst] >= immediate_value);
+            update_overflow_sub(result, ctx.reg[dst], immediate_value);
+            ctx.reg[dst] = result;
             break;
         }
 
@@ -119,125 +119,125 @@ namespace GameBoyAdvance {
 
         switch (op) {
         case 0b0000: // AND
-            m_reg[dst] &= m_reg[src];
-            update_sign(m_reg[dst]);
-            update_zero(m_reg[dst]);
+            ctx.reg[dst] &= ctx.reg[src];
+            update_sign(ctx.reg[dst]);
+            update_zero(ctx.reg[dst]);
             break;
         case 0b0001: // EOR
-            m_reg[dst] ^= m_reg[src];
-            update_sign(m_reg[dst]);
-            update_zero(m_reg[dst]);
+            ctx.reg[dst] ^= ctx.reg[src];
+            update_sign(ctx.reg[dst]);
+            update_zero(ctx.reg[dst]);
             break;
         case 0b0010: { // LSL
-            u32 amount = m_reg[src];
-            bool carry = m_cpsr & MASK_CFLAG;
-            logical_shift_left(m_reg[dst], amount, carry);
+            u32 amount = ctx.reg[src];
+            bool carry = ctx.cpsr & MASK_CFLAG;
+            logical_shift_left(ctx.reg[dst], amount, carry);
             set_carry(carry);
-            update_sign(m_reg[dst]);
-            update_zero(m_reg[dst]);
+            update_sign(ctx.reg[dst]);
+            update_zero(ctx.reg[dst]);
             break;
         }
         case 0b0011: { // LSR
-            u32 amount = m_reg[src];
-            bool carry = m_cpsr & MASK_CFLAG;
-            logical_shift_right(m_reg[dst], amount, carry, false);
+            u32 amount = ctx.reg[src];
+            bool carry = ctx.cpsr & MASK_CFLAG;
+            logical_shift_right(ctx.reg[dst], amount, carry, false);
             set_carry(carry);
-            update_sign(m_reg[dst]);
-            update_zero(m_reg[dst]);
+            update_sign(ctx.reg[dst]);
+            update_zero(ctx.reg[dst]);
             break;
         }
         case 0b0100: { // ASR
-            u32 amount = m_reg[src];
-            bool carry = m_cpsr & MASK_CFLAG;
-            arithmetic_shift_right(m_reg[dst], amount, carry, false);
+            u32 amount = ctx.reg[src];
+            bool carry = ctx.cpsr & MASK_CFLAG;
+            arithmetic_shift_right(ctx.reg[dst], amount, carry, false);
             set_carry(carry);
-            update_sign(m_reg[dst]);
-            update_zero(m_reg[dst]);
+            update_sign(ctx.reg[dst]);
+            update_zero(ctx.reg[dst]);
             break;
         }
         case 0b0101: { // ADC
-            int carry = (m_cpsr >> 29) & 1;
-            u32 result = m_reg[dst] + m_reg[src] + carry;
-            u64 result_long = (u64)(m_reg[dst]) + (u64)(m_reg[src]) + (u64)carry;
+            int carry = (ctx.cpsr >> 29) & 1;
+            u32 result = ctx.reg[dst] + ctx.reg[src] + carry;
+            u64 result_long = (u64)(ctx.reg[dst]) + (u64)(ctx.reg[src]) + (u64)carry;
             set_carry(result_long & 0x100000000);
-            update_overflow_add(result, m_reg[dst], m_reg[src]);
+            update_overflow_add(result, ctx.reg[dst], ctx.reg[src]);
             update_sign(result);
             update_zero(result);
-            m_reg[dst] = result;
+            ctx.reg[dst] = result;
             break;
         }
         case 0b0110: { // SBC
-            int carry = (m_cpsr >> 29) & 1;
-            u32 result = m_reg[dst] - m_reg[src] + carry - 1;
-            set_carry(m_reg[dst] >= (m_reg[src] + carry - 1));
-            update_overflow_sub(result, m_reg[dst], m_reg[src]);
+            int carry = (ctx.cpsr >> 29) & 1;
+            u32 result = ctx.reg[dst] - ctx.reg[src] + carry - 1;
+            set_carry(ctx.reg[dst] >= (ctx.reg[src] + carry - 1));
+            update_overflow_sub(result, ctx.reg[dst], ctx.reg[src]);
             update_sign(result);
             update_zero(result);
-            m_reg[dst] = result;
+            ctx.reg[dst] = result;
             break;
         }
         case 0b0111: { // ROR
-            u32 amount = m_reg[src];
-            bool carry = m_cpsr & MASK_CFLAG;
-            rotate_right(m_reg[dst], amount, carry, false);
+            u32 amount = ctx.reg[src];
+            bool carry = ctx.cpsr & MASK_CFLAG;
+            rotate_right(ctx.reg[dst], amount, carry, false);
             set_carry(carry);
-            update_sign(m_reg[dst]);
-            update_zero(m_reg[dst]);
+            update_sign(ctx.reg[dst]);
+            update_zero(ctx.reg[dst]);
             break;
         }
         case 0b1000: { // TST
-            u32 result = m_reg[dst] & m_reg[src];
+            u32 result = ctx.reg[dst] & ctx.reg[src];
             update_sign(result);
             update_zero(result);
             break;
         }
         case 0b1001: { // NEG
-            u32 result = 0 - m_reg[src];
-            set_carry(0 >= m_reg[src]);
-            update_overflow_sub(result, 0, m_reg[src]);
+            u32 result = 0 - ctx.reg[src];
+            set_carry(0 >= ctx.reg[src]);
+            update_overflow_sub(result, 0, ctx.reg[src]);
             update_sign(result);
             update_zero(result);
-            m_reg[dst] = result;
+            ctx.reg[dst] = result;
             break;
         }
         case 0b1010: { // CMP
-            u32 result = m_reg[dst] - m_reg[src];
-            set_carry(m_reg[dst] >= m_reg[src]);
-            update_overflow_sub(result, m_reg[dst], m_reg[src]);
+            u32 result = ctx.reg[dst] - ctx.reg[src];
+            set_carry(ctx.reg[dst] >= ctx.reg[src]);
+            update_overflow_sub(result, ctx.reg[dst], ctx.reg[src]);
             update_sign(result);
             update_zero(result);
             break;
         }
         case 0b1011: { // CMN
-            u32 result = m_reg[dst] + m_reg[src];
-            u64 result_long = (u64)(m_reg[dst]) + (u64)(m_reg[src]);
+            u32 result = ctx.reg[dst] + ctx.reg[src];
+            u64 result_long = (u64)(ctx.reg[dst]) + (u64)(ctx.reg[src]);
             set_carry(result_long & 0x100000000);
-            update_overflow_add(result, m_reg[dst], m_reg[src]);
+            update_overflow_add(result, ctx.reg[dst], ctx.reg[src]);
             update_sign(result);
             update_zero(result);
             break;
         }
         case 0b1100: // ORR
-            m_reg[dst] |= m_reg[src];
-            update_sign(m_reg[dst]);
-            update_zero(m_reg[dst]);
+            ctx.reg[dst] |= ctx.reg[src];
+            update_sign(ctx.reg[dst]);
+            update_zero(ctx.reg[dst]);
             break;
         case 0b1101: // MUL
             // TODO: how to calc. the internal cycles?
-            m_reg[dst] *= m_reg[src];
-            update_sign(m_reg[dst]);
-            update_zero(m_reg[dst]);
+            ctx.reg[dst] *= ctx.reg[src];
+            update_sign(ctx.reg[dst]);
+            update_zero(ctx.reg[dst]);
             set_carry(false);
             break;
         case 0b1110: // BIC
-            m_reg[dst] &= ~(m_reg[src]);
-            update_sign(m_reg[dst]);
-            update_zero(m_reg[dst]);
+            ctx.reg[dst] &= ~(ctx.reg[src]);
+            update_sign(ctx.reg[dst]);
+            update_zero(ctx.reg[dst]);
             break;
         case 0b1111: // MVN
-            m_reg[dst] = ~(m_reg[src]);
-            update_sign(m_reg[dst]);
-            update_zero(m_reg[dst]);
+            ctx.reg[dst] = ~(ctx.reg[src]);
+            update_sign(ctx.reg[dst]);
+            update_zero(ctx.reg[dst]);
             break;
         }
     }
@@ -254,7 +254,7 @@ namespace GameBoyAdvance {
         if (high1) dst |= 8;
         if (high2) src |= 8;
 
-        operand = m_reg[src];
+        operand = ctx.reg[src];
         if (src == 15) {
             operand &= ~1;
         }
@@ -262,35 +262,35 @@ namespace GameBoyAdvance {
         switch (op)
         {
         case 0: // ADD
-            m_reg[dst] += operand;
+            ctx.reg[dst] += operand;
             break;
         case 1: { // CMP
-            u32 result = m_reg[dst] - operand;
-            set_carry(m_reg[dst] >= operand);
-            update_overflow_sub(result, m_reg[dst], operand);
+            u32 result = ctx.reg[dst] - operand;
+            set_carry(ctx.reg[dst] >= operand);
+            update_overflow_sub(result, ctx.reg[dst], operand);
             update_sign(result);
             update_zero(result);
             perform_check = false;
             break;
         }
         case 2: // MOV
-            m_reg[dst] = operand;
+            ctx.reg[dst] = operand;
             break;
         case 3: // BX
             if (operand & 1) {
-                m_reg[15] = operand & ~1;
+                ctx.r15 = operand & ~1;
             } else {
-                m_cpsr &= ~MASK_THUMB;
-                m_reg[15] = operand & ~3;
+                ctx.cpsr &= ~MASK_THUMB;
+                ctx.r15 = operand & ~3;
             }
-            m_flush = true;
+            ctx.pipe.do_flush = true;
             perform_check = false;
             break;
         }
 
         if (perform_check && dst == 15) {
-            m_reg[dst] &= ~1;
-            m_flush = true;
+            ctx.reg[dst] &= ~1;
+            ctx.pipe.do_flush = true;
         }
     }
 
@@ -298,9 +298,9 @@ namespace GameBoyAdvance {
     void ARM::thumb_6(u16 instruction) {
         // THUMB.6 PC-relative load
         u32 imm     = instruction & 0xFF;
-        u32 address = (m_reg[15] & ~2) + (imm << 2);
+        u32 address = (ctx.r15 & ~2) + (imm << 2);
 
-        m_reg[dst] = read_word(address);
+        ctx.reg[dst] = read_word(address);
     }
 
     template <int op, int off>
@@ -308,20 +308,20 @@ namespace GameBoyAdvance {
         // THUMB.7 Load/store with register offset
         int dst = instruction & 7;
         int base = (instruction >> 3) & 7;
-        u32 address = m_reg[base] + m_reg[off];
+        u32 address = ctx.reg[base] + ctx.reg[off];
 
         switch (op) {
         case 0b00: // STR
-            write_word(address, m_reg[dst]);
+            write_word(address, ctx.reg[dst]);
             break;
         case 0b01: // STRB
-            bus_write_byte(address, (u8)m_reg[dst]);
+            bus_write_byte(address, (u8)ctx.reg[dst]);
             break;
         case 0b10: // LDR
-            m_reg[dst] = read_word_rotated(address);
+            ctx.reg[dst] = read_word_rotated(address);
             break;
         case 0b11: // LDRB
-            m_reg[dst] = bus_read_byte(address);
+            ctx.reg[dst] = bus_read_byte(address);
             break;
         }
     }
@@ -331,24 +331,24 @@ namespace GameBoyAdvance {
         // THUMB.8 Load/store sign-extended byte/halfword
         int dst = instruction & 7;
         int base = (instruction >> 3) & 7;
-        u32 address = m_reg[base] + m_reg[off];
+        u32 address = ctx.reg[base] + ctx.reg[off];
 
         switch (op) {
         case 0b00: // STRH
-            write_hword(address, m_reg[dst]);
+            write_hword(address, ctx.reg[dst]);
             break;
         case 0b01: // LDSB
-            m_reg[dst] = bus_read_byte(address);
+            ctx.reg[dst] = bus_read_byte(address);
 
-            if (m_reg[dst] & 0x80) {
-                m_reg[dst] |= 0xFFFFFF00;
+            if (ctx.reg[dst] & 0x80) {
+                ctx.reg[dst] |= 0xFFFFFF00;
             }
             break;
         case 0b10: // LDRH
-            m_reg[dst] = read_hword(address);
+            ctx.reg[dst] = read_hword(address);
             break;
         case 0b11: // LDSH
-            m_reg[dst] = read_hword_signed(address);
+            ctx.reg[dst] = read_hword_signed(address);
             break;
         }
     }
@@ -361,23 +361,23 @@ namespace GameBoyAdvance {
 
         switch (op) {
         case 0b00: { // STR
-            u32 address = m_reg[base] + (imm << 2);
-            write_word(address, m_reg[dst]);
+            u32 address = ctx.reg[base] + (imm << 2);
+            write_word(address, ctx.reg[dst]);
             break;
         }
         case 0b01: { // LDR
-            u32 address = m_reg[base] + (imm << 2);
-            m_reg[dst] = read_word_rotated(address);
+            u32 address = ctx.reg[base] + (imm << 2);
+            ctx.reg[dst] = read_word_rotated(address);
             break;
         }
         case 0b10: { // STRB
-            u32 address = m_reg[base] + imm;
-            bus_write_byte(address, m_reg[dst]);
+            u32 address = ctx.reg[base] + imm;
+            bus_write_byte(address, ctx.reg[dst]);
             break;
         }
         case 0b11: { // LDRB
-            u32 address = m_reg[base] + imm;
-            m_reg[dst] = bus_read_byte(address);
+            u32 address = ctx.reg[base] + imm;
+            ctx.reg[dst] = bus_read_byte(address);
             break;
         }
         }
@@ -388,12 +388,12 @@ namespace GameBoyAdvance {
         // THUMB.10 Load/store halfword
         int dst     = instruction & 7;
         int base    = (instruction >> 3) & 7;
-        u32 address = m_reg[base] + (imm << 1);
+        u32 address = ctx.reg[base] + (imm << 1);
 
         if (load) {
-            m_reg[dst] = read_hword(address);
+            ctx.reg[dst] = read_hword(address);
         } else {
-            write_hword(address, m_reg[dst]);
+            write_hword(address, ctx.reg[dst]);
         }
     }
 
@@ -401,12 +401,12 @@ namespace GameBoyAdvance {
     void ARM::thumb_11(u16 instruction) {
         // THUMB.11 SP-relative load/store
         u32 imm     = instruction & 0xFF;
-        u32 address = m_reg[13] + (imm << 2);
+        u32 address = ctx.reg[13] + (imm << 2);
 
         if (load) {
-            m_reg[dst] = read_word_rotated(address);
+            ctx.reg[dst] = read_word_rotated(address);
         } else {
-            write_word(address, m_reg[dst]);
+            write_word(address, ctx.reg[dst]);
         }
     }
 
@@ -417,12 +417,12 @@ namespace GameBoyAdvance {
         u32 imm = (instruction & 0xFF) << 2;
         
         if (stackptr) {
-            address = m_reg[13];
+            address = ctx.reg[13];
         } else {
-            address = m_reg[15] & ~2;
+            address = ctx.r15 & ~2;
         }
 
-        m_reg[dst] = address + imm;
+        ctx.reg[dst] = address + imm;
     }
 
     template <bool sub>
@@ -430,24 +430,24 @@ namespace GameBoyAdvance {
         // THUMB.13 Add offset to stack pointer
         u32 imm = (instruction & 0x7F) << 2;
 
-        m_reg[13] += sub ? -imm : imm;
+        ctx.reg[13] += sub ? -imm : imm;
     }
 
     template <bool pop, bool rbit>
     void ARM::thumb_14(u16 instruction) {
         // THUMB.14 push/pop registers
-        u32 addr = m_reg[13];
+        u32 addr = ctx.reg[13];
         const int register_list = instruction & 0xFF;
 
         // hardware corner case. not sure if emulated correctly.
         if (!rbit && register_list == 0) {
             if (pop) {
-                m_reg[15] = read_word(addr);
-                m_flush   = true;
+                ctx.r15 = read_word(addr);
+                ctx.pipe.do_flush   = true;
             } else {
-                write_word(addr, m_reg[15]);
+                write_word(addr, ctx.r15);
             }
-            m_reg[13] += pop ? 64 : -64;
+            ctx.reg[13] += pop ? 64 : -64;
             return;
         }
 
@@ -465,16 +465,16 @@ namespace GameBoyAdvance {
             }
             
             addr -= register_count << 2;
-            m_reg[13] = addr;
+            ctx.reg[13] = addr;
         }
 
         // perform load/store multiple
         for (int i = 0; i <= 7; i++) {
             if (register_list & (1 << i)) {
                 if (pop) {
-                    m_reg[i] = read_word(addr);
+                    ctx.reg[i] = read_word(addr);
                 } else {
-                    write_word(addr, m_reg[i]);
+                    write_word(addr, ctx.reg[i]);
                 }
                 addr += 4;
             }
@@ -482,16 +482,16 @@ namespace GameBoyAdvance {
 
         if (rbit) {
             if (pop) {
-                m_reg[15] = read_word(addr) & ~1;
-                m_flush = true;
+                ctx.r15 = read_word(addr) & ~1;
+                ctx.pipe.do_flush = true;
             } else {
-                write_word(addr, m_reg[14]);
+                write_word(addr, ctx.reg[14]);
             }
             addr += 4;
         }
 
         if (pop) {
-            m_reg[13] = addr;
+            ctx.reg[13] = addr;
         }
     }
 
@@ -499,33 +499,33 @@ namespace GameBoyAdvance {
     void ARM::thumb_15(u16 instruction) {
         // THUMB.15 Multiple load/store
         bool write_back = true;
-        u32 address = m_reg[base];
+        u32 address = ctx.reg[base];
         int register_list = instruction & 0xFF;
 
         if (load) {
             if (register_list == 0) {
-                m_reg[15] = read_word(address);
-                m_flush = true;
-                m_reg[base] += 64;
+                ctx.r15 = read_word(address);
+                ctx.pipe.do_flush = true;
+                ctx.reg[base] += 64;
                 return;
             }
 
             for (int i = 0; i <= 7; i++) {
                 if (register_list & (1<<i)) {
-                    m_reg[i] = read_word(address);
+                    ctx.reg[i] = read_word(address);
                     address += 4;
                 }
             }
 
             if (write_back && (~register_list & (1<<base))) {
-                m_reg[base] = address;
+                ctx.reg[base] = address;
             }
         } else {
             int first_register = -1;
 
             if (register_list == 0) {
-                write_word(address, m_reg[15]);
-                m_reg[base] += 64;
+                write_word(address, ctx.r15);
+                ctx.reg[base] += 64;
                 return;
             }
 
@@ -536,12 +536,12 @@ namespace GameBoyAdvance {
                     }
 
                     if (i == base && i == first_register) {
-                        write_word(m_reg[base], address);
+                        write_word(ctx.reg[base], address);
                     } else {
-                        write_word(m_reg[base], m_reg[i]);
+                        write_word(ctx.reg[base], ctx.reg[i]);
                     }
 
-                    m_reg[base] += 4;
+                    ctx.reg[base] += 4;
                 }
             }
         }
@@ -559,27 +559,27 @@ namespace GameBoyAdvance {
             }
 
             // update r15/pc and flush pipe
-            m_reg[15] += (signed_immediate << 1);
-            m_flush = true;
+            ctx.r15 += (signed_immediate << 1);
+            ctx.pipe.do_flush = true;
         }
     }
 
     void ARM::thumb_17(u16 instruction) {
         // THUMB.17 Software Interrupt
-        u8 call_number = bus_read_byte(m_reg[15] - 4);
+        u8 call_number = bus_read_byte(ctx.r15 - 4);
         
         if (!m_hle) {
             // save return address and program status
-            m_bank[BANK_SVC][BANK_R14] = m_reg[15] - 2;
-            m_spsr[SPSR_SVC] = m_cpsr;
+            ctx.bank[BANK_SVC][BANK_R14] = ctx.r15 - 2;
+            ctx.spsr[SPSR_SVC] = ctx.cpsr;
 
             // switch to SVC mode and disable interrupts
             switch_mode(MODE_SVC);
-            m_cpsr = (m_cpsr & ~MASK_THUMB) | MASK_IRQD;
+            ctx.cpsr = (ctx.cpsr & ~MASK_THUMB) | MASK_IRQD;
 
             // jump to exception vector
-            m_reg[15] = EXCPT_SWI;
-            m_flush = true;
+            ctx.r15 = EXCPT_SWI;
+            ctx.pipe.do_flush = true;
         } else {
             software_interrupt(call_number);
         }
@@ -595,8 +595,8 @@ namespace GameBoyAdvance {
         }
 
         // update r15/pc and flush pipe
-        m_reg[15] += imm;
-        m_flush = true;
+        ctx.r15 += imm;
+        ctx.pipe.do_flush = true;
     }
 
     template <bool second_instruction>
@@ -605,19 +605,19 @@ namespace GameBoyAdvance {
         u32 imm = instruction & 0x7FF;
 
         if (second_instruction) {
-            u32 temp_pc = m_reg[15] - 2;
-            u32 value = m_reg[14] + (imm << 1);
+            u32 temp_pc = ctx.r15 - 2;
+            u32 value = ctx.reg[14] + (imm << 1);
 
             // update r15/pc
             value &= 0x7FFFFF;
-            m_reg[15] &= ~0x7FFFFF;
-            m_reg[15] |= value & ~1;
+            ctx.r15 &= ~0x7FFFFF;
+            ctx.r15 |= value & ~1;
 
             // store return address and flush pipe.
-            m_reg[14] = temp_pc | 1;
-            m_flush = true;
+            ctx.reg[14] = temp_pc | 1;
+            ctx.pipe.do_flush = true;
         } else {
-            m_reg[14] = m_reg[15] + (imm << 12);
+            ctx.reg[14] = ctx.r15 + (imm << 12);
         }
     }
 }

@@ -69,18 +69,18 @@ inline void write_word(u32 offset, u32 value) {
 }
 
 inline void refill_pipeline() {
-    if (m_cpsr & MASK_THUMB) {
-        m_opcode[0] = read_hword(m_reg[15]);
-        m_opcode[1] = read_hword(m_reg[15] + 2);
-        m_reg[15] += 4;
+    if (ctx.cpsr & MASK_THUMB) {
+        ctx.pipe.opcode[0] = read_hword(ctx.r15);
+        ctx.pipe.opcode[1] = read_hword(ctx.r15 + 2);
+        ctx.r15 += 4;
     } else {
-        m_opcode[0] = read_word(m_reg[15]);
-        m_opcode[1] = read_word(m_reg[15] + 4);
-        m_reg[15] += 8;
+        ctx.pipe.opcode[0] = read_word(ctx.r15);
+        ctx.pipe.opcode[1] = read_word(ctx.r15 + 4);
+        ctx.r15 += 8;
     }
     
-    m_index = 0;
-    m_flush = false;
+    ctx.pipe.index = 0;
+    ctx.pipe.do_flush = false;
 }
 
 #endif
