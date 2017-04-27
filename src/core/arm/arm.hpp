@@ -26,30 +26,32 @@ namespace GameBoyAdvance {
 
     class ARM {
     public:
-        /// Constructor
         ARM();
-
-        /// Resets the CPU state.
-        virtual void reset();
-
-        /// Executes exactly one instruction.
-        void step();
-
-        /// Tries to raise an IRQ exception.
-        void raise_interrupt();
-
-        /// HLE-flag getter
-        bool get_hle() { return m_hle; }
-
-        /// HLE-flag setter
-        /// @param  hle  HLE-flag
-        void set_hle(bool hle) { m_hle = hle; }
+        virtual void Reset();
+        
+        void Step();
+        void RaiseInterrupt();
+        // TODO: Fast Interrupt (FIQ)
+        
+        auto GetContext() -> ARMContext& {
+            return ctx;
+        }
+        void SetContext(ARMContext& ctx) {
+            this->ctx = ctx;
+        }
+        
+        bool GetFakeSWI() const { 
+            return fake_swi; 
+        }
+        void SetFakeSWI(bool fake_swi) { 
+            this->fake_swi = fake_swi; 
+        }
 
     protected:
         
         ARMContext ctx;
-
-        bool m_hle;
+        
+        bool fake_swi;
 
         // memory bus methods
         virtual u8  bus_read_byte(u32 address)  { return 0; }

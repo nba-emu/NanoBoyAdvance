@@ -692,7 +692,7 @@ namespace GameBoyAdvance {
     void ARM::arm_swi(u32 instruction) {
         u32 call_number = bus_read_byte(ctx.r15 - 6);
 
-        if (!m_hle) {
+        if (!fake_swi) {
             // save return address and program status
             ctx.bank[BANK_SVC][BANK_R14] = ctx.r15 - 4;
             ctx.spsr[SPSR_SVC] = ctx.cpsr;

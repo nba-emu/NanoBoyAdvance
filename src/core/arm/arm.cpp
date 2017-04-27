@@ -21,22 +21,23 @@
 #include "arm.hpp"
 
 namespace GameBoyAdvance {
+    
     ARM::ARM() {
-        reset();
+        Reset();
     }
 
-    void ARM::reset()  {
+    void ARM::Reset()  {
         ctx.pipe.index = 0;
 
-        std::memset(ctx.reg, 0, sizeof(ctx.reg));
+        std::memset(ctx.reg,  0, sizeof(ctx.reg));
         std::memset(ctx.bank, 0, sizeof(ctx.bank));
-        ctx.cpsr = MODE_SYS;
+        ctx.cpsr   = MODE_SYS;
         ctx.p_spsr = &ctx.spsr[SPSR_DEF];
 
         refill_pipeline();
     }
 
-	void ARM::step() {
+	void ARM::Step() {
         auto& pipe  = ctx.pipe;
     	bool  thumb = ctx.cpsr & MASK_THUMB;
 
@@ -119,8 +120,8 @@ namespace GameBoyAdvance {
                 ctx.bank[old_fiq_bank][6] = ctx.reg[12];
 
                 // restore general purpose registers from new bank.
-                ctx.reg[8] = ctx.bank[new_fiq_bank][2];
-                ctx.reg[9] = ctx.bank[new_fiq_bank][3];
+                ctx.reg[8]  = ctx.bank[new_fiq_bank][2];
+                ctx.reg[9]  = ctx.bank[new_fiq_bank][3];
                 ctx.reg[10] = ctx.bank[new_fiq_bank][4];
                 ctx.reg[11] = ctx.bank[new_fiq_bank][5];
                 ctx.reg[12] = ctx.bank[new_fiq_bank][6];
@@ -140,7 +141,7 @@ namespace GameBoyAdvance {
         ctx.cpsr = (ctx.cpsr & ~MASK_MODE) | (u32)new_mode;
     }
 
-    void ARM::raise_interrupt() {
+    void ARM::RaiseInterrupt() {
         if (~ctx.cpsr & MASK_IRQD) {
             bool thumb = ctx.cpsr & MASK_THUMB;
 

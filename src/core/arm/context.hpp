@@ -24,7 +24,6 @@
 
 namespace GameBoyAdvance {
     struct ARMContext {
-        
         // General Purpose Registers
         union {
             struct {

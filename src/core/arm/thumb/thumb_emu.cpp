@@ -568,7 +568,7 @@ namespace GameBoyAdvance {
         // THUMB.17 Software Interrupt
         u8 call_number = bus_read_byte(ctx.r15 - 4);
         
-        if (!m_hle) {
+        if (!fake_swi) {
             // save return address and program status
             ctx.bank[BANK_SVC][BANK_R14] = ctx.r15 - 2;
             ctx.spsr[SPSR_SVC] = ctx.cpsr;

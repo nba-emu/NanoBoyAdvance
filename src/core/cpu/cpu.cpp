@@ -37,7 +37,7 @@ namespace GameBoyAdvance {
 
     CPU::CPU(Config* config) : m_config(config), m_ppu(config), m_apu(config) {
         
-        reset();
+        Reset();
 
         // setup interrupt controller
         m_interrupt.set_flag_register(&m_io.interrupt.request);
@@ -56,8 +56,8 @@ namespace GameBoyAdvance {
         }
     }
 
-    void CPU::reset() {
-        ARM::reset();
+    void CPU::Reset() {
+        ARM::Reset();
 
         // reset PPU und APU state
         m_ppu.reset();
@@ -99,13 +99,13 @@ namespace GameBoyAdvance {
         m_dma_active  = false;
         m_current_dma = 0;
 
-        set_hle(!m_config->use_bios);
+        SetFakeSWI(!m_config->use_bios);
 
         if (!m_config->use_bios || !File::exists(m_config->bios_path)) {
             // TODO: load helper BIOS
             
             // set CPU entrypoint to ROM entrypoint
-            ctx.r15 = 0x08000000;
+            ctx.r15     = 0x08000000;
             ctx.reg[13] = 0x03007F00;
             
             // set stack pointers to their respective addresses
@@ -181,7 +181,7 @@ namespace GameBoyAdvance {
         }
         
         // forced system reset...
-        reset();
+        Reset();
     }
 
     void CPU::frame() {
@@ -243,9 +243,9 @@ namespace GameBoyAdvance {
                 dma_transfer();
             } else if (LIKELY(m_io.haltcnt == SYSTEM_RUN)) {
                 if (m_io.interrupt.master_enable && requested_and_enabled) {
-                    raise_interrupt();
+                    RaiseInterrupt();
                 }
-                step();
+                Step();
             } else {
                 //TODO: inaccurate because of timer interrupts
                 timer_step(m_cycles);

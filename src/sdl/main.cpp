@@ -253,7 +253,7 @@ int main(int argc, char** argv) {
                         
                         continue;
                     case SDLK_F9:
-                        emu.reset();
+                        emu.Reset();
                         continue;
                     default: 
                         continue;
