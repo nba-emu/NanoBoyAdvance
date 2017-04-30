@@ -67,18 +67,28 @@ namespace GameBoyAdvance {
         #include "memory.hpp"
 
     private:
-        static Bank ModeToBank(Mode mode);
 
         void SwitchMode(Mode new_mode);
 
-        // conditional helpers
-        #include "flags.hpp"
+        bool CheckCondition(Condition condition);
+        void UpdateSignFlag(u32 result);
+        void UpdateZeroFlag(u64 result);
+        void SetCarryFlag(bool carry);
+        void UpdateOverflowFlagAdd(u32 result, u32 operand1, u32 operand2);
+        void UpdateOverflowFlagSub(u32 result, u32 operand1, u32 operand2);
 
-        // shifting helpers
-        #include "shifting.hpp"
+        static void LogicalShiftLeft(u32& operand, u32 amount, bool& carry);
+        static void LogicalShiftRight(u32& operand, u32 amount, bool& carry, bool immediate);
+        static void ArithmeticShiftRight(u32& operand, u32 amount, bool& carry, bool immediate);
+        static void RotateRight(u32& operand, u32 amount, bool& carry, bool immediate);
+        static void ApplyShift(int shift, u32& operand, u32 amount, bool& carry, bool immediate);
+        
+        static Bank ModeToBank(Mode mode);
 
         // ARM and THUMB interpreter cores
-        #include "arm/arm_emu.hpp"
-        #include "thumb/thumb_emu.hpp"
+        #include "instr_arm.hpp"
+        #include "instr_thumb.hpp"
     };
+    
+    #include "inline_code.hpp"
 }

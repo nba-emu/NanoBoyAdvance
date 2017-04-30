@@ -21,7 +21,7 @@ typedef void (ARM::*ThumbInstruction)(u16);
 
 static const ThumbInstruction thumb_lut[1024];
 
-inline void thumb_execute(u32 instruction)
+inline void thumb_execute(u32 instruction) 
 {
     (this->*thumb_lut[instruction >> 6])(instruction);
 }

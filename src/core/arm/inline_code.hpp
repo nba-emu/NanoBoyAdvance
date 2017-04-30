@@ -24,7 +24,7 @@
 
 #define XOR_BIT_31(a, b) (((a) ^ (b)) >> 31)
 
-inline bool CheckCondition(Condition condition) {
+inline bool ARM::CheckCondition(Condition condition) {
     if (condition == COND_AL) {
         return true;
     }
@@ -51,7 +51,7 @@ inline bool CheckCondition(Condition condition) {
     return false;
 }
 
-inline void UpdateSignFlag(u32 result) {
+inline void ARM::UpdateSignFlag(u32 result) {
     if (result >> 31) {
         ctx.cpsr |= MASK_NFLAG;
     } else {
@@ -59,7 +59,7 @@ inline void UpdateSignFlag(u32 result) {
     }
 }
 
-inline void UpdateZeroFlag(u64 result) {
+inline void ARM::UpdateZeroFlag(u64 result) {
     if (result == 0) {
         ctx.cpsr |= MASK_ZFLAG;
     } else {
@@ -67,7 +67,7 @@ inline void UpdateZeroFlag(u64 result) {
     }
 }
 
-inline void SetCarryFlag(bool carry) {
+inline void ARM::SetCarryFlag(bool carry) {
     if (carry) {
         ctx.cpsr |= MASK_CFLAG;
     } else {
@@ -75,7 +75,7 @@ inline void SetCarryFlag(bool carry) {
     }
 }
 
-inline void UpdateOverflowFlagAdd(u32 result, u32 operand1, u32 operand2) {
+inline void ARM::UpdateOverflowFlagAdd(u32 result, u32 operand1, u32 operand2) {
     bool overflow = !XOR_BIT_31(operand1, operand2) && XOR_BIT_31(result, operand2);
 
     if (overflow) {
@@ -85,7 +85,7 @@ inline void UpdateOverflowFlagAdd(u32 result, u32 operand1, u32 operand2) {
     }
 }
 
-inline void UpdateOverflowFlagSub(u32 result, u32 operand1, u32 operand2) {
+inline void ARM::UpdateOverflowFlagSub(u32 result, u32 operand1, u32 operand2) {
     bool overflow = XOR_BIT_31(operand1, operand2) && !XOR_BIT_31(result, operand2);
 
     if (overflow) {
@@ -95,3 +95,68 @@ inline void UpdateOverflowFlagSub(u32 result, u32 operand1, u32 operand2) {
     }
 }
 
+inline void ARM::LogicalShiftLeft(u32& operand, u32 amount, bool& carry) {
+    if (amount == 0) {
+        return;
+    }
+
+    for (u32 i = 0; i < amount; i++) {
+        carry = operand & 0x80000000 ? true : false;
+        operand <<= 1;
+    }
+}
+
+inline void ARM::LogicalShiftRight(u32& operand, u32 amount, bool& carry, bool immediate) {
+    // LSR #0 equals to LSR #32
+    amount = immediate & (amount == 0) ? 32 : amount;
+    
+    for (u32 i = 0; i < amount; i++) {
+        carry = operand & 1 ? true : false;
+        operand >>= 1;
+    }
+}
+
+inline void ARM::ArithmeticShiftRight(u32& operand, u32 amount, bool& carry, bool immediate) {
+    u32 sign_bit = operand & 0x80000000;
+
+    // ASR #0 equals to ASR #32
+    amount = (immediate && (amount == 0)) ? 32 : amount;
+
+    for (u32 i = 0; i < amount; i++) {
+        carry   = operand & 1 ? true : false;
+        operand = (operand >> 1) | sign_bit;
+    }
+}
+
+inline void ARM::RotateRight(u32& operand, u32 amount, bool& carry, bool immediate) {
+    // ROR #0 equals to RRX #1
+    if (amount != 0 || !immediate) {
+        for (u32 i = 1; i <= amount; i++) {
+            u32 high_bit = (operand & 1) ? 0x80000000 : 0;
+            
+            operand = (operand >> 1) | high_bit;
+            carry   = high_bit == 0x80000000;
+        }
+    } else {
+        bool old_carry = carry;
+        
+        carry   = (operand & 1) ? true : false;
+        operand = (operand >> 1) | (old_carry ? 0x80000000 : 0);
+    }
+}
+
+inline void ARM::ApplyShift(int shift, u32& operand, u32 amount, bool& carry, bool immediate) {
+    switch (shift) {
+    case 0:
+        LogicalShiftLeft(operand, amount, carry);
+        return;
+    case 1:
+        LogicalShiftRight(operand, amount, carry, immediate);
+        return;
+    case 2:
+        ArithmeticShiftRight(operand, amount, carry, immediate);
+        return;
+    case 3:
+        RotateRight(operand, amount, carry, immediate);
+    }
+}

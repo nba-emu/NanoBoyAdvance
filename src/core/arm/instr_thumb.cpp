@@ -17,13 +17,14 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#include "../arm.hpp"
+#include "arm.hpp"
 #include "util/logger.hpp"
 
 using namespace Util;
 
 namespace GameBoyAdvance {
-    #include "thumb_lut.hpp"
+    
+    #include "tables/op_thumb.hpp"
 
     template <int imm, int type>
     void ARM::thumb_1(u16 instruction) {

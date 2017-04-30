@@ -17,13 +17,14 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#include "../arm.hpp"
+#include "arm.hpp"
 #include "util/logger.hpp"
 
 using namespace Util;
 
 namespace GameBoyAdvance {
-    #include "arm_lut.hpp"
+    
+    #include "tables/op_arm.hpp"
 
     template <bool immediate, int opcode, bool _set_flags, int field4>
     void ARM::arm_data_processing(u32 instruction) {

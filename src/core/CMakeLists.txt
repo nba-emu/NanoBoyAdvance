@@ -1,7 +1,26 @@
-set(SOURCES
+# TODO: seperate lists for each folder/subsystem
+
+set(ARM_SRC
     arm/arm.cpp
-    arm/arm/arm_emu.cpp
-    arm/thumb/thumb_emu.cpp
+    arm/instr_arm.cpp
+    arm/instr_thumb.cpp
+)
+
+set(ARM_HDR
+    arm/arm.hpp
+    arm/enums.hpp
+    arm/flags.hpp
+    arm/memory.hpp
+    arm/context.hpp
+    arm/shifting.hpp
+    arm/instr_arm.hpp
+    arm/instr_thumb.hpp
+    arm/tables/op_arm.hpp
+    arm/tables/op_thumb.hpp
+)
+
+set(SOURCES
+    ${ARM_SRC}
     cpu/io.cpp
     cpu/cpu.cpp
     cpu/memory.cpp
@@ -23,16 +42,7 @@ set(SOURCES
 
 set(HEADERS
     config.hpp
-    arm/arm.hpp
-    arm/enums.hpp
-    arm/flags.hpp
-    arm/memory.hpp
-    arm/context.hpp
-    arm/shifting.hpp
-    arm/arm/arm_emu.hpp
-    arm/arm/arm_lut.hpp
-    arm/thumb/thumb_emu.hpp
-    arm/thumb/thumb_lut.hpp
+    ${ARM_HDR}
     cpu/io.hpp
     cpu/cpu.hpp
     cpu/enums.hpp
