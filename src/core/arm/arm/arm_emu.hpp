@@ -17,8 +17,6 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#ifdef ARMIGO_INCLUDE
-
 typedef void (ARM::*ARMInstruction)(u32);
 
 static const ARMInstruction arm_lut[4096];
@@ -64,5 +62,3 @@ template <bool link>
 void arm_branch(u32 instruction);
 
 void arm_swi(u32 instruction);
-
-#endif

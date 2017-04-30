@@ -20,7 +20,6 @@
 #pragma once
 
 #include "context.hpp"
-#define ARMIGO_INCLUDE
 
 namespace GameBoyAdvance {
 
@@ -83,5 +82,3 @@ namespace GameBoyAdvance {
         #include "thumb/thumb_emu.hpp"
     };
 }
-
-#undef ARMIGO_INCLUDE
