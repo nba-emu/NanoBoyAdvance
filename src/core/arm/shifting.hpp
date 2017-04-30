@@ -17,9 +17,7 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#ifdef ARMIGO_INCLUDE
-
-inline void logical_shift_left(u32& operand, u32 amount, bool& carry) {
+inline void LogicalShiftLeft(u32& operand, u32 amount, bool& carry) {
     if (amount == 0) {
         return;
     }
@@ -30,7 +28,7 @@ inline void logical_shift_left(u32& operand, u32 amount, bool& carry) {
     }
 }
 
-inline void logical_shift_right(u32& operand, u32 amount, bool& carry, bool immediate) {
+inline void LogicalShiftRight(u32& operand, u32 amount, bool& carry, bool immediate) {
     // LSR #0 equals to LSR #32
     amount = immediate & (amount == 0) ? 32 : amount;
     
@@ -40,7 +38,7 @@ inline void logical_shift_right(u32& operand, u32 amount, bool& carry, bool imme
     }
 }
 
-inline void arithmetic_shift_right(u32& operand, u32 amount, bool& carry, bool immediate) {
+inline void ArithmeticShiftRight(u32& operand, u32 amount, bool& carry, bool immediate) {
     u32 sign_bit = operand & 0x80000000;
 
     // ASR #0 equals to ASR #32
@@ -52,7 +50,7 @@ inline void arithmetic_shift_right(u32& operand, u32 amount, bool& carry, bool i
     }
 }
 
-inline void rotate_right(u32& operand, u32 amount, bool& carry, bool immediate) {
+inline void RotateRight(u32& operand, u32 amount, bool& carry, bool immediate) {
     // ROR #0 equals to RRX #1
     if (amount != 0 || !immediate) {
         for (u32 i = 1; i <= amount; i++) {
@@ -69,20 +67,19 @@ inline void rotate_right(u32& operand, u32 amount, bool& carry, bool immediate) 
     }
 }
 
-inline void perform_shift(int shift, u32& operand, u32 amount, bool& carry, bool immediate) {
+inline void ApplyShift(int shift, u32& operand, u32 amount, bool& carry, bool immediate) {
     switch (shift) {
     case 0:
-        logical_shift_left(operand, amount, carry);
+        LogicalShiftLeft(operand, amount, carry);
         return;
     case 1:
-        logical_shift_right(operand, amount, carry, immediate);
+        LogicalShiftRight(operand, amount, carry, immediate);
         return;
     case 2:
-        arithmetic_shift_right(operand, amount, carry, immediate);
+        ArithmeticShiftRight(operand, amount, carry, immediate);
         return;
     case 3:
-        rotate_right(operand, amount, carry, immediate);
+        RotateRight(operand, amount, carry, immediate);
     }
 }
 
-#endif

@@ -17,8 +17,6 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#ifdef ARMIGO_INCLUDE
-
 #define Z_FLAG (ctx.cpsr & MASK_ZFLAG)
 #define C_FLAG (ctx.cpsr & MASK_CFLAG)
 #define N_FLAG (ctx.cpsr & MASK_NFLAG)
@@ -26,7 +24,7 @@
 
 #define XOR_BIT_31(a, b) (((a) ^ (b)) >> 31)
 
-inline bool check_condition(Condition condition) {
+inline bool CheckCondition(Condition condition) {
     if (condition == COND_AL) {
         return true;
     }
@@ -53,7 +51,7 @@ inline bool check_condition(Condition condition) {
     return false;
 }
 
-inline void update_sign(u32 result) {
+inline void UpdateSignFlag(u32 result) {
     if (result >> 31) {
         ctx.cpsr |= MASK_NFLAG;
     } else {
@@ -61,7 +59,7 @@ inline void update_sign(u32 result) {
     }
 }
 
-inline void update_zero(u64 result) {
+inline void UpdateZeroFlag(u64 result) {
     if (result == 0) {
         ctx.cpsr |= MASK_ZFLAG;
     } else {
@@ -69,7 +67,7 @@ inline void update_zero(u64 result) {
     }
 }
 
-inline void set_carry(bool carry) {
+inline void SetCarryFlag(bool carry) {
     if (carry) {
         ctx.cpsr |= MASK_CFLAG;
     } else {
@@ -77,7 +75,7 @@ inline void set_carry(bool carry) {
     }
 }
 
-inline void update_overflow_add(u32 result, u32 operand1, u32 operand2) {
+inline void UpdateOverflowFlagAdd(u32 result, u32 operand1, u32 operand2) {
     bool overflow = !XOR_BIT_31(operand1, operand2) && XOR_BIT_31(result, operand2);
 
     if (overflow) {
@@ -87,7 +85,7 @@ inline void update_overflow_add(u32 result, u32 operand1, u32 operand2) {
     }
 }
 
-inline void update_overflow_sub(u32 result, u32 operand1, u32 operand2) {
+inline void UpdateOverflowFlagSub(u32 result, u32 operand1, u32 operand2) {
     bool overflow = XOR_BIT_31(operand1, operand2) && !XOR_BIT_31(result, operand2);
 
     if (overflow) {
@@ -97,4 +95,3 @@ inline void update_overflow_sub(u32 result, u32 operand1, u32 operand2) {
     }
 }
 
-#endif

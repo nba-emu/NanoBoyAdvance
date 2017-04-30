@@ -75,7 +75,7 @@ namespace GameBoyAdvance {
         ctx.r15 += thumb ? 2 : 4;
     }
 
-    inline Bank ARM::mode_to_bank(Mode mode) {
+    inline Bank ARM::ModeToBank(Mode mode) {
         switch (mode) {
         case MODE_USR:
         case MODE_SYS:
@@ -97,15 +97,15 @@ namespace GameBoyAdvance {
 
     // Based on mGBA (endrift's) approach to banking.
     // https://github.com/mgba-emu/mgba/blob/master/src/arm/arm.c
-    void ARM::switch_mode(Mode new_mode) {
+    void ARM::SwitchMode(Mode new_mode) {
         Mode old_mode = static_cast<Mode>(ctx.cpsr & MASK_MODE);
 
         if (new_mode == old_mode) {
             return;
         }
 
-        Bank new_bank = mode_to_bank(new_mode);
-        Bank old_bank = mode_to_bank(old_mode);
+        Bank new_bank = ModeToBank(new_mode);
+        Bank old_bank = ModeToBank(old_mode);
 
         if (new_bank != old_bank) {
             if (new_bank == BANK_FIQ || old_bank == BANK_FIQ) {
@@ -150,7 +150,7 @@ namespace GameBoyAdvance {
 
             // save program status and switch mode
             ctx.spsr[SPSR_IRQ] = ctx.cpsr;
-            switch_mode(MODE_IRQ);
+            SwitchMode(MODE_IRQ);
             ctx.cpsr = (ctx.cpsr & ~MASK_THUMB) | MASK_IRQD;
 
             // jump to exception vector

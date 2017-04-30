@@ -17,8 +17,6 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#ifdef ARMIGO_INCLUDE
-
 inline u32 read_hword(u32 offset) {
     if (offset & 1) {
         u32 value = bus_read_hword(offset & ~1);
@@ -83,4 +81,3 @@ inline void refill_pipeline() {
     ctx.pipe.do_flush = false;
 }
 
-#endif

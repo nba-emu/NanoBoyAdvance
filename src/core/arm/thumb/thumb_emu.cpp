@@ -35,12 +35,12 @@ namespace GameBoyAdvance {
 
         ctx.reg[dst] = ctx.reg[src];
 
-        perform_shift(type, ctx.reg[dst], imm, carry, true);
+        ApplyShift(type, ctx.reg[dst], imm, carry, true);
 
         // update carry, sign and zero flag
-        set_carry(carry);
-        update_sign(ctx.reg[dst]);
-        update_zero(ctx.reg[dst]);
+        SetCarryFlag(carry);
+        UpdateSignFlag(ctx.reg[dst]);
+        UpdateZeroFlag(ctx.reg[dst]);
     }
 
     template <bool immediate, bool subtract, int field3>
@@ -56,18 +56,18 @@ namespace GameBoyAdvance {
         if (subtract) {
             result = ctx.reg[src] - operand;
 
-            set_carry(ctx.reg[src] >= operand);
-            update_overflow_sub(result, ctx.reg[src], operand);
+            SetCarryFlag(ctx.reg[src] >= operand);
+            UpdateOverflowFlagSub(result, ctx.reg[src], operand);
         } else {
             u64 result_long = (u64)(ctx.reg[src]) + (u64)operand;
 
             result = (u32)result_long;
-            set_carry(result_long & 0x100000000);
-            update_overflow_add(result, ctx.reg[src], operand);
+            SetCarryFlag(result_long & 0x100000000);
+            UpdateOverflowFlagAdd(result, ctx.reg[src], operand);
         }
 
-        update_sign(result);
-        update_zero(result);
+        UpdateSignFlag(result);
+        UpdateZeroFlag(result);
 
         ctx.reg[dst] = result;
     }
@@ -81,33 +81,33 @@ namespace GameBoyAdvance {
         switch (op) {
         case 0b00: // MOV
             ctx.reg[dst] = immediate_value;
-            update_sign(0);
-            update_zero(immediate_value);
+            UpdateSignFlag(0);
+            UpdateZeroFlag(immediate_value);
             return;//important!
 
         case 0b01: // CMP
             result = ctx.reg[dst] - immediate_value;
-            set_carry(ctx.reg[dst] >= immediate_value);
-            update_overflow_sub(result, ctx.reg[dst], immediate_value);
+            SetCarryFlag(ctx.reg[dst] >= immediate_value);
+            UpdateOverflowFlagSub(result, ctx.reg[dst], immediate_value);
             break;
         case 0b10: { // ADD
             u64 result_long = (u64)ctx.reg[dst] + (u64)immediate_value;
             result = (u32)result_long;
-            set_carry(result_long & 0x100000000);
-            update_overflow_add(result, ctx.reg[dst], immediate_value);
+            SetCarryFlag(result_long & 0x100000000);
+            UpdateOverflowFlagAdd(result, ctx.reg[dst], immediate_value);
             ctx.reg[dst] = result;
             break;
         }
         case 0b11: // SUB
             result = ctx.reg[dst] - immediate_value;
-            set_carry(ctx.reg[dst] >= immediate_value);
-            update_overflow_sub(result, ctx.reg[dst], immediate_value);
+            SetCarryFlag(ctx.reg[dst] >= immediate_value);
+            UpdateOverflowFlagSub(result, ctx.reg[dst], immediate_value);
             ctx.reg[dst] = result;
             break;
         }
 
-        update_sign(result);
-        update_zero(result);
+        UpdateSignFlag(result);
+        UpdateZeroFlag(result);
     }
 
     template <int op>
@@ -120,124 +120,124 @@ namespace GameBoyAdvance {
         switch (op) {
         case 0b0000: // AND
             ctx.reg[dst] &= ctx.reg[src];
-            update_sign(ctx.reg[dst]);
-            update_zero(ctx.reg[dst]);
+            UpdateSignFlag(ctx.reg[dst]);
+            UpdateZeroFlag(ctx.reg[dst]);
             break;
         case 0b0001: // EOR
             ctx.reg[dst] ^= ctx.reg[src];
-            update_sign(ctx.reg[dst]);
-            update_zero(ctx.reg[dst]);
+            UpdateSignFlag(ctx.reg[dst]);
+            UpdateZeroFlag(ctx.reg[dst]);
             break;
         case 0b0010: { // LSL
             u32 amount = ctx.reg[src];
             bool carry = ctx.cpsr & MASK_CFLAG;
-            logical_shift_left(ctx.reg[dst], amount, carry);
-            set_carry(carry);
-            update_sign(ctx.reg[dst]);
-            update_zero(ctx.reg[dst]);
+            LogicalShiftLeft(ctx.reg[dst], amount, carry);
+            SetCarryFlag(carry);
+            UpdateSignFlag(ctx.reg[dst]);
+            UpdateZeroFlag(ctx.reg[dst]);
             break;
         }
         case 0b0011: { // LSR
             u32 amount = ctx.reg[src];
             bool carry = ctx.cpsr & MASK_CFLAG;
-            logical_shift_right(ctx.reg[dst], amount, carry, false);
-            set_carry(carry);
-            update_sign(ctx.reg[dst]);
-            update_zero(ctx.reg[dst]);
+            LogicalShiftRight(ctx.reg[dst], amount, carry, false);
+            SetCarryFlag(carry);
+            UpdateSignFlag(ctx.reg[dst]);
+            UpdateZeroFlag(ctx.reg[dst]);
             break;
         }
         case 0b0100: { // ASR
             u32 amount = ctx.reg[src];
             bool carry = ctx.cpsr & MASK_CFLAG;
-            arithmetic_shift_right(ctx.reg[dst], amount, carry, false);
-            set_carry(carry);
-            update_sign(ctx.reg[dst]);
-            update_zero(ctx.reg[dst]);
+            ArithmeticShiftRight(ctx.reg[dst], amount, carry, false);
+            SetCarryFlag(carry);
+            UpdateSignFlag(ctx.reg[dst]);
+            UpdateZeroFlag(ctx.reg[dst]);
             break;
         }
         case 0b0101: { // ADC
             int carry = (ctx.cpsr >> 29) & 1;
             u32 result = ctx.reg[dst] + ctx.reg[src] + carry;
             u64 result_long = (u64)(ctx.reg[dst]) + (u64)(ctx.reg[src]) + (u64)carry;
-            set_carry(result_long & 0x100000000);
-            update_overflow_add(result, ctx.reg[dst], ctx.reg[src]);
-            update_sign(result);
-            update_zero(result);
+            SetCarryFlag(result_long & 0x100000000);
+            UpdateOverflowFlagAdd(result, ctx.reg[dst], ctx.reg[src]);
+            UpdateSignFlag(result);
+            UpdateZeroFlag(result);
             ctx.reg[dst] = result;
             break;
         }
         case 0b0110: { // SBC
             int carry = (ctx.cpsr >> 29) & 1;
             u32 result = ctx.reg[dst] - ctx.reg[src] + carry - 1;
-            set_carry(ctx.reg[dst] >= (ctx.reg[src] + carry - 1));
-            update_overflow_sub(result, ctx.reg[dst], ctx.reg[src]);
-            update_sign(result);
-            update_zero(result);
+            SetCarryFlag(ctx.reg[dst] >= (ctx.reg[src] + carry - 1));
+            UpdateOverflowFlagSub(result, ctx.reg[dst], ctx.reg[src]);
+            UpdateSignFlag(result);
+            UpdateZeroFlag(result);
             ctx.reg[dst] = result;
             break;
         }
         case 0b0111: { // ROR
             u32 amount = ctx.reg[src];
             bool carry = ctx.cpsr & MASK_CFLAG;
-            rotate_right(ctx.reg[dst], amount, carry, false);
-            set_carry(carry);
-            update_sign(ctx.reg[dst]);
-            update_zero(ctx.reg[dst]);
+            RotateRight(ctx.reg[dst], amount, carry, false);
+            SetCarryFlag(carry);
+            UpdateSignFlag(ctx.reg[dst]);
+            UpdateZeroFlag(ctx.reg[dst]);
             break;
         }
         case 0b1000: { // TST
             u32 result = ctx.reg[dst] & ctx.reg[src];
-            update_sign(result);
-            update_zero(result);
+            UpdateSignFlag(result);
+            UpdateZeroFlag(result);
             break;
         }
         case 0b1001: { // NEG
             u32 result = 0 - ctx.reg[src];
-            set_carry(0 >= ctx.reg[src]);
-            update_overflow_sub(result, 0, ctx.reg[src]);
-            update_sign(result);
-            update_zero(result);
+            SetCarryFlag(0 >= ctx.reg[src]);
+            UpdateOverflowFlagSub(result, 0, ctx.reg[src]);
+            UpdateSignFlag(result);
+            UpdateZeroFlag(result);
             ctx.reg[dst] = result;
             break;
         }
         case 0b1010: { // CMP
             u32 result = ctx.reg[dst] - ctx.reg[src];
-            set_carry(ctx.reg[dst] >= ctx.reg[src]);
-            update_overflow_sub(result, ctx.reg[dst], ctx.reg[src]);
-            update_sign(result);
-            update_zero(result);
+            SetCarryFlag(ctx.reg[dst] >= ctx.reg[src]);
+            UpdateOverflowFlagSub(result, ctx.reg[dst], ctx.reg[src]);
+            UpdateSignFlag(result);
+            UpdateZeroFlag(result);
             break;
         }
         case 0b1011: { // CMN
             u32 result = ctx.reg[dst] + ctx.reg[src];
             u64 result_long = (u64)(ctx.reg[dst]) + (u64)(ctx.reg[src]);
-            set_carry(result_long & 0x100000000);
-            update_overflow_add(result, ctx.reg[dst], ctx.reg[src]);
-            update_sign(result);
-            update_zero(result);
+            SetCarryFlag(result_long & 0x100000000);
+            UpdateOverflowFlagAdd(result, ctx.reg[dst], ctx.reg[src]);
+            UpdateSignFlag(result);
+            UpdateZeroFlag(result);
             break;
         }
         case 0b1100: // ORR
             ctx.reg[dst] |= ctx.reg[src];
-            update_sign(ctx.reg[dst]);
-            update_zero(ctx.reg[dst]);
+            UpdateSignFlag(ctx.reg[dst]);
+            UpdateZeroFlag(ctx.reg[dst]);
             break;
         case 0b1101: // MUL
             // TODO: how to calc. the internal cycles?
             ctx.reg[dst] *= ctx.reg[src];
-            update_sign(ctx.reg[dst]);
-            update_zero(ctx.reg[dst]);
-            set_carry(false);
+            UpdateSignFlag(ctx.reg[dst]);
+            UpdateZeroFlag(ctx.reg[dst]);
+            SetCarryFlag(false);
             break;
         case 0b1110: // BIC
             ctx.reg[dst] &= ~(ctx.reg[src]);
-            update_sign(ctx.reg[dst]);
-            update_zero(ctx.reg[dst]);
+            UpdateSignFlag(ctx.reg[dst]);
+            UpdateZeroFlag(ctx.reg[dst]);
             break;
         case 0b1111: // MVN
             ctx.reg[dst] = ~(ctx.reg[src]);
-            update_sign(ctx.reg[dst]);
-            update_zero(ctx.reg[dst]);
+            UpdateSignFlag(ctx.reg[dst]);
+            UpdateZeroFlag(ctx.reg[dst]);
             break;
         }
     }
@@ -266,10 +266,10 @@ namespace GameBoyAdvance {
             break;
         case 1: { // CMP
             u32 result = ctx.reg[dst] - operand;
-            set_carry(ctx.reg[dst] >= operand);
-            update_overflow_sub(result, ctx.reg[dst], operand);
-            update_sign(result);
-            update_zero(result);
+            SetCarryFlag(ctx.reg[dst] >= operand);
+            UpdateOverflowFlagSub(result, ctx.reg[dst], operand);
+            UpdateSignFlag(result);
+            UpdateZeroFlag(result);
             perform_check = false;
             break;
         }
@@ -550,7 +550,7 @@ namespace GameBoyAdvance {
     template <int cond>
     void ARM::thumb_16(u16 instruction) {
         // THUMB.16 Conditional branch
-        if (check_condition(static_cast<Condition>(cond))) {
+        if (CheckCondition(static_cast<Condition>(cond))) {
             u32 signed_immediate = instruction & 0xFF;
 
             // sign-extend the immediate value if neccessary
@@ -574,7 +574,7 @@ namespace GameBoyAdvance {
             ctx.spsr[SPSR_SVC] = ctx.cpsr;
 
             // switch to SVC mode and disable interrupts
-            switch_mode(MODE_SVC);
+            SwitchMode(MODE_SVC);
             ctx.cpsr = (ctx.cpsr & ~MASK_THUMB) | MASK_IRQD;
 
             // jump to exception vector

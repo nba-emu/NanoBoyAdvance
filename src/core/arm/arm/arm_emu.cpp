@@ -64,13 +64,13 @@ namespace GameBoyAdvance {
                 amount = (instruction >> 7) & 0x1F;
             }
 
-            perform_shift(shift_type, op2, amount, carry, shift_immediate);
+            ApplyShift(shift_type, op2, amount, carry, shift_immediate);
         }
 
         if (reg_dst == 15) {
             if (set_flags) {
                 u32 spsr = *ctx.p_spsr;
-                switch_mode(static_cast<Mode>(spsr & MASK_MODE));
+                SwitchMode(static_cast<Mode>(spsr & MASK_MODE));
                 ctx.cpsr = spsr;
                 set_flags = false;
             }
@@ -83,9 +83,9 @@ namespace GameBoyAdvance {
             u32 result = op1 & op2;
 
             if (set_flags) {
-                update_sign(result);
-                update_zero(result);
-                set_carry(carry);
+                UpdateSignFlag(result);
+                UpdateZeroFlag(result);
+                SetCarryFlag(carry);
             }
 
             ctx.reg[reg_dst] = result;
@@ -96,9 +96,9 @@ namespace GameBoyAdvance {
             u32 result = op1 ^ op2;
 
             if (set_flags) {
-                update_sign(result);
-                update_zero(result);
-                set_carry(carry);
+                UpdateSignFlag(result);
+                UpdateZeroFlag(result);
+                SetCarryFlag(carry);
             }
 
             ctx.reg[reg_dst] = result;
@@ -109,10 +109,10 @@ namespace GameBoyAdvance {
             u32 result = op1 - op2;
 
             if (set_flags) {
-                set_carry(op1 >= op2);
-                update_overflow_sub(result, op1, op2);
-                update_sign(result);
-                update_zero(result);
+                SetCarryFlag(op1 >= op2);
+                UpdateOverflowFlagSub(result, op1, op2);
+                UpdateSignFlag(result);
+                UpdateZeroFlag(result);
             }
 
             ctx.reg[reg_dst] = result;
@@ -123,10 +123,10 @@ namespace GameBoyAdvance {
             u32 result = op2 - op1;
 
             if (set_flags) {
-                set_carry(op2 >= op1);
-                update_overflow_sub(result, op2, op1);
-                update_sign(result);
-                update_zero(result);
+                SetCarryFlag(op2 >= op1);
+                UpdateOverflowFlagSub(result, op2, op1);
+                UpdateSignFlag(result);
+                UpdateZeroFlag(result);
             }
 
             ctx.reg[reg_dst] = result;
@@ -139,10 +139,10 @@ namespace GameBoyAdvance {
             if (set_flags) {
                 u64 result_long = (u64)op1 + (u64)op2;
 
-                set_carry(result_long & 0x100000000);
-                update_overflow_add(result, op1, op2);
-                update_sign(result);
-                update_zero(result);
+                SetCarryFlag(result_long & 0x100000000);
+                UpdateOverflowFlagAdd(result, op1, op2);
+                UpdateSignFlag(result);
+                UpdateZeroFlag(result);
             }
 
             ctx.reg[reg_dst] = result;
@@ -156,10 +156,10 @@ namespace GameBoyAdvance {
             if (set_flags) {
                 u64 result_long = (u64)op1 + (u64)op2 + (u64)carry2;
 
-                set_carry(result_long & 0x100000000);
-                update_overflow_add(result, op1, op2);
-                update_sign(result);
-                update_zero(result);
+                SetCarryFlag(result_long & 0x100000000);
+                UpdateOverflowFlagAdd(result, op1, op2);
+                UpdateSignFlag(result);
+                UpdateZeroFlag(result);
             }
 
             ctx.reg[reg_dst] = result;
@@ -171,10 +171,10 @@ namespace GameBoyAdvance {
             u32 result = op1 - op2 + carry2 - 1;
 
             if (set_flags) {
-                set_carry(op1 >= (op2 + carry2 - 1));
-                update_overflow_sub(result, op1, op2);
-                update_sign(result);
-                update_zero(result);
+                SetCarryFlag(op1 >= (op2 + carry2 - 1));
+                UpdateOverflowFlagSub(result, op1, op2);
+                UpdateSignFlag(result);
+                UpdateZeroFlag(result);
             }
 
             ctx.reg[reg_dst] = result;
@@ -186,10 +186,10 @@ namespace GameBoyAdvance {
             u32 result = op2 - op1 + carry2 - 1;
 
             if (set_flags) {
-                set_carry(op2 >= (op1 + carry2 - 1));
-                update_overflow_sub(result, op2, op1);
-                update_sign(result);
-                update_zero(result);
+                SetCarryFlag(op2 >= (op1 + carry2 - 1));
+                UpdateOverflowFlagSub(result, op2, op1);
+                UpdateSignFlag(result);
+                UpdateZeroFlag(result);
             }
 
             ctx.reg[reg_dst] = result;
@@ -199,28 +199,28 @@ namespace GameBoyAdvance {
             // Bitwise AND flags only (TST)
             u32 result = op1 & op2;
 
-            update_sign(result);
-            update_zero(result);
-            set_carry(carry);
+            UpdateSignFlag(result);
+            UpdateZeroFlag(result);
+            SetCarryFlag(carry);
             break;
         }
         case 0b1001: {
             // Bitwise EXOR flags only (TEQ)
             u32 result = op1 ^ op2;
 
-            update_sign(result);
-            update_zero(result);
-            set_carry(carry);
+            UpdateSignFlag(result);
+            UpdateZeroFlag(result);
+            SetCarryFlag(carry);
             break;
         }
         case 0b1010: {
             // Subtraction flags only (CMP)
             u32 result = op1 - op2;
 
-            set_carry(op1 >= op2);
-            update_overflow_sub(result, op1, op2);
-            update_sign(result);
-            update_zero(result);
+            SetCarryFlag(op1 >= op2);
+            UpdateOverflowFlagSub(result, op1, op2);
+            UpdateSignFlag(result);
+            UpdateZeroFlag(result);
             break;
         }
         case 0b1011: {
@@ -228,10 +228,10 @@ namespace GameBoyAdvance {
             u32 result = op1 + op2;
             u64 result_long = (u64)op1 + (u64)op2;
 
-            set_carry(result_long & 0x100000000);
-            update_overflow_add(result, op1, op2);
-            update_sign(result);
-            update_zero(result);
+            SetCarryFlag(result_long & 0x100000000);
+            UpdateOverflowFlagAdd(result, op1, op2);
+            UpdateSignFlag(result);
+            UpdateZeroFlag(result);
             break;
         }
         case 0b1100: {
@@ -239,9 +239,9 @@ namespace GameBoyAdvance {
             u32 result = op1 | op2;
 
             if (set_flags) {
-                update_sign(result);
-                update_zero(result);
-                set_carry(carry);
+                UpdateSignFlag(result);
+                UpdateZeroFlag(result);
+                SetCarryFlag(carry);
             }
 
             ctx.reg[reg_dst] = result;
@@ -250,9 +250,9 @@ namespace GameBoyAdvance {
         case 0b1101: {
             // Move into register (MOV)
             if (set_flags) {
-                update_sign(op2);
-                update_zero(op2);
-                set_carry(carry);
+                UpdateSignFlag(op2);
+                UpdateZeroFlag(op2);
+                SetCarryFlag(carry);
             }
 
             ctx.reg[reg_dst] = op2;
@@ -263,9 +263,9 @@ namespace GameBoyAdvance {
             u32 result = op1 & ~op2;
 
             if (set_flags) {
-                update_sign(result);
-                update_zero(result);
-                set_carry(carry);
+                UpdateSignFlag(result);
+                UpdateZeroFlag(result);
+                SetCarryFlag(carry);
             }
 
             ctx.reg[reg_dst] = result;
@@ -276,9 +276,9 @@ namespace GameBoyAdvance {
             u32 not_op2 = ~op2;
 
             if (set_flags) {
-                update_sign(not_op2);
-                update_zero(not_op2);
-                set_carry(carry);
+                UpdateSignFlag(not_op2);
+                UpdateZeroFlag(not_op2);
+                SetCarryFlag(carry);
             }
 
             ctx.reg[reg_dst] = not_op2;
@@ -313,7 +313,7 @@ namespace GameBoyAdvance {
             // write to cpsr or spsr
             if (!use_spsr) {
                 // todo: check that mode is affected?
-                switch_mode(static_cast<Mode>(value & MASK_MODE));
+                SwitchMode(static_cast<Mode>(value & MASK_MODE));
                 ctx.cpsr = (ctx.cpsr & ~mask) | value;
             } else {
                 *ctx.p_spsr = (*ctx.p_spsr & ~mask) | value;
@@ -340,8 +340,8 @@ namespace GameBoyAdvance {
         }
 
         if (set_flags) {
-            update_sign(result);
-            update_zero(result);
+            UpdateSignFlag(result);
+            UpdateZeroFlag(result);
         }
 
         ctx.reg[dst] = result;
@@ -386,8 +386,8 @@ namespace GameBoyAdvance {
         ctx.reg[dst_hi] = result_hi;
 
         if (set_flags) {
-            update_sign(result_hi);
-            update_zero(result);
+            UpdateSignFlag(result_hi);
+            UpdateZeroFlag(result);
         }
     }
 
@@ -501,7 +501,7 @@ namespace GameBoyAdvance {
         // in that case W-bit indicates wether user-mode register access should be enforced.
         if (!pre_indexed && write_back) {
             old_mode = static_cast<Mode>(ctx.cpsr & MASK_MODE);
-            switch_mode(MODE_USR);
+            SwitchMode(MODE_USR);
         }
 
         // get address offset.
@@ -513,7 +513,7 @@ namespace GameBoyAdvance {
             u32 amount = (instruction >> 7) & 0x1F;
 
             off = ctx.reg[instruction & 0xF];
-            perform_shift(shift, off, amount, carry, true);
+            ApplyShift(shift, off, amount, carry, true);
         }
 
         if (pre_indexed) {
@@ -549,7 +549,7 @@ namespace GameBoyAdvance {
 
                 // if user-mode was enforced, return to previous mode.
                 if (write_back) {
-                    switch_mode(old_mode);
+                    SwitchMode(old_mode);
                 }
             }
             else if (write_back)
@@ -565,7 +565,7 @@ namespace GameBoyAdvance {
         ctx.spsr[SPSR_SVC] = ctx.cpsr;
 
         // switch to UND mode and disable interrupts
-        switch_mode(MODE_UND);
+        SwitchMode(MODE_UND);
         ctx.cpsr |= MASK_IRQD;
 
         // jump to exception vector
@@ -601,7 +601,7 @@ namespace GameBoyAdvance {
 
         if (user_mode && (!load || !transfer_r15)) {
             old_mode = static_cast<Mode>(ctx.cpsr & MASK_MODE);
-            switch_mode(MODE_USR);
+            SwitchMode(MODE_USR);
             mode_switched = true;
         }
 
@@ -646,7 +646,7 @@ namespace GameBoyAdvance {
                 if (i == 15) {
                     if (user_mode) {
                         u32 spsr = *ctx.p_spsr;
-                        switch_mode(static_cast<Mode>(spsr & MASK_MODE));
+                        SwitchMode(static_cast<Mode>(spsr & MASK_MODE));
                         ctx.cpsr = spsr;
                     }
                     ctx.pipe.do_flush = true;
@@ -669,7 +669,7 @@ namespace GameBoyAdvance {
         }
 
         if (mode_switched) {
-            switch_mode(old_mode);
+            SwitchMode(old_mode);
         }
     }
 
@@ -698,7 +698,7 @@ namespace GameBoyAdvance {
             ctx.spsr[SPSR_SVC] = ctx.cpsr;
 
             // switch to SVC mode and disable interrupts
-            switch_mode(MODE_SVC);
+            SwitchMode(MODE_SVC);
             ctx.cpsr |= MASK_IRQD;
 
             // jump to exception vector

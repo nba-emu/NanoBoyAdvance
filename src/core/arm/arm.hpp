@@ -68,9 +68,9 @@ namespace GameBoyAdvance {
         #include "memory.hpp"
 
     private:
-        static Bank mode_to_bank(Mode mode);
+        static Bank ModeToBank(Mode mode);
 
-        void switch_mode(Mode new_mode);
+        void SwitchMode(Mode new_mode);
 
         // conditional helpers
         #include "flags.hpp"
