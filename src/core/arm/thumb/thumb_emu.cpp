@@ -19,7 +19,6 @@
 
 #include "../arm.hpp"
 #include "util/logger.hpp"
-#define ARMIGO_INCLUDE
 
 using namespace Util;
 

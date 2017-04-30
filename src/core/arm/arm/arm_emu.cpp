@@ -19,7 +19,6 @@
 
 #include "../arm.hpp"
 #include "util/logger.hpp"
-#define ARMIGO_INCLUDE
 
 using namespace Util;
 
@@ -41,7 +40,7 @@ namespace GameBoyAdvance {
             int amount = ((instruction >> 8) & 0xF) << 1;
 
             if (amount != 0) {
-                carry = (imm >> (amount -1)) & 1;
+                carry = (imm >> (amount - 1)) & 1;
                 op2 = (imm >> amount) | (imm << (32 - amount));
             } else {
                 op2 = imm;

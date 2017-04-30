@@ -17,7 +17,7 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-inline void LogicalShiftLeft(u32& operand, u32 amount, bool& carry) {
+static inline void LogicalShiftLeft(u32& operand, u32 amount, bool& carry) {
     if (amount == 0) {
         return;
     }
@@ -28,7 +28,7 @@ inline void LogicalShiftLeft(u32& operand, u32 amount, bool& carry) {
     }
 }
 
-inline void LogicalShiftRight(u32& operand, u32 amount, bool& carry, bool immediate) {
+static inline void LogicalShiftRight(u32& operand, u32 amount, bool& carry, bool immediate) {
     // LSR #0 equals to LSR #32
     amount = immediate & (amount == 0) ? 32 : amount;
     
@@ -38,7 +38,7 @@ inline void LogicalShiftRight(u32& operand, u32 amount, bool& carry, bool immedi
     }
 }
 
-inline void ArithmeticShiftRight(u32& operand, u32 amount, bool& carry, bool immediate) {
+static inline void ArithmeticShiftRight(u32& operand, u32 amount, bool& carry, bool immediate) {
     u32 sign_bit = operand & 0x80000000;
 
     // ASR #0 equals to ASR #32
@@ -50,7 +50,7 @@ inline void ArithmeticShiftRight(u32& operand, u32 amount, bool& carry, bool imm
     }
 }
 
-inline void RotateRight(u32& operand, u32 amount, bool& carry, bool immediate) {
+static inline void RotateRight(u32& operand, u32 amount, bool& carry, bool immediate) {
     // ROR #0 equals to RRX #1
     if (amount != 0 || !immediate) {
         for (u32 i = 1; i <= amount; i++) {
@@ -67,7 +67,7 @@ inline void RotateRight(u32& operand, u32 amount, bool& carry, bool immediate) {
     }
 }
 
-inline void ApplyShift(int shift, u32& operand, u32 amount, bool& carry, bool immediate) {
+static inline void ApplyShift(int shift, u32& operand, u32 amount, bool& carry, bool immediate) {
     switch (shift) {
     case 0:
         LogicalShiftLeft(operand, amount, carry);
