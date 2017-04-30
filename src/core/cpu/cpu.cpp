@@ -57,7 +57,7 @@ namespace GameBoyAdvance {
     }
 
     void CPU::Reset() {
-        auto ctx = GetContext();
+        auto& ctx = GetContext();
         
         ARM::Reset();
 
