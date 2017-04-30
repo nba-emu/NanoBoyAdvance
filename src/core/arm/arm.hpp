@@ -47,10 +47,6 @@ namespace GameBoyAdvance {
         }
 
     protected:
-        
-        ARMContext ctx;
-        
-        bool fake_swi;
 
         // memory bus methods
         virtual u8  bus_read_byte(u32 address)  { return 0; }
@@ -61,13 +57,17 @@ namespace GameBoyAdvance {
         virtual void bus_write_word (u32 address, u32 value) {}
 
         // swi #nn HLE-handler
-        virtual void software_interrupt(int number) {}
+        virtual void SoftwareInterrupt(int number) {}
 
         // memory access helpers
         #include "memory.hpp"
 
     private:
 
+        bool fake_swi;
+        
+        ARMContext ctx;
+        
         void SwitchMode(Mode new_mode);
 
         bool CheckCondition(Condition condition);

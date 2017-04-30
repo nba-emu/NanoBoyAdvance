@@ -57,6 +57,8 @@ namespace GameBoyAdvance {
     }
 
     void CPU::Reset() {
+        auto ctx = GetContext();
+        
         ARM::Reset();
 
         // reset PPU und APU state

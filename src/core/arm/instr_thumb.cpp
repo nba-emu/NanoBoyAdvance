@@ -581,7 +581,7 @@ namespace GameBoyAdvance {
             ctx.r15 = EXCPT_SWI;
             ctx.pipe.do_flush = true;
         } else {
-            software_interrupt(call_number);
+            SoftwareInterrupt(call_number);
         }
     }
 
