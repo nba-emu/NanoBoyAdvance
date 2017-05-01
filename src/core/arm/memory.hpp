@@ -55,7 +55,7 @@ inline u32 ReadHWord(u32 address, int flags) {
         }
     }
     
-    return 0xDEADBEEF; //helpful debug thing
+    return bus_read_hword(address & ~1);
 }
 
 inline u32 ReadWord(u32 address, int flags) {

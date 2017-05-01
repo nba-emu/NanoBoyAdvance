@@ -64,7 +64,7 @@ namespace GameBoyAdvance {
             if (words) {
                 WriteWord(dma.internal.dst_addr, ReadWord(dma.internal.src_addr, MEM_NONE), MEM_NONE);
             } else {
-                WriteHWord(dma.internal.dst_addr, ReadHWord(dma.internal.src_addr, MEM_ROTATE), MEM_NONE);
+                WriteHWord(dma.internal.dst_addr, ReadHWord(dma.internal.src_addr, MEM_NONE), MEM_NONE);
             }
 
             if (dma.dst_cntl == DMA_INCREMENT || dma.dst_cntl == DMA_RELOAD) {
