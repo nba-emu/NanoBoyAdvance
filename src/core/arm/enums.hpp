@@ -94,4 +94,18 @@ namespace GameBoyAdvance {
         EXCPT_INTERRUPT      = 0x18,
         EXCPT_FAST_INTERRUPT = 0x1C
     };
+    
+    enum MemoryFlags {
+        MEM_NONE   = 0,
+        
+        // Use for debug/internal accesses
+        MEM_DEBUG  = (1 << 0),
+        
+        // (Non-)Sequential Accesses
+        MEM_SEQ    = (1 << 1),
+        MEM_NONSEQ = (1 << 2),
+      
+        MEM_SIGNED = (1 << 3),
+        MEM_ROTATE = (1 << 4)
+    };
 }

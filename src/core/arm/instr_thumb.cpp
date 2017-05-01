@@ -321,7 +321,7 @@ namespace GameBoyAdvance {
             ctx.reg[dst] = read_word_rotated(address);
             break;
         case 0b11: // LDRB
-            ctx.reg[dst] = bus_read_byte(address);
+            ctx.reg[dst] = ReadByte(address, MEM_NONE);
             break;
         }
     }
@@ -338,17 +338,13 @@ namespace GameBoyAdvance {
             write_hword(address, ctx.reg[dst]);
             break;
         case 0b01: // LDSB
-            ctx.reg[dst] = bus_read_byte(address);
-
-            if (ctx.reg[dst] & 0x80) {
-                ctx.reg[dst] |= 0xFFFFFF00;
-            }
+            ctx.reg[dst] = ReadByte(address, MEM_SIGNED);
             break;
         case 0b10: // LDRH
-            ctx.reg[dst] = read_hword(address);
+            ctx.reg[dst] = ReadHWord(address, MEM_ROTATE);
             break;
         case 0b11: // LDSH
-            ctx.reg[dst] = read_hword_signed(address);
+            ctx.reg[dst] = ReadHWord(address, MEM_SIGNED);
             break;
         }
     }
@@ -377,7 +373,7 @@ namespace GameBoyAdvance {
         }
         case 0b11: { // LDRB
             u32 address = ctx.reg[base] + imm;
-            ctx.reg[dst] = bus_read_byte(address);
+            ctx.reg[dst] = ReadByte(address, MEM_NONE);
             break;
         }
         }
@@ -566,7 +562,7 @@ namespace GameBoyAdvance {
 
     void ARM::thumb_17(u16 instruction) {
         // THUMB.17 Software Interrupt
-        u8 call_number = bus_read_byte(ctx.r15 - 4);
+        u8 call_number = ReadByte(ctx.r15 - 4, MEM_NONE);
         
         if (!fake_swi) {
             // save return address and program status

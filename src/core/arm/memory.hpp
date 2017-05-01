@@ -17,6 +17,47 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
+inline u32 ReadByte(u32 address, int flags) {
+    u32 value = bus_read_byte(address);
+    
+    if ((flags & MEM_SIGNED) && (value & 0x80)) {
+        return value | 0xFFFFFF00;
+    }
+    
+    return value;
+}
+
+inline u32 ReadHWord(u32 address, int flags) {
+    
+    u32 value;
+    
+    if (flags & MEM_ROTATE) {
+        if (address & 1) {
+            value = bus_read_hword(address & ~1);
+            return (value >> 8) | (value << 24);
+        }
+        return bus_read_hword(address);
+    }
+    
+    if (flags & MEM_SIGNED) {
+        if (address & 1) {
+            value = bus_read_byte(address);
+            if (value & 0x80) {
+                return value | 0xFFFFFF00;
+            }
+            return value;
+        } else {
+            value = bus_read_hword(address);
+            if (value & 0x8000) {
+                return value | 0xFFFF0000;
+            }
+            return value;
+        }
+    }
+    
+    return 0xDEADBEEF; //helpful debug thing
+}
+
 inline u32 read_hword(u32 offset) {
     if (offset & 1) {
         u32 value = bus_read_hword(offset & ~1);

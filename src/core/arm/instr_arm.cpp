@@ -399,7 +399,7 @@ namespace GameBoyAdvance {
         int base = (instruction >> 16) & 0xF;
 
         if (swap_byte) {
-            tmp = bus_read_byte(ctx.reg[base]);
+            tmp = ReadByte(ctx.reg[base], MEM_NONE);
             bus_write_byte(ctx.reg[base], (u8)ctx.reg[src]);
         } else {
             tmp = read_word_rotated(ctx.reg[base]);
@@ -457,26 +457,12 @@ namespace GameBoyAdvance {
             break;
         case 2: {
             // load signed byte
-            u32 value = bus_read_byte(addr);
-
-            // sign-extends the byte to 32-bit.
-            if (value & 0x80) {
-                value |= 0xFFFFFF00;
-            }
-
-            ctx.reg[dst] = value;
+            ctx.reg[dst] = ReadByte(addr, MEM_SIGNED);
             break;
         }
         case 3: {
             // load signed halfword
-            u32 value = read_hword(addr);
-
-            // sign-extends the halfword to 32-bit.
-            if (value & 0x8000) {
-                value |= 0xFFFF0000;
-            } 
-
-            ctx.reg[dst] = value;
+            ctx.reg[dst] = read_hword_signed(addr);
             break;
         }
         }
@@ -521,8 +507,8 @@ namespace GameBoyAdvance {
         }
 
         if (load) {
-            ctx.reg[dst] = byte ? bus_read_byte(addr) : read_word_rotated(addr);
-
+            ctx.reg[dst] = byte ? ReadByte(addr, MEM_NONE) : read_word_rotated(addr);
+            
             // writes to r15 require a pipeline flush.
             if (dst == 15) {
                 ctx.pipe.do_flush = true;
@@ -690,7 +676,7 @@ namespace GameBoyAdvance {
     }
 
     void ARM::arm_swi(u32 instruction) {
-        u32 call_number = bus_read_byte(ctx.r15 - 6);
+        u32 call_number = ReadByte(ctx.r15 - 6, MEM_NONE);
 
         if (!fake_swi) {
             // save return address and program status
