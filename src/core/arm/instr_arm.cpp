@@ -402,7 +402,7 @@ namespace GameBoyAdvance {
             tmp = ReadByte(ctx.reg[base], MEM_NONE);
             bus_write_byte(ctx.reg[base], (u8)ctx.reg[src]);
         } else {
-            tmp = read_word_rotated(ctx.reg[base]);
+            tmp = ReadWord(ctx.reg[base], MEM_ROTATE);
             write_word(ctx.reg[base], ctx.reg[src]);
         }
 
@@ -507,7 +507,7 @@ namespace GameBoyAdvance {
         }
 
         if (load) {
-            ctx.reg[dst] = byte ? ReadByte(addr, MEM_NONE) : read_word_rotated(addr);
+            ctx.reg[dst] = byte ? ReadByte(addr, MEM_NONE) : ReadWord(addr, MEM_ROTATE);
             
             // writes to r15 require a pipeline flush.
             if (dst == 15) {
@@ -576,7 +576,7 @@ namespace GameBoyAdvance {
         // hardware corner case. not sure if emulated correctly.
         if (register_list == 0) {
             if (load) {
-                ctx.r15 = read_word(ctx.reg[base]);
+                ctx.r15 = ReadWord(ctx.reg[base], MEM_NONE);
                 ctx.pipe.do_flush = true;
             } else {
                 write_word(ctx.reg[base], ctx.r15);
@@ -627,7 +627,7 @@ namespace GameBoyAdvance {
                     write_back = false;
                 }
 
-                ctx.reg[i] = read_word(addr);
+                ctx.reg[i] = ReadWord(addr, MEM_NONE);
 
                 if (i == 15) {
                     if (user_mode) {

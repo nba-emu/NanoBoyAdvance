@@ -58,45 +58,15 @@ inline u32 ReadHWord(u32 address, int flags) {
     return 0xDEADBEEF; //helpful debug thing
 }
 
-inline u32 read_hword(u32 offset) {
-    if (offset & 1) {
-        u32 value = bus_read_hword(offset & ~1);
-
-        return (value >> 8) | (value << 24);
+inline u32 ReadWord(u32 address, int flags) {
+    u32 value = bus_read_word(address & ~3);
+    
+    if (flags & MEM_ROTATE) {
+        int amount = (address & 3) << 3;
+        return (value >> amount) | (value << (32 - amount));
     }
-
-    return bus_read_hword(offset);
-}
-
-inline u32 read_hword_signed(u32 offset) {
-    u32 value = 0;
-
-    if (offset & 1) {
-        value = bus_read_byte(offset);
-
-        if (value & 0x80) {
-            value |= 0xFFFFFF00;
-        }
-    } else {
-        value = bus_read_hword(offset);
-
-        if (value & 0x8000) {
-            value |= 0xFFFF0000;
-        }
-    }
-
+    
     return value;
-}
-
-inline u32 read_word(u32 offset) {
-    return bus_read_word(offset & ~3);
-}
-
-inline u32 read_word_rotated(u32 offset) {
-    u32 value = read_word(offset);
-    int amount = (offset & 3) * 8;
-
-    return amount == 0 ? value : ((value >> amount) | (value << (32 - amount)));
 }
 
 inline void write_hword(u32 offset, u16 value) {
@@ -109,12 +79,12 @@ inline void write_word(u32 offset, u32 value) {
 
 inline void refill_pipeline() {
     if (ctx.cpsr & MASK_THUMB) {
-        ctx.pipe.opcode[0] = read_hword(ctx.r15);
-        ctx.pipe.opcode[1] = read_hword(ctx.r15 + 2);
+        ctx.pipe.opcode[0] = bus_read_hword(ctx.r15);
+        ctx.pipe.opcode[1] = bus_read_hword(ctx.r15 + 2);
         ctx.r15 += 4;
     } else {
-        ctx.pipe.opcode[0] = read_word(ctx.r15);
-        ctx.pipe.opcode[1] = read_word(ctx.r15 + 4);
+        ctx.pipe.opcode[0] = bus_read_word(ctx.r15);
+        ctx.pipe.opcode[1] = bus_read_word(ctx.r15 + 4);
         ctx.r15 += 8;
     }
     

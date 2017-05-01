@@ -45,9 +45,9 @@ namespace GameBoyAdvance {
             ctx.r15 &= ~1;
 
             if (pipe.index == 0) {
-                pipe.opcode[2] = read_hword(ctx.r15);
+                pipe.opcode[2] = bus_read_hword(ctx.r15);
             } else {
-                pipe.opcode[pipe.index - 1] = read_hword(ctx.r15);
+                pipe.opcode[pipe.index - 1] = bus_read_hword(ctx.r15);
             }
 
             thumb_execute(pipe.opcode[pipe.index]);
@@ -55,9 +55,9 @@ namespace GameBoyAdvance {
             ctx.r15 &= ~3;
 
             if (pipe.index == 0) {
-                pipe.opcode[2] = read_word(ctx.r15);
+                pipe.opcode[2] = bus_read_word(ctx.r15);
             } else {
-                pipe.opcode[pipe.index - 1] = read_word(ctx.r15);
+                pipe.opcode[pipe.index - 1] = bus_read_word(ctx.r15);
             }
 
             arm_execute(pipe.opcode[pipe.index]);
