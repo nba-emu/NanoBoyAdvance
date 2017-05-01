@@ -443,7 +443,7 @@ namespace GameBoyAdvance {
         case 1:
             // load/store halfword
             if (load) {
-                ctx.reg[dst] = read_hword(addr);
+                ctx.reg[dst] = ReadHWord(addr, MEM_ROTATE);
             } else {
                 u32 value = ctx.reg[dst];
 
@@ -462,7 +462,7 @@ namespace GameBoyAdvance {
         }
         case 3: {
             // load signed halfword
-            ctx.reg[dst] = read_hword_signed(addr);
+            ctx.reg[dst] = ReadHWord(addr, MEM_SIGNED);
             break;
         }
         }

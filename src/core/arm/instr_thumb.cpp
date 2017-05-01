@@ -387,7 +387,7 @@ namespace GameBoyAdvance {
         u32 address = ctx.reg[base] + (imm << 1);
 
         if (load) {
-            ctx.reg[dst] = read_hword(address);
+            ctx.reg[dst] = ReadHWord(address, MEM_ROTATE);
         } else {
             write_hword(address, ctx.reg[dst]);
         }
