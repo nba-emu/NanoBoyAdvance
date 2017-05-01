@@ -96,14 +96,31 @@ namespace GameBoyAdvance {
                 enable    = value & 128;
 
                 if (!enable_previous && enable) {
-                    // TODO(accuracy): length, src/dst_addr must be masked.
+                    // TODO(accuracy): length must be masked.
                     internal.length = length;
                     internal.dst_addr = dst_addr;
                     internal.src_addr = src_addr;
+                    
+                    // mask internal address registers
+                    internal.dst_addr &= (id != 3) ? 0x07FFFFFF : 0x0FFFFFFF;
+                    internal.src_addr &= (id == 0) ? 0x07FFFFFF : 0x0FFFFFFF;
 
+                    // mask length
+                    if (id == 3) {
+                        internal.length &= 0xFFFF;
+                        if (internal.length == 0) {
+                            internal.length = 0x10000;
+                        }
+                    } else {
+                        internal.length &= 0x3FFF;
+                        if (internal.length == 0) {
+                            internal.length = 0x4000;
+                        }
+                    }
+                    
                     if (time == DMA_IMMEDIATE) {
                         // !!hacked!! sad flerovium :(
-                        *dma_active = true;
+                        *dma_active  = true;
                         *current_dma = id;
                     }
                 }

@@ -38,7 +38,7 @@ struct IO {
         DMASize size;
 
         struct Internal {
-            u16 length;
+            u32 length;
             u32 dst_addr;
             u32 src_addr;
         } internal;
