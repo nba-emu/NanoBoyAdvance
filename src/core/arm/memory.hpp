@@ -69,12 +69,16 @@ inline u32 ReadWord(u32 address, int flags) {
     return value;
 }
 
-inline void write_hword(u32 offset, u16 value) {
-    bus_write_hword(offset & ~1, value);
+inline void WriteByte(u32 address, u8 value, int flags) {
+    bus_write_byte(address, value);
 }
 
-inline void write_word(u32 offset, u32 value) {
-    bus_write_word(offset & ~3, value);
+inline void WriteHWord(u32 address, u16 value, int flags) {
+    bus_write_hword(address & ~1, value);
+}
+
+inline void WriteWord(u32 address, u32 value, int flags) {
+    bus_write_word(address & ~3, value);
 }
 
 inline void refill_pipeline() {

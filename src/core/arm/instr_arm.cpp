@@ -400,10 +400,10 @@ namespace GameBoyAdvance {
 
         if (swap_byte) {
             tmp = ReadByte(ctx.reg[base], MEM_NONE);
-            bus_write_byte(ctx.reg[base], (u8)ctx.reg[src]);
+            WriteByte(ctx.reg[base], (u8)ctx.reg[src], MEM_NONE);
         } else {
             tmp = ReadWord(ctx.reg[base], MEM_ROTATE);
-            write_word(ctx.reg[base], ctx.reg[src]);
+            WriteWord(ctx.reg[base], ctx.reg[src], MEM_NONE);
         }
 
         ctx.reg[dst] = tmp;
@@ -452,7 +452,7 @@ namespace GameBoyAdvance {
                     value += 4;
                 }
 
-                write_hword(addr, value);
+                WriteHWord(addr, value, MEM_NONE);
             }
             break;
         case 2: {
@@ -522,9 +522,9 @@ namespace GameBoyAdvance {
             }
 
             if (byte) {
-                bus_write_byte(addr, (u8)value);
+                WriteByte(addr, (u8)value, MEM_NONE);
             } else {
-                write_word(addr, value);
+                WriteWord(addr, value, MEM_NONE);
             }
         }
 
@@ -579,7 +579,7 @@ namespace GameBoyAdvance {
                 ctx.r15 = ReadWord(ctx.reg[base], MEM_NONE);
                 ctx.pipe.do_flush = true;
             } else {
-                write_word(ctx.reg[base], ctx.r15);
+                WriteWord(ctx.reg[base], ctx.r15, MEM_NONE);
             }
             ctx.reg[base] += base_increment ? 64 : -64;
             return;
@@ -639,9 +639,9 @@ namespace GameBoyAdvance {
                 }
             } else {
                 if (i == first_register && i == base) {
-                    write_word(addr, addr_old);
+                    WriteWord(addr, addr_old, MEM_NONE);
                 } else {
-                    write_word(addr, ctx.reg[i]);
+                    WriteWord(addr, ctx.reg[i], MEM_NONE);
                 }
             }
 
