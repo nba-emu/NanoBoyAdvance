@@ -17,7 +17,7 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-inline u32 ReadByte(u32 address, int flags) {
+inline u32 read_byte(u32 address, int flags) {
     u32 value = bus_read_byte(address);
     
     if ((flags & MEM_SIGNED) && (value & 0x80)) {
@@ -27,7 +27,7 @@ inline u32 ReadByte(u32 address, int flags) {
     return value;
 }
 
-inline u32 ReadHWord(u32 address, int flags) {
+inline u32 read_hword(u32 address, int flags) {
     
     u32 value;
     
@@ -58,7 +58,7 @@ inline u32 ReadHWord(u32 address, int flags) {
     return bus_read_hword(address & ~1);
 }
 
-inline u32 ReadWord(u32 address, int flags) {
+inline u32 read_word(u32 address, int flags) {
     u32 value = bus_read_word(address & ~3);
     
     if (flags & MEM_ROTATE) {
@@ -69,15 +69,15 @@ inline u32 ReadWord(u32 address, int flags) {
     return value;
 }
 
-inline void WriteByte(u32 address, u8 value, int flags) {
+inline void write_byte(u32 address, u8 value, int flags) {
     bus_write_byte(address, value);
 }
 
-inline void WriteHWord(u32 address, u16 value, int flags) {
+inline void write_hword(u32 address, u16 value, int flags) {
     bus_write_hword(address & ~1, value);
 }
 
-inline void WriteWord(u32 address, u32 value, int flags) {
+inline void write_word(u32 address, u32 value, int flags) {
     bus_write_word(address & ~3, value);
 }
 

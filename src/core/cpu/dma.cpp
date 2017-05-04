@@ -62,9 +62,9 @@ namespace GameBoyAdvance {
             }
 
             if (words) {
-                WriteWord(dma.internal.dst_addr, ReadWord(dma.internal.src_addr, MEM_NONE), MEM_NONE);
+                write_word(dma.internal.dst_addr, read_word(dma.internal.src_addr, MEM_NONE), MEM_NONE);
             } else {
-                WriteHWord(dma.internal.dst_addr, ReadHWord(dma.internal.src_addr, MEM_NONE), MEM_NONE);
+                write_hword(dma.internal.dst_addr, read_hword(dma.internal.src_addr, MEM_NONE), MEM_NONE);
             }
 
             if (dma.dst_cntl == DMA_INCREMENT || dma.dst_cntl == DMA_RELOAD) {
@@ -110,9 +110,9 @@ namespace GameBoyAdvance {
         auto& dma = m_io.dma[dma_id];
         
         for (int i = 0; i < 4; i++) {
-            u32 value = ReadWord(dma.internal.src_addr & ~3, MEM_NONE);
+            u32 value = read_word(dma.internal.src_addr & ~3, MEM_NONE);
             
-            WriteWord(dma.internal.dst_addr & ~3, value, MEM_NONE);
+            write_word(dma.internal.dst_addr & ~3, value, MEM_NONE);
             
             dma.internal.src_addr += 4;
         }
