@@ -21,7 +21,7 @@
 
 #ifdef CPU_INCLUDE
 
-u8 bus_read_byte(u32 address) final {
+u8 bus_read_byte(u32 address, int flags) final {
     register int page = (address >> 24) & 15;
     register read_func func = s_read_table[page];
 
@@ -30,7 +30,7 @@ u8 bus_read_byte(u32 address) final {
     return (this->*func)(address);
 }
 
-u16 bus_read_hword(u32 address) final {
+u16 bus_read_hword(u32 address, int flags) final {
     register int page = (address >> 24) & 15;
     register read_func func = s_read_table[page];
 
@@ -39,7 +39,7 @@ u16 bus_read_hword(u32 address) final {
     return (this->*func)(address) | ((this->*func)(address + 1) << 8);
 }
 
-u32 bus_read_word(u32 address) final {
+u32 bus_read_word(u32 address, int flags) final {
     register int page = (address >> 24) & 15;
     register read_func func = s_read_table[page];
 
@@ -51,7 +51,7 @@ u32 bus_read_word(u32 address) final {
            ((this->*func)(address + 3) << 24);
 }
 
-void bus_write_byte(u32 address, u8 value) final {
+void bus_write_byte(u32 address, u8 value, int flags) final {
     register int page = (address >> 24) & 15;
     register write_func func = s_write_table[page];
 
@@ -67,7 +67,7 @@ void bus_write_byte(u32 address, u8 value) final {
     (this->*func)(address, value);
 }
 
-void bus_write_hword(u32 address, u16 value) final {
+void bus_write_hword(u32 address, u16 value, int flags) final {
     register int page = (address >> 24) & 15;
     register write_func func = s_write_table[page];
 
@@ -77,7 +77,7 @@ void bus_write_hword(u32 address, u16 value) final {
     (this->*func)(address + 1, value >> 8);
 }
 
-void bus_write_word(u32 address, u32 value) final {
+void bus_write_word(u32 address, u32 value, int flags) final {
     register int page = (address >> 24) & 15;
     register write_func func = s_write_table[page];
 

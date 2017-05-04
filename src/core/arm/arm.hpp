@@ -26,36 +26,47 @@ namespace GameBoyAdvance {
     class ARM {
     public:
         ARM();
+        
+        // Reset ARM state
         virtual void reset();
         
+        // Execute one instruction
         void step();
+        
+        // Trigger IRQ-handler
         void signal_interrupt();
         
+        // Get ARM context (state)
         auto get_context() -> ARMContext& {
             return ctx;
         }
         
+        // Set ARM context (state)
         void set_context(ARMContext& ctx) {
             this->ctx = ctx;
         }
         
+        // Is HLE-emulation enabled?
         bool get_fake_swi() const { 
             return fake_swi; 
         }
         
+        // Set HLE-emulation flag
         void set_fake_swi(bool fake_swi) { 
             this->fake_swi = fake_swi; 
         }
 
     protected:
 
-        // memory bus methods
-        virtual u8  bus_read_byte(u32 address)  { return 0; }
-        virtual u16 bus_read_hword(u32 address) { return 0; }
-        virtual u32 bus_read_word(u32 address)  { return 0; }
-        virtual void bus_write_byte(u32 address, u8 value) {}
-        virtual void bus_write_hword(u32 address, u16 value) {}
-        virtual void bus_write_word (u32 address, u32 value) {}
+        // System Read Methods
+        virtual u8  bus_read_byte (u32 address, int flags) { return 0; }
+        virtual u16 bus_read_hword(u32 address, int flags) { return 0; }
+        virtual u32 bus_read_word (u32 address, int flags) { return 0; }
+
+        // System Write Methods
+        virtual void bus_write_byte (u32 address, u8 value,  int flags) {}
+        virtual void bus_write_hword(u32 address, u16 value, int flags) {}
+        virtual void bus_write_word (u32 address, u32 value, int flags) {}
 
         // swi #nn HLE-handler
         virtual void software_interrupt(int number) {}
@@ -71,6 +82,7 @@ namespace GameBoyAdvance {
         
         void switch_mode(Mode new_mode);
 
+        // CPU flag helpers
         bool check_condition(Condition condition);
         void update_sign_flag(u32 result);
         void update_zero_flag(u64 result);
@@ -78,6 +90,7 @@ namespace GameBoyAdvance {
         void update_overflow_add(u32 result, u32 operand1, u32 operand2);
         void update_overflow_sub(u32 result, u32 operand1, u32 operand2);
 
+        // Barrel Shifter Methods
         static void shift_lsl(u32& operand, u32 amount, bool& carry);
         static void shift_lsr(u32& operand, u32 amount, bool& carry, bool immediate);
         static void shift_asr(u32& operand, u32 amount, bool& carry, bool immediate);
