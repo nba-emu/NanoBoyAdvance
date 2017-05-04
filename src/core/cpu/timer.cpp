@@ -91,7 +91,7 @@ namespace GameBoyAdvance {
                 
                 for (int j = 0; j < times; j++) {
                     // transfers sample from FIFO to APU chip
-                    m_apu.fifo_get_sample(i);
+                    m_apu.fifo_next(i);
 
                     // tries to trigger DMA transfer if FIFO requests more data
                     if (fifo.requires_data()) {

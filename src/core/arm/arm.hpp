@@ -84,9 +84,6 @@ namespace GameBoyAdvance {
         // swi #nn HLE-handler
         virtual void software_interrupt(int number) {}
 
-        // memory access helpers
-        #include "memory.hpp"
-
     private:
 
         bool fake_swi;

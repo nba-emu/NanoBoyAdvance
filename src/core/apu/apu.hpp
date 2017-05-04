@@ -22,8 +22,6 @@
 #include "fifo.hpp"
 #include "../config.hpp"
 #include "util/integer.hpp"
-#include <vector>
-#include <mutex>
 
 #define APU_INCLUDE
 
@@ -44,8 +42,6 @@ namespace GameBoyAdvance {
         static constexpr float s_psg_volume[] = { 0.25, 0.5, 1, 1 };
         static constexpr float s_dma_volume[] = { 2, 4 };
         static constexpr float s_wav_volume[] = { 0, 1, 0.5, 0.25 };
-        
-        std::mutex m_mutex;
         
         // stores latched FIFO samples
         s8 m_fifo_sample[2];
@@ -70,22 +66,30 @@ namespace GameBoyAdvance {
             return m_io;
         }
         
+        // Convert GBA frequency to real freq.
         static auto convert_frequency(int freq) -> float;
         
+        // Sound Generators
         auto generate_quad(int id) -> float;
-        auto generate_wave() -> float;
-        auto generate_noise() -> float;
-        void update_quad(int step_cycles);
-        void update_wave(int step_cycles);
+        auto generate_wave()       -> float;
+        auto generate_noise()      -> float;
+        
+        // Updates PSG states
+        void update_quad (int step_cycles);
+        void update_wave (int step_cycles);
         void update_noise(int step_cycles);
         
+        // Mix all channels together
         void mix_samples(int samples);
         
+        // Advance state by a given amount of cycles
         void step(int step_cycles);
         
+        // Fill audio buffer from ring buffer
         void fill_buffer(u16* stream, int length);
         
-        void fifo_get_sample(int fifo_id) {
+        // Pull next sample from FIFO A (0) or B (1)
+        void fifo_next(int fifo_id) {
             m_fifo_sample[fifo_id] = m_io.fifo[fifo_id].dequeue();
         }
     };
