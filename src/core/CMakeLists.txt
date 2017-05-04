@@ -9,7 +9,6 @@ set(ARM_SRC
 set(ARM_HDR
     arm/arm.hpp
     arm/enums.hpp
-    arm/memory.hpp
     arm/context.hpp
     arm/inline_code.hpp
     arm/instr_arm.hpp
