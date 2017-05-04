@@ -35,12 +35,12 @@ namespace GameBoyAdvance {
 
         ctx.reg[dst] = ctx.reg[src];
 
-        ApplyShift(type, ctx.reg[dst], imm, carry, true);
+        apply_shift(type, ctx.reg[dst], imm, carry, true);
 
         // update carry, sign and zero flag
-        SetCarryFlag(carry);
-        UpdateSignFlag(ctx.reg[dst]);
-        UpdateZeroFlag(ctx.reg[dst]);
+        update_carry_flag(carry);
+        update_sign_flag(ctx.reg[dst]);
+        update_zero_flag(ctx.reg[dst]);
     }
 
     template <bool immediate, bool subtract, int field3>
@@ -56,18 +56,18 @@ namespace GameBoyAdvance {
         if (subtract) {
             result = ctx.reg[src] - operand;
 
-            SetCarryFlag(ctx.reg[src] >= operand);
-            UpdateOverflowFlagSub(result, ctx.reg[src], operand);
+            update_carry_flag(ctx.reg[src] >= operand);
+            update_overflow_sub(result, ctx.reg[src], operand);
         } else {
             u64 result_long = (u64)(ctx.reg[src]) + (u64)operand;
 
             result = (u32)result_long;
-            SetCarryFlag(result_long & 0x100000000);
-            UpdateOverflowFlagAdd(result, ctx.reg[src], operand);
+            update_carry_flag(result_long & 0x100000000);
+            update_overflow_add(result, ctx.reg[src], operand);
         }
 
-        UpdateSignFlag(result);
-        UpdateZeroFlag(result);
+        update_sign_flag(result);
+        update_zero_flag(result);
 
         ctx.reg[dst] = result;
     }
@@ -81,33 +81,33 @@ namespace GameBoyAdvance {
         switch (op) {
         case 0b00: // MOV
             ctx.reg[dst] = immediate_value;
-            UpdateSignFlag(0);
-            UpdateZeroFlag(immediate_value);
+            update_sign_flag(0);
+            update_zero_flag(immediate_value);
             return;//important!
 
         case 0b01: // CMP
             result = ctx.reg[dst] - immediate_value;
-            SetCarryFlag(ctx.reg[dst] >= immediate_value);
-            UpdateOverflowFlagSub(result, ctx.reg[dst], immediate_value);
+            update_carry_flag(ctx.reg[dst] >= immediate_value);
+            update_overflow_sub(result, ctx.reg[dst], immediate_value);
             break;
         case 0b10: { // ADD
             u64 result_long = (u64)ctx.reg[dst] + (u64)immediate_value;
             result = (u32)result_long;
-            SetCarryFlag(result_long & 0x100000000);
-            UpdateOverflowFlagAdd(result, ctx.reg[dst], immediate_value);
+            update_carry_flag(result_long & 0x100000000);
+            update_overflow_add(result, ctx.reg[dst], immediate_value);
             ctx.reg[dst] = result;
             break;
         }
         case 0b11: // SUB
             result = ctx.reg[dst] - immediate_value;
-            SetCarryFlag(ctx.reg[dst] >= immediate_value);
-            UpdateOverflowFlagSub(result, ctx.reg[dst], immediate_value);
+            update_carry_flag(ctx.reg[dst] >= immediate_value);
+            update_overflow_sub(result, ctx.reg[dst], immediate_value);
             ctx.reg[dst] = result;
             break;
         }
 
-        UpdateSignFlag(result);
-        UpdateZeroFlag(result);
+        update_sign_flag(result);
+        update_zero_flag(result);
     }
 
     template <int op>
@@ -120,124 +120,124 @@ namespace GameBoyAdvance {
         switch (op) {
         case 0b0000: // AND
             ctx.reg[dst] &= ctx.reg[src];
-            UpdateSignFlag(ctx.reg[dst]);
-            UpdateZeroFlag(ctx.reg[dst]);
+            update_sign_flag(ctx.reg[dst]);
+            update_zero_flag(ctx.reg[dst]);
             break;
         case 0b0001: // EOR
             ctx.reg[dst] ^= ctx.reg[src];
-            UpdateSignFlag(ctx.reg[dst]);
-            UpdateZeroFlag(ctx.reg[dst]);
+            update_sign_flag(ctx.reg[dst]);
+            update_zero_flag(ctx.reg[dst]);
             break;
         case 0b0010: { // LSL
             u32 amount = ctx.reg[src];
             bool carry = ctx.cpsr & MASK_CFLAG;
-            LogicalShiftLeft(ctx.reg[dst], amount, carry);
-            SetCarryFlag(carry);
-            UpdateSignFlag(ctx.reg[dst]);
-            UpdateZeroFlag(ctx.reg[dst]);
+            shift_lsl(ctx.reg[dst], amount, carry);
+            update_carry_flag(carry);
+            update_sign_flag(ctx.reg[dst]);
+            update_zero_flag(ctx.reg[dst]);
             break;
         }
         case 0b0011: { // LSR
             u32 amount = ctx.reg[src];
             bool carry = ctx.cpsr & MASK_CFLAG;
-            LogicalShiftRight(ctx.reg[dst], amount, carry, false);
-            SetCarryFlag(carry);
-            UpdateSignFlag(ctx.reg[dst]);
-            UpdateZeroFlag(ctx.reg[dst]);
+            shift_lsr(ctx.reg[dst], amount, carry, false);
+            update_carry_flag(carry);
+            update_sign_flag(ctx.reg[dst]);
+            update_zero_flag(ctx.reg[dst]);
             break;
         }
         case 0b0100: { // ASR
             u32 amount = ctx.reg[src];
             bool carry = ctx.cpsr & MASK_CFLAG;
-            ArithmeticShiftRight(ctx.reg[dst], amount, carry, false);
-            SetCarryFlag(carry);
-            UpdateSignFlag(ctx.reg[dst]);
-            UpdateZeroFlag(ctx.reg[dst]);
+            shift_asr(ctx.reg[dst], amount, carry, false);
+            update_carry_flag(carry);
+            update_sign_flag(ctx.reg[dst]);
+            update_zero_flag(ctx.reg[dst]);
             break;
         }
         case 0b0101: { // ADC
             int carry = (ctx.cpsr >> 29) & 1;
             u32 result = ctx.reg[dst] + ctx.reg[src] + carry;
             u64 result_long = (u64)(ctx.reg[dst]) + (u64)(ctx.reg[src]) + (u64)carry;
-            SetCarryFlag(result_long & 0x100000000);
-            UpdateOverflowFlagAdd(result, ctx.reg[dst], ctx.reg[src]);
-            UpdateSignFlag(result);
-            UpdateZeroFlag(result);
+            update_carry_flag(result_long & 0x100000000);
+            update_overflow_add(result, ctx.reg[dst], ctx.reg[src]);
+            update_sign_flag(result);
+            update_zero_flag(result);
             ctx.reg[dst] = result;
             break;
         }
         case 0b0110: { // SBC
             int carry = (ctx.cpsr >> 29) & 1;
             u32 result = ctx.reg[dst] - ctx.reg[src] + carry - 1;
-            SetCarryFlag(ctx.reg[dst] >= (ctx.reg[src] + carry - 1));
-            UpdateOverflowFlagSub(result, ctx.reg[dst], ctx.reg[src]);
-            UpdateSignFlag(result);
-            UpdateZeroFlag(result);
+            update_carry_flag(ctx.reg[dst] >= (ctx.reg[src] + carry - 1));
+            update_overflow_sub(result, ctx.reg[dst], ctx.reg[src]);
+            update_sign_flag(result);
+            update_zero_flag(result);
             ctx.reg[dst] = result;
             break;
         }
         case 0b0111: { // ROR
             u32 amount = ctx.reg[src];
             bool carry = ctx.cpsr & MASK_CFLAG;
-            RotateRight(ctx.reg[dst], amount, carry, false);
-            SetCarryFlag(carry);
-            UpdateSignFlag(ctx.reg[dst]);
-            UpdateZeroFlag(ctx.reg[dst]);
+            shift_ror(ctx.reg[dst], amount, carry, false);
+            update_carry_flag(carry);
+            update_sign_flag(ctx.reg[dst]);
+            update_zero_flag(ctx.reg[dst]);
             break;
         }
         case 0b1000: { // TST
             u32 result = ctx.reg[dst] & ctx.reg[src];
-            UpdateSignFlag(result);
-            UpdateZeroFlag(result);
+            update_sign_flag(result);
+            update_zero_flag(result);
             break;
         }
         case 0b1001: { // NEG
             u32 result = 0 - ctx.reg[src];
-            SetCarryFlag(0 >= ctx.reg[src]);
-            UpdateOverflowFlagSub(result, 0, ctx.reg[src]);
-            UpdateSignFlag(result);
-            UpdateZeroFlag(result);
+            update_carry_flag(0 >= ctx.reg[src]);
+            update_overflow_sub(result, 0, ctx.reg[src]);
+            update_sign_flag(result);
+            update_zero_flag(result);
             ctx.reg[dst] = result;
             break;
         }
         case 0b1010: { // CMP
             u32 result = ctx.reg[dst] - ctx.reg[src];
-            SetCarryFlag(ctx.reg[dst] >= ctx.reg[src]);
-            UpdateOverflowFlagSub(result, ctx.reg[dst], ctx.reg[src]);
-            UpdateSignFlag(result);
-            UpdateZeroFlag(result);
+            update_carry_flag(ctx.reg[dst] >= ctx.reg[src]);
+            update_overflow_sub(result, ctx.reg[dst], ctx.reg[src]);
+            update_sign_flag(result);
+            update_zero_flag(result);
             break;
         }
         case 0b1011: { // CMN
             u32 result = ctx.reg[dst] + ctx.reg[src];
             u64 result_long = (u64)(ctx.reg[dst]) + (u64)(ctx.reg[src]);
-            SetCarryFlag(result_long & 0x100000000);
-            UpdateOverflowFlagAdd(result, ctx.reg[dst], ctx.reg[src]);
-            UpdateSignFlag(result);
-            UpdateZeroFlag(result);
+            update_carry_flag(result_long & 0x100000000);
+            update_overflow_add(result, ctx.reg[dst], ctx.reg[src]);
+            update_sign_flag(result);
+            update_zero_flag(result);
             break;
         }
         case 0b1100: // ORR
             ctx.reg[dst] |= ctx.reg[src];
-            UpdateSignFlag(ctx.reg[dst]);
-            UpdateZeroFlag(ctx.reg[dst]);
+            update_sign_flag(ctx.reg[dst]);
+            update_zero_flag(ctx.reg[dst]);
             break;
         case 0b1101: // MUL
             // TODO: how to calc. the internal cycles?
             ctx.reg[dst] *= ctx.reg[src];
-            UpdateSignFlag(ctx.reg[dst]);
-            UpdateZeroFlag(ctx.reg[dst]);
-            SetCarryFlag(false);
+            update_sign_flag(ctx.reg[dst]);
+            update_zero_flag(ctx.reg[dst]);
+            update_carry_flag(false);
             break;
         case 0b1110: // BIC
             ctx.reg[dst] &= ~(ctx.reg[src]);
-            UpdateSignFlag(ctx.reg[dst]);
-            UpdateZeroFlag(ctx.reg[dst]);
+            update_sign_flag(ctx.reg[dst]);
+            update_zero_flag(ctx.reg[dst]);
             break;
         case 0b1111: // MVN
             ctx.reg[dst] = ~(ctx.reg[src]);
-            UpdateSignFlag(ctx.reg[dst]);
-            UpdateZeroFlag(ctx.reg[dst]);
+            update_sign_flag(ctx.reg[dst]);
+            update_zero_flag(ctx.reg[dst]);
             break;
         }
     }
@@ -266,10 +266,10 @@ namespace GameBoyAdvance {
             break;
         case 1: { // CMP
             u32 result = ctx.reg[dst] - operand;
-            SetCarryFlag(ctx.reg[dst] >= operand);
-            UpdateOverflowFlagSub(result, ctx.reg[dst], operand);
-            UpdateSignFlag(result);
-            UpdateZeroFlag(result);
+            update_carry_flag(ctx.reg[dst] >= operand);
+            update_overflow_sub(result, ctx.reg[dst], operand);
+            update_sign_flag(result);
+            update_zero_flag(result);
             perform_check = false;
             break;
         }
@@ -300,7 +300,7 @@ namespace GameBoyAdvance {
         u32 imm     = instruction & 0xFF;
         u32 address = (ctx.r15 & ~2) + (imm << 2);
 
-        ctx.reg[dst] = ReadWord(address, MEM_NONE);
+        ctx.reg[dst] = read_word(address, MEM_NONE);
     }
 
     template <int op, int off>
@@ -312,16 +312,16 @@ namespace GameBoyAdvance {
 
         switch (op) {
         case 0b00: // STR
-            WriteWord(address, ctx.reg[dst], MEM_NONE);
+            write_word(address, ctx.reg[dst], MEM_NONE);
             break;
         case 0b01: // STRB
-            WriteByte(address, (u8)ctx.reg[dst], MEM_NONE);
+            write_byte(address, (u8)ctx.reg[dst], MEM_NONE);
             break;
         case 0b10: // LDR
-            ctx.reg[dst] = ReadWord(address, MEM_ROTATE);
+            ctx.reg[dst] = read_word(address, MEM_ROTATE);
             break;
         case 0b11: // LDRB
-            ctx.reg[dst] = ReadByte(address, MEM_NONE);
+            ctx.reg[dst] = read_byte(address, MEM_NONE);
             break;
         }
     }
@@ -335,16 +335,16 @@ namespace GameBoyAdvance {
 
         switch (op) {
         case 0b00: // STRH
-            WriteHWord(address, ctx.reg[dst], MEM_NONE);
+            write_hword(address, ctx.reg[dst], MEM_NONE);
             break;
         case 0b01: // LDSB
-            ctx.reg[dst] = ReadByte(address, MEM_SIGNED);
+            ctx.reg[dst] = read_byte(address, MEM_SIGNED);
             break;
         case 0b10: // LDRH
-            ctx.reg[dst] = ReadHWord(address, MEM_ROTATE);
+            ctx.reg[dst] = read_hword(address, MEM_ROTATE);
             break;
         case 0b11: // LDSH
-            ctx.reg[dst] = ReadHWord(address, MEM_SIGNED);
+            ctx.reg[dst] = read_hword(address, MEM_SIGNED);
             break;
         }
     }
@@ -358,22 +358,22 @@ namespace GameBoyAdvance {
         switch (op) {
         case 0b00: { // STR
             u32 address = ctx.reg[base] + (imm << 2);
-            WriteWord(address, ctx.reg[dst], MEM_NONE);
+            write_word(address, ctx.reg[dst], MEM_NONE);
             break;
         }
         case 0b01: { // LDR
             u32 address = ctx.reg[base] + (imm << 2);
-            ctx.reg[dst] = ReadWord(address, MEM_ROTATE);
+            ctx.reg[dst] = read_word(address, MEM_ROTATE);
             break;
         }
         case 0b10: { // STRB
             u32 address = ctx.reg[base] + imm;
-            WriteByte(address, ctx.reg[dst], MEM_NONE);
+            write_byte(address, ctx.reg[dst], MEM_NONE);
             break;
         }
         case 0b11: { // LDRB
             u32 address = ctx.reg[base] + imm;
-            ctx.reg[dst] = ReadByte(address, MEM_NONE);
+            ctx.reg[dst] = read_byte(address, MEM_NONE);
             break;
         }
         }
@@ -387,9 +387,9 @@ namespace GameBoyAdvance {
         u32 address = ctx.reg[base] + (imm << 1);
 
         if (load) {
-            ctx.reg[dst] = ReadHWord(address, MEM_ROTATE);
+            ctx.reg[dst] = read_hword(address, MEM_ROTATE);
         } else {
-            WriteHWord(address, ctx.reg[dst], MEM_NONE);
+            write_hword(address, ctx.reg[dst], MEM_NONE);
         }
     }
 
@@ -400,9 +400,9 @@ namespace GameBoyAdvance {
         u32 address = ctx.reg[13] + (imm << 2);
 
         if (load) {
-            ctx.reg[dst] = ReadWord(address, MEM_ROTATE);
+            ctx.reg[dst] = read_word(address, MEM_ROTATE);
         } else {
-            WriteWord(address, ctx.reg[dst], MEM_NONE);
+            write_word(address, ctx.reg[dst], MEM_NONE);
         }
     }
 
@@ -438,10 +438,10 @@ namespace GameBoyAdvance {
         // hardware corner case. not sure if emulated correctly.
         if (!rbit && register_list == 0) {
             if (pop) {
-                ctx.r15 = ReadWord(addr, MEM_NONE);
+                ctx.r15 = read_word(addr, MEM_NONE);
                 ctx.pipe.do_flush   = true;
             } else {
-                WriteWord(addr, ctx.r15, MEM_NONE);
+                write_word(addr, ctx.r15, MEM_NONE);
             }
             ctx.reg[13] += pop ? 64 : -64;
             return;
@@ -468,9 +468,9 @@ namespace GameBoyAdvance {
         for (int i = 0; i <= 7; i++) {
             if (register_list & (1 << i)) {
                 if (pop) {
-                    ctx.reg[i] = ReadWord(addr, MEM_NONE);
+                    ctx.reg[i] = read_word(addr, MEM_NONE);
                 } else {
-                    WriteWord(addr, ctx.reg[i], MEM_NONE);
+                    write_word(addr, ctx.reg[i], MEM_NONE);
                 }
                 addr += 4;
             }
@@ -478,10 +478,10 @@ namespace GameBoyAdvance {
 
         if (rbit) {
             if (pop) {
-                ctx.r15 = ReadWord(addr, MEM_NONE) & ~1;
+                ctx.r15 = read_word(addr, MEM_NONE) & ~1;
                 ctx.pipe.do_flush = true;
             } else {
-                WriteWord(addr, ctx.reg[14], MEM_NONE);
+                write_word(addr, ctx.reg[14], MEM_NONE);
             }
             addr += 4;
         }
@@ -500,7 +500,7 @@ namespace GameBoyAdvance {
 
         if (load) {
             if (register_list == 0) {
-                ctx.r15 = ReadWord(address, MEM_NONE);
+                ctx.r15 = read_word(address, MEM_NONE);
                 ctx.pipe.do_flush = true;
                 ctx.reg[base] += 64;
                 return;
@@ -508,7 +508,7 @@ namespace GameBoyAdvance {
 
             for (int i = 0; i <= 7; i++) {
                 if (register_list & (1<<i)) {
-                    ctx.reg[i] = ReadWord(address, MEM_NONE);
+                    ctx.reg[i] = read_word(address, MEM_NONE);
                     address += 4;
                 }
             }
@@ -520,7 +520,7 @@ namespace GameBoyAdvance {
             int first_register = -1;
 
             if (register_list == 0) {
-                WriteWord(address, ctx.r15, MEM_NONE);
+                write_word(address, ctx.r15, MEM_NONE);
                 ctx.reg[base] += 64;
                 return;
             }
@@ -532,9 +532,9 @@ namespace GameBoyAdvance {
                     }
 
                     if (i == base && i == first_register) {
-                        WriteWord(ctx.reg[base], address, MEM_NONE);
+                        write_word(ctx.reg[base], address, MEM_NONE);
                     } else {
-                        WriteWord(ctx.reg[base], ctx.reg[i], MEM_NONE);
+                        write_word(ctx.reg[base], ctx.reg[i], MEM_NONE);
                     }
 
                     ctx.reg[base] += 4;
@@ -546,7 +546,7 @@ namespace GameBoyAdvance {
     template <int cond>
     void ARM::thumb_16(u16 instruction) {
         // THUMB.16 Conditional branch
-        if (CheckCondition(static_cast<Condition>(cond))) {
+        if (check_condition(static_cast<Condition>(cond))) {
             u32 signed_immediate = instruction & 0xFF;
 
             // sign-extend the immediate value if neccessary
@@ -562,7 +562,7 @@ namespace GameBoyAdvance {
 
     void ARM::thumb_17(u16 instruction) {
         // THUMB.17 Software Interrupt
-        u8 call_number = ReadByte(ctx.r15 - 4, MEM_NONE);
+        u8 call_number = read_byte(ctx.r15 - 4, MEM_NONE);
         
         if (!fake_swi) {
             // save return address and program status
@@ -570,14 +570,14 @@ namespace GameBoyAdvance {
             ctx.spsr[SPSR_SVC] = ctx.cpsr;
 
             // switch to SVC mode and disable interrupts
-            SwitchMode(MODE_SVC);
+            switch_mode(MODE_SVC);
             ctx.cpsr = (ctx.cpsr & ~MASK_THUMB) | MASK_IRQD;
 
             // jump to exception vector
             ctx.r15 = EXCPT_SWI;
             ctx.pipe.do_flush = true;
         } else {
-            SoftwareInterrupt(call_number);
+            software_interrupt(call_number);
         }
     }
 

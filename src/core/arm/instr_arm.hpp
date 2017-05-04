@@ -24,7 +24,7 @@ static const ARMInstruction arm_lut[4096];
 inline void arm_execute(u32 instruction) {
     Condition condition = static_cast<Condition>(instruction >> 28);
 
-    if (CheckCondition(condition)) {
+    if (check_condition(condition)) {
         int index = ((instruction >> 16) & 0xFF0) | ((instruction >> 4) & 0xF);
         (this->*arm_lut[index])(instruction);
     }

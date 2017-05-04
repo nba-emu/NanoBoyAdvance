@@ -37,7 +37,7 @@ namespace GameBoyAdvance {
 
     CPU::CPU(Config* config) : m_config(config), m_ppu(config), m_apu(config) {
         
-        Reset();
+        reset();
 
         // setup interrupt controller
         m_interrupt.set_flag_register(&m_io.interrupt.request);
@@ -56,10 +56,10 @@ namespace GameBoyAdvance {
         }
     }
 
-    void CPU::Reset() {
-        auto& ctx = GetContext();
+    void CPU::reset() {
+        auto& ctx = get_context();
         
-        ARM::Reset();
+        ARM::reset();
 
         // reset PPU und APU state
         m_ppu.reset();
@@ -101,7 +101,7 @@ namespace GameBoyAdvance {
         m_dma_active  = false;
         m_current_dma = 0;
 
-        SetFakeSWI(!m_config->use_bios);
+        set_fake_swi(!m_config->use_bios);
 
         if (!m_config->use_bios || !File::exists(m_config->bios_path)) {
             // TODO: load helper BIOS
@@ -183,7 +183,7 @@ namespace GameBoyAdvance {
         }
         
         // forced system reset...
-        Reset();
+        reset();
     }
 
     void CPU::frame() {
@@ -245,9 +245,9 @@ namespace GameBoyAdvance {
                 dma_transfer();
             } else if (LIKELY(m_io.haltcnt == SYSTEM_RUN)) {
                 if (m_io.interrupt.master_enable && requested_and_enabled) {
-                    RaiseInterrupt();
+                    signal_interrupt();
                 }
-                Step();
+                step();
             } else {
                 //TODO: inaccurate because of timer interrupts
                 timer_step(m_cycles);

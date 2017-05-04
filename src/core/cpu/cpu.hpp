@@ -146,7 +146,7 @@ namespace GameBoyAdvance {
         CPU(Config* config);
         ~CPU();
 
-        void Reset();
+        void reset();
 
         APU& get_apu();
         u16& get_keypad();
@@ -159,7 +159,7 @@ namespace GameBoyAdvance {
 
         #include "memory.hpp"
 
-        void SoftwareInterrupt(int number) final {};
+        void software_interrupt(int number) final {};
     };
 }
 

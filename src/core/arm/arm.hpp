@@ -26,23 +26,24 @@ namespace GameBoyAdvance {
     class ARM {
     public:
         ARM();
-        virtual void Reset();
+        virtual void reset();
         
-        void Step();
-        void RaiseInterrupt();
-        // TODO: Fast Interrupt (FIQ)
+        void step();
+        void signal_interrupt();
         
-        auto GetContext() -> ARMContext& {
+        auto get_context() -> ARMContext& {
             return ctx;
         }
-        void SetContext(ARMContext& ctx) {
+        
+        void set_context(ARMContext& ctx) {
             this->ctx = ctx;
         }
         
-        bool GetFakeSWI() const { 
+        bool get_fake_swi() const { 
             return fake_swi; 
         }
-        void SetFakeSWI(bool fake_swi) { 
+        
+        void set_fake_swi(bool fake_swi) { 
             this->fake_swi = fake_swi; 
         }
 
@@ -57,7 +58,7 @@ namespace GameBoyAdvance {
         virtual void bus_write_word (u32 address, u32 value) {}
 
         // swi #nn HLE-handler
-        virtual void SoftwareInterrupt(int number) {}
+        virtual void software_interrupt(int number) {}
 
         // memory access helpers
         #include "memory.hpp"
@@ -68,22 +69,22 @@ namespace GameBoyAdvance {
         
         ARMContext ctx;
         
-        void SwitchMode(Mode new_mode);
+        void switch_mode(Mode new_mode);
 
-        bool CheckCondition(Condition condition);
-        void UpdateSignFlag(u32 result);
-        void UpdateZeroFlag(u64 result);
-        void SetCarryFlag(bool carry);
-        void UpdateOverflowFlagAdd(u32 result, u32 operand1, u32 operand2);
-        void UpdateOverflowFlagSub(u32 result, u32 operand1, u32 operand2);
+        bool check_condition(Condition condition);
+        void update_sign_flag(u32 result);
+        void update_zero_flag(u64 result);
+        void update_carry_flag(bool carry);
+        void update_overflow_add(u32 result, u32 operand1, u32 operand2);
+        void update_overflow_sub(u32 result, u32 operand1, u32 operand2);
 
-        static void LogicalShiftLeft(u32& operand, u32 amount, bool& carry);
-        static void LogicalShiftRight(u32& operand, u32 amount, bool& carry, bool immediate);
-        static void ArithmeticShiftRight(u32& operand, u32 amount, bool& carry, bool immediate);
-        static void RotateRight(u32& operand, u32 amount, bool& carry, bool immediate);
-        static void ApplyShift(int shift, u32& operand, u32 amount, bool& carry, bool immediate);
+        static void shift_lsl(u32& operand, u32 amount, bool& carry);
+        static void shift_lsr(u32& operand, u32 amount, bool& carry, bool immediate);
+        static void shift_asr(u32& operand, u32 amount, bool& carry, bool immediate);
+        static void shift_ror(u32& operand, u32 amount, bool& carry, bool immediate);
+        static void apply_shift(int shift, u32& operand, u32 amount, bool& carry, bool immediate);
         
-        static Bank ModeToBank(Mode mode);
+        static Bank mode_to_bank(Mode mode);
 
         // ARM and THUMB interpreter cores
         #include "instr_arm.hpp"
