@@ -26,4 +26,4 @@ set (HEADERS
 add_executable(NanoboyAdvance ${SRCS} ${HEADERS})
 
 # Link it against required libraries
-target_link_libraries(NanoboyAdvance gba ${GTKMM_LIBRARIES} ${GTKGLEXTMM_LIBRARIES} ${PNG_LIBRARY})
+target_link_libraries(NanoboyAdvance core ${GTKMM_LIBRARIES} ${GTKGLEXTMM_LIBRARIES} ${PNG_LIBRARY})

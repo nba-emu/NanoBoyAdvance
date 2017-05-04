@@ -20,7 +20,7 @@
 #pragma once
 
 #include <string>
-#include "arm/arm.hpp"
+#include "../arm/arm.hpp"
 #include "enums.hpp"
 #include "interrupt.hpp"
 #include "../config.hpp"
@@ -33,12 +33,12 @@ namespace GameBoyAdvance {
     
     class CPU : public ARM {
     private:
-        typedef u8 (CPU::*read_func)(u32 address);
+        typedef u8   (CPU::*read_func)(u32 address);
         typedef void (CPU::*write_func)(u32 address, u8 value);
 
         Config* m_config;
         
-        u8* m_rom;
+        u8*    m_rom;
         size_t m_rom_size;
         CartBackup* m_backup {nullptr};
 
@@ -57,7 +57,7 @@ namespace GameBoyAdvance {
         APU m_apu;
         Interrupt m_interrupt;
 
-        int m_cycles;
+        int  m_cycles;
         bool m_dma_active;
         int  m_current_dma;
 

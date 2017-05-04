@@ -17,9 +17,6 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#ifdef ARMIGO_INCLUDE
-
-// build using this small hacked-together util: https://hastebin.com/ojadolidup.cpp
 const ARM::ARMInstruction ARM::arm_lut[4096] = {
     &ARM::arm_data_processing<0,0,0,0>,
     &ARM::arm_data_processing<0,0,0,1>,
@@ -4118,5 +4115,3 @@ const ARM::ARMInstruction ARM::arm_lut[4096] = {
     &ARM::arm_swi,
     &ARM::arm_swi
 };
-
-#endif

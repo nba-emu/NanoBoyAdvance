@@ -17,13 +17,11 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#ifdef ARMIGO_INCLUDE
-
 typedef void (ARM::*ThumbInstruction)(u16);
 
 static const ThumbInstruction thumb_lut[1024];
 
-inline void thumb_execute(u32 instruction)
+inline void thumb_execute(u32 instruction) 
 {
     (this->*thumb_lut[instruction >> 6])(instruction);
 }
@@ -83,4 +81,3 @@ void thumb_18(u16 instruction);
 template <bool second_instruction>
 void thumb_19(u16 instruction);
 
-#endif

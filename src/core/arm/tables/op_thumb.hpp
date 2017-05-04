@@ -17,8 +17,6 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#ifdef ARMIGO_INCLUDE
-
 const ARM::ThumbInstruction ARM::thumb_lut[1024] =
 {
     /* THUMB.1 Move shifted register */
@@ -315,4 +313,3 @@ const ARM::ThumbInstruction ARM::thumb_lut[1024] =
     &ARM::thumb_19<1>, &ARM::thumb_19<1>, &ARM::thumb_19<1>, &ARM::thumb_19<1>
 };
 
-#endif
