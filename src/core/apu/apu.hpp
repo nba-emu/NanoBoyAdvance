@@ -43,10 +43,10 @@ namespace GameBoyAdvance {
         static constexpr float s_dma_volume[] = { 2, 4 };
         static constexpr float s_wav_volume[] = { 0, 1, 0.5, 0.25 };
         
-        // stores latched FIFO samples
+        // Stores latched FIFO samples
         s8 m_fifo_sample[2];
         
-        // stereo output (ringbuffers)
+        // Stereo output (ring buffers)
         u16 m_output[2][0x4000];
         int m_read_pos  { 0 };
         int m_write_pos { 0 };
