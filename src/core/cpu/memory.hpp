@@ -26,10 +26,17 @@
 //     Theoretically all addresses that are being passed should be aligned
 //     which hopefully should make it impossible to access two memory areas at the time.
 
+// TODO(accuracy):
+//     Handle FLASH/SRAM/EEPROM etc accordingly :/
+
 //TODO: poor big-endian is crying right now :(
-#define READ_FAST_8(buffer, address)  *(u8*)(&buffer[address])
+#define READ_FAST_8(buffer, address)  *(u8*) (&buffer[address])
 #define READ_FAST_16(buffer, address) *(u16*)(&buffer[address])
 #define READ_FAST_32(buffer, address) *(u32*)(&buffer[address])
+
+#define WRITE_FAST_8(buffer, address, value)  *(u8*) (&buffer[address]) = value;
+#define WRITE_FAST_16(buffer, address, value) *(u16*)(&buffer[address]) = value;
+#define WRITE_FAST_32(buffer, address, value) *(u32*)(&buffer[address]) = value;
 
 u8 bus_read_byte(u32 address, int flags) final {
     int page = (address >> 24) & 15;
@@ -119,6 +126,7 @@ u16 bus_read_hword(u32 address, int flags) final {
             }
             return m_backup->read_byte(address) * 0x0101;
         }
+        
         default: return 0;
     }
 }
@@ -174,41 +182,114 @@ u32 bus_read_word(u32 address, int flags) final {
 }
 
 void bus_write_byte(u32 address, u8 value, int flags) final {
-    register int page = (address >> 24) & 15;
-    register write_func func = s_write_table[page];
-
-    m_cycles -= s_mem_cycles8_16[page];
-
-    // handle 16-bit data busses. might reduce condition?
-    if (page == 5 || page == 6 || page == 7) {
-        (this->*func)(address & ~1, value);
-        (this->*func)((address & ~1) + 1, value);
-        return;
+    int page = (address >> 24) & 15;
+    
+    // poor mans cycle counting
+    m_cycles -= s_mem_cycles32[page];
+    
+    switch (page) {
+        case 0x2: WRITE_FAST_8(m_wram, address & 0x3FFFF, value); break;
+        case 0x3: WRITE_FAST_8(m_iram, address & 0x7FFF,  value); break;
+        case 0x4: {
+            write_mmio(address, value & 0xFF);
+            break;
+        }
+        case 0x5: WRITE_FAST_16(m_pal, address & 0x3FF, value * 0x0101); break;
+        case 0x6: {
+            address &= 0x1FFFF;
+            if (address >= 0x18000) {
+                address &= ~0x8000;
+            }
+            WRITE_FAST_16(m_vram, address, value * 0x0101);
+            break;
+        }
+        case 0x7: WRITE_FAST_16(m_oam, address & 0x3FF, value); break;
+        case 0xE: {
+            if (!m_backup) { 
+                break;
+            }
+            m_backup->write_byte(address + 0, value); 
+            m_backup->write_byte(address + 1, value); 
+            break;
+        }
+        default: break; // TODO: throw error
     }
-
-    (this->*func)(address, value);
 }
 
 void bus_write_hword(u32 address, u16 value, int flags) final {
-    register int page = (address >> 24) & 15;
-    register write_func func = s_write_table[page];
-
-    m_cycles -= s_mem_cycles8_16[page];
-
-    (this->*func)(address + 0, value & 0xFF);
-    (this->*func)(address + 1, value >> 8);
+    int page = (address >> 24) & 15;
+    
+    // poor mans cycle counting
+    m_cycles -= s_mem_cycles32[page];
+    
+    switch (page) {
+        case 0x2: WRITE_FAST_16(m_wram, address & 0x3FFFF, value); break;
+        case 0x3: WRITE_FAST_16(m_iram, address & 0x7FFF,  value); break;
+        case 0x4: {
+            write_mmio(address, value & 0xFF);
+            write_mmio(address + 1, (value >> 8)  & 0xFF);
+            break;
+        }
+        case 0x5: WRITE_FAST_16(m_pal, address & 0x3FF, value); break;
+        case 0x6: {
+            address &= 0x1FFFF;
+            if (address >= 0x18000) {
+                address &= ~0x8000;
+            }
+            WRITE_FAST_16(m_vram, address, value);
+            break;
+        }
+        case 0x7: WRITE_FAST_16(m_oam, address & 0x3FF, value); break;
+        case 0xE: {
+            if (!m_backup) { 
+                break;
+            }
+            m_backup->write_byte(address + 0, value); 
+            m_backup->write_byte(address + 1, value); 
+            break;
+        }
+        default: break; // TODO: throw error
+    }
 }
 
 void bus_write_word(u32 address, u32 value, int flags) final {
-    register int page = (address >> 24) & 15;
-    register write_func func = s_write_table[page];
-
+    int page = (address >> 24) & 15;
+    
+    // poor mans cycle counting
     m_cycles -= s_mem_cycles32[page];
-
-    (this->*func)(address + 0, (value >> 0) & 0xFF);
-    (this->*func)(address + 1, (value >> 8) & 0xFF);
-    (this->*func)(address + 2, (value >> 16) & 0xFF);
-    (this->*func)(address + 3, (value >> 24) & 0xFF);
+    
+    switch (page) {
+        case 0x2: WRITE_FAST_32(m_wram, address & 0x3FFFF, value); break;
+        case 0x3: WRITE_FAST_32(m_iram, address & 0x7FFF,  value); break;
+        case 0x4: {
+            write_mmio(address, value & 0xFF);
+            write_mmio(address + 1, (value >> 8)  & 0xFF);
+            write_mmio(address + 2, (value >> 16) & 0xFF);
+            write_mmio(address + 3, (value >> 24) & 0xFF);
+            break;
+        }
+        case 0x5: WRITE_FAST_32(m_pal, address & 0x3FF, value); break;
+        case 0x6: {
+            address &= 0x1FFFF;
+            if (address >= 0x18000) {
+                address &= ~0x8000;
+            }
+            WRITE_FAST_32(m_vram, address, value);
+            break;
+        }
+        case 0x7: WRITE_FAST_32(m_oam, address & 0x3FF, value); break;
+        case 0xE: {
+            if (!m_backup) { 
+                break;
+            }
+            m_backup->write_byte(address + 0, value); 
+            m_backup->write_byte(address + 1, value); 
+            m_backup->write_byte(address + 2, value); 
+            m_backup->write_byte(address + 3, value); 
+            break;
+        }
+        default: break; // TODO: throw error
+    }
 }
 
 #endif
