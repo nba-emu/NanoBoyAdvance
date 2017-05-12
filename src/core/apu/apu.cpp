@@ -365,14 +365,9 @@ namespace GameBoyAdvance {
             output[SIDE_LEFT ] = (output[SIDE_LEFT ] >> bias.resolution) << bias.resolution;
             output[SIDE_RIGHT] = (output[SIDE_RIGHT] >> bias.resolution) << bias.resolution;
             
-            // prevent evil simultanious accesses
-            m_mutex.lock();
-            
             // copy audio into the output ringbuffers
             m_output[SIDE_LEFT ][m_write_pos] = output[SIDE_LEFT ] * 64;
             m_output[SIDE_RIGHT][m_write_pos] = output[SIDE_RIGHT] * 64;
-            
-            m_mutex.unlock();
             
             // update write position
             m_write_pos = (m_write_pos + 1) & 0x3FFF;
@@ -408,8 +403,6 @@ namespace GameBoyAdvance {
         // 2) length is twice the actual length because of two stereo channels
         length >>= 2;
         
-        m_mutex.lock();
-        
         for (int i = 0; i < length; i++) {
             // copy left/right sample from ringbuffer to SDL buffer
             stream[i * 2 + 0] = m_output[SIDE_LEFT ][m_read_pos];
@@ -418,7 +411,5 @@ namespace GameBoyAdvance {
             // update read position
             m_read_pos = (m_read_pos + 1) & 0x3FFF;
         }
-        
-        m_mutex.unlock();
     }
 }

@@ -68,11 +68,21 @@ namespace GameBoyAdvance {
         virtual void bus_write_hword(u32 address, u16 value, int flags) {}
         virtual void bus_write_word (u32 address, u32 value, int flags) {}
 
+        // Internal Read Helpers
+        u32 read_byte (u32 address, int flags);
+        u32 read_hword(u32 address, int flags);
+        u32 read_word (u32 address, int flags);
+        
+        // Internal Write Helpers
+        void write_byte (u32 address, u8 value,  int flags);
+        void write_hword(u32 address, u16 value, int flags);
+        void write_word (u32 address, u32 value, int flags);
+
+        // Reloads Pipeline
+        void refill_pipeline();
+        
         // swi #nn HLE-handler
         virtual void software_interrupt(int number) {}
-
-        // memory access helpers
-        #include "memory.hpp"
 
     private:
 
@@ -82,7 +92,7 @@ namespace GameBoyAdvance {
         
         void switch_mode(Mode new_mode);
 
-        // CPU flag helpers
+        // Flag Helpers
         bool check_condition(Condition condition);
         void update_sign_flag(u32 result);
         void update_zero_flag(u64 result);
@@ -90,7 +100,7 @@ namespace GameBoyAdvance {
         void update_overflow_add(u32 result, u32 operand1, u32 operand2);
         void update_overflow_sub(u32 result, u32 operand1, u32 operand2);
 
-        // Barrel Shifter Methods
+        // Barrel Shifter Helpers
         static void shift_lsl(u32& operand, u32 amount, bool& carry);
         static void shift_lsr(u32& operand, u32 amount, bool& carry, bool immediate);
         static void shift_asr(u32& operand, u32 amount, bool& carry, bool immediate);
