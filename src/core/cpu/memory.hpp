@@ -40,15 +40,73 @@ u16 bus_read_hword(u32 address, int flags) final {
 }
 
 u32 bus_read_word(u32 address, int flags) final {
-    register int page = (address >> 24) & 15;
-    register read_func func = s_read_table[page];
+    switch ((address >> 24) & 15) {
+        // BIOS memory
+        case 0x0: {
+            if (address >= 0x4000) {
+                return 0;
+            }
+            return *(u32*)(&m_bios[address]);
+        }
+        // WRAM memory
+        case 0x2: {
+            return  bus_read_hword(address,     flags) |
+                   (bus_read_hword(address + 2, flags) << 16);
+        }
+        // IWRAM memory
+        case 0x3: {
+            return *(u32*)(&m_iram[address & 0x7FFF]);
+        }
+        // IO
+        case 0x4: {
+            return  read_mmio(address) |
+                   (read_mmio(address + 1) << 8 ) |
+                   (read_mmio(address + 2) << 16) |
+                   (read_mmio(address + 3) << 24);
+        }
+        // PRAM memory
+        case 0x5: {
+            return  bus_read_hword(address,     flags) |
+                   (bus_read_hword(address + 2, flags) << 16);
+        }
+        // VRAM memory
+        case 0x6: {
+            return  bus_read_hword(address,     flags) |
+                   (bus_read_hword(address + 2, flags) << 16);
+        }
+        // OAM
+        case 0x7: {
+            return *(u32*)(&m_oam[address & 0x3FF]);
+        }
+        // ROM (cartridge)
+        case 0x8:
+        case 0x9: {
+            address &= 0x1FFFFFF;
+            if (address >= m_rom_size) {
+                return 0;
+            }
+            return  *(u32*)(&m_rom[address]);
+        }
+        // SRAM/FLASH
+        case 0xE: {
+            if (!m_backup) {
+                return 0;
+            }
+            return m_backup->read_byte(address) * 0x01010101;
+        }
+            
+        default: {
+            register int page = (address >> 24) & 15;
+            register read_func func = s_read_table[page];
 
-    m_cycles -= s_mem_cycles32[page];
+            m_cycles -= s_mem_cycles32[page];
 
-    return (this->*func)(address) |
-           ((this->*func)(address + 1) << 8) |
-           ((this->*func)(address + 2) << 16) |
-           ((this->*func)(address + 3) << 24);
+            return (this->*func)(address) |
+                   ((this->*func)(address + 1) << 8) |
+                   ((this->*func)(address + 2) << 16) |
+                   ((this->*func)(address + 3) << 24);
+        }
+    }
 }
 
 void bus_write_byte(u32 address, u8 value, int flags) final {
