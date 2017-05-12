@@ -27,17 +27,54 @@
 //     which hopefully should make it impossible to access two memory areas at the time.
 
 //TODO: poor big-endian is crying right now :(
-#define READ_FAST_8 (buffer, address) *(u8* )(&buffer[address])
+#define READ_FAST_8(buffer, address)  *(u8*)(&buffer[address])
 #define READ_FAST_16(buffer, address) *(u16*)(&buffer[address])
 #define READ_FAST_32(buffer, address) *(u32*)(&buffer[address])
 
 u8 bus_read_byte(u32 address, int flags) final {
-    register int page = (address >> 24) & 15;
-    register read_func func = s_read_table[page];
+    int page = (address >> 24) & 15;
 
+    // poor mans cycle counting
     m_cycles -= s_mem_cycles8_16[page];
 
-    return (this->*func)(address);
+    switch (page) {
+        case 0x0: {
+            if (address >= 0x4000) {
+                return 0;
+            }
+            return READ_FAST_8(m_bios, address);
+        }
+        case 0x2: return READ_FAST_8(m_wram, address & 0x3FFFF);
+        case 0x3: return READ_FAST_8(m_iram, address & 0x7FFF );
+        case 0x4: {
+            return  read_mmio(address) |
+                   (read_mmio(address + 1) << 8 );
+        }
+        case 0x5: return READ_FAST_8(m_pal, address & 0x3FF);
+        case 0x6: {
+            address &= 0x1FFFF;
+            if (address >= 0x18000) {
+                address &= ~0x8000;
+            }
+            return READ_FAST_8(m_vram, address);
+        }
+        case 0x7: return READ_FAST_8(m_oam, address & 0x3FF);
+        case 0x8:
+        case 0x9: {
+            address &= 0x1FFFFFF;
+            if (address >= m_rom_size) {
+                return address >> 1;
+            }
+            return READ_FAST_8(m_rom, address);
+        }
+        case 0xE: {
+            if (!m_backup) {
+                return 0;
+            }
+            return m_backup->read_byte(address);
+        }
+        default: return 0;
+    }
 }
 
 u16 bus_read_hword(u32 address, int flags) final {
