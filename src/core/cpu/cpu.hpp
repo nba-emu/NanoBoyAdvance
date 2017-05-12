@@ -101,7 +101,7 @@ namespace GameBoyAdvance {
         };
 
         static constexpr int s_mem_cycles32[16] = {
-            1, 1, 6, 1, 1, 2, 2, 1, 5, 5, 1, 1, 1, 1, 5, 1
+            1, 1, 6, 1, 1, 2, 2, 1, 8, 8, 1, 1, 1, 1, 5, 1
         };
 
         static constexpr read_func s_read_table[16] = {
