@@ -31,12 +31,75 @@ u8 bus_read_byte(u32 address, int flags) final {
 }
 
 u16 bus_read_hword(u32 address, int flags) final {
-    register int page = (address >> 24) & 15;
+    /*register int page = (address >> 24) & 15;
     register read_func func = s_read_table[page];
 
     m_cycles -= s_mem_cycles8_16[page];
 
-    return (this->*func)(address) | ((this->*func)(address + 1) << 8);
+    return (this->*func)(address) | ((this->*func)(address + 1) << 8);*/
+    
+    int page = (address >> 24) & 15;
+    
+    m_cycles -= s_mem_cycles8_16[page];
+    
+    switch (page) {
+        // BIOS
+        case 0x0: {
+            if (address >= 0x4000) {
+                return 0;
+            }
+            return *(u16*)(&m_bios[address]);
+        }
+        // WRAM
+        case 0x2: {
+            return *(u16*)(&m_wram[address & 0x3FFFF]);
+        }
+        // IWRAM
+        case 0x3: {
+            return *(u16*)(&m_iram[address & 0x7FFF]);
+        }
+        // IO
+        case 0x4: {
+            return  read_mmio(address) |
+                   (read_mmio(address + 1) << 8 );
+        }
+        // PRAM
+        case 0x5: {
+            return *(u16*)(&m_pal[address & 0x3FF]);
+        }
+        // VRAM
+        case 0x6: {
+            address &= 0x1FFFF;
+            if (address >= 0x18000) {
+                address &= ~0x8000;
+            }
+            return *(u16*)(&m_vram[address]);
+        }
+        // OAM
+        case 0x7: {
+            return *(u16*)(&m_oam[address & 0x3FF]);
+        }
+        // ROM (cartridge)
+        case 0x8:
+        case 0x9: {
+            address &= 0x1FFFFFF;
+            if (address >= m_rom_size) {
+                return address >> 1;
+            }
+            return *(u16*)(&m_rom[address]);
+        }
+        // SRAM/FLASH
+        case 0xE: {
+            if (!m_backup) {
+                return 0;
+            }
+            return m_backup->read_byte(address) * 0x0101;
+        }
+            
+        default: {
+            return 0;
+        }
+    }
 }
 
 u32 bus_read_word(u32 address, int flags) final {
@@ -73,7 +136,11 @@ u32 bus_read_word(u32 address, int flags) final {
         }
         // VRAM
         case 0x6: {
-            return *(u32*)(&m_vram[address & 0x1FFFF]);
+            address &= 0x1FFFF;
+            if (address >= 0x18000) {
+                address &= ~0x8000;
+            }
+            return *(u32*)(&m_vram[address]);
         }
         // OAM
         case 0x7: {
@@ -82,8 +149,11 @@ u32 bus_read_word(u32 address, int flags) final {
         // ROM (cartridge)
         case 0x8:
         case 0x9: {
-            return  bus_read_hword(address,     flags) |
-                   (bus_read_hword(address + 2, flags) << 16);
+            address &= 0x1FFFFFF;
+            if (address >= m_rom_size) {
+                return address >> 1;
+            }
+            return *(u32*)(&m_rom[address]);
         }
         // SRAM/FLASH
         case 0xE: {
