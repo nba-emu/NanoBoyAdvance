@@ -98,7 +98,7 @@ namespace GameBoyAdvance {
             if (x >= 240) x -= 512;            
             if (y >= 160) y -= 256;
             
-            bool affine    = attribute0 & 256;
+            bool affine    = attribute0 & (1<<8);
             bool attr0bit9 = attribute0 & (1<<9);
             
             // check if OBJ is disabled
