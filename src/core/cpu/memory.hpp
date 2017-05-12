@@ -41,18 +41,18 @@ u16 bus_read_hword(u32 address, int flags) final {
 
 u32 bus_read_word(u32 address, int flags) final {
     switch ((address >> 24) & 15) {
-        // BIOS memory
+        // BIOS
         case 0x0: {
             if (address >= 0x4000) {
                 return 0;
             }
             return *(u32*)(&m_bios[address]);
         }
-        // WRAM memory
+        // WRAM
         case 0x2: {
             return *(u32*)(&m_wram[address & 0x3FFFF]);
         }
-        // IWRAM memory
+        // IWRAM
         case 0x3: {
             return *(u32*)(&m_iram[address & 0x7FFF]);
         }
@@ -63,12 +63,12 @@ u32 bus_read_word(u32 address, int flags) final {
                    (read_mmio(address + 2) << 16) |
                    (read_mmio(address + 3) << 24);
         }
-        // PRAM memory
+        // PRAM
         case 0x5: {
             return  bus_read_hword(address,     flags) |
                    (bus_read_hword(address + 2, flags) << 16);
         }
-        // VRAM memory
+        // VRAM
         case 0x6: {
             return  bus_read_hword(address,     flags) |
                    (bus_read_hword(address + 2, flags) << 16);
@@ -80,11 +80,8 @@ u32 bus_read_word(u32 address, int flags) final {
         // ROM (cartridge)
         case 0x8:
         case 0x9: {
-            address &= 0x1FFFFFF;
-            if (address >= m_rom_size) {
-                return 0;
-            }
-            return  *(u32*)(&m_rom[address]);
+            return  bus_read_hword(address,     flags) |
+                   (bus_read_hword(address + 2, flags) << 16);
         }
         // SRAM/FLASH
         case 0xE: {
