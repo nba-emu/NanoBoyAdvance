@@ -21,8 +21,7 @@
 
 namespace GameBoyAdvance {
     
-    void PPU::render_bitmap_1()
-    {
+    void PPU::render_bitmap_1() {
         u32 offset = m_io.vcount * 480;
 
         for (int x = 0; x < 240; x++) {
