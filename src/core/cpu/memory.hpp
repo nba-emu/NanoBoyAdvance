@@ -50,8 +50,7 @@ u32 bus_read_word(u32 address, int flags) final {
         }
         // WRAM memory
         case 0x2: {
-            return  bus_read_hword(address,     flags) |
-                   (bus_read_hword(address + 2, flags) << 16);
+            return *(u32*)(&m_wram[address & 0x3FFFF]);
         }
         // IWRAM memory
         case 0x3: {
@@ -96,15 +95,7 @@ u32 bus_read_word(u32 address, int flags) final {
         }
             
         default: {
-            register int page = (address >> 24) & 15;
-            register read_func func = s_read_table[page];
-
-            m_cycles -= s_mem_cycles32[page];
-
-            return (this->*func)(address) |
-                   ((this->*func)(address + 1) << 8) |
-                   ((this->*func)(address + 2) << 16) |
-                   ((this->*func)(address + 3) << 24);
+            return 0;
         }
     }
 }
