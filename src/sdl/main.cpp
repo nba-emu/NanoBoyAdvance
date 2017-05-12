@@ -38,6 +38,8 @@ SDL_Window*   g_window;
 SDL_Texture*  g_texture;
 SDL_Renderer* g_renderer;
 
+bool g_fullscreen = false;
+
 void sound_cb(APU* apu, u16* stream, int length) {
     apu->fill_buffer(stream, length);
 }
@@ -254,6 +256,16 @@ int main(int argc, char** argv) {
                         continue;
                     case SDLK_F9:
                         emu.reset();
+                        continue;
+                    case SDLK_F10:
+                        if (!released) continue;
+                        
+                        if (g_fullscreen) {
+                            SDL_SetWindowFullscreen(g_window, 0);
+                        } else {
+                            SDL_SetWindowFullscreen(g_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+                        }
+                        g_fullscreen = !g_fullscreen;
                         continue;
                     default: 
                         continue;
