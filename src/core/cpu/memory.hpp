@@ -40,7 +40,11 @@ u16 bus_read_hword(u32 address, int flags) final {
 }
 
 u32 bus_read_word(u32 address, int flags) final {
-    switch ((address >> 24) & 15) {
+    const int page = (address >> 24) & 15;
+    
+    m_cycles -= s_mem_cycles32[page];
+    
+    switch (page) {
         // BIOS
         case 0x0: {
             if (address >= 0x4000) {
@@ -65,13 +69,11 @@ u32 bus_read_word(u32 address, int flags) final {
         }
         // PRAM
         case 0x5: {
-            return  bus_read_hword(address,     flags) |
-                   (bus_read_hword(address + 2, flags) << 16);
+            return *(u32*)(&m_pal[address & 0x3FF]);
         }
         // VRAM
         case 0x6: {
-            return  bus_read_hword(address,     flags) |
-                   (bus_read_hword(address + 2, flags) << 16);
+            return *(u32*)(&m_vram[address & 0x1FFFF]);
         }
         // OAM
         case 0x7: {
