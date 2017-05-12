@@ -27,7 +27,7 @@ using namespace Util;
 
 namespace GameBoyAdvance {
     
-    u8 CPU::read_mmio(u32 address) {
+    auto CPU::read_mmio(u32 address) -> u8 {
         auto& ppu_io = m_ppu.get_io();
         auto& apu_io = m_apu.get_io();
 

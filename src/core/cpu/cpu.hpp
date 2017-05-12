@@ -33,9 +33,6 @@ namespace GameBoyAdvance {
     
     class CPU : public ARM {
     private:
-        typedef u8   (CPU::*read_func)(u32 address);
-        typedef void (CPU::*write_func)(u32 address, u8 value);
-
         Config* m_config;
         
         u8*    m_rom;
@@ -62,26 +59,9 @@ namespace GameBoyAdvance {
         int  m_current_dma;
 
         void load_game();
-                
-        u8 read_bios(u32 address);
-        u8 read_wram(u32 address);
-        u8 read_iram(u32 address);
-        u8 read_mmio(u32 address);
-        u8 read_pal(u32 address);
-        u8 read_vram(u32 address);
-        u8 read_oam(u32 address);
-        u8 read_rom(u32 address);
-        u8 read_save(u32 address);
-        u8 read_invalid(u32 address);
-
-        void write_wram(u32 address, u8 value);
-        void write_iram(u32 address, u8 value);
+        
+        auto read_mmio (u32 address) -> u8;
         void write_mmio(u32 address, u8 value);
-        void write_pal(u32 address, u8 value);
-        void write_vram(u32 address, u8 value);
-        void write_oam(u32 address, u8 value);
-        void write_save(u32 address, u8 value);
-        void write_invalid(u32 address, u8 value);
 
         void run_for(int cycles);
 
@@ -102,44 +82,6 @@ namespace GameBoyAdvance {
 
         static constexpr int s_mem_cycles32[16] = {
             1, 1, 6, 1, 1, 2, 2, 1, 8, 8, 1, 1, 1, 1, 5, 1
-        };
-
-        static constexpr read_func s_read_table[16] = {
-            &CPU::read_bios,
-            &CPU::read_invalid,
-            &CPU::read_wram,
-            &CPU::read_iram,
-            &CPU::read_mmio,
-            &CPU::read_pal,
-            &CPU::read_vram,
-            &CPU::read_oam,
-            &CPU::read_rom,
-            &CPU::read_rom,
-            &CPU::read_invalid,
-            &CPU::read_invalid,
-            &CPU::read_invalid,
-            &CPU::read_invalid,
-            &CPU::read_save,
-            &CPU::read_invalid
-        };
-
-        static constexpr write_func s_write_table[16] = {
-            &CPU::write_invalid,
-            &CPU::write_invalid,
-            &CPU::write_wram,
-            &CPU::write_iram,
-            &CPU::write_mmio,
-            &CPU::write_pal,
-            &CPU::write_vram,
-            &CPU::write_oam,
-            &CPU::write_invalid,
-            &CPU::write_invalid,
-            &CPU::write_invalid,
-            &CPU::write_invalid,
-            &CPU::write_invalid,
-            &CPU::write_invalid,
-            &CPU::write_save,
-            &CPU::write_invalid
         };
 
     public:

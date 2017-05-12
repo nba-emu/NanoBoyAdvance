@@ -21,7 +21,6 @@ set(SOURCES
     ${ARM_SRC}
     cpu/io.cpp
     cpu/cpu.cpp
-    cpu/memory.cpp
     cpu/mmio.cpp
     cpu/timer.cpp
     cpu/dma.cpp
