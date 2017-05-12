@@ -21,6 +21,16 @@
 
 #ifdef CPU_INCLUDE
 
+// TODO(accuracy): 
+//     Verify that this kind of reading works for edge cases.
+//     Theoretically all addresses that are being passed should be aligned
+//     which hopefully should make it impossible to access two memory areas at the time.
+
+//TODO: poor big-endian is crying right now :(
+#define READ_FAST_8 (buffer, address) *(u8* )(&buffer[address])
+#define READ_FAST_16(buffer, address) *(u16*)(&buffer[address])
+#define READ_FAST_32(buffer, address) *(u32*)(&buffer[address])
+
 u8 bus_read_byte(u32 address, int flags) final {
     register int page = (address >> 24) & 15;
     register read_func func = s_read_table[page];
@@ -31,131 +41,90 @@ u8 bus_read_byte(u32 address, int flags) final {
 }
 
 u16 bus_read_hword(u32 address, int flags) final {
-    /*register int page = (address >> 24) & 15;
-    register read_func func = s_read_table[page];
-
-    m_cycles -= s_mem_cycles8_16[page];
-
-    return (this->*func)(address) | ((this->*func)(address + 1) << 8);*/
-    
     int page = (address >> 24) & 15;
     
+    // poor mans cycle counting
     m_cycles -= s_mem_cycles8_16[page];
     
     switch (page) {
-        // BIOS
         case 0x0: {
             if (address >= 0x4000) {
                 return 0;
             }
-            return *(u16*)(&m_bios[address]);
+            return READ_FAST_16(m_bios, address);
         }
-        // WRAM
-        case 0x2: {
-            return *(u16*)(&m_wram[address & 0x3FFFF]);
-        }
-        // IWRAM
-        case 0x3: {
-            return *(u16*)(&m_iram[address & 0x7FFF]);
-        }
-        // IO
+        case 0x2: return READ_FAST_16(m_wram, address & 0x3FFFF);
+        case 0x3: return READ_FAST_16(m_iram, address & 0x7FFF );
         case 0x4: {
             return  read_mmio(address) |
                    (read_mmio(address + 1) << 8 );
         }
-        // PRAM
-        case 0x5: {
-            return *(u16*)(&m_pal[address & 0x3FF]);
-        }
-        // VRAM
+        case 0x5: return READ_FAST_16(m_pal, address & 0x3FF);
         case 0x6: {
             address &= 0x1FFFF;
             if (address >= 0x18000) {
                 address &= ~0x8000;
             }
-            return *(u16*)(&m_vram[address]);
+            return READ_FAST_16(m_vram, address);
         }
-        // OAM
-        case 0x7: {
-            return *(u16*)(&m_oam[address & 0x3FF]);
-        }
-        // ROM (cartridge)
+        case 0x7: return READ_FAST_16(m_oam, address & 0x3FF);
         case 0x8:
         case 0x9: {
             address &= 0x1FFFFFF;
             if (address >= m_rom_size) {
                 return address >> 1;
             }
-            return *(u16*)(&m_rom[address]);
+            return READ_FAST_16(m_rom, address);
         }
-        // SRAM/FLASH
         case 0xE: {
             if (!m_backup) {
                 return 0;
             }
             return m_backup->read_byte(address) * 0x0101;
         }
-            
-        default: {
-            return 0;
-        }
+        default: return 0;
     }
 }
 
 u32 bus_read_word(u32 address, int flags) final {
     const int page = (address >> 24) & 15;
     
+    // poor mans cycle counting
     m_cycles -= s_mem_cycles32[page];
     
     switch (page) {
-        // BIOS
         case 0x0: {
             if (address >= 0x4000) {
                 return 0;
             }
-            return *(u32*)(&m_bios[address]);
+            return READ_FAST_32(m_bios, address);
         }
-        // WRAM
-        case 0x2: {
-            return *(u32*)(&m_wram[address & 0x3FFFF]);
-        }
-        // IWRAM
-        case 0x3: {
-            return *(u32*)(&m_iram[address & 0x7FFF]);
-        }
-        // IO
+        case 0x2: return READ_FAST_32(m_wram, address & 0x3FFFF);
+        case 0x3: return READ_FAST_32(m_iram, address & 0x7FFF );
         case 0x4: {
             return  read_mmio(address) |
                    (read_mmio(address + 1) << 8 ) |
                    (read_mmio(address + 2) << 16) |
                    (read_mmio(address + 3) << 24);
         }
-        // PRAM
-        case 0x5: {
-            return *(u32*)(&m_pal[address & 0x3FF]);
-        }
-        // VRAM
+        case 0x5: return READ_FAST_32(m_pal, address & 0x3FF);
         case 0x6: {
             address &= 0x1FFFF;
             if (address >= 0x18000) {
                 address &= ~0x8000;
             }
-            return *(u32*)(&m_vram[address]);
+            return READ_FAST_32(m_vram, address);
         }
-        // OAM
-        case 0x7: {
-            return *(u32*)(&m_oam[address & 0x3FF]);
-        }
-        // ROM (cartridge)
+        case 0x7: return READ_FAST_32(m_oam, address & 0x3FF);
         case 0x8:
         case 0x9: {
             address &= 0x1FFFFFF;
             if (address >= m_rom_size) {
-                return address >> 1;
+                return ( (address      >> 1) &  0xFFFF) |
+                       (((address + 2) >> 1) << 16    );
             }
-            return *(u32*)(&m_rom[address]);
+            return READ_FAST_32(m_rom, address);
         }
-        // SRAM/FLASH
         case 0xE: {
             if (!m_backup) {
                 return 0;
@@ -163,9 +132,7 @@ u32 bus_read_word(u32 address, int flags) final {
             return m_backup->read_byte(address) * 0x01010101;
         }
             
-        default: {
-            return 0;
-        }
+        default: return 0;
     }
 }
 
