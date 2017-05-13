@@ -130,6 +130,8 @@ namespace GameBoyAdvance {
             
             delete data;
         }
+        
+        bios_opcode = 0;
     }
 
     APU& CPU::get_apu() {

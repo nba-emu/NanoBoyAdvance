@@ -38,6 +38,16 @@
 #define WRITE_FAST_16(buffer, address, value) *(u16*)(&buffer[address]) = value;
 #define WRITE_FAST_32(buffer, address, value) *(u32*)(&buffer[address]) = value;
 
+auto read_bios(u32 address) -> u32 {    
+    if (address >= 0x4000) {
+        return 0;
+    }
+    if (get_context().r15 >= 0x4000) {
+        return bios_opcode;
+    }
+    return bios_opcode = READ_FAST_32(m_bios, address);
+}
+
 u8 bus_read_byte(u32 address, int flags) final {
     int page = (address >> 24) & 15;
 
@@ -46,10 +56,7 @@ u8 bus_read_byte(u32 address, int flags) final {
 
     switch (page) {
         case 0x0: {
-            if (address >= 0x4000) {
-                return 0;
-            }
-            return READ_FAST_8(m_bios, address);
+            return read_bios(address);
         }
         case 0x2: return READ_FAST_8(m_wram, address & 0x3FFFF);
         case 0x3: return READ_FAST_8(m_iram, address & 0x7FFF );
@@ -92,10 +99,7 @@ u16 bus_read_hword(u32 address, int flags) final {
     
     switch (page) {
         case 0x0: {
-            if (address >= 0x4000) {
-                return 0;
-            }
-            return READ_FAST_16(m_bios, address);
+            return read_bios(address);
         }
         case 0x2: return READ_FAST_16(m_wram, address & 0x3FFFF);
         case 0x3: return READ_FAST_16(m_iram, address & 0x7FFF );
@@ -139,10 +143,7 @@ u32 bus_read_word(u32 address, int flags) final {
     
     switch (page) {
         case 0x0: {
-            if (address >= 0x4000) {
-                return 0;
-            }
-            return READ_FAST_32(m_bios, address);
+            return read_bios(address);
         }
         case 0x2: return READ_FAST_32(m_wram, address & 0x3FFFF);
         case 0x3: return READ_FAST_32(m_iram, address & 0x7FFF );

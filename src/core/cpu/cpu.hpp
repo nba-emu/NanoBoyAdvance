@@ -48,6 +48,8 @@ namespace GameBoyAdvance {
 
         u8 m_mmio[0x800];
 
+        u32 bios_opcode;
+        
         #include "io.hpp"
 
         PPU m_ppu;
