@@ -110,9 +110,9 @@ namespace GameBoyAdvance {
         auto& dma = m_io.dma[dma_id];
         
         for (int i = 0; i < 4; i++) {
-            u32 value = read_word(dma.internal.src_addr & ~3, MEM_NONE);
+            u32 value = read_word(dma.internal.src_addr, MEM_NONE);
             
-            write_word(dma.internal.dst_addr & ~3, value, MEM_NONE);
+            write_word(dma.internal.dst_addr, value, MEM_NONE);
             
             dma.internal.src_addr += 4;
         }
