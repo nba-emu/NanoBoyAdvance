@@ -600,20 +600,21 @@ namespace GameBoyAdvance {
         // THUMB.19 Long branch with link.
         u32 imm = instruction & 0x7FF;
 
-        if (second_instruction) {
+        if (!second_instruction) {
+            imm <<= 12;
+            if (imm & 0x400000) {
+                imm |= 0xFF800000;
+            }
+            ctx.r14 = ctx.r15 + imm;
+        } else {
             u32 temp_pc = ctx.r15 - 2;
-            u32 value = ctx.reg[14] + (imm << 1);
 
             // update r15/pc
-            value &= 0x7FFFFF;
-            ctx.r15 &= ~0x7FFFFF;
-            ctx.r15 |= value & ~1;
+            ctx.r15 = (ctx.r14 + (imm << 1)) & ~1;
 
             // store return address and flush pipe.
             ctx.reg[14] = temp_pc | 1;
             ctx.pipe.do_flush = true;
-        } else {
-            ctx.reg[14] = ctx.r15 + (imm << 12);
         }
     }
 }
