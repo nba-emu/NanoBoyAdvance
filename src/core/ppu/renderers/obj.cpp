@@ -183,11 +183,11 @@ namespace GameBoyAdvance {
                             tex_x < 0      || tex_y < 0     ) { continue; }
                         
                         if (h_flip) {
-                            tex_x = width  - tex_x;
+                            tex_x = width - tex_x - 1;
                         }
                         
                         if (v_flip) {
-                            tex_y = height - tex_y;
+                            tex_y = height - tex_y - 1;
                         }
                         
                         int tile_x  = tex_x  & 7;
