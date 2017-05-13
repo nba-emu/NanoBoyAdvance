@@ -203,13 +203,12 @@ void bus_write_byte(u32 address, u8 value, int flags) final {
             WRITE_FAST_16(m_vram, address, value * 0x0101);
             break;
         }
-        case 0x7: WRITE_FAST_16(m_oam, address & 0x3FF, value); break;
+        case 0x7: WRITE_FAST_16(m_oam, address & 0x3FF, value * 0x0101); break;
         case 0xE: {
             if (!m_backup) { 
                 break;
             }
-            m_backup->write_byte(address + 0, value); 
-            m_backup->write_byte(address + 1, value); 
+            m_backup->write_byte(address, value); 
             break;
         }
         default: break; // TODO: throw error
