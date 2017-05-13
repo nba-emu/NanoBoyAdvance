@@ -80,39 +80,38 @@ namespace GameBoyAdvance {
     
     void PPU::compose_scanline() {
         
+        u16 backdrop_color = (m_pal[1] << 8) | m_pal[0];
+        u32* line_buffer   = m_framebuffer + m_io.vcount * 240;
+        
         auto win0in   = m_io.winin.enable[0];
         auto win1in   = m_io.winin.enable[1];
         auto objwinin = m_io.winout.enable[1];
         
-        u16 backdrop_color = (m_pal[1] << 8) | m_pal[0];
-        u32* line_buffer   = m_framebuffer + m_io.vcount * 240;
-        
-        const bool inside[6][3] = {
-            { win0in[LAYER_BG0], win1in[LAYER_BG0], objwinin[LAYER_BG0] },
-            { win0in[LAYER_BG1], win1in[LAYER_BG1], objwinin[LAYER_BG1] },
-            { win0in[LAYER_BG2], win1in[LAYER_BG2], objwinin[LAYER_BG2] },
-            { win0in[LAYER_BG3], win1in[LAYER_BG3], objwinin[LAYER_BG3] },
-            { win0in[LAYER_OBJ], win1in[LAYER_OBJ], objwinin[LAYER_OBJ] },
-            { win0in[LAYER_SFX], win1in[LAYER_SFX], objwinin[LAYER_SFX] }
-        };
+        auto win_enable = m_io.control.win_enable;
+        bool no_windows = !win_enable[0] && !win_enable[1] && !win_enable[2];
        
         auto bgcnt   = m_io.bgcnt;
         auto outside = m_io.winout.enable[0];
         auto enable  = m_io.control.enable;
 
         for (int x = 0; x < 240; x++) {
-            int layer[2] = { LAYER_BD, LAYER_BD };
-            u16 pixel[2] = { backdrop_color, 0 };
             
-            auto& obj = m_obj_layer[x];
+            int layer[2] = { LAYER_BD, LAYER_BD };
+            u16 pixel[2] = { backdrop_color, 0  };
+            
+            const auto& obj = m_obj_layer[x];
+            
+            const bool win0   = win_enable[0] && m_win_mask[0][x];
+            const bool win1   = win_enable[1] && m_win_mask[1][x];
+            const bool objwin = win_enable[2] && obj.window;
+            
+            bool* visible = win0   ? win0in   : 
+                            win1   ? win1in   :
+                            objwin ? objwinin : outside; 
             
             for (int j = 3; j >= 0; j--) {
-                
                 for (int k = 3; k >= 0; k--) {
-                    bool visible = is_visible(x, inside[k], outside[k]);
-
-                    if (enable[k] && bgcnt[k].priority == j && visible) {
-                        
+                    if (enable[k] && bgcnt[k].priority == j && (visible[k] || no_windows)) {
                         u16 new_pixel = m_buffer[k][x];
                         
                         if (new_pixel != COLOR_TRANSPARENT) {
@@ -124,9 +123,7 @@ namespace GameBoyAdvance {
                     }
                 }
                 
-                if (enable[LAYER_OBJ] && obj.prio == j && 
-                    is_visible(x, inside[LAYER_OBJ], outside[LAYER_OBJ])) {
-
+                if (enable[LAYER_OBJ] && obj.prio == j && (visible[LAYER_OBJ] || no_windows)) {
                     u16 new_pixel = obj.pixel;
                         
                     if (new_pixel != COLOR_TRANSPARENT) {
@@ -138,9 +135,8 @@ namespace GameBoyAdvance {
                 }
             }
             
-            if (is_visible(x, inside[LAYER_SFX], outside[LAYER_SFX])) {
-                
-                SpecialEffect sfx = m_io.bldcnt.sfx;
+            if (visible[LAYER_SFX] || no_windows) {
+                auto sfx          = m_io.bldcnt.sfx;
                 bool is_alpha_obj = layer[0] == LAYER_OBJ && obj.alpha;
                 bool sfx_above    = m_io.bldcnt.targets[0][layer[0]] || is_alpha_obj;
                 bool sfx_below    = m_io.bldcnt.targets[1][layer[1]];
