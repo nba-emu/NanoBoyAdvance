@@ -31,7 +31,7 @@
 
 namespace GameBoyAdvance {
     
-    class CPU : public ARM {
+    class CPU : private ARM {
     private:
         Config* m_config;
         
