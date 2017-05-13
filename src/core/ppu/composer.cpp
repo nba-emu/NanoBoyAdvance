@@ -83,16 +83,15 @@ namespace GameBoyAdvance {
         u16 backdrop_color = (m_pal[1] << 8) | m_pal[0];
         u32* line_buffer   = m_framebuffer + m_io.vcount * 240;
         
-        auto win0in   = m_io.winin.enable[0];
-        auto win1in   = m_io.winin.enable[1];
-        auto objwinin = m_io.winout.enable[1];
+        const auto& bgcnt    = m_io.bgcnt;
+        const auto& outside  = m_io.winout.enable[0];
+        const auto& enable   = m_io.control.enable;
+        const auto& win0in   = m_io.winin.enable[0];
+        const auto& win1in   = m_io.winin.enable[1];
+        const auto& objwinin = m_io.winout.enable[1];
         
         auto win_enable = m_io.control.win_enable;
         bool no_windows = !win_enable[0] && !win_enable[1] && !win_enable[2];
-       
-        auto bgcnt   = m_io.bgcnt;
-        auto outside = m_io.winout.enable[0];
-        auto enable  = m_io.control.enable;
 
         for (int x = 0; x < 240; x++) {
             
