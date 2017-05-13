@@ -186,7 +186,7 @@ void bus_write_byte(u32 address, u8 value, int flags) final {
     int page = (address >> 24) & 15;
     
     // poor mans cycle counting
-    m_cycles -= s_mem_cycles32[page];
+    m_cycles -= s_mem_cycles8_16[page];
     
     switch (page) {
         case 0x2: WRITE_FAST_8(m_wram, address & 0x3FFFF, value); break;
@@ -220,7 +220,7 @@ void bus_write_hword(u32 address, u16 value, int flags) final {
     int page = (address >> 24) & 15;
     
     // poor mans cycle counting
-    m_cycles -= s_mem_cycles32[page];
+    m_cycles -= s_mem_cycles8_16[page];
     
     switch (page) {
         case 0x2: WRITE_FAST_16(m_wram, address & 0x3FFFF, value); break;
