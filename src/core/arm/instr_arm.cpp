@@ -307,13 +307,15 @@ namespace GameBoyAdvance {
             } else {
                 op = ctx.reg[instruction & 0xF];
             }
-
+            
             u32 value = op & mask;
 
             // write to cpsr or spsr
             if (!use_spsr) {
-                // todo: check that mode is affected?
-                switch_mode(static_cast<Mode>(value & MASK_MODE));
+                // only switch mode if it actually gets written to
+                if (mask & 0xFF) {
+                    switch_mode(static_cast<Mode>(value & MASK_MODE));
+                }
                 ctx.cpsr = (ctx.cpsr & ~mask) | value;
             } else {
                 *ctx.p_spsr = (*ctx.p_spsr & ~mask) | value;
