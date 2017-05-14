@@ -24,6 +24,45 @@
 
 #define XOR_BIT_31(a, b) (((a) ^ (b)) >> 31)
 
+// MEH: place this somewhere else. It should be inline though :/
+inline void ARM::step() {
+    auto& pipe  = ctx.pipe;
+    bool  thumb = ctx.cpsr & MASK_THUMB;
+
+    if (thumb) {
+        ctx.r15 &= ~1;
+
+        if (pipe.index == 0) {
+            pipe.opcode[2] = bus_read_hword(ctx.r15, MEM_NONE);
+        } else {
+            pipe.opcode[pipe.index - 1] = bus_read_hword(ctx.r15, MEM_NONE);
+        }
+
+        thumb_execute(pipe.opcode[pipe.index]);
+    } else {
+        ctx.r15 &= ~3;
+
+        if (pipe.index == 0) {
+            pipe.opcode[2] = bus_read_word(ctx.r15, MEM_NONE);
+        } else {
+            pipe.opcode[pipe.index - 1] = bus_read_word(ctx.r15, MEM_NONE);
+        }
+
+        arm_execute(pipe.opcode[pipe.index]);
+    }
+
+    if (pipe.do_flush) {
+        refill_pipeline();
+        return;
+    }
+
+    // update pipeline status
+    pipe.index = (pipe.index + 1) % 3;
+
+    // update instruction pointer
+    ctx.r15 += thumb ? 2 : 4;
+}
+
 inline bool ARM::check_condition(Condition condition) {
     if (condition == COND_AL) {
         return true;
