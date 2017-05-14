@@ -74,6 +74,8 @@ u8 bus_read_byte(u32 address, int flags) final {
         }
         case 0x7: return READ_FAST_8(m_oam, address & 0x3FF);
         case 0x8: case 0x9:
+        case 0xA: case 0xB: 
+        case 0xC: case 0xD: {
             address &= 0x1FFFFFF;
             if (address >= m_rom_size) {
                 return address >> 1;
@@ -116,6 +118,8 @@ u16 bus_read_hword(u32 address, int flags) final {
         }
         case 0x7: return READ_FAST_16(m_oam, address & 0x3FF);
         case 0x8: case 0x9:
+        case 0xA: case 0xB: 
+        case 0xC: case 0xD: {
             address &= 0x1FFFFFF;
             if (address >= m_rom_size) {
                 return address >> 1;
@@ -161,6 +165,8 @@ u32 bus_read_word(u32 address, int flags) final {
         }
         case 0x7: return READ_FAST_32(m_oam, address & 0x3FF);
         case 0x8: case 0x9:
+        case 0xA: case 0xB: 
+        case 0xC: case 0xD: {
             address &= 0x1FFFFFF;
             if (address >= m_rom_size) {
                 return ( (address      >> 1) &  0xFFFF) |
