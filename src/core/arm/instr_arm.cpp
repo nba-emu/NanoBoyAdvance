@@ -575,7 +575,7 @@ namespace GameBoyAdvance {
         Mode old_mode;
         bool mode_switched = false;
 
-        // hardware corner case. not sure if emulated correctly.
+        /*// hardware corner case. not sure if emulated correctly.
         if (register_list == 0) {
             if (load) {
                 ctx.r15 = read_word(ctx.reg[base], MEM_NONE);
@@ -585,7 +585,7 @@ namespace GameBoyAdvance {
             }
             ctx.reg[base] += base_increment ? 64 : -64;
             return;
-        }
+        }*/
 
         if (user_mode && (!load || !transfer_r15)) {
             old_mode = static_cast<Mode>(ctx.cpsr & MASK_MODE);

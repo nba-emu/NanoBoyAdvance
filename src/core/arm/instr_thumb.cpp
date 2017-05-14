@@ -436,7 +436,7 @@ namespace GameBoyAdvance {
         const int register_list = instruction & 0xFF;
 
         // hardware corner case. not sure if emulated correctly.
-        if (!rbit && register_list == 0) {
+        /*if (!rbit && register_list == 0) {
             if (pop) {
                 ctx.r15 = read_word(addr, MEM_NONE);
                 ctx.pipe.do_flush   = true;
@@ -445,7 +445,7 @@ namespace GameBoyAdvance {
             }
             ctx.reg[13] += pop ? 64 : -64;
             return;
-        }
+        }*/
 
         if (!pop) {
             int register_count = 0;
@@ -499,12 +499,12 @@ namespace GameBoyAdvance {
         int register_list = instruction & 0xFF;
 
         if (load) {
-            if (register_list == 0) {
+            /*if (register_list == 0) {
                 ctx.r15 = read_word(address, MEM_NONE);
                 ctx.pipe.do_flush = true;
                 ctx.reg[base] += 64;
                 return;
-            }
+            }*/
 
             for (int i = 0; i <= 7; i++) {
                 if (register_list & (1<<i)) {
@@ -519,11 +519,11 @@ namespace GameBoyAdvance {
         } else {
             int first_register = -1;
 
-            if (register_list == 0) {
+            /*if (register_list == 0) {
                 write_word(address, ctx.r15, MEM_NONE);
                 ctx.reg[base] += 64;
                 return;
-            }
+            }*/
 
             for (int i = 0; i <= 7; i++) {
                 if (register_list & (1<<i)) {
