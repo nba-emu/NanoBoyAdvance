@@ -36,12 +36,15 @@ set(EMULATOR_HDR
 set(CART_SRC
     cart/sram.cpp
     cart/flash.cpp
+    cart/cartridge.cpp
 )
 
 set(CART_HDR
     cart/cart_backup.hpp
     cart/sram.hpp
     cart/flash.hpp
+    cart/header.hpp
+    cart/cartridge.hpp
 )
 
 set(PPU_SRC
