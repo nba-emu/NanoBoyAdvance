@@ -17,8 +17,6 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#ifdef APU_INCLUDE
-
 enum Side {
     SIDE_LEFT  = 0,
     SIDE_RIGHT = 1
@@ -162,5 +160,3 @@ struct IO {
         void write(int offset, u8 value);
     } bias;
 } m_io;
-
-#endif

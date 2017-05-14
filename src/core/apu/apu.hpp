@@ -23,8 +23,6 @@
 #include "../config.hpp"
 #include "util/integer.hpp"
 
-#define APU_INCLUDE
-
 namespace GameBoyAdvance {
     
     class APU {
@@ -94,5 +92,3 @@ namespace GameBoyAdvance {
         }
     };
 }
-
-#undef APU_INCLUDE
