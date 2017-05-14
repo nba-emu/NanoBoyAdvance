@@ -30,7 +30,7 @@ using namespace Util;
 
 namespace GameBoyAdvance {
     
-    auto Cartridge::from_file(std::string path, SaveType type) -> Cartridge& {
+    auto Cartridge::from_file(std::string path, SaveType type) -> std::shared_ptr<Cartridge> {
         auto cart = new Cartridge();
         
         // Load game from drive
@@ -55,7 +55,7 @@ namespace GameBoyAdvance {
             case SAVE_FLASH128: cart->backup = new Flash(save_path, true ); break;
         }
         
-        return *cart;
+        return std::shared_ptr<Cartridge>(cart);
     }
     
     // TODO: Have a list of game codes with the matching save types.

@@ -20,6 +20,7 @@
 #pragma once
 
 #include <string>
+#include <memory>
 #include "header.hpp"
 #include "cart_backup.hpp"
 
@@ -42,11 +43,18 @@ namespace GameBoyAdvance {
             Header* header;
         };
         SaveType type;
-        CartBackup* backup { nullptr };
+        CartBackup* backup;
 
+        Cartridge() : data(nullptr), backup(nullptr) { }
+        
+        ~Cartridge() {
+            delete data;
+            delete backup;
+        }
+        
         auto detect_type() -> SaveType;
         
-        static auto from_file(std::string path, SaveType type = SAVE_DETECT) -> Cartridge&;
+        static auto from_file(std::string path, SaveType type = SAVE_DETECT) -> std::shared_ptr<Cartridge>;
     };
     
 }
