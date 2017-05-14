@@ -26,10 +26,9 @@
 
 // MEH: place this somewhere else. It should be inline though :/
 inline void ARM::step() {
-    auto& pipe  = ctx.pipe;
-    bool  thumb = ctx.cpsr & MASK_THUMB;
+    auto& pipe = ctx.pipe;
 
-    if (thumb) {
+    if (ctx.cpsr & MASK_THUMB) {
         ctx.r15 &= ~1;
 
         if (pipe.index == 0) {
@@ -39,6 +38,15 @@ inline void ARM::step() {
         }
 
         thumb_execute(pipe.opcode[pipe.index]);
+        
+        if (pipe.do_flush) {
+            refill_pipeline();
+            return;
+        }
+        
+        if (++pipe.index == 3) pipe.index = 0;
+        
+        ctx.r15 += 2;
     } else {
         ctx.r15 &= ~3;
 
@@ -49,18 +57,16 @@ inline void ARM::step() {
         }
 
         arm_execute(pipe.opcode[pipe.index]);
+        
+        if (pipe.do_flush) {
+            refill_pipeline();
+            return;
+        }
+        
+        if (++pipe.index == 3) pipe.index = 0;
+        
+        ctx.r15 += 4;
     }
-
-    if (pipe.do_flush) {
-        refill_pipeline();
-        return;
-    }
-
-    // update pipeline status
-    pipe.index = (pipe.index + 1) % 3;
-
-    // update instruction pointer
-    ctx.r15 += thumb ? 2 : 4;
 }
 
 inline bool ARM::check_condition(Condition condition) {
