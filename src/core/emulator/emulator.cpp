@@ -19,7 +19,7 @@
 
 #include <cstring>
 #include <stdexcept>
-#include "cpu.hpp"
+#include "emulator.hpp"
 #include "../cart/sram.hpp"
 #include "../cart/flash.hpp"
 #include "util/file.hpp"

@@ -17,7 +17,7 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#include "cpu.hpp"
+#include "emulator.hpp"
 #include "util/logger.hpp"
 
 using namespace Util;

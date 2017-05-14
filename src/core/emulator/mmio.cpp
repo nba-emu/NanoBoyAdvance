@@ -19,8 +19,8 @@
 
 // TODO: cleanup and simplify. Use inliners to reduce code redundancy.
 
-#include "cpu.hpp"
 #include "mmio.hpp"
+#include "emulator.hpp"
 #include "util/logger.hpp"
 
 using namespace Util;

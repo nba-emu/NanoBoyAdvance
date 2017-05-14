@@ -19,11 +19,11 @@ set(ARM_HDR
 
 set(SOURCES
     ${ARM_SRC}
-    cpu/io.cpp
-    cpu/cpu.cpp
-    cpu/mmio.cpp
-    cpu/timer.cpp
-    cpu/dma.cpp
+    emulator/io.cpp
+    emulator/emulator.cpp
+    emulator/mmio.cpp
+    emulator/timer.cpp
+    emulator/dma.cpp
     cart/sram.cpp
     cart/flash.cpp
     ppu/io.cpp
@@ -40,12 +40,12 @@ set(SOURCES
 set(HEADERS
     config.hpp
     ${ARM_HDR}
-    cpu/io.hpp
-    cpu/cpu.hpp
-    cpu/enums.hpp
-    cpu/interrupt.hpp
-    cpu/mmio.hpp
-    cpu/memory.hpp
+    emulator/io.hpp
+    emulator/emulator.hpp
+    emulator/enums.hpp
+    emulator/interrupt.hpp
+    emulator/mmio.hpp
+    emulator/memory.hpp
     cart/cart_backup.hpp
     cart/sram.hpp
     cart/flash.hpp

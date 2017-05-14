@@ -20,7 +20,7 @@
 #include <string>
 #include <iostream>
 #include <SDL2/SDL.h>
-#include "core/cpu/cpu.hpp"
+#include "core/emulator/emulator.hpp"
 #include "util/file.hpp"
 
 #include "argument_parser.hpp"
