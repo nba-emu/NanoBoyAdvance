@@ -30,10 +30,10 @@ using namespace Util;
 
 namespace GameBoyAdvance {
     
-    constexpr int CPU::s_mem_cycles8_16[16];
-    constexpr int CPU::s_mem_cycles32[16];
+    constexpr int Emulator::s_mem_cycles8_16[16];
+    constexpr int Emulator::s_mem_cycles32[16];
     
-    CPU::CPU(Config* config) : m_config(config), m_ppu(config), m_apu(config) {
+    Emulator::Emulator(Config* config) : m_config(config), m_ppu(config), m_apu(config) {
         
         reset();
 
@@ -45,7 +45,7 @@ namespace GameBoyAdvance {
         m_ppu.set_interrupt(&m_interrupt);
     }
 
-    CPU::~CPU() {
+    Emulator::~Emulator() {
         if (m_backup != nullptr) {
             delete m_backup;
         }
@@ -54,7 +54,7 @@ namespace GameBoyAdvance {
         }
     }
 
-    void CPU::reset() {
+    void Emulator::reset() {
         auto& ctx = get_context();
         
         ARM::reset();
@@ -134,20 +134,20 @@ namespace GameBoyAdvance {
         bios_opcode = 0;
     }
 
-    APU& CPU::get_apu() {
+    APU& Emulator::get_apu() {
         return m_apu;
     }
     
-    u16& CPU::get_keypad() {
+    u16& Emulator::get_keypad() {
         return m_io.keyinput;
     }
 
-    void CPU::load_config() {
+    void Emulator::load_config() {
         m_ppu.load_config();
         m_apu.load_config();
     }
     
-    void CPU::load_game(std::string rom_file, std::string save_file) {
+    void Emulator::load_game(std::string rom_file, std::string save_file) {
         m_rom      = File::read_data(rom_file);
         m_rom_size = File::get_size(rom_file);
 
@@ -186,7 +186,7 @@ namespace GameBoyAdvance {
         reset();
     }
 
-    void CPU::frame() {
+    void Emulator::frame() {
         const int VISIBLE_LINES   = 160;
         const int INVISIBLE_LINES = 68;
         
@@ -227,7 +227,7 @@ namespace GameBoyAdvance {
         }
     }
 
-    void CPU::run_for(int cycles) {
+    void Emulator::run_for(int cycles) {
         int cycles_previous;
         
         m_cycles += cycles;

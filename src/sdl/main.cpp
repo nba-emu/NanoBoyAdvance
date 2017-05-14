@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
     
     Config* config = new Config();
     
-    CPU emu(config);
+    Emulator emu(config);
 
     u16* keyinput;
     u32  fbuffer[240 * 160];

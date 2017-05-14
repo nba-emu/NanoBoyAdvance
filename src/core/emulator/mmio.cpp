@@ -27,7 +27,7 @@ using namespace Util;
 
 namespace GameBoyAdvance {
     
-    auto CPU::read_mmio(u32 address) -> u8 {
+    auto Emulator::read_mmio(u32 address) -> u8 {
         auto& ppu_io = m_ppu.get_io();
         auto& apu_io = m_apu.get_io();
 
@@ -123,7 +123,7 @@ namespace GameBoyAdvance {
         return m_mmio[address & 0x7FF];
     }
 
-    void CPU::write_mmio(u32 address, u8 value) {
+    void Emulator::write_mmio(u32 address, u8 value) {
         auto& ppu_io = m_ppu.get_io();
         auto& apu_io = m_apu.get_io();
         

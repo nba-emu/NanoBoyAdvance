@@ -24,7 +24,7 @@ using namespace Util;
 
 namespace GameBoyAdvance {
     
-    void CPU::IO::DMA::reset() {
+    void Emulator::IO::DMA::reset() {
         enable = false;
         repeat = false;
         interrupt = false;
@@ -43,7 +43,7 @@ namespace GameBoyAdvance {
         src_cntl = DMA_INCREMENT;
     }
 
-    auto CPU::IO::DMA::read(int offset) -> u8 {
+    auto Emulator::IO::DMA::read(int offset) -> u8 {
         // TODO: are SAD/DAD/CNT_L readable?
         switch (offset) {
             // DMAXCNT_H
@@ -61,7 +61,7 @@ namespace GameBoyAdvance {
         }
     }
 
-    void CPU::IO::DMA::write(int offset, u8 value) {
+    void Emulator::IO::DMA::write(int offset, u8 value) {
         switch (offset) {
             // DMAXSAD
             case 0: src_addr = (src_addr & 0xFFFFFF00) | value; break;
@@ -129,7 +129,7 @@ namespace GameBoyAdvance {
         }
     }
 
-    void CPU::IO::Timer::reset() {
+    void Emulator::IO::Timer::reset() {
         cycles = 0;
         reload = 0;
         counter = 0;
@@ -139,7 +139,7 @@ namespace GameBoyAdvance {
         control.enable = false;
     }
 
-    auto CPU::IO::Timer::read(int offset) -> u8 {
+    auto Emulator::IO::Timer::read(int offset) -> u8 {
         switch (offset) {
             case 0: return counter & 0xFF;
             case 1: return counter >> 8;
@@ -151,7 +151,7 @@ namespace GameBoyAdvance {
         }
     }
 
-    void CPU::IO::Timer::write(int offset, u8 value) {
+    void Emulator::IO::Timer::write(int offset, u8 value) {
         switch (offset) {
             case 0: reload = (reload & 0xFF00) | value; break;
             case 1: reload = (reload & 0x00FF) | (value << 8); break;
@@ -170,7 +170,7 @@ namespace GameBoyAdvance {
         }
     }
 
-    void CPU::IO::Interrupt::reset() {
+    void Emulator::IO::Interrupt::reset() {
         enable = 0;
         request = 0;
         master_enable = 0;

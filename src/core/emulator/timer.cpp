@@ -32,7 +32,7 @@ namespace GameBoyAdvance {
     static constexpr int g_timer_shift[4] = { 0, 6, 8, 10 };
     static constexpr int g_timer_mask [4] = { 0, 0x3F, 0xFF, 0x3FF };
 
-    void CPU::timer_step(int cycles) {
+    void Emulator::timer_step(int cycles) {
         
         for (int i = 0; i < 4; i++) {
             auto& timer   = m_io.timer[i];
@@ -76,7 +76,7 @@ namespace GameBoyAdvance {
         }
     }
     
-    void CPU::timer_fifo(int timer_id, int times) {
+    void Emulator::timer_fifo(int timer_id, int times) {
         auto& apu_io  = m_apu.get_io();
         auto& control = apu_io.control;
         auto& dma1    = m_io.dma[1];
@@ -110,7 +110,7 @@ namespace GameBoyAdvance {
         }
     }
 
-    void CPU::timer_overflow(IO::Timer& timer, int times) {
+    void Emulator::timer_overflow(IO::Timer& timer, int times) {
         
         // request timer overflow interrupt if needed
         if (timer.control.interrupt) {
@@ -139,7 +139,7 @@ namespace GameBoyAdvance {
         }
     }
     
-    void CPU::timer_increment(IO::Timer& timer, int increment_count) {
+    void Emulator::timer_increment(IO::Timer& timer, int increment_count) {
         
         int next_overflow = 0x10000 - timer.counter;
         
@@ -169,7 +169,7 @@ namespace GameBoyAdvance {
     }
     
     // Short-cut method for cascade timers that ALWAYS get incremented by one.
-    void CPU::timer_increment_once(IO::Timer& timer) {
+    void Emulator::timer_increment_once(IO::Timer& timer) {
         if (timer.counter != 0xFFFF) {
             timer.counter++;    
         } else {

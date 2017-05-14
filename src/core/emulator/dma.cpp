@@ -24,7 +24,7 @@ using namespace Util;
 
 namespace GameBoyAdvance {
     
-    void CPU::dma_hblank() {
+    void Emulator::dma_hblank() {
         for (int i = 0; i < 4; i++) {
             auto& dma = m_io.dma[i];
 
@@ -36,7 +36,7 @@ namespace GameBoyAdvance {
         }
     }
 
-    void CPU::dma_vblank() {
+    void Emulator::dma_vblank() {
         for (int i = 0; i < 4; i++) {
             auto& dma = m_io.dma[i];
 
@@ -48,7 +48,7 @@ namespace GameBoyAdvance {
         }
     }
 
-    void CPU::dma_transfer() {
+    void Emulator::dma_transfer() {
         auto& dma = m_io.dma[m_current_dma];
 
         DMAControl src_cntl = dma.src_cntl;
@@ -106,7 +106,7 @@ namespace GameBoyAdvance {
         }
     }
     
-    void CPU::dma_fill_fifo(int dma_id) {
+    void Emulator::dma_fill_fifo(int dma_id) {
         auto& dma = m_io.dma[dma_id];
         
         for (int i = 0; i < 4; i++) {

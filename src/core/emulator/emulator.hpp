@@ -31,7 +31,7 @@
 
 namespace GameBoyAdvance {
     
-    class CPU : private ARM {
+    class Emulator : private ARM {
     private:
         Config* m_config;
         
@@ -87,8 +87,8 @@ namespace GameBoyAdvance {
         };
 
     public:
-        CPU(Config* config);
-        ~CPU();
+        Emulator(Config* config);
+        ~Emulator();
 
         void reset();
 
