@@ -23,6 +23,8 @@
 
 namespace GameBoyAdvance {
     
+    #pragma pack(push, 1) 
+    
     // For details see: http://problemkaputt.de/gbatek.htm#gbacartridgeheader
     struct Header {
         // First instruction
@@ -56,4 +58,5 @@ namespace GameBoyAdvance {
         } mb;
     };
     
+    #pragma pack(pop)
 }

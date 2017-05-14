@@ -36,16 +36,17 @@ namespace GameBoyAdvance {
     
     struct Cartridge {
         
+        u32 size;
         union {
             u8*     data;
             Header* header;
         };
-        CartBackup* backup;
-        
-        static from_file(std::string path, SaveType type = SAVE_DETECT);
-        
-    private:
+        SaveType type;
+        CartBackup* backup { nullptr };
+
         auto detect_type() -> SaveType;
+        
+        static auto from_file(std::string path, SaveType type = SAVE_DETECT) -> Cartridge&;
     };
     
 }
