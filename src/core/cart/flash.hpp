@@ -20,10 +20,10 @@
 #pragma once
 
 #include <string>
-#include "cart_backup.hpp"
+#include "save.hpp"
 
 namespace GameBoyAdvance {
-    class Flash : public CartBackup {
+    class Flash : public Save {
     private:
         enum FlashCommand {
             READ_CHIP_ID   = 0x90,

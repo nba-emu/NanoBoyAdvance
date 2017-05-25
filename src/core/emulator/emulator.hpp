@@ -48,8 +48,8 @@ namespace GameBoyAdvance {
             // Local copy (fast access)
             struct ROM {
                 u8*    data;
+                Save*  save;
                 size_t size;
-                CartBackup* save;
             } rom;
         } memory;
 

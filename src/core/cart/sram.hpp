@@ -20,12 +20,12 @@
 #pragma once
 
 #include <string>
-#include "cart_backup.hpp"
+#include "save.hpp"
 
 #define SRAM_SIZE 65536
 
 namespace GameBoyAdvance {
-    class SRAM : public CartBackup {
+    class SRAM : public Save {
     private:
         
         u8 m_memory[SRAM_SIZE];

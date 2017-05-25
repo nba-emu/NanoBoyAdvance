@@ -22,7 +22,7 @@
 #include <string>
 #include <memory>
 #include "header.hpp"
-#include "cart_backup.hpp"
+#include "save.hpp"
 
 namespace GameBoyAdvance {
     
@@ -42,7 +42,7 @@ namespace GameBoyAdvance {
             Header* header;
         };
         SaveType type;
-        CartBackup* backup;
+        Save* backup;
 
         Cartridge() : data(nullptr), backup(nullptr) { }
         
