@@ -19,8 +19,6 @@
 
 #pragma once 
 
-#ifdef CPU_INCLUDE
-
 // TODO(accuracy): 
 //     Verify that this kind of reading works for edge cases.
 //     Theoretically all addresses that are being passed should be aligned
@@ -77,16 +75,16 @@ u8 bus_read_byte(u32 address, int flags) final {
         case 0xA: case 0xB: 
         case 0xC: case 0xD: {
             address &= 0x1FFFFFF;
-            if (address >= m_rom_size) {
+            if (address >= memory.rom.size) {
                 return address >> 1;
             }
-            return READ_FAST_8(m_rom, address);
+            return READ_FAST_8(memory.rom.data, address);
         }
         case 0xE: {
-            if (!m_backup) {
+            if (!memory.rom.save) {
                 return 0;
             }
-            return m_backup->read_byte(address);
+            return memory.rom.save->read_byte(address);
         }
         default: return 0;
     }
@@ -121,16 +119,16 @@ u16 bus_read_hword(u32 address, int flags) final {
         case 0xA: case 0xB: 
         case 0xC: case 0xD: {
             address &= 0x1FFFFFF;
-            if (address >= m_rom_size) {
+            if (address >= memory.rom.size) {
                 return address >> 1;
             }
-            return READ_FAST_16(m_rom, address);
+            return READ_FAST_16(memory.rom.data, address);
         }
         case 0xE: {
-            if (!m_backup) {
+            if (!memory.rom.save) {
                 return 0;
             }
-            return m_backup->read_byte(address) * 0x0101;
+            return memory.rom.save->read_byte(address) * 0x0101;
         }
         
         default: return 0;
@@ -168,17 +166,17 @@ u32 bus_read_word(u32 address, int flags) final {
         case 0xA: case 0xB: 
         case 0xC: case 0xD: {
             address &= 0x1FFFFFF;
-            if (address >= m_rom_size) {
+            if (address >= memory.rom.size) {
                 return ( (address      >> 1) &  0xFFFF) |
                        (((address + 2) >> 1) << 16    );
             }
-            return READ_FAST_32(m_rom, address);
+            return READ_FAST_32(memory.rom.data, address);
         }
         case 0xE: {
-            if (!m_backup) {
+            if (!memory.rom.save) {
                 return 0;
             }
-            return m_backup->read_byte(address) * 0x01010101;
+            return memory.rom.save->read_byte(address) * 0x01010101;
         }
             
         default: return 0;
@@ -209,10 +207,10 @@ void bus_write_byte(u32 address, u8 value, int flags) final {
         }
         case 0x7: WRITE_FAST_16(memory.oam, address & 0x3FF, value * 0x0101); break;
         case 0xE: {
-            if (!m_backup) { 
+            if (!memory.rom.save) { 
                 break;
             }
-            m_backup->write_byte(address, value); 
+            memory.rom.save->write_byte(address, value); 
             break;
         }
         default: break; // TODO: throw error
@@ -244,11 +242,11 @@ void bus_write_hword(u32 address, u16 value, int flags) final {
         }
         case 0x7: WRITE_FAST_16(memory.oam, address & 0x3FF, value); break;
         case 0xE: {
-            if (!m_backup) { 
+            if (!memory.rom.save) { 
                 break;
             }
-            m_backup->write_byte(address + 0, value); 
-            m_backup->write_byte(address + 1, value); 
+            memory.rom.save->write_byte(address + 0, value); 
+            memory.rom.save->write_byte(address + 1, value); 
             break;
         }
         default: break; // TODO: throw error
@@ -282,17 +280,16 @@ void bus_write_word(u32 address, u32 value, int flags) final {
         }
         case 0x7: WRITE_FAST_32(memory.oam, address & 0x3FF, value); break;
         case 0xE: {
-            if (!m_backup) { 
+            if (!memory.rom.save) { 
                 break;
             }
-            m_backup->write_byte(address + 0, value); 
-            m_backup->write_byte(address + 1, value); 
-            m_backup->write_byte(address + 2, value); 
-            m_backup->write_byte(address + 3, value); 
+            memory.rom.save->write_byte(address + 0, value); 
+            memory.rom.save->write_byte(address + 1, value); 
+            memory.rom.save->write_byte(address + 2, value); 
+            memory.rom.save->write_byte(address + 3, value); 
             break;
         }
         default: break; // TODO: throw error
     }
 }
 
-#endif

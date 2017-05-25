@@ -28,20 +28,14 @@
 #include "../apu/apu.hpp"
 #include "../cart/cartridge.hpp"
 
-#define CPU_INCLUDE
-
 namespace GameBoyAdvance {
     
     class Emulator : private ARM {
+        
     private:
         Config* m_config;
         
         std::shared_ptr<Cartridge> cart;
-
-        // Local cartridge data copy (for optimization)
-        u8*    m_rom;
-        size_t m_rom_size;
-        CartBackup* m_backup {nullptr};
         
         struct SystemMemory {
             u8 bios    [0x4000 ];
@@ -50,8 +44,16 @@ namespace GameBoyAdvance {
             u8 palette [0x400  ];
             u8 oam     [0x400  ];
             u8 vram    [0x18000];
+            
+            // Local copy (fast access)
+            struct ROM {
+                u8*    data;
+                size_t size;
+                CartBackup* save;
+            } rom;
         } memory;
 
+        //TODO: remove this hack
         u8 m_mmio[0x800];
 
         u32 bios_opcode;
@@ -110,5 +112,3 @@ namespace GameBoyAdvance {
         void software_interrupt(int number) final {};
     };
 }
-
-#undef CPU_INCLUDE

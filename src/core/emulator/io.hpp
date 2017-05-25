@@ -17,8 +17,6 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#ifdef CPU_INCLUDE
-
 struct IO {
     
     struct DMA {
@@ -87,4 +85,3 @@ struct IO {
     SystemState haltcnt;
 } m_io;
 
-#endif

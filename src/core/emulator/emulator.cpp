@@ -59,8 +59,8 @@ namespace GameBoyAdvance {
         m_apu.reset();
 
         // reset cartridge memory
-        if (m_backup != nullptr) {
-            m_backup->reset();
+        if (memory.rom.save != nullptr) {
+            memory.rom.save->reset();
         }
 
         // clear out all memory
@@ -147,9 +147,9 @@ namespace GameBoyAdvance {
         this->cart = cart;
         
         // internal copies, for optimization.
-        this->m_rom      = cart->data;
-        this->m_rom_size = cart->size;
-        this->m_backup   = cart->backup;
+        this->memory.rom.data      = cart->data;
+        this->memory.rom.size = cart->size;
+        this->memory.rom.save   = cart->backup;
         
         reset();
     }
