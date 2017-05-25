@@ -7,12 +7,12 @@
   * it under the terms of the GNU General Public License as published by
   * the Free Software Foundation, either version 3 of the License, or
   * (at your option) any later version.
-  * 
+  *
   * NanoboyAdvance is distributed in the hope that it will be useful,
   * but WITHOUT ANY WARRANTY; without even the implied warranty of
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   * GNU General Public License for more details.
-  * 
+  *
   * You should have received a copy of the GNU General Public License
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
@@ -26,7 +26,7 @@
 using namespace Util;
 
 namespace GameBoyAdvance {
-    
+
     auto Emulator::read_mmio(u32 address) -> u8 {
         auto& ppu_io = m_ppu.get_io();
         auto& apu_io = m_apu.get_io();
@@ -55,14 +55,14 @@ namespace GameBoyAdvance {
             case BLDCNT+1:   return ppu_io.bldcnt.read(1);
 
             // DMA01
-            case DMA0CNT_H:   return m_io.dma[0].read(10);
-            case DMA0CNT_H+1: return m_io.dma[0].read(11);
-            case DMA1CNT_H:   return m_io.dma[1].read(10);
-            case DMA1CNT_H+1: return m_io.dma[1].read(11);
-            case DMA2CNT_H:   return m_io.dma[2].read(10);
-            case DMA2CNT_H+1: return m_io.dma[2].read(11);
-            case DMA3CNT_H:   return m_io.dma[3].read(10);
-            case DMA3CNT_H+1: return m_io.dma[3].read(11);
+            case DMA0CNT_H:   return regs.dma[0].read(10);
+            case DMA0CNT_H+1: return regs.dma[0].read(11);
+            case DMA1CNT_H:   return regs.dma[1].read(10);
+            case DMA1CNT_H+1: return regs.dma[1].read(11);
+            case DMA2CNT_H:   return regs.dma[2].read(10);
+            case DMA2CNT_H+1: return regs.dma[2].read(11);
+            case DMA3CNT_H:   return regs.dma[3].read(10);
+            case DMA3CNT_H+1: return regs.dma[3].read(11);
 
             // SOUND
             case SOUND1CNT_L:   return apu_io.tone[0].read(0);
@@ -89,33 +89,33 @@ namespace GameBoyAdvance {
             case SOUNDCNT_L+1:  return apu_io.control.read(1);
             case SOUNDCNT_H:    return apu_io.control.read(2);
             case SOUNDCNT_H+1:  return apu_io.control.read(3);
-            case SOUNDCNT_X:    return apu_io.control.read(4);   
-            
+            case SOUNDCNT_X:    return apu_io.control.read(4);
+
             // TIMER
-            case TM0CNT_L:   return m_io.timer[0].read(0);
-            case TM0CNT_L+1: return m_io.timer[0].read(1);
-            case TM0CNT_H:   return m_io.timer[0].read(2);
-            case TM1CNT_L:   return m_io.timer[1].read(0);
-            case TM1CNT_L+1: return m_io.timer[1].read(1);
-            case TM1CNT_H:   return m_io.timer[1].read(2);
-            case TM2CNT_L:   return m_io.timer[2].read(0);
-            case TM2CNT_L+1: return m_io.timer[2].read(1);
-            case TM2CNT_H:   return m_io.timer[2].read(2);
-            case TM3CNT_L:   return m_io.timer[3].read(0);
-            case TM3CNT_L+1: return m_io.timer[3].read(1);
-            case TM3CNT_H:   return m_io.timer[3].read(2);
+            case TM0CNT_L:   return regs.timer[0].read(0);
+            case TM0CNT_L+1: return regs.timer[0].read(1);
+            case TM0CNT_H:   return regs.timer[0].read(2);
+            case TM1CNT_L:   return regs.timer[1].read(0);
+            case TM1CNT_L+1: return regs.timer[1].read(1);
+            case TM1CNT_H:   return regs.timer[1].read(2);
+            case TM2CNT_L:   return regs.timer[2].read(0);
+            case TM2CNT_L+1: return regs.timer[2].read(1);
+            case TM2CNT_H:   return regs.timer[2].read(2);
+            case TM3CNT_L:   return regs.timer[3].read(0);
+            case TM3CNT_L+1: return regs.timer[3].read(1);
+            case TM3CNT_H:   return regs.timer[3].read(2);
 
             // JOYPAD
-            case KEYINPUT:   return m_io.keyinput & 0xFF;
-            case KEYINPUT+1: return m_io.keyinput >> 8;
+            case KEYINPUT:   return regs.keyinput & 0xFF;
+            case KEYINPUT+1: return regs.keyinput >> 8;
 
             // INTERRUPT
-            case IE:    return m_io.interrupt.enable & 0xFF;
-            case IE+1:  return m_io.interrupt.enable >> 8;
-            case IF:    return m_io.interrupt.request & 0xFF;
-            case IF+1:  return m_io.interrupt.request >> 8;
-            case IME:   return m_io.interrupt.master_enable & 0xFF;
-            case IME+1: return m_io.interrupt.master_enable >> 8;
+            case IE:    return regs.interrupt.enable & 0xFF;
+            case IE+1:  return regs.interrupt.enable >> 8;
+            case IF:    return regs.interrupt.request & 0xFF;
+            case IF+1:  return regs.interrupt.request >> 8;
+            case IME:   return regs.interrupt.master_enable & 0xFF;
+            case IME+1: return regs.interrupt.master_enable >> 8;
 
             default: Logger::log<LOG_DEBUG>("unknown IO read {0:X}", address);
         }
@@ -126,7 +126,7 @@ namespace GameBoyAdvance {
     void Emulator::write_mmio(u32 address, u8 value) {
         auto& ppu_io = m_ppu.get_io();
         auto& apu_io = m_apu.get_io();
-        
+
         switch (address) {
             // PPU
             case DISPCNT:    ppu_io.control.write(0, value); break;
@@ -242,56 +242,56 @@ namespace GameBoyAdvance {
             case BLDALPHA:   ppu_io.bldalpha.write(0, value); break;
             case BLDALPHA+1: ppu_io.bldalpha.write(1, value); break;
             case BLDY:       ppu_io.bldy.write(value); break;
-                
+
             // DMA
-            case DMA0SAD:     m_io.dma[0].write(0, value); break;
-            case DMA0SAD+1:   m_io.dma[0].write(1, value); break;
-            case DMA0SAD+2:   m_io.dma[0].write(2, value); break;
-            case DMA0SAD+3:   m_io.dma[0].write(3, value); break;
-            case DMA0DAD:     m_io.dma[0].write(4, value); break;
-            case DMA0DAD+1:   m_io.dma[0].write(5, value); break;
-            case DMA0DAD+2:   m_io.dma[0].write(6, value); break;
-            case DMA0DAD+3:   m_io.dma[0].write(7, value); break;
-            case DMA0CNT_L:   m_io.dma[0].write(8, value); break;
-            case DMA0CNT_L+1: m_io.dma[0].write(9, value); break;
-            case DMA0CNT_H:   m_io.dma[0].write(10, value); break;
-            case DMA0CNT_H+1: m_io.dma[0].write(11, value); break;
-            case DMA1SAD:     m_io.dma[1].write(0, value); break;
-            case DMA1SAD+1:   m_io.dma[1].write(1, value); break;
-            case DMA1SAD+2:   m_io.dma[1].write(2, value); break;
-            case DMA1SAD+3:   m_io.dma[1].write(3, value); break;
-            case DMA1DAD:     m_io.dma[1].write(4, value); break;
-            case DMA1DAD+1:   m_io.dma[1].write(5, value); break;
-            case DMA1DAD+2:   m_io.dma[1].write(6, value); break;
-            case DMA1DAD+3:   m_io.dma[1].write(7, value); break;
-            case DMA1CNT_L:   m_io.dma[1].write(8, value); break;
-            case DMA1CNT_L+1: m_io.dma[1].write(9, value); break;
-            case DMA1CNT_H:   m_io.dma[1].write(10, value); break;
-            case DMA1CNT_H+1: m_io.dma[1].write(11, value); break;
-            case DMA2SAD:     m_io.dma[2].write(0, value); break;
-            case DMA2SAD+1:   m_io.dma[2].write(1, value); break;
-            case DMA2SAD+2:   m_io.dma[2].write(2, value); break;
-            case DMA2SAD+3:   m_io.dma[2].write(3, value); break;
-            case DMA2DAD:     m_io.dma[2].write(4, value); break;
-            case DMA2DAD+1:   m_io.dma[2].write(5, value); break;
-            case DMA2DAD+2:   m_io.dma[2].write(6, value); break;
-            case DMA2DAD+3:   m_io.dma[2].write(7, value); break;
-            case DMA2CNT_L:   m_io.dma[2].write(8, value); break;
-            case DMA2CNT_L+1: m_io.dma[2].write(9, value); break;
-            case DMA2CNT_H:   m_io.dma[2].write(10, value); break;
-            case DMA2CNT_H+1: m_io.dma[2].write(11, value); break;
-            case DMA3SAD:     m_io.dma[3].write(0, value); break;
-            case DMA3SAD+1:   m_io.dma[3].write(1, value); break;
-            case DMA3SAD+2:   m_io.dma[3].write(2, value); break;
-            case DMA3SAD+3:   m_io.dma[3].write(3, value); break;
-            case DMA3DAD:     m_io.dma[3].write(4, value); break;
-            case DMA3DAD+1:   m_io.dma[3].write(5, value); break;
-            case DMA3DAD+2:   m_io.dma[3].write(6, value); break;
-            case DMA3DAD+3:   m_io.dma[3].write(7, value); break;
-            case DMA3CNT_L:   m_io.dma[3].write(8, value); break;
-            case DMA3CNT_L+1: m_io.dma[3].write(9, value); break;
-            case DMA3CNT_H:   m_io.dma[3].write(10, value); break;
-            case DMA3CNT_H+1: m_io.dma[3].write(11, value); break;
+            case DMA0SAD:     regs.dma[0].write(0, value); break;
+            case DMA0SAD+1:   regs.dma[0].write(1, value); break;
+            case DMA0SAD+2:   regs.dma[0].write(2, value); break;
+            case DMA0SAD+3:   regs.dma[0].write(3, value); break;
+            case DMA0DAD:     regs.dma[0].write(4, value); break;
+            case DMA0DAD+1:   regs.dma[0].write(5, value); break;
+            case DMA0DAD+2:   regs.dma[0].write(6, value); break;
+            case DMA0DAD+3:   regs.dma[0].write(7, value); break;
+            case DMA0CNT_L:   regs.dma[0].write(8, value); break;
+            case DMA0CNT_L+1: regs.dma[0].write(9, value); break;
+            case DMA0CNT_H:   regs.dma[0].write(10, value); break;
+            case DMA0CNT_H+1: regs.dma[0].write(11, value); break;
+            case DMA1SAD:     regs.dma[1].write(0, value); break;
+            case DMA1SAD+1:   regs.dma[1].write(1, value); break;
+            case DMA1SAD+2:   regs.dma[1].write(2, value); break;
+            case DMA1SAD+3:   regs.dma[1].write(3, value); break;
+            case DMA1DAD:     regs.dma[1].write(4, value); break;
+            case DMA1DAD+1:   regs.dma[1].write(5, value); break;
+            case DMA1DAD+2:   regs.dma[1].write(6, value); break;
+            case DMA1DAD+3:   regs.dma[1].write(7, value); break;
+            case DMA1CNT_L:   regs.dma[1].write(8, value); break;
+            case DMA1CNT_L+1: regs.dma[1].write(9, value); break;
+            case DMA1CNT_H:   regs.dma[1].write(10, value); break;
+            case DMA1CNT_H+1: regs.dma[1].write(11, value); break;
+            case DMA2SAD:     regs.dma[2].write(0, value); break;
+            case DMA2SAD+1:   regs.dma[2].write(1, value); break;
+            case DMA2SAD+2:   regs.dma[2].write(2, value); break;
+            case DMA2SAD+3:   regs.dma[2].write(3, value); break;
+            case DMA2DAD:     regs.dma[2].write(4, value); break;
+            case DMA2DAD+1:   regs.dma[2].write(5, value); break;
+            case DMA2DAD+2:   regs.dma[2].write(6, value); break;
+            case DMA2DAD+3:   regs.dma[2].write(7, value); break;
+            case DMA2CNT_L:   regs.dma[2].write(8, value); break;
+            case DMA2CNT_L+1: regs.dma[2].write(9, value); break;
+            case DMA2CNT_H:   regs.dma[2].write(10, value); break;
+            case DMA2CNT_H+1: regs.dma[2].write(11, value); break;
+            case DMA3SAD:     regs.dma[3].write(0, value); break;
+            case DMA3SAD+1:   regs.dma[3].write(1, value); break;
+            case DMA3SAD+2:   regs.dma[3].write(2, value); break;
+            case DMA3SAD+3:   regs.dma[3].write(3, value); break;
+            case DMA3DAD:     regs.dma[3].write(4, value); break;
+            case DMA3DAD+1:   regs.dma[3].write(5, value); break;
+            case DMA3DAD+2:   regs.dma[3].write(6, value); break;
+            case DMA3DAD+3:   regs.dma[3].write(7, value); break;
+            case DMA3CNT_L:   regs.dma[3].write(8, value); break;
+            case DMA3CNT_L+1: regs.dma[3].write(9, value); break;
+            case DMA3CNT_H:   regs.dma[3].write(10, value); break;
+            case DMA3CNT_H+1: regs.dma[3].write(11, value); break;
 
             // SOUND
             case SOUND1CNT_L:   apu_io.tone[0].write(0, value); break;
@@ -332,7 +332,7 @@ namespace GameBoyAdvance {
             case WAVE_RAM+15: {
                 int index = address & 0xF;
                 int bank  = apu_io.wave.bank_number ^ 1;
-                
+
                 apu_io.wave_ram[bank][index] = value;
                 break;
             }
@@ -343,52 +343,52 @@ namespace GameBoyAdvance {
             case FIFO_B:
             case FIFO_B+1:
             case FIFO_B+2:
-            case FIFO_B+3: apu_io.fifo[1].enqueue(value); break;    
+            case FIFO_B+3: apu_io.fifo[1].enqueue(value); break;
             case SOUNDCNT_L:   apu_io.control.write(0, value); break;
             case SOUNDCNT_L+1: apu_io.control.write(1, value); break;
             case SOUNDCNT_H:   apu_io.control.write(2, value); break;
             case SOUNDCNT_H+1: apu_io.control.write(3, value); break;
-            case SOUNDCNT_X:   apu_io.control.write(4, value); break; 
-                
+            case SOUNDCNT_X:   apu_io.control.write(4, value); break;
+
             // TIMER
-            case TM0CNT_L:   m_io.timer[0].write(0, value); break;
-            case TM0CNT_L+1: m_io.timer[0].write(1, value); break;
-            case TM0CNT_H:   m_io.timer[0].write(2, value); break;
-            case TM1CNT_L:   m_io.timer[1].write(0, value); break;
-            case TM1CNT_L+1: m_io.timer[1].write(1, value); break;
-            case TM1CNT_H:   m_io.timer[1].write(2, value); break;
-            case TM2CNT_L:   m_io.timer[2].write(0, value); break;
-            case TM2CNT_L+1: m_io.timer[2].write(1, value); break;
-            case TM2CNT_H:   m_io.timer[2].write(2, value); break;
-            case TM3CNT_L:   m_io.timer[3].write(0, value); break;
-            case TM3CNT_L+1: m_io.timer[3].write(1, value); break;
-            case TM3CNT_H:   m_io.timer[3].write(2, value); break;
+            case TM0CNT_L:   regs.timer[0].write(0, value); break;
+            case TM0CNT_L+1: regs.timer[0].write(1, value); break;
+            case TM0CNT_H:   regs.timer[0].write(2, value); break;
+            case TM1CNT_L:   regs.timer[1].write(0, value); break;
+            case TM1CNT_L+1: regs.timer[1].write(1, value); break;
+            case TM1CNT_H:   regs.timer[1].write(2, value); break;
+            case TM2CNT_L:   regs.timer[2].write(0, value); break;
+            case TM2CNT_L+1: regs.timer[2].write(1, value); break;
+            case TM2CNT_H:   regs.timer[2].write(2, value); break;
+            case TM3CNT_L:   regs.timer[3].write(0, value); break;
+            case TM3CNT_L+1: regs.timer[3].write(1, value); break;
+            case TM3CNT_H:   regs.timer[3].write(2, value); break;
 
             // INTERRUPT
             case IE:
-                m_io.interrupt.enable &= 0xFF00;
-                m_io.interrupt.enable |= value;
+                regs.interrupt.enable &= 0xFF00;
+                regs.interrupt.enable |= value;
                 break;
             case IE+1:
-                m_io.interrupt.enable &= 0x00FF;
-                m_io.interrupt.enable |= (value << 8);
+                regs.interrupt.enable &= 0x00FF;
+                regs.interrupt.enable |= (value << 8);
                 break;
             case IF:
-                m_io.interrupt.request &= ~value;
+                regs.interrupt.request &= ~value;
                 break;
             case IF+1:
-                m_io.interrupt.request &= ~(value << 8);
+                regs.interrupt.request &= ~(value << 8);
                 break;
             case IME:
-                m_io.interrupt.master_enable &= 0xFF00;
-                m_io.interrupt.master_enable |= value;
+                regs.interrupt.master_enable &= 0xFF00;
+                regs.interrupt.master_enable |= value;
                 break;
             case IME+1:
-                m_io.interrupt.master_enable &= 0x00FF;
-                m_io.interrupt.master_enable |= (value << 8);
+                regs.interrupt.master_enable &= 0x00FF;
+                regs.interrupt.master_enable |= (value << 8);
                 break;
             case HALTCNT:
-                m_io.haltcnt = (value & 0x80) ? SYSTEM_STOP : SYSTEM_HALT;
+                regs.haltcnt = (value & 0x80) ? SYSTEM_STOP : SYSTEM_HALT;
                 break;
 
             default:

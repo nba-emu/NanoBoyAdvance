@@ -36,7 +36,7 @@ namespace GameBoyAdvance {
     void Emulator::timer_step(int cycles) {
 
         for (int i = 0; i < 4; i++) {
-            auto& timer   = m_io.timer[i];
+            auto& timer   = regs.timer[i];
             auto& control = timer.control;
 
             // handles only non-cascade timers directly
@@ -80,8 +80,8 @@ namespace GameBoyAdvance {
     void Emulator::timer_fifo(int timer_id, int times) {
         auto& apu_io  = m_apu.get_io();
         auto& control = apu_io.control;
-        auto& dma1    = m_io.dma[1];
-        auto& dma2    = m_io.dma[2];
+        auto& dma1    = regs.dma[1];
+        auto& dma2    = regs.dma[2];
 
         // for each DMA FIFO
         for (int i = 0; i < 2; i++) {
@@ -123,7 +123,7 @@ namespace GameBoyAdvance {
 
         // cascade next timer if required
         if (timer.id != 3) {
-            auto& timer2 = m_io.timer[timer.id + 1];
+            auto& timer2 = regs.timer[timer.id + 1];
 
             if (timer2.control.enable && timer2.control.cascade) {
                 if (times == 1) {

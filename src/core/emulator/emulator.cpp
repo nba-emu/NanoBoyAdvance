@@ -38,7 +38,7 @@ namespace GameBoyAdvance {
         reset();
 
         // setup interrupt controller
-        m_interrupt.set_flag_register(&m_io.interrupt.request);
+        m_interrupt.set_flag_register(&regs.interrupt.request);
 
         // feed PPU with important data.
         m_ppu.set_memory(memory.palette, memory.oam, memory.vram);
@@ -72,22 +72,22 @@ namespace GameBoyAdvance {
         memset(m_mmio, 0, 0x800);
 
         // reset IO-registers
-        m_io.keyinput = 0x3FF;
-        m_io.interrupt.reset();
-        m_io.haltcnt = SYSTEM_RUN;
+        regs.keyinput = 0x3FF;
+        regs.interrupt.reset();
+        regs.haltcnt = SYSTEM_RUN;
 
         for (int i = 0; i < 4; i++) {
             // reset DMA channels
-            m_io.dma[i].id = i;
-            m_io.dma[i].reset();
+            regs.dma[i].id = i;
+            regs.dma[i].reset();
 
             // !!hacked!! ouchy ouch
-            m_io.dma[i].dma_active  = &m_dma_active;
-            m_io.dma[i].current_dma = &m_current_dma;
+            regs.dma[i].dma_active  = &m_dma_active;
+            regs.dma[i].current_dma = &m_current_dma;
 
             // reset timers
-            m_io.timer[i].id = i;
-            m_io.timer[i].reset();
+            regs.timer[i].id = i;
+            regs.timer[i].reset();
         }
 
         m_cycles = 0;
@@ -134,7 +134,7 @@ namespace GameBoyAdvance {
     }
 
     u16& Emulator::get_keypad() {
-        return m_io.keyinput;
+        return regs.keyinput;
     }
 
     void Emulator::load_config() {
@@ -147,9 +147,9 @@ namespace GameBoyAdvance {
         this->cart = cart;
 
         // internal copies, for optimization.
-        this->memory.rom.data      = cart->data;
+        this->memory.rom.data = cart->data;
         this->memory.rom.size = cart->size;
-        this->memory.rom.save   = cart->backup;
+        this->memory.rom.save = cart->backup;
 
         reset();
     }
@@ -201,18 +201,18 @@ namespace GameBoyAdvance {
         m_cycles += cycles;
 
         while (m_cycles > 0) {
-            u32 requested_and_enabled = m_io.interrupt.request & m_io.interrupt.enable;
+            u32 requested_and_enabled = regs.interrupt.request & regs.interrupt.enable;
 
-            if (m_io.haltcnt == SYSTEM_HALT && requested_and_enabled) {
-                m_io.haltcnt = SYSTEM_RUN;
+            if (regs.haltcnt == SYSTEM_HALT && requested_and_enabled) {
+                regs.haltcnt = SYSTEM_RUN;
             }
 
             cycles_previous = m_cycles;
 
             if (UNLIKELY(m_dma_active)) {
                 dma_transfer();
-            } else if (LIKELY(m_io.haltcnt == SYSTEM_RUN)) {
-                if (m_io.interrupt.master_enable && requested_and_enabled) {
+            } else if (LIKELY(regs.haltcnt == SYSTEM_RUN)) {
+                if (regs.interrupt.master_enable && requested_and_enabled) {
                     signal_interrupt();
                 }
                 step();

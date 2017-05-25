@@ -76,7 +76,7 @@ namespace GameBoyAdvance {
             } interrupt;
 
             SystemState haltcnt;
-        } m_io;
+        } regs;
 
         //TODO: remove this hack
         u8 m_mmio[0x800];

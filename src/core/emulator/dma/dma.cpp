@@ -26,7 +26,7 @@ namespace GameBoyAdvance {
 
     void Emulator::dma_hblank() {
         for (int i = 0; i < 4; i++) {
-            auto& dma = m_io.dma[i];
+            auto& dma = regs.dma[i];
 
             if (dma.enable && dma.time == DMA_HBLANK) {
                 m_dma_active  = true;
@@ -38,7 +38,7 @@ namespace GameBoyAdvance {
 
     void Emulator::dma_vblank() {
         for (int i = 0; i < 4; i++) {
-            auto& dma = m_io.dma[i];
+            auto& dma = regs.dma[i];
 
             if (dma.enable && dma.time == DMA_VBLANK) {
                 m_dma_active  = true;
@@ -49,7 +49,7 @@ namespace GameBoyAdvance {
     }
 
     void Emulator::dma_transfer() {
-        auto& dma = m_io.dma[m_current_dma];
+        auto& dma = regs.dma[m_current_dma];
 
         DMAControl src_cntl = dma.src_cntl;
         DMAControl dst_cntl = dma.dst_cntl;
@@ -107,7 +107,7 @@ namespace GameBoyAdvance {
     }
 
     void Emulator::dma_fill_fifo(int dma_id) {
-        auto& dma = m_io.dma[dma_id];
+        auto& dma = regs.dma[dma_id];
 
         for (int i = 0; i < 4; i++) {
             u32 value = read_word(dma.internal.src_addr, MEM_NONE);
