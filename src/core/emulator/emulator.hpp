@@ -26,7 +26,8 @@
 #include "../config.hpp"
 #include "../ppu/ppu.hpp"
 #include "../apu/apu.hpp"
-#include "../cart/cart_backup.hpp"
+#include "../cart/cartridge.hpp"
+
 #define CPU_INCLUDE
 
 namespace GameBoyAdvance {
@@ -35,10 +36,13 @@ namespace GameBoyAdvance {
     private:
         Config* m_config;
         
+        std::shared_ptr<Cartridge> cart;
+
+        // Local cartridge data copy (for optimization)
         u8*    m_rom;
         size_t m_rom_size;
         CartBackup* m_backup {nullptr};
-
+        
         u8 m_bios[0x4000];
         u8 m_wram[0x40000];
         u8 m_iram[0x8000];
@@ -59,8 +63,6 @@ namespace GameBoyAdvance {
         int  m_cycles;
         bool m_dma_active;
         int  m_current_dma;
-
-        void load_game();
         
         auto read_mmio (u32 address) -> u8;
         void write_mmio(u32 address, u8 value);
@@ -96,7 +98,7 @@ namespace GameBoyAdvance {
         u16& get_keypad();
 
         void load_config();
-        void load_game(std::string rom_file, std::string save_file);
+        void load_game(std::shared_ptr<Cartridge> cart);
         
         void frame();
     protected:

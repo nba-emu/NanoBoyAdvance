@@ -91,20 +91,17 @@ int main(int argc, char** argv) {
     
     int scale = 1;
     std::string rom_path;
-    std::string save_path;
     
     ArgumentParser parser;
     shared_ptr<ParsedArguments> args;
     
     Option bios_opt("bios", "path", false);
-    Option save_opt("save", "path", true);
     Option scale_opt("scale", "factor", true);
     Option speed_opt("forward", "multiplier", true);
     Option frameskip_opt("frameskip", "frames", true);
     Option darken_opt("darken", "", true);
     
     parser.add_option(bios_opt);
-    parser.add_option(save_opt);
     parser.add_option(scale_opt);
     parser.add_option(speed_opt);
     parser.add_option(frameskip_opt);
@@ -122,12 +119,6 @@ int main(int argc, char** argv) {
         rom_path = args->files[0];
         
         args->get_option_string("bios", config->bios_path);
-        
-        if (args->option_exists("save")) {
-            args->get_option_string("save", save_path);
-        } else {
-            save_path = rom_path.substr(0, rom_path.find_last_of(".")) + ".sav";
-        }
         
         if (args->option_exists("scale")) {
             args->get_option_int("scale", scale);
@@ -164,7 +155,9 @@ int main(int argc, char** argv) {
     emu.load_config();
     
     if (File::exists(rom_path) && File::exists(config->bios_path)) {
-        emu.load_game(rom_path, save_path);
+        auto cart = Cartridge::from_file(rom_path);
+        
+        emu.load_game(cart);
         keyinput = &emu.get_keypad();
     } else {
         parser.print_usage(argv[0]);

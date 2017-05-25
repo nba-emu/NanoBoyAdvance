@@ -46,12 +46,7 @@ namespace GameBoyAdvance {
     }
 
     Emulator::~Emulator() {
-        if (m_backup != nullptr) {
-            delete m_backup;
-        }
-        if (m_rom != nullptr) {
-            delete m_rom;
-        }
+        
     }
 
     void Emulator::reset() {
@@ -147,42 +142,15 @@ namespace GameBoyAdvance {
         m_apu.load_config();
     }
     
-    void Emulator::load_game(std::string rom_file, std::string save_file) {
-        m_rom      = File::read_data(rom_file);
-        m_rom_size = File::get_size(rom_file);
-
-        if (m_backup != nullptr) {
-            delete m_backup;
-            m_backup = nullptr;
-        }
-
-        SaveType save_type = m_config->save_type;
+    void Emulator::load_game(std::shared_ptr<Cartridge> cart) {
+        // hold reference to the Cartridge
+        this->cart = cart;
         
-        if (save_type == SAVE_DETECT) {
-            // Quick way for determining the save type.
-            // Might want to add an overwrite for nasty games that like to trick emulators
-            for (int i = 0; i < m_rom_size; i += 4) {
-                if (memcmp(m_rom + i, "EEPROM_V", 8) == 0) {
-                    save_type = SAVE_EEPROM;
-                } else if (memcmp(m_rom + i, "SRAM_V", 6) == 0) {
-                    save_type = SAVE_SRAM;
-                } else if (memcmp(m_rom + i, "FLASH_V"   , 7 ) == 0 ||
-                           memcmp(m_rom + i, "FLASH512_V", 10) == 0) {
-                    save_type = SAVE_FLASH64;
-                } else if (memcmp(m_rom + i, "FLASH1M_V", 9) == 0) {
-                    save_type = SAVE_FLASH128;
-                }
-            }
-        }
+        // internal copies, for optimization.
+        this->m_rom      = cart->data;
+        this->m_rom_size = cart->size;
+        this->m_backup   = cart->backup;
         
-        switch (save_type) {
-            case SAVE_EEPROM:   /*break;*/
-            case SAVE_SRAM:     m_backup = new SRAM(save_file);         break;
-            case SAVE_FLASH64:  m_backup = new Flash(save_file, false); break;
-            case SAVE_FLASH128: m_backup = new Flash(save_file, true);  break;
-        }
-        
-        // forced system reset...
         reset();
     }
 

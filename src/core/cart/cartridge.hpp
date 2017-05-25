@@ -26,7 +26,6 @@
 
 namespace GameBoyAdvance {
     
-    // BIG MEH
     enum SaveType {
         SAVE_DETECT,
         SAVE_SRAM,

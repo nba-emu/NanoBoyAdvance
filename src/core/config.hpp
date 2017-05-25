@@ -24,19 +24,10 @@
 
 namespace GameBoyAdvance {
     
-    enum SaveType {
-        SAVE_DETECT,
-        SAVE_SRAM,
-        SAVE_FLASH64,
-        SAVE_FLASH128,
-        SAVE_EEPROM
-    };
-    
     struct Config {
         // Core
         bool use_bios = true;
         std::string bios_path;
-        SaveType save_type = SAVE_DETECT;
         
         // Graphics
         int  frameskip     = 0;
