@@ -28,6 +28,9 @@
 #include "../apu/apu.hpp"
 #include "../cart/cartridge.hpp"
 
+#include "dma/regs.hpp"
+#include "timer/regs.hpp"
+
 namespace GameBoyAdvance {
 
     class Emulator : private ARM {
@@ -77,9 +80,9 @@ namespace GameBoyAdvance {
 
         void timer_step(int cycles);
         void timer_fifo(int timer_id, int times);
-        void timer_overflow(IO::Timer& timer, int times);
-        void timer_increment(IO::Timer& timer, int increment_count);
-        void timer_increment_once(IO::Timer& timer);
+        void timer_overflow(Timer& timer, int times);
+        void timer_increment(Timer& timer, int increment_count);
+        void timer_increment_once(Timer& timer);
 
         void dma_hblank();
         void dma_vblank();

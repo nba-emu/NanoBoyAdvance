@@ -19,28 +19,27 @@
 
 #pragma once
 
+#include "util/integer.hpp"
+
 namespace GameBoyAdvance {
 
-    enum InterruptType {
-        INTERRUPT_VBLANK  = 1,
-        INTERRUPT_HBLANK  = 2,
-        INTERRUPT_VCOUNT  = 4,
-        INTERRUPT_TIMER_0 = 8,
-        INTERRUPT_TIMER_1 = 16,
-        INTERRUPT_TIMER_2 = 32,
-        INTERRUPT_TIMER_3 = 64,
-        INTERRUPT_SERIAL  = 128,
-        INTERRUPT_DMA_0   = 256,
-        INTERRUPT_DMA_1   = 512,
-        INTERRUPT_DMA_2   = 1024,
-        INTERRUPT_DMA_3   = 2048,
-        INTERRUPT_KEYPAD  = 4096,
-        INTERRUPT_GAMEPAK = 8192
+    struct Timer {
+        int id;
+
+        struct Control {
+            int frequency;
+            bool cascade;
+            bool interrupt;
+            bool enable;
+        } control;
+
+        int cycles;
+        u16 reload;
+        u32 counter;
+
+        void reset();
+        auto read(int offset) -> u8;
+        void write(int offset, u8 value);
     };
 
-    enum SystemState {
-        SYSTEM_RUN,
-        SYSTEM_STOP,
-        SYSTEM_HALT
-    };
 }

@@ -7,23 +7,23 @@
   * it under the terms of the GNU General Public License as published by
   * the Free Software Foundation, either version 3 of the License, or
   * (at your option) any later version.
-  * 
+  *
   * NanoboyAdvance is distributed in the hope that it will be useful,
   * but WITHOUT ANY WARRANTY; without even the implied warranty of
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   * GNU General Public License for more details.
-  * 
+  *
   * You should have received a copy of the GNU General Public License
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#include "emulator.hpp"
+#include "../emulator.hpp"
 #include "util/logger.hpp"
 
 using namespace Util;
 
 namespace GameBoyAdvance {
-    
+
     void Emulator::dma_hblank() {
         for (int i = 0; i < 4; i++) {
             auto& dma = m_io.dma[i];
@@ -105,18 +105,18 @@ namespace GameBoyAdvance {
             m_interrupt.request((InterruptType)(INTERRUPT_DMA_0 << dma.id));
         }
     }
-    
+
     void Emulator::dma_fill_fifo(int dma_id) {
         auto& dma = m_io.dma[dma_id];
-        
+
         for (int i = 0; i < 4; i++) {
             u32 value = read_word(dma.internal.src_addr, MEM_NONE);
-            
+
             write_word(dma.internal.dst_addr, value, MEM_NONE);
-            
+
             dma.internal.src_addr += 4;
         }
-        
+
         if (dma.interrupt) {
             m_interrupt.request((InterruptType)(INTERRUPT_DMA_0 << dma.id));
         }

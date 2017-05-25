@@ -20,8 +20,10 @@ set(EMULATOR_SRC
     emulator/io.cpp
     emulator/emulator.cpp
     emulator/mmio.cpp
-    emulator/timer.cpp
-    emulator/dma.cpp
+    emulator/dma/dma.cpp
+    emulator/dma/regs.cpp
+    emulator/timer/timer.cpp
+    emulator/timer/regs.cpp
 )
 
 set(EMULATOR_HDR
@@ -31,6 +33,8 @@ set(EMULATOR_HDR
     emulator/interrupt.hpp
     emulator/mmio.hpp
     emulator/memory.hpp
+    emulator/dma/regs.hpp
+    emulator/timer/regs.hpp
 )
 
 set(CART_SRC
