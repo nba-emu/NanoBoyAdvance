@@ -20,16 +20,16 @@
 #pragma once
 
 #include <string>
-#include "../arm/arm.hpp"
+
 #include "enums.hpp"
 #include "interrupt.hpp"
+#include "dma/regs.hpp"
+#include "timer/regs.hpp"
 #include "../config.hpp"
+#include "../arm/arm.hpp"
 #include "../ppu/ppu.hpp"
 #include "../apu/apu.hpp"
 #include "../cart/cartridge.hpp"
-
-#include "dma/regs.hpp"
-#include "timer/regs.hpp"
 
 namespace GameBoyAdvance {
 

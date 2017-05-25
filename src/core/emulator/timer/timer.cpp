@@ -18,10 +18,8 @@
   */
 
 #include "regs.hpp"
-
 #include "../mmio.hpp"
 #include "../emulator.hpp"
-
 #include "util/logger.hpp"
 
 using namespace Util;
