@@ -41,7 +41,7 @@ namespace GameBoyAdvance {
         m_interrupt.set_flag_register(&m_io.interrupt.request);
 
         // feed PPU with important data.
-        m_ppu.set_memory(m_pal, m_oam, m_vram);
+        m_ppu.set_memory(memory.palette, memory.oam, memory.vram);
         m_ppu.set_interrupt(&m_interrupt);
     }
 
@@ -64,11 +64,11 @@ namespace GameBoyAdvance {
         }
 
         // clear out all memory
-        memset(m_wram, 0, 0x40000);
-        memset(m_iram, 0, 0x8000);
-        memset(m_pal,  0, 0x400);
-        memset(m_oam,  0, 0x400);
-        memset(m_vram, 0, 0x18000);
+        memset(memory.wram, 0, 0x40000);
+        memset(memory.iram, 0, 0x8000);
+        memset(memory.palette,  0, 0x400);
+        memset(memory.oam,  0, 0x400);
+        memset(memory.vram, 0, 0x18000);
         memset(m_mmio, 0, 0x800);
 
         // reset IO-registers
@@ -118,7 +118,7 @@ namespace GameBoyAdvance {
             }
             
             // copy BIOS to local buffer
-            memcpy(m_bios, data, size);
+            memcpy(memory.bios, data, size);
             
             // reset r15 because of weird reason
             ctx.r15 = 0x00000000;

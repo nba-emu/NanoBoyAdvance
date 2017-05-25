@@ -43,12 +43,14 @@ namespace GameBoyAdvance {
         size_t m_rom_size;
         CartBackup* m_backup {nullptr};
         
-        u8 m_bios[0x4000];
-        u8 m_wram[0x40000];
-        u8 m_iram[0x8000];
-        u8 m_pal[0x400];
-        u8 m_oam[0x400];
-        u8 m_vram[0x18000];
+        struct SystemMemory {
+            u8 bios    [0x4000 ];
+            u8 wram    [0x40000];
+            u8 iram    [0x8000 ];
+            u8 palette [0x400  ];
+            u8 oam     [0x400  ];
+            u8 vram    [0x18000];
+        } memory;
 
         u8 m_mmio[0x800];
 

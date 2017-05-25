@@ -45,7 +45,7 @@ auto read_bios(u32 address) -> u32 {
     if (get_context().r15 >= 0x4000) {
         return bios_opcode;
     }
-    return bios_opcode = READ_FAST_32(m_bios, address);
+    return bios_opcode = READ_FAST_32(memory.bios, address);
 }
 
 u8 bus_read_byte(u32 address, int flags) final {
@@ -58,21 +58,21 @@ u8 bus_read_byte(u32 address, int flags) final {
         case 0x0: {
             return read_bios(address);
         }
-        case 0x2: return READ_FAST_8(m_wram, address & 0x3FFFF);
-        case 0x3: return READ_FAST_8(m_iram, address & 0x7FFF );
+        case 0x2: return READ_FAST_8(memory.wram, address & 0x3FFFF);
+        case 0x3: return READ_FAST_8(memory.iram, address & 0x7FFF );
         case 0x4: {
             return  read_mmio(address) |
                    (read_mmio(address + 1) << 8 );
         }
-        case 0x5: return READ_FAST_8(m_pal, address & 0x3FF);
+        case 0x5: return READ_FAST_8(memory.palette, address & 0x3FF);
         case 0x6: {
             address &= 0x1FFFF;
             if (address >= 0x18000) {
                 address &= ~0x8000;
             }
-            return READ_FAST_8(m_vram, address);
+            return READ_FAST_8(memory.vram, address);
         }
-        case 0x7: return READ_FAST_8(m_oam, address & 0x3FF);
+        case 0x7: return READ_FAST_8(memory.oam, address & 0x3FF);
         case 0x8: case 0x9:
         case 0xA: case 0xB: 
         case 0xC: case 0xD: {
@@ -102,21 +102,21 @@ u16 bus_read_hword(u32 address, int flags) final {
         case 0x0: {
             return read_bios(address);
         }
-        case 0x2: return READ_FAST_16(m_wram, address & 0x3FFFF);
-        case 0x3: return READ_FAST_16(m_iram, address & 0x7FFF );
+        case 0x2: return READ_FAST_16(memory.wram, address & 0x3FFFF);
+        case 0x3: return READ_FAST_16(memory.iram, address & 0x7FFF );
         case 0x4: {
             return  read_mmio(address) |
                    (read_mmio(address + 1) << 8 );
         }
-        case 0x5: return READ_FAST_16(m_pal, address & 0x3FF);
+        case 0x5: return READ_FAST_16(memory.palette, address & 0x3FF);
         case 0x6: {
             address &= 0x1FFFF;
             if (address >= 0x18000) {
                 address &= ~0x8000;
             }
-            return READ_FAST_16(m_vram, address);
+            return READ_FAST_16(memory.vram, address);
         }
-        case 0x7: return READ_FAST_16(m_oam, address & 0x3FF);
+        case 0x7: return READ_FAST_16(memory.oam, address & 0x3FF);
         case 0x8: case 0x9:
         case 0xA: case 0xB: 
         case 0xC: case 0xD: {
@@ -147,23 +147,23 @@ u32 bus_read_word(u32 address, int flags) final {
         case 0x0: {
             return read_bios(address);
         }
-        case 0x2: return READ_FAST_32(m_wram, address & 0x3FFFF);
-        case 0x3: return READ_FAST_32(m_iram, address & 0x7FFF );
+        case 0x2: return READ_FAST_32(memory.wram, address & 0x3FFFF);
+        case 0x3: return READ_FAST_32(memory.iram, address & 0x7FFF );
         case 0x4: {
             return  read_mmio(address) |
                    (read_mmio(address + 1) << 8 ) |
                    (read_mmio(address + 2) << 16) |
                    (read_mmio(address + 3) << 24);
         }
-        case 0x5: return READ_FAST_32(m_pal, address & 0x3FF);
+        case 0x5: return READ_FAST_32(memory.palette, address & 0x3FF);
         case 0x6: {
             address &= 0x1FFFF;
             if (address >= 0x18000) {
                 address &= ~0x8000;
             }
-            return READ_FAST_32(m_vram, address);
+            return READ_FAST_32(memory.vram, address);
         }
-        case 0x7: return READ_FAST_32(m_oam, address & 0x3FF);
+        case 0x7: return READ_FAST_32(memory.oam, address & 0x3FF);
         case 0x8: case 0x9:
         case 0xA: case 0xB: 
         case 0xC: case 0xD: {
@@ -192,22 +192,22 @@ void bus_write_byte(u32 address, u8 value, int flags) final {
     m_cycles -= s_mem_cycles8_16[page];
     
     switch (page) {
-        case 0x2: WRITE_FAST_8(m_wram, address & 0x3FFFF, value); break;
-        case 0x3: WRITE_FAST_8(m_iram, address & 0x7FFF,  value); break;
+        case 0x2: WRITE_FAST_8(memory.wram, address & 0x3FFFF, value); break;
+        case 0x3: WRITE_FAST_8(memory.iram, address & 0x7FFF,  value); break;
         case 0x4: {
             write_mmio(address, value & 0xFF);
             break;
         }
-        case 0x5: WRITE_FAST_16(m_pal, address & 0x3FF, value * 0x0101); break;
+        case 0x5: WRITE_FAST_16(memory.palette, address & 0x3FF, value * 0x0101); break;
         case 0x6: {
             address &= 0x1FFFF;
             if (address >= 0x18000) {
                 address &= ~0x8000;
             }
-            WRITE_FAST_16(m_vram, address, value * 0x0101);
+            WRITE_FAST_16(memory.vram, address, value * 0x0101);
             break;
         }
-        case 0x7: WRITE_FAST_16(m_oam, address & 0x3FF, value * 0x0101); break;
+        case 0x7: WRITE_FAST_16(memory.oam, address & 0x3FF, value * 0x0101); break;
         case 0xE: {
             if (!m_backup) { 
                 break;
@@ -226,23 +226,23 @@ void bus_write_hword(u32 address, u16 value, int flags) final {
     m_cycles -= s_mem_cycles8_16[page];
     
     switch (page) {
-        case 0x2: WRITE_FAST_16(m_wram, address & 0x3FFFF, value); break;
-        case 0x3: WRITE_FAST_16(m_iram, address & 0x7FFF,  value); break;
+        case 0x2: WRITE_FAST_16(memory.wram, address & 0x3FFFF, value); break;
+        case 0x3: WRITE_FAST_16(memory.iram, address & 0x7FFF,  value); break;
         case 0x4: {
             write_mmio(address, value & 0xFF);
             write_mmio(address + 1, (value >> 8)  & 0xFF);
             break;
         }
-        case 0x5: WRITE_FAST_16(m_pal, address & 0x3FF, value); break;
+        case 0x5: WRITE_FAST_16(memory.palette, address & 0x3FF, value); break;
         case 0x6: {
             address &= 0x1FFFF;
             if (address >= 0x18000) {
                 address &= ~0x8000;
             }
-            WRITE_FAST_16(m_vram, address, value);
+            WRITE_FAST_16(memory.vram, address, value);
             break;
         }
-        case 0x7: WRITE_FAST_16(m_oam, address & 0x3FF, value); break;
+        case 0x7: WRITE_FAST_16(memory.oam, address & 0x3FF, value); break;
         case 0xE: {
             if (!m_backup) { 
                 break;
@@ -262,8 +262,8 @@ void bus_write_word(u32 address, u32 value, int flags) final {
     m_cycles -= s_mem_cycles32[page];
     
     switch (page) {
-        case 0x2: WRITE_FAST_32(m_wram, address & 0x3FFFF, value); break;
-        case 0x3: WRITE_FAST_32(m_iram, address & 0x7FFF,  value); break;
+        case 0x2: WRITE_FAST_32(memory.wram, address & 0x3FFFF, value); break;
+        case 0x3: WRITE_FAST_32(memory.iram, address & 0x7FFF,  value); break;
         case 0x4: {
             write_mmio(address, value & 0xFF);
             write_mmio(address + 1, (value >> 8)  & 0xFF);
@@ -271,16 +271,16 @@ void bus_write_word(u32 address, u32 value, int flags) final {
             write_mmio(address + 3, (value >> 24) & 0xFF);
             break;
         }
-        case 0x5: WRITE_FAST_32(m_pal, address & 0x3FF, value); break;
+        case 0x5: WRITE_FAST_32(memory.palette, address & 0x3FF, value); break;
         case 0x6: {
             address &= 0x1FFFF;
             if (address >= 0x18000) {
                 address &= ~0x8000;
             }
-            WRITE_FAST_32(m_vram, address, value);
+            WRITE_FAST_32(memory.vram, address, value);
             break;
         }
-        case 0x7: WRITE_FAST_32(m_oam, address & 0x3FF, value); break;
+        case 0x7: WRITE_FAST_32(memory.oam, address & 0x3FF, value); break;
         case 0xE: {
             if (!m_backup) { 
                 break;
