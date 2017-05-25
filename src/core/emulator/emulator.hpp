@@ -57,12 +57,30 @@ namespace GameBoyAdvance {
             } rom;
         } memory;
 
+        struct Registers {
+            DMA   dma[4];
+            Timer timer[4];
+
+            u16 keyinput;
+
+            struct Interrupt {
+                u16 enable;
+                u16 request;
+                u16 master_enable;
+
+                void reset() {
+                    enable  = 0;
+                    request = 0;
+                    master_enable = 0;
+                }
+            } interrupt;
+
+            SystemState haltcnt;
+        } m_io;
+
         //TODO: remove this hack
         u8 m_mmio[0x800];
-
         u32 bios_opcode;
-
-        #include "io.hpp"
 
         // Subsystems
         PPU m_ppu;

@@ -17,7 +17,6 @@ set(ARM_HDR
 )
 
 set(EMULATOR_SRC
-    emulator/io.cpp
     emulator/emulator.cpp
     emulator/mmio.cpp
     emulator/dma/dma.cpp
@@ -27,7 +26,6 @@ set(EMULATOR_SRC
 )
 
 set(EMULATOR_HDR
-    emulator/io.hpp
     emulator/emulator.hpp
     emulator/enums.hpp
     emulator/interrupt.hpp
