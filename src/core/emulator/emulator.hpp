@@ -7,12 +7,12 @@
   * it under the terms of the GNU General Public License as published by
   * the Free Software Foundation, either version 3 of the License, or
   * (at your option) any later version.
-  * 
+  *
   * NanoboyAdvance is distributed in the hope that it will be useful,
   * but WITHOUT ANY WARRANTY; without even the implied warranty of
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   * GNU General Public License for more details.
-  * 
+  *
   * You should have received a copy of the GNU General Public License
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
@@ -29,14 +29,15 @@
 #include "../cart/cartridge.hpp"
 
 namespace GameBoyAdvance {
-    
+
     class Emulator : private ARM {
-        
+
     private:
         Config* m_config;
-        
+
+        // do not delete - needed for reference counting
         std::shared_ptr<Cartridge> cart;
-        
+
         struct SystemMemory {
             u8 bios    [0x4000 ];
             u8 wram    [0x40000];
@@ -44,7 +45,7 @@ namespace GameBoyAdvance {
             u8 palette [0x400  ];
             u8 oam     [0x400  ];
             u8 vram    [0x18000];
-            
+
             // Local copy (fast access)
             struct ROM {
                 u8*    data;
@@ -57,9 +58,10 @@ namespace GameBoyAdvance {
         u8 m_mmio[0x800];
 
         u32 bios_opcode;
-        
+
         #include "io.hpp"
 
+        // Subsystems
         PPU m_ppu;
         APU m_apu;
         Interrupt m_interrupt;
@@ -67,7 +69,7 @@ namespace GameBoyAdvance {
         int  m_cycles;
         bool m_dma_active;
         int  m_current_dma;
-        
+
         auto read_mmio (u32 address) -> u8;
         void write_mmio(u32 address, u8 value);
 
@@ -78,19 +80,11 @@ namespace GameBoyAdvance {
         void timer_overflow(IO::Timer& timer, int times);
         void timer_increment(IO::Timer& timer, int increment_count);
         void timer_increment_once(IO::Timer& timer);
-        
+
         void dma_hblank();
         void dma_vblank();
         void dma_transfer();
         void dma_fill_fifo(int dma_id);
-
-        static constexpr int s_mem_cycles8_16[16] = {
-            1, 1, 3, 1, 1, 1, 1, 1, 5, 5, 1, 1, 1, 1, 5, 1
-        };
-
-        static constexpr int s_mem_cycles32[16] = {
-            1, 1, 6, 1, 1, 2, 2, 1, 8, 8, 1, 1, 1, 1, 5, 1
-        };
 
     public:
         Emulator(Config* config);
@@ -103,7 +97,7 @@ namespace GameBoyAdvance {
 
         void load_config();
         void load_game(std::shared_ptr<Cartridge> cart);
-        
+
         void frame();
     protected:
 

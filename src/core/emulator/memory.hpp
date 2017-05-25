@@ -7,19 +7,19 @@
   * it under the terms of the GNU General Public License as published by
   * the Free Software Foundation, either version 3 of the License, or
   * (at your option) any later version.
-  * 
+  *
   * NanoboyAdvance is distributed in the hope that it will be useful,
   * but WITHOUT ANY WARRANTY; without even the implied warranty of
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   * GNU General Public License for more details.
-  * 
+  *
   * You should have received a copy of the GNU General Public License
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#pragma once 
+#pragma once
 
-// TODO(accuracy): 
+// TODO(accuracy):
 //     Verify that this kind of reading works for edge cases.
 //     Theoretically all addresses that are being passed should be aligned
 //     which hopefully should make it impossible to access two memory areas at the time.
@@ -36,7 +36,17 @@
 #define WRITE_FAST_16(buffer, address, value) *(u16*)(&buffer[address]) = value;
 #define WRITE_FAST_32(buffer, address, value) *(u32*)(&buffer[address]) = value;
 
-auto read_bios(u32 address) -> u32 {    
+// Cycle-LUT for byte and hword accesses
+static constexpr int cycles[16] = {
+    1, 1, 3, 1, 1, 1, 1, 1, 5, 5, 1, 1, 1, 1, 5, 1
+};
+
+// Cycles-LUT for word accesses
+static constexpr int cycles32[16] = {
+    1, 1, 6, 1, 1, 2, 2, 1, 8, 8, 1, 1, 1, 1, 5, 1
+};
+
+auto read_bios(u32 address) -> u32 {
     if (address >= 0x4000) {
         return 0;
     }
@@ -50,7 +60,7 @@ u8 bus_read_byte(u32 address, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
-    m_cycles -= s_mem_cycles8_16[page];
+    m_cycles -= cycles[page];
 
     switch (page) {
         case 0x0: {
@@ -72,7 +82,7 @@ u8 bus_read_byte(u32 address, int flags) final {
         }
         case 0x7: return READ_FAST_8(memory.oam, address & 0x3FF);
         case 0x8: case 0x9:
-        case 0xA: case 0xB: 
+        case 0xA: case 0xB:
         case 0xC: case 0xD: {
             address &= 0x1FFFFFF;
             if (address >= memory.rom.size) {
@@ -92,10 +102,10 @@ u8 bus_read_byte(u32 address, int flags) final {
 
 u16 bus_read_hword(u32 address, int flags) final {
     int page = (address >> 24) & 15;
-    
+
     // poor mans cycle counting
-    m_cycles -= s_mem_cycles8_16[page];
-    
+    m_cycles -= cycles[page];
+
     switch (page) {
         case 0x0: {
             return read_bios(address);
@@ -116,7 +126,7 @@ u16 bus_read_hword(u32 address, int flags) final {
         }
         case 0x7: return READ_FAST_16(memory.oam, address & 0x3FF);
         case 0x8: case 0x9:
-        case 0xA: case 0xB: 
+        case 0xA: case 0xB:
         case 0xC: case 0xD: {
             address &= 0x1FFFFFF;
             if (address >= memory.rom.size) {
@@ -130,17 +140,17 @@ u16 bus_read_hword(u32 address, int flags) final {
             }
             return memory.rom.save->read_byte(address) * 0x0101;
         }
-        
+
         default: return 0;
     }
 }
 
 u32 bus_read_word(u32 address, int flags) final {
     const int page = (address >> 24) & 15;
-    
+
     // poor mans cycle counting
-    m_cycles -= s_mem_cycles32[page];
-    
+    m_cycles -= cycles32[page];
+
     switch (page) {
         case 0x0: {
             return read_bios(address);
@@ -163,7 +173,7 @@ u32 bus_read_word(u32 address, int flags) final {
         }
         case 0x7: return READ_FAST_32(memory.oam, address & 0x3FF);
         case 0x8: case 0x9:
-        case 0xA: case 0xB: 
+        case 0xA: case 0xB:
         case 0xC: case 0xD: {
             address &= 0x1FFFFFF;
             if (address >= memory.rom.size) {
@@ -178,17 +188,17 @@ u32 bus_read_word(u32 address, int flags) final {
             }
             return memory.rom.save->read_byte(address) * 0x01010101;
         }
-            
+
         default: return 0;
     }
 }
 
 void bus_write_byte(u32 address, u8 value, int flags) final {
     int page = (address >> 24) & 15;
-    
+
     // poor mans cycle counting
-    m_cycles -= s_mem_cycles8_16[page];
-    
+    m_cycles -= cycles[page];
+
     switch (page) {
         case 0x2: WRITE_FAST_8(memory.wram, address & 0x3FFFF, value); break;
         case 0x3: WRITE_FAST_8(memory.iram, address & 0x7FFF,  value); break;
@@ -207,10 +217,10 @@ void bus_write_byte(u32 address, u8 value, int flags) final {
         }
         case 0x7: WRITE_FAST_16(memory.oam, address & 0x3FF, value * 0x0101); break;
         case 0xE: {
-            if (!memory.rom.save) { 
+            if (!memory.rom.save) {
                 break;
             }
-            memory.rom.save->write_byte(address, value); 
+            memory.rom.save->write_byte(address, value);
             break;
         }
         default: break; // TODO: throw error
@@ -219,10 +229,10 @@ void bus_write_byte(u32 address, u8 value, int flags) final {
 
 void bus_write_hword(u32 address, u16 value, int flags) final {
     int page = (address >> 24) & 15;
-    
+
     // poor mans cycle counting
-    m_cycles -= s_mem_cycles8_16[page];
-    
+    m_cycles -= cycles[page];
+
     switch (page) {
         case 0x2: WRITE_FAST_16(memory.wram, address & 0x3FFFF, value); break;
         case 0x3: WRITE_FAST_16(memory.iram, address & 0x7FFF,  value); break;
@@ -242,11 +252,11 @@ void bus_write_hword(u32 address, u16 value, int flags) final {
         }
         case 0x7: WRITE_FAST_16(memory.oam, address & 0x3FF, value); break;
         case 0xE: {
-            if (!memory.rom.save) { 
+            if (!memory.rom.save) {
                 break;
             }
-            memory.rom.save->write_byte(address + 0, value); 
-            memory.rom.save->write_byte(address + 1, value); 
+            memory.rom.save->write_byte(address + 0, value);
+            memory.rom.save->write_byte(address + 1, value);
             break;
         }
         default: break; // TODO: throw error
@@ -255,10 +265,10 @@ void bus_write_hword(u32 address, u16 value, int flags) final {
 
 void bus_write_word(u32 address, u32 value, int flags) final {
     int page = (address >> 24) & 15;
-    
+
     // poor mans cycle counting
-    m_cycles -= s_mem_cycles32[page];
-    
+    m_cycles -= cycles32[page];
+
     switch (page) {
         case 0x2: WRITE_FAST_32(memory.wram, address & 0x3FFFF, value); break;
         case 0x3: WRITE_FAST_32(memory.iram, address & 0x7FFF,  value); break;
@@ -280,16 +290,15 @@ void bus_write_word(u32 address, u32 value, int flags) final {
         }
         case 0x7: WRITE_FAST_32(memory.oam, address & 0x3FF, value); break;
         case 0xE: {
-            if (!memory.rom.save) { 
+            if (!memory.rom.save) {
                 break;
             }
-            memory.rom.save->write_byte(address + 0, value); 
-            memory.rom.save->write_byte(address + 1, value); 
-            memory.rom.save->write_byte(address + 2, value); 
-            memory.rom.save->write_byte(address + 3, value); 
+            memory.rom.save->write_byte(address + 0, value);
+            memory.rom.save->write_byte(address + 1, value);
+            memory.rom.save->write_byte(address + 2, value);
+            memory.rom.save->write_byte(address + 3, value);
             break;
         }
         default: break; // TODO: throw error
     }
 }
-
