@@ -34,6 +34,19 @@
 namespace GameBoyAdvance {
 
     class Emulator : private ARM {
+    public:
+        Emulator(Config* config);
+        ~Emulator();
+
+        void reset();
+
+        APU& get_apu();
+        u16& get_keypad();
+
+        void load_config();
+        void load_game(std::shared_ptr<Cartridge> cart);
+
+        void frame();
 
     private:
         Config* m_config;
@@ -55,6 +68,11 @@ namespace GameBoyAdvance {
                 Save*  save;
                 size_t size;
             } rom;
+
+            u32 bios_opcode;
+
+            //TODO: remove this hack
+            u8 mmio[0x800];
         } memory;
 
         struct Registers {
@@ -77,10 +95,6 @@ namespace GameBoyAdvance {
 
             SystemState haltcnt;
         } regs;
-
-        //TODO: remove this hack
-        u8 m_mmio[0x800];
-        u32 bios_opcode;
 
         // Subsystems
         PPU m_ppu;
@@ -107,19 +121,6 @@ namespace GameBoyAdvance {
         void dma_transfer();
         void dma_fill_fifo(int dma_id);
 
-    public:
-        Emulator(Config* config);
-        ~Emulator();
-
-        void reset();
-
-        APU& get_apu();
-        u16& get_keypad();
-
-        void load_config();
-        void load_game(std::shared_ptr<Cartridge> cart);
-
-        void frame();
     protected:
 
         #include "memory.hpp"

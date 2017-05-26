@@ -120,7 +120,7 @@ namespace GameBoyAdvance {
             default: Logger::log<LOG_DEBUG>("unknown IO read {0:X}", address);
         }
 
-        return m_mmio[address & 0x7FF];
+        return memory.mmio[address & 0x7FF];
     }
 
     void Emulator::write_mmio(u32 address, u8 value) {
@@ -393,7 +393,7 @@ namespace GameBoyAdvance {
 
             default:
                 Logger::log<LOG_DEBUG>("unknown IO write {0:X}", address);
-                m_mmio[address & 0x7FF] = value;
+                memory.mmio[address & 0x7FF] = value;
         }
     }
 }

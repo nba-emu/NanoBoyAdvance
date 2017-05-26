@@ -69,7 +69,7 @@ namespace GameBoyAdvance {
         memset(memory.palette,  0, 0x400);
         memset(memory.oam,  0, 0x400);
         memset(memory.vram, 0, 0x18000);
-        memset(m_mmio, 0, 0x800);
+        memset(memory.mmio, 0, 0x800);
 
         // reset IO-registers
         regs.keyinput = 0x3FF;
@@ -126,7 +126,7 @@ namespace GameBoyAdvance {
             delete data;
         }
 
-        bios_opcode = 0;
+        memory.bios_opcode = 0;
     }
 
     APU& Emulator::get_apu() {

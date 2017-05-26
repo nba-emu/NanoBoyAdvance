@@ -51,9 +51,9 @@ auto read_bios(u32 address) -> u32 {
         return 0;
     }
     if (get_context().r15 >= 0x4000) {
-        return bios_opcode;
+        return memory.bios_opcode;
     }
-    return bios_opcode = READ_FAST_32(memory.bios, address);
+    return memory.bios_opcode = READ_FAST_32(memory.bios, address);
 }
 
 u8 bus_read_byte(u32 address, int flags) final {
