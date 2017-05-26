@@ -20,7 +20,7 @@
 // TODO: cleanup and simplify. Use inliners to reduce code redundancy.
 
 #include "mmio.hpp"
-#include "emulator.hpp"
+#include "../emulator.hpp"
 #include "util/logger.hpp"
 
 using namespace Util;

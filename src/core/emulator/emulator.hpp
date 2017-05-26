@@ -55,11 +55,11 @@ namespace GameBoyAdvance {
         std::shared_ptr<Cartridge> cart;
 
         struct SystemMemory {
-            u8 bios    [0x4000 ];
+            u8 bios    [0x04000];
             u8 wram    [0x40000];
-            u8 iram    [0x8000 ];
-            u8 palette [0x400  ];
-            u8 oam     [0x400  ];
+            u8 iram    [0x08000];
+            u8 palette [0x00400];
+            u8 oam     [0x00400];
             u8 vram    [0x18000];
 
             // Local copy (fast access)
@@ -123,7 +123,7 @@ namespace GameBoyAdvance {
 
     protected:
 
-        #include "memory.hpp"
+        #include "memory/memory.hpp"
 
         void software_interrupt(int number) final {};
     };

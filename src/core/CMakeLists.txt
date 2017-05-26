@@ -18,7 +18,7 @@ set(ARM_HDR
 
 set(EMULATOR_SRC
     emulator/emulator.cpp
-    emulator/mmio.cpp
+    emulator/memory/mmio.cpp
     emulator/dma/dma.cpp
     emulator/dma/regs.cpp
     emulator/timer/timer.cpp
@@ -29,8 +29,8 @@ set(EMULATOR_HDR
     emulator/emulator.hpp
     emulator/enums.hpp
     emulator/interrupt.hpp
-    emulator/mmio.hpp
-    emulator/memory.hpp
+    emulator/memory/mmio.hpp
+    emulator/memory/memory.hpp
     emulator/dma/regs.hpp
     emulator/timer/regs.hpp
 )
