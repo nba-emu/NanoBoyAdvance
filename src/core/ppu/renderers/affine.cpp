@@ -23,74 +23,74 @@
 using namespace Util;
 
 namespace GameBoyAdvance {
+  
+  void PPU::render_affine(int id) {
     
-    void PPU::render_affine(int id) {
-        
-        auto bg        = m_io.bgcnt[2 + id];
-        u16* buffer    = m_buffer[2 + id];
-        u32 tile_block = bg.tile_block << 14;
+    auto bg    = m_io.bgcnt[2 + id];
+    u16* buffer  = m_buffer[2 + id];
+    u32 tile_block = bg.tile_block << 14;
 
-        float ref_x = m_io.bgx[id].internal;
-        float ref_y = m_io.bgy[id].internal;
-        float parameter_a = PPU::decode_fixed16(m_io.bgpa[id]);
-        float parameter_c = PPU::decode_fixed16(m_io.bgpc[id]);
+    float ref_x = m_io.bgx[id].internal;
+    float ref_y = m_io.bgy[id].internal;
+    float parameter_a = PPU::decode_fixed16(m_io.bgpa[id]);
+    float parameter_c = PPU::decode_fixed16(m_io.bgpc[id]);
 
-        int size, block_width;
+    int size, block_width;
 
-        switch (bg.screen_size) {
-            case 0: size = 128; block_width = 16; break;
-            case 1: size = 256; block_width = 32; break;
-            case 2: size = 512; block_width = 64; break;
-            case 3: size = 1024; block_width = 128; break;
-        }
-
-        for (int _x = 0; _x < 240; _x++) {
-            bool is_backdrop = false;
-
-            int x = ref_x + _x * parameter_a;
-            int y = ref_y + _x * parameter_c;
-
-            if (x >= size) {
-                if (bg.wraparound) {
-                    x = x % size;
-                } else {
-                    is_backdrop = true;
-                }
-            } else if (x < 0) {
-                if (bg.wraparound) {
-                    x = (size + x) % size;
-                } else {
-                    is_backdrop = true;
-                }
-            }
-
-            if (y >= size) {
-                if (bg.wraparound) {
-                    y = y % size;
-                } else {
-                    is_backdrop = true;
-                }
-            } else if (y < 0) {
-                if (bg.wraparound) {
-                    y = (size + y) % size;
-                } else {
-                    is_backdrop = true;
-                }
-            }
-
-            if (is_backdrop) {
-                buffer[_x] = COLOR_TRANSPARENT;
-                continue;
-            }
-
-            int map_x  = x >> 3;
-            int map_y  = y >> 3;
-            int tile_x = x & 7;
-            int tile_y = y & 7;
-
-            int number = m_vram[(bg.map_block << 11) + map_y * block_width + map_x];
-
-            buffer[_x] = get_tile_pixel_8bpp(tile_block, 0, number, tile_x, tile_y);
-        }
+    switch (bg.screen_size) {
+      case 0: size = 128; block_width = 16; break;
+      case 1: size = 256; block_width = 32; break;
+      case 2: size = 512; block_width = 64; break;
+      case 3: size = 1024; block_width = 128; break;
     }
+
+    for (int _x = 0; _x < 240; _x++) {
+      bool is_backdrop = false;
+
+      int x = ref_x + _x * parameter_a;
+      int y = ref_y + _x * parameter_c;
+
+      if (x >= size) {
+        if (bg.wraparound) {
+          x = x % size;
+        } else {
+          is_backdrop = true;
+        }
+      } else if (x < 0) {
+        if (bg.wraparound) {
+          x = (size + x) % size;
+        } else {
+          is_backdrop = true;
+        }
+      }
+
+      if (y >= size) {
+        if (bg.wraparound) {
+          y = y % size;
+        } else {
+          is_backdrop = true;
+        }
+      } else if (y < 0) {
+        if (bg.wraparound) {
+          y = (size + y) % size;
+        } else {
+          is_backdrop = true;
+        }
+      }
+
+      if (is_backdrop) {
+        buffer[_x] = COLOR_TRANSPARENT;
+        continue;
+      }
+
+      int map_x  = x >> 3;
+      int map_y  = y >> 3;
+      int tile_x = x & 7;
+      int tile_y = y & 7;
+
+      int number = m_vram[(bg.map_block << 11) + map_y * block_width + map_x];
+
+      buffer[_x] = get_tile_pixel_8bpp(tile_block, 0, number, tile_x, tile_y);
+    }
+  }
 }

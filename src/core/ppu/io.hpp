@@ -20,120 +20,120 @@
 #ifdef PPU_INCLUDE
 
 struct IO {
+  
+  struct DisplayControl {
+    int  mode;
+    bool cgb_mode;
+    int  frame_select;
+    bool hblank_oam_access;
+    bool one_dimensional;
+    bool forced_blank;
+    bool enable[5];
+    bool win_enable[3];
+
+    void reset();
+    auto read(int offset) -> u8;
+    void write(int offset, u8 value);
+  } control;
+
+  struct DisplayStatus {
+    bool vblank_flag;
+    bool hblank_flag;
+    bool vcount_flag;
+    bool vblank_interrupt;
+    bool hblank_interrupt;
+    bool vcount_interrupt;
+    int  vcount_setting;
+
+    void reset();
+    auto read(int offset) -> u8;
+    void write(int offset, u8 value);
+  } status;
+
+  int vcount;
+
+  struct BackgroundControl {
+    int  priority;
+    int  tile_block;
+    bool mosaic_enable;
+    bool full_palette;//eh
+    int  map_block;
+    bool wraparound;
+    int  screen_size;
+
+    void reset();
+    auto read(int offset) -> u8;
+    void write(int offset, u8 value);
+  } bgcnt[4];
+
+  // horizontal and vertical scrolling info for each BG.
+  u16 bghofs[4];
+  u16 bgvofs[4];
+
+  struct ReferencePoint {
+    u32   value;
+    float internal;
+
+    void reset();
+    void write(int offset, u8 value);
+  } bgx[2], bgy[2];
+
+  // rotate/scale parameters, PA/PB/PC/PD
+  u16 bgpa[2];
+  u16 bgpb[2];
+  u16 bgpc[2];
+  u16 bgpd[2];
+  
+  struct Mosaic {
+    struct {
+      int h;
+      int v;
+    } bg, obj;
     
-    struct DisplayControl {
-        int  mode;
-        bool cgb_mode;
-        int  frame_select;
-        bool hblank_oam_access;
-        bool one_dimensional;
-        bool forced_blank;
-        bool enable[5];
-        bool win_enable[3];
-
-        void reset();
-        auto read(int offset) -> u8;
-        void write(int offset, u8 value);
-    } control;
-
-    struct DisplayStatus {
-        bool vblank_flag;
-        bool hblank_flag;
-        bool vcount_flag;
-        bool vblank_interrupt;
-        bool hblank_interrupt;
-        bool vcount_interrupt;
-        int  vcount_setting;
-
-        void reset();
-        auto read(int offset) -> u8;
-        void write(int offset, u8 value);
-    } status;
-
-    int vcount;
-
-    struct BackgroundControl {
-        int  priority;
-        int  tile_block;
-        bool mosaic_enable;
-        bool full_palette;//eh
-        int  map_block;
-        bool wraparound;
-        int  screen_size;
-
-        void reset();
-        auto read(int offset) -> u8;
-        void write(int offset, u8 value);
-    } bgcnt[4];
-
-    // horizontal and vertical scrolling info for each BG.
-    u16 bghofs[4];
-    u16 bgvofs[4];
-
-    struct ReferencePoint {
-        u32   value;
-        float internal;
-
-        void reset();
-        void write(int offset, u8 value);
-    } bgx[2], bgy[2];
-
-    // rotate/scale parameters, PA/PB/PC/PD
-    u16 bgpa[2];
-    u16 bgpb[2];
-    u16 bgpc[2];
-    u16 bgpd[2];
+    void reset();
+    void write(int offset, u8 value);
+  } mosaic;
+  
+  struct BlendControl {
+    SpecialEffect sfx;
+    bool targets[2][6];
     
-    struct Mosaic {
-        struct {
-            int h;
-            int v;
-        } bg, obj;
-        
-        void reset();
-        void write(int offset, u8 value);
-    } mosaic;
+    void reset();
+    auto read(int offset) -> u8;
+    void write(int offset, u8 value);
+  } bldcnt;
+  
+  struct BlendAlpha {
+    int eva;
+    int evb;
     
-    struct BlendControl {
-        SpecialEffect sfx;
-        bool targets[2][6];
-        
-        void reset();
-        auto read(int offset) -> u8;
-        void write(int offset, u8 value);
-    } bldcnt;
+    void reset();
+    void write(int offset, u8 value);
+  } bldalpha;
+  
+  struct BlendY {
+    int evy;
     
-    struct BlendAlpha {
-        int eva;
-        int evb;
-        
-        void reset();
-        void write(int offset, u8 value);
-    } bldalpha;
+    void reset();
+    void write(u8 value);
+  } bldy;
+  
+  struct WindowRange {
+    int min;
+    int max;
     
-    struct BlendY {
-        int evy;
-        
-        void reset();
-        void write(u8 value);
-    } bldy;
+    void reset();
+    void write(int offset, u8 value);
+  } winh[2], winv[2];
+  
+  struct WindowLayerSelect {
+    bool enable[2][6];
     
-    struct WindowRange {
-        int min;
-        int max;
-        
-        void reset();
-        void write(int offset, u8 value);
-    } winh[2], winv[2];
-    
-    struct WindowLayerSelect {
-        bool enable[2][6];
-        
-        void reset();
-        auto read(int offset) -> u8;
-        void write(int offset, u8 value);
-    
-    } winin, winout;
+    void reset();
+    auto read(int offset) -> u8;
+    void write(int offset, u8 value);
+  
+  } winin, winout;
 } m_io;
 
 #endif

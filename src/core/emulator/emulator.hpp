@@ -33,97 +33,97 @@
 
 namespace GameBoyAdvance {
 
-    class Emulator : private ARM {
+  class Emulator : private ARM {
 
-    private:
-        Config* m_config;
+  private:
+    Config* m_config;
 
-        // do not delete - needed for reference counting
-        std::shared_ptr<Cartridge> cart;
+    // do not delete - needed for reference counting
+    std::shared_ptr<Cartridge> cart;
 
-        struct SystemMemory {
-            u8 bios    [0x4000 ];
-            u8 wram    [0x40000];
-            u8 iram    [0x8000 ];
-            u8 palette [0x400  ];
-            u8 oam     [0x400  ];
-            u8 vram    [0x18000];
+    struct SystemMemory {
+      u8 bios  [0x4000 ];
+      u8 wram  [0x40000];
+      u8 iram  [0x8000 ];
+      u8 palette [0x400  ];
+      u8 oam   [0x400  ];
+      u8 vram  [0x18000];
 
-            // Local copy (fast access)
-            struct ROM {
-                u8*    data;
-                Save*  save;
-                size_t size;
-            } rom;
-        } memory;
+      // Local copy (fast access)
+      struct ROM {
+        u8*  data;
+        Save*  save;
+        size_t size;
+      } rom;
+    } memory;
 
-        struct Registers {
-            DMA   dma[4];
-            Timer timer[4];
+    struct Registers {
+      DMA   dma[4];
+      Timer timer[4];
 
-            u16 keyinput;
+      u16 keyinput;
 
-            struct Interrupt {
-                u16 enable;
-                u16 request;
-                u16 master_enable;
+      struct Interrupt {
+        u16 enable;
+        u16 request;
+        u16 master_enable;
 
-                void reset() {
-                    enable  = 0;
-                    request = 0;
-                    master_enable = 0;
-                }
-            } interrupt;
+        void reset() {
+          enable  = 0;
+          request = 0;
+          master_enable = 0;
+        }
+      } interrupt;
 
-            SystemState haltcnt;
-        } regs;
+      SystemState haltcnt;
+    } regs;
 
-        //TODO: remove this hack
-        u8 m_mmio[0x800];
-        u32 bios_opcode;
+    //TODO: remove this hack
+    u8 m_mmio[0x800];
+    u32 bios_opcode;
 
-        // Subsystems
-        PPU m_ppu;
-        APU m_apu;
-        Interrupt m_interrupt;
+    // Subsystems
+    PPU m_ppu;
+    APU m_apu;
+    Interrupt m_interrupt;
 
-        int  m_cycles;
-        bool m_dma_active;
-        int  m_current_dma;
+    int  m_cycles;
+    bool m_dma_active;
+    int  m_current_dma;
 
-        auto read_mmio (u32 address) -> u8;
-        void write_mmio(u32 address, u8 value);
+    auto read_mmio (u32 address) -> u8;
+    void write_mmio(u32 address, u8 value);
 
-        void run_for(int cycles);
+    void run_for(int cycles);
 
-        void timer_step(int cycles);
-        void timer_fifo(int timer_id, int times);
-        void timer_overflow(Timer& timer, int times);
-        void timer_increment(Timer& timer, int increment_count);
-        void timer_increment_once(Timer& timer);
+    void timer_step(int cycles);
+    void timer_fifo(int timer_id, int times);
+    void timer_overflow(Timer& timer, int times);
+    void timer_increment(Timer& timer, int increment_count);
+    void timer_increment_once(Timer& timer);
 
-        void dma_hblank();
-        void dma_vblank();
-        void dma_transfer();
-        void dma_fill_fifo(int dma_id);
+    void dma_hblank();
+    void dma_vblank();
+    void dma_transfer();
+    void dma_fill_fifo(int dma_id);
 
-    public:
-        Emulator(Config* config);
-        ~Emulator();
+  public:
+    Emulator(Config* config);
+    ~Emulator();
 
-        void reset();
+    void reset();
 
-        APU& get_apu();
-        u16& get_keypad();
+    APU& get_apu();
+    u16& get_keypad();
 
-        void load_config();
-        void load_game(std::shared_ptr<Cartridge> cart);
+    void load_config();
+    void load_game(std::shared_ptr<Cartridge> cart);
 
-        void frame();
-    protected:
+    void frame();
+  protected:
 
-        #include "memory.hpp"
+    #include "memory.hpp"
 
-        void software_interrupt(int number) final {};
-    };
+    void software_interrupt(int number) final {};
+  };
 }

@@ -25,38 +25,38 @@
 using namespace Util;
 
 namespace GameBoyAdvance {
-    
-    SRAM::SRAM(std::string save_file) {
-        m_save_file = save_file;
-        reset();
+  
+  SRAM::SRAM(std::string save_file) {
+    m_save_file = save_file;
+    reset();
+  }
+  
+  SRAM::~SRAM() {
+    File::write_data(m_save_file, m_memory, SRAM_SIZE);
+  }
+  
+  void SRAM::reset() {
+    if (File::exists(m_save_file)) {
+      int size = File::get_size(m_save_file);
+      
+      if (size == SRAM_SIZE) {
+        u8* data = File::read_data(m_save_file);
+        
+        std::memcpy(m_memory, data, SRAM_SIZE);
+      } else {
+        throw std::runtime_error("invalid SRAM save: " + m_save_file);
+      }
+    } else {
+      std::memset(m_memory, 0, SRAM_SIZE);
     }
-    
-    SRAM::~SRAM() {
-        File::write_data(m_save_file, m_memory, SRAM_SIZE);
-    }
-    
-    void SRAM::reset() {
-        if (File::exists(m_save_file)) {
-            int size = File::get_size(m_save_file);
-            
-            if (size == SRAM_SIZE) {
-                u8* data = File::read_data(m_save_file);
-                
-                std::memcpy(m_memory, data, SRAM_SIZE);
-            } else {
-                throw std::runtime_error("invalid SRAM save: " + m_save_file);
-            }
-        } else {
-            std::memset(m_memory, 0, SRAM_SIZE);
-        }
-    }
-    
-    auto SRAM::read_byte(u32 address) -> u8 {
-        return m_memory[address & 0x7FFF];
-    }
-    
-    void SRAM::write_byte(u32 address, u8 value) {
-        m_memory[address & 0x7FFF] = value;
-    }
-    
+  }
+  
+  auto SRAM::read_byte(u32 address) -> u8 {
+    return m_memory[address & 0x7FFF];
+  }
+  
+  void SRAM::write_byte(u32 address, u8 value) {
+    m_memory[address & 0x7FFF] = value;
+  }
+  
 }

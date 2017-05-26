@@ -20,44 +20,44 @@
 #include "regs.hpp"
 
 namespace GameBoyAdvance {
-    void Timer::reset() {
-        cycles = 0;
-        reload = 0;
-        counter = 0;
-        control.frequency = 0;
-        control.cascade = false;
-        control.interrupt = false;
-        control.enable = false;
-    }
+  void Timer::reset() {
+    cycles = 0;
+    reload = 0;
+    counter = 0;
+    control.frequency = 0;
+    control.cascade = false;
+    control.interrupt = false;
+    control.enable = false;
+  }
 
-    auto Timer::read(int offset) -> u8 {
-        switch (offset) {
-            case 0: return counter & 0xFF;
-            case 1: return counter >> 8;
-            case 2:
-                return (control.frequency) |
-                       (control.cascade   ? 4   : 0) |
-                       (control.interrupt ? 64  : 0) |
-                       (control.enable    ? 128 : 0);
+  auto Timer::read(int offset) -> u8 {
+    switch (offset) {
+      case 0: return counter & 0xFF;
+      case 1: return counter >> 8;
+      case 2:
+        return (control.frequency) |
+             (control.cascade   ? 4   : 0) |
+             (control.interrupt ? 64  : 0) |
+             (control.enable  ? 128 : 0);
+    }
+  }
+
+  void Timer::write(int offset, u8 value) {
+    switch (offset) {
+      case 0: reload = (reload & 0xFF00) | value; break;
+      case 1: reload = (reload & 0x00FF) | (value << 8); break;
+      case 2: {
+        bool enable_previous = control.enable;
+
+        control.frequency = value & 3;
+        control.cascade   = value & 4;
+        control.interrupt = value & 64;
+        control.enable  = value & 128;
+
+        if (!enable_previous && control.enable) {
+          counter = reload;
         }
+      }
     }
-
-    void Timer::write(int offset, u8 value) {
-        switch (offset) {
-            case 0: reload = (reload & 0xFF00) | value; break;
-            case 1: reload = (reload & 0x00FF) | (value << 8); break;
-            case 2: {
-                bool enable_previous = control.enable;
-
-                control.frequency = value & 3;
-                control.cascade   = value & 4;
-                control.interrupt = value & 64;
-                control.enable    = value & 128;
-
-                if (!enable_previous && control.enable) {
-                    counter = reload;
-                }
-            }
-        }
-    }
+  }
 }

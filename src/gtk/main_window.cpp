@@ -20,18 +20,18 @@
 #include "main_window.hpp"
 
 MainWindow::MainWindow() {
-    set_title("NanoboyAdvance 0.1");
-    set_reallocate_redraws(true); //TODO: wat is dis
-    
-    add(m_vbox);
-    
-    // setup screen
-    m_screen.set_size_request(240, 160);
-    m_vbox.pack_start(m_screen);
-    
-    show_all();
+  set_title("NanoboyAdvance 0.1");
+  set_reallocate_redraws(true); //TODO: wat is dis
+  
+  add(m_vbox);
+  
+  // setup screen
+  m_screen.set_size_request(240, 160);
+  m_vbox.pack_start(m_screen);
+  
+  show_all();
 }
 
 MainWindow::~MainWindow() {
-    
+  
 }

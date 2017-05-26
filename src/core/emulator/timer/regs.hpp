@@ -22,22 +22,22 @@
 #include "util/integer.hpp"
 
 namespace GameBoyAdvance {
-    struct Timer {
-        int id;
+  struct Timer {
+    int id;
 
-        struct Control {
-            int frequency;
-            bool cascade;
-            bool interrupt;
-            bool enable;
-        } control;
+    struct Control {
+      int frequency;
+      bool cascade;
+      bool interrupt;
+      bool enable;
+    } control;
 
-        int cycles;
-        u16 reload;
-        u32 counter;
+    int cycles;
+    u16 reload;
+    u32 counter;
 
-        void reset();
-        auto read(int offset) -> u8;
-        void write(int offset, u8 value);
-    };
+    void reset();
+    auto read(int offset) -> u8;
+    void write(int offset, u8 value);
+  };
 }

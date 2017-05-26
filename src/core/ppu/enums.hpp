@@ -21,27 +21,27 @@
 
 namespace GameBoyAdvance {
 
-    enum Layer {
-        LAYER_BG0 = 0,
-        LAYER_BG1 = 1,
-        LAYER_BG2 = 2,
-        LAYER_BG3 = 3,
-        LAYER_OBJ = 4,
-        LAYER_BD  = 5,
-        LAYER_SFX = 5
-    };
-    
-    enum SpecialEffect {
-        SFX_NONE     = 0,
-        SFX_BLEND    = 1,
-        SFX_INCREASE = 2,
-        SFX_DECREASE = 3
-    };
-    
-    enum ObjectMode {
-        OBJ_NORMAL     = 0,
-        OBJ_SEMI       = 1,
-        OBJ_WINDOW     = 2,
-        OBJ_PROHIBITED = 3
-    };
+  enum Layer {
+    LAYER_BG0 = 0,
+    LAYER_BG1 = 1,
+    LAYER_BG2 = 2,
+    LAYER_BG3 = 3,
+    LAYER_OBJ = 4,
+    LAYER_BD  = 5,
+    LAYER_SFX = 5
+  };
+  
+  enum SpecialEffect {
+    SFX_NONE   = 0,
+    SFX_BLEND  = 1,
+    SFX_INCREASE = 2,
+    SFX_DECREASE = 3
+  };
+  
+  enum ObjectMode {
+    OBJ_NORMAL   = 0,
+    OBJ_SEMI     = 1,
+    OBJ_WINDOW   = 2,
+    OBJ_PROHIBITED = 3
+  };
 }

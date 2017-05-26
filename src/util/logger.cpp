@@ -24,15 +24,15 @@
 #include "logger.hpp"
 
 namespace Util {
-    
-    namespace Logger {
-        std::map<int, std::string> g_level_map = {
-            { LOG_TRACE, "TRACE" },
-            { LOG_DEBUG, "DEBUG" },
-            { LOG_INFO,  "INFO" },
-            { LOG_WARN,  "WARN" },
-            { LOG_ERROR, "ERROR" },
-            { LOG_FATAL, "FATAL" }
-        };
-    }
+  
+  namespace Logger {
+    std::map<int, std::string> g_level_map = {
+      { LOG_TRACE, "TRACE" },
+      { LOG_DEBUG, "DEBUG" },
+      { LOG_INFO,  "INFO" },
+      { LOG_WARN,  "WARN" },
+      { LOG_ERROR, "ERROR" },
+      { LOG_FATAL, "FATAL" }
+    };
+  }
 }

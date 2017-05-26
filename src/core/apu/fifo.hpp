@@ -22,51 +22,51 @@
 #include "util/integer.hpp"
 
 namespace GameBoyAdvance {
-    const int FIFO_SIZE = 32;
+  const int FIFO_SIZE = 32;
+  
+  class FIFO {
+  private:
+    int m_index;
+    s8  m_buffer[FIFO_SIZE];
     
-    class FIFO {
-    private:
-        int m_index;
-        s8  m_buffer[FIFO_SIZE];
-        
-    public:
-        FIFO() {
-            reset();
-        }
-        
-        void reset() {
-            m_index = 0;
-        }
-        
-        bool requires_data() {
-            return m_index <= (FIFO_SIZE >> 1);
-        }
-        
-        void enqueue(u8 data) {
-            if (m_index < FIFO_SIZE) {
-                m_buffer[m_index++] = static_cast<s8>(data);
-            }
-        }
-        
-        auto dequeue() -> s8 {
-            s8 value;
-            
-            if (m_index == 0) {
-                // FIFO underrun
-                return 0;
-            }
-            
-            value = m_buffer[0];
-            
-            // advances each next sample by one position
-            for (int i = 1; i < m_index; i++) {
-                m_buffer[i - 1] = m_buffer[i];
-            }
-            
-            m_index--;
-            
-            return value;
-        }
-    };
+  public:
+    FIFO() {
+      reset();
+    }
     
+    void reset() {
+      m_index = 0;
+    }
+    
+    bool requires_data() {
+      return m_index <= (FIFO_SIZE >> 1);
+    }
+    
+    void enqueue(u8 data) {
+      if (m_index < FIFO_SIZE) {
+        m_buffer[m_index++] = static_cast<s8>(data);
+      }
+    }
+    
+    auto dequeue() -> s8 {
+      s8 value;
+      
+      if (m_index == 0) {
+        // FIFO underrun
+        return 0;
+      }
+      
+      value = m_buffer[0];
+      
+      // advances each next sample by one position
+      for (int i = 1; i < m_index; i++) {
+        m_buffer[i - 1] = m_buffer[i];
+      }
+      
+      m_index--;
+      
+      return value;
+    }
+  };
+  
 }

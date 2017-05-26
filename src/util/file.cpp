@@ -28,60 +28,60 @@
 using namespace std;
 
 namespace Util {
+  
+  namespace File {
     
-    namespace File {
-        
-        bool exists(string filename) {
-            
-            ifstream ifs(filename);
-            bool exists = ifs.is_open();
+    bool exists(string filename) {
+      
+      ifstream ifs(filename);
+      bool exists = ifs.is_open();
 
-            ifs.close();
+      ifs.close();
 
-            return exists;
-        }
-
-        int get_size(string filename) {
-            
-            ifstream ifs(filename, ios::in | ios::binary | ios::ate);
-
-            if (ifs.is_open()) {
-                ifs.seekg(0, ios::end);
-                return ifs.tellg();
-            } else {
-                throw std::runtime_error("unable to access file: " + filename);
-            }
-        }
-
-        u8* read_data(string filename) {
-            
-            ifstream ifs(filename, ios::in | ios::binary | ios::ate);
-            size_t filesize;
-            u8* data = 0;
-
-            if (ifs.is_open()) {
-                ifs.seekg(0, ios::end);
-                filesize = ifs.tellg();
-                ifs.seekg(0, ios::beg);
-                data = new u8[filesize];
-                ifs.read((char*)data, filesize);
-                ifs.close();
-            } else {
-                throw std::runtime_error("unable to read file: " + filename);
-            }
-
-            return data;
-        }
-
-        void write_data(string filename, u8* data, int size) {
-            ofstream ofs(filename, ios::out | ios::binary);
-
-            if (ofs.is_open()) {
-                ofs.write((char*)data, size);
-                ofs.close();
-            } else {
-                throw std::runtime_error("unable to write file: " + filename);
-            }
-        }
+      return exists;
     }
+
+    int get_size(string filename) {
+      
+      ifstream ifs(filename, ios::in | ios::binary | ios::ate);
+
+      if (ifs.is_open()) {
+        ifs.seekg(0, ios::end);
+        return ifs.tellg();
+      } else {
+        throw std::runtime_error("unable to access file: " + filename);
+      }
+    }
+
+    u8* read_data(string filename) {
+      
+      ifstream ifs(filename, ios::in | ios::binary | ios::ate);
+      size_t filesize;
+      u8* data = 0;
+
+      if (ifs.is_open()) {
+        ifs.seekg(0, ios::end);
+        filesize = ifs.tellg();
+        ifs.seekg(0, ios::beg);
+        data = new u8[filesize];
+        ifs.read((char*)data, filesize);
+        ifs.close();
+      } else {
+        throw std::runtime_error("unable to read file: " + filename);
+      }
+
+      return data;
+    }
+
+    void write_data(string filename, u8* data, int size) {
+      ofstream ofs(filename, ios::out | ios::binary);
+
+      if (ofs.is_open()) {
+        ofs.write((char*)data, size);
+        ofs.close();
+      } else {
+        throw std::runtime_error("unable to write file: " + filename);
+      }
+    }
+  }
 }
