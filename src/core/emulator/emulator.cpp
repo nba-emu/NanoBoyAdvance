@@ -33,12 +33,12 @@ namespace GameBoyAdvance {
     constexpr int Emulator::cycles[16];
     constexpr int Emulator::cycles32[16];
 
-    Emulator::Emulator(Config* config) : m_config(config), ppu(config), apu(config) {
+    Emulator::Emulator(Config* config) : config(config), ppu(config), apu(config) {
 
         reset();
 
         // setup interrupt controller
-        m_interrupt.set_flag_register(&regs.interrupt.request);
+        m_interrupt.set_flag_register(&regs.irq.if_);
 
         // feed PPU with important data.
         ppu.set_memory(memory.palette, memory.oam, memory.vram);
@@ -72,9 +72,11 @@ namespace GameBoyAdvance {
         memset(memory.mmio, 0, 0x800);
 
         // reset IO-registers
-        regs.keyinput = 0x3FF;
-        regs.interrupt.reset();
+        regs.irq.ie  = 0;
+        regs.irq.if_ = 0;
+        regs.irq.ime = 0;
         regs.haltcnt = SYSTEM_RUN;
+        regs.keyinput = 0x3FF;
 
         for (int i = 0; i < 4; i++) {
             // reset DMA channels
@@ -82,21 +84,21 @@ namespace GameBoyAdvance {
             regs.dma[i].reset();
 
             // !!hacked!! ouchy ouch
-            regs.dma[i].dma_active  = &m_dma_active;
-            regs.dma[i].current_dma = &m_current_dma;
+            regs.dma[i].dma_active  = &dma_running;
+            regs.dma[i].current_dma = &dma_current;
 
             // reset timers
             regs.timer[i].id = i;
             regs.timer[i].reset();
         }
 
-        m_cycles = 0;
-        m_dma_active  = false;
-        m_current_dma = 0;
+        cycles_left = 0;
+        dma_running  = false;
+        dma_current = 0;
 
-        set_fake_swi(!m_config->use_bios);
+        set_fake_swi(!config->use_bios);
 
-        if (!m_config->use_bios || !File::exists(m_config->bios_path)) {
+        if (!config->use_bios || !File::exists(config->bios_path)) {
             // TODO: load helper BIOS
 
             // set CPU entrypoint to ROM entrypoint
@@ -110,8 +112,8 @@ namespace GameBoyAdvance {
             // load first two ROM instructions
             refill_pipeline();
         } else {
-            int size = File::get_size(m_config->bios_path);
-            u8* data = File::read_data(m_config->bios_path);
+            int size = File::get_size(config->bios_path);
+            u8* data = File::read_data(config->bios_path);
 
             if (size > 0x4000) {
                 throw std::runtime_error("bad BIOS image");
@@ -162,7 +164,7 @@ namespace GameBoyAdvance {
         const int CYCLES_HBLANK = 272;
         const int CYCLES_ENTIRE = CYCLES_ACTIVE + CYCLES_HBLANK;
 
-        int frame_count = m_config->fast_forward ? m_config->multiplier : 1;
+        int frame_count = config->fast_forward ? config->multiplier : 1;
 
         for (int frame = 0; frame < frame_count; frame++) {
             // 160 visible lines, alternating SCANLINE and HBLANK.
@@ -173,7 +175,7 @@ namespace GameBoyAdvance {
 
                 // HBLANK
                 ppu.hblank();
-                if (!m_dma_active) {
+                if (!dma_running) {
                     dma_hblank();
                 }
                 run_for(CYCLES_HBLANK);
@@ -184,7 +186,7 @@ namespace GameBoyAdvance {
 
             // 68 invisible lines, VBLANK period.
             ppu.vblank();
-            if (!m_dma_active) {
+            if (!dma_running) {
                 dma_vblank();
             }
             for (int line = 0; line < INVISIBLE_LINES; line++) {
@@ -198,36 +200,36 @@ namespace GameBoyAdvance {
     void Emulator::run_for(int cycles) {
         int cycles_previous;
 
-        m_cycles += cycles;
+        cycles_left += cycles;
 
-        while (m_cycles > 0) {
-            u32 requested_and_enabled = regs.interrupt.request & regs.interrupt.enable;
+        while (cycles_left > 0) {
+            u32 requested_and_enabled = regs.irq.if_ & regs.irq.ie;
 
             if (regs.haltcnt == SYSTEM_HALT && requested_and_enabled) {
                 regs.haltcnt = SYSTEM_RUN;
             }
 
-            cycles_previous = m_cycles;
+            cycles_previous = cycles_left;
 
-            if (UNLIKELY(m_dma_active)) {
+            if (UNLIKELY(dma_running)) {
                 dma_transfer();
             } else if (LIKELY(regs.haltcnt == SYSTEM_RUN)) {
-                if (regs.interrupt.master_enable && requested_and_enabled) {
+                if (regs.irq.ime && requested_and_enabled) {
                     signal_interrupt();
                 }
                 step();
             } else {
                 //TODO: inaccurate because of timer interrupts
-                timer_step(m_cycles);
-                m_cycles = 0;
+                timer_step(cycles_left);
+                cycles_left = 0;
                 return;
             }
 
-            timer_step(cycles_previous - m_cycles);
+            timer_step(cycles_previous - cycles_left);
         }
 
-        //if (m_cycles < -10) {
-        //    fmt::print("desync {0} cycles!\n", m_cycles*-1);
+        //if (cycles_left < -10) {
+        //    fmt::print("desync {0} cycles!\n", cycles_left*-1);
         //}
     }
 }

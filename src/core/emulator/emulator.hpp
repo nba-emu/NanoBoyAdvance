@@ -49,7 +49,15 @@ namespace GameBoyAdvance {
         void frame();
 
     private:
-        Config* m_config;
+        Config* config;
+
+        // cycles until next PPU phase
+        int  cycles_left;
+
+        // subsystems
+        PPU ppu;
+        APU apu;
+        Interrupt m_interrupt;
 
         // do not delete - needed for reference counting
         std::shared_ptr<Cartridge> cart;
@@ -82,44 +90,35 @@ namespace GameBoyAdvance {
             u16 keyinput;
 
             struct Interrupt {
-                u16 enable;
-                u16 request;
-                u16 master_enable;
-
-                void reset() {
-                    enable  = 0;
-                    request = 0;
-                    master_enable = 0;
-                }
-            } interrupt;
+                u16 ie;
+                u16 if_;
+                u16 ime;
+            } irq;
 
             SystemState haltcnt;
         } regs;
 
-        // Subsystems
-        PPU ppu;
-        APU apu;
-        Interrupt m_interrupt;
-
-        int  m_cycles;
-        bool m_dma_active;
-        int  m_current_dma;
-
+        // Memory Mapped I/O
         auto read_mmio (u32 address) -> u8;
         void write_mmio(u32 address, u8 value);
 
         void run_for(int cycles);
 
-        void timer_step(int cycles);
-        void timer_fifo(int timer_id, int times);
-        void timer_overflow(Timer& timer, int times);
-        void timer_increment(Timer& timer, int increment_count);
-        void timer_increment_once(Timer& timer);
+        // DMA emulation
+        bool dma_running;
+        int  dma_current;
 
         void dma_hblank();
         void dma_vblank();
         void dma_transfer();
         void dma_fill_fifo(int dma_id);
+
+        // Timer emulation
+        void timer_step(int cycles);
+        void timer_fifo(int timer_id, int times);
+        void timer_overflow(Timer& timer, int times);
+        void timer_increment(Timer& timer, int increment_count);
+        void timer_increment_once(Timer& timer);
 
     protected:
 

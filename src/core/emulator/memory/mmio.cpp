@@ -110,12 +110,12 @@ namespace GameBoyAdvance {
             case KEYINPUT+1: return regs.keyinput >> 8;
 
             // INTERRUPT
-            case IE:    return regs.interrupt.enable & 0xFF;
-            case IE+1:  return regs.interrupt.enable >> 8;
-            case IF:    return regs.interrupt.request & 0xFF;
-            case IF+1:  return regs.interrupt.request >> 8;
-            case IME:   return regs.interrupt.master_enable & 0xFF;
-            case IME+1: return regs.interrupt.master_enable >> 8;
+            case IE:    return regs.irq.ie & 0xFF;
+            case IE+1:  return regs.irq.ie >> 8;
+            case IF:    return regs.irq.if_ & 0xFF;
+            case IF+1:  return regs.irq.if_ >> 8;
+            case IME:   return regs.irq.ime & 0xFF;
+            case IME+1: return regs.irq.ime >> 8;
 
             default: Logger::log<LOG_DEBUG>("unknown IO read {0:X}", address);
         }
@@ -142,54 +142,22 @@ namespace GameBoyAdvance {
             case BG3CNT:     ppu_io.bgcnt[3].write(0, value); break;
             case BG3CNT+1:   ppu_io.bgcnt[3].write(1, value); break;
 
-            case BG0HOFS:
-                ppu_io.bghofs[0] = (ppu_io.bghofs[0] & 0xFF00) | value;
-                break;
-            case BG0HOFS+1:
-                ppu_io.bghofs[0] = (ppu_io.bghofs[0] & 0x00FF) | (value << 8);
-                break;
-            case BG0VOFS:
-                ppu_io.bgvofs[0] = (ppu_io.bgvofs[0] & 0xFF00) | value;
-                break;
-            case BG0VOFS+1:
-                ppu_io.bgvofs[0] = (ppu_io.bgvofs[0] & 0x00FF) | (value << 8);
-                break;
-            case BG1HOFS:
-                ppu_io.bghofs[1] = (ppu_io.bghofs[1] & 0xFF00) | value;
-                break;
-            case BG1HOFS+1:
-                ppu_io.bghofs[1] = (ppu_io.bghofs[1] & 0x00FF) | (value << 8);
-                break;
-            case BG1VOFS:
-                ppu_io.bgvofs[1] = (ppu_io.bgvofs[1] & 0xFF00) | value;
-                break;
-            case BG1VOFS+1:
-                ppu_io.bgvofs[1] = (ppu_io.bgvofs[1] & 0x00FF) | (value << 8);
-                break;
-            case BG2HOFS:
-                ppu_io.bghofs[2] = (ppu_io.bghofs[2] & 0xFF00) | value;
-                break;
-            case BG2HOFS+1:
-                ppu_io.bghofs[2] = (ppu_io.bghofs[2] & 0x00FF) | (value << 8);
-                break;
-            case BG2VOFS:
-                ppu_io.bgvofs[2] = (ppu_io.bgvofs[2] & 0xFF00) | value;
-                break;
-            case BG2VOFS+1:
-                ppu_io.bgvofs[2] = (ppu_io.bgvofs[2] & 0x00FF) | (value << 8);
-                break;
-            case BG3HOFS:
-                ppu_io.bghofs[3] = (ppu_io.bghofs[3] & 0xFF00) | value;
-                break;
-            case BG3HOFS+1:
-                ppu_io.bghofs[3] = (ppu_io.bghofs[3] & 0x00FF) | (value << 8);
-                break;
-            case BG3VOFS:
-                ppu_io.bgvofs[3] = (ppu_io.bgvofs[3] & 0xFF00) | value;
-                break;
-            case BG3VOFS+1:
-                ppu_io.bgvofs[3] = (ppu_io.bgvofs[3] & 0x00FF) | (value << 8);
-                break;
+            case BG0HOFS:   ppu_io.bghofs[0] = (ppu_io.bghofs[0] & 0xFF00) | value;        break;
+            case BG0HOFS+1: ppu_io.bghofs[0] = (ppu_io.bghofs[0] & 0x00FF) | (value << 8); break;
+            case BG0VOFS:   ppu_io.bgvofs[0] = (ppu_io.bgvofs[0] & 0xFF00) | value;        break;
+            case BG0VOFS+1: ppu_io.bgvofs[0] = (ppu_io.bgvofs[0] & 0x00FF) | (value << 8); break;
+            case BG1HOFS:   ppu_io.bghofs[1] = (ppu_io.bghofs[1] & 0xFF00) | value;        break;
+            case BG1HOFS+1: ppu_io.bghofs[1] = (ppu_io.bghofs[1] & 0x00FF) | (value << 8); break;
+            case BG1VOFS:   ppu_io.bgvofs[1] = (ppu_io.bgvofs[1] & 0xFF00) | value;        break;
+            case BG1VOFS+1: ppu_io.bgvofs[1] = (ppu_io.bgvofs[1] & 0x00FF) | (value << 8); break;
+            case BG2HOFS:   ppu_io.bghofs[2] = (ppu_io.bghofs[2] & 0xFF00) | value;        break;
+            case BG2HOFS+1: ppu_io.bghofs[2] = (ppu_io.bghofs[2] & 0x00FF) | (value << 8); break;
+            case BG2VOFS:   ppu_io.bgvofs[2] = (ppu_io.bgvofs[2] & 0xFF00) | value;        break;
+            case BG2VOFS+1: ppu_io.bgvofs[2] = (ppu_io.bgvofs[2] & 0x00FF) | (value << 8); break;
+            case BG3HOFS:   ppu_io.bghofs[3] = (ppu_io.bghofs[3] & 0xFF00) | value;        break;
+            case BG3HOFS+1: ppu_io.bghofs[3] = (ppu_io.bghofs[3] & 0x00FF) | (value << 8); break;
+            case BG3VOFS:   ppu_io.bgvofs[3] = (ppu_io.bgvofs[3] & 0xFF00) | value;        break;
+            case BG3VOFS+1: ppu_io.bgvofs[3] = (ppu_io.bgvofs[3] & 0x00FF) | (value << 8); break;
 
             case BG2PA:      ppu_io.bgpa[0] = (ppu_io.bgpa[0] & 0xFF00) | (value << 0); break;
             case BG2PA+1:    ppu_io.bgpa[0] = (ppu_io.bgpa[0] & 0x00FF) | (value << 8); break;
@@ -332,7 +300,6 @@ namespace GameBoyAdvance {
             case WAVE_RAM+15: {
                 int index = address & 0xF;
                 int bank  = apu_io.wave.bank_number ^ 1;
-
                 apu_io.wave_ram[bank][index] = value;
                 break;
             }
@@ -365,35 +332,42 @@ namespace GameBoyAdvance {
             case TM3CNT_H:   regs.timer[3].write(2, value); break;
 
             // INTERRUPT
-            case IE:
-                regs.interrupt.enable &= 0xFF00;
-                regs.interrupt.enable |= value;
+            case IE: {
+                regs.irq.ie &= 0xFF00;
+                regs.irq.ie |= value;
                 break;
-            case IE+1:
-                regs.interrupt.enable &= 0x00FF;
-                regs.interrupt.enable |= (value << 8);
+            }
+            case IE+1: {
+                regs.irq.ie &= 0x00FF;
+                regs.irq.ie |= (value << 8);
                 break;
-            case IF:
-                regs.interrupt.request &= ~value;
+            }
+            case IF: {
+                regs.irq.if_ &= ~value;
                 break;
-            case IF+1:
-                regs.interrupt.request &= ~(value << 8);
+            }
+            case IF+1: {
+                regs.irq.if_ &= ~(value << 8);
                 break;
-            case IME:
-                regs.interrupt.master_enable &= 0xFF00;
-                regs.interrupt.master_enable |= value;
+            }
+            case IME: {
+                regs.irq.ime &= 0xFF00;
+                regs.irq.ime |= value;
                 break;
-            case IME+1:
-                regs.interrupt.master_enable &= 0x00FF;
-                regs.interrupt.master_enable |= (value << 8);
+            }
+            case IME+1: {
+                regs.irq.ime &= 0x00FF;
+                regs.irq.ime |= (value << 8);
                 break;
-            case HALTCNT:
+            }
+            case HALTCNT: {
                 regs.haltcnt = (value & 0x80) ? SYSTEM_STOP : SYSTEM_HALT;
                 break;
-
-            default:
+            }
+            default: {
                 Logger::log<LOG_DEBUG>("unknown IO write {0:X}", address);
                 memory.mmio[address & 0x7FF] = value;
+            }
         }
     }
 }

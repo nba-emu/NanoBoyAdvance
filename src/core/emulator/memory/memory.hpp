@@ -60,7 +60,7 @@ u8 bus_read_byte(u32 address, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
-    m_cycles -= cycles[page];
+    cycles_left -= cycles[page];
 
     switch (page) {
         case 0x0: {
@@ -104,7 +104,7 @@ u16 bus_read_hword(u32 address, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
-    m_cycles -= cycles[page];
+    cycles_left -= cycles[page];
 
     switch (page) {
         case 0x0: {
@@ -149,7 +149,7 @@ u32 bus_read_word(u32 address, int flags) final {
     const int page = (address >> 24) & 15;
 
     // poor mans cycle counting
-    m_cycles -= cycles32[page];
+    cycles_left -= cycles32[page];
 
     switch (page) {
         case 0x0: {
@@ -197,7 +197,7 @@ void bus_write_byte(u32 address, u8 value, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
-    m_cycles -= cycles[page];
+    cycles_left -= cycles[page];
 
     switch (page) {
         case 0x2: WRITE_FAST_8(memory.wram, address & 0x3FFFF, value); break;
@@ -231,7 +231,7 @@ void bus_write_hword(u32 address, u16 value, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
-    m_cycles -= cycles[page];
+    cycles_left -= cycles[page];
 
     switch (page) {
         case 0x2: WRITE_FAST_16(memory.wram, address & 0x3FFFF, value); break;
@@ -267,7 +267,7 @@ void bus_write_word(u32 address, u32 value, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
-    m_cycles -= cycles32[page];
+    cycles_left -= cycles32[page];
 
     switch (page) {
         case 0x2: WRITE_FAST_32(memory.wram, address & 0x3FFFF, value); break;

@@ -29,8 +29,8 @@ namespace GameBoyAdvance {
             auto& dma = regs.dma[i];
 
             if (dma.enable && dma.time == DMA_HBLANK) {
-                m_dma_active  = true;
-                m_current_dma = i;
+                dma_running  = true;
+                dma_current = i;
                 return;
             }
         }
@@ -41,15 +41,15 @@ namespace GameBoyAdvance {
             auto& dma = regs.dma[i];
 
             if (dma.enable && dma.time == DMA_VBLANK) {
-                m_dma_active  = true;
-                m_current_dma = i;
+                dma_running  = true;
+                dma_current = i;
                 return;
             }
         }
     }
 
     void Emulator::dma_transfer() {
-        auto& dma = regs.dma[m_current_dma];
+        auto& dma = regs.dma[dma_current];
 
         DMAControl src_cntl = dma.src_cntl;
         DMAControl dst_cntl = dma.dst_cntl;
@@ -57,7 +57,7 @@ namespace GameBoyAdvance {
 
         while (dma.internal.length != 0) {
             // do not desync...
-            if (m_cycles < 0) {
+            if (cycles_left < 0) {
                 return;
             }
 
@@ -92,13 +92,13 @@ namespace GameBoyAdvance {
 
             // even though DMA will be repeated, we have to wait for it to be rescheduled.
             if (dma.time != DMA_IMMEDIATE) {
-                m_dma_active  = false;
-                m_current_dma = -1;
+                dma_running  = false;
+                dma_current = -1;
             }
         } else {
             dma.enable = false;
-            m_dma_active = false;
-            m_current_dma = -1;
+            dma_running = false;
+            dma_current = -1;
         }
 
         if (dma.interrupt) {
