@@ -23,13 +23,13 @@
 #include "controls/screen.hpp"
 
 class MainWindow : public Gtk::Window {
-  
+    
 public:
-  MainWindow();
-  virtual ~MainWindow();
-  
+    MainWindow();
+    virtual ~MainWindow();
+    
 private:
-  // Controls
-  Screen  m_screen;
-  Gtk::VBox m_vbox;
+    // Controls
+    Screen    m_screen;
+    Gtk::VBox m_vbox;
 };

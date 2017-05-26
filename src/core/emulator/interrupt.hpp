@@ -25,17 +25,17 @@
 // TODO: get rid of this crap
 
 namespace GameBoyAdvance {
-  class Interrupt {
-  private:
-    u16* m_interrupt_flag;
+    class Interrupt {
+    private:
+        u16* m_interrupt_flag;
 
-  public:
-    void set_flag_register(u16* io_reg) {
-      m_interrupt_flag = io_reg;
-    }
+    public:
+        void set_flag_register(u16* io_reg) {
+            m_interrupt_flag = io_reg;
+        }
 
-    void request(InterruptType type) {
-      *m_interrupt_flag |= static_cast<int>(type);
-    }
-  };
+        void request(InterruptType type) {
+            *m_interrupt_flag |= static_cast<int>(type);
+        }
+    };
 }

@@ -24,60 +24,60 @@ using namespace Util;
 
 namespace GameBoyAdvance {
 
-  void PPU::render_text(int id) {
-  
-    auto bg    = m_io.bgcnt[id];
-    u16* buffer  = m_buffer[id];
-    u32 tile_block = bg.tile_block << 14;
-
-    int line   = m_io.vcount + m_io.bgvofs[id];
-    int row    = line >> 3;
-    int tile_y   = line & 7;
-    int screen_y = (row >> 5) & 1;
-
-    int palette, number;
-    bool h_flip, v_flip;
-    int last_number     = -1;
-    int last_tile_encoder = -1;
-
-    u32 base_offset = (bg.map_block << 11) + ((row & 0x1F) << 6);
+    void PPU::render_text(int id) {
     
-    bool is_256 = m_io.bgcnt[id].full_palette;
+        auto bg        = m_io.bgcnt[id];
+        u16* buffer    = m_buffer[id];
+        u32 tile_block = bg.tile_block << 14;
 
-    for (int _x = 0; _x < 240; _x++) {
-      int x = _x + m_io.bghofs[id];
+        int line     = m_io.vcount + m_io.bgvofs[id];
+        int row      = line >> 3;
+        int tile_y   = line & 7;
+        int screen_y = (row >> 5) & 1;
 
-      int col   = x >> 3;
-      int  tile_x = x & 7;
-      int _tile_y = tile_y;
+        int palette, number;
+        bool h_flip, v_flip;
+        int last_number       = -1;
+        int last_tile_encoder = -1;
 
-      int screen_x = (col >> 5) & 1;
-      u32 offset   = base_offset + ((col & 0x1F) << 1);
+        u32 base_offset = (bg.map_block << 11) + ((row & 0x1F) << 6);
+        
+        bool is_256 = m_io.bgcnt[id].full_palette;
 
-      switch (bg.screen_size) {
-        case 1: offset += screen_x << 11; break;
-        case 2: offset += screen_y << 11; break;
-        case 3: offset += (screen_x << 11) + (screen_y << 12); break;
-      }
+        for (int _x = 0; _x < 240; _x++) {
+            int x = _x + m_io.bghofs[id];
 
-      u16 tile_encoder = (m_vram[offset + 1] << 8) | m_vram[offset];
+            int col     = x >> 3;
+            int  tile_x = x & 7;
+            int _tile_y = tile_y;
 
-      if (tile_encoder != last_tile_encoder) {
-        number  = tile_encoder & 0x3FF;
-        h_flip  = tile_encoder & (1 << 10);
-        v_flip  = tile_encoder & (1 << 11);
-        palette = tile_encoder >> 12;
-        last_tile_encoder = tile_encoder;
-      }
+            int screen_x = (col >> 5) & 1;
+            u32 offset   = base_offset + ((col & 0x1F) << 1);
 
-      if (h_flip)  tile_x ^= 7;
-      if (v_flip) _tile_y ^= 7;
+            switch (bg.screen_size) {
+                case 1: offset += screen_x << 11; break;
+                case 2: offset += screen_y << 11; break;
+                case 3: offset += (screen_x << 11) + (screen_y << 12); break;
+            }
 
-      if (is_256) {
-        buffer[_x] = get_tile_pixel_8bpp(tile_block, 0, number, tile_x, _tile_y);
-      } else {
-        buffer[_x] = get_tile_pixel_4bpp(tile_block, palette, number, tile_x, _tile_y);
-      }
+            u16 tile_encoder = (m_vram[offset + 1] << 8) | m_vram[offset];
+
+            if (tile_encoder != last_tile_encoder) {
+                number  = tile_encoder & 0x3FF;
+                h_flip  = tile_encoder & (1 << 10);
+                v_flip  = tile_encoder & (1 << 11);
+                palette = tile_encoder >> 12;
+                last_tile_encoder = tile_encoder;
+            }
+
+            if (h_flip)  tile_x ^= 7;
+            if (v_flip) _tile_y ^= 7;
+
+            if (is_256) {
+                buffer[_x] = get_tile_pixel_8bpp(tile_block, 0, number, tile_x, _tile_y);
+            } else {
+                buffer[_x] = get_tile_pixel_4bpp(tile_block, palette, number, tile_x, _tile_y);
+            }
+        }
     }
-  }
 }

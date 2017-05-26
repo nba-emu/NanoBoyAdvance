@@ -23,7 +23,7 @@ static const ThumbInstruction thumb_lut[1024];
 
 inline void thumb_execute(u32 instruction) 
 {
-  (this->*thumb_lut[instruction >> 6])(instruction);
+    (this->*thumb_lut[instruction >> 6])(instruction);
 }
 
 template <int imm, int type>

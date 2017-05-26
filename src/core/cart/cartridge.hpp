@@ -25,35 +25,35 @@
 #include "save.hpp"
 
 namespace GameBoyAdvance {
-  
-  enum SaveType {
-    SAVE_DETECT,
-    SAVE_SRAM,
-    SAVE_FLASH64,
-    SAVE_FLASH128,
-    SAVE_EEPROM
-  };
-  
-  struct Cartridge {
     
-    u32 size;
-    union {
-      u8*   data;
-      Header* header;
+    enum SaveType {
+        SAVE_DETECT,
+        SAVE_SRAM,
+        SAVE_FLASH64,
+        SAVE_FLASH128,
+        SAVE_EEPROM
     };
-    SaveType type;
-    Save* backup;
+    
+    struct Cartridge {
+        
+        u32 size;
+        union {
+            u8*     data;
+            Header* header;
+        };
+        SaveType type;
+        Save* backup;
 
-    Cartridge() : data(nullptr), backup(nullptr) { }
+        Cartridge() : data(nullptr), backup(nullptr) { }
+        
+        ~Cartridge() {
+            delete data;
+            delete backup;
+        }
+        
+        auto detect_type() -> SaveType;
+        
+        static auto from_file(std::string path, SaveType type = SAVE_DETECT) -> std::shared_ptr<Cartridge>;
+    };
     
-    ~Cartridge() {
-      delete data;
-      delete backup;
-    }
-    
-    auto detect_type() -> SaveType;
-    
-    static auto from_file(std::string path, SaveType type = SAVE_DETECT) -> std::shared_ptr<Cartridge>;
-  };
-  
 }

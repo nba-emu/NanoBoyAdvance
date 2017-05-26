@@ -23,19 +23,19 @@
 #include "util/integer.hpp"
 
 namespace GameBoyAdvance {
-  
-  struct Config {
-    // Core
-    bool use_bios = true;
-    std::string bios_path;
     
-    // Graphics
-    int  frameskip   = 0;
-    u32* framebuffer   = nullptr;
-    bool darken_screen = false;
-    
-    // Misc.
-    int  multiplier   = 1;
-    bool fast_forward = false;
-  };
+    struct Config {
+        // Core
+        bool use_bios = true;
+        std::string bios_path;
+        
+        // Graphics
+        int  frameskip     = 0;
+        u32* framebuffer   = nullptr;
+        bool darken_screen = false;
+        
+        // Misc.
+        int  multiplier   = 1;
+        bool fast_forward = false;
+    };
 }

@@ -20,37 +20,37 @@
 #include "../ppu.hpp"
 
 namespace GameBoyAdvance {
-  
-  void PPU::render_bitmap_1() {
-    u32 offset = m_io.vcount * 480;
+    
+    void PPU::render_bitmap_1() {
+        u32 offset = m_io.vcount * 480;
 
-    for (int x = 0; x < 240; x++) {
-      m_buffer[2][x] = (m_vram[offset + 1] << 8) | m_vram[offset];
-      offset += 2;
+        for (int x = 0; x < 240; x++) {
+            m_buffer[2][x] = (m_vram[offset + 1] << 8) | m_vram[offset];
+            offset += 2;
+        }
     }
-  }
 
-  void PPU::render_bitmap_2() {
-    u32 page = m_io.control.frame_select ? 0xA000 : 0;
-    u32 offset = page + m_io.vcount * 240;
+    void PPU::render_bitmap_2() {
+        u32 page = m_io.control.frame_select ? 0xA000 : 0;
+        u32 offset = page + m_io.vcount * 240;
 
-    for (int x = 0; x < 240; x++) {
-      int index = m_vram[offset + x];
-      m_buffer[2][x] = read_palette(0, index);
+        for (int x = 0; x < 240; x++) {
+            int index = m_vram[offset + x];
+            m_buffer[2][x] = read_palette(0, index);
+        }
     }
-  }
 
-  void PPU::render_bitmap_3() {
-    u32 page = m_io.control.frame_select ? 0xA000 : 0;
-    u32 offset = page + m_io.vcount * 320;
+    void PPU::render_bitmap_3() {
+        u32 page = m_io.control.frame_select ? 0xA000 : 0;
+        u32 offset = page + m_io.vcount * 320;
 
-    for (int x = 0; x < 240; x++) {
-      if (x < 160 && m_io.vcount < 128) {
-        m_buffer[2][x] = (m_vram[offset + 1] << 8) | m_vram[offset];
-        offset += 2;
-      } else {
-        m_buffer[2][x] = COLOR_TRANSPARENT;
-      }
+        for (int x = 0; x < 240; x++) {
+            if (x < 160 && m_io.vcount < 128) {
+                m_buffer[2][x] = (m_vram[offset + 1] << 8) | m_vram[offset];
+                offset += 2;
+            } else {
+                m_buffer[2][x] = COLOR_TRANSPARENT;
+            }
+        }
     }
-  }
 }

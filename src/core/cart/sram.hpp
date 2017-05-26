@@ -25,18 +25,18 @@
 #define SRAM_SIZE 65536
 
 namespace GameBoyAdvance {
-  class SRAM : public Save {
-  private:
-    
-    u8 m_memory[SRAM_SIZE];
-    std::string m_save_file;
+    class SRAM : public Save {
+    private:
+        
+        u8 m_memory[SRAM_SIZE];
+        std::string m_save_file;
 
-  public:
-    SRAM(std::string save_file);
-    ~SRAM();
+    public:
+        SRAM(std::string save_file);
+        ~SRAM();
 
-    void reset();
-    auto read_byte(u32 address) -> u8;
-    void write_byte(u32 address, u8 value);
-  };
+        void reset();
+        auto read_byte(u32 address) -> u8;
+        void write_byte(u32 address, u8 value);
+    };
 }

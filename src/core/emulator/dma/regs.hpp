@@ -23,54 +23,54 @@
 
 namespace GameBoyAdvance {
 
-  enum DMAControl {
-    DMA_INCREMENT = 0,
-    DMA_DECREMENT = 1,
-    DMA_FIXED   = 2,
-    DMA_RELOAD  = 3
-  };
+    enum DMAControl {
+        DMA_INCREMENT = 0,
+        DMA_DECREMENT = 1,
+        DMA_FIXED     = 2,
+        DMA_RELOAD    = 3
+    };
 
-  enum DMATime {
-    DMA_IMMEDIATE = 0,
-    DMA_VBLANK  = 1,
-    DMA_HBLANK  = 2,
-    DMA_SPECIAL   = 3
-  };
+    enum DMATime {
+        DMA_IMMEDIATE = 0,
+        DMA_VBLANK    = 1,
+        DMA_HBLANK    = 2,
+        DMA_SPECIAL   = 3
+    };
 
-  enum DMASize {
-    DMA_HWORD = 0,
-    DMA_WORD  = 1
-  };
+    enum DMASize {
+        DMA_HWORD = 0,
+        DMA_WORD  = 1
+    };
 
-  struct DMA {
-    int id;
+    struct DMA {
+        int id;
 
-    bool enable;
-    bool repeat;
-    bool interrupt;
-    bool gamepak;
+        bool enable;
+        bool repeat;
+        bool interrupt;
+        bool gamepak;
 
-    u16 length;
-    u32 dst_addr;
-    u32 src_addr;
-    DMAControl dst_cntl;
-    DMAControl src_cntl;
-    DMATime time;
-    DMASize size;
+        u16 length;
+        u32 dst_addr;
+        u32 src_addr;
+        DMAControl dst_cntl;
+        DMAControl src_cntl;
+        DMATime time;
+        DMASize size;
 
-    struct Internal {
-      u32 length;
-      u32 dst_addr;
-      u32 src_addr;
-    } internal;
+        struct Internal {
+            u32 length;
+            u32 dst_addr;
+            u32 src_addr;
+        } internal;
 
-    // !!hacked!! much ouch
-    bool* dma_active;
-    int*  current_dma;
+        // !!hacked!! much ouch
+        bool* dma_active;
+        int*  current_dma;
 
-    void reset();
-    auto read(int offset) -> u8;
-    void write(int offset, u8 value);
-  };
-  
+        void reset();
+        auto read(int offset) -> u8;
+        void write(int offset, u8 value);
+    };
+    
 }

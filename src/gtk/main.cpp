@@ -21,10 +21,10 @@
 #include "main_window.hpp"
 
 int main(int argc, char** argv) {
-  Gtk::Main app(argc, argv);
-  Gtk::GL::init(argc, argv);
-  
-  MainWindow window;
-  
-  app.run(window);
+    Gtk::Main app(argc, argv);
+    Gtk::GL::init(argc, argv);
+    
+    MainWindow window;
+    
+    app.run(window);
 }

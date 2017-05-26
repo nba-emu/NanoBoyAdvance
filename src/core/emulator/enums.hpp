@@ -21,26 +21,26 @@
 
 namespace GameBoyAdvance {
 
-  enum InterruptType {
-    INTERRUPT_VBLANK  = 1,
-    INTERRUPT_HBLANK  = 2,
-    INTERRUPT_VCOUNT  = 4,
-    INTERRUPT_TIMER_0 = 8,
-    INTERRUPT_TIMER_1 = 16,
-    INTERRUPT_TIMER_2 = 32,
-    INTERRUPT_TIMER_3 = 64,
-    INTERRUPT_SERIAL  = 128,
-    INTERRUPT_DMA_0   = 256,
-    INTERRUPT_DMA_1   = 512,
-    INTERRUPT_DMA_2   = 1024,
-    INTERRUPT_DMA_3   = 2048,
-    INTERRUPT_KEYPAD  = 4096,
-    INTERRUPT_GAMEPAK = 8192
-  };
+    enum InterruptType {
+        INTERRUPT_VBLANK  = 1,
+        INTERRUPT_HBLANK  = 2,
+        INTERRUPT_VCOUNT  = 4,
+        INTERRUPT_TIMER_0 = 8,
+        INTERRUPT_TIMER_1 = 16,
+        INTERRUPT_TIMER_2 = 32,
+        INTERRUPT_TIMER_3 = 64,
+        INTERRUPT_SERIAL  = 128,
+        INTERRUPT_DMA_0   = 256,
+        INTERRUPT_DMA_1   = 512,
+        INTERRUPT_DMA_2   = 1024,
+        INTERRUPT_DMA_3   = 2048,
+        INTERRUPT_KEYPAD  = 4096,
+        INTERRUPT_GAMEPAK = 8192
+    };
 
-  enum SystemState {
-    SYSTEM_RUN,
-    SYSTEM_STOP,
-    SYSTEM_HALT
-  };
+    enum SystemState {
+        SYSTEM_RUN,
+        SYSTEM_STOP,
+        SYSTEM_HALT
+    };
 }

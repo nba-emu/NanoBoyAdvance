@@ -18,145 +18,145 @@
   */
 
 enum Side {
-  SIDE_LEFT  = 0,
-  SIDE_RIGHT = 1
+    SIDE_LEFT  = 0,
+    SIDE_RIGHT = 1
 };
 
 enum DMANumber {
-  DMA_A = 0,
-  DMA_B = 1
+    DMA_A = 0,
+    DMA_B = 1
 };
 
 enum SweepDirection {
-  SWEEP_INC = 0,
-  SWEEP_DEC = 1
+    SWEEP_INC = 0,
+    SWEEP_DEC = 1
 };
-  
+    
 enum EnvelopeDirection {
-  ENV_INC = 1,
-  ENV_DEC = 0
+    ENV_INC = 1,
+    ENV_DEC = 0
 };
 
 struct IO {
-  FIFO fifo[2];
-  
-  struct VolumeEnvelope {
-    int time;
-    int initial;
-    int direction;
-  };
-  
-  struct ToneChannel {
+    FIFO fifo[2];
     
-    struct Sweep {
-      int time;
-      int shift;
-      int direction;
-    } sweep;
+    struct VolumeEnvelope {
+        int time;
+        int initial;
+        int direction;
+    };
     
-    VolumeEnvelope envelope;
+    struct ToneChannel {
+        
+        struct Sweep {
+            int time;
+            int shift;
+            int direction;
+        } sweep;
+        
+        VolumeEnvelope envelope;
+        
+        int frequency;
+        int wave_duty;
+        int sound_length;
+        bool apply_length;
+        
+        // not visible to the CPU
+        struct Internal {
+            int sample;
+            int volume;
+            int frequency;
+            
+            struct Cycles {
+                int sweep;
+                int length;
+                int envelope;
+            } cycles;
+        } internal;
+        
+        void reset();
+        auto read(int offset) -> u8;
+        void write(int offset, u8 value);
+    } tone[2];
     
-    int frequency;
-    int wave_duty;
-    int sound_length;
-    bool apply_length;
-    
-    // not visible to the CPU
-    struct Internal {
-      int sample;
-      int volume;
-      int frequency;
-      
-      struct Cycles {
-        int sweep;
-        int length;
-        int envelope;
-      } cycles;
-    } internal;
-    
-    void reset();
-    auto read(int offset) -> u8;
-    void write(int offset, u8 value);
-  } tone[2];
-  
-  struct WaveChannel {
-    
-    bool playback;
-    bool force_volume;
-    bool apply_length;
+    struct WaveChannel {
+        
+        bool playback;
+        bool force_volume;
+        bool apply_length;
 
-    int volume;
-    int frequency;
-    int dimension;
-    int bank_number;
-    int sound_length;
+        int volume;
+        int frequency;
+        int dimension;
+        int bank_number;
+        int sound_length;
+        
+        struct Internal {
+            int sample_ptr;
+            int sample_cycles;
+            int length_cycles;
+        } internal;
+        
+        void reset();
+        auto read(int offset) -> u8;
+        void write(int offset, u8 value);
+        
+    } wave;
     
-    struct Internal {
-      int sample_ptr;
-      int sample_cycles;
-      int length_cycles;
-    } internal;
+    u8 wave_ram[2][16];
     
-    void reset();
-    auto read(int offset) -> u8;
-    void write(int offset, u8 value);
+    struct NoiseChannel {
+        VolumeEnvelope envelope;
+        
+        int frequency;
+        int sound_length;
+        int divide_ratio;
+        
+        bool full_width;
+        bool apply_length;
     
-  } wave;
-  
-  u8 wave_ram[2][16];
-  
-  struct NoiseChannel {
-    VolumeEnvelope envelope;
+        struct Internal {
+            int output;
+            u16 shift_reg;
+            
+            int volume;
+            int shift_cycles;
+            int length_cycles;
+            int envelope_cycles;
+        } internal;
+        
+        void reset();
+        auto read(int offset) -> u8;
+        void write(int offset, u8 value);
+    } noise;
     
-    int frequency;
-    int sound_length;
-    int divide_ratio;
+    struct Control {
+        bool master_enable;
+        FIFO* fifo[2];
+        
+        struct PSG {
+            int  volume;    // 0=25% 1=50% 2=100% 3=forbidden
+            int  master[2]; // 0..255, one for each side
+            bool enable[2][4];
+        } psg;
+        
+        struct DMA {
+            int  volume; // 0=50%, 1=100%
+            bool enable[2];
+            int  timer_num;
+        } dma[2];
+        
+        void reset();
+        auto read(int offset) -> u8;
+        void write(int offset, u8 value);
+    } control;
     
-    bool full_width;
-    bool apply_length;
-  
-    struct Internal {
-      int output;
-      u16 shift_reg;
-      
-      int volume;
-      int shift_cycles;
-      int length_cycles;
-      int envelope_cycles;
-    } internal;
-    
-    void reset();
-    auto read(int offset) -> u8;
-    void write(int offset, u8 value);
-  } noise;
-  
-  struct Control {
-    bool master_enable;
-    FIFO* fifo[2];
-    
-    struct PSG {
-      int  volume;  // 0=25% 1=50% 2=100% 3=forbidden
-      int  master[2]; // 0..255, one for each side
-      bool enable[2][4];
-    } psg;
-    
-    struct DMA {
-      int  volume; // 0=50%, 1=100%
-      bool enable[2];
-      int  timer_num;
-    } dma[2];
-    
-    void reset();
-    auto read(int offset) -> u8;
-    void write(int offset, u8 value);
-  } control;
-  
-  struct BIAS {
-    int level;
-    int resolution;
-    
-    void reset();
-    auto read(int offset) -> u8;
-    void write(int offset, u8 value);
-  } bias;
+    struct BIAS {
+        int level;
+        int resolution;
+        
+        void reset();
+        auto read(int offset) -> u8;
+        void write(int offset, u8 value);
+    } bias;
 } m_io;

@@ -27,28 +27,28 @@
 #include "integer.hpp"
 
 namespace Util {
-  
-  namespace File {
     
-    /// Determines wether a file exists.
-    /// @param  filename  the file to check.
-    /// @returns  wether the file exists.
-    bool exists(std::string filename);
+    namespace File {
+        
+        /// Determines wether a file exists.
+        /// @param    filename  the file to check.
+        /// @returns  wether the file exists.
+        bool exists(std::string filename);
 
-    /// Determines file size.
-    /// @param  filename  the file to get the size from.
-    /// @returns  the file size.
-    int get_size(std::string filename);
+        /// Determines file size.
+        /// @param    filename  the file to get the size from.
+        /// @returns  the file size.
+        int get_size(std::string filename);
 
-    /// Reads a file into a byte array.
-    /// @param  filename  the file to read.
-    /// @returns  the byte array.
-    u8* read_data(std::string filename);
+        /// Reads a file into a byte array.
+        /// @param    filename  the file to read.
+        /// @returns  the byte array.
+        u8* read_data(std::string filename);
 
-    /// Writes a byte array to a file.
-    /// @param  filename  the file to write
-    /// @param  data    the byte array
-    /// @param  size    the size of the array
-    void write_data(std::string filename, u8* data, int size);
-  }
+        /// Writes a byte array to a file.
+        /// @param  filename  the file to write
+        /// @param  data      the byte array
+        /// @param  size      the size of the array
+        void write_data(std::string filename, u8* data, int size);
+    }
 }

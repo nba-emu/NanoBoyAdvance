@@ -23,677 +23,677 @@
 using namespace Util;
 
 namespace GameBoyAdvance {
-  
-  #include "tables/op_arm.hpp"
-
-  template <bool immediate, int opcode, bool _set_flags, int field4>
-  void ARM::arm_data_processing(u32 instruction) {
-    u32 op1, op2;
-    bool carry = ctx.cpsr & MASK_CFLAG;
-    int reg_dst = (instruction >> 12) & 0xF;
-    int reg_op1 = (instruction >> 16) & 0xF;
-    bool set_flags = _set_flags;
-
-    op1 = ctx.reg[reg_op1];
-
-    if (immediate) {
-      int imm = instruction & 0xFF;
-      int amount = ((instruction >> 8) & 0xF) << 1;
-
-      if (amount != 0) {
-        carry = (imm >> (amount - 1)) & 1;
-        op2 = (imm >> amount) | (imm << (32 - amount));
-      } else {
-        op2 = imm;
-      }
-    } else {
-      u32 amount;
-      int reg_op2 = instruction & 0xF;
-      int shift_type = (field4 >> 1) & 3;
-      bool shift_immediate = (field4 & 1) ? false : true;
-
-      op2 = ctx.reg[reg_op2];
-
-      if (!shift_immediate) {
-        amount = ctx.reg[(instruction >> 8) & 0xF];
-        
-        if (reg_op1 == 15) op1 += 4;
-        if (reg_op2 == 15) op2 += 4;
-        //cycles++;
-      } else {
-        amount = (instruction >> 7) & 0x1F;
-      }
-
-      apply_shift(shift_type, op2, amount, carry, shift_immediate);
-    }
-
-    if (reg_dst == 15) {
-      if (set_flags) {
-        u32 spsr = *ctx.p_spsr;
-        switch_mode(static_cast<Mode>(spsr & MASK_MODE));
-        ctx.cpsr = spsr;
-        set_flags = false;
-      }
-      ctx.pipe.do_flush = true;
-    }
-
-    switch (opcode) {
-    case 0b0000: {
-      // Bitwise AND (AND)
-      u32 result = op1 & op2;
-
-      if (set_flags) {
-        update_sign_flag(result);
-        update_zero_flag(result);
-        update_carry_flag(carry);
-      }
-
-      ctx.reg[reg_dst] = result;
-      break;
-    }
-    case 0b0001: {
-      // Bitwise EXOR (EOR)
-      u32 result = op1 ^ op2;
-
-      if (set_flags) {
-        update_sign_flag(result);
-        update_zero_flag(result);
-        update_carry_flag(carry);
-      }
-
-      ctx.reg[reg_dst] = result;
-      break;
-    }
-    case 0b0010: {
-      // Subtraction (SUB)
-      u32 result = op1 - op2;
-
-      if (set_flags) {
-        update_carry_flag(op1 >= op2);
-        update_overflow_sub(result, op1, op2);
-        update_sign_flag(result);
-        update_zero_flag(result);
-      }
-
-      ctx.reg[reg_dst] = result;
-      break;
-    }
-    case 0b0011: {
-      // Reverse subtraction (RSB)
-      u32 result = op2 - op1;
-
-      if (set_flags) {
-        update_carry_flag(op2 >= op1);
-        update_overflow_sub(result, op2, op1);
-        update_sign_flag(result);
-        update_zero_flag(result);
-      }
-
-      ctx.reg[reg_dst] = result;
-      break;
-    }
-    case 0b0100: {
-      // Addition (ADD)
-      u32 result = op1 + op2;
-
-      if (set_flags) {
-        u64 result_long = (u64)op1 + (u64)op2;
-
-        update_carry_flag(result_long & 0x100000000);
-        update_overflow_add(result, op1, op2);
-        update_sign_flag(result);
-        update_zero_flag(result);
-      }
-
-      ctx.reg[reg_dst] = result;
-      break;
-    }
-    case 0b0101: {
-      // Addition with Carry
-      int carry2 = (ctx.cpsr >> 29) & 1;
-      u32 result = op1 + op2 + carry2;
-
-      if (set_flags) {
-        u64 result_long = (u64)op1 + (u64)op2 + (u64)carry2;
-
-        update_carry_flag(result_long & 0x100000000);
-        update_overflow_add(result, op1, op2);
-        update_sign_flag(result);
-        update_zero_flag(result);
-      }
-
-      ctx.reg[reg_dst] = result;
-      break;
-    }
-    case 0b0110: {
-      // Subtraction with Carry
-      int carry2 = (ctx.cpsr >> 29) & 1;
-      u32 result = op1 - op2 + carry2 - 1;
-
-      if (set_flags) {
-        update_carry_flag(op1 >= (op2 + carry2 - 1));
-        update_overflow_sub(result, op1, op2);
-        update_sign_flag(result);
-        update_zero_flag(result);
-      }
-
-      ctx.reg[reg_dst] = result;
-      break;
-    }
-    case 0b0111: {
-      // Reverse Substraction with Carry
-      int carry2 = (ctx.cpsr >> 29) & 1;
-      u32 result = op2 - op1 + carry2 - 1;
-
-      if (set_flags) {
-        update_carry_flag(op2 >= (op1 + carry2 - 1));
-        update_overflow_sub(result, op2, op1);
-        update_sign_flag(result);
-        update_zero_flag(result);
-      }
-
-      ctx.reg[reg_dst] = result;
-      break;
-    }
-    case 0b1000: {
-      // Bitwise AND flags only (TST)
-      u32 result = op1 & op2;
-
-      update_sign_flag(result);
-      update_zero_flag(result);
-      update_carry_flag(carry);
-      break;
-    }
-    case 0b1001: {
-      // Bitwise EXOR flags only (TEQ)
-      u32 result = op1 ^ op2;
-
-      update_sign_flag(result);
-      update_zero_flag(result);
-      update_carry_flag(carry);
-      break;
-    }
-    case 0b1010: {
-      // Subtraction flags only (CMP)
-      u32 result = op1 - op2;
-
-      update_carry_flag(op1 >= op2);
-      update_overflow_sub(result, op1, op2);
-      update_sign_flag(result);
-      update_zero_flag(result);
-      break;
-    }
-    case 0b1011: {
-      // Addition flags only (CMN)
-      u32 result = op1 + op2;
-      u64 result_long = (u64)op1 + (u64)op2;
-
-      update_carry_flag(result_long & 0x100000000);
-      update_overflow_add(result, op1, op2);
-      update_sign_flag(result);
-      update_zero_flag(result);
-      break;
-    }
-    case 0b1100: {
-      // Bitwise OR (ORR)
-      u32 result = op1 | op2;
-
-      if (set_flags) {
-        update_sign_flag(result);
-        update_zero_flag(result);
-        update_carry_flag(carry);
-      }
-
-      ctx.reg[reg_dst] = result;
-      break;
-    }
-    case 0b1101: {
-      // Move into register (MOV)
-      if (set_flags) {
-        update_sign_flag(op2);
-        update_zero_flag(op2);
-        update_carry_flag(carry);
-      }
-
-      ctx.reg[reg_dst] = op2;
-      break;
-    }
-    case 0b1110: {
-      // Bit Clear (BIC)
-      u32 result = op1 & ~op2;
-
-      if (set_flags) {
-        update_sign_flag(result);
-        update_zero_flag(result);
-        update_carry_flag(carry);
-      }
-
-      ctx.reg[reg_dst] = result;
-      break;
-    }
-    case 0b1111: {
-      // Move into register negated (MVN)
-      u32 not_op2 = ~op2;
-
-      if (set_flags) {
-        update_sign_flag(not_op2);
-        update_zero_flag(not_op2);
-        update_carry_flag(carry);
-      }
-
-      ctx.reg[reg_dst] = not_op2;
-      break;
-    }
-    }
-  }
-
-  template <bool immediate, bool use_spsr, bool to_status>
-  void ARM::arm_psr_transfer(u32 instruction) {
-    if (to_status) {
-      u32 op;
-      u32 mask = 0;
-
-      // create mask based on fsxc-bits.
-      if (instruction & (1 << 16)) mask |= 0x000000FF;
-      if (instruction & (1 << 17)) mask |= 0x0000FF00;
-      if (instruction & (1 << 18)) mask |= 0x00FF0000;
-      if (instruction & (1 << 19)) mask |= 0xFF000000;
-
-      // decode source operand
-      if (immediate) {
-        int imm = instruction & 0xFF;
-        int amount = ((instruction >> 8) & 0xF) << 1;
-        op = (imm >> amount) | (imm << (32 - amount));
-      } else {
-        op = ctx.reg[instruction & 0xF];
-      }
-      
-      u32 value = op & mask;
-
-      // write to cpsr or spsr
-      if (!use_spsr) {
-        // only switch mode if it actually gets written to
-        if (mask & 0xFF) {
-          switch_mode(static_cast<Mode>(value & MASK_MODE));
-        }
-        ctx.cpsr = (ctx.cpsr & ~mask) | value;
-      } else {
-        *ctx.p_spsr = (*ctx.p_spsr & ~mask) | value;
-      }
-    } else {
-      int dst = (instruction >> 12) & 0xF;
-      
-      ctx.reg[dst] = use_spsr ? *ctx.p_spsr : ctx.cpsr;
-    }
-  }
-
-  template <bool accumulate, bool set_flags>
-  void ARM::arm_multiply(u32 instruction) {
-    u32 result;
-    int op1 = instruction & 0xF;
-    int op2 = (instruction >> 8) & 0xF;
-    int dst = (instruction >> 16) & 0xF;
-
-    result = ctx.reg[op1] * ctx.reg[op2];
-
-    if (accumulate) {
-      int op3 = (instruction >> 12) & 0xF;
-      result += ctx.reg[op3];
-    }
-
-    if (set_flags) {
-      update_sign_flag(result);
-      update_zero_flag(result);
-    }
-
-    ctx.reg[dst] = result;
-  }
-
-  template <bool sign_extend, bool accumulate, bool set_flags>
-  void ARM::arm_multiply_long(u32 instruction) {
-    s64 result;
-    int op1 = instruction & 0xF;
-    int op2 = (instruction >> 8) & 0xF;
-    int dst_lo = (instruction >> 12) & 0xF;
-    int dst_hi = (instruction >> 16) & 0xF;
-
-    if (sign_extend) {
-      s64 op1_value = ctx.reg[op1];
-      s64 op2_value = ctx.reg[op2];
-
-      // sign-extend operands
-      if (op1_value & 0x80000000) op1_value |= 0xFFFFFFFF00000000;
-      if (op2_value & 0x80000000) op2_value |= 0xFFFFFFFF00000000;
-
-      result = op1_value * op2_value;
-    } else {
-      u64 uresult = (u64)ctx.reg[op1] * (u64)ctx.reg[op2];
-      result = uresult;
-    }
-
-    if (accumulate) {
-      s64 value = ctx.reg[dst_hi];
-
-      // workaround required by x86.
-      value <<= 16;
-      value <<= 16;
-      value |= ctx.reg[dst_lo];
-
-      result += value;
-    }
-
-    u32 result_hi = result >> 32;
-
-    ctx.reg[dst_lo] = result & 0xFFFFFFFF;
-    ctx.reg[dst_hi] = result_hi;
-
-    if (set_flags) {
-      update_sign_flag(result_hi);
-      update_zero_flag(result);
-    }
-  }
-
-  template <bool swap_byte>
-  void ARM::arm_single_data_swap(u32 instruction) {
-    u32 tmp;
-    int src = instruction & 0xF;
-    int dst = (instruction >> 12) & 0xF;
-    int base = (instruction >> 16) & 0xF;
-
-    if (swap_byte) {
-      tmp = read_byte(ctx.reg[base], MEM_NONE);
-      write_byte(ctx.reg[base], (u8)ctx.reg[src], MEM_NONE);
-    } else {
-      tmp = read_word(ctx.reg[base], MEM_ROTATE);
-      write_word(ctx.reg[base], ctx.reg[src], MEM_NONE);
-    }
-
-    ctx.reg[dst] = tmp;
-  }
-
-  void ARM::arm_branch_exchange(u32 instruction) {
-    u32 addr = ctx.reg[instruction & 0xF];
-
-    ctx.pipe.do_flush = true;
-
-    if (addr & 1) {
-      ctx.r15 = addr & ~1;
-      ctx.cpsr |= MASK_THUMB;
-    } else {
-      ctx.r15 = addr & ~3;
-    }
-  }
-
-  template <bool pre_indexed, bool base_increment, bool immediate, bool write_back, bool load, int opcode>
-  void ARM::arm_halfword_signed_transfer(u32 instruction) {
-    u32 off;
-    int dst = (instruction >> 12) & 0xF;
-    int base = (instruction >> 16) & 0xF;
-    u32 addr = ctx.reg[base];
-
-    if (immediate) {
-      off = (instruction & 0xF) | ((instruction >> 4) & 0xF0);
-    } else {
-      off = ctx.reg[instruction & 0xF];
-    }
-
-    if (pre_indexed) {
-      addr += base_increment ? off : -off;
-    }
-
-    switch (opcode) {
-    case 1:
-      // load/store halfword
-      if (load) {
-        ctx.reg[dst] = read_hword(addr, MEM_ROTATE);
-      } else {
-        u32 value = ctx.reg[dst];
-
-        // r15 is $+12 instead of $+8 because of internal prefetch.
-        if (dst == 15) {
-          value += 4;
-        }
-
-        write_hword(addr, value, MEM_NONE);
-      }
-      break;
-    case 2: {
-      // load signed byte
-      ctx.reg[dst] = read_byte(addr, MEM_SIGNED);
-      break;
-    }
-    case 3: {
-      // load signed halfword
-      ctx.reg[dst] = read_hword(addr, MEM_SIGNED);
-      break;
-    }
-    }
-
-    if ((write_back || !pre_indexed) && base != dst) {
-      if (!pre_indexed) {
-        addr += base_increment ? off : -off;
-      }
-      ctx.reg[base] = addr;
-    }
-  }
-
-  template <bool immediate, bool pre_indexed, bool base_increment, bool byte, bool write_back, bool load>
-  void ARM::arm_single_transfer(u32 instruction) {
-    u32 off;
-    Mode old_mode;
-    int dst  = (instruction >> 12) & 0xF;
-    int base = (instruction >> 16) & 0xF;
-    u32 addr = ctx.reg[base];
-
-    // post-indexing implicitly performs a write back.
-    // in that case W-bit indicates wether user-mode register access should be enforced.
-    if (!pre_indexed && write_back) {
-      old_mode = static_cast<Mode>(ctx.cpsr & MASK_MODE);
-      switch_mode(MODE_USR);
-    }
-
-    // get address offset.
-    if (immediate) {
-      off = instruction & 0xFFF;
-    } else {
-      bool carry = ctx.cpsr & MASK_CFLAG;
-      int shift = (instruction >> 5) & 3;
-      u32 amount = (instruction >> 7) & 0x1F;
-
-      off = ctx.reg[instruction & 0xF];
-      apply_shift(shift, off, amount, carry, true);
-    }
-
-    if (pre_indexed) {
-      addr += base_increment ? off : -off;
-    }
-
-    if (load) {
-      ctx.reg[dst] = byte ? read_byte(addr, MEM_NONE) : read_word(addr, MEM_ROTATE);
-      
-      // writes to r15 require a pipeline flush.
-      if (dst == 15) {
-        ctx.pipe.do_flush = true;
-      }
-    } else {
-      u32 value = ctx.reg[dst];
-
-      // r15 is $+12 now due to internal prefetch cycle.
-      if (dst == 15) {
-        value += 4;
-      }
-
-      if (byte) {
-        write_byte(addr, (u8)value, MEM_NONE);
-      } else {
-        write_word(addr, value, MEM_NONE);
-      }
-    }
-
-    // writeback operation may not overwrite the destination register.
-    if (base != dst) {
-      if (!pre_indexed) {
-        ctx.reg[base] += base_increment ? off : -off;
-
-        // if user-mode was enforced, return to previous mode.
-        if (write_back) {
-          switch_mode(old_mode);
-        }
-      }
-      else if (write_back)
-      {
-        ctx.reg[base] = addr;
-      }
-    }
-  }
-
-  void ARM::arm_undefined(u32 instruction) {
-    // save return address and program status
-    ctx.bank[BANK_SVC][BANK_R14] = ctx.r15 - 4;
-    ctx.spsr[SPSR_SVC] = ctx.cpsr;
-
-    // switch to UND mode and disable interrupts
-    switch_mode(MODE_UND);
-    ctx.cpsr |= MASK_IRQD;
-
-    // jump to exception vector
-    ctx.r15 = EXCPT_UNDEFINED;
-    ctx.pipe.do_flush = true;
-  }
-
-  template <bool _pre_indexed, bool base_increment, bool user_mode, bool _write_back, bool load>
-  void ARM::arm_block_transfer(u32 instruction) {
-    int first_register;
-    int register_count = 0;
-    int register_list = instruction & 0xFFFF;
-    bool transfer_r15 = register_list & (1 << 15);
-    bool pre_indexed = _pre_indexed;
-    bool write_back = _write_back;
-
-    int base = (instruction >> 16) & 0xF;
-
-    Mode old_mode;
-    bool mode_switched = false;
-
-    /*// hardware corner case. not sure if emulated correctly.
-    if (register_list == 0) {
-      if (load) {
-        ctx.r15 = read_word(ctx.reg[base], MEM_NONE);
-        ctx.pipe.do_flush = true;
-      } else {
-        write_word(ctx.reg[base], ctx.r15, MEM_NONE);
-      }
-      ctx.reg[base] += base_increment ? 64 : -64;
-      return;
-    }*/
-
-    if (user_mode && (!load || !transfer_r15)) {
-      old_mode = static_cast<Mode>(ctx.cpsr & MASK_MODE);
-      switch_mode(MODE_USR);
-      mode_switched = true;
-    }
-
-    // find first register in list and also count them.
-    for (int i = 15; i >= 0; i--) {
-      if (~register_list & (1 << i)) {
-        continue;
-      }
-
-      first_register = i;
-      register_count++;
-    }
-
-    u32 addr = ctx.reg[base];
-    u32 addr_old = addr;
-
-    // instruction internally works with incrementing addresses.
-    if (!base_increment) {
-      addr -= register_count * 4;
-      ctx.reg[base] = addr;
-      write_back = false;
-      pre_indexed = !pre_indexed;
-    }
-
-    // process register list starting with the lowest address and register.
-    for (int i = first_register; i < 16; i++) {
-      if (~register_list & (1 << i)) {
-        continue;
-      }
-
-      if (pre_indexed) { 
-        addr += 4;
-      }
-
-      if (load) {
-        if (i == base) {
-          write_back = false;
-        }
-
-        ctx.reg[i] = read_word(addr, MEM_NONE);
-
-        if (i == 15) {
-          if (user_mode) {
-            u32 spsr = *ctx.p_spsr;
-            switch_mode(static_cast<Mode>(spsr & MASK_MODE));
-            ctx.cpsr = spsr;
-          }
-          ctx.pipe.do_flush = true;
-        }
-      } else {
-        if (i == first_register && i == base) {
-          write_word(addr, addr_old, MEM_NONE);
+    
+    #include "tables/op_arm.hpp"
+
+    template <bool immediate, int opcode, bool _set_flags, int field4>
+    void ARM::arm_data_processing(u32 instruction) {
+        u32 op1, op2;
+        bool carry = ctx.cpsr & MASK_CFLAG;
+        int reg_dst = (instruction >> 12) & 0xF;
+        int reg_op1 = (instruction >> 16) & 0xF;
+        bool set_flags = _set_flags;
+
+        op1 = ctx.reg[reg_op1];
+
+        if (immediate) {
+            int imm = instruction & 0xFF;
+            int amount = ((instruction >> 8) & 0xF) << 1;
+
+            if (amount != 0) {
+                carry = (imm >> (amount - 1)) & 1;
+                op2 = (imm >> amount) | (imm << (32 - amount));
+            } else {
+                op2 = imm;
+            }
         } else {
-          write_word(addr, ctx.reg[i], MEM_NONE);
+            u32 amount;
+            int reg_op2 = instruction & 0xF;
+            int shift_type = (field4 >> 1) & 3;
+            bool shift_immediate = (field4 & 1) ? false : true;
+
+            op2 = ctx.reg[reg_op2];
+
+            if (!shift_immediate) {
+                amount = ctx.reg[(instruction >> 8) & 0xF];
+                
+                if (reg_op1 == 15) op1 += 4;
+                if (reg_op2 == 15) op2 += 4;
+                //cycles++;
+            } else {
+                amount = (instruction >> 7) & 0x1F;
+            }
+
+            apply_shift(shift_type, op2, amount, carry, shift_immediate);
         }
-      }
 
-      if (!pre_indexed) {
-        addr += 4;
-      }
+        if (reg_dst == 15) {
+            if (set_flags) {
+                u32 spsr = *ctx.p_spsr;
+                switch_mode(static_cast<Mode>(spsr & MASK_MODE));
+                ctx.cpsr = spsr;
+                set_flags = false;
+            }
+            ctx.pipe.do_flush = true;
+        }
 
-      if (write_back) { 
-        ctx.reg[base] = addr; 
-      }
+        switch (opcode) {
+        case 0b0000: {
+            // Bitwise AND (AND)
+            u32 result = op1 & op2;
+
+            if (set_flags) {
+                update_sign_flag(result);
+                update_zero_flag(result);
+                update_carry_flag(carry);
+            }
+
+            ctx.reg[reg_dst] = result;
+            break;
+        }
+        case 0b0001: {
+            // Bitwise EXOR (EOR)
+            u32 result = op1 ^ op2;
+
+            if (set_flags) {
+                update_sign_flag(result);
+                update_zero_flag(result);
+                update_carry_flag(carry);
+            }
+
+            ctx.reg[reg_dst] = result;
+            break;
+        }
+        case 0b0010: {
+            // Subtraction (SUB)
+            u32 result = op1 - op2;
+
+            if (set_flags) {
+                update_carry_flag(op1 >= op2);
+                update_overflow_sub(result, op1, op2);
+                update_sign_flag(result);
+                update_zero_flag(result);
+            }
+
+            ctx.reg[reg_dst] = result;
+            break;
+        }
+        case 0b0011: {
+            // Reverse subtraction (RSB)
+            u32 result = op2 - op1;
+
+            if (set_flags) {
+                update_carry_flag(op2 >= op1);
+                update_overflow_sub(result, op2, op1);
+                update_sign_flag(result);
+                update_zero_flag(result);
+            }
+
+            ctx.reg[reg_dst] = result;
+            break;
+        }
+        case 0b0100: {
+            // Addition (ADD)
+            u32 result = op1 + op2;
+
+            if (set_flags) {
+                u64 result_long = (u64)op1 + (u64)op2;
+
+                update_carry_flag(result_long & 0x100000000);
+                update_overflow_add(result, op1, op2);
+                update_sign_flag(result);
+                update_zero_flag(result);
+            }
+
+            ctx.reg[reg_dst] = result;
+            break;
+        }
+        case 0b0101: {
+            // Addition with Carry
+            int carry2 = (ctx.cpsr >> 29) & 1;
+            u32 result = op1 + op2 + carry2;
+
+            if (set_flags) {
+                u64 result_long = (u64)op1 + (u64)op2 + (u64)carry2;
+
+                update_carry_flag(result_long & 0x100000000);
+                update_overflow_add(result, op1, op2);
+                update_sign_flag(result);
+                update_zero_flag(result);
+            }
+
+            ctx.reg[reg_dst] = result;
+            break;
+        }
+        case 0b0110: {
+            // Subtraction with Carry
+            int carry2 = (ctx.cpsr >> 29) & 1;
+            u32 result = op1 - op2 + carry2 - 1;
+
+            if (set_flags) {
+                update_carry_flag(op1 >= (op2 + carry2 - 1));
+                update_overflow_sub(result, op1, op2);
+                update_sign_flag(result);
+                update_zero_flag(result);
+            }
+
+            ctx.reg[reg_dst] = result;
+            break;
+        }
+        case 0b0111: {
+            // Reverse Substraction with Carry
+            int carry2 = (ctx.cpsr >> 29) & 1;
+            u32 result = op2 - op1 + carry2 - 1;
+
+            if (set_flags) {
+                update_carry_flag(op2 >= (op1 + carry2 - 1));
+                update_overflow_sub(result, op2, op1);
+                update_sign_flag(result);
+                update_zero_flag(result);
+            }
+
+            ctx.reg[reg_dst] = result;
+            break;
+        }
+        case 0b1000: {
+            // Bitwise AND flags only (TST)
+            u32 result = op1 & op2;
+
+            update_sign_flag(result);
+            update_zero_flag(result);
+            update_carry_flag(carry);
+            break;
+        }
+        case 0b1001: {
+            // Bitwise EXOR flags only (TEQ)
+            u32 result = op1 ^ op2;
+
+            update_sign_flag(result);
+            update_zero_flag(result);
+            update_carry_flag(carry);
+            break;
+        }
+        case 0b1010: {
+            // Subtraction flags only (CMP)
+            u32 result = op1 - op2;
+
+            update_carry_flag(op1 >= op2);
+            update_overflow_sub(result, op1, op2);
+            update_sign_flag(result);
+            update_zero_flag(result);
+            break;
+        }
+        case 0b1011: {
+            // Addition flags only (CMN)
+            u32 result = op1 + op2;
+            u64 result_long = (u64)op1 + (u64)op2;
+
+            update_carry_flag(result_long & 0x100000000);
+            update_overflow_add(result, op1, op2);
+            update_sign_flag(result);
+            update_zero_flag(result);
+            break;
+        }
+        case 0b1100: {
+            // Bitwise OR (ORR)
+            u32 result = op1 | op2;
+
+            if (set_flags) {
+                update_sign_flag(result);
+                update_zero_flag(result);
+                update_carry_flag(carry);
+            }
+
+            ctx.reg[reg_dst] = result;
+            break;
+        }
+        case 0b1101: {
+            // Move into register (MOV)
+            if (set_flags) {
+                update_sign_flag(op2);
+                update_zero_flag(op2);
+                update_carry_flag(carry);
+            }
+
+            ctx.reg[reg_dst] = op2;
+            break;
+        }
+        case 0b1110: {
+            // Bit Clear (BIC)
+            u32 result = op1 & ~op2;
+
+            if (set_flags) {
+                update_sign_flag(result);
+                update_zero_flag(result);
+                update_carry_flag(carry);
+            }
+
+            ctx.reg[reg_dst] = result;
+            break;
+        }
+        case 0b1111: {
+            // Move into register negated (MVN)
+            u32 not_op2 = ~op2;
+
+            if (set_flags) {
+                update_sign_flag(not_op2);
+                update_zero_flag(not_op2);
+                update_carry_flag(carry);
+            }
+
+            ctx.reg[reg_dst] = not_op2;
+            break;
+        }
+        }
     }
 
-    if (mode_switched) {
-      switch_mode(old_mode);
+    template <bool immediate, bool use_spsr, bool to_status>
+    void ARM::arm_psr_transfer(u32 instruction) {
+        if (to_status) {
+            u32 op;
+            u32 mask = 0;
+
+            // create mask based on fsxc-bits.
+            if (instruction & (1 << 16)) mask |= 0x000000FF;
+            if (instruction & (1 << 17)) mask |= 0x0000FF00;
+            if (instruction & (1 << 18)) mask |= 0x00FF0000;
+            if (instruction & (1 << 19)) mask |= 0xFF000000;
+
+            // decode source operand
+            if (immediate) {
+                int imm = instruction & 0xFF;
+                int amount = ((instruction >> 8) & 0xF) << 1;
+                op = (imm >> amount) | (imm << (32 - amount));
+            } else {
+                op = ctx.reg[instruction & 0xF];
+            }
+            
+            u32 value = op & mask;
+
+            // write to cpsr or spsr
+            if (!use_spsr) {
+                // only switch mode if it actually gets written to
+                if (mask & 0xFF) {
+                    switch_mode(static_cast<Mode>(value & MASK_MODE));
+                }
+                ctx.cpsr = (ctx.cpsr & ~mask) | value;
+            } else {
+                *ctx.p_spsr = (*ctx.p_spsr & ~mask) | value;
+            }
+        } else {
+            int dst = (instruction >> 12) & 0xF;
+            
+            ctx.reg[dst] = use_spsr ? *ctx.p_spsr : ctx.cpsr;
+        }
     }
-  }
 
-  template <bool link>
-  void ARM::arm_branch(u32 instruction) {
-    u32 off = instruction & 0xFFFFFF;
+    template <bool accumulate, bool set_flags>
+    void ARM::arm_multiply(u32 instruction) {
+        u32 result;
+        int op1 = instruction & 0xF;
+        int op2 = (instruction >> 8) & 0xF;
+        int dst = (instruction >> 16) & 0xF;
 
-    if (off & 0x800000) {
-      off |= 0xFF000000;
+        result = ctx.reg[op1] * ctx.reg[op2];
+
+        if (accumulate) {
+            int op3 = (instruction >> 12) & 0xF;
+            result += ctx.reg[op3];
+        }
+
+        if (set_flags) {
+            update_sign_flag(result);
+            update_zero_flag(result);
+        }
+
+        ctx.reg[dst] = result;
     }
-    
-    if (link) { 
-      ctx.reg[14] = ctx.r15 - 4;
+
+    template <bool sign_extend, bool accumulate, bool set_flags>
+    void ARM::arm_multiply_long(u32 instruction) {
+        s64 result;
+        int op1 = instruction & 0xF;
+        int op2 = (instruction >> 8) & 0xF;
+        int dst_lo = (instruction >> 12) & 0xF;
+        int dst_hi = (instruction >> 16) & 0xF;
+
+        if (sign_extend) {
+            s64 op1_value = ctx.reg[op1];
+            s64 op2_value = ctx.reg[op2];
+
+            // sign-extend operands
+            if (op1_value & 0x80000000) op1_value |= 0xFFFFFFFF00000000;
+            if (op2_value & 0x80000000) op2_value |= 0xFFFFFFFF00000000;
+
+            result = op1_value * op2_value;
+        } else {
+            u64 uresult = (u64)ctx.reg[op1] * (u64)ctx.reg[op2];
+            result = uresult;
+        }
+
+        if (accumulate) {
+            s64 value = ctx.reg[dst_hi];
+
+            // workaround required by x86.
+            value <<= 16;
+            value <<= 16;
+            value |= ctx.reg[dst_lo];
+
+            result += value;
+        }
+
+        u32 result_hi = result >> 32;
+
+        ctx.reg[dst_lo] = result & 0xFFFFFFFF;
+        ctx.reg[dst_hi] = result_hi;
+
+        if (set_flags) {
+            update_sign_flag(result_hi);
+            update_zero_flag(result);
+        }
     }
-    
-    ctx.r15 += off << 2;
-    ctx.pipe.do_flush = true;
-  }
 
-  void ARM::arm_swi(u32 instruction) {
-    u32 call_number = read_byte(ctx.r15 - 6, MEM_NONE);
+    template <bool swap_byte>
+    void ARM::arm_single_data_swap(u32 instruction) {
+        u32 tmp;
+        int src = instruction & 0xF;
+        int dst = (instruction >> 12) & 0xF;
+        int base = (instruction >> 16) & 0xF;
 
-    if (!fake_swi) {
-      // save return address and program status
-      ctx.bank[BANK_SVC][BANK_R14] = ctx.r15 - 4;
-      ctx.spsr[SPSR_SVC] = ctx.cpsr;
+        if (swap_byte) {
+            tmp = read_byte(ctx.reg[base], MEM_NONE);
+            write_byte(ctx.reg[base], (u8)ctx.reg[src], MEM_NONE);
+        } else {
+            tmp = read_word(ctx.reg[base], MEM_ROTATE);
+            write_word(ctx.reg[base], ctx.reg[src], MEM_NONE);
+        }
 
-      // switch to SVC mode and disable interrupts
-      switch_mode(MODE_SVC);
-      ctx.cpsr |= MASK_IRQD;
-
-      // jump to exception vector
-      ctx.r15 = EXCPT_SWI;
-      ctx.pipe.do_flush = true;
-    } else {
-      software_interrupt(call_number);
+        ctx.reg[dst] = tmp;
     }
-  }
+
+    void ARM::arm_branch_exchange(u32 instruction) {
+        u32 addr = ctx.reg[instruction & 0xF];
+
+        ctx.pipe.do_flush = true;
+
+        if (addr & 1) {
+            ctx.r15 = addr & ~1;
+            ctx.cpsr |= MASK_THUMB;
+        } else {
+            ctx.r15 = addr & ~3;
+        }
+    }
+
+    template <bool pre_indexed, bool base_increment, bool immediate, bool write_back, bool load, int opcode>
+    void ARM::arm_halfword_signed_transfer(u32 instruction) {
+        u32 off;
+        int dst = (instruction >> 12) & 0xF;
+        int base = (instruction >> 16) & 0xF;
+        u32 addr = ctx.reg[base];
+
+        if (immediate) {
+            off = (instruction & 0xF) | ((instruction >> 4) & 0xF0);
+        } else {
+            off = ctx.reg[instruction & 0xF];
+        }
+
+        if (pre_indexed) {
+            addr += base_increment ? off : -off;
+        }
+
+        switch (opcode) {
+        case 1:
+            // load/store halfword
+            if (load) {
+                ctx.reg[dst] = read_hword(addr, MEM_ROTATE);
+            } else {
+                u32 value = ctx.reg[dst];
+
+                // r15 is $+12 instead of $+8 because of internal prefetch.
+                if (dst == 15) {
+                    value += 4;
+                }
+
+                write_hword(addr, value, MEM_NONE);
+            }
+            break;
+        case 2: {
+            // load signed byte
+            ctx.reg[dst] = read_byte(addr, MEM_SIGNED);
+            break;
+        }
+        case 3: {
+            // load signed halfword
+            ctx.reg[dst] = read_hword(addr, MEM_SIGNED);
+            break;
+        }
+        }
+
+        if ((write_back || !pre_indexed) && base != dst) {
+            if (!pre_indexed) {
+                addr += base_increment ? off : -off;
+            }
+            ctx.reg[base] = addr;
+        }
+    }
+
+    template <bool immediate, bool pre_indexed, bool base_increment, bool byte, bool write_back, bool load>
+    void ARM::arm_single_transfer(u32 instruction) {
+        u32 off;
+        Mode old_mode;
+        int dst  = (instruction >> 12) & 0xF;
+        int base = (instruction >> 16) & 0xF;
+        u32 addr = ctx.reg[base];
+
+        // post-indexing implicitly performs a write back.
+        // in that case W-bit indicates wether user-mode register access should be enforced.
+        if (!pre_indexed && write_back) {
+            old_mode = static_cast<Mode>(ctx.cpsr & MASK_MODE);
+            switch_mode(MODE_USR);
+        }
+
+        // get address offset.
+        if (immediate) {
+            off = instruction & 0xFFF;
+        } else {
+            bool carry = ctx.cpsr & MASK_CFLAG;
+            int shift = (instruction >> 5) & 3;
+            u32 amount = (instruction >> 7) & 0x1F;
+
+            off = ctx.reg[instruction & 0xF];
+            apply_shift(shift, off, amount, carry, true);
+        }
+
+        if (pre_indexed) {
+            addr += base_increment ? off : -off;
+        }
+
+        if (load) {
+            ctx.reg[dst] = byte ? read_byte(addr, MEM_NONE) : read_word(addr, MEM_ROTATE);
+            
+            // writes to r15 require a pipeline flush.
+            if (dst == 15) {
+                ctx.pipe.do_flush = true;
+            }
+        } else {
+            u32 value = ctx.reg[dst];
+
+            // r15 is $+12 now due to internal prefetch cycle.
+            if (dst == 15) {
+                value += 4;
+            }
+
+            if (byte) {
+                write_byte(addr, (u8)value, MEM_NONE);
+            } else {
+                write_word(addr, value, MEM_NONE);
+            }
+        }
+
+        // writeback operation may not overwrite the destination register.
+        if (base != dst) {
+            if (!pre_indexed) {
+                ctx.reg[base] += base_increment ? off : -off;
+
+                // if user-mode was enforced, return to previous mode.
+                if (write_back) {
+                    switch_mode(old_mode);
+                }
+            }
+            else if (write_back)
+            {
+                ctx.reg[base] = addr;
+            }
+        }
+    }
+
+    void ARM::arm_undefined(u32 instruction) {
+        // save return address and program status
+        ctx.bank[BANK_SVC][BANK_R14] = ctx.r15 - 4;
+        ctx.spsr[SPSR_SVC] = ctx.cpsr;
+
+        // switch to UND mode and disable interrupts
+        switch_mode(MODE_UND);
+        ctx.cpsr |= MASK_IRQD;
+
+        // jump to exception vector
+        ctx.r15 = EXCPT_UNDEFINED;
+        ctx.pipe.do_flush = true;
+    }
+
+    template <bool _pre_indexed, bool base_increment, bool user_mode, bool _write_back, bool load>
+    void ARM::arm_block_transfer(u32 instruction) {
+        int first_register;
+        int register_count = 0;
+        int register_list = instruction & 0xFFFF;
+        bool transfer_r15 = register_list & (1 << 15);
+        bool pre_indexed = _pre_indexed;
+        bool write_back = _write_back;
+
+        int base = (instruction >> 16) & 0xF;
+
+        Mode old_mode;
+        bool mode_switched = false;
+
+        /*// hardware corner case. not sure if emulated correctly.
+        if (register_list == 0) {
+            if (load) {
+                ctx.r15 = read_word(ctx.reg[base], MEM_NONE);
+                ctx.pipe.do_flush = true;
+            } else {
+                write_word(ctx.reg[base], ctx.r15, MEM_NONE);
+            }
+            ctx.reg[base] += base_increment ? 64 : -64;
+            return;
+        }*/
+
+        if (user_mode && (!load || !transfer_r15)) {
+            old_mode = static_cast<Mode>(ctx.cpsr & MASK_MODE);
+            switch_mode(MODE_USR);
+            mode_switched = true;
+        }
+
+        // find first register in list and also count them.
+        for (int i = 15; i >= 0; i--) {
+            if (~register_list & (1 << i)) {
+                continue;
+            }
+
+            first_register = i;
+            register_count++;
+        }
+
+        u32 addr = ctx.reg[base];
+        u32 addr_old = addr;
+
+        // instruction internally works with incrementing addresses.
+        if (!base_increment) {
+            addr -= register_count * 4;
+            ctx.reg[base] = addr;
+            write_back = false;
+            pre_indexed = !pre_indexed;
+        }
+
+        // process register list starting with the lowest address and register.
+        for (int i = first_register; i < 16; i++) {
+            if (~register_list & (1 << i)) {
+                continue;
+            }
+
+            if (pre_indexed) { 
+                addr += 4;
+            }
+
+            if (load) {
+                if (i == base) {
+                    write_back = false;
+                }
+
+                ctx.reg[i] = read_word(addr, MEM_NONE);
+
+                if (i == 15) {
+                    if (user_mode) {
+                        u32 spsr = *ctx.p_spsr;
+                        switch_mode(static_cast<Mode>(spsr & MASK_MODE));
+                        ctx.cpsr = spsr;
+                    }
+                    ctx.pipe.do_flush = true;
+                }
+            } else {
+                if (i == first_register && i == base) {
+                    write_word(addr, addr_old, MEM_NONE);
+                } else {
+                    write_word(addr, ctx.reg[i], MEM_NONE);
+                }
+            }
+
+            if (!pre_indexed) {
+                addr += 4;
+            }
+
+            if (write_back) { 
+                ctx.reg[base] = addr; 
+            }
+        }
+
+        if (mode_switched) {
+            switch_mode(old_mode);
+        }
+    }
+
+    template <bool link>
+    void ARM::arm_branch(u32 instruction) {
+        u32 off = instruction & 0xFFFFFF;
+
+        if (off & 0x800000) {
+            off |= 0xFF000000;
+        }
+        
+        if (link) { 
+            ctx.reg[14] = ctx.r15 - 4;
+        }
+        
+        ctx.r15 += off << 2;
+        ctx.pipe.do_flush = true;
+    }
+
+    void ARM::arm_swi(u32 instruction) {
+        u32 call_number = read_byte(ctx.r15 - 6, MEM_NONE);
+
+        if (!fake_swi) {
+            // save return address and program status
+            ctx.bank[BANK_SVC][BANK_R14] = ctx.r15 - 4;
+            ctx.spsr[SPSR_SVC] = ctx.cpsr;
+
+            // switch to SVC mode and disable interrupts
+            switch_mode(MODE_SVC);
+            ctx.cpsr |= MASK_IRQD;
+
+            // jump to exception vector
+            ctx.r15 = EXCPT_SWI;
+            ctx.pipe.do_flush = true;
+        } else {
+            software_interrupt(call_number);
+        }
+    }
 }

@@ -22,12 +22,12 @@
 #include "util/integer.hpp"
 
 namespace GameBoyAdvance {
-  class Save {
-  public:
-    virtual void reset() {}
-    virtual auto read_byte(u32 address) -> u8 { return 0; }
-    virtual void write_byte(u32 address, u8 value) {}
+    class Save {
+    public:
+        virtual void reset() {}
+        virtual auto read_byte(u32 address) -> u8 { return 0; }
+        virtual void write_byte(u32 address, u8 value) {}
 
-    virtual ~Save() {}
-  };
+        virtual ~Save() {}
+    };
 }
