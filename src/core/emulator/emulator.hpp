@@ -97,8 +97,8 @@ namespace GameBoyAdvance {
         } regs;
 
         // Subsystems
-        PPU m_ppu;
-        APU m_apu;
+        PPU ppu;
+        APU apu;
         Interrupt m_interrupt;
 
         int  m_cycles;

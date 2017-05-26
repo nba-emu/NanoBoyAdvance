@@ -33,7 +33,7 @@ namespace GameBoyAdvance {
     constexpr int Emulator::cycles[16];
     constexpr int Emulator::cycles32[16];
 
-    Emulator::Emulator(Config* config) : m_config(config), m_ppu(config), m_apu(config) {
+    Emulator::Emulator(Config* config) : m_config(config), ppu(config), apu(config) {
 
         reset();
 
@@ -41,8 +41,8 @@ namespace GameBoyAdvance {
         m_interrupt.set_flag_register(&regs.interrupt.request);
 
         // feed PPU with important data.
-        m_ppu.set_memory(memory.palette, memory.oam, memory.vram);
-        m_ppu.set_interrupt(&m_interrupt);
+        ppu.set_memory(memory.palette, memory.oam, memory.vram);
+        ppu.set_interrupt(&m_interrupt);
     }
 
     Emulator::~Emulator() {
@@ -55,8 +55,8 @@ namespace GameBoyAdvance {
         ARM::reset();
 
         // reset PPU und APU state
-        m_ppu.reset();
-        m_apu.reset();
+        ppu.reset();
+        apu.reset();
 
         // reset cartridge memory
         if (memory.rom.save != nullptr) {
@@ -130,7 +130,7 @@ namespace GameBoyAdvance {
     }
 
     APU& Emulator::get_apu() {
-        return m_apu;
+        return apu;
     }
 
     u16& Emulator::get_keypad() {
@@ -138,8 +138,8 @@ namespace GameBoyAdvance {
     }
 
     void Emulator::load_config() {
-        m_ppu.load_config();
-        m_apu.load_config();
+        ppu.load_config();
+        apu.load_config();
     }
 
     void Emulator::load_game(std::shared_ptr<Cartridge> cart) {
@@ -168,29 +168,29 @@ namespace GameBoyAdvance {
             // 160 visible lines, alternating SCANLINE and HBLANK.
             for (int line = 0; line < VISIBLE_LINES; line++) {
                 // SCANLINE
-                m_ppu.scanline(frame == 0);
+                ppu.scanline(frame == 0);
                 run_for(CYCLES_ACTIVE);
 
                 // HBLANK
-                m_ppu.hblank();
+                ppu.hblank();
                 if (!m_dma_active) {
                     dma_hblank();
                 }
                 run_for(CYCLES_HBLANK);
 
-                m_ppu.next_line();
-                m_apu.step(CYCLES_ENTIRE);
+                ppu.next_line();
+                apu.step(CYCLES_ENTIRE);
             }
 
             // 68 invisible lines, VBLANK period.
-            m_ppu.vblank();
+            ppu.vblank();
             if (!m_dma_active) {
                 dma_vblank();
             }
             for (int line = 0; line < INVISIBLE_LINES; line++) {
                 run_for(CYCLES_ENTIRE);
-                m_ppu.next_line();
-                m_apu.step(CYCLES_ENTIRE);
+                ppu.next_line();
+                apu.step(CYCLES_ENTIRE);
             }
         }
     }

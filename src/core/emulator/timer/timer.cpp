@@ -78,7 +78,7 @@ namespace GameBoyAdvance {
     }
 
     void Emulator::timer_fifo(int timer_id, int times) {
-        auto& apu_io  = m_apu.get_io();
+        auto& apu_io  = apu.get_io();
         auto& control = apu_io.control;
         auto& dma1    = regs.dma[1];
         auto& dma2    = regs.dma[2];
@@ -92,7 +92,7 @@ namespace GameBoyAdvance {
 
                 for (int j = 0; j < times; j++) {
                     // transfers sample from FIFO to APU chip
-                    m_apu.fifo_next(i);
+                    apu.fifo_next(i);
 
                     // tries to trigger DMA transfer if FIFO requests more data
                     if (fifo.requires_data()) {
@@ -135,7 +135,7 @@ namespace GameBoyAdvance {
         }
 
         // handle FIFO transfer if sound is enabled
-        if (m_apu.get_io().control.master_enable) {
+        if (apu.get_io().control.master_enable) {
             timer_fifo(timer.id, times);
         }
     }
