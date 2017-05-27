@@ -46,7 +46,7 @@ namespace GameBoyAdvance {
         void load_config();
         void load_game(std::shared_ptr<Cartridge> cart);
 
-        void frame();
+        void run_frame();
 
     private:
         Config* config;
@@ -121,7 +121,7 @@ namespace GameBoyAdvance {
         void timer_increment_once(Timer& timer);
 
     protected:
-
+        // memory bus implementation
         #include "memory/memory.hpp"
 
         void software_interrupt(int number) final {};

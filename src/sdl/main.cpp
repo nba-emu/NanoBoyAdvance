@@ -181,7 +181,7 @@ int main(int argc, char** argv) {
     while (running) {
 
         // generate frame(s)
-        emu.frame();
+        emu.run_frame();
 
         // update frame counter
         frames += config->fast_forward ? config->multiplier : 1;

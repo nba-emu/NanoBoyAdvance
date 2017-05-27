@@ -64,12 +64,12 @@ namespace GameBoyAdvance {
         }
 
         // clear out all memory
-        memset(memory.wram, 0, 0x40000);
-        memset(memory.iram, 0, 0x8000);
-        memset(memory.palette,  0, 0x400);
-        memset(memory.oam,  0, 0x400);
-        memset(memory.vram, 0, 0x18000);
-        memset(memory.mmio, 0, 0x800);
+        memset(memory.wram,    0, 0x40000);
+        memset(memory.iram,    0, 0x08000);
+        memset(memory.palette, 0, 0x00400);
+        memset(memory.oam,     0, 0x00400);
+        memset(memory.vram,    0, 0x18000);
+        memset(memory.mmio,    0, 0x00800);
 
         // reset IO-registers
         regs.irq.ie  = 0;
@@ -156,7 +156,7 @@ namespace GameBoyAdvance {
         reset();
     }
 
-    void Emulator::frame() {
+    void Emulator::run_frame() {
         const int VISIBLE_LINES   = 160;
         const int INVISIBLE_LINES = 68;
 
