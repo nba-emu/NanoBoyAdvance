@@ -50,7 +50,7 @@ namespace GameBoyAdvance {
     }
 
     void Emulator::reset() {
-        auto& ctx = get_context();
+        auto& ctx = context();
 
         ARM::reset();
 

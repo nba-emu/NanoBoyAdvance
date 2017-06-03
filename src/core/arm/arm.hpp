@@ -7,12 +7,12 @@
   * it under the terms of the GNU General Public License as published by
   * the Free Software Foundation, either version 3 of the License, or
   * (at your option) any later version.
-  * 
+  *
   * NanoboyAdvance is distributed in the hope that it will be useful,
   * but WITHOUT ANY WARRANTY; without even the implied warranty of
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   * GNU General Public License for more details.
-  * 
+  *
   * You should have received a copy of the GNU General Public License
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
@@ -26,34 +26,34 @@ namespace GameBoyAdvance {
     class ARM {
     public:
         ARM();
-        
+
         // Reset ARM state
         virtual void reset();
-        
+
         // Execute one instruction
         void step();
-        
+
         // Trigger IRQ-handler
         void signal_interrupt();
-        
+
         // Get ARM context (state)
-        auto get_context() -> ARMContext& {
+        auto context() -> ARMContext& {
             return ctx;
         }
-        
+
         // Set ARM context (state)
-        void set_context(ARMContext& ctx) {
+        void context(ARMContext& ctx) {
             this->ctx = ctx;
         }
-        
+
         // Is HLE-emulation enabled?
-        bool get_fake_swi() const { 
-            return fake_swi; 
+        bool get_fake_swi() const {
+            return fake_swi;
         }
-        
+
         // Set HLE-emulation flag
-        void set_fake_swi(bool fake_swi) { 
-            this->fake_swi = fake_swi; 
+        void set_fake_swi(bool fake_swi) {
+            this->fake_swi = fake_swi;
         }
 
     protected:
@@ -72,7 +72,7 @@ namespace GameBoyAdvance {
         u32 read_byte (u32 address, int flags);
         u32 read_hword(u32 address, int flags);
         u32 read_word (u32 address, int flags);
-        
+
         // Internal Write Helpers
         void write_byte (u32 address, u8 value,  int flags);
         void write_hword(u32 address, u16 value, int flags);
@@ -80,16 +80,16 @@ namespace GameBoyAdvance {
 
         // Reloads Pipeline
         void refill_pipeline();
-        
+
         // swi #nn HLE-handler
         virtual void software_interrupt(int number) {}
 
     private:
 
         bool fake_swi;
-        
+
         ARMContext ctx;
-        
+
         void switch_mode(Mode new_mode);
 
         // Flag Helpers
@@ -106,13 +106,13 @@ namespace GameBoyAdvance {
         static void shift_asr(u32& operand, u32 amount, bool& carry, bool immediate);
         static void shift_ror(u32& operand, u32 amount, bool& carry, bool immediate);
         static void apply_shift(int shift, u32& operand, u32 amount, bool& carry, bool immediate);
-        
+
         static Bank mode_to_bank(Mode mode);
 
         // ARM and THUMB interpreter cores
         #include "instr_arm.hpp"
         #include "instr_thumb.hpp"
     };
-    
+
     #include "inline_code.hpp"
 }
