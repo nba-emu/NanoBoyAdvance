@@ -34,7 +34,6 @@ namespace GameBoyAdvance {
     constexpr int Emulator::cycles32[16];
 
     Emulator::Emulator(Config* config) : config(config), ppu(config), apu(config) {
-
         reset();
 
         // setup interrupt controller

@@ -7,12 +7,12 @@
   * it under the terms of the GNU General Public License as published by
   * the Free Software Foundation, either version 3 of the License, or
   * (at your option) any later version.
-  * 
+  *
   * NanoboyAdvance is distributed in the hope that it will be useful,
   * but WITHOUT ANY WARRANTY; without even the implied warranty of
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   * GNU General Public License for more details.
-  * 
+  *
   * You should have received a copy of the GNU General Public License
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
@@ -25,8 +25,7 @@ using namespace Util;
 namespace GameBoyAdvance {
 
     void PPU::render_text(int id) {
-    
-        auto bg        = m_io.bgcnt[id];
+        auto& bg       = m_io.bgcnt[id];
         u16* buffer    = m_buffer[id];
         u32 tile_block = bg.tile_block << 14;
 
@@ -41,7 +40,7 @@ namespace GameBoyAdvance {
         int last_tile_encoder = -1;
 
         u32 base_offset = (bg.map_block << 11) + ((row & 0x1F) << 6);
-        
+
         bool is_256 = m_io.bgcnt[id].full_palette;
 
         for (int _x = 0; _x < 240; _x++) {
