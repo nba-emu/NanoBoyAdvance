@@ -93,7 +93,7 @@ namespace GameBoyAdvance {
         }
 
         cycles_left = 0;
-        dma_running  = false;
+        dma_running = false;
         dma_current = 0;
 
         set_fake_swi(!config->use_bios);
