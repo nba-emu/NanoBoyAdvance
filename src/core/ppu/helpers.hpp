@@ -7,12 +7,12 @@
   * it under the terms of the GNU General Public License as published by
   * the Free Software Foundation, either version 3 of the License, or
   * (at your option) any later version.
-  * 
+  *
   * NanoboyAdvance is distributed in the hope that it will be useful,
   * but WITHOUT ANY WARRANTY; without even the implied warranty of
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   * GNU General Public License for more details.
-  * 
+  *
   * You should have received a copy of the GNU General Public License
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
@@ -25,13 +25,11 @@ inline u32 color_convert(u16 color) {
 }
 
 inline u16 read_palette(int palette, int index) {
-    
     return (m_pal[(palette << 5) + (index << 1) | 1] << 8) |
             m_pal[(palette << 5) + (index << 1)];
 }
 
 inline u16 get_tile_pixel_4bpp(u32 base, int palette, int number, int x, int y) {
-    
     u32 offset = base + (number << 5) + (y << 2) + (x >> 1);
 
     int tuple = m_vram[offset];
@@ -45,7 +43,6 @@ inline u16 get_tile_pixel_4bpp(u32 base, int palette, int number, int x, int y) 
 }
 
 inline u16 get_tile_pixel_8bpp(u32 base, int palette, int number, int x, int y) {
-    
     u32 offset = base + (number << 6) + (y << 3) + x;
     int index  = m_vram[offset];
 
@@ -56,30 +53,55 @@ inline u16 get_tile_pixel_8bpp(u32 base, int palette, int number, int x, int y) 
     return read_palette(palette, index);
 }
 
-inline bool is_visible(int x, const bool inside[3], bool outside) {
+inline void draw_tile_line_4bpp(u32* buffer, u32 base, int palette, int number, int y, bool flip) {
+    u8* data = &m_vram[base + (number << 5) + (y << 2)];
     
-    auto win_enable = m_io.control.win_enable;
-    
-    if (win_enable[0] || win_enable[1] || win_enable[2]) {
-        
-        for (int i = 0; i < 2; i++) {
-            if (win_enable[i] && m_win_mask[i][x]) {
-                return inside[i];
-            }
+    if (flip) {
+        for (int i = 0; i < 4; i++) {
+            int tuple  = *data++;
+            int pixel1 = tuple & 15;
+            int pixel2 = tuple >> 4;
+            
+            buffer[((i<<1)|0)^7] = (pixel1 == 0) ? COLOR_TRANSPARENT : read_palette(palette, pixel1);
+            buffer[((i<<1)|1)^7] = (pixel2 == 0) ? COLOR_TRANSPARENT : read_palette(palette, pixel2);
         }
-        
-        if (win_enable[2] && m_obj_layer[x].window) {
-            return inside[2];
+    } else {
+        for (int i = 0; i < 4; i++) {
+            int tuple  = *data++;
+            int pixel1 = tuple & 15;
+            int pixel2 = tuple >> 4;
+            
+            buffer[(i<<1)|0] = (pixel1 == 0) ? COLOR_TRANSPARENT : read_palette(palette, pixel1);
+            buffer[(i<<1)|1] = (pixel2 == 0) ? COLOR_TRANSPARENT : read_palette(palette, pixel2);
         }
-        
-        return outside;
     }
+}
+
+inline void draw_tile_line_8bpp(u32* buffer, u32 base, int number, int y, bool flip) {
+    u8* data = &m_vram[base + (number << 6) + (y << 3)];
     
-    return true;
+    if (flip) {
+        for (int x = 7; x >= 0; x--) {
+            int pixel = *data++;
+            if (pixel == 0) {
+                buffer[x] = COLOR_TRANSPARENT;
+                continue;
+            }
+            buffer[x] = read_palette(0, pixel);
+        }
+    } else {
+        for (int x = 0; x < 8; x++) {
+            int pixel = *data++;
+            if (pixel == 0) {
+                buffer[x] = COLOR_TRANSPARENT;
+                continue;
+            }
+            buffer[x] = read_palette(0, pixel);
+        }
+    }
 }
 
 static inline float decode_fixed16(u16 number) {
-    
     bool  is_negative = number & (1 << 15);
     s32   int_part    = (number >> 8) | (is_negative ? 0xFFFFFF00 : 0);
     float frac_part   = static_cast<float>(number & 0xFF) / 256.0;
@@ -88,7 +110,6 @@ static inline float decode_fixed16(u16 number) {
 }
 
 static inline float decode_fixed32(u32 number) {
-    
     bool  is_negative = number & (1 << 27);
     s32   int_part    = ((number & ~0xF0000000) >> 8) | (is_negative ? 0xFFF00000 : 0);
     float frac_part   = static_cast<float>(number & 0xFF) / 256.0;
