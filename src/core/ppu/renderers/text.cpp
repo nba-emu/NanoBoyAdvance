@@ -80,12 +80,14 @@ namespace GameBoyAdvance {
                 last_encoder = encoder;
             }
 
+            // Optimization: unsigned(draw_x) <= unsigned(232)
             if (draw_x >= 0 && draw_x <= 232) {
                 for (int x = 0; x < 8; x++) {
                     buffer[draw_x++] = tile_buffer[x];
                 }
             } else {
                 for (int x = 0; x < 8; x++) {
+                    // Optimization: invert condition, then use: unsigned(draw_x) < unsigned(240)
                     if (draw_x < 0 || draw_x >= 240) {
                         draw_x++;
                         continue;
