@@ -18,6 +18,7 @@
   */
 
 #include "../ppu.hpp"
+#include "util/likely.hpp"
 
 namespace GameBoyAdvance {
 
@@ -71,7 +72,7 @@ namespace GameBoyAdvance {
                 const int final_y = v_flip ? (tile_y ^ 7) : tile_y;
                 
                 // decode the determined tile into our buffer
-                if (bg.full_palette) {
+                if (UNLIKELY(bg.full_palette)) {
                     draw_tile_line_8bpp(tile_buffer, tile_block, number, final_y, h_flip);
                 } else {
                     draw_tile_line_4bpp(tile_buffer, tile_block, palette, number, final_y, h_flip);
@@ -80,14 +81,12 @@ namespace GameBoyAdvance {
                 last_encoder = encoder;
             }
 
-            // Optimization: unsigned(draw_x) <= unsigned(232)
-            if (draw_x >= 0 && draw_x <= 232) {
+            if (LIKELY(draw_x >= 0 && draw_x <= 232)) {
                 for (int x = 0; x < 8; x++) {
                     buffer[draw_x++] = tile_buffer[x];
                 }
             } else {
                 for (int x = 0; x < 8; x++) {
-                    // Optimization: invert condition, then use: unsigned(draw_x) < unsigned(240)
                     if (draw_x < 0 || draw_x >= 240) {
                         draw_x++;
                         continue;
