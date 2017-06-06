@@ -48,6 +48,9 @@ namespace GameBoyAdvance {
         // color conversion LUT
         u32 m_color_lut[0x8000];
         
+        // LUT for fast (alpha) blend calculation
+        u8 blend_table[17][17][32][32];
+        
         struct ObjectPixel {
             u8  prio;
             u16 pixel;

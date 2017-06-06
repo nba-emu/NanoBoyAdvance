@@ -18,6 +18,7 @@
   */
 
 #include <cmath>
+#include <algorithm>
 #include "ppu.hpp"
 #include "util/logger.hpp"
 
@@ -28,6 +29,20 @@ namespace GameBoyAdvance {
     PPU::PPU(Config* config) : m_config(config) {
         reset();
         load_config();
+        
+        // Generate blending LUT
+        for (int color0 = 0; color0 <= 31; color0++) {
+            for (int color1 = 0; color1 <= 31; color1++) {    
+                for (int factor0 = 0; factor0 <= 16; factor0++) {
+                    
+                    // Most inner loop - generate blend result and store in LUT.
+                    for (int factor1 = 0; factor1 <= 16; factor1++) {
+                        int result = (color0 * factor0 + color1 * factor1) >> 4;
+                        blend_table[factor0][factor1][color0][color1] = std::min<u8>(result, 31);
+                    }
+                }
+            }
+        }
     }
     
     void PPU::load_config() {
