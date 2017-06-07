@@ -23,7 +23,7 @@
 namespace GameBoyAdvance {
 
     ARM::ARM() {
-        reset();
+        ARM::reset();
     }
 
     void ARM::reset()  {
