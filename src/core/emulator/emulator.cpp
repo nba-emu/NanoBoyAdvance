@@ -34,10 +34,9 @@ namespace GameBoyAdvance {
     constexpr int Emulator::cycles32[16];
 
     Emulator::Emulator(Config* config) : config(config), ppu(config), apu(config) {
-        // must be initialized *before* calling reset()
-        memory.rom.save = nullptr;
-
-        Emulator::reset();
+        //// must be initialized *before* calling reset()
+        //memory.rom.save = nullptr;
+        //Emulator::reset();
 
         // setup interrupt controller
         m_interrupt.set_flag_register(&regs.irq.if_);
@@ -124,7 +123,7 @@ namespace GameBoyAdvance {
             // copy BIOS to local buffer
             memcpy(memory.bios, data, size);
 
-            // reset r15 because of weird reason
+            // start at BIOS reset vector
             ctx.r15 = 0x00000000;
 
             delete data;
