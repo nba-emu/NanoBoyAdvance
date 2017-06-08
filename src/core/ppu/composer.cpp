@@ -17,6 +17,7 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
+#include <algorithm>
 #include "ppu.hpp"
 
 namespace GameBoyAdvance {
@@ -29,41 +30,44 @@ namespace GameBoyAdvance {
         
         switch (sfx) {
             case SFX_BLEND: {
-                int eva = m_io.bldalpha.eva;
-                int evb = m_io.bldalpha.evb;
+                int eva = std::min<int>(16, m_io.bldalpha.eva);
+                int evb = std::min<int>(16, m_io.bldalpha.evb);
             
-                int r2  = (target2 >> 0 ) & 0x1F;
-                int g2  = (target2 >> 5 ) & 0x1F;
-                int b2  = (target2 >> 10) & 0x1F;
-                float a = eva >= 16 ? 1.0 : (eva / 16.0);
-                float b = evb >= 16 ? 1.0 : (evb / 16.0);
+                int r2 = (target2 >> 0 ) & 0x1F;
+                int g2 = (target2 >> 5 ) & 0x1F;
+                int b2 = (target2 >> 10) & 0x1F;
             
-                // linear combination of both pixels
-                r1 = a * r1 + b * r2;
-                g1 = a * g1 + b * g2;
-                b1 = a * b1 + b * b2;
-            
+                r1 = blend_table[eva][evb][r1][r2];
+                g1 = blend_table[eva][evb][g1][g2];
+                b1 = blend_table[eva][evb][b1][b2];
                 break;
             }
             case SFX_INCREASE: {
-                int evy = m_io.bldy.evy;
+                int evy = std::min<int>(16, m_io.bldy.evy);
             
-                float brightness = evy >= 16 ? 1.0 : (evy / 16.0); 
+                //float brightness = evy >= 16 ? 1.0 : (evy / 16.0); 
+                //r1 = r1 + (31 - r1) * brightness;
+                //g1 = g1 + (31 - g1) * brightness;
+                //b1 = b1 + (31 - b1) * brightness;
             
-                r1 = r1 + (31 - r1) * brightness;
-                g1 = g1 + (31 - g1) * brightness;
-                b1 = b1 + (31 - b1) * brightness;
+                r1 = blend_table[16 - evy][evy][r1][31];
+                g1 = blend_table[16 - evy][evy][g1][31];
+                b1 = blend_table[16 - evy][evy][b1][31];
             
                 break;
             }
             case SFX_DECREASE: {
-                int evy = m_io.bldy.evy;
+                int evy = std::min<int>(16, m_io.bldy.evy);
             
-                float brightness = evy >= 16 ? 1.0 : (evy / 16.0); 
+                //float brightness = evy >= 16 ? 1.0 : (evy / 16.0); 
             
-                r1 = r1 - r1 * brightness;
-                g1 = g1 - g1 * brightness;
-                b1 = b1 - b1 * brightness;
+                //r1 = r1 - r1 * brightness;
+                //g1 = g1 - g1 * brightness;
+                //b1 = b1 - b1 * brightness;
+            
+                r1 = blend_table[16 - evy][evy][r1][0];
+                g1 = blend_table[16 - evy][evy][g1][0];
+                b1 = blend_table[16 - evy][evy][b1][0];
             
                 break;
             }

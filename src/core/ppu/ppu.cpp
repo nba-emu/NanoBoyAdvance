@@ -30,7 +30,7 @@ namespace GameBoyAdvance {
         reset();
         load_config();
         
-        // Generate blending LUT
+        // Generate blending LUT (TODO: make table static)
         for (int color0 = 0; color0 <= 31; color0++) {
             for (int color1 = 0; color1 <= 31; color1++) {    
                 for (int factor0 = 0; factor0 <= 16; factor0++) {
