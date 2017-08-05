@@ -1,0 +1,73 @@
+/**
+  * Copyright (C) 2017 flerovium^-^ (Frederic Meyer)
+  *
+  * This file is part of NanoboyAdvance.
+  *
+  * NanoboyAdvance is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  * 
+  * NanoboyAdvance is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  * GNU General Public License for more details.
+  * 
+  * You should have received a copy of the GNU General Public License
+  * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
+  */
+
+#pragma once
+
+#include <QMainWindow>
+#include <QMenuBar>
+#include <QStatusBar>
+#include <QLabel>
+#include <QTimer>
+
+#include "screen.hpp"
+#include "core/emulator/emulator.hpp"
+
+class MainWindow : public QMainWindow {
+    Q_OBJECT
+        
+public:
+     MainWindow(QWidget* parent = 0);
+    ~MainWindow();
+    
+public slots:
+    // Shows Open ROM dialog
+    void openGame();
+    
+private:
+    void setupMenu();
+    void setupFileMenu();
+    
+    QMenuBar* m_menu_bar;
+    
+    // Menus
+    QMenu* m_file_menu;
+    QMenu* m_edit_menu;
+    QMenu* m_help_menu;
+    
+    // Menu Actions
+    QAction* m_open_file;
+    QAction* m_close;
+    QAction* m_open_settings;
+    QAction* m_about_qt;
+    QAction* m_about_app;
+    
+    // Timer
+    QTimer* m_timer;
+    QTimer* m_fps_timer;
+    
+    // Program Status
+    QStatusBar* m_status_bar;
+    QLabel*     m_status_msg;
+    
+    // Display widget
+    Screen* m_screen;
+    
+    // Emulator instance
+    GameBoyAdvance::Emulator* m_emu { nullptr };
+};
