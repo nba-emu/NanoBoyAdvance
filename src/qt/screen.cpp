@@ -24,24 +24,44 @@ Screen::Screen(QWidget* parent) : QGLWidget(parent)
 { }
 
 Screen::~Screen() {
-    glDeleteTextures(1, &m_Texture);
+    glDeleteTextures(1, &m_texture);
 }
 
 void Screen::updateTexture(u32* pixels, int width, int height) {
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
+    // Update texture pixels
+    glTexImage2D(
+        GL_TEXTURE_2D, 
+        0, 
+        GL_RGBA, 
+        width, 
+        height, 
+        0, 
+        GL_BGRA, 
+        GL_UNSIGNED_BYTE, 
+        pixels
+    );
+    
+    // Redraw screen
     updateGL();
 }
 
 auto Screen::sizeHint() const -> QSize {
+    // Default size, 2 times of GBA screen.
     return QSize {480, 320};
 }
 
 void Screen::initializeGL() {
+    // Clear screen, black color
     qglClearColor(Qt::black);
+    
+    // Enable textures
     glEnable(GL_TEXTURE_2D);
 
-    glGenTextures(1, &m_Texture);
-    glBindTexture(GL_TEXTURE_2D, m_Texture);
+    // Generate one texture to store screen pixels
+    glGenTextures(1, &m_texture);
+    glBindTexture(GL_TEXTURE_2D, m_texture);
+    
+    // Set texture interpolation mode to nearest
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 }
