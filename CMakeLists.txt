@@ -14,7 +14,6 @@ set(VERSION_MINOR 1)
 # === FRONTENDS === #
 
 # Frontend selection
-option(GTK_GUI  "Build GTKMM GUI"      ON)
 option(SDL2_GUI "Build SDL2 based GUI" ON)
 
 # SDL2 - required *atleast* for sound
@@ -36,7 +35,7 @@ if (STATIC_STDLIB)
 endif()
 
 # Debug Mode?
-option(DEBUG "Build for debug purposes" OFF)
+option(DEBUG "Build for debugging" OFF)
 if (DEBUG)
     add_definitions(-std=c++11 -g -O0 -fpermissive -DDEBUG)
 else()
