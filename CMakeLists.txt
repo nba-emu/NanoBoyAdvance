@@ -14,7 +14,18 @@ set(VERSION_MINOR 1)
 # === FRONTENDS === #
 
 # Frontend selection
+option(QT_GUI   "Build Qt5 frontend"   ON)
 option(SDL2_GUI "Build SDL2 based GUI" ON)
+
+# Add Qt5 & OpenGL if neccessary
+# TODO: should attempt to support Qt4
+if (QT_GUI)
+    find_package(OpenGL REQUIRED)
+    find_package(Qt5Gui REQUIRED)
+    find_package(Qt5Widgets REQUIRED)
+    find_package(Qt5OpenGL REQUIRED)
+    set(QT_DEPS Qt5::Gui Qt5::Widgets Qt5::OpenGL)
+endif()
 
 # SDL2 - required *atleast* for sound
 include (FindSDL2 REQUIRED)

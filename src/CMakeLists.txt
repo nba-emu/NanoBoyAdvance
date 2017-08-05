@@ -8,3 +8,7 @@ add_subdirectory(third_party)
 if (SDL2_GUI)
     add_subdirectory(sdl)
 endif()
+
+if (QT_GUI)
+    add_subdirectory(qt)
+endif()

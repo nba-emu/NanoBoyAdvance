@@ -1,0 +1,32 @@
+set(CMAKE_AUTOMOC ON)
+
+set(SRCS
+    main.cpp
+)
+
+set(HEADERS
+    
+)
+
+if (WIN32)
+    configure_file (
+        "${PROJECT_SOURCE_DIR}/res/app.rc.in"
+        "${PROJECT_BINARY_DIR}/res/app.rc"
+        )
+    list(APPEND RESOURCES "${PROJECT_BINARY_DIR}/res/app.rc")
+    if (MINGW)
+        set(CMAKE_RC_COMPILER_INIT windres)
+        enable_language(RC)
+        set(CMAKE_RC_COMPILE_OBJECT
+            "<CMAKE_RC_COMPILER> -i <SOURCE> -o <OBJECT>")
+    endif()
+endif()
+
+# Create output executable
+add_executable(NanoboyAdvance ${SRCS} ${HEADERS} ${RESOURCES})
+
+# Link NanoBoyAdvance Core, Qt and OpenGL
+target_link_libraries(NanoboyAdvance core)
+target_link_libraries(NanoboyAdvance ${QT_DEPS} ${OPENGL_gl_LIBRARY})
+
+# file(COPY "${PROJECT_SOURCE_DIR}/config.sml" DESTINATION "${PROJECT_BINARY_DIR}/src/qt/")
