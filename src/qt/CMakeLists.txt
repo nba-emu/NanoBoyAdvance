@@ -2,10 +2,11 @@ set(CMAKE_AUTOMOC ON)
 
 set(SRCS
     main.cpp
+    screen.cpp
 )
 
 set(HEADERS
-    
+    screen.hpp
 )
 
 if (WIN32)
