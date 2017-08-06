@@ -42,6 +42,7 @@ namespace GameBoyAdvance {
 
         APU& get_apu();
         u16& get_keypad();
+        void set_keystate(Key key, bool pressed);
 
         void load_config();
         void load_game(std::shared_ptr<Cartridge> cart);

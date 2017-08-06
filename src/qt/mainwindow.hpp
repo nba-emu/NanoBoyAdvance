@@ -56,6 +56,8 @@ private:
     // Called by SDL2 to request new audio
     static void soundCallback(GameBoyAdvance::APU* apu, u16* stream, int length);
     
+    static auto qtKeyToEmu(int key) -> GameBoyAdvance::Key;
+    
     QMenuBar* m_menu_bar;
     
     // Menus
@@ -84,5 +86,6 @@ private:
     u32 m_framebuffer[240 * 160];
     
     // Emulator instance
-    GameBoyAdvance::Emulator* m_emu { nullptr };
+    GameBoyAdvance::Config*   m_config { nullptr };
+    GameBoyAdvance::Emulator* m_emu    { nullptr };
 };

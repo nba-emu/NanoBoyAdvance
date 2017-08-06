@@ -140,6 +140,15 @@ namespace GameBoyAdvance {
         return regs.keyinput;
     }
 
+    void Emulator::set_keystate(Key key, bool pressed) {
+        // NOTE: GBA keys work with pull up logic
+        if (pressed) {
+            regs.keyinput &= ~static_cast<int>(key);
+        } else {
+            regs.keyinput |=  static_cast<int>(key);
+        }
+    }
+    
     void Emulator::load_config() {
         ppu.load_config();
         apu.load_config();

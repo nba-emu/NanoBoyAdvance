@@ -62,6 +62,31 @@ void MainWindow::setupFileMenu() {
 void MainWindow::setupScreen() {
     m_screen = new Screen {this};
     
+    connect(m_screen, &Screen::keyPress, this,
+        [this] (int key) {
+            if (m_emu == nullptr) {
+                return;
+            }
+            if (key == Qt::Key_Space) {
+                m_config->fast_forward = true;
+                return;
+            }
+            m_emu->set_keystate(MainWindow::qtKeyToEmu(key), true);
+        }
+    );
+    connect(m_screen, &Screen::keyRelease, this,
+        [this] (int key) {
+            if (m_emu == nullptr) {
+                return;
+            }
+            if (key == Qt::Key_Space) {
+                m_config->fast_forward = false;
+                return;
+            }
+            m_emu->set_keystate(MainWindow::qtKeyToEmu(key), false);
+        }
+    );
+    
     setCentralWidget(m_screen);
 }
 
@@ -111,7 +136,6 @@ void MainWindow::openGame() {
 }
 
 void MainWindow::runGame(const QString& rom_file) {
-    auto config = new Config(); // why dynamic
     auto cart   = Cartridge::from_file(rom_file.toStdString());
     
     if (m_emu != nullptr) {
@@ -119,17 +143,22 @@ void MainWindow::runGame(const QString& rom_file) {
         delete m_emu;
     }
     
-    // TODO: try reusing an existing instance
-    m_emu = new Emulator(config);
+    m_config = new Config();
     
-    config->bios_path   = "bios.bin";
-    config->framebuffer = m_framebuffer;
+    // TODO: try reusing an existing instance
+    m_emu = new Emulator(m_config);
+    
+    m_config->multiplier  = 10;
+    m_config->bios_path   = "bios.bin";
+    m_config->framebuffer = m_framebuffer;
     
     m_emu->load_config();
     m_emu->load_game(cart);
     
     setupSound(&m_emu->get_apu());
+    
     m_timer->start();
+    m_screen->grabKeyboard();
 }
 
 void MainWindow::soundCallback(APU* apu, u16* stream, int length) {
@@ -153,4 +182,20 @@ void MainWindow::setupSound(APU* apu) {
 
 void MainWindow::closeAudio() {
     SDL_CloseAudioDevice(1);
+}
+
+auto MainWindow::qtKeyToEmu(int key) -> Key {
+    switch (key) {
+        case Qt::Key_A:         return Key::A;
+        case Qt::Key_S:         return Key::B;
+        case Qt::Key_Backspace: return Key::Select;
+        case Qt::Key_Return:    return Key::Start;
+        case Qt::Key_Right:     return Key::Right;
+        case Qt::Key_Left:      return Key::Left;
+        case Qt::Key_Up:        return Key::Up;
+        case Qt::Key_Down:      return Key::Down;
+        case Qt::Key_W:         return Key::R;
+        case Qt::Key_Q:         return Key::L;
+        default:                return Key::None;
+    }
 }
