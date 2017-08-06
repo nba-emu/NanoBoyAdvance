@@ -82,28 +82,28 @@ void MainWindow::setupScreen() {
     // Key press handler
     connect(m_screen, &Screen::keyPress, this,
         [this] (int key) {
-            if (m_emu == nullptr) {
+            if (m_emulator == nullptr) {
                 return;
             }
             if (key == Qt::Key_Space) {
                 m_config->fast_forward = true;
                 return;
             }
-            m_emu->set_keystate(MainWindow::qtKeyToEmu(key), true);
+            m_emulator->set_keystate(MainWindow::qtKeyToEmu(key), true);
         }
     );
 
     // Key release handler
     connect(m_screen, &Screen::keyRelease, this,
         [this] (int key) {
-            if (m_emu == nullptr) {
+            if (m_emulator == nullptr) {
                 return;
             }
             if (key == Qt::Key_Space) {
                 m_config->fast_forward = false;
                 return;
             }
-            m_emu->set_keystate(MainWindow::qtKeyToEmu(key), false);
+            m_emulator->set_keystate(MainWindow::qtKeyToEmu(key), false);
         }
     );
 
@@ -151,7 +151,7 @@ void MainWindow::setupStatusBar() {
 
 void MainWindow::nextFrame() {
     // Emulate the next frame(s)
-    m_emu->run_frame();
+    m_emulator->run_frame();
     m_frames++;
 
     // Update screen image
@@ -181,7 +181,6 @@ void MainWindow::openGame() {
             box.setWindowTitle(tr("File not found"));
 
             box.exec();
-
             return;
         }
 
@@ -206,32 +205,33 @@ void MainWindow::runGame(const QString& rom_file) {
         return;
     }
 
-    if (m_emu != nullptr) {
-        closeAudio();
-        delete m_emu;
+    // Create config object if not done yet
+    if (m_config == nullptr) {
+        m_config = new Config();
+
+        m_config->multiplier  = 10;
+        m_config->bios_path   = bios_path;
+        m_config->framebuffer = m_framebuffer;
     }
-    if (m_config != nullptr) {
-        delete m_config;
+
+    // Create emulator object if not done yet
+    if (m_emulator == nullptr) {
+        m_emulator = new Emulator(m_config);
     }
 
-    m_config = new Config();
+    // Apply config and load game.
+    m_emulator->load_config();
+    m_emulator->load_game(cart);
 
-    // TODO: try reusing an existing instance
-    m_emu = new Emulator(m_config);
+    // Setup sound output
+    setupSound(&m_emulator->get_apu());
 
-    m_config->multiplier  = 10;
-    m_config->bios_path   = bios_path;
-    m_config->framebuffer = m_framebuffer;
-
-    m_emu->load_config();
-    m_emu->load_game(cart);
-
-    setupSound(&m_emu->get_apu());
-
+    // Start FPS counting
     m_frames = 0;
-
-    m_timer->start();
     m_timer_fps->start();
+
+    // Start emulating
+    m_timer->start();
 
     m_screen->grabKeyboard();
 }

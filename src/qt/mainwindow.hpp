@@ -89,6 +89,6 @@ private:
     u32 m_framebuffer[240 * 160];
 
     // Emulator instance
-    GameBoyAdvance::Config*   m_config { nullptr };
-    GameBoyAdvance::Emulator* m_emu    { nullptr };
+    GameBoyAdvance::Config*   m_config   { nullptr };
+    GameBoyAdvance::Emulator* m_emulator { nullptr };
 };
