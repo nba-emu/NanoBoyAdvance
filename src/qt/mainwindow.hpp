@@ -75,7 +75,7 @@ private:
     
     // Timer
     QTimer* m_timer;
-    QTimer* m_fps_timer;
+    QTimer* m_timer_fps;
     
     // Program Status
     QStatusBar* m_status_bar;

@@ -63,6 +63,7 @@ void MainWindow::setupFileMenu() {
 void MainWindow::setupScreen() {
     m_screen = new Screen {this};
     
+    // Key press handler
     connect(m_screen, &Screen::keyPress, this,
         [this] (int key) {
             if (m_emu == nullptr) {
@@ -75,6 +76,8 @@ void MainWindow::setupScreen() {
             m_emu->set_keystate(MainWindow::qtKeyToEmu(key), true);
         }
     );
+    
+    // Key release handler
     connect(m_screen, &Screen::keyRelease, this,
         [this] (int key) {
             if (m_emu == nullptr) {
@@ -88,47 +91,55 @@ void MainWindow::setupScreen() {
         }
     );
     
+    // Make screen widget our central widget
     setCentralWidget(m_screen);
 }
 
 void MainWindow::setupEmuTimers() {
-    m_timer     = new QTimer {this};
-    m_fps_timer = new QTimer {this};
-    
+    // Create main timer, ticks at 60Hz
+    m_timer = new QTimer {this};
     m_timer->setSingleShot(false);
     m_timer->setInterval(16);
     
-    m_fps_timer->setSingleShot(false);
-    m_fps_timer->setInterval(1000);
+    // Create FPS timer, ticks at 1Hz
+    m_timer_fps = new QTimer {this};
+    m_timer_fps->setSingleShot(false);
+    m_timer_fps->setInterval(1000);
     
+    // Call "nextFrame" each time the main timer ticks
     connect(m_timer, &QTimer::timeout, this, &MainWindow::nextFrame);
-    connect(m_fps_timer, &QTimer::timeout, this,
+    
+    // FPS timer event
+    connect(m_timer_fps, &QTimer::timeout, this,
         [this] {
-            std::string message = std::to_string(m_frames) + " FPS";
-            
-            m_status_msg->setText(QString(message.c_str()));
+            auto message = std::to_string(m_frames) + " FPS";
             
             m_frames = 0;
+            m_status_msg->setText(QString(message.c_str()));
         }
     );
 }
 
 void MainWindow::setupStatusBar() {
-    m_status_msg = new QLabel {this};
+    // Create status bar with label text
+    m_status_msg = new QLabel     {this};
     m_status_bar = new QStatusBar {this};
-    
-    m_status_msg->setText(tr("Idle..."));
     m_status_bar->addPermanentWidget(m_status_msg);
     
+    // Assign status bar to main window
     setStatusBar(m_status_bar);
+    
+    // Set a nice default message
+    m_status_msg->setText(tr("Idle..."));
 }
 
 void MainWindow::nextFrame() {
+    // Emulate the next frame(s)
     m_emu->run_frame();
-    
-    m_screen->updateTexture(m_framebuffer, 240, 160);
-    
     m_frames++;
+    
+    // Update screen image
+    m_screen->updateTexture(m_framebuffer, 240, 160);
 }
 
 void MainWindow::openGame() {
@@ -138,32 +149,46 @@ void MainWindow::openGame() {
     dialog.setFileMode   (QFileDialog::AnyFile   );
     dialog.setNameFilter ("GameBoyAdvance ROMs (*.gba *.agb)");
 
-    if (!dialog.exec()) {
-        return;
-    }
+    if (dialog.exec()) {
+        // Get path of whatever is the first selected file
+        QString file = dialog.selectedFiles().at(0);
     
-    QString file = dialog.selectedFiles().at(0);
-    
-    if (!QFile::exists(file)) {
-        QMessageBox box {this};
-        
-        auto dialog_text = tr("Cannot find file ") + 
-                           QFileInfo(file).fileName();
-        
-        box.setIcon(QMessageBox::Critical);
-        box.setText(dialog_text);
-        box.setWindowTitle(tr("File not found"));
-        
-        box.exec();
-        
-        return;
-    }
+        // Need to confirm that it actually exists
+        if (!QFile::exists(file)) {
+            QMessageBox box {this};
 
-    runGame(file);
+            auto dialog_text = tr("Cannot find file ") + 
+                               QFileInfo(file).fileName();
+
+            box.setText(dialog_text);
+            box.setIcon(QMessageBox::Critical);
+            box.setWindowTitle(tr("File not found"));
+
+            box.exec();
+
+            return;
+        }
+
+        // Load game and start emulating
+        runGame(file);
+    }
 }
 
 void MainWindow::runGame(const QString& rom_file) {
-    auto cart   = Cartridge::from_file(rom_file.toStdString());
+    auto cart = Cartridge::from_file(rom_file.toStdString());
+    
+    const std::string bios_path = "bios.bin";
+    
+    if (!QFile::exists(QString(bios_path.c_str()))) {
+        QMessageBox box {this};
+        
+        box.setText("Please place BIOS as 'bios.bin' in the emulators folder.");
+        box.setIcon(QMessageBox::Critical);
+        box.setWindowTitle(tr("BIOS not found."));
+        
+        box.exec();
+        return;
+    }
     
     if (m_emu != nullptr) {
         closeAudio();
@@ -179,7 +204,7 @@ void MainWindow::runGame(const QString& rom_file) {
     m_emu = new Emulator(m_config);
     
     m_config->multiplier  = 10;
-    m_config->bios_path   = "bios.bin";
+    m_config->bios_path   = bios_path;
     m_config->framebuffer = m_framebuffer;
     
     m_emu->load_config();
@@ -190,11 +215,12 @@ void MainWindow::runGame(const QString& rom_file) {
     m_frames = 0;
     
     m_timer->start();
-    m_fps_timer->start();
+    m_timer_fps->start();
     
     m_screen->grabKeyboard();
 }
 
+// Sound callback - called by SDL2. Wraps around C++ method.
 void MainWindow::soundCallback(APU* apu, u16* stream, int length) {
     apu->fill_buffer(stream, length);
 }
@@ -202,6 +228,7 @@ void MainWindow::soundCallback(APU* apu, u16* stream, int length) {
 void MainWindow::setupSound(APU* apu) {
     SDL_AudioSpec spec;
 
+    // Setup desired audio spec
     spec.freq     = 44100;
     spec.samples  = 1024;
     spec.format   = AUDIO_U16;
@@ -209,6 +236,7 @@ void MainWindow::setupSound(APU* apu) {
     spec.callback = &MainWindow::soundCallback;
     spec.userdata = apu;
 
+    // Initialize SDL2 audio start playing
     SDL_Init(SDL_INIT_AUDIO);
     SDL_OpenAudio(&spec, NULL);
     SDL_PauseAudio(0);
@@ -218,6 +246,7 @@ void MainWindow::closeAudio() {
     SDL_CloseAudioDevice(1);
 }
 
+// Translates Qt keycodes to enumeration that Emulator understands
 auto MainWindow::qtKeyToEmu(int key) -> Key {
     switch (key) {
         case Qt::Key_A:         return Key::A;
