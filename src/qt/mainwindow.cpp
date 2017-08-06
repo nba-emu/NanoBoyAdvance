@@ -50,6 +50,7 @@ void MainWindow::setupMenu() {
     setMenuBar(m_menu_bar);
 
     setupFileMenu();
+    setupHelpMenu();
 }
 
 void MainWindow::setupFileMenu() {
@@ -60,9 +61,24 @@ void MainWindow::setupFileMenu() {
     connect(m_close,     &QAction::triggered, this, &QApplication::quit  );
 }
 
+void MainWindow::setupHelpMenu() {
+    m_about_app = m_help_menu->addAction(tr("About NanoboyAdvance"));
+    m_about_qt  = m_help_menu->addAction(tr("About Qt"));
+
+    m_about_app->setMenuRole(QAction::AboutRole);
+    connect(m_about_app, &QAction::triggered,
+        [this] {
+            QMessageBox::information(this, tr("About NanoboyAdvance"), tr("A small and simple GBA emulator."));
+        }
+    );
+
+    m_about_qt->setMenuRole(QAction::AboutQtRole);
+    connect(m_about_qt, &QAction::triggered, this, &QApplication::aboutQt);
+}
+
 void MainWindow::setupScreen() {
     m_screen = new Screen {this};
-    
+
     // Key press handler
     connect(m_screen, &Screen::keyPress, this,
         [this] (int key) {
@@ -76,7 +92,7 @@ void MainWindow::setupScreen() {
             m_emu->set_keystate(MainWindow::qtKeyToEmu(key), true);
         }
     );
-    
+
     // Key release handler
     connect(m_screen, &Screen::keyRelease, this,
         [this] (int key) {
@@ -90,7 +106,7 @@ void MainWindow::setupScreen() {
             m_emu->set_keystate(MainWindow::qtKeyToEmu(key), false);
         }
     );
-    
+
     // Make screen widget our central widget
     setCentralWidget(m_screen);
 }
@@ -100,20 +116,20 @@ void MainWindow::setupEmuTimers() {
     m_timer = new QTimer {this};
     m_timer->setSingleShot(false);
     m_timer->setInterval(16);
-    
+
     // Create FPS timer, ticks at 1Hz
     m_timer_fps = new QTimer {this};
     m_timer_fps->setSingleShot(false);
     m_timer_fps->setInterval(1000);
-    
+
     // Call "nextFrame" each time the main timer ticks
     connect(m_timer, &QTimer::timeout, this, &MainWindow::nextFrame);
-    
+
     // FPS timer event
     connect(m_timer_fps, &QTimer::timeout, this,
         [this] {
             auto message = std::to_string(m_frames) + " FPS";
-            
+
             m_frames = 0;
             m_status_msg->setText(QString(message.c_str()));
         }
@@ -125,10 +141,10 @@ void MainWindow::setupStatusBar() {
     m_status_msg = new QLabel     {this};
     m_status_bar = new QStatusBar {this};
     m_status_bar->addPermanentWidget(m_status_msg);
-    
+
     // Assign status bar to main window
     setStatusBar(m_status_bar);
-    
+
     // Set a nice default message
     m_status_msg->setText(tr("Idle..."));
 }
@@ -137,14 +153,14 @@ void MainWindow::nextFrame() {
     // Emulate the next frame(s)
     m_emu->run_frame();
     m_frames++;
-    
+
     // Update screen image
     m_screen->updateTexture(m_framebuffer, 240, 160);
 }
 
 void MainWindow::openGame() {
     QFileDialog dialog {this};
-    
+
     dialog.setAcceptMode (QFileDialog::AcceptOpen);
     dialog.setFileMode   (QFileDialog::AnyFile   );
     dialog.setNameFilter ("GameBoyAdvance ROMs (*.gba *.agb)");
@@ -152,12 +168,12 @@ void MainWindow::openGame() {
     if (dialog.exec()) {
         // Get path of whatever is the first selected file
         QString file = dialog.selectedFiles().at(0);
-    
+
         // Need to confirm that it actually exists
         if (!QFile::exists(file)) {
             QMessageBox box {this};
 
-            auto dialog_text = tr("Cannot find file ") + 
+            auto dialog_text = tr("Cannot find file ") +
                                QFileInfo(file).fileName();
 
             box.setText(dialog_text);
@@ -176,20 +192,20 @@ void MainWindow::openGame() {
 
 void MainWindow::runGame(const QString& rom_file) {
     auto cart = Cartridge::from_file(rom_file.toStdString());
-    
+
     const std::string bios_path = "bios.bin";
-    
+
     if (!QFile::exists(QString(bios_path.c_str()))) {
         QMessageBox box {this};
-        
+
         box.setText("Please place BIOS as 'bios.bin' in the emulators folder.");
         box.setIcon(QMessageBox::Critical);
         box.setWindowTitle(tr("BIOS not found."));
-        
+
         box.exec();
         return;
     }
-    
+
     if (m_emu != nullptr) {
         closeAudio();
         delete m_emu;
@@ -197,26 +213,26 @@ void MainWindow::runGame(const QString& rom_file) {
     if (m_config != nullptr) {
         delete m_config;
     }
-    
+
     m_config = new Config();
-    
+
     // TODO: try reusing an existing instance
     m_emu = new Emulator(m_config);
-    
+
     m_config->multiplier  = 10;
     m_config->bios_path   = bios_path;
     m_config->framebuffer = m_framebuffer;
-    
+
     m_emu->load_config();
     m_emu->load_game(cart);
-    
+
     setupSound(&m_emu->get_apu());
-    
+
     m_frames = 0;
-    
+
     m_timer->start();
     m_timer_fps->start();
-    
+
     m_screen->grabKeyboard();
 }
 
