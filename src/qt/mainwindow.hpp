@@ -39,9 +39,22 @@ public slots:
     // Shows Open ROM dialog
     void openGame();
     
+    void nextFrame();
+    
 private:
     void setupMenu();
     void setupFileMenu();
+    void setupScreen();
+    void setupEmuTimer();
+    
+    void runGame(const QString& rom_file);
+    
+    // Setup SDL2 Audio Subsystem
+    void setupSound(GameBoyAdvance::APU* apu);
+    void closeAudio();
+    
+    // Called by SDL2 to request new audio
+    static void soundCallback(GameBoyAdvance::APU* apu, u16* stream, int length);
     
     QMenuBar* m_menu_bar;
     
@@ -67,6 +80,8 @@ private:
     
     // Display widget
     Screen* m_screen;
+    
+    u32 m_framebuffer[240 * 160];
     
     // Emulator instance
     GameBoyAdvance::Emulator* m_emu { nullptr };

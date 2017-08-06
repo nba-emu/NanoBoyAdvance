@@ -21,6 +21,8 @@
 #include <QMessageBox>
 #include <QApplication>
 
+#include <SDL2/SDL.h>
+
 #include "mainwindow.hpp"
 
 using namespace GameBoyAdvance;
@@ -29,10 +31,12 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     setWindowTitle("NanoboyAdvance");
 
     setupMenu();
+    setupScreen();
+    setupEmuTimer();
 }
 
 MainWindow::~MainWindow() {
-
+    SDL_Quit();
 }
 
 void MainWindow::setupMenu() {
@@ -53,6 +57,26 @@ void MainWindow::setupFileMenu() {
 
     connect(m_open_file, &QAction::triggered, this, &MainWindow::openGame);
     connect(m_close,     &QAction::triggered, this, &QApplication::quit  );
+}
+
+void MainWindow::setupScreen() {
+    m_screen = new Screen {this};
+    
+    setCentralWidget(m_screen);
+}
+
+void MainWindow::setupEmuTimer() {
+    m_timer = new QTimer {this};
+    
+    m_timer->setSingleShot(false);
+    m_timer->setInterval(17);
+    
+    connect(m_timer, &QTimer::timeout, this, &MainWindow::nextFrame);
+}
+
+void MainWindow::nextFrame() {
+    m_emu->run_frame();
+    m_screen->updateTexture(m_framebuffer, 240, 160);
 }
 
 void MainWindow::openGame() {
@@ -82,4 +106,51 @@ void MainWindow::openGame() {
         
         return;
     }
+
+    runGame(file);
+}
+
+void MainWindow::runGame(const QString& rom_file) {
+    auto config = new Config(); // why dynamic
+    auto cart   = Cartridge::from_file(rom_file.toStdString());
+    
+    if (m_emu != nullptr) {
+        closeAudio();
+        delete m_emu;
+    }
+    
+    // TODO: try reusing an existing instance
+    m_emu = new Emulator(config);
+    
+    config->bios_path   = "bios.bin";
+    config->framebuffer = m_framebuffer;
+    
+    m_emu->load_config();
+    m_emu->load_game(cart);
+    
+    setupSound(&m_emu->get_apu());
+    m_timer->start();
+}
+
+void MainWindow::soundCallback(APU* apu, u16* stream, int length) {
+    apu->fill_buffer(stream, length);
+}
+
+void MainWindow::setupSound(APU* apu) {
+    SDL_AudioSpec spec;
+
+    spec.freq     = 44100;
+    spec.samples  = 1024;
+    spec.format   = AUDIO_U16;
+    spec.channels = 2;
+    spec.callback = &MainWindow::soundCallback;
+    spec.userdata = apu;
+
+    SDL_Init(SDL_INIT_AUDIO);
+    SDL_OpenAudio(&spec, NULL);
+    SDL_PauseAudio(0);
+}
+
+void MainWindow::closeAudio() {
+    SDL_CloseAudioDevice(1);
 }
