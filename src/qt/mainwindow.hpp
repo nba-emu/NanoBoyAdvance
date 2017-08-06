@@ -45,7 +45,8 @@ private:
     void setupMenu();
     void setupFileMenu();
     void setupScreen();
-    void setupEmuTimer();
+    void setupEmuTimers();
+    void setupStatusBar();
     
     void runGame(const QString& rom_file);
     
@@ -83,6 +84,7 @@ private:
     // Display widget
     Screen* m_screen;
     
+    int m_frames {0};
     u32 m_framebuffer[240 * 160];
     
     // Emulator instance

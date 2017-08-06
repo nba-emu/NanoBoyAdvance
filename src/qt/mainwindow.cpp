@@ -32,7 +32,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
     setupMenu();
     setupScreen();
-    setupEmuTimer();
+    setupEmuTimers();
+    setupStatusBar();
 }
 
 MainWindow::~MainWindow() {
@@ -90,18 +91,44 @@ void MainWindow::setupScreen() {
     setCentralWidget(m_screen);
 }
 
-void MainWindow::setupEmuTimer() {
-    m_timer = new QTimer {this};
+void MainWindow::setupEmuTimers() {
+    m_timer     = new QTimer {this};
+    m_fps_timer = new QTimer {this};
     
     m_timer->setSingleShot(false);
-    m_timer->setInterval(17);
+    m_timer->setInterval(16);
+    
+    m_fps_timer->setSingleShot(false);
+    m_fps_timer->setInterval(1000);
     
     connect(m_timer, &QTimer::timeout, this, &MainWindow::nextFrame);
+    connect(m_fps_timer, &QTimer::timeout, this,
+        [this] {
+            std::string message = std::to_string(m_frames) + " FPS";
+            
+            m_status_msg->setText(QString(message.c_str()));
+            
+            m_frames = 0;
+        }
+    );
+}
+
+void MainWindow::setupStatusBar() {
+    m_status_msg = new QLabel {this};
+    m_status_bar = new QStatusBar {this};
+    
+    m_status_msg->setText(tr("Idle..."));
+    m_status_bar->addPermanentWidget(m_status_msg);
+    
+    setStatusBar(m_status_bar);
 }
 
 void MainWindow::nextFrame() {
     m_emu->run_frame();
+    
     m_screen->updateTexture(m_framebuffer, 240, 160);
+    
+    m_frames++;
 }
 
 void MainWindow::openGame() {
@@ -142,6 +169,9 @@ void MainWindow::runGame(const QString& rom_file) {
         closeAudio();
         delete m_emu;
     }
+    if (m_config != nullptr) {
+        delete m_config;
+    }
     
     m_config = new Config();
     
@@ -157,7 +187,11 @@ void MainWindow::runGame(const QString& rom_file) {
     
     setupSound(&m_emu->get_apu());
     
+    m_frames = 0;
+    
     m_timer->start();
+    m_fps_timer->start();
+    
     m_screen->grabKeyboard();
 }
 
