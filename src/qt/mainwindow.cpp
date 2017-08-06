@@ -27,7 +27,10 @@
 
 using namespace GameBoyAdvance;
 
-MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
+MainWindow::MainWindow(QWidget* parent) :
+    m_settings(QSettings::IniFormat, QSettings::UserScope, "flerovium", "NanoboyAdvance"),
+    QMainWindow(parent)
+{
     setWindowTitle("NanoboyAdvance");
 
     setupMenu();
@@ -101,7 +104,7 @@ void MainWindow::setupScreen() {
             }
             if (key == Qt::Key_Space) {
                 m_config->fast_forward = false;
-                return;
+                return;,
             }
             m_emulator->set_keystate(MainWindow::qtKeyToEmu(key), false);
         }
