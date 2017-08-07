@@ -58,10 +58,17 @@ void MainWindow::setupMenu() {
 
 void MainWindow::setupFileMenu() {
     m_open_file = m_file_menu->addAction(tr("&Open"));
+    m_pause_emu = m_file_menu->addAction(tr("&Pause"));
+    m_stop_emu  = m_file_menu->addAction(tr("&Stop"));
     m_close     = m_file_menu->addAction(tr("&Close"));
+
+    m_pause_emu->setCheckable(true);
 
     connect(m_open_file, &QAction::triggered, this, &MainWindow::openGame);
     connect(m_close,     &QAction::triggered, this, &QApplication::quit  );
+
+    connect(m_pause_emu, &QAction::triggered, this, &MainWindow::pauseClicked);
+    connect(m_stop_emu,  &QAction::triggered, this, &MainWindow::stopClicked );
 }
 
 void MainWindow::setupHelpMenu() {
@@ -229,6 +236,8 @@ void MainWindow::runGame(const QString& rom_file) {
     // Setup sound output
     setupSound(&m_emulator->get_apu());
 
+    m_emu_state = EmulationState::Running;
+
     // Start FPS counting
     m_frames = 0;
     m_timer_fps->start();
@@ -237,6 +246,27 @@ void MainWindow::runGame(const QString& rom_file) {
     m_timer->start();
 
     m_screen->grabKeyboard();
+}
+
+void MainWindow::pauseClicked() {
+    switch (m_emu_state) {
+        case EmulationState::Paused:
+            m_timer->start();
+            m_timer_fps->start();
+            m_emu_state = EmulationState::Running;
+            break;
+        case EmulationState::Running:
+            m_timer->stop();
+            m_timer_fps->stop();
+            m_emu_state = EmulationState::Paused;
+            break;
+    }
+}
+
+void MainWindow::stopClicked() {
+    m_timer->stop();
+    m_timer_fps->stop();
+    m_emu_state = EmulationState::Stopped;
 }
 
 // Sound callback - called by SDL2. Wraps around C++ method.

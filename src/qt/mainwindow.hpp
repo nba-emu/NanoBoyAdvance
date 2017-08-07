@@ -43,6 +43,12 @@ public slots:
     void nextFrame();
 
 private:
+    enum class EmulationState {
+        Stopped,
+        Running,
+        Paused
+    };
+
     void setupMenu();
     void setupFileMenu();
     void setupHelpMenu();
@@ -51,6 +57,8 @@ private:
     void setupStatusBar();
 
     void runGame(const QString& rom_file);
+    void pauseClicked();
+    void stopClicked();
 
     // Setup SDL2 Audio Subsystem
     void setupSound(GameBoyAdvance::APU* apu);
@@ -72,6 +80,8 @@ private:
 
     // Menu Actions
     QAction* m_open_file;
+    QAction* m_pause_emu;
+    QAction* m_stop_emu;
     QAction* m_close;
     QAction* m_open_settings;
     QAction* m_about_qt;
@@ -90,6 +100,9 @@ private:
 
     int m_frames {0};
     u32 m_framebuffer[240 * 160];
+
+    // Keep track of emulation state: Running/Stopped/Paused
+    EmulationState m_emu_state { EmulationState::Stopped };
 
     // Emulator instance
     GameBoyAdvance::Config*   m_config   { nullptr };
