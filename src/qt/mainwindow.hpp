@@ -24,6 +24,7 @@
 #include <QStatusBar>
 #include <QLabel>
 #include <QTimer>
+#include <QSettings>
 
 #include "screen.hpp"
 #include "core/emulator/emulator.hpp"
@@ -59,6 +60,8 @@ private:
     static void soundCallback(GameBoyAdvance::APU* apu, u16* stream, int length);
 
     static auto qtKeyToEmu(int key) -> GameBoyAdvance::Key;
+
+    QSettings m_settings;
 
     QMenuBar* m_menu_bar;
 

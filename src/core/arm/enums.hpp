@@ -96,16 +96,16 @@ namespace GameBoyAdvance {
     };
     
     enum MemoryFlags {
-        MEM_NONE   = 0,
+        M_NONE   = 0,
         
         // Use for debug/internal accesses
-        MEM_DEBUG  = (1 << 0),
+        M_DEBUG  = (1 << 0),
         
         // (Non-)Sequential Accesses
-        MEM_SEQ    = (1 << 1),
-        MEM_NONSEQ = (1 << 2),
+        M_SEQ    = (1 << 1),
+        M_NONSEQ = (1 << 2),
       
-        MEM_SIGNED = (1 << 3),
-        MEM_ROTATE = (1 << 4)
+        M_SIGNED = (1 << 3),
+        M_ROTATE = (1 << 4)
     };
 }

@@ -27,7 +27,10 @@
 
 using namespace GameBoyAdvance;
 
-MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
+MainWindow::MainWindow(QWidget* parent) :
+    m_settings(QSettings::IniFormat, QSettings::UserScope, "flerovium", "NanoboyAdvance"),
+    QMainWindow(parent)
+{
     setWindowTitle("NanoboyAdvance");
 
     setupMenu();
