@@ -104,7 +104,7 @@ void MainWindow::setupScreen() {
             }
             if (key == Qt::Key_Space) {
                 m_config->fast_forward = false;
-                return;,
+                return;
             }
             m_emulator->set_keystate(MainWindow::qtKeyToEmu(key), false);
         }

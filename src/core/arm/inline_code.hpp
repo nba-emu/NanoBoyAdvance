@@ -32,9 +32,9 @@ inline void ARM::step() {
         ctx.r15 &= ~1;
 
         if (pipe.index == 0) {
-            pipe.opcode[2] = bus_read_hword(ctx.r15, MEM_NONE);
+            pipe.opcode[2] = bus_read_hword(ctx.r15, M_NONE);
         } else {
-            pipe.opcode[pipe.index - 1] = bus_read_hword(ctx.r15, MEM_NONE);
+            pipe.opcode[pipe.index - 1] = bus_read_hword(ctx.r15, M_NONE);
         }
 
         thumb_execute(pipe.opcode[pipe.index]);
@@ -51,9 +51,9 @@ inline void ARM::step() {
         ctx.r15 &= ~3;
 
         if (pipe.index == 0) {
-            pipe.opcode[2] = bus_read_word(ctx.r15, MEM_NONE);
+            pipe.opcode[2] = bus_read_word(ctx.r15, M_NONE);
         } else {
-            pipe.opcode[pipe.index - 1] = bus_read_word(ctx.r15, MEM_NONE);
+            pipe.opcode[pipe.index - 1] = bus_read_word(ctx.r15, M_NONE);
         }
 
         arm_execute(pipe.opcode[pipe.index]);
@@ -209,7 +209,7 @@ inline void ARM::apply_shift(int shift, u32& operand, u32 amount, bool& carry, b
 inline u32 ARM::read_byte(u32 address, int flags) {
     u32 value = bus_read_byte(address, flags);
     
-    if ((flags & MEM_SIGNED) && (value & 0x80)) {
+    if ((flags & M_SIGNED) && (value & 0x80)) {
         return value | 0xFFFFFF00;
     }
     
@@ -219,7 +219,7 @@ inline u32 ARM::read_byte(u32 address, int flags) {
 inline u32 ARM::read_hword(u32 address, int flags) {  
     u32 value;
     
-    if (flags & MEM_ROTATE) {
+    if (flags & M_ROTATE) {
         if (address & 1) {
             value = bus_read_hword(address & ~1, flags);
             return (value >> 8) | (value << 24);
@@ -227,7 +227,7 @@ inline u32 ARM::read_hword(u32 address, int flags) {
         return bus_read_hword(address, flags);
     }
     
-    if (flags & MEM_SIGNED) {
+    if (flags & M_SIGNED) {
         if (address & 1) {
             value = bus_read_byte(address, flags);
             if (value & 0x80) {
@@ -249,7 +249,7 @@ inline u32 ARM::read_hword(u32 address, int flags) {
 inline u32 ARM::read_word(u32 address, int flags) {
     u32 value = bus_read_word(address & ~3, flags);
     
-    if (flags & MEM_ROTATE) {
+    if (flags & M_ROTATE) {
         int amount = (address & 3) << 3;
         return (value >> amount) | (value << (32 - amount));
     }
@@ -271,12 +271,12 @@ inline void ARM::write_word(u32 address, u32 value, int flags) {
 
 inline void ARM::refill_pipeline() {
     if (ctx.cpsr & MASK_THUMB) {
-        ctx.pipe.opcode[0] = bus_read_hword(ctx.r15, MEM_NONE);
-        ctx.pipe.opcode[1] = bus_read_hword(ctx.r15 + 2, MEM_NONE);
+        ctx.pipe.opcode[0] = bus_read_hword(ctx.r15, M_NONE);
+        ctx.pipe.opcode[1] = bus_read_hword(ctx.r15 + 2, M_NONE);
         ctx.r15 += 4;
     } else {
-        ctx.pipe.opcode[0] = bus_read_word(ctx.r15, MEM_NONE);
-        ctx.pipe.opcode[1] = bus_read_word(ctx.r15 + 4, MEM_NONE);
+        ctx.pipe.opcode[0] = bus_read_word(ctx.r15, M_NONE);
+        ctx.pipe.opcode[1] = bus_read_word(ctx.r15 + 4, M_NONE);
         ctx.r15 += 8;
     }
     

@@ -401,11 +401,11 @@ namespace GameBoyAdvance {
         int base = (instruction >> 16) & 0xF;
 
         if (swap_byte) {
-            tmp = read_byte(ctx.reg[base], MEM_NONE);
-            write_byte(ctx.reg[base], (u8)ctx.reg[src], MEM_NONE);
+            tmp = read_byte(ctx.reg[base], M_NONE);
+            write_byte(ctx.reg[base], (u8)ctx.reg[src], M_NONE);
         } else {
-            tmp = read_word(ctx.reg[base], MEM_ROTATE);
-            write_word(ctx.reg[base], ctx.reg[src], MEM_NONE);
+            tmp = read_word(ctx.reg[base], M_ROTATE);
+            write_word(ctx.reg[base], ctx.reg[src], M_NONE);
         }
 
         ctx.reg[dst] = tmp;
@@ -445,7 +445,7 @@ namespace GameBoyAdvance {
         case 1:
             // load/store halfword
             if (load) {
-                ctx.reg[dst] = read_hword(addr, MEM_ROTATE);
+                ctx.reg[dst] = read_hword(addr, M_ROTATE);
             } else {
                 u32 value = ctx.reg[dst];
 
@@ -454,17 +454,17 @@ namespace GameBoyAdvance {
                     value += 4;
                 }
 
-                write_hword(addr, value, MEM_NONE);
+                write_hword(addr, value, M_NONE);
             }
             break;
         case 2: {
             // load signed byte
-            ctx.reg[dst] = read_byte(addr, MEM_SIGNED);
+            ctx.reg[dst] = read_byte(addr, M_SIGNED);
             break;
         }
         case 3: {
             // load signed halfword
-            ctx.reg[dst] = read_hword(addr, MEM_SIGNED);
+            ctx.reg[dst] = read_hword(addr, M_SIGNED);
             break;
         }
         }
@@ -509,7 +509,7 @@ namespace GameBoyAdvance {
         }
 
         if (load) {
-            ctx.reg[dst] = byte ? read_byte(addr, MEM_NONE) : read_word(addr, MEM_ROTATE);
+            ctx.reg[dst] = byte ? read_byte(addr, M_NONE) : read_word(addr, M_ROTATE);
             
             // writes to r15 require a pipeline flush.
             if (dst == 15) {
@@ -524,9 +524,9 @@ namespace GameBoyAdvance {
             }
 
             if (byte) {
-                write_byte(addr, (u8)value, MEM_NONE);
+                write_byte(addr, (u8)value, M_NONE);
             } else {
-                write_word(addr, value, MEM_NONE);
+                write_word(addr, value, M_NONE);
             }
         }
 
@@ -578,10 +578,10 @@ namespace GameBoyAdvance {
         /*// hardware corner case. not sure if emulated correctly.
         if (register_list == 0) {
             if (load) {
-                ctx.r15 = read_word(ctx.reg[base], MEM_NONE);
+                ctx.r15 = read_word(ctx.reg[base], M_NONE);
                 ctx.pipe.do_flush = true;
             } else {
-                write_word(ctx.reg[base], ctx.r15, MEM_NONE);
+                write_word(ctx.reg[base], ctx.r15, M_NONE);
             }
             ctx.reg[base] += base_increment ? 64 : -64;
             return;
@@ -629,7 +629,7 @@ namespace GameBoyAdvance {
                     write_back = false;
                 }
 
-                ctx.reg[i] = read_word(addr, MEM_NONE);
+                ctx.reg[i] = read_word(addr, M_NONE);
 
                 if (i == 15) {
                     if (user_mode) {
@@ -641,9 +641,9 @@ namespace GameBoyAdvance {
                 }
             } else {
                 if (i == first_register && i == base) {
-                    write_word(addr, addr_old, MEM_NONE);
+                    write_word(addr, addr_old, M_NONE);
                 } else {
-                    write_word(addr, ctx.reg[i], MEM_NONE);
+                    write_word(addr, ctx.reg[i], M_NONE);
                 }
             }
 
@@ -678,7 +678,7 @@ namespace GameBoyAdvance {
     }
 
     void ARM::arm_swi(u32 instruction) {
-        u32 call_number = read_byte(ctx.r15 - 6, MEM_NONE);
+        u32 call_number = read_byte(ctx.r15 - 6, M_NONE);
 
         if (!fake_swi) {
             // save return address and program status
