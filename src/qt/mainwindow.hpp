@@ -52,6 +52,7 @@ private:
     void setupMenu();
     void setupFileMenu();
     void setupHelpMenu();
+    void setupEmulationMenu();
     void setupScreen();
     void setupEmuTimers();
     void setupStatusBar();
@@ -75,9 +76,10 @@ private:
 
     // Menus
     QMenu* m_file_menu;
+    QMenu* m_emul_menu;
     QMenu* m_edit_menu;
     QMenu* m_help_menu;
-
+    
     // Menu Actions
     QAction* m_open_file;
     QAction* m_pause_emu;

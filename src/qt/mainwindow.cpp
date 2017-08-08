@@ -47,28 +47,23 @@ void MainWindow::setupMenu() {
     m_menu_bar = new QMenuBar {this};
 
     m_file_menu = m_menu_bar->addMenu(tr("&File"));
-    m_edit_menu = m_menu_bar->addMenu(tr("&Edit"));
+    m_emul_menu = m_menu_bar->addMenu(tr("&Emulation"));
+    m_edit_menu = m_menu_bar->addMenu(tr("Edit"));
     m_help_menu = m_menu_bar->addMenu(tr("&?"));
 
     setMenuBar(m_menu_bar);
 
     setupFileMenu();
     setupHelpMenu();
+    setupEmulationMenu();
 }
 
 void MainWindow::setupFileMenu() {
     m_open_file = m_file_menu->addAction(tr("&Open"));
-    m_pause_emu = m_file_menu->addAction(tr("&Pause"));
-    m_stop_emu  = m_file_menu->addAction(tr("&Stop"));
     m_close     = m_file_menu->addAction(tr("&Close"));
-
-    m_pause_emu->setCheckable(true);
 
     connect(m_open_file, &QAction::triggered, this, &MainWindow::openGame);
     connect(m_close,     &QAction::triggered, this, &QApplication::quit  );
-
-    connect(m_pause_emu, &QAction::triggered, this, &MainWindow::pauseClicked);
-    connect(m_stop_emu,  &QAction::triggered, this, &MainWindow::stopClicked );
 }
 
 void MainWindow::setupHelpMenu() {
@@ -84,6 +79,16 @@ void MainWindow::setupHelpMenu() {
 
     m_about_qt->setMenuRole(QAction::AboutQtRole);
     connect(m_about_qt, &QAction::triggered, this, &QApplication::aboutQt);
+}
+
+void MainWindow::setupEmulationMenu() {
+    m_pause_emu = m_emul_menu->addAction(tr("&Pause"));
+    m_pause_emu->setCheckable(true);
+    
+    m_stop_emu  = m_emul_menu->addAction(tr("&Stop"));
+    
+    connect(m_pause_emu, &QAction::triggered, this, &MainWindow::pauseClicked);
+    connect(m_stop_emu,  &QAction::triggered, this, &MainWindow::stopClicked );
 }
 
 void MainWindow::setupScreen() {
