@@ -9,9 +9,10 @@ The emulator is at an early stage but it can already boot a high amount of comme
 ## Compiling
 
 For Windows users:
--IMPORTANT: You must download SDL2 at https://www.libsdl.org/download-2.0.php
--IMPORTANT: You must also download Qt at https://www.qt.io/download-open-source/ (if you want to build the Qt frontend)
--You must add these to the PATH, or add them to the cache if you are using CMake GUI.
+
+-IMPORTANT: You must download SDL2 at https://www.libsdl.org/download-2.0.php  
+-IMPORTANT: You must also download Qt at https://www.qt.io/download-open-source/ (if you want to build the Qt frontend)  
+-You must add these to the PATH, or add them to the cache if you are using CMake GUI.  
 
 Linux users usually just install the libraries via package manager and should be good.
 
