@@ -22,18 +22,14 @@ cd build
 cmake %FLAGS% %SOURCE_PATH%
 make
 ```
-Replace `%FLAGS%` with flags (if any) with flags that shall be passed to `cmake`.
-
-Replace `%SOURCE_PATH%` with the path where you extracted the source / cloned the repository.
+Replace `%FLAGS%` with flags (if any) with flags that shall be passed to `cmake`.  
+Replace `%SOURCE_PATH%` with the path where you extracted the source / cloned the repository.  
 
 ### CMake Options
-`DEBUG`: Enable compilation for debugging.
-
-`SDL2`: Enables SDL2 frontend (please note SDL2 is always required though, for audio)
-
-`QT_GUI`: Enables Qt5 frontend which is more user-friendly than the plain SDL2 build
-
-`PROFILE`: Compiles for profiling with GNU gprof.
+`DEBUG`: Enable compilation for debugging.  
+`SDL2`: Enables SDL2 frontend (please note SDL2 is always required though, for audio)  
+`QT_GUI`: Enables Qt5 frontend which is more user-friendly than the plain SDL2 build  
+`PROFILE`: Compiles for profiling with GNU gprof.  
 
 ## Credits
 
