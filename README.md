@@ -1,6 +1,6 @@
 # NanoboyAdvance
 
-NanoboyAdvance is an experimental GameBoyAdvance (TM) emulator written in C++11. Its core is designed to be 100% platform-independend and to run games at good speed even on older hardware such as netbooks. Ports to mobile devices and handhelds are also planned, but might need more optimization or a JIT compiler though.
+NanoboyAdvance is an experimental GameBoyAdvance (TM) emulator written in C++11. Its core is designed to be 100% platform-independent and to run games at good speed even on older hardware such as netbooks. Ports to mobile devices and handhelds are also planned, but might need more optimization or a JIT compiler though.
 
 ## Status:
 
@@ -8,6 +8,9 @@ The emulator is at an early stage but it can already boot a high amount of comme
 
 ## Compiling
 
+-IMPORTANT: You must download Qt at https://www.qt.io/download-open-source/
+-IMPORTANT: You must also download SDL at https://www.libsdl.org/download-2.0.php
+-You must add these to the PATH, or add them to the cache if you are using CMake GUI.
 ```
 mkdir build
 cd build
