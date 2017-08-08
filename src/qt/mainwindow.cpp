@@ -47,13 +47,15 @@ void MainWindow::setupMenu() {
     m_menu_bar = new QMenuBar {this};
 
     m_file_menu = m_menu_bar->addMenu(tr("&File"));
-    m_edit_menu = m_menu_bar->addMenu(tr("&Edit"));
+    m_emul_menu = m_menu_bar->addMenu(tr("&Emulation"));
+    m_edit_menu = m_menu_bar->addMenu(tr("Edit"));
     m_help_menu = m_menu_bar->addMenu(tr("&?"));
 
     setMenuBar(m_menu_bar);
 
     setupFileMenu();
     setupHelpMenu();
+    setupEmulationMenu();
 }
 
 void MainWindow::setupFileMenu() {
@@ -77,6 +79,16 @@ void MainWindow::setupHelpMenu() {
 
     m_about_qt->setMenuRole(QAction::AboutQtRole);
     connect(m_about_qt, &QAction::triggered, this, &QApplication::aboutQt);
+}
+
+void MainWindow::setupEmulationMenu() {
+    m_pause_emu = m_emul_menu->addAction(tr("&Pause"));
+    m_pause_emu->setCheckable(true);
+    
+    m_stop_emu  = m_emul_menu->addAction(tr("&Stop"));
+    
+    connect(m_pause_emu, &QAction::triggered, this, &MainWindow::pauseClicked);
+    connect(m_stop_emu,  &QAction::triggered, this, &MainWindow::stopClicked );
 }
 
 void MainWindow::setupScreen() {
@@ -229,6 +241,8 @@ void MainWindow::runGame(const QString& rom_file) {
     // Setup sound output
     setupSound(&m_emulator->get_apu());
 
+    m_emu_state = EmulationState::Running;
+
     // Start FPS counting
     m_frames = 0;
     m_timer_fps->start();
@@ -237,6 +251,27 @@ void MainWindow::runGame(const QString& rom_file) {
     m_timer->start();
 
     m_screen->grabKeyboard();
+}
+
+void MainWindow::pauseClicked() {
+    switch (m_emu_state) {
+        case EmulationState::Paused:
+            m_timer->start();
+            m_timer_fps->start();
+            m_emu_state = EmulationState::Running;
+            break;
+        case EmulationState::Running:
+            m_timer->stop();
+            m_timer_fps->stop();
+            m_emu_state = EmulationState::Paused;
+            break;
+    }
+}
+
+void MainWindow::stopClicked() {
+    m_timer->stop();
+    m_timer_fps->stop();
+    m_emu_state = EmulationState::Stopped;
 }
 
 // Sound callback - called by SDL2. Wraps around C++ method.
