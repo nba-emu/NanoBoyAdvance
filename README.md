@@ -8,9 +8,13 @@ The emulator is at an early stage but it can already boot a high amount of comme
 
 ## Compiling
 
--IMPORTANT: You must download Qt at https://www.qt.io/download-open-source/
--IMPORTANT: You must also download SDL at https://www.libsdl.org/download-2.0.php
+For Windows users:
+-IMPORTANT: You must download SDL2 at https://www.libsdl.org/download-2.0.php
+-IMPORTANT: You must also download Qt at https://www.qt.io/download-open-source/ (if you want to build the Qt frontend)
 -You must add these to the PATH, or add them to the cache if you are using CMake GUI.
+
+Linux users usually just install the libraries via package manager and should be good.
+
 ```
 mkdir build
 cd build
@@ -24,7 +28,9 @@ Replace `%SOURCE_PATH%` with the path where you extracted the source / cloned th
 ### CMake Options
 `DEBUG`: Enable compilation for debugging.
 
-`SDL2`: Enables SDL2 frontend
+`SDL2`: Enables SDL2 frontend (please note SDL2 is always required though, for audio)
+
+`QT_GUI`: Enables Qt5 frontend which is more user-friendly than the plain SDL2 build
 
 `PROFILE`: Compiles for profiling with GNU gprof.
 
