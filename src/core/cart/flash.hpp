@@ -51,7 +51,7 @@ namespace GameBoyAdvance {
         ~Flash();
 
         void reset();
-        auto read_byte(u32 address) -> u8;
-        void write_byte(u32 address, u8 value);
+        auto read8(u32 address) -> u8;
+        void write8(u32 address, u8 value);
     };
 }

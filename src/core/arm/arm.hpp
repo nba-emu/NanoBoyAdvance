@@ -34,7 +34,7 @@ namespace GameBoyAdvance {
         void step();
 
         // Trigger IRQ-handler
-        void signal_interrupt();
+        void signalIRQ();
 
         // Get ARM context (state)
         auto context() -> ARMContext& {
@@ -47,42 +47,42 @@ namespace GameBoyAdvance {
         }
 
         // Is HLE-emulation enabled?
-        bool get_fake_swi() const {
+        bool swiHLE() const {
             return fake_swi;
         }
 
         // Set HLE-emulation flag
-        void set_fake_swi(bool fake_swi) {
+        void swiHLE(bool fake_swi) {
             this->fake_swi = fake_swi;
         }
 
     protected:
 
         // System Read Methods
-        virtual u8  bus_read_byte (u32 address, int flags) { return 0; }
-        virtual u16 bus_read_hword(u32 address, int flags) { return 0; }
-        virtual u32 bus_read_word (u32 address, int flags) { return 0; }
+        virtual u8  busRead8 (u32 address, int flags) { return 0; }
+        virtual u16 busRead16(u32 address, int flags) { return 0; }
+        virtual u32 busRead32(u32 address, int flags) { return 0; }
 
         // System Write Methods
-        virtual void bus_write_byte (u32 address, u8 value,  int flags) {}
-        virtual void bus_write_hword(u32 address, u16 value, int flags) {}
-        virtual void bus_write_word (u32 address, u32 value, int flags) {}
+        virtual void busWrite8 (u32 address, u8 value,  int flags) {}
+        virtual void busWrite16(u32 address, u16 value, int flags) {}
+        virtual void busWrite32(u32 address, u32 value, int flags) {}
 
         // Internal Read Helpers
-        u32 read_byte (u32 address, int flags);
-        u32 read_hword(u32 address, int flags);
-        u32 read_word (u32 address, int flags);
+        u32 read8 (u32 address, int flags);
+        u32 read16(u32 address, int flags);
+        u32 read32(u32 address, int flags);
 
         // Internal Write Helpers
-        void write_byte (u32 address, u8 value,  int flags);
-        void write_hword(u32 address, u16 value, int flags);
-        void write_word (u32 address, u32 value, int flags);
+        void write8 (u32 address, u8 value,  int flags);
+        void write16(u32 address, u16 value, int flags);
+        void write32(u32 address, u32 value, int flags);
 
         // Reloads Pipeline
-        void refill_pipeline();
+        void refillPipeline();
 
         // swi #nn HLE-handler
-        virtual void software_interrupt(int number) {}
+        virtual void handleSWI(int number) {}
 
     private:
 
@@ -90,24 +90,24 @@ namespace GameBoyAdvance {
 
         ARMContext ctx;
 
-        void switch_mode(Mode new_mode);
+        void switchMode(Mode new_mode);
 
         // Flag Helpers
-        bool check_condition(Condition condition);
-        void update_sign_flag(u32 result);
-        void update_zero_flag(u64 result);
-        void update_carry_flag(bool carry);
-        void update_overflow_add(u32 result, u32 operand1, u32 operand2);
-        void update_overflow_sub(u32 result, u32 operand1, u32 operand2);
+        bool checkCondition(Condition condition);
+        void updateSignFlag(u32 result);
+        void updateZeroFlag(u64 result);
+        void updateCarryFlag(bool carry);
+        void updateOverflowFlagAdd(u32 result, u32 operand1, u32 operand2);
+        void updateOverflowFlagSub(u32 result, u32 operand1, u32 operand2);
 
         // Barrel Shifter Helpers
-        static void shift_lsl(u32& operand, u32 amount, bool& carry);
-        static void shift_lsr(u32& operand, u32 amount, bool& carry, bool immediate);
-        static void shift_asr(u32& operand, u32 amount, bool& carry, bool immediate);
-        static void shift_ror(u32& operand, u32 amount, bool& carry, bool immediate);
-        static void apply_shift(int shift, u32& operand, u32 amount, bool& carry, bool immediate);
+        static void shiftLSL(u32& operand, u32 amount, bool& carry);
+        static void shiftLSR(u32& operand, u32 amount, bool& carry, bool immediate);
+        static void shiftASR(u32& operand, u32 amount, bool& carry, bool immediate);
+        static void shiftROR(u32& operand, u32 amount, bool& carry, bool immediate);
+        static void applyShift(int shift, u32& operand, u32 amount, bool& carry, bool immediate);
 
-        static Bank mode_to_bank(Mode mode);
+        static Bank modeToBank(Mode mode);
 
         // ARM and THUMB interpreter cores
         #include "instr_arm.hpp"

@@ -97,7 +97,7 @@ namespace GameBoyAdvance {
         dma_running = false;
         dma_current = 0;
 
-        set_fake_swi(!config->use_bios);
+        swiHLE(!config->use_bios);
 
         if (!config->use_bios || !File::exists(config->bios_path)) {
             // TODO: load helper BIOS
@@ -111,7 +111,7 @@ namespace GameBoyAdvance {
             ctx.bank[BANK_IRQ][BANK_R13] = 0x03007FA0;
 
             // load first two ROM instructions
-            refill_pipeline();
+            refillPipeline();
         } else {
             int size = File::get_size(config->bios_path);
             u8* data = File::read_data(config->bios_path);
@@ -225,7 +225,7 @@ namespace GameBoyAdvance {
                 dma_transfer();
             } else if (LIKELY(regs.haltcnt == SYSTEM_RUN)) {
                 if (regs.irq.ime && requested_and_enabled) {
-                    signal_interrupt();
+                    signalIRQ();
                 }
                 step();
             } else {

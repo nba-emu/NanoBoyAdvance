@@ -72,7 +72,7 @@ namespace GameBoyAdvance
         }
     }
 
-    auto Flash::read_byte(u32 address) -> u8 {
+    auto Flash::read8(u32 address) -> u8 {
         address &= 0xFFFF;
 
         // TODO(accuracy): according to VisualBoyAdvance chip id might be mirrored each 100h bytes.
@@ -89,7 +89,7 @@ namespace GameBoyAdvance
         return m_memory[m_bank][address];
     }
 
-    void Flash::write_byte(u32 address, u8 value) {
+    void Flash::write8(u32 address, u8 value) {
         if (m_enable_write) {
             // single (actual) byte write
             m_memory[m_bank][address & 0xFFFF] = value;

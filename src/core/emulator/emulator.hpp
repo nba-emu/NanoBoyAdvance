@@ -125,6 +125,6 @@ namespace GameBoyAdvance {
         // memory bus implementation
         #include "memory/memory.hpp"
 
-        void software_interrupt(int number) final {};
+        void handleSWI(int number) final {};
     };
 }

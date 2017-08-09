@@ -56,7 +56,7 @@ auto read_bios(u32 address) -> u32 {
     return memory.bios_opcode = READ_FAST_32(memory.bios, address);
 }
 
-u8 bus_read_byte(u32 address, int flags) final {
+u8 busRead8(u32 address, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
@@ -94,13 +94,13 @@ u8 bus_read_byte(u32 address, int flags) final {
             if (!memory.rom.save) {
                 return 0;
             }
-            return memory.rom.save->read_byte(address);
+            return memory.rom.save->read8(address);
         }
         default: return 0;
     }
 }
 
-u16 bus_read_hword(u32 address, int flags) final {
+u16 busRead16(u32 address, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
@@ -138,14 +138,14 @@ u16 bus_read_hword(u32 address, int flags) final {
             if (!memory.rom.save) {
                 return 0;
             }
-            return memory.rom.save->read_byte(address) * 0x0101;
+            return memory.rom.save->read8(address) * 0x0101;
         }
 
         default: return 0;
     }
 }
 
-u32 bus_read_word(u32 address, int flags) final {
+u32 busRead32(u32 address, int flags) final {
     const int page = (address >> 24) & 15;
 
     // poor mans cycle counting
@@ -186,14 +186,14 @@ u32 bus_read_word(u32 address, int flags) final {
             if (!memory.rom.save) {
                 return 0;
             }
-            return memory.rom.save->read_byte(address) * 0x01010101;
+            return memory.rom.save->read8(address) * 0x01010101;
         }
 
         default: return 0;
     }
 }
 
-void bus_write_byte(u32 address, u8 value, int flags) final {
+void busWrite8(u32 address, u8 value, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
@@ -220,14 +220,14 @@ void bus_write_byte(u32 address, u8 value, int flags) final {
             if (!memory.rom.save) {
                 break;
             }
-            memory.rom.save->write_byte(address, value);
+            memory.rom.save->write8(address, value);
             break;
         }
         default: break; // TODO: throw error
     }
 }
 
-void bus_write_hword(u32 address, u16 value, int flags) final {
+void busWrite16(u32 address, u16 value, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
@@ -255,15 +255,15 @@ void bus_write_hword(u32 address, u16 value, int flags) final {
             if (!memory.rom.save) {
                 break;
             }
-            memory.rom.save->write_byte(address + 0, value);
-            memory.rom.save->write_byte(address + 1, value);
+            memory.rom.save->write8(address + 0, value);
+            memory.rom.save->write8(address + 1, value);
             break;
         }
         default: break; // TODO: throw error
     }
 }
 
-void bus_write_word(u32 address, u32 value, int flags) final {
+void busWrite32(u32 address, u32 value, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
@@ -293,10 +293,10 @@ void bus_write_word(u32 address, u32 value, int flags) final {
             if (!memory.rom.save) {
                 break;
             }
-            memory.rom.save->write_byte(address + 0, value);
-            memory.rom.save->write_byte(address + 1, value);
-            memory.rom.save->write_byte(address + 2, value);
-            memory.rom.save->write_byte(address + 3, value);
+            memory.rom.save->write8(address + 0, value);
+            memory.rom.save->write8(address + 1, value);
+            memory.rom.save->write8(address + 2, value);
+            memory.rom.save->write8(address + 3, value);
             break;
         }
         default: break; // TODO: throw error

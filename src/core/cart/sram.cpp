@@ -51,11 +51,11 @@ namespace GameBoyAdvance {
         }
     }
     
-    auto SRAM::read_byte(u32 address) -> u8 {
+    auto SRAM::read8(u32 address) -> u8 {
         return m_memory[address & 0x7FFF];
     }
     
-    void SRAM::write_byte(u32 address, u8 value) {
+    void SRAM::write8(u32 address, u8 value) {
         m_memory[address & 0x7FFF] = value;
     }
     

@@ -21,44 +21,44 @@ typedef void (ARM::*ARMInstruction)(u32);
 
 static const ARMInstruction arm_lut[4096];
 
-inline void arm_execute(u32 instruction) {
+inline void executeARM(u32 instruction) {
     Condition condition = static_cast<Condition>(instruction >> 28);
 
-    if (check_condition(condition)) {
+    if (checkCondition(condition)) {
         int index = ((instruction >> 16) & 0xFF0) | ((instruction >> 4) & 0xF);
         (this->*arm_lut[index])(instruction);
     }
 }
 
 template <bool immediate, int opcode, bool _set_flags, int field4>
-void arm_data_processing(u32 instruction);
+void dataProcessingARM(u32 instruction);
 
 template <bool immediate, bool use_spsr, bool to_status>
-void arm_psr_transfer(u32 instruction);
+void statusTransferARM(u32 instruction);
 
 template <bool accumulate, bool set_flags>
-void arm_multiply(u32 instruction);
+void multiplyARM(u32 instruction);
 
 template <bool sign_extend, bool accumulate, bool set_flags>
-void arm_multiply_long(u32 instruction);
+void multiplyLongARM(u32 instruction);
 
 template <bool swap_byte>
-void arm_single_data_swap(u32 instruction);
+void singleDataSwapARM(u32 instruction);
 
-void arm_branch_exchange(u32 instruction);
+void branchExchangeARM(u32 instruction);
 
 template <bool pre_indexed, bool base_increment, bool immediate, bool write_back, bool load, int opcode>
-void arm_halfword_signed_transfer(u32 instruction);
+void halfwordSignedTransferARM(u32 instruction);
 
 template <bool immediate, bool pre_indexed, bool base_increment, bool byte, bool write_back, bool load>
-void arm_single_transfer(u32 instruction);
+void singleTransferARM(u32 instruction);
 
-void arm_undefined(u32 instruction);
+void undefinedInstARM(u32 instruction);
 
 template <bool _pre_indexed, bool base_increment, bool user_mode, bool _write_back, bool load>
-void arm_block_transfer(u32 instruction);
+void blockTransferARM(u32 instruction);
 
 template <bool link>
-void arm_branch(u32 instruction);
+void branchARM(u32 instruction);
 
-void arm_swi(u32 instruction);
+void swiARM(u32 instruction);

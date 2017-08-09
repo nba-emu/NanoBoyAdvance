@@ -32,15 +32,15 @@ inline void ARM::step() {
         ctx.r15 &= ~1;
 
         if (pipe.index == 0) {
-            pipe.opcode[2] = bus_read_hword(ctx.r15, M_NONE);
+            pipe.opcode[2] = busRead16(ctx.r15, M_NONE);
         } else {
-            pipe.opcode[pipe.index - 1] = bus_read_hword(ctx.r15, M_NONE);
+            pipe.opcode[pipe.index - 1] = busRead16(ctx.r15, M_NONE);
         }
 
-        thumb_execute(pipe.opcode[pipe.index]);
+        executeThumb(pipe.opcode[pipe.index]);
         
         if (pipe.do_flush) {
-            refill_pipeline();
+            refillPipeline();
             return;
         }
         
@@ -51,15 +51,15 @@ inline void ARM::step() {
         ctx.r15 &= ~3;
 
         if (pipe.index == 0) {
-            pipe.opcode[2] = bus_read_word(ctx.r15, M_NONE);
+            pipe.opcode[2] = busRead32(ctx.r15, M_NONE);
         } else {
-            pipe.opcode[pipe.index - 1] = bus_read_word(ctx.r15, M_NONE);
+            pipe.opcode[pipe.index - 1] = busRead32(ctx.r15, M_NONE);
         }
 
-        arm_execute(pipe.opcode[pipe.index]);
+        executeARM(pipe.opcode[pipe.index]);
         
         if (pipe.do_flush) {
-            refill_pipeline();
+            refillPipeline();
             return;
         }
         
@@ -69,7 +69,7 @@ inline void ARM::step() {
     }
 }
 
-inline bool ARM::check_condition(Condition condition) {
+inline bool ARM::checkCondition(Condition condition) {
     if (condition == COND_AL) {
         return true;
     }
@@ -96,7 +96,7 @@ inline bool ARM::check_condition(Condition condition) {
     return false;
 }
 
-inline void ARM::update_sign_flag(u32 result) {
+inline void ARM::updateSignFlag(u32 result) {
     if (result >> 31) {
         ctx.cpsr |= MASK_NFLAG;
     } else {
@@ -104,7 +104,7 @@ inline void ARM::update_sign_flag(u32 result) {
     }
 }
 
-inline void ARM::update_zero_flag(u64 result) {
+inline void ARM::updateZeroFlag(u64 result) {
     if (result == 0) {
         ctx.cpsr |= MASK_ZFLAG;
     } else {
@@ -112,7 +112,7 @@ inline void ARM::update_zero_flag(u64 result) {
     }
 }
 
-inline void ARM::update_carry_flag(bool carry) {
+inline void ARM::updateCarryFlag(bool carry) {
     if (carry) {
         ctx.cpsr |= MASK_CFLAG;
     } else {
@@ -120,7 +120,7 @@ inline void ARM::update_carry_flag(bool carry) {
     }
 }
 
-inline void ARM::update_overflow_add(u32 result, u32 operand1, u32 operand2) {
+inline void ARM::updateOverflowFlagAdd(u32 result, u32 operand1, u32 operand2) {
     bool overflow = !XOR_BIT_31(operand1, operand2) && XOR_BIT_31(result, operand2);
 
     if (overflow) {
@@ -130,7 +130,7 @@ inline void ARM::update_overflow_add(u32 result, u32 operand1, u32 operand2) {
     }
 }
 
-inline void ARM::update_overflow_sub(u32 result, u32 operand1, u32 operand2) {
+inline void ARM::updateOverflowFlagSub(u32 result, u32 operand1, u32 operand2) {
     bool overflow = XOR_BIT_31(operand1, operand2) && !XOR_BIT_31(result, operand2);
 
     if (overflow) {
@@ -140,7 +140,7 @@ inline void ARM::update_overflow_sub(u32 result, u32 operand1, u32 operand2) {
     }
 }
 
-inline void ARM::shift_lsl(u32& operand, u32 amount, bool& carry) {
+inline void ARM::shiftLSL(u32& operand, u32 amount, bool& carry) {
     if (amount == 0) {
         return;
     }
@@ -151,7 +151,7 @@ inline void ARM::shift_lsl(u32& operand, u32 amount, bool& carry) {
     }
 }
 
-inline void ARM::shift_lsr(u32& operand, u32 amount, bool& carry, bool immediate) {
+inline void ARM::shiftLSR(u32& operand, u32 amount, bool& carry, bool immediate) {
     // LSR #0 equals to LSR #32
     amount = immediate & (amount == 0) ? 32 : amount;
     
@@ -161,7 +161,7 @@ inline void ARM::shift_lsr(u32& operand, u32 amount, bool& carry, bool immediate
     }
 }
 
-inline void ARM::shift_asr(u32& operand, u32 amount, bool& carry, bool immediate) {
+inline void ARM::shiftASR(u32& operand, u32 amount, bool& carry, bool immediate) {
     u32 sign_bit = operand & 0x80000000;
 
     // ASR #0 equals to ASR #32
@@ -173,7 +173,7 @@ inline void ARM::shift_asr(u32& operand, u32 amount, bool& carry, bool immediate
     }
 }
 
-inline void ARM::shift_ror(u32& operand, u32 amount, bool& carry, bool immediate) {
+inline void ARM::shiftROR(u32& operand, u32 amount, bool& carry, bool immediate) {
     // ROR #0 equals to RRX #1
     if (amount != 0 || !immediate) {
         for (u32 i = 1; i <= amount; i++) {
@@ -190,24 +190,24 @@ inline void ARM::shift_ror(u32& operand, u32 amount, bool& carry, bool immediate
     }
 }
 
-inline void ARM::apply_shift(int shift, u32& operand, u32 amount, bool& carry, bool immediate) {
+inline void ARM::applyShift(int shift, u32& operand, u32 amount, bool& carry, bool immediate) {
     switch (shift) {
     case 0:
-        shift_lsl(operand, amount, carry);
+        shiftLSL(operand, amount, carry);
         return;
     case 1:
-        shift_lsr(operand, amount, carry, immediate);
+        shiftLSR(operand, amount, carry, immediate);
         return;
     case 2:
-        shift_asr(operand, amount, carry, immediate);
+        shiftASR(operand, amount, carry, immediate);
         return;
     case 3:
-        shift_ror(operand, amount, carry, immediate);
+        shiftROR(operand, amount, carry, immediate);
     }
 }
 
-inline u32 ARM::read_byte(u32 address, int flags) {
-    u32 value = bus_read_byte(address, flags);
+inline u32 ARM::read8(u32 address, int flags) {
+    u32 value = busRead8(address, flags);
     
     if ((flags & M_SIGNED) && (value & 0x80)) {
         return value | 0xFFFFFF00;
@@ -216,26 +216,26 @@ inline u32 ARM::read_byte(u32 address, int flags) {
     return value;
 }
 
-inline u32 ARM::read_hword(u32 address, int flags) {  
+inline u32 ARM::read16(u32 address, int flags) {  
     u32 value;
     
     if (flags & M_ROTATE) {
         if (address & 1) {
-            value = bus_read_hword(address & ~1, flags);
+            value = busRead16(address & ~1, flags);
             return (value >> 8) | (value << 24);
         }
-        return bus_read_hword(address, flags);
+        return busRead16(address, flags);
     }
     
     if (flags & M_SIGNED) {
         if (address & 1) {
-            value = bus_read_byte(address, flags);
+            value = busRead8(address, flags);
             if (value & 0x80) {
                 return value | 0xFFFFFF00;
             }
             return value;
         } else {
-            value = bus_read_hword(address, flags);
+            value = busRead16(address, flags);
             if (value & 0x8000) {
                 return value | 0xFFFF0000;
             }
@@ -243,11 +243,11 @@ inline u32 ARM::read_hword(u32 address, int flags) {
         }
     }
     
-    return bus_read_hword(address & ~1, flags);
+    return busRead16(address & ~1, flags);
 }
 
-inline u32 ARM::read_word(u32 address, int flags) {
-    u32 value = bus_read_word(address & ~3, flags);
+inline u32 ARM::read32(u32 address, int flags) {
+    u32 value = busRead32(address & ~3, flags);
     
     if (flags & M_ROTATE) {
         int amount = (address & 3) << 3;
@@ -257,26 +257,26 @@ inline u32 ARM::read_word(u32 address, int flags) {
     return value;
 }
 
-inline void ARM::write_byte(u32 address, u8 value, int flags) {
-    bus_write_byte(address, value, flags);
+inline void ARM::write8(u32 address, u8 value, int flags) {
+    busWrite8(address, value, flags);
 }
 
-inline void ARM::write_hword(u32 address, u16 value, int flags) {
-    bus_write_hword(address & ~1, value, flags);
+inline void ARM::write16(u32 address, u16 value, int flags) {
+    busWrite16(address & ~1, value, flags);
 }
 
-inline void ARM::write_word(u32 address, u32 value, int flags) {
-    bus_write_word(address & ~3, value, flags);
+inline void ARM::write32(u32 address, u32 value, int flags) {
+    busWrite32(address & ~3, value, flags);
 }
 
-inline void ARM::refill_pipeline() {
+inline void ARM::refillPipeline() {
     if (ctx.cpsr & MASK_THUMB) {
-        ctx.pipe.opcode[0] = bus_read_hword(ctx.r15, M_NONE);
-        ctx.pipe.opcode[1] = bus_read_hword(ctx.r15 + 2, M_NONE);
+        ctx.pipe.opcode[0] = busRead16(ctx.r15, M_NONE);
+        ctx.pipe.opcode[1] = busRead16(ctx.r15 + 2, M_NONE);
         ctx.r15 += 4;
     } else {
-        ctx.pipe.opcode[0] = bus_read_word(ctx.r15, M_NONE);
-        ctx.pipe.opcode[1] = bus_read_word(ctx.r15 + 4, M_NONE);
+        ctx.pipe.opcode[0] = busRead32(ctx.r15, M_NONE);
+        ctx.pipe.opcode[1] = busRead32(ctx.r15 + 4, M_NONE);
         ctx.r15 += 8;
     }
     

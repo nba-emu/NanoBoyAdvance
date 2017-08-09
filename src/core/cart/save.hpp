@@ -25,8 +25,8 @@ namespace GameBoyAdvance {
     class Save {
     public:
         virtual void reset() {}
-        virtual auto read_byte(u32 address) -> u8 { return 0; }
-        virtual void write_byte(u32 address, u8 value) {}
+        virtual auto read8(u32 address) -> u8 { return 0; }
+        virtual void write8(u32 address, u8 value) {}
 
         virtual ~Save() {}
     };
