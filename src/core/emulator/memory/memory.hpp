@@ -69,8 +69,8 @@ u8 busRead8(u32 address, int flags) final {
         case 0x2: return READ_FAST_8(memory.wram, address & 0x3FFFF);
         case 0x3: return READ_FAST_8(memory.iram, address & 0x7FFF );
         case 0x4: {
-            return  read_mmio(address) |
-                   (read_mmio(address + 1) << 8 );
+            return  readMMIO(address) |
+                   (readMMIO(address + 1) << 8 );
         }
         case 0x5: return READ_FAST_8(memory.palette, address & 0x3FF);
         case 0x6: {
@@ -113,8 +113,8 @@ u16 busRead16(u32 address, int flags) final {
         case 0x2: return READ_FAST_16(memory.wram, address & 0x3FFFF);
         case 0x3: return READ_FAST_16(memory.iram, address & 0x7FFF );
         case 0x4: {
-            return  read_mmio(address) |
-                   (read_mmio(address + 1) << 8 );
+            return  readMMIO(address) |
+                   (readMMIO(address + 1) << 8 );
         }
         case 0x5: return READ_FAST_16(memory.palette, address & 0x3FF);
         case 0x6: {
@@ -158,10 +158,10 @@ u32 busRead32(u32 address, int flags) final {
         case 0x2: return READ_FAST_32(memory.wram, address & 0x3FFFF);
         case 0x3: return READ_FAST_32(memory.iram, address & 0x7FFF );
         case 0x4: {
-            return  read_mmio(address) |
-                   (read_mmio(address + 1) << 8 ) |
-                   (read_mmio(address + 2) << 16) |
-                   (read_mmio(address + 3) << 24);
+            return  readMMIO(address) |
+                   (readMMIO(address + 1) << 8 ) |
+                   (readMMIO(address + 2) << 16) |
+                   (readMMIO(address + 3) << 24);
         }
         case 0x5: return READ_FAST_32(memory.palette, address & 0x3FF);
         case 0x6: {
@@ -203,7 +203,7 @@ void busWrite8(u32 address, u8 value, int flags) final {
         case 0x2: WRITE_FAST_8(memory.wram, address & 0x3FFFF, value); break;
         case 0x3: WRITE_FAST_8(memory.iram, address & 0x7FFF,  value); break;
         case 0x4: {
-            write_mmio(address, value & 0xFF);
+            writeMMIO(address, value & 0xFF);
             break;
         }
         case 0x5: WRITE_FAST_16(memory.palette, address & 0x3FF, value * 0x0101); break;
@@ -237,8 +237,8 @@ void busWrite16(u32 address, u16 value, int flags) final {
         case 0x2: WRITE_FAST_16(memory.wram, address & 0x3FFFF, value); break;
         case 0x3: WRITE_FAST_16(memory.iram, address & 0x7FFF,  value); break;
         case 0x4: {
-            write_mmio(address, value & 0xFF);
-            write_mmio(address + 1, (value >> 8)  & 0xFF);
+            writeMMIO(address, value & 0xFF);
+            writeMMIO(address + 1, (value >> 8)  & 0xFF);
             break;
         }
         case 0x5: WRITE_FAST_16(memory.palette, address & 0x3FF, value); break;
@@ -273,10 +273,10 @@ void busWrite32(u32 address, u32 value, int flags) final {
         case 0x2: WRITE_FAST_32(memory.wram, address & 0x3FFFF, value); break;
         case 0x3: WRITE_FAST_32(memory.iram, address & 0x7FFF,  value); break;
         case 0x4: {
-            write_mmio(address, value & 0xFF);
-            write_mmio(address + 1, (value >> 8)  & 0xFF);
-            write_mmio(address + 2, (value >> 16) & 0xFF);
-            write_mmio(address + 3, (value >> 24) & 0xFF);
+            writeMMIO(address, value & 0xFF);
+            writeMMIO(address + 1, (value >> 8)  & 0xFF);
+            writeMMIO(address + 2, (value >> 16) & 0xFF);
+            writeMMIO(address + 3, (value >> 24) & 0xFF);
             break;
         }
         case 0x5: WRITE_FAST_32(memory.palette, address & 0x3FF, value); break;

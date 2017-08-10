@@ -46,7 +46,7 @@ namespace GameBoyAdvance {
         }
     }
 
-    void Emulator::dma_transfer() {
+    void Emulator::dmaTransfer() {
         auto& dma = regs.dma[dma_current];
 
         DMAControl src_cntl = dma.src_cntl;
@@ -104,7 +104,7 @@ namespace GameBoyAdvance {
         }
     }
 
-    void Emulator::dma_fill_fifo(int dma_id) {
+    void Emulator::dmaTransferFIFO(int dma_id) {
         auto& dma = regs.dma[dma_id];
 
         for (int i = 0; i < 4; i++) {

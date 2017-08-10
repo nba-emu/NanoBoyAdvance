@@ -157,8 +157,8 @@ int main(int argc, char** argv) {
     if (File::exists(rom_path) && File::exists(config->bios_path)) {
         auto cart = Cartridge::fromFile(rom_path);
 
-        emu.load_game(cart);
-        keyinput = &emu.get_keypad();
+        emu.loadGame(cart);
+        keyinput = &emu.getKeypad();
     } else {
         parser.print_usage(argv[0]);
         return -1;
@@ -170,7 +170,7 @@ int main(int argc, char** argv) {
     setup_window();
 
     // setup SDL sound
-    setup_sound(&emu.get_apu());
+    setup_sound(&emu.getAPU());
 
     SDL_Event event;
     bool running = true;
@@ -181,7 +181,7 @@ int main(int argc, char** argv) {
     while (running) {
 
         // generate frame(s)
-        emu.run_frame();
+        emu.runFrame();
 
         // update frame counter
         frames += config->fast_forward ? config->multiplier : 1;

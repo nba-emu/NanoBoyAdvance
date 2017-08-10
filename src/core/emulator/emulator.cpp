@@ -132,15 +132,15 @@ namespace GameBoyAdvance {
         memory.bios_opcode = 0;
     }
 
-    APU& Emulator::get_apu() {
+    APU& Emulator::getAPU() {
         return apu;
     }
 
-    u16& Emulator::get_keypad() {
+    u16& Emulator::getKeypad() {
         return regs.keyinput;
     }
 
-    void Emulator::set_keystate(Key key, bool pressed) {
+    void Emulator::setKeyState(Key key, bool pressed) {
         // NOTE: GBA keys work with pull up logic
         if (pressed) {
             regs.keyinput &= ~static_cast<int>(key);
@@ -148,13 +148,13 @@ namespace GameBoyAdvance {
             regs.keyinput |=  static_cast<int>(key);
         }
     }
-    
+
     void Emulator::reloadConfig() {
         ppu.reloadConfig();
         apu.reloadConfig();
     }
 
-    void Emulator::load_game(std::shared_ptr<Cartridge> cart) {
+    void Emulator::loadGame(std::shared_ptr<Cartridge> cart) {
         // hold reference to the Cartridge
         this->cart = cart;
 
@@ -166,7 +166,7 @@ namespace GameBoyAdvance {
         reset();
     }
 
-    void Emulator::run_frame() {
+    void Emulator::runFrame() {
         const int VISIBLE_LINES   = 160;
         const int INVISIBLE_LINES = 68;
 
@@ -181,14 +181,14 @@ namespace GameBoyAdvance {
             for (int line = 0; line < VISIBLE_LINES; line++) {
                 // SCANLINE
                 ppu.scanline(frame == 0);
-                run_for(CYCLES_ACTIVE);
+                runInternal(CYCLES_ACTIVE);
 
                 // HBLANK
                 ppu.hblank();
                 if (!dma_running) {
                     dma_hblank();
                 }
-                run_for(CYCLES_HBLANK);
+                runInternal(CYCLES_HBLANK);
 
                 ppu.nextLine();
                 apu.step(CYCLES_ENTIRE);
@@ -200,14 +200,14 @@ namespace GameBoyAdvance {
                 dma_vblank();
             }
             for (int line = 0; line < INVISIBLE_LINES; line++) {
-                run_for(CYCLES_ENTIRE);
+                runInternal(CYCLES_ENTIRE);
                 ppu.nextLine();
                 apu.step(CYCLES_ENTIRE);
             }
         }
     }
 
-    void Emulator::run_for(int cycles) {
+    void Emulator::runInternal(int cycles) {
         int cycles_previous;
 
         cycles_left += cycles;
@@ -222,7 +222,7 @@ namespace GameBoyAdvance {
             cycles_previous = cycles_left;
 
             if (UNLIKELY(dma_running)) {
-                dma_transfer();
+                dmaTransfer();
             } else if (LIKELY(regs.haltcnt == SYSTEM_RUN)) {
                 if (regs.irq.ime && requested_and_enabled) {
                     signalIRQ();
@@ -230,16 +230,12 @@ namespace GameBoyAdvance {
                 step();
             } else {
                 //TODO: inaccurate because of timer interrupts
-                timer_step(cycles_left);
+                timerStep(cycles_left);
                 cycles_left = 0;
                 return;
             }
 
-            timer_step(cycles_previous - cycles_left);
+            timerStep(cycles_previous - cycles_left);
         }
-
-        //if (cycles_left < -10) {
-        //    fmt::print("desync {0} cycles!\n", cycles_left*-1);
-        //}
     }
 }

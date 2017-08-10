@@ -33,8 +33,7 @@ namespace GameBoyAdvance {
     static constexpr int g_timer_shift[4] = { 0, 6, 8, 10 };
     static constexpr int g_timer_mask [4] = { 0, 0x3F, 0xFF, 0x3FF };
 
-    void Emulator::timer_step(int cycles) {
-
+    void Emulator::timerStep(int cycles) {
         for (int i = 0; i < 4; i++) {
             auto& timer   = regs.timer[i];
             auto& control = timer.control;
@@ -68,7 +67,7 @@ namespace GameBoyAdvance {
                     }
 
                     // increment timer by the calculated amount
-                    timer_increment(timer, increments);
+                    timerIncrement(timer, increments);
                 }
 
                 // don't loose the left amount of cycles
@@ -77,7 +76,7 @@ namespace GameBoyAdvance {
         }
     }
 
-    void Emulator::timer_fifo(int timer_id, int times) {
+    void Emulator::timerHandleFIFO(int timer_id, int times) {
         auto& apu_io  = apu.getIO();
         auto& control = apu_io.control;
         auto& dma1    = regs.dma[1];
@@ -99,11 +98,10 @@ namespace GameBoyAdvance {
 
                         u32 address = (i == 0) ? FIFO_A : FIFO_B;
 
-                        // eh...
                         if (dma1.enable && dma1.time == DMA_SPECIAL && dma1.dst_addr == address) {
-                            dma_fill_fifo(1);
+                            dmaTransferFIFO(1);
                         } else if (dma2.enable && dma2.time == DMA_SPECIAL && dma2.dst_addr == address) {
-                            dma_fill_fifo(2);
+                            dmaTransferFIFO(2);
                         }
                     }
                 }
@@ -111,8 +109,7 @@ namespace GameBoyAdvance {
         }
     }
 
-    void Emulator::timer_overflow(Timer& timer, int times) {
-
+    void Emulator::timerHandleOverflow(Timer& timer, int times) {
         // request timer overflow interrupt if needed
         if (timer.control.interrupt) {
             m_interrupt.request((InterruptType)(INTERRUPT_TIMER_0 << timer.id));
@@ -127,20 +124,20 @@ namespace GameBoyAdvance {
 
             if (timer2.control.enable && timer2.control.cascade) {
                 if (times == 1) {
-                    timer_increment_once(timer2);
+                    timerIncrementOnce(timer2);
                 } else {
-                    timer_increment(timer2, times);
+                    timerIncrement(timer2, times);
                 }
             }
         }
 
         // handle FIFO transfer if sound is enabled
         if (apu.getIO().control.master_enable) {
-            timer_fifo(timer.id, times);
+            timerHandleFIFO(timer.id, times);
         }
     }
 
-    void Emulator::timer_increment(Timer& timer, int increment_count) {
+    void Emulator::timerIncrement(Timer& timer, int increment_count) {
 
         int next_overflow = 0x10000 - timer.counter;
 
@@ -162,7 +159,7 @@ namespace GameBoyAdvance {
                 increment_count = increment_count % required;
             }
 
-            timer_overflow(timer, overflow_count);
+            timerHandleOverflow(timer, overflow_count);
         }
 
         // update the counter with the remaining increments
@@ -170,11 +167,11 @@ namespace GameBoyAdvance {
     }
 
     // Short-cut method for cascade timers that ALWAYS get incremented by one.
-    void Emulator::timer_increment_once(Timer& timer) {
+    void Emulator::timerIncrementOnce(Timer& timer) {
         if (timer.counter != 0xFFFF) {
             timer.counter++;
         } else {
-            timer_overflow(timer, 1);
+            timerHandleOverflow(timer, 1);
         }
     }
 }

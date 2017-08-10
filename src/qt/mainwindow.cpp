@@ -104,7 +104,7 @@ void MainWindow::setupScreen() {
                 m_config->fast_forward = true;
                 return;
             }
-            m_emulator->set_keystate(MainWindow::qtKeyToEmu(key), true);
+            m_emulator->setKeyState(MainWindow::qtKeyToEmu(key), true);
         }
     );
 
@@ -118,7 +118,7 @@ void MainWindow::setupScreen() {
                 m_config->fast_forward = false;
                 return;
             }
-            m_emulator->set_keystate(MainWindow::qtKeyToEmu(key), false);
+            m_emulator->setKeyState(MainWindow::qtKeyToEmu(key), false);
         }
     );
 
@@ -166,7 +166,7 @@ void MainWindow::setupStatusBar() {
 
 void MainWindow::nextFrame() {
     // Emulate the next frame(s)
-    m_emulator->run_frame();
+    m_emulator->runFrame();
     m_frames++;
 
     // Update screen image
@@ -236,10 +236,10 @@ void MainWindow::runGame(const QString& rom_file) {
 
     // Apply config and load game.
     m_emulator->reloadConfig();
-    m_emulator->load_game(cart);
+    m_emulator->loadGame(cart);
 
     // Setup sound output
-    setupSound(&m_emulator->get_apu());
+    setupSound(&m_emulator->getAPU());
 
     m_emu_state = EmulationState::Running;
 

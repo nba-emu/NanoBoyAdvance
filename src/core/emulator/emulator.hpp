@@ -40,14 +40,14 @@ namespace GameBoyAdvance {
 
         void reset();
 
-        APU& get_apu();
-        u16& get_keypad();
-        void set_keystate(Key key, bool pressed);
+        APU& getAPU();
+        u16& getKeypad();
+        void setKeyState(Key key, bool pressed);
 
         void reloadConfig();
-        void load_game(std::shared_ptr<Cartridge> cart);
+        void loadGame(std::shared_ptr<Cartridge> cart);
 
-        void run_frame();
+        void runFrame();
 
     private:
         Config* config;
@@ -100,10 +100,10 @@ namespace GameBoyAdvance {
         } regs;
 
         // Memory Mapped I/O
-        auto read_mmio (u32 address) -> u8;
-        void write_mmio(u32 address, u8 value);
+        auto readMMIO (u32 address) -> u8;
+        void writeMMIO(u32 address, u8 value);
 
-        void run_for(int cycles);
+        void runInternal(int cycles);
 
         // DMA emulation
         bool dma_running;
@@ -111,15 +111,15 @@ namespace GameBoyAdvance {
 
         void dma_hblank();
         void dma_vblank();
-        void dma_transfer();
-        void dma_fill_fifo(int dma_id);
+        void dmaTransfer();
+        void dmaTransferFIFO(int dma_id);
 
         // Timer emulation
-        void timer_step(int cycles);
-        void timer_fifo(int timer_id, int times);
-        void timer_overflow(Timer& timer, int times);
-        void timer_increment(Timer& timer, int increment_count);
-        void timer_increment_once(Timer& timer);
+        void timerStep(int cycles);
+        void timerHandleFIFO(int timer_id, int times);
+        void timerHandleOverflow(Timer& timer, int times);
+        void timerIncrement(Timer& timer, int increment_count);
+        void timerIncrementOnce(Timer& timer);
 
     protected:
         // memory bus implementation
