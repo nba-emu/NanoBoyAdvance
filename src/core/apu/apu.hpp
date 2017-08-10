@@ -58,36 +58,36 @@ namespace GameBoyAdvance {
         APU(Config* config);
         
         void reset();
-        void load_config();
+        void reloadConfig();
         
-        IO& get_io() {
+        IO& getIO() {
             return m_io;
         }
         
         // Convert GBA frequency to real freq.
-        static auto convert_frequency(int freq) -> float;
+        static auto convertFrequency(int freq) -> float;
         
         // Sound Generators
-        auto generate_quad(int id) -> float;
-        auto generate_wave()       -> float;
-        auto generate_noise()      -> float;
+        auto generateQuad(int id) -> float;
+        auto generateWave()       -> float;
+        auto generateNoise()      -> float;
         
         // Updates PSG states
-        void update_quad (int step_cycles);
-        void update_wave (int step_cycles);
-        void update_noise(int step_cycles);
+        void updateQuad (int step_cycles);
+        void updateWave (int step_cycles);
+        void updateNoise(int step_cycles);
         
         // Mix all channels together
-        void mix_samples(int samples);
+        void mixChannels(int samples);
         
         // Advance state by a given amount of cycles
         void step(int step_cycles);
         
         // Fill audio buffer from ring buffer
-        void fill_buffer(u16* stream, int length);
+        void fillBuffer(u16* stream, int length);
         
         // Pull next sample from FIFO A (0) or B (1)
-        void fifo_next(int fifo_id) {
+        void signalFifoTransfer(int fifo_id) {
             m_fifo_sample[fifo_id] = m_io.fifo[fifo_id].dequeue();
         }
     };

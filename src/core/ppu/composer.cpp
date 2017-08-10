@@ -22,7 +22,7 @@
 
 namespace GameBoyAdvance {
     
-    inline void PPU::apply_sfx(u16* target1, u16 target2, SpecialEffect sfx) {
+    inline void PPU::blendPixels(u16* target1, u16 target2, SpecialEffect sfx) {
         
         int r1 = (*target1 >> 0 ) & 0x1F;
         int g1 = (*target1 >> 5 ) & 0x1F;
@@ -82,7 +82,7 @@ namespace GameBoyAdvance {
                    (b1 << 10);
     }
     
-    void PPU::compose_scanline() {
+    void PPU::completeScanline() {
         
         u16 backdrop_color = *(u16*)(m_pal);
         u32* line_buffer   = &m_framebuffer[m_io.vcount * 240];
@@ -149,7 +149,7 @@ namespace GameBoyAdvance {
                 }
                 
                 if (sfx != SFX_NONE && sfx_above && (sfx_below || sfx != SFX_BLEND)) {
-                    apply_sfx(&pixel[0], pixel[1], sfx);
+                    blendPixels(&pixel[0], pixel[1], sfx);
                 }
             }
 

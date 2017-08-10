@@ -63,36 +63,36 @@ namespace GameBoyAdvance {
         #include "io.hpp"
         #include "helpers.hpp"
 
-        void render_text(int id);
-        void render_affine(int id);
-        void render_bitmap_1();
-        void render_bitmap_2();
-        void render_bitmap_3();
-        void render_obj(u32 tile_base);
+        void renderTextBG(int id);
+        void renderAffineBG(int id);
+        void renderBitmapMode1BG();
+        void renderBitmapMode2BG();
+        void renderBitmapMode3BG();
+        void renderSprites(u32 tile_base);
         
-        void apply_sfx(u16* target1, u16 target2, SpecialEffect sfx);
+        void blendPixels(u16* target1, u16 target2, SpecialEffect sfx);
         
     public:
         PPU(Config* config);
 
         void reset();
-        void load_config();
+        void reloadConfig();
         
-        IO& get_io() {
+        IO& getIO() {
             return m_io;
         }
 
-        void set_memory(u8* pal, u8* oam, u8* vram);
-        void set_interrupt(Interrupt* interrupt);
+        void setMemoryBuffers(u8* pal, u8* oam, u8* vram);
+        void setInterruptController(Interrupt* interrupt);
 
         void hblank();
         void vblank();
         void scanline(bool render);
-        void next_line();
+        void nextLine();
         
-        void render_window(int id);
+        void renderWindow(int id);
 
-        void compose_scanline();
+        void completeScanline();
     };
 }
 

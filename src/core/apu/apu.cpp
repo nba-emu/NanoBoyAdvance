@@ -63,15 +63,15 @@ namespace GameBoyAdvance {
         m_io.control.reset();
     }
     
-    void APU::load_config() {
+    void APU::reloadConfig() {
         
     }
     
-    auto APU::convert_frequency(int freq) -> float {
+    auto APU::convertFrequency(int freq) -> float {
         return 131072 / (2048 - freq);
     }
     
-    auto APU::generate_quad(int id) -> float {
+    auto APU::generateQuad(int id) -> float {
         
         auto& channel  = m_io.tone[id];
         auto& internal = channel.internal;
@@ -86,7 +86,7 @@ namespace GameBoyAdvance {
         }
 
         float amplitude = (float)internal.volume * (1.0 / 16.0);
-        float frequency = convert_frequency(internal.frequency);
+        float frequency = convertFrequency(internal.frequency);
         float position  = (float)((2 * M_PI * internal.sample * frequency) / m_sample_rate);
         float wave_duty = s_wave_duty[channel.wave_duty];
         
@@ -106,7 +106,7 @@ namespace GameBoyAdvance {
         return amplitude * value;
     }
     
-    auto APU::generate_wave() -> float {
+    auto APU::generateWave() -> float {
         
         auto& wave     = m_io.wave;
         auto& wave_int = wave.internal; 
@@ -131,7 +131,7 @@ namespace GameBoyAdvance {
         return (sample - 8) * volume * 8;
     }
     
-    auto APU::generate_noise() -> float {
+    auto APU::generateNoise() -> float {
         auto& noise     = m_io.noise;
         auto& noise_int = noise.internal;
 
@@ -148,7 +148,7 @@ namespace GameBoyAdvance {
         return amplitude * (noise_int.output ? 128 : -128);
     }
     
-    void APU::update_quad(int step_cycles) {
+    void APU::updateQuad(int step_cycles) {
         
         for (int i = 0; i < 2; i++) {
             
@@ -207,7 +207,7 @@ namespace GameBoyAdvance {
         }
     }
     
-    void APU::update_wave(int step_cycles) {
+    void APU::updateWave(int step_cycles) {
         auto& wave     = m_io.wave;
         auto& wave_int = wave.internal;
         
@@ -242,7 +242,7 @@ namespace GameBoyAdvance {
         }
     }
     
-    void APU::update_noise(int step_cycles) {
+    void APU::updateNoise(int step_cycles) {
         auto& noise     = m_io.noise;
         auto& noise_int = noise.internal;
         auto& envelope  = noise.envelope;
@@ -302,7 +302,7 @@ namespace GameBoyAdvance {
         }
     }
     
-    void APU::mix_samples(int samples) {
+    void APU::mixChannels(int samples) {
         
         auto& psg  = m_io.control.psg;
         auto& dma  = m_io.control.dma;
@@ -322,10 +322,10 @@ namespace GameBoyAdvance {
             float volume_right = (float)psg.master[SIDE_RIGHT] / 7.0;
             
             // generate PSG channels
-            s16 tone1 = (s16)generate_quad(0);
-            s16 tone2 = (s16)generate_quad(1);
-            s16 wave  = (s16)generate_wave();
-            s16 noise = (s16)generate_noise();
+            s16 tone1 = (s16)generateQuad(0);
+            s16 tone2 = (s16)generateQuad(1);
+            s16 wave  = (s16)generateWave();
+            s16 noise = (s16)generateNoise();
             
             // mix PSGs on the left channel
             if (psg.enable[SIDE_LEFT][0]) output[SIDE_LEFT] += tone1;
@@ -379,16 +379,16 @@ namespace GameBoyAdvance {
         
         int cycles_per_sample = 16780000 / m_sample_rate;
         
-        update_quad(step_cycles);
-        update_wave(step_cycles);
-        update_noise(step_cycles);
+        updateQuad(step_cycles);
+        updateWave(step_cycles);
+        updateNoise(step_cycles);
         
         m_cycle_count += step_cycles;
         
         if (m_cycle_count >= cycles_per_sample) {
             int samples = m_cycle_count / cycles_per_sample;
             
-            mix_samples(samples);
+            mixChannels(samples);
             
             // consume the cycles required for each sample
             m_cycle_count -= samples * cycles_per_sample;    
@@ -396,7 +396,7 @@ namespace GameBoyAdvance {
         
     }
     
-    void APU::fill_buffer(u16* stream, int length) {
+    void APU::fillBuffer(u16* stream, int length) {
         
         // divide length by four because:
         // 1) length is provided in bytes, while we work with hwords

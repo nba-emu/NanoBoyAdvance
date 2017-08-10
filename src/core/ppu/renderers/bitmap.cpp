@@ -21,7 +21,7 @@
 
 namespace GameBoyAdvance {
     
-    void PPU::render_bitmap_1() {
+    void PPU::renderBitmapMode1BG() {
         u32 offset = m_io.vcount * 480;
 
         for (int x = 0; x < 240; x++) {
@@ -30,7 +30,7 @@ namespace GameBoyAdvance {
         }
     }
 
-    void PPU::render_bitmap_2() {
+    void PPU::renderBitmapMode2BG() {
         u32 page = m_io.control.frame_select ? 0xA000 : 0;
         u32 offset = page + m_io.vcount * 240;
 
@@ -40,7 +40,7 @@ namespace GameBoyAdvance {
         }
     }
 
-    void PPU::render_bitmap_3() {
+    void PPU::renderBitmapMode3BG() {
         u32 page = m_io.control.frame_select ? 0xA000 : 0;
         u32 offset = page + m_io.vcount * 320;
 

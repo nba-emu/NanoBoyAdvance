@@ -41,7 +41,7 @@ SDL_Renderer* g_renderer;
 bool g_fullscreen = false;
 
 void sound_cb(APU* apu, u16* stream, int length) {
-    apu->fill_buffer(stream, length);
+    apu->fillBuffer(stream, length);
 }
 
 void setup_sound(APU* apu) {
@@ -152,10 +152,10 @@ int main(int argc, char** argv) {
 
     config->framebuffer = fbuffer;
 
-    emu.load_config();
+    emu.reloadConfig();
 
     if (File::exists(rom_path) && File::exists(config->bios_path)) {
-        auto cart = Cartridge::from_file(rom_path);
+        auto cart = Cartridge::fromFile(rom_path);
 
         emu.load_game(cart);
         keyinput = &emu.get_keypad();
@@ -244,7 +244,7 @@ int main(int argc, char** argv) {
                         }
 
                         //// make core adapt new settings
-                        //emu.load_config();
+                        //emu.reloadConfig();
 
                         continue;
                     case SDLK_F9:

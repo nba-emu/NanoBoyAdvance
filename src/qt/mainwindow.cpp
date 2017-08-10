@@ -205,7 +205,7 @@ void MainWindow::openGame() {
 }
 
 void MainWindow::runGame(const QString& rom_file) {
-    auto cart = Cartridge::from_file(rom_file.toStdString());
+    auto cart = Cartridge::fromFile(rom_file.toStdString());
 
     const std::string bios_path = "bios.bin";
 
@@ -235,7 +235,7 @@ void MainWindow::runGame(const QString& rom_file) {
     }
 
     // Apply config and load game.
-    m_emulator->load_config();
+    m_emulator->reloadConfig();
     m_emulator->load_game(cart);
 
     // Setup sound output
@@ -276,7 +276,7 @@ void MainWindow::stopClicked() {
 
 // Sound callback - called by SDL2. Wraps around C++ method.
 void MainWindow::soundCallback(APU* apu, u16* stream, int length) {
-    apu->fill_buffer(stream, length);
+    apu->fillBuffer(stream, length);
 }
 
 void MainWindow::setupSound(APU* apu) {

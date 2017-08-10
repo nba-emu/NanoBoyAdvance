@@ -28,7 +28,7 @@ namespace GameBoyAdvance {
     
     PPU::PPU(Config* config) : m_config(config) {
         reset();
-        load_config();
+        reloadConfig();
         
         // Generate blending LUT (TODO: make table static)
         for (int color0 = 0; color0 <= 31; color0++) {
@@ -45,7 +45,7 @@ namespace GameBoyAdvance {
         }
     }
     
-    void PPU::load_config() {
+    void PPU::reloadConfig() {
         
         m_frameskip   = m_config->frameskip;
         m_framebuffer = m_config->framebuffer;
@@ -120,13 +120,13 @@ namespace GameBoyAdvance {
         m_frame_counter = 0;
     }
 
-    void PPU::set_memory(u8* pal, u8* oam, u8* vram) {
+    void PPU::setMemoryBuffers(u8* pal, u8* oam, u8* vram) {
         m_pal  = pal;
         m_oam  = oam;
         m_vram = vram;
     }
 
-    void PPU::set_interrupt(Interrupt* interrupt) {
+    void PPU::setInterruptController(Interrupt* interrupt) {
         m_interrupt = interrupt;
     }
 
@@ -182,48 +182,48 @@ namespace GameBoyAdvance {
             }
 
             if (m_io.control.win_enable[0]) {
-                render_window(0);
+                renderWindow(0);
             }
             
             if (m_io.control.win_enable[1]) {
-                render_window(1);
+                renderWindow(1);
             }
             
             switch (m_io.control.mode) {
                 case 0:
                     // BG Mode 0 - 240x160 pixels, Text mode
-                    if (m_io.control.enable[0]) render_text(0);
-                    if (m_io.control.enable[1]) render_text(1);
-                    if (m_io.control.enable[2]) render_text(2);
-                    if (m_io.control.enable[3]) render_text(3);
+                    if (m_io.control.enable[0]) renderTextBG(0);
+                    if (m_io.control.enable[1]) renderTextBG(1);
+                    if (m_io.control.enable[2]) renderTextBG(2);
+                    if (m_io.control.enable[3]) renderTextBG(3);
                     break;
                 case 1:
                     // BG Mode 1 - 240x160 pixels, Text and RS mode mixed
-                    if (m_io.control.enable[0]) render_text(0);
-                    if (m_io.control.enable[1]) render_text(1);
-                    if (m_io.control.enable[2]) render_affine(0);
+                    if (m_io.control.enable[0]) renderTextBG(0);
+                    if (m_io.control.enable[1]) renderTextBG(1);
+                    if (m_io.control.enable[2]) renderAffineBG(0);
                     break;
                 case 2:
                     // BG Mode 2 - 240x160 pixels, RS mode
-                    if (m_io.control.enable[2]) render_affine(0);
-                    if (m_io.control.enable[2]) render_affine(1);
+                    if (m_io.control.enable[2]) renderAffineBG(0);
+                    if (m_io.control.enable[2]) renderAffineBG(1);
                     break;
                 case 3:
                     // BG Mode 3 - 240x160 pixels, 32768 colors
                     if (m_io.control.enable[2]) {
-                        render_bitmap_1();
+                        renderBitmapMode1BG();
                     }
                     break;
                 case 4:
                     // BG Mode 4 - 240x160 pixels, 256 colors (out of 32768 colors)
                     if (m_io.control.enable[2]) {
-                        render_bitmap_2();
+                        renderBitmapMode2BG();
                     }
                     break;
                 case 5:
                     // BG Mode 5 - 160x128 pixels, 32768 colors
                     if (m_io.control.enable[2]) {
-                        render_bitmap_3();
+                        renderBitmapMode3BG();
                     }
                     break;
                 default:
@@ -232,14 +232,14 @@ namespace GameBoyAdvance {
 
             if (m_io.control.enable[4]) {
                 // TODO(accuracy): tile base might not always be 0x10000?
-                render_obj(0x10000);
+                renderSprites(0x10000);
             }
 
-            compose_scanline();
+            completeScanline();
         }
     }
 
-    void PPU::next_line() {
+    void PPU::nextLine() {
         
         bool vcount_flag = m_io.vcount == m_io.status.vcount_setting;
         
@@ -251,7 +251,7 @@ namespace GameBoyAdvance {
         }
     }
     
-    void PPU::render_window(int id) {
+    void PPU::renderWindow(int id) {
         
         int   line = m_io.vcount;
         auto& winh = m_io.winh[id];

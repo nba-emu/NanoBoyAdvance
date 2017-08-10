@@ -30,7 +30,7 @@ using namespace Util;
 
 namespace GameBoyAdvance {
     
-    auto Cartridge::from_file(std::string path, SaveType type) -> std::shared_ptr<Cartridge> {
+    auto Cartridge::fromFile(std::string path, SaveType type) -> std::shared_ptr<Cartridge> {
         auto cart = new Cartridge();
         
         // Load game from drive
@@ -42,7 +42,7 @@ namespace GameBoyAdvance {
         cart->size = File::get_size (path);
         
         if (type == SAVE_DETECT) {
-            cart->type = cart->detect_type();
+            cart->type = cart->detectType();
         } else {
             cart->type = type;
         }
@@ -59,7 +59,7 @@ namespace GameBoyAdvance {
     }
     
     // TODO: Have a list of game codes with the matching save types.
-    auto Cartridge::detect_type() -> SaveType {
+    auto Cartridge::detectType() -> SaveType {
         const std::map<std::string, SaveType> types {
             { "EEPROM_V",   SAVE_EEPROM   },
             { "SRAM_V",     SAVE_SRAM     },

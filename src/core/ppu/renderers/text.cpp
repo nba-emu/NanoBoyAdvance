@@ -22,7 +22,7 @@
 
 namespace GameBoyAdvance {
 
-    void PPU::render_text(int id) {
+    void PPU::renderTextBG(int id) {
         const auto& bg = m_io.bgcnt[id];
         
         u16* buffer    = m_buffer[id];

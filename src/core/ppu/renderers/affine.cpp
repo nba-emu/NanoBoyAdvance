@@ -24,7 +24,7 @@ using namespace Util;
 
 namespace GameBoyAdvance {
     
-    void PPU::render_affine(int id) {
+    void PPU::renderAffineBG(int id) {
         
         auto bg        = m_io.bgcnt[2 + id];
         u16* buffer    = m_buffer[2 + id];

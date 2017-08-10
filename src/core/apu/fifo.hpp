@@ -38,7 +38,7 @@ namespace GameBoyAdvance {
             m_index = 0;
         }
         
-        bool requires_data() {
+        bool requiresData() {
             return m_index <= (FIFO_SIZE >> 1);
         }
         

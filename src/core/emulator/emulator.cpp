@@ -42,8 +42,8 @@ namespace GameBoyAdvance {
         m_interrupt.set_flag_register(&regs.irq.if_);
 
         // feed PPU with important data.
-        ppu.set_memory(memory.palette, memory.oam, memory.vram);
-        ppu.set_interrupt(&m_interrupt);
+        ppu.setMemoryBuffers(memory.palette, memory.oam, memory.vram);
+        ppu.setInterruptController(&m_interrupt);
     }
 
     Emulator::~Emulator() {
@@ -149,9 +149,9 @@ namespace GameBoyAdvance {
         }
     }
     
-    void Emulator::load_config() {
-        ppu.load_config();
-        apu.load_config();
+    void Emulator::reloadConfig() {
+        ppu.reloadConfig();
+        apu.reloadConfig();
     }
 
     void Emulator::load_game(std::shared_ptr<Cartridge> cart) {
@@ -190,7 +190,7 @@ namespace GameBoyAdvance {
                 }
                 run_for(CYCLES_HBLANK);
 
-                ppu.next_line();
+                ppu.nextLine();
                 apu.step(CYCLES_ENTIRE);
             }
 
@@ -201,7 +201,7 @@ namespace GameBoyAdvance {
             }
             for (int line = 0; line < INVISIBLE_LINES; line++) {
                 run_for(CYCLES_ENTIRE);
-                ppu.next_line();
+                ppu.nextLine();
                 apu.step(CYCLES_ENTIRE);
             }
         }

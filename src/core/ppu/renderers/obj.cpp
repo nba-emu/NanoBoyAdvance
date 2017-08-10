@@ -53,7 +53,7 @@ namespace GameBoyAdvance {
         }
     };
 
-    void PPU::render_obj(u32 tile_base) {
+    void PPU::renderSprites(u32 tile_base) {
         
         // affine 2x2 matrix
         s16 pa, pb, pc, pd;

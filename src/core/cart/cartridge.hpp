@@ -35,7 +35,6 @@ namespace GameBoyAdvance {
     };
     
     struct Cartridge {
-        
         u32 size;
         union {
             u8*     data;
@@ -51,9 +50,9 @@ namespace GameBoyAdvance {
             delete backup;
         }
         
-        auto detect_type() -> SaveType;
+        auto detectType() -> SaveType;
         
-        static auto from_file(std::string path, SaveType type = SAVE_DETECT) -> std::shared_ptr<Cartridge>;
+        static auto fromFile(std::string path, SaveType type = SAVE_DETECT) -> std::shared_ptr<Cartridge>;
     };
     
 }
