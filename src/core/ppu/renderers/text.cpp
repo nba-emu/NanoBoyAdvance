@@ -73,9 +73,9 @@ namespace GameBoyAdvance {
                 
                 // decode the determined tile into our buffer
                 if (UNLIKELY(bg.full_palette)) {
-                    draw_tile_line_8bpp(tile_buffer, tile_block, number, final_y, h_flip);
+                    drawTileLine8BPP(tile_buffer, tile_block, number, final_y, h_flip);
                 } else {
-                    draw_tile_line_4bpp(tile_buffer, tile_block, palette, number, final_y, h_flip);
+                    drawTileLine4BPP(tile_buffer, tile_block, palette, number, final_y, h_flip);
                 }
                 
                 last_encoder = encoder;

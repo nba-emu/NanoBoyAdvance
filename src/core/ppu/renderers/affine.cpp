@@ -32,8 +32,8 @@ namespace GameBoyAdvance {
 
         float ref_x = m_io.bgx[id].internal;
         float ref_y = m_io.bgy[id].internal;
-        float parameter_a = PPU::decode_fixed16(m_io.bgpa[id]);
-        float parameter_c = PPU::decode_fixed16(m_io.bgpc[id]);
+        float parameter_a = PPU::decodeFixed16(m_io.bgpa[id]);
+        float parameter_c = PPU::decodeFixed16(m_io.bgpc[id]);
 
         int size, block_width;
 
@@ -90,7 +90,7 @@ namespace GameBoyAdvance {
 
             int number = m_vram[(bg.map_block << 11) + map_y * block_width + map_x];
 
-            buffer[_x] = get_tile_pixel_8bpp(tile_block, 0, number, tile_x, tile_y);
+            buffer[_x] = getTilePixel8BPP(tile_block, 0, number, tile_x, tile_y);
         }
     }
 }

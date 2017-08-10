@@ -153,7 +153,7 @@ namespace GameBoyAdvance {
                 }
             }
 
-            line_buffer[x] = color_convert(pixel[0]);
+            line_buffer[x] = rgb555ToARGB(pixel[0]);
         }
     }
 }

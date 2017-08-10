@@ -36,7 +36,7 @@ namespace GameBoyAdvance {
 
         for (int x = 0; x < 240; x++) {
             int index = m_vram[offset + x];
-            m_buffer[2][x] = read_palette(0, index);
+            m_buffer[2][x] = readPaletteEntry(0, index);
         }
     }
 

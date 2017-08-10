@@ -20,16 +20,16 @@
 #ifdef PPU_INCLUDE
 
 // TODO: greenswap?
-inline u32 color_convert(u16 color) {
+inline u32 rgb555ToARGB(u16 color) {
     return m_color_lut[color & 0x7FFF];
 }
 
-inline u16 read_palette(int palette, int index) {
+inline u16 readPaletteEntry(int palette, int index) {
     return (m_pal[(palette << 5) + (index << 1) | 1] << 8) |
             m_pal[(palette << 5) + (index << 1)];
 }
 
-inline u16 get_tile_pixel_4bpp(u32 base, int palette, int number, int x, int y) {
+inline u16 getTilePixel4BPP(u32 base, int palette, int number, int x, int y) {
     u32 offset = base + (number << 5) + (y << 2) + (x >> 1);
 
     int tuple = m_vram[offset];
@@ -39,10 +39,10 @@ inline u16 get_tile_pixel_4bpp(u32 base, int palette, int number, int x, int y) 
         return COLOR_TRANSPARENT;
     }
 
-    return read_palette(palette, index);
+    return readPaletteEntry(palette, index);
 }
 
-inline u16 get_tile_pixel_8bpp(u32 base, int palette, int number, int x, int y) {
+inline u16 getTilePixel8BPP(u32 base, int palette, int number, int x, int y) {
     u32 offset = base + (number << 6) + (y << 3) + x;
     int index  = m_vram[offset];
 
@@ -50,10 +50,10 @@ inline u16 get_tile_pixel_8bpp(u32 base, int palette, int number, int x, int y) 
         return COLOR_TRANSPARENT;
     }
 
-    return read_palette(palette, index);
+    return readPaletteEntry(palette, index);
 }
 
-inline void draw_tile_line_4bpp(u32* buffer, u32 base, int palette, int number, int y, bool flip) {
+inline void drawTileLine4BPP(u32* buffer, u32 base, int palette, int number, int y, bool flip) {
     u8* data = &m_vram[base + (number << 5) + (y << 2)];
     
     if (flip) {
@@ -62,8 +62,8 @@ inline void draw_tile_line_4bpp(u32* buffer, u32 base, int palette, int number, 
             int pixel1 = tuple & 15;
             int pixel2 = tuple >> 4;
             
-            buffer[((i<<1)|0)^7] = (pixel1 == 0) ? COLOR_TRANSPARENT : read_palette(palette, pixel1);
-            buffer[((i<<1)|1)^7] = (pixel2 == 0) ? COLOR_TRANSPARENT : read_palette(palette, pixel2);
+            buffer[((i<<1)|0)^7] = (pixel1 == 0) ? COLOR_TRANSPARENT : readPaletteEntry(palette, pixel1);
+            buffer[((i<<1)|1)^7] = (pixel2 == 0) ? COLOR_TRANSPARENT : readPaletteEntry(palette, pixel2);
         }
     } else {
         for (int i = 0; i < 4; i++) {
@@ -71,13 +71,13 @@ inline void draw_tile_line_4bpp(u32* buffer, u32 base, int palette, int number, 
             int pixel1 = tuple & 15;
             int pixel2 = tuple >> 4;
             
-            buffer[(i<<1)|0] = (pixel1 == 0) ? COLOR_TRANSPARENT : read_palette(palette, pixel1);
-            buffer[(i<<1)|1] = (pixel2 == 0) ? COLOR_TRANSPARENT : read_palette(palette, pixel2);
+            buffer[(i<<1)|0] = (pixel1 == 0) ? COLOR_TRANSPARENT : readPaletteEntry(palette, pixel1);
+            buffer[(i<<1)|1] = (pixel2 == 0) ? COLOR_TRANSPARENT : readPaletteEntry(palette, pixel2);
         }
     }
 }
 
-inline void draw_tile_line_8bpp(u32* buffer, u32 base, int number, int y, bool flip) {
+inline void drawTileLine8BPP(u32* buffer, u32 base, int number, int y, bool flip) {
     u8* data = &m_vram[base + (number << 6) + (y << 3)];
     
     if (flip) {
@@ -87,7 +87,7 @@ inline void draw_tile_line_8bpp(u32* buffer, u32 base, int number, int y, bool f
                 buffer[x] = COLOR_TRANSPARENT;
                 continue;
             }
-            buffer[x] = read_palette(0, pixel);
+            buffer[x] = readPaletteEntry(0, pixel);
         }
     } else {
         for (int x = 0; x < 8; x++) {
@@ -96,12 +96,12 @@ inline void draw_tile_line_8bpp(u32* buffer, u32 base, int number, int y, bool f
                 buffer[x] = COLOR_TRANSPARENT;
                 continue;
             }
-            buffer[x] = read_palette(0, pixel);
+            buffer[x] = readPaletteEntry(0, pixel);
         }
     }
 }
 
-static inline float decode_fixed16(u16 number) {
+static inline float decodeFixed16(u16 number) {
     bool  is_negative = number & (1 << 15);
     s32   int_part    = (number >> 8) | (is_negative ? 0xFFFFFF00 : 0);
     float frac_part   = static_cast<float>(number & 0xFF) / 256.0;
@@ -109,7 +109,7 @@ static inline float decode_fixed16(u16 number) {
     return static_cast<float>(int_part) + frac_part;
 }
 
-static inline float decode_fixed32(u32 number) {
+static inline float decodeFixed32(u32 number) {
     bool  is_negative = number & (1 << 27);
     s32   int_part    = ((number & ~0xF0000000) >> 8) | (is_negative ? 0xFFF00000 : 0);
     float frac_part   = static_cast<float>(number & 0xFF) / 256.0;

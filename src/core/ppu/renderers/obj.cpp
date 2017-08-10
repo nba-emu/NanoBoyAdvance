@@ -208,9 +208,9 @@ namespace GameBoyAdvance {
                         u16 pixel;
                         
                         if (is_256) {
-                            pixel = get_tile_pixel_8bpp(tile_base, 16     , tile_num, tile_x, tile_y);
+                            pixel = getTilePixel8BPP(tile_base, 16     , tile_num, tile_x, tile_y);
                         } else {
-                            pixel = get_tile_pixel_4bpp(tile_base, palette, tile_num, tile_x, tile_y);
+                            pixel = getTilePixel4BPP(tile_base, palette, tile_num, tile_x, tile_y);
                         }
 
                         auto& p = m_obj_layer[screen_x];
