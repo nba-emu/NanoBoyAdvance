@@ -36,8 +36,8 @@ namespace GameBoyAdvance {
 
     APU::APU(Config* config) : m_config(config) {
         // forward FIFO access to SOUNDCNT register (for FIFO resetting)
-        m_io.control.fifo[0] = &m_io.fifo[0];
-        m_io.control.fifo[1] = &m_io.fifo[1];
+        regs.control.fifo[0] = &regs.fifo[0];
+        regs.control.fifo[1] = &regs.fifo[1];
 
         // reset state
         reset();
@@ -52,15 +52,15 @@ namespace GameBoyAdvance {
 
         // reset channel (registers)
         for (int i = 0; i < 2; i++) {
-            m_io.fifo[i].reset();
-            m_io.tone[i].reset();
+            regs.fifo[i].reset();
+            regs.tone[i].reset();
         }
-        m_io.wave.reset();
-        m_io.noise.reset();
+        regs.wave.reset();
+        regs.noise.reset();
 
         // reset control registers
-        m_io.bias.reset();
-        m_io.control.reset();
+        regs.bias.reset();
+        regs.control.reset();
     }
 
     void APU::reloadConfig() {}
@@ -70,7 +70,7 @@ namespace GameBoyAdvance {
     }
 
     auto APU::generateQuad(int id) -> float {
-        auto& channel  = m_io.tone[id];
+        auto& channel  = regs.tone[id];
         auto& internal = channel.internal;
         auto& cycles   = internal.cycles;
 
@@ -104,7 +104,7 @@ namespace GameBoyAdvance {
     }
 
     auto APU::generateWave() -> float {
-        auto& wave     = m_io.wave;
+        auto& wave     = regs.wave;
         auto& wave_int = wave.internal;
 
         if (!wave.playback) {
@@ -119,7 +119,7 @@ namespace GameBoyAdvance {
             }
         }
 
-        u8  byte   = m_io.wave_ram[wave.bank_number][wave_int.sample_ptr >> 1];
+        u8  byte   = regs.wave_ram[wave.bank_number][wave_int.sample_ptr >> 1];
         int sample = (wave_int.sample_ptr & 1) ? (byte & 15) : (byte >> 4);
 
         float volume = wave.force_volume ? 0.75 : s_wav_volume[wave.volume];
@@ -128,7 +128,7 @@ namespace GameBoyAdvance {
     }
 
     auto APU::generateNoise() -> float {
-        auto& noise     = m_io.noise;
+        auto& noise     = regs.noise;
         auto& noise_int = noise.internal;
 
         if (noise.apply_length) {
@@ -146,7 +146,7 @@ namespace GameBoyAdvance {
 
     void APU::updateQuad(int step_cycles) {
         for (int i = 0; i < 2; i++) {
-            auto& channel  = m_io.tone[i];
+            auto& channel  = regs.tone[i];
             auto& internal = channel.internal;
             auto& cycles   = internal.cycles;
             auto& sweep    = channel.sweep;
@@ -202,7 +202,7 @@ namespace GameBoyAdvance {
     }
 
     void APU::updateWave(int step_cycles) {
-        auto& wave     = m_io.wave;
+        auto& wave     = regs.wave;
         auto& wave_int = wave.internal;
 
         // concert sample rate to cycles
@@ -237,7 +237,7 @@ namespace GameBoyAdvance {
     }
 
     void APU::updateNoise(int step_cycles) {
-        auto& noise     = m_io.noise;
+        auto& noise     = regs.noise;
         auto& noise_int = noise.internal;
         auto& envelope  = noise.envelope;
 
@@ -297,9 +297,9 @@ namespace GameBoyAdvance {
     }
 
     void APU::mixChannels(int samples) {
-        auto& psg  = m_io.control.psg;
-        auto& dma  = m_io.control.dma;
-        auto& bias = m_io.bias;
+        auto& psg  = regs.control.psg;
+        auto& dma  = regs.control.dma;
+        auto& bias = regs.bias;
 
         float psg_volume = s_psg_volume[psg.volume];
 

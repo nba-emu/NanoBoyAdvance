@@ -61,7 +61,7 @@ namespace GameBoyAdvance {
         void reloadConfig();
 
         IO& getIO() {
-            return m_io;
+            return regs;
         }
 
         // Convert GBA frequency to real freq.
@@ -88,7 +88,7 @@ namespace GameBoyAdvance {
 
         // Pull next sample from FIFO A (0) or B (1)
         void signalFifoTransfer(int fifo_id) {
-            fifo_sample[fifo_id] = m_io.fifo[fifo_id].dequeue();
+            fifo_sample[fifo_id] = regs.fifo[fifo_id].dequeue();
         }
     };
 }
