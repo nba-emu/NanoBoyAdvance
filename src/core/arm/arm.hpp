@@ -27,31 +27,23 @@ namespace GameBoyAdvance {
     public:
         ARM();
 
-        // Reset ARM state
         virtual void reset();
 
-        // Execute one instruction
         void step();
-
-        // Trigger IRQ-handler
         void signalIRQ();
 
-        // Get ARM context (state)
+        // ARM context getter/setter
         auto context() -> ARMContext& {
             return ctx;
         }
-
-        // Set ARM context (state)
         void context(ARMContext& ctx) {
             this->ctx = ctx;
         }
 
-        // Is HLE-emulation enabled?
+        // SWI emulation flag getter/setter
         bool swiHLE() const {
             return fake_swi;
         }
-
-        // Set HLE-emulation flag
         void swiHLE(bool fake_swi) {
             this->fake_swi = fake_swi;
         }

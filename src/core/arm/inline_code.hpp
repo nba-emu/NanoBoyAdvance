@@ -7,12 +7,12 @@
   * it under the terms of the GNU General Public License as published by
   * the Free Software Foundation, either version 3 of the License, or
   * (at your option) any later version.
-  * 
+  *
   * NanoboyAdvance is distributed in the hope that it will be useful,
   * but WITHOUT ANY WARRANTY; without even the implied warranty of
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   * GNU General Public License for more details.
-  * 
+  *
   * You should have received a copy of the GNU General Public License
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
@@ -38,14 +38,14 @@ inline void ARM::step() {
         }
 
         executeThumb(pipe.opcode[pipe.index]);
-        
+
         if (pipe.do_flush) {
             refillPipeline();
             return;
         }
-        
+
         if (++pipe.index == 3) pipe.index = 0;
-        
+
         ctx.r15 += 2;
     } else {
         ctx.r15 &= ~3;
@@ -57,14 +57,14 @@ inline void ARM::step() {
         }
 
         executeARM(pipe.opcode[pipe.index]);
-        
+
         if (pipe.do_flush) {
             refillPipeline();
             return;
         }
-        
+
         if (++pipe.index == 3) pipe.index = 0;
-        
+
         ctx.r15 += 4;
     }
 }
@@ -92,7 +92,7 @@ inline bool ARM::checkCondition(Condition condition) {
         case COND_AL: return true;
         case COND_NV: return false;
     }
-    
+
     return false;
 }
 
@@ -154,7 +154,7 @@ inline void ARM::shiftLSL(u32& operand, u32 amount, bool& carry) {
 inline void ARM::shiftLSR(u32& operand, u32 amount, bool& carry, bool immediate) {
     // LSR #0 equals to LSR #32
     amount = immediate & (amount == 0) ? 32 : amount;
-    
+
     for (u32 i = 0; i < amount; i++) {
         carry = operand & 1 ? true : false;
         operand >>= 1;
@@ -178,13 +178,13 @@ inline void ARM::shiftROR(u32& operand, u32 amount, bool& carry, bool immediate)
     if (amount != 0 || !immediate) {
         for (u32 i = 1; i <= amount; i++) {
             u32 high_bit = (operand & 1) ? 0x80000000 : 0;
-            
+
             operand = (operand >> 1) | high_bit;
             carry   = high_bit == 0x80000000;
         }
     } else {
         bool old_carry = carry;
-        
+
         carry   = (operand & 1) ? true : false;
         operand = (operand >> 1) | (old_carry ? 0x80000000 : 0);
     }
@@ -208,17 +208,17 @@ inline void ARM::applyShift(int shift, u32& operand, u32 amount, bool& carry, bo
 
 inline u32 ARM::read8(u32 address, int flags) {
     u32 value = busRead8(address, flags);
-    
+
     if ((flags & M_SIGNED) && (value & 0x80)) {
         return value | 0xFFFFFF00;
     }
-    
+
     return value;
 }
 
-inline u32 ARM::read16(u32 address, int flags) {  
+inline u32 ARM::read16(u32 address, int flags) {
     u32 value;
-    
+
     if (flags & M_ROTATE) {
         if (address & 1) {
             value = busRead16(address & ~1, flags);
@@ -226,7 +226,7 @@ inline u32 ARM::read16(u32 address, int flags) {
         }
         return busRead16(address, flags);
     }
-    
+
     if (flags & M_SIGNED) {
         if (address & 1) {
             value = busRead8(address, flags);
@@ -242,18 +242,18 @@ inline u32 ARM::read16(u32 address, int flags) {
             return value;
         }
     }
-    
+
     return busRead16(address & ~1, flags);
 }
 
 inline u32 ARM::read32(u32 address, int flags) {
     u32 value = busRead32(address & ~3, flags);
-    
+
     if (flags & M_ROTATE) {
         int amount = (address & 3) << 3;
         return (value >> amount) | (value << (32 - amount));
     }
-    
+
     return value;
 }
 
@@ -283,4 +283,3 @@ inline void ARM::refillPipeline() {
     ctx.pipe.index = 0;
     ctx.pipe.do_flush = false;
 }
-
