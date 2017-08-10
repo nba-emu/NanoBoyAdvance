@@ -109,8 +109,8 @@ namespace GameBoyAdvance {
         bool dma_running;
         int  dma_current;
 
-        void dma_hblank();
-        void dma_vblank();
+        void dmaFindHBlank();
+        void dmaFindVBlank();
         void dmaTransfer();
         void dmaTransferFIFO(int dma_id);
 

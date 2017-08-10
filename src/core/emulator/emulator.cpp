@@ -186,7 +186,7 @@ namespace GameBoyAdvance {
                 // HBLANK
                 ppu.hblank();
                 if (!dma_running) {
-                    dma_hblank();
+                    dmaFindHBlank();
                 }
                 runInternal(CYCLES_HBLANK);
 
@@ -197,7 +197,7 @@ namespace GameBoyAdvance {
             // 68 invisible lines, VBLANK period.
             ppu.vblank();
             if (!dma_running) {
-                dma_vblank();
+                dmaFindVBlank();
             }
             for (int line = 0; line < INVISIBLE_LINES; line++) {
                 runInternal(CYCLES_ENTIRE);

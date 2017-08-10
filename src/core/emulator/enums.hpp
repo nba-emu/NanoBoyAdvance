@@ -20,7 +20,6 @@
 #pragma once
 
 namespace GameBoyAdvance {
-
     enum InterruptType {
         INTERRUPT_VBLANK  = 1,
         INTERRUPT_HBLANK  = 2,
@@ -43,7 +42,7 @@ namespace GameBoyAdvance {
         SYSTEM_STOP,
         SYSTEM_HALT
     };
-    
+
     enum class Key {
         None   = 0,
         A      = 1<<0,

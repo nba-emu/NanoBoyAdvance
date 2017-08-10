@@ -24,7 +24,7 @@ using namespace Util;
 
 namespace GameBoyAdvance {
 
-    void Emulator::dma_hblank() {
+    void Emulator::dmaFindHBlank() {
         for (int i = 0; i < 4; i++) {
             auto& dma = regs.dma[i];
             if (dma.enable && dma.time == DMA_HBLANK) {
@@ -35,7 +35,7 @@ namespace GameBoyAdvance {
         }
     }
 
-    void Emulator::dma_vblank() {
+    void Emulator::dmaFindVBlank() {
         for (int i = 0; i < 4; i++) {
             auto& dma = regs.dma[i];
             if (dma.enable && dma.time == DMA_VBLANK) {
