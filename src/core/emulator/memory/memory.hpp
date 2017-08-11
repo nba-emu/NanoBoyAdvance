@@ -36,6 +36,9 @@
 #define WRITE_FAST_16(buffer, address, value) *(u16*)(&buffer[address]) = value;
 #define WRITE_FAST_32(buffer, address, value) *(u32*)(&buffer[address]) = value;
 
+#define IS_EEPROM_ACCESS(address) memory.rom.save && cart->type == SAVE_EEPROM && \
+                                  ((~memory.rom.size & 0x01000000) || address >= 0x0DFFFF00)
+
 // Cycle-LUT for byte and hword accesses
 static constexpr int cycles[16] = {
     1, 1, 3, 1, 1, 1, 1, 1, 5, 5, 1, 1, 1, 1, 5, 1
@@ -91,7 +94,7 @@ u8 busRead8(u32 address, int flags) final {
             return READ_FAST_8(memory.rom.data, address);
         }
         case 0xE: {
-            if (!memory.rom.save) {
+            if (!memory.rom.save || cart->type == SAVE_EEPROM) {
                 return 0;
             }
             return memory.rom.save->read8(address);
@@ -125,9 +128,17 @@ u16 busRead16(u32 address, int flags) final {
             return READ_FAST_16(memory.vram, address);
         }
         case 0x7: return READ_FAST_16(memory.oam, address & 0x3FF);
+
+        // 0x0DXXXXXX may be used to read/write from EEPROM
+        case 0xD: {
+            // Must check if this is an EEPROM access or ordinary ROM mirror read.
+            if (IS_EEPROM_ACCESS(address)) {
+                return memory.rom.save->read8(address);
+            }
+        }
         case 0x8: case 0x9:
         case 0xA: case 0xB:
-        case 0xC: case 0xD: {
+        case 0xC: {
             address &= 0x1FFFFFF;
             if (address >= memory.rom.size) {
                 return address >> 1;
@@ -135,7 +146,7 @@ u16 busRead16(u32 address, int flags) final {
             return READ_FAST_16(memory.rom.data, address);
         }
         case 0xE: {
-            if (!memory.rom.save) {
+            if (!memory.rom.save || cart->type == SAVE_EEPROM) {
                 return 0;
             }
             return memory.rom.save->read8(address) * 0x0101;
@@ -183,7 +194,7 @@ u32 busRead32(u32 address, int flags) final {
             return READ_FAST_32(memory.rom.data, address);
         }
         case 0xE: {
-            if (!memory.rom.save) {
+            if (!memory.rom.save  || cart->type == SAVE_EEPROM) {
                 return 0;
             }
             return memory.rom.save->read8(address) * 0x01010101;
@@ -217,7 +228,7 @@ void busWrite8(u32 address, u8 value, int flags) final {
         }
         case 0x7: WRITE_FAST_16(memory.oam, address & 0x3FF, value * 0x0101); break;
         case 0xE: {
-            if (!memory.rom.save) {
+            if (!memory.rom.save || cart->type == SAVE_EEPROM) {
                 break;
             }
             memory.rom.save->write8(address, value);
@@ -251,17 +262,17 @@ void busWrite16(u32 address, u16 value, int flags) final {
             break;
         }
         case 0x7: WRITE_FAST_16(memory.oam, address & 0x3FF, value); break;
+
+        // EEPROM write
         case 0xD: {
-            // TODO: use a faster local copy of cart->type
-            // TODO(2): restrict address furtherly
-            if (!memory.rom.save || cart->type != SAVE_EEPROM) {
-                break;
+            if (IS_EEPROM_ACCESS(address)) {
+                memory.rom.save->write8(address, value);
             }
-            memory.rom.save->write8(address, value);
             break;
         }
+
         case 0xE: {
-            if (!memory.rom.save) {
+            if (!memory.rom.save || cart->type == SAVE_EEPROM) {
                 break;
             }
             memory.rom.save->write8(address + 0, value);
@@ -299,7 +310,7 @@ void busWrite32(u32 address, u32 value, int flags) final {
         }
         case 0x7: WRITE_FAST_32(memory.oam, address & 0x3FF, value); break;
         case 0xE: {
-            if (!memory.rom.save) {
+            if (!memory.rom.save || cart->type == SAVE_EEPROM) {
                 break;
             }
             memory.rom.save->write8(address + 0, value);

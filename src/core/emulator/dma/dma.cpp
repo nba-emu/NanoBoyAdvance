@@ -108,10 +108,10 @@ namespace GameBoyAdvance {
         auto& dma = regs.dma[dma_id];
 
         for (int i = 0; i < 4; i++) {
-            u32 value = read32(dma.internal.src_addr, M_NONE);
+            // transfer word to FIFO
+            write32(dma.internal.dst_addr, read32(dma.internal.src_addr, M_NONE), M_NONE);
 
-            write32(dma.internal.dst_addr, value, M_NONE);
-
+            // advance source address
             dma.internal.src_addr += 4;
         }
 

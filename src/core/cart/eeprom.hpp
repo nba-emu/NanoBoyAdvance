@@ -23,13 +23,42 @@
 #include "save.hpp"
 
 namespace GameBoyAdvance {
+    enum EEPROMSize {
+        EEPROM_4K  = 0,
+        EEPROM_64K = 1
+    };
+
     class EEPROM : public Save {
     public:
-         EEPROM(std::string save_file);
-        ~EEPROM();
+        EEPROM(std::string save_file, EEPROMSize size);
+       ~EEPROM();
 
         void reset();
         auto read8(u32 address) -> u8;
         void write8(u32 address, u8 value);
+
+    private:
+        void resetSerialBuffer();
+
+        enum class State {
+            AcceptCommand,
+            GetReadAddress,
+            GetWriteAddress,
+            PreReadData,
+            ReadData,
+            WriteData,
+            WaitZero
+        };
+
+        static constexpr int s_addr_bits[2] = { 6, 14 };
+
+        u8* memory {nullptr};
+
+        u32 serialBuffer;
+        int receivedBits;
+        int currentAddress;
+
+        State state;
+        EEPROMSize size;
     };
 }
