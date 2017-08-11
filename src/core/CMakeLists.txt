@@ -38,6 +38,7 @@ set(EMULATOR_HDR
 set(CART_SRC
     cart/sram.cpp
     cart/flash.cpp
+    cart/eeprom.cpp
     cart/cartridge.cpp
 )
 
@@ -45,6 +46,7 @@ set(CART_HDR
     cart/save.hpp
     cart/sram.hpp
     cart/flash.hpp
+    cart/eeprom.hpp
     cart/header.hpp
     cart/cartridge.hpp
 )

@@ -72,5 +72,5 @@ namespace GameBoyAdvance {
         auto read(int offset) -> u8;
         void write(int offset, u8 value);
     };
-    
+
 }

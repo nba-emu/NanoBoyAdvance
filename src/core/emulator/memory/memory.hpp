@@ -251,6 +251,15 @@ void busWrite16(u32 address, u16 value, int flags) final {
             break;
         }
         case 0x7: WRITE_FAST_16(memory.oam, address & 0x3FF, value); break;
+        case 0xD: {
+            // TODO: use a faster local copy of cart->type
+            // TODO(2): restrict address furtherly
+            if (!memory.rom.save || cart->type != SAVE_EEPROM) {
+                break;
+            }
+            memory.rom.save->write8(address, value);
+            break;
+        }
         case 0xE: {
             if (!memory.rom.save) {
                 break;

@@ -90,11 +90,11 @@ namespace GameBoyAdvance {
 
             // even though DMA will be repeated, we have to wait for it to be rescheduled.
             if (dma.time != DMA_IMMEDIATE) {
-                dma_running  = false;
+                dma_running = false;
                 dma_current = -1;
             }
         } else {
-            dma.enable = false;
+            dma.enable  = false;
             dma_running = false;
             dma_current = -1;
         }
