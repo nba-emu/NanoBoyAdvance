@@ -19,6 +19,7 @@
 
 #include "eeprom.hpp"
 
+#include <cstring>
 #include <iostream>
 
 namespace GameBoyAdvance {
@@ -27,7 +28,10 @@ namespace GameBoyAdvance {
     EEPROM::EEPROM(std::string save_path, EEPROMSize size) : size(size) {
         int bufferSize = (1 << s_addr_bits[size]) * 8;
 
+        std::cout << bufferSize << std::endl;
+
         memory = new u8[bufferSize];
+        std::memset(memory, 0, bufferSize);
         currentAddress = 0;
         resetSerialBuffer();
 
@@ -41,51 +45,149 @@ namespace GameBoyAdvance {
     }
 
     void EEPROM::resetSerialBuffer() {
-        serialBuffer = 0;
-        receivedBits = 0;
+        serialBuffer    = 0;
+        transmittedBits = 0;
     }
 
     auto EEPROM::read8(u32 address) -> u8 {
-        std::cout << "read! " << std::hex << address << std::dec << std::endl;
-        return 0xFF;
+        //std::string tmp;
+        //std::cout << "Reading one bit!" << std::endl;
+        //std::cin  >> tmp;
+
+        if (state & State::EnableRead) {
+            if (state & State::DummyNibble) {
+                std::cout << "Read nibble bit " << std::dec << transmittedBits << std::endl;
+
+                if (++transmittedBits == 4) {
+                    state &= ~State::DummyNibble;
+                    resetSerialBuffer();
+                }
+                return 0;
+            }
+            else {
+                int bit   = transmittedBits % 8;
+                int index = transmittedBits / 8;
+
+                std::cout << "Read data bit " << std::dec << transmittedBits << std::endl;
+
+                if (++transmittedBits == 64) {
+                    state = State::AcceptCommand;
+                    resetSerialBuffer();
+                }
+
+                return (memory[currentAddress + index] >> (7 - bit)) & 1;
+            }
+        }
+
+        return 0;
+
+        /*std::string x;
+        std::cout << transmittedBits << std::endl;
+        std::cin >> x;
+
+        switch (state) {
+            case State::PreReadData:
+                // TODO: find out what the actual hardware returns for these 4 bits
+                if (++transmittedBits == 4) {
+                    state = State::ReadData;
+                    resetSerialBuffer();
+                }
+                std::cout << "returning dummy bit..." << std::endl;
+                return 0;
+
+            case State::ReadData:
+                if (++transmittedBits == 64) {
+                    state = State::AcceptCommand;
+                    resetSerialBuffer();
+                    std::cout << "finished read!" << std::endl;
+                }
+                std::cout << "returning bit: " << std::dec << transmittedBits << std::endl;
+                return 1;
+                //return memory[currentAddress + (transmittedBits >> 3)];
+        }*/
+
+        return 0;
     }
 
     void EEPROM::write8(u32 address, u8 value) {
+        if (state & State::EnableRead) {
+            return;
+        }
+
         value &= 1;
 
         //std::cout << std::hex << address << ": " << (int)value << std::dec << std::endl;
 
         serialBuffer = (serialBuffer << 1) | value;
-        receivedBits++;
+        transmittedBits++;
 
-        //std::cout << std::hex << serialBuffer << std::endl;
+        std::cout << "serialBuffer: " << std::hex << serialBuffer << std::endl;
 
-        switch (state) {
-            case State::AcceptCommand:
-                if (receivedBits == 2) {
-                    // TODO: log invalid commands
-                    switch (serialBuffer) {
-                        case 2: state = State::GetWriteAddress; break;
-                        case 3: state = State::GetReadAddress;  break;
-                    }
-                    resetSerialBuffer();
+        if (state == State::AcceptCommand && transmittedBits == 2) {
+            switch (serialBuffer) {
+                case 2: {
+                    std::cout << "Begin Write command" << std::endl;
+                    state = State::WriteMode  |
+                            State::GetAddress |
+                            State::GetWriteData |
+                            State::EatDummy;
+                    break;
                 }
-                break;
-
-            case State::GetReadAddress:
-            case State::GetWriteAddress:
-                if (receivedBits == s_addr_bits[size]) {
-                    currentAddress = serialBuffer * 8;
-                    std::cout << std::hex << "addr: " << currentAddress << std::endl;
-
-                    // TODO: might need to erase all 8 bytes on write request
-                    switch (state) { // meh!
-                        case State::GetReadAddress:  state = State::PreReadData; break;
-                        case State::GetWriteAddress: state = State::WriteData;   break;
-                    }
-                    resetSerialBuffer();
+                case 3: {
+                    std::cout << "Begin Read command" << std::endl;
+                    state = State::ReadMode   |
+                            State::GetAddress |
+                            State::EatDummy;
+                    break;
                 }
-                break;
+            }
+            resetSerialBuffer();
+        }
+        else if (state & State::GetAddress) {
+            if (transmittedBits == s_addr_bits[size]) {
+                currentAddress = serialBuffer * 8;
+
+                if (state & State::WriteMode) {
+                    std::cout << "Clean 8 bytes" << std::endl;
+                    for (int i = 0; i < 8; i++) {
+                        memory[currentAddress + i] = 0;
+                    }
+                }
+
+                std::cout << "Received address: 0x" << std::hex << currentAddress << std::endl;
+                state &= ~State::GetAddress;
+                resetSerialBuffer();
+            }
+        }
+        else if (state & State::GetWriteData) {
+            int bit   = transmittedBits % 8;
+            int index = transmittedBits / 8;
+
+            std::cout << "Burning bit: " << value << std::endl;
+
+            memory[currentAddress + index] &= ~(1 << (7 - bit));
+            memory[currentAddress + index] |= value << (7 - bit);
+
+            if (transmittedBits == 64) {
+                state &= ~State::GetWriteData;
+                resetSerialBuffer();
+            }
+        }
+        else if (state & State::EatDummy) {
+            std::cout << "Ate dummy bit" << std::endl;
+            if (serialBuffer != 0) {
+                std::cout << "Warn: dummy but serial buffer is non-zero!" << std::endl;
+            }
+            state &= ~State::EatDummy;
+
+            if (state & State::ReadMode) {
+                state |= State::EnableRead | State::DummyNibble;
+            }
+            else if (state & State::WriteMode) {
+                state = State::AcceptCommand;
+            }
+
+            resetSerialBuffer();
         }
     }
 }

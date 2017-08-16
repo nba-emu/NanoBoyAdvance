@@ -7,12 +7,12 @@
   * it under the terms of the GNU General Public License as published by
   * the Free Software Foundation, either version 3 of the License, or
   * (at your option) any later version.
-  * 
+  *
   * NanoboyAdvance is distributed in the hope that it will be useful,
   * but WITHOUT ANY WARRANTY; without even the implied warranty of
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   * GNU General Public License for more details.
-  * 
+  *
   * You should have received a copy of the GNU General Public License
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
@@ -39,12 +39,12 @@ namespace GameBoyAdvance {
         BANK_UND,
         BANK_COUNT
     };
-    
+
     enum BankedRegister {
         BANK_R13 = 0,
         BANK_R14 = 1
     };
-    
+
     enum SavedStatusRegister {
         SPSR_DEF = 0,
         SPSR_FIQ = 1,
@@ -54,7 +54,7 @@ namespace GameBoyAdvance {
         SPSR_UND = 5,
         SPSR_COUNT = 6
     };
-    
+
     enum Condition {
         COND_EQ = 0,
         COND_NE = 1,
@@ -94,18 +94,19 @@ namespace GameBoyAdvance {
         EXCPT_INTERRUPT      = 0x18,
         EXCPT_FAST_INTERRUPT = 0x1C
     };
-    
+
     enum MemoryFlags {
         M_NONE   = 0,
-        
+
         // Use for debug/internal accesses
         M_DEBUG  = (1 << 0),
-        
+
         // (Non-)Sequential Accesses
         M_SEQ    = (1 << 1),
         M_NONSEQ = (1 << 2),
-      
+
         M_SIGNED = (1 << 3),
-        M_ROTATE = (1 << 4)
+        M_ROTATE = (1 << 4),
+        M_DMA    = (1 << 5)
     };
 }

@@ -60,9 +60,9 @@ namespace GameBoyAdvance {
             }
 
             if (words) {
-                write32(dma.internal.dst_addr, read32(dma.internal.src_addr, M_NONE), M_NONE);
+                write32(dma.internal.dst_addr, read32(dma.internal.src_addr, M_DMA), M_DMA);
             } else {
-                write16(dma.internal.dst_addr, read16(dma.internal.src_addr, M_NONE), M_NONE);
+                write16(dma.internal.dst_addr, read16(dma.internal.src_addr, M_DMA), M_DMA);
             }
 
             if (dma.dst_cntl == DMA_INCREMENT || dma.dst_cntl == DMA_RELOAD) {
@@ -109,7 +109,7 @@ namespace GameBoyAdvance {
 
         for (int i = 0; i < 4; i++) {
             // transfer word to FIFO
-            write32(dma.internal.dst_addr, read32(dma.internal.src_addr, M_NONE), M_NONE);
+            write32(dma.internal.dst_addr, read32(dma.internal.src_addr, M_DMA), M_DMA);
 
             // advance source address
             dma.internal.src_addr += 4;

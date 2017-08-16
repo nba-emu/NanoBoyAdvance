@@ -36,8 +36,8 @@
 #define WRITE_FAST_16(buffer, address, value) *(u16*)(&buffer[address]) = value;
 #define WRITE_FAST_32(buffer, address, value) *(u32*)(&buffer[address]) = value;
 
-#define IS_EEPROM_ACCESS(address) memory.rom.save && cart->type == SAVE_EEPROM && \
-                                  ((~memory.rom.size & 0x01000000) || address >= 0x0DFFFF00)
+#define IS_EEPROM_ACCESS(address) memory.rom.save && cart->type == SAVE_EEPROM &&\
+                                  ((~memory.rom.size & 0x02000000) || address >= 0x0DFFFF00)
 
 // Cycle-LUT for byte and hword accesses
 static constexpr int cycles[16] = {
@@ -133,6 +133,9 @@ u16 busRead16(u32 address, int flags) final {
         case 0xD: {
             // Must check if this is an EEPROM access or ordinary ROM mirror read.
             if (IS_EEPROM_ACCESS(address)) {
+                if (~flags & M_DMA) {
+                    return 1;
+                }
                 return memory.rom.save->read8(address);
             }
         }
@@ -266,6 +269,9 @@ void busWrite16(u32 address, u16 value, int flags) final {
         // EEPROM write
         case 0xD: {
             if (IS_EEPROM_ACCESS(address)) {
+                if (~flags & M_DMA) {
+                    break;
+                }
                 memory.rom.save->write8(address, value);
             }
             break;

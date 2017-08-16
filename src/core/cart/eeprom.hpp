@@ -20,6 +20,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include "save.hpp"
 
 namespace GameBoyAdvance {
@@ -40,22 +41,23 @@ namespace GameBoyAdvance {
     private:
         void resetSerialBuffer();
 
-        enum class State {
-            AcceptCommand,
-            GetReadAddress,
-            GetWriteAddress,
-            PreReadData,
-            ReadData,
-            WriteData,
-            WaitZero
+        enum State {
+            AcceptCommand = 1 << 0,
+            ReadMode      = 1 << 1,
+            WriteMode     = 1 << 2,
+            GetAddress    = 1 << 3,
+            EnableRead    = 1 << 4,
+            DummyNibble   = 1 << 5,
+            GetWriteData  = 1 << 6,
+            EatDummy      = 1 << 7
         };
 
         static constexpr int s_addr_bits[2] = { 6, 14 };
 
         u8* memory {nullptr};
 
-        u32 serialBuffer;
-        int receivedBits;
+        u64 serialBuffer;
+        int transmittedBits;
         int currentAddress;
 
         State state;
