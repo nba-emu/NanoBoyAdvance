@@ -30,9 +30,6 @@ using namespace Util;
 
 namespace GameBoyAdvance {
 
-    constexpr int Emulator::cycles[16];
-    constexpr int Emulator::cycles32[16];
-
     Emulator::Emulator(Config* config) : config(config), ppu(config), apu(config) {
         //// must be initialized *before* calling reset()
         //memory.rom.save = nullptr;
@@ -92,6 +89,24 @@ namespace GameBoyAdvance {
             waitcnt.phi      = 0;
             waitcnt.prefetch = 0;
             waitcnt.cgb      = 0;
+
+            // setup 8/16/32 bit access cycle LUT
+            cycles[0x0] = 1; cycles32[0x0] = 1;
+            cycles[0x1] = 1; cycles32[0x1] = 1;
+            cycles[0x2] = 3; cycles32[0x2] = 6;
+            cycles[0x3] = 1; cycles32[0x3] = 1;
+            cycles[0x4] = 1; cycles32[0x4] = 1;
+            cycles[0x5] = 1; cycles32[0x5] = 2;
+            cycles[0x6] = 1; cycles32[0x6] = 2;
+            cycles[0x7] = 1; cycles32[0x7] = 1;
+            cycles[0x8] = 5; cycles32[0x8] = 8;
+            cycles[0x9] = 5; cycles32[0x9] = 8;
+            cycles[0xA] = 1; cycles32[0xA] = 1;
+            cycles[0xB] = 1; cycles32[0xB] = 1;
+            cycles[0xC] = 1; cycles32[0xC] = 1;
+            cycles[0xD] = 1; cycles32[0xD] = 1;
+            cycles[0xE] = 5; cycles32[0xE] = 5;
+            cycles[0xF] = 1; cycles32[0xF] = 1;
         }
 
         for (int i = 0; i < 4; i++) {

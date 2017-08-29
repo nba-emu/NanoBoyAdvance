@@ -39,16 +39,6 @@
 #define IS_EEPROM_ACCESS(address) memory.rom.save && cart->type == SAVE_EEPROM &&\
                                   ((~memory.rom.size & 0x02000000) || address >= 0x0DFFFF00)
 
-// Cycle-LUT for byte and hword accesses
-static constexpr int cycles[16] = {
-    1, 1, 3, 1, 1, 1, 1, 1, 5, 5, 1, 1, 1, 1, 5, 1
-};
-
-// Cycles-LUT for word accesses
-static constexpr int cycles32[16] = {
-    1, 1, 6, 1, 1, 2, 2, 1, 8, 8, 1, 1, 1, 1, 5, 1
-};
-
 auto read_bios(u32 address) -> u32 {
     if (address >= 0x4000) {
         return 0;

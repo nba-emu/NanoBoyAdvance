@@ -52,8 +52,10 @@ namespace GameBoyAdvance {
     private:
         Config* config;
 
-        // cycles until next PPU phase
-        int  cycles_left;
+        // cycle-counting
+        int cycles_left;
+        int cycles[16];
+        int cycles32[16];
 
         // subsystems
         PPU ppu;
