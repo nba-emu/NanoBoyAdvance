@@ -32,7 +32,7 @@ inline void ARM::step() {
         ctx.r15 &= ~1;
 
         if (pipe.index == 0) {
-            pipe.opcode[2] = busRead16(ctx.r15, M_NONE);
+            pipe.opcode[2] = busRead16(ctx.r15, M_SEQ);
         } else {
             pipe.opcode[pipe.index - 1] = busRead16(ctx.r15, M_SEQ);
         }
@@ -51,7 +51,7 @@ inline void ARM::step() {
         ctx.r15 &= ~3;
 
         if (pipe.index == 0) {
-            pipe.opcode[2] = busRead32(ctx.r15, M_NONE);
+            pipe.opcode[2] = busRead32(ctx.r15, M_SEQ);
         } else {
             pipe.opcode[pipe.index - 1] = busRead32(ctx.r15, M_SEQ);
         }
