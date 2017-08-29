@@ -24,7 +24,19 @@ using namespace Util;
 
 #define ADVANCE_PC \
     if (++ctx.pipe.index == 3) ctx.pipe.index = 0;\
-    ctx.r15 += 2;\
+    ctx.r15 += 2;
+
+#define REFILL_PIPELINE_A \
+    ctx.pipe.index     = 0;\
+    ctx.pipe.opcode[0] = busRead32(ctx.r15,     M_NONSEQ);\
+    ctx.pipe.opcode[1] = busRead32(ctx.r15 + 4, M_SEQ);\
+    ctx.r15 += 8;
+
+#define REFILL_PIPELINE_T \
+    ctx.pipe.index     = 0;\
+    ctx.pipe.opcode[0] = busRead16(ctx.r15,     M_NONSEQ);\
+    ctx.pipe.opcode[1] = busRead16(ctx.r15 + 2, M_SEQ);\
+    ctx.r15 += 4;
 
 namespace GameBoyAdvance {
 
@@ -291,17 +303,18 @@ namespace GameBoyAdvance {
         case 3: // BX
             if (operand & 1) {
                 ctx.r15 = operand & ~1;
+                REFILL_PIPELINE_T;
             } else {
                 ctx.cpsr &= ~MASK_THUMB;
                 ctx.r15 = operand & ~3;
+                REFILL_PIPELINE_A;
             }
-            refillPipeline();
             return; // do not advance pc
         }
 
         if (perform_check && dst == 15) {
             ctx.reg[dst] &= ~1; // TODO: use r15 directly
-            refillPipeline();
+            REFILL_PIPELINE_T;
             return; // do not advance pc
         }
 
@@ -499,7 +512,7 @@ namespace GameBoyAdvance {
                 ctx.r15 = read32(addr, M_NONE) & ~1;
 
                 // TODO: refill pipe and fast return, no pc advance
-                refillPipeline();
+                REFILL_PIPELINE_T;
                 ctx.reg[13] = addr + 4;
                 return;
             } else {
@@ -571,7 +584,7 @@ namespace GameBoyAdvance {
 
             // update r15/pc and flush pipe
             ctx.r15 += (signed_immediate << 1);
-            refillPipeline();
+            REFILL_PIPELINE_T;
         } else {
             ADVANCE_PC;
         }
@@ -592,7 +605,7 @@ namespace GameBoyAdvance {
 
             // jump to exception vector
             ctx.r15 = EXCPT_SWI;
-            refillPipeline();
+            REFILL_PIPELINE_A;
         } else {
             handleSWI(call_number);
             ADVANCE_PC;
@@ -610,7 +623,7 @@ namespace GameBoyAdvance {
 
         // update r15/pc and flush pipe
         ctx.r15 += imm;
-        refillPipeline();
+        REFILL_PIPELINE_T;
     }
 
     template <bool second_instruction>
@@ -633,7 +646,7 @@ namespace GameBoyAdvance {
 
             // store return address and flush pipe.
             ctx.reg[14] = temp_pc | 1;
-            refillPipeline();
+            REFILL_PIPELINE_T;
         }
     }
 }
