@@ -39,7 +39,7 @@
 #define IS_EEPROM_ACCESS(address) memory.rom.save && cart->type == SAVE_EEPROM &&\
                                   ((~memory.rom.size & 0x02000000) || address >= 0x0DFFFF00)
 
-auto read_bios(u32 address) -> u32 {
+auto readBIOS(u32 address) -> u32 {
     if (address >= 0x4000) {
         return 0;
     }
@@ -57,7 +57,7 @@ u8 busRead8(u32 address, int flags) final {
 
     switch (page) {
         case 0x0: {
-            return read_bios(address);
+            return readBIOS(address);
         }
         case 0x2: return READ_FAST_8(memory.wram, address & 0x3FFFF);
         case 0x3: return READ_FAST_8(memory.iram, address & 0x7FFF );
@@ -101,7 +101,7 @@ u16 busRead16(u32 address, int flags) final {
 
     switch (page) {
         case 0x0: {
-            return read_bios(address);
+            return readBIOS(address);
         }
         case 0x2: return READ_FAST_16(memory.wram, address & 0x3FFFF);
         case 0x3: return READ_FAST_16(memory.iram, address & 0x7FFF );
@@ -157,7 +157,7 @@ u32 busRead32(u32 address, int flags) final {
 
     switch (page) {
         case 0x0: {
-            return read_bios(address);
+            return readBIOS(address);
         }
         case 0x2: return READ_FAST_32(memory.wram, address & 0x3FFFF);
         case 0x3: return READ_FAST_32(memory.iram, address & 0x7FFF );

@@ -30,6 +30,11 @@ using namespace Util;
 
 namespace GameBoyAdvance {
 
+    constexpr int Emulator::ws_nseq[4];
+    constexpr int Emulator::ws_seq0[2];
+    constexpr int Emulator::ws_seq1[2];
+    constexpr int Emulator::ws_seq2[2];
+
     Emulator::Emulator(Config* config) : config(config), ppu(config), apu(config) {
         //// must be initialized *before* calling reset()
         //memory.rom.save = nullptr;
@@ -91,6 +96,7 @@ namespace GameBoyAdvance {
             waitcnt.cgb      = 0;
 
             // setup 8/16/32 bit access cycle LUT
+            // TODO: use actual real values!
             cycles[0x0] = 1; cycles32[0x0] = 1;
             cycles[0x1] = 1; cycles32[0x1] = 1;
             cycles[0x2] = 3; cycles32[0x2] = 6;
