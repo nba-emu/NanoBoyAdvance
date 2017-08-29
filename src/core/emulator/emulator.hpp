@@ -96,6 +96,19 @@ namespace GameBoyAdvance {
                 u16 ime;
             } irq;
 
+            struct WaitstateControl {
+                int sram;
+                int ws0_n;
+                int ws0_s;
+                int ws1_n;
+                int ws1_s;
+                int ws2_n;
+                int ws2_s;
+                int phi;
+                int prefetch;
+                int cgb;
+            } waitcnt;
+
             SystemState haltcnt;
         } regs;
 

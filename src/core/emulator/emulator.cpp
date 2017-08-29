@@ -79,6 +79,21 @@ namespace GameBoyAdvance {
         regs.haltcnt = SYSTEM_RUN;
         regs.keyinput = 0x3FF;
 
+        // reset WAITCNT
+        auto& waitcnt = regs.waitcnt;
+        {
+            waitcnt.sram     = 0;
+            waitcnt.ws0_n    = 0;
+            waitcnt.ws0_s    = 0;
+            waitcnt.ws1_n    = 0;
+            waitcnt.ws1_s    = 0;
+            waitcnt.ws2_n    = 0;
+            waitcnt.ws2_s    = 0;
+            waitcnt.phi      = 0;
+            waitcnt.prefetch = 0;
+            waitcnt.cgb      = 0;
+        }
+
         for (int i = 0; i < 4; i++) {
             // reset DMA channels
             regs.dma[i].id = i;
