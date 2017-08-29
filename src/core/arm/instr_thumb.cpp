@@ -280,7 +280,7 @@ namespace GameBoyAdvance {
         if (high2) src |= 8;
 
         operand = ctx.reg[src];
-        if (src == 15) { // TODO: lookup high2, should be zero-cost, small efficiency
+        if (high2 && src == 15)
             operand &= ~1;
         }
 
@@ -511,7 +511,7 @@ namespace GameBoyAdvance {
             if (pop) {
                 ctx.r15 = read32(addr, M_NONE) & ~1;
 
-                // TODO: refill pipe and fast return, no pc advance
+                // refill pipe and fast return, no pc advance
                 REFILL_PIPELINE_T;
                 ctx.reg[13] = addr + 4;
                 return;
