@@ -124,8 +124,7 @@ namespace GameBoyAdvance {
     }
 
     template <int op>
-    void ARM::thumbInst4(u16 instruction)
-    {
+    void ARM::thumbInst4(u16 instruction) {
         // THUMB.4 ALU operations
         int dst = instruction & 7;
         int src = (instruction >> 3) & 7;
@@ -258,8 +257,7 @@ namespace GameBoyAdvance {
     }
 
     template <int op, bool high1, bool high2>
-    void ARM::thumbInst5(u16 instruction)
-    {
+    void ARM::thumbInst5(u16 instruction) {
         // THUMB.5 Hi register operations/branch exchange
         u32 operand;
         bool perform_check = true;
@@ -270,12 +268,11 @@ namespace GameBoyAdvance {
         if (high2) src |= 8;
 
         operand = ctx.reg[src];
-        if (src == 15) {
+        if (src == 15) { // TODO: lookup high2, should be zero-cost, small efficiency
             operand &= ~1;
         }
 
-        switch (op)
-        {
+        switch (op) {
         case 0: // ADD
             ctx.reg[dst] += operand;
             break;
@@ -300,17 +297,12 @@ namespace GameBoyAdvance {
             }
             refillPipeline();
             return; // do not advance pc
-            // - OBSOLETE -
-            //ctx.pipe.do_flush = true;
-            //perform_check = false;
-            //break;
         }
 
         if (perform_check && dst == 15) {
             ctx.reg[dst] &= ~1; // TODO: use r15 directly
             refillPipeline();
             return; // do not advance pc
-            //ctx.pipe.do_flush = true;
         }
 
         ADVANCE_PC;
@@ -453,7 +445,6 @@ namespace GameBoyAdvance {
         }
 
         ctx.reg[dst] = address + imm;
-
         ADVANCE_PC;
     }
 
@@ -463,7 +454,6 @@ namespace GameBoyAdvance {
         u32 imm = (instruction & 0x7F) << 2;
 
         ctx.reg[13] += sub ? -imm : imm;
-
         ADVANCE_PC;
     }
 
@@ -473,17 +463,7 @@ namespace GameBoyAdvance {
         u32 addr = ctx.reg[13];
         const int register_list = instruction & 0xFF;
 
-        // hardware corner case. not sure if emulated correctly.
-        /*if (!rbit && register_list == 0) {
-            if (pop) {
-                ctx.r15 = read32(addr, M_NONE);
-                ctx.pipe.do_flush   = true;
-            } else {
-                write32(addr, ctx.r15, M_NONE);
-            }
-            ctx.reg[13] += pop ? 64 : -64;
-            return;
-        }*/
+        // TODO: emulate empty register list
 
         if (!pop) {
             int register_count = 0;
@@ -502,8 +482,6 @@ namespace GameBoyAdvance {
             ctx.reg[13] = addr;
         }
 
-        bool refilledPipeline = false;
-
         // perform load/store multiple
         for (int i = 0; i <= 7; i++) {
             if (register_list & (1 << i)) {
@@ -519,9 +497,11 @@ namespace GameBoyAdvance {
         if (rbit) {
             if (pop) {
                 ctx.r15 = read32(addr, M_NONE) & ~1;
+
+                // TODO: refill pipe and fast return, no pc advance
                 refillPipeline();
-                refilledPipeline = true;
-                //ctx.pipe.do_flush = true;
+                ctx.reg[13] = addr + 4;
+                return;
             } else {
                 write32(addr, ctx.reg[14], M_NONE);
             }
@@ -531,9 +511,6 @@ namespace GameBoyAdvance {
         if (pop) {
             ctx.reg[13] = addr;
         }
-
-        // TODO: this is extremely mediocre...
-        if (refilledPipeline) return; // do not advance pc
 
         ADVANCE_PC;
     }
@@ -545,14 +522,9 @@ namespace GameBoyAdvance {
         u32 address = ctx.reg[base];
         int register_list = instruction & 0xFF;
 
-        if (load) {
-            /*if (register_list == 0) {
-                ctx.r15 = read32(address, M_NONE);
-                ctx.pipe.do_flush = true;
-                ctx.reg[base] += 64;
-                return;
-            }*/
+        // TODO: emulate empty register list
 
+        if (load) {
             for (int i = 0; i <= 7; i++) {
                 if (register_list & (1<<i)) {
                     ctx.reg[i] = read32(address, M_NONE);
@@ -565,12 +537,6 @@ namespace GameBoyAdvance {
             }
         } else {
             int first_register = -1;
-
-            /*if (register_list == 0) {
-                write32(address, ctx.r15, M_NONE);
-                ctx.reg[base] += 64;
-                return;
-            }*/
 
             for (int i = 0; i <= 7; i++) {
                 if (register_list & (1<<i)) {
@@ -605,7 +571,6 @@ namespace GameBoyAdvance {
 
             // update r15/pc and flush pipe
             ctx.r15 += (signed_immediate << 1);
-            //ctx.pipe.do_flush = true;
             refillPipeline();
         } else {
             ADVANCE_PC;
@@ -627,7 +592,6 @@ namespace GameBoyAdvance {
 
             // jump to exception vector
             ctx.r15 = EXCPT_SWI;
-            //ctx.pipe.do_flush = true;
             refillPipeline();
         } else {
             handleSWI(call_number);
@@ -647,9 +611,6 @@ namespace GameBoyAdvance {
         // update r15/pc and flush pipe
         ctx.r15 += imm;
         refillPipeline();
-        //ctx.pipe.do_flush = true;
-
-        //ADVANCE_PC;
     }
 
     template <bool second_instruction>
@@ -673,7 +634,6 @@ namespace GameBoyAdvance {
             // store return address and flush pipe.
             ctx.reg[14] = temp_pc | 1;
             refillPipeline();
-            //ctx.pipe.do_flush = true;
         }
     }
 }
