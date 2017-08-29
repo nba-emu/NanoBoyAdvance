@@ -7,12 +7,12 @@
   * it under the terms of the GNU General Public License as published by
   * the Free Software Foundation, either version 3 of the License, or
   * (at your option) any later version.
-  * 
+  *
   * NanoboyAdvance is distributed in the hope that it will be useful,
   * but WITHOUT ANY WARRANTY; without even the implied warranty of
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   * GNU General Public License for more details.
-  * 
+  *
   * You should have received a copy of the GNU General Public License
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
@@ -22,8 +22,12 @@
 
 using namespace Util;
 
+#define ADVANCE_PC \
+    if (++ctx.pipe.index == 3) ctx.pipe.index = 0;\
+    ctx.r15 += 2;\
+
 namespace GameBoyAdvance {
-    
+
     #include "tables/op_thumb.hpp"
 
     template <int imm, int type>
@@ -41,6 +45,8 @@ namespace GameBoyAdvance {
         updateCarryFlag(carry);
         updateSignFlag(ctx.reg[dst]);
         updateZeroFlag(ctx.reg[dst]);
+
+        ADVANCE_PC;
     }
 
     template <bool immediate, bool subtract, int field3>
@@ -70,6 +76,8 @@ namespace GameBoyAdvance {
         updateZeroFlag(result);
 
         ctx.reg[dst] = result;
+
+        ADVANCE_PC;
     }
 
     template <int op, int dst>
@@ -83,6 +91,9 @@ namespace GameBoyAdvance {
             ctx.reg[dst] = immediate_value;
             updateSignFlag(0);
             updateZeroFlag(immediate_value);
+
+            //TODO: handle this case in a more straight-forward manner?
+            ADVANCE_PC;
             return;//important!
 
         case 0b01: // CMP
@@ -108,6 +119,8 @@ namespace GameBoyAdvance {
 
         updateSignFlag(result);
         updateZeroFlag(result);
+
+        ADVANCE_PC;
     }
 
     template <int op>
@@ -240,6 +253,8 @@ namespace GameBoyAdvance {
             updateZeroFlag(ctx.reg[dst]);
             break;
         }
+
+        ADVANCE_PC;
     }
 
     template <int op, bool high1, bool high2>
@@ -258,7 +273,7 @@ namespace GameBoyAdvance {
         if (src == 15) {
             operand &= ~1;
         }
-            
+
         switch (op)
         {
         case 0: // ADD
@@ -283,15 +298,22 @@ namespace GameBoyAdvance {
                 ctx.cpsr &= ~MASK_THUMB;
                 ctx.r15 = operand & ~3;
             }
-            ctx.pipe.do_flush = true;
-            perform_check = false;
-            break;
+            refillPipeline();
+            return; // do not advance pc
+            // - OBSOLETE -
+            //ctx.pipe.do_flush = true;
+            //perform_check = false;
+            //break;
         }
 
         if (perform_check && dst == 15) {
-            ctx.reg[dst] &= ~1;
-            ctx.pipe.do_flush = true;
+            ctx.reg[dst] &= ~1; // TODO: use r15 directly
+            refillPipeline();
+            return; // do not advance pc
+            //ctx.pipe.do_flush = true;
         }
+
+        ADVANCE_PC;
     }
 
     template <int dst>
@@ -301,6 +323,8 @@ namespace GameBoyAdvance {
         u32 address = (ctx.r15 & ~2) + (imm << 2);
 
         ctx.reg[dst] = read32(address, M_NONE);
+
+        ADVANCE_PC;
     }
 
     template <int op, int off>
@@ -324,6 +348,8 @@ namespace GameBoyAdvance {
             ctx.reg[dst] = read8(address, M_NONE);
             break;
         }
+
+        ADVANCE_PC;
     }
 
     template <int op, int off>
@@ -347,6 +373,8 @@ namespace GameBoyAdvance {
             ctx.reg[dst] = read16(address, M_SIGNED);
             break;
         }
+
+        ADVANCE_PC;
     }
 
     template <int op, int imm>
@@ -377,6 +405,8 @@ namespace GameBoyAdvance {
             break;
         }
         }
+
+        ADVANCE_PC;
     }
 
     template <bool load, int imm>
@@ -391,6 +421,8 @@ namespace GameBoyAdvance {
         } else {
             write16(address, ctx.reg[dst], M_NONE);
         }
+
+        ADVANCE_PC;
     }
 
     template <bool load, int dst>
@@ -404,6 +436,8 @@ namespace GameBoyAdvance {
         } else {
             write32(address, ctx.reg[dst], M_NONE);
         }
+
+        ADVANCE_PC;
     }
 
     template <bool stackptr, int dst>
@@ -411,7 +445,7 @@ namespace GameBoyAdvance {
         // THUMB.12 Load address
         u32 address;
         u32 imm = (instruction & 0xFF) << 2;
-        
+
         if (stackptr) {
             address = ctx.reg[13];
         } else {
@@ -419,6 +453,8 @@ namespace GameBoyAdvance {
         }
 
         ctx.reg[dst] = address + imm;
+
+        ADVANCE_PC;
     }
 
     template <bool sub>
@@ -427,6 +463,8 @@ namespace GameBoyAdvance {
         u32 imm = (instruction & 0x7F) << 2;
 
         ctx.reg[13] += sub ? -imm : imm;
+
+        ADVANCE_PC;
     }
 
     template <bool pop, bool rbit>
@@ -449,20 +487,22 @@ namespace GameBoyAdvance {
 
         if (!pop) {
             int register_count = 0;
-            
+
             for (int i = 0; i <= 7; i++) {
                 if (register_list & (1 << i)) {
                     register_count++;
                 }
             }
-            
+
             if (rbit) {
                 register_count++;
             }
-            
+
             addr -= register_count << 2;
             ctx.reg[13] = addr;
         }
+
+        bool refilledPipeline = false;
 
         // perform load/store multiple
         for (int i = 0; i <= 7; i++) {
@@ -479,7 +519,9 @@ namespace GameBoyAdvance {
         if (rbit) {
             if (pop) {
                 ctx.r15 = read32(addr, M_NONE) & ~1;
-                ctx.pipe.do_flush = true;
+                refillPipeline();
+                refilledPipeline = true;
+                //ctx.pipe.do_flush = true;
             } else {
                 write32(addr, ctx.reg[14], M_NONE);
             }
@@ -489,6 +531,11 @@ namespace GameBoyAdvance {
         if (pop) {
             ctx.reg[13] = addr;
         }
+
+        // TODO: this is extremely mediocre...
+        if (refilledPipeline) return; // do not advance pc
+
+        ADVANCE_PC;
     }
 
     template <bool load, int base>
@@ -541,6 +588,8 @@ namespace GameBoyAdvance {
                 }
             }
         }
+
+        ADVANCE_PC;
     }
 
     template <int cond>
@@ -556,14 +605,17 @@ namespace GameBoyAdvance {
 
             // update r15/pc and flush pipe
             ctx.r15 += (signed_immediate << 1);
-            ctx.pipe.do_flush = true;
+            //ctx.pipe.do_flush = true;
+            refillPipeline();
+        } else {
+            ADVANCE_PC;
         }
     }
 
     void ARM::thumbInst17(u16 instruction) {
         // THUMB.17 Software Interrupt
         u8 call_number = read8(ctx.r15 - 4, M_NONE);
-        
+
         if (!fake_swi) {
             // save return address and program status
             ctx.bank[BANK_SVC][BANK_R14] = ctx.r15 - 2;
@@ -575,9 +627,11 @@ namespace GameBoyAdvance {
 
             // jump to exception vector
             ctx.r15 = EXCPT_SWI;
-            ctx.pipe.do_flush = true;
+            //ctx.pipe.do_flush = true;
+            refillPipeline();
         } else {
             handleSWI(call_number);
+            ADVANCE_PC;
         }
     }
 
@@ -592,7 +646,10 @@ namespace GameBoyAdvance {
 
         // update r15/pc and flush pipe
         ctx.r15 += imm;
-        ctx.pipe.do_flush = true;
+        refillPipeline();
+        //ctx.pipe.do_flush = true;
+
+        //ADVANCE_PC;
     }
 
     template <bool second_instruction>
@@ -606,6 +663,7 @@ namespace GameBoyAdvance {
                 imm |= 0xFF800000;
             }
             ctx.r14 = ctx.r15 + imm;
+            ADVANCE_PC;
         } else {
             u32 temp_pc = ctx.r15 - 2;
 
@@ -614,7 +672,8 @@ namespace GameBoyAdvance {
 
             // store return address and flush pipe.
             ctx.reg[14] = temp_pc | 1;
-            ctx.pipe.do_flush = true;
+            refillPipeline();
+            //ctx.pipe.do_flush = true;
         }
     }
 }

@@ -39,14 +39,14 @@ inline void ARM::step() {
 
         executeThumb(pipe.opcode[pipe.index]);
 
-        if (pipe.do_flush) {
-            refillPipeline();
-            return;
-        }
+        //if (pipe.do_flush) {
+        //    refillPipeline();
+        //    return;
+        //}
 
-        if (++pipe.index == 3) pipe.index = 0;
+        //if (++pipe.index == 3) pipe.index = 0;
 
-        ctx.r15 += 2;
+        //ctx.r15 += 2;
     } else {
         ctx.r15 &= ~3;
 
