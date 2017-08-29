@@ -280,7 +280,7 @@ namespace GameBoyAdvance {
         if (high2) src |= 8;
 
         operand = ctx.reg[src];
-        if (high2 && src == 15)
+        if (high2 && src == 15) {
             operand &= ~1;
         }
 
