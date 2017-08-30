@@ -389,6 +389,7 @@ namespace GameBoyAdvance {
                 waitcnt.ws0_s = (value >> 4) & 1;
                 waitcnt.ws1_n = (value >> 5) & 3;
                 waitcnt.ws1_s = (value >> 7) & 1;
+                calculateMemoryCycles();
                 break;
             }
             case WAITCNT+1: {
@@ -398,6 +399,7 @@ namespace GameBoyAdvance {
                 waitcnt.phi      = (value >> 3) & 3;
                 waitcnt.prefetch = (value >> 6) & 1;
                 waitcnt.cgb      = (value >> 7) & 1;
+                calculateMemoryCycles();
                 break;
             }
 

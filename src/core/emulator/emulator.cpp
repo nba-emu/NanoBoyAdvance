@@ -30,10 +30,10 @@ using namespace Util;
 
 namespace GameBoyAdvance {
 
-    constexpr int Emulator::ws_nseq[4];
-    constexpr int Emulator::ws_seq0[2];
-    constexpr int Emulator::ws_seq1[2];
-    constexpr int Emulator::ws_seq2[2];
+    constexpr int Emulator::s_ws_nseq[4];
+    constexpr int Emulator::s_ws_seq0[2];
+    constexpr int Emulator::s_ws_seq1[2];
+    constexpr int Emulator::s_ws_seq2[2];
 
     Emulator::Emulator(Config* config) : config(config), ppu(config), apu(config) {
         //// must be initialized *before* calling reset()
@@ -97,22 +97,24 @@ namespace GameBoyAdvance {
 
             // setup 8/16/32 bit access cycle LUT
             // TODO: use actual real values!
-            cycles[0x0] = 1; cycles32[0x0] = 1;
-            cycles[0x1] = 1; cycles32[0x1] = 1;
-            cycles[0x2] = 3; cycles32[0x2] = 6;
-            cycles[0x3] = 1; cycles32[0x3] = 1;
-            cycles[0x4] = 1; cycles32[0x4] = 1;
-            cycles[0x5] = 1; cycles32[0x5] = 2;
-            cycles[0x6] = 1; cycles32[0x6] = 2;
-            cycles[0x7] = 1; cycles32[0x7] = 1;
-            cycles[0x8] = 5; cycles32[0x8] = 8;
-            cycles[0x9] = 5; cycles32[0x9] = 8;
-            cycles[0xA] = 1; cycles32[0xA] = 1;
-            cycles[0xB] = 1; cycles32[0xB] = 1;
-            cycles[0xC] = 1; cycles32[0xC] = 1;
-            cycles[0xD] = 1; cycles32[0xD] = 1;
-            cycles[0xE] = 5; cycles32[0xE] = 5;
-            cycles[0xF] = 1; cycles32[0xF] = 1;
+            for (int i = 0; i < 2; i++) {
+                cycles[i][0x0] = 1; cycles32[i][0x0] = 1;
+                cycles[i][0x1] = 1; cycles32[i][0x1] = 1;
+                cycles[i][0x2] = 3; cycles32[i][0x2] = 6;
+                cycles[i][0x3] = 1; cycles32[i][0x3] = 1;
+                cycles[i][0x4] = 1; cycles32[i][0x4] = 1;
+                cycles[i][0x5] = 1; cycles32[i][0x5] = 2;
+                cycles[i][0x6] = 1; cycles32[i][0x6] = 2;
+                cycles[i][0x7] = 1; cycles32[i][0x7] = 1;
+                cycles[i][0x8] = 5; cycles32[i][0x8] = 8;
+                cycles[i][0x9] = 5; cycles32[i][0x9] = 8;
+                cycles[i][0xA] = 1; cycles32[i][0xA] = 1;
+                cycles[i][0xB] = 1; cycles32[i][0xB] = 1;
+                cycles[i][0xC] = 1; cycles32[i][0xC] = 1;
+                cycles[i][0xD] = 1; cycles32[i][0xD] = 1;
+                cycles[i][0xE] = 5; cycles32[i][0xE] = 5;
+                cycles[i][0xF] = 1; cycles32[i][0xF] = 1;
+            }
         }
 
         for (int i = 0; i < 4; i++) {
@@ -273,5 +275,36 @@ namespace GameBoyAdvance {
 
             timerStep(cycles_previous - cycles_left);
         }
+    }
+
+    // TODO: consider placing this in memory.hpp?
+    void Emulator::calculateMemoryCycles() {
+        const auto& waitcnt = regs.waitcnt;
+
+        // SRAM cycles. I assume it's the same for every type of access?
+        cycles[0][0xE]   = s_ws_nseq[waitcnt.sram];
+        cycles[1][0xE]   = s_ws_nseq[waitcnt.sram];
+        cycles32[0][0xE] = s_ws_nseq[waitcnt.sram];
+        cycles32[1][0xE] = s_ws_nseq[waitcnt.sram];
+
+        // WS0/WS1/WS2 non-sequential cycles
+        cycles[0][0x8] = cycles[0][0x9] = 1 + s_ws_nseq[waitcnt.ws0_n];
+        cycles[0][0xA] = cycles[0][0xB] = 1 + s_ws_nseq[waitcnt.ws1_n];
+        cycles[0][0xC] = cycles[0][0xD] = 1 + s_ws_nseq[waitcnt.ws2_n];
+
+        // WS0/WS1/WS2 sequential cycles
+        cycles[1][0x8] = cycles[1][0x9] = 1 + s_ws_seq0[waitcnt.ws0_s];
+        cycles[1][0xA] = cycles[1][0xB] = 1 + s_ws_seq1[waitcnt.ws1_s];
+        cycles[1][0xC] = cycles[1][0xD] = 1 + s_ws_seq2[waitcnt.ws2_s];
+
+        // WS0/WS1/WS2 32-bit non-sequential access: 1N access, 1S access
+        cycles32[0][0x8] = cycles32[0][0x9] = cycles[0][0x8] + cycles[1][0x8];
+        cycles32[0][0xA] = cycles32[0][0xB] = cycles[0][0xA] + cycles[1][0x8];
+        cycles32[0][0xC] = cycles32[0][0xD] = cycles[0][0xC] + cycles[1][0x8];
+
+        // WS0/WS1/WS2 32-bit sequential access: 2S accesses
+        cycles32[1][0x8] = cycles32[1][0x9] = cycles[1][0x8] * 2;
+        cycles32[1][0xA] = cycles32[1][0xB] = cycles[1][0xA] * 2;
+        cycles32[1][0xC] = cycles32[1][0xD] = cycles[1][0xC] * 2;
     }
 }

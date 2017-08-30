@@ -56,14 +56,14 @@ namespace GameBoyAdvance {
         int cycles_left;
 
         // cycle count LUTs
-        int cycles[16];
-        int cycles32[16];
+        int cycles  [2][16];
+        int cycles32[2][16];
 
         // cycle count configurations for different waitstates
-        static constexpr int ws_nseq[4] = { 4, 3, 2, 8 }; // non-sequential SRAM/WS0/WS1/WS2
-        static constexpr int ws_seq0[2] = { 2, 1 };       // sequential WS0
-        static constexpr int ws_seq1[2] = { 4, 1 };       // sequential WS1
-        static constexpr int ws_seq2[2] = { 8, 1 };       // sequential WS2
+        static constexpr int s_ws_nseq[4] = { 4, 3, 2, 8 }; // non-sequential SRAM/WS0/WS1/WS2
+        static constexpr int s_ws_seq0[2] = { 2, 1 };       // sequential WS0
+        static constexpr int s_ws_seq1[2] = { 4, 1 };       // sequential WS1
+        static constexpr int s_ws_seq2[2] = { 8, 1 };       // sequential WS2
 
         // subsystems
         PPU ppu;
@@ -144,6 +144,7 @@ namespace GameBoyAdvance {
         void timerIncrement(Timer& timer, int increment_count);
         void timerIncrementOnce(Timer& timer);
 
+        void calculateMemoryCycles();
     protected:
         // memory bus implementation
         #include "memory/memory.hpp"
