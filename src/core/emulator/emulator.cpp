@@ -96,25 +96,18 @@ namespace GameBoyAdvance {
             waitcnt.cgb      = 0;
 
             // setup 8/16/32 bit access cycle LUT
-            // TODO: use actual real values!
             for (int i = 0; i < 2; i++) {
                 cycles[i][0x0] = 1; cycles32[i][0x0] = 1;
                 cycles[i][0x1] = 1; cycles32[i][0x1] = 1;
-                cycles[i][0x2] = 3; cycles32[i][0x2] = 6;
+                cycles[i][0x2] = 3; cycles32[i][0x2] = 6; // BEWARE! - see 4000800h
                 cycles[i][0x3] = 1; cycles32[i][0x3] = 1;
                 cycles[i][0x4] = 1; cycles32[i][0x4] = 1;
                 cycles[i][0x5] = 1; cycles32[i][0x5] = 2;
                 cycles[i][0x6] = 1; cycles32[i][0x6] = 2;
                 cycles[i][0x7] = 1; cycles32[i][0x7] = 1;
-                cycles[i][0x8] = 5; cycles32[i][0x8] = 8;
-                cycles[i][0x9] = 5; cycles32[i][0x9] = 8;
-                cycles[i][0xA] = 1; cycles32[i][0xA] = 1;
-                cycles[i][0xB] = 1; cycles32[i][0xB] = 1;
-                cycles[i][0xC] = 1; cycles32[i][0xC] = 1;
-                cycles[i][0xD] = 1; cycles32[i][0xD] = 1;
-                cycles[i][0xE] = 5; cycles32[i][0xE] = 5;
                 cycles[i][0xF] = 1; cycles32[i][0xF] = 1;
             }
+            calculateMemoryCycles();
         }
 
         for (int i = 0; i < 4; i++) {
