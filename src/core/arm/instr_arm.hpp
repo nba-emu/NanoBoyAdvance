@@ -7,12 +7,12 @@
   * it under the terms of the GNU General Public License as published by
   * the Free Software Foundation, either version 3 of the License, or
   * (at your option) any later version.
-  * 
+  *
   * NanoboyAdvance is distributed in the hope that it will be useful,
   * but WITHOUT ANY WARRANTY; without even the implied warranty of
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   * GNU General Public License for more details.
-  * 
+  *
   * You should have received a copy of the GNU General Public License
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
@@ -27,6 +27,10 @@ inline void executeARM(u32 instruction) {
     if (checkCondition(condition)) {
         int index = ((instruction >> 16) & 0xFF0) | ((instruction >> 4) & 0xF);
         (this->*arm_lut[index])(instruction);
+    } else {
+        // eh kinda redundant
+        if (++ctx.pipe.index == 3) ctx.pipe.index = 0;
+        ctx.r15 += 4; // use constant
     }
 }
 

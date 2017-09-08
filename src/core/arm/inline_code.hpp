@@ -48,15 +48,6 @@ inline void ARM::step() {
         }
 
         executeARM(pipe.opcode[pipe.index]);
-
-        if (pipe.do_flush) {
-            refillPipeline();
-            return;
-        }
-
-        if (++pipe.index == 3) pipe.index = 0;
-
-        ctx.r15 += 4;
     }
 }
 

@@ -7,12 +7,12 @@
   * it under the terms of the GNU General Public License as published by
   * the Free Software Foundation, either version 3 of the License, or
   * (at your option) any later version.
-  * 
+  *
   * NanoboyAdvance is distributed in the hope that it will be useful,
   * but WITHOUT ANY WARRANTY; without even the implied warranty of
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   * GNU General Public License for more details.
-  * 
+  *
   * You should have received a copy of the GNU General Public License
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
@@ -22,8 +22,17 @@
 
 using namespace Util;
 
+#define ADVANCE_PC {\
+    if (ctx.pipe.do_flush) {\
+        refillPipeline();\
+        return;\
+    }\
+    if (++ctx.pipe.index == 3) ctx.pipe.index = 0;\
+    ctx.r15 += 4;\
+}
+
 namespace GameBoyAdvance {
-    
+
     #include "tables/op_arm.hpp"
 
     template <bool immediate, int opcode, bool _set_flags, int field4>
@@ -56,7 +65,7 @@ namespace GameBoyAdvance {
 
             if (!shift_immediate) {
                 amount = ctx.reg[(instruction >> 8) & 0xF];
-                
+
                 if (reg_op1 == 15) op1 += 4;
                 if (reg_op2 == 15) op2 += 4;
                 //cycles++;
@@ -285,6 +294,8 @@ namespace GameBoyAdvance {
             break;
         }
         }
+
+        ADVANCE_PC;
     }
 
     template <bool immediate, bool use_spsr, bool to_status>
@@ -307,7 +318,7 @@ namespace GameBoyAdvance {
             } else {
                 op = ctx.reg[instruction & 0xF];
             }
-            
+
             u32 value = op & mask;
 
             // write to cpsr or spsr
@@ -322,9 +333,12 @@ namespace GameBoyAdvance {
             }
         } else {
             int dst = (instruction >> 12) & 0xF;
-            
+
             ctx.reg[dst] = use_spsr ? *ctx.p_spsr : ctx.cpsr;
         }
+
+        // TODO: keep in mind that MSR can change the thumb bit!
+        ADVANCE_PC;
     }
 
     template <bool accumulate, bool set_flags>
@@ -347,6 +361,8 @@ namespace GameBoyAdvance {
         }
 
         ctx.reg[dst] = result;
+
+        ADVANCE_PC;
     }
 
     template <bool sign_extend, bool accumulate, bool set_flags>
@@ -391,6 +407,8 @@ namespace GameBoyAdvance {
             updateSignFlag(result_hi);
             updateZeroFlag(result);
         }
+
+        ADVANCE_PC;
     }
 
     template <bool swap_byte>
@@ -409,6 +427,8 @@ namespace GameBoyAdvance {
         }
 
         ctx.reg[dst] = tmp;
+
+        ADVANCE_PC;
     }
 
     void ARM::branchExchangeARM(u32 instruction) {
@@ -422,6 +442,8 @@ namespace GameBoyAdvance {
         } else {
             ctx.r15 = addr & ~3;
         }
+
+        ADVANCE_PC;
     }
 
     template <bool pre_indexed, bool base_increment, bool immediate, bool write_back, bool load, int opcode>
@@ -475,6 +497,8 @@ namespace GameBoyAdvance {
             }
             ctx.reg[base] = addr;
         }
+
+        ADVANCE_PC;
     }
 
     template <bool immediate, bool pre_indexed, bool base_increment, bool byte, bool write_back, bool load>
@@ -510,7 +534,7 @@ namespace GameBoyAdvance {
 
         if (load) {
             ctx.reg[dst] = byte ? read8(addr, M_NONE) : read32(addr, M_ROTATE);
-            
+
             // writes to r15 require a pipeline flush.
             if (dst == 15) {
                 ctx.pipe.do_flush = true;
@@ -545,6 +569,8 @@ namespace GameBoyAdvance {
                 ctx.reg[base] = addr;
             }
         }
+
+        ADVANCE_PC;
     }
 
     void ARM::undefinedInstARM(u32 instruction) {
@@ -559,6 +585,8 @@ namespace GameBoyAdvance {
         // jump to exception vector
         ctx.r15 = EXCPT_UNDEFINED;
         ctx.pipe.do_flush = true;
+
+        ADVANCE_PC;
     }
 
     template <bool _pre_indexed, bool base_increment, bool user_mode, bool _write_back, bool load>
@@ -620,7 +648,7 @@ namespace GameBoyAdvance {
                 continue;
             }
 
-            if (pre_indexed) { 
+            if (pre_indexed) {
                 addr += 4;
             }
 
@@ -651,14 +679,16 @@ namespace GameBoyAdvance {
                 addr += 4;
             }
 
-            if (write_back) { 
-                ctx.reg[base] = addr; 
+            if (write_back) {
+                ctx.reg[base] = addr;
             }
         }
 
         if (mode_switched) {
             switchMode(old_mode);
         }
+
+        ADVANCE_PC;
     }
 
     template <bool link>
@@ -668,13 +698,15 @@ namespace GameBoyAdvance {
         if (off & 0x800000) {
             off |= 0xFF000000;
         }
-        
-        if (link) { 
+
+        if (link) {
             ctx.reg[14] = ctx.r15 - 4;
         }
-        
+
         ctx.r15 += off << 2;
         ctx.pipe.do_flush = true;
+
+        ADVANCE_PC; //
     }
 
     void ARM::swiARM(u32 instruction) {
@@ -695,5 +727,7 @@ namespace GameBoyAdvance {
         } else {
             handleSWI(call_number);
         }
+
+        ADVANCE_PC;
     }
 }
