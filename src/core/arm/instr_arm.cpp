@@ -22,14 +22,21 @@
 
 using namespace Util;
 
-#define ADVANCE_PC {\
-    if (ctx.pipe.do_flush) {\
-        refillPipeline();\
-        return;\
-    }\
+#define ADVANCE_PC \
     if (++ctx.pipe.index == 3) ctx.pipe.index = 0;\
-    ctx.r15 += 4;\
-}
+    ctx.r15 += 4;
+
+#define REFILL_PIPELINE_A \
+    ctx.pipe.index     = 0;\
+    ctx.pipe.opcode[0] = busRead32(ctx.r15,     M_NONSEQ);\
+    ctx.pipe.opcode[1] = busRead32(ctx.r15 + 4, M_SEQ);\
+    ctx.r15 += 8;
+
+#define REFILL_PIPELINE_T \
+    ctx.pipe.index     = 0;\
+    ctx.pipe.opcode[0] = busRead16(ctx.r15,     M_NONSEQ);\
+    ctx.pipe.opcode[1] = busRead16(ctx.r15 + 2, M_SEQ);\
+    ctx.r15 += 4;
 
 namespace GameBoyAdvance {
 
@@ -83,7 +90,6 @@ namespace GameBoyAdvance {
                 ctx.cpsr = spsr;
                 set_flags = false;
             }
-            ctx.pipe.do_flush = true;
         }
 
         switch (opcode) {
@@ -295,7 +301,15 @@ namespace GameBoyAdvance {
         }
         }
 
-        ADVANCE_PC;
+        if (reg_dst == 15) {
+            if (ctx.cpsr & MASK_THUMB) {
+                REFILL_PIPELINE_T;
+            } else {
+                REFILL_PIPELINE_A;
+            }
+        } else {
+            ADVANCE_PC;
+        }
     }
 
     template <bool immediate, bool use_spsr, bool to_status>
@@ -434,16 +448,14 @@ namespace GameBoyAdvance {
     void ARM::branchExchangeARM(u32 instruction) {
         u32 addr = ctx.reg[instruction & 0xF];
 
-        ctx.pipe.do_flush = true;
-
         if (addr & 1) {
             ctx.r15 = addr & ~1;
             ctx.cpsr |= MASK_THUMB;
+            REFILL_PIPELINE_T;
         } else {
             ctx.r15 = addr & ~3;
+            REFILL_PIPELINE_A;
         }
-
-        ADVANCE_PC;
     }
 
     template <bool pre_indexed, bool base_increment, bool immediate, bool write_back, bool load, int opcode>
@@ -533,11 +545,10 @@ namespace GameBoyAdvance {
         }
 
         if (load) {
-            ctx.reg[dst] = byte ? read8(addr, M_NONE) : read32(addr, M_ROTATE);
-
-            // writes to r15 require a pipeline flush.
-            if (dst == 15) {
-                ctx.pipe.do_flush = true;
+            if (byte) {
+                ctx.reg[dst] = read8(addr, M_NONE);
+            } else {
+                ctx.reg[dst] = read32(addr, M_ROTATE);
             }
         } else {
             u32 value = ctx.reg[dst];
@@ -564,13 +575,17 @@ namespace GameBoyAdvance {
                     switchMode(old_mode);
                 }
             }
-            else if (write_back)
-            {
+            else if (write_back) {
                 ctx.reg[base] = addr;
             }
         }
 
-        ADVANCE_PC;
+        // writes to r15 require a pipeline flush.
+        if (load && dst == 15) { // eh
+            REFILL_PIPELINE_A;
+        } else {
+            ADVANCE_PC;
+        }
     }
 
     void ARM::undefinedInstARM(u32 instruction) {
@@ -584,9 +599,8 @@ namespace GameBoyAdvance {
 
         // jump to exception vector
         ctx.r15 = EXCPT_UNDEFINED;
-        ctx.pipe.do_flush = true;
 
-        ADVANCE_PC;
+        REFILL_PIPELINE_A;
     }
 
     template <bool _pre_indexed, bool base_increment, bool user_mode, bool _write_back, bool load>
@@ -603,17 +617,7 @@ namespace GameBoyAdvance {
         Mode old_mode;
         bool mode_switched = false;
 
-        /*// hardware corner case. not sure if emulated correctly.
-        if (register_list == 0) {
-            if (load) {
-                ctx.r15 = read32(ctx.reg[base], M_NONE);
-                ctx.pipe.do_flush = true;
-            } else {
-                write32(ctx.reg[base], ctx.r15, M_NONE);
-            }
-            ctx.reg[base] += base_increment ? 64 : -64;
-            return;
-        }*/
+        // TODO: emulate empty register list
 
         if (user_mode && (!load || !transfer_r15)) {
             old_mode = static_cast<Mode>(ctx.cpsr & MASK_MODE);
@@ -665,7 +669,6 @@ namespace GameBoyAdvance {
                         switchMode(static_cast<Mode>(spsr & MASK_MODE));
                         ctx.cpsr = spsr;
                     }
-                    ctx.pipe.do_flush = true;
                 }
             } else {
                 if (i == first_register && i == base) {
@@ -688,7 +691,16 @@ namespace GameBoyAdvance {
             switchMode(old_mode);
         }
 
-        ADVANCE_PC;
+        // must reload pipeline if r15 was overwritten
+        if (load && (register_list & (1 << 15))) {
+            if (ctx.cpsr & MASK_THUMB) {
+                REFILL_PIPELINE_T;
+            } else {
+                REFILL_PIPELINE_A;
+            }
+        } else {
+            ADVANCE_PC;
+        }
     }
 
     template <bool link>
@@ -704,9 +716,8 @@ namespace GameBoyAdvance {
         }
 
         ctx.r15 += off << 2;
-        ctx.pipe.do_flush = true;
 
-        ADVANCE_PC; //
+        REFILL_PIPELINE_A;
     }
 
     void ARM::swiARM(u32 instruction) {
@@ -723,11 +734,10 @@ namespace GameBoyAdvance {
 
             // jump to exception vector
             ctx.r15 = EXCPT_SWI;
-            ctx.pipe.do_flush = true;
+            REFILL_PIPELINE_A;
         } else {
             handleSWI(call_number);
+            ADVANCE_PC;
         }
-
-        ADVANCE_PC;
     }
 }
