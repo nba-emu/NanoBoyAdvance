@@ -437,9 +437,9 @@ namespace GameBoyAdvance {
         u32 address = ctx.reg[13] + (imm << 2);
 
         if (load) {
-            ctx.reg[dst] = read32(address, M_ROTATE);
+            ctx.reg[dst] = read32(address, M_NONSEQ | M_ROTATE);
         } else {
-            write32(address, ctx.reg[dst], M_NONE);
+            write32(address, ctx.reg[dst], M_NONSEQ);
         }
 
         ADVANCE_PC;
