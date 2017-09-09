@@ -149,6 +149,10 @@ namespace GameBoyAdvance {
         // memory bus implementation
         #include "memory/memory.hpp"
 
+        void busInternalCycles(int count) {
+            cycles_left -= count;
+        }
+
         void handleSWI(int number) final {};
     };
 }

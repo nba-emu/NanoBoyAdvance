@@ -438,6 +438,7 @@ namespace GameBoyAdvance {
 
         if (load) {
             ctx.reg[dst] = read32(address, M_NONSEQ | M_ROTATE);
+            busInternalCycles(1); // test
         } else {
             write32(address, ctx.reg[dst], M_NONSEQ);
         }
