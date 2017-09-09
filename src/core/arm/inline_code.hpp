@@ -30,13 +30,6 @@ inline void ARM::step() {
 
     if (ctx.cpsr & MASK_THUMB) {
         ctx.r15 &= ~1;
-
-        if (pipe.index == 0) {
-            pipe.opcode[2] = busRead16(ctx.r15, M_SEQ);
-        } else {
-            pipe.opcode[pipe.index - 1] = busRead16(ctx.r15, M_SEQ);
-        }
-
         executeThumb(pipe.opcode[pipe.index]);
     } else {
         ctx.r15 &= ~3;
