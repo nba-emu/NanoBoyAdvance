@@ -261,13 +261,16 @@ namespace GameBoyAdvance {
             updateSignFlag(ctx.reg[dst]);
             updateZeroFlag(ctx.reg[dst]);
             break;
-        case 0b1101: // MUL
-            // TODO: how to calc. the internal cycles?
+        case 0b1101: {// MUL
+            // TODO: calculate internal cycles
             ctx.reg[dst] *= ctx.reg[src];
+
+            // calculate flags - is the carry flag really cleared?
             updateSignFlag(ctx.reg[dst]);
             updateZeroFlag(ctx.reg[dst]);
             updateCarryFlag(false);
             break;
+        }
         case 0b1110: // BIC
             ctx.reg[dst] &= ~(ctx.reg[src]);
             updateSignFlag(ctx.reg[dst]);
