@@ -155,7 +155,7 @@ u32 busRead32(u32 address, int flags) final {
     const int page = (address >> 24) & 15;
 
     // poor mans cycle counting
-    cycles_left -= cycles32[(flags & M_SEQ)?1:0][page];
+    cycles_left -= cycles32[flags & M_SEQ][page];
 
     switch (page) {
         case 0x0: {
@@ -285,7 +285,7 @@ void busWrite32(u32 address, u32 value, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
-    cycles_left -= cycles32[(flags & M_SEQ)?1:0][page];
+    cycles_left -= cycles32[flags & M_SEQ][page];
 
     switch (page) {
         case 0x2: WRITE_FAST_32(memory.wram, address & 0x3FFFF, value); break;
