@@ -49,11 +49,13 @@ auto readBIOS(u32 address) -> u32 {
     return memory.bios_opcode = READ_FAST_32(memory.bios, address);
 }
 
+// CAREFUL: "flags & M_SEQ" only works because M_SEQ currently equals to "1".
+
 u8 busRead8(u32 address, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
-    cycles_left -= cycles[(flags & M_SEQ)?1:0][page];
+    cycles_left -= cycles[flags & M_SEQ][page];
 
     switch (page) {
         case 0x0: {
@@ -97,7 +99,7 @@ u16 busRead16(u32 address, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
-    cycles_left -= cycles[(flags & M_SEQ)?1:0][page];
+    cycles_left -= cycles[flags & M_SEQ][page];
 
     switch (page) {
         case 0x0: {
@@ -201,7 +203,7 @@ void busWrite8(u32 address, u8 value, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
-    cycles_left -= cycles[(flags & M_SEQ)?1:0][page];
+    cycles_left -= cycles[flags & M_SEQ][page];
 
     switch (page) {
         case 0x2: WRITE_FAST_8(memory.wram, address & 0x3FFFF, value); break;
@@ -235,7 +237,7 @@ void busWrite16(u32 address, u16 value, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
-    cycles_left -= cycles[(flags & M_SEQ)?1:0][page];
+    cycles_left -= cycles[flags & M_SEQ][page];
 
     switch (page) {
         case 0x2: WRITE_FAST_16(memory.wram, address & 0x3FFFF, value); break;

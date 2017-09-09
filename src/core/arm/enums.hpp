@@ -98,12 +98,12 @@ namespace GameBoyAdvance {
     enum MemoryFlags {
         M_NONE   = 0,
 
-        // Use for debug/internal accesses
-        M_DEBUG  = (1 << 0),
-
         // (Non-)Sequential Accesses
-        M_SEQ    = (1 << 1),
-        M_NONSEQ = (1 << 2),
+        M_SEQ    = (1 << 0),
+        M_NONSEQ = (1 << 1),
+
+        // Use for debug/internal accesses
+        M_DEBUG  = (1 << 2),
 
         M_SIGNED = (1 << 3),
         M_ROTATE = (1 << 4),

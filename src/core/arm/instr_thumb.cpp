@@ -578,11 +578,11 @@ namespace GameBoyAdvance {
         u32 address = ctx.reg[base];
         int register_list = instruction & 0xFF;
 
-        PREFETCH_T(M_SEQ); // TODO: order!
-
         // TODO: emulate empty register list
 
         if (load) {
+            PREFETCH_T(M_SEQ);
+
             for (int i = 0; i <= 7; i++) {
                 if (register_list & (1<<i)) {
                     ctx.reg[i] = read32(address, M_NONE);
@@ -596,16 +596,21 @@ namespace GameBoyAdvance {
         } else {
             int first_register = -1;
 
+            PREFETCH_T(M_NONSEQ);
+
             for (int i = 0; i <= 7; i++) {
                 if (register_list & (1<<i)) {
+                    int access_type = M_SEQ; // ewww
+
                     if (first_register == -1) {
                         first_register = i;
+                        access_type = M_NONSEQ;
                     }
 
                     if (i == base && i == first_register) {
-                        write32(ctx.reg[base], address, M_NONE);
+                        write32(ctx.reg[base], address, access_type);
                     } else {
-                        write32(ctx.reg[base], ctx.reg[i], M_NONE);
+                        write32(ctx.reg[base], ctx.reg[i], access_type);
                     }
 
                     ctx.reg[base] += 4;
