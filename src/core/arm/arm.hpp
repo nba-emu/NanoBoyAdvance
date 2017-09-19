@@ -49,6 +49,7 @@ namespace GameBoyAdvance {
         }
 
     protected:
+        virtual void busInternalCycles(int count) {}
 
         // System Read Methods
         virtual u8  busRead8 (u32 address, int flags) { return 0; }

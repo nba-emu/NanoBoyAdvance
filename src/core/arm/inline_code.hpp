@@ -30,42 +30,17 @@ inline void ARM::step() {
 
     if (ctx.cpsr & MASK_THUMB) {
         ctx.r15 &= ~1;
-
-        if (pipe.index == 0) {
-            pipe.opcode[2] = busRead16(ctx.r15, M_NONE);
-        } else {
-            pipe.opcode[pipe.index - 1] = busRead16(ctx.r15, M_NONE);
-        }
-
         executeThumb(pipe.opcode[pipe.index]);
-
-        if (pipe.do_flush) {
-            refillPipeline();
-            return;
-        }
-
-        if (++pipe.index == 3) pipe.index = 0;
-
-        ctx.r15 += 2;
     } else {
         ctx.r15 &= ~3;
 
         if (pipe.index == 0) {
-            pipe.opcode[2] = busRead32(ctx.r15, M_NONE);
+            pipe.opcode[2] = busRead32(ctx.r15, M_SEQ);
         } else {
-            pipe.opcode[pipe.index - 1] = busRead32(ctx.r15, M_NONE);
+            pipe.opcode[pipe.index - 1] = busRead32(ctx.r15, M_SEQ);
         }
 
         executeARM(pipe.opcode[pipe.index]);
-
-        if (pipe.do_flush) {
-            refillPipeline();
-            return;
-        }
-
-        if (++pipe.index == 3) pipe.index = 0;
-
-        ctx.r15 += 4;
     }
 }
 
@@ -271,15 +246,15 @@ inline void ARM::write32(u32 address, u32 value, int flags) {
 
 inline void ARM::refillPipeline() {
     if (ctx.cpsr & MASK_THUMB) {
-        ctx.pipe.opcode[0] = busRead16(ctx.r15, M_NONE);
-        ctx.pipe.opcode[1] = busRead16(ctx.r15 + 2, M_NONE);
+        ctx.pipe.opcode[0] = busRead16(ctx.r15,     M_NONSEQ);
+        ctx.pipe.opcode[1] = busRead16(ctx.r15 + 2, M_SEQ);
         ctx.r15 += 4;
     } else {
-        ctx.pipe.opcode[0] = busRead32(ctx.r15, M_NONE);
-        ctx.pipe.opcode[1] = busRead32(ctx.r15 + 4, M_NONE);
+        ctx.pipe.opcode[0] = busRead32(ctx.r15,     M_NONSEQ);
+        ctx.pipe.opcode[1] = busRead32(ctx.r15 + 4, M_SEQ);
         ctx.r15 += 8;
     }
-    
+
     ctx.pipe.index = 0;
     ctx.pipe.do_flush = false;
 }

@@ -39,17 +39,7 @@
 #define IS_EEPROM_ACCESS(address) memory.rom.save && cart->type == SAVE_EEPROM &&\
                                   ((~memory.rom.size & 0x02000000) || address >= 0x0DFFFF00)
 
-// Cycle-LUT for byte and hword accesses
-static constexpr int cycles[16] = {
-    1, 1, 3, 1, 1, 1, 1, 1, 5, 5, 1, 1, 1, 1, 5, 1
-};
-
-// Cycles-LUT for word accesses
-static constexpr int cycles32[16] = {
-    1, 1, 6, 1, 1, 2, 2, 1, 8, 8, 1, 1, 1, 1, 5, 1
-};
-
-auto read_bios(u32 address) -> u32 {
+auto readBIOS(u32 address) -> u32 {
     if (address >= 0x4000) {
         return 0;
     }
@@ -59,15 +49,17 @@ auto read_bios(u32 address) -> u32 {
     return memory.bios_opcode = READ_FAST_32(memory.bios, address);
 }
 
+// CAREFUL: "flags & M_SEQ" only works because M_SEQ currently equals to "1".
+
 u8 busRead8(u32 address, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
-    cycles_left -= cycles[page];
+    cycles_left -= cycles[flags & M_SEQ][page];
 
     switch (page) {
         case 0x0: {
-            return read_bios(address);
+            return readBIOS(address);
         }
         case 0x2: return READ_FAST_8(memory.wram, address & 0x3FFFF);
         case 0x3: return READ_FAST_8(memory.iram, address & 0x7FFF );
@@ -107,11 +99,11 @@ u16 busRead16(u32 address, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
-    cycles_left -= cycles[page];
+    cycles_left -= cycles[flags & M_SEQ][page];
 
     switch (page) {
         case 0x0: {
-            return read_bios(address);
+            return readBIOS(address);
         }
         case 0x2: return READ_FAST_16(memory.wram, address & 0x3FFFF);
         case 0x3: return READ_FAST_16(memory.iram, address & 0x7FFF );
@@ -163,11 +155,11 @@ u32 busRead32(u32 address, int flags) final {
     const int page = (address >> 24) & 15;
 
     // poor mans cycle counting
-    cycles_left -= cycles32[page];
+    cycles_left -= cycles32[flags & M_SEQ][page];
 
     switch (page) {
         case 0x0: {
-            return read_bios(address);
+            return readBIOS(address);
         }
         case 0x2: return READ_FAST_32(memory.wram, address & 0x3FFFF);
         case 0x3: return READ_FAST_32(memory.iram, address & 0x7FFF );
@@ -211,7 +203,7 @@ void busWrite8(u32 address, u8 value, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
-    cycles_left -= cycles[page];
+    cycles_left -= cycles[flags & M_SEQ][page];
 
     switch (page) {
         case 0x2: WRITE_FAST_8(memory.wram, address & 0x3FFFF, value); break;
@@ -245,7 +237,7 @@ void busWrite16(u32 address, u16 value, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
-    cycles_left -= cycles[page];
+    cycles_left -= cycles[flags & M_SEQ][page];
 
     switch (page) {
         case 0x2: WRITE_FAST_16(memory.wram, address & 0x3FFFF, value); break;
@@ -293,7 +285,7 @@ void busWrite32(u32 address, u32 value, int flags) final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
-    cycles_left -= cycles32[page];
+    cycles_left -= cycles32[flags & M_SEQ][page];
 
     switch (page) {
         case 0x2: WRITE_FAST_32(memory.wram, address & 0x3FFFF, value); break;

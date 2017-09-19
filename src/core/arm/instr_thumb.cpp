@@ -7,12 +7,12 @@
   * it under the terms of the GNU General Public License as published by
   * the Free Software Foundation, either version 3 of the License, or
   * (at your option) any later version.
-  * 
+  *
   * NanoboyAdvance is distributed in the hope that it will be useful,
   * but WITHOUT ANY WARRANTY; without even the implied warranty of
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   * GNU General Public License for more details.
-  * 
+  *
   * You should have received a copy of the GNU General Public License
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
@@ -22,8 +22,31 @@
 
 using namespace Util;
 
+#define PREFETCH_T(accessType) \
+    if (ctx.pipe.index == 0) {\
+        ctx.pipe.opcode[2] = busRead16(ctx.r15, accessType);\
+    } else {\
+        ctx.pipe.opcode[ctx.pipe.index - 1] = busRead16(ctx.r15, accessType);\
+    }
+
+#define ADVANCE_PC \
+    if (++ctx.pipe.index == 3) ctx.pipe.index = 0;\
+    ctx.r15 += 2;
+
+#define REFILL_PIPELINE_A \
+    ctx.pipe.index     = 0;\
+    ctx.pipe.opcode[0] = busRead32(ctx.r15,     M_NONSEQ);\
+    ctx.pipe.opcode[1] = busRead32(ctx.r15 + 4, M_SEQ);\
+    ctx.r15 += 8;
+
+#define REFILL_PIPELINE_T \
+    ctx.pipe.index     = 0;\
+    ctx.pipe.opcode[0] = busRead16(ctx.r15,     M_NONSEQ);\
+    ctx.pipe.opcode[1] = busRead16(ctx.r15 + 2, M_SEQ);\
+    ctx.r15 += 4;
+
 namespace GameBoyAdvance {
-    
+
     #include "tables/op_thumb.hpp"
 
     template <int imm, int type>
@@ -33,6 +56,8 @@ namespace GameBoyAdvance {
         int src = (instruction >> 3) & 7;
         bool carry = ctx.cpsr & MASK_CFLAG;
 
+        PREFETCH_T(M_SEQ);
+
         ctx.reg[dst] = ctx.reg[src];
 
         applyShift(type, ctx.reg[dst], imm, carry, true);
@@ -41,6 +66,8 @@ namespace GameBoyAdvance {
         updateCarryFlag(carry);
         updateSignFlag(ctx.reg[dst]);
         updateZeroFlag(ctx.reg[dst]);
+
+        ADVANCE_PC;
     }
 
     template <bool immediate, bool subtract, int field3>
@@ -49,6 +76,8 @@ namespace GameBoyAdvance {
         u32 operand, result;
         int dst = instruction & 7;
         int src = (instruction >> 3) & 7;
+
+        PREFETCH_T(M_SEQ);
 
         // either a register or an immediate value
         operand = immediate ? field3 : ctx.reg[field3];
@@ -70,6 +99,8 @@ namespace GameBoyAdvance {
         updateZeroFlag(result);
 
         ctx.reg[dst] = result;
+
+        ADVANCE_PC;
     }
 
     template <int op, int dst>
@@ -78,11 +109,16 @@ namespace GameBoyAdvance {
         u32 result;
         u32 immediate_value = instruction & 0xFF;
 
+        PREFETCH_T(M_SEQ);
+
         switch (op) {
         case 0b00: // MOV
             ctx.reg[dst] = immediate_value;
             updateSignFlag(0);
             updateZeroFlag(immediate_value);
+
+            //TODO: handle this case in a more straight-forward manner?
+            ADVANCE_PC;
             return;//important!
 
         case 0b01: // CMP
@@ -108,14 +144,17 @@ namespace GameBoyAdvance {
 
         updateSignFlag(result);
         updateZeroFlag(result);
+
+        ADVANCE_PC;
     }
 
     template <int op>
-    void ARM::thumbInst4(u16 instruction)
-    {
+    void ARM::thumbInst4(u16 instruction) {
         // THUMB.4 ALU operations
         int dst = instruction & 7;
         int src = (instruction >> 3) & 7;
+
+        PREFETCH_T(M_SEQ);
 
         switch (op) {
         case 0b0000: // AND
@@ -222,13 +261,16 @@ namespace GameBoyAdvance {
             updateSignFlag(ctx.reg[dst]);
             updateZeroFlag(ctx.reg[dst]);
             break;
-        case 0b1101: // MUL
-            // TODO: how to calc. the internal cycles?
+        case 0b1101: {// MUL
+            // TODO: calculate internal cycles
             ctx.reg[dst] *= ctx.reg[src];
+
+            // calculate flags - is the carry flag really cleared?
             updateSignFlag(ctx.reg[dst]);
             updateZeroFlag(ctx.reg[dst]);
             updateCarryFlag(false);
             break;
+        }
         case 0b1110: // BIC
             ctx.reg[dst] &= ~(ctx.reg[src]);
             updateSignFlag(ctx.reg[dst]);
@@ -240,27 +282,29 @@ namespace GameBoyAdvance {
             updateZeroFlag(ctx.reg[dst]);
             break;
         }
+
+        ADVANCE_PC;
     }
 
     template <int op, bool high1, bool high2>
-    void ARM::thumbInst5(u16 instruction)
-    {
+    void ARM::thumbInst5(u16 instruction) {
         // THUMB.5 Hi register operations/branch exchange
         u32 operand;
         bool perform_check = true;
         int dst = instruction & 7;
         int src = (instruction >> 3) & 7;
 
+        PREFETCH_T(M_SEQ);
+
         if (high1) dst |= 8;
         if (high2) src |= 8;
 
         operand = ctx.reg[src];
-        if (src == 15) {
+        if (high2 && src == 15) {
             operand &= ~1;
         }
-            
-        switch (op)
-        {
+
+        switch (op) {
         case 0: // ADD
             ctx.reg[dst] += operand;
             break;
@@ -279,19 +323,22 @@ namespace GameBoyAdvance {
         case 3: // BX
             if (operand & 1) {
                 ctx.r15 = operand & ~1;
+                REFILL_PIPELINE_T;
             } else {
                 ctx.cpsr &= ~MASK_THUMB;
                 ctx.r15 = operand & ~3;
+                REFILL_PIPELINE_A;
             }
-            ctx.pipe.do_flush = true;
-            perform_check = false;
-            break;
+            return; // do not advance pc
         }
 
         if (perform_check && dst == 15) {
-            ctx.reg[dst] &= ~1;
-            ctx.pipe.do_flush = true;
+            ctx.reg[dst] &= ~1; // TODO: use r15 directly
+            REFILL_PIPELINE_T;
+            return; // do not advance pc
         }
+
+        ADVANCE_PC;
     }
 
     template <int dst>
@@ -300,7 +347,10 @@ namespace GameBoyAdvance {
         u32 imm     = instruction & 0xFF;
         u32 address = (ctx.r15 & ~2) + (imm << 2);
 
-        ctx.reg[dst] = read32(address, M_NONE);
+        PREFETCH_T(M_NONSEQ);
+        busInternalCycles(1);
+        ctx.reg[dst] = read32(address, M_NONSEQ);
+        ADVANCE_PC;
     }
 
     template <int op, int off>
@@ -310,20 +360,26 @@ namespace GameBoyAdvance {
         int base = (instruction >> 3) & 7;
         u32 address = ctx.reg[base] + ctx.reg[off];
 
+        PREFETCH_T(M_NONSEQ);
+
         switch (op) {
         case 0b00: // STR
-            write32(address, ctx.reg[dst], M_NONE);
+            write32(address, ctx.reg[dst], M_NONSEQ);
             break;
         case 0b01: // STRB
-            write8(address, (u8)ctx.reg[dst], M_NONE);
+            write8(address, (u8)ctx.reg[dst], M_NONSEQ);
             break;
         case 0b10: // LDR
-            ctx.reg[dst] = read32(address, M_ROTATE);
+            busInternalCycles(1);
+            ctx.reg[dst] = read32(address, M_NONSEQ | M_ROTATE);
             break;
         case 0b11: // LDRB
-            ctx.reg[dst] = read8(address, M_NONE);
+            busInternalCycles(1);
+            ctx.reg[dst] = read8(address, M_NONSEQ);
             break;
         }
+
+        ADVANCE_PC;
     }
 
     template <int op, int off>
@@ -333,20 +389,27 @@ namespace GameBoyAdvance {
         int base = (instruction >> 3) & 7;
         u32 address = ctx.reg[base] + ctx.reg[off];
 
+        PREFETCH_T(M_NONSEQ);
+
         switch (op) {
         case 0b00: // STRH
-            write16(address, ctx.reg[dst], M_NONE);
+            write16(address, ctx.reg[dst], M_NONSEQ);
             break;
         case 0b01: // LDSB
-            ctx.reg[dst] = read8(address, M_SIGNED);
+            busInternalCycles(1);
+            ctx.reg[dst] = read8(address, M_NONSEQ | M_SIGNED);
             break;
         case 0b10: // LDRH
-            ctx.reg[dst] = read16(address, M_ROTATE);
+            busInternalCycles(1);
+            ctx.reg[dst] = read16(address, M_NONSEQ | M_ROTATE);
             break;
         case 0b11: // LDSH
-            ctx.reg[dst] = read16(address, M_SIGNED);
+            busInternalCycles(1);
+            ctx.reg[dst] = read16(address, M_NONSEQ | M_SIGNED);
             break;
         }
+
+        ADVANCE_PC;
     }
 
     template <int op, int imm>
@@ -355,28 +418,34 @@ namespace GameBoyAdvance {
         int dst = instruction & 7;
         int base = (instruction >> 3) & 7;
 
+        PREFETCH_T(M_NONSEQ);
+
         switch (op) {
         case 0b00: { // STR
             u32 address = ctx.reg[base] + (imm << 2);
-            write32(address, ctx.reg[dst], M_NONE);
+            write32(address, ctx.reg[dst], M_NONSEQ);
             break;
         }
         case 0b01: { // LDR
             u32 address = ctx.reg[base] + (imm << 2);
-            ctx.reg[dst] = read32(address, M_ROTATE);
+            busInternalCycles(1);
+            ctx.reg[dst] = read32(address, M_NONSEQ | M_ROTATE);
             break;
         }
         case 0b10: { // STRB
             u32 address = ctx.reg[base] + imm;
-            write8(address, ctx.reg[dst], M_NONE);
+            write8(address, ctx.reg[dst], M_NONSEQ | M_NONE);
             break;
         }
         case 0b11: { // LDRB
             u32 address = ctx.reg[base] + imm;
-            ctx.reg[dst] = read8(address, M_NONE);
+            busInternalCycles(1);
+            ctx.reg[dst] = read8(address, M_NONSEQ | M_NONE);
             break;
         }
         }
+
+        ADVANCE_PC;
     }
 
     template <bool load, int imm>
@@ -386,13 +455,19 @@ namespace GameBoyAdvance {
         int base    = (instruction >> 3) & 7;
         u32 address = ctx.reg[base] + (imm << 1);
 
+        PREFETCH_T(M_NONSEQ);
+
         if (load) {
-            ctx.reg[dst] = read16(address, M_ROTATE);
+            busInternalCycles(1);
+            ctx.reg[dst] = read16(address, M_NONSEQ | M_ROTATE);
         } else {
-            write16(address, ctx.reg[dst], M_NONE);
+            write16(address, ctx.reg[dst], M_NONSEQ);
         }
+
+        ADVANCE_PC;
     }
 
+    // touched
     template <bool load, int dst>
     void ARM::thumbInst11(u16 instruction) {
         // THUMB.11 SP-relative load/store
@@ -400,10 +475,15 @@ namespace GameBoyAdvance {
         u32 address = ctx.reg[13] + (imm << 2);
 
         if (load) {
-            ctx.reg[dst] = read32(address, M_ROTATE);
+            busInternalCycles(1);
+            ctx.reg[dst] = read32(address, M_NONSEQ | M_ROTATE);
+            PREFETCH_T(M_NONSEQ);
         } else {
-            write32(address, ctx.reg[dst], M_NONE);
+            write32(address, ctx.reg[dst], M_NONSEQ);
+            PREFETCH_T(M_NONSEQ);
         }
+
+        ADVANCE_PC;
     }
 
     template <bool stackptr, int dst>
@@ -411,7 +491,9 @@ namespace GameBoyAdvance {
         // THUMB.12 Load address
         u32 address;
         u32 imm = (instruction & 0xFF) << 2;
-        
+
+        PREFETCH_T(M_SEQ);
+
         if (stackptr) {
             address = ctx.reg[13];
         } else {
@@ -419,6 +501,7 @@ namespace GameBoyAdvance {
         }
 
         ctx.reg[dst] = address + imm;
+        ADVANCE_PC;
     }
 
     template <bool sub>
@@ -426,7 +509,9 @@ namespace GameBoyAdvance {
         // THUMB.13 Add offset to stack pointer
         u32 imm = (instruction & 0x7F) << 2;
 
+        PREFETCH_T(M_SEQ);
         ctx.reg[13] += sub ? -imm : imm;
+        ADVANCE_PC;
     }
 
     template <bool pop, bool rbit>
@@ -435,31 +520,23 @@ namespace GameBoyAdvance {
         u32 addr = ctx.reg[13];
         const int register_list = instruction & 0xFF;
 
-        // hardware corner case. not sure if emulated correctly.
-        /*if (!rbit && register_list == 0) {
-            if (pop) {
-                ctx.r15 = read32(addr, M_NONE);
-                ctx.pipe.do_flush   = true;
-            } else {
-                write32(addr, ctx.r15, M_NONE);
-            }
-            ctx.reg[13] += pop ? 64 : -64;
-            return;
-        }*/
+        PREFETCH_T(M_SEQ); // TODO: order!
+
+        // TODO: emulate empty register list
 
         if (!pop) {
             int register_count = 0;
-            
+
             for (int i = 0; i <= 7; i++) {
                 if (register_list & (1 << i)) {
                     register_count++;
                 }
             }
-            
+
             if (rbit) {
                 register_count++;
             }
-            
+
             addr -= register_count << 2;
             ctx.reg[13] = addr;
         }
@@ -479,7 +556,11 @@ namespace GameBoyAdvance {
         if (rbit) {
             if (pop) {
                 ctx.r15 = read32(addr, M_NONE) & ~1;
-                ctx.pipe.do_flush = true;
+
+                // refill pipe and fast return, no pc advance
+                REFILL_PIPELINE_T;
+                ctx.reg[13] = addr + 4;
+                return;
             } else {
                 write32(addr, ctx.reg[14], M_NONE);
             }
@@ -489,6 +570,8 @@ namespace GameBoyAdvance {
         if (pop) {
             ctx.reg[13] = addr;
         }
+
+        ADVANCE_PC;
     }
 
     template <bool load, int base>
@@ -498,13 +581,10 @@ namespace GameBoyAdvance {
         u32 address = ctx.reg[base];
         int register_list = instruction & 0xFF;
 
+        // TODO: emulate empty register list
+
         if (load) {
-            /*if (register_list == 0) {
-                ctx.r15 = read32(address, M_NONE);
-                ctx.pipe.do_flush = true;
-                ctx.reg[base] += 64;
-                return;
-            }*/
+            PREFETCH_T(M_SEQ);
 
             for (int i = 0; i <= 7; i++) {
                 if (register_list & (1<<i)) {
@@ -519,33 +599,36 @@ namespace GameBoyAdvance {
         } else {
             int first_register = -1;
 
-            /*if (register_list == 0) {
-                write32(address, ctx.r15, M_NONE);
-                ctx.reg[base] += 64;
-                return;
-            }*/
+            PREFETCH_T(M_NONSEQ);
 
             for (int i = 0; i <= 7; i++) {
                 if (register_list & (1<<i)) {
+                    int access_type = M_SEQ; // ewww
+
                     if (first_register == -1) {
                         first_register = i;
+                        access_type = M_NONSEQ;
                     }
 
                     if (i == base && i == first_register) {
-                        write32(ctx.reg[base], address, M_NONE);
+                        write32(ctx.reg[base], address, access_type);
                     } else {
-                        write32(ctx.reg[base], ctx.reg[i], M_NONE);
+                        write32(ctx.reg[base], ctx.reg[i], access_type);
                     }
 
                     ctx.reg[base] += 4;
                 }
             }
         }
+
+        ADVANCE_PC;
     }
 
     template <int cond>
     void ARM::thumbInst16(u16 instruction) {
         // THUMB.16 Conditional branch
+        PREFETCH_T(M_SEQ);
+
         if (checkCondition(static_cast<Condition>(cond))) {
             u32 signed_immediate = instruction & 0xFF;
 
@@ -556,14 +639,18 @@ namespace GameBoyAdvance {
 
             // update r15/pc and flush pipe
             ctx.r15 += (signed_immediate << 1);
-            ctx.pipe.do_flush = true;
+            REFILL_PIPELINE_T;
+        } else {
+            ADVANCE_PC;
         }
     }
 
     void ARM::thumbInst17(u16 instruction) {
         // THUMB.17 Software Interrupt
         u8 call_number = read8(ctx.r15 - 4, M_NONE);
-        
+
+        PREFETCH_T(M_SEQ);
+
         if (!fake_swi) {
             // save return address and program status
             ctx.bank[BANK_SVC][BANK_R14] = ctx.r15 - 2;
@@ -575,15 +662,18 @@ namespace GameBoyAdvance {
 
             // jump to exception vector
             ctx.r15 = EXCPT_SWI;
-            ctx.pipe.do_flush = true;
+            REFILL_PIPELINE_A;
         } else {
             handleSWI(call_number);
+            ADVANCE_PC;
         }
     }
 
     void ARM::thumbInst18(u16 instruction) {
         // THUMB.18 Unconditional branch
         u32 imm = (instruction & 0x3FF) << 1;
+
+        PREFETCH_T(M_SEQ);
 
         // sign-extend r15/pc displacement
         if (instruction & 0x400) {
@@ -592,7 +682,7 @@ namespace GameBoyAdvance {
 
         // update r15/pc and flush pipe
         ctx.r15 += imm;
-        ctx.pipe.do_flush = true;
+        REFILL_PIPELINE_T;
     }
 
     template <bool second_instruction>
@@ -600,12 +690,15 @@ namespace GameBoyAdvance {
         // THUMB.19 Long branch with link.
         u32 imm = instruction & 0x7FF;
 
+        PREFETCH_T(M_SEQ);
+
         if (!second_instruction) {
             imm <<= 12;
             if (imm & 0x400000) {
                 imm |= 0xFF800000;
             }
             ctx.r14 = ctx.r15 + imm;
+            ADVANCE_PC;
         } else {
             u32 temp_pc = ctx.r15 - 2;
 
@@ -614,7 +707,7 @@ namespace GameBoyAdvance {
 
             // store return address and flush pipe.
             ctx.reg[14] = temp_pc | 1;
-            ctx.pipe.do_flush = true;
+            REFILL_PIPELINE_T;
         }
     }
 }

@@ -117,6 +117,26 @@ namespace GameBoyAdvance {
             case IME:   return regs.irq.ime & 0xFF;
             case IME+1: return regs.irq.ime >> 8;
 
+            // WAITSTATES
+            case WAITCNT: {
+                const auto& waitcnt = regs.waitcnt;
+
+                return (waitcnt.sram  << 0) |
+                       (waitcnt.ws0_n << 2) |
+                       (waitcnt.ws0_s << 4) |
+                       (waitcnt.ws1_n << 5) |
+                       (waitcnt.ws1_s << 7) ;
+            }
+            case WAITCNT+1: {
+                const auto& waitcnt = regs.waitcnt;
+
+                return (waitcnt.ws2_n    << 0) |
+                       (waitcnt.ws2_s    << 2) |
+                       (waitcnt.phi      << 3) |
+                       (waitcnt.prefetch << 6) |
+                       (waitcnt.cgb      << 7) ;
+            }
+
             default: Logger::log<LOG_DEBUG>("unknown IO read {0:X}", address);
         }
 
@@ -360,10 +380,35 @@ namespace GameBoyAdvance {
                 regs.irq.ime |= (value << 8);
                 break;
             }
+
+            // WAITSTATES
+            case WAITCNT: {
+                auto& waitcnt = regs.waitcnt;
+                waitcnt.sram  = (value >> 0) & 3;
+                waitcnt.ws0_n = (value >> 2) & 3;
+                waitcnt.ws0_s = (value >> 4) & 1;
+                waitcnt.ws1_n = (value >> 5) & 3;
+                waitcnt.ws1_s = (value >> 7) & 1;
+                calculateMemoryCycles();
+                break;
+            }
+            case WAITCNT+1: {
+                auto& waitcnt = regs.waitcnt;
+                waitcnt.ws2_n    = (value >> 0) & 3;
+                waitcnt.ws2_s    = (value >> 2) & 1;
+                waitcnt.phi      = (value >> 3) & 3;
+                waitcnt.prefetch = (value >> 6) & 1;
+                waitcnt.cgb      = (value >> 7) & 1;
+                calculateMemoryCycles();
+                break;
+            }
+
+            // SYSTEM CONTROL
             case HALTCNT: {
                 regs.haltcnt = (value & 0x80) ? SYSTEM_STOP : SYSTEM_HALT;
                 break;
             }
+
             default: {
                 Logger::log<LOG_DEBUG>("unknown IO write {0:X}", address);
                 memory.mmio[address & 0x7FF] = value;
