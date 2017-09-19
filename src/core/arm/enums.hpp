@@ -79,10 +79,16 @@ namespace GameBoyAdvance {
         MASK_THUMB = 0x20,
         MASK_FIQD  = 0x40,
         MASK_IRQD  = 0x80,
-        MASK_VFLAG = 0x10000000,
-        MASK_CFLAG = 0x20000000,
-        MASK_ZFLAG = 0x40000000,
-        MASK_NFLAG = 0x80000000
+
+        POS_VFLAG = 28,
+        POS_CFLAG = 29,
+        POS_ZFLAG = 30,
+        POS_NFLAG = 31,
+
+        MASK_VFLAG = 1 << POS_VFLAG /* 0x10000000 */,
+        MASK_CFLAG = 1 << POS_CFLAG /* 0x20000000 */,
+        MASK_ZFLAG = 1 << POS_ZFLAG /* 0x40000000 */,
+        MASK_NFLAG = 1 << POS_NFLAG /* 0x80000000 */
     };
 
     enum ExceptionVector {
