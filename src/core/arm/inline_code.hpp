@@ -167,17 +167,10 @@ inline void ARM::shiftROR(u32& operand, u32 amount, bool& carry, bool immediate)
 
 inline void ARM::applyShift(int shift, u32& operand, u32 amount, bool& carry, bool immediate) {
     switch (shift) {
-    case 0:
-        shiftLSL(operand, amount, carry);
-        return;
-    case 1:
-        shiftLSR(operand, amount, carry, immediate);
-        return;
-    case 2:
-        shiftASR(operand, amount, carry, immediate);
-        return;
-    case 3:
-        shiftROR(operand, amount, carry, immediate);
+    case 0: shiftLSL(operand, amount, carry);            return;
+    case 1: shiftLSR(operand, amount, carry, immediate); return;
+    case 2: shiftASR(operand, amount, carry, immediate); return;
+    case 3: shiftROR(operand, amount, carry, immediate); return;
     }
 }
 

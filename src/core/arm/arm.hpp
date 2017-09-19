@@ -93,6 +93,11 @@ namespace GameBoyAdvance {
         void updateOverflowFlagAdd(u32 result, u32 operand1, u32 operand2);
         void updateOverflowFlagSub(u32 result, u32 operand1, u32 operand2);
 
+        // ALU operations
+        auto opADD(u32 op1, u32 op2, u32 op3,   bool set_flags) -> u32;
+        auto opSUB(u32 op1, u32 op2,            bool set_flags) -> u32;
+        auto opSBC(u32 op1, u32 op2, u32 carry, bool set_flags) -> u32;
+
         // Barrel Shifter Helpers
         static void shiftLSL(u32& operand, u32 amount, bool& carry);
         static void shiftLSR(u32& operand, u32 amount, bool& carry, bool immediate);
@@ -107,5 +112,6 @@ namespace GameBoyAdvance {
         #include "instr_thumb.hpp"
     };
 
+    #include "alu.hpp"
     #include "inline_code.hpp"
 }

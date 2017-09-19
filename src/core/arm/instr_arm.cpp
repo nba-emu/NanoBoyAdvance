@@ -121,7 +121,7 @@ namespace GameBoyAdvance {
             break;
         }
         case 0b0010: {
-            // Subtraction (SUB)
+            /*// Subtraction (SUB)
             u32 result = op1 - op2;
 
             if (set_flags) {
@@ -131,11 +131,12 @@ namespace GameBoyAdvance {
                 updateZeroFlag(result);
             }
 
-            ctx.reg[reg_dst] = result;
+            ctx.reg[reg_dst] = result;*/
+            ctx.reg[reg_dst] = opSUB(op1, op2, set_flags);
             break;
         }
         case 0b0011: {
-            // Reverse subtraction (RSB)
+            /*// Reverse subtraction (RSB)
             u32 result = op2 - op1;
 
             if (set_flags) {
@@ -145,11 +146,12 @@ namespace GameBoyAdvance {
                 updateZeroFlag(result);
             }
 
-            ctx.reg[reg_dst] = result;
+            ctx.reg[reg_dst] = result;*/
+            ctx.reg[reg_dst] = opSUB(op2, op1, set_flags);
             break;
         }
         case 0b0100: {
-            // Addition (ADD)
+            /*// Addition (ADD)
             u32 result = op1 + op2;
 
             if (set_flags) {
@@ -161,11 +163,12 @@ namespace GameBoyAdvance {
                 updateZeroFlag(result);
             }
 
-            ctx.reg[reg_dst] = result;
+            ctx.reg[reg_dst] = result;*/
+            ctx.reg[reg_dst] = opADD(op1, op2, 0, set_flags);
             break;
         }
         case 0b0101: {
-            // Addition with Carry
+            /*// Addition with Carry
             int carry2 = (ctx.cpsr >> 29) & 1;
             u32 result = op1 + op2 + carry2;
 
@@ -178,12 +181,13 @@ namespace GameBoyAdvance {
                 updateZeroFlag(result);
             }
 
-            ctx.reg[reg_dst] = result;
+            ctx.reg[reg_dst] = result;*/
+            ctx.reg[reg_dst] = opADD(op1, op2, (ctx.cpsr>>POS_CFLAG)&1, set_flags);
             break;
         }
         case 0b0110: {
             // Subtraction with Carry
-            int carry2 = (ctx.cpsr >> 29) & 1;
+            /*int carry2 = (ctx.cpsr >> 29) & 1;
             u32 result = op1 - op2 + carry2 - 1;
 
             if (set_flags) {
@@ -193,11 +197,12 @@ namespace GameBoyAdvance {
                 updateZeroFlag(result);
             }
 
-            ctx.reg[reg_dst] = result;
+            ctx.reg[reg_dst] = result;*/
+            ctx.reg[reg_dst] = opSBC(op1, op2, (~(ctx.cpsr)>>POS_CFLAG)&1, set_flags);
             break;
         }
         case 0b0111: {
-            // Reverse Substraction with Carry
+            /*// Reverse Substraction with Carry
             int carry2 = (ctx.cpsr >> 29) & 1;
             u32 result = op2 - op1 + carry2 - 1;
 
@@ -208,7 +213,8 @@ namespace GameBoyAdvance {
                 updateZeroFlag(result);
             }
 
-            ctx.reg[reg_dst] = result;
+            ctx.reg[reg_dst] = result;*/
+            ctx.reg[reg_dst] = opSBC(op2, op1, (~(ctx.cpsr)>>POS_CFLAG)&1, set_flags);
             break;
         }
         case 0b1000: {
