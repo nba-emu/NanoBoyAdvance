@@ -474,13 +474,13 @@ namespace GameBoyAdvance {
         u32 imm     = instruction & 0xFF;
         u32 address = ctx.reg[13] + (imm << 2);
 
-        PREFETCH_T(M_NONSEQ); // TODO: order
-
         if (load) {
-            busInternalCycles(1); // test
+            busInternalCycles(1);
             ctx.reg[dst] = read32(address, M_NONSEQ | M_ROTATE);
+            PREFETCH_T(M_NONSEQ);
         } else {
             write32(address, ctx.reg[dst], M_NONSEQ);
+            PREFETCH_T(M_NONSEQ);
         }
 
         ADVANCE_PC;
