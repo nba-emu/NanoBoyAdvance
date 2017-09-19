@@ -31,8 +31,8 @@ endif()
 include (FindSDL2 REQUIRED)
 find_package(SDL2 REQUIRED)
 
-# libpng - required for screenshots
-find_package(PNG  REQUIRED)
+# # libpng - required for screenshots
+# find_package(PNG  REQUIRED)
 
 # === COMPILATION MODES === #
 
