@@ -28,6 +28,15 @@ inline auto ARM::opADD(u32 op1, u32 op2, u32 op3, bool set_flags) -> u32 {
         updateOverflowFlagAdd(result32, op1, op2); // how about op3?
         updateCarryFlag(result64 & 0x100000000ULL);
 
+        //u32 overflow = ((~( op1        ^ op2) & ((op1 + op2)       ^ op2))  ^
+        //                (~((op1 + op2) ^ op3) & ((op1 + op2 + op3) ^ op3))) >> 31;
+
+        //if (overflow) {
+        //    ctx.cpsr |=  MASK_VFLAG;
+        //} else {
+        //    ctx.cpsr &= ~MASK_VFLAG;
+        //}
+
         return result32;
     }
     return op1 + op2 + op3;
