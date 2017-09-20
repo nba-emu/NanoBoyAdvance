@@ -121,99 +121,26 @@ namespace GameBoyAdvance {
             break;
         }
         case 0b0010: {
-            /*// Subtraction (SUB)
-            u32 result = op1 - op2;
-
-            if (set_flags) {
-                updateCarryFlag(op1 >= op2);
-                updateOverflowFlagSub(result, op1, op2);
-                updateSignFlag(result);
-                updateZeroFlag(result);
-            }
-
-            ctx.reg[reg_dst] = result;*/
             ctx.reg[reg_dst] = opSUB(op1, op2, set_flags);
             break;
         }
         case 0b0011: {
-            /*// Reverse subtraction (RSB)
-            u32 result = op2 - op1;
-
-            if (set_flags) {
-                updateCarryFlag(op2 >= op1);
-                updateOverflowFlagSub(result, op2, op1);
-                updateSignFlag(result);
-                updateZeroFlag(result);
-            }
-
-            ctx.reg[reg_dst] = result;*/
             ctx.reg[reg_dst] = opSUB(op2, op1, set_flags);
             break;
         }
         case 0b0100: {
-            /*// Addition (ADD)
-            u32 result = op1 + op2;
-
-            if (set_flags) {
-                u64 result_long = (u64)op1 + (u64)op2;
-
-                updateCarryFlag(result_long & 0x100000000);
-                updateOverflowFlagAdd(result, op1, op2);
-                updateSignFlag(result);
-                updateZeroFlag(result);
-            }
-
-            ctx.reg[reg_dst] = result;*/
             ctx.reg[reg_dst] = opADD(op1, op2, 0, set_flags);
             break;
         }
         case 0b0101: {
-            /*// Addition with Carry
-            int carry2 = (ctx.cpsr >> 29) & 1;
-            u32 result = op1 + op2 + carry2;
-
-            if (set_flags) {
-                u64 result_long = (u64)op1 + (u64)op2 + (u64)carry2;
-
-                updateCarryFlag(result_long & 0x100000000);
-                updateOverflowFlagAdd(result, op1, op2);
-                updateSignFlag(result);
-                updateZeroFlag(result);
-            }
-
-            ctx.reg[reg_dst] = result;*/
             ctx.reg[reg_dst] = opADD(op1, op2, (ctx.cpsr>>POS_CFLAG)&1, set_flags);
             break;
         }
         case 0b0110: {
-            // Subtraction with Carry
-            /*int carry2 = (ctx.cpsr >> 29) & 1;
-            u32 result = op1 - op2 + carry2 - 1;
-
-            if (set_flags) {
-                updateCarryFlag(op1 >= (op2 + carry2 - 1));
-                updateOverflowFlagSub(result, op1, op2);
-                updateSignFlag(result);
-                updateZeroFlag(result);
-            }
-
-            ctx.reg[reg_dst] = result;*/
             ctx.reg[reg_dst] = opSBC(op1, op2, (~(ctx.cpsr)>>POS_CFLAG)&1, set_flags);
             break;
         }
         case 0b0111: {
-            /*// Reverse Substraction with Carry
-            int carry2 = (ctx.cpsr >> 29) & 1;
-            u32 result = op2 - op1 + carry2 - 1;
-
-            if (set_flags) {
-                updateCarryFlag(op2 >= (op1 + carry2 - 1));
-                updateOverflowFlagSub(result, op2, op1);
-                updateSignFlag(result);
-                updateZeroFlag(result);
-            }
-
-            ctx.reg[reg_dst] = result;*/
             ctx.reg[reg_dst] = opSBC(op2, op1, (~(ctx.cpsr)>>POS_CFLAG)&1, set_flags);
             break;
         }
