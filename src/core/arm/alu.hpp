@@ -49,19 +49,20 @@ inline auto ARM::opSUB(u32 op1, u32 op2, bool set_flags) -> u32 {
 
 inline auto ARM::opSBC(u32 op1, u32 op2, u32 carry, bool set_flags) -> u32 {
     if (set_flags) {
-        u32 result1 = op1 - op2;
-        u32 result2 = result1 - carry;
+        u64 result64_1 = (u64)op1   - (u64)op2;
+        u64 result64_2 = result64_1 - (u64)carry;
 
-        u64 _result1 = (u64)op1 - (u64)op2;
-        u64 _result2 = (u64)result1 - (u64)carry;
-        bool new_carry1 = _result1 < 0x100000000ULL;
-        bool new_carry2 = _result2 < 0x100000000ULL;
+        bool new_carry1 = result64_1 < 0x100000000ULL;
+        bool new_carry2 = result64_2 < 0x100000000ULL;
 
-        u32 overflow = (((op1 ^ op2) & ~(result1 ^ op2)) ^
-                       (result1      & ~ result2      )) >> 31;
+        u32 result32_1 = (u32)result64_1;
+        u32 result32_2 = (u32)result64_2;
 
-        updateZeroFlag(result2);
-        updateSignFlag(result2);
+        u32 overflow = (((op1 ^ op2) & ~(result32_1 ^ op2)) ^
+                       (result32_1   & ~ result32_2      )) >> 31;
+
+        updateZeroFlag(result32_2);
+        updateSignFlag(result32_2);
         updateCarryFlag(new_carry1 && new_carry2);
 
         if (overflow) {
@@ -70,7 +71,7 @@ inline auto ARM::opSBC(u32 op1, u32 op2, u32 carry, bool set_flags) -> u32 {
             ctx.cpsr &= ~MASK_VFLAG;
         }
 
-        return result2;
+        return result32_2;
     }
     return op1 - op2 - carry;
 }
