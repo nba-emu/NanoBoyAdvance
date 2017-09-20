@@ -57,18 +57,14 @@ inline auto ARM::opSBC(u32 op1, u32 op2, u32 carry, bool set_flags) -> u32 {
         bool new_carry1 = _result1 < 0x100000000ULL;
         bool new_carry2 = _result2 < 0x100000000ULL;
 
-        //bool new_carry1 = (0xFFFFFFFF - op1    ) < op2;
-        //bool new_carry2 = (0xFFFFFFFF - result1) < carry;
-
-        u32 overflow1 = ((op1     ^ op2  ) & ~(result1 ^ op2  )) >> 31;
-        u32 overflow2 = ((result1 ^ carry) & ~(result2 ^ carry)) >> 31;
-
+        u32 overflow = (((op1 ^ op2) & ~(result1 ^ op2)) ^
+                       (result1      & ~ result2      )) >> 31;
 
         updateZeroFlag(result2);
         updateSignFlag(result2);
         updateCarryFlag(new_carry1 && new_carry2);
 
-        if (overflow1 | overflow2) {
+        if (overflow) {
             ctx.cpsr |=  MASK_VFLAG;
         } else {
             ctx.cpsr &= ~MASK_VFLAG;
