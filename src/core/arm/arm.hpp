@@ -93,6 +93,9 @@ namespace GameBoyAdvance {
         void updateOverflowFlagAdd(u32 result, u32 operand1, u32 operand2);
         void updateOverflowFlagSub(u32 result, u32 operand1, u32 operand2);
 
+        // Data Processing
+        auto opDataProc(u32 result, bool set_nz, bool set_c = false, bool carry = false) -> u32;
+
         // ALU operations
         auto opADD(u32 op1, u32 op2, u32 op3,   bool set_flags) -> u32;
         auto opSUB(u32 op1, u32 op2,            bool set_flags) -> u32;

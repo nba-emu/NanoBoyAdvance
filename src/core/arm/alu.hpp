@@ -17,6 +17,17 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
+inline auto ARM::opDataProc(u32 result, bool set_nz, bool set_c, bool carry) -> u32 {
+    if (set_nz) {
+        updateSignFlag(result);
+        updateZeroFlag(result);
+    }
+    if (set_c) {
+        updateCarryFlag(carry);
+    }
+    return result;
+}
+
 inline auto ARM::opADD(u32 op1, u32 op2, u32 op3, bool set_flags) -> u32 {
     if (set_flags) {
         u64 result64 = (u64)op1 + (u64)op2 + (u64)op3;

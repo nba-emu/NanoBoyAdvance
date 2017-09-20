@@ -42,35 +42,55 @@ namespace GameBoyAdvance {
 
     #include "tables/op_arm.hpp"
 
+    enum class DataOp {
+        AND = 0,
+        EOR = 1,
+        SUB = 2,
+        RSB = 3,
+        ADD = 4,
+        ADC = 5,
+        SBC = 6,
+        RSC = 7,
+        TST = 8,
+        TEQ = 9,
+        CMP = 10,
+        CMN = 11,
+        ORR = 12,
+        MOV = 13,
+        BIC = 14,
+        MVN = 15
+    };
+
     template <bool immediate, int opcode, bool _set_flags, int field4>
     void ARM::dataProcessingARM(u32 instruction) {
-        u32 op1, op2;
-        bool carry = ctx.cpsr & MASK_CFLAG;
+        bool set_flags = _set_flags; // make modifiable
+
         int reg_dst = (instruction >> 12) & 0xF;
         int reg_op1 = (instruction >> 16) & 0xF;
-        bool set_flags = _set_flags;
 
-        op1 = ctx.reg[reg_op1];
+        u32 op1 = ctx.reg[reg_op1], op2 = 0;
+
+        bool carry = ctx.cpsr & MASK_CFLAG;
 
         if (immediate) {
-            int imm = instruction & 0xFF;
+            int imm    =   instruction & 0xFF;
             int amount = ((instruction >> 8) & 0xF) << 1;
 
             if (amount != 0) {
                 carry = (imm >> (amount - 1)) & 1;
-                op2 = (imm >> amount) | (imm << (32 - amount));
+                op2   = (imm >>  amount) | (imm << (32 - amount));
             } else {
                 op2 = imm;
             }
         } else {
-            u32 amount;
-            int reg_op2 = instruction & 0xF;
-            int shift_type = (field4 >> 1) & 3;
-            bool shift_immediate = (field4 & 1) ? false : true;
+            u32  amount;
+            int  reg_op2    = instruction    & 0xF;
+            int  shift_type = ( field4 >> 1) & 3;
+            bool shift_imm  = (~field4 >> 0) & 1; //(field4  & 1) ? false : true;
 
             op2 = ctx.reg[reg_op2];
 
-            if (!shift_immediate) {
+            if (!shift_imm) {
                 amount = ctx.reg[(instruction >> 8) & 0xF];
 
                 if (reg_op1 == 15) op1 += 4;
@@ -81,7 +101,7 @@ namespace GameBoyAdvance {
                 amount = (instruction >> 7) & 0x1F;
             }
 
-            applyShift(shift_type, op2, amount, carry, shift_immediate);
+            applyShift(shift_type, op2, amount, carry, shift_imm);
         }
 
         if (reg_dst == 15) {
@@ -93,109 +113,25 @@ namespace GameBoyAdvance {
             }
         }
 
-        switch (opcode) {
-        case 0b0000: {
-            // Bitwise AND (AND)
-            u32 result = op1 & op2;
+        auto& out = ctx.reg[reg_dst];
 
-            if (set_flags) {
-                updateSignFlag(result);
-                updateZeroFlag(result);
-                updateCarryFlag(carry);
-            }
-
-            ctx.reg[reg_dst] = result;
-            break;
-        }
-        case 0b0001: {
-            // Bitwise EXOR (EOR)
-            u32 result = op1 ^ op2;
-
-            if (set_flags) {
-                updateSignFlag(result);
-                updateZeroFlag(result);
-                updateCarryFlag(carry);
-            }
-
-            ctx.reg[reg_dst] = result;
-            break;
-        }
-        case 0b0010: ctx.reg[reg_dst] = opSUB(op1, op2, set_flags);                             break;
-        case 0b0011: ctx.reg[reg_dst] = opSUB(op2, op1, set_flags);                             break; // RSB
-        case 0b0100: ctx.reg[reg_dst] = opADD(op1, op2, 0, set_flags);                          break;
-        case 0b0101: ctx.reg[reg_dst] = opADD(op1, op2, (  ctx.cpsr >>POS_CFLAG)&1, set_flags); break;
-        case 0b0110: ctx.reg[reg_dst] = opSBC(op1, op2, (~(ctx.cpsr)>>POS_CFLAG)&1, set_flags); break;
-        case 0b0111: ctx.reg[reg_dst] = opSBC(op2, op1, (~(ctx.cpsr)>>POS_CFLAG)&1, set_flags); break; // RSC
-        case 0b1000: {
-            // Bitwise AND flags only (TST)
-            u32 result = op1 & op2;
-
-            updateSignFlag(result);
-            updateZeroFlag(result);
-            updateCarryFlag(carry);
-            break;
-        }
-        case 0b1001: {
-            // Bitwise EXOR flags only (TEQ)
-            u32 result = op1 ^ op2;
-
-            updateSignFlag(result);
-            updateZeroFlag(result);
-            updateCarryFlag(carry);
-            break;
-        }
-        case 0b1010: opSUB(op1, op2,    true); break; // CMP
-        case 0b1011: opADD(op1, op2, 0, true); break; // CMN
-        case 0b1100: {
-            // Bitwise OR (ORR)
-            u32 result = op1 | op2;
-
-            if (set_flags) {
-                updateSignFlag(result);
-                updateZeroFlag(result);
-                updateCarryFlag(carry);
-            }
-
-            ctx.reg[reg_dst] = result;
-            break;
-        }
-        case 0b1101: {
-            // Move into register (MOV)
-            if (set_flags) {
-                updateSignFlag(op2);
-                updateZeroFlag(op2);
-                updateCarryFlag(carry);
-            }
-
-            ctx.reg[reg_dst] = op2;
-            break;
-        }
-        case 0b1110: {
-            // Bit Clear (BIC)
-            u32 result = op1 & ~op2;
-
-            if (set_flags) {
-                updateSignFlag(result);
-                updateZeroFlag(result);
-                updateCarryFlag(carry);
-            }
-
-            ctx.reg[reg_dst] = result;
-            break;
-        }
-        case 0b1111: {
-            // Move into register negated (MVN)
-            u32 not_op2 = ~op2;
-
-            if (set_flags) {
-                updateSignFlag(not_op2);
-                updateZeroFlag(not_op2);
-                updateCarryFlag(carry);
-            }
-
-            ctx.reg[reg_dst] = not_op2;
-            break;
-        }
+        switch (static_cast<DataOp>(opcode)) {
+        case DataOp::AND: out = opDataProc (op1 & op2, set_flags, set_flags, carry);          break;
+        case DataOp::EOR: out = opDataProc (op1 ^ op2, set_flags, set_flags, carry);          break;
+        case DataOp::SUB: out = opSUB      (op1, op2, set_flags);                             break;
+        case DataOp::RSB: out = opSUB      (op2, op1, set_flags);                             break;
+        case DataOp::ADD: out = opADD      (op1, op2, 0, set_flags);                          break;
+        case DataOp::ADC: out = opADD      (op1, op2, (  ctx.cpsr >>POS_CFLAG)&1, set_flags); break;
+        case DataOp::SBC: out = opSBC      (op1, op2, (~(ctx.cpsr)>>POS_CFLAG)&1, set_flags); break;
+        case DataOp::RSC: out = opSBC      (op2, op1, (~(ctx.cpsr)>>POS_CFLAG)&1, set_flags); break;
+        case DataOp::TST:       opDataProc (op1 & op2, true, true, carry);                    break;
+        case DataOp::TEQ:       opDataProc (op1 ^ op2, true, true, carry);                    break;
+        case DataOp::CMP:       opSUB      (op1, op2,    true);                               break;
+        case DataOp::CMN:       opADD      (op1, op2, 0, true);                               break;
+        case DataOp::ORR: out = opDataProc (op1 | op2,  set_flags, set_flags, carry);         break;
+        case DataOp::MOV: out = opDataProc (op2,        set_flags, set_flags, carry);         break;
+        case DataOp::BIC: out = opDataProc (op1 & ~op2, set_flags, set_flags, carry);         break;
+        case DataOp::MVN: out = opDataProc (~op2,       set_flags, set_flags, carry);         break;
         }
 
         if (reg_dst == 15) {
