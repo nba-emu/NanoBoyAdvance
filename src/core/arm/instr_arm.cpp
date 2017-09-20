@@ -120,30 +120,12 @@ namespace GameBoyAdvance {
             ctx.reg[reg_dst] = result;
             break;
         }
-        case 0b0010: {
-            ctx.reg[reg_dst] = opSUB(op1, op2, set_flags);
-            break;
-        }
-        case 0b0011: {
-            ctx.reg[reg_dst] = opSUB(op2, op1, set_flags);
-            break;
-        }
-        case 0b0100: {
-            ctx.reg[reg_dst] = opADD(op1, op2, 0, set_flags);
-            break;
-        }
-        case 0b0101: {
-            ctx.reg[reg_dst] = opADD(op1, op2, (ctx.cpsr>>POS_CFLAG)&1, set_flags);
-            break;
-        }
-        case 0b0110: {
-            ctx.reg[reg_dst] = opSBC(op1, op2, (~(ctx.cpsr)>>POS_CFLAG)&1, set_flags);
-            break;
-        }
-        case 0b0111: {
-            ctx.reg[reg_dst] = opSBC(op2, op1, (~(ctx.cpsr)>>POS_CFLAG)&1, set_flags);
-            break;
-        }
+        case 0b0010: ctx.reg[reg_dst] = opSUB(op1, op2, set_flags);                             break;
+        case 0b0011: ctx.reg[reg_dst] = opSUB(op2, op1, set_flags);                             break; // RSB
+        case 0b0100: ctx.reg[reg_dst] = opADD(op1, op2, 0, set_flags);                          break;
+        case 0b0101: ctx.reg[reg_dst] = opADD(op1, op2, (  ctx.cpsr >>POS_CFLAG)&1, set_flags); break;
+        case 0b0110: ctx.reg[reg_dst] = opSBC(op1, op2, (~(ctx.cpsr)>>POS_CFLAG)&1, set_flags); break;
+        case 0b0111: ctx.reg[reg_dst] = opSBC(op2, op1, (~(ctx.cpsr)>>POS_CFLAG)&1, set_flags); break; // RSC
         case 0b1000: {
             // Bitwise AND flags only (TST)
             u32 result = op1 & op2;
@@ -162,27 +144,8 @@ namespace GameBoyAdvance {
             updateCarryFlag(carry);
             break;
         }
-        case 0b1010: {
-            // Subtraction flags only (CMP)
-            u32 result = op1 - op2;
-
-            updateCarryFlag(op1 >= op2);
-            updateOverflowFlagSub(result, op1, op2);
-            updateSignFlag(result);
-            updateZeroFlag(result);
-            break;
-        }
-        case 0b1011: {
-            // Addition flags only (CMN)
-            u32 result = op1 + op2;
-            u64 result_long = (u64)op1 + (u64)op2;
-
-            updateCarryFlag(result_long & 0x100000000);
-            updateOverflowFlagAdd(result, op1, op2);
-            updateSignFlag(result);
-            updateZeroFlag(result);
-            break;
-        }
+        case 0b1010: opSUB(op1, op2,    true); break; // CMP
+        case 0b1011: opADD(op1, op2, 0, true); break; // CMN
         case 0b1100: {
             // Bitwise OR (ORR)
             u32 result = op1 | op2;
