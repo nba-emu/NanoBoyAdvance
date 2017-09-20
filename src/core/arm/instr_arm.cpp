@@ -86,7 +86,7 @@ namespace GameBoyAdvance {
             u32  amount;
             int  reg_op2    = instruction    & 0xF;
             int  shift_type = ( field4 >> 1) & 3;
-            bool shift_imm  = (~field4 >> 0) & 1; //(field4  & 1) ? false : true;
+            bool shift_imm  = (~field4 >> 0) & 1;
 
             op2 = ctx.reg[reg_op2];
 
@@ -191,6 +191,7 @@ namespace GameBoyAdvance {
     template <bool accumulate, bool set_flags>
     void ARM::multiplyARM(u32 instruction) {
         u32 result;
+
         int op1 = instruction & 0xF;
         int op2 = (instruction >> 8) & 0xF;
         int dst = (instruction >> 16) & 0xF;
@@ -201,7 +202,6 @@ namespace GameBoyAdvance {
             int op3 = (instruction >> 12) & 0xF;
             result += ctx.reg[op3];
         }
-
         if (set_flags) {
             updateSignFlag(result);
             updateZeroFlag(result);
@@ -261,8 +261,8 @@ namespace GameBoyAdvance {
     template <bool swap_byte>
     void ARM::singleDataSwapARM(u32 instruction) {
         u32 tmp;
-        int src = instruction & 0xF;
-        int dst = (instruction >> 12) & 0xF;
+        int src  = (instruction >>  0) & 0xF;
+        int dst  = (instruction >> 12) & 0xF;
         int base = (instruction >> 16) & 0xF;
 
         if (swap_byte) {
@@ -294,7 +294,7 @@ namespace GameBoyAdvance {
     template <bool pre_indexed, bool base_increment, bool immediate, bool write_back, bool load, int opcode>
     void ARM::halfwordSignedTransferARM(u32 instruction) {
         u32 off;
-        int dst = (instruction >> 12) & 0xF;
+        int dst  = (instruction >> 12) & 0xF;
         int base = (instruction >> 16) & 0xF;
         u32 addr = ctx.reg[base];
 
