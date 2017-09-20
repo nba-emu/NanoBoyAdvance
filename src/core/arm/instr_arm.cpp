@@ -543,7 +543,6 @@ namespace GameBoyAdvance {
         if (off & 0x800000) {
             off |= 0xFF000000;
         }
-
         if (link) {
             ctx.reg[14] = ctx.r15 - 4;
         }

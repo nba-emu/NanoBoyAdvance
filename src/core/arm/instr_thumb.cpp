@@ -148,6 +148,25 @@ namespace GameBoyAdvance {
         ADVANCE_PC;
     }
 
+    enum class ThumbDataOp {
+        AND = 0,
+        EOR = 1,
+        LSL = 2,
+        LSR = 3,
+        ASR = 4,
+        ADC = 5,
+        SBC = 6,
+        ROR = 7,
+        TST = 8,
+        NEG = 9,
+        CMP = 10,
+        CMN = 11,
+        ORR = 12,
+        MUL = 13,
+        BIC = 14,
+        MVN = 15
+    };
+
     template <int op>
     void ARM::thumbInst4(u16 instruction) {
         // THUMB.4 ALU operations
@@ -156,18 +175,10 @@ namespace GameBoyAdvance {
 
         PREFETCH_T(M_SEQ);
 
-        switch (op) {
-        case 0b0000: // AND
-            ctx.reg[dst] &= ctx.reg[src];
-            updateSignFlag(ctx.reg[dst]);
-            updateZeroFlag(ctx.reg[dst]);
-            break;
-        case 0b0001: // EOR
-            ctx.reg[dst] ^= ctx.reg[src];
-            updateSignFlag(ctx.reg[dst]);
-            updateZeroFlag(ctx.reg[dst]);
-            break;
-        case 0b0010: { // LSL
+        switch (static_cast<ThumbDataOp>(op)) {
+        case ThumbDataOp::AND: ctx.reg[dst] = opDataProc(ctx.reg[dst] & ctx.reg[src], true); break;
+        case ThumbDataOp::EOR: ctx.reg[dst] = opDataProc(ctx.reg[dst] ^ ctx.reg[src], true); break;
+        case ThumbDataOp::LSL: {
             u32 amount = ctx.reg[src];
             bool carry = ctx.cpsr & MASK_CFLAG;
             shiftLSL(ctx.reg[dst], amount, carry);
@@ -176,7 +187,7 @@ namespace GameBoyAdvance {
             updateZeroFlag(ctx.reg[dst]);
             break;
         }
-        case 0b0011: { // LSR
+        case ThumbDataOp::LSR: {
             u32 amount = ctx.reg[src];
             bool carry = ctx.cpsr & MASK_CFLAG;
             shiftLSR(ctx.reg[dst], amount, carry, false);
@@ -185,7 +196,7 @@ namespace GameBoyAdvance {
             updateZeroFlag(ctx.reg[dst]);
             break;
         }
-        case 0b0100: { // ASR
+        case ThumbDataOp::ASR: {
             u32 amount = ctx.reg[src];
             bool carry = ctx.cpsr & MASK_CFLAG;
             shiftASR(ctx.reg[dst], amount, carry, false);
@@ -194,28 +205,9 @@ namespace GameBoyAdvance {
             updateZeroFlag(ctx.reg[dst]);
             break;
         }
-        case 0b0101: { // ADC
-            int carry = (ctx.cpsr >> 29) & 1;
-            u32 result = ctx.reg[dst] + ctx.reg[src] + carry;
-            u64 result_long = (u64)(ctx.reg[dst]) + (u64)(ctx.reg[src]) + (u64)carry;
-            updateCarryFlag(result_long & 0x100000000);
-            updateOverflowFlagAdd(result, ctx.reg[dst], ctx.reg[src]);
-            updateSignFlag(result);
-            updateZeroFlag(result);
-            ctx.reg[dst] = result;
-            break;
-        }
-        case 0b0110: { // SBC
-            int carry = (ctx.cpsr >> 29) & 1;
-            u32 result = ctx.reg[dst] - ctx.reg[src] + carry - 1;
-            updateCarryFlag(ctx.reg[dst] >= (ctx.reg[src] + carry - 1));
-            updateOverflowFlagSub(result, ctx.reg[dst], ctx.reg[src]);
-            updateSignFlag(result);
-            updateZeroFlag(result);
-            ctx.reg[dst] = result;
-            break;
-        }
-        case 0b0111: { // ROR
+        case ThumbDataOp::ADC: ctx.reg[dst] = opADD(ctx.reg[dst], ctx.reg[src], (ctx.cpsr>>POS_CFLAG)&1, true); break;
+        case ThumbDataOp::SBC: ctx.reg[dst] = opSBC(ctx.reg[dst], ctx.reg[src], (~(ctx.cpsr)>>POS_CFLAG)&1, true); break;
+        case ThumbDataOp::ROR: {
             u32 amount = ctx.reg[src];
             bool carry = ctx.cpsr & MASK_CFLAG;
             shiftROR(ctx.reg[dst], amount, carry, false);
@@ -224,44 +216,12 @@ namespace GameBoyAdvance {
             updateZeroFlag(ctx.reg[dst]);
             break;
         }
-        case 0b1000: { // TST
-            u32 result = ctx.reg[dst] & ctx.reg[src];
-            updateSignFlag(result);
-            updateZeroFlag(result);
-            break;
-        }
-        case 0b1001: { // NEG
-            u32 result = 0 - ctx.reg[src];
-            updateCarryFlag(0 >= ctx.reg[src]);
-            updateOverflowFlagSub(result, 0, ctx.reg[src]);
-            updateSignFlag(result);
-            updateZeroFlag(result);
-            ctx.reg[dst] = result;
-            break;
-        }
-        case 0b1010: { // CMP
-            u32 result = ctx.reg[dst] - ctx.reg[src];
-            updateCarryFlag(ctx.reg[dst] >= ctx.reg[src]);
-            updateOverflowFlagSub(result, ctx.reg[dst], ctx.reg[src]);
-            updateSignFlag(result);
-            updateZeroFlag(result);
-            break;
-        }
-        case 0b1011: { // CMN
-            u32 result = ctx.reg[dst] + ctx.reg[src];
-            u64 result_long = (u64)(ctx.reg[dst]) + (u64)(ctx.reg[src]);
-            updateCarryFlag(result_long & 0x100000000);
-            updateOverflowFlagAdd(result, ctx.reg[dst], ctx.reg[src]);
-            updateSignFlag(result);
-            updateZeroFlag(result);
-            break;
-        }
-        case 0b1100: // ORR
-            ctx.reg[dst] |= ctx.reg[src];
-            updateSignFlag(ctx.reg[dst]);
-            updateZeroFlag(ctx.reg[dst]);
-            break;
-        case 0b1101: {// MUL
+        case ThumbDataOp::TST: opDataProc(ctx.reg[dst] & ctx.reg[src], true); break;
+        case ThumbDataOp::NEG: ctx.reg[dst] = opSUB(0, ctx.reg[src], true); break;
+        case ThumbDataOp::CMP: opSUB(ctx.reg[dst], ctx.reg[src], true); break;
+        case ThumbDataOp::CMN: opADD(ctx.reg[dst], ctx.reg[src], 0, true); break;
+        case ThumbDataOp::ORR: ctx.reg[dst] = opDataProc(ctx.reg[dst] | ctx.reg[src], true); break;
+        case ThumbDataOp::MUL: {
             // TODO: calculate internal cycles
             ctx.reg[dst] *= ctx.reg[src];
 
@@ -271,16 +231,8 @@ namespace GameBoyAdvance {
             updateCarryFlag(false);
             break;
         }
-        case 0b1110: // BIC
-            ctx.reg[dst] &= ~(ctx.reg[src]);
-            updateSignFlag(ctx.reg[dst]);
-            updateZeroFlag(ctx.reg[dst]);
-            break;
-        case 0b1111: // MVN
-            ctx.reg[dst] = ~(ctx.reg[src]);
-            updateSignFlag(ctx.reg[dst]);
-            updateZeroFlag(ctx.reg[dst]);
-            break;
+        case ThumbDataOp::BIC: ctx.reg[dst] = opDataProc(ctx.reg[dst] & ~ctx.reg[src], true); break;
+        case ThumbDataOp::MVN: ctx.reg[dst] = opDataProc(~(ctx.reg[src]), true); break;
         }
 
         ADVANCE_PC;
@@ -300,6 +252,7 @@ namespace GameBoyAdvance {
         if (high2) src |= 8;
 
         operand = ctx.reg[src];
+
         if (high2 && src == 15) {
             operand &= ~1;
         }
