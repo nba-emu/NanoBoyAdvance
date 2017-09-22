@@ -404,13 +404,20 @@ namespace GameBoyAdvance {
                 ctx.reg[base] += base_increment ? off : -off;
 
                 // if user-mode was enforced, return to previous mode.
-                if (write_back) {
-                    switchMode(old_mode);
-                }
+                //// TODO: check if this is really wrong. I think it is.
+                //if (write_back) {
+                //    switchMode(old_mode);
+                //}
             }
             else if (write_back) {
                 ctx.reg[base] = addr;
             }
+        }
+
+        // TODO: double-check if this is how it should be.
+        // restore previous mode (if changed)
+        if (!pre_indexed && write_back) {
+            switchMode(old_mode);
         }
 
         // writes to r15 require a pipeline flush.
