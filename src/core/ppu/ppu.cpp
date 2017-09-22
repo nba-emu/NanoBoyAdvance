@@ -159,19 +159,27 @@ namespace GameBoyAdvance {
     }
 
     void PPU::scanline(bool render) {
-
-        // todo: maybe find a better way
+        // TODO: maybe find a better way
         m_io.status.vblank_flag = false;
         m_io.status.hblank_flag = false;
 
-        // off by one scanline?
+        // Are we off by one scanline?
         m_io.bgx[0].internal += PPU::decodeFixed16(m_io.bgpb[0]);
         m_io.bgy[0].internal += PPU::decodeFixed16(m_io.bgpd[0]);
         m_io.bgx[1].internal += PPU::decodeFixed16(m_io.bgpb[1]);
         m_io.bgy[1].internal += PPU::decodeFixed16(m_io.bgpd[1]);
 
         if (render && (m_frameskip == 0 || m_frame_counter == 0)) {
+            u16 backdrop_color = *(u16*)(m_pal); // TODO: endianess
+            u32* line_buffer   = &m_framebuffer[m_io.vcount * 240];
 
+            #define COMPOSE_MODE345 {\
+                for (int x = 0; x < 240; x++) {\
+                    line_buffer[x] = rgb555ToARGB(m_buffer[2][x]);\
+                }\
+            }
+
+            // Simulate forced blank and bail out early
             if (m_io.control.forced_blank) {
                 u32* line = m_framebuffer + m_io.vcount * 240;
 
@@ -181,59 +189,131 @@ namespace GameBoyAdvance {
                 return;
             }
 
+            // Render window masks
             if (m_io.control.win_enable[0]) {
                 renderWindow(0);
             }
-
             if (m_io.control.win_enable[1]) {
                 renderWindow(1);
             }
 
             switch (m_io.control.mode) {
-                case 0:
+                case 0: {
                     // BG Mode 0 - 240x160 pixels, Text mode
                     if (m_io.control.enable[0]) renderTextBG(0);
                     if (m_io.control.enable[1]) renderTextBG(1);
                     if (m_io.control.enable[2]) renderTextBG(2);
                     if (m_io.control.enable[3]) renderTextBG(3);
                     if (m_io.control.enable[4]) renderSprites();
+                    //completeScanline();
+
+                    #define DECLARE_WIN_VARS \
+                        const auto& outside  = m_io.winout.enable[0];\
+                        const auto& win0in   = m_io.winin.enable[0];\
+                        const auto& win1in   = m_io.winin.enable[1];\
+                        const auto& objwinin = m_io.winout.enable[1];\
+
+                    #define LOOP_PRIO(loop_inner) \
+                        for (int prio = 3; prio >= 0; prio--) {\
+                            loop_inner\
+                        }
+
+                    #define LOOP_BG_MODE_0_1(loop_inner) \
+                        for (int bg = 3; bg >= 0; bg--) {\
+                            loop_inner\
+                        }
+
+                    const auto& bgcnt  = m_io.bgcnt;
+                    const auto& enable = m_io.control.enable;
+
+                    auto win_enable = m_io.control.win_enable;
+                    bool no_windows = !win_enable[0] && !win_enable[1] && !win_enable[2];
+                    bool no_effects = m_io.bldcnt.sfx == SFX_NONE; // TODO: look at windows?
+
+                    if (no_windows && no_effects) {
+                        for (int x = 0; x < 240; x++) {
+                            int current_prio = 4;
+                            u32 out_pixel    = backdrop_color;
+                            LOOP_BG_MODE_0_1(
+                                if (enable[bg] && bgcnt[bg].priority <= current_prio) {
+                                    u32 pixel;
+                                    //renderTextBG(bg);
+                                    pixel = m_buffer[bg][x];
+                                    if (pixel != COLOR_TRANSPARENT) {
+                                        out_pixel    = pixel;
+                                        current_prio = bgcnt[bg].priority;
+                                    }
+                                }
+                            )
+                            if (enable[LAYER_OBJ] && m_obj_layer[x].prio <= current_prio) {
+                                u32 pixel = m_obj_layer[x].pixel;
+                                if (pixel != COLOR_TRANSPARENT) {
+                                    line_buffer[x] = rgb555ToARGB(pixel);
+                                    continue;
+                                }
+                            }
+                            line_buffer[x] = rgb555ToARGB(out_pixel);
+                        }
+                    }
+                    else if (!no_windows &&  no_effects) {
+                        DECLARE_WIN_VARS;
+                        for (int x = 0; x < 240; x++) {
+
+                        }
+                    }
+                    else if ( no_windows && !no_effects) {
+                        for (int x = 0; x < 240; x++) {
+
+                        }
+                    }
+                    else {
+                        DECLARE_WIN_VARS;
+                        for (int x = 0; x < 240; x++) {
+
+                        }
+                    }
+
                     break;
+                }
                 case 1:
                     // BG Mode 1 - 240x160 pixels, Text and RS mode mixed
                     if (m_io.control.enable[0]) renderTextBG(0);
                     if (m_io.control.enable[1]) renderTextBG(1);
                     if (m_io.control.enable[2]) renderAffineBG(0);
                     if (m_io.control.enable[4]) renderSprites();
+                    completeScanline();
                     break;
                 case 2:
                     // BG Mode 2 - 240x160 pixels, RS mode
                     if (m_io.control.enable[2]) renderAffineBG(0);
                     if (m_io.control.enable[2]) renderAffineBG(1);
                     if (m_io.control.enable[4]) renderSprites();
+                    completeScanline();
                     break;
                 case 3:
                     // BG Mode 3 - 240x160 pixels, 32768 colors
                     if (m_io.control.enable[2]) {
                         renderBitmapMode1BG();
                     }
+                    COMPOSE_MODE345;
                     break;
                 case 4:
                     // BG Mode 4 - 240x160 pixels, 256 colors (out of 32768 colors)
                     if (m_io.control.enable[2]) {
                         renderBitmapMode2BG();
                     }
+                    COMPOSE_MODE345;
                     break;
                 case 5:
                     // BG Mode 5 - 160x128 pixels, 32768 colors
                     if (m_io.control.enable[2]) {
                         renderBitmapMode3BG();
                     }
+                    COMPOSE_MODE345;
                     break;
                 default:
                     Logger::log<LOG_ERROR>("unknown ppu mode: {0}", m_io.control.mode);
             }
-
-            completeScanline();
         }
     }
 
