@@ -224,7 +224,7 @@ namespace GameBoyAdvance {
                 if (new_pixel != COLOR_TRANSPARENT) {\
                     layer[1] = layer[0];\
                     layer[0] = bg;\
-                    layer[1] = pixel[0];\
+                    pixel[1] = pixel[0];\
                     pixel[0] = new_pixel;\
                 }
 
