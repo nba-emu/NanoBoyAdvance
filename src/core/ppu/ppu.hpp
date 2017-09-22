@@ -7,12 +7,12 @@
   * it under the terms of the GNU General Public License as published by
   * the Free Software Foundation, either version 3 of the License, or
   * (at your option) any later version.
-  * 
+  *
   * NanoboyAdvance is distributed in the hope that it will be useful,
   * but WITHOUT ANY WARRANTY; without even the implied warranty of
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   * GNU General Public License for more details.
-  * 
+  *
   * You should have received a copy of the GNU General Public License
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
@@ -27,7 +27,7 @@
 #define PPU_INCLUDE
 
 namespace GameBoyAdvance {
-    
+
     const u16 COLOR_TRANSPARENT = 0x8000;
 
     class PPU {
@@ -36,7 +36,7 @@ namespace GameBoyAdvance {
         u8* m_oam;
         u8* m_vram;
         Interrupt* m_interrupt = nullptr;
-        
+
         int  m_frameskip;
         u32* m_framebuffer;
         Config* m_config;
@@ -44,13 +44,13 @@ namespace GameBoyAdvance {
         // rendering buffers
         u16  m_buffer[4][240];
         bool m_win_mask[2][240];
-        
+
         // color conversion LUT
         u32 m_color_lut[0x8000];
-        
+
         // LUT for fast (alpha) blend calculation
         u8 blend_table[17][17][32][32];
-        
+
         struct ObjectPixel {
             u8  prio;
             u16 pixel;
@@ -68,16 +68,16 @@ namespace GameBoyAdvance {
         void renderBitmapMode1BG();
         void renderBitmapMode2BG();
         void renderBitmapMode3BG();
-        void renderSprites(u32 tile_base);
-        
+        void renderSprites();
+
         void blendPixels(u16* target1, u16 target2, SpecialEffect sfx);
-        
+
     public:
         PPU(Config* config);
 
         void reset();
         void reloadConfig();
-        
+
         IO& getIO() {
             return m_io;
         }
@@ -89,7 +89,7 @@ namespace GameBoyAdvance {
         void vblank();
         void scanline(bool render);
         void nextLine();
-        
+
         void renderWindow(int id);
 
         void completeScanline();

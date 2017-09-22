@@ -7,12 +7,12 @@
   * it under the terms of the GNU General Public License as published by
   * the Free Software Foundation, either version 3 of the License, or
   * (at your option) any later version.
-  * 
+  *
   * NanoboyAdvance is distributed in the hope that it will be useful,
   * but WITHOUT ANY WARRANTY; without even the implied warranty of
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   * GNU General Public License for more details.
-  * 
+  *
   * You should have received a copy of the GNU General Public License
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
@@ -25,16 +25,16 @@
 using namespace Util;
 
 namespace GameBoyAdvance {
-    
+
     PPU::PPU(Config* config) : m_config(config) {
         reset();
         reloadConfig();
-        
+
         // Generate blending LUT (TODO: make table static)
         for (int color0 = 0; color0 <= 31; color0++) {
-            for (int color1 = 0; color1 <= 31; color1++) {    
+            for (int color1 = 0; color1 <= 31; color1++) {
                 for (int factor0 = 0; factor0 <= 16; factor0++) {
-                    
+
                     // Most inner loop - generate blend result and store in LUT.
                     for (int factor1 = 0; factor1 <= 16; factor1++) {
                         int result = (color0 * factor0 + color1 * factor1) >> 4;
@@ -44,15 +44,15 @@ namespace GameBoyAdvance {
             }
         }
     }
-    
+
     void PPU::reloadConfig() {
-        
+
         m_frameskip   = m_config->frameskip;
         m_framebuffer = m_config->framebuffer;
-        
+
         // build color LUT
         for (int color = 0; color < 0x8000; color++) {
-            
+
             if (m_config->darken_screen) {
                 double r = ((color >> 0 ) & 0x1F) / 31.0;
                 double g = ((color >> 5 ) & 0x1F) / 31.0;
@@ -62,9 +62,9 @@ namespace GameBoyAdvance {
                 g = std::pow(g, 3.0) * 48;
                 b = std::pow(b, 1.4) * 48;
 
-                m_color_lut[color] = 0xFF000000     | 
-                                     ((int)b << 0 ) | 
-                                     ((int)g << 8 ) | 
+                m_color_lut[color] = 0xFF000000     |
+                                     ((int)b << 0 ) |
+                                     ((int)g << 8 ) |
                                      ((int)r << 16);
             } else {
                 int r = (color >> 0 ) & 0x1F;
@@ -77,7 +77,7 @@ namespace GameBoyAdvance {
     }
 
     void PPU::reset() {
-        
+
         m_io.vcount = 0;
 
         // reset DISPCNT and DISPCNT
@@ -86,11 +86,11 @@ namespace GameBoyAdvance {
 
         // reset all backgrounds
         for (int i = 0; i < 4; i++) {
-            
+
             m_io.bghofs[i] = 0;
             m_io.bgvofs[i] = 0;
             m_io.bgcnt[i].reset();
-            
+
             if (i < 2) {
                 m_io.bgx[i].reset();
                 m_io.bgy[i].reset();
@@ -100,15 +100,15 @@ namespace GameBoyAdvance {
                 m_io.bgpd[i] = 0;
             }
         }
-        
+
         // reset MOSAIC register
         m_io.mosaic.reset();
-        
+
         // reset blending registers
         m_io.bldcnt.reset();
         m_io.bldalpha.reset();
         m_io.bldy.reset();
-        
+
         // reset window registers
         m_io.winin.reset();
         m_io.winout.reset();
@@ -131,7 +131,7 @@ namespace GameBoyAdvance {
     }
 
     void PPU::hblank() {
-        
+
         m_io.status.vblank_flag = false;
         m_io.status.hblank_flag = true;
 
@@ -140,7 +140,7 @@ namespace GameBoyAdvance {
     }
 
     void PPU::vblank() {
-        
+
         m_io.status.vblank_flag = true;
         m_io.status.hblank_flag = false;
 
@@ -159,7 +159,7 @@ namespace GameBoyAdvance {
     }
 
     void PPU::scanline(bool render) {
-        
+
         // todo: maybe find a better way
         m_io.status.vblank_flag = false;
         m_io.status.hblank_flag = false;
@@ -171,10 +171,10 @@ namespace GameBoyAdvance {
         m_io.bgy[1].internal += PPU::decodeFixed16(m_io.bgpd[1]);
 
         if (render && (m_frameskip == 0 || m_frame_counter == 0)) {
-            
+
             if (m_io.control.forced_blank) {
                 u32* line = m_framebuffer + m_io.vcount * 240;
-            
+
                 for (int x = 0; x < 240; x++) {
                     line[x] = rgb555ToARGB(0x7FFF);
                 }
@@ -184,11 +184,11 @@ namespace GameBoyAdvance {
             if (m_io.control.win_enable[0]) {
                 renderWindow(0);
             }
-            
+
             if (m_io.control.win_enable[1]) {
                 renderWindow(1);
             }
-            
+
             switch (m_io.control.mode) {
                 case 0:
                     // BG Mode 0 - 240x160 pixels, Text mode
@@ -196,17 +196,20 @@ namespace GameBoyAdvance {
                     if (m_io.control.enable[1]) renderTextBG(1);
                     if (m_io.control.enable[2]) renderTextBG(2);
                     if (m_io.control.enable[3]) renderTextBG(3);
+                    if (m_io.control.enable[4]) renderSprites();
                     break;
                 case 1:
                     // BG Mode 1 - 240x160 pixels, Text and RS mode mixed
                     if (m_io.control.enable[0]) renderTextBG(0);
                     if (m_io.control.enable[1]) renderTextBG(1);
                     if (m_io.control.enable[2]) renderAffineBG(0);
+                    if (m_io.control.enable[4]) renderSprites();
                     break;
                 case 2:
                     // BG Mode 2 - 240x160 pixels, RS mode
                     if (m_io.control.enable[2]) renderAffineBG(0);
                     if (m_io.control.enable[2]) renderAffineBG(1);
+                    if (m_io.control.enable[4]) renderSprites();
                     break;
                 case 3:
                     // BG Mode 3 - 240x160 pixels, 32768 colors
@@ -230,19 +233,14 @@ namespace GameBoyAdvance {
                     Logger::log<LOG_ERROR>("unknown ppu mode: {0}", m_io.control.mode);
             }
 
-            if (m_io.control.enable[4]) {
-                // TODO(accuracy): tile base might not always be 0x10000?
-                renderSprites(0x10000);
-            }
-
             completeScanline();
         }
     }
 
     void PPU::nextLine() {
-        
+
         bool vcount_flag = m_io.vcount == m_io.status.vcount_setting;
-        
+
         m_io.vcount = (m_io.vcount + 1) % 228;
         m_io.status.vcount_flag = vcount_flag;
 
@@ -250,15 +248,15 @@ namespace GameBoyAdvance {
             m_interrupt->request(INTERRUPT_VCOUNT);
         }
     }
-    
+
     void PPU::renderWindow(int id) {
-        
+
         int   line = m_io.vcount;
         auto& winh = m_io.winh[id];
         auto& winv = m_io.winv[id];
-        
+
         auto buffer = m_win_mask[id];
-        
+
         // meh.....
         if ((winv.min <= winv.max && (line < winv.min || line >= winv.max)) ||
             (winv.min >  winv.max && (line < winv.min && line >= winv.max))
@@ -266,7 +264,7 @@ namespace GameBoyAdvance {
             memset(buffer, 0, 240 * sizeof(bool)); // meh...
             return;
         }
-        
+
         if (winh.min <= winh.max) {
             for (int x = 0; x < 240; x++) {
                 buffer[x] = x >= winh.min && x < winh.max;
