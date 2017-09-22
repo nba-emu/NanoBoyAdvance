@@ -173,12 +173,6 @@ namespace GameBoyAdvance {
             u16 backdrop_color = *(u16*)(m_pal); // TODO: endianess
             u32* line_buffer   = &m_framebuffer[m_io.vcount * 240];
 
-            #define COMPOSE_MODE345 {\
-                for (int x = 0; x < 240; x++) {\
-                    line_buffer[x] = rgb555ToARGB(m_buffer[2][x]);\
-                }\
-            }
-
             // Simulate forced blank and bail out early
             if (m_io.control.forced_blank) {
                 u32* line = m_framebuffer + m_io.vcount * 240;
@@ -197,6 +191,185 @@ namespace GameBoyAdvance {
                 renderWindow(1);
             }
 
+            #define DECLARE_VARS_NO_SFX \
+                int current_prio = 4;\
+                u16 out_pixel    = backdrop_color;
+
+            #define IS_SUITABLE_BG_NO_SFX (enable[bg] && bgcnt[bg].priority <= current_prio)
+
+            #define SUITABLE_BG_NO_SFX_INNER \
+                u16 pixel;\
+                pixel = m_buffer[bg][x];\
+                if (pixel != COLOR_TRANSPARENT) {\
+                    out_pixel    = pixel;\
+                    current_prio = bgcnt[bg].priority;\
+                }
+
+            #define IS_OBJ_PIXEL_NO_SFX (enable[LAYER_OBJ] && m_obj_layer[x].prio <= current_prio)
+
+            #define OBJ_PIXEL_NO_SFX_INNER \
+                u16 pixel = m_obj_layer[x].pixel;\
+                if (pixel != COLOR_TRANSPARENT) {\
+                    line_buffer[x] = rgb555ToARGB(pixel);\
+                    continue;\
+                }
+
+            #define DECLARE_SFX_VARS \
+                int layer[2] = { LAYER_BD, LAYER_BD };\
+                u16 pixel[2] = { backdrop_color, 0  };
+
+            #define IS_SUITABLE_BG_SFX (enable[bg] && bgcnt[bg].priority == prio)
+
+            #define SUITABLE_BG_SFX_INNER \
+                u16 new_pixel = m_buffer[bg][x];\
+                if (new_pixel != COLOR_TRANSPARENT) {\
+                    layer[1] = layer[0];\
+                    layer[0] = bg;\
+                    layer[1] = pixel[0];\
+                    pixel[0] = new_pixel;\
+                }
+
+            #define IS_OBJ_PIXEL_SFX (enable[LAYER_OBJ] && m_obj_layer[x].prio == prio)
+
+            #define OBJ_PIXEL_SFX_INNER \
+                u16 new_pixel = m_obj_layer[x].pixel;\
+                if (new_pixel != COLOR_TRANSPARENT) {\
+                    layer[1] = layer[0];\
+                    layer[0] = LAYER_OBJ;\
+                    pixel[1] = pixel[0];\
+                    pixel[0] = new_pixel;\
+                }
+
+            #define PERFORM_SFX_EFFECT \
+                auto sfx          = m_io.bldcnt.sfx;\
+                bool is_alpha_obj = layer[0] == LAYER_OBJ && m_obj_layer[x].alpha;\
+                bool sfx_above    = m_io.bldcnt.targets[0][layer[0]] || is_alpha_obj;\
+                bool sfx_below    = m_io.bldcnt.targets[1][layer[1]];\
+                \
+                if (is_alpha_obj && sfx_below) {\
+                    sfx = SFX_BLEND;\
+                }\
+                \
+                if (sfx != SFX_NONE && sfx_above && (sfx_below || sfx != SFX_BLEND)) {\
+                    blendPixels(&pixel[0], pixel[1], sfx);\
+                }
+
+            #define DECLARE_WIN_VARS \
+                const auto& outside  = m_io.winout.enable[0];\
+                const auto& win0in   = m_io.winin.enable[0];\
+                const auto& win1in   = m_io.winin.enable[1];\
+                const auto& objwinin = m_io.winout.enable[1];\
+
+            #define DECLARE_WIN_VARS_INNER \
+                const bool win0   = win_enable[0] && m_win_mask[0][x];\
+                const bool win1   = win_enable[1] && m_win_mask[1][x];\
+                const bool objwin = win_enable[2] && m_obj_layer[x].window;\
+                \
+                bool* visible = win0   ? win0in   :\
+                                win1   ? win1in   :\
+                                objwin ? objwinin : outside;
+
+            #define  BG_IS_IN_WINDOW visible[bg]
+            #define OBJ_IS_IN_WINDOW visible[LAYER_OBJ]
+
+            #define LOOP_LINE \
+                for (int x = 0; x < 240; x++)
+
+            #define LOOP_PRIO \
+                for (int prio = 3; prio >= 0; prio--)
+
+            #define LOOP_BG_MODE_0 \
+                for (int bg = 3; bg >= 0; bg--)
+
+            #define LOOP_BG_MODE_1 \
+                for (int bg = 2; bg >= 0; bg--)
+
+            #define LOOP_BG_MODE_2 \
+                for (int bg = 1; bg >= 0; bg--)
+
+            #define LOOP_BG_MODE_3_4_5 \
+                int bg = 2;
+
+            const auto& bgcnt  = m_io.bgcnt;
+            const auto& enable = m_io.control.enable;
+
+            auto win_enable = m_io.control.win_enable;
+            bool no_windows = !win_enable[0] && !win_enable[1] && !win_enable[2];
+            bool no_effects = m_io.bldcnt.sfx == SFX_NONE; // TODO: look at windows?
+
+            #define COMPOSE(custom_bg_loop) \
+                if (no_windows && no_effects) {\
+                    LOOP_LINE {\
+                        DECLARE_VARS_NO_SFX;\
+                        custom_bg_loop {\
+                            if (IS_SUITABLE_BG_NO_SFX) {\
+                                SUITABLE_BG_NO_SFX_INNER;\
+                            }\
+                        }\
+                        if (IS_OBJ_PIXEL_NO_SFX) {\
+                            OBJ_PIXEL_NO_SFX_INNER;\
+                        }\
+                        line_buffer[x] = rgb555ToARGB(out_pixel);\
+                    }\
+                }\
+                else if (!no_windows &&  no_effects) {\
+                    DECLARE_WIN_VARS;\
+                    DECLARE_VARS_NO_SFX;\
+                    LOOP_LINE {\
+                        DECLARE_VARS_NO_SFX;\
+                        DECLARE_WIN_VARS_INNER\
+                        custom_bg_loop {\
+                            if (IS_SUITABLE_BG_NO_SFX && BG_IS_IN_WINDOW) {\
+                                SUITABLE_BG_NO_SFX_INNER;\
+                            }\
+                        }\
+                        if (IS_OBJ_PIXEL_NO_SFX && OBJ_IS_IN_WINDOW) {\
+                            OBJ_PIXEL_NO_SFX_INNER;\
+                        }\
+                        line_buffer[x] = rgb555ToARGB(out_pixel);\
+                    }\
+                }\
+                else if ( no_windows && !no_effects) {\
+                    DECLARE_WIN_VARS;\
+                    LOOP_LINE {\
+                        DECLARE_SFX_VARS;\
+                        DECLARE_WIN_VARS_INNER;\
+                        LOOP_PRIO {\
+                            custom_bg_loop {\
+                                if (IS_SUITABLE_BG_SFX) {\
+                                    SUITABLE_BG_SFX_INNER;\
+                                }\
+                            }\
+                            if (IS_OBJ_PIXEL_SFX) {\
+                                OBJ_PIXEL_SFX_INNER;\
+                            }\
+                        }\
+                        PERFORM_SFX_EFFECT;\
+                        line_buffer[x] = rgb555ToARGB(pixel[0]);\
+                    }\
+                }\
+                else {\
+                    DECLARE_WIN_VARS;\
+                    LOOP_LINE {\
+                        DECLARE_SFX_VARS;\
+                        DECLARE_WIN_VARS_INNER;\
+                        LOOP_PRIO {\
+                            custom_bg_loop {\
+                                if (IS_SUITABLE_BG_SFX && BG_IS_IN_WINDOW) {\
+                                    SUITABLE_BG_SFX_INNER;\
+                                }\
+                            }\
+                            if (IS_OBJ_PIXEL_SFX && OBJ_IS_IN_WINDOW) {\
+                                OBJ_PIXEL_SFX_INNER;\
+                            }\
+                        }\
+                        if (visible[LAYER_SFX]) {\
+                            PERFORM_SFX_EFFECT;\
+                        }\
+                        line_buffer[x] = rgb555ToARGB(pixel[0]);\
+                    }\
+                }
+
             switch (m_io.control.mode) {
                 case 0: {
                     // BG Mode 0 - 240x160 pixels, Text mode
@@ -205,184 +378,7 @@ namespace GameBoyAdvance {
                     if (m_io.control.enable[2]) renderTextBG(2);
                     if (m_io.control.enable[3]) renderTextBG(3);
                     if (m_io.control.enable[4]) renderSprites();
-                    //completeScanline();
-
-                    #define DECLARE_VARS_NO_SFX \
-                        int current_prio = 4;\
-                        u16 out_pixel    = backdrop_color;
-
-                    #define IS_SUITABLE_BG_NO_SFX (enable[bg] && bgcnt[bg].priority <= current_prio)
-
-                    #define SUITABLE_BG_NO_SFX_INNER \
-                        u16 pixel;\
-                        pixel = m_buffer[bg][x];\
-                        if (pixel != COLOR_TRANSPARENT) {\
-                            out_pixel    = pixel;\
-                            current_prio = bgcnt[bg].priority;\
-                        }
-
-                    #define IS_OBJ_PIXEL_NO_SFX (enable[LAYER_OBJ] && m_obj_layer[x].prio <= current_prio)
-
-                    #define OBJ_PIXEL_NO_SFX_INNER \
-                        u16 pixel = m_obj_layer[x].pixel;\
-                        if (pixel != COLOR_TRANSPARENT) {\
-                            line_buffer[x] = rgb555ToARGB(pixel);\
-                            continue;\
-                        }
-
-                    #define DECLARE_SFX_VARS \
-                        int layer[2] = { LAYER_BD, LAYER_BD };\
-                        u16 pixel[2] = { backdrop_color, 0  };
-
-                    #define IS_SUITABLE_BG_SFX (enable[bg] && bgcnt[bg].priority == prio)
-
-                    #define SUITABLE_BG_SFX_INNER \
-                        u16 new_pixel = m_buffer[bg][x];\
-                        if (new_pixel != COLOR_TRANSPARENT) {\
-                            layer[1] = layer[0];\
-                            layer[0] = bg;\
-                            layer[1] = pixel[0];\
-                            pixel[0] = new_pixel;\
-                        }
-
-                    #define IS_OBJ_PIXEL_SFX (enable[LAYER_OBJ] && m_obj_layer[x].prio == prio)
-
-                    #define OBJ_PIXEL_SFX_INNER \
-                        u16 new_pixel = m_obj_layer[x].pixel;\
-                        if (new_pixel != COLOR_TRANSPARENT) {\
-                            layer[1] = layer[0];\
-                            layer[0] = LAYER_OBJ;\
-                            pixel[1] = pixel[0];\
-                            pixel[0] = new_pixel;\
-                        }
-
-                    #define PERFORM_SFX_EFFECT \
-                        auto sfx          = m_io.bldcnt.sfx;\
-                        bool is_alpha_obj = layer[0] == LAYER_OBJ && m_obj_layer[x].alpha;\
-                        bool sfx_above    = m_io.bldcnt.targets[0][layer[0]] || is_alpha_obj;\
-                        bool sfx_below    = m_io.bldcnt.targets[1][layer[1]];\
-                        \
-                        if (is_alpha_obj && sfx_below) {\
-                            sfx = SFX_BLEND;\
-                        }\
-                        \
-                        if (sfx != SFX_NONE && sfx_above && (sfx_below || sfx != SFX_BLEND)) {\
-                            blendPixels(&pixel[0], pixel[1], sfx);\
-                        }
-
-                    #define DECLARE_WIN_VARS \
-                        const auto& outside  = m_io.winout.enable[0];\
-                        const auto& win0in   = m_io.winin.enable[0];\
-                        const auto& win1in   = m_io.winin.enable[1];\
-                        const auto& objwinin = m_io.winout.enable[1];\
-
-                    #define DECLARE_WIN_VARS_INNER \
-                        const bool win0   = win_enable[0] && m_win_mask[0][x];\
-                        const bool win1   = win_enable[1] && m_win_mask[1][x];\
-                        const bool objwin = win_enable[2] && m_obj_layer[x].window;\
-                        \
-                        bool* visible = win0   ? win0in   :\
-                                        win1   ? win1in   :\
-                                        objwin ? objwinin : outside;
-
-                    #define  BG_IS_IN_WINDOW visible[bg]
-                    #define OBJ_IS_IN_WINDOW visible[LAYER_OBJ]
-
-                    #define LOOP_LINE \
-                        for (int x = 0; x < 240; x++)
-
-                    #define LOOP_PRIO \
-                        for (int prio = 3; prio >= 0; prio--)
-
-                    #define LOOP_BG_MODE_0_1 \
-                        for (int bg = 3; bg >= 0; bg--)
-
-                    const auto& bgcnt  = m_io.bgcnt;
-                    const auto& enable = m_io.control.enable;
-
-                    auto win_enable = m_io.control.win_enable;
-                    bool no_windows = !win_enable[0] && !win_enable[1] && !win_enable[2];
-                    bool no_effects = m_io.bldcnt.sfx == SFX_NONE; // TODO: look at windows?
-
-                    if (no_windows && no_effects) {
-                        // NO WINDOWS ENABLED
-                        // NO SPECIAL EFFECTS ENABLED
-                        LOOP_LINE {
-                            DECLARE_VARS_NO_SFX;
-                            LOOP_BG_MODE_0_1 {
-                                if (IS_SUITABLE_BG_NO_SFX) {
-                                    SUITABLE_BG_NO_SFX_INNER;
-                                }
-                            }
-                            if (IS_OBJ_PIXEL_NO_SFX) {
-                                OBJ_PIXEL_NO_SFX_INNER;
-                            }
-                            line_buffer[x] = rgb555ToARGB(out_pixel);
-                        }
-                    }
-                    else if (!no_windows &&  no_effects) {
-                        // WINDOWS ENABLED
-                        // NO SPCIAL EFFECTS ENABLED
-                        DECLARE_WIN_VARS;
-                        DECLARE_VARS_NO_SFX;
-                        LOOP_LINE {
-                            DECLARE_VARS_NO_SFX;
-                            DECLARE_WIN_VARS_INNER
-                            LOOP_BG_MODE_0_1 {
-                                if (IS_SUITABLE_BG_NO_SFX && BG_IS_IN_WINDOW) {
-                                    SUITABLE_BG_NO_SFX_INNER;
-                                }
-                            }
-                            if (IS_OBJ_PIXEL_NO_SFX && OBJ_IS_IN_WINDOW) {
-                                OBJ_PIXEL_NO_SFX_INNER;
-                            }
-                            line_buffer[x] = rgb555ToARGB(out_pixel);
-                        }
-                    }
-                    else if ( no_windows && !no_effects) {
-                        // WINDOWS NOT ENABNLED
-                        // SPECIAL EFFECTS ENABLED
-                        DECLARE_WIN_VARS;
-                        LOOP_LINE {
-                            DECLARE_SFX_VARS;
-                            DECLARE_WIN_VARS_INNER;
-                            LOOP_PRIO {
-                                LOOP_BG_MODE_0_1 {
-                                    if (IS_SUITABLE_BG_SFX) {
-                                        SUITABLE_BG_SFX_INNER;
-                                    }
-                                }
-                                if (IS_OBJ_PIXEL_SFX) {
-                                    OBJ_PIXEL_SFX_INNER;
-                                }
-                            }
-                            PERFORM_SFX_EFFECT;
-                            line_buffer[x] = rgb555ToARGB(pixel[0]);
-                        }
-                    }
-                    else {
-                        // WINDOWS ENABNLED
-                        // SPECIAL EFFECTS ENABLED
-                        DECLARE_WIN_VARS;
-                        LOOP_LINE {
-                            DECLARE_SFX_VARS;
-                            DECLARE_WIN_VARS_INNER;
-                            LOOP_PRIO {
-                                LOOP_BG_MODE_0_1 {
-                                    if (IS_SUITABLE_BG_SFX && BG_IS_IN_WINDOW) {
-                                        SUITABLE_BG_SFX_INNER;
-                                    }
-                                }
-                                if (IS_OBJ_PIXEL_SFX && OBJ_IS_IN_WINDOW) {
-                                    OBJ_PIXEL_SFX_INNER;
-                                }
-                            }
-                            if (visible[LAYER_SFX]) {
-                                PERFORM_SFX_EFFECT;
-                            }
-                            line_buffer[x] = rgb555ToARGB(pixel[0]);
-                        }
-                    }
+                    COMPOSE(LOOP_BG_MODE_0);
                     break;
                 }
                 case 1:
@@ -391,38 +387,36 @@ namespace GameBoyAdvance {
                     if (m_io.control.enable[1]) renderTextBG(1);
                     if (m_io.control.enable[2]) renderAffineBG(0);
                     if (m_io.control.enable[4]) renderSprites();
-                    completeScanline();
+                    COMPOSE(LOOP_BG_MODE_1);
                     break;
                 case 2:
                     // BG Mode 2 - 240x160 pixels, RS mode
                     if (m_io.control.enable[2]) renderAffineBG(0);
                     if (m_io.control.enable[2]) renderAffineBG(1);
                     if (m_io.control.enable[4]) renderSprites();
-                    completeScanline();
+                    COMPOSE(LOOP_BG_MODE_2);
                     break;
                 case 3:
                     // BG Mode 3 - 240x160 pixels, 32768 colors
                     if (m_io.control.enable[2]) {
                         renderBitmapMode1BG();
                     }
-                    COMPOSE_MODE345;
+                    COMPOSE(LOOP_BG_MODE_3_4_5);
                     break;
                 case 4:
                     // BG Mode 4 - 240x160 pixels, 256 colors (out of 32768 colors)
                     if (m_io.control.enable[2]) {
                         renderBitmapMode2BG();
                     }
-                    COMPOSE_MODE345;
+                    COMPOSE(LOOP_BG_MODE_3_4_5);
                     break;
                 case 5:
                     // BG Mode 5 - 160x128 pixels, 32768 colors
                     if (m_io.control.enable[2]) {
                         renderBitmapMode3BG();
                     }
-                    COMPOSE_MODE345;
+                    COMPOSE(LOOP_BG_MODE_3_4_5);
                     break;
-                default:
-                    Logger::log<LOG_ERROR>("unknown ppu mode: {0}", m_io.control.mode);
             }
         }
     }
