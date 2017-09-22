@@ -207,21 +207,95 @@ namespace GameBoyAdvance {
                     if (m_io.control.enable[4]) renderSprites();
                     //completeScanline();
 
+                    #define DECLARE_VARS_NO_SFX \
+                        int current_prio = 4;\
+                        u16 out_pixel    = backdrop_color;
+
+                    #define IS_SUITABLE_BG_NO_SFX (enable[bg] && bgcnt[bg].priority <= current_prio)
+
+                    #define SUITABLE_BG_NO_SFX_INNER \
+                        u16 pixel;\
+                        pixel = m_buffer[bg][x];\
+                        if (pixel != COLOR_TRANSPARENT) {\
+                            out_pixel    = pixel;\
+                            current_prio = bgcnt[bg].priority;\
+                        }
+
+                    #define IS_OBJ_PIXEL_NO_SFX (enable[LAYER_OBJ] && m_obj_layer[x].prio <= current_prio)
+
+                    #define OBJ_PIXEL_NO_SFX_INNER \
+                        u16 pixel = m_obj_layer[x].pixel;\
+                        if (pixel != COLOR_TRANSPARENT) {\
+                            line_buffer[x] = rgb555ToARGB(pixel);\
+                            continue;\
+                        }
+
+                    #define DECLARE_SFX_VARS \
+                        int layer[2] = { LAYER_BD, LAYER_BD };\
+                        u16 pixel[2] = { backdrop_color, 0  };
+
+                    #define IS_SUITABLE_BG_SFX (enable[bg] && bgcnt[bg].priority == prio)
+
+                    #define SUITABLE_BG_SFX_INNER \
+                        u16 new_pixel = m_buffer[bg][x];\
+                        if (new_pixel != COLOR_TRANSPARENT) {\
+                            layer[1] = layer[0];\
+                            layer[0] = bg;\
+                            layer[1] = pixel[0];\
+                            pixel[0] = new_pixel;\
+                        }
+
+                    #define IS_OBJ_PIXEL_SFX (enable[LAYER_OBJ] && m_obj_layer[x].prio == prio)
+
+                    #define OBJ_PIXEL_SFX_INNER \
+                        u16 new_pixel = m_obj_layer[x].pixel;\
+                        if (new_pixel != COLOR_TRANSPARENT) {\
+                            layer[1] = layer[0];\
+                            layer[0] = LAYER_OBJ;\
+                            pixel[1] = pixel[0];\
+                            pixel[0] = new_pixel;\
+                        }
+
+                    #define PERFORM_SFX_EFFECT \
+                        auto sfx          = m_io.bldcnt.sfx;\
+                        bool is_alpha_obj = layer[0] == LAYER_OBJ && m_obj_layer[x].alpha;\
+                        bool sfx_above    = m_io.bldcnt.targets[0][layer[0]] || is_alpha_obj;\
+                        bool sfx_below    = m_io.bldcnt.targets[1][layer[1]];\
+                        \
+                        if (is_alpha_obj && sfx_below) {\
+                            sfx = SFX_BLEND;\
+                        }\
+                        \
+                        if (sfx != SFX_NONE && sfx_above && (sfx_below || sfx != SFX_BLEND)) {\
+                            blendPixels(&pixel[0], pixel[1], sfx);\
+                        }
+
                     #define DECLARE_WIN_VARS \
                         const auto& outside  = m_io.winout.enable[0];\
                         const auto& win0in   = m_io.winin.enable[0];\
                         const auto& win1in   = m_io.winin.enable[1];\
                         const auto& objwinin = m_io.winout.enable[1];\
 
-                    #define LOOP_PRIO(loop_inner) \
-                        for (int prio = 3; prio >= 0; prio--) {\
-                            loop_inner\
-                        }
+                    #define DECLARE_WIN_VARS_INNER \
+                        const bool win0   = win_enable[0] && m_win_mask[0][x];\
+                        const bool win1   = win_enable[1] && m_win_mask[1][x];\
+                        const bool objwin = win_enable[2] && m_obj_layer[x].window;\
+                        \
+                        bool* visible = win0   ? win0in   :\
+                                        win1   ? win1in   :\
+                                        objwin ? objwinin : outside;
 
-                    #define LOOP_BG_MODE_0_1(loop_inner) \
-                        for (int bg = 3; bg >= 0; bg--) {\
-                            loop_inner\
-                        }
+                    #define  BG_IS_IN_WINDOW visible[bg]
+                    #define OBJ_IS_IN_WINDOW visible[LAYER_OBJ]
+
+                    #define LOOP_LINE \
+                        for (int x = 0; x < 240; x++)
+
+                    #define LOOP_PRIO \
+                        for (int prio = 3; prio >= 0; prio--)
+
+                    #define LOOP_BG_MODE_0_1 \
+                        for (int bg = 3; bg >= 0; bg--)
 
                     const auto& bgcnt  = m_io.bgcnt;
                     const auto& enable = m_io.control.enable;
@@ -231,48 +305,84 @@ namespace GameBoyAdvance {
                     bool no_effects = m_io.bldcnt.sfx == SFX_NONE; // TODO: look at windows?
 
                     if (no_windows && no_effects) {
-                        for (int x = 0; x < 240; x++) {
-                            int current_prio = 4;
-                            u32 out_pixel    = backdrop_color;
-                            LOOP_BG_MODE_0_1(
-                                if (enable[bg] && bgcnt[bg].priority <= current_prio) {
-                                    u32 pixel;
-                                    //renderTextBG(bg);
-                                    pixel = m_buffer[bg][x];
-                                    if (pixel != COLOR_TRANSPARENT) {
-                                        out_pixel    = pixel;
-                                        current_prio = bgcnt[bg].priority;
-                                    }
+                        // NO WINDOWS ENABLED
+                        // NO SPECIAL EFFECTS ENABLED
+                        LOOP_LINE {
+                            DECLARE_VARS_NO_SFX;
+                            LOOP_BG_MODE_0_1 {
+                                if (IS_SUITABLE_BG_NO_SFX) {
+                                    SUITABLE_BG_NO_SFX_INNER;
                                 }
-                            )
-                            if (enable[LAYER_OBJ] && m_obj_layer[x].prio <= current_prio) {
-                                u32 pixel = m_obj_layer[x].pixel;
-                                if (pixel != COLOR_TRANSPARENT) {
-                                    line_buffer[x] = rgb555ToARGB(pixel);
-                                    continue;
-                                }
+                            }
+                            if (IS_OBJ_PIXEL_NO_SFX) {
+                                OBJ_PIXEL_NO_SFX_INNER;
                             }
                             line_buffer[x] = rgb555ToARGB(out_pixel);
                         }
                     }
                     else if (!no_windows &&  no_effects) {
+                        // WINDOWS ENABLED
+                        // NO SPCIAL EFFECTS ENABLED
                         DECLARE_WIN_VARS;
-                        for (int x = 0; x < 240; x++) {
-
+                        DECLARE_VARS_NO_SFX;
+                        LOOP_LINE {
+                            DECLARE_VARS_NO_SFX;
+                            DECLARE_WIN_VARS_INNER
+                            LOOP_BG_MODE_0_1 {
+                                if (IS_SUITABLE_BG_NO_SFX && BG_IS_IN_WINDOW) {
+                                    SUITABLE_BG_NO_SFX_INNER;
+                                }
+                            }
+                            if (IS_OBJ_PIXEL_NO_SFX && OBJ_IS_IN_WINDOW) {
+                                OBJ_PIXEL_NO_SFX_INNER;
+                            }
+                            line_buffer[x] = rgb555ToARGB(out_pixel);
                         }
                     }
                     else if ( no_windows && !no_effects) {
-                        for (int x = 0; x < 240; x++) {
-
+                        // WINDOWS NOT ENABNLED
+                        // SPECIAL EFFECTS ENABLED
+                        DECLARE_WIN_VARS;
+                        LOOP_LINE {
+                            DECLARE_SFX_VARS;
+                            DECLARE_WIN_VARS_INNER;
+                            LOOP_PRIO {
+                                LOOP_BG_MODE_0_1 {
+                                    if (IS_SUITABLE_BG_SFX) {
+                                        SUITABLE_BG_SFX_INNER;
+                                    }
+                                }
+                                if (IS_OBJ_PIXEL_SFX) {
+                                    OBJ_PIXEL_SFX_INNER;
+                                }
+                            }
+                            PERFORM_SFX_EFFECT;
+                            line_buffer[x] = rgb555ToARGB(pixel[0]);
                         }
                     }
                     else {
+                        // WINDOWS ENABNLED
+                        // SPECIAL EFFECTS ENABLED
                         DECLARE_WIN_VARS;
-                        for (int x = 0; x < 240; x++) {
-
+                        LOOP_LINE {
+                            DECLARE_SFX_VARS;
+                            DECLARE_WIN_VARS_INNER;
+                            LOOP_PRIO {
+                                LOOP_BG_MODE_0_1 {
+                                    if (IS_SUITABLE_BG_SFX && BG_IS_IN_WINDOW) {
+                                        SUITABLE_BG_SFX_INNER;
+                                    }
+                                }
+                                if (IS_OBJ_PIXEL_SFX && OBJ_IS_IN_WINDOW) {
+                                    OBJ_PIXEL_SFX_INNER;
+                                }
+                            }
+                            if (visible[LAYER_SFX]) {
+                                PERFORM_SFX_EFFECT;
+                            }
+                            line_buffer[x] = rgb555ToARGB(pixel[0]);
                         }
                     }
-
                     break;
                 }
                 case 1:

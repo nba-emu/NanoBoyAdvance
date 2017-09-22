@@ -22,7 +22,7 @@
 
 namespace GameBoyAdvance {
 
-    inline void PPU::blendPixels(u16* target1, u16 target2, SpecialEffect sfx) {
+    void PPU::blendPixels(u16* target1, u16 target2, SpecialEffect sfx) {
 
         int r1 = (*target1 >> 0 ) & 0x1F;
         int g1 = (*target1 >> 5 ) & 0x1F;
