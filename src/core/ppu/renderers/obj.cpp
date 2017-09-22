@@ -62,6 +62,7 @@ namespace GameBoyAdvance {
         u32 offset = 127 << 3;
 
         // (semi) eh...
+        line_has_alpha_objs = false;
         for (int i = 0; i < 240; i++) {
             auto& obj = m_obj_layer[i];
 
@@ -75,7 +76,6 @@ namespace GameBoyAdvance {
         // we have to read OAM data in descending order but that
         // might affect dcache performance? not sure about impact.
         for (int i = 0; i < 128; i++) {
-
             // TODO(performance): decode these on OAM writes already?
             u16 attribute0 = (m_oam[offset + 1] << 8) | m_oam[offset + 0];
             u16 attribute1 = (m_oam[offset + 3] << 8) | m_oam[offset + 2];
@@ -224,6 +224,9 @@ namespace GameBoyAdvance {
                                 p.prio   = prio;
                                 p.pixel  = pixel;
                                 p.alpha  = mode == OBJ_SEMI;
+                                if (p.alpha) {
+                                    line_has_alpha_objs = true;
+                                }
                             }
                         }
                     }

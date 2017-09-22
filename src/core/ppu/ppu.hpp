@@ -51,6 +51,8 @@ namespace GameBoyAdvance {
         // LUT for fast (alpha) blend calculation
         u8 blend_table[17][17][32][32];
 
+        bool line_has_alpha_objs;
+
         struct ObjectPixel {
             u8  prio;
             u16 pixel;

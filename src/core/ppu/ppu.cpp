@@ -46,7 +46,6 @@ namespace GameBoyAdvance {
     }
 
     void PPU::reloadConfig() {
-
         m_frameskip   = m_config->frameskip;
         m_framebuffer = m_config->framebuffer;
 
@@ -77,7 +76,6 @@ namespace GameBoyAdvance {
     }
 
     void PPU::reset() {
-
         m_io.vcount = 0;
 
         // reset DISPCNT and DISPCNT
@@ -118,6 +116,7 @@ namespace GameBoyAdvance {
         m_io.winv[1].reset();
 
         m_frame_counter = 0;
+        line_has_alpha_objs = false;
     }
 
     void PPU::setMemoryBuffers(u8* pal, u8* oam, u8* vram) {
@@ -295,7 +294,7 @@ namespace GameBoyAdvance {
 
             auto win_enable = m_io.control.win_enable;
             bool no_windows = !win_enable[0] && !win_enable[1] && !win_enable[2];
-            bool no_effects = m_io.bldcnt.sfx == SFX_NONE; // TODO: look at windows?
+            bool no_effects = (m_io.bldcnt.sfx == SFX_NONE) && !line_has_alpha_objs;
 
             #define COMPOSE(custom_bg_loop) \
                 if (no_windows && no_effects) {\
@@ -434,7 +433,6 @@ namespace GameBoyAdvance {
     }
 
     void PPU::renderWindow(int id) {
-
         int   line = m_io.vcount;
         auto& winh = m_io.winh[id];
         auto& winv = m_io.winv[id];
