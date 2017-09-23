@@ -12,7 +12,7 @@ For Windows users:
 
 -IMPORTANT: You must download SDL2 at https://www.libsdl.org/download-2.0.php  
 -IMPORTANT: You must also download Qt at https://www.qt.io/download-open-source/ (if you want to build the Qt frontend)  
--You must add these to the PATH, or add them to the cache if you are using CMake GUI.  
+-You must add these to your MinGW folder by doing this: https://w3.cs.jmu.edu/bernstdh/Web/common/help/cpp_mingw-sdl-setup.php 
 
 Linux users usually just install the libraries via package manager and should be good.
 
