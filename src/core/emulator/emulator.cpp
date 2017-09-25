@@ -41,7 +41,7 @@ namespace GameBoyAdvance {
         //Emulator::reset();
 
         // setup interrupt controller
-        m_interrupt.set_flag_register(&regs.irq.if_);
+        m_interrupt.set_flag_register(&regs.irq.flag);
 
         // feed PPU with important data. (EEK!)
         ppu.setInterruptController(&m_interrupt);
@@ -243,7 +243,7 @@ namespace GameBoyAdvance {
         cycles_left += cycles;
 
         while (cycles_left > 0) {
-            u32 requested_and_enabled = regs.irq.if_ & regs.irq.ie;
+            u32 requested_and_enabled = regs.irq.flag & regs.irq.enable;
 
             if (regs.haltcnt == SYSTEM_HALT && requested_and_enabled) {
                 regs.haltcnt = SYSTEM_RUN;
@@ -254,7 +254,7 @@ namespace GameBoyAdvance {
             if (UNLIKELY(dma_running)) {
                 dmaTransfer();
             } else if (LIKELY(regs.haltcnt == SYSTEM_RUN)) {
-                if (regs.irq.ime && requested_and_enabled) {
+                if (regs.irq.master_enable && requested_and_enabled) {
                     signalIRQ();
                 }
                 step();

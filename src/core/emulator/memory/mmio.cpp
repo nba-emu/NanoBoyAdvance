@@ -1,4 +1,4 @@
-/**
+irq.enable/**
   * Copyright (C) 2017 flerovium^-^ (Frederic Meyer)
   *
   * This file is part of NanoboyAdvance.
@@ -110,12 +110,12 @@ namespace GameBoyAdvance {
             case KEYINPUT+1: return regs.keyinput >> 8;
 
             // INTERRUPT
-            case IE:    return regs.irq.ie & 0xFF;
-            case IE+1:  return regs.irq.ie >> 8;
-            case IF:    return regs.irq.if_ & 0xFF;
-            case IF+1:  return regs.irq.if_ >> 8;
-            case IME:   return regs.irq.ime & 0xFF;
-            case IME+1: return regs.irq.ime >> 8;
+            case IE:    return regs.irq.enable & 0xFF;
+            case IE+1:  return regs.irq.enable >> 8;
+            case IF:    return regs.irq.flag & 0xFF;
+            case IF+1:  return regs.irq.flag >> 8;
+            case IME:   return regs.irq.master_enable & 0xFF;
+            case IME+1: return regs.irq.master_enable >> 8;
 
             // WAITSTATES
             case WAITCNT: {
@@ -353,31 +353,31 @@ namespace GameBoyAdvance {
 
             // INTERRUPT
             case IE: {
-                regs.irq.ie &= 0xFF00;
-                regs.irq.ie |= value;
+                regs.irq.enable &= 0xFF00;
+                regs.irq.enable |= value;
                 break;
             }
             case IE+1: {
-                regs.irq.ie &= 0x00FF;
-                regs.irq.ie |= (value << 8);
+                regs.irq.enable &= 0x00FF;
+                regs.irq.enable |= (value << 8);
                 break;
             }
             case IF: {
-                regs.irq.if_ &= ~value;
+                regs.irq.flag &= ~value;
                 break;
             }
             case IF+1: {
-                regs.irq.if_ &= ~(value << 8);
+                regs.irq.flag &= ~(value << 8);
                 break;
             }
             case IME: {
-                regs.irq.ime &= 0xFF00;
-                regs.irq.ime |= value;
+                regs.irq.master_enable &= 0xFF00;
+                regs.irq.master_enable |= value;
                 break;
             }
             case IME+1: {
-                regs.irq.ime &= 0x00FF;
-                regs.irq.ime |= (value << 8);
+                regs.irq.master_enable &= 0x00FF;
+                regs.irq.master_enable |= (value << 8);
                 break;
             }
 

@@ -101,9 +101,9 @@ namespace GameBoyAdvance {
             u16 keyinput;
 
             struct Interrupt {
-                u16 ie;
-                u16 if_;
-                u16 ime;
+                u16 enable;
+                u16 flag;
+                u16 master_enable;
             } irq;
 
             struct WaitstateControl {
