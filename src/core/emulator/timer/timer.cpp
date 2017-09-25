@@ -132,7 +132,7 @@ namespace GameBoyAdvance {
         }
 
         // handle FIFO transfer if sound is enabled
-        if (apu.getIO().control.master_enable) {
+        if (timer.id < 2 && apu.getIO().control.master_enable) {
             timerHandleFIFO(timer.id, times);
         }
     }
