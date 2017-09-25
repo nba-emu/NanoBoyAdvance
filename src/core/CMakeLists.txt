@@ -7,6 +7,7 @@ set(ARM_SRC
 
 set(ARM_HDR
     arm/arm.hpp
+    arm/alu.hpp
     arm/enums.hpp
     arm/context.hpp
     arm/inline_code.hpp
