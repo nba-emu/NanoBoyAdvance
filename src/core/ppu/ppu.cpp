@@ -26,7 +26,12 @@ using namespace Util;
 
 namespace GameBoyAdvance {
 
-    PPU::PPU(Config* config) : m_config(config) {
+    PPU::PPU(Config* config, u8* paletteMemory, u8* objectMemory, u8* videoMemory) :
+            m_config (config),
+            m_pal    (paletteMemory),
+            m_oam    (objectMemory),
+            m_vram   (videoMemory)
+    {
         reset();
         reloadConfig();
 

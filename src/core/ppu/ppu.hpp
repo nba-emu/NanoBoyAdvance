@@ -75,7 +75,7 @@ namespace GameBoyAdvance {
         void blendPixels(u16* target1, u16 target2, SpecialEffect sfx);
 
     public:
-        PPU(Config* config);
+        PPU(Config* config, u8* paletteMemory, u8* objectMemory, u8* videoMemory);
 
         void reset();
         void reloadConfig();

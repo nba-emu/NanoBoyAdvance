@@ -35,7 +35,7 @@ namespace GameBoyAdvance {
     constexpr int Emulator::s_ws_seq1[2];
     constexpr int Emulator::s_ws_seq2[2];
 
-    Emulator::Emulator(Config* config) : config(config), ppu(config), apu(config) {
+    Emulator::Emulator(Config* config) : config(config), ppu(config, memory.palette, memory.oam, memory.vram), apu(config) {
         //// must be initialized *before* calling reset()
         //memory.rom.save = nullptr;
         //Emulator::reset();
@@ -43,8 +43,7 @@ namespace GameBoyAdvance {
         // setup interrupt controller
         m_interrupt.set_flag_register(&regs.irq.if_);
 
-        // feed PPU with important data.
-        ppu.setMemoryBuffers(memory.palette, memory.oam, memory.vram);
+        // feed PPU with important data. (EEK!)
         ppu.setInterruptController(&m_interrupt);
     }
 
