@@ -8,6 +8,7 @@ set(HEADERS
     integer.hpp
     logger.hpp
     likely.hpp
+    ini.hpp
 )
 
 add_library(util STATIC ${SRCS} ${HEADERS})
