@@ -1,4 +1,4 @@
-irq.enable/**
+/**
   * Copyright (C) 2017 flerovium^-^ (Frederic Meyer)
   *
   * This file is part of NanoboyAdvance.

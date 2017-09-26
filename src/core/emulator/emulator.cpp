@@ -74,11 +74,11 @@ namespace GameBoyAdvance {
         memset(memory.mmio,    0, 0x00800);
 
         // reset IO-registers
-        regs.irq.ie  = 0;
-        regs.irq.if_ = 0;
-        regs.irq.ime = 0;
-        regs.haltcnt = SYSTEM_RUN;
-        regs.keyinput = 0x3FF;
+        regs.irq.enable        = 0;
+        regs.irq.flag          = 0;
+        regs.irq.master_enable = 0;
+        regs.haltcnt           = SYSTEM_RUN;
+        regs.keyinput          = 0x3FF;
 
         // reset WAITCNT
         auto& waitcnt = regs.waitcnt;
