@@ -187,20 +187,12 @@ namespace Util {
                         ini_value->value        = value;
                         ini_value->source_line  = ini_line;
                         (*current_section)[key] = ini_value;
-
-                        std::cout << key << "->" << value << std::endl;
                     }
-                } else {
+                }
+                /*else {
                     // Empty line, switch back to global namespace
                     current_section = &global;
-                }
-
-                /*//std::cout << "[" << nr << "] " << line << std::endl;
-                std::cout << "[" << ini_line->line << "]" << std::endl;
-                std::cout << "L:" << ini_line->text << "|" << std::endl;
-                std::cout << "S:" << ini_line->s_trim << "|" << std::endl;
-                std::cout << "E:" << ini_line->e_trim << "|" << std::endl;
-                std::cout << "C:" << ini_line->comment << "|" << std::endl;*/
+                }*/
             }
             ini.close();
         }
