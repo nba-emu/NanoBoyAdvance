@@ -18,65 +18,65 @@ set(ARM_HDR
 )
 
 set(EMULATOR_SRC
-    emulator/emulator.cpp
-    emulator/memory/mmio.cpp
-    emulator/dma/dma.cpp
-    emulator/dma/regs.cpp
-    emulator/timer/timer.cpp
-    emulator/timer/regs.cpp
+    system/gba/emulator.cpp
+    system/gba/memory/mmio.cpp
+    system/gba/dma/dma.cpp
+    system/gba/dma/regs.cpp
+    system/gba/timer/timer.cpp
+    system/gba/timer/regs.cpp
 )
 
 set(EMULATOR_HDR
-    emulator/emulator.hpp
-    emulator/enums.hpp
-    emulator/interrupt.hpp
-    emulator/memory/mmio.hpp
-    emulator/memory/memory.hpp
-    emulator/dma/regs.hpp
-    emulator/timer/regs.hpp
+    system/gba/emulator.hpp
+    system/gba/enums.hpp
+    system/gba/interrupt.hpp
+    system/gba/memory/mmio.hpp
+    system/gba/memory/memory.hpp
+    system/gba/dma/regs.hpp
+    system/gba/timer/regs.hpp
 )
 
 set(CART_SRC
-    emulator/cart/sram.cpp
-    emulator/cart/flash.cpp
-    emulator/cart/eeprom.cpp
-    emulator/cart/cartridge.cpp
+    system/gba/cart/sram.cpp
+    system/gba/cart/flash.cpp
+    system/gba/cart/eeprom.cpp
+    system/gba/cart/cartridge.cpp
 )
 
 set(CART_HDR
-    emulator/cart/save.hpp
-    emulator/cart/sram.hpp
-    emulator/cart/flash.hpp
-    emulator/cart/eeprom.hpp
-    emulator/cart/header.hpp
-    emulator/cart/cartridge.hpp
+    system/gba/cart/save.hpp
+    system/gba/cart/sram.hpp
+    system/gba/cart/flash.hpp
+    system/gba/cart/eeprom.hpp
+    system/gba/cart/header.hpp
+    system/gba/cart/cartridge.hpp
 )
 
 set(PPU_SRC
-    emulator/ppu/io.cpp
-    emulator/ppu/ppu.cpp
-    emulator/ppu/composer.cpp
-    emulator/ppu/renderers/bitmap.cpp
-    emulator/ppu/renderers/text.cpp
-    emulator/ppu/renderers/obj.cpp
-    emulator/ppu/renderers/affine.cpp
+    system/gba/ppu/io.cpp
+    system/gba/ppu/ppu.cpp
+    system/gba/ppu/composer.cpp
+    system/gba/ppu/renderers/bitmap.cpp
+    system/gba/ppu/renderers/text.cpp
+    system/gba/ppu/renderers/obj.cpp
+    system/gba/ppu/renderers/affine.cpp
 )
 
 set(PPU_HDR
-    emulator/ppu/io.hpp
-    emulator/ppu/enums.hpp
-    emulator/ppu/ppu.hpp
+    system/gba/ppu/io.hpp
+    system/gba/ppu/enums.hpp
+    system/gba/ppu/ppu.hpp
 )
 
 set(APU_SRC
-    emulator/apu/apu.cpp
-    emulator/apu/io.cpp
+    system/gba/apu/apu.cpp
+    system/gba/apu/io.cpp
 )
 
 set(APU_HDR
-    emulator/apu/apu.hpp
-    emulator/apu/fifo.hpp
-    emulator/apu/io.hpp
+    system/gba/apu/apu.hpp
+    system/gba/apu/fifo.hpp
+    system/gba/apu/io.hpp
 )
 
 set(SOURCES
@@ -88,7 +88,7 @@ set(SOURCES
 )
 
 set(HEADERS
-    config.hpp
+    system/gba/config.hpp
     ${ARM_HDR}
     ${EMULATOR_HDR}
     ${CART_HDR}

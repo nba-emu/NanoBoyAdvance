@@ -27,7 +27,7 @@
 #include <QSettings>
 
 #include "screen.hpp"
-#include "core/emulator/emulator.hpp"
+#include "core/system/gba/emulator.hpp"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT

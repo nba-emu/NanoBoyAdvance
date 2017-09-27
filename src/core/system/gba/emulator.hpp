@@ -30,7 +30,7 @@
 #include "apu/apu.hpp"
 #include "cart/cartridge.hpp"
 
-#include "../processor/arm/arm.hpp"
+#include "../../processor/arm/arm.hpp"
 
 namespace Core {
 

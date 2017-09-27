@@ -20,7 +20,7 @@
 #include <string>
 #include <iostream>
 #include <SDL2/SDL.h>
-#include "core/emulator/emulator.hpp"
+#include "core/system/gba/emulator.hpp"
 #include "util/file.hpp"
 #include "util/ini.hpp"
 
