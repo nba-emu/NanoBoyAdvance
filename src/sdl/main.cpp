@@ -24,7 +24,7 @@
 #include "util/file.hpp"
 #include "util/ini.hpp"
 
-#include "argument_parser.hpp"
+#include "version.hpp"
 
 #undef main
 
@@ -100,10 +100,6 @@ int main(int argc, char** argv) {
     config->bios_path  = ini.getString("Emulation", "biosPath");
     config->multiplier = ini.getInteger("Emulation", "fastForward");
 
-    //if (config->multiplier > 1) {
-
-    //}
-
     // [Video]
     scale                 = ini.getInteger("Video", "scale");
     config->darken_screen = ini.getInteger("Video", "darken"); // boolean!
@@ -121,7 +117,6 @@ int main(int argc, char** argv) {
         emu.loadGame(cart);
         keyinput = &emu.getKeypad();
     } else {
-        //parser.print_usage(argv[0]);
         return -1;
     }
 
@@ -138,6 +133,8 @@ int main(int argc, char** argv) {
 
     int frames = 0;
     int ticks1 = SDL_GetTicks();
+
+    std::string version = std::to_string(VERSION_MAJOR) + "." + std::to_string(VERSION_MINOR);
 
     while (running) {
 
@@ -156,8 +153,8 @@ int main(int argc, char** argv) {
                 rendered_frames /= config->multiplier;
             }
 
-            string title = "NanoboyAdvance [" + std::to_string(percentage) + "% | " +
-                                                std::to_string(rendered_frames) + "fps]";
+            string title = "NanoboyAdvance " + version + " [" + std::to_string(percentage) + "% | " +
+                                                                std::to_string(rendered_frames) + "fps]";
             SDL_SetWindowTitle(g_window, title.c_str());
 
             ticks1 = ticks2;
