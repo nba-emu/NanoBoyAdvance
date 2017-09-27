@@ -22,13 +22,13 @@
 #include <string>
 
 #include "enums.hpp"
+#include "config.hpp"
 #include "interrupt.hpp"
 #include "dma/regs.hpp"
 #include "timer/regs.hpp"
-#include "../config.hpp"
-#include "../ppu/ppu.hpp"
-#include "../apu/apu.hpp"
-#include "../cart/cartridge.hpp"
+#include "ppu/ppu.hpp"
+#include "apu/apu.hpp"
+#include "cart/cartridge.hpp"
 
 #include "../processor/arm/arm.hpp"
 

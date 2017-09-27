@@ -19,9 +19,9 @@
 
 #include <cstring>
 #include <stdexcept>
+
 #include "emulator.hpp"
-#include "../cart/sram.hpp"
-#include "../cart/flash.hpp"
+
 #include "util/file.hpp"
 #include "util/logger.hpp"
 #include "util/likely.hpp"

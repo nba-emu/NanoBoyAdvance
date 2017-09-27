@@ -20,8 +20,8 @@
 #pragma once
 
 #include "fifo.hpp"
-#include "../config.hpp"
 #include "util/integer.hpp"
+#include "../config.hpp"
 
 namespace Core {
 

@@ -21,7 +21,7 @@
 
 #include "enums.hpp"
 #include "util/integer.hpp"
-#include "../emulator/interrupt.hpp"
+#include "../interrupt.hpp"
 #include "../config.hpp"
 
 #define PPU_INCLUDE

@@ -37,46 +37,46 @@ set(EMULATOR_HDR
 )
 
 set(CART_SRC
-    cart/sram.cpp
-    cart/flash.cpp
-    cart/eeprom.cpp
-    cart/cartridge.cpp
+    emulator/cart/sram.cpp
+    emulator/cart/flash.cpp
+    emulator/cart/eeprom.cpp
+    emulator/cart/cartridge.cpp
 )
 
 set(CART_HDR
-    cart/save.hpp
-    cart/sram.hpp
-    cart/flash.hpp
-    cart/eeprom.hpp
-    cart/header.hpp
-    cart/cartridge.hpp
+    emulator/cart/save.hpp
+    emulator/cart/sram.hpp
+    emulator/cart/flash.hpp
+    emulator/cart/eeprom.hpp
+    emulator/cart/header.hpp
+    emulator/cart/cartridge.hpp
 )
 
 set(PPU_SRC
-    ppu/io.cpp
-    ppu/ppu.cpp
-    ppu/composer.cpp
-    ppu/renderers/bitmap.cpp
-    ppu/renderers/text.cpp
-    ppu/renderers/obj.cpp
-    ppu/renderers/affine.cpp
+    emulator/ppu/io.cpp
+    emulator/ppu/ppu.cpp
+    emulator/ppu/composer.cpp
+    emulator/ppu/renderers/bitmap.cpp
+    emulator/ppu/renderers/text.cpp
+    emulator/ppu/renderers/obj.cpp
+    emulator/ppu/renderers/affine.cpp
 )
 
 set(PPU_HDR
-    ppu/io.hpp
-    ppu/enums.hpp
-    ppu/ppu.hpp
+    emulator/ppu/io.hpp
+    emulator/ppu/enums.hpp
+    emulator/ppu/ppu.hpp
 )
 
 set(APU_SRC
-    apu/apu.cpp
-    apu/io.cpp
+    emulator/apu/apu.cpp
+    emulator/apu/io.cpp
 )
 
 set(APU_HDR
-    apu/apu.hpp
-    apu/fifo.hpp
-    apu/io.hpp
+    emulator/apu/apu.hpp
+    emulator/apu/fifo.hpp
+    emulator/apu/io.hpp
 )
 
 set(SOURCES
