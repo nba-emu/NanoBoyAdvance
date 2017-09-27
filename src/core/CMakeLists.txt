@@ -12,7 +12,6 @@ set(ARM_HDR
     processor/arm/instr_arm.hpp
     processor/arm/instr_thumb.hpp
     processor/arm/tables/op_arm.hpp
-    processor/arm/tables/op_thumb.hpp
 )
 
 set(EMULATOR_SRC
