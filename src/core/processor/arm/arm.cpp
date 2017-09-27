@@ -37,7 +37,7 @@ namespace Core {
         refillPipeline();
     }
 
-    inline Bank ARM::modeToBank(Mode mode) {
+    inline ARM::Bank ARM::modeToBank(ARM::Mode mode) {
         switch (mode) {
         case MODE_USR:
         case MODE_SYS:
@@ -59,15 +59,15 @@ namespace Core {
 
     // Based on mGBA (endrift's) approach to banking.
     // https://github.com/mgba-emu/mgba/blob/master/src/arm/arm.c
-    void ARM::switchMode(Mode new_mode) {
-        Mode old_mode = static_cast<Mode>(ctx.cpsr & MASK_MODE);
+    void ARM::switchMode(ARM::Mode new_mode) {
+        ARM::Mode old_mode = static_cast<Mode>(ctx.cpsr & MASK_MODE);
 
         if (new_mode == old_mode) {
             return;
         }
 
-        Bank new_bank = modeToBank(new_mode);
-        Bank old_bank = modeToBank(old_mode);
+        ARM::Bank new_bank = modeToBank(new_mode);
+        ARM::Bank old_bank = modeToBank(old_mode);
 
         if (new_bank != old_bank) {
             if (new_bank == BANK_FIQ || old_bank == BANK_FIQ) {

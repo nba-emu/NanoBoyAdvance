@@ -8,7 +8,6 @@ set(ARM_SRC
 set(ARM_HDR
     processor/arm/arm.hpp
     processor/arm/alu.hpp
-    processor/arm/enums.hpp
     processor/arm/inline_code.hpp
     processor/arm/instr_arm.hpp
     processor/arm/instr_thumb.hpp
