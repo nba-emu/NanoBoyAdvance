@@ -51,7 +51,7 @@ auto readBIOS(u32 address) -> u32 {
 
 // CAREFUL: "flags & M_SEQ" only works because M_SEQ currently equals to "1".
 
-u8 busRead8(u32 address, int flags) final {
+auto busRead8(u32 address, int flags) -> u8 final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
@@ -95,7 +95,7 @@ u8 busRead8(u32 address, int flags) final {
     }
 }
 
-u16 busRead16(u32 address, int flags) final {
+auto busRead16(u32 address, int flags) -> u16 final {
     int page = (address >> 24) & 15;
 
     // poor mans cycle counting
@@ -151,7 +151,7 @@ u16 busRead16(u32 address, int flags) final {
     }
 }
 
-u32 busRead32(u32 address, int flags) final {
+auto busRead32(u32 address, int flags) -> u32 final {
     const int page = (address >> 24) & 15;
 
     // poor mans cycle counting

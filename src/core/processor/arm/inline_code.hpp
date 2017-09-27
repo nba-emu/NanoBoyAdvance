@@ -50,20 +50,20 @@ inline bool ARM::checkCondition(Condition condition) {
     }
 
     switch (condition) {
-        case COND_EQ: return Z_FLAG;
+        case COND_EQ: return  Z_FLAG;
         case COND_NE: return !Z_FLAG;
-        case COND_CS: return C_FLAG;
+        case COND_CS: return  C_FLAG;
         case COND_CC: return !C_FLAG;
-        case COND_MI: return N_FLAG;
+        case COND_MI: return  N_FLAG;
         case COND_PL: return !N_FLAG;
-        case COND_VS: return V_FLAG;
+        case COND_VS: return  V_FLAG;
         case COND_VC: return !V_FLAG;
-        case COND_HI: return C_FLAG && !Z_FLAG;
-        case COND_LS: return !C_FLAG || Z_FLAG;
-        case COND_GE: return N_FLAG == V_FLAG;
-        case COND_LT: return N_FLAG != V_FLAG;
+        case COND_HI: return  C_FLAG && !Z_FLAG;
+        case COND_LS: return !C_FLAG ||  Z_FLAG;
+        case COND_GE: return  N_FLAG ==  V_FLAG;
+        case COND_LT: return  N_FLAG !=  V_FLAG;
         case COND_GT: return !Z_FLAG && (N_FLAG == V_FLAG);
-        case COND_LE: return Z_FLAG || (N_FLAG != V_FLAG);
+        case COND_LE: return  Z_FLAG || (N_FLAG != V_FLAG);
         case COND_AL: return true;
         case COND_NV: return false;
     }
@@ -174,69 +174,6 @@ inline void ARM::applyShift(int shift, u32& operand, u32 amount, bool& carry, bo
     }
 }
 
-inline u32 ARM::read8(u32 address, int flags) {
-    u32 value = busRead8(address, flags);
-
-    if ((flags & M_SIGNED) && (value & 0x80)) {
-        return value | 0xFFFFFF00;
-    }
-
-    return value;
-}
-
-inline u32 ARM::read16(u32 address, int flags) {
-    u32 value;
-
-    if (flags & M_ROTATE) {
-        if (address & 1) {
-            value = busRead16(address & ~1, flags);
-            return (value >> 8) | (value << 24);
-        }
-        return busRead16(address, flags);
-    }
-
-    if (flags & M_SIGNED) {
-        if (address & 1) {
-            value = busRead8(address, flags);
-            if (value & 0x80) {
-                return value | 0xFFFFFF00;
-            }
-            return value;
-        } else {
-            value = busRead16(address, flags);
-            if (value & 0x8000) {
-                return value | 0xFFFF0000;
-            }
-            return value;
-        }
-    }
-
-    return busRead16(address & ~1, flags);
-}
-
-inline u32 ARM::read32(u32 address, int flags) {
-    u32 value = busRead32(address & ~3, flags);
-
-    if (flags & M_ROTATE) {
-        int amount = (address & 3) << 3;
-        return (value >> amount) | (value << (32 - amount));
-    }
-
-    return value;
-}
-
-inline void ARM::write8(u32 address, u8 value, int flags) {
-    busWrite8(address, value, flags);
-}
-
-inline void ARM::write16(u32 address, u16 value, int flags) {
-    busWrite16(address & ~1, value, flags);
-}
-
-inline void ARM::write32(u32 address, u32 value, int flags) {
-    busWrite32(address & ~3, value, flags);
-}
-
 inline void ARM::refillPipeline() {
     if (ctx.cpsr & MASK_THUMB) {
         ctx.pipe.opcode[0] = busRead16(ctx.r15,     M_NONSEQ);
@@ -247,7 +184,5 @@ inline void ARM::refillPipeline() {
         ctx.pipe.opcode[1] = busRead32(ctx.r15 + 4, M_SEQ);
         ctx.r15 += 8;
     }
-
     ctx.pipe.index = 0;
-    ctx.pipe.do_flush = false;
 }

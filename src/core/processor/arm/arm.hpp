@@ -153,9 +153,8 @@ namespace Core {
 
             // Processor Pipeline
             struct {
-                int  index;
-                u32  opcode[3];
-                bool do_flush;
+                int index;
+                u32 opcode[3];
             } pipe;
         };
 
@@ -186,9 +185,9 @@ namespace Core {
         virtual void busInternalCycles(int count) {}
 
         // System Read Methods
-        virtual u8  busRead8 (u32 address, int flags) { return 0; }
-        virtual u16 busRead16(u32 address, int flags) { return 0; }
-        virtual u32 busRead32(u32 address, int flags) { return 0; }
+        virtual auto busRead8 (u32 address, int flags) -> u8  { return 0; }
+        virtual auto busRead16(u32 address, int flags) -> u16 { return 0; }
+        virtual auto busRead32(u32 address, int flags) -> u32 { return 0; }
 
         // System Write Methods
         virtual void busWrite8 (u32 address, u8 value,  int flags) {}
@@ -196,9 +195,9 @@ namespace Core {
         virtual void busWrite32(u32 address, u32 value, int flags) {}
 
         // Internal Read Helpers
-        u32 read8 (u32 address, int flags);
-        u32 read16(u32 address, int flags);
-        u32 read32(u32 address, int flags);
+        auto read8 (u32 address, int flags) -> u32;
+        auto read16(u32 address, int flags) -> u32;
+        auto read32(u32 address, int flags) -> u32;
 
         // Internal Write Helpers
         void write8 (u32 address, u8 value,  int flags);
@@ -251,4 +250,5 @@ namespace Core {
 
     #include "alu.hpp"
     #include "inline_code.hpp"
+    #include "memory.hpp"
 }
