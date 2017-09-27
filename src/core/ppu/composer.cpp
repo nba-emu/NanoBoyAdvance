@@ -20,7 +20,7 @@
 #include <algorithm>
 #include "ppu.hpp"
 
-namespace GameBoyAdvance {
+namespace Core {
 
     void PPU::blendPixels(u16* target1, u16 target2, SpecialEffect sfx) {
 

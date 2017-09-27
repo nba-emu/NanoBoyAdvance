@@ -38,7 +38,7 @@ using namespace Util;
     ctx.pipe.opcode[1] = busRead16(ctx.r15 + 2, M_SEQ);\
     ctx.r15 += 4;
 
-namespace GameBoyAdvance {
+namespace Core {
 
     #include "tables/op_arm.hpp"
 

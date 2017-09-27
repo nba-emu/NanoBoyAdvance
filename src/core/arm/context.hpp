@@ -22,7 +22,7 @@
 #include "enums.hpp"
 #include "util/integer.hpp"
 
-namespace GameBoyAdvance {
+namespace Core {
     struct ARMContext {
         // General Purpose Registers
         union {

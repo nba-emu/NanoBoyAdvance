@@ -23,7 +23,7 @@
 
 using namespace Util;
 
-namespace GameBoyAdvance
+namespace Core
 {
     Flash::Flash(std::string save_file, bool second_bank) {
         m_save_file   = save_file;

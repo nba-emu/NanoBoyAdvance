@@ -19,7 +19,7 @@
 
 #pragma once
 
-namespace GameBoyAdvance {
+namespace Core {
     
     const int DISPCNT = 0x04000000;
     const int DISPSTAT = 0x04000004;

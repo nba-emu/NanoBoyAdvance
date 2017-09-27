@@ -22,7 +22,7 @@
 #include <string>
 #include "save.hpp"
 
-namespace GameBoyAdvance {
+namespace Core {
     class Flash : public Save {
     private:
         enum FlashCommand {

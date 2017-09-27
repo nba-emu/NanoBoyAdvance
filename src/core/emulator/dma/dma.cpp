@@ -22,7 +22,7 @@
 
 using namespace Util;
 
-namespace GameBoyAdvance {
+namespace Core {
 
     void Emulator::dmaFindHBlank() {
         for (int i = 0; i < 4; i++) {

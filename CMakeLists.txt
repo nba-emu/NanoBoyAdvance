@@ -7,6 +7,10 @@ project(NanoboyAdvance)
 # Set CMakeTests path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
 
+# The version number
+set(VERSION_MAJOR 0)
+set(VERSION_MINOR 1)
+
 # === FRONTENDS === #
 
 # Frontend selection

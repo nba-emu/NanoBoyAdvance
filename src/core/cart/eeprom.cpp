@@ -22,7 +22,7 @@
 #include <cstring>
 #include <iostream>
 
-namespace GameBoyAdvance {
+namespace Core {
     constexpr int EEPROM::s_addr_bits[2];
 
     EEPROM::EEPROM(std::string save_path, EEPROMSize size) : size(size) {

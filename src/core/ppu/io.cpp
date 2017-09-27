@@ -19,7 +19,7 @@
 
 #include "ppu.hpp"
 
-namespace GameBoyAdvance {
+namespace Core {
     
     void PPU::IO::DisplayControl::reset() {
         mode = 0;

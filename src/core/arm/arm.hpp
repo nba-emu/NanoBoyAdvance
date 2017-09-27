@@ -21,7 +21,7 @@
 
 #include "context.hpp"
 
-namespace GameBoyAdvance {
+namespace Core {
 
     class ARM {
     public:

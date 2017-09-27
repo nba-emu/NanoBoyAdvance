@@ -24,7 +24,7 @@
 
 using namespace Util;
 
-namespace GameBoyAdvance {
+namespace Core {
 
     // cycles required for one increment
     static constexpr int g_timer_ticks[4] = { 1, 64, 256, 1024 };

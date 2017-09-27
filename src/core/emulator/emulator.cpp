@@ -28,7 +28,7 @@
 
 using namespace Util;
 
-namespace GameBoyAdvance {
+namespace Core {
 
     constexpr int Emulator::s_ws_nseq[4];
     constexpr int Emulator::s_ws_seq0[2];

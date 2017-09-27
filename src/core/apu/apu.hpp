@@ -23,7 +23,7 @@
 #include "../config.hpp"
 #include "util/integer.hpp"
 
-namespace GameBoyAdvance {
+namespace Core {
 
     class APU {
     private:

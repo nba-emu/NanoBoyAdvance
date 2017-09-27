@@ -30,7 +30,7 @@
 
 using namespace std;
 using namespace Util;
-using namespace GameBoyAdvance;
+using namespace Core;
 
 int g_width  = 240;
 int g_height = 160;

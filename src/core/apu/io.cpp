@@ -19,7 +19,7 @@
 
 #include "apu.hpp"
 
-namespace GameBoyAdvance {
+namespace Core {
 
     void APU::IO::ToneChannel::reset() {
         // reset sweep info

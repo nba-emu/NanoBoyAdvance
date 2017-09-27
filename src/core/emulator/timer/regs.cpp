@@ -19,7 +19,7 @@
 
 #include "regs.hpp"
 
-namespace GameBoyAdvance {
+namespace Core {
     void Timer::reset() {
         cycles = 0;
         reload = 0;

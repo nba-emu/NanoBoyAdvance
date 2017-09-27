@@ -62,13 +62,13 @@ private:
     void stopClicked();
 
     // Setup SDL2 Audio Subsystem
-    void setupSound(GameBoyAdvance::APU* apu);
+    void setupSound(Core::APU* apu);
     void closeAudio();
 
     // Called by SDL2 to request new audio
-    static void soundCallback(GameBoyAdvance::APU* apu, u16* stream, int length);
+    static void soundCallback(Core::APU* apu, u16* stream, int length);
 
-    static auto qtKeyToEmu(int key) -> GameBoyAdvance::Key;
+    static auto qtKeyToEmu(int key) -> Core::Key;
 
     QSettings m_settings;
 
@@ -107,6 +107,6 @@ private:
     EmulationState m_emu_state { EmulationState::Stopped };
 
     // Emulator instance
-    GameBoyAdvance::Config*   m_config   { nullptr };
-    GameBoyAdvance::Emulator* m_emulator { nullptr };
+    Core::Config*   m_config   { nullptr };
+    Core::Emulator* m_emulator { nullptr };
 };

@@ -24,7 +24,7 @@
 
 using namespace Util;
 
-namespace GameBoyAdvance {
+namespace Core {
     
     SRAM::SRAM(std::string save_file) {
         m_save_file = save_file;

@@ -19,7 +19,7 @@
 
 #pragma once
 
-namespace GameBoyAdvance {
+namespace Core {
     enum InterruptType {
         INTERRUPT_VBLANK  = 1,
         INTERRUPT_HBLANK  = 2,

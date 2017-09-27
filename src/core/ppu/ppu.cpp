@@ -24,7 +24,7 @@
 
 using namespace Util;
 
-namespace GameBoyAdvance {
+namespace Core {
 
     PPU::PPU(Config* config, u8* paletteMemory, u8* objectMemory, u8* videoMemory) :
             m_config (config),

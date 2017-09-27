@@ -19,7 +19,7 @@
 
 #include "regs.hpp"
 
-namespace GameBoyAdvance {
+namespace Core {
 
     void DMA::reset() {
         enable    = false;

@@ -24,7 +24,7 @@
 #include "header.hpp"
 #include "save.hpp"
 
-namespace GameBoyAdvance {
+namespace Core {
     
     enum SaveType {
         SAVE_DETECT,

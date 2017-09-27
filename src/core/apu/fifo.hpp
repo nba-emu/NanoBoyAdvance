@@ -21,7 +21,7 @@
 
 #include "util/integer.hpp"
 
-namespace GameBoyAdvance {
+namespace Core {
     class FIFO {
     private:
         static const int s_fifo_size = 32;

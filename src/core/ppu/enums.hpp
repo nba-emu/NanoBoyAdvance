@@ -19,7 +19,7 @@
 
 #pragma once
 
-namespace GameBoyAdvance {
+namespace Core {
 
     enum Layer {
         LAYER_BG0 = 0,

@@ -23,7 +23,7 @@
 #include <vector>
 #include "save.hpp"
 
-namespace GameBoyAdvance {
+namespace Core {
     enum EEPROMSize {
         EEPROM_4K  = 0,
         EEPROM_64K = 1

@@ -21,7 +21,7 @@
 
 #include "util/integer.hpp"
 
-namespace GameBoyAdvance {
+namespace Core {
 
     enum DMAControl {
         DMA_INCREMENT = 0,

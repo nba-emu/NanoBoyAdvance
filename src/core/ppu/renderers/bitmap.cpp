@@ -19,7 +19,7 @@
 
 #include "../ppu.hpp"
 
-namespace GameBoyAdvance {
+namespace Core {
     
     void PPU::renderBitmapMode1BG() {
         u32 offset = m_io.vcount * 480;

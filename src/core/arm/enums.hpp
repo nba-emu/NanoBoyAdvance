@@ -19,7 +19,7 @@
 
 #pragma once
 
-namespace GameBoyAdvance {
+namespace Core {
     enum Mode {
         MODE_USR = 0x10,
         MODE_FIQ = 0x11,

@@ -20,37 +20,37 @@
 #include "../ppu.hpp"
 #include "util/likely.hpp"
 
-namespace GameBoyAdvance {
+namespace Core {
 
     void PPU::renderTextBG(int id) {
         const auto& bg = m_io.bgcnt[id];
-        
+
         u16* buffer    = m_buffer[id];
         u32 tile_block = bg.tile_block << 14;
 
         u32 tile_buffer[8];
         int last_encoder = -1;
-        
+
         // scrolled scanline
         const int line = m_io.vcount + m_io.bgvofs[id];
-        
+
         // vertical position data
         const int row      = line >> 3;
         const int tile_y   = line &  7;
         const int screen_y = (row >> 5) & 1;
-        
+
         // points to the start of the row's tile map information
         const u32 base_offset = (bg.map_block << 11) + ((row & 0x1F) << 6);
-        
+
         // current pixel being drawn, current map column
         int draw_x = -(m_io.bghofs[id]  & 7);
         int column =   m_io.bghofs[id] >> 3;
 
         while (draw_x < 240) {
             int screen_x = (column >> 5) & 1;
-            
+
             int offset = base_offset + ((column++ & 0x1F) << 1);
-            
+
             switch (bg.screen_size) {
                 case 1: offset += screen_x << 11; break;
                 case 2: offset += screen_y << 11; break;
@@ -64,20 +64,20 @@ namespace GameBoyAdvance {
                 // tile number and palette
                 const int number  = encoder & 0x3FF;
                 const int palette = encoder >> 12;
-                
+
                 // flipping information
                 const bool h_flip = encoder & (1 << 10);
                 const bool v_flip = encoder & (1 << 11);
-                
+
                 const int final_y = v_flip ? (tile_y ^ 7) : tile_y;
-                
+
                 // decode the determined tile into our buffer
                 if (UNLIKELY(bg.full_palette)) {
                     drawTileLine8BPP(tile_buffer, tile_block, number, final_y, h_flip);
                 } else {
                     drawTileLine4BPP(tile_buffer, tile_block, palette, number, final_y, h_flip);
                 }
-                
+
                 last_encoder = encoder;
             }
 

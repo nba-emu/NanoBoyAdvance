@@ -21,7 +21,7 @@
 
 #include "util/integer.hpp"
 
-namespace GameBoyAdvance {
+namespace Core {
     
     #pragma pack(push, 1) 
     

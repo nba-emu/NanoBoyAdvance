@@ -20,7 +20,7 @@
 #include "../ppu.hpp"
 #include "util/logger.hpp"
 
-namespace GameBoyAdvance {
+namespace Core {
 
     static constexpr int g_obj_size[4][4][2] = {
         /* SQUARE */

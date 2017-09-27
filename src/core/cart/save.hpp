@@ -21,7 +21,7 @@
 
 #include "util/integer.hpp"
 
-namespace GameBoyAdvance {
+namespace Core {
     class Save {
     public:
         virtual void reset() {}

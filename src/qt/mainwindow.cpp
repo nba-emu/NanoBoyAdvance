@@ -25,7 +25,7 @@
 
 #include "mainwindow.hpp"
 
-using namespace GameBoyAdvance;
+using namespace Core;
 
 MainWindow::MainWindow(QWidget* parent) :
     m_settings(QSettings::IniFormat, QSettings::UserScope, "flerovium", "NanoboyAdvance"),
@@ -84,9 +84,9 @@ void MainWindow::setupHelpMenu() {
 void MainWindow::setupEmulationMenu() {
     m_pause_emu = m_emul_menu->addAction(tr("&Pause"));
     m_pause_emu->setCheckable(true);
-    
+
     m_stop_emu  = m_emul_menu->addAction(tr("&Stop"));
-    
+
     connect(m_pause_emu, &QAction::triggered, this, &MainWindow::pauseClicked);
     connect(m_stop_emu,  &QAction::triggered, this, &MainWindow::stopClicked );
 }

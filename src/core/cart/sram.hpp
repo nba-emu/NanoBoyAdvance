@@ -24,7 +24,7 @@
 
 #define SRAM_SIZE 65536
 
-namespace GameBoyAdvance {
+namespace Core {
     class SRAM : public Save {
     private:
         

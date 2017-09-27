@@ -31,7 +31,7 @@
 #include "../apu/apu.hpp"
 #include "../cart/cartridge.hpp"
 
-namespace GameBoyAdvance {
+namespace Core {
 
     class Emulator : private ARM {
     public:

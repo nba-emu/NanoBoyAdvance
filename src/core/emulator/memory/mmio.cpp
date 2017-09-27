@@ -25,7 +25,7 @@
 
 using namespace Util;
 
-namespace GameBoyAdvance {
+namespace Core {
 
     auto Emulator::readMMIO(u32 address) -> u8 {
         auto& ppu_io = ppu.getIO();

@@ -29,7 +29,7 @@
 
 using namespace Util;
 
-namespace GameBoyAdvance {
+namespace Core {
 
     auto Cartridge::fromFile(std::string path, SaveType type) -> std::shared_ptr<Cartridge> {
         auto cart = new Cartridge();

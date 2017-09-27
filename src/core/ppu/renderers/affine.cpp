@@ -22,7 +22,7 @@
 
 using namespace Util;
 
-namespace GameBoyAdvance {
+namespace Core {
     
     void PPU::renderAffineBG(int id) {
         

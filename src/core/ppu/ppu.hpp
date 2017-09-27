@@ -26,7 +26,7 @@
 
 #define PPU_INCLUDE
 
-namespace GameBoyAdvance {
+namespace Core {
 
     const u16 COLOR_TRANSPARENT = 0x8000;
 
