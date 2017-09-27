@@ -26,10 +26,11 @@
 #include "dma/regs.hpp"
 #include "timer/regs.hpp"
 #include "../config.hpp"
-#include "../arm/arm.hpp"
 #include "../ppu/ppu.hpp"
 #include "../apu/apu.hpp"
 #include "../cart/cartridge.hpp"
+
+#include "../processor/arm/arm.hpp"
 
 namespace Core {
 

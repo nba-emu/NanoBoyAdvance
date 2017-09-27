@@ -1,20 +1,20 @@
 
 set(ARM_SRC
-    arm/arm.cpp
-    arm/instr_arm.cpp
-    arm/instr_thumb.cpp
+    processor/arm/arm.cpp
+    processor/arm/instr_arm.cpp
+    processor/arm/instr_thumb.cpp
 )
 
 set(ARM_HDR
-    arm/arm.hpp
-    arm/alu.hpp
-    arm/enums.hpp
-    arm/context.hpp
-    arm/inline_code.hpp
-    arm/instr_arm.hpp
-    arm/instr_thumb.hpp
-    arm/tables/op_arm.hpp
-    arm/tables/op_thumb.hpp
+    processor/arm/arm.hpp
+    processor/arm/alu.hpp
+    processor/arm/enums.hpp
+    processor/arm/context.hpp
+    processor/arm/inline_code.hpp
+    processor/arm/instr_arm.hpp
+    processor/arm/instr_thumb.hpp
+    processor/arm/tables/op_arm.hpp
+    processor/arm/tables/op_thumb.hpp
 )
 
 set(EMULATOR_SRC
