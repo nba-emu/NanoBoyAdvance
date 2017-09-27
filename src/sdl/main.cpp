@@ -32,8 +32,8 @@ using namespace std;
 using namespace Util;
 using namespace Core;
 
-int g_width  = 240;
-int g_height = 160;
+int g_width  = 480;
+int g_height = 320;
 
 SDL_Window*   g_window;
 SDL_Texture*  g_texture;
