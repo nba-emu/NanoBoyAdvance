@@ -22,6 +22,7 @@
 #include <SDL2/SDL.h>
 #include "core/emulator/emulator.hpp"
 #include "util/file.hpp"
+#include "util/ini.hpp"
 
 #include "argument_parser.hpp"
 
@@ -90,65 +91,25 @@ int main(int argc, char** argv) {
     u32  fbuffer[240 * 160];
 
     int scale = 1;
-    std::string rom_path;
+    std::string rom_path = std::string(argv[1]);
 
-    ArgumentParser parser;
-    shared_ptr<ParsedArguments> args;
+    INI ini("config.ini");
 
-    Option bios_opt("bios", "path", false);
-    Option scale_opt("scale", "factor", true);
-    Option speed_opt("forward", "multiplier", true);
-    Option frameskip_opt("frameskip", "frames", true);
-    Option darken_opt("darken", "", true);
+    // TODO implement defaults
+    // [Emulation]
+    config->bios_path  = ini.getString("Emulation", "biosPath");
+    config->multiplier = ini.getInteger("Emulation", "fastForward");
 
-    parser.add_option(bios_opt);
-    parser.add_option(scale_opt);
-    parser.add_option(speed_opt);
-    parser.add_option(frameskip_opt);
-    parser.add_option(darken_opt);
+    //if (config->multiplier > 1) {
 
-    parser.set_file_limit(1, 1);
+    //}
 
-    args = parser.parse(argc, argv);
+    // [Video]
+    scale                 = ini.getInteger("Video", "scale");
+    config->darken_screen = ini.getInteger("Video", "darken"); // boolean!
+    config->frameskip     = ini.getInteger("Video", "frameskip");
 
-    if (args->error) {
-        return -1;
-    }
-
-    try {
-        rom_path = args->files[0];
-
-        args->get_option_string("bios", config->bios_path);
-
-        if (args->option_exists("scale")) {
-            args->get_option_int("scale", scale);
-
-            if (scale == 0) {
-                parser.print_usage(argv[0]);
-                return -1;
-            }
-        }
-
-        if (args->option_exists("forward")) {
-            args->get_option_int("forward", config->multiplier);
-
-            if (config->multiplier == 0) {
-                parser.print_usage(argv[0]);
-                return -1;
-            }
-        }
-
-        if (args->option_exists("frameskip")) {
-            args->get_option_int("frameskip", config->frameskip);
-        }
-
-        if (args->option_exists("darken")) {
-            args->get_option_bool("darken", config->darken_screen);
-        }
-    } catch (std::exception& e) {
-        parser.print_usage(argv[0]);
-        return -1;
-    }
+    if (scale < 1) scale = 1;
 
     config->framebuffer = fbuffer;
 
@@ -160,7 +121,7 @@ int main(int argc, char** argv) {
         emu.loadGame(cart);
         keyinput = &emu.getKeypad();
     } else {
-        parser.print_usage(argv[0]);
+        //parser.print_usage(argv[0]);
         return -1;
     }
 

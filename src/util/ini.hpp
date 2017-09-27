@@ -99,7 +99,7 @@ namespace Util {
                 // - Detect and trim comment -
                 auto c = line.find_first_of("#");
 
-                if (c != string::npos) {
+                if (c != std::string::npos) {
                     // Store comment information in line structure
                     ini_line->has_comment = true;
                     ini_line->comment     = line.substr(c + 1);
@@ -114,15 +114,15 @@ namespace Util {
                 auto s = line.find_first_not_of(" \t");
                 auto e = line.find_last_not_of (" \t");
 
-                /*if (s != string::npos) {
+                /*if (s != std::string::npos) {
                     ini_line->s_trim = line.substr(0, line.size() - s);
                     line = line.substr(s);
                 }
-                if (e != string::npos) {
+                if (e != std::string::npos) {
                     line = line.substr(0, e + 1);
                 }*/
 
-                if (s != string::npos && e != string::npos) {
+                if (s != std::string::npos && e != std::string::npos) {
                     //ini_line->s_trim = line.substr(0, s - 1) : "";
                     //ini_line->e_trim = (e != line.size()-1) ? line.substr(e + 1)    : "";
 
@@ -161,7 +161,7 @@ namespace Util {
                         auto first = line.find_first_of("=");
                         auto last  = line.find_last_of ("=");
 
-                        if (first == string::npos) {
+                        if (first == std::string::npos) {
                             throw INIParseError(ini_line, "expected '='");
                         }
                         if (first != last) {
@@ -174,10 +174,10 @@ namespace Util {
                         auto a =   key.find_last_not_of (" \t");
                         auto b = value.find_first_not_of(" \t");
 
-                        if (a != string::npos) {
+                        if (a != std::string::npos) {
                             key = key.substr(0, a + 1);
                         }
-                        if (b != string::npos) {
+                        if (b != std::string::npos) {
                             value = value.substr(b);
                         }
 
