@@ -19,11 +19,51 @@
 
 #pragma once
 
-#include "context.hpp"
+#include "enums.hpp"
+#include "util/integer.hpp"
 
 namespace Core {
 
     class ARM {
+    private:
+        struct Context {
+            // General Purpose Registers
+            union {
+                struct {
+                    u32 r0;
+                    u32 r1;
+                    u32 r2;
+                    u32 r3;
+                    u32 r4;
+                    u32 r5;
+                    u32 r6;
+                    u32 r7;
+                    u32 r8;
+                    u32 r9;
+                    u32 r10;
+                    u32 r11;
+                    u32 r12;
+                    u32 r13;
+                    u32 r14;
+                    u32 r15;
+                };
+                u32 reg[16];
+            };
+            u32 bank[BANK_COUNT][7];
+
+            // Program Status Registers
+            u32  cpsr;
+            u32  spsr[SPSR_COUNT];
+            u32* p_spsr;
+
+            // Processor Pipeline
+            struct {
+                int  index;
+                u32  opcode[3];
+                bool do_flush;
+            } pipe;
+        };
+
     public:
         ARM();
 
@@ -33,10 +73,10 @@ namespace Core {
         void signalIRQ();
 
         // ARM context getter/setter
-        auto context() -> ARMContext& {
+        auto context() -> Context& {
             return ctx;
         }
-        void context(ARMContext& ctx) {
+        void context(Context& ctx) {
             this->ctx = ctx;
         }
 
@@ -81,7 +121,7 @@ namespace Core {
 
         bool fake_swi;
 
-        ARMContext ctx;
+        Context ctx;
 
         void switchMode(Mode new_mode);
 
