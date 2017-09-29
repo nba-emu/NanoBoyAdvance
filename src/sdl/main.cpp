@@ -41,51 +41,27 @@ SDL_Renderer* g_renderer;
 
 bool g_fullscreen = false;
 
-void sound_cb(APU* apu, u16* stream, int length) {
-    apu->fillBuffer(stream, length);
-}
+Config   g_config;
+Emulator g_emu(&g_config);
+INI*     g_ini;
 
-void setup_sound(APU* apu) {
-    SDL_AudioSpec spec;
+const std::string g_version_title = "NanoboyAdvance " + std::to_string(VERSION_MAJOR) + "." + std::to_string(VERSION_MINOR);
 
-    spec.freq     = 44100;
-    spec.samples  = 1024;
-    spec.format   = AUDIO_U16;
-    spec.channels = 2;
-    spec.callback = sound_cb;
-    spec.userdata = apu;
+// SDL2 setup (forward declaration)
+void setupWindow();
+void destroyWindow();
+void setupSound(APU* apu);
 
-    SDL_Init(SDL_INIT_AUDIO);
-    SDL_OpenAudio(&spec, NULL);
-    SDL_PauseAudio(0);
-}
-
-void setup_window() {
-    SDL_Init(SDL_INIT_VIDEO);
-
-    g_window = SDL_CreateWindow("NanoboyAdvance",
-                                  SDL_WINDOWPOS_CENTERED,
-                                  SDL_WINDOWPOS_CENTERED,
-                                  g_width,
-                                  g_height,
-                                  0
-                               );
-
-    g_renderer = SDL_CreateRenderer(g_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    g_texture  = SDL_CreateTexture(g_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 240, 160);
-}
-
-void free_window() {
-    SDL_DestroyTexture(g_texture);
-    SDL_DestroyRenderer(g_renderer);
-    SDL_DestroyWindow(g_window);
+void printUsage(char* exe_name) {
+    std::cout << "usage: " << std::string(exe_name) << " rom_path" << std::endl;
 }
 
 int main(int argc, char** argv) {
-
-    Config* config = new Config();
-
-    Emulator emu(config);
+    // Check for the correct amount of arguments
+    if (argc != 2) {
+        printUsage(argv[0]);
+        return -1;
+    }
 
     u16* keyinput;
     u32  fbuffer[240 * 160];
@@ -93,29 +69,29 @@ int main(int argc, char** argv) {
     int scale = 1;
     std::string rom_path = std::string(argv[1]);
 
-    INI ini("config.ini");
+    g_ini = new INI("config.ini");
 
     // TODO implement defaults
     // [Emulation]
-    config->bios_path  = ini.getString("Emulation", "biosPath");
-    config->multiplier = ini.getInteger("Emulation", "fastForward");
+    g_config.bios_path  = g_ini->getString("Emulation", "biosPath");
+    g_config.multiplier = g_ini->getInteger("Emulation", "fastForward");
 
     // [Video]
-    scale                 = ini.getInteger("Video", "scale");
-    config->darken_screen = ini.getInteger("Video", "darken"); // boolean!
-    config->frameskip     = ini.getInteger("Video", "frameskip");
+    scale                  = g_ini->getInteger("Video", "scale");
+    g_config.darken_screen = g_ini->getInteger("Video", "darken"); // boolean!
+    g_config.frameskip     = g_ini->getInteger("Video", "frameskip");
 
     if (scale < 1) scale = 1;
 
-    config->framebuffer = fbuffer;
+    g_config.framebuffer = fbuffer;
 
-    emu.reloadConfig();
+    g_emu.reloadConfig();
 
-    if (File::exists(rom_path) && File::exists(config->bios_path)) {
+    if (File::exists(rom_path) && File::exists(g_config.bios_path)) {
         auto cart = Cartridge::fromFile(rom_path);
 
-        emu.loadGame(cart);
-        keyinput = &emu.getKeypad();
+        g_emu.loadGame(cart);
+        keyinput = &g_emu.getKeypad();
     } else {
         return -1;
     }
@@ -123,10 +99,10 @@ int main(int argc, char** argv) {
     // setup SDL window
     g_width  *= scale;
     g_height *= scale;
-    setup_window();
+    setupWindow();
 
     // setup SDL sound
-    setup_sound(&emu.getAPU());
+    setupSound(&g_emu.getAPU());
 
     SDL_Event event;
     bool running = true;
@@ -134,27 +110,25 @@ int main(int argc, char** argv) {
     int frames = 0;
     int ticks1 = SDL_GetTicks();
 
-    std::string version = std::to_string(VERSION_MAJOR) + "." + std::to_string(VERSION_MINOR);
-
     while (running) {
 
         // generate frame(s)
-        emu.runFrame();
+        g_emu.runFrame();
 
         // update frame counter
-        frames += config->fast_forward ? config->multiplier : 1;
+        frames += g_config.fast_forward ? g_config.multiplier : 1;
 
         int ticks2 = SDL_GetTicks();
         if (ticks2 - ticks1 >= 1000) {
             int percentage = (frames / 60.0) * 100;
             int rendered_frames = frames;
 
-            if (config->fast_forward) {
-                rendered_frames /= config->multiplier;
+            if (g_config.fast_forward) {
+                rendered_frames /= g_config.multiplier;
             }
 
-            string title = "NanoboyAdvance " + version + " [" + std::to_string(percentage) + "% | " +
-                                                                std::to_string(rendered_frames) + "fps]";
+            string title = g_version_title + " [" + std::to_string(percentage) + "% | " +
+                                                    std::to_string(rendered_frames) + "fps]";
             SDL_SetWindowTitle(g_window, title.c_str());
 
             ticks1 = ticks2;
@@ -192,21 +166,17 @@ int main(int argc, char** argv) {
                     case SDLK_q:         num = (1<<9); break;
                     case SDLK_SPACE:
                         if (released) {
-                            config->fast_forward = false;
+                            g_config.fast_forward = false;
                         } else {
                             // prevent more than one update!
-                            if (config->fast_forward) {
+                            if (g_config.fast_forward) {
                                 continue;
                             }
-                            config->fast_forward = true;
+                            g_config.fast_forward = true;
                         }
-
-                        //// make core adapt new settings
-                        //emu.reloadConfig();
-
                         continue;
                     case SDLK_F9:
-                        emu.reset();
+                        g_emu.reset();
                         continue;
                     case SDLK_F10:
                         if (!released) continue;
@@ -231,8 +201,50 @@ int main(int argc, char** argv) {
         }
     }
 
-    free_window();
+    destroyWindow();
     SDL_Quit();
 
     return 0;
+}
+
+void soundCallback(APU* apu, u16* stream, int length) {
+    apu->fillBuffer(stream, length);
+}
+
+void setupSound(APU* apu) {
+    SDL_AudioSpec spec;
+
+    // Set the desired specs.
+    // TODO: get freq/samples from ini
+    spec.freq     = 44100;
+    spec.samples  = 1024;
+    spec.format   = AUDIO_U16;
+    spec.channels = 2;
+    spec.callback = soundCallback;
+    spec.userdata = apu;
+
+    SDL_Init(SDL_INIT_AUDIO);
+    SDL_OpenAudio(&spec, NULL);
+    SDL_PauseAudio(0);
+}
+
+void setupWindow() {
+    SDL_Init(SDL_INIT_VIDEO);
+
+    g_window = SDL_CreateWindow(g_version_title.c_str(),
+                                  SDL_WINDOWPOS_CENTERED,
+                                  SDL_WINDOWPOS_CENTERED,
+                                  g_width,
+                                  g_height,
+                                  0
+                               );
+
+    g_renderer = SDL_CreateRenderer(g_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    g_texture  = SDL_CreateTexture(g_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 240, 160);
+}
+
+void destroyWindow() {
+    SDL_DestroyTexture(g_texture);
+    SDL_DestroyRenderer(g_renderer);
+    SDL_DestroyWindow(g_window);
 }
