@@ -3,7 +3,6 @@ set(SRCS
 )
 
 set(HEADERS
-    argument_parser.hpp
 )
 
 add_executable(NanoboyAdvance-SDL ${SRCS} ${HEADERS})
