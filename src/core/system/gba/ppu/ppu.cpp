@@ -81,44 +81,44 @@ namespace Core {
     }
 
     void PPU::reset() {
-        m_io.vcount = 0;
+        regs.vcount = 0;
 
         // reset DISPCNT and DISPCNT
-        m_io.control.reset();
-        m_io.status.reset();
+        regs.control.reset();
+        regs.status.reset();
 
         // reset all backgrounds
         for (int i = 0; i < 4; i++) {
 
-            m_io.bghofs[i] = 0;
-            m_io.bgvofs[i] = 0;
-            m_io.bgcnt[i].reset();
+            regs.bghofs[i] = 0;
+            regs.bgvofs[i] = 0;
+            regs.bgcnt[i].reset();
 
             if (i < 2) {
-                m_io.bgx[i].reset();
-                m_io.bgy[i].reset();
-                m_io.bgpa[i] = 0;
-                m_io.bgpb[i] = 0;
-                m_io.bgpc[i] = 0;
-                m_io.bgpd[i] = 0;
+                regs.bgx[i].reset();
+                regs.bgy[i].reset();
+                regs.bgpa[i] = 0;
+                regs.bgpb[i] = 0;
+                regs.bgpc[i] = 0;
+                regs.bgpd[i] = 0;
             }
         }
 
         // reset MOSAIC register
-        m_io.mosaic.reset();
+        regs.mosaic.reset();
 
         // reset blending registers
-        m_io.bldcnt.reset();
-        m_io.bldalpha.reset();
-        m_io.bldy.reset();
+        regs.bldcnt.reset();
+        regs.bldalpha.reset();
+        regs.bldy.reset();
 
         // reset window registers
-        m_io.winin.reset();
-        m_io.winout.reset();
-        m_io.winh[0].reset();
-        m_io.winv[0].reset();
-        m_io.winh[1].reset();
-        m_io.winv[1].reset();
+        regs.winin.reset();
+        regs.winout.reset();
+        regs.winh[0].reset();
+        regs.winv[0].reset();
+        regs.winh[1].reset();
+        regs.winv[1].reset();
 
         m_frame_counter = 0;
         line_has_alpha_objs = false;
@@ -136,50 +136,50 @@ namespace Core {
 
     void PPU::hblank() {
 
-        m_io.status.vblank_flag = false;
-        m_io.status.hblank_flag = true;
+        regs.status.vblank_flag = false;
+        regs.status.hblank_flag = true;
 
-        if (m_io.status.hblank_interrupt)
+        if (regs.status.hblank_interrupt)
             m_interrupt->request(INTERRUPT_HBLANK);
     }
 
     void PPU::vblank() {
 
-        m_io.status.vblank_flag = true;
-        m_io.status.hblank_flag = false;
+        regs.status.vblank_flag = true;
+        regs.status.hblank_flag = false;
 
-        m_io.bgx[0].internal = PPU::decodeFixed32(m_io.bgx[0].value);
-        m_io.bgy[0].internal = PPU::decodeFixed32(m_io.bgy[0].value);
-        m_io.bgx[1].internal = PPU::decodeFixed32(m_io.bgx[1].value);
-        m_io.bgy[1].internal = PPU::decodeFixed32(m_io.bgy[1].value);
+        regs.bgx[0].internal = PPU::decodeFixed32(regs.bgx[0].value);
+        regs.bgy[0].internal = PPU::decodeFixed32(regs.bgy[0].value);
+        regs.bgx[1].internal = PPU::decodeFixed32(regs.bgx[1].value);
+        regs.bgy[1].internal = PPU::decodeFixed32(regs.bgy[1].value);
 
         if (m_config->frameskip != 0) {
             m_frame_counter = (m_frame_counter + 1) % m_config->frameskip;
         }
 
-        if (m_io.status.vblank_interrupt) {
+        if (regs.status.vblank_interrupt) {
             m_interrupt->request(INTERRUPT_VBLANK);
         }
     }
 
     void PPU::scanline(bool render) {
         // TODO: maybe find a better way
-        m_io.status.vblank_flag = false;
-        m_io.status.hblank_flag = false;
+        regs.status.vblank_flag = false;
+        regs.status.hblank_flag = false;
 
         // Are we off by one scanline?
-        m_io.bgx[0].internal += PPU::decodeFixed16(m_io.bgpb[0]);
-        m_io.bgy[0].internal += PPU::decodeFixed16(m_io.bgpd[0]);
-        m_io.bgx[1].internal += PPU::decodeFixed16(m_io.bgpb[1]);
-        m_io.bgy[1].internal += PPU::decodeFixed16(m_io.bgpd[1]);
+        regs.bgx[0].internal += PPU::decodeFixed16(regs.bgpb[0]);
+        regs.bgy[0].internal += PPU::decodeFixed16(regs.bgpd[0]);
+        regs.bgx[1].internal += PPU::decodeFixed16(regs.bgpb[1]);
+        regs.bgy[1].internal += PPU::decodeFixed16(regs.bgpd[1]);
 
         if (render && (m_frameskip == 0 || m_frame_counter == 0)) {
             u16 backdrop_color = *(u16*)(m_pal); // TODO: endianess
-            u32* line_buffer   = &m_framebuffer[m_io.vcount * 240];
+            u32* line_buffer   = &m_framebuffer[regs.vcount * 240];
 
             // Simulate forced blank and bail out early
-            if (m_io.control.forced_blank) {
-                u32* line = m_framebuffer + m_io.vcount * 240;
+            if (regs.control.forced_blank) {
+                u32* line = m_framebuffer + regs.vcount * 240;
 
                 for (int x = 0; x < 240; x++) {
                     line[x] = rgb555ToARGB(0x7FFF);
@@ -188,10 +188,10 @@ namespace Core {
             }
 
             // Render window masks
-            if (m_io.control.win_enable[0]) {
+            if (regs.control.win_enable[0]) {
                 renderWindow(0);
             }
-            if (m_io.control.win_enable[1]) {
+            if (regs.control.win_enable[1]) {
                 renderWindow(1);
             }
 
@@ -245,10 +245,10 @@ namespace Core {
                 }
 
             #define PERFORM_SFX_EFFECT \
-                auto sfx          = m_io.bldcnt.sfx;\
+                auto sfx          = regs.bldcnt.sfx;\
                 bool is_alpha_obj = layer[0] == LAYER_OBJ && m_obj_layer[x].alpha;\
-                bool sfx_above    = m_io.bldcnt.targets[0][layer[0]] || is_alpha_obj;\
-                bool sfx_below    = m_io.bldcnt.targets[1][layer[1]];\
+                bool sfx_above    = regs.bldcnt.targets[0][layer[0]] || is_alpha_obj;\
+                bool sfx_below    = regs.bldcnt.targets[1][layer[1]];\
                 \
                 if (is_alpha_obj && sfx_below) {\
                     sfx = SFX_BLEND;\
@@ -259,10 +259,10 @@ namespace Core {
                 }
 
             #define DECLARE_WIN_VARS \
-                const auto& outside  = m_io.winout.enable[0];\
-                const auto& win0in   = m_io.winin.enable[0];\
-                const auto& win1in   = m_io.winin.enable[1];\
-                const auto& objwinin = m_io.winout.enable[1];\
+                const auto& outside  = regs.winout.enable[0];\
+                const auto& win0in   = regs.winin.enable[0];\
+                const auto& win1in   = regs.winin.enable[1];\
+                const auto& objwinin = regs.winout.enable[1];\
 
             #define DECLARE_WIN_VARS_INNER \
                 const bool win0   = win_enable[0] && m_win_mask[0][x];\
@@ -294,12 +294,12 @@ namespace Core {
             #define LOOP_BG_MODE_3_4_5 \
                 int bg = 2;
 
-            const auto& bgcnt  = m_io.bgcnt;
-            const auto& enable = m_io.control.enable;
+            const auto& bgcnt  = regs.bgcnt;
+            const auto& enable = regs.control.enable;
 
-            auto win_enable = m_io.control.win_enable;
+            auto win_enable = regs.control.win_enable;
             bool no_windows = !win_enable[0] && !win_enable[1] && !win_enable[2];
-            bool no_effects = (m_io.bldcnt.sfx == SFX_NONE) && !line_has_alpha_objs;
+            bool no_effects = (regs.bldcnt.sfx == SFX_NONE) && !line_has_alpha_objs;
 
             #define COMPOSE(custom_bg_loop) \
                 if (no_windows && no_effects) {\
@@ -374,52 +374,52 @@ namespace Core {
                     }\
                 }
 
-            switch (m_io.control.mode) {
+            switch (regs.control.mode) {
                 case 0: {
                     // BG Mode 0 - 240x160 pixels, Text mode
-                    if (m_io.control.enable[0]) renderTextBG(0);
-                    if (m_io.control.enable[1]) renderTextBG(1);
-                    if (m_io.control.enable[2]) renderTextBG(2);
-                    if (m_io.control.enable[3]) renderTextBG(3);
-                    if (m_io.control.enable[4]) renderSprites();
+                    if (regs.control.enable[0]) renderTextBG(0);
+                    if (regs.control.enable[1]) renderTextBG(1);
+                    if (regs.control.enable[2]) renderTextBG(2);
+                    if (regs.control.enable[3]) renderTextBG(3);
+                    if (regs.control.enable[4]) renderSprites();
                     COMPOSE(LOOP_BG_MODE_0);
                     break;
                 }
                 case 1:
                     // BG Mode 1 - 240x160 pixels, Text and RS mode mixed
-                    if (m_io.control.enable[0]) renderTextBG(0);
-                    if (m_io.control.enable[1]) renderTextBG(1);
-                    if (m_io.control.enable[2]) renderAffineBG(0);
-                    if (m_io.control.enable[4]) renderSprites();
+                    if (regs.control.enable[0]) renderTextBG(0);
+                    if (regs.control.enable[1]) renderTextBG(1);
+                    if (regs.control.enable[2]) renderAffineBG(0);
+                    if (regs.control.enable[4]) renderSprites();
                     COMPOSE(LOOP_BG_MODE_1);
                     break;
                 case 2:
                     // BG Mode 2 - 240x160 pixels, RS mode
-                    if (m_io.control.enable[2]) renderAffineBG(0);
-                    if (m_io.control.enable[3]) renderAffineBG(1);
-                    if (m_io.control.enable[4]) renderSprites();
+                    if (regs.control.enable[2]) renderAffineBG(0);
+                    if (regs.control.enable[3]) renderAffineBG(1);
+                    if (regs.control.enable[4]) renderSprites();
                     COMPOSE(LOOP_BG_MODE_2);
                     break;
                 case 3:
                     // BG Mode 3 - 240x160 pixels, 32768 colors
-                    if (m_io.control.enable[2]) {
+                    if (regs.control.enable[2]) {
                         renderBitmapMode1BG();
                     }
                     COMPOSE(LOOP_BG_MODE_3_4_5);
                     break;
                 case 4:
                     // BG Mode 4 - 240x160 pixels, 256 colors (out of 32768 colors)
-                    if (m_io.control.enable[2]) {
+                    if (regs.control.enable[2]) {
                         renderBitmapMode2BG();
                     }
-                    if (m_io.control.enable[4]) {
+                    if (regs.control.enable[4]) {
                         renderSprites();
                     }
                     COMPOSE(LOOP_BG_MODE_3_4_5);
                     break;
                 case 5:
                     // BG Mode 5 - 160x128 pixels, 32768 colors
-                    if (m_io.control.enable[2]) {
+                    if (regs.control.enable[2]) {
                         renderBitmapMode3BG();
                     }
                     COMPOSE(LOOP_BG_MODE_3_4_5);
@@ -430,20 +430,20 @@ namespace Core {
 
     void PPU::nextLine() {
 
-        bool vcount_flag = m_io.vcount == m_io.status.vcount_setting;
+        bool vcount_flag = regs.vcount == regs.status.vcount_setting;
 
-        m_io.vcount = (m_io.vcount + 1) % 228;
-        m_io.status.vcount_flag = vcount_flag;
+        regs.vcount = (regs.vcount + 1) % 228;
+        regs.status.vcount_flag = vcount_flag;
 
-        if (vcount_flag && m_io.status.vcount_interrupt) {
+        if (vcount_flag && regs.status.vcount_interrupt) {
             m_interrupt->request(INTERRUPT_VCOUNT);
         }
     }
 
     void PPU::renderWindow(int id) {
-        int   line = m_io.vcount;
-        auto& winh = m_io.winh[id];
-        auto& winv = m_io.winv[id];
+        int   line = regs.vcount;
+        auto& winh = regs.winh[id];
+        auto& winv = regs.winv[id];
 
         auto buffer = m_win_mask[id];
 

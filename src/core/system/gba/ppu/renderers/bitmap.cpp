@@ -22,7 +22,7 @@
 namespace Core {
     
     void PPU::renderBitmapMode1BG() {
-        u32 offset = m_io.vcount * 480;
+        u32 offset = regs.vcount * 480;
 
         for (int x = 0; x < 240; x++) {
             m_buffer[2][x] = (m_vram[offset + 1] << 8) | m_vram[offset];
@@ -31,8 +31,8 @@ namespace Core {
     }
 
     void PPU::renderBitmapMode2BG() {
-        u32 page = m_io.control.frame_select ? 0xA000 : 0;
-        u32 offset = page + m_io.vcount * 240;
+        u32 page = regs.control.frame_select ? 0xA000 : 0;
+        u32 offset = page + regs.vcount * 240;
 
         for (int x = 0; x < 240; x++) {
             int index = m_vram[offset + x];
@@ -41,11 +41,11 @@ namespace Core {
     }
 
     void PPU::renderBitmapMode3BG() {
-        u32 page = m_io.control.frame_select ? 0xA000 : 0;
-        u32 offset = page + m_io.vcount * 320;
+        u32 page = regs.control.frame_select ? 0xA000 : 0;
+        u32 offset = page + regs.vcount * 320;
 
         for (int x = 0; x < 240; x++) {
-            if (x < 160 && m_io.vcount < 128) {
+            if (x < 160 && regs.vcount < 128) {
                 m_buffer[2][x] = (m_vram[offset + 1] << 8) | m_vram[offset];
                 offset += 2;
             } else {

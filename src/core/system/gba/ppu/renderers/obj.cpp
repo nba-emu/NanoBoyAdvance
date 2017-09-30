@@ -151,7 +151,7 @@ namespace Core {
             int half_width  = rect_width  >> 1;
             int half_height = rect_height >> 1;
 
-            int line  = m_io.vcount;
+            int line  = regs.vcount;
             int min_y = y - half_height;
             int max_y = y + half_height;
 
@@ -198,7 +198,7 @@ namespace Core {
 
                         int tile_num = number;
 
-                        if (m_io.control.one_dimensional) {
+                        if (regs.control.one_dimensional) {
                             tile_num += block_y * (width >> 3);
                         } else {
                             tile_num += block_y << (is_256? 4 : 5);

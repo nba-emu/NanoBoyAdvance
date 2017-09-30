@@ -30,8 +30,8 @@ namespace Core {
 
         switch (sfx) {
             case SFX_BLEND: {
-                int eva = std::min<int>(16, m_io.bldalpha.eva);
-                int evb = std::min<int>(16, m_io.bldalpha.evb);
+                int eva = std::min<int>(16, regs.bldalpha.eva);
+                int evb = std::min<int>(16, regs.bldalpha.evb);
 
                 int r2 = (target2 >> 0 ) & 0x1F;
                 int g2 = (target2 >> 5 ) & 0x1F;
@@ -43,7 +43,7 @@ namespace Core {
                 break;
             }
             case SFX_INCREASE: {
-                int evy = std::min<int>(16, m_io.bldy.evy);
+                int evy = std::min<int>(16, regs.bldy.evy);
 
                 //float brightness = evy >= 16 ? 1.0 : (evy / 16.0);
                 //r1 = r1 + (31 - r1) * brightness;
@@ -57,7 +57,7 @@ namespace Core {
                 break;
             }
             case SFX_DECREASE: {
-                int evy = std::min<int>(16, m_io.bldy.evy);
+                int evy = std::min<int>(16, regs.bldy.evy);
 
                 //float brightness = evy >= 16 ? 1.0 : (evy / 16.0);
 
@@ -85,28 +85,28 @@ namespace Core {
     void PPU::completeScanline() {
 
         u16 backdrop_color = *(u16*)(m_pal);
-        u32* line_buffer   = &m_framebuffer[m_io.vcount * 240];
+        u32* line_buffer   = &m_framebuffer[regs.vcount * 240];
 
         #define DECLARE_WIN_VARS \
-            const auto& outside  = m_io.winout.enable[0];\
-            const auto& enable   = m_io.control.enable;\
-            const auto& win0in   = m_io.winin.enable[0];\
-            const auto& win1in   = m_io.winin.enable[1];\
-            const auto& objwinin = m_io.winout.enable[1];\
+            const auto& outside  = regs.winout.enable[0];\
+            const auto& enable   = regs.control.enable;\
+            const auto& win0in   = regs.winin.enable[0];\
+            const auto& win1in   = regs.winin.enable[1];\
+            const auto& objwinin = regs.winout.enable[1];\
 
-        const auto& bgcnt    = m_io.bgcnt;
+        const auto& bgcnt    = regs.bgcnt;
 
-        auto win_enable = m_io.control.win_enable;
+        auto win_enable = regs.control.win_enable;
         bool no_windows = !win_enable[0] && !win_enable[1] && !win_enable[2];
 
-        /*const auto& bgcnt    = m_io.bgcnt;
-        const auto& outside  = m_io.winout.enable[0];
-        const auto& enable   = m_io.control.enable;
-        const auto& win0in   = m_io.winin.enable[0];
-        const auto& win1in   = m_io.winin.enable[1];
-        const auto& objwinin = m_io.winout.enable[1];
+        /*const auto& bgcnt    = regs.bgcnt;
+        const auto& outside  = regs.winout.enable[0];
+        const auto& enable   = regs.control.enable;
+        const auto& win0in   = regs.winin.enable[0];
+        const auto& win1in   = regs.winin.enable[1];
+        const auto& objwinin = regs.winout.enable[1];
 
-        auto win_enable = m_io.control.win_enable;
+        auto win_enable = regs.control.win_enable;
         bool no_windows = !win_enable[0] && !win_enable[1] && !win_enable[2];
 
         for (int x = 0; x < 240; x++) {
@@ -151,10 +151,10 @@ namespace Core {
             }
 
             if (visible[LAYER_SFX] || no_windows) {
-                auto sfx          = m_io.bldcnt.sfx;
+                auto sfx          = regs.bldcnt.sfx;
                 bool is_alpha_obj = layer[0] == LAYER_OBJ && obj.alpha;
-                bool sfx_above    = m_io.bldcnt.targets[0][layer[0]] || is_alpha_obj;
-                bool sfx_below    = m_io.bldcnt.targets[1][layer[1]];
+                bool sfx_above    = regs.bldcnt.targets[0][layer[0]] || is_alpha_obj;
+                bool sfx_below    = regs.bldcnt.targets[1][layer[1]];
 
                 if (is_alpha_obj && sfx_below) {
                     sfx = SFX_BLEND;

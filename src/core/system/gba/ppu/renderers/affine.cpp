@@ -7,12 +7,12 @@
   * it under the terms of the GNU General Public License as published by
   * the Free Software Foundation, either version 3 of the License, or
   * (at your option) any later version.
-  * 
+  *
   * NanoboyAdvance is distributed in the hope that it will be useful,
   * but WITHOUT ANY WARRANTY; without even the implied warranty of
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   * GNU General Public License for more details.
-  * 
+  *
   * You should have received a copy of the GNU General Public License
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
@@ -23,17 +23,17 @@
 using namespace Util;
 
 namespace Core {
-    
+
     void PPU::renderAffineBG(int id) {
-        
-        auto bg        = m_io.bgcnt[2 + id];
+
+        auto bg        = regs.bgcnt[2 + id];
         u16* buffer    = m_buffer[2 + id];
         u32 tile_block = bg.tile_block << 14;
 
-        float ref_x = m_io.bgx[id].internal;
-        float ref_y = m_io.bgy[id].internal;
-        float parameter_a = PPU::decodeFixed16(m_io.bgpa[id]);
-        float parameter_c = PPU::decodeFixed16(m_io.bgpc[id]);
+        float ref_x = regs.bgx[id].internal;
+        float ref_y = regs.bgy[id].internal;
+        float parameter_a = PPU::decodeFixed16(regs.bgpa[id]);
+        float parameter_c = PPU::decodeFixed16(regs.bgpc[id]);
 
         int size, block_width;
 

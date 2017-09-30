@@ -81,7 +81,7 @@ namespace Core {
         void reloadConfig();
 
         IO& getIO() {
-            return m_io;
+            return regs;
         }
 
         void setMemoryBuffers(u8* pal, u8* oam, u8* vram);

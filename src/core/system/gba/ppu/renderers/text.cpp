@@ -23,7 +23,7 @@
 namespace Core {
 
     void PPU::renderTextBG(int id) {
-        const auto& bg = m_io.bgcnt[id];
+        const auto& bg = regs.bgcnt[id];
 
         u16* buffer    = m_buffer[id];
         u32 tile_block = bg.tile_block << 14;
@@ -32,7 +32,7 @@ namespace Core {
         int last_encoder = -1;
 
         // scrolled scanline
-        const int line = m_io.vcount + m_io.bgvofs[id];
+        const int line = regs.vcount + regs.bgvofs[id];
 
         // vertical position data
         const int row      = line >> 3;
@@ -43,8 +43,8 @@ namespace Core {
         const u32 base_offset = (bg.map_block << 11) + ((row & 0x1F) << 6);
 
         // current pixel being drawn, current map column
-        int draw_x = -(m_io.bghofs[id]  & 7);
-        int column =   m_io.bghofs[id] >> 3;
+        int draw_x = -(regs.bghofs[id]  & 7);
+        int column =   regs.bghofs[id] >> 3;
 
         while (draw_x < 240) {
             int screen_x = (column >> 5) & 1;

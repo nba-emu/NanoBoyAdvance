@@ -7,12 +7,12 @@
   * it under the terms of the GNU General Public License as published by
   * the Free Software Foundation, either version 3 of the License, or
   * (at your option) any later version.
-  * 
+  *
   * NanoboyAdvance is distributed in the hope that it will be useful,
   * but WITHOUT ANY WARRANTY; without even the implied warranty of
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   * GNU General Public License for more details.
-  * 
+  *
   * You should have received a copy of the GNU General Public License
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
@@ -20,7 +20,7 @@
 #ifdef PPU_INCLUDE
 
 struct IO {
-    
+
     struct DisplayControl {
         int  mode;
         bool cgb_mode;
@@ -83,57 +83,57 @@ struct IO {
     u16 bgpb[2];
     u16 bgpc[2];
     u16 bgpd[2];
-    
+
     struct Mosaic {
         struct {
             int h;
             int v;
         } bg, obj;
-        
+
         void reset();
         void write(int offset, u8 value);
     } mosaic;
-    
+
     struct BlendControl {
         SpecialEffect sfx;
         bool targets[2][6];
-        
+
         void reset();
         auto read(int offset) -> u8;
         void write(int offset, u8 value);
     } bldcnt;
-    
+
     struct BlendAlpha {
         int eva;
         int evb;
-        
+
         void reset();
         void write(int offset, u8 value);
     } bldalpha;
-    
+
     struct BlendY {
         int evy;
-        
+
         void reset();
         void write(u8 value);
     } bldy;
-    
+
     struct WindowRange {
         int min;
         int max;
-        
+
         void reset();
         void write(int offset, u8 value);
     } winh[2], winv[2];
-    
+
     struct WindowLayerSelect {
         bool enable[2][6];
-        
+
         void reset();
         auto read(int offset) -> u8;
         void write(int offset, u8 value);
-    
+
     } winin, winout;
-} m_io;
+} regs;
 
 #endif
