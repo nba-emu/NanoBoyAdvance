@@ -396,7 +396,7 @@ namespace Core {
                 case 2:
                     // BG Mode 2 - 240x160 pixels, RS mode
                     if (m_io.control.enable[2]) renderAffineBG(0);
-                    if (m_io.control.enable[2]) renderAffineBG(1);
+                    if (m_io.control.enable[3]) renderAffineBG(1);
                     if (m_io.control.enable[4]) renderSprites();
                     COMPOSE(LOOP_BG_MODE_2);
                     break;
