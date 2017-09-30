@@ -269,9 +269,9 @@ namespace Core {
                 const bool win1   = win_enable[1] && m_win_mask[1][x];\
                 const bool objwin = win_enable[2] && m_obj_layer[x].window;\
                 \
-                bool* visible = win0   ? win0in   :\
-                                win1   ? win1in   :\
-                                objwin ? objwinin : outside;
+                const bool* visible = win0   ? win0in   :\
+                                      win1   ? win1in   :\
+                                      objwin ? objwinin : outside;
 
             #define  BG_IS_IN_WINDOW visible[bg]
             #define OBJ_IS_IN_WINDOW visible[LAYER_OBJ]
