@@ -289,7 +289,7 @@ namespace Core {
                 for (int bg = 2; bg >= 0; bg--)
 
             #define LOOP_BG_MODE_2 \
-                for (int bg = 1; bg >= 0; bg--)
+                for (int bg = 3; bg >= 2; bg--)
 
             #define LOOP_BG_MODE_3_4_5 \
                 int bg = 2;
@@ -411,6 +411,9 @@ namespace Core {
                     // BG Mode 4 - 240x160 pixels, 256 colors (out of 32768 colors)
                     if (m_io.control.enable[2]) {
                         renderBitmapMode2BG();
+                    }
+                    if (m_io.control.enable[4]) {
+                        renderSprites();
                     }
                     COMPOSE(LOOP_BG_MODE_3_4_5);
                     break;
