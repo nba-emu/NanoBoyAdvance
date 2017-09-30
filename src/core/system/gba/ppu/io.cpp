@@ -7,12 +7,12 @@
   * it under the terms of the GNU General Public License as published by
   * the Free Software Foundation, either version 3 of the License, or
   * (at your option) any later version.
-  * 
+  *
   * NanoboyAdvance is distributed in the hope that it will be useful,
   * but WITHOUT ANY WARRANTY; without even the implied warranty of
   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
   * GNU General Public License for more details.
-  * 
+  *
   * You should have received a copy of the GNU General Public License
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
@@ -20,7 +20,7 @@
 #include "ppu.hpp"
 
 namespace Core {
-    
+
     void PPU::IO::DisplayControl::reset() {
         mode = 0;
         cgb_mode = false;
@@ -39,7 +39,6 @@ namespace Core {
     }
 
     auto PPU::IO::DisplayControl::read(int offset) -> u8 {
-        
         switch (offset) {
             case 0:
                 return mode |
@@ -61,7 +60,6 @@ namespace Core {
     }
 
     void PPU::IO::DisplayControl::write(int offset, u8 value) {
-        
         switch (offset) {
             case 0:
                 mode = value & 7;
@@ -95,7 +93,6 @@ namespace Core {
     }
 
     auto PPU::IO::DisplayStatus::read(int offset) -> u8 {
-        
         switch (offset) {
             case 0:
                 return (vblank_flag ? 1 : 0) |
@@ -133,7 +130,6 @@ namespace Core {
     }
 
     auto PPU::IO::BackgroundControl::read(int offset) -> u8 {
-        
         switch (offset) {
             case 0:
                 return priority |
@@ -148,7 +144,6 @@ namespace Core {
     }
 
     void PPU::IO::BackgroundControl::write(int offset, u8 value) {
-        
         switch (offset) {
             case 0:
                 priority      = value & 3;
@@ -169,43 +164,41 @@ namespace Core {
     }
 
     void PPU::IO::ReferencePoint::write(int offset, u8 value) {
-        
         switch (offset) {
             case 0: this->value = (this->value & 0xFFFFFF00) | (value << 0); break;
             case 1: this->value = (this->value & 0xFFFF00FF) | (value << 8); break;
             case 2: this->value = (this->value & 0xFF00FFFF) | (value << 16); break;
             case 3: this->value = (this->value & 0x00FFFFFF) | (value << 24); break;
         }
-        
+
         internal = PPU::decodeFixed32(this->value);
     }
-    
+
     void PPU::IO::Mosaic::reset() {
         bg.h  = 0;
         bg.v  = 0;
         obj.h = 0;
         obj.v = 0;
     }
-    
+
     void PPU::IO::Mosaic::write(int offset, u8 value) {
         switch (offset) {
-            case 0: bg.h  = value & 0xF; bg.v  = value >> 4; break;    
-            case 1: obj.h = value & 0xF; obj.v = value >> 4; break;    
+            case 0: bg.h  = value & 0xF; bg.v  = value >> 4; break;
+            case 1: obj.h = value & 0xF; obj.v = value >> 4; break;
         }
     }
-    
+
     void PPU::IO::BlendControl::reset() {
         sfx = SFX_NONE;
-        
+
         for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 6; j++) {
                 targets[i][j] = false;
             }
         }
     }
-    
+
     auto PPU::IO::BlendControl::read(int offset) -> u8 {
-        
         switch (offset) {
             case 0:
                 return (targets[0][LAYER_BG0] ? 1  : 0) |
@@ -224,30 +217,27 @@ namespace Core {
                        (targets[1][LAYER_BD ] ? 32 : 0);
         }
     }
-    
+
     void PPU::IO::WindowRange::reset() {
         min = max = 0;
     }
-    
+
     void PPU::IO::WindowRange::write(int offset, u8 value) {
-        
         switch (offset) {
             case 0: max = value & 0xFF; break;
             case 1: min = value & 0xFF; break;
         }
     }
-    
-    void PPU::IO::WindowLayerSelect::reset() { 
-        
+
+    void PPU::IO::WindowLayerSelect::reset() {
         for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 6; j++) {
                 enable[i][j] = false;
             }
         }
     }
-    
+
     auto PPU::IO::WindowLayerSelect::read(int offset) -> u8 {
-        
         return (enable[offset][LAYER_BG0] ? 1  : 0) |
                (enable[offset][LAYER_BG1] ? 2  : 0) |
                (enable[offset][LAYER_BG2] ? 4  : 0) |
@@ -255,9 +245,8 @@ namespace Core {
                (enable[offset][LAYER_OBJ] ? 16 : 0) |
                (enable[offset][LAYER_SFX] ? 32 : 0);
     }
-    
+
     void PPU::IO::WindowLayerSelect::write(int offset, u8 value) {
-        
         enable[offset][LAYER_BG0] = value & 1;
         enable[offset][LAYER_BG1] = value & 2;
         enable[offset][LAYER_BG2] = value & 4;
@@ -265,9 +254,8 @@ namespace Core {
         enable[offset][LAYER_OBJ] = value & 16;
         enable[offset][LAYER_SFX] = value & 32;
     }
-    
+
     void PPU::IO::BlendControl::write(int offset, u8 value) {
-        
         switch (offset) {
             case 0:
                 targets[0][LAYER_BG0] = value & 1;
@@ -288,22 +276,22 @@ namespace Core {
                 break;
         }
     }
-    
+
     void PPU::IO::BlendAlpha::reset() {
         eva = evb = 0;
     }
-    
+
     void PPU::IO::BlendAlpha::write(int offset, u8 value) {
         switch (offset) {
             case 0: eva = value & 0x1F; break;
             case 1: evb = value & 0x1F; break;
         }
     }
-    
+
     void PPU::IO::BlendY::reset() {
         evy = 0;
     }
-    
+
     void PPU::IO::BlendY::write(u8 value) {
         evy = value & 0x1F;
     }
