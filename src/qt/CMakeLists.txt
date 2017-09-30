@@ -4,11 +4,13 @@ set(SRCS
     main.cpp
     screen.cpp
     mainwindow.cpp
+    settings.cpp
 )
 
 set(HEADERS
     screen.hpp
     mainwindow.hpp
+    settings.hpp
 )
 
 if (WIN32)

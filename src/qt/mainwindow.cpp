@@ -24,6 +24,7 @@
 #include <SDL2/SDL.h>
 
 #include "mainwindow.hpp"
+#include "settings.hpp"
 
 using namespace Core;
 
@@ -50,6 +51,16 @@ void MainWindow::setupMenu() {
     m_emul_menu = m_menu_bar->addMenu(tr("&Emulation"));
     m_edit_menu = m_menu_bar->addMenu(tr("Edit"));
     m_help_menu = m_menu_bar->addMenu(tr("&?"));
+
+    // TEST
+    connect(m_edit_menu->addAction(tr("Settings")), &QAction::triggered,
+        [this] {
+            auto ini    = Util::INI("config.ini");
+            auto dialog = new SettingsDialog(ini);
+
+            dialog->show();
+        }
+    );
 
     setMenuBar(m_menu_bar);
 
