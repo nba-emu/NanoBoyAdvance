@@ -22,39 +22,34 @@
 namespace Core {
 
     void PPU::IO::DisplayControl::reset() {
-        mode = 0;
-        cgb_mode = false;
-        frame_select = 0;
+        mode              = 0;
+        cgb_mode          = false;
+        frame_select      = 0;
         hblank_oam_access = false;
-        one_dimensional = false;
-        forced_blank = false;
-        enable[0] = false;
-        enable[1] = false;
-        enable[2] = false;
-        enable[3] = false;
-        enable[4] = false;
-        win_enable[0] = false;
-        win_enable[1] = false;
-        win_enable[2] = false;
+        one_dimensional   = false;
+        forced_blank      = false;
+
+        for (int i = 0; i < 5; i++) enable[i]     = false;
+        for (int i = 0; i < 3; i++) win_enable[i] = false;
     }
 
     auto PPU::IO::DisplayControl::read(int offset) -> u8 {
         switch (offset) {
             case 0:
                 return mode |
-                       (cgb_mode ? 8 : 0) |
-                       (frame_select ? 16 : 0) |
-                       (hblank_oam_access ? 32 : 0) |
-                       (one_dimensional ? 64 : 0) |
-                       (forced_blank ? 128 : 0);
+                       (cgb_mode          ? 8   : 0) |
+                       (frame_select      ? 16  : 0) |
+                       (hblank_oam_access ? 32  : 0) |
+                       (one_dimensional   ? 64  : 0) |
+                       (forced_blank      ? 128 : 0);
             case 1:
-                return (enable[0] ? 1 : 0) |
-                       (enable[1] ? 2 : 0) |
-                       (enable[2] ? 4 : 0) |
-                       (enable[3] ? 8 : 0) |
+                return (enable[0] ? 1  : 0) |
+                       (enable[1] ? 2  : 0) |
+                       (enable[2] ? 4  : 0) |
+                       (enable[3] ? 8  : 0) |
                        (enable[4] ? 16 : 0) |
-                       (win_enable[0] ? 32 : 0) |
-                       (win_enable[1] ? 64 : 0) |
+                       (win_enable[0] ? 32  : 0) |
+                       (win_enable[1] ? 64  : 0) |
                        (win_enable[2] ? 128 : 0);
         }
     }
@@ -62,12 +57,12 @@ namespace Core {
     void PPU::IO::DisplayControl::write(int offset, u8 value) {
         switch (offset) {
             case 0:
-                mode = value & 7;
-                cgb_mode = value & 8;
-                frame_select = (value >> 4) & 1;
+                mode              = value & 7;
+                cgb_mode          = value & 8;
+                frame_select      = (value >> 4) & 1;
                 hblank_oam_access = value & 32;
-                one_dimensional = value & 64;
-                forced_blank = value & 128;
+                one_dimensional   = value & 64;
+                forced_blank      = value & 128;
                 break;
             case 1:
                 enable[0] = value & 1;
@@ -98,7 +93,7 @@ namespace Core {
                 return (vblank_flag ? 1 : 0) |
                        (hblank_flag ? 2 : 0) |
                        (vcount_flag ? 4 : 0) |
-                       (vblank_interrupt ? 8 : 0) |
+                       (vblank_interrupt ? 8  : 0) |
                        (hblank_interrupt ? 16 : 0) |
                        (vcount_interrupt ? 32 : 0);
             case 1:
@@ -190,7 +185,6 @@ namespace Core {
 
     void PPU::IO::BlendControl::reset() {
         sfx = SFX_NONE;
-
         for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 6; j++) {
                 targets[i][j] = false;
