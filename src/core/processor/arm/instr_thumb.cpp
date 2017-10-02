@@ -312,25 +312,29 @@ namespace Core {
     template <int op, int off>
     void ARM::thumbInst8(u16 instruction) {
         // THUMB.8 Load/store sign-extended byte/halfword
-        int dst = instruction & 7;
+        int dst  = (instruction >> 0) & 7;
         int base = (instruction >> 3) & 7;
         u32 address = ctx.reg[base] + ctx.reg[off];
 
         PREFETCH_T(M_NONSEQ);
 
         switch (op) {
-        case 0b00: // STRH
+        case 0b00:
+            // STRH rDST, [rBASE, rOFF]
             write16(address, ctx.reg[dst], M_NONSEQ);
             break;
-        case 0b01: // LDSB
+        case 0b01:
+            // LDSB rDST, [rBASE, rOFF]
             busInternalCycles(1);
             ctx.reg[dst] = read8(address, M_NONSEQ | M_SIGNED);
             break;
-        case 0b10: // LDRH
+        case 0b10:
+            // LDRH rDST, [rBASE, rOFF]
             busInternalCycles(1);
             ctx.reg[dst] = read16(address, M_NONSEQ | M_ROTATE);
             break;
-        case 0b11: // LDSH
+        case 0b11:
+            // LDSH rDST, [rBASE, rOFF]
             busInternalCycles(1);
             ctx.reg[dst] = read16(address, M_NONSEQ | M_SIGNED);
             break;
@@ -342,34 +346,48 @@ namespace Core {
     template <int op, int imm>
     void ARM::thumbInst9(u16 instruction) {
         // THUMB.9 Load store with immediate offset
-        int dst = instruction & 7;
+        int dst  = (instruction >> 0) & 7;
         int base = (instruction >> 3) & 7;
 
         PREFETCH_T(M_NONSEQ);
 
         switch (op) {
-        case 0b00: { // STR
-            u32 address = ctx.reg[base] + (imm << 2);
-            write32(address, ctx.reg[dst], M_NONSEQ);
+        case 0b00:
+            // STR rDST, [rBASE, #imm]
+            write32(
+                ctx.reg[base] + (imm << 2),
+                ctx.reg[dst],
+                M_NONSEQ
+            );
             break;
-        }
-        case 0b01: { // LDR
-            u32 address = ctx.reg[base] + (imm << 2);
+        case 0b01:
+            // LDR rDST, [rBASE, #imm]
+            // Internal CPU cycle (I-cycle)
             busInternalCycles(1);
-            ctx.reg[dst] = read32(address, M_NONSEQ | M_ROTATE);
+
+            ctx.reg[dst] = read32(
+                ctx.reg[base] + (imm << 2),
+                M_NONSEQ | M_ROTATE
+            );
             break;
-        }
-        case 0b10: { // STRB
-            u32 address = ctx.reg[base] + imm;
-            write8(address, ctx.reg[dst], M_NONSEQ | M_NONE);
+        case 0b10:
+            // STRB rDST, [rBASE, #imm]
+            write8(
+                ctx.reg[base] + imm,
+                ctx.reg[dst],
+                M_NONSEQ
+            );
             break;
-        }
-        case 0b11: { // LDRB
-            u32 address = ctx.reg[base] + imm;
+        case 0b11:
+            // LDRB rDST, [rBASE, #imm]
+            // Internal CPU cycle (I-cycle)
             busInternalCycles(1);
-            ctx.reg[dst] = read8(address, M_NONSEQ | M_NONE);
+            
+            ctx.reg[dst] = read8(
+                ctx.reg[base] + imm,
+                M_NONSEQ
+            );
             break;
-        }
         }
 
         ADVANCE_PC;
