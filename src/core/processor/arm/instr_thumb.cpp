@@ -382,7 +382,7 @@ namespace Core {
             // LDRB rDST, [rBASE, #imm]
             // Internal CPU cycle (I-cycle)
             busInternalCycles(1);
-            
+
             ctx.reg[dst] = read8(
                 ctx.reg[base] + imm,
                 M_NONSEQ
@@ -396,7 +396,7 @@ namespace Core {
     template <bool load, int imm>
     void ARM::thumbInst10(u16 instruction) {
         // THUMB.10 Load/store halfword
-        int dst     = instruction & 7;
+        int dst     = (instruction >> 0) & 7;
         int base    = (instruction >> 3) & 7;
         u32 address = ctx.reg[base] + (imm << 1);
 
@@ -434,18 +434,12 @@ namespace Core {
     template <bool stackptr, int dst>
     void ARM::thumbInst12(u16 instruction) {
         // THUMB.12 Load address
-        u32 address;
         u32 imm = (instruction & 0xFF) << 2;
 
         PREFETCH_T(M_SEQ);
 
-        if (stackptr) {
-            address = ctx.reg[13];
-        } else {
-            address = ctx.r15 & ~2;
-        }
+        ctx.reg[dst] = (stackptr ? ctx.reg[13] : (ctx.r15 & ~2)) + imm;
 
-        ctx.reg[dst] = address + imm;
         ADVANCE_PC;
     }
 
@@ -455,7 +449,9 @@ namespace Core {
         u32 imm = (instruction & 0x7F) << 2;
 
         PREFETCH_T(M_SEQ);
+
         ctx.reg[13] += sub ? -imm : imm;
+
         ADVANCE_PC;
     }
 
