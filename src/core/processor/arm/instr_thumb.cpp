@@ -50,8 +50,8 @@ namespace Core {
     template <int imm, int type>
     void ARM::thumbInst1(u16 instruction) {
         // THUMB.1 Move shifted register
-        int dst = instruction & 7;
-        int src = (instruction >> 3) & 7;
+        int  dst   = (instruction >> 0) & 7;
+        int  src   = (instruction >> 3) & 7;
         bool carry = ctx.cpsr & MASK_CFLAG;
 
         PREFETCH_T(M_SEQ);
@@ -215,57 +215,56 @@ namespace Core {
     template <int op, bool high1, bool high2>
     void ARM::thumbInst5(u16 instruction) {
         // THUMB.5 Hi register operations/branch exchange
-        u32 operand;
-        bool perform_check = true;
-        int dst = instruction & 7;
+        int dst = (instruction >> 0) & 7;
         int src = (instruction >> 3) & 7;
 
-        PREFETCH_T(M_SEQ);
-
+        // Instruction may access higher registers r8 - r15 ("Hi register").
+        // This is archieved using two extra bits that displace the register number by 8.
         if (high1) dst |= 8;
         if (high2) src |= 8;
 
-        operand = ctx.reg[src];
+        PREFETCH_T(M_SEQ);
 
-        if (high2 && src == 15) {
-            operand &= ~1;
-        }
+        u32 operand = ctx.reg[src];
 
-        switch (op) {
-        case 0: // ADD
-            ctx.reg[dst] += operand;
-            break;
-        case 1: { // CMP
-            u32 result = ctx.reg[dst] - operand;
-            updateCarryFlag(ctx.reg[dst] >= operand);
-            updateOverflowFlagSub(result, ctx.reg[dst], operand);
-            updateSignFlag(result);
-            updateZeroFlag(result);
-            perform_check = false;
-            break;
-        }
-        case 2: // MOV
-            ctx.reg[dst] = operand;
-            break;
-        case 3: // BX
+        // If r15 is used as operand we must
+        // ensure that its value is halfword aligned.
+        if (src == 15) operand &= ~1;
+
+        // Check for Branch & Exchange (bx) instruction.
+        if (op == 3) {
+            // LSB indicates new instruction set (0 = ARM, 1 = THUMB)
             if (operand & 1) {
                 ctx.r15 = operand & ~1;
                 REFILL_PIPELINE_T;
             } else {
                 ctx.cpsr &= ~MASK_THUMB;
-                ctx.r15 = operand & ~3;
+                ctx.r15   = operand & ~3;
                 REFILL_PIPELINE_A;
             }
-            return; // do not advance pc
         }
-
-        if (perform_check && dst == 15) {
-            ctx.reg[dst] &= ~1; // TODO: use r15 directly
-            REFILL_PIPELINE_T;
-            return; // do not advance pc
+        // Check for Compare (cmp) instruction
+        else if (op == 1) {
+            // This is a simple one. Subtraction but only the flags are stored.
+            opSUB(ctx.reg[dst], operand, true);
+            ADVANCE_PC;
         }
+        // Otherwise it's an 'add' or 'mov' opcode
+        else {
+            switch (op) {
+            case 0: ctx.reg[dst] += operand; break; // ADD
+            case 2: ctx.reg[dst]  = operand; break; // MOV
+            }
 
-        ADVANCE_PC;
+            // Check if r15 was overwritten.
+            // If so we need to realign it and refill the pipeline.
+            if (dst == 15) {
+                ctx.r15 &= ~1;
+                REFILL_PIPELINE_T;
+                return;
+            }
+            ADVANCE_PC;
+        }
     }
 
     template <int dst>
