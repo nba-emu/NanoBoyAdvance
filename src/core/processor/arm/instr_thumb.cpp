@@ -528,7 +528,21 @@ namespace Core {
         u32 address = ctx.reg[base];
         int register_list = instruction & 0xFF;
 
-        // TODO: emulate empty register list
+#if 0
+        // TODO: verify on hardware
+        if (register_list == 0) {
+            PREFETCH_T(M_SEQ);
+            ctx.reg[base] += 0x40;
+            if (load) {
+                ctx.r15 = read32(address, M_NONE); // check access type
+                REFILL_PIPELINE_T;
+            } else {
+                write32(address, ctx.r15, M_NONE); // check access type
+                ADVANCE_PC;
+            }
+            return;
+        }
+#endif
 
         if (load) {
             PREFETCH_T(M_SEQ);
