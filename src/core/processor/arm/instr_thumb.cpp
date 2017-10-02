@@ -71,32 +71,22 @@ namespace Core {
     template <bool immediate, bool subtract, int field3>
     void ARM::thumbInst2(u16 instruction) {
         // THUMB.2 Add/subtract
-        u32 operand, result;
-        int dst = instruction & 7;
+        u32 operand;
+        int dst = (instruction >> 0) & 7;
         int src = (instruction >> 3) & 7;
 
         PREFETCH_T(M_SEQ);
 
-        // either a register or an immediate value
+        // Third parameter. 3-bit immediate value (#imm) or register (rOP).
         operand = immediate ? field3 : ctx.reg[field3];
 
         if (subtract) {
-            result = ctx.reg[src] - operand;
-
-            updateCarryFlag(ctx.reg[src] >= operand);
-            updateOverflowFlagSub(result, ctx.reg[src], operand);
+            // SUB rDST, rSRC, operand
+            ctx.reg[dst] = opSUB(ctx.reg[src], operand, true);
         } else {
-            u64 result_long = (u64)(ctx.reg[src]) + (u64)operand;
-
-            result = (u32)result_long;
-            updateCarryFlag(result_long & 0x100000000);
-            updateOverflowFlagAdd(result, ctx.reg[src], operand);
+            // ADD rDST, rSRC, operand
+            ctx.reg[dst] = opADD(ctx.reg[src], operand, 0, true);
         }
-
-        updateSignFlag(result);
-        updateZeroFlag(result);
-
-        ctx.reg[dst] = result;
 
         ADVANCE_PC;
     }
