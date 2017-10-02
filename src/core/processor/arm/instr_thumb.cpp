@@ -104,44 +104,30 @@ namespace Core {
     template <int op, int dst>
     void ARM::thumbInst3(u16 instruction) {
         // THUMB.3 Move/compare/add/subtract immediate
-        u32 result;
-        u32 immediate_value = instruction & 0xFF;
+        u32 imm = instruction & 0xFF;
 
         PREFETCH_T(M_SEQ);
 
         switch (op) {
-        case 0b00: // MOV
-            ctx.reg[dst] = immediate_value;
+        case 0b00:
+            // MOV rDST, #imm
+            ctx.reg[dst] = imm;
             updateSignFlag(0);
-            updateZeroFlag(immediate_value);
-
-            //TODO: handle this case in a more straight-forward manner?
-            ADVANCE_PC;
-            return;//important!
-
-        case 0b01: // CMP
-            result = ctx.reg[dst] - immediate_value;
-            updateCarryFlag(ctx.reg[dst] >= immediate_value);
-            updateOverflowFlagSub(result, ctx.reg[dst], immediate_value);
+            updateZeroFlag(imm);
             break;
-        case 0b10: { // ADD
-            u64 result_long = (u64)ctx.reg[dst] + (u64)immediate_value;
-            result = (u32)result_long;
-            updateCarryFlag(result_long & 0x100000000);
-            updateOverflowFlagAdd(result, ctx.reg[dst], immediate_value);
-            ctx.reg[dst] = result;
+        case 0b01:
+            // CMP rDST, #imm
+            opSUB(ctx.reg[dst], imm, true);
+            break;
+        case 0b10:
+            // ADD rDST, #imm
+            ctx.reg[dst] = opADD(ctx.reg[dst], imm, 0, true);
+            break;
+        case 0b11:
+            // SUB rDST, #imm
+            ctx.reg[dst] = opSUB(ctx.reg[dst], imm, true);
             break;
         }
-        case 0b11: // SUB
-            result = ctx.reg[dst] - immediate_value;
-            updateCarryFlag(ctx.reg[dst] >= immediate_value);
-            updateOverflowFlagSub(result, ctx.reg[dst], immediate_value);
-            ctx.reg[dst] = result;
-            break;
-        }
-
-        updateSignFlag(result);
-        updateZeroFlag(result);
 
         ADVANCE_PC;
     }
@@ -203,7 +189,7 @@ namespace Core {
             updateZeroFlag(ctx.reg[dst]);
             break;
         }
-        case ThumbDataOp::ADC: ctx.reg[dst] = opADD(ctx.reg[dst], ctx.reg[src], (ctx.cpsr>>POS_CFLAG)&1, true); break;
+        case ThumbDataOp::ADC: ctx.reg[dst] = opADD(ctx.reg[dst], ctx.reg[src], ( (ctx.cpsr)>>POS_CFLAG)&1, true); break;
         case ThumbDataOp::SBC: ctx.reg[dst] = opSBC(ctx.reg[dst], ctx.reg[src], (~(ctx.cpsr)>>POS_CFLAG)&1, true); break;
         case ThumbDataOp::ROR: {
             u32 amount = ctx.reg[src];
