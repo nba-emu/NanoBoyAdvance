@@ -144,7 +144,7 @@ namespace Core {
     template <int op>
     void ARM::thumbInst4(u16 instruction) {
         // THUMB.4 ALU operations
-        int dst = instruction & 7;
+        int dst = (instruction >> 0) & 7;
         int src = (instruction >> 3) & 7;
 
         PREFETCH_T(M_SEQ);
@@ -152,6 +152,7 @@ namespace Core {
         switch (static_cast<ThumbDataOp>(op)) {
         case ThumbDataOp::AND: ctx.reg[dst] = opDataProc(ctx.reg[dst] & ctx.reg[src], true); break;
         case ThumbDataOp::EOR: ctx.reg[dst] = opDataProc(ctx.reg[dst] ^ ctx.reg[src], true); break;
+
         case ThumbDataOp::LSL: {
             u32 amount = ctx.reg[src];
             bool carry = ctx.cpsr & MASK_CFLAG;
@@ -161,6 +162,7 @@ namespace Core {
             updateZeroFlag(ctx.reg[dst]);
             break;
         }
+
         case ThumbDataOp::LSR: {
             u32 amount = ctx.reg[src];
             bool carry = ctx.cpsr & MASK_CFLAG;
@@ -179,8 +181,10 @@ namespace Core {
             updateZeroFlag(ctx.reg[dst]);
             break;
         }
+
         case ThumbDataOp::ADC: ctx.reg[dst] = opADD(ctx.reg[dst], ctx.reg[src], ( (ctx.cpsr)>>POS_CFLAG)&1, true); break;
         case ThumbDataOp::SBC: ctx.reg[dst] = opSBC(ctx.reg[dst], ctx.reg[src], (~(ctx.cpsr)>>POS_CFLAG)&1, true); break;
+
         case ThumbDataOp::ROR: {
             u32 amount = ctx.reg[src];
             bool carry = ctx.cpsr & MASK_CFLAG;
@@ -190,21 +194,24 @@ namespace Core {
             updateZeroFlag(ctx.reg[dst]);
             break;
         }
+
         case ThumbDataOp::TST: opDataProc(ctx.reg[dst] & ctx.reg[src], true); break;
         case ThumbDataOp::NEG: ctx.reg[dst] = opSUB(0, ctx.reg[src], true); break;
         case ThumbDataOp::CMP: opSUB(ctx.reg[dst], ctx.reg[src], true); break;
         case ThumbDataOp::CMN: opADD(ctx.reg[dst], ctx.reg[src], 0, true); break;
         case ThumbDataOp::ORR: ctx.reg[dst] = opDataProc(ctx.reg[dst] | ctx.reg[src], true); break;
+
         case ThumbDataOp::MUL: {
             // TODO: calculate internal cycles
             ctx.reg[dst] *= ctx.reg[src];
 
-            // calculate flags - is the carry flag really cleared?
+            // Calculate flags. Is the carry flag really cleared?
             updateSignFlag(ctx.reg[dst]);
             updateZeroFlag(ctx.reg[dst]);
             updateCarryFlag(false);
             break;
         }
+
         case ThumbDataOp::BIC: ctx.reg[dst] = opDataProc(ctx.reg[dst] & ~ctx.reg[src], true); break;
         case ThumbDataOp::MVN: ctx.reg[dst] = opDataProc(~(ctx.reg[src]), true); break;
         }
