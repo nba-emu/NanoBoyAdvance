@@ -521,10 +521,10 @@ namespace Core {
         ADVANCE_PC;
     }
 
+    // TODO: could use some optimizations :S
     template <bool load, int base>
     void ARM::thumbInst15(u16 instruction) {
         // THUMB.15 Multiple load/store
-        bool write_back = true;
         u32 address = ctx.reg[base];
         int register_list = instruction & 0xFF;
 
@@ -554,7 +554,7 @@ namespace Core {
                 }
             }
 
-            if (write_back && (~register_list & (1<<base))) {
+            if (~register_list & (1<<base)) {
                 ctx.reg[base] = address;
             }
         } else {
