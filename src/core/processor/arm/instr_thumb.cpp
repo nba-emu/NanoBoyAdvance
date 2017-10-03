@@ -465,57 +465,45 @@ namespace Core {
     void ARM::thumbInst14(u16 instruction) {
         // THUMB.14 push/pop registers
         u32 addr = ctx.reg[13];
-        const int register_list = instruction & 0xFF;
 
-        PREFETCH_T(M_SEQ); // TODO: order!
+        PREFETCH_T(M_SEQ);
 
-        // TODO: emulate empty register list
-
-        if (!pop) {
-            int register_count = 0;
-
-            for (int i = 0; i <= 7; i++) {
-                if (register_list & (1 << i)) {
-                    register_count++;
-                }
-            }
-
-            if (rbit) {
-                register_count++;
-            }
-
-            addr -= register_count << 2;
-            ctx.reg[13] = addr;
-        }
-
-        // perform load/store multiple
-        for (int i = 0; i <= 7; i++) {
-            if (register_list & (1 << i)) {
-                if (pop) {
-                    ctx.reg[i] = read32(addr, M_NONE);
-                } else {
-                    write32(addr, ctx.reg[i], M_NONE);
-                }
-                addr += 4;
-            }
-        }
-
-        if (rbit) {
-            if (pop) {
-                ctx.r15 = read32(addr, M_NONE) & ~1;
-
-                // refill pipe and fast return, no pc advance
-                REFILL_PIPELINE_T;
-                ctx.reg[13] = addr + 4;
-                return;
-            } else {
-                write32(addr, ctx.reg[14], M_NONE);
-            }
-            addr += 4;
-        }
+        // TODO: - emulate empty register list
+        //       - figure proper timings & access orders.
 
         if (pop) {
+            for (int reg = 0; reg <= 7; reg++) {
+                if (instruction & (1<<reg)) {
+                    ctx.reg[reg] = read32(addr, M_NONE);
+                    addr += 4;
+                }
+            }
+            if (rbit) {
+                ctx.reg[15] = read32(addr, M_NONE) & ~1;
+                ctx.reg[13] = addr + 4;
+                REFILL_PIPELINE_T;
+                return;
+            }
             ctx.reg[13] = addr;
+        } else {
+            // Calculate internal start address (final r13 value)
+            for (int reg = 0; reg <= 7; reg++) {
+                if (instruction & (1 << reg)) addr -= 4;
+            }
+            if (rbit) addr -= 4;
+
+            // Store address in r13 before we mess with it.
+            ctx.reg[13] = addr;
+
+            for (int reg = 0; reg <= 7; reg++) {
+                if (instruction & (1<<reg)) {
+                    write32(addr, ctx.reg[reg], M_NONE);
+                    addr += 4;
+                }
+            }
+            if (rbit) {
+                write32(addr, ctx.reg[14], M_NONE);
+            }
         }
 
         ADVANCE_PC;
@@ -525,8 +513,6 @@ namespace Core {
     template <bool load, int base>
     void ARM::thumbInst15(u16 instruction) {
         // THUMB.15 Multiple load/store
-        u32 address = ctx.reg[base];
-
 #if 0
         // TODO: verify on hardware
         if ((instruction & 0xFF) == 0) {
@@ -544,15 +530,15 @@ namespace Core {
 #endif
 
         if (load) {
-            PREFETCH_T(M_SEQ);
+            u32 address = ctx.reg[base];
 
+            PREFETCH_T(M_SEQ);
             for (int i = 0; i <= 7; i++) {
                 if (instruction & (1<<i)) {
                     ctx.reg[i] = read32(address, M_NONE);
                     address += 4;
                 }
             }
-
             if (~instruction & (1<<base)) {
                 ctx.reg[base] = address;
             }
