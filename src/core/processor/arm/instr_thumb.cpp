@@ -526,11 +526,10 @@ namespace Core {
     void ARM::thumbInst15(u16 instruction) {
         // THUMB.15 Multiple load/store
         u32 address = ctx.reg[base];
-        int register_list = instruction & 0xFF;
 
 #if 0
         // TODO: verify on hardware
-        if (register_list == 0) {
+        if ((instruction & 0xFF) == 0) {
             PREFETCH_T(M_SEQ);
             ctx.reg[base] += 0x40;
             if (load) {
@@ -548,22 +547,39 @@ namespace Core {
             PREFETCH_T(M_SEQ);
 
             for (int i = 0; i <= 7; i++) {
-                if (register_list & (1<<i)) {
+                if (instruction & (1<<i)) {
                     ctx.reg[i] = read32(address, M_NONE);
                     address += 4;
                 }
             }
 
-            if (~register_list & (1<<base)) {
+            if (~instruction & (1<<base)) {
                 ctx.reg[base] = address;
             }
         } else {
-            int first_register = -1;
-
             PREFETCH_T(M_NONSEQ);
 
-            for (int i = 0; i <= 7; i++) {
-                if (register_list & (1<<i)) {
+            int reg = 0;
+
+            // First Loop - Run to first register (nonsequential access)
+            for (; reg <= 7; reg++) {
+                if (instruction & (1 << reg)) {
+                    write32(ctx.reg[base], ctx.reg[reg], M_NONSEQ);
+                    ctx.reg[base] += 4;
+                    break;
+                }
+            }
+            reg++;
+            // Second Loop - Run until end (sequential accesses)
+            for (; reg <= 7; reg++) {
+                if (instruction & (1 << reg)) {
+                    write32(ctx.reg[base], ctx.reg[reg], M_SEQ);
+                    ctx.reg[base] += 4;
+                }
+            }
+
+            /*for (int i = 0; i <= 7; i++) {
+                if (instruction & (1<<i)) {
                     int access_type = M_SEQ; // ewww
 
                     if (first_register == -1) {
@@ -571,15 +587,16 @@ namespace Core {
                         access_type = M_NONSEQ;
                     }
 
-                    if (i == base && i == first_register) {
-                        write32(ctx.reg[base], address, access_type);
-                    } else {
-                        write32(ctx.reg[base], ctx.reg[i], access_type);
-                    }
+                    //if (i == base && i == first_register) {
+                    //    write32(ctx.reg[base], address, access_type);
+                    //} else {
+                    //    write32(ctx.reg[base], ctx.reg[i], access_type);
+                    //}
+                    write32(ctx.reg[base], ctx.reg[i], access_type);
 
                     ctx.reg[base] += 4;
                 }
-            }
+            }*/
         }
 
         ADVANCE_PC;
