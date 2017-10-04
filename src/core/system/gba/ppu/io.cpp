@@ -217,9 +217,15 @@ namespace Core {
     }
 
     void PPU::IO::WindowRange::write(int offset, u8 value) {
+        int min_old = min;
+        int max_old = max;
+
         switch (offset) {
             case 0: max = value & 0xFF; break;
             case 1: min = value & 0xFF; break;
+        }
+        if (min != min_old || max != max_old) {
+            changed = true;
         }
     }
 

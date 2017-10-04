@@ -119,8 +119,9 @@ struct IO {
     } bldy;
 
     struct WindowRange {
-        int min;
-        int max;
+        int  min;
+        int  max;
+        bool changed; // only for internal optimization
 
         void reset();
         void write(int offset, u8 value);

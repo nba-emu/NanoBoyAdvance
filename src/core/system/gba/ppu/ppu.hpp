@@ -44,6 +44,7 @@ namespace Core {
         // rendering buffers
         u16  m_buffer[4][240];
         bool m_win_mask[2][240];
+        bool m_win_scanline_enable[2];
 
         // color conversion LUT
         u32 m_color_lut[0x8000];

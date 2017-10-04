@@ -56,7 +56,6 @@ namespace Core {
 
         // build color LUT
         for (int color = 0; color < 0x8000; color++) {
-
             if (m_config->darken_screen) {
                 double r = ((color >> 0 ) & 0x1F) / 31.0;
                 double g = ((color >> 5 ) & 0x1F) / 31.0;
@@ -89,7 +88,6 @@ namespace Core {
 
         // reset all backgrounds
         for (int i = 0; i < 4; i++) {
-
             regs.bghofs[i] = 0;
             regs.bgvofs[i] = 0;
             regs.bgcnt[i].reset();
@@ -135,7 +133,6 @@ namespace Core {
     }
 
     void PPU::hblank() {
-
         regs.status.vblank_flag = false;
         regs.status.hblank_flag = true;
 
@@ -144,7 +141,6 @@ namespace Core {
     }
 
     void PPU::vblank() {
-
         regs.status.vblank_flag = true;
         regs.status.hblank_flag = false;
 
@@ -265,8 +261,8 @@ namespace Core {
                 const auto& objwinin = regs.winout.enable[1];\
 
             #define DECLARE_WIN_VARS_INNER \
-                const bool win0   = win_enable[0] && m_win_mask[0][x];\
-                const bool win1   = win_enable[1] && m_win_mask[1][x];\
+                const bool win0   = win_enable[0] && m_win_scanline_enable[0] && m_win_mask[0][x];\
+                const bool win1   = win_enable[1] && m_win_scanline_enable[1] && m_win_mask[1][x];\
                 const bool objwin = win_enable[2] && m_obj_layer[x].window;\
                 \
                 const bool* visible = win0   ? win0in   :\
@@ -429,7 +425,6 @@ namespace Core {
     }
 
     void PPU::nextLine() {
-
         bool vcount_flag = regs.vcount == regs.status.vcount_setting;
 
         regs.vcount = (regs.vcount + 1) % 228;
@@ -442,26 +437,32 @@ namespace Core {
 
     void PPU::renderWindow(int id) {
         int   line = regs.vcount;
-        auto& winh = regs.winh[id];
         auto& winv = regs.winv[id];
 
-        auto buffer = m_win_mask[id];
-
-        // meh.....
+        // Check if the current scanline is outside of the window.
         if ((winv.min <= winv.max && (line < winv.min || line >= winv.max)) ||
-            (winv.min >  winv.max && (line < winv.min && line >= winv.max))
-           ) {
-            memset(buffer, 0, 240 * sizeof(bool)); // meh...
-            return;
-        }
-
-        if (winh.min <= winh.max) {
-            for (int x = 0; x < 240; x++) {
-                buffer[x] = x >= winh.min && x < winh.max;
-            }
+            (winv.min >  winv.max && (line < winv.min && line >= winv.max)))
+        {
+            // Mark window as inactive during the current scanline.
+            m_win_scanline_enable[id] = false;
         } else {
-            for (int x = 0; x < 240; x++) {
-                buffer[x] = x >= winh.min || x < winh.max;
+            auto& winh = regs.winh[id];
+
+            // Mark window as active during the current scanline.
+            m_win_scanline_enable[id] = true;
+
+            // Only recalculate the LUTs if min/max changed between the last update & now.
+            if (winh.changed) {
+                if (winh.min <= winh.max) {
+                    for (int x = 0; x < 240; x++) {
+                        m_win_mask[id][x] = x >= winh.min && x < winh.max;
+                    }
+                } else {
+                    for (int x = 0; x < 240; x++) {
+                        m_win_mask[id][x] = x >= winh.min || x < winh.max;
+                    }
+                }
+                winh.changed = false;
             }
         }
     }
