@@ -52,7 +52,6 @@ set(CART_HDR
 set(PPU_SRC
     system/gba/ppu/io.cpp
     system/gba/ppu/ppu.cpp
-    system/gba/ppu/composer.cpp
     system/gba/ppu/renderers/bitmap.cpp
     system/gba/ppu/renderers/text.cpp
     system/gba/ppu/renderers/obj.cpp

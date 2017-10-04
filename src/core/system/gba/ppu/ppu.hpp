@@ -55,8 +55,8 @@ namespace Core {
         bool line_has_alpha_objs;
 
         struct ObjectPixel {
-            u8  prio;
-            u16 pixel;
+            u8   prio;
+            u16  pixel;
             bool alpha;
             bool window;
         } m_obj_layer[240];
@@ -73,6 +73,7 @@ namespace Core {
         void renderBitmapMode3BG();
         void renderSprites();
 
+        void renderWindow(int id);
         void blendPixels(u16* target1, u16 target2, SpecialEffect sfx);
 
     public:
@@ -92,10 +93,6 @@ namespace Core {
         void vblank();
         void scanline(bool render);
         void nextLine();
-
-        void renderWindow(int id);
-
-        void completeScanline();
     };
 }
 
