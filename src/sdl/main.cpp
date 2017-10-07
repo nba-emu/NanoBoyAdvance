@@ -87,14 +87,19 @@ int main(int argc, char** argv) {
 
     g_emu.reloadConfig();
 
-    if (File::exists(rom_path) && File::exists(g_config.bios_path)) {
-        auto cart = Cartridge::fromFile(rom_path);
-
-        g_emu.loadGame(cart);
-        keyinput = &g_emu.getKeypad();
-    } else {
+    if (!File::exists(rom_path)) {
+        std::cout << "ROM file not found." << std::endl;
         return -1;
     }
+    if (!File::exists(g_config.bios_path)) {
+        std::cout << "BIOS file not found." << std::endl;
+        return -1;
+    }
+
+    auto cart = Cartridge::fromFile(rom_path);
+
+    g_emu.loadGame(cart);
+    keyinput = &g_emu.getKeypad();
 
     // setup SDL window
     g_width  *= scale;
