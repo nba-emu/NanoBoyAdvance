@@ -92,37 +92,26 @@ inline auto ARM::opSBC(u32 op1, u32 op2, u32 carry, bool set_flags) -> u32 {
 inline void ARM::shiftLSL(u32& operand, u32 amount, bool& carry) {
     if (amount == 0) return;
 
-//#if defined(__i386__)
-//    /* 32 bit x86 detected */
-//    for (u32 i = 0; i < amount; i++) {
-//        carry = operand & 0x80000000 ? true : false;
-//        operand <<= 1;
-//    }
-//#else
-//    carry = (operand << (amount - 1)) & (1 << 31);
-//    operand <<= amount;
-//#endif
+#if defined(__i386__) || defined(__x86_64__)
     if (amount >= 32) {
         operand <<= 31;
         amount   -= 31;
     }
+#endif
     carry     = (operand << (amount - 1)) & (1 << 31);
     operand <<= amount;
 }
 
 inline void ARM::shiftLSR(u32& operand, u32 amount, bool& carry, bool immediate) {
     // LSR #0 equals to LSR #32
-    //amount = immediate & (amount == 0) ? 32 : amount;
     if (immediate && amount == 0) amount = 32;
 
-    /*for (u32 i = 0; i < amount; i++) {
-        carry = operand & 1 ? true : false;
-        operand >>= 1;
-    }*/
+#if defined(__i386__) || defined(__x86_64__)
     if (amount >= 32) {
         operand >>= 31;
         amount   -= 31;
     }
+#endif
     carry     = (operand >> (amount - 1)) & 1;
     operand >>= amount;
 }
@@ -131,7 +120,8 @@ inline void ARM::shiftASR(u32& operand, u32 amount, bool& carry, bool immediate)
     u32 sign_bit = operand & 0x80000000;
 
     // ASR #0 equals to ASR #32
-    amount = (immediate && (amount == 0)) ? 32 : amount;
+    //amount = (immediate && (amount == 0)) ? 32 : amount;
+    if (immediate && amount == 0) amount = 32;
 
     for (u32 i = 0; i < amount; i++) {
         carry   = operand & 1;
