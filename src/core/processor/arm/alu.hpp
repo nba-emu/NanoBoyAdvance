@@ -90,24 +90,41 @@ inline auto ARM::opSBC(u32 op1, u32 op2, u32 carry, bool set_flags) -> u32 {
 }
 
 inline void ARM::shiftLSL(u32& operand, u32 amount, bool& carry) {
-    if (amount == 0) {
-        return;
-    }
+    if (amount == 0) return;
 
-    for (u32 i = 0; i < amount; i++) {
-        carry = operand & 0x80000000 ? true : false;
-        operand <<= 1;
+//#if defined(__i386__)
+//    /* 32 bit x86 detected */
+//    for (u32 i = 0; i < amount; i++) {
+//        carry = operand & 0x80000000 ? true : false;
+//        operand <<= 1;
+//    }
+//#else
+//    carry = (operand << (amount - 1)) & (1 << 31);
+//    operand <<= amount;
+//#endif
+    if (amount >= 32) {
+        operand <<= 31;
+        amount   -= 31;
     }
+    carry     = (operand << (amount - 1)) & (1 << 31);
+    operand <<= amount;
 }
 
 inline void ARM::shiftLSR(u32& operand, u32 amount, bool& carry, bool immediate) {
     // LSR #0 equals to LSR #32
-    amount = immediate & (amount == 0) ? 32 : amount;
+    //amount = immediate & (amount == 0) ? 32 : amount;
+    if (immediate && amount == 0) amount = 32;
 
-    for (u32 i = 0; i < amount; i++) {
+    /*for (u32 i = 0; i < amount; i++) {
         carry = operand & 1 ? true : false;
         operand >>= 1;
+    }*/
+    if (amount >= 32) {
+        operand >>= 31;
+        amount   -= 31;
     }
+    carry     = (operand >> (amount - 1)) & 1;
+    operand >>= amount;
 }
 
 inline void ARM::shiftASR(u32& operand, u32 amount, bool& carry, bool immediate) {
@@ -117,7 +134,7 @@ inline void ARM::shiftASR(u32& operand, u32 amount, bool& carry, bool immediate)
     amount = (immediate && (amount == 0)) ? 32 : amount;
 
     for (u32 i = 0; i < amount; i++) {
-        carry   = operand & 1 ? true : false;
+        carry   = operand & 1;
         operand = (operand >> 1) | sign_bit;
     }
 }
@@ -126,15 +143,15 @@ inline void ARM::shiftROR(u32& operand, u32 amount, bool& carry, bool immediate)
     // ROR #0 equals to RRX #1
     if (amount != 0 || !immediate) {
         for (u32 i = 1; i <= amount; i++) {
-            u32 high_bit = (operand & 1) ? 0x80000000 : 0;
+            u32 high_bit = (operand & 1) << 31;
 
             operand = (operand >> 1) | high_bit;
-            carry   = high_bit == 0x80000000;
+            carry   = high_bit;
         }
     } else {
         bool old_carry = carry;
 
-        carry   = (operand & 1) ? true : false;
+        carry   = operand & 1;
         operand = (operand >> 1) | (old_carry ? 0x80000000 : 0);
     }
 }
