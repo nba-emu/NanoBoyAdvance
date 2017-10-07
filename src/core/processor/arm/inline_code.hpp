@@ -24,23 +24,21 @@
 
 #define XOR_BIT_31(a, b) (((a) ^ (b)) >> 31)
 
-// MEH: place this somewhere else. It should be inline though :/
 inline void ARM::step() {
     auto& pipe = ctx.pipe;
 
     if (ctx.cpsr & MASK_THUMB) {
         ctx.r15 &= ~1;
-        executeThumb(pipe.opcode[pipe.index]);
+        executeThumb(pipe.opcode[0]);
     } else {
         ctx.r15 &= ~3;
 
-        if (pipe.index == 0) {
-            pipe.opcode[2] = busRead32(ctx.r15, M_SEQ);
-        } else {
-            pipe.opcode[pipe.index - 1] = busRead32(ctx.r15, M_SEQ);
-        }
+        u32 instruction = pipe.opcode[0];
 
-        executeARM(pipe.opcode[pipe.index]);
+        pipe.opcode[0] = pipe.opcode[1];
+        pipe.opcode[1] = busRead32(ctx.r15, M_SEQ);
+
+        executeARM(instruction);
     }
 }
 
@@ -48,7 +46,6 @@ inline bool ARM::checkCondition(Condition condition) {
     if (condition == COND_AL) {
         return true;
     }
-
     switch (condition) {
         case COND_EQ: return  Z_FLAG;
         case COND_NE: return !Z_FLAG;
@@ -67,7 +64,6 @@ inline bool ARM::checkCondition(Condition condition) {
         case COND_AL: return true;
         case COND_NV: return false;
     }
-
     return false;
 }
 
@@ -125,5 +121,4 @@ inline void ARM::refillPipeline() {
         ctx.pipe.opcode[1] = busRead32(ctx.r15 + 4, M_SEQ);
         ctx.r15 += 8;
     }
-    ctx.pipe.index = 0;
 }

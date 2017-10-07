@@ -23,24 +23,17 @@
 using namespace Util;
 
 #define PREFETCH_T(accessType) \
-    if (ctx.pipe.index == 0) {\
-        ctx.pipe.opcode[2] = busRead16(ctx.r15, accessType);\
-    } else {\
-        ctx.pipe.opcode[ctx.pipe.index - 1] = busRead16(ctx.r15, accessType);\
-    }
+    ctx.pipe.opcode[0] = ctx.pipe.opcode[1];\
+    ctx.pipe.opcode[1] = busRead16(ctx.r15, accessType);
 
-#define ADVANCE_PC \
-    if (++ctx.pipe.index == 3) ctx.pipe.index = 0;\
-    ctx.r15 += 2;
+#define ADVANCE_PC ctx.r15 += 2;
 
 #define REFILL_PIPELINE_A \
-    ctx.pipe.index     = 0;\
     ctx.pipe.opcode[0] = busRead32(ctx.r15,     M_NONSEQ);\
     ctx.pipe.opcode[1] = busRead32(ctx.r15 + 4, M_SEQ);\
     ctx.r15 += 8;
 
 #define REFILL_PIPELINE_T \
-    ctx.pipe.index     = 0;\
     ctx.pipe.opcode[0] = busRead16(ctx.r15,     M_NONSEQ);\
     ctx.pipe.opcode[1] = busRead16(ctx.r15 + 2, M_SEQ);\
     ctx.r15 += 4;

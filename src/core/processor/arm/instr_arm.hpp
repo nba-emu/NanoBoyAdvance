@@ -28,8 +28,6 @@ inline void executeARM(u32 instruction) {
         int index = ((instruction >> 16) & 0xFF0) | ((instruction >> 4) & 0xF);
         (this->*arm_lut[index])(instruction);
     } else {
-        // eh kinda redundant
-        if (++ctx.pipe.index == 3) ctx.pipe.index = 0;
         ctx.r15 += 4; // use constant
     }
 }
