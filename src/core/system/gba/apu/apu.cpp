@@ -333,8 +333,8 @@ namespace Core {
             if (psg.enable[SIDE_RIGHT][3]) output[SIDE_RIGHT] += noise;
 
             // apply master volume to the PSG channels
-            output[SIDE_LEFT ] *= psg_volume;
-            output[SIDE_RIGHT] *= psg_volume;
+            output[SIDE_LEFT ] *= psg_volume * volume_left;
+            output[SIDE_RIGHT] *= psg_volume * volume_right;
 
             // add FIFO audio samples
             for (int fifo = 0; fifo < 2; fifo++) {
