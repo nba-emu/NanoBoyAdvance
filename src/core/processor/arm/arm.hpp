@@ -151,11 +151,8 @@ namespace Core {
             u32  spsr[SPSR_COUNT];
             u32* p_spsr;
 
-            // Processor Pipeline
-            struct {
-                int index;
-                u32 opcode[3];
-            } pipe;
+            // Instruction Pipeline
+            u32 pipe[2];
         };
 
         ARM();

@@ -23,19 +23,19 @@
 using namespace Util;
 
 #define PREFETCH_T(accessType) \
-    ctx.pipe.opcode[0] = ctx.pipe.opcode[1];\
-    ctx.pipe.opcode[1] = busRead16(ctx.r15, accessType);
+    ctx.pipe[0] = ctx.pipe[1];\
+    ctx.pipe[1] = busRead16(ctx.r15, accessType);
 
 #define ADVANCE_PC ctx.r15 += 2;
 
 #define REFILL_PIPELINE_A \
-    ctx.pipe.opcode[0] = busRead32(ctx.r15,     M_NONSEQ);\
-    ctx.pipe.opcode[1] = busRead32(ctx.r15 + 4, M_SEQ);\
+    ctx.pipe[0] = busRead32(ctx.r15,     M_NONSEQ);\
+    ctx.pipe[1] = busRead32(ctx.r15 + 4, M_SEQ);\
     ctx.r15 += 8;
 
 #define REFILL_PIPELINE_T \
-    ctx.pipe.opcode[0] = busRead16(ctx.r15,     M_NONSEQ);\
-    ctx.pipe.opcode[1] = busRead16(ctx.r15 + 2, M_SEQ);\
+    ctx.pipe[0] = busRead16(ctx.r15,     M_NONSEQ);\
+    ctx.pipe[1] = busRead16(ctx.r15 + 2, M_SEQ);\
     ctx.r15 += 4;
 
 namespace Core {

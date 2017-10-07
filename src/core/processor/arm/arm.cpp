@@ -27,8 +27,6 @@ namespace Core {
     }
 
     void ARM::reset()  {
-        ctx.pipe.index = 0;
-
         std::memset(ctx.reg,  0, sizeof(ctx.reg));
         std::memset(ctx.bank, 0, sizeof(ctx.bank));
         ctx.cpsr   = MODE_SYS;
@@ -117,7 +115,9 @@ namespace Core {
 
             // jump to exception vector
             ctx.r15 = EXCPT_INTERRUPT;
-            refillPipeline();
+            ctx.pipe[0] = read32(ctx.r15    , M_NONSEQ);
+            ctx.pipe[1] = read32(ctx.r15 + 4, M_SEQ);
+            ctx.r15 += 8;
         }
     }
 }

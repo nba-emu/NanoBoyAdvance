@@ -29,14 +29,14 @@ inline void ARM::step() {
 
     if (ctx.cpsr & MASK_THUMB) {
         ctx.r15 &= ~1;
-        executeThumb(pipe.opcode[0]);
+        executeThumb(pipe[0]);
     } else {
         ctx.r15 &= ~3;
 
-        u32 instruction = pipe.opcode[0];
+        u32 instruction = pipe[0];
 
-        pipe.opcode[0] = pipe.opcode[1];
-        pipe.opcode[1] = busRead32(ctx.r15, M_SEQ);
+        pipe[0] = pipe[1];
+        pipe[1] = busRead32(ctx.r15, M_SEQ);
 
         executeARM(instruction);
     }
@@ -113,12 +113,12 @@ inline void ARM::updateOverflowFlagSub(u32 result, u32 operand1, u32 operand2) {
 
 inline void ARM::refillPipeline() {
     if (ctx.cpsr & MASK_THUMB) {
-        ctx.pipe.opcode[0] = busRead16(ctx.r15,     M_NONSEQ);
-        ctx.pipe.opcode[1] = busRead16(ctx.r15 + 2, M_SEQ);
+        ctx.pipe[0] = busRead16(ctx.r15,     M_NONSEQ);
+        ctx.pipe[1] = busRead16(ctx.r15 + 2, M_SEQ);
         ctx.r15 += 4;
     } else {
-        ctx.pipe.opcode[0] = busRead32(ctx.r15,     M_NONSEQ);
-        ctx.pipe.opcode[1] = busRead32(ctx.r15 + 4, M_SEQ);
+        ctx.pipe[0] = busRead32(ctx.r15,     M_NONSEQ);
+        ctx.pipe[1] = busRead32(ctx.r15 + 4, M_SEQ);
         ctx.r15 += 8;
     }
 }
