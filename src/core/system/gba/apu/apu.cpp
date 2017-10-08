@@ -241,6 +241,8 @@ namespace Core {
         auto& noise_int = noise.internal;
         auto& envelope  = noise.envelope;
 
+        const u16 lfsr_xor[] = { 0x6000, 0x0060 };
+
         // TODO: make this less shitty
         int shift_freq = 524288;
 
@@ -257,17 +259,14 @@ namespace Core {
         noise_int.shift_cycles += step_cycles;
 
         while (noise_int.shift_cycles >= needed_cycles) {
-            int carry = noise_int.shift_reg & 1;
+            int carry = noise_int.lfsr & 1;
 
-            noise_int.shift_reg >>= 1;
+            noise_int.lfsr >>= 1;
 
             if (carry) {
-                noise_int.shift_reg ^= noise.full_width ? 0x6000 : 0x60;
+                noise_int.lfsr ^= lfsr_xor[noise.size_flag];
             }
-
-            noise_int.output = carry;
-
-            // consume shifting cycles
+            noise_int.output        = carry;
             noise_int.shift_cycles -= needed_cycles;
         }
 
@@ -280,7 +279,6 @@ namespace Core {
             // 1) not very optimized - i suppose
             // 2) almost the same as QUAD envelope code
             while (noise_int.envelope_cycles >= envelope_clock) {
-
                 if (envelope.direction == ENV_INC) {
                     if (noise_int.volume != 15) noise_int.volume++;
                 } else {

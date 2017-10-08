@@ -220,11 +220,11 @@ namespace Core {
         sound_length = 0;
         divide_ratio = 0;
 
-        full_width   = false;
+        size_flag   = false;
         apply_length = false;
 
         internal.output          = 0;
-        internal.shift_reg       = 0;
+        internal.lfsr       = 0;
         internal.volume          = 0;
         internal.shift_cycles    = 0;
         internal.length_cycles   = 0;
@@ -247,7 +247,7 @@ namespace Core {
             // Frequency/Control
             case 4: {
                 return (divide_ratio << 0    ) |
-                       (full_width    ? 8 : 0) |
+                       (size_flag     ? 8 : 0) |
                        (frequency    << 4    );
             }
             case 5: {
@@ -273,7 +273,7 @@ namespace Core {
             // Frequency/Control
             case 4: {
                 divide_ratio = value  & 7;
-                full_width   = value  & 8;
+                size_flag    = value  & 8;
                 frequency    = value >> 4;
                 break;
             }
@@ -282,8 +282,10 @@ namespace Core {
 
                 // on sound restart
                 if (value & 0x80) {
+                    const u16 lfsr_init[] = { 0x4000, 0x0040 };
+
                     internal.output          = 0;
-                    internal.shift_reg       = full_width ? 0x4000 : 0x40;
+                    internal.lfsr            = lfsr_init[size_flag];
                     internal.volume          = envelope.initial;
                     internal.shift_cycles    = 0;
                     internal.length_cycles   = 0;
