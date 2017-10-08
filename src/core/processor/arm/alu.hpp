@@ -18,12 +18,18 @@
   */
 
 inline auto ARM::opDataProc(u32 result, bool set_nz, bool set_c, bool carry) -> u32 {
-    if (set_nz) {
-        updateSignFlag(result);
-        updateZeroFlag(result);
+    if (set_nz && set_c) {
+        ctx.cpsr &= ~(MASK_NFLAG | MASK_ZFLAG | MASK_CFLAG);
+
+        if (result & (1 << 31)) ctx.cpsr |= MASK_NFLAG;
+        if (result == 0)        ctx.cpsr |= MASK_ZFLAG;
+        if (carry)              ctx.cpsr |= MASK_CFLAG;
     }
-    if (set_c) {
-        updateCarryFlag(carry);
+    else if (set_nz && !set_c) {
+        ctx.cpsr &= ~(MASK_NFLAG | MASK_ZFLAG);
+
+        if (result & (1 << 31)) ctx.cpsr |= MASK_NFLAG;
+        if (result == 0)        ctx.cpsr |= MASK_ZFLAG;
     }
     return result;
 }
