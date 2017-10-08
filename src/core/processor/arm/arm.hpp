@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/likely.hpp"
 #include "util/integer.hpp"
 
 namespace Core {
@@ -227,8 +228,9 @@ namespace Core {
         auto opDataProc(u32 result, bool set_nz, bool set_c = false, bool carry = false) -> u32;
 
         // ALU operations
-        auto opADD(u32 op1, u32 op2, u32 op3,   bool set_flags) -> u32;
+        auto opADD(u32 op1, u32 op2,            bool set_flags) -> u32;
         auto opSUB(u32 op1, u32 op2,            bool set_flags) -> u32;
+        auto opADC(u32 op1, u32 op2, u32 op3,   bool set_flags) -> u32;
         auto opSBC(u32 op1, u32 op2, u32 carry, bool set_flags) -> u32;
 
         // Barrel Shifter Helpers

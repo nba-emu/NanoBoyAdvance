@@ -114,14 +114,14 @@ namespace Core {
         case DataOp::EOR: out = opDataProc (op1 ^ op2, set_flags, set_flags, carry);          break;
         case DataOp::SUB: out = opSUB      (op1, op2, set_flags);                             break;
         case DataOp::RSB: out = opSUB      (op2, op1, set_flags);                             break;
-        case DataOp::ADD: out = opADD      (op1, op2, 0, set_flags);                          break;
-        case DataOp::ADC: out = opADD      (op1, op2, (  ctx.cpsr >>POS_CFLAG)&1, set_flags); break;
+        case DataOp::ADD: out = opADD      (op1, op2, set_flags);                             break;
+        case DataOp::ADC: out = opADC      (op1, op2, (  ctx.cpsr >>POS_CFLAG)&1, set_flags); break;
         case DataOp::SBC: out = opSBC      (op1, op2, (~(ctx.cpsr)>>POS_CFLAG)&1, set_flags); break;
         case DataOp::RSC: out = opSBC      (op2, op1, (~(ctx.cpsr)>>POS_CFLAG)&1, set_flags); break;
         case DataOp::TST:       opDataProc (op1 & op2, true, true, carry);                    break;
         case DataOp::TEQ:       opDataProc (op1 ^ op2, true, true, carry);                    break;
-        case DataOp::CMP:       opSUB      (op1, op2,    true);                               break;
-        case DataOp::CMN:       opADD      (op1, op2, 0, true);                               break;
+        case DataOp::CMP:       opSUB      (op1, op2, true);                                  break;
+        case DataOp::CMN:       opADD      (op1, op2, true);                                  break;
         case DataOp::ORR: out = opDataProc (op1 | op2,  set_flags, set_flags, carry);         break;
         case DataOp::MOV: out = opDataProc (op2,        set_flags, set_flags, carry);         break;
         case DataOp::BIC: out = opDataProc (op1 & ~op2, set_flags, set_flags, carry);         break;

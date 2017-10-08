@@ -28,24 +28,40 @@ inline auto ARM::opDataProc(u32 result, bool set_nz, bool set_c, bool carry) -> 
     return result;
 }
 
-inline auto ARM::opADD(u32 op1, u32 op2, u32 op3, bool set_flags) -> u32 {
+inline auto ARM::opADD(u32 op1, u32 op2, bool set_flags) -> u32 {
+    if (set_flags) {
+        u64 result64 = (u64)op1 + (u64)op2;
+        u32 result32 = (u32)result64;
+
+        u32 overflow = (~( op1 ^ op2) & ((op1 + op2) ^ op2)) >> 31;
+
+        ctx.cpsr &= ~(MASK_NFLAG | MASK_ZFLAG | MASK_CFLAG | MASK_VFLAG);
+
+        if (result32 & (1 << 31))      ctx.cpsr |= MASK_NFLAG;
+        if (result32 == 0)             ctx.cpsr |= MASK_ZFLAG;
+        if (result64 & 0x100000000ULL) ctx.cpsr |= MASK_CFLAG;
+        if (overflow)                  ctx.cpsr |= MASK_VFLAG;
+
+        return result32;
+    }
+    return op1 + op2;
+}
+
+inline auto ARM::opADC(u32 op1, u32 op2, u32 op3, bool set_flags) -> u32 {
     if (set_flags) {
         u64 result64 = (u64)op1 + (u64)op2 + (u64)op3;
         u32 result32 = (u32)result64;
 
-        updateZeroFlag(result32);
-        updateSignFlag(result32);
-        updateOverflowFlagAdd(result32, op1, op2); // how about op3?
-        updateCarryFlag(result64 & 0x100000000ULL);
+        // TODO: confirm the correctness of this logic
+        u32 overflow = ((~( op1        ^ op2) & ((op1 + op2)       ^ op2))  ^
+                        (~((op1 + op2) ^ op3) & ((op1 + op2 + op3) ^ op3))) >> 31;
 
-        //u32 overflow = ((~( op1        ^ op2) & ((op1 + op2)       ^ op2))  ^
-        //                (~((op1 + op2) ^ op3) & ((op1 + op2 + op3) ^ op3))) >> 31;
+        ctx.cpsr &= ~(MASK_NFLAG | MASK_ZFLAG | MASK_CFLAG | MASK_VFLAG);
 
-        //if (overflow) {
-        //    ctx.cpsr |=  MASK_VFLAG;
-        //} else {
-        //    ctx.cpsr &= ~MASK_VFLAG;
-        //}
+        if (result32 & (1 << 31))      ctx.cpsr |= MASK_NFLAG;
+        if (result32 == 0)             ctx.cpsr |= MASK_ZFLAG;
+        if (result64 & 0x100000000ULL) ctx.cpsr |= MASK_CFLAG;
+        if (overflow)                  ctx.cpsr |= MASK_VFLAG;
 
         return result32;
     }
@@ -54,12 +70,15 @@ inline auto ARM::opADD(u32 op1, u32 op2, u32 op3, bool set_flags) -> u32 {
 
 inline auto ARM::opSUB(u32 op1, u32 op2, bool set_flags) -> u32 {
     if (set_flags) {
-        u32 result = op1 - op2;
+        u32 result   =   op1 - op2;
+        u32 overflow = ((op1 ^ op2) & ~(result ^ op2)) >> 31;
 
-        updateZeroFlag(result);
-        updateSignFlag(result);
-        updateOverflowFlagSub(result, op1, op2);
-        updateCarryFlag(op1 >= op2);
+        ctx.cpsr &= ~(MASK_NFLAG | MASK_ZFLAG | MASK_CFLAG | MASK_VFLAG);
+
+        if (result & (1 << 31)) ctx.cpsr |= MASK_NFLAG;
+        if (result == 0)        ctx.cpsr |= MASK_ZFLAG;
+        if (op1 >= op2)         ctx.cpsr |= MASK_CFLAG;
+        if (overflow)           ctx.cpsr |= MASK_VFLAG;
 
         return result;
     }
@@ -68,21 +87,19 @@ inline auto ARM::opSUB(u32 op1, u32 op2, bool set_flags) -> u32 {
 
 inline auto ARM::opSBC(u32 op1, u32 op2, u32 carry, bool set_flags) -> u32 {
     if (set_flags) {
-        u32 result_1 = op1 - op2;
-        u32 result_2 = result_1 - carry;;
+        u32 result_1 = op1      - op2; // interim result
+        u32 result_2 = result_1 - carry;
 
         u32 overflow = (((op1 ^ op2) & ~(result_1 ^ op2)) ^
                        (result_1     & ~ result_2      )) >> 31;
 
-        updateZeroFlag(result_2);
-        updateSignFlag(result_2);
-        updateCarryFlag((op1 >= op2) && (result_1 >= carry));
+        ctx.cpsr &= ~(MASK_NFLAG | MASK_ZFLAG | MASK_CFLAG | MASK_VFLAG);
 
-        if (overflow) {
-            ctx.cpsr |=  MASK_VFLAG;
-        } else {
-            ctx.cpsr &= ~MASK_VFLAG;
-        }
+        if (result_2 & (1 << 31)) ctx.cpsr |= MASK_NFLAG;
+        if (result_2 == 0)        ctx.cpsr |= MASK_ZFLAG;
+        if (overflow)             ctx.cpsr |= MASK_VFLAG;
+
+        if ((op1 >= op2) && (result_1 >= carry)) ctx.cpsr |= MASK_CFLAG;
 
         return result_2;
     }
@@ -93,7 +110,7 @@ inline void ARM::shiftLSL(u32& operand, u32 amount, bool& carry) {
     if (amount == 0) return;
 
 #if defined(__i386__) || defined(__x86_64__)
-    if (amount >= 32) {
+    if (UNLIKELY(amount >= 32)) {
         operand <<= 31;
         amount   -= 31;
     }
@@ -107,7 +124,7 @@ inline void ARM::shiftLSR(u32& operand, u32 amount, bool& carry, bool immediate)
     if (immediate && amount == 0) amount = 32;
 
 #if defined(__i386__) || defined(__x86_64__)
-    if (amount >= 32) {
+    if (UNLIKELY(amount >= 32)) {
         operand >>= 31;
         amount   -= 31;
     }
@@ -120,7 +137,6 @@ inline void ARM::shiftASR(u32& operand, u32 amount, bool& carry, bool immediate)
     u32 sign_bit = operand & 0x80000000;
 
     // ASR #0 equals to ASR #32
-    //amount = (immediate && (amount == 0)) ? 32 : amount;
     if (immediate && amount == 0) amount = 32;
 
     for (u32 i = 0; i < amount; i++) {

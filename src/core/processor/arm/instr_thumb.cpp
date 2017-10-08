@@ -78,7 +78,7 @@ namespace Core {
             ctx.reg[dst] = opSUB(ctx.reg[src], operand, true);
         } else {
             // ADD rDST, rSRC, operand
-            ctx.reg[dst] = opADD(ctx.reg[src], operand, 0, true);
+            ctx.reg[dst] = opADD(ctx.reg[src], operand, true);
         }
 
         ADVANCE_PC;
@@ -104,7 +104,7 @@ namespace Core {
             break;
         case 0b10:
             // ADD rDST, #imm
-            ctx.reg[dst] = opADD(ctx.reg[dst], imm, 0, true);
+            ctx.reg[dst] = opADD(ctx.reg[dst], imm, true);
             break;
         case 0b11:
             // SUB rDST, #imm
@@ -175,7 +175,7 @@ namespace Core {
             break;
         }
 
-        case ThumbDataOp::ADC: ctx.reg[dst] = opADD(ctx.reg[dst], ctx.reg[src], ( (ctx.cpsr)>>POS_CFLAG)&1, true); break;
+        case ThumbDataOp::ADC: ctx.reg[dst] = opADC(ctx.reg[dst], ctx.reg[src], ( (ctx.cpsr)>>POS_CFLAG)&1, true); break;
         case ThumbDataOp::SBC: ctx.reg[dst] = opSBC(ctx.reg[dst], ctx.reg[src], (~(ctx.cpsr)>>POS_CFLAG)&1, true); break;
 
         case ThumbDataOp::ROR: {
@@ -188,10 +188,10 @@ namespace Core {
             break;
         }
 
-        case ThumbDataOp::TST: opDataProc(ctx.reg[dst] & ctx.reg[src], true); break;
-        case ThumbDataOp::NEG: ctx.reg[dst] = opSUB(0, ctx.reg[src], true); break;
-        case ThumbDataOp::CMP: opSUB(ctx.reg[dst], ctx.reg[src], true); break;
-        case ThumbDataOp::CMN: opADD(ctx.reg[dst], ctx.reg[src], 0, true); break;
+        case ThumbDataOp::TST:                opDataProc(ctx.reg[dst] & ctx.reg[src], true); break;
+        case ThumbDataOp::NEG: ctx.reg[dst] = opSUB(0,            ctx.reg[src], true); break;
+        case ThumbDataOp::CMP:                opSUB(ctx.reg[dst], ctx.reg[src], true); break;
+        case ThumbDataOp::CMN:                opADD(ctx.reg[dst], ctx.reg[src], true); break;
         case ThumbDataOp::ORR: ctx.reg[dst] = opDataProc(ctx.reg[dst] | ctx.reg[src], true); break;
 
         case ThumbDataOp::MUL: {
