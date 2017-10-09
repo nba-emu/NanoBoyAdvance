@@ -224,7 +224,7 @@ namespace Core {
         apply_length = false;
 
         internal.output          = 0;
-        internal.lfsr       = 0;
+        internal.lfsr            = 0;
         internal.volume          = 0;
         internal.shift_cycles    = 0;
         internal.length_cycles   = 0;

@@ -21,13 +21,13 @@
 
 namespace Core {
     void Timer::reset() {
-        cycles = 0;
-        reload = 0;
+        cycles  = 0;
+        reload  = 0;
         counter = 0;
         control.frequency = 0;
-        control.cascade = false;
+        control.cascade   = false;
         control.interrupt = false;
-        control.enable = false;
+        control.enable    = false;
     }
 
     auto Timer::read(int offset) -> u8 {
@@ -44,7 +44,7 @@ namespace Core {
 
     void Timer::write(int offset, u8 value) {
         switch (offset) {
-            case 0: reload = (reload & 0xFF00) | value; break;
+            case 0: reload = (reload & 0xFF00) | (value << 0); break;
             case 1: reload = (reload & 0x00FF) | (value << 8); break;
             case 2: {
                 bool enable_previous = control.enable;
