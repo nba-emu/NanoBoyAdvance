@@ -122,10 +122,7 @@ namespace Core {
                         }
                     }
 
-                    if (dma.time == DMA_IMMEDIATE) {
-                        dma_running = true;
-                        dma_current = id;
-                    }
+                    if (dma.time == DMA_IMMEDIATE) dmaActivate(id);
                 }
                 break;
             }

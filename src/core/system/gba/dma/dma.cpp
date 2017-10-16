@@ -23,14 +23,23 @@
 using namespace Util;
 
 namespace Core {
+    void Emulator::dmaActivate(int id) {
+        // Defer execution of immediate DMA if another higher priority DMA is still running.
+        // Otherwise go ahead at set is as the currently running DMA.
+        if (dma_running == 0 || id < dma_current) {
+            dma_current = id;
+        }
+
+        // Mark DMA as enabled.
+        dma_running |= (1 << id);
+    }
 
     void Emulator::dmaFindHBlank() {
         for (int i = 0; i < 4; i++) {
             auto& dma = regs.dma[i];
             if (dma.enable && dma.time == DMA_HBLANK) {
-                dma_running = true;
-                dma_current = i;
-                return;
+                dmaActivate(i);
+                //return;
             }
         }
     }
@@ -39,9 +48,8 @@ namespace Core {
         for (int i = 0; i < 4; i++) {
             auto& dma = regs.dma[i];
             if (dma.enable && dma.time == DMA_VBLANK) {
-                dma_running = true;
-                dma_current = i;
-                return;
+                dmaActivate(i);
+                //return;
             }
         }
     }
@@ -49,15 +57,13 @@ namespace Core {
     void Emulator::dmaTransfer() {
         auto& dma = regs.dma[dma_current];
 
-        DMAControl src_cntl = dma.src_cntl;
-        DMAControl dst_cntl = dma.dst_cntl;
-        bool words = dma.size == DMA_WORD;
+        auto src_cntl = dma.src_cntl;
+        auto dst_cntl = dma.dst_cntl;
+        bool words    = dma.size == DMA_WORD;
 
         while (dma.internal.length != 0) {
-            // do not desync...
-            if (cycles_left < 0) {
-                return;
-            }
+            // Do not underrun the cycle counter.
+            if (cycles_left <= 0) return;
 
             if (words) {
                 write32(dma.internal.dst_addr, read32(dma.internal.src_addr, M_DMA), M_DMA);
@@ -88,22 +94,30 @@ namespace Core {
                 dma.internal.dst_addr = dma.dst_addr;
             }
 
-            // even though DMA will be repeated, we have to wait for it to be rescheduled.
             if (dma.time != DMA_IMMEDIATE) {
-                dma_running = false;
-                dma_current = -1;
+                dma_running &= ~(1 << dma_current);
             }
         } else {
-            dma.enable  = false;
-            dma_running = false;
-            dma_current = -1;
+            dma.enable   = false;
+            dma_running &= ~(1 << dma_current);
         }
 
-        if (dma.interrupt) {
+        if (dma.interrupt)
             m_interrupt.request((InterruptType)(INTERRUPT_DMA_0 << dma_current));
+
+        // Lookup next DMA to run, if any.
+        if (dma_running != 0) {
+            for (int id = 0; id < 4; id++) {
+                // Check if the DMA is currently activated.
+                if (dma_running & (1 << id)) {
+                    dma_current = id;
+                    break;
+                }
+            }
         }
     }
 
+    // TODO: FIFO DMA currently ignores DMA priority I think. This should not be the case.
     void Emulator::dmaTransferFIFO(int dma_id) {
         auto& dma = regs.dma[dma_id];
 
@@ -115,8 +129,7 @@ namespace Core {
             dma.internal.src_addr += 4;
         }
 
-        if (dma.interrupt) {
-            m_interrupt.request((InterruptType)(INTERRUPT_DMA_0 << dma_current));
-        }
+        if (dma.interrupt)
+            m_interrupt.request((InterruptType)(INTERRUPT_DMA_0 << dma_id));
     }
 }

@@ -118,7 +118,7 @@ namespace Core {
         }
 
         cycles_left = 0;
-        dma_running = false;
+        dma_running = 0;
         dma_current = 0;
 
         swiHLE(!config->use_bios);
@@ -209,9 +209,7 @@ namespace Core {
 
                 // HBLANK
                 ppu.hblank();
-                if (!dma_running) {
-                    dmaFindHBlank();
-                }
+                dmaFindHBlank();
                 runInternal(CYCLES_HBLANK);
 
                 ppu.nextLine();
@@ -220,9 +218,7 @@ namespace Core {
 
             // 68 invisible lines, VBLANK period.
             ppu.vblank();
-            if (!dma_running) {
-                dmaFindVBlank();
-            }
+            dmaFindVBlank();
             for (int line = 0; line < INVISIBLE_LINES; line++) {
                 runInternal(CYCLES_ENTIRE);
                 ppu.nextLine();
@@ -245,7 +241,7 @@ namespace Core {
 
             cycles_previous = cycles_left;
 
-            if (UNLIKELY(dma_running)) {
+            if (UNLIKELY(dma_running != 0)) {
                 dmaTransfer();
             } else if (LIKELY(regs.haltcnt == SYSTEM_RUN)) {
                 if (regs.irq.master_enable && requested_and_enabled) {
