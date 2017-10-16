@@ -55,33 +55,44 @@ namespace Core {
     void Emulator::dmaTransfer() {
         auto& dma = regs.dma[dma_current];
 
-        auto src_cntl = dma.src_cntl;
-        auto dst_cntl = dma.dst_cntl;
-        bool words    = dma.size == DMA_WORD;
+        const auto src_cntl = dma.src_cntl;
+        const auto dst_cntl = dma.dst_cntl;
+        const bool words    = dma.size == DMA_WORD;
 
-        while (dma.internal.length != 0) {
-            // Do not underrun the cycle counter.
-            if (cycles_left <= 0) return;
+        // TODO: find out what happens if src_cntl is DMA_RELOAD.
+        const int modify_table[2][4] = {
+            { 2, -2, 0, 2 },
+            { 4, -4, 0, 4 }
+        };
 
-            if (words) {
+        const int src_modify = modify_table[dma.size][src_cntl];
+        const int dst_modify = modify_table[dma.size][dst_cntl];
+
+        // Run DMA for as long as possible.
+        if (words) {
+            while (dma.internal.length != 0) {
+                if (cycles_left <= 0) return;
+
                 write32(dma.internal.dst_addr, read32(dma.internal.src_addr, M_DMA), M_DMA);
-            } else {
+                dma.internal.src_addr += src_modify;
+                dma.internal.dst_addr += dst_modify;
+                dma.internal.length--;
+            }
+        }
+        else {
+            while (dma.internal.length != 0) {
+                if (cycles_left <= 0) return;
+
                 write16(dma.internal.dst_addr, read16(dma.internal.src_addr, M_DMA), M_DMA);
+                dma.internal.src_addr += src_modify;
+                dma.internal.dst_addr += dst_modify;
+                dma.internal.length--;
             }
+        }
 
-            if (dma.dst_cntl == DMA_INCREMENT || dma.dst_cntl == DMA_RELOAD) {
-                dma.internal.dst_addr += dma.size == DMA_WORD ? 4 : 2;
-            } else if (dma.dst_cntl == DMA_DECREMENT) {
-                dma.internal.dst_addr -= dma.size == DMA_WORD ? 4 : 2;
-            }
-
-            if (dma.src_cntl == DMA_INCREMENT || dma.src_cntl == DMA_RELOAD) {
-                dma.internal.src_addr += dma.size == DMA_WORD ? 4 : 2;
-            } else if (dma.src_cntl == DMA_DECREMENT) {
-                dma.internal.src_addr -= dma.size == DMA_WORD ? 4 : 2;
-            }
-
-            dma.internal.length--;
+        // If this code is reached, the DMA has completed. Trigger IRQ if wanted.
+        if (dma.interrupt) {
+            m_interrupt.request((InterruptType)(INTERRUPT_DMA_0 << dma_current));
         }
 
         if (dma.repeat) {
@@ -91,26 +102,24 @@ namespace Core {
             if (dst_cntl == DMA_RELOAD) {
                 dma.internal.dst_addr = dma.dst_addr;
             }
-
             if (dma.time != DMA_IMMEDIATE) {
+                // Non-immediate DMA. Must wait for the DMA to get activated again.
                 dma_running &= ~(1 << dma_current);
             }
-        } else {
+        }
+        else {
             dma.enable   = false;
             dma_running &= ~(1 << dma_current);
         }
 
-        if (dma.interrupt)
-            m_interrupt.request((InterruptType)(INTERRUPT_DMA_0 << dma_current));
+        // Skip DMA selection loop if no DMA is activated.
+        if (dma_running == 0) return;
 
-        // Lookup next DMA to run, if any.
-        if (dma_running != 0) {
-            for (int id = 0; id < 4; id++) {
-                // Check if the DMA is currently activated.
-                if (dma_running & (1 << id)) {
-                    dma_current = id;
-                    break;
-                }
+        // Select next DMA to execute.
+        for (int id = 0; id < 4; id++) {
+            if (dma_running & (1 << id)) {
+                dma_current = id;
+                break;
             }
         }
     }
