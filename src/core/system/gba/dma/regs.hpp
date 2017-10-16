@@ -43,8 +43,6 @@ namespace Core {
     };
 
     struct DMA {
-        int id;
-
         bool enable;
         bool repeat;
         bool interrupt;
@@ -63,10 +61,6 @@ namespace Core {
             u32 dst_addr;
             u32 src_addr;
         } internal;
-
-        // !!hacked!! much ouch
-        bool* dma_active;
-        int*  current_dma;
     };
 
 }

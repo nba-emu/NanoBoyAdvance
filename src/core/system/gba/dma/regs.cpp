@@ -123,9 +123,8 @@ namespace Core {
                     }
 
                     if (dma.time == DMA_IMMEDIATE) {
-                        // !!hacked!! sad flerovium :(
-                        *(dma.dma_active)  = true;
-                        *(dma.current_dma) = id;
+                        dma_running = true;
+                        dma_current = id;
                     }
                 }
                 break;

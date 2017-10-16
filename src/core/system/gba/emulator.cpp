@@ -110,13 +110,7 @@ namespace Core {
         }
 
         for (int i = 0; i < 4; i++) {
-            // reset DMA channels
-            regs.dma[i].id = i; // duh
             dmaReset(i);
-
-            // !!hacked!! ouchy ouch
-            regs.dma[i].dma_active  = &dma_running;
-            regs.dma[i].current_dma = &dma_current;
 
             // reset timers
             regs.timer[i].id = i;

@@ -100,7 +100,7 @@ namespace Core {
         }
 
         if (dma.interrupt) {
-            m_interrupt.request((InterruptType)(INTERRUPT_DMA_0 << dma.id));
+            m_interrupt.request((InterruptType)(INTERRUPT_DMA_0 << dma_current));
         }
     }
 
@@ -116,7 +116,7 @@ namespace Core {
         }
 
         if (dma.interrupt) {
-            m_interrupt.request((InterruptType)(INTERRUPT_DMA_0 << dma.id));
+            m_interrupt.request((InterruptType)(INTERRUPT_DMA_0 << dma_current));
         }
     }
 }
