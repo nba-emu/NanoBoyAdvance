@@ -17,110 +17,115 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#include "regs.hpp"
+#include "../emulator.hpp"
 
 namespace Core {
+    void Emulator::dmaReset(int id) {
+        auto& dma = regs.dma[id];
 
-    void DMA::reset() {
-        enable    = false;
-        repeat    = false;
-        interrupt = false;
-        gamepak   = false;
+        dma.enable    = false;
+        dma.repeat    = false;
+        dma.interrupt = false;
+        dma.gamepak   = false;
 
-        length   = 0;
-        dst_addr = 0;
-        src_addr = 0;
-        internal.length   = 0;
-        internal.dst_addr = 0;
-        internal.src_addr = 0;
+        dma.length   = 0;
+        dma.dst_addr = 0;
+        dma.src_addr = 0;
+        dma.internal.length   = 0;
+        dma.internal.dst_addr = 0;
+        dma.internal.src_addr = 0;
 
-        size     = DMA_HWORD;
-        time     = DMA_IMMEDIATE;
-        dst_cntl = DMA_INCREMENT;
-        src_cntl = DMA_INCREMENT;
+        dma.size     = DMA_HWORD;
+        dma.time     = DMA_IMMEDIATE;
+        dma.dst_cntl = DMA_INCREMENT;
+        dma.src_cntl = DMA_INCREMENT;
     }
 
-    auto DMA::read(int offset) -> u8 {
+    auto Emulator::dmaRead(int id, int offset) -> u8 {
+        auto& dma = regs.dma[id];
+
         // TODO: are SAD/DAD/CNT_L readable?
         switch (offset) {
             // DMAXCNT_H
             case 10: {
-                return (dst_cntl << 5) |
-                       (src_cntl << 7);
+                return (dma.dst_cntl << 5) |
+                       (dma.src_cntl << 7);
             }
             case 11: {
-                return (src_cntl >> 1) |
-                       (size     << 2) |
-                       (time     << 4) |
-                       (repeat    ? 2   : 0) |
-                       (gamepak   ? 8   : 0) |
-                       (interrupt ? 64  : 0) |
-                       (enable    ? 128 : 0);
+                return (dma.src_cntl >> 1) |
+                       (dma.size     << 2) |
+                       (dma.time     << 4) |
+                       (dma.repeat    ? 2   : 0) |
+                       (dma.gamepak   ? 8   : 0) |
+                       (dma.interrupt ? 64  : 0) |
+                       (dma.enable    ? 128 : 0);
             }
         }
     }
 
-    void DMA::write(int offset, u8 value) {
+    void Emulator::dmaWrite(int id, int offset, u8 value) {
+        auto& dma = regs.dma[id];
+
         switch (offset) {
             // DMAXSAD
-            case 0: src_addr = (src_addr & 0xFFFFFF00) | value; break;
-            case 1: src_addr = (src_addr & 0xFFFF00FF) | (value<<8); break;
-            case 2: src_addr = (src_addr & 0xFF00FFFF) | (value<<16); break;
-            case 3: src_addr = (src_addr & 0x00FFFFFF) | (value<<24); break;
+            case 0: dma.src_addr = (dma.src_addr & 0xFFFFFF00) | (value<<0 ); break;
+            case 1: dma.src_addr = (dma.src_addr & 0xFFFF00FF) | (value<<8 ); break;
+            case 2: dma.src_addr = (dma.src_addr & 0xFF00FFFF) | (value<<16); break;
+            case 3: dma.src_addr = (dma.src_addr & 0x00FFFFFF) | (value<<24); break;
 
             // DMAXDAD
-            case 4: dst_addr = (dst_addr & 0xFFFFFF00) | value; break;
-            case 5: dst_addr = (dst_addr & 0xFFFF00FF) | (value<<8); break;
-            case 6: dst_addr = (dst_addr & 0xFF00FFFF) | (value<<16); break;
-            case 7: dst_addr = (dst_addr & 0x00FFFFFF) | (value<<24); break;
+            case 4: dma.dst_addr = (dma.dst_addr & 0xFFFFFF00) | (value<<0 ); break;
+            case 5: dma.dst_addr = (dma.dst_addr & 0xFFFF00FF) | (value<<8 ); break;
+            case 6: dma.dst_addr = (dma.dst_addr & 0xFF00FFFF) | (value<<16); break;
+            case 7: dma.dst_addr = (dma.dst_addr & 0x00FFFFFF) | (value<<24); break;
 
             // DMAXCNT_L
-            case 8: length = (length & 0xFF00) | value; break;
-            case 9: length = (length & 0x00FF) | (value<<8); break;
+            case 8: dma.length = (dma.length & 0xFF00) | (value<<0); break;
+            case 9: dma.length = (dma.length & 0x00FF) | (value<<8); break;
 
             // DMAXCNT_H
             case 10:
-                dst_cntl = static_cast<DMAControl>((value >> 5) & 3);
-                src_cntl = static_cast<DMAControl>((src_cntl & 0b10) | (value>>7));
+                dma.dst_cntl = static_cast<DMAControl>((value >> 5) & 3);
+                dma.src_cntl = static_cast<DMAControl>((dma.src_cntl & 0b10) | (value>>7));
                 break;
             case 11: {
-                bool enable_previous = enable;
+                bool enable_previous = dma.enable;
 
-                src_cntl  = static_cast<DMAControl>((src_cntl & 0b01) | ((value & 1)<<1));
-                size      = static_cast<DMASize>((value>>2) & 1);
-                time      = static_cast<DMATime>((value>>4) & 3);
-                repeat    = value & 2;
-                gamepak   = value & 8;
-                interrupt = value & 64;
-                enable    = value & 128;
+                dma.src_cntl  = static_cast<DMAControl>((dma.src_cntl & 0b01) | ((value & 1)<<1));
+                dma.size      = static_cast<DMASize>((value>>2) & 1);
+                dma.time      = static_cast<DMATime>((value>>4) & 3);
+                dma.repeat    = value & 2;
+                dma.gamepak   = value & 8;
+                dma.interrupt = value & 64;
+                dma.enable    = value & 128;
 
-                if (!enable_previous && enable) {
+                if (!enable_previous && dma.enable) {
                     // TODO(accuracy): length must be masked.
-                    internal.length = length;
-                    internal.dst_addr = dst_addr;
-                    internal.src_addr = src_addr;
+                    dma.internal.length   = dma.length;
+                    dma.internal.dst_addr = dma.dst_addr;
+                    dma.internal.src_addr = dma.src_addr;
 
                     // mask internal address registers
-                    internal.dst_addr &= (id != 3) ? 0x07FFFFFF : 0x0FFFFFFF;
-                    internal.src_addr &= (id == 0) ? 0x07FFFFFF : 0x0FFFFFFF;
+                    dma.internal.dst_addr &= (id != 3) ? 0x07FFFFFF : 0x0FFFFFFF;
+                    dma.internal.src_addr &= (id == 0) ? 0x07FFFFFF : 0x0FFFFFFF;
 
                     // mask length
                     if (id == 3) {
-                        internal.length &= 0xFFFF;
-                        if (internal.length == 0) {
-                            internal.length = 0x10000;
+                        dma.internal.length &= 0xFFFF;
+                        if (dma.internal.length == 0) {
+                            dma.internal.length = 0x10000;
                         }
                     } else {
-                        internal.length &= 0x3FFF;
-                        if (internal.length == 0) {
-                            internal.length = 0x4000;
+                        dma.internal.length &= 0x3FFF;
+                        if (dma.internal.length == 0) {
+                            dma.internal.length = 0x4000;
                         }
                     }
 
-                    if (time == DMA_IMMEDIATE) {
+                    if (dma.time == DMA_IMMEDIATE) {
                         // !!hacked!! sad flerovium :(
-                        *dma_active  = true;
-                        *current_dma = id;
+                        *(dma.dma_active)  = true;
+                        *(dma.current_dma) = id;
                     }
                 }
                 break;

@@ -133,6 +133,12 @@ namespace Core {
         bool dma_running;
         int  dma_current;
 
+        // DMA I/O reset/read/write
+        void dmaReset(int id);
+        auto dmaRead (int id, int offset) -> u8;
+        void dmaWrite(int id, int offset, u8 value);
+
+        // DMA handling
         void dmaFindHBlank();
         void dmaFindVBlank();
         void dmaTransfer();
