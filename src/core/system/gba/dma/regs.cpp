@@ -99,29 +99,16 @@ namespace Core {
                 dma.interrupt = value & 64;
                 dma.enable    = value & 128;
 
+                // Detect "rising edge" of enable bit.
                 if (!enable_previous && dma.enable) {
-                    // TODO(accuracy): length must be masked.
-                    dma.internal.length   = dma.length;
-                    dma.internal.dst_addr = dma.dst_addr;
-                    dma.internal.src_addr = dma.src_addr;
+                    // Load masked values into internal DMA state.
+                    dma.internal.dst_addr = dma.dst_addr & s_dma_dst_mask[id];
+                    dma.internal.src_addr = dma.src_addr & s_dma_src_mask[id];
+                    dma.internal.length   = dma.length   & s_dma_len_mask[id];
 
-                    // mask internal address registers
-                    dma.internal.dst_addr &= (id != 3) ? 0x07FFFFFF : 0x0FFFFFFF;
-                    dma.internal.src_addr &= (id == 0) ? 0x07FFFFFF : 0x0FFFFFFF;
+                    if (dma.internal.length == 0) dma.internal.length = s_dma_len_mask[id] + 1;
 
-                    // mask length
-                    if (id == 3) {
-                        dma.internal.length &= 0xFFFF;
-                        if (dma.internal.length == 0) {
-                            dma.internal.length = 0x10000;
-                        }
-                    } else {
-                        dma.internal.length &= 0x3FFF;
-                        if (dma.internal.length == 0) {
-                            dma.internal.length = 0x4000;
-                        }
-                    }
-
+                    // Directly schedule immediate DMAs for execution.
                     if (dma.time == DMA_IMMEDIATE) dmaActivate(id);
                 }
                 break;

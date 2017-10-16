@@ -53,25 +53,30 @@ namespace Core {
     private:
         Config* config;
 
-        // cycles until next PPU phase
+        // Cycles until next PPU phase
         int cycles_left;
 
-        // cycle count LUTs
+        // Cycle count LUTs
         int cycles  [2][16];
         int cycles32[2][16];
 
-        // cycle count configurations for different waitstates
+        // Cycle count configurations for different waitstates
         static constexpr int s_ws_nseq[4] = { 4, 3, 2, 8 }; // non-sequential SRAM/WS0/WS1/WS2
         static constexpr int s_ws_seq0[2] = { 2, 1 };       // sequential WS0
         static constexpr int s_ws_seq1[2] = { 4, 1 };       // sequential WS1
         static constexpr int s_ws_seq2[2] = { 8, 1 };       // sequential WS2
 
-        // subsystems
+        // DMA mask LUTs
+        static constexpr u32 s_dma_dst_mask[4] = { 0x07FFFFFF, 0x07FFFFFF, 0x07FFFFFF, 0x0FFFFFFF };
+        static constexpr u32 s_dma_src_mask[4] = { 0x07FFFFFF, 0x0FFFFFFF, 0x0FFFFFFF, 0x0FFFFFFF };
+        static constexpr u32 s_dma_len_mask[4] = { 0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF };
+
+        // Subsystems (PPU, APU, shitty interrupt thing)
         PPU ppu;
         APU apu;
         Interrupt m_interrupt;
 
-        // do not delete - needed for reference counting
+        // Do not delete - needed for reference counting
         std::shared_ptr<Cartridge> cart;
 
         struct SystemMemory {
@@ -155,7 +160,7 @@ namespace Core {
 
         void calculateMemoryCycles();
     protected:
-        // memory bus implementation
+        // Memory bus implementation
         #include "memory/memory.hpp"
 
         void busInternalCycles(int count) {

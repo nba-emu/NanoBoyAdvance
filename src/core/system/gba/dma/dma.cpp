@@ -96,14 +96,18 @@ namespace Core {
         }
 
         if (dma.repeat) {
-            // TODO(accuracy): length, dst_addr must be masked.
-            dma.internal.length = dma.length;
+            // Reload the internal length counter.
+            dma.internal.length = dma.length & s_dma_len_mask[dma_current];
 
+            if (dma.internal.length == 0) dma.internal.length = s_dma_len_mask[dma_current] + 1;
+
+            // Must reload destination address too if wanted.
             if (dst_cntl == DMA_RELOAD) {
-                dma.internal.dst_addr = dma.dst_addr;
+                dma.internal.dst_addr = dma.dst_addr & s_dma_dst_mask[dma_current];
             }
+
+            // Check for non-immediate DMA. Must wait for the DMA to get activated again.
             if (dma.time != DMA_IMMEDIATE) {
-                // Non-immediate DMA. Must wait for the DMA to get activated again.
                 dma_running &= ~(1 << dma_current);
             }
         }
