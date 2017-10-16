@@ -35,9 +35,5 @@ namespace Core {
         int cycles;
         u16 reload;
         u32 counter;
-
-        void reset();
-        auto read(int offset) -> u8;
-        void write(int offset, u8 value);
     };
 }

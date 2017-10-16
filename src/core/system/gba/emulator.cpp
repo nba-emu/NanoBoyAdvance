@@ -52,7 +52,6 @@ namespace Core {
     }
 
     Emulator::~Emulator() {
-
     }
 
     void Emulator::reset() {
@@ -113,12 +112,10 @@ namespace Core {
             calculateMemoryCycles();
         }
 
+        // Reset DMA & Timer states.
         for (int i = 0; i < 4; i++) {
             dmaReset(i);
-
-            // reset timers
-            regs.timer[i].id = i;
-            regs.timer[i].reset();
+            timerReset(i);
         }
 
         cycles_left = 0;

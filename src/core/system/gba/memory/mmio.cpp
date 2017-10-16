@@ -92,18 +92,18 @@ namespace Core {
             case SOUNDCNT_X:    return apu_io.control.read(4);
 
             // TIMER
-            case TM0CNT_L:   return regs.timer[0].read(0);
-            case TM0CNT_L+1: return regs.timer[0].read(1);
-            case TM0CNT_H:   return regs.timer[0].read(2);
-            case TM1CNT_L:   return regs.timer[1].read(0);
-            case TM1CNT_L+1: return regs.timer[1].read(1);
-            case TM1CNT_H:   return regs.timer[1].read(2);
-            case TM2CNT_L:   return regs.timer[2].read(0);
-            case TM2CNT_L+1: return regs.timer[2].read(1);
-            case TM2CNT_H:   return regs.timer[2].read(2);
-            case TM3CNT_L:   return regs.timer[3].read(0);
-            case TM3CNT_L+1: return regs.timer[3].read(1);
-            case TM3CNT_H:   return regs.timer[3].read(2);
+            case TM0CNT_L:   return timerRead(0, 0);
+            case TM0CNT_L+1: return timerRead(0, 1);
+            case TM0CNT_H:   return timerRead(0, 2);
+            case TM1CNT_L:   return timerRead(1, 0);
+            case TM1CNT_L+1: return timerRead(1, 1);
+            case TM1CNT_H:   return timerRead(1, 2);
+            case TM2CNT_L:   return timerRead(2, 0);
+            case TM2CNT_L+1: return timerRead(2, 1);
+            case TM2CNT_H:   return timerRead(2, 2);
+            case TM3CNT_L:   return timerRead(3, 0);
+            case TM3CNT_L+1: return timerRead(3, 1);
+            case TM3CNT_H:   return timerRead(3, 2);
 
             // JOYPAD
             case KEYINPUT:   return regs.keyinput & 0xFF;
@@ -338,18 +338,18 @@ namespace Core {
             case SOUNDCNT_X:   apu_io.control.write(4, value); break;
 
             // TIMER
-            case TM0CNT_L:   regs.timer[0].write(0, value); break;
-            case TM0CNT_L+1: regs.timer[0].write(1, value); break;
-            case TM0CNT_H:   regs.timer[0].write(2, value); break;
-            case TM1CNT_L:   regs.timer[1].write(0, value); break;
-            case TM1CNT_L+1: regs.timer[1].write(1, value); break;
-            case TM1CNT_H:   regs.timer[1].write(2, value); break;
-            case TM2CNT_L:   regs.timer[2].write(0, value); break;
-            case TM2CNT_L+1: regs.timer[2].write(1, value); break;
-            case TM2CNT_H:   regs.timer[2].write(2, value); break;
-            case TM3CNT_L:   regs.timer[3].write(0, value); break;
-            case TM3CNT_L+1: regs.timer[3].write(1, value); break;
-            case TM3CNT_H:   regs.timer[3].write(2, value); break;
+            case TM0CNT_L:   timerWrite(0, 0, value); break;
+            case TM0CNT_L+1: timerWrite(0, 1, value); break;
+            case TM0CNT_H:   timerWrite(0, 2, value); break;
+            case TM1CNT_L:   timerWrite(1, 0, value); break;
+            case TM1CNT_L+1: timerWrite(1, 1, value); break;
+            case TM1CNT_H:   timerWrite(1, 2, value); break;
+            case TM2CNT_L:   timerWrite(2, 0, value); break;
+            case TM2CNT_L+1: timerWrite(2, 1, value); break;
+            case TM2CNT_H:   timerWrite(2, 2, value); break;
+            case TM3CNT_L:   timerWrite(3, 0, value); break;
+            case TM3CNT_L+1: timerWrite(3, 1, value); break;
+            case TM3CNT_H:   timerWrite(3, 2, value); break;
 
             // INTERRUPT
             case IE: {

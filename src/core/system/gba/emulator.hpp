@@ -151,7 +151,12 @@ namespace Core {
         void dmaTransfer();
         void dmaTransferFIFO(int dma_id);
 
-        // Timer emulation
+        // Timer I/O reset/read/write
+        void timerReset(int id);
+        auto timerRead (int id, int offset) -> u8;
+        void timerWrite(int id, int offset, u8 value);
+
+        // Timer handling
         void timerStep(int cycles);
         void timerHandleFIFO(int timer_id, int times);
         void timerHandleOverflow(Timer& timer, int times);
