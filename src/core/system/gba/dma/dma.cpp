@@ -39,7 +39,6 @@ namespace Core {
             auto& dma = regs.dma[i];
             if (dma.enable && dma.time == DMA_HBLANK) {
                 dmaActivate(i);
-                //return;
             }
         }
     }
@@ -49,7 +48,6 @@ namespace Core {
             auto& dma = regs.dma[i];
             if (dma.enable && dma.time == DMA_VBLANK) {
                 dmaActivate(i);
-                //return;
             }
         }
     }
