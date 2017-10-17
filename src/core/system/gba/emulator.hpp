@@ -135,8 +135,9 @@ namespace Core {
         void runInternal(int cycles);
 
         // DMA emulation
-        int dma_running;
-        int dma_current;
+        int  dma_running;
+        int  dma_current;
+        bool dma_loop_exit;
 
         // DMA I/O reset/read/write
         void dmaReset(int id);

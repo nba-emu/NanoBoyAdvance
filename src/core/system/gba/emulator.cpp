@@ -121,6 +121,7 @@ namespace Core {
         cycles_left = 0;
         dma_running = 0;
         dma_current = 0;
+        dma_loop_exit = false;
 
         swiHLE(!config->use_bios);
 

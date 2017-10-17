@@ -26,8 +26,12 @@ namespace Core {
     void Emulator::dmaActivate(int id) {
         // Defer execution of immediate DMA if another higher priority DMA is still running.
         // Otherwise go ahead at set is as the currently running DMA.
-        if (dma_running == 0 || id < dma_current) {
+        if (dma_running == 0) {
             dma_current = id;
+        }
+        else if (id < dma_current) {
+            dma_current = id;
+            dma_loop_exit = true;
         }
 
         // Mark DMA as enabled.
@@ -73,6 +77,12 @@ namespace Core {
             while (dma.internal.length != 0) {
                 if (cycles_left <= 0) return;
 
+                // Halt if DMA was interrupted by (higher priority) DMA.
+                if (dma_loop_exit) {
+                    dma_loop_exit = false;
+                    return;
+                }
+
                 write32(dma.internal.dst_addr, read32(dma.internal.src_addr, M_DMA), M_DMA);
                 dma.internal.src_addr += src_modify;
                 dma.internal.dst_addr += dst_modify;
@@ -82,6 +92,12 @@ namespace Core {
         else {
             while (dma.internal.length != 0) {
                 if (cycles_left <= 0) return;
+
+                // Halt if DMA was interrupted by (higher priority) DMA.
+                if (dma_loop_exit) {
+                    dma_loop_exit = false;
+                    return;
+                }
 
                 write16(dma.internal.dst_addr, read16(dma.internal.src_addr, M_DMA), M_DMA);
                 dma.internal.src_addr += src_modify;
