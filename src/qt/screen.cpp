@@ -17,17 +17,23 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
+#include <cstring>
+
 #include "screen.hpp"
 #include <QtWidgets>
 
-Screen::Screen(QWidget* parent) : QGLWidget(parent)
-{ }
+Screen::Screen(int width, int height, QWidget* parent) : QGLWidget(parent), width(width), height(height) { 
+    framebuffer = new u32[width * height];
+    clear();
+}
 
 Screen::~Screen() {
     glDeleteTextures(1, &texture);
+
+    delete framebuffer;
 }
 
-void Screen::updateTexture(u32* pixels, int width, int height) {
+void Screen::updateTexture() {
     // Update texture pixels
     glTexImage2D(
         GL_TEXTURE_2D, 
@@ -38,7 +44,7 @@ void Screen::updateTexture(u32* pixels, int width, int height) {
         0, 
         GL_BGRA, 
         GL_UNSIGNED_BYTE, 
-        pixels
+        framebuffer
     );
     
     // Redraw screen
@@ -64,6 +70,8 @@ void Screen::initializeGL() {
     // Set texture interpolation mode to nearest
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    clear();
 }
 
 void Screen::paintGL() {
@@ -100,6 +108,11 @@ void Screen::resizeGL(int width, int height) {
     glViewport(sidePadding, 0, fixedWidth, height);
     
     glMatrixMode(GL_MODELVIEW);
+}
+
+void Screen::clear() {
+    std::memset(framebuffer, 0, sizeof(u32) * width * height);
+    updateTexture();
 }
 
 void Screen::keyPressEvent(QKeyEvent* event) {

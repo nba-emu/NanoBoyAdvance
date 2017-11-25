@@ -95,7 +95,7 @@ void MainWindow::setupEmulationMenu() {
 }
 
 void MainWindow::setupScreen() {
-    screen = new Screen {this};
+    screen = new Screen(240, 160, this);
 
     // Key press handler
     connect(screen, &Screen::keyPress, this,
@@ -172,8 +172,7 @@ void MainWindow::nextFrame() {
     emulator->runFrame();
     frames++;
 
-    // Update screen image
-    screen->updateTexture(framebuffer, 240, 160);
+    screen->updateTexture();
 }
 
 void MainWindow::openGame() {
@@ -229,7 +228,7 @@ void MainWindow::runGame(const QString& rom_file) {
 
         config->multiplier  = 10;
         config->bios_path   = bios_path;
-        config->framebuffer = framebuffer;
+        config->framebuffer = screen->pixels();
     }
 
     // Create emulator object if not done yet
@@ -277,6 +276,8 @@ void MainWindow::pauseClicked() {
 void MainWindow::stopClicked() {
     timer_run->stop();
     timer_fps->stop();
+
+    screen->clear();
 
     emu_state = EmulationState::Stopped;
 }

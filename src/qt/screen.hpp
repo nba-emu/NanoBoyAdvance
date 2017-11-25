@@ -26,12 +26,15 @@ class Screen : public QGLWidget {
     Q_OBJECT
 
 public:
-     Screen(QWidget *parent = 0);
+     Screen(int width, int height, QWidget *parent = 0);
     ~Screen();
     
-    void updateTexture(u32* pixels, int width, int height);
+    void updateTexture();
 
     auto sizeHint() const -> QSize;
+
+    void clear();
+    auto pixels() const -> u32* { return framebuffer; }
 
 signals:
     void keyPress(int key);
@@ -47,6 +50,9 @@ protected:
     void keyReleaseEvent(QKeyEvent *event);
 
 private:
-    
+    int  width;
+    int  height;
+    u32* framebuffer;
+
     GLuint texture;
 };

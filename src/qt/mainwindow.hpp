@@ -109,7 +109,6 @@ private:
     } menubar;
 
     int frames {0};
-    u32 framebuffer[240 * 160];
 
     // Keep track of emulation state: Running/Stopped/Paused
     EmulationState emu_state { EmulationState::Stopped };
