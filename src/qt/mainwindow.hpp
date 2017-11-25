@@ -67,7 +67,7 @@ private:
     void closeAudio();
 
     // Called by SDL2 to request new audio
-    static void soundCallback(Core::APU* apu, u16* stream, int length);
+    static void soundCallback(Core::APU* apu, s16* stream, int length);
 
     static auto qtKeyToEmu(int key) -> Core::Key;
 

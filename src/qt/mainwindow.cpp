@@ -282,9 +282,16 @@ void MainWindow::stopClicked() {
     emu_state = EmulationState::Stopped;
 }
 
+#include <limits.h>
+
 // Sound callback - called by SDL2. Wraps around C++ method.
-void MainWindow::soundCallback(APU* apu, u16* stream, int length) {
+void MainWindow::soundCallback(APU* apu, s16* stream, int length) {
     apu->fillBuffer(stream, length);
+
+    // Temporary workaround *sigh*
+    for (int i = 0; i < length / sizeof(s16); i++) {
+        stream[i] -= SHRT_MIN;
+    }
 }
 
 void MainWindow::setupSound(APU* apu) {
@@ -293,7 +300,7 @@ void MainWindow::setupSound(APU* apu) {
     // Setup desired audio spec
     spec.freq     = 44100;
     spec.samples  = 1024;
-    spec.format   = AUDIO_U16;
+    spec.format   = AUDIO_S16;
     spec.channels = 2;
     spec.callback = &MainWindow::soundCallback;
     spec.userdata = apu;

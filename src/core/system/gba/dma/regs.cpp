@@ -19,6 +19,10 @@
 
 #include "../emulator.hpp"
 
+#include "util/logger.hpp"
+
+using namespace Util;
+
 namespace Core {
     void Emulator::dmaReset(int id) {
         auto& dma = regs.dma[id];
@@ -110,6 +114,8 @@ namespace Core {
 
                     // Directly schedule immediate DMAs for execution.
                     if (dma.time == DMA_IMMEDIATE) dmaActivate(id);
+
+                    Logger::log<LOG_DEBUG>("DMA[{0}]: ENABLE: src={1:x}, dst={2:x}", id, dma.internal.src_addr, dma.internal.dst_addr);
                 }
                 break;
             }
