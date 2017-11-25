@@ -24,10 +24,11 @@
 #include <QStatusBar>
 #include <QLabel>
 #include <QTimer>
-#include <QSettings>
 
 #include "screen.hpp"
 #include "core/system/gba/emulator.hpp"
+
+#include "util/ini.hpp"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -70,43 +71,50 @@ private:
 
     static auto qtKeyToEmu(int key) -> Core::Key;
 
-    QSettings m_settings;
-
-    QMenuBar* m_menu_bar;
-
-    // Menus
-    QMenu* m_file_menu;
-    QMenu* m_emul_menu;
-    QMenu* m_edit_menu;
-    QMenu* m_help_menu;
-    
-    // Menu Actions
-    QAction* m_open_file;
-    QAction* m_pause_emu;
-    QAction* m_stop_emu;
-    QAction* m_close;
-    QAction* m_open_settings;
-    QAction* m_about_qt;
-    QAction* m_about_app;
-
-    // Timer
-    QTimer* m_timer;
-    QTimer* m_timer_fps;
-
-    // Program Status
-    QLabel*     m_status_msg;
-    QStatusBar* m_status_bar;
+    // Configuration file
+    Util::INI ini { "config.ini", true };
 
     // Display widget
-    Screen* m_screen;
+    Screen* screen;
 
-    int m_frames {0};
-    u32 m_framebuffer[240 * 160];
+    // Timer
+    QTimer* timer_run;
+    QTimer* timer_fps;
+
+    // Program Status
+    QLabel*     status_msg;
+    QStatusBar* status_bar;
+
+    // Menu structure
+    struct {
+        QMenuBar* bar;
+        struct {
+            QMenu* menu;
+
+            QAction* open;
+            QAction* close;
+        } file;
+        struct {
+            QMenu* menu;
+
+            QAction* pause;
+            QAction* stop;
+        } emulation;
+        struct {
+            QMenu* menu;
+
+            QAction* qt;
+            QAction* app;
+        } help;
+    } menubar;
+
+    int frames {0};
+    u32 framebuffer[240 * 160];
 
     // Keep track of emulation state: Running/Stopped/Paused
-    EmulationState m_emu_state { EmulationState::Stopped };
+    EmulationState emu_state { EmulationState::Stopped };
 
     // Emulator instance
-    Core::Config*   m_config   { nullptr };
-    Core::Emulator* m_emulator { nullptr };
+    Core::Config*   config   { nullptr };
+    Core::Emulator* emulator { nullptr };
 };

@@ -28,10 +28,7 @@
 
 using namespace Core;
 
-MainWindow::MainWindow(QWidget* parent) :
-    m_settings(QSettings::IniFormat, QSettings::UserScope, "flerovium", "NanoboyAdvance"),
-    QMainWindow(parent)
-{
+MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     setWindowTitle("NanoboyAdvance");
 
     setupMenu();
@@ -45,24 +42,13 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::setupMenu() {
-    m_menu_bar = new QMenuBar {this};
+    menubar.bar = new QMenuBar {this};
 
-    m_file_menu = m_menu_bar->addMenu(tr("&File"));
-    m_emul_menu = m_menu_bar->addMenu(tr("&Emulation"));
-    m_edit_menu = m_menu_bar->addMenu(tr("Edit"));
-    m_help_menu = m_menu_bar->addMenu(tr("&?"));
+    menubar.file.menu      = menubar.bar->addMenu(tr("&File"));
+    menubar.emulation.menu = menubar.bar->addMenu(tr("&Emulation"));
+    menubar.help.menu      = menubar.bar->addMenu(tr("&?"));
 
-    // TEST
-    connect(m_edit_menu->addAction(tr("Settings")), &QAction::triggered,
-        [this] {
-            auto ini    = Util::INI("config.ini");
-            auto dialog = new SettingsDialog(ini);
-
-            dialog->show();
-        }
-    );
-
-    setMenuBar(m_menu_bar);
+    setMenuBar(menubar.bar);
 
     setupFileMenu();
     setupHelpMenu();
@@ -70,118 +56,124 @@ void MainWindow::setupMenu() {
 }
 
 void MainWindow::setupFileMenu() {
-    m_open_file = m_file_menu->addAction(tr("&Open"));
-    m_close     = m_file_menu->addAction(tr("&Close"));
+    auto& file = menubar.file;
 
-    connect(m_open_file, &QAction::triggered, this, &MainWindow::openGame);
-    connect(m_close,     &QAction::triggered, this, &QApplication::quit  );
+    file.open  = file.menu->addAction(tr("&Open"));
+    file.close = file.menu->addAction(tr("&Close"));
+
+    connect(file.open,  &QAction::triggered, this, &MainWindow::openGame);
+    connect(file.close, &QAction::triggered, this, &QApplication::quit  );
 }
 
 void MainWindow::setupHelpMenu() {
-    m_about_app = m_help_menu->addAction(tr("About NanoboyAdvance"));
-    m_about_qt  = m_help_menu->addAction(tr("About Qt"));
+    auto& help = menubar.help;
 
-    m_about_app->setMenuRole(QAction::AboutRole);
-    connect(m_about_app, &QAction::triggered,
+    help.app = help.menu->addAction(tr("About NanoboyAdvance"));
+    help.qt  = help.menu->addAction(tr("About Qt"));
+
+    help.app->setMenuRole(QAction::AboutRole);
+    connect(help.app, &QAction::triggered,
         [this] {
             QMessageBox::information(this, tr("About NanoboyAdvance"), tr("A small and simple GBA emulator."));
         }
     );
 
-    m_about_qt->setMenuRole(QAction::AboutQtRole);
-    connect(m_about_qt, &QAction::triggered, this, &QApplication::aboutQt);
+    help.qt->setMenuRole(QAction::AboutQtRole);
+    connect(help.qt, &QAction::triggered, this, &QApplication::aboutQt);
 }
 
 void MainWindow::setupEmulationMenu() {
-    m_pause_emu = m_emul_menu->addAction(tr("&Pause"));
-    m_pause_emu->setCheckable(true);
+    auto& emulation = menubar.emulation;
 
-    m_stop_emu  = m_emul_menu->addAction(tr("&Stop"));
+    emulation.pause = emulation.menu->addAction(tr("&Pause"));
+    emulation.stop  = emulation.menu->addAction(tr("&Stop"));
 
-    connect(m_pause_emu, &QAction::triggered, this, &MainWindow::pauseClicked);
-    connect(m_stop_emu,  &QAction::triggered, this, &MainWindow::stopClicked );
+    emulation.pause->setCheckable(true);
+
+    connect(emulation.pause, &QAction::triggered, this, &MainWindow::pauseClicked);
+    connect(emulation.stop,  &QAction::triggered, this, &MainWindow::stopClicked );
 }
 
 void MainWindow::setupScreen() {
-    m_screen = new Screen {this};
+    screen = new Screen {this};
 
     // Key press handler
-    connect(m_screen, &Screen::keyPress, this,
+    connect(screen, &Screen::keyPress, this,
         [this] (int key) {
-            if (m_emulator == nullptr) {
+            if (emulator == nullptr) {
                 return;
             }
             if (key == Qt::Key_Space) {
-                m_config->fast_forward = true;
+                config->fast_forward = true;
                 return;
             }
-            m_emulator->setKeyState(MainWindow::qtKeyToEmu(key), true);
+            emulator->setKeyState(MainWindow::qtKeyToEmu(key), true);
         }
     );
 
     // Key release handler
-    connect(m_screen, &Screen::keyRelease, this,
+    connect(screen, &Screen::keyRelease, this,
         [this] (int key) {
-            if (m_emulator == nullptr) {
+            if (emulator == nullptr) {
                 return;
             }
             if (key == Qt::Key_Space) {
-                m_config->fast_forward = false;
+                config->fast_forward = false;
                 return;
             }
-            m_emulator->setKeyState(MainWindow::qtKeyToEmu(key), false);
+            emulator->setKeyState(MainWindow::qtKeyToEmu(key), false);
         }
     );
 
     // Make screen widget our central widget
-    setCentralWidget(m_screen);
+    setCentralWidget(screen);
 }
 
 void MainWindow::setupEmuTimers() {
     // Create main timer, ticks at 60Hz
-    m_timer = new QTimer {this};
-    m_timer->setSingleShot(false);
-    m_timer->setInterval(16);
+    timer_run = new QTimer {this};
+    timer_run->setSingleShot(false);
+    timer_run->setInterval(16);
 
     // Create FPS timer, ticks at 1Hz
-    m_timer_fps = new QTimer {this};
-    m_timer_fps->setSingleShot(false);
-    m_timer_fps->setInterval(1000);
+    timer_fps = new QTimer {this};
+    timer_fps->setSingleShot(false);
+    timer_fps->setInterval(1000);
 
     // Call "nextFrame" each time the main timer ticks
-    connect(m_timer, &QTimer::timeout, this, &MainWindow::nextFrame);
+    connect(timer_run, &QTimer::timeout, this, &MainWindow::nextFrame);
 
     // FPS timer event
-    connect(m_timer_fps, &QTimer::timeout, this,
+    connect(timer_fps, &QTimer::timeout, this,
         [this] {
-            auto message = std::to_string(m_frames) + " FPS";
+            auto message = std::to_string(frames) + " FPS";
 
-            m_frames = 0;
-            m_status_msg->setText(QString(message.c_str()));
+            frames = 0;
+            status_msg->setText(QString(message.c_str()));
         }
     );
 }
 
 void MainWindow::setupStatusBar() {
     // Create status bar with label text
-    m_status_msg = new QLabel     {this};
-    m_status_bar = new QStatusBar {this};
-    m_status_bar->addPermanentWidget(m_status_msg);
+    status_msg = new QLabel     {this};
+    status_bar = new QStatusBar {this};
+    status_bar->addPermanentWidget(status_msg);
 
     // Assign status bar to main window
-    setStatusBar(m_status_bar);
+    setStatusBar(status_bar);
 
     // Set a nice default message
-    m_status_msg->setText(tr("Idle..."));
+    status_msg->setText(tr("Idle..."));
 }
 
 void MainWindow::nextFrame() {
     // Emulate the next frame(s)
-    m_emulator->runFrame();
-    m_frames++;
+    emulator->runFrame();
+    frames++;
 
     // Update screen image
-    m_screen->updateTexture(m_framebuffer, 240, 160);
+    screen->updateTexture(framebuffer, 240, 160);
 }
 
 void MainWindow::openGame() {
@@ -232,57 +224,61 @@ void MainWindow::runGame(const QString& rom_file) {
     }
 
     // Create config object if not done yet
-    if (m_config == nullptr) {
-        m_config = new Config();
+    if (config == nullptr) {
+        config = new Config();
 
-        m_config->multiplier  = 10;
-        m_config->bios_path   = bios_path;
-        m_config->framebuffer = m_framebuffer;
+        config->multiplier  = 10;
+        config->bios_path   = bios_path;
+        config->framebuffer = framebuffer;
     }
 
     // Create emulator object if not done yet
-    if (m_emulator == nullptr) {
-        m_emulator = new Emulator(m_config);
+    if (emulator == nullptr) {
+        emulator = new Emulator(config);
     }
 
     // Apply config and load game.
-    m_emulator->reloadConfig();
-    m_emulator->loadGame(cart);
+    emulator->reloadConfig();
+    emulator->loadGame(cart);
 
     // Setup sound output
-    setupSound(&m_emulator->getAPU());
+    setupSound(&emulator->getAPU());
 
-    m_emu_state = EmulationState::Running;
+    emu_state = EmulationState::Running;
 
     // Start FPS counting
-    m_frames = 0;
-    m_timer_fps->start();
+    frames = 0;
+    timer_fps->start();
 
     // Start emulating
-    m_timer->start();
+    timer_run->start();
 
-    m_screen->grabKeyboard();
+    screen->grabKeyboard();
 }
 
 void MainWindow::pauseClicked() {
-    switch (m_emu_state) {
+    switch (emu_state) {
         case EmulationState::Paused:
-            m_timer->start();
-            m_timer_fps->start();
-            m_emu_state = EmulationState::Running;
+            timer_run->start();
+            timer_fps->start();
+
+            emu_state = EmulationState::Running;
             break;
+
         case EmulationState::Running:
-            m_timer->stop();
-            m_timer_fps->stop();
-            m_emu_state = EmulationState::Paused;
+            timer_run->stop();
+            timer_fps->stop();
+            
+            emu_state = EmulationState::Paused;
             break;
     }
 }
 
 void MainWindow::stopClicked() {
-    m_timer->stop();
-    m_timer_fps->stop();
-    m_emu_state = EmulationState::Stopped;
+    timer_run->stop();
+    timer_fps->stop();
+
+    emu_state = EmulationState::Stopped;
 }
 
 // Sound callback - called by SDL2. Wraps around C++ method.

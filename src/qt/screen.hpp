@@ -48,5 +48,5 @@ protected:
 
 private:
     
-    GLuint m_texture;
+    GLuint texture;
 };

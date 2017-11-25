@@ -24,7 +24,7 @@ Screen::Screen(QWidget* parent) : QGLWidget(parent)
 { }
 
 Screen::~Screen() {
-    glDeleteTextures(1, &m_texture);
+    glDeleteTextures(1, &texture);
 }
 
 void Screen::updateTexture(u32* pixels, int width, int height) {
@@ -58,8 +58,8 @@ void Screen::initializeGL() {
     glEnable(GL_TEXTURE_2D);
 
     // Generate one texture to store screen pixels
-    glGenTextures(1, &m_texture);
-    glBindTexture(GL_TEXTURE_2D, m_texture);
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
     
     // Set texture interpolation mode to nearest
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -67,9 +67,6 @@ void Screen::initializeGL() {
 }
 
 void Screen::paintGL() {
-    float w = static_cast<float>(width());
-    float h = static_cast<float>(height());
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
     
@@ -79,22 +76,29 @@ void Screen::paintGL() {
         glVertex2f(0, 0);
         
         glTexCoord2f(1.0f, 0);
-        glVertex2f(w, 0);
+        glVertex2f(1.0f, 0);
 
         glTexCoord2f(1.0f, 1.0f);
-        glVertex2f(w, h);
+        glVertex2f(1.0f, 1.0f);
 
         glTexCoord2f(0, 1.0f);
-        glVertex2f(0, h);
+        glVertex2f(0, 1.0f);
     }
     glEnd();
 }
 
 void Screen::resizeGL(int width, int height) {
+    int fixedWidth  = height + height / 2;
+    int sidePadding = (width - fixedWidth) / 2;
+
+    // Setup orthogonal projection matrix
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0, width, height, 0, -1, 1);
-    glViewport(0, 0, width, height);
+    glOrtho(0, 1.0f, 1.0f, 0, -1, 1);
+    
+    // Setup viewport
+    glViewport(sidePadding, 0, fixedWidth, height);
+    
     glMatrixMode(GL_MODELVIEW);
 }
 
