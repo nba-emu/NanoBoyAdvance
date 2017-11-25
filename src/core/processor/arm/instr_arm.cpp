@@ -557,6 +557,8 @@ namespace Core {
         u32 call_number = read8(ctx.r15 - 6, M_NONE);
 
         if (!fake_swi) {
+            Logger::log<LOG_DEBUG>("SWI[{0:x}]: r0={1:x}, r1={2:x}, r2={3:x}", call_number, ctx.r0, ctx.r1, ctx.r2);
+
             // save return address and program status
             ctx.bank[BANK_SVC][BANK_R14] = ctx.r15 - 4;
             ctx.spsr[SPSR_SVC] = ctx.cpsr;

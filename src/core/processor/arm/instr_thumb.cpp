@@ -609,6 +609,8 @@ namespace Core {
         PREFETCH_T(M_SEQ);
 
         if (!fake_swi) {
+            Logger::log<LOG_DEBUG>("SWI[0x{0:X}]: r0=0x{1:X}, r1=0x{2:X}, r2=0x{3:X}", call_number, ctx.r0, ctx.r1, ctx.r2);
+
             // save return address and program status
             ctx.bank[BANK_SVC][BANK_R14] = ctx.r15 - 2;
             ctx.spsr[SPSR_SVC] = ctx.cpsr;
