@@ -40,6 +40,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     config = QtConfig::fromINI(&ini);
     config->framebuffer = screen->pixels();
 
+    resetUI();
     applyConfiguration();
 }
 
@@ -91,11 +92,17 @@ void MainWindow::setupHelpMenu() {
 void MainWindow::setupEmulationMenu() {
     auto& emulation = menubar.emulation;
 
+    emulation.reset = emulation.menu->addAction(tr("&Reset"));
     emulation.pause = emulation.menu->addAction(tr("&Pause"));
     emulation.stop  = emulation.menu->addAction(tr("&Stop"));
 
     emulation.pause->setCheckable(true);
 
+    connect(emulation.reset, &QAction::triggered, this,
+        [this] {
+            emulator->reset();
+        }
+    );
     connect(emulation.pause, &QAction::triggered, this, &MainWindow::pauseClicked);
     connect(emulation.stop,  &QAction::triggered, this, &MainWindow::stopClicked );
 }
@@ -168,8 +175,10 @@ void MainWindow::setupStatusBar() {
 
     // Assign status bar to main window
     setStatusBar(status_bar);
+}
 
-    // Set a nice default message
+void MainWindow::resetUI() {
+    screen->clear();
     status_msg->setText(tr("Idle..."));
 }
 
@@ -260,6 +269,8 @@ void MainWindow::runGame(const QString& rom_file) {
 void MainWindow::pauseClicked() {
     switch (emu_state) {
         case EmulationState::Paused:
+            SDL_PauseAudio(0);
+
             timer_run->start();
             timer_fps->start();
 
@@ -267,6 +278,8 @@ void MainWindow::pauseClicked() {
             break;
 
         case EmulationState::Running:
+            SDL_PauseAudio(1);
+            
             timer_run->stop();
             timer_fps->stop();
             
@@ -279,7 +292,8 @@ void MainWindow::stopClicked() {
     timer_run->stop();
     timer_fps->stop();
 
-    screen->clear();
+    closeAudio();
+    resetUI();
 
     emu_state = EmulationState::Stopped;
 }

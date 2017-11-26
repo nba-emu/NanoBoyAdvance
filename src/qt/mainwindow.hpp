@@ -59,6 +59,7 @@ private:
     void setupEmuTimers();
     void setupStatusBar();
 
+    void resetUI();
     void applyConfiguration();
 
     void runGame(const QString& rom_file);
@@ -100,6 +101,7 @@ private:
         struct {
             QMenu* menu;
 
+            QAction* reset;
             QAction* pause;
             QAction* stop;
         } emulation;
