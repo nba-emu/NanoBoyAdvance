@@ -100,7 +100,9 @@ void MainWindow::setupEmulationMenu() {
 
     connect(emulation.reset, &QAction::triggered, this,
         [this] {
-            emulator->reset();
+            if (emulator != nullptr) {
+                emulator->reset();
+            }
         }
     );
     connect(emulation.pause, &QAction::triggered, this, &MainWindow::pauseClicked);
