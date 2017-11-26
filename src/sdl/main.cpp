@@ -73,8 +73,8 @@ int main(int argc, char** argv) {
 
     // TODO implement defaults
     // [Emulation]
-    g_config.bios_path  = g_ini->getString("Emulation", "biosPath");
-    g_config.multiplier = g_ini->getInteger("Emulation", "fastForward");
+    g_config.bios_path  = g_ini->getString("Emulation", "bios");
+    g_config.multiplier = g_ini->getInteger("Emulation", "fastforward");
 
     // [Video]
     scale                  = g_ini->getInteger("Video", "scale");

@@ -63,7 +63,9 @@ namespace Core {
         regs.control.reset();
     }
 
-    void APU::reloadConfig() {}
+    void APU::reloadConfig() {
+        sample_rate = m_config->audio.sample_rate;
+    }
 
     auto APU::convertFrequency(int freq) -> float {
         return 131072 / (2048 - freq);

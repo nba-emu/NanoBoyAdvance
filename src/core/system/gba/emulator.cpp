@@ -123,22 +123,9 @@ namespace Core {
         dma_current = 0;
         dma_loop_exit = false;
 
-        swiHLE(!config->use_bios);
+        swiHLE(false);
 
-        if (!config->use_bios || !File::exists(config->bios_path)) {
-            // TODO: load helper BIOS
-
-            // set CPU entrypoint to ROM entrypoint
-            ctx.r15     = 0x08000000;
-            ctx.reg[13] = 0x03007F00;
-
-            // set stack pointers to their respective addresses
-            ctx.bank[BANK_SVC][BANK_R13] = 0x03007FE0;
-            ctx.bank[BANK_IRQ][BANK_R13] = 0x03007FA0;
-
-            // load first two ROM instructions
-            refillPipeline();
-        } else {
+        if (File::exists(config->bios_path)) {
             int size = File::get_size(config->bios_path);
             u8* data = File::read_data(config->bios_path);
 
@@ -153,6 +140,8 @@ namespace Core {
             ctx.r15 = 0x00000000;
 
             delete data;
+        } else {
+            throw std::runtime_error("BIOS file not found: " + config->bios_path);
         }
 
         memory.bios_opcode = 0;

@@ -35,6 +35,12 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     setupScreen();
     setupEmuTimers();
     setupStatusBar();
+
+    // Setup configuration
+    config = QtConfig::fromINI(&ini);
+    config->framebuffer = screen->pixels();
+
+    applyConfiguration();
 }
 
 MainWindow::~MainWindow() {
@@ -167,6 +173,10 @@ void MainWindow::setupStatusBar() {
     status_msg->setText(tr("Idle..."));
 }
 
+void MainWindow::applyConfiguration() {
+    screen->aspectRatio(config->video.keep_ar);
+}
+
 void MainWindow::nextFrame() {
     // Emulate the next frame(s)
     emulator->runFrame();
@@ -209,26 +219,18 @@ void MainWindow::openGame() {
 void MainWindow::runGame(const QString& rom_file) {
     auto cart = Cartridge::fromFile(rom_file.toStdString());
 
-    const std::string bios_path = "bios.bin";
+    config->reload();
+    applyConfiguration();
 
-    if (!QFile::exists(QString(bios_path.c_str()))) {
+    if (!QFile::exists(QString(config->bios_path.c_str()))) {
         QMessageBox box {this};
 
-        box.setText("Please place BIOS as 'bios.bin' in the emulators folder.");
+        box.setText("Please provide a BIOS file via the settings dialog or 'config.ini' file.");
         box.setIcon(QMessageBox::Critical);
         box.setWindowTitle(tr("BIOS not found."));
 
         box.exec();
         return;
-    }
-
-    // Create config object if not done yet
-    if (config == nullptr) {
-        config = new Config();
-
-        config->multiplier  = 10;
-        config->bios_path   = bios_path;
-        config->framebuffer = screen->pixels();
     }
 
     // Create emulator object if not done yet
@@ -295,19 +297,24 @@ void MainWindow::soundCallback(APU* apu, s16* stream, int length) {
 }
 
 void MainWindow::setupSound(APU* apu) {
-    SDL_AudioSpec spec;
+    SDL_AudioSpec want, have;
 
     // Setup desired audio spec
-    spec.freq     = 44100;
-    spec.samples  = 1024;
-    spec.format   = AUDIO_S16;
-    spec.channels = 2;
-    spec.callback = &MainWindow::soundCallback;
-    spec.userdata = apu;
+    want.freq     = config->audio.sample_rate;
+    want.samples  = config->audio.buffer_size;
+    want.format   = AUDIO_S16;
+    want.channels = 2;
+    want.callback = &MainWindow::soundCallback;
+    want.userdata = apu;
 
     // Initialize SDL2 audio start playing
     SDL_Init(SDL_INIT_AUDIO);
-    SDL_OpenAudio(&spec, NULL);
+    SDL_OpenAudio(&want, &have);
+
+    // Fallback
+    config->audio.sample_rate = have.freq;
+    config->audio.buffer_size = have.samples;
+
     SDL_PauseAudio(0);
 }
 

@@ -36,6 +36,7 @@ public:
     void clear();
     auto pixels() const -> u32* { return framebuffer; }
 
+    void aspectRatio(bool keep_ar) { aspect_ratio = keep_ar; }
 signals:
     void keyPress(int key);
     void keyRelease(int key);
@@ -53,6 +54,7 @@ private:
     int  width;
     int  height;
     u32* framebuffer;
+    bool aspect_ratio;
 
     GLuint texture;
 };

@@ -96,8 +96,13 @@ void Screen::paintGL() {
 }
 
 void Screen::resizeGL(int width, int height) {
-    int fixedWidth  = height + height / 2;
-    int sidePadding = (width - fixedWidth) / 2;
+    int fixedWidth  = width;
+    int sidePadding = 0;
+
+    if (aspect_ratio) {
+        fixedWidth  = height + height / 2;
+        sidePadding = (width - fixedWidth) / 2;
+    }
 
     // Setup orthogonal projection matrix
     glMatrixMode(GL_PROJECTION);

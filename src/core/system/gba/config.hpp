@@ -26,15 +26,28 @@ namespace Core {
 
     struct Config {
         // Core
-        bool use_bios = true;
         std::string bios_path;
 
-        // Graphics
+        // Get rid of these.
         int  frameskip     = 0;
-        u32* framebuffer   = nullptr;
         bool darken_screen = false;
 
-        // Misc.
+        // Rendering buffer
+        u32* framebuffer   = nullptr;
+
+        struct Audio {
+            int sample_rate;
+            int buffer_size;
+            
+            struct AudioMute {
+                bool psg[4] { false, false, false, false };
+                bool dma[2] { false, false };
+
+                bool master { false };
+            } mute;
+        } audio;
+
+        // Misc. Get rid of these.
         int  multiplier   = 1;
         bool fast_forward = false;
     };

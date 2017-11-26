@@ -26,6 +26,7 @@
 #include <QTimer>
 
 #include "screen.hpp"
+#include "config.hpp"
 #include "core/system/gba/emulator.hpp"
 
 #include "util/ini.hpp"
@@ -57,6 +58,8 @@ private:
     void setupScreen();
     void setupEmuTimers();
     void setupStatusBar();
+
+    void applyConfiguration();
 
     void runGame(const QString& rom_file);
     void pauseClicked();
@@ -114,6 +117,6 @@ private:
     EmulationState emu_state { EmulationState::Stopped };
 
     // Emulator instance
-    Core::Config*   config   { nullptr };
+    QtConfig*       config   { nullptr }; /* custom class */
     Core::Emulator* emulator { nullptr };
 };

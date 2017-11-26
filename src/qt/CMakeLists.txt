@@ -11,6 +11,7 @@ set(HEADERS
     screen.hpp
     mainwindow.hpp
     settings.hpp
+    config.hpp
 )
 
 if (WIN32)
