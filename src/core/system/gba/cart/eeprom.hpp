@@ -62,5 +62,7 @@ namespace Core {
 
         State state;
         EEPROMSize size;
+
+        int bufferSize;
     };
 }
