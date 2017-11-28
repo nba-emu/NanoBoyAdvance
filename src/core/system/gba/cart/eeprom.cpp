@@ -160,10 +160,11 @@ namespace Core {
             }
         }
         else if (state & State::GetWriteData) {
-            int bit   = transmittedBits % 8;
-            int index = transmittedBits / 8;
+            // - 1 is quick hack: in this case transmittedBits counts from 1-64 but we need 0-63...
+            int bit   = (transmittedBits - 1) % 8;
+            int index = (transmittedBits - 1) / 8;
 
-            std::cout << "Burning bit: " << value << std::endl;
+            std::cout << "Burning bit: " << std::to_string(value) << std::endl;
 
             memory[currentAddress + index] &= ~(1 << (7 - bit));
             memory[currentAddress + index] |= value << (7 - bit);
