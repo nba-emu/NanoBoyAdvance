@@ -144,6 +144,8 @@ namespace Core {
             throw std::runtime_error("BIOS file not found: " + config->bios_path);
         }
 
+        refillPipeline();
+
         memory.bios_opcode = 0;
     }
 
