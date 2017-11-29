@@ -51,10 +51,10 @@ namespace Core {
         std::string save_path = path.substr(0, path.find_last_of(".")) + ".sav";
 
         switch (cart->type) {
-            case SAVE_SRAM:     cart->backup = new SRAM (save_path)            ; break;
-            case SAVE_FLASH64:  cart->backup = new Flash(save_path, false)     ; break;
-            case SAVE_FLASH128: cart->backup = new Flash(save_path, true )     ; break;
-            case SAVE_EEPROM:   cart->backup = new EEPROM(save_path, EEPROM_4K); break;
+            case SAVE_SRAM:     cart->backup = new SRAM (save_path)                  ; break;
+            case SAVE_FLASH64:  cart->backup = new Flash(save_path, false)           ; break;
+            case SAVE_FLASH128: cart->backup = new Flash(save_path, true )           ; break;
+            case SAVE_EEPROM:   cart->backup = new EEPROM(save_path, EEPROM::SIZE_4K); break;
         }
 
         return std::shared_ptr<Cartridge>(cart);

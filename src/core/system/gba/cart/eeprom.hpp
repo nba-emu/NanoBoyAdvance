@@ -24,13 +24,14 @@
 #include "save.hpp"
 
 namespace Core {
-    enum EEPROMSize {
-        EEPROM_4K  = 0,
-        EEPROM_64K = 1
-    };
 
     class EEPROM : public Save {
     public:
+        enum EEPROMSize {
+            SIZE_4K  = 0,
+            SIZE_64K = 1
+        };
+
         EEPROM(std::string save_file, EEPROMSize size);
        ~EEPROM();
 
@@ -42,27 +43,26 @@ namespace Core {
         void resetSerialBuffer();
 
         enum State {
-            EEPROM_ACCEPT_COMMAND = 1 << 0,
-            EEPROM_READ_MODE      = 1 << 1,
-            EEPROM_WRITE_MODE     = 1 << 2,
-            EEPROM_GET_ADDRESS    = 1 << 3,
-            EEPROM_READING        = 1 << 4,
-            EEPROM_DUMMY_NIBBLE   = 1 << 5,
-            EEPROM_WRITING        = 1 << 6,
-            EEPROM_EAT_DUMMY      = 1 << 7
+            STATE_ACCEPT_COMMAND = 1 << 0,
+            STATE_READ_MODE      = 1 << 1,
+            STATE_WRITE_MODE     = 1 << 2,
+            STATE_GET_ADDRESS    = 1 << 3,
+            STATE_READING        = 1 << 4,
+            STATE_DUMMY_NIBBLE   = 1 << 5,
+            STATE_WRITING        = 1 << 6,
+            STATE_EAT_DUMMY      = 1 << 7
         };
 
         static constexpr int s_addr_bits[2] = { 6, 14 };
 
         u8* memory {nullptr};
+        int memory_size;
 
-        u64 serialBuffer;
-        int transmittedBits;
-        int currentAddress;
+        int address;
+        u64 serial_buffer;
+        int transmitted_bits;
 
         int state;
         EEPROMSize size;
-
-        int bufferSize;
     };
 }

@@ -28,12 +28,12 @@ namespace Core {
     constexpr int EEPROM::s_addr_bits[2];
 
     EEPROM::EEPROM(std::string save_path, EEPROMSize size) : size(size) {
-        bufferSize = (1 << s_addr_bits[size]) * 8;
-        memory = new u8[bufferSize];
+        memory_size = (1 << s_addr_bits[size]) * 8;
+        memory = new u8[memory_size];
 
         reset();
 
-        Logger::log<LOG_DEBUG>("EEPROM: buffer size is {0} (bytes).", bufferSize);
+        Logger::log<LOG_DEBUG>("EEPROM: buffer size is {0} (bytes).", memory_size);
     }
 
     EEPROM::~EEPROM() {
@@ -42,40 +42,40 @@ namespace Core {
     }
 
     void EEPROM::reset() {
-        std::memset(memory, 0, bufferSize);
-        currentAddress = 0;
+        std::memset(memory, 0, memory_size);
+        address = 0;
         resetSerialBuffer();
 
-        state = EEPROM_ACCEPT_COMMAND;
+        state = STATE_ACCEPT_COMMAND;
     }
 
     void EEPROM::resetSerialBuffer() {
-        serialBuffer    = 0;
-        transmittedBits = 0;
+        serial_buffer    = 0;
+        transmitted_bits = 0;
     }
 
     auto EEPROM::read8(u32 address) -> u8 {
-        if (state & EEPROM_READING) {
-            if (state & EEPROM_DUMMY_NIBBLE) {
+        if (state & STATE_READING) {
+            if (state & STATE_DUMMY_NIBBLE) {
                 // Four bits that simply are ignored but will be send.
-                if (++transmittedBits == 4) {
-                    state &= ~EEPROM_DUMMY_NIBBLE;
+                if (++transmitted_bits == 4) {
+                    state &= ~STATE_DUMMY_NIBBLE;
                     resetSerialBuffer();
                 }
                 return 0;
             }
             else {
-                int bit   = transmittedBits % 8;
-                int index = transmittedBits / 8;
+                int bit   = transmitted_bits % 8;
+                int index = transmitted_bits / 8;
 
-                if (++transmittedBits == 64) {
+                if (++transmitted_bits == 64) {
                     Logger::log<LOG_DEBUG>("EEPROM: completed read. accepting new commands.");
 
-                    state = EEPROM_ACCEPT_COMMAND;
+                    state = STATE_ACCEPT_COMMAND;
                     resetSerialBuffer();
                 }
 
-                return (memory[currentAddress + index] >> (7 - bit)) & 1;
+                return (memory[this->address + index] >> (7 - bit)) & 1;
             }
         }
 
@@ -83,82 +83,82 @@ namespace Core {
     }
 
     void EEPROM::write8(u32 address, u8 value) {
-        if (state & EEPROM_READING) {
+        if (state & STATE_READING) {
             return;
         }
 
         value &= 1;
 
-        serialBuffer = (serialBuffer << 1) | value;
-        transmittedBits++;
+        serial_buffer = (serial_buffer << 1) | value;
+        transmitted_bits++;
 
-        if (state == EEPROM_ACCEPT_COMMAND && transmittedBits == 2) {
-            switch (serialBuffer) {
+        if (state == STATE_ACCEPT_COMMAND && transmitted_bits == 2) {
+            switch (serial_buffer) {
                 case 2: {
                     Logger::log<LOG_DEBUG>("EEPROM: receiving write request...");
-                    state = EEPROM_WRITE_MODE  |
-                            EEPROM_GET_ADDRESS |
-                            EEPROM_WRITING     |
-                            EEPROM_EAT_DUMMY;
+                    state = STATE_WRITE_MODE  |
+                            STATE_GET_ADDRESS |
+                            STATE_WRITING     |
+                            STATE_EAT_DUMMY;
                     break;
                 }
                 case 3: {
                     Logger::log<LOG_DEBUG>("EEPROM: receiving read request...");
-                    state = EEPROM_READ_MODE   |
-                            EEPROM_GET_ADDRESS |
-                            EEPROM_EAT_DUMMY;
+                    state = STATE_READ_MODE   |
+                            STATE_GET_ADDRESS |
+                            STATE_EAT_DUMMY;
                     break;
                 }
             }
             resetSerialBuffer();
         }
-        else if (state & EEPROM_GET_ADDRESS) {
-            if (transmittedBits == s_addr_bits[size]) {
-                currentAddress = serialBuffer * 8;
+        else if (state & STATE_GET_ADDRESS) {
+            if (transmitted_bits == s_addr_bits[size]) {
+                this->address = serial_buffer * 8;
 
-                if (state & EEPROM_WRITE_MODE) {
+                if (state & STATE_WRITE_MODE) {
                     // Clean memory 'cell'.
                     for (int i = 0; i < 8; i++) {
-                        memory[currentAddress + i] = 0;
+                        memory[this->address + i] = 0;
                     }
                 }
 
-                Logger::log<LOG_DEBUG>("EEPROM: requested address = 0x{0:X}", currentAddress);
+                Logger::log<LOG_DEBUG>("EEPROM: requested address = 0x{0:X}", this->address);
 
-                state &= ~EEPROM_GET_ADDRESS;
+                state &= ~STATE_GET_ADDRESS;
                 resetSerialBuffer();
             }
         }
-        else if (state & EEPROM_WRITING) {
-            // - 1 is quick hack: in this case transmittedBits counts from 1-64 but we need 0-63...
-            int bit   = (transmittedBits - 1) % 8;
-            int index = (transmittedBits - 1) / 8;
+        else if (state & STATE_WRITING) {
+            // - 1 is quick hack: in this case transmitted_bits counts from 1-64 but we need 0-63...
+            int bit   = (transmitted_bits - 1) % 8;
+            int index = (transmitted_bits - 1) / 8;
 
-            memory[currentAddress + index] &= ~(1 << (7 - bit));
-            memory[currentAddress + index] |= value << (7 - bit);
+            memory[this->address + index] &= ~(1 << (7 - bit));
+            memory[this->address + index] |= value << (7 - bit);
 
-            if (transmittedBits == 64) {
+            if (transmitted_bits == 64) {
                 Logger::log<LOG_DEBUG>("EEPROM: burned 64 bits of data.");
 
-                state &= ~EEPROM_WRITING;
+                state &= ~STATE_WRITING;
                 resetSerialBuffer();
             }
         }
-        else if (state & EEPROM_EAT_DUMMY) {
-            if (serialBuffer != 0) {
+        else if (state & STATE_EAT_DUMMY) {
+            if (serial_buffer != 0) {
                 Logger::log<LOG_WARN>("EEPROM: received non-zero dummy bit.");
             }
-            state &= ~EEPROM_EAT_DUMMY;
+            state &= ~STATE_EAT_DUMMY;
 
-            if (state & EEPROM_READ_MODE) {
+            if (state & STATE_READ_MODE) {
                 Logger::log<LOG_DEBUG>("EEPROM: got dummy, read enabled.");
 
-                state |= EEPROM_READING | EEPROM_DUMMY_NIBBLE;
+                state |= STATE_READING | STATE_DUMMY_NIBBLE;
             }
-            else if (state & EEPROM_WRITE_MODE) {
+            else if (state & STATE_WRITE_MODE) {
                 Logger::log<LOG_DEBUG>("EEPROM: write completed, accepting new commands.");
 
-                state = EEPROM_ACCEPT_COMMAND;
+                state = STATE_ACCEPT_COMMAND;
             }
 
             resetSerialBuffer();
