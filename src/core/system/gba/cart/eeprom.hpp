@@ -42,14 +42,14 @@ namespace Core {
         void resetSerialBuffer();
 
         enum State {
-            AcceptCommand = 1 << 0,
-            ReadMode      = 1 << 1,
-            WriteMode     = 1 << 2,
-            GetAddress    = 1 << 3,
-            EnableRead    = 1 << 4,
-            DummyNibble   = 1 << 5,
-            GetWriteData  = 1 << 6,
-            EatDummy      = 1 << 7
+            EEPROM_ACCEPT_COMMAND = 1 << 0,
+            EEPROM_READ_MODE      = 1 << 1,
+            EEPROM_WRITE_MODE     = 1 << 2,
+            EEPROM_GET_ADDRESS    = 1 << 3,
+            EEPROM_READING        = 1 << 4,
+            EEPROM_DUMMY_NIBBLE   = 1 << 5,
+            EEPROM_WRITING        = 1 << 6,
+            EEPROM_EAT_DUMMY      = 1 << 7
         };
 
         static constexpr int s_addr_bits[2] = { 6, 14 };
@@ -60,7 +60,7 @@ namespace Core {
         int transmittedBits;
         int currentAddress;
 
-        State state;
+        int state;
         EEPROMSize size;
 
         int bufferSize;
