@@ -46,6 +46,13 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
 MainWindow::~MainWindow() {
     SDL_Quit();
+    if (emulator != nullptr) {
+        delete emulator;
+    }
+    if (config != nullptr) {
+        delete config;
+    }
+    // TODO: delete UI elements!
 }
 
 void MainWindow::setupMenu() {

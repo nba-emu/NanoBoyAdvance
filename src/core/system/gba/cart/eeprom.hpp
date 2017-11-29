@@ -32,7 +32,7 @@ namespace Core {
             SIZE_64K = 1
         };
 
-        EEPROM(std::string save_file, EEPROMSize size);
+        EEPROM(std::string save_path, EEPROMSize size_hint);
        ~EEPROM();
 
         void reset();
@@ -54,6 +54,9 @@ namespace Core {
         };
 
         static constexpr int s_addr_bits[2] = { 6, 14 };
+        static constexpr int s_save_size[2] = { 512, 8192 };
+
+        std::string save_path;
 
         u8* memory {nullptr};
         int memory_size;

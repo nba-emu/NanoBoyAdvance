@@ -18,6 +18,7 @@
   */
 
 #include "eeprom.hpp"
+#include "util/file.hpp"
 #include "util/logger.hpp"
 
 #include <cstring>
@@ -26,27 +27,46 @@ using namespace Util;
 
 namespace Core {
     constexpr int EEPROM::s_addr_bits[2];
+    constexpr int EEPROM::s_save_size[2];
 
-    EEPROM::EEPROM(std::string save_path, EEPROMSize size) : size(size) {
-        memory_size = (1 << s_addr_bits[size]) * 8;
-        memory = new u8[memory_size];
+    EEPROM::EEPROM(std::string save_path, EEPROMSize size_hint) : size(size_hint), save_path(save_path) {
+        memory_size = s_save_size[size];
 
-        reset();
+        if (File::exists(save_path)) {
+            int save_size = File::get_size(save_path);
+
+            if (save_size == s_save_size[0] || save_size == s_save_size[1]) {
+                size        = (save_size == s_save_size[0]) ? SIZE_4K : SIZE_64K;
+                memory      = File::read_data(save_path);
+                memory_size = save_size;
+            }
+            else {
+                memory = new u8[memory_size];
+                std::memset(memory, 0, memory_size);
+            }
+        }
+        else {
+            memory = new u8[memory_size];
+            std::memset(memory, 0, memory_size);
+        }
 
         Logger::log<LOG_DEBUG>("EEPROM: buffer size is {0} (bytes).", memory_size);
+
+        reset();
     }
 
     EEPROM::~EEPROM() {
-
-        delete memory;
+        if (memory != nullptr) {
+            File::write_data(save_path, memory, memory_size);
+            delete memory;
+        }
     }
 
     void EEPROM::reset() {
-        std::memset(memory, 0, memory_size);
+        // Resets internal state etc.
+        state   = STATE_ACCEPT_COMMAND;
         address = 0;
         resetSerialBuffer();
-
-        state = STATE_ACCEPT_COMMAND;
     }
 
     void EEPROM::resetSerialBuffer() {
@@ -83,9 +103,7 @@ namespace Core {
     }
 
     void EEPROM::write8(u32 address, u8 value) {
-        if (state & STATE_READING) {
-            return;
-        }
+        if (state & STATE_READING) return;
 
         value &= 1;
 
