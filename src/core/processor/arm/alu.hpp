@@ -117,8 +117,14 @@ inline void ARM::shiftLSL(u32& operand, u32 amount, bool& carry) {
 
 #if defined(__i386__) || defined(__x86_64__)
     if (UNLIKELY(amount >= 32)) {
-        operand <<= 31;
-        amount   -= 31;
+        if (amount > 32) {
+            carry = false;
+        }
+        else {
+            carry = operand & 1;
+        }
+        operand = 0;
+        return;
     }
 #endif
     carry     = (operand << (amount - 1)) & (1 << 31);
@@ -131,8 +137,14 @@ inline void ARM::shiftLSR(u32& operand, u32 amount, bool& carry, bool immediate)
 
 #if defined(__i386__) || defined(__x86_64__)
     if (UNLIKELY(amount >= 32)) {
-        operand >>= 31;
-        amount   -= 31;
+        if (amount > 32) {
+            carry = false;
+        }
+        else {
+            carry = operand & (1 << 31);
+        }
+        operand = 0;
+        return;
     }
 #endif
     carry     = (operand >> (amount - 1)) & 1;
