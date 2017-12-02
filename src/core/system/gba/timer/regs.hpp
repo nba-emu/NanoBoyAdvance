@@ -35,5 +35,8 @@ namespace Core {
         int cycles;
         u16 reload;
         u32 counter;
+#
+        int  ticks; // Cycles to increment
+        bool overflow;
     };
 }

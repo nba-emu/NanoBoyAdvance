@@ -159,10 +159,10 @@ namespace Core {
 
         // Timer handling
         void timerStep(int cycles);
+        
+        template <int id>
+        void timerRunInternal(int cycles);
         void timerHandleFIFO(int timer_id, int times);
-        void timerHandleOverflow(Timer& timer, int times);
-        void timerIncrement(Timer& timer, int increment_count);
-        void timerIncrementOnce(Timer& timer);
 
         void calculateMemoryCycles();
     protected:

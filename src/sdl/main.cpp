@@ -81,6 +81,9 @@ int main(int argc, char** argv) {
     g_config.darken_screen = g_ini->getInteger("Video", "darken"); // boolean!
     g_config.frameskip     = g_ini->getInteger("Video", "frameskip");
 
+    g_config.audio.sample_rate = 44100;
+    g_config.audio.buffer_size = 1024;
+
     if (scale < 1) scale = 1;
 
     g_config.framebuffer = fbuffer;

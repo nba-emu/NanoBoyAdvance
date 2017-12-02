@@ -20,6 +20,8 @@
 #include "../emulator.hpp"
 
 namespace Core {
+    static constexpr int g_ticks[4] = { 1, 64, 256, 1024 };
+
     void Emulator::timerReset(int id) {
         auto& timer = regs.timer[id];
 
@@ -31,6 +33,8 @@ namespace Core {
         timer.control.cascade   = false;
         timer.control.interrupt = false;
         timer.control.enable    = false;
+
+        timer.overflow = false;
     }
 
     auto Emulator::timerRead(int id, int offset) -> u8 {
@@ -60,6 +64,8 @@ namespace Core {
                 timer.control.cascade   = value & 4;
                 timer.control.interrupt = value & 64;
                 timer.control.enable    = value & 128;
+
+                timer.ticks = g_ticks[timer.control.frequency];
 
                 if (!enable_previous && timer.control.enable) {
                     timer.counter = timer.reload;

@@ -26,152 +26,104 @@ using namespace Util;
 
 namespace Core {
 
-    // cycles required for one increment
-    static constexpr int g_timer_ticks[4] = { 1, 64, 256, 1024 };
-
-    // shift amount and mask for division/modulo by total_cycles
-    static constexpr int g_timer_shift[4] = { 0, 6, 8, 10 };
-    static constexpr int g_timer_mask [4] = { 0, 0x3F, 0xFF, 0x3FF };
-
     void Emulator::timerStep(int cycles) {
-        for (int i = 0; i < 4; i++) {
-            auto& timer   = regs.timer[i];
-            auto& control = timer.control;
+        if (regs.timer[0].control.enable) {
+            timerRunInternal<0>(cycles);
+        }
+        if (regs.timer[1].control.enable) {
+            timerRunInternal<1>(cycles);
+        }
+        if (regs.timer[2].control.enable) {
+            timerRunInternal<2>(cycles);
+        }
+        if (regs.timer[3].control.enable) {
+            timerRunInternal<3>(cycles);
+        }
+    }
 
-            // handles only non-cascade timers directly
-            if (control.enable && !control.cascade) {
-                int cycles_left   = cycles;
-                int total_cycles  = g_timer_ticks[control.frequency];
-                int needed_cycles = total_cycles - timer.cycles;
+    template <int id>
+    void Emulator::timerRunInternal(int cycles) {
+        auto& timer   = regs.timer[id];
+        auto& control = timer.control;
 
-                // does the cycle amount satifies an increment?
-                if (cycles_left >= needed_cycles) {
-                    int increments = 1; // atleast one increment
+        if (control.cascade) {
+            if (id != 0 && regs.timer[id - 1].overflow) {
+                timer.overflow = false;
 
-                    // consume the amount of cycles needed for the first increment
-                    cycles_left -= needed_cycles;
-
-                    // check if more increments are still possible
-                    if (cycles_left >= total_cycles) {
-                        if (control.frequency == 0) {
-                            // in this case frequency = F/1 and we can take a shortcut
-                            increments += cycles_left;
-                            cycles_left = 0;
-                        } else {
-                            // divide left amount of cycles to run by the total cycles needed for an increment
-                            // to calculate: a) furtherly satisfyable increments (quotient) and
-                            //               b) amount of cycles left after doing them (remainder)
-                            increments += cycles_left >> g_timer_shift[control.frequency];
-                            cycles_left = cycles_left  & g_timer_mask [control.frequency];
-                        }
+                if (timer.counter != 0xFFFF) {
+                    timer.counter++;
+                }
+                else {
+                    timer.counter  = timer.reload;
+                    timer.overflow = true;
+                
+                    if (control.interrupt) {
+                        m_interrupt.request((InterruptType)(INTERRUPT_TIMER_0 << id));
                     }
-
-                    // increment timer by the calculated amount
-                    timerIncrement(timer, increments);
+                    if (timer.id < 2 && apu.getIO().control.master_enable) {
+                        timerHandleFIFO(id, 1);
+                    }
                 }
 
-                // don't loose the left amount of cycles
-                timer.cycles += cycles_left;
+                regs.timer[id - 1].overflow = false;
             }
+        }
+        else {
+            int available = timer.cycles + cycles;
+            int overflows = 0;
+
+            timer.overflow = false;
+
+            while (available >= timer.ticks) {
+                if (timer.counter != 0xFFFF) {
+                    timer.counter++;
+                }
+                else {
+                    timer.counter  = timer.reload;
+                    timer.overflow = true;
+                    overflows++;
+                }
+                available -= timer.ticks;
+            }
+
+            if (timer.overflow) {
+                if (control.interrupt) {
+                    m_interrupt.request((InterruptType)(INTERRUPT_TIMER_0 << id));
+                }
+                if (timer.id < 2 && apu.getIO().control.master_enable) {
+                    timerHandleFIFO(id, overflows);
+                }
+            }
+
+            timer.cycles = available;
         }
     }
 
     void Emulator::timerHandleFIFO(int timer_id, int times) {
         auto& apu_io  = apu.getIO();
         auto& control = apu_io.control;
-        auto& dma1    = regs.dma[1];
-        auto& dma2    = regs.dma[2];
 
-        // for each DMA FIFO
-        for (int i = 0; i < 2; i++) {
+        static const u32 fifo_addr[2] = { FIFO_A, FIFO_B };
 
-            // is the overflowing timer responsible for this FIFO?
-            if (control.dma[i].timer_num == timer_id) {
-                auto& fifo = apu_io.fifo[i];
-
-                for (int j = 0; j < times; j++) {
-                    // transfers sample from FIFO to APU chip
-                    apu.signalFifoTransfer(i);
-
-                    // tries to trigger DMA transfer if FIFO requests more data
-                    if (fifo.requiresData()) {
-
-                        u32 address = (i == 0) ? FIFO_A : FIFO_B;
-
-                        if (dma1.enable && dma1.time == DMA_SPECIAL && dma1.dst_addr == address) {
-                            dmaTransferFIFO(1);
-                        } else if (dma2.enable && dma2.time == DMA_SPECIAL && dma2.dst_addr == address) {
-                            dmaTransferFIFO(2);
-                        }
+        for (int fifo = 0; fifo < 2; fifo++) {
+            if (control.dma[fifo].timer_num != timer_id) {
+                continue;
+            }
+            u32  address = fifo_addr[fifo];
+            for (int time = 0; time < times; time++) {
+                apu.signalFifoTransfer(fifo);
+                if (!apu_io.fifo[fifo].requiresData()) {
+                    continue;
+                }
+                for (int dma_id = 1; dma_id <= 2; dma_id++) {
+                    auto& dma = regs.dma[dma_id];
+                    if (dma.enable && dma.time == DMA_SPECIAL && dma.dst_addr == address) {
+                        dmaTransferFIFO(dma_id);
+                        break;
                     }
                 }
             }
         }
     }
 
-    void Emulator::timerHandleOverflow(Timer& timer, int times) {
-        // request timer overflow interrupt if needed
-        if (timer.control.interrupt) {
-            m_interrupt.request((InterruptType)(INTERRUPT_TIMER_0 << timer.id));
-        }
-
-        // reload counter value
-        timer.counter = timer.reload;
-
-        // cascade next timer if required
-        if (timer.id != 3) {
-            auto& timer2 = regs.timer[timer.id + 1];
-
-            if (timer2.control.enable && timer2.control.cascade) {
-                if (times == 1) {
-                    timerIncrementOnce(timer2);
-                } else {
-                    timerIncrement(timer2, times);
-                }
-            }
-        }
-
-        // handle FIFO transfer if sound is enabled
-        if (timer.id < 2 && apu.getIO().control.master_enable) {
-            timerHandleFIFO(timer.id, times);
-        }
-    }
-
-    void Emulator::timerIncrement(Timer& timer, int increment_count) {
-
-        int next_overflow = 0x10000 - timer.counter;
-
-        // reset the timer's cycle counter
-        timer.cycles = 0;
-
-        // does overflow happen at all?
-        if (increment_count >= next_overflow) {
-            int overflow_count = 1;
-
-            // "eat" the increments for the first overflow
-            increment_count -= next_overflow;
-
-            // if there are increments left
-            if (increment_count != 0) {
-                int required = 0x10000 - timer.reload;
-
-                overflow_count += increment_count / required;
-                increment_count = increment_count % required;
-            }
-
-            timerHandleOverflow(timer, overflow_count);
-        }
-
-        // update the counter with the remaining increments
-        timer.counter += increment_count;
-    }
-
-    // Short-cut method for cascade timers that ALWAYS get incremented by one.
-    void Emulator::timerIncrementOnce(Timer& timer) {
-        if (timer.counter != 0xFFFF) {
-            timer.counter++;
-        } else {
-            timerHandleOverflow(timer, 1);
-        }
-    }
 }
