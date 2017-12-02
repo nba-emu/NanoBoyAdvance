@@ -49,14 +49,12 @@ namespace Core {
         if (control.cascade) {
             if (id != 0 && regs.timer[id - 1].overflow) {
                 timer.overflow = false;
-
                 if (timer.counter != 0xFFFF) {
                     timer.counter++;
                 }
                 else {
                     timer.counter  = timer.reload;
                     timer.overflow = true;
-                
                     if (control.interrupt) {
                         m_interrupt.request((InterruptType)(INTERRUPT_TIMER_0 << id));
                     }
@@ -64,7 +62,6 @@ namespace Core {
                         timerHandleFIFO(id, 1);
                     }
                 }
-
                 regs.timer[id - 1].overflow = false;
             }
         }
@@ -73,7 +70,7 @@ namespace Core {
             int overflows = 0;
 
             timer.overflow = false;
-
+            
             while (available >= timer.ticks) {
                 if (timer.counter != 0xFFFF) {
                     timer.counter++;
@@ -85,7 +82,6 @@ namespace Core {
                 }
                 available -= timer.ticks;
             }
-
             if (timer.overflow) {
                 if (control.interrupt) {
                     m_interrupt.request((InterruptType)(INTERRUPT_TIMER_0 << id));
@@ -94,7 +90,6 @@ namespace Core {
                     timerHandleFIFO(id, overflows);
                 }
             }
-
             timer.cycles = available;
         }
     }
