@@ -20,6 +20,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QApplication>
+#include <QKeyEvent>
 
 #include <SDL2/SDL.h>
 
@@ -28,7 +29,7 @@
 
 using namespace Core;
 
-MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
+MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent) {
     setWindowTitle("NanoboyAdvance");
 
     setupMenu();
@@ -42,6 +43,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
     resetUI();
     applyConfiguration();
+    
+    app->installEventFilter(this);
 }
 
 MainWindow::~MainWindow() {
@@ -53,6 +56,30 @@ MainWindow::~MainWindow() {
         delete config;
     }
     // TODO: delete UI elements!
+}
+
+bool MainWindow::eventFilter(QObject *obj, QEvent *event) {   
+    auto type = event->type();
+    
+    if (type == QEvent::KeyPress || type == QEvent::KeyRelease) {
+        QKeyEvent* key_event = static_cast<QKeyEvent*>(event);
+        
+        auto key = key_event->key();
+        
+        bool is_press = type == QEvent::KeyPress;
+        
+        if (emulator == nullptr) {
+            return QObject::eventFilter(obj, event);
+        }
+        if (key == Qt::Key_Space) {
+            config->fast_forward = is_press;
+            return true;
+        }
+        emulator->setKeyState(MainWindow::qtKeyToEmu(key), is_press);
+        
+        return true;
+    }
+    return QObject::eventFilter(obj, event);
 }
 
 void MainWindow::setupMenu() {
@@ -118,34 +145,6 @@ void MainWindow::setupEmulationMenu() {
 
 void MainWindow::setupScreen() {
     screen = new Screen(240, 160, this);
-
-    // Key press handler
-    connect(screen, &Screen::keyPress, this,
-        [this] (int key) {
-            if (emulator == nullptr) {
-                return;
-            }
-            if (key == Qt::Key_Space) {
-                config->fast_forward = true;
-                return;
-            }
-            emulator->setKeyState(MainWindow::qtKeyToEmu(key), true);
-        }
-    );
-
-    // Key release handler
-    connect(screen, &Screen::keyRelease, this,
-        [this] (int key) {
-            if (emulator == nullptr) {
-                return;
-            }
-            if (key == Qt::Key_Space) {
-                config->fast_forward = false;
-                return;
-            }
-            emulator->setKeyState(MainWindow::qtKeyToEmu(key), false);
-        }
-    );
 
     // Make screen widget our central widget
     setCentralWidget(screen);
@@ -272,7 +271,7 @@ void MainWindow::runGame(const QString& rom_file) {
     // Start emulating
     timer_run->start();
 
-    screen->grabKeyboard();
+    //screen->grabKeyboard();
 }
 
 void MainWindow::pauseClicked() {

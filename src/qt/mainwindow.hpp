@@ -35,7 +35,7 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
-     MainWindow(QWidget* parent = 0);
+     MainWindow(QApplication* app, QWidget* parent = 0);
     ~MainWindow();
 
 public slots:
@@ -44,6 +44,9 @@ public slots:
 
     void nextFrame();
 
+protected:
+    bool eventFilter(QObject* obj, QEvent* event);
+    
 private:
     enum class EmulationState {
         Stopped,

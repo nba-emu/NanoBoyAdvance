@@ -119,11 +119,3 @@ void Screen::clear() {
     std::memset(framebuffer, 0, sizeof(u32) * width * height);
     updateTexture();
 }
-
-void Screen::keyPressEvent(QKeyEvent* event) {
-    emit keyPress(event->key());
-}
-
-void Screen::keyReleaseEvent(QKeyEvent* event) {
-    emit keyRelease(event->key());
-}

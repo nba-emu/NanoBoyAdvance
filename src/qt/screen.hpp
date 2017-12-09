@@ -37,18 +37,12 @@ public:
     auto pixels() const -> u32* { return framebuffer; }
 
     void aspectRatio(bool keep_ar) { aspect_ratio = keep_ar; }
-signals:
-    void keyPress(int key);
-    void keyRelease(int key);
 
 protected:
     void initializeGL();
     
     void paintGL();
     void resizeGL(int width, int height);
-    
-    void keyPressEvent(QKeyEvent *event);
-    void keyReleaseEvent(QKeyEvent *event);
 
 private:
     int  width;
