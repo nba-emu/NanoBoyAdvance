@@ -294,6 +294,8 @@ void MainWindow::pauseClicked() {
             
             emu_state = EmulationState::Paused;
             break;
+            
+        default: break;
     }
 }
 
@@ -310,7 +312,10 @@ void MainWindow::stopClicked() {
 #include <limits.h>
 
 // Sound callback - called by SDL2. Wraps around C++ method.
-void MainWindow::soundCallback(APU* apu, s16* stream, int length) {
+void MainWindow::soundCallback(void* _apu, u8* _stream, int length) {
+    APU* apu = (APU*)_apu;
+    u16* stream = (u16*)_stream;
+    
     apu->fillBuffer(stream, length);
 
     // Temporary workaround *sigh*

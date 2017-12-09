@@ -252,8 +252,12 @@ namespace Core {
         // Otherwise it's an 'add' or 'mov' opcode
         else {
             switch (op) {
-            case 0: ctx.reg[dst] += operand; break; // ADD
-            case 2: ctx.reg[dst]  = operand; break; // MOV
+                case 0: ctx.reg[dst] += operand; break; // ADD
+                case 2: ctx.reg[dst]  = operand; break; // MOV
+                
+                default: 
+                    Logger::log<LOG_ERROR>("THUMB5: invalid opcode.");
+                    break;
             }
 
             // Check if r15 was overwritten.

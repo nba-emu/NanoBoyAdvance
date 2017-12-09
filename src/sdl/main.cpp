@@ -215,8 +215,10 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-void soundCallback(APU* apu, u16* stream, int length) {
-    apu->fillBuffer(stream, length);
+void soundCallback(void* apu, u8* stream, int length) {
+    APU* _apu = (APU*)apu;
+    
+    _apu->fillBuffer((u16*)stream, length);
 }
 
 void setupSound(APU* apu) {

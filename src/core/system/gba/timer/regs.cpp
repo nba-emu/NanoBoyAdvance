@@ -41,13 +41,19 @@ namespace Core {
         auto& timer = regs.timer[id];
 
         switch (offset) {
-            case 0: return timer.counter & 0xFF;
-            case 1: return timer.counter >> 8;
-            case 2:
+            case 0: {
+                return timer.counter & 0xFF;
+            }
+            case 1: {
+                return timer.counter >> 8;
+            }
+            case 2: {
                 return (timer.control.frequency) |
                        (timer.control.cascade   ? 4   : 0) |
                        (timer.control.interrupt ? 64  : 0) |
                        (timer.control.enable    ? 128 : 0);
+            }
+            default: return 0;
         }
     }
 

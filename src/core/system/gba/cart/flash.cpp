@@ -127,6 +127,8 @@ namespace Core
                         m_enable_bank_select = true;
                     }
                     return;
+                    
+                default: return;
             }
 
             // 0E005555=AA, 0E002AAA=55 sequence must be performed again before
@@ -142,7 +144,7 @@ namespace Core
                 m_memory[m_bank][base_address + i] = 0xFF;
             }
                 
-            m_enable_erase = false;
+            m_enable_erase  = false;
             m_command_phase = 0;
         } else if (m_enable_bank_select && address == 0x0E000000) {
             // bank Selection

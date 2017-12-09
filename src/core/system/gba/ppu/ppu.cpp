@@ -497,6 +497,7 @@ namespace Core {
                 b1 = blend_table[16 - evy][evy][b1][0];
                 break;
             }
+            default: break;
         }
 
         *target1 = (r1 << 0 ) | (g1 << 5 ) | (b1 << 10);

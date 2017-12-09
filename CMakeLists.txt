@@ -50,7 +50,7 @@ option(DEBUG "Build for debugging" OFF)
 if (DEBUG)
     add_definitions(-std=c++11 -g -O0 -fpermissive -DDEBUG)
 else()
-    add_definitions(-std=c++11 -Ofast -fpermissive -finline-functions)
+    add_definitions(-std=c++11 -Ofast -fpermissive)
 endif()
 
 # Perform profiling?

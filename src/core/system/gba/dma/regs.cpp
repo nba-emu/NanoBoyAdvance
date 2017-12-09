@@ -64,6 +64,7 @@ namespace Core {
                        (dma.interrupt ? 64  : 0) |
                        (dma.enable    ? 128 : 0);
             }
+            default: return 0;
         }
     }
 

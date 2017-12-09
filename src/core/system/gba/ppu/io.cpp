@@ -51,6 +51,8 @@ namespace Core {
                        (win_enable[0] ? 32  : 0) |
                        (win_enable[1] ? 64  : 0) |
                        (win_enable[2] ? 128 : 0);
+                
+            default: return 0;
         }
     }
 
@@ -98,6 +100,8 @@ namespace Core {
                        (vcount_interrupt ? 32 : 0);
             case 1:
                 return vcount_setting;
+                
+            default: return 0;
         }
     }
 
@@ -135,6 +139,8 @@ namespace Core {
                 return map_block |
                        (wraparound ? 32 : 0) |
                        (screen_size << 6);
+                
+            default: return 0;
         }
     }
 
@@ -209,6 +215,8 @@ namespace Core {
                        (targets[1][LAYER_BG3] ? 8  : 0) |
                        (targets[1][LAYER_OBJ] ? 16 : 0) |
                        (targets[1][LAYER_BD ] ? 32 : 0);
+                
+            default: return 0;
         }
     }
 

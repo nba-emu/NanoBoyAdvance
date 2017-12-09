@@ -72,6 +72,8 @@ namespace Core {
             case 5: {
                 return apply_length ? 0x40 : 0;
             }
+                
+            default: return 0;
         }
     }
 
@@ -162,6 +164,8 @@ namespace Core {
             case 5: {
                 return apply_length ? 0x40 : 0;
             }
+                
+            default: return 0;
         }
     }
 
@@ -253,6 +257,8 @@ namespace Core {
             case 5: {
                 return apply_length ? 0x40 : 0;
             }
+                
+            default: return 0;
         }
     }
 
@@ -347,6 +353,8 @@ namespace Core {
             case 4:
                 // TODO(accuracy): actually emulate bits 0-3
                 return 0b1111 | (master_enable ? 128 : 0);
+                
+            default: return 0;
         }
     }
 
@@ -402,18 +410,22 @@ namespace Core {
         switch (offset) {
             case 0: return level & 0xFF;
             case 1: return ((level >> 8) & 3) | (resolution << 6);
+                
+            default: return 0;
         }
     }
 
     void APU::IO::BIAS::write(int offset, u8 value) {
         switch (offset) {
-            case 0:
+            case 0: {
                 level = (level & ~0xFF) | value;
                 break;
-            case 1:
+            }
+            case 1: {
                 level      = (level & 0xFF) | (value << 8);
                 resolution = value >> 6;
                 break;
+            }
         }
     }
 }
