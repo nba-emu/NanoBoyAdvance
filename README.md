@@ -12,7 +12,12 @@ For Windows users:
 
 -IMPORTANT: You must download SDL2 at https://www.libsdl.org/download-2.0.php  
 -IMPORTANT: You must also download Qt at https://www.qt.io/download-open-source/ (if you want to build the Qt frontend)  
--You must add these to the PATH, or add them to the cache if you are using CMake GUI.  
+-You must add these to the PATH, and you must also add these to your compiler folder with the following procedure: 
+
+1. Download the library version for your specific compiler.
+2. copy the /lib folder in the library into your compiler /lib folder
+3. copy the /include folder in the library into your compiler /include folder
+4. Copy the library DLLs into your compiler /bin folder.
 
 Linux users usually just install the libraries via package manager and should be good.
 
