@@ -1,0 +1,9 @@
+SET(SOURCES
+    main.cpp
+)
+
+SET(HEADERS
+)
+
+ADD_EXECUTABLE(NanoboyAdvance-SDL ${SOURCES} ${HEADERS})
+TARGET_LINK_LIBRARIES(NanoboyAdvance-SDL core)
