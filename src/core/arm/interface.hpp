@@ -28,7 +28,6 @@ struct Interface {
     virtual void WriteWord(std::uint32_t address, std::uint32_t value, AccessType type) = 0;
 
     virtual void Tick(int cycles) = 0;
-
     virtual void SWI(std::uint32_t call_id) = 0;
 };
 

@@ -20,18 +20,35 @@ public:
         cpu.Reset();
         cpu.SetInterface(this);
     }
-    
-    virtual std::uint8_t  ReadByte(std::uint32_t address, ARM::AccessType type) = 0;
-    virtual std::uint16_t ReadHalf(std::uint32_t address, ARM::AccessType type) = 0;
-    virtual std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) = 0;
 
-    virtual void WriteByte(std::uint32_t address, std::uint8_t  value, ARM::AccessType type) = 0;
-    virtual void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type) = 0;
-    virtual void WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type) = 0;
+    /* Memory bus implementation (ReadByte, ...) */
+    #include "bus.inl"
+
+    void Tick(int cycles) final { }
 
 private:
     ARM::ARM7 cpu;
 
+    struct SystemMemory {
+        std::uint8_t bios    [0x04000];
+        std::uint8_t wram    [0x40000];
+        std::uint8_t iram    [0x08000];
+        std::uint8_t palette [0x00400];
+        std::uint8_t oam     [0x00400];
+        std::uint8_t vram    [0x18000];
+
+        struct ROM {
+            std::uint8_t* data;
+            Save* save;
+            size_t size;
+        } rom;
+
+        /* Last opcode fetched from BIOS memory. */
+        u32 bios_opcode;
+
+        /* TODO: remove this hack. */
+        std::uint8_t mmio[0x800];
+    } memory;
 };
 
 } // namespace GBA
