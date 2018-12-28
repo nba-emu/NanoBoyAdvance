@@ -28,6 +28,8 @@ public:
         std::memset(memory.oam,     0, 0x00400);
         std::memset(memory.vram,    0, 0x18000);
         std::memset(memory.mmio,    0, 0x00800);
+
+        cpu.GetState().r15 = 0x08000000;
     }
 
     /* Memory bus implementation (ReadByte, ...) */
@@ -40,6 +42,14 @@ public:
     void SetSlot1(uint8_t* rom, size_t size) {
         memory.rom.data = rom;
         memory.rom.size = size;
+    }
+
+    void Dork() {
+        auto& state = cpu.GetState();
+        cpu.Run();
+        // for (int i = 0; i < 16; i++) {
+        //     std::printf("r%d: 0x%08x\n", i, state.reg[i]);
+        // }
     }
 private:
     ARM::ARM7 cpu;

@@ -6,7 +6,13 @@
  */
 
 std::uint8_t ReadByte(std::uint32_t address, ARM::AccessType type) final {
-    /* TODO */
+    int page = (address >> 24) & 15;
+    if (page == 8) {
+        return memory.rom.data[address & 0xFFFFFF];
+    } else {
+        std::printf("[R] 0x%08x\n", address);
+        return 0;
+    }
     return 0;
 }
 
@@ -20,8 +26,9 @@ std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) final {
           (ReadHalf(address + 2, type) << 16);
 }
 
-void WriteByte(std::uint32_t address, std::uint8_t  value, ARM::AccessType type) final {
+void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) final {
     /* TODO */
+    std::printf("[W] 0x%08x = 0x%02x\n", address, value);
 }
 
 void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type) final {

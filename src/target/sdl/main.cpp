@@ -60,6 +60,8 @@ int main(int argc, char** argv) {
     cpu.SetSlot1(rom, size);
 
     while (running) {
+        for (int i = 0; i < 10; i++)
+            cpu.Dork();
         /* generate frame here. */
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
