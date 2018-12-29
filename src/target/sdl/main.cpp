@@ -61,9 +61,21 @@ int main(int argc, char** argv) {
     cpu.Reset();
     cpu.SetSlot1(rom, size);
 
+    /* Benchmark */
+    int frames = 0;
+    int ticks1 = SDL_GetTicks();
+
     while (running) {
         cpu.Dork();
-        
+
+        frames++;
+        int ticks2 = SDL_GetTicks();
+        if ((ticks2 - ticks1) >= 1000) {
+            std::printf("FPS: %d\n", frames);
+            ticks1 = ticks2;
+            frames = 0;
+        }
+
         /* generate frame here. */
         SDL_UpdateTexture(texture, nullptr, fb, 240 * sizeof(std::uint32_t));
         SDL_RenderClear(renderer);

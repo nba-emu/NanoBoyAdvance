@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#define DEBUGGER
+//#define DEBUGGER
 
 #include <array>
 #include <memory>

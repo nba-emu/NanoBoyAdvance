@@ -8,7 +8,7 @@
 inline void ARM7::Reset() {
     for (int i = 0; i < 16; i++)
         state.reg[i] = 0;
-    
+
     for (int i = 0; i < BANK_COUNT; i++) {
         for (int j = 0; j < 7; j++)
             state.bank[i][j] = 0;
@@ -56,7 +56,7 @@ inline void ARM7::Run() {
         pipe[0] = pipe[1];
         pipe[1] = ReadWord(state.r15, ACCESS_SEQ);
         if (CheckCondition(static_cast<Condition>(instruction >> 28))) {
-            int hash = ((instruction >> 16) & 0xFF0) | 
+            int hash = ((instruction >> 16) & 0xFF0) |
                        ((instruction >>  4) & 0x00F);
             (this->*arm_lut[hash])(instruction);
         } else {

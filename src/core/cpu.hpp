@@ -45,7 +45,7 @@ public:
     }
 
     void Dork() {
-        for (int i = 0; i < 16000000 / 60; i++)
+        for (int i = 0; i < 6500000 / 60; i++)
             cpu.Run();
         // auto& state = cpu.GetState();
         // for (int i = 0; i < 16; i++) {
