@@ -16,7 +16,7 @@ class Emulator {
 
 private:
     CPU cpu;
-    
+
 };
 
 } // namespace GBA

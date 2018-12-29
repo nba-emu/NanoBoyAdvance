@@ -45,12 +45,19 @@ public:
     }
 
     void Dork() {
-        for (int i = 0; i < 6500000 / 60; i++)
+        /* Assume IPC=0.5 */
+        for (int i = 0; i < 8000000 / 60; i++)
             cpu.Run();
         // auto& state = cpu.GetState();
         // for (int i = 0; i < 16; i++) {
         //     std::printf("r%d: 0x%08x\n", i, state.reg[i]);
         // }
+    }
+
+    void RunFor(int cycles) {
+        for (int i = 0; i < cycles; i++) {
+            cpu.Run();
+        }
     }
 private:
     ARM::ARM7 cpu;
