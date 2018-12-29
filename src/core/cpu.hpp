@@ -45,8 +45,9 @@ public:
     }
 
     void Dork() {
-        auto& state = cpu.GetState();
-        cpu.Run();
+        for (int i = 0; i < 16000000 / 60; i++)
+            cpu.Run();
+        // auto& state = cpu.GetState();
         // for (int i = 0; i < 16; i++) {
         //     std::printf("r%d: 0x%08x\n", i, state.reg[i]);
         // }

@@ -11,6 +11,8 @@ SET(HEADERS
     arm/interface.hpp
     arm/state.hpp
     arm/util.hpp
+    cpu.hpp
+    emulator.hpp
 )
 
 ADD_LIBRARY(core STATIC ${SOURCES} ${HEADERS})

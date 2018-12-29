@@ -79,11 +79,15 @@ std::uint8_t ReadByte(std::uint32_t address, ARM::AccessType type) final {
 }
 
 std::uint16_t ReadHalf(std::uint32_t address, ARM::AccessType type) final {
+    if ((address >> 24) == 0x08)
+        return READ_FAST_16(memory.rom.data, address & 0xFFFFFF);
     return ReadByte(address + 0, type) |
           (ReadByte(address + 1, type) << 8);
 }
 
 std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) final {
+    if ((address >> 24) == 0x08)
+        return READ_FAST_32(memory.rom.data, address & 0xFFFFFF);
     return ReadHalf(address + 0, type) |
           (ReadHalf(address + 2, type) << 16);
 }
@@ -101,7 +105,7 @@ void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) 
         }
         case 0x5: WRITE_FAST_16(memory.palette, address & 0x3FF, value * 0x0101); break;
         case 0x6: {
-            std::printf("[W][VRAM] 0x%08x = 0x%02x\n", address, value);
+            //std::printf("[W][VRAM] 0x%08x = 0x%02x\n", address, value);
             address &= 0x1FFFF;
             if (address >= 0x18000)
                 address &= ~0x8000;

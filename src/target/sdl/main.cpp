@@ -62,8 +62,8 @@ int main(int argc, char** argv) {
     cpu.SetSlot1(rom, size);
 
     while (running) {
-        for (int i = 0; i < 10; i++)
-            cpu.Dork();
+        cpu.Dork();
+        
         /* generate frame here. */
         SDL_UpdateTexture(texture, nullptr, fb, 240 * sizeof(std::uint32_t));
         SDL_RenderClear(renderer);
