@@ -25,6 +25,8 @@ int main(int argc, char** argv) {
     SDL_Texture* texture;
     SDL_Renderer* renderer;
 
+    std::uint32_t fb[240*160];
+
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
     window = SDL_CreateWindow("NanoboyAdvance 0.1",
                               SDL_WINDOWPOS_CENTERED,
@@ -63,6 +65,11 @@ int main(int argc, char** argv) {
         for (int i = 0; i < 10; i++)
             cpu.Dork();
         /* generate frame here. */
+        SDL_UpdateTexture(texture, nullptr, fb, 240 * sizeof(std::uint32_t));
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+        SDL_RenderPresent(renderer);
+
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 running = false;
