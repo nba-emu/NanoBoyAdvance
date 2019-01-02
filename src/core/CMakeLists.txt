@@ -1,6 +1,7 @@
 SET(SOURCES
     arm/isa/thumb.cpp
     arm/isa/arm.cpp
+    mmio.cpp
 )
 
 SET(HEADERS

@@ -82,6 +82,9 @@ private:
         /* TODO: remove this hack. */
         std::uint8_t mmio[0x800];
     } memory;
+
+    auto ReadMMIO(std::uint32_t address) -> std::uint8_t;
+    void WriteMMIO(std::uint32_t address, std::uint8_t value);
 };
 
 } // namespace GBA
