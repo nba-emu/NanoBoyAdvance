@@ -9,6 +9,7 @@
 
 #include "arm/arm.hpp"
 #include "arm/interface.hpp"
+#include "ppu/ppu.hpp"
 #include <cstring>
 
 namespace NanoboyAdvance {
@@ -60,6 +61,7 @@ public:
         }
     }
 private:
+    PPU ppu;
     ARM::ARM7 cpu;
 
     struct SystemMemory {

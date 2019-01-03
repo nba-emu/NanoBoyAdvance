@@ -257,7 +257,7 @@ void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type)
         //     memory.rom.save->write8(address + 1, value);
         //     break;
         // }
-        default: break; // TODO: throw error
+        default: break; /* TODO: throw error */
     }
 }
 
@@ -309,6 +309,6 @@ void WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type)
         //     memory.rom.save->write8(address + 3, value);
         //     break;
         // }
-        default: break; // TODO: throw error
+        default: break; /* TODO: throw error */
     }
 }
