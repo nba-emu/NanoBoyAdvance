@@ -11,15 +11,6 @@ namespace ARM {
 
 std::array<ARM7::ArmInstruction, 4096> ARM7::arm_lut = MakeArmLut();
 
-constexpr std::array<ARM7::ArmInstruction, 4096> ARM7::MakeArmLut() {
-    std::array<ARM7::ArmInstruction, 4096> lut = {};
-
-    static_for<std::size_t, 0, 4096>([&](auto i) {
-        lut[i] = GetArmHandler<((i & 0xFF0) << 16) | ((i & 0xF) << 4)>();
-    });
-    return lut;
-}
-
 template <bool immediate, int opcode, bool _set_flags, int field4>
 void ARM7::ARM_DataProcessing(std::uint32_t instruction) {
     bool set_flags = _set_flags;
@@ -338,6 +329,7 @@ void ARM7::ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
     }
 
     switch (opcode) {
+        case 0: break;
         case 1:
             if (load) {
                 state.reg[dst] = ReadHalfRotate(address, ACCESS_NSEQ);
@@ -691,6 +683,15 @@ constexpr ARM7::ArmInstruction ARM7::GetArmHandler() {
     }
 
     return &ARM7::ARM_Undefined;
+}
+
+constexpr std::array<ARM7::ArmInstruction, 4096> ARM7::MakeArmLut() {
+    std::array<ARM7::ArmInstruction, 4096> lut = {};
+
+    static_for<std::size_t, 0, 4096>([&](auto i) {
+        lut[i] = GetArmHandler<((i & 0xFF0) << 16) | ((i & 0xF) << 4)>();
+    });
+    return lut;
 }
 
 } // namespace ARM

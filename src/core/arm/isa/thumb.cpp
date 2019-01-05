@@ -11,14 +11,6 @@ namespace ARM {
 
 std::array<ARM7::ThumbInstruction, 1024> ARM7::thumb_lut = MakeThumbLut();
 
-constexpr std::array<ARM7::ThumbInstruction, 1024> ARM7::MakeThumbLut() {
-    std::array<ARM7::ThumbInstruction, 1024> lut = {};
-    static_for<std::size_t, 0, 1024>([&](auto i) {
-        lut[i] = GetThumbHandler<i<<6>();
-    });
-    return lut;
-}
-
 template <int op, int imm>
 void ARM7::Thumb_MoveShiftedRegister(std::uint16_t instruction) {
     // THUMB.1 Move shifted register
@@ -607,5 +599,14 @@ constexpr ARM7::ThumbInstruction ARM7::GetThumbHandler() {
 
     return &ARM7::Thumb_Undefined;
 }
+
+constexpr std::array<ARM7::ThumbInstruction, 1024> ARM7::MakeThumbLut() {
+    std::array<ARM7::ThumbInstruction, 1024> lut = {};
+    static_for<std::size_t, 0, 1024>([&](auto i) {
+        lut[i] = GetThumbHandler<i<<6>();
+    });
+    return lut;
+}
+
 
 } // namespace ARM
