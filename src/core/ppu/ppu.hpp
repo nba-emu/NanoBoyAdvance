@@ -17,7 +17,13 @@ class PPU {
 public:
     struct MMIO {
         DisplayControl dispcnt;
+        DisplayStatus dispstat;
     } mmio;
+
+    void Reset() {
+        mmio.dispcnt.Reset();
+        mmio.dispstat.Reset();
+    }
 };
 
 } // namespace GBA

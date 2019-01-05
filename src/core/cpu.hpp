@@ -15,12 +15,13 @@
 namespace NanoboyAdvance {
 namespace GBA {
 
-class CPU : ARM::Interface {
+class CPU : private ARM::Interface {
 
 public:
     void Reset() {
         cpu.Reset();
         cpu.SetInterface(this);
+        cpu.GetState().r15 = 0x08000000;
 
         /* Clear-out all memory buffers. */
         std::memset(memory.wram,    0, 0x40000);
@@ -30,14 +31,8 @@ public:
         std::memset(memory.vram,    0, 0x18000);
         std::memset(memory.mmio,    0, 0x00800);
 
-        cpu.GetState().r15 = 0x08000000;
+        ppu.Reset();
     }
-
-    /* Memory bus implementation (ReadByte, ...) */
-    #include "bus.inl"
-
-    void Tick(int cycles) final { }
-    void SWI(std::uint32_t call_id) final { }
 
     /* TODO: Evaluate if there are better ways? */
     void SetSlot1(uint8_t* rom, size_t size) {
@@ -84,6 +79,12 @@ private:
         /* TODO: remove this hack. */
         std::uint8_t mmio[0x800];
     } memory;
+
+    /* Memory bus implementation (ReadByte, ...) */
+    #include "bus.inl"
+
+    void Tick(int cycles) final { }
+    void SWI(std::uint32_t call_id) final { }
 
     auto ReadMMIO(std::uint32_t address) -> std::uint8_t;
     void WriteMMIO(std::uint32_t address, std::uint8_t value);

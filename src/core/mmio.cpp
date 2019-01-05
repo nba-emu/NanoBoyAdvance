@@ -20,6 +20,8 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     switch (address) {
     case DISPCNT+0: return ppu_io.dispcnt.Read(0);
     case DISPCNT+1: return ppu_io.dispcnt.Read(1);
+    case DISPSTAT+0: return ppu_io.dispstat.Read(0);
+    case DISPSTAT+1: return ppu_io.dispstat.Read(1);
     }
     return 0;
 }
@@ -32,6 +34,8 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     switch (address) {
     case DISPCNT+0: ppu_io.dispcnt.Write(0, value); break;
     case DISPCNT+1: ppu_io.dispcnt.Write(1, value); break;
+    case DISPSTAT+0: ppu_io.dispstat.Write(0, value); break;
+    case DISPSTAT+1: ppu_io.dispstat.Write(1, value); break;
     }
 }
 

@@ -54,5 +54,38 @@ void DisplayControl::Write(int address, std::uint8_t value) {
     }
 }
 
+void DisplayStatus::Reset() {
+    Write(0, 0);
+    Write(1, 1);
+}
+
+auto DisplayStatus::Read(int address) -> std::uint8_t {
+    switch (address) {
+    case 0:
+        return vblank_flag |
+            (hblank_flag << 1) |
+            (vcount_flag << 2) |
+            (vblank_irq_enable << 3) |
+            (hblank_irq_enable << 4) |
+            (vcount_irq_enable << 5);
+    case 1:
+        return vcount_setting;
+    }
+}
+
+void DisplayStatus::Write(int address, std::uint8_t value) {
+    switch (address) {
+    case 0:
+        vblank_irq_enable = (value >> 3) & 1;
+        hblank_irq_enable = (value >> 4) & 1;
+        vcount_irq_enable = (value >> 5) & 1;
+        break;
+    case 1:
+        /* TODO: What happens with values > 227? */
+        vcount_setting = value;
+        break;
+    }
+}
+
 } // namespace GBA
 } // namespace NanoboyAdvance

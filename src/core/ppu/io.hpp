@@ -26,5 +26,19 @@ struct DisplayControl {
     void Write(int address, std::uint8_t value);
 };
 
+struct DisplayStatus {
+    int vblank_flag;
+    int hblank_flag;
+    int vcount_flag;
+    int vblank_irq_enable;
+    int hblank_irq_enable;
+    int vcount_irq_enable;
+    int vcount_setting;
+
+    void Reset();
+    auto Read(int address) -> std::uint8_t;
+    void Write(int address, std::uint8_t value);
+};
+
 } // namespace GBA
 } // namespace NanoboyAdvance
