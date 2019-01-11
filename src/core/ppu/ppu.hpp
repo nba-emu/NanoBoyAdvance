@@ -18,11 +18,13 @@ public:
     struct MMIO {
         DisplayControl dispcnt;
         DisplayStatus dispstat;
+        std::uint8_t vcount;
     } mmio;
 
     void Reset() {
         mmio.dispcnt.Reset();
         mmio.dispstat.Reset();
+        mmio.vcount = 0;
     }
 };
 

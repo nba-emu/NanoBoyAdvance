@@ -56,7 +56,7 @@ void DisplayControl::Write(int address, std::uint8_t value) {
 
 void DisplayStatus::Reset() {
     Write(0, 0);
-    Write(1, 1);
+    Write(1, 0);
 }
 
 auto DisplayStatus::Read(int address) -> std::uint8_t {

@@ -22,6 +22,8 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case DISPCNT+1: return ppu_io.dispcnt.Read(1);
     case DISPSTAT+0: return ppu_io.dispstat.Read(0);
     case DISPSTAT+1: return ppu_io.dispstat.Read(1);
+    case VCOUNT+0: return ppu_io.vcount & 0xFF;
+    case VCOUNT+1: return 0;
     }
     return 0;
 }
@@ -36,6 +38,7 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     case DISPCNT+1: ppu_io.dispcnt.Write(1, value); break;
     case DISPSTAT+0: ppu_io.dispstat.Write(0, value); break;
     case DISPSTAT+1: ppu_io.dispstat.Write(1, value); break;
+    /* TODO: do VCOUNT writes have an effect on the GBA too? */
     }
 }
 
