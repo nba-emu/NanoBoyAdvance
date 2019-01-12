@@ -13,19 +13,26 @@ namespace NanoboyAdvance {
 namespace GBA {
 
 class PPU {
+    enum Phase {
+        PHASE_SCANLINE = 0,
+        PHASE_HBLANK = 1,
+        PHASE_VBLANK = 2
+    };
 
+    static const int s_wait_cycles[3];
+
+    enum Phase phase;
 public:
+    int wait_cycles;
+
     struct MMIO {
         DisplayControl dispcnt;
         DisplayStatus dispstat;
         std::uint8_t vcount;
     } mmio;
 
-    void Reset() {
-        mmio.dispcnt.Reset();
-        mmio.dispstat.Reset();
-        mmio.vcount = 0;
-    }
+    void Reset();
+    void Tick();
 };
 
 } // namespace GBA

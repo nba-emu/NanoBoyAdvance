@@ -40,21 +40,20 @@ public:
         memory.rom.size = size;
     }
 
-    void Dork() {
-        /* Assume IPC=0.5 */
-        for (int i = 0; i < 8000000 / 60; i++)
-            cpu.Run();
-        // auto& state = cpu.GetState();
-        // for (int i = 0; i < 16; i++) {
-        //     std::printf("r%d: 0x%08x\n", i, state.reg[i]);
-        // }
-    }
-
     void RunFor(int cycles) {
-        for (int i = 0; i < cycles; i++) {
-            cpu.Run();
+        while (cycles > 0) {
+            /* Get next event. */
+            int run_until = ppu.wait_cycles;
+
+            for (int i = 0; i < run_until; i++) {
+                cpu.Run();
+            }
+
+            ppu.Tick();
+            cycles -= run_until;
         }
     }
+
 private:
     PPU ppu;
     ARM::ARM7 cpu;

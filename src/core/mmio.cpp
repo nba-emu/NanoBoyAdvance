@@ -13,7 +13,7 @@ namespace NanoboyAdvance {
 namespace GBA {
 
 auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
-    std::printf("[R][MMIO] 0x%08x\n", address);
+    //std::printf("[R][MMIO] 0x%08x\n", address);
 
     auto& ppu_io = ppu.mmio;
 

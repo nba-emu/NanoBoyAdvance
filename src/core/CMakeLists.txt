@@ -3,6 +3,7 @@ SET(SOURCES
     arm/isa/arm.cpp
     mmio.cpp
     ppu/io.cpp
+    ppu/ppu.cpp
 )
 
 SET(HEADERS
