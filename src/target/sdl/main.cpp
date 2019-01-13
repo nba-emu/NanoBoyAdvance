@@ -15,8 +15,10 @@
 
 #include <cstdio>
 #include "core/cpu.hpp"
+#include "core/config.hpp"
 
-NanoboyAdvance::GBA::CPU cpu;
+NanoboyAdvance::GBA::Config config;
+NanoboyAdvance::GBA::CPU cpu(&config);
 
 int main(int argc, char** argv) {
     bool running = true;
@@ -56,6 +58,9 @@ int main(int argc, char** argv) {
         std::puts("Error: unable to fully read the ROM.");
         return -1;
     }
+
+    /* Setup configuration object. */
+    config.video.output = fb;
 
     /* Initialize emulator. */
     cpu.Reset();

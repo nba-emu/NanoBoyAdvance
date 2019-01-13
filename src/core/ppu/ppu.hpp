@@ -7,7 +7,9 @@
 
 #pragma once
 
+#include <cstdint>
 #include "io.hpp"
+#include "../config.hpp"
 
 namespace NanoboyAdvance {
 namespace GBA {
@@ -22,6 +24,15 @@ class PPU {
     static const int s_wait_cycles[3];
 
     enum Phase phase;
+    
+    Config* config;
+
+    std::uint8_t* pram;
+    std::uint8_t* vram;
+    std::uint8_t* oam;
+
+    static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
+    auto ReadPalette(int palette, int index) -> std::uint16_t;
 public:
     int wait_cycles;
 
@@ -31,8 +42,18 @@ public:
         std::uint8_t vcount;
     } mmio;
 
+    PPU(Config* config,
+        std::uint8_t* pram,
+        std::uint8_t* vram,
+        std::uint8_t* oam) : config(config),
+                             pram(pram),
+                             vram(vram),
+                             oam(oam)
+    { }
+
     void Reset();
     void Tick();
+    void RenderScanline();
 };
 
 } // namespace GBA

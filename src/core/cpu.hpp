@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "config.hpp"
 #include "arm/arm.hpp"
 #include "arm/interface.hpp"
 #include "ppu/ppu.hpp"
@@ -18,6 +19,13 @@ namespace GBA {
 class CPU : private ARM::Interface {
 
 public:
+    CPU(Config* config) : config(config),
+                          ppu(config,
+                              memory.palette,
+                              memory.vram,
+                              memory.oam)
+    { }
+    
     void Reset() {
         cpu.Reset();
         cpu.SetInterface(this);
@@ -57,6 +65,7 @@ public:
 private:
     PPU ppu;
     ARM::ARM7 cpu;
+    Config* config;
 
     struct SystemMemory {
         std::uint8_t bios    [0x04000];
