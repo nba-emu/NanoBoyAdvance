@@ -16,57 +16,10 @@
 namespace NanoboyAdvance {
 namespace GBA {
 
-class CPU : private ARM::Interface {
-
-public:
-    CPU(Config* config) : config(config) {
-        ppu.config = config;
-        ppu.pram = memory.pram;
-        ppu.vram = memory.vram;
-        ppu.oam  = memory.oam;
-        Reset();
-    }
-    
-    void Reset() {
-        cpu.Reset();
-        cpu.SetInterface(this);
-        cpu.GetState().r15 = 0x08000000;
-
-        /* Clear-out all memory buffers. */
-        std::memset(memory.wram, 0, 0x40000);
-        std::memset(memory.iram, 0, 0x08000);
-        std::memset(memory.pram, 0, 0x00400);
-        std::memset(memory.oam,  0, 0x00400);
-        std::memset(memory.vram, 0, 0x18000);
-        std::memset(memory.mmio, 0, 0x00800);
-
-        ppu.Reset();
-    }
-
-    /* TODO: Evaluate if there are better ways? */
-    void SetSlot1(uint8_t* rom, size_t size) {
-        memory.rom.data = rom;
-        memory.rom.size = size;
-        Reset();
-    }
-
-    void RunFor(int cycles) {
-        while (cycles > 0) {
-            /* Get next event. */
-            int run_until = ppu.wait_cycles;
-
-            for (int i = 0; i < run_until / 4; i++) {
-                cpu.Run();
-            }
-
-            ppu.Tick();
-            cycles -= run_until;
-        }
-    }
-
-private:
+class CPU : private ARM::Interface,
+            private ARM::ARM7 {
     PPU ppu;
-    ARM::ARM7 cpu;
+
     Config* config;
 
     struct SystemMemory {
@@ -79,15 +32,11 @@ private:
 
         struct ROM {
             std::uint8_t* data;
-            //Save* save;
             size_t size;
         } rom;
 
         /* Last opcode fetched from BIOS memory. */
         std::uint32_t bios_opcode;
-
-        /* TODO: remove this hack. */
-        std::uint8_t mmio[0x800];
     } memory;
 
     /* Memory bus implementation (ReadByte, ...) */
@@ -98,6 +47,14 @@ private:
 
     auto ReadMMIO(std::uint32_t address) -> std::uint8_t;
     void WriteMMIO(std::uint32_t address, std::uint8_t value);
+
+public:
+    CPU(Config* config);
+
+    void Reset();
+    void SetSlot1(uint8_t* rom, size_t size);
+
+    void RunFor(int cycles);
 };
 
 } // namespace GBA

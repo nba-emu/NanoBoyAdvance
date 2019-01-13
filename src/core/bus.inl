@@ -18,7 +18,7 @@
 #define WRITE_FAST_32(buffer, address, value) *(uint32_t*)(&buffer[address]) = value;
 
 std::uint32_t ReadBIOS(std::uint32_t address) {
-    if (cpu.GetState().r15 >= 0x4000) {
+    if (GetState().r15 >= 0x4000) {
         return memory.bios_opcode;
     }
     if (address >= 0x4000) {
