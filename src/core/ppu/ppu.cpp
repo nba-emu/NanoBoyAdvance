@@ -6,6 +6,7 @@
  */
 
 #include "ppu.hpp"
+#include "../cpu.hpp"
 
 namespace NanoboyAdvance {
 namespace GBA {
@@ -56,15 +57,27 @@ void PPU::Tick() {
         phase = PHASE_HBLANK;
         wait_cycles = s_wait_cycles[PHASE_HBLANK];
         dispstat.hblank_flag = 1;
+
+        if (dispstat.hblank_irq_enable) {
+            cpu->mmio.irq_ie |= CPU::INT_HBLANK;
+        }
         break;
     case PHASE_HBLANK:
         dispstat.hblank_flag = 0;
         dispstat.vcount_flag = ++vcount == dispstat.vcount_setting;
 
+        if (dispstat.vcount_flag && dispstat.vcount_irq_enable) {
+            cpu->mmio.irq_ie |= CPU::INT_VCOUNT;
+        }
+
         if (vcount == 160) {
             dispstat.vblank_flag = 1;
             phase = PHASE_VBLANK;
             wait_cycles = s_wait_cycles[PHASE_VBLANK];
+
+            if (dispstat.vblank_irq_enable) {
+                cpu->mmio.irq_ie |= CPU::INT_VBLANK;
+            }
         } else {
             phase = PHASE_SCANLINE;
             wait_cycles = s_wait_cycles[PHASE_SCANLINE];
@@ -88,6 +101,11 @@ void PPU::Tick() {
             /* Update vertical counter. */
             dispstat.vcount_flag = ++vcount == dispstat.vcount_setting;
         }
+
+        if (dispstat.vcount_flag && dispstat.vcount_irq_enable) {
+            cpu->mmio.irq_ie |= CPU::INT_VCOUNT;
+        }
+
         break;
     }
 }
