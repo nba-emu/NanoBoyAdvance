@@ -39,7 +39,12 @@ public:
     struct MMIO {
         DisplayControl dispcnt;
         DisplayStatus dispstat;
+
         std::uint8_t vcount;
+        
+        BackgroundControl bgcnt[4];
+        std::uint16_t bghofs[4];
+        std::uint16_t bgvofs[4];
     } mmio;
 
     PPU(Config* config,

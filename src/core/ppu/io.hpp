@@ -40,5 +40,19 @@ struct DisplayStatus {
     void Write(int address, std::uint8_t value);
 };
 
+struct BackgroundControl {
+    int priority;
+    int tile_block;
+    int mosaic_enable;
+    int full_palette;
+    int map_block;
+    int wraparound;
+    int size;
+
+    void Reset();
+    auto Read(int address) -> std::uint8_t;
+    void Write(int address, std::uint8_t value);
+};
+
 } // namespace GBA
 } // namespace NanoboyAdvance

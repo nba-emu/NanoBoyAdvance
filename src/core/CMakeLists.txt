@@ -4,6 +4,7 @@ SET(SOURCES
     mmio.cpp
     ppu/io.cpp
     ppu/ppu.cpp
+    ppu/render.cpp
 )
 
 SET(HEADERS
