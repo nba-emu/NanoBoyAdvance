@@ -15,6 +15,7 @@ CPU::CPU(Config* config) : config(config) {
     ppu.pram = memory.pram;
     ppu.vram = memory.vram;
     ppu.oam  = memory.oam;
+    ppu.cpu  = this;
     Reset();
 }
     

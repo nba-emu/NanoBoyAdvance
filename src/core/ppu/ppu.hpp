@@ -19,6 +19,8 @@ class CPU;
 class PPU {
     friend class CPU;
 
+    CPU* cpu;
+    
     int wait_cycles;
 
     enum Phase {
@@ -50,8 +52,9 @@ class PPU {
 
     static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
     auto ReadPalette(int palette, int index) -> std::uint16_t;
-public:
+
     void Reset();
+
     void Tick();
     void RenderScanline();
 };
