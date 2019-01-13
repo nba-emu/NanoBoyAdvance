@@ -16,6 +16,7 @@ CPU::CPU(Config* config) : config(config) {
     ppu.vram = memory.vram;
     ppu.oam  = memory.oam;
     ppu.cpu  = this;
+
     Reset();
 }
     
@@ -30,6 +31,11 @@ void CPU::Reset() {
     std::memset(memory.pram, 0, 0x00400);
     std::memset(memory.oam,  0, 0x00400);
     std::memset(memory.vram, 0, 0x18000);
+
+    /* Reset interrupt control. */
+    mmio.irq_ie = 0;
+    mmio.irq_if = 0;
+    mmio.irq_ime = 0;
 
     ppu.Reset();
 }

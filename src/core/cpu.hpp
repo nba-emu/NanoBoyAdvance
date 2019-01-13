@@ -19,7 +19,7 @@ namespace GBA {
 class CPU : private ARM::Interface {
     PPU ppu;
     ARM::ARM7 cpu;
-    
+
     Config* config;
 
     struct SystemMemory {
@@ -38,6 +38,12 @@ class CPU : private ARM::Interface {
         /* Last opcode fetched from BIOS memory. */
         std::uint32_t bios_opcode;
     } memory;
+
+    struct MMIO {
+        std::uint16_t irq_ie;
+        std::uint16_t irq_if;
+        std::uint16_t irq_ime;
+    } mmio;
 
     /* Memory bus implementation (ReadByte, ...) */
     #include "bus.inl"

@@ -33,7 +33,17 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
         case BG2CNT+1:   return ppu_io.bgcnt[2].Read(1);
         case BG3CNT+0:   return ppu_io.bgcnt[3].Read(0);
         case BG3CNT+1:   return ppu_io.bgcnt[3].Read(1);
-        case KEYINPUT: return 0xFF;
+
+        case KEYINPUT+0: return 0xFF;
+        case KEYINPUT+1: return 0;
+
+        /* Interrupt Control */
+        case IE+0:  return mmio.irq_ie  & 0xFF;
+        case IE+1:  return mmio.irq_ie  >> 8;
+        case IF+0:  return mmio.irq_if  & 0xFF;
+        case IF+1:  return mmio.irq_if  >> 8;
+        case IME+0: return mmio.irq_ime & 0xFF;
+        case IME+1: return mmio.irq_ime >> 8;
     }
     return 0;
 }
@@ -122,6 +132,36 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
             ppu_io.bgvofs[3] &= 0x00FF;
             ppu_io.bgvofs[3] |= (value & 1) << 8;
             break;
+
+        /* Interrupt Control */
+        case IE+0: {
+            mmio.irq_ie &= 0xFF00;
+            mmio.irq_ie |= value;
+            break;
+        }
+        case IE+1: {
+            mmio.irq_ie &= 0x00FF;
+            mmio.irq_ie |= value << 8;
+            break;
+        }
+        case IF+0: {
+            mmio.irq_if &= ~value;
+            break;
+        }
+        case IF+1: {
+            mmio.irq_if &= ~(value << 8);
+            break;
+        }
+        case IME+0: {
+            mmio.irq_ime &= 0xFF00;
+            mmio.irq_ime |= value;
+            break;
+        }
+        case IME+1: {
+            mmio.irq_ime &= 0x00FF;
+            mmio.irq_ime |= value << 8;
+            break;
+        }
     }
 }
 
