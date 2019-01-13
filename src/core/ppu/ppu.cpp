@@ -47,7 +47,6 @@ void PPU::Tick() {
         phase = PHASE_HBLANK;
         wait_cycles = s_wait_cycles[PHASE_HBLANK];
         dispstat.hblank_flag = 1;
-        RenderScanline();
         break;
     case PHASE_HBLANK:
         dispstat.hblank_flag = 0;
@@ -60,6 +59,7 @@ void PPU::Tick() {
         } else {
             phase = PHASE_SCANLINE;
             wait_cycles = s_wait_cycles[PHASE_SCANLINE];
+            RenderScanline();
         }
         break;
     case PHASE_VBLANK:
@@ -71,6 +71,8 @@ void PPU::Tick() {
             /* Update vertical counter. */
             vcount = 0;
             dispstat.vcount_flag = dispstat.vcount_setting == 0;
+
+            RenderScanline();
         } else {
             wait_cycles = s_wait_cycles[PHASE_VBLANK];
             
