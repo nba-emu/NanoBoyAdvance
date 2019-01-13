@@ -180,7 +180,7 @@ void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) 
         }
         case 0x5: WRITE_FAST_16(memory.palette, address & 0x3FF, value * 0x0101); break;
         case 0x6: {
-            std::printf("[W][VRAM] 0x%08x=0x%x\n", address, value);
+            //std::printf("[W][VRAM] 0x%08x=0x%x\n", address, value);
             address &= 0x1FFFF;
             if (address >= 0x18000)
                 address &= ~0x8000;
@@ -211,7 +211,7 @@ void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type)
         }
         case 0x5: WRITE_FAST_16(memory.palette, address & 0x3FF, value); break;
         case 0x6: {
-            std::printf("[W][VRAM] 0x%08x=0x%x\n", address, value);
+            //std::printf("[W][VRAM] 0x%08x=0x%x\n", address, value);
             address &= 0x1FFFF;
             if (address >= 0x18000) {
                 address &= ~0x8000;
@@ -277,7 +277,7 @@ void WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type)
         }
         case 0x5: WRITE_FAST_32(memory.palette, address & 0x3FF, value); break;
         case 0x6: {
-            std::printf("[W][VRAM] 0x%08x=0x%x\n", address, value);
+            //std::printf("[W][VRAM] 0x%08x=0x%x\n", address, value);
             address &= 0x1FFFF;
             if (address >= 0x18000) {
                 address &= ~0x8000;

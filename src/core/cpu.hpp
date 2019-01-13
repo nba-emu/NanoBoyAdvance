@@ -45,7 +45,7 @@ public:
             /* Get next event. */
             int run_until = ppu.wait_cycles;
 
-            for (int i = 0; i < run_until; i++) {
+            for (int i = 0; i < run_until / 4; i++) {
                 cpu.Run();
             }
 
