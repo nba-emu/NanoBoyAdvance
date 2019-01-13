@@ -63,7 +63,6 @@ int main(int argc, char** argv) {
     config.video.output = fb;
 
     /* Initialize emulator. */
-    cpu.Reset();
     cpu.SetSlot1(rom, size);
 
     /* Benchmark */

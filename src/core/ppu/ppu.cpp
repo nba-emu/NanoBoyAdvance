@@ -16,14 +16,16 @@ void PPU::Reset() {
     mmio.dispcnt.Reset();
     mmio.dispstat.Reset();
     mmio.vcount = 0;
-    
+
     for (int i = 0; i < 4; i++) {
         mmio.bgcnt[i].Reset();
         mmio.bghofs[i] = 0;
         mmio.bgvofs[i] = 0;
     }
     
+    phase = PHASE_SCANLINE;
     wait_cycles = s_wait_cycles[PHASE_SCANLINE];
+    RenderScanline();
 }
 
 auto PPU::ConvertColor(std::uint16_t color) -> std::uint32_t {

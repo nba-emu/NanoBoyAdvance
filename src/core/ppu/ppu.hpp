@@ -14,27 +14,20 @@
 namespace NanoboyAdvance {
 namespace GBA {
 
+class CPU;
+
 class PPU {
+    friend class CPU;
+
+    int wait_cycles;
+
     enum Phase {
         PHASE_SCANLINE = 0,
         PHASE_HBLANK = 1,
         PHASE_VBLANK = 2
     };
 
-    static const int s_wait_cycles[3];
-
-    enum Phase phase;
-    
-    Config* config;
-
-    std::uint8_t* pram;
-    std::uint8_t* vram;
-    std::uint8_t* oam;
-
-    static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
-    auto ReadPalette(int palette, int index) -> std::uint16_t;
-public:
-    int wait_cycles;
+    enum Phase phase; 
 
     struct MMIO {
         DisplayControl dispcnt;
@@ -47,15 +40,17 @@ public:
         std::uint16_t bgvofs[4];
     } mmio;
 
-    PPU(Config* config,
-        std::uint8_t* pram,
-        std::uint8_t* vram,
-        std::uint8_t* oam) : config(config),
-                             pram(pram),
-                             vram(vram),
-                             oam(oam)
-    { }
+    Config* config;
 
+    std::uint8_t* pram;
+    std::uint8_t* vram;
+    std::uint8_t* oam;
+
+    static const int s_wait_cycles[3];
+
+    static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
+    auto ReadPalette(int palette, int index) -> std::uint16_t;
+public:
     void Reset();
     void Tick();
     void RenderScanline();

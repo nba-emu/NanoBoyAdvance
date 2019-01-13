@@ -19,12 +19,13 @@ namespace GBA {
 class CPU : private ARM::Interface {
 
 public:
-    CPU(Config* config) : config(config),
-                          ppu(config,
-                              memory.palette,
-                              memory.vram,
-                              memory.oam)
-    { }
+    CPU(Config* config) : config(config) {
+        ppu.config = config;
+        ppu.pram = memory.pram;
+        ppu.vram = memory.vram;
+        ppu.oam  = memory.oam;
+        Reset();
+    }
     
     void Reset() {
         cpu.Reset();
@@ -32,12 +33,12 @@ public:
         cpu.GetState().r15 = 0x08000000;
 
         /* Clear-out all memory buffers. */
-        std::memset(memory.wram,    0, 0x40000);
-        std::memset(memory.iram,    0, 0x08000);
-        std::memset(memory.palette, 0, 0x00400);
-        std::memset(memory.oam,     0, 0x00400);
-        std::memset(memory.vram,    0, 0x18000);
-        std::memset(memory.mmio,    0, 0x00800);
+        std::memset(memory.wram, 0, 0x40000);
+        std::memset(memory.iram, 0, 0x08000);
+        std::memset(memory.pram, 0, 0x00400);
+        std::memset(memory.oam,  0, 0x00400);
+        std::memset(memory.vram, 0, 0x18000);
+        std::memset(memory.mmio, 0, 0x00800);
 
         ppu.Reset();
     }
@@ -46,6 +47,7 @@ public:
     void SetSlot1(uint8_t* rom, size_t size) {
         memory.rom.data = rom;
         memory.rom.size = size;
+        Reset();
     }
 
     void RunFor(int cycles) {
@@ -68,12 +70,12 @@ private:
     Config* config;
 
     struct SystemMemory {
-        std::uint8_t bios    [0x04000];
-        std::uint8_t wram    [0x40000];
-        std::uint8_t iram    [0x08000];
-        std::uint8_t palette [0x00400];
-        std::uint8_t oam     [0x00400];
-        std::uint8_t vram    [0x18000];
+        std::uint8_t bios[0x04000];
+        std::uint8_t wram[0x40000];
+        std::uint8_t iram[0x08000];
+        std::uint8_t pram[0x00400];
+        std::uint8_t oam [0x00400];
+        std::uint8_t vram[0x18000];
 
         struct ROM {
             std::uint8_t* data;

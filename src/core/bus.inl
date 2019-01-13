@@ -38,7 +38,7 @@ std::uint8_t ReadByte(std::uint32_t address, ARM::AccessType type) final {
         case 0x2: return READ_FAST_8(memory.wram, address & 0x3FFFF);
         case 0x3: return READ_FAST_8(memory.iram, address & 0x7FFF);
         case 0x4: return ReadMMIO(address);
-        case 0x5: return READ_FAST_8(memory.palette, address & 0x3FF);
+        case 0x5: return READ_FAST_8(memory.pram, address & 0x3FF);
         case 0x6: {
             address &= 0x1FFFF;
             if (address >= 0x18000)
@@ -78,7 +78,7 @@ std::uint16_t ReadHalf(std::uint32_t address, ARM::AccessType type) final {
             return  ReadMMIO(address + 0) |
                    (ReadMMIO(address + 1) << 8);
         }
-        case 0x5: return READ_FAST_16(memory.palette, address & 0x3FF);
+        case 0x5: return READ_FAST_16(memory.pram, address & 0x3FF);
         case 0x6: {
             address &= 0x1FFFF;
             if (address >= 0x18000)
@@ -133,7 +133,7 @@ std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) final {
                    (ReadMMIO(address + 2) << 16) |
                    (ReadMMIO(address + 3) << 24);
         }
-        case 0x5: return READ_FAST_32(memory.palette, address & 0x3FF);
+        case 0x5: return READ_FAST_32(memory.pram, address & 0x3FF);
         case 0x6: {
             address &= 0x1FFFF;
             if (address >= 0x18000)
@@ -178,7 +178,7 @@ void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) 
             WriteMMIO(address, value & 0xFF);
             break;
         }
-        case 0x5: WRITE_FAST_16(memory.palette, address & 0x3FF, value * 0x0101); break;
+        case 0x5: WRITE_FAST_16(memory.pram, address & 0x3FF, value * 0x0101); break;
         case 0x6: {
             //std::printf("[W][VRAM] 0x%08x=0x%x\n", address, value);
             address &= 0x1FFFF;
@@ -209,7 +209,7 @@ void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type)
             WriteMMIO(address + 1, (value >> 8) & 0xFF);
             break;
         }
-        case 0x5: WRITE_FAST_16(memory.palette, address & 0x3FF, value); break;
+        case 0x5: WRITE_FAST_16(memory.pram, address & 0x3FF, value); break;
         case 0x6: {
             //std::printf("[W][VRAM] 0x%08x=0x%x\n", address, value);
             address &= 0x1FFFF;
@@ -275,7 +275,7 @@ void WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type)
             WriteMMIO(address + 3, (value >> 24) & 0xFF);
             break;
         }
-        case 0x5: WRITE_FAST_32(memory.palette, address & 0x3FF, value); break;
+        case 0x5: WRITE_FAST_32(memory.pram, address & 0x3FF, value); break;
         case 0x6: {
             //std::printf("[W][VRAM] 0x%08x=0x%x\n", address, value);
             address &= 0x1FFFF;
