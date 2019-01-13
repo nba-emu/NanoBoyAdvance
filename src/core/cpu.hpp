@@ -16,10 +16,10 @@
 namespace NanoboyAdvance {
 namespace GBA {
 
-class CPU : private ARM::Interface,
-            private ARM::ARM7 {
+class CPU : private ARM::Interface {
     PPU ppu;
-
+    ARM::ARM7 cpu;
+    
     Config* config;
 
     struct SystemMemory {

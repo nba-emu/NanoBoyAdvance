@@ -19,9 +19,9 @@ CPU::CPU(Config* config) : config(config) {
 }
     
 void CPU::Reset() {
-    ARM7::Reset();
-    SetInterface(this);
-    GetState().r15 = 0x08000000;
+    cpu.Reset();
+    cpu.SetInterface(this);
+    cpu.GetState().r15 = 0x08000000;
 
     /* Clear-out all memory buffers. */
     std::memset(memory.wram, 0, 0x40000);
@@ -46,7 +46,7 @@ void CPU::RunFor(int cycles) {
         int run_until = ppu.wait_cycles;
 
         for (int i = 0; i < run_until / 4; i++) {
-            Run();
+            cpu.Run();
         }
 
         ppu.Tick();
