@@ -162,6 +162,15 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
             mmio.irq_ime |= value << 8;
             break;
         }
+
+        case HALTCNT: {
+            if (value & 0x80) {
+                mmio.haltcnt = SYSTEM_STOP;
+            } else {
+                mmio.haltcnt = SYSTEM_HALT;
+            }
+            break;
+        }
     }
 }
 

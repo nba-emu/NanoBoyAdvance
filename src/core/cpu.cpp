@@ -37,6 +37,8 @@ void CPU::Reset() {
     mmio.irq_if = 0;
     mmio.irq_ime = 0;
 
+    mmio.haltcnt = SYSTEM_RUN;
+
     ppu.Reset();
 }
 
@@ -53,7 +55,16 @@ void CPU::RunFor(int cycles) {
         int run_until = ppu.wait_cycles;
 
         for (int i = 0; i < run_until / 4; i++) {
-            cpu.Run();
+            std::uint16_t fire = mmio.irq_ie & mmio.irq_if;
+
+            if (mmio.haltcnt == SYSTEM_HALT && fire)
+                mmio.haltcnt = SYSTEM_RUN;
+
+            if (mmio.haltcnt == SYSTEM_RUN) {
+                if (mmio.irq_ime && fire)
+                    cpu.SignalIrq();
+                cpu.Run();
+            }
         }
 
         ppu.Tick();

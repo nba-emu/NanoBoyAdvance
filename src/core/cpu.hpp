@@ -24,6 +24,12 @@ class CPU : private ARM::Interface {
 
     Config* config;
 
+    enum HaltControl {
+        SYSTEM_RUN,
+        SYSTEM_STOP,
+        SYSTEM_HALT
+    };
+
     enum Interrupt {
         INT_VBLANK = 1 << 0,
         INT_HBLANK = 1 << 1,
@@ -62,6 +68,8 @@ class CPU : private ARM::Interface {
         std::uint16_t irq_ie;
         std::uint16_t irq_if;
         std::uint16_t irq_ime;
+
+        HaltControl haltcnt;
     } mmio;
 
     /* Memory bus implementation (ReadByte, ...) */
