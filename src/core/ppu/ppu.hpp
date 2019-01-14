@@ -44,7 +44,7 @@ private:
     void RenderScanline();
 
     CPU* cpu;
-    
+
     std::uint8_t* pram;
     std::uint8_t* vram;
     std::uint8_t* oam;

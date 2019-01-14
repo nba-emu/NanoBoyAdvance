@@ -150,7 +150,10 @@ void CPU::RunFor(int cycles) {
             }
         }
 
-        ppu.Tick();
+        ppu.wait_cycles -= go_for + run_until;
+        if (ppu.wait_cycles <= 0) {
+            ppu.Tick();
+        }
         cycles -= go_for;
     }
 }

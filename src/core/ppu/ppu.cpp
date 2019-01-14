@@ -63,7 +63,7 @@ void PPU::Tick() {
     switch (phase) {
     case PHASE_SCANLINE:
         phase = PHASE_HBLANK;
-        wait_cycles = s_wait_cycles[PHASE_HBLANK];
+        wait_cycles += s_wait_cycles[PHASE_HBLANK];
         dispstat.hblank_flag = 1;
 
         if (dispstat.hblank_irq_enable) {
@@ -81,14 +81,14 @@ void PPU::Tick() {
         if (vcount == 160) {
             dispstat.vblank_flag = 1;
             phase = PHASE_VBLANK;
-            wait_cycles = s_wait_cycles[PHASE_VBLANK];
+            wait_cycles += s_wait_cycles[PHASE_VBLANK];
 
             if (dispstat.vblank_irq_enable) {
                 cpu->mmio.irq_if |= CPU::INT_VBLANK;
             }
         } else {
             phase = PHASE_SCANLINE;
-            wait_cycles = s_wait_cycles[PHASE_SCANLINE];
+            wait_cycles += s_wait_cycles[PHASE_SCANLINE];
             RenderScanline();
         }
         break;
@@ -96,7 +96,7 @@ void PPU::Tick() {
         if (vcount == 227) {
             dispstat.vblank_flag = 0;
             phase = PHASE_SCANLINE;
-            wait_cycles = s_wait_cycles[PHASE_SCANLINE];
+            wait_cycles += s_wait_cycles[PHASE_SCANLINE];
 
             /* Update vertical counter. */
             vcount = 0;
@@ -104,7 +104,7 @@ void PPU::Tick() {
 
             RenderScanline();
         } else {
-            wait_cycles = s_wait_cycles[PHASE_VBLANK];
+            wait_cycles += s_wait_cycles[PHASE_VBLANK];
             
             /* Update vertical counter. */
             dispstat.vcount_flag = ++vcount == dispstat.vcount_setting;
