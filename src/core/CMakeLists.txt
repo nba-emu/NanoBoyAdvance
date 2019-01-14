@@ -9,15 +9,15 @@ SET(SOURCES
 )
 
 SET(HEADERS
-    arm/debugger/breakpoint.hpp
-    arm/debugger/debugger.hpp
     arm/arm.hpp
     arm/enums.hpp
     arm/interface.hpp
     arm/state.hpp
     arm/util.hpp
+    ppu/ppu.hpp
+    ppu/io.hpp
     cpu.hpp
-    emulator.hpp
+    mmio.hpp
 )
 
 ADD_LIBRARY(core STATIC ${SOURCES} ${HEADERS})

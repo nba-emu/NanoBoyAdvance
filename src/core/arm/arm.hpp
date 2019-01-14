@@ -6,7 +6,6 @@
  */
 
 #pragma once
-//#define DEBUGGER
 
 #include <array>
 #include <memory>
@@ -14,10 +13,6 @@
 #include "interface.hpp"
 #include "state.hpp"
 #include "util.hpp"
-
-#ifdef DEBUGGER
-#include "debugger/debugger.hpp"
-#endif
 
 namespace ARM {
 
@@ -28,12 +23,6 @@ public:
     auto GetInterface() -> Interface* const { return interface; }
     void SetInterface(Interface* interface) { this->interface = interface; }
     auto GetState() -> State& { return state; }
-
-#ifdef DEBUGGER
-    auto GetDebugger() -> Debugger* const { return debugger; }
-    void AttachDebugger(Debugger* debugger) { this->debugger = debugger; }
-    void RemoveDebugger() { this->debugger = nullptr; }
-#endif
 
     void Run();
     void SignalIrq();
@@ -46,10 +35,6 @@ private:
 
     /* Interface to emulator (Memory, SWI-emulation, ...). */
     Interface* interface;
-
-#ifdef DEBUGGER
-    Debugger* debugger = nullptr;
-#endif
 
     static Bank ModeToBank(Mode mode);
     void SwitchMode(Mode new_mode);
@@ -66,10 +51,6 @@ private:
     void WriteByte(std::uint32_t address, std::uint8_t  value, AccessType type);
     void WriteHalf(std::uint32_t address, std::uint16_t value, AccessType type);
     void WriteWord(std::uint32_t address, std::uint32_t value, AccessType type);
-#ifdef DEBUGGER
-    void DebuggerCheckRead(std::uint32_t address);
-    void DebuggerCheckWrite(std::uint32_t address);
-#endif
 
     void SetNZ(std::uint32_t value);
 
