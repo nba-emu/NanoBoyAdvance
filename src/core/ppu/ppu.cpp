@@ -59,7 +59,7 @@ void PPU::Tick() {
         dispstat.hblank_flag = 1;
 
         if (dispstat.hblank_irq_enable) {
-            cpu->mmio.irq_ie |= CPU::INT_HBLANK;
+            cpu->mmio.irq_if |= CPU::INT_HBLANK;
         }
         break;
     case PHASE_HBLANK:
@@ -67,7 +67,7 @@ void PPU::Tick() {
         dispstat.vcount_flag = ++vcount == dispstat.vcount_setting;
 
         if (dispstat.vcount_flag && dispstat.vcount_irq_enable) {
-            cpu->mmio.irq_ie |= CPU::INT_VCOUNT;
+            cpu->mmio.irq_if |= CPU::INT_VCOUNT;
         }
 
         if (vcount == 160) {
@@ -76,7 +76,7 @@ void PPU::Tick() {
             wait_cycles = s_wait_cycles[PHASE_VBLANK];
 
             if (dispstat.vblank_irq_enable) {
-                cpu->mmio.irq_ie |= CPU::INT_VBLANK;
+                cpu->mmio.irq_if |= CPU::INT_VBLANK;
             }
         } else {
             phase = PHASE_SCANLINE;
@@ -103,7 +103,7 @@ void PPU::Tick() {
         }
 
         if (dispstat.vcount_flag && dispstat.vcount_irq_enable) {
-            cpu->mmio.irq_ie |= CPU::INT_VCOUNT;
+            cpu->mmio.irq_if |= CPU::INT_VCOUNT;
         }
 
         break;

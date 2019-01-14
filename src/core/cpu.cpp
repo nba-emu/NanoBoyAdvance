@@ -7,8 +7,6 @@
 
 #include "cpu.hpp"
 
-#include <cstdio> /* remove me */
-
 namespace NanoboyAdvance {
 namespace GBA {
 
