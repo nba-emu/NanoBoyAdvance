@@ -24,26 +24,6 @@ inline void ARM7::Reset() {
 inline void ARM7::Run() {
     auto instruction = pipe[0];
 
-#ifdef DEBUGGER
-    if (debugger != nullptr) {
-        std::uint32_t ip = state.r15;
-        if (state.cpsr.f.thumb) {
-            ip -= 4;
-        } else {
-            ip -= 8;
-        }
-        for (auto breakpoint : debugger->Get(Breakpoint::Type::Code)) {
-            if (breakpoint->address == ip) {
-                breakpoint->hitTimes++;
-                debugger->OnHit(breakpoint);
-                /* HACK: use hit counter to determine if execution should be continued. */
-                if ((breakpoint->hitTimes % 2) == 1)
-                    return;
-            }
-        }
-    }
-#endif
-
     if (state.cpsr.f.thumb) {
         state.r15 &= ~1;
 
