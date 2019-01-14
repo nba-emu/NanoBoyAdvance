@@ -13,9 +13,8 @@ namespace ARM {
 
 /* Type of memory access. */
 enum AccessType {
-    ACCESS_NSEQ  = 0,
-    ACCESS_SEQ   = 1,
-    ACCESS_DEBUG = 2
+    ACCESS_NSEQ = 0,
+    ACCESS_SEQ  = 1,
 };
 
 struct Interface {

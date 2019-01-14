@@ -131,9 +131,11 @@ void CPU::SetSlot1(uint8_t* rom, size_t size) {
 void CPU::RunFor(int cycles) {
     while (cycles > 0) {
         /* Get next event. */
-        int run_until = ppu.wait_cycles;
+        int go_for = ppu.wait_cycles;
 
-        for (int i = 0; i < run_until / 4; i++) {
+        run_until += go_for;
+
+        while (run_until > 0) {
             std::uint16_t fire = mmio.irq_ie & mmio.irq_if;
 
             if (mmio.haltcnt == SYSTEM_HALT && fire)
@@ -143,11 +145,13 @@ void CPU::RunFor(int cycles) {
                 if (mmio.irq_ime && fire)
                     cpu.SignalIrq();
                 cpu.Run();
+            } else {
+                run_until = 0;
             }
         }
 
         ppu.Tick();
-        cycles -= run_until;
+        cycles -= go_for;
     }
 }
 

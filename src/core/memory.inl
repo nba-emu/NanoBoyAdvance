@@ -33,6 +33,8 @@ std::uint32_t ReadBIOS(std::uint32_t address) {
 std::uint8_t ReadByte(std::uint32_t address, ARM::AccessType type) final {
     int page = (address >> 24) & 15;
 
+    run_until -= cycles16[type][page];
+
     switch (page) {
         case 0x0: return ReadBIOS(address);
         case 0x2: return READ_FAST_8(memory.wram, address & 0x3FFFF);
@@ -69,6 +71,8 @@ std::uint8_t ReadByte(std::uint32_t address, ARM::AccessType type) final {
 
 std::uint16_t ReadHalf(std::uint32_t address, ARM::AccessType type) final {
     int page = (address >> 24) & 15;
+
+    run_until -= cycles16[type][page];
 
     switch (page) {
         case 0x0: return ReadBIOS(address);
@@ -123,6 +127,8 @@ std::uint16_t ReadHalf(std::uint32_t address, ARM::AccessType type) final {
 std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) final {
     int page = (address >> 24) & 15;
 
+    run_until -= cycles32[type][page];
+
     switch (page) {
         case 0x0: return ReadBIOS(address);
         case 0x2: return READ_FAST_32(memory.wram, address & 0x3FFFF);
@@ -170,6 +176,8 @@ std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) final {
 void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) final {
     int page = (address >> 24) & 15;
 
+    run_until -= cycles16[type][page];
+
     switch (page) {
         case 0x2: WRITE_FAST_8(memory.wram, address & 0x3FFFF, value); break;
         case 0x3: WRITE_FAST_8(memory.iram, address & 0x7FFF,  value); break;
@@ -199,6 +207,8 @@ void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) 
 
 void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type) final {
     int page = (address >> 24) & 15;
+
+    run_until -= cycles16[type][page];
 
     switch (page) {
         case 0x2: WRITE_FAST_16(memory.wram, address & 0x3FFFF, value); break;
@@ -263,6 +273,8 @@ void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type)
 
 void WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type) final {
     int page = (address >> 24) & 15;
+
+    run_until -= cycles32[type][page];
 
     switch (page) {
         case 0x2: WRITE_FAST_32(memory.wram, address & 0x3FFFF, value); break;

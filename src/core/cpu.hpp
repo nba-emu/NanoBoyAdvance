@@ -103,6 +103,7 @@ private:
     PPU ppu;
     Config* config;
 
+    int run_until = 0;
     int cycles16[2][16];
     int cycles32[2][16];
 
