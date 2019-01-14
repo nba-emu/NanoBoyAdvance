@@ -8,8 +8,8 @@
 #pragma once
 
 #include <cstdint>
-#include "io.hpp"
 #include "../config.hpp"
+#include "io.hpp"
 
 namespace NanoboyAdvance {
 namespace GBA {
@@ -17,19 +17,11 @@ namespace GBA {
 class CPU;
 
 class PPU {
-    friend class CPU;
+public:
+    PPU(Config* config, CPU* cpu);
 
-    CPU* cpu;
-    
-    int wait_cycles;
-
-    enum Phase {
-        PHASE_SCANLINE = 0,
-        PHASE_HBLANK = 1,
-        PHASE_VBLANK = 2
-    };
-
-    enum Phase phase; 
+    void Reset();
+    void Tick();
 
     struct MMIO {
         DisplayControl dispcnt;
@@ -42,21 +34,28 @@ class PPU {
         std::uint16_t bgvofs[4];
     } mmio;
 
-    Config* config;
+    int wait_cycles;
 
+private:
+    static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
+    auto ReadPalette(int palette, int index) -> std::uint16_t;
+    void RenderScanline();
+
+    CPU* cpu;
+    Config* config;
     std::uint8_t* pram;
     std::uint8_t* vram;
     std::uint8_t* oam;
 
+    enum Phase {
+        PHASE_SCANLINE = 0,
+        PHASE_HBLANK = 1,
+        PHASE_VBLANK = 2
+    };
+
+    enum Phase phase;
+
     static const int s_wait_cycles[3];
-
-    static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
-    auto ReadPalette(int palette, int index) -> std::uint16_t;
-
-    void Reset();
-
-    void Tick();
-    void RenderScanline();
 };
 
 } // namespace GBA

@@ -5,18 +5,14 @@
  * found in the LICENSE file.
  */
 
+#include <cstring>
 #include "cpu.hpp"
 
 namespace NanoboyAdvance {
 namespace GBA {
 
-CPU::CPU(Config* config) : config(config) {
-    ppu.config = config;
-    ppu.pram = memory.pram;
-    ppu.vram = memory.vram;
-    ppu.oam  = memory.oam;
-    ppu.cpu  = this;
-
+CPU::CPU(Config* config) : config(config),
+                           ppu(config, this) {
     Reset();
 }
     
@@ -26,8 +22,8 @@ void CPU::Reset() {
 
     auto& state = cpu.GetState();
 
-    state.bank[ARM::BANK_SVC] [ARM::BANK_R13] = 0x03007FE0; 
-    state.bank[ARM::BANK_IRQ] [ARM::BANK_R13] = 0x03007FA0;
+    state.bank[ARM::BANK_SVC][ARM::BANK_R13] = 0x03007FE0; 
+    state.bank[ARM::BANK_IRQ][ARM::BANK_R13] = 0x03007FA0;
     state.reg[13] = 0x03007F00;
     state.cpsr.f.mode = ARM::MODE_USR;
     state.r15 = 0x08000000;

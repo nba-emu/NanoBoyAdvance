@@ -13,6 +13,14 @@ namespace GBA {
 
 const int PPU::s_wait_cycles[3] = { 960, 272, 1232 };
 
+PPU::PPU(Config* config, CPU* cpu) {
+    this->config = config;
+    this->cpu = cpu;
+    pram = cpu->memory.pram;
+    vram = cpu->memory.vram;
+    oam  = cpu->memory.oam;
+}
+
 void PPU::Reset() {
     mmio.dispcnt.Reset();
     mmio.dispstat.Reset();
