@@ -174,7 +174,6 @@ void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) 
         case 0x2: WRITE_FAST_8(memory.wram, address & 0x3FFFF, value); break;
         case 0x3: WRITE_FAST_8(memory.iram, address & 0x7FFF,  value); break;
         case 0x4: {
-            std::printf("[W][MMIO] 0x%08x = 0x%02x\n", address, value);
             WriteMMIO(address, value & 0xFF);
             break;
         }
