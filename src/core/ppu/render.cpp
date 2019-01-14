@@ -57,8 +57,8 @@ void PPU::RenderText(int id) {
         std::uint32_t offset = base + ((column++ % 32) * 2);
 
         switch (bgcnt.size) {
-            case 1: offset += screen_x * 2048; break;
-            case 2: offset += screen_y * 2048; break;
+            case 1: offset +=  screen_x * 2048; break;
+            case 2: offset +=  screen_y * 2048; break;
             case 3: offset += (screen_x * 2048) + (screen_y * 4096); break;
         }
 
@@ -82,18 +82,22 @@ void PPU::RenderText(int id) {
 
         if (draw_x >= 0 & draw_x <= 232) {
             for (int x = 0; x < 8; x++) {
-                if (tile[x] != 0x8000 && bgcnt.priority <= priority[draw_x])
+                if (tile[x] != 0x8000 && bgcnt.priority <= priority[draw_x]) {
+                    pixel[1][draw_x] = pixel[0][draw_x];
                     pixel[0][draw_x] = tile[x];
+                    priority[draw_x] = bgcnt.priority;
+                }
                 draw_x++;
             }
         } else {
             for (int x = 0; x < 8; x++) {
-                if (draw_x < 0 || draw_x >= 240) {
-                    draw_x++;
-                    continue;
-                }
-                if (tile[x] != 0x8000 && bgcnt.priority <= priority[draw_x])
+                if (draw_x >= 0 && draw_x < 240 &&
+                    tile[x] != 0x8000 && bgcnt.priority <= priority[draw_x])
+                {
+                    pixel[1][draw_x] = pixel[0][draw_x];
                     pixel[0][draw_x] = tile[x];
+                    priority[draw_x] = bgcnt.priority;
+                }
                 draw_x++;
             }
         }
