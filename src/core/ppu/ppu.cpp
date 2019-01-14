@@ -26,7 +26,7 @@ void PPU::Reset() {
     
     phase = PHASE_SCANLINE;
     wait_cycles = s_wait_cycles[PHASE_SCANLINE];
-    RenderScanline();
+    //RenderScanline();
 }
 
 auto PPU::ConvertColor(std::uint16_t color) -> std::uint32_t {
@@ -120,8 +120,13 @@ void PPU::RenderScanline() {
     } else {
         /* TODO: how does HW behave when we select mode 6 or 7? */
         switch (mmio.dispcnt.mode) {
-            case 0:
+            case 0: {
+                /* Debug */
+                for (int x = 0; x < 16; x++) {
+                    line[x] = ConvertColor(ReadPalette(0, x));
+                }
                 break;
+            }
             case 1:
                 break;
             case 2:
