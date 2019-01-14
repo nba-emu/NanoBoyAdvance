@@ -23,6 +23,8 @@ public:
     void Reset();
     void Tick();
 
+    Config* config;
+
     struct MMIO {
         DisplayControl dispcnt;
         DisplayStatus dispstat;
@@ -42,7 +44,7 @@ private:
     void RenderScanline();
 
     CPU* cpu;
-    Config* config;
+    
     std::uint8_t* pram;
     std::uint8_t* vram;
     std::uint8_t* oam;

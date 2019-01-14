@@ -49,7 +49,7 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
 }
 
 void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
-    std::printf("[W][MMIO] 0x%08x=0x%02x\n", address, value);
+    //std::printf("[W][MMIO] 0x%08x=0x%02x\n", address, value);
 
     auto& ppu_io = ppu.mmio;
 

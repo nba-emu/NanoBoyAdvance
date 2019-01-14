@@ -19,6 +19,9 @@ class CPU : private ARM::Interface {
 public:
     CPU(Config* config);
 
+    auto GetConfig() -> Config* const;
+    void SetConfig(Config* config);
+
     void Reset();
     void SetSlot1(uint8_t* rom, size_t size);
 
