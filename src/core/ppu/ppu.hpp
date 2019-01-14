@@ -42,12 +42,17 @@ private:
     static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
     auto ReadPalette(int palette, int index) -> std::uint16_t;
     void RenderScanline();
-
+    void RenderText(int id);
+    void DecodeTile4bpp(std::uint16_t* buffer, std::uint32_t base, int palette, int number, int y, bool flip);
+    
     CPU* cpu;
 
     std::uint8_t* pram;
     std::uint8_t* vram;
     std::uint8_t* oam;
+
+    uint8_t priority[240];
+    uint16_t pixel[2][240];
 
     enum Phase {
         PHASE_SCANLINE = 0,

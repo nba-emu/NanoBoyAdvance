@@ -5,6 +5,7 @@
  * found in the LICENSE file.
  */
 
+#include <cstring>
 #include "ppu.hpp"
 #include "../cpu.hpp"
 
@@ -126,12 +127,21 @@ void PPU::RenderScanline() {
         for (int x = 0; x < 240; x++)
             line[x] = ConvertColor(0x7FFF);
     } else {
+        std::memset(priority, 6, sizeof(uint8_t)*240);
+
         /* TODO: how does HW behave when we select mode 6 or 7? */
         switch (mmio.dispcnt.mode) {
             case 0: {
-                /* Debug */
-                for (int x = 0; x < 16; x++) {
-                    line[x] = ConvertColor(ReadPalette(0, x));
+                // /* Debug */
+                // for (int x = 0; x < 16; x++) {
+                //     line[x] = ConvertColor(ReadPalette(0, x));
+                // }
+                for (int i = 3; i >= 0; i--) {
+                    if (mmio.dispcnt.enable[i])
+                        RenderText(i);
+                }
+                for (int x = 0; x < 240; x++) {
+                    line[x] = ConvertColor(pixel[0][x]);
                 }
                 break;
             }
