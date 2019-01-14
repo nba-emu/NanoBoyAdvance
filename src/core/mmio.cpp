@@ -163,6 +163,26 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
             break;
         }
 
+        /* Waitstates */
+        case WAITCNT+0: {
+            mmio.waitcnt.sram  = (value >> 0) & 3;
+            mmio.waitcnt.ws0_n = (value >> 2) & 3;
+            mmio.waitcnt.ws0_s = (value >> 4) & 1;
+            mmio.waitcnt.ws1_n = (value >> 5) & 3;
+            mmio.waitcnt.ws1_s = (value >> 7) & 1;
+            UpdateCycleLUT();
+            break;
+        }
+        case WAITCNT+1: {
+            mmio.waitcnt.ws2_n = (value >> 0) & 3;
+            mmio.waitcnt.ws2_s = (value >> 2) & 1;
+            mmio.waitcnt.phi = (value >> 3) & 3;
+            mmio.waitcnt.prefetch = (value >> 6) & 1;
+            mmio.waitcnt.cgb = (value >> 7) & 1;
+            UpdateCycleLUT();
+            break;
+        }
+
         case HALTCNT: {
             if (value & 0x80) {
                 mmio.haltcnt = SYSTEM_STOP;

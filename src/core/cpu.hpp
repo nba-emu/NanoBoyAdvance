@@ -73,6 +73,19 @@ public:
         std::uint16_t irq_ime;
 
         HaltControl haltcnt;
+
+        struct WaitstateControl {
+            int sram;
+            int ws0_n;
+            int ws0_s;
+            int ws1_n;
+            int ws1_s;
+            int ws2_n;
+            int ws2_s;
+            int phi;
+            int prefetch;
+            int cgb;
+        } waitcnt;
     } mmio;
 
 private:
@@ -84,9 +97,19 @@ private:
     auto ReadMMIO(std::uint32_t address) -> std::uint8_t;
     void WriteMMIO(std::uint32_t address, std::uint8_t value);
 
+    void UpdateCycleLUT();
+
     ARM::ARM7 cpu;
     PPU ppu;
     Config* config;
+
+    int cycles16[2][16];
+    int cycles32[2][16];
+
+    static const int s_ws_nseq[4]; /* Non-sequential SRAM/WS0/WS1/WS2 */
+    static const int s_ws_seq0[2]; /* Sequential WS0 */
+    static const int s_ws_seq1[2]; /* Sequential WS1 */
+    static const int s_ws_seq2[2]; /* Sequential WS2 */
 };
 
 } // namespace GBA

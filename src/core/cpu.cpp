@@ -11,6 +11,11 @@
 namespace NanoboyAdvance {
 namespace GBA {
 
+const int CPU::s_ws_nseq[4] = { 4, 3, 2, 8 }; /* Non-sequential SRAM/WS0/WS1/WS2 */
+const int CPU::s_ws_seq0[2] = { 2, 1 };       /* Sequential WS0 */
+const int CPU::s_ws_seq1[2] = { 4, 1 };       /* Sequential WS1 */
+const int CPU::s_ws_seq2[2] = { 8, 1 };       /* Sequential WS2 */
+
 CPU::CPU(Config* config) : config(config),
                            ppu(config, this) {
     Reset();
@@ -77,6 +82,40 @@ void CPU::Reset() {
     mmio.irq_if = 0;
     mmio.irq_ime = 0;
 
+    /* Reset waitstates. */
+    mmio.waitcnt.sram = 0;
+    mmio.waitcnt.ws0_n = 0;
+    mmio.waitcnt.ws0_s = 0;
+    mmio.waitcnt.ws1_n = 0;
+    mmio.waitcnt.ws1_s = 0;
+    mmio.waitcnt.ws2_n = 0;
+    mmio.waitcnt.ws2_s = 0;
+    mmio.waitcnt.phi = 0;
+    mmio.waitcnt.prefetch = 0;
+    mmio.waitcnt.cgb = 0;
+    /* TODO: implement register 0x04000800. */
+    for (int i = 0; i < 2; i++) {
+        cycles16[i][0x0] = 1;
+        cycles32[i][0x0] = 1;
+        cycles16[i][0x1] = 1;
+        cycles32[i][0x1] = 1;
+        cycles16[i][0x2] = 3;
+        cycles32[i][0x2] = 6;
+        cycles16[i][0x3] = 1;
+        cycles32[i][0x3] = 1;
+        cycles16[i][0x4] = 1;
+        cycles32[i][0x4] = 1;
+        cycles16[i][0x5] = 1;
+        cycles32[i][0x5] = 2;
+        cycles16[i][0x6] = 1;
+        cycles32[i][0x6] = 2;
+        cycles16[i][0x7] = 1;
+        cycles32[i][0x7] = 1;
+        cycles16[i][0xF] = 1;
+        cycles32[i][0xF] = 1;
+    }
+    UpdateCycleLUT();
+
     mmio.haltcnt = SYSTEM_RUN;
 
     ppu.Reset();
@@ -110,6 +149,36 @@ void CPU::RunFor(int cycles) {
         ppu.Tick();
         cycles -= run_until;
     }
+}
+
+void CPU::UpdateCycleLUT() {
+    const auto& waitcnt = mmio.waitcnt;
+
+    /* SRAM timing. */
+    cycles16[0][0xE] = s_ws_nseq[waitcnt.sram];
+    cycles16[1][0xE] = s_ws_nseq[waitcnt.sram];
+    cycles32[0][0xE] = s_ws_nseq[waitcnt.sram];
+    cycles32[1][0xE] = s_ws_nseq[waitcnt.sram];
+
+    /* ROM: WS0/WS1/WS2 non-sequential timing. */
+    cycles16[0][0x8] = cycles16[0][0x9] = 1 + s_ws_nseq[waitcnt.ws0_n];
+    cycles16[0][0xA] = cycles16[0][0xB] = 1 + s_ws_nseq[waitcnt.ws1_n];
+    cycles16[0][0xC] = cycles16[0][0xD] = 1 + s_ws_nseq[waitcnt.ws2_n];
+
+    /* ROM: WS0/WS1/WS2 sequential timing. */
+    cycles16[1][0x8] = cycles16[1][0x9] = 1 + s_ws_seq0[waitcnt.ws0_s];
+    cycles16[1][0xA] = cycles16[1][0xB] = 1 + s_ws_seq1[waitcnt.ws1_s];
+    cycles16[1][0xC] = cycles16[1][0xD] = 1 + s_ws_seq2[waitcnt.ws2_s];
+
+    /* ROM: WS0/WS1/WS2 32-bit non-sequential access: 1N access, 1S access */
+    cycles32[0][0x8] = cycles32[0][0x9] = cycles16[0][0x8] + cycles16[1][0x8];
+    cycles32[0][0xA] = cycles32[0][0xB] = cycles16[0][0xA] + cycles16[1][0x8];
+    cycles32[0][0xC] = cycles32[0][0xD] = cycles16[0][0xC] + cycles16[1][0x8];
+
+    /* ROM: WS0/WS1/WS2 32-bit sequential access: 2S accesses */
+    cycles32[1][0x8] = cycles32[1][0x9] = cycles16[1][0x8] * 2;
+    cycles32[1][0xA] = cycles32[1][0xB] = cycles16[1][0xA] * 2;
+    cycles32[1][0xC] = cycles32[1][0xD] = cycles16[1][0xC] * 2;
 }
 
 } // namespace NanoboyAdvance
