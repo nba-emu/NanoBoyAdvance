@@ -149,9 +149,9 @@ void ARM7::ARM_DataProcessing(std::uint32_t instruction) {
 
     if (reg_dst == 15) {
         if (state.cpsr.f.thumb) {
-            RefillT();
+            Thumb_ReloadPipeline();
         } else {
-            RefillA();
+            ARM_ReloadPipeline();
         }
     } else {
         state.r15 += 4;
@@ -303,10 +303,10 @@ void ARM7::ARM_BranchAndExchange(std::uint32_t instruction) {
     if (address & 1) {
         state.r15 = address & ~1;
         state.cpsr.f.thumb = 1;
-        RefillT();
+        Thumb_ReloadPipeline();
     } else {
         state.r15 = address & ~3;
-        RefillA();
+        ARM_ReloadPipeline();
     }
 }
 
@@ -374,7 +374,7 @@ void ARM7::ARM_BranchAndLink(std::uint32_t instruction) {
     }
 
     state.r15 += offset * 4;
-    RefillA();
+    ARM_ReloadPipeline();
 }
 
 template <bool immediate, bool pre, bool add, bool byte, bool writeback, bool load>
@@ -446,7 +446,7 @@ void ARM7::ARM_SingleDataTransfer(std::uint32_t instruction) {
     }
 
     if (load && dst == 15) {
-        RefillA();
+        ARM_ReloadPipeline();
     } else {
         state.r15 += 4;
     }
@@ -535,9 +535,9 @@ void ARM7::ARM_BlockDataTransfer(std::uint32_t instruction) {
 
     if (load && transfer_pc) {
         if (state.cpsr.f.thumb) {
-            RefillT();
+            Thumb_ReloadPipeline();
         } else {
-            RefillA();
+            ARM_ReloadPipeline();
         }
     } else {
         state.r15 += 4;
@@ -555,7 +555,7 @@ void ARM7::ARM_Undefined(std::uint32_t instruction) {
 
     /* Jump to execution vector */
     state.r15 = 0x04;
-    RefillA();
+    ARM_ReloadPipeline();
 }
 
 void ARM7::ARM_SWI(std::uint32_t instruction) {
@@ -569,7 +569,7 @@ void ARM7::ARM_SWI(std::uint32_t instruction) {
 
     /* Jump to execution vector */
     state.r15 = 0x08;
-    RefillA();
+    ARM_ReloadPipeline();
 }
 
 template <std::uint32_t instruction>

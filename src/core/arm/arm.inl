@@ -71,16 +71,16 @@ inline void ARM7::SignalIrq() {
 
     /* Jump to exception vector. */
     state.r15 = 0x18;
-    RefillA();
+    ARM_ReloadPipeline();
 }
 
-inline void ARM7::RefillA() {
+inline void ARM7::ARM_ReloadPipeline() {
     pipe[0] = interface->ReadWord(state.r15+0, ACCESS_NSEQ);
     pipe[1] = interface->ReadWord(state.r15+4, ACCESS_SEQ);
     state.r15 += 8;
 }
 
-inline void ARM7::RefillT() {
+inline void ARM7::Thumb_ReloadPipeline() {
     pipe[0] = interface->ReadHalf(state.r15+0, ACCESS_NSEQ);
     pipe[1] = interface->ReadHalf(state.r15+2, ACCESS_SEQ);
     state.r15 += 4;

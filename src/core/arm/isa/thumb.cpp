@@ -189,11 +189,11 @@ void ARM7::Thumb_HighRegisterOps_BX(std::uint16_t instruction) {
         /* LSB indicates new instruction set (0 = ARM, 1 = THUMB) */
         if (operand & 1) {
             state.r15 = operand & ~1;
-            RefillT();
+            Thumb_ReloadPipeline();
         } else {
             state.cpsr.f.thumb = 0;
             state.r15 = operand & ~3;
-            RefillA();
+            ARM_ReloadPipeline();
         }
     /* Check for Compare (CMP) instruction. */
     } else if (op == 1) {
@@ -206,7 +206,7 @@ void ARM7::Thumb_HighRegisterOps_BX(std::uint16_t instruction) {
 
         if (dst == 15) {
             state.r15 &= ~1;
-            RefillT();
+            Thumb_ReloadPipeline();
         } else {
             state.r15 += 2;
         }
@@ -369,7 +369,7 @@ void ARM7::Thumb_PushPop(std::uint16_t instruction) {
         if (rbit) {
             state.reg[15] = ReadWord(address, ACCESS_SEQ) & ~1;
             state.reg[13] = address + 4;
-            RefillT();
+            Thumb_ReloadPipeline();
             return;
         }
         state.r13 = address;
@@ -448,13 +448,13 @@ void ARM7::Thumb_ConditionalBranch(std::uint16_t instruction) {
         }
 
         state.r15 += imm * 2;
-        RefillT();
+        Thumb_ReloadPipeline();
     } else {
         state.r15 += 2;
     }
 }
 
-void ARM7::Thumb_SoftwareInterrupt(std::uint16_t instruction) {
+void ARM7::Thumb_SWI(std::uint16_t instruction) {
     /* Save return address and program status. */
     state.bank[BANK_SVC][BANK_R14] = state.r15 - 2;
     state.spsr[BANK_SVC].v = state.cpsr.v;
@@ -466,7 +466,7 @@ void ARM7::Thumb_SoftwareInterrupt(std::uint16_t instruction) {
 
     /* Jump to execution vector */
     state.r15 = 0x08;
-    RefillA();
+    ARM_ReloadPipeline();
 }
 
 void ARM7::Thumb_UnconditionalBranch(std::uint16_t instruction) {
@@ -478,7 +478,7 @@ void ARM7::Thumb_UnconditionalBranch(std::uint16_t instruction) {
     }
 
     state.r15 += imm;
-    RefillT();
+    Thumb_ReloadPipeline();
 }
 
 template <bool second_instruction>
@@ -497,7 +497,7 @@ void ARM7::Thumb_LongBranchLink(std::uint16_t instruction) {
 
         state.r15 = (state.r14 + imm * 2) & ~1;
         state.r14 = temp | 1;
-        RefillT();
+        Thumb_ReloadPipeline();
     }
 }
 
@@ -586,7 +586,7 @@ constexpr ARM7::ThumbInstruction ARM7::GetThumbHandler() {
     }
     if ((instruction & 0xFF00) == 0xDF00) {
         // THUMB.17 Software Interrupt
-        return &ARM7::Thumb_SoftwareInterrupt;
+        return &ARM7::Thumb_SWI;
     }
     if ((instruction & 0xF800) == 0xE000) {
         // THUMB.18 Unconditional Branch

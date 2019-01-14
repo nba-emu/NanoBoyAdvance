@@ -65,8 +65,8 @@ private:
     std::uint32_t SUB(std::uint32_t op1, std::uint32_t op2, bool set_flags);
     std::uint32_t SBC(std::uint32_t op1, std::uint32_t op2, bool set_flags);
 
-    void RefillA();
-    void RefillT();
+    void ARM_ReloadPipeline();
+    void Thumb_ReloadPipeline();
 
     typedef void (ARM7::*ArmInstruction)(std::uint32_t);
     typedef void (ARM7::*ThumbInstruction)(std::uint16_t);

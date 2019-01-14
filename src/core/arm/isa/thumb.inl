@@ -72,7 +72,7 @@ void Thumb_LoadStoreMultiple(std::uint16_t instruction);
 template <int cond>
 void Thumb_ConditionalBranch(std::uint16_t instruction);
 
-void Thumb_SoftwareInterrupt(std::uint16_t instruction);
+void Thumb_SWI(std::uint16_t instruction);
 
 void Thumb_UnconditionalBranch(std::uint16_t instruction);
 
