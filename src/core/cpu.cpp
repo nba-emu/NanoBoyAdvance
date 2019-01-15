@@ -17,6 +17,7 @@ constexpr int CPU::s_ws_seq2[2]; /* Sequential WS2 */
 
 CPU::CPU(Config* config)
     : config(config)
+    , cpu(this)
     , ppu(this)
 {
     Reset();
@@ -24,7 +25,6 @@ CPU::CPU(Config* config)
     
 void CPU::Reset() {
     cpu.Reset();
-    cpu.SetInterface(this);
 
     auto& state = cpu.GetState();
 

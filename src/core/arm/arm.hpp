@@ -18,19 +18,21 @@ namespace ARM {
 
 class ARM7 {
 public:
-    void Reset();
+    ARM7(ARM::Interface* interface)
+        : interface(interface)
+    { }
 
     auto GetInterface() -> Interface* const { return interface; }
-    void SetInterface(Interface* interface) { this->interface = interface; }
     auto GetState() -> State& { return state; }
 
+    void Reset();
     void Run();
     void SignalIrq();
 
 private:
-    /* CPU registers */
     State state;
     StatusRegister* p_spsr;
+
     std::uint32_t pipe[2];
 
     /* Interface to emulator (Memory, SWI-emulation, ...). */
