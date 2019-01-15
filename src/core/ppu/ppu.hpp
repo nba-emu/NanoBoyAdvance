@@ -62,7 +62,7 @@ private:
 
     Phase phase;
 
-    static const int s_wait_cycles[3];
+    static constexpr int s_wait_cycles[3] = { 960, 272, 1232 };
 };
 
 }

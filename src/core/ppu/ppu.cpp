@@ -11,14 +11,16 @@
 
 using namespace NanoboyAdvance::GBA;
 
-const int PPU::s_wait_cycles[3] = { 960, 272, 1232 };
+constexpr int PPU::s_wait_cycles[3];
 
-PPU::PPU(Config* config, CPU* cpu) {
-    this->config = config;
-    this->cpu = cpu;
-    pram = cpu->memory.pram;
-    vram = cpu->memory.vram;
-    oam  = cpu->memory.oam;
+PPU::PPU(Config* config, CPU* cpu) 
+    : config(config)
+    , cpu(cpu)
+    , pram(cpu->memory.pram)
+    , vram(cpu->memory.vram)
+    , oam(cpu->memory.oam)
+{
+    Reset();
 }
 
 void PPU::Reset() {
