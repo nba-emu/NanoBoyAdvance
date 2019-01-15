@@ -5,12 +5,13 @@
  * found in the LICENSE file.
  */
 
+#include "../cpu.hpp"
 #include "ppu.hpp"
 
 using namespace NanoboyAdvance::GBA;
 
 void PPU::DecodeTile4bpp(std::uint16_t* buffer, std::uint32_t base, int palette, int number, int y, bool flip) {
-    std::uint8_t* data = &vram[base + (number * 32) + (y * 4)];
+    std::uint8_t* data = &cpu->memory.vram[base + (number * 32) + (y * 4)];
 
     if (flip) {
         for (int x = 0; x < 4; x++) {
@@ -61,7 +62,7 @@ void PPU::RenderText(int id) {
             case 3: offset += (screen_x * 2048) + (screen_y * 4096); break;
         }
 
-        std::uint16_t encoder = (vram[offset + 1] << 8) | vram[offset];
+        std::uint16_t encoder = (cpu->memory.vram[offset + 1] << 8) | cpu->memory.vram[offset];
 
         if (encoder != last_encoder) {
             int number  = encoder & 0x3FF;

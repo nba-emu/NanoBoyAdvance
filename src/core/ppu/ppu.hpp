@@ -8,7 +8,7 @@
 #pragma once
 
 #include <cstdint>
-#include "../config.hpp"
+
 #include "io.hpp"
 
 namespace NanoboyAdvance::GBA {
@@ -17,12 +17,10 @@ class CPU;
 
 class PPU {
 public:
-    PPU(Config* config, CPU* cpu);
+    PPU(CPU* cpu);
 
     void Reset();
     void Tick();
-
-    Config* config;
 
     struct MMIO {
         DisplayControl dispcnt;
@@ -52,10 +50,6 @@ private:
     void DecodeTile4bpp(std::uint16_t* buffer, std::uint32_t base, int palette, int number, int y, bool flip);
 
     CPU* cpu;
-
-    std::uint8_t* pram;
-    std::uint8_t* vram;
-    std::uint8_t* oam;
 
     uint8_t priority[240];
     uint16_t pixel[2][240];

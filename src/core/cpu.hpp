@@ -18,9 +18,6 @@ class CPU : private ARM::Interface {
 public:
     CPU(Config* config);
 
-    auto GetConfig() -> Config* const;
-    void SetConfig(Config* config);
-
     void Reset();
     void SetSlot1(uint8_t* rom, size_t size);
 
@@ -48,6 +45,8 @@ public:
         INT_KEYPAD  = 1 << 12,
         INT_GAMEPAK = 1 << 13
     };
+
+    Config* config;
 
     struct SystemMemory {
         std::uint8_t bios[0x04000];
@@ -94,7 +93,7 @@ private:
     void Tick(int cycles) final {
         run_until -= cycles;
     }
-    
+
     void SWI(std::uint32_t call_id) final { }
 
     auto ReadMMIO(std::uint32_t address) -> std::uint8_t;
@@ -104,7 +103,6 @@ private:
 
     ARM::ARM7 cpu;
     PPU ppu;
-    Config* config;
 
     int run_until = 0;
     int cycles16[2][16];

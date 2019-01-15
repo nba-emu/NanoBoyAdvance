@@ -17,20 +17,10 @@ constexpr int CPU::s_ws_seq2[2]; /* Sequential WS2 */
 
 CPU::CPU(Config* config)
     : config(config)
-    , ppu(config, this)
+    , ppu(this)
 {
     Reset();
 }
-
-auto CPU::GetConfig() -> Config* const {
-    return config;
-}
-
-void CPU::SetConfig(Config* config) {
-    ppu.config = config;
-    this->config = config;
-}
-
     
 void CPU::Reset() {
     cpu.Reset();
