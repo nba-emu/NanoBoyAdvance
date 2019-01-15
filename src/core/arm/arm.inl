@@ -146,40 +146,74 @@ inline void ARM7::SwitchMode(Mode new_mode) {
     if (new_mode == old_mode)
         return;
 
-    auto new_bank = ModeToBank(new_mode);
-    auto old_bank = ModeToBank(old_mode);
-
-    auto bank = &state.bank[0];
-
     state.cpsr.f.mode = new_mode;
 
-    if (new_bank == old_bank)
-        return;
-
-    if (new_bank == BANK_FIQ || old_bank == BANK_FIQ) {
-        auto old_gpr_bank = (old_bank == BANK_FIQ) ? BANK_FIQ : BANK_NONE;
-        auto new_gpr_bank = (new_bank == BANK_FIQ) ? BANK_FIQ : BANK_NONE;
-
-        /* Save General Purpose Registers */
-        for (int i = 0; i < 5; i++) {
-            bank[old_gpr_bank][2+i] = state.reg[8+i];
-        }
-
-        /* Restore General Purpose Registers */
-        for (int i = 0; i < 5; i++) {
-            state.reg[8+i] = bank[new_gpr_bank][2+i];
-        }
+    switch (old_mode) {
+        case MODE_USR:
+        case MODE_SYS:
+            state.bank[BANK_NONE][BANK_R13] = state.r13;
+            state.bank[BANK_NONE][BANK_R14] = state.r14;
+            break;
+        case MODE_FIQ:
+            state.bank[BANK_FIQ][BANK_R13] = state.r13;
+            state.bank[BANK_FIQ][BANK_R14] = state.r14;
+            for (int i = 0; i < 5; i++) {
+                state.bank[BANK_FIQ][2+i] = state.reg[8+i];
+            }
+            break;
+        case MODE_IRQ:
+            state.bank[BANK_IRQ][BANK_R13] = state.r13;
+            state.bank[BANK_IRQ][BANK_R14] = state.r14;
+            break;
+        case MODE_SVC:
+            state.bank[BANK_SVC][BANK_R13] = state.r13;
+            state.bank[BANK_SVC][BANK_R14] = state.r14;
+            break;
+        case MODE_ABT:
+            state.bank[BANK_ABT][BANK_R13] = state.r13;
+            state.bank[BANK_ABT][BANK_R14] = state.r14;
+            break;
+        case MODE_UND:
+            state.bank[BANK_UND][BANK_R13] = state.r13;
+            state.bank[BANK_UND][BANK_R14] = state.r14;
+            break;
     }
 
-    /* Save SP and LR to current bank. */
-    state.bank[old_bank][BANK_R13] = state.r13;
-    state.bank[old_bank][BANK_R14] = state.r14;
-
-    /* Restore SP and LR from new bank. */
-    state.r13 = state.bank[new_bank][BANK_R13];
-    state.r14 = state.bank[new_bank][BANK_R14];
-
-    p_spsr = &state.spsr[new_bank];
+    switch (new_mode) {
+        case MODE_USR:
+        case MODE_SYS:
+            state.r13 = state.bank[BANK_NONE][BANK_R13];
+            state.r14 = state.bank[BANK_NONE][BANK_R14];
+            p_spsr = &state.spsr[BANK_NONE];
+            break;
+        case MODE_FIQ:
+            state.r13 = state.bank[BANK_FIQ][BANK_R13];
+            state.r14 = state.bank[BANK_FIQ][BANK_R14];
+            for (int i = 0; i < 5; i++) {
+                state.reg[8+i] = state.bank[BANK_FIQ][2+i];
+            }
+            break;
+        case MODE_IRQ:
+            state.r13 = state.bank[BANK_IRQ][BANK_R13];
+            state.r14 = state.bank[BANK_IRQ][BANK_R14];
+            p_spsr = &state.spsr[BANK_IRQ];
+            break;
+        case MODE_SVC:
+            state.r13 = state.bank[BANK_SVC][BANK_R13];
+            state.r14 = state.bank[BANK_SVC][BANK_R14];
+            p_spsr = &state.spsr[BANK_SVC];
+            break;
+        case MODE_ABT:
+            state.r13 = state.bank[BANK_ABT][BANK_R13];
+            state.r14 = state.bank[BANK_ABT][BANK_R14];
+            p_spsr = &state.spsr[BANK_ABT];
+            break;
+        case MODE_UND:
+            state.r13 = state.bank[BANK_UND][BANK_R13];
+            state.r14 = state.bank[BANK_UND][BANK_R14];
+            p_spsr = &state.spsr[BANK_UND];
+            break;
+    }
 }
 
 inline std::uint32_t ARM7::ReadByte(std::uint32_t address, AccessType type) {
