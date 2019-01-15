@@ -49,4 +49,4 @@ enum Condition {
     COND_NV = 15
 };
 
-} // namespace ARM
+}

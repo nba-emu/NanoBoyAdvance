@@ -7,8 +7,7 @@
 
 #include "io.hpp"
 
-namespace NanoboyAdvance {
-namespace GBA {
+using namespace NanoboyAdvance::GBA;
 
 void DisplayControl::Reset() {
     Write(0, 0);
@@ -121,6 +120,3 @@ void BackgroundControl::Write(int address, std::uint8_t value) {
         break;
     }
 }
-
-} // namespace GBA
-} // namespace NanoboyAdvance

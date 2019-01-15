@@ -7,7 +7,7 @@
 
 #include "../arm.hpp"
 
-namespace ARM {
+using namespace ARM;
 
 std::array<ARM7::ThumbInstruction, 1024> ARM7::thumb_lut = MakeThumbLut();
 
@@ -602,11 +602,9 @@ constexpr ARM7::ThumbInstruction ARM7::GetThumbHandler() {
 
 constexpr std::array<ARM7::ThumbInstruction, 1024> ARM7::MakeThumbLut() {
     std::array<ARM7::ThumbInstruction, 1024> lut = {};
+    
     static_for<std::size_t, 0, 1024>([&](auto i) {
         lut[i] = GetThumbHandler<i<<6>();
     });
     return lut;
 }
-
-
-} // namespace ARM

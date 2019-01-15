@@ -7,8 +7,7 @@
 
 #include "ppu.hpp"
 
-namespace NanoboyAdvance {
-namespace GBA {
+using namespace NanoboyAdvance::GBA;
 
 void PPU::DecodeTile4bpp(std::uint16_t* buffer, std::uint32_t base, int palette, int number, int y, bool flip) {
     std::uint8_t* data = &vram[base + (number * 32) + (y * 4)];
@@ -103,6 +102,3 @@ void PPU::RenderText(int id) {
         }
     }
 }
-
-} // namespace GBA
-} // namespace NanoboyAdvance

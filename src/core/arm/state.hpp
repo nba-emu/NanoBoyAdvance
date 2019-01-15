@@ -67,4 +67,4 @@ struct State {
     StatusRegister spsr[BANK_COUNT];
 };
 
-} // namespace ARM
+}

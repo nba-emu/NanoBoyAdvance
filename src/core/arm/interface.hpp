@@ -30,4 +30,4 @@ struct Interface {
     virtual void SWI(std::uint32_t call_id) = 0;
 };
 
-} // namespace ARM
+}

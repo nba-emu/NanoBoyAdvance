@@ -7,7 +7,7 @@
 
 #include "../arm.hpp"
 
-namespace ARM {
+using namespace ARM;
 
 std::array<ARM7::ArmInstruction, 4096> ARM7::arm_lut = MakeArmLut();
 
@@ -693,5 +693,3 @@ constexpr std::array<ARM7::ArmInstruction, 4096> ARM7::MakeArmLut() {
     });
     return lut;
 }
-
-} // namespace ARM

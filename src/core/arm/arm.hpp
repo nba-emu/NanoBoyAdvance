@@ -92,4 +92,4 @@ private:
 #include "alu/add_sub.inl"
 #include "alu/shift.inl"
 
-} // namespace ARM
+}

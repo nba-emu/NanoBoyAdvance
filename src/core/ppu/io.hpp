@@ -9,8 +9,7 @@
 
 #include <cstdint>
 
-namespace NanoboyAdvance {
-namespace GBA {
+namespace NanoboyAdvance::GBA {
 
 struct DisplayControl {
     int mode;
@@ -54,5 +53,4 @@ struct BackgroundControl {
     void Write(int address, std::uint8_t value);
 };
 
-} // namespace GBA
-} // namespace NanoboyAdvance
+}

@@ -11,8 +11,7 @@
 #include "../config.hpp"
 #include "io.hpp"
 
-namespace NanoboyAdvance {
-namespace GBA {
+namespace NanoboyAdvance::GBA {
 
 class CPU;
 
@@ -65,5 +64,4 @@ private:
     static const int s_wait_cycles[3];
 };
 
-} // namespace GBA
-} // namespace NanoboyAdvance
+}
