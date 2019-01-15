@@ -8,19 +8,19 @@
 #include <cstring>
 #include "cpu.hpp"
 
-namespace NanoboyAdvance {
-namespace GBA {
+using namespace NanoboyAdvance::GBA;
 
-const int CPU::s_ws_nseq[4] = { 4, 3, 2, 8 }; /* Non-sequential SRAM/WS0/WS1/WS2 */
-const int CPU::s_ws_seq0[2] = { 2, 1 };       /* Sequential WS0 */
-const int CPU::s_ws_seq1[2] = { 4, 1 };       /* Sequential WS1 */
-const int CPU::s_ws_seq2[2] = { 8, 1 };       /* Sequential WS2 */
+constexpr int CPU::s_ws_nseq[4]; /* Non-sequential SRAM/WS0/WS1/WS2 */
+constexpr int CPU::s_ws_seq0[2]; /* Sequential WS0 */
+constexpr int CPU::s_ws_seq1[2]; /* Sequential WS1 */
+constexpr int CPU::s_ws_seq2[2]; /* Sequential WS2 */
 
-CPU::CPU(Config* config) : config(config),
-                           ppu(config, this) {
+CPU::CPU(Config* config)
+    : config(config)
+    , ppu(config, this)
+{
     Reset();
 }
-
 
 auto CPU::GetConfig() -> Config* const {
     return config;
@@ -116,7 +116,7 @@ void CPU::Reset() {
     }
     UpdateCycleLUT();
 
-    mmio.haltcnt = SYSTEM_RUN;
+    mmio.haltcnt = HaltControl::RUN;
 
     ppu.Reset();
 }
@@ -138,10 +138,10 @@ void CPU::RunFor(int cycles) {
         while (run_until > 0) {
             std::uint16_t fire = mmio.irq_ie & mmio.irq_if;
 
-            if (mmio.haltcnt == SYSTEM_HALT && fire)
-                mmio.haltcnt = SYSTEM_RUN;
+            if (mmio.haltcnt == HaltControl::HALT && fire)
+                mmio.haltcnt = HaltControl::RUN;
 
-            if (mmio.haltcnt == SYSTEM_RUN) {
+            if (mmio.haltcnt == HaltControl::RUN) {
                 if (mmio.irq_ime && fire)
                     cpu.SignalIrq();
                 cpu.Run();
@@ -187,6 +187,3 @@ void CPU::UpdateCycleLUT() {
     cycles32[1][0xA] = cycles32[1][0xB] = cycles16[1][0xA] * 2;
     cycles32[1][0xC] = cycles32[1][0xD] = cycles16[1][0xC] * 2;
 }
-
-} // namespace NanoboyAdvance
-} // namespace GBA

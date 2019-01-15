@@ -9,8 +9,7 @@
 
 #include <cstdint>
 
-namespace NanoboyAdvance {
-namespace GBA {
+namespace NanoboyAdvance::GBA {
 
 struct Config {
     struct Video {
@@ -18,5 +17,4 @@ struct Config {
     } video;
 };
 
-} // namespace GBA
-} // namespace NanoboyAdvance
+}

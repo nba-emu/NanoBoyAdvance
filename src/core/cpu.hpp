@@ -12,8 +12,7 @@
 #include "arm/interface.hpp"
 #include "ppu/ppu.hpp"
 
-namespace NanoboyAdvance {
-namespace GBA {
+namespace NanoboyAdvance::GBA {
 
 class CPU : private ARM::Interface {
 public:
@@ -27,27 +26,27 @@ public:
 
     void RunFor(int cycles);
 
-    enum HaltControl {
-        SYSTEM_RUN,
-        SYSTEM_STOP,
-        SYSTEM_HALT
+    enum class HaltControl {
+        RUN,
+        STOP,
+        HALT
     };
 
-    enum Interrupt {
-        INT_VBLANK  = 1 << 0,
-        INT_HBLANK  = 1 << 1,
-        INT_VCOUNT  = 1 << 2,
-        INT_TIMER0  = 1 << 3,
-        INT_TIMER1  = 1 << 4,
-        INT_TIMER2  = 1 << 5,
-        INT_TIMER3  = 1 << 6,
-        INT_SERIAL  = 1 << 7,
-        INT_DMA0    = 1 << 8,
-        INT_DMA1    = 1 << 9,
-        INT_DMA2    = 1 << 10,
-        INT_DMA3    = 1 << 11,
-        INT_KEYPAD  = 1 << 12,
-        INT_GAMEPAK = 1 << 13
+    enum class Interrupt {
+        VBLANK  = 1 << 0,
+        HBLANK  = 1 << 1,
+        VCOUNT  = 1 << 2,
+        TIMER0  = 1 << 3,
+        TIMER1  = 1 << 4,
+        TIMER2  = 1 << 5,
+        TIMER3  = 1 << 6,
+        SERIAL  = 1 << 7,
+        DMA0    = 1 << 8,
+        DMA1    = 1 << 9,
+        DMA2    = 1 << 10,
+        DMA3    = 1 << 11,
+        KEYPAD  = 1 << 12,
+        GAMEPAK = 1 << 13
     };
 
     struct SystemMemory {
@@ -107,11 +106,10 @@ private:
     int cycles16[2][16];
     int cycles32[2][16];
 
-    static const int s_ws_nseq[4]; /* Non-sequential SRAM/WS0/WS1/WS2 */
-    static const int s_ws_seq0[2]; /* Sequential WS0 */
-    static const int s_ws_seq1[2]; /* Sequential WS1 */
-    static const int s_ws_seq2[2]; /* Sequential WS2 */
+    static constexpr int s_ws_nseq[4] = { 4, 3, 2, 8 }; /* Non-sequential SRAM/WS0/WS1/WS2 */
+    static constexpr int s_ws_seq0[2] = { 2, 1 };       /* Sequential WS0 */
+    static constexpr int s_ws_seq1[2] = { 4, 1 };       /* Sequential WS1 */
+    static constexpr int s_ws_seq2[2] = { 8, 1 };       /* Sequential WS2 */
 };
 
-} // namespace GBA
-} // namespace NanoboyAdvance
+}

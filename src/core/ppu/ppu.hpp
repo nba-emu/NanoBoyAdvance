@@ -54,13 +54,13 @@ private:
     uint8_t priority[240];
     uint16_t pixel[2][240];
 
-    enum Phase {
-        PHASE_SCANLINE = 0,
-        PHASE_HBLANK = 1,
-        PHASE_VBLANK = 2
+    enum class Phase {
+        SCANLINE = 0,
+        HBLANK = 1,
+        VBLANK = 2
     };
 
-    enum Phase phase;
+    Phase phase;
 
     static const int s_wait_cycles[3];
 };

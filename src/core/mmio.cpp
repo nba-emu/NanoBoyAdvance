@@ -9,8 +9,7 @@
 #include "mmio.hpp"
 #include <cstdio>
 
-namespace NanoboyAdvance {
-namespace GBA {
+using namespace NanoboyAdvance::GBA;
 
 auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     //std::printf("[R][MMIO] 0x%08x\n", address);
@@ -185,14 +184,11 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
 
         case HALTCNT: {
             if (value & 0x80) {
-                mmio.haltcnt = SYSTEM_STOP;
+                mmio.haltcnt = HaltControl::STOP;
             } else {
-                mmio.haltcnt = SYSTEM_HALT;
+                mmio.haltcnt = HaltControl::HALT;
             }
             break;
         }
     }
 }
-
-} // namespace GBA
-} // namespace NanoboyAdvance
