@@ -5,9 +5,10 @@
  * found in the LICENSE file.
  */
 
+#include <cstdio>
+
 #include "cpu.hpp"
 #include "mmio.hpp"
-#include <cstdio>
 
 using namespace NanoboyAdvance::GBA;
 

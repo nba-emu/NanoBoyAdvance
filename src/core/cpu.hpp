@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "config.hpp"
 #include "arm/arm.hpp"
 #include "arm/interface.hpp"
+#include "config.hpp"
 #include "ppu/ppu.hpp"
 
 namespace NanoboyAdvance::GBA {

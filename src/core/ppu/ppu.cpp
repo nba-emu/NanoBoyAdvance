@@ -6,8 +6,9 @@
  */
 
 #include <cstring>
-#include "ppu.hpp"
+
 #include "../cpu.hpp"
+#include "ppu.hpp"
 
 using namespace NanoboyAdvance::GBA;
 
