@@ -88,7 +88,8 @@ public:
     } mmio;
 
 private:
-    #include "memory.inl"
+    /* Contains memory read/write implementation. */
+    #include "cpu.inl"
 
     void Tick(int cycles) final { }
     void SWI(std::uint32_t call_id) final { }

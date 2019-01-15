@@ -88,8 +88,7 @@ private:
 };
 
 #include "arm.inl"
-#include "memory.inl"
-#include "alu/add_sub.inl"
-#include "alu/shift.inl"
+#include "add_sub.inl"
+#include "shifter.inl"
 
 }

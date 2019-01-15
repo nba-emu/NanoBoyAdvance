@@ -7,6 +7,7 @@
 
 /* TODO: Add support for Big-Endian architectures.
  * Maybe write utils functions that handle casting and endianess?
+ * Get rid of ugly defines.
  */
 
 #define READ_FAST_8(buffer, address)  *(uint8_t*) (&buffer[address])
