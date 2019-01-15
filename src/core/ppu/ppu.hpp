@@ -38,12 +38,19 @@ public:
     int wait_cycles;
 
 private:
+    enum class Phase {
+        SCANLINE = 0,
+        HBLANK = 1,
+        VBLANK = 2
+    };
+
     static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
+    void Next(Phase phase);
     auto ReadPalette(int palette, int index) -> std::uint16_t;
     void RenderScanline();
     void RenderText(int id);
     void DecodeTile4bpp(std::uint16_t* buffer, std::uint32_t base, int palette, int number, int y, bool flip);
-    
+
     CPU* cpu;
 
     std::uint8_t* pram;
@@ -52,12 +59,6 @@ private:
 
     uint8_t priority[240];
     uint16_t pixel[2][240];
-
-    enum class Phase {
-        SCANLINE = 0,
-        HBLANK = 1,
-        VBLANK = 2
-    };
 
     Phase phase;
 

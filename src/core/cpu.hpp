@@ -32,21 +32,21 @@ public:
         HALT
     };
 
-    enum class Interrupt {
-        VBLANK  = 1 << 0,
-        HBLANK  = 1 << 1,
-        VCOUNT  = 1 << 2,
-        TIMER0  = 1 << 3,
-        TIMER1  = 1 << 4,
-        TIMER2  = 1 << 5,
-        TIMER3  = 1 << 6,
-        SERIAL  = 1 << 7,
-        DMA0    = 1 << 8,
-        DMA1    = 1 << 9,
-        DMA2    = 1 << 10,
-        DMA3    = 1 << 11,
-        KEYPAD  = 1 << 12,
-        GAMEPAK = 1 << 13
+    enum Interrupt {
+        INT_VBLANK  = 1 << 0,
+        INT_HBLANK  = 1 << 1,
+        INT_VCOUNT  = 1 << 2,
+        INT_TIMER0  = 1 << 3,
+        INT_TIMER1  = 1 << 4,
+        INT_TIMER2  = 1 << 5,
+        INT_TIMER3  = 1 << 6,
+        INT_SERIAL  = 1 << 7,
+        INT_DMA0    = 1 << 8,
+        INT_DMA1    = 1 << 9,
+        INT_DMA2    = 1 << 10,
+        INT_DMA3    = 1 << 11,
+        INT_KEYPAD  = 1 << 12,
+        INT_GAMEPAK = 1 << 13
     };
 
     struct SystemMemory {

@@ -11,8 +11,6 @@
 
 using namespace NanoboyAdvance::GBA;
 
-using Interrupt = CPU::Interrupt;
-
 const int PPU::s_wait_cycles[3] = { 960, 272, 1232 };
 
 PPU::PPU(Config* config, CPU* cpu) {
@@ -34,9 +32,14 @@ void PPU::Reset() {
         mmio.bgvofs[i] = 0;
     }
     
-    phase = Phase::SCANLINE;
-    wait_cycles = s_wait_cycles[static_cast<int>(Phase::SCANLINE)];
+    wait_cycles = 0;
+    Next(Phase::SCANLINE);
     //RenderScanline();
+}
+
+void PPU::Next(Phase phase) {
+    this->phase  = phase;
+    wait_cycles += s_wait_cycles[static_cast<int>(phase)];
 }
 
 auto PPU::ConvertColor(std::uint16_t color) -> std::uint32_t {
@@ -64,12 +67,11 @@ void PPU::Tick() {
 
     switch (phase) {
         case Phase::SCANLINE: {
-            phase = Phase::HBLANK;
-            wait_cycles += s_wait_cycles[static_cast<int>(Phase::HBLANK)];
+            Next(Phase::HBLANK);
             dispstat.hblank_flag = 1;
 
             if (dispstat.hblank_irq_enable) {
-                cpu->mmio.irq_if |= static_cast<int>(Interrupt::HBLANK);
+                cpu->mmio.irq_if |= CPU::INT_HBLANK;
             }
             break;
         }
@@ -78,20 +80,18 @@ void PPU::Tick() {
             dispstat.vcount_flag = ++vcount == dispstat.vcount_setting;
 
             if (dispstat.vcount_flag && dispstat.vcount_irq_enable) {
-                cpu->mmio.irq_if |= static_cast<int>(Interrupt::VCOUNT);
+                cpu->mmio.irq_if |= CPU::INT_VCOUNT;
             }
 
             if (vcount == 160) {
                 dispstat.vblank_flag = 1;
-                phase = Phase::VBLANK;
-                wait_cycles += s_wait_cycles[static_cast<int>(Phase::VBLANK)];
+                Next(Phase::VBLANK);
 
                 if (dispstat.vblank_irq_enable) {
-                    cpu->mmio.irq_if |= static_cast<int>(Interrupt::VBLANK);
+                    cpu->mmio.irq_if |= CPU::INT_VBLANK;
                 }
             } else {
-                phase = Phase::SCANLINE;
-                wait_cycles += s_wait_cycles[static_cast<int>(Phase::SCANLINE)];
+                Next(Phase::SCANLINE);
                 RenderScanline();
             }
             break;
@@ -99,8 +99,7 @@ void PPU::Tick() {
         case Phase::VBLANK: {
             if (vcount == 227) {
                 dispstat.vblank_flag = 0;
-                phase = Phase::SCANLINE;
-                wait_cycles += s_wait_cycles[static_cast<int>(Phase::SCANLINE)];
+                Next(Phase::SCANLINE);
 
                 /* Update vertical counter. */
                 vcount = 0;
@@ -108,14 +107,14 @@ void PPU::Tick() {
 
                 RenderScanline();
             } else {
-                wait_cycles += s_wait_cycles[static_cast<int>(Phase::VBLANK)];
+                Next(Phase::VBLANK);
                 
                 /* Update vertical counter. */
                 dispstat.vcount_flag = ++vcount == dispstat.vcount_setting;
             }
 
             if (dispstat.vcount_flag && dispstat.vcount_irq_enable) {
-                cpu->mmio.irq_if |= static_cast<int>(Interrupt::VCOUNT);
+                cpu->mmio.irq_if |= CPU::INT_VCOUNT;
             }
             break;
         }
