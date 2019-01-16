@@ -20,7 +20,9 @@ class ARM7 {
 public:
     ARM7(ARM::Interface* interface)
         : interface(interface)
-    { }
+    {
+        BuildConditionTable();
+    }
 
     auto GetInterface() -> Interface* const { return interface; }
     auto GetState() -> State& { return state; }
@@ -34,13 +36,14 @@ private:
     StatusRegister* p_spsr;
 
     std::uint32_t pipe[2];
-
+    bool condition_table[16][16];
+    
     /* Interface to emulator (Memory, SWI-emulation, ...). */
     Interface* interface;
 
-    static Bank ModeToBank(Mode mode);
     void SwitchMode(Mode new_mode);
 
+    void BuildConditionTable();
     bool CheckCondition(Condition condition);
 
     std::uint32_t ReadByte(std::uint32_t address, AccessType type);

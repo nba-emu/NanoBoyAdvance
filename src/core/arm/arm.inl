@@ -91,53 +91,33 @@ inline void ARM7::SetNZ(std::uint32_t value) {
     state.cpsr.f.z = (value == 0);
 }
 
-inline bool ARM7::CheckCondition(Condition condition) {
-    auto& cpsr = state.cpsr;
+inline void ARM7::BuildConditionTable() {
+    for (int flags = 0; flags < 16; flags++) {
+        bool n = flags & 8;
+        bool z = flags & 4;
+        bool c = flags & 2;
+        bool v = flags & 1;
 
-    if (condition == COND_AL) {
-        return true;
+        condition_table[COND_EQ][flags] = z;
+        condition_table[COND_NE][flags] = !z;
+        condition_table[COND_CS][flags] =  c;
+        condition_table[COND_CC][flags] = !c;
+        condition_table[COND_MI][flags] =  n;
+        condition_table[COND_PL][flags] = !n;
+        condition_table[COND_VS][flags] =  v;
+        condition_table[COND_VC][flags] = !v;
+        condition_table[COND_HI][flags] =  c && !z;
+        condition_table[COND_LS][flags] = !c ||  z;
+        condition_table[COND_GE][flags] = n == v;
+        condition_table[COND_LT][flags] = n != v;
+        condition_table[COND_GT][flags] = !(z || (n != v));
+        condition_table[COND_LE][flags] =  (z || (n != v));
+        condition_table[COND_AL][flags] = true;
     }
-
-    switch (condition) {
-        case COND_EQ: return  cpsr.f.z;
-        case COND_NE: return !cpsr.f.z;
-        case COND_CS: return  cpsr.f.c;
-        case COND_CC: return !cpsr.f.c;
-        case COND_MI: return  cpsr.f.n;
-        case COND_PL: return !cpsr.f.n;
-        case COND_VS: return  cpsr.f.v;
-        case COND_VC: return !cpsr.f.v;
-        case COND_HI: return  cpsr.f.c && !cpsr.f.z;
-        case COND_LS: return !cpsr.f.c ||  cpsr.f.z;
-        case COND_GE: return  cpsr.f.n == cpsr.f.v;
-        case COND_LT: return  cpsr.f.n != cpsr.f.v;
-        case COND_GT: return !(cpsr.f.z || (cpsr.f.n != cpsr.f.v));
-        case COND_LE: return   cpsr.f.z || (cpsr.f.n != cpsr.f.v);
-        case COND_AL: return true;
-        case COND_NV: return false;
-    }
-
-    return false;
 }
 
-inline Bank ARM7::ModeToBank(Mode mode) {
-    switch (mode) {
-    case MODE_USR:
-    case MODE_SYS:
-        return BANK_NONE;
-    case MODE_FIQ:
-        return BANK_FIQ;
-    case MODE_IRQ:
-        return BANK_IRQ;
-    case MODE_SVC:
-        return BANK_SVC;
-    case MODE_ABT:
-        return BANK_ABT;
-    case MODE_UND:
-        return BANK_UND;
-    default:
-        return BANK_NONE;
-    }
+inline bool ARM7::CheckCondition(Condition condition) {
+    return condition_table[condition][state.cpsr.v >> 28];
 }
 
 inline void ARM7::SwitchMode(Mode new_mode) {
