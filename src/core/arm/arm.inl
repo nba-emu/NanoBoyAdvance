@@ -113,10 +113,13 @@ inline void ARM7::BuildConditionTable() {
         condition_table[COND_GT][flags] = !(z || (n != v));
         condition_table[COND_LE][flags] =  (z || (n != v));
         condition_table[COND_AL][flags] = true;
+        condition_table[COND_NV][flags] = false;
     }
 }
 
 inline bool ARM7::CheckCondition(Condition condition) {
+    if (condition == COND_AL)
+        return true;
     return condition_table[condition][state.cpsr.v >> 28];
 }
 
