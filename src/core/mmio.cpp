@@ -34,8 +34,8 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
         case BG3CNT+0:   return ppu_io.bgcnt[3].Read(0);
         case BG3CNT+1:   return ppu_io.bgcnt[3].Read(1);
 
-        case KEYINPUT+0: return 0xFF;
-        case KEYINPUT+1: return 0;
+        case KEYINPUT+0: return mmio.keyinput & 0xFF;
+        case KEYINPUT+1: return mmio.keyinput >> 8;
 
         /* Interrupt Control */
         case IE+0:  return mmio.irq_ie  & 0xFF;

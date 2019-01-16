@@ -67,6 +67,8 @@ void CPU::Reset() {
         return;
     }
 
+    mmio.keyinput = 0x3FF;
+
     /* Reset interrupt control. */
     mmio.irq_ie = 0;
     mmio.irq_if = 0;

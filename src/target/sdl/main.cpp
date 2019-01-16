@@ -89,6 +89,30 @@ int main(int argc, char** argv) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 running = false;
+            } else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
+                std::uint16_t bit;
+
+                auto key_event = (SDL_KeyboardEvent*)(&event);
+
+                switch (key_event->keysym.sym) {
+                    case SDLK_z:
+                    case SDLK_y: bit = (1<<0); break;
+                    case SDLK_x: bit = (1<<1); break;
+                    case SDLK_BACKSPACE: bit = (1<<2); break;
+                    case SDLK_RETURN: bit = (1<<3); break;
+                    case SDLK_RIGHT:  bit = (1<<4); break;
+                    case SDLK_LEFT:   bit = (1<<5); break;
+                    case SDLK_UP:     bit = (1<<6); break;
+                    case SDLK_DOWN:   bit = (1<<7); break;
+                    case SDLK_w: bit = (1<<8); break;
+                    case SDLK_q: bit = (1<<9); break;
+                }
+                
+                if (event.type == SDL_KEYUP) {
+                    cpu.mmio.keyinput |=  bit;
+                } else {
+                    cpu.mmio.keyinput &= ~bit;
+                }
             }
         }
     }

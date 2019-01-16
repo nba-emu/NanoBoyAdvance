@@ -66,6 +66,8 @@ public:
     } memory;
 
     struct MMIO {
+        std::uint16_t keyinput;
+        
         std::uint16_t irq_ie;
         std::uint16_t irq_if;
         std::uint16_t irq_ime;
