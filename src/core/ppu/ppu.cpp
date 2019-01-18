@@ -97,7 +97,6 @@ void PPU::Tick() {
         }
         case Phase::VBLANK: {
             if (vcount == 227) {
-                dispstat.vblank_flag = 0;
                 Next(Phase::SCANLINE);
 
                 /* Update vertical counter. */
@@ -107,6 +106,9 @@ void PPU::Tick() {
                 RenderScanline();
             } else {
                 Next(Phase::VBLANK);
+
+                if (vcount == 226)
+                    dispstat.vblank_flag = 0;
                 
                 /* Update vertical counter. */
                 dispstat.vcount_flag = ++vcount == dispstat.vcount_setting;
