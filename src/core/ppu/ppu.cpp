@@ -137,15 +137,13 @@ void PPU::RenderScanline() {
         for (int i = 0; i < 240; i++)
             ((std::uint32_t*)pixel)[i] = fill;
         for (int i = 0; i < 60; i++)
-            ((std::uint32_t*)priority)[i] = 0x06060606;
+            ((std::uint32_t*)priority)[i] = 0x04040404;
+        for (int i = 0; i < 120; i++)
+            ((std::uint32_t*)layer)[i] = 0x05050505;
         
         /* TODO: how does HW behave when we select mode 6 or 7? */
         switch (mmio.dispcnt.mode) {
             case 0: {
-                // /* Debug */
-                // for (int x = 0; x < 16; x++) {
-                //     line[x] = ConvertColor(ReadPalette(0, x));
-                // }
                 for (int i = 3; i >= 0; i--) {
                     if (mmio.dispcnt.enable[i])
                         RenderText(i);

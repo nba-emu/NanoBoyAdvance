@@ -34,10 +34,12 @@ void PPU::DecodeTile4bpp(std::uint16_t* buffer, std::uint32_t base, int palette,
     }
 }
 
-void PPU::DrawPixel(int x, int priority, std::uint16_t color) {
+void PPU::DrawPixel(int x, int layer, int priority, std::uint16_t color) {
     if (color != s_color_transparent && priority <= this->priority[x]) {
         pixel[1][x] = pixel[0][x];
         pixel[0][x] = color;
+        this->layer[1][x] = this->layer[0][x];
+        this->layer[0][x] = layer;
         this->priority[x] = priority;
     }
 }
@@ -90,12 +92,12 @@ void PPU::RenderText(int id) {
 
         if (draw_x >= 0 & draw_x <= 232) {
             for (int x = 0; x < 8; x++) {
-                DrawPixel(draw_x++, bgcnt.priority, tile[x]);
+                DrawPixel(draw_x++, id, bgcnt.priority, tile[x]);
             }
         } else {
             for (int x = 0; x < 8; x++) {
                 if (draw_x >= 0 && draw_x < 240) {
-                    DrawPixel(draw_x, bgcnt.priority, tile[x]);
+                    DrawPixel(draw_x, id, bgcnt.priority, tile[x]);
                 }
                 draw_x++;
             }

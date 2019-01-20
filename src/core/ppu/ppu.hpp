@@ -48,12 +48,13 @@ private:
     void RenderScanline();
     void RenderText(int id);
     void DecodeTile4bpp(std::uint16_t* buffer, std::uint32_t base, int palette, int number, int y, bool flip);
-    void DrawPixel(int x, int priority, std::uint16_t color);
+    void DrawPixel(int x, int layer, int priority, std::uint16_t color);
 
     CPU* cpu;
 
-    uint8_t priority[240];
-    uint16_t pixel[2][240];
+    std::uint8_t  priority[240];
+    std::uint8_t  layer[2][240];
+    std::uint16_t pixel[2][240];
 
     Phase phase;
 
