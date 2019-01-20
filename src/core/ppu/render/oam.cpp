@@ -9,37 +9,29 @@
 
 using namespace NanoboyAdvance::GBA;
 
-/* TODO: Refactor me. */
-static constexpr int g_obj_size[4][4][2] = {
-        /* SQUARE */
-        {
-            { 8 , 8  },
-            { 16, 16 },
-            { 32, 32 },
-            { 64, 64 }
-        },
-        /* HORIZONTAL */
-        {
-            { 16, 8  },
-            { 32, 8  },
-            { 32, 16 },
-            { 64, 32 }
-        },
-        /* VERTICAL */
-        {
-            { 8 , 16 },
-            { 8 , 32 },
-            { 16, 32 },
-            { 32, 64 }
-        },
-        /* PROHIBITED */
-        {
-            { 0, 0 },
-            { 0, 0 },
-            { 0, 0 },
-            { 0, 0 }
-        }
-    };
+const int PPU::s_obj_size[4][4][2] = {
+    /* SQUARE */
+    {
+        { 8 , 8  },
+        { 16, 16 },
+        { 32, 32 },
+        { 64, 64 }
+    },
+    /* HORIZONTAL */
+    {
+        { 16, 8  },
+        { 32, 8  },
+        { 32, 16 },
+        { 64, 32 }
+    },
+    /* VERTICAL */
+    {
+        { 8 , 16 },
+        { 8 , 32 },
+        { 16, 32 },
+        { 32, 64 }
+    }
+};
 
 void PPU::RenderLayerOAM() {
     /* 2d-affine transform matrix (pa, pb, pc, pd). */
@@ -82,8 +74,8 @@ void PPU::RenderLayerOAM() {
         }
 
         /* Decode OBJ width and height. */
-        width  = g_obj_size[shape][size][0];
-        height = g_obj_size[shape][size][1];
+        width  = s_obj_size[shape][size][0];
+        height = s_obj_size[shape][size][1];
 
         int rect_width  = width;
         int rect_height = height;

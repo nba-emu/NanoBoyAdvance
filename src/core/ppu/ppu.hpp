@@ -79,6 +79,7 @@ private:
 
     static constexpr std::uint16_t s_color_transparent = 0x8000;
     static constexpr int s_wait_cycles[3] = { 960, 272, 1232 };
+    static const int s_obj_size[4][4][2];
 };
 
 }
