@@ -169,31 +169,6 @@ void PPU::RenderScanline() {
                 }
                 if (mmio.dispcnt.enable[4])
                     RenderLayerOAM();
-                
-                auto& bldcnt = mmio.bldcnt;
-                
-                for (int x = 0; x < 240; x++) {
-                    auto sfx = bldcnt.sfx;
-                    int layer1 = layer[0][x];
-                    int layer2 = layer[1][x];
-
-                    bool is_alpha_obj = (layer[0][x] == 4) && (obj_attr[x] & OBJ_IS_ALPHA);               
-                    bool is_sfx_1 = bldcnt.targets[0][layer1] || is_alpha_obj;
-                    bool is_sfx_2 = bldcnt.targets[1][layer2];
-
-                    if (is_alpha_obj && is_sfx_2) {
-                        sfx = BlendControl::Effect::SFX_BLEND;
-                    }
-
-                    if (sfx != BlendControl::Effect::SFX_NONE && is_sfx_1 &&
-                            (is_sfx_2 || sfx != BlendControl::Effect::SFX_BLEND)) {
-                        Blend(&pixel[0][x], pixel[1][x], sfx);
-                    }
-                }
-
-                for (int x = 0; x < 240; x++) {
-                    line[x] = ConvertColor(pixel[0][x]);
-                }
                 break;
             }
             case 1:
@@ -212,6 +187,31 @@ void PPU::RenderScanline() {
             }
             case 5:
                 break;
+        }
+
+        auto& bldcnt = mmio.bldcnt;
+                
+        for (int x = 0; x < 240; x++) {
+            auto sfx = bldcnt.sfx;
+            int layer1 = layer[0][x];
+            int layer2 = layer[1][x];
+
+            bool is_alpha_obj = (layer[0][x] == 4) && (obj_attr[x] & OBJ_IS_ALPHA);               
+            bool is_sfx_1 = bldcnt.targets[0][layer1] || is_alpha_obj;
+            bool is_sfx_2 = bldcnt.targets[1][layer2];
+
+            if (is_alpha_obj && is_sfx_2) {
+                sfx = BlendControl::Effect::SFX_BLEND;
+            }
+
+            if (sfx != BlendControl::Effect::SFX_NONE && is_sfx_1 &&
+                    (is_sfx_2 || sfx != BlendControl::Effect::SFX_BLEND)) {
+                Blend(&pixel[0][x], pixel[1][x], sfx);
+            }
+        }
+
+        for (int x = 0; x < 240; x++) {
+            line[x] = ConvertColor(pixel[0][x]);
         }
     }
 }
