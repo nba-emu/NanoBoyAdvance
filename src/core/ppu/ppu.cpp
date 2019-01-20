@@ -12,6 +12,7 @@
 
 using namespace NanoboyAdvance::GBA;
 
+constexpr std::uint16_t PPU::s_color_transparent;
 constexpr int PPU::s_wait_cycles[3];
 
 PPU::PPU(CPU* cpu) 
@@ -130,8 +131,14 @@ void PPU::RenderScanline() {
         for (int x = 0; x < 240; x++)
             line[x] = ConvertColor(0x7FFF);
     } else {
-        std::memset(priority, 6, sizeof(uint8_t)*240);
+        std::uint16_t backdrop = ReadPalette(0, 0);
+        std::uint32_t fill = backdrop * 0x00010001;
 
+        for (int i = 0; i < 240; i++)
+            ((std::uint32_t*)pixel)[i] = fill;
+        for (int i = 0; i < 60; i++)
+            ((std::uint32_t*)priority)[i] = 0x06060606;
+        
         /* TODO: how does HW behave when we select mode 6 or 7? */
         switch (mmio.dispcnt.mode) {
             case 0: {

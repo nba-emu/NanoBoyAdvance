@@ -34,6 +34,14 @@ void PPU::DecodeTile4bpp(std::uint16_t* buffer, std::uint32_t base, int palette,
     }
 }
 
+void PPU::DrawPixel(int x, int priority, std::uint16_t color) {
+    if (color != s_color_transparent && priority <= this->priority[x]) {
+        pixel[1][x] = pixel[0][x];
+        pixel[0][x] = color;
+        this->priority[x] = priority;
+    }
+}
+
 void PPU::RenderText(int id) {
     const auto& bgcnt = mmio.bgcnt[id];
 
@@ -82,21 +90,12 @@ void PPU::RenderText(int id) {
 
         if (draw_x >= 0 & draw_x <= 232) {
             for (int x = 0; x < 8; x++) {
-                if (tile[x] != 0x8000 && bgcnt.priority <= priority[draw_x]) {
-                    pixel[1][draw_x] = pixel[0][draw_x];
-                    pixel[0][draw_x] = tile[x];
-                    priority[draw_x] = bgcnt.priority;
-                }
-                draw_x++;
+                DrawPixel(draw_x++, bgcnt.priority, tile[x]);
             }
         } else {
             for (int x = 0; x < 8; x++) {
-                if (draw_x >= 0 && draw_x < 240 &&
-                    tile[x] != 0x8000 && bgcnt.priority <= priority[draw_x])
-                {
-                    pixel[1][draw_x] = pixel[0][draw_x];
-                    pixel[0][draw_x] = tile[x];
-                    priority[draw_x] = bgcnt.priority;
+                if (draw_x >= 0 && draw_x < 240) {
+                    DrawPixel(draw_x, bgcnt.priority, tile[x]);
                 }
                 draw_x++;
             }
