@@ -53,6 +53,31 @@ void DecodeTileLine8BPP(std::uint16_t* buffer, std::uint32_t base, int number, i
     }
 }
 
+auto DecodeTilePixel4BPP(std::uint32_t base, int palette, int number, int x, int y) -> std::uint16_t {
+    std::uint32_t offset = base + (number * 32) + (y * 4) + (x / 2);
+
+    int tuple = vram[offset];
+    int index = (x & 1) ? (tuple >> 4) : (tuple & 0xF);
+
+    if (index == 0) {
+        return s_color_transparent;
+    } else {
+        return ReadPalette(palette, index);
+    }
+}
+
+auto DecodeTilePixel8BPP(std::uint32_t base, int number, int x, int y) -> std::uint16_t {
+    std::uint32_t offset = base + (number * 64) + (y * 8) + x;
+
+    int index = vram[offset];
+
+    if (index == 0) {
+        return s_color_transparent;
+    } else {
+        return ReadPalette(0, index);
+    }
+}
+
 void DrawPixel(int x, int layer, int priority, std::uint16_t color) {
     if (color != s_color_transparent && priority <= this->priority[x]) {
         pixel[1][x] = pixel[0][x];

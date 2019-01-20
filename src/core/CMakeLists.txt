@@ -5,6 +5,7 @@ SET(SOURCES
     ppu/regs.cpp
     ppu/ppu.cpp
     ppu/render/text.cpp
+    ppu/render/oam.cpp
     cpu.cpp
 )
 

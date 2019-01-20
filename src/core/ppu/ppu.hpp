@@ -9,6 +9,7 @@
 
 #include <cstdint>
 
+#include "../config.hpp"
 #include "regs.hpp"
 
 namespace NanoboyAdvance::GBA {
@@ -42,10 +43,23 @@ private:
         VBLANK = 2
     };
 
+    enum ObjAttribute {
+        OBJ_IS_ALPHA  = 1,
+        OBJ_IS_WINDOW = 2
+    };
+
+    enum ObjectMode {
+        OBJ_NORMAL     = 0,
+        OBJ_SEMI       = 1,
+        OBJ_WINDOW     = 2,
+        OBJ_PROHIBITED = 3
+    };
+
     static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
     void Next(Phase phase);
     void RenderScanline();
     void RenderLayerText(int id);
+    void RenderLayerOAM();
 
     #include "ppu.inl"
 
@@ -56,6 +70,7 @@ private:
     std::uint8_t* vram;
     std::uint8_t* oam;
 
+    std::uint8_t  obj_attr[240];
     std::uint8_t  priority[240];
     std::uint8_t  layer[2][240];
     std::uint16_t pixel[2][240];

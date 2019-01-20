@@ -20,7 +20,7 @@ PPU::PPU(CPU* cpu)
     , config(cpu->config)
     , pram(cpu->memory.pram)
     , vram(cpu->memory.vram)
-    , oam(cpu->memory.pram)
+    , oam(cpu->memory.oam)
 {
     Reset();
 }
@@ -130,12 +130,17 @@ void PPU::RenderScanline() {
         std::uint16_t backdrop = ReadPalette(0, 0);
         std::uint32_t fill = backdrop * 0x00010001;
 
-        for (int i = 0; i < 240; i++)
+        /* Reset scanline buffers. */
+        for (int i = 0; i < 240; i++) {
             ((std::uint32_t*)pixel)[i] = fill;
-        for (int i = 0; i < 60; i++)
+        }
+        for (int i = 0; i < 60; i++) {
+            ((std::uint32_t*)obj_attr)[i] = 0;
             ((std::uint32_t*)priority)[i] = 0x04040404;
-        for (int i = 0; i < 120; i++)
+        }
+        for (int i = 0; i < 120; i++) {
             ((std::uint32_t*)layer)[i] = 0x05050505;
+        }
         
         /* TODO: how does HW behave when we select mode 6 or 7? */
         switch (mmio.dispcnt.mode) {
@@ -144,6 +149,8 @@ void PPU::RenderScanline() {
                     if (mmio.dispcnt.enable[i])
                         RenderLayerText(i);
                 }
+                if (mmio.dispcnt.enable[4])
+                    RenderLayerOAM();
                 for (int x = 0; x < 240; x++) {
                     line[x] = ConvertColor(pixel[0][x]);
                 }
