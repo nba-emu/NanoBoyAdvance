@@ -17,6 +17,10 @@ constexpr int PPU::s_wait_cycles[3];
 
 PPU::PPU(CPU* cpu) 
     : cpu(cpu)
+    , config(cpu->config)
+    , pram(cpu->memory.pram)
+    , vram(cpu->memory.vram)
+    , oam(cpu->memory.pram)
 {
     Reset();
 }
@@ -51,14 +55,6 @@ auto PPU::ConvertColor(std::uint16_t color) -> std::uint32_t {
            g << 11 |
            b <<  3 |
            0xFF000000;
-}
-
-auto PPU::ReadPalette(int palette, int index) -> std::uint16_t {
-    int cell = (palette * 32) + (index * 2);
-
-    /* TODO: On Little-Endian devices we can get away with casting to uint16_t*. */
-    return (cpu->memory.pram[cell + 1] << 8) |
-            cpu->memory.pram[cell + 0];
 }
 
 void PPU::Tick() {
@@ -125,7 +121,7 @@ void PPU::Tick() {
 
 void PPU::RenderScanline() {
     std::uint16_t vcount = mmio.vcount;
-    std::uint32_t* line = &cpu->config->video.output[vcount * 240];
+    std::uint32_t* line = &config->video.output[vcount * 240];
 
     if (mmio.dispcnt.forced_blank) {
         for (int x = 0; x < 240; x++)

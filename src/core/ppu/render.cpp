@@ -10,40 +10,6 @@
 
 using namespace NanoboyAdvance::GBA;
 
-void PPU::DecodeTile4bpp(std::uint16_t* buffer, std::uint32_t base, int palette, int number, int y, bool flip) {
-    std::uint8_t* data = &cpu->memory.vram[base + (number * 32) + (y * 4)];
-
-    if (flip) {
-        for (int x = 0; x < 4; x++) {
-            int d  = *data++;
-            int p1 = d & 15;
-            int p2 = d >> 4;
-
-            buffer[(x*2+0)^7] = p1 ? ReadPalette(palette, p1) : 0x8000;
-            buffer[(x*2+1)^7] = p2 ? ReadPalette(palette, p2) : 0x8000;
-        }
-    } else {
-        for (int x = 0; x < 4; x++) {
-            int d  = *data++;
-            int p1 = d & 15;
-            int p2 = d >> 4;
-
-            buffer[x*2+0] = p1 ? ReadPalette(palette, p1) : 0x8000;
-            buffer[x*2+1] = p2 ? ReadPalette(palette, p2) : 0x8000;
-        }
-    }
-}
-
-void PPU::DrawPixel(int x, int layer, int priority, std::uint16_t color) {
-    if (color != s_color_transparent && priority <= this->priority[x]) {
-        pixel[1][x] = pixel[0][x];
-        pixel[0][x] = color;
-        this->layer[1][x] = this->layer[0][x];
-        this->layer[0][x] = layer;
-        this->priority[x] = priority;
-    }
-}
-
 void PPU::RenderText(int id) {
     const auto& bgcnt = mmio.bgcnt[id];
 
@@ -72,7 +38,7 @@ void PPU::RenderText(int id) {
             case 3: offset += (screen_x * 2048) + (screen_y * 4096); break;
         }
 
-        std::uint16_t encoder = (cpu->memory.vram[offset + 1] << 8) | cpu->memory.vram[offset];
+        std::uint16_t encoder = (vram[offset + 1] << 8) | vram[offset];
 
         if (encoder != last_encoder) {
             int number  = encoder & 0x3FF;
