@@ -13,7 +13,7 @@ auto ReadPalette(int palette, int index) -> std::uint16_t {
             pram[cell + 0];
 }
 
-void DecodeTile4bpp(std::uint16_t* buffer, std::uint32_t base, int palette, int number, int y, bool flip) {
+void DecodeTileLine4BPP(std::uint16_t* buffer, std::uint32_t base, int palette, int number, int y, bool flip) {
     std::uint8_t* data = &vram[base + (number * 32) + (y * 4)];
 
     if (flip) {
@@ -33,6 +33,22 @@ void DecodeTile4bpp(std::uint16_t* buffer, std::uint32_t base, int palette, int 
 
             buffer[x*2+0] = p1 ? ReadPalette(palette, p1) : s_color_transparent;
             buffer[x*2+1] = p2 ? ReadPalette(palette, p2) : s_color_transparent;
+        }
+    }
+}
+
+void DecodeTileLine8BPP(std::uint16_t* buffer, std::uint32_t base, int number, int y, bool flip) {
+    std::uint8_t* data = &vram[base + (number * 64) + (y * 8)];
+
+    if (flip) {
+        for (int x = 7; x >= 0; x--) {
+            int pixel = *data++;
+            buffer[x] = pixel ? ReadPalette(0, pixel) : s_color_transparent;
+        }
+    } else {
+        for (int x = 0; x < 8; x++) {
+            int pixel = *data++;
+            buffer[x] = pixel ? ReadPalette(0, pixel) : s_color_transparent;
         }
     }
 }

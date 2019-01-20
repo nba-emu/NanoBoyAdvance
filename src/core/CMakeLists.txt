@@ -2,9 +2,9 @@ SET(SOURCES
     arm/isa/thumb.cpp
     arm/isa/arm.cpp
     mmio.cpp
-    ppu/io.cpp
+    ppu/regs.cpp
     ppu/ppu.cpp
-    ppu/render.cpp
+    ppu/render/text.cpp
     cpu.cpp
 )
 
@@ -15,7 +15,7 @@ SET(HEADERS
     arm/state.hpp
     arm/util.hpp
     ppu/ppu.hpp
-    ppu/io.hpp
+    ppu/regs.hpp
     cpu.hpp
     mmio.hpp
 )

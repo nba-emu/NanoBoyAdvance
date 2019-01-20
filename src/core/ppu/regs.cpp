@@ -5,7 +5,7 @@
  * found in the LICENSE file.
  */
 
-#include "io.hpp"
+#include "regs.hpp"
 
 using namespace NanoboyAdvance::GBA;
 

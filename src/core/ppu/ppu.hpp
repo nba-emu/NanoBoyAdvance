@@ -9,7 +9,7 @@
 
 #include <cstdint>
 
-#include "io.hpp"
+#include "regs.hpp"
 
 namespace NanoboyAdvance::GBA {
 
@@ -45,7 +45,7 @@ private:
     static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
     void Next(Phase phase);
     void RenderScanline();
-    void RenderText(int id);
+    void RenderLayerText(int id);
 
     #include "ppu.inl"
 

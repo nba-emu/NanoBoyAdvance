@@ -142,7 +142,7 @@ void PPU::RenderScanline() {
             case 0: {
                 for (int i = 3; i >= 0; i--) {
                     if (mmio.dispcnt.enable[i])
-                        RenderText(i);
+                        RenderLayerText(i);
                 }
                 for (int x = 0; x < 240; x++) {
                     line[x] = ConvertColor(pixel[0][x]);
