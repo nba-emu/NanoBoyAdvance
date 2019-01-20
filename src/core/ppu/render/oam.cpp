@@ -44,7 +44,7 @@ void PPU::RenderLayerOAM() {
 
     for (; offset >= 0; offset -= 8) {
         /* Check if OBJ is diabled (affine=0, attr0bit9=1) */
-        if ((oam[offset + 1] & 3) == 1) {
+        if ((oam[offset + 1] & 3) == 2) {
             continue;
         }
 
