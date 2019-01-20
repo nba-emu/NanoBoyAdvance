@@ -48,7 +48,7 @@ void PPU::RenderLayerOAM() {
     int tile_num;
     std::uint16_t pixel;
     std::uint32_t tile_base = 0x10000;
-    std::int32_t offset = 127 * 8;
+    std::int32_t  offset = 127 * 8;
 
     for (; offset >= 0; offset -= 8) {
         std::uint16_t attr0 = (oam[offset + 1] << 8) | oam[offset + 0];
@@ -181,8 +181,12 @@ void PPU::RenderLayerOAM() {
             if (pixel != s_color_transparent) {
                 if (mode == OBJ_WINDOW) {
                     obj_attr[global_x] |= OBJ_IS_WINDOW;
-                } else {
-                    /* TODO */
+                } else if (prio <= priority[global_x]) {
+                    if (mode == OBJ_SEMI) {
+                        obj_attr[global_x] |=  OBJ_IS_ALPHA;
+                    } else {
+                        obj_attr[global_x] &= ~OBJ_IS_ALPHA;
+                    }
                     DrawPixel(global_x, 4, prio, pixel);
                 }
             }
