@@ -43,6 +43,11 @@ void PPU::RenderLayerOAM() {
     std::int32_t  offset = 127 * 8;
 
     for (; offset >= 0; offset -= 8) {
+        /* Check if OBJ is diabled (affine=0, attr0bit9=1) */
+        if ((oam[offset + 1] & 3) == 1) {
+            continue;
+        }
+
         std::uint16_t attr0 = (oam[offset + 1] << 8) | oam[offset + 0];
         std::uint16_t attr1 = (oam[offset + 3] << 8) | oam[offset + 2];
         std::uint16_t attr2 = (oam[offset + 5] << 8) | oam[offset + 4];
@@ -67,11 +72,6 @@ void PPU::RenderLayerOAM() {
 
         int affine  = (attr0 >> 8) & 1;
         int attr0b9 = (attr0 >> 9) & 1;
-
-        /* Check if OBJ is disabled. */
-        if (!affine && attr0b9) {
-            continue;
-        }
 
         /* Decode OBJ width and height. */
         width  = s_obj_size[shape][size][0];
