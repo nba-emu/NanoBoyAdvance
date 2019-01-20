@@ -5,6 +5,7 @@
  * found in the LICENSE file.
  */
 
+#include <algorithm>
 #include <cstring>
 
 #include "../cpu.hpp"
@@ -22,6 +23,7 @@ PPU::PPU(CPU* cpu)
     , vram(cpu->memory.vram)
     , oam(cpu->memory.oam)
 {
+    InitBlendTable();
     Reset();
 }
 
@@ -35,10 +37,26 @@ void PPU::Reset() {
         mmio.bghofs[i] = 0;
         mmio.bgvofs[i] = 0;
     }
+
+    mmio.eva = 0;
+    mmio.evb = 0;
+    mmio.evy = 0;
+    mmio.bldcnt.Reset();
     
     wait_cycles = 0;
     Next(Phase::SCANLINE);
     //RenderScanline();
+}
+
+void PPU::InitBlendTable() {
+    for (int color0 = 0; color0 <= 31; color0++)
+    for (int color1 = 0; color1 <= 31; color1++)
+    for (int factor0 = 0; factor0 <= 16; factor0++)
+    for (int factor1 = 0; factor1 <= 16; factor1++) {
+        int result = (color0 * factor0 + color1 * factor1) >> 4;
+
+        blend_table[factor0][factor1][color0][color1] = std::min<std::uint8_t>(result, 31);
+    }
 }
 
 void PPU::Next(Phase phase) {
@@ -151,6 +169,23 @@ void PPU::RenderScanline() {
                 }
                 if (mmio.dispcnt.enable[4])
                     RenderLayerOAM();
+                
+                auto& bldcnt = mmio.bldcnt;
+                auto  sfx = bldcnt.sfx;
+                for (int x = 0; x < 240; x++) {
+                    int layer1 = layer[0][x];
+                    int layer2 = layer[1][x];
+
+                    bool is_alpha_obj = (layer[0][x] == 4) && (obj_attr[x] & OBJ_IS_ALPHA);
+                    bool is_sfx_1 = bldcnt.targets[0][layer1] || is_alpha_obj;
+                    bool is_sfx_2 = bldcnt.targets[1][layer2];
+
+                    if (sfx != BlendControl::Effect::SFX_NONE &&
+                        is_sfx_1 && (is_sfx_2 || sfx != BlendControl::Effect::SFX_BLEND)) {
+                        Blend(&pixel[0][x], pixel[1][x], sfx);
+                    }
+                }
+                
                 for (int x = 0; x < 240; x++) {
                     line[x] = ConvertColor(pixel[0][x]);
                 }
@@ -174,4 +209,46 @@ void PPU::RenderScanline() {
                 break;
         }
     }
+}
+
+void PPU::Blend(std::uint16_t* _target1, std::uint16_t target2, BlendControl::Effect sfx) {
+    std::uint16_t target1 = *_target1;
+
+    int r1 = (target1 >>  0) & 0x1F;
+    int g1 = (target1 >>  5) & 0x1F;
+    int b1 = (target1 >> 10) & 0x1F;
+
+    switch (sfx) {
+        case BlendControl::Effect::SFX_BLEND: {
+            int eva = std::min<int>(16, mmio.eva);
+            int evb = std::min<int>(16, mmio.evb);
+
+            int r2 = (target2 >>  0) & 0x1F;
+            int g2 = (target2 >>  5) & 0x1F;
+            int b2 = (target2 >> 10) & 0x1F;
+
+            r1 = blend_table[eva][evb][r1][r2];
+            g1 = blend_table[eva][evb][g1][g2];
+            b1 = blend_table[eva][evb][b1][b2];
+            break;
+        }
+        case BlendControl::Effect::SFX_BRIGHTEN: {
+            int evy = std::min<int>(16, mmio.evy);
+
+            r1 = blend_table[16 - evy][evy][r1][31];
+            g1 = blend_table[16 - evy][evy][g1][31];
+            b1 = blend_table[16 - evy][evy][b1][31];
+            break;
+        }
+        case BlendControl::Effect::SFX_DARKEN: {
+            int evy = std::min<int>(16, mmio.evy);
+
+            r1 = blend_table[16 - evy][evy][r1][0];
+            g1 = blend_table[16 - evy][evy][g1][0];
+            b1 = blend_table[16 - evy][evy][b1][0];
+            break;
+        }
+    }
+
+    *_target1 = (r1<<0) | (g1<<5) | (b1<<10);
 }

@@ -33,7 +33,9 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
         case BG2CNT+1:   return ppu_io.bgcnt[2].Read(1);
         case BG3CNT+0:   return ppu_io.bgcnt[3].Read(0);
         case BG3CNT+1:   return ppu_io.bgcnt[3].Read(1);
-
+        case BLDCNT+0:   return ppu_io.bldcnt.Read(0);
+        case BLDCNT+1:   return ppu_io.bldcnt.Read(1);
+        
         case KEYINPUT+0: return mmio.keyinput & 0xFF;
         case KEYINPUT+1: return mmio.keyinput >> 8;
 
@@ -132,7 +134,18 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
             ppu_io.bgvofs[3] &= 0x00FF;
             ppu_io.bgvofs[3] |= (value & 1) << 8;
             break;
-
+        case BLDCNT+0: ppu_io.bldcnt.Write(0, value); break;
+        case BLDCNT+1: ppu_io.bldcnt.Write(1, value); break;
+        case BLDALPHA+0:
+            ppu_io.eva = value & 0x1F;
+            break;
+        case BLDALPHA+1:
+            ppu_io.evb = value & 0x1F;
+            break;
+        case BLDY:
+            ppu_io.evy = value & 0x1F;
+            break;
+        
         /* Interrupt Control */
         case IE+0: {
             mmio.irq_ie &= 0xFF00;

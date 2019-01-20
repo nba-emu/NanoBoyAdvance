@@ -32,6 +32,11 @@ public:
         BackgroundControl bgcnt[4];
         std::uint16_t bghofs[4];
         std::uint16_t bgvofs[4];
+
+        BlendControl bldcnt;
+        int eva;
+        int evb;
+        int evy;
     } mmio;
 
     int wait_cycles;
@@ -56,10 +61,12 @@ private:
     };
 
     static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
+    void InitBlendTable();
     void Next(Phase phase);
     void RenderScanline();
     void RenderLayerText(int id);
     void RenderLayerOAM();
+    void Blend(std::uint16_t* target1, std::uint16_t target2, BlendControl::Effect sfx);
 
     #include "ppu.inl"
 
@@ -76,6 +83,8 @@ private:
     std::uint16_t pixel[2][240];
 
     Phase phase;
+
+    std::uint8_t blend_table[17][17][32][32];
 
     static constexpr std::uint16_t s_color_transparent = 0x8000;
     static constexpr int s_wait_cycles[3] = { 960, 272, 1232 };

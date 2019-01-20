@@ -53,4 +53,19 @@ struct BackgroundControl {
     void Write(int address, std::uint8_t value);
 };
 
+struct BlendControl {
+    enum Effect {
+        SFX_NONE,
+        SFX_BLEND,
+        SFX_BRIGHTEN,
+        SFX_DARKEN
+    } sfx;
+    
+    int targets[2][6];
+
+    void Reset();
+    auto Read(int address) -> std::uint8_t;
+    void Write(int address, std::uint8_t value);
+};
+
 }

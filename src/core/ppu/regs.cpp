@@ -120,3 +120,42 @@ void BackgroundControl::Write(int address, std::uint8_t value) {
         break;
     }
 }
+
+void BlendControl::Reset() {
+    Write(0, 0);
+    Write(1, 0);
+}
+
+auto BlendControl::Read(int address) -> std::uint8_t {
+    switch (address) {
+    case 0: {
+        std::uint8_t value = 0;
+        for (int i = 0; i < 6; i++)
+            value |= targets[0][i] << i;
+        value |= sfx << 6;
+        return value;
+    }
+    case 1: {
+        std::uint8_t value = 0;
+        for (int i = 0; i < 6; i++)
+            value |= targets[1][i] << i;
+        return value;
+    }
+    }
+}
+
+void BlendControl::Write(int address, std::uint8_t value) {
+    switch (address) {
+    case 0: {
+        for (int i = 0; i < 6; i++)
+            targets[0][i] = (value >> i) & 1;
+        sfx = (Effect)(value >> 6);
+        break;
+    }
+    case 1: {
+        for (int i = 0; i < 6; i++)
+            targets[1][i] = (value >> i) & 1;
+        break;
+    }
+    }
+}
