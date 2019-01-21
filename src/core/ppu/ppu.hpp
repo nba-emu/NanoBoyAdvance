@@ -71,6 +71,7 @@ private:
     void RenderScanline();
     void RenderLayerText(int id);
     void RenderLayerOAM();
+    void RenderWindow(int id);
     void Blend(std::uint16_t* target1, std::uint16_t target2, BlendControl::Effect sfx);
 
     #include "ppu.inl"
@@ -86,7 +87,10 @@ private:
     std::uint8_t  priority[240];
     std::uint8_t  layer[2][240];
     std::uint16_t pixel[2][240];
+	std::uint8_t  win_mask[2][240];
 
+	bool win_active[2];
+	
     Phase phase;
 
     std::uint8_t blend_table[17][17][32][32];
