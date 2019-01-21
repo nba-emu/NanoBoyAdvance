@@ -33,6 +33,10 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
         case BG2CNT+1:   return ppu_io.bgcnt[2].Read(1);
         case BG3CNT+0:   return ppu_io.bgcnt[3].Read(0);
         case BG3CNT+1:   return ppu_io.bgcnt[3].Read(1);
+		case WININ+0:    return ppu_io.winin.Read(0);
+		case WININ+1:    return ppu_io.winin.Read(1);
+		case WINOUT+0:   return ppu_io.winout.Read(0);
+		case WINOUT+1:   return ppu_io.winout.Read(1);
         case BLDCNT+0:   return ppu_io.bldcnt.Read(0);
         case BLDCNT+1:   return ppu_io.bldcnt.Read(1);
         
@@ -134,6 +138,18 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
             ppu_io.bgvofs[3] &= 0x00FF;
             ppu_io.bgvofs[3] |= (value & 1) << 8;
             break;
+        case WIN0H+0: ppu_io.winh[0].Write(0, value); break;
+        case WIN0H+1: ppu_io.winh[0].Write(1, value); break;
+        case WIN1H+0: ppu_io.winh[1].Write(0, value); break;
+        case WIN1H+1: ppu_io.winh[1].Write(1, value); break;        
+        case WIN0V+0: ppu_io.winv[0].Write(0, value); break;
+        case WIN0V+1: ppu_io.winv[0].Write(1, value); break;
+        case WIN1V+0: ppu_io.winv[1].Write(0, value); break;
+        case WIN1V+1: ppu_io.winv[1].Write(1, value); break;
+        case WININ+0: ppu_io.winin.Write(0, value); break;
+        case WININ+1: ppu_io.winin.Write(1, value); break;
+        case WINOUT+0: ppu_io.winout.Write(0, value); break;
+        case WINOUT+1: ppu_io.winout.Write(1, value); break;
         case BLDCNT+0: ppu_io.bldcnt.Write(0, value); break;
         case BLDCNT+1: ppu_io.bldcnt.Write(1, value); break;
         case BLDALPHA+0:

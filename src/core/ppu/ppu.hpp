@@ -33,6 +33,11 @@ public:
         std::uint16_t bghofs[4];
         std::uint16_t bgvofs[4];
 
+		WindowRange winh[2];
+		WindowRange winv[2];
+		WindowLayerSelect winin;
+		WindowLayerSelect winout;
+
         BlendControl bldcnt;
         int eva;
         int evb;

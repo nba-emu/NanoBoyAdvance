@@ -68,4 +68,22 @@ struct BlendControl {
     void Write(int address, std::uint8_t value);
 };
 
+struct WindowRange {
+    int min;
+    int max;
+
+    bool _changed;
+
+    void Reset();
+    void Write(int address, std::uint8_t value);
+};
+
+struct WindowLayerSelect {
+    int enable[2][6];
+
+    void Reset();
+    auto Read(int offset) -> std::uint8_t;
+    void Write(int offset, std::uint8_t value);
+};
+
 }
