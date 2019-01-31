@@ -128,33 +128,33 @@ void WindowRange::Reset() {
 }
 
 void WindowRange::Write(int address, std::uint8_t value) {
-	switch (address) {
-	case 0:
-		if (value != max) _changed = true;
-		max = value;
-		break;
-	case 1:
-		if (value != min) _changed = true;
-		min = value;
-		break;
-	}
+    switch (address) {
+    case 0:
+        if (value != max) _changed = true;
+        max = value;
+        break;
+    case 1:
+        if (value != min) _changed = true;
+        min = value;
+        break;
+    }
 }
 
 void WindowLayerSelect::Reset() {
-	Write(0, 0);
-	Write(1, 0);
+    Write(0, 0);
+    Write(1, 0);
 }
 
 auto WindowLayerSelect::Read(int address) -> std::uint8_t {
-	std::uint8_t value = 0;
-	for (int i = 0; i < 6; i++)
-		value |= enable[address][i];
-	return value;
+    std::uint8_t value = 0;
+    for (int i = 0; i < 6; i++)
+        value |= enable[address][i];
+    return value;
 }
 
 void WindowLayerSelect::Write(int address, std::uint8_t value) {
-	for (int i = 0; i < 6; i++)
-		enable[address][i] = (value >> i) & 1;
+    for (int i = 0; i < 6; i++)
+        enable[address][i] = (value >> i) & 1;
 }
 
 void BlendControl::Reset() {

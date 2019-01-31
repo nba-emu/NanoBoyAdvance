@@ -162,9 +162,9 @@ void PPU::RenderScanline() {
 
         /* Render window masks. */
         if (mmio.dispcnt.enable[5])
-        	RenderWindow(0);
+            RenderWindow(0);
         if (mmio.dispcnt.enable[6])
-        	RenderWindow(1);
+            RenderWindow(1);
         
         /* TODO: how does HW behave when we select mode 6 or 7? */
         switch (mmio.dispcnt.mode) {
@@ -223,30 +223,30 @@ void PPU::RenderScanline() {
 }
 
 void PPU::RenderWindow(int id) {
-	int line = mmio.vcount;
-	auto& winv = mmio.winv[id];
+    int line = mmio.vcount;
+    auto& winv = mmio.winv[id];
 
-	if ((winv.min <= winv.max && (line < winv.min || line >= winv.max)) ||
-	    (winv.min >  winv.max && (line < winv.min && line >= winv.max)) )
-	{
-		win_active[id] = false;
-	} else {
-		auto& winh = mmio.winh[id];
+    if ((winv.min <= winv.max && (line < winv.min || line >= winv.max)) ||
+        (winv.min >  winv.max && (line < winv.min && line >= winv.max)) )
+    {
+        win_active[id] = false;
+    } else {
+        auto& winh = mmio.winh[id];
 
-		win_active[id] = true;
+        win_active[id] = true;
 
-		if (winh._changed) {
-			if (winh.min <= winh.max) {
-				for (int x = 0; x < 240; x++) {
-					win_mask[id][x] = x >= winh.min && x < winh.max;
-				}
-			} else {
-				for (int x = 0; x < 240; x++) {
-					win_mask[id][x] = x >= winh.min || x < winh.max;
-				}
-			}
-		}
-	}
+        if (winh._changed) {
+            if (winh.min <= winh.max) {
+                for (int x = 0; x < 240; x++) {
+                    win_mask[id][x] = x >= winh.min && x < winh.max;
+                }
+            } else {
+                for (int x = 0; x < 240; x++) {
+                    win_mask[id][x] = x >= winh.min || x < winh.max;
+                }
+            }
+        }
+    }
 }
 
 void PPU::Blend(std::uint16_t* _target1, std::uint16_t target2, BlendControl::Effect sfx) {

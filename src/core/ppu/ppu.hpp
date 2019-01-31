@@ -33,10 +33,10 @@ public:
         std::uint16_t bghofs[4];
         std::uint16_t bgvofs[4];
 
-		WindowRange winh[2];
-		WindowRange winv[2];
-		WindowLayerSelect winin;
-		WindowLayerSelect winout;
+        WindowRange winh[2];
+        WindowRange winv[2];
+        WindowLayerSelect winin;
+        WindowLayerSelect winout;
 
         BlendControl bldcnt;
         int eva;
@@ -87,10 +87,10 @@ private:
     std::uint8_t  priority[240];
     std::uint8_t  layer[2][240];
     std::uint16_t pixel[2][240];
-	std::uint8_t  win_mask[2][240];
+    std::uint8_t  win_mask[2][240];
 
-	bool win_active[2];
-	
+    bool win_active[2];
+    
     Phase phase;
 
     std::uint8_t blend_table[17][17][32][32];
