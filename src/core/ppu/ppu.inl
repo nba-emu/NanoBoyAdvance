@@ -79,6 +79,15 @@ auto DecodeTilePixel8BPP(std::uint32_t base, int number, int x, int y) -> std::u
 }
 
 void DrawPixel(int x, int layer, int priority, std::uint16_t color) {
+	if (mmio.dispcnt.enable[5] && win_active[0] && win_mask[0][x]) {
+		if (!mmio.winin.enable[0][layer]) return;
+	}
+	if (mmio.dispcnt.enable[6] && win_active[1] && win_mask[1][x]) {
+		if (!mmio.winin.enable[1][layer]) return;
+	}
+	if (mmio.dispcnt.enable[7] && (obj_attr[x] & OBJ_IS_WINDOW)) {
+		
+	}
     if (color != s_color_transparent && priority <= this->priority[x]) {
         pixel[1][x] = pixel[0][x];
         pixel[0][x] = color;
