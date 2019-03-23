@@ -33,10 +33,10 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
         case BG2CNT+1:   return ppu_io.bgcnt[2].Read(1);
         case BG3CNT+0:   return ppu_io.bgcnt[3].Read(0);
         case BG3CNT+1:   return ppu_io.bgcnt[3].Read(1);
-        case WININ+0:    return ppu_io.winin.Read(0);
-        case WININ+1:    return ppu_io.winin.Read(1);
-        case WINOUT+0:   return ppu_io.winout.Read(0);
-        case WINOUT+1:   return ppu_io.winout.Read(1);
+		case WININ+0:    return ppu_io.winin.Read(0);
+		case WININ+1:    return ppu_io.winin.Read(1);
+		case WINOUT+0:   return ppu_io.winout.Read(0);
+		case WINOUT+1:   return ppu_io.winout.Read(1);
         case BLDCNT+0:   return ppu_io.bldcnt.Read(0);
         case BLDCNT+1:   return ppu_io.bldcnt.Read(1);
         
