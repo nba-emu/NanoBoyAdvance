@@ -159,12 +159,6 @@ void PPU::RenderScanline() {
         for (int i = 0; i < 120; i++) {
             ((std::uint32_t*)layer)[i] = 0x05050505;
         }
-
-        /* Render window masks. */
-        if (mmio.dispcnt.enable[6])
-        	RenderWindow(0);
-        if (mmio.dispcnt.enable[7])
-        	RenderWindow(1);
         
         /* TODO: how does HW behave when we select mode 6 or 7? */
         switch (mmio.dispcnt.mode) {
@@ -220,33 +214,6 @@ void PPU::RenderScanline() {
             line[x] = ConvertColor(pixel[0][x]);
         }
     }
-}
-
-void PPU::RenderWindow(int id) {
-	int line = mmio.vcount;
-	auto& winv = mmio.winv[id];
-
-	if ((winv.min <= winv.max && (line < winv.min || line >= winv.max)) ||
-	    (winv.min >  winv.max && (line < winv.min && line >= winv.max)) )
-	{
-		win_active[id] = false;
-	} else {
-		auto& winh = mmio.winh[id];
-
-		win_active[id] = true;
-
-		if (winh._changed) {
-			if (winh.min <= winh.max) {
-				for (int x = 0; x < 240; x++) {
-					win_mask[id][x] = x >= winh.min && x < winh.max;
-				}
-			} else {
-				for (int x = 0; x < 240; x++) {
-					win_mask[id][x] = x >= winh.min || x < winh.max;
-				}
-			}
-		}
-	}
 }
 
 void PPU::Blend(std::uint16_t* _target1, std::uint16_t target2, BlendControl::Effect sfx) {
