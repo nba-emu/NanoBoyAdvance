@@ -161,9 +161,9 @@ void PPU::RenderScanline() {
         }
 
         /* Render window masks. */
-        if (mmio.dispcnt.enable[5])
-        	RenderWindow(0);
         if (mmio.dispcnt.enable[6])
+        	RenderWindow(0);
+        if (mmio.dispcnt.enable[7])
         	RenderWindow(1);
         
         /* TODO: how does HW behave when we select mode 6 or 7? */
