@@ -152,7 +152,7 @@ void CPU::RunFor(int cycles) {
                 cpu.Run();
             } else {
                 /* HACK: inaccurate due to timer interrupts. */
-                //RunTimers(run_until);
+                RunTimers(run_until);
                 run_until = 0;
                 break;
             }

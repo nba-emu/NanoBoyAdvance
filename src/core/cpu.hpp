@@ -13,7 +13,6 @@
 #include "event_device.hpp"
 #include "ppu/ppu.hpp"
 
-//#include <list>
 #include <unordered_set>
 
 namespace NanoboyAdvance::GBA {
