@@ -75,7 +75,7 @@ auto PPU::ConvertColor(std::uint16_t color) -> std::uint32_t {
            0xFF000000;
 }
 
-void PPU::Tick() {
+bool PPU::Tick() {
     auto& vcount = mmio.vcount;
     auto& dispstat = mmio.dispstat;
 
@@ -135,6 +135,8 @@ void PPU::Tick() {
             break;
         }
     }
+    
+    return true;
 }
 
 void PPU::RenderScanline() {

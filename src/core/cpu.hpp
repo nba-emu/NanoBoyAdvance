@@ -10,7 +10,11 @@
 #include "arm/arm.hpp"
 #include "arm/interface.hpp"
 #include "config.hpp"
+#include "event_device.hpp"
 #include "ppu/ppu.hpp"
+
+//#include <list>
+#include <unordered_set>
 
 namespace NanoboyAdvance::GBA {
 
@@ -20,9 +24,11 @@ public:
 
     void Reset();
     void SetSlot1(uint8_t* rom, size_t size);
-
+    void RegisterEvent(EventDevice& event);
+    void UnregisterEvent(EventDevice& event);
+    
     void RunFor(int cycles);
-
+    
     enum class HaltControl {
         RUN,
         STOP,
@@ -107,9 +113,12 @@ private:
     PPU ppu;
 
     int run_until = 0;
+    int go_for = 0;
     int cycles16[2][16];
     int cycles32[2][16];
 
+    std::unordered_set<EventDevice*> events { &ppu };
+    
     static constexpr int s_ws_nseq[4] = { 4, 3, 2, 8 }; /* Non-sequential SRAM/WS0/WS1/WS2 */
     static constexpr int s_ws_seq0[2] = { 2, 1 };       /* Sequential WS0 */
     static constexpr int s_ws_seq1[2] = { 4, 1 };       /* Sequential WS1 */

@@ -5,6 +5,7 @@
  * found in the LICENSE file.
  */
 
+#include <climits>
 #include <cstring>
 #include "cpu.hpp"
 
@@ -120,13 +121,20 @@ void CPU::SetSlot1(uint8_t* rom, size_t size) {
     Reset();
 }
 
+void CPU::RegisterEvent(EventDevice& event) {
+    events.insert(&event);
+}
+
+void CPU::UnregisterEvent(EventDevice& event) {
+    events.erase(&event);
+}
+
 void CPU::RunFor(int cycles) {
     while (cycles > 0) {
-        /* Get next event. */
-        int go_for = ppu.wait_cycles;
-
+        /* TODO: how to handle adding events during the CPU loop? */
+        
         run_until += go_for;
-
+        
         while (run_until > 0) {
             std::uint16_t fire = mmio.irq_ie & mmio.irq_if;
 
@@ -141,12 +149,26 @@ void CPU::RunFor(int cycles) {
                 run_until = 0;
             }
         }
-
-        ppu.wait_cycles -= go_for + run_until;
-        if (ppu.wait_cycles <= 0) {
-            ppu.Tick();
-        }
+        
+        /* CHECKME */
+        int elapsed = go_for + run_until;
+        
         cycles -= go_for;
+        go_for = INT_MAX;
+        
+        /* Update cycle counters and get cycles to next event. */
+        for (auto event : events) {
+            event->wait_cycles -= elapsed;
+            if (event->wait_cycles <= 0) {
+                if (!event->Tick()) {
+                    events.erase(event);
+                    continue;
+                }
+            }
+            if (event->wait_cycles < go_for) {
+                go_for = event->wait_cycles;
+            }
+        }
     }
 }
 

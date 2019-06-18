@@ -10,18 +10,19 @@
 #include <cstdint>
 
 #include "../config.hpp"
+#include "../event_device.hpp"
 #include "regs.hpp"
 
 namespace NanoboyAdvance::GBA {
 
 class CPU;
 
-class PPU {
+class PPU : public EventDevice {
 public:
     PPU(CPU* cpu);
 
     void Reset();
-    void Tick();
+    bool Tick() final;
 
     struct MMIO {
         DisplayControl dispcnt;
@@ -43,8 +44,6 @@ public:
         int evb;
         int evy;
     } mmio;
-
-    int wait_cycles;
 
 private:
     enum class Phase {

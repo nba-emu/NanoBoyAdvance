@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
     int ticks1 = SDL_GetTicks();
 
     while (running) {
-        cpu.RunFor(280896);
+        cpu.RunFor(280896 * 20);
 
         frames++;
         int ticks2 = SDL_GetTicks();
