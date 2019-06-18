@@ -41,11 +41,11 @@ int main(int argc, char** argv) {
     texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 240, 160);
 
     size_t size;
-    auto file = std::fopen("pmdtr.gba", "rb");
+    auto file = std::fopen("tmr_demo.gba", "rb");
     std::uint8_t* rom;
 
     if (file == nullptr) {
-        std::puts("Error: unable to open armwrestler.gba");
+        std::puts("Error: unable to open tmr_demo.gba");
         return -1;
     }
 
@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
     int ticks1 = SDL_GetTicks();
 
     while (running) {
-        cpu.RunFor(280896 * 20);
+        cpu.RunFor(280896);
 
         frames++;
         int ticks2 = SDL_GetTicks();

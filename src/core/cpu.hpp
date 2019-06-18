@@ -92,6 +92,24 @@ public:
             int prefetch;
             int cgb;
         } waitcnt;
+        
+        struct Timer {
+            int id;
+
+            struct Control {
+                int frequency;
+                bool cascade;
+                bool interrupt;
+                bool enable;
+            } control;
+
+            int cycles;
+            std::uint16_t reload;
+            std::uint32_t counter;
+
+            int  ticks; /* cycles per increment */
+            bool overflow;
+        } timer[4];
     } mmio;
 
 private:
@@ -104,6 +122,11 @@ private:
 
     void SWI(std::uint32_t call_id) final { }
 
+    void ResetTimers();
+    auto ReadTimer(int id, int offset) -> std::uint8_t;
+    void WriteTimer(int id, int offset, std::uint8_t value);
+    void RunTimers(int cycles);
+    
     auto ReadMMIO(std::uint32_t address) -> std::uint8_t;
     void WriteMMIO(std::uint32_t address, std::uint8_t value);
 

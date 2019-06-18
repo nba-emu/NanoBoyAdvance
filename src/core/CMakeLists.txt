@@ -7,6 +7,7 @@ SET(SOURCES
     ppu/render/text.cpp
     ppu/render/oam.cpp
     cpu.cpp
+    timer.cpp
 )
 
 SET(HEADERS
@@ -18,6 +19,7 @@ SET(HEADERS
     ppu/ppu.hpp
     ppu/regs.hpp
     cpu.hpp
+    event_device.hpp
     mmio.hpp
 )
 

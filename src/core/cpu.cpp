@@ -111,6 +111,7 @@ void CPU::Reset() {
 
     mmio.haltcnt = HaltControl::RUN;
 
+    ResetTimers();
     ppu.Reset();
 }
 
@@ -130,6 +131,8 @@ void CPU::UnregisterEvent(EventDevice& event) {
 }
 
 void CPU::RunFor(int cycles) {
+    int previous;
+    
     while (cycles > 0) {
         /* TODO: how to handle adding events during the CPU loop? */
         
@@ -141,13 +144,20 @@ void CPU::RunFor(int cycles) {
             if (mmio.haltcnt == HaltControl::HALT && fire)
                 mmio.haltcnt = HaltControl::RUN;
 
+            previous = run_until;
+            
             if (mmio.haltcnt == HaltControl::RUN) {
                 if (mmio.irq_ime && fire)
                     cpu.SignalIrq();
                 cpu.Run();
             } else {
+                /* HACK: inaccurate due to timer interrupts. */
+                //RunTimers(run_until);
                 run_until = 0;
+                break;
             }
+            
+            RunTimers(previous - run_until);
         }
         
         /* CHECKME */
