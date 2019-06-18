@@ -7,6 +7,7 @@ SET(SOURCES
     ppu/render/text.cpp
     ppu/render/oam.cpp
     cpu.cpp
+    dma.cpp
     timer.cpp
 )
 

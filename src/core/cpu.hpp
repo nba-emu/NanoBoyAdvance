@@ -166,6 +166,10 @@ private:
     void WriteTimer(int id, int offset, std::uint8_t value);
     void RunTimers(int cycles);
     
+    void ResetDMAs();
+    auto ReadDMA(int id, int offset) -> std::uint8_t;
+    void WriteDMA(int id, int offset, std::uint8_t value);
+    
     auto ReadMMIO(std::uint32_t address) -> std::uint8_t;
     void WriteMMIO(std::uint32_t address, std::uint8_t value);
 
@@ -185,6 +189,10 @@ private:
     static constexpr int s_ws_seq0[2] = { 2, 1 };       /* Sequential WS0 */
     static constexpr int s_ws_seq1[2] = { 4, 1 };       /* Sequential WS1 */
     static constexpr int s_ws_seq2[2] = { 8, 1 };       /* Sequential WS2 */
+    
+    static constexpr std::uint32_t s_dma_dst_mask[4] = { 0x07FFFFFF, 0x07FFFFFF, 0x07FFFFFF, 0x0FFFFFFF };
+    static constexpr std::uint32_t s_dma_src_mask[4] = { 0x07FFFFFF, 0x0FFFFFFF, 0x0FFFFFFF, 0x0FFFFFFF };
+    static constexpr std::uint32_t s_dma_len_mask[4] = { 0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF };
 };
 
 }
