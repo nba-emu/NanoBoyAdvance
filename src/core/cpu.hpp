@@ -23,8 +23,13 @@ public:
 
     void Reset();
     void SetSlot1(uint8_t* rom, size_t size);
+    
     void RegisterEvent(EventDevice& event);
     void UnregisterEvent(EventDevice& event);
+    
+    // FIXME:
+    void dmaFindHBlank();
+    void dmaFindVBlank();
     
     void RunFor(int cycles);
     
@@ -169,6 +174,9 @@ private:
     void ResetDMAs();
     auto ReadDMA(int id, int offset) -> std::uint8_t;
     void WriteDMA(int id, int offset, std::uint8_t value);
+    void RunDMA(); 
+    // FIXME:
+    void dmaActivate(int id);
     
     auto ReadMMIO(std::uint32_t address) -> std::uint8_t;
     void WriteMMIO(std::uint32_t address, std::uint8_t value);
@@ -184,6 +192,11 @@ private:
     int cycles32[2][16];
 
     std::unordered_set<EventDevice*> events { &ppu };
+    
+    int dma_running;
+    int dma_current;
+    bool dma_loop_exit;
+
     
     static constexpr int s_ws_nseq[4] = { 4, 3, 2, 8 }; /* Non-sequential SRAM/WS0/WS1/WS2 */
     static constexpr int s_ws_seq0[2] = { 2, 1 };       /* Sequential WS0 */

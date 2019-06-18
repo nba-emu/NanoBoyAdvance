@@ -147,7 +147,10 @@ void CPU::RunFor(int cycles) {
 
             previous = run_until;
             
-            if (mmio.haltcnt == HaltControl::RUN) {
+            /* TODO: do LIKELY/UNLIKELY make difference here? */
+            if (dma_running != 0) {
+                RunDMA();
+            } else if (mmio.haltcnt == HaltControl::RUN) {
                 if (mmio.irq_ime && fire)
                     cpu.SignalIrq();
                 cpu.Run();

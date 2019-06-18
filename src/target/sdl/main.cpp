@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 240, 160);
 
     size_t size;
-    auto file = std::fopen("pmdtr.gba", "rb");
+    auto file = std::fopen("ruby.gba", "rb");
     std::uint8_t* rom;
 
     if (file == nullptr) {

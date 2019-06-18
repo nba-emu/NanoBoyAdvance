@@ -73,7 +73,7 @@ void CPU::WriteTimer(int id, int offset, std::uint8_t value) {
 void CPU::RunTimers(int cycles) {
     #pragma unroll_loop
     for (int id = 0; id < 4; id++) {
-        auto& timer   = mmio.timer[id];
+        auto& timer = mmio.timer[id];
         auto& control = timer.control;
 
         if (!control.enable) {

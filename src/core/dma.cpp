@@ -7,9 +7,14 @@
 
 #include "cpu.hpp"
 
+using namespace ARM;
 using namespace NanoboyAdvance::GBA;
 
 void CPU::ResetDMAs() {
+    dma_running = 0;
+    dma_current = 0;
+    dma_loop_exit = false;
+    
     for (int id = 0; id < 4; id++) {
         auto& dma = mmio.dma[id];
 
@@ -50,6 +55,38 @@ auto CPU::ReadDMA(int id, int offset) -> std::uint8_t {
                    (dma.enable    ? 128 : 0);
         }
         default: return 0;
+    }
+}
+
+  void CPU::dmaActivate(int id) {
+    // Defer execution of immediate DMA if another higher priority DMA is still running.
+    // Otherwise go ahead at set is as the currently running DMA.
+    if (dma_running == 0) {
+        dma_current = id;
+    } else if (id < dma_current) {
+        dma_current = id;
+        dma_loop_exit = true;
+    }
+
+    // Mark DMA as enabled.
+    dma_running |= (1 << id);
+}
+
+void CPU::dmaFindHBlank() {
+    for (int i = 0; i < 4; i++) {
+        auto& dma = mmio.dma[i];
+        if (dma.enable && dma.time == DMA_HBLANK) {
+            dmaActivate(i);
+        }
+    }
+}
+
+void CPU::dmaFindVBlank() {
+    for (int i = 0; i < 4; i++) {
+        auto& dma = mmio.dma[i];
+        if (dma.enable && dma.time == DMA_VBLANK) {
+            dmaActivate(i);
+        }
     }
 }
 
@@ -102,9 +139,104 @@ void CPU::WriteDMA(int id, int offset, std::uint8_t value) {
 
                 /* Schedule DMA if is setup for immediate execution. */
                 if (dma.time == DMA_IMMEDIATE) {
-//                    dmaActivate(id);
+                    dmaActivate(id);
                 }
             }
+            break;
+        }
+    }
+}
+
+void CPU::RunDMA() {
+    auto& dma = mmio.dma[dma_current];
+    
+    const auto src_cntl = dma.src_cntl;
+    const auto dst_cntl = dma.dst_cntl;
+    const bool words = dma.size == DMA_WORD;
+    
+    /* TODO: what happens if src_cntl equals DMA_RELOAD? */
+    const int modify_table[2][4] = {
+        { 2, -2, 0, 2 },
+        { 4, -4, 0, 4 }
+    };
+    
+    const int src_modify = modify_table[dma.size][src_cntl];
+    const int dst_modify = modify_table[dma.size][dst_cntl];
+
+    std::uint32_t word;
+    
+    /* Run DMA until completion or interruption. */
+    if (words) {
+        while (dma.internal.length != 0) {
+            if (run_until <= 0) return;
+            
+            /* Stop if DMA was interleaved by higher priority DMA. */
+            if (dma_loop_exit) {
+                dma_loop_exit = false;
+                return;
+            }
+            
+            word = ReadWord(dma.internal.src_addr, ACCESS_SEQ);
+            WriteWord(dma.internal.dst_addr, word, ACCESS_SEQ);
+            
+            dma.internal.src_addr += src_modify;
+            dma.internal.dst_addr += dst_modify;
+            dma.internal.length--;
+        }
+    } else {
+        while (dma.internal.length != 0) {
+            if (run_until <= 0) return;
+            
+            /* Stop if DMA was interleaved by higher priority DMA. */
+            if (dma_loop_exit) {
+                dma_loop_exit = false;
+                return;
+            }
+            
+            word = ReadHalf(dma.internal.src_addr, ACCESS_SEQ);
+            WriteHalf(dma.internal.dst_addr, word, ACCESS_SEQ);
+            
+            dma.internal.src_addr += src_modify;
+            dma.internal.dst_addr += dst_modify;
+            dma.internal.length--;
+        }
+    }
+    
+    /* If this code path is reached, the DMA has completed. */
+    
+    if (dma.interrupt) {
+        mmio.irq_if |= CPU::INT_DMA0 << dma_current;
+    }
+    
+    if (dma.repeat) {
+        /* Reload the internal length counter. */
+        dma.internal.length = dma.length & s_dma_len_mask[dma_current];
+        if (dma.internal.length == 0) {
+            dma.internal.length = s_dma_len_mask[dma_current] + 1;
+        }
+
+        /* Reload destination address if specified. */
+        if (dst_cntl == DMA_RELOAD) {
+            dma.internal.dst_addr = dma.dst_addr & s_dma_dst_mask[dma_current];
+        }
+
+        /* If DMA is specified to be non-immediate, wait for it to be retriggered. */
+        if (dma.time != DMA_IMMEDIATE) {
+            dma_running &= ~(1 << dma_current);
+        }
+    } else {
+        dma.enable = false;
+        dma_running &= ~(1 << dma_current);
+    }
+    
+    if (dma_running == 0) return;
+
+    /* Find the next DMA to execute. 
+     * TODO: maybe this can be optimized using a LUT.
+     */
+    for (int id = 0; id < 4; id++) {
+        if (dma_running & (1 << id)) {
+            dma_current = id;
             break;
         }
     }

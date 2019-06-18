@@ -66,6 +66,16 @@ std::uint8_t ReadByte(std::uint32_t address, ARM::AccessType type) final {
         //     }
         //     return memory.rom.save->read8(address);
         // }
+        
+        case 0xE: {
+            /* HACK: trick games into thinking we have FLASH memory :b */
+            if (address == 0xE000000)
+                return 0x62;
+            if (address == 0xE000001)
+                return 0x13;
+            return 0;
+        }
+        
         default: return 0;
     }
 }
