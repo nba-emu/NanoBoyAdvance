@@ -51,6 +51,25 @@ public:
         INT_GAMEPAK = 1 << 13
     };
 
+    enum DMAControl {
+        DMA_INCREMENT = 0,
+        DMA_DECREMENT = 1,
+        DMA_FIXED     = 2,
+        DMA_RELOAD    = 3
+    };
+
+    enum DMATime {
+        DMA_IMMEDIATE = 0,
+        DMA_VBLANK    = 1,
+        DMA_HBLANK    = 2,
+        DMA_SPECIAL   = 3
+    };
+
+    enum DMASize {
+        DMA_HWORD = 0,
+        DMA_WORD  = 1
+    };
+    
     Config* config;
 
     struct SystemMemory {
@@ -109,6 +128,27 @@ public:
             int  ticks; /* cycles per increment */
             bool overflow;
         } timer[4];
+        
+        struct DMA {
+            bool enable;
+            bool repeat;
+            bool interrupt;
+            bool gamepak;
+
+            std::uint16_t length;
+            std::uint32_t dst_addr;
+            std::uint32_t src_addr;
+            DMAControl dst_cntl;
+            DMAControl src_cntl;
+            DMATime time;
+            DMASize size;
+
+            struct Internal {
+                std::uint32_t length;
+                std::uint32_t dst_addr;
+                std::uint32_t src_addr;
+            } internal;
+        } dma[4];
     } mmio;
 
 private:
