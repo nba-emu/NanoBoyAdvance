@@ -9,7 +9,6 @@
 
 using namespace NanoboyAdvance::GBA;
 
-
 void CPU::ResetDMAs() {
     for (int id = 0; id < 4; id++) {
         auto& dma = mmio.dma[id];

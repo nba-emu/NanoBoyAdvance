@@ -112,6 +112,7 @@ void CPU::Reset() {
     mmio.haltcnt = HaltControl::RUN;
 
     ResetTimers();
+    ResetDMAs();
     ppu.Reset();
 }
 
