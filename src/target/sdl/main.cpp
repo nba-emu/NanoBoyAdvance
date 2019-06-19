@@ -70,12 +70,12 @@ int main(int argc, char** argv) {
     int ticks1 = SDL_GetTicks();
 
     while (running) {
-        cpu.RunFor(280896 * 20);
+        cpu.RunFor(280896);
 
         frames++;
         int ticks2 = SDL_GetTicks();
         if ((ticks2 - ticks1) >= 1000) {
-            std::printf("FPS: %d\n", frames*20);
+            std::printf("FPS: %d\n", frames);
             ticks1 = ticks2;
             frames = 0;
         }

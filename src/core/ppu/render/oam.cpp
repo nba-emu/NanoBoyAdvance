@@ -30,6 +30,13 @@ const int PPU::s_obj_size[4][4][2] = {
         { 8 , 32 },
         { 16, 32 },
         { 32, 64 }
+    },
+    /* PROHIBITED */
+    {
+        { 0, 0 },
+        { 0, 0 },
+        { 0, 0 },
+        { 0, 0 }
     }
 };
 
@@ -103,6 +110,8 @@ void PPU::RenderLayerOAM() {
                 y += half_height;
                 rect_width  *= 2;
                 rect_height *= 2;
+                half_width  *= 2;
+                half_height *= 2;
             }
         } else {
             /* Set transform to identity:
@@ -139,8 +148,8 @@ void PPU::RenderLayerOAM() {
                 continue;
             }
 
-            int tex_x = ((transform[0] * local_x + transform[1] * local_y) >> 8) + half_width;
-            int tex_y = ((transform[2] * local_x + transform[3] * local_y) >> 8) + half_height;
+            int tex_x = ((transform[0] * local_x + transform[1] * local_y) >> 8) + (width / 2);
+            int tex_y = ((transform[2] * local_x + transform[3] * local_y) >> 8) + (height / 2);
 
             /* Check if transformed coordinates are inside bounds. */
             if (tex_x >= width || tex_y >= height ||
