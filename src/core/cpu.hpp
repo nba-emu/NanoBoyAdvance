@@ -130,7 +130,9 @@ public:
             std::uint16_t reload;
             std::uint32_t counter;
 
-            int  ticks; /* cycles per increment */
+            /* internal */
+            int  shift;
+            int  mask;
             bool overflow;
         } timer[4];
         

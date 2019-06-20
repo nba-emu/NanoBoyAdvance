@@ -9,7 +9,8 @@
 
 using namespace NanoboyAdvance::GBA;
 
-static constexpr int g_ticks[4] = { 1, 64, 256, 1024 };
+static constexpr int g_ticks_shift[4] = { 0, 6, 8, 10 };
+static constexpr int g_ticks_mask[4] = { 0, 0x3F, 0xFF, 0x3FF };
 
 void CPU::ResetTimers() {
     for (int id = 0; id < 4; id++) {
@@ -24,6 +25,8 @@ void CPU::ResetTimers() {
         timer.control.interrupt = false;
         timer.control.enable = false;
         timer.overflow = false;
+        timer.shift = 0;
+        timer.mask = 0;
     }
 }
 
@@ -61,8 +64,9 @@ void CPU::WriteTimer(int id, int offset, std::uint8_t value) {
             timer.control.interrupt = value & 64;
             timer.control.enable    = value & 128;
 
-            timer.ticks = g_ticks[timer.control.frequency];
-
+            timer.shift = g_ticks_shift[timer.control.frequency];
+            timer.mask  = g_ticks_mask[timer.control.frequency];
+            
             if (!enable_previous && timer.control.enable) {
                 timer.counter = timer.reload;
             }
@@ -103,16 +107,24 @@ void CPU::RunTimers(int cycles) {
 
             timer.overflow = false;
             
-            while (available >= timer.ticks) {
-                if (timer.counter != 0xFFFF) {
-                    timer.counter++;
-                } else {
-                    timer.counter  = timer.reload;
-                    timer.overflow = true;
-                    overflows++;
+            int increments  = available >> timer.shift;
+            int to_overflow = 0x10000 - timer.counter;
+            
+            if (increments >= to_overflow) {
+                timer.counter  = timer.reload;
+                timer.overflow = true;
+                overflows++;
+                increments -= to_overflow;
+                
+                to_overflow = 0x10000 - timer.reload;
+                if (increments >= to_overflow) {
+                    overflows += increments / to_overflow;
+                    increments %= to_overflow;
                 }
-                available -= timer.ticks;
             }
+            
+            timer.counter += increments;
+            available &= timer.mask;
             
             if (timer.overflow) {
                 if (control.interrupt) {
