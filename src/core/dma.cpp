@@ -140,7 +140,7 @@ void CPU::WriteDMA(int id, int offset, std::uint8_t value) {
 
                 /* Schedule DMA if is setup for immediate execution. */
                 if (dma.time == DMA_IMMEDIATE) {
-                    dmaActivate(id);
+                    MarkDMAForExecution(id);
                 }
             }
             break;
@@ -148,7 +148,7 @@ void CPU::WriteDMA(int id, int offset, std::uint8_t value) {
     }
 }
 
-void CPU::dmaActivate(int id) {
+void CPU::MarkDMAForExecution(int id) {
     // Defer execution of immediate DMA if another higher priority DMA is still running.
     // Otherwise go ahead at set is as the currently running DMA.
     if (dma_run_set == 0) {
@@ -166,26 +166,26 @@ void CPU::TriggerHBlankDMA() {
 //    for (int i = 0; i < 4; i++) {
 //        auto& dma = mmio.dma[i];
 //        if (dma.enable && dma.time == DMA_HBLANK) {
-//            dmaActivate(i);
+//            MarkDMAForExecution(i);
 //        }
 //    }
     int hblank_dma = g_dma_from_bitset[dma_run_set & dma_hblank_mask];
     
     if (hblank_dma >= 0)
-        dmaActivate(hblank_dma);
+        MarkDMAForExecution(hblank_dma);
 }
 
 void CPU::TriggerVBlankDMA() {
 //    for (int i = 0; i < 4; i++) {
 //        auto& dma = mmio.dma[i];
 //        if (dma.enable && dma.time == DMA_VBLANK) {
-//            dmaActivate(i);
+//            MarkDMAForExecution(i);
 //        }
 //    }
     int vblank_dma = g_dma_from_bitset[dma_run_set & dma_vblank_mask];
     
     if (vblank_dma >= 0)
-        dmaActivate(vblank_dma);
+        MarkDMAForExecution(vblank_dma);
 }
 
 void CPU::RunDMA() {
