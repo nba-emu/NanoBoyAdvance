@@ -175,8 +175,7 @@ private:
     auto ReadDMA(int id, int offset) -> std::uint8_t;
     void WriteDMA(int id, int offset, std::uint8_t value);
     void RunDMA(); 
-    // FIXME:
-    void dmaActivate(int id);
+    void MarkDMAForExecution(int id);
     
     auto ReadMMIO(std::uint32_t address) -> std::uint8_t;
     void WriteMMIO(std::uint32_t address, std::uint8_t value);
