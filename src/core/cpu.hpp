@@ -26,10 +26,8 @@ public:
     
     void RegisterEvent(EventDevice& event);
     void UnregisterEvent(EventDevice& event);
-    
-    // FIXME:
-    void dmaFindHBlank();
-    void dmaFindVBlank();
+    void TriggerHBlankDMA();
+    void TriggerVBlankDMA();
     
     void RunFor(int cycles);
     
@@ -195,9 +193,11 @@ private:
 
     std::unordered_set<EventDevice*> events { &ppu };
     
-    int dma_running;
-    int dma_current;
-    bool dma_loop_exit;
+    int  dma_hblank_mask;
+    int  dma_vblank_mask;
+    int  dma_run_set;
+    int  dma_current;
+    bool dma_interleaved;
 
     
     static constexpr int s_ws_nseq[4] = { 4, 3, 2, 8 }; /* Non-sequential SRAM/WS0/WS1/WS2 */

@@ -10,10 +10,32 @@
 using namespace ARM;
 using namespace NanoboyAdvance::GBA;
 
+/* Retrieves DMA with highest priority from a DMA bitset. */
+static constexpr int g_dma_from_bitset[] = {
+    /* 0b0000 */ -1,
+    /* 0b0001 */  0,
+    /* 0b0010 */  1,
+    /* 0b0011 */  0,
+    /* 0b0100 */  2,
+    /* 0b0101 */  0,
+    /* 0b0110 */  1,
+    /* 0b0111 */  0,
+    /* 0b1000 */  3,
+    /* 0b1001 */  0,
+    /* 0b1010 */  1,
+    /* 0b1011 */  0,
+    /* 0b1100 */  2,
+    /* 0b1101 */  0,
+    /* 0b1110 */  1,
+    /* 0b1111 */  0
+};
+
 void CPU::ResetDMAs() {
-    dma_running = 0;
+    dma_hblank_mask = 0;
+    dma_vblank_mask = 0;
+    dma_run_set = 0;
     dma_current = 0;
-    dma_loop_exit = false;
+    dma_interleaved = false;
     
     for (int id = 0; id < 4; id++) {
         auto& dma = mmio.dma[id];
@@ -58,38 +80,6 @@ auto CPU::ReadDMA(int id, int offset) -> std::uint8_t {
     }
 }
 
-  void CPU::dmaActivate(int id) {
-    // Defer execution of immediate DMA if another higher priority DMA is still running.
-    // Otherwise go ahead at set is as the currently running DMA.
-    if (dma_running == 0) {
-        dma_current = id;
-    } else if (id < dma_current) {
-        dma_current = id;
-        dma_loop_exit = true;
-    }
-
-    // Mark DMA as enabled.
-    dma_running |= (1 << id);
-}
-
-void CPU::dmaFindHBlank() {
-    for (int i = 0; i < 4; i++) {
-        auto& dma = mmio.dma[i];
-        if (dma.enable && dma.time == DMA_HBLANK) {
-            dmaActivate(i);
-        }
-    }
-}
-
-void CPU::dmaFindVBlank() {
-    for (int i = 0; i < 4; i++) {
-        auto& dma = mmio.dma[i];
-        if (dma.enable && dma.time == DMA_VBLANK) {
-            dmaActivate(i);
-        }
-    }
-}
-
 void CPU::WriteDMA(int id, int offset, std::uint8_t value) {
     auto& dma = mmio.dma[id];
 
@@ -126,6 +116,17 @@ void CPU::WriteDMA(int id, int offset, std::uint8_t value) {
             dma.interrupt = value & 64;
             dma.enable    = value & 128;
 
+            if (dma.time == DMA_HBLANK) {
+                dma_hblank_mask |=  (1<<id);
+                dma_vblank_mask &= ~(1<<id);
+            } else if (dma.time == DMA_VBLANK) { 
+                dma_hblank_mask &= ~(1<<id);
+                dma_vblank_mask |=  (1<<id);
+            } else {
+                dma_hblank_mask &= ~(1<<id);
+                dma_vblank_mask &= ~(1<<id);
+            }
+                
             /* DMA state is latched on "rising" enable bit. */
             if (!enable_previous && dma.enable) {
                 /* Latch sanitized values into internal DMA state. */
@@ -145,6 +146,46 @@ void CPU::WriteDMA(int id, int offset, std::uint8_t value) {
             break;
         }
     }
+}
+
+void CPU::dmaActivate(int id) {
+    // Defer execution of immediate DMA if another higher priority DMA is still running.
+    // Otherwise go ahead at set is as the currently running DMA.
+    if (dma_run_set == 0) {
+        dma_current = id;
+    } else if (id < dma_current) {
+        dma_current = id;
+        dma_interleaved = true;
+    }
+
+    // Mark DMA as enabled.
+    dma_run_set |= (1 << id);
+}
+
+void CPU::TriggerHBlankDMA() {
+//    for (int i = 0; i < 4; i++) {
+//        auto& dma = mmio.dma[i];
+//        if (dma.enable && dma.time == DMA_HBLANK) {
+//            dmaActivate(i);
+//        }
+//    }
+    int hblank_dma = g_dma_from_bitset[dma_run_set & dma_hblank_mask];
+    
+    if (hblank_dma >= 0)
+        dmaActivate(hblank_dma);
+}
+
+void CPU::TriggerVBlankDMA() {
+//    for (int i = 0; i < 4; i++) {
+//        auto& dma = mmio.dma[i];
+//        if (dma.enable && dma.time == DMA_VBLANK) {
+//            dmaActivate(i);
+//        }
+//    }
+    int vblank_dma = g_dma_from_bitset[dma_run_set & dma_vblank_mask];
+    
+    if (vblank_dma >= 0)
+        dmaActivate(vblank_dma);
 }
 
 void CPU::RunDMA() {
@@ -171,8 +212,8 @@ void CPU::RunDMA() {
             if (run_until <= 0) return;
             
             /* Stop if DMA was interleaved by higher priority DMA. */
-            if (dma_loop_exit) {
-                dma_loop_exit = false;
+            if (dma_interleaved) {
+                dma_interleaved = false;
                 return;
             }
             
@@ -188,8 +229,8 @@ void CPU::RunDMA() {
             if (run_until <= 0) return;
             
             /* Stop if DMA was interleaved by higher priority DMA. */
-            if (dma_loop_exit) {
-                dma_loop_exit = false;
+            if (dma_interleaved) {
+                dma_interleaved = false;
                 return;
             }
             
@@ -222,22 +263,14 @@ void CPU::RunDMA() {
 
         /* If DMA is specified to be non-immediate, wait for it to be retriggered. */
         if (dma.time != DMA_IMMEDIATE) {
-            dma_running &= ~(1 << dma_current);
+            dma_run_set &= ~(1 << dma_current);
         }
     } else {
         dma.enable = false;
-        dma_running &= ~(1 << dma_current);
+        dma_run_set &= ~(1 << dma_current);
     }
     
-    if (dma_running == 0) return;
-
-    /* Find the next DMA to execute. 
-     * TODO: maybe this can be optimized using a LUT.
-     */
-    for (int id = 0; id < 4; id++) {
-        if (dma_running & (1 << id)) {
-            dma_current = id;
-            break;
-        }
+    if (dma_run_set > 0) {
+        dma_current = g_dma_from_bitset[dma_run_set];
     }
 }

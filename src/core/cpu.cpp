@@ -148,7 +148,7 @@ void CPU::RunFor(int cycles) {
             previous = run_until;
             
             /* TODO: do LIKELY/UNLIKELY make difference here? */
-            if (dma_running != 0) {
+            if (dma_run_set != 0) {
                 RunDMA();
             } else if (mmio.haltcnt == HaltControl::RUN) {
                 if (mmio.irq_ime && fire)

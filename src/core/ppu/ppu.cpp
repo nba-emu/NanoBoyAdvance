@@ -81,7 +81,7 @@ bool PPU::Tick() {
 
     switch (phase) {
         case Phase::SCANLINE: {
-            cpu->dmaFindHBlank();
+            cpu->TriggerHBlankDMA();
             Next(Phase::HBLANK);
             dispstat.hblank_flag = 1;
 
@@ -99,7 +99,7 @@ bool PPU::Tick() {
             }
 
             if (vcount == 160) {
-                cpu->dmaFindVBlank();
+                cpu->TriggerVBlankDMA();
                 dispstat.vblank_flag = 1;
                 Next(Phase::VBLANK);
 
