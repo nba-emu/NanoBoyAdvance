@@ -35,6 +35,7 @@ private:
     State state;
     StatusRegister* p_spsr;
 
+    AccessType fetch_type;
     std::uint32_t pipe[2];
     bool condition_table[16][16];
     

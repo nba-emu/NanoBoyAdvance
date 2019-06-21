@@ -19,6 +19,7 @@
 #define WRITE_FAST_32(buffer, address, value) *(uint32_t*)(&buffer[address]) = value;
 
 void Tick(int cycles) final {
+    timers.Run(cycles);
     ticks_cpu_left -= cycles;
 }
 

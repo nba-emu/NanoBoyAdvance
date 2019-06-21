@@ -28,6 +28,7 @@ void ARM7::Thumb_MoveShiftedRegister(std::uint16_t instruction) {
     state.cpsr.f.n = result >> 31;
 
     state.reg[dst] = result;
+    fetch_type = ACCESS_SEQ;
     state.r15 += 2;
 }
 
@@ -43,6 +44,7 @@ void ARM7::Thumb_AddSub(std::uint16_t instruction) {
         state.reg[dst] = ADD(state.reg[src], operand, true);
     }
 
+    fetch_type = ACCESS_SEQ;
     state.r15 += 2;
 }
 
@@ -72,6 +74,7 @@ void ARM7::Thumb_Op3(std::uint16_t instruction) {
         break;
     }
 
+    fetch_type = ACCESS_SEQ;
     state.r15 += 2;
 }
 
@@ -117,6 +120,7 @@ void ARM7::Thumb_ALU(std::uint16_t instruction) {
         LSL(state.reg[dst], state.reg[src], carry);
         SetNZ(state.reg[dst]);
         state.cpsr.f.c = carry;
+        interface->Tick(1);
         break;
     }
     case ThumbDataOp::LSR: {
@@ -124,6 +128,7 @@ void ARM7::Thumb_ALU(std::uint16_t instruction) {
         LSR(state.reg[dst], state.reg[src], carry, false);
         SetNZ(state.reg[dst]);
         state.cpsr.f.c = carry;
+        interface->Tick(1);
         break;
     }
     case ThumbDataOp::ASR: {
@@ -131,6 +136,7 @@ void ARM7::Thumb_ALU(std::uint16_t instruction) {
         ASR(state.reg[dst], state.reg[src], carry, false);
         SetNZ(state.reg[dst]);
         state.cpsr.f.c = carry;
+        interface->Tick(1);
         break;
     }
     case ThumbDataOp::ROR: {
@@ -138,6 +144,7 @@ void ARM7::Thumb_ALU(std::uint16_t instruction) {
         ROR(state.reg[dst], state.reg[src], carry, false);
         SetNZ(state.reg[dst]);
         state.cpsr.f.c = carry;
+        interface->Tick(1);
         break;
     }
 
@@ -166,6 +173,7 @@ void ARM7::Thumb_ALU(std::uint16_t instruction) {
 
     }
 
+    fetch_type = ACCESS_SEQ;
     state.r15 += 2;
 }
 
@@ -198,6 +206,7 @@ void ARM7::Thumb_HighRegisterOps_BX(std::uint16_t instruction) {
     /* Check for Compare (CMP) instruction. */
     } else if (op == 1) {
         SUB(state.reg[dst], operand, true);
+        fetch_type = ACCESS_SEQ;
         state.r15 += 2;
     /* Otherwise instruction is ADD or MOv. */
     } else {
@@ -208,6 +217,7 @@ void ARM7::Thumb_HighRegisterOps_BX(std::uint16_t instruction) {
             state.r15 &= ~1;
             Thumb_ReloadPipeline();
         } else {
+            fetch_type = ACCESS_SEQ;
             state.r15 += 2;
         }
     }
@@ -219,6 +229,7 @@ void ARM7::Thumb_LoadStoreRelativePC(std::uint16_t instruction) {
     std::uint32_t address = (state.r15 & ~2) + (offset << 2);
 
     state.reg[dst] = ReadWord(address, ACCESS_NSEQ);
+    fetch_type = ACCESS_NSEQ;
     state.r15 += 2;
 }
 
@@ -244,6 +255,7 @@ void ARM7::Thumb_LoadStoreOffsetReg(std::uint16_t instruction) {
         break;
     }
 
+    fetch_type = ACCESS_NSEQ;
     state.r15 += 2;
 }
 
@@ -273,6 +285,7 @@ void ARM7::Thumb_LoadStoreSigned(std::uint16_t instruction) {
         break;
     }
 
+    fetch_type = ACCESS_NSEQ;
     state.r15 += 2;
 }
 
@@ -300,6 +313,7 @@ void ARM7::Thumb_LoadStoreOffsetImm(std::uint16_t instruction) {
         break;
     }
 
+    fetch_type = ACCESS_NSEQ;
     state.r15 += 2;
 }
 
@@ -316,6 +330,7 @@ void ARM7::Thumb_LoadStoreHword(std::uint16_t instruction) {
         WriteHalf(address, state.reg[dst], ACCESS_NSEQ);
     }
 
+    fetch_type = ACCESS_NSEQ;
     state.r15 += 2;
 }
 
@@ -330,6 +345,7 @@ void ARM7::Thumb_LoadStoreRelativeToSP(std::uint16_t instruction) {
         WriteWord(address, state.reg[dst], ACCESS_NSEQ);
     }
 
+    fetch_type = ACCESS_NSEQ;
     state.r15 += 2;
 }
 
@@ -343,6 +359,7 @@ void ARM7::Thumb_LoadAddress(std::uint16_t instruction) {
         state.reg[dst] = (state.r15 & ~2) + offset;
     }
 
+    fetch_type = ACCESS_SEQ;
     state.r15 += 2;
 }
 
@@ -351,6 +368,7 @@ void ARM7::Thumb_AddOffsetToSP(std::uint16_t instruction) {
     std::uint32_t offset = (instruction  & 0x7F) * 4;
 
     state.r13 += sub ? -offset : offset;
+    fetch_type = ACCESS_SEQ;
     state.r15 += 2;
 }
 
@@ -395,6 +413,7 @@ void ARM7::Thumb_PushPop(std::uint16_t instruction) {
         }
     }
 
+    fetch_type = ACCESS_NSEQ;
     state.r15 += 2;
 }
 
@@ -434,6 +453,7 @@ void ARM7::Thumb_LoadStoreMultiple(std::uint16_t instruction) {
         }
     }
 
+    fetch_type = ACCESS_NSEQ;
     state.r15 += 2;
 }
 
@@ -450,6 +470,7 @@ void ARM7::Thumb_ConditionalBranch(std::uint16_t instruction) {
         state.r15 += imm * 2;
         Thumb_ReloadPipeline();
     } else {
+        fetch_type = ACCESS_SEQ;
         state.r15 += 2;
     }
 }
@@ -491,6 +512,7 @@ void ARM7::Thumb_LongBranchLink(std::uint16_t instruction) {
             imm |= 0xFF800000;
         }
         state.r14 = state.r15 + imm;
+        fetch_type = ACCESS_SEQ;
         state.r15 += 2;
     } else {
         std::uint32_t temp = state.r15 - 2;
