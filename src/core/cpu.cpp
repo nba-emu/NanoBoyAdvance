@@ -193,10 +193,10 @@ void CPU::UpdateCycleLUT() {
     auto& waitcnt = mmio.waitcnt;
 
     /* SRAM timing. */
-    cycles16[0][0xE] = s_ws_nseq[waitcnt.sram];
-    cycles16[1][0xE] = s_ws_nseq[waitcnt.sram];
-    cycles32[0][0xE] = s_ws_nseq[waitcnt.sram];
-    cycles32[1][0xE] = s_ws_nseq[waitcnt.sram];
+    cycles16[0][0xE] = 1 + s_ws_nseq[waitcnt.sram];
+    cycles16[1][0xE] = 1 + s_ws_nseq[waitcnt.sram];
+    cycles32[0][0xE] = 1 + s_ws_nseq[waitcnt.sram];
+    cycles32[1][0xE] = 1 + s_ws_nseq[waitcnt.sram];
 
     /* ROM: WS0/WS1/WS2 non-sequential timing. */
     cycles16[0][0x8] = cycles16[0][0x9] = 1 + s_ws_nseq[waitcnt.ws0_n];
@@ -210,8 +210,8 @@ void CPU::UpdateCycleLUT() {
 
     /* ROM: WS0/WS1/WS2 32-bit non-sequential access: 1N access, 1S access */
     cycles32[0][0x8] = cycles32[0][0x9] = cycles16[0][0x8] + cycles16[1][0x8];
-    cycles32[0][0xA] = cycles32[0][0xB] = cycles16[0][0xA] + cycles16[1][0x8];
-    cycles32[0][0xC] = cycles32[0][0xD] = cycles16[0][0xC] + cycles16[1][0x8];
+    cycles32[0][0xA] = cycles32[0][0xB] = cycles16[0][0xA] + cycles16[1][0xA];
+    cycles32[0][0xC] = cycles32[0][0xD] = cycles16[0][0xC] + cycles16[1][0xC];
     
     /* ROM: WS0/WS1/WS2 32-bit sequential access: 2S accesses */
     cycles32[1][0x8] = cycles32[1][0x9] = cycles16[1][0x8] * 2;
