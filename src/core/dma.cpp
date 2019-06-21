@@ -11,6 +11,10 @@
 using namespace ARM;
 using namespace NanoboyAdvance::GBA;
 
+static constexpr std::uint32_t g_dma_dst_mask[4] = { 0x07FFFFFF, 0x07FFFFFF, 0x07FFFFFF, 0x0FFFFFFF };
+static constexpr std::uint32_t g_dma_src_mask[4] = { 0x07FFFFFF, 0x0FFFFFFF, 0x0FFFFFFF, 0x0FFFFFFF };
+static constexpr std::uint32_t g_dma_len_mask[4] = { 0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF };
+
 /* Retrieves DMA with highest priority from a DMA bitset. */
 static constexpr int g_dma_from_bitset[] = {
     /* 0b0000 */ -1,
@@ -32,11 +36,11 @@ static constexpr int g_dma_from_bitset[] = {
 };
 
 void DMAController::Reset() {
-    dma_hblank_mask = 0;
-    dma_vblank_mask = 0;
-    dma_run_set = 0;
-    dma_current = 0;
-    dma_interleaved = false;
+    hblank_set = 0;
+    vblank_set = 0;
+    run_set = 0;
+    current = 0;
+    interleaved = false;
     
     for (int id = 0; id < 4; id++) {
         dma[id].enable = false;
@@ -112,25 +116,25 @@ void DMAController::Write(int id, int offset, std::uint8_t value) {
             dma[id].enable    = value & 128;
 
             if (dma[id].time == DMA_HBLANK) {
-                dma_hblank_mask |=  (1<<id);
-                dma_vblank_mask &= ~(1<<id);
+                hblank_set |=  (1<<id);
+                vblank_set &= ~(1<<id);
             } else if (dma[id].time == DMA_VBLANK) { 
-                dma_hblank_mask &= ~(1<<id);
-                dma_vblank_mask |=  (1<<id);
+                hblank_set &= ~(1<<id);
+                vblank_set |=  (1<<id);
             } else {
-                dma_hblank_mask &= ~(1<<id);
-                dma_vblank_mask &= ~(1<<id);
+                hblank_set &= ~(1<<id);
+                vblank_set &= ~(1<<id);
             }
                 
             /* DMA state is latched on "rising" enable bit. */
             if (!enable_previous && dma[id].enable) {
                 /* Latch sanitized values into internal DMA state. */
-                dma[id].internal.dst_addr = dma[id].dst_addr & s_dma_dst_mask[id];
-                dma[id].internal.src_addr = dma[id].src_addr & s_dma_src_mask[id];
-                dma[id].internal.length   = dma[id].length   & s_dma_len_mask[id];
+                dma[id].internal.dst_addr = dma[id].dst_addr & g_dma_dst_mask[id];
+                dma[id].internal.src_addr = dma[id].src_addr & g_dma_src_mask[id];
+                dma[id].internal.length   = dma[id].length   & g_dma_len_mask[id];
 
                 if (dma[id].internal.length == 0) {
-                    dma[id].internal.length = s_dma_len_mask[id] + 1;
+                    dma[id].internal.length = g_dma_len_mask[id] + 1;
                 }
 
                 /* Schedule DMA if is setup for immediate execution. */
@@ -146,15 +150,15 @@ void DMAController::Write(int id, int offset, std::uint8_t value) {
 void DMAController::MarkDMAForExecution(int id) {
     // Defer execution of immediate DMA if another higher priority DMA is still running.
     // Otherwise go ahead at set is as the currently running DMA.
-    if (dma_run_set == 0) {
-        dma_current = id;
-    } else if (id < dma_current) {
-        dma_current = id;
-        dma_interleaved = true;
+    if (run_set == 0) {
+        current = id;
+    } else if (id < current) {
+        current = id;
+        interleaved = true;
     }
 
     // Mark DMA as enabled.
-    dma_run_set |= (1 << id);
+    run_set |= (1 << id);
 }
 
 void DMAController::TriggerHBlankDMA() {
@@ -164,7 +168,7 @@ void DMAController::TriggerHBlankDMA() {
 //            MarkDMAForExecution(i);
 //        }
 //    }
-    int hblank_dma = g_dma_from_bitset[dma_run_set & dma_hblank_mask];
+    int hblank_dma = g_dma_from_bitset[run_set & hblank_set];
     
     if (hblank_dma >= 0)
         MarkDMAForExecution(hblank_dma);
@@ -177,14 +181,14 @@ void DMAController::TriggerVBlankDMA() {
 //            MarkDMAForExecution(i);
 //        }
 //    }
-    int vblank_dma = g_dma_from_bitset[dma_run_set & dma_vblank_mask];
+    int vblank_dma = g_dma_from_bitset[run_set & vblank_set];
     
     if (vblank_dma >= 0)
         MarkDMAForExecution(vblank_dma);
 }
 
 void DMAController::Run() {
-    auto& dma = this->dma[dma_current];
+    auto& dma = this->dma[current];
     
     const auto src_cntl = dma.src_cntl;
     const auto dst_cntl = dma.dst_cntl;
@@ -207,8 +211,8 @@ void DMAController::Run() {
             if (cpu->run_until <= 0) return;
             
             /* Stop if DMA was interleaved by higher priority DMA. */
-            if (dma_interleaved) {
-                dma_interleaved = false;
+            if (interleaved) {
+                interleaved = false;
                 return;
             }
             
@@ -224,8 +228,8 @@ void DMAController::Run() {
             if (cpu->run_until <= 0) return;
             
             /* Stop if DMA was interleaved by higher priority DMA. */
-            if (dma_interleaved) {
-                dma_interleaved = false;
+            if (interleaved) {
+                interleaved = false;
                 return;
             }
             
@@ -241,31 +245,31 @@ void DMAController::Run() {
     /* If this code path is reached, the DMA has completed. */
     
     if (dma.interrupt) {
-        cpu->mmio.irq_if |= CPU::INT_DMA0 << dma_current;
+        cpu->mmio.irq_if |= CPU::INT_DMA0 << current;
     }
     
     if (dma.repeat) {
         /* Reload the internal length counter. */
-        dma.internal.length = dma.length & s_dma_len_mask[dma_current];
+        dma.internal.length = dma.length & g_dma_len_mask[current];
         if (dma.internal.length == 0) {
-            dma.internal.length = s_dma_len_mask[dma_current] + 1;
+            dma.internal.length = g_dma_len_mask[current] + 1;
         }
 
         /* Reload destination address if specified. */
         if (dst_cntl == DMA_RELOAD) {
-            dma.internal.dst_addr = dma.dst_addr & s_dma_dst_mask[dma_current];
+            dma.internal.dst_addr = dma.dst_addr & g_dma_dst_mask[current];
         }
 
         /* If DMA is specified to be non-immediate, wait for it to be retriggered. */
         if (dma.time != DMA_IMMEDIATE) {
-            dma_run_set &= ~(1 << dma_current);
+            run_set &= ~(1 << current);
         }
     } else {
         dma.enable = false;
-        dma_run_set &= ~(1 << dma_current);
+        run_set &= ~(1 << current);
     }
     
-    if (dma_run_set > 0) {
-        dma_current = g_dma_from_bitset[dma_run_set];
+    if (run_set > 0) {
+        current = g_dma_from_bitset[run_set];
     }
 }

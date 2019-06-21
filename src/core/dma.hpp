@@ -25,20 +25,19 @@ public:
     void Run();
     
     bool IsRunning() const {
-        return dma_run_set != 0;
+        return run_set != 0;
     }
     
 private:
     void MarkDMAForExecution(int id);
     
     CPU* cpu;
-    
-    /* TODO: rename these! */
-    int  dma_hblank_mask;
-    int  dma_vblank_mask;
-    int  dma_run_set;
-    int  dma_current;
-    bool dma_interleaved;
+
+    int  hblank_set;
+    int  vblank_set;
+    int  run_set;
+    int  current;
+    bool interleaved;
     
     enum DMAControl {
         DMA_INCREMENT = 0,
@@ -79,10 +78,6 @@ private:
             std::uint32_t src_addr;
         } internal;
     } dma[4];
-    
-    static constexpr std::uint32_t s_dma_dst_mask[4] = { 0x07FFFFFF, 0x07FFFFFF, 0x07FFFFFF, 0x0FFFFFFF };
-    static constexpr std::uint32_t s_dma_src_mask[4] = { 0x07FFFFFF, 0x0FFFFFFF, 0x0FFFFFFF, 0x0FFFFFFF };
-    static constexpr std::uint32_t s_dma_len_mask[4] = { 0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF };
 };
 
 }
