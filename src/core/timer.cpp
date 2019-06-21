@@ -66,6 +66,7 @@ void TimerController::Write(int id, int offset, std::uint8_t value) {
             
             if (!enable_previous && control.enable) {
                 timer[id].counter = timer[id].reload;
+                timer[id].cycles = 0;
             }
         }
     }
