@@ -19,7 +19,7 @@
 #define WRITE_FAST_32(buffer, address, value) *(uint32_t*)(&buffer[address]) = value;
 
 void Tick(int cycles) final {
-    run_until -= cycles;
+    ticks_cpu_left -= cycles;
 }
 
 std::uint32_t ReadBIOS(std::uint32_t address) {

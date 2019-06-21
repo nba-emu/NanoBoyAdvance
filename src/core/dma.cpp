@@ -229,7 +229,7 @@ void DMAController::Run() {
     switch (dma.size) {
         case DMA_WORD: {
             while (dma.internal.length != 0) {
-                if (cpu->run_until <= 0) return;
+                if (cpu->ticks_cpu_left <= 0) return;
 
                 /* Stop if DMA was interleaved by higher priority DMA. */
                 if (interleaved) {
@@ -248,7 +248,7 @@ void DMAController::Run() {
         }
         case DMA_HWORD: {
             while (dma.internal.length != 0) {
-                if (cpu->run_until <= 0) return;
+                if (cpu->ticks_cpu_left <= 0) return;
 
                 /* Stop if DMA was interleaved by higher priority DMA. */
                 if (interleaved) {

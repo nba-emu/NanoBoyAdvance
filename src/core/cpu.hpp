@@ -114,8 +114,8 @@ private:
 
     void UpdateCycleLUT();
 
-    int run_until = 0;
-    int go_for = 0;
+    int ticks_cpu_left = 0;
+    int ticks_to_event = 0;
     int cycles16[2][16];
     int cycles32[2][16];
 

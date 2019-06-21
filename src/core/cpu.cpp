@@ -139,17 +139,17 @@ void CPU::RunFor(int cycles) {
     while (cycles > 0) {
         /* TODO: how to handle adding events during the CPU loop? */
         
-        run_until += go_for;
+        ticks_cpu_left += ticks_to_event;
         
-        while (run_until > 0) {
+        while (ticks_cpu_left > 0) {
             std::uint16_t fire = mmio.irq_ie & mmio.irq_if;
 
             if (mmio.haltcnt == HaltControl::HALT && fire)
                 mmio.haltcnt = HaltControl::RUN;
 
-            previous = run_until;
+            previous = ticks_cpu_left;
             
-            /* TODO: do LIKELY/UNLIKELY make difference here? */
+            /* TODO: do LIKELY/UNLIKELY make a difference here? */
             if (dma.IsRunning()) {
                 dma.Run();
             } else if (mmio.haltcnt == HaltControl::RUN) {
@@ -158,38 +158,39 @@ void CPU::RunFor(int cycles) {
                 cpu.Run();
             } else {
                 /* HACK: inaccurate due to timer interrupts. */
-                timers.Run(run_until);
-                run_until = 0;
+                timers.Run(ticks_cpu_left);
+                ticks_cpu_left = 0;
                 break;
             }
             
-            timers.Run(previous - run_until);
+            timers.Run(previous - ticks_cpu_left);
         }
         
-        /* CHECKME */
-        int elapsed = go_for + run_until;
+        /* CHECKME: somehow I doubt this is correct... */
+        int elapsed = ticks_to_event + ticks_cpu_left;
         
-        cycles -= go_for;
-        go_for = INT_MAX;
+        cycles -= ticks_to_event;
+        ticks_to_event = INT_MAX;
         
         /* Update cycle counters and get cycles to next event. */
         for (auto event : events) {
             event->wait_cycles -= elapsed;
             if (event->wait_cycles <= 0) {
                 if (!event->Tick()) {
+                    /* TODO: fix this, it does not work obviously. */
                     events.erase(event);
                     continue;
                 }
             }
-            if (event->wait_cycles < go_for) {
-                go_for = event->wait_cycles;
+            if (event->wait_cycles < ticks_to_event) {
+                ticks_to_event = event->wait_cycles;
             }
         }
     }
 }
 
 void CPU::UpdateCycleLUT() {
-    const auto& waitcnt = mmio.waitcnt;
+    auto& waitcnt = mmio.waitcnt;
 
     /* SRAM timing. */
     cycles16[0][0xE] = s_ws_nseq[waitcnt.sram];
@@ -211,7 +212,7 @@ void CPU::UpdateCycleLUT() {
     cycles32[0][0x8] = cycles32[0][0x9] = cycles16[0][0x8] + cycles16[1][0x8];
     cycles32[0][0xA] = cycles32[0][0xB] = cycles16[0][0xA] + cycles16[1][0x8];
     cycles32[0][0xC] = cycles32[0][0xD] = cycles16[0][0xC] + cycles16[1][0x8];
-
+    
     /* ROM: WS0/WS1/WS2 32-bit sequential access: 2S accesses */
     cycles32[1][0x8] = cycles32[1][0x9] = cycles16[1][0x8] * 2;
     cycles32[1][0xA] = cycles32[1][0xB] = cycles16[1][0xA] * 2;
