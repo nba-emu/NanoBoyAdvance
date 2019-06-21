@@ -20,6 +20,7 @@ CPU::CPU(Config* config)
     : config(config)
     , cpu(this)
     , ppu(this)
+    , timers(this)
 {
     Reset();
 }
@@ -111,7 +112,7 @@ void CPU::Reset() {
 
     mmio.haltcnt = HaltControl::RUN;
 
-    ResetTimers();
+    timers.Reset();
     ResetDMAs();
     ppu.Reset();
 }
@@ -156,12 +157,12 @@ void CPU::RunFor(int cycles) {
                 cpu.Run();
             } else {
                 /* HACK: inaccurate due to timer interrupts. */
-                RunTimers(run_until);
+                timers.Run(run_until);
                 run_until = 0;
                 break;
             }
             
-            RunTimers(previous - run_until);
+            timers.Run(previous - run_until);
         }
         
         /* CHECKME */
