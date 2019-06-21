@@ -15,6 +15,12 @@ static constexpr std::uint32_t g_dma_dst_mask[4] = { 0x07FFFFFF, 0x07FFFFFF, 0x0
 static constexpr std::uint32_t g_dma_src_mask[4] = { 0x07FFFFFF, 0x0FFFFFFF, 0x0FFFFFFF, 0x0FFFFFFF };
 static constexpr std::uint32_t g_dma_len_mask[4] = { 0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF };
 
+/* TODO: what happens if src_cntl equals DMA_RELOAD? */
+static constexpr int g_dma_modify[2][4] = {
+    { 2, -2, 0, 2 },
+    { 4, -4, 0, 4 }
+};
+
 /* Retrieves DMA with highest priority from a DMA bitset. */
 static constexpr int g_dma_from_bitset[] = {
     /* 0b0000 */ -1,
@@ -84,37 +90,69 @@ auto DMAController::Read(int id, int offset) -> std::uint8_t {
 void DMAController::Write(int id, int offset, std::uint8_t value) {
     switch (offset) {
         /* DMAXSAD */
-        case 0: dma[id].src_addr = (dma[id].src_addr & 0xFFFFFF00) | (value<<0 ); break;
-        case 1: dma[id].src_addr = (dma[id].src_addr & 0xFFFF00FF) | (value<<8 ); break;
-        case 2: dma[id].src_addr = (dma[id].src_addr & 0xFF00FFFF) | (value<<16); break;
-        case 3: dma[id].src_addr = (dma[id].src_addr & 0x00FFFFFF) | (value<<24); break;
+        case 0: {
+            dma[id].src_addr = (dma[id].src_addr & 0xFFFFFF00) | (value<<0 );
+            break;
+        }
+        case 1: {
+            dma[id].src_addr = (dma[id].src_addr & 0xFFFF00FF) | (value<<8 );
+            break;
+        }
+        case 2: {
+            dma[id].src_addr = (dma[id].src_addr & 0xFF00FFFF) | (value<<16);
+            break;
+        }
+        case 3: {
+            dma[id].src_addr = (dma[id].src_addr & 0x00FFFFFF) | (value<<24);
+            break;
+        }
 
         /* DMAXDAD */
-        case 4: dma[id].dst_addr = (dma[id].dst_addr & 0xFFFFFF00) | (value<<0 ); break;
-        case 5: dma[id].dst_addr = (dma[id].dst_addr & 0xFFFF00FF) | (value<<8 ); break;
-        case 6: dma[id].dst_addr = (dma[id].dst_addr & 0xFF00FFFF) | (value<<16); break;
-        case 7: dma[id].dst_addr = (dma[id].dst_addr & 0x00FFFFFF) | (value<<24); break;
+        case 4: {
+            dma[id].dst_addr = (dma[id].dst_addr & 0xFFFFFF00) | (value<<0 );
+            break;
+        }
+        case 5: {
+            dma[id].dst_addr = (dma[id].dst_addr & 0xFFFF00FF) | (value<<8 );
+            break;
+        }
+        case 6: {
+            dma[id].dst_addr = (dma[id].dst_addr & 0xFF00FFFF) | (value<<16);
+            break;
+        }
+        case 7: {
+            dma[id].dst_addr = (dma[id].dst_addr & 0x00FFFFFF) | (value<<24);
+            break;
+        }
 
         /* DMAXCNT_L */
-        case 8: dma[id].length = (dma[id].length & 0xFF00) | (value<<0); break;
-        case 9: dma[id].length = (dma[id].length & 0x00FF) | (value<<8); break;
+        case 8: {
+            dma[id].length = (dma[id].length & 0xFF00) | (value<<0);
+            break;
+        }
+        case 9: {
+            dma[id].length = (dma[id].length & 0x00FF) | (value<<8);
+            break;
+        }
 
         /* DMAXCNT_H */
-        case 10:
-            dma[id].dst_cntl = static_cast<DMAControl>((value >> 5) & 3);
-            dma[id].src_cntl = static_cast<DMAControl>((dma[id].src_cntl & 0b10) | (value>>7));
+        case 10: {
+            dma[id].dst_cntl = DMAControl((value >> 5) & 3);
+            dma[id].src_cntl = DMAControl((dma[id].src_cntl & 0b10) | (value>>7));
             break;
+        }
         case 11: {
             bool enable_previous = dma[id].enable;
 
-            dma[id].src_cntl  = static_cast<DMAControl>((dma[id].src_cntl & 0b01) | ((value & 1)<<1));
-            dma[id].size      = static_cast<DMASize>((value>>2) & 1);
-            dma[id].time      = static_cast<DMATime>((value>>4) & 3);
+            dma[id].src_cntl  = DMAControl((dma[id].src_cntl & 0b01) | ((value & 1)<<1));
+            dma[id].size      = DMASize((value>>2) & 1);
+            dma[id].time      = DMATime((value>>4) & 3);
             dma[id].repeat    = value & 2;
             dma[id].gamepak   = value & 8;
             dma[id].interrupt = value & 64;
             dma[id].enable    = value & 128;
 
+            /* Update HBLANK/VBLANK DMA sets. */
             if (dma[id].time == DMA_HBLANK) {
                 hblank_set |=  (1<<id);
                 vblank_set &= ~(1<<id);
@@ -148,8 +186,10 @@ void DMAController::Write(int id, int offset, std::uint8_t value) {
 }
 
 void DMAController::MarkDMAForExecution(int id) {
-    // Defer execution of immediate DMA if another higher priority DMA is still running.
-    // Otherwise go ahead at set is as the currently running DMA.
+    /* If no other DMA is running or this DMA has higher priority
+     * then execute this DMA directly.
+     * Lower priority DMAs will be interleaved in the latter case.
+     */
     if (run_set == 0) {
         current = id;
     } else if (id < current) {
@@ -157,17 +197,11 @@ void DMAController::MarkDMAForExecution(int id) {
         interleaved = true;
     }
 
-    // Mark DMA as enabled.
+    /* Mark DMA as running. */
     run_set |= (1 << id);
 }
 
 void DMAController::TriggerHBlankDMA() {
-//    for (int i = 0; i < 4; i++) {
-//        auto& dma = mmio.dma[i];
-//        if (dma.enable && dma.time == DMA_HBLANK) {
-//            MarkDMAForExecution(i);
-//        }
-//    }
     int hblank_dma = g_dma_from_bitset[run_set & hblank_set];
     
     if (hblank_dma >= 0)
@@ -175,12 +209,6 @@ void DMAController::TriggerHBlankDMA() {
 }
 
 void DMAController::TriggerVBlankDMA() {
-//    for (int i = 0; i < 4; i++) {
-//        auto& dma = mmio.dma[i];
-//        if (dma.enable && dma.time == DMA_VBLANK) {
-//            MarkDMAForExecution(i);
-//        }
-//    }
     int vblank_dma = g_dma_from_bitset[run_set & vblank_set];
     
     if (vblank_dma >= 0)
@@ -190,59 +218,56 @@ void DMAController::TriggerVBlankDMA() {
 void DMAController::Run() {
     auto& dma = this->dma[current];
     
-    const auto src_cntl = dma.src_cntl;
-    const auto dst_cntl = dma.dst_cntl;
-    const bool words = dma.size == DMA_WORD;
+    auto src_cntl = dma.src_cntl;
+    auto dst_cntl = dma.dst_cntl;
+    int src_modify = g_dma_modify[dma.size][src_cntl];
+    int dst_modify = g_dma_modify[dma.size][dst_cntl];
     
-    /* TODO: what happens if src_cntl equals DMA_RELOAD? */
-    const int modify_table[2][4] = {
-        { 2, -2, 0, 2 },
-        { 4, -4, 0, 4 }
-    };
-    
-    const int src_modify = modify_table[dma.size][src_cntl];
-    const int dst_modify = modify_table[dma.size][dst_cntl];
-
     std::uint32_t word;
     
     /* Run DMA until completion or interruption. */
-    if (words) {
-        while (dma.internal.length != 0) {
-            if (cpu->run_until <= 0) return;
-            
-            /* Stop if DMA was interleaved by higher priority DMA. */
-            if (interleaved) {
-                interleaved = false;
-                return;
+    switch (dma.size) {
+        case DMA_WORD: {
+            while (dma.internal.length != 0) {
+                if (cpu->run_until <= 0) return;
+
+                /* Stop if DMA was interleaved by higher priority DMA. */
+                if (interleaved) {
+                    interleaved = false;
+                    return;
+                }
+
+                word = cpu->ReadWord(dma.internal.src_addr, ACCESS_SEQ);
+                cpu->WriteWord(dma.internal.dst_addr, word, ACCESS_SEQ);
+
+                dma.internal.src_addr += src_modify;
+                dma.internal.dst_addr += dst_modify;
+                dma.internal.length--;
             }
-            
-            word = cpu->ReadWord(dma.internal.src_addr, ACCESS_SEQ);
-            cpu->WriteWord(dma.internal.dst_addr, word, ACCESS_SEQ);
-            
-            dma.internal.src_addr += src_modify;
-            dma.internal.dst_addr += dst_modify;
-            dma.internal.length--;
+            break;
         }
-    } else {
-        while (dma.internal.length != 0) {
-            if (cpu->run_until <= 0) return;
-            
-            /* Stop if DMA was interleaved by higher priority DMA. */
-            if (interleaved) {
-                interleaved = false;
-                return;
+        case DMA_HWORD: {
+            while (dma.internal.length != 0) {
+                if (cpu->run_until <= 0) return;
+
+                /* Stop if DMA was interleaved by higher priority DMA. */
+                if (interleaved) {
+                    interleaved = false;
+                    return;
+                }
+
+                word = cpu->ReadHalf(dma.internal.src_addr, ACCESS_SEQ);
+                cpu->WriteHalf(dma.internal.dst_addr, word, ACCESS_SEQ);
+
+                dma.internal.src_addr += src_modify;
+                dma.internal.dst_addr += dst_modify;
+                dma.internal.length--;
             }
-            
-            word = cpu->ReadHalf(dma.internal.src_addr, ACCESS_SEQ);
-            cpu->WriteHalf(dma.internal.dst_addr, word, ACCESS_SEQ);
-            
-            dma.internal.src_addr += src_modify;
-            dma.internal.dst_addr += dst_modify;
-            dma.internal.length--;
+            break;
         }
     }
     
-    /* If this code path is reached, the DMA has completed. */
+    /* NOTE: if this code path is reached, the DMA has completed. */
     
     if (dma.interrupt) {
         cpu->mmio.irq_if |= CPU::INT_DMA0 << current;
