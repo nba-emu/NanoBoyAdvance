@@ -1,6 +1,7 @@
 SET(SOURCES
     arm/isa/thumb.cpp
     arm/isa/arm.cpp
+    bios.cpp
     mmio.cpp
     ppu/regs.cpp
     ppu/ppu.cpp

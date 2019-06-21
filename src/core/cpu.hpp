@@ -107,11 +107,7 @@ private:
     /* Contains memory read/write implementation. */
     #include "cpu.inl"
 
-    void Tick(int cycles) final {
-        run_until -= cycles;
-    }
-
-    void SWI(std::uint32_t call_id) final { }
+    void SWI(std::uint32_t call_id) final;
 
     auto ReadMMIO(std::uint32_t address) -> std::uint8_t;
     void WriteMMIO(std::uint32_t address, std::uint8_t value);
