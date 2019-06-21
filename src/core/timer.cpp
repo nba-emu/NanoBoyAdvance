@@ -65,8 +65,13 @@ void TimerController::Write(int id, int offset, std::uint8_t value) {
             timer[id].mask  = g_ticks_mask[control.frequency];
             
             if (!enable_previous && control.enable) {
+                /* NOTE: the timing calibration test seems to
+                 * expect the timer to start 2 cycles later than we do.
+                 * We account for this here, however I'm not 100% sure if it
+                 * holds for the general case.
+                 */
+                timer[id].cycles = -2;
                 timer[id].counter = timer[id].reload;
-                timer[id].cycles = 0;
             }
         }
     }
