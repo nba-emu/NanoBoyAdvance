@@ -35,7 +35,7 @@ inline void ARM7::Run() {
         state.r15 &= ~3;
 
         pipe[0] = pipe[1];
-        pipe[1] = ReadWord(state.r15, ACCESS_SEQ);
+        pipe[1] = ReadWord(state.r15, fetch_type);
         if (CheckCondition(static_cast<Condition>(instruction >> 28))) {
             int hash = ((instruction >> 16) & 0xFF0) |
                        ((instruction >>  4) & 0x00F);

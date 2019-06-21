@@ -40,6 +40,8 @@ int main(int argc, char** argv) {
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 240, 160);
 
+    //SDL_GL_SetSwapInterval(0);
+    
     size_t size;
     auto file = std::fopen("suite.gba", "rb");
     std::uint8_t* rom;

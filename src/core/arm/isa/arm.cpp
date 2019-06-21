@@ -154,6 +154,7 @@ void ARM7::ARM_DataProcessing(std::uint32_t instruction) {
             ARM_ReloadPipeline();
         }
     } else {
+        fetch_type = ACCESS_SEQ;
         state.r15 += 4;
     }
 }
@@ -202,6 +203,7 @@ void ARM7::ARM_StatusTransfer(std::uint32_t instruction) {
         }
     }
 
+    fetch_type = ACCESS_SEQ;
     state.r15 += 4;
 }
 
@@ -224,6 +226,7 @@ void ARM7::ARM_Multiply(std::uint32_t instruction) {
     }
 
     state.reg[dst] = result;
+    fetch_type = ACCESS_SEQ;
     state.r15 += 4;
 }
 
@@ -274,9 +277,11 @@ void ARM7::ARM_MultiplyLong(std::uint32_t instruction) {
         state.cpsr.f.z = result == 0;
     }
 
+    fetch_type = ACCESS_SEQ;
     state.r15 += 4;
 }
 
+/* TODO: check if timings are correct. */
 template <bool byte>
 void ARM7::ARM_SingleDataSwap(std::uint32_t instruction) {
     int src  = (instruction >>  0) & 0xF;
@@ -294,6 +299,8 @@ void ARM7::ARM_SingleDataSwap(std::uint32_t instruction) {
     }
 
     state.reg[dst] = tmp;
+    interface->Tick(1);
+    fetch_type = ACCESS_NSEQ;
     state.r15 += 4;
 }
 
@@ -333,6 +340,7 @@ void ARM7::ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
         case 1:
             if (load) {
                 state.reg[dst] = ReadHalfRotate(address, ACCESS_NSEQ);
+                interface->Tick(1);
             } else {
                 std::uint32_t value = state.reg[dst];
 
@@ -345,9 +353,11 @@ void ARM7::ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
             break;
         case 2:
             state.reg[dst] = ReadByteSigned(address, ACCESS_NSEQ);
+            interface->Tick(1);
             break;
         case 3:
             state.reg[dst] = ReadHalfSigned(address, ACCESS_NSEQ);
+            interface->Tick(1);
             break;
     }
 
@@ -358,6 +368,7 @@ void ARM7::ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
         state.reg[base] = address;
     }
 
+    fetch_type = ACCESS_NSEQ;
     state.r15 += 4;
 }
 
@@ -416,6 +427,7 @@ void ARM7::ARM_SingleDataTransfer(std::uint32_t instruction) {
         } else {
             state.reg[dst] = ReadWordRotate(address, ACCESS_NSEQ);
         }
+        interface->Tick(1);
     } else {
         std::uint32_t value = state.reg[dst];
 
@@ -448,6 +460,7 @@ void ARM7::ARM_SingleDataTransfer(std::uint32_t instruction) {
     if (load && dst == 15) {
         ARM_ReloadPipeline();
     } else {
+        fetch_type = ACCESS_NSEQ;
         state.r15 += 4;
     }
 }
@@ -491,6 +504,8 @@ void ARM7::ARM_BlockDataTransfer(std::uint32_t instruction) {
         writeback = false;
         pre = !pre;
     }
+    
+    auto access_type = ACCESS_NSEQ;
 
     for (int i = first; i < 16; i++) {
         if (~list & (1 << i)) {
@@ -505,7 +520,7 @@ void ARM7::ARM_BlockDataTransfer(std::uint32_t instruction) {
             if (i == base) {
                 writeback = false;
             }
-            state.reg[i] = ReadWord(address, ACCESS_NSEQ);
+            state.reg[i] = ReadWord(address, access_type);
             if (i == 15 && user_mode) {
                 auto& spsr = *p_spsr;
 
@@ -514,11 +529,13 @@ void ARM7::ARM_BlockDataTransfer(std::uint32_t instruction) {
             }
         } else {
             if (i == first && i == base) {
-                WriteWord(address, address_old, ACCESS_NSEQ);
+                WriteWord(address, address_old, access_type);
             } else {
-                WriteWord(address, state.reg[i], ACCESS_NSEQ);
+                WriteWord(address, state.reg[i], access_type);
             }
         }
+        
+        access_type = ACCESS_SEQ;
 
         if (!pre) {
             address += 4;
@@ -527,6 +544,10 @@ void ARM7::ARM_BlockDataTransfer(std::uint32_t instruction) {
         if (writeback) {
             state.reg[base] = address;
         }
+    }
+
+    if (load) {
+        interface->Tick(1);
     }
 
     if (switched) {
@@ -540,6 +561,7 @@ void ARM7::ARM_BlockDataTransfer(std::uint32_t instruction) {
             ARM_ReloadPipeline();
         }
     } else {
+        fetch_type = ACCESS_NSEQ;
         state.r15 += 4;
     }
 }
