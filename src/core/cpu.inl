@@ -39,6 +39,9 @@ std::uint32_t ReadBIOS(std::uint32_t address) {
 std::uint8_t ReadByte(std::uint32_t address, ARM::AccessType type) final {
     int page = (address >> 24) & 15;
 
+//    if (page == 8 && (address & 0x1FFFF) == 0)
+//        type = ARM::ACCESS_NSEQ;
+
     Tick(cycles16[type][page]);
 
     switch (page) {
@@ -87,6 +90,9 @@ std::uint8_t ReadByte(std::uint32_t address, ARM::AccessType type) final {
 
 std::uint16_t ReadHalf(std::uint32_t address, ARM::AccessType type) final {
     int page = (address >> 24) & 15;
+
+//    if (page == 8 && (address & 0x1FFFF) == 0)
+//        type = ARM::ACCESS_NSEQ;
 
     Tick(cycles16[type][page]);
 
@@ -143,6 +149,9 @@ std::uint16_t ReadHalf(std::uint32_t address, ARM::AccessType type) final {
 std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) final {
     int page = (address >> 24) & 15;
 
+//    if (page == 8 && (address & 0x1FFFF) == 0)
+//        type = ARM::ACCESS_NSEQ;
+
     Tick(cycles32[type][page]);
 
     switch (page) {
@@ -192,6 +201,9 @@ std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) final {
 void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) final {
     int page = (address >> 24) & 15;
 
+//    if (page == 8 && (address & 0x1FFFF) == 0)
+//        type = ARM::ACCESS_NSEQ;
+
     Tick(cycles16[type][page]);
 
     switch (page) {
@@ -223,6 +235,9 @@ void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) 
 
 void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type) final {
     int page = (address >> 24) & 15;
+
+//    if (page == 8 && (address & 0x1FFFF) == 0)
+//        type = ARM::ACCESS_NSEQ;
 
     Tick(cycles16[type][page]);
 
@@ -289,6 +304,9 @@ void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type)
 
 void WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type) final {
     int page = (address >> 24) & 15;
+
+//    if (page == 8 && (address & 0x1FFFF) == 0)
+//        type = ARM::ACCESS_NSEQ;
 
     Tick(cycles32[type][page]);
 

@@ -229,6 +229,7 @@ void ARM7::Thumb_LoadStoreRelativePC(std::uint16_t instruction) {
     std::uint32_t address = (state.r15 & ~2) + (offset << 2);
 
     state.reg[dst] = ReadWord(address, ACCESS_NSEQ);
+    interface->Tick(1);
     fetch_type = ACCESS_NSEQ;
     state.r15 += 2;
 }
@@ -249,9 +250,11 @@ void ARM7::Thumb_LoadStoreOffsetReg(std::uint16_t instruction) {
         break;
     case 0b10: // LDR
         state.reg[dst] = ReadWordRotate(address, ACCESS_NSEQ);
+        interface->Tick(1);
         break;
     case 0b11: // LDRB
         state.reg[dst] = ReadByte(address, ACCESS_NSEQ);
+        interface->Tick(1);
         break;
     }
 
@@ -274,14 +277,17 @@ void ARM7::Thumb_LoadStoreSigned(std::uint16_t instruction) {
     case 0b01:
         /* LDSB rD, [rB, rO] */
         state.reg[dst] = ReadByteSigned(address, ACCESS_NSEQ);
+        interface->Tick(1);
         break;
     case 0b10:
         /* LDRH rD, [rB, rO] */
         state.reg[dst] = ReadHalfRotate(address, ACCESS_NSEQ);
+        interface->Tick(1);
         break;
     case 0b11:
         /* LDSH rD, [rB, rO] */
         state.reg[dst] = ReadHalfSigned(address, ACCESS_NSEQ);
+        interface->Tick(1);
         break;
     }
 
@@ -302,6 +308,7 @@ void ARM7::Thumb_LoadStoreOffsetImm(std::uint16_t instruction) {
     case 0b01:
         /* LDR rD, [rB, #imm] */
         state.reg[dst] = ReadWordRotate(state.reg[base] + imm * 4, ACCESS_NSEQ);
+        interface->Tick(1);
         break;
     case 0b10:
         /* STRB rD, [rB, #imm] */
@@ -310,6 +317,7 @@ void ARM7::Thumb_LoadStoreOffsetImm(std::uint16_t instruction) {
     case 0b11:
         /* LDRB rD, [rB, #imm] */
         state.reg[dst] = ReadByte(state.reg[base] + imm, ACCESS_NSEQ);
+        interface->Tick(1);
         break;
     }
 
@@ -326,6 +334,7 @@ void ARM7::Thumb_LoadStoreHword(std::uint16_t instruction) {
 
     if (load) {
         state.reg[dst] = ReadHalfRotate(address, ACCESS_NSEQ);
+        interface->Tick(1);
     } else {
         WriteHalf(address, state.reg[dst], ACCESS_NSEQ);
     }
@@ -341,6 +350,7 @@ void ARM7::Thumb_LoadStoreRelativeToSP(std::uint16_t instruction) {
 
     if (load) {
         state.reg[dst] = ReadWordRotate(address, ACCESS_NSEQ);
+        interface->Tick(1);
     } else {
         WriteWord(address, state.reg[dst], ACCESS_NSEQ);
     }
