@@ -10,6 +10,7 @@
 #include "arm/arm.hpp"
 #include "arm/interface.hpp"
 #include "config.hpp"
+#include "dma.hpp"
 #include "event_device.hpp"
 #include "ppu/ppu.hpp"
 #include "timer.hpp"
@@ -27,8 +28,6 @@ public:
     
     void RegisterEvent(EventDevice& event);
     void UnregisterEvent(EventDevice& event);
-    void TriggerHBlankDMA();
-    void TriggerVBlankDMA();
     
     void RunFor(int cycles);
     
@@ -53,25 +52,6 @@ public:
         INT_DMA3    = 1 << 11,
         INT_KEYPAD  = 1 << 12,
         INT_GAMEPAK = 1 << 13
-    };
-
-    enum DMAControl {
-        DMA_INCREMENT = 0,
-        DMA_DECREMENT = 1,
-        DMA_FIXED     = 2,
-        DMA_RELOAD    = 3
-    };
-
-    enum DMATime {
-        DMA_IMMEDIATE = 0,
-        DMA_VBLANK    = 1,
-        DMA_HBLANK    = 2,
-        DMA_SPECIAL   = 3
-    };
-
-    enum DMASize {
-        DMA_HWORD = 0,
-        DMA_WORD  = 1
     };
     
     Config* config;
@@ -114,30 +94,16 @@ public:
             int prefetch;
             int cgb;
         } waitcnt;
-        
-        struct DMA {
-            bool enable;
-            bool repeat;
-            bool interrupt;
-            bool gamepak;
-
-            std::uint16_t length;
-            std::uint32_t dst_addr;
-            std::uint32_t src_addr;
-            DMAControl dst_cntl;
-            DMAControl src_cntl;
-            DMATime time;
-            DMASize size;
-
-            struct Internal {
-                std::uint32_t length;
-                std::uint32_t dst_addr;
-                std::uint32_t src_addr;
-            } internal;
-        } dma[4];
     } mmio;
+    
+    ARM::ARM7 cpu;
+    PPU ppu;
+    DMAController dma;
+    TimerController timers;
 
 private:
+    friend class DMAController;
+    
     /* Contains memory read/write implementation. */
     #include "cpu.inl"
 
@@ -147,20 +113,10 @@ private:
 
     void SWI(std::uint32_t call_id) final { }
 
-    void ResetDMAs();
-    auto ReadDMA(int id, int offset) -> std::uint8_t;
-    void WriteDMA(int id, int offset, std::uint8_t value);
-    void RunDMA(); 
-    void MarkDMAForExecution(int id);
-    
     auto ReadMMIO(std::uint32_t address) -> std::uint8_t;
     void WriteMMIO(std::uint32_t address, std::uint8_t value);
 
     void UpdateCycleLUT();
-
-    ARM::ARM7 cpu;
-    PPU ppu;
-    TimerController timers;
 
     int run_until = 0;
     int go_for = 0;
@@ -168,12 +124,6 @@ private:
     int cycles32[2][16];
 
     std::unordered_set<EventDevice*> events { &ppu };
-    
-    int  dma_hblank_mask;
-    int  dma_vblank_mask;
-    int  dma_run_set;
-    int  dma_current;
-    bool dma_interleaved;
     
     static constexpr int s_ws_nseq[4] = { 4, 3, 2, 8 }; /* Non-sequential SRAM/WS0/WS1/WS2 */
     static constexpr int s_ws_seq0[2] = { 2, 1 };       /* Sequential WS0 */

@@ -20,6 +20,7 @@ CPU::CPU(Config* config)
     : config(config)
     , cpu(this)
     , ppu(this)
+    , dma(this)
     , timers(this)
 {
     Reset();
@@ -113,7 +114,7 @@ void CPU::Reset() {
     mmio.haltcnt = HaltControl::RUN;
 
     timers.Reset();
-    ResetDMAs();
+    dma.Reset();
     ppu.Reset();
 }
 
@@ -149,8 +150,8 @@ void CPU::RunFor(int cycles) {
             previous = run_until;
             
             /* TODO: do LIKELY/UNLIKELY make difference here? */
-            if (dma_run_set != 0) {
-                RunDMA();
+            if (dma.IsRunning()) {
+                dma.Run();
             } else if (mmio.haltcnt == HaltControl::RUN) {
                 if (mmio.irq_ime && fire)
                     cpu.SignalIrq();

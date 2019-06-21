@@ -6,6 +6,7 @@
  */
 
 #include "cpu.hpp"
+#include "timer.hpp"
 
 using namespace NanoboyAdvance::GBA;
 
