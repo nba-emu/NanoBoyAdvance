@@ -386,20 +386,28 @@ template <bool pop, bool rbit>
 void ARM7::Thumb_PushPop(std::uint16_t instruction) {
     std::uint32_t address = state.r13;
 
-    /* TODO: Empty register list, figure out timings. */
+    /* TODO: handle empty register lists. */
+    
+    auto access_type = ACCESS_NSEQ;
+    
     if (pop) {
         for (int reg = 0; reg <= 7; reg++) {
             if (instruction & (1<<reg)) {
-                state.reg[reg] = ReadWord(address, ACCESS_SEQ);
+                state.reg[reg] = ReadWord(address, access_type);
+                access_type = ACCESS_SEQ;
                 address += 4;
             }
         }
+        
         if (rbit) {
-            state.reg[15] = ReadWord(address, ACCESS_SEQ) & ~1;
+            state.reg[15] = ReadWord(address, access_type) & ~1;
             state.reg[13] = address + 4;
+            interface->Tick(1);
             Thumb_ReloadPipeline();
             return;
         }
+        
+        interface->Tick(1);
         state.r13 = address;
     } else {
         /* Calculate internal start address (final r13 value) */
@@ -414,12 +422,14 @@ void ARM7::Thumb_PushPop(std::uint16_t instruction) {
 
         for (int reg = 0; reg <= 7; reg++) {
             if (instruction & (1<<reg)) {
-                WriteWord(address, state.reg[reg], ACCESS_SEQ);
+                WriteWord(address, state.reg[reg], access_type);
+                access_type = ACCESS_SEQ;
                 address += 4;
             }
         }
+        
         if (rbit) {
-            WriteWord(address, state.r14, ACCESS_SEQ);
+            WriteWord(address, state.r14, access_type);
         }
     }
 
@@ -429,16 +439,20 @@ void ARM7::Thumb_PushPop(std::uint16_t instruction) {
 
 template <bool load, int base>
 void ARM7::Thumb_LoadStoreMultiple(std::uint16_t instruction) {
-    /* TODO: handle empty register list, work on timings. */
+    /* TODO: handle empty register list. */
+    
     if (load) {
         std::uint32_t address = state.reg[base];
-
+        auto access_type = ACCESS_NSEQ;
+        
         for (int i = 0; i <= 7; i++) {
             if (instruction & (1<<i)) {
-                state.reg[i] = ReadWord(address, ACCESS_SEQ);
+                state.reg[i] = ReadWord(address, access_type);
+                access_type = ACCESS_SEQ;
                 address += 4;
             }
         }
+        interface->Tick(1);
         if (~instruction & (1<<base)) {
             state.reg[base] = address;
         }
