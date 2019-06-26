@@ -1,4 +1,6 @@
 SET(SOURCES
+    apu/apu.cpp
+    apu/regs.cpp
     arm/isa/thumb.cpp
     arm/isa/arm.cpp
     bios.cpp
@@ -13,6 +15,8 @@ SET(SOURCES
 )
 
 SET(HEADERS
+    apu/apu.hpp
+    apu/regs.hpp
     arm/arm.hpp
     arm/enums.hpp
     arm/interface.hpp

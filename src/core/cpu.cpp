@@ -115,6 +115,7 @@ void CPU::Reset() {
 
     timers.Reset();
     dma.Reset();
+    apu.Reset();
     ppu.Reset();
 }
 

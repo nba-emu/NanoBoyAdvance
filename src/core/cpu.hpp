@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "apu/apu.hpp"
 #include "arm/arm.hpp"
 #include "arm/interface.hpp"
 #include "config.hpp"
@@ -97,6 +98,7 @@ public:
     } mmio;
     
     ARM::ARM7 cpu;
+    APU apu;
     PPU ppu;
     DMAController dma;
     TimerController timers;

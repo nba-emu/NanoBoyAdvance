@@ -15,6 +15,7 @@ using namespace NanoboyAdvance::GBA;
 auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     //std::printf("[R][MMIO] 0x%08x\n", address);
 
+    auto& apu_io = apu.mmio;
     auto& ppu_io = ppu.mmio;
 
     switch (address) {
@@ -50,6 +51,13 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
         case DMA3CNT_H:   return dma.Read(3, 10);
         case DMA3CNT_H+1: return dma.Read(3, 11);
             
+        /* SOUND */
+        case SOUNDCNT_L:    return apu_io.soundcnt.Read(0);
+        case SOUNDCNT_L+1:  return apu_io.soundcnt.Read(1);
+        case SOUNDCNT_H:    return apu_io.soundcnt.Read(2);
+        case SOUNDCNT_H+1:  return apu_io.soundcnt.Read(3);
+        case SOUNDCNT_X:    return apu_io.soundcnt.Read(4);
+            
         /* Timers 0-3 */
         case TM0CNT_L:   return timers.Read(0, 0);
         case TM0CNT_L+1: return timers.Read(0, 1);
@@ -81,6 +89,7 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
 void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     //std::printf("[W][MMIO] 0x%08x=0x%02x\n", address, value);
 
+    auto& apu_io = apu.mmio;
     auto& ppu_io = ppu.mmio;
 
     switch (address) {
@@ -89,7 +98,6 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
         case DISPCNT+1:  ppu_io.dispcnt.Write(1, value); break;
         case DISPSTAT+0: ppu_io.dispstat.Write(0, value); break;
         case DISPSTAT+1: ppu_io.dispstat.Write(1, value); break;
-        /* TODO: do VCOUNT writes have an effect on the GBA too? */
         case BG0CNT+0:   ppu_io.bgcnt[0].Write(0, value); break;
         case BG0CNT+1:   ppu_io.bgcnt[0].Write(1, value); break;
         case BG1CNT+0:   ppu_io.bgcnt[1].Write(0, value); break;
@@ -235,6 +243,13 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
         case DMA3CNT_L+1: dma.Write(3, 9, value); break;
         case DMA3CNT_H:   dma.Write(3, 10, value); break;
         case DMA3CNT_H+1: dma.Write(3, 11, value); break;
+            
+        /* SOUND */
+        case SOUNDCNT_L:   apu_io.soundcnt.Write(0, value); break;
+        case SOUNDCNT_L+1: apu_io.soundcnt.Write(1, value); break;
+        case SOUNDCNT_H:   apu_io.soundcnt.Write(2, value); break;
+        case SOUNDCNT_H+1: apu_io.soundcnt.Write(3, value); break;
+        case SOUNDCNT_X:   apu_io.soundcnt.Write(4, value); break;
             
         /* Timers 0-3 */
         case TM0CNT_L:   timers.Write(0, 0, value); break;
