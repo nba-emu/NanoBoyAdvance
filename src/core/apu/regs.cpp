@@ -89,10 +89,10 @@ void SoundControl::Write(int address, std::uint8_t value) {
         case 3:
             dma[DMA_A].enable[SIDE_RIGHT] = value & 1;
             dma[DMA_A].enable[SIDE_LEFT ] = value & 2;
-            dma[DMA_A].timer_id           = (value >> 2) & 1;
+            dma[DMA_A].timer_id = (value >> 2) & 1;
             dma[DMA_B].enable[SIDE_RIGHT] = value & 16;
             dma[DMA_B].enable[SIDE_LEFT ] = value & 32;
-            dma[DMA_B].timer_id           = (value >> 6) & 1;
+            dma[DMA_B].timer_id = (value >> 6) & 1;
 //            if (value & 0x08) {
 //                fifo[0]->reset();
 //            }

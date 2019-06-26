@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "fifo.hpp"
 #include "regs.hpp"
 
 namespace NanoboyAdvance::GBA {
@@ -20,6 +21,8 @@ public:
     struct MMIO {
         SoundControl soundcnt;
     } mmio;
+    
+    FIFO fifo;
     
 private:
 };
