@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "fifo.hpp"
 #include "regs.hpp"
 
 namespace NanoboyAdvance::GBA {
@@ -22,10 +21,11 @@ public:
     void LatchFIFO(int id, int times);
     
     struct MMIO {
-        SoundControl soundcnt;
+        FIFO fifo[2];
+        
+        SoundControl soundcnt { fifo };
     } mmio;
     
-    FIFO fifo[2];
     std::int8_t latch[2];
     
 private:

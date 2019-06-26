@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "fifo.hpp"
+
 #include <cstdint>
 
 namespace NanoboyAdvance::GBA {
@@ -22,6 +24,8 @@ enum DMANumber {
 };
     
 struct SoundControl {
+    SoundControl(FIFO* fifos) : fifos(fifos) { }
+    
     bool master_enable;
 
     struct PSG {
@@ -39,6 +43,9 @@ struct SoundControl {
     void Reset();
     auto Read(int address) -> std::uint8_t;
     void Write(int address, std::uint8_t value);
+
+private:
+    FIFO* fifos;
 };
 
 }

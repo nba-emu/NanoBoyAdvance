@@ -31,7 +31,7 @@ public:
         }
     }
     
-    std::int8_t Read() {
+    auto Read() -> std::int8_t {
         std::int8_t value = 0;
         
         if (count > 0) {

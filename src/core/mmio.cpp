@@ -248,11 +248,11 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
         case FIFO_A:
         case FIFO_A+1:
         case FIFO_A+2:
-        case FIFO_A+3: apu.fifo[0].Write(value); break;
+        case FIFO_A+3: apu_io.fifo[0].Write(value); break;
         case FIFO_B:
         case FIFO_B+1:
         case FIFO_B+2:
-        case FIFO_B+3: apu.fifo[1].Write(value); break;
+        case FIFO_B+3: apu_io.fifo[1].Write(value); break;
         case SOUNDCNT_L:   apu_io.soundcnt.Write(0, value); break;
         case SOUNDCNT_L+1: apu_io.soundcnt.Write(1, value); break;
         case SOUNDCNT_H:   apu_io.soundcnt.Write(2, value); break;

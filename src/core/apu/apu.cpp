@@ -13,18 +13,20 @@
 using namespace NanoboyAdvance::GBA;
 
 void APU::Reset() {
+    mmio.fifo[0].Reset();
+    mmio.fifo[1].Reset();
     mmio.soundcnt.Reset();
-    fifo[0].Reset();
-    fifo[1].Reset();
 }
     
 void APU::LatchFIFO(int id, int times) {
+    auto& fifo = mmio.fifo[id];
+    
     for (int time = 0; time < times; time++) {
-        latch[id] = fifo[id].Read();
-        //std::printf("latched %d\n", latch[id]);
+        latch[id] = fifo.Read();
+        std::printf("latch[%d]=%d\n", id, latch[id]);
         
         // HACK: we should match FIFO the DMA.
-        if (fifo[id].Count() <= 16) {
+        if (fifo.Count() <= 16) {
             cpu->dma.RunFIFO(1 + id);
         }
     }
