@@ -19,6 +19,7 @@ constexpr int CPU::s_ws_seq2[2]; /* Sequential WS2 */
 CPU::CPU(Config* config)
     : config(config)
     , cpu(this)
+    , apu(this)
     , ppu(this)
     , dma(this)
     , timers(this)

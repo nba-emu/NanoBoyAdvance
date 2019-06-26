@@ -298,3 +298,19 @@ void DMAController::Run() {
         current = g_dma_from_bitset[run_set];
     }
 }
+
+/* TODO: integrate into Run() and take care of DMA priority. */
+void DMAController::RunFIFO(int dma_id) {
+    auto& dma = this->dma[dma_id];
+    std::uint32_t word;
+    
+    for (int i = 0; i < 4; i++) {
+        word = cpu->ReadWord(dma.internal.src_addr, ACCESS_SEQ);
+        cpu->WriteWord(dma.internal.dst_addr, word, ACCESS_SEQ);
+        dma.internal.src_addr += 4;
+    }
+
+    if (dma.interrupt) {
+        cpu->mmio.irq_if |= CPU::INT_DMA0 << dma_id;
+    }
+}

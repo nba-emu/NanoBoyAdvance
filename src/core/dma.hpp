@@ -23,6 +23,7 @@ public:
     void TriggerHBlankDMA();
     void TriggerVBlankDMA();
     void Run();
+    void RunFIFO(int dma_id);
     
     bool IsRunning() const {
         return run_set != 0;

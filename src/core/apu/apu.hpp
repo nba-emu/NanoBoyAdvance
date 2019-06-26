@@ -10,24 +10,16 @@
 #include "fifo.hpp"
 #include "regs.hpp"
 
-#include <cstdio>
-
 namespace NanoboyAdvance::GBA {
-    
+
+class CPU;
+
 class APU {
 public:
-    void Reset() {
-        mmio.soundcnt.Reset();
-        fifo[0].Reset();
-        fifo[1].Reset();
-    }
+    APU(CPU* cpu) : cpu(cpu) { }
     
-    void LatchFIFO(int id, int times) {
-        for (int time = 0; time < times; time++) {
-            latch[id] = fifo[id].Read();
-            std::printf("latched %d\n", latch[id]);
-        }
-    }
+    void Reset();
+    void LatchFIFO(int id, int times);
     
     struct MMIO {
         SoundControl soundcnt;
@@ -37,6 +29,8 @@ public:
     std::int8_t latch[2];
     
 private:
+    CPU* cpu;
+    
 };
 
 }
