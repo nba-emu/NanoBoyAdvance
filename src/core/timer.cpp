@@ -78,6 +78,8 @@ void TimerController::Write(int id, int offset, std::uint8_t value) {
 }
 
 void TimerController::Run(int cycles) {
+    bool sound_enabled = cpu->apu.mmio.soundcnt.master_enable;
+    
     #pragma unroll_loop
     for (int id = 0; id < 4; id++) {
         auto& control = timer[id].control;
@@ -94,12 +96,10 @@ void TimerController::Run(int cycles) {
                 } else {
                     timer[id].counter  = timer[id].reload;
                     timer[id].overflow = true;
-                    if (control.interrupt) {
+                    if (control.interrupt)
                         cpu->mmio.irq_if |= CPU::INT_TIMER0 << id;
-                    }
-//                    if (timer.id < 2 && apu.getIO().control.master_enable) {
-//                        timerHandleFIFO(id, 1);
-//                    }
+                    if (id <= 1 && sound_enabled)
+                        RunFIFO(id, 1);
                 }
                 timer[id - 1].overflow = false;
             }
@@ -129,14 +129,22 @@ void TimerController::Run(int cycles) {
             available &= timer[id].mask;
             
             if (timer[id].overflow) {
-                if (control.interrupt) {
+                if (control.interrupt)
                     cpu->mmio.irq_if |= CPU::INT_TIMER0 << id;
-                }
-//                if (timer.id < 2 && apu.getIO().control.master_enable) {
-//                    timerHandleFIFO(id, overflows);
-//                }
+                if (id <= 1 && sound_enabled)
+                    RunFIFO(id, overflows);
             }
             timer[id].cycles = available;
         }
+    }
+}
+
+void TimerController::RunFIFO(int timer_id, int times) {
+    auto& apu = cpu->apu;
+    auto& soundcnt = apu.mmio.soundcnt;
+    
+    for (int fifo = 0; fifo < 2; fifo++) {
+        if (soundcnt.dma[fifo].timer_id == timer_id)
+            apu.LatchFIFO(fifo, times);
     }
 }

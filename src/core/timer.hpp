@@ -23,6 +23,8 @@ public:
     void Run(int cycles);
     
 private:
+    void RunFIFO(int timer_id, int times);
+    
     CPU* cpu;
 
     struct Timer {
@@ -43,7 +45,7 @@ private:
         int  shift;
         int  mask;
         bool overflow;
-    } timer[4];    
+    } timer[4];
 };
 
 }

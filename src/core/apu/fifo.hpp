@@ -18,24 +18,26 @@ public:
     void Reset() {
         rd_ptr = 0;
         wr_ptr = 0;
-        free = s_fifo_len;
+        count = 0;
     }
     
+    int Count() const { return count; }
+    
     void Write(std::int8_t sample) {
-        if (free > 0) {
+        if (count < s_fifo_len) {
             data[wr_ptr] = sample;
             wr_ptr = (wr_ptr + 1) % s_fifo_len;
-            free--;
+            count++;
         }
     }
     
     std::int8_t Read() {
         std::int8_t value = 0;
         
-        if (free < s_fifo_len) {
+        if (count > 0) {
             value = data[rd_ptr];
             rd_ptr = (rd_ptr + 1) % s_fifo_len;
-            free++;
+            count--;
         }
         
         return value;
@@ -48,7 +50,7 @@ private:
  
     int rd_ptr;
     int wr_ptr;
-    int free;
+    int count;
 };
     
 }
