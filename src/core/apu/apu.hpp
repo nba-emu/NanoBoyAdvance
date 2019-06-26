@@ -16,13 +16,15 @@ class APU {
 public:
     void Reset() {
         mmio.soundcnt.Reset();
+        fifo[0].Reset();
+        fifo[1].Reset();
     }
     
     struct MMIO {
         SoundControl soundcnt;
     } mmio;
     
-    FIFO fifo;
+    FIFO fifo[2];
     
 private:
 };
