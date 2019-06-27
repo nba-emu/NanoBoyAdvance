@@ -20,10 +20,10 @@ public:
     void Reset();
     auto Read(int id, int offset) -> std::uint8_t;
     void Write(int id, int offset, std::uint8_t value);
-    void TriggerHBlankDMA();
-    void TriggerVBlankDMA();
+    void RequestHBlank();
+    void RequestVBlank();
+    void RequestFIFO(int fifo);
     void Run();
-    void RunFIFO(int dma_id);
     
     bool IsRunning() const {
         return run_set != 0;
@@ -74,6 +74,7 @@ private:
         DMASize size;
 
         struct Internal {
+            int fifo_pending;
             std::uint32_t length;
             std::uint32_t dst_addr;
             std::uint32_t src_addr;

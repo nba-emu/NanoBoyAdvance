@@ -166,6 +166,8 @@ void DMAController::Write(int id, int offset, std::uint8_t value) {
                 
             /* DMA state is latched on "rising" enable bit. */
             if (!enable_previous && dma[id].enable) {
+                dma[id].internal.fifo_pending = 0;
+                
                 /* Latch sanitized values into internal DMA state. */
                 dma[id].internal.dst_addr = dma[id].dst_addr & g_dma_dst_mask[id];
                 dma[id].internal.src_addr = dma[id].src_addr & g_dma_src_mask[id];
@@ -201,18 +203,27 @@ void DMAController::MarkDMAForExecution(int id) {
     run_set |= (1 << id);
 }
 
-void DMAController::TriggerHBlankDMA() {
+void DMAController::RequestHBlank() {
     int hblank_dma = g_dma_from_bitset[run_set & hblank_set];
     
     if (hblank_dma >= 0)
         MarkDMAForExecution(hblank_dma);
 }
 
-void DMAController::TriggerVBlankDMA() {
+void DMAController::RequestVBlank() {
     int vblank_dma = g_dma_from_bitset[run_set & vblank_set];
     
     if (vblank_dma >= 0)
         MarkDMAForExecution(vblank_dma);
+}
+
+void DMAController::RequestFIFO(int fifo) {
+    int id = fifo + 1; // FIXME
+    
+    if (dma[id].enable) {
+        dma[id].internal.fifo_pending++;
+        MarkDMAForExecution(id);
+    }
 }
 
 void DMAController::Run() {
@@ -224,6 +235,29 @@ void DMAController::Run() {
     int dst_modify = g_dma_modify[dma.size][dst_cntl];
     
     std::uint32_t word;
+    
+    /* FIXME */
+    if (current >= 1 && current <= 2 && dma.time == DMA_SPECIAL) {
+        for (int i = 0; i < 4; i++) {
+            word = cpu->ReadWord(dma.internal.src_addr, ACCESS_SEQ);
+            cpu->WriteWord(dma.internal.dst_addr, word, ACCESS_SEQ);
+            dma.internal.src_addr += 4;
+        }
+        
+        if (--dma.internal.fifo_pending == 0) {
+            run_set &= ~(1 << current);
+        }
+        
+        if (dma.interrupt) {
+            cpu->mmio.irq_if |= CPU::INT_DMA0 << current;
+        }
+        
+        if (run_set > 0) {
+            current = g_dma_from_bitset[run_set];
+        }
+        
+        return;
+    }
     
     /* Run DMA until completion or interruption. */
     switch (dma.size) {
@@ -296,21 +330,5 @@ void DMAController::Run() {
     
     if (run_set > 0) {
         current = g_dma_from_bitset[run_set];
-    }
-}
-
-/* TODO: integrate into Run() and take care of DMA priority. */
-void DMAController::RunFIFO(int dma_id) {
-    auto& dma = this->dma[dma_id];
-    std::uint32_t word;
-    
-    for (int i = 0; i < 4; i++) {
-        word = cpu->ReadWord(dma.internal.src_addr, ACCESS_SEQ);
-        cpu->WriteWord(dma.internal.dst_addr, word, ACCESS_SEQ);
-        dma.internal.src_addr += 4;
-    }
-
-    if (dma.interrupt) {
-        cpu->mmio.irq_if |= CPU::INT_DMA0 << dma_id;
     }
 }
