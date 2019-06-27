@@ -31,6 +31,7 @@ public:
     
 private:
     void MarkDMAForExecution(int id);
+    void RunFIFO();
     
     CPU* cpu;
 
@@ -74,7 +75,7 @@ private:
         DMASize size;
 
         struct Internal {
-            int fifo_pending;
+            int request_count;
             std::uint32_t length;
             std::uint32_t dst_addr;
             std::uint32_t src_addr;

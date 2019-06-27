@@ -166,7 +166,7 @@ void DMAController::Write(int id, int offset, std::uint8_t value) {
                 
             /* DMA state is latched on "rising" enable bit. */
             if (!enable_previous && dma[id].enable) {
-                dma[id].internal.fifo_pending = 0;
+                dma[id].internal.request_count = 0;
                 
                 /* Latch sanitized values into internal DMA state. */
                 dma[id].internal.dst_addr = dma[id].dst_addr & g_dma_dst_mask[id];
@@ -221,83 +221,63 @@ void DMAController::RequestFIFO(int fifo) {
     int id = fifo + 1; // FIXME
     
     if (dma[id].enable) {
-        dma[id].internal.fifo_pending++;
+        dma[id].internal.request_count++;
         MarkDMAForExecution(id);
     }
 }
 
 void DMAController::Run() {
     auto& dma = this->dma[current];
-    
-    auto src_cntl = dma.src_cntl;
-    auto dst_cntl = dma.dst_cntl;
+    auto  src_cntl = dma.src_cntl;
+    auto  dst_cntl = dma.dst_cntl;
     int src_modify = g_dma_modify[dma.size][src_cntl];
     int dst_modify = g_dma_modify[dma.size][dst_cntl];
     
     std::uint32_t word;
     
-    /* FIXME */
-    if (current >= 1 && current <= 2 && dma.time == DMA_SPECIAL) {
-        for (int i = 0; i < 4; i++) {
-            word = cpu->ReadWord(dma.internal.src_addr, ACCESS_SEQ);
-            cpu->WriteWord(dma.internal.dst_addr, word, ACCESS_SEQ);
-            dma.internal.src_addr += 4;
-        }
-        
-        if (--dma.internal.fifo_pending == 0) {
-            run_set &= ~(1 << current);
-        }
-        
-        if (dma.interrupt) {
-            cpu->mmio.irq_if |= CPU::INT_DMA0 << current;
-        }
-        
-        if (run_set > 0) {
-            current = g_dma_from_bitset[run_set];
-        }
-        
+    /* FIFO DMA does not work quite a like a normal DMA.
+     * For example the repeat bit works different, word transfer is enforced
+     * and if FIFO DMA was requested multiple times, it needs to run more than once.
+     */
+    if (dma.time == DMA_SPECIAL && (current == 1 || current == 2)) {
+        RunFIFO();
         return;
     }
     
     /* Run DMA until completion or interruption. */
-    switch (dma.size) {
-        case DMA_WORD: {
-            while (dma.internal.length != 0) {
-                if (cpu->ticks_cpu_left <= 0) return;
+    if (dma.size == DMA_WORD) {
+        while (dma.internal.length != 0) {
+            if (cpu->ticks_cpu_left <= 0) return;
 
-                /* Stop if DMA was interleaved by higher priority DMA. */
-                if (interleaved) {
-                    interleaved = false;
-                    return;
-                }
-
-                word = cpu->ReadWord(dma.internal.src_addr, ACCESS_SEQ);
-                cpu->WriteWord(dma.internal.dst_addr, word, ACCESS_SEQ);
-
-                dma.internal.src_addr += src_modify;
-                dma.internal.dst_addr += dst_modify;
-                dma.internal.length--;
+            /* Stop if DMA was interleaved by higher priority DMA. */
+            if (interleaved) {
+                interleaved = false;
+                return;
             }
-            break;
+
+            word = cpu->ReadWord(dma.internal.src_addr, ACCESS_SEQ);
+            cpu->WriteWord(dma.internal.dst_addr, word, ACCESS_SEQ);
+
+            dma.internal.src_addr += src_modify;
+            dma.internal.dst_addr += dst_modify;
+            dma.internal.length--;
         }
-        case DMA_HWORD: {
-            while (dma.internal.length != 0) {
-                if (cpu->ticks_cpu_left <= 0) return;
+    } else {
+        while (dma.internal.length != 0) {
+            if (cpu->ticks_cpu_left <= 0) return;
 
-                /* Stop if DMA was interleaved by higher priority DMA. */
-                if (interleaved) {
-                    interleaved = false;
-                    return;
-                }
-
-                word = cpu->ReadHalf(dma.internal.src_addr, ACCESS_SEQ);
-                cpu->WriteHalf(dma.internal.dst_addr, word, ACCESS_SEQ);
-
-                dma.internal.src_addr += src_modify;
-                dma.internal.dst_addr += dst_modify;
-                dma.internal.length--;
+            /* Stop if DMA was interleaved by higher priority DMA. */
+            if (interleaved) {
+                interleaved = false;
+                return;
             }
-            break;
+
+            word = cpu->ReadHalf(dma.internal.src_addr, ACCESS_SEQ);
+            cpu->WriteHalf(dma.internal.dst_addr, word, ACCESS_SEQ);
+            
+            dma.internal.src_addr += src_modify;
+            dma.internal.dst_addr += dst_modify;
+            dma.internal.length--;
         }
     }
     
@@ -328,6 +308,30 @@ void DMAController::Run() {
         run_set &= ~(1 << current);
     }
     
+    if (run_set > 0) {
+        current = g_dma_from_bitset[run_set];
+    }
+}
+
+void DMAController::RunFIFO() {
+    auto& dma = this->dma[current];
+    std::uint32_t word;
+    
+    /* CHECKME: is cycle budget overshoot a problem here? */
+    for (int i = 0; i < 4; i++) {
+        word = cpu->ReadWord(dma.internal.src_addr, ACCESS_SEQ);
+        cpu->WriteWord(dma.internal.dst_addr, word, ACCESS_SEQ);
+        dma.internal.src_addr += 4;
+    }
+        
+    if (--dma.internal.request_count == 0) {
+        run_set &= ~(1 << current);
+    }
+        
+    if (dma.interrupt) {
+        cpu->mmio.irq_if |= CPU::INT_DMA0 << current;
+    }
+        
     if (run_set > 0) {
         current = g_dma_from_bitset[run_set];
     }
