@@ -7,6 +7,7 @@
 
 #include "cpu.hpp"
 #include "dma.hpp"
+#include "mmio.hpp"
 
 using namespace ARM;
 using namespace NanoboyAdvance::GBA;
@@ -218,11 +219,17 @@ void DMAController::RequestVBlank() {
 }
 
 void DMAController::RequestFIFO(int fifo) {
-    int id = fifo + 1; // FIXME
+    std::uint32_t address[2] = { FIFO_A, FIFO_B };
     
-    if (dma[id].enable) {
-        dma[id].internal.request_count++;
-        MarkDMAForExecution(id);
+    for (int id = 1; id <= 2; id++) {
+        if (dma[id].enable &&
+            dma[id].time == DMA_SPECIAL &&
+            dma[id].dst_addr == address[fifo])
+        {
+            dma[id].internal.request_count++;
+            MarkDMAForExecution(id);
+            break;
+        }
     }
 }
 
@@ -315,6 +322,7 @@ void DMAController::Run() {
 
 void DMAController::RunFIFO() {
     auto& dma = this->dma[current];
+    
     std::uint32_t word;
     
     /* CHECKME: is cycle budget overshoot a problem here? */
