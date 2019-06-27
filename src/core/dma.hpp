@@ -41,21 +41,21 @@ private:
     int  current;
     bool interleaved;
     
-    enum DMAControl {
+    enum AddressControl  {
         DMA_INCREMENT = 0,
         DMA_DECREMENT = 1,
         DMA_FIXED     = 2,
         DMA_RELOAD    = 3
     };
 
-    enum DMATime {
+    enum StartTiming {
         DMA_IMMEDIATE = 0,
         DMA_VBLANK    = 1,
         DMA_HBLANK    = 2,
         DMA_SPECIAL   = 3
     };
 
-    enum DMASize {
+    enum WordSize {
         DMA_HWORD = 0,
         DMA_WORD  = 1
     };
@@ -69,13 +69,14 @@ private:
         std::uint16_t length;
         std::uint32_t dst_addr;
         std::uint32_t src_addr;
-        DMAControl dst_cntl;
-        DMAControl src_cntl;
-        DMATime time;
-        DMASize size;
+        AddressControl dst_cntl;
+        AddressControl src_cntl;
+        StartTiming time;
+        WordSize size;
 
         struct Internal {
             int request_count;
+            
             std::uint32_t length;
             std::uint32_t dst_addr;
             std::uint32_t src_addr;

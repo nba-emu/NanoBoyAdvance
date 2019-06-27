@@ -138,16 +138,16 @@ void DMAController::Write(int id, int offset, std::uint8_t value) {
 
         /* DMAXCNT_H */
         case 10: {
-            dma[id].dst_cntl = DMAControl((value >> 5) & 3);
-            dma[id].src_cntl = DMAControl((dma[id].src_cntl & 0b10) | (value>>7));
+            dma[id].dst_cntl = AddressControl((value >> 5) & 3);
+            dma[id].src_cntl = AddressControl((dma[id].src_cntl & 0b10) | (value>>7));
             break;
         }
         case 11: {
             bool enable_previous = dma[id].enable;
 
-            dma[id].src_cntl  = DMAControl((dma[id].src_cntl & 0b01) | ((value & 1)<<1));
-            dma[id].size      = DMASize((value>>2) & 1);
-            dma[id].time      = DMATime((value>>4) & 3);
+            dma[id].src_cntl  = AddressControl((dma[id].src_cntl & 0b01) | ((value & 1)<<1));
+            dma[id].size      = WordSize((value>>2) & 1);
+            dma[id].time      = StartTiming((value>>4) & 3);
             dma[id].repeat    = value & 2;
             dma[id].gamepak   = value & 8;
             dma[id].interrupt = value & 64;
