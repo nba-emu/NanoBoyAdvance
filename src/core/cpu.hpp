@@ -121,7 +121,7 @@ private:
     int cycles16[2][16];
     int cycles32[2][16];
 
-    std::unordered_set<EventDevice*> events { &ppu };
+    std::unordered_set<EventDevice*> events { &ppu, &apu };
     
     static constexpr int s_ws_nseq[4] = { 4, 3, 2, 8 }; /* Non-sequential SRAM/WS0/WS1/WS2 */
     static constexpr int s_ws_seq0[2] = { 2, 1 };       /* Sequential WS0 */

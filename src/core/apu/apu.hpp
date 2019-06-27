@@ -8,17 +8,21 @@
 #pragma once
 
 #include "regs.hpp"
+#include "../event_device.hpp"
+
+#include <cstdio>
 
 namespace NanoboyAdvance::GBA {
 
 class CPU;
 
-class APU {
+class APU : public EventDevice {
 public:
     APU(CPU* cpu) : cpu(cpu) { }
     
     void Reset();
     void LatchFIFO(int id, int times);
+    bool Tick() final;
     
     struct MMIO {
         FIFO fifo[2];
@@ -31,6 +35,8 @@ public:
 private:
     CPU* cpu;
     
+    //FILE* dump[2];
+    FILE* dump;
 };
 
 }

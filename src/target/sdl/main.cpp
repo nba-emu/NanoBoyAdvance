@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     //SDL_GL_SetSwapInterval(0);
     
     size_t size;
-    auto file = std::fopen("ruby.gba", "rb");
+    auto file = std::fopen("pokeemerald.gba", "rb");
     std::uint8_t* rom;
 
     if (file == nullptr) {
