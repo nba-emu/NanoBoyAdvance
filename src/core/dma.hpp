@@ -25,9 +25,7 @@ public:
     void RequestFIFO(int fifo);
     void Run();
     
-    bool IsRunning() const {
-        return run_set != 0;
-    }
+    bool IsRunning() const { return run_set != 0; }
     
 private:
     void MarkDMAForExecution(int id);

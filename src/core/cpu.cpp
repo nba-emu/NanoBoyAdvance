@@ -164,8 +164,6 @@ void CPU::RunFor(int cycles) {
                 ticks_cpu_left = 0;
                 break;
             }
-            
-            //timers.Run(previous - ticks_cpu_left);
         }
         
         /* CHECKME: somehow I doubt this is correct... */

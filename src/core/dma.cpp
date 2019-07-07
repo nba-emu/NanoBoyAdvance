@@ -200,7 +200,6 @@ void DMAController::MarkDMAForExecution(int id) {
         interleaved = true;
     }
 
-    /* Mark DMA as running. */
     run_set |= (1 << id);
 }
 
