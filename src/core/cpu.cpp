@@ -90,6 +90,7 @@ void CPU::Reset() {
     mmio.waitcnt.phi = 0;
     mmio.waitcnt.prefetch = 0;
     mmio.waitcnt.cgb = 0;
+    
     /* TODO: implement register 0x04000800. */
     for (int i = 0; i < 2; i++) {
         cycles16[i][0x0] = 1;
@@ -111,6 +112,7 @@ void CPU::Reset() {
         cycles16[i][0xF] = 1;
         cycles32[i][0xF] = 1;
     }
+    
     UpdateCycleLUT();
 
     mmio.haltcnt = HaltControl::RUN;
@@ -185,9 +187,7 @@ void CPU::RunFor(int cycles) {
 }
 
 void CPU::UpdateCycleLUT() {
-    auto& waitcnt = mmio.waitcnt;
-    
-    int sram_cycles = 1 + s_ws_nseq[waitcnt.sram];
+    int sram_cycles = 1 + s_ws_nseq[mmio.waitcnt.sram];
     
     /* SRAM waitstates */
     cycles16[ACCESS_NSEQ][0xE] = sram_cycles;
@@ -198,14 +198,14 @@ void CPU::UpdateCycleLUT() {
     /* ROM waitstates */
     for (int i = 0; i < 2; i++) {
         /* ROM: WS0/WS1/WS2 non-sequential timing. */
-        cycles16[ACCESS_NSEQ][0x8 + i] = 1 + s_ws_nseq[waitcnt.ws0_n];
-        cycles16[ACCESS_NSEQ][0xA + i] = 1 + s_ws_nseq[waitcnt.ws1_n];
-        cycles16[ACCESS_NSEQ][0xC + i] = 1 + s_ws_nseq[waitcnt.ws2_n];
+        cycles16[ACCESS_NSEQ][0x8 + i] = 1 + s_ws_nseq[mmio.waitcnt.ws0_n];
+        cycles16[ACCESS_NSEQ][0xA + i] = 1 + s_ws_nseq[mmio.waitcnt.ws1_n];
+        cycles16[ACCESS_NSEQ][0xC + i] = 1 + s_ws_nseq[mmio.waitcnt.ws2_n];
         
         /* ROM: WS0/WS1/WS2 sequential timing. */
-        cycles16[ACCESS_SEQ][0x8 + i] = 1 + s_ws_seq0[waitcnt.ws0_s];
-        cycles16[ACCESS_SEQ][0xA + i] = 1 + s_ws_seq1[waitcnt.ws1_s];
-        cycles16[ACCESS_SEQ][0xC + i] = 1 + s_ws_seq2[waitcnt.ws2_s];
+        cycles16[ACCESS_SEQ][0x8 + i] = 1 + s_ws_seq0[mmio.waitcnt.ws0_s];
+        cycles16[ACCESS_SEQ][0xA + i] = 1 + s_ws_seq1[mmio.waitcnt.ws1_s];
+        cycles16[ACCESS_SEQ][0xC + i] = 1 + s_ws_seq2[mmio.waitcnt.ws2_s];
         
         /* ROM: WS0/WS1/WS2 32-bit non-sequential access: 1N access, 1S access */
         cycles32[ACCESS_NSEQ][0x8 + i] = cycles16[ACCESS_NSEQ][0x8] + 
