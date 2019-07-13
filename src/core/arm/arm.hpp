@@ -12,7 +12,7 @@
 #include <utility>
 #include "interface.hpp"
 #include "state.hpp"
-#include "util.hpp"
+#include <util/meta.hpp>
 
 namespace ARM {
 

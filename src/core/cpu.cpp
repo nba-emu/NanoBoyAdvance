@@ -8,6 +8,7 @@
 #include <climits>
 #include <cstring>
 #include "cpu.hpp"
+#include <util/file.hpp>
 
 using namespace ARM;
 using namespace GameBoyAdvance;
