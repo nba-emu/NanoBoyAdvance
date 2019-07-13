@@ -22,7 +22,7 @@ public:
     
     void Reset();
     void LatchFIFO(int id, int times);
-    bool Tick() final;
+    void Tick() final;
     
     struct MMIO {
         FIFO fifo[2];

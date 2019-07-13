@@ -22,7 +22,7 @@ public:
     PPU(CPU* cpu);
 
     void Reset();
-    bool Tick() final;
+    void Tick() final;
 
     struct MMIO {
         DisplayControl dispcnt;

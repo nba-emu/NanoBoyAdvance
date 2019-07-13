@@ -139,8 +139,6 @@ void CPU::RunFor(int cycles) {
     int previous;
     
     while (cycles > 0) {
-        /* TODO: how to handle adding events during the CPU loop? */
-        
         ticks_cpu_left += ticks_to_event;
         
         while (ticks_cpu_left > 0) {
@@ -150,8 +148,7 @@ void CPU::RunFor(int cycles) {
                 mmio.haltcnt = HaltControl::RUN;
 
             previous = ticks_cpu_left;
-            
-            /* TODO: do LIKELY/UNLIKELY make a difference here? */
+
             if (dma.IsRunning()) {
                 dma.Run();
             } else if (mmio.haltcnt == HaltControl::RUN) {
@@ -159,28 +156,25 @@ void CPU::RunFor(int cycles) {
                     cpu.SignalIrq();
                 cpu.Run();
             } else {
-                /* HACK: inaccurate due to timer interrupts. */
+                /* TODO: inaccurate due to timer interrupts. */
                 timers.Run(ticks_cpu_left);
                 ticks_cpu_left = 0;
                 break;
             }
         }
         
-        /* CHECKME: somehow I doubt this is correct... */
-        int elapsed = ticks_to_event + ticks_cpu_left;
+        int elapsed = ticks_to_event + ticks_cpu_left; /* CHECKME */
         
         cycles -= ticks_to_event;
         ticks_to_event = INT_MAX;
         
         /* Update cycle counters and get cycles to next event. */
-        for (auto event : events) {
+        for (auto it = events.begin(); it != events.end();) {
+            auto event = *it;
+            ++it;
             event->wait_cycles -= elapsed;
             if (event->wait_cycles <= 0) {
-                if (!event->Tick()) {
-                    /* TODO: fix this, it does not work obviously. */
-                    events.erase(event);
-                    continue;
-                }
+                event->Tick();
             }
             if (event->wait_cycles < ticks_to_event) {
                 ticks_to_event = event->wait_cycles;

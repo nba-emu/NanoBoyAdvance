@@ -12,7 +12,7 @@ namespace NanoboyAdvance::GBA {
 struct EventDevice {
     int wait_cycles = 0;
     
-    virtual bool Tick() = 0;
+    virtual void Tick() = 0;
 };
 
 }
