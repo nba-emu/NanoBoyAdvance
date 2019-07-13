@@ -5,24 +5,16 @@
  * found in the LICENSE file.
  */
 
-inline void ARM7::Reset() {
-    for (int i = 0; i < 16; i++)
-        state.reg[i] = 0;
-
-    for (int i = 0; i < BANK_COUNT; i++) {
-        for (int j = 0; j < 7; j++)
-            state.bank[i][j] = 0;
-        state.spsr[i].v = 0;
-    }
-
-    state.cpsr.v = 0;
+inline void ARM7TDMI::Reset() {
+    state.Reset();
+    
     SwitchMode(MODE_SYS);
     pipe[0] = 0xF0000000;
     pipe[1] = 0xF0000000;
     fetch_type = ACCESS_NSEQ;
 }
 
-inline void ARM7::Run() {
+inline void ARM7TDMI::Run() {
     auto instruction = pipe[0];
 
     if (state.cpsr.f.thumb) {
@@ -46,7 +38,7 @@ inline void ARM7::Run() {
     }
 }
 
-inline void ARM7::SignalIrq() {
+inline void ARM7TDMI::SignalIrq() {
     if (state.cpsr.f.mask_irq) {
         return;
     }
@@ -75,26 +67,21 @@ inline void ARM7::SignalIrq() {
     ARM_ReloadPipeline();
 }
 
-inline void ARM7::ARM_ReloadPipeline() {
+inline void ARM7TDMI::ARM_ReloadPipeline() {
     pipe[0] = interface->ReadWord(state.r15+0, ACCESS_NSEQ);
     pipe[1] = interface->ReadWord(state.r15+4, ACCESS_SEQ);
     fetch_type = ACCESS_SEQ;
     state.r15 += 8;
 }
 
-inline void ARM7::Thumb_ReloadPipeline() {
+inline void ARM7TDMI::Thumb_ReloadPipeline() {
     pipe[0] = interface->ReadHalf(state.r15+0, ACCESS_NSEQ);
     pipe[1] = interface->ReadHalf(state.r15+2, ACCESS_SEQ);
     fetch_type = ACCESS_SEQ;
     state.r15 += 4;
 }
 
-inline void ARM7::SetNZ(std::uint32_t value) {
-    state.cpsr.f.n = value >> 31;
-    state.cpsr.f.z = (value == 0);
-}
-
-inline void ARM7::BuildConditionTable() {
+inline void ARM7TDMI::BuildConditionTable() {
     for (int flags = 0; flags < 16; flags++) {
         bool n = flags & 8;
         bool z = flags & 4;
@@ -120,13 +107,13 @@ inline void ARM7::BuildConditionTable() {
     }
 }
 
-inline bool ARM7::CheckCondition(Condition condition) {
+inline bool ARM7TDMI::CheckCondition(Condition condition) {
     if (condition == COND_AL)
         return true;
     return condition_table[condition][state.cpsr.v >> 28];
 }
 
-inline void ARM7::SwitchMode(Mode new_mode) {
+inline void ARM7TDMI::SwitchMode(Mode new_mode) {
     auto old_mode = state.cpsr.f.mode;
 
     if (new_mode == old_mode)
@@ -200,73 +187,4 @@ inline void ARM7::SwitchMode(Mode new_mode) {
             p_spsr = &state.spsr[BANK_UND];
             break;
     }
-}
-
-inline std::uint32_t ARM7::ReadByte(std::uint32_t address, AccessType type) {
-    return interface->ReadByte(address, type);
-}
-
-inline std::uint32_t ARM7::ReadHalf(std::uint32_t address, AccessType type) {
-    return interface->ReadHalf(address & ~1, type);
-}
-
-inline std::uint32_t ARM7::ReadWord(std::uint32_t address, AccessType type) {
-    return interface->ReadWord(address & ~3, type);
-}
-
-inline std::uint32_t ARM7::ReadByteSigned(std::uint32_t address, AccessType type) {
-    std::uint32_t value = interface->ReadByte(address, type);
-
-    if (value & 0x80) {
-        value |= 0xFFFFFF00;
-    }
-
-    return value;
-}
-
-inline std::uint32_t ARM7::ReadHalfRotate(std::uint32_t address, AccessType type) {
-    auto value = interface->ReadHalf(address & ~1, type);
-
-    if (address & 1) {
-        value = (value >> 8) | (value << 24);
-    }
-
-    return value;
-}
-
-inline std::uint32_t ARM7::ReadHalfSigned(std::uint32_t address, AccessType type) {
-    std::uint32_t value;
-
-    if (address & 1) {
-        value = interface->ReadByte(address, type);
-        if (value & 0x80) {
-            value |= 0xFFFFFF00;
-        }
-    } else {
-        value = interface->ReadHalf(address, type);
-        if (value & 0x8000) {
-            value |= 0xFFFF0000;
-        }
-    }
-
-    return value;
-}
-
-inline std::uint32_t ARM7::ReadWordRotate(std::uint32_t address, AccessType type) {
-    auto value = interface->ReadWord(address & ~3, type);
-    auto shift = (address & 3) * 8;
-
-    return (value >> shift) | (value << (32 - shift));
-}
-
-inline void ARM7::WriteByte(std::uint32_t address, std::uint8_t  value, AccessType type) {
-    interface->WriteByte(address, value, type);
-}
-
-inline void ARM7::WriteHalf(std::uint32_t address, std::uint16_t value, AccessType type) {
-    interface->WriteHalf(address & ~1, value, type);
-}
-
-inline void ARM7::WriteWord(std::uint32_t address, std::uint32_t value, AccessType type) {
-    interface->WriteWord(address & ~3, value, type);
 }

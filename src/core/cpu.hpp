@@ -8,8 +8,7 @@
 #pragma once
 
 #include "apu/apu.hpp"
-#include "arm/arm.hpp"
-#include "arm/interface.hpp"
+#include "arm/arm7tdmi/arm7tdmi.hpp"
 #include "config.hpp"
 #include "dma.hpp"
 #include "event_device.hpp"
@@ -97,7 +96,7 @@ public:
         } waitcnt;
     } mmio;
     
-    ARM::ARM7 cpu;
+    ARM::ARM7TDMI cpu;
     APU apu;
     PPU ppu;
     DMAController dma;

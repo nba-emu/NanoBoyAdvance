@@ -1,8 +1,8 @@
 SET(SOURCES
     apu/apu.cpp
     apu/regs.cpp
-    arm/isa/thumb.cpp
-    arm/isa/arm.cpp
+    arm/arm7tdmi/isa/thumb.cpp
+    arm/arm7tdmi/isa/arm.cpp
     bios.cpp
     mmio.cpp
     ppu/regs.cpp
@@ -17,10 +17,8 @@ SET(SOURCES
 SET(HEADERS
     apu/apu.hpp
     apu/regs.hpp
-    arm/arm.hpp
-    arm/enums.hpp
-    arm/interface.hpp
-    arm/state.hpp
+    arm/core/arm.hpp
+    arm/core/interface.hpp
     ppu/ppu.hpp
     ppu/regs.hpp
     cpu.hpp
