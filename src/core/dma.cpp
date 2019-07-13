@@ -10,7 +10,7 @@
 #include "mmio.hpp"
 
 using namespace ARM;
-using namespace NanoboyAdvance::GBA;
+using namespace GameBoyAdvance;
 
 static constexpr std::uint32_t g_dma_dst_mask[4] = { 0x07FFFFFF, 0x07FFFFFF, 0x07FFFFFF, 0x0FFFFFFF };
 static constexpr std::uint32_t g_dma_src_mask[4] = { 0x07FFFFFF, 0x0FFFFFFF, 0x0FFFFFFF, 0x0FFFFFFF };

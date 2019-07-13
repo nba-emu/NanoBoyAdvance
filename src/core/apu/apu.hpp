@@ -12,7 +12,7 @@
 
 #include <cstdio>
 
-namespace NanoboyAdvance::GBA {
+namespace GameBoyAdvance {
 
 class CPU;
 

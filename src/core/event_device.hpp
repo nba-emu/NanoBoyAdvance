@@ -7,7 +7,7 @@
 
 #pragma once
 
-namespace NanoboyAdvance::GBA {
+namespace GameBoyAdvance {
 
 struct EventDevice {
     int wait_cycles = 0;

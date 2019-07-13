@@ -18,7 +18,7 @@
 
 #include <unordered_set>
 
-namespace NanoboyAdvance::GBA {
+namespace GameBoyAdvance {
 
 class CPU : private ARM::Interface {
 public:

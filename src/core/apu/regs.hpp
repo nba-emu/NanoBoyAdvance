@@ -11,7 +11,7 @@
 
 #include <cstdint>
 
-namespace NanoboyAdvance::GBA {
+namespace GameBoyAdvance {
 
 enum Side {
     SIDE_LEFT  = 0,

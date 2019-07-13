@@ -17,8 +17,8 @@
 #include "core/cpu.hpp"
 #include "core/config.hpp"
 
-NanoboyAdvance::GBA::Config config;
-NanoboyAdvance::GBA::CPU cpu(&config);
+GameBoyAdvance::Config config;
+GameBoyAdvance::CPU cpu(&config);
 
 int main(int argc, char** argv) {
     bool running = true;

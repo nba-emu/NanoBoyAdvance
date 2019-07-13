@@ -13,7 +13,7 @@
 #include "../event_device.hpp"
 #include "regs.hpp"
 
-namespace NanoboyAdvance::GBA {
+namespace GameBoyAdvance {
 
 class CPU;
 

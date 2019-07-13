@@ -10,7 +10,7 @@
 #include "cpu.hpp"
 
 using namespace ARM;
-using namespace NanoboyAdvance::GBA;
+using namespace GameBoyAdvance;
 
 constexpr int CPU::s_ws_nseq[4]; /* Non-sequential SRAM/WS0/WS1/WS2 */
 constexpr int CPU::s_ws_seq0[2]; /* Sequential WS0 */

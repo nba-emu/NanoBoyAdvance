@@ -7,7 +7,7 @@
 
 #include "regs.hpp"
 
-using namespace NanoboyAdvance::GBA;
+using namespace GameBoyAdvance;
 
 void DisplayControl::Reset() {
     Write(0, 0);

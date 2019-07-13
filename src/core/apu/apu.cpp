@@ -9,7 +9,7 @@
 #include "../cpu.hpp"
 #include <math.h>
 
-using namespace NanoboyAdvance::GBA;
+using namespace GameBoyAdvance;
 
 void APU::Reset() {
     mmio.fifo[0].Reset();
