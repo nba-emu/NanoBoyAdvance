@@ -21,7 +21,6 @@ SET(HEADERS
     arm/enums.hpp
     arm/interface.hpp
     arm/state.hpp
-    arm/util.hpp
     ppu/ppu.hpp
     ppu/regs.hpp
     cpu.hpp
@@ -30,3 +29,4 @@ SET(HEADERS
 )
 
 ADD_LIBRARY(core STATIC ${SOURCES} ${HEADERS})
+TARGET_LINK_LIBRARIES(core stdc++fs)

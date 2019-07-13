@@ -16,7 +16,10 @@
 #include <cstdio>
 #include "core/cpu.hpp"
 #include "core/config.hpp"
-#include <util/file.hpp>
+#include <experimental/filesystem>
+#include <fstream>
+
+namespace fs = std::experimental::filesystem;
 
 GameBoyAdvance::Config config;
 GameBoyAdvance::CPU cpu(&config);
@@ -48,14 +51,19 @@ int main(int argc, char** argv) {
         return -1;
     }
     
-    size_t size;
+    std::uintmax_t size;
     std::uint8_t* rom;
     std::string rom_path = argv[1];
     
-    if (File::Exists(rom_path)) {
-        size = File::GetSize(rom_path);
+    if (fs::exists(rom_path)) {
+        size = fs::file_size(rom_path);
         rom = new std::uint8_t[size];
-        File::ReadData(rom_path, rom, size);
+        std::ifstream stream { rom_path, std::ios::in | std::ios::binary };
+        if (!stream.is_open()) {
+            std::printf("Cannot open ROM: %s\n", rom_path.c_str());
+            return -2;
+        }
+        stream.read((char*)rom, size);
     } else {
         std::printf("Cannot find ROM: %s\n", rom_path.c_str());
         return -2;

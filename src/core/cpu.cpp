@@ -5,10 +5,14 @@
  * found in the LICENSE file.
  */
 
+#include "cpu.hpp"
+
 #include <climits>
 #include <cstring>
-#include "cpu.hpp"
-#include <util/file.hpp>
+#include <experimental/filesystem>
+#include <fstream>
+
+namespace fs = std::experimental::filesystem;
 
 using namespace ARM;
 using namespace GameBoyAdvance;
@@ -48,11 +52,24 @@ void CPU::Reset() {
     std::memset(memory.oam,  0, 0x00400);
     std::memset(memory.vram, 0, 0x18000);
 
+    auto bios_path = "bios.bin";
+    
     /* Load BIOS. This really should not be done here. */
-    if (File::Exists("bios.bin")) {
-        File::ReadData("bios.bin", memory.bios, 0x4000);
+    if (fs::exists(bios_path)) {
+        auto size = fs::file_size(bios_path);
+        
+        if (size <= 0x4000) {
+            std::ifstream stream { "bios.bin", std::ios::in | std::ios::binary };
+            if (!stream.is_open()) {
+                std::puts("Error: could not open BIOS file.");
+            }
+            stream.read((char*)memory.bios, size);
+            stream.close();
+        } else {
+            std::puts("Error: your BIOS file is too big.");
+        }
     } else {
-        std::puts("Error: cannot locate bios.bin");
+        std::puts("Error: cannot locate BIOS file.");
     }
 
     mmio.keyinput = 0x3FF;
