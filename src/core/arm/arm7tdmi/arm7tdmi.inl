@@ -6,16 +6,8 @@
  */
 
 inline void ARM7::Reset() {
-    for (int i = 0; i < 16; i++)
-        state.reg[i] = 0;
-
-    for (int i = 0; i < BANK_COUNT; i++) {
-        for (int j = 0; j < 7; j++)
-            state.bank[i][j] = 0;
-        state.spsr[i].v = 0;
-    }
-
-    state.cpsr.v = 0;
+    state.Reset();
+    
     SwitchMode(MODE_SYS);
     pipe[0] = 0xF0000000;
     pipe[1] = 0xF0000000;
