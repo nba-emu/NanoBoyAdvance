@@ -96,7 +96,7 @@ public:
         } waitcnt;
     } mmio;
     
-    ARM::ARM7 cpu;
+    ARM::ARM7TDMI cpu;
     APU apu;
     PPU ppu;
     DMAController dma;

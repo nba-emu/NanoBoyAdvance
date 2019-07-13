@@ -5,7 +5,7 @@
  * found in the LICENSE file.
  */
 
-inline void ARM7::Reset() {
+inline void ARM7TDMI::Reset() {
     state.Reset();
     
     SwitchMode(MODE_SYS);
@@ -14,7 +14,7 @@ inline void ARM7::Reset() {
     fetch_type = ACCESS_NSEQ;
 }
 
-inline void ARM7::Run() {
+inline void ARM7TDMI::Run() {
     auto instruction = pipe[0];
 
     if (state.cpsr.f.thumb) {
@@ -38,7 +38,7 @@ inline void ARM7::Run() {
     }
 }
 
-inline void ARM7::SignalIrq() {
+inline void ARM7TDMI::SignalIrq() {
     if (state.cpsr.f.mask_irq) {
         return;
     }
@@ -67,21 +67,21 @@ inline void ARM7::SignalIrq() {
     ARM_ReloadPipeline();
 }
 
-inline void ARM7::ARM_ReloadPipeline() {
+inline void ARM7TDMI::ARM_ReloadPipeline() {
     pipe[0] = interface->ReadWord(state.r15+0, ACCESS_NSEQ);
     pipe[1] = interface->ReadWord(state.r15+4, ACCESS_SEQ);
     fetch_type = ACCESS_SEQ;
     state.r15 += 8;
 }
 
-inline void ARM7::Thumb_ReloadPipeline() {
+inline void ARM7TDMI::Thumb_ReloadPipeline() {
     pipe[0] = interface->ReadHalf(state.r15+0, ACCESS_NSEQ);
     pipe[1] = interface->ReadHalf(state.r15+2, ACCESS_SEQ);
     fetch_type = ACCESS_SEQ;
     state.r15 += 4;
 }
 
-inline void ARM7::BuildConditionTable() {
+inline void ARM7TDMI::BuildConditionTable() {
     for (int flags = 0; flags < 16; flags++) {
         bool n = flags & 8;
         bool z = flags & 4;
@@ -107,13 +107,13 @@ inline void ARM7::BuildConditionTable() {
     }
 }
 
-inline bool ARM7::CheckCondition(Condition condition) {
+inline bool ARM7TDMI::CheckCondition(Condition condition) {
     if (condition == COND_AL)
         return true;
     return condition_table[condition][state.cpsr.v >> 28];
 }
 
-inline void ARM7::SwitchMode(Mode new_mode) {
+inline void ARM7TDMI::SwitchMode(Mode new_mode) {
     auto old_mode = state.cpsr.f.mode;
 
     if (new_mode == old_mode)

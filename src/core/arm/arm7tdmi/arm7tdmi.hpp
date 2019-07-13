@@ -17,10 +17,10 @@
 
 namespace ARM {
 
-class ARM7 {
+class ARM7TDMI {
 
 public:
-    ARM7(ARM::Interface* interface)
+    ARM7TDMI(ARM::Interface* interface)
         : interface(interface)
     {
         BuildConditionTable();
@@ -59,21 +59,21 @@ private:
     void ARM_ReloadPipeline();
     void Thumb_ReloadPipeline();
 
-    typedef void (ARM7::*ArmInstruction)(std::uint32_t);
-    typedef void (ARM7::*ThumbInstruction)(std::uint16_t);
+    typedef void (ARM7TDMI::*ArmInstruction)(std::uint32_t);
+    typedef void (ARM7TDMI::*ThumbInstruction)(std::uint16_t);
     
     static std::array<ArmInstruction, 4096> arm_lut;
     static std::array<ThumbInstruction, 1024> thumb_lut;
 
     template <std::uint32_t instruction>
-    static constexpr ARM7::ArmInstruction GetArmHandler();
+    static constexpr ARM7TDMI::ArmInstruction GetArmHandler();
     
-    static constexpr std::array<ARM7::ArmInstruction, 4096> MakeArmLut();
+    static constexpr std::array<ARM7TDMI::ArmInstruction, 4096> MakeArmLut();
 
     template <std::uint16_t instruction>
-    static constexpr ARM7::ThumbInstruction GetThumbHandler();
+    static constexpr ARM7TDMI::ThumbInstruction GetThumbHandler();
     
-    static constexpr std::array<ARM7::ThumbInstruction, 1024> MakeThumbLut();
+    static constexpr std::array<ARM7TDMI::ThumbInstruction, 1024> MakeThumbLut();
 
     #include "isa/arm.inl"
     #include "isa/thumb.inl"

@@ -9,10 +9,10 @@
 
 using namespace ARM;
 
-std::array<ARM7::ThumbInstruction, 1024> ARM7::thumb_lut = MakeThumbLut();
+std::array<ARM7TDMI::ThumbInstruction, 1024> ARM7TDMI::thumb_lut = MakeThumbLut();
 
 template <int op, int imm>
-void ARM7::Thumb_MoveShiftedRegister(std::uint16_t instruction) {
+void ARM7TDMI::Thumb_MoveShiftedRegister(std::uint16_t instruction) {
     // THUMB.1 Move shifted register
     int dst   = (instruction >> 0) & 7;
     int src   = (instruction >> 3) & 7;
@@ -33,7 +33,7 @@ void ARM7::Thumb_MoveShiftedRegister(std::uint16_t instruction) {
 }
 
 template <bool immediate, bool subtract, int field3>
-void ARM7::Thumb_AddSub(std::uint16_t instruction) {
+void ARM7TDMI::Thumb_AddSub(std::uint16_t instruction) {
     int dst = (instruction >> 0) & 7;
     int src = (instruction >> 3) & 7;
     std::uint32_t operand = immediate ? field3 : state.reg[field3];
@@ -49,7 +49,7 @@ void ARM7::Thumb_AddSub(std::uint16_t instruction) {
 }
 
 template <int op, int dst>
-void ARM7::Thumb_Op3(std::uint16_t instruction) {
+void ARM7TDMI::Thumb_Op3(std::uint16_t instruction) {
     // THUMB.3 Move/compare/add/subtract immediate
     std::uint32_t imm = instruction & 0xFF;
 
@@ -79,7 +79,7 @@ void ARM7::Thumb_Op3(std::uint16_t instruction) {
 }
 
 template <int op>
-void ARM7::Thumb_ALU(std::uint16_t instruction) {
+void ARM7TDMI::Thumb_ALU(std::uint16_t instruction) {
     int dst = (instruction >> 0) & 7;
     int src = (instruction >> 3) & 7;
 
@@ -178,7 +178,7 @@ void ARM7::Thumb_ALU(std::uint16_t instruction) {
 }
 
 template <int op, bool high1, bool high2>
-void ARM7::Thumb_HighRegisterOps_BX(std::uint16_t instruction) {
+void ARM7TDMI::Thumb_HighRegisterOps_BX(std::uint16_t instruction) {
     // THUMB.5 Hi register operations/branch exchange
     int dst = (instruction >> 0) & 7;
     int src = (instruction >> 3) & 7;
@@ -224,7 +224,7 @@ void ARM7::Thumb_HighRegisterOps_BX(std::uint16_t instruction) {
 }
 
 template <int dst>
-void ARM7::Thumb_LoadStoreRelativePC(std::uint16_t instruction) {
+void ARM7TDMI::Thumb_LoadStoreRelativePC(std::uint16_t instruction) {
     std::uint32_t offset  = instruction & 0xFF;
     std::uint32_t address = (state.r15 & ~2) + (offset << 2);
 
@@ -235,7 +235,7 @@ void ARM7::Thumb_LoadStoreRelativePC(std::uint16_t instruction) {
 }
 
 template <int op, int off>
-void ARM7::Thumb_LoadStoreOffsetReg(std::uint16_t instruction) {
+void ARM7TDMI::Thumb_LoadStoreOffsetReg(std::uint16_t instruction) {
     int dst  = (instruction >> 0) & 7;
     int base = (instruction >> 3) & 7;
 
@@ -263,7 +263,7 @@ void ARM7::Thumb_LoadStoreOffsetReg(std::uint16_t instruction) {
 }
 
 template <int op, int off>
-void ARM7::Thumb_LoadStoreSigned(std::uint16_t instruction) {
+void ARM7TDMI::Thumb_LoadStoreSigned(std::uint16_t instruction) {
     int dst  = (instruction >> 0) & 7;
     int base = (instruction >> 3) & 7;
     
@@ -296,7 +296,7 @@ void ARM7::Thumb_LoadStoreSigned(std::uint16_t instruction) {
 }
 
 template <int op, int imm>
-void ARM7::Thumb_LoadStoreOffsetImm(std::uint16_t instruction) {
+void ARM7TDMI::Thumb_LoadStoreOffsetImm(std::uint16_t instruction) {
     int dst  = (instruction >> 0) & 7;
     int base = (instruction >> 3) & 7;
 
@@ -326,7 +326,7 @@ void ARM7::Thumb_LoadStoreOffsetImm(std::uint16_t instruction) {
 }
 
 template <bool load, int imm>
-void ARM7::Thumb_LoadStoreHword(std::uint16_t instruction) {
+void ARM7TDMI::Thumb_LoadStoreHword(std::uint16_t instruction) {
     int dst  = (instruction >> 0) & 7;
     int base = (instruction >> 3) & 7;
 
@@ -344,7 +344,7 @@ void ARM7::Thumb_LoadStoreHword(std::uint16_t instruction) {
 }
 
 template <bool load, int dst>
-void ARM7::Thumb_LoadStoreRelativeToSP(std::uint16_t instruction) {
+void ARM7TDMI::Thumb_LoadStoreRelativeToSP(std::uint16_t instruction) {
     std::uint32_t offset  = instruction & 0xFF;
     std::uint32_t address = state.reg[13] + offset * 4;
 
@@ -360,7 +360,7 @@ void ARM7::Thumb_LoadStoreRelativeToSP(std::uint16_t instruction) {
 }
 
 template <bool stackptr, int dst>
-void ARM7::Thumb_LoadAddress(std::uint16_t instruction) {
+void ARM7TDMI::Thumb_LoadAddress(std::uint16_t instruction) {
     std::uint32_t offset = (instruction  & 0xFF) << 2;
 
     if (stackptr) {
@@ -374,7 +374,7 @@ void ARM7::Thumb_LoadAddress(std::uint16_t instruction) {
 }
 
 template <bool sub>
-void ARM7::Thumb_AddOffsetToSP(std::uint16_t instruction) {
+void ARM7TDMI::Thumb_AddOffsetToSP(std::uint16_t instruction) {
     std::uint32_t offset = (instruction  & 0x7F) * 4;
 
     state.r13 += sub ? -offset : offset;
@@ -383,7 +383,7 @@ void ARM7::Thumb_AddOffsetToSP(std::uint16_t instruction) {
 }
 
 template <bool pop, bool rbit>
-void ARM7::Thumb_PushPop(std::uint16_t instruction) {
+void ARM7TDMI::Thumb_PushPop(std::uint16_t instruction) {
     std::uint32_t address = state.r13;
 
     /* TODO: handle empty register lists. */
@@ -438,7 +438,7 @@ void ARM7::Thumb_PushPop(std::uint16_t instruction) {
 }
 
 template <bool load, int base>
-void ARM7::Thumb_LoadStoreMultiple(std::uint16_t instruction) {
+void ARM7TDMI::Thumb_LoadStoreMultiple(std::uint16_t instruction) {
     /* TODO: handle empty register list. */
     
     if (load) {
@@ -482,7 +482,7 @@ void ARM7::Thumb_LoadStoreMultiple(std::uint16_t instruction) {
 }
 
 template <int cond>
-void ARM7::Thumb_ConditionalBranch(std::uint16_t instruction) {
+void ARM7TDMI::Thumb_ConditionalBranch(std::uint16_t instruction) {
     if (CheckCondition(static_cast<Condition>(cond))) {
         std::uint32_t imm = instruction & 0xFF;
 
@@ -499,7 +499,7 @@ void ARM7::Thumb_ConditionalBranch(std::uint16_t instruction) {
     }
 }
 
-void ARM7::Thumb_SWI(std::uint16_t instruction) {
+void ARM7TDMI::Thumb_SWI(std::uint16_t instruction) {
     /* Save return address and program status. */
     state.bank[BANK_SVC][BANK_R14] = state.r15 - 2;
     state.spsr[BANK_SVC].v = state.cpsr.v;
@@ -514,7 +514,7 @@ void ARM7::Thumb_SWI(std::uint16_t instruction) {
     ARM_ReloadPipeline();
 }
 
-void ARM7::Thumb_UnconditionalBranch(std::uint16_t instruction) {
+void ARM7TDMI::Thumb_UnconditionalBranch(std::uint16_t instruction) {
     std::uint32_t imm = (instruction & 0x3FF) * 2;
 
     /* Sign-extend immediate value. */
@@ -527,7 +527,7 @@ void ARM7::Thumb_UnconditionalBranch(std::uint16_t instruction) {
 }
 
 template <bool second_instruction>
-void ARM7::Thumb_LongBranchLink(std::uint16_t instruction) {
+void ARM7TDMI::Thumb_LongBranchLink(std::uint16_t instruction) {
     std::uint32_t imm = instruction & 0x7FF;
 
     if (!second_instruction) {
@@ -548,106 +548,106 @@ void ARM7::Thumb_LongBranchLink(std::uint16_t instruction) {
 }
 
 /* This should never get called. */
-void ARM7::Thumb_Undefined(std::uint16_t instruction) { }
+void ARM7TDMI::Thumb_Undefined(std::uint16_t instruction) { }
 
 template <std::uint16_t instruction>
-constexpr ARM7::ThumbInstruction ARM7::GetThumbHandler() {
+constexpr ARM7TDMI::ThumbInstruction ARM7TDMI::GetThumbHandler() {
     if ((instruction & 0xF800) < 0x1800) {
         // THUMB.1 Move shifted register
-        return &ARM7::Thumb_MoveShiftedRegister<(instruction >> 11) & 3,     /* Operation */
+        return &ARM7TDMI::Thumb_MoveShiftedRegister<(instruction >> 11) & 3,     /* Operation */
                                (instruction >>  6) & 0x1F>; /* Offset5 */
     }
     if ((instruction & 0xF800) == 0x1800) {
         // THUMB.2 Add/subtract
-        return &ARM7::Thumb_AddSub<(instruction >> 10) & 1,  /* Immediate-Flag */
+        return &ARM7TDMI::Thumb_AddSub<(instruction >> 10) & 1,  /* Immediate-Flag */
                                (instruction >>  9) & 1,  /* Subtract-Flag */
                                (instruction >>  6) & 7>; /* 3-bit field */
     }
     if ((instruction & 0xE000) == 0x2000) {
         // THUMB.3 Move/compare/add/subtract immediate
-        return &ARM7::Thumb_Op3<(instruction >> 11) & 3,   /* Operation */
+        return &ARM7TDMI::Thumb_Op3<(instruction >> 11) & 3,   /* Operation */
                                (instruction >>  8) & 7>;  /* rD */
     }
     if ((instruction & 0xFC00) == 0x4000) {
         // THUMB.4 ALU operations
-        return &ARM7::Thumb_ALU<(instruction >> 6) & 0xF>; /* Operation */
+        return &ARM7TDMI::Thumb_ALU<(instruction >> 6) & 0xF>; /* Operation */
     }
     if ((instruction & 0xFC00) == 0x4400) {
         // THUMB.5 Hi register operations/branch exchange
-        return &ARM7::Thumb_HighRegisterOps_BX<(instruction >> 8) & 3,  /* Operation */
+        return &ARM7TDMI::Thumb_HighRegisterOps_BX<(instruction >> 8) & 3,  /* Operation */
                                (instruction >> 7) & 1,  /* High 1 */
                                (instruction >> 6) & 1>; /* High 2 */
     }
     if ((instruction & 0xF800) == 0x4800) {
         // THUMB.6 PC-relative load
-        return &ARM7::Thumb_LoadStoreRelativePC<(instruction >>  8) & 7>; /* rD */
+        return &ARM7TDMI::Thumb_LoadStoreRelativePC<(instruction >>  8) & 7>; /* rD */
     }
     if ((instruction & 0xF200) == 0x5000) {
         // THUMB.7 Load/store with register offset
-        return &ARM7::Thumb_LoadStoreOffsetReg<(instruction >> 10) & 3,  /* Operation (LB) */
+        return &ARM7TDMI::Thumb_LoadStoreOffsetReg<(instruction >> 10) & 3,  /* Operation (LB) */
                                (instruction >>  6) & 7>; /* rO */
     }
     if ((instruction & 0xF200) == 0x5200) {
         // THUMB.8 Load/store sign-extended byte/halfword
-        return &ARM7::Thumb_LoadStoreSigned<(instruction >> 10) & 3,  /* Operation (HS) */
+        return &ARM7TDMI::Thumb_LoadStoreSigned<(instruction >> 10) & 3,  /* Operation (HS) */
                                (instruction >>  6) & 7>; /* rO */
     }
     if ((instruction & 0xE000) == 0x6000) {
         // THUMB.9 Load store with immediate offset
-        return &ARM7::Thumb_LoadStoreOffsetImm<(instruction >> 11) & 3,     /* Operation (BL) */
+        return &ARM7TDMI::Thumb_LoadStoreOffsetImm<(instruction >> 11) & 3,     /* Operation (BL) */
                                (instruction >>  6) & 0x1F>; /* Offset5 */
     }
     if ((instruction & 0xF000) == 0x8000) {
         // THUMB.10 Load/store halfword
-        return &ARM7::Thumb_LoadStoreHword<(instruction >> 11) & 1,     /* Load-Flag */
+        return &ARM7TDMI::Thumb_LoadStoreHword<(instruction >> 11) & 1,     /* Load-Flag */
                                 (instruction >>  6) & 0x1F>; /* Offset5 */
     }
     if ((instruction & 0xF000) == 0x9000) {
         // THUMB.11 SP-relative load/store
-        return &ARM7::Thumb_LoadStoreRelativeToSP<(instruction >> 11) & 1,  /* Load-Flag */
+        return &ARM7TDMI::Thumb_LoadStoreRelativeToSP<(instruction >> 11) & 1,  /* Load-Flag */
                                 (instruction >>  8) & 7>; /* rD */
     }
     if ((instruction & 0xF000) == 0xA000) {
         // THUMB.12 Load address
-        return &ARM7::Thumb_LoadAddress<(instruction >> 11) & 1,  /* 0=PC??? 1=SP */
+        return &ARM7TDMI::Thumb_LoadAddress<(instruction >> 11) & 1,  /* 0=PC??? 1=SP */
                                 (instruction >>  8) & 7>; /* rD */
     }
     if ((instruction & 0xFF00) == 0xB000) {
         // THUMB.13 Add offset to stack pointer
-        return &ARM7::Thumb_AddOffsetToSP<(instruction >> 7) & 1>; /* Subtract-Flag */
+        return &ARM7TDMI::Thumb_AddOffsetToSP<(instruction >> 7) & 1>; /* Subtract-Flag */
     }
     if ((instruction & 0xF600) == 0xB400) {
         // THUMB.14 push/pop registers
-        return &ARM7::Thumb_PushPop<(instruction >> 11) & 1,  /* 0=PUSH 1=POP */
+        return &ARM7TDMI::Thumb_PushPop<(instruction >> 11) & 1,  /* 0=PUSH 1=POP */
                                 (instruction >>  8) & 1>; /* PC/LR-flag */
     }
     if ((instruction & 0xF000) == 0xC000) {
         // THUMB.15 Multiple load/store
-        return &ARM7::Thumb_LoadStoreMultiple<(instruction >> 11) & 1,  /* Load-Flag */
+        return &ARM7TDMI::Thumb_LoadStoreMultiple<(instruction >> 11) & 1,  /* Load-Flag */
                                 (instruction >>  8) & 7>; /* rB */
     }
     if ((instruction & 0xFF00) < 0xDF00) {
         // THUMB.16 Conditional Branch
-        return &ARM7::Thumb_ConditionalBranch<(instruction >> 8) & 0xF>; /* Condition */
+        return &ARM7TDMI::Thumb_ConditionalBranch<(instruction >> 8) & 0xF>; /* Condition */
     }
     if ((instruction & 0xFF00) == 0xDF00) {
         // THUMB.17 Software Interrupt
-        return &ARM7::Thumb_SWI;
+        return &ARM7TDMI::Thumb_SWI;
     }
     if ((instruction & 0xF800) == 0xE000) {
         // THUMB.18 Unconditional Branch
-        return &ARM7::Thumb_UnconditionalBranch;
+        return &ARM7TDMI::Thumb_UnconditionalBranch;
     }
     if ((instruction & 0xF000) == 0xF000) {
         // THUMB.19 Long branch with link
-        return &ARM7::Thumb_LongBranchLink<(instruction >> 11) & 1>; /* Second Instruction */
+        return &ARM7TDMI::Thumb_LongBranchLink<(instruction >> 11) & 1>; /* Second Instruction */
     }
 
-    return &ARM7::Thumb_Undefined;
+    return &ARM7TDMI::Thumb_Undefined;
 }
 
-constexpr std::array<ARM7::ThumbInstruction, 1024> ARM7::MakeThumbLut() {
-    std::array<ARM7::ThumbInstruction, 1024> lut = {};
+constexpr std::array<ARM7TDMI::ThumbInstruction, 1024> ARM7TDMI::MakeThumbLut() {
+    std::array<ARM7TDMI::ThumbInstruction, 1024> lut = {};
     
     static_for<std::size_t, 0, 1024>([&](auto i) {
         lut[i] = GetThumbHandler<i<<6>();
