@@ -8,11 +8,48 @@
 #pragma once
 
 #include <cstdint>
-#include "enums.hpp"
 
 namespace ARM {
 
-/* Bank Registers */
+enum Mode {
+    MODE_USR = 0x10,
+    MODE_FIQ = 0x11,
+    MODE_IRQ = 0x12,
+    MODE_SVC = 0x13,
+    MODE_ABT = 0x17,
+    MODE_UND = 0x1B,
+    MODE_SYS = 0x1F
+};
+
+enum Bank {
+    BANK_NONE = 0,
+    BANK_FIQ  = 1,
+    BANK_SVC  = 2,
+    BANK_ABT  = 3,
+    BANK_IRQ  = 4,
+    BANK_UND  = 5,
+    BANK_COUNT
+};
+
+enum Condition {
+    COND_EQ = 0,
+    COND_NE = 1,
+    COND_CS = 2,
+    COND_CC = 3,
+    COND_MI = 4,
+    COND_PL = 5,
+    COND_VS = 6,
+    COND_VC = 7,
+    COND_HI = 8,
+    COND_LS = 9,
+    COND_GE = 10,
+    COND_LT = 11,
+    COND_GT = 12,
+    COND_LE = 13,
+    COND_AL = 14,
+    COND_NV = 15
+};
+
 enum BankedRegister {
     BANK_R13 = 0,
     BANK_R14 = 1
@@ -34,7 +71,6 @@ typedef union {
     std::uint32_t v;
 } StatusRegister;
 
-/* ARM7TDMI-S execution state. */
 struct State {
     // General Purpose Registers
     union {

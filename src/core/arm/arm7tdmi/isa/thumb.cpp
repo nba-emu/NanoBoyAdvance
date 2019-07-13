@@ -5,7 +5,7 @@
  * found in the LICENSE file.
  */
 
-#include "../arm.hpp"
+#include "../arm7tdmi.hpp"
 
 using namespace ARM;
 
