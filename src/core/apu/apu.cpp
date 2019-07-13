@@ -33,18 +33,18 @@ void APU::LatchFIFO(int id, int times) {
 
 #define POINTS (32)
 
-bool APU::Tick() {
+void APU::Tick() {
     float T = 32768.0/48000.0;
     static float t = 0.0;
     
-    static float meme[2][POINTS] {0};
+    static float fifo[2][POINTS] {0};
     
     for (int i = 1; i < POINTS; i++) {
-        meme[0][i-1] = meme[0][i];
-        meme[1][i-1] = meme[1][i];
+        fifo[0][i-1] = fifo[0][i];
+        fifo[1][i-1] = fifo[1][i];
     }
-    meme[0][POINTS-1] = latch[0]/128.0;
-    meme[1][POINTS-1] = latch[1]/128.0;
+    fifo[0][POINTS-1] = latch[0]/128.0;
+    fifo[1][POINTS-1] = latch[1]/128.0;
 
     while (t < 1.0) {
         int16_t foo[2] { 0 };
@@ -52,8 +52,8 @@ bool APU::Tick() {
 //        float a = (1.0 - cos(M_PI*t))*0.5;
 //        float b = 1.0 - a;
 //        
-//        foo[0] = int16_t(round((meme[0][POINTS-2] * b + meme[0][POINTS-1] * a) * 32767.0));
-//        foo[1] = int16_t(round((meme[1][POINTS-2] * b + meme[1][POINTS-1] * a) * 32767.0));
+//        foo[0] = int16_t(round((fifo[0][POINTS-2] * b + fifo[0][POINTS-1] * a) * 32767.0));
+//        foo[1] = int16_t(round((fifo[1][POINTS-2] * b + fifo[1][POINTS-1] * a) * 32767.0));
 
         float foo2[2] {0};
         
@@ -66,8 +66,8 @@ bool APU::Tick() {
             float a2 = 0.08;
             float win = a0 - a1*cos(2*M_PI*n/POINTS) + a2*cos(4*M_PI*n/POINTS);
 
-            foo2[0] += sinc * win * meme[0][n];
-            foo2[1] += sinc * win * meme[1][n];
+            foo2[0] += sinc * win * fifo[0][n];
+            foo2[1] += sinc * win * fifo[1][n];
         }
         
         foo[0] = int16_t(round(foo2[0] * 32767.0));
@@ -80,5 +80,4 @@ bool APU::Tick() {
     t = t - 1.0;
    
     wait_cycles += 512;
-    return true;
 }
