@@ -16,6 +16,7 @@
 #include <cstdio>
 #include "core/cpu.hpp"
 #include "core/config.hpp"
+#include <util/file.hpp>
 
 GameBoyAdvance::Config config;
 GameBoyAdvance::CPU cpu(&config);
@@ -42,25 +43,25 @@ int main(int argc, char** argv) {
 
     //SDL_GL_SetSwapInterval(0);
     
+    if (argc != 2) {
+        std::printf("Usage: %s rom_path\n", argv[0]);
+        return -1;
+    }
+    
     size_t size;
-    auto file = std::fopen("pokeemerald.gba", "rb");
     std::uint8_t* rom;
-
-    if (file == nullptr) {
-        std::puts("Error: unable to open armwrestler.gba");
-        return -1;
+    std::string rom_path = argv[1];
+    
+    if (File::Exists(rom_path)) {
+        size = File::GetSize(rom_path);
+        rom = new std::uint8_t[size];
+        File::ReadData(rom_path, rom, size);
+    } else {
+        std::printf("Cannot find ROM: %s\n", rom_path.c_str());
+        return -2;
     }
-
-    std::fseek(file, 0, SEEK_END);
-    size = std::ftell(file);
-    std::fseek(file, 0, SEEK_SET);
-
-    rom = new uint8_t[size];
-    if (std::fread(rom, 1, size, file) != size) {
-        std::puts("Error: unable to fully read the ROM.");
-        return -1;
-    }
-
+    
+    
     /* Setup configuration object. */
     config.video.output = fb;
 

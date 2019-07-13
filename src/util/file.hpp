@@ -13,14 +13,14 @@
 
 namespace File {
     
-auto Exists(std::string const& path) -> bool {
+static auto Exists(std::string const& path) -> bool {
     std::ifstream stream { path };
     bool result = stream.is_open();
     stream.close();
     return result;
 }
 
-auto GetSize(std::string const& path) -> size_t {
+static auto GetSize(std::string const& path) -> size_t {
     std::ifstream stream { path, std::ios::in | std::ios::binary | std::ios::ate };
     size_t size = 0;
     
@@ -33,7 +33,7 @@ auto GetSize(std::string const& path) -> size_t {
     return size;
 }
 
-auto ReadData(std::string const& path, std::uint8_t* data, size_t max_size) -> bool {
+static auto ReadData(std::string const& path, std::uint8_t* data, size_t max_size) -> bool {
     std::ifstream stream { path, std::ios::in | std::ios::binary | std::ios::ate };
     size_t size;
     
@@ -52,7 +52,7 @@ auto ReadData(std::string const& path, std::uint8_t* data, size_t max_size) -> b
     return false;
 }
 
-auto WriteData(std::string const& path, std::uint8_t* data, size_t size) -> bool {
+static auto WriteData(std::string const& path, std::uint8_t* data, size_t size) -> bool {
     std::ofstream stream { path, std::ios::out | std::ios::binary };
     
     if (stream.is_open()) {
