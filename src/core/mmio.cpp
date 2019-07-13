@@ -10,7 +10,7 @@
 #include "cpu.hpp"
 #include "mmio.hpp"
 
-using namespace NanoboyAdvance::GBA;
+using namespace GameBoyAdvance;
 
 auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     //std::printf("[R][MMIO] 0x%08x\n", address);

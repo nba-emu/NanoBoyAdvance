@@ -7,7 +7,7 @@
 
 #include "../ppu.hpp"
 
-using namespace NanoboyAdvance::GBA;
+using namespace GameBoyAdvance;
 
 const int PPU::s_obj_size[4][4][2] = {
     /* SQUARE */

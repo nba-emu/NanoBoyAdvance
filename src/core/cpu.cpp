@@ -8,8 +8,10 @@
 #include <climits>
 #include <cstring>
 #include "cpu.hpp"
+#include <util/file.hpp>
 
-using namespace NanoboyAdvance::GBA;
+using namespace ARM;
+using namespace GameBoyAdvance;
 
 constexpr int CPU::s_ws_nseq[4]; /* Non-sequential SRAM/WS0/WS1/WS2 */
 constexpr int CPU::s_ws_seq0[2]; /* Sequential WS0 */
@@ -47,28 +49,10 @@ void CPU::Reset() {
     std::memset(memory.vram, 0, 0x18000);
 
     /* Load BIOS. This really should not be done here. */
-    size_t size;
-    auto file = std::fopen("bios.bin", "rb");
-    std::uint8_t* rom;
-
-    if (file == nullptr) {
-        std::puts("Error: unable to open bios.bin");
-        while (1) {}
-        return;
-    }
-
-    std::fseek(file, 0, SEEK_END);
-    size = std::ftell(file);
-    std::fseek(file, 0, SEEK_SET);
-
-    if (size > 0x4000) {
-        std::puts("Error: BIOS image too large.");
-        return;
-    }
-
-    if (std::fread(memory.bios, 1, size, file) != size) {
-        std::puts("Error: unable to fully read the ROM.");
-        return;
+    if (File::Exists("bios.bin")) {
+        File::ReadData("bios.bin", memory.bios, 0x4000);
+    } else {
+        std::puts("Error: cannot locate bios.bin");
     }
 
     mmio.keyinput = 0x3FF;
@@ -89,6 +73,7 @@ void CPU::Reset() {
     mmio.waitcnt.phi = 0;
     mmio.waitcnt.prefetch = 0;
     mmio.waitcnt.cgb = 0;
+    
     /* TODO: implement register 0x04000800. */
     for (int i = 0; i < 2; i++) {
         cycles16[i][0x0] = 1;
@@ -110,6 +95,7 @@ void CPU::Reset() {
         cycles16[i][0xF] = 1;
         cycles32[i][0xF] = 1;
     }
+    
     UpdateCycleLUT();
 
     mmio.haltcnt = HaltControl::RUN;
@@ -184,31 +170,37 @@ void CPU::RunFor(int cycles) {
 }
 
 void CPU::UpdateCycleLUT() {
-    auto& waitcnt = mmio.waitcnt;
-
-    /* SRAM timing. */
-    cycles16[0][0xE] = 1 + s_ws_nseq[waitcnt.sram];
-    cycles16[1][0xE] = 1 + s_ws_nseq[waitcnt.sram];
-    cycles32[0][0xE] = 1 + s_ws_nseq[waitcnt.sram];
-    cycles32[1][0xE] = 1 + s_ws_nseq[waitcnt.sram];
-
-    /* ROM: WS0/WS1/WS2 non-sequential timing. */
-    cycles16[0][0x8] = cycles16[0][0x9] = 1 + s_ws_nseq[waitcnt.ws0_n];
-    cycles16[0][0xA] = cycles16[0][0xB] = 1 + s_ws_nseq[waitcnt.ws1_n];
-    cycles16[0][0xC] = cycles16[0][0xD] = 1 + s_ws_nseq[waitcnt.ws2_n];
-
-    /* ROM: WS0/WS1/WS2 sequential timing. */
-    cycles16[1][0x8] = cycles16[1][0x9] = 1 + s_ws_seq0[waitcnt.ws0_s];
-    cycles16[1][0xA] = cycles16[1][0xB] = 1 + s_ws_seq1[waitcnt.ws1_s];
-    cycles16[1][0xC] = cycles16[1][0xD] = 1 + s_ws_seq2[waitcnt.ws2_s];
-
-    /* ROM: WS0/WS1/WS2 32-bit non-sequential access: 1N access, 1S access */
-    cycles32[0][0x8] = cycles32[0][0x9] = cycles16[0][0x8] + cycles16[1][0x8];
-    cycles32[0][0xA] = cycles32[0][0xB] = cycles16[0][0xA] + cycles16[1][0xA];
-    cycles32[0][0xC] = cycles32[0][0xD] = cycles16[0][0xC] + cycles16[1][0xC];
+    int sram_cycles = 1 + s_ws_nseq[mmio.waitcnt.sram];
     
-    /* ROM: WS0/WS1/WS2 32-bit sequential access: 2S accesses */
-    cycles32[1][0x8] = cycles32[1][0x9] = cycles16[1][0x8] * 2;
-    cycles32[1][0xA] = cycles32[1][0xB] = cycles16[1][0xA] * 2;
-    cycles32[1][0xC] = cycles32[1][0xD] = cycles16[1][0xC] * 2;
+    /* SRAM waitstates */
+    cycles16[ACCESS_NSEQ][0xE] = sram_cycles;
+    cycles32[ACCESS_NSEQ][0xE] = sram_cycles;
+    cycles16[ACCESS_SEQ ][0xE] = sram_cycles;
+    cycles32[ACCESS_SEQ ][0xE] = sram_cycles;
+
+    /* ROM waitstates */
+    for (int i = 0; i < 2; i++) {
+        /* ROM: WS0/WS1/WS2 non-sequential timing. */
+        cycles16[ACCESS_NSEQ][0x8 + i] = 1 + s_ws_nseq[mmio.waitcnt.ws0_n];
+        cycles16[ACCESS_NSEQ][0xA + i] = 1 + s_ws_nseq[mmio.waitcnt.ws1_n];
+        cycles16[ACCESS_NSEQ][0xC + i] = 1 + s_ws_nseq[mmio.waitcnt.ws2_n];
+        
+        /* ROM: WS0/WS1/WS2 sequential timing. */
+        cycles16[ACCESS_SEQ][0x8 + i] = 1 + s_ws_seq0[mmio.waitcnt.ws0_s];
+        cycles16[ACCESS_SEQ][0xA + i] = 1 + s_ws_seq1[mmio.waitcnt.ws1_s];
+        cycles16[ACCESS_SEQ][0xC + i] = 1 + s_ws_seq2[mmio.waitcnt.ws2_s];
+        
+        /* ROM: WS0/WS1/WS2 32-bit non-sequential access: 1N access, 1S access */
+        cycles32[ACCESS_NSEQ][0x8 + i] = cycles16[ACCESS_NSEQ][0x8] + 
+                                         cycles16[ACCESS_SEQ ][0x8];
+        cycles32[ACCESS_NSEQ][0xA + i] = cycles16[ACCESS_NSEQ][0xA] +
+                                         cycles16[ACCESS_SEQ ][0xA];
+        cycles32[ACCESS_NSEQ][0xC + i] = cycles16[ACCESS_NSEQ][0xC] +
+                                         cycles16[ACCESS_SEQ ][0xC];
+        
+        /* ROM: WS0/WS1/WS2 32-bit sequential access: 2S accesses */
+        cycles32[ACCESS_SEQ][0x8 + i] = cycles16[ACCESS_SEQ][0x8] * 2;
+        cycles32[ACCESS_SEQ][0xA + i] = cycles16[ACCESS_SEQ][0xA] * 2;
+        cycles32[ACCESS_SEQ][0xC + i] = cycles16[ACCESS_SEQ][0xC] * 2;    
+    }
 }

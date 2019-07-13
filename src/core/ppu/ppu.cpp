@@ -11,7 +11,7 @@
 #include "../cpu.hpp"
 #include "ppu.hpp"
 
-using namespace NanoboyAdvance::GBA;
+using namespace GameBoyAdvance;
 
 constexpr std::uint16_t PPU::s_color_transparent;
 constexpr int PPU::s_wait_cycles[3];

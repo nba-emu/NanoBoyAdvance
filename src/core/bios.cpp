@@ -7,7 +7,7 @@
 
 #include "cpu.hpp"
 
-using namespace NanoboyAdvance::GBA;
+using namespace GameBoyAdvance;
 
 void CPU::SWI(std::uint32_t call_id) {
     

@@ -7,7 +7,7 @@
 
 #include "../ppu.hpp"
 
-using namespace NanoboyAdvance::GBA;
+using namespace GameBoyAdvance;
 
 void PPU::RenderLayerText(int id) {
     const auto& bgcnt = mmio.bgcnt[id];

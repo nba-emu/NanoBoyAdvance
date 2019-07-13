@@ -9,7 +9,7 @@
 #include "../cpu.hpp"
 #include <math.h>
 
-using namespace NanoboyAdvance::GBA;
+using namespace GameBoyAdvance;
 
 void APU::Reset() {
     mmio.fifo[0].Reset();
@@ -31,53 +31,6 @@ void APU::LatchFIFO(int id, int times) {
     }
 }
 
-#define POINTS (32)
-
 void APU::Tick() {
-    float T = 32768.0/48000.0;
-    static float t = 0.0;
-    
-    static float fifo[2][POINTS] {0};
-    
-    for (int i = 1; i < POINTS; i++) {
-        fifo[0][i-1] = fifo[0][i];
-        fifo[1][i-1] = fifo[1][i];
-    }
-    fifo[0][POINTS-1] = latch[0]/128.0;
-    fifo[1][POINTS-1] = latch[1]/128.0;
-
-    while (t < 1.0) {
-        int16_t foo[2] { 0 };
-        
-//        float a = (1.0 - cos(M_PI*t))*0.5;
-//        float b = 1.0 - a;
-//        
-//        foo[0] = int16_t(round((fifo[0][POINTS-2] * b + fifo[0][POINTS-1] * a) * 32767.0));
-//        foo[1] = int16_t(round((fifo[1][POINTS-2] * b + fifo[1][POINTS-1] * a) * 32767.0));
-
-        float foo2[2] {0};
-        
-        for (int n = 0; n < POINTS; n++) {
-            float x = t - (n - POINTS/2);
-            float sinc = (x == 0) ? 1.0 : (sin(M_PI*x)/(M_PI*x));
-            
-            float a0 = 0.42;
-            float a1 = 0.5;
-            float a2 = 0.08;
-            float win = a0 - a1*cos(2*M_PI*n/POINTS) + a2*cos(4*M_PI*n/POINTS);
-
-            foo2[0] += sinc * win * fifo[0][n];
-            foo2[1] += sinc * win * fifo[1][n];
-        }
-        
-        foo[0] = int16_t(round(foo2[0] * 32767.0));
-        foo[1] = int16_t(round(foo2[1] * 32767.0));
-        
-        fwrite(foo, 2, sizeof(int16_t), dump);
-        t += T;
-    }
-    
-    t = t - 1.0;
-   
     wait_cycles += 512;
 }

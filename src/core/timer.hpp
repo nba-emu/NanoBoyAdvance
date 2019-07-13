@@ -9,7 +9,7 @@
 
 #include <cstdint>
 
-namespace NanoboyAdvance::GBA {
+namespace GameBoyAdvance {
 
 class CPU;
     
