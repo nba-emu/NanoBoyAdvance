@@ -49,28 +49,10 @@ void CPU::Reset() {
     std::memset(memory.vram, 0, 0x18000);
 
     /* Load BIOS. This really should not be done here. */
-    size_t size;
-    auto file = std::fopen("bios.bin", "rb");
-    std::uint8_t* rom;
-
-    if (file == nullptr) {
-        std::puts("Error: unable to open bios.bin");
-        while (1) {}
-        return;
-    }
-
-    std::fseek(file, 0, SEEK_END);
-    size = std::ftell(file);
-    std::fseek(file, 0, SEEK_SET);
-
-    if (size > 0x4000) {
-        std::puts("Error: BIOS image too large.");
-        return;
-    }
-
-    if (std::fread(memory.bios, 1, size, file) != size) {
-        std::puts("Error: unable to fully read the ROM.");
-        return;
+    if (File::Exists("bios.bin")) {
+        File::ReadData("bios.bin", memory.bios, 0x4000);
+    } else {
+        std::puts("Error: cannot locate bios.bin");
     }
 
     mmio.keyinput = 0x3FF;
