@@ -11,7 +11,6 @@
 #include "../core/interface.hpp"
 
 #include <array>
-#include <memory>
 
 namespace ARM {
 

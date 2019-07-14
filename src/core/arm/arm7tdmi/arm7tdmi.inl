@@ -7,7 +7,9 @@
 
 inline void ARM7TDMI::Reset() {
     state.Reset();
+    
     SwitchMode(MODE_SYS);
+    
     pipe.opcode[0] = 0xF0000000;
     pipe.opcode[1] = 0xF0000000;
     pipe.fetch_type = ACCESS_NSEQ;
