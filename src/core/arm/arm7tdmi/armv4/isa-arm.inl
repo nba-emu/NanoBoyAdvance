@@ -5,14 +5,27 @@
  * found in the LICENSE file.
  */
 
-#include "../arm7tdmi.hpp"
-
-using namespace ARM;
-
-std::array<ARM7TDMI::ArmInstruction, 4096> ARM7TDMI::arm_lut = MakeArmLut();
+enum class DataOp {
+    AND = 0,
+    EOR = 1,
+    SUB = 2,
+    RSB = 3,
+    ADD = 4,
+    ADC = 5,
+    SBC = 6,
+    RSC = 7,
+    TST = 8,
+    TEQ = 9,
+    CMP = 10,
+    CMN = 11,
+    ORR = 12,
+    MOV = 13,
+    BIC = 14,
+    MVN = 15
+};
 
 template <bool immediate, int opcode, bool _set_flags, int field4>
-void ARM7TDMI::ARM_DataProcessing(std::uint32_t instruction) {
+void ARM_DataProcessing(std::uint32_t instruction) {
     bool set_flags = _set_flags;
 
     int reg_dst = (instruction >> 12) & 0xF;
@@ -149,18 +162,18 @@ void ARM7TDMI::ARM_DataProcessing(std::uint32_t instruction) {
 
     if (reg_dst == 15) {
         if (state.cpsr.f.thumb) {
-            Thumb_ReloadPipeline();
+            ReloadPipeline16();
         } else {
-            ARM_ReloadPipeline();
+            ReloadPipeline32();
         }
     } else {
-        fetch_type = ACCESS_SEQ;
+        pipe.fetch_type = ACCESS_SEQ;
         state.r15 += 4;
     }
 }
 
 template <bool immediate, bool use_spsr, bool to_status>
-void ARM7TDMI::ARM_StatusTransfer(std::uint32_t instruction) {
+void ARM_StatusTransfer(std::uint32_t instruction) {
     if (to_status) {
         std::uint32_t op;
         std::uint32_t mask = 0;
@@ -203,12 +216,12 @@ void ARM7TDMI::ARM_StatusTransfer(std::uint32_t instruction) {
         }
     }
 
-    fetch_type = ACCESS_SEQ;
+    pipe.fetch_type = ACCESS_SEQ;
     state.r15 += 4;
 }
 
 template <bool accumulate, bool set_flags>
-void ARM7TDMI::ARM_Multiply(std::uint32_t instruction) {
+void ARM_Multiply(std::uint32_t instruction) {
     std::uint32_t result;
 
     int op1 = (instruction >>  0) & 0xF;
@@ -226,12 +239,12 @@ void ARM7TDMI::ARM_Multiply(std::uint32_t instruction) {
     }
 
     state.reg[dst] = result;
-    fetch_type = ACCESS_SEQ;
+    pipe.fetch_type = ACCESS_SEQ;
     state.r15 += 4;
 }
 
 template <bool sign_extend, bool accumulate, bool set_flags>
-void ARM7TDMI::ARM_MultiplyLong(std::uint32_t instruction) {
+void ARM_MultiplyLong(std::uint32_t instruction) {
     int op1 = (instruction >>  0) & 0xF;
     int op2 = (instruction >>  8) & 0xF;
     
@@ -277,13 +290,13 @@ void ARM7TDMI::ARM_MultiplyLong(std::uint32_t instruction) {
         state.cpsr.f.z = result == 0;
     }
 
-    fetch_type = ACCESS_SEQ;
+    pipe.fetch_type = ACCESS_SEQ;
     state.r15 += 4;
 }
 
 /* TODO: check if timings are correct. */
 template <bool byte>
-void ARM7TDMI::ARM_SingleDataSwap(std::uint32_t instruction) {
+void ARM_SingleDataSwap(std::uint32_t instruction) {
     int src  = (instruction >>  0) & 0xF;
     int dst  = (instruction >> 12) & 0xF;
     int base = (instruction >> 16) & 0xF;
@@ -300,25 +313,25 @@ void ARM7TDMI::ARM_SingleDataSwap(std::uint32_t instruction) {
 
     state.reg[dst] = tmp;
     interface->Tick(1);
-    fetch_type = ACCESS_NSEQ;
+    pipe.fetch_type = ACCESS_NSEQ;
     state.r15 += 4;
 }
 
-void ARM7TDMI::ARM_BranchAndExchange(std::uint32_t instruction) {
+void ARM_BranchAndExchange(std::uint32_t instruction) {
     std::uint32_t address = state.reg[instruction & 0xF];
 
     if (address & 1) {
         state.r15 = address & ~1;
         state.cpsr.f.thumb = 1;
-        Thumb_ReloadPipeline();
+        ReloadPipeline16();
     } else {
         state.r15 = address & ~3;
-        ARM_ReloadPipeline();
+        ReloadPipeline32();
     }
 }
 
 template <bool pre, bool add, bool immediate, bool writeback, bool load, int opcode>
-void ARM7TDMI::ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
+void ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
     int dst  = (instruction >> 12) & 0xF;
     int base = (instruction >> 16) & 0xF;
 
@@ -368,12 +381,12 @@ void ARM7TDMI::ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
         state.reg[base] = address;
     }
 
-    fetch_type = ACCESS_NSEQ;
+    pipe.fetch_type = ACCESS_NSEQ;
     state.r15 += 4;
 }
 
 template <bool link>
-void ARM7TDMI::ARM_BranchAndLink(std::uint32_t instruction) {
+void ARM_BranchAndLink(std::uint32_t instruction) {
     std::uint32_t offset = instruction & 0xFFFFFF;
 
     if (offset & 0x800000) {
@@ -385,11 +398,11 @@ void ARM7TDMI::ARM_BranchAndLink(std::uint32_t instruction) {
     }
 
     state.r15 += offset * 4;
-    ARM_ReloadPipeline();
+    ReloadPipeline32();
 }
 
 template <bool immediate, bool pre, bool add, bool byte, bool writeback, bool load>
-void ARM7TDMI::ARM_SingleDataTransfer(std::uint32_t instruction) {
+void ARM_SingleDataTransfer(std::uint32_t instruction) {
     Mode mode;
     std::uint32_t offset;
 
@@ -458,15 +471,15 @@ void ARM7TDMI::ARM_SingleDataTransfer(std::uint32_t instruction) {
     }
 
     if (load && dst == 15) {
-        ARM_ReloadPipeline();
+        ReloadPipeline32();
     } else {
-        fetch_type = ACCESS_NSEQ;
+        pipe.fetch_type = ACCESS_NSEQ;
         state.r15 += 4;
     }
 }
 
 template <bool _pre, bool add, bool user_mode, bool _writeback, bool load>
-void ARM7TDMI::ARM_BlockDataTransfer(std::uint32_t instruction) {
+void ARM_BlockDataTransfer(std::uint32_t instruction) {
     bool pre = _pre;
     bool writeback = _writeback;
 
@@ -556,17 +569,17 @@ void ARM7TDMI::ARM_BlockDataTransfer(std::uint32_t instruction) {
 
     if (load && transfer_pc) {
         if (state.cpsr.f.thumb) {
-            Thumb_ReloadPipeline();
+            ReloadPipeline16();
         } else {
-            ARM_ReloadPipeline();
+            ReloadPipeline32();
         }
     } else {
-        fetch_type = ACCESS_NSEQ;
+        pipe.fetch_type = ACCESS_NSEQ;
         state.r15 += 4;
     }
 }
 
-void ARM7TDMI::ARM_Undefined(std::uint32_t instruction) {
+void ARM_Undefined(std::uint32_t instruction) {
     /* Save return address and program status. */
     state.bank[BANK_SVC][BANK_R14] = state.r15 - 4;
     state.spsr[BANK_SVC].v = state.cpsr.v;
@@ -577,10 +590,10 @@ void ARM7TDMI::ARM_Undefined(std::uint32_t instruction) {
 
     /* Jump to execution vector */
     state.r15 = 0x04;
-    ARM_ReloadPipeline();
+    ReloadPipeline32();
 }
 
-void ARM7TDMI::ARM_SWI(std::uint32_t instruction) {
+void ARM_SWI(std::uint32_t instruction) {
     /* Save return address and program status. */
     state.bank[BANK_SVC][BANK_R14] = state.r15 - 4;
     state.spsr[BANK_SVC].v = state.cpsr.v;
@@ -591,127 +604,6 @@ void ARM7TDMI::ARM_SWI(std::uint32_t instruction) {
 
     /* Jump to execution vector */
     state.r15 = 0x08;
-    ARM_ReloadPipeline();
+    ReloadPipeline32();
 }
 
-template <std::uint32_t instruction>
-constexpr ARM7TDMI::ArmInstruction ARM7TDMI::GetArmHandler() {
-    const std::uint32_t opcode = instruction & 0x0FFFFFFF;
-    
-    const bool pre  = instruction & (1 << 24);
-    const bool add  = instruction & (1 << 23);
-    const bool wb   = instruction & (1 << 21);
-    const bool load = instruction & (1 << 20);
-
-    switch (opcode >> 26) {
-    case 0b00:
-        if (opcode & (1 << 25)) {
-            // ARM.8 Data processing and PSR transfer ... immediate
-            const bool set_flags = instruction & (1 << 20);
-            const int  opcode = (instruction >> 21) & 0xF;
-
-            if (!set_flags && opcode >= 0b1000 && opcode <= 0b1011) {
-                const bool use_spsr  = instruction & (1 << 22);
-                const bool to_status = instruction & (1 << 21);
-
-                return &ARM7TDMI::ARM_StatusTransfer<true, use_spsr, to_status>;
-            } else {
-                const int field4 = (instruction >> 4) & 0xF;
-
-                return &ARM7TDMI::ARM_DataProcessing<true, opcode, set_flags, field4>;
-            }
-        } else if ((opcode & 0xFF000F0) == 0x1200010) {
-            // ARM.3 Branch and exchange
-            // TODO: Some bad instructions might be falsely detected as BX.
-            // How does HW handle this?
-            return &ARM7TDMI::ARM_BranchAndExchange;
-        } else if ((opcode & 0x10000F0) == 0x0000090) {
-            // ARM.1 Multiply (accumulate), ARM.2 Multiply (accumulate) long
-            const bool accumulate = instruction & (1 << 21);
-            const bool set_flags  = instruction & (1 << 20);
-
-            if (opcode & (1 << 23)) {
-                const bool sign_extend = instruction & (1 << 22);
-
-                return &ARM7TDMI::ARM_MultiplyLong<sign_extend, accumulate, set_flags>;
-            } else {
-                return &ARM7TDMI::ARM_Multiply<accumulate, set_flags>;
-            }
-        } else if ((opcode & 0x10000F0) == 0x1000090) {
-            // ARM.4 Single data swap
-            const bool byte = instruction & (1 << 22);
-
-            return &ARM7TDMI::ARM_SingleDataSwap<byte>;
-        } else if ((opcode & 0xF0) == 0xB0 ||
-                   (opcode & 0xD0) == 0xD0) {
-            // ARM.5 Halfword data transfer, register offset
-            // ARM.6 Halfword data transfer, immediate offset
-            // ARM.7 Signed data transfer (byte/halfword)
-            const bool immediate = instruction & (1 << 22);
-            const int opcode = (instruction >> 5) & 3;
-
-            return &ARM7TDMI::ARM_HalfwordSignedTransfer<pre, add, immediate, wb, load, opcode>;
-        } else {
-            // ARM.8 Data processing and PSR transfer
-            const bool set_flags = instruction & (1 << 20);
-            const int  opcode = (instruction >> 21) & 0xF;
-
-            if (!set_flags && opcode >= 0b1000 && opcode <= 0b1011) {
-                const bool use_spsr  = instruction & (1 << 22);
-                const bool to_status = instruction & (1 << 21);
-
-                return &ARM7TDMI::ARM_StatusTransfer<false, use_spsr, to_status>;
-            } else {
-                const int field4 = (instruction >> 4) & 0xF;
-
-                return &ARM7TDMI::ARM_DataProcessing<false, opcode, set_flags, field4>;
-            }
-        }
-        break;
-    case 0b01:
-        // ARM.9 Single data transfer, ARM.10 Undefined
-        if ((opcode & 0x2000010) == 0x2000010) {
-            return &ARM7TDMI::ARM_Undefined;
-        } else {
-            const bool immediate = ~instruction & (1 << 25);
-            const bool byte = instruction & (1 << 22);
-
-            return &ARM7TDMI::ARM_SingleDataTransfer<immediate, pre, add, byte, wb, load>;
-        }
-        break;
-    case 0b10:
-        // ARM.11 Block data transfer, ARM.12 Branch
-        if (opcode & (1 << 25)) {
-            return &ARM7TDMI::ARM_BranchAndLink<(opcode >> 24) & 1>;
-        } else {
-            const bool user_mode = instruction & (1 << 22);
-
-            return &ARM7TDMI::ARM_BlockDataTransfer<pre, add, user_mode, wb, load>;
-        }
-        break;
-    case 0b11:
-        if (opcode & (1 << 25)) {
-            if (opcode & (1 << 24)) {
-                // ARM.16 Software interrupt
-                return &ARM7TDMI::ARM_SWI;
-            } else {
-                // ARM.14 Coprocessor data operation
-                // ARM.15 Coprocessor register transfer
-            }
-        } else {
-            // ARM.13 Coprocessor data transfer
-        }
-        break;
-    }
-
-    return &ARM7TDMI::ARM_Undefined;
-}
-
-constexpr std::array<ARM7TDMI::ArmInstruction, 4096> ARM7TDMI::MakeArmLut() {
-    std::array<ARM7TDMI::ArmInstruction, 4096> lut = {};
-
-    static_for<std::size_t, 0, 4096>([&](auto i) {
-        lut[i] = GetArmHandler<((i & 0xFF0) << 16) | ((i & 0xF) << 4)>();
-    });
-    return lut;
-}

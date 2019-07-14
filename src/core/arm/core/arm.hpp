@@ -71,7 +71,7 @@ typedef union {
     std::uint32_t v;
 } StatusRegister;
 
-struct State {
+struct RegisterFile {
     // General Purpose Registers
     union {
         struct {
@@ -102,7 +102,7 @@ struct State {
     StatusRegister cpsr;
     StatusRegister spsr[BANK_COUNT];
     
-    State() { Reset(); }
+    RegisterFile() { Reset(); }
     
     void Reset() {
         for (int i = 0; i < 16; i++) reg[i] = 0;

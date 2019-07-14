@@ -24,7 +24,7 @@ void Tick(int cycles) final {
 }
 
 std::uint32_t ReadBIOS(std::uint32_t address) {
-    if (cpu.GetState().r15 >= 0x4000) {
+    if (cpu.state.r15 >= 0x4000) {
         return memory.bios_opcode;
     }
     if (address >= 0x4000) {

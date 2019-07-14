@@ -9,29 +9,30 @@ inline void ARM7TDMI::Reset() {
     state.Reset();
     
     SwitchMode(MODE_SYS);
-    pipe[0] = 0xF0000000;
-    pipe[1] = 0xF0000000;
-    fetch_type = ACCESS_NSEQ;
+    
+    pipe.opcode[0] = 0xF0000000;
+    pipe.opcode[1] = 0xF0000000;
+    pipe.fetch_type = ACCESS_NSEQ;
 }
 
 inline void ARM7TDMI::Run() {
-    auto instruction = pipe[0];
+    auto instruction = pipe.opcode[0];
 
     if (state.cpsr.f.thumb) {
         state.r15 &= ~1;
 
-        pipe[0] = pipe[1];
-        pipe[1] = ReadHalf(state.r15, fetch_type);
-        (this->*thumb_lut[instruction >> 6])(instruction);
+        pipe.opcode[0] = pipe.opcode[1];
+        pipe.opcode[1] = ReadHalf(state.r15, pipe.fetch_type);
+        (this->*s_opcode_lut_thumb[instruction >> 6])(instruction);
     } else {
         state.r15 &= ~3;
 
-        pipe[0] = pipe[1];
-        pipe[1] = ReadWord(state.r15, fetch_type);
+        pipe.opcode[0] = pipe.opcode[1];
+        pipe.opcode[1] = ReadWord(state.r15, pipe.fetch_type);
         if (CheckCondition(static_cast<Condition>(instruction >> 28))) {
             int hash = ((instruction >> 16) & 0xFF0) |
                        ((instruction >>  4) & 0x00F);
-            (this->*arm_lut[hash])(instruction);
+            (this->*s_opcode_lut_arm[hash])(instruction);
         } else {
             state.r15 += 4;
         }
@@ -64,20 +65,20 @@ inline void ARM7TDMI::SignalIrq() {
 
     /* Jump to exception vector. */
     state.r15 = 0x18;
-    ARM_ReloadPipeline();
+    ReloadPipeline32();
 }
 
-inline void ARM7TDMI::ARM_ReloadPipeline() {
-    pipe[0] = interface->ReadWord(state.r15+0, ACCESS_NSEQ);
-    pipe[1] = interface->ReadWord(state.r15+4, ACCESS_SEQ);
-    fetch_type = ACCESS_SEQ;
+inline void ARM7TDMI::ReloadPipeline32() {
+    pipe.opcode[0] = interface->ReadWord(state.r15+0, ACCESS_NSEQ);
+    pipe.opcode[1] = interface->ReadWord(state.r15+4, ACCESS_SEQ);
+    pipe.fetch_type = ACCESS_SEQ;
     state.r15 += 8;
 }
 
-inline void ARM7TDMI::Thumb_ReloadPipeline() {
-    pipe[0] = interface->ReadHalf(state.r15+0, ACCESS_NSEQ);
-    pipe[1] = interface->ReadHalf(state.r15+2, ACCESS_SEQ);
-    fetch_type = ACCESS_SEQ;
+inline void ARM7TDMI::ReloadPipeline16() {
+    pipe.opcode[0] = interface->ReadHalf(state.r15+0, ACCESS_NSEQ);
+    pipe.opcode[1] = interface->ReadHalf(state.r15+2, ACCESS_SEQ);
+    pipe.fetch_type = ACCESS_SEQ;
     state.r15 += 4;
 }
 

@@ -11,35 +11,28 @@
 #include "../core/interface.hpp"
 
 #include <array>
-#include <memory>
-#include <utility>
-#include <util/meta.hpp>
 
 namespace ARM {
 
 class ARM7TDMI {
 
 public:
-    ARM7TDMI(ARM::Interface* interface)
+    ARM7TDMI(Interface* interface)
         : interface(interface)
     {
         BuildConditionTable();
+        Reset();
     }
 
     auto GetInterface() -> Interface* const { return interface; }
-    auto GetState() -> State& { return state; }
 
     void Reset();
     void Run();
     void SignalIrq();
 
+    RegisterFile state;
+    
 private:
-    State state;
-    StatusRegister* p_spsr;
-
-    AccessType fetch_type;
-    std::uint32_t pipe[2];
-    bool condition_table[16][16];
     
     /* Interface to emulator (Memory, SWI-emulation, ...). */
     Interface* interface;
@@ -56,27 +49,37 @@ private:
     
     #undef ARM_INCLUDE_GUARD
 
-    void ARM_ReloadPipeline();
-    void Thumb_ReloadPipeline();
-
-    typedef void (ARM7TDMI::*ArmInstruction)(std::uint32_t);
-    typedef void (ARM7TDMI::*ThumbInstruction)(std::uint16_t);
+    typedef void (ARM7TDMI::*Instruction16)(std::uint16_t);
+    typedef void (ARM7TDMI::*Instruction32)(std::uint32_t);
     
-    static std::array<ArmInstruction, 4096> arm_lut;
-    static std::array<ThumbInstruction, 1024> thumb_lut;
+    void ReloadPipeline16();
+    void ReloadPipeline32();
 
-    template <std::uint32_t instruction>
-    static constexpr ARM7TDMI::ArmInstruction GetArmHandler();
+    using OpcodeTable16 = std::array<Instruction16, 1024>;
+    using OpcodeTable32 = std::array<Instruction32, 4096>;
     
-    static constexpr std::array<ARM7TDMI::ArmInstruction, 4096> MakeArmLut();
+    static OpcodeTable16 s_opcode_lut_thumb;
+    static OpcodeTable32 s_opcode_lut_arm;
 
     template <std::uint16_t instruction>
-    static constexpr ARM7TDMI::ThumbInstruction GetThumbHandler();
+    static constexpr ARM7TDMI::Instruction16 EmitHandler16();
+    static constexpr OpcodeTable16 EmitAll16();
     
-    static constexpr std::array<ARM7TDMI::ThumbInstruction, 1024> MakeThumbLut();
+    template <std::uint32_t instruction>
+    static constexpr ARM7TDMI::Instruction32 EmitHandler32();
+    static constexpr OpcodeTable32 EmitAll32();
 
-    #include "isa/arm.inl"
-    #include "isa/thumb.inl"
+    StatusRegister* p_spsr;
+    
+    struct Pipeline {
+        AccessType    fetch_type;
+        std::uint32_t opcode[2];
+    } pipe;
+    
+    bool condition_table[16][16];
+    
+    #include "armv4/isa-arm.inl"
+    #include "armv4/isa-thumb.inl"
 };
 
 #include "arm7tdmi.inl"
