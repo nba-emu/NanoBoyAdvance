@@ -28,7 +28,7 @@ void ARM7TDMI::Thumb_MoveShiftedRegister(std::uint16_t instruction) {
     state.cpsr.f.n = result >> 31;
 
     state.reg[dst] = result;
-    fetch_type = ACCESS_SEQ;
+    pipe.fetch_type = ACCESS_SEQ;
     state.r15 += 2;
 }
 
@@ -44,7 +44,7 @@ void ARM7TDMI::Thumb_AddSub(std::uint16_t instruction) {
         state.reg[dst] = ADD(state.reg[src], operand, true);
     }
 
-    fetch_type = ACCESS_SEQ;
+    pipe.fetch_type = ACCESS_SEQ;
     state.r15 += 2;
 }
 
@@ -74,7 +74,7 @@ void ARM7TDMI::Thumb_Op3(std::uint16_t instruction) {
         break;
     }
 
-    fetch_type = ACCESS_SEQ;
+    pipe.fetch_type = ACCESS_SEQ;
     state.r15 += 2;
 }
 
@@ -173,7 +173,7 @@ void ARM7TDMI::Thumb_ALU(std::uint16_t instruction) {
 
     }
 
-    fetch_type = ACCESS_SEQ;
+    pipe.fetch_type = ACCESS_SEQ;
     state.r15 += 2;
 }
 
@@ -206,7 +206,7 @@ void ARM7TDMI::Thumb_HighRegisterOps_BX(std::uint16_t instruction) {
     /* Check for Compare (CMP) instruction. */
     } else if (op == 1) {
         SUB(state.reg[dst], operand, true);
-        fetch_type = ACCESS_SEQ;
+        pipe.fetch_type = ACCESS_SEQ;
         state.r15 += 2;
     /* Otherwise instruction is ADD or MOv. */
     } else {
@@ -217,7 +217,7 @@ void ARM7TDMI::Thumb_HighRegisterOps_BX(std::uint16_t instruction) {
             state.r15 &= ~1;
             Thumb_ReloadPipeline();
         } else {
-            fetch_type = ACCESS_SEQ;
+            pipe.fetch_type = ACCESS_SEQ;
             state.r15 += 2;
         }
     }
@@ -230,7 +230,7 @@ void ARM7TDMI::Thumb_LoadStoreRelativePC(std::uint16_t instruction) {
 
     state.reg[dst] = ReadWord(address, ACCESS_NSEQ);
     interface->Tick(1);
-    fetch_type = ACCESS_NSEQ;
+    pipe.fetch_type = ACCESS_NSEQ;
     state.r15 += 2;
 }
 
@@ -258,7 +258,7 @@ void ARM7TDMI::Thumb_LoadStoreOffsetReg(std::uint16_t instruction) {
         break;
     }
 
-    fetch_type = ACCESS_NSEQ;
+    pipe.fetch_type = ACCESS_NSEQ;
     state.r15 += 2;
 }
 
@@ -291,7 +291,7 @@ void ARM7TDMI::Thumb_LoadStoreSigned(std::uint16_t instruction) {
         break;
     }
 
-    fetch_type = ACCESS_NSEQ;
+    pipe.fetch_type = ACCESS_NSEQ;
     state.r15 += 2;
 }
 
@@ -321,7 +321,7 @@ void ARM7TDMI::Thumb_LoadStoreOffsetImm(std::uint16_t instruction) {
         break;
     }
 
-    fetch_type = ACCESS_NSEQ;
+    pipe.fetch_type = ACCESS_NSEQ;
     state.r15 += 2;
 }
 
@@ -339,7 +339,7 @@ void ARM7TDMI::Thumb_LoadStoreHword(std::uint16_t instruction) {
         WriteHalf(address, state.reg[dst], ACCESS_NSEQ);
     }
 
-    fetch_type = ACCESS_NSEQ;
+    pipe.fetch_type = ACCESS_NSEQ;
     state.r15 += 2;
 }
 
@@ -355,7 +355,7 @@ void ARM7TDMI::Thumb_LoadStoreRelativeToSP(std::uint16_t instruction) {
         WriteWord(address, state.reg[dst], ACCESS_NSEQ);
     }
 
-    fetch_type = ACCESS_NSEQ;
+    pipe.fetch_type = ACCESS_NSEQ;
     state.r15 += 2;
 }
 
@@ -369,7 +369,7 @@ void ARM7TDMI::Thumb_LoadAddress(std::uint16_t instruction) {
         state.reg[dst] = (state.r15 & ~2) + offset;
     }
 
-    fetch_type = ACCESS_SEQ;
+    pipe.fetch_type = ACCESS_SEQ;
     state.r15 += 2;
 }
 
@@ -378,7 +378,7 @@ void ARM7TDMI::Thumb_AddOffsetToSP(std::uint16_t instruction) {
     std::uint32_t offset = (instruction  & 0x7F) * 4;
 
     state.r13 += sub ? -offset : offset;
-    fetch_type = ACCESS_SEQ;
+    pipe.fetch_type = ACCESS_SEQ;
     state.r15 += 2;
 }
 
@@ -433,7 +433,7 @@ void ARM7TDMI::Thumb_PushPop(std::uint16_t instruction) {
         }
     }
 
-    fetch_type = ACCESS_NSEQ;
+    pipe.fetch_type = ACCESS_NSEQ;
     state.r15 += 2;
 }
 
@@ -477,7 +477,7 @@ void ARM7TDMI::Thumb_LoadStoreMultiple(std::uint16_t instruction) {
         }
     }
 
-    fetch_type = ACCESS_NSEQ;
+    pipe.fetch_type = ACCESS_NSEQ;
     state.r15 += 2;
 }
 
@@ -494,7 +494,7 @@ void ARM7TDMI::Thumb_ConditionalBranch(std::uint16_t instruction) {
         state.r15 += imm * 2;
         Thumb_ReloadPipeline();
     } else {
-        fetch_type = ACCESS_SEQ;
+        pipe.fetch_type = ACCESS_SEQ;
         state.r15 += 2;
     }
 }
@@ -536,7 +536,7 @@ void ARM7TDMI::Thumb_LongBranchLink(std::uint16_t instruction) {
             imm |= 0xFF800000;
         }
         state.r14 = state.r15 + imm;
-        fetch_type = ACCESS_SEQ;
+        pipe.fetch_type = ACCESS_SEQ;
         state.r15 += 2;
     } else {
         std::uint32_t temp = state.r15 - 2;

@@ -154,7 +154,7 @@ void ARM7TDMI::ARM_DataProcessing(std::uint32_t instruction) {
             ARM_ReloadPipeline();
         }
     } else {
-        fetch_type = ACCESS_SEQ;
+        pipe.fetch_type = ACCESS_SEQ;
         state.r15 += 4;
     }
 }
@@ -203,7 +203,7 @@ void ARM7TDMI::ARM_StatusTransfer(std::uint32_t instruction) {
         }
     }
 
-    fetch_type = ACCESS_SEQ;
+    pipe.fetch_type = ACCESS_SEQ;
     state.r15 += 4;
 }
 
@@ -226,7 +226,7 @@ void ARM7TDMI::ARM_Multiply(std::uint32_t instruction) {
     }
 
     state.reg[dst] = result;
-    fetch_type = ACCESS_SEQ;
+    pipe.fetch_type = ACCESS_SEQ;
     state.r15 += 4;
 }
 
@@ -277,7 +277,7 @@ void ARM7TDMI::ARM_MultiplyLong(std::uint32_t instruction) {
         state.cpsr.f.z = result == 0;
     }
 
-    fetch_type = ACCESS_SEQ;
+    pipe.fetch_type = ACCESS_SEQ;
     state.r15 += 4;
 }
 
@@ -300,7 +300,7 @@ void ARM7TDMI::ARM_SingleDataSwap(std::uint32_t instruction) {
 
     state.reg[dst] = tmp;
     interface->Tick(1);
-    fetch_type = ACCESS_NSEQ;
+    pipe.fetch_type = ACCESS_NSEQ;
     state.r15 += 4;
 }
 
@@ -368,7 +368,7 @@ void ARM7TDMI::ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
         state.reg[base] = address;
     }
 
-    fetch_type = ACCESS_NSEQ;
+    pipe.fetch_type = ACCESS_NSEQ;
     state.r15 += 4;
 }
 
@@ -460,7 +460,7 @@ void ARM7TDMI::ARM_SingleDataTransfer(std::uint32_t instruction) {
     if (load && dst == 15) {
         ARM_ReloadPipeline();
     } else {
-        fetch_type = ACCESS_NSEQ;
+        pipe.fetch_type = ACCESS_NSEQ;
         state.r15 += 4;
     }
 }
@@ -561,7 +561,7 @@ void ARM7TDMI::ARM_BlockDataTransfer(std::uint32_t instruction) {
             ARM_ReloadPipeline();
         }
     } else {
-        fetch_type = ACCESS_NSEQ;
+        pipe.fetch_type = ACCESS_NSEQ;
         state.r15 += 4;
     }
 }

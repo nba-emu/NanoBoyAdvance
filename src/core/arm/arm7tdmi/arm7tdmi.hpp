@@ -20,26 +20,23 @@ namespace ARM {
 class ARM7TDMI {
 
 public:
-    ARM7TDMI(ARM::Interface* interface)
+    ARM7TDMI(Interface* interface)
         : interface(interface)
     {
         BuildConditionTable();
+        Reset();
     }
 
     auto GetInterface() -> Interface* const { return interface; }
-    auto GetState() -> State& { return state; }
 
     void Reset();
     void Run();
     void SignalIrq();
 
-private:
     State state;
-    StatusRegister* p_spsr;
-
-    AccessType fetch_type;
-    std::uint32_t pipe[2];
-    bool condition_table[16][16];
+    
+private:
+    
     
     /* Interface to emulator (Memory, SWI-emulation, ...). */
     Interface* interface;
@@ -75,6 +72,15 @@ private:
     
     static constexpr std::array<ARM7TDMI::ThumbInstruction, 1024> MakeThumbLut();
 
+    StatusRegister* p_spsr;
+    
+    struct Pipeline {
+        AccessType    fetch_type;
+        std::uint32_t opcode[2];
+    } pipe;
+    
+    bool condition_table[16][16];
+    
     #include "isa/arm.inl"
     #include "isa/thumb.inl"
 };
