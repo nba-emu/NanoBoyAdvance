@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <core/arm/arm7tdmi/arm7tdmi.hpp>
+#include <arm/arm7tdmi/arm7tdmi.hpp>
 
 #include "apu/apu.hpp"
 #include "config.hpp"
