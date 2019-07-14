@@ -9,9 +9,9 @@
 
 #include <cstdint>
 
-#include "../config.hpp"
-#include "../event_device.hpp"
 #include "regs.hpp"
+#include "../config.hpp"
+#include "../cpu/event_device.hpp"
 
 namespace GameBoyAdvance {
 

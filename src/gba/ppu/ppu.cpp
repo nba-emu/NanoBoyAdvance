@@ -8,8 +8,8 @@
 #include <algorithm>
 #include <cstring>
 
-#include "../cpu.hpp"
 #include "ppu.hpp"
+#include "../cpu/cpu.hpp"
 
 using namespace GameBoyAdvance;
 
