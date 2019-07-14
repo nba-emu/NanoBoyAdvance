@@ -1,7 +1,6 @@
-SET(SOURCES
+set(SOURCES
     apu/apu.cpp
     apu/regs.cpp
-    arm/arm7tdmi/armv4/emit.cpp
     bios.cpp
     mmio.cpp
     ppu/regs.cpp
@@ -13,11 +12,9 @@ SET(SOURCES
     timer.cpp
 )
 
-SET(HEADERS
+set(HEADERS
     apu/apu.hpp
     apu/regs.hpp
-    arm/core/arm.hpp
-    arm/core/interface.hpp
     ppu/ppu.hpp
     ppu/regs.hpp
     cpu.hpp
@@ -25,5 +22,5 @@ SET(HEADERS
     mmio.hpp
 )
 
-ADD_LIBRARY(core STATIC ${SOURCES} ${HEADERS})
-TARGET_LINK_LIBRARIES(core stdc++fs)
+add_library(gba STATIC ${SOURCES} ${HEADERS})
+target_link_libraries(gba arm stdc++fs)

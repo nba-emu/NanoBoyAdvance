@@ -1,3 +1,5 @@
-INCLUDE_DIRECTORIES(.)
-ADD_SUBDIRECTORY(core)
-ADD_SUBDIRECTORY("target/${TARGET}")
+include_directories(.)
+
+add_subdirectory(arm)
+add_subdirectory(gba)
+add_subdirectory("platform/${PLATFORM}")

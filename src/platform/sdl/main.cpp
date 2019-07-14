@@ -14,8 +14,8 @@
 #undef main
 
 #include <cstdio>
-#include "core/cpu.hpp"
-#include "core/config.hpp"
+#include <gba/cpu.hpp>
+#include <gba/config.hpp>
 #include <experimental/filesystem>
 #include <fstream>
 
