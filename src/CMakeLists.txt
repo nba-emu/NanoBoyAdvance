@@ -1,3 +1,3 @@
-INCLUDE_DIRECTORIES(.)
-ADD_SUBDIRECTORY(core)
-ADD_SUBDIRECTORY("platform/${PLATFORM}")
+include_directories(.)
+add_subdirectory(core)
+add_subdirectory("platform/${PLATFORM}")
