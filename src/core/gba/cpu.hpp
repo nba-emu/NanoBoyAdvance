@@ -8,7 +8,7 @@
 #pragma once
 
 #include "apu/apu.hpp"
-#include "arm/arm7tdmi/arm7tdmi.hpp"
+#include "../arm/arm7tdmi/arm7tdmi.hpp"
 #include "config.hpp"
 #include "dma.hpp"
 #include "event_device.hpp"
