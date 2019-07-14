@@ -12,8 +12,6 @@
 
 #include <array>
 #include <memory>
-#include <utility>
-#include <util/meta.hpp>
 
 namespace ARM {
 
@@ -33,7 +31,7 @@ public:
     void Run();
     void SignalIrq();
 
-    State state;
+    RegisterFile state;
     
 private:
     
@@ -81,8 +79,8 @@ private:
     
     bool condition_table[16][16];
     
-    #include "isa/arm.inl"
-    #include "isa/thumb.inl"
+    #include "armv4/isa-arm.inl"
+    #include "armv4/isa-thumb.inl"
 };
 
 #include "arm7tdmi.inl"

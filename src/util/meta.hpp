@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <utility>
+
 template <typename T, T Begin,  class Func, T ...Is>
 constexpr void static_for_impl( Func &&f, std::integer_sequence<T, Is...> ) {
     ( f( std::integral_constant<T, Begin + Is>{ } ),... );

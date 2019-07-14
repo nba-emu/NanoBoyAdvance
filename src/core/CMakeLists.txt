@@ -1,8 +1,7 @@
 SET(SOURCES
     apu/apu.cpp
     apu/regs.cpp
-    arm/arm7tdmi/isa/thumb.cpp
-    arm/arm7tdmi/isa/arm.cpp
+    arm/arm7tdmi/armv4/emit.cpp
     bios.cpp
     mmio.cpp
     ppu/regs.cpp
