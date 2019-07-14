@@ -8,7 +8,7 @@
 #pragma once
 
 #include "regs.hpp"
-#include "../event_device.hpp"
+#include "../cpu/event_device.hpp"
 
 #include <cstdio>
 
@@ -35,7 +35,6 @@ public:
 private:
     CPU* cpu;
     
-    //FILE* dump[2];
     FILE* dump;
 };
 

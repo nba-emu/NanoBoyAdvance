@@ -8,15 +8,14 @@
 #pragma once
 
 #include <arm/arm7tdmi/arm7tdmi.hpp>
+#include <unordered_set>
 
-#include "apu/apu.hpp"
-#include "config.hpp"
 #include "dma.hpp"
 #include "event_device.hpp"
-#include "ppu/ppu.hpp"
 #include "timer.hpp"
-
-#include <unordered_set>
+#include "../ppu/ppu.hpp"
+#include "../apu/apu.hpp"
+#include "../config.hpp"
 
 namespace GameBoyAdvance {
 

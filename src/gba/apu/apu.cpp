@@ -5,9 +5,10 @@
  * found in the LICENSE file.
  */
 
-#include "apu.hpp"
-#include "../cpu.hpp"
 #include <math.h>
+
+#include "apu.hpp"
+#include "../cpu/cpu.hpp"
 
 using namespace GameBoyAdvance;
 
