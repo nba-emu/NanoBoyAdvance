@@ -183,7 +183,8 @@ void PPU::RenderScanline() {
                 int frame = mmio.dispcnt.frame * 0xA000;
                 int offset = frame + vcount * 240;
                 for (int x = 0; x < 240; x++) {
-                    line[x] = ConvertColor(ReadPalette(0, cpu->memory.vram[offset + x]));
+                    //line[x] = ConvertColor(ReadPalette(0, cpu->memory.vram[offset + x]));
+                    DrawPixel(x, 2, mmio.bgcnt[2].priority, ReadPalette(0, cpu->memory.vram[offset + x]));
                 }
                 break;
             }
