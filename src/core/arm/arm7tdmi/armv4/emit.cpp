@@ -15,7 +15,7 @@ ARM7TDMI::OpcodeTable16 ARM7TDMI::s_opcode_lut_thumb = EmitAll16();
 ARM7TDMI::OpcodeTable32 ARM7TDMI::s_opcode_lut_arm = EmitAll32();
 
 constexpr ARM7TDMI::OpcodeTable16 ARM7TDMI::EmitAll16() {
-    std::array<ARM7TDMI::Instruction16, 1024> lut = {};
+    ARM7TDMI::OpcodeTable16 lut = {};
     
     static_for<std::size_t, 0, 1024>([&](auto i) {
         lut[i] = EmitHandler16<i<<6>();
@@ -24,7 +24,7 @@ constexpr ARM7TDMI::OpcodeTable16 ARM7TDMI::EmitAll16() {
 }
 
 constexpr ARM7TDMI::OpcodeTable32 ARM7TDMI::EmitAll32() {
-    std::array<ARM7TDMI::Instruction32, 4096> lut = {};
+    ARM7TDMI::OpcodeTable32 lut = {};
 
     static_for<std::size_t, 0, 4096>([&](auto i) {
         lut[i] = EmitHandler32<((i & 0xFF0) << 16) | ((i & 0xF) << 4)>();

@@ -43,8 +43,6 @@ int main(int argc, char** argv) {
                              );
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 240, 160);
-
-    //SDL_GL_SetSwapInterval(0);
     
     if (argc != 2) {
         std::printf("Usage: %s rom_path\n", argv[0]);
@@ -100,7 +98,7 @@ int main(int argc, char** argv) {
             if (event.type == SDL_QUIT) {
                 running = false;
             } else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
-                std::uint16_t bit;
+                std::uint16_t bit = 0;
 
                 auto key_event = (SDL_KeyboardEvent*)(&event);
 
@@ -116,6 +114,13 @@ int main(int argc, char** argv) {
                     case SDLK_DOWN:   bit = (1<<7); break;
                     case SDLK_w: bit = (1<<8); break;
                     case SDLK_q: bit = (1<<9); break;
+                    case SDLK_SPACE:
+                        if (event.type == SDL_KEYDOWN) {
+                            SDL_GL_SetSwapInterval(0);
+                        } else {
+                            SDL_GL_SetSwapInterval(1);
+                        }
+                        break;
                 }
                 
                 if (event.type == SDL_KEYUP) {
