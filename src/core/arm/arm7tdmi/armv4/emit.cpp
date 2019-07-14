@@ -34,95 +34,147 @@ constexpr ARM7TDMI::OpcodeTable32 ARM7TDMI::EmitAll32() {
 
 template <std::uint16_t instruction>
 constexpr ARM7TDMI::Instruction16 ARM7TDMI::EmitHandler16() {
+    // THUMB.1 Move shifted register
     if ((instruction & 0xF800) < 0x1800) {
-        // THUMB.1 Move shifted register
-        return &ARM7TDMI::Thumb_MoveShiftedRegister<(instruction >> 11) & 3,     /* Operation */
-                               (instruction >>  6) & 0x1F>; /* Offset5 */
+        const auto opcode  = (instruction >> 11) & 3;
+        const auto offset5 = (instruction >>  6) & 0x1F;
+        
+        return &ARM7TDMI::Thumb_MoveShiftedRegister<opcode, offset5>;
     }
+    
+    // THUMB.2 Add/subtract
     if ((instruction & 0xF800) == 0x1800) {
-        // THUMB.2 Add/subtract
-        return &ARM7TDMI::Thumb_AddSub<(instruction >> 10) & 1,  /* Immediate-Flag */
-                               (instruction >>  9) & 1,  /* Subtract-Flag */
-                               (instruction >>  6) & 7>; /* 3-bit field */
+        const bool immediate = (instruction >> 10) & 1;
+        const bool subtract  = (instruction >>  9) & 1;
+        const auto field3 = (instruction >>  6) & 7;
+        
+        return &ARM7TDMI::Thumb_AddSub<immediate, subtract, field3>;
     }
+    
+    // THUMB.3 Move/compare/add/subtract immediate
     if ((instruction & 0xE000) == 0x2000) {
-        // THUMB.3 Move/compare/add/subtract immediate
-        return &ARM7TDMI::Thumb_Op3<(instruction >> 11) & 3,   /* Operation */
-                               (instruction >>  8) & 7>;  /* rD */
+        const auto opcode = (instruction >> 11) & 3;
+        const auto rD = (instruction >>  8) & 7;
+        
+        return &ARM7TDMI::Thumb_Op3<opcode, rD>;
     }
+    
+    // THUMB.4 ALU operations
     if ((instruction & 0xFC00) == 0x4000) {
-        // THUMB.4 ALU operations
-        return &ARM7TDMI::Thumb_ALU<(instruction >> 6) & 0xF>; /* Operation */
+        const auto opcode = (instruction >> 6) & 0xF;
+        
+        return &ARM7TDMI::Thumb_ALU<opcode>;
     }
+    
+    // THUMB.5 Hi register operations/branch exchange
     if ((instruction & 0xFC00) == 0x4400) {
-        // THUMB.5 Hi register operations/branch exchange
-        return &ARM7TDMI::Thumb_HighRegisterOps_BX<(instruction >> 8) & 3,  /* Operation */
-                               (instruction >> 7) & 1,  /* High 1 */
-                               (instruction >> 6) & 1>; /* High 2 */
+        const auto opcode = (instruction >> 8) & 3;
+        const bool high1  = (instruction >> 7) & 1;
+        const bool high2  = (instruction >> 6) & 1;
+        
+        return &ARM7TDMI::Thumb_HighRegisterOps_BX<opcode, high1, high2>;
     }
+    
+    // THUMB.6 PC-relative load
     if ((instruction & 0xF800) == 0x4800) {
-        // THUMB.6 PC-relative load
-        return &ARM7TDMI::Thumb_LoadStoreRelativePC<(instruction >>  8) & 7>; /* rD */
+        const auto rD = (instruction >>  8) & 7;
+        
+        return &ARM7TDMI::Thumb_LoadStoreRelativePC<rD>;
     }
+    
+    // THUMB.7 Load/store with register offset
     if ((instruction & 0xF200) == 0x5000) {
-        // THUMB.7 Load/store with register offset
-        return &ARM7TDMI::Thumb_LoadStoreOffsetReg<(instruction >> 10) & 3,  /* Operation (LB) */
-                               (instruction >>  6) & 7>; /* rO */
+        const auto opcode = (instruction >> 10) & 3;
+        const auto rO = (instruction >>  6) & 7;
+        
+        return &ARM7TDMI::Thumb_LoadStoreOffsetReg<opcode, rO>;
     }
+    
+    // THUMB.8 Load/store sign-extended byte/halfword
     if ((instruction & 0xF200) == 0x5200) {
-        // THUMB.8 Load/store sign-extended byte/halfword
-        return &ARM7TDMI::Thumb_LoadStoreSigned<(instruction >> 10) & 3,  /* Operation (HS) */
-                               (instruction >>  6) & 7>; /* rO */
+        const auto opcode = (instruction >> 10) & 3;
+        const auto rO = (instruction >>  6) & 7;
+        
+        return &ARM7TDMI::Thumb_LoadStoreSigned<opcode, rO>;
     }
+    
+    // THUMB.9 Load store with immediate offset
     if ((instruction & 0xE000) == 0x6000) {
-        // THUMB.9 Load store with immediate offset
-        return &ARM7TDMI::Thumb_LoadStoreOffsetImm<(instruction >> 11) & 3,     /* Operation (BL) */
-                               (instruction >>  6) & 0x1F>; /* Offset5 */
+        const auto opcode  = (instruction >> 11) & 3;
+        const auto offset5 = (instruction >>  6) & 0x1F;
+        
+        return &ARM7TDMI::Thumb_LoadStoreOffsetImm<opcode, offset5>;
     }
+    
+    // THUMB.10 Load/store halfword
     if ((instruction & 0xF000) == 0x8000) {
-        // THUMB.10 Load/store halfword
-        return &ARM7TDMI::Thumb_LoadStoreHword<(instruction >> 11) & 1,     /* Load-Flag */
-                                (instruction >>  6) & 0x1F>; /* Offset5 */
+        const bool load = (instruction >> 11) & 1;
+        const auto offset5 = (instruction >>  6) & 0x1F;
+        
+        return &ARM7TDMI::Thumb_LoadStoreHword<load, offset5>;
     }
+    
+    // THUMB.11 SP-relative load/store
     if ((instruction & 0xF000) == 0x9000) {
-        // THUMB.11 SP-relative load/store
-        return &ARM7TDMI::Thumb_LoadStoreRelativeToSP<(instruction >> 11) & 1,  /* Load-Flag */
-                                (instruction >>  8) & 7>; /* rD */
+        const bool load = (instruction >> 11) & 1;
+        const auto rD = (instruction >>  8) & 7;
+        
+        return &ARM7TDMI::Thumb_LoadStoreRelativeToSP<load, rD>;
     }
+    
+    // THUMB.12 Load address
     if ((instruction & 0xF000) == 0xA000) {
-        // THUMB.12 Load address
-        return &ARM7TDMI::Thumb_LoadAddress<(instruction >> 11) & 1,  /* 0=PC??? 1=SP */
-                                (instruction >>  8) & 7>; /* rD */
+        const bool use_r13 = (instruction >> 11) & 1;
+        const auto rD = (instruction >>  8) & 7;
+        
+        return &ARM7TDMI::Thumb_LoadAddress<use_r13, rD>;
     }
+    
+    // THUMB.13 Add offset to stack pointer
     if ((instruction & 0xFF00) == 0xB000) {
-        // THUMB.13 Add offset to stack pointer
-        return &ARM7TDMI::Thumb_AddOffsetToSP<(instruction >> 7) & 1>; /* Subtract-Flag */
+        const bool subtract = (instruction >> 7) & 1;
+        
+        return &ARM7TDMI::Thumb_AddOffsetToSP<subtract>;
     }
+    
+    // THUMB.14 push/pop registers
     if ((instruction & 0xF600) == 0xB400) {
-        // THUMB.14 push/pop registers
-        return &ARM7TDMI::Thumb_PushPop<(instruction >> 11) & 1,  /* 0=PUSH 1=POP */
-                                (instruction >>  8) & 1>; /* PC/LR-flag */
+        const bool load  = (instruction >> 11) & 1;
+        const bool pc_lr = (instruction >>  8) & 1;
+        
+        return &ARM7TDMI::Thumb_PushPop<load, pc_lr>;
     }
+    
+    // THUMB.15 Multiple load/store
     if ((instruction & 0xF000) == 0xC000) {
-        // THUMB.15 Multiple load/store
-        return &ARM7TDMI::Thumb_LoadStoreMultiple<(instruction >> 11) & 1,  /* Load-Flag */
-                                (instruction >>  8) & 7>; /* rB */
+        const bool load = (instruction >> 11) & 1;
+        const auto rB = (instruction >>  8) & 7;
+        
+        return &ARM7TDMI::Thumb_LoadStoreMultiple<load, rB>;
     }
+    
+    // THUMB.16 Conditional Branch
     if ((instruction & 0xFF00) < 0xDF00) {
-        // THUMB.16 Conditional Branch
-        return &ARM7TDMI::Thumb_ConditionalBranch<(instruction >> 8) & 0xF>; /* Condition */
+        const auto condition = (instruction >> 8) & 0xF;
+        
+        return &ARM7TDMI::Thumb_ConditionalBranch<condition>;
     }
+    
+    // THUMB.17 Software Interrupt
     if ((instruction & 0xFF00) == 0xDF00) {
-        // THUMB.17 Software Interrupt
         return &ARM7TDMI::Thumb_SWI;
     }
+    
+    // THUMB.18 Unconditional Branch
     if ((instruction & 0xF800) == 0xE000) {
-        // THUMB.18 Unconditional Branch
         return &ARM7TDMI::Thumb_UnconditionalBranch;
     }
+    
+    // THUMB.19 Long branch with link
     if ((instruction & 0xF000) == 0xF000) {
-        // THUMB.19 Long branch with link
-        return &ARM7TDMI::Thumb_LongBranchLink<(instruction >> 11) & 1>; /* Second Instruction */
+        const auto opcode = (instruction >> 11) & 1;
+        
+        return &ARM7TDMI::Thumb_LongBranchLink<opcode>;
     }
 
     return &ARM7TDMI::Thumb_Undefined;
