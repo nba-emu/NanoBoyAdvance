@@ -9,8 +9,6 @@
 
 using namespace ARM;
 
-std::array<ARM7TDMI::ThumbInstruction, 1024> ARM7TDMI::thumb_lut = MakeThumbLut();
-
 template <int op, int imm>
 void ARM7TDMI::Thumb_MoveShiftedRegister(std::uint16_t instruction) {
     // THUMB.1 Move shifted register
@@ -197,11 +195,11 @@ void ARM7TDMI::Thumb_HighRegisterOps_BX(std::uint16_t instruction) {
         /* LSB indicates new instruction set (0 = ARM, 1 = THUMB) */
         if (operand & 1) {
             state.r15 = operand & ~1;
-            Thumb_ReloadPipeline();
+            ReloadPipeline16();
         } else {
             state.cpsr.f.thumb = 0;
             state.r15 = operand & ~3;
-            ARM_ReloadPipeline();
+            ReloadPipeline32();
         }
     /* Check for Compare (CMP) instruction. */
     } else if (op == 1) {
@@ -215,7 +213,7 @@ void ARM7TDMI::Thumb_HighRegisterOps_BX(std::uint16_t instruction) {
 
         if (dst == 15) {
             state.r15 &= ~1;
-            Thumb_ReloadPipeline();
+            ReloadPipeline16();
         } else {
             pipe.fetch_type = ACCESS_SEQ;
             state.r15 += 2;
@@ -403,7 +401,7 @@ void ARM7TDMI::Thumb_PushPop(std::uint16_t instruction) {
             state.reg[15] = ReadWord(address, access_type) & ~1;
             state.reg[13] = address + 4;
             interface->Tick(1);
-            Thumb_ReloadPipeline();
+            ReloadPipeline16();
             return;
         }
         
@@ -492,7 +490,7 @@ void ARM7TDMI::Thumb_ConditionalBranch(std::uint16_t instruction) {
         }
 
         state.r15 += imm * 2;
-        Thumb_ReloadPipeline();
+        ReloadPipeline16();
     } else {
         pipe.fetch_type = ACCESS_SEQ;
         state.r15 += 2;
@@ -511,7 +509,7 @@ void ARM7TDMI::Thumb_SWI(std::uint16_t instruction) {
 
     /* Jump to execution vector */
     state.r15 = 0x08;
-    ARM_ReloadPipeline();
+    ReloadPipeline32();
 }
 
 void ARM7TDMI::Thumb_UnconditionalBranch(std::uint16_t instruction) {
@@ -523,7 +521,7 @@ void ARM7TDMI::Thumb_UnconditionalBranch(std::uint16_t instruction) {
     }
 
     state.r15 += imm;
-    Thumb_ReloadPipeline();
+    ReloadPipeline16();
 }
 
 template <bool second_instruction>
@@ -543,15 +541,26 @@ void ARM7TDMI::Thumb_LongBranchLink(std::uint16_t instruction) {
 
         state.r15 = (state.r14 + imm * 2) & ~1;
         state.r14 = temp | 1;
-        Thumb_ReloadPipeline();
+        ReloadPipeline16();
     }
 }
 
-/* This should never get called. */
+/* this should never get called. */
 void ARM7TDMI::Thumb_Undefined(std::uint16_t instruction) { }
 
+ARM7TDMI::OpcodeTable16 ARM7TDMI::s_opcode_lut_thumb = EmitAll16();
+
+constexpr ARM7TDMI::OpcodeTable16 ARM7TDMI::EmitAll16() {
+    std::array<ARM7TDMI::Instruction16, 1024> lut = {};
+    
+    static_for<std::size_t, 0, 1024>([&](auto i) {
+        lut[i] = EmitHandler16<i<<6>();
+    });
+    return lut;
+}
+
 template <std::uint16_t instruction>
-constexpr ARM7TDMI::ThumbInstruction ARM7TDMI::GetThumbHandler() {
+constexpr ARM7TDMI::Instruction16 ARM7TDMI::EmitHandler16() {
     if ((instruction & 0xF800) < 0x1800) {
         // THUMB.1 Move shifted register
         return &ARM7TDMI::Thumb_MoveShiftedRegister<(instruction >> 11) & 3,     /* Operation */
@@ -646,11 +655,3 @@ constexpr ARM7TDMI::ThumbInstruction ARM7TDMI::GetThumbHandler() {
     return &ARM7TDMI::Thumb_Undefined;
 }
 
-constexpr std::array<ARM7TDMI::ThumbInstruction, 1024> ARM7TDMI::MakeThumbLut() {
-    std::array<ARM7TDMI::ThumbInstruction, 1024> lut = {};
-    
-    static_for<std::size_t, 0, 1024>([&](auto i) {
-        lut[i] = GetThumbHandler<i<<6>();
-    });
-    return lut;
-}

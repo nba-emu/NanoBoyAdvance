@@ -9,8 +9,6 @@
 
 using namespace ARM;
 
-std::array<ARM7TDMI::ArmInstruction, 4096> ARM7TDMI::arm_lut = MakeArmLut();
-
 template <bool immediate, int opcode, bool _set_flags, int field4>
 void ARM7TDMI::ARM_DataProcessing(std::uint32_t instruction) {
     bool set_flags = _set_flags;
@@ -149,9 +147,9 @@ void ARM7TDMI::ARM_DataProcessing(std::uint32_t instruction) {
 
     if (reg_dst == 15) {
         if (state.cpsr.f.thumb) {
-            Thumb_ReloadPipeline();
+            ReloadPipeline16();
         } else {
-            ARM_ReloadPipeline();
+            ReloadPipeline32();
         }
     } else {
         pipe.fetch_type = ACCESS_SEQ;
@@ -310,10 +308,10 @@ void ARM7TDMI::ARM_BranchAndExchange(std::uint32_t instruction) {
     if (address & 1) {
         state.r15 = address & ~1;
         state.cpsr.f.thumb = 1;
-        Thumb_ReloadPipeline();
+        ReloadPipeline16();
     } else {
         state.r15 = address & ~3;
-        ARM_ReloadPipeline();
+        ReloadPipeline32();
     }
 }
 
@@ -385,7 +383,7 @@ void ARM7TDMI::ARM_BranchAndLink(std::uint32_t instruction) {
     }
 
     state.r15 += offset * 4;
-    ARM_ReloadPipeline();
+    ReloadPipeline32();
 }
 
 template <bool immediate, bool pre, bool add, bool byte, bool writeback, bool load>
@@ -458,7 +456,7 @@ void ARM7TDMI::ARM_SingleDataTransfer(std::uint32_t instruction) {
     }
 
     if (load && dst == 15) {
-        ARM_ReloadPipeline();
+        ReloadPipeline32();
     } else {
         pipe.fetch_type = ACCESS_NSEQ;
         state.r15 += 4;
@@ -556,9 +554,9 @@ void ARM7TDMI::ARM_BlockDataTransfer(std::uint32_t instruction) {
 
     if (load && transfer_pc) {
         if (state.cpsr.f.thumb) {
-            Thumb_ReloadPipeline();
+            ReloadPipeline16();
         } else {
-            ARM_ReloadPipeline();
+            ReloadPipeline32();
         }
     } else {
         pipe.fetch_type = ACCESS_NSEQ;
@@ -577,7 +575,7 @@ void ARM7TDMI::ARM_Undefined(std::uint32_t instruction) {
 
     /* Jump to execution vector */
     state.r15 = 0x04;
-    ARM_ReloadPipeline();
+    ReloadPipeline32();
 }
 
 void ARM7TDMI::ARM_SWI(std::uint32_t instruction) {
@@ -591,11 +589,22 @@ void ARM7TDMI::ARM_SWI(std::uint32_t instruction) {
 
     /* Jump to execution vector */
     state.r15 = 0x08;
-    ARM_ReloadPipeline();
+    ReloadPipeline32();
+}
+
+ARM7TDMI::OpcodeTable32 ARM7TDMI::s_opcode_lut_arm = EmitAll32();
+
+constexpr ARM7TDMI::OpcodeTable32 ARM7TDMI::EmitAll32() {
+    std::array<ARM7TDMI::Instruction32, 4096> lut = {};
+
+    static_for<std::size_t, 0, 4096>([&](auto i) {
+        lut[i] = EmitHandler32<((i & 0xFF0) << 16) | ((i & 0xF) << 4)>();
+    });
+    return lut;
 }
 
 template <std::uint32_t instruction>
-constexpr ARM7TDMI::ArmInstruction ARM7TDMI::GetArmHandler() {
+constexpr ARM7TDMI::Instruction32 ARM7TDMI::EmitHandler32() {
     const std::uint32_t opcode = instruction & 0x0FFFFFFF;
     
     const bool pre  = instruction & (1 << 24);
@@ -705,13 +714,4 @@ constexpr ARM7TDMI::ArmInstruction ARM7TDMI::GetArmHandler() {
     }
 
     return &ARM7TDMI::ARM_Undefined;
-}
-
-constexpr std::array<ARM7TDMI::ArmInstruction, 4096> ARM7TDMI::MakeArmLut() {
-    std::array<ARM7TDMI::ArmInstruction, 4096> lut = {};
-
-    static_for<std::size_t, 0, 4096>([&](auto i) {
-        lut[i] = GetArmHandler<((i & 0xFF0) << 16) | ((i & 0xF) << 4)>();
-    });
-    return lut;
 }
