@@ -1,11 +1,11 @@
 set(SOURCES
-    arm7tdmi/armv4/emit.cpp
+    arm7tdmi/isa-emit.cpp
 )
 
 set(HEADERS
     arm7tdmi/arm7tdmi.hpp
-    core/arm.hpp
-    core/interface.hpp
+    common/arm.hpp
+    common/interface.hpp
 )
 
 add_library(arm STATIC ${SOURCES} ${HEADERS})

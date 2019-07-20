@@ -17,7 +17,7 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#include "../arm7tdmi.hpp"
+#include "arm7tdmi.hpp"
 
 #include <utility>
 

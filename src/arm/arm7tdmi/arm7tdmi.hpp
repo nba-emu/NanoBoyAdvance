@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "../core/arm.hpp"
-#include "../core/interface.hpp"
+#include "../common/arm.hpp"
+#include "../common/interface.hpp"
 
 #include <array>
 
@@ -67,9 +67,9 @@ private:
     #define ARM_INCLUDE_GUARD
     
     #include "memory.inl"
-    #include "../core/arithmetic.inl"
-    #include "armv4/isa-arm.inl"
-    #include "armv4/isa-thumb.inl"
+    #include "../common/arithmetic.inl"
+    #include "isa-arm.inl"
+    #include "isa-thumb.inl"
     
     #undef ARM_INCLUDE_GUARD
 
