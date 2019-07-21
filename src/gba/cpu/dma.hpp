@@ -27,71 +27,71 @@ class CPU;
 
 class DMAController {
 public:
-    DMAController(CPU* cpu) : cpu(cpu) { }
-    
-    void Reset();
-    auto Read(int id, int offset) -> std::uint8_t;
-    void Write(int id, int offset, std::uint8_t value);
-    void RequestHBlank();
-    void RequestVBlank();
-    void RequestFIFO(int fifo);
-    void Run();
-    
-    bool IsRunning() const { return run_set != 0; }
-    
+  DMAController(CPU* cpu) : cpu(cpu) { }
+  
+  void Reset();
+  auto Read(int id, int offset) -> std::uint8_t;
+  void Write(int id, int offset, std::uint8_t value);
+  void RequestHBlank();
+  void RequestVBlank();
+  void RequestFIFO(int fifo);
+  void Run();
+  
+  bool IsRunning() const { return run_set != 0; }
+  
 private:
-    void MarkDMAForExecution(int id);
-    void RunFIFO();
-    
-    CPU* cpu;
+  void MarkDMAForExecution(int id);
+  void RunFIFO();
+  
+  CPU* cpu;
 
-    int  hblank_set;
-    int  vblank_set;
-    int  run_set;
-    int  current;
-    bool interleaved;
-    
-    enum AddressControl  {
-        DMA_INCREMENT = 0,
-        DMA_DECREMENT = 1,
-        DMA_FIXED     = 2,
-        DMA_RELOAD    = 3
-    };
+  int  hblank_set;
+  int  vblank_set;
+  int  run_set;
+  int  current;
+  bool interleaved;
+  
+  enum AddressControl  {
+    DMA_INCREMENT = 0,
+    DMA_DECREMENT = 1,
+    DMA_FIXED   = 2,
+    DMA_RELOAD  = 3
+  };
 
-    enum StartTiming {
-        DMA_IMMEDIATE = 0,
-        DMA_VBLANK    = 1,
-        DMA_HBLANK    = 2,
-        DMA_SPECIAL   = 3
-    };
+  enum StartTiming {
+    DMA_IMMEDIATE = 0,
+    DMA_VBLANK  = 1,
+    DMA_HBLANK  = 2,
+    DMA_SPECIAL   = 3
+  };
 
-    enum WordSize {
-        DMA_HWORD = 0,
-        DMA_WORD  = 1
-    };
-    
-    struct DMA {
-        bool enable;
-        bool repeat;
-        bool interrupt;
-        bool gamepak;
+  enum WordSize {
+    DMA_HWORD = 0,
+    DMA_WORD  = 1
+  };
+  
+  struct DMA {
+    bool enable;
+    bool repeat;
+    bool interrupt;
+    bool gamepak;
 
-        std::uint16_t length;
-        std::uint32_t dst_addr;
-        std::uint32_t src_addr;
-        AddressControl dst_cntl;
-        AddressControl src_cntl;
-        StartTiming time;
-        WordSize size;
+    std::uint16_t length;
+    std::uint32_t dst_addr;
+    std::uint32_t src_addr;
+    AddressControl dst_cntl;
+    AddressControl src_cntl;
+    StartTiming time;
+    WordSize size;
 
-        struct Internal {
-            int request_count;
-            
-            std::uint32_t length;
-            std::uint32_t dst_addr;
-            std::uint32_t src_addr;
-        } internal;
-    } dma[4];
+    struct Internal {
+      int request_count;
+      
+      std::uint32_t length;
+      std::uint32_t dst_addr;
+      std::uint32_t src_addr;
+    } internal;
+  } dma[4];
 };
 
 }

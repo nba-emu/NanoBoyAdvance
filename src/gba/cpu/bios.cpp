@@ -22,5 +22,5 @@
 using namespace GameBoyAdvance;
 
 void CPU::SWI(std::uint32_t call_id) {
-    
+  /* TODO */
 }

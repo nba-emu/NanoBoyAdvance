@@ -22,9 +22,8 @@
 namespace GameBoyAdvance {
 
 struct EventDevice {
-    int wait_cycles = 0;
-    
-    virtual void Tick() = 0;
+  int wait_cycles = 0;
+  virtual void Tick() = 0;
 };
 
 }

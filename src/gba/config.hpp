@@ -24,9 +24,9 @@
 namespace GameBoyAdvance {
 
 struct Config {
-    struct Video {
-        std::uint32_t* output = nullptr;
-    } video;
+  struct Video {
+    std::uint32_t* output = nullptr;
+  } video;
 };
 
 }

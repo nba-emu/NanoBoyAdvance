@@ -30,24 +30,24 @@ class CPU;
 
 class APU : public EventDevice {
 public:
-    APU(CPU* cpu) : cpu(cpu) { }
+  APU(CPU* cpu) : cpu(cpu) { }
+  
+  void Reset();
+  void LatchFIFO(int id, int times);
+  void Tick() final;
+  
+  struct MMIO {
+    FIFO fifo[2];
     
-    void Reset();
-    void LatchFIFO(int id, int times);
-    void Tick() final;
-    
-    struct MMIO {
-        FIFO fifo[2];
-        
-        SoundControl soundcnt { fifo };
-    } mmio;
-    
-    std::int8_t latch[2];
-    
+    SoundControl soundcnt { fifo };
+  } mmio;
+  
+  std::int8_t latch[2];
+  
 private:
-    CPU* cpu;
-    
-    FILE* dump;
+  CPU* cpu;
+  
+  FILE* dump;
 };
 
 }
