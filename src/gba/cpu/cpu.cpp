@@ -219,11 +219,11 @@ void CPU::UpdateCycleLUT() {
     
     /* ROM: WS0/WS1/WS2 32-bit non-sequential access: 1N access, 1S access */
     cycles32[ACCESS_NSEQ][0x8 + i] = cycles16[ACCESS_NSEQ][0x8] + 
-                     cycles16[ACCESS_SEQ ][0x8];
+                                     cycles16[ACCESS_SEQ ][0x8];
     cycles32[ACCESS_NSEQ][0xA + i] = cycles16[ACCESS_NSEQ][0xA] +
-                     cycles16[ACCESS_SEQ ][0xA];
+                                     cycles16[ACCESS_SEQ ][0xA];
     cycles32[ACCESS_NSEQ][0xC + i] = cycles16[ACCESS_NSEQ][0xC] +
-                     cycles16[ACCESS_SEQ ][0xC];
+                                     cycles16[ACCESS_SEQ ][0xC];
     
     /* ROM: WS0/WS1/WS2 32-bit sequential access: 2S accesses */
     cycles32[ACCESS_SEQ][0x8 + i] = cycles16[ACCESS_SEQ][0x8] * 2;
