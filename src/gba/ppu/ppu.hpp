@@ -22,7 +22,6 @@
 #include <cstdint>
 
 #include "regs.hpp"
-#include "../config.hpp"
 #include "../cpu/event_device.hpp"
 
 namespace GameBoyAdvance {
@@ -70,9 +69,9 @@ private:
   };
 
   enum ObjectMode {
-    OBJ_NORMAL   = 0,
-    OBJ_SEMI     = 1,
-    OBJ_WINDOW   = 2,
+    OBJ_NORMAL = 0,
+    OBJ_SEMI   = 1,
+    OBJ_WINDOW = 2,
     OBJ_PROHIBITED = 3
   };
 
@@ -88,7 +87,6 @@ private:
 
   CPU* cpu;
 
-  Config* config;
   std::uint8_t* pram;
   std::uint8_t* vram;
   std::uint8_t* oam;

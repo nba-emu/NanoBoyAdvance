@@ -26,15 +26,46 @@
 #undef main
 
 #include <cstdio>
-#include <gba/cpu/cpu.hpp>
-#include <gba/config.hpp>
-#include <experimental/filesystem>
-#include <fstream>
+#include <gba/emulator.hpp>
 
-namespace fs = std::experimental::filesystem;
-
-GameBoyAdvance::Config config;
-GameBoyAdvance::CPU cpu(&config);
+class SDL2_InputDevice : public GameBoyAdvance::InputDevice {
+public:
+  auto Poll(Key key) -> bool final {
+    // TODO: Currently we poll events up to 10 times per
+    // keypad read. Not sure if this has any effect, but maybe we can fix it.
+    
+    SDL_PumpEvents();
+    
+    auto keystate = SDL_GetKeyboardState(NULL);
+    
+    using Key = InputDevice::Key;
+    
+    switch (key) {
+      case Key::A:
+        return keystate[SDL_SCANCODE_Z] || keystate[SDL_SCANCODE_Y];
+      case Key::B:
+        return keystate[SDL_SCANCODE_X];
+      case Key::Select:
+        return keystate[SDL_SCANCODE_BACKSPACE];
+      case Key::Start:
+        return keystate[SDL_SCANCODE_RETURN];
+      case Key::Right:
+        return keystate[SDL_SCANCODE_RIGHT];
+      case Key::Left:
+        return keystate[SDL_SCANCODE_LEFT];
+      case Key::Up:
+        return keystate[SDL_SCANCODE_UP];
+      case Key::Down:
+        return keystate[SDL_SCANCODE_DOWN];
+      case Key::R:
+        return keystate[SDL_SCANCODE_S];
+      case Key::L:
+        return keystate[SDL_SCANCODE_A];
+    }
+    
+    return false;
+  }
+};
 
 int main(int argc, char** argv) {
   bool running = true;
@@ -61,46 +92,37 @@ int main(int argc, char** argv) {
     return -1;
   }
   
-  std::uintmax_t size;
-  std::uint8_t* rom;
   std::string rom_path = argv[1];
   
-  if (fs::exists(rom_path)) {
-    size = fs::file_size(rom_path);
-    rom = new std::uint8_t[size];
-    std::ifstream stream { rom_path, std::ios::in | std::ios::binary };
-    if (!stream.is_open()) {
-      std::printf("Cannot open ROM: %s\n", rom_path.c_str());
-      return -2;
-    }
-    stream.read((char*)rom, size);
-  } else {
-    std::printf("Cannot find ROM: %s\n", rom_path.c_str());
-    return -2;
-  }
+  auto config = std::make_shared<GameBoyAdvance::Config>();
   
-  /* Setup configuration object. */
-  config.video.output = fb;
-
-  /* Initialize emulator. */
-  cpu.SetSlot1(rom, size);
+  config->video.output = fb;
+  config->input_dev = std::make_shared<SDL2_InputDevice>();
+  
+  auto emulator = std::make_unique<GameBoyAdvance::Emulator>(config);
+  
+  if (!emulator->LoadGame(rom_path)) {
+    std::printf("Cannot open ROM: %s\n", rom_path.c_str());
+    return -1;
+  }
 
   /* Benchmark */
   int frames = 0;
   int ticks1 = SDL_GetTicks();
 
   while (running) {
-    cpu.RunFor(280896);
-
+    emulator->Frame();
+    
     frames++;
+    
     int ticks2 = SDL_GetTicks();
+    
     if ((ticks2 - ticks1) >= 1000) {
       std::printf("FPS: %d\n", frames);
       ticks1 = ticks2;
       frames = 0;
     }
 
-    /* generate frame here. */
     SDL_UpdateTexture(texture, nullptr, fb, 240 * sizeof(std::uint32_t));
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, nullptr, nullptr);
@@ -110,22 +132,9 @@ int main(int argc, char** argv) {
       if (event.type == SDL_QUIT) {
         running = false;
       } else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
-        std::uint16_t bit = 0;
-
         auto key_event = (SDL_KeyboardEvent*)(&event);
-
+        
         switch (key_event->keysym.sym) {
-          case SDLK_z:
-          case SDLK_y: bit = (1<<0); break;
-          case SDLK_x: bit = (1<<1); break;
-          case SDLK_BACKSPACE: bit = (1<<2); break;
-          case SDLK_RETURN: bit = (1<<3); break;
-          case SDLK_RIGHT:  bit = (1<<4); break;
-          case SDLK_LEFT:   bit = (1<<5); break;
-          case SDLK_UP:   bit = (1<<6); break;
-          case SDLK_DOWN:   bit = (1<<7); break;
-          case SDLK_w: bit = (1<<8); break;
-          case SDLK_q: bit = (1<<9); break;
           case SDLK_SPACE:
             if (event.type == SDL_KEYDOWN) {
               SDL_GL_SetSwapInterval(0);
@@ -133,18 +142,15 @@ int main(int argc, char** argv) {
               SDL_GL_SetSwapInterval(1);
             }
             break;
-        }
-        
-        if (event.type == SDL_KEYUP) {
-          cpu.mmio.keyinput |=  bit;
-        } else {
-          cpu.mmio.keyinput &= ~bit;
+          case SDLK_F9:
+            if (event.type == SDL_KEYUP) {
+              emulator->Reset();
+            }
+            break;
         }
       }
     }
   }
-
-  delete rom;
 
   SDL_DestroyTexture(texture);
   SDL_DestroyRenderer(renderer);

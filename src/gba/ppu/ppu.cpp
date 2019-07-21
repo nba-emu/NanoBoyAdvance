@@ -30,7 +30,6 @@ constexpr int PPU::s_wait_cycles[3];
 
 PPU::PPU(CPU* cpu) 
   : cpu(cpu)
-  , config(cpu->config)
   , pram(cpu->memory.pram)
   , vram(cpu->memory.vram)
   , oam(cpu->memory.oam)
@@ -152,8 +151,8 @@ void PPU::Tick() {
 }
 
 void PPU::RenderScanline() {
-  std::uint16_t vcount = mmio.vcount;
-  std::uint32_t* line = &config->video.output[vcount * 240];
+  std::uint16_t  vcount = mmio.vcount;
+  std::uint32_t* line = &cpu->config->video.output[vcount * 240];
 
   if (mmio.dispcnt.forced_blank) {
     for (int x = 0; x < 240; x++)

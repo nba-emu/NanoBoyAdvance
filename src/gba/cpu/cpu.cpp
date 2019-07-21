@@ -21,10 +21,6 @@
 
 #include <climits>
 #include <cstring>
-#include <experimental/filesystem>
-#include <fstream>
-
-namespace fs = std::experimental::filesystem;
 
 using namespace ARM;
 using namespace GameBoyAdvance;
@@ -34,7 +30,7 @@ constexpr int CPU::s_ws_seq0[2]; /* Sequential WS0 */
 constexpr int CPU::s_ws_seq1[2]; /* Sequential WS1 */
 constexpr int CPU::s_ws_seq2[2]; /* Sequential WS2 */
 
-CPU::CPU(Config* config)
+CPU::CPU(std::shared_ptr<Config> config)
   : config(config)
   , cpu(this)
   , apu(this)
@@ -61,26 +57,6 @@ void CPU::Reset() {
   std::memset(memory.pram, 0, 0x00400);
   std::memset(memory.oam,  0, 0x00400);
   std::memset(memory.vram, 0, 0x18000);
-
-  auto bios_path = "bios.bin";
-  
-  /* Load BIOS. This really should not be done here. */
-  if (fs::exists(bios_path)) {
-    auto size = fs::file_size(bios_path);
-    
-    if (size <= 0x4000) {
-      std::ifstream stream { "bios.bin", std::ios::in | std::ios::binary };
-      if (!stream.is_open()) {
-        std::puts("Error: could not open BIOS file.");
-      }
-      stream.read((char*)memory.bios, size);
-      stream.close();
-    } else {
-      std::puts("Error: your BIOS file is too big.");
-    }
-  } else {
-    std::puts("Error: cannot locate BIOS file.");
-  }
 
   mmio.keyinput = 0x3FF;
 
@@ -131,13 +107,6 @@ void CPU::Reset() {
   dma.Reset();
   apu.Reset();
   ppu.Reset();
-}
-
-/* TODO: Does this really belong into the CPU class? */
-void CPU::SetSlot1(uint8_t* rom, size_t size) {
-  memory.rom.data = rom;
-  memory.rom.size = size;
-  Reset();
 }
 
 void CPU::RegisterEvent(EventDevice& event) {

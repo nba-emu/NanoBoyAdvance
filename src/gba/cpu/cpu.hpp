@@ -20,6 +20,7 @@
 #pragma once
 
 #include <arm/arm7tdmi/arm7tdmi.hpp>
+#include <memory>
 #include <unordered_set>
 
 #include "dma.hpp"
@@ -33,10 +34,9 @@ namespace GameBoyAdvance {
 
 class CPU : private ARM::Interface {
 public:
-  CPU(Config* config);
+  CPU(std::shared_ptr<Config> config);
 
   void Reset();
-  void SetSlot1(uint8_t* rom, size_t size);
   
   void RegisterEvent(EventDevice& event);
   void UnregisterEvent(EventDevice& event);
@@ -58,15 +58,15 @@ public:
     INT_TIMER2  = 1 << 5,
     INT_TIMER3  = 1 << 6,
     INT_SERIAL  = 1 << 7,
-    INT_DMA0  = 1 << 8,
-    INT_DMA1  = 1 << 9,
-    INT_DMA2  = 1 << 10,
-    INT_DMA3  = 1 << 11,
+    INT_DMA0    = 1 << 8,
+    INT_DMA1    = 1 << 9,
+    INT_DMA2    = 1 << 10,
+    INT_DMA3    = 1 << 11,
     INT_KEYPAD  = 1 << 12,
     INT_GAMEPAK = 1 << 13
   };
   
-  Config* config;
+  std::shared_ptr<Config> config;
 
   struct SystemMemory {
     std::uint8_t bios[0x04000];
@@ -77,7 +77,7 @@ public:
     std::uint8_t vram[0x18000];
 
     struct ROM {
-      std::uint8_t* data;
+      std::shared_ptr<uint8_t[]> data;
       size_t size;
     } rom;
 

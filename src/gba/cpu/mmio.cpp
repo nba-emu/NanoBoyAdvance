@@ -24,6 +24,8 @@
 
 using namespace GameBoyAdvance;
 
+using Key = InputDevice::Key;
+
 auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
   auto& apu_io = apu.mmio;
   auto& ppu_io = ppu.mmio;
@@ -81,10 +83,22 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case TM3CNT_L:   return timers.Read(3, 0);
     case TM3CNT_L+1: return timers.Read(3, 1);
     case TM3CNT_H:   return timers.Read(3, 2);
+  
+    case KEYINPUT+0: {
+      return (config->input_dev->Poll(Key::A)      ? 0 : 1)  |
+             (config->input_dev->Poll(Key::B)      ? 0 : 2)  |
+             (config->input_dev->Poll(Key::Select) ? 0 : 4)  |
+             (config->input_dev->Poll(Key::Start)  ? 0 : 8)  |
+             (config->input_dev->Poll(Key::Right)  ? 0 : 16) |
+             (config->input_dev->Poll(Key::Left)   ? 0 : 32) |
+             (config->input_dev->Poll(Key::Up)     ? 0 : 64) |
+             (config->input_dev->Poll(Key::Down)   ? 0 : 128);
+    }
+    case KEYINPUT+1: {
+      return (config->input_dev->Poll(Key::R) ? 0 : 1) |
+             (config->input_dev->Poll(Key::L) ? 0 : 2);
+    }
       
-    case KEYINPUT+0: return mmio.keyinput & 0xFF;
-    case KEYINPUT+1: return mmio.keyinput >> 8;
-
     /* Interrupt Control */
     case IE+0:  return mmio.irq_ie  & 0xFF;
     case IE+1:  return mmio.irq_ie  >> 8;

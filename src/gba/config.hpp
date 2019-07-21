@@ -20,13 +20,20 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
+
+#include "input_device.hpp"
 
 namespace GameBoyAdvance {
 
 struct Config {
+  std::string bios_path = "bios.bin";
+  
   struct Video {
     std::uint32_t* output = nullptr;
   } video;
+  
+  std::shared_ptr<InputDevice> input_dev = std::make_shared<NullInputDevice>();
 };
 
 }
