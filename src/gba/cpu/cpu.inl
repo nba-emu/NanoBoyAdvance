@@ -17,10 +17,7 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-/* TODO: Add support for Big-Endian architectures.
- * Maybe write utils functions that handle casting and endianess?
- * Get rid of ugly defines.
- */
+/* TODO: add support for Big-Endian architectures. */
 
 #define READ_FAST_8(buffer, address)  *(uint8_t*) (&buffer[address])
 #define READ_FAST_16(buffer, address) *(uint16_t*)(&buffer[address])
@@ -39,6 +36,7 @@ std::uint32_t ReadBIOS(std::uint32_t address) {
   if (cpu.state.r15 >= 0x4000) {
     return memory.bios_opcode;
   }
+  
   if (address >= 0x4000) {
     /* TODO: check if this matches HW behaviour. */
     memory.bios_opcode = 0;
@@ -50,9 +48,6 @@ std::uint32_t ReadBIOS(std::uint32_t address) {
 
 std::uint8_t ReadByte(std::uint32_t address, ARM::AccessType type) final {
   int page = (address >> 24) & 15;
-
-//  if (page == 8 && (address & 0x1FFFF) == 0)
-//    type = ARM::ACCESS_NSEQ;
 
   Tick(cycles16[type][page]);
 
@@ -73,6 +68,10 @@ std::uint8_t ReadByte(std::uint32_t address, ARM::AccessType type) final {
     case 0xA: case 0xB:
     case 0xC: case 0xD: {
       address &= 0x1FFFFFF;
+      if ((address & 0x1FFFF) == 0) {
+        Tick(cycles16[ARM::ACCESS_NSEQ][page] - 
+             cycles16[type][page]);
+      }
       // if (IS_GPIO_ACCESS(address) && gpio->isReadable()) {
       //   return gpio->read(address);
       // }
@@ -102,9 +101,6 @@ std::uint8_t ReadByte(std::uint32_t address, ARM::AccessType type) final {
 
 std::uint16_t ReadHalf(std::uint32_t address, ARM::AccessType type) final {
   int page = (address >> 24) & 15;
-
-//  if (page == 8 && (address & 0x1FFFF) == 0)
-//    type = ARM::ACCESS_NSEQ;
 
   Tick(cycles16[type][page]);
 
@@ -139,6 +135,10 @@ std::uint16_t ReadHalf(std::uint32_t address, ARM::AccessType type) final {
     case 0xA: case 0xB:
     case 0xC: {
       address &= 0x1FFFFFF;
+      if ((address & 0x1FFFF) == 0) {
+        Tick(cycles16[ARM::ACCESS_NSEQ][page] - 
+             cycles16[type][page]);
+      }
       // if (IS_GPIO_ACCESS(address) && gpio->isReadable()) {
       //   return  gpio->read(address) |
       //      (gpio->read(address + 1) << 8);
@@ -160,9 +160,6 @@ std::uint16_t ReadHalf(std::uint32_t address, ARM::AccessType type) final {
 
 std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) final {
   int page = (address >> 24) & 15;
-
-//  if (page == 8 && (address & 0x1FFFF) == 0)
-//    type = ARM::ACCESS_NSEQ;
 
   Tick(cycles32[type][page]);
 
@@ -188,6 +185,10 @@ std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) final {
     case 0xA: case 0xB:
     case 0xC: case 0xD: {
       address &= 0x1FFFFFF;
+      if ((address & 0x1FFFF) == 0) {
+        Tick(cycles32[ARM::ACCESS_NSEQ][page] - 
+             cycles32[type][page]);
+      }
       // if (IS_GPIO_ACCESS(address) && gpio->isReadable()) {
       //   return  gpio->read(address)      |
       //      (gpio->read(address + 1) << 8)  |
@@ -213,8 +214,8 @@ std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) final {
 void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) final {
   int page = (address >> 24) & 15;
 
-//  if (page == 8 && (address & 0x1FFFF) == 0)
-//    type = ARM::ACCESS_NSEQ;
+  // if (page == 8 && (address & 0x1FFFF) == 0)
+  //   type = ARM::ACCESS_NSEQ;
 
   Tick(cycles16[type][page]);
 
@@ -241,15 +242,15 @@ void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) 
       //memory.rom.save->write8(address, value);
       break;
     }
-    default: break; /* TODO: log illegal writes. */
+    default: break;
   }
 }
 
 void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type) final {
   int page = (address >> 24) & 15;
 
-//  if (page == 8 && (address & 0x1FFFF) == 0)
-//    type = ARM::ACCESS_NSEQ;
+  // if (page == 8 && (address & 0x1FFFF) == 0)
+  //   type = ARM::ACCESS_NSEQ;
 
   Tick(cycles16[type][page]);
 
@@ -273,8 +274,8 @@ void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type)
     }
     case 0x7: WRITE_FAST_16(memory.oam, address & 0x3FF, value); break;
 
-    case 0x8: case 0x9:
-    case 0xA: case 0xB:
+    // case 0x8: case 0x9:
+    // case 0xA: case 0xB:
     // case 0xC: {
     //   address &= 0x1FFFFFF;
     //   if (IS_GPIO_ACCESS(address)) {
@@ -310,15 +311,15 @@ void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type)
     //   memory.rom.save->write8(address + 1, value);
     //   break;
     // }
-    default: break; /* TODO: throw error */
+    default: break;
   }
 }
 
 void WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type) final {
   int page = (address >> 24) & 15;
 
-//  if (page == 8 && (address & 0x1FFFF) == 0)
-//    type = ARM::ACCESS_NSEQ;
+  // if (page == 8 && (address & 0x1FFFF) == 0)
+  //   type = ARM::ACCESS_NSEQ;
 
   Tick(cycles32[type][page]);
 
@@ -368,6 +369,6 @@ void WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type)
     //   memory.rom.save->write8(address + 3, value);
     //   break;
     // }
-    default: break; /* TODO: throw error */
+    default: break;
   }
 }

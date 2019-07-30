@@ -43,7 +43,7 @@ inline void ARM7TDMI::Run() {
     pipe.opcode[1] = ReadWord(state.r15, pipe.fetch_type);
     if (CheckCondition(static_cast<Condition>(instruction >> 28))) {
       int hash = ((instruction >> 16) & 0xFF0) |
-             ((instruction >>  4) & 0x00F);
+                 ((instruction >>  4) & 0x00F);
       (this->*s_opcode_lut_arm[hash])(instruction);
     } else {
       state.r15 += 4;

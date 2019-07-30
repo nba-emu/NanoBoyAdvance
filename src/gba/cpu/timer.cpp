@@ -132,7 +132,7 @@ void TimerController::Run(int cycles) {
         
         to_overflow = 0x10000 - timer[id].reload;
         if (increments >= to_overflow) {
-          overflows += increments / to_overflow;
+          overflows  += increments / to_overflow;
           increments %= to_overflow;
         }
       }
