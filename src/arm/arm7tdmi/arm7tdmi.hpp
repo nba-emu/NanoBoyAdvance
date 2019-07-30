@@ -70,16 +70,9 @@ private:
   #include "../common/arithmetic.inl"
   #include "isa-arm.inl"
   #include "isa-thumb.inl"
+  #include "isa-emit.inl"
   
   #undef ARM_INCLUDE_GUARD
-
-  template <std::uint16_t instruction>
-  static constexpr ARM7TDMI::Instruction16 EmitHandler16();
-  static constexpr OpcodeTable16 EmitAll16();
-  
-  template <std::uint32_t instruction>
-  static constexpr ARM7TDMI::Instruction32 EmitHandler32();
-  static constexpr OpcodeTable32 EmitAll32();
 
   StatusRegister* p_spsr;
   
