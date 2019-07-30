@@ -121,7 +121,6 @@ void TimerController::Increment(int id, int times) {
 }
 
 void TimerController::Run(int cycles) {
-  #pragma unroll_loop
   for (int id = 0; id < 4; id++) {
     if (timer[id].control.enable && !timer[id].control.cascade) {
       int available = timer[id].cycles + cycles;
