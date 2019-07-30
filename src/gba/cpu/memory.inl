@@ -19,6 +19,10 @@
 
 /* TODO: add support for Big-Endian architectures. */
 
+/* TODO: must implement obscure hardware quirks:
+ * http://problemkaputt.de/gbatek.htm#gbaunpredictablethings
+ */
+
 #define READ_FAST_8(buffer, address)  *(uint8_t*) (&buffer[address])
 #define READ_FAST_16(buffer, address) *(uint16_t*)(&buffer[address])
 #define READ_FAST_32(buffer, address) *(uint32_t*)(&buffer[address])
@@ -26,11 +30,6 @@
 #define WRITE_FAST_8(buffer, address, value)  *(uint8_t*) (&buffer[address]) = value;
 #define WRITE_FAST_16(buffer, address, value) *(uint16_t*)(&buffer[address]) = value;
 #define WRITE_FAST_32(buffer, address, value) *(uint32_t*)(&buffer[address]) = value;
-
-void Tick(int cycles) final {
-  timers.Run(cycles);
-  ticks_cpu_left -= cycles;
-}
 
 std::uint32_t ReadBIOS(std::uint32_t address) {
   if (cpu.state.r15 >= 0x4000) {

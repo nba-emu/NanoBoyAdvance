@@ -117,11 +117,11 @@ public:
 private:
   friend class DMAController;
   
-  /* Contains memory read/write implementation. */
-  #include "cpu.inl"
+  #include "memory.inl"
 
   void SWI(std::uint32_t call_id) final;
-
+  void Tick(int cycles) final;
+  
   auto ReadMMIO(std::uint32_t address) -> std::uint8_t;
   void WriteMMIO(std::uint32_t address, std::uint8_t value);
 

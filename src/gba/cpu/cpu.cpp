@@ -40,7 +40,7 @@ CPU::CPU(std::shared_ptr<Config> config)
 {
   Reset();
 }
-  
+
 void CPU::Reset() {
   cpu.Reset();
 
@@ -117,6 +117,11 @@ void CPU::UnregisterEvent(EventDevice& event) {
   events.erase(&event);
 }
 
+void CPU::Tick(int cycles) {
+  timers.Run(cycles);
+  ticks_cpu_left -= cycles;
+}
+
 void CPU::RunFor(int cycles) {
   int previous;
   
@@ -145,9 +150,9 @@ void CPU::RunFor(int cycles) {
       }
     }
     
-    int elapsed = ticks_to_event + ticks_cpu_left; /* CHECKME */
+    int elapsed = ticks_to_event - ticks_cpu_left;
     
-    cycles -= ticks_to_event;
+    cycles -= elapsed;
     ticks_to_event = INT_MAX;
     
     /* Update cycle counters and get cycles to next event. */
