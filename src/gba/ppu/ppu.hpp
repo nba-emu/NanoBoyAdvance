@@ -76,6 +76,7 @@ private:
   };
 
   static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
+  
   void InitBlendTable();
   void Next(Phase phase);
   void RenderScanline();

@@ -30,7 +30,7 @@ namespace GameBoyAdvance {
 class Emulator {
 public:
   Emulator(std::shared_ptr<Config> config);
-  
+
   void Reset();
   auto LoadGame(std::string const& path) -> bool;
   void Frame();

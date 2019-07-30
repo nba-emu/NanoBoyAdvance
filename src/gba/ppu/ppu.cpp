@@ -81,9 +81,9 @@ auto PPU::ConvertColor(std::uint16_t color) -> std::uint32_t {
   int b = (color >> 10) & 0x1F;
 
   return r << 19 |
-       g << 11 |
-       b <<  3 |
-       0xFF000000;
+         g << 11 |
+         b <<  3 |
+         0xFF000000;
 }
 
 void PPU::Tick() {
