@@ -89,74 +89,55 @@ void TimerController::Write(int id, int offset, std::uint8_t value) {
   }
 }
 
-void TimerController::Run(int cycles) {
-  bool sound_enabled = cpu->apu.mmio.soundcnt.master_enable;
+void TimerController::Increment(int id, int times) {
+  int overflows = 0;
+  int to_overflow = 0x10000 - timer[id].counter;
   
-  #pragma unroll_loop
-  for (int id = 0; id < 4; id++) {
-    auto& control = timer[id].control;
-
-    if (!control.enable) {
-      continue;
-    }
-    
-    if (control.cascade) {
-      if (id != 0 && timer[id - 1].overflow) {
-        timer[id].overflow = false;
-        if (timer[id].counter != 0xFFFF) {
-          timer[id].counter++;
-        } else {
-          timer[id].counter  = timer[id].reload;
-          timer[id].overflow = true;
-          if (control.interrupt)
-            cpu->mmio.irq_if |= CPU::INT_TIMER0 << id;
-          if (id <= 1 && sound_enabled)
-            RunFIFO(id, 1);
-        }
-        timer[id - 1].overflow = false;
-      }
-    } else {
-      int available = timer[id].cycles + cycles;
-      int overflows = 0;
-
-      timer[id].overflow = false;
-      
-      int increments  = available >> timer[id].shift;
-      int to_overflow = 0x10000 - timer[id].counter;
-      
-      if (increments >= to_overflow) {
-        timer[id].counter  = timer[id].reload;
-        timer[id].overflow = true;
-        overflows++;
-        increments -= to_overflow;
+  if (times >= to_overflow) {
+    timer[id].counter = timer[id].reload;
+    overflows++;
+    times -= to_overflow;
         
-        to_overflow = 0x10000 - timer[id].reload;
-        if (increments >= to_overflow) {
-          overflows  += increments / to_overflow;
-          increments %= to_overflow;
-        }
-      }
+    to_overflow = 0x10000 - timer[id].reload;
+    if (times >= to_overflow) {
+      overflows += times / to_overflow;
+      times %= to_overflow;
+    }
+  }
       
-      timer[id].counter += increments;
-      available &= timer[id].mask;
-      
-      if (timer[id].overflow) {
-        if (control.interrupt)
-          cpu->mmio.irq_if |= CPU::INT_TIMER0 << id;
-        if (id <= 1 && sound_enabled)
-          RunFIFO(id, overflows);
-      }
-      timer[id].cycles = available;
+  timer[id].counter += times;
+    
+  if (overflows > 0) {
+    if (id != 3 && timer[id + 1].control.cascade) {
+      Increment(id + 1, overflows);
+    }
+    if (timer[id].control.interrupt) {
+      cpu->mmio.irq_if |= CPU::INT_TIMER0 << id;
+    }
+    if (id <= 1 && cpu->apu.mmio.soundcnt.master_enable) {
+      RunFIFO(id, overflows);
     }
   }
 }
 
-void TimerController::RunFIFO(int timer_id, int times) {
+void TimerController::Run(int cycles) {
+  #pragma unroll_loop
+  for (int id = 0; id < 4; id++) {
+    if (timer[id].control.enable && !timer[id].control.cascade) {
+      int available = timer[id].cycles + cycles;
+
+      Increment(id, (available >> timer[id].shift));
+      timer[id].cycles = available & timer[id].mask;
+    }
+  }
+}
+
+void TimerController::RunFIFO(int id, int times) {
   auto& apu = cpu->apu;
   auto& soundcnt = apu.mmio.soundcnt;
   
   for (int fifo = 0; fifo < 2; fifo++) {
-    if (soundcnt.dma[fifo].timer_id == timer_id)
+    if (soundcnt.dma[fifo].timer_id == id)
       apu.LatchFIFO(fifo, times);
   }
 }

@@ -35,7 +35,8 @@ public:
   void Run(int cycles);
   
 private:
-  void RunFIFO(int timer_id, int times); 
+  void Increment(int id, int times);
+  void RunFIFO(int id, int times); 
   
   CPU* cpu;
 
