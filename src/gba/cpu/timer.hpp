@@ -30,9 +30,9 @@ public:
   TimerController(CPU* cpu) : cpu(cpu) { }
   
   void Reset();
+  void Run(int cycles);
   auto Read(int id, int offset) -> std::uint8_t;
   void Write(int id, int offset, std::uint8_t value);
-  void Run(int cycles);
   
 private:
   void Increment(int id, int times);
