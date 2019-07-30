@@ -104,7 +104,7 @@ auto TimerController::Read(int id, int offset) -> std::uint8_t {
       return (timer[id].control.frequency) |
              (timer[id].control.cascade   ? 4   : 0) |
              (timer[id].control.interrupt ? 64  : 0) |
-             (timer[id].control.enable  ? 128 : 0);
+             (timer[id].control.enable    ? 128 : 0);
     }
     default: return 0;
   }
@@ -122,7 +122,7 @@ void TimerController::Write(int id, int offset, std::uint8_t value) {
       control.frequency = value & 3;
       control.cascade   = value & 4;
       control.interrupt = value & 64;
-      control.enable  = value & 128;
+      control.enable    = value & 128;
 
       timer[id].shift = g_ticks_shift[control.frequency];
       timer[id].mask  = g_ticks_mask[control.frequency];

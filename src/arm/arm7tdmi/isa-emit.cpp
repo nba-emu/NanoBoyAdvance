@@ -19,8 +19,6 @@
 
 #include "arm7tdmi.hpp"
 
-#include <utility>
-
 using namespace ARM;
 
 ARM7TDMI::OpcodeTable16 ARM7TDMI::s_opcode_lut_thumb = EmitAll16();
