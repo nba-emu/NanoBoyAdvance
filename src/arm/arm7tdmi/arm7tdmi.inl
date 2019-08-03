@@ -126,78 +126,47 @@ inline bool ARM7TDMI::CheckCondition(Condition condition) {
   return condition_table[condition][state.cpsr.v >> 28];
 }
 
-inline void ARM7TDMI::SwitchMode(Mode new_mode) {
-  auto old_mode = state.cpsr.f.mode;
+inline auto ARM7TDMI::GetRegisterBankByMode(Mode mode) -> Bank {
+  switch (mode) {
+    case MODE_USR:
+    case MODE_SYS:
+      return BANK_NONE;
+    case MODE_FIQ:
+      return BANK_FIQ;
+    case MODE_IRQ:
+      return BANK_IRQ;
+    case MODE_SVC:
+      return BANK_SVC;
+    case MODE_ABT:
+      return BANK_ABT;
+    case MODE_UND:
+      return BANK_UND;
+  }
+}
 
-  if (new_mode == old_mode)
+inline void ARM7TDMI::SwitchMode(Mode new_mode) {
+  auto old_bank = GetRegisterBankByMode(state.cpsr.f.mode);
+  auto new_bank = GetRegisterBankByMode(new_mode);
+
+  if (old_bank == new_bank)
     return;
 
-  state.cpsr.f.mode = new_mode;
+  if (old_bank == BANK_FIQ || new_bank == BANK_FIQ) {
+    for (int i = 0; i < 7; i++){
+      state.bank[old_bank][i] = state.reg[8+i];
+    }
 
-  switch (old_mode) {
-    case MODE_USR:
-    case MODE_SYS:
-      state.bank[BANK_NONE][BANK_R13] = state.r13;
-      state.bank[BANK_NONE][BANK_R14] = state.r14;
-      break;
-    case MODE_FIQ:
-      state.bank[BANK_FIQ][BANK_R13] = state.r13;
-      state.bank[BANK_FIQ][BANK_R14] = state.r14;
-      for (int i = 0; i < 5; i++) {
-        state.bank[BANK_FIQ][2+i] = state.reg[8+i];
-      }
-      break;
-    case MODE_IRQ:
-      state.bank[BANK_IRQ][BANK_R13] = state.r13;
-      state.bank[BANK_IRQ][BANK_R14] = state.r14;
-      break;
-    case MODE_SVC:
-      state.bank[BANK_SVC][BANK_R13] = state.r13;
-      state.bank[BANK_SVC][BANK_R14] = state.r14;
-      break;
-    case MODE_ABT:
-      state.bank[BANK_ABT][BANK_R13] = state.r13;
-      state.bank[BANK_ABT][BANK_R14] = state.r14;
-      break;
-    case MODE_UND:
-      state.bank[BANK_UND][BANK_R13] = state.r13;
-      state.bank[BANK_UND][BANK_R14] = state.r14;
-      break;
-  }
+    for (int i = 0; i < 7; i++) {
+      state.reg[8+i] = state.bank[new_bank][i];
+    }
+  } else {
+    state.bank[old_bank][5] = state.r13;
+    state.bank[old_bank][6] = state.r14;
 
-  switch (new_mode) {
-    case MODE_USR:
-    case MODE_SYS:
-      state.r13 = state.bank[BANK_NONE][BANK_R13];
-      state.r14 = state.bank[BANK_NONE][BANK_R14];
-      p_spsr = &state.spsr[BANK_NONE];
-      break;
-    case MODE_FIQ:
-      state.r13 = state.bank[BANK_FIQ][BANK_R13];
-      state.r14 = state.bank[BANK_FIQ][BANK_R14];
-      for (int i = 0; i < 5; i++) {
-        state.reg[8+i] = state.bank[BANK_FIQ][2+i];
-      }
-      break;
-    case MODE_IRQ:
-      state.r13 = state.bank[BANK_IRQ][BANK_R13];
-      state.r14 = state.bank[BANK_IRQ][BANK_R14];
-      p_spsr = &state.spsr[BANK_IRQ];
-      break;
-    case MODE_SVC:
-      state.r13 = state.bank[BANK_SVC][BANK_R13];
-      state.r14 = state.bank[BANK_SVC][BANK_R14];
-      p_spsr = &state.spsr[BANK_SVC];
-      break;
-    case MODE_ABT:
-      state.r13 = state.bank[BANK_ABT][BANK_R13];
-      state.r14 = state.bank[BANK_ABT][BANK_R14];
-      p_spsr = &state.spsr[BANK_ABT];
-      break;
-    case MODE_UND:
-      state.r13 = state.bank[BANK_UND][BANK_R13];
-      state.r14 = state.bank[BANK_UND][BANK_R14];
-      p_spsr = &state.spsr[BANK_UND];
-      break;
+    state.r13 = state.bank[new_bank][5];
+    state.r14 = state.bank[new_bank][6];
   }
+  
+  state.cpsr.f.mode = new_mode; 
+  p_spsr = &state.spsr[new_bank];
 }

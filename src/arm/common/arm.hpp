@@ -63,8 +63,13 @@ enum Condition {
 };
 
 enum BankedRegister {
-  BANK_R13 = 0,
-  BANK_R14 = 1
+  BANK_R8  = 0,
+  BANK_R9  = 1,
+  BANK_R10 = 2,
+  BANK_R11 = 3,
+  BANK_R12 = 4,
+  BANK_R13 = 5,
+  BANK_R14 = 6
 };
 
 typedef union {

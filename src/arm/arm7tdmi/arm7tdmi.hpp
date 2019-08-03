@@ -50,6 +50,7 @@ private:
   /* Interface to emulator (Memory, SWI-emulation, ...). */
   Interface* interface;
 
+  static auto GetRegisterBankByMode(Mode mode) -> Bank;
   void SwitchMode(Mode new_mode);
   void ReloadPipeline16();
   void ReloadPipeline32();
