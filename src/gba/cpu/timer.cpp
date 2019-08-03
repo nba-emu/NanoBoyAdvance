@@ -20,6 +20,8 @@
 #include "cpu.hpp"
 #include "timer.hpp"
 
+#include <climits>
+
 using namespace GameBoyAdvance;
 
 static constexpr int g_ticks_shift[4] = { 0, 6, 8, 10 };
@@ -90,6 +92,24 @@ void TimerController::RunFIFO(int id, int times) {
     if (soundcnt.dma[fifo].timer_id == id)
       cpu->apu.LatchFIFO(fifo, times);
   }
+}
+
+auto TimerController::GetCyclesUntilIrq() -> int {
+  int cycles = INT_MAX;
+  
+  for (auto const& timer : this->timer) {
+    if (timer.control.interrupt && 
+        timer.control.enable &&
+       !timer.control.cascade)
+    {
+      int required = ((0x10000 - timer.counter) << timer.shift) - timer.cycles;
+      
+      if (required < cycles)
+        cycles = required;
+    }
+  }
+  
+  return cycles;
 }
 
 auto TimerController::Read(int id, int offset) -> std::uint8_t {

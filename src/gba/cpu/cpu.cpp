@@ -19,6 +19,7 @@
 
 #include "cpu.hpp"
 
+#include <algorithm>
 #include <climits>
 #include <cstring>
 
@@ -143,10 +144,10 @@ void CPU::RunFor(int cycles) {
           cpu.SignalIrq();
         cpu.Run();
       } else {
-        /* TODO: inaccurate due to timer interrupts. */
-        timers.Run(ticks_cpu_left);
-        ticks_cpu_left = 0;
-        break;
+        int advance = std::min(timers.GetCyclesUntilIrq(), ticks_cpu_left);
+        
+        timers.Run(advance);
+        ticks_cpu_left -= advance;
       }
     }
     

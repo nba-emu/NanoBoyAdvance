@@ -31,6 +31,7 @@ public:
   
   void Reset();
   void Run(int cycles);
+  auto GetCyclesUntilIrq() -> int;
   auto Read(int id, int offset) -> std::uint8_t;
   void Write(int id, int offset, std::uint8_t value);
   
@@ -39,7 +40,7 @@ private:
   void RunFIFO(int id, int times); 
   
   CPU* cpu;
-
+  
   struct Timer {
     int id;
 
