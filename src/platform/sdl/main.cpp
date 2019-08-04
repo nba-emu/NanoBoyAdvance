@@ -69,6 +69,7 @@ public:
 
 int main(int argc, char** argv) {
   bool running = true;
+  bool fullscreen = false;
   SDL_Event event;
   SDL_Window* window;
   SDL_Texture* texture;
@@ -118,7 +119,7 @@ int main(int argc, char** argv) {
     int ticks2 = SDL_GetTicks();
     
     if ((ticks2 - ticks1) >= 1000) {
-      std::printf("FPS: %d\n", frames);
+      std::printf("FPS: %d (%.2f%%)\n", frames, frames/60.0*100.0);
       ticks1 = ticks2;
       frames = 0;
     }
@@ -145,6 +146,12 @@ int main(int argc, char** argv) {
           case SDLK_F9:
             if (event.type == SDL_KEYUP) {
               emulator->Reset();
+            }
+            break;
+          case SDLK_F10:
+            if (event.type == SDL_KEYUP) {
+              fullscreen = !fullscreen;
+              SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
             }
             break;
         }
