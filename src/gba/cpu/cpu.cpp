@@ -51,7 +51,7 @@ void CPU::Reset() {
   cpu.state.cpsr.f.mode = ARM::MODE_USR;
   cpu.state.r15 = 0x08000000;
 
-  /* Clear-out all memory buffers. */
+  /* Clear all memory buffers. */
   std::memset(memory.bios, 0, 0x04000);
   std::memset(memory.wram, 0, 0x40000);
   std::memset(memory.iram, 0, 0x08000);
@@ -59,12 +59,13 @@ void CPU::Reset() {
   std::memset(memory.oam,  0, 0x00400);
   std::memset(memory.vram, 0, 0x18000);
 
-  mmio.keyinput = 0x3FF;
-
   /* Reset interrupt control. */
-  mmio.irq_ie = 0;
-  mmio.irq_if = 0;
+  mmio.irq_ie  = 0;
+  mmio.irq_if  = 0;
   mmio.irq_ime = 0;
+  
+  mmio.keyinput = 0x3FF;
+  mmio.haltcnt = HaltControl::RUN;
 
   /* Reset waitstates. */
   mmio.waitcnt.sram = 0;
@@ -77,11 +78,8 @@ void CPU::Reset() {
   mmio.waitcnt.phi = 0;
   mmio.waitcnt.prefetch = 0;
   mmio.waitcnt.cgb = 0;
-  
   UpdateCycleLUT();
-
-  mmio.haltcnt = HaltControl::RUN;
-
+  
   timers.Reset();
   dma.Reset();
   apu.Reset();
