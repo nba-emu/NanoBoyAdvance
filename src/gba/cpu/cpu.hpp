@@ -129,8 +129,16 @@ private:
 
   int ticks_cpu_left = 0;
   int ticks_to_event = 0;
-  int cycles16[2][16];
-  int cycles32[2][16];
+
+  int cycles16[2][16] {
+    { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+    { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+  };
+  
+  int cycles32[2][16] {
+    { 1, 1, 6, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+    { 1, 1, 6, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 1 }
+  };
 
   std::unordered_set<EventDevice*> events { &ppu, &apu };
   

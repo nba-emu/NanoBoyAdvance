@@ -78,28 +78,6 @@ void CPU::Reset() {
   mmio.waitcnt.prefetch = 0;
   mmio.waitcnt.cgb = 0;
   
-  /* TODO: implement register 0x04000800. */
-  for (int i = 0; i < 2; i++) {
-    cycles16[i][0x0] = 1;
-    cycles32[i][0x0] = 1;
-    cycles16[i][0x1] = 1;
-    cycles32[i][0x1] = 1;
-    cycles16[i][0x2] = 3;
-    cycles32[i][0x2] = 6;
-    cycles16[i][0x3] = 1;
-    cycles32[i][0x3] = 1;
-    cycles16[i][0x4] = 1;
-    cycles32[i][0x4] = 1;
-    cycles16[i][0x5] = 1;
-    cycles32[i][0x5] = 2;
-    cycles16[i][0x6] = 1;
-    cycles32[i][0x6] = 2;
-    cycles16[i][0x7] = 1;
-    cycles32[i][0x7] = 1;
-    cycles16[i][0xF] = 1;
-    cycles32[i][0xF] = 1;
-  }
-  
   UpdateCycleLUT();
 
   mmio.haltcnt = HaltControl::RUN;
@@ -171,6 +149,8 @@ void CPU::RunFor(int cycles) {
 
 void CPU::UpdateCycleLUT() {
   int sram_cycles = 1 + s_ws_nseq[mmio.waitcnt.sram];
+  
+  /* TODO: implement register 0x04000800. */
   
   /* SRAM waitstates */
   cycles16[ACCESS_NSEQ][0xE] = sram_cycles;
