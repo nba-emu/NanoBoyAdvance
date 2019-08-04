@@ -124,18 +124,16 @@ void CPU::Tick(int cycles) {
 }
 
 void CPU::RunFor(int cycles) {
-  int previous;
+  cycles += ticks_cpu_left;
   
   while (cycles > 0) {
-    ticks_cpu_left += ticks_to_event;
+    ticks_cpu_left = ticks_to_event;
     
     while (ticks_cpu_left > 0) {
       std::uint16_t fire = mmio.irq_ie & mmio.irq_if;
 
       if (mmio.haltcnt == HaltControl::HALT && fire)
         mmio.haltcnt = HaltControl::RUN;
-
-      previous = ticks_cpu_left;
 
       if (dma.IsRunning()) {
         dma.Run();
