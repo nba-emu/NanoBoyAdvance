@@ -119,7 +119,7 @@ private:
   
   #include "memory.inl"
 
-  void SWI(std::uint32_t call_id) final;
+  void SWI(std::uint32_t call_id) final { }
   void Tick(int cycles) final;
   
   auto ReadMMIO(std::uint32_t address) -> std::uint8_t;

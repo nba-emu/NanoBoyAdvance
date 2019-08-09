@@ -1,7 +1,6 @@
 set(SOURCES
     apu/apu.cpp
     apu/regs.cpp
-    cpu/bios.cpp
     cpu/cpu.cpp
     cpu/dma.cpp
     cpu/mmio.cpp

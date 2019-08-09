@@ -99,17 +99,29 @@ void CPU::Tick(int cycles) {
 }
 
 void CPU::RunFor(int cycles) {
+  int elapsed;
+  
+  /* Compensate for over- or undershoot from previous calls. */
   cycles += ticks_cpu_left;
   
   while (cycles > 0) {
+    /* CPU may run until the next event must be executed. */
     ticks_cpu_left = ticks_to_event;
     
+    /* 'ticks_cpu_left' will be consumed by memory accesses,
+     * internal CPU cycles or timers during CPU idle.
+     * In any case it is decremented by calls to Tick(cycles).
+     */
     while (ticks_cpu_left > 0) {
-      std::uint16_t fire = mmio.irq_ie & mmio.irq_if;
+      auto fire = mmio.irq_ie & mmio.irq_if;
 
       if (mmio.haltcnt == HaltControl::HALT && fire)
         mmio.haltcnt = HaltControl::RUN;
 
+      /* DMA and CPU cannot run simultaneously since
+       * both access the memory bus.
+       * If DMA is requested the CPU will be blocked.
+       */
       if (dma.IsRunning()) {
         dma.Run();
       } else if (mmio.haltcnt == HaltControl::RUN) {
@@ -117,19 +129,16 @@ void CPU::RunFor(int cycles) {
           cpu.SignalIrq();
         cpu.Run();
       } else {
-        int advance = std::min(timers.GetCyclesUntilIrq(), ticks_cpu_left);
-        
-        timers.Run(advance);
-        ticks_cpu_left -= advance;
+        /* Forward to the next event or timer IRQ. */
+        Tick(std::min(timers.GetCyclesUntilIrq(), ticks_cpu_left));
       }
     }
     
-    int elapsed = ticks_to_event - ticks_cpu_left;
-    
+    elapsed = ticks_to_event - ticks_cpu_left;
     cycles -= elapsed;
-    ticks_to_event = INT_MAX;
     
-    /* Update cycle counters and get cycles to next event. */
+    /* Update events and determine when the next event will happen. */
+    ticks_to_event = INT_MAX;
     for (auto it = events.begin(); it != events.end();) {
       auto event = *it;
       ++it;
