@@ -595,10 +595,10 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
   }
 }
 
-void ARM_Undefined(std::uint32_t instruction) {
+void ARM_Undefined(std::uint32_t instruction) {  
   /* Save return address and program status. */
-  state.bank[BANK_SVC][BANK_R14] = state.r15 - 4;
-  state.spsr[BANK_SVC].v = state.cpsr.v;
+  state.bank[BANK_UND][BANK_R14] = state.r15 - 4;
+  state.spsr[BANK_UND].v = state.cpsr.v;
 
   /* Switch to UND mode and disable interrupts. */
   SwitchMode(MODE_UND);
