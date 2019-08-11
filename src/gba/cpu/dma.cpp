@@ -158,41 +158,44 @@ void DMAController::Write(int id, int offset, std::uint8_t value) {
       bool enable_previous = dma[id].enable;
 
       dma[id].src_cntl  = AddressControl((dma[id].src_cntl & 0b01) | ((value & 1)<<1));
-      dma[id].size    = WordSize((value>>2) & 1);
-      dma[id].time    = StartTiming((value>>4) & 3);
-      dma[id].repeat  = value & 2;
+      dma[id].size      = WordSize((value>>2) & 1);
+      dma[id].time      = StartTiming((value>>4) & 3);
+      dma[id].repeat    = value & 2;
       dma[id].gamepak   = value & 8;
       dma[id].interrupt = value & 64;
-      dma[id].enable  = value & 128;
+      dma[id].enable    = value & 128;
 
-      /* Update HBLANK/VBLANK DMA sets. */
-      if (dma[id].time == DMA_HBLANK) {
-        hblank_set |=  (1<<id);
-        vblank_set &= ~(1<<id);
-      } else if (dma[id].time == DMA_VBLANK) { 
-        hblank_set &= ~(1<<id);
-        vblank_set |=  (1<<id);
-      } else {
-        hblank_set &= ~(1<<id);
-        vblank_set &= ~(1<<id);
-      }
-        
-      /* DMA state is latched on "rising" enable bit. */
-      if (!enable_previous && dma[id].enable) {
-        dma[id].internal.request_count = 0;
-        
-        /* Latch sanitized values into internal DMA state. */
-        dma[id].internal.dst_addr = dma[id].dst_addr & g_dma_dst_mask[id];
-        dma[id].internal.src_addr = dma[id].src_addr & g_dma_src_mask[id];
-        dma[id].internal.length   = dma[id].length   & g_dma_len_mask[id];
+      hblank_set &= ~(1<<id);
+      vblank_set &= ~(1<<id);
 
-        if (dma[id].internal.length == 0) {
-          dma[id].internal.length = g_dma_len_mask[id] + 1;
+      if (dma[id].enable) {
+        /* Update HBLANK/VBLANK DMA sets. */
+        switch (dma[id].time) {
+          case DMA_HBLANK:
+            hblank_set |= (1<<id);
+            break;
+          case DMA_VBLANK:
+            vblank_set |= (1<<id);
+            break;
         }
 
-        /* Schedule DMA if is setup for immediate execution. */
-        if (dma[id].time == DMA_IMMEDIATE) {
-          MarkDMAForExecution(id);
+        /* DMA state is latched on "rising" enable bit. */
+        if (!enable_previous) {
+          dma[id].internal.request_count = 0;
+
+          /* Latch sanitized values into internal DMA state. */
+          dma[id].internal.dst_addr = dma[id].dst_addr & g_dma_dst_mask[id];
+          dma[id].internal.src_addr = dma[id].src_addr & g_dma_src_mask[id];
+          dma[id].internal.length   = dma[id].length   & g_dma_len_mask[id];
+
+          if (dma[id].internal.length == 0) {
+            dma[id].internal.length = g_dma_len_mask[id] + 1;
+          }
+
+          /* Schedule DMA if is setup for immediate execution. */
+          if (dma[id].time == DMA_IMMEDIATE) {
+            MarkDMAForExecution(id);
+          }
         }
       }
       break;
@@ -216,14 +219,14 @@ void DMAController::MarkDMAForExecution(int id) {
 }
 
 void DMAController::RequestHBlank() {
-  int hblank_dma = g_dma_from_bitset[run_set & hblank_set];
+  int hblank_dma = g_dma_from_bitset[hblank_set];
   
   if (hblank_dma >= 0)
     MarkDMAForExecution(hblank_dma);
 }
 
 void DMAController::RequestVBlank() {
-  int vblank_dma = g_dma_from_bitset[run_set & vblank_set];
+  int vblank_dma = g_dma_from_bitset[vblank_set];
   
   if (vblank_dma >= 0)
     MarkDMAForExecution(vblank_dma);
