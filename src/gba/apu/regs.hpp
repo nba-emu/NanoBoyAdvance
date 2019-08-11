@@ -60,4 +60,13 @@ private:
   FIFO* fifos;
 };
 
+struct BIAS {
+  int level;
+  int resolution;
+
+  void Reset();
+  auto Read(int address) -> std::uint8_t;
+  void Write(int address, std::uint8_t value);
+};
+
 }

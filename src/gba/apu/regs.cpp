@@ -115,3 +115,30 @@ void SoundControl::Write(int address, std::uint8_t value) {
       break;
   }
 }
+
+void BIAS::Reset() {
+  level = 0x200;
+  resolution = 0;
+}
+
+auto BIAS::Read(int address) -> std::uint8_t {
+  switch (address) {
+    case 0:  return   level & 0xFF;
+    case 1:  return ((level >> 8) & 3) | (resolution << 6);
+    default: return 0;
+  }
+}
+
+void BIAS::Write(int address, std::uint8_t value) {
+  switch (address) {
+    case 0: {
+      level = (level & ~0xFF) | value;
+      break;
+    }
+    case 1: {
+      level = (level & 0xFF) | (value << 8);
+      resolution = value >> 6;
+      break;
+    }
+  }
+}

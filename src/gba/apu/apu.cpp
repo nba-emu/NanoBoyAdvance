@@ -28,6 +28,7 @@ void APU::Reset() {
   mmio.fifo[0].Reset();
   mmio.fifo[1].Reset();
   mmio.soundcnt.Reset();
+  mmio.bias.Reset();
   
   dump = fopen("audio.raw", "wb");
   wait_cycles = 512;

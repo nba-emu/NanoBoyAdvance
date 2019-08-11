@@ -185,8 +185,14 @@ void PPU::RenderScanline() {
         break;
       }
       case 1:
+        // TODO
+        if (mmio.dispcnt.enable[4])
+          RenderLayerOAM();
         break;
       case 2:
+        // TODO
+        if (mmio.dispcnt.enable[4])
+          RenderLayerOAM();
         break;
       case 3:
         break;

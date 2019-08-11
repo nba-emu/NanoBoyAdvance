@@ -40,6 +40,7 @@ public:
     FIFO fifo[2];
     
     SoundControl soundcnt { fifo };
+    BIAS bias;
   } mmio;
   
   std::int8_t latch[2];

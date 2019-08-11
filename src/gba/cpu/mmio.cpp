@@ -69,6 +69,8 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case SOUNDCNT_H:   return apu_io.soundcnt.Read(2);
     case SOUNDCNT_H+1: return apu_io.soundcnt.Read(3);
     case SOUNDCNT_X:   return apu_io.soundcnt.Read(4);
+    case SOUNDBIAS:    return apu_io.bias.Read(0);
+    case SOUNDBIAS+1:  return apu_io.bias.Read(1);
       
     /* Timers 0-3 */
     case TM0CNT_L:   return timers.Read(0, 0);
@@ -280,6 +282,8 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     case SOUNDCNT_H:   apu_io.soundcnt.Write(2, value); break;
     case SOUNDCNT_H+1: apu_io.soundcnt.Write(3, value); break;
     case SOUNDCNT_X:   apu_io.soundcnt.Write(4, value); break;
+    case SOUNDBIAS:    apu_io.bias.Write(0, value);
+    case SOUNDBIAS+1:  apu_io.bias.Write(1, value);
       
     /* Timers 0-3 */
     case TM0CNT_L:   timers.Write(0, 0, value); break;
