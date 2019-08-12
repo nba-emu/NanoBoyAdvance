@@ -20,8 +20,8 @@
 #include "cpu.hpp"
 
 #include <algorithm>
-#include <climits>
 #include <cstring>
+#include <limits>
 
 using namespace GameBoyAdvance;
 
@@ -138,7 +138,7 @@ void CPU::RunFor(int cycles) {
     cycles -= elapsed;
     
     /* Update events and determine when the next event will happen. */
-    ticks_to_event = INT_MAX;
+    ticks_to_event = std::numeric_limits<int>::max();
     for (auto it = events.begin(); it != events.end();) {
       auto event = *it;
       ++it;

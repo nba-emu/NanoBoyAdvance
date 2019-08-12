@@ -20,7 +20,7 @@
 #include "cpu.hpp"
 #include "timer.hpp"
 
-#include <climits>
+#include <limits>
 
 using namespace GameBoyAdvance;
 
@@ -95,7 +95,7 @@ void TimerController::RunFIFO(int id, int times) {
 }
 
 auto TimerController::GetCyclesUntilIrq() -> int {
-  int cycles = INT_MAX;
+  int cycles = std::numeric_limits<int>::max();
   
   for (auto const& timer : this->timer) {
     if (timer.control.interrupt && 
