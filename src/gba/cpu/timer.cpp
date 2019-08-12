@@ -29,68 +29,71 @@ static constexpr int g_ticks_mask[4] = { 0, 0x3F, 0xFF, 0x3FF };
 
 void TimerController::Reset() {
   for (int id = 0; id < 4; id++) {
-    timer[id].id = id;
-    timer[id].cycles = 0;
-    timer[id].reload = 0;
+    timer[id].id      = id;
+    timer[id].cycles  = 0;
+    timer[id].reload  = 0;
     timer[id].counter = 0;
     timer[id].control.frequency = 0;
-    timer[id].control.cascade = false;
+    timer[id].control.cascade   = false;
     timer[id].control.interrupt = false;
-    timer[id].control.enable = false;
+    timer[id].control.enable    = false;
     timer[id].overflow = false;
-    timer[id].shift = 0;
-    timer[id].mask = 0;
+    timer[id].shift    = 0;
+    timer[id].mask     = 0;
   }
 }
 
 void TimerController::Run(int cycles) {
-  for (int id = 0; id < 4; id++) {
-    if (timer[id].control.enable && !timer[id].control.cascade) {
-      int available = timer[id].cycles + cycles;
+  int available;
+  int increment;
 
-      Increment(id, available >> timer[id].shift);
+  for (int id = 0; id < 4; id++) {
+    if ( timer[id].control.enable &&
+        !timer[id].control.cascade) 
+    {
+      available = timer[id].cycles + cycles;
+      increment = available >> timer[id].shift;
+      
+      if (increment > 0) {
+        Increment(id, increment);
+      }
+    
       timer[id].cycles = available & timer[id].mask;
     }
   }
 }
 
-void TimerController::Increment(int id, int times) {
+void TimerController::Increment(int id, int increment) {
   int overflows = 0;
-  int to_overflow = 0x10000 - timer[id].counter;
+  int threshold = 0x10000 - timer[id].counter;
   
-  if (times >= to_overflow) {
-    timer[id].counter = timer[id].reload;
+  if (increment >= threshold) {
     overflows++;
-    times -= to_overflow;
-        
-    to_overflow = 0x10000 - timer[id].reload;
-    if (times >= to_overflow) {
-      overflows += times / to_overflow;
-      times %= to_overflow;
+    increment -= threshold;
+    timer[id].counter = timer[id].reload;
+    
+    threshold = 0x10000 - timer[id].reload;
+    
+    if (increment >= threshold) {
+      overflows += increment / threshold;
+      increment %= threshold;
     }
   }
       
-  timer[id].counter += times;
+  timer[id].counter += increment;
     
   if (overflows > 0) {
     if (id != 3 && timer[id + 1].control.cascade) {
       Increment(id + 1, overflows);
     }
+    
     if (timer[id].control.interrupt) {
       cpu->mmio.irq_if |= CPU::INT_TIMER0 << id;
     }
+    
     if (id <= 1 && cpu->apu.mmio.soundcnt.master_enable) {
-      RunFIFO(id, overflows);
+      LatchAudioFromFIFO(id, overflows);
     }
-  }
-}
-
-void TimerController::RunFIFO(int id, int times) {
-  auto& soundcnt = cpu->apu.mmio.soundcnt;
-  
-  for (int fifo = 0; fifo < 2; fifo++) {
-    if (soundcnt.dma[fifo].timer_id == id)
-      cpu->apu.LatchFIFO(fifo, times);
   }
 }
 
@@ -104,12 +107,23 @@ auto TimerController::GetCyclesUntilIrq() -> int {
     {
       int required = ((0x10000 - timer.counter) << timer.shift) - timer.cycles;
       
-      if (required < cycles)
+      if (required < cycles) {
         cycles = required;
+      }
     }
   }
   
   return cycles;
+}
+
+void TimerController::LatchAudioFromFIFO(int id, int increment) {
+  auto& soundcnt = cpu->apu.mmio.soundcnt;
+  
+  for (int fifo = 0; fifo < 2; fifo++) {
+    if (soundcnt.dma[fifo].timer_id == id) {
+      cpu->apu.LatchFIFO(fifo, increment);
+    }
+  }
 }
 
 auto TimerController::Read(int id, int offset) -> std::uint8_t {
@@ -153,7 +167,7 @@ void TimerController::Write(int id, int offset, std::uint8_t value) {
          * We account for this here, however I'm not 100% sure if it
          * holds for the general case.
          */
-        timer[id].cycles = -2;
+        timer[id].cycles  = -2;
         timer[id].counter = timer[id].reload;
       }
     }

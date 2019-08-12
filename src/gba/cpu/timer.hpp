@@ -36,8 +36,8 @@ public:
   void Write(int id, int offset, std::uint8_t value);
   
 private:
-  void Increment(int id, int times);
-  void RunFIFO(int id, int times); 
+  void Increment(int id, int increment);
+  void LatchAudioFromFIFO(int id, int increment); 
   
   CPU* cpu;
   

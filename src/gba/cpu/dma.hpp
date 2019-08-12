@@ -45,10 +45,10 @@ private:
   
   CPU* cpu;
 
-  int  hblank_set;
-  int  vblank_set;
-  int  run_set;
-  int  current;
+  int hblank_set;
+  int vblank_set;
+  int run_set;
+  int current;
   bool interleaved;
   
   enum AddressControl  {
@@ -62,7 +62,7 @@ private:
     DMA_IMMEDIATE = 0,
     DMA_VBLANK  = 1,
     DMA_HBLANK  = 2,
-    DMA_SPECIAL   = 3
+    DMA_SPECIAL = 3
   };
 
   enum WordSize {

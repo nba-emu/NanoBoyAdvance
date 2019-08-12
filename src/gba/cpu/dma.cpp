@@ -62,39 +62,38 @@ void DMAController::Reset() {
   interleaved = false;
   
   for (int id = 0; id < 4; id++) {
-    dma[id].enable = false;
-    dma[id].repeat = false;
+    dma[id].enable    = false;
+    dma[id].repeat    = false;
     dma[id].interrupt = false;
-    dma[id].gamepak  = false;
-    dma[id].length   = 0;
-    dma[id].dst_addr = 0;
-    dma[id].src_addr = 0;
+    dma[id].gamepak   = false;
+    dma[id].length    = 0;
+    dma[id].dst_addr  = 0;
+    dma[id].src_addr  = 0;
     dma[id].internal.length   = 0;
     dma[id].internal.dst_addr = 0;
     dma[id].internal.src_addr = 0;
-    dma[id].size   = DMA_HWORD;
-    dma[id].time   = DMA_IMMEDIATE;
+    dma[id].size     = DMA_HWORD;
+    dma[id].time     = DMA_IMMEDIATE;
     dma[id].dst_cntl = DMA_INCREMENT;
     dma[id].src_cntl = DMA_INCREMENT;
   }
 }
 
 auto DMAController::Read(int id, int offset) -> std::uint8_t {
-  /* TODO: are SAD/DAD/CNT_L readable? */
   switch (offset) {
     /* DMAXCNT_H */
     case 10: {
       return (dma[id].dst_cntl << 5) |
-           (dma[id].src_cntl << 7);
+             (dma[id].src_cntl << 7);
     }
     case 11: {
-      return (dma[id].src_cntl >> 1) |
-           (dma[id].size   << 2) |
-           (dma[id].time   << 4) |
-           (dma[id].repeat  ? 2   : 0) |
-           (dma[id].gamepak   ? 8   : 0) |
-           (dma[id].interrupt ? 64  : 0) |
-           (dma[id].enable  ? 128 : 0);
+      return (dma[id].src_cntl  >> 1) |
+             (dma[id].size      << 2) |
+             (dma[id].time      << 4) |
+             (dma[id].repeat    ? 2   : 0) |
+             (dma[id].gamepak   ? 8   : 0) |
+             (dma[id].interrupt ? 64  : 0) |
+             (dma[id].enable    ? 128 : 0);
     }
     default: return 0;
   }
@@ -103,50 +102,20 @@ auto DMAController::Read(int id, int offset) -> std::uint8_t {
 void DMAController::Write(int id, int offset, std::uint8_t value) {
   switch (offset) {
     /* DMAXSAD */
-    case 0: {
-      dma[id].src_addr = (dma[id].src_addr & 0xFFFFFF00) | (value<<0 );
-      break;
-    }
-    case 1: {
-      dma[id].src_addr = (dma[id].src_addr & 0xFFFF00FF) | (value<<8 );
-      break;
-    }
-    case 2: {
-      dma[id].src_addr = (dma[id].src_addr & 0xFF00FFFF) | (value<<16);
-      break;
-    }
-    case 3: {
-      dma[id].src_addr = (dma[id].src_addr & 0x00FFFFFF) | (value<<24);
-      break;
-    }
+    case 0: dma[id].src_addr = (dma[id].src_addr & 0xFFFFFF00) | (value<<0 ); break;
+    case 1: dma[id].src_addr = (dma[id].src_addr & 0xFFFF00FF) | (value<<8 ); break;
+    case 2: dma[id].src_addr = (dma[id].src_addr & 0xFF00FFFF) | (value<<16); break;
+    case 3: dma[id].src_addr = (dma[id].src_addr & 0x00FFFFFF) | (value<<24); break;
 
     /* DMAXDAD */
-    case 4: {
-      dma[id].dst_addr = (dma[id].dst_addr & 0xFFFFFF00) | (value<<0 );
-      break;
-    }
-    case 5: {
-      dma[id].dst_addr = (dma[id].dst_addr & 0xFFFF00FF) | (value<<8 );
-      break;
-    }
-    case 6: {
-      dma[id].dst_addr = (dma[id].dst_addr & 0xFF00FFFF) | (value<<16);
-      break;
-    }
-    case 7: {
-      dma[id].dst_addr = (dma[id].dst_addr & 0x00FFFFFF) | (value<<24);
-      break;
-    }
+    case 4: dma[id].dst_addr = (dma[id].dst_addr & 0xFFFFFF00) | (value<<0 ); break;
+    case 5: dma[id].dst_addr = (dma[id].dst_addr & 0xFFFF00FF) | (value<<8 ); break;
+    case 6: dma[id].dst_addr = (dma[id].dst_addr & 0xFF00FFFF) | (value<<16); break;
+    case 7: dma[id].dst_addr = (dma[id].dst_addr & 0x00FFFFFF) | (value<<24); break;
 
     /* DMAXCNT_L */
-    case 8: {
-      dma[id].length = (dma[id].length & 0xFF00) | (value<<0);
-      break;
-    }
-    case 9: {
-      dma[id].length = (dma[id].length & 0x00FF) | (value<<8);
-      break;
-    }
+    case 8: dma[id].length = (dma[id].length & 0xFF00) | (value<<0); break;
+    case 9: dma[id].length = (dma[id].length & 0x00FF) | (value<<8); break;
 
     /* DMAXCNT_H */
     case 10: {
