@@ -30,12 +30,12 @@ public:
   DMAController(CPU* cpu) : cpu(cpu) { }
   
   void Reset();
-  auto Read(int id, int offset) -> std::uint8_t;
-  void Write(int id, int offset, std::uint8_t value);
   void RequestHBlank();
   void RequestVBlank();
   void RequestFIFO(int fifo);
   void Run();
+  auto Read(int id, int offset) -> std::uint8_t;
+  void Write(int id, int offset, std::uint8_t value);
   
   bool IsRunning() const { return run_set != 0; }
   
