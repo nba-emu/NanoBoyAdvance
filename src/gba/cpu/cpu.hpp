@@ -118,13 +118,13 @@ private:
   friend class DMAController;
   
   #include "memory.inl"
-
+  
   void SWI(std::uint32_t call_id) final { }
   void Tick(int cycles) final;
   
   auto ReadMMIO(std::uint32_t address) -> std::uint8_t;
   void WriteMMIO(std::uint32_t address, std::uint8_t value);
-
+  
   void UpdateCycleLUT();
 
   int ticks_cpu_left = 0;

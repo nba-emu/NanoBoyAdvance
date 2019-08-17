@@ -21,7 +21,6 @@
 #include "dma.hpp"
 #include "mmio.hpp"
 
-using namespace ARM;
 using namespace GameBoyAdvance;
 
 static constexpr std::uint32_t g_dma_dst_mask[4] = { 0x07FFFFFF, 0x07FFFFFF, 0x07FFFFFF, 0x0FFFFFFF };

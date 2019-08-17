@@ -100,13 +100,13 @@ void CPU::Tick(int cycles) {
 
 void CPU::RunFor(int cycles) {
   int elapsed;
-  
+
   /* Compensate for over- or undershoot from previous calls. */
   cycles += ticks_cpu_left;
-  
+
   while (cycles > 0) {
     /* CPU may run until the next event must be executed. */
-    ticks_cpu_left = ticks_to_event;
+    ticks_cpu_left = std::min(cycles, ticks_to_event);
     
     /* 'ticks_cpu_left' will be consumed by memory accesses,
      * internal CPU cycles or timers during CPU idle.
