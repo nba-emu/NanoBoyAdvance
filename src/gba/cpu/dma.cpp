@@ -152,8 +152,8 @@ void DMAController::Run() {
         return;
       }
 
-      word = cpu->ReadWord(dma.internal.src_addr, ARM::ACCESS_SEQ);
-      cpu->WriteWord(dma.internal.dst_addr, word, ARM::ACCESS_SEQ);
+      word = cpu->ReadWord(dma.internal.src_addr & ~3, ARM::ACCESS_SEQ);
+      cpu->WriteWord(dma.internal.dst_addr & ~3, word, ARM::ACCESS_SEQ);
 
       dma.internal.src_addr += src_modify;
       dma.internal.dst_addr += dst_modify;
@@ -169,8 +169,8 @@ void DMAController::Run() {
         return;
       }
 
-      word = cpu->ReadHalf(dma.internal.src_addr, ARM::ACCESS_SEQ);
-      cpu->WriteHalf(dma.internal.dst_addr, word, ARM::ACCESS_SEQ);
+      word = cpu->ReadHalf(dma.internal.src_addr & ~1, ARM::ACCESS_SEQ);
+      cpu->WriteHalf(dma.internal.dst_addr & ~1, word, ARM::ACCESS_SEQ);
       
       dma.internal.src_addr += src_modify;
       dma.internal.dst_addr += dst_modify;
