@@ -44,7 +44,7 @@ std::uint32_t ReadByteSigned(std::uint32_t address, AccessType type) {
 }
 
 std::uint32_t ReadHalfRotate(std::uint32_t address, AccessType type) {
-  auto value = interface->ReadHalf(address & ~1, type);
+  std::uint32_t value = interface->ReadHalf(address & ~1, type);
 
   if (address & 1) {
     value = (value >> 8) | (value << 24);
