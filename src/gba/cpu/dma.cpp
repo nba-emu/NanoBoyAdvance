@@ -214,8 +214,8 @@ void DMAController::RunFIFO() {
   
   /* CHECKME: is cycle budget overshoot a problem here? */
   for (int i = 0; i < 4; i++) {
-    word = cpu->ReadWord(dma.internal.src_addr, ARM::ACCESS_SEQ);
-    cpu->WriteWord(dma.internal.dst_addr, word, ARM::ACCESS_SEQ);
+    word = cpu->ReadWord(dma.internal.src_addr & ~3, ARM::ACCESS_SEQ);
+    cpu->WriteWord(dma.internal.dst_addr & ~3, word, ARM::ACCESS_SEQ);
     
     dma.internal.src_addr += 4;
   }
