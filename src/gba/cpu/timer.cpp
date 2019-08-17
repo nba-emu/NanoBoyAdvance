@@ -45,19 +45,14 @@ void TimerController::Reset() {
 
 void TimerController::Run(int cycles) {
   int available;
-  int increment;
 
   for (int id = 0; id < 4; id++) {
     if ( timer[id].control.enable &&
         !timer[id].control.cascade) 
     {
       available = timer[id].cycles + cycles;
-      increment = available >> timer[id].shift;
       
-      if (increment > 0) {
-        Increment(id, increment);
-      }
-    
+      Increment(id, available >> timer[id].shift);
       timer[id].cycles = available & timer[id].mask;
     }
   }
