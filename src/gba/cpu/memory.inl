@@ -109,7 +109,7 @@ std::uint16_t ReadHalf(std::uint32_t address, ARM::AccessType type) final {
     case 0x3: return READ_FAST_16(memory.iram, address & 0x7FFF );
     case 0x4: {
       return  ReadMMIO(address + 0) |
-           (ReadMMIO(address + 1) << 8);
+             (ReadMMIO(address + 1) << 8);
     }
     case 0x5: return READ_FAST_16(memory.pram, address & 0x3FF);
     case 0x6: {
@@ -167,10 +167,10 @@ std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) final {
     case 0x2: return READ_FAST_32(memory.wram, address & 0x3FFFF);
     case 0x3: return READ_FAST_32(memory.iram, address & 0x7FFF );
     case 0x4: {
-      return  ReadMMIO(address + 0) |
-           (ReadMMIO(address + 1) << 8 ) |
-           (ReadMMIO(address + 2) << 16) |
-           (ReadMMIO(address + 3) << 24);
+      return ReadMMIO(address + 0) |
+            (ReadMMIO(address + 1) << 8 ) |
+            (ReadMMIO(address + 2) << 16) |
+            (ReadMMIO(address + 3) << 24);
     }
     case 0x5: return READ_FAST_32(memory.pram, address & 0x3FF);
     case 0x6: {
@@ -196,7 +196,7 @@ std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) final {
       // }
       if (address >= memory.rom.size)
         return (((address + 0) / 2) & 0xFFFF) |
-             (((address + 2) / 2) << 16);
+               (((address + 2) / 2) << 16);
       return READ_FAST_32(memory.rom.data, address);
     }
     // case 0xE: {
