@@ -39,10 +39,10 @@ void CPU::ResetDMA() {
     dma.internal.length = 0;
     dma.internal.dst_addr = 0;
     dma.internal.src_addr = 0;
-    dma.size = DMA_HWORD;
-    dma.time = DMA_IMMEDIATE;
-    dma.dst_cntl = DMA_INCREMENT;
-    dma.src_cntl = DMA_INCREMENT;
+    dma.size = DMA::HWORD;
+    dma.time = DMA::IMMEDIATE;
+    dma.dst_cntl = DMA::INCREMENT;
+    dma.src_cntl = DMA::INCREMENT;
   }
 }
 
@@ -90,16 +90,16 @@ void CPU::WriteDMA(int id, int offset, std::uint8_t value) {
 
     /* DMAXCNT_H */
     case 10: {
-      dma.dst_cntl = AddressControl((value >> 5) & 3);
-      dma.src_cntl = AddressControl((dma.src_cntl & 0b10) | (value>>7));
+      dma.dst_cntl = DMA::Control((value >> 5) & 3);
+      dma.src_cntl = DMA::Control((dma.src_cntl & 0b10) | (value>>7));
       break;
     }
     case 11: {
       bool enable_previous = dma.enable;
 
-      dma.src_cntl  = AddressControl((dma.src_cntl & 0b01) | ((value & 1)<<1));
-      dma.size      = WordSize((value>>2) & 1);
-      dma.time      = StartTiming((value>>4) & 3);
+      dma.src_cntl  = DMA::Control((dma.src_cntl & 0b01) | ((value & 1)<<1));
+      dma.size      = DMA::Size((value>>2) & 1);
+      dma.time      = DMA::Timing((value>>4) & 3);
       dma.repeat    = value & 2;
       dma.gamepak   = value & 8;
       dma.interrupt = value & 64;
@@ -111,10 +111,10 @@ void CPU::WriteDMA(int id, int offset, std::uint8_t value) {
       if (dma.enable) {
         /* Update HBLANK/VBLANK DMA sets. */
         switch (dma.time) {
-          case DMA_HBLANK:
+          case DMA::HBLANK:
             dma_hblank_set |= (1<<id);
             break;
-          case DMA_VBLANK:
+          case DMA::VBLANK:
             dma_vblank_set |= (1<<id);
             break;
         }
@@ -133,7 +133,7 @@ void CPU::WriteDMA(int id, int offset, std::uint8_t value) {
           }
 
           /* Schedule DMA if is setup for immediate execution. */
-          if (dma.time == DMA_IMMEDIATE) {
+          if (dma.time == DMA::IMMEDIATE) {
             StartDMA(id);
           }
         }

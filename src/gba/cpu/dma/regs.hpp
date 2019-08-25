@@ -22,27 +22,27 @@
 #include <cstdint>
 
 namespace GameBoyAdvance {
-
-enum AddressControl  {
-  DMA_INCREMENT = 0,
-  DMA_DECREMENT = 1,
-  DMA_FIXED   = 2,
-  DMA_RELOAD  = 3
-};
-
-enum StartTiming {
-  DMA_IMMEDIATE = 0,
-  DMA_VBLANK  = 1,
-  DMA_HBLANK  = 2,
-  DMA_SPECIAL = 3
-};
-
-enum WordSize {
-  DMA_HWORD = 0,
-  DMA_WORD  = 1
-};
   
 struct DMA {
+  enum Control  {
+    INCREMENT = 0,
+    DECREMENT = 1,
+    FIXED  = 2,
+    RELOAD = 3
+  };
+
+  enum Timing {
+    IMMEDIATE = 0,
+    VBLANK  = 1,
+    HBLANK  = 2,
+    SPECIAL = 3
+  };
+
+  enum Size {
+    HWORD = 0,
+    WORD  = 1
+  };
+
   bool enable;
   bool repeat;
   bool interrupt;
@@ -51,12 +51,12 @@ struct DMA {
   std::uint16_t length;
   std::uint32_t dst_addr;
   std::uint32_t src_addr;
-  AddressControl dst_cntl;
-  AddressControl src_cntl;
-  StartTiming time;
-  WordSize size;
+  Control dst_cntl;
+  Control src_cntl;
+  Timing time;
+  Size size;
 
-  struct Internal {
+  struct {
     int request_count;
       
     std::uint32_t length;

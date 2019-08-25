@@ -22,7 +22,7 @@
 
 namespace GameBoyAdvance {
 
-/* TODO: what happens if src_cntl equals DMA_RELOAD? */
+/* TODO: what happens if src_cntl equals DMA::RELOAD? */
 static constexpr int g_dma_modify[2][4] = {
   { 2, -2, 0, 2 },
   { 4, -4, 0, 4 }
@@ -88,7 +88,7 @@ void CPU::RequestAudioDMA(int fifo) {
   
   for (int id = 1; id <= 2; id++) {
     if (mmio.dma[id].enable &&
-        mmio.dma[id].time == DMA_SPECIAL &&
+        mmio.dma[id].time == DMA::SPECIAL &&
         mmio.dma[id].dst_addr == address[fifo])
     {
       mmio.dma[id].internal.request_count++;
@@ -108,7 +108,7 @@ void CPU::RunDMA() {
    * For example the repeat bit works different, word transfer is enforced
    * and if FIFO DMA was requested multiple times, it needs to run more than once.
    */
-  if (dma.time == DMA_SPECIAL && (dma_current == 1 || dma_current == 2)) {
+  if (dma.time == DMA::SPECIAL && (dma_current == 1 || dma_current == 2)) {
     RunAudioDMA();
     return;
   }
@@ -116,7 +116,7 @@ void CPU::RunDMA() {
   std::uint32_t word;
   
   /* Run DMA until completion or interruption. */
-  if (dma.size == DMA_WORD) {
+  if (dma.size == DMA::WORD) {
     while (dma.internal.length != 0) {
       if (ticks_cpu_left <= 0) return;
 
@@ -165,12 +165,12 @@ void CPU::RunDMA() {
     }
 
     /* Reload destination address if specified. */
-    if (dma.dst_cntl == DMA_RELOAD) {
+    if (dma.dst_cntl == DMA::RELOAD) {
       dma.internal.dst_addr = dma.dst_addr & s_dma_dst_mask[dma_current];
     }
 
     /* If DMA is specified to be non-immediate, wait for it to be retriggered. */
-    if (dma.time != DMA_IMMEDIATE) {
+    if (dma.time != DMA::IMMEDIATE) {
       dma_run_set &= ~(1 << dma_current);
     }
   } else {
