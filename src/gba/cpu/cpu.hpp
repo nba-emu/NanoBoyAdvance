@@ -122,9 +122,8 @@ public:
   PPU ppu;
 
 private:
-  friend class DMAController;
   
-  #include "memory.inl"
+  #include "memory/memory.inl"
   
   void SWI(std::uint32_t call_id) final { }
   void Tick(int cycles) final;

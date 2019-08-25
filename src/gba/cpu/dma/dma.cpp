@@ -18,7 +18,7 @@
   */
 
 #include "../cpu.hpp"
-#include "../mmio.hpp"
+#include "../memory/mmio.hpp"
 
 namespace GameBoyAdvance {
 

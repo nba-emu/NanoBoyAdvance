@@ -4,7 +4,7 @@ set(SOURCES
     cpu/cpu.cpp
     cpu/dma/dma.cpp
     cpu/dma/regs.cpp
-    cpu/mmio.cpp
+    cpu/memory/mmio.cpp
     cpu/timer.cpp
     emulator.cpp
     ppu/ppu.cpp
@@ -18,7 +18,7 @@ set(HEADERS
     apu/regs.hpp
     cpu/cpu.hpp
     cpu/event_device.hpp
-    cpu/mmio.hpp
+    cpu/memory/mmio.hpp
     emulator.hpp
     ppu/ppu.hpp
     ppu/regs.hpp

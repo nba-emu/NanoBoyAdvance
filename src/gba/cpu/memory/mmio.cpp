@@ -19,8 +19,8 @@
 
 #include <cstdio>
 
-#include "cpu.hpp"
 #include "mmio.hpp"
+#include "../cpu.hpp"
 
 using namespace GameBoyAdvance;
 
