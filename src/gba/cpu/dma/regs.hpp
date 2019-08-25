@@ -17,34 +17,52 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#include <math.h>
+#pragma once
 
-#include "apu.hpp"
-#include "../cpu/cpu.hpp"
+#include <cstdint>
 
-using namespace GameBoyAdvance;
+namespace GameBoyAdvance {
 
-void APU::Reset() {
-  mmio.fifo[0].Reset();
-  mmio.fifo[1].Reset();
-  mmio.soundcnt.Reset();
-  mmio.bias.Reset();
+enum AddressControl  {
+  DMA_INCREMENT = 0,
+  DMA_DECREMENT = 1,
+  DMA_FIXED   = 2,
+  DMA_RELOAD  = 3
+};
+
+enum StartTiming {
+  DMA_IMMEDIATE = 0,
+  DMA_VBLANK  = 1,
+  DMA_HBLANK  = 2,
+  DMA_SPECIAL = 3
+};
+
+enum WordSize {
+  DMA_HWORD = 0,
+  DMA_WORD  = 1
+};
   
-  dump = fopen("audio.raw", "wb");
-  wait_cycles = 512;
-}
-  
-void APU::LatchFIFO(int id, int times) {
-  auto& fifo = mmio.fifo[id];
-  
-  for (int time = 0; time < times; time++) {
-    latch[id] = fifo.Read();
-    if (fifo.Count() <= 16) {
-      cpu->RequestAudioDMA(id);
-    }
-  }
-}
+struct DMA {
+  bool enable;
+  bool repeat;
+  bool interrupt;
+  bool gamepak;
 
-void APU::Tick() {
-  wait_cycles += 512;
+  std::uint16_t length;
+  std::uint32_t dst_addr;
+  std::uint32_t src_addr;
+  AddressControl dst_cntl;
+  AddressControl src_cntl;
+  StartTiming time;
+  WordSize size;
+
+  struct Internal {
+    int request_count;
+      
+    std::uint32_t length;
+    std::uint32_t dst_addr;
+    std::uint32_t src_addr;
+  } internal;
+};
+
 }

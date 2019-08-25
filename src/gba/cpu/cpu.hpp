@@ -23,7 +23,7 @@
 #include <memory>
 #include <unordered_set>
 
-#include "dma.hpp"
+#include "dma/regs.hpp"
 #include "event_device.hpp"
 #include "timer.hpp"
 #include "../ppu/ppu.hpp"
@@ -41,6 +41,10 @@ public:
   void RegisterEvent(EventDevice& event);
   void UnregisterEvent(EventDevice& event);
   
+  void RequestHBlankDMA();
+  void RequestVBlankDMA();
+  void RequestAudioDMA(int fifo);
+
   void RunFor(int cycles);
   
   enum class HaltControl {
@@ -86,8 +90,10 @@ public:
   } memory;
 
   struct MMIO {
+    DMA dma[4];
+
     std::uint16_t keyinput;
-    
+
     std::uint16_t irq_ie;
     std::uint16_t irq_if;
     std::uint16_t irq_ime;
@@ -109,10 +115,11 @@ public:
   } mmio;
   
   ARM::ARM7TDMI cpu;
+  
+  TimerController timers;
+  
   APU apu;
   PPU ppu;
-  DMAController dma;
-  TimerController timers;
 
 private:
   friend class DMAController;
@@ -126,6 +133,19 @@ private:
   void WriteMMIO(std::uint32_t address, std::uint8_t value);
   
   void UpdateCycleLUT();
+
+  void ResetDMA();
+  auto ReadDMA (int id, int offset) -> std::uint8_t;
+  void WriteDMA(int id, int offset, std::uint8_t value);
+  void StartDMA(int id);
+  void RunDMA();
+  void RunAudioDMA();
+
+  int  dma_hblank_set;
+  int  dma_vblank_set;
+  int  dma_run_set;
+  int  dma_current;
+  bool dma_interleaved;
 
   int ticks_cpu_left = 0;
   int ticks_to_event = 0;
@@ -146,6 +166,10 @@ private:
   static constexpr int s_ws_seq0[2] = { 2, 1 };       /* Sequential WS0 */
   static constexpr int s_ws_seq1[2] = { 4, 1 };       /* Sequential WS1 */
   static constexpr int s_ws_seq2[2] = { 8, 1 };       /* Sequential WS2 */
+
+  static constexpr std::uint32_t s_dma_dst_mask[4] = { 0x07FFFFFF, 0x07FFFFFF, 0x07FFFFFF, 0x0FFFFFFF };
+  static constexpr std::uint32_t s_dma_src_mask[4] = { 0x07FFFFFF, 0x0FFFFFFF, 0x0FFFFFFF, 0x0FFFFFFF };
+  static constexpr std::uint32_t s_dma_len_mask[4] = { 0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF };
 };
 
 }

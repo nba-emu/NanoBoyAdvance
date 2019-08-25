@@ -2,7 +2,8 @@ set(SOURCES
     apu/apu.cpp
     apu/regs.cpp
     cpu/cpu.cpp
-    cpu/dma.cpp
+    cpu/dma/dma.cpp
+    cpu/dma/regs.cpp
     cpu/mmio.cpp
     cpu/timer.cpp
     emulator.cpp
