@@ -123,7 +123,14 @@ public:
 
 private:
   
-  #include "memory/memory.inl"
+  std::uint32_t ReadBIOS(std::uint32_t address);
+  
+  std::uint8_t  ReadByte(std::uint32_t address, ARM::AccessType type) final;
+  std::uint16_t ReadHalf(std::uint32_t address, ARM::AccessType type) final;
+  std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) final;
+  void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) final;
+  void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type) final;
+  void WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type) final;
   
   void SWI(std::uint32_t call_id) final { }
   void Tick(int cycles) final;
@@ -178,4 +185,6 @@ private:
   static constexpr std::uint32_t s_dma_len_mask[4] = { 0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF };
 };
 
+#include "memory/memory.inl"
+  
 }

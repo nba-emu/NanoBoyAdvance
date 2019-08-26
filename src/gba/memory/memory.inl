@@ -31,7 +31,7 @@
 #define WRITE_FAST_16(buffer, address, value) *(uint16_t*)(&buffer[address]) = value;
 #define WRITE_FAST_32(buffer, address, value) *(uint32_t*)(&buffer[address]) = value;
 
-std::uint32_t ReadBIOS(std::uint32_t address) {
+inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
   if (cpu.state.r15 >= 0x4000) {
     return memory.bios_opcode;
   }
@@ -45,7 +45,7 @@ std::uint32_t ReadBIOS(std::uint32_t address) {
   return (memory.bios_opcode = READ_FAST_32(memory.bios, address));
 }
 
-std::uint8_t ReadByte(std::uint32_t address, ARM::AccessType type) final {
+inline std::uint8_t CPU::ReadByte(std::uint32_t address, ARM::AccessType type) {
   int page = (address >> 24) & 15;
 
   Tick(cycles16[type][page]);
@@ -98,7 +98,7 @@ std::uint8_t ReadByte(std::uint32_t address, ARM::AccessType type) final {
   }
 }
 
-std::uint16_t ReadHalf(std::uint32_t address, ARM::AccessType type) final {
+inline std::uint16_t CPU::ReadHalf(std::uint32_t address, ARM::AccessType type) {
   int page = (address >> 24) & 15;
 
   Tick(cycles16[type][page]);
@@ -157,7 +157,7 @@ std::uint16_t ReadHalf(std::uint32_t address, ARM::AccessType type) final {
   }
 }
 
-std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) final {
+inline std::uint32_t CPU::ReadWord(std::uint32_t address, ARM::AccessType type) {
   int page = (address >> 24) & 15;
 
   Tick(cycles32[type][page]);
@@ -210,7 +210,7 @@ std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) final {
   }
 }
 
-void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) final {
+inline void CPU::WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) {
   int page = (address >> 24) & 15;
 
   // if (page == 8 && (address & 0x1FFFF) == 0)
@@ -245,7 +245,7 @@ void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) 
   }
 }
 
-void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type) final {
+inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type) {
   int page = (address >> 24) & 15;
 
   // if (page == 8 && (address & 0x1FFFF) == 0)
@@ -314,7 +314,7 @@ void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type)
   }
 }
 
-void WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type) final {
+inline void CPU::WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type) {
   int page = (address >> 24) & 15;
 
   // if (page == 8 && (address & 0x1FFFF) == 0)
