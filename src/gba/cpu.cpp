@@ -126,7 +126,7 @@ void CPU::RunFor(int cycles) {
         RunDMA();
       } else if (mmio.haltcnt == HaltControl::RUN) {
         if (mmio.irq_ime && fire)
-          cpu.SignalIrq();
+          cpu.SignalIRQ();
         cpu.Run();
       } else {
         /* Forward to the next event or timer IRQ. */

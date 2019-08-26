@@ -51,7 +51,7 @@ inline void ARM7TDMI::Run() {
   }
 }
 
-inline void ARM7TDMI::SignalIrq() {
+inline void ARM7TDMI::SignalIRQ() {
   if (state.cpsr.f.mask_irq) {
     return;
   }

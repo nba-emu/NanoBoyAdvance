@@ -23,12 +23,12 @@
 #include <memory>
 #include <unordered_set>
 
-#include "dma/regs.hpp"
+#include "config.hpp"
 #include "event_device.hpp"
+#include "dma/regs.hpp"
 #include "timer/regs.hpp"
-#include "../ppu/ppu.hpp"
-#include "../apu/apu.hpp"
-#include "../config.hpp"
+#include "apu/apu.hpp"
+#include "ppu/ppu.hpp"
 
 namespace GameBoyAdvance {
 
