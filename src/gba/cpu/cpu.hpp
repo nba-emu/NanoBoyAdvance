@@ -145,7 +145,6 @@ private:
   void WriteTimer(int id, int offset, std::uint8_t value);
   void RunTimers(int cycles);
   void IncrementTimer(int id, int increment);
-  void LatchFIFO(int id, int increment);
   auto GetCyclesToTimerIRQ() -> int;
   
   int  dma_hblank_set;

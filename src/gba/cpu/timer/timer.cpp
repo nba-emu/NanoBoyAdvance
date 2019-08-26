@@ -38,6 +38,7 @@ void CPU::RunTimers(int cycles) {
 
 void CPU::IncrementTimer(int id, int increment) {
   auto& timer = mmio.timer[id];
+  auto& soundcnt = apu.mmio.soundcnt;
   
   int overflows = 0;
   int threshold = 0x10000 - timer.counter;
@@ -66,19 +67,12 @@ void CPU::IncrementTimer(int id, int increment) {
       mmio.irq_if |= CPU::INT_TIMER0 << id;
     }
     
-    if (id <= 1 && apu.mmio.soundcnt.master_enable) {
-      LatchFIFO(id, overflows);
-    }
-  }
-}
-
-// TODO: do this in the APU?
-void CPU::LatchFIFO(int id, int increment) {
-  auto& soundcnt = apu.mmio.soundcnt;
-  
-  for (int fifo = 0; fifo < 2; fifo++) {
-    if (soundcnt.dma[fifo].timer_id == id) {
-      apu.LatchFIFO(fifo, increment);
+    if (id <= 1 && soundcnt.master_enable) {
+      for (int fifo = 0; fifo < 2; fifo++) {
+        if (soundcnt.dma[fifo].timer_id == id) {
+          apu.LatchFIFO(fifo, overflows);
+        }
+      }
     }
   }
 }
