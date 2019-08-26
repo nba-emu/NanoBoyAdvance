@@ -23,43 +23,24 @@
 
 namespace GameBoyAdvance {
 
-class CPU;
-  
-class TimerController {
-public:
-  TimerController(CPU* cpu) : cpu(cpu) { }
-  
-  void Reset();
-  void Run(int cycles);
-  auto GetCyclesUntilIrq() -> int;
-  auto Read(int id, int offset) -> std::uint8_t;
-  void Write(int id, int offset, std::uint8_t value);
-  
-private:
-  void Increment(int id, int increment);
-  void LatchAudioFromFIFO(int id, int increment); 
-  
-  CPU* cpu;
-  
-  struct Timer {
-    int id;
+struct Timer {
+  int id;
 
-    struct Control {
-      int frequency;
-      bool cascade;
-      bool interrupt;
-      bool enable;
-    } control;
+  struct Control {
+    int frequency;
+    bool cascade;
+    bool interrupt;
+    bool enable;
+  } control;
 
-    int cycles;
-    std::uint16_t reload;
-    std::uint32_t counter;
+  int cycles;
+  std::uint16_t reload;
+  std::uint32_t counter;
 
-    /* internal */
-    int  shift;
-    int  mask;
-    bool overflow;
-  } timer[4];
+  /* internal */
+  int  shift;
+  int  mask;
+  bool overflow;
 };
 
 }

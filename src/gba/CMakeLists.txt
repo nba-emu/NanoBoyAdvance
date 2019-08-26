@@ -5,7 +5,8 @@ set(SOURCES
     cpu/dma/dma.cpp
     cpu/dma/regs.cpp
     cpu/memory/mmio.cpp
-    cpu/timer.cpp
+    cpu/timer/regs.cpp
+    cpu/timer/timer.cpp
     emulator.cpp
     ppu/ppu.cpp
     ppu/regs.cpp

@@ -25,7 +25,7 @@
 
 #include "dma/regs.hpp"
 #include "event_device.hpp"
-#include "timer.hpp"
+#include "timer/regs.hpp"
 #include "../ppu/ppu.hpp"
 #include "../apu/apu.hpp"
 #include "../config.hpp"
@@ -91,6 +91,8 @@ public:
 
   struct MMIO {
     DMA dma[4];
+    
+    Timer timer[4];
 
     std::uint16_t keyinput;
 
@@ -116,8 +118,6 @@ public:
   
   ARM::ARM7TDMI cpu;
   
-  TimerController timers;
-  
   APU apu;
   PPU ppu;
 
@@ -140,6 +140,14 @@ private:
   void RunDMA();
   void RunAudioDMA();
 
+  void ResetTimers();
+  auto ReadTimer (int id, int offset) -> std::uint8_t;
+  void WriteTimer(int id, int offset, std::uint8_t value);
+  void RunTimers(int cycles);
+  void IncrementTimer(int id, int increment);
+  void LatchFIFO(int id, int increment);
+  auto GetCyclesToTimerIRQ() -> int;
+  
   int  dma_hblank_set;
   int  dma_vblank_set;
   int  dma_run_set;
