@@ -22,44 +22,47 @@
 #include <cstdint>
 
 namespace GameBoyAdvance {
+  
+struct DMA {
+  enum Control  {
+    INCREMENT = 0,
+    DECREMENT = 1,
+    FIXED  = 2,
+    RELOAD = 3
+  };
 
-class CPU;
-  
-class TimerController {
-public:
-  TimerController(CPU* cpu) : cpu(cpu) { }
-  
-  void Reset();
-  void Run(int cycles);
-  auto GetCyclesUntilIrq() -> int;
-  auto Read(int id, int offset) -> std::uint8_t;
-  void Write(int id, int offset, std::uint8_t value);
-  
-private:
-  void Increment(int id, int increment);
-  void LatchAudioFromFIFO(int id, int increment); 
-  
-  CPU* cpu;
-  
-  struct Timer {
-    int id;
+  enum Timing {
+    IMMEDIATE = 0,
+    VBLANK  = 1,
+    HBLANK  = 2,
+    SPECIAL = 3
+  };
 
-    struct Control {
-      int frequency;
-      bool cascade;
-      bool interrupt;
-      bool enable;
-    } control;
+  enum Size {
+    HWORD = 0,
+    WORD  = 1
+  };
 
-    int cycles;
-    std::uint16_t reload;
-    std::uint32_t counter;
+  bool enable;
+  bool repeat;
+  bool interrupt;
+  bool gamepak;
 
-    /* internal */
-    int  shift;
-    int  mask;
-    bool overflow;
-  } timer[4];
+  std::uint16_t length;
+  std::uint32_t dst_addr;
+  std::uint32_t src_addr;
+  Control dst_cntl;
+  Control src_cntl;
+  Timing time;
+  Size size;
+
+  struct {
+    int request_count;
+      
+    std::uint32_t length;
+    std::uint32_t dst_addr;
+    std::uint32_t src_addr;
+  } internal;
 };
 
 }

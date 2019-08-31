@@ -41,7 +41,7 @@ public:
 
   void Reset();
   void Run();
-  void SignalIrq();
+  void SignalIRQ();
 
   RegisterFile state;
   

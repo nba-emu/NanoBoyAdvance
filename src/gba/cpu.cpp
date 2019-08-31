@@ -35,21 +35,11 @@ CPU::CPU(std::shared_ptr<Config> config)
   , cpu(this)
   , apu(this)
   , ppu(this)
-  , dma(this)
-  , timers(this)
 {
   Reset();
 }
 
 void CPU::Reset() {
-  cpu.Reset();
-
-//  cpu.state.bank[ARM::BANK_SVC][ARM::BANK_R13] = 0x03007FE0; 
-//  cpu.state.bank[ARM::BANK_IRQ][ARM::BANK_R13] = 0x03007FA0;
-//  cpu.state.reg[13] = 0x03007F00;
-//  cpu.state.cpsr.f.mode = ARM::MODE_USR;
-//  cpu.state.r15 = 0x08000000;
-
   /* Clear all memory buffers. */
   std::memset(memory.bios, 0, 0x04000);
   std::memset(memory.wram, 0, 0x40000);
@@ -79,10 +69,17 @@ void CPU::Reset() {
   mmio.waitcnt.cgb = 0;
   UpdateCycleLUT();
   
-  timers.Reset();
-  dma.Reset();
+  ResetDMA();
+  ResetTimers();
   apu.Reset();
   ppu.Reset();
+  cpu.Reset();
+  
+//  cpu.state.bank[ARM::BANK_SVC][ARM::BANK_R13] = 0x03007FE0; 
+//  cpu.state.bank[ARM::BANK_IRQ][ARM::BANK_R13] = 0x03007FA0;
+//  cpu.state.reg[13] = 0x03007F00;
+//  cpu.state.cpsr.f.mode = ARM::MODE_USR;
+//  cpu.state.r15 = 0x08000000;
 }
 
 void CPU::RegisterEvent(EventDevice& event) {
@@ -94,7 +91,7 @@ void CPU::UnregisterEvent(EventDevice& event) {
 }
 
 void CPU::Tick(int cycles) {
-  timers.Run(cycles);
+  RunTimers(cycles);
   ticks_cpu_left -= cycles;
 }
 
@@ -125,15 +122,15 @@ void CPU::RunFor(int cycles) {
        * both access the memory bus.
        * If DMA is requested the CPU will be blocked.
        */
-      if (dma.IsRunning()) {
-        dma.Run();
+      if (dma_run_set != 0) {
+        RunDMA();
       } else if (mmio.haltcnt == HaltControl::RUN) {
         if (mmio.irq_ime && fire)
-          cpu.SignalIrq();
+          cpu.SignalIRQ();
         cpu.Run();
       } else {
         /* Forward to the next event or timer IRQ. */
-        Tick(std::min(timers.GetCyclesUntilIrq(), ticks_cpu_left));
+        Tick(std::min(GetCyclesToTimerIRQ(), ticks_cpu_left));
       }
     }
     

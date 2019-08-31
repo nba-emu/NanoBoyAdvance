@@ -51,7 +51,7 @@ inline void ARM7TDMI::Run() {
   }
 }
 
-inline void ARM7TDMI::SignalIrq() {
+inline void ARM7TDMI::SignalIRQ() {
   if (state.cpsr.f.mask_irq) {
     return;
   }
@@ -148,6 +148,9 @@ inline void ARM7TDMI::SwitchMode(Mode new_mode) {
   auto old_bank = GetRegisterBankByMode(state.cpsr.f.mode);
   auto new_bank = GetRegisterBankByMode(new_mode);
 
+  state.cpsr.f.mode = new_mode; 
+  p_spsr = &state.spsr[new_bank];
+
   if (old_bank == new_bank)
     return;
 
@@ -166,7 +169,4 @@ inline void ARM7TDMI::SwitchMode(Mode new_mode) {
     state.r13 = state.bank[new_bank][5];
     state.r14 = state.bank[new_bank][6];
   }
-  
-  state.cpsr.f.mode = new_mode; 
-  p_spsr = &state.spsr[new_bank];
 }

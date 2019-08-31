@@ -19,36 +19,28 @@
 
 #pragma once
 
-#include "regs.hpp"
-#include "../event_device.hpp"
-
-#include <cstdio>
+#include <cstdint>
 
 namespace GameBoyAdvance {
 
-class CPU;
+struct Timer {
+  int id;
 
-class APU : public EventDevice {
-public:
-  APU(CPU* cpu) : cpu(cpu) { }
-  
-  void Reset();
-  void LatchFIFO(int id, int times);
-  void Tick() final;
-  
-  struct MMIO {
-    FIFO fifo[2];
-    
-    SoundControl soundcnt { fifo };
-    BIAS bias;
-  } mmio;
-  
-  std::int8_t latch[2];
-  
-private:
-  CPU* cpu;
-  
-  FILE* dump;
+  struct Control {
+    int frequency;
+    bool cascade;
+    bool interrupt;
+    bool enable;
+  } control;
+
+  int cycles;
+  std::uint16_t reload;
+  std::uint32_t counter;
+
+  /* internal */
+  int  shift;
+  int  mask;
+  bool overflow;
 };
 
 }

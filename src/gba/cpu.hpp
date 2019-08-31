@@ -23,12 +23,12 @@
 #include <memory>
 #include <unordered_set>
 
-#include "dma.hpp"
+#include "config.hpp"
 #include "event_device.hpp"
-#include "timer.hpp"
-#include "../ppu/ppu.hpp"
-#include "../apu/apu.hpp"
-#include "../config.hpp"
+#include "dma/regs.hpp"
+#include "timer/regs.hpp"
+#include "apu/apu.hpp"
+#include "ppu/ppu.hpp"
 
 namespace GameBoyAdvance {
 
@@ -41,6 +41,10 @@ public:
   void RegisterEvent(EventDevice& event);
   void UnregisterEvent(EventDevice& event);
   
+  void RequestHBlankDMA();
+  void RequestVBlankDMA();
+  void RequestAudioDMA(int fifo);
+
   void RunFor(int cycles);
   
   enum class HaltControl {
@@ -86,8 +90,12 @@ public:
   } memory;
 
   struct MMIO {
-    std::uint16_t keyinput;
+    DMA dma[4];
     
+    Timer timer[4];
+
+    std::uint16_t keyinput;
+
     std::uint16_t irq_ie;
     std::uint16_t irq_if;
     std::uint16_t irq_ime;
@@ -109,15 +117,20 @@ public:
   } mmio;
   
   ARM::ARM7TDMI cpu;
+  
   APU apu;
   PPU ppu;
-  DMAController dma;
-  TimerController timers;
 
 private:
-  friend class DMAController;
   
-  #include "memory.inl"
+  std::uint32_t ReadBIOS(std::uint32_t address);
+  
+  std::uint8_t  ReadByte(std::uint32_t address, ARM::AccessType type) final;
+  std::uint16_t ReadHalf(std::uint32_t address, ARM::AccessType type) final;
+  std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) final;
+  void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) final;
+  void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type) final;
+  void WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type) final;
   
   void SWI(std::uint32_t call_id) final { }
   void Tick(int cycles) final;
@@ -126,6 +139,26 @@ private:
   void WriteMMIO(std::uint32_t address, std::uint8_t value);
   
   void UpdateCycleLUT();
+
+  void ResetDMA();
+  auto ReadDMA (int id, int offset) -> std::uint8_t;
+  void WriteDMA(int id, int offset, std::uint8_t value);
+  void StartDMA(int id);
+  void RunDMA();
+  void RunAudioDMA();
+
+  void ResetTimers();
+  auto ReadTimer (int id, int offset) -> std::uint8_t;
+  void WriteTimer(int id, int offset, std::uint8_t value);
+  void RunTimers(int cycles);
+  void IncrementTimer(int id, int increment);
+  auto GetCyclesToTimerIRQ() -> int;
+  
+  int  dma_hblank_set;
+  int  dma_vblank_set;
+  int  dma_run_set;
+  int  dma_current;
+  bool dma_interleaved;
 
   int ticks_cpu_left = 0;
   int ticks_to_event = 0;
@@ -146,6 +179,12 @@ private:
   static constexpr int s_ws_seq0[2] = { 2, 1 };       /* Sequential WS0 */
   static constexpr int s_ws_seq1[2] = { 4, 1 };       /* Sequential WS1 */
   static constexpr int s_ws_seq2[2] = { 8, 1 };       /* Sequential WS2 */
+
+  static constexpr std::uint32_t s_dma_dst_mask[4] = { 0x07FFFFFF, 0x07FFFFFF, 0x07FFFFFF, 0x0FFFFFFF };
+  static constexpr std::uint32_t s_dma_src_mask[4] = { 0x07FFFFFF, 0x0FFFFFFF, 0x0FFFFFFF, 0x0FFFFFFF };
+  static constexpr std::uint32_t s_dma_len_mask[4] = { 0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF };
 };
 
+#include "memory/memory.inl"
+  
 }

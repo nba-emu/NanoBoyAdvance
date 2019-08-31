@@ -21,7 +21,7 @@
 #include <cstring>
 
 #include "ppu.hpp"
-#include "../cpu/cpu.hpp"
+#include "../cpu.hpp"
 
 using namespace GameBoyAdvance;
 
@@ -92,7 +92,7 @@ void PPU::Tick() {
 
   switch (phase) {
     case Phase::SCANLINE: {
-      cpu->dma.RequestHBlank();
+      cpu->RequestHBlankDMA();
       Next(Phase::HBLANK);
       dispstat.hblank_flag = 1;
 
@@ -110,7 +110,7 @@ void PPU::Tick() {
       }
 
       if (vcount == 160) {
-        cpu->dma.RequestVBlank();
+        cpu->RequestVBlankDMA();
         dispstat.vblank_flag = 1;
         Next(Phase::VBLANK);
 

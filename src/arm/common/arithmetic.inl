@@ -51,8 +51,7 @@ std::uint32_t ADC(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
     SetNZ(result32);
     state.cpsr.f.c = result64 >> 32;
     state.cpsr.f.v = ((~(op1 ^ op2) & ((op1 + op2) ^ op2)) ^
-              (~((op1 + op2) ^ op3) & (result32 ^ op3))) >> 31;
-
+                     (~((op1 + op2) ^ op3) & (result32 ^ op3))) >> 31;
     return result32;
   } else {
     return op1 + op2 + op3;

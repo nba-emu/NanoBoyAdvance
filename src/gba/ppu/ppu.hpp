@@ -22,7 +22,7 @@
 #include <cstdint>
 
 #include "regs.hpp"
-#include "../cpu/event_device.hpp"
+#include "../event_device.hpp"
 
 namespace GameBoyAdvance {
 

@@ -19,8 +19,8 @@
 
 #include <cstdio>
 
-#include "cpu.hpp"
 #include "mmio.hpp"
+#include "../cpu.hpp"
 
 using namespace GameBoyAdvance;
 
@@ -54,14 +54,14 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case BLDCNT+1:   return ppu_io.bldcnt.Read(1);
     
     /* DMAs 0-3 */
-    case DMA0CNT_H:   return dma.Read(0, 10);
-    case DMA0CNT_H+1: return dma.Read(0, 11);
-    case DMA1CNT_H:   return dma.Read(1, 10);
-    case DMA1CNT_H+1: return dma.Read(1, 11);
-    case DMA2CNT_H:   return dma.Read(2, 10);
-    case DMA2CNT_H+1: return dma.Read(2, 11);
-    case DMA3CNT_H:   return dma.Read(3, 10);
-    case DMA3CNT_H+1: return dma.Read(3, 11);
+    case DMA0CNT_H:   return ReadDMA(0, 10);
+    case DMA0CNT_H+1: return ReadDMA(0, 11);
+    case DMA1CNT_H:   return ReadDMA(1, 10);
+    case DMA1CNT_H+1: return ReadDMA(1, 11);
+    case DMA2CNT_H:   return ReadDMA(2, 10);
+    case DMA2CNT_H+1: return ReadDMA(2, 11);
+    case DMA3CNT_H:   return ReadDMA(3, 10);
+    case DMA3CNT_H+1: return ReadDMA(3, 11);
       
     /* SOUND */
     case SOUNDCNT_L:   return apu_io.soundcnt.Read(0);
@@ -73,18 +73,18 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case SOUNDBIAS+1:  return apu_io.bias.Read(1);
       
     /* Timers 0-3 */
-    case TM0CNT_L:   return timers.Read(0, 0);
-    case TM0CNT_L+1: return timers.Read(0, 1);
-    case TM0CNT_H:   return timers.Read(0, 2);
-    case TM1CNT_L:   return timers.Read(1, 0);
-    case TM1CNT_L+1: return timers.Read(1, 1);
-    case TM1CNT_H:   return timers.Read(1, 2);
-    case TM2CNT_L:   return timers.Read(2, 0);
-    case TM2CNT_L+1: return timers.Read(2, 1);
-    case TM2CNT_H:   return timers.Read(2, 2);
-    case TM3CNT_L:   return timers.Read(3, 0);
-    case TM3CNT_L+1: return timers.Read(3, 1);
-    case TM3CNT_H:   return timers.Read(3, 2);
+    case TM0CNT_L:   return ReadTimer(0, 0);
+    case TM0CNT_L+1: return ReadTimer(0, 1);
+    case TM0CNT_H:   return ReadTimer(0, 2);
+    case TM1CNT_L:   return ReadTimer(1, 0);
+    case TM1CNT_L+1: return ReadTimer(1, 1);
+    case TM1CNT_H:   return ReadTimer(1, 2);
+    case TM2CNT_L:   return ReadTimer(2, 0);
+    case TM2CNT_L+1: return ReadTimer(2, 1);
+    case TM2CNT_H:   return ReadTimer(2, 2);
+    case TM3CNT_L:   return ReadTimer(3, 0);
+    case TM3CNT_L+1: return ReadTimer(3, 1);
+    case TM3CNT_H:   return ReadTimer(3, 2);
   
     case KEYINPUT+0: {
       return (config->input_dev->Poll(Key::A)      ? 0 : 1)  |
@@ -219,54 +219,54 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
       break;
     
     /* DMAs 0-3 */
-    case DMA0SAD:     dma.Write(0, 0, value); break;
-    case DMA0SAD+1:   dma.Write(0, 1, value); break;
-    case DMA0SAD+2:   dma.Write(0, 2, value); break;
-    case DMA0SAD+3:   dma.Write(0, 3, value); break;
-    case DMA0DAD:     dma.Write(0, 4, value); break;
-    case DMA0DAD+1:   dma.Write(0, 5, value); break;
-    case DMA0DAD+2:   dma.Write(0, 6, value); break;
-    case DMA0DAD+3:   dma.Write(0, 7, value); break;
-    case DMA0CNT_L:   dma.Write(0, 8, value); break;
-    case DMA0CNT_L+1: dma.Write(0, 9, value); break;
-    case DMA0CNT_H:   dma.Write(0, 10, value); break;
-    case DMA0CNT_H+1: dma.Write(0, 11, value); break;
-    case DMA1SAD:     dma.Write(1, 0, value); break;
-    case DMA1SAD+1:   dma.Write(1, 1, value); break;
-    case DMA1SAD+2:   dma.Write(1, 2, value); break;
-    case DMA1SAD+3:   dma.Write(1, 3, value); break;
-    case DMA1DAD:     dma.Write(1, 4, value); break;
-    case DMA1DAD+1:   dma.Write(1, 5, value); break;
-    case DMA1DAD+2:   dma.Write(1, 6, value); break;
-    case DMA1DAD+3:   dma.Write(1, 7, value); break;
-    case DMA1CNT_L:   dma.Write(1, 8, value); break;
-    case DMA1CNT_L+1: dma.Write(1, 9, value); break;
-    case DMA1CNT_H:   dma.Write(1, 10, value); break;
-    case DMA1CNT_H+1: dma.Write(1, 11, value); break;
-    case DMA2SAD:     dma.Write(2, 0, value); break;
-    case DMA2SAD+1:   dma.Write(2, 1, value); break;
-    case DMA2SAD+2:   dma.Write(2, 2, value); break;
-    case DMA2SAD+3:   dma.Write(2, 3, value); break;
-    case DMA2DAD:     dma.Write(2, 4, value); break;
-    case DMA2DAD+1:   dma.Write(2, 5, value); break;
-    case DMA2DAD+2:   dma.Write(2, 6, value); break;
-    case DMA2DAD+3:   dma.Write(2, 7, value); break;
-    case DMA2CNT_L:   dma.Write(2, 8, value); break;
-    case DMA2CNT_L+1: dma.Write(2, 9, value); break;
-    case DMA2CNT_H:   dma.Write(2, 10, value); break;
-    case DMA2CNT_H+1: dma.Write(2, 11, value); break;
-    case DMA3SAD:     dma.Write(3, 0, value); break;
-    case DMA3SAD+1:   dma.Write(3, 1, value); break;
-    case DMA3SAD+2:   dma.Write(3, 2, value); break;
-    case DMA3SAD+3:   dma.Write(3, 3, value); break;
-    case DMA3DAD:     dma.Write(3, 4, value); break;
-    case DMA3DAD+1:   dma.Write(3, 5, value); break;
-    case DMA3DAD+2:   dma.Write(3, 6, value); break;
-    case DMA3DAD+3:   dma.Write(3, 7, value); break;
-    case DMA3CNT_L:   dma.Write(3, 8, value); break;
-    case DMA3CNT_L+1: dma.Write(3, 9, value); break;
-    case DMA3CNT_H:   dma.Write(3, 10, value); break;
-    case DMA3CNT_H+1: dma.Write(3, 11, value); break;
+    case DMA0SAD:     WriteDMA(0, 0, value); break;
+    case DMA0SAD+1:   WriteDMA(0, 1, value); break;
+    case DMA0SAD+2:   WriteDMA(0, 2, value); break;
+    case DMA0SAD+3:   WriteDMA(0, 3, value); break;
+    case DMA0DAD:     WriteDMA(0, 4, value); break;
+    case DMA0DAD+1:   WriteDMA(0, 5, value); break;
+    case DMA0DAD+2:   WriteDMA(0, 6, value); break;
+    case DMA0DAD+3:   WriteDMA(0, 7, value); break;
+    case DMA0CNT_L:   WriteDMA(0, 8, value); break;
+    case DMA0CNT_L+1: WriteDMA(0, 9, value); break;
+    case DMA0CNT_H:   WriteDMA(0, 10, value); break;
+    case DMA0CNT_H+1: WriteDMA(0, 11, value); break;
+    case DMA1SAD:     WriteDMA(1, 0, value); break;
+    case DMA1SAD+1:   WriteDMA(1, 1, value); break;
+    case DMA1SAD+2:   WriteDMA(1, 2, value); break;
+    case DMA1SAD+3:   WriteDMA(1, 3, value); break;
+    case DMA1DAD:     WriteDMA(1, 4, value); break;
+    case DMA1DAD+1:   WriteDMA(1, 5, value); break;
+    case DMA1DAD+2:   WriteDMA(1, 6, value); break;
+    case DMA1DAD+3:   WriteDMA(1, 7, value); break;
+    case DMA1CNT_L:   WriteDMA(1, 8, value); break;
+    case DMA1CNT_L+1: WriteDMA(1, 9, value); break;
+    case DMA1CNT_H:   WriteDMA(1, 10, value); break;
+    case DMA1CNT_H+1: WriteDMA(1, 11, value); break;
+    case DMA2SAD:     WriteDMA(2, 0, value); break;
+    case DMA2SAD+1:   WriteDMA(2, 1, value); break;
+    case DMA2SAD+2:   WriteDMA(2, 2, value); break;
+    case DMA2SAD+3:   WriteDMA(2, 3, value); break;
+    case DMA2DAD:     WriteDMA(2, 4, value); break;
+    case DMA2DAD+1:   WriteDMA(2, 5, value); break;
+    case DMA2DAD+2:   WriteDMA(2, 6, value); break;
+    case DMA2DAD+3:   WriteDMA(2, 7, value); break;
+    case DMA2CNT_L:   WriteDMA(2, 8, value); break;
+    case DMA2CNT_L+1: WriteDMA(2, 9, value); break;
+    case DMA2CNT_H:   WriteDMA(2, 10, value); break;
+    case DMA2CNT_H+1: WriteDMA(2, 11, value); break;
+    case DMA3SAD:     WriteDMA(3, 0, value); break;
+    case DMA3SAD+1:   WriteDMA(3, 1, value); break;
+    case DMA3SAD+2:   WriteDMA(3, 2, value); break;
+    case DMA3SAD+3:   WriteDMA(3, 3, value); break;
+    case DMA3DAD:     WriteDMA(3, 4, value); break;
+    case DMA3DAD+1:   WriteDMA(3, 5, value); break;
+    case DMA3DAD+2:   WriteDMA(3, 6, value); break;
+    case DMA3DAD+3:   WriteDMA(3, 7, value); break;
+    case DMA3CNT_L:   WriteDMA(3, 8, value); break;
+    case DMA3CNT_L+1: WriteDMA(3, 9, value); break;
+    case DMA3CNT_H:   WriteDMA(3, 10, value); break;
+    case DMA3CNT_H+1: WriteDMA(3, 11, value); break;
       
     /* SOUND */
     case FIFO_A:
@@ -286,18 +286,18 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     case SOUNDBIAS+1:  apu_io.bias.Write(1, value);
       
     /* Timers 0-3 */
-    case TM0CNT_L:   timers.Write(0, 0, value); break;
-    case TM0CNT_L+1: timers.Write(0, 1, value); break;
-    case TM0CNT_H:   timers.Write(0, 2, value); break;
-    case TM1CNT_L:   timers.Write(1, 0, value); break;
-    case TM1CNT_L+1: timers.Write(1, 1, value); break;
-    case TM1CNT_H:   timers.Write(1, 2, value); break;
-    case TM2CNT_L:   timers.Write(2, 0, value); break;
-    case TM2CNT_L+1: timers.Write(2, 1, value); break;
-    case TM2CNT_H:   timers.Write(2, 2, value); break;
-    case TM3CNT_L:   timers.Write(3, 0, value); break;
-    case TM3CNT_L+1: timers.Write(3, 1, value); break;
-    case TM3CNT_H:   timers.Write(3, 2, value); break;
+    case TM0CNT_L:   WriteTimer(0, 0, value); break;
+    case TM0CNT_L+1: WriteTimer(0, 1, value); break;
+    case TM0CNT_H:   WriteTimer(0, 2, value); break;
+    case TM1CNT_L:   WriteTimer(1, 0, value); break;
+    case TM1CNT_L+1: WriteTimer(1, 1, value); break;
+    case TM1CNT_H:   WriteTimer(1, 2, value); break;
+    case TM2CNT_L:   WriteTimer(2, 0, value); break;
+    case TM2CNT_L+1: WriteTimer(2, 1, value); break;
+    case TM2CNT_H:   WriteTimer(2, 2, value); break;
+    case TM3CNT_L:   WriteTimer(3, 0, value); break;
+    case TM3CNT_L+1: WriteTimer(3, 1, value); break;
+    case TM3CNT_H:   WriteTimer(3, 2, value); break;
     
     /* Interrupt Control */
     case IE+0: {

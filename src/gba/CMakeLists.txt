@@ -1,10 +1,12 @@
 set(SOURCES
     apu/apu.cpp
     apu/regs.cpp
-    cpu/cpu.cpp
-    cpu/dma.cpp
-    cpu/mmio.cpp
-    cpu/timer.cpp
+    cpu.cpp
+    dma/dma.cpp
+    dma/regs.cpp
+    memory/mmio.cpp
+    timer/regs.cpp
+    timer/timer.cpp
     emulator.cpp
     ppu/ppu.cpp
     ppu/regs.cpp
@@ -15,9 +17,9 @@ set(SOURCES
 set(HEADERS
     apu/apu.hpp
     apu/regs.hpp
-    cpu/cpu.hpp
-    cpu/event_device.hpp
-    cpu/mmio.hpp
+    cpu.hpp
+    event_device.hpp
+    memory/mmio.hpp
     emulator.hpp
     ppu/ppu.hpp
     ppu/regs.hpp

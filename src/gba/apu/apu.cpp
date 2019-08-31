@@ -20,7 +20,7 @@
 #include <math.h>
 
 #include "apu.hpp"
-#include "../cpu/cpu.hpp"
+#include "../cpu.hpp"
 
 using namespace GameBoyAdvance;
 
@@ -40,7 +40,7 @@ void APU::LatchFIFO(int id, int times) {
   for (int time = 0; time < times; time++) {
     latch[id] = fifo.Read();
     if (fifo.Count() <= 16) {
-      cpu->dma.RequestFIFO(id);
+      cpu->RequestAudioDMA(id);
     }
   }
 }
