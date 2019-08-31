@@ -30,11 +30,9 @@
 namespace DSP {
 
 template <typename T>
-class Resampler : public Stream<T> {
+class Resampler : public WriteStream<T> {
 public:
   Resampler(std::shared_ptr<WriteStream<T>> output) : output(output) {}
-  
-  auto Read() -> T { return output->Read(); }
   
   void SetSampleRates(float samplerate_in, float samplerate_out) {
     resample_phase_shift = samplerate_in / samplerate_out;
@@ -46,25 +44,29 @@ protected:
   float resample_phase_shift = 1;
 };
 
-template <int points>
-class SincResampler : public Resampler<float> {
+template <typename T, int points>
+class SincResampler : public Resampler<T> {
 public:
-  void Write(float input) {
+  SincResampler(std::shared_ptr<WriteStream<T>> output) 
+    : Resampler<T>(output)
+  { }
+
+  void Write(T const& input) final {
     taps.Write(input); // TODO: initial write position?
 
     while (resample_phase < 1.0) { 
-      float sample = 0.0;
+      T sample = {};
 
       for (int n = 0; n < points; n++) {
         float x = M_PI * (resample_phase - (n - points/2)) + 1e-6;
         float sinc = std::sin(x)/x;
 
-        sample += sinc * taps.Peek(n);
+        sample += taps.Peek(n) * sinc;
       }
 
-      output->Write(sample);
+      this->output->Write(sample);
 
-      resample_phase += resample_phase_shift;
+      resample_phase += this->resample_phase_shift;
     }
 
     taps.Read(); // advance read pointer
@@ -75,7 +77,7 @@ public:
 private:
   float resample_phase = 0; // internal phase
   
-  RingBuffer<float> taps { points };
+  RingBuffer<T> taps { points };
 };
   
 }

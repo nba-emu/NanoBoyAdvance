@@ -33,7 +33,11 @@ class CPU;
 
 class APU : public EventDevice {
 public:
-  APU(CPU* cpu) : cpu(cpu) { }
+  APU(CPU* cpu) 
+    : cpu(cpu) 
+    , buffer(new DSP::StereoRingBuffer<float>(16384))
+    , resampler(new DSP::SincResampler<DSP::StereoSample<float>, 16>(buffer))
+  { }
   
   void Reset();
   void LatchFIFO(int id, int times);
@@ -48,7 +52,8 @@ public:
   
   std::int8_t latch[2];
   
-  DSP::StereoRingBuffer<std::int16_t> buffer { 16384 };
+  std::shared_ptr<DSP::StereoRingBuffer<float>> buffer;
+  std::unique_ptr<DSP::Resampler<DSP::StereoSample<float>>> resampler;
   
 private:
   CPU* cpu;

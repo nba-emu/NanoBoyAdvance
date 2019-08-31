@@ -30,7 +30,6 @@ struct StereoSample {
   T left  {};
   T right {};
   
-  // Conversion e.g. from StereoSample<int> to StereoSample<float>
   template <typename U>
   operator StereoSample<U>() {
     return { (U)left, (U)right };
@@ -76,47 +75,5 @@ struct StereoSample {
     return *this;
   }
 };
-
-template <typename T>
-class RingBuffer : public Stream<T> {
-
-public:
-  RingBuffer(int length)
-    : length(length)
-  {
-    data.reset(new T[length]);
-    Reset();
-  }
-  
-  void Reset() {
-    rd_ptr = 0;
-    wr_ptr = 0;
-  }
-  
-  auto Peek(int offset) -> T const {
-    return data[(rd_ptr + offset) % length];
-  }
-  
-  auto Read() -> T {
-    T value = data[rd_ptr];
-    rd_ptr = (rd_ptr + 1) % length;
-    return value;
-  }
-  
-  void Write(T const& value) {
-    data[wr_ptr] = value;
-    wr_ptr = (wr_ptr + 1) % length;
-  }
-  
-private:
-  std::unique_ptr<T[]> data;
-  
-  int rd_ptr;
-  int wr_ptr;
-  int length;
-};
-
-template <typename T>
-using StereoRingBuffer = RingBuffer<StereoSample<T>>;
   
 }

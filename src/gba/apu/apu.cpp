@@ -17,7 +17,7 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#include <math.h>
+#include <cmath>
 
 #include "apu.hpp"
 #include "../cpu.hpp"
@@ -36,10 +36,10 @@ void AudioCallback(APU* apu, std::int16_t* stream, int byte_len) {
   int samples = byte_len/sizeof(std::int16_t)/2;
   
   for (int x = 0; x < samples; x++) {
-    auto sample = apu->buffer.Read();
+    auto sample = apu->buffer->Read() * 32767.0;
     
-    stream[x*2+0] = sample.left;
-    stream[x*2+1] = sample.right;
+    stream[x*2+0] = std::int16_t(std::round(sample.left));
+    stream[x*2+1] = std::int16_t(std::round(sample.right));
   }
 }
 
@@ -88,39 +88,9 @@ void APU::LatchFIFO(int id, int times) {
   }
 }
 
-#define POINTS (16)
-
-void APU::Tick() {
-  float T = 32768.0/48000.0;
-  static float t = 0.0;
- 
-  static DSP::StereoRingBuffer<float> taps { POINTS };
+void APU::Tick() {    
+  resampler->SetSampleRates(32768.0, 48000.0);
+  resampler->Write({ latch[0]/128.0f, latch[1]/128.0f });
   
-  // TODO: initial write position!
-  taps.Write({ latch[0], latch[1] });
-  
-  while (t < 1.0) {
-    DSP::StereoSample<float> sample;
-    
-    for (int n = 0; n < POINTS; n++) {
-      float x = M_PI*(t - (n - POINTS/2)) + 1e-6;
-      float sinc = sin(x)/x;
-      
-      auto tap = taps.Peek(n);
-      
-      sample += tap * sinc;
-    }
-
-    sample *= 128.0;
-    
-    buffer.Write(DSP::StereoSample<std::int16_t>(sample));
-    
-    t += T;
-  }
-  
-  taps.Read(); // advance read pointer
-
-  t = t - 1.0;
-
   wait_cycles += 512;
 }
