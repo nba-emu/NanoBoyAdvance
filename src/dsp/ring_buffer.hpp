@@ -21,61 +21,10 @@
 
 #include <memory>
 
+#include "stereo.hpp"
 #include "stream.hpp"
 
 namespace DSP {
-
-template <typename T>
-struct StereoSample {
-  T left  {};
-  T right {};
-  
-  // Conversion e.g. from StereoSample<int> to StereoSample<float>
-  template <typename U>
-  operator StereoSample<U>() {
-    return { (U)left, (U)right };
-  }
-  
-  StereoSample<T> operator+(T scalar) const {
-    return { left + scalar, right + scalar };
-  }
-  
-  StereoSample<T> operator+(StereoSample<T> const& other) const {
-    return { left + other.left, right + other.right };
-  }
-  
-  StereoSample<T>& operator+=(T scalar) {
-    left  += scalar;
-    right += scalar;
-    return *this;
-  }
-  
-  StereoSample<T>& operator+=(StereoSample<T> const& other) {
-    left  += other.left;
-    right += other.right;
-    return *this;
-  }
-  
-  StereoSample<T> operator*(T scalar) const {
-    return { left * scalar, right * scalar };
-  }
-  
-  StereoSample<T> operator*(StereoSample<T> const& other) const {
-    return { left * other.left, right * other.right };
-  }
-  
-  StereoSample<T>& operator*=(T scalar) {
-    left  *= scalar;
-    right *= scalar;
-    return *this;
-  }
-  
-  StereoSample<T>& operator*=(StereoSample<T> const& other) {
-    left  *= other.left;
-    right *= other.right;
-    return *this;
-  }
-};
 
 template <typename T>
 class RingBuffer : public Stream<T> {
