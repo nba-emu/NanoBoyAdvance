@@ -19,7 +19,7 @@
 
 #pragma once
 
-// TODO: is a shared_ptr really best fit here?
+/* TODO: is a shared_ptr really best fit here? */
 
 #include <cmath>
 #include <memory>
@@ -31,6 +31,7 @@ namespace DSP {
 
 template <typename T>
 class Resampler : public WriteStream<T> {
+
 public:
   Resampler(std::shared_ptr<WriteStream<T>> output) : output(output) {}
   
@@ -44,15 +45,69 @@ protected:
   float resample_phase_shift = 1;
 };
 
+template <typename T>
+class NearestResampler : public Resampler<T> {
+
+public:
+  NearestResampler(std::shared_ptr<WriteStream<T>> output) 
+    : Resampler<T>(output)
+  { }
+  
+  void Write(T const& input) final {
+    while (resample_phase < 1.0) {
+      this->output->Write(input);
+      resample_phase += this->resample_phase_shift;
+    }
+    
+    resample_phase = resample_phase - 1.0;
+  }
+  
+private:
+  float resample_phase = 0;
+};
+
+template <typename T>
+class CosineResampler : public Resampler<T> {
+
+public:
+  CosineResampler(std::shared_ptr<WriteStream<T>> output) 
+    : Resampler<T>(output)
+  { }
+  
+  void Write(T const& input) final {
+    while (resample_phase < 1.0) {
+      float x = (std::cos(M_PI * resample_phase) + 1.0) * 0.5;
+      
+      this->output->Write(previous * x + input * (1.0 - x));
+      
+      resample_phase += this->resample_phase_shift;
+    }
+    
+    resample_phase = resample_phase - 1.0;
+    
+    previous = input;
+  }
+  
+private:
+  T previous = {};
+  
+  float resample_phase = 0;
+};
+
 template <typename T, int points>
 class SincResampler : public Resampler<T> {
+
 public:
   SincResampler(std::shared_ptr<WriteStream<T>> output) 
     : Resampler<T>(output)
-  { }
+  {
+    for (int i = 0; i < points - 1; i++) {
+      taps.Write({});
+    }
+  }
 
   void Write(T const& input) final {
-    taps.Write(input); // TODO: initial write position?
+    taps.Write(input);
 
     while (resample_phase < 1.0) { 
       T sample = {};
@@ -69,15 +124,15 @@ public:
       resample_phase += this->resample_phase_shift;
     }
 
-    taps.Read(); // advance read pointer
+    taps.Read();
 
     resample_phase = resample_phase - 1.0;
   }
   
 private:
-  float resample_phase = 0; // internal phase
-  
   RingBuffer<T> taps { points };
+  
+  float resample_phase = 0;
 };
   
 }

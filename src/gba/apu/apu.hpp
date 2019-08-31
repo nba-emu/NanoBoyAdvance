@@ -36,7 +36,7 @@ public:
   APU(CPU* cpu) 
     : cpu(cpu) 
     , buffer(new DSP::StereoRingBuffer<float>(16384))
-    , resampler(new DSP::SincResampler<DSP::StereoSample<float>, 16>(buffer))
+    , resampler(new DSP::SincResampler<DSP::StereoSample<float>, 24>(buffer))
   { }
   
   void Reset();
