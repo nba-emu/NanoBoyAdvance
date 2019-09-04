@@ -22,10 +22,10 @@
 namespace GameBoyAdvance {
 
 void CPU::ResetDMA() {
-  dma_hblank_set = 0;
-  dma_vblank_set = 0;
-  dma_run_set = 0;
-  dma_current = 0;
+  dma_hblank_set.reset();
+  dma_vblank_set.reset();
+  dma_run_set.reset();
+  dma_current = -1;
   dma_interleaved = false;
   
   for (auto& dma : mmio.dma) {
@@ -105,17 +105,17 @@ void CPU::WriteDMA(int id, int offset, std::uint8_t value) {
       dma.interrupt = value & 64;
       dma.enable    = value & 128;
 
-      dma_hblank_set &= ~(1<<id);
-      dma_vblank_set &= ~(1<<id);
+      dma_hblank_set.set(id, false);
+      dma_vblank_set.set(id, false);
 
       if (dma.enable) {
         /* Update HBLANK/VBLANK DMA sets. */
         switch (dma.time) {
           case DMA::HBLANK:
-            dma_hblank_set |= (1<<id);
+            dma_hblank_set.set(id, true);
             break;
           case DMA::VBLANK:
-            dma_vblank_set |= (1<<id);
+            dma_vblank_set.set(id, true);
             break;
         }
 

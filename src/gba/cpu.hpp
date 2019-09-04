@@ -20,6 +20,7 @@
 #pragma once
 
 #include <arm/arm7tdmi/arm7tdmi.hpp>
+#include <bitset>
 #include <memory>
 
 #include "config.hpp"
@@ -152,9 +153,9 @@ private:
   void IncrementTimer(int id, int increment);
   auto GetCyclesToTimerIRQ() -> int;
   
-  int  dma_hblank_set;
-  int  dma_vblank_set;
-  int  dma_run_set;
+  std::bitset<4> dma_hblank_set;
+  std::bitset<4> dma_vblank_set;
+  std::bitset<4> dma_run_set;
   int  dma_current;
   bool dma_interleaved;
   

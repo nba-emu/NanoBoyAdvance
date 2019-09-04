@@ -57,18 +57,18 @@ void CPU::StartDMA(int id) {
    * then execute this DMA directly.
    * Lower priority DMAs will be interleaved in the latter case.
    */
-  if (dma_run_set == 0) {
+  if (dma_run_set.to_ulong() == 0) {
     dma_current = id;
   } else if (id < dma_current) {
     dma_current = id;
     dma_interleaved = true;
   }
 
-  dma_run_set |= (1 << id);
+  dma_run_set.set(id, true);
 }
 
 void CPU::RequestHBlankDMA() {
-  int hblank_dma = g_dma_from_bitset[dma_hblank_set];
+  int hblank_dma = g_dma_from_bitset[dma_hblank_set.to_ulong()];
   
   if (hblank_dma >= 0) {
     StartDMA(hblank_dma);
@@ -76,7 +76,7 @@ void CPU::RequestHBlankDMA() {
 }
 
 void CPU::RequestVBlankDMA() {
-  int vblank_dma = g_dma_from_bitset[dma_vblank_set];
+  int vblank_dma = g_dma_from_bitset[dma_vblank_set.to_ulong()];
   
   if (vblank_dma >= 0) {
     StartDMA(vblank_dma);
@@ -178,7 +178,7 @@ void CPU::RunDMA() {
     dma_run_set &= ~(1 << dma_current);
   }
   
-  dma_current = g_dma_from_bitset[dma_run_set];
+  dma_current = g_dma_from_bitset[dma_run_set.to_ulong()];
 }
 
 void CPU::RunAudioDMA() {
@@ -200,7 +200,7 @@ void CPU::RunAudioDMA() {
     mmio.irq_if |= CPU::INT_DMA0 << dma_current;
   }
     
-  dma_current = g_dma_from_bitset[dma_run_set];
+  dma_current = g_dma_from_bitset[dma_run_set.to_ulong()];
 }
 
 }
