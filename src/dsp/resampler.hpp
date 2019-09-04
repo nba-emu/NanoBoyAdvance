@@ -25,6 +25,7 @@
 #include <memory>
 
 #include "ring_buffer.hpp"
+#include "stereo.hpp"
 #include "stream.hpp"
 
 namespace DSP {
@@ -46,6 +47,9 @@ protected:
 };
 
 template <typename T>
+using StereoResampler = Resampler<StereoSample<T>>;  
+
+template <typename T>
 class NearestResampler : public Resampler<T> {
 
 public:
@@ -65,6 +69,9 @@ public:
 private:
   float resample_phase = 0;
 };
+
+template <typename T>
+using NearestStereoResampler = NearestResampler<StereoSample<T>>;
 
 template <typename T>
 class CosineResampler : public Resampler<T> {
@@ -93,6 +100,9 @@ private:
   
   float resample_phase = 0;
 };
+
+template <typename T>
+using CosineStereoResampler = CosineResampler<StereoSample<T>>;
 
 template <typename T, int points>
 class SincResampler : public Resampler<T> {
@@ -134,5 +144,8 @@ private:
   
   float resample_phase = 0;
 };
-  
+
+template <typename T, int points>
+using SincStereoResampler = SincResampler<StereoSample<T>, points>;
+
 }
