@@ -19,46 +19,53 @@
 
 #pragma once
 
-#include "regs.hpp"
-#include "../event_device.hpp"
+#include <memory>
 
-#include <dsp/resampler.hpp>
-#include <dsp/ring_buffer.hpp>
+#include "stereo.hpp"
+#include "stream.hpp"
 
-#include <cstdio>
+namespace DSP {
 
-namespace GameBoyAdvance {
+template <typename T>
+class RingBuffer : public Stream<T> {
 
-class CPU;
-
-class APU : public EventDevice {
 public:
-  APU(CPU* cpu) 
-    : cpu(cpu) 
-    , buffer(new DSP::StereoRingBuffer<float>(16384))
-    , resampler(new DSP::SincResampler<DSP::StereoSample<float>, 24>(buffer))
-  { }
+  RingBuffer(int length)
+    : length(length)
+  {
+    data.reset(new T[length]);
+    Reset();
+  }
   
-  void Reset();
-  void LatchFIFO(int id, int times);
-  void Tick() final;
+  void Reset() {
+    rd_ptr = 0;
+    wr_ptr = 0;
+  }
   
-  struct MMIO {
-    FIFO fifo[2];
-    
-    SoundControl soundcnt { fifo };
-    BIAS bias;
-  } mmio;
+  auto Peek(int offset) -> T const {
+    return data[(rd_ptr + offset) % length];
+  }
   
-  std::int8_t latch[2];
+  auto Read() -> T {
+    T value = data[rd_ptr];
+    rd_ptr = (rd_ptr + 1) % length;
+    return value;
+  }
   
-  std::shared_ptr<DSP::StereoRingBuffer<float>> buffer;
-  std::unique_ptr<DSP::Resampler<DSP::StereoSample<float>>> resampler;
+  void Write(T const& value) {
+    data[wr_ptr] = value;
+    wr_ptr = (wr_ptr + 1) % length;
+  }
   
 private:
-  CPU* cpu;
+  std::unique_ptr<T[]> data;
   
-  FILE* dump;
+  int rd_ptr;
+  int wr_ptr;
+  int length;
 };
 
+template <typename T>
+using StereoRingBuffer = RingBuffer<StereoSample<T>>;
+  
 }

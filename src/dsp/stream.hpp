@@ -19,46 +19,23 @@
 
 #pragma once
 
-#include "regs.hpp"
-#include "../event_device.hpp"
+namespace DSP {
 
-#include <dsp/resampler.hpp>
-#include <dsp/ring_buffer.hpp>
-
-#include <cstdio>
-
-namespace GameBoyAdvance {
-
-class CPU;
-
-class APU : public EventDevice {
+template <typename T>
+class ReadStream {
 public:
-  APU(CPU* cpu) 
-    : cpu(cpu) 
-    , buffer(new DSP::StereoRingBuffer<float>(16384))
-    , resampler(new DSP::SincResampler<DSP::StereoSample<float>, 24>(buffer))
-  { }
-  
-  void Reset();
-  void LatchFIFO(int id, int times);
-  void Tick() final;
-  
-  struct MMIO {
-    FIFO fifo[2];
-    
-    SoundControl soundcnt { fifo };
-    BIAS bias;
-  } mmio;
-  
-  std::int8_t latch[2];
-  
-  std::shared_ptr<DSP::StereoRingBuffer<float>> buffer;
-  std::unique_ptr<DSP::Resampler<DSP::StereoSample<float>>> resampler;
-  
-private:
-  CPU* cpu;
-  
-  FILE* dump;
+  virtual auto Read() -> T = 0;
 };
 
+template <typename T>
+class WriteStream {
+public:
+  virtual void Write(T const& value) = 0;
+};
+
+template <typename T>
+class Stream : public ReadStream<T>,
+               public WriteStream<T>
+{ };
+  
 }

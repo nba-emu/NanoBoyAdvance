@@ -17,12 +17,31 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#include <math.h>
+#include <cmath>
 
 #include "apu.hpp"
 #include "../cpu.hpp"
 
+#ifdef _MSC_VER
+#include "SDL.h"
+#else
+#include <SDL2/SDL.h>
+#endif
+
+#include <cstdio>
+
 using namespace GameBoyAdvance;
+
+void AudioCallback(APU* apu, std::int16_t* stream, int byte_len) {
+  int samples = byte_len/sizeof(std::int16_t)/2;
+  
+  for (int x = 0; x < samples; x++) {
+    auto sample = apu->buffer->Read() * 32767.0;
+    
+    stream[x*2+0] = std::int16_t(std::round(sample.left));
+    stream[x*2+1] = std::int16_t(std::round(sample.right));
+  }
+}
 
 void APU::Reset() {
   mmio.fifo[0].Reset();
@@ -32,6 +51,30 @@ void APU::Reset() {
   
   dump = fopen("audio.raw", "wb");
   wait_cycles = 512;
+  
+  // TODO: refactor this out of the core.
+  if (SDL_Init(SDL_INIT_AUDIO) < 0) {
+    std::puts("APU: SDL_Init(SDL_INIT_AUDIO) failed.");
+    return;
+  }
+  
+  SDL_AudioSpec want;
+  
+  want.freq = 48000;
+  want.samples = 4096;
+  want.format = AUDIO_S16;
+  want.channels = 2;
+  want.callback = (SDL_AudioCallback)AudioCallback;
+  want.userdata = this;
+  
+  SDL_CloseAudio();
+  
+  if (SDL_OpenAudio(&want, nullptr) < 0) {
+    std::puts("SDL_OpenAudio(&want, nullptr) failed.");
+    return;
+  }
+  
+  SDL_PauseAudio(0);
 }
   
 void APU::LatchFIFO(int id, int times) {
@@ -45,6 +88,9 @@ void APU::LatchFIFO(int id, int times) {
   }
 }
 
-void APU::Tick() {
+void APU::Tick() {    
+  resampler->SetSampleRates(32768.0, 48000.0);
+  resampler->Write({ latch[0]/128.0f, latch[1]/128.0f });
+  
   wait_cycles += 512;
 }
