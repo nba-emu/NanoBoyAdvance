@@ -98,7 +98,9 @@ private:
   std::uint8_t  priority[240];
   std::uint8_t  layer[2][240];
   std::uint16_t pixel[2][240];
-
+  
+  std::uint32_t output[240*160];
+  
   Phase phase;
 
   std::uint8_t blend_table[17][17][32][32];

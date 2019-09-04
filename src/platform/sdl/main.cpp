@@ -28,6 +28,9 @@
 #include <cstdio>
 #include <gba/emulator.hpp>
 
+SDL_Texture*  g_texture;
+SDL_Renderer* g_renderer;
+
 class SDL2_InputDevice : public GameBoyAdvance::InputDevice {
 public:
   auto Poll(Key key) -> bool final {
@@ -67,15 +70,22 @@ public:
   }
 };
 
+class SDL2_VideoDevice : public GameBoyAdvance::VideoDevice {
+public:
+  
+  void Draw(std::uint32_t* buffer) final {
+    SDL_UpdateTexture(g_texture, nullptr, buffer, 240 * sizeof(std::uint32_t));
+    SDL_RenderClear(g_renderer);
+    SDL_RenderCopy(g_renderer, g_texture, nullptr, nullptr);
+    SDL_RenderPresent(g_renderer);
+  }
+};
+
 int main(int argc, char** argv) {
   bool running = true;
   bool fullscreen = false;
   SDL_Event event;
   SDL_Window* window;
-  SDL_Texture* texture;
-  SDL_Renderer* renderer;
-
-  std::uint32_t fb[240*160];
 
   SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
   window = SDL_CreateWindow("NanoboyAdvance 0.1",
@@ -85,8 +95,8 @@ int main(int argc, char** argv) {
                 320,
                 0
                );
-  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-  texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 240, 160);
+  g_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+  g_texture = SDL_CreateTexture(g_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 240, 160);
   
   if (argc != 2) {
     std::printf("Usage: %s rom_path\n", argv[0]);
@@ -97,8 +107,8 @@ int main(int argc, char** argv) {
   
   auto config = std::make_shared<GameBoyAdvance::Config>();
   
-  config->video.output = fb;
   config->input_dev = std::make_shared<SDL2_InputDevice>();
+  config->video_dev = std::make_shared<SDL2_VideoDevice>();
   
   auto emulator = std::make_unique<GameBoyAdvance::Emulator>(config);
   
@@ -113,21 +123,14 @@ int main(int argc, char** argv) {
 
   while (running) {
     emulator->Frame();
-    
     frames++;
     
     int ticks2 = SDL_GetTicks();
-    
     if ((ticks2 - ticks1) >= 1000) {
       std::printf("FPS: %d (%.2f%%)\n", frames, frames/60.0*100.0);
       ticks1 = ticks2;
       frames = 0;
     }
-
-    SDL_UpdateTexture(texture, nullptr, fb, 240 * sizeof(std::uint32_t));
-    SDL_RenderClear(renderer);
-    SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-    SDL_RenderPresent(renderer);
 
     while (SDL_PollEvent(&event)) {
       if (event.type == SDL_QUIT) {
@@ -159,8 +162,8 @@ int main(int argc, char** argv) {
     }
   }
 
-  SDL_DestroyTexture(texture);
-  SDL_DestroyRenderer(renderer);
+  SDL_DestroyTexture(g_texture);
+  SDL_DestroyRenderer(g_renderer);
   SDL_DestroyWindow(window);
   SDL_Quit();
 

@@ -111,6 +111,8 @@ void PPU::Tick() {
       }
 
       if (vcount == 160) {
+        cpu->config->video_dev->Draw(output);
+        
         cpu->RequestVBlankDMA();
         dispstat.vblank_flag = 1;
         Next(Phase::VBLANK);
@@ -153,7 +155,7 @@ void PPU::Tick() {
 
 void PPU::RenderScanline() {
   std::uint16_t  vcount = mmio.vcount;
-  std::uint32_t* line = &cpu->config->video.output[vcount * 240];
+  std::uint32_t* line = &output[vcount * 240];
 
   if (mmio.dispcnt.forced_blank) {
     for (int x = 0; x < 240; x++)
@@ -201,7 +203,6 @@ void PPU::RenderScanline() {
         int frame = mmio.dispcnt.frame * 0xA000;
         int offset = frame + vcount * 240;
         for (int x = 0; x < 240; x++) {
-          //line[x] = ConvertColor(ReadPalette(0, cpu->memory.vram[offset + x]));
           DrawPixel(x, 2, mmio.bgcnt[2].priority, ReadPalette(0, cpu->memory.vram[offset + x]));
         }
         break;
