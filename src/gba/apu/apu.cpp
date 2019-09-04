@@ -49,8 +49,9 @@ void APU::Reset() {
   mmio.soundcnt.Reset();
   mmio.bias.Reset();
   
+  event.countdown = 512;
+  
   dump = fopen("audio.raw", "wb");
-  wait_cycles = 512;
   
   // TODO: refactor this out of the core.
   if (SDL_Init(SDL_INIT_AUDIO) < 0) {
@@ -92,5 +93,5 @@ void APU::Tick() {
   resampler->SetSampleRates(32768.0, 48000.0);
   resampler->Write({ latch[0]/128.0f, latch[1]/128.0f });
   
-  wait_cycles += 512;
+  event.countdown += 512;
 }

@@ -40,6 +40,11 @@ CPU::CPU(std::shared_ptr<Config> config)
 }
 
 void CPU::Reset() {
+  scheduler.Reset();
+  
+  scheduler.Add(ppu.event);
+  scheduler.Add(apu.event);
+  
   /* Clear all memory buffers. */
   std::memset(memory.bios, 0, 0x04000);
   std::memset(memory.wram, 0, 0x40000);
@@ -82,14 +87,6 @@ void CPU::Reset() {
 //  cpu.state.r15 = 0x08000000;
 }
 
-void CPU::RegisterEvent(EventDevice& event) {
-  events.insert(&event);
-}
-
-void CPU::UnregisterEvent(EventDevice& event) {
-  events.erase(&event);
-}
-
 void CPU::Tick(int cycles) {
   RunTimers(cycles);
   ticks_cpu_left -= cycles;
@@ -102,9 +99,11 @@ void CPU::RunFor(int cycles) {
   cycles += ticks_cpu_left;
 
   while (cycles > 0) {
-    if (cycles < ticks_to_event)
+    /* Run only for the duration the caller requested. */
+    if (cycles < ticks_to_event) {
       ticks_to_event = cycles;
-
+    }
+    
     /* CPU may run until the next event must be executed. */
     ticks_cpu_left = ticks_to_event;
     
@@ -115,8 +114,9 @@ void CPU::RunFor(int cycles) {
     while (ticks_cpu_left > 0) {
       auto fire = mmio.irq_ie & mmio.irq_if;
 
-      if (mmio.haltcnt == HaltControl::HALT && fire)
+      if (mmio.haltcnt == HaltControl::HALT && fire) {
         mmio.haltcnt = HaltControl::RUN;
+      }
 
       /* DMA and CPU cannot run simultaneously since
        * both access the memory bus.
@@ -125,8 +125,9 @@ void CPU::RunFor(int cycles) {
       if (dma_run_set != 0) {
         RunDMA();
       } else if (mmio.haltcnt == HaltControl::RUN) {
-        if (mmio.irq_ime && fire)
+        if (mmio.irq_ime && fire) {
           cpu.SignalIRQ();
+        }
         cpu.Run();
       } else {
         /* Forward to the next event or timer IRQ. */
@@ -135,21 +136,11 @@ void CPU::RunFor(int cycles) {
     }
     
     elapsed = ticks_to_event - ticks_cpu_left;
+    
     cycles -= elapsed;
     
     /* Update events and determine when the next event will happen. */
-    ticks_to_event = std::numeric_limits<int>::max();
-    for (auto it = events.begin(); it != events.end();) {
-      auto event = *it;
-      ++it;
-      event->wait_cycles -= elapsed;
-      if (event->wait_cycles <= 0) {
-        event->Tick();
-      }
-      if (event->wait_cycles < ticks_to_event) {
-        ticks_to_event = event->wait_cycles;
-      }
-    }
+    ticks_to_event = scheduler.Schedule(elapsed);
   }
 }
 

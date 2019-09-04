@@ -54,9 +54,9 @@ void PPU::Reset() {
   mmio.evy = 0;
   mmio.bldcnt.Reset();
   
-  wait_cycles = 0;
+  event.countdown = 0;
+  
   Next(Phase::SCANLINE);
-  //RenderScanline();
 }
 
 void PPU::InitBlendTable() {
@@ -71,8 +71,9 @@ void PPU::InitBlendTable() {
 }
 
 void PPU::Next(Phase phase) {
-  this->phase  = phase;
-  wait_cycles += s_wait_cycles[static_cast<int>(phase)];
+  this->phase = phase;
+  
+  event.countdown += s_wait_cycles[static_cast<int>(phase)];
 }
 
 auto PPU::ConvertColor(std::uint16_t color) -> std::uint32_t {

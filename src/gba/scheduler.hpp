@@ -19,48 +19,54 @@
 
 #pragma once
 
-#include "regs.hpp"
-#include "../scheduler.hpp"
-
-#include <dsp/resampler.hpp>
-#include <dsp/ring_buffer.hpp>
-
-#include <cstdio>
+#include <functional>
+#include <limits>
+#include <unordered_set>
 
 namespace GameBoyAdvance {
 
-class CPU;
+using cycle_t = int;
 
-class APU {
+struct Event {
+  cycle_t countdown = 0;
+  
+  std::function<void()> tick;
+};
+
+class Scheduler {
 public:
-  APU(CPU* cpu) 
-    : cpu(cpu) 
-    , buffer(new DSP::StereoRingBuffer<float>(16384))
-    , resampler(new DSP::CosineStereoResampler<float>(buffer))
-  { }
+  void Reset() {
+    events.clear();
+  }
   
-  void Reset();
-  void LatchFIFO(int id, int times);
-  void Tick();
+  void Add(Event& event) {
+    events.insert(&event);
+  }
+
+  void Remove(Event& event) {
+    events.erase(&event);
+  }
   
-  Event event { 0, [this]() { this->Tick(); } };
-  
-  struct MMIO {
-    FIFO fifo[2];
+  auto Schedule(cycle_t elapsed) -> cycle_t {
+    cycle_t ticks_to_event = std::numeric_limits<cycle_t>::max();
     
-    SoundControl soundcnt { fifo };
-    BIAS bias;
-  } mmio;
-  
-  std::int8_t latch[2];
-  
-  std::shared_ptr<DSP::StereoRingBuffer<float>> buffer;
-  std::unique_ptr<DSP::StereoResampler<float>> resampler;
-  
+    for (auto it = events.begin(); it != events.end();) {
+      auto event = *it;
+      ++it;
+      event->countdown -= elapsed;
+      if (event->countdown <= 0) {
+        event->tick();
+      }
+      if (event->countdown < ticks_to_event) {
+        ticks_to_event = event->countdown;
+      }
+    }
+    
+    return ticks_to_event;
+  }
+
 private:
-  CPU* cpu;
-  
-  FILE* dump;
+  std::unordered_set<Event*> events;
 };
 
 }

@@ -22,19 +22,21 @@
 #include <cstdint>
 
 #include "regs.hpp"
-#include "../event_device.hpp"
+#include "../scheduler.hpp"
 
 namespace GameBoyAdvance {
 
 class CPU;
 
-class PPU : public EventDevice {
+class PPU {
 public:
   PPU(CPU* cpu);
 
   void Reset();
-  void Tick() final;
+  void Tick();
 
+  Event event { 0, [this]() { this->Tick(); } };
+  
   struct MMIO {
     DisplayControl dispcnt;
     DisplayStatus dispstat;

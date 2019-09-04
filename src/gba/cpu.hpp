@@ -21,14 +21,13 @@
 
 #include <arm/arm7tdmi/arm7tdmi.hpp>
 #include <memory>
-#include <unordered_set>
 
 #include "config.hpp"
-#include "event_device.hpp"
 #include "dma/regs.hpp"
 #include "timer/regs.hpp"
 #include "apu/apu.hpp"
 #include "ppu/ppu.hpp"
+#include "scheduler.hpp"
 
 namespace GameBoyAdvance {
 
@@ -37,9 +36,6 @@ public:
   CPU(std::shared_ptr<Config> config);
 
   void Reset();
-  
-  void RegisterEvent(EventDevice& event);
-  void UnregisterEvent(EventDevice& event);
   
   void RequestHBlankDMA();
   void RequestVBlankDMA();
@@ -118,6 +114,8 @@ public:
   
   ARM::ARM7TDMI cpu;
   
+  Scheduler scheduler;
+  
   APU apu;
   PPU ppu;
 
@@ -159,9 +157,9 @@ private:
   int  dma_run_set;
   int  dma_current;
   bool dma_interleaved;
-
-  int ticks_cpu_left = 0;
-  int ticks_to_event = 0;
+  
+  cycle_t ticks_cpu_left = 0;
+  cycle_t ticks_to_event = 0;
 
   int cycles16[2][16] {
     { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
@@ -172,8 +170,6 @@ private:
     { 1, 1, 6, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
     { 1, 1, 6, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 1 }
   };
-
-  std::unordered_set<EventDevice*> events { &ppu, &apu };
   
   static constexpr int s_ws_nseq[4] = { 4, 3, 2, 8 }; /* Non-sequential SRAM/WS0/WS1/WS2 */
   static constexpr int s_ws_seq0[2] = { 2, 1 };       /* Sequential WS0 */
