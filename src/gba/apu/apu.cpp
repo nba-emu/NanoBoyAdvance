@@ -22,12 +22,6 @@
 #include "apu.hpp"
 #include "../cpu.hpp"
 
-#ifdef _MSC_VER
-#include "SDL.h"
-#else
-#include <SDL2/SDL.h>
-#endif
-
 #include <cstdio>
 
 using namespace GameBoyAdvance;
@@ -53,29 +47,12 @@ void APU::Reset() {
   
   dump = fopen("audio.raw", "wb");
   
-  // TODO: refactor this out of the core.
-  if (SDL_Init(SDL_INIT_AUDIO) < 0) {
-    std::puts("APU: SDL_Init(SDL_INIT_AUDIO) failed.");
-    return;
-  }
+  auto audio_dev = cpu->config->audio_dev;
   
-  SDL_AudioSpec want;
-  
-  want.freq = 48000;
-  want.samples = 4096;
-  want.format = AUDIO_S16;
-  want.channels = 2;
-  want.callback = (SDL_AudioCallback)AudioCallback;
-  want.userdata = this;
-  
-  SDL_CloseAudio();
-  
-  if (SDL_OpenAudio(&want, nullptr) < 0) {
-    std::puts("SDL_OpenAudio(&want, nullptr) failed.");
-    return;
-  }
-  
-  SDL_PauseAudio(0);
+  /* TODO: check return value for failure. */
+  audio_dev->Close();
+  audio_dev->Open(this, (AudioDevice::Callback)AudioCallback);
+  resampler->SetSampleRates(32768.0, audio_dev->GetSampleRate());
 }
   
 void APU::LatchFIFO(int id, int times) {
@@ -90,7 +67,6 @@ void APU::LatchFIFO(int id, int times) {
 }
 
 void APU::Tick() {    
-  resampler->SetSampleRates(32768.0, 48000.0);
   resampler->Write({ latch[0]/128.0f, latch[1]/128.0f });
   
   event.countdown += 512;

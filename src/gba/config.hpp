@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <memory>
 
+#include "device/audio_device.hpp"
 #include "device/input_device.hpp"
 #include "device/video_device.hpp"
 
@@ -36,6 +37,7 @@ struct Config {
   struct Audio {
   } audio;
   
+  std::shared_ptr<AudioDevice> audio_dev = std::make_shared<NullAudioDevice>();
   std::shared_ptr<InputDevice> input_dev = std::make_shared<NullInputDevice>();
   std::shared_ptr<VideoDevice> video_dev = std::make_shared<NullVideoDevice>();
 };

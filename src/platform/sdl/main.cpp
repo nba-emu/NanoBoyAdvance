@@ -31,6 +31,54 @@
 SDL_Texture*  g_texture;
 SDL_Renderer* g_renderer;
 
+class SDL2_AudioDevice : public GameBoyAdvance::AudioDevice {
+public:
+  auto GetSampleRate() -> int final { return have.freq; }
+  auto GetBlockSize() -> int final { return have.samples; }
+  
+  bool Open(void* userdata, Callback callback) final {
+    SDL_AudioSpec want;
+    
+    if (SDL_Init(SDL_INIT_AUDIO) < 0) {
+      std::puts("SDL2_AudioDevice: SDL_Init(SDL_INIT_AUDIO) failed.");
+      return false;
+    }
+    
+    // TODO: read from configuration file.
+    want.freq = 48000;
+    want.samples = 4096;
+    want.format = AUDIO_S16;
+    want.channels = 2;
+    want.callback = (SDL_AudioCallback)callback;
+    want.userdata = userdata;
+    
+    if (SDL_OpenAudio(&want, &have) < 0) {
+      std::puts("SDL2_AudioDevice: SDL_OpenAudio(&want, &have) failed.");
+      return false;
+    }
+    
+    if (have.format != want.format) {
+      std::puts("SDL_AudioDevice: S16 sample format unavailable.");
+      return false;
+    }
+    
+    if (have.channels != want.channels) {
+      std::puts("SDL_AudioDevice: Stereo output unavailable.");
+    }
+    
+    SDL_PauseAudio(0);
+    
+    return true;
+  }
+  
+  void Close() {
+    SDL_CloseAudio();
+  }
+  
+private:
+  SDL_AudioSpec have;
+};
+
 class SDL2_InputDevice : public GameBoyAdvance::InputDevice {
 public:
   auto Poll(Key key) -> bool final {
@@ -107,6 +155,7 @@ int main(int argc, char** argv) {
   
   auto config = std::make_shared<GameBoyAdvance::Config>();
   
+  config->audio_dev = std::make_shared<SDL2_AudioDevice>();
   config->input_dev = std::make_shared<SDL2_InputDevice>();
   config->video_dev = std::make_shared<SDL2_VideoDevice>();
   
