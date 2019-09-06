@@ -20,6 +20,7 @@
 #pragma once
 
 #include "regs.hpp"
+#include "sequencer.hpp"
 #include "../scheduler.hpp"
 
 #include <dsp/resampler.hpp>

@@ -21,6 +21,8 @@
 
 namespace GameBoyAdvance {
 
+#include <cstdint>
+  
 /* TODO: support different sample formats? */
 
 class AudioDevice {
