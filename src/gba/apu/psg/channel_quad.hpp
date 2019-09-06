@@ -19,51 +19,16 @@
 
 #pragma once
 
-#include "regs.hpp"
-#include "psg/channel_quad.hpp"
-#include "psg/channel_wave.hpp"
-#include "psg/channel_noise.hpp"
-#include "../scheduler.hpp"
-
-#include <dsp/resampler.hpp>
-#include <dsp/ring_buffer.hpp>
-
-#include <cstdio>
+#include "sequencer.hpp"
 
 namespace GameBoyAdvance {
 
-class CPU;
-
-class APU {
+class QuadChannel {
 public:
-  APU(CPU* cpu) 
-    : cpu(cpu) 
-    , buffer(new DSP::StereoRingBuffer<float>(16384))
-    , resampler(new DSP::CosineStereoResampler<float>(buffer))
-  { }
-  
-  void Reset();
-  void LatchFIFO(int id, int times);
-  void Tick();
-  
-  Event event { 0, [this]() { this->Tick(); } };
-  
-  struct MMIO {
-    FIFO fifo[2];
-    
-    SoundControl soundcnt { fifo };
-    BIAS bias;
-  } mmio;
-  
-  std::int8_t latch[2];
-  
-  std::shared_ptr<DSP::StereoRingBuffer<float>> buffer;
-  std::unique_ptr<DSP::StereoResampler<float>> resampler;
-  
+  void Reset() { }
+
 private:
-  CPU* cpu;
-  
-  FILE* dump;
+  Sequencer sequencer;
 };
 
 }

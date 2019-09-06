@@ -21,7 +21,7 @@
 
 #include <algorithm>
 
-#include "../scheduler.hpp"
+#include "../../scheduler.hpp"
 
 namespace GameBoyAdvance {
 
