@@ -30,8 +30,12 @@ public:
   void Reset() {
     direction = Direction::Decrement;
     initial_volume = 0;
-    current_volume = 0;
     divider = 0;
+    Restart();
+  }
+  
+  void Restart() {
+    current_volume = initial_volume;
     step = 0;
   }
   
@@ -71,9 +75,14 @@ struct Sweep {
 public:
   void Reset() { 
     direction = Direction::Increment;
-    current_freq = 0;
+    initial_freq = 0;
     divider = 0;
     shift = 0;
+    Restart();
+  }
+  
+  void Restart() {
+    current_freq = initial_freq;
     step = 0;
   }
   
@@ -103,6 +112,7 @@ public:
     Decrement = 1
   } direction;
   
+  int initial_freq;
   int current_freq;
   int divider;
   int shift;
@@ -121,6 +131,12 @@ struct Sequencer {
     
     step = 0;
     event.countdown = s_cycles_per_step;
+  }
+  
+  void Restart() {
+    sweep.Restart();
+    envelope.Restart();
+    step = 0;
   }
   
   void Tick() {
@@ -150,7 +166,7 @@ struct Sequencer {
   
   // TODO: is the GBA clock actually 16777216 Hz?
   // that would give us an exact clock divide by 32768.
-  static constexpr int s_cycles_per_step = 16777216/512;
+  static constexpr cycle_t s_cycles_per_step = 16777216/512;
 };
 
 }

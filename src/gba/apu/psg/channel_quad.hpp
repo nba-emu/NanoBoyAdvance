@@ -47,7 +47,6 @@ struct QuadChannel {
   void Reset() {
     sequencer.Reset();
     
-    frequency = 0;
     wave_duty = 0;
     length = 0;
     length_enable = false;
@@ -154,17 +153,23 @@ struct QuadChannel {
       
       // Frequency Control
       case 4: {
-        frequency = (frequency & ~0xFF) | value;
+        //std::printf("lo=%x\n", value);
+        sweep.initial_freq = (sweep.initial_freq & ~0xFF) | value;
         break;
       }
       case 5: {
-        frequency = (frequency & 0xFF) | ((value & 7) << 8);
+        //std::printf("hi=%x\n", value & 7);
+        sweep.initial_freq = (sweep.initial_freq & 0xFF) | (((int)value & 7) << 8);
+        length_enable = value & 0x40;
         
-        // On sound restart
         if (value & 0x80) {
-          envelope.current_volume = envelope.initial_volume;
-          sweep.current_freq = frequency;
-          // TODO: reset sequencer properly?
+          auto expected = 131072.0 / (2048.0 - float(sweep.initial_freq));
+          auto actual = 16777216/(FreqCycles(sweep.initial_freq)*8.0f);
+          auto error = expected - (float)actual;
+
+          std::printf("psg: note=%x expected=%f actual=%f error=%f\n", sweep.initial_freq, expected, actual, error);
+
+          sequencer.Restart();
         }
         
         break;
@@ -173,7 +178,6 @@ struct QuadChannel {
   }
   
   // IO
-  int  frequency;
   int  wave_duty;
   int  length;
   bool length_enable;
