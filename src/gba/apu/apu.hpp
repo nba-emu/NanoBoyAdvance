@@ -36,11 +36,7 @@ class CPU;
 
 class APU {
 public:
-  APU(CPU* cpu) 
-    : cpu(cpu) 
-    , buffer(new DSP::StereoRingBuffer<float>(16384))
-    , resampler(new DSP::CosineStereoResampler<float>(buffer))
-  { }
+  APU(CPU* cpu);
   
   void Reset();
   void LatchFIFO(int id, int times);
@@ -54,6 +50,8 @@ public:
     SoundControl soundcnt { fifo };
     BIAS bias;
   } mmio;
+  
+  QuadChannel psg1;
   
   std::int8_t latch[2];
   

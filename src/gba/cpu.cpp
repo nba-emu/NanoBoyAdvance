@@ -40,7 +40,8 @@ CPU::CPU(std::shared_ptr<Config> config)
 }
 
 void CPU::Reset() {
-  scheduler.Reset();
+  // FIXME
+  //scheduler.Reset();
   
   scheduler.Add(ppu.event);
   scheduler.Add(apu.event);
