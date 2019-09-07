@@ -151,7 +151,7 @@ void ASR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediat
   }
   if (amount == 0) return;
 #endif
-  carry = msb;
+  carry = (operand >> (amount - 1)) & 1;
   operand = (operand >> amount) | ((0xFFFFFFFF * msb) << (32 - amount));
   // for (std::uint32_t i = 0; i < amount; i++) {
   //   carry   = operand & 1;
@@ -169,7 +169,7 @@ void ROR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediat
     amount %= 32;
     operand = (operand >> (amount - 1)) | (operand << (32 - amount + 1));
     carry = operand & 1;
-    operand = (operand >> 1) | (operand << 31); 
+    operand = (operand >> 1) | (operand << 31);
     // for (std::uint32_t i = 1; i <= amount; i++) {
     //   lsb = operand & 1;
     //   operand = (operand >> 1) | (lsb << 31);
