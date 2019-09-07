@@ -52,6 +52,7 @@ public:
   } mmio;
   
   QuadChannel psg1;
+  QuadChannel psg2;
   
   std::int8_t latch[2];
   

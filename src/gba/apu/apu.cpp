@@ -40,6 +40,7 @@ void AudioCallback(APU* apu, std::int16_t* stream, int byte_len) {
 APU::APU(CPU* cpu) 
   : cpu(cpu)
   , psg1(cpu->scheduler)
+  , psg2(cpu->scheduler)
   , buffer(new DSP::StereoRingBuffer<float>(16384))
   , resampler(new DSP::CosineStereoResampler<float>(buffer))
 { }
@@ -74,8 +75,8 @@ void APU::LatchFIFO(int id, int times) {
 }
 
 void APU::Tick() {
-  resampler->Write({ latch[0]/256.0f + psg1.sample/512.0f, 
-                     latch[1]/256.0f + psg1.sample/512.0f });
+  resampler->Write({ latch[0]/256.0f + (psg1.sample + psg2.sample)/512.0f, 
+                     latch[1]/256.0f + (psg1.sample + psg2.sample)/512.0f });
   
   event.countdown += 512;
 }

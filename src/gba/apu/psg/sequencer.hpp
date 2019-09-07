@@ -27,7 +27,13 @@ namespace GameBoyAdvance {
 
 class Envelope {
 public:
-  void Reset() { step = 0; }
+  void Reset() {
+    direction = Direction::Decrement;
+    initial_volume = 0;
+    current_volume = 0;
+    divider = 0;
+    step = 0;
+  }
   
   void Tick() {
     if (!enabled || divider == 0) return;
@@ -53,6 +59,7 @@ public:
     Decrement = 0
   } direction;
   
+  int initial_volume;
   int current_volume;
   int divider;
   
@@ -62,7 +69,13 @@ private:
 
 struct Sweep {
 public:
-  void Reset() { step = 0; }
+  void Reset() { 
+    direction = Direction::Increment;
+    current_freq = 0;
+    divider = 0;
+    shift = 0;
+    step = 0;
+  }
   
   void Tick() {
     if (!enabled || divider == 0) return;

@@ -28,6 +28,9 @@ namespace GameBoyAdvance {
 
 struct QuadChannel {
   QuadChannel(Scheduler& scheduler) {
+    sequencer.sweep.enabled = true;
+    sequencer.envelope.enabled = true;
+    
     scheduler.Add(event);
     scheduler.Add(sequencer.event);
     Reset();
@@ -44,22 +47,136 @@ struct QuadChannel {
   void Reset() {
     sequencer.Reset();
     
+    frequency = 0;
+    wave_duty = 0;
+    length = 0;
+    length_enable = false;
+    
     phase = 0;
-    event.countdown = FreqCycles(1800);
+    event.countdown = FreqCycles(0);
   }
   
   void Tick() {
-    // Wave duty = 50%
-    if (phase < 4) {
+    if (length_enable && sequencer.length >= length) {
+      sample = 0;
+      // BIG TODO: event latency!
+      event.countdown = FreqCycles(0);
+      return;
+    }
+    
+    int duty;
+    
+    switch (wave_duty) {
+      case 0: duty = 1; break;
+      case 1: duty = 2; break;
+      case 2: duty = 4; break;
+      case 3: duty = 6; break;
+    }
+    
+    // TODO: pick correct wave duty.
+    if (phase < duty) {
       sample = +127;
     } else {
       sample = -128;
     }
     
+    std::int16_t hack = sample;
+    hack *= sequencer.envelope.current_volume;
+    hack /= 16; // 15?
+    sample = std::int8_t(hack);
+    
+    
     phase = (phase + 1) % 8;
     
-    event.countdown += FreqCycles(1800);
+    event.countdown += FreqCycles(sequencer.sweep.current_freq);
   }
+  
+  auto Read(int offset) -> std::uint8_t {
+    auto& sweep = sequencer.sweep;
+    auto& envelope = sequencer.envelope;
+    
+    switch (offset) {
+      // Sweep Register
+      case 0: {
+        return sweep.shift |
+              ((int)sweep.direction << 3) |
+              (sweep.divider << 4);
+      }
+      case 1: return 0;
+        
+      // Duty/Len/Envelope
+      case 2: {
+        // Sound Length?
+        return wave_duty << 6;
+      }
+      case 3: {
+        return envelope.divider |
+              ((int)envelope.direction << 3) |
+              (envelope.initial_volume << 4);
+      }
+      
+      // Frequency/Control
+      case 4: return 0;
+      case 5: {
+        return length_enable ? 0x40 : 0;
+      }
+      
+      default: return 0;
+    }
+  }
+  
+  void Write(int offset, std::uint8_t value) {
+    auto& sweep = sequencer.sweep;
+    auto& envelope = sequencer.envelope;
+    
+    switch (offset) {
+      // Sweep Register
+      case 0: {
+        sweep.shift = value & 7;
+        sweep.direction = Sweep::Direction((value >> 3) & 1);
+        sweep.divider = value >> 4;
+        break;
+      }
+      case 1: break;
+        
+      // Duty/Len/Envelope
+      case 2: {
+        length = value & 63;
+        wave_duty = (value >> 6) & 3;
+        break;
+      }
+      case 3: {
+        envelope.divider = value & 7;
+        envelope.direction = Envelope::Direction((value >> 3) & 1);
+        envelope.initial_volume = value >> 4;
+        break;
+      }
+      
+      // Frequency Control
+      case 4: {
+        frequency = (frequency & ~0xFF) | value;
+        break;
+      }
+      case 5: {
+        frequency = (frequency & 0xFF) | ((value & 7) << 8);
+        
+        // On sound restart
+        if (value & 0x80) {
+          envelope.current_volume = envelope.initial_volume;
+          sweep.current_freq = frequency;
+          // TODO: reset sequencer properly?
+        }
+        
+        break;
+      }
+    }
+  }
+  
+  // IO
+  int  frequency;
+  int  wave_duty;
+  int  length;
+  bool length_enable;
   
   std::int8_t sample = 0;
   int phase;
