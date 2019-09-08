@@ -22,7 +22,6 @@
 #include "sequencer.hpp"
 
 #include <cstdint>
-#include <cstdio>
 
 namespace GameBoyAdvance {
 
@@ -153,22 +152,14 @@ struct QuadChannel {
       
       // Frequency Control
       case 4: {
-        //std::printf("lo=%x\n", value);
         sweep.initial_freq = (sweep.initial_freq & ~0xFF) | value;
         break;
       }
       case 5: {
-        //std::printf("hi=%x\n", value & 7);
         sweep.initial_freq = (sweep.initial_freq & 0xFF) | (((int)value & 7) << 8);
         length_enable = value & 0x40;
         
         if (value & 0x80) {
-          auto expected = 131072.0 / (2048.0 - float(sweep.initial_freq));
-          auto actual = 16777216/(FreqCycles(sweep.initial_freq)*8.0f);
-          auto error = expected - (float)actual;
-
-          std::printf("psg: note=%x expected=%f actual=%f error=%f\n", sweep.initial_freq, expected, actual, error);
-
           sequencer.Restart();
         }
         

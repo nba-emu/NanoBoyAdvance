@@ -71,7 +71,7 @@ private:
   int step;
 };
 
-struct Sweep {
+class Sweep {
 public:
   void Reset() { 
     direction = Direction::Increment;
@@ -121,7 +121,8 @@ private:
   int step;
 };
 
-struct Sequencer {
+class Sequencer {
+public:
   Sequencer() { Reset(); }
     
   void Reset() {
@@ -159,10 +160,12 @@ struct Sequencer {
   
   Event event { 0, [this]() { this->Tick(); } };
   
-  int step;
   int length;
   Envelope envelope;
   Sweep sweep;
+  
+private:
+  int step;
   
   // TODO: is the GBA clock actually 16777216 Hz?
   // that would give us an exact clock divide by 32768.
