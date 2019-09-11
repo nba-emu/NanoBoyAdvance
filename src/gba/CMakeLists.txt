@@ -2,8 +2,7 @@ set(SOURCES
     apu/apu.cpp
     apu/regs.cpp
     cpu/cpu.cpp
-    cpu/dma/dma.cpp
-    cpu/dma/regs.cpp
+    cpu/dma.cpp
     cpu/memory/mmio.cpp
     cpu/timer/regs.cpp
     cpu/timer/timer.cpp
@@ -18,11 +17,12 @@ set(HEADERS
     apu/apu.hpp
     apu/regs.hpp
     cpu/cpu.hpp
+    cpu/dma.hpp
     cpu/memory/mmio.hpp
     emulator.hpp
     ppu/ppu.hpp
     ppu/regs.hpp
-    scheduler.hpp
+    cpu/scheduler.hpp
 )
 
 add_library(gba STATIC ${SOURCES} ${HEADERS})

@@ -69,7 +69,7 @@ void APU::LatchFIFO(int id, int times) {
   for (int time = 0; time < times; time++) {
     latch[id] = fifo.Read();
     if (fifo.Count() <= 16) {
-      cpu->RequestAudioDMA(id);
+      cpu->dma.Request((id == 0) ? DMAx::Occasion::FIFO0 : DMAx::Occasion::FIFO1);
     }
   }
 }

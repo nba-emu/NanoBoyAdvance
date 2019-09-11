@@ -20,10 +20,9 @@
 #pragma once
 
 #include <arm/arm7tdmi/arm7tdmi.hpp>
-#include <bitset>
 #include <memory>
 
-#include "dma/regs.hpp"
+#include "dma.hpp"
 #include "timer/regs.hpp"
 #include "scheduler.hpp"
 #include "../apu/apu.hpp"
@@ -38,11 +37,15 @@ public:
 
   void Reset();
   
-  void RequestHBlankDMA();
-  void RequestVBlankDMA();
-  void RequestAudioDMA(int fifo);
-
   void RunFor(int cycles);
+  
+  /* TODO: provide way to read CPU memory without consuming cycles. */
+  std::uint8_t  ReadByte(std::uint32_t address, ARM::AccessType type) final;
+  std::uint16_t ReadHalf(std::uint32_t address, ARM::AccessType type) final;
+  std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) final;
+  void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) final;
+  void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type) final;
+  void WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type) final;
   
   enum class HaltControl {
     RUN,
@@ -87,8 +90,6 @@ public:
   } memory;
 
   struct MMIO {
-    DMA dma[4];
-    
     Timer timer[4];
 
     std::uint16_t keyinput;
@@ -117,21 +118,15 @@ public:
   
   Scheduler scheduler;
   
+  DMAx dma;
   APU apu;
   PPU ppu;
-
+  
 private:
   
   auto ReadMMIO (std::uint32_t address) -> std::uint8_t;
   void WriteMMIO(std::uint32_t address, std::uint8_t value);
-  
   std::uint32_t ReadBIOS(std::uint32_t address);
-  std::uint8_t  ReadByte(std::uint32_t address, ARM::AccessType type) final;
-  std::uint16_t ReadHalf(std::uint32_t address, ARM::AccessType type) final;
-  std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) final;
-  void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) final;
-  void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type) final;
-  void WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type) final;
   
   void SWI(std::uint32_t call_id) final { }
   void Tick(int cycles) final;
@@ -144,19 +139,6 @@ private:
   void RunTimers(int cycles);
   void IncrementTimer(int id, int increment);
   auto GetCyclesToTimerIRQ() -> int;
-  
-  void ResetDMA();
-  auto ReadDMA (int id, int offset) -> std::uint8_t;
-  void WriteDMA(int id, int offset, std::uint8_t value);
-  void StartDMA(int id);
-  void RunDMA();
-  void RunAudioDMA();
-  
-  std::bitset<4> dma_hblank_set;
-  std::bitset<4> dma_vblank_set;
-  std::bitset<4> dma_run_set;
-  int  dma_current;
-  bool dma_interleaved;
   
   cycle_t ticks_cpu_left = 0;
   cycle_t ticks_to_event = 0;
@@ -175,10 +157,6 @@ private:
   static constexpr int s_ws_seq0[2] = { 2, 1 };       /* Sequential WS0 */
   static constexpr int s_ws_seq1[2] = { 4, 1 };       /* Sequential WS1 */
   static constexpr int s_ws_seq2[2] = { 8, 1 };       /* Sequential WS2 */
-
-  static constexpr std::uint32_t s_dma_dst_mask[4] = { 0x07FFFFFF, 0x07FFFFFF, 0x07FFFFFF, 0x0FFFFFFF };
-  static constexpr std::uint32_t s_dma_src_mask[4] = { 0x07FFFFFF, 0x0FFFFFFF, 0x0FFFFFFF, 0x0FFFFFFF };
-  static constexpr std::uint32_t s_dma_len_mask[4] = { 0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF };
 };
 
 #include "memory/memory.inl"

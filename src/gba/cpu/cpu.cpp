@@ -33,6 +33,7 @@ constexpr int CPU::s_ws_seq2[2];
 CPU::CPU(std::shared_ptr<Config> config)
   : config(config)
   , cpu(this)
+  , dma(this)
   , apu(this)
   , ppu(this)
 {
@@ -75,7 +76,7 @@ void CPU::Reset() {
   mmio.waitcnt.cgb = 0;
   UpdateCycleLUT();
   
-  ResetDMA();
+  dma.Reset();
   ResetTimers();
   apu.Reset();
   ppu.Reset();
@@ -123,8 +124,8 @@ void CPU::RunFor(int cycles) {
        * both access the memory bus.
        * If DMA is requested the CPU will be blocked.
        */
-      if (dma_run_set != 0) {
-        RunDMA();
+      if (dma.IsRunning()) {
+        dma.Run(ticks_cpu_left);
       } else if (mmio.haltcnt == HaltControl::RUN) {
         if (mmio.irq_ime && fire) {
           cpu.SignalIRQ();
