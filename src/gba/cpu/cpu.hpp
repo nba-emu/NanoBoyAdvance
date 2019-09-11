@@ -120,7 +120,7 @@ public:
   APU apu;
   PPU ppu;
   DMA dma;
-  TimerX timer;
+  Timer timer;
   ARM::ARM7TDMI cpu;
   
 private:

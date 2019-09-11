@@ -27,7 +27,7 @@ namespace GameBoyAdvance {
 static constexpr int g_ticks_shift[4] = { 0, 6, 8, 10 };
 static constexpr int g_ticks_mask[4] = { 0, 0x3F, 0xFF, 0x3FF };
 
-void TimerX::Reset() {
+void Timer::Reset() {
   for (int chan_id = 0; chan_id < 4; chan_id++) {
     channels[chan_id].id = chan_id;
     channels[chan_id].cycles = 0;
@@ -43,7 +43,7 @@ void TimerX::Reset() {
   }
 }
 
-auto TimerX::Read(int chan_id, int offset) -> std::uint8_t {
+auto Timer::Read(int chan_id, int offset) -> std::uint8_t {
   auto const& channel = channels[chan_id];
   
   switch (offset) {
@@ -63,7 +63,7 @@ auto TimerX::Read(int chan_id, int offset) -> std::uint8_t {
   }
 }
 
-void TimerX::Write(int chan_id, int offset, std::uint8_t value) {
+void Timer::Write(int chan_id, int offset, std::uint8_t value) {
   auto& channel = channels[chan_id];
   auto& control = channel.control;
   
@@ -94,7 +94,7 @@ void TimerX::Write(int chan_id, int offset, std::uint8_t value) {
   }
 }
 
-void TimerX::Run(int cycles) {
+void Timer::Run(int cycles) {
   int available;
 
   for (auto& channel: channels) {
@@ -107,7 +107,7 @@ void TimerX::Run(int cycles) {
   }
 }
 
-auto TimerX::GetCyclesUntilIRQ() -> int {
+auto Timer::GetCyclesUntilIRQ() -> int {
   int cycles = std::numeric_limits<int>::max();
   
   /* TODO: optimize and refactor this. */
@@ -127,7 +127,7 @@ auto TimerX::GetCyclesUntilIRQ() -> int {
   return cycles;
 }
 
-void TimerX::Increment(int chan_id, int increment) {
+void Timer::Increment(int chan_id, int increment) {
   auto& channel  = channels[chan_id];
   auto& soundcnt = cpu->apu.mmio.soundcnt;
   
