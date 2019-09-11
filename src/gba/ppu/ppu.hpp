@@ -22,7 +22,7 @@
 #include <cstdint>
 
 #include "regs.hpp"
-#include "../scheduler.hpp"
+#include "../cpu/scheduler.hpp"
 
 namespace GameBoyAdvance {
 

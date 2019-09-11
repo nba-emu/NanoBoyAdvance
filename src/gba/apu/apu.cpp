@@ -20,7 +20,7 @@
 #include <cmath>
 
 #include "apu.hpp"
-#include "../cpu.hpp"
+#include "../cpu/cpu.hpp"
 
 #include <cstdio>
 

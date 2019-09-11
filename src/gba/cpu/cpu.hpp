@@ -23,12 +23,12 @@
 #include <bitset>
 #include <memory>
 
-#include "config.hpp"
 #include "dma/regs.hpp"
 #include "timer/regs.hpp"
-#include "apu/apu.hpp"
-#include "ppu/ppu.hpp"
 #include "scheduler.hpp"
+#include "../apu/apu.hpp"
+#include "../config.hpp"
+#include "../ppu/ppu.hpp"
 
 namespace GameBoyAdvance {
 
@@ -122,8 +122,10 @@ public:
 
 private:
   
-  std::uint32_t ReadBIOS(std::uint32_t address);
+  auto ReadMMIO (std::uint32_t address) -> std::uint8_t;
+  void WriteMMIO(std::uint32_t address, std::uint8_t value);
   
+  std::uint32_t ReadBIOS(std::uint32_t address);
   std::uint8_t  ReadByte(std::uint32_t address, ARM::AccessType type) final;
   std::uint16_t ReadHalf(std::uint32_t address, ARM::AccessType type) final;
   std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) final;
@@ -134,17 +136,7 @@ private:
   void SWI(std::uint32_t call_id) final { }
   void Tick(int cycles) final;
   
-  auto ReadMMIO(std::uint32_t address) -> std::uint8_t;
-  void WriteMMIO(std::uint32_t address, std::uint8_t value);
-  
   void UpdateCycleLUT();
-
-  void ResetDMA();
-  auto ReadDMA (int id, int offset) -> std::uint8_t;
-  void WriteDMA(int id, int offset, std::uint8_t value);
-  void StartDMA(int id);
-  void RunDMA();
-  void RunAudioDMA();
 
   void ResetTimers();
   auto ReadTimer (int id, int offset) -> std::uint8_t;
@@ -152,6 +144,13 @@ private:
   void RunTimers(int cycles);
   void IncrementTimer(int id, int increment);
   auto GetCyclesToTimerIRQ() -> int;
+  
+  void ResetDMA();
+  auto ReadDMA (int id, int offset) -> std::uint8_t;
+  void WriteDMA(int id, int offset, std::uint8_t value);
+  void StartDMA(int id);
+  void RunDMA();
+  void RunAudioDMA();
   
   std::bitset<4> dma_hblank_set;
   std::bitset<4> dma_vblank_set;
