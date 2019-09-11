@@ -23,7 +23,7 @@
 #include <memory>
 
 #include "dma.hpp"
-#include "timer/regs.hpp"
+#include "timer.hpp"
 #include "scheduler.hpp"
 #include "../apu/apu.hpp"
 #include "../config.hpp"
@@ -90,10 +90,11 @@ public:
   } memory;
 
   struct MMIO {
-    Timer timer[4];
-
     std::uint16_t keyinput;
 
+    /* TODO: make this accessible without passing
+     *       the complete CPU object. 
+     */
     std::uint16_t irq_ie;
     std::uint16_t irq_if;
     std::uint16_t irq_ime;
@@ -112,15 +113,15 @@ public:
       int prefetch;
       int cgb;
     } waitcnt;
-  } mmio;
-  
-  ARM::ARM7TDMI cpu;
+  } mmio; 
   
   Scheduler scheduler;
   
-  DMA dma;
   APU apu;
   PPU ppu;
+  DMA dma;
+  TimerX timer;
+  ARM::ARM7TDMI cpu;
   
 private:
   
@@ -132,13 +133,6 @@ private:
   void Tick(int cycles) final;
   
   void UpdateCycleLUT();
-
-  void ResetTimers();
-  auto ReadTimer (int id, int offset) -> std::uint8_t;
-  void WriteTimer(int id, int offset, std::uint8_t value);
-  void RunTimers(int cycles);
-  void IncrementTimer(int id, int increment);
-  auto GetCyclesToTimerIRQ() -> int;
   
   cycle_t ticks_cpu_left = 0;
   cycle_t ticks_to_event = 0;

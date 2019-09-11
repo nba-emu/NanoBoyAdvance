@@ -23,24 +23,43 @@
 
 namespace GameBoyAdvance {
 
-struct Timer {
-  int id;
+class CPU;
+  
+class Timer {
 
-  struct Control {
-    int frequency;
-    bool cascade;
-    bool interrupt;
-    bool enable;
-  } control;
+public:
+  Timer(CPU* cpu) : cpu(cpu) { Reset(); }
+  
+  void Reset();
+  auto Read (int chan_id, int offset) -> std::uint8_t;
+  void Write(int chan_id, int offset, std::uint8_t value);
+  void Run(int cycles);
+  auto GetCyclesUntilIRQ() -> int;
+  
+private:
+  void Increment(int chan_id, int increment);
+  
+  CPU* cpu;
+  
+  struct Channel {
+    int id;
 
-  int cycles;
-  std::uint16_t reload;
-  std::uint32_t counter;
+    struct Control {
+      int frequency;
+      bool cascade;
+      bool interrupt;
+      bool enable;
+    } control;
 
-  /* internal */
-  int  shift;
-  int  mask;
-  bool overflow;
+    int cycles;
+    std::uint16_t reload;
+    std::uint32_t counter;
+
+    /* TODO: internal */
+    int  shift;
+    int  mask;
+    bool overflow;
+  } channels[4];
 };
 
 }

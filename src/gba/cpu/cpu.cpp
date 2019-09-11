@@ -32,10 +32,11 @@ constexpr int CPU::s_ws_seq2[2];
 
 CPU::CPU(std::shared_ptr<Config> config)
   : config(config)
-  , cpu(this)
-  , dma(this)
   , apu(this)
   , ppu(this)
+  , dma(this)
+  , timer(this)
+  , cpu(this)
 {
   Reset();
 }
@@ -77,7 +78,7 @@ void CPU::Reset() {
   UpdateCycleLUT();
   
   dma.Reset();
-  ResetTimers();
+  timer.Reset();
   apu.Reset();
   ppu.Reset();
   cpu.Reset();
@@ -90,7 +91,7 @@ void CPU::Reset() {
 }
 
 void CPU::Tick(int cycles) {
-  RunTimers(cycles);
+  timer.Run(cycles);
   ticks_cpu_left -= cycles;
 }
 
@@ -133,7 +134,7 @@ void CPU::RunFor(int cycles) {
         cpu.Run();
       } else {
         /* Forward to the next event or timer IRQ. */
-        Tick(std::min(GetCyclesToTimerIRQ(), ticks_cpu_left));
+        Tick(std::min(timer.GetCyclesUntilIRQ(), ticks_cpu_left));
       }
     }
     

@@ -83,18 +83,18 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case SOUNDBIAS+1:  return apu_io.bias.Read(1);
       
     /* Timers 0-3 */
-    case TM0CNT_L:   return ReadTimer(0, 0);
-    case TM0CNT_L+1: return ReadTimer(0, 1);
-    case TM0CNT_H:   return ReadTimer(0, 2);
-    case TM1CNT_L:   return ReadTimer(1, 0);
-    case TM1CNT_L+1: return ReadTimer(1, 1);
-    case TM1CNT_H:   return ReadTimer(1, 2);
-    case TM2CNT_L:   return ReadTimer(2, 0);
-    case TM2CNT_L+1: return ReadTimer(2, 1);
-    case TM2CNT_H:   return ReadTimer(2, 2);
-    case TM3CNT_L:   return ReadTimer(3, 0);
-    case TM3CNT_L+1: return ReadTimer(3, 1);
-    case TM3CNT_H:   return ReadTimer(3, 2);
+    case TM0CNT_L:   return timer.Read(0, 0);
+    case TM0CNT_L+1: return timer.Read(0, 1);
+    case TM0CNT_H:   return timer.Read(0, 2);
+    case TM1CNT_L:   return timer.Read(1, 0);
+    case TM1CNT_L+1: return timer.Read(1, 1);
+    case TM1CNT_H:   return timer.Read(1, 2);
+    case TM2CNT_L:   return timer.Read(2, 0);
+    case TM2CNT_L+1: return timer.Read(2, 1);
+    case TM2CNT_H:   return timer.Read(2, 2);
+    case TM3CNT_L:   return timer.Read(3, 0);
+    case TM3CNT_L+1: return timer.Read(3, 1);
+    case TM3CNT_H:   return timer.Read(3, 2);
   
     case KEYINPUT+0: {
       return (config->input_dev->Poll(Key::A)      ? 0 : 1)  |
@@ -306,18 +306,18 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     case SOUNDBIAS+1:  apu_io.bias.Write(1, value);
       
     /* Timers 0-3 */
-    case TM0CNT_L:   WriteTimer(0, 0, value); break;
-    case TM0CNT_L+1: WriteTimer(0, 1, value); break;
-    case TM0CNT_H:   WriteTimer(0, 2, value); break;
-    case TM1CNT_L:   WriteTimer(1, 0, value); break;
-    case TM1CNT_L+1: WriteTimer(1, 1, value); break;
-    case TM1CNT_H:   WriteTimer(1, 2, value); break;
-    case TM2CNT_L:   WriteTimer(2, 0, value); break;
-    case TM2CNT_L+1: WriteTimer(2, 1, value); break;
-    case TM2CNT_H:   WriteTimer(2, 2, value); break;
-    case TM3CNT_L:   WriteTimer(3, 0, value); break;
-    case TM3CNT_L+1: WriteTimer(3, 1, value); break;
-    case TM3CNT_H:   WriteTimer(3, 2, value); break;
+    case TM0CNT_L:   timer.Write(0, 0, value); break;
+    case TM0CNT_L+1: timer.Write(0, 1, value); break;
+    case TM0CNT_H:   timer.Write(0, 2, value); break;
+    case TM1CNT_L:   timer.Write(1, 0, value); break;
+    case TM1CNT_L+1: timer.Write(1, 1, value); break;
+    case TM1CNT_H:   timer.Write(1, 2, value); break;
+    case TM2CNT_L:   timer.Write(2, 0, value); break;
+    case TM2CNT_L+1: timer.Write(2, 1, value); break;
+    case TM2CNT_H:   timer.Write(2, 2, value); break;
+    case TM3CNT_L:   timer.Write(3, 0, value); break;
+    case TM3CNT_L+1: timer.Write(3, 1, value); break;
+    case TM3CNT_H:   timer.Write(3, 2, value); break;
     
     /* Interrupt Control */
     case IE+0: {
