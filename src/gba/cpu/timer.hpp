@@ -55,10 +55,9 @@ private:
     std::uint16_t reload;
     std::uint32_t counter;
 
-    /* TODO: internal */
-    int  shift;
-    int  mask;
-    bool overflow;
+    /* Based on timer frequency. */
+    int shift;
+    int mask;
   } channels[4];
 };
 

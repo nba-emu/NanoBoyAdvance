@@ -37,7 +37,6 @@ void Timer::Reset() {
     channels[chan_id].control.cascade = false;
     channels[chan_id].control.interrupt = false;
     channels[chan_id].control.enable = false;
-    channels[chan_id].overflow = false;
     channels[chan_id].shift = 0;
     channels[chan_id].mask  = 0;
   }
