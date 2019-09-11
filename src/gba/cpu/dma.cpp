@@ -55,7 +55,7 @@ static constexpr std::uint32_t g_dma_dst_mask[] = { 0x07FFFFFF, 0x07FFFFFF, 0x07
 static constexpr std::uint32_t g_dma_src_mask[] = { 0x07FFFFFF, 0x0FFFFFFF, 0x0FFFFFFF, 0x0FFFFFFF };
 static constexpr std::uint32_t g_dma_len_mask[] = { 0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF };
 
-void DMAx::Reset() {
+void DMA::Reset() {
   hblank_set.reset();
   vblank_set.reset();
   runnable.reset();
@@ -80,31 +80,23 @@ void DMAx::Reset() {
   }
 }
 
-void DMAx::TryStart(int chan_id) {
-  if (runnable.none()) {
-    current = chan_id;
-  } else if (chan_id < current) {
-    current = chan_id;
-    interleaved = true;
-  }
-  
-  runnable.set(chan_id, true);
-}
-
-void DMAx::Request(Occasion occasion) {
+void DMA::Request(Occasion occasion) {
   switch (occasion) {
     case Occasion::HBlank: {
+      /* TODO: implement video capture mode. */
       auto chan_id = g_dma_from_bitset[hblank_set.to_ulong()];
       if (chan_id != g_dma_none_id)
         TryStart(chan_id);
       break;
     }
+    
     case Occasion::VBlank: {
       auto chan_id = g_dma_from_bitset[vblank_set.to_ulong()];
       if (chan_id != g_dma_none_id)
         TryStart(chan_id);
       break;
     }
+    
     case Occasion::FIFO0:
     case Occasion::FIFO1: {
       auto address = (occasion == Occasion::FIFO0) ? FIFO_A : FIFO_B;
@@ -122,11 +114,10 @@ void DMAx::Request(Occasion occasion) {
   }
 }
 
-void DMAx::Run(int const& ticks_left) {
+void DMA::Run(int const& ticks_left) {
   auto& channel = channels[current];
   
-  /* TODO: make clear that this checks for audio DMA. */
-  if (channel.time == Channel::SPECIAL && (current == 1 || current == 2)) {
+  if (channel.is_fifo_dma) {
     TransferFIFO();
   } else {
     bool completed;
@@ -137,120 +128,35 @@ void DMAx::Run(int const& ticks_left) {
       completed = TransferLoop16(ticks_left);
     }
     
-    if (completed) {
-      if (channel.interrupt) {
-        cpu->mmio.irq_if |= (CPU::INT_DMA0 << current);
-      }
+    if (!completed) return;
+    
+    if (channel.interrupt) {
+      cpu->mmio.irq_if |= (CPU::INT_DMA0 << current);
+    }
       
-      /* TODO: refactor this beauty. */
-      if (channel.repeat) {
-        /* Reload the internal length counter. */
-        channel.latch.length = channel.length & g_dma_len_mask[current];
-        if (channel.latch.length == 0) {
-          channel.latch.length = g_dma_len_mask[current] + 1;
-        }
-
-        /* Reload destination address if specified. */
-        if (channel.dst_cntl == Channel::RELOAD) {
-          channel.latch.dst_addr = channel.dst_addr & g_dma_dst_mask[current];
-        }
-
-        /* If DMA is specified to be non-immediate, wait for it to be retriggered. */
-        if (channel.time != Channel::IMMEDIATE) {
-          runnable.set(current, false);
-        }
-      } else {
-        channel.enable = false;
+    if (channel.repeat) {
+      channel.latch.length = channel.length & g_dma_len_mask[current];
+      if (channel.latch.length == 0) {
+        channel.latch.length = g_dma_len_mask[current] + 1;
+      }
+        
+      if (channel.dst_cntl == Channel::RELOAD) {
+        channel.latch.dst_addr = channel.dst_addr & g_dma_dst_mask[current];
+      }
+        
+      if (channel.time != Channel::IMMEDIATE) {
         runnable.set(current, false);
       }
+    } else {
+      channel.enable = false;
+      runnable.set(current, false);
+    }
       
-      current = g_dma_from_bitset[runnable.to_ulong()];
-    }
+    current = g_dma_from_bitset[runnable.to_ulong()];
   }
 }
 
-bool DMAx::TransferLoop16(int const& ticks_left) {
-  auto& channel   = channels[current];
-  auto src_modify = g_dma_modify[Channel::HWORD][channel.src_cntl];
-  auto dst_modify = g_dma_modify[Channel::HWORD][channel.dst_cntl];
-  
-  std::uint32_t word;
-  
-  while (channel.latch.length != 0) {
-    if (ticks_left <= 0) return false; 
-    
-    /* Stop if DMA was interleaved by higher priority DMA. */
-    if (interleaved) {
-      interleaved = false;
-      return false;
-    }
-    
-    word = cpu->ReadHalf(channel.latch.src_addr & ~1, ARM::ACCESS_SEQ);
-    cpu->WriteHalf(channel.latch.dst_addr & ~1, word, ARM::ACCESS_SEQ);
-    
-    channel.latch.src_addr += src_modify;
-    channel.latch.dst_addr += dst_modify;
-    channel.latch.length--;
-  }
-  
-  return true;
-}
-
-bool DMAx::TransferLoop32(int const& ticks_left) {
-  auto& channel   = channels[current];
-  auto src_modify = g_dma_modify[Channel::WORD][channel.src_cntl];
-  auto dst_modify = g_dma_modify[Channel::WORD][channel.dst_cntl];
-  
-  std::uint32_t word;
-  
-  while (channel.latch.length != 0) {
-    if (ticks_left <= 0) return false; 
-    
-    /* Stop if DMA was interleaved by higher priority DMA. */
-    if (interleaved) {
-      interleaved = false;
-      return false;
-    }
-    
-    word = cpu->ReadWord(channel.latch.src_addr & ~3, ARM::ACCESS_SEQ);
-    cpu->WriteWord(channel.latch.dst_addr & ~3, word, ARM::ACCESS_SEQ);
-    
-    channel.latch.src_addr += src_modify;
-    channel.latch.dst_addr += dst_modify;
-    channel.latch.length--;
-  }
-  
-  return true;
-}
-
-void DMAx::TransferFIFO() {
-  auto& channel = channels[current];
-  
-  /* TODO(1): Assert FIFO DMA conditions. 
-   *          What happens when the DMA is not configured as in the spec.?
-   * TODO(2): Ensure that we do not overshoot 'ticks_left'. 
-   */
-  std::uint32_t word;
-  
-  for (int i = 0; i < 4; i++) {
-    word = cpu->ReadWord(channel.latch.src_addr & ~3, ARM::ACCESS_SEQ);
-    cpu->WriteWord(channel.latch.dst_addr & ~3, word, ARM::ACCESS_SEQ);
-    
-    channel.latch.src_addr += 4;
-  }
-    
-  if (--channel.fifo_request_count == 0) {
-    runnable.set(current, false);
-  }
-    
-  if (channel.interrupt) {
-    cpu->mmio.irq_if |= (CPU::INT_DMA0 << current);
-  }
-  
-  current = g_dma_from_bitset[runnable.to_ulong()];
-}
-
-auto DMAx::Read(int chan_id, int offset) -> std::uint8_t {
+auto DMA::Read(int chan_id, int offset) -> std::uint8_t {
   auto const& channel = channels[chan_id];
 
   switch (offset) {
@@ -271,7 +177,7 @@ auto DMAx::Read(int chan_id, int offset) -> std::uint8_t {
   }
 }
 
-void DMAx::Write(int chan_id, int offset, std::uint8_t value) {
+void DMA::Write(int chan_id, int offset, std::uint8_t value) {
   auto& channel = channels[chan_id];
 
   switch (offset) {
@@ -307,43 +213,141 @@ void DMAx::Write(int chan_id, int offset, std::uint8_t value) {
       channel.gamepak   = value & 8;
       channel.interrupt = value & 64;
       channel.enable    = value & 128;
-
-      /* TODO: clean this mess up! */
       
-      hblank_set.set(chan_id, false);
-      vblank_set.set(chan_id, false);
-
-      if (channel.enable) {
-        /* Update HBLANK/VBLANK DMA sets. */
-        switch (channel.time) {
-          case Channel::HBLANK:
-            hblank_set.set(chan_id, true);
-            break;
-          case Channel::VBLANK:
-            vblank_set.set(chan_id, true);
-            break;
-        }
-
-        /* DMA state is latched on "rising" enable bit. */
-        if (!enable_previous) {
-          channel.fifo_request_count = 0;
-
-          /* Latch sanitized values into internal DMA state. */
-          channel.latch.dst_addr = channel.dst_addr & g_dma_dst_mask[chan_id];
-          channel.latch.src_addr = channel.src_addr & g_dma_src_mask[chan_id];
-          channel.latch.length   = channel.length   & g_dma_len_mask[chan_id];
-
-          if (channel.latch.length == 0) {
-            channel.latch.length = g_dma_len_mask[chan_id] + 1;
-          }
-
-          /* Schedule DMA if is setup for immediate execution. */
-          if (channel.time == Channel::IMMEDIATE) {
-            TryStart(chan_id);
-          }
-        }
-      }
+      channel.is_fifo_dma = (channel.time == Channel::SPECIAL) && 
+                            (chan_id == 1 || chan_id == 2);
+      
+      OnChannelWritten(chan_id, enable_previous);
       break;
     }
   }
+}
+
+void DMA::TryStart(int chan_id) {
+  if (runnable.none()) {
+    current = chan_id;
+  } else if (chan_id < current) {
+    current = chan_id;
+    interleaved = true;
+  }
+  
+  runnable.set(chan_id, true);
+}
+
+void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
+  auto& channel = channels[chan_id];
+  
+  hblank_set.set(chan_id, false);
+  vblank_set.set(chan_id, false);
+
+  if (channel.enable) {
+    /* Update HBLANK/VBLANK DMA sets. */
+    switch (channel.time) {
+      case Channel::HBLANK:
+        hblank_set.set(chan_id, true);
+        break;
+      case Channel::VBLANK:
+        vblank_set.set(chan_id, true);
+        break;
+    }
+
+    /* DMA state is latched on "rising" enable bit. */
+    if (!enabled_old) {
+      channel.fifo_request_count = 0;
+
+      /* Latch sanitized values into internal DMA state. */
+      channel.latch.dst_addr = channel.dst_addr & g_dma_dst_mask[chan_id];
+      channel.latch.src_addr = channel.src_addr & g_dma_src_mask[chan_id];
+      channel.latch.length   = channel.length   & g_dma_len_mask[chan_id];
+
+      if (channel.latch.length == 0) {
+        channel.latch.length = g_dma_len_mask[chan_id] + 1;
+      }
+
+      if (channel.time == Channel::IMMEDIATE) {
+        TryStart(chan_id);
+      }
+    }
+  }
+}
+
+bool DMA::TransferLoop16(int const& ticks_left) {
+  auto& channel   = channels[current];
+  auto src_modify = g_dma_modify[Channel::HWORD][channel.src_cntl];
+  auto dst_modify = g_dma_modify[Channel::HWORD][channel.dst_cntl];
+  
+  std::uint32_t word;
+  
+  while (channel.latch.length != 0) {
+    if (ticks_left <= 0) return false; 
+    
+    /* Stop if DMA was interleaved by higher priority DMA. */
+    if (interleaved) {
+      interleaved = false;
+      return false;
+    }
+    
+    word = cpu->ReadHalf(channel.latch.src_addr & ~1, ARM::ACCESS_SEQ);
+    cpu->WriteHalf(channel.latch.dst_addr & ~1, word, ARM::ACCESS_SEQ);
+    
+    channel.latch.src_addr += src_modify;
+    channel.latch.dst_addr += dst_modify;
+    channel.latch.length--;
+  }
+  
+  return true;
+}
+
+bool DMA::TransferLoop32(int const& ticks_left) {
+  auto& channel   = channels[current];
+  auto src_modify = g_dma_modify[Channel::WORD][channel.src_cntl];
+  auto dst_modify = g_dma_modify[Channel::WORD][channel.dst_cntl];
+  
+  std::uint32_t word;
+  
+  while (channel.latch.length != 0) {
+    if (ticks_left <= 0) return false; 
+    
+    /* Stop if DMA was interleaved by higher priority DMA. */
+    if (interleaved) {
+      interleaved = false;
+      return false;
+    }
+    
+    word = cpu->ReadWord(channel.latch.src_addr & ~3, ARM::ACCESS_SEQ);
+    cpu->WriteWord(channel.latch.dst_addr & ~3, word, ARM::ACCESS_SEQ);
+    
+    channel.latch.src_addr += src_modify;
+    channel.latch.dst_addr += dst_modify;
+    channel.latch.length--;
+  }
+  
+  return true;
+}
+
+void DMA::TransferFIFO() {
+  auto& channel = channels[current];
+  
+  /* TODO(1): Assert FIFO DMA conditions. 
+   *          What happens when the DMA is not configured as in the spec.?
+   * TODO(2): Ensure that we do not overshoot 'ticks_left'. 
+   */
+  std::uint32_t word;
+  
+  for (int i = 0; i < 4; i++) {
+    word = cpu->ReadWord(channel.latch.src_addr & ~3, ARM::ACCESS_SEQ);
+    cpu->WriteWord(channel.latch.dst_addr & ~3, word, ARM::ACCESS_SEQ);
+    
+    channel.latch.src_addr += 4;
+  }
+    
+  if (--channel.fifo_request_count == 0) {
+    runnable.set(current, false);
+  }
+    
+  if (channel.interrupt) {
+    cpu->mmio.irq_if |= (CPU::INT_DMA0 << current);
+  }
+  
+  current = g_dma_from_bitset[runnable.to_ulong()];
 }

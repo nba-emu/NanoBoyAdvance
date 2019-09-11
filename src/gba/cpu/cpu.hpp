@@ -118,7 +118,7 @@ public:
   
   Scheduler scheduler;
   
-  DMAx dma;
+  DMA dma;
   APU apu;
   PPU ppu;
   

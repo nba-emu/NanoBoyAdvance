@@ -93,7 +93,7 @@ void PPU::Tick() {
 
   switch (phase) {
     case Phase::SCANLINE: {
-      cpu->dma.Request(DMAx::Occasion::HBlank);
+      cpu->dma.Request(DMA::Occasion::HBlank);
       Next(Phase::HBLANK);
       dispstat.hblank_flag = 1;
 
@@ -113,7 +113,7 @@ void PPU::Tick() {
       if (vcount == 160) {
         cpu->config->video_dev->Draw(output);
         
-        cpu->dma.Request(DMAx::Occasion::VBlank);
+        cpu->dma.Request(DMA::Occasion::VBlank);
         dispstat.vblank_flag = 1;
         Next(Phase::VBLANK);
 

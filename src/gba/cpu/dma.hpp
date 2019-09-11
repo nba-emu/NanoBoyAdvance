@@ -26,10 +26,10 @@ namespace GameBoyAdvance {
 
 class CPU;
   
-class DMAx {
+class DMA {
 
 public:
-  DMAx(CPU* cpu) : cpu(cpu) { Reset(); }
+  DMA(CPU* cpu) : cpu(cpu) { Reset(); }
   
   enum class Occasion {
     HBlank,
@@ -47,6 +47,7 @@ public:
   
 private:
   void TryStart(int chan_id);
+  void OnChannelWritten(int chan_id, bool enabled_old);
   bool TransferLoop16(int const& ticks_left);
   bool TransferLoop32(int const& ticks_left);
   void TransferFIFO();
@@ -93,6 +94,7 @@ private:
     Timing time;
     Size size;
 
+    bool is_fifo_dma;
     int fifo_request_count;
     
     struct {
