@@ -3,8 +3,8 @@ set(SOURCES
     system/apu/apu.cpp
     system/apu/regs.cpp
     system/cpu.cpp
+    system/cpu-mmio.cpp
     system/dma.cpp
-    system/memory/mmio.cpp
     system/timer.cpp
     system/ppu/ppu.cpp
     system/ppu/regs.cpp
@@ -18,7 +18,7 @@ set(HEADERS
     system/apu/regs.hpp
     system/cpu.hpp
     system/dma.hpp
-    system/memory/mmio.hpp
+    system/registers.hpp
     system/timer.hpp
     system/ppu/ppu.hpp
     system/ppu/regs.hpp

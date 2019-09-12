@@ -153,6 +153,6 @@ private:
   static constexpr int s_ws_seq2[2] = { 8, 1 };       /* Sequential WS2 */
 };
 
-#include "memory/memory.inl"
+#include "cpu-memory.inl"
   
 }
