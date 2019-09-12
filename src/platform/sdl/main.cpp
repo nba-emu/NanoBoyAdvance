@@ -46,7 +46,7 @@ public:
     
     // TODO: read from configuration file.
     want.freq = 48000;
-    want.samples = 4096;
+    want.samples = 1024;
     want.format = AUDIO_S16;
     want.channels = 2;
     want.callback = (SDL_AudioCallback)callback;

@@ -28,12 +28,30 @@ using namespace GameBoyAdvance;
 
 void AudioCallback(APU* apu, std::int16_t* stream, int byte_len) {
   int samples = byte_len/sizeof(std::int16_t)/2;
+  int available = apu->buffer->Available();
   
-  for (int x = 0; x < samples; x++) {
-    auto sample = apu->buffer->Read() * 32767.0;
+//  while (available-- > 2*samples) {
+//    apu->buffer->Read();
+//  }
+  
+  if (available >= 2*samples) {
+    for (int x = 0; x < samples; x++) {
+      auto sample = apu->buffer->Read() * 32767.0;
+      
+      stream[x*2+0] = std::int16_t(std::round(sample.left));
+      stream[x*2+1] = std::int16_t(std::round(sample.right));
+    }
+  } else {
+    int y = 0;
     
-    stream[x*2+0] = std::int16_t(std::round(sample.left));
-    stream[x*2+1] = std::int16_t(std::round(sample.right));
+    for (int x = 0; x < samples; x++) {
+      auto sample = apu->buffer->Peek(y) * 32767.0;
+    
+      if (++y == available) y = 0;
+      
+      stream[x*2+0] = std::int16_t(std::round(sample.left));
+      stream[x*2+1] = std::int16_t(std::round(sample.right));
+    }
   }
 }
 
@@ -41,7 +59,7 @@ APU::APU(CPU* cpu)
   : cpu(cpu)
   , psg1(cpu->scheduler)
   , psg2(cpu->scheduler)
-  , buffer(new DSP::StereoRingBuffer<float>(16384))
+  , buffer(new DSP::StereoRingBuffer<float>(16384, true))
   , resampler(new DSP::CosineStereoResampler<float>(buffer))
 { }
 

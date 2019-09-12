@@ -30,16 +30,20 @@ template <typename T>
 class RingBuffer : public Stream<T> {
 
 public:
-  RingBuffer(int length)
+  RingBuffer(int length, bool blocking = false)
     : length(length)
+    , blocking(blocking)
   {
     data.reset(new T[length]);
     Reset();
   }
   
+  auto Available() -> int { return count; }
+  
   void Reset() {
     rd_ptr = 0;
     wr_ptr = 0;
+    count  = 0;
   }
   
   auto Peek(int offset) -> T const {
@@ -48,13 +52,20 @@ public:
   
   auto Read() -> T {
     T value = data[rd_ptr];
-    rd_ptr = (rd_ptr + 1) % length;
+    if (!blocking || count > 0) {
+      rd_ptr = (rd_ptr + 1) % length;
+      count--;
+    }
     return value;
   }
   
   void Write(T const& value) {
+    if (blocking && count == length) {
+      return;
+    }
     data[wr_ptr] = value;
     wr_ptr = (wr_ptr + 1) % length;
+    count++;
   }
   
 private:
@@ -63,6 +74,8 @@ private:
   int rd_ptr;
   int wr_ptr;
   int length;
+  int count;
+  bool blocking;
 };
 
 template <typename T>
