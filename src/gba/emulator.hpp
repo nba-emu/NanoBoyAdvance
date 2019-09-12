@@ -23,7 +23,7 @@
 #include <string>
 
 #include "config.hpp"
-#include "cpu/cpu.hpp"
+#include "system/cpu.hpp"
 
 namespace GameBoyAdvance {
 
