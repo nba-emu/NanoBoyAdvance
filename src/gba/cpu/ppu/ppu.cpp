@@ -21,7 +21,7 @@
 #include <cstring>
 
 #include "ppu.hpp"
-#include "../cpu/cpu.hpp"
+#include "../cpu.hpp"
 
 using namespace GameBoyAdvance;
 

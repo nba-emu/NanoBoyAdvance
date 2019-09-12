@@ -25,9 +25,9 @@
 #include "dma.hpp"
 #include "timer.hpp"
 #include "scheduler.hpp"
-#include "../apu/apu.hpp"
+#include "apu/apu.hpp"
+#include "ppu/ppu.hpp"
 #include "../config.hpp"
-#include "../ppu/ppu.hpp"
 
 namespace GameBoyAdvance {
 

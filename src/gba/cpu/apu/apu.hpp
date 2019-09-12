@@ -23,7 +23,7 @@
 #include "psg/channel_quad.hpp"
 #include "psg/channel_wave.hpp"
 #include "psg/channel_noise.hpp"
-#include "../cpu/scheduler.hpp"
+#include "../scheduler.hpp"
 
 #include <dsp/resampler.hpp>
 #include <dsp/ring_buffer.hpp>
