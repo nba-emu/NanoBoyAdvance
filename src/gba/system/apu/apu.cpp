@@ -60,7 +60,7 @@ APU::APU(CPU* cpu)
   , psg1(cpu->scheduler)
   , psg2(cpu->scheduler)
   , buffer(new DSP::StereoRingBuffer<float>(16384, true))
-  , resampler(new DSP::CosineStereoResampler<float>(buffer))
+  , resampler(new DSP::SincStereoResampler<float, 32>(buffer))
 { }
 
 void APU::Reset() {
@@ -69,7 +69,8 @@ void APU::Reset() {
   mmio.soundcnt.Reset();
   mmio.bias.Reset();
   
-  event.countdown = 512;
+  resolution_old = 0;
+  event.countdown = 512 >> mmio.bias.resolution;
   
   dump = fopen("audio.raw", "wb");
   
@@ -78,7 +79,7 @@ void APU::Reset() {
   /* TODO: check return value for failure. */
   audio_dev->Close();
   audio_dev->Open(this, (AudioDevice::Callback)AudioCallback);
-  resampler->SetSampleRates(32768.0, audio_dev->GetSampleRate());
+  resampler->SetSampleRates(32768 << mmio.bias.resolution, audio_dev->GetSampleRate());
 }
   
 void APU::LatchFIFO(int id, int times) {
@@ -93,8 +94,14 @@ void APU::LatchFIFO(int id, int times) {
 }
 
 void APU::Tick() {
+  if (mmio.bias.resolution != resolution_old) {
+    resampler->SetSampleRates(32768 << mmio.bias.resolution, 
+      cpu->config->audio_dev->GetSampleRate());
+    resolution_old = mmio.bias.resolution;
+  }
+  
   resampler->Write({ latch[0]/256.0f + (psg1.sample + psg2.sample)/512.0f, 
                      latch[1]/256.0f + (psg1.sample + psg2.sample)/512.0f });
   
-  event.countdown += 512;
+  event.countdown += 512 >> mmio.bias.resolution;
 }

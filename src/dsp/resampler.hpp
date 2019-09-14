@@ -36,7 +36,7 @@ class Resampler : public WriteStream<T> {
 public:
   Resampler(std::shared_ptr<WriteStream<T>> output) : output(output) {}
   
-  void SetSampleRates(float samplerate_in, float samplerate_out) {
+  virtual void SetSampleRates(float samplerate_in, float samplerate_out) {
     resample_phase_shift = samplerate_in / samplerate_out;
   }
 
@@ -79,11 +79,16 @@ class CosineResampler : public Resampler<T> {
 public:
   CosineResampler(std::shared_ptr<WriteStream<T>> output) 
     : Resampler<T>(output)
-  { }
+  {
+    /* TODO: do not generate the table every time. */
+    for (int i = 0; i < s_lut_resolution; i++) {
+      lut[i] = (std::cos(M_PI * i/float(s_lut_resolution)) + 1.0) * 0.5;
+    }
+  }
   
   void Write(T const& input) final {
     while (resample_phase < 1.0) {
-      float x = (std::cos(M_PI * resample_phase) + 1.0) * 0.5;
+      float x = lut[(int)std::round(resample_phase * s_lut_resolution)];
       
       this->output->Write(previous * x + input * (1.0 - x));
       
@@ -96,23 +101,61 @@ public:
   }
   
 private:
-  T previous = {};
+  static constexpr int s_lut_resolution = 512;
   
+  T previous = {};
   float resample_phase = 0;
+  float lut[s_lut_resolution];
 };
 
 template <typename T>
 using CosineStereoResampler = CosineResampler<StereoSample<T>>;
 
+#include <cstdio>
+  
 template <typename T, int points>
 class SincResampler : public Resampler<T> {
 
 public:
+  static_assert((points % 4) == 0, "DSP::SincResampler<T, points>: points must be divisible by four.");
+
   SincResampler(std::shared_ptr<WriteStream<T>> output) 
     : Resampler<T>(output)
   {
+    SetSampleRates(1, 1);
+
     for (int i = 0; i < points - 1; i++) {
       taps.Write({});
+    }
+  }
+  
+  void SetSampleRates(float samplerate_in, float samplerate_out) final {
+    Resampler<T>::SetSampleRates(samplerate_in, samplerate_out);
+    
+    float kernelSum = 0.0;
+    float cutoff = 0.65; // TODO: do not hardcode this.
+    
+    if (this->resample_phase_shift > 1.0) {
+      cutoff /= this->resample_phase_shift;
+    }
+
+    for (int n = 0; n < points; n++) {
+      for (int m = 0; m < s_lut_resolution; m++) {
+        double t  = m/double(s_lut_resolution);
+        double x1 = M_PI * (t - n + points/2) + 1e-6;
+        double x2 = 2 * M_PI * (n + t)/points; 
+        double sinc = std::sin(cutoff * x1)/x1;
+        double blackman = 0.42 - 0.49 * std::cos(x2) + 0.076 * std::cos(2 * x2);
+        
+        lut[n*s_lut_resolution+m] = sinc * blackman;
+        kernelSum += sinc * blackman;
+      }
+    }
+    
+    kernelSum /= s_lut_resolution;
+    
+    for (int i = 0; i < points * s_lut_resolution; i++) {
+      lut[i] /= kernelSum;
     }
   }
 
@@ -122,12 +165,25 @@ public:
     while (resample_phase < 1.0) { 
       T sample = {};
 
-      for (int n = 0; n < points; n++) {
-        float x = M_PI * (resample_phase - (n - points/2)) + 1e-6;
-        float sinc = std::sin(x)/x;
+//      for (int n = 0; n < points; n++) {
+//        float sinc = lut[(int)std::round((n + resample_phase) * s_lut_resolution)];
+//
+//        sample += taps.Peek(n) * sinc;
+//      }
 
-        sample += taps.Peek(n) * sinc;
+      float x1 = resample_phase * s_lut_resolution;
+      
+      for (int n = 0; n < points; n += 4) {
+        int x2 = (int)std::round(x1);
+        
+        sample += taps.Peek(n+0)*lut[x2+0*s_lut_resolution] +
+                  taps.Peek(n+1)*lut[x2+1*s_lut_resolution] + 
+                  taps.Peek(n+2)*lut[x2+2*s_lut_resolution] + 
+                  taps.Peek(n+3)*lut[x2+3*s_lut_resolution];
+        
+        x1 += 4 * s_lut_resolution;
       }
+
 
       this->output->Write(sample);
 
@@ -140,9 +196,11 @@ public:
   }
   
 private:
-  RingBuffer<T> taps { points };
-  
+  static constexpr int s_lut_resolution = 512;
+
+  double lut[points * s_lut_resolution];
   float resample_phase = 0;
+  RingBuffer<T> taps { points };
 };
 
 template <typename T, int points>

@@ -59,10 +59,11 @@ public:
   std::shared_ptr<DSP::StereoRingBuffer<float>> buffer;
   std::unique_ptr<DSP::StereoResampler<float>> resampler;
   
+  FILE* dump;
 private:
   CPU* cpu;
   
-  FILE* dump;
+  int resolution_old = 0;
 };
 
 }
