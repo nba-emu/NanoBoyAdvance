@@ -111,8 +111,6 @@ private:
 template <typename T>
 using CosineStereoResampler = CosineResampler<StereoSample<T>>;
 
-#include <cstdio>
-  
 template <typename T, int points>
 class SincResampler : public Resampler<T> {
 
@@ -171,17 +169,15 @@ public:
 //        sample += taps.Peek(n) * sinc;
 //      }
 
-      float x1 = resample_phase * s_lut_resolution;
+      int x = int(std::round(resample_phase * s_lut_resolution));
       
-      for (int n = 0; n < points; n += 4) {
-        int x2 = (int)std::round(x1);
+      for (int n = 0; n < points; n += 4) {        
+        sample += taps.Peek(n+0)*lut[x+0*s_lut_resolution] +
+                  taps.Peek(n+1)*lut[x+1*s_lut_resolution] + 
+                  taps.Peek(n+2)*lut[x+2*s_lut_resolution] + 
+                  taps.Peek(n+3)*lut[x+3*s_lut_resolution];
         
-        sample += taps.Peek(n+0)*lut[x2+0*s_lut_resolution] +
-                  taps.Peek(n+1)*lut[x2+1*s_lut_resolution] + 
-                  taps.Peek(n+2)*lut[x2+2*s_lut_resolution] + 
-                  taps.Peek(n+3)*lut[x2+3*s_lut_resolution];
-        
-        x1 += 4 * s_lut_resolution;
+        x += 4 * s_lut_resolution;
       }
 
 
