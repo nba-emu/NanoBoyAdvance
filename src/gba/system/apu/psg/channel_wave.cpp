@@ -19,7 +19,7 @@
 
 #include "channel_wave.hpp"
 
-namespace GameBoyAdvance {
+using namespace GameBoyAdvance;
 
 WaveChannel::WaveChannel(Scheduler& scheduler) {
   sequencer.sweep.enabled = false;
@@ -89,16 +89,16 @@ auto WaveChannel::Read(int offset) -> std::uint8_t {
   switch (offset) {
     /* Stop / Wave RAM select */
     case 0: {
-      return (dimension   << 5       ) |
-             (wave_bank << 6       ) |
-             (enabled     ? 0x80 : 0);
+      return (dimension << 5) |
+             (wave_bank << 6) |
+             (enabled ? 0x80 : 0);
     }
     case 1: return 0;
 
     /* Length / Volume */
     case 2: return 0;
     case 3: {
-      return (volume       << 5       ) |
+      return (volume << 5) |
              (force_volume  ? 0x80 : 0);
     }
 
@@ -116,9 +116,9 @@ void WaveChannel::Write(int offset, std::uint8_t value) {
   switch (offset) {
     /* Stop / Wave RAM select */
     case 0: {
-      dimension   = (value >> 5) & 1;
+      dimension = (value >> 5) & 1;
       wave_bank = (value >> 6) & 1;
-      enabled    =  value & 0x80;
+      enabled = value & 0x80;
       break;
     }
     case 1: break;
@@ -129,7 +129,7 @@ void WaveChannel::Write(int offset, std::uint8_t value) {
       break;
     }
     case 3: {
-      volume       = (value >> 5) & 3;
+      volume = (value >> 5) & 3;
       force_volume = value & 0x80;
       break;
     }
@@ -140,14 +140,14 @@ void WaveChannel::Write(int offset, std::uint8_t value) {
       break;
     }
     case 5: {
-      frequency    = (frequency & 0xFF) | ((value & 7) << 8);
+      frequency = (frequency & 0xFF) | ((value & 7) << 8);
       length_enable = value & 0x40;
 
       if (value & 0x80) {
         phase = 0;
         sequencer.Restart();
         
-        // in 64-digit mode output starts with the first bank
+        /* in 64-digit mode output starts with the first bank */
         if (dimension) {
           wave_bank = 0;
         }
@@ -155,6 +155,4 @@ void WaveChannel::Write(int offset, std::uint8_t value) {
       break;
     }
   }
-}
-
 }
