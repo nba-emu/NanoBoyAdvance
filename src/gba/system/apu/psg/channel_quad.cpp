@@ -24,7 +24,7 @@ using namespace GameBoyAdvance;
 QuadChannel::QuadChannel(Scheduler& scheduler) {
   sequencer.sweep.enabled = true;
   sequencer.envelope.enabled = true;
-    
+  
   scheduler.Add(event);
   scheduler.Add(sequencer.event);
   Reset();

@@ -19,8 +19,8 @@
 
 #pragma once
 
-//#include "sequencer.hpp"
-#include "../../scheduler.hpp"
+#include "sequencer.hpp"
+//#include "../../scheduler.hpp"
 
 #include <cstdint>
 
@@ -30,11 +30,17 @@ class WaveChannel {
 
 public:
   WaveChannel(Scheduler& scheduler) {
+    sequencer.sweep.enabled = false;
+    sequencer.envelope.enabled = false;
+    
     scheduler.Add(event);
+    scheduler.Add(sequencer.event);
     Reset();
   }
   
   void Reset() {
+    sequencer.Reset();
+    
     phase = 0;
     sample = 0;
     
@@ -57,13 +63,11 @@ public:
   }
   
   void Generate() {
-    if (!playback) {
+    if (!playback || (apply_length && sequencer.length >= sound_length)) {
       sample = 0;
       event.countdown = GetSynthesisIntervalFromFrequency(0);
       return;
     }
-    
-    /* TODO: implement length counting */
     
     auto byte = wave_ram[bank_number][phase / 2];
     
@@ -147,10 +151,9 @@ public:
         frequency    = (frequency & 0xFF) | ((value & 7) << 8);
         apply_length = value & 0x40;
 
-        // on sound restart
         if (value & 0x80) {
-          // TODO:
-          //internal.length_cycles = 0;
+          phase = 0;
+          sequencer.Restart();
           
           // in 64-digit mode output starts with the first bank
           if (dimension) {
@@ -176,7 +179,7 @@ private:
   
   Event event { 0, [this]() { this->Generate(); } };
   
-  //Sequencer sequencer;
+  Sequencer sequencer;
   
   // TODO: rename this appropriately.
   bool playback;
