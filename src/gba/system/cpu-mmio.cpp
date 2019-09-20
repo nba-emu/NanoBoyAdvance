@@ -80,6 +80,10 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case SOUND3CNT_H+1: return apu.psg3.Read(3);
     case SOUND3CNT_X:   return apu.psg3.Read(4);
     case SOUND3CNT_X+1: return apu.psg3.Read(5);
+    case SOUND4CNT_L:   return apu.psg4.Read(0);
+    case SOUND4CNT_L+1: return apu.psg4.Read(1);
+    case SOUND4CNT_H:   return apu.psg4.Read(4);
+    case SOUND4CNT_H+1: return apu.psg4.Read(5);
     case SOUNDCNT_L:   return apu_io.soundcnt.Read(0);
     case SOUNDCNT_L+1: return apu_io.soundcnt.Read(1);
     case SOUNDCNT_H:   return apu_io.soundcnt.Read(2);
@@ -301,6 +305,10 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     case SOUND3CNT_H+1: apu.psg3.Write(3, value); break;
     case SOUND3CNT_X:   apu.psg3.Write(4, value); break;
     case SOUND3CNT_X+1: apu.psg3.Write(5, value); break;
+    case SOUND4CNT_L:   apu.psg4.Write(0, value); break;
+    case SOUND4CNT_L+1: apu.psg4.Write(1, value); break;
+    case SOUND4CNT_H:   apu.psg4.Write(4, value); break;
+    case SOUND4CNT_H+1: apu.psg4.Write(5, value); break;
     case WAVE_RAM+0:
     case WAVE_RAM+1:
     case WAVE_RAM+2:

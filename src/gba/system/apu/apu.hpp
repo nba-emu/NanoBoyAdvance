@@ -54,6 +54,7 @@ public:
   QuadChannel psg1;
   QuadChannel psg2;
   WaveChannel psg3;
+  NoiseChannel psg4;
   
   std::int8_t latch[2];
   

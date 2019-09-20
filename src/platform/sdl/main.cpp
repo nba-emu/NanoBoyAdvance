@@ -136,7 +136,7 @@ int main(int argc, char** argv) {
   SDL_Window* window;
 
   SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
-  window = SDL_CreateWindow("NanoboyAdvance 0.1",
+  window = SDL_CreateWindow("NanoboyAdvance",
                 SDL_WINDOWPOS_CENTERED,
                 SDL_WINDOWPOS_CENTERED,
                 480,
