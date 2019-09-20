@@ -74,6 +74,12 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case SOUND2CNT_L+1: return apu.psg2.Read(3);
     case SOUND2CNT_H:   return apu.psg2.Read(4);
     case SOUND2CNT_H+1: return apu.psg2.Read(5);
+    case SOUND3CNT_L:   return apu.psg3.Read(0);
+    case SOUND3CNT_L+1: return apu.psg3.Read(1);
+    case SOUND3CNT_H:   return apu.psg3.Read(2);
+    case SOUND3CNT_H+1: return apu.psg3.Read(3);
+    case SOUND3CNT_X:   return apu.psg3.Read(4);
+    case SOUND3CNT_X+1: return apu.psg3.Read(5);
     case SOUNDCNT_L:   return apu_io.soundcnt.Read(0);
     case SOUNDCNT_L+1: return apu_io.soundcnt.Read(1);
     case SOUNDCNT_H:   return apu_io.soundcnt.Read(2);
@@ -289,6 +295,12 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     case SOUND2CNT_L+1: apu.psg2.Write(3, value); break;
     case SOUND2CNT_H:   apu.psg2.Write(4, value); break;
     case SOUND2CNT_H+1: apu.psg2.Write(5, value); break;
+    case SOUND3CNT_L:   apu.psg3.Write(0, value); break;
+    case SOUND3CNT_L+1: apu.psg3.Write(1, value); break;
+    case SOUND3CNT_H:   apu.psg3.Write(2, value); break;
+    case SOUND3CNT_H+1: apu.psg3.Write(3, value); break;
+    case SOUND3CNT_X:   apu.psg3.Write(4, value); break;
+    case SOUND3CNT_X+1: apu.psg3.Write(5, value); break;
     case FIFO_A:
     case FIFO_A+1:
     case FIFO_A+2:

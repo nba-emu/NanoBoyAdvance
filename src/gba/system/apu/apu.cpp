@@ -59,6 +59,7 @@ APU::APU(CPU* cpu)
   : cpu(cpu)
   , psg1(cpu->scheduler)
   , psg2(cpu->scheduler)
+  , psg3(cpu->scheduler)
   , buffer(new DSP::StereoRingBuffer<float>(16384, true))
   , resampler(new DSP::SincStereoResampler<float, 32>(buffer))
 { }
@@ -100,8 +101,8 @@ void APU::Tick() {
     resolution_old = mmio.bias.resolution;
   }
   
-  resampler->Write({ latch[0]/256.0f + (psg1.sample + psg2.sample)/512.0f, 
-                     latch[1]/256.0f + (psg1.sample + psg2.sample)/512.0f });
+  resampler->Write({ latch[0]/256.0f + (psg1.sample + psg2.sample + psg3.sample)/512.0f, 
+                     latch[1]/256.0f + (psg1.sample + psg2.sample + psg3.sample)/512.0f });
   
   event.countdown += 512 >> mmio.bias.resolution;
 }
