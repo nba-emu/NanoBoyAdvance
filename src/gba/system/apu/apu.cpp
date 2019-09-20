@@ -107,8 +107,8 @@ void APU::Tick() {
     resolution_old = mmio.bias.resolution;
   }
   
-  resampler->Write({ latch[0]/256.0f + (psg1.sample + psg2.sample + psg3.sample + psg4.sample)/512.0f, 
-                     latch[1]/256.0f + (psg1.sample + psg2.sample + psg3.sample + psg4.sample)/512.0f });
+  resampler->Write({ latch[0]/256.0f + (psg1.sample + psg2.sample + psg3.sample + psg4.sample)/1024.0f, 
+                     latch[1]/256.0f + (psg1.sample + psg2.sample + psg3.sample + psg4.sample)/1024.0f });
   
   event.countdown += 512 >> mmio.bias.resolution;
 }
