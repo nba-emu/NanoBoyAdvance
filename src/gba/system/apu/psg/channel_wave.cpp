@@ -55,7 +55,7 @@ void WaveChannel::Reset() {
 }
 
 void WaveChannel::Generate() {
-  if (!enabled || (length_enable && sequencer.length >= length_max)) {
+  if (!enabled || (length_enable && sequencer.length >= (256 - length_max))) {
     sample = 0;
     event.countdown = GetSynthesisIntervalFromFrequency(0);
     return;

@@ -43,7 +43,7 @@ void QuadChannel::Reset() {
 }
 
 void QuadChannel::Generate() {
-  if (length_enable && sequencer.length >= length_max) {
+  if (length_enable && sequencer.length >= (64 - length_max)) {
     sample = 0;
     event.countdown = GetSynthesisIntervalFromFrequency(0);
     return;
