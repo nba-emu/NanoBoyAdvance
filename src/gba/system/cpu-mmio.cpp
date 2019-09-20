@@ -301,6 +301,25 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     case SOUND3CNT_H+1: apu.psg3.Write(3, value); break;
     case SOUND3CNT_X:   apu.psg3.Write(4, value); break;
     case SOUND3CNT_X+1: apu.psg3.Write(5, value); break;
+    case WAVE_RAM+0:
+    case WAVE_RAM+1:
+    case WAVE_RAM+2:
+    case WAVE_RAM+3:
+    case WAVE_RAM+4:
+    case WAVE_RAM+5:
+    case WAVE_RAM+6:
+    case WAVE_RAM+7:
+    case WAVE_RAM+8:
+    case WAVE_RAM+9:
+    case WAVE_RAM+10:
+    case WAVE_RAM+11:
+    case WAVE_RAM+12:
+    case WAVE_RAM+13:
+    case WAVE_RAM+14:
+    case WAVE_RAM+15: {
+      apu.psg3.WriteSample(address&0xF, value);
+      break;
+    }
     case FIFO_A:
     case FIFO_A+1:
     case FIFO_A+2:

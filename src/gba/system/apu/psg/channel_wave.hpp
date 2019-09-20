@@ -47,23 +47,49 @@ public:
     bank_number = 0;
     sound_length = 0;
     
+    for (int i = 0; i < 2; i++) {
+      for (int j = 0; j < 16; j++) {
+        wave_ram[i][j] = 0;
+      }
+    }
+    
     event.countdown = GetSynthesisIntervalFromFrequency(0);
   }
   
   void Generate() {
-    // TODO: this is just a test.
-    if (phase < 8) {
-      sample = 127;
-    } else {
-      sample = -128;
+    if (!playback) {
+      sample = 0;
+      event.countdown = GetSynthesisIntervalFromFrequency(0);
+      return;
     }
     
-    phase = (phase + 1) % 16;
+    /* TODO: implement length counting */
+    
+    auto byte = wave_ram[bank_number][phase / 2];
+    
+    if ((phase % 2) == 0) {
+      sample = byte >> 4;
+    } else {
+      sample = byte & 15;
+    }
+
+    constexpr int volume_table[4] = { 0, 4, 2, 1 };
+    
+    /* TODO: at 100% sample might overflow. */
+    sample = (sample - 8) * 4 * (force_volume ? 3 : volume_table[volume]);
+    
+    if (++phase == 32) {
+      phase = 0;
+      
+      if (dimension) {
+        bank_number ^= 1;
+      }
+    }
     
     event.countdown += GetSynthesisIntervalFromFrequency(frequency);
   }
   
-  auto Read (int offset) -> std::uint8_t {
+  auto Read(int offset) -> std::uint8_t {
     switch (offset) {
       /* Stop / Wave RAM select */
       case 0: {
@@ -136,14 +162,16 @@ public:
     }
   }
   
+  void WriteSample(int offset, std::uint8_t value) {
+    wave_ram[bank_number ^ 1][offset] = value;
+  }
+  
   std::int8_t sample = 0;
   
 private:
   constexpr int GetSynthesisIntervalFromFrequency(int frequency) {
-    // 128 cycles equals 131072 Hz, the highest possible frequency.
-    // We are dividing by 16, because the waveform can change at
-    // eight evenly spaced points inside a single cycle, depending on the wave ram pattern.
-    return 128 * (2048 - frequency) / 16;
+    // 8 cycles equals 2097152 Hz, the highest possible sample rate.
+    return 8 * (2048 - frequency);
   }
   
   Event event { 0, [this]() { this->Generate(); } };
@@ -159,6 +187,7 @@ private:
   int dimension;
   int bank_number;
   int sound_length;
+  std::uint8_t wave_ram[2][16];
   
   int phase;
 };
