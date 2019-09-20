@@ -1,6 +1,7 @@
 set(SOURCES
     emulator.cpp
     system/apu/psg/channel_quad.cpp
+    system/apu/psg/channel_wave.cpp
     system/apu/apu.cpp
     system/apu/regs.cpp
     system/cpu.cpp
