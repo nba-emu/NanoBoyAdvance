@@ -20,19 +20,16 @@
 #pragma once
 
 #include "sequencer.hpp"
+#include "../regs.hpp"
 
 #include <cstdint>
-
-/* TODO: the noise channel seems to be a real performance hog.
- * I guess I have to make the timing less tight to make it fast.
- */
 
 namespace GameBoyAdvance {
 
 class NoiseChannel {
 
 public:
-  NoiseChannel(Scheduler& scheduler);
+  NoiseChannel(Scheduler& scheduler, BIAS& bias);
   
   void Reset();
   
@@ -66,6 +63,9 @@ private:
   int  width;
   int  length;
   bool length_enable;
+  
+  BIAS& bias;
+  int skip_count;
 };
 
 }

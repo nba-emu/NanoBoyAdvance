@@ -21,7 +21,7 @@
 
 using namespace GameBoyAdvance;
 
-NoiseChannel::NoiseChannel(Scheduler& scheduler) {
+NoiseChannel::NoiseChannel(Scheduler& scheduler, BIAS& bias) : bias(bias) {
   sequencer.sweep.enabled = false;
   sequencer.envelope.enabled = true;
 
@@ -41,6 +41,7 @@ void NoiseChannel::Reset() {
   
   lfsr = 0;
   sample = 0;
+  skip_count = 0;
   
   event.countdown = GetSynthesisInterval(7, 15);
 }
@@ -55,7 +56,7 @@ void NoiseChannel::Generate() {
   constexpr std::uint16_t lfsr_xor[2] = { 0x6000, 0x60 };
   
   int carry = lfsr & 1;
-  
+
   lfsr >>= 1;
   if (carry) {
     lfsr ^= lfsr_xor[width];
@@ -63,10 +64,35 @@ void NoiseChannel::Generate() {
   } else {
     sample = -8;
   }
-  
+
   sample *= sequencer.envelope.current_volume;
   
-  event.countdown += GetSynthesisInterval(frequency_ratio, frequency_shift);
+  /* Skip samples that will never be sampled by the audio mixer. */
+  for (int i = 0; i < skip_count; i++) {
+    carry = lfsr & 1;
+    lfsr >>= 1;
+    if (carry) {
+      lfsr ^= lfsr_xor[width];
+    }
+  }
+  
+  int noise_interval = GetSynthesisInterval(frequency_ratio, frequency_shift);
+  int mixer_interval = bias.GetSampleInterval();
+  
+  /* If a channel generates at a higher rate than
+   * the audio mixer samples it, then it will generate samples
+   * that will be skipped anyways.
+   * In that case we can sample the channel at the same rate
+   * as the mixer rate and only output the sample that will be used.
+   */
+  if (noise_interval < mixer_interval) {
+    skip_count = mixer_interval/noise_interval - 1;
+    noise_interval = mixer_interval;
+  } else {
+    skip_count = 0;
+  }
+  
+  event.countdown += noise_interval;
 }
 
 auto NoiseChannel::Read(int offset) -> std::uint8_t {

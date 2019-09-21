@@ -67,6 +67,9 @@ struct BIAS {
   void Reset();
   auto Read(int address) -> std::uint8_t;
   void Write(int address, std::uint8_t value);
+  
+  auto GetSampleInterval() -> int { return 512 >> resolution; }
+  auto GetSampleRate() -> int { return 32768 << resolution; }
 };
 
 }
