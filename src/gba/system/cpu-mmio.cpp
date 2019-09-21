@@ -128,6 +128,21 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case IF+1:  return mmio.irq_if  >> 8;
     case IME+0: return mmio.irq_ime & 0xFF;
     case IME+1: return mmio.irq_ime >> 8;
+      
+    /* Waitstates */
+    case WAITCNT+0: {
+      return mmio.waitcnt.sram |
+            (mmio.waitcnt.ws0_n << 2) |
+            (mmio.waitcnt.ws0_s << 4) |
+            (mmio.waitcnt.ws1_n << 5) |
+            (mmio.waitcnt.ws1_s << 7);
+    }
+    case WAITCNT+1: {
+      return mmio.waitcnt.ws2_n |
+            (mmio.waitcnt.ws2_s << 2) |
+            (mmio.waitcnt.phi << 3) |
+            (mmio.waitcnt.prefetch << 6);
+    }
   }
   return 0;
 }
