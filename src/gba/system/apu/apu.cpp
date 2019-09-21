@@ -62,7 +62,6 @@ APU::APU(CPU* cpu)
   , psg3(cpu->scheduler)
   , psg4(cpu->scheduler, mmio.bias)
   , buffer(new DSP::StereoRingBuffer<float>(16384, true))
-  , resampler(new DSP::SincStereoResampler<float, 32>(buffer))
 { }
 
 void APU::Reset() {
@@ -86,6 +85,27 @@ void APU::Reset() {
   /* TODO: check return value for failure. */
   audio_dev->Close();
   audio_dev->Open(this, (AudioDevice::Callback)AudioCallback);
+
+  using Interpolation = Config::Audio::Interpolation;
+    
+  switch (cpu->config->audio.interpolation) {
+    case Interpolation::Cosine:
+      resampler.reset(new DSP::CosineStereoResampler<float>(buffer));
+      break;
+    case Interpolation::Cubic:
+      resampler.reset(new DSP::CubicStereoResampler<float>(buffer));
+      break;
+    case Interpolation::Sinc_32:
+      resampler.reset(new DSP::SincStereoResampler<float, 32>(buffer));
+      break;
+    case Interpolation::Sinc_64:
+      resampler.reset(new DSP::SincStereoResampler<float, 64>(buffer));
+      break;
+    case Interpolation::Sinc_128:
+      resampler.reset(new DSP::SincStereoResampler<float, 128>(buffer));
+      break;
+  }
+  
   resampler->SetSampleRates(mmio.bias.GetSampleRate(), audio_dev->GetSampleRate());
 }
   

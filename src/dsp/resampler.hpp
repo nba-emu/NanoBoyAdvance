@@ -204,12 +204,6 @@ public:
     while (resample_phase < 1.0) { 
       T sample = {};
 
-//      for (int n = 0; n < points; n++) {
-//        float sinc = lut[(int)std::round((n + resample_phase) * s_lut_resolution)];
-//
-//        sample += taps.Peek(n) * sinc;
-//      }
-
       int x = int(std::round(resample_phase * s_lut_resolution));
       
       for (int n = 0; n < points; n += 4) {        

@@ -35,6 +35,13 @@ struct Config {
   } video;
   
   struct Audio {
+    enum class Interpolation {
+      Cosine,
+      Cubic,
+      Sinc_32,
+      Sinc_64,
+      Sinc_128
+    } interpolation = Interpolation::Cosine;
   } audio;
   
   std::shared_ptr<AudioDevice> audio_dev = std::make_shared<NullAudioDevice>();
