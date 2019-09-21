@@ -36,14 +36,14 @@ void QuadChannel::Reset() {
   phase = 0;
   sample = 0;
   wave_duty = 0;
-  length_max = 0;
+  length = 0;
   length_enable = false;
   
   event.countdown = GetSynthesisIntervalFromFrequency(0);
 }
 
 void QuadChannel::Generate() {
-  if (length_enable && sequencer.length >= (64 - length_max)) {
+  if (length_enable && sequencer.length >= (64 - length)) {
     sample = 0;
     event.countdown = GetSynthesisIntervalFromFrequency(0);
     return;
@@ -112,7 +112,7 @@ void QuadChannel::Write(int offset, std::uint8_t value) {
       
     /* Wave Duty / Length / Envelope */
     case 2: {
-      length_max =  value & 63;
+      length =  value & 63;
       wave_duty  = (value >> 6) & 3;
       break;
     }

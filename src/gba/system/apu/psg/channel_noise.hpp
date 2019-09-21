@@ -44,11 +44,12 @@ public:
   void Reset() {
     sequencer.Reset();
     
-    frequency = 0;
-    sound_length = 0;
-    divide_ratio = 0;
-    size_flag = false;
-    apply_length = false;
+    frequency_shift = 0;
+    frequency_ratio = 0;
+    width = 0;
+    length = 0;
+    length_enable = false;
+    
     lfsr = 0;
     sample = 0;
     
@@ -56,7 +57,7 @@ public:
   }
   
   void Generate() {
-    if (apply_length && sequencer.length >= (64 - sound_length)) {
+    if (length_enable && sequencer.length >= (64 - length)) {
       sample = 0;
       event.countdown = GetSynthesisInterval(7, 15);
       return;
@@ -68,7 +69,7 @@ public:
     
     lfsr >>= 1;
     if (carry) {
-      lfsr ^= lfsr_xor[size_flag];
+      lfsr ^= lfsr_xor[width];
       sample = +8;
     } else {
       sample = -8;
@@ -76,7 +77,7 @@ public:
     
     sample *= sequencer.envelope.current_volume;
     
-    event.countdown += GetSynthesisInterval(divide_ratio, frequency);
+    event.countdown += GetSynthesisInterval(frequency_ratio, frequency_shift);
   }
   
   auto Read(int offset) -> std::uint8_t {
@@ -95,12 +96,12 @@ public:
 
       /* Frequency / Control */
       case 4: {
-        return divide_ratio |
-              (size_flag ? 8 : 0) |
-              (frequency << 4);
+        return frequency_ratio |
+              (width << 3) |
+              (frequency_shift << 4);
       }
       case 5: {
-        return apply_length ? 0x40 : 0;
+        return length_enable ? 0x40 : 0;
       }
                 
       default: return 0;
@@ -113,7 +114,7 @@ public:
     switch (offset) {
       /* Length / Envelope */
       case 0: {
-        sound_length = value & 63;
+        length = value & 63;
         break;
       }
       case 1: {
@@ -125,27 +126,19 @@ public:
 
       /* Frequency / Control */
       case 4: {
-        divide_ratio = value  & 7;
-        size_flag = value  & 8;
-        frequency = value >> 4;
+        frequency_ratio = value & 7;
+        width = (value >> 3) & 1;
+        frequency_shift = value >> 4;
         break;
       }
       case 5: {
-        apply_length = value & 0x40;
+        length_enable = value & 0x40;
 
         if (value & 0x80) {
           const std::uint16_t lfsr_init[] = { 0x4000, 0x0040 };
           
           sequencer.Restart();
-          lfsr = lfsr_init[size_flag];
-          
-//          const u16 lfsr_init[] = { 0x4000, 0x0040 };
-//          internal.output          = 0;
-//          internal.lfsr            = lfsr_init[size_flag];
-//          internal.volume          = envelope.initial;
-//          internal.shift_cycles    = 0;
-//          internal.length_cycles   = 0;
-//          internal.envelope_cycles = 0;
+          lfsr = lfsr_init[width];
         }
         break;
       }
@@ -155,30 +148,29 @@ public:
   std::int8_t sample = 0;
   
 private:
-  constexpr int GetSynthesisInterval(int r, int s) {
-    int interval = 32 * (2<<s); // 64 << s
+  constexpr int GetSynthesisInterval(int ratio, int shift) {
+    int interval = 64 << shift;
     
-    if (r == 0) {
+    if (ratio == 0) {
       interval /= 2;
     } else {
-      interval *= r;
+      interval *= ratio;
     }
     
     return interval;
   }
   
+  std::uint16_t lfsr;
+  
   Event event { 0, [this]() { this->Generate(); } };
   
   Sequencer sequencer;
   
-  /* TODO: rename these properly. */
-  int frequency;
-  int sound_length;
-  int divide_ratio;
-  bool size_flag;
-  bool apply_length;
-  
-  std::uint16_t lfsr;
+  int  frequency_shift;
+  int  frequency_ratio;
+  int  width;
+  int  length;
+  bool length_enable;
 };
 
 }

@@ -43,7 +43,7 @@ void WaveChannel::Reset() {
   dimension = 0;
   wave_bank = 0;
   length_enable = false;
-  length_max = 0;
+  length = 0;
   
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 16; j++) {
@@ -55,7 +55,7 @@ void WaveChannel::Reset() {
 }
 
 void WaveChannel::Generate() {
-  if (!enabled || (length_enable && sequencer.length >= (256 - length_max))) {
+  if (!enabled || (length_enable && sequencer.length >= (256 - length))) {
     sample = 0;
     event.countdown = GetSynthesisIntervalFromFrequency(0);
     return;
@@ -125,7 +125,7 @@ void WaveChannel::Write(int offset, std::uint8_t value) {
 
     /* Length / Volume */
     case 2: {
-      length_max = value;
+      length = value;
       break;
     }
     case 3: {

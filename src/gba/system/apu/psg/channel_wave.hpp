@@ -58,7 +58,7 @@ private:
   int  frequency;
   int  dimension;
   int  wave_bank;
-  int  length_max;
+  int  length;
   bool length_enable;
   
   std::uint8_t wave_ram[2][16];

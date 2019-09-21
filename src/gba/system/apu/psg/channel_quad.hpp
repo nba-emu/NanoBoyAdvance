@@ -53,7 +53,7 @@ private:
   int phase;
   
   int  wave_duty;
-  int  length_max;
+  int  length;
   bool length_enable;
 };
 
