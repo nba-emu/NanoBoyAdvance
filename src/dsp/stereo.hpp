@@ -63,6 +63,26 @@ struct StereoSample {
     return *this;
   }
   
+  StereoSample<T> operator-(T scalar) const {
+    return { left - scalar, right - scalar };
+  }
+  
+  StereoSample<T> operator-(StereoSample<T> const& other) const {
+    return { left - other.left, right - other.right };
+  }
+  
+  StereoSample<T>& operator-=(T scalar) {
+    left  -= scalar;
+    right -= scalar;
+    return *this;
+  }
+  
+  StereoSample<T>& operator-=(StereoSample<T> const& other) {
+    left  -= other.left;
+    right -= other.right;
+    return *this;
+  }
+  
   StereoSample<T> operator*(T scalar) const {
     return { left * scalar, right * scalar };
   }
