@@ -104,6 +104,9 @@ void APU::Reset() {
     case Interpolation::Sinc_128:
       resampler.reset(new DSP::SincStereoResampler<float, 128>(buffer));
       break;
+    case Interpolation::Sinc_256:
+      resampler.reset(new DSP::SincStereoResampler<float, 256>(buffer));
+      break;
   }
   
   resampler->SetSampleRates(mmio.bias.GetSampleRate(), audio_dev->GetSampleRate());
