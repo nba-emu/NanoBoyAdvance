@@ -107,8 +107,39 @@ void APU::Tick() {
     resolution_old = mmio.bias.resolution;
   }
   
-  resampler->Write({ latch[0]/256.0f + (psg1.sample + psg2.sample + psg3.sample + psg4.sample)/1024.0f, 
-                     latch[1]/256.0f + (psg1.sample + psg2.sample + psg3.sample + psg4.sample)/1024.0f });
+  DSP::StereoSample<float> sample { 0, 0 };
+  
+  auto& psg = mmio.soundcnt.psg;
+  auto& dma = mmio.soundcnt.dma;
+  
+  /* TODO: what happens if volume=3 (forbidden)? */
+  constexpr float psg_volume_tab[4] = { 0.25, 0.5, 1.0, 0.0 };
+  constexpr float dma_volume_tab[2] = { 2.0, 4.0 };
+  
+  float psg_volume = psg_volume_tab[psg.volume];
+  
+  for (int channel = 0; channel < 2; channel++) {
+    std::int16_t psg_sample = 0;
+    
+    if (psg.enable[channel][0]) psg_sample += psg1.sample;
+    if (psg.enable[channel][1]) psg_sample += psg2.sample;
+    if (psg.enable[channel][2]) psg_sample += psg3.sample;
+    if (psg.enable[channel][3]) psg_sample += psg4.sample;
+    
+    sample[channel] += psg_sample/600.0f * psg_volume * psg.master[channel]/7.0f;
+    
+    if (dma[0].enable[channel]) {
+      sample[channel] += latch[0]/600.0f * dma_volume_tab[dma[0].volume];
+    }
+    
+    if (dma[1].enable[channel]) {
+      sample[channel] += latch[1]/600.0f * dma_volume_tab[dma[1].volume];
+    }
+  }
+  
+  /* TODO: emulate BIAS register. */
+  
+  resampler->Write(sample);
   
   event.countdown += 512 >> mmio.bias.resolution;
 }

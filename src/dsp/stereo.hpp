@@ -20,6 +20,7 @@
 #pragma once
 
 #include <memory>
+#include <stdexcept>
 
 #include "stream.hpp"
 
@@ -33,6 +34,13 @@ struct StereoSample {
   template <typename U>
   operator StereoSample<U>() {
     return { (U)left, (U)right };
+  }
+  
+  T& operator[](int index) {
+    if (index == 0) return left;
+    if (index == 1) return right;
+    
+    throw std::runtime_error("DSP::StereoSample<T>: bad index for operator[].");
   }
   
   StereoSample<T> operator+(T scalar) const {
