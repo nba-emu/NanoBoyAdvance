@@ -25,8 +25,8 @@ NoiseChannel::NoiseChannel(Scheduler& scheduler, BIAS& bias) : bias(bias) {
   sequencer.sweep.enabled = false;
   sequencer.envelope.enabled = true;
 
-  scheduler.Add(event);
   scheduler.Add(sequencer.event);
+  scheduler.Add(event);
   Reset();
 }
 

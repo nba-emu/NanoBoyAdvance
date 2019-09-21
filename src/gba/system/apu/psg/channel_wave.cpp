@@ -25,8 +25,8 @@ WaveChannel::WaveChannel(Scheduler& scheduler) {
   sequencer.sweep.enabled = false;
   sequencer.envelope.enabled = false;
 
-  scheduler.Add(event);
   scheduler.Add(sequencer.event);
+  scheduler.Add(event);
   Reset();
 }
 

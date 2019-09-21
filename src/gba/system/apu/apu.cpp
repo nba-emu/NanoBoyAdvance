@@ -72,6 +72,7 @@ void APU::Reset() {
   
   resolution_old = 0;
   event.countdown = mmio.bias.GetSampleInterval();
+  cpu->scheduler.Add(event);
   
   psg1.Reset();
   psg2.Reset();

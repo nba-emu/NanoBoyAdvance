@@ -46,7 +46,6 @@ void CPU::Reset() {
   //scheduler.Reset();
   
   scheduler.Add(ppu.event);
-  scheduler.Add(apu.event);
   
   /* Clear all memory buffers. */
   std::memset(memory.bios, 0, 0x04000);
