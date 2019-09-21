@@ -126,14 +126,14 @@ void APU::Tick() {
     if (psg.enable[channel][2]) psg_sample += psg3.sample;
     if (psg.enable[channel][3]) psg_sample += psg4.sample;
     
-    sample[channel] += psg_sample/600.0f * psg_volume * psg.master[channel]/7.0f;
+    sample[channel] += psg_sample/float(0x600) * psg_volume * psg.master[channel]/7.0f;
     
     if (dma[0].enable[channel]) {
-      sample[channel] += latch[0]/600.0f * dma_volume_tab[dma[0].volume];
+      sample[channel] += latch[0]/float(0x600) * dma_volume_tab[dma[0].volume];
     }
     
     if (dma[1].enable[channel]) {
-      sample[channel] += latch[1]/600.0f * dma_volume_tab[dma[1].volume];
+      sample[channel] += latch[1]/float(0x600) * dma_volume_tab[dma[1].volume];
     }
   }
   
