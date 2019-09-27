@@ -237,7 +237,7 @@ void Thumb_HighRegisterOps_BX(std::uint16_t instruction) {
     SUB(state.reg[dst], operand, true);
     pipe.fetch_type = ACCESS_SEQ;
     state.r15 += 2;
-  /* Otherwise instruction is ADD or MOv. */
+  /* Otherwise instruction is ADD or MOV. */
   } else {
     if (op == 0) state.reg[dst] += operand;
     if (op == 2) state.reg[dst]  = operand;
