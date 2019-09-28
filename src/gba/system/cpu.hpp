@@ -132,7 +132,7 @@ private:
   void SWI(std::uint32_t call_id) final { }
   void Tick(int cycles) final;
   void Idle() final;
-  void RunPrefetch(std::uint32_t address, int cycles);
+  void PrefetchStep(std::uint32_t address, int cycles);
   
   void UpdateCycleLUT();
   

@@ -108,13 +108,13 @@ void CPU::Tick(int cycles) {
 
 void CPU::Idle() {
   if (mmio.waitcnt.prefetch) {
-    RunPrefetch(0, 1);
+    PrefetchStep(0, 1);
   } else {
     Tick(1);
   }
 }
 
-void CPU::RunPrefetch(std::uint32_t address, int cycles) {
+void CPU::PrefetchStep(std::uint32_t address, int cycles) {
   #define IS_ROM_REGION(address) ((address) >= 0x08000000 && (address) <= 0x0EFFFFFF) 
   
   auto thumb = cpu.state.cpsr.f.thumb;
