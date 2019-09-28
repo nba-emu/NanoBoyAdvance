@@ -76,6 +76,8 @@ void CPU::Reset() {
   mmio.waitcnt.cgb = 0;
   UpdateCycleLUT();
   
+  prefetch.active = false;
+  
   dma.Reset();
   timer.Reset();
   apu.Reset();
@@ -92,6 +94,62 @@ void CPU::Reset() {
 void CPU::Tick(int cycles) {
   timer.Run(cycles);
   ticks_cpu_left -= cycles;
+  if (prefetch.active) {
+    prefetch.countdown -= cycles;
+    if (prefetch.countdown <= 0) {
+      /* TODO: figure out how to continue prefetch. */
+      prefetch.active = false;
+      std::printf("prefetch completed for 0x%08x.\n", prefetch.address);
+    }
+  }
+}
+
+void CPU::Idle() {
+  if (mmio.waitcnt.prefetch) {
+    RunPrefetch(0, 1);
+  } else {
+    Tick(1);
+  }
+}
+
+void CPU::RunPrefetch(std::uint32_t address, int cycles) {
+  #define IS_ROM_REGION(address) ((address) >= 0x08000000 && (address) <= 0x0EFFFFFF) 
+  
+  int width = cpu.state.cpsr.f.thumb ? 2 : 4;
+  
+  /* TODO: ensure that prefetch will only be started if
+   * the opcode can be fetched *sequentially* from the ROM.
+   */
+  
+  static std::uint32_t last_rom_addr = 0;
+  
+  if (prefetch.active) {
+    /* If prefetching the desired opcode just complete. */
+    if (address == prefetch.address) {
+      Tick(prefetch.countdown);
+      
+      // blarghz
+      last_rom_addr = address;
+      return;
+    }
+    
+    if (IS_ROM_REGION(address)) {
+      prefetch.active = false;
+      std::printf("prefetch to 0x%08x interrupted by access to 0x%08x.\n", prefetch.address, address);
+    }
+  } else if (IS_ROM_REGION(cpu.state.r15) && !IS_ROM_REGION(address) && cpu.state.r15 == last_rom_addr) {
+    prefetch.active = true;
+    prefetch.address = cpu.state.r15 + width;
+    //prefetch.countdown = 3;//hardcoded for now
+    prefetch.countdown = (cpu.state.cpsr.f.thumb ? cycles16 : cycles32)[ARM::ACCESS_SEQ][(prefetch.address>>24)&15];
+    std::printf("start prefetch for 0x%08x last=0x%08x\n", prefetch.address, last_rom_addr);
+  }
+  
+  if (IS_ROM_REGION(address)) {
+    last_rom_addr = address;
+  }
+  
+  Tick(cycles);
 }
 
 void CPU::RunFor(int cycles) {

@@ -131,8 +131,16 @@ private:
   
   void SWI(std::uint32_t call_id) final { }
   void Tick(int cycles) final;
+  void Idle() final;
+  void RunPrefetch(std::uint32_t address, int cycles);
   
   void UpdateCycleLUT();
+  
+  struct Prefetch {
+    bool active;
+    std::uint32_t address;
+    int countdown;
+  } prefetch;
   
   cycle_t ticks_cpu_left = 0;
   cycle_t ticks_to_event = 0;

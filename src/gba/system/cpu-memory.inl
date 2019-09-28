@@ -47,8 +47,13 @@ inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
 
 inline std::uint8_t CPU::ReadByte(std::uint32_t address, ARM::AccessType type) {
   int page = (address >> 24) & 15;
-
-  Tick(cycles16[type][page]);
+  int cycles = cycles16[type][page];
+  
+  if (mmio.waitcnt.prefetch) {
+    RunPrefetch(address, cycles);
+  } else {
+    Tick(cycles);
+  }
 
   switch (page) {
     case 0x0: return ReadBIOS(address);
@@ -100,9 +105,14 @@ inline std::uint8_t CPU::ReadByte(std::uint32_t address, ARM::AccessType type) {
 
 inline std::uint16_t CPU::ReadHalf(std::uint32_t address, ARM::AccessType type) {
   int page = (address >> 24) & 15;
-
-  Tick(cycles16[type][page]);
-
+  int cycles = cycles16[type][page];
+  
+  if (mmio.waitcnt.prefetch) {
+    RunPrefetch(address, cycles);
+  } else {
+    Tick(cycles);
+  }
+  
   switch (page) {
     case 0x0: return ReadBIOS(address);
     case 0x2: return READ_FAST_16(memory.wram, address & 0x3FFFF);
@@ -159,9 +169,14 @@ inline std::uint16_t CPU::ReadHalf(std::uint32_t address, ARM::AccessType type) 
 
 inline std::uint32_t CPU::ReadWord(std::uint32_t address, ARM::AccessType type) {
   int page = (address >> 24) & 15;
-
-  Tick(cycles32[type][page]);
-
+  int cycles = cycles32[type][page];
+  
+  if (mmio.waitcnt.prefetch) {
+    RunPrefetch(address, cycles);
+  } else {
+    Tick(cycles);
+  }
+  
   switch (page) {
     case 0x0: return ReadBIOS(address);
     case 0x2: return READ_FAST_32(memory.wram, address & 0x3FFFF);
@@ -212,11 +227,16 @@ inline std::uint32_t CPU::ReadWord(std::uint32_t address, ARM::AccessType type) 
 
 inline void CPU::WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) {
   int page = (address >> 24) & 15;
+  int cycles = cycles16[type][page];
 
   // if (page == 8 && (address & 0x1FFFF) == 0)
   //   type = ARM::ACCESS_NSEQ;
 
-  Tick(cycles16[type][page]);
+  if (mmio.waitcnt.prefetch) {
+    RunPrefetch(address, cycles);
+  } else {
+    Tick(cycles);
+  }
 
   switch (page) {
     case 0x2: WRITE_FAST_8(memory.wram, address & 0x3FFFF, value); break;
@@ -247,11 +267,16 @@ inline void CPU::WriteByte(std::uint32_t address, std::uint8_t value, ARM::Acces
 
 inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type) {
   int page = (address >> 24) & 15;
-
+  int cycles = cycles16[type][page];
+  
   // if (page == 8 && (address & 0x1FFFF) == 0)
   //   type = ARM::ACCESS_NSEQ;
 
-  Tick(cycles16[type][page]);
+  if (mmio.waitcnt.prefetch) {
+    RunPrefetch(address, cycles);
+  } else {
+    Tick(cycles);
+  }
 
   switch (page) {
     case 0x2: WRITE_FAST_16(memory.wram, address & 0x3FFFF, value); break;
@@ -316,11 +341,16 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, ARM::Acce
 
 inline void CPU::WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type) {
   int page = (address >> 24) & 15;
-
+  int cycles = cycles32[type][page];
+  
   // if (page == 8 && (address & 0x1FFFF) == 0)
   //   type = ARM::ACCESS_NSEQ;
 
-  Tick(cycles32[type][page]);
+  if (mmio.waitcnt.prefetch) {
+    RunPrefetch(address, cycles);
+  } else {
+    Tick(cycles);
+  }
 
   switch (page) {
     case 0x2: WRITE_FAST_32(memory.wram, address & 0x3FFFF, value); break;
