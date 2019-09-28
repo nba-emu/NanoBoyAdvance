@@ -101,19 +101,7 @@ void CPU::Tick(int cycles) {
     
     if (prefetch.countdown <= 0) {
       prefetch.count++;
-      
-      //std::printf("prefetch completed for 0x%08x.\n", prefetch.address[prefetch.count]);
-    
-      int capacity = cpu.state.cpsr.f.thumb ? 8 : 4;
-      
-      if (false /*prefetch.count < capacity*/) {
-        /* TODO: fix this case, trying to continue prefetch breaks timings. */
-        std::uint32_t next_addr = prefetch.address[prefetch.count - 1] + cpu.state.cpsr.f.thumb?2:4;
-        prefetch.address[prefetch.count] = next_addr;
-        prefetch.countdown = (cpu.state.cpsr.f.thumb ? cycles16 : cycles32)[ARM::ACCESS_SEQ][(next_addr>>24)&15];
-      } else {
-        prefetch.active = false;
-      }
+      prefetch.active = false;
     }
   }
 }
@@ -155,10 +143,13 @@ void CPU::RunPrefetch(std::uint32_t address, int cycles) {
       //std::printf("prefetch to 0x%08x interrupted by access to 0x%08x.\n", prefetch.address[prefetch.count], address);
     }
   } else if (prefetch.count < capacity && IS_ROM_REGION(cpu.state.r15) && !IS_ROM_REGION(address) && cpu.state.r15 == last_rom_addr) {
+    std::uint32_t next_address = ((prefetch.count > 0) ? prefetch.address[prefetch.count - 1]
+                                                       : cpu.state.r15) + (thumb ? 2 : 4);
+    
     prefetch.active = true;
-    prefetch.address[0] = cpu.state.r15 + (thumb ? 2 : 4);
-    prefetch.count = 0;
-    prefetch.countdown = (thumb ? cycles16 : cycles32)[ARM::ACCESS_SEQ][(prefetch.address[0] >> 24) & 15];
+    prefetch.address[prefetch.count] = next_address;
+    prefetch.countdown = (thumb ? cycles16 : cycles32)[ARM::ACCESS_SEQ][(next_address >> 24) & 15];
+    
     //std::printf("start prefetch for 0x%08x last=0x%08x\n", prefetch.address[0], last_rom_addr);
   }
   
