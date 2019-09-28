@@ -78,6 +78,7 @@ void CPU::Reset() {
   
   prefetch.active = false;
   prefetch.count = 0;
+  prefetch.last_rom_address = 0;
   
   dma.Reset();
   timer.Reset();
@@ -120,8 +121,6 @@ void CPU::PrefetchStep(std::uint32_t address, int cycles) {
   auto thumb = cpu.state.cpsr.f.thumb;
   auto capacity = thumb ? 8 : 4;
   
-  static std::uint32_t last_rom_addr = 0;
-  
   if (prefetch.active) {
     /* If prefetching the desired opcode just complete. */
     if (address == prefetch.address[prefetch.count]) {
@@ -133,28 +132,27 @@ void CPU::PrefetchStep(std::uint32_t address, int cycles) {
         prefetch.address[i - 1] = prefetch.address[i];
       }
       
-      // blarghz
-      last_rom_addr = address;
+      prefetch.last_rom_address = address;
       return;
     }
     
     if (IS_ROM_REGION(address)) {
       prefetch.active = false;
-      //std::printf("prefetch to 0x%08x interrupted by access to 0x%08x.\n", prefetch.address[prefetch.count], address);
     }
-  } else if (prefetch.count < capacity && IS_ROM_REGION(cpu.state.r15) && !IS_ROM_REGION(address) && cpu.state.r15 == last_rom_addr) {
+  } else if (prefetch.count < capacity &&
+             IS_ROM_REGION(cpu.state.r15) &&
+            !IS_ROM_REGION(address) && 
+             cpu.state.r15 == prefetch.last_rom_address) {
     std::uint32_t next_address = ((prefetch.count > 0) ? prefetch.address[prefetch.count - 1]
                                                        : cpu.state.r15) + (thumb ? 2 : 4);
     
     prefetch.active = true;
     prefetch.address[prefetch.count] = next_address;
     prefetch.countdown = (thumb ? cycles16 : cycles32)[ARM::ACCESS_SEQ][(next_address >> 24) & 15];
-    
-    //std::printf("start prefetch for 0x%08x last=0x%08x\n", prefetch.address[0], last_rom_addr);
   }
   
   if (IS_ROM_REGION(address)) {
-    last_rom_addr = address;
+    prefetch.last_rom_address = address;
   }
   
   #undef IS_ROM_REGION
@@ -170,7 +168,7 @@ void CPU::PrefetchStep(std::uint32_t address, int cycles) {
       }
     } else {
       prefetch.active = false;
-      prefetch.count = 0;  
+      prefetch.count = 0;
     }
   }
   

@@ -139,6 +139,7 @@ private:
   struct Prefetch {
     bool active;
     std::uint32_t address[8];
+    std::uint32_t last_rom_address;
     int count;
     int countdown;
   } prefetch;
