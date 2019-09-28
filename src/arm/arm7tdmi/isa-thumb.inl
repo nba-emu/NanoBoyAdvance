@@ -149,7 +149,7 @@ void Thumb_ALU(std::uint16_t instruction) {
     LSL(state.reg[dst], state.reg[src], carry);
     SetNZ(state.reg[dst]);
     state.cpsr.f.c = carry;
-    interface->Tick(1);
+    interface->Idle();
     break;
   }
   case ThumbDataOp::LSR: {
@@ -157,7 +157,7 @@ void Thumb_ALU(std::uint16_t instruction) {
     LSR(state.reg[dst], state.reg[src], carry, false);
     SetNZ(state.reg[dst]);
     state.cpsr.f.c = carry;
-    interface->Tick(1);
+    interface->Idle();
     break;
   }
   case ThumbDataOp::ASR: {
@@ -165,7 +165,7 @@ void Thumb_ALU(std::uint16_t instruction) {
     ASR(state.reg[dst], state.reg[src], carry, false);
     SetNZ(state.reg[dst]);
     state.cpsr.f.c = carry;
-    interface->Tick(1);
+    interface->Idle();
     break;
   }
   case ThumbDataOp::ROR: {
@@ -173,7 +173,7 @@ void Thumb_ALU(std::uint16_t instruction) {
     ROR(state.reg[dst], state.reg[src], carry, false);
     SetNZ(state.reg[dst]);
     state.cpsr.f.c = carry;
-    interface->Tick(1);
+    interface->Idle();
     break;
   }
 
@@ -258,7 +258,7 @@ void Thumb_LoadStoreRelativePC(std::uint16_t instruction) {
   std::uint32_t address = (state.r15 & ~2) + (offset << 2);
 
   state.reg[dst] = ReadWord(address, ACCESS_NSEQ);
-  interface->Tick(1);
+  interface->Idle();
   pipe.fetch_type = ACCESS_NSEQ;
   state.r15 += 2;
 }
@@ -279,11 +279,11 @@ void Thumb_LoadStoreOffsetReg(std::uint16_t instruction) {
     break;
   case 0b10: // LDR
     state.reg[dst] = ReadWordRotate(address, ACCESS_NSEQ);
-    interface->Tick(1);
+    interface->Idle();
     break;
   case 0b11: // LDRB
     state.reg[dst] = ReadByte(address, ACCESS_NSEQ);
-    interface->Tick(1);
+    interface->Idle();
     break;
   }
 
@@ -306,17 +306,17 @@ void Thumb_LoadStoreSigned(std::uint16_t instruction) {
   case 0b01:
     /* LDSB rD, [rB, rO] */
     state.reg[dst] = ReadByteSigned(address, ACCESS_NSEQ);
-    interface->Tick(1);
+    interface->Idle();
     break;
   case 0b10:
     /* LDRH rD, [rB, rO] */
     state.reg[dst] = ReadHalfRotate(address, ACCESS_NSEQ);
-    interface->Tick(1);
+    interface->Idle();
     break;
   case 0b11:
     /* LDSH rD, [rB, rO] */
     state.reg[dst] = ReadHalfSigned(address, ACCESS_NSEQ);
-    interface->Tick(1);
+    interface->Idle();
     break;
   }
 
@@ -337,7 +337,7 @@ void Thumb_LoadStoreOffsetImm(std::uint16_t instruction) {
   case 0b01:
     /* LDR rD, [rB, #imm] */
     state.reg[dst] = ReadWordRotate(state.reg[base] + imm * 4, ACCESS_NSEQ);
-    interface->Tick(1);
+    interface->Idle();
     break;
   case 0b10:
     /* STRB rD, [rB, #imm] */
@@ -346,7 +346,7 @@ void Thumb_LoadStoreOffsetImm(std::uint16_t instruction) {
   case 0b11:
     /* LDRB rD, [rB, #imm] */
     state.reg[dst] = ReadByte(state.reg[base] + imm, ACCESS_NSEQ);
-    interface->Tick(1);
+    interface->Idle();
     break;
   }
 
@@ -363,7 +363,7 @@ void Thumb_LoadStoreHword(std::uint16_t instruction) {
 
   if (load) {
     state.reg[dst] = ReadHalfRotate(address, ACCESS_NSEQ);
-    interface->Tick(1);
+    interface->Idle();
   } else {
     WriteHalf(address, state.reg[dst], ACCESS_NSEQ);
   }
@@ -379,7 +379,7 @@ void Thumb_LoadStoreRelativeToSP(std::uint16_t instruction) {
 
   if (load) {
     state.reg[dst] = ReadWordRotate(address, ACCESS_NSEQ);
-    interface->Tick(1);
+    interface->Idle();
   } else {
     WriteWord(address, state.reg[dst], ACCESS_NSEQ);
   }
@@ -431,12 +431,12 @@ void Thumb_PushPop(std::uint16_t instruction) {
     if (rbit) {
       state.reg[15] = ReadWord(address, access_type) & ~1;
       state.reg[13] = address + 4;
-      interface->Tick(1);
+      interface->Idle();
       ReloadPipeline16();
       return;
     }
     
-    interface->Tick(1);
+    interface->Idle();
     state.r13 = address;
   } else {
     /* Calculate internal start address (final r13 value) */
@@ -481,7 +481,7 @@ void Thumb_LoadStoreMultiple(std::uint16_t instruction) {
         address += 4;
       }
     }
-    interface->Tick(1);
+    interface->Idle();
     if (~instruction & (1<<base)) {
       state.reg[base] = address;
     }

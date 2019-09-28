@@ -78,7 +78,7 @@ void ARM_DataProcessing(std::uint32_t instruction) {
       if (reg_op1 == 15) op1 += 4;
       if (reg_op2 == 15) op2 += 4;
 
-      interface->Tick(1);
+      interface->Idle();
     }
 
     DoShift(shift_type, op2, shift, carry, shift_imm);
@@ -328,7 +328,7 @@ void ARM_SingleDataSwap(std::uint32_t instruction) {
   }
 
   state.reg[dst] = tmp;
-  interface->Tick(1);
+  interface->Idle();
   pipe.fetch_type = ACCESS_NSEQ;
   state.r15 += 4;
 }
@@ -369,7 +369,7 @@ void ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
     case 1:
       if (load) {
         state.reg[dst] = ReadHalfRotate(address, ACCESS_NSEQ);
-        interface->Tick(1);
+        interface->Idle();
       } else {
         std::uint32_t value = state.reg[dst];
 
@@ -382,11 +382,11 @@ void ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
       break;
     case 2:
       state.reg[dst] = ReadByteSigned(address, ACCESS_NSEQ);
-      interface->Tick(1);
+      interface->Idle();
       break;
     case 3:
       state.reg[dst] = ReadHalfSigned(address, ACCESS_NSEQ);
-      interface->Tick(1);
+      interface->Idle();
       break;
   }
 
@@ -456,7 +456,7 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
     } else {
       state.reg[dst] = ReadWordRotate(address, ACCESS_NSEQ);
     }
-    interface->Tick(1);
+    interface->Idle();
   } else {
     std::uint32_t value = state.reg[dst];
 
@@ -576,7 +576,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
   }
 
   if (load) {
-    interface->Tick(1);
+    interface->Idle();
   }
 
   if (switched) {
