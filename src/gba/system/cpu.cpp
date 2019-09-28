@@ -97,9 +97,21 @@ void CPU::Tick(int cycles) {
   if (prefetch.active) {
     prefetch.countdown -= cycles;
     if (prefetch.countdown <= 0) {
-      /* TODO: figure out how to continue prefetch. */
-      prefetch.active = false;
-      std::printf("prefetch completed for 0x%08x.\n", prefetch.address);
+      prefetch.count++;
+      
+      std::printf("prefetch completed for 0x%08x.\n", prefetch.address[prefetch.count]);
+    
+      int capacity = cpu.state.cpsr.f.thumb ? 8 : 4;
+      
+      if (prefetch.count < capacity) {
+        /* Try to fetch the next instruction next. */
+        int next_addr = prefetch.address[prefetch.count - 1] + cpu.state.cpsr.f.thumb?2:4;
+        prefetch.address[prefetch.count] = next_addr;
+        prefetch.countdown = (cpu.state.cpsr.f.thumb ? cycles16 : cycles32)[ARM::ACCESS_SEQ][(next_addr>>24)&15];
+        prefetch.active = false;
+      } else {
+        prefetch.active = false;
+      }
     }
   }
 }
@@ -117,6 +129,8 @@ void CPU::RunPrefetch(std::uint32_t address, int cycles) {
   
   int width = cpu.state.cpsr.f.thumb ? 2 : 4;
   
+  int capacity = cpu.state.cpsr.f.thumb ? 8 : 4;
+  
   /* TODO: ensure that prefetch will only be started if
    * the opcode can be fetched *sequentially* from the ROM.
    */
@@ -125,8 +139,13 @@ void CPU::RunPrefetch(std::uint32_t address, int cycles) {
   
   if (prefetch.active) {
     /* If prefetching the desired opcode just complete. */
-    if (address == prefetch.address) {
+    if (address == prefetch.address[prefetch.count]) {
       Tick(prefetch.countdown);
+      
+      prefetch.count--;
+      for (int i = 1; i < capacity; i++) {
+        prefetch.address[i - 1] = prefetch.address[i];
+      }
       
       // blarghz
       last_rom_addr = address;
@@ -135,18 +154,34 @@ void CPU::RunPrefetch(std::uint32_t address, int cycles) {
     
     if (IS_ROM_REGION(address)) {
       prefetch.active = false;
-      std::printf("prefetch to 0x%08x interrupted by access to 0x%08x.\n", prefetch.address, address);
+      std::printf("prefetch to 0x%08x interrupted by access to 0x%08x.\n", prefetch.address[prefetch.count], address);
     }
-  } else if (IS_ROM_REGION(cpu.state.r15) && !IS_ROM_REGION(address) && cpu.state.r15 == last_rom_addr) {
+  } else if (prefetch.count < capacity && IS_ROM_REGION(cpu.state.r15) && !IS_ROM_REGION(address) && cpu.state.r15 == last_rom_addr) {
     prefetch.active = true;
-    prefetch.address = cpu.state.r15 + width;
-    //prefetch.countdown = 3;//hardcoded for now
-    prefetch.countdown = (cpu.state.cpsr.f.thumb ? cycles16 : cycles32)[ARM::ACCESS_SEQ][(prefetch.address>>24)&15];
-    std::printf("start prefetch for 0x%08x last=0x%08x\n", prefetch.address, last_rom_addr);
+    prefetch.address[0] = cpu.state.r15 + width;
+    prefetch.count = 0;
+    prefetch.countdown = (cpu.state.cpsr.f.thumb ? cycles16 : cycles32)[ARM::ACCESS_SEQ][(prefetch.address[0]>>24)&15];
+    std::printf("start prefetch for 0x%08x last=0x%08x\n", prefetch.address[0], last_rom_addr);
   }
   
   if (IS_ROM_REGION(address)) {
     last_rom_addr = address;
+  }
+  
+  if (address == cpu.state.r15 && address != prefetch.address[0]) {
+    prefetch.active = false;
+    prefetch.count = 0;
+  }
+  
+  /* TODO: find a better way to detect opcode fetch. */
+  /* TODO: is it enought to check address[0] or should we search the entire FIFO? */
+  if (address == cpu.state.r15 && address == prefetch.address[0]) {
+    cycles = 1;
+    /* TODO: this is redundant. */
+    prefetch.count--;
+    for (int i = 1; i < capacity; i++) {
+      prefetch.address[i - 1] = prefetch.address[i];
+    }
   }
   
   Tick(cycles);

@@ -138,7 +138,8 @@ private:
   
   struct Prefetch {
     bool active;
-    std::uint32_t address;
+    std::uint32_t address[8];
+    int count = 0; // FIXME
     int countdown;
   } prefetch;
   
