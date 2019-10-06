@@ -529,8 +529,10 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
 
   if (!add) {
     address -= count * 4;
-    state.reg[base] = address;
-    writeback = false;
+    if (writeback) {
+      state.reg[base] = address;
+      writeback = false;
+    }
     pre = !pre;
   }
   
