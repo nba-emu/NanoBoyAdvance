@@ -29,6 +29,9 @@
 #include "ppu/ppu.hpp"
 #include "../config.hpp"
 
+// HACK
+#include "../cartridge/backup.hpp"
+
 namespace GameBoyAdvance {
 
 class CPU : private ARM::Interface {
@@ -122,6 +125,9 @@ public:
   DMA dma;
   Timer timer;
   ARM::ARM7TDMI cpu;
+  
+  // HACK!
+  Backup* backup;
   
 private:
   
