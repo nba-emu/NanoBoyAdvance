@@ -74,6 +74,12 @@ void CPU::Reset() {
   mmio.waitcnt.phi = 0;
   mmio.waitcnt.prefetch = 0;
   mmio.waitcnt.cgb = 0;
+  for (int i = 16; i < 256; i++) {
+    cycles16[ARM::ACCESS_NSEQ][i] = 1;
+    cycles16[ARM::ACCESS_SEQ ][i] = 1;
+    cycles32[ARM::ACCESS_NSEQ][i] = 1;
+    cycles32[ARM::ACCESS_SEQ ][i] = 1;
+  }
   UpdateCycleLUT();
   
   prefetch.active = false;
@@ -148,7 +154,7 @@ void CPU::PrefetchStep(std::uint32_t address, int cycles) {
     
     prefetch.active = true;
     prefetch.address[prefetch.count] = next_address;
-    prefetch.countdown = (thumb ? cycles16 : cycles32)[ARM::ACCESS_SEQ][(next_address >> 24) & 15];
+    prefetch.countdown = (thumb ? cycles16 : cycles32)[ARM::ACCESS_SEQ][next_address >> 24];
   }
   
   if (IS_ROM_REGION(address)) {

@@ -49,7 +49,7 @@ inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
 }
 
 inline std::uint8_t CPU::ReadByte(std::uint32_t address, ARM::AccessType type) {
-  int page = (address >> 24) & 15;
+  int page = address >> 24;
   int cycles = cycles16[type][page];
   
   if (mmio.waitcnt.prefetch) {
@@ -107,7 +107,7 @@ inline std::uint8_t CPU::ReadByte(std::uint32_t address, ARM::AccessType type) {
 }
 
 inline std::uint16_t CPU::ReadHalf(std::uint32_t address, ARM::AccessType type) {
-  int page = (address >> 24) & 15;
+  int page = address >> 24;
   int cycles = cycles16[type][page];
   
   if (mmio.waitcnt.prefetch) {
@@ -172,7 +172,7 @@ inline std::uint16_t CPU::ReadHalf(std::uint32_t address, ARM::AccessType type) 
 }
 
 inline std::uint32_t CPU::ReadWord(std::uint32_t address, ARM::AccessType type) {
-  int page = (address >> 24) & 15;
+  int page = address >> 24;
   int cycles = cycles32[type][page];
   
   if (mmio.waitcnt.prefetch) {
@@ -230,7 +230,7 @@ inline std::uint32_t CPU::ReadWord(std::uint32_t address, ARM::AccessType type) 
 }
 
 inline void CPU::WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) {
-  int page = (address >> 24) & 15;
+  int page = address >> 24;
   int cycles = cycles16[type][page];
 
   // if (page == 8 && (address & 0x1FFFF) == 0)
@@ -270,7 +270,7 @@ inline void CPU::WriteByte(std::uint32_t address, std::uint8_t value, ARM::Acces
 }
 
 inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type) {
-  int page = (address >> 24) & 15;
+  int page = address >> 24;
   int cycles = cycles16[type][page];
   
   // if (page == 8 && (address & 0x1FFFF) == 0)
@@ -344,7 +344,7 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, ARM::Acce
 }
 
 inline void CPU::WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type) {
-  int page = (address >> 24) & 15;
+  int page = address >> 24;
   int cycles = cycles32[type][page];
   
   // if (page == 8 && (address & 0x1FFFF) == 0)
