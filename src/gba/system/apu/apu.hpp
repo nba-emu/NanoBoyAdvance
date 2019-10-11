@@ -28,6 +28,7 @@
 #include <dsp/resampler.hpp>
 #include <dsp/ring_buffer.hpp>
 
+#include <mutex>
 #include <cstdio>
 
 namespace GameBoyAdvance {
@@ -50,6 +51,8 @@ public:
     SoundControl soundcnt { fifo };
     BIAS bias;
   } mmio;
+  
+  std::mutex buffer_mutex;
   
   QuadChannel psg1;
   QuadChannel psg2;

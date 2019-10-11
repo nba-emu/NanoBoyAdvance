@@ -27,14 +27,12 @@
 using namespace GameBoyAdvance;
 
 void AudioCallback(APU* apu, std::int16_t* stream, int byte_len) {
+  std::lock_guard<std::mutex> guard(apu->buffer_mutex);
+  
   int samples = byte_len/sizeof(std::int16_t)/2;
   int available = apu->buffer->Available();
   
-//  while (available-- > 2*samples) {
-//    apu->buffer->Read();
-//  }
-  
-  if (available >= 2*samples) {
+  if (available >= samples) {
     for (int x = 0; x < samples; x++) {
       auto sample = apu->buffer->Read() * 32767.0;
       
@@ -61,7 +59,7 @@ APU::APU(CPU* cpu)
   , psg2(cpu->scheduler)
   , psg3(cpu->scheduler)
   , psg4(cpu->scheduler, mmio.bias)
-  , buffer(new DSP::StereoRingBuffer<float>(16384, true))
+  , buffer(new DSP::StereoRingBuffer<float>(4096, true))
 { }
 
 void APU::Reset() {
@@ -165,7 +163,9 @@ void APU::Tick() {
   
   /* TODO: emulate BIAS register. */
   
+  buffer_mutex.lock();
   resampler->Write(sample);
+  buffer_mutex.unlock();
   
   event.countdown += bias.GetSampleInterval();
 }
