@@ -52,10 +52,6 @@ public:
     want.callback = (SDL_AudioCallback)callback;
     want.userdata = userdata;
     
-    /*if (SDL_OpenAudio(&want, &have) < 0) {
-      std::puts("SDL2_AudioDevice: SDL_OpenAudio(&want, &have) failed.");
-      return false;
-    }*/
     device = SDL_OpenAudioDevice(NULL, 0, &want, &have, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
     
     if (device == 0) {
@@ -71,14 +67,12 @@ public:
       std::puts("SDL_AudioDevice: Stereo output unavailable.");
     }
     
-//    SDL_PauseAudio(0);
     SDL_PauseAudioDevice(device, 0);
     
     return true;
   }
   
   void Close() {
-//    SDL_CloseAudio();
     SDL_CloseAudioDevice(device);
   }
   
