@@ -24,6 +24,10 @@
 #include <cmath>
 #include <memory>
 
+#ifndef M_PI
+#define M_PI (3.141592653589793238463)
+#endif
+
 #include "ring_buffer.hpp"
 #include "stereo.hpp"
 #include "stream.hpp"
