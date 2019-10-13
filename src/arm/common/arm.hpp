@@ -130,7 +130,7 @@ struct RegisterFile {
       spsr[i].v = 0;
     }
 
-    cpsr.v = 0;
+    cpsr.v = MODE_SYS;
   }
 };
 
