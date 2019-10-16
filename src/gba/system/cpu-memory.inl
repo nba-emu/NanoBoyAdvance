@@ -31,6 +31,9 @@
 #define WRITE_FAST_16(buffer, address, value) *(uint16_t*)(&buffer[address]) = value;
 #define WRITE_FAST_32(buffer, address, value) *(uint32_t*)(&buffer[address]) = value;
 
+#define IS_EEPROM_ACCESS(address) backup && true &&\
+                                  ((~memory.rom.size & 0x02000000) || address >= 0x0DFFFF00)
+
 inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
   if (cpu.state.r15 >= 0x4000) {
     return memory.bios_opcode;
@@ -131,15 +134,16 @@ inline std::uint16_t CPU::ReadHalf(std::uint32_t address, ARM::AccessType type) 
     case 0x7: return READ_FAST_16(memory.oam, address & 0x3FF);
 
     // 0x0DXXXXXX may be used to read/write from EEPROM
-    // case 0xD: {
-    //   // Must check if this is an EEPROM access or ordinary ROM mirror read.
-    //   if (IS_EEPROM_ACCESS(address)) {
-    //     if (~flags & M_DMA) {
-    //       return 1;
-    //     }
-    //     return memory.rom.save->read8(address);
-    //   }
-    // }
+    case 0xD: {
+      // Must check if this is an EEPROM access or ordinary ROM mirror read.
+      if (IS_EEPROM_ACCESS(address)) {
+        //if (~flags & M_DMA) {
+        if (!dma.IsRunning()) { // TODO: this is potentially buggy.  
+          return 1;
+        }
+        return backup->Read(address);
+      }
+    }
     case 0x8: case 0x9:
     case 0xA: case 0xB:
     case 0xC: {
@@ -310,22 +314,22 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, ARM::Acce
     // }
 
     // EEPROM write
-    // case 0xD: {
-    //    if (IS_EEPROM_ACCESS(address)) {
-    //     if (~flags & M_DMA) {
-    //       break;
-    //     }
-    //     memory.rom.save->write8(address, value);
-    //     break;
-    //   }
+    case 0xD: {
+      if (IS_EEPROM_ACCESS(address)) {
+        if (!dma.IsRunning()) { // TODO: this is potentially buggy.
+          break;
+        }
+        backup->Write(address, value);
+        break;
+      }
     //   address &= 0x1FFFFFF;
     //   if (IS_GPIO_ACCESS(address)) {
     //     gpio->write(address+0, value&0xFF);
     //     gpio->write(address+1, value>>8);
     //     break;
     //   }
-    //   break;
-    // }
+      break;
+    }
     //
     // case 0xE: {
     //   if (!memory.rom.save || cart->type == SAVE_EEPROM) {

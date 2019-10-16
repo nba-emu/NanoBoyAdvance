@@ -1,4 +1,5 @@
 set(SOURCES
+    cartridge/eeprom.cpp
     emulator.cpp
     system/apu/psg/channel_noise.cpp
     system/apu/psg/channel_quad.cpp
@@ -16,6 +17,8 @@ set(SOURCES
 )
 
 set(HEADERS
+    cartridge/backup.hpp
+    cartridge/eeprom.hpp
     emulator.hpp
     system/apu/apu.hpp
     system/apu/regs.hpp
