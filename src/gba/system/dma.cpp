@@ -85,15 +85,25 @@ void DMA::Request(Occasion occasion) {
     case Occasion::HBlank: {
       /* TODO: implement video capture mode. */
       auto chan_id = g_dma_from_bitset[hblank_set.to_ulong()];
-      if (chan_id != g_dma_none_id)
+      if (chan_id != g_dma_none_id) {
+        /* Try to start the HBlank DMA with the highest priority,
+         * but also mark other enabled HBlank DMAs as runnable.
+         */
         TryStart(chan_id);
+        runnable |= hblank_set;
+      }
       break;
     }
     
     case Occasion::VBlank: {
       auto chan_id = g_dma_from_bitset[vblank_set.to_ulong()];
-      if (chan_id != g_dma_none_id)
+      if (chan_id != g_dma_none_id) {
+        /* Try to start the VBlank DMA with the highest priority,
+         * but also mark other enabled VBlank DMAs as runnable.
+         */
         TryStart(chan_id);
+        runnable |= vblank_set;
+      }
       break;
     }
     
@@ -115,21 +125,21 @@ void DMA::Request(Occasion occasion) {
 }
 
 void DMA::Run(int const& ticks_left) {
+  bool  completed;
   auto& channel = channels[current];
   
   if (channel.is_fifo_dma) {
     TransferFIFO();
+    return;
+  }
+    
+  if (channel.size == Channel::WORD) {
+    completed = TransferLoop32(ticks_left);
   } else {
-    bool completed;
-    
-    if (channel.size == Channel::WORD) {
-      completed = TransferLoop32(ticks_left);
-    } else {
-      completed = TransferLoop16(ticks_left);
-    }
-    
-    if (!completed) return;
-    
+    completed = TransferLoop16(ticks_left);
+  }
+
+  if (completed) {
     if (channel.interrupt) {
       cpu->mmio.irq_if |= (CPU::INT_DMA0 << current);
     }
@@ -150,6 +160,8 @@ void DMA::Run(int const& ticks_left) {
     } else {
       channel.enable = false;
       runnable.set(current, false);
+      hblank_set.set(current, false);
+      vblank_set.set(current, false);
     }
       
     current = g_dma_from_bitset[runnable.to_ulong()];
