@@ -190,9 +190,9 @@ void PPU::RenderScanline() {
     }
     for (int i = 0; i < 60; i++) {
       ((std::uint32_t*)obj_attr)[i] = 0;
-      ((std::uint32_t*)priority)[i] = 0x04040404;
     }
     for (int i = 0; i < 120; i++) {
+      ((std::uint32_t*)priority)[i] = 0x04040404;
       ((std::uint32_t*)layer)[i] = 0x05050505;
     }
     

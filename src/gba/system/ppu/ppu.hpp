@@ -103,7 +103,7 @@ private:
   std::uint8_t* oam;
 
   std::uint8_t  obj_attr[240];
-  std::uint8_t  priority[240];
+  std::uint8_t  priority[2][240];
   std::uint8_t  layer[2][240];
   std::uint16_t pixel[2][240];
   

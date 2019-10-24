@@ -17,6 +17,23 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
+void DrawPixel(int x, int layer, int priority, std::uint16_t color) {
+  if (color == s_color_transparent) return;
+  
+  if (priority <= this->priority[0][x]) {
+    pixel[1][x] = pixel[0][x];
+    pixel[0][x] = color;
+    this->layer[1][x] = this->layer[0][x];
+    this->layer[0][x] = layer;
+    this->priority[1][x] = this->priority[0][x];
+    this->priority[0][x] = priority;
+  } else if (priority <= this->priority[1][x]) {
+    pixel[1][x] = color;
+    this->layer[1][x] = layer;
+    this->priority[1][x] = priority;
+  }
+}
+
 auto ReadPalette(int palette, int index) -> std::uint16_t {
   int cell = (palette * 32) + (index * 2);
 
@@ -87,15 +104,5 @@ auto DecodeTilePixel8BPP(std::uint32_t base, int number, int x, int y) -> std::u
     return s_color_transparent;
   } else {
     return ReadPalette(0, index);
-  }
-}
-
-void DrawPixel(int x, int layer, int priority, std::uint16_t color) {
-  if (color != s_color_transparent && priority <= this->priority[x]) {
-    pixel[1][x] = pixel[0][x];
-    pixel[0][x] = color;
-    this->layer[1][x] = this->layer[0][x];
-    this->layer[0][x] = layer;
-    this->priority[x] = priority;
   }
 }

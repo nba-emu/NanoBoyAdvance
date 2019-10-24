@@ -194,7 +194,7 @@ void PPU::RenderLayerOAM() {
       if (pixel != s_color_transparent) {
         if (mode == OBJ_WINDOW) {
           obj_attr[global_x] |= OBJ_IS_WINDOW;
-        } else if (prio <= priority[global_x]) {
+        } else if (prio <= priority[0][global_x]) { /* TODO: check me */
           if (mode == OBJ_SEMI) {
             obj_attr[global_x] |=  OBJ_IS_ALPHA;
           } else {
