@@ -133,6 +133,25 @@ void BackgroundControl::Write(int address, std::uint8_t value) {
   }
 }
 
+void ReferencePoint::Reset() {
+  initial = _current = 0;
+}
+
+void ReferencePoint::Write(int address, std::uint8_t value) {
+  switch (address) {
+  case 0: initial = (initial & 0x0FFFFF00) | (value << 0); break;
+  case 1: initial = (initial & 0x0FFF00FF) | (value << 8); break;
+  case 2: initial = (initial & 0x0F00FFFF) | (value << 16); break;
+  case 3: initial = (initial & 0x00FFFFFF) | (value << 24); break;
+  }
+  
+  if (initial & (1 << 27)) {
+    initial |= 0xF0000000;
+  }
+  
+  _current = initial;
+}
+
 void WindowRange::Reset() {
   min = 0;
   max = 0;

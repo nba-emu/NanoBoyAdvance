@@ -22,7 +22,7 @@ auto ReadPalette(int palette, int index) -> std::uint16_t {
 
   /* TODO: On Little-Endian devices we can get away with casting to uint16_t*. */
   return (pram[cell + 1] << 8) |
-      pram[cell + 0];
+          pram[cell + 0];
 }
 
 void DecodeTileLine4BPP(std::uint16_t* buffer, std::uint32_t base, int palette, int number, int y, bool flip) {

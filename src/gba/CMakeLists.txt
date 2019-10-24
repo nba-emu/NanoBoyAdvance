@@ -12,6 +12,7 @@ set(SOURCES
     system/timer.cpp
     system/ppu/ppu.cpp
     system/ppu/regs.cpp
+    system/ppu/render/affine.cpp
     system/ppu/render/text.cpp
     system/ppu/render/oam.cpp
 )

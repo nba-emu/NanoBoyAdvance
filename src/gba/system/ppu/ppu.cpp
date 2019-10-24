@@ -48,6 +48,15 @@ void PPU::Reset() {
     mmio.bghofs[i] = 0;
     mmio.bgvofs[i] = 0;
   }
+  
+  for (int i = 0; i < 2; i++) {
+    mmio.bgx[i].Reset();
+    mmio.bgy[i].Reset();
+    mmio.bgpa[i] = 0;
+    mmio.bgpb[i] = 0;
+    mmio.bgpc[i] = 0;
+    mmio.bgpd[i] = 0;
+  }
 
   mmio.eva = 0;
   mmio.evb = 0;
@@ -120,9 +129,20 @@ void PPU::Tick() {
         if (dispstat.vblank_irq_enable) {
           cpu->mmio.irq_if |= CPU::INT_VBLANK;
         }
-      } else {
+        
+        mmio.bgx[0]._current = mmio.bgx[0].initial;
+        mmio.bgy[0]._current = mmio.bgy[0].initial;
+        mmio.bgx[1]._current = mmio.bgx[1].initial;
+        mmio.bgy[1]._current = mmio.bgy[1].initial;
+      } else {                
         Next(Phase::SCANLINE);
         RenderScanline();
+        
+        /* TODO: not sure if this should be done before or after RenderScanline() */
+        mmio.bgx[0]._current += mmio.bgpb[0];
+        mmio.bgy[0]._current += mmio.bgpd[0];
+        mmio.bgx[1]._current += mmio.bgpb[1];
+        mmio.bgy[1]._current += mmio.bgpd[1];
       }
       break;
     }
@@ -188,12 +208,20 @@ void PPU::RenderScanline() {
         break;
       }
       case 1:
-        // TODO
+        if (mmio.dispcnt.enable[0])
+          RenderLayerText(0);
+        if (mmio.dispcnt.enable[1])
+          RenderLayerText(1);
+        if (mmio.dispcnt.enable[2])
+          RenderLayerAffine(0);
         if (mmio.dispcnt.enable[4])
           RenderLayerOAM();
         break;
       case 2:
-        // TODO
+        if (mmio.dispcnt.enable[2])
+          RenderLayerAffine(0);
+        if (mmio.dispcnt.enable[3])
+          RenderLayerAffine(1);
         if (mmio.dispcnt.enable[4])
           RenderLayerOAM();
         break;

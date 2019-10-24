@@ -65,6 +65,14 @@ struct BackgroundControl {
   void Write(int address, std::uint8_t value);
 };
 
+struct ReferencePoint {
+  std::int32_t initial;
+  std::int32_t _current;
+  
+  void Reset();
+  void Write(int address, std::uint8_t value);
+};
+  
 struct BlendControl {
   enum Effect {
     SFX_NONE,
@@ -83,7 +91,6 @@ struct BlendControl {
 struct WindowRange {
   int min;
   int max;
-
   bool _changed;
 
   void Reset();

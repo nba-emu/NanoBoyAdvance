@@ -44,8 +44,15 @@ public:
     std::uint8_t vcount;
     
     BackgroundControl bgcnt[4];
+    
     std::uint16_t bghofs[4];
     std::uint16_t bgvofs[4];
+    
+    ReferencePoint bgx[2], bgy[2];
+    std::int16_t bgpa[2];
+    std::int16_t bgpb[2];
+    std::int16_t bgpc[2];
+    std::int16_t bgpd[2];
 
     WindowRange winh[2];
     WindowRange winv[2];
@@ -83,6 +90,7 @@ private:
   void Next(Phase phase);
   void RenderScanline();
   void RenderLayerText(int id);
+  void RenderLayerAffine(int id);
   void RenderLayerOAM();
   void Blend(std::uint16_t* target1, std::uint16_t target2, BlendControl::Effect sfx);
 
