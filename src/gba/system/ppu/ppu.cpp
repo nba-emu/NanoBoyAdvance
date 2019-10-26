@@ -256,7 +256,7 @@ void PPU::RenderScanline() {
 
       if (sfx != BlendControl::Effect::SFX_NONE && is_sfx_1 &&
           (is_sfx_2 || sfx != BlendControl::Effect::SFX_BLEND)) {
-        Blend(&pixel[0][x], pixel[1][x], sfx);
+        Blend(pixel[0][x], pixel[1][x], sfx);
       }
     }
 
@@ -266,44 +266,42 @@ void PPU::RenderScanline() {
   }
 }
 
-void PPU::Blend(std::uint16_t* _target1, std::uint16_t target2, BlendControl::Effect sfx) {
-  std::uint16_t target1 = *_target1;
-
+void PPU::Blend(std::uint16_t& target1, std::uint16_t target2, BlendControl::Effect sfx) {
   int r1 = (target1 >>  0) & 0x1F;
   int g1 = (target1 >>  5) & 0x1F;
   int b1 = (target1 >> 10) & 0x1F;
 
   switch (sfx) {
-    case BlendControl::Effect::SFX_BLEND: {
-      int eva = std::min<int>(16, mmio.eva);
-      int evb = std::min<int>(16, mmio.evb);
+  case BlendControl::Effect::SFX_BLEND: {
+    int eva = std::min<int>(16, mmio.eva);
+    int evb = std::min<int>(16, mmio.evb);
 
-      int r2 = (target2 >>  0) & 0x1F;
-      int g2 = (target2 >>  5) & 0x1F;
-      int b2 = (target2 >> 10) & 0x1F;
+    int r2 = (target2 >>  0) & 0x1F;
+    int g2 = (target2 >>  5) & 0x1F;
+    int b2 = (target2 >> 10) & 0x1F;
 
-      r1 = blend_table[eva][evb][r1][r2];
-      g1 = blend_table[eva][evb][g1][g2];
-      b1 = blend_table[eva][evb][b1][b2];
-      break;
-    }
-    case BlendControl::Effect::SFX_BRIGHTEN: {
-      int evy = std::min<int>(16, mmio.evy);
+    r1 = blend_table[eva][evb][r1][r2];
+    g1 = blend_table[eva][evb][g1][g2];
+    b1 = blend_table[eva][evb][b1][b2];
+    break;
+  }
+  case BlendControl::Effect::SFX_BRIGHTEN: {
+    int evy = std::min<int>(16, mmio.evy);
 
-      r1 = blend_table[16 - evy][evy][r1][31];
-      g1 = blend_table[16 - evy][evy][g1][31];
-      b1 = blend_table[16 - evy][evy][b1][31];
-      break;
-    }
-    case BlendControl::Effect::SFX_DARKEN: {
-      int evy = std::min<int>(16, mmio.evy);
+    r1 = blend_table[16 - evy][evy][r1][31];
+    g1 = blend_table[16 - evy][evy][g1][31];
+    b1 = blend_table[16 - evy][evy][b1][31];
+    break;
+  }
+  case BlendControl::Effect::SFX_DARKEN: {
+    int evy = std::min<int>(16, mmio.evy);
 
-      r1 = blend_table[16 - evy][evy][r1][0];
-      g1 = blend_table[16 - evy][evy][g1][0];
-      b1 = blend_table[16 - evy][evy][b1][0];
-      break;
-    }
+    r1 = blend_table[16 - evy][evy][r1][0];
+    g1 = blend_table[16 - evy][evy][g1][0];
+    b1 = blend_table[16 - evy][evy][b1][0];
+    break;
+  }
   }
 
-  *_target1 = (r1<<0) | (g1<<5) | (b1<<10);
+  target1 = r1 | (g1 << 5) | (b1 << 10);
 }

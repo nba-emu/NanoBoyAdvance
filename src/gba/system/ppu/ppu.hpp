@@ -92,7 +92,7 @@ private:
   void RenderLayerText(int id);
   void RenderLayerAffine(int id);
   void RenderLayerOAM();
-  void Blend(std::uint16_t* target1, std::uint16_t target2, BlendControl::Effect sfx);
+  void Blend(std::uint16_t& target1, std::uint16_t target2, BlendControl::Effect sfx);
 
   #include "ppu.inl"
 
