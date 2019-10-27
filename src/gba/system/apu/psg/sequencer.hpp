@@ -167,8 +167,6 @@ public:
 private:
   int step;
   
-  // TODO: is the GBA clock actually 16777216 Hz?
-  // that would give us an exact clock divide by 32768.
   static constexpr cycle_t s_cycles_per_step = 16777216/512;
 };
 
