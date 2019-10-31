@@ -25,7 +25,6 @@ namespace DSP {
 
 template <typename T>
 class CosineResampler : public Resampler<T> {
-
 public:
   CosineResampler(std::shared_ptr<WriteStream<T>> output) 
     : Resampler<T>(output)

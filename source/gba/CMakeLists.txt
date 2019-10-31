@@ -4,7 +4,8 @@ set(SOURCES
     core/apu/psg/channel_quad.cpp
     core/apu/psg/channel_wave.cpp
     core/apu/apu.cpp
-    core/apu/regs.cpp
+    core/apu/callback.cpp
+    core/apu/registers.cpp
     core/arm/isa-armv4/emit.cpp
     core/backup/eeprom.cpp
     core/cpu.cpp
@@ -21,7 +22,7 @@ set(SOURCES
 set(HEADERS
     emulator.hpp
     core/apu/apu.hpp
-    core/apu/regs.hpp
+    core/apu/registers.hpp
     core/arm/arm7.hpp
     core/arm/interface.hpp
     core/arm/state.hpp

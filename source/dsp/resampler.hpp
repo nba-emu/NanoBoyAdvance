@@ -33,7 +33,6 @@ namespace DSP {
 
 template <typename T>
 class Resampler : public WriteStream<T> {
-
 public:
   Resampler(std::shared_ptr<WriteStream<T>> output) : output(output) {}
   

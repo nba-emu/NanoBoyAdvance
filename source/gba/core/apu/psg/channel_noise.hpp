@@ -19,15 +19,14 @@
 
 #pragma once
 
-#include "sequencer.hpp"
-#include "../regs.hpp"
-
 #include <cstdint>
+
+#include "sequencer.hpp"
+#include "../registers.hpp"
 
 namespace GameBoyAdvance {
 
 class NoiseChannel {
-
 public:
   NoiseChannel(Scheduler& scheduler, BIAS& bias);
   

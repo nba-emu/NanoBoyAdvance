@@ -25,7 +25,6 @@ namespace DSP {
 
 template <typename T>
 class NearestResampler : public Resampler<T> {
-
 public:
   NearestResampler(std::shared_ptr<WriteStream<T>> output) 
     : Resampler<T>(output)

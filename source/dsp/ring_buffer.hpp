@@ -28,7 +28,6 @@ namespace DSP {
 
 template <typename T>
 class RingBuffer : public Stream<T> {
-
 public:
   RingBuffer(int length, bool blocking = false)
     : length(length)

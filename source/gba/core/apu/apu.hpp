@@ -19,16 +19,16 @@
 
 #pragma once
 
-#include "regs.hpp"
-#include "psg/channel_quad.hpp"
-#include "psg/channel_wave.hpp"
-#include "psg/channel_noise.hpp"
-#include "../scheduler.hpp"
+#include <mutex>
 
 #include <dsp/resampler.hpp>
 #include <dsp/ring_buffer.hpp>
 
-#include <mutex>
+#include "registers.hpp"
+#include "psg/channel_quad.hpp"
+#include "psg/channel_wave.hpp"
+#include "psg/channel_noise.hpp"
+#include "../scheduler.hpp"
 
 namespace GameBoyAdvance {
 

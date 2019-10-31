@@ -26,7 +26,6 @@
 namespace GameBoyAdvance {
 
 class QuadChannel {
-
 public:
   QuadChannel(Scheduler& scheduler);
     

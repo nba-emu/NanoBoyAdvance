@@ -26,7 +26,6 @@
 namespace GameBoyAdvance {
 
 class WaveChannel {
-
 public:
   WaveChannel(Scheduler& scheduler);
   
