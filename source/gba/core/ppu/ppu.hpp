@@ -21,7 +21,7 @@
 
 #include <cstdint>
 
-#include "regs.hpp"
+#include "registers.hpp"
 #include "../scheduler.hpp"
 
 namespace GameBoyAdvance {

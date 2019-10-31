@@ -17,7 +17,7 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#include "regs.hpp"
+#include "registers.hpp"
 
 using namespace GameBoyAdvance;
 

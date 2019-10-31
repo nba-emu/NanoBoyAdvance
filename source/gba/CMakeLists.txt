@@ -13,7 +13,7 @@ set(SOURCES
     core/dma.cpp
     core/timer.cpp
     core/ppu/ppu.cpp
-    core/ppu/regs.cpp
+    core/ppu/registers.cpp
     core/ppu/render/affine.cpp
     core/ppu/render/text.cpp
     core/ppu/render/oam.cpp
@@ -33,7 +33,7 @@ set(HEADERS
     core/memory/registers.hpp
     core/timer.hpp
     core/ppu/ppu.hpp
-    core/ppu/regs.hpp
+    core/ppu/registers.hpp
     core/scheduler.hpp
 )
 
