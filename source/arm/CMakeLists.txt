@@ -3,7 +3,7 @@ set(SOURCES
 )
 
 set(HEADERS
-    arm7tdmi.hpp
+    arm7.hpp
     interface.hpp
     state.hpp
 )

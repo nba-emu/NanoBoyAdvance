@@ -37,7 +37,9 @@ public:
     Reset();
   }
 
-  auto GetInterface() -> Interface* const { return interface; }
+  auto GetInterface() -> Interface* const {
+    return interface;
+  }
 
   void Reset();
   void Run();
