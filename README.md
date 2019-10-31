@@ -13,6 +13,6 @@ If you wish to look at the code before this rewrite, check out the `v0.1` branch
 
 #### Media
 
-![screenshot1](misc/screenshot1.png)
+![screenshot1](media/screenshot1.png)
 
 *TODO*
