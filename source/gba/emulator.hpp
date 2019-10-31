@@ -25,17 +25,29 @@
 #include "core/cpu.hpp"
 
 namespace GameBoyAdvance {
-
+  
 class Emulator {
 public:
+  enum class StatusCode {
+    BiosNotFound,
+    GameNotFound,
+    BiosWrongSize,
+    GameWrongSize,
+    Ok
+  };
+  
   Emulator(std::shared_ptr<Config> config);
 
   void Reset();
-  auto LoadGame(std::string const& path) -> bool;
+  auto LoadGame(std::string const& path) -> StatusCode;
   void Frame();
   
 private:
+  auto LoadBIOS() -> StatusCode; 
+  
   CPU cpu;
+  bool bios_loaded = false;
+  std::shared_ptr<Config> config;
 };
 
 }

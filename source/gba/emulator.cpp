@@ -33,50 +33,75 @@ constexpr int g_cycles_per_frame = 280896;
 constexpr int g_bios_size = 0x4000;
 
 Emulator::Emulator(std::shared_ptr<Config> config)
-  : cpu(config) {
+  : cpu(config)
+  , config(config)
+{
   Reset();
 }
 
-void Emulator::Reset() {
-  cpu.Reset();
+void Emulator::Reset() { cpu.Reset(); }
+
+auto Emulator::LoadBIOS() -> StatusCode {
+  auto bios_path = config->bios_path;
   
-  /* TODO: exception is inconsistent, LoadGame returns a boolean. */
-  
-  auto bios_path = cpu.config->bios_path;
-  
-  if (!fs::exists(bios_path) || !fs::is_regular_file(bios_path))
-    throw std::runtime_error("Cannot open BIOS file.");
+  if (!fs::exists(bios_path) || !fs::is_regular_file(bios_path)) {
+    return StatusCode::BiosNotFound;
+  }
   
   auto size = fs::file_size(bios_path);
   
-  if (size != g_bios_size)
-    throw std::runtime_error("BIOS file has wrong size.");
+  if (size != g_bios_size) {
+    return StatusCode::BiosWrongSize;
+  }
   
   std::ifstream stream { bios_path, std::ios::binary };
   
-  if (!stream.good())
-    throw std::runtime_error("Cannot open BIOS file.");
+  /* TODO: most likely this error would only happen
+   * if the file cannot be opened due to missing privileges.
+   * The status code "BIOS not found" is not accurate, really.
+   */
+  if (!stream.good()) {
+    return StatusCode::BiosNotFound;
+  }
   
   stream.read((char*)cpu.memory.bios, g_bios_size);
   stream.close();
+  
+  return StatusCode::Ok;
 }
 
-auto Emulator::LoadGame(std::string const& path) -> bool {
+auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   size_t size;
   
-  if (!fs::exists(path) || !fs::is_regular_file(path))
-    return false;
+  /* If the BIOS was not loaded yet, load it now. */
+  if (!bios_loaded) {
+    auto status = LoadBIOS();
+    if (status != StatusCode::Ok) {
+      return status;
+    }
+    bios_loaded = true;
+  }
+  
+  if (!fs::exists(path) || !fs::is_regular_file(path)) {
+    return StatusCode::GameNotFound;
+  }
   
   size = fs::file_size(path);
   
-  if (size > 32*1024*1024)
-    return false;
+  if (size > 32*1024*1024) {
+    return StatusCode::GameWrongSize;
+  }
   
   std::ifstream stream { path, std::ios::binary };
   
-  if (!stream.good())
-    return false;
-  
+  /* TODO: most likely this error would only happen
+   * if the file cannot be opened due to missing privileges.
+   * The status code "Game not found" is not accurate, really.
+   */
+  if (!stream.good()) {
+    return StatusCode::GameNotFound;
+  }
+    
   auto rom = std::make_unique<std::uint8_t[]>(size);
   stream.read((char*)(rom.get()), size);
   stream.close();
@@ -87,7 +112,7 @@ auto Emulator::LoadGame(std::string const& path) -> bool {
   cpu.memory.rom.size = size;
   cpu.memory.rom.backup = std::make_shared<EEPROM>(save_path, EEPROM::SIZE_4K);
   
-  return true;
+  return StatusCode::Ok;
 }
 
 void Emulator::Frame() {

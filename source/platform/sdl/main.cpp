@@ -162,9 +162,30 @@ int main(int argc, char** argv) {
   config->video_dev = std::make_shared<SDL2_VideoDevice>();
   
   auto emulator = std::make_unique<GameBoyAdvance::Emulator>(config);
+  auto status = emulator->LoadGame(rom_path);
   
-  if (!emulator->LoadGame(rom_path)) {
-    std::printf("Cannot open ROM: %s\n", rom_path.c_str());
+  using StatusCode = GameBoyAdvance::Emulator::StatusCode;
+  
+  if (status != StatusCode::Ok) {
+    switch (status) {
+      case StatusCode::GameNotFound: {
+        std::printf("Cannot open ROM: %s\n", rom_path.c_str());
+        return -1;
+      }
+      case StatusCode::BiosNotFound: {
+        std::printf("Cannot open BIOS: %s\n", config->bios_path.c_str());
+        return -2;
+      }
+      case StatusCode::GameWrongSize: {
+        std::puts("The provided ROM file is larger than the allowed 32 MiB.");
+        return -3;
+      }
+      case StatusCode::BiosWrongSize: {
+        std::puts("The provided BIOS file does not match the expected size of 16 KiB.");
+        return -4;
+      }
+    }
+    
     return -1;
   }
 
