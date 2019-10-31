@@ -8,7 +8,7 @@ set(SOURCES
     system/arm/isa-armv4/emit.cpp
     system/backup/eeprom.cpp
     system/cpu.cpp
-    system/cpu-mmio.cpp
+    system/memory/registers.cpp
     system/dma.cpp
     system/timer.cpp
     system/ppu/ppu.cpp
@@ -29,7 +29,7 @@ set(HEADERS
     system/backup/eeprom.hpp
     system/cpu.hpp
     system/dma.hpp
-    system/registers.hpp
+    system/memory/registers.hpp
     system/timer.hpp
     system/ppu/ppu.hpp
     system/ppu/regs.hpp

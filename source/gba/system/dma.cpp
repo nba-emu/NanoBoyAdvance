@@ -19,7 +19,7 @@
 
 #include "cpu.hpp"
 #include "dma.hpp"
-#include "registers.hpp"
+#include "memory/registers.hpp"
 
 using namespace GameBoyAdvance;
 

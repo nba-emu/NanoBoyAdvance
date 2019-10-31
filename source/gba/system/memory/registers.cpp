@@ -17,10 +17,8 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#include <cstdio>
-
-#include "cpu.hpp"
 #include "registers.hpp"
+#include "../cpu.hpp"
 
 using namespace GameBoyAdvance;
 
