@@ -68,11 +68,11 @@ private:
   
   #define ARM_INCLUDE_GUARD
   
-  #include "isa/arithmetic.inl"
-  #include "isa/emit.inl"
-  #include "isa/isa-arm.inl"
-  #include "isa/isa-thumb.inl"
-  #include "isa/memory.inl"
+  #include "isa-armv4/arithmetic.inl"
+  #include "isa-armv4/emit.inl"
+  #include "isa-armv4/isa-arm.inl"
+  #include "isa-armv4/isa-thumb.inl"
+  #include "isa-armv4/memory.inl"
   
   #undef ARM_INCLUDE_GUARD
 
@@ -86,6 +86,6 @@ private:
   bool condition_table[16][16];
 };
 
-#include "arm7tdmi.inl"
+#include "arm7.inl"
 
 }

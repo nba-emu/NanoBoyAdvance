@@ -1,5 +1,5 @@
 set(SOURCES
-    isa/emit.cpp
+    isa-armv4/emit.cpp
 )
 
 set(HEADERS

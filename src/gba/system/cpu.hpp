@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <arm/arm7tdmi.hpp>
+#include <arm/arm7.hpp>
 #include <memory>
 
 #include "dma.hpp"
