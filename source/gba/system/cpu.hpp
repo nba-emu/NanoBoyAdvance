@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include <arm/arm7.hpp>
 #include <memory>
 
+#include "arm/arm7.hpp"
 #include "backup/backup.hpp"
 #include "config/config.hpp"
 #include "dma.hpp"

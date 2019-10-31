@@ -5,6 +5,7 @@ set(SOURCES
     system/apu/psg/channel_wave.cpp
     system/apu/apu.cpp
     system/apu/regs.cpp
+    system/arm/isa-armv4/emit.cpp
     system/backup/eeprom.cpp
     system/cpu.cpp
     system/cpu-mmio.cpp
@@ -21,6 +22,9 @@ set(HEADERS
     emulator.hpp
     system/apu/apu.hpp
     system/apu/regs.hpp
+    system/arm/arm7.hpp
+    system/arm/interface.hpp
+    system/arm/state.hpp
     system/backup/backup.hpp
     system/backup/eeprom.hpp
     system/cpu.hpp
@@ -33,4 +37,4 @@ set(HEADERS
 )
 
 add_library(gba STATIC ${SOURCES} ${HEADERS})
-target_link_libraries(gba arm stdc++fs)
+target_link_libraries(gba stdc++fs)
