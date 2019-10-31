@@ -23,12 +23,12 @@
 
 #include "arm/arm7.hpp"
 #include "backup/backup.hpp"
-#include "config/config.hpp"
 #include "dma.hpp"
 #include "timer.hpp"
 #include "scheduler.hpp"
 #include "apu/apu.hpp"
 #include "ppu/ppu.hpp"
+#include "../config/config.hpp"
 
 namespace GameBoyAdvance {
 

@@ -23,7 +23,7 @@
 
 #include "emulator.hpp"
 
-#include "system/backup/eeprom.hpp"
+#include "core/backup/eeprom.hpp"
 
 using namespace GameBoyAdvance;
 

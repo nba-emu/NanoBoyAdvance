@@ -22,7 +22,7 @@
 #include <memory>
 #include <string>
 
-#include "system/cpu.hpp"
+#include "core/cpu.hpp"
 
 namespace GameBoyAdvance {
 

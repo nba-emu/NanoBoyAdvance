@@ -1,39 +1,39 @@
 set(SOURCES
     emulator.cpp
-    system/apu/psg/channel_noise.cpp
-    system/apu/psg/channel_quad.cpp
-    system/apu/psg/channel_wave.cpp
-    system/apu/apu.cpp
-    system/apu/regs.cpp
-    system/arm/isa-armv4/emit.cpp
-    system/backup/eeprom.cpp
-    system/cpu.cpp
-    system/memory/registers.cpp
-    system/dma.cpp
-    system/timer.cpp
-    system/ppu/ppu.cpp
-    system/ppu/regs.cpp
-    system/ppu/render/affine.cpp
-    system/ppu/render/text.cpp
-    system/ppu/render/oam.cpp
+    core/apu/psg/channel_noise.cpp
+    core/apu/psg/channel_quad.cpp
+    core/apu/psg/channel_wave.cpp
+    core/apu/apu.cpp
+    core/apu/regs.cpp
+    core/arm/isa-armv4/emit.cpp
+    core/backup/eeprom.cpp
+    core/cpu.cpp
+    core/memory/registers.cpp
+    core/dma.cpp
+    core/timer.cpp
+    core/ppu/ppu.cpp
+    core/ppu/regs.cpp
+    core/ppu/render/affine.cpp
+    core/ppu/render/text.cpp
+    core/ppu/render/oam.cpp
 )
 
 set(HEADERS
     emulator.hpp
-    system/apu/apu.hpp
-    system/apu/regs.hpp
-    system/arm/arm7.hpp
-    system/arm/interface.hpp
-    system/arm/state.hpp
-    system/backup/backup.hpp
-    system/backup/eeprom.hpp
-    system/cpu.hpp
-    system/dma.hpp
-    system/memory/registers.hpp
-    system/timer.hpp
-    system/ppu/ppu.hpp
-    system/ppu/regs.hpp
-    system/scheduler.hpp
+    core/apu/apu.hpp
+    core/apu/regs.hpp
+    core/arm/arm7.hpp
+    core/arm/interface.hpp
+    core/arm/state.hpp
+    core/backup/backup.hpp
+    core/backup/eeprom.hpp
+    core/cpu.hpp
+    core/dma.hpp
+    core/memory/registers.hpp
+    core/timer.hpp
+    core/ppu/ppu.hpp
+    core/ppu/regs.hpp
+    core/scheduler.hpp
 )
 
 add_library(gba STATIC ${SOURCES} ${HEADERS})
