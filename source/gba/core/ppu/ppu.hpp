@@ -94,7 +94,7 @@ private:
   void RenderLayerOAM();
   void Blend(std::uint16_t& target1, std::uint16_t target2, BlendControl::Effect sfx);
 
-  #include "ppu.inl"
+  #include "helper.inl"
 
   CPU* cpu;
 
