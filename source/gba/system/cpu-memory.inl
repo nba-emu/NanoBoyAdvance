@@ -31,7 +31,7 @@
 #define WRITE_FAST_16(buffer, address, value) *(uint16_t*)(&buffer[address]) = value;
 #define WRITE_FAST_32(buffer, address, value) *(uint32_t*)(&buffer[address]) = value;
 
-#define IS_EEPROM_ACCESS(address) backup && true &&\
+#define IS_EEPROM_ACCESS(address) memory.rom.backup && true &&\
                                   ((~memory.rom.size & 0x02000000) || address >= 0x0DFFFF00)
 
 inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
@@ -141,7 +141,7 @@ inline std::uint16_t CPU::ReadHalf(std::uint32_t address, ARM::AccessType type) 
         if (!dma.IsRunning()) { // TODO: this is potentially buggy.  
           return 1;
         }
-        return backup->Read(address);
+        return memory.rom.backup->Read(address);
       }
     }
     case 0x8: case 0x9:
@@ -319,7 +319,7 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, ARM::Acce
         if (!dma.IsRunning()) { // TODO: this is potentially buggy.
           break;
         }
-        backup->Write(address, value);
+        memory.rom.backup->Write(address, value);
         break;
       }
     //   address &= 0x1FFFFFF;

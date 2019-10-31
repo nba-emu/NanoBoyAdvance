@@ -82,12 +82,11 @@ auto Emulator::LoadGame(std::string const& path) -> bool {
   stream.read((char*)(rom.get()), size);
   stream.close();
   
-  cpu.memory.rom.data = std::move(rom);
-  cpu.memory.rom.size = size;
-  
   std::string save_path = path.substr(0, path.find_last_of(".")) + ".sav";
   
-  cpu.backup = new EEPROM(save_path, EEPROM::SIZE_4K);
+  cpu.memory.rom.data = std::move(rom);
+  cpu.memory.rom.size = size;
+  cpu.memory.rom.backup = std::make_shared<EEPROM>(save_path, EEPROM::SIZE_4K);
   
   return true;
 }

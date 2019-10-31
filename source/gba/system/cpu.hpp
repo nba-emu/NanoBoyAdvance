@@ -27,10 +27,8 @@
 #include "scheduler.hpp"
 #include "apu/apu.hpp"
 #include "ppu/ppu.hpp"
-#include "../config.hpp"
-
-// HACK
 #include "../cartridge/backup.hpp"
+#include "../config.hpp"
 
 namespace GameBoyAdvance {
 
@@ -85,6 +83,7 @@ public:
 
     struct ROM {
       std::shared_ptr<uint8_t[]> data;
+      std::shared_ptr<Backup> backup;
       size_t size;
     } rom;
 
@@ -95,9 +94,6 @@ public:
   struct MMIO {
     std::uint16_t keyinput;
 
-    /* TODO: make this accessible without passing
-     *       the complete CPU object. 
-     */
     std::uint16_t irq_ie;
     std::uint16_t irq_if;
     std::uint16_t irq_ime;
@@ -125,9 +121,6 @@ public:
   DMA dma;
   Timer timer;
   ARM::ARM7TDMI cpu;
-  
-  // HACK!
-  Backup* backup;
   
 private:
   
