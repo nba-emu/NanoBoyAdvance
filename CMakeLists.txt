@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(NanoboyAdvance C CXX)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 
 set(PLATFORM "sdl" CACHE STRING "Build Target (sdl, ...)")
 
