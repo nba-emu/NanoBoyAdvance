@@ -24,10 +24,11 @@
 #include <dsp/resampler.hpp>
 #include <dsp/ring_buffer.hpp>
 
+#include "channel/channel_quad.hpp"
+#include "channel/channel_wave.hpp"
+#include "channel/channel_noise.hpp"
+#include "channel/fifo.hpp"
 #include "registers.hpp"
-#include "psg/channel_quad.hpp"
-#include "psg/channel_wave.hpp"
-#include "psg/channel_noise.hpp"
 #include "../scheduler.hpp"
 
 namespace GameBoyAdvance {

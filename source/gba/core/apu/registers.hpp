@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "fifo.hpp"
-
 #include <cstdint>
+
+#include "channel/fifo.hpp"
 
 namespace GameBoyAdvance {
 

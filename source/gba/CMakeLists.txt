@@ -1,8 +1,8 @@
 set(SOURCES
     emulator.cpp
-    core/apu/psg/channel_noise.cpp
-    core/apu/psg/channel_quad.cpp
-    core/apu/psg/channel_wave.cpp
+    core/apu/channel/channel_noise.cpp
+    core/apu/channel/channel_quad.cpp
+    core/apu/channel/channel_wave.cpp
     core/apu/apu.cpp
     core/apu/callback.cpp
     core/apu/registers.cpp
