@@ -29,7 +29,6 @@
 #include <dsp/ring_buffer.hpp>
 
 #include <mutex>
-#include <cstdio>
 
 namespace GameBoyAdvance {
 
@@ -64,7 +63,6 @@ public:
   std::shared_ptr<DSP::StereoRingBuffer<float>> buffer;
   std::unique_ptr<DSP::StereoResampler<float>> resampler;
   
-  FILE* dump;
 private:
   CPU* cpu;
   

@@ -19,10 +19,11 @@
 
 #include <cmath>
 
+#include <dsp/resampler/cosine.hpp>
+#include <dsp/resampler/cubic.hpp>
+#include <dsp/resampler/windowed-sinc.hpp>
 #include "apu.hpp"
 #include "../cpu.hpp"
-
-#include <cstdio>
 
 using namespace GameBoyAdvance;
 
@@ -76,8 +77,6 @@ void APU::Reset() {
   psg2.Reset();
   psg3.Reset();
   psg4.Reset();
-  
-  dump = fopen("audio.raw", "wb");
   
   auto audio_dev = cpu->config->audio_dev;
   

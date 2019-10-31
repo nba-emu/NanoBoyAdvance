@@ -19,36 +19,32 @@
 
 #pragma once
 
-#include <cmath>
-#include <memory>
-
-#ifndef M_PI
-#define M_PI (3.141592653589793238463)
-#endif
-
-#include "stereo.hpp"
-#include "stream.hpp"
+#include "../resampler.hpp"
 
 namespace DSP {
 
 template <typename T>
-class Resampler : public WriteStream<T> {
+class NearestResampler : public Resampler<T> {
 
 public:
-  Resampler(std::shared_ptr<WriteStream<T>> output) : output(output) {}
+  NearestResampler(std::shared_ptr<WriteStream<T>> output) 
+    : Resampler<T>(output)
+  { }
   
-  virtual void SetSampleRates(float samplerate_in, float samplerate_out) {
-    resample_phase_shift = samplerate_in / samplerate_out;
+  void Write(T const& input) final {
+    while (resample_phase < 1.0) {
+      this->output->Write(input);
+      resample_phase += this->resample_phase_shift;
+    }
+    
+    resample_phase = resample_phase - 1.0;
   }
-
-protected:
-  /* TODO: is a shared_ptr really best fit here? */
-  std::shared_ptr<WriteStream<T>> output;
   
-  float resample_phase_shift = 1;
+private:
+  float resample_phase = 0;
 };
 
 template <typename T>
-using StereoResampler = Resampler<StereoSample<T>>;
+using NearestStereoResampler = NearestResampler<StereoSample<T>>;
 
 }
