@@ -42,9 +42,7 @@ CPU::CPU(std::shared_ptr<Config> config)
 }
 
 void CPU::Reset() {
-  // FIXME
-  //scheduler.Reset();
-  
+  /* TODO: properly reset the scheduler. */
   scheduler.Add(ppu.event);
   
   /* Clear all memory buffers. */
@@ -92,11 +90,13 @@ void CPU::Reset() {
   ppu.Reset();
   cpu.Reset();
   
-//  cpu.state.bank[ARM::BANK_SVC][ARM::BANK_R13] = 0x03007FE0; 
-//  cpu.state.bank[ARM::BANK_IRQ][ARM::BANK_R13] = 0x03007FA0;
-//  cpu.state.reg[13] = 0x03007F00;
-//  cpu.state.cpsr.f.mode = ARM::MODE_USR;
-//  cpu.state.r15 = 0x08000000;
+  if (config->skip_bios) {
+    cpu.state.bank[ARM::BANK_SVC][ARM::BANK_R13] = 0x03007FE0; 
+    cpu.state.bank[ARM::BANK_IRQ][ARM::BANK_R13] = 0x03007FA0;
+    cpu.state.reg[13] = 0x03007F00;
+    cpu.state.cpsr.f.mode = ARM::MODE_USR;
+    cpu.state.r15 = 0x08000000;
+  }
 }
 
 void CPU::Tick(int cycles) {

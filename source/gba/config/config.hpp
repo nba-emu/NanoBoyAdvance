@@ -30,6 +30,7 @@ namespace GameBoyAdvance {
 
 struct Config {
   std::string bios_path = "bios.bin";
+  bool skip_bios = false;
   
   struct Video {
   } video;
