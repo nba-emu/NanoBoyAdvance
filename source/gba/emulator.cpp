@@ -23,8 +23,7 @@
 
 #include "emulator.hpp"
 
-// HACK
-#include "cartridge/eeprom.hpp"
+#include "system/backup/eeprom.hpp"
 
 using namespace GameBoyAdvance;
 

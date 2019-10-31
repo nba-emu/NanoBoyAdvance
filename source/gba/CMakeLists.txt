@@ -1,11 +1,11 @@
 set(SOURCES
-    cartridge/eeprom.cpp
     emulator.cpp
     system/apu/psg/channel_noise.cpp
     system/apu/psg/channel_quad.cpp
     system/apu/psg/channel_wave.cpp
     system/apu/apu.cpp
     system/apu/regs.cpp
+    system/backup/eeprom.cpp
     system/cpu.cpp
     system/cpu-mmio.cpp
     system/dma.cpp
@@ -18,11 +18,11 @@ set(SOURCES
 )
 
 set(HEADERS
-    cartridge/backup.hpp
-    cartridge/eeprom.hpp
     emulator.hpp
     system/apu/apu.hpp
     system/apu/regs.hpp
+    system/backup/backup.hpp
+    system/backup/eeprom.hpp
     system/cpu.hpp
     system/dma.hpp
     system/registers.hpp
