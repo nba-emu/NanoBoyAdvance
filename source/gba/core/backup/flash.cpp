@@ -21,9 +21,6 @@
 #include <experimental/filesystem>
 #include <fstream>
 
-
-#include <cstdio>
-
 #include "flash.hpp"
 
 using namespace GameBoyAdvance;
@@ -84,75 +81,81 @@ void FLASH::Write(std::uint32_t address, std::uint8_t value) {
     enable_write = false;
     return;
   }
-  
-  /* TODO: what happens with malformed writes? */
-  
-  if (address == 0x0E005555 && value == 0xAA) {
-    phase = 1;
-    return;
-  }
-  
-  if (address == 0x0E002AAA && value == 0x55 && phase == 1) {
-    phase = 2;
-    return;
-  }
-  
-  if (address == 0x0E005555 && phase == 2) {
-    switch (static_cast<Command>(value)) {
-      case READ_CHIP_ID: {
-        enable_chip_id = true;
-        return;
+
+  /* TODO: figure out how malformed sequences behave. */
+  switch (phase) {
+    case 0: {
+      if (address == 0x0E005555 && value == 0xAA) {
+        phase = 1;
       }
-      case FINISH_CHIP_ID: {
-        enable_chip_id = false;
-        return;
-      }
-      case ERASE: {
-        enable_erase = true;
-        return;
-      }
-      case ERASE_CHIP: {
-        if (enable_erase) {
-          std::memset(memory, sizeof(memory), 0xFF);
-          enable_erase = false;
-        }
-        return;
-      }
-      case WRITE_BYTE: {
-        enable_write = true;
-        return;
-      }
-      case SELECT_BANK: {
-        /* TODO: maybe it would be better to break if the chip is 64K? */
-        if (size == SIZE_128K) {
-          enable_select = true;
-        }
-        return;
-      }
-      default: return;
+      break;
     }
-    
-    phase = 0;
-    return;
-  }
-  
-  if (enable_erase && static_cast<Command>(value) == ERASE_SECTOR &&
-      (address & ~0xF000) == 0x0E000000 && phase == 2) {
-    std::uint32_t base = address & 0xF000;
-    
-    for (int i = 0; i < 0x1000; i++) {
-      memory[current_bank][base + i] = 0xFF;
+    case 1: {
+      if (address == 0x0E002AAA && value == 0x55) {
+        phase = 2;
+      }
+      break;
     }
-    
-    enable_erase = false;
-    phase = 0;
-    return;
-  }
-  
-  if (enable_select && address == 0x0E000000) {
-    current_bank = value & 1;
-    enable_select = false;
-    /* Why do we not set phase = 0? */
-    // return;
+    case 2: {
+      if (address == 0x0E005555) {
+        switch (static_cast<Command>(value)) {
+          case READ_CHIP_ID: {
+            enable_chip_id = true;
+            phase = 0;
+            break;
+          }
+          case FINISH_CHIP_ID: {
+            enable_chip_id = false;
+            phase = 0;
+            break;
+          }
+          case ERASE: {
+            enable_erase = true;
+            break;
+          }
+          case ERASE_CHIP: {
+            if (enable_erase) {
+              std::memset(memory, sizeof(memory), 0xFF);
+              enable_erase = false;
+            }
+            phase = 0;
+            break;
+          }
+          case WRITE_BYTE: {
+            enable_write = true;
+            break;
+          }
+          case SELECT_BANK: {
+            /* TODO: maybe it would be better to break if the chip is 64K? */
+            if (size == SIZE_128K) {
+              enable_select = true;
+            }
+            break;
+          }
+        }
+        
+        return;
+      }
+      
+      if ((address & ~0xF000) == 0x0E000000 && enable_erase && static_cast<Command>(value) == ERASE_SECTOR) {
+        std::uint32_t base = address & 0xF000;
+
+        for (int i = 0; i < 0x1000; i++) {
+          memory[current_bank][base + i] = 0xFF;
+        }
+
+        enable_erase = false;
+        phase = 0;
+        return;
+      }
+
+      if (address == 0x0E000000 && enable_select) {
+        current_bank = value & 1;
+        enable_select = false;
+        phase = 0;
+      }
+      
+      break;
+    }
   }
 }

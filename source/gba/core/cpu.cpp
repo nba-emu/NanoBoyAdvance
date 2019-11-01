@@ -72,13 +72,14 @@ void CPU::Reset() {
   mmio.waitcnt.phi = 0;
   mmio.waitcnt.prefetch = 0;
   mmio.waitcnt.cgb = 0;
+  UpdateCycleLUT();
+  
   for (int i = 16; i < 256; i++) {
     cycles16[ARM::ACCESS_NSEQ][i] = 1;
     cycles16[ARM::ACCESS_SEQ ][i] = 1;
     cycles32[ARM::ACCESS_NSEQ][i] = 1;
     cycles32[ARM::ACCESS_SEQ ][i] = 1;
   }
-  UpdateCycleLUT();
   
   prefetch.active = false;
   prefetch.count = 0;
