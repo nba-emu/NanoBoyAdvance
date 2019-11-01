@@ -76,12 +76,6 @@ auto FLASH::Read (std::uint32_t address) -> std::uint8_t {
 }
 
 void FLASH::Write(std::uint32_t address, std::uint8_t value) {
-  if (enable_write) {
-    memory[current_bank][address & 0xFFFF] = value;
-    enable_write = false;
-    return;
-  }
-
   /* TODO: figure out how malformed sequences behave. */
   switch (phase) {
     case 0: {
@@ -97,65 +91,77 @@ void FLASH::Write(std::uint32_t address, std::uint8_t value) {
       break;
     }
     case 2: {
-      if (address == 0x0E005555) {
-        switch (static_cast<Command>(value)) {
-          case READ_CHIP_ID: {
-            enable_chip_id = true;
-            phase = 0;
-            break;
-          }
-          case FINISH_CHIP_ID: {
-            enable_chip_id = false;
-            phase = 0;
-            break;
-          }
-          case ERASE: {
-            enable_erase = true;
-            break;
-          }
-          case ERASE_CHIP: {
-            if (enable_erase) {
-              std::memset(memory, sizeof(memory), 0xFF);
-              enable_erase = false;
-            }
-            phase = 0;
-            break;
-          }
-          case WRITE_BYTE: {
-            enable_write = true;
-            break;
-          }
-          case SELECT_BANK: {
-            /* TODO: maybe it would be better to break if the chip is 64K? */
-            if (size == SIZE_128K) {
-              enable_select = true;
-            }
-            break;
-          }
-        }
-        
-        return;
-      }
-      
-      if ((address & ~0xF000) == 0x0E000000 && enable_erase && static_cast<Command>(value) == ERASE_SECTOR) {
-        std::uint32_t base = address & 0xF000;
-
-        for (int i = 0; i < 0x1000; i++) {
-          memory[current_bank][base + i] = 0xFF;
-        }
-
-        enable_erase = false;
-        phase = 0;
-        return;
-      }
-
-      if (address == 0x0E000000 && enable_select) {
-        current_bank = value & 1;
-        enable_select = false;
-        phase = 0;
-      }
-      
+      HandleCommand(address, value);
+      break;
+    }
+    case 3: {
+      HandleExtended(address, value);
       break;
     }
   }
+}
+
+void FLASH::HandleCommand(std::uint32_t address, std::uint8_t value) {
+  if (address == 0x0E005555) {
+    switch (static_cast<Command>(value)) {
+      case READ_CHIP_ID: {
+        enable_chip_id = true;
+        phase = 0;
+        break;
+      }
+      case FINISH_CHIP_ID: {
+        enable_chip_id = false;
+        phase = 0;
+        break;
+      }
+      case ERASE: {
+        enable_erase = true;
+        phase = 0;
+        break;
+      }
+      case ERASE_CHIP: {
+        if (enable_erase) {
+          std::memset(memory, sizeof(memory), 0xFF);
+          enable_erase = false;
+        }
+        phase = 0;
+        break;
+      }
+      case WRITE_BYTE: {
+        enable_write = true;
+        phase = 3;
+        break;
+      }
+      case SELECT_BANK: {
+        if (size == SIZE_128K) {
+          enable_select = true;
+          phase = 3;
+        } else {
+          phase = 0;
+        }
+        break;
+      }
+    }
+  } else if (enable_erase && (address & ~0xF000) == 0x0E000000 && static_cast<Command>(value) == ERASE_SECTOR) {
+    std::uint32_t base = address & 0xF000;
+
+    for (int i = 0; i < 0x1000; i++) {
+      memory[current_bank][base + i] = 0xFF;
+    }
+
+    enable_erase = false;
+    phase = 0;
+  }
+}
+
+void FLASH::HandleExtended(std::uint32_t address, std::uint8_t value) {
+  if (enable_write) {
+    memory[current_bank][address & 0xFFFF] = value;
+    enable_write = false;
+  } else if (enable_select && address == 0x0E000000) {
+    current_bank = value & 1;
+    enable_select = false;
+  }
+      
+  phase = 0;
 }

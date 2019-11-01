@@ -52,6 +52,9 @@ private:
     SELECT_BANK = 0xB0
   };
   
+  void HandleCommand(std::uint32_t address, std::uint8_t value);
+  void HandleExtended(std::uint32_t address, std::uint8_t value);
+  
   Size size;
   std::string save_path;
   
