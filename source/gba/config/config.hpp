@@ -30,7 +30,17 @@ namespace GameBoyAdvance {
 
 struct Config {
   std::string bios_path = "bios.bin";
+  
   bool skip_bios = false;
+  
+  enum class SaveType {
+    Detect,
+    SRAM,
+    FLASH_64,
+    FLASH_128,
+    EEPROM_4,
+    EEPROM_64
+  } save_type = SaveType::Detect;
   
   struct Video {
   } video;

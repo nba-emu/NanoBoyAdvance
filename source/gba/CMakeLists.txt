@@ -8,6 +8,7 @@ set(SOURCES
     core/apu/registers.cpp
     core/arm/isa-armv4/emit.cpp
     core/backup/eeprom.cpp
+    core/backup/flash.cpp
     core/cpu.cpp
     core/memory/registers.cpp
     core/dma.cpp
@@ -28,6 +29,7 @@ set(HEADERS
     core/arm/state.hpp
     core/backup/backup.hpp
     core/backup/eeprom.hpp
+    core/backup/flash.hpp
     core/cpu.hpp
     core/dma.hpp
     core/memory/registers.hpp

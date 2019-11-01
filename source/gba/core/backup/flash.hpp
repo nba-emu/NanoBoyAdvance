@@ -19,38 +19,49 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 
-#include "core/cpu.hpp"
+#include "backup.hpp"
 
 namespace GameBoyAdvance {
-  
-class Emulator {
+
+class FLASH : public Backup {
+
 public:
-  enum class StatusCode {
-    BiosNotFound,
-    GameNotFound,
-    BiosWrongSize,
-    GameWrongSize,
-    Ok
+  enum Size {
+    SIZE_64K  = 0,
+    SIZE_128K = 1
   };
   
-  Emulator(std::shared_ptr<Config> config);
+  FLASH(std::string const& save_path, Size size_hint);
+ ~FLASH() final;
+  
+  void Reset() final;
+  auto Read (std::uint32_t address) -> std::uint8_t final;
+  void Write(std::uint32_t address, std::uint8_t value) final;
 
-  void Reset();
-  auto LoadGame(std::string const& path) -> StatusCode;
-  void Frame();
-  
 private:
-  static auto DetectSaveType(std::uint8_t* rom, size_t size) -> Config::SaveType;
   
-  auto LoadBIOS() -> StatusCode; 
+  enum Command {
+    READ_CHIP_ID = 0x90,
+    FINISH_CHIP_ID = 0xF0,
+    ERASE = 0x80,
+    ERASE_CHIP = 0x10,
+    ERASE_SECTOR = 0x30,
+    WRITE_BYTE = 0xA0,
+    SELECT_BANK = 0xB0
+  };
   
-  CPU cpu;
-  bool bios_loaded = false;
-  bool save_detect = false;
-  std::shared_ptr<Config> config;
+  Size size;
+  std::string save_path;
+  
+  std::uint8_t memory[2][65536];
+  int current_bank;
+  int phase;
+  bool enable_chip_id;
+  bool enable_erase;
+  bool enable_write;
+  bool enable_select;
 };
 
 }

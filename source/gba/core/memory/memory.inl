@@ -31,7 +31,10 @@
 #define WRITE_FAST_16(buffer, address, value) *(uint16_t*)(&buffer[address]) = value;
 #define WRITE_FAST_32(buffer, address, value) *(uint32_t*)(&buffer[address]) = value;
 
-#define IS_EEPROM_ACCESS(address) memory.rom.backup && true &&\
+#define IS_EEPROM_BACKUP (config->save_type == Config::SaveType::EEPROM_4 ||\
+                          config->save_type == Config::SaveType::EEPROM_64)
+
+#define IS_EEPROM_ACCESS(address) memory.rom.backup && IS_EEPROM_BACKUP &&\
                                   ((~memory.rom.size & 0x02000000) || address >= 0x0DFFFF00)
 
 inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
@@ -86,20 +89,11 @@ inline std::uint8_t CPU::ReadByte(std::uint32_t address, ARM::AccessType type) {
         return address / 2;
       return READ_FAST_8(memory.rom.data, address);
     }
-    // case 0xE: {
-    //   if (!memory.rom.save || cart->type == SAVE_EEPROM) {
-    //     return 0;
-    //   }
-    //   return memory.rom.save->read8(address);
-    // }
-    
     case 0xE: {
-      /* HACK: trick games into thinking we have FLASH memory :b */
-      if (address == 0xE000000)
-        return 0x62;
-      if (address == 0xE000001)
-        return 0x13;
-      return 0;
+      if (!memory.rom.backup || IS_EEPROM_BACKUP) {
+        return 0;
+      }
+      return memory.rom.backup->Read(address);
     }
     
     default: return 0;
@@ -160,12 +154,12 @@ inline std::uint16_t CPU::ReadHalf(std::uint32_t address, ARM::AccessType type) 
         return address / 2;
       return READ_FAST_16(memory.rom.data, address);
     }
-    // case 0xE: {
-    //   if (!memory.rom.save || cart->type == SAVE_EEPROM) {
-    //     return 0;
-    //   }
-    //   return memory.rom.save->read8(address) * 0x0101;
-    // }
+    case 0xE: {
+      if (!memory.rom.backup || IS_EEPROM_BACKUP) {
+        return 0;
+      }
+      return memory.rom.backup->Read(address) * 0x0101;
+    }
 
     default: return 0;
   }
@@ -218,12 +212,12 @@ inline std::uint32_t CPU::ReadWord(std::uint32_t address, ARM::AccessType type) 
                (((address + 2) / 2) << 16);
       return READ_FAST_32(memory.rom.data, address);
     }
-    // case 0xE: {
-    //   if (!memory.rom.save  || cart->type == SAVE_EEPROM) {
-    //     return 0;
-    //   }
-    //   return memory.rom.save->read8(address) * 0x01010101;
-    // }
+    case 0xE: {
+      if (!memory.rom.backup || IS_EEPROM_BACKUP) {
+        return 0;
+      }
+      return memory.rom.backup->Read(address) * 0x01010101;
+    }
 
     default: return 0;
   }
@@ -260,9 +254,9 @@ inline void CPU::WriteByte(std::uint32_t address, std::uint8_t value, ARM::Acces
     }
     case 0x7: WRITE_FAST_16(memory.oam, address & 0x3FF, value * 0x0101); break;
     case 0xE: {
-      //if (!memory.rom.save || cart->type == SAVE_EEPROM)
-      //  break;
-      //memory.rom.save->write8(address, value);
+      if (!memory.rom.backup || IS_EEPROM_BACKUP)
+        break;
+      memory.rom.backup->Write(address, value);
       break;
     }
     default: break;
@@ -331,14 +325,14 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, ARM::Acce
       break;
     }
     //
-    // case 0xE: {
-    //   if (!memory.rom.save || cart->type == SAVE_EEPROM) {
-    //     break;
-    //   }
-    //   memory.rom.save->write8(address + 0, value);
-    //   memory.rom.save->write8(address + 1, value);
-    //   break;
-    // }
+    case 0xE: {
+      if (!memory.rom.backup || IS_EEPROM_BACKUP) {
+        break;
+      }
+      memory.rom.backup->Write(address + 0, value);
+      memory.rom.backup->Write(address + 1, value);
+      break;
+    }
     default: break;
   }
 }
@@ -392,16 +386,16 @@ inline void CPU::WriteWord(std::uint32_t address, std::uint32_t value, ARM::Acce
     //   break;
     // }
 
-    // case 0xE: {
-    //   if (!memory.rom.save || cart->type == SAVE_EEPROM) {
-    //     break;
-    //   }
-    //   memory.rom.save->write8(address + 0, value);
-    //   memory.rom.save->write8(address + 1, value);
-    //   memory.rom.save->write8(address + 2, value);
-    //   memory.rom.save->write8(address + 3, value);
-    //   break;
-    // }
+    case 0xE: {
+      if (!memory.rom.backup || IS_EEPROM_BACKUP) {
+        break;
+      }
+      memory.rom.backup->Write(address + 0, value);
+      memory.rom.backup->Write(address + 1, value);
+      memory.rom.backup->Write(address + 2, value);
+      memory.rom.backup->Write(address + 3, value);
+      break;
+    }
     default: break;
   }
 }

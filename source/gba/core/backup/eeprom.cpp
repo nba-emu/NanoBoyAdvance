@@ -17,12 +17,12 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#include "eeprom.hpp"
-
 #include <cstring>
 #include <exception>
 #include <experimental/filesystem>
 #include <fstream>
+
+#include "eeprom.hpp"
 
 using namespace GameBoyAdvance;
 

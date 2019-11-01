@@ -17,17 +17,22 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
+#include <cstring>
 #include <exception>
 #include <experimental/filesystem>
 #include <fstream>
+#include <map>
 
 #include "emulator.hpp"
 
 #include "core/backup/eeprom.hpp"
+#include "core/backup/flash.hpp"
 
 using namespace GameBoyAdvance;
 
 namespace fs = std::experimental::filesystem;
+
+using SaveType = Config::SaveType;
 
 constexpr int g_cycles_per_frame = 280896;
 constexpr int g_bios_size = 0x4000;
@@ -36,10 +41,34 @@ Emulator::Emulator(std::shared_ptr<Config> config)
   : cpu(config)
   , config(config)
 {
+  save_detect = config->save_type == SaveType::Detect;
   Reset();
 }
 
 void Emulator::Reset() { cpu.Reset(); }
+
+auto Emulator::DetectSaveType(std::uint8_t* rom, size_t size) -> SaveType {
+  const std::map<std::string, Config::SaveType> signatures {
+    { "EEPROM_V",   SaveType::EEPROM_4  },
+    { "SRAM_V",     SaveType::SRAM      },
+    { "FLASH_V",    SaveType::FLASH_64  },
+    { "FLASH512_V", SaveType::FLASH_64  },
+    { "FLASH1M_V",  SaveType::FLASH_128 }
+  };
+  
+  for (int i = 0; i < size; i += 4) {
+    for (auto const& pair : signatures) {
+      auto const& string = pair.first;
+      
+      if (std::memcmp(&rom[i], string.c_str(), string.size()) == 0) {
+        return pair.second;
+      }
+    }
+  }
+  
+  /* TODO: find a sane default. */
+  return Config::SaveType::Detect;
+}
 
 auto Emulator::LoadBIOS() -> StatusCode {
   auto bios_path = config->bios_path;
@@ -108,9 +137,31 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   
   std::string save_path = path.substr(0, path.find_last_of(".")) + ".sav";
   
+  /* TODO: include a database to bust troublemakers. */
+  if (save_detect) {
+    config->save_type = DetectSaveType(rom.get(), size);
+  }
+  
+  switch (config->save_type) {
+    case SaveType::SRAM:
+      /* ... */
+      break;
+    case SaveType::FLASH_64:
+      cpu.memory.rom.backup = std::make_shared<FLASH>(save_path, FLASH::SIZE_64K);
+      break;
+    case SaveType::FLASH_128:
+      cpu.memory.rom.backup = std::make_shared<FLASH>(save_path, FLASH::SIZE_128K);
+      break;
+    case SaveType::EEPROM_4:
+      cpu.memory.rom.backup = std::make_shared<EEPROM>(save_path, EEPROM::SIZE_4K);
+      break;
+    case SaveType::EEPROM_64:
+      cpu.memory.rom.backup = std::make_shared<EEPROM>(save_path, EEPROM::SIZE_64K);
+      break;
+  }
+  
   cpu.memory.rom.data = std::move(rom);
   cpu.memory.rom.size = size;
-  cpu.memory.rom.backup = std::make_shared<EEPROM>(save_path, EEPROM::SIZE_4K);
   
   return StatusCode::Ok;
 }
