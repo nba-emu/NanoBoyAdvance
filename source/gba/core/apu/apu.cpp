@@ -109,7 +109,7 @@ void APU::OnTimerOverflow(int timer_id, int times) {
   }
 }
 
-void APU::Tick() {
+void APU::Generate() {
   auto& bias = mmio.bias;
   
   if (bias.resolution != resolution_old) {

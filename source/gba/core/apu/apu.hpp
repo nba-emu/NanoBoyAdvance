@@ -41,9 +41,9 @@ public:
   
   void Reset();
   void OnTimerOverflow(int timer_id, int times);
-  void Tick();
+  void Generate();
   
-  Event event { 0, [this]() { this->Tick(); } };
+  Event event { 0, [this]() { this->Generate(); } };
   
   struct MMIO {
     FIFO fifo[2];
