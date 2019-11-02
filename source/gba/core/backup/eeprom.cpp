@@ -65,10 +65,6 @@ EEPROM::EEPROM(std::string const& save_path, Size size_hint)
   Reset();
 }
 
-EEPROM::~EEPROM() {
-  /* TODO ... */
-}
-
 void EEPROM::Reset() {
   state = STATE_ACCEPT_COMMAND;
   address = 0;

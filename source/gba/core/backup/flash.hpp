@@ -22,6 +22,7 @@
 #include <string>
 
 #include "backup.hpp"
+#include "backup_file.hpp"
 
 namespace GameBoyAdvance {
 
@@ -34,7 +35,6 @@ public:
   };
   
   FLASH(std::string const& save_path, Size size_hint);
- ~FLASH() final;
   
   void Reset() final;
   auto Read (std::uint32_t address) -> std::uint8_t final;
@@ -55,10 +55,12 @@ private:
   void HandleCommand(std::uint32_t address, std::uint8_t value);
   void HandleExtended(std::uint32_t address, std::uint8_t value);
   
+  auto Physical(int index) -> int { return current_bank * 65536 + index; }
+  
   Size size;
   std::string save_path;
+  std::unique_ptr<BackupFile> file;
   
-  std::uint8_t memory[2][65536];
   int current_bank;
   int phase;
   bool enable_chip_id;

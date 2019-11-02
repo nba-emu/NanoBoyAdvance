@@ -21,7 +21,7 @@
 
 #include <cstdint>
 
-namespace GameBoyAdvance {
+namespace GameBoyAdvance { 
 
 class Backup {
 
@@ -29,7 +29,6 @@ public:
   virtual void Reset() = 0;
   virtual auto Read (std::uint32_t address) -> std::uint8_t = 0;
   virtual void Write(std::uint32_t address, std::uint8_t value) = 0;
-  virtual ~Backup() {}
 };
 
 }

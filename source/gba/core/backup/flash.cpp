@@ -17,15 +17,9 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#include <cstring>
-#include <experimental/filesystem>
-#include <fstream>
-
 #include "flash.hpp"
 
 using namespace GameBoyAdvance;
-
-namespace fs = std::experimental::filesystem;
 
 static constexpr int g_save_size[2] = { 65536, 131072 };
 
@@ -34,10 +28,6 @@ FLASH::FLASH(std::string const& save_path, Size size_hint)
   , size(size_hint)
 {
   Reset();
-}
-
-FLASH::~FLASH() {
-  
 }
   
 void FLASH::Reset() {
@@ -48,13 +38,13 @@ void FLASH::Reset() {
   enable_write = false;
   enable_select = false;
   
-  //if (fs::exists(save_path)) {
-  if (false) {
-    auto save_size = fs::file_size(save_path);
-    
-    /* ... */
+  int bytes = g_save_size[size];
+  
+  file = BackupFile::OpenOrCreate(save_path, { 65536, 131072 }, bytes);
+  if (bytes == g_save_size[0]) {
+    size = SIZE_64K;
   } else {
-    std::memset(memory, 0xFF, sizeof(memory));
+    size = SIZE_128K;
   }
 }
 
@@ -72,7 +62,7 @@ auto FLASH::Read (std::uint32_t address) -> std::uint8_t {
     }
   }
   
-  return memory[current_bank][address];
+  return file->Read(Physical(address));
 }
 
 void FLASH::Write(std::uint32_t address, std::uint8_t value) {
@@ -121,7 +111,7 @@ void FLASH::HandleCommand(std::uint32_t address, std::uint8_t value) {
       }
       case ERASE_CHIP: {
         if (enable_erase) {
-          std::memset(memory, 0xFF, sizeof(memory));
+          file->MemorySet(0, g_save_size[size], 0xFF);
           enable_erase = false;
         }
         phase = 0;
@@ -144,11 +134,8 @@ void FLASH::HandleCommand(std::uint32_t address, std::uint8_t value) {
     }
   } else if (enable_erase && (address & ~0xF000) == 0x0E000000 && static_cast<Command>(value) == ERASE_SECTOR) {
     std::uint32_t base = address & 0xF000;
-
-    for (int i = 0; i < 0x1000; i++) {
-      memory[current_bank][base + i] = 0xFF;
-    }
-
+    
+    file->MemorySet(Physical(base), 0x1000, 0xFF);
     enable_erase = false;
     phase = 0;
   }
@@ -156,7 +143,7 @@ void FLASH::HandleCommand(std::uint32_t address, std::uint8_t value) {
 
 void FLASH::HandleExtended(std::uint32_t address, std::uint8_t value) {
   if (enable_write) {
-    memory[current_bank][address & 0xFFFF] = value;
+    file->Write(Physical(address & 0xFFFF), value);
     enable_write = false;
   } else if (enable_select && address == 0x0E000000) {
     current_bank = value & 1;

@@ -34,7 +34,6 @@ public:
   };
   
   EEPROM(std::string const& save_path, Size size_hint);
- ~EEPROM() final;
   
   void Reset() final;
   auto Read (std::uint32_t address) -> std::uint8_t final;
