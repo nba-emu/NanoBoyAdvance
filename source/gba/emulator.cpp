@@ -27,6 +27,7 @@
 
 #include "core/backup/eeprom.hpp"
 #include "core/backup/flash.hpp"
+#include "core/backup/sram.hpp"
 
 using namespace GameBoyAdvance;
 
@@ -41,7 +42,7 @@ Emulator::Emulator(std::shared_ptr<Config> config)
   : cpu(config)
   , config(config)
 {
-  save_detect = config->save_type == SaveType::Detect;
+  save_detect = (config->save_type == SaveType::Detect);
   Reset();
 }
 
@@ -144,7 +145,7 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   
   switch (config->save_type) {
     case SaveType::SRAM:
-      /* ... */
+      cpu.memory.rom.backup = std::make_shared<SRAM>(save_path);
       break;
     case SaveType::FLASH_64:
       cpu.memory.rom.backup = std::make_shared<FLASH>(save_path, FLASH::SIZE_64K);
