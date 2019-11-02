@@ -100,7 +100,7 @@ auto DecodeTilePixel4BPP(std::uint32_t base, int palette, int number, int x, int
   }
 }
 
-auto DecodeTilePixel8BPP(std::uint32_t base, int number, int x, int y) -> std::uint16_t {
+auto DecodeTilePixel8BPP(std::uint32_t base, int number, int x, int y, bool sprite = false) -> std::uint16_t {
   std::uint32_t offset = base + (number * 64) + (y * 8) + x;
 
   int index = vram[offset];
@@ -108,6 +108,6 @@ auto DecodeTilePixel8BPP(std::uint32_t base, int number, int x, int y) -> std::u
   if (index == 0) {
     return s_color_transparent;
   } else {
-    return ReadPalette(0, index);
+    return ReadPalette(sprite ? 16 : 0, index);
   }
 }

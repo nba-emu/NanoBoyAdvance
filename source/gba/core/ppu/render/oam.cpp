@@ -186,7 +186,7 @@ void PPU::RenderLayerOAM() {
       tile_num += block_x;
 
       if (is_256) {
-        pixel = DecodeTilePixel8BPP(tile_base, tile_num, tile_x, tile_y);
+        pixel = DecodeTilePixel8BPP(tile_base, tile_num, tile_x, tile_y, true);
       } else {
         pixel = DecodeTilePixel4BPP(tile_base, palette, tile_num, tile_x, tile_y);
       }
