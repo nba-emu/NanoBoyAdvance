@@ -40,7 +40,7 @@ public:
   APU(CPU* cpu);
   
   void Reset();
-  void LatchFIFO(int id, int times);
+  void OnTimerOverflow(int timer_id, int times);
   void Tick();
   
   Event event { 0, [this]() { this->Tick(); } };

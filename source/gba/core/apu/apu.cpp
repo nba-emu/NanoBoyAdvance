@@ -85,15 +85,26 @@ void APU::Reset() {
   
   resampler->SetSampleRates(mmio.bias.GetSampleRate(), audio_dev->GetSampleRate());
 }
+
+void APU::OnTimerOverflow(int timer_id, int times) {
+  auto const& soundcnt = mmio.soundcnt;
   
-void APU::LatchFIFO(int id, int times) {
-  auto& fifo = mmio.fifo[id];
+  if (!soundcnt.master_enable) {
+    return;
+  }
   
-  for (int time = 0; time < times; time++) {
-    latch[id] = fifo.Read();
-    if (fifo.Count() <= 16) {
-      cpu->dma.Request((id == 0) ? DMA::Occasion::FIFO0 : 
-                                   DMA::Occasion::FIFO1);
+  constexpr DMA::Occasion occasion[2] = { DMA::Occasion::FIFO0, DMA::Occasion::FIFO1 };
+  
+  for (int fifo_id = 0; fifo_id < 2; fifo_id++) {
+    if (soundcnt.dma[fifo_id].timer_id == timer_id) {
+      auto& fifo = mmio.fifo[fifo_id];
+      for (int time = 0; time < times - 1; time++) {
+        fifo.Read();
+      }
+      latch[fifo_id] = fifo.Read();
+      if (fifo.Count() <= 16) {
+        cpu->dma.Request(occasion[fifo_id]);
+      }
     }
   }
 }
@@ -136,8 +147,6 @@ void APU::Tick() {
       sample[channel] += latch[1]/float(0x600) * dma_volume_tab[dma[1].volume];
     }
   }
-  
-  /* TODO: emulate BIAS register. */
   
   buffer_mutex.lock();
   resampler->Write(sample);

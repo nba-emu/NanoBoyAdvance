@@ -127,9 +127,7 @@ auto Timer::GetCyclesUntilIRQ() -> int {
 }
 
 void Timer::Increment(int chan_id, int increment) {
-  auto& channel  = channels[chan_id];
-  auto& soundcnt = cpu->apu.mmio.soundcnt;
-  
+  auto& channel = channels[chan_id];
   int overflows = 0;
   int threshold = 0x10000 - channel.counter;
   
@@ -159,13 +157,8 @@ void Timer::Increment(int chan_id, int increment) {
       cpu->mmio.irq_if |= (CPU::INT_TIMER0 << chan_id);
     }
     
-    /* TODO: check if this can/should be done in the APU instead. */
-    if (chan_id <= 1 && soundcnt.master_enable) {
-      for (int fifo = 0; fifo < 2; fifo++) {
-        if (soundcnt.dma[fifo].timer_id == chan_id) {
-          cpu->apu.LatchFIFO(fifo, overflows);
-        }
-      }
+    if (chan_id <= 1) {
+      cpu->apu.OnTimerOverflow(chan_id, overflows);
     }
   }
 }
