@@ -54,7 +54,7 @@ public:
       if (std::find(begin, end, size) != end) {
         file->stream.open(save_path, flags);
         if (file->stream.fail()) {
-          throw std::runtime_error("Unable to open file: " + save_path);
+          throw std::runtime_error("BackupFile: unable to open file: " + save_path);
         }
         default_size = size;
         file->memory.reset(new std::uint8_t[size]);
@@ -63,47 +63,56 @@ public:
       }
     }
 
+    file->file_size = default_size;
+    
     /* A new save file is created either when no file exists yet,
      * or when the existing file has an invalid size.
      */
     if (create) {
       file->stream.open(save_path, flags | std::ios::trunc);
       if (file->stream.fail()) {
-        throw std::runtime_error("Unable to create file: " + save_path);
+        throw std::runtime_error("BackupFile: unable to create file: " + save_path);
       }
-      
       file->memory.reset(new std::uint8_t[default_size]);
       file->MemorySet(0, default_size, 0xFF);
     }
     
-    /* TODO: is std::move necessary or does copy-elision does it work here? */
-    return std::move(file);
+    return file;
   }
   
-  auto Read(int index) -> std::uint8_t {
-    /* TODO: boundary check. */
+  auto Read(unsigned index) -> std::uint8_t {
+    if (index >= file_size) {
+      throw std::runtime_error("BackupFile: out-of-bounds index while reading.");
+    }
     return memory[index];
   }
   
-  void Write(int index, std::uint8_t value) {
-    /* TODO: boundary check. */
+  void Write(unsigned index, std::uint8_t value) {
+    if (index >= file_size) {
+      throw std::runtime_error("BackupFile: out-of-bounds index while writing.");
+    }
     memory[index] = value;
     if (auto_update) {
       Update(index, 1);
     }
   }
   
-  void MemorySet(int index, size_t length, std::uint8_t value) {
-    /* TODO: boundary check. */
+  void MemorySet(unsigned index, size_t length, std::uint8_t value) {
+    if ((index + length) > file_size) {
+      throw std::runtime_error("BackupFile: out-of-bounds index while setting memory.");
+    }
     std::memset(&memory[index], value, length);
     if (auto_update) {
       Update(index, length);
     }
   }
   
-  void Update(int position, size_t length) {
-    stream.seekg(position);
-    stream.write((char*)&memory[position], length);
+  void Update(unsigned index, size_t length) {
+    if ((index + length) > file_size) {
+      throw std::runtime_error("BackupFile: out-of-bounds index while updating file.");
+    }
+    stream.seekg(index);
+    stream.write((char*)&memory[index], length);
   }
   
   bool auto_update = true;
@@ -111,6 +120,7 @@ public:
 private:
   BackupFile() { }
   
+  size_t file_size;
   std::fstream stream;
   std::unique_ptr<std::uint8_t[]> memory;
 }; 
