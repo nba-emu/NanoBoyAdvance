@@ -54,7 +54,7 @@ void FLASH::Reset() {
     
     /* ... */
   } else {
-    std::memset(memory, sizeof(memory), 0xFF);
+    std::memset(memory, 0xFF, sizeof(memory));
   }
 }
 
@@ -121,7 +121,7 @@ void FLASH::HandleCommand(std::uint32_t address, std::uint8_t value) {
       }
       case ERASE_CHIP: {
         if (enable_erase) {
-          std::memset(memory, sizeof(memory), 0xFF);
+          std::memset(memory, 0xFF, sizeof(memory));
           enable_erase = false;
         }
         phase = 0;
