@@ -19,14 +19,10 @@
 
 #include <cstring>
 #include <exception>
-#include <experimental/filesystem>
-#include <fstream>
 
 #include "eeprom.hpp"
 
 using namespace GameBoyAdvance;
-
-namespace fs = std::experimental::filesystem;
 
 static constexpr int g_addr_bits[2] = { 6, 14 };
 static constexpr int g_save_size[2] = { 512, 8192 };
@@ -35,33 +31,6 @@ EEPROM::EEPROM(std::string const& save_path, Size size_hint)
   : save_path(save_path)
   , size(size_hint)
 {
-  int bytes = g_save_size[size_hint];
-  
-  /* TODO: get rid of the ugly redundancy. */
-  if (fs::exists(save_path)) {
-    auto save_size = fs::file_size(save_path);
-    
-    if (save_size == g_save_size[0] || save_size == g_save_size[1]) {
-      size = (save_size == g_save_size[0]) ? SIZE_4K : SIZE_64K;
-
-      std::ifstream stream { save_path, std::ios::binary };
-
-      /* TODO: find a proper way to handle this. */
-      if (!stream.good())
-        throw std::runtime_error("Cannot read save file.");
-
-      memory = new std::uint8_t[save_size];
-      stream.read((char*)memory, save_size);
-      stream.close();
-    } else {
-      memory = new std::uint8_t[bytes];
-      std::memset(memory, 0xFF, bytes);
-    }
-  } else {
-    memory = new std::uint8_t[bytes];
-    std::memset(memory, 0xFF, bytes);
-  }
-  
   Reset();
 }
 
@@ -69,14 +38,21 @@ void EEPROM::Reset() {
   state = STATE_ACCEPT_COMMAND;
   address = 0;
   ResetSerialBuffer();
+
+  int bytes = g_save_size[size];
+  
+  file = BackupFile::OpenOrCreate(save_path, { 512, 8192 }, bytes);
+  if (bytes == g_save_size[0]) {
+    size = SIZE_4K;
+  } else {
+    size = SIZE_64K;
+  }
 }
 
 void EEPROM::ResetSerialBuffer() {
   serial_buffer = 0;
   transmitted_bits = 0;
 }
-
-#include <cstdio>
 
 auto EEPROM::Read(std::uint32_t address) -> std::uint8_t {
   if (state & STATE_READING) {
@@ -97,10 +73,8 @@ auto EEPROM::Read(std::uint32_t address) -> std::uint8_t {
         state = STATE_ACCEPT_COMMAND;
         ResetSerialBuffer();
       }
-
-      std::printf("EEPROM::read: address=0x%08x index=%d\n", this->address, index);
       
-      return (memory[this->address + index] >> (7 - bit)) & 1;
+      return (file->Read(this->address + index) >> (7 - bit)) & 1;
     }
   }
 
@@ -139,9 +113,10 @@ void EEPROM::Write(std::uint32_t address, std::uint8_t value) {
       this->address = serial_buffer * 8;
 
       if (state & STATE_WRITE_MODE) {
-        // Clean memory 'cell'.
+        /* TODO: Use BackupFile::MemorySet(...) */
         for (int i = 0; i < 8; i++) {
-          memory[this->address + i] = 0;
+//          memory[this->address + i] = 0;
+          file->Write(this->address + i, 0);
         }
       }
 
@@ -151,13 +126,15 @@ void EEPROM::Write(std::uint32_t address, std::uint8_t value) {
       ResetSerialBuffer();
     }
   } else if (state & STATE_WRITING) {
-    // - 1 is quick hack: in this case transmitted_bits counts from 1-64 but we need 0-63...
+    // "- 1" is quick hack: in this case transmitted_bits counts from 1-64 but we need 0-63...
     int bit   = (transmitted_bits - 1) % 8;
     int index = (transmitted_bits - 1) / 8;
 
-    memory[this->address + index] &= ~(1 << (7 - bit));
-    memory[this->address + index] |= value << (7 - bit);
-
+    auto tmp = file->Read(this->address + index);
+    tmp &= ~(1 << (7 - bit));
+    tmp |= value << (7 - bit);
+    file->Write(this->address + index, tmp);
+    
     if (transmitted_bits == 64) {
       //Logger::log<LOG_DEBUG>("EEPROM: burned 64 bits of data.");
 

@@ -22,6 +22,7 @@
 #include <string>
 
 #include "backup.hpp"
+#include "backup_file.hpp"
 
 namespace GameBoyAdvance {
 
@@ -55,12 +56,13 @@ private:
   
   int size;
   std::string save_path;
+  std::unique_ptr<BackupFile> file;
 
   /* TODO: use an unique_ptr here? */
-  std::uint8_t* memory = nullptr;
+//  std::uint8_t* memory = nullptr;
   
   int state;
-  int address; /* TODO: what is the appropriate data type? */
+  int address;
   std::uint64_t serial_buffer;
   int transmitted_bits;
 };
