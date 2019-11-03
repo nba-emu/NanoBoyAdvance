@@ -108,7 +108,7 @@ void PPU::RenderScanline() {
       if (mmio.dispcnt.enable[ENABLE_OBJ]) {
         RenderLayerOAM();
       }
-      ComposeScanline(0, 1);
+      ComposeScanline(2, 3);
       break;
     }
     case 4: {
