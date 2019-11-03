@@ -20,6 +20,7 @@ set(SOURCES
     core/ppu/render/affine.cpp
     core/ppu/render/text.cpp
     core/ppu/render/oam.cpp
+    core/ppu/render/window.cpp
 )
 
 set(HEADERS

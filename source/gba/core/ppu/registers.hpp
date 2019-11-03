@@ -24,6 +24,17 @@
 namespace GameBoyAdvance {
 
 struct DisplayControl {
+  enum Enable {
+    ENABLE_BG0  = 0,
+    ENABLE_BG1  = 1,
+    ENABLE_BG2  = 2,
+    ENABLE_BG3  = 3,
+    ENABLE_OBJ  = 4,
+    ENABLE_WIN0 = 5,
+    ENABLE_WIN1 = 6,
+    ENABLE_OBJWIN = 7 
+  };
+  
   int mode;
   int cgb_mode;
   int frame;

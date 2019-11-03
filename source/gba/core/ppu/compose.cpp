@@ -48,6 +48,35 @@ void PPU::InitBlendTable() {
   }
 }
 
+void PPU::ComposeScanline(int bg_min, int bg_max) {
+  std::uint32_t* line = &output[mmio.vcount * 240];
+  std::uint16_t backdrop = ReadPalette(0, 0);
+  
+  for (int x = 0; x < 240; x++) {
+    int priority = 4;
+    std::uint16_t pixel = backdrop;
+    
+    /* TODO: for maximum effiency maybe we can pre-sort the BGs by priority. */
+    for (int bg = bg_max; bg >= bg_min; bg--) {
+      if (mmio.dispcnt.enable[bg] &&
+          mmio.bgcnt[bg].priority <= priority &&
+          buffer_bg[bg][x] != s_color_transparent) {
+        pixel = buffer_bg[bg][x];
+        priority = mmio.bgcnt[bg].priority;
+      }
+    }
+    
+    if (mmio.dispcnt.enable[4] &&
+        buffer_obj[x].priority <= priority &&
+        buffer_obj[x].color != s_color_transparent) {
+      pixel = buffer_obj[x].color;
+      priority = buffer_obj[x].priority;
+    }
+    
+    line[x] = ConvertColor(pixel);
+  }
+}
+
 void PPU::Blend(std::uint16_t& target1,
                 std::uint16_t target2,
                 BlendControl::Effect sfx) {

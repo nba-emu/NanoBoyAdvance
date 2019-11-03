@@ -97,6 +97,8 @@ private:
   void RenderLayerText(int id);
   void RenderLayerAffine(int id);
   void RenderLayerOAM();
+  void RenderWindow(int id);
+  void ComposeScanline(int bg_min, int bg_max);
   void Blend(std::uint16_t& target1, std::uint16_t target2, BlendControl::Effect sfx);
 
   #include "helper.inl"
@@ -107,6 +109,20 @@ private:
   std::uint8_t* vram;
   std::uint8_t* oam;
 
+  std::uint16_t buffer_bg[4][240];
+  
+  struct ObjectPixel {
+    std::uint16_t color;
+    std::uint8_t  priority;
+    unsigned alpha  : 1;
+    unsigned window : 1;
+  } buffer_obj[240];
+  
+  bool line_contains_alpha_obj;
+  
+  bool buffer_win[2][240];
+  bool window_scanline_enable[2];
+  
   std::uint8_t  obj_attr[240];
   std::uint8_t  priority[2][240];
   std::uint8_t  layer[2][240];
