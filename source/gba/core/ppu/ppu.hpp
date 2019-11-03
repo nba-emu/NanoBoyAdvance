@@ -29,11 +29,16 @@ namespace GameBoyAdvance {
 class CPU;
 
 class PPU {
+
 public:
   PPU(CPU* cpu);
 
   void Reset();
+  
   void Tick();
+  void OnScanlineComplete();
+  void OnHBlankComplete();
+  void OnVBlankLineComplete();
 
   Event event { 0, [this]() { this->Tick(); } };
   
@@ -87,7 +92,7 @@ private:
   static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
   
   void InitBlendTable();
-  void Next(Phase phase);
+  void SetNextEvent(Phase phase);
   void RenderScanline();
   void RenderLayerText(int id);
   void RenderLayerAffine(int id);

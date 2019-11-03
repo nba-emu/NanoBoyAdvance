@@ -14,6 +14,7 @@ set(SOURCES
     core/dma.cpp
     core/timer.cpp
     core/ppu/ppu.cpp
+    core/ppu/timing.cpp
     core/ppu/registers.cpp
     core/ppu/render/affine.cpp
     core/ppu/render/text.cpp

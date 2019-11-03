@@ -64,8 +64,7 @@ void PPU::Reset() {
   mmio.bldcnt.Reset();
   
   event.countdown = 0;
-  
-  Next(Phase::SCANLINE);
+  SetNextEvent(Phase::SCANLINE);
 }
 
 void PPU::InitBlendTable() {
@@ -79,12 +78,6 @@ void PPU::InitBlendTable() {
   }
 }
 
-void PPU::Next(Phase phase) {
-  this->phase = phase;
-  
-  event.countdown += s_wait_cycles[static_cast<int>(phase)];
-}
-
 auto PPU::ConvertColor(std::uint16_t color) -> std::uint32_t {
   int r = (color >>  0) & 0x1F;
   int g = (color >>  5) & 0x1F;
@@ -94,83 +87,6 @@ auto PPU::ConvertColor(std::uint16_t color) -> std::uint32_t {
          g << 11 |
          b <<  3 |
          0xFF000000;
-}
-
-void PPU::Tick() {
-  auto& vcount = mmio.vcount;
-  auto& dispstat = mmio.dispstat;
-
-  switch (phase) {
-    case Phase::SCANLINE: {
-      cpu->dma.Request(DMA::Occasion::HBlank);
-      Next(Phase::HBLANK);
-      dispstat.hblank_flag = 1;
-
-      if (dispstat.hblank_irq_enable) {
-        cpu->mmio.irq_if |= CPU::INT_HBLANK;
-      }
-      break;
-    }
-    case Phase::HBLANK: {
-      dispstat.hblank_flag = 0;
-      dispstat.vcount_flag = ++vcount == dispstat.vcount_setting;
-
-      if (dispstat.vcount_flag && dispstat.vcount_irq_enable) {
-        cpu->mmio.irq_if |= CPU::INT_VCOUNT;
-      }
-
-      if (vcount == 160) {
-        cpu->config->video_dev->Draw(output);
-        
-        cpu->dma.Request(DMA::Occasion::VBlank);
-        dispstat.vblank_flag = 1;
-        Next(Phase::VBLANK);
-
-        if (dispstat.vblank_irq_enable) {
-          cpu->mmio.irq_if |= CPU::INT_VBLANK;
-        }
-        
-        mmio.bgx[0]._current = mmio.bgx[0].initial;
-        mmio.bgy[0]._current = mmio.bgy[0].initial;
-        mmio.bgx[1]._current = mmio.bgx[1].initial;
-        mmio.bgy[1]._current = mmio.bgy[1].initial;
-      } else {                
-        Next(Phase::SCANLINE);
-        RenderScanline();
-        
-        /* TODO: not sure if this should be done before or after RenderScanline() */
-        mmio.bgx[0]._current += mmio.bgpb[0];
-        mmio.bgy[0]._current += mmio.bgpd[0];
-        mmio.bgx[1]._current += mmio.bgpb[1];
-        mmio.bgy[1]._current += mmio.bgpd[1];
-      }
-      break;
-    }
-    case Phase::VBLANK: {
-      if (vcount == 227) {
-        Next(Phase::SCANLINE);
-
-        /* Update vertical counter. */
-        vcount = 0;
-        dispstat.vcount_flag = dispstat.vcount_setting == 0;
-
-        RenderScanline();
-      } else {
-        Next(Phase::VBLANK);
-
-        if (vcount == 226)
-          dispstat.vblank_flag = 0;
-        
-        /* Update vertical counter. */
-        dispstat.vcount_flag = ++vcount == dispstat.vcount_setting;
-      }
-
-      if (dispstat.vcount_flag && dispstat.vcount_irq_enable) {
-        cpu->mmio.irq_if |= CPU::INT_VCOUNT;
-      }
-      break;
-    }
-  }
 }
 
 void PPU::RenderScanline() {
