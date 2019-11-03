@@ -156,7 +156,7 @@ void PPU::OnHBlankComplete() {
     bgy[0]._current = bgy[0].initial;
     bgx[1]._current = bgx[1].initial;
     bgy[1]._current = bgy[1].initial;
-  } else {                    
+  } else {    
     if (++mosaic.bg._counter_y == mosaic.bg.size_y) {
       mosaic.bg._counter_y = 0;
     }
@@ -165,10 +165,26 @@ void PPU::OnHBlankComplete() {
       mosaic.obj._counter_y = 0;
     }
     
-    bgx[0]._current += mmio.bgpb[0];
-    bgy[0]._current += mmio.bgpd[0];
-    bgx[1]._current += mmio.bgpb[1];
-    bgy[1]._current += mmio.bgpd[1];
+    /* TODO: I don't know if affine MOSAIC is actually implemented like this. */
+    if (mmio.bgcnt[2].mosaic_enable) {
+      if (mosaic.bg._counter_y == 0) {
+        bgx[0]._current += mosaic.bg.size_y * mmio.bgpb[0];
+        bgy[0]._current += mosaic.bg.size_y * mmio.bgpd[0];
+      }
+    } else {
+      bgx[0]._current += mmio.bgpb[0];
+      bgy[0]._current += mmio.bgpd[0];
+    }
+    
+    if (mmio.bgcnt[3].mosaic_enable) {
+      if (mosaic.bg._counter_y == 0) {
+        bgx[1]._current += mosaic.bg.size_y * mmio.bgpb[1];
+        bgy[1]._current += mosaic.bg.size_y * mmio.bgpd[1];
+      }
+    } else {
+      bgx[1]._current += mmio.bgpb[1];
+      bgy[1]._current += mmio.bgpd[1];
+    }
     
     SetNextEvent(Phase::SCANLINE);
     RenderScanline();

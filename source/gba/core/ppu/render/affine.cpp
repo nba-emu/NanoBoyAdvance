@@ -23,6 +23,7 @@ using namespace GameBoyAdvance;
 
 void PPU::RenderLayerAffine(int id) {
   auto const& bg = mmio.bgcnt[2 + id];
+  auto const& mosaic = mmio.mosaic.bg;
   
   std::uint32_t tile_base = bg.tile_block * 16384;
   
@@ -43,14 +44,24 @@ void PPU::RenderLayerAffine(int id) {
   
   std::uint16_t* buffer = buffer_bg[2 + id];
   
+  int mosaic_x = 0;
+  
   for (int _x = 0; _x < 240; _x++) {
     bool is_backdrop = false;
     
     std::int32_t x = ref_x >> 8;
     std::int32_t y = ref_y >> 8;
     
-    ref_x += pa;
-    ref_y += pc;
+    if (bg.mosaic_enable) {
+      if (++mosaic_x == mosaic.size_x) {
+        ref_x += mosaic.size_x * pa;
+        ref_y += mosaic.size_x * pc;
+        mosaic_x = 0;
+      }
+    } else {
+      ref_x += pa;
+      ref_y += pc;
+    }
     
     if (x >= size) {
       if (bg.wraparound) {
