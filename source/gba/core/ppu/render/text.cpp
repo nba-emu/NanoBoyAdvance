@@ -22,11 +22,18 @@
 using namespace GameBoyAdvance;
 
 void PPU::RenderLayerText(int id) {
-  const auto& bgcnt = mmio.bgcnt[id];
+  auto const& bgcnt  = mmio.bgcnt[id];
+  auto const& mosaic = mmio.mosaic.bg;
   
   std::uint32_t tile_base = bgcnt.tile_block * 16384;
    
   int line = mmio.bgvofs[id] + mmio.vcount;
+  
+  /* Apply vertical mosaic */
+  if (bgcnt.mosaic_enable) {
+    line -= mosaic._counter_y;
+//    line &= ~1;
+  }
 
   int draw_x = -(mmio.bghofs[id] % 8);
   int grid_x =   mmio.bghofs[id] / 8;
@@ -90,6 +97,18 @@ void PPU::RenderLayerText(int id) {
 
       for (x; x < max; x++) {
         buffer[draw_x++] = tile[x];
+      }
+    }
+  }
+
+  /* Apply horizontal works. */
+  if (bgcnt.mosaic_enable && mosaic.size_x != 1) {
+    int mosaic_x = 0;
+
+    for (int x = 0; x < 240; x++) {
+      buffer[x] = buffer[x - mosaic_x];
+      if (++mosaic_x == mosaic.size_x) {
+        mosaic_x = 0;
       }
     }
   }

@@ -232,22 +232,28 @@ void BlendControl::Write(int address, std::uint8_t value) {
 }
 
 void Mosaic::Reset() {
-  bg.horizontal = 1;
-  bg.vertical = 1;
-  obj.horizontal = 1;
-  obj.vertical = 1;
+  bg.size_x = 1;
+  bg.size_y = 1;
+  bg._counter_y = 0;
+  obj.size_x = 1;
+  obj.size_y = 1;
+  bg._counter_y = 0;
 }
 
 void Mosaic::Write(int address, std::uint8_t value) {
   switch (address) {
   case 0: {
-    bg.horizontal = (value & 15) + 1;
-    bg.vertical = (value >> 4) + 1;
+    bg.size_x = (value & 15) + 1;
+    bg.size_y = (value >> 4) + 1;
+    /* TODO: find out if/how the hardware does this. */
+    bg._counter_y = 0;
     break;
   }
   case 1: {
-    obj.horizontal = (value & 15) + 1;
-    obj.vertical = (value >> 4) + 1;
+    obj.size_x = (value & 15) + 1;
+    obj.size_y = (value >> 4) + 1;
+    /* TODO: find out if/how the hardware does this. */
+    obj._counter_y = 0;
     break;
   }
   }

@@ -107,8 +107,9 @@ struct WindowLayerSelect {
 
 struct Mosaic {
   struct {
-    int horizontal;
-    int vertical;
+    int size_x;
+    int size_y;
+    int _counter_y;
   } bg, obj;
   
   void Reset();

@@ -193,7 +193,7 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
         Blend(pixel[0], pixel[1], blend_mode);
       }
     }
-
+    
     line[x] = ConvertColor(pixel[0]);
   }
 }

@@ -71,6 +71,18 @@ void PPU::Reset() {
   mmio.evy = 0;
   mmio.bldcnt.Reset();
   
+//  for (int x = 0; x < 240; x++) {
+//    for (int bg = 0; bg < 4; bg++) {
+//      buffer_bg[bg][x] = s_color_transparent;
+//    }
+//    buffer_obj[x].priority = 4;
+//    buffer_obj[x].color = s_color_transparent;
+//    buffer_obj[x].alpha = 0;
+//    buffer_obj[x].window = 0;
+//  }
+//  
+//  line_contains_alpha_obj = false;
+  
   event.countdown = 0;
   SetNextEvent(Phase::SCANLINE);
 }
@@ -115,7 +127,10 @@ void PPU::OnScanlineComplete() {
 void PPU::OnHBlankComplete() {
   auto& vcount = mmio.vcount;
   auto& dispstat = mmio.dispstat;
-
+  auto& mosaic = mmio.mosaic;
+  auto& bgx = mmio.bgx;
+  auto& bgy = mmio.bgy;
+  
   dispstat.hblank_flag = 0;
   dispstat.vcount_flag = ++vcount == dispstat.vcount_setting;
 
@@ -133,20 +148,30 @@ void PPU::OnHBlankComplete() {
     if (dispstat.vblank_irq_enable) {
       cpu->mmio.irq_if |= CPU::INT_VBLANK;
     }
-        
-    mmio.bgx[0]._current = mmio.bgx[0].initial;
-    mmio.bgy[0]._current = mmio.bgy[0].initial;
-    mmio.bgx[1]._current = mmio.bgx[1].initial;
-    mmio.bgy[1]._current = mmio.bgy[1].initial;
-  } else {                
+    
+    mosaic.bg._counter_y = 0;
+    mosaic.obj._counter_y = 0;
+    
+    bgx[0]._current = bgx[0].initial;
+    bgy[0]._current = bgy[0].initial;
+    bgx[1]._current = bgx[1].initial;
+    bgy[1]._current = bgy[1].initial;
+  } else {                    
+    if (++mosaic.bg._counter_y == mosaic.bg.size_y) {
+      mosaic.bg._counter_y = 0;
+    }
+    
+    if (++mosaic.obj._counter_y == mosaic.obj.size_y) {
+      mosaic.obj._counter_y = 0;
+    }
+    
+    bgx[0]._current += mmio.bgpb[0];
+    bgy[0]._current += mmio.bgpd[0];
+    bgx[1]._current += mmio.bgpb[1];
+    bgy[1]._current += mmio.bgpd[1];
+    
     SetNextEvent(Phase::SCANLINE);
     RenderScanline();
-    
-    /* TODO: not sure if this should be done before or after RenderScanline() */
-    mmio.bgx[0]._current += mmio.bgpb[0];
-    mmio.bgy[0]._current += mmio.bgpd[0];
-    mmio.bgx[1]._current += mmio.bgpb[1];
-    mmio.bgy[1]._current += mmio.bgpd[1];
   }
 }
 
