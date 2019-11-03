@@ -60,6 +60,16 @@ void PPU::RenderLayerOAM() {
   std::uint16_t pixel;
   std::uint32_t tile_base = 0x10000;
   std::int32_t  offset = 127 * 8;
+  
+  line_contains_alpha_obj = false;
+  
+  /* TODO: check if there is a faster way to initialize the array. */
+  for (int x = 0; x < 240; x++) {
+    buffer_obj[x].priority = 4;
+    buffer_obj[x].color = s_color_transparent;
+    buffer_obj[x].alpha = 0;
+    buffer_obj[x].window = 0;
+  }
 
   for (; offset >= 0; offset -= 8) {
     /* Check if OBJ is diabled (affine=0, attr0bit9=1) */
@@ -191,16 +201,18 @@ void PPU::RenderLayerOAM() {
         pixel = DecodeTilePixel4BPP(tile_base, palette, tile_num, tile_x, tile_y);
       }
 
+      auto& point = buffer_obj[global_x];
+      
       if (pixel != s_color_transparent) {
         if (mode == OBJ_WINDOW) {
-          obj_attr[global_x] |= OBJ_IS_WINDOW;
-        } else if (prio <= priority[0][global_x]) { /* TODO: check me */
-          if (mode == OBJ_SEMI) {
-            obj_attr[global_x] |=  OBJ_IS_ALPHA;
-          } else {
-            obj_attr[global_x] &= ~OBJ_IS_ALPHA;
+          point.window = 1;
+        } else if (prio <= point.priority) {
+          point.priority = prio;
+          point.color = pixel;
+          point.alpha = (mode == OBJ_SEMI) ? 1 : 0;
+          if (point.alpha) {
+            line_contains_alpha_obj = true;
           }
-          DrawPixel(global_x, 4, prio, pixel);
         }
       }
     }

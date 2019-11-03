@@ -17,28 +17,6 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-void DrawPixel(int x, int layer, int priority, std::uint16_t color) {
-  if (color == s_color_transparent) return;
-  
-  if (priority <= this->priority[0][x]) {
-    if (this->layer[0][x] == layer) {
-      pixel[0][x] = color;
-      this->priority[0][x] = priority;
-    } else {
-      pixel[1][x] = pixel[0][x];
-      pixel[0][x] = color;
-      this->layer[1][x] = this->layer[0][x];
-      this->layer[0][x] = layer;
-      this->priority[1][x] = this->priority[0][x];
-      this->priority[0][x] = priority;
-    }
-  } else if (priority <= this->priority[1][x]) {
-    pixel[1][x] = color;
-    this->layer[1][x] = layer;
-    this->priority[1][x] = priority;
-  }
-}
-
 auto ReadPalette(int palette, int index) -> std::uint16_t {
   int cell = (palette * 32) + (index * 2);
 

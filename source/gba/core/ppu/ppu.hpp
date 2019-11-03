@@ -29,11 +29,16 @@ namespace GameBoyAdvance {
 class CPU;
 
 class PPU {
+
 public:
   PPU(CPU* cpu);
 
   void Reset();
+  
   void Tick();
+  void OnScanlineComplete();
+  void OnHBlankComplete();
+  void OnVBlankLineComplete();
 
   Event event { 0, [this]() { this->Tick(); } };
   
@@ -83,15 +88,38 @@ private:
     OBJ_WINDOW = 2,
     OBJ_PROHIBITED = 3
   };
+  
+  enum Layer {
+    LAYER_BG0 = 0,
+    LAYER_BG1 = 1,
+    LAYER_BG2 = 2,
+    LAYER_BG3 = 3,
+    LAYER_OBJ = 4,
+    LAYER_SFX = 5,
+    LAYER_BD  = 5
+  };
+  
+  enum Enable {
+    ENABLE_BG0 = 0,
+    ENABLE_BG1 = 1,
+    ENABLE_BG2 = 2,
+    ENABLE_BG3 = 3,
+    ENABLE_OBJ = 4,
+    ENABLE_WIN0 = 5,
+    ENABLE_WIN1 = 6,
+    ENABLE_OBJWIN = 7 
+  };
 
   static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
   
   void InitBlendTable();
-  void Next(Phase phase);
+  void SetNextEvent(Phase phase);
   void RenderScanline();
   void RenderLayerText(int id);
   void RenderLayerAffine(int id);
   void RenderLayerOAM();
+  void RenderWindow(int id);
+  void ComposeScanline(int bg_min, int bg_max);
   void Blend(std::uint16_t& target1, std::uint16_t target2, BlendControl::Effect sfx);
 
   #include "helper.inl"
@@ -102,10 +130,19 @@ private:
   std::uint8_t* vram;
   std::uint8_t* oam;
 
-  std::uint8_t  obj_attr[240];
-  std::uint8_t  priority[2][240];
-  std::uint8_t  layer[2][240];
-  std::uint16_t pixel[2][240];
+  std::uint16_t buffer_bg[4][240];
+  
+  struct ObjectPixel {
+    std::uint16_t color;
+    std::uint8_t  priority;
+    unsigned alpha  : 1;
+    unsigned window : 1;
+  } buffer_obj[240];
+  
+  bool line_contains_alpha_obj;
+  
+  bool buffer_win[2][240];
+  bool window_scanline_enable[2];
   
   std::uint32_t output[240*160];
   

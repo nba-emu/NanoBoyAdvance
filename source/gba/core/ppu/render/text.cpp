@@ -42,6 +42,8 @@ void PPU::RenderLayerText(int id) {
   std::uint32_t offset;
   std::uint32_t base = (bgcnt.map_block * 2048) + ((grid_y % 32) * 64);
 
+  std::uint16_t* buffer = buffer_bg[id];
+  
   while (draw_x < 240) {
     screen_x = (grid_x / 32) % 2;
     offset = base + ((grid_x++ % 32) * 2);
@@ -72,7 +74,7 @@ void PPU::RenderLayerText(int id) {
 
     if (draw_x >= 0 && draw_x <= 232) {
       for (int x = 0; x < 8; x++) {
-        DrawPixel(draw_x++, id, bgcnt.priority, tile[x]);
+        buffer[draw_x++] = tile[x];
       }
     } else {
       int x = 0;
@@ -87,7 +89,7 @@ void PPU::RenderLayerText(int id) {
       }
 
       for (x; x < max; x++) {
-        DrawPixel(draw_x++, id, bgcnt.priority, tile[x]);
+        buffer[draw_x++] = tile[x];
       }
     }
   }

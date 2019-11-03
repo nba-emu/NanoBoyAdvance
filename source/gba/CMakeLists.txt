@@ -13,11 +13,13 @@ set(SOURCES
     core/memory/registers.cpp
     core/dma.cpp
     core/timer.cpp
+    core/ppu/compose.cpp
     core/ppu/ppu.cpp
     core/ppu/registers.cpp
     core/ppu/render/affine.cpp
     core/ppu/render/text.cpp
     core/ppu/render/oam.cpp
+    core/ppu/render/window.cpp
 )
 
 set(HEADERS
