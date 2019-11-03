@@ -52,7 +52,7 @@ const int PPU::s_obj_size[4][4][2] = {
   }
 };
 
-void PPU::RenderLayerOAM() {
+void PPU::RenderLayerOAM() {  
   /* 2d-affine transform matrix (pa, pb, pc, pd). */
   std::int16_t transform[4];
 
@@ -145,7 +145,7 @@ void PPU::RenderLayerOAM() {
       transform[2] = 0;
       transform[3] = 0x100;
     }
-
+    
     int line = mmio.vcount;
 
     /* Bail out if scanline is outside OBJ's view rectangle. */
@@ -162,16 +162,29 @@ void PPU::RenderLayerOAM() {
 
     if (is_256) number /= 2;
 
+    int mosaic_x = 0;
+    
+    if (mosaic) {
+      /* TODO: optimize this operation. */
+      mosaic_x = (x - half_width) % mmio.mosaic.obj.size_x;
+      local_y -= mmio.mosaic.obj._counter_y;
+    }
+    
     /* Render OBJ scanline. */
     for (int local_x = -half_width; local_x <= half_width; local_x++) {
+      int _local_x = local_x - mosaic_x;
       int global_x = local_x + x;
 
+      if (mosaic && (++mosaic_x == mmio.mosaic.obj.size_x)) {
+        mosaic_x = 0;
+      }
+      
       if (global_x < 0 || global_x >= 240) {
         continue;
       }
 
-      int tex_x = ((transform[0] * local_x + transform[1] * local_y) >> 8) + (width / 2);
-      int tex_y = ((transform[2] * local_x + transform[3] * local_y) >> 8) + (height / 2);
+      int tex_x = ((transform[0] * _local_x + transform[1] * local_y) >> 8) + (width / 2);
+      int tex_y = ((transform[2] * _local_x + transform[3] * local_y) >> 8) + (height / 2);
 
       /* Check if transformed coordinates are inside bounds. */
       if (tex_x >= width || tex_y >= height ||
