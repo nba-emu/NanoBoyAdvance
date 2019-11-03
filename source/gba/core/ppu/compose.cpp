@@ -65,7 +65,7 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
   bool no_windows  = !dispcnt.enable[5] && !dispcnt.enable[6] && !dispcnt.enable[7];
   
   for (int x = 0; x < 240; x++) {
-    int layer[2] = { 6, 6 }; // TODO: check me
+    int layer[2] = { 5, 5 }; // TODO: check me
     std::uint16_t pixel[2] = { backdrop, 0 };
     
     const int* win_layer_enable = winout.enable[0];
