@@ -230,3 +230,25 @@ void BlendControl::Write(int address, std::uint8_t value) {
   }
   }
 }
+
+void Mosaic::Reset() {
+  bg.horizontal = 1;
+  bg.vertical = 1;
+  obj.horizontal = 1;
+  obj.vertical = 1;
+}
+
+void Mosaic::Write(int address, std::uint8_t value) {
+  switch (address) {
+  case 0: {
+    bg.horizontal = (value & 15) + 1;
+    bg.vertical = (value >> 4) + 1;
+    break;
+  }
+  case 1: {
+    obj.horizontal = (value & 15) + 1;
+    obj.vertical = (value >> 4) + 1;
+    break;
+  }
+  }
+}

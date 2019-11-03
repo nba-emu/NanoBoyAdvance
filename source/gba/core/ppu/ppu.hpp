@@ -63,6 +63,8 @@ public:
     WindowRange winv[2];
     WindowLayerSelect winin;
     WindowLayerSelect winout;
+    
+    Mosaic mosaic;
 
     BlendControl bldcnt;
     int eva;

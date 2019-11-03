@@ -105,4 +105,14 @@ struct WindowLayerSelect {
   void Write(int offset, std::uint8_t value);
 };
 
+struct Mosaic {
+  struct {
+    int horizontal;
+    int vertical;
+  } bg, obj;
+  
+  void Reset();
+  void Write(int address, std::uint8_t value);
+};
+
 }

@@ -56,7 +56,16 @@ void PPU::Reset() {
     mmio.bgpc[i] = 0;
     mmio.bgpd[i] = 0;
   }
-
+  
+  mmio.winh[0].Reset();
+  mmio.winh[1].Reset();
+  mmio.winv[0].Reset();
+  mmio.winv[1].Reset();
+  mmio.winin.Reset();
+  mmio.winout.Reset();
+  
+  mmio.mosaic.Reset();
+  
   mmio.eva = 0;
   mmio.evb = 0;
   mmio.evy = 0;

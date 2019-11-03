@@ -273,6 +273,8 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     case WININ+1: ppu_io.winin.Write(1, value); break;
     case WINOUT+0: ppu_io.winout.Write(0, value); break;
     case WINOUT+1: ppu_io.winout.Write(1, value); break;
+    case MOSAIC+0: ppu_io.mosaic.Write(0, value); break;
+    case MOSAIC+1: ppu_io.mosaic.Write(1, value); break;
     case BLDCNT+0: ppu_io.bldcnt.Write(0, value); break;
     case BLDCNT+1: ppu_io.bldcnt.Write(1, value); break;
     case BLDALPHA+0:
