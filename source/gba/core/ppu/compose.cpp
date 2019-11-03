@@ -56,16 +56,32 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
   
   auto const& dispcnt = mmio.dispcnt;
   auto const& bgcnt = mmio.bgcnt;
+  auto const& winin = mmio.winin;
+  auto const& winout = mmio.winout;
+  
+  bool win0_active = dispcnt.enable[5] && window_scanline_enable[0];
+  bool win1_active = dispcnt.enable[6] && window_scanline_enable[1];
+  bool win2_active = dispcnt.enable[6];
+  bool no_windows  = !dispcnt.enable[5] && !dispcnt.enable[6] && !dispcnt.enable[7];
   
   for (int x = 0; x < 240; x++) {
-    int layer[2] = { 5, 5 }; // TODO: check me
+    int layer[2] = { 6, 6 }; // TODO: check me
     std::uint16_t pixel[2] = { backdrop, 0 };
-    /* ... */
+    
+    const int* win_layer_enable = winout.enable[0];
+    
+    if (win0_active && buffer_win[0][x]) {
+      win_layer_enable = winin.enable[0];
+    } else if (win1_active && buffer_win[1][x]) {
+      win_layer_enable = winin.enable[1];
+    } else if (win2_active && buffer_obj[x].window) {
+      win_layer_enable = winout.enable[1];
+    }
     
     /* TODO: for maximum effiency maybe we can pre-sort the BGs by priority. */
     for (int prio = 3; prio >= 0; prio--) {
       for (int bg = bg_max; bg >= bg_min; bg--) {
-        if (dispcnt.enable[bg] && bgcnt[bg].priority == prio) {
+        if (dispcnt.enable[bg] && bgcnt[bg].priority == prio && (no_windows || win_layer_enable[bg])) {
           auto pixel_new = buffer_bg[bg][x];
           if (pixel_new != s_color_transparent) {
             layer[1] = layer[0];
@@ -76,7 +92,7 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
         }
       }
       
-      if (dispcnt.enable[4] && buffer_obj[x].priority == prio) {
+      if (dispcnt.enable[4] && buffer_obj[x].priority == prio && (no_windows || win_layer_enable[4])) {
         auto pixel_new = buffer_obj[x].color;
         if (pixel_new != s_color_transparent) {
           layer[1] = layer[0];
@@ -87,18 +103,20 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
       }
     }
     
-    auto blend_mode = mmio.bldcnt.sfx;
-    bool is_alpha_obj = layer[0] == 4 && buffer_obj[x].alpha;
-    bool have_dst = mmio.bldcnt.targets[0][layer[0]] | is_alpha_obj;
-    bool have_src = mmio.bldcnt.targets[1][layer[1]];
-    
-    if (is_alpha_obj && have_src) {
-      blend_mode = BlendMode::SFX_BLEND;
-    }
-    
-    if (blend_mode != BlendMode::SFX_NONE && have_dst &&
-        (have_src || blend_mode != BlendMode::SFX_BLEND)) {
-      Blend(pixel[0], pixel[1], blend_mode);
+    if (no_windows || win_layer_enable[5] || (layer[0] == 4 && buffer_obj[x].alpha)) {
+      auto blend_mode = mmio.bldcnt.sfx;
+      bool is_alpha_obj = layer[0] == 4 && buffer_obj[x].alpha;
+      bool have_dst = mmio.bldcnt.targets[0][layer[0]] | is_alpha_obj;
+      bool have_src = mmio.bldcnt.targets[1][layer[1]];
+
+      if (is_alpha_obj && have_src) {
+        blend_mode = BlendMode::SFX_BLEND;
+      }
+
+      if (blend_mode != BlendMode::SFX_NONE && have_dst &&
+          (have_src || blend_mode != BlendMode::SFX_BLEND)) {
+        Blend(pixel[0], pixel[1], blend_mode);
+      }
     }
     
     line[x] = ConvertColor(pixel[0]);
