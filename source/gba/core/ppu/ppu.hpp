@@ -88,6 +88,27 @@ private:
     OBJ_WINDOW = 2,
     OBJ_PROHIBITED = 3
   };
+  
+  enum Layer {
+    LAYER_BG0 = 0,
+    LAYER_BG1 = 1,
+    LAYER_BG2 = 2,
+    LAYER_BG3 = 3,
+    LAYER_OBJ = 4,
+    LAYER_SFX = 5,
+    LAYER_BD  = 5
+  };
+  
+  enum Enable {
+    ENABLE_BG0 = 0,
+    ENABLE_BG1 = 1,
+    ENABLE_BG2 = 2,
+    ENABLE_BG3 = 3,
+    ENABLE_OBJ = 4,
+    ENABLE_WIN0 = 5,
+    ENABLE_WIN1 = 6,
+    ENABLE_OBJWIN = 7 
+  };
 
   static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
   
@@ -122,11 +143,6 @@ private:
   
   bool buffer_win[2][240];
   bool window_scanline_enable[2];
-  
-  std::uint8_t  obj_attr[240];
-  std::uint8_t  priority[2][240];
-  std::uint8_t  layer[2][240];
-  std::uint16_t pixel[2][240];
   
   std::uint32_t output[240*160];
   
