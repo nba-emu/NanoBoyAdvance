@@ -20,6 +20,7 @@
 #include <algorithm>
 
 #include "ppu.hpp"
+#include "../cpu.hpp"
 
 using namespace GameBoyAdvance;
 
@@ -46,6 +47,78 @@ void PPU::InitBlendTable() {
           blend_table[factor0][factor1][color0][color1] = std::min<std::uint8_t>(result, 31);
         }
       }
+    }
+  }
+}
+
+void PPU::RenderScanline() {
+  std::uint16_t  vcount = mmio.vcount;
+  std::uint32_t* line = &output[vcount * 240];
+
+  if (mmio.dispcnt.forced_blank) {
+    for (int x = 0; x < 240; x++) {
+      line[x] = ConvertColor(0x7FFF);
+    }
+    return;
+  }
+  
+  if (mmio.dispcnt.enable[DisplayControl::ENABLE_WIN0]) {
+    RenderWindow(0);
+  }
+  
+  if (mmio.dispcnt.enable[DisplayControl::ENABLE_WIN1]) {
+    RenderWindow(1);
+  }
+  
+  /* TODO: properly implement the bitmap modes. */
+  switch (mmio.dispcnt.mode) {
+    case 0: {
+      for (int i = 0; i < 4; i++) {
+        if (mmio.dispcnt.enable[i]) {
+          RenderLayerText(i);
+        }
+      }
+      if (mmio.dispcnt.enable[DisplayControl::ENABLE_OBJ]) {
+        RenderLayerOAM();
+      }
+      ComposeScanline(0, 3);
+      break;
+    }
+    case 1: {
+      for (int i = 0; i < 2; i++) {
+        if (mmio.dispcnt.enable[i]) {
+          RenderLayerText(i);
+        }
+      }
+      if (mmio.dispcnt.enable[2]) {
+        RenderLayerAffine(0);
+      }
+      if (mmio.dispcnt.enable[DisplayControl::ENABLE_OBJ]) {
+        RenderLayerOAM();
+      }
+      ComposeScanline(0, 2);
+      break;
+    }
+    case 2: {
+      for (int i = 0; i < 2; i++) {
+        if (mmio.dispcnt.enable[2 + i]) {
+          RenderLayerAffine(i);
+        }
+      }
+      if (mmio.dispcnt.enable[DisplayControl::ENABLE_OBJ]) {
+        RenderLayerOAM();
+      }
+      ComposeScanline(0, 1);
+      break;
+    }
+    case 4: {
+      int frame = mmio.dispcnt.frame * 0xA000;
+      int offset = frame + vcount * 240;
+      for (int x = 0; x < 240; x++) {
+        buffer_bg[2][x] = ReadPalette(0, cpu->memory.vram[offset + x]);
+      }
+      ComposeScanline(2, 2);
+      break;
     }
   }
 }

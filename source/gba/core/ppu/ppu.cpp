@@ -66,162 +66,103 @@ void PPU::Reset() {
   SetNextEvent(Phase::SCANLINE);
 }
 
-void PPU::RenderScanline() {
-  std::uint16_t  vcount = mmio.vcount;
-  std::uint32_t* line = &output[vcount * 240];
+void PPU::Tick() {
+  auto& vcount = mmio.vcount;
+  auto& dispstat = mmio.dispstat;
 
-  if (mmio.dispcnt.forced_blank) {
-    for (int x = 0; x < 240; x++) {
-      line[x] = ConvertColor(0x7FFF);
-    }
-    return;
-  }
-  
-  if (mmio.dispcnt.enable[DisplayControl::ENABLE_WIN0]) {
-    RenderWindow(0);
-  }
-  
-  if (mmio.dispcnt.enable[DisplayControl::ENABLE_WIN1]) {
-    RenderWindow(1);
-  }
-  
-  /* TODO: properly implement the bitmap modes. */
-  switch (mmio.dispcnt.mode) {
-    case 0: {
-      for (int i = 0; i < 4; i++) {
-        if (mmio.dispcnt.enable[i]) {
-          RenderLayerText(i);
-        }
-      }
-      if (mmio.dispcnt.enable[DisplayControl::ENABLE_OBJ]) {
-        RenderLayerOAM();
-      }
-      ComposeScanline(0, 3);
+  switch (phase) {
+    case Phase::SCANLINE: {
+      OnScanlineComplete();
       break;
     }
-    case 1: {
-      for (int i = 0; i < 2; i++) {
-        if (mmio.dispcnt.enable[i]) {
-          RenderLayerText(i);
-        }
-      }
-      if (mmio.dispcnt.enable[2]) {
-        RenderLayerAffine(0);
-      }
-      if (mmio.dispcnt.enable[DisplayControl::ENABLE_OBJ]) {
-        RenderLayerOAM();
-      }
-      ComposeScanline(0, 2);
+    case Phase::HBLANK: {
+      OnHBlankComplete();
       break;
     }
-    case 2: {
-      for (int i = 0; i < 2; i++) {
-        if (mmio.dispcnt.enable[2 + i]) {
-          RenderLayerAffine(i);
-        }
-      }
-      if (mmio.dispcnt.enable[DisplayControl::ENABLE_OBJ]) {
-        RenderLayerOAM();
-      }
-      ComposeScanline(0, 1);
-      break;
-    }
-    case 4: {
-      int frame = mmio.dispcnt.frame * 0xA000;
-      int offset = frame + vcount * 240;
-      for (int x = 0; x < 240; x++) {
-        buffer_bg[2][x] = ReadPalette(0, cpu->memory.vram[offset + x]);
-      }
-      ComposeScanline(2, 2);
+    case Phase::VBLANK: {
+      OnVBlankLineComplete();
       break;
     }
   }
+}
+
+void PPU::SetNextEvent(Phase phase) {
+  this->phase = phase;
+  event.countdown += s_wait_cycles[static_cast<int>(phase)];
+}
+
+void PPU::OnScanlineComplete() {
+  auto& dispstat = mmio.dispstat;
   
-//  if (mmio.dispcnt.forced_blank) {
-//    for (int x = 0; x < 240; x++)
-//      line[x] = ConvertColor(0x7FFF);
-//  } else {
-//    std::uint16_t backdrop = ReadPalette(0, 0);
-//    std::uint32_t fill = backdrop * 0x00010001;
-//
-//    /* Reset scanline buffers. */
-//    for (int i = 0; i < 240; i++) {
-//      ((std::uint32_t*)pixel)[i] = fill;
-//    }
-//    for (int i = 0; i < 60; i++) {
-//      ((std::uint32_t*)obj_attr)[i] = 0;
-//    }
-//    for (int i = 0; i < 120; i++) {
-//      ((std::uint32_t*)priority)[i] = 0x04040404;
-//      ((std::uint32_t*)layer)[i] = 0x05050505;
-//    }
-//    
-//    /* TODO: how does HW behave when we select mode 6 or 7? */
-//    switch (mmio.dispcnt.mode) {
-//      case 0: {
-//        for (int i = 3; i >= 0; i--) {
-//          if (mmio.dispcnt.enable[i])
-//            RenderLayerText(i);
-//        }
-//        if (mmio.dispcnt.enable[4])
-//          RenderLayerOAM();
-//        break;
-//      }
-//      case 1:
-//        if (mmio.dispcnt.enable[0])
-//          RenderLayerText(0);
-//        if (mmio.dispcnt.enable[1])
-//          RenderLayerText(1);
-//        if (mmio.dispcnt.enable[2])
-//          RenderLayerAffine(0);
-//        if (mmio.dispcnt.enable[4])
-//          RenderLayerOAM();
-//        break;
-//      case 2:
-//        if (mmio.dispcnt.enable[2])
-//          RenderLayerAffine(0);
-//        if (mmio.dispcnt.enable[3])
-//          RenderLayerAffine(1);
-//        if (mmio.dispcnt.enable[4])
-//          RenderLayerOAM();
-//        break;
-//      case 3:
-//        break;
-//      case 4: {
-//        int frame = mmio.dispcnt.frame * 0xA000;
-//        int offset = frame + vcount * 240;
-//        for (int x = 0; x < 240; x++) {
-//          DrawPixel(x, 2, mmio.bgcnt[2].priority, ReadPalette(0, cpu->memory.vram[offset + x]));
-//        }
-//        break;
-//      }
-//      case 5:
-//        break;
-//    }
-//
-//    auto& bldcnt = mmio.bldcnt;
-//        
-//    for (int x = 0; x < 240; x++) {
-//      auto sfx = bldcnt.sfx;
-//      int layer1 = layer[0][x];
-//      int layer2 = layer[1][x];
-//
-//      bool is_alpha_obj = (layer[0][x] == 4) && (obj_attr[x] & OBJ_IS_ALPHA);         
-//      bool is_sfx_1 = bldcnt.targets[0][layer1] || is_alpha_obj;
-//      bool is_sfx_2 = bldcnt.targets[1][layer2];
-//
-//      if (is_alpha_obj && is_sfx_2) {
-//        sfx = BlendControl::Effect::SFX_BLEND;
-//      }
-//
-//      if (sfx != BlendControl::Effect::SFX_NONE && is_sfx_1 &&
-//          (is_sfx_2 || sfx != BlendControl::Effect::SFX_BLEND)) {
-//        Blend(pixel[0][x], pixel[1][x], sfx);
-//      }
-//    }
-//
-//    for (int x = 0; x < 240; x++) {
-//      line[x] = ConvertColor(pixel[0][x]);
-//    }
-//  }
+  cpu->dma.Request(DMA::Occasion::HBlank);
+  SetNextEvent(Phase::HBLANK);
+  dispstat.hblank_flag = 1;
+
+  if (dispstat.hblank_irq_enable) {
+    cpu->mmio.irq_if |= CPU::INT_HBLANK;
+  }
+}
+
+void PPU::OnHBlankComplete() {
+  auto& vcount = mmio.vcount;
+  auto& dispstat = mmio.dispstat;
+
+  dispstat.hblank_flag = 0;
+  dispstat.vcount_flag = ++vcount == dispstat.vcount_setting;
+
+  if (dispstat.vcount_flag && dispstat.vcount_irq_enable) {
+    cpu->mmio.irq_if |= CPU::INT_VCOUNT;
+  }
+
+  if (vcount == 160) {
+    cpu->config->video_dev->Draw(output);
+      
+    cpu->dma.Request(DMA::Occasion::VBlank);
+    dispstat.vblank_flag = 1;
+    SetNextEvent(Phase::VBLANK);
+
+    if (dispstat.vblank_irq_enable) {
+      cpu->mmio.irq_if |= CPU::INT_VBLANK;
+    }
+        
+    mmio.bgx[0]._current = mmio.bgx[0].initial;
+    mmio.bgy[0]._current = mmio.bgy[0].initial;
+    mmio.bgx[1]._current = mmio.bgx[1].initial;
+    mmio.bgy[1]._current = mmio.bgy[1].initial;
+  } else {                
+    SetNextEvent(Phase::SCANLINE);
+    RenderScanline();
+    
+    /* TODO: not sure if this should be done before or after RenderScanline() */
+    mmio.bgx[0]._current += mmio.bgpb[0];
+    mmio.bgy[0]._current += mmio.bgpd[0];
+    mmio.bgx[1]._current += mmio.bgpb[1];
+    mmio.bgy[1]._current += mmio.bgpd[1];
+  }
+}
+
+void PPU::OnVBlankLineComplete() {
+  auto& vcount = mmio.vcount;
+  auto& dispstat = mmio.dispstat;
+  
+  if (vcount == 227) {
+    SetNextEvent(Phase::SCANLINE);
+
+    /* Update vertical counter. */
+    vcount = 0;
+    dispstat.vcount_flag = dispstat.vcount_setting == 0;
+
+    RenderScanline();
+  } else {
+    SetNextEvent(Phase::VBLANK);
+    if (vcount == 226)
+      dispstat.vblank_flag = 0;
+        
+    /* Update vertical counter. */
+    dispstat.vcount_flag = ++vcount == dispstat.vcount_setting;
+  }
+
+  if (dispstat.vcount_flag && dispstat.vcount_irq_enable) {
+    cpu->mmio.irq_if |= CPU::INT_VCOUNT;
+  }
 }
