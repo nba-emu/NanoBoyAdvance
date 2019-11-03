@@ -23,6 +23,8 @@
 
 using namespace GameBoyAdvance;
 
+using BlendMode = BlendControl::Effect;
+
 auto PPU::ConvertColor(std::uint16_t color) -> std::uint32_t {
   int r = (color >>  0) & 0x1F;
   int g = (color >>  5) & 0x1F;
@@ -52,40 +54,103 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
   std::uint32_t* line = &output[mmio.vcount * 240];
   std::uint16_t backdrop = ReadPalette(0, 0);
   
+  auto const& dispcnt = mmio.dispcnt;
+  auto const& bgcnt = mmio.bgcnt;
+  
   for (int x = 0; x < 240; x++) {
-    int priority = 4;
-    std::uint16_t pixel = backdrop;
+    int layer[2] = { 5, 5 }; // TODO: check me
+    std::uint16_t pixel[2] = { backdrop, 0 };
+    /* ... */
     
     /* TODO: for maximum effiency maybe we can pre-sort the BGs by priority. */
-    for (int bg = bg_max; bg >= bg_min; bg--) {
-      if (mmio.dispcnt.enable[bg] &&
-          mmio.bgcnt[bg].priority <= priority &&
-          buffer_bg[bg][x] != s_color_transparent) {
-        pixel = buffer_bg[bg][x];
-        priority = mmio.bgcnt[bg].priority;
+    for (int prio = 3; prio >= 0; prio--) {
+      for (int bg = bg_max; bg >= bg_min; bg--) {
+        if (dispcnt.enable[bg] && bgcnt[bg].priority == prio) {
+          auto pixel_new = buffer_bg[bg][x];
+          if (pixel_new != s_color_transparent) {
+            layer[1] = layer[0];
+            layer[0] = bg;
+            pixel[1] = pixel[0];
+            pixel[0] = pixel_new;
+          }
+        }
+      }
+      
+      if (dispcnt.enable[4] && buffer_obj[x].priority == prio) {
+        auto pixel_new = buffer_obj[x].color;
+        if (pixel_new != s_color_transparent) {
+          layer[1] = layer[0];
+          layer[0] = 4;
+          pixel[1] = pixel[0];
+          pixel[0] = pixel_new;
+        }
       }
     }
     
-    if (mmio.dispcnt.enable[4] &&
-        buffer_obj[x].priority <= priority &&
-        buffer_obj[x].color != s_color_transparent) {
-      pixel = buffer_obj[x].color;
-      priority = buffer_obj[x].priority;
+    auto blend_mode = mmio.bldcnt.sfx;
+    bool is_alpha_obj = layer[0] == 4 && buffer_obj[x].alpha;
+    bool have_dst = mmio.bldcnt.targets[0][layer[0]] | is_alpha_obj;
+    bool have_src = mmio.bldcnt.targets[1][layer[1]];
+    
+    if (is_alpha_obj && have_src) {
+      blend_mode = BlendMode::SFX_BLEND;
     }
     
-    line[x] = ConvertColor(pixel);
+    if (blend_mode != BlendMode::SFX_NONE && have_dst &&
+        (have_src || blend_mode != BlendMode::SFX_BLEND)) {
+      Blend(pixel[0], pixel[1], blend_mode);
+    }
+    
+    line[x] = ConvertColor(pixel[0]);
   }
+  
+//  bool no_window = !mmio.dispcnt.enable[5] && !mmio.dispcnt.enable[6] && !mmio.dispcnt.enable[7];
+//  bool no_effect = (mmio.bldcnt.sfx == BlendMode::SFX_NONE) && !line_contains_alpha_obj;
+//  
+//  if (no_window && no_effect) {
+//    
+//  } else if (!no_window && no_effect) {
+//    
+//  } else if (no_window && !no_effect) {
+//    
+//  } else {
+//    
+//  }
+//  
+//  for (int x = 0; x < 240; x++) {
+//    int priority = 4;
+//    std::uint16_t pixel = backdrop;
+//    
+//    /* TODO: for maximum effiency maybe we can pre-sort the BGs by priority. */
+//    for (int bg = bg_max; bg >= bg_min; bg--) {
+//      if (mmio.dispcnt.enable[bg] &&
+//          mmio.bgcnt[bg].priority <= priority &&
+//          buffer_bg[bg][x] != s_color_transparent) {
+//        pixel = buffer_bg[bg][x];
+//        priority = mmio.bgcnt[bg].priority;
+//      }
+//    }
+//    
+//    if (mmio.dispcnt.enable[4] &&
+//        buffer_obj[x].priority <= priority &&
+//        buffer_obj[x].color != s_color_transparent) {
+//      pixel = buffer_obj[x].color;
+//      priority = buffer_obj[x].priority;
+//    }
+//    
+//    line[x] = ConvertColor(pixel);
+//  }
 }
 
 void PPU::Blend(std::uint16_t& target1,
                 std::uint16_t target2,
-                BlendControl::Effect sfx) {
+                BlendMode sfx) {
   int r1 = (target1 >>  0) & 0x1F;
   int g1 = (target1 >>  5) & 0x1F;
   int b1 = (target1 >> 10) & 0x1F;
 
   switch (sfx) {
-    case BlendControl::Effect::SFX_BLEND: {
+    case BlendMode::SFX_BLEND: {
       int eva = std::min<int>(16, mmio.eva);
       int evb = std::min<int>(16, mmio.evb);
 
@@ -98,7 +163,7 @@ void PPU::Blend(std::uint16_t& target1,
       b1 = blend_table[eva][evb][b1][b2];
       break;
     }
-    case BlendControl::Effect::SFX_BRIGHTEN: {
+    case BlendMode::SFX_BRIGHTEN: {
       int evy = std::min<int>(16, mmio.evy);
 
       r1 = blend_table[16 - evy][evy][r1][31];
@@ -106,7 +171,7 @@ void PPU::Blend(std::uint16_t& target1,
       b1 = blend_table[16 - evy][evy][b1][31];
       break;
     }
-    case BlendControl::Effect::SFX_DARKEN: {
+    case BlendMode::SFX_DARKEN: {
       int evy = std::min<int>(16, mmio.evy);
 
       r1 = blend_table[16 - evy][evy][r1][0];
