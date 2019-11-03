@@ -13,6 +13,7 @@ set(SOURCES
     core/memory/registers.cpp
     core/dma.cpp
     core/timer.cpp
+    core/ppu/compose.cpp
     core/ppu/ppu.cpp
     core/ppu/timing.cpp
     core/ppu/registers.cpp
