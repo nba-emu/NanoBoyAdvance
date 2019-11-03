@@ -61,7 +61,7 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
   
   bool win0_active = dispcnt.enable[5] && window_scanline_enable[0];
   bool win1_active = dispcnt.enable[6] && window_scanline_enable[1];
-  bool win2_active = dispcnt.enable[6];
+  bool win2_active = dispcnt.enable[7];
   bool no_windows  = !dispcnt.enable[5] && !dispcnt.enable[6] && !dispcnt.enable[7];
   
   for (int x = 0; x < 240; x++) {
@@ -118,7 +118,7 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
         Blend(pixel[0], pixel[1], blend_mode);
       }
     }
-    
+
     line[x] = ConvertColor(pixel[0]);
   }
   

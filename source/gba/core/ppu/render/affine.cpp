@@ -41,6 +41,8 @@ void PPU::RenderLayerAffine(int id) {
     case 3: size = 1024; block_width = 128; break;
   }
   
+  std::uint16_t* buffer = buffer_bg[2 + id];
+  
   for (int _x = 0; _x < 240; _x++) {
     bool is_backdrop = false;
     
@@ -81,7 +83,7 @@ void PPU::RenderLayerAffine(int id) {
     }
 
     if (is_backdrop) {
-      DrawPixel(_x, 2 + id, bg.priority, s_color_transparent);
+      buffer[_x] = s_color_transparent;
       continue;
     }
     
@@ -92,6 +94,6 @@ void PPU::RenderLayerAffine(int id) {
 
     int number = vram[(bg.map_block << 11) + map_y * block_width + map_x];
     
-    DrawPixel(_x, 2 + id, bg.priority, DecodeTilePixel8BPP(tile_base, number, tile_x, tile_y));
+    buffer[_x] = DecodeTilePixel8BPP(tile_base, number, tile_x, tile_y);
   }
 }

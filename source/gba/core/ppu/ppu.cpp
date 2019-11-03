@@ -85,6 +85,7 @@ void PPU::RenderScanline() {
     RenderWindow(1);
   }
   
+  /* TODO: properly implement the bitmap modes. */
   switch (mmio.dispcnt.mode) {
     case 0: {
       for (int i = 0; i < 4; i++) {
@@ -96,6 +97,42 @@ void PPU::RenderScanline() {
         RenderLayerOAM();
       }
       ComposeScanline(0, 3);
+      break;
+    }
+    case 1: {
+      for (int i = 0; i < 2; i++) {
+        if (mmio.dispcnt.enable[i]) {
+          RenderLayerText(i);
+        }
+      }
+      if (mmio.dispcnt.enable[2]) {
+        RenderLayerAffine(0);
+      }
+      if (mmio.dispcnt.enable[DisplayControl::ENABLE_OBJ]) {
+        RenderLayerOAM();
+      }
+      ComposeScanline(0, 2);
+      break;
+    }
+    case 2: {
+      for (int i = 0; i < 2; i++) {
+        if (mmio.dispcnt.enable[2 + i]) {
+          RenderLayerAffine(i);
+        }
+      }
+      if (mmio.dispcnt.enable[DisplayControl::ENABLE_OBJ]) {
+        RenderLayerOAM();
+      }
+      ComposeScanline(0, 1);
+      break;
+    }
+    case 4: {
+      int frame = mmio.dispcnt.frame * 0xA000;
+      int offset = frame + vcount * 240;
+      for (int x = 0; x < 240; x++) {
+        buffer_bg[2][x] = ReadPalette(0, cpu->memory.vram[offset + x]);
+      }
+      ComposeScanline(2, 2);
       break;
     }
   }

@@ -68,7 +68,7 @@ void PPU::RenderLayerOAM() {
     buffer_obj[x].priority = 4;
     buffer_obj[x].color = s_color_transparent;
     buffer_obj[x].alpha = 0;
-    buffer_obj[x].window = 1;
+    buffer_obj[x].window = 0;
   }
 
   for (; offset >= 0; offset -= 8) {
