@@ -82,7 +82,7 @@ void PPU::RenderLayerBitmap3() {
   for (int x = 0; x < 240; x++) {
     int _x = x - mosaic_x;
     
-    /* TODO: should be check the mosaic-adjusted line or VCOUNT? */
+    /* TODO: should we check the mosaic-adjusted line or VCOUNT? */
     if (_x < 160 && line < 128) {
       int index = offset + _x * 2;
       
