@@ -119,6 +119,9 @@ private:
   void RenderScanline();
   void RenderLayerText(int id);
   void RenderLayerAffine(int id);
+  void RenderLayerBitmap1();
+  void RenderLayerBitmap2();
+  void RenderLayerBitmap3();
   void RenderLayerOAM();
   void RenderWindow(int id);
   void ComposeScanline(int bg_min, int bg_max);

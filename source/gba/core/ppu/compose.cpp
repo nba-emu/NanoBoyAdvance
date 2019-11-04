@@ -70,9 +70,9 @@ void PPU::RenderScanline() {
     RenderWindow(1);
   }
   
-  /* TODO: properly implement the bitmap modes. */
   switch (mmio.dispcnt.mode) {
     case 0: {
+      /* BG Mode 0 - 240x160 pixels, Text mode */
       for (int i = 0; i < 4; i++) {
         if (mmio.dispcnt.enable[i]) {
           RenderLayerText(i);
@@ -85,6 +85,7 @@ void PPU::RenderScanline() {
       break;
     }
     case 1: {
+      /* BG Mode 1 - 240x160 pixels, Text and RS mode mixed */
       for (int i = 0; i < 2; i++) {
         if (mmio.dispcnt.enable[i]) {
           RenderLayerText(i);
@@ -100,6 +101,7 @@ void PPU::RenderScanline() {
       break;
     }
     case 2: {
+      /* BG Mode 2 - 240x160 pixels, RS mode */
       for (int i = 0; i < 2; i++) {
         if (mmio.dispcnt.enable[2 + i]) {
           RenderLayerAffine(i);
@@ -111,11 +113,29 @@ void PPU::RenderScanline() {
       ComposeScanline(2, 3);
       break;
     }
+    case 3: {
+      /* BG Mode 3 - 240x160 pixels, 32768 colors */
+      if (mmio.dispcnt.enable[2]) {
+        RenderLayerBitmap1();
+      }
+      ComposeScanline(2, 2);
+      break;
+    }
     case 4: {
-      int frame = mmio.dispcnt.frame * 0xA000;
-      int offset = frame + vcount * 240;
-      for (int x = 0; x < 240; x++) {
-        buffer_bg[2][x] = ReadPalette(0, cpu->memory.vram[offset + x]);
+      /* BG Mode 4 - 240x160 pixels, 256 colors (out of 32768 colors) */
+      if (mmio.dispcnt.enable[2]) {
+        RenderLayerBitmap2();
+      }
+      if (mmio.dispcnt.enable[ENABLE_OBJ]) {
+        RenderLayerOAM();
+      }
+      ComposeScanline(2, 2);
+      break;
+    }
+    case 5: {
+      /* BG Mode 5 - 160x128 pixels, 32768 colors */
+      if (mmio.dispcnt.enable[2]) {
+        RenderLayerBitmap3();
       }
       ComposeScanline(2, 2);
       break;
