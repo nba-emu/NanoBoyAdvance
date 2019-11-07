@@ -390,7 +390,8 @@ void ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
       break;
   }
 
-  if ((writeback || !pre) && base != dst) {
+  /* TODO: confirm that the restriction only applies to load instructions. */
+  if ((writeback || !pre) && (!load || base != dst)) {
     if (!pre) {
       address += add ? offset : -offset;
     }
@@ -473,7 +474,8 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
   /* Write address back to the base register.
    * However the destination register must not be overwritten.
    */
-  if (base != dst) {
+  /* TODO: confirm that the restriction only applies to load instructions. */
+  if (!load || base != dst) {
     if (!pre) {
       state.reg[base] += add ? offset : -offset;
     } else if (writeback) {
@@ -496,6 +498,7 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
 
 template <bool _pre, bool add, bool user_mode, bool _writeback, bool load>
 void ARM_BlockDataTransfer(std::uint32_t instruction) {
+  /* TODO: figure out why the remaining tests fail. */
   bool pre = _pre;
   bool writeback = _writeback;
 
@@ -509,72 +512,86 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
   bool transfer_pc = list & (1 << 15);
   bool switched = false;
 
-  /* TODO: Handle empty register lists. */
-
   if (user_mode && (!load || !transfer_pc)) {
     mode = state.cpsr.f.mode;
     SwitchMode(MODE_USR);
     switched = true;
   }
 
-  for (int i = 15; i >= 0; i--) {
-    if (~list & (1 << i))
-      continue;
-    first = i;
-    count++;
-  }
-
-  std::uint32_t address = state.reg[base];
-  std::uint32_t address_old = address;
-
-  if (!add) {
-    address -= count * 4;
-    if (writeback) {
-      state.reg[base] = address;
-      writeback = false;
-    }
-    pre = !pre;
-  }
-  
-  auto access_type = ACCESS_NSEQ;
-
-  for (int i = first; i < 16; i++) {
-    if (~list & (1 << i)) {
-      continue;
+  if (list != 0) {
+    for (int i = 15; i >= 0; i--) {
+      if (~list & (1 << i))
+        continue;
+      first = i;
+      count++;
     }
 
-    if (pre) {
-      address += 4;
-    }
+    std::uint32_t address = state.reg[base];
+    std::uint32_t address_old = address;
 
-    if (load) {
-      if (i == base) {
+    if (!add) {
+      address -= count * 4;
+      if (writeback) {
+        state.reg[base] = address;
         writeback = false;
       }
-      state.reg[i] = ReadWord(address, access_type);
-      if (i == 15 && user_mode) {
-        auto& spsr = *p_spsr;
+      pre = !pre;
+    }
 
-        SwitchMode(spsr.f.mode);
-        state.cpsr.v = spsr.v;
+    auto access_type = ACCESS_NSEQ;
+
+    for (int i = first; i < 16; i++) {
+      if (~list & (1 << i)) {
+        continue;
       }
-    } else {
-      if (i == first && i == base) {
-        WriteWord(address, address_old, access_type);
+
+      if (pre) {
+        address += 4;
+      }
+
+      if (load) {
+        if (i == base) {
+          writeback = false;
+        }
+        state.reg[i] = ReadWord(address, access_type);
+        if (i == 15 && user_mode) {
+          auto& spsr = *p_spsr;
+
+          SwitchMode(spsr.f.mode);
+          state.cpsr.v = spsr.v;
+        }
       } else {
-        WriteWord(address, state.reg[i], access_type);
+        if (i == first && i == base) {
+          WriteWord(address, address_old, access_type);
+        } else if (i == 15) {
+          WriteWord(address, state.r15 + 4, access_type);
+        } else {
+          WriteWord(address, state.reg[i], access_type);
+        }
       }
+
+      access_type = ACCESS_SEQ;
+
+      if (!pre) {
+        address += 4;
+      }
+
+      if (writeback) {
+        state.reg[base] = address;
+      }
+    }
+  } else {
+    /* From GBATEK:
+     * Empty Rlist: R15 loaded/stored (ARMv4 only), and Rb=Rb+/-40h (ARMv4-v5).
+     */
+    if (load) {
+      state.r15 = ReadWord(state.reg[base], ACCESS_NSEQ);
+      transfer_pc = true;
+    } else {
+      WriteWord(state.reg[base], state.r15 + 4, ACCESS_NSEQ);
     }
     
-    access_type = ACCESS_SEQ;
-
-    if (!pre) {
-      address += 4;
-    }
-
-    if (writeback) {
-      state.reg[base] = address;
-    }
+    state.reg[base] += add ? 0x40 : -0x40;
   }
 
   if (load) {
