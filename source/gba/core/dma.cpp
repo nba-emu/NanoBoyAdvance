@@ -51,9 +51,17 @@ static constexpr int g_dma_from_bitset[] = {
   /* 0b1111 */ 0
 };
 
-static constexpr std::uint32_t g_dma_dst_mask[] = { 0x07FFFFFF, 0x07FFFFFF, 0x07FFFFFF, 0x0FFFFFFF };
-static constexpr std::uint32_t g_dma_src_mask[] = { 0x07FFFFFF, 0x0FFFFFFF, 0x0FFFFFFF, 0x0FFFFFFF };
-static constexpr std::uint32_t g_dma_len_mask[] = { 0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF };
+static constexpr std::uint32_t g_dma_dst_mask[] = { 
+  0x07FFFFFF, 0x07FFFFFF, 0x07FFFFFF, 0x0FFFFFFF
+};
+
+static constexpr std::uint32_t g_dma_src_mask[] = {
+  0x07FFFFFF, 0x0FFFFFFF, 0x0FFFFFFF, 0x0FFFFFFF
+};
+
+static constexpr std::uint32_t g_dma_len_mask[] = { 
+  0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF
+};
 
 void DMA::Reset() {
   hblank_set.reset();
@@ -91,7 +99,6 @@ void DMA::Request(Occasion occasion) {
       }
       break;
     }
-    
     case Occasion::VBlank: {
       auto chan_id = g_dma_from_bitset[vblank_set.to_ulong()];
       if (chan_id != g_dma_none_id) {
@@ -100,7 +107,6 @@ void DMA::Request(Occasion occasion) {
       }
       break;
     }
-    
     case Occasion::Video: {
       auto chan_id = g_dma_from_bitset[video_set.to_ulong()];
       if (chan_id != g_dma_none_id) {
@@ -109,7 +115,6 @@ void DMA::Request(Occasion occasion) {
       }
       break;
     }
-    
     case Occasion::FIFO0:
     case Occasion::FIFO1: {
       auto address = (occasion == Occasion::FIFO0) ? FIFO_A : FIFO_B;
@@ -279,8 +284,11 @@ void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
 
       /* Latch sanitized values into internal DMA state. */
       channel.latch.dst_addr = channel.dst_addr & g_dma_dst_mask[chan_id];
-      channel.latch.src_addr = channel.src_addr & g_dma_src_mask[chan_id];
+      channel.latch.src_addr = channel.src_addr;
       channel.latch.length   = channel.length   & g_dma_len_mask[chan_id];
+      
+      /* Block reading from disconnected memory. */
+      channel.allow_read = (channel.src_addr & g_dma_src_mask[chan_id]) == channel.src_addr;
 
       if (channel.latch.length == 0) {
         channel.latch.length = g_dma_len_mask[chan_id] + 1;
@@ -298,8 +306,6 @@ bool DMA::TransferLoop16(int const& ticks_left) {
   auto src_modify = g_dma_modify[Channel::HWORD][channel.src_cntl];
   auto dst_modify = g_dma_modify[Channel::HWORD][channel.dst_cntl];
   
-  std::uint32_t word;
-  
   while (channel.latch.length != 0) {
     if (ticks_left <= 0) return false; 
     
@@ -309,8 +315,10 @@ bool DMA::TransferLoop16(int const& ticks_left) {
       return false;
     }
     
-    word = cpu->ReadHalf(channel.latch.src_addr & ~1, ARM::ACCESS_SEQ);
-    cpu->WriteHalf(channel.latch.dst_addr & ~1, word, ARM::ACCESS_SEQ);
+    if (channel.allow_read) {
+      latch = 0x00010001 * cpu->ReadHalf(channel.latch.src_addr & ~1, ARM::ACCESS_SEQ);
+    }
+    cpu->WriteHalf(channel.latch.dst_addr & ~1, latch, ARM::ACCESS_SEQ);
     
     channel.latch.src_addr += src_modify;
     channel.latch.dst_addr += dst_modify;
@@ -325,8 +333,6 @@ bool DMA::TransferLoop32(int const& ticks_left) {
   auto src_modify = g_dma_modify[Channel::WORD][channel.src_cntl];
   auto dst_modify = g_dma_modify[Channel::WORD][channel.dst_cntl];
   
-  std::uint32_t word;
-  
   while (channel.latch.length != 0) {
     if (ticks_left <= 0) return false; 
     
@@ -336,8 +342,10 @@ bool DMA::TransferLoop32(int const& ticks_left) {
       return false;
     }
     
-    word = cpu->ReadWord(channel.latch.src_addr & ~3, ARM::ACCESS_SEQ);
-    cpu->WriteWord(channel.latch.dst_addr & ~3, word, ARM::ACCESS_SEQ);
+    if (channel.allow_read) {
+      latch = cpu->ReadWord(channel.latch.src_addr & ~3, ARM::ACCESS_SEQ);
+    }
+    cpu->WriteWord(channel.latch.dst_addr & ~3, latch, ARM::ACCESS_SEQ);
     
     channel.latch.src_addr += src_modify;
     channel.latch.dst_addr += dst_modify;
@@ -350,15 +358,11 @@ bool DMA::TransferLoop32(int const& ticks_left) {
 void DMA::TransferFIFO() {
   auto& channel = channels[current];
   
-  /* TODO(1): Assert FIFO DMA conditions. 
-   *          What happens when the DMA is not configured as in the spec.?
-   * TODO(2): Ensure that we do not overshoot 'ticks_left'. 
-   */
-  std::uint32_t word;
-  
   for (int i = 0; i < 4; i++) {
-    word = cpu->ReadWord(channel.latch.src_addr & ~3, ARM::ACCESS_SEQ);
-    cpu->WriteWord(channel.latch.dst_addr & ~3, word, ARM::ACCESS_SEQ);
+    if (channel.allow_read) {
+      latch = cpu->ReadWord(channel.latch.src_addr & ~3, ARM::ACCESS_SEQ);
+    }
+    cpu->WriteWord(channel.latch.dst_addr & ~3, latch, ARM::ACCESS_SEQ);
     
     channel.latch.src_addr += 4;
   }

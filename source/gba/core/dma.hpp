@@ -63,6 +63,8 @@ private:
   std::bitset<4> video_set;
   std::bitset<4> runnable;
   
+  std::uint32_t latch;
+  
   struct Channel {
     enum Control  {
       INCREMENT = 0,
@@ -96,6 +98,7 @@ private:
     Timing time;
     Size size;
 
+    bool allow_read;
     bool is_fifo_dma;
     int fifo_request_count;
     
