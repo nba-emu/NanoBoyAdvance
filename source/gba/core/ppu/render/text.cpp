@@ -100,7 +100,7 @@ void PPU::RenderLayerText(int id) {
     }
   }
 
-  /* Apply horizontal works. */
+  /* Apply horizontal mosaic. */
   if (bgcnt.mosaic_enable && mosaic.size_x != 1) {
     int mosaic_x = 0;
 
