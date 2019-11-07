@@ -33,12 +33,8 @@ class PPU {
 public:
   PPU(CPU* cpu);
 
-  void Reset();
-  
+  void Reset();  
   void Tick();
-  void OnScanlineComplete();
-  void OnHBlankComplete();
-  void OnVBlankLineComplete();
 
   Event event { 0, [this]() { this->Tick(); } };
   
@@ -76,7 +72,8 @@ private:
   enum class Phase {
     SCANLINE = 0,
     HBLANK = 1,
-    VBLANK = 2
+    VBLANK_SCANLINE = 2,
+    VBLANK_HBLANK = 3
   };
 
   enum ObjAttribute {
@@ -126,7 +123,11 @@ private:
   void RenderWindow(int id);
   void ComposeScanline(int bg_min, int bg_max);
   void Blend(std::uint16_t& target1, std::uint16_t target2, BlendControl::Effect sfx);
-
+  void OnScanlineComplete();
+  void OnHblankComplete();
+  void OnVblankScanlineComplete();
+  void OnVblankHblankComplete();
+  
   #include "helper.inl"
 
   CPU* cpu;
@@ -156,7 +157,7 @@ private:
   std::uint8_t blend_table[17][17][32][32];
 
   static constexpr std::uint16_t s_color_transparent = 0x8000;
-  static constexpr int s_wait_cycles[3] = { 960, 272, 1232 };
+  static constexpr int s_wait_cycles[4] = { 1006, 226, 1006, 226 };
   static const int s_obj_size[4][4][2];
 };
 

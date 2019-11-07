@@ -25,7 +25,7 @@
 using namespace GameBoyAdvance;
 
 constexpr std::uint16_t PPU::s_color_transparent;
-constexpr int PPU::s_wait_cycles[3];
+constexpr int PPU::s_wait_cycles[4];
 
 PPU::PPU(CPU* cpu) 
   : cpu(cpu)
@@ -88,20 +88,21 @@ void PPU::Reset() {
 }
 
 void PPU::Tick() {
-  auto& vcount = mmio.vcount;
-  auto& dispstat = mmio.dispstat;
-
   switch (phase) {
     case Phase::SCANLINE: {
       OnScanlineComplete();
       break;
     }
     case Phase::HBLANK: {
-      OnHBlankComplete();
+      OnHblankComplete();
       break;
     }
-    case Phase::VBLANK: {
-      OnVBlankLineComplete();
+    case Phase::VBLANK_SCANLINE: {
+      OnVblankScanlineComplete();
+      break;
+    }
+    case Phase::VBLANK_HBLANK: {
+      OnVblankHblankComplete();
       break;
     }
   }
@@ -115,16 +116,20 @@ void PPU::SetNextEvent(Phase phase) {
 void PPU::OnScanlineComplete() {
   auto& dispstat = mmio.dispstat;
   
-  cpu->dma.Request(DMA::Occasion::HBlank);
   SetNextEvent(Phase::HBLANK);
+  cpu->dma.Request(DMA::Occasion::HBlank);
   dispstat.hblank_flag = 1;
+  
+  if (mmio.vcount >= 2) {
+    cpu->dma.Request(DMA::Occasion::Video);
+  }
 
   if (dispstat.hblank_irq_enable) {
     cpu->mmio.irq_if |= CPU::INT_HBLANK;
   }
 }
 
-void PPU::OnHBlankComplete() {
+void PPU::OnHblankComplete() {
   auto& vcount = mmio.vcount;
   auto& dispstat = mmio.dispstat;
   auto& mosaic = mmio.mosaic;
@@ -133,81 +138,101 @@ void PPU::OnHBlankComplete() {
   
   dispstat.hblank_flag = 0;
   dispstat.vcount_flag = ++vcount == dispstat.vcount_setting;
-
+  
   if (dispstat.vcount_flag && dispstat.vcount_irq_enable) {
     cpu->mmio.irq_if |= CPU::INT_VCOUNT;
   }
 
   if (vcount == 160) {
     cpu->config->video_dev->Draw(output);
-      
+    
+    /* Enter vertical blanking mode */
+    SetNextEvent(Phase::VBLANK_SCANLINE);
     cpu->dma.Request(DMA::Occasion::VBlank);
     dispstat.vblank_flag = 1;
-    SetNextEvent(Phase::VBLANK);
-
+    
     if (dispstat.vblank_irq_enable) {
       cpu->mmio.irq_if |= CPU::INT_VBLANK;
     }
     
+    /* Reset vertical mosaic counters */
     mosaic.bg._counter_y = 0;
     mosaic.obj._counter_y = 0;
     
+    /* Reload internal affine registers */
     bgx[0]._current = bgx[0].initial;
     bgy[0]._current = bgy[0].initial;
     bgx[1]._current = bgx[1].initial;
     bgy[1]._current = bgy[1].initial;
-  } else {    
+  } else {
+    /* Advance vertical background mosaic counter */
     if (++mosaic.bg._counter_y == mosaic.bg.size_y) {
       mosaic.bg._counter_y = 0;
     }
     
+    /* Advance vertical OBJ mosaic counter */
     if (++mosaic.obj._counter_y == mosaic.obj.size_y) {
       mosaic.obj._counter_y = 0;
     }
     
-    /* TODO: I don't know if affine MOSAIC is actually implemented like this. */
-    if (mmio.bgcnt[2].mosaic_enable) {
-      if (mosaic.bg._counter_y == 0) {
-        bgx[0]._current += mosaic.bg.size_y * mmio.bgpb[0];
-        bgy[0]._current += mosaic.bg.size_y * mmio.bgpd[0];
+    /* Vertical mosaic for affine-transformed layers. */
+    for (int i = 0; i < 2; i++) {
+      /* TODO: I don't know if affine MOSAIC is actually implemented like this. */
+      if (mmio.bgcnt[2 + i].mosaic_enable) {
+        if (mosaic.bg._counter_y == 0) {
+          bgx[i]._current += mosaic.bg.size_y * mmio.bgpb[i];
+          bgy[i]._current += mosaic.bg.size_y * mmio.bgpd[i];
+        }
+      } else {
+        bgx[i]._current += mmio.bgpb[i];
+        bgy[i]._current += mmio.bgpd[i];
       }
-    } else {
-      bgx[0]._current += mmio.bgpb[0];
-      bgy[0]._current += mmio.bgpd[0];
     }
     
-    if (mmio.bgcnt[3].mosaic_enable) {
-      if (mosaic.bg._counter_y == 0) {
-        bgx[1]._current += mosaic.bg.size_y * mmio.bgpb[1];
-        bgy[1]._current += mosaic.bg.size_y * mmio.bgpd[1];
-      }
-    } else {
-      bgx[1]._current += mmio.bgpb[1];
-      bgy[1]._current += mmio.bgpd[1];
-    }
-    
+    /* Continue to render the next scanline */
     SetNextEvent(Phase::SCANLINE);
     RenderScanline();
   }
 }
 
-void PPU::OnVBlankLineComplete() {
+void PPU::OnVblankScanlineComplete() {
+  auto& dispstat = mmio.dispstat;
+  
+  /* NOTE: HBlank during VBlank does not appear to trigger HBlank DMA.
+   * Contrary to GBATEK, HBlank IRQs however appear to happen.
+   */
+  SetNextEvent(Phase::VBLANK_HBLANK);
+  dispstat.hblank_flag = 1;
+  
+  if (mmio.vcount < 162) {
+    cpu->dma.Request(DMA::Occasion::Video);
+  }
+  
+  if (dispstat.hblank_irq_enable) {
+    cpu->mmio.irq_if |= CPU::INT_HBLANK;
+  }
+}
+
+void PPU::OnVblankHblankComplete() {
   auto& vcount = mmio.vcount;
   auto& dispstat = mmio.dispstat;
   
+  dispstat.hblank_flag = 0;
+    
   if (vcount == 227) {
-    SetNextEvent(Phase::SCANLINE);
-
     /* Update vertical counter. */
     vcount = 0;
     dispstat.vcount_flag = dispstat.vcount_setting == 0;
 
+    /* Leave vertical blanking mode, render first scanline. */
+    SetNextEvent(Phase::SCANLINE);
     RenderScanline();
   } else {
-    SetNextEvent(Phase::VBLANK);
-    if (vcount == 226)
+    SetNextEvent(Phase::VBLANK_SCANLINE);
+    if (vcount == 226) {
       dispstat.vblank_flag = 0;
-        
+    }
+
     /* Update vertical counter. */
     dispstat.vcount_flag = ++vcount == dispstat.vcount_setting;
   }

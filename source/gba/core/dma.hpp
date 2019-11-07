@@ -34,6 +34,7 @@ public:
   enum class Occasion {
     HBlank,
     VBlank,
+    Video,
     FIFO0,
     FIFO1
   };
@@ -59,6 +60,7 @@ private:
   
   std::bitset<4> hblank_set;
   std::bitset<4> vblank_set;
+  std::bitset<4> video_set;
   std::bitset<4> runnable;
   
   struct Channel {

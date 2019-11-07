@@ -58,6 +58,7 @@ static constexpr std::uint32_t g_dma_len_mask[] = { 0x3FFF, 0x3FFF, 0x3FFF, 0xFF
 void DMA::Reset() {
   hblank_set.reset();
   vblank_set.reset();
+  video_set.reset();
   runnable.reset();
   current = -1;
   interleaved = false;
@@ -83,12 +84,8 @@ void DMA::Reset() {
 void DMA::Request(Occasion occasion) {
   switch (occasion) {
     case Occasion::HBlank: {
-      /* TODO: implement video capture mode. */
       auto chan_id = g_dma_from_bitset[hblank_set.to_ulong()];
       if (chan_id != g_dma_none_id) {
-        /* Try to start the HBlank DMA with the highest priority,
-         * but also mark other enabled HBlank DMAs as runnable.
-         */
         TryStart(chan_id);
         runnable |= hblank_set;
       }
@@ -98,11 +95,17 @@ void DMA::Request(Occasion occasion) {
     case Occasion::VBlank: {
       auto chan_id = g_dma_from_bitset[vblank_set.to_ulong()];
       if (chan_id != g_dma_none_id) {
-        /* Try to start the VBlank DMA with the highest priority,
-         * but also mark other enabled VBlank DMAs as runnable.
-         */
         TryStart(chan_id);
         runnable |= vblank_set;
+      }
+      break;
+    }
+    
+    case Occasion::Video: {
+      auto chan_id = g_dma_from_bitset[video_set.to_ulong()];
+      if (chan_id != g_dma_none_id) {
+        TryStart(chan_id);
+        runnable |= video_set;
       }
       break;
     }
@@ -162,6 +165,7 @@ void DMA::Run(int const& ticks_left) {
       runnable.set(current, false);
       hblank_set.set(current, false);
       vblank_set.set(current, false);
+      video_set.set(current, false);
     }
       
     current = g_dma_from_bitset[runnable.to_ulong()];
@@ -251,6 +255,7 @@ void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
   
   hblank_set.set(chan_id, false);
   vblank_set.set(chan_id, false);
+  video_set.set(chan_id, false);
 
   if (channel.enable) {
     /* Update HBLANK/VBLANK DMA sets. */
@@ -260,6 +265,11 @@ void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
         break;
       case Channel::VBLANK:
         vblank_set.set(chan_id, true);
+        break;
+      case Channel::SPECIAL:
+        if (chan_id == 3) {
+          video_set.set(chan_id, true);
+        }
         break;
     }
 
