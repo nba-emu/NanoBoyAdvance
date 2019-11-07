@@ -77,7 +77,7 @@ inline std::uint8_t CPU::ReadByte(std::uint32_t address, ARM::AccessType type) {
     case 0x8: case 0x9:
     case 0xA: case 0xB:
     case 0xC: case 0xD: {
-      address &= 0x1FFFFFF;
+      address &= memory.rom.mask;
       if ((address & 0x1FFFF) == 0) {
         Tick(cycles16[ARM::ACCESS_NSEQ][page] - 
              cycles16[type][page]);
@@ -141,7 +141,7 @@ inline std::uint16_t CPU::ReadHalf(std::uint32_t address, ARM::AccessType type) 
     case 0x8: case 0x9:
     case 0xA: case 0xB:
     case 0xC: {
-      address &= 0x1FFFFFF;
+      address &= memory.rom.mask;
       if ((address & 0x1FFFF) == 0) {
         Tick(cycles16[ARM::ACCESS_NSEQ][page] - 
              cycles16[type][page]);
@@ -196,7 +196,7 @@ inline std::uint32_t CPU::ReadWord(std::uint32_t address, ARM::AccessType type) 
     case 0x8: case 0x9:
     case 0xA: case 0xB:
     case 0xC: case 0xD: {
-      address &= 0x1FFFFFF;
+      address &= memory.rom.mask;
       if ((address & 0x1FFFF) == 0) {
         Tick(cycles32[ARM::ACCESS_NSEQ][page] - 
              cycles32[type][page]);

@@ -85,6 +85,7 @@ public:
       std::shared_ptr<uint8_t[]> data;
       std::shared_ptr<Backup> backup;
       size_t size;
+      std::uint32_t mask = 0x1FFFFFF;
     } rom;
 
     /* Last opcode fetched from BIOS memory. */

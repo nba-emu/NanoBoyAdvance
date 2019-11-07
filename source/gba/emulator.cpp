@@ -164,6 +164,16 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   cpu.memory.rom.data = std::move(rom);
   cpu.memory.rom.size = size;
   
+  if (config->mirror_rom) {
+    std::uint32_t mask = 1;
+    while (mask < size) {
+      mask *= 2;
+    }
+    cpu.memory.rom.mask = mask - 1;
+  } else {
+    cpu.memory.rom.mask = 0x1FFFFFF;
+  }
+  
   return StatusCode::Ok;
 }
 

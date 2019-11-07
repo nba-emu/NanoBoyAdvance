@@ -32,6 +32,7 @@ struct Config {
   std::string bios_path = "bios.bin";
   
   bool skip_bios = false;
+  bool mirror_rom = true;
   
   enum class SaveType {
     Detect,
