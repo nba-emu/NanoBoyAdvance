@@ -90,6 +90,9 @@ std::uint32_t SBC(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
 /* CHECKME: should shift amount be masked by 0xFF? */
 
 void DoShift(int opcode, std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediate) {
+  /* TODO: is it same to mask the upper bits before anything else? */
+  amount &= 0xFF;
+  
   switch (opcode) {
     case 0: LSL(operand, amount, carry); break;
     case 1: LSR(operand, amount, carry, immediate); break;
@@ -117,8 +120,14 @@ void LSL(std::uint32_t& operand, std::uint32_t amount, int& carry) {
 }
 
 void LSR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediate) {
-  // LSR #0 equals to LSR #32
-  if (immediate && amount == 0) amount = 32;
+  if (amount == 0) {
+    // LSR #0 equals to LSR #32
+    if (immediate) {
+      amount = 32;
+    } else {
+      return;
+    }
+  }
 
 #if (defined(__i386__) || defined(__x86_64__))
   if (amount >= 32) {
@@ -138,8 +147,14 @@ void LSR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediat
 void ASR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediate) {
   std::uint32_t sign_bit = operand & 0x80000000;
 
-  // ASR #0 equals to ASR #32
-  if (immediate && amount == 0) amount = 32;
+  if (amount == 0) {
+    // ASR #0 equals to ASR #32
+    if (immediate) {
+      amount = 32;
+    } else {
+      return;
+    }
+  }
 
   int msb = operand >> 31;
 
@@ -149,8 +164,8 @@ void ASR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediat
     operand = 0xFFFFFFFF * msb;
     return;
   }
-  if (amount == 0) return;
 #endif
+
   carry = (operand >> (amount - 1)) & 1;
   operand = (operand >> amount) | ((0xFFFFFFFF * msb) << (32 - amount));
   // for (std::uint32_t i = 0; i < amount; i++) {
