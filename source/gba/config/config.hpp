@@ -54,7 +54,7 @@ struct Config {
       Sinc_64,
       Sinc_128,
       Sinc_256
-    } interpolation = Interpolation::Sinc_32;
+    } interpolation = Interpolation::Cosine;
   } audio;
   
   std::shared_ptr<AudioDevice> audio_dev = std::make_shared<NullAudioDevice>();

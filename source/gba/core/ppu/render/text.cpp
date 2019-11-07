@@ -73,6 +73,7 @@ void PPU::RenderLayerText(int id) {
       
       encoder = (vram[offset + 1] << 8) | vram[offset];
 
+      /* TODO: speed tile decoding itself up. */
       if (encoder != last_encoder) {
         int number  = encoder & 0x3FF;
         int palette = encoder >> 12;
