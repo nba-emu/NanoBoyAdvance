@@ -99,6 +99,8 @@ private:
     Size size;
 
     bool allow_read;
+    ARM::AccessType second_access;
+    
     bool is_fifo_dma;
     int fifo_request_count;
     

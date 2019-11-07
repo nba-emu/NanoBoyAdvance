@@ -284,11 +284,31 @@ void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
 
       /* Latch sanitized values into internal DMA state. */
       channel.latch.dst_addr = channel.dst_addr & g_dma_dst_mask[chan_id];
-      channel.latch.src_addr = channel.src_addr;
-      channel.latch.length   = channel.length   & g_dma_len_mask[chan_id];
+      channel.latch.src_addr = channel.src_addr & g_dma_src_mask[chan_id];
+      channel.latch.length   = channel.length & g_dma_len_mask[chan_id];
+      
+      int src_page = channel.src_addr >> 24;
+      int dst_page = channel.dst_addr >> 24;
+      
+      if (src_page >= 0x09 && src_page <= 0x0E) {
+        src_page = 0x08;
+      }
+      
+      if (dst_page >= 0x09 && dst_page <= 0x0E) {
+        dst_page = 0x08;
+      }
+      
+      /* If source and destination fall on the same memory region,
+       * then reads and writes must always be non-sequential.
+       */
+      if (src_page == dst_page) {
+        channel.second_access = ARM::ACCESS_NSEQ;
+      } else {
+        channel.second_access = ARM::ACCESS_SEQ;
+      }
       
       /* Block reading from disconnected memory. */
-      channel.allow_read = (channel.src_addr & g_dma_src_mask[chan_id]) == channel.src_addr;
+      channel.allow_read = (channel.latch.src_addr) == channel.src_addr;
 
       if (channel.latch.length == 0) {
         channel.latch.length = g_dma_len_mask[chan_id] + 1;
@@ -306,6 +326,8 @@ bool DMA::TransferLoop16(int const& ticks_left) {
   auto src_modify = g_dma_modify[Channel::HWORD][channel.src_cntl];
   auto dst_modify = g_dma_modify[Channel::HWORD][channel.dst_cntl];
   
+  auto access = ARM::ACCESS_NSEQ;
+  
   while (channel.latch.length != 0) {
     if (ticks_left <= 0) return false; 
     
@@ -316,9 +338,10 @@ bool DMA::TransferLoop16(int const& ticks_left) {
     }
     
     if (channel.allow_read) {
-      latch = 0x00010001 * cpu->ReadHalf(channel.latch.src_addr & ~1, ARM::ACCESS_SEQ);
+      latch = 0x00010001 * cpu->ReadHalf(channel.latch.src_addr & ~1, access);
     }
-    cpu->WriteHalf(channel.latch.dst_addr & ~1, latch, ARM::ACCESS_SEQ);
+    cpu->WriteHalf(channel.latch.dst_addr & ~1, latch, access);
+    access = channel.second_access;
     
     channel.latch.src_addr += src_modify;
     channel.latch.dst_addr += dst_modify;
@@ -333,6 +356,8 @@ bool DMA::TransferLoop32(int const& ticks_left) {
   auto src_modify = g_dma_modify[Channel::WORD][channel.src_cntl];
   auto dst_modify = g_dma_modify[Channel::WORD][channel.dst_cntl];
   
+  auto access = ARM::ACCESS_NSEQ;
+  
   while (channel.latch.length != 0) {
     if (ticks_left <= 0) return false; 
     
@@ -343,9 +368,10 @@ bool DMA::TransferLoop32(int const& ticks_left) {
     }
     
     if (channel.allow_read) {
-      latch = cpu->ReadWord(channel.latch.src_addr & ~3, ARM::ACCESS_SEQ);
+      latch = cpu->ReadWord(channel.latch.src_addr & ~3, access);
     }
-    cpu->WriteWord(channel.latch.dst_addr & ~3, latch, ARM::ACCESS_SEQ);
+    cpu->WriteWord(channel.latch.dst_addr & ~3, latch, access);
+    access = channel.second_access;
     
     channel.latch.src_addr += src_modify;
     channel.latch.dst_addr += dst_modify;
@@ -358,15 +384,18 @@ bool DMA::TransferLoop32(int const& ticks_left) {
 void DMA::TransferFIFO() {
   auto& channel = channels[current];
   
+  auto access = ARM::ACCESS_NSEQ;
+  
   for (int i = 0; i < 4; i++) {
     if (channel.allow_read) {
-      latch = cpu->ReadWord(channel.latch.src_addr & ~3, ARM::ACCESS_SEQ);
+      latch = cpu->ReadWord(channel.latch.src_addr & ~3, access);
     }
-    cpu->WriteWord(channel.latch.dst_addr & ~3, latch, ARM::ACCESS_SEQ);
+    cpu->WriteWord(channel.latch.dst_addr & ~3, latch, access);
+    access = channel.second_access;
     
     channel.latch.src_addr += 4;
   }
-    
+  
   if (--channel.fifo_request_count == 0) {
     runnable.set(current, false);
   }
