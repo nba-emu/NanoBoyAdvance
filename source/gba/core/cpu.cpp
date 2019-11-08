@@ -82,8 +82,10 @@ void CPU::Reset() {
   }
   
   prefetch.active = false;
+  prefetch.rd_pos = 0;
+  prefetch.wr_pos = 0;
   prefetch.count = 0;
-  prefetch.last_rom_address = 0;
+  last_rom_address = 0;
   
   dma.Reset();
   timer.Reset();
@@ -109,6 +111,7 @@ void CPU::Tick(int cycles) {
     
     if (prefetch.countdown <= 0) {
       prefetch.count++;
+      prefetch.wr_pos = (prefetch.wr_pos + 1) % 8;
       prefetch.active = false;
     }
   }
@@ -125,21 +128,23 @@ void CPU::Idle() {
 void CPU::PrefetchStep(std::uint32_t address, int cycles) {
   #define IS_ROM_REGION(address) ((address) >= 0x08000000 && (address) <= 0x0EFFFFFF) 
   
-  auto thumb = cpu.state.cpsr.f.thumb;
-  auto capacity = thumb ? 8 : 4;
+  int thumb = cpu.state.cpsr.f.thumb;
+  int capacity = thumb ? 8 : 4;
   
   if (prefetch.active) {
     /* If prefetching the desired opcode just complete. */
-    if (address == prefetch.address[prefetch.count]) {
+    if (address == prefetch.address[prefetch.wr_pos]) {
+      int count  = prefetch.count;
+      int wr_pos = prefetch.wr_pos;
+      
       Tick(prefetch.countdown);
       
-      /* TODO: this is redundant and slow. */
-      prefetch.count--;
-      for (int i = 1; i < capacity; i++) {
-        prefetch.address[i - 1] = prefetch.address[i];
-      }
+      // HACK: overwrite count and wr_pos with old values to
+      // account for the prefetched opcode being consumed right away.
+      prefetch.count = count;
+      prefetch.wr_pos = wr_pos;
       
-      prefetch.last_rom_address = address;
+      last_rom_address = address;
       return;
     }
     
@@ -149,33 +154,40 @@ void CPU::PrefetchStep(std::uint32_t address, int cycles) {
   } else if (prefetch.count < capacity &&
              IS_ROM_REGION(cpu.state.r15) &&
             !IS_ROM_REGION(address) && 
-             cpu.state.r15 == prefetch.last_rom_address) {
-    std::uint32_t next_address = ((prefetch.count > 0) ? prefetch.address[prefetch.count - 1]
-                                                       : cpu.state.r15) + (thumb ? 2 : 4);
+             cpu.state.r15 == last_rom_address) {
+    std::uint32_t next_address;
+    
+    if (prefetch.count > 0) {
+      next_address = prefetch.last_address;
+    } else {
+      next_address = cpu.state.r15;
+    }
+    
+    next_address += thumb ? 2 : 4;
+    prefetch.last_address = next_address;
     
     prefetch.active = true;
-    prefetch.address[prefetch.count] = next_address;
+    prefetch.address[prefetch.wr_pos] = next_address;
     prefetch.countdown = (thumb ? cycles16 : cycles32)[ARM::ACCESS_SEQ][next_address >> 24];
   }
   
   if (IS_ROM_REGION(address)) {
-    prefetch.last_rom_address = address;
+    last_rom_address = address;
   }
   
   #undef IS_ROM_REGION
   
   /* TODO: this check does not guarantee 100% that this is an opcode fetch. */
-  if (address == cpu.state.r15) {
-    if (address == prefetch.address[0]) {
+  if (prefetch.count > 0 && address == cpu.state.r15) {
+    if (address == prefetch.address[prefetch.rd_pos]) {
       cycles = 1;
-      /* TODO: this is redundant and slow. */
       prefetch.count--;
-      for (int i = 1; i < capacity; i++) {
-        prefetch.address[i - 1] = prefetch.address[i];
-      }
+      prefetch.rd_pos = (prefetch.rd_pos + 1) % 8;
     } else {
       prefetch.active = false;
       prefetch.count = 0;
+      prefetch.rd_pos = 0;
+      prefetch.wr_pos = 0;
     }
   }
   

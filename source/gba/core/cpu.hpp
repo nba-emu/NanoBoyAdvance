@@ -136,13 +136,19 @@ private:
   
   void UpdateCycleLUT();
   
+  /* GamePak prefetch buffer state. */
   struct Prefetch {
     bool active;
     std::uint32_t address[8];
-    std::uint32_t last_rom_address;
+    std::uint32_t last_address;
+    int rd_pos;
+    int wr_pos;
     int count;
     int countdown;
   } prefetch;
+  
+  /* Last ROM address that was accessed. Used for GamePak prefetch. */
+  std::uint32_t last_rom_address;
   
   cycle_t ticks_cpu_left = 0;
   cycle_t ticks_to_event = 0;
