@@ -90,7 +90,7 @@ std::uint32_t SBC(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
 /* CHECKME: should shift amount be masked by 0xFF? */
 
 void DoShift(int opcode, std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediate) {
-  /* TODO: is it same to mask the upper bits before anything else? */
+  /* TODO: is it sane to mask the upper bits before anything else? */
   amount &= 0xFF;
   
   switch (opcode) {
