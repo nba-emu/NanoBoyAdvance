@@ -46,6 +46,8 @@ void PPU::RenderLayerText(int id) {
   std::uint32_t base = (bgcnt.map_block * 2048) + ((grid_y % 32) * 64);
 
   std::uint16_t* buffer = buffer_bg[id];
+  std::int32_t  last_encoder = -1;
+  std::uint16_t encoder;
   
   grid_x %= 32;
   
@@ -68,8 +70,6 @@ void PPU::RenderLayerText(int id) {
   do {
     do {
       std::uint32_t offset = base + grid_x++ * 2;
-      std::int32_t  last_encoder = -1;
-      std::uint16_t encoder;
       
       encoder = (vram[offset + 1] << 8) | vram[offset];
 
