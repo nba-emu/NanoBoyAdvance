@@ -73,10 +73,12 @@ void Timer::Write(int chan_id, int offset, std::uint8_t value) {
       bool enable_previous = control.enable;
 
       control.frequency = value & 3;
-      control.cascade   = value & 4;
       control.interrupt = value & 64;
-      control.enable    = value & 128;
-
+      control.enable = value & 128;
+      if (chan_id != 0) {
+        control.cascade = value & 4;
+      }
+      
       channel.shift = g_ticks_shift[control.frequency];
       channel.mask  = g_ticks_mask[control.frequency];
       
