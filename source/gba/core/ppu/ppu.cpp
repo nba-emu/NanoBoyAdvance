@@ -82,7 +82,7 @@ void PPU::Reset() {
 //  }
 //  
 //  line_contains_alpha_obj = false;
-  
+//  
   event.countdown = 0;
   SetNextEvent(Phase::SCANLINE);
 }

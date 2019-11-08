@@ -159,12 +159,26 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
                      !dispcnt.enable[ENABLE_WIN1] &&
                      !dispcnt.enable[ENABLE_OBJWIN];
   
+  int bg_list[4];
+  int bg_count = 0;
+  
+  /* Sort enabled backgrounds by their respective priority in ascending order. */
+  for (int prio = 3; prio >= 0; prio--) {
+    for (int bg = bg_max; bg >= bg_min; bg--) {
+      if (dispcnt.enable[bg] && bgcnt[bg].priority == prio) {
+        bg_list[bg_count++] = bg; 
+      }
+    }
+  }
+  
   for (int x = 0; x < 240; x++) {
+    int prio[2] = { 4, 4 };
     int layer[2] = { LAYER_BD, LAYER_BD };
-    std::uint16_t pixel[2] = { backdrop, 0 };
+    std::uint16_t pixel[2];
     
     const int* win_layer_enable = winout.enable[0];
     
+    /* Determine the window that has the highest priority. */
     if (win0_active && buffer_win[0][x]) {
       win_layer_enable = winin.enable[0];
     } else if (win1_active && buffer_win[1][x]) {
@@ -173,28 +187,48 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
       win_layer_enable = winout.enable[1];
     }
     
-    /* TODO: for maximum effiency maybe we can pre-sort the BGs by priority. */
-    for (int prio = 3; prio >= 0; prio--) {
-      for (int bg = bg_max; bg >= bg_min; bg--) {
-        if (dispcnt.enable[bg] && bgcnt[bg].priority == prio && (no_windows || win_layer_enable[bg])) {
-          auto pixel_new = buffer_bg[bg][x];
-          if (pixel_new != s_color_transparent) {
-            layer[1] = layer[0];
-            layer[0] = bg;
-            pixel[1] = pixel[0];
-            pixel[0] = pixel_new;
-          }
-        }
-      }
+    /* Find up to two top-most visible background pixels. */
+    for (int i = 0; i < bg_count; i++) {
+      int bg = bg_list[i];
       
-      if (dispcnt.enable[ENABLE_OBJ] && buffer_obj[x].priority == prio && (no_windows || win_layer_enable[LAYER_OBJ])) {
-        auto pixel_new = buffer_obj[x].color;
+      if (no_windows || win_layer_enable[bg]) {
+        auto pixel_new = buffer_bg[bg][x];
         if (pixel_new != s_color_transparent) {
           layer[1] = layer[0];
-          layer[0] = LAYER_OBJ;
-          pixel[1] = pixel[0];
-          pixel[0] = pixel_new;
+          layer[0] = bg;
+          prio[1] = prio[0];
+          prio[0] = bgcnt[bg].priority;
         }
+      }
+    }
+    
+    if (dispcnt.enable[ENABLE_OBJ] && buffer_obj[x].color != s_color_transparent && (no_windows || win_layer_enable[LAYER_OBJ])) {
+      int priority = buffer_obj[x].priority;
+      
+      if (priority <= prio[0]) {
+        layer[1] = layer[0];
+        layer[0] = LAYER_OBJ;
+      } else if (priority <= prio[1]) {
+        layer[1] = LAYER_OBJ;
+      }
+    }
+    
+    /* Map layer ids to pixels. */
+    for (int i = 0; i < 2; i++) {
+      int l = layer[i];
+      switch (l) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+          pixel[i] = buffer_bg[l][x];
+          break;
+        case 4:
+          pixel[i] = buffer_obj[x].color;
+          break;
+        case 5:
+          pixel[i] = backdrop;
+          break;
       }
     }
     
