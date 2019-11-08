@@ -202,7 +202,12 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
       }
     }
     
-    if (dispcnt.enable[ENABLE_OBJ] && buffer_obj[x].color != s_color_transparent && (no_windows || win_layer_enable[LAYER_OBJ])) {
+    /* Check if a OBJ pixel takes priority over one of the two
+     * top-most background pixels and insert it accordingly.
+     */
+    if (dispcnt.enable[ENABLE_OBJ] &&
+        buffer_obj[x].color != s_color_transparent &&
+        (no_windows || win_layer_enable[LAYER_OBJ])) {
       int priority = buffer_obj[x].priority;
       
       if (priority <= prio[0]) {
@@ -213,15 +218,15 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
       }
     }
     
-    /* Map layer ids to pixels. */
+    /* Map layer numbers to pixels. */
     for (int i = 0; i < 2; i++) {
-      int l = layer[i];
-      switch (l) {
+      int _layer = layer[i];
+      switch (_layer) {
         case 0:
         case 1:
         case 2:
         case 3:
-          pixel[i] = buffer_bg[l][x];
+          pixel[i] = buffer_bg[_layer][x];
           break;
         case 4:
           pixel[i] = buffer_obj[x].color;
