@@ -171,10 +171,11 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
     }
   }
   
+  std::uint16_t pixel[2];
+  
   for (int x = 0; x < 240; x++) {
     int prio[2] = { 4, 4 };
     int layer[2] = { LAYER_BD, LAYER_BD };
-    std::uint16_t pixel[2];
     
     const int* win_layer_enable = winout.enable[0];
     

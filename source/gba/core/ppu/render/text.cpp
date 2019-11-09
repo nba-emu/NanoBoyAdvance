@@ -71,7 +71,7 @@ void PPU::RenderLayerText(int id) {
       break;
   }
   
-  if (screen_x) {
+  if (screen_x == 1) {
     base_adjust *= -1;
   }
   
