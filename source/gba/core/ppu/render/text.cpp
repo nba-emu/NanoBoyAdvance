@@ -51,20 +51,28 @@ void PPU::RenderLayerText(int id) {
   
   grid_x %= 32;
   
-  std::uint32_t base_flip = 0;
+  std::uint32_t base_adjust;
   
   switch (bgcnt.size) {
+    case 0:
+      base_adjust = 0;
+      break;
     case 1: 
       base += screen_x * 2048;
-      base_flip = 2048;
+      base_adjust = 2048;
       break;
     case 2:
-      base +=  screen_y * 2048;
+      base += screen_y * 2048;
+      base_adjust = 0;
       break;
     case 3:
       base += (screen_x * 2048) + (screen_y * 4096);
-      base_flip = 2048;
+      base_adjust = 2048;
       break;
+  }
+  
+  if (screen_x) {
+    base_adjust *= -1;
   }
   
   do {
@@ -114,7 +122,8 @@ void PPU::RenderLayerText(int id) {
       }
     } while (grid_x < 32);
     
-    base ^= base_flip;
+    base += base_adjust;
+    base_adjust *= -1;
     grid_x = 0;
   } while (draw_x < 240);
 
