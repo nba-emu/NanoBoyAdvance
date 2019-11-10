@@ -60,6 +60,7 @@ void DMA::Reset() {
   vblank_set.reset();
   video_set.reset();
   runnable.reset();
+  
   current = -1;
   interleaved = false;
   
@@ -79,6 +80,17 @@ void DMA::Reset() {
     channel.dst_cntl = Channel::INCREMENT;
     channel.src_cntl = Channel::INCREMENT;
   }
+}
+
+void DMA::TryStart(int chan_id) {
+  if (runnable.none()) {
+    current = chan_id;
+  } else if (chan_id < current) {
+    current = chan_id;
+    interleaved = true;
+  }
+  
+  runnable.set(chan_id, true);
 }
 
 void DMA::Request(Occasion occasion) {
@@ -125,25 +137,84 @@ void DMA::Request(Occasion occasion) {
 }
 
 void DMA::Run(int const& ticks_left) {
-  bool  completed;
   auto& channel = channels[current];
   
+  auto access = ARM::ACCESS_NSEQ;
+  
   if (channel.is_fifo_dma) {
-    TransferFIFO();
-    return;
-  }
-    
-  if (channel.size == Channel::WORD) {
-    completed = TransferLoop32(ticks_left);
-  } else {
-    completed = TransferLoop16(ticks_left);
-  }
-
-  if (completed) {
-    if (channel.interrupt) {
-      cpu->mmio.irq_if |= (CPU::INT_DMA0 << current);
+    /* TODO: figure out how the FIFO DMA works in detail. */
+    for (int i = 0; i < 4; i++) {
+      if (channel.allow_read) {
+        latch = cpu->ReadWord(channel.latch.src_addr, access);
+      }
+      cpu->WriteWord(channel.latch.dst_addr, latch, access);
+      access = channel.second_access;
+      channel.latch.src_addr += 4;
     }
-      
+
+    if (--channel.fifo_request_count == 0) {
+      runnable.set(current, false);
+    }
+  } else {
+    auto src_modify = g_dma_modify[channel.size][channel.src_cntl];
+    auto dst_modify = g_dma_modify[channel.size][channel.dst_cntl];
+    
+    #define CHECK_INTERLEAVED\
+      if (ticks_left <= 0 || interleaved) {\
+        interleaved = false;\
+        return;\
+      }
+    
+    #define ADVANCE_REGS\
+      channel.latch.src_addr += src_modify;\
+      channel.latch.dst_addr += dst_modify;\
+      channel.latch.length--;
+    
+    if (channel.size == Channel::HWORD) {
+      if (channel.allow_read) {
+        /* HWORD DMA - NORMAL */
+        while (channel.latch.length != 0) {
+          CHECK_INTERLEAVED;
+
+          latch = 0x00010001 * cpu->ReadHalf(channel.latch.src_addr, access);
+          cpu->WriteHalf(channel.latch.dst_addr, latch, access);
+          access = channel.second_access;
+          ADVANCE_REGS;
+        }
+      } else {
+        /* HWORD DMA - OPEN BUS */
+        while (channel.latch.length != 0) {
+          CHECK_INTERLEAVED;
+          
+          cpu->WriteHalf(channel.latch.dst_addr, latch, access);
+          access = channel.second_access;
+          ADVANCE_REGS;
+        }
+      }
+    } else {
+      if (channel.allow_read) {
+        /* WORD DMA - NORMAL */
+        while (channel.latch.length != 0) {
+          CHECK_INTERLEAVED;
+          
+          latch = cpu->ReadWord(channel.latch.src_addr, access);
+          cpu->WriteWord(channel.latch.dst_addr, latch, access);
+          access = channel.second_access;
+          ADVANCE_REGS;
+        }
+      } else {
+        /* WORD DMA - OPEN BUS */
+        while (channel.latch.length != 0) {
+          CHECK_INTERLEAVED;
+          
+          cpu->WriteWord(channel.latch.dst_addr, latch, access);
+          access = channel.second_access;
+          ADVANCE_REGS;
+        }
+      }
+    }
+    
+    /* If this code is reached, the DMA was not interleaved and completed. */
     if (channel.repeat) {
       /* Latch length */
       channel.latch.length = channel.length & g_dma_len_mask[current];
@@ -173,15 +244,21 @@ void DMA::Run(int const& ticks_left) {
       }
     } else {
       channel.enable = false;
+      
+      /* DMA is not enabled, thus not eligable for HBLANK/VBLANK/VIDEO requests. */
       runnable.set(current, false);
       hblank_set.set(current, false);
       vblank_set.set(current, false);
       video_set.set(current, false);
     }
-    
-    /* Get the next DMA to run */
-    current = g_dma_from_bitset[runnable.to_ulong()];
   }
+  
+  if (channel.interrupt) {
+    cpu->mmio.irq_if |= (CPU::INT_DMA0 << current);
+  }
+  
+  /* Select the next DMA to execute */
+  current = g_dma_from_bitset[runnable.to_ulong()];
 }
 
 auto DMA::Read(int chan_id, int offset) -> std::uint8_t {
@@ -251,17 +328,6 @@ void DMA::Write(int chan_id, int offset, std::uint8_t value) {
       break;
     }
   }
-}
-
-void DMA::TryStart(int chan_id) {
-  if (runnable.none()) {
-    current = chan_id;
-  } else if (chan_id < current) {
-    current = chan_id;
-    interleaved = true;
-  }
-  
-  runnable.set(chan_id, true);
 }
 
 void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
@@ -343,90 +409,4 @@ void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
     vblank_set.set(chan_id, false);
     video_set.set(chan_id, false);
   }
-}
-
-bool DMA::TransferLoop16(int const& ticks_left) {
-  auto& channel   = channels[current];
-  auto src_modify = g_dma_modify[Channel::HWORD][channel.src_cntl];
-  auto dst_modify = g_dma_modify[Channel::HWORD][channel.dst_cntl];
-  
-  auto access = ARM::ACCESS_NSEQ;
-  
-  while (channel.latch.length != 0) {
-    if (ticks_left <= 0) return false; 
-    
-    /* Stop if DMA was interleaved by higher priority DMA. */
-    if (interleaved) {
-      interleaved = false;
-      return false;
-    }
-    
-    if (channel.allow_read) {
-      latch = 0x00010001 * cpu->ReadHalf(channel.latch.src_addr, access);
-    }
-    cpu->WriteHalf(channel.latch.dst_addr, latch, access);
-    access = channel.second_access;
-    
-    channel.latch.src_addr += src_modify;
-    channel.latch.dst_addr += dst_modify;
-    channel.latch.length--;
-  }
-  
-  return true;
-}
-
-bool DMA::TransferLoop32(int const& ticks_left) {
-  auto& channel   = channels[current];
-  auto src_modify = g_dma_modify[Channel::WORD][channel.src_cntl];
-  auto dst_modify = g_dma_modify[Channel::WORD][channel.dst_cntl];
-  
-  auto access = ARM::ACCESS_NSEQ;
-  
-  while (channel.latch.length != 0) {
-    if (ticks_left <= 0) return false; 
-    
-    /* Stop if DMA was interleaved by higher priority DMA. */
-    if (interleaved) {
-      interleaved = false;
-      return false;
-    }
-    
-    if (channel.allow_read) {
-      latch = cpu->ReadWord(channel.latch.src_addr, access);
-    }
-    cpu->WriteWord(channel.latch.dst_addr, latch, access);
-    access = channel.second_access;
-    
-    channel.latch.src_addr += src_modify;
-    channel.latch.dst_addr += dst_modify;
-    channel.latch.length--;
-  }
-  
-  return true;
-}
-
-void DMA::TransferFIFO() {
-  auto& channel = channels[current];
-  
-  auto access = ARM::ACCESS_NSEQ;
-  
-  for (int i = 0; i < 4; i++) {
-    if (channel.allow_read) {
-      latch = cpu->ReadWord(channel.latch.src_addr, access);
-    }
-    cpu->WriteWord(channel.latch.dst_addr, latch, access);
-    access = channel.second_access;
-    
-    channel.latch.src_addr += 4;
-  }
-  
-  if (--channel.fifo_request_count == 0) {
-    runnable.set(current, false);
-  }
-    
-  if (channel.interrupt) {
-    cpu->mmio.irq_if |= (CPU::INT_DMA0 << current);
-  }
-  
-  current = g_dma_from_bitset[runnable.to_ulong()];
 }

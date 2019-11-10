@@ -74,20 +74,30 @@ public:
 private:
   void TryStart(int chan_id);
   void OnChannelWritten(int chan_id, bool enabled_old);
-  bool TransferLoop16(int const& ticks_left);
-  bool TransferLoop32(int const& ticks_left);
-  void TransferFIFO();
   
   CPU* cpu;
   
-  int  current;
+  /* The id of the DMA that is currently running.
+   * If no DMA is running, then the value will be minus one.
+   */
+  int current;
+  
+  /* Indicates whether the currently running DMA got
+   * interleaved by a higher-priority DMA.
+   */
   bool interleaved;
   
+  /* Sets of HBLANK/VBLANK/VIDEO channels that will be
+   * executable on the respective trigger/DMA request.
+   */
   std::bitset<4> hblank_set;
   std::bitset<4> vblank_set;
   std::bitset<4> video_set;
+  
+  /* Set DMA channels that may be executed. */
   std::bitset<4> runnable;
   
+  /* The last value read by any DMA channel. Required for DMA open bus. */
   std::uint32_t latch;
   
   struct Channel {
