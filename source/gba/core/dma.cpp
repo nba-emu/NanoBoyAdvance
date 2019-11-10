@@ -155,6 +155,12 @@ void DMA::Run(int const& ticks_left) {
       if (channel.dst_cntl == Channel::RELOAD) {
         if (CheckDestinationAddress(current, channel.dst_addr >> 24)) {
           channel.latch.dst_addr = channel.dst_addr;
+          /* Ensure that all writes are aligned. */
+          if (channel.size == Channel::WORD) {
+            channel.latch.dst_addr &= ~3;
+          } else {
+            channel.latch.dst_addr &= ~1;
+          }
         } else {
           /* TODO: disable write completely? */
           channel.latch.dst_addr = 0;
@@ -300,6 +306,15 @@ void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
         channel.allow_read = false;
       }
       
+      /* Ensure that all accesses are aligned. */
+      if (channel.size == Channel::WORD) {
+        channel.latch.src_addr &= ~3;
+        channel.latch.dst_addr &= ~3;
+      } else {
+        channel.latch.src_addr &= ~1;
+        channel.latch.dst_addr &= ~1;
+      }
+      
       /* Latch length */
       channel.latch.length = channel.length & g_dma_len_mask[chan_id];
       if (channel.latch.length == 0) {
@@ -347,9 +362,9 @@ bool DMA::TransferLoop16(int const& ticks_left) {
     }
     
     if (channel.allow_read) {
-      latch = 0x00010001 * cpu->ReadHalf(channel.latch.src_addr & ~1, access);
+      latch = 0x00010001 * cpu->ReadHalf(channel.latch.src_addr, access);
     }
-    cpu->WriteHalf(channel.latch.dst_addr & ~1, latch, access);
+    cpu->WriteHalf(channel.latch.dst_addr, latch, access);
     access = channel.second_access;
     
     channel.latch.src_addr += src_modify;
@@ -377,9 +392,9 @@ bool DMA::TransferLoop32(int const& ticks_left) {
     }
     
     if (channel.allow_read) {
-      latch = cpu->ReadWord(channel.latch.src_addr & ~3, access);
+      latch = cpu->ReadWord(channel.latch.src_addr, access);
     }
-    cpu->WriteWord(channel.latch.dst_addr & ~3, latch, access);
+    cpu->WriteWord(channel.latch.dst_addr, latch, access);
     access = channel.second_access;
     
     channel.latch.src_addr += src_modify;
@@ -397,9 +412,9 @@ void DMA::TransferFIFO() {
   
   for (int i = 0; i < 4; i++) {
     if (channel.allow_read) {
-      latch = cpu->ReadWord(channel.latch.src_addr & ~3, access);
+      latch = cpu->ReadWord(channel.latch.src_addr, access);
     }
-    cpu->WriteWord(channel.latch.dst_addr & ~3, latch, access);
+    cpu->WriteWord(channel.latch.dst_addr, latch, access);
     access = channel.second_access;
     
     channel.latch.src_addr += 4;
