@@ -51,14 +51,6 @@ static constexpr int g_dma_from_bitset[] = {
   /* 0b1111 */ 0
 };
 
-static constexpr std::uint32_t g_dma_dst_mask[] = { 
-  0x07FFFFFF, 0x07FFFFFF, 0x07FFFFFF, 0x0FFFFFFF
-};
-
-static constexpr std::uint32_t g_dma_src_mask[] = {
-  0x07FFFFFF, 0x0FFFFFFF, 0x0FFFFFFF, 0x0FFFFFFF
-};
-
 static constexpr std::uint32_t g_dma_len_mask[] = { 
   0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF
 };
