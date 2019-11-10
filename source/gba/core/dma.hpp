@@ -94,7 +94,7 @@ private:
   std::bitset<4> vblank_set;
   std::bitset<4> video_set;
   
-  /* Set DMA channels that may be executed. */
+  /* Set of DMA channels that may be executed. */
   std::bitset<4> runnable;
   
   /* The last value read by any DMA channel. Required for DMA open bus. */
