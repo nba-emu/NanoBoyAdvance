@@ -203,15 +203,15 @@ void DMA::Write(int chan_id, int offset, std::uint8_t value) {
 
   switch (offset) {
     /* DMAXSAD */
-    case 0: channel.src_addr = (channel.src_addr & 0xFFFFFF00) | (value<<0 ); break;
-    case 1: channel.src_addr = (channel.src_addr & 0xFFFF00FF) | (value<<8 ); break;
-    case 2: channel.src_addr = (channel.src_addr & 0xFF00FFFF) | (value<<16); break;
+    case 0: channel.src_addr = (channel.src_addr & 0x0FFFFF00) | (value<<0 ); break;
+    case 1: channel.src_addr = (channel.src_addr & 0x0FFF00FF) | (value<<8 ); break;
+    case 2: channel.src_addr = (channel.src_addr & 0x0F00FFFF) | (value<<16); break;
     case 3: channel.src_addr = (channel.src_addr & 0x00FFFFFF) | (value<<24); break;
 
     /* DMAXDAD */
-    case 4: channel.dst_addr = (channel.dst_addr & 0xFFFFFF00) | (value<<0 ); break;
-    case 5: channel.dst_addr = (channel.dst_addr & 0xFFFF00FF) | (value<<8 ); break;
-    case 6: channel.dst_addr = (channel.dst_addr & 0xFF00FFFF) | (value<<16); break;
+    case 4: channel.dst_addr = (channel.dst_addr & 0x0FFFFF00) | (value<<0 ); break;
+    case 5: channel.dst_addr = (channel.dst_addr & 0x0FFF00FF) | (value<<8 ); break;
+    case 6: channel.dst_addr = (channel.dst_addr & 0x0F00FFFF) | (value<<16); break;
     case 7: channel.dst_addr = (channel.dst_addr & 0x00FFFFFF) | (value<<24); break;
 
     /* DMAXCNT_L */
@@ -282,38 +282,36 @@ void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
     if (!enabled_old) {
       channel.fifo_request_count = 0;
 
-      /* Latch sanitized values into internal DMA state. */
-      channel.latch.dst_addr = channel.dst_addr & g_dma_dst_mask[chan_id];
-      channel.latch.src_addr = channel.src_addr & g_dma_src_mask[chan_id];
-      channel.latch.length   = channel.length & g_dma_len_mask[chan_id];
-      
       int src_page = channel.src_addr >> 24;
       int dst_page = channel.dst_addr >> 24;
       
-      if (src_page >= 0x09 && src_page <= 0x0E) {
-        src_page = 0x08;
-      }
-      
-      if (dst_page >= 0x09 && dst_page <= 0x0E) {
-        dst_page = 0x08;
-      }
-      
-      /* If source and destination fall on the same memory region,
-       * then reads and writes must always be non-sequential.
-       */
-      if (src_page == dst_page) {
-        channel.second_access = ARM::ACCESS_NSEQ;
+      /* Only DMA3 can write to cartridge ROM. */
+      if (chan_id == 3 || dst_page < 0x08) {
+        channel.latch.dst_addr = channel.dst_addr;
       } else {
-        channel.second_access = ARM::ACCESS_SEQ;
+        /* TODO: disable write completely? */
+        channel.latch.dst_addr = 0;
       }
       
-      /* Block reading from disconnected memory. */
-      channel.allow_read = (channel.latch.src_addr) == channel.src_addr;
-
+      /* DMA0 can not read ROM, but it is able to read the SRAM region. 
+       * DMA explcitly disallows reading from BIOS memory,
+       * therefore invoking DMA open bus instead of BIOS open bus.
+       */
+      if ((chan_id != 0 || src_page < 0x08 || src_page >= 0x0E) && src_page >= 0x02) {
+        channel.latch.src_addr = channel.src_addr;
+        channel.allow_read = true;
+      } else {
+        channel.allow_read = false;
+      }
+      
+      channel.latch.length = channel.length & g_dma_len_mask[chan_id];
       if (channel.latch.length == 0) {
         channel.latch.length = g_dma_len_mask[chan_id] + 1;
       }
-
+      
+      /* TODO: handle cases were the second access would be non-sequential. */
+      channel.second_access = ARM::ACCESS_SEQ;
+      
       if (channel.time == Channel::IMMEDIATE) {
         TryStart(chan_id);
       }
