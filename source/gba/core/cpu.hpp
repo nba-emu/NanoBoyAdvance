@@ -125,6 +125,16 @@ public:
   
 private:
   
+  template <typename T>
+  auto Read(void* buffer, std::uint32_t index) -> T {
+    return *(T*)(&((std::uint8_t*)buffer)[index]);
+  }
+  
+  template <typename T>
+  void Write(void* buffer, std::uint32_t index, T value) {
+    *(T*)(&((std::uint8_t*)buffer)[index]) = value;
+  }
+  
   auto ReadMMIO (std::uint32_t address) -> std::uint8_t;
   void WriteMMIO(std::uint32_t address, std::uint8_t value);
   std::uint32_t ReadBIOS(std::uint32_t address);
@@ -135,6 +145,11 @@ private:
   void PrefetchStep(std::uint32_t address, int cycles);
   
   void UpdateCycleLUT();
+  
+  /* Contains the last word read from memory.
+   * Required for open bus emulation.
+   */
+  std::uint32_t memory_latch;
   
   /* GamePak prefetch buffer state. */
   struct Prefetch {
