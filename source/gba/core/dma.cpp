@@ -153,15 +153,23 @@ void DMA::Run(int const& ticks_left) {
     }
       
     if (channel.repeat) {
+      /* Latch length */
       channel.latch.length = channel.length & g_dma_len_mask[current];
       if (channel.latch.length == 0) {
         channel.latch.length = g_dma_len_mask[current] + 1;
       }
-        
+      
+      /* Latch destination address */
       if (channel.dst_cntl == Channel::RELOAD) {
-        channel.latch.dst_addr = channel.dst_addr & g_dma_dst_mask[current];
+        if (CheckDestinationAddress(current, channel.dst_addr >> 24)) {
+          channel.latch.dst_addr = channel.dst_addr;
+        } else {
+          /* TODO: disable write completely? */
+          channel.latch.dst_addr = 0;
+        }
       }
-        
+      
+      /* Non-immediate DMAs must be retriggered before they run again. */
       if (channel.time != Channel::IMMEDIATE) {
         runnable.set(current, false);
       }
@@ -172,7 +180,8 @@ void DMA::Run(int const& ticks_left) {
       vblank_set.set(current, false);
       video_set.set(current, false);
     }
-      
+    
+    /* Get the next DMA to run */
     current = g_dma_from_bitset[runnable.to_ulong()];
   }
 }
@@ -257,13 +266,11 @@ void DMA::TryStart(int chan_id) {
 
 void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
   auto& channel = channels[chan_id];
-  
-  hblank_set.set(chan_id, false);
-  vblank_set.set(chan_id, false);
-  video_set.set(chan_id, false);
 
   if (channel.enable) {
-    /* Update HBLANK/VBLANK DMA sets. */
+    /* Update HBLANK/VBLANK DMA sets. 
+     * This information is used to schedule these DMAs on request.
+     */
     switch (channel.time) {
       case Channel::HBLANK:
         hblank_set.set(chan_id, true);
@@ -280,42 +287,52 @@ void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
 
     /* DMA state is latched on "rising" enable bit. */
     if (!enabled_old) {
-      channel.fifo_request_count = 0;
-
-      int src_page = channel.src_addr >> 24;
-      int dst_page = channel.dst_addr >> 24;
+      int src_page = GetUnaliasedMemoryArea(channel.src_addr >> 24);
+      int dst_page = GetUnaliasedMemoryArea(channel.dst_addr >> 24);
       
-      /* Only DMA3 can write to cartridge ROM. */
-      if (chan_id == 3 || dst_page < 0x08) {
+      /* Latch destination address */
+      if (CheckDestinationAddress(chan_id, dst_page)) {
         channel.latch.dst_addr = channel.dst_addr;
       } else {
         /* TODO: disable write completely? */
         channel.latch.dst_addr = 0;
       }
       
-      /* DMA0 can not read ROM, but it is able to read the SRAM region. 
-       * DMA explcitly disallows reading from BIOS memory,
-       * therefore invoking DMA open bus instead of BIOS open bus.
-       */
-      if ((chan_id != 0 || src_page < 0x08 || src_page >= 0x0E) && src_page >= 0x02) {
+      /* Latch source address */
+      if (CheckSourceAddress(chan_id, src_page)) {
         channel.latch.src_addr = channel.src_addr;
         channel.allow_read = true;
       } else {
         channel.allow_read = false;
       }
       
+      /* Latch length */
       channel.latch.length = channel.length & g_dma_len_mask[chan_id];
       if (channel.latch.length == 0) {
         channel.latch.length = g_dma_len_mask[chan_id] + 1;
       }
       
-      /* TODO: handle cases were the second access would be non-sequential. */
-      channel.second_access = ARM::ACCESS_SEQ;
+      /* TODO: confirm that read/write to the same area results 
+       * in only non-sequential accesses.
+       */
+      if (src_page == dst_page) {
+        channel.second_access = ARM::ACCESS_NSEQ;
+      } else {
+        channel.second_access = ARM::ACCESS_SEQ;
+      }
       
+      /* Immediate DMAs are scheduled right away. */
       if (channel.time == Channel::IMMEDIATE) {
         TryStart(chan_id);
       }
+      
+      channel.fifo_request_count = 0;
     }
+  } else {
+    /* DMA is not enabled, thus not eligable for HBLANK/VBLANK/VIDEO requests. */
+    hblank_set.set(chan_id, false);
+    vblank_set.set(chan_id, false);
+    video_set.set(chan_id, false);
   }
 }
 

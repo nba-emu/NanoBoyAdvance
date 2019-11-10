@@ -46,6 +46,31 @@ public:
   void Write(int chan_id, int offset, std::uint8_t value);
   bool IsRunning() { return runnable.any(); }
   
+  constexpr bool CheckDestinationAddress(int chan_id, int page) {
+    /* Only DMA3 may write to cartridge area. */
+    return chan_id == 3 || page < 0x08;
+  }
+  
+  constexpr bool CheckSourceAddress(int chan_id, int page) {
+    /* DMA0 can not read ROM, but it is able to read the SRAM region. 
+     * DMA explcitly disallows reading from BIOS memory,
+     * therefore invoking DMA open bus instead of BIOS open bus.
+     */
+    return (chan_id != 0 || page < 0x08 || page >= 0x0E) && page >= 0x02;
+  }
+  
+  constexpr int GetUnaliasedMemoryArea(int page) {
+    if (page >= 0x09 && page <= 0x0D) {
+      return 0x08;
+    }
+    
+    if (page == 0x0F) {
+      return 0x0E;
+    }
+    
+    return page;
+  }
+  
 private:
   void TryStart(int chan_id);
   void OnChannelWritten(int chan_id, bool enabled_old);
