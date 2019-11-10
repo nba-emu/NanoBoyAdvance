@@ -203,17 +203,19 @@ void DMA::Write(int chan_id, int offset, std::uint8_t value) {
   auto& channel = channels[chan_id];
 
   switch (offset) {
-    /* DMAXSAD */
-    case 0: channel.src_addr = (channel.src_addr & 0x0FFFFF00) | (value<<0 ); break;
-    case 1: channel.src_addr = (channel.src_addr & 0x0FFF00FF) | (value<<8 ); break;
-    case 2: channel.src_addr = (channel.src_addr & 0x0F00FFFF) | (value<<16); break;
-    case 3: channel.src_addr = (channel.src_addr & 0x00FFFFFF) | (value<<24); break;
+    /* DMAXSAD
+     * NOTE: the most-significant nibble will be removed here. */
+    case 0: channel.src_addr = (channel.src_addr & 0x0FFFFF00) |  (value<<0 ); break;
+    case 1: channel.src_addr = (channel.src_addr & 0x0FFF00FF) |  (value<<8 ); break;
+    case 2: channel.src_addr = (channel.src_addr & 0x0F00FFFF) |  (value<<16); break;
+    case 3: channel.src_addr = (channel.src_addr & 0x00FFFFFF) | ((value<<24) & 0x0F000000); break;
 
-    /* DMAXDAD */
-    case 4: channel.dst_addr = (channel.dst_addr & 0x0FFFFF00) | (value<<0 ); break;
-    case 5: channel.dst_addr = (channel.dst_addr & 0x0FFF00FF) | (value<<8 ); break;
-    case 6: channel.dst_addr = (channel.dst_addr & 0x0F00FFFF) | (value<<16); break;
-    case 7: channel.dst_addr = (channel.dst_addr & 0x00FFFFFF) | (value<<24); break;
+    /* DMAXDAD
+     * NOTE: the most-significant nibble will be removed here. */
+    case 4: channel.dst_addr = (channel.dst_addr & 0x0FFFFF00) |  (value<<0 ); break;
+    case 5: channel.dst_addr = (channel.dst_addr & 0x0FFF00FF) |  (value<<8 ); break;
+    case 6: channel.dst_addr = (channel.dst_addr & 0x0F00FFFF) |  (value<<16); break;
+    case 7: channel.dst_addr = (channel.dst_addr & 0x00FFFFFF) | ((value<<24) & 0x0F000000); break;
 
     /* DMAXCNT_L */
     case 8: channel.length = (channel.length & 0xFF00) | (value<<0); break;
