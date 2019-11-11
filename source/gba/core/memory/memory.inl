@@ -287,9 +287,10 @@ inline void CPU::WriteByte(std::uint32_t address, std::uint8_t value, ARM::Acces
     case REGION_EWRAM:
       Write<std::uint8_t>(memory.wram, address & 0x3FFFF, value);
       break;
-    case REGION_IWRAM:
+    case REGION_IWRAM: {
       Write<std::uint8_t>(memory.iram, address & 0x7FFF,  value);
       break;
+    }
     case REGION_MMIO: {
       WriteMMIO(address, value & 0xFF);
       break;
@@ -305,9 +306,10 @@ inline void CPU::WriteByte(std::uint32_t address, std::uint8_t value, ARM::Acces
       Write<std::uint16_t>(memory.vram, address, value * 0x0101);
       break;
     }
-    case REGION_OAM:
+    case REGION_OAM: {
       Write<std::uint16_t>(memory.oam, address & 0x3FF, value * 0x0101);
       break;
+    }
     case REGION_SRAM_1:
     case REGION_SRAM_2: {
       address &= 0x0EFFFFFF;
