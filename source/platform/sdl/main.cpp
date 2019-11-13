@@ -83,12 +83,7 @@ private:
 
 class SDL2_InputDevice : public GameBoyAdvance::InputDevice {
 public:
-  auto Poll(Key key) -> bool final {
-    // TODO: Currently we poll events up to 10 times per
-    // keypad read. Not sure if this has any effect, but maybe we can fix it.
-    
-    SDL_PumpEvents();
-    
+  auto Poll(Key key) -> bool final {  
     auto keystate = SDL_GetKeyboardState(NULL);
     
     using Key = InputDevice::Key;
@@ -209,6 +204,9 @@ int main(int argc, char** argv) {
     if (!unbounded) {
       ticks_start = SDL_GetTicks();
     }
+    
+    /* Update key state */
+    SDL_PumpEvents();
     
     emulator->Frame();
     frames++;
