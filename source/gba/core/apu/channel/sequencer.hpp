@@ -87,7 +87,7 @@ public:
   }
   
   void Tick() {
-    if (!enabled || divider == 0) return;
+    if (!enabled || divider == 0 || shift == 0) return;
     
     if (step == (divider - 1)) {
       int offset = current_freq >> shift;
