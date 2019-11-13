@@ -105,15 +105,15 @@ void QuadChannel::Write(int offset, std::uint8_t value) {
     case 0: {
       sweep.shift = value & 7;
       sweep.direction = Sweep::Direction((value >> 3) & 1);
-      sweep.divider = value >> 4;
+      sweep.divider = (value >> 4) & 7;
       break;
     }
     case 1: break;
       
     /* Wave Duty / Length / Envelope */
     case 2: {
-      length =  value & 63;
-      wave_duty  = (value >> 6) & 3;
+      length = value & 63;
+      wave_duty = (value >> 6) & 3;
       break;
     }
     case 3: {
