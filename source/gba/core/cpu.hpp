@@ -48,6 +48,24 @@ public:
   void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type) final;
   void WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type) final;
   
+  enum MemoryRegion {
+    REGION_BIOS = 0,
+    REGION_EWRAM = 2,
+    REGION_IWRAM = 3,
+    REGION_MMIO = 4,
+    REGION_PRAM = 5,
+    REGION_VRAM = 6,
+    REGION_OAM = 7,
+    REGION_ROM_W0_L = 8,
+    REGION_ROM_W0_H = 9,
+    REGION_ROM_W1_L = 0xA,
+    REGION_ROM_W1_H = 0xB,
+    REGION_ROM_W2_L = 0xC,
+    REGION_ROM_W2_H = 0xD,
+    REGION_SRAM_1 = 0xE,
+    REGION_SRAM_2 = 0xF
+  };
+  
   enum class HaltControl {
     RUN,
     STOP,
@@ -125,6 +143,16 @@ public:
   
 private:
   
+  template <typename T>
+  auto Read(void* buffer, std::uint32_t address) -> T {
+    return *(T*)(&((std::uint8_t*)buffer)[address]);
+  }
+  
+  template <typename T>
+  void Write(void* buffer, std::uint32_t address, T value) {
+    *(T*)(&((std::uint8_t*)buffer)[address]) = value;
+  }
+  
   auto ReadMMIO (std::uint32_t address) -> std::uint8_t;
   void WriteMMIO(std::uint32_t address, std::uint8_t value);
   std::uint32_t ReadBIOS(std::uint32_t address);
@@ -135,6 +163,11 @@ private:
   void PrefetchStep(std::uint32_t address, int cycles);
   
   void UpdateCycleLUT();
+  
+  /* Contains the last word read from memory.
+   * Required for open bus emulation.
+   */
+  std::uint32_t memory_latch;
   
   /* GamePak prefetch buffer state. */
   struct Prefetch {

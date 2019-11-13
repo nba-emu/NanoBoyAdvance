@@ -81,6 +81,8 @@ void CPU::Reset() {
     cycles32[ARM::ACCESS_SEQ ][i] = 1;
   }
   
+  memory_latch = 0;
+  
   prefetch.active = false;
   prefetch.rd_pos = 0;
   prefetch.wr_pos = 0;

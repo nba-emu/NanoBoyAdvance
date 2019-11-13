@@ -180,7 +180,7 @@ auto WindowLayerSelect::Read(int address) -> std::uint8_t {
   std::uint8_t value = 0;
   
   for (int i = 0; i < 6; i++) {
-    value |= enable[address][i];
+    value |= enable[address][i] << i;
   }
   
   return value;
