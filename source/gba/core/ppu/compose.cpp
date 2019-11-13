@@ -118,6 +118,9 @@ void PPU::RenderScanline() {
       if (mmio.dispcnt.enable[2]) {
         RenderLayerBitmap1();
       }
+      if (mmio.dispcnt.enable[ENABLE_OBJ]) {
+        RenderLayerOAM(true);
+      }
       ComposeScanline(2, 2);
       break;
     }
@@ -127,7 +130,7 @@ void PPU::RenderScanline() {
         RenderLayerBitmap2();
       }
       if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-        RenderLayerOAM();
+        RenderLayerOAM(true);
       }
       ComposeScanline(2, 2);
       break;
@@ -136,6 +139,9 @@ void PPU::RenderScanline() {
       /* BG Mode 5 - 160x128 pixels, 32768 colors */
       if (mmio.dispcnt.enable[2]) {
         RenderLayerBitmap3();
+      }
+      if (mmio.dispcnt.enable[ENABLE_OBJ]) {
+        RenderLayerOAM(true);
       }
       ComposeScanline(2, 2);
       break;

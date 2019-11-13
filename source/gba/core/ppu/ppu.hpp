@@ -119,7 +119,7 @@ private:
   void RenderLayerBitmap1();
   void RenderLayerBitmap2();
   void RenderLayerBitmap3();
-  void RenderLayerOAM();
+  void RenderLayerOAM(bool bitmap_mode = false);
   void RenderWindow(int id);
   void ComposeScanline(int bg_min, int bg_max);
   void Blend(std::uint16_t& target1, std::uint16_t target2, BlendControl::Effect sfx);
