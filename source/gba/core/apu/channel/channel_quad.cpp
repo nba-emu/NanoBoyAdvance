@@ -42,7 +42,7 @@ void QuadChannel::Reset() {
 }
 
 void QuadChannel::Generate() {
-  if (length_enable && sequencer.length <= 0) {
+  if ((length_enable && sequencer.length <= 0) || sequencer.sweep.channel_disabled) {
     sample = 0;
     event.countdown = GetSynthesisIntervalFromFrequency(0);
     return;
@@ -125,10 +125,12 @@ void QuadChannel::Write(int offset, std::uint8_t value) {
     /* Frequency / Control */
     case 4: {
       sweep.initial_freq = (sweep.initial_freq & ~0xFF) | value;
+      sweep.current_freq = sweep.initial_freq;
       break;
     }
     case 5: {
       sweep.initial_freq = (sweep.initial_freq & 0xFF) | (((int)value & 7) << 8);
+      sweep.current_freq = sweep.initial_freq;
       length_enable = value & 0x40;
       
       if (value & 0x80) {
