@@ -24,7 +24,8 @@ using namespace GameBoyAdvance;
 WaveChannel::WaveChannel(Scheduler& scheduler) {
   sequencer.sweep.enabled = false;
   sequencer.envelope.enabled = false;
-
+  sequencer.length_default = 256;
+  
   scheduler.Add(sequencer.event);
   scheduler.Add(event);
   Reset();
@@ -43,7 +44,6 @@ void WaveChannel::Reset() {
   dimension = 0;
   wave_bank = 0;
   length_enable = false;
-  length = 0;
   
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 16; j++) {
@@ -55,7 +55,7 @@ void WaveChannel::Reset() {
 }
 
 void WaveChannel::Generate() {
-  if (!enabled || (length_enable && sequencer.length >= (256 - length))) {
+  if (!enabled || (length_enable && sequencer.length <= 0)) {
     sample = 0;
     event.countdown = GetSynthesisIntervalFromFrequency(0);
     return;
@@ -125,7 +125,7 @@ void WaveChannel::Write(int offset, std::uint8_t value) {
 
     /* Length / Volume */
     case 2: {
-      length = value;
+      sequencer.length = 256 - value;
       break;
     }
     case 3: {

@@ -36,7 +36,6 @@ void NoiseChannel::Reset() {
   frequency_shift = 0;
   frequency_ratio = 0;
   width = 0;
-  length = 0;
   length_enable = false;
   
   lfsr = 0;
@@ -47,7 +46,7 @@ void NoiseChannel::Reset() {
 }
 
 void NoiseChannel::Generate() {
-  if (length_enable && sequencer.length >= (64 - length)) {
+  if (length_enable && sequencer.length <= 0) {
     sample = 0;
     event.countdown = GetSynthesisInterval(7, 15);
     return;
@@ -129,7 +128,7 @@ void NoiseChannel::Write(int offset, std::uint8_t value) {
   switch (offset) {
     /* Length / Envelope */
     case 0: {
-      length = value & 63;
+      sequencer.length = 64 - (value & 63);
       break;
     }
     case 1: {
@@ -150,6 +149,7 @@ void NoiseChannel::Write(int offset, std::uint8_t value) {
       length_enable = value & 0x40;
 
       if (value & 0x80) {
+        /* TODO: are these the correct initialization values? */
         const std::uint16_t lfsr_init[] = { 0x4000, 0x0040 };
         
         sequencer.Restart();

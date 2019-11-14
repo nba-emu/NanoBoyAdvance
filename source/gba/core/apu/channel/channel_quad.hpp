@@ -46,13 +46,9 @@ private:
   }
 
   Event event { 0, [this]() { this->Generate(); } };
-  
   Sequencer sequencer;
-  
   int phase;
-  
-  int  wave_duty;
-  int  length;
+  int wave_duty;
   bool length_enable;
 };
 

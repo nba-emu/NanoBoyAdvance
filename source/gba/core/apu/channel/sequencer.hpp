@@ -135,6 +135,9 @@ public:
   }
   
   void Restart() {
+    if (length == 0) {
+      length = length_default;
+    }
     sweep.Restart();
     envelope.Restart();
     step = 0;
@@ -143,16 +146,21 @@ public:
   void Tick() {
     // http://gbdev.gg8.se/wiki/articles/Gameboy_sound_hardware#Frame_Sequencer
     switch (step) {
-      case 0: length++; break;
+      case 0: length--; break;
       case 1: break;
-      case 2: length++; sweep.Tick(); break;
+      case 2: length--; sweep.Tick(); break;
       case 3: break;
-      case 4: length++; break;
+      case 4: length--; break;
       case 5: break;
-      case 6: length++; sweep.Tick(); break;
+      case 6: length--; sweep.Tick(); break;
       case 7: envelope.Tick(); break;
     }
-      
+    
+//    /* TODO: find a better way to handle this. */
+//    if (length < 0) {
+//      length = 0;
+//    }
+    
     step = (step + 1) % 8;
     
     event.countdown += s_cycles_per_step;
@@ -161,6 +169,7 @@ public:
   Event event { 0, [this]() { this->Tick(); } };
   
   int length;
+  int length_default = 64;
   Envelope envelope;
   Sweep sweep;
   
