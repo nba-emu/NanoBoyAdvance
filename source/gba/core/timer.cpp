@@ -39,6 +39,7 @@ void Timer::Reset() {
     channels[chan_id].control.enable = false;
     channels[chan_id].shift = 0;
     channels[chan_id].mask  = 0;
+    channels[chan_id].cascades_into_timer_causing_irq = false;
   }
 }
 
@@ -91,6 +92,31 @@ void Timer::Write(int chan_id, int offset, std::uint8_t value) {
         channel.cycles  = -2;
         channel.counter = channel.reload;
       }
+      
+      bool connected = false;
+      
+      /* Identify non-cascading timers that are connected to a
+       * cascading timer which is setup to trigger IRQs.
+       */
+      for (int id = 3; id >= 0; id--) {
+        auto const& control = channels[id].control;
+
+        if (!control.enable) {
+          connected = false;
+          continue;
+        }
+        
+        channels[id].cascades_into_timer_causing_irq = false;
+        
+        if (connected) {
+          connected = control.cascade;
+          if (!connected) {
+            channels[id].cascades_into_timer_causing_irq = true;
+          }
+        } else if (control.cascade && control.interrupt) {
+          connected = true;
+        }
+      }
     }
   }
 }
@@ -108,14 +134,14 @@ void Timer::Run(int cycles) {
   }
 }
 
-auto Timer::GetCyclesUntilIRQ() -> int {
+auto Timer::EstimateCyclesUntilIRQ() -> int {
   int cycles = std::numeric_limits<int>::max();
   
   /* TODO: optimize and refactor this. */
   for (auto const& channel : channels) {
-    if (channel.control.interrupt && 
-        channel.control.enable &&
-       !channel.control.cascade) 
+    if ((channel.control.interrupt || channel.cascades_into_timer_causing_irq) && 
+         channel.control.enable &&
+        !channel.control.cascade) 
     {
       int required = ((0x10000 - channel.counter) << channel.shift) - channel.cycles;
       

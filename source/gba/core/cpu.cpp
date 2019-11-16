@@ -235,7 +235,7 @@ void CPU::RunFor(int cycles) {
         cpu.Run();
       } else {
         /* Forward to the next event or timer IRQ. */
-        Tick(std::min(timer.GetCyclesUntilIRQ(), ticks_cpu_left));
+        Tick(std::min(timer.EstimateCyclesUntilIRQ(), ticks_cpu_left));
       }
     }
     

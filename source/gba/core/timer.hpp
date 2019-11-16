@@ -34,7 +34,7 @@ public:
   auto Read (int chan_id, int offset) -> std::uint8_t;
   void Write(int chan_id, int offset, std::uint8_t value);
   void Run(int cycles);
-  auto GetCyclesUntilIRQ() -> int;
+  auto EstimateCyclesUntilIRQ() -> int;
   
 private:
   void Increment(int chan_id, int increment);
@@ -58,6 +58,8 @@ private:
     /* Based on timer frequency. */
     int shift;
     int mask;
+    
+    bool cascades_into_timer_causing_irq;
   } channels[4];
 };
 
