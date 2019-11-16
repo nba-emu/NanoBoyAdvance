@@ -60,7 +60,6 @@ private:
   int  frequency_shift;
   int  frequency_ratio;
   int  width;
-  int  length;
   bool length_enable;
   
   BIAS& bias;
