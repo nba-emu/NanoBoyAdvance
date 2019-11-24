@@ -26,6 +26,7 @@ void PPU::RenderLayerAffine(int id) {
   auto const& mosaic = mmio.mosaic.bg;
   
   std::uint32_t tile_base = bg.tile_block * 16384;
+  std::uint32_t map_base = bg.map_block * 2048;
   
   std::int32_t ref_x = mmio.bgx[id]._current;
   std::int32_t ref_y = mmio.bgy[id]._current;
@@ -47,8 +48,6 @@ void PPU::RenderLayerAffine(int id) {
   int mosaic_x = 0;
   
   for (int _x = 0; _x < 240; _x++) {
-    bool is_backdrop = false;
-    
     std::int32_t x = ref_x >> 8;
     std::int32_t y = ref_y >> 8;
     
@@ -63,48 +62,28 @@ void PPU::RenderLayerAffine(int id) {
       ref_y += pc;
     }
     
-    if (x >= size) {
-      if (bg.wraparound) {
-        x = x % size;
-      } else {
-        is_backdrop = true;
-      }
-    } else if (x < 0) {
-      if (bg.wraparound) {
-        //x = (size + x) % size;
+    if (bg.wraparound) {
+      if (x >= size) {
+        x %= size;
+      } else if (x < 0) {
         x = size + (x % size);
-      } else {
-        is_backdrop = true;
       }
-    }
-
-    if (y >= size) {
-      if (bg.wraparound) {
-        y = y % size;
-      } else {
-        is_backdrop = true;
-      }
-    } else if (y < 0) {
-      if (bg.wraparound) {
-        //y = (size + y) % size;
+      
+      if (y >= size) {
+        y %= size;
+      } else if (y < 0) {
         y = size + (y % size);
-      } else {
-        is_backdrop = true;
       }
-    }
-
-    if (is_backdrop) {
+    } else if (x >= size || y >= size || x < 0 || y < 0) {
       buffer[_x] = s_color_transparent;
       continue;
     }
     
-    int map_x  = x / 8;
-    int map_y  = y / 8;
-    int tile_x = x % 8;
-    int tile_y = y % 8;
-
-    int number = vram[(bg.map_block << 11) + map_y * block_width + map_x];
-    
-    buffer[_x] = DecodeTilePixel8BPP(tile_base, number, tile_x, tile_y);
+    buffer[_x] = DecodeTilePixel8BPP(
+      tile_base,
+      vram[map_base + (y / 8) * block_width + (x / 8)],
+      x % 8,
+      y % 8
+    );
   }
 }
