@@ -89,3 +89,54 @@ auto DecodeTilePixel8BPP(std::uint32_t base, int number, int x, int y, bool spri
     return ReadPalette(sprite ? 16 : 0, index);
   }
 }
+
+void AffineRenderLoop(int id,
+                      int width,
+                      int height,
+                      std::function<void(int, int, int)> render_func) {
+  auto const& bg = mmio.bgcnt[2 + id];
+  auto const& mosaic = mmio.mosaic.bg;
+  std::uint16_t* buffer = buffer_bg[2 + id];
+  
+  std::int32_t ref_x = mmio.bgx[id]._current;
+  std::int32_t ref_y = mmio.bgy[id]._current;
+  std::int16_t pa = mmio.bgpa[id];
+  std::int16_t pc = mmio.bgpc[id];
+  
+  int mosaic_x = 0;
+  
+  for (int _x = 0; _x < 240; _x++) {
+    std::int32_t x = ref_x >> 8;
+    std::int32_t y = ref_y >> 8;
+    
+    if (bg.mosaic_enable) {
+      if (++mosaic_x == mosaic.size_x) {
+        ref_x += mosaic.size_x * pa;
+        ref_y += mosaic.size_x * pc;
+        mosaic_x = 0;
+      }
+    } else {
+      ref_x += pa;
+      ref_y += pc;
+    }
+    
+    if (bg.wraparound) {
+      if (x >= width) {
+        x %= width;
+      } else if (x < 0) {
+        x = width + (x % width);
+      }
+      
+      if (y >= height) {
+        y %= height;
+      } else if (y < 0) {
+        y = height + (y % height);
+      }
+    } else if (x >= width || y >= height || x < 0 || y < 0) {
+      buffer[_x] = s_color_transparent;
+      continue;
+    }
+    
+    render_func(_x, (int)x, (int)y);
+  }
+}

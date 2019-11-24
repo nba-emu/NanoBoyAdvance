@@ -51,10 +51,10 @@ void PPU::Reset() {
   for (int i = 0; i < 2; i++) {
     mmio.bgx[i].Reset();
     mmio.bgy[i].Reset();
-    mmio.bgpa[i] = 0;
+    mmio.bgpa[i] = 0x100;
     mmio.bgpb[i] = 0;
     mmio.bgpc[i] = 0;
-    mmio.bgpd[i] = 0;
+    mmio.bgpd[i] = 0x100;
   }
   
   mmio.winh[0].Reset();

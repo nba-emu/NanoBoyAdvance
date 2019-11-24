@@ -20,6 +20,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 
 #include "registers.hpp"
 #include "../scheduler.hpp"

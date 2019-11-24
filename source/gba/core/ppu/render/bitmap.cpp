@@ -22,77 +22,29 @@
 using namespace GameBoyAdvance;
 
 void PPU::RenderLayerBitmap1() {
-  auto line = mmio.vcount;
-  auto mosaic = mmio.bgcnt[2].mosaic_enable;
-  
-  if (mosaic) {
-    line -= mmio.mosaic.bg._counter_y;
-  }
-  
-  auto offset = line * 480;
-  
-  int mosaic_x = 0;
-  
-  for (int x = 0; x < 240; x++) {
-    int index = offset + (x - mosaic_x) * 2;
+  AffineRenderLoop(0, 240, 160, [&](int line_x, int x, int y) {
+    int index = y * 480 + x * 2;
     
-    buffer_bg[2][x] = (vram[index + 1] << 8) | vram[index];
-  
-    if (mosaic && (++mosaic_x == mmio.mosaic.bg.size_x)) {
-      mosaic_x = 0;
-    }
-  }
+    buffer_bg[2][line_x] = (vram[index + 1] << 8) | vram[index];
+  });
 }
 
 void PPU::RenderLayerBitmap2() {  
-  auto line = mmio.vcount;
-  auto mosaic = mmio.bgcnt[2].mosaic_enable;
-  
-  if (mosaic) {
-    line -= mmio.mosaic.bg._counter_y;
-  }
-  
   auto frame = mmio.dispcnt.frame * 0xA000;
-  auto offset = frame + line * 240;
-
-  int mosaic_x = 0;
   
-  for (int x = 0; x < 240; x++) {
-    buffer_bg[2][x] = ReadPalette(0, vram[offset + x - mosaic_x]);
+  AffineRenderLoop(0, 240, 160, [&](int line_x, int x, int y) {
+    int index = frame + y * 240 + x;
     
-    if (mosaic && (++mosaic_x == mmio.mosaic.bg.size_x)) {
-      mosaic_x = 0;
-    }
-  }
+    buffer_bg[2][line_x] = ReadPalette(0, vram[index]);
+  });
 }
 
 void PPU::RenderLayerBitmap3() {
-  auto line = mmio.vcount;
-  auto mosaic = mmio.bgcnt[2].mosaic_enable;
-  
-  if (mosaic) {
-    line -= mmio.mosaic.bg._counter_y;
-  }
-  
   auto frame = mmio.dispcnt.frame * 0xA000;
-  auto offset = frame + line * 320;
-
-  int mosaic_x = 0;
   
-  for (int x = 0; x < 240; x++) {
-    int _x = x - mosaic_x;
+  AffineRenderLoop(0, 160, 128, [&](int line_x, int x, int y) {
+    int index = frame + y * 320 + x * 2;
     
-    /* TODO: should we check the mosaic-adjusted line or VCOUNT? */
-    if (_x < 160 && line < 128) {
-      int index = offset + _x * 2;
-      
-      buffer_bg[2][x] = (vram[index + 1] << 8) | vram[index];
-    } else {
-      buffer_bg[2][x] = s_color_transparent;
-    }
-    
-    if (mosaic && (++mosaic_x == mmio.mosaic.bg.size_x)) {
-      mosaic_x = 0;
-    }
-  }
+    buffer_bg[2][line_x] = (vram[index + 1] << 8) | vram[index];
+  });
 }
