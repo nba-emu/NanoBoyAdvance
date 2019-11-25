@@ -37,14 +37,14 @@ public:
   CPU(std::shared_ptr<Config> config);
 
   void Reset();
-  
   void RunFor(int cycles);
   
   /* TODO: provide way to read CPU memory without consuming cycles. */
-  std::uint8_t  ReadByte(std::uint32_t address, ARM::AccessType type) final;
-  std::uint16_t ReadHalf(std::uint32_t address, ARM::AccessType type) final;
-  std::uint32_t ReadWord(std::uint32_t address, ARM::AccessType type) final;
-  void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) final;
+  
+  auto ReadByte(std::uint32_t address, ARM::AccessType type) -> std::uint8_t  final;
+  auto ReadHalf(std::uint32_t address, ARM::AccessType type) -> std::uint16_t final;
+  auto ReadWord(std::uint32_t address, ARM::AccessType type) -> std::uint32_t final;
+  void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type)  final;
   void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type) final;
   void WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type) final;
   
@@ -155,7 +155,8 @@ private:
   
   auto ReadMMIO (std::uint32_t address) -> std::uint8_t;
   void WriteMMIO(std::uint32_t address, std::uint8_t value);
-  std::uint32_t ReadBIOS(std::uint32_t address);
+  auto ReadBIOS(std::uint32_t address) -> std::uint32_t;
+  auto ReadUnused() -> std::uint32_t;
   
   void SWI(std::uint32_t call_id) final { }
   void Tick(int cycles) final;
@@ -163,11 +164,6 @@ private:
   void PrefetchStep(std::uint32_t address, int cycles);
   
   void UpdateCycleLUT();
-  
-  /* Contains the last word read from memory.
-   * Required for open bus emulation.
-   */
-  std::uint32_t memory_latch;
   
   /* GamePak prefetch buffer state. */
   struct Prefetch {

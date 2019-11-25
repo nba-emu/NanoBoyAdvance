@@ -30,20 +30,67 @@
                                   ((~memory.rom.size & 0x02000000) || address >= 0x0DFFFF00)
 
 inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
-  if (cpu.state.r15 >= 0x4000) {
-    return memory.bios_opcode;
+  int shift = (address & 3) * 8;
+  
+  address &= ~3;
+
+  if (address >= 0x4000) {
+    return ReadUnused() >> shift;
   }
   
-  if (address >= 0x4000) {
-    /* TODO: this actually invokes regular Open Bus. */
-    memory.bios_opcode = 0;
-    return 0;
+  if (cpu.state.r15 >= 0x4000) {
+    return memory.bios_opcode >> shift;
   }
 
-  return (memory.bios_opcode = Read<std::uint32_t>(memory.bios, address));
+  memory.bios_opcode = Read<std::uint32_t>(memory.bios, address);
+
+  return memory.bios_opcode >> shift;
 }
 
-inline std::uint8_t CPU::ReadByte(std::uint32_t address, ARM::AccessType type) {
+inline std::uint32_t CPU::ReadUnused() {
+  if (!cpu.state.cpsr.f.thumb) {
+    return cpu.GetPrefetchedOpcode(1);
+  }
+  
+  auto r15 = cpu.state.r15;
+  
+  switch (r15 >> 24) {
+    case REGION_EWRAM:
+    case REGION_PRAM:
+    case REGION_VRAM:
+    case REGION_ROM_W0_L:
+    case REGION_ROM_W0_H:
+    case REGION_ROM_W1_L:
+    case REGION_ROM_W1_H:
+    case REGION_ROM_W2_L:
+    case REGION_ROM_W2_H: {
+      return cpu.GetPrefetchedOpcode(1) * 0x00010001;
+    }
+    case REGION_BIOS:
+    case REGION_OAM: {
+      if (r15 & 2) {
+        return cpu.GetPrefetchedOpcode(0) |
+              (cpu.GetPrefetchedOpcode(1) << 16);
+      } else {
+        /* FIXME: this is not correct, but also [$+6] has not been prefetched at this point. */
+        return cpu.GetPrefetchedOpcode(1) * 0x00010001;
+      }
+    }
+    case REGION_IWRAM: {
+      if (r15 & 2) {
+        return cpu.GetPrefetchedOpcode(0) |
+              (cpu.GetPrefetchedOpcode(1) << 16);
+      } else {
+        return cpu.GetPrefetchedOpcode(1) |
+              (cpu.GetPrefetchedOpcode(0) << 16);
+      }
+    }
+  }
+  
+  return 0;
+}
+
+inline auto CPU::ReadByte(std::uint32_t address, ARM::AccessType type) -> std::uint8_t {
   int page = address >> 24;
   int cycles = cycles16[type][page];
   
@@ -106,13 +153,15 @@ inline std::uint8_t CPU::ReadByte(std::uint32_t address, ARM::AccessType type) {
       return memory.rom.backup->Read(address);
     }
     
-    default: { 
-      return 0;
+    default: {
+      int shift = (address & 3) * 8;
+      
+      return (ReadUnused() >> shift) & 0xFF;
     }
   }
 }
 
-inline std::uint16_t CPU::ReadHalf(std::uint32_t address, ARM::AccessType type) {
+inline auto CPU::ReadHalf(std::uint32_t address, ARM::AccessType type) -> std::uint16_t {
   int page = address >> 24;
   int cycles = cycles16[type][page];
   
@@ -189,12 +238,14 @@ inline std::uint16_t CPU::ReadHalf(std::uint32_t address, ARM::AccessType type) 
     }
 
     default: {
-      return 0;
+      int shift = (address & 2) * 8;
+      
+      return (ReadUnused() >> shift) & 0xFFFF;
     }
   }
 }
 
-inline std::uint32_t CPU::ReadWord(std::uint32_t address, ARM::AccessType type) {
+inline auto CPU::ReadWord(std::uint32_t address, ARM::AccessType type) -> std::uint32_t {
   int page = address >> 24;
   int cycles = cycles32[type][page];
   
@@ -265,7 +316,7 @@ inline std::uint32_t CPU::ReadWord(std::uint32_t address, ARM::AccessType type) 
     }
 
     default: {
-      return 0;
+      return ReadUnused();
     }
   }
 }

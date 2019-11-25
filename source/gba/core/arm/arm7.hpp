@@ -44,7 +44,11 @@ public:
   void Reset();
   void Run();
   void SignalIRQ();
-
+  
+  auto GetPrefetchedOpcode(int slot) -> std::uint32_t {
+    return pipe.opcode[slot];
+  }
+  
   RegisterFile state;
   
 private:
