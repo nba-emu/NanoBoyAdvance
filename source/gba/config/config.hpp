@@ -31,8 +31,7 @@ namespace GameBoyAdvance {
 struct Config {
   std::string bios_path = "bios.bin";
   
-  bool skip_bios  = false;
-  bool mirror_rom = true;
+  bool skip_bios = false;
   
   enum class SaveType {
     Detect,
