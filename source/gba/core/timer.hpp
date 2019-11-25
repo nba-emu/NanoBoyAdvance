@@ -40,6 +40,7 @@ private:
   void Increment(int chan_id, int increment);
   
   CPU* cpu;
+  bool may_cause_irq;
   
   struct Channel {
     int id;

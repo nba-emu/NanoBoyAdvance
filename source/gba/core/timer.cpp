@@ -28,6 +28,8 @@ static constexpr int g_ticks_shift[4] = { 0, 6, 8, 10 };
 static constexpr int g_ticks_mask[4] = { 0, 0x3F, 0xFF, 0x3FF };
 
 void Timer::Reset() {
+  may_cause_irq = false;
+  
   for (int chan_id = 0; chan_id < 4; chan_id++) {
     channels[chan_id].id = chan_id;
     channels[chan_id].cycles = 0;
@@ -95,6 +97,8 @@ void Timer::Write(int chan_id, int offset, std::uint8_t value) {
       
       bool connected = false;
       
+      may_cause_irq = false;
+      
       /* Identify non-cascading timers that are connected to a
        * cascading timer which is setup to trigger IRQs.
        */
@@ -116,6 +120,8 @@ void Timer::Write(int chan_id, int offset, std::uint8_t value) {
         } else if (control.cascade && control.interrupt) {
           connected = true;
         }
+        
+        may_cause_irq |= control.interrupt;
       }
     }
   }
@@ -137,11 +143,14 @@ void Timer::Run(int cycles) {
 auto Timer::EstimateCyclesUntilIRQ() -> int {
   int cycles = std::numeric_limits<int>::max();
   
-  /* TODO: optimize and refactor this. */
+  if (!may_cause_irq) {
+    return cycles;
+  }
+  
   for (auto const& channel : channels) {
-    if ((channel.control.interrupt || channel.cascades_into_timer_causing_irq) && 
-         channel.control.enable &&
-        !channel.control.cascade) 
+    if (channel.control.enable &&
+       (channel.control.interrupt || channel.cascades_into_timer_causing_irq) && 
+       !channel.control.cascade) 
     {
       int required = ((0x10000 - channel.counter) << channel.shift) - channel.cycles;
       
