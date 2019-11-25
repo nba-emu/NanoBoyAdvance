@@ -118,38 +118,47 @@ void APU::Generate() {
     resolution_old = mmio.bias.resolution;
   }
   
-  DSP::StereoSample<float> sample { 0, 0 };
+  DSP::StereoSample<std::int32_t> sample { 0, 0 };
   
   auto& psg = mmio.soundcnt.psg;
   auto& dma = mmio.soundcnt.dma;
   
-  /* TODO: what happens if volume=3 (forbidden)? */
-  constexpr float psg_volume_tab[4] = { 0.25, 0.5, 1.0, 0.0 };
-  constexpr float dma_volume_tab[2] = { 2.0, 4.0 };
+  constexpr int scale = 4 * 7; // required, otherwise we loose dynamic range.
+  constexpr std::int32_t maximum = 0x3FF * scale;
   
-  float psg_volume = psg_volume_tab[psg.volume];
+  /* TODO: what happens if volume=3 (forbidden)? */
+  constexpr int psg_volume_tab[4] = { 1, 2, 4, 0 };
+  constexpr int dma_volume_tab[2] = { scale * 2, scale * 4 };
+  
+  auto psg_volume = psg_volume_tab[psg.volume];
   
   for (int channel = 0; channel < 2; channel++) {
-    std::int16_t psg_sample = 0;
+    std::int32_t psg_sample = 0;
     
     if (psg.enable[channel][0]) psg_sample += psg1.sample;
     if (psg.enable[channel][1]) psg_sample += psg2.sample;
     if (psg.enable[channel][2]) psg_sample += psg3.sample;
     if (psg.enable[channel][3]) psg_sample += psg4.sample;
     
-    sample[channel] += psg_sample/float(0x600) * psg_volume * psg.master[channel]/7.0f;
-    
+    sample[channel] += psg_sample * psg_volume * psg.master[channel];
+
     if (dma[0].enable[channel]) {
-      sample[channel] += latch[0]/float(0x600) * dma_volume_tab[dma[0].volume];
+      sample[channel] += latch[0] * dma_volume_tab[dma[0].volume];
     }
     
     if (dma[1].enable[channel]) {
-      sample[channel] += latch[1]/float(0x600) * dma_volume_tab[dma[1].volume];
+      sample[channel] += latch[1] * dma_volume_tab[dma[1].volume];
     }
+    
+    sample[channel] += mmio.bias.level * scale;
+    sample[channel]  = std::clamp(sample[channel], 0, maximum);
   }
   
   buffer_mutex.lock();
-  resampler->Write(sample);
+  resampler->Write({
+    (sample[0] / float(maximum)) * 2.0f - 1.0f,
+    (sample[1] / float(maximum)) * 2.0f - 1.0f,
+  });
   buffer_mutex.unlock();
   
   event.countdown += bias.GetSampleInterval();
