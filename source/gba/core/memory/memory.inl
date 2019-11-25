@@ -352,13 +352,13 @@ inline void CPU::WriteByte(std::uint32_t address, std::uint8_t value, ARM::Acces
     }
     case REGION_VRAM: {
       address &= 0x1FFFF;
-      if (address >= 0x18000)
+      if (address >= 0x18000) {
         address &= ~0x8000;
+      }
+      if (address >= 0x10000) {
+        break;
+      }
       Write<std::uint16_t>(memory.vram, address, value * 0x0101);
-      break;
-    }
-    case REGION_OAM: {
-      Write<std::uint16_t>(memory.oam, address & 0x3FF, value * 0x0101);
       break;
     }
     case REGION_SRAM_1:
