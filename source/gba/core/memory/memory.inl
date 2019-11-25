@@ -35,7 +35,7 @@ inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
   address &= ~3;
 
   if (address >= 0x4000) {
-    return ReadUnused() >> shift;
+    return ReadUnused(address) >> shift;
   }
   
   if (cpu.state.r15 >= 0x4000) {
@@ -47,47 +47,52 @@ inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
   return memory.bios_opcode >> shift;
 }
 
-inline std::uint32_t CPU::ReadUnused() {
-  if (!cpu.state.cpsr.f.thumb) {
-    return cpu.GetPrefetchedOpcode(1);
-  }
+inline std::uint32_t CPU::ReadUnused(std::uint32_t address) {
+  std::uint32_t result = 0;
   
-  auto r15 = cpu.state.r15;
+  if (cpu.state.cpsr.f.thumb) {
+    auto r15 = cpu.state.r15;
   
-  switch (r15 >> 24) {
-    case REGION_EWRAM:
-    case REGION_PRAM:
-    case REGION_VRAM:
-    case REGION_ROM_W0_L:
-    case REGION_ROM_W0_H:
-    case REGION_ROM_W1_L:
-    case REGION_ROM_W1_H:
-    case REGION_ROM_W2_L:
-    case REGION_ROM_W2_H: {
-      return cpu.GetPrefetchedOpcode(1) * 0x00010001;
-    }
-    case REGION_BIOS:
-    case REGION_OAM: {
-      if (r15 & 2) {
-        return cpu.GetPrefetchedOpcode(0) |
-              (cpu.GetPrefetchedOpcode(1) << 16);
-      } else {
-        /* FIXME: this is not correct, but also [$+6] has not been prefetched at this point. */
-        return cpu.GetPrefetchedOpcode(1) * 0x00010001;
+    switch (r15 >> 24) {
+      case REGION_EWRAM:
+      case REGION_PRAM:
+      case REGION_VRAM:
+      case REGION_ROM_W0_L:
+      case REGION_ROM_W0_H:
+      case REGION_ROM_W1_L:
+      case REGION_ROM_W1_H:
+      case REGION_ROM_W2_L:
+      case REGION_ROM_W2_H: {
+        result = cpu.GetPrefetchedOpcode(1) * 0x00010001;
+        break;
+      }
+      case REGION_BIOS:
+      case REGION_OAM: {
+        if (r15 & 3) {
+          result = cpu.GetPrefetchedOpcode(0) |
+                  (cpu.GetPrefetchedOpcode(1) << 16);
+        } else {
+          /* FIXME: this is not correct, but also [$+6] has not been prefetched at this point. */
+          result = cpu.GetPrefetchedOpcode(1) * 0x00010001;
+        }
+        break;
+      }
+      case REGION_IWRAM: {
+        if (r15 & 3) {
+          result = cpu.GetPrefetchedOpcode(0) |
+                  (cpu.GetPrefetchedOpcode(1) << 16);
+        } else {
+          result = cpu.GetPrefetchedOpcode(1) |
+                  (cpu.GetPrefetchedOpcode(0) << 16);
+        }
+        break;
       }
     }
-    case REGION_IWRAM: {
-      if (r15 & 2) {
-        return cpu.GetPrefetchedOpcode(0) |
-              (cpu.GetPrefetchedOpcode(1) << 16);
-      } else {
-        return cpu.GetPrefetchedOpcode(1) |
-              (cpu.GetPrefetchedOpcode(0) << 16);
-      }
-    }
+  } else {
+    result = cpu.GetPrefetchedOpcode(1);
   }
-  
-  return 0;
+    
+  return result >> ((address & 3) * 8);
 }
 
 inline auto CPU::ReadByte(std::uint32_t address, ARM::AccessType type) -> std::uint8_t {
@@ -154,9 +159,7 @@ inline auto CPU::ReadByte(std::uint32_t address, ARM::AccessType type) -> std::u
     }
     
     default: {
-      int shift = (address & 3) * 8;
-      
-      return (ReadUnused() >> shift) & 0xFF;
+      return ReadUnused(address);
     }
   }
 }
@@ -238,9 +241,7 @@ inline auto CPU::ReadHalf(std::uint32_t address, ARM::AccessType type) -> std::u
     }
 
     default: {
-      int shift = (address & 2) * 8;
-      
-      return (ReadUnused() >> shift) & 0xFFFF;
+      return ReadUnused(address);
     }
   }
 }
@@ -316,7 +317,7 @@ inline auto CPU::ReadWord(std::uint32_t address, ARM::AccessType type) -> std::u
     }
 
     default: {
-      return ReadUnused();
+      return ReadUnused(address);
     }
   }
 }

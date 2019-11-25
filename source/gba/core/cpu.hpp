@@ -156,7 +156,7 @@ private:
   auto ReadMMIO (std::uint32_t address) -> std::uint8_t;
   void WriteMMIO(std::uint32_t address, std::uint8_t value);
   auto ReadBIOS(std::uint32_t address) -> std::uint32_t;
-  auto ReadUnused() -> std::uint32_t;
+  auto ReadUnused(std::uint32_t address) -> std::uint32_t;
   
   void SWI(std::uint32_t call_id) final { }
   void Tick(int cycles) final;
