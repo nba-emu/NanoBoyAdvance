@@ -123,8 +123,8 @@ void BIAS::Reset() {
 
 auto BIAS::Read(int address) -> std::uint8_t {
   switch (address) {
-    case 0:  return  (level & 0x7F) << 1;
-    case 1:  return ((level >> 7) & 3) | (resolution << 6);
+    case 0:  return   level & 0xFF;
+    case 1:  return ((level >> 8) & 3) | (resolution << 6);
     default: return 0;
   }
 }
@@ -132,11 +132,11 @@ auto BIAS::Read(int address) -> std::uint8_t {
 void BIAS::Write(int address, std::uint8_t value) {
   switch (address) {
     case 0: {
-      level = (level & ~0x7F) | (value >> 1);
+      level = (level & ~0xFF) | (value & ~1);
       break;
     }
     case 1: {
-      level = (level & 0x7F) | ((value & 3) << 7);
+      level = (level & 0xFF) | ((value & 3) << 8);
       resolution = value >> 6;
       break;
     }
