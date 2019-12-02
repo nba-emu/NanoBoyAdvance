@@ -1,10 +1,8 @@
+![logo](media/logo_cropped.png)
+
 <h2>NanoboyAdvance</h2>
 
-![logo](media/logo.png)
-
 ![license](https://img.shields.io/github/license/fleroviux/NanoboyAdvance)
-
-#### About
 
 NanoboyAdvance is a Nintendo GameBoy Advance (TM) emulator written in C++17.<br>
 The goal is to create a modern, accurate GameBoy Advance emulator while also being fast
