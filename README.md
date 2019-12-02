@@ -29,7 +29,7 @@ In order to compile NanoboyAdvance you will need a few dependencies:
 ### Setup
 
 Download or clone the repository to a folder of your choice.
-Then open a command prompt, create a build folder, run `cmake` and make to build the emulator.
+Then open a command prompt, create a build folder, run `cmake` and `make` to build the emulator.
 ```bash
 cd /your/path/NanoboyAdvance
 mkdir build
