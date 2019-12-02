@@ -1,5 +1,9 @@
 <h2>NanoboyAdvance</h2>
 
+![logo](media/logo.png)
+
+![license](https://img.shields.io/github/license/fleroviux/NanoboyAdvance)
+
 #### About
 
 NanoboyAdvance is a Nintendo GameBoy Advance (TM) emulator written in C++17.<br>
@@ -13,7 +17,6 @@ Even the games from the `Classic NES` series, which are known to be troublesome 
 #### Media
 
 ![screenshot1](media/screenshot1.png)
-![screenshot1](media/screenshot2.png)
 
 # Compiling
 
@@ -28,7 +31,7 @@ In order to compile NanoboyAdvance you will need a few dependencies:
 ## Setup
 
 Download or clone the repository to a folder of your choice.
-Then open a command prompt, create a build folder, run cmake and make to build the emulator.
+Then open a command prompt, create a build folder, run `cmake` and make to build the emulator.
 ```bash
 cd /your/path/NanoboyAdvance
 mkdir build
@@ -56,3 +59,8 @@ You can then run the emulator:
 ```bash
 ./NanoboyAdvance-SDL path_to_your_rom.gba
 ```
+
+# Acknowledgement
+
+- GBATEK by Martin Korth: a great piece of documentation that made this emulator possible.
+- VisualBoyAdvance by Forgotten: inspiring me to pursue emulator programming.
