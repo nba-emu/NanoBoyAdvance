@@ -12,11 +12,11 @@ The emulator implements the core hardware completely and with fairly high accura
 Any game that I tested so far goes in-game in NanoboyAdvance, almost all of them without known issues.
 Even the games from the `Classic NES` series, which are known to be troublesome to emulate, work properly. 
 
-#### Media
+## Media
 
 ![screenshot1](media/screenshot1.png)
 
-# Compiling
+## Compiling
 
 Currently the code is known to be compilable on Linux and Windows.
 Use of a recent G++ compiler is recommmended. Other compilers *might* work but have not been tested so far.
@@ -26,7 +26,7 @@ In order to compile NanoboyAdvance you will need a few dependencies:
 - CMake
 - SDL2 development files (libsdl2-dev on a Debian-based system)
 
-## Setup
+### Setup
 
 Download or clone the repository to a folder of your choice.
 Then open a command prompt, create a build folder, run `cmake` and make to build the emulator.
@@ -39,7 +39,7 @@ make
 ```
 The compiled executable can be found at `build/source/platform/sdl/`.
 
-## Rebuilding
+### Rebuilding
 
 When rebuilding you can just re-run make from the command prompt.
 ```bash
@@ -47,7 +47,7 @@ cd /your/path/NanoboyAdvance/build
 make
 ```
 
-# Running
+## Running
 
 In order to run NanoboyAdvance you will need a BIOS file.
 You can either dump your own or get an open source replacement online (https://github.com/Nebuleon/ReGBA/blob/master/bios/gba_bios.bin).
@@ -58,7 +58,13 @@ You can then run the emulator:
 ./NanoboyAdvance-SDL path_to_your_rom.gba
 ```
 
-# Acknowledgement
+## Limitations
+- currently there is no decent GUI or configuration system.
+- no link-cable or RTC support yet.
+- some of the code is not endian-safe.
+
+## Acknowledgement
 
 - GBATEK by Martin Korth: a great piece of documentation that made this emulator possible.
-- VisualBoyAdvance by Forgotten: inspiring me to pursue emulator programming.
+- mGBA by endrift: great test suite, also referenced its code for a few details.
+- VisualBoyAdvance by Forgotten: inspired me to pursue emulator programming.
