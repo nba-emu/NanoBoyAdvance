@@ -1,6 +1,6 @@
-![logo](media/logo_cropped.png)
-
 <h2>NanoboyAdvance</h2>
+
+![logo](media/logo_cropped.png)
 
 ![license](https://img.shields.io/github/license/fleroviux/NanoboyAdvance)
 
