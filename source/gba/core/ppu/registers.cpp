@@ -74,11 +74,11 @@ auto DisplayStatus::Read(int address) -> std::uint8_t {
   switch (address) {
   case 0:
     return vblank_flag |
-      (hblank_flag << 1) |
-      (vcount_flag << 2) |
-      (vblank_irq_enable << 3) |
-      (hblank_irq_enable << 4) |
-      (vcount_irq_enable << 5);
+          (hblank_flag << 1) |
+          (vcount_flag << 2) |
+          (vblank_irq_enable << 3) |
+          (hblank_irq_enable << 4) |
+          (vcount_irq_enable << 5);
   case 1:
     return vcount_setting;
   }
@@ -107,27 +107,31 @@ auto BackgroundControl::Read(int address) -> std::uint8_t {
   switch (address) {
   case 0:
     return priority |
-      (tile_block << 2) |
-      (mosaic_enable << 6) |
-      (full_palette << 7);
+          (tile_block << 2) |
+          (unused << 4) |
+          (mosaic_enable << 6) |
+          (full_palette << 7);
   case 1:
     return map_block |
-      (wraparound << 5) |
-      (size << 6);
+          (wraparound << 5) |
+          (size << 6);
   }
 }
 
-void BackgroundControl::Write(int address, std::uint8_t value) {
+void BackgroundControl::Write(int address, std::uint8_t value) {  
   switch (address) {
   case 0:
     priority = value & 3;
     tile_block = (value >> 2) & 3;
+    unused = (value >> 4) & 3;
     mosaic_enable = (value >> 6) & 1;
     full_palette = value >> 7;
     break;
   case 1:
     map_block = value & 0x1F;
-    wraparound = (value >> 5) & 1;
+    if (id >= 2) {
+      wraparound = (value >> 5) & 1;
+    }
     size = value >> 6;
     break;
   }
@@ -245,6 +249,7 @@ void Mosaic::Write(int address, std::uint8_t value) {
   case 0: {
     bg.size_x = (value & 15) + 1;
     bg.size_y = (value >> 4) + 1;
+    
     /* TODO: find out if/how the hardware does this. */
     bg._counter_y = 0;
     break;
@@ -252,6 +257,7 @@ void Mosaic::Write(int address, std::uint8_t value) {
   case 1: {
     obj.size_x = (value & 15) + 1;
     obj.size_y = (value >> 4) + 1;
+    
     /* TODO: find out if/how the hardware does this. */
     obj._counter_y = 0;
     break;

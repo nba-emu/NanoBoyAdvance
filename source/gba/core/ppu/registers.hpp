@@ -54,15 +54,21 @@ struct DisplayStatus {
 struct BackgroundControl {
   int priority;
   int tile_block;
+  int unused;
   int mosaic_enable;
   int full_palette;
   int map_block;
-  int wraparound;
+  int wraparound = false;
   int size;
 
+  BackgroundControl(int id) : id(id) {}
+  
   void Reset();
   auto Read(int address) -> std::uint8_t;
   void Write(int address, std::uint8_t value);
+
+private:
+  int id;
 };
 
 struct ReferencePoint {

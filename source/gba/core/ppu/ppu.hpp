@@ -45,7 +45,7 @@ public:
 
     std::uint8_t vcount;
     
-    BackgroundControl bgcnt[4];
+    BackgroundControl bgcnt[4] { 0, 1, 2, 3 };
     
     std::uint16_t bghofs[4];
     std::uint16_t bgvofs[4];

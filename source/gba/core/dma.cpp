@@ -316,10 +316,10 @@ void DMA::Write(int chan_id, int offset, std::uint8_t value) {
       channel.src_cntl  = Channel::Control((channel.src_cntl & 0b01) | ((value & 1)<<1));
       channel.size      = Channel::Size((value>>2) & 1);
       channel.time      = Channel::Timing((value>>4) & 3);
-      channel.repeat    = value & 2;
-      channel.gamepak   = value & 8;
-      channel.interrupt = value & 64;
-      channel.enable    = value & 128;
+      channel.repeat    =  value & 2;
+      channel.gamepak   = (value & 8) && chan_id == 3;
+      channel.interrupt =  value & 64;
+      channel.enable    =  value & 128;
       
       channel.is_fifo_dma = (channel.time == Channel::SPECIAL) && 
                             (chan_id == 1 || chan_id == 2);

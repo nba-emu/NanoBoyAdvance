@@ -50,14 +50,24 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case WINOUT+1:   return ppu_io.winout.Read(1);
     case BLDCNT+0:   return ppu_io.bldcnt.Read(0);
     case BLDCNT+1:   return ppu_io.bldcnt.Read(1);
+    case BLDALPHA+0: return ppu_io.eva;
+    case BLDALPHA+1: return ppu_io.evb;
     
     /* DMAs 0-3 */
+    case DMA0CNT_L:
+    case DMA0CNT_L+1: return 0;
     case DMA0CNT_H:   return dma.Read(0, 10);
     case DMA0CNT_H+1: return dma.Read(0, 11);
+    case DMA1CNT_L:
+    case DMA1CNT_L+1: return 0;
     case DMA1CNT_H:   return dma.Read(1, 10);
     case DMA1CNT_H+1: return dma.Read(1, 11);
+    case DMA2CNT_L:
+    case DMA2CNT_L+1: return 0;
     case DMA2CNT_H:   return dma.Read(2, 10);
     case DMA2CNT_H+1: return dma.Read(2, 11);
+    case DMA3CNT_L:
+    case DMA3CNT_L+1: return 0;
     case DMA3CNT_H:   return dma.Read(3, 10);
     case DMA3CNT_H+1: return dma.Read(3, 11);
       
@@ -68,28 +78,43 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case SOUND1CNT_H+1: return apu.psg1.Read(3);
     case SOUND1CNT_X:   return apu.psg1.Read(4);
     case SOUND1CNT_X+1: return apu.psg1.Read(5);
+    case SOUND1CNT_X+2:
+    case SOUND1CNT_X+3: return 0;
     case SOUND2CNT_L:   return apu.psg2.Read(2);
     case SOUND2CNT_L+1: return apu.psg2.Read(3);
     case SOUND2CNT_H:   return apu.psg2.Read(4);
     case SOUND2CNT_H+1: return apu.psg2.Read(5);
+    case SOUND2CNT_H+2: 
+    case SOUND2CNT_H+3: return 0;
     case SOUND3CNT_L:   return apu.psg3.Read(0);
     case SOUND3CNT_L+1: return apu.psg3.Read(1);
     case SOUND3CNT_H:   return apu.psg3.Read(2);
     case SOUND3CNT_H+1: return apu.psg3.Read(3);
     case SOUND3CNT_X:   return apu.psg3.Read(4);
     case SOUND3CNT_X+1: return apu.psg3.Read(5);
+    case SOUND3CNT_X+2:
+    case SOUND3CNT_X+3: return 0;
     case SOUND4CNT_L:   return apu.psg4.Read(0);
     case SOUND4CNT_L+1: return apu.psg4.Read(1);
+    case SOUND4CNT_L+2:
+    case SOUND4CNT_L+3: return 0;
     case SOUND4CNT_H:   return apu.psg4.Read(4);
     case SOUND4CNT_H+1: return apu.psg4.Read(5);
+    case SOUND4CNT_H+2:
+    case SOUND4CNT_H+3: return 0;
     case SOUNDCNT_L:   return apu_io.soundcnt.Read(0);
     case SOUNDCNT_L+1: return apu_io.soundcnt.Read(1);
     case SOUNDCNT_H:   return apu_io.soundcnt.Read(2);
     case SOUNDCNT_H+1: return apu_io.soundcnt.Read(3);
     case SOUNDCNT_X:   return apu_io.soundcnt.Read(4);
-    case SOUNDBIAS:    return apu_io.bias.Read(0);
-    case SOUNDBIAS+1:  return apu_io.bias.Read(1);
-      
+    case SOUNDCNT_X+1:
+    case SOUNDCNT_X+2:
+    case SOUNDCNT_X+3:  return 0;
+    case SOUNDBIAS:   return apu_io.bias.Read(0);
+    case SOUNDBIAS+1: return apu_io.bias.Read(1);
+    case SOUNDBIAS+2:
+    case SOUNDBIAS+3: return 0;
+
     /* Timers 0-3 */
     case TM0CNT_L:   return timer.Read(0, 0);
     case TM0CNT_L+1: return timer.Read(0, 1);
@@ -142,7 +167,8 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
             (mmio.waitcnt.prefetch << 6);
     }
   }
-  return 0;
+  
+  return ReadUnused(address);
 }
 
 void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
