@@ -115,7 +115,7 @@ public:
 
     std::uint16_t irq_ie;
     std::uint16_t irq_if;
-    std::uint16_t irq_ime;
+    int irq_ime;
 
     HaltControl haltcnt;
 

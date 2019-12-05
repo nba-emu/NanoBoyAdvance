@@ -20,6 +20,8 @@
 #include "registers.hpp"
 #include "../cpu.hpp"
 
+#include <cstdio>
+
 using namespace GameBoyAdvance;
 
 using Key = InputDevice::Key;
@@ -109,7 +111,7 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case SOUNDCNT_X:   return apu_io.soundcnt.Read(4);
     case SOUNDCNT_X+1:
     case SOUNDCNT_X+2:
-    case SOUNDCNT_X+3:  return 0;
+    case SOUNDCNT_X+3: return 0;
     case SOUNDBIAS:   return apu_io.bias.Read(0);
     case SOUNDBIAS+1: return apu_io.bias.Read(1);
     case SOUNDBIAS+2:
@@ -119,15 +121,19 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case TM0CNT_L:   return timer.Read(0, 0);
     case TM0CNT_L+1: return timer.Read(0, 1);
     case TM0CNT_H:   return timer.Read(0, 2);
+    case TM0CNT_H+1: return 0;
     case TM1CNT_L:   return timer.Read(1, 0);
     case TM1CNT_L+1: return timer.Read(1, 1);
     case TM1CNT_H:   return timer.Read(1, 2);
+    case TM1CNT_H+1: return 0;
     case TM2CNT_L:   return timer.Read(2, 0);
     case TM2CNT_L+1: return timer.Read(2, 1);
     case TM2CNT_H:   return timer.Read(2, 2);
+    case TM2CNT_H+1: return 0;
     case TM3CNT_L:   return timer.Read(3, 0);
     case TM3CNT_L+1: return timer.Read(3, 1);
     case TM3CNT_H:   return timer.Read(3, 2);
+    case TM3CNT_H+1: return 0;
   
     case KEYINPUT+0: {
       return (config->input_dev->Poll(Key::A)      ? 0 : 1)  |
@@ -149,8 +155,10 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case IE+1:  return mmio.irq_ie  >> 8;
     case IF+0:  return mmio.irq_if  & 0xFF;
     case IF+1:  return mmio.irq_if  >> 8;
-    case IME+0: return mmio.irq_ime & 0xFF;
-    case IME+1: return mmio.irq_ime >> 8;
+    case IME+0: return mmio.irq_ime;
+    case IME+1:
+    case IME+2:
+    case IME+3: return 0;
       
     /* Waitstates */
     case WAITCNT+0: {
@@ -166,6 +174,8 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
             (mmio.waitcnt.phi << 3) |
             (mmio.waitcnt.prefetch << 6);
     }
+    case WAITCNT+2:
+    case WAITCNT+3: return 0;
   }
   
   return ReadUnused(address);
@@ -452,14 +462,8 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
       mmio.irq_if &= ~(value << 8);
       break;
     }
-    case IME+0: {
-      mmio.irq_ime &= 0xFF00;
-      mmio.irq_ime |= value;
-      break;
-    }
-    case IME+1: {
-      mmio.irq_ime &= 0x00FF;
-      mmio.irq_ime |= value << 8;
+    case IME: {
+      mmio.irq_ime = value & 1;
       break;
     }
 
