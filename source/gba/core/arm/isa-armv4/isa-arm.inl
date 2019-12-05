@@ -53,6 +53,8 @@ void ARM_DataProcessing(std::uint32_t instruction) {
 
   int carry = state.cpsr.f.c;
 
+  pipe.fetch_type = ACCESS_SEQ;
+
   if (immediate) {
     int value = instruction & 0xFF;
     int shift = ((instruction >> 8) & 0xF) * 2;
@@ -79,6 +81,7 @@ void ARM_DataProcessing(std::uint32_t instruction) {
       if (reg_op2 == 15) op2 += 4;
 
       interface->Idle();
+      pipe.fetch_type = ACCESS_NSEQ;
     }
 
     DoShift(shift_type, op2, shift, carry, shift_imm);
@@ -183,7 +186,6 @@ void ARM_DataProcessing(std::uint32_t instruction) {
       ReloadPipeline32();
     }
   } else {
-    pipe.fetch_type = ACCESS_SEQ;
     state.r15 += 4;
   }
 }
@@ -259,7 +261,7 @@ void ARM_Multiply(std::uint32_t instruction) {
   }
 
   state.reg[dst] = result;
-  pipe.fetch_type = ACCESS_SEQ;
+  pipe.fetch_type = ACCESS_NSEQ;
   state.r15 += 4;
 }
 
@@ -313,7 +315,7 @@ void ARM_MultiplyLong(std::uint32_t instruction) {
     state.cpsr.f.z = result == 0;
   }
 
-  pipe.fetch_type = ACCESS_SEQ;
+  pipe.fetch_type = ACCESS_NSEQ;
   state.r15 += 4;
 }
 

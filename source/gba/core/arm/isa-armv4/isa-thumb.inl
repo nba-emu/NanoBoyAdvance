@@ -112,9 +112,10 @@ void Thumb_ALU(std::uint16_t instruction) {
   int dst = (instruction >> 0) & 7;
   int src = (instruction >> 3) & 7;
 
+  pipe.fetch_type = ACCESS_SEQ;
+
   /* Order of opcodes has been rearranged for readabilities sake. */
   switch (static_cast<ThumbDataOp>(op)) {
-
   case ThumbDataOp::MVN:
     state.reg[dst] = ~state.reg[src];
     SetNZ(state.reg[dst]);
@@ -150,6 +151,7 @@ void Thumb_ALU(std::uint16_t instruction) {
     SetNZ(state.reg[dst]);
     state.cpsr.f.c = carry;
     interface->Idle();
+    pipe.fetch_type = ACCESS_NSEQ;
     break;
   }
   case ThumbDataOp::LSR: {
@@ -158,6 +160,7 @@ void Thumb_ALU(std::uint16_t instruction) {
     SetNZ(state.reg[dst]);
     state.cpsr.f.c = carry;
     interface->Idle();
+    pipe.fetch_type = ACCESS_NSEQ;
     break;
   }
   case ThumbDataOp::ASR: {
@@ -166,6 +169,7 @@ void Thumb_ALU(std::uint16_t instruction) {
     SetNZ(state.reg[dst]);
     state.cpsr.f.c = carry;
     interface->Idle();
+    pipe.fetch_type = ACCESS_NSEQ;
     break;
   }
   case ThumbDataOp::ROR: {
@@ -174,6 +178,7 @@ void Thumb_ALU(std::uint16_t instruction) {
     SetNZ(state.reg[dst]);
     state.cpsr.f.c = carry;
     interface->Idle();
+    pipe.fetch_type = ACCESS_NSEQ;
     break;
   }
 
@@ -198,10 +203,10 @@ void Thumb_ALU(std::uint16_t instruction) {
     state.reg[dst] *= state.reg[src];
     SetNZ(state.reg[dst]);
     state.cpsr.f.c = 0;
+    pipe.fetch_type = ACCESS_NSEQ;
     break;
   }
 
-  pipe.fetch_type = ACCESS_SEQ;
   state.r15 += 2;
 }
 
