@@ -245,11 +245,15 @@ void ARM_Multiply(std::uint32_t instruction) {
   int op3 = (instruction >> 12) & 0xF;
   int dst = (instruction >> 16) & 0xF;
 
+  TickMultiply(state.reg[op2]);
+  
   result = state.reg[op1] * state.reg[op2];
 
   if (accumulate) {
     result += state.reg[op3];
+    interface->Idle();
   }
+  
   if (set_flags) {
     SetNZ(result);
   }
@@ -261,13 +265,16 @@ void ARM_Multiply(std::uint32_t instruction) {
 
 template <bool sign_extend, bool accumulate, bool set_flags>
 void ARM_MultiplyLong(std::uint32_t instruction) {
-  int op1 = (instruction >>  0) & 0xF;
-  int op2 = (instruction >>  8) & 0xF;
+  int op1 = (instruction >> 0) & 0xF;
+  int op2 = (instruction >> 8) & 0xF;
   
   int dst_lo = (instruction >> 12) & 0xF;
   int dst_hi = (instruction >> 16) & 0xF;
 
   std::int64_t result;
+  
+  interface->Idle();
+  TickMultiply(state.reg[op2]);
 
   if (sign_extend) {
     std::int64_t a = state.reg[op1];
@@ -293,9 +300,9 @@ void ARM_MultiplyLong(std::uint32_t instruction) {
     value  |= state.reg[dst_lo];
 
     result += value;
+    interface->Idle();
   }
 
-  /* TODO: Why does this work? */
   std::uint32_t result_hi = result >> 32;
 
   state.reg[dst_lo] = result & 0xFFFFFFFF;

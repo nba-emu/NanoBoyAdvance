@@ -26,6 +26,24 @@ void SetNZ(std::uint32_t value) {
   state.cpsr.f.z = (value == 0);
 }
 
+void TickMultiply(std::uint32_t multiplier) {
+  int ticks = 1;
+  std::uint32_t mask = 0xFFFFFF00;
+  
+  while (true) {
+    multiplier &= mask;
+    if (multiplier == 0 || multiplier == mask) {
+      break;
+    }
+    mask <<= 8;
+    ticks++;
+  }
+
+  // TODO: fix me.
+  for (int i = 0; i < ticks; i++)
+    interface->Idle();
+}
+
 std::uint32_t ADD(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
   if (set_flags) {
     std::uint64_t result64 = (std::uint64_t)op1 + (std::uint64_t)op2;

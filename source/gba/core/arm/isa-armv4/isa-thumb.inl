@@ -194,12 +194,11 @@ void Thumb_ALU(std::uint16_t instruction) {
     ADD(state.reg[dst], state.reg[src], true);
     break;
   case ThumbDataOp::MUL:
-    /* TODO: calculate internal cycles. */
+    TickMultiply(state.reg[dst]);
     state.reg[dst] *= state.reg[src];
     SetNZ(state.reg[dst]);
     state.cpsr.f.c = 0;
     break;
-
   }
 
   pipe.fetch_type = ACCESS_SEQ;
