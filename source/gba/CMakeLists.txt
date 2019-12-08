@@ -6,7 +6,6 @@ set(SOURCES
     core/apu/apu.cpp
     core/apu/callback.cpp
     core/apu/registers.cpp
-    core/arm/isa-armv4/emit.cpp
     core/backup/eeprom.cpp
     core/backup/flash.cpp
     core/cpu.cpp

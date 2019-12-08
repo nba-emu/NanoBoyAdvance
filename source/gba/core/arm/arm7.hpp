@@ -24,21 +24,23 @@
 
 #include <array>
 #include <utility>
+#include <type_traits>
 
 namespace ARM {
 
+template <typename Tinterface>
 class ARM7TDMI {
-
+  
 public:
-  ARM7TDMI(Interface* interface)
+  ARM7TDMI(Tinterface* interface)
     : interface(interface)
   {
+    static_assert(std::is_base_of<Interface, Tinterface>::value,
+                  "Tinterface must implement ARM::Interface");
+    opcode_lut_16 = EmitAll16();
+    opcode_lut_32 = EmitAll32();
     BuildConditionTable();
     Reset();
-  }
-
-  auto GetInterface() -> Interface* const {
-    return interface;
   }
 
   void Reset();
@@ -54,7 +56,7 @@ public:
 private:
   
   /* Interface to emulator (Memory, SWI-emulation, ...). */
-  Interface* interface;
+  Tinterface* interface;
 
   static auto GetRegisterBankByMode(Mode mode) -> Bank;
   void SwitchMode(Mode new_mode);
@@ -69,8 +71,8 @@ private:
   using OpcodeTable16 = std::array<Instruction16, 1024>;
   using OpcodeTable32 = std::array<Instruction32, 4096>;
   
-  static OpcodeTable16 s_opcode_lut_thumb;
-  static OpcodeTable32 s_opcode_lut_arm;
+  OpcodeTable16 opcode_lut_16;
+  OpcodeTable32 opcode_lut_32;
   
   #define ARM_INCLUDE_GUARD
   

@@ -38,7 +38,7 @@ inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
     return ReadUnused(address) >> shift;
   }
   
-  if (cpu.state.r15 >= 0x4000) {
+  if (state.r15 >= 0x4000) {
     return memory.bios_opcode >> shift;
   }
 
@@ -50,8 +50,8 @@ inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
 inline std::uint32_t CPU::ReadUnused(std::uint32_t address) {
   std::uint32_t result = 0;
   
-  if (cpu.state.cpsr.f.thumb) {
-    auto r15 = cpu.state.r15;
+  if (state.cpsr.f.thumb) {
+    auto r15 = state.r15;
   
     switch (r15 >> 24) {
       case REGION_EWRAM:
@@ -63,33 +63,33 @@ inline std::uint32_t CPU::ReadUnused(std::uint32_t address) {
       case REGION_ROM_W1_H:
       case REGION_ROM_W2_L:
       case REGION_ROM_W2_H: {
-        result = cpu.GetPrefetchedOpcode(1) * 0x00010001;
+        result = GetPrefetchedOpcode(1) * 0x00010001;
         break;
       }
       case REGION_BIOS:
       case REGION_OAM: {
         if (r15 & 3) {
-          result = cpu.GetPrefetchedOpcode(0) |
-                  (cpu.GetPrefetchedOpcode(1) << 16);
+          result = GetPrefetchedOpcode(0) |
+                  (GetPrefetchedOpcode(1) << 16);
         } else {
           /* FIXME: this is not correct, but also [$+6] has not been prefetched at this point. */
-          result = cpu.GetPrefetchedOpcode(1) * 0x00010001;
+          result = GetPrefetchedOpcode(1) * 0x00010001;
         }
         break;
       }
       case REGION_IWRAM: {
         if (r15 & 3) {
-          result = cpu.GetPrefetchedOpcode(0) |
-                  (cpu.GetPrefetchedOpcode(1) << 16);
+          result = GetPrefetchedOpcode(0) |
+                  (GetPrefetchedOpcode(1) << 16);
         } else {
-          result = cpu.GetPrefetchedOpcode(1) |
-                  (cpu.GetPrefetchedOpcode(0) << 16);
+          result = GetPrefetchedOpcode(1) |
+                  (GetPrefetchedOpcode(0) << 16);
         }
         break;
       }
     }
   } else {
-    result = cpu.GetPrefetchedOpcode(1);
+    result = GetPrefetchedOpcode(1);
   }
     
   return result >> ((address & 3) * 8);

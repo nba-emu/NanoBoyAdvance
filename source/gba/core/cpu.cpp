@@ -31,12 +31,12 @@ constexpr int CPU::s_ws_seq1[2];
 constexpr int CPU::s_ws_seq2[2];
 
 CPU::CPU(std::shared_ptr<Config> config)
-  : config(config)
+  : ARM7TDMI<CPU>::ARM7TDMI(this)
+  , config(config)
   , apu(this)
   , ppu(this)
   , dma(this)
   , timer(this)
-  , cpu(this)
 {
   std::memset(memory.bios, 0, 0x04000);
   Reset();
@@ -91,14 +91,14 @@ void CPU::Reset() {
   timer.Reset();
   apu.Reset();
   ppu.Reset();
-  cpu.Reset();
+  ARM7TDMI<CPU>::Reset();
   
   if (config->skip_bios) {
-    cpu.state.bank[ARM::BANK_SVC][ARM::BANK_R13] = 0x03007FE0; 
-    cpu.state.bank[ARM::BANK_IRQ][ARM::BANK_R13] = 0x03007FA0;
-    cpu.state.reg[13] = 0x03007F00;
-    cpu.state.cpsr.f.mode = ARM::MODE_USR;
-    cpu.state.r15 = 0x08000000;
+    state.bank[ARM::BANK_SVC][ARM::BANK_R13] = 0x03007FE0; 
+    state.bank[ARM::BANK_IRQ][ARM::BANK_R13] = 0x03007FA0;
+    state.reg[13] = 0x03007F00;
+    state.cpsr.f.mode = ARM::MODE_USR;
+    state.r15 = 0x08000000;
   }
 }
 
@@ -128,7 +128,7 @@ void CPU::Idle() {
 void CPU::PrefetchStep(std::uint32_t address, int cycles) {
   #define IS_ROM_REGION(address) ((address) >= 0x08000000 && (address) <= 0x0EFFFFFF) 
   
-  int thumb = cpu.state.cpsr.f.thumb;
+  int thumb = state.cpsr.f.thumb;
   int capacity = thumb ? 8 : 4;
   
   if (prefetch.active) {
@@ -152,15 +152,15 @@ void CPU::PrefetchStep(std::uint32_t address, int cycles) {
       prefetch.active = false;
     }
   } else if (prefetch.count < capacity &&
-             IS_ROM_REGION(cpu.state.r15) &&
+             IS_ROM_REGION(state.r15) &&
             !IS_ROM_REGION(address) && 
-             cpu.state.r15 == last_rom_address) {
+             state.r15 == last_rom_address) {
     std::uint32_t next_address;
     
     if (prefetch.count > 0) {
       next_address = prefetch.last_address;
     } else {
-      next_address = cpu.state.r15;
+      next_address = state.r15;
     }
     
     next_address += thumb ? 2 : 4;
@@ -178,7 +178,7 @@ void CPU::PrefetchStep(std::uint32_t address, int cycles) {
   #undef IS_ROM_REGION
   
   /* TODO: this check does not guarantee 100% that this is an opcode fetch. */
-  if (prefetch.count > 0 && address == cpu.state.r15) {
+  if (prefetch.count > 0 && address == state.r15) {
     if (address == prefetch.address[prefetch.rd_pos]) {
       cycles = 1;
       prefetch.count--;
@@ -228,9 +228,9 @@ void CPU::RunFor(int cycles) {
         dma.Run(ticks_cpu_left);
       } else if (mmio.haltcnt == HaltControl::RUN) {
         if (mmio.irq_ime && fire) {
-          cpu.SignalIRQ();
+          SignalIRQ();
         }
-        cpu.Run();
+        Run();
       } else {
         /* Forward to the next event or timer IRQ. */
         Tick(std::min(timer.EstimateCyclesUntilIRQ(), ticks_cpu_left));
