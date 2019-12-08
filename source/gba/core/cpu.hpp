@@ -39,15 +39,6 @@ public:
   void Reset();
   void RunFor(int cycles);
   
-  /* TODO: provide way to read CPU memory without consuming cycles. */
-  
-  auto ReadByte(std::uint32_t address, ARM::AccessType type) -> std::uint8_t  final;
-  auto ReadHalf(std::uint32_t address, ARM::AccessType type) -> std::uint16_t final;
-  auto ReadWord(std::uint32_t address, ARM::AccessType type) -> std::uint32_t final;
-  void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type)  final;
-  void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type) final;
-  void WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type) final;
-  
   enum MemoryRegion {
     REGION_BIOS = 0,
     REGION_EWRAM = 2,
@@ -139,9 +130,11 @@ public:
   PPU ppu;
   DMA dma;
   Timer timer;
-  ARM::ARM7TDMI cpu;
+  ARM::ARM7TDMI<CPU> cpu;
   
 private:
+  friend class DMA;
+  friend class ARM::ARM7TDMI<CPU>;
   
   template <typename T>
   auto Read(void* buffer, std::uint32_t address) -> T {
@@ -157,6 +150,13 @@ private:
   void WriteMMIO(std::uint32_t address, std::uint8_t value);
   auto ReadBIOS(std::uint32_t address) -> std::uint32_t;
   auto ReadUnused(std::uint32_t address) -> std::uint32_t;
+  
+  auto ReadByte(std::uint32_t address, ARM::AccessType type) -> std::uint8_t  final;
+  auto ReadHalf(std::uint32_t address, ARM::AccessType type) -> std::uint16_t final;
+  auto ReadWord(std::uint32_t address, ARM::AccessType type) -> std::uint32_t final;
+  void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type)  final;
+  void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type) final;
+  void WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type) final;
   
   void SWI(std::uint32_t call_id) final { }
   void Tick(int cycles) final;

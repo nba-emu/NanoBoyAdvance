@@ -17,7 +17,8 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-inline void ARM7TDMI::Reset() {
+template <typename Tinterface>
+inline void ARM7TDMI<Tinterface>::Reset() {
   state.Reset();
   
   SwitchMode(MODE_SYS);
@@ -27,7 +28,8 @@ inline void ARM7TDMI::Reset() {
   pipe.fetch_type = ACCESS_NSEQ;
 }
 
-inline void ARM7TDMI::Run() {
+template <typename Tinterface>
+inline void ARM7TDMI<Tinterface>::Run() {
   auto instruction = pipe.opcode[0];
 
   if (state.cpsr.f.thumb) {
@@ -35,7 +37,7 @@ inline void ARM7TDMI::Run() {
 
     pipe.opcode[0] = pipe.opcode[1];
     pipe.opcode[1] = ReadHalf(state.r15, pipe.fetch_type);
-    (this->*s_opcode_lut_thumb[instruction >> 6])(instruction);
+    (this->*opcode_lut_16[instruction >> 6])(instruction);
   } else {
     state.r15 &= ~3;
 
@@ -44,14 +46,15 @@ inline void ARM7TDMI::Run() {
     if (CheckCondition(static_cast<Condition>(instruction >> 28))) {
       int hash = ((instruction >> 16) & 0xFF0) |
                  ((instruction >>  4) & 0x00F);
-      (this->*s_opcode_lut_arm[hash])(instruction);
+      (this->*opcode_lut_32[hash])(instruction);
     } else {
       state.r15 += 4;
     }
   }
 }
 
-inline void ARM7TDMI::SignalIRQ() {
+template <typename Tinterface>
+inline void ARM7TDMI<Tinterface>::SignalIRQ() {
   if (state.cpsr.f.mask_irq) {
     return;
   }
@@ -80,21 +83,24 @@ inline void ARM7TDMI::SignalIRQ() {
   ReloadPipeline32();
 }
 
-inline void ARM7TDMI::ReloadPipeline32() {
+template <typename Tinterface>
+inline void ARM7TDMI<Tinterface>::ReloadPipeline32() {
   pipe.opcode[0] = interface->ReadWord(state.r15+0, ACCESS_NSEQ);
   pipe.opcode[1] = interface->ReadWord(state.r15+4, ACCESS_SEQ);
   pipe.fetch_type = ACCESS_SEQ;
   state.r15 += 8;
 }
 
-inline void ARM7TDMI::ReloadPipeline16() {
+template <typename Tinterface>
+inline void ARM7TDMI<Tinterface>::ReloadPipeline16() {
   pipe.opcode[0] = interface->ReadHalf(state.r15+0, ACCESS_NSEQ);
   pipe.opcode[1] = interface->ReadHalf(state.r15+2, ACCESS_SEQ);
   pipe.fetch_type = ACCESS_SEQ;
   state.r15 += 4;
 }
 
-inline void ARM7TDMI::BuildConditionTable() {
+template <typename Tinterface>
+inline void ARM7TDMI<Tinterface>::BuildConditionTable() {
   for (int flags = 0; flags < 16; flags++) {
     bool n = flags & 8;
     bool z = flags & 4;
@@ -120,13 +126,15 @@ inline void ARM7TDMI::BuildConditionTable() {
   }
 }
 
-inline bool ARM7TDMI::CheckCondition(Condition condition) {
+template <typename Tinterface>
+inline bool ARM7TDMI<Tinterface>::CheckCondition(Condition condition) {
   if (condition == COND_AL)
     return true;
   return condition_table[condition][state.cpsr.v >> 28];
 }
 
-inline auto ARM7TDMI::GetRegisterBankByMode(Mode mode) -> Bank {
+template <typename Tinterface>
+inline auto ARM7TDMI<Tinterface>::GetRegisterBankByMode(Mode mode) -> Bank {
   switch (mode) {
     case MODE_USR:
     case MODE_SYS:
@@ -144,7 +152,8 @@ inline auto ARM7TDMI::GetRegisterBankByMode(Mode mode) -> Bank {
   }
 }
 
-inline void ARM7TDMI::SwitchMode(Mode new_mode) {
+template <typename Tinterface>
+inline void ARM7TDMI<Tinterface>::SwitchMode(Mode new_mode) {
   auto old_bank = GetRegisterBankByMode(state.cpsr.f.mode);
   auto new_bank = GetRegisterBankByMode(new_mode);
 
