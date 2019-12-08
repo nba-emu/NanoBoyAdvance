@@ -24,20 +24,19 @@
 
 #include <array>
 #include <utility>
-//#include <type_traits>
+#include <type_traits>
 
 namespace ARM {
 
 template <typename Tinterface>
 class ARM7TDMI {
-// TODO: fix this later
-//  static_assert(std::is_base_of<Interface, Tinterface>::value,
-//                "Tinterface must implement ARM::Interface");
   
 public:
   ARM7TDMI(Tinterface* interface)
     : interface(interface)
   {
+    static_assert(std::is_base_of<Interface, Tinterface>::value,
+                  "Tinterface must implement ARM::Interface");
     opcode_lut_16 = EmitAll16();
     opcode_lut_32 = EmitAll32();
     BuildConditionTable();

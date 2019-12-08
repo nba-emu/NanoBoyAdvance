@@ -32,7 +32,8 @@
 
 namespace GameBoyAdvance {
 
-class CPU : private ARM::Interface {
+class CPU : private ARM::ARM7TDMI<CPU>,
+            private ARM::Interface {
 public:
   CPU(std::shared_ptr<Config> config);
 
@@ -130,7 +131,6 @@ public:
   PPU ppu;
   DMA dma;
   Timer timer;
-  ARM::ARM7TDMI<CPU> cpu;
   
 private:
   friend class DMA;
