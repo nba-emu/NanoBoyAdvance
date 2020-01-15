@@ -424,12 +424,13 @@ void Thumb_PushPop(std::uint16_t instruction) {
     if (pop) {
       state.r15 = ReadWord(state.r13, ACCESS_NSEQ);
       ReloadPipeline16();
+      state.r13 += 0x40;
     } else {
       WriteWord(state.r13, state.r15 + 2, ACCESS_NSEQ);
       state.r15 += 2;
+      state.r13 -= 0x40;
     }
-
-    state.r13 += pop ? 0x40 : -0x40;
+    
     return;
   }
 
