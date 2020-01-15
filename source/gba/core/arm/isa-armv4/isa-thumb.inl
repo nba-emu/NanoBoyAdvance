@@ -417,15 +417,28 @@ void Thumb_AddOffsetToSP(std::uint16_t instruction) {
 
 template <bool pop, bool rbit>
 void Thumb_PushPop(std::uint16_t instruction) {
-  std::uint32_t address = state.r13;
+  auto list = instruction & 0xFF;
 
-  /* TODO: handle empty register lists. */
-  
+  /* Handle special case for empty register lists. */
+  if (list == 0 && !rbit) {
+    if (pop) {
+      state.r15 = ReadWord(state.r13, ACCESS_NSEQ);
+      ReloadPipeline16();
+    } else {
+      WriteWord(state.r13, state.r15 + 2, ACCESS_NSEQ);
+      state.r15 += 2;
+    }
+
+    state.r13 += pop ? 0x40 : -0x40;
+    return;
+  }
+
+  auto address = state.r13;
   auto access_type = ACCESS_NSEQ;
   
   if (pop) {
     for (int reg = 0; reg <= 7; reg++) {
-      if (instruction & (1<<reg)) {
+      if (list & (1 << reg)) {
         state.reg[reg] = ReadWord(address, access_type);
         access_type = ACCESS_SEQ;
         address += 4;
@@ -445,16 +458,17 @@ void Thumb_PushPop(std::uint16_t instruction) {
   } else {
     /* Calculate internal start address (final r13 value) */
     for (int reg = 0; reg <= 7; reg++) {
-      if (instruction & (1 << reg))
+      if (list & (1 << reg))
         address -= 4;
     }
+
     if (rbit) address -= 4;
 
     /* Store address in r13 before we mess with it. */
     state.r13 = address;
 
     for (int reg = 0; reg <= 7; reg++) {
-      if (instruction & (1<<reg)) {
+      if (list & (1 << reg)) {
         WriteWord(address, state.reg[reg], access_type);
         access_type = ACCESS_SEQ;
         address += 4;
@@ -472,40 +486,62 @@ void Thumb_PushPop(std::uint16_t instruction) {
 
 template <bool load, int base>
 void Thumb_LoadStoreMultiple(std::uint16_t instruction) {
-  /* TODO: handle empty register list. */
-  
+  auto list = instruction & 0xFF;
+
+  /* Handle special case for empty register lists. */
+  if (list == 0) {
+    if (load) {
+      state.r15 = ReadWord(state.reg[base], ACCESS_NSEQ);
+      ReloadPipeline16();
+    } else {
+      WriteWord(state.reg[base], state.r15 + 2, ACCESS_NSEQ);
+      state.r15 += 2;
+    }
+
+    state.reg[base] += 0x40;
+    return;
+  }
+
   if (load) {
     std::uint32_t address = state.reg[base];
     auto access_type = ACCESS_NSEQ;
     
     for (int i = 0; i <= 7; i++) {
-      if (instruction & (1<<i)) {
+      if (list & (1 << i)) {
         state.reg[i] = ReadWord(address, access_type);
         access_type = ACCESS_SEQ;
         address += 4;
       }
     }
     interface->Idle();
-    if (~instruction & (1<<base)) {
+    if (~list & (1 << base)) {
       state.reg[base] = address;
     }
   } else {
-    int reg = 0;
+    int count = 0;
+    int first = 0;
 
-    /* First Loop - Run to first register (nonsequential access) */
-    for (; reg <= 7; reg++) {
-      if (instruction & (1<<reg)) {
-        WriteWord(state.reg[base], state.reg[reg], ACCESS_NSEQ);
-        state.reg[base] += 4;
-        break;
+    /* Count number of registers and find first register. */
+    for (int reg = 7; reg >= 0; reg--) {
+      if (list & (1 << reg)) {
+        count++;
+        first = reg;
       }
     }
-    reg++;
-    /* Second Loop - Run until end (sequential accesses) */
-    for (; reg <= 7; reg++) {
-      if (instruction & (1 << reg)) {
-        WriteWord(state.reg[base], state.reg[reg], ACCESS_SEQ);
-        state.reg[base] += 4;
+
+    std::uint32_t address = state.reg[base];
+    std::uint32_t base_new = address + count * 4;
+
+    /* Transfer first register (non-sequential access) */
+    WriteWord(address, state.reg[first], ACCESS_NSEQ);
+    state.reg[base] = base_new;
+    address += 4;
+
+    /* Run until end (sequential accesses) */
+    for (int reg = first + 1; reg <= 7; reg++) {
+      if (list & (1 << reg)) {
+        WriteWord(address, state.reg[reg], ACCESS_SEQ);
+        address += 4;
       }
     }
   }

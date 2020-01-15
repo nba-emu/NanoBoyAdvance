@@ -507,7 +507,6 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
 
 template <bool _pre, bool add, bool user_mode, bool _writeback, bool load>
 void ARM_BlockDataTransfer(std::uint32_t instruction) {
-  /* TODO: figure out why the remaining tests fail. */
   bool pre = _pre;
   bool writeback = _writeback;
 
@@ -536,15 +535,15 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
     }
 
     std::uint32_t address = state.reg[base];
-    std::uint32_t address_old = address;
+    std::uint32_t base_old = address;
+    std::uint32_t base_new;
 
     if (!add) {
       address -= count * 4;
-      if (writeback) {
-        state.reg[base] = address;
-        writeback = false;
-      }
+      base_new = address;
       pre = !pre;
+    } else {
+      base_new = address + count * 4;
     }
 
     auto access_type = ACCESS_NSEQ;
@@ -570,8 +569,8 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
           state.cpsr.v = spsr.v;
         }
       } else {
-        if (i == first && i == base) {
-          WriteWord(address, address_old, access_type);
+        if (i == base) {
+          WriteWord(address, (i == first) ? base_old : base_new, access_type);
         } else if (i == 15) {
           WriteWord(address, state.r15 + 4, access_type);
         } else {
@@ -586,7 +585,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
       }
 
       if (writeback) {
-        state.reg[base] = address;
+        state.reg[base] = base_new;
       }
     }
   } else {
