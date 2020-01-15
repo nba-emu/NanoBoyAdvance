@@ -319,7 +319,7 @@ void ARM_MultiplyLong(std::uint32_t instruction) {
   state.r15 += 4;
 }
 
-/* TODO: check if timings are correct. */
+/* TODO: Check if timings are correct. */
 template <bool byte>
 void ARM_SingleDataSwap(std::uint32_t instruction) {
   int src  = (instruction >>  0) & 0xF;
@@ -399,7 +399,6 @@ void ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
       break;
   }
 
-  /* TODO: confirm that the restriction only applies to load instructions. */
   if ((writeback || !pre) && (!load || base != dst)) {
     if (!pre) {
       address += add ? offset : -offset;
@@ -483,7 +482,6 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
   /* Write address back to the base register.
    * However the destination register must not be overwritten.
    */
-  /* TODO: confirm that the restriction only applies to load instructions. */
   if (!load || base != dst) {
     if (!pre) {
       state.reg[base] += add ? offset : -offset;
