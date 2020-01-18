@@ -517,7 +517,9 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
   bool transfer_pc = list & (1 << 15);
   bool switched = false;
 
-  /* TODO: is rB supposed to be accessed in the current mode on the ARM7TDMI? */
+  /* NOTE: most likely the base register is supposed to be read before switching to user mode. */
+  std::uint32_t address = state.reg[base];
+
   if (user_mode && (!load || !transfer_pc)) {
     mode = state.cpsr.f.mode;
     SwitchMode(MODE_USR);
@@ -532,7 +534,6 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
       count++;
     }
 
-    std::uint32_t address = state.reg[base];
     std::uint32_t base_old = address;
     std::uint32_t base_new;
 
