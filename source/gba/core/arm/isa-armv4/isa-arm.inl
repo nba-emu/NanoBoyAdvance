@@ -503,10 +503,9 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
   }
 }
 
-template <bool _pre, bool add, bool user_mode, bool _writeback, bool load>
+template <bool _pre, bool add, bool user_mode, bool writeback, bool load>
 void ARM_BlockDataTransfer(std::uint32_t instruction) {
   bool pre = _pre;
-  bool writeback = _writeback;
 
   int base = (instruction >> 16) & 0xF;
 
@@ -518,6 +517,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
   bool transfer_pc = list & (1 << 15);
   bool switched = false;
 
+  /* TODO: is rB supposed to be accessed in the current mode on the ARM7TDMI? */
   if (user_mode && (!load || !transfer_pc)) {
     mode = state.cpsr.f.mode;
     SwitchMode(MODE_USR);
@@ -556,9 +556,6 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
       }
 
       if (load) {
-        if (i == base) {
-          writeback = false;
-        }
         state.reg[i] = ReadWord(address, access_type);
         if (i == 15 && user_mode) {
           auto& spsr = *p_spsr;
@@ -581,10 +578,10 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
       if (!pre) {
         address += 4;
       }
+    }
 
-      if (writeback) {
-        state.reg[base] = base_new;
-      }
+    if (writeback && (!load || !(list & (1 << base)))) {
+      state.reg[base] = base_new;
     }
   } else {
     /* From GBATEK:
