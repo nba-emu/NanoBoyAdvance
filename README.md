@@ -3,6 +3,7 @@
 ![logo](media/logo_cropped.png)
 
 ![license](https://img.shields.io/github/license/fleroviux/NanoboyAdvance)
+[![CodeFactor](https://www.codefactor.io/repository/github/fleroviux/NanoboyAdvance/badge)](https://www.codefactor.io/repository/github/fleroviux/NanoboyAdvance)
 
 NanoboyAdvance is a Nintendo GameBoy Advance (TM) emulator written in C++17.<br>
 The goal is to create a modern, accurate GameBoy Advance emulator while also being fast
@@ -18,9 +19,10 @@ Even the games from the `Classic NES` series, which are known to be troublesome 
 
 ## Compiling
 
-Currently the code is known to be compilable on Linux and Windows.
-Use of a recent G++ compiler is recommmended. Other compilers *might* work but have not been tested so far.
-Your version of G++ should support C++17.
+Currently NanoboyAdvance is known to be compilable with Linux and Windows.
+You will require a C++17 capable C++ compiler. G++7 or newer is recommended.
+Other compilers may work, but are not tested as frequently.
+Performance may vary with compilers other than G++. 
 
 In order to compile NanoboyAdvance you will need a few dependencies:
 - CMake
