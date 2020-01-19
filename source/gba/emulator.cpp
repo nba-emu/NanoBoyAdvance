@@ -67,7 +67,6 @@ auto Emulator::DetectSaveType(std::uint8_t* rom, size_t size) -> SaveType {
     }
   }
   
-  /* TODO: find a sane default. */
   return Config::SaveType::Detect;
 }
 
@@ -145,6 +144,7 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   
   switch (config->save_type) {
     case SaveType::SRAM:
+    case SaveType::Detect: // opt for SRAM if no save type was detected.
       cpu.memory.rom.backup = std::make_shared<SRAM>(save_path);
       break;
     case SaveType::FLASH_64:

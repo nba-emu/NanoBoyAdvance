@@ -109,12 +109,12 @@ void PPU::RenderLayerText(int id) {
         if (draw_x < 0) {
           x = -draw_x;
           draw_x = 0;
-          for (x; x < max; x++) {
+          for (; x < max; x++) {
             buffer[draw_x++] = tile[x];
           }
         } else if (draw_x > 232) {
           max -= draw_x - 232;
-          for (x; x < max; x++) {
+          for (; x < max; x++) {
             buffer[draw_x++] = tile[x];
           }
           break;

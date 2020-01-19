@@ -45,6 +45,8 @@ auto DisplayControl::Read(int address) -> std::uint8_t {
       (enable[6] << 6) |
       (enable[7] << 7);
   }
+
+  return 0;
 }
 
 void DisplayControl::Write(int address, std::uint8_t value) {
@@ -82,6 +84,8 @@ auto DisplayStatus::Read(int address) -> std::uint8_t {
   case 1:
     return vcount_setting;
   }
+
+  return 0;
 }
 
 void DisplayStatus::Write(int address, std::uint8_t value) {
@@ -116,6 +120,8 @@ auto BackgroundControl::Read(int address) -> std::uint8_t {
           (wraparound << 5) |
           (size << 6);
   }
+
+  return 0;
 }
 
 void BackgroundControl::Write(int address, std::uint8_t value) {  
@@ -217,6 +223,8 @@ auto BlendControl::Read(int address) -> std::uint8_t {
     return value;
   }
   }
+
+  return 0;
 }
 
 void BlendControl::Write(int address, std::uint8_t value) {
