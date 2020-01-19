@@ -142,6 +142,8 @@ int main(int argc, char** argv) {
                );
   g_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED /*| SDL_RENDERER_PRESENTVSYNC*/);
   g_texture = SDL_CreateTexture(g_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 240, 160);
+
+  SDL_RenderSetLogicalSize(g_renderer, 240, 160);
   
   if (argc != 2) {
     std::printf("Usage: %s rom_path\n", argv[0]);
