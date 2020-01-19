@@ -145,19 +145,19 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   switch (config->save_type) {
     case SaveType::SRAM:
     case SaveType::Detect: // opt for SRAM if no save type was detected.
-      cpu.memory.rom.backup = std::make_shared<SRAM>(save_path);
+      cpu.memory.rom.backup = std::make_unique<SRAM>(save_path);
       break;
     case SaveType::FLASH_64:
-      cpu.memory.rom.backup = std::make_shared<FLASH>(save_path, FLASH::SIZE_64K);
+      cpu.memory.rom.backup = std::make_unique<FLASH>(save_path, FLASH::SIZE_64K);
       break;
     case SaveType::FLASH_128:
-      cpu.memory.rom.backup = std::make_shared<FLASH>(save_path, FLASH::SIZE_128K);
+      cpu.memory.rom.backup = std::make_unique<FLASH>(save_path, FLASH::SIZE_128K);
       break;
     case SaveType::EEPROM_4:
-      cpu.memory.rom.backup = std::make_shared<EEPROM>(save_path, EEPROM::SIZE_4K);
+      cpu.memory.rom.backup = std::make_unique<EEPROM>(save_path, EEPROM::SIZE_4K);
       break;
     case SaveType::EEPROM_64:
-      cpu.memory.rom.backup = std::make_shared<EEPROM>(save_path, EEPROM::SIZE_64K);
+      cpu.memory.rom.backup = std::make_unique<EEPROM>(save_path, EEPROM::SIZE_64K);
       break;
   }
   
