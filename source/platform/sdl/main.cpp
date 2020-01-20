@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
                 SDL_WINDOWPOS_CENTERED,
                 480,
                 320,
-                0
+                SDL_WINDOW_RESIZABLE
                );
   g_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED /*| SDL_RENDERER_PRESENTVSYNC*/);
   g_texture = SDL_CreateTexture(g_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 240, 160);

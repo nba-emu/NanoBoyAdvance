@@ -9,9 +9,9 @@ NanoboyAdvance is a Nintendo GameBoy Advance (TM) emulator written in C++17.<br>
 The goal is to create a modern, accurate GameBoy Advance emulator while also being fast
 and avoiding to sacrifice too much code quality.
 
-The emulator implements the core hardware completely and with fairly high accuracy.
+The emulator implements the core hardware completely and with high accuracy.
 Any game that I tested so far goes in-game in NanoboyAdvance, almost all of them without known issues.
-Even the games from the `Classic NES` series, which are known to be troublesome to emulate, work properly. 
+The games from the `Classic NES` series, which are troublesome to emulate and abuse a variety of edge-cases and undefined behaviour, are emulated properly. 
 
 ## Media
 
@@ -19,10 +19,9 @@ Even the games from the `Classic NES` series, which are known to be troublesome 
 
 ## Compiling
 
-Currently NanoboyAdvance is known to be compilable with Linux and Windows.
-You will require a C++17 capable C++ compiler. G++7 or newer is recommended.
-Other compilers may work, but are not tested as frequently.
-Performance may vary with compilers other than G++. 
+NanoboyAdvance works and can be compiled on Windows, Linux and Mac OS X.
+A C++17 capable C++ compiler is required. G++7 / Clang++6 or newer are recommended.
+Other compilers may work, but are untested.
 
 In order to compile NanoboyAdvance you will need a few dependencies:
 - CMake
@@ -39,6 +38,9 @@ cd build
 cmake ..
 make
 ```
+
+If you get an error regarding to `libc++fs` not being found, try commenting out `target_link_libraries(gba stdc++fs)` in `source/gba/CMakeLists.txt`.
+
 The compiled executable can be found at `build/source/platform/sdl/`.
 
 ### Rebuilding
