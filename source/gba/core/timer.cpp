@@ -158,11 +158,8 @@ auto Timer::EstimateCyclesUntilIRQ() -> int {
   
   for (int i = 0; i < run_count; i++) {
     auto& channel = channels[run_list[i]];
-    
-    if (channel.control.enable &&
-       (channel.control.interrupt || channel.cascades_into_timer_causing_irq) && 
-       !channel.control.cascade) 
-    {
+
+    if (channel.control.interrupt || channel.cascades_into_timer_causing_irq) {
       int required = ((0x10000 - channel.counter) << channel.shift) - channel.cycles;
       
       if (required < cycles) {
