@@ -29,6 +29,7 @@ static constexpr int g_ticks_mask[4] = { 0, 0x3F, 0xFF, 0x3FF };
 
 void Timer::Reset() {
   may_cause_irq = false;
+  run_count = 0;
   
   for (int chan_id = 0; chan_id < 4; chan_id++) {
     channels[chan_id].id = chan_id;
@@ -98,7 +99,7 @@ void Timer::Write(int chan_id, int offset, std::uint8_t value) {
       bool connected = false;
       
       may_cause_irq = false;
-      
+
       /* Identify non-cascading timers that are connected to a
        * cascading timer which is setup to trigger IRQs.
        */
@@ -123,20 +124,28 @@ void Timer::Write(int chan_id, int offset, std::uint8_t value) {
         
         may_cause_irq |= control.interrupt;
       }
+
+      run_count = 0;
+
+      /* Populate list of enabled, clock-driven timers. */
+      for (int id = 0; id <= 3; id++) {
+        auto const& control = channels[id].control;
+
+        if (control.enable && !control.cascade) {
+          run_list[run_count++] = id;
+        }
+      }
     }
   }
 }
 
 void Timer::Run(int cycles) {
-  int available;
-
-  for (auto& channel: channels) {
-    if (channel.control.enable && !channel.control.cascade) {
-      available = channel.cycles + cycles;
+  for (int i = 0; i < run_count; i++) {
+    auto& channel = channels[run_list[i]];
+    int available = channel.cycles + cycles;
       
-      Increment(channel.id, available >> channel.shift);
-      channel.cycles = available & channel.mask;
-    }
+    Increment(channel.id, available >> channel.shift);
+    channel.cycles = available & channel.mask;
   }
 }
 
@@ -147,7 +156,9 @@ auto Timer::EstimateCyclesUntilIRQ() -> int {
     return cycles;
   }
   
-  for (auto const& channel : channels) {
+  for (int i = 0; i < run_count; i++) {
+    auto& channel = channels[run_list[i]];
+    
     if (channel.control.enable &&
        (channel.control.interrupt || channel.cascades_into_timer_causing_irq) && 
        !channel.control.cascade) 
@@ -179,11 +190,7 @@ void Timer::Increment(int chan_id, int increment) {
       overflows += increment / threshold;
       increment %= threshold;
     }
-  }
-      
-  channel.counter += increment;
-    
-  if (overflows > 0) {
+
     int next_id = chan_id + 1;
     
     if (channel.control.interrupt) {
@@ -198,6 +205,8 @@ void Timer::Increment(int chan_id, int increment) {
       Increment(next_id, overflows);
     }
   }
+      
+  channel.counter += increment;
 }
   
 }

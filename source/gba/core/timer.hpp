@@ -42,6 +42,9 @@ private:
   CPU* cpu;
   bool may_cause_irq;
   
+  int run_list[4];
+  int run_count;
+
   struct Channel {
     int id;
 
