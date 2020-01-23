@@ -135,6 +135,7 @@ inline bool ARM7TDMI<Tinterface>::CheckCondition(Condition condition) {
 
 template <typename Tinterface>
 inline auto ARM7TDMI<Tinterface>::GetRegisterBankByMode(Mode mode) -> Bank {
+  /* TODO: reverse-engineer which bank the CPU defaults to for invalid modes. */
   switch (mode) {
     case MODE_USR:
     case MODE_SYS:
@@ -150,6 +151,8 @@ inline auto ARM7TDMI<Tinterface>::GetRegisterBankByMode(Mode mode) -> Bank {
     case MODE_UND:
       return BANK_UND;
   }
+
+  return BANK_UND;
 }
 
 template <typename Tinterface>
@@ -158,10 +161,20 @@ inline void ARM7TDMI<Tinterface>::SwitchMode(Mode new_mode) {
   auto new_bank = GetRegisterBankByMode(new_mode);
 
   state.cpsr.f.mode = new_mode; 
-  p_spsr = &state.spsr[new_bank];
 
-  if (old_bank == new_bank)
+  if (new_bank != BANK_NONE) {
+    p_spsr = &state.spsr[new_bank]; 
+  } else {
+    /* In system/user mode reading from SPSR returns the current CPSR value.
+     * However writes to SPSR appear to do nothing.
+     * We take care of this fact in the MSR implementation.
+     */
+    p_spsr = &state.cpsr;
+  }
+
+  if (old_bank == new_bank) {
     return;
+  }
 
   if (old_bank == BANK_FIQ || new_bank == BANK_FIQ) {
     for (int i = 0; i < 7; i++){

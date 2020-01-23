@@ -191,6 +191,7 @@ void ARM_DataProcessing(std::uint32_t instruction) {
 template <bool immediate, bool use_spsr, bool to_status>
 void ARM_StatusTransfer(std::uint32_t instruction) {
   if (to_status) {
+    /* TODO: find out what happens if the thumb bit was altered by MSR. */
     std::uint32_t op;
     std::uint32_t mask = 0;
 
@@ -212,16 +213,15 @@ void ARM_StatusTransfer(std::uint32_t instruction) {
 
     std::uint32_t value = op & mask;
 
+    /* Apply masked replace to SPSR or CPSR. */
     if (!use_spsr) {
       if (mask & 0xFF) {
         SwitchMode(static_cast<Mode>(value & 0x1F));
       }
       state.cpsr.v = (state.cpsr.v & ~mask) | value;
-    } else {
+    } else if (p_spsr != &state.cpsr) {
       p_spsr->v = (p_spsr->v & ~mask) | value;
     }
-
-    /* TODO: Handle case where Thumb-bit was set. */
   } else {
     int dst = (instruction >> 12) & 0xF;
     
