@@ -17,11 +17,7 @@
   * along with NanoboyAdvance. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#ifdef _MSC_VER
 #include "SDL.h"
-#else
-#include <SDL2/SDL.h>
-#endif
 
 #undef main
 
