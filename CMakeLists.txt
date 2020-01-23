@@ -11,6 +11,10 @@ set(COMPILE_FLAGS   "${COMPILE_FLAGS} -Ofast")
 set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   ${COMPILE_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILE_FLAGS}")
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL Clang)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+endif()
+
 #add_definitions(-pg)
 #set(CMAKE_EXE_LINKER_FLAGS -pg)
 

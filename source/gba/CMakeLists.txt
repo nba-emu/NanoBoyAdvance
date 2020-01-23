@@ -42,6 +42,7 @@ set(HEADERS
 )
 
 add_library(gba STATIC ${SOURCES} ${HEADERS})
+
 if (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
     target_link_libraries(gba stdc++fs)
 endif()
