@@ -580,12 +580,10 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
         SwitchMode(spsr.f.mode);
         state.cpsr.v = spsr.v;
       }
+    } else if (i == base) {
+      WriteWord(address, (i == first) ? base_old : base_new, access_type);
     } else {
-      if (i == base) {
-        WriteWord(address, (i == first) ? base_old : base_new, access_type);
-      } else {
-        WriteWord(address, state.reg[i], access_type);
-      }
+      WriteWord(address, state.reg[i], access_type);
     }
 
     if (!pre) {
