@@ -98,6 +98,7 @@ constexpr int TM2CNT_H = 0x0400010A;
 constexpr int TM3CNT_L = 0x0400010C;
 constexpr int TM3CNT_H = 0x0400010E;
 constexpr int KEYINPUT = 0x04000130;
+constexpr int RCNT = 0x04000134;
 constexpr int IE = 0x04000200;
 constexpr int IF = 0x04000202;
 constexpr int WAITCNT = 0x04000204;

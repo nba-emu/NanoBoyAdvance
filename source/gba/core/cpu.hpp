@@ -123,6 +123,8 @@ public:
       int prefetch;
       int cgb;
     } waitcnt;
+
+    std::uint16_t rcnt_hack;
   } mmio; 
   
   Scheduler scheduler;

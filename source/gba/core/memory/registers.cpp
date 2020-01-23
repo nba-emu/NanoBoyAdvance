@@ -149,6 +149,9 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
       return (config->input_dev->Poll(Key::R) ? 0 : 1) |
              (config->input_dev->Poll(Key::L) ? 0 : 2);
     }
+
+    case RCNT+0: return mmio.rcnt_hack & 0xFF;
+    case RCNT+1: return mmio.rcnt_hack >> 8;
       
     /* Interrupt Control */
     case IE+0:  return mmio.irq_ie  & 0xFF;
@@ -443,6 +446,17 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     case TM3CNT_L+1: timer.Write(3, 1, value); break;
     case TM3CNT_H:   timer.Write(3, 2, value); break;
     
+    case RCNT: {
+      mmio.rcnt_hack &= 0xFF00;
+      mmio.rcnt_hack |= value;
+      break;
+    }
+    case RCNT+1: {
+      mmio.rcnt_hack &= 0x00FF;
+      mmio.rcnt_hack |= value << 8;
+      break;
+    }
+
     /* Interrupt Control */
     case IE+0: {
       mmio.irq_ie &= 0xFF00;
