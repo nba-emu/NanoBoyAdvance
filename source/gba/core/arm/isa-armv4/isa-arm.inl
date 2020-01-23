@@ -426,6 +426,7 @@ void ARM_BranchAndLink(std::uint32_t instruction) {
 
 template <bool immediate, bool pre, bool add, bool byte, bool writeback, bool load>
 void ARM_SingleDataTransfer(std::uint32_t instruction) {
+  /* TODO: reverse-engineer special case with usermode registers and a banked base register. */
   Mode mode;
   std::uint32_t offset;
 
@@ -477,20 +478,18 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
     }
   }
 
-  /* Write address back to the base register.
-   * However the destination register must not be overwritten.
-   */
+  /* Restore original mode (if it was changed) */
+  if (!pre && writeback) {
+    SwitchMode(mode);
+  }
+
+  /* Write address back to the base register. */
   if (!load || base != dst) {
     if (!pre) {
       state.reg[base] += add ? offset : -offset;
     } else if (writeback) {
       state.reg[base] = address;
     }
-  }
-
-  /* Restore original mode (if it was changed) */
-  if (!pre && writeback) {
-    SwitchMode(mode);
   }
 
   if (load && dst == 15) {
@@ -503,105 +502,109 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
 
 template <bool _pre, bool add, bool user_mode, bool writeback, bool load>
 void ARM_BlockDataTransfer(std::uint32_t instruction) {
-  bool pre = _pre;
-
+  /* TODO: reverse-engineer special case with usermode registers and a banked base register. */
   int base = (instruction >> 16) & 0xF;
-
-  int first;
-  int count = 0;
   int list = instruction & 0xFFFF;
   
   Mode mode;
   bool transfer_pc = list & (1 << 15);
-  bool switched = false;
+  bool switch_mode = user_mode && (!load || !transfer_pc);
+  int  first = 0;
+  int  bytes = 0;
+  bool pre = _pre;
 
-  /* NOTE: most likely the base register is supposed to be read before switching to user mode. */
   std::uint32_t address = state.reg[base];
 
-  if (user_mode && (!load || !transfer_pc)) {
+  /* r15 will be advanced at the end of the first cycle, before the transfer starts.
+   * When written via STM, r15 will therefore be ahead of PC by an extra word.
+   */
+  state.r15 += 4;
+
+  if (switch_mode) {
     mode = state.cpsr.f.mode;
     SwitchMode(MODE_USR);
-    switched = true;
   }
 
   if (list != 0) {
+    /* Determine number of bytes to transfer and the first register in the list. */
     for (int i = 15; i >= 0; i--) {
-      if (~list & (1 << i))
-        continue;
-      first = i;
-      count++;
-    }
-
-    std::uint32_t base_old = address;
-    std::uint32_t base_new;
-
-    if (!add) {
-      address -= count * 4;
-      base_new = address;
-      pre = !pre;
-    } else {
-      base_new = address + count * 4;
-    }
-
-    auto access_type = ACCESS_NSEQ;
-
-    for (int i = first; i < 16; i++) {
       if (~list & (1 << i)) {
         continue;
       }
-
-      if (pre) {
-        address += 4;
-      }
-
-      if (load) {
-        state.reg[i] = ReadWord(address, access_type);
-        if (i == 15 && user_mode) {
-          auto& spsr = *p_spsr;
-
-          SwitchMode(spsr.f.mode);
-          state.cpsr.v = spsr.v;
-        }
-      } else {
-        if (i == base) {
-          WriteWord(address, (i == first) ? base_old : base_new, access_type);
-        } else if (i == 15) {
-          WriteWord(address, state.r15 + 4, access_type);
-        } else {
-          WriteWord(address, state.reg[i], access_type);
-        }
-      }
-
-      access_type = ACCESS_SEQ;
-
-      if (!pre) {
-        address += 4;
-      }
-    }
-
-    if (writeback && (!load || !(list & (1 << base)))) {
-      state.reg[base] = base_new;
-    }
+      first = i;
+      bytes += 4;
+    }  
   } else {
-    /* From GBATEK:
-     * Empty Rlist: R15 loaded/stored (ARMv4 only), and Rb=Rb+/-40h (ARMv4-v5).
+    /* If the register list is empty, only r15 will be loaded/stored but
+     * the base will be incremented/decremented as if each register was transferred.
      */
-    if (load) {
-      state.r15 = ReadWord(state.reg[base], ACCESS_NSEQ);
-      transfer_pc = true;
-    } else {
-      WriteWord(state.reg[base], state.r15 + 4, ACCESS_NSEQ);
+    list  = 1 << 15;
+    first = 15;
+    transfer_pc = true;
+    bytes = 64;
+  }
+
+  std::uint32_t base_new = address;
+  std::uint32_t base_old = address;
+
+  /* The CPU always transfers registers sequentially,
+   * for decrementing modes it determines the final address first and
+   * then transfers the registers with incrementing addresses.
+   * Due to the inverted order post-decrement becomes pre-increment and
+   * pre-decrement becomes post-increment.
+   */
+  if (!add) {
+    pre = !pre;
+    address  -= bytes;
+    base_new -= bytes;
+  } else {
+    base_new += bytes;
+  }
+
+  auto access_type = ACCESS_NSEQ;
+
+  for (int i = first; i < 16; i++) {
+    if (~list & (1 << i)) {
+      continue;
     }
-    
-    state.reg[base] += add ? 0x40 : -0x40;
+
+    if (pre) {
+      address += 4;
+    }
+
+    if (load) {
+      state.reg[i] = ReadWord(address, access_type);
+      if (i == 15 && user_mode) {
+        auto& spsr = *p_spsr;
+
+        SwitchMode(spsr.f.mode);
+        state.cpsr.v = spsr.v;
+      }
+    } else {
+      if (i == base) {
+        WriteWord(address, (i == first) ? base_old : base_new, access_type);
+      } else {
+        WriteWord(address, state.reg[i], access_type);
+      }
+    }
+
+    if (!pre) {
+      address += 4;
+    }
+
+    access_type = ACCESS_SEQ;
+  }
+
+  if (switch_mode) {
+    SwitchMode(mode);
+  }
+
+  if (writeback && (!load || !(list & (1 << base)))) {
+    state.reg[base] = base_new;
   }
 
   if (load) {
     interface->Idle();
-  }
-
-  if (switched) {
-    SwitchMode(mode);
   }
 
   if (load && transfer_pc) {
@@ -612,7 +615,6 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
     }
   } else {
     pipe.fetch_type = ACCESS_NSEQ;
-    state.r15 += 4;
   }
 }
 
@@ -643,4 +645,3 @@ void ARM_SWI(std::uint32_t instruction) {
   state.r15 = 0x08;
   ReloadPipeline32();
 }
-
