@@ -139,8 +139,7 @@ void Thumb_ALU(std::uint16_t instruction) {
     SetNZ(state.reg[dst]);
     break;
   case ThumbDataOp::TST: {
-    std::uint32_t result = state.reg[dst] & state.reg[src];
-    SetNZ(result);
+    SetNZ(state.reg[dst] & state.reg[src]);
     break;
   }
 
