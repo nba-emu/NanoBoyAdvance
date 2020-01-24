@@ -58,9 +58,6 @@ private:
   std::string save_path;
   std::unique_ptr<BackupFile> file;
 
-  /* TODO: use an unique_ptr here? */
-//  std::uint8_t* memory = nullptr;
-  
   int state;
   int address;
   std::uint64_t serial_buffer;
