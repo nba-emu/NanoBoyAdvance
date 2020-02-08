@@ -25,6 +25,8 @@ namespace GameBoyAdvance {
 
 class VideoDevice {
 public:
+  virtual ~VideoDevice() {}
+
   virtual void Draw(std::uint32_t* buffer) = 0;
 };
 

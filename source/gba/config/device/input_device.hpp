@@ -23,6 +23,8 @@ namespace GameBoyAdvance {
 
 class InputDevice {
 public:
+  virtual ~InputDevice() {}
+
   enum class Key {
     Up,
     Down,

@@ -31,12 +31,12 @@ using namespace GameBoyAdvance;
 void AudioCallback(APU* apu, std::int16_t* stream, int byte_len);
 
 APU::APU(CPU* cpu) 
-  : cpu(cpu)
-  , psg1(cpu->scheduler)
+  : psg1(cpu->scheduler)
   , psg2(cpu->scheduler)
   , psg3(cpu->scheduler)
   , psg4(cpu->scheduler, mmio.bias)
   , buffer(new DSP::StereoRingBuffer<float>(4096, true))
+  , cpu(cpu)
 { }
 
 void APU::Reset() {

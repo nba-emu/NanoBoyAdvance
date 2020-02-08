@@ -24,12 +24,16 @@ namespace DSP {
 template <typename T>
 class ReadStream {
 public:
+  virtual ~ReadStream() {};
+
   virtual auto Read() -> T = 0;
 };
 
 template <typename T>
 class WriteStream {
 public:
+  virtual ~WriteStream() {};
+  
   virtual void Write(T const& value) = 0;
 };
 

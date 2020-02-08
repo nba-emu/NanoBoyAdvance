@@ -27,6 +27,8 @@ namespace GameBoyAdvance {
 
 class AudioDevice {
 public:
+  virtual ~AudioDevice() {}
+
   typedef void (*Callback)(void* userdata, std::int16_t* stream, int byte_len);
 
   virtual auto GetSampleRate() -> int = 0;

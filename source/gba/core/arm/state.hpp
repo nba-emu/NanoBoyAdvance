@@ -23,7 +23,7 @@
 
 namespace ARM {
 
-enum Mode {
+enum Mode : unsigned int {
   MODE_USR = 0x10,
   MODE_FIQ = 0x11,
   MODE_IRQ = 0x12,
@@ -72,9 +72,9 @@ enum BankedRegister {
   BANK_R14 = 6
 };
 
-typedef union {
+union StatusRegister {
   struct {
-    enum Mode mode : 5;
+    Mode mode : 5;
     unsigned int thumb : 1;
     unsigned int mask_fiq : 1;
     unsigned int mask_irq : 1;
@@ -86,7 +86,7 @@ typedef union {
     unsigned int n : 1;
   } f;
   std::uint32_t v;
-} StatusRegister;
+};
 
 struct RegisterFile {
   // General Purpose Registers
