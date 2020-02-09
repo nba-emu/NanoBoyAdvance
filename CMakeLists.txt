@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
 project(NanoboyAdvance CXX)
 
+set(VERSION_MAJOR 0)
+set(VERSION_MINOR 1)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)

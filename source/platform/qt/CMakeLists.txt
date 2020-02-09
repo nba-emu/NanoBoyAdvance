@@ -1,10 +1,10 @@
-SET(SOURCES
+set(SOURCES
   main.cpp
   mainwindow.cpp
   screen.cpp
 )
 
-SET(HEADERS
+set(HEADERS
   mainwindow.hpp
   screen.hpp
 )
@@ -18,5 +18,19 @@ find_package(Qt5Widgets REQUIRED)
 find_package(Qt5OpenGL REQUIRED)
 set(QT_DEPS Qt5::Gui Qt5::Widgets Qt5::OpenGL)
 
-ADD_EXECUTABLE(NanoboyAdvance ${SOURCES} ${HEADERS})
-TARGET_LINK_LIBRARIES(NanoboyAdvance gba ${QT_DEPS} ${OPENGL_gl_LIBRARY})
+if (WIN32)
+    configure_file (
+        "${CMAKE_CURRENT_SOURCE_DIR}/res/app.rc.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/res/app.rc"
+        )
+    list(APPEND RESOURCES "${CMAKE_CURRENT_BINARY_DIR}/res/app.rc")
+    if (MINGW)
+        set(CMAKE_RC_COMPILER_INIT windres)
+        enable_language(RC)
+        set(CMAKE_RC_COMPILE_OBJECT
+            "<CMAKE_RC_COMPILER> -i <SOURCE> -o <OBJECT>")
+    endif()
+endif()
+
+add_executable(NanoboyAdvance ${SOURCES} ${HEADERS} ${RESOURCES})
+target_link_libraries(NanoboyAdvance gba ${QT_DEPS} ${OPENGL_gl_LIBRARY})
