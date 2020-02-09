@@ -27,19 +27,16 @@ void SetNZ(std::uint32_t value) {
 }
 
 void TickMultiply(std::uint32_t multiplier) {
-  int ticks = 1;
   std::uint32_t mask = 0xFFFFFF00;
   
+  interface->Idle();
+
   while (true) {
     multiplier &= mask;
     if (multiplier == 0 || multiplier == mask) {
       break;
     }
     mask <<= 8;
-    ticks++;
-  }
-
-  for (int i = 0; i < ticks; i++) {
     interface->Idle();
   }
 }
