@@ -57,32 +57,46 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
       emulator->LoadGame("violet.gba");
       emulator->Reset();
 
-      float frames_per_second = 16777216.0 / 280896.0; // ~ 59.7 fps
-      float frame_duration = 1000000.0 / frames_per_second; // in microseconds
-      //float frame_duration_fract = frame_duration - int(frame_duration);
-      //float fractional_delay = 0.0;
+      static constexpr int kMillisecondsPerSecond = 1000;
+      static constexpr int kMicrosecondsPerMillisecond = 1000;
 
-      auto ts = std::chrono::high_resolution_clock::now();
+      float frames_per_second = 16777216.0 / 280896.0; // ~ 59.7 fps
+      float frame_duration = kMillisecondsPerSecond / frames_per_second; // in milliseconds
+      float accumulated_error = 0.0;
+
       int frames = 0;
+      auto timestamp_previous_fps_update = std::chrono::high_resolution_clock::now();
 
       while (true) {
-        auto t0 = std::chrono::high_resolution_clock::now();
+        auto timestamp_frame_start = std::chrono::high_resolution_clock::now();
         emulator->Frame();
-        auto t1 = std::chrono::high_resolution_clock::now();
         frames++;
-        if (std::chrono::duration_cast<std::chrono::seconds>(t1 - ts).count() >= 1) {
-          qDebug() << frames;
+        auto timestamp_frame_end = std::chrono::high_resolution_clock::now();
+
+        auto time_since_last_fps_update = std::chrono::duration_cast<std::chrono::milliseconds>(
+          timestamp_frame_end - timestamp_previous_fps_update
+        ).count();
+
+        if (time_since_last_fps_update >= kMillisecondsPerSecond) {
+          qDebug() << frames << "-" << time_since_last_fps_update;
           frames = 0;
-          ts = t1;
+          timestamp_previous_fps_update = timestamp_frame_end;
         }
 
-        t1 = std::chrono::high_resolution_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
+          std::chrono::high_resolution_clock::now() - timestamp_frame_start
+        ).count() / float(kMicrosecondsPerMillisecond);
+        
+        // NOTE: we need to cast each variable to an integer seperately because
+        // we don't want the fractional parts to accumulate and overflow into the integer part.
+        auto delay = int(frame_duration) - int(elapsed) + int(accumulated_error);
 
-        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+        std::this_thread::sleep_for(std::chrono::milliseconds(delay));
 
-        std::this_thread::sleep_for(std::chrono::microseconds(int(frame_duration - elapsed.count())));
-
-        //qDebug() << duration.count();
+        accumulated_error -= int(accumulated_error);
+        accumulated_error -= std::chrono::duration_cast<std::chrono::milliseconds>(
+          std::chrono::high_resolution_clock::now() - timestamp_frame_start
+        ).count() - frame_duration;
       }
     });
 
