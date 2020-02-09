@@ -33,6 +33,8 @@ public:
     format.setSwapInterval(0);
     setFormat(format);
 
+    // The signal-slot structure is needed, so that Screen::Draw
+    // may be invoked from another thread without causing trouble.
     connect(this, &Screen::SignalDraw, this, &Screen::DrawSlot);
   }
 

@@ -20,6 +20,8 @@
 // TEST
 #include <gba/emulator.hpp>
 #include <thread>
+#include <chrono>
+#include <QDebug>
 
 #include <QApplication>
 #include <QMenuBar>
@@ -47,16 +49,6 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
   auto help_menu = menubar->addMenu(tr("&?"));
 
   connect(file_open, &QAction::triggered, this, [this] {
-    //auto config = std::make_shared<GameBoyAdvance::Config>();
-    //config->video_dev = screen;
-
-    //auto emulator = std::make_unique<GameBoyAdvance::Emulator>(config);
-    //emulator->LoadGame("violet.gba");
-    //emulator->Reset();
-    //for (int i = 0; i < 20000; i++) {
-    //  emulator->Frame();
-    //}
-
     std::thread test([&] {
       auto config = std::make_shared<GameBoyAdvance::Config>();
       config->video_dev = screen;
@@ -65,8 +57,32 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
       emulator->LoadGame("violet.gba");
       emulator->Reset();
 
+      float frames_per_second = 16777216.0 / 280896.0; // ~ 59.7 fps
+      float frame_duration = 1000000.0 / frames_per_second; // in microseconds
+      //float frame_duration_fract = frame_duration - int(frame_duration);
+      //float fractional_delay = 0.0;
+
+      auto ts = std::chrono::high_resolution_clock::now();
+      int frames = 0;
+
       while (true) {
+        auto t0 = std::chrono::high_resolution_clock::now();
         emulator->Frame();
+        auto t1 = std::chrono::high_resolution_clock::now();
+        frames++;
+        if (std::chrono::duration_cast<std::chrono::seconds>(t1 - ts).count() >= 1) {
+          qDebug() << frames;
+          frames = 0;
+          ts = t1;
+        }
+
+        t1 = std::chrono::high_resolution_clock::now();
+
+        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+
+        std::this_thread::sleep_for(std::chrono::microseconds(int(frame_duration - elapsed.count())));
+
+        //qDebug() << duration.count();
       }
     });
 
