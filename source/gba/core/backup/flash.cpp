@@ -24,8 +24,8 @@ using namespace GameBoyAdvance;
 static constexpr int g_save_size[2] = { 65536, 131072 };
 
 FLASH::FLASH(std::string const& save_path, Size size_hint)
-  : save_path(save_path)
-  , size(size_hint)
+  : size(size_hint)
+  , save_path(save_path)
 {
   Reset();
 }

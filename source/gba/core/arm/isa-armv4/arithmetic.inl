@@ -39,9 +39,9 @@ void TickMultiply(std::uint32_t multiplier) {
     ticks++;
   }
 
-  // TODO: fix me.
-  for (int i = 0; i < ticks; i++)
+  for (int i = 0; i < ticks; i++) {
     interface->Idle();
+  }
 }
 
 std::uint32_t ADD(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
@@ -105,8 +105,6 @@ std::uint32_t SBC(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
   }
 }
 
-/* CHECKME: should shift amount be masked by 0xFF? */
-
 void DoShift(int opcode, std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediate) {
   /* TODO: is it sane to mask the upper bits before anything else? */
   amount &= 0xFF;
@@ -163,8 +161,6 @@ void LSR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediat
 }
 
 void ASR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediate) {
-  std::uint32_t sign_bit = operand & 0x80000000;
-
   if (amount == 0) {
     // ASR #0 equals to ASR #32
     if (immediate) {
@@ -186,10 +182,6 @@ void ASR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediat
 
   carry = (operand >> (amount - 1)) & 1;
   operand = (operand >> amount) | ((0xFFFFFFFF * msb) << (32 - amount));
-  // for (std::uint32_t i = 0; i < amount; i++) {
-  //   carry   = operand & 1;
-  //   operand = (operand >> 1) | sign_bit;
-  // }
 }
 
 void ROR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediate) {
@@ -203,11 +195,6 @@ void ROR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediat
     operand = (operand >> (amount - 1)) | (operand << (32 - amount + 1));
     carry = operand & 1;
     operand = (operand >> 1) | (operand << 31);
-    // for (std::uint32_t i = 1; i <= amount; i++) {
-    //   lsb = operand & 1;
-    //   operand = (operand >> 1) | (lsb << 31);
-    //   carry = lsb;
-    // }
   } else {
     lsb = operand & 1;
     operand = (operand >> 1) | (carry << 31);
