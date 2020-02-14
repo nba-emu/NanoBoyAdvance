@@ -200,8 +200,7 @@ int main(int argc, char** argv) {
 
           switch (key_event->keysym.sym) {
           case SDLK_SPACE:
-            //unbounded = event.type == SDL_KEYDOWN;
-            //unbounded_changed = true;
+            framelimiter.Unbounded(event.type == SDL_KEYDOWN);
             break;
           case SDLK_F9:
             if (event.type == SDL_KEYUP) {

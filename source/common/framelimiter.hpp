@@ -36,11 +36,16 @@ public:
   }
 
   void Reset(float fps) {
+    Unbounded(false);
     frames_per_second = fps;
     frame_duration = kMillisecondsPerSecond / fps;
     accumulated_error = 0;
     frame_count = 0;
     timestamp_previous_fps_update = std::chrono::high_resolution_clock::now();
+  }
+
+  void Unbounded(bool value) {
+    unbounded = value;
   }
 
   void Run(std::function<void(void)> frame_advance, std::function<void(int)> update_fps) {
@@ -62,20 +67,22 @@ public:
       timestamp_previous_fps_update = timestamp_frame_end;
     }
 
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-      std::chrono::high_resolution_clock::now() - timestamp_frame_start
-    ).count();
+    if (!unbounded) {
+      auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::high_resolution_clock::now() - timestamp_frame_start
+      ).count();
 
-    // NOTE: we need to cast the variables to integers seperately because
-    // we don't want the fractional parts to accumulate and overflow into the integer part.
-    auto delay = int(frame_duration) + int(accumulated_error) - elapsed;
+      // NOTE: we need to cast the variables to integers seperately because
+      // we don't want the fractional parts to accumulate and overflow into the integer part.
+      auto delay = int(frame_duration) + int(accumulated_error) - elapsed;
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+      std::this_thread::sleep_for(std::chrono::milliseconds(delay));
 
-    accumulated_error -= int(accumulated_error);
-    accumulated_error -= std::chrono::duration_cast<std::chrono::milliseconds>(
-      std::chrono::high_resolution_clock::now() - timestamp_frame_start
-    ).count() - frame_duration;
+      accumulated_error -= int(accumulated_error);
+      accumulated_error -= std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::high_resolution_clock::now() - timestamp_frame_start
+      ).count() - frame_duration;
+    }
   }
 
 private:
@@ -86,6 +93,8 @@ private:
   float frames_per_second;
   float frame_duration;
   float accumulated_error = 0.0;
+
+  bool unbounded = false;
 
   std::chrono::time_point<std::chrono::high_resolution_clock> timestamp_previous_fps_update;
 };
