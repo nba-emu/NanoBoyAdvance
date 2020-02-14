@@ -22,6 +22,7 @@
 #undef main
 
 #include <cstdio>
+#include <common/framelimiter.hpp>
 #include <gba/emulator.hpp>
 
 SDL_Texture*  g_texture;
@@ -182,65 +183,25 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  bool unbounded = false;
-  bool unbounded_changed = false;
-  
-  /* Benchmark */
-  int frames = 0;
-  int ticks1 = SDL_GetTicks();
-  int ticks_start;
-  int ticks_end;
-  
-  float frames_per_second = 16777216.0/280896.0; // ~ 59.7 fps
-  float frame_duration = 1000.0/frames_per_second;
-  float frame_duration_fract = frame_duration - int(frame_duration);
-  float fractional_delay = 0.0;
-  
+  Common::Framelimiter framelimiter;
+
+  framelimiter.Reset(16777216.0 / 280896.0); // ~ 59.7 fps
   SDL_GL_SetSwapInterval(0);
   
   while (running) {
-    if (!unbounded) {
-      ticks_start = SDL_GetTicks();
-    }
-    
-    /* Update key state */
-    SDL_PumpEvents();
-    
-    emulator->Frame();
-    frames++;
-    
-    int ticks2 = SDL_GetTicks();
-    if ((ticks2 - ticks1) >= 1000) {
-      auto actual_fps = frames/float(ticks2 - ticks1)*1000.0;
-      auto percentage = actual_fps / frames_per_second * 100.0;
-      
-      if (!unbounded && !unbounded_changed) {
-        /* Try to compensate for framelimiter inaccuracies. */
-        frame_duration += (actual_fps/frames_per_second - 1.0) * 1000.0 / actual_fps;
-        frame_duration_fract = frame_duration - int(frame_duration);
-      }
-      
-      unbounded_changed = false;
-      
-      SDL_SetWindowTitle(window, 
-        ("NanoboyAdvance [" +
-         std::to_string((int)std::round(actual_fps)) + "fps | " +
-         std::to_string((int)std::round(percentage)) + "%]"
-        ).c_str());
-      ticks1 = ticks2;
-      frames = 0;
-    }
+    framelimiter.Run([&] {
+      emulator->Frame();
 
-    while (SDL_PollEvent(&event)) {
-      if (event.type == SDL_QUIT) {
-        running = false;
-      } else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
-        auto key_event = (SDL_KeyboardEvent*)(&event);
-        
-        switch (key_event->keysym.sym) {
+      while (SDL_PollEvent(&event)) {
+        if (event.type == SDL_QUIT) {
+          running = false;
+        } else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
+          auto key_event = (SDL_KeyboardEvent*)(&event);
+
+          switch (key_event->keysym.sym) {
           case SDLK_SPACE:
-            unbounded = event.type == SDL_KEYDOWN;
-            unbounded_changed = true;
+            //unbounded = event.type == SDL_KEYDOWN;
+            //unbounded_changed = true;
             break;
           case SDLK_F9:
             if (event.type == SDL_KEYUP) {
@@ -253,25 +214,13 @@ int main(int argc, char** argv) {
               SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
             }
             break;
+          }
         }
       }
-    }
-    
-    if (!unbounded) {
-      ticks_end = SDL_GetTicks();
 
-      int delay = int(frame_duration) + int(fractional_delay) - (ticks_end - ticks_start);
-
-      if (delay > 0) {
-        SDL_Delay(delay);
-      }
-
-      if (fractional_delay >= 1.0) {
-        fractional_delay -= 1.0;
-      }
-
-      fractional_delay += frame_duration_fract;
-    }
+      SDL_PumpEvents();
+    }, [&](int fps) {
+    });
   }
 
   SDL_DestroyTexture(g_texture);
