@@ -11,7 +11,7 @@
 #include <functional>
 #include <thread>
 
-namespace Common {
+namespace common {
 
 class Framelimiter {
 public:
@@ -87,4 +87,4 @@ private:
   std::chrono::time_point<std::chrono::high_resolution_clock> timestamp_previous_fps_update;
 };
 
-}
+} // namespace common

@@ -11,12 +11,12 @@
 
 #include <cstdio>
 #include <common/framelimiter.hpp>
-#include <gba/emulator.hpp>
+#include <emulator/emulator.hpp>
 
 SDL_Texture*  g_texture;
 SDL_Renderer* g_renderer;
 
-class SDL2_AudioDevice : public GameBoyAdvance::AudioDevice {
+class SDL2_AudioDevice : public nba::AudioDevice {
 public:
   auto GetSampleRate() -> int final { return have.freq; }
   auto GetBlockSize() -> int final { return have.samples; }
@@ -66,7 +66,7 @@ private:
   SDL_AudioSpec have;
 };
 
-class SDL2_InputDevice : public GameBoyAdvance::InputDevice {
+class SDL2_InputDevice : public nba::InputDevice {
 public:
   auto Poll(Key key) -> bool final {  
     auto keystate = SDL_GetKeyboardState(NULL);
@@ -100,7 +100,7 @@ public:
   }
 };
 
-class SDL2_VideoDevice : public GameBoyAdvance::VideoDevice {
+class SDL2_VideoDevice : public nba::VideoDevice {
 public:
   
   void Draw(std::uint32_t* buffer) final {
@@ -137,16 +137,16 @@ int main(int argc, char** argv) {
   
   std::string rom_path = argv[1];
   
-  auto config = std::make_shared<GameBoyAdvance::Config>();
+  auto config = std::make_shared<nba::Config>();
   
   config->audio_dev = std::make_shared<SDL2_AudioDevice>();
   config->input_dev = std::make_shared<SDL2_InputDevice>();
   config->video_dev = std::make_shared<SDL2_VideoDevice>();
   
-  auto emulator = std::make_unique<GameBoyAdvance::Emulator>(config);
+  auto emulator = std::make_unique<nba::Emulator>(config);
   auto status = emulator->LoadGame(rom_path);
   
-  using StatusCode = GameBoyAdvance::Emulator::StatusCode;
+  using StatusCode = nba::Emulator::StatusCode;
   
   if (status != StatusCode::Ok) {
     switch (status) {
@@ -171,7 +171,7 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  Common::Framelimiter framelimiter;
+  common::Framelimiter framelimiter;
 
   framelimiter.Reset(16777216.0 / 280896.0); // ~ 59.7 fps
   SDL_GL_SetSwapInterval(0);

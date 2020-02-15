@@ -6,7 +6,7 @@
  */
 
 // TEST
-#include <gba/emulator.hpp>
+#include <emulator/emulator.hpp>
 #include <thread>
 #include <QDebug>
 #include <common/framelimiter.hpp>
@@ -38,14 +38,14 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
 
   connect(file_open, &QAction::triggered, this, [this] {
     std::thread test([&] {
-      auto config = std::make_shared<GameBoyAdvance::Config>();
+      auto config = std::make_shared<nba::Config>();
       config->video_dev = screen;
 
-      auto emulator = std::make_unique<GameBoyAdvance::Emulator>(config);
+      auto emulator = std::make_unique<nba::Emulator>(config);
       emulator->LoadGame("violet.gba");
       emulator->Reset();
 
-      Common::Framelimiter framelimiter;
+      common::Framelimiter framelimiter;
 
       framelimiter.Reset(16777216.0 / 280896.0); // ~ 59.7 fps
 
