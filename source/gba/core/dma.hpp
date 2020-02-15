@@ -10,6 +10,8 @@
 #include <bitset>
 #include <cstdint>
 
+#include "arm/memory.hpp"
+
 namespace GameBoyAdvance {
 
 class CPU;
@@ -17,6 +19,8 @@ class CPU;
 class DMA {
 
 public:
+  using Access = ARM::MemoryBase::Access;
+  
   DMA(CPU* cpu) : cpu(cpu) { Reset(); }
   
   enum class Occasion {
@@ -122,7 +126,7 @@ private:
     Size size;
 
     bool allow_read;
-    ARM::AccessType second_access;
+    Access second_access;
     
     bool is_fifo_dma;
     int fifo_request_count;

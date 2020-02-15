@@ -20,22 +20,24 @@
 
 namespace GameBoyAdvance {
 
-class CPU : private ARM::ARM7TDMI,
-            private ARM::Interface {
+class CPU final : private ARM::ARM7TDMI,
+                  private ARM::MemoryBase {
 public:
+  using Access = ARM::MemoryBase::Access;
+
   CPU(std::shared_ptr<Config> config);
 
   void Reset();
   void RunFor(int cycles);
   
   enum MemoryRegion {
-    REGION_BIOS = 0,
+    REGION_BIOS  = 0,
     REGION_EWRAM = 2,
     REGION_IWRAM = 3,
-    REGION_MMIO = 4,
-    REGION_PRAM = 5,
-    REGION_VRAM = 6,
-    REGION_OAM = 7,
+    REGION_MMIO  = 4,
+    REGION_PRAM  = 5,
+    REGION_VRAM  = 6,
+    REGION_OAM   = 7,
     REGION_ROM_W0_L = 8,
     REGION_ROM_W0_H = 9,
     REGION_ROM_W1_L = 0xA,
@@ -141,15 +143,14 @@ private:
   auto ReadBIOS(std::uint32_t address) -> std::uint32_t;
   auto ReadUnused(std::uint32_t address) -> std::uint32_t;
   
-  auto ReadByte(std::uint32_t address, ARM::AccessType type) -> std::uint8_t  final;
-  auto ReadHalf(std::uint32_t address, ARM::AccessType type) -> std::uint16_t final;
-  auto ReadWord(std::uint32_t address, ARM::AccessType type) -> std::uint32_t final;
-  void WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type)  final;
-  void WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type) final;
-  void WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type) final;
+  auto ReadByte(std::uint32_t address, Access access) -> std::uint8_t  final;
+  auto ReadHalf(std::uint32_t address, Access access) -> std::uint16_t final;
+  auto ReadWord(std::uint32_t address, Access access) -> std::uint32_t final;
+  void WriteByte(std::uint32_t address, std::uint8_t value, Access access)  final;
+  void WriteHalf(std::uint32_t address, std::uint16_t value, Access access) final;
+  void WriteWord(std::uint32_t address, std::uint32_t value, Access access) final;
   
-  void SWI(std::uint32_t call_id) final { }
-  void Tick(int cycles) final;
+  void Tick(int cycles);
   void Idle() final;
   void PrefetchStep(std::uint32_t address, int cycles);
   

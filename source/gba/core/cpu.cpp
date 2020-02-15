@@ -65,10 +65,10 @@ void CPU::Reset() {
   UpdateCycleLUT();
   
   for (int i = 16; i < 256; i++) {
-    cycles16[ARM::ACCESS_NSEQ][i] = 1;
-    cycles16[ARM::ACCESS_SEQ ][i] = 1;
-    cycles32[ARM::ACCESS_NSEQ][i] = 1;
-    cycles32[ARM::ACCESS_SEQ ][i] = 1;
+    cycles16[int(Access::Nonsequential)][i] = 1;
+    cycles32[int(Access::Nonsequential)][i] = 1;
+    cycles16[int(Access::Sequential)][i] = 1;
+    cycles32[int(Access::Sequential)][i] = 1;
   }
   
   prefetch.active = false;
@@ -158,7 +158,7 @@ void CPU::PrefetchStep(std::uint32_t address, int cycles) {
     
     prefetch.active = true;
     prefetch.address[prefetch.wr_pos] = next_address;
-    prefetch.countdown = (thumb ? cycles16 : cycles32)[ARM::ACCESS_SEQ][next_address >> 24];
+    prefetch.countdown = (thumb ? cycles16 : cycles32)[int(Access::Sequential)][next_address >> 24];
   }
   
   if (IS_ROM_REGION(address)) {
@@ -238,10 +238,10 @@ void CPU::RunFor(int cycles) {
 
 void CPU::UpdateCycleLUT() {
   /* TODO: implement register 0x04000800. */
-  auto cycles16_n = cycles16[ARM::ACCESS_NSEQ];
-  auto cycles16_s = cycles16[ARM::ACCESS_SEQ];
-  auto cycles32_n = cycles32[ARM::ACCESS_NSEQ];
-  auto cycles32_s = cycles32[ARM::ACCESS_SEQ];
+  auto cycles16_n = cycles16[int(Access::Nonsequential)];
+  auto cycles16_s = cycles16[int(Access::Sequential)];
+  auto cycles32_n = cycles32[int(Access::Nonsequential)];
+  auto cycles32_s = cycles32[int(Access::Sequential)];
   
   int sram_cycles = 1 + s_ws_nseq[mmio.waitcnt.sram];
   

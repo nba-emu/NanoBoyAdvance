@@ -27,8 +27,8 @@ set(HEADERS
     emulator.hpp
     core/apu/apu.hpp
     core/apu/registers.hpp
-    core/arm/arm7.hpp
-    core/arm/interface.hpp
+    core/arm/arm7tdmi.hpp
+    core/arm/memory.hpp
     core/arm/state.hpp
     core/backup/backup.hpp
     core/backup/eeprom.hpp

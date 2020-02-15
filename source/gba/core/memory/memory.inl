@@ -83,9 +83,9 @@ inline std::uint32_t CPU::ReadUnused(std::uint32_t address) {
   return result >> ((address & 3) * 8);
 }
 
-inline auto CPU::ReadByte(std::uint32_t address, ARM::AccessType type) -> std::uint8_t {
+inline auto CPU::ReadByte(std::uint32_t address, Access access) -> std::uint8_t {
   int page = address >> 24;
-  int cycles = cycles16[type][page];
+  int cycles = cycles16[int(access)][page];
   
   if (mmio.waitcnt.prefetch) {
     PrefetchStep(address, cycles);
@@ -126,8 +126,8 @@ inline auto CPU::ReadByte(std::uint32_t address, ARM::AccessType type) -> std::u
     case REGION_ROM_W2_H: {
       address &= memory.rom.mask;
       if ((address & 0x1FFFF) == 0) {
-        Tick(cycles16[ARM::ACCESS_NSEQ][page] - 
-             cycles16[type][page]);
+        Tick(cycles16[int(Access::Nonsequential)][page] - 
+             cycles16[int(access)][page]);
       }
       // if (IS_GPIO_ACCESS(address) && gpio->isReadable()) {
       //   return gpio->read(address);
@@ -152,9 +152,9 @@ inline auto CPU::ReadByte(std::uint32_t address, ARM::AccessType type) -> std::u
   }
 }
 
-inline auto CPU::ReadHalf(std::uint32_t address, ARM::AccessType type) -> std::uint16_t {
+inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t {
   int page = address >> 24;
-  int cycles = cycles16[type][page];
+  int cycles = cycles16[int(access)][page];
   
   if (mmio.waitcnt.prefetch) {
     PrefetchStep(address, cycles);
@@ -208,8 +208,8 @@ inline auto CPU::ReadHalf(std::uint32_t address, ARM::AccessType type) -> std::u
     case REGION_ROM_W2_L: {
       address &= memory.rom.mask;
       if ((address & 0x1FFFF) == 0) {
-        Tick(cycles16[ARM::ACCESS_NSEQ][page] - 
-             cycles16[type][page]);
+        Tick(cycles16[int(Access::Nonsequential)][page] - 
+             cycles16[int(access)][page]);
       }
       // if (IS_GPIO_ACCESS(address) && gpio->isReadable()) {
       //   return  gpio->read(address) |
@@ -234,9 +234,9 @@ inline auto CPU::ReadHalf(std::uint32_t address, ARM::AccessType type) -> std::u
   }
 }
 
-inline auto CPU::ReadWord(std::uint32_t address, ARM::AccessType type) -> std::uint32_t {
+inline auto CPU::ReadWord(std::uint32_t address, Access access) -> std::uint32_t {
   int page = address >> 24;
-  int cycles = cycles32[type][page];
+  int cycles = cycles32[int(access)][page];
   
   if (mmio.waitcnt.prefetch) {
     PrefetchStep(address, cycles);
@@ -280,8 +280,8 @@ inline auto CPU::ReadWord(std::uint32_t address, ARM::AccessType type) -> std::u
     case REGION_ROM_W2_H: {
       address &= memory.rom.mask;
       if ((address & 0x1FFFF) == 0) {
-        Tick(cycles32[ARM::ACCESS_NSEQ][page] - 
-             cycles32[type][page]);
+        Tick(cycles32[int(Access::Nonsequential)][page] - 
+             cycles32[int(access)][page]);
       }
       // if (IS_GPIO_ACCESS(address) && gpio->isReadable()) {
       //   return  gpio->read(address)      |
@@ -310,12 +310,9 @@ inline auto CPU::ReadWord(std::uint32_t address, ARM::AccessType type) -> std::u
   }
 }
 
-inline void CPU::WriteByte(std::uint32_t address, std::uint8_t value, ARM::AccessType type) {
+inline void CPU::WriteByte(std::uint32_t address, std::uint8_t value, Access access) {
   int page = address >> 24;
-  int cycles = cycles16[type][page];
-
-  // if (page == 8 && (address & 0x1FFFF) == 0)
-  //   type = ARM::ACCESS_NSEQ;
+  int cycles = cycles16[int(access)][page];
 
   if (mmio.waitcnt.prefetch) {
     PrefetchStep(address, cycles);
@@ -362,12 +359,9 @@ inline void CPU::WriteByte(std::uint32_t address, std::uint8_t value, ARM::Acces
   }
 }
 
-inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, ARM::AccessType type) {
+inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, Access access) {
   int page = address >> 24;
-  int cycles = cycles16[type][page];
-  
-  // if (page == 8 && (address & 0x1FFFF) == 0)
-  //   type = ARM::ACCESS_NSEQ;
+  int cycles = cycles16[int(access)][page];
 
   if (mmio.waitcnt.prefetch) {
     PrefetchStep(address, cycles);
@@ -448,12 +442,9 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, ARM::Acce
   }
 }
 
-inline void CPU::WriteWord(std::uint32_t address, std::uint32_t value, ARM::AccessType type) {
+inline void CPU::WriteWord(std::uint32_t address, std::uint32_t value, Access access) {
   int page = address >> 24;
-  int cycles = cycles32[type][page];
-  
-  // if (page == 8 && (address & 0x1FFFF) == 0)
-  //   type = ARM::ACCESS_NSEQ;
+  int cycles = cycles32[int(access)][page];
 
   if (mmio.waitcnt.prefetch) {
     PrefetchStep(address, cycles);

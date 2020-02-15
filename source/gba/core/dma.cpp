@@ -127,7 +127,7 @@ void DMA::Request(Occasion occasion) {
 void DMA::Run(int const& ticks_left) {
   auto& channel = channels[current];
   
-  auto access = ARM::ACCESS_NSEQ;
+  auto access = Access::Nonsequential;
   
   if (channel.is_fifo_dma) {
     /* TODO: figure out how the FIFO DMA works in detail. */
@@ -379,9 +379,9 @@ void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
        * in only non-sequential accesses.
        */
       if (src_page == dst_page) {
-        channel.second_access = ARM::ACCESS_NSEQ;
+        channel.second_access = Access::Nonsequential;
       } else {
-        channel.second_access = ARM::ACCESS_SEQ;
+        channel.second_access = Access::Sequential;
       }
       
       /* Immediate DMAs are scheduled right away. */

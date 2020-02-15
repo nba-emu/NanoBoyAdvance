@@ -37,7 +37,7 @@ void ARM_DataProcessing(std::uint32_t instruction) {
 
   int carry = state.cpsr.f.c;
 
-  pipe.fetch_type = ACCESS_SEQ;
+  pipe.fetch_type = Access::Sequential;
 
   if (immediate) {
     int value = instruction & 0xFF;
@@ -65,7 +65,7 @@ void ARM_DataProcessing(std::uint32_t instruction) {
       if (reg_op2 == 15) op2 += 4;
 
       interface->Idle();
-      pipe.fetch_type = ACCESS_NSEQ;
+      pipe.fetch_type = Access::Nonsequential;
     }
 
     DoShift(shift_type, op2, shift, carry, shift_imm);
@@ -216,7 +216,7 @@ void ARM_StatusTransfer(std::uint32_t instruction) {
     }
   }
 
-  pipe.fetch_type = ACCESS_SEQ;
+  pipe.fetch_type = Access::Sequential;
   state.r15 += 4;
 }
 
@@ -243,7 +243,7 @@ void ARM_Multiply(std::uint32_t instruction) {
   }
 
   state.reg[dst] = result;
-  pipe.fetch_type = ACCESS_NSEQ;
+  pipe.fetch_type = Access::Nonsequential;
   state.r15 += 4;
 }
 
@@ -297,7 +297,7 @@ void ARM_MultiplyLong(std::uint32_t instruction) {
     state.cpsr.f.z = result == 0;
   }
 
-  pipe.fetch_type = ACCESS_NSEQ;
+  pipe.fetch_type = Access::Nonsequential;
   state.r15 += 4;
 }
 
@@ -311,16 +311,16 @@ void ARM_SingleDataSwap(std::uint32_t instruction) {
   std::uint32_t tmp;
 
   if (byte) {
-    tmp = ReadByte(state.reg[base], ACCESS_NSEQ);
-    WriteByte(state.reg[base], (std::uint8_t)state.reg[src], ACCESS_NSEQ);
+    tmp = ReadByte(state.reg[base], Access::Nonsequential);
+    WriteByte(state.reg[base], (std::uint8_t)state.reg[src], Access::Nonsequential);
   } else {
-    tmp = ReadWordRotate(state.reg[base], ACCESS_NSEQ);
-    WriteWord(state.reg[base], state.reg[src], ACCESS_NSEQ);
+    tmp = ReadWordRotate(state.reg[base], Access::Nonsequential);
+    WriteWord(state.reg[base], state.reg[src], Access::Nonsequential);
   }
 
   state.reg[dst] = tmp;
   interface->Idle();
-  pipe.fetch_type = ACCESS_NSEQ;
+  pipe.fetch_type = Access::Nonsequential;
   state.r15 += 4;
 }
 
@@ -359,7 +359,7 @@ void ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
     case 0: break;
     case 1:
       if (load) {
-        state.reg[dst] = ReadHalfRotate(address, ACCESS_NSEQ);
+        state.reg[dst] = ReadHalfRotate(address, Access::Nonsequential);
         interface->Idle();
       } else {
         std::uint32_t value = state.reg[dst];
@@ -368,15 +368,15 @@ void ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
           value += 4;
         }
 
-        WriteHalf(address, value, ACCESS_NSEQ);
+        WriteHalf(address, value, Access::Nonsequential);
       }
       break;
     case 2:
-      state.reg[dst] = ReadByteSigned(address, ACCESS_NSEQ);
+      state.reg[dst] = ReadByteSigned(address, Access::Nonsequential);
       interface->Idle();
       break;
     case 3:
-      state.reg[dst] = ReadHalfSigned(address, ACCESS_NSEQ);
+      state.reg[dst] = ReadHalfSigned(address, Access::Nonsequential);
       interface->Idle();
       break;
   }
@@ -388,7 +388,7 @@ void ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
     state.reg[base] = address;
   }
 
-  pipe.fetch_type = ACCESS_NSEQ;
+  pipe.fetch_type = Access::Nonsequential;
   state.r15 += 4;
 }
 
@@ -444,9 +444,9 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
 
   if (load) {
     if (byte) {
-      state.reg[dst] = ReadByte(address, ACCESS_NSEQ);
+      state.reg[dst] = ReadByte(address, Access::Nonsequential);
     } else {
-      state.reg[dst] = ReadWordRotate(address, ACCESS_NSEQ);
+      state.reg[dst] = ReadWordRotate(address, Access::Nonsequential);
     }
     interface->Idle();
   } else {
@@ -456,9 +456,9 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
     if (dst == 15) value += 4;
 
     if (byte) {
-      WriteByte(address, (std::uint8_t)value, ACCESS_NSEQ);
+      WriteByte(address, (std::uint8_t)value, Access::Nonsequential);
     } else {
-      WriteWord(address, value, ACCESS_NSEQ);
+      WriteWord(address, value, Access::Nonsequential);
     }
   }
 
@@ -479,7 +479,7 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
   if (load && dst == 15) {
     ReloadPipeline32();
   } else {
-    pipe.fetch_type = ACCESS_NSEQ;
+    pipe.fetch_type = Access::Nonsequential;
     state.r15 += 4;
   }
 }
@@ -545,7 +545,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
     base_new += bytes;
   }
 
-  auto access_type = ACCESS_NSEQ;
+  auto access_type = Access::Nonsequential;
 
   for (int i = first; i < 16; i++) {
     if (~list & (1 << i)) {
@@ -574,7 +574,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
       address += 4;
     }
 
-    access_type = ACCESS_SEQ;
+    access_type = Access::Sequential;
   }
 
   if (switch_mode) {
@@ -596,7 +596,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
       ReloadPipeline32();
     }
   } else {
-    pipe.fetch_type = ACCESS_NSEQ;
+    pipe.fetch_type = Access::Nonsequential;
   }
 }
 

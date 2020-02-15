@@ -9,14 +9,16 @@
 
 #include <array>
 
-#include "interface.hpp"
+#include "memory.hpp"
 #include "state.hpp"
 
 namespace ARM {
 
 class ARM7TDMI {
 public:
-  ARM7TDMI(Interface* interface) : interface(interface) { Reset(); }
+  using Access = MemoryBase::Access;
+
+  ARM7TDMI(MemoryBase* interface) : interface(interface) { Reset(); }
 
   void Reset() {
     state.Reset();
@@ -25,7 +27,7 @@ public:
 
     pipe.opcode[0] = 0xF0000000;
     pipe.opcode[1] = 0xF0000000;
-    pipe.fetch_type = ACCESS_NSEQ;
+    pipe.fetch_type = Access::Nonsequential;
   }
 
   auto GetPrefetchedOpcode(int slot) -> std::uint32_t {
@@ -100,16 +102,16 @@ private:
   }
 
   void ReloadPipeline16() {
-    pipe.opcode[0] = interface->ReadHalf(state.r15 + 0, ACCESS_NSEQ);
-    pipe.opcode[1] = interface->ReadHalf(state.r15 + 2, ACCESS_SEQ);
-    pipe.fetch_type = ACCESS_SEQ;
+    pipe.opcode[0] = interface->ReadHalf(state.r15 + 0, Access::Nonsequential);
+    pipe.opcode[1] = interface->ReadHalf(state.r15 + 2, Access::Sequential);
+    pipe.fetch_type = Access::Sequential;
     state.r15 += 4;
   }
 
   void ReloadPipeline32() {
-    pipe.opcode[0] = interface->ReadWord(state.r15 + 0, ACCESS_NSEQ);
-    pipe.opcode[1] = interface->ReadWord(state.r15 + 4, ACCESS_SEQ);
-    pipe.fetch_type = ACCESS_SEQ;
+    pipe.opcode[0] = interface->ReadWord(state.r15 + 0, Access::Nonsequential);
+    pipe.opcode[1] = interface->ReadWord(state.r15 + 4, Access::Sequential);
+    pipe.fetch_type = Access::Sequential;
     state.r15 += 8;
   }
 
@@ -176,13 +178,11 @@ private:
   #include "handlers/handler32.inl"
   #include "handlers/memory.inl"
   
-  /* Interface to emulator (Memory, SWI-emulation, ...). */
-  Interface* interface;
-
+  MemoryBase* interface;
   StatusRegister* p_spsr;
-  
+
   struct Pipeline {
-    AccessType    fetch_type;
+    Access fetch_type;
     std::uint32_t opcode[2];
   } pipe;
   
