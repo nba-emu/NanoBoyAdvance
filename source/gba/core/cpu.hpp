@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <config/config.hpp>
 #include <memory>
 
 #include "arm/arm7tdmi.hpp"
@@ -16,7 +17,6 @@
 #include "scheduler.hpp"
 #include "apu/apu.hpp"
 #include "ppu/ppu.hpp"
-#include "../config/config.hpp"
 
 namespace GameBoyAdvance {
 

@@ -38,7 +38,7 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
 
   connect(file_open, &QAction::triggered, this, [this] {
     std::thread test([&] {
-      auto config = std::make_shared<GameBoyAdvance::Config>();
+      auto config = std::make_shared<Config>();
       config->video_dev = screen;
 
       auto emulator = std::make_unique<GameBoyAdvance::Emulator>(config);

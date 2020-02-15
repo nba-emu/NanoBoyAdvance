@@ -7,12 +7,8 @@
 
 #pragma once
 
-namespace GameBoyAdvance {
-
 #include <cstdint>
   
-/* TODO: support different sample formats? */
-
 class AudioDevice {
 public:
   virtual ~AudioDevice() {}
@@ -32,5 +28,3 @@ public:
   bool Open(void* userdata, Callback callback) final { return true; }
   void Close() { }
 };
-
-}

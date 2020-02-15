@@ -7,8 +7,6 @@
 
 #pragma once
 
-namespace GameBoyAdvance {
-
 class InputDevice {
 public:
   virtual ~InputDevice() {}
@@ -35,5 +33,3 @@ public:
     return false;
   }
 };
-
-}

@@ -9,10 +9,10 @@
 
 #include <QGLWidget>
 #include <QOpenGLWidget>
-#include <gba/config/device/video_device.hpp>
+#include <device/video_device.hpp>
 
 class Screen : public QOpenGLWidget,
-               public GameBoyAdvance::VideoDevice {
+               public VideoDevice {
   Q_OBJECT
 
 public:

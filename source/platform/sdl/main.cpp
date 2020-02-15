@@ -16,7 +16,7 @@
 SDL_Texture*  g_texture;
 SDL_Renderer* g_renderer;
 
-class SDL2_AudioDevice : public GameBoyAdvance::AudioDevice {
+class SDL2_AudioDevice : public AudioDevice {
 public:
   auto GetSampleRate() -> int final { return have.freq; }
   auto GetBlockSize() -> int final { return have.samples; }
@@ -66,7 +66,7 @@ private:
   SDL_AudioSpec have;
 };
 
-class SDL2_InputDevice : public GameBoyAdvance::InputDevice {
+class SDL2_InputDevice : public InputDevice {
 public:
   auto Poll(Key key) -> bool final {  
     auto keystate = SDL_GetKeyboardState(NULL);
@@ -100,7 +100,7 @@ public:
   }
 };
 
-class SDL2_VideoDevice : public GameBoyAdvance::VideoDevice {
+class SDL2_VideoDevice : public VideoDevice {
 public:
   
   void Draw(std::uint32_t* buffer) final {
@@ -137,7 +137,7 @@ int main(int argc, char** argv) {
   
   std::string rom_path = argv[1];
   
-  auto config = std::make_shared<GameBoyAdvance::Config>();
+  auto config = std::make_shared<Config>();
   
   config->audio_dev = std::make_shared<SDL2_AudioDevice>();
   config->input_dev = std::make_shared<SDL2_InputDevice>();
