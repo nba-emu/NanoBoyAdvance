@@ -7,11 +7,10 @@
 
 #pragma once
 
+#include <array>
+
 #include "interface.hpp"
 #include "state.hpp"
-
-#include <array>
-#include <utility>
 
 namespace ARM {
 
@@ -21,8 +20,6 @@ public:
   ARM7TDMI(Interface* interface)
     : interface(interface)
   {
-    opcode_lut_16 = EmitAll16();
-    opcode_lut_32 = EmitAll32();
     BuildConditionTable();
     Reset();
   }
@@ -36,8 +33,12 @@ public:
   }
   
   RegisterFile state;
+
+  typedef void (ARM7TDMI::*Handler16)(std::uint16_t);
+  typedef void (ARM7TDMI::*Handler32)(std::uint32_t);
   
 private:
+  friend struct TableGen;
   
   /* Interface to emulator (Memory, SWI-emulation, ...). */
   Interface* interface;
@@ -48,20 +49,10 @@ private:
   void ReloadPipeline32();
   void BuildConditionTable();
   bool CheckCondition(Condition condition);
-  
-  typedef void (ARM7TDMI::*Instruction16)(std::uint16_t);
-  typedef void (ARM7TDMI::*Instruction32)(std::uint32_t);
-  
-  using OpcodeTable16 = std::array<Instruction16, 1024>;
-  using OpcodeTable32 = std::array<Instruction32, 4096>;
-  
-  OpcodeTable16 opcode_lut_16;
-  OpcodeTable32 opcode_lut_32;
-  
+ 
   #define ARM_INCLUDE_GUARD
   
   #include "isa-armv4/arithmetic.inl"
-  #include "isa-armv4/emit.inl"
   #include "isa-armv4/isa-arm.inl"
   #include "isa-armv4/isa-thumb.inl"
   #include "isa-armv4/memory.inl"
@@ -76,6 +67,9 @@ private:
   } pipe;
   
   bool condition_table[16][16];
+
+  static std::array<Handler16, 1024> s_opcode_lut_16;
+  static std::array<Handler32, 4096> s_opcode_lut_32;
 };
 
 #include "arm7.inl"

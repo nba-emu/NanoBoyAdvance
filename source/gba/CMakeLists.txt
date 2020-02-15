@@ -1,5 +1,6 @@
 set(SOURCES
     emulator.cpp
+    core/arm/tablegen/tablegen.cpp
     core/apu/channel/channel_noise.cpp
     core/apu/channel/channel_quad.cpp
     core/apu/channel/channel_wave.cpp

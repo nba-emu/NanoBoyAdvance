@@ -23,7 +23,7 @@ inline void ARM7TDMI::Run() {
 
     pipe.opcode[0] = pipe.opcode[1];
     pipe.opcode[1] = ReadHalf(state.r15, pipe.fetch_type);
-    (this->*opcode_lut_16[instruction >> 6])(instruction);
+    (this->*s_opcode_lut_16[instruction >> 6])(instruction);
   } else {
     state.r15 &= ~3;
 
@@ -32,7 +32,7 @@ inline void ARM7TDMI::Run() {
     if (CheckCondition(static_cast<Condition>(instruction >> 28))) {
       int hash = ((instruction >> 16) & 0xFF0) |
                  ((instruction >>  4) & 0x00F);
-      (this->*opcode_lut_32[hash])(instruction);
+      (this->*s_opcode_lut_32[hash])(instruction);
     } else {
       state.r15 += 4;
     }
