@@ -7,11 +7,11 @@
 
 #pragma once
 
+#include <cartridge/backup/backup.hpp>
 #include <config/config.hpp>
 #include <memory>
 
 #include "arm/arm7tdmi.hpp"
-#include "backup/backup.hpp"
 #include "dma.hpp"
 #include "timer.hpp"
 #include "scheduler.hpp"
@@ -83,7 +83,7 @@ public:
 
     struct ROM {
       std::unique_ptr<uint8_t[]> data;
-      std::unique_ptr<Backup> backup;
+      std::unique_ptr<nba::Backup> backup;
       size_t size;
       std::uint32_t mask = 0x1FFFFFF;
     } rom;

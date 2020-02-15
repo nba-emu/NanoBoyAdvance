@@ -9,9 +9,9 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #endif
 
-#include <core/backup/eeprom.hpp>
-#include <core/backup/flash.hpp>
-#include <core/backup/sram.hpp>
+#include <cartridge/backup/eeprom.hpp>
+#include <cartridge/backup/flash.hpp>
+#include <cartridge/backup/sram.hpp>
 #include <cstring>
 #include <exception>
 #include <experimental/filesystem>

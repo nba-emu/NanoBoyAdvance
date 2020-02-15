@@ -8,8 +8,6 @@
 #include "registers.hpp"
 #include "../cpu.hpp"
 
-#include <cstdio>
-
 namespace nba::core {
 
 using Key = InputDevice::Key;

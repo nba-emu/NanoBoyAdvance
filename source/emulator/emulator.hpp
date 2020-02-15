@@ -34,7 +34,7 @@ private:
   
   auto LoadBIOS() -> StatusCode; 
   
-  nba::core::CPU cpu;
+  core::CPU cpu;
   bool bios_loaded = false;
   bool save_detect = false;
   std::shared_ptr<Config> config;
