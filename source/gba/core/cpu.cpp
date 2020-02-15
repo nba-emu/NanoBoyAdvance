@@ -19,7 +19,7 @@ constexpr int CPU::s_ws_seq1[2];
 constexpr int CPU::s_ws_seq2[2];
 
 CPU::CPU(std::shared_ptr<Config> config)
-  : ARM7TDMI<CPU>::ARM7TDMI(this)
+  : ARM7TDMI::ARM7TDMI(this)
   , config(config)
   , apu(this)
   , ppu(this)
@@ -81,7 +81,7 @@ void CPU::Reset() {
   timer.Reset();
   apu.Reset();
   ppu.Reset();
-  ARM7TDMI<CPU>::Reset();
+  ARM7TDMI::Reset();
   
   if (config->skip_bios) {
     state.bank[ARM::BANK_SVC][ARM::BANK_R13] = 0x03007FE0; 

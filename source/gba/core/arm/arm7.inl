@@ -5,8 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-template <typename Tinterface>
-inline void ARM7TDMI<Tinterface>::Reset() {
+inline void ARM7TDMI::Reset() {
   state.Reset();
   
   SwitchMode(MODE_SYS);
@@ -16,8 +15,7 @@ inline void ARM7TDMI<Tinterface>::Reset() {
   pipe.fetch_type = ACCESS_NSEQ;
 }
 
-template <typename Tinterface>
-inline void ARM7TDMI<Tinterface>::Run() {
+inline void ARM7TDMI::Run() {
   auto instruction = pipe.opcode[0];
 
   if (state.cpsr.f.thumb) {
@@ -41,8 +39,7 @@ inline void ARM7TDMI<Tinterface>::Run() {
   }
 }
 
-template <typename Tinterface>
-inline void ARM7TDMI<Tinterface>::SignalIRQ() {
+inline void ARM7TDMI::SignalIRQ() {
   if (state.cpsr.f.mask_irq) {
     return;
   }
@@ -71,24 +68,21 @@ inline void ARM7TDMI<Tinterface>::SignalIRQ() {
   ReloadPipeline32();
 }
 
-template <typename Tinterface>
-inline void ARM7TDMI<Tinterface>::ReloadPipeline32() {
+inline void ARM7TDMI::ReloadPipeline32() {
   pipe.opcode[0] = interface->ReadWord(state.r15+0, ACCESS_NSEQ);
   pipe.opcode[1] = interface->ReadWord(state.r15+4, ACCESS_SEQ);
   pipe.fetch_type = ACCESS_SEQ;
   state.r15 += 8;
 }
 
-template <typename Tinterface>
-inline void ARM7TDMI<Tinterface>::ReloadPipeline16() {
+inline void ARM7TDMI::ReloadPipeline16() {
   pipe.opcode[0] = interface->ReadHalf(state.r15+0, ACCESS_NSEQ);
   pipe.opcode[1] = interface->ReadHalf(state.r15+2, ACCESS_SEQ);
   pipe.fetch_type = ACCESS_SEQ;
   state.r15 += 4;
 }
 
-template <typename Tinterface>
-inline void ARM7TDMI<Tinterface>::BuildConditionTable() {
+inline void ARM7TDMI::BuildConditionTable() {
   for (int flags = 0; flags < 16; flags++) {
     bool n = flags & 8;
     bool z = flags & 4;
@@ -114,15 +108,13 @@ inline void ARM7TDMI<Tinterface>::BuildConditionTable() {
   }
 }
 
-template <typename Tinterface>
-inline bool ARM7TDMI<Tinterface>::CheckCondition(Condition condition) {
+inline bool ARM7TDMI::CheckCondition(Condition condition) {
   if (condition == COND_AL)
     return true;
   return condition_table[condition][state.cpsr.v >> 28];
 }
 
-template <typename Tinterface>
-inline auto ARM7TDMI<Tinterface>::GetRegisterBankByMode(Mode mode) -> Bank {
+inline auto ARM7TDMI::GetRegisterBankByMode(Mode mode) -> Bank {
   /* TODO: reverse-engineer which bank the CPU defaults to for invalid modes. */
   switch (mode) {
     case MODE_USR:
@@ -143,8 +135,7 @@ inline auto ARM7TDMI<Tinterface>::GetRegisterBankByMode(Mode mode) -> Bank {
   return BANK_UND;
 }
 
-template <typename Tinterface>
-inline void ARM7TDMI<Tinterface>::SwitchMode(Mode new_mode) {
+inline void ARM7TDMI::SwitchMode(Mode new_mode) {
   auto old_bank = GetRegisterBankByMode(state.cpsr.f.mode);
   auto new_bank = GetRegisterBankByMode(new_mode);
 

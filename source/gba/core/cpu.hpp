@@ -20,7 +20,7 @@
 
 namespace GameBoyAdvance {
 
-class CPU : private ARM::ARM7TDMI<CPU>,
+class CPU : private ARM::ARM7TDMI,
             private ARM::Interface {
 public:
   CPU(std::shared_ptr<Config> config);
@@ -124,7 +124,7 @@ public:
   
 private:
   friend class DMA;
-  friend class ARM::ARM7TDMI<CPU>;
+  friend class ARM::ARM7TDMI;
   
   template <typename T>
   auto Read(void* buffer, std::uint32_t address) -> T {

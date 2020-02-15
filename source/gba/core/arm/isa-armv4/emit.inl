@@ -19,24 +19,6 @@ static constexpr void static_for( Func &&f ) {
   static_for_impl<T, Begin>( std::forward<Func>(f), std::make_integer_sequence<T, End - Begin>{ } );
 }
 
-static constexpr OpcodeTable16 EmitAll16() {
-  ARM7TDMI::OpcodeTable16 lut = {};
-  
-  static_for<std::size_t, 0, 1024>([&](auto i) {
-    lut[i] = EmitHandler16<i<<6>();
-  });
-  return lut;
-}
-
-static constexpr OpcodeTable32 EmitAll32() {
-  ARM7TDMI::OpcodeTable32 lut = {};
-
-  static_for<std::size_t, 0, 4096>([&](auto i) {
-    lut[i] = EmitHandler32<((i & 0xFF0) << 16) | ((i & 0xF) << 4)>();
-  });
-  return lut;
-}
-
 template <std::uint16_t instruction>
 static constexpr Instruction16 EmitHandler16() {
   // THUMB.1 Move shifted register
@@ -296,4 +278,22 @@ static constexpr Instruction32 EmitHandler32() {
   }
 
   return &ARM7TDMI::ARM_Undefined;
+}
+
+static constexpr OpcodeTable16 EmitAll16() {
+  ARM7TDMI::OpcodeTable16 lut = {};
+
+  static_for<std::size_t, 0, 1024>([&](auto i) {
+    lut[i] = EmitHandler16<i << 6>();
+    });
+  return lut;
+}
+
+static constexpr OpcodeTable32 EmitAll32() {
+  ARM7TDMI::OpcodeTable32 lut = {};
+
+  static_for<std::size_t, 0, 4096>([&](auto i) {
+    lut[i] = EmitHandler32<((i & 0xFF0) << 16) | ((i & 0xF) << 4)>();
+    });
+  return lut;
 }
