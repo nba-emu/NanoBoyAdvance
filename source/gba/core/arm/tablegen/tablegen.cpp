@@ -53,9 +53,40 @@ struct TableGen {
 
     return lut;
   }
+
+  static constexpr auto GenerateConditionTable() -> std::array<bool, 256> {
+    std::array<bool, 256> lut{};
+    
+    for (int flag_set = 0; flag_set < 16; flag_set++) {
+      bool n = flag_set & 8;
+      bool z = flag_set & 4;
+      bool c = flag_set & 2;
+      bool v = flag_set & 1;
+
+      lut[(COND_EQ << 4) | flag_set] =  z;
+      lut[(COND_NE << 4) | flag_set] = !z;
+      lut[(COND_CS << 4) | flag_set] =  c;
+      lut[(COND_CC << 4) | flag_set] = !c;
+      lut[(COND_MI << 4) | flag_set] =  n;
+      lut[(COND_PL << 4) | flag_set] = !n;
+      lut[(COND_VS << 4) | flag_set] =  v;
+      lut[(COND_VC << 4) | flag_set] = !v;
+      lut[(COND_HI << 4) | flag_set] =  c && !z;
+      lut[(COND_LS << 4) | flag_set] = !c ||  z;
+      lut[(COND_GE << 4) | flag_set] = n == v;
+      lut[(COND_LT << 4) | flag_set] = n != v;
+      lut[(COND_GT << 4) | flag_set] = !(z || (n != v));
+      lut[(COND_LE << 4) | flag_set] =  (z || (n != v));
+      lut[(COND_AL << 4) | flag_set] = true;
+      lut[(COND_NV << 4) | flag_set] = false;
+    }
+
+    return lut;
+  }
 };
 
 std::array<Handler16, 1024> ARM7TDMI::s_opcode_lut_16 = TableGen::GenerateTableThumb();
 std::array<Handler32, 4096> ARM7TDMI::s_opcode_lut_32 = TableGen::GenerateTableARM();
+std::array<bool, 256> ARM7TDMI::s_condition_lut = TableGen::GenerateConditionTable();
 
 } // namespace ARM

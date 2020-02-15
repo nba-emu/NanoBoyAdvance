@@ -16,35 +16,7 @@ namespace ARM {
 
 class ARM7TDMI {
 public:
-  ARM7TDMI(Interface* interface)
-    : interface(interface)
-  {
-    for (int flags = 0; flags < 16; flags++) {
-      bool n = flags & 8;
-      bool z = flags & 4;
-      bool c = flags & 2;
-      bool v = flags & 1;
-
-      condition_table[COND_EQ][flags] = z;
-      condition_table[COND_NE][flags] = !z;
-      condition_table[COND_CS][flags] = c;
-      condition_table[COND_CC][flags] = !c;
-      condition_table[COND_MI][flags] = n;
-      condition_table[COND_PL][flags] = !n;
-      condition_table[COND_VS][flags] = v;
-      condition_table[COND_VC][flags] = !v;
-      condition_table[COND_HI][flags] = c && !z;
-      condition_table[COND_LS][flags] = !c || z;
-      condition_table[COND_GE][flags] = n == v;
-      condition_table[COND_LT][flags] = n != v;
-      condition_table[COND_GT][flags] = !(z || (n != v));
-      condition_table[COND_LE][flags] = (z || (n != v));
-      condition_table[COND_AL][flags] = true;
-      condition_table[COND_NV][flags] = false;
-    }
-
-    Reset();
-  }
+  ARM7TDMI(Interface* interface) : interface(interface) { Reset(); }
 
   void Reset() {
     state.Reset();
@@ -120,14 +92,11 @@ public:
   
 private:
   friend struct TableGen;
-  
-  /* Interface to emulator (Memory, SWI-emulation, ...). */
-  Interface* interface;
 
   bool CheckCondition(Condition condition) {
     if (condition == COND_AL)
       return true;
-    return condition_table[condition][state.cpsr.v >> 28];
+    return s_condition_lut[(static_cast<int>(condition) << 4) | (state.cpsr.v >> 28)];
   }
 
   void ReloadPipeline16() {
@@ -207,6 +176,9 @@ private:
   #include "handlers/handler32.inl"
   #include "handlers/memory.inl"
   
+  /* Interface to emulator (Memory, SWI-emulation, ...). */
+  Interface* interface;
+
   StatusRegister* p_spsr;
   
   struct Pipeline {
@@ -214,12 +186,9 @@ private:
     std::uint32_t opcode[2];
   } pipe;
   
-  bool condition_table[16][16];
-
+  static std::array<bool, 256> s_condition_lut;
   static std::array<Handler16, 1024> s_opcode_lut_16;
   static std::array<Handler32, 4096> s_opcode_lut_32;
 };
-
-#include "arm7.inl"
 
 }
