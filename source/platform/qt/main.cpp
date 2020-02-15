@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) 2020 fleroviux
+ *
+ * Licensed under GPLv3 or any later version.
+ * Refer to the included LICENSE file.
+ */
+
 #include <QApplication>
 #include "mainwindow.hpp"
 
