@@ -266,9 +266,9 @@ void CPU::UpdateCycleLUT() {
   cycles16_s[REGION_ROM_W2_H] = cycles16_s[REGION_ROM_W2_L];
    
    /* ROM: WS0/WS1/WS2 32-bit non-sequential access: 1N access, 1S access */
-  cycles32_n[REGION_ROM_W0_L] = cycles16_n[0x8] + cycles16_s[0x8];
-  cycles32_n[REGION_ROM_W1_L] = cycles16_n[0xA] + cycles16_s[0xA];
-  cycles32_n[REGION_ROM_W2_L] = cycles16_n[0xC] + cycles16_s[0xC];
+  cycles32_n[REGION_ROM_W0_L] = cycles16_n[REGION_ROM_W0_L] + cycles16_s[REGION_ROM_W0_L];
+  cycles32_n[REGION_ROM_W1_L] = cycles16_n[REGION_ROM_W1_L] + cycles16_s[REGION_ROM_W1_L];
+  cycles32_n[REGION_ROM_W2_L] = cycles16_n[REGION_ROM_W2_L] + cycles16_s[REGION_ROM_W2_L];
   cycles32_n[REGION_ROM_W0_H] = cycles32_n[REGION_ROM_W0_L];
   cycles32_n[REGION_ROM_W1_H] = cycles32_n[REGION_ROM_W1_L];
   cycles32_n[REGION_ROM_W2_H] = cycles32_n[REGION_ROM_W2_L];
