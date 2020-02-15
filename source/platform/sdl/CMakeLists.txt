@@ -1,13 +1,13 @@
-SET(SOURCES
+set(SOURCES
     main.cpp
 )
 
-SET(HEADERS
+set(HEADERS
 )
 
-INCLUDE(FindSDL2 REQUIRED)
-FIND_PACKAGE(SDL2 REQUIRED)
-INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIR})
+include(FindSDL2 REQUIRED)
+find_package(SDL2 REQUIRED)
+include_directories(${SDL2_INCLUDE_DIR})
 
-ADD_EXECUTABLE(NanoboyAdvance-SDL ${SOURCES} ${HEADERS})
-TARGET_LINK_LIBRARIES(NanoboyAdvance-SDL gba ${SDL2_LIBRARY})
+add_executable(NanoboyAdvance-SDL ${SOURCES} ${HEADERS})
+target_link_libraries(NanoboyAdvance-SDL gba ${SDL2_LIBRARY})
