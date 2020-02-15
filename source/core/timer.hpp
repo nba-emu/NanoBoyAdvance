@@ -9,12 +9,11 @@
 
 #include <cstdint>
 
-namespace GameBoyAdvance {
+namespace nba::core {
 
 class CPU;
   
 class Timer {
-
 public:
   Timer(CPU* cpu) : cpu(cpu) { Reset(); }
   
@@ -55,4 +54,4 @@ private:
   } channels[4];
 };
 
-}
+} // namespace nba::core

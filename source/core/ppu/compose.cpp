@@ -10,7 +10,7 @@
 #include "ppu.hpp"
 #include "../cpu.hpp"
 
-using namespace GameBoyAdvance;
+namespace nba::core {
 
 using BlendMode = BlendControl::Effect;
 
@@ -293,3 +293,5 @@ void PPU::Blend(std::uint16_t& target1,
 
   target1 = r1 | (g1 << 5) | (b1 << 10);
 }
+
+} // namespace nba::core

@@ -9,7 +9,7 @@
 
 #include <cstdint>
 
-namespace GameBoyAdvance { 
+namespace nba::core { 
 
 class Backup {
 
@@ -21,4 +21,4 @@ public:
   virtual void Write(std::uint32_t address, std::uint8_t value) = 0;
 };
 
-}
+} // namespace nba::core

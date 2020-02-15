@@ -12,10 +12,9 @@
 #include "backup.hpp"
 #include "backup_file.hpp"
 
-namespace GameBoyAdvance {
+namespace nba::core {
 
 class EEPROM : public Backup {
-
 public:
   enum Size {
     SIZE_4K  = 0,
@@ -52,4 +51,4 @@ private:
   int transmitted_bits;
 };
 
-}
+} // namespace nba::core

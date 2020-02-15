@@ -12,10 +12,9 @@
 #include "backup.hpp"
 #include "backup_file.hpp"
 
-namespace GameBoyAdvance {
+namespace nba::core {
 
 class FLASH : public Backup {
-
 public:
   enum Size {
     SIZE_64K  = 0,
@@ -57,4 +56,4 @@ private:
   bool enable_select;
 };
 
-}
+} // namespace nba::core

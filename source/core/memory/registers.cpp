@@ -10,7 +10,7 @@
 
 #include <cstdio>
 
-using namespace GameBoyAdvance;
+namespace nba::core {
 
 using Key = InputDevice::Key;
 
@@ -499,3 +499,5 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     }
   }
 }
+
+} // namespace nba::core

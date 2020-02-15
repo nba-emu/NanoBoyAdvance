@@ -11,7 +11,7 @@
 
 #include "../../scheduler.hpp"
 
-namespace GameBoyAdvance {
+namespace nba::core {
 
 class Envelope {
 public:
@@ -178,11 +178,6 @@ public:
       case 7: envelope.Tick(); break;
     }
     
-//    /* TODO: find a better way to handle this. */
-//    if (length < 0) {
-//      length = 0;
-//    }
-    
     step = (step + 1) % 8;
     
     event.countdown += s_cycles_per_step;
@@ -201,4 +196,4 @@ private:
   static constexpr cycle_t s_cycles_per_step = 16777216/512;
 };
 
-}
+} // namespace nba::core

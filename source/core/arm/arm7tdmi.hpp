@@ -12,7 +12,7 @@
 #include "memory.hpp"
 #include "state.hpp"
 
-namespace ARM {
+namespace nba::core::arm {
 
 class ARM7TDMI {
 public:
@@ -191,4 +191,4 @@ private:
   static std::array<Handler32, 4096> s_opcode_lut_32;
 };
 
-}
+} // namespace nba::core::arm

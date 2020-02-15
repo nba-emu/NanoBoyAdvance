@@ -10,7 +10,7 @@
 #include "cpu.hpp"
 #include "timer.hpp"
 
-namespace GameBoyAdvance {
+namespace nba::core {
 
 static constexpr int g_ticks_shift[4] = { 0, 6, 8, 10 };
 static constexpr int g_ticks_mask[4] = { 0, 0x3F, 0xFF, 0x3FF };
@@ -194,4 +194,4 @@ void Timer::Increment(int chan_id, int increment) {
   channel.counter += increment;
 }
   
-}
+} // namespace nba::core

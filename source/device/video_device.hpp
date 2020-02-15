@@ -9,6 +9,8 @@
 
 #include <cstdint>
 
+namespace nba {
+
 class VideoDevice {
 public:
   virtual ~VideoDevice() {}
@@ -19,3 +21,5 @@ public:
 class NullVideoDevice : public VideoDevice {
   void Draw(std::uint32_t* buffer) { }
 };
+
+} // namespace nba

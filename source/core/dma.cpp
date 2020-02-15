@@ -9,7 +9,7 @@
 #include "dma.hpp"
 #include "memory/registers.hpp"
 
-using namespace GameBoyAdvance;
+namespace nba::core {
 
 /* TODO: what happens if src_cntl equals DMA::RELOAD? */
 static constexpr int g_dma_modify[2][4] = {
@@ -398,3 +398,5 @@ void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
     video_set.set(chan_id, false);
   }
 }
+
+} // namespace nba::core

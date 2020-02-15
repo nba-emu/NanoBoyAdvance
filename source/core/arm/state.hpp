@@ -9,7 +9,7 @@
 
 #include <cstdint>
 
-namespace ARM {
+namespace nba::core::arm {
 
 enum Mode : unsigned int {
   MODE_USR = 0x10,
@@ -122,4 +122,4 @@ struct RegisterFile {
   }
 };
 
-}
+} // namespace nba::core::arm

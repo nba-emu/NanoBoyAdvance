@@ -12,10 +12,9 @@
 #include "backup.hpp"
 #include "backup_file.hpp"
 
-namespace GameBoyAdvance {
+namespace nba::core {
 
 class SRAM : public Backup {
-
 public:
   SRAM(std::string const& save_path)
     : save_path(save_path) {
@@ -40,4 +39,4 @@ private:
   std::unique_ptr<BackupFile> file;
 };
 
-}
+} // namespace nba::core

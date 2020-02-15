@@ -11,7 +11,7 @@
 
 #include "channel/fifo.hpp"
 
-namespace GameBoyAdvance {
+namespace nba::core {
 
 enum Side {
   SIDE_LEFT  = 0,
@@ -60,4 +60,4 @@ struct BIAS {
   auto GetSampleRate() -> int { return 32768 << resolution; }
 };
 
-}
+} // namespace nba::core

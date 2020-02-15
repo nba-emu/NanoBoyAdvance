@@ -12,7 +12,7 @@
 #include <device/video_device.hpp>
 
 class Screen : public QOpenGLWidget,
-               public VideoDevice {
+               public nba::VideoDevice {
   Q_OBJECT
 
 public:

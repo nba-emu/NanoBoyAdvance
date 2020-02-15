@@ -9,7 +9,7 @@
 
 #include <cstdint>
 
-namespace ARM {
+namespace nba::core::arm {
 
 class MemoryBase {
 public:
@@ -29,4 +29,4 @@ public:
   virtual void Idle() = 0;
 };
 
-}
+} // namespace nba::core::arm

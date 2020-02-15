@@ -11,7 +11,7 @@
 #include <cstring>
 #include <limits>
 
-using namespace GameBoyAdvance;
+namespace nba::core {
 
 constexpr int CPU::s_ws_nseq[4];
 constexpr int CPU::s_ws_seq0[2];
@@ -84,10 +84,10 @@ void CPU::Reset() {
   ARM7TDMI::Reset();
   
   if (config->skip_bios) {
-    state.bank[ARM::BANK_SVC][ARM::BANK_R13] = 0x03007FE0; 
-    state.bank[ARM::BANK_IRQ][ARM::BANK_R13] = 0x03007FA0;
+    state.bank[arm::BANK_SVC][arm::BANK_R13] = 0x03007FE0; 
+    state.bank[arm::BANK_IRQ][arm::BANK_R13] = 0x03007FA0;
     state.reg[13] = 0x03007F00;
-    state.cpsr.f.mode = ARM::MODE_USR;
+    state.cpsr.f.mode = arm::MODE_USR;
     state.r15 = 0x08000000;
   }
 }
@@ -281,3 +281,5 @@ void CPU::UpdateCycleLUT() {
   cycles32_s[REGION_ROM_W1_H] = cycles32_s[REGION_ROM_W1_L];
   cycles32_s[REGION_ROM_W2_H] = cycles32_s[REGION_ROM_W2_L];
 }
+
+} // namespace nba::core

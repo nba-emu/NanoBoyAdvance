@@ -7,7 +7,7 @@
 
 #include "flash.hpp"
 
-using namespace GameBoyAdvance;
+namespace nba::core {
 
 static constexpr int g_save_size[2] = { 65536, 131072 };
 
@@ -140,3 +140,5 @@ void FLASH::HandleExtended(std::uint32_t address, std::uint8_t value) {
       
   phase = 0;
 }
+
+} // namespace nba::core

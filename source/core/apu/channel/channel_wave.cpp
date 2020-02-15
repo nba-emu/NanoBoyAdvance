@@ -7,7 +7,7 @@
 
 #include "channel_wave.hpp"
 
-using namespace GameBoyAdvance;
+namespace nba::core {
 
 WaveChannel::WaveChannel(Scheduler& scheduler) {
   sequencer.sweep.enabled = false;
@@ -144,3 +144,5 @@ void WaveChannel::Write(int offset, std::uint8_t value) {
     }
   }
 }
+
+} // namespace nba::core

@@ -7,11 +7,11 @@
 
 #pragma once
 
-#include "sequencer.hpp"
-
 #include <cstdint>
 
-namespace GameBoyAdvance {
+#include "sequencer.hpp"
+
+namespace nba::core {
 
 class WaveChannel {
 public:
@@ -52,4 +52,4 @@ private:
   int phase;
 };
 
-}
+} // namespace nba::core

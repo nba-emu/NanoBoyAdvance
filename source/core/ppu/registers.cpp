@@ -7,7 +7,7 @@
 
 #include "registers.hpp"
 
-using namespace GameBoyAdvance;
+namespace nba::core {
 
 void DisplayControl::Reset() {
   Write(0, 0);
@@ -260,3 +260,5 @@ void Mosaic::Write(int address, std::uint8_t value) {
   }
   }
 }
+
+} // namespace nba::core

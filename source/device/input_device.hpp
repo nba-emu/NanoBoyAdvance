@@ -7,6 +7,8 @@
 
 #pragma once
 
+namespace nba {
+
 class InputDevice {
 public:
   virtual ~InputDevice() {}
@@ -33,3 +35,5 @@ public:
     return false;
   }
 };
+
+} // namespace nba

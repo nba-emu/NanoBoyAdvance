@@ -10,7 +10,7 @@
 #include "ppu.hpp"
 #include "../cpu.hpp"
 
-using namespace GameBoyAdvance;
+namespace nba::core {
 
 constexpr std::uint16_t PPU::s_color_transparent;
 constexpr int PPU::s_wait_cycles[4];
@@ -229,3 +229,5 @@ void PPU::OnVblankHblankComplete() {
     cpu->mmio.irq_if |= CPU::INT_VCOUNT;
   }
 }
+
+} // namespace nba::core

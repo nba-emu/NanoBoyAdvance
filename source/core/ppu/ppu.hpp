@@ -13,7 +13,7 @@
 #include "registers.hpp"
 #include "../scheduler.hpp"
 
-namespace GameBoyAdvance {
+namespace nba::core {
 
 class CPU;
 
@@ -150,4 +150,4 @@ private:
   static const int s_obj_size[4][4][2];
 };
 
-}
+} // namespace nba::core

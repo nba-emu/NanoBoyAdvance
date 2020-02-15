@@ -7,7 +7,7 @@
 
 #include "../ppu.hpp"
 
-using namespace GameBoyAdvance;
+namespace nba::core {
 
 void PPU::RenderWindow(int id) {
   int line = mmio.vcount;
@@ -39,3 +39,5 @@ void PPU::RenderWindow(int id) {
     }
   }
 }
+
+} // namespace nba::core

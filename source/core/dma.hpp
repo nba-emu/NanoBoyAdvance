@@ -12,14 +12,13 @@
 
 #include "arm/memory.hpp"
 
-namespace GameBoyAdvance {
+namespace nba::core {
 
 class CPU;
   
 class DMA {
-
 public:
-  using Access = ARM::MemoryBase::Access;
+  using Access = arm::MemoryBase::Access;
   
   DMA(CPU* cpu) : cpu(cpu) { Reset(); }
   
@@ -139,4 +138,4 @@ private:
   } channels[4];
 };
 
-}
+} // namespace nba::core

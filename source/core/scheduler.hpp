@@ -11,7 +11,7 @@
 #include <limits>
 #include <unordered_set>
 
-namespace GameBoyAdvance {
+namespace nba::core {
 
 using cycle_t = int;
 
@@ -57,4 +57,4 @@ private:
   std::unordered_set<Event*> events;
 };
 
-}
+} // namespace nba::core

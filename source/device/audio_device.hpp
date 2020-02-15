@@ -8,6 +8,8 @@
 #pragma once
 
 #include <cstdint>
+
+namespace nba {
   
 class AudioDevice {
 public:
@@ -28,3 +30,5 @@ public:
   bool Open(void* userdata, Callback callback) final { return true; }
   void Close() { }
 };
+
+} // namespace nba

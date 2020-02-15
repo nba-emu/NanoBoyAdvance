@@ -38,10 +38,10 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
 
   connect(file_open, &QAction::triggered, this, [this] {
     std::thread test([&] {
-      auto config = std::make_shared<Config>();
+      auto config = std::make_shared<nba::Config>();
       config->video_dev = screen;
 
-      auto emulator = std::make_unique<Emulator>(config);
+      auto emulator = std::make_unique<nba::Emulator>(config);
       emulator->LoadGame("violet.gba");
       emulator->Reset();
 

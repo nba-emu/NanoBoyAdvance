@@ -7,7 +7,7 @@
 
 #include "../ppu.hpp"
 
-using namespace GameBoyAdvance;
+namespace nba::core {
 
 void PPU::RenderLayerAffine(int id) {
   auto const& bg = mmio.bgcnt[2 + id];
@@ -35,3 +35,5 @@ void PPU::RenderLayerAffine(int id) {
     );
   });
 }
+
+} // namespace nba::core

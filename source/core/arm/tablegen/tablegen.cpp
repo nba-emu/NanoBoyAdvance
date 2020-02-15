@@ -9,7 +9,7 @@
 
 #include "../arm7tdmi.hpp"
 
-namespace ARM {
+namespace nba::core::arm {
 
 using Handler16 = ARM7TDMI::Handler16;
 using Handler32 = ARM7TDMI::Handler32;
@@ -87,4 +87,4 @@ std::array<Handler16, 1024> ARM7TDMI::s_opcode_lut_16 = TableGen::GenerateTableT
 std::array<Handler32, 4096> ARM7TDMI::s_opcode_lut_32 = TableGen::GenerateTableARM();
 std::array<bool, 256> ARM7TDMI::s_condition_lut = TableGen::GenerateConditionTable();
 
-} // namespace ARM
+} // namespace nba::core::arm

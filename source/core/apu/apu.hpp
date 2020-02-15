@@ -7,10 +7,9 @@
 
 #pragma once
 
-#include <mutex>
-
 #include <common/dsp/resampler.hpp>
 #include <common/dsp/ring_buffer.hpp>
+#include <mutex>
 
 #include "channel/channel_quad.hpp"
 #include "channel/channel_wave.hpp"
@@ -19,7 +18,7 @@
 #include "registers.hpp"
 #include "../scheduler.hpp"
 
-namespace GameBoyAdvance {
+namespace nba::core {
 
 class CPU;
 
@@ -58,4 +57,4 @@ private:
   int resolution_old = 0;
 };
 
-}
+} // namespace nba::core

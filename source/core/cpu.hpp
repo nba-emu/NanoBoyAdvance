@@ -18,12 +18,12 @@
 #include "apu/apu.hpp"
 #include "ppu/ppu.hpp"
 
-namespace GameBoyAdvance {
+namespace nba::core {
 
-class CPU final : private ARM::ARM7TDMI,
-                  private ARM::MemoryBase {
+class CPU final : private arm::ARM7TDMI,
+                  private arm::MemoryBase {
 public:
-  using Access = ARM::MemoryBase::Access;
+  using Access = arm::MemoryBase::Access;
 
   CPU(std::shared_ptr<Config> config);
 
@@ -126,7 +126,7 @@ public:
   
 private:
   friend class DMA;
-  friend class ARM::ARM7TDMI;
+  friend class arm::ARM7TDMI;
   
   template <typename T>
   auto Read(void* buffer, std::uint32_t address) -> T {
@@ -191,4 +191,4 @@ private:
 
 #include "memory/memory.inl"
   
-}
+} // namespace nba::core

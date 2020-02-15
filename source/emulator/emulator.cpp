@@ -20,9 +20,11 @@
 
 #include "emulator.hpp"
 
-using namespace GameBoyAdvance;
+namespace nba {
 
 namespace fs = std::experimental::filesystem;
+
+using namespace nba::core;
 
 using SaveType = Config::SaveType;
 
@@ -172,3 +174,5 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
 void Emulator::Frame() {
   cpu.RunFor(g_cycles_per_frame);
 }
+
+} // namespace nba

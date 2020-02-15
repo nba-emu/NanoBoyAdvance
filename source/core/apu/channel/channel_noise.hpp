@@ -12,7 +12,7 @@
 #include "sequencer.hpp"
 #include "../registers.hpp"
 
-namespace GameBoyAdvance {
+namespace nba::core {
 
 class NoiseChannel {
 public:
@@ -54,4 +54,4 @@ private:
   int skip_count;
 };
 
-}
+} // namespace nba::core

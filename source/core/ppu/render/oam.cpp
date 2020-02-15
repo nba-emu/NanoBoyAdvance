@@ -7,7 +7,7 @@
 
 #include "../ppu.hpp"
 
-using namespace GameBoyAdvance;
+namespace nba::core {
 
 const int PPU::s_obj_size[4][4][2] = {
   /* SQUARE */
@@ -223,3 +223,5 @@ void PPU::RenderLayerOAM(bool bitmap_mode) {
     }
   }
 }
+
+} // namespace nba::core

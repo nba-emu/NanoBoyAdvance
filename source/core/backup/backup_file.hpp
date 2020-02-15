@@ -21,10 +21,9 @@
 #include <memory>
 #include <vector>
 
-namespace GameBoyAdvance {
+namespace nba::core {
 
 class BackupFile {
-
 public:
   
   static auto OpenOrCreate(std::string const& save_path,
@@ -117,4 +116,4 @@ private:
   std::unique_ptr<std::uint8_t[]> memory;
 }; 
 
-}
+} // namespace nba::core

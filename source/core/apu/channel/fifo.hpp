@@ -9,7 +9,7 @@
 
 #include <cstdint>
 
-namespace GameBoyAdvance {
+namespace nba::core {
 
 class FIFO {   
 public:
@@ -53,5 +53,5 @@ private:
   int count;
 };
   
-}
+} // namespace nba::core
   

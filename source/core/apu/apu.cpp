@@ -13,7 +13,7 @@
 #include "apu.hpp"
 #include "../cpu.hpp"
 
-using namespace GameBoyAdvance;
+namespace nba::core {
 
 /* Implemented in callback.cpp */
 void AudioCallback(APU* apu, std::int16_t* stream, int byte_len);
@@ -147,3 +147,5 @@ void APU::Generate() {
   
   event.countdown += bias.GetSampleInterval();
 }
+
+} // namespace nba::core

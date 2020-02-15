@@ -9,7 +9,7 @@
 
 #include "apu.hpp"
 
-using namespace GameBoyAdvance;
+namespace nba::core {
 
 void AudioCallback(APU* apu, std::int16_t* stream, int byte_len) {
   std::lock_guard<std::mutex> guard(apu->buffer_mutex);
@@ -37,3 +37,5 @@ void AudioCallback(APU* apu, std::int16_t* stream, int byte_len) {
     }
   }
 }
+
+} // namespace nba::core

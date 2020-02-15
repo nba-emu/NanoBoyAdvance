@@ -10,7 +10,9 @@
 #include <core/cpu.hpp>
 #include <memory>
 #include <string>
-  
+
+namespace nba {
+
 class Emulator {
 public:
   enum class StatusCode {
@@ -32,8 +34,10 @@ private:
   
   auto LoadBIOS() -> StatusCode; 
   
-  GameBoyAdvance::CPU cpu;
+  nba::core::CPU cpu;
   bool bios_loaded = false;
   bool save_detect = false;
   std::shared_ptr<Config> config;
 };
+
+} // namespace nba

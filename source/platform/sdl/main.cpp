@@ -16,7 +16,7 @@
 SDL_Texture*  g_texture;
 SDL_Renderer* g_renderer;
 
-class SDL2_AudioDevice : public AudioDevice {
+class SDL2_AudioDevice : public nba::AudioDevice {
 public:
   auto GetSampleRate() -> int final { return have.freq; }
   auto GetBlockSize() -> int final { return have.samples; }
@@ -66,7 +66,7 @@ private:
   SDL_AudioSpec have;
 };
 
-class SDL2_InputDevice : public InputDevice {
+class SDL2_InputDevice : public nba::InputDevice {
 public:
   auto Poll(Key key) -> bool final {  
     auto keystate = SDL_GetKeyboardState(NULL);
@@ -100,7 +100,7 @@ public:
   }
 };
 
-class SDL2_VideoDevice : public VideoDevice {
+class SDL2_VideoDevice : public nba::VideoDevice {
 public:
   
   void Draw(std::uint32_t* buffer) final {
@@ -137,16 +137,16 @@ int main(int argc, char** argv) {
   
   std::string rom_path = argv[1];
   
-  auto config = std::make_shared<Config>();
+  auto config = std::make_shared<nba::Config>();
   
   config->audio_dev = std::make_shared<SDL2_AudioDevice>();
   config->input_dev = std::make_shared<SDL2_InputDevice>();
   config->video_dev = std::make_shared<SDL2_VideoDevice>();
   
-  auto emulator = std::make_unique<Emulator>(config);
+  auto emulator = std::make_unique<nba::Emulator>(config);
   auto status = emulator->LoadGame(rom_path);
   
-  using StatusCode = Emulator::StatusCode;
+  using StatusCode = nba::Emulator::StatusCode;
   
   if (status != StatusCode::Ok) {
     switch (status) {

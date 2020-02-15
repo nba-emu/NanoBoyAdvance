@@ -10,7 +10,7 @@
 
 #include "eeprom.hpp"
 
-using namespace GameBoyAdvance;
+namespace nba::core {
 
 static constexpr int g_addr_bits[2] = { 6, 14 };
 static constexpr int g_save_size[2] = { 512, 8192 };
@@ -130,3 +130,5 @@ void EEPROM::Write(std::uint32_t address, std::uint8_t value) {
     ResetSerialBuffer();
   }
 }
+
+} // namespace nba::core

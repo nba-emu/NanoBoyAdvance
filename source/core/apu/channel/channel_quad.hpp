@@ -7,11 +7,11 @@
 
 #pragma once
 
-#include "sequencer.hpp"
-
 #include <cstdint>
 
-namespace GameBoyAdvance {
+#include "sequencer.hpp"
+
+namespace nba::core {
 
 class QuadChannel {
 public:
@@ -40,4 +40,4 @@ private:
   bool length_enable;
 };
 
-}
+} // namespace nba::core

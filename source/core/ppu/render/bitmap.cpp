@@ -7,7 +7,7 @@
 
 #include "../ppu.hpp"
 
-using namespace GameBoyAdvance;
+namespace nba::core {
 
 void PPU::RenderLayerBitmap1() {
   AffineRenderLoop(0, 240, 160, [&](int line_x, int x, int y) {
@@ -36,3 +36,5 @@ void PPU::RenderLayerBitmap3() {
     buffer_bg[2][line_x] = (vram[index + 1] << 8) | vram[index];
   });
 }
+
+} // namespace nba::core

@@ -7,7 +7,7 @@
 
 #include "channel_noise.hpp"
 
-using namespace GameBoyAdvance;
+namespace nba::core {
 
 NoiseChannel::NoiseChannel(Scheduler& scheduler, BIAS& bias) : bias(bias) {
   sequencer.sweep.enabled = false;
@@ -147,3 +147,5 @@ void NoiseChannel::Write(int offset, std::uint8_t value) {
     }
   }
 }
+
+} // namespace nba::core

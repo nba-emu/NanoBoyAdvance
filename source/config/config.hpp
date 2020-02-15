@@ -15,6 +15,8 @@
 #include "../device/input_device.hpp"
 #include "../device/video_device.hpp"
 
+namespace nba {
+
 struct Config {
   std::string bios_path = "bios.bin";
   
@@ -47,3 +49,5 @@ struct Config {
   std::shared_ptr<InputDevice> input_dev = std::make_shared<NullInputDevice>();
   std::shared_ptr<VideoDevice> video_dev = std::make_shared<NullVideoDevice>();
 };
+
+} // namespace nba

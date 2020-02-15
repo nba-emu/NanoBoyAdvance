@@ -9,7 +9,7 @@
 
 #include <cstdint>
 
-namespace GameBoyAdvance {
+namespace nba::core {
 
 struct DisplayControl {
   int mode;
@@ -110,4 +110,4 @@ struct Mosaic {
   void Write(int address, std::uint8_t value);
 };
 
-}
+} // namespace nba::core

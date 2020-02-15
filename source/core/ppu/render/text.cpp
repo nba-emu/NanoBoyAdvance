@@ -7,7 +7,7 @@
 
 #include "../ppu.hpp"
 
-using namespace GameBoyAdvance;
+namespace nba::core {
 
 void PPU::RenderLayerText(int id) {
   auto const& bgcnt  = mmio.bgcnt[id];
@@ -127,3 +127,5 @@ void PPU::RenderLayerText(int id) {
     }
   }
 }
+
+} // namespace nba::core

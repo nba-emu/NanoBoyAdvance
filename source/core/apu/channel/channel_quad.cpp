@@ -7,7 +7,7 @@
 
 #include "channel_quad.hpp"
 
-using namespace GameBoyAdvance;
+namespace nba::core {
 
 QuadChannel::QuadChannel(Scheduler& scheduler) {
   sequencer.sweep.enabled = true;
@@ -130,3 +130,5 @@ void QuadChannel::Write(int offset, std::uint8_t value) {
     }
   }
 }
+
+} // namespace nba::core

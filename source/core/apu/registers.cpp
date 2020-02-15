@@ -7,7 +7,7 @@
 
 #include "registers.hpp"
 
-using namespace GameBoyAdvance;
+namespace nba::core {
 
 void SoundControl::Reset() {
   master_enable = false;
@@ -130,3 +130,5 @@ void BIAS::Write(int address, std::uint8_t value) {
     }
   }
 }
+
+} // namespace nba::core
