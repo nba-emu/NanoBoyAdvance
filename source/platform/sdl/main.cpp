@@ -11,7 +11,7 @@
 
 #include <cstdio>
 #include <common/framelimiter.hpp>
-#include <gba/emulator.hpp>
+#include <emulator/emulator.hpp>
 
 SDL_Texture*  g_texture;
 SDL_Renderer* g_renderer;
@@ -143,10 +143,10 @@ int main(int argc, char** argv) {
   config->input_dev = std::make_shared<SDL2_InputDevice>();
   config->video_dev = std::make_shared<SDL2_VideoDevice>();
   
-  auto emulator = std::make_unique<GameBoyAdvance::Emulator>(config);
+  auto emulator = std::make_unique<Emulator>(config);
   auto status = emulator->LoadGame(rom_path);
   
-  using StatusCode = GameBoyAdvance::Emulator::StatusCode;
+  using StatusCode = Emulator::StatusCode;
   
   if (status != StatusCode::Ok) {
     switch (status) {

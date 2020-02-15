@@ -9,6 +9,9 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #endif
 
+#include <core/backup/eeprom.hpp>
+#include <core/backup/flash.hpp>
+#include <core/backup/sram.hpp>
 #include <cstring>
 #include <exception>
 #include <experimental/filesystem>
@@ -16,10 +19,6 @@
 #include <map>
 
 #include "emulator.hpp"
-
-#include "core/backup/eeprom.hpp"
-#include "core/backup/flash.hpp"
-#include "core/backup/sram.hpp"
 
 using namespace GameBoyAdvance;
 

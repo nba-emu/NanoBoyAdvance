@@ -6,7 +6,7 @@
  */
 
 // TEST
-#include <gba/emulator.hpp>
+#include <emulator/emulator.hpp>
 #include <thread>
 #include <QDebug>
 #include <common/framelimiter.hpp>
@@ -41,7 +41,7 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
       auto config = std::make_shared<Config>();
       config->video_dev = screen;
 
-      auto emulator = std::make_unique<GameBoyAdvance::Emulator>(config);
+      auto emulator = std::make_unique<Emulator>(config);
       emulator->LoadGame("violet.gba");
       emulator->Reset();
 

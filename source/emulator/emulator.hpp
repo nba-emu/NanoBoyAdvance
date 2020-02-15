@@ -7,12 +7,9 @@
 
 #pragma once
 
+#include <core/cpu.hpp>
 #include <memory>
 #include <string>
-
-#include "core/cpu.hpp"
-
-namespace GameBoyAdvance {
   
 class Emulator {
 public:
@@ -35,10 +32,8 @@ private:
   
   auto LoadBIOS() -> StatusCode; 
   
-  CPU cpu;
+  GameBoyAdvance::CPU cpu;
   bool bios_loaded = false;
   bool save_detect = false;
   std::shared_ptr<Config> config;
 };
-
-}
