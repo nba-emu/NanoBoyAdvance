@@ -9,7 +9,7 @@
 
 #include "../resampler.hpp"
 
-namespace DSP {
+namespace common::dsp {
 
 template <typename T>
 class NearestResampler : public Resampler<T> {
@@ -34,4 +34,4 @@ private:
 template <typename T>
 using NearestStereoResampler = NearestResampler<StereoSample<T>>;
 
-}
+} // namespace common::dsp

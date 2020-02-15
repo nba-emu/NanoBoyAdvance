@@ -9,8 +9,8 @@
 
 #include <mutex>
 
-#include <dsp/resampler.hpp>
-#include <dsp/ring_buffer.hpp>
+#include <common/dsp/resampler.hpp>
+#include <common/dsp/ring_buffer.hpp>
 
 #include "channel/channel_quad.hpp"
 #include "channel/channel_wave.hpp"
@@ -49,8 +49,8 @@ public:
   
   std::int8_t latch[2];
   
-  std::shared_ptr<DSP::StereoRingBuffer<float>> buffer;
-  std::unique_ptr<DSP::StereoResampler<float>> resampler;
+  std::shared_ptr<common::dsp::StereoRingBuffer<float>> buffer;
+  std::unique_ptr<common::dsp::StereoResampler<float>> resampler;
   
 private:
   CPU* cpu;

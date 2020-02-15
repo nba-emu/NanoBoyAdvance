@@ -5,625 +5,599 @@
  * Refer to the included LICENSE file.
  */
 
-enum class DataOp {
+enum class ThumbDataOp {
   AND = 0,
   EOR = 1,
-  SUB = 2,
-  RSB = 3,
-  ADD = 4,
+  LSL = 2,
+  LSR = 3,
+  ASR = 4,
   ADC = 5,
   SBC = 6,
-  RSC = 7,
+  ROR = 7,
   TST = 8,
-  TEQ = 9,
+  NEG = 9,
   CMP = 10,
   CMN = 11,
   ORR = 12,
-  MOV = 13,
+  MUL = 13,
   BIC = 14,
   MVN = 15
 };
 
-template <bool immediate, int opcode, bool _set_flags, int field4>
-void ARM_DataProcessing(std::uint32_t instruction) {
-  bool set_flags = _set_flags;
-
-  int reg_dst = (instruction >> 12) & 0xF;
-  int reg_op1 = (instruction >> 16) & 0xF;
-  int reg_op2 = (instruction >>  0) & 0xF;
-
-  std::uint32_t op2 = 0;
-  std::uint32_t op1 = state.reg[reg_op1];
-
+template <int op, int imm>
+void Thumb_MoveShiftedRegister(std::uint16_t instruction) {
+  // THUMB.1 Move shifted register
+  int dst   = (instruction >> 0) & 7;
+  int src   = (instruction >> 3) & 7;
   int carry = state.cpsr.f.c;
 
-  pipe.fetch_type = Access::Sequential;
+  std::uint32_t result = state.reg[src];
 
-  if (immediate) {
-    int value = instruction & 0xFF;
-    int shift = ((instruction >> 8) & 0xF) * 2;
+  DoShift(op, result, imm, carry, true);
 
-    if (shift != 0) {
-      carry = (value >> (shift - 1)) & 1;
-      op2   = (value >> shift) | (value << (32 - shift)); 
-    } else {
-      op2 = value;
-    }
-  } else {
-    std::uint32_t shift;
-    int  shift_type = ( field4 >> 1) & 3;
-    bool shift_imm  = (~field4 >> 0) & 1;
-
-    op2 = state.reg[reg_op2];
-
-    if (shift_imm) {
-      shift = (instruction >> 7) & 0x1F;
-    } else {
-      shift = state.reg[(instruction >> 8) & 0xF];
-
-      if (reg_op1 == 15) op1 += 4;
-      if (reg_op2 == 15) op2 += 4;
-
-      interface->Idle();
-      pipe.fetch_type = Access::Nonsequential;
-    }
-
-    DoShift(shift_type, op2, shift, carry, shift_imm);
-  }
-
-  if (reg_dst == 15 && set_flags) {
-    auto spsr = *p_spsr;
-
-    SwitchMode(spsr.f.mode);
-    state.cpsr.v = spsr.v;
-    set_flags = false;
-  }
-
-  auto& cpsr = state.cpsr;
-  auto& result = state.reg[reg_dst];
-
-  switch (static_cast<DataOp>(opcode)) {
-    case DataOp::AND:
-      result = op1 & op2;
-      if (set_flags) {
-        SetNZ(result);
-        cpsr.f.c = carry;
-      }
-      break;
-    case DataOp::EOR:
-      result = op1 ^ op2;
-      if (set_flags) {
-        SetNZ(result);
-        cpsr.f.c = carry;
-      }
-      break;
-    case DataOp::SUB:
-      result = SUB(op1, op2, set_flags);
-      break;
-    case DataOp::RSB:
-      result = SUB(op2, op1, set_flags);
-      break;
-    case DataOp::ADD:
-      result = ADD(op1, op2, set_flags);
-      break;
-    case DataOp::ADC:
-      result = ADC(op1, op2, set_flags);
-      break;
-    case DataOp::SBC:
-      result = SBC(op1, op2, set_flags);
-      break;
-    case DataOp::RSC:
-      result = SBC(op2, op1, set_flags);
-      break;
-    case DataOp::TST: {
-      SetNZ(op1 & op2);
-      cpsr.f.c = carry;
-      break;
-    }
-    case DataOp::TEQ: {
-      SetNZ(op1 ^ op2);
-      cpsr.f.c = carry;
-      break;
-    }
-    case DataOp::CMP:
-      SUB(op1, op2, true);
-      break;
-    case DataOp::CMN:
-      ADD(op1, op2, true);
-      break;
-    case DataOp::ORR:
-      result = op1 | op2;
-      if (set_flags) {
-        SetNZ(result);
-        cpsr.f.c = carry;
-      }
-      break;
-    case DataOp::MOV:
-      result = op2;
-      if (set_flags) {
-        SetNZ(result);
-        cpsr.f.c = carry;
-      }
-      break;
-    case DataOp::BIC:
-      result = op1 & ~op2;
-      if (set_flags) {
-        SetNZ(result);
-        cpsr.f.c = carry;
-      }
-      break;
-    case DataOp::MVN:
-      result = ~op2;
-      if (set_flags) {
-        SetNZ(result);
-        cpsr.f.c = carry;
-      }
-      break;
-  }
-
-  if (reg_dst == 15) {
-    if (state.cpsr.f.thumb) {
-      ReloadPipeline16();
-    } else {
-      ReloadPipeline32();
-    }
-  } else {
-    state.r15 += 4;
-  }
-}
-
-template <bool immediate, bool use_spsr, bool to_status>
-void ARM_StatusTransfer(std::uint32_t instruction) {
-  if (to_status) {
-    /* TODO: find out what happens if the thumb bit was altered by MSR. */
-    std::uint32_t op;
-    std::uint32_t mask = 0;
-
-    /* Create mask based on fsxc-bits. */
-    if (instruction & (1 << 16)) mask |= 0x000000FF;
-    if (instruction & (1 << 17)) mask |= 0x0000FF00;
-    if (instruction & (1 << 18)) mask |= 0x00FF0000;
-    if (instruction & (1 << 19)) mask |= 0xFF000000;
-
-    /* Decode source operand. */
-    if (immediate) {
-      int value = instruction & 0xFF;
-      int shift = ((instruction >> 8) & 0xF) * 2;
-      
-      op = (value >> shift) | (value << (32 - shift));
-    } else {
-      op = state.reg[instruction & 0xF];
-    }
-
-    std::uint32_t value = op & mask;
-
-    /* Apply masked replace to SPSR or CPSR. */
-    if (!use_spsr) {
-      if (mask & 0xFF) {
-        SwitchMode(static_cast<Mode>(value & 0x1F));
-      }
-      state.cpsr.v = (state.cpsr.v & ~mask) | value;
-    } else if (p_spsr != &state.cpsr) {
-      p_spsr->v = (p_spsr->v & ~mask) | value;
-    }
-  } else {
-    int dst = (instruction >> 12) & 0xF;
-    
-    if (use_spsr) {
-      state.reg[dst] = p_spsr->v;
-    } else {
-      state.reg[dst] = state.cpsr.v;
-    }
-  }
-
-  pipe.fetch_type = Access::Sequential;
-  state.r15 += 4;
-}
-
-template <bool accumulate, bool set_flags>
-void ARM_Multiply(std::uint32_t instruction) {
-  std::uint32_t result;
-
-  int op1 = (instruction >>  0) & 0xF;
-  int op2 = (instruction >>  8) & 0xF;
-  int op3 = (instruction >> 12) & 0xF;
-  int dst = (instruction >> 16) & 0xF;
-
-  TickMultiply(state.reg[op2]);
-  
-  result = state.reg[op1] * state.reg[op2];
-
-  if (accumulate) {
-    result += state.reg[op3];
-    interface->Idle();
-  }
-  
-  if (set_flags) {
-    SetNZ(result);
-  }
+  /* Update flags */
+  state.cpsr.f.c = carry;
+  state.cpsr.f.z = (result == 0);
+  state.cpsr.f.n = result >> 31;
 
   state.reg[dst] = result;
-  pipe.fetch_type = Access::Nonsequential;
-  state.r15 += 4;
+  pipe.fetch_type = Access::Sequential;
+  state.r15 += 2;
 }
 
-template <bool sign_extend, bool accumulate, bool set_flags>
-void ARM_MultiplyLong(std::uint32_t instruction) {
-  int op1 = (instruction >> 0) & 0xF;
-  int op2 = (instruction >> 8) & 0xF;
-  
-  int dst_lo = (instruction >> 12) & 0xF;
-  int dst_hi = (instruction >> 16) & 0xF;
+template <bool immediate, bool subtract, int field3>
+void Thumb_AddSub(std::uint16_t instruction) {
+  int dst = (instruction >> 0) & 7;
+  int src = (instruction >> 3) & 7;
+  std::uint32_t operand = immediate ? field3 : state.reg[field3];
 
-  std::int64_t result;
-  
-  interface->Idle();
-  TickMultiply(state.reg[op2]);
-
-  if (sign_extend) {
-    std::int64_t a = state.reg[op1];
-    std::int64_t b = state.reg[op2];
-
-    /* Sign-extend operands */
-    if (a & 0x80000000) a |= 0xFFFFFFFF00000000;
-    if (b & 0x80000000) b |= 0xFFFFFFFF00000000;
-
-    result = a * b;
+  if (subtract) {
+    state.reg[dst] = SUB(state.reg[src], operand, true);
   } else {
-    std::uint64_t uresult = (std::uint64_t)state.reg[op1] * (std::uint64_t)state.reg[op2];
-
-    result = (std::int64_t)uresult;
+    state.reg[dst] = ADD(state.reg[src], operand, true);
   }
 
-  if (accumulate) {
-    std::int64_t value = state.reg[dst_hi];
+  pipe.fetch_type = Access::Sequential;
+  state.r15 += 2;
+}
 
-    /* Workaround x86 shift limitations. */
-    value <<= 16;
-    value <<= 16;
-    value  |= state.reg[dst_lo];
+template <int op, int dst>
+void Thumb_Op3(std::uint16_t instruction) {
+  // THUMB.3 Move/compare/add/subtract immediate
+  std::uint32_t imm = instruction & 0xFF;
 
-    result += value;
+  switch (op) {
+  case 0b00:
+    /* MOV rD, #imm */
+    state.reg[dst] = imm;
+    state.cpsr.f.n = 0;
+    state.cpsr.f.z = imm == 0;
+    break;
+  case 0b01:
+    /* CMP rD, #imm */
+    SUB(state.reg[dst], imm, true);
+    break;
+  case 0b10:
+    /* ADD rD, #imm */
+    state.reg[dst] = ADD(state.reg[dst], imm, true);
+    break;
+  case 0b11:
+    /* SUB rD, #imm */
+    state.reg[dst] = SUB(state.reg[dst], imm, true);
+    break;
+  }
+
+  pipe.fetch_type = Access::Sequential;
+  state.r15 += 2;
+}
+
+template <int op>
+void Thumb_ALU(std::uint16_t instruction) {
+  int dst = (instruction >> 0) & 7;
+  int src = (instruction >> 3) & 7;
+
+  pipe.fetch_type = Access::Sequential;
+
+  /* Order of opcodes has been rearranged for readabilities sake. */
+  switch (static_cast<ThumbDataOp>(op)) {
+  case ThumbDataOp::MVN:
+    state.reg[dst] = ~state.reg[src];
+    SetNZ(state.reg[dst]);
+    break;
+
+  /* Bitwise logical */
+  case ThumbDataOp::AND:
+    state.reg[dst] &= state.reg[src];
+    SetNZ(state.reg[dst]);
+    break;
+  case ThumbDataOp::BIC:
+    state.reg[dst] &= ~state.reg[src];
+    SetNZ(state.reg[dst]);
+    break;
+  case ThumbDataOp::ORR:
+    state.reg[dst] |= state.reg[src];
+    SetNZ(state.reg[dst]);
+    break;
+  case ThumbDataOp::EOR:
+    state.reg[dst] ^= state.reg[src];
+    SetNZ(state.reg[dst]);
+    break;
+  case ThumbDataOp::TST: {
+    SetNZ(state.reg[dst] & state.reg[src]);
+    break;
+  }
+
+  /* LSL, LSR, ASR, ROR */
+  case ThumbDataOp::LSL: {
+    int carry = state.cpsr.f.c;
+    LSL(state.reg[dst], state.reg[src], carry);
+    SetNZ(state.reg[dst]);
+    state.cpsr.f.c = carry;
     interface->Idle();
-  }
-
-  std::uint32_t result_hi = result >> 32;
-
-  state.reg[dst_lo] = result & 0xFFFFFFFF;
-  state.reg[dst_hi] = result_hi;
-
-  if (set_flags) {
-    state.cpsr.f.n = result_hi >> 31;
-    state.cpsr.f.z = result == 0;
-  }
-
-  pipe.fetch_type = Access::Nonsequential;
-  state.r15 += 4;
-}
-
-/* TODO: Check if timings are correct. */
-template <bool byte>
-void ARM_SingleDataSwap(std::uint32_t instruction) {
-  int src  = (instruction >>  0) & 0xF;
-  int dst  = (instruction >> 12) & 0xF;
-  int base = (instruction >> 16) & 0xF;
-
-  std::uint32_t tmp;
-
-  if (byte) {
-    tmp = ReadByte(state.reg[base], Access::Nonsequential);
-    WriteByte(state.reg[base], (std::uint8_t)state.reg[src], Access::Nonsequential);
-  } else {
-    tmp = ReadWordRotate(state.reg[base], Access::Nonsequential);
-    WriteWord(state.reg[base], state.reg[src], Access::Nonsequential);
-  }
-
-  state.reg[dst] = tmp;
-  interface->Idle();
-  pipe.fetch_type = Access::Nonsequential;
-  state.r15 += 4;
-}
-
-void ARM_BranchAndExchange(std::uint32_t instruction) {
-  std::uint32_t address = state.reg[instruction & 0xF];
-
-  if (address & 1) {
-    state.r15 = address & ~1;
-    state.cpsr.f.thumb = 1;
-    ReloadPipeline16();
-  } else {
-    state.r15 = address & ~3;
-    ReloadPipeline32();
-  }
-}
-
-template <bool pre, bool add, bool immediate, bool writeback, bool load, int opcode>
-void ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
-  int dst  = (instruction >> 12) & 0xF;
-  int base = (instruction >> 16) & 0xF;
-
-  std::uint32_t offset;
-  std::uint32_t address = state.reg[base];
-
-  if (immediate) {
-    offset = (instruction & 0xF) | ((instruction >> 4) & 0xF0);
-  } else {
-    offset = state.reg[instruction & 0xF];
-  }
-
-  if (pre) {
-    address += add ? offset : -offset;
-  }
-
-  switch (opcode) {
-    case 0: break;
-    case 1:
-      if (load) {
-        state.reg[dst] = ReadHalfRotate(address, Access::Nonsequential);
-        interface->Idle();
-      } else {
-        std::uint32_t value = state.reg[dst];
-
-        if (dst == 15) {
-          value += 4;
-        }
-
-        WriteHalf(address, value, Access::Nonsequential);
-      }
-      break;
-    case 2:
-      state.reg[dst] = ReadByteSigned(address, Access::Nonsequential);
-      interface->Idle();
-      break;
-    case 3:
-      state.reg[dst] = ReadHalfSigned(address, Access::Nonsequential);
-      interface->Idle();
-      break;
-  }
-
-  if ((writeback || !pre) && (!load || base != dst)) {
-    if (!pre) {
-      address += add ? offset : -offset;
-    }
-    state.reg[base] = address;
-  }
-
-  pipe.fetch_type = Access::Nonsequential;
-  state.r15 += 4;
-}
-
-template <bool link>
-void ARM_BranchAndLink(std::uint32_t instruction) {
-  std::uint32_t offset = instruction & 0xFFFFFF;
-
-  if (offset & 0x800000) {
-    offset |= 0xFF000000;
-  }
-
-  if (link) {
-    state.r14 = state.r15 - 4;
-  }
-
-  state.r15 += offset * 4;
-  ReloadPipeline32();
-}
-
-template <bool immediate, bool pre, bool add, bool byte, bool writeback, bool load>
-void ARM_SingleDataTransfer(std::uint32_t instruction) {
-  /* TODO: reverse-engineer special case with usermode registers and a banked base register. */
-  Mode mode;
-  std::uint32_t offset;
-
-  int dst  = (instruction >> 12) & 0xF;
-  int base = (instruction >> 16) & 0xF;
-  std::uint32_t address = state.reg[base];
-
-  /* Post-indexing implicitly write back to the base register.
-   * In that case user mode registers will be used if the W-bit is set.
-   */
-  if (!pre && writeback) {
-    mode = static_cast<Mode>(state.cpsr.f.mode);
-    SwitchMode(MODE_USR);
-  }
-
-  /* Calculate offset relative to base register. */
-  if (immediate) {
-    offset = instruction & 0xFFF;
-  } else {
-    int carry  = state.cpsr.f.c;
-    int opcode = (instruction >> 5) & 3;
-    int amount = (instruction >> 7) & 0x1F;
-
-    offset = state.reg[instruction & 0xF];
-    DoShift(opcode, offset, amount, carry, true);
-  }
-
-  if (pre) {
-    address += add ? offset : -offset;
-  }
-
-  if (load) {
-    if (byte) {
-      state.reg[dst] = ReadByte(address, Access::Nonsequential);
-    } else {
-      state.reg[dst] = ReadWordRotate(address, Access::Nonsequential);
-    }
-    interface->Idle();
-  } else {
-    std::uint32_t value = state.reg[dst];
-
-    /* r15 is $+12 now due to internal prefetch cycle. */
-    if (dst == 15) value += 4;
-
-    if (byte) {
-      WriteByte(address, (std::uint8_t)value, Access::Nonsequential);
-    } else {
-      WriteWord(address, value, Access::Nonsequential);
-    }
-  }
-
-  /* Restore original mode (if it was changed) */
-  if (!pre && writeback) {
-    SwitchMode(mode);
-  }
-
-  /* Write address back to the base register. */
-  if (!load || base != dst) {
-    if (!pre) {
-      state.reg[base] += add ? offset : -offset;
-    } else if (writeback) {
-      state.reg[base] = address;
-    }
-  }
-
-  if (load && dst == 15) {
-    ReloadPipeline32();
-  } else {
     pipe.fetch_type = Access::Nonsequential;
-    state.r15 += 4;
+    break;
   }
+  case ThumbDataOp::LSR: {
+    int carry = state.cpsr.f.c;
+    LSR(state.reg[dst], state.reg[src], carry, false);
+    SetNZ(state.reg[dst]);
+    state.cpsr.f.c = carry;
+    interface->Idle();
+    pipe.fetch_type = Access::Nonsequential;
+    break;
+  }
+  case ThumbDataOp::ASR: {
+    int carry = state.cpsr.f.c;
+    ASR(state.reg[dst], state.reg[src], carry, false);
+    SetNZ(state.reg[dst]);
+    state.cpsr.f.c = carry;
+    interface->Idle();
+    pipe.fetch_type = Access::Nonsequential;
+    break;
+  }
+  case ThumbDataOp::ROR: {
+    int carry = state.cpsr.f.c;
+    ROR(state.reg[dst], state.reg[src], carry, false);
+    SetNZ(state.reg[dst]);
+    state.cpsr.f.c = carry;
+    interface->Idle();
+    pipe.fetch_type = Access::Nonsequential;
+    break;
+  }
+
+  /* Add/Sub with carry, NEG, comparison, multiply */
+  case ThumbDataOp::ADC:
+    state.reg[dst] = ADC(state.reg[dst], state.reg[src], true);
+    break;
+  case ThumbDataOp::SBC:
+    state.reg[dst] = SBC(state.reg[dst], state.reg[src], true);
+    break;
+  case ThumbDataOp::NEG:
+    state.reg[dst] = SUB(0, state.reg[src], true);
+    break;
+  case ThumbDataOp::CMP:
+    SUB(state.reg[dst], state.reg[src], true);
+    break;
+  case ThumbDataOp::CMN:
+    ADD(state.reg[dst], state.reg[src], true);
+    break;
+  case ThumbDataOp::MUL:
+    TickMultiply(state.reg[dst]);
+    state.reg[dst] *= state.reg[src];
+    SetNZ(state.reg[dst]);
+    state.cpsr.f.c = 0;
+    pipe.fetch_type = Access::Nonsequential;
+    break;
+  }
+
+  state.r15 += 2;
 }
 
-template <bool _pre, bool add, bool user_mode, bool writeback, bool load>
-void ARM_BlockDataTransfer(std::uint32_t instruction) {
-  /* TODO: reverse-engineer special case with usermode registers and a banked base register. */
-  int base = (instruction >> 16) & 0xF;
-  int list = instruction & 0xFFFF;
-  
-  Mode mode;
-  bool transfer_pc = list & (1 << 15);
-  bool switch_mode = user_mode && (!load || !transfer_pc);
-  int  first = 0;
-  int  bytes = 0;
-  bool pre = _pre;
+template <int op, bool high1, bool high2>
+void Thumb_HighRegisterOps_BX(std::uint16_t instruction) {
+  // THUMB.5 Hi register operations/branch exchange
+  int dst = (instruction >> 0) & 7;
+  int src = (instruction >> 3) & 7;
 
-  std::uint32_t address = state.reg[base];
+  // Instruction may access higher registers r8 - r15 ("Hi register").
+  // This is archieved using two extra bits that displace the register number by 8.
+  if (high1) dst |= 8;
+  if (high2) src |= 8;
 
-  /* r15 will be advanced at the end of the first cycle, before the transfer starts.
-   * When written via STM, r15 will therefore be ahead of PC by an extra word.
-   */
-  state.r15 += 4;
+  std::uint32_t operand = state.reg[src];
 
-  if (switch_mode) {
-    mode = state.cpsr.f.mode;
-    SwitchMode(MODE_USR);
-  }
+  if (src == 15) operand &= ~1;
 
-  if (list != 0) {
-    /* Determine number of bytes to transfer and the first register in the list. */
-    for (int i = 15; i >= 0; i--) {
-      if (~list & (1 << i)) {
-        continue;
-      }
-      first = i;
-      bytes += 4;
-    }  
-  } else {
-    /* If the register list is empty, only r15 will be loaded/stored but
-     * the base will be incremented/decremented as if each register was transferred.
-     */
-    list  = 1 << 15;
-    first = 15;
-    transfer_pc = true;
-    bytes = 64;
-  }
-
-  std::uint32_t base_new = address;
-  std::uint32_t base_old = address;
-
-  /* The CPU always transfers registers sequentially,
-   * for decrementing modes it determines the final address first and
-   * then transfers the registers with incrementing addresses.
-   * Due to the inverted order post-decrement becomes pre-increment and
-   * pre-decrement becomes post-increment.
-   */
-  if (!add) {
-    pre = !pre;
-    address  -= bytes;
-    base_new -= bytes;
-  } else {
-    base_new += bytes;
-  }
-
-  auto access_type = Access::Nonsequential;
-
-  for (int i = first; i < 16; i++) {
-    if (~list & (1 << i)) {
-      continue;
-    }
-
-    if (pre) {
-      address += 4;
-    }
-
-    if (load) {
-      state.reg[i] = ReadWord(address, access_type);
-      if (i == 15 && user_mode) {
-        auto& spsr = *p_spsr;
-
-        SwitchMode(spsr.f.mode);
-        state.cpsr.v = spsr.v;
-      }
-    } else if (i == base) {
-      WriteWord(address, (i == first) ? base_old : base_new, access_type);
-    } else {
-      WriteWord(address, state.reg[i], access_type);
-    }
-
-    if (!pre) {
-      address += 4;
-    }
-
-    access_type = Access::Sequential;
-  }
-
-  if (switch_mode) {
-    SwitchMode(mode);
-  }
-
-  if (writeback && (!load || !(list & (1 << base)))) {
-    state.reg[base] = base_new;
-  }
-
-  if (load) {
-    interface->Idle();
-  }
-
-  if (load && transfer_pc) {
-    if (state.cpsr.f.thumb) {
+  /* Check for Branch & Exchange (bx) instruction. */
+  if (op == 3) {
+    /* LSB indicates new instruction set (0 = ARM, 1 = THUMB) */
+    if (operand & 1) {
+      state.r15 = operand & ~1;
       ReloadPipeline16();
     } else {
+      state.cpsr.f.thumb = 0;
+      state.r15 = operand & ~3;
       ReloadPipeline32();
     }
+  /* Check for Compare (CMP) instruction. */
+  } else if (op == 1) {
+    SUB(state.reg[dst], operand, true);
+    pipe.fetch_type = Access::Sequential;
+    state.r15 += 2;
+  /* Otherwise instruction is ADD or MOV. */
   } else {
-    pipe.fetch_type = Access::Nonsequential;
+    if (op == 0) state.reg[dst] += operand;
+    if (op == 2) state.reg[dst]  = operand;
+
+    if (dst == 15) {
+      state.r15 &= ~1;
+      ReloadPipeline16();
+    } else {
+      pipe.fetch_type = Access::Sequential;
+      state.r15 += 2;
+    }
   }
 }
 
-void ARM_Undefined(std::uint32_t instruction) {  
-  /* Save return address and program status. */
-  state.bank[BANK_UND][BANK_R14] = state.r15 - 4;
-  state.spsr[BANK_UND].v = state.cpsr.v;
+template <int dst>
+void Thumb_LoadStoreRelativePC(std::uint16_t instruction) {
+  std::uint32_t offset  = instruction & 0xFF;
+  std::uint32_t address = (state.r15 & ~2) + (offset << 2);
 
-  /* Switch to UND mode and disable interrupts. */
-  SwitchMode(MODE_UND);
-  state.cpsr.f.mask_irq = 1;
-
-  /* Jump to execution vector */
-  state.r15 = 0x04;
-  ReloadPipeline32();
+  state.reg[dst] = ReadWord(address, Access::Nonsequential);
+  interface->Idle();
+  pipe.fetch_type = Access::Nonsequential;
+  state.r15 += 2;
 }
 
-void ARM_SWI(std::uint32_t instruction) {
+template <int op, int off>
+void Thumb_LoadStoreOffsetReg(std::uint16_t instruction) {
+  int dst  = (instruction >> 0) & 7;
+  int base = (instruction >> 3) & 7;
+
+  std::uint32_t address = state.reg[base] + state.reg[off];
+
+  switch (op) {
+  case 0b00: // STR
+    WriteWord(address, state.reg[dst], Access::Nonsequential);
+    break;
+  case 0b01: // STRB
+    WriteByte(address, (std::uint8_t)state.reg[dst], Access::Nonsequential);
+    break;
+  case 0b10: // LDR
+    state.reg[dst] = ReadWordRotate(address, Access::Nonsequential);
+    interface->Idle();
+    break;
+  case 0b11: // LDRB
+    state.reg[dst] = ReadByte(address, Access::Nonsequential);
+    interface->Idle();
+    break;
+  }
+
+  pipe.fetch_type = Access::Nonsequential;
+  state.r15 += 2;
+}
+
+template <int op, int off>
+void Thumb_LoadStoreSigned(std::uint16_t instruction) {
+  int dst  = (instruction >> 0) & 7;
+  int base = (instruction >> 3) & 7;
+  
+  std::uint32_t address = state.reg[base] + state.reg[off];
+
+  switch (op) {
+  case 0b00:
+    /* STRH rD, [rB, rO] */
+    WriteHalf(address, state.reg[dst], Access::Nonsequential);
+    break;
+  case 0b01:
+    /* LDSB rD, [rB, rO] */
+    state.reg[dst] = ReadByteSigned(address, Access::Nonsequential);
+    interface->Idle();
+    break;
+  case 0b10:
+    /* LDRH rD, [rB, rO] */
+    state.reg[dst] = ReadHalfRotate(address, Access::Nonsequential);
+    interface->Idle();
+    break;
+  case 0b11:
+    /* LDSH rD, [rB, rO] */
+    state.reg[dst] = ReadHalfSigned(address, Access::Nonsequential);
+    interface->Idle();
+    break;
+  }
+
+  pipe.fetch_type = Access::Nonsequential;
+  state.r15 += 2;
+}
+
+template <int op, int imm>
+void Thumb_LoadStoreOffsetImm(std::uint16_t instruction) {
+  int dst  = (instruction >> 0) & 7;
+  int base = (instruction >> 3) & 7;
+
+  switch (op) {
+  case 0b00:
+    /* STR rD, [rB, #imm] */
+    WriteWord(state.reg[base] + imm * 4, state.reg[dst], Access::Nonsequential);
+    break;
+  case 0b01:
+    /* LDR rD, [rB, #imm] */
+    state.reg[dst] = ReadWordRotate(state.reg[base] + imm * 4, Access::Nonsequential);
+    interface->Idle();
+    break;
+  case 0b10:
+    /* STRB rD, [rB, #imm] */
+    WriteByte(state.reg[base] + imm, state.reg[dst], Access::Nonsequential);
+    break;
+  case 0b11:
+    /* LDRB rD, [rB, #imm] */
+    state.reg[dst] = ReadByte(state.reg[base] + imm, Access::Nonsequential);
+    interface->Idle();
+    break;
+  }
+
+  pipe.fetch_type = Access::Nonsequential;
+  state.r15 += 2;
+}
+
+template <bool load, int imm>
+void Thumb_LoadStoreHword(std::uint16_t instruction) {
+  int dst  = (instruction >> 0) & 7;
+  int base = (instruction >> 3) & 7;
+
+  std::uint32_t address = state.reg[base] + imm * 2;
+
+  if (load) {
+    state.reg[dst] = ReadHalfRotate(address, Access::Nonsequential);
+    interface->Idle();
+  } else {
+    WriteHalf(address, state.reg[dst], Access::Nonsequential);
+  }
+
+  pipe.fetch_type = Access::Nonsequential;
+  state.r15 += 2;
+}
+
+template <bool load, int dst>
+void Thumb_LoadStoreRelativeToSP(std::uint16_t instruction) {
+  std::uint32_t offset  = instruction & 0xFF;
+  std::uint32_t address = state.reg[13] + offset * 4;
+
+  if (load) {
+    state.reg[dst] = ReadWordRotate(address, Access::Nonsequential);
+    interface->Idle();
+  } else {
+    WriteWord(address, state.reg[dst], Access::Nonsequential);
+  }
+
+  pipe.fetch_type = Access::Nonsequential;
+  state.r15 += 2;
+}
+
+template <bool stackptr, int dst>
+void Thumb_LoadAddress(std::uint16_t instruction) {
+  std::uint32_t offset = (instruction  & 0xFF) << 2;
+
+  if (stackptr) {
+    state.reg[dst] = state.r13 + offset;
+  } else {
+    state.reg[dst] = (state.r15 & ~2) + offset;
+  }
+
+  pipe.fetch_type = Access::Sequential;
+  state.r15 += 2;
+}
+
+template <bool sub>
+void Thumb_AddOffsetToSP(std::uint16_t instruction) {
+  std::uint32_t offset = (instruction  & 0x7F) * 4;
+
+  state.r13 += sub ? -offset : offset;
+  pipe.fetch_type = Access::Sequential;
+  state.r15 += 2;
+}
+
+template <bool pop, bool rbit>
+void Thumb_PushPop(std::uint16_t instruction) {
+  auto list = instruction & 0xFF;
+
+  /* Handle special case for empty register lists. */
+  if (list == 0 && !rbit) {
+    if (pop) {
+      state.r15 = ReadWord(state.r13, Access::Nonsequential);
+      ReloadPipeline16();
+      state.r13 += 0x40;
+    } else {
+      WriteWord(state.r13, state.r15 + 2, Access::Nonsequential);
+      state.r15 += 2;
+      state.r13 -= 0x40;
+    }
+    
+    return;
+  }
+
+  auto address = state.r13;
+  auto access_type = Access::Nonsequential;
+  
+  if (pop) {
+    for (int reg = 0; reg <= 7; reg++) {
+      if (list & (1 << reg)) {
+        state.reg[reg] = ReadWord(address, access_type);
+        access_type = Access::Sequential;
+        address += 4;
+      }
+    }
+    
+    if (rbit) {
+      state.reg[15] = ReadWord(address, access_type) & ~1;
+      state.reg[13] = address + 4;
+      interface->Idle();
+      ReloadPipeline16();
+      return;
+    }
+    
+    interface->Idle();
+    state.r13 = address;
+  } else {
+    /* Calculate internal start address (final r13 value) */
+    for (int reg = 0; reg <= 7; reg++) {
+      if (list & (1 << reg))
+        address -= 4;
+    }
+
+    if (rbit) address -= 4;
+
+    /* Store address in r13 before we mess with it. */
+    state.r13 = address;
+
+    for (int reg = 0; reg <= 7; reg++) {
+      if (list & (1 << reg)) {
+        WriteWord(address, state.reg[reg], access_type);
+        access_type = Access::Sequential;
+        address += 4;
+      }
+    }
+    
+    if (rbit) {
+      WriteWord(address, state.r14, access_type);
+    }
+  }
+
+  pipe.fetch_type = Access::Nonsequential;
+  state.r15 += 2;
+}
+
+template <bool load, int base>
+void Thumb_LoadStoreMultiple(std::uint16_t instruction) {
+  auto list = instruction & 0xFF;
+
+  /* Handle special case for empty register lists. */
+  if (list == 0) {
+    if (load) {
+      state.r15 = ReadWord(state.reg[base], Access::Nonsequential);
+      ReloadPipeline16();
+    } else {
+      WriteWord(state.reg[base], state.r15 + 2, Access::Nonsequential);
+      state.r15 += 2;
+    }
+
+    state.reg[base] += 0x40;
+    return;
+  }
+
+  if (load) {
+    std::uint32_t address = state.reg[base];
+    auto access_type = Access::Nonsequential;
+    
+    for (int i = 0; i <= 7; i++) {
+      if (list & (1 << i)) {
+        state.reg[i] = ReadWord(address, access_type);
+        access_type = Access::Sequential;
+        address += 4;
+      }
+    }
+    interface->Idle();
+    if (~list & (1 << base)) {
+      state.reg[base] = address;
+    }
+  } else {
+    int count = 0;
+    int first = 0;
+
+    /* Count number of registers and find first register. */
+    for (int reg = 7; reg >= 0; reg--) {
+      if (list & (1 << reg)) {
+        count++;
+        first = reg;
+      }
+    }
+
+    std::uint32_t address = state.reg[base];
+    std::uint32_t base_new = address + count * 4;
+
+    /* Transfer first register (non-sequential access) */
+    WriteWord(address, state.reg[first], Access::Nonsequential);
+    state.reg[base] = base_new;
+    address += 4;
+
+    /* Run until end (sequential accesses) */
+    for (int reg = first + 1; reg <= 7; reg++) {
+      if (list & (1 << reg)) {
+        WriteWord(address, state.reg[reg], Access::Sequential);
+        address += 4;
+      }
+    }
+  }
+
+  pipe.fetch_type = Access::Nonsequential;
+  state.r15 += 2;
+}
+
+template <int cond>
+void Thumb_ConditionalBranch(std::uint16_t instruction) {
+  if (CheckCondition(static_cast<Condition>(cond))) {
+    std::uint32_t imm = instruction & 0xFF;
+
+    /* Sign-extend immediate value. */
+    if (imm & 0x80) {
+      imm |= 0xFFFFFF00;
+    }
+
+    state.r15 += imm * 2;
+    ReloadPipeline16();
+  } else {
+    pipe.fetch_type = Access::Sequential;
+    state.r15 += 2;
+  }
+}
+
+void Thumb_SWI(std::uint16_t instruction) {
   /* Save return address and program status. */
-  state.bank[BANK_SVC][BANK_R14] = state.r15 - 4;
+  state.bank[BANK_SVC][BANK_R14] = state.r15 - 2;
   state.spsr[BANK_SVC].v = state.cpsr.v;
 
   /* Switch to SVC mode and disable interrupts. */
   SwitchMode(MODE_SVC);
+  state.cpsr.f.thumb = 0;
   state.cpsr.f.mask_irq = 1;
 
   /* Jump to execution vector */
   state.r15 = 0x08;
   ReloadPipeline32();
 }
+
+void Thumb_UnconditionalBranch(std::uint16_t instruction) {
+  std::uint32_t imm = (instruction & 0x3FF) * 2;
+
+  /* Sign-extend immediate value. */
+  if (instruction & 0x400) {
+    imm |= 0xFFFFF800;
+  }
+
+  state.r15 += imm;
+  ReloadPipeline16();
+}
+
+template <bool second_instruction>
+void Thumb_LongBranchLink(std::uint16_t instruction) {
+  std::uint32_t imm = instruction & 0x7FF;
+
+  if (!second_instruction) {
+    imm <<= 12;
+    if (imm & 0x400000) {
+      imm |= 0xFF800000;
+    }
+    state.r14 = state.r15 + imm;
+    pipe.fetch_type = Access::Sequential;
+    state.r15 += 2;
+  } else {
+    std::uint32_t temp = state.r15 - 2;
+
+    state.r15 = (state.r14 + imm * 2) & ~1;
+    state.r14 = temp | 1;
+    ReloadPipeline16();
+  }
+}
+
+void Thumb_Undefined(std::uint16_t instruction) { }

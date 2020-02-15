@@ -12,7 +12,7 @@
 
 #include "stream.hpp"
 
-namespace DSP {
+namespace common::dsp {
 
 template <typename T>
 struct StereoSample {
@@ -92,4 +92,4 @@ struct StereoSample {
   }
 };
   
-}
+} // namespace common::dsp

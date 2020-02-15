@@ -10,7 +10,7 @@
 #include "../resampler.hpp"
 #include "../ring_buffer.hpp"
 
-namespace DSP {
+namespace common::dsp {
 
 template <typename T, int points>
 class SincResampler : public Resampler<T> {
@@ -95,4 +95,4 @@ private:
 template <typename T, int points>
 using SincStereoResampler = SincResampler<StereoSample<T>, points>;
 
-}
+} // namespace common::dsp

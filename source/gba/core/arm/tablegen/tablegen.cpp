@@ -35,22 +35,20 @@ struct TableGen {
   static constexpr auto GenerateTableThumb() -> std::array<Handler16, 1024> {
     std::array<Handler16, 1024> lut{};
 
-    Common::static_for<std::size_t, 0, 1024>([&](auto i) {
+    common::static_for<std::size_t, 0, 1024>([&](auto i) {
       lut[i] = GenerateHandlerThumb<i << 6>();
     });
-
     return lut;
   }
 
   static constexpr auto GenerateTableARM() -> std::array<Handler32, 4096> {
     std::array<Handler32, 4096> lut{};
 
-    Common::static_for<std::size_t, 0, 4096>([&](auto i) {
+    common::static_for<std::size_t, 0, 4096>([&](auto i) {
       lut[i] = GenerateHandlerARM<
         ((i & 0xFF0) << 16) |
         ((i & 0xF) << 4)>();
     });
-
     return lut;
   }
 

@@ -171,7 +171,7 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  Common::Framelimiter framelimiter;
+  common::Framelimiter framelimiter;
 
   framelimiter.Reset(16777216.0 / 280896.0); // ~ 59.7 fps
   SDL_GL_SetSwapInterval(0);

@@ -17,12 +17,13 @@
 #include "stereo.hpp"
 #include "stream.hpp"
 
-namespace DSP {
+namespace common::dsp {
 
 template <typename T>
 class Resampler : public WriteStream<T> {
 public:
   Resampler(std::shared_ptr<WriteStream<T>> output) : output(output) {}
+
   virtual ~Resampler() {}
   
   virtual void SetSampleRates(float samplerate_in, float samplerate_out) {
@@ -30,7 +31,6 @@ public:
   }
 
 protected:
-  /* TODO: is a shared_ptr really best fit here? */
   std::shared_ptr<WriteStream<T>> output;
   
   float resample_phase_shift = 1;
@@ -39,4 +39,4 @@ protected:
 template <typename T>
 using StereoResampler = Resampler<StereoSample<T>>;
 
-}
+} // namespace common::dsp

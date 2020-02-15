@@ -45,7 +45,7 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
       emulator->LoadGame("violet.gba");
       emulator->Reset();
 
-      Common::Framelimiter framelimiter;
+      common::Framelimiter framelimiter;
 
       framelimiter.Reset(16777216.0 / 280896.0); // ~ 59.7 fps
 

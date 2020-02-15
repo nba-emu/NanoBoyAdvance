@@ -6,10 +6,10 @@
  */
 
 #include <cmath>
+#include <common/dsp/resampler/cosine.hpp>
+#include <common/dsp/resampler/cubic.hpp>
+#include <common/dsp/resampler/windowed-sinc.hpp>
 
-#include <dsp/resampler/cosine.hpp>
-#include <dsp/resampler/cubic.hpp>
-#include <dsp/resampler/windowed-sinc.hpp>
 #include "apu.hpp"
 #include "../cpu.hpp"
 
@@ -23,11 +23,13 @@ APU::APU(CPU* cpu)
   , psg2(cpu->scheduler)
   , psg3(cpu->scheduler)
   , psg4(cpu->scheduler, mmio.bias)
-  , buffer(new DSP::StereoRingBuffer<float>(4096, true))
+  , buffer(new common::dsp::StereoRingBuffer<float>(4096, true))
   , cpu(cpu)
 { }
 
 void APU::Reset() {
+  using namespace common::dsp;
+
   mmio.fifo[0].Reset();
   mmio.fifo[1].Reset();
   mmio.soundcnt.Reset();
@@ -44,7 +46,6 @@ void APU::Reset() {
   
   auto audio_dev = cpu->config->audio_dev;
   
-  /* TODO: check return value for failure. */
   audio_dev->Close();
   audio_dev->Open(this, (AudioDevice::Callback)AudioCallback);
 
@@ -52,22 +53,22 @@ void APU::Reset() {
     
   switch (cpu->config->audio.interpolation) {
     case Interpolation::Cosine:
-      resampler.reset(new DSP::CosineStereoResampler<float>(buffer));
+      resampler.reset(new CosineStereoResampler<float>(buffer));
       break;
     case Interpolation::Cubic:
-      resampler.reset(new DSP::CubicStereoResampler<float>(buffer));
+      resampler.reset(new CubicStereoResampler<float>(buffer));
       break;
     case Interpolation::Sinc_32:
-      resampler.reset(new DSP::SincStereoResampler<float, 32>(buffer));
+      resampler.reset(new SincStereoResampler<float, 32>(buffer));
       break;
     case Interpolation::Sinc_64:
-      resampler.reset(new DSP::SincStereoResampler<float, 64>(buffer));
+      resampler.reset(new SincStereoResampler<float, 64>(buffer));
       break;
     case Interpolation::Sinc_128:
-      resampler.reset(new DSP::SincStereoResampler<float, 128>(buffer));
+      resampler.reset(new SincStereoResampler<float, 128>(buffer));
       break;
     case Interpolation::Sinc_256:
-      resampler.reset(new DSP::SincStereoResampler<float, 256>(buffer));
+      resampler.reset(new SincStereoResampler<float, 256>(buffer));
       break;
   }
   
@@ -106,7 +107,7 @@ void APU::Generate() {
     resolution_old = mmio.bias.resolution;
   }
   
-  DSP::StereoSample<std::int16_t> sample { 0, 0 };
+  common::dsp::StereoSample<std::int16_t> sample { 0, 0 };
   
   /* TODO: what happens if volume=3 (forbidden)? */
   constexpr int psg_volume_tab[4] = { 1, 2, 4, 0 };

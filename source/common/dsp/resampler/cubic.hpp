@@ -9,7 +9,7 @@
 
 #include "../resampler.hpp"
 
-namespace DSP {
+namespace common::dsp {
 
 template <typename T>
 class CubicResampler : public Resampler<T> {
@@ -51,4 +51,4 @@ private:
 template <typename T>
 using CubicStereoResampler = CubicResampler<StereoSample<T>>;
 
-}
+} // namespace common::dsp

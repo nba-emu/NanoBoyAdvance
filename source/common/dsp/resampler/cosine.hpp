@@ -9,7 +9,7 @@
 
 #include "../resampler.hpp"
 
-namespace DSP {
+namespace common::dsp {
 
 template <typename T>
 class CosineResampler : public Resampler<T> {
@@ -17,7 +17,6 @@ public:
   CosineResampler(std::shared_ptr<WriteStream<T>> output) 
     : Resampler<T>(output)
   {
-    /* TODO: do not generate the table every time. */
     for (int i = 0; i < s_lut_resolution; i++) {
       lut[i] = (std::cos(M_PI * i/float(s_lut_resolution)) + 1.0) * 0.5;
     }
@@ -48,4 +47,4 @@ private:
 template <typename T>
 using CosineStereoResampler = CosineResampler<StereoSample<T>>;
 
-}
+} // namespace common::dsp

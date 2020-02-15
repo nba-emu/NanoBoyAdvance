@@ -7,7 +7,7 @@
 
 #pragma once
 
-namespace DSP {
+namespace common::dsp {
 
 template <typename T>
 class ReadStream {
@@ -30,4 +30,4 @@ class Stream : public ReadStream<T>,
                public WriteStream<T>
 { };
   
-}
+} // namespace common::dsp
