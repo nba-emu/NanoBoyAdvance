@@ -33,4 +33,4 @@ if (WIN32)
 endif()
 
 add_executable(NanoboyAdvance ${SOURCES} ${HEADERS} ${RESOURCES})
-target_link_libraries(NanoboyAdvance gba ${QT_DEPS} ${OPENGL_gl_LIBRARY})
+target_link_libraries(NanoboyAdvance nba ${QT_DEPS} ${OPENGL_gl_LIBRARY})
