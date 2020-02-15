@@ -5,10 +5,6 @@
  * Refer to the included LICENSE file.
  */
 
-#ifndef ARM_INCLUDE_GUARD
-#error "This file cannot be included regularely!"
-#endif
-
 enum class DataOp {
   AND = 0,
   EOR = 1,

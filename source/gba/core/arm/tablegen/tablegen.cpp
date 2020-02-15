@@ -7,7 +7,7 @@
 
 #include <common/static_for.hpp>
 
-#include "../arm7.hpp"
+#include "../arm7tdmi.hpp"
 
 namespace ARM {
 
@@ -42,7 +42,7 @@ struct TableGen {
     return lut;
   }
 
-  static constexpr auto GenerateTableARM()->std::array<Handler32, 4096> {
+  static constexpr auto GenerateTableARM() -> std::array<Handler32, 4096> {
     std::array<Handler32, 4096> lut{};
 
     Common::static_for<std::size_t, 0, 4096>([&](auto i) {

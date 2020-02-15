@@ -5,10 +5,6 @@
  * Refer to the included LICENSE file.
  */
 
-#ifndef ARM_INCLUDE_GUARD
-#error "This file cannot be included regularely!"
-#endif
-
 std::uint32_t ReadByte(std::uint32_t address, AccessType type) {
   return interface->ReadByte(address, type);
 }

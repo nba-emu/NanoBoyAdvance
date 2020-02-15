@@ -5,10 +5,6 @@
  * Refer to the included LICENSE file.
  */
 
-#ifndef ARM_INCLUDE_GUARD
-#error "This file cannot be included regularely!"
-#endif
-
 void SetNZ(std::uint32_t value) {
   state.cpsr.f.n = value >> 31;
   state.cpsr.f.z = (value == 0);

@@ -9,7 +9,7 @@
 
 #include <memory>
 
-#include "arm/arm7.hpp"
+#include "arm/arm7tdmi.hpp"
 #include "backup/backup.hpp"
 #include "dma.hpp"
 #include "timer.hpp"
