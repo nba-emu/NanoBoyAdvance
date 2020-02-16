@@ -46,7 +46,7 @@ void Emulator::Reset() { cpu.Reset(); }
 
 auto Emulator::DetectBackupType(std::uint8_t* rom, size_t size) -> BackupType {
   const std::map<std::string, Config::BackupType> signatures {
-    { "EEPROM_V",   BackupType::EEPROM_4  },
+    { "EEPROM_V",   BackupType::EEPROM_64 },
     { "SRAM_V",     BackupType::SRAM      },
     { "FLASH_V",    BackupType::FLASH_64  },
     { "FLASH512_V", BackupType::FLASH_64  },
