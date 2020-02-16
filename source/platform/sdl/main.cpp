@@ -11,6 +11,7 @@
 
 #include <cstdio>
 #include <common/framelimiter.hpp>
+#include <common/log.hpp>
 #include <emulator/emulator.hpp>
 
 SDL_Texture*  g_texture;
@@ -116,6 +117,8 @@ int main(int argc, char** argv) {
   bool fullscreen = false;
   SDL_Event event;
   SDL_Window* window;
+
+  common::logger::init();
 
   SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
   window = SDL_CreateWindow("NanoboyAdvance",

@@ -3,11 +3,16 @@ include_directories(.)
 option(PLATFORM_QT "Enable Qt5 frontend" ON)
 option(PLATFORM_SDL "Enable SDL2 frontend" ON)
 
+add_subdirectory(third_party)
+
 set(SOURCES
   # Cartridge
   cartridge/backup/eeprom.cpp
   cartridge/backup/flash.cpp
   cartridge/game_db.cpp
+
+  # Common
+  common/log.cpp
 
   # APU
   core/apu/channel/channel_noise.cpp
@@ -59,6 +64,7 @@ set(HEADERS
   common/dsp/resampler/windowed-sinc.hpp
   common/dsp/resampler.hpp
   common/framelimiter.hpp
+  common/log.hpp
   common/static_for.hpp
 
   # Config
@@ -109,6 +115,7 @@ set(HEADERS
 )
 
 add_library(nba STATIC ${SOURCES} ${HEADERS})
+target_link_libraries(nba fmt)
 
 # TODO: this is not really optimal.
 # What do we do about it?

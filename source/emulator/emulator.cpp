@@ -14,6 +14,7 @@
 #include <cartridge/backup/eeprom.hpp>
 #include <cartridge/backup/flash.hpp>
 #include <cartridge/backup/sram.hpp>
+#include <common/log.hpp>
 #include <cstring>
 #include <exception>
 #include <experimental/filesystem>
@@ -126,6 +127,8 @@ auto Emulator::LoadBIOS() -> StatusCode {
 auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   size_t size;
   
+  LOG_INFO("Loading ROM {0}", path);
+
   /* If the BIOS was not loaded yet, load it now. */
   if (!bios_loaded) {
     auto status = LoadBIOS();

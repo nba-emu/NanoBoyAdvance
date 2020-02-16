@@ -5,7 +5,9 @@
  * Refer to the included LICENSE file.
  */
 
+#include <common/log.hpp>
 #include <QApplication>
+
 #include "mainwindow.hpp"
 
 int main(int argc, char** argv) {
@@ -14,6 +16,8 @@ int main(int argc, char** argv) {
 
   QCoreApplication::setOrganizationName("fleroviux");
   QCoreApplication::setApplicationName("NanoboyAdvance");
+
+  common::logger::init();
 
   window.show();
   return app.exec();
