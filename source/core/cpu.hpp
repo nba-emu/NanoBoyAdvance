@@ -83,9 +83,11 @@ public:
 
     struct ROM {
       std::unique_ptr<uint8_t[]> data;
-      std::unique_ptr<nba::Backup> backup;
       size_t size;
       std::uint32_t mask = 0x1FFFFFF;
+
+      std::unique_ptr<nba::Backup> backup;
+      Config::BackupType backup_type = Config::BackupType::Detect;
     } rom;
 
     /* Last opcode fetched from BIOS memory. */

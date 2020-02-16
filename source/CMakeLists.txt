@@ -7,6 +7,7 @@ set(SOURCES
   # Cartridge
   cartridge/backup/eeprom.cpp
   cartridge/backup/flash.cpp
+  cartridge/game_db.cpp
 
   # APU
   core/apu/channel/channel_noise.cpp
@@ -48,6 +49,7 @@ set(HEADERS
   cartridge/backup/eeprom.hpp
   cartridge/backup/flash.hpp
   cartridge/backup/sram.hpp
+  cartridge/game_db.hpp
   cartridge/header.hpp
 
   # Common

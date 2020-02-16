@@ -11,8 +11,8 @@
  * http://problemkaputt.de/gbatek.htm#gbaunpredictablethings
  */
 
-#define IS_EEPROM_BACKUP (config->save_type == Config::SaveType::EEPROM_4 ||\
-                          config->save_type == Config::SaveType::EEPROM_64)
+#define IS_EEPROM_BACKUP (memory.rom.backup_type == Config::BackupType::EEPROM_4 ||\
+                          memory.rom.backup_type == Config::BackupType::EEPROM_64)
 
 #define IS_EEPROM_ACCESS(address) memory.rom.backup && IS_EEPROM_BACKUP &&\
                                   ((~memory.rom.size & 0x02000000) || address >= 0x0DFFFF00)

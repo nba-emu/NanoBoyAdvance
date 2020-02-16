@@ -30,13 +30,12 @@ public:
   void Frame();
   
 private:
-  static auto DetectSaveType(std::uint8_t* rom, size_t size) -> Config::SaveType;
+  static auto DetectBackupType(std::uint8_t* rom, size_t size) -> Config::BackupType;
   
   auto LoadBIOS() -> StatusCode; 
   
   core::CPU cpu;
   bool bios_loaded = false;
-  bool save_detect = false;
   std::shared_ptr<Config> config;
 };
 
