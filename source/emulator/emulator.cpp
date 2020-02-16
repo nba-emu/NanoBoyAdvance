@@ -127,8 +127,6 @@ auto Emulator::LoadBIOS() -> StatusCode {
 auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   size_t size;
   
-  LOG_INFO("Loading ROM {0}", path);
-
   /* If the BIOS was not loaded yet, load it now. */
   if (!bios_loaded) {
     auto status = LoadBIOS();
@@ -138,12 +136,20 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
     bios_loaded = true;
   }
   
+  LOG_INFO("Loading {0}", path);
+
   /* Ensure ROM exists and has valid size. */
   if (!fs::exists(path) || !fs::is_regular_file(path)) {
+    LOG_ERROR("The ROM path does not exist or does not point to a file.");
     return StatusCode::GameNotFound;
   }
   size = fs::file_size(path);
+  if (size < sizeof(Header)) {
+    LOG_ERROR("ROM size is too low, no valid header.");
+    return StatusCode::GameWrongSize;
+  }
   if (size > g_max_rom_size) {
+    LOG_ERROR("ROM size exceeds maximum size of 32 MiB.");
     return StatusCode::GameWrongSize;
   }
   
@@ -154,59 +160,71 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
    * The status code "Game not found" is not accurate, really.
    */
   if (!stream.good()) {
+    LOG_ERROR("Failed to open ROM file with unknown error.");
     return StatusCode::GameNotFound;
   }
     
   auto rom = std::make_unique<std::uint8_t[]>(size);
+  Header* header = reinterpret_cast<Header*>(rom.get());
   stream.read((char*)(rom.get()), size);
   stream.close();
   
   std::string save_path = path.substr(0, path.find_last_of(".")) + ".sav";
-  
-  bool mirroring = false;
-  Config::BackupType backup_type = Config::BackupType::Detect;
+
+  GameInfo game_info;
+
+  std::string game_title;
+  std::string game_code;
+  std::string game_maker;
+
+  game_title.assign(header->game.title, 12);
+  game_code.assign(header->game.code, 4);
+  game_maker.assign(header->game.maker, 2);
 
   /* If no save type was specified try to determine it from a list of
    * game override. Alternatively if that doesn't work, look for some
    * Nintendo SDK strings, that can reveal the save type.
    */
   if (config->backup_type == Config::BackupType::Detect) {
-    Header* header = reinterpret_cast<Header*>(rom.get());
-    
-    /* Convert 4-byte game code to string. */
-    std::string game_code;
-    for (int i = 0; i < 4; i++) {
-      game_code += header->game.code[i];
-    }
-    
     /* Try to match gamecode with game database. */
     auto match = g_game_db.find(game_code);
     if (match != g_game_db.end()) {
-      std::printf("Found match for game %s\n", game_code.c_str());
-      backup_type = match->second.backup_type;
-      mirroring = match->second.mirror;
+      LOG_INFO("Successfully matched ROM to game database entry.");
+      game_info = match->second;
     }
 
-    if (backup_type == Config::BackupType::Detect) {
-      backup_type = DetectBackupType(rom.get(), size);
+    if (game_info.backup_type == Config::BackupType::Detect) {
+      LOG_INFO("Could not determine backup type from game database. Searching for SDK pattern...");
+      game_info.backup_type = DetectBackupType(rom.get(), size);
+      if (game_info.backup_type == Config::BackupType::Detect) {
+        game_info.backup_type = Config::BackupType::SRAM;
+        LOG_WARN("Failed to determine backup type, fallback to SRAM.");
+      }
     }
   } else {
-    backup_type = config->backup_type;
+    game_info.backup_type = config->backup_type;
   }
+
+  LOG_INFO("Game Title: {0}", game_title);
+  LOG_INFO("Game Code:  {0}", game_code);
+  LOG_INFO("Game Maker: {0}", game_maker);
+  LOG_INFO("Backup: {0}", std::to_string(game_info.backup_type));
+  LOG_INFO("RTC:    {0}", game_info.gpio == GPIO::RTC);
+  LOG_INFO("Mirror: {0}", game_info.mirror);
   
   /* Mount cartridge into the cartridge slot ;-) */
   cpu.memory.rom.data = std::move(rom);
   cpu.memory.rom.size = size;
-  cpu.memory.rom.backup_type = backup_type;
-  cpu.memory.rom.backup = std::unique_ptr<Backup>{ CreateBackupInstance(backup_type, save_path) };
+  cpu.memory.rom.backup_type = game_info.backup_type;
+  cpu.memory.rom.backup = std::unique_ptr<Backup>{ CreateBackupInstance(game_info.backup_type, save_path) };
 
   /* Some games (e.g. Classic NES series) have the ROM memory mirrored. */
-  if (mirroring) {
+  if (game_info.mirror) {
     cpu.memory.rom.mask = CalculateMirrorMask(size);
   } else {
     cpu.memory.rom.mask = 0x1FFFFFF;
   }
-  
+
   return StatusCode::Ok;
 }
 
