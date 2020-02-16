@@ -32,6 +32,7 @@ using BackupType = Config::BackupType;
 
 constexpr int g_cycles_per_frame = 280896;
 constexpr int g_bios_size = 0x4000;
+constexpr int g_max_rom_size = 33554432; // 32 MiB
 
 Emulator::Emulator(std::shared_ptr<Config> config)
   : cpu(config)
@@ -62,6 +63,35 @@ auto Emulator::DetectBackupType(std::uint8_t* rom, size_t size) -> BackupType {
   }
   
   return Config::BackupType::Detect;
+}
+
+auto Emulator::CreateBackupInstance(Config::BackupType backup_type, std::string save_path) -> Backup* {
+  switch (backup_type) {
+    case BackupType::SRAM:
+    case BackupType::Detect: {
+      return new SRAM(save_path);
+    }
+    case BackupType::FLASH_64: {
+      return new FLASH(save_path, FLASH::SIZE_64K);
+    }
+    case BackupType::FLASH_128: {
+      return new FLASH(save_path, FLASH::SIZE_128K);
+    }
+    case BackupType::EEPROM_4: {
+      return new EEPROM(save_path, EEPROM::SIZE_4K);
+    }
+    case BackupType::EEPROM_64: {
+      return new EEPROM(save_path, EEPROM::SIZE_64K);
+    }
+  }
+}
+
+auto Emulator::CalculateMirrorMask(size_t size) -> std::uint32_t {
+  std::uint32_t mask = 1;
+  while (mask < size) {
+    mask *= 2;
+  }
+  return mask - 1;
 }
 
 auto Emulator::LoadBIOS() -> StatusCode {
@@ -105,13 +135,12 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
     bios_loaded = true;
   }
   
+  /* Ensure ROM exists and has valid size. */
   if (!fs::exists(path) || !fs::is_regular_file(path)) {
     return StatusCode::GameNotFound;
   }
-  
   size = fs::file_size(path);
-  
-  if (size > 32*1024*1024) {
+  if (size > g_max_rom_size) {
     return StatusCode::GameWrongSize;
   }
   
@@ -134,6 +163,10 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   bool mirroring = false;
   Config::BackupType backup_type = Config::BackupType::Detect;
 
+  /* If no save type was specified try to determine it from a list of
+   * game override. Alternatively if that doesn't work, look for some
+   * Nintendo SDK strings, that can reveal the save type.
+   */
   if (config->backup_type == Config::BackupType::Detect) {
     Header* header = reinterpret_cast<Header*>(rom.get());
     
@@ -158,41 +191,15 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
     backup_type = config->backup_type;
   }
   
+  /* Mount cartridge into the cartridge slot ;-) */
   cpu.memory.rom.data = std::move(rom);
   cpu.memory.rom.size = size;
   cpu.memory.rom.backup_type = backup_type;
-
-  switch (backup_type) {
-    case BackupType::SRAM:
-    case BackupType::Detect: {
-      cpu.memory.rom.backup = std::make_unique<SRAM>(save_path);
-      break;
-    }
-    case BackupType::FLASH_64: {
-      cpu.memory.rom.backup = std::make_unique<FLASH>(save_path, FLASH::SIZE_64K);
-      break;
-    }
-    case BackupType::FLASH_128: {
-      cpu.memory.rom.backup = std::make_unique<FLASH>(save_path, FLASH::SIZE_128K);
-      break;
-    }
-    case BackupType::EEPROM_4: {
-      cpu.memory.rom.backup = std::make_unique<EEPROM>(save_path, EEPROM::SIZE_4K);
-      break;
-    }
-    case BackupType::EEPROM_64: {
-      cpu.memory.rom.backup = std::make_unique<EEPROM>(save_path, EEPROM::SIZE_64K);
-      break;
-    }
-  }
+  cpu.memory.rom.backup = std::unique_ptr<Backup>{ CreateBackupInstance(backup_type, save_path) };
 
   /* Some games (e.g. Classic NES series) have the ROM memory mirrored. */
   if (mirroring) {
-    std::uint32_t mask = 1;
-    while (mask < size) {
-      mask *= 2;
-    }
-    cpu.memory.rom.mask = mask - 1;
+    cpu.memory.rom.mask = CalculateMirrorMask(size);
   } else {
     cpu.memory.rom.mask = 0x1FFFFFF;
   }
