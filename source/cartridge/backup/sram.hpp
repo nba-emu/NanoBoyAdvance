@@ -12,7 +12,7 @@
 #include "backup.hpp"
 #include "backup_file.hpp"
 
-namespace nba::core {
+namespace nba {
 
 class SRAM : public Backup {
 public:
@@ -39,4 +39,4 @@ private:
   std::unique_ptr<BackupFile> file;
 };
 
-} // namespace nba::core
+} // namespace nba

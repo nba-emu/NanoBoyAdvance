@@ -21,7 +21,7 @@
 #include <memory>
 #include <vector>
 
-namespace nba::core {
+namespace nba {
 
 class BackupFile {
 public:
@@ -116,4 +116,4 @@ private:
   std::unique_ptr<std::uint8_t[]> memory;
 }; 
 
-} // namespace nba::core
+} // namespace nba

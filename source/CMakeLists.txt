@@ -4,6 +4,11 @@ option(PLATFORM_QT "Enable Qt5 frontend" ON)
 option(PLATFORM_SDL "Enable SDL2 frontend" ON)
 
 set(SOURCES
+  # Cartridge
+  cartridge/backup/eeprom.cpp
+  cartridge/backup/flash.cpp
+  cartridge/game_db.cpp
+
   # APU
   core/apu/channel/channel_noise.cpp
   core/apu/channel/channel_quad.cpp
@@ -15,10 +20,6 @@ set(SOURCES
   # ARM
   core/arm/tablegen/tablegen.cpp
 
-  # Backup
-  core/backup/eeprom.cpp
-  core/backup/flash.cpp
-  
   # Memory
   core/memory/registers.cpp
 
@@ -42,6 +43,15 @@ set(SOURCES
 )
 
 set(HEADERS
+  # Cartridge
+  cartridge/backup/backup.hpp
+  cartridge/backup/backup_file.hpp
+  cartridge/backup/eeprom.hpp
+  cartridge/backup/flash.hpp
+  cartridge/backup/sram.hpp
+  cartridge/game_db.hpp
+  cartridge/header.hpp
+
   # Common
   common/dsp/resampler/cosine.hpp
   common/dsp/resampler/cubic.hpp
@@ -73,13 +83,6 @@ set(HEADERS
   core/arm/arm7tdmi.hpp
   core/arm/memory.hpp
   core/arm/state.hpp
-
-  # Cartridge backup
-  core/backup/backup.hpp
-  core/backup/backup_file.hpp
-  core/backup/eeprom.hpp
-  core/backup/flash.hpp
-  core/backup/sram.hpp
 
   # Memory
   core/memory/memory.inl

@@ -12,7 +12,7 @@
 #include "backup.hpp"
 #include "backup_file.hpp"
 
-namespace nba::core {
+namespace nba {
 
 class EEPROM : public Backup {
 public:
@@ -51,4 +51,4 @@ private:
   int transmitted_bits;
 };
 
-} // namespace nba::core
+} // namespace nba

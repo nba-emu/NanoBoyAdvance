@@ -30,13 +30,14 @@ public:
   void Frame();
   
 private:
-  static auto DetectSaveType(std::uint8_t* rom, size_t size) -> Config::SaveType;
+  static auto DetectBackupType(std::uint8_t* rom, size_t size) -> Config::BackupType;
+  static auto CreateBackupInstance(Config::BackupType backup_type, std::string save_path) -> Backup*;
+  static auto CalculateMirrorMask(size_t size) -> std::uint32_t;
   
   auto LoadBIOS() -> StatusCode; 
   
-  nba::core::CPU cpu;
+  core::CPU cpu;
   bool bios_loaded = false;
-  bool save_detect = false;
   std::shared_ptr<Config> config;
 };
 

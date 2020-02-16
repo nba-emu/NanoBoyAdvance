@@ -12,7 +12,7 @@
 #include "backup.hpp"
 #include "backup_file.hpp"
 
-namespace nba::core {
+namespace nba {
 
 class FLASH : public Backup {
 public:
@@ -56,4 +56,4 @@ private:
   bool enable_select;
 };
 
-} // namespace nba::core
+} // namespace nba
