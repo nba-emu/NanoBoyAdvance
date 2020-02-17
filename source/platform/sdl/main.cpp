@@ -5,122 +5,30 @@
  * Refer to the included LICENSE file.
  */
 
-#include "SDL.h"
-
-#undef main
-
 #include <cstdio>
 #include <common/framelimiter.hpp>
 #include <common/log.hpp>
 #include <emulator/emulator.hpp>
+#include <fmt/format.h>
 
-SDL_Texture*  g_texture;
-SDL_Renderer* g_renderer;
+#include "device/audio_device.hpp"
+#include "device/input_device.hpp"
+#include "device/video_device.hpp"
 
-class SDL2_AudioDevice : public nba::AudioDevice {
-public:
-  auto GetSampleRate() -> int final { return have.freq; }
-  auto GetBlockSize() -> int final { return have.samples; }
-  
-  bool Open(void* userdata, Callback callback) final {
-    SDL_AudioSpec want;
-    
-    if (SDL_Init(SDL_INIT_AUDIO) < 0) {
-      std::puts("SDL2_AudioDevice: SDL_Init(SDL_INIT_AUDIO) failed.");
-      return false;
-    }
-    
-    // TODO: read from configuration file.
-    want.freq = 48000;
-    want.samples = 1024;
-    want.format = AUDIO_S16;
-    want.channels = 2;
-    want.callback = (SDL_AudioCallback)callback;
-    want.userdata = userdata;
-    
-    device = SDL_OpenAudioDevice(NULL, 0, &want, &have, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
-    
-    if (device == 0) {
-      std::printf("SDL_OpenAudioDevice: failed to open audio: %s\n", SDL_GetError());
-    }
-    
-    if (have.format != want.format) {
-      std::puts("SDL_AudioDevice: S16 sample format unavailable.");
-      return false;
-    }
-    
-    if (have.channels != want.channels) {
-      std::puts("SDL_AudioDevice: Stereo output unavailable.");
-    }
-    
-    SDL_PauseAudioDevice(device, 0);
-    
-    return true;
-  }
-  
-  void Close() {
-    SDL_CloseAudioDevice(device);
-  }
-  
-private:
-  SDL_AudioDeviceID device;
-  SDL_AudioSpec have;
-};
-
-class SDL2_InputDevice : public nba::InputDevice {
-public:
-  auto Poll(Key key) -> bool final {  
-    auto keystate = SDL_GetKeyboardState(NULL);
-    
-    using Key = InputDevice::Key;
-    
-    switch (key) {
-      case Key::A:
-        return keystate[SDL_SCANCODE_Z] || keystate[SDL_SCANCODE_Y];
-      case Key::B:
-        return keystate[SDL_SCANCODE_X];
-      case Key::Select:
-        return keystate[SDL_SCANCODE_BACKSPACE];
-      case Key::Start:
-        return keystate[SDL_SCANCODE_RETURN];
-      case Key::Right:
-        return keystate[SDL_SCANCODE_RIGHT];
-      case Key::Left:
-        return keystate[SDL_SCANCODE_LEFT];
-      case Key::Up:
-        return keystate[SDL_SCANCODE_UP];
-      case Key::Down:
-        return keystate[SDL_SCANCODE_DOWN];
-      case Key::R:
-        return keystate[SDL_SCANCODE_S];
-      case Key::L:
-        return keystate[SDL_SCANCODE_A];
-    }
-    
-    return false;
-  }
-};
-
-class SDL2_VideoDevice : public nba::VideoDevice {
-public:
-  
-  void Draw(std::uint32_t* buffer) final {
-    SDL_UpdateTexture(g_texture, nullptr, buffer, 240 * sizeof(std::uint32_t));
-    SDL_RenderClear(g_renderer);
-    SDL_RenderCopy(g_renderer, g_texture, nullptr, nullptr);
-    SDL_RenderPresent(g_renderer);
-  }
-};
+#undef main
 
 int main(int argc, char** argv) {
   bool running = true;
   bool fullscreen = false;
+
   SDL_Event event;
   SDL_Window* window;
+  common::Framelimiter framelimiter;
 
   common::logger::init();
 
   SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+
   window = SDL_CreateWindow("NanoboyAdvance",
                 SDL_WINDOWPOS_CENTERED,
                 SDL_WINDOWPOS_CENTERED,
@@ -128,13 +36,9 @@ int main(int argc, char** argv) {
                 320,
                 SDL_WINDOW_RESIZABLE
                );
-  g_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED /*| SDL_RENDERER_PRESENTVSYNC*/);
-  g_texture = SDL_CreateTexture(g_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 240, 160);
-
-  SDL_RenderSetLogicalSize(g_renderer, 240, 160);
   
   if (argc != 2) {
-    std::printf("Usage: %s rom_path\n", argv[0]);
+    fmt::print("Usage: {0} rom_path\n", argv[0]);
     return -1;
   }
   
@@ -144,7 +48,7 @@ int main(int argc, char** argv) {
   
   config->audio_dev = std::make_shared<SDL2_AudioDevice>();
   config->input_dev = std::make_shared<SDL2_InputDevice>();
-  config->video_dev = std::make_shared<SDL2_VideoDevice>();
+  config->video_dev = std::make_shared<SDL2_VideoDevice>(window);
   
   auto emulator = std::make_unique<nba::Emulator>(config);
   auto status = emulator->LoadGame(rom_path);
@@ -154,27 +58,25 @@ int main(int argc, char** argv) {
   if (status != StatusCode::Ok) {
     switch (status) {
       case StatusCode::GameNotFound: {
-        std::printf("Cannot open ROM: %s\n", rom_path.c_str());
+        fmt::print("Cannot open ROM: {0}\n", rom_path);
         return -1;
       }
       case StatusCode::BiosNotFound: {
-        std::printf("Cannot open BIOS: %s\n", config->bios_path.c_str());
+        fmt::print("Cannot open BIOS: {0}\n", config->bios_path);
         return -2;
       }
       case StatusCode::GameWrongSize: {
-        std::puts("The provided ROM file is larger than the allowed 32 MiB.");
+        fmt::print("The provided ROM file is larger than the allowed 32 MiB.\n");
         return -3;
       }
       case StatusCode::BiosWrongSize: {
-        std::puts("The provided BIOS file does not match the expected size of 16 KiB.");
+        fmt::print("The provided BIOS file does not match the expected size of 16 KiB.\n");
         return -4;
       }
     }
     
     return -1;
   }
-
-  common::Framelimiter framelimiter;
 
   framelimiter.Reset(16777216.0 / 280896.0); // ~ 59.7 fps
   SDL_GL_SetSwapInterval(0);
@@ -190,20 +92,23 @@ int main(int argc, char** argv) {
           auto key_event = (SDL_KeyboardEvent*)(&event);
 
           switch (key_event->keysym.sym) {
-          case SDLK_SPACE:
-            framelimiter.Unbounded(event.type == SDL_KEYDOWN);
-            break;
-          case SDLK_F9:
-            if (event.type == SDL_KEYUP) {
-              emulator->Reset();
+            case SDLK_SPACE: {
+              framelimiter.Unbounded(event.type == SDL_KEYDOWN);
+              break;
             }
-            break;
-          case SDLK_F10:
-            if (event.type == SDL_KEYUP) {
-              fullscreen = !fullscreen;
-              SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+            case SDLK_F9: {
+              if (event.type == SDL_KEYUP) {
+                emulator->Reset();
+              }
+              break;
             }
-            break;
+            case SDLK_F10: {
+              if (event.type == SDL_KEYUP) {
+                fullscreen = !fullscreen;
+                SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+              }
+              break;
+            }
           }
         }
       }
@@ -213,8 +118,6 @@ int main(int argc, char** argv) {
     });
   }
 
-  SDL_DestroyTexture(g_texture);
-  SDL_DestroyRenderer(g_renderer);
   SDL_DestroyWindow(window);
   SDL_Quit();
 

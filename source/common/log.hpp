@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include <fmt/format.h>
 #include <string>
-#include <third_party/fmtlib/include/fmt/format.h>
 
 namespace common::logger {
 
