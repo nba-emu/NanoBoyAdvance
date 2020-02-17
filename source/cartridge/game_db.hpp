@@ -19,7 +19,7 @@ enum class GPIO {
 
 struct GameInfo {
   Config::BackupType backup_type = Config::BackupType::Detect;
-  GPIO gpio  = GPIO::None;
+  GPIO gpio = GPIO::None;
   bool mirror = false;
 };
 
