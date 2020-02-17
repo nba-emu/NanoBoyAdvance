@@ -3,6 +3,9 @@ set(SOURCES
 )
 
 set(HEADERS
+    device/audio_device.hpp
+    device/input_device.hpp
+    device/video_device.hpp
 )
 
 include(FindSDL2 REQUIRED)

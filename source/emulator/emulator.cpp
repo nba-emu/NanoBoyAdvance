@@ -58,6 +58,7 @@ auto Emulator::DetectBackupType(std::uint8_t* rom, size_t size) -> BackupType {
       auto const& string = pair.first;
       
       if (std::memcmp(&rom[i], string.c_str(), string.size()) == 0) {
+        LOG_INFO("Found ROM string indicating {0} backup type.", std::to_string(pair.second));
         return pair.second;
       }
     }
@@ -68,8 +69,7 @@ auto Emulator::DetectBackupType(std::uint8_t* rom, size_t size) -> BackupType {
 
 auto Emulator::CreateBackupInstance(Config::BackupType backup_type, std::string save_path) -> Backup* {
   switch (backup_type) {
-    case BackupType::SRAM:
-    case BackupType::Detect: {
+    case BackupType::SRAM: {
       return new SRAM(save_path);
     }
     case BackupType::FLASH_64: {
@@ -83,6 +83,9 @@ auto Emulator::CreateBackupInstance(Config::BackupType backup_type, std::string 
     }
     case BackupType::EEPROM_64: {
       return new EEPROM(save_path, EEPROM::SIZE_64K);
+    }
+    default: {
+      throw std::logic_error("CreateBackupInstance: bad backup type 'Detect'.");
     }
   }
 }
@@ -99,12 +102,14 @@ auto Emulator::LoadBIOS() -> StatusCode {
   auto bios_path = config->bios_path;
   
   if (!fs::exists(bios_path) || !fs::is_regular_file(bios_path)) {
+    LOG_ERROR("Unable to load BIOS file: {0}", bios_path);
     return StatusCode::BiosNotFound;
   }
   
   auto size = fs::file_size(bios_path);
   
   if (size != g_bios_size) {
+    LOG_ERROR("BIOS file has unexpected size, expected file of {0} bytes.", g_bios_size);
     return StatusCode::BiosWrongSize;
   }
   
@@ -115,6 +120,7 @@ auto Emulator::LoadBIOS() -> StatusCode {
    * The status code "BIOS not found" is not accurate, really.
    */
   if (!stream.good()) {
+    LOG_ERROR("Failed to open BIOS file with unknown error.");
     return StatusCode::BiosNotFound;
   }
   
@@ -126,7 +132,12 @@ auto Emulator::LoadBIOS() -> StatusCode {
 
 auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   size_t size;
-  
+  GameInfo game_info;
+  std::string game_title;
+  std::string game_code;
+  std::string game_maker;
+  std::string save_path = path.substr(0, path.find_last_of(".")) + ".sav";
+
   /* If the BIOS was not loaded yet, load it now. */
   if (!bios_loaded) {
     auto status = LoadBIOS();
@@ -136,20 +147,16 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
     bios_loaded = true;
   }
   
-  LOG_INFO("Loading {0}", path);
-
   /* Ensure ROM exists and has valid size. */
   if (!fs::exists(path) || !fs::is_regular_file(path)) {
     LOG_ERROR("The ROM path does not exist or does not point to a file.");
     return StatusCode::GameNotFound;
   }
+
   size = fs::file_size(path);
-  if (size < sizeof(Header)) {
-    LOG_ERROR("ROM size is too low, no valid header.");
-    return StatusCode::GameWrongSize;
-  }
-  if (size > g_max_rom_size) {
-    LOG_ERROR("ROM size exceeds maximum size of 32 MiB.");
+  
+  if (size < sizeof(Header) || size > g_max_rom_size) {
+    LOG_ERROR("ROM file has unexpected size, expected file size between {0} bytes and 32 MiB.", sizeof(Header));
     return StatusCode::GameWrongSize;
   }
   
@@ -160,7 +167,7 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
    * The status code "Game not found" is not accurate, really.
    */
   if (!stream.good()) {
-    LOG_ERROR("Failed to open ROM file with unknown error.");
+    LOG_ERROR("Failed to open ROM with unknown error.");
     return StatusCode::GameNotFound;
   }
     
@@ -168,14 +175,6 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   Header* header = reinterpret_cast<Header*>(rom.get());
   stream.read((char*)(rom.get()), size);
   stream.close();
-  
-  std::string save_path = path.substr(0, path.find_last_of(".")) + ".sav";
-
-  GameInfo game_info;
-
-  std::string game_title;
-  std::string game_code;
-  std::string game_maker;
 
   game_title.assign(header->game.title, 12);
   game_code.assign(header->game.code, 4);
@@ -187,14 +186,16 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
    */
   if (config->backup_type == Config::BackupType::Detect) {
     /* Try to match gamecode with game database. */
-    auto match = g_game_db.find(game_code);
-    if (match != g_game_db.end()) {
+    if (auto match = g_game_db.find(game_code); match != g_game_db.end()) {
       LOG_INFO("Successfully matched ROM to game database entry.");
       game_info = match->second;
     }
 
+    /* If not database entry was found, try to search the ROM for
+     * strings that can indicate the backup type used by this game.
+     */
     if (game_info.backup_type == Config::BackupType::Detect) {
-      LOG_INFO("Could not determine backup type from game database. Searching for SDK pattern...");
+      LOG_INFO("Unable to get backup type from game database.");
       game_info.backup_type = DetectBackupType(rom.get(), size);
       if (game_info.backup_type == Config::BackupType::Detect) {
         game_info.backup_type = Config::BackupType::SRAM;
