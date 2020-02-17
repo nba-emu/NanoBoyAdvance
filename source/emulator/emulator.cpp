@@ -191,8 +191,9 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
       game_info = match->second;
     }
 
-    /* If not database entry was found, try to search the ROM for
-     * strings that can indicate the backup type used by this game.
+    /* If not database entry was found or the entry has no backup type information,
+     * try to search the ROM for strings that can indicate the 
+     * backup type used by this game.
      */
     if (game_info.backup_type == Config::BackupType::Detect) {
       LOG_INFO("Unable to get backup type from game database.");
