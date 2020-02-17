@@ -12,10 +12,11 @@
 namespace common {
 
 namespace detail {
-  template <typename T, T Begin, class Func, T ...Is>
-  static constexpr void static_for_impl(Func&& f, std::integer_sequence<T, Is...>) {
-    (f(std::integral_constant<T, Begin + Is>{ }), ...);
-  }
+
+template <typename T, T Begin, class Func, T ...Is>
+static constexpr void static_for_impl(Func&& f, std::integer_sequence<T, Is...>) {
+  (f(std::integral_constant<T, Begin + Is>{ }), ...);
+}
 } // namespace detail
 
 template <typename T, T Begin, T End, class Func >
