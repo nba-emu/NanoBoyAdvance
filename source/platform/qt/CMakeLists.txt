@@ -18,6 +18,11 @@ find_package(Qt5Widgets REQUIRED)
 find_package(Qt5OpenGL REQUIRED)
 set(QT_DEPS Qt5::Gui Qt5::Widgets Qt5::OpenGL)
 
+
+include(FindSDL2 REQUIRED)
+find_package(SDL2 REQUIRED)
+include_directories(${SDL2_INCLUDE_DIR})
+
 if (WIN32)
     configure_file (
         "${CMAKE_CURRENT_SOURCE_DIR}/res/app.rc.in"
@@ -33,4 +38,4 @@ if (WIN32)
 endif()
 
 add_executable(NanoboyAdvance ${SOURCES} ${HEADERS} ${RESOURCES})
-target_link_libraries(NanoboyAdvance nba ${QT_DEPS} ${OPENGL_gl_LIBRARY})
+target_link_libraries(NanoboyAdvance nba ${QT_DEPS} ${OPENGL_gl_LIBRARY} ${SDL2_LIBRARY})

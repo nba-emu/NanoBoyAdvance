@@ -15,8 +15,8 @@ namespace common {
 
 class Framelimiter {
 public:
-  Framelimiter() {
-    Reset(60);
+  Framelimiter(float fps = 60.0) {
+    Reset(fps);
   }
 
   void Reset() {

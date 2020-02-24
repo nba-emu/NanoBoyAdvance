@@ -11,8 +11,12 @@
 #include <QDebug>
 #include <common/framelimiter.hpp>
 
+#include <platform/sdl/device/audio_device.hpp>
 #include <QApplication>
 #include <QMenuBar>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QKeyEvent>
 
 #include "mainwindow.hpp"
 
@@ -36,32 +40,150 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
   /* Create help menu */
   auto help_menu = menubar->addMenu(tr("&?"));
 
-  connect(file_open, &QAction::triggered, this, [this] {
-    std::thread test([&] {
-      auto config = std::make_shared<nba::Config>();
-      config->video_dev = screen;
+  /* Set emulator config */
+  config->video_dev = screen;
+  config->audio_dev = std::make_shared<SDL2_AudioDevice>();
+  config->input_dev = input_device;
+  emulator = std::make_unique<nba::Emulator>(config);
 
-      auto emulator = std::make_unique<nba::Emulator>(config);
-      emulator->LoadGame("violet.gba");
-      emulator->Reset();
+  connect(file_open, &QAction::triggered, this, &MainWindow::FileOpen);
 
-      common::Framelimiter framelimiter;
-
-      framelimiter.Reset(16777216.0 / 280896.0); // ~ 59.7 fps
-
-      while (true) {
-        framelimiter.Run([&] {
-          emulator->Frame();
-        }, [&](int fps) {
-          this->setWindowTitle(QString{ (std::string("NanoboyAdvance [") + std::to_string(fps) + std::string(" fps]")).c_str() });
-        });
-      }
-    });
-
-    test.detach();
-  });
+  app->installEventFilter(this);
 }
 
 MainWindow::~MainWindow() {
 
+}
+
+bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
+  auto type = event->type();
+
+  if (type != QEvent::KeyPress && type != QEvent::KeyRelease) {
+    return QObject::eventFilter(obj, event);
+  }
+
+  auto key = dynamic_cast<QKeyEvent*>(event)->key();
+  auto pressed = type == QEvent::KeyPress;
+
+  /* TODO: support dynamic key mapping. */
+  switch (key) {
+    case Qt::Key_Y:
+    case Qt::Key_Z: {
+      input_device->SetKeyStatus(nba::InputDevice::Key::A, pressed);
+      return true;
+    }
+    case Qt::Key_X: {
+      input_device->SetKeyStatus(nba::InputDevice::Key::B, pressed);
+      return true;
+    }
+    case Qt::Key_Return: {
+      input_device->SetKeyStatus(nba::InputDevice::Key::Start, pressed);
+      return true;
+    }
+    case Qt::Key_Backspace: {
+      input_device->SetKeyStatus(nba::InputDevice::Key::Select, pressed);
+      return true;
+    }
+    case Qt::Key_Up: {
+      input_device->SetKeyStatus(nba::InputDevice::Key::Up, pressed);
+      return true;
+    }
+    case Qt::Key_Down: {
+      input_device->SetKeyStatus(nba::InputDevice::Key::Down, pressed);
+      return true;
+    }
+    case Qt::Key_Left: {
+      input_device->SetKeyStatus(nba::InputDevice::Key::Left, pressed);
+      return true;
+    }
+    case Qt::Key_Right: {
+      input_device->SetKeyStatus(nba::InputDevice::Key::Right, pressed);
+      return true;
+    }
+    case Qt::Key_Space: {
+      framelimiter.Unbounded(pressed);
+      return true;
+    }
+    default: {
+      return QObject::eventFilter(obj, event);
+    }
+  }
+}
+
+void MainWindow::FileOpen() {
+  using StatusCode = nba::Emulator::StatusCode;
+
+  QFileDialog dialog {this};
+  dialog.setAcceptMode(QFileDialog::AcceptOpen);
+  dialog.setFileMode(QFileDialog::AnyFile);
+  dialog.setNameFilter("GameBoyAdvance ROMs (*.gba *.agb)");
+
+  if (!dialog.exec()) {
+    return;
+  }
+
+  auto file = dialog.selectedFiles().at(0);
+
+  if (emulator_state == EmulationState::Running) {
+    emulator_state = EmulationState::Stopped;
+    while (emulator_thread_running) ;
+  }
+
+  /* TODO: move message boxes to another method. */
+  switch (emulator->LoadGame(file.toStdString())) {
+    case StatusCode::GameNotFound: {
+      QMessageBox box {this};
+      box.setText(tr("Cannot find file: ") + QFileInfo(file).fileName());
+      box.setIcon(QMessageBox::Critical);
+      box.setWindowTitle(tr("File not found"));
+      box.exec();
+      return;
+    }
+    case StatusCode::BiosNotFound: {
+      QMessageBox box {this};
+      box.setText(tr("Please reference a BIOS file in the configuration.\n\n"
+                     "Cannot open BIOS: ") + QString{config->bios_path.c_str()});
+      box.setIcon(QMessageBox::Critical);
+      box.setWindowTitle(tr("BIOS not found"));
+      box.exec();
+      return;
+    }
+    case StatusCode::GameWrongSize: {
+      QMessageBox box {this};
+      box.setIcon(QMessageBox::Critical);
+      box.setText(tr("The file you opened exceeds the maximum size of 32 MiB."));
+      box.setWindowTitle(tr("ROM exceeds maximum size"));
+      box.exec();
+      return;
+    }
+    case StatusCode::BiosWrongSize: {
+      QMessageBox box {this};
+      box.setIcon(QMessageBox::Critical);
+      box.setText(tr("Your BIOS file exceeds the maximum size of 16 KiB."));
+      box.setWindowTitle(tr("BIOS file exceeds maximum size"));
+      box.exec();
+      return;
+    }
+  }
+
+  emulator->Reset();
+  emulator_state = EmulationState::Running;
+
+  emulator_thread = std::thread([this] {
+    emulator_thread_running = true;
+
+    framelimiter.Reset(); // foo
+
+    while (emulator_state == EmulationState::Running) {
+      framelimiter.Run([&] {
+        emulator->Frame();
+      }, [&](int fps) {
+        this->setWindowTitle(QString{ (std::string("NanoboyAdvance [") + std::to_string(fps) + std::string(" fps]")).c_str() });
+      });
+    }
+
+    emulator_thread_running = false;
+  });
+
+  emulator_thread.detach();
 }
