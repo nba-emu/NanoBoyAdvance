@@ -116,8 +116,6 @@ void CPU::Idle() {
 }
 
 void CPU::PrefetchStep(std::uint32_t address, int cycles) {
-  #define IS_ROM_REGION(address) ((address) >= 0x08000000 && (address) <= 0x0EFFFFFF) 
-  
   int thumb = state.cpsr.f.thumb;
   int capacity = thumb ? 8 : 4;
   
@@ -138,12 +136,12 @@ void CPU::PrefetchStep(std::uint32_t address, int cycles) {
       return;
     }
     
-    if (IS_ROM_REGION(address)) {
+    if (IsROMAddress(address)) {
       prefetch.active = false;
     }
   } else if (prefetch.count < capacity &&
-             IS_ROM_REGION(state.r15) &&
-            !IS_ROM_REGION(address) && 
+             IsROMAddress(state.r15) &&
+            !IsROMAddress(address) && 
              state.r15 == last_rom_address) {
     std::uint32_t next_address;
     
@@ -161,11 +159,9 @@ void CPU::PrefetchStep(std::uint32_t address, int cycles) {
     prefetch.countdown = (thumb ? cycles16 : cycles32)[int(Access::Sequential)][next_address >> 24];
   }
   
-  if (IS_ROM_REGION(address)) {
+  if (IsROMAddress(address)) {
     last_rom_address = address;
   }
-  
-  #undef IS_ROM_REGION
   
   /* TODO: this check does not guarantee 100% that this is an opcode fetch. */
   if (prefetch.count > 0 && address == state.r15) {

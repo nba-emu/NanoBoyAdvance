@@ -7,16 +7,6 @@
 
 /* TODO: add support for Big-Endian architectures. */
 
-/* TODO: must implement obscure hardware quirks:
- * http://problemkaputt.de/gbatek.htm#gbaunpredictablethings
- */
-
-#define IS_EEPROM_BACKUP (memory.rom.backup_type == Config::BackupType::EEPROM_4 ||\
-                          memory.rom.backup_type == Config::BackupType::EEPROM_64)
-
-#define IS_EEPROM_ACCESS(address) memory.rom.backup && IS_EEPROM_BACKUP &&\
-                                  ((~memory.rom.size & 0x02000000) || address >= 0x0DFFFF00)
-
 inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
   int shift = (address & 3) * 8;
   
@@ -140,7 +130,7 @@ inline auto CPU::ReadByte(std::uint32_t address, Access access) -> std::uint8_t 
     case REGION_SRAM_1:
     case REGION_SRAM_2: {
       address &= 0x0EFFFFFF;
-      if (!memory.rom.backup || IS_EEPROM_BACKUP) {
+      if (!memory.rom.backup || HasEEPROMBackup()) {
         return 0;
       }
       return memory.rom.backup->Read(address);
@@ -192,7 +182,7 @@ inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t
     /* 0x0DXXXXXX may be used to read/write from EEPROM */
     case REGION_ROM_W2_H: {
       /* Must check if this is an EEPROM access or ordinary ROM mirror read. */
-      if (IS_EEPROM_ACCESS(address)) {
+      if (IsEEPROMAddress(address)) {
         /* TODO: this is not a very nice way to do this. */
         if (!dma.IsRunning()) {
           return 1;
@@ -222,7 +212,7 @@ inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t
     case REGION_SRAM_1:
     case REGION_SRAM_2: {
       address &= 0x0EFFFFFF;
-      if (!memory.rom.backup || IS_EEPROM_BACKUP) {
+      if (!memory.rom.backup || HasEEPROMBackup()) {
         return 0;
       }
       return memory.rom.backup->Read(address) * 0x0101;
@@ -298,7 +288,7 @@ inline auto CPU::ReadWord(std::uint32_t address, Access access) -> std::uint32_t
     case REGION_SRAM_1:
     case REGION_SRAM_2: {
       address &= 0x0EFFFFFF;
-      if (!memory.rom.backup || IS_EEPROM_BACKUP) {
+      if (!memory.rom.backup || HasEEPROMBackup()) {
         return 0;
       }
       return memory.rom.backup->Read(address) * 0x01010101;
@@ -350,7 +340,7 @@ inline void CPU::WriteByte(std::uint32_t address, std::uint8_t value, Access acc
     case REGION_SRAM_1:
     case REGION_SRAM_2: {
       address &= 0x0EFFFFFF;
-      if (!memory.rom.backup || IS_EEPROM_BACKUP) {
+      if (!memory.rom.backup || HasEEPROMBackup()) {
         break;
       }
       memory.rom.backup->Write(address, value);
@@ -412,7 +402,7 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, Access ac
 
     /* EEPROM write */
     case REGION_ROM_W2_H: {
-      if (IS_EEPROM_ACCESS(address)) {
+      if (IsEEPROMAddress(address)) {
         /* TODO: this is not a very nice way to do this. */
         if (!dma.IsRunning()) {
           break;
@@ -432,7 +422,7 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, Access ac
     case REGION_SRAM_1:
     case REGION_SRAM_2: {
       address &= 0x0EFFFFFF;
-      if (!memory.rom.backup || IS_EEPROM_BACKUP) {
+      if (!memory.rom.backup || HasEEPROMBackup()) {
         break;
       }
       memory.rom.backup->Write(address + 0, value);
@@ -502,7 +492,7 @@ inline void CPU::WriteWord(std::uint32_t address, std::uint32_t value, Access ac
     case REGION_SRAM_1:
     case REGION_SRAM_2: {
       address &= 0x0EFFFFFF;
-      if (!memory.rom.backup || IS_EEPROM_BACKUP) {
+      if (!memory.rom.backup || HasEEPROMBackup()) {
         break;
       }
       memory.rom.backup->Write(address + 0, value);

@@ -129,7 +129,7 @@ public:
 private:
   friend class DMA;
   friend class arm::ARM7TDMI;
-  
+
   template <typename T>
   auto Read(void* buffer, std::uint32_t address) -> T {
     return *(T*)(&((std::uint8_t*)buffer)[address]);
@@ -139,7 +139,20 @@ private:
   void Write(void* buffer, std::uint32_t address, T value) {
     *(T*)(&((std::uint8_t*)buffer)[address]) = value;
   }
+
+  bool HasEEPROMBackup() const {
+    return memory.rom.backup_type == Config::BackupType::EEPROM_4 ||
+           memory.rom.backup_type == Config::BackupType::EEPROM_64;
+  }
   
+  bool IsEEPROMAddress(std::uint32_t address) {
+    return HasEEPROMBackup() && ((~memory.rom.size & 0x02000000) || address >= 0x0DFFFF00);
+  }
+
+  bool IsROMAddress(std::uint32_t address) {
+    return address >= 0x08000000 && address <= 0x0EFFFFFF;
+  }
+
   auto ReadMMIO (std::uint32_t address) -> std::uint8_t;
   void WriteMMIO(std::uint32_t address, std::uint8_t value);
   auto ReadBIOS(std::uint32_t address) -> std::uint32_t;
