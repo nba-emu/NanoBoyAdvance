@@ -185,9 +185,6 @@ private:
   /* Last ROM address that was accessed. Used for GamePak prefetch. */
   std::uint32_t last_rom_address;
   
-  cycle_t ticks_cpu_left = 0;
-  cycle_t ticks_to_event = 0;
-
   int cycles16[2][256] {
     { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
     { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },

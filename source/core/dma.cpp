@@ -124,7 +124,7 @@ void DMA::Request(Occasion occasion) {
   }
 }
 
-void DMA::Run(int const& ticks_left) {
+void DMA::Run() {
   auto& channel = channels[current];
   
   auto access = Access::Nonsequential;
@@ -148,7 +148,7 @@ void DMA::Run(int const& ticks_left) {
     auto dst_modify = g_dma_modify[channel.size][channel.dst_cntl];
     
     #define CHECK_INTERLEAVED\
-      if (ticks_left <= 0 || interleaved) {\
+      if (cpu->scheduler.GetRemainingCycleCount() <= 0 || interleaved) {\
         interleaved = false;\
         return;\
       }

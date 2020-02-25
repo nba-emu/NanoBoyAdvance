@@ -193,7 +193,7 @@ public:
 private:
   int step;
   
-  static constexpr cycle_t s_cycles_per_step = 16777216/512;
+  static constexpr int s_cycles_per_step = 16777216/512;
 };
 
 } // namespace nba::core

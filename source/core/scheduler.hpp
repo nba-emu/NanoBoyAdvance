@@ -13,47 +13,73 @@
 
 namespace nba::core {
 
-using cycle_t = int;
-
 struct Event {
-  cycle_t countdown = 0;
-  
+  int countdown = 0;
   std::function<void()> tick;
 };
 
 class Scheduler {
 public:
+  Scheduler() { Reset(); }
+
   void Reset() {
     events.clear();
+    next_event = 0;
+    cpu_cycles = 0;
+    total_cpu_cycles = 0;
+  }
+
+  void AddCycles(int cycles) {
+    cpu_cycles += cycles;
+    total_cpu_cycles += cycles;
+  }
+
+  auto GetRemainingCycleCount() const -> int {
+    return next_event - cpu_cycles;
+  }
+
+  auto TotalCycleCount() -> int& {
+    return total_cpu_cycles;
   }
   
   void Add(Event& event) {
     events.insert(&event);
+    /* If during emulation an event is added that should happen before
+     * the next time we would synchronize otherwise, then we need to
+     * determine a new, earlier synchronization point.
+     */
+    if (event.countdown < GetRemainingCycleCount()) {
+      Schedule();
+    }
   }
 
   void Remove(Event& event) {
     events.erase(&event);
   }
   
-  auto Schedule(cycle_t elapsed) -> cycle_t {
-    cycle_t ticks_to_event = std::numeric_limits<cycle_t>::max();
-    
+  void Schedule() {
+    next_event = std::numeric_limits<int>::max();
+
     for (auto it = events.begin(); it != events.end();) {
       auto event = *it;
       ++it;
-      event->countdown -= elapsed;
+      event->countdown -= cpu_cycles;
       if (event->countdown <= 0) {
         event->tick();
       }
-      if (event->countdown < ticks_to_event) {
-        ticks_to_event = event->countdown;
+      if (event->countdown < next_event) {
+        next_event = event->countdown;
       }
     }
-    
-    return ticks_to_event;
+
+    cpu_cycles = 0;
   }
 
 private:
+  int next_event;
+  int cpu_cycles;
+  int total_cpu_cycles;
+
   std::unordered_set<Event*> events;
 };
 

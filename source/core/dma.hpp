@@ -11,6 +11,7 @@
 #include <cstdint>
 
 #include "arm/memory.hpp"
+#include "scheduler.hpp"
 
 namespace nba::core {
 
@@ -32,7 +33,7 @@ public:
   
   void Reset();
   void Request(Occasion occasion);
-  void Run(int const& ticks_left);
+  void Run();
   auto Read (int chan_id, int offset) -> std::uint8_t;
   void Write(int chan_id, int offset, std::uint8_t value);
   bool IsRunning() { return runnable.any(); }

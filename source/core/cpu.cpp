@@ -94,7 +94,7 @@ void CPU::Reset() {
 
 void CPU::Tick(int cycles) {
   timer.Run(cycles);
-  ticks_cpu_left -= cycles;
+  scheduler.AddCycles(cycles);
   
   if (prefetch.active) {
     prefetch.countdown -= cycles;
@@ -181,25 +181,14 @@ void CPU::PrefetchStep(std::uint32_t address, int cycles) {
 }
 
 void CPU::RunFor(int cycles) {
-  int elapsed;
+  while (scheduler.TotalCycleCount() < cycles) {
+    scheduler.Schedule();
+  
+    // TODO: this could be problematic, when events are added during execution.
+    int remaining = cycles - scheduler.TotalCycleCount();
+    int limit = std::max(scheduler.GetRemainingCycleCount() - remaining, 0);
 
-  /* Compensate for over- or undershoot from previous calls. */
-  cycles += ticks_cpu_left;
-
-  while (cycles > 0) {
-    /* Run only for the duration the caller requested. */
-    if (cycles < ticks_to_event) {
-      ticks_to_event = cycles;
-    }
-    
-    /* CPU may run until the next event must be executed. */
-    ticks_cpu_left = ticks_to_event;
-    
-    /* 'ticks_cpu_left' will be consumed by memory accesses,
-     * internal CPU cycles or timers during CPU idle.
-     * In any case it is decremented by calls to Tick(cycles).
-     */
-    while (ticks_cpu_left > 0) {
+    while (scheduler.GetRemainingCycleCount() > limit) {
       auto fire = mmio.irq_ie & mmio.irq_if;
 
       if (mmio.haltcnt == HaltControl::HALT && fire) {
@@ -211,7 +200,7 @@ void CPU::RunFor(int cycles) {
        * If DMA is requested the CPU will be blocked.
        */
       if (dma.IsRunning()) {
-        dma.Run(ticks_cpu_left);
+        dma.Run();
       } else if (mmio.haltcnt == HaltControl::RUN) {
         if (mmio.irq_ime && fire) {
           SignalIRQ();
@@ -219,17 +208,13 @@ void CPU::RunFor(int cycles) {
         Run();
       } else {
         /* Forward to the next event or timer IRQ. */
-        Tick(std::min(timer.EstimateCyclesUntilIRQ(), ticks_cpu_left));
+        Tick(std::min(timer.EstimateCyclesUntilIRQ(), scheduler.GetRemainingCycleCount()));
       }
     }
-    
-    elapsed = ticks_to_event - ticks_cpu_left;
-    
-    cycles -= elapsed;
-    
-    /* Update events and determine when the next event will happen. */
-    ticks_to_event = scheduler.Schedule(elapsed);
   }
+
+  /* Compensate for over- or undershoot from previous calls. */
+  scheduler.TotalCycleCount() = -scheduler.GetRemainingCycleCount();
 }
 
 void CPU::UpdateCycleLUT() {
