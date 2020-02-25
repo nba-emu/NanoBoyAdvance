@@ -13,13 +13,13 @@
 
 namespace nba::core {
 
-struct Event {
-  int countdown = 0;
-  std::function<void()> tick;
-};
-
 class Scheduler {
 public:
+  struct Event {
+    int countdown = 0;
+    std::function<void()> tick;
+  };
+
   Scheduler() { Reset(); }
 
   void Reset() {

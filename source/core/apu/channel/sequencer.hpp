@@ -183,7 +183,7 @@ public:
     event.countdown += s_cycles_per_step;
   }
   
-  Event event { 0, [this]() { this->Tick(); } };
+  Scheduler::Event event { 0, [this] { this->Tick(); } };
   
   int length;
   int length_default = 64;

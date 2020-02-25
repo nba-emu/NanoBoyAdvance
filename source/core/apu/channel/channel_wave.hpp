@@ -35,7 +35,7 @@ private:
     return 8 * (2048 - frequency);
   }
   
-  Event event { 0, [this]() { this->Generate(); } };
+  Scheduler::Event event { 0, [this] { this->Generate(); } };
   
   Sequencer sequencer;
   

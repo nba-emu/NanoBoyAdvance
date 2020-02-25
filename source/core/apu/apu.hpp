@@ -30,7 +30,7 @@ public:
   void OnTimerOverflow(int timer_id, int times);
   void Generate();
   
-  Event event { 0, [this]() { this->Generate(); } };
+  Scheduler::Event event { 0, [this] { this->Generate(); } };
   
   struct MMIO {
     FIFO fifo[2];

@@ -41,7 +41,7 @@ private:
   
   std::uint16_t lfsr;
   
-  Event event { 0, [this]() { this->Generate(); } };
+  Scheduler::Event event { 0, [this] { this->Generate(); } };
   
   Sequencer sequencer;
   

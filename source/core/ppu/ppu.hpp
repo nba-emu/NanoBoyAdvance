@@ -25,7 +25,7 @@ public:
   void Reset();  
   void Tick();
 
-  Event event { 0, [this]() { this->Tick(); } };
+  Scheduler::Event event { 0, [this] { this->Tick(); } };
   
   struct MMIO {
     DisplayControl dispcnt;
