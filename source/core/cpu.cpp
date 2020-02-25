@@ -62,7 +62,7 @@ void CPU::Reset() {
   mmio.waitcnt.phi = 0;
   mmio.waitcnt.prefetch = 0;
   mmio.waitcnt.cgb = 0;
-  UpdateCycleLUT();
+  UpdateMemoryDelayTable();
   
   for (int i = 16; i < 256; i++) {
     cycles16[int(Access::Nonsequential)][i] = 1;
@@ -217,7 +217,7 @@ void CPU::RunFor(int cycles) {
   scheduler.TotalCycleCount() = -scheduler.GetRemainingCycleCount();
 }
 
-void CPU::UpdateCycleLUT() {
+void CPU::UpdateMemoryDelayTable() {
   auto cycles16_n = cycles16[int(Access::Nonsequential)];
   auto cycles16_s = cycles16[int(Access::Sequential)];
   auto cycles32_n = cycles32[int(Access::Nonsequential)];
@@ -225,42 +225,32 @@ void CPU::UpdateCycleLUT() {
   
   int sram_cycles = 1 + s_ws_nseq[mmio.waitcnt.sram];
   
-  cycles16_n[REGION_SRAM_1] = sram_cycles;
-  cycles32_n[REGION_SRAM_1] = sram_cycles;
-  cycles16_s[REGION_SRAM_1] = sram_cycles;
-  cycles32_s[REGION_SRAM_1] = sram_cycles;
+  cycles16_n[0xE] = sram_cycles;
+  cycles32_n[0xE] = sram_cycles;
+  cycles16_s[0xE] = sram_cycles;
+  cycles32_s[0xE] = sram_cycles;
 
-  /* ROM: WS0/WS1/WS2 non-sequential timing. */
-  cycles16_n[REGION_ROM_W0_L] = 1 + s_ws_nseq[mmio.waitcnt.ws0_n];
-  cycles16_n[REGION_ROM_W1_L] = 1 + s_ws_nseq[mmio.waitcnt.ws1_n];
-  cycles16_n[REGION_ROM_W2_L] = 1 + s_ws_nseq[mmio.waitcnt.ws2_n];
-  cycles16_n[REGION_ROM_W0_H] = cycles16_n[REGION_ROM_W0_L];
-  cycles16_n[REGION_ROM_W1_H] = cycles16_n[REGION_ROM_W1_L];
-  cycles16_n[REGION_ROM_W2_H] = cycles16_n[REGION_ROM_W2_L];
-  
-  /* ROM: WS0/WS1/WS2 sequential timing. */
-  cycles16_s[REGION_ROM_W0_L] = 1 + s_ws_seq0[mmio.waitcnt.ws0_s];
-  cycles16_s[REGION_ROM_W1_L] = 1 + s_ws_seq1[mmio.waitcnt.ws1_s];
-  cycles16_s[REGION_ROM_W2_L] = 1 + s_ws_seq2[mmio.waitcnt.ws2_s];
-  cycles16_s[REGION_ROM_W0_H] = cycles16_s[REGION_ROM_W0_L];
-  cycles16_s[REGION_ROM_W1_H] = cycles16_s[REGION_ROM_W1_L];
-  cycles16_s[REGION_ROM_W2_H] = cycles16_s[REGION_ROM_W2_L];
-   
-   /* ROM: WS0/WS1/WS2 32-bit non-sequential access: 1N access, 1S access */
-  cycles32_n[REGION_ROM_W0_L] = cycles16_n[REGION_ROM_W0_L] + cycles16_s[REGION_ROM_W0_L];
-  cycles32_n[REGION_ROM_W1_L] = cycles16_n[REGION_ROM_W1_L] + cycles16_s[REGION_ROM_W1_L];
-  cycles32_n[REGION_ROM_W2_L] = cycles16_n[REGION_ROM_W2_L] + cycles16_s[REGION_ROM_W2_L];
-  cycles32_n[REGION_ROM_W0_H] = cycles32_n[REGION_ROM_W0_L];
-  cycles32_n[REGION_ROM_W1_H] = cycles32_n[REGION_ROM_W1_L];
-  cycles32_n[REGION_ROM_W2_H] = cycles32_n[REGION_ROM_W2_L];
-   
-  /* ROM: WS0/WS1/WS2 32-bit sequential access: 2S accesses */
-  cycles32_s[REGION_ROM_W0_L] = cycles16_s[0x8] * 2;
-  cycles32_s[REGION_ROM_W1_L] = cycles16_s[0xA] * 2;
-  cycles32_s[REGION_ROM_W2_L] = cycles16_s[0xC] * 2;
-  cycles32_s[REGION_ROM_W0_H] = cycles32_s[REGION_ROM_W0_L];
-  cycles32_s[REGION_ROM_W1_H] = cycles32_s[REGION_ROM_W1_L];
-  cycles32_s[REGION_ROM_W2_H] = cycles32_s[REGION_ROM_W2_L];
+  for (int i = 0; i < 2; i++) {
+    /* ROM: WS0/WS1/WS2 non-sequential timing. */
+    cycles16_n[0x8+i] = 1 + s_ws_nseq[mmio.waitcnt.ws0_n];
+    cycles16_n[0xA+i] = 1 + s_ws_nseq[mmio.waitcnt.ws1_n];
+    cycles16_n[0xC+i] = 1 + s_ws_nseq[mmio.waitcnt.ws2_n];
+    
+    /* ROM: WS0/WS1/WS2 sequential timing. */
+    cycles16_s[0x8+i] = 1 + s_ws_seq0[mmio.waitcnt.ws0_s];
+    cycles16_s[0xA+i] = 1 + s_ws_seq1[mmio.waitcnt.ws1_s];
+    cycles16_s[0xC+i] = 1 + s_ws_seq2[mmio.waitcnt.ws2_s];
+    
+    /* ROM: WS0/WS1/WS2 32-bit non-sequential access: 1N access, 1S access */
+    cycles32_n[0x8+i] = cycles16_n[0x8] + cycles16_s[0x8];
+    cycles32_n[0xA+i] = cycles16_n[0xA] + cycles16_s[0xA];
+    cycles32_n[0xC+i] = cycles16_n[0xC] + cycles16_s[0xC];
+    
+    /* ROM: WS0/WS1/WS2 32-bit sequential access: 2S accesses */
+    cycles32_s[0x8+i] = cycles16_s[0x8] * 2;
+    cycles32_s[0xA+i] = cycles16_s[0xA] * 2;
+    cycles32_s[0xC+i] = cycles16_s[0xC] * 2;  
+  }
 }
 
 } // namespace nba::core

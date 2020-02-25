@@ -169,7 +169,7 @@ private:
   void Idle() final;
   void PrefetchStep(std::uint32_t address, int cycles);
   
-  void UpdateCycleLUT();
+  void UpdateMemoryDelayTable();
   
   /* GamePak prefetch buffer state. */
   struct Prefetch {

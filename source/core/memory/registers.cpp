@@ -474,7 +474,7 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
       mmio.waitcnt.ws0_s = (value >> 4) & 1;
       mmio.waitcnt.ws1_n = (value >> 5) & 3;
       mmio.waitcnt.ws1_s = (value >> 7) & 1;
-      UpdateCycleLUT();
+      UpdateMemoryDelayTable();
       break;
     }
     case WAITCNT+1: {
@@ -483,7 +483,7 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
       mmio.waitcnt.phi = (value >> 3) & 3;
       mmio.waitcnt.prefetch = (value >> 6) & 1;
       mmio.waitcnt.cgb = (value >> 7) & 1;
-      UpdateCycleLUT();
+      UpdateMemoryDelayTable();
       break;
     }
 
