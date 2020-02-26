@@ -242,7 +242,7 @@ void DMA::Run() {
   }
   
   if (channel.interrupt) {
-    cpu->mmio.irq_if |= (CPU::INT_DMA0 << current);
+    cpu->irq_controller.Raise(InterruptSource::DMA, current);
   }
   
   /* Select the next DMA to execute */

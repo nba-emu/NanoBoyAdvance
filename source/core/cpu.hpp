@@ -14,6 +14,7 @@
 #include "arm/arm7tdmi.hpp"
 #include "dma.hpp"
 #include "timer.hpp"
+#include "interrupt.hpp"
 #include "scheduler.hpp"
 #include "apu/apu.hpp"
 #include "ppu/ppu.hpp"
@@ -54,22 +55,22 @@ public:
     HALT
   };
 
-  enum Interrupt {
-    INT_VBLANK  = 1 << 0,
-    INT_HBLANK  = 1 << 1,
-    INT_VCOUNT  = 1 << 2,
-    INT_TIMER0  = 1 << 3,
-    INT_TIMER1  = 1 << 4,
-    INT_TIMER2  = 1 << 5,
-    INT_TIMER3  = 1 << 6,
-    INT_SERIAL  = 1 << 7,
-    INT_DMA0    = 1 << 8,
-    INT_DMA1    = 1 << 9,
-    INT_DMA2    = 1 << 10,
-    INT_DMA3    = 1 << 11,
-    INT_KEYPAD  = 1 << 12,
-    INT_GAMEPAK = 1 << 13
-  };
+  //enum Interrupt {
+  //  INT_VBLANK  = 1 << 0,
+  //  INT_HBLANK  = 1 << 1,
+  //  INT_VCOUNT  = 1 << 2,
+  //  INT_TIMER0  = 1 << 3,
+  //  INT_TIMER1  = 1 << 4,
+  //  INT_TIMER2  = 1 << 5,
+  //  INT_TIMER3  = 1 << 6,
+  //  INT_SERIAL  = 1 << 7,
+  //  INT_DMA0    = 1 << 8,
+  //  INT_DMA1    = 1 << 9,
+  //  INT_DMA2    = 1 << 10,
+  //  INT_DMA3    = 1 << 11,
+  //  INT_KEYPAD  = 1 << 12,
+  //  INT_GAMEPAK = 1 << 13
+  //};
   
   std::shared_ptr<Config> config;
 
@@ -97,10 +98,6 @@ public:
   struct MMIO {
     std::uint16_t keyinput;
 
-    std::uint16_t irq_ie;
-    std::uint16_t irq_if;
-    int irq_ime;
-
     HaltControl haltcnt;
 
     struct WaitstateControl {
@@ -120,7 +117,7 @@ public:
   } mmio; 
   
   Scheduler scheduler;
-  
+  InterruptController irq_controller;
   APU apu;
   PPU ppu;
   DMA dma;

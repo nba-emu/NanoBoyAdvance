@@ -179,7 +179,7 @@ void Timer::Increment(int chan_id, int increment) {
     int next_id = chan_id + 1;
     
     if (channel.control.interrupt) {
-      cpu->mmio.irq_if |= (CPU::INT_TIMER0 << chan_id);
+      cpu->irq_controller.Raise(InterruptSource::Timer, chan_id);
     }
     
     if (chan_id <= 1) {

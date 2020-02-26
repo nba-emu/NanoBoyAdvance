@@ -113,7 +113,7 @@ void PPU::OnScanlineComplete() {
   }
 
   if (dispstat.hblank_irq_enable) {
-    cpu->mmio.irq_if |= CPU::INT_HBLANK;
+    cpu->irq_controller.Raise(InterruptSource::HBlank);
   }
 }
 
@@ -128,7 +128,7 @@ void PPU::OnHblankComplete() {
   dispstat.vcount_flag = ++vcount == dispstat.vcount_setting;
   
   if (dispstat.vcount_flag && dispstat.vcount_irq_enable) {
-    cpu->mmio.irq_if |= CPU::INT_VCOUNT;
+    cpu->irq_controller.Raise(InterruptSource::VCount);
   }
 
   if (vcount == 160) {
@@ -140,7 +140,7 @@ void PPU::OnHblankComplete() {
     dispstat.vblank_flag = 1;
     
     if (dispstat.vblank_irq_enable) {
-      cpu->mmio.irq_if |= CPU::INT_VBLANK;
+      cpu->irq_controller.Raise(InterruptSource::VBlank);
     }
     
     /* Reset vertical mosaic counters */
@@ -197,7 +197,7 @@ void PPU::OnVblankScanlineComplete() {
   }
   
   if (dispstat.hblank_irq_enable) {
-    cpu->mmio.irq_if |= CPU::INT_HBLANK;
+    cpu->irq_controller.Raise(InterruptSource::HBlank);
   }
 }
 
@@ -226,7 +226,7 @@ void PPU::OnVblankHblankComplete() {
   }
 
   if (dispstat.vcount_flag && dispstat.vcount_irq_enable) {
-    cpu->mmio.irq_if |= CPU::INT_VCOUNT;
+    cpu->irq_controller.Raise(InterruptSource::VCount);
   }
 }
 

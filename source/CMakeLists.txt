@@ -102,6 +102,7 @@ set(HEADERS
   # CPU, DMA, Timer
   core/cpu.hpp
   core/dma.hpp
+  core/interrupt.hpp
   core/scheduler.hpp
   core/timer.hpp
 

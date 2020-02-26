@@ -41,11 +41,6 @@ void CPU::Reset() {
   std::memset(memory.oam,  0, 0x00400);
   std::memset(memory.vram, 0, 0x18000);
 
-  /* Reset interrupt control. */
-  mmio.irq_ie  = 0;
-  mmio.irq_if  = 0;
-  mmio.irq_ime = 0;
-
   mmio.keyinput = 0x3FF;
   mmio.haltcnt = HaltControl::RUN;
 
@@ -77,6 +72,7 @@ void CPU::Reset() {
   prefetch.count = 0;
   last_rom_address = 0;
   
+  irq_controller.Reset();
   dma.Reset();
   timer.Reset();
   apu.Reset();
@@ -189,9 +185,9 @@ void CPU::RunFor(int cycles) {
     int limit = std::max(scheduler.GetRemainingCycleCount() - remaining, 0);
 
     while (scheduler.GetRemainingCycleCount() > limit) {
-      auto fire = mmio.irq_ie & mmio.irq_if;
+      auto has_servable_irq = irq_controller.HasServableIRQ();
 
-      if (mmio.haltcnt == HaltControl::HALT && fire) {
+      if (mmio.haltcnt == HaltControl::HALT && has_servable_irq) {
         mmio.haltcnt = HaltControl::RUN;
       }
 
@@ -202,7 +198,7 @@ void CPU::RunFor(int cycles) {
       if (dma.IsRunning()) {
         dma.Run();
       } else if (mmio.haltcnt == HaltControl::RUN) {
-        if (mmio.irq_ime && fire) {
+        if (irq_controller.MasterEnable() && has_servable_irq) {
           SignalIRQ();
         }
         Run();
