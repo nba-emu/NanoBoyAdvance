@@ -108,8 +108,7 @@ public:
   }
 
 private:
-  int master_enable;
-
+  bool master_enable;
   std::uint16_t enabled;
   std::uint16_t requested;
 };

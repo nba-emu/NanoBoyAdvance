@@ -133,9 +133,9 @@ void DMA::Run() {
     /* TODO: figure out how the FIFO DMA works in detail. */
     for (int i = 0; i < 4; i++) {
       if (channel.allow_read) {
-        latch = cpu->ReadWord(channel.latch.src_addr, access);
+        latch = memory->ReadWord(channel.latch.src_addr, access);
       }
-      cpu->WriteWord(channel.latch.dst_addr, latch, access);
+      memory->WriteWord(channel.latch.dst_addr, latch, access);
       access = channel.second_access;
       channel.latch.src_addr += 4;
     }
@@ -148,7 +148,7 @@ void DMA::Run() {
     auto dst_modify = g_dma_modify[channel.size][channel.dst_cntl];
     
     #define CHECK_INTERLEAVED\
-      if (cpu->scheduler.GetRemainingCycleCount() <= 0 || interleaved) {\
+      if (scheduler->GetRemainingCycleCount() <= 0 || interleaved) {\
         interleaved = false;\
         return;\
       }
@@ -164,8 +164,8 @@ void DMA::Run() {
         while (channel.latch.length != 0) {
           CHECK_INTERLEAVED;
 
-          latch = 0x00010001 * cpu->ReadHalf(channel.latch.src_addr, access);
-          cpu->WriteHalf(channel.latch.dst_addr, latch, access);
+          latch = 0x00010001 * memory->ReadHalf(channel.latch.src_addr, access);
+          memory->WriteHalf(channel.latch.dst_addr, latch, access);
           access = channel.second_access;
           ADVANCE_REGS;
         }
@@ -174,7 +174,7 @@ void DMA::Run() {
         while (channel.latch.length != 0) {
           CHECK_INTERLEAVED;
           
-          cpu->WriteHalf(channel.latch.dst_addr, latch, access);
+          memory->WriteHalf(channel.latch.dst_addr, latch, access);
           access = channel.second_access;
           ADVANCE_REGS;
         }
@@ -185,8 +185,8 @@ void DMA::Run() {
         while (channel.latch.length != 0) {
           CHECK_INTERLEAVED;
           
-          latch = cpu->ReadWord(channel.latch.src_addr, access);
-          cpu->WriteWord(channel.latch.dst_addr, latch, access);
+          latch = memory->ReadWord(channel.latch.src_addr, access);
+          memory->WriteWord(channel.latch.dst_addr, latch, access);
           access = channel.second_access;
           ADVANCE_REGS;
         }
@@ -195,7 +195,7 @@ void DMA::Run() {
         while (channel.latch.length != 0) {
           CHECK_INTERLEAVED;
           
-          cpu->WriteWord(channel.latch.dst_addr, latch, access);
+          memory->WriteWord(channel.latch.dst_addr, latch, access);
           access = channel.second_access;
           ADVANCE_REGS;
         }
@@ -242,7 +242,7 @@ void DMA::Run() {
   }
   
   if (channel.interrupt) {
-    cpu->irq_controller.Raise(InterruptSource::DMA, current);
+    irq_controller->Raise(InterruptSource::DMA, current);
   }
   
   /* Select the next DMA to execute */

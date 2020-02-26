@@ -11,17 +11,21 @@
 #include <cstdint>
 
 #include "arm/memory.hpp"
+#include "interrupt.hpp"
 #include "scheduler.hpp"
 
 namespace nba::core {
 
-class CPU;
-  
 class DMA {
 public:
   using Access = arm::MemoryBase::Access;
   
-  DMA(CPU* cpu) : cpu(cpu) { Reset(); }
+  DMA(arm::MemoryBase* memory,
+      InterruptController* irq_controller,
+      Scheduler* scheduler) 
+    : memory(memory)
+    , irq_controller(irq_controller)
+    , scheduler(scheduler) { Reset(); }
   
   enum class Occasion {
     HBlank,
@@ -67,8 +71,10 @@ private:
   void TryStart(int chan_id);
   void OnChannelWritten(int chan_id, bool enabled_old);
   
-  CPU* cpu;
-  
+  arm::MemoryBase* memory;
+  InterruptController* irq_controller;
+  Scheduler* scheduler;
+
   /* The id of the DMA that is currently running.
    * If no DMA is running, then the value will be minus one.
    */
