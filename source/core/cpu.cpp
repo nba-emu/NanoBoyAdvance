@@ -31,9 +31,6 @@ CPU::CPU(std::shared_ptr<Config> config)
 }
 
 void CPU::Reset() {
-  /* TODO: properly reset the scheduler. */
-  scheduler.Add(ppu.event);
-  
   /* Clear all memory buffers. */
   std::memset(memory.wram, 0, 0x40000);
   std::memset(memory.iram, 0, 0x08000);
@@ -72,6 +69,7 @@ void CPU::Reset() {
   prefetch.count = 0;
   last_rom_address = 0;
   
+  /* TODO: properly reset the scheduler. */
   irq_controller.Reset();
   dma.Reset();
   timer.Reset();

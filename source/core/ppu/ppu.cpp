@@ -26,6 +26,8 @@ PPU::PPU(CPU* cpu)
 }
 
 void PPU::Reset() {
+  cpu->scheduler.Add(event);
+
   mmio.dispcnt.Reset();
   mmio.dispstat.Reset();
   mmio.vcount = 0;
@@ -59,18 +61,6 @@ void PPU::Reset() {
   mmio.evy = 0;
   mmio.bldcnt.Reset();
   
-//  for (int x = 0; x < 240; x++) {
-//    for (int bg = 0; bg < 4; bg++) {
-//      buffer_bg[bg][x] = s_color_transparent;
-//    }
-//    buffer_obj[x].priority = 4;
-//    buffer_obj[x].color = s_color_transparent;
-//    buffer_obj[x].alpha = 0;
-//    buffer_obj[x].window = 0;
-//  }
-//  
-//  line_contains_alpha_obj = false;
-//  
   event.countdown = 0;
   SetNextEvent(Phase::SCANLINE);
 }
