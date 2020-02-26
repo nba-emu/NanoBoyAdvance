@@ -25,7 +25,8 @@ public:
       Scheduler* scheduler) 
     : memory(memory)
     , irq_controller(irq_controller)
-    , scheduler(scheduler) { Reset(); }
+    , scheduler(scheduler)
+  { Reset(); }
   
   enum class Occasion {
     HBlank,

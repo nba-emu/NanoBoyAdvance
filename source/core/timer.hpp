@@ -9,13 +9,17 @@
 
 #include <cstdint>
 
-namespace nba::core {
+#include "apu/apu.hpp"
+#include "interrupt.hpp"
 
-class CPU;
+namespace nba::core {
   
 class Timer {
 public:
-  Timer(CPU* cpu) : cpu(cpu) { Reset(); }
+  Timer(InterruptController* irq_controller, APU* apu) 
+    : irq_controller(irq_controller)
+    , apu(apu) 
+  { Reset(); }
   
   void Reset();
   auto Read (int chan_id, int offset) -> std::uint8_t;
@@ -26,7 +30,9 @@ public:
 private:
   void Increment(int chan_id, int increment);
   
-  CPU* cpu;
+  InterruptController* irq_controller;
+  APU* apu;
+
   bool may_cause_irq;
   
   int run_list[4];

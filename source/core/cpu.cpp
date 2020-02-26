@@ -24,7 +24,7 @@ CPU::CPU(std::shared_ptr<Config> config)
   , apu(this)
   , ppu(this)
   , dma(this, &irq_controller, &scheduler)
-  , timer(this)
+  , timer(&irq_controller, &apu)
 {
   std::memset(memory.bios, 0, 0x04000);
   Reset();
