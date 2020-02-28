@@ -232,9 +232,10 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
       }
     }
     
-    if (no_windows || win_layer_enable[LAYER_SFX] || (layer[0] == LAYER_OBJ && buffer_obj[x].alpha)) {
+    bool is_alpha_obj = layer[0] == LAYER_OBJ && buffer_obj[x].alpha;
+
+    if (no_windows || win_layer_enable[LAYER_SFX] || is_alpha_obj) {
       auto blend_mode = mmio.bldcnt.sfx;
-      bool is_alpha_obj = layer[0] == LAYER_OBJ && buffer_obj[x].alpha;
       bool have_dst = mmio.bldcnt.targets[0][layer[0]] | is_alpha_obj;
       bool have_src = mmio.bldcnt.targets[1][layer[1]];
 
