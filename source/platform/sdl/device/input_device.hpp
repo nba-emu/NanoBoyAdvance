@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <device/audio_device.hpp>
+#include <emulator/device/audio_device.hpp>
 
 #include "SDL.h"
 

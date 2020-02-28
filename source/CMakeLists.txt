@@ -6,57 +6,40 @@ option(PLATFORM_SDL "Enable SDL2 frontend" ON)
 add_subdirectory(third_party)
 
 set(SOURCES
-  # Cartridge
-  cartridge/backup/eeprom.cpp
-  cartridge/backup/flash.cpp
-  cartridge/game_db.cpp
-
   # Common
   common/log.cpp
 
-  # APU
-  core/apu/channel/channel_noise.cpp
-  core/apu/channel/channel_quad.cpp
-  core/apu/channel/channel_wave.cpp
-  core/apu/apu.cpp
-  core/apu/callback.cpp
-  core/apu/registers.cpp
+  # Cartridge
+  emulator/cartridge/backup/eeprom.cpp
+  emulator/cartridge/backup/flash.cpp
+  emulator/cartridge/game_db.cpp
 
-  # ARM
-  core/arm/tablegen/tablegen.cpp
-
-  # Memory
-  core/memory/registers.cpp
-
-  # PPU
-  core/ppu/render/affine.cpp
-  core/ppu/render/bitmap.cpp
-  core/ppu/render/oam.cpp
-  core/ppu/render/text.cpp
-  core/ppu/render/window.cpp
-  core/ppu/compose.cpp
-  core/ppu/ppu.cpp
-  core/ppu/registers.cpp
-
-  # CPU, DMA, Timer
-  core/cpu.cpp
-  core/dma.cpp
-  core/timer.cpp
+  # Core
+  emulator/core/apu/channel/channel_noise.cpp
+  emulator/core/apu/channel/channel_quad.cpp
+  emulator/core/apu/channel/channel_wave.cpp
+  emulator/core/apu/apu.cpp
+  emulator/core/apu/callback.cpp
+  emulator/core/apu/registers.cpp
+  emulator/core/arm/tablegen/tablegen.cpp
+  emulator/core/memory/registers.cpp
+  emulator/core/ppu/render/affine.cpp
+  emulator/core/ppu/render/bitmap.cpp
+  emulator/core/ppu/render/oam.cpp
+  emulator/core/ppu/render/text.cpp
+  emulator/core/ppu/render/window.cpp
+  emulator/core/ppu/compose.cpp
+  emulator/core/ppu/ppu.cpp
+  emulator/core/ppu/registers.cpp
+  emulator/core/cpu.cpp
+  emulator/core/dma.cpp
+  emulator/core/timer.cpp
 
   # Emulator
   emulator/emulator.cpp
 )
 
 set(HEADERS
-  # Cartridge
-  cartridge/backup/backup.hpp
-  cartridge/backup/backup_file.hpp
-  cartridge/backup/eeprom.hpp
-  cartridge/backup/flash.hpp
-  cartridge/backup/sram.hpp
-  cartridge/game_db.hpp
-  cartridge/header.hpp
-
   # Common
   common/dsp/resampler/cosine.hpp
   common/dsp/resampler/cubic.hpp
@@ -67,49 +50,50 @@ set(HEADERS
   common/log.hpp
   common/static_for.hpp
 
+  # Cartridge
+  emulator/cartridge/backup/backup.hpp
+  emulator/cartridge/backup/backup_file.hpp
+  emulator/cartridge/backup/eeprom.hpp
+  emulator/cartridge/backup/flash.hpp
+  emulator/cartridge/backup/sram.hpp
+  emulator/cartridge/game_db.hpp
+  emulator/cartridge/header.hpp
+
   # Config
-  config/config.hpp
+  emulator/config/config.hpp
 
-  # APU
-  core/apu/channel/channel_noise.hpp
-  core/apu/channel/channel_quad.hpp
-  core/apu/channel/channel_wave.hpp
-  core/apu/channel/fifo.hpp
-  core/apu/channel/sequencer.hpp
-  core/apu/apu.hpp
-  core/apu/registers.hpp
-
-  # ARM
-  core/arm/handlers/arithmetic.inl
-  core/arm/handlers/handler16.inl
-  core/arm/handlers/handler32.inl
-  core/arm/handlers/memory.inl
-  core/arm/tablegen/gen_arm.hpp
-  core/arm/tablegen/gen_thumb.hpp
-  core/arm/arm7tdmi.hpp
-  core/arm/memory.hpp
-  core/arm/state.hpp
-
-  # Memory
-  core/memory/memory.inl
-  core/memory/registers.hpp
-
-  # PPU
-  core/ppu/helper.inl
-  core/ppu/ppu.hpp
-  core/ppu/registers.hpp
-
-  # CPU, DMA, Timer
-  core/cpu.hpp
-  core/dma.hpp
-  core/interrupt.hpp
-  core/scheduler.hpp
-  core/timer.hpp
+  # Core
+  emulator/core/apu/channel/channel_noise.hpp
+  emulator/core/apu/channel/channel_quad.hpp
+  emulator/core/apu/channel/channel_wave.hpp
+  emulator/core/apu/channel/fifo.hpp
+  emulator/core/apu/channel/sequencer.hpp
+  emulator/core/apu/apu.hpp
+  emulator/core/apu/registers.hpp
+  emulator/core/arm/handlers/arithmetic.inl
+  emulator/core/arm/handlers/handler16.inl
+  emulator/core/arm/handlers/handler32.inl
+  emulator/core/arm/handlers/memory.inl
+  emulator/core/arm/tablegen/gen_arm.hpp
+  emulator/core/arm/tablegen/gen_thumb.hpp
+  emulator/core/arm/arm7tdmi.hpp
+  emulator/core/arm/memory.hpp
+  emulator/core/arm/state.hpp
+  emulator/core/memory/memory.inl
+  emulator/core/memory/registers.hpp
+  emulator/core/ppu/helper.inl
+  emulator/core/ppu/ppu.hpp
+  emulator/core/ppu/registers.hpp
+  emulator/core/cpu.hpp
+  emulator/core/dma.hpp
+  emulator/core/interrupt.hpp
+  emulator/core/scheduler.hpp
+  emulator/core/timer.hpp
 
   # Devices
-  device/audio_device.hpp
-  device/input_device.hpp
-  device/video_device.hpp
+  emulator/device/audio_device.hpp
+  emulator/device/input_device.hpp
+  emulator/device/video_device.hpp
 
   # Emulator
   emulator/emulator.hpp

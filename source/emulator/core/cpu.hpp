@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <cartridge/backup/backup.hpp>
-#include <config/config.hpp>
+#include <emulator/cartridge/backup/backup.hpp>
+#include <emulator/config/config.hpp>
 #include <memory>
 
 #include "arm/arm7tdmi.hpp"

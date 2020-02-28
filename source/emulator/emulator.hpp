@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <core/cpu.hpp>
+#include <emulator/core/cpu.hpp>
 #include <memory>
 #include <string>
 

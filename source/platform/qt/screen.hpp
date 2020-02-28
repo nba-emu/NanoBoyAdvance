@@ -9,7 +9,7 @@
 
 #include <QGLWidget>
 #include <QOpenGLWidget>
-#include <device/video_device.hpp>
+#include <emulator/device/video_device.hpp>
 
 class Screen : public QOpenGLWidget,
                public nba::VideoDevice {
