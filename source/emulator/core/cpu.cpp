@@ -21,9 +21,9 @@ constexpr int CPU::s_ws_seq2[2];
 CPU::CPU(std::shared_ptr<Config> config)
   : ARM7TDMI::ARM7TDMI(this)
   , config(config)
-  , apu(this)
-  , ppu(this)
   , dma(this, &irq_controller, &scheduler)
+  , apu(&scheduler, &dma, config)
+  , ppu(this)
   , timer(&irq_controller, &apu)
 {
   std::memset(memory.bios, 0, 0x04000);

@@ -16,7 +16,7 @@ namespace nba::core {
 
 class NoiseChannel {
 public:
-  NoiseChannel(Scheduler& scheduler, BIAS& bias);
+  NoiseChannel(Scheduler* scheduler, BIAS& bias);
   
   void Reset();
   

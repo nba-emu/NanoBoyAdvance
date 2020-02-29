@@ -15,7 +15,7 @@ namespace nba::core {
 
 class WaveChannel {
 public:
-  WaveChannel(Scheduler& scheduler);
+  WaveChannel(Scheduler* scheduler);
   
   void Reset();
   

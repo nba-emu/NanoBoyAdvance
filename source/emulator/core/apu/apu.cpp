@@ -11,20 +11,21 @@
 #include <common/dsp/resampler/windowed-sinc.hpp>
 
 #include "apu.hpp"
-#include "../cpu.hpp"
 
 namespace nba::core {
 
 /* Implemented in callback.cpp */
 void AudioCallback(APU* apu, std::int16_t* stream, int byte_len);
 
-APU::APU(CPU* cpu) 
-  : psg1(cpu->scheduler)
-  , psg2(cpu->scheduler)
-  , psg3(cpu->scheduler)
-  , psg4(cpu->scheduler, mmio.bias)
+APU::APU(Scheduler* scheduler, DMA* dma, std::shared_ptr<Config> config) 
+  : psg1(scheduler)
+  , psg2(scheduler)
+  , psg3(scheduler)
+  , psg4(scheduler, mmio.bias)
   , buffer(new common::dsp::StereoRingBuffer<float>(4096, true))
-  , cpu(cpu)
+  , scheduler(scheduler)
+  , dma(dma)
+  , config(config)
 { }
 
 void APU::Reset() {
@@ -37,21 +38,21 @@ void APU::Reset() {
   
   resolution_old = 0;
   event.countdown = mmio.bias.GetSampleInterval();
-  cpu->scheduler.Add(event);
+  scheduler->Add(event);
   
   psg1.Reset();
   psg2.Reset();
   psg3.Reset();
   psg4.Reset();
   
-  auto audio_dev = cpu->config->audio_dev;
+  auto audio_dev = config->audio_dev;
   
   audio_dev->Close();
   audio_dev->Open(this, (AudioDevice::Callback)AudioCallback);
 
   using Interpolation = Config::Audio::Interpolation;
     
-  switch (cpu->config->audio.interpolation) {
+  switch (config->audio.interpolation) {
     case Interpolation::Cosine:
       resampler.reset(new CosineStereoResampler<float>(buffer));
       break;
@@ -92,7 +93,7 @@ void APU::OnTimerOverflow(int timer_id, int times) {
       }
       latch[fifo_id] = fifo.Read();
       if (fifo.Count() <= 16) {
-        cpu->dma.Request(occasion[fifo_id]);
+        dma->Request(occasion[fifo_id]);
       }
     }
   }
@@ -103,7 +104,7 @@ void APU::Generate() {
   
   if (bias.resolution != resolution_old) {
     resampler->SetSampleRates(bias.GetSampleRate(), 
-      cpu->config->audio_dev->GetSampleRate());
+      config->audio_dev->GetSampleRate());
     resolution_old = mmio.bias.resolution;
   }
   

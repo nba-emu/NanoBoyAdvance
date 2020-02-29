@@ -101,9 +101,9 @@ public:
   
   Scheduler scheduler;
   InterruptController irq_controller;
+  DMA dma;
   APU apu;
   PPU ppu;
-  DMA dma;
   Timer timer;
   
 private:

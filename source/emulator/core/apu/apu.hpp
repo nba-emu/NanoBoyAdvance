@@ -9,6 +9,8 @@
 
 #include <common/dsp/resampler.hpp>
 #include <common/dsp/ring_buffer.hpp>
+#include <emulator/config/config.hpp>
+#include <emulator/core/dma.hpp>
 #include <mutex>
 
 #include "channel/channel_quad.hpp"
@@ -20,11 +22,9 @@
 
 namespace nba::core {
 
-class CPU;
-
 class APU {
 public:
-  APU(CPU* cpu);
+  APU(Scheduler* scheduler, DMA* dma, std::shared_ptr<Config>);
   
   void Reset();
   void OnTimerOverflow(int timer_id, int times);
@@ -39,20 +39,21 @@ public:
     BIAS bias;
   } mmio;
   
-  std::mutex buffer_mutex;
-  
   QuadChannel psg1;
   QuadChannel psg2;
   WaveChannel psg3;
   NoiseChannel psg4;
   
   std::int8_t latch[2];
-  
+
+  std::mutex buffer_mutex;
   std::shared_ptr<common::dsp::StereoRingBuffer<float>> buffer;
   std::unique_ptr<common::dsp::StereoResampler<float>> resampler;
   
 private:
-  CPU* cpu;
+  Scheduler* scheduler;
+  DMA* dma;
+  std::shared_ptr<Config> config;
   
   int resolution_old = 0;
 };

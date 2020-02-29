@@ -15,7 +15,7 @@ namespace nba::core {
 
 class QuadChannel {
 public:
-  QuadChannel(Scheduler& scheduler);
+  QuadChannel(Scheduler* scheduler);
     
   void Reset();
   
