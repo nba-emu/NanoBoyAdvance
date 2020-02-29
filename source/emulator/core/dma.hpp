@@ -9,9 +9,10 @@
 
 #include <bitset>
 #include <cstdint>
-#include <emulator/core/arm/memory.hpp>
-#include <emulator/core/interrupt.hpp>
-#include <emulator/core/scheduler.hpp>
+
+#include "arm/memory.hpp"
+#include "interrupt.hpp"
+#include "scheduler.hpp"
 
 namespace nba::core {
 

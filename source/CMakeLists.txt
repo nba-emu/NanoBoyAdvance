@@ -22,7 +22,6 @@ set(SOURCES
   emulator/core/apu/callback.cpp
   emulator/core/apu/registers.cpp
   emulator/core/arm/tablegen/tablegen.cpp
-  emulator/core/dma/dma.cpp
   emulator/core/ppu/render/affine.cpp
   emulator/core/ppu/render/bitmap.cpp
   emulator/core/ppu/render/oam.cpp
@@ -30,10 +29,11 @@ set(SOURCES
   emulator/core/ppu/render/window.cpp
   emulator/core/ppu/compose.cpp
   emulator/core/ppu/ppu.cpp
-  emulator/core/timer/timer.cpp
   emulator/core/ppu/registers.cpp
   emulator/core/cpu.cpp
   emulator/core/cpu-mmio.cpp
+  emulator/core/dma.cpp
+  emulator/core/timer.cpp
 
   # Emulator
   emulator/emulator.cpp
@@ -79,16 +79,16 @@ set(HEADERS
   emulator/core/arm/arm7tdmi.hpp
   emulator/core/arm/memory.hpp
   emulator/core/arm/state.hpp
-  emulator/core/dma/dma.hpp
   emulator/core/ppu/helper.inl
   emulator/core/ppu/ppu.hpp
   emulator/core/ppu/registers.hpp
-  emulator/core/timer/timer.hpp
   emulator/core/cpu.hpp
   emulator/core/cpu-memory.inl
   emulator/core/cpu-mmio.hpp
+  emulator/core/dma.hpp
   emulator/core/interrupt.hpp
   emulator/core/scheduler.hpp
+  emulator/core/timer.hpp
 
   # Devices
   emulator/device/audio_device.hpp

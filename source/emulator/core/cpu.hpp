@@ -12,12 +12,12 @@
 #include <memory>
 
 #include "arm/arm7tdmi.hpp"
+#include "dma.hpp"
+#include "timer.hpp"
 #include "interrupt.hpp"
 #include "scheduler.hpp"
 #include "apu/apu.hpp"
 #include "ppu/ppu.hpp"
-#include "dma/dma.hpp"
-#include "timer/timer.hpp"
 
 namespace nba::core {
 
