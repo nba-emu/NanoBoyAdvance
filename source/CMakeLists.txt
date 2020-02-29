@@ -22,7 +22,6 @@ set(SOURCES
   emulator/core/apu/callback.cpp
   emulator/core/apu/registers.cpp
   emulator/core/arm/tablegen/tablegen.cpp
-  emulator/core/memory/registers.cpp
   emulator/core/ppu/render/affine.cpp
   emulator/core/ppu/render/bitmap.cpp
   emulator/core/ppu/render/oam.cpp
@@ -32,6 +31,7 @@ set(SOURCES
   emulator/core/ppu/ppu.cpp
   emulator/core/ppu/registers.cpp
   emulator/core/cpu.cpp
+  emulator/core/cpu-mmio.cpp
   emulator/core/dma.cpp
   emulator/core/timer.cpp
 
@@ -79,12 +79,12 @@ set(HEADERS
   emulator/core/arm/arm7tdmi.hpp
   emulator/core/arm/memory.hpp
   emulator/core/arm/state.hpp
-  emulator/core/memory/memory.inl
-  emulator/core/memory/registers.hpp
   emulator/core/ppu/helper.inl
   emulator/core/ppu/ppu.hpp
   emulator/core/ppu/registers.hpp
   emulator/core/cpu.hpp
+  emulator/core/cpu-memory.inl
+  emulator/core/cpu-mmio.hpp
   emulator/core/dma.hpp
   emulator/core/interrupt.hpp
   emulator/core/scheduler.hpp

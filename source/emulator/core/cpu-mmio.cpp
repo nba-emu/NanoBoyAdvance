@@ -5,8 +5,8 @@
  * Refer to the included LICENSE file.
  */
 
-#include "registers.hpp"
-#include "../cpu.hpp"
+#include "cpu.hpp"
+#include "cpu-mmio.hpp"
 
 namespace nba::core {
 

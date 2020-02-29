@@ -20,10 +20,7 @@ namespace nba::core {
 
 class PPU {
 public:
-  PPU(Scheduler* scheduler,
-      InterruptController* irq_controller,
-      DMA* dma,
-      std::shared_ptr<Config> config);
+  PPU(Scheduler* scheduler, InterruptController* irq_controller, DMA* dma, std::shared_ptr<Config> config);
 
   void Reset();  
 
