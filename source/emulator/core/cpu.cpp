@@ -23,7 +23,7 @@ CPU::CPU(std::shared_ptr<Config> config)
   , config(config)
   , dma(this, &irq_controller, &scheduler)
   , apu(&scheduler, &dma, config)
-  , ppu(this)
+  , ppu(&scheduler, &irq_controller, &dma, config)
   , timer(&irq_controller, &apu)
 {
   std::memset(memory.bios, 0, 0x04000);
@@ -31,19 +31,14 @@ CPU::CPU(std::shared_ptr<Config> config)
 }
 
 void CPU::Reset() {
-  /* Clear all memory buffers. */
   std::memset(memory.wram, 0, 0x40000);
   std::memset(memory.iram, 0, 0x08000);
-  std::memset(memory.pram, 0, 0x00400);
-  std::memset(memory.oam,  0, 0x00400);
-  std::memset(memory.vram, 0, 0x18000);
 
   mmio.keyinput = 0x3FF;
   mmio.haltcnt = HaltControl::RUN;
-
   mmio.rcnt_hack = 0;
 
-  /* Reset waitstates. */
+  /* Reset waitstates */
   mmio.waitcnt.sram = 0;
   mmio.waitcnt.ws0_n = 0;
   mmio.waitcnt.ws0_s = 0;
@@ -63,13 +58,14 @@ void CPU::Reset() {
     cycles32[int(Access::Sequential)][i] = 1;
   }
   
+  /* Reset prefetch buffer */
   prefetch.active = false;
   prefetch.rd_pos = 0;
   prefetch.wr_pos = 0;
   prefetch.count = 0;
   last_rom_address = 0;
   
-  /* TODO: properly reset the scheduler. */
+  /* TODO: properly reset the scheduler */
   irq_controller.Reset();
   dma.Reset();
   timer.Reset();

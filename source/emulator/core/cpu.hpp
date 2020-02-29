@@ -61,9 +61,6 @@ public:
     std::uint8_t bios[0x04000];
     std::uint8_t wram[0x40000];
     std::uint8_t iram[0x08000];
-    std::uint8_t pram[0x00400];
-    std::uint8_t oam [0x00400];
-    std::uint8_t vram[0x18000];
 
     struct ROM {
       std::unique_ptr<uint8_t[]> data;
