@@ -8,8 +8,7 @@
 #pragma once
 
 #include <algorithm>
-
-#include "../../scheduler.hpp"
+#include <emulator/core/scheduler.hpp>
 
 namespace nba::core {
 

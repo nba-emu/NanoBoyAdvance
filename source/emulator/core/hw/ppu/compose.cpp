@@ -8,7 +8,6 @@
 #include <algorithm>
 
 #include "ppu.hpp"
-#include "../cpu.hpp"
 
 namespace nba::core {
 

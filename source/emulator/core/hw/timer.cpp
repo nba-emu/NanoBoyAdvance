@@ -7,7 +7,6 @@
 
 #include <limits>
 
-#include "cpu.hpp"
 #include "timer.hpp"
 
 namespace nba::core {

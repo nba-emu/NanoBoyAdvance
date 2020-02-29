@@ -15,25 +15,25 @@ set(SOURCES
   emulator/cartridge/game_db.cpp
 
   # Core
-  emulator/core/apu/channel/channel_noise.cpp
-  emulator/core/apu/channel/channel_quad.cpp
-  emulator/core/apu/channel/channel_wave.cpp
-  emulator/core/apu/apu.cpp
-  emulator/core/apu/callback.cpp
-  emulator/core/apu/registers.cpp
   emulator/core/arm/tablegen/tablegen.cpp
-  emulator/core/ppu/render/affine.cpp
-  emulator/core/ppu/render/bitmap.cpp
-  emulator/core/ppu/render/oam.cpp
-  emulator/core/ppu/render/text.cpp
-  emulator/core/ppu/render/window.cpp
-  emulator/core/ppu/compose.cpp
-  emulator/core/ppu/ppu.cpp
-  emulator/core/ppu/registers.cpp
+  emulator/core/hw/apu/channel/channel_noise.cpp
+  emulator/core/hw/apu/channel/channel_quad.cpp
+  emulator/core/hw/apu/channel/channel_wave.cpp
+  emulator/core/hw/apu/apu.cpp
+  emulator/core/hw/apu/callback.cpp
+  emulator/core/hw/apu/registers.cpp
+  emulator/core/hw/ppu/render/affine.cpp
+  emulator/core/hw/ppu/render/bitmap.cpp
+  emulator/core/hw/ppu/render/oam.cpp
+  emulator/core/hw/ppu/render/text.cpp
+  emulator/core/hw/ppu/render/window.cpp
+  emulator/core/hw/ppu/compose.cpp
+  emulator/core/hw/ppu/ppu.cpp
+  emulator/core/hw/ppu/registers.cpp
+  emulator/core/hw/dma.cpp
+  emulator/core/hw/timer.cpp
   emulator/core/cpu.cpp
   emulator/core/cpu-mmio.cpp
-  emulator/core/dma.cpp
-  emulator/core/timer.cpp
 
   # Emulator
   emulator/emulator.cpp
@@ -63,13 +63,6 @@ set(HEADERS
   emulator/config/config.hpp
 
   # Core
-  emulator/core/apu/channel/channel_noise.hpp
-  emulator/core/apu/channel/channel_quad.hpp
-  emulator/core/apu/channel/channel_wave.hpp
-  emulator/core/apu/channel/fifo.hpp
-  emulator/core/apu/channel/sequencer.hpp
-  emulator/core/apu/apu.hpp
-  emulator/core/apu/registers.hpp
   emulator/core/arm/handlers/arithmetic.inl
   emulator/core/arm/handlers/handler16.inl
   emulator/core/arm/handlers/handler32.inl
@@ -79,16 +72,23 @@ set(HEADERS
   emulator/core/arm/arm7tdmi.hpp
   emulator/core/arm/memory.hpp
   emulator/core/arm/state.hpp
-  emulator/core/ppu/helper.inl
-  emulator/core/ppu/ppu.hpp
-  emulator/core/ppu/registers.hpp
+  emulator/core/hw/apu/channel/channel_noise.hpp
+  emulator/core/hw/apu/channel/channel_quad.hpp
+  emulator/core/hw/apu/channel/channel_wave.hpp
+  emulator/core/hw/apu/channel/fifo.hpp
+  emulator/core/hw/apu/channel/sequencer.hpp
+  emulator/core/hw/apu/apu.hpp
+  emulator/core/hw/apu/registers.hpp
+  emulator/core/hw/ppu/helper.inl
+  emulator/core/hw/ppu/ppu.hpp
+  emulator/core/hw/ppu/registers.hpp
+  emulator/core/hw/dma.hpp
+  emulator/core/hw/timer.hpp
   emulator/core/cpu.hpp
   emulator/core/cpu-memory.inl
   emulator/core/cpu-mmio.hpp
-  emulator/core/dma.hpp
   emulator/core/interrupt.hpp
   emulator/core/scheduler.hpp
-  emulator/core/timer.hpp
 
   # Devices
   emulator/device/audio_device.hpp

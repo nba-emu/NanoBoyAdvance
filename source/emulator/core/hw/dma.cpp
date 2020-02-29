@@ -5,7 +5,8 @@
  * Refer to the included LICENSE file.
  */
 
-#include "cpu-mmio.hpp"
+#include <emulator/core/cpu-mmio.hpp>
+
 #include "dma.hpp"
 
 namespace nba::core {

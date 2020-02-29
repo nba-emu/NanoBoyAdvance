@@ -8,9 +8,9 @@
 #pragma once
 
 #include <cstdint>
+#include <emulator/core/interrupt.hpp>
 
 #include "apu/apu.hpp"
-#include "interrupt.hpp"
 
 namespace nba::core {
   
