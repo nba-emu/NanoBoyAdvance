@@ -102,28 +102,28 @@ void Thumb_ALU(std::uint16_t instruction) {
   switch (static_cast<ThumbDataOp>(op)) {
   case ThumbDataOp::MVN:
     state.reg[dst] = ~state.reg[src];
-    SetNZ(state.reg[dst]);
+    SetZeroAndSignFlag(state.reg[dst]);
     break;
 
   /* Bitwise logical */
   case ThumbDataOp::AND:
     state.reg[dst] &= state.reg[src];
-    SetNZ(state.reg[dst]);
+    SetZeroAndSignFlag(state.reg[dst]);
     break;
   case ThumbDataOp::BIC:
     state.reg[dst] &= ~state.reg[src];
-    SetNZ(state.reg[dst]);
+    SetZeroAndSignFlag(state.reg[dst]);
     break;
   case ThumbDataOp::ORR:
     state.reg[dst] |= state.reg[src];
-    SetNZ(state.reg[dst]);
+    SetZeroAndSignFlag(state.reg[dst]);
     break;
   case ThumbDataOp::EOR:
     state.reg[dst] ^= state.reg[src];
-    SetNZ(state.reg[dst]);
+    SetZeroAndSignFlag(state.reg[dst]);
     break;
   case ThumbDataOp::TST: {
-    SetNZ(state.reg[dst] & state.reg[src]);
+    SetZeroAndSignFlag(state.reg[dst] & state.reg[src]);
     break;
   }
 
@@ -131,7 +131,7 @@ void Thumb_ALU(std::uint16_t instruction) {
   case ThumbDataOp::LSL: {
     int carry = state.cpsr.f.c;
     LSL(state.reg[dst], state.reg[src], carry);
-    SetNZ(state.reg[dst]);
+    SetZeroAndSignFlag(state.reg[dst]);
     state.cpsr.f.c = carry;
     interface->Idle();
     pipe.fetch_type = Access::Nonsequential;
@@ -140,7 +140,7 @@ void Thumb_ALU(std::uint16_t instruction) {
   case ThumbDataOp::LSR: {
     int carry = state.cpsr.f.c;
     LSR(state.reg[dst], state.reg[src], carry, false);
-    SetNZ(state.reg[dst]);
+    SetZeroAndSignFlag(state.reg[dst]);
     state.cpsr.f.c = carry;
     interface->Idle();
     pipe.fetch_type = Access::Nonsequential;
@@ -149,7 +149,7 @@ void Thumb_ALU(std::uint16_t instruction) {
   case ThumbDataOp::ASR: {
     int carry = state.cpsr.f.c;
     ASR(state.reg[dst], state.reg[src], carry, false);
-    SetNZ(state.reg[dst]);
+    SetZeroAndSignFlag(state.reg[dst]);
     state.cpsr.f.c = carry;
     interface->Idle();
     pipe.fetch_type = Access::Nonsequential;
@@ -158,7 +158,7 @@ void Thumb_ALU(std::uint16_t instruction) {
   case ThumbDataOp::ROR: {
     int carry = state.cpsr.f.c;
     ROR(state.reg[dst], state.reg[src], carry, false);
-    SetNZ(state.reg[dst]);
+    SetZeroAndSignFlag(state.reg[dst]);
     state.cpsr.f.c = carry;
     interface->Idle();
     pipe.fetch_type = Access::Nonsequential;
@@ -184,7 +184,7 @@ void Thumb_ALU(std::uint16_t instruction) {
   case ThumbDataOp::MUL:
     TickMultiply(state.reg[dst]);
     state.reg[dst] *= state.reg[src];
-    SetNZ(state.reg[dst]);
+    SetZeroAndSignFlag(state.reg[dst]);
     state.cpsr.f.c = 0;
     pipe.fetch_type = Access::Nonsequential;
     break;

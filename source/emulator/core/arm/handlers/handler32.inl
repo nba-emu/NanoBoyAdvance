@@ -86,14 +86,14 @@ void ARM_DataProcessing(std::uint32_t instruction) {
     case DataOp::AND:
       result = op1 & op2;
       if (set_flags) {
-        SetNZ(result);
+        SetZeroAndSignFlag(result);
         cpsr.f.c = carry;
       }
       break;
     case DataOp::EOR:
       result = op1 ^ op2;
       if (set_flags) {
-        SetNZ(result);
+        SetZeroAndSignFlag(result);
         cpsr.f.c = carry;
       }
       break;
@@ -116,12 +116,12 @@ void ARM_DataProcessing(std::uint32_t instruction) {
       result = SBC(op2, op1, set_flags);
       break;
     case DataOp::TST: {
-      SetNZ(op1 & op2);
+      SetZeroAndSignFlag(op1 & op2);
       cpsr.f.c = carry;
       break;
     }
     case DataOp::TEQ: {
-      SetNZ(op1 ^ op2);
+      SetZeroAndSignFlag(op1 ^ op2);
       cpsr.f.c = carry;
       break;
     }
@@ -134,28 +134,28 @@ void ARM_DataProcessing(std::uint32_t instruction) {
     case DataOp::ORR:
       result = op1 | op2;
       if (set_flags) {
-        SetNZ(result);
+        SetZeroAndSignFlag(result);
         cpsr.f.c = carry;
       }
       break;
     case DataOp::MOV:
       result = op2;
       if (set_flags) {
-        SetNZ(result);
+        SetZeroAndSignFlag(result);
         cpsr.f.c = carry;
       }
       break;
     case DataOp::BIC:
       result = op1 & ~op2;
       if (set_flags) {
-        SetNZ(result);
+        SetZeroAndSignFlag(result);
         cpsr.f.c = carry;
       }
       break;
     case DataOp::MVN:
       result = ~op2;
       if (set_flags) {
-        SetNZ(result);
+        SetZeroAndSignFlag(result);
         cpsr.f.c = carry;
       }
       break;
@@ -239,7 +239,7 @@ void ARM_Multiply(std::uint32_t instruction) {
   }
   
   if (set_flags) {
-    SetNZ(result);
+    SetZeroAndSignFlag(result);
   }
 
   state.reg[dst] = result;
