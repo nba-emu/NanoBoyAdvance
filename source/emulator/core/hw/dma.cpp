@@ -5,9 +5,9 @@
  * Refer to the included LICENSE file.
  */
 
-#include "cpu.hpp"
+#include <emulator/core/cpu-mmio.hpp>
+
 #include "dma.hpp"
-#include "memory/registers.hpp"
 
 namespace nba::core {
 
@@ -124,7 +124,7 @@ void DMA::Request(Occasion occasion) {
   }
 }
 
-void DMA::Run(int const& ticks_left) {
+void DMA::Run() {
   auto& channel = channels[current];
   
   auto access = Access::Nonsequential;
@@ -133,9 +133,9 @@ void DMA::Run(int const& ticks_left) {
     /* TODO: figure out how the FIFO DMA works in detail. */
     for (int i = 0; i < 4; i++) {
       if (channel.allow_read) {
-        latch = cpu->ReadWord(channel.latch.src_addr, access);
+        latch = memory->ReadWord(channel.latch.src_addr, access);
       }
-      cpu->WriteWord(channel.latch.dst_addr, latch, access);
+      memory->WriteWord(channel.latch.dst_addr, latch, access);
       access = channel.second_access;
       channel.latch.src_addr += 4;
     }
@@ -148,7 +148,7 @@ void DMA::Run(int const& ticks_left) {
     auto dst_modify = g_dma_modify[channel.size][channel.dst_cntl];
     
     #define CHECK_INTERLEAVED\
-      if (ticks_left <= 0 || interleaved) {\
+      if (scheduler->GetRemainingCycleCount() <= 0 || interleaved) {\
         interleaved = false;\
         return;\
       }
@@ -164,8 +164,8 @@ void DMA::Run(int const& ticks_left) {
         while (channel.latch.length != 0) {
           CHECK_INTERLEAVED;
 
-          latch = 0x00010001 * cpu->ReadHalf(channel.latch.src_addr, access);
-          cpu->WriteHalf(channel.latch.dst_addr, latch, access);
+          latch = 0x00010001 * memory->ReadHalf(channel.latch.src_addr, access);
+          memory->WriteHalf(channel.latch.dst_addr, latch, access);
           access = channel.second_access;
           ADVANCE_REGS;
         }
@@ -174,7 +174,7 @@ void DMA::Run(int const& ticks_left) {
         while (channel.latch.length != 0) {
           CHECK_INTERLEAVED;
           
-          cpu->WriteHalf(channel.latch.dst_addr, latch, access);
+          memory->WriteHalf(channel.latch.dst_addr, latch, access);
           access = channel.second_access;
           ADVANCE_REGS;
         }
@@ -185,8 +185,8 @@ void DMA::Run(int const& ticks_left) {
         while (channel.latch.length != 0) {
           CHECK_INTERLEAVED;
           
-          latch = cpu->ReadWord(channel.latch.src_addr, access);
-          cpu->WriteWord(channel.latch.dst_addr, latch, access);
+          latch = memory->ReadWord(channel.latch.src_addr, access);
+          memory->WriteWord(channel.latch.dst_addr, latch, access);
           access = channel.second_access;
           ADVANCE_REGS;
         }
@@ -195,7 +195,7 @@ void DMA::Run(int const& ticks_left) {
         while (channel.latch.length != 0) {
           CHECK_INTERLEAVED;
           
-          cpu->WriteWord(channel.latch.dst_addr, latch, access);
+          memory->WriteWord(channel.latch.dst_addr, latch, access);
           access = channel.second_access;
           ADVANCE_REGS;
         }
@@ -242,7 +242,7 @@ void DMA::Run(int const& ticks_left) {
   }
   
   if (channel.interrupt) {
-    cpu->mmio.irq_if |= (CPU::INT_DMA0 << current);
+    irq_controller->Raise(InterruptSource::DMA, current);
   }
   
   /* Select the next DMA to execute */

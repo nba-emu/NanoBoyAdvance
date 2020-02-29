@@ -45,7 +45,7 @@ public:
         double sinc = std::sin(cutoff * x1)/x1;
         double blackman = 0.42 - 0.49 * std::cos(x2) + 0.076 * std::cos(2 * x2);
         
-        lut[n*s_lut_resolution+m] = sinc * blackman;
+        lut[n * s_lut_resolution+m] = sinc * blackman;
         kernelSum += sinc * blackman;
       }
     }
@@ -66,10 +66,10 @@ public:
       int x = int(std::round(resample_phase * s_lut_resolution));
       
       for (int n = 0; n < points; n += 4) {        
-        sample += taps.Peek(n+0)*lut[x+0*s_lut_resolution] +
-                  taps.Peek(n+1)*lut[x+1*s_lut_resolution] + 
-                  taps.Peek(n+2)*lut[x+2*s_lut_resolution] + 
-                  taps.Peek(n+3)*lut[x+3*s_lut_resolution];
+        sample += taps.Peek(n + 0) * lut[x + 0 * s_lut_resolution];
+        sample += taps.Peek(n + 1) * lut[x + 1 * s_lut_resolution]; 
+        sample += taps.Peek(n + 2) * lut[x + 2 * s_lut_resolution]; 
+        sample += taps.Peek(n + 3) * lut[x + 3 * s_lut_resolution];
         
         x += 4 * s_lut_resolution;
       }

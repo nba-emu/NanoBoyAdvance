@@ -9,11 +9,11 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #endif
 
-#include <cartridge/header.hpp>
-#include <cartridge/game_db.hpp>
-#include <cartridge/backup/eeprom.hpp>
-#include <cartridge/backup/flash.hpp>
-#include <cartridge/backup/sram.hpp>
+#include <emulator/cartridge/header.hpp>
+#include <emulator/cartridge/game_db.hpp>
+#include <emulator/cartridge/backup/eeprom.hpp>
+#include <emulator/cartridge/backup/flash.hpp>
+#include <emulator/cartridge/backup/sram.hpp>
 #include <common/log.hpp>
 #include <cstring>
 #include <exception>

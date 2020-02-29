@@ -8,24 +8,29 @@
 #include <cstring>
 
 #include "ppu.hpp"
-#include "../cpu.hpp"
 
 namespace nba::core {
 
 constexpr std::uint16_t PPU::s_color_transparent;
 constexpr int PPU::s_wait_cycles[4];
 
-PPU::PPU(CPU* cpu) 
-  : cpu(cpu)
-  , pram(cpu->memory.pram)
-  , vram(cpu->memory.vram)
-  , oam(cpu->memory.oam)
+PPU::PPU(Scheduler* scheduler, InterruptController* irq_controller, DMA* dma, std::shared_ptr<Config> config) 
+  : scheduler(scheduler)
+  , irq_controller(irq_controller)
+  , dma(dma)
+  , config(config)
 {
   InitBlendTable();
   Reset();
 }
 
 void PPU::Reset() {
+  scheduler->Add(event);
+
+  std::memset(pram, 0, 0x00400);
+  std::memset(oam,  0, 0x00400);
+  std::memset(vram, 0, 0x18000);
+
   mmio.dispcnt.Reset();
   mmio.dispstat.Reset();
   mmio.vcount = 0;
@@ -59,18 +64,6 @@ void PPU::Reset() {
   mmio.evy = 0;
   mmio.bldcnt.Reset();
   
-//  for (int x = 0; x < 240; x++) {
-//    for (int bg = 0; bg < 4; bg++) {
-//      buffer_bg[bg][x] = s_color_transparent;
-//    }
-//    buffer_obj[x].priority = 4;
-//    buffer_obj[x].color = s_color_transparent;
-//    buffer_obj[x].alpha = 0;
-//    buffer_obj[x].window = 0;
-//  }
-//  
-//  line_contains_alpha_obj = false;
-//  
   event.countdown = 0;
   SetNextEvent(Phase::SCANLINE);
 }
@@ -105,15 +98,15 @@ void PPU::OnScanlineComplete() {
   auto& dispstat = mmio.dispstat;
   
   SetNextEvent(Phase::HBLANK);
-  cpu->dma.Request(DMA::Occasion::HBlank);
+  dma->Request(DMA::Occasion::HBlank);
   dispstat.hblank_flag = 1;
   
   if (mmio.vcount >= 2) {
-    cpu->dma.Request(DMA::Occasion::Video);
+    dma->Request(DMA::Occasion::Video);
   }
 
   if (dispstat.hblank_irq_enable) {
-    cpu->mmio.irq_if |= CPU::INT_HBLANK;
+    irq_controller->Raise(InterruptSource::HBlank);
   }
 }
 
@@ -128,19 +121,19 @@ void PPU::OnHblankComplete() {
   dispstat.vcount_flag = ++vcount == dispstat.vcount_setting;
   
   if (dispstat.vcount_flag && dispstat.vcount_irq_enable) {
-    cpu->mmio.irq_if |= CPU::INT_VCOUNT;
+    irq_controller->Raise(InterruptSource::VCount);
   }
 
   if (vcount == 160) {
-    cpu->config->video_dev->Draw(output);
+    config->video_dev->Draw(output);
     
     /* Enter vertical blanking mode */
     SetNextEvent(Phase::VBLANK_SCANLINE);
-    cpu->dma.Request(DMA::Occasion::VBlank);
+    dma->Request(DMA::Occasion::VBlank);
     dispstat.vblank_flag = 1;
     
     if (dispstat.vblank_irq_enable) {
-      cpu->mmio.irq_if |= CPU::INT_VBLANK;
+      irq_controller->Raise(InterruptSource::VBlank);
     }
     
     /* Reset vertical mosaic counters */
@@ -193,11 +186,11 @@ void PPU::OnVblankScanlineComplete() {
   dispstat.hblank_flag = 1;
   
   if (mmio.vcount < 162) {
-    cpu->dma.Request(DMA::Occasion::Video);
+    dma->Request(DMA::Occasion::Video);
   }
   
   if (dispstat.hblank_irq_enable) {
-    cpu->mmio.irq_if |= CPU::INT_HBLANK;
+    irq_controller->Raise(InterruptSource::HBlank);
   }
 }
 
@@ -226,7 +219,7 @@ void PPU::OnVblankHblankComplete() {
   }
 
   if (dispstat.vcount_flag && dispstat.vcount_irq_enable) {
-    cpu->mmio.irq_if |= CPU::INT_VCOUNT;
+    irq_controller->Raise(InterruptSource::VCount);
   }
 }
 

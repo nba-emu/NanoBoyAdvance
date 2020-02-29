@@ -15,7 +15,7 @@ namespace nba::core {
 
 class WaveChannel {
 public:
-  WaveChannel(Scheduler& scheduler);
+  WaveChannel(Scheduler* scheduler);
   
   void Reset();
   
@@ -35,7 +35,7 @@ private:
     return 8 * (2048 - frequency);
   }
   
-  Event event { 0, [this]() { this->Generate(); } };
+  Scheduler::Event event { 0, [this] { this->Generate(); } };
   
   Sequencer sequencer;
   

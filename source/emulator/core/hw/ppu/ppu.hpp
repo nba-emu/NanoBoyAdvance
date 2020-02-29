@@ -7,26 +7,27 @@
 
 #pragma once
 
+#include <emulator/config/config.hpp>
+#include <emulator/core/hw/dma.hpp>
+#include <emulator/core/scheduler.hpp>
+#include <emulator/core/interrupt.hpp>
 #include <cstdint>
 #include <functional>
 
 #include "registers.hpp"
-#include "../scheduler.hpp"
 
 namespace nba::core {
 
-class CPU;
-
 class PPU {
-
 public:
-  PPU(CPU* cpu);
+  PPU(Scheduler* scheduler, InterruptController* irq_controller, DMA* dma, std::shared_ptr<Config> config);
 
   void Reset();  
-  void Tick();
 
-  Event event { 0, [this]() { this->Tick(); } };
-  
+  std::uint8_t pram[0x00400];
+  std::uint8_t oam [0x00400];
+  std::uint8_t vram[0x18000];
+
   struct MMIO {
     DisplayControl dispcnt;
     DisplayStatus dispstat;
@@ -100,6 +101,7 @@ private:
 
   static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
   
+  void Tick();
   void InitBlendTable();
   void SetNextEvent(Phase phase);
   void RenderScanline();
@@ -119,11 +121,12 @@ private:
   
   #include "helper.inl"
 
-  CPU* cpu;
+  Scheduler::Event event { 0, [this] { this->Tick(); } };
 
-  std::uint8_t* pram;
-  std::uint8_t* vram;
-  std::uint8_t* oam;
+  Scheduler* scheduler;
+  InterruptController* irq_controller;
+  DMA* dma;
+  std::shared_ptr<Config> config;
 
   std::uint16_t buffer_bg[4][240];
   

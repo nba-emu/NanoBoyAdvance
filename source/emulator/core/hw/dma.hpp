@@ -9,18 +9,23 @@
 
 #include <bitset>
 #include <cstdint>
-
-#include "arm/memory.hpp"
+#include <emulator/core/arm/memory.hpp>
+#include <emulator/core/interrupt.hpp>
+#include <emulator/core/scheduler.hpp>
 
 namespace nba::core {
 
-class CPU;
-  
 class DMA {
 public:
   using Access = arm::MemoryBase::Access;
   
-  DMA(CPU* cpu) : cpu(cpu) { Reset(); }
+  DMA(arm::MemoryBase* memory,
+      InterruptController* irq_controller,
+      Scheduler* scheduler) 
+    : memory(memory)
+    , irq_controller(irq_controller)
+    , scheduler(scheduler)
+  { Reset(); }
   
   enum class Occasion {
     HBlank,
@@ -32,7 +37,7 @@ public:
   
   void Reset();
   void Request(Occasion occasion);
-  void Run(int const& ticks_left);
+  void Run();
   auto Read (int chan_id, int offset) -> std::uint8_t;
   void Write(int chan_id, int offset, std::uint8_t value);
   bool IsRunning() { return runnable.any(); }
@@ -66,8 +71,10 @@ private:
   void TryStart(int chan_id);
   void OnChannelWritten(int chan_id, bool enabled_old);
   
-  CPU* cpu;
-  
+  arm::MemoryBase* memory;
+  InterruptController* irq_controller;
+  Scheduler* scheduler;
+
   /* The id of the DMA that is currently running.
    * If no DMA is running, then the value will be minus one.
    */

@@ -7,7 +7,6 @@
 
 #include <limits>
 
-#include "cpu.hpp"
 #include "timer.hpp"
 
 namespace nba::core {
@@ -179,11 +178,11 @@ void Timer::Increment(int chan_id, int increment) {
     int next_id = chan_id + 1;
     
     if (channel.control.interrupt) {
-      cpu->mmio.irq_if |= (CPU::INT_TIMER0 << chan_id);
+      irq_controller->Raise(InterruptSource::Timer, chan_id);
     }
     
     if (chan_id <= 1) {
-      cpu->apu.OnTimerOverflow(chan_id, overflows);
+      apu->OnTimerOverflow(chan_id, overflows);
     }
     
     if (next_id != 4 && channels[next_id].control.cascade) {

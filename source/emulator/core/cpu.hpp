@@ -7,16 +7,17 @@
 
 #pragma once
 
-#include <cartridge/backup/backup.hpp>
-#include <config/config.hpp>
+#include <emulator/cartridge/backup/backup.hpp>
+#include <emulator/config/config.hpp>
 #include <memory>
 
 #include "arm/arm7tdmi.hpp"
-#include "dma.hpp"
-#include "timer.hpp"
+#include "hw/apu/apu.hpp"
+#include "hw/ppu/ppu.hpp"
+#include "hw/dma.hpp"
+#include "hw/timer.hpp"
+#include "interrupt.hpp"
 #include "scheduler.hpp"
-#include "apu/apu.hpp"
-#include "ppu/ppu.hpp"
 
 namespace nba::core {
 
@@ -54,32 +55,12 @@ public:
     HALT
   };
 
-  enum Interrupt {
-    INT_VBLANK  = 1 << 0,
-    INT_HBLANK  = 1 << 1,
-    INT_VCOUNT  = 1 << 2,
-    INT_TIMER0  = 1 << 3,
-    INT_TIMER1  = 1 << 4,
-    INT_TIMER2  = 1 << 5,
-    INT_TIMER3  = 1 << 6,
-    INT_SERIAL  = 1 << 7,
-    INT_DMA0    = 1 << 8,
-    INT_DMA1    = 1 << 9,
-    INT_DMA2    = 1 << 10,
-    INT_DMA3    = 1 << 11,
-    INT_KEYPAD  = 1 << 12,
-    INT_GAMEPAK = 1 << 13
-  };
-  
   std::shared_ptr<Config> config;
 
   struct SystemMemory {
     std::uint8_t bios[0x04000];
     std::uint8_t wram[0x40000];
     std::uint8_t iram[0x08000];
-    std::uint8_t pram[0x00400];
-    std::uint8_t oam [0x00400];
-    std::uint8_t vram[0x18000];
 
     struct ROM {
       std::unique_ptr<uint8_t[]> data;
@@ -96,10 +77,6 @@ public:
 
   struct MMIO {
     std::uint16_t keyinput;
-
-    std::uint16_t irq_ie;
-    std::uint16_t irq_if;
-    int irq_ime;
 
     HaltControl haltcnt;
 
@@ -120,10 +97,10 @@ public:
   } mmio; 
   
   Scheduler scheduler;
-  
+  InterruptController irq_controller;
+  DMA dma;
   APU apu;
   PPU ppu;
-  DMA dma;
   Timer timer;
   
 private:
@@ -169,7 +146,7 @@ private:
   void Idle() final;
   void PrefetchStep(std::uint32_t address, int cycles);
   
-  void UpdateCycleLUT();
+  void UpdateMemoryDelayTable();
   
   /* GamePak prefetch buffer state. */
   struct Prefetch {
@@ -185,9 +162,6 @@ private:
   /* Last ROM address that was accessed. Used for GamePak prefetch. */
   std::uint32_t last_rom_address;
   
-  cycle_t ticks_cpu_left = 0;
-  cycle_t ticks_to_event = 0;
-
   int cycles16[2][256] {
     { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
     { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
@@ -204,6 +178,6 @@ private:
   static constexpr int s_ws_seq2[2] = { 8, 1 };       /* Sequential WS2 */
 };
 
-#include "memory/memory.inl"
+#include "cpu-memory.inl"
   
 } // namespace nba::core

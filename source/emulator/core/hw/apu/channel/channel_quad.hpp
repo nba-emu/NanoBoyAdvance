@@ -15,7 +15,7 @@ namespace nba::core {
 
 class QuadChannel {
 public:
-  QuadChannel(Scheduler& scheduler);
+  QuadChannel(Scheduler* scheduler);
     
   void Reset();
   
@@ -33,7 +33,7 @@ private:
     return 128 * (2048 - frequency) / 8;
   }
 
-  Event event { 0, [this]() { this->Generate(); } };
+  Scheduler::Event event { 0, [this] { this->Generate(); } };
   Sequencer sequencer;
   int phase;
   int wave_duty;

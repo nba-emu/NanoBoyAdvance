@@ -97,16 +97,16 @@ inline auto CPU::ReadByte(std::uint32_t address, Access access) -> std::uint8_t 
       return ReadMMIO(address);
     }
     case REGION_PRAM: {
-      return Read<std::uint8_t>(memory.pram, address & 0x3FF);
+      return Read<std::uint8_t>(ppu.pram, address & 0x3FF);
     }
     case REGION_VRAM: {
       address &= 0x1FFFF;
       if (address >= 0x18000)
         address &= ~0x8000;
-      return Read<std::uint8_t>(memory.vram, address);
+      return Read<std::uint8_t>(ppu.vram, address);
     }
     case REGION_OAM: {
-      return Read<std::uint8_t>(memory.oam, address & 0x3FF);
+      return Read<std::uint8_t>(ppu.oam, address & 0x3FF);
     }
     case REGION_ROM_W0_L:
     case REGION_ROM_W0_H:
@@ -167,16 +167,16 @@ inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t
              (ReadMMIO(address + 1) << 8);
     }
     case REGION_PRAM: {
-      return Read<std::uint16_t>(memory.pram, address & 0x3FF);
+      return Read<std::uint16_t>(ppu.pram, address & 0x3FF);
     }
     case REGION_VRAM: {
       address &= 0x1FFFF;
       if (address >= 0x18000)
         address &= ~0x8000;
-      return Read<std::uint16_t>(memory.vram, address);
+      return Read<std::uint16_t>(ppu.vram, address);
     }
     case REGION_OAM: {
-      return Read<std::uint16_t>(memory.oam, address & 0x3FF);
+      return Read<std::uint16_t>(ppu.oam, address & 0x3FF);
     }
     
     /* 0x0DXXXXXX may be used to read/write from EEPROM */
@@ -251,16 +251,16 @@ inline auto CPU::ReadWord(std::uint32_t address, Access access) -> std::uint32_t
             (ReadMMIO(address + 3) << 24);
     }
     case REGION_PRAM: {
-      return Read<std::uint32_t>(memory.pram, address & 0x3FF);
+      return Read<std::uint32_t>(ppu.pram, address & 0x3FF);
     }
     case REGION_VRAM: {
       address &= 0x1FFFF;
       if (address >= 0x18000)
         address &= ~0x8000;
-      return Read<std::uint32_t>(memory.vram, address);
+      return Read<std::uint32_t>(ppu.vram, address);
     }
     case REGION_OAM: {
-      return Read<std::uint32_t>(memory.oam, address & 0x3FF);
+      return Read<std::uint32_t>(ppu.oam, address & 0x3FF);
     }
     case REGION_ROM_W0_L:
     case REGION_ROM_W0_H:
@@ -323,7 +323,7 @@ inline void CPU::WriteByte(std::uint32_t address, std::uint8_t value, Access acc
       break;
     }
     case REGION_PRAM: {
-      Write<std::uint16_t>(memory.pram, address & 0x3FF, value * 0x0101);
+      Write<std::uint16_t>(ppu.pram, address & 0x3FF, value * 0x0101);
       break;
     }
     case REGION_VRAM: {
@@ -334,7 +334,7 @@ inline void CPU::WriteByte(std::uint32_t address, std::uint8_t value, Access acc
       if (address >= 0x10000) {
         break;
       }
-      Write<std::uint16_t>(memory.vram, address, value * 0x0101);
+      Write<std::uint16_t>(ppu.vram, address, value * 0x0101);
       break;
     }
     case REGION_SRAM_1:
@@ -374,7 +374,7 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, Access ac
       break;
     }
     case REGION_PRAM: {
-      Write<std::uint16_t>(memory.pram, address & 0x3FF, value);
+      Write<std::uint16_t>(ppu.pram, address & 0x3FF, value);
       break;
     }
     case REGION_VRAM: {
@@ -382,11 +382,11 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, Access ac
       if (address >= 0x18000) {
         address &= ~0x8000;
       }
-      Write<std::uint16_t>(memory.vram, address, value);
+      Write<std::uint16_t>(ppu.vram, address, value);
       break;
     }
     case REGION_OAM: {
-      Write<std::uint16_t>(memory.oam, address & 0x3FF, value);
+      Write<std::uint16_t>(ppu.oam, address & 0x3FF, value);
       break;
     }
     // case REGION_ROM_W0_L: case REGION_ROM_W0_H:
@@ -459,7 +459,7 @@ inline void CPU::WriteWord(std::uint32_t address, std::uint32_t value, Access ac
       break;
     }
     case REGION_PRAM: {
-      Write<std::uint32_t>(memory.pram, address & 0x3FF, value);
+      Write<std::uint32_t>(ppu.pram, address & 0x3FF, value);
       break;
     }
     case REGION_VRAM: {
@@ -467,11 +467,11 @@ inline void CPU::WriteWord(std::uint32_t address, std::uint32_t value, Access ac
       if (address >= 0x18000) {
         address &= ~0x8000;
       }
-      Write<std::uint32_t>(memory.vram, address, value);
+      Write<std::uint32_t>(ppu.vram, address, value);
       break;
     }
     case REGION_OAM: {
-      Write<std::uint32_t>(memory.oam, address & 0x3FF, value);
+      Write<std::uint32_t>(ppu.oam, address & 0x3FF, value);
       break;
     }
 

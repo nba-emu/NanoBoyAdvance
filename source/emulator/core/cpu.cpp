@@ -21,37 +21,24 @@ constexpr int CPU::s_ws_seq2[2];
 CPU::CPU(std::shared_ptr<Config> config)
   : ARM7TDMI::ARM7TDMI(this)
   , config(config)
-  , apu(this)
-  , ppu(this)
-  , dma(this)
-  , timer(this)
+  , dma(this, &irq_controller, &scheduler)
+  , apu(&scheduler, &dma, config)
+  , ppu(&scheduler, &irq_controller, &dma, config)
+  , timer(&irq_controller, &apu)
 {
   std::memset(memory.bios, 0, 0x04000);
   Reset();
 }
 
 void CPU::Reset() {
-  /* TODO: properly reset the scheduler. */
-  scheduler.Add(ppu.event);
-  
-  /* Clear all memory buffers. */
   std::memset(memory.wram, 0, 0x40000);
   std::memset(memory.iram, 0, 0x08000);
-  std::memset(memory.pram, 0, 0x00400);
-  std::memset(memory.oam,  0, 0x00400);
-  std::memset(memory.vram, 0, 0x18000);
-
-  /* Reset interrupt control. */
-  mmio.irq_ie  = 0;
-  mmio.irq_if  = 0;
-  mmio.irq_ime = 0;
 
   mmio.keyinput = 0x3FF;
   mmio.haltcnt = HaltControl::RUN;
-
   mmio.rcnt_hack = 0;
 
-  /* Reset waitstates. */
+  /* Reset waitstates */
   mmio.waitcnt.sram = 0;
   mmio.waitcnt.ws0_n = 0;
   mmio.waitcnt.ws0_s = 0;
@@ -62,7 +49,7 @@ void CPU::Reset() {
   mmio.waitcnt.phi = 0;
   mmio.waitcnt.prefetch = 0;
   mmio.waitcnt.cgb = 0;
-  UpdateCycleLUT();
+  UpdateMemoryDelayTable();
   
   for (int i = 16; i < 256; i++) {
     cycles16[int(Access::Nonsequential)][i] = 1;
@@ -71,12 +58,15 @@ void CPU::Reset() {
     cycles32[int(Access::Sequential)][i] = 1;
   }
   
+  /* Reset prefetch buffer */
   prefetch.active = false;
   prefetch.rd_pos = 0;
   prefetch.wr_pos = 0;
   prefetch.count = 0;
   last_rom_address = 0;
   
+  /* TODO: properly reset the scheduler */
+  irq_controller.Reset();
   dma.Reset();
   timer.Reset();
   apu.Reset();
@@ -94,7 +84,7 @@ void CPU::Reset() {
 
 void CPU::Tick(int cycles) {
   timer.Run(cycles);
-  ticks_cpu_left -= cycles;
+  scheduler.AddCycles(cycles);
   
   if (prefetch.active) {
     prefetch.countdown -= cycles;
@@ -181,28 +171,17 @@ void CPU::PrefetchStep(std::uint32_t address, int cycles) {
 }
 
 void CPU::RunFor(int cycles) {
-  int elapsed;
+  while (scheduler.TotalCycleCount() < cycles) {
+    scheduler.Schedule();
+  
+    // TODO: this could be problematic, when events are added during execution.
+    int remaining = cycles - scheduler.TotalCycleCount();
+    int limit = std::max(scheduler.GetRemainingCycleCount() - remaining, 0);
 
-  /* Compensate for over- or undershoot from previous calls. */
-  cycles += ticks_cpu_left;
+    while (scheduler.GetRemainingCycleCount() > limit) {
+      auto has_servable_irq = irq_controller.HasServableIRQ();
 
-  while (cycles > 0) {
-    /* Run only for the duration the caller requested. */
-    if (cycles < ticks_to_event) {
-      ticks_to_event = cycles;
-    }
-    
-    /* CPU may run until the next event must be executed. */
-    ticks_cpu_left = ticks_to_event;
-    
-    /* 'ticks_cpu_left' will be consumed by memory accesses,
-     * internal CPU cycles or timers during CPU idle.
-     * In any case it is decremented by calls to Tick(cycles).
-     */
-    while (ticks_cpu_left > 0) {
-      auto fire = mmio.irq_ie & mmio.irq_if;
-
-      if (mmio.haltcnt == HaltControl::HALT && fire) {
+      if (mmio.haltcnt == HaltControl::HALT && has_servable_irq) {
         mmio.haltcnt = HaltControl::RUN;
       }
 
@@ -211,28 +190,24 @@ void CPU::RunFor(int cycles) {
        * If DMA is requested the CPU will be blocked.
        */
       if (dma.IsRunning()) {
-        dma.Run(ticks_cpu_left);
+        dma.Run();
       } else if (mmio.haltcnt == HaltControl::RUN) {
-        if (mmio.irq_ime && fire) {
+        if (irq_controller.MasterEnable() && has_servable_irq) {
           SignalIRQ();
         }
         Run();
       } else {
         /* Forward to the next event or timer IRQ. */
-        Tick(std::min(timer.EstimateCyclesUntilIRQ(), ticks_cpu_left));
+        Tick(std::min(timer.EstimateCyclesUntilIRQ(), scheduler.GetRemainingCycleCount()));
       }
     }
-    
-    elapsed = ticks_to_event - ticks_cpu_left;
-    
-    cycles -= elapsed;
-    
-    /* Update events and determine when the next event will happen. */
-    ticks_to_event = scheduler.Schedule(elapsed);
   }
+
+  /* Compensate for over- or undershoot from previous calls. */
+  scheduler.TotalCycleCount() = -scheduler.GetRemainingCycleCount();
 }
 
-void CPU::UpdateCycleLUT() {
+void CPU::UpdateMemoryDelayTable() {
   auto cycles16_n = cycles16[int(Access::Nonsequential)];
   auto cycles16_s = cycles16[int(Access::Sequential)];
   auto cycles32_n = cycles32[int(Access::Nonsequential)];
@@ -240,42 +215,32 @@ void CPU::UpdateCycleLUT() {
   
   int sram_cycles = 1 + s_ws_nseq[mmio.waitcnt.sram];
   
-  cycles16_n[REGION_SRAM_1] = sram_cycles;
-  cycles32_n[REGION_SRAM_1] = sram_cycles;
-  cycles16_s[REGION_SRAM_1] = sram_cycles;
-  cycles32_s[REGION_SRAM_1] = sram_cycles;
+  cycles16_n[0xE] = sram_cycles;
+  cycles32_n[0xE] = sram_cycles;
+  cycles16_s[0xE] = sram_cycles;
+  cycles32_s[0xE] = sram_cycles;
 
-  /* ROM: WS0/WS1/WS2 non-sequential timing. */
-  cycles16_n[REGION_ROM_W0_L] = 1 + s_ws_nseq[mmio.waitcnt.ws0_n];
-  cycles16_n[REGION_ROM_W1_L] = 1 + s_ws_nseq[mmio.waitcnt.ws1_n];
-  cycles16_n[REGION_ROM_W2_L] = 1 + s_ws_nseq[mmio.waitcnt.ws2_n];
-  cycles16_n[REGION_ROM_W0_H] = cycles16_n[REGION_ROM_W0_L];
-  cycles16_n[REGION_ROM_W1_H] = cycles16_n[REGION_ROM_W1_L];
-  cycles16_n[REGION_ROM_W2_H] = cycles16_n[REGION_ROM_W2_L];
-  
-  /* ROM: WS0/WS1/WS2 sequential timing. */
-  cycles16_s[REGION_ROM_W0_L] = 1 + s_ws_seq0[mmio.waitcnt.ws0_s];
-  cycles16_s[REGION_ROM_W1_L] = 1 + s_ws_seq1[mmio.waitcnt.ws1_s];
-  cycles16_s[REGION_ROM_W2_L] = 1 + s_ws_seq2[mmio.waitcnt.ws2_s];
-  cycles16_s[REGION_ROM_W0_H] = cycles16_s[REGION_ROM_W0_L];
-  cycles16_s[REGION_ROM_W1_H] = cycles16_s[REGION_ROM_W1_L];
-  cycles16_s[REGION_ROM_W2_H] = cycles16_s[REGION_ROM_W2_L];
-   
-   /* ROM: WS0/WS1/WS2 32-bit non-sequential access: 1N access, 1S access */
-  cycles32_n[REGION_ROM_W0_L] = cycles16_n[REGION_ROM_W0_L] + cycles16_s[REGION_ROM_W0_L];
-  cycles32_n[REGION_ROM_W1_L] = cycles16_n[REGION_ROM_W1_L] + cycles16_s[REGION_ROM_W1_L];
-  cycles32_n[REGION_ROM_W2_L] = cycles16_n[REGION_ROM_W2_L] + cycles16_s[REGION_ROM_W2_L];
-  cycles32_n[REGION_ROM_W0_H] = cycles32_n[REGION_ROM_W0_L];
-  cycles32_n[REGION_ROM_W1_H] = cycles32_n[REGION_ROM_W1_L];
-  cycles32_n[REGION_ROM_W2_H] = cycles32_n[REGION_ROM_W2_L];
-   
-  /* ROM: WS0/WS1/WS2 32-bit sequential access: 2S accesses */
-  cycles32_s[REGION_ROM_W0_L] = cycles16_s[0x8] * 2;
-  cycles32_s[REGION_ROM_W1_L] = cycles16_s[0xA] * 2;
-  cycles32_s[REGION_ROM_W2_L] = cycles16_s[0xC] * 2;
-  cycles32_s[REGION_ROM_W0_H] = cycles32_s[REGION_ROM_W0_L];
-  cycles32_s[REGION_ROM_W1_H] = cycles32_s[REGION_ROM_W1_L];
-  cycles32_s[REGION_ROM_W2_H] = cycles32_s[REGION_ROM_W2_L];
+  for (int i = 0; i < 2; i++) {
+    /* ROM: WS0/WS1/WS2 non-sequential timing. */
+    cycles16_n[0x8+i] = 1 + s_ws_nseq[mmio.waitcnt.ws0_n];
+    cycles16_n[0xA+i] = 1 + s_ws_nseq[mmio.waitcnt.ws1_n];
+    cycles16_n[0xC+i] = 1 + s_ws_nseq[mmio.waitcnt.ws2_n];
+    
+    /* ROM: WS0/WS1/WS2 sequential timing. */
+    cycles16_s[0x8+i] = 1 + s_ws_seq0[mmio.waitcnt.ws0_s];
+    cycles16_s[0xA+i] = 1 + s_ws_seq1[mmio.waitcnt.ws1_s];
+    cycles16_s[0xC+i] = 1 + s_ws_seq2[mmio.waitcnt.ws2_s];
+    
+    /* ROM: WS0/WS1/WS2 32-bit non-sequential access: 1N access, 1S access */
+    cycles32_n[0x8+i] = cycles16_n[0x8] + cycles16_s[0x8];
+    cycles32_n[0xA+i] = cycles16_n[0xA] + cycles16_s[0xA];
+    cycles32_n[0xC+i] = cycles16_n[0xC] + cycles16_s[0xC];
+    
+    /* ROM: WS0/WS1/WS2 32-bit sequential access: 2S accesses */
+    cycles32_s[0x8+i] = cycles16_s[0x8] * 2;
+    cycles32_s[0xA+i] = cycles16_s[0xA] * 2;
+    cycles32_s[0xC+i] = cycles16_s[0xC] * 2;  
+  }
 }
 
 } // namespace nba::core

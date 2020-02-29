@@ -5,8 +5,8 @@
  * Refer to the included LICENSE file.
  */
 
-#include "registers.hpp"
-#include "../cpu.hpp"
+#include "cpu.hpp"
+#include "cpu-mmio.hpp"
 
 namespace nba::core {
 
@@ -140,11 +140,11 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case RCNT+1: return mmio.rcnt_hack >> 8;
       
     /* Interrupt Control */
-    case IE+0:  return mmio.irq_ie  & 0xFF;
-    case IE+1:  return mmio.irq_ie  >> 8;
-    case IF+0:  return mmio.irq_if  & 0xFF;
-    case IF+1:  return mmio.irq_if  >> 8;
-    case IME+0: return mmio.irq_ime;
+    case IE+0:  return irq_controller.Read(0);
+    case IE+1:  return irq_controller.Read(1);
+    case IF+0:  return irq_controller.Read(2);
+    case IF+1:  return irq_controller.Read(3);
+    case IME+0: return irq_controller.Read(4);
     case IME+1:
     case IME+2:
     case IME+3: return 0;
@@ -444,28 +444,11 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     }
 
     /* Interrupt Control */
-    case IE+0: {
-      mmio.irq_ie &= 0xFF00;
-      mmio.irq_ie |= value;
-      break;
-    }
-    case IE+1: {
-      mmio.irq_ie &= 0x00FF;
-      mmio.irq_ie |= value << 8;
-      break;
-    }
-    case IF+0: {
-      mmio.irq_if &= ~value;
-      break;
-    }
-    case IF+1: {
-      mmio.irq_if &= ~(value << 8);
-      break;
-    }
-    case IME: {
-      mmio.irq_ime = value & 1;
-      break;
-    }
+    case IE+0: irq_controller.Write(0, value); break;
+    case IE+1: irq_controller.Write(1, value); break;
+    case IF+0: irq_controller.Write(2, value); break;
+    case IF+1: irq_controller.Write(3, value); break;
+    case IME:  irq_controller.Write(4, value); break;
 
     /* Waitstates */
     case WAITCNT+0: {
@@ -474,7 +457,7 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
       mmio.waitcnt.ws0_s = (value >> 4) & 1;
       mmio.waitcnt.ws1_n = (value >> 5) & 3;
       mmio.waitcnt.ws1_s = (value >> 7) & 1;
-      UpdateCycleLUT();
+      UpdateMemoryDelayTable();
       break;
     }
     case WAITCNT+1: {
@@ -483,7 +466,7 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
       mmio.waitcnt.phi = (value >> 3) & 3;
       mmio.waitcnt.prefetch = (value >> 6) & 1;
       mmio.waitcnt.cgb = (value >> 7) & 1;
-      UpdateCycleLUT();
+      UpdateMemoryDelayTable();
       break;
     }
 

@@ -8,8 +8,7 @@
 #pragma once
 
 #include <algorithm>
-
-#include "../../scheduler.hpp"
+#include <emulator/core/scheduler.hpp>
 
 namespace nba::core {
 
@@ -183,7 +182,7 @@ public:
     event.countdown += s_cycles_per_step;
   }
   
-  Event event { 0, [this]() { this->Tick(); } };
+  Scheduler::Event event { 0, [this] { this->Tick(); } };
   
   int length;
   int length_default = 64;
@@ -193,7 +192,7 @@ public:
 private:
   int step;
   
-  static constexpr cycle_t s_cycles_per_step = 16777216/512;
+  static constexpr int s_cycles_per_step = 16777216/512;
 };
 
 } // namespace nba::core
