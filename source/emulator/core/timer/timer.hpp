@@ -9,8 +9,8 @@
 
 #include <cstdint>
 
-#include "apu/apu.hpp"
-#include "interrupt.hpp"
+#include <emulator/core/apu/apu.hpp>
+#include <emulator/core/interrupt.hpp>
 
 namespace nba::core {
   

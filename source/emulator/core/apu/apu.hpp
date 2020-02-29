@@ -10,7 +10,7 @@
 #include <common/dsp/resampler.hpp>
 #include <common/dsp/ring_buffer.hpp>
 #include <emulator/config/config.hpp>
-#include <emulator/core/dma.hpp>
+#include <emulator/core/dma/dma.hpp>
 #include <emulator/core/scheduler.hpp>
 #include <mutex>
 
