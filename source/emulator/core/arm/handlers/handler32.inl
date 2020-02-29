@@ -499,11 +499,6 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
 
   std::uint32_t address = state.reg[base];
 
-  /* r15 will be advanced at the end of the first cycle, before the transfer starts.
-   * When written via STM, r15 will therefore be ahead of PC by an extra word.
-   */
-  state.r15 += 4;
-
   if (switch_mode) {
     mode = state.cpsr.f.mode;
     SwitchMode(MODE_USR);
@@ -566,6 +561,9 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
       }
     } else if (i == base) {
       WriteWord(address, (i == first) ? base_old : base_new, access_type);
+    } else if (i == 15) {
+      /* In hardware r15 is incremented in the cycle before the first transfer. */
+      WriteWord(address, state.r15 + 4, access_type);
     } else {
       WriteWord(address, state.reg[i], access_type);
     }
@@ -597,6 +595,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
     }
   } else {
     pipe.fetch_type = Access::Nonsequential;
+    state.r15 += 4;
   }
 }
 
