@@ -182,7 +182,7 @@ inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t
     /* 0x0DXXXXXX may be used to read/write from EEPROM */
     case REGION_ROM_W2_H: {
       /* Must check if this is an EEPROM access or ordinary ROM mirror read. */
-      if (IsEEPROMAddress(address)) {
+      if (IsEEPROMAccess(address)) {
         /* TODO: this is not a very nice way to do this. */
         if (!dma.IsRunning()) {
           return 1;
@@ -402,7 +402,7 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, Access ac
 
     /* EEPROM write */
     case REGION_ROM_W2_H: {
-      if (IsEEPROMAddress(address)) {
+      if (IsEEPROMAccess(address)) {
         /* TODO: this is not a very nice way to do this. */
         if (!dma.IsRunning()) {
           break;

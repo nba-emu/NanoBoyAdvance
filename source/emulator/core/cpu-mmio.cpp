@@ -399,7 +399,7 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     case WAVE_RAM+13:
     case WAVE_RAM+14:
     case WAVE_RAM+15: {
-      apu.psg3.WriteSample(address&0xF, value);
+      apu.psg3.WriteSample(address & 0xF, value);
       break;
     }
     case FIFO_A:

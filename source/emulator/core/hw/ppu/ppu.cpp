@@ -14,7 +14,10 @@ namespace nba::core {
 constexpr std::uint16_t PPU::s_color_transparent;
 constexpr int PPU::s_wait_cycles[4];
 
-PPU::PPU(Scheduler* scheduler, InterruptController* irq_controller, DMA* dma, std::shared_ptr<Config> config) 
+PPU::PPU(Scheduler* scheduler,
+         InterruptController* irq_controller,
+         DMA* dma,
+         std::shared_ptr<Config> config) 
   : scheduler(scheduler)
   , irq_controller(irq_controller)
   , dma(dma)

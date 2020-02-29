@@ -104,9 +104,6 @@ public:
   Timer timer;
   
 private:
-  friend class DMA;
-  friend class arm::ARM7TDMI;
-
   template <typename T>
   auto Read(void* buffer, std::uint32_t address) -> T {
     return *(T*)(&((std::uint8_t*)buffer)[address]);
@@ -122,7 +119,7 @@ private:
            memory.rom.backup_type == Config::BackupType::EEPROM_64;
   }
   
-  bool IsEEPROMAddress(std::uint32_t address) {
+  bool IsEEPROMAccess(std::uint32_t address) {
     return HasEEPROMBackup() && ((~memory.rom.size & 0x02000000) || address >= 0x0DFFFF00);
   }
 

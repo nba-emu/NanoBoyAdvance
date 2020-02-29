@@ -20,7 +20,10 @@ namespace nba::core {
 
 class PPU {
 public:
-  PPU(Scheduler* scheduler, InterruptController* irq_controller, DMA* dma, std::shared_ptr<Config> config);
+  PPU(Scheduler* scheduler,
+      InterruptController* irq_controller,
+      DMA* dma,
+      std::shared_ptr<Config> config);
 
   void Reset();  
 
@@ -102,8 +105,13 @@ private:
   static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
   
   void Tick();
-  void InitBlendTable();
+
   void SetNextEvent(Phase phase);
+  void OnScanlineComplete();
+  void OnHblankComplete();
+  void OnVblankScanlineComplete();
+  void OnVblankHblankComplete();
+  
   void RenderScanline();
   void RenderLayerText(int id);
   void RenderLayerAffine(int id);
@@ -112,12 +120,10 @@ private:
   void RenderLayerBitmap3();
   void RenderLayerOAM(bool bitmap_mode = false);
   void RenderWindow(int id);
+
   void ComposeScanline(int bg_min, int bg_max);
+  void InitBlendTable();
   void Blend(std::uint16_t& target1, std::uint16_t target2, BlendControl::Effect sfx);
-  void OnScanlineComplete();
-  void OnHblankComplete();
-  void OnVblankScanlineComplete();
-  void OnVblankHblankComplete();
   
   #include "helper.inl"
 
