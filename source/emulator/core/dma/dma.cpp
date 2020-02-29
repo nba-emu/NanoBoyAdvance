@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-#include <emulator/core/cpu-mmio.hpp>
+#include <emulator/core/registers.hpp>
 
 #include "dma.hpp"
 

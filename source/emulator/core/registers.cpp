@@ -6,7 +6,7 @@
  */
 
 #include "cpu.hpp"
-#include "cpu-mmio.hpp"
+#include "registers.hpp"
 
 namespace nba::core {
 

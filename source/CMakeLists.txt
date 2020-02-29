@@ -33,7 +33,7 @@ set(SOURCES
   emulator/core/timer/timer.cpp
   emulator/core/ppu/registers.cpp
   emulator/core/cpu.cpp
-  emulator/core/cpu-mmio.cpp
+  emulator/core/registers.cpp
 
   # Emulator
   emulator/emulator.cpp
@@ -85,9 +85,9 @@ set(HEADERS
   emulator/core/ppu/registers.hpp
   emulator/core/timer/timer.hpp
   emulator/core/cpu.hpp
-  emulator/core/cpu-memory.inl
-  emulator/core/cpu-mmio.hpp
   emulator/core/interrupt.hpp
+  emulator/core/memory.inl
+  emulator/core/registers.hpp
   emulator/core/scheduler.hpp
 
   # Devices
