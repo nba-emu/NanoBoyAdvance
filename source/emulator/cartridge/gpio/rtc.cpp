@@ -6,6 +6,7 @@
  */
 
 #include <common/log.hpp>
+#include <ctime>
 
 #include "rtc.hpp"
 
@@ -32,7 +33,6 @@ void RTC::Reset() {
   state = State::Command;
 
   control.Reset();
-  datetime.Reset();
 }
 
 bool RTC::ReadSIO() {
@@ -183,35 +183,43 @@ void RTC::ReadRegister() {
       break;
     }
     case Register::DateTime: {
-      buffer[0] = datetime.year;
-      buffer[1] = datetime.month;
-      buffer[2] = datetime.day;
-      buffer[3] = datetime.day_of_week;
-      buffer[4] = datetime.hour;
-      buffer[5] = datetime.minute;
-      buffer[6] = datetime.second;
+      auto time = std::time(nullptr);
+      auto gm = std::gmtime(&time);
+      buffer[0] = ConvertDecimalToBCD(gm->tm_year - 100);
+      buffer[1] = ConvertDecimalToBCD(1 + gm->tm_mon);
+      buffer[2] = ConvertDecimalToBCD(1 + gm->tm_mday);
+      buffer[3] = ConvertDecimalToBCD(gm->tm_wday);
+      buffer[4] = ConvertDecimalToBCD(gm->tm_hour);
+      buffer[5] = ConvertDecimalToBCD(gm->tm_min);
+      buffer[6] = ConvertDecimalToBCD(gm->tm_sec);
       break;
     }
     case Register::Time: {
-      buffer[0] = datetime.hour;
-      buffer[1] = datetime.minute;
-      buffer[2] = datetime.second;
+      auto time = std::time(nullptr);
+      auto gm = std::gmtime(&time);
+      buffer[0] = ConvertDecimalToBCD(gm->tm_hour);
+      buffer[1] = ConvertDecimalToBCD(gm->tm_min);
+      buffer[2] = ConvertDecimalToBCD(gm->tm_sec);
       break;
     }
   }
 }
 
 void RTC::WriteRegister() {
+  // TODO: is the datetime register writeable?
   switch (reg) {
     case Register::Control: {
       control.unknown = buffer[0] & 2;
       control.per_minute_irq = buffer[0] & 8;
       control.mode_24h = buffer[0] & 64;
+      if (control.per_minute_irq) {
+        LOG_WARN("RTC: enabled the per-minute IRQ. This is currently unimplemented.");
+      }
       break;
     }
     case Register::ForceReset: {
+      // TODO: somehow reset datetime register?
       control.Reset();
-      datetime.Reset();
       break;
     }
     case Register::ForceIRQ: {

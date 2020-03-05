@@ -54,6 +54,19 @@ private:
   void ReadRegister();
   void WriteRegister();
 
+  static auto ConvertDecimalToBCD(std::uint8_t x) -> std::uint8_t {
+    std::uint8_t y = 0;
+    std::uint8_t e = 1;
+
+    while (x > 0) {
+      y += (x % 10) * e;
+      e *= 16;
+      x /= 10; 
+    }
+
+    return y;
+  }
+
   int current_bit;
   int current_byte;
 
@@ -82,27 +95,6 @@ private:
       poweroff = false;
     }
   } control;
-
-  struct DateTimeRegister {
-    std::uint8_t year;
-    std::uint8_t month;
-    std::uint8_t day;
-    std::uint8_t day_of_week;
-    // NOTE: hour[7:] is AM/PM-flag, probably only in 12-hour mode?
-    std::uint8_t hour;
-    std::uint8_t minute;
-    std::uint8_t second;
-
-    void Reset() {
-      year = 0;
-      month = 1;
-      day = 1;
-      day_of_week = 0;
-      hour = 0;
-      minute = 0;
-      second = 0;
-    }
-  } datetime;
 
   static constexpr int s_argument_count[8] = {
     0, // ForceReset
