@@ -32,7 +32,8 @@ public:
     ForceIRQ = 3,
     Control = 4,
     Time = 6,
-    FreeRegister = 7
+    // NOTE: GBATEK calls this register "free" but it is unclear what that means.
+    Free = 7
   };
 
   RTC(nba::core::Scheduler* scheduler, nba::core::InterruptController* irq_controller) : GPIO(scheduler, irq_controller) {
