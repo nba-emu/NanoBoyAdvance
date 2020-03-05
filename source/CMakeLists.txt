@@ -12,6 +12,8 @@ set(SOURCES
   # Cartridge
   emulator/cartridge/backup/eeprom.cpp
   emulator/cartridge/backup/flash.cpp
+  emulator/cartridge/gpio/gpio.cpp
+  emulator/cartridge/gpio/rtc.cpp
   emulator/cartridge/game_db.cpp
 
   # Core
@@ -56,6 +58,8 @@ set(HEADERS
   emulator/cartridge/backup/eeprom.hpp
   emulator/cartridge/backup/flash.hpp
   emulator/cartridge/backup/sram.hpp
+  emulator/cartridge/gpio/gpio.hpp
+  emulator/cartridge/gpio/rtc.hpp
   emulator/cartridge/game_db.hpp
   emulator/cartridge/header.hpp
 

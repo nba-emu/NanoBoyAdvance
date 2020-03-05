@@ -14,6 +14,7 @@
 #include <emulator/cartridge/backup/eeprom.hpp>
 #include <emulator/cartridge/backup/flash.hpp>
 #include <emulator/cartridge/backup/sram.hpp>
+#include <emulator/cartridge/gpio/rtc.hpp>
 #include <common/log.hpp>
 #include <cstring>
 #include <exception>
@@ -211,7 +212,7 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   LOG_INFO("Game Code:  {0}", game_code);
   LOG_INFO("Game Maker: {0}", game_maker);
   LOG_INFO("Backup: {0}", std::to_string(game_info.backup_type));
-  LOG_INFO("RTC:    {0}", game_info.gpio == GPIO::RTC);
+  LOG_INFO("RTC:    {0}", game_info.gpio == GPIODeviceType::RTC);
   LOG_INFO("Mirror: {0}", game_info.mirror);
   
   /* Mount cartridge into the cartridge slot ;-) */
@@ -219,6 +220,13 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   cpu.memory.rom.size = size;
   cpu.memory.rom.backup_type = game_info.backup_type;
   cpu.memory.rom.backup = std::unique_ptr<Backup>{ CreateBackupInstance(game_info.backup_type, save_path) };
+
+  /* Create and mount RTC if necessary. */
+  if (game_info.gpio == GPIODeviceType::RTC) {
+    cpu.memory.rom.gpio = std::make_unique<RTC>(&cpu.scheduler, &cpu.irq_controller);
+  } else {
+    cpu.memory.rom.gpio.reset();
+  }
 
   /* Some games (e.g. Classic NES series) have the ROM memory mirrored. */
   if (game_info.mirror) {

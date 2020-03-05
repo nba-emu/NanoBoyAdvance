@@ -201,10 +201,11 @@ inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t
         Tick(cycles16[int(Access::Nonsequential)][page] - 
              cycles16[int(access)][page]);
       }
-      // if (IS_GPIO_ACCESS(address) && gpio->isReadable()) {
-      //   return  gpio->read(address) |
-      //      (gpio->read(address + 1) << 8);
-      // }
+      // TODO: probably the "IsReadable" check is inaccurate and not even required.
+      if (IsGPIOAccess(address) && memory.rom.gpio->IsReadable()) {
+        return memory.rom.gpio->Read(address + 0) |
+              (memory.rom.gpio->Read(address + 1) << 8);
+      }
       if (address >= memory.rom.size)
         return address / 2;
       return Read<std::uint16_t>(memory.rom.data.get(), address);
@@ -273,12 +274,13 @@ inline auto CPU::ReadWord(std::uint32_t address, Access access) -> std::uint32_t
         Tick(cycles32[int(Access::Nonsequential)][page] - 
              cycles32[int(access)][page]);
       }
-      // if (IS_GPIO_ACCESS(address) && gpio->isReadable()) {
-      //   return  gpio->read(address)      |
-      //      (gpio->read(address + 1) << 8)  |
-      //      (gpio->read(address + 2) << 16) |
-      //      (gpio->read(address + 3) << 24);
-      // }
+      // TODO: probably the "IsReadable" check is inaccurate and not even required.
+      if (IsGPIOAccess(address) && memory.rom.gpio->IsReadable()) {
+        return memory.rom.gpio->Read(address + 0) |
+              (memory.rom.gpio->Read(address + 1) <<  8) |
+              (memory.rom.gpio->Read(address + 2) << 16) |
+              (memory.rom.gpio->Read(address + 3) << 24);
+      }
       if (address >= memory.rom.size) {
         return (((address + 0) / 2) & 0xFFFF) |
                (((address + 2) / 2) << 16);
@@ -389,16 +391,16 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, Access ac
       Write<std::uint16_t>(ppu.oam, address & 0x3FF, value);
       break;
     }
-    // case REGION_ROM_W0_L: case REGION_ROM_W0_H:
-    // case REGION_ROM_W1_L: case REGION_ROM_W1_H:
-    // case REGION_ROM_W2_L: {
-    //   address &= 0x1FFFFFF;
-    //   if (IS_GPIO_ACCESS(address)) {
-    //     gpio->write(address+0, value&0xFF);
-    //     gpio->write(address+1, value>>8);
-    //   }
-    //   break;
-    // }
+    case REGION_ROM_W0_L: case REGION_ROM_W0_H:
+    case REGION_ROM_W1_L: case REGION_ROM_W1_H:
+    case REGION_ROM_W2_L: {
+      address &= 0x1FFFFFF;
+      if (IsGPIOAccess(address)) {
+        memory.rom.gpio->Write(address + 0, value & 0xFF);
+        memory.rom.gpio->Write(address + 1, value >> 8);
+      }
+      break;
+    }
 
     /* EEPROM write */
     case REGION_ROM_W2_H: {
@@ -410,12 +412,12 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, Access ac
         memory.rom.backup->Write(address, value);
         break;
       }
-    //   address &= 0x1FFFFFF;
-    //   if (IS_GPIO_ACCESS(address)) {
-    //     gpio->write(address+0, value&0xFF);
-    //     gpio->write(address+1, value>>8);
-    //     break;
-    //   }
+      address &= 0x1FFFFFF;
+      if (IsGPIOAccess(address)) {
+        memory.rom.gpio->Write(address + 0, value & 0xFF);
+        memory.rom.gpio->Write(address + 1, value >> 8);
+        break;
+      }
       break;
     }
     
@@ -475,19 +477,19 @@ inline void CPU::WriteWord(std::uint32_t address, std::uint32_t value, Access ac
       break;
     }
 
-    // case REGION_ROM_W0_L: case REGION_ROM_W0_H:
-    // case REGION_ROM_W1_L: case REGION_ROM_W1_H:
-    // case REGION_ROM_W2_L: case REGION_ROM_W2_H: {
-    //   // TODO: check if 32-bit EEPROM accesses are possible.
-    //   address &= 0x1FFFFFF;
-    //   if (IS_GPIO_ACCESS(address)) {
-    //     gpio->write(address+0, (value>>0) &0xFF);
-    //     gpio->write(address+1, (value>>8) &0xFF);
-    //     gpio->write(address+2, (value>>16)&0xFF);
-    //     gpio->write(address+3, (value>>24)&0xFF);
-    //   }
-    //   break;
-    // }
+    case REGION_ROM_W0_L: case REGION_ROM_W0_H:
+    case REGION_ROM_W1_L: case REGION_ROM_W1_H:
+    case REGION_ROM_W2_L: case REGION_ROM_W2_H: {
+      // TODO: check if 32-bit EEPROM accesses are possible.
+      address &= 0x1FFFFFF;
+      if (IsGPIOAccess(address)) {
+        memory.rom.gpio->Write(address + 0, (value >>  0) & 0xFF);
+        memory.rom.gpio->Write(address + 1, (value >>  8) & 0xFF);
+        memory.rom.gpio->Write(address + 2, (value >> 16) & 0xFF);
+        memory.rom.gpio->Write(address + 3, (value >> 24) & 0xFF);
+      }
+      break;
+    }
 
     case REGION_SRAM_1:
     case REGION_SRAM_2: {

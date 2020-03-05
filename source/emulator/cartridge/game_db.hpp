@@ -12,14 +12,14 @@
 
 namespace nba {
 
-enum class GPIO {
+enum class GPIODeviceType {
   None,
   RTC
 };
 
 struct GameInfo {
   Config::BackupType backup_type = Config::BackupType::Detect;
-  GPIO gpio = GPIO::None;
+  GPIODeviceType gpio = GPIODeviceType::None;
   bool mirror = false;
 };
 

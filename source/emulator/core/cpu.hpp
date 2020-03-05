@@ -8,6 +8,7 @@
 #pragma once
 
 #include <emulator/cartridge/backup/backup.hpp>
+#include <emulator/cartridge/gpio/gpio.hpp>
 #include <emulator/config/config.hpp>
 #include <memory>
 
@@ -29,6 +30,7 @@ public:
   CPU(std::shared_ptr<Config> config);
 
   void Reset();
+
   void RunFor(int cycles);
   
   enum MemoryRegion {
@@ -67,6 +69,7 @@ public:
       size_t size;
       std::uint32_t mask = 0x1FFFFFF;
 
+      std::unique_ptr<nba::GPIO> gpio;
       std::unique_ptr<nba::Backup> backup;
       Config::BackupType backup_type = Config::BackupType::Detect;
     } rom;
@@ -119,6 +122,12 @@ private:
            memory.rom.backup_type == Config::BackupType::EEPROM_64;
   }
   
+  bool IsGPIOAccess(std::uint32_t address) {
+    // NOTE: currently we do not check if the address lies within ROM.
+    // It would be nice if we could fix that.
+    return memory.rom.gpio != nullptr && address >= 0xC4 && address <= 0xC8;
+  }
+
   bool IsEEPROMAccess(std::uint32_t address) {
     return HasEEPROMBackup() && ((~memory.rom.size & 0x02000000) || address >= 0x0DFFFF00);
   }
