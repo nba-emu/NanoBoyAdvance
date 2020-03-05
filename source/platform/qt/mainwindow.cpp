@@ -39,6 +39,8 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
 
   /* Create help menu */
   auto help_menu = menubar->addMenu(tr("&?"));
+  auto about_app = help_menu->addAction(tr("About NanoboyAdvance"));
+  auto about_qt  = help_menu->addAction(tr("About Qt"));
 
   /* Set emulator config */
   config->video_dev = screen;
@@ -47,6 +49,22 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
   emulator = std::make_unique<nba::Emulator>(config);
 
   connect(file_open, &QAction::triggered, this, &MainWindow::FileOpen);
+  connect(file_close, &QAction::triggered, &QApplication::quit);
+  about_app->setMenuRole(QAction::AboutRole);
+  connect(about_app, &QAction::triggered, [&]{
+    QMessageBox box {this};
+    box.setTextFormat(Qt::RichText);
+    box.setText(tr("NanoboyAdvance is a portable Game Boy Advance emulator.<br><br>"
+                   "Copyright (C) 2018 - 2020 Frederic Raphael Meyer (fleroviux)<br><br>"
+                   "NanoboyAdvance is licensed under the GPLv3 or any later version.<br><br>"
+                   "Github: <a href=\"https://github.com/fleroviux/NanoboyAdvance\">https://github.com/fleroviux/NanoboyAdvance</a><br>"
+                   "Twitter: <a href=\"https://twitter.com/fleroviux\">@fleroviux</a><br><br>"
+                   "Game Boy Advance is a registered trademark of Nintendo Co., Ltd."));
+    box.setWindowTitle(tr("About NanoboyAdvance"));
+    box.exec();
+  });
+  about_qt->setMenuRole(QAction::AboutQtRole);
+  connect(about_qt, &QAction::triggered, &QApplication::aboutQt);
 
   app->installEventFilter(this);
 }
