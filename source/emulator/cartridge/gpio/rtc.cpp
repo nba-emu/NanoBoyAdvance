@@ -29,7 +29,7 @@ void RTC::Reset() {
   port.sck = 0;
   port.sio = 0; 
   port.cs  = 0;
-  state = State::Waiting;
+  state = State::Command;
 
   control.Reset();
   datetime.Reset();
@@ -77,7 +77,7 @@ void RTC::WritePort(std::uint8_t value) {
 
   // NOTE: this is not tested but probably needed?
   if (!old_cs && port.cs) {
-    state = State::Waiting;
+    state = State::Command;
     current_bit  = 0;
     current_byte = 0;
   }
@@ -88,8 +88,7 @@ void RTC::WritePort(std::uint8_t value) {
   }
 
   switch (state) {
-    // TODO: rename Waiting to something that indicates receiving the command byte.
-    case State::Waiting: {
+    case State::Command: {
       ReceiveCommandSIO();
       break;
     }
@@ -134,14 +133,14 @@ void RTC::ReceiveCommandSIO() {
     if (s_argument_count[(int)reg] > 0) {
       state = State::Sending;
     } else {
-      state = State::Waiting;
+      state = State::Command;
     }
   } else {
     if (s_argument_count[(int)reg] > 0) {
       state = State::Receiving;
     } else {
       WriteRegister();
-      state = State::Waiting;
+      state = State::Command;
     }
   }
 }
@@ -155,7 +154,7 @@ void RTC::ReceiveBufferSIO() {
 
       // TODO: does the chip accept more commands or
       // must it be reenabled before sending the next command?
-      state = State::Waiting;
+      state = State::Command;
     }
   } 
 }
@@ -169,7 +168,7 @@ void RTC::TransmitBufferSIO() {
     if (++current_byte == s_argument_count[(int)reg]) {
       // TODO: does the chip accept more commands or
       // must it be reenabled before sending the next command?
-      state = State::Waiting;
+      state = State::Command;
     }
   }
 }

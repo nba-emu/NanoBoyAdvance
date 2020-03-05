@@ -35,8 +35,7 @@ auto GPIO::Read(std::uint32_t address) -> std::uint8_t {
     case Register::Data: {
       auto value = ReadPort() & rd_mask;
 
-      // TODO: can we not just use wr_mask?
-      port_data &= ~rd_mask;
+      port_data &= wr_mask;
       port_data |= value;
 
       // CHECKME: what should we return for the masked bits? Are they floating?
@@ -56,9 +55,8 @@ auto GPIO::Read(std::uint32_t address) -> std::uint8_t {
 void GPIO::Write(std::uint32_t address, std::uint8_t value) {
   switch (static_cast<Register>(address)) {
     case Register::Data: {
-      // TODO: can we not just use rd_mask?
-      port_data &= ~wr_mask;
-      port_data |=  wr_mask & value;
+      port_data &= rd_mask;
+      port_data |= wr_mask & value;
       WritePort(port_data);
       break;
     }

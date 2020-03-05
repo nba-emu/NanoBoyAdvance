@@ -20,7 +20,7 @@ public:
   };
 
   enum class State {
-    Waiting,
+    Command,
     Sending,
     Receiving,
     Complete
