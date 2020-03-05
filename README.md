@@ -63,8 +63,8 @@ You can then run the emulator:
 ```
 
 ## Limitations
-- currently there is no decent GUI or configuration system.
-- no link-cable or RTC support yet.
+- currently there is no configuration system.
+- no link-cable.
 - some of the code is not endian-safe.
 
 ## Acknowledgement
