@@ -46,9 +46,12 @@ signals:
   void SignalDraw(std::uint32_t* buffer);
 
 private:
+  auto CompileShader() -> GLuint;
+
   int viewport_x = 0;
   int viewport_width = 0;
   int viewport_height = 0;
 
   GLuint texture;
+  GLuint program;
 };

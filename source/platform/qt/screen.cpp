@@ -5,6 +5,8 @@
  * Refer to the included LICENSE file.
  */
 
+#include <QGLFunctions>
+
 #include "screen.hpp"
 
 void Screen::Draw(std::uint32_t* buffer) {
@@ -31,6 +33,46 @@ void Screen::DrawSlot(std::uint32_t* buffer) {
   update();
 }
 
+auto Screen::CompileShader() -> GLuint {
+  QGLFunctions ctx(QGLContext::currentContext());
+
+  auto vid = ctx.glCreateShader(GL_VERTEX_SHADER);
+  auto fid = ctx.glCreateShader(GL_FRAGMENT_SHADER);
+
+  const char* vert_src[] = {
+    "varying vec2 uv;\n"
+    "void main(void) {\n"
+    "    gl_Position = gl_Vertex;\n"
+    "    uv = gl_MultiTexCoord0;\n"
+    "}"
+  };
+
+  const char* frag_src[] = {
+    "uniform sampler2D tex;\n"
+    "varying vec2 uv;\n"
+    "void main(void) {\n"
+    "    vec4 color = texture(tex, uv);\n"
+    "    color.r = pow(color.r, 4.0);\n"
+    "    color.g = pow(color.g, 3.0);\n"
+    "    color.b = pow(color.b, 1.4);\n"
+    "    gl_FragColor = color;\n"
+    "}"
+  };
+
+  /* TODO: check for compilation errors. */
+  ctx.glShaderSource(vid, 1, vert_src, nullptr);
+  ctx.glShaderSource(fid, 1, frag_src, nullptr);
+  ctx.glCompileShader(vid);
+  ctx.glCompileShader(fid);
+
+  auto pid = ctx.glCreateProgram();
+  ctx.glAttachShader(pid, vid);
+  ctx.glAttachShader(pid, fid);
+  ctx.glLinkProgram(pid);
+
+  return pid;
+}
+
 void Screen::initializeGL() {
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -47,11 +89,16 @@ void Screen::initializeGL() {
 
   glClearColor(0, 0, 0, 1);
   glClear(GL_COLOR_BUFFER_BIT);
+
+  program = CompileShader();
 }
 
 void Screen::paintGL() {
+  QGLFunctions ctx(QGLContext::currentContext());
+
   glViewport(viewport_x, 0, viewport_width, viewport_height);
   glBindTexture(GL_TEXTURE_2D, texture);
+  ctx.glUseProgram(program);
 
   glBegin(GL_QUADS);
   {
