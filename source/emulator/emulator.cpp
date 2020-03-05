@@ -222,11 +222,12 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   cpu.memory.rom.backup = std::unique_ptr<Backup>{ CreateBackupInstance(game_info.backup_type, save_path) };
 
   /* Create and mount RTC if necessary. */
-  if (game_info.gpio == GPIODeviceType::RTC) {
-    cpu.memory.rom.gpio = std::make_unique<RTC>(&cpu.scheduler, &cpu.irq_controller);
-  } else {
-    cpu.memory.rom.gpio.reset();
-  }
+  cpu.memory.rom.gpio = std::make_unique<RTC>(&cpu.scheduler, &cpu.irq_controller);
+  //if (game_info.gpio == GPIODeviceType::RTC) {
+  //  cpu.memory.rom.gpio = std::make_unique<RTC>(&cpu.scheduler, &cpu.irq_controller);
+  //} else {
+  //  cpu.memory.rom.gpio.reset();
+  //}
 
   /* Some games (e.g. Classic NES series) have the ROM memory mirrored. */
   if (game_info.mirror) {

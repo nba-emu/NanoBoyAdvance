@@ -183,23 +183,23 @@ void RTC::ReadRegister() {
       break;
     }
     case Register::DateTime: {
-      auto time = std::time(nullptr);
-      auto gm = std::gmtime(&time);
-      buffer[0] = ConvertDecimalToBCD(gm->tm_year - 100);
-      buffer[1] = ConvertDecimalToBCD(1 + gm->tm_mon);
-      buffer[2] = ConvertDecimalToBCD(1 + gm->tm_mday);
-      buffer[3] = ConvertDecimalToBCD(gm->tm_wday);
-      buffer[4] = ConvertDecimalToBCD(gm->tm_hour);
-      buffer[5] = ConvertDecimalToBCD(gm->tm_min);
-      buffer[6] = ConvertDecimalToBCD(gm->tm_sec);
+      auto timestamp = std::time(nullptr);
+      auto time = std::localtime(&timestamp);
+      buffer[0] = ConvertDecimalToBCD(time->tm_year - 100);
+      buffer[1] = ConvertDecimalToBCD(1 + time->tm_mon);
+      buffer[2] = ConvertDecimalToBCD(1 + time->tm_mday);
+      buffer[3] = ConvertDecimalToBCD(time->tm_wday);
+      buffer[4] = ConvertDecimalToBCD(time->tm_hour);
+      buffer[5] = ConvertDecimalToBCD(time->tm_min);
+      buffer[6] = ConvertDecimalToBCD(time->tm_sec);
       break;
     }
     case Register::Time: {
-      auto time = std::time(nullptr);
-      auto gm = std::gmtime(&time);
-      buffer[0] = ConvertDecimalToBCD(gm->tm_hour);
-      buffer[1] = ConvertDecimalToBCD(gm->tm_min);
-      buffer[2] = ConvertDecimalToBCD(gm->tm_sec);
+      auto timestamp = std::time(nullptr);
+      auto time = std::localtime(&timestamp);
+      buffer[0] = ConvertDecimalToBCD(time->tm_hour);
+      buffer[1] = ConvertDecimalToBCD(time->tm_min);
+      buffer[2] = ConvertDecimalToBCD(time->tm_sec);
       break;
     }
   }
