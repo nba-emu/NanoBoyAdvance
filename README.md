@@ -70,5 +70,6 @@ You can then run the emulator:
 ## Acknowledgement
 
 - GBATEK by Martin Korth: a great piece of documentation that made this emulator possible.
+- Talarubi & byuu: I am using their GBA color correction shader
 - mGBA by endrift: great test suite, also referenced its code for a few details.
 - VisualBoyAdvance by Forgotten: inspired me to pursue emulator programming.

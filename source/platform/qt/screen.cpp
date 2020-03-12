@@ -48,14 +48,17 @@ auto Screen::CompileShader() -> GLuint {
   };
 
   const char* frag_src[] = {
+    // Credits to Talarubi and byuu for the color correction algorithm.
+    // https://byuu.net/video/color-emulation
     "uniform sampler2D tex;\n"
     "varying vec2 uv;\n"
     "void main(void) {\n"
-    "    vec4 color = texture(tex, uv);\n"
-    "    color.r = pow(color.r, 4.0);\n"
-    "    color.g = pow(color.g, 3.0);\n"
-    "    color.b = pow(color.b, 1.4);\n"
-    "    gl_FragColor = color;\n"
+    "    vec4 color = texture2D(tex, uv);\n"
+    "    color.rgb = pow(color.rgb, vec3(4.0));\n"
+    "    gl_FragColor.rgb = pow(vec3(color.r + 0.196 * color.g,\n"
+    "                                0.039 * color.r + 0.901 * color.g + 0.117 * color.b,\n"
+    "                                0.196 * color.r + 0.039 * color.g + 0.862 * color.b), vec3(1.0/2.2));"
+    "    gl_FragColor.a = 1.0;\n"
     "}"
   };
 
