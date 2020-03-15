@@ -16,6 +16,9 @@ set(SOURCES
   emulator/cartridge/gpio/rtc.cpp
   emulator/cartridge/game_db.cpp
 
+  # Config
+  emulator/config/config_toml.cpp
+
   # Core
   emulator/core/arm/tablegen/tablegen.cpp
   emulator/core/hw/apu/channel/channel_noise.cpp
@@ -65,6 +68,7 @@ set(HEADERS
 
   # Config
   emulator/config/config.hpp
+  emulator/config/config_toml.hpp
 
   # Core
   emulator/core/arm/handlers/arithmetic.inl

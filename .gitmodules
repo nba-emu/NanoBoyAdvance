@@ -1,3 +1,6 @@
 [submodule "source/third_party/fmtlib"]
 	path = source/third_party/fmtlib
 	url = https://github.com/fmtlib/fmt.git
+[submodule "source/third_party/toml11"]
+	path = source/third_party/toml11
+	url = https://github.com/ToruNiina/toml11

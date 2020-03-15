@@ -31,6 +31,8 @@ struct Config {
     EEPROM_64
   } backup_type = BackupType::Detect;
   
+  bool force_rtc = false;
+
   struct Video {
   } video;
   
