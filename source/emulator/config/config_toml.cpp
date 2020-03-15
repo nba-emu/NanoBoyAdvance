@@ -9,6 +9,7 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #endif
 
+#include <common/log.hpp>
 #include <experimental/filesystem>
 #include <fstream>
 #include <map>
