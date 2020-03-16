@@ -10,8 +10,8 @@ The goal is to create a modern, accurate Game Boy Advance emulator while also be
 and avoiding to sacrifice too much code quality.
 
 The emulator implements the core hardware completely and with high accuracy.
-Almost all games can be emulated without any known issues, even the 'Classic NES' titles which abuse
-a variety of edge-cases and undefined behaviour.
+Almost all games can be emulated without any known issues, even the 'Classic NES' titles which abuse a
+variety of edge-cases and undefined behaviour.
 
 ## Media
 
@@ -19,8 +19,9 @@ a variety of edge-cases and undefined behaviour.
 
 ## Compiling
 
-NanoboyAdvance can be compiled on Windows and Linux (Mac OS X and FreeBSD should work too, but are not tested).
+NanoboyAdvance can be compiled on Windows and Linux (Mac OS X and FreeBSD should work, but are not tested).
 A modern C++17-capable compiler such as Clang/Clang-CL or G++ is mandatory.
+MSVC is not supported and most definitely doesn't work in the default configuration (stack overflow while parsing heavily-templated code).
 
 There are a few dependencies that you need to get:
 - CMake
@@ -64,7 +65,8 @@ If you get an error regarding to `libc++fs` not being found, try commenting out 
 
 In order to run NanoboyAdvance you will need a BIOS file.
 You can either dump your own or get an open source replacement online (https://github.com/Nebuleon/ReGBA/blob/master/bios/gba_bios.bin).
-The BIOS file must be placed as `bios.bin` in the same folder as the executable.
+The BIOS file must be placed as `bios.bin` in the same folder as the executable. However keep in mind, that a replacement BIOS
+will not be as accurate as the original one.
 
 ## Known issues
 - Hello Kitty Collection: Miracle Fashion Maker does not go in-game.
