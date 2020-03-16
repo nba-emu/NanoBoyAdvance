@@ -53,9 +53,9 @@ The compiled executables then can be found in `build/source/platform/`.
 
 You probably need to lookup the documentation of the environment you are going use.
 Make sure to point CMake to the aforementioned libraries and your compiler of choice.
-I've had success building the compiler with LLVM Clang on Windows.
+I've had success building the emulator with LLVM Clang on Windows.
 With `clang-cl.exe` you can also build and debug the code from Visual Studio, if you want to.
-For Clang on Windows you should get the libraries built for MSVC (since Clang on Windows aims to be ABI-compatible with MSVC)
+For LLVM Clang on Windows you should get MSVC versions of the libraries since LLVM Clang aims to be ABI-compatible with MSVC on Windows.
 
 #### Miscellaneous
 
