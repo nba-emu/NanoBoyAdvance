@@ -5,13 +5,13 @@
 ![license](https://img.shields.io/github/license/fleroviux/NanoboyAdvance)
 [![CodeFactor](https://www.codefactor.io/repository/github/fleroviux/NanoboyAdvance/badge)](https://www.codefactor.io/repository/github/fleroviux/NanoboyAdvance)
 
-NanoboyAdvance is a Nintendo GameBoy Advance (TM) emulator written in C++17.<br>
-The goal is to create a modern, accurate GameBoy Advance emulator while also being fast
+NanoboyAdvance is a Nintendo Game Boy Advance (TM) emulator written in C++17.<br>
+The goal is to create a modern, accurate Game Boy Advance emulator while also being reasonably fast
 and avoiding to sacrifice too much code quality.
 
 The emulator implements the core hardware completely and with high accuracy.
-Any game that I tested so far goes in-game in NanoboyAdvance, almost all of them without known issues.
-The games from the `Classic NES` series, which are troublesome to emulate and abuse a variety of edge-cases and undefined behaviour, are emulated properly. 
+Almost all games can be emulated without any known issues, even the 'Classic NES' titles which abuse
+a variety of edge-cases and undefined behaviour.
 
 ## Media
 
@@ -19,37 +19,46 @@ The games from the `Classic NES` series, which are troublesome to emulate and ab
 
 ## Compiling
 
-NanoboyAdvance works and can be compiled on Windows, Linux and Mac OS X.
-A C++17 capable C++ compiler is required. G++7 / Clang++6 or newer are recommended.
-Other compilers may work, but are untested.
+NanoboyAdvance can be compiled on Windows and Linux (Mac OS X and FreeBSD should work too, but are not tested).
+A modern C++17-capable compiler such as Clang/Clang-CL or G++ is mandatory.
 
-In order to compile NanoboyAdvance you will need a few dependencies:
+There are a few dependencies that you need to get:
 - CMake
-- SDL2 development files (libsdl2-dev on a Debian-based system)
+- SDL2 development library
+- Qt5 (only if you build the Qt frontend)
 
-### Setup
+### Clone Git repository
 
-Download or clone the repository to a folder of your choice.
-Then open a command prompt, create a build folder, run `cmake` and `make` to build the emulator.
-```bash
-cd /your/path/NanoboyAdvance
+Make sure to clone the repository with its submodules:
+```
+git clone --recurse-submodules https://github.com/fleroviux/NanoboyAdvance.git
+```
+
+### Setup CMake build environment
+
+Setup the CMake build in a folder of your choice.
+
+#### Linux
+```
+cd /somewhere/on/your/system/NanoboyAdvance
 mkdir build
 cd build
 cmake ..
-make
 ```
+A final `make` then compiles the emulator.
+The compiled executables then can be found in `build/source/platform/`.
 
-If you get an error regarding to `libc++fs` not being found, try commenting out `target_link_libraries(gba stdc++fs)` in `source/gba/CMakeLists.txt`.
+#### Windows
 
-The compiled executable can be found at `build/source/platform/sdl/`.
+You probably need to lookup the documentation of the environment you are going use.
+Make sure to point CMake to the aforementioned libraries and your compiler of choice.
+I've had success building the compiler with LLVM Clang on Windows.
+With `clang-cl.exe` you can also build and debug the code from Visual Studio, if you want to.
+For Clang on Windows you should get the libraries built for MSVC (since Clang on Windows aims to be ABI-compatible with MSVC)
 
-### Rebuilding
+#### Miscellaneous
 
-When rebuilding you can just re-run make from the command prompt.
-```bash
-cd /your/path/NanoboyAdvance/build
-make
-```
+If you get an error regarding to `libc++fs` not being found, try commenting out `target_link_libraries(nba stdc++fs)` in `source/CMakeLists.txt`.
 
 ## Running
 
@@ -57,15 +66,10 @@ In order to run NanoboyAdvance you will need a BIOS file.
 You can either dump your own or get an open source replacement online (https://github.com/Nebuleon/ReGBA/blob/master/bios/gba_bios.bin).
 The BIOS file must be placed as `bios.bin` in the same folder as the executable.
 
-You can then run the emulator:
-```bash
-./NanoboyAdvance-SDL path_to_your_rom.gba
-```
-
-## Limitations
-- currently there is no configuration system.
-- no link-cable.
-- some of the code is not endian-safe.
+## Known issues
+- Hello Kitty Collection: Miracle Fashion Maker does not go in-game.
+- James Pond - Codename Robocod does not go in-game
+- Mario & Luigi Superstar Saga: bad audio on the noise channel, inaccuracy in the envelope generator?
 
 ## Acknowledgement
 
