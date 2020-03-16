@@ -1,0 +1,13 @@
+[general]
+bios_path = "bios.bin"
+bios_skip = false
+
+[cartridge]
+# Possible values: detect, sram, flash64, flash128, eeprom512, eeprom8192
+save_type = "detect"
+# Force-enable RTC emulation, otherwise rely on game database.
+force_rtc = true
+
+[audio]
+# Possible values: cosine, cubic, sinc64, sinc128, sinc256
+resampler = "cosine"

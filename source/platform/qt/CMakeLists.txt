@@ -39,3 +39,5 @@ endif()
 
 add_executable(NanoboyAdvance ${SOURCES} ${HEADERS} ${RESOURCES})
 target_link_libraries(NanoboyAdvance nba ${QT_DEPS} ${OPENGL_gl_LIBRARY} ${SDL2_LIBRARY})
+
+file(COPY "${PROJECT_SOURCE_DIR}/config.toml" DESTINATION "${PROJECT_BINARY_DIR}/source/platform/qt/")
