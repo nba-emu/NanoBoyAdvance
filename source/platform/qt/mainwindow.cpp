@@ -5,12 +5,6 @@
  * Refer to the included LICENSE file.
  */
 
-// TEST
-#include <emulator/emulator.hpp>
-#include <thread>
-#include <QDebug>
-#include <common/framelimiter.hpp>
-
 #include <platform/sdl/device/audio_device.hpp>
 #include <QApplication>
 #include <QMenuBar>
@@ -256,8 +250,6 @@ void MainWindow::FileOpen() {
 
   emulator_thread = std::thread([this] {
     emulator_thread_running = true;
-
-    framelimiter.Reset(); // foo
 
     while (emulator_state == EmulationState::Running) {
       framelimiter.Run([&] {
