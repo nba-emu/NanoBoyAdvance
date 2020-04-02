@@ -13,6 +13,7 @@
 #include <emulator/emulator.hpp>
 #include <memory>
 #include <QMainWindow>
+#include <QActionGroup>
 #include <utility>
 #include <vector>
 
