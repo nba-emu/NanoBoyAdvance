@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <common/framelimiter.hpp>
 #include <common/log.hpp>
+#include <emulator/config/config_toml.hpp>
 #include <emulator/emulator.hpp>
 #include <fmt/format.h>
 
@@ -49,6 +50,7 @@ int main(int argc, char** argv) {
   config->audio_dev = std::make_shared<SDL2_AudioDevice>();
   config->input_dev = std::make_shared<SDL2_InputDevice>();
   config->video_dev = std::make_shared<SDL2_VideoDevice>(window);
+  config_toml_read(*config, "config.toml");
   
   auto emulator = std::make_unique<nba::Emulator>(config);
   auto status = emulator->LoadGame(rom_path);
