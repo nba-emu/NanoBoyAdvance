@@ -115,7 +115,6 @@ void DMA::Request(Occasion occasion) {
         if (channel.enable &&
             channel.time == Channel::SPECIAL &&
             channel.dst_addr == address) {
-          channel.fifo_request_count++;
           TryStart(chan_id);
         }
       }
@@ -130,6 +129,8 @@ void DMA::Run() {
   auto access = Access::Nonsequential;
   
   if (channel.is_fifo_dma) {
+    runnable.set(current, false);
+
     /* TODO: figure out how the FIFO DMA works in detail. */
     for (int i = 0; i < 4; i++) {
       if (channel.allow_read) {
@@ -138,10 +139,6 @@ void DMA::Run() {
       memory->WriteWord(channel.latch.dst_addr, latch, access);
       access = channel.second_access;
       channel.latch.src_addr += 4;
-    }
-
-    if (--channel.fifo_request_count == 0) {
-      runnable.set(current, false);
     }
   } else {
     auto src_modify = g_dma_modify[channel.size][channel.src_cntl];
@@ -388,8 +385,6 @@ void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
       if (channel.time == Channel::IMMEDIATE) {
         TryStart(chan_id);
       }
-      
-      channel.fifo_request_count = 0;
     }
   } else {
     /* DMA is not enabled, thus not eligable for HBLANK/VBLANK/VIDEO requests. */

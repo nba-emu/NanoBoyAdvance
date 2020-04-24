@@ -135,7 +135,6 @@ private:
     Access second_access;
     
     bool is_fifo_dma;
-    int fifo_request_count;
     
     struct {
       std::uint32_t length;
