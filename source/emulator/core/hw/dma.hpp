@@ -118,6 +118,8 @@ private:
       WORD  = 1
     };
 
+    int id;
+
     bool enable;
     bool repeat;
     bool interrupt;

@@ -52,7 +52,9 @@ void DMA::Reset() {
   current = -1;
   interleaved = false;
   
-  for (auto& channel : channels) {
+  for (int id = 0; id < 4; id++) {
+    auto& channel = channels[id];
+    channel.id = id;
     channel.enable = false;
     channel.repeat = false;
     channel.interrupt = false;
@@ -129,7 +131,7 @@ void DMA::Run() {
   auto access = Access::Nonsequential;
   
   if (channel.is_fifo_dma) {
-    runnable.set(current, false);
+    runnable.set(channel.id, false);
 
     /* TODO: figure out how the FIFO DMA works in detail. */
     for (int i = 0; i < 4; i++) {
@@ -202,14 +204,14 @@ void DMA::Run() {
     /* If this code is reached, the DMA was not interleaved and completed. */
     if (channel.repeat) {
       /* Latch length */
-      channel.latch.length = channel.length & g_dma_len_mask[current];
+      channel.latch.length = channel.length & g_dma_len_mask[channel.id];
       if (channel.latch.length == 0) {
-        channel.latch.length = g_dma_len_mask[current] + 1;
+        channel.latch.length = g_dma_len_mask[channel.id] + 1;
       }
       
       /* Latch destination address */
       if (channel.dst_cntl == Channel::RELOAD) {
-        if (CheckDestinationAddress(current, channel.dst_addr >> 24)) {
+        if (CheckDestinationAddress(channel.id, channel.dst_addr >> 24)) {
           channel.latch.dst_addr = channel.dst_addr;
           /* Ensure that all writes are aligned. */
           if (channel.size == Channel::WORD) {
@@ -225,21 +227,21 @@ void DMA::Run() {
       
       /* Non-immediate DMAs must be retriggered before they run again. */
       if (channel.time != Channel::IMMEDIATE) {
-        runnable.set(current, false);
+        runnable.set(channel.id, false);
       }
     } else {
       channel.enable = false;
       
       /* DMA is not enabled, thus not eligable for HBLANK/VBLANK/VIDEO requests. */
-      runnable.set(current, false);
-      hblank_set.set(current, false);
-      vblank_set.set(current, false);
-      video_set.set(current, false);
+      runnable.set(channel.id, false);
+      hblank_set.set(channel.id, false);
+      vblank_set.set(channel.id, false);
+      video_set.set(channel.id, false);
     }
   }
   
   if (channel.interrupt) {
-    irq_controller->Raise(InterruptSource::DMA, current);
+    irq_controller->Raise(InterruptSource::DMA, channel.id);
   }
   
   /* Select the next DMA to execute */
