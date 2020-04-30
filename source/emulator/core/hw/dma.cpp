@@ -225,10 +225,7 @@ void DMA::Run() {
         }
       }
       
-      /* Non-immediate DMAs must be retriggered before they run again. */
-      if (channel.time != Channel::IMMEDIATE) {
-        runnable.set(channel.id, false);
-      }
+      runnable.set(channel.id, false);
     } else {
       channel.enable = false;
       
