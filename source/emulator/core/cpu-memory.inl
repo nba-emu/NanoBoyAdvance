@@ -160,7 +160,7 @@ inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t
       return Read<std::uint16_t>(memory.wram, address & 0x3FFFF);
     }
     case REGION_IWRAM: {
-      return Read<std::uint16_t>(memory.iram, address & 0x7FFF );
+      return Read<std::uint16_t>(memory.iram, address & 0x7FFF);
     }
     case REGION_MMIO: {
       return  ReadMMIO(address + 0) |
@@ -333,7 +333,7 @@ inline void CPU::WriteByte(std::uint32_t address, std::uint8_t value, Access acc
       if (address >= 0x18000) {
         address &= ~0x8000;
       }
-      if (address >= 0x10000) {
+      if (address >= (ppu.mmio.dispcnt.mode >= 3 ? 0x14000 : 0x10000)) {
         break;
       }
       Write<std::uint16_t>(ppu.vram, address, value * 0x0101);
