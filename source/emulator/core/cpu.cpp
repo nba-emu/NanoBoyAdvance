@@ -190,7 +190,7 @@ void CPU::RunFor(int cycles) {
        * If DMA is requested the CPU will be blocked.
        */
       if (dma.IsRunning()) {
-        dma.Run();
+        dma.Run(ppu.mmio.vcount);
       } else if (mmio.haltcnt == HaltControl::RUN) {
         if (irq_controller.MasterEnable() && has_servable_irq) {
           SignalIRQ();

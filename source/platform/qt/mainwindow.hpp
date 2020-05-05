@@ -14,6 +14,7 @@
 #include <memory>
 #include <QMainWindow>
 #include <QActionGroup>
+#include <QMenu>
 #include <utility>
 #include <vector>
 

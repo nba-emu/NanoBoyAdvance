@@ -125,7 +125,7 @@ void DMA::Request(Occasion occasion) {
   }
 }
 
-void DMA::Run() {
+void DMA::Run(uint8_t vcount) {
   auto& channel = channels[current];
   
   auto access = Access::Nonsequential;
@@ -202,7 +202,7 @@ void DMA::Run() {
     }
     
     /* If this code is reached, the DMA was not interleaved and completed. */
-    if (channel.repeat) {
+    if (channel.repeat && !(channel.id == 3 && channel.time == Channel::SPECIAL && vcount >= 161)) {
       /* Latch length */
       channel.latch.length = channel.length & g_dma_len_mask[channel.id];
       if (channel.latch.length == 0) {

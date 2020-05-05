@@ -37,7 +37,7 @@ public:
   
   void Reset();
   void Request(Occasion occasion);
-  void Run();
+  void Run(uint8_t vcount);
   auto Read (int chan_id, int offset) -> std::uint8_t;
   void Write(int chan_id, int offset, std::uint8_t value);
   bool IsRunning() { return runnable.any(); }
