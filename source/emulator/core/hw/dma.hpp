@@ -37,6 +37,7 @@ public:
   
   void Reset();
   void Request(Occasion occasion);
+  void StopVideoXferDMA();
   void Run();
   auto Read (int chan_id, int offset) -> std::uint8_t;
   void Write(int chan_id, int offset, std::uint8_t value);

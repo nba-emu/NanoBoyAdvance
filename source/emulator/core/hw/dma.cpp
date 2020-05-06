@@ -125,6 +125,17 @@ void DMA::Request(Occasion occasion) {
   }
 }
 
+void DMA::StopVideoXferDMA() {
+  auto& channel = channels[3];
+
+  if (channel.enable && channel.time == Channel::Timing::SPECIAL) {
+    channel.enable = false;
+    runnable.set(3, false);
+    video_set.set(3, false);
+    current = g_dma_from_bitset[runnable.to_ulong()];
+  }
+}
+
 void DMA::Run() {
   auto& channel = channels[current];
   

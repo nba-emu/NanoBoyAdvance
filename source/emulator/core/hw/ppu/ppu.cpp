@@ -190,6 +190,8 @@ void PPU::OnVblankScanlineComplete() {
   
   if (mmio.vcount < 162) {
     dma->Request(DMA::Occasion::Video);
+  } else if (mmio.vcount == 162) {
+    dma->StopVideoXferDMA();
   }
   
   if (dispstat.hblank_irq_enable) {
