@@ -10,8 +10,8 @@ include(FindSDL2 REQUIRED)
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIR})
 
-add_executable(NanoboyAdvance-SDL ${SOURCES} ${HEADERS})
-target_link_libraries(NanoboyAdvance-SDL nba ${SDL2_LIBRARY})
+add_executable(NanoboyAdvance ${SOURCES} ${HEADERS})
+target_link_libraries(NanoboyAdvance nba ${SDL2_LIBRARY})
 
 file(COPY "${PROJECT_SOURCE_DIR}/config.toml" DESTINATION "${PROJECT_BINARY_DIR}/source/platform/sdl/")
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/keymap.toml" DESTINATION "${PROJECT_BINARY_DIR}/source/platform/sdl/")

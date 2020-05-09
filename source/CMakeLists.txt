@@ -1,6 +1,5 @@
 include_directories(.)
 
-option(PLATFORM_QT "Enable Qt5 frontend" ON)
 option(PLATFORM_SDL "Enable SDL2 frontend" ON)
 
 add_subdirectory(third_party)
@@ -114,11 +113,6 @@ target_link_libraries(nba fmt)
 # What do we do about it?
 if (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
     target_link_libraries(nba stdc++fs)
-endif()
-
-
-if (PLATFORM_QT)
-  add_subdirectory("platform/qt")
 endif()
 
 if (PLATFORM_SDL)
