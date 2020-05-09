@@ -75,6 +75,16 @@ void config_toml_read(Config& config, std::string const& path) {
     }
   }
 
+  if (data.contains("video")) {
+    auto video_result = toml::expect<toml::value>(data.at("video"));
+
+    if (video_result.is_ok()) {
+      auto video = video_result.unwrap();
+      config.video.fullscreen = toml::find_or<toml::boolean>(video, "fullscreen", false);
+      config.video.scale = toml::find_or<int>(video, "scale", 2);
+    }
+  }
+
   if (data.contains("audio")) {
     auto audio_result = toml::expect<toml::value>(data.at("audio"));
 
@@ -130,6 +140,10 @@ void config_toml_write(Config& config, std::string const& path) {
   }
   data["cartridge"]["save_type"] = save_type;
   data["cartridge"]["force_rtc"] = config.force_rtc;
+
+  // Video
+  data["video"]["fullscreen"] = config.video.fullscreen;
+  data["video"]["scale"] = config.video.scale;
 
   // Audio
   std::string resampler;

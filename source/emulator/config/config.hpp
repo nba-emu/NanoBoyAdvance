@@ -34,6 +34,8 @@ struct Config {
   bool force_rtc = false;
 
   struct Video {
+    bool fullscreen = false;
+    int scale = 2;
   } video;
   
   struct Audio {

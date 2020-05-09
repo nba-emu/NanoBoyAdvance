@@ -8,6 +8,10 @@ save_type = "detect"
 # Force-enable RTC emulation, otherwise rely on game database.
 force_rtc = true
 
+[video]
+fullscreen = false
+scale = 2
+
 [audio]
 # Possible values: cosine, cubic, sinc64, sinc128, sinc256
 resampler = "cosine"

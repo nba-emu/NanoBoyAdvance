@@ -39,8 +39,6 @@ static auto g_config = std::make_shared<nba::Config>();
 static auto g_emulator = std::make_unique<nba::Emulator>(g_config);
 static auto g_emulator_lock = std::mutex{};
 
-static auto g_fullscreen = false;
-
 void parse_arguments(int argc, char** argv);
 void usage(char* app_name);
 void load_game(std::string const& rom_path);
@@ -107,6 +105,10 @@ void load_keymap() {
   }
 }
 
+void update_fullscreen() {
+  SDL_SetWindowFullscreen(g_window, g_config->video.fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+}
+
 void init(int argc, char** argv) {
   config_toml_read(*g_config, "config.toml");
   parse_arguments(argc, argv);
@@ -115,12 +117,13 @@ void init(int argc, char** argv) {
   g_window = SDL_CreateWindow("NanoboyAdvance",
     SDL_WINDOWPOS_CENTERED,
     SDL_WINDOWPOS_CENTERED,
-    480,
-    320,
+    kNativeWidth * g_config->video.scale,
+    kNativeHeight * g_config->video.scale,
     0);
   g_renderer = SDL_CreateRenderer(g_window, -1, SDL_RENDERER_ACCELERATED /*| SDL_RENDERER_PRESENTVSYNC*/);
   g_texture  = SDL_CreateTexture(g_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, kNativeWidth, kNativeHeight);
   SDL_RenderSetLogicalSize(g_renderer, kNativeWidth, kNativeHeight);
+  update_fullscreen();
   auto audio_device = std::make_shared<SDL2_AudioDevice>();
   audio_device->SetPassthrough((SDL_AudioCallback)audio_passthrough);
   g_config->audio_dev = audio_device;
@@ -146,6 +149,16 @@ void parse_arguments(int argc, char** argv) {
         usage(argv[0]);
       }
       g_config->bios_path = std::string{argv[i++]};
+    } else if (key == "--fullscreen") {
+      g_config->video.fullscreen = true;
+    } else if (key == "--scale") {
+      if (i == limit) {
+        usage(argv[0]);
+      }
+      g_config->video.scale = std::atoi(argv[i++]);
+      if (g_config->video.scale == 0) {
+        usage(argv[0]);
+      }
     } else {
       usage(argv[0]);
     }
@@ -157,7 +170,7 @@ void parse_arguments(int argc, char** argv) {
 }
 
 void usage(char* app_name) {
-  fmt::print("Usage: {0} [--bios bios_path] rom_path\n", app_name);
+  fmt::print("Usage: {0} [--bios bios_path] [--fullscreen] [--scale factor] rom_path\n", app_name);
   std::exit(-1);
 }
 
@@ -200,8 +213,8 @@ void update_key(SDL_KeyboardEvent* event) {
   }
 
   if (key == keymap.fullscreen && !pressed) {
-    g_fullscreen = !g_fullscreen;
-    SDL_SetWindowFullscreen(g_window, g_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+    g_config->video.fullscreen = !g_config->video.fullscreen;
+    update_fullscreen();
   }
 
   auto match = keymap.gba.find(key);
