@@ -34,6 +34,7 @@ static auto input_device = std::make_shared<nba::BasicInputDevice>();
 static SDL_Renderer* g_renderer;
 static SDL_Texture* g_texture;
 static std::uint32_t g_framebuffer[kNativeWidth * kNativeHeight];
+static auto g_frame_counter = 0;
 
 static auto g_config = std::make_shared<nba::Config>();
 static auto g_emulator = std::make_unique<nba::Emulator>(g_config);
@@ -49,6 +50,7 @@ struct KeyMap {
 struct SDL2_VideoDevice : public nba::VideoDevice {
   void Draw(std::uint32_t* buffer) final {
     std::memcpy(g_framebuffer, buffer, sizeof(std::uint32_t) * kNativeWidth * kNativeHeight);
+    g_frame_counter++;
   }
 };
 
@@ -232,6 +234,8 @@ void init(int argc, char** argv) {
 void loop() {
   auto event = SDL_Event{};
 
+  auto ticks_start = SDL_GetTicks();
+
   for (;;) {
     if (!g_sync_to_audio) {
       g_emulator_lock.lock();
@@ -243,6 +247,13 @@ void loop() {
       SDL_RenderClear(g_renderer);
       SDL_RenderCopy(g_renderer, g_texture, nullptr, nullptr);
       SDL_RenderPresent(g_renderer);
+    }
+    auto ticks_end = SDL_GetTicks();
+    if ((ticks_end - ticks_start) >= 1000) {
+      auto title = fmt::format("NanoboyAdvance [{0} fps | {1}%]", g_frame_counter, int(g_frame_counter / 60.0 * 100.0));
+      SDL_SetWindowTitle(g_window, title.c_str());
+      g_frame_counter = 0;
+      ticks_start = ticks_end;
     }
     while (SDL_PollEvent(&event)) {
       if (event.type == SDL_QUIT)
