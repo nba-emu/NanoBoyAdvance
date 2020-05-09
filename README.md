@@ -6,8 +6,7 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/fleroviux/NanoboyAdvance/badge)](https://www.codefactor.io/repository/github/fleroviux/NanoboyAdvance)
 
 NanoboyAdvance is a Nintendo Game Boy Advance (TM) emulator written in C++17.<br>
-The goal is to create a modern, accurate Game Boy Advance emulator while also being reasonably fast
-and avoiding to sacrifice too much code quality.
+The goal is to create a minimal, accurate and reasonably efficient Game Boy Advance emulator in modern C++.
 
 The emulator implements the core hardware completely and with high accuracy.
 Almost all games can be emulated without any known issues, even the 'Classic NES' titles which abuse a
@@ -21,12 +20,11 @@ variety of edge-cases and undefined behaviour.
 
 NanoboyAdvance can be compiled on Windows and Linux (Mac OS X and FreeBSD should work, but are not tested).
 A modern C++17-capable compiler such as Clang/Clang-CL or G++ is mandatory.
-MSVC is not supported and most definitely doesn't work in the default configuration (stack overflow while parsing heavily-templated code).
+MSVC is not supported and most definitely doesn't work in the default configuration (stack overflow while parsing templated code).
 
 There are a few dependencies that you need to get:
 - CMake
 - SDL2 development library
-- Qt5 (only if you build the Qt frontend)
 
 ### Clone Git repository
 
