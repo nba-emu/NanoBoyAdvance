@@ -65,7 +65,7 @@ inline auto to_string(BackupType value) -> std::string {
     case BackupType::FLASH_64: return "FLASH_64";
     case BackupType::FLASH_128: return "FLASH_128";
     case BackupType::EEPROM_4: return "EEPROM_4";
-    case BackupType::EEPROM_64: return "EEPROM_64";
+    default: return "EEPROM_64";
   }
 }
 
