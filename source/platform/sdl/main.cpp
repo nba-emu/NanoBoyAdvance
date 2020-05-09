@@ -39,12 +39,16 @@ static auto g_config = std::make_shared<nba::Config>();
 static auto g_emulator = std::make_unique<nba::Emulator>(g_config);
 static auto g_emulator_lock = std::mutex{};
 
+static auto g_fullscreen = false;
+
 void parse_arguments(int argc, char** argv);
 void usage(char* app_name);
 void load_game(std::string const& rom_path);
 
 struct KeyMap {
   SDL_Keycode fastforward = SDLK_SPACE;
+  SDL_Keycode reset = SDLK_F9;
+  SDL_Keycode fullscreen = SDLK_F10;
   std::unordered_map<SDL_Keycode, nba::InputDevice::Key> gba;
 } keymap;
 
@@ -79,6 +83,8 @@ void load_keymap() {
     if (general_result.is_ok()) {
       auto general = general_result.unwrap();
       keymap.fastforward = SDL_GetKeyFromName(toml::find_or<std::string>(general, "fastforward", "Space").c_str());
+      keymap.reset = SDL_GetKeyFromName(toml::find_or<std::string>(general, "reset", "F9").c_str());
+      keymap.fullscreen = SDL_GetKeyFromName(toml::find_or<std::string>(general, "fullscreen", "F10").c_str());
     }
   }
 
@@ -187,10 +193,20 @@ void update_key(SDL_KeyboardEvent* event) {
     }
   }
 
-  for (auto& entry : keymap.gba) {
-    if (entry.first == key) {
-      input_device->SetKeyStatus(entry.second, pressed);
-    }
+  if (key == keymap.reset && !pressed) {
+    g_emulator_lock.lock();
+    g_emulator->Reset();
+    g_emulator_lock.unlock();
+  }
+
+  if (key == keymap.fullscreen && !pressed) {
+    g_fullscreen = !g_fullscreen;
+    SDL_SetWindowFullscreen(g_window, g_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+  }
+
+  auto match = keymap.gba.find(key);
+  if (match != keymap.gba.end()) {
+    input_device->SetKeyStatus(match->second, pressed);
   }
 }
 
