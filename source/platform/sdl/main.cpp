@@ -31,7 +31,11 @@ static SDL_Window* g_window;
 static std::atomic_bool g_sync_to_audio = true;
 static int g_cycles_per_audio_frame = 0;
 
-static auto input_device = std::make_shared<nba::BasicInputDevice>();
+static auto g_keyboard_input_device = nba::BasicInputDevice{};
+static auto g_controller_input_device = nba::BasicInputDevice{};
+static SDL_GameController* g_game_controller = nullptr;
+static auto g_game_controller_button_x_old = false;
+static auto g_fastforward = false;
 
 static SDL_Renderer* g_renderer;
 static SDL_Texture* g_texture;
@@ -49,6 +53,12 @@ struct KeyMap {
   std::unordered_map<SDL_Keycode, nba::InputDevice::Key> gba;
 } keymap;
 
+struct CombinedInputDevice : public nba::InputDevice {
+  auto Poll(Key key) -> bool final {
+    return g_keyboard_input_device.Poll(key) || g_controller_input_device.Poll(key);
+  }
+};
+
 struct SDL2_VideoDevice : public nba::VideoDevice {
   void Draw(std::uint32_t* buffer) final {
     std::memcpy(g_framebuffer, buffer, sizeof(std::uint32_t) * kNativeWidth * kNativeHeight);
@@ -59,6 +69,7 @@ struct SDL2_VideoDevice : public nba::VideoDevice {
 void load_game(std::string const& rom_path);
 void update_fullscreen();
 void update_key(SDL_KeyboardEvent* event);
+void update_controller();
 void audio_passthrough(SDL2_AudioDevice* audio_device, std::int16_t* stream, int byte_len);
 
 void usage(char* app_name) {
@@ -212,7 +223,7 @@ void init(int argc, char** argv) {
   config_toml_read(*g_config, "config.toml");
   parse_arguments(argc, argv);
   load_keymap();
-  SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+  SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER);
   g_window = SDL_CreateWindow("NanoboyAdvance",
     SDL_WINDOWPOS_CENTERED,
     SDL_WINDOWPOS_CENTERED,
@@ -225,10 +236,19 @@ void init(int argc, char** argv) {
   SDL_GL_SetSwapInterval(1);
   g_sync_to_audio = g_config->sync_to_audio;
   update_fullscreen();
+  for (int i = 0; i < SDL_NumJoysticks(); i++) {
+    if (SDL_IsGameController(i)) {
+      g_game_controller = SDL_GameControllerOpen(i);
+      if (g_game_controller != nullptr) {
+        LOG_INFO("Detected game controller '{0}'", SDL_GameControllerNameForIndex(i));
+        break;
+      }
+    }
+  }
   auto audio_device = std::make_shared<SDL2_AudioDevice>();
   audio_device->SetPassthrough((SDL_AudioCallback)audio_passthrough);
   g_config->audio_dev = audio_device;
-  g_config->input_dev = input_device;
+  g_config->input_dev = std::make_shared<CombinedInputDevice>();
   g_config->video_dev = std::make_shared<SDL2_VideoDevice>();
   g_emulator->Reset();
   g_cycles_per_audio_frame = 16777216ULL * audio_device->GetBlockSize() / audio_device->GetSampleRate();
@@ -240,17 +260,16 @@ void loop() {
   auto ticks_start = SDL_GetTicks();
 
   for (;;) {
+    update_controller();
     if (!g_sync_to_audio) {
       g_emulator_lock.lock();
       g_emulator->Frame();
       g_emulator_lock.unlock();
     }
-    if (g_framebuffer != nullptr) {
-      SDL_UpdateTexture(g_texture, nullptr, g_framebuffer, kNativeWidth * sizeof(std::uint32_t));
-      SDL_RenderClear(g_renderer);
-      SDL_RenderCopy(g_renderer, g_texture, nullptr, nullptr);
-      SDL_RenderPresent(g_renderer);
-    }
+    SDL_UpdateTexture(g_texture, nullptr, g_framebuffer, kNativeWidth * sizeof(std::uint32_t));
+    SDL_RenderClear(g_renderer);
+    SDL_RenderCopy(g_renderer, g_texture, nullptr, nullptr);
+    SDL_RenderPresent(g_renderer);
     auto ticks_end = SDL_GetTicks();
     if ((ticks_end - ticks_start) >= 1000) {
       auto title = fmt::format("NanoboyAdvance [{0} fps | {1}%]", g_frame_counter, int(g_frame_counter / 60.0 * 100.0));
@@ -268,6 +287,9 @@ void loop() {
 }
 
 void destroy() {
+  if (g_game_controller != nullptr) {
+    SDL_GameControllerClose(g_game_controller);
+  }
   SDL_DestroyTexture(g_texture);
   SDL_DestroyRenderer(g_renderer);
   SDL_DestroyWindow(g_window);
@@ -286,17 +308,22 @@ void update_fullscreen() {
   SDL_SetWindowFullscreen(g_window, g_config->video.fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 }
 
+void update_fastforward(bool fastforward) {
+  g_fastforward = fastforward;
+  g_sync_to_audio = !fastforward && g_config->sync_to_audio;
+  if (fastforward) {
+    SDL_GL_SetSwapInterval(0);
+  } else {
+    SDL_GL_SetSwapInterval(1);
+  }
+}
+
 void update_key(SDL_KeyboardEvent* event) {
   bool pressed = event->type == SDL_KEYDOWN;
   auto key = event->keysym.sym;
   
   if (key == keymap.fastforward) {
-    g_sync_to_audio = !pressed && g_config->sync_to_audio;
-    if (pressed) {
-      SDL_GL_SetSwapInterval(0);
-    } else {
-      SDL_GL_SetSwapInterval(1);
-    }
+    update_fastforward(pressed);
   }
 
   if (key == keymap.reset && !pressed) {
@@ -312,8 +339,46 @@ void update_key(SDL_KeyboardEvent* event) {
 
   auto match = keymap.gba.find(key);
   if (match != keymap.gba.end()) {
-    input_device->SetKeyStatus(match->second, pressed);
+    g_keyboard_input_device.SetKeyStatus(match->second, pressed);
   }
+}
+
+void update_controller() {
+  if (g_game_controller == nullptr)
+    return;
+  SDL_GameControllerUpdate();
+  
+  auto button_x = SDL_GameControllerGetButton(g_game_controller, SDL_CONTROLLER_BUTTON_X);
+  if (g_game_controller_button_x_old && !button_x) {
+    update_fastforward(!g_fastforward);
+  }
+  g_game_controller_button_x_old = button_x;
+
+  static const std::unordered_map<SDL_GameControllerButton, nba::InputDevice::Key> buttons{
+    { SDL_CONTROLLER_BUTTON_A, nba::InputDevice::Key::A },
+    { SDL_CONTROLLER_BUTTON_B, nba::InputDevice::Key::B },
+    { SDL_CONTROLLER_BUTTON_LEFTSHOULDER , nba::InputDevice::Key::L },
+    { SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, nba::InputDevice::Key::R },
+    { SDL_CONTROLLER_BUTTON_START, nba::InputDevice::Key::Start },
+    { SDL_CONTROLLER_BUTTON_BACK, nba::InputDevice::Key::Select }
+  };
+
+  for (auto& button : buttons) {
+    if (SDL_GameControllerGetButton(g_game_controller, button.first)) {
+      g_controller_input_device.SetKeyStatus(button.second, true);
+    } else {
+      g_controller_input_device.SetKeyStatus(button.second, false);
+    }
+  }
+
+  constexpr auto threshold = std::numeric_limits<int16_t>::max() / 2;
+  auto x = SDL_GameControllerGetAxis(g_game_controller, SDL_CONTROLLER_AXIS_LEFTX);
+  auto y = SDL_GameControllerGetAxis(g_game_controller, SDL_CONTROLLER_AXIS_LEFTY);
+  
+  g_controller_input_device.SetKeyStatus(nba::InputDevice::Key::Left, x < -threshold);
+  g_controller_input_device.SetKeyStatus(nba::InputDevice::Key::Right, x > threshold);
+  g_controller_input_device.SetKeyStatus(nba::InputDevice::Key::Up, y < -threshold);
+  g_controller_input_device.SetKeyStatus(nba::InputDevice::Key::Down, y > threshold);
 }
 
 int main(int argc, char** argv) {
