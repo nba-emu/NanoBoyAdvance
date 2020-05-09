@@ -162,7 +162,58 @@ void parse_arguments(int argc, char** argv) {
         usage(argv[0]);
       }
     } else if (key == "--sync-to-audio") {
-      g_config->sync_to_audio = true;
+      if (i == limit) {
+        usage(argv[0]);
+      }
+      auto value = std::string{argv[i++]};
+      if (value == "yes") {
+        g_config->sync_to_audio = true;
+      } else if (value == "no") {
+        g_config->sync_to_audio = false;
+      } else {
+        usage(argv[0]);
+      }
+    } else if (key == "--force-rtc") {
+      g_config->force_rtc = true;
+    } else if (key == "--save-type") {
+      /* TODO: deduplicate this piece of code. */
+      const std::unordered_map<std::string, nba::Config::BackupType> save_types{
+        { "detect",     nba::Config::BackupType::Detect    },
+        { "sram",       nba::Config::BackupType::SRAM      },
+        { "flash64",    nba::Config::BackupType::FLASH_64  },
+        { "flash128",   nba::Config::BackupType::FLASH_128 },
+        { "eeprom512",  nba::Config::BackupType::EEPROM_4  },
+        { "eeprom8192", nba::Config::BackupType::EEPROM_64 }
+      };
+      if (i == limit) {
+        usage(argv[0]);
+      }
+      auto match = save_types.find(argv[i++]);
+      if (match != save_types.end()) {
+        g_config->backup_type = match->second;
+      } else {
+        fmt::print("Bad save type, refer to config.toml for documentation.\n\n");
+        usage(argv[0]);
+      }
+    } else if (key == "--resampler") {
+      /* TODO: deduplicate this piece of code. */
+      const std::unordered_map<std::string, nba::Config::Audio::Interpolation> resamplers{
+        { "cosine",  nba::Config::Audio::Interpolation::Cosine   },
+        { "cubic",   nba::Config::Audio::Interpolation::Cubic    },
+        { "sinc64",  nba::Config::Audio::Interpolation::Sinc_64  },
+        { "sinc128", nba::Config::Audio::Interpolation::Sinc_128 },
+        { "sinc256", nba::Config::Audio::Interpolation::Sinc_256 }
+      };
+      if (i == limit) {
+        usage(argv[0]);
+      }
+      auto match = resamplers.find(argv[i++]);
+      if (match != resamplers.end()) {
+        g_config->audio.interpolation = match->second;
+      } else {
+        fmt::print("Bad resampler type, refer to config.toml for documentation.\n\n");
+        usage(argv[0]);
+      }
     } else {
       usage(argv[0]);
     }
@@ -174,7 +225,7 @@ void parse_arguments(int argc, char** argv) {
 }
 
 void usage(char* app_name) {
-  fmt::print("Usage: {0} [--bios bios_path] [--fullscreen] [--scale factor] [--sync-to-audio] rom_path\n", app_name);
+  fmt::print("Usage: {0} [--bios bios_path] [--force-rtc] [--save-type type] [--fullscreen] [--scale factor] [--resampler type] [--sync-to-audio yes/no] rom_path\n", app_name);
   std::exit(-1);
 }
 
