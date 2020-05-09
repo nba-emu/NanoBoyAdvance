@@ -15,7 +15,9 @@
 #include <emulator/emulator.hpp>
 #include <fmt/format.h>
 #include <string>
+#include <third_party/toml11/toml.hpp>
 #include <thread>
+#include <unordered_map>
 
 #include "device/audio_device.hpp"
 
@@ -41,6 +43,11 @@ void parse_arguments(int argc, char** argv);
 void usage(char* app_name);
 void load_game(std::string const& rom_path);
 
+struct KeyMap {
+  SDL_Keycode fastforward = SDLK_SPACE;
+  std::unordered_map<SDL_Keycode, nba::InputDevice::Key> gba;
+} keymap;
+
 struct SDL2_VideoDevice : public nba::VideoDevice {
   void Draw(std::uint32_t* buffer) final {
     std::memcpy(g_framebuffer, buffer, sizeof(std::uint32_t) * kNativeWidth * kNativeHeight);
@@ -57,9 +64,47 @@ void audio_passthrough(SDL2_AudioDevice* audio_device, std::int16_t* stream, int
   audio_device->InvokeCallback(stream, byte_len);
 }
 
+void load_keymap() {
+  toml::value data;
+
+  try {
+    data = toml::parse("keymap.toml");
+  } catch (std::exception& ex) {
+    LOG_WARN("Failed to load or parse keymap configuration.");
+  }
+
+  if (data.contains("general")) {
+    auto general_result = toml::expect<toml::value>(data.at("general"));
+
+    if (general_result.is_ok()) {
+      auto general = general_result.unwrap();
+      keymap.fastforward = SDL_GetKeyFromName(toml::find_or<std::string>(general, "fastforward", "Space").c_str());
+    }
+  }
+
+  if (data.contains("gba")) {
+    auto gba_result = toml::expect<toml::value>(data.at("gba"));
+
+    if (gba_result.is_ok()) {
+      auto gba = gba_result.unwrap();
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "a", "A").c_str())] = nba::InputDevice::Key::A;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "b", "B").c_str())] = nba::InputDevice::Key::B;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "l", "D").c_str())] = nba::InputDevice::Key::L;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "r", "F").c_str())] = nba::InputDevice::Key::R;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "start", "Return").c_str())] = nba::InputDevice::Key::Start;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "select", "Backspace").c_str())] = nba::InputDevice::Key::Select;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "up", "Up").c_str())] = nba::InputDevice::Key::Up;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "down", "Down").c_str())] = nba::InputDevice::Key::Down;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "left", "Left").c_str())] = nba::InputDevice::Key::Left;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "right", "Right").c_str())] = nba::InputDevice::Key::Right;
+    }
+  }
+}
+
 void init(int argc, char** argv) {
   config_toml_read(*g_config, "config.toml");
   parse_arguments(argc, argv);
+  load_keymap();
   SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
   g_window = SDL_CreateWindow("NanoboyAdvance",
     SDL_WINDOWPOS_CENTERED,
@@ -131,46 +176,21 @@ void load_game(std::string const& rom_path) {
 
 void update_key(SDL_KeyboardEvent* event) {
   bool pressed = event->type == SDL_KEYDOWN;
+  auto key = event->keysym.sym;
+  
+  if (key == keymap.fastforward) {
+    g_sync_to_audio = !pressed;
+    if (pressed) {
+      SDL_GL_SetSwapInterval(0);
+    } else {
+      SDL_GL_SetSwapInterval(1);
+    }
+  }
 
-  switch (event->keysym.sym) {
-    case SDLK_a:
-      input_device->SetKeyStatus(nba::InputDevice::Key::A, pressed);
-      break;
-    case SDLK_s:
-      input_device->SetKeyStatus(nba::InputDevice::Key::B, pressed);
-      break;
-    case SDLK_d:
-      input_device->SetKeyStatus(nba::InputDevice::Key::L, pressed);
-      break;
-    case SDLK_f:
-      input_device->SetKeyStatus(nba::InputDevice::Key::R, pressed);
-      break;
-    case SDLK_UP:
-      input_device->SetKeyStatus(nba::InputDevice::Key::Up, pressed);
-      break;
-    case SDLK_DOWN:
-      input_device->SetKeyStatus(nba::InputDevice::Key::Down, pressed);
-      break;
-    case SDLK_LEFT:
-      input_device->SetKeyStatus(nba::InputDevice::Key::Left, pressed);
-      break;
-    case SDLK_RIGHT:
-      input_device->SetKeyStatus(nba::InputDevice::Key::Right, pressed);
-      break;
-    case SDLK_BACKSPACE:
-      input_device->SetKeyStatus(nba::InputDevice::Key::Select, pressed);
-      break;
-    case SDLK_RETURN:
-      input_device->SetKeyStatus(nba::InputDevice::Key::Start, pressed);
-      break;
-    case SDLK_SPACE:
-      g_sync_to_audio = !pressed;
-      if (pressed) {
-        SDL_GL_SetSwapInterval(0);
-      } else {
-        SDL_GL_SetSwapInterval(1);
-      }
-      break;
+  for (auto& entry : keymap.gba) {
+    if (entry.first == key) {
+      input_device->SetKeyStatus(entry.second, pressed);
+    }
   }
 }
 

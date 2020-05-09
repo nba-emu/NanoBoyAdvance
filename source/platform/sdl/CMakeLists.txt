@@ -4,8 +4,6 @@ set(SOURCES
 
 set(HEADERS
     device/audio_device.hpp
-    device/input_device.hpp
-    device/video_device.hpp
 )
 
 include(FindSDL2 REQUIRED)
@@ -16,3 +14,4 @@ add_executable(NanoboyAdvance-SDL ${SOURCES} ${HEADERS})
 target_link_libraries(NanoboyAdvance-SDL nba ${SDL2_LIBRARY})
 
 file(COPY "${PROJECT_SOURCE_DIR}/config.toml" DESTINATION "${PROJECT_BINARY_DIR}/source/platform/sdl/")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/keymap.toml" DESTINATION "${PROJECT_BINARY_DIR}/source/platform/sdl/")
