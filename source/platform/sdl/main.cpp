@@ -21,6 +21,8 @@
 
 #include "device/audio_device.hpp"
 
+#undef main
+
 static constexpr auto kNativeWidth = 240;
 static constexpr auto kNativeHeight = 160;
 
@@ -206,6 +208,7 @@ void load_keymap() {
 }
 
 void init(int argc, char** argv) {
+  common::logger::init();
   config_toml_read(*g_config, "config.toml");
   parse_arguments(argc, argv);
   load_keymap();
