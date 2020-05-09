@@ -27,6 +27,7 @@ public:
 
   void Reset();
   auto LoadGame(std::string const& path) -> StatusCode;
+  void Run(int cycles);
   void Frame();
   
 private:

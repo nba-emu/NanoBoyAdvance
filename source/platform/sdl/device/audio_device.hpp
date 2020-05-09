@@ -12,13 +12,22 @@
 
 #include "SDL.h"
 
-class SDL2_AudioDevice : public nba::AudioDevice {
-public:
+struct SDL2_AudioDevice : public nba::AudioDevice {
   auto GetSampleRate() -> int final { return have.freq; }
   auto GetBlockSize() -> int final { return have.samples; }
+  
+  auto SetPassthrough(SDL_AudioCallback passthrough) {
+    this->passthrough = passthrough;
+  }
+
+  void InvokeCallback(std::int16_t* stream, int byte_len) {
+    if (callback) {
+      callback(callback_userdata, stream, byte_len);
+    }
+  }
 
   bool Open(void* userdata, Callback callback) final {
-    SDL_AudioSpec want;
+    auto want = SDL_AudioSpec{};
 
     if (SDL_Init(SDL_INIT_AUDIO) < 0) {
       LOG_ERROR("SDL_Init(SDL_INIT_AUDIO) failed.");
@@ -27,11 +36,20 @@ public:
 
     /* TODO: read from configuration file. */
     want.freq = 48000;
-    want.samples = 1024;
+    want.samples = 2048;
     want.format = AUDIO_S16;
     want.channels = 2;
-    want.callback = (SDL_AudioCallback)callback;
-    want.userdata = userdata;
+    
+    if (passthrough != nullptr) {
+      want.callback = passthrough;
+      want.userdata = this;
+    } else {
+      want.callback = (SDL_AudioCallback)callback;
+      want.userdata = userdata;
+    }
+
+    this->callback = callback;
+    callback_userdata = userdata;
 
     device = SDL_OpenAudioDevice(NULL, 0, &want, &have, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
 
@@ -59,6 +77,9 @@ public:
   }
 
 private:
+  Callback callback;
+  void* callback_userdata;
+  SDL_AudioCallback passthrough = nullptr;
   SDL_AudioDeviceID device;
   SDL_AudioSpec have;
 };
