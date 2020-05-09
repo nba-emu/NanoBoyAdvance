@@ -120,9 +120,11 @@ void init(int argc, char** argv) {
     kNativeWidth * g_config->video.scale,
     kNativeHeight * g_config->video.scale,
     0);
-  g_renderer = SDL_CreateRenderer(g_window, -1, SDL_RENDERER_ACCELERATED /*| SDL_RENDERER_PRESENTVSYNC*/);
+  g_renderer = SDL_CreateRenderer(g_window, -1, SDL_RENDERER_ACCELERATED);
   g_texture  = SDL_CreateTexture(g_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, kNativeWidth, kNativeHeight);
   SDL_RenderSetLogicalSize(g_renderer, kNativeWidth, kNativeHeight);
+  SDL_GL_SetSwapInterval(1);
+  g_sync_to_audio = g_config->sync_to_audio;
   update_fullscreen();
   auto audio_device = std::make_shared<SDL2_AudioDevice>();
   audio_device->SetPassthrough((SDL_AudioCallback)audio_passthrough);
@@ -159,6 +161,8 @@ void parse_arguments(int argc, char** argv) {
       if (g_config->video.scale == 0) {
         usage(argv[0]);
       }
+    } else if (key == "--sync-to-audio") {
+      g_config->sync_to_audio = true;
     } else {
       usage(argv[0]);
     }
@@ -170,7 +174,7 @@ void parse_arguments(int argc, char** argv) {
 }
 
 void usage(char* app_name) {
-  fmt::print("Usage: {0} [--bios bios_path] [--fullscreen] [--scale factor] rom_path\n", app_name);
+  fmt::print("Usage: {0} [--bios bios_path] [--fullscreen] [--scale factor] [--sync-to-audio] rom_path\n", app_name);
   std::exit(-1);
 }
 
@@ -198,7 +202,7 @@ void update_key(SDL_KeyboardEvent* event) {
   auto key = event->keysym.sym;
   
   if (key == keymap.fastforward) {
-    g_sync_to_audio = !pressed;
+    g_sync_to_audio = !pressed && g_config->sync_to_audio;
     if (pressed) {
       SDL_GL_SetSwapInterval(0);
     } else {

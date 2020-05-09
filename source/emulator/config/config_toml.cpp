@@ -43,6 +43,7 @@ void config_toml_read(Config& config, std::string const& path) {
       auto general = general_result.unwrap();
       config.bios_path = toml::find_or<std::string>(general, "bios_path", "bios.bin");
       config.skip_bios = toml::find_or<toml::boolean>(general, "bios_skip", false);
+      config.sync_to_audio = toml::find_or<toml::boolean>(general, "sync_to_audio", true);
     }
   }
 
@@ -127,6 +128,7 @@ void config_toml_write(Config& config, std::string const& path) {
   // General
   data["general"]["bios_path"] = config.bios_path;
   data["general"]["bios_skip"] = config.skip_bios;
+  data["general"]["sync_to_audio"] = config.sync_to_audio;
 
   // Cartridge
   std::string save_type;

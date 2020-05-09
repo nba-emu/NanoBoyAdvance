@@ -21,6 +21,7 @@ struct Config {
   std::string bios_path = "bios.bin";
   
   bool skip_bios = false;
+  bool sync_to_audio = false;
   
   enum class BackupType {
     Detect,
