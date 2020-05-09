@@ -1,6 +1,7 @@
 [general]
 bios_path = "bios.bin"
 bios_skip = false
+sync_to_audio = true
 
 [cartridge]
 # Possible values: detect, sram, flash64, flash128, eeprom512, eeprom8192
@@ -8,6 +9,10 @@ save_type = "detect"
 # Force-enable RTC emulation, otherwise rely on game database.
 force_rtc = true
 
+[video]
+fullscreen = false
+scale = 2
+
 [audio]
-# Possible values: cosine, cubic, sinc64, sinc128, sinc256
-resampler = "cosine"
+# Possible values: cosine, cubic, sinc64
+resampler = "cubic"

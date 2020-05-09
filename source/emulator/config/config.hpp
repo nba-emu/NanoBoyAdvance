@@ -21,6 +21,7 @@ struct Config {
   std::string bios_path = "bios.bin";
   
   bool skip_bios = false;
+  bool sync_to_audio = false;
   
   enum class BackupType {
     Detect,
@@ -34,6 +35,8 @@ struct Config {
   bool force_rtc = false;
 
   struct Video {
+    bool fullscreen = false;
+    int scale = 2;
   } video;
   
   struct Audio {

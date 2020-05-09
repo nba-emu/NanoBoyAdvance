@@ -238,6 +238,10 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   return StatusCode::Ok;
 }
 
+void Emulator::Run(int cycles) {
+  cpu.RunFor(cycles);
+}
+
 void Emulator::Frame() {
   cpu.RunFor(g_cycles_per_frame);
 }

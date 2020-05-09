@@ -43,6 +43,7 @@ void config_toml_read(Config& config, std::string const& path) {
       auto general = general_result.unwrap();
       config.bios_path = toml::find_or<std::string>(general, "bios_path", "bios.bin");
       config.skip_bios = toml::find_or<toml::boolean>(general, "bios_skip", false);
+      config.sync_to_audio = toml::find_or<toml::boolean>(general, "sync_to_audio", true);
     }
   }
 
@@ -72,6 +73,16 @@ void config_toml_read(Config& config, std::string const& path) {
       }
 
       config.force_rtc = toml::find_or<toml::boolean>(cartridge, "force_rtc", false);
+    }
+  }
+
+  if (data.contains("video")) {
+    auto video_result = toml::expect<toml::value>(data.at("video"));
+
+    if (video_result.is_ok()) {
+      auto video = video_result.unwrap();
+      config.video.fullscreen = toml::find_or<toml::boolean>(video, "fullscreen", false);
+      config.video.scale = toml::find_or<int>(video, "scale", 2);
     }
   }
 
@@ -117,6 +128,7 @@ void config_toml_write(Config& config, std::string const& path) {
   // General
   data["general"]["bios_path"] = config.bios_path;
   data["general"]["bios_skip"] = config.skip_bios;
+  data["general"]["sync_to_audio"] = config.sync_to_audio;
 
   // Cartridge
   std::string save_type;
@@ -130,6 +142,10 @@ void config_toml_write(Config& config, std::string const& path) {
   }
   data["cartridge"]["save_type"] = save_type;
   data["cartridge"]["force_rtc"] = config.force_rtc;
+
+  // Video
+  data["video"]["fullscreen"] = config.video.fullscreen;
+  data["video"]["scale"] = config.video.scale;
 
   // Audio
   std::string resampler;

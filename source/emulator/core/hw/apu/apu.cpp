@@ -22,7 +22,6 @@ APU::APU(Scheduler* scheduler, DMA* dma, std::shared_ptr<Config> config)
   , psg2(scheduler)
   , psg3(scheduler)
   , psg4(scheduler, mmio.bias)
-  , buffer(new common::dsp::StereoRingBuffer<float>(4096, true))
   , scheduler(scheduler)
   , dma(dma)
   , config(config)
@@ -50,8 +49,10 @@ void APU::Reset() {
   audio_dev->Close();
   audio_dev->Open(this, (AudioDevice::Callback)AudioCallback);
 
+  buffer = std::make_unique<common::dsp::StereoRingBuffer<float>>(audio_dev->GetBlockSize() * 4, true);
+
   using Interpolation = Config::Audio::Interpolation;
-    
+
   switch (config->audio.interpolation) {
     case Interpolation::Cosine:
       resampler.reset(new CosineStereoResampler<float>(buffer));
