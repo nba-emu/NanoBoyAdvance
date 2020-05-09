@@ -39,10 +39,6 @@ static auto g_config = std::make_shared<nba::Config>();
 static auto g_emulator = std::make_unique<nba::Emulator>(g_config);
 static auto g_emulator_lock = std::mutex{};
 
-void parse_arguments(int argc, char** argv);
-void usage(char* app_name);
-void load_game(std::string const& rom_path);
-
 struct KeyMap {
   SDL_Keycode fastforward = SDLK_SPACE;
   SDL_Keycode reset = SDLK_F9;
@@ -56,89 +52,14 @@ struct SDL2_VideoDevice : public nba::VideoDevice {
   }
 };
 
-void audio_passthrough(SDL2_AudioDevice* audio_device, std::int16_t* stream, int byte_len) {
-  if (g_sync_to_audio) {
-    g_emulator_lock.lock();
-    g_emulator->Run(g_cycles_per_audio_frame);
-    g_emulator_lock.unlock();
-  }
+void load_game(std::string const& rom_path);
+void update_fullscreen();
+void update_key(SDL_KeyboardEvent* event);
+void audio_passthrough(SDL2_AudioDevice* audio_device, std::int16_t* stream, int byte_len);
 
-  audio_device->InvokeCallback(stream, byte_len);
-}
-
-void load_keymap() {
-  toml::value data;
-
-  try {
-    data = toml::parse("keymap.toml");
-  } catch (std::exception& ex) {
-    LOG_WARN("Failed to load or parse keymap configuration.");
-  }
-
-  if (data.contains("general")) {
-    auto general_result = toml::expect<toml::value>(data.at("general"));
-
-    if (general_result.is_ok()) {
-      auto general = general_result.unwrap();
-      keymap.fastforward = SDL_GetKeyFromName(toml::find_or<std::string>(general, "fastforward", "Space").c_str());
-      keymap.reset = SDL_GetKeyFromName(toml::find_or<std::string>(general, "reset", "F9").c_str());
-      keymap.fullscreen = SDL_GetKeyFromName(toml::find_or<std::string>(general, "fullscreen", "F10").c_str());
-    }
-  }
-
-  if (data.contains("gba")) {
-    auto gba_result = toml::expect<toml::value>(data.at("gba"));
-
-    if (gba_result.is_ok()) {
-      auto gba = gba_result.unwrap();
-      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "a", "A").c_str())] = nba::InputDevice::Key::A;
-      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "b", "B").c_str())] = nba::InputDevice::Key::B;
-      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "l", "D").c_str())] = nba::InputDevice::Key::L;
-      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "r", "F").c_str())] = nba::InputDevice::Key::R;
-      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "start", "Return").c_str())] = nba::InputDevice::Key::Start;
-      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "select", "Backspace").c_str())] = nba::InputDevice::Key::Select;
-      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "up", "Up").c_str())] = nba::InputDevice::Key::Up;
-      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "down", "Down").c_str())] = nba::InputDevice::Key::Down;
-      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "left", "Left").c_str())] = nba::InputDevice::Key::Left;
-      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "right", "Right").c_str())] = nba::InputDevice::Key::Right;
-    }
-  }
-}
-
-void update_fullscreen() {
-  SDL_SetWindowFullscreen(g_window, g_config->video.fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
-}
-
-void init(int argc, char** argv) {
-  config_toml_read(*g_config, "config.toml");
-  parse_arguments(argc, argv);
-  load_keymap();
-  SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
-  g_window = SDL_CreateWindow("NanoboyAdvance",
-    SDL_WINDOWPOS_CENTERED,
-    SDL_WINDOWPOS_CENTERED,
-    kNativeWidth * g_config->video.scale,
-    kNativeHeight * g_config->video.scale,
-    0);
-  g_renderer = SDL_CreateRenderer(g_window, -1, SDL_RENDERER_ACCELERATED);
-  g_texture  = SDL_CreateTexture(g_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, kNativeWidth, kNativeHeight);
-  SDL_RenderSetLogicalSize(g_renderer, kNativeWidth, kNativeHeight);
-  SDL_GL_SetSwapInterval(1);
-  g_sync_to_audio = g_config->sync_to_audio;
-  update_fullscreen();
-  auto audio_device = std::make_shared<SDL2_AudioDevice>();
-  audio_device->SetPassthrough((SDL_AudioCallback)audio_passthrough);
-  g_config->audio_dev = audio_device;
-  g_config->input_dev = input_device;
-  g_config->video_dev = std::make_shared<SDL2_VideoDevice>();
-  g_emulator->Reset();
-  g_cycles_per_audio_frame = 16777216ULL * audio_device->GetBlockSize() / audio_device->GetSampleRate();
-}
-
-void destroy() {
-  SDL_DestroyTexture(g_texture);
-  SDL_DestroyRenderer(g_renderer);
-  SDL_DestroyWindow(g_window);
+void usage(char* app_name) {
+  fmt::print("Usage: {0} [--bios bios_path] [--force-rtc] [--save-type type] [--fullscreen] [--scale factor] [--resampler type] [--sync-to-audio yes/no] rom_path\n", app_name);
+  std::exit(-1);
 }
 
 void parse_arguments(int argc, char** argv) {
@@ -224,11 +145,6 @@ void parse_arguments(int argc, char** argv) {
   load_game(argv[i]);
 }
 
-void usage(char* app_name) {
-  fmt::print("Usage: {0} [--bios bios_path] [--force-rtc] [--save-type type] [--fullscreen] [--scale factor] [--resampler type] [--sync-to-audio yes/no] rom_path\n", app_name);
-  std::exit(-1);
-}
-
 void load_game(std::string const& rom_path) {
   using StatusCode = nba::Emulator::StatusCode;
 
@@ -246,6 +162,114 @@ void load_game(std::string const& rom_path) {
     fmt::print("The provided BIOS file does not match the expected size of 16 KiB.\n");
     std::exit(-5);
   }
+}
+
+void load_keymap() {
+  toml::value data;
+
+  try {
+    data = toml::parse("keymap.toml");
+  } catch (std::exception& ex) {
+    LOG_WARN("Failed to load or parse keymap configuration.");
+  }
+
+  if (data.contains("general")) {
+    auto general_result = toml::expect<toml::value>(data.at("general"));
+
+    if (general_result.is_ok()) {
+      auto general = general_result.unwrap();
+      keymap.fastforward = SDL_GetKeyFromName(toml::find_or<std::string>(general, "fastforward", "Space").c_str());
+      keymap.reset = SDL_GetKeyFromName(toml::find_or<std::string>(general, "reset", "F9").c_str());
+      keymap.fullscreen = SDL_GetKeyFromName(toml::find_or<std::string>(general, "fullscreen", "F10").c_str());
+    }
+  }
+
+  if (data.contains("gba")) {
+    auto gba_result = toml::expect<toml::value>(data.at("gba"));
+
+    if (gba_result.is_ok()) {
+      auto gba = gba_result.unwrap();
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "a", "A").c_str())] = nba::InputDevice::Key::A;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "b", "B").c_str())] = nba::InputDevice::Key::B;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "l", "D").c_str())] = nba::InputDevice::Key::L;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "r", "F").c_str())] = nba::InputDevice::Key::R;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "start", "Return").c_str())] = nba::InputDevice::Key::Start;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "select", "Backspace").c_str())] = nba::InputDevice::Key::Select;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "up", "Up").c_str())] = nba::InputDevice::Key::Up;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "down", "Down").c_str())] = nba::InputDevice::Key::Down;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "left", "Left").c_str())] = nba::InputDevice::Key::Left;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "right", "Right").c_str())] = nba::InputDevice::Key::Right;
+    }
+  }
+}
+
+void init(int argc, char** argv) {
+  config_toml_read(*g_config, "config.toml");
+  parse_arguments(argc, argv);
+  load_keymap();
+  SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+  g_window = SDL_CreateWindow("NanoboyAdvance",
+    SDL_WINDOWPOS_CENTERED,
+    SDL_WINDOWPOS_CENTERED,
+    kNativeWidth * g_config->video.scale,
+    kNativeHeight * g_config->video.scale,
+    0);
+  g_renderer = SDL_CreateRenderer(g_window, -1, SDL_RENDERER_ACCELERATED);
+  g_texture  = SDL_CreateTexture(g_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, kNativeWidth, kNativeHeight);
+  SDL_RenderSetLogicalSize(g_renderer, kNativeWidth, kNativeHeight);
+  SDL_GL_SetSwapInterval(1);
+  g_sync_to_audio = g_config->sync_to_audio;
+  update_fullscreen();
+  auto audio_device = std::make_shared<SDL2_AudioDevice>();
+  audio_device->SetPassthrough((SDL_AudioCallback)audio_passthrough);
+  g_config->audio_dev = audio_device;
+  g_config->input_dev = input_device;
+  g_config->video_dev = std::make_shared<SDL2_VideoDevice>();
+  g_emulator->Reset();
+  g_cycles_per_audio_frame = 16777216ULL * audio_device->GetBlockSize() / audio_device->GetSampleRate();
+}
+
+void loop() {
+  auto event = SDL_Event{};
+
+  for (;;) {
+    if (!g_sync_to_audio) {
+      g_emulator_lock.lock();
+      g_emulator->Frame();
+      g_emulator_lock.unlock();
+    }
+    if (g_framebuffer != nullptr) {
+      SDL_UpdateTexture(g_texture, nullptr, g_framebuffer, kNativeWidth * sizeof(std::uint32_t));
+      SDL_RenderClear(g_renderer);
+      SDL_RenderCopy(g_renderer, g_texture, nullptr, nullptr);
+      SDL_RenderPresent(g_renderer);
+    }
+    while (SDL_PollEvent(&event)) {
+      if (event.type == SDL_QUIT)
+        return;
+      if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)
+        update_key(reinterpret_cast<SDL_KeyboardEvent*>(&event));
+    }
+  }
+}
+
+void destroy() {
+  SDL_DestroyTexture(g_texture);
+  SDL_DestroyRenderer(g_renderer);
+  SDL_DestroyWindow(g_window);
+}
+
+void audio_passthrough(SDL2_AudioDevice* audio_device, std::int16_t* stream, int byte_len) {
+  if (g_sync_to_audio) {
+    g_emulator_lock.lock();
+    g_emulator->Run(g_cycles_per_audio_frame);
+    g_emulator_lock.unlock();
+  }
+  audio_device->InvokeCallback(stream, byte_len);
+}
+
+void update_fullscreen() {
+  SDL_SetWindowFullscreen(g_window, g_config->video.fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 }
 
 void update_key(SDL_KeyboardEvent* event) {
@@ -275,30 +299,6 @@ void update_key(SDL_KeyboardEvent* event) {
   auto match = keymap.gba.find(key);
   if (match != keymap.gba.end()) {
     input_device->SetKeyStatus(match->second, pressed);
-  }
-}
-
-void loop() {
-  auto event = SDL_Event{};
-
-  for (;;) {
-    if (!g_sync_to_audio) {
-      g_emulator_lock.lock();
-      g_emulator->Frame();
-      g_emulator_lock.unlock();
-    }
-    if (g_framebuffer != nullptr) {
-      SDL_UpdateTexture(g_texture, nullptr, g_framebuffer, kNativeWidth * sizeof(std::uint32_t));
-      SDL_RenderClear(g_renderer);
-      SDL_RenderCopy(g_renderer, g_texture, nullptr, nullptr);
-      SDL_RenderPresent(g_renderer);
-    }
-    while (SDL_PollEvent(&event)) {
-      if (event.type == SDL_QUIT)
-        return;
-      if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)
-        update_key(reinterpret_cast<SDL_KeyboardEvent*>(&event));
-    }
   }
 }
 
