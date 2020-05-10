@@ -37,6 +37,10 @@ struct Config {
   struct Video {
     bool fullscreen = false;
     int scale = 2;
+    struct Shader {
+      std::string path_vs = "";
+      std::string path_fs = "";
+    } shader;
   } video;
   
   struct Audio {

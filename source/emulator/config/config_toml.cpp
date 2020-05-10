@@ -83,6 +83,8 @@ void config_toml_read(Config& config, std::string const& path) {
       auto video = video_result.unwrap();
       config.video.fullscreen = toml::find_or<toml::boolean>(video, "fullscreen", false);
       config.video.scale = toml::find_or<int>(video, "scale", 2);
+      config.video.shader.path_vs = toml::find_or<std::string>(video, "shader_vs", "");
+      config.video.shader.path_fs = toml::find_or<std::string>(video, "shader_fs", "");
     }
   }
 
@@ -146,6 +148,8 @@ void config_toml_write(Config& config, std::string const& path) {
   // Video
   data["video"]["fullscreen"] = config.video.fullscreen;
   data["video"]["scale"] = config.video.scale;
+  data["video"]["shader_vs"] = config.video.shader.path_vs;
+  data["video"]["shader_fs"] = config.video.shader.path_fs;
 
   // Audio
   std::string resampler;

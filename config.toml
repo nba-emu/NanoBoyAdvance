@@ -12,6 +12,9 @@ force_rtc = true
 [video]
 fullscreen = false
 scale = 2
+# Set empty string for no shader.
+shader_vs = "shader/gba_colors.vs"
+shader_fs = "shader/gba_colors.fs"
 
 [audio]
 # Possible values: cosine, cubic, sinc64

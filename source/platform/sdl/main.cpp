@@ -14,6 +14,9 @@
 #include <emulator/device/video_device.hpp>
 #include <emulator/emulator.hpp>
 #include <fmt/format.h>
+#include <fstream>
+#include <iterator>
+#include <optional>
 #include <string>
 #include <third_party/toml11/toml.hpp>
 #include <thread>
@@ -21,12 +24,19 @@
 
 #include "device/audio_device.hpp"
 
+// FIXME
+#include <GL/glew.h>
+
 #undef main
 
 static constexpr auto kNativeWidth = 240;
 static constexpr auto kNativeHeight = 160;
 
 static SDL_Window* g_window;
+static SDL_GLContext g_gl_context;
+static GLuint g_gl_texture;
+static std::uint32_t g_framebuffer[kNativeWidth * kNativeHeight];
+static auto g_frame_counter = 0;
 
 static std::atomic_bool g_sync_to_audio = true;
 static int g_cycles_per_audio_frame = 0;
@@ -36,11 +46,6 @@ static auto g_controller_input_device = nba::BasicInputDevice{};
 static SDL_GameController* g_game_controller = nullptr;
 static auto g_game_controller_button_x_old = false;
 static auto g_fastforward = false;
-
-static SDL_Renderer* g_renderer;
-static SDL_Texture* g_texture;
-static std::uint32_t g_framebuffer[kNativeWidth * kNativeHeight];
-static auto g_frame_counter = 0;
 
 static auto g_config = std::make_shared<nba::Config>();
 static auto g_emulator = std::make_unique<nba::Emulator>(g_config);
@@ -68,6 +73,7 @@ struct SDL2_VideoDevice : public nba::VideoDevice {
 
 void load_game(std::string const& rom_path);
 void update_fullscreen();
+void update_viewport();
 void update_key(SDL_KeyboardEvent* event);
 void update_controller();
 void audio_passthrough(SDL2_AudioDevice* audio_device, std::int16_t* stream, int byte_len);
@@ -219,6 +225,39 @@ void load_keymap() {
   }
 }
 
+auto load_as_string(std::string const& path) -> std::optional<std::string> {
+  std::string ret;
+  std::ifstream file { path };
+  if (!file.good()) {
+    return {};
+  }
+  file.seekg(0, std::ios::end);
+  ret.reserve(file.tellg());
+  file.seekg(0);
+  ret.assign(std::istreambuf_iterator<char>{ file }, std::istreambuf_iterator<char>{});
+  return ret;
+}
+
+auto compile_shader(GLuint shader, const char* source) -> bool {
+  GLint compiled = 0;
+  const char* source_array[] = { source };
+  glShaderSource(shader, 1, source_array, nullptr);
+  glCompileShader(shader);
+  glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
+  if(compiled == GL_FALSE) {
+    GLint max_length = 0;
+    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &max_length);
+
+    auto error_log = std::make_unique<GLchar[]>(max_length);
+    glGetShaderInfoLog(shader, max_length, &max_length, error_log.get());
+    LOG_ERROR("Failed to compile shader:\n{0}", error_log.get());
+    glDeleteShader(shader);
+    return false;
+  }
+
+  return true;
+}
+
 void init(int argc, char** argv) {
   common::logger::init();
   config_toml_read(*g_config, "config.toml");
@@ -230,13 +269,46 @@ void init(int argc, char** argv) {
     SDL_WINDOWPOS_CENTERED,
     kNativeWidth * g_config->video.scale,
     kNativeHeight * g_config->video.scale,
-    0);
-  g_renderer = SDL_CreateRenderer(g_window, -1, SDL_RENDERER_ACCELERATED);
-  g_texture  = SDL_CreateTexture(g_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, kNativeWidth, kNativeHeight);
-  SDL_RenderSetLogicalSize(g_renderer, kNativeWidth, kNativeHeight);
+    SDL_WINDOW_OPENGL);
+  g_gl_context = SDL_GL_CreateContext(g_window);
+  #ifndef __APPLE__
+  glewExperimental = GL_TRUE;
+  glewInit();
+  #endif
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   SDL_GL_SetSwapInterval(1);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  glEnable(GL_TEXTURE_2D);
+  glGenTextures(1, &g_gl_texture);
+  glBindTexture(GL_TEXTURE_2D, g_gl_texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  if (!g_config->video.shader.path_vs.empty() && !g_config->video.shader.path_fs.empty()) {
+    auto vert_src = load_as_string(g_config->video.shader.path_vs);
+    auto frag_src = load_as_string(g_config->video.shader.path_fs);
+    if (vert_src.has_value() && frag_src.has_value()) {
+      auto vid = glCreateShader(GL_VERTEX_SHADER);
+      auto fid = glCreateShader(GL_FRAGMENT_SHADER);
+      if (compile_shader(vid, vert_src.value().c_str()) && compile_shader(fid, frag_src.value().c_str())) {
+        auto pid = glCreateProgram();
+        glAttachShader(pid, vid);
+        glAttachShader(pid, fid);
+        glLinkProgram(pid);
+        glUseProgram(pid);
+      }
+    }
+  }
+  glClearColor(0, 0, 0, 1);
+  glClear(GL_COLOR_BUFFER_BIT);
   g_sync_to_audio = g_config->sync_to_audio;
   update_fullscreen();
+  update_viewport();
   for (int i = 0; i < SDL_NumJoysticks(); i++) {
     if (SDL_IsGameController(i)) {
       g_game_controller = SDL_GameControllerOpen(i);
@@ -267,10 +339,31 @@ void loop() {
       g_emulator->Frame();
       g_emulator_lock.unlock();
     }
-    SDL_UpdateTexture(g_texture, nullptr, g_framebuffer, kNativeWidth * sizeof(std::uint32_t));
-    SDL_RenderClear(g_renderer);
-    SDL_RenderCopy(g_renderer, g_texture, nullptr, nullptr);
-    SDL_RenderPresent(g_renderer);
+    update_viewport();
+    glClear(GL_COLOR_BUFFER_BIT);
+    glBindTexture(GL_TEXTURE_2D, g_gl_texture);
+    glTexImage2D(
+      GL_TEXTURE_2D,
+      0,
+      GL_RGBA,
+      kNativeWidth,
+      kNativeHeight,
+      0,
+      GL_BGRA,
+      GL_UNSIGNED_BYTE,
+      g_framebuffer
+    );
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 0);
+    glVertex2f(-1.0f, 1.0f);
+    glTexCoord2f(1.0f, 0);
+    glVertex2f(1.0f, 1.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex2f(1.0f, -1.0f);
+    glTexCoord2f(0, 1.0f);
+    glVertex2f(-1.0f, -1.0f);
+    glEnd();
+    SDL_GL_SwapWindow(g_window);
     auto ticks_end = SDL_GetTicks();
     if ((ticks_end - ticks_start) >= 1000) {
       auto title = fmt::format("NanoboyAdvance [{0} fps | {1}%]", g_frame_counter, int(g_frame_counter / 60.0 * 100.0));
@@ -293,9 +386,9 @@ void destroy() {
   if (g_game_controller != nullptr) {
     SDL_GameControllerClose(g_game_controller);
   }
-  SDL_DestroyTexture(g_texture);
-  SDL_DestroyRenderer(g_renderer);
+  SDL_GL_DeleteContext(g_gl_context);
   SDL_DestroyWindow(g_window);
+  SDL_QuitSubSystem(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER);
 }
 
 void audio_passthrough(SDL2_AudioDevice* audio_device, std::int16_t* stream, int byte_len) {
@@ -309,6 +402,15 @@ void audio_passthrough(SDL2_AudioDevice* audio_device, std::int16_t* stream, int
 
 void update_fullscreen() {
   SDL_SetWindowFullscreen(g_window, g_config->video.fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+}
+
+void update_viewport() {
+  int width;
+  int height;
+  SDL_GL_GetDrawableSize(g_window, &width, &height);
+
+  int viewport_width = height + height / 2;
+  glViewport((width - viewport_width) / 2, 0, viewport_width, height);
 }
 
 void update_fastforward(bool fastforward) {
