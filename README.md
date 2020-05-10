@@ -34,6 +34,12 @@ There are a few dependencies that you need to get:
 - SDL2 development library
 - GLEW
 
+### Arch Linux
+`pacman -S cmake sdl2 glew`
+
+### Ubuntu or Debian derived
+`apt install cmake libsdl2-dev libglew-dev`
+
 ### Clone Git repository
 
 Make sure to clone the repository with its submodules:
