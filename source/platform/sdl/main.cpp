@@ -287,6 +287,8 @@ void loop() {
 }
 
 void destroy() {
+  // Make sure that the audio thread no longer accesses the emulator.
+  g_emulator_lock.lock();
   if (g_game_controller != nullptr) {
     SDL_GameControllerClose(g_game_controller);
   }
