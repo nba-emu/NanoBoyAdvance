@@ -12,9 +12,15 @@ The emulator implements the core hardware completely and with high accuracy.
 Almost all games can be emulated without any known issues, even the 'Classic NES' titles which abuse a
 variety of edge-cases and undefined behaviour.
 
-## Media
-
 ![screenshot1](media/screenshot1.png)
+
+## Features
+
+- very accurate GBA emulation
+- RTC emulation
+- high quality audio rendering
+- game controller support
+- lightweight: minimal, configurable SDL2 frontend 
 
 ## Compiling
 
@@ -74,6 +80,6 @@ will not be as accurate as the original one.
 ## Acknowledgement
 
 - GBATEK by Martin Korth: a great piece of documentation that made this emulator possible.
-- Talarubi & Near (byuu): I am using their GBA color correction shader (https://byuu.net/video/color-emulation)
+- Talarubi & Near: The GBA color correction shader (https://byuu.net/video/color-emulation)
 - mGBA by endrift: great test suite, also referenced its code for a few details.
 - VisualBoyAdvance by Forgotten: inspired me to pursue emulator programming.
