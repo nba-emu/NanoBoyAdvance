@@ -186,6 +186,7 @@ void load_keymap() {
     data = toml::parse("keymap.toml");
   } catch (std::exception& ex) {
     LOG_WARN("Failed to load or parse keymap configuration.");
+    return;
   }
 
   if (data.contains("general")) {
