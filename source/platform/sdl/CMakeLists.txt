@@ -12,7 +12,7 @@ include_directories(${SDL2_INCLUDE_DIR})
 
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
-include_directories($(GLEW_INCLUDE_DIRS))
+include_directories(${GLEW_INCLUDE_DIRS})
 
 add_executable(NanoboyAdvance ${SOURCES} ${HEADERS})
 target_link_libraries(NanoboyAdvance nba ${SDL2_LIBRARY} ${OPENGL_gl_LIBRARY} ${GLEW_LIBRARIES})

@@ -24,8 +24,7 @@
 
 #include "device/audio_device.hpp"
 
-// FIXME
-#include <GL/glew.h>
+#include "GL/glew.h"
 
 #undef main
 

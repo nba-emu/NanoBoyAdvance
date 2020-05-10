@@ -20,7 +20,8 @@ variety of edge-cases and undefined behaviour.
 - RTC emulation
 - high quality audio rendering
 - game controller support
-- lightweight: minimal, configurable SDL2 frontend 
+- basic GLSL shader support
+- lightweight: minimal, configurable SDL2 frontend
 
 ## Compiling
 
@@ -31,6 +32,7 @@ MSVC is not supported and most definitely doesn't work in the default configurat
 There are a few dependencies that you need to get:
 - CMake
 - SDL2 development library
+- GLEW
 
 ### Clone Git repository
 
