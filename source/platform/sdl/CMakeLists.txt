@@ -15,7 +15,7 @@ find_package(GLEW REQUIRED)
 include_directories(${GLEW_INCLUDE_DIRS})
 
 add_executable(NanoboyAdvance ${SOURCES} ${HEADERS})
-target_link_libraries(NanoboyAdvance nba ${SDL2_LIBRARY} ${OPENGL_gl_LIBRARY} ${GLEW_LIBRARIES})
+target_link_libraries(NanoboyAdvance nba ${SDL2_LIBRARY} ${OPENGL_gl_LIBRARY} GLEW::glew)
 
 file(COPY "${PROJECT_SOURCE_DIR}/config.toml" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/keymap.toml" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
