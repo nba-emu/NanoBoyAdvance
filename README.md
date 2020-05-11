@@ -29,15 +29,17 @@ NanoboyAdvance can be compiled on Windows and Linux (Mac OS X and FreeBSD should
 A modern C++17-capable compiler such as Clang/Clang-CL or G++ is mandatory.
 MSVC is not supported and most definitely doesn't work in the default configuration (stack overflow while parsing templated code).
 
+### Dependencies
+
 There are a few dependencies that you need to get:
 - CMake
 - SDL2 development library
 - GLEW
 
-### Arch Linux
+On Arch Linux:\
 `pacman -S cmake sdl2 glew`
 
-### Ubuntu or Debian derived
+On an Ubuntu or Debian derived system:\
 `apt install cmake libsdl2-dev libglew-dev`
 
 ### Clone Git repository
