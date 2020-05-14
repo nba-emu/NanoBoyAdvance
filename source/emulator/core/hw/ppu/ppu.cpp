@@ -12,7 +12,7 @@
 namespace nba::core {
 
 constexpr std::uint16_t PPU::s_color_transparent;
-constexpr int PPU::s_wait_cycles[4];
+constexpr int PPU::s_wait_cycles[5];
 
 PPU::PPU(Scheduler* scheduler,
          InterruptController* irq_controller,
@@ -77,6 +77,10 @@ void PPU::Tick() {
       OnScanlineComplete();
       break;
     }
+    case Phase::HBLANK_SEARCH: {
+      OnHblankSearchComplete();
+      break;
+    }
     case Phase::HBLANK: {
       OnHblankComplete();
       break;
@@ -98,18 +102,23 @@ void PPU::SetNextEvent(Phase phase) {
 }
 
 void PPU::OnScanlineComplete() {
-  auto& dispstat = mmio.dispstat;
-  
-  SetNextEvent(Phase::HBLANK);
-  dma->Request(DMA::Occasion::HBlank);
-  dispstat.hblank_flag = 1;
-  
-  if (mmio.vcount >= 2) {
-    dma->Request(DMA::Occasion::Video);
+  SetNextEvent(Phase::HBLANK_SEARCH);
+
+  if (mmio.dispstat.hblank_irq_enable) {
+    irq_controller->Raise(InterruptSource::HBlank);
   }
 
-  if (dispstat.hblank_irq_enable) {
-    irq_controller->Raise(InterruptSource::HBlank);
+  RenderScanline();
+}
+
+void PPU::OnHblankSearchComplete() {
+  SetNextEvent(Phase::HBLANK);
+
+  dma->Request(DMA::Occasion::HBlank);
+  mmio.dispstat.hblank_flag = 1;
+
+  if (mmio.vcount >= 2) {
+    dma->Request(DMA::Occasion::Video);
   }
 }
 
@@ -175,7 +184,6 @@ void PPU::OnHblankComplete() {
     
     /* Continue to render the next scanline */
     SetNextEvent(Phase::SCANLINE);
-    RenderScanline();
   }
 }
 
@@ -212,7 +220,6 @@ void PPU::OnVblankHblankComplete() {
 
     /* Leave vertical blanking mode, render first scanline. */
     SetNextEvent(Phase::SCANLINE);
-    RenderScanline();
   } else {
     SetNextEvent(Phase::VBLANK_SCANLINE);
     if (vcount == 226) {
