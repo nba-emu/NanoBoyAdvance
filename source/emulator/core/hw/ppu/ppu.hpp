@@ -107,6 +107,8 @@ private:
   
   void Tick();
 
+  void UpdateInternalAffineRegisters();
+
   void SetNextEvent(Phase phase);
   void OnScanlineComplete();
   void OnHblankSearchComplete();

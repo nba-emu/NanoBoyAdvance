@@ -20,6 +20,8 @@ struct DisplayControl {
   int forced_blank;
   int enable[8];
 
+  bool _mode_is_dirty;
+
   void Reset();
   auto Read(int address) -> std::uint8_t;
   void Write(int address, std::uint8_t value);

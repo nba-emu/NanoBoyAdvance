@@ -96,6 +96,35 @@ void PPU::Tick() {
   }
 }
 
+void PPU::UpdateInternalAffineRegisters() {
+  auto& bgx = mmio.bgx;
+  auto& bgy = mmio.bgy;
+  auto& mosaic = mmio.mosaic;
+
+  if (mmio.vcount == 160 || mmio.dispcnt._mode_is_dirty) {
+    mmio.dispcnt._mode_is_dirty = false;
+
+    /* Reload internal affine registers */
+    bgx[0]._current = bgx[0].initial;
+    bgy[0]._current = bgy[0].initial;
+    bgx[1]._current = bgx[1].initial;
+    bgy[1]._current = bgy[1].initial;
+  } else {
+    for (int i = 0; i < 2; i++) {
+      if (mmio.bgcnt[2 + i].mosaic_enable) {
+        /* Vertical mosaic for affine-transformed layers. */
+        if (mosaic.bg._counter_y == 0) {
+          bgx[i]._current += mosaic.bg.size_y * mmio.bgpb[i];
+          bgy[i]._current += mosaic.bg.size_y * mmio.bgpd[i];
+        }
+      } else {
+        bgx[i]._current += mmio.bgpb[i];
+        bgy[i]._current += mmio.bgpd[i];
+      }
+    }
+  }
+}
+
 void PPU::SetNextEvent(Phase phase) {
   this->phase = phase;
   event.countdown += s_wait_cycles[static_cast<int>(phase)];
@@ -126,8 +155,6 @@ void PPU::OnHblankComplete() {
   auto& vcount = mmio.vcount;
   auto& dispstat = mmio.dispstat;
   auto& mosaic = mmio.mosaic;
-  auto& bgx = mmio.bgx;
-  auto& bgy = mmio.bgy;
   
   dispstat.hblank_flag = 0;
   dispstat.vcount_flag = ++vcount == dispstat.vcount_setting;
@@ -152,11 +179,7 @@ void PPU::OnHblankComplete() {
     mosaic.bg._counter_y = 0;
     mosaic.obj._counter_y = 0;
     
-    /* Reload internal affine registers */
-    bgx[0]._current = bgx[0].initial;
-    bgy[0]._current = bgy[0].initial;
-    bgx[1]._current = bgx[1].initial;
-    bgy[1]._current = bgy[1].initial;
+    
   } else {
     /* Advance vertical background mosaic counter */
     if (++mosaic.bg._counter_y == mosaic.bg.size_y) {
@@ -168,23 +191,11 @@ void PPU::OnHblankComplete() {
       mosaic.obj._counter_y = 0;
     }
     
-    /* Vertical mosaic for affine-transformed layers. */
-    for (int i = 0; i < 2; i++) {
-      /* TODO: I don't know if affine MOSAIC is actually implemented like this. */
-      if (mmio.bgcnt[2 + i].mosaic_enable) {
-        if (mosaic.bg._counter_y == 0) {
-          bgx[i]._current += mosaic.bg.size_y * mmio.bgpb[i];
-          bgy[i]._current += mosaic.bg.size_y * mmio.bgpd[i];
-        }
-      } else {
-        bgx[i]._current += mmio.bgpb[i];
-        bgy[i]._current += mmio.bgpd[i];
-      }
-    }
-    
     /* Continue to render the next scanline */
     SetNextEvent(Phase::SCANLINE);
   }
+
+  UpdateInternalAffineRegisters();
 }
 
 void PPU::OnVblankScanlineComplete() {
