@@ -196,7 +196,7 @@ void PPU::RenderLayerOAM(bool bitmap_mode) {
       
       tile_num += block_x;
 
-      if (bitmap_mode && tile_num < 512) {
+      if (bitmap_mode && tile_num < (is_256 ? 256 : 512)) {
         continue;
       }
       
