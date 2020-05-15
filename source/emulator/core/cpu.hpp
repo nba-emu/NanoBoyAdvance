@@ -167,7 +167,12 @@ private:
   
   /* Last ROM address that was accessed. Used for GamePak prefetch. */
   std::uint32_t last_rom_address;
-  
+
+  struct IRQ {
+    bool processing;
+    int countdown;
+  } irq;
+
   int cycles16[2][256] {
     { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
     { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },

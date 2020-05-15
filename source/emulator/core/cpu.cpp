@@ -34,6 +34,9 @@ void CPU::Reset() {
   std::memset(memory.wram, 0, 0x40000);
   std::memset(memory.iram, 0, 0x08000);
 
+  irq.processing = false;
+  irq.countdown = 0;
+
   mmio.keyinput = 0x3FF;
   mmio.haltcnt = HaltControl::RUN;
   mmio.rcnt_hack = 0;
@@ -83,6 +86,10 @@ void CPU::Reset() {
 }
 
 void CPU::Tick(int cycles) {
+  if (irq.processing && irq.countdown >= 0) {
+    irq.countdown -= cycles;
+  }
+
   timer.Run(cycles);
   scheduler.AddCycles(cycles);
   
@@ -193,7 +200,14 @@ void CPU::RunFor(int cycles) {
         dma.Run();
       } else if (mmio.haltcnt == HaltControl::RUN) {
         if (irq_controller.MasterEnable() && has_servable_irq) {
-          SignalIRQ();
+          if (!irq.processing) {
+            irq.processing = true;
+            irq.countdown = 6;
+          } else if (irq.countdown < 0) {
+            SignalIRQ();
+          }
+        } else {
+          irq.processing = false;
         }
         Run();
       } else {
