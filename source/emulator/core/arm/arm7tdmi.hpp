@@ -8,6 +8,7 @@
 #pragma once
 
 #include <array>
+#include <common/log.hpp>
 
 #include "memory.hpp"
 #include "state.hpp"

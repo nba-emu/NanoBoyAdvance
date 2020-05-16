@@ -372,10 +372,12 @@ void ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
       }
       break;
     case 2:
+      ASSERT(load, "STR instruction in signed-byte mode is unpredictable.");
       state.reg[dst] = ReadByteSigned(address, Access::Nonsequential);
       interface->Idle();
       break;
     case 3:
+      ASSERT(load, "STR instruction in signed-half mode is unpredictable.");
       state.reg[dst] = ReadHalfSigned(address, Access::Nonsequential);
       interface->Idle();
       break;
@@ -388,8 +390,12 @@ void ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
     state.reg[base] = address;
   }
 
-  pipe.fetch_type = Access::Nonsequential;
-  state.r15 += 4;
+  if (load && dst == 15) {
+    ReloadPipeline32();
+  } else {
+    pipe.fetch_type = Access::Nonsequential;
+    state.r15 += 4;
+  }
 }
 
 template <bool link>
