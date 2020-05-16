@@ -119,7 +119,8 @@ const std::map<std::string, GameInfo> g_game_db {
   { "BPES", { Config::BackupType::FLASH_128, GPIODeviceType::RTC, false } },  /* Pokemon - Edicion Esmeralda (Spain) */
   { "BPGS", { Config::BackupType::FLASH_128, GPIODeviceType::None, false } }, /* Pokemon - Edicion Verde Hoja (Spain) */
   { "BPRS", { Config::BackupType::FLASH_128, GPIODeviceType::None, false } }  /* Pokemon - Edicion Rojo Fuego (Spain) */,
-  { "A9DP", { Config::BackupType::EEPROM_4, GPIODeviceType::None, false } }   /* DOOM II */
+  { "A9DP", { Config::BackupType::EEPROM_4, GPIODeviceType::None, false } },  /* DOOM II */
+  { "AAOJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, false } }   /* Acrobat Kid (Japan */
 };
 
 } // namespace nba
