@@ -105,61 +105,66 @@ void CPU::Tick(int cycles) {
 }
 
 void CPU::Idle() {
-  if (mmio.waitcnt.prefetch) {
-    PrefetchStep(0, 1);
-  } else {
-    Tick(1);
-  }
+  PrefetchStepRAM(1);
 }
 
-void CPU::PrefetchStep(std::uint32_t address, int cycles) {
+void CPU::PrefetchStepRAM(int cycles) {
+  if (!mmio.waitcnt.prefetch) {
+    Tick(cycles);
+    return;
+  }
+
   int thumb = state.cpsr.f.thumb;
   int capacity = thumb ? 8 : 4;
-  
-  if (prefetch.active) {
-    /* If prefetching the desired opcode just complete. */
-    if (address == prefetch.address[prefetch.wr_pos]) {
-      int count  = prefetch.count;
-      int wr_pos = prefetch.wr_pos;
-      
-      Tick(prefetch.countdown);
-      
-      // HACK: overwrite count and wr_pos with old values to
-      // account for the prefetched opcode being consumed right away.
-      prefetch.count = count;
-      prefetch.wr_pos = wr_pos;
-      
-      last_rom_address = address;
-      return;
-    }
-    
-    if (IsROMAddress(address)) {
-      prefetch.active = false;
-    }
-  } else if (prefetch.count < capacity &&
-             IsROMAddress(state.r15) &&
-            !IsROMAddress(address) && 
-             state.r15 == last_rom_address) {
+
+  if (!prefetch.active && prefetch.count < capacity && state.r15 == last_rom_address) {
     std::uint32_t next_address;
-    
+
     if (prefetch.count > 0) {
       next_address = prefetch.last_address;
     } else {
       next_address = state.r15;
     }
-    
+
     next_address += thumb ? 2 : 4;
     prefetch.last_address = next_address;
-    
+
     prefetch.active = true;
     prefetch.address[prefetch.wr_pos] = next_address;
     prefetch.countdown = (thumb ? cycles16 : cycles32)[int(Access::Sequential)][next_address >> 24];
   }
-  
-  if (IsROMAddress(address)) {
-    last_rom_address = address;
+
+  Tick(cycles);
+}
+
+void CPU::PrefetchStepROM(std::uint32_t address, int cycles) {
+  if (!mmio.waitcnt.prefetch) {
+    Tick(cycles);
+    return;
   }
-  
+
+  if (prefetch.active) {
+    /* If prefetching the desired opcode just complete. */
+    if (address == prefetch.address[prefetch.wr_pos]) {
+      int count = prefetch.count;
+      int wr_pos = prefetch.wr_pos;
+
+      Tick(prefetch.countdown);
+
+      // HACK: overwrite count and wr_pos with old values to
+      // account for the prefetched opcode being consumed right away.
+      prefetch.count = count;
+      prefetch.wr_pos = wr_pos;
+
+      last_rom_address = address;
+      return;
+    }
+
+    prefetch.active = false;
+  }
+
+  last_rom_address = address;
+
   /* TODO: this check does not guarantee 100% that this is an opcode fetch. */
   if (prefetch.count > 0 && address == state.r15) {
     if (address == prefetch.address[prefetch.rd_pos]) {
@@ -173,7 +178,7 @@ void CPU::PrefetchStep(std::uint32_t address, int cycles) {
       prefetch.wr_pos = 0;
     }
   }
-  
+
   Tick(cycles);
 }
 

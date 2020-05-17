@@ -150,7 +150,8 @@ private:
   
   void Tick(int cycles);
   void Idle() final;
-  void PrefetchStep(std::uint32_t address, int cycles);
+  void PrefetchStepRAM(int cycles);
+  void PrefetchStepROM(std::uint32_t address, int cycles);
   
   void UpdateMemoryDelayTable();
   
