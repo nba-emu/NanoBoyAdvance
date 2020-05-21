@@ -101,7 +101,6 @@ void DoShift(int opcode, std::uint32_t& operand, std::uint32_t amount, int& carr
 void LSL(std::uint32_t& operand, std::uint32_t amount, int& carry) {
   if (amount == 0) return;
 
-#if (defined(__i386__) || defined(__x86_64__))
   if (amount >= 32) {
     if (amount > 32) {
       carry = 0;
@@ -111,7 +110,7 @@ void LSL(std::uint32_t& operand, std::uint32_t amount, int& carry) {
     operand = 0;
     return;
   }
-#endif
+
   carry = (operand << (amount - 1)) >> 31;
   operand <<= amount;
 }
@@ -126,7 +125,6 @@ void LSR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediat
     }
   }
 
-#if (defined(__i386__) || defined(__x86_64__))
   if (amount >= 32) {
     if (amount > 32) {
       carry = 0;
@@ -136,7 +134,7 @@ void LSR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediat
     operand = 0;
     return;
   }
-#endif
+
   carry = (operand >> (amount - 1)) & 1;
   operand >>= amount;
 }
@@ -153,13 +151,11 @@ void ASR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediat
 
   int msb = operand >> 31;
 
-#if (defined(__i386__) || defined(__x86_64__))
   if (amount >= 32) {
     carry = msb;
     operand = 0xFFFFFFFF * msb;
     return;
   }
-#endif
 
   carry = (operand >> (amount - 1)) & 1;
   operand = (operand >> amount) | ((0xFFFFFFFF * msb) << (32 - amount));
