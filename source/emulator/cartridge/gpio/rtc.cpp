@@ -187,7 +187,7 @@ void RTC::ReadRegister() {
       auto time = std::localtime(&timestamp);
       buffer[0] = ConvertDecimalToBCD(time->tm_year - 100);
       buffer[1] = ConvertDecimalToBCD(1 + time->tm_mon);
-      buffer[2] = ConvertDecimalToBCD(1 + time->tm_mday);
+      buffer[2] = ConvertDecimalToBCD(time->tm_mday);
       buffer[3] = ConvertDecimalToBCD(time->tm_wday);
       buffer[4] = ConvertDecimalToBCD(time->tm_hour);
       buffer[5] = ConvertDecimalToBCD(time->tm_min);
