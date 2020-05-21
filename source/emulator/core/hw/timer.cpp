@@ -185,8 +185,11 @@ void Timer::Increment(int chan_id, int increment) {
       apu->OnTimerOverflow(chan_id, overflows);
     }
     
-    if (next_id != 4 && channels[next_id].control.cascade) {
-      Increment(next_id, overflows);
+    if (next_id != 4) {
+      auto& control = channels[next_id].control;
+      if (control.enable && control.cascade) {
+        Increment(next_id, overflows);
+      }
     }
   }
       
