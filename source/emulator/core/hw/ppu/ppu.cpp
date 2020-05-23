@@ -144,11 +144,10 @@ void PPU::OnHblankSearchComplete() {
   SetNextEvent(Phase::HBLANK);
 
   dma->Request(DMA::Occasion::HBlank);
-  mmio.dispstat.hblank_flag = 1;
-
   if (mmio.vcount >= 2) {
     dma->Request(DMA::Occasion::Video);
   }
+  mmio.dispstat.hblank_flag = 1;
 }
 
 void PPU::OnHblankComplete() {
