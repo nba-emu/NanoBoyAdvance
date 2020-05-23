@@ -120,7 +120,9 @@ const std::map<std::string, GameInfo> g_game_db {
   { "BPGS", { Config::BackupType::FLASH_128, GPIODeviceType::None, false } }, /* Pokemon - Edicion Verde Hoja (Spain) */
   { "BPRS", { Config::BackupType::FLASH_128, GPIODeviceType::None, false } }  /* Pokemon - Edicion Rojo Fuego (Spain) */,
   { "A9DP", { Config::BackupType::EEPROM_4, GPIODeviceType::None, false } },  /* DOOM II */
-  { "AAOJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, false } }   /* Acrobat Kid (Japan */
+  { "AAOJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, false } },  /* Acrobat Kid (Japan */
+  { "BGDP", { Config::BackupType::EEPROM_4, GPIODeviceType::None, false } },  /* Baldur's Gate - Dark Alliance (Europe) */
+  { "BGDE", { Config::BackupType::EEPROM_4, GPIODeviceType::None, false } }   /* Baldur's Gate - Dark Alliance (USA) */
 };
 
 } // namespace nba
