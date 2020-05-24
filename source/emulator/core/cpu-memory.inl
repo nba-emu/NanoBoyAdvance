@@ -125,7 +125,7 @@ inline auto CPU::ReadByte(std::uint32_t address, Access access) -> std::uint8_t 
       //   return gpio->read(address);
       // }
       if (address >= memory.rom.size) {
-        return address / 2;
+        return (address / 2) >> ((address & 1) * 8);
       }
       return Read<std::uint8_t>(memory.rom.data.get(), address);
     }
