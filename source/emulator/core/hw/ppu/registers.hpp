@@ -28,6 +28,8 @@ struct DisplayControl {
 };
 
 struct DisplayStatus {
+  class PPU* ppu = nullptr;
+
   int vblank_flag;
   int hblank_flag;
   int vcount_flag;

@@ -25,6 +25,7 @@ PPU::PPU(Scheduler* scheduler,
 {
   InitBlendTable();
   Reset();
+  mmio.dispstat.ppu = this;
 }
 
 void PPU::Reset() {
@@ -125,6 +126,14 @@ void PPU::UpdateInternalAffineRegisters() {
   }
 }
 
+void PPU::CheckForVcountIRQ() {
+  auto& dispstat = mmio.dispstat;
+  dispstat.vcount_flag = mmio.vcount == dispstat.vcount_setting;
+  if (dispstat.vcount_flag && dispstat.vcount_irq_enable) {
+    irq_controller->Raise(InterruptSource::VCount);
+  }
+}
+
 void PPU::SetNextEvent(Phase phase) {
   this->phase = phase;
   event.countdown += s_wait_cycles[static_cast<int>(phase)];
@@ -156,11 +165,8 @@ void PPU::OnHblankComplete() {
   auto& mosaic = mmio.mosaic;
   
   dispstat.hblank_flag = 0;
-  dispstat.vcount_flag = ++vcount == dispstat.vcount_setting;
-  
-  if (dispstat.vcount_flag && dispstat.vcount_irq_enable) {
-    irq_controller->Raise(InterruptSource::VCount);
-  }
+  vcount++;
+  CheckForVcountIRQ();
 
   if (vcount == 160) {
     config->video_dev->Draw(output);
@@ -236,13 +242,10 @@ void PPU::OnVblankHblankComplete() {
       dispstat.vblank_flag = 0;
     }
 
-    /* Update vertical counter. */
-    dispstat.vcount_flag = ++vcount == dispstat.vcount_setting;
+    vcount++;
   }
 
-  if (dispstat.vcount_flag && dispstat.vcount_irq_enable) {
-    irq_controller->Raise(InterruptSource::VCount);
-  }
+  CheckForVcountIRQ();
 }
 
 } // namespace nba::core

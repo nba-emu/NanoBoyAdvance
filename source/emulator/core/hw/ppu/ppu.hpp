@@ -62,6 +62,8 @@ public:
   } mmio;
 
 private:
+  friend struct DisplayStatus;
+
   enum class Phase {
     SCANLINE = 0,
     HBLANK_SEARCH = 1,
@@ -108,6 +110,7 @@ private:
   void Tick();
 
   void UpdateInternalAffineRegisters();
+  void CheckForVcountIRQ();
 
   void SetNextEvent(Phase phase);
   void OnScanlineComplete();

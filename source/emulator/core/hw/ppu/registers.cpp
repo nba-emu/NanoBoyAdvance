@@ -5,6 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
+#include "ppu.hpp"
 #include "registers.hpp"
 
 namespace nba::core {
@@ -86,10 +87,15 @@ void DisplayStatus::Write(int address, std::uint8_t value) {
     vblank_irq_enable = (value >> 3) & 1;
     hblank_irq_enable = (value >> 4) & 1;
     vcount_irq_enable = (value >> 5) & 1;
+    if (ppu != nullptr) {
+      ppu->CheckForVcountIRQ();
+    }
     break;
   case 1:
-    /* TODO: What happens with values > 227? */
     vcount_setting = value;
+    if (ppu != nullptr) {
+      ppu->CheckForVcountIRQ();
+    }
     break;
   }
 }
