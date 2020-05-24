@@ -128,10 +128,11 @@ void PPU::UpdateInternalAffineRegisters() {
 
 void PPU::CheckForVcountIRQ() {
   auto& dispstat = mmio.dispstat;
-  dispstat.vcount_flag = mmio.vcount == dispstat.vcount_setting;
-  if (dispstat.vcount_flag && dispstat.vcount_irq_enable) {
+  auto vcount_flag_new = dispstat.vcount_setting == mmio.vcount;
+  if (dispstat.vcount_irq_enable && !dispstat.vcount_flag && vcount_flag_new) {
     irq_controller->Raise(InterruptSource::VCount);
   }
+  dispstat.vcount_flag = vcount_flag_new;
 }
 
 void PPU::SetNextEvent(Phase phase) {
