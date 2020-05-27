@@ -46,7 +46,7 @@ void PPU::RenderLayerOAM(bool bitmap_mode) {
 
   int tile_num;
   std::uint16_t pixel;
-  std::int32_t  offset = 127 * 8;
+  //std::int32_t  offset = 127 * 8;
   
   line_contains_alpha_obj = false;
   
@@ -58,7 +58,7 @@ void PPU::RenderLayerOAM(bool bitmap_mode) {
     buffer_obj[x].window = 0;
   }
 
-  for (; offset >= 0; offset -= 8) {
+  for (std::int32_t offset = 0; offset <= 127 * 8; offset += 8) {
     /* Check if OBJ is diabled (affine=0, attr0bit9=1) */
     if ((oam[offset + 1] & 3) == 2) {
       continue;
@@ -216,7 +216,7 @@ void PPU::RenderLayerOAM(bool bitmap_mode) {
       if (pixel != s_color_transparent) {
         if (mode == OBJ_WINDOW) {
           point.window = 1;
-        } else if (prio <= point.priority) {
+        } else if (prio < point.priority || point.color == s_color_transparent) {
           point.priority = prio;
           point.color = pixel;
           point.alpha = (mode == OBJ_SEMI) ? 1 : 0;
@@ -224,6 +224,10 @@ void PPU::RenderLayerOAM(bool bitmap_mode) {
             line_contains_alpha_obj = true;
           }
         }
+      }
+
+      if (prio < point.priority) {
+        point.priority = prio;
       }
     }
   }
