@@ -46,7 +46,6 @@ void PPU::RenderLayerOAM(bool bitmap_mode) {
 
   int tile_num;
   std::uint16_t pixel;
-  std::uint32_t tile_base = 0x10000;
   std::int32_t  offset = 127 * 8;
   
   line_contains_alpha_obj = false;
@@ -148,12 +147,18 @@ void PPU::RenderLayerOAM(bool bitmap_mode) {
     int flip_v  = !affine && (attr1 & (1 << 13));
     int is_256  = (attr0 >> 13) & 1;
 
-    if (is_256) number /= 2;
+    std::uint32_t tile_base = 0x10000;
+
+    if (is_256) {
+      if ((number & 1) && mmio.dispcnt.oam_mapping_1d) {
+        tile_base = 0x10020;
+      }
+      number /= 2;
+    }
 
     int mosaic_x = 0;
     
     if (mosaic) {
-      /* TODO: optimize this operation. */
       mosaic_x = (x - half_width) % mmio.mosaic.obj.size_x;
       local_y -= mmio.mosaic.obj._counter_y;
     }
