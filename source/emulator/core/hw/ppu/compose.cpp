@@ -235,15 +235,12 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
 
     if (no_windows || win_layer_enable[LAYER_SFX] || is_alpha_obj) {
       auto blend_mode = mmio.bldcnt.sfx;
-      bool have_dst = mmio.bldcnt.targets[0][layer[0]] || is_alpha_obj;
+      bool have_dst = mmio.bldcnt.targets[0][layer[0]];
       bool have_src = mmio.bldcnt.targets[1][layer[1]];
 
-      if (is_alpha_obj) {
-        blend_mode = BlendMode::SFX_BLEND;
-      }
-
-      if (blend_mode != BlendMode::SFX_NONE && have_dst &&
-          (have_src || blend_mode != BlendMode::SFX_BLEND)) {
+      if (is_alpha_obj && have_src) {
+        Blend(pixel[0], pixel[1], BlendMode::SFX_BLEND);
+      } else if (have_dst && blend_mode != BlendMode::SFX_NONE && (have_src || blend_mode != BlendMode::SFX_BLEND)) {
         Blend(pixel[0], pixel[1], blend_mode);
       }
     }
