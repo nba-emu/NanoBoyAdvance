@@ -54,6 +54,7 @@ public:
                    ((instruction >>  4) & 0x00F);
         (this->*s_opcode_lut_32[hash])(instruction);
       } else {
+        pipe.fetch_type = Access::Sequential;
         state.r15 += 4;
       }
     }

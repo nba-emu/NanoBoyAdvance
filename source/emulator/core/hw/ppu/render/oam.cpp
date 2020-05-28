@@ -46,7 +46,6 @@ void PPU::RenderLayerOAM(bool bitmap_mode) {
 
   int tile_num;
   std::uint16_t pixel;
-  //std::int32_t  offset = 127 * 8;
   
   line_contains_alpha_obj = false;
   
