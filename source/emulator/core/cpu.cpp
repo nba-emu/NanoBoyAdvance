@@ -39,6 +39,7 @@ void CPU::Reset() {
 
   mmio.keyinput = 0x3FF;
   mmio.haltcnt = HaltControl::RUN;
+  mmio.postflg = 0;
   mmio.rcnt_hack = 0;
 
   /* Reset waitstates */

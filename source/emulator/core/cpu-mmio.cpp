@@ -90,6 +90,24 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case SOUND4CNT_H+1: return apu.psg4.Read(5);
     case SOUND4CNT_H+2:
     case SOUND4CNT_H+3: return 0;
+    case WAVE_RAM + 0:
+    case WAVE_RAM + 1:
+    case WAVE_RAM + 2:
+    case WAVE_RAM + 3:
+    case WAVE_RAM + 4:
+    case WAVE_RAM + 5:
+    case WAVE_RAM + 6:
+    case WAVE_RAM + 7:
+    case WAVE_RAM + 8:
+    case WAVE_RAM + 9:
+    case WAVE_RAM + 10:
+    case WAVE_RAM + 11:
+    case WAVE_RAM + 12:
+    case WAVE_RAM + 13:
+    case WAVE_RAM + 14:
+    case WAVE_RAM + 15: {
+      return apu.psg3.ReadSample(address & 0xF);
+    }
     case SOUNDCNT_L:   return apu_io.soundcnt.Read(0);
     case SOUNDCNT_L+1: return apu_io.soundcnt.Read(1);
     case SOUNDCNT_H:   return apu_io.soundcnt.Read(2);
@@ -165,6 +183,7 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     }
     case WAITCNT+2:
     case WAITCNT+3: return 0;
+    case POSTFLG: return mmio.postflg;
   }
   
   return ReadUnused(address);
@@ -478,6 +497,8 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
       }
       break;
     }
+
+    case POSTFLG: mmio.postflg = value & 1; break;
   }
 }
 

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <common/log.hpp>
 #include <emulator/cartridge/backup/backup.hpp>
 #include <emulator/cartridge/gpio/gpio.hpp>
 #include <emulator/config/config.hpp>
@@ -82,6 +83,7 @@ public:
     std::uint16_t keyinput;
 
     HaltControl haltcnt;
+    std::uint8_t postflg;
 
     struct WaitstateControl {
       int sram;

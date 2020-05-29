@@ -91,4 +91,5 @@ constexpr int IE = 0x04000200;
 constexpr int IF = 0x04000202;
 constexpr int WAITCNT = 0x04000204;
 constexpr int IME = 0x04000208;
+constexpr int POSTFLG = 0x04000300;
 constexpr int HALTCNT = 0x04000301;
