@@ -23,6 +23,10 @@ public:
   auto Read (int offset) -> std::uint8_t;
   void Write(int offset, std::uint8_t value);
   
+  auto ReadSample(int offset) -> std::uint8_t {
+    return wave_ram[wave_bank ^ 1][offset];
+  }
+
   void WriteSample(int offset, std::uint8_t value) {
     wave_ram[wave_bank ^ 1][offset] = value;
   }
