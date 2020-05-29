@@ -201,7 +201,7 @@ inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t
       PrefetchStepROM(address, cycles16[int(Access::Nonsequential)][page]);
     }
     address &= memory.rom.mask;
-    if (IsGPIOAccess(address)) {
+    if (IsGPIOAccess(address) && memory.rom.gpio->IsReadable()) {
       return memory.rom.gpio->Read(address + 0) |
             (memory.rom.gpio->Read(address + 1) << 8);
     }
@@ -277,7 +277,7 @@ inline auto CPU::ReadWord(std::uint32_t address, Access access) -> std::uint32_t
       PrefetchStepROM(address, cycles32[int(Access::Nonsequential)][page]);
     }
     address &= memory.rom.mask;
-    if (IsGPIOAccess(address)) {
+    if (IsGPIOAccess(address) && memory.rom.gpio->IsReadable()) {
       return memory.rom.gpio->Read(address + 0) |
             (memory.rom.gpio->Read(address + 1) <<  8) |
             (memory.rom.gpio->Read(address + 2) << 16) |
