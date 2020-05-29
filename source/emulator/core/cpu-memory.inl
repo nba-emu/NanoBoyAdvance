@@ -143,6 +143,10 @@ inline auto CPU::ReadByte(std::uint32_t address, Access access) -> std::uint8_t 
 inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t {
   int page = address >> 24;
   int cycles = cycles16[int(access)][page];
+
+  if (page != REGION_SRAM_1 && page != REGION_SRAM_2) {
+    address &= ~1;
+  }
   
   switch (page) {
   case REGION_BIOS: {
@@ -229,6 +233,10 @@ inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t
 inline auto CPU::ReadWord(std::uint32_t address, Access access) -> std::uint32_t {
   int page = address >> 24;
   int cycles = cycles32[int(access)][page];
+
+  if (page != REGION_SRAM_1 && page != REGION_SRAM_2) {
+    address &= ~3;
+  }
   
   switch (page) {
   case REGION_BIOS: {
@@ -357,6 +365,10 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, Access ac
   int page = address >> 24;
   int cycles = cycles16[int(access)][page];
 
+  if (page != REGION_SRAM_1 && page != REGION_SRAM_2) {
+    address &= ~1;
+  }
+
   switch (page) {
   case REGION_EWRAM: {
     PrefetchStepRAM(cycles);
@@ -427,8 +439,7 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, Access ac
     PrefetchStepROM(address, cycles);
     address &= 0x0EFFFFFF;
     if (memory.rom.backup && !HasEEPROMBackup()) {
-      memory.rom.backup->Write(address + 0, value);
-      memory.rom.backup->Write(address + 1, value);
+      memory.rom.backup->Write(address, value >> ((address & 1) * 8));
     }
     break;
   }
@@ -438,6 +449,10 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, Access ac
 inline void CPU::WriteWord(std::uint32_t address, std::uint32_t value, Access access) {
   int page = address >> 24;
   int cycles = cycles32[int(access)][page];
+
+  if (page != REGION_SRAM_1 && page != REGION_SRAM_2) {
+    address &= ~3;
+  }
 
   switch (page) {
   case REGION_EWRAM: {
@@ -496,10 +511,7 @@ inline void CPU::WriteWord(std::uint32_t address, std::uint32_t value, Access ac
     PrefetchStepROM(address, cycles);
     address &= 0x0EFFFFFF;
     if (memory.rom.backup && !HasEEPROMBackup()) {
-      memory.rom.backup->Write(address + 0, value);
-      memory.rom.backup->Write(address + 1, value);
-      memory.rom.backup->Write(address + 2, value);
-      memory.rom.backup->Write(address + 3, value);
+      memory.rom.backup->Write(address, value >> ((address & 3) * 8));
     }
     break;
   }

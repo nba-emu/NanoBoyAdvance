@@ -10,11 +10,11 @@ std::uint32_t ReadByte(std::uint32_t address, Access access) {
 }
 
 std::uint32_t ReadHalf(std::uint32_t address, Access access) {
-  return interface->ReadHalf(address & ~1, access);
+  return interface->ReadHalf(address, access);
 }
 
 std::uint32_t ReadWord(std::uint32_t address, Access access) {
-  return interface->ReadWord(address & ~3, access);
+  return interface->ReadWord(address, access);
 }
 
 std::uint32_t ReadByteSigned(std::uint32_t address, Access access) {
@@ -28,7 +28,7 @@ std::uint32_t ReadByteSigned(std::uint32_t address, Access access) {
 }
 
 std::uint32_t ReadHalfRotate(std::uint32_t address, Access access) {
-  std::uint32_t value = interface->ReadHalf(address & ~1, access);
+  std::uint32_t value = interface->ReadHalf(address, access);
 
   if (address & 1) {
     value = (value >> 8) | (value << 24);
@@ -56,7 +56,7 @@ std::uint32_t ReadHalfSigned(std::uint32_t address, Access access) {
 }
 
 std::uint32_t ReadWordRotate(std::uint32_t address, Access access) {
-  auto value = interface->ReadWord(address & ~3, access);
+  auto value = interface->ReadWord(address, access);
   auto shift = (address & 3) * 8;
 
   return (value >> shift) | (value << (32 - shift));
@@ -67,9 +67,9 @@ void WriteByte(std::uint32_t address, std::uint8_t  value, Access access) {
 }
 
 void WriteHalf(std::uint32_t address, std::uint16_t value, Access access) {
-  interface->WriteHalf(address & ~1, value, access);
+  interface->WriteHalf(address, value, access);
 }
 
 void WriteWord(std::uint32_t address, std::uint32_t value, Access access) {
-  interface->WriteWord(address & ~3, value, access);
+  interface->WriteWord(address, value, access);
 }
