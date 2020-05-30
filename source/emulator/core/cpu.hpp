@@ -8,6 +8,7 @@
 #pragma once
 
 #include <common/log.hpp>
+#include <common/m4a.hpp>
 #include <emulator/cartridge/backup/backup.hpp>
 #include <emulator/cartridge/gpio/gpio.hpp>
 #include <emulator/config/config.hpp>
@@ -23,15 +24,13 @@
 
 namespace nba::core {
 
-class CPU final : private arm::ARM7TDMI,
-                  private arm::MemoryBase {
+class CPU final : private arm::ARM7TDMI, private arm::MemoryBase {
 public:
   using Access = arm::MemoryBase::Access;
 
   CPU(std::shared_ptr<Config> config);
 
   void Reset();
-
   void RunFor(int cycles);
   
   enum MemoryRegion {
@@ -125,8 +124,8 @@ private:
   }
   
   bool IsGPIOAccess(std::uint32_t address) {
-    // NOTE: currently we do not check if the address lies within ROM.
-    // It would be nice if we could fix that.
+    // NOTE: we do not check if the address lies within ROM, since
+    // it is not required in the context. This should be reflected in the name though.
     return memory.rom.gpio != nullptr && address >= 0xC4 && address <= 0xC8;
   }
 
@@ -156,7 +155,15 @@ private:
   void PrefetchStepROM(std::uint32_t address, int cycles);
   
   void UpdateMemoryDelayTable();
+
+  void M4ASearchForSampleFreqSet();
+  void M4ASampleFreqSetHook();
+  void M4AFixupPercussiveChannels();
   
+  M4ASoundInfo* m4a_soundinfo;
+  int m4a_original_freq = 0;
+  std::uint32_t m4a_setfreq_address = 0;
+
   /* GamePak prefetch buffer state. */
   struct Prefetch {
     bool active;

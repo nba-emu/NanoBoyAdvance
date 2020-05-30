@@ -111,6 +111,8 @@ void config_toml_read(Config& config, std::string const& path) {
       } else {
         config.audio.interpolation = match->second;
       }
+
+      config.audio.m4a_xq_enable = toml::find_or<toml::boolean>(audio, "m4a_xq_enable", false);
     }
   }
 }
@@ -161,6 +163,7 @@ void config_toml_write(Config& config, std::string const& path) {
     case Config::Audio::Interpolation::Sinc_256: resampler = "sinc256"; break;
   }
   data["audio"]["resampler"] = resampler;
+  data["audio"]["m4a_xq_enable"] = config.audio.m4a_xq_enable;
 
   std::ofstream file{ path, std::ios::out };
   file << data;

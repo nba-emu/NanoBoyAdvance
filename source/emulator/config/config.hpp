@@ -52,6 +52,7 @@ struct Config {
       Sinc_128,
       Sinc_256
     } interpolation = Interpolation::Cosine;
+    bool m4a_xq_enable = true;
   } audio;
   
   std::shared_ptr<AudioDevice> audio_dev = std::make_shared<NullAudioDevice>();

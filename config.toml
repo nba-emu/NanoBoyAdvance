@@ -19,3 +19,6 @@ shader_fs = "shader/gba_colors.fs"
 [audio]
 # Possible values: cosine, cubic, sinc64
 resampler = "cubic"
+# Higher quality for games using the popular M4A audio engine,
+# but increases CPU load and may break some games.
+m4a_xq_enable = false
