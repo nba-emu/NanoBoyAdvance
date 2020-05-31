@@ -224,7 +224,7 @@ void CPU::RunFor(int cycles) {
         if (irq_controller.MasterEnable() && has_servable_irq) {
           if (!irq.processing) {
             irq.processing = true;
-            irq.countdown = 6;
+            irq.countdown = 3;
           } else if (irq.countdown < 0) {
             SignalIRQ();
           }
