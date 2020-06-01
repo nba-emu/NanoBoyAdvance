@@ -184,8 +184,6 @@ void PPU::OnHblankComplete() {
     /* Reset vertical mosaic counters */
     mosaic.bg._counter_y = 0;
     mosaic.obj._counter_y = 0;
-    
-    
   } else {
     /* Advance vertical background mosaic counter */
     if (++mosaic.bg._counter_y == mosaic.bg.size_y) {
@@ -233,7 +231,6 @@ void PPU::OnVblankHblankComplete() {
   if (vcount == 227) {
     /* Update vertical counter. */
     vcount = 0;
-    dispstat.vcount_flag = dispstat.vcount_setting == 0;
 
     /* Leave vertical blanking mode, render first scanline. */
     SetNextEvent(Phase::SCANLINE);
