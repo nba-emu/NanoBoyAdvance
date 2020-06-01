@@ -42,7 +42,7 @@ On Arch Linux:\
 On an Ubuntu or Debian derived system:\
 `apt install cmake libsdl2-dev libglew-dev`
 
-On macOS:\
+On macOS:
 - install macOS 10.15 SDK for OpenGL support
 - SDL2: `brew install sdl2`
 - GLEW: `brew install glew`
