@@ -49,6 +49,9 @@ void PPU::RenderLayerOAM(bool bitmap_mode) {
   
   line_contains_alpha_obj = false;
   
+  int cycles = 0;
+  int cycle_limit = mmio.dispcnt.hblank_oam_access ? 954 : 1210;
+
   /* TODO: check if there is a faster way to initialize the array. */
   for (int x = 0; x < 240; x++) {
     buffer_obj[x].priority = 4;
@@ -102,6 +105,8 @@ void PPU::RenderLayerOAM(bool bitmap_mode) {
     x += half_width;
     y += half_height;
 
+    int cycles_per_pixel = 1;
+
     /* Load transform matrix. */
     if (affine) {
       int group = ((attr1 >> 9) & 0x1F) << 5;
@@ -121,6 +126,8 @@ void PPU::RenderLayerOAM(bool bitmap_mode) {
         half_width  *= 2;
         half_height *= 2;
       }
+
+      cycles_per_pixel = 2;
     } else {
       /* Set transform to identity:
        * [ 1 0 ]
@@ -162,10 +169,20 @@ void PPU::RenderLayerOAM(bool bitmap_mode) {
       local_y -= mmio.mosaic.obj._counter_y;
     }
     
+    if (affine) {
+      cycles += 10;
+    }
+
     /* Render OBJ scanline. */
     for (int local_x = -half_width; local_x <= half_width; local_x++) {
       int _local_x = local_x - mosaic_x;
       int global_x = local_x + x;
+
+      if (cycles > cycle_limit) {
+        return;
+      }
+
+      cycles += cycles_per_pixel;
 
       if (mosaic && (++mosaic_x == mmio.mosaic.obj.size_x)) {
         mosaic_x = 0;
