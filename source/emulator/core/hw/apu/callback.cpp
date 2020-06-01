@@ -5,6 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
+#include <algorithm>
 #include <cmath>
 
 #include "apu.hpp"
@@ -17,10 +18,15 @@ void AudioCallback(APU* apu, std::int16_t* stream, int byte_len) {
   int samples = byte_len/sizeof(std::int16_t)/2;
   int available = apu->buffer->Available();
   
+  static constexpr float kMaxAmplitude = 0.999;
+  
   if (available >= samples) {
     for (int x = 0; x < samples; x++) {
-      auto sample = apu->buffer->Read() * 32767.0;
-      
+      auto sample = apu->buffer->Read();
+      sample[0] = std::clamp(sample[0], -kMaxAmplitude, kMaxAmplitude);
+      sample[1] = std::clamp(sample[1], -kMaxAmplitude, kMaxAmplitude);
+      sample *= 32767.0;
+
       stream[x*2+0] = std::int16_t(std::round(sample.left));
       stream[x*2+1] = std::int16_t(std::round(sample.right));
     }
@@ -28,7 +34,10 @@ void AudioCallback(APU* apu, std::int16_t* stream, int byte_len) {
     int y = 0;
     
     for (int x = 0; x < samples; x++) {
-      auto sample = apu->buffer->Peek(y) * 32767.0;
+      auto sample = apu->buffer->Peek(y);
+      sample[0] = std::clamp(sample[0], -kMaxAmplitude, kMaxAmplitude);
+      sample[1] = std::clamp(sample[1], -kMaxAmplitude, kMaxAmplitude);
+      sample *= 32767.0;
     
       if (++y == available) y = 0;
       
