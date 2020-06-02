@@ -32,10 +32,9 @@ public:
   }
   
   auto Read() -> std::int8_t {
-    std::int8_t value = 0;
+    std::int8_t value = data[rd_ptr];
     
     if (count > 0) {
-      value = data[rd_ptr];
       rd_ptr = (rd_ptr + 1) % s_fifo_len;
       count--;
     }
