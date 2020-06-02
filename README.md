@@ -25,7 +25,7 @@ variety of edge-cases and undefined behaviour.
 
 ## Compiling
 
-NanoboyAdvance can be compiled on Windows and Linux (Mac OS X and FreeBSD should work, but are not tested).
+NanoboyAdvance can be compiled on Windows, Linux and macOS (FreeBSD should work, but are not tested).
 A modern C++17-capable compiler such as Clang/Clang-CL or G++ is mandatory.
 MSVC is not supported and most definitely doesn't work in the default configuration (stack overflow while parsing templated code).
 
@@ -41,6 +41,11 @@ On Arch Linux:\
 
 On an Ubuntu or Debian derived system:\
 `apt install cmake libsdl2-dev libglew-dev`
+
+On macOS:
+- install macOS 10.15 SDK for OpenGL support
+- SDL2: `brew install sdl2`
+- GLEW: `brew install glew`
 
 ### Clone Git repository
 
@@ -62,6 +67,13 @@ cmake ..
 ```
 A final `make` then compiles the emulator.
 The compiled executables then can be found in `build/source/platform/`.
+
+#### macOS
+As a workaround you may need to manually expose GLEW headers:
+```bash
+export CPPFLAGS="$CPPFLAGS -I/usr/local/opt/glew/include"
+```
+Otherwise the build process should be identical to Linux.
 
 #### Windows
 
