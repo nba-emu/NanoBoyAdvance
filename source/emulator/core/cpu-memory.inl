@@ -26,6 +26,10 @@ inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
 inline std::uint32_t CPU::ReadUnused(std::uint32_t address) {
   std::uint32_t result = 0;
   
+  if (dma.IsRunning()) {
+    return dma.GetOpenBusValue() >> ((address & 3) * 8);
+  }
+
   if (state.cpsr.f.thumb) {
     auto r15 = state.r15;
   

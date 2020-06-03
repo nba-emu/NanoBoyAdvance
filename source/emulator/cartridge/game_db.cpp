@@ -126,7 +126,7 @@ const std::map<std::string, GameInfo> g_game_db {
   { "BJBE", { Config::BackupType::EEPROM_4, GPIODeviceType::None, false } },  /* 007 - Everything or Nothing (USA, Europe) (En,Fr,De) */
   { "BJBJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, false } },  /* 007 - Everything or Nothing (Japan) */
   { "ALUP", { Config::BackupType::EEPROM_4, GPIODeviceType::None, false } },  /* 0937 - Super Monkey Ball Jr. (Europe) */
-  { "ALUE", { Config::BackupType::EEPROM_4, GPIODeviceType::None, false } },  /* 0763 - Super Monkey Ball Jr. (USA) */
+  { "ALUE", { Config::BackupType::EEPROM_4, GPIODeviceType::None, false } }   /* 0763 - Super Monkey Ball Jr. (USA) */
 };
 
 } // namespace nba

@@ -42,7 +42,9 @@ public:
   auto Read (int chan_id, int offset) -> std::uint8_t;
   void Write(int chan_id, int offset, std::uint8_t value);
   bool IsRunning() { return runnable.any(); }
+  auto GetOpenBusValue() -> std::uint32_t { return latch; }
   
+private:
   constexpr bool CheckDestinationAddress(int chan_id, int page) {
     /* Only DMA3 may write to cartridge area. */
     return chan_id == 3 || page < 0x08;
@@ -67,8 +69,7 @@ public:
     
     return page;
   }
-  
-private:
+
   void TryStart(int chan_id);
   void OnChannelWritten(int chan_id, bool enabled_old);
   
