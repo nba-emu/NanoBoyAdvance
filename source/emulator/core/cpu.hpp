@@ -18,8 +18,8 @@
 #include "hw/apu/apu.hpp"
 #include "hw/ppu/ppu.hpp"
 #include "hw/dma.hpp"
+#include "hw/interrupt.hpp"
 #include "hw/timer.hpp"
-#include "interrupt.hpp"
 #include "scheduler.hpp"
 
 namespace nba::core {
@@ -70,8 +70,8 @@ public:
       std::uint32_t mask = 0x1FFFFFF;
 
       std::unique_ptr<nba::GPIO> gpio;
-      std::unique_ptr<nba::Backup> backup;
-      Config::BackupType backup_type = Config::BackupType::Detect;
+      std::unique_ptr<nba::Backup> backup_sram;
+      std::unique_ptr<nba::Backup> backup_eeprom;
     } rom;
 
     /* Last opcode fetched from BIOS memory. */
@@ -110,31 +110,22 @@ public:
 private:
   template <typename T>
   auto Read(void* buffer, std::uint32_t address) -> T {
-    return *(T*)(&((std::uint8_t*)buffer)[address]);
+    return *reinterpret_cast<T*>(&(reinterpret_cast<std::uint8_t*>(buffer))[address]);
   }
   
   template <typename T>
   void Write(void* buffer, std::uint32_t address, T value) {
-    *(T*)(&((std::uint8_t*)buffer)[address]) = value;
-  }
-
-  bool HasEEPROMBackup() const {
-    return memory.rom.backup_type == Config::BackupType::EEPROM_4 ||
-           memory.rom.backup_type == Config::BackupType::EEPROM_64;
+    *reinterpret_cast<T*>(&(reinterpret_cast<std::uint8_t*>(buffer))[address]) = value;
   }
   
   bool IsGPIOAccess(std::uint32_t address) {
     // NOTE: we do not check if the address lies within ROM, since
     // it is not required in the context. This should be reflected in the name though.
-    return memory.rom.gpio != nullptr && address >= 0xC4 && address <= 0xC8;
+    return memory.rom.gpio && address >= 0xC4 && address <= 0xC8;
   }
 
   bool IsEEPROMAccess(std::uint32_t address) {
-    return HasEEPROMBackup() && ((~memory.rom.size & 0x02000000) || address >= 0x0DFFFF00);
-  }
-
-  bool IsROMAddress(std::uint32_t address) {
-    return address >= 0x08000000 && address <= 0x0EFFFFFF;
+    return memory.rom.backup_eeprom && ((~memory.rom.size & 0x02000000) || address >= 0x0DFFFF00);
   }
 
   auto ReadMMIO (std::uint32_t address) -> std::uint8_t;
@@ -153,7 +144,6 @@ private:
   void Idle() final;
   void PrefetchStepRAM(int cycles);
   void PrefetchStepROM(std::uint32_t address, int cycles);
-  
   void UpdateMemoryDelayTable();
 
   void M4ASearchForSampleFreqSet();

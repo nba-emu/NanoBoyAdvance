@@ -8,7 +8,7 @@
 #pragma once
 
 #include <cstdint>
-#include <emulator/core/interrupt.hpp>
+#include <emulator/core/hw/interrupt.hpp>
 
 #include "apu/apu.hpp"
 
