@@ -70,24 +70,18 @@ auto Emulator::DetectBackupType(std::uint8_t* rom, size_t size) -> BackupType {
 
 auto Emulator::CreateBackupInstance(Config::BackupType backup_type, std::string save_path) -> Backup* {
   switch (backup_type) {
-    case BackupType::SRAM: {
+    case BackupType::SRAM:
       return new SRAM(save_path);
-    }
-    case BackupType::FLASH_64: {
+    case BackupType::FLASH_64:
       return new FLASH(save_path, FLASH::SIZE_64K);
-    }
-    case BackupType::FLASH_128: {
+    case BackupType::FLASH_128:
       return new FLASH(save_path, FLASH::SIZE_128K);
-    }
-    case BackupType::EEPROM_4: {
+    case BackupType::EEPROM_4:
       return new EEPROM(save_path, EEPROM::SIZE_4K);
-    }
-    case BackupType::EEPROM_64: {
+    case BackupType::EEPROM_64:
       return new EEPROM(save_path, EEPROM::SIZE_64K);
-    }
-    default: {
+    default:
       throw std::logic_error("CreateBackupInstance: bad backup type 'Detect'.");
-    }
   }
 }
 
@@ -215,11 +209,16 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   LOG_INFO("RTC:    {0}", game_info.gpio == GPIODeviceType::RTC);
   LOG_INFO("Mirror: {0}", game_info.mirror);
   
-  /* Mount cartridge into the cartridge slot ;-) */
+  /* Mount cartridge into the cartridge slot. */
   cpu.memory.rom.data = std::move(rom);
   cpu.memory.rom.size = size;
-  cpu.memory.rom.backup_type = game_info.backup_type;
-  cpu.memory.rom.backup = std::unique_ptr<Backup>{ CreateBackupInstance(game_info.backup_type, save_path) };
+  if (game_info.backup_type == Config::BackupType::EEPROM_4 || game_info.backup_type == Config::BackupType::EEPROM_64) {
+    cpu.memory.rom.backup_sram.reset();
+    cpu.memory.rom.backup_eeprom = std::unique_ptr<Backup>{ CreateBackupInstance(game_info.backup_type, save_path) };
+  } else {
+    cpu.memory.rom.backup_sram = std::unique_ptr<Backup>{ CreateBackupInstance(game_info.backup_type, save_path) };
+    cpu.memory.rom.backup_eeprom.reset();
+  }
 
   /* Create and mount RTC if necessary. */
   if (game_info.gpio == GPIODeviceType::RTC || config->force_rtc) {

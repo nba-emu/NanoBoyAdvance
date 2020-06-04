@@ -132,8 +132,8 @@ inline auto CPU::ReadByte(std::uint32_t address, Access access) -> std::uint8_t 
   case REGION_SRAM_2: {
     PrefetchStepROM(address, cycles);
     address &= 0x0EFFFFFF;
-    if (memory.rom.backup && !HasEEPROMBackup()) {
-      return memory.rom.backup->Read(address);
+    if (memory.rom.backup_sram) {
+      return memory.rom.backup_sram->Read(address);
     }
     return 0;
   }  
@@ -194,7 +194,7 @@ inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t
       if (!dma.IsRunning()) {
         return 1;
       }
-      return memory.rom.backup->Read(address);
+      return memory.rom.backup_eeprom->Read(address);
     }
     [[fallthrough]];
   }
@@ -222,8 +222,8 @@ inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t
   case REGION_SRAM_2: {
     PrefetchStepROM(address, cycles);
     address &= 0x0EFFFFFF;
-    if (memory.rom.backup && !HasEEPROMBackup()) {
-      return memory.rom.backup->Read(address) * 0x0101;
+    if (memory.rom.backup_sram) {
+      return memory.rom.backup_sram->Read(address) * 0x0101;
     }
     return 0;
   }
@@ -305,8 +305,8 @@ inline auto CPU::ReadWord(std::uint32_t address, Access access) -> std::uint32_t
   case REGION_SRAM_2: {
     PrefetchStepROM(address, cycles);
     address &= 0x0EFFFFFF;
-    if (memory.rom.backup && !HasEEPROMBackup()) {
-      return memory.rom.backup->Read(address) * 0x01010101;
+    if (memory.rom.backup_sram) {
+      return memory.rom.backup_sram->Read(address) * 0x01010101;
     }
     return 0;
   }
@@ -357,8 +357,8 @@ inline void CPU::WriteByte(std::uint32_t address, std::uint8_t value, Access acc
   case REGION_SRAM_2: {
     PrefetchStepROM(address, cycles);
     address &= 0x0EFFFFFF;
-    if (memory.rom.backup && !HasEEPROMBackup()) {
-      memory.rom.backup->Write(address, value);
+    if (memory.rom.backup_sram) {
+      memory.rom.backup_sram->Write(address, value);
     }
     break;
   }
@@ -427,7 +427,7 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, Access ac
       if (!dma.IsRunning()) {
         break;
       }
-      memory.rom.backup->Write(address, value);
+      memory.rom.backup_eeprom->Write(address, value);
       break;
     }
     address &= 0x1FFFFFF;
@@ -442,8 +442,8 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, Access ac
   case REGION_SRAM_2: {
     PrefetchStepROM(address, cycles);
     address &= 0x0EFFFFFF;
-    if (memory.rom.backup && !HasEEPROMBackup()) {
-      memory.rom.backup->Write(address, value >> ((address & 1) * 8));
+    if (memory.rom.backup_sram) {
+      memory.rom.backup_sram->Write(address, value >> ((address & 1) * 8));
     }
     break;
   }
@@ -514,8 +514,8 @@ inline void CPU::WriteWord(std::uint32_t address, std::uint32_t value, Access ac
   case REGION_SRAM_2: {
     PrefetchStepROM(address, cycles);
     address &= 0x0EFFFFFF;
-    if (memory.rom.backup && !HasEEPROMBackup()) {
-      memory.rom.backup->Write(address, value >> ((address & 3) * 8));
+    if (memory.rom.backup_sram) {
+      memory.rom.backup_sram->Write(address, value >> ((address & 3) * 8));
     }
     break;
   }
