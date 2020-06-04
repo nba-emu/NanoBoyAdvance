@@ -38,6 +38,7 @@ set(SOURCES
   emulator/core/hw/timer.cpp
   emulator/core/cpu.cpp
   emulator/core/cpu-mmio.cpp
+  emulator/core/interrupt.cpp
 
   # Emulator
   emulator/emulator.cpp
