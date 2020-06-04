@@ -499,7 +499,6 @@ inline void CPU::WriteWord(std::uint32_t address, std::uint32_t value, Access ac
   case REGION_ROM_W1_L: case REGION_ROM_W1_H:
   case REGION_ROM_W2_L: case REGION_ROM_W2_H: {
     PrefetchStepROM(address, cycles);
-    /* TODO: check what happens on 32-bit EEPROM accesses. */
     address &= 0x1FFFFFF;
     if (IsGPIOAccess(address)) {
       memory.rom.gpio->Write(address + 0, (value >>  0) & 0xFF);
