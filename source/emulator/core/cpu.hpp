@@ -18,8 +18,8 @@
 #include "hw/apu/apu.hpp"
 #include "hw/ppu/ppu.hpp"
 #include "hw/dma.hpp"
+#include "hw/interrupt.hpp"
 #include "hw/timer.hpp"
-#include "interrupt.hpp"
 #include "scheduler.hpp"
 
 namespace nba::core {

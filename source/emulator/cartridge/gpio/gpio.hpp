@@ -9,7 +9,7 @@
 
 #include <cassert>
 #include <emulator/core/scheduler.hpp>
-#include <emulator/core/interrupt.hpp>
+#include <emulator/core/hw/interrupt.hpp>
 
 namespace nba {
 

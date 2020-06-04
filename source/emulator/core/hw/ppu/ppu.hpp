@@ -9,8 +9,8 @@
 
 #include <emulator/config/config.hpp>
 #include <emulator/core/hw/dma.hpp>
+#include <emulator/core/hw/interrupt.hpp>
 #include <emulator/core/scheduler.hpp>
-#include <emulator/core/interrupt.hpp>
 #include <cstdint>
 #include <functional>
 
