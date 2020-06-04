@@ -132,6 +132,9 @@ inline auto CPU::ReadByte(std::uint32_t address, Access access) -> std::uint8_t 
   case REGION_SRAM_2: {
     PrefetchStepROM(address, cycles);
     address &= 0x0EFFFFFF;
+    if (IsGPIOAccess(address) && memory.rom.gpio->IsReadable()) {
+      return memory.rom.gpio->Read(address);
+    }
     if (memory.rom.backup_sram) {
       return memory.rom.backup_sram->Read(address);
     }
@@ -210,8 +213,7 @@ inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t
     }
     address &= memory.rom.mask;
     if (IsGPIOAccess(address) && memory.rom.gpio->IsReadable()) {
-      return memory.rom.gpio->Read(address + 0) |
-            (memory.rom.gpio->Read(address + 1) << 8);
+      return memory.rom.gpio->Read(address);
     }
     if (address >= memory.rom.size) {
       return address / 2;
@@ -291,9 +293,7 @@ inline auto CPU::ReadWord(std::uint32_t address, Access access) -> std::uint32_t
     address &= memory.rom.mask;
     if (IsGPIOAccess(address) && memory.rom.gpio->IsReadable()) {
       return memory.rom.gpio->Read(address + 0) |
-            (memory.rom.gpio->Read(address + 1) <<  8) |
-            (memory.rom.gpio->Read(address + 2) << 16) |
-            (memory.rom.gpio->Read(address + 3) << 24);
+            (memory.rom.gpio->Read(address + 2) << 16);
     }
     if (address >= memory.rom.size) {
       return (((address + 0) / 2) & 0xFFFF) |
@@ -432,8 +432,7 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, Access ac
     }
     address &= 0x1FFFFFF;
     if (IsGPIOAccess(address)) {
-      memory.rom.gpio->Write(address + 0, value & 0xFF);
-      memory.rom.gpio->Write(address + 1, value >> 8);
+      memory.rom.gpio->Write(address, value & 0xFF);
       break;
     }
     break;
@@ -504,9 +503,7 @@ inline void CPU::WriteWord(std::uint32_t address, std::uint32_t value, Access ac
     address &= 0x1FFFFFF;
     if (IsGPIOAccess(address)) {
       memory.rom.gpio->Write(address + 0, (value >>  0) & 0xFF);
-      memory.rom.gpio->Write(address + 1, (value >>  8) & 0xFF);
       memory.rom.gpio->Write(address + 2, (value >> 16) & 0xFF);
-      memory.rom.gpio->Write(address + 3, (value >> 24) & 0xFF);
     }
     break;
   }
