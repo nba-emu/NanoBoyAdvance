@@ -37,7 +37,9 @@ void CPU::Reset() {
   std::memset(memory.iram, 0, 0x08000);
 
   irq = {};
-  mmio.waitcnt = {};
+  mmio = {};
+  prefetch = {};
+  last_rom_address = 0;
   UpdateMemoryDelayTable();
   
   for (int i = 16; i < 256; i++) {
@@ -46,10 +48,6 @@ void CPU::Reset() {
     cycles16[int(Access::Sequential)][i] = 1;
     cycles32[int(Access::Sequential)][i] = 1;
   }
-  
-  /* Reset prefetch buffer */
-  prefetch = {};
-  last_rom_address = 0;
   
   /* TODO: properly reset the scheduler */
   irq_controller.Reset();

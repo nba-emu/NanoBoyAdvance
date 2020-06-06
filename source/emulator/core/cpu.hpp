@@ -60,9 +60,9 @@ public:
   std::shared_ptr<Config> config;
 
   struct SystemMemory {
-    std::uint8_t bios[0x04000]{ 0 };
-    std::uint8_t wram[0x40000]{ 0 };
-    std::uint8_t iram[0x08000]{ 0 };
+    std::uint8_t bios[0x04000];
+    std::uint8_t wram[0x40000];
+    std::uint8_t iram[0x08000];
 
     struct ROM {
       std::unique_ptr<uint8_t[]> data;
@@ -78,9 +78,9 @@ public:
 
   struct MMIO {
     std::uint16_t keyinput = 0x3FF;
-    HaltControl haltcnt = HaltControl::RUN;
-    std::uint8_t postflg = 0;
     std::uint16_t rcnt_hack = 0;
+    std::uint8_t postflg = 0;
+    HaltControl haltcnt = HaltControl::RUN;
 
     struct WaitstateControl {
       int sram = 0;
