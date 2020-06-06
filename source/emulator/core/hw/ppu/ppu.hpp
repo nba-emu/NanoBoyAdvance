@@ -110,7 +110,7 @@ private:
   void Tick();
 
   void UpdateInternalAffineRegisters();
-  void CheckForVcountIRQ();
+  void CheckVerticalCounterIRQ();
 
   void SetNextEvent(Phase phase);
   void OnScanlineComplete();

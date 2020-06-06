@@ -308,7 +308,7 @@ void CPU::M4ASampleFreqSetHook() {
       soundinfo_p2 = Read<std::uint32_t>(memory.iram, soundinfo_p1 & 0x00FFFFFF);
       break;
     default:
-      LOG_ERROR("M$A SoundInfo pointer is outside of IWRAM or EWRAM, unsupported.");
+      LOG_ERROR("M4A SoundInfo pointer is outside of IWRAM or EWRAM, unsupported.");
       return;
   }
   

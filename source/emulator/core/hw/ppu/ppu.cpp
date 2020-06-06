@@ -72,6 +72,11 @@ void PPU::Reset() {
   SetNextEvent(Phase::SCANLINE);
 }
 
+void PPU::SetNextEvent(Phase phase) {
+  this->phase = phase;
+  event.countdown += s_wait_cycles[static_cast<int>(phase)];
+}
+
 void PPU::Tick() {
   switch (phase) {
     case Phase::SCANLINE:
@@ -121,18 +126,13 @@ void PPU::UpdateInternalAffineRegisters() {
   }
 }
 
-void PPU::CheckForVcountIRQ() {
+void PPU::CheckVerticalCounterIRQ() {
   auto& dispstat = mmio.dispstat;
   auto vcount_flag_new = dispstat.vcount_setting == mmio.vcount;
   if (dispstat.vcount_irq_enable && !dispstat.vcount_flag && vcount_flag_new) {
     irq_controller->Raise(InterruptSource::VCount);
   }
   dispstat.vcount_flag = vcount_flag_new;
-}
-
-void PPU::SetNextEvent(Phase phase) {
-  this->phase = phase;
-  event.countdown += s_wait_cycles[static_cast<int>(phase)];
 }
 
 void PPU::OnScanlineComplete() {
@@ -162,12 +162,11 @@ void PPU::OnHblankComplete() {
   
   dispstat.hblank_flag = 0;
   vcount++;
-  CheckForVcountIRQ();
+  CheckVerticalCounterIRQ();
 
   if (vcount == 160) {
     config->video_dev->Draw(output);
     
-    /* Enter vertical blanking mode */
     SetNextEvent(Phase::VBLANK_SCANLINE);
     dma->Request(DMA::Occasion::VBlank);
     dispstat.vblank_flag = 1;
@@ -190,7 +189,6 @@ void PPU::OnHblankComplete() {
       mosaic.obj._counter_y = 0;
     }
     
-    /* Continue to render the next scanline */
     SetNextEvent(Phase::SCANLINE);
   }
 
@@ -200,9 +198,6 @@ void PPU::OnHblankComplete() {
 void PPU::OnVblankScanlineComplete() {
   auto& dispstat = mmio.dispstat;
   
-  /* NOTE: HBlank during VBlank does not appear to trigger HBlank DMA.
-   * Contrary to GBATEK, HBlank IRQs however appear to happen.
-   */
   SetNextEvent(Phase::VBLANK_HBLANK);
   dispstat.hblank_flag = 1;
   
@@ -224,21 +219,17 @@ void PPU::OnVblankHblankComplete() {
   dispstat.hblank_flag = 0;
     
   if (vcount == 227) {
-    /* Update vertical counter. */
     vcount = 0;
-
-    /* Leave vertical blanking mode, render first scanline. */
     SetNextEvent(Phase::SCANLINE);
   } else {
     SetNextEvent(Phase::VBLANK_SCANLINE);
     if (vcount == 226) {
       dispstat.vblank_flag = 0;
     }
-
     vcount++;
   }
 
-  CheckForVcountIRQ();
+  CheckVerticalCounterIRQ();
 }
 
 } // namespace nba::core
