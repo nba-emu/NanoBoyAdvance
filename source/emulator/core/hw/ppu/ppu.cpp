@@ -74,26 +74,21 @@ void PPU::Reset() {
 
 void PPU::Tick() {
   switch (phase) {
-    case Phase::SCANLINE: {
+    case Phase::SCANLINE:
       OnScanlineComplete();
       break;
-    }
-    case Phase::HBLANK_SEARCH: {
+    case Phase::HBLANK_SEARCH:
       OnHblankSearchComplete();
       break;
-    }
-    case Phase::HBLANK: {
+    case Phase::HBLANK:
       OnHblankComplete();
       break;
-    }
-    case Phase::VBLANK_SCANLINE: {
+    case Phase::VBLANK_SCANLINE:
       OnVblankScanlineComplete();
       break;
-    }
-    case Phase::VBLANK_HBLANK: {
+    case Phase::VBLANK_HBLANK:
       OnVblankHblankComplete();
       break;
-    }
   }
 }
 

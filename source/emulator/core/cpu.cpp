@@ -172,7 +172,6 @@ void CPU::PrefetchStepROM(std::uint32_t address, int cycles) {
 void CPU::RunFor(int cycles) {
   bool m4a_xq_enable = config->audio.m4a_xq_enable && m4a_setfreq_address != 0;
 
-
   // TODO: this could end up very slow if RunFor is called too often per second.
   if (m4a_xq_enable && m4a_soundinfo != nullptr) {
     M4AFixupPercussiveChannels();
