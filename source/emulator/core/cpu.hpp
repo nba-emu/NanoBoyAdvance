@@ -60,44 +60,40 @@ public:
   std::shared_ptr<Config> config;
 
   struct SystemMemory {
-    std::uint8_t bios[0x04000];
-    std::uint8_t wram[0x40000];
-    std::uint8_t iram[0x08000];
+    std::uint8_t bios[0x04000]{ 0 };
+    std::uint8_t wram[0x40000]{ 0 };
+    std::uint8_t iram[0x08000]{ 0 };
 
     struct ROM {
       std::unique_ptr<uint8_t[]> data;
       size_t size;
       std::uint32_t mask = 0x1FFFFFF;
-
       std::unique_ptr<nba::GPIO> gpio;
       std::unique_ptr<nba::Backup> backup_sram;
       std::unique_ptr<nba::Backup> backup_eeprom;
     } rom;
 
-    /* Last opcode fetched from BIOS memory. */
-    std::uint32_t bios_opcode;
+    std::uint32_t bios_latch = 0;
   } memory;
 
   struct MMIO {
-    std::uint16_t keyinput;
-
-    HaltControl haltcnt;
-    std::uint8_t postflg;
+    std::uint16_t keyinput = 0x3FF;
+    HaltControl haltcnt = HaltControl::RUN;
+    std::uint8_t postflg = 0;
+    std::uint16_t rcnt_hack = 0;
 
     struct WaitstateControl {
-      int sram;
-      int ws0_n;
-      int ws0_s;
-      int ws1_n;
-      int ws1_s;
-      int ws2_n;
-      int ws2_s;
-      int phi;
-      int prefetch;
-      int cgb;
+      int sram = 0;
+      int ws0_n = 0;
+      int ws0_s = 0;
+      int ws1_n = 0;
+      int ws1_s = 0;
+      int ws2_n = 0;
+      int ws2_s = 0;
+      int phi = 0;
+      int prefetch = 0;
+      int cgb = 0;
     } waitcnt;
-
-    std::uint16_t rcnt_hack;
   } mmio; 
   
   Scheduler scheduler;
@@ -156,21 +152,20 @@ private:
 
   /* GamePak prefetch buffer state. */
   struct Prefetch {
-    bool active;
+    bool active = false;
     std::uint32_t address[8];
     std::uint32_t last_address;
-    int rd_pos;
-    int wr_pos;
-    int count;
+    int rd_pos = 0;
+    int wr_pos = 0;
+    int count = 0;
     int countdown;
   } prefetch;
   
-  /* Last ROM address that was accessed. Used for GamePak prefetch. */
   std::uint32_t last_rom_address;
 
   struct IRQ {
-    bool processing;
-    int countdown;
+    bool processing = false;
+    int countdown = 0;
   } irq;
 
   int cycles16[2][256] {

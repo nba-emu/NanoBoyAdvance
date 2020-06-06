@@ -15,12 +15,12 @@ inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
   }
   
   if (state.r15 >= 0x4000) {
-    return memory.bios_opcode >> shift;
+    return memory.bios_latch >> shift;
   }
 
-  memory.bios_opcode = Read<std::uint32_t>(memory.bios, address);
+  memory.bios_latch = Read<std::uint32_t>(memory.bios, address);
 
-  return memory.bios_opcode >> shift;
+  return memory.bios_latch >> shift;
 }
 
 inline std::uint32_t CPU::ReadUnused(std::uint32_t address) {

@@ -36,25 +36,8 @@ void CPU::Reset() {
   std::memset(memory.wram, 0, 0x40000);
   std::memset(memory.iram, 0, 0x08000);
 
-  irq.processing = false;
-  irq.countdown = 0;
-
-  mmio.keyinput = 0x3FF;
-  mmio.haltcnt = HaltControl::RUN;
-  mmio.postflg = 0;
-  mmio.rcnt_hack = 0;
-
-  /* Reset waitstates */
-  mmio.waitcnt.sram = 0;
-  mmio.waitcnt.ws0_n = 0;
-  mmio.waitcnt.ws0_s = 0;
-  mmio.waitcnt.ws1_n = 0;
-  mmio.waitcnt.ws1_s = 0;
-  mmio.waitcnt.ws2_n = 0;
-  mmio.waitcnt.ws2_s = 0;
-  mmio.waitcnt.phi = 0;
-  mmio.waitcnt.prefetch = 0;
-  mmio.waitcnt.cgb = 0;
+  irq = {};
+  mmio.waitcnt = {};
   UpdateMemoryDelayTable();
   
   for (int i = 16; i < 256; i++) {
@@ -65,10 +48,7 @@ void CPU::Reset() {
   }
   
   /* Reset prefetch buffer */
-  prefetch.active = false;
-  prefetch.rd_pos = 0;
-  prefetch.wr_pos = 0;
-  prefetch.count = 0;
+  prefetch = {};
   last_rom_address = 0;
   
   /* TODO: properly reset the scheduler */
