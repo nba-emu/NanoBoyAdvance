@@ -115,27 +115,29 @@ inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t
   }
   case REGION_EWRAM: {
     PrefetchStepRAM(cycles);
-    return Read<std::uint16_t>(memory.wram, address & 0x3FFFF);
+    return UpdateOpenBusDup16(Read<std::uint16_t>(memory.wram, address & 0x3FFFF));
   }
   case REGION_IWRAM: {
     PrefetchStepRAM(cycles);
-    return Read<std::uint16_t>(memory.iram, address & 0x7FFF);
+    return UpdateOpenBusIWRAM16(address, Read<std::uint16_t>(memory.iram, address & 0x7FFF));
   }
   case REGION_MMIO: {
+    // TODO: figure out open bus behaviour.
+    // We likely have to fetch the whole 32-bit IO register...
     PrefetchStepRAM(cycles);
     return  ReadMMIO(address + 0) |
            (ReadMMIO(address + 1) << 8);
   }
   case REGION_PRAM: {
     PrefetchStepRAM(cycles);
-    return Read<std::uint16_t>(ppu.pram, address & 0x3FF);
+    return UpdateOpenBusDup16(Read<std::uint16_t>(ppu.pram, address & 0x3FF));
   }
   case REGION_VRAM: {
     PrefetchStepRAM(cycles);
     address &= 0x1FFFF;
     if (address >= 0x18000)
       address &= ~0x8000;
-    return Read<std::uint16_t>(ppu.vram, address);
+    return UpdateOpenBusDup16(Read<std::uint16_t>(ppu.vram, address));
   }
   case REGION_OAM: {
     PrefetchStepRAM(cycles);
@@ -148,9 +150,9 @@ inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t
     if (IsEEPROMAccess(address)) {
       /* TODO: this is not a very nice way to do this. */
       if (!dma.IsRunning()) {
-        return 1;
+        return UpdateOpenBusDup16(1);
       }
-      return memory.rom.backup_eeprom->Read(address);
+      return UpdateOpenBusDup16(memory.rom.backup_eeprom->Read(address));
     }
     [[fallthrough]];
   }
@@ -166,19 +168,20 @@ inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t
     }
     address &= memory.rom.mask;
     if (IsGPIOAccess(address) && memory.rom.gpio->IsReadable()) {
-      return memory.rom.gpio->Read(address);
+      return UpdateOpenBusDup16(memory.rom.gpio->Read(address));
     }
     if (address >= memory.rom.size) {
-      return address / 2;
+      return UpdateOpenBusDup16(address / 2);
     }
-    return Read<std::uint16_t>(memory.rom.data.get(), address);
+    return UpdateOpenBusDup16(Read<std::uint16_t>(memory.rom.data.get(), address));
   }
   case REGION_SRAM_1:
   case REGION_SRAM_2: {
+    // TODO: confirm that the bus duplicates the 16-bit word for SRAM/FLASH as well.
     PrefetchStepROM(address, cycles);
     address &= 0x0EFFFFFF;
     if (memory.rom.backup_sram) {
-      return memory.rom.backup_sram->Read(address) * 0x0101;
+      return UpdateOpenBusDup16(memory.rom.backup_sram->Read(address) * 0x0101);
     }
     return 0;
   }
