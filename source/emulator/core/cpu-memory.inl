@@ -64,7 +64,7 @@ inline auto CPU::ReadByte(std::uint32_t address, Access access) -> std::uint8_t 
   }
   case REGION_OAM: {
     PrefetchStepRAM(cycles);
-    return UpdateOpenBus32(Read<std::uint32_t>(ppu.oam, address & 0x3FF)) >> ((address & 3) * 8);
+    return UpdateOpenBus32(Read<std::uint32_t>(ppu.oam, address & 0x3FC)) >> ((address & 3) * 8);
   }
   case REGION_ROM_W0_L:
   case REGION_ROM_W0_H:
@@ -144,7 +144,7 @@ inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t
   }
   case REGION_OAM: {
     PrefetchStepRAM(cycles);
-    return UpdateOpenBus32(Read<std::uint32_t>(ppu.oam, address & 0x3FF)) >> ((address & 3) * 8);
+    return UpdateOpenBus32(Read<std::uint32_t>(ppu.oam, address & 0x3FC)) >> ((address & 3) * 8);
   } 
   /* 0x0DXXXXXX may be used to read/write from EEPROM */
   case REGION_ROM_W2_H: {
