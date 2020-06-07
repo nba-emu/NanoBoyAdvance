@@ -39,26 +39,28 @@ inline auto CPU::ReadByte(std::uint32_t address, Access access) -> std::uint8_t 
   }
   case REGION_EWRAM: {
     PrefetchStepRAM(cycles);
-    return Read<std::uint8_t>(memory.wram, address & 0x3FFFF);
+    return UpdateOpenBusDup8(Read<std::uint8_t>(memory.wram, address & 0x3FFFF));
   }
   case REGION_IWRAM: {
     PrefetchStepRAM(cycles);
-    return Read<std::uint8_t>(memory.iram, address & 0x7FFF);
+    return UpdateOpenBusIWRAM8(address, Read<std::uint8_t>(memory.iram, address & 0x7FFF));
   }
   case REGION_MMIO: {
+    // TODO: figure out open bus behaviour.
+    // We likely have to fetch the whole 32-bit IO register...
     PrefetchStepRAM(cycles);
     return ReadMMIO(address);
   }
   case REGION_PRAM: {
     PrefetchStepRAM(cycles);
-    return Read<std::uint8_t>(ppu.pram, address & 0x3FF);
+    return UpdateOpenBusDup8(Read<std::uint8_t>(ppu.pram, address & 0x3FF));
   }
   case REGION_VRAM: {
     PrefetchStepRAM(cycles);
     address &= 0x1FFFF;
     if (address >= 0x18000)
       address &= ~0x8000;
-    return Read<std::uint8_t>(ppu.vram, address);
+    return UpdateOpenBusDup8(Read<std::uint8_t>(ppu.vram, address));
   }
   case REGION_OAM: {
     PrefetchStepRAM(cycles);
@@ -77,19 +79,20 @@ inline auto CPU::ReadByte(std::uint32_t address, Access access) -> std::uint8_t 
     }
     address &= memory.rom.mask;
     if (address >= memory.rom.size) {
-      return (address / 2) >> ((address & 1) * 8);
+      return UpdateOpenBusDup8((address / 2) >> ((address & 1) * 8));
     }
-    return Read<std::uint8_t>(memory.rom.data.get(), address);
+    return UpdateOpenBusDup8(Read<std::uint8_t>(memory.rom.data.get(), address));
   }
   case REGION_SRAM_1:
   case REGION_SRAM_2: {
+    // TODO: confirm that the bus duplicates the 8-bit byte for SRAM/FLASH as well.
     PrefetchStepROM(address, cycles);
     address &= 0x0EFFFFFF;
     if (IsGPIOAccess(address) && memory.rom.gpio->IsReadable()) {
-      return memory.rom.gpio->Read(address);
+      return UpdateOpenBusDup8(memory.rom.gpio->Read(address));
     }
     if (memory.rom.backup_sram) {
-      return memory.rom.backup_sram->Read(address);
+      return UpdateOpenBusDup8(memory.rom.backup_sram->Read(address));
     }
     return 0;
   }  

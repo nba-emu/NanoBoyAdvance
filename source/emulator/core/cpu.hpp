@@ -125,6 +125,18 @@ private:
     return memory.rom.backup_eeprom && ((~memory.rom.size & 0x02000000) || address >= 0x0DFFFF00);
   }
 
+  auto UpdateOpenBusDup8(std::uint8_t value) -> std::uint8_t {
+    memory.latch = value * 0x01010101;
+    return value;
+  }
+
+  auto UpdateOpenBusIWRAM8(std::uint32_t address, std::uint8_t value) -> std::uint8_t {
+    auto shift = (address & 3) * 8;
+    memory.latch &= ~(0xFF << shift);
+    memory.latch |= value << shift;
+    return value;
+  }
+
   auto UpdateOpenBusDup16(std::uint16_t value) -> std::uint16_t {
     memory.latch = value * 0x00010001;
     return value;
