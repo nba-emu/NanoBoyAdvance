@@ -6,6 +6,7 @@
  */
 
 inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
+  // TODO: clean this mess up.
   int shift = (address & 3) * 8;
   
   address &= ~3;
@@ -18,7 +19,7 @@ inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
     return memory.bios_latch >> shift;
   }
 
-  memory.bios_latch = Read<std::uint32_t>(memory.bios, address);
+  memory.bios_latch = UpdateOpenBus32(Read<std::uint32_t>(memory.bios, address));
 
   return memory.bios_latch >> shift;
 }
@@ -61,7 +62,7 @@ inline auto CPU::ReadByte(std::uint32_t address, Access access) -> std::uint8_t 
   }
   case REGION_OAM: {
     PrefetchStepRAM(cycles);
-    return Read<std::uint8_t>(ppu.oam, address & 0x3FF);
+    return UpdateOpenBus32(Read<std::uint32_t>(ppu.oam, address & 0x3FF)) >> ((address & 3) * 8);
   }
   case REGION_ROM_W0_L:
   case REGION_ROM_W0_H:
@@ -138,7 +139,7 @@ inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t
   }
   case REGION_OAM: {
     PrefetchStepRAM(cycles);
-    return Read<std::uint16_t>(ppu.oam, address & 0x3FF);
+    return UpdateOpenBus32(Read<std::uint32_t>(ppu.oam, address & 0x3FF)) >> ((address & 3) * 8);
   } 
   /* 0x0DXXXXXX may be used to read/write from EEPROM */
   case REGION_ROM_W2_H: {
@@ -199,7 +200,7 @@ inline auto CPU::ReadWord(std::uint32_t address, Access access) -> std::uint32_t
   switch (page) {
   case REGION_BIOS: {
     PrefetchStepRAM(cycles);
-    return UpdateOpenBus32(ReadBIOS(address));
+    return ReadBIOS(address);
   }
   case REGION_EWRAM: {
     PrefetchStepRAM(cycles);
