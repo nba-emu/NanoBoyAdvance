@@ -88,13 +88,13 @@ void DisplayStatus::Write(int address, std::uint8_t value) {
     hblank_irq_enable = (value >> 4) & 1;
     vcount_irq_enable = (value >> 5) & 1;
     if (ppu != nullptr) {
-      ppu->CheckForVcountIRQ();
+      ppu->CheckVerticalCounterIRQ();
     }
     break;
   case 1:
     vcount_setting = value;
     if (ppu != nullptr) {
-      ppu->CheckForVcountIRQ();
+      ppu->CheckVerticalCounterIRQ();
     }
     break;
   }

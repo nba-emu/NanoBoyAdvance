@@ -66,7 +66,7 @@ void PPU::RenderScanline() {
         }
       }
       if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-        RenderLayerOAM();
+        RenderLayerOAM(false);
       }
       ComposeScanline(0, 3);
       break;
@@ -82,7 +82,7 @@ void PPU::RenderScanline() {
         RenderLayerAffine(0);
       }
       if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-        RenderLayerOAM();
+        RenderLayerOAM(false);
       }
       ComposeScanline(0, 2);
       break;
@@ -95,7 +95,7 @@ void PPU::RenderScanline() {
         }
       }
       if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-        RenderLayerOAM();
+        RenderLayerOAM(false);
       }
       ComposeScanline(2, 3);
       break;

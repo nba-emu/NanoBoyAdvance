@@ -110,7 +110,7 @@ private:
   void Tick();
 
   void UpdateInternalAffineRegisters();
-  void CheckForVcountIRQ();
+  void CheckVerticalCounterIRQ();
 
   void SetNextEvent(Phase phase);
   void OnScanlineComplete();
@@ -125,7 +125,7 @@ private:
   void RenderLayerBitmap1();
   void RenderLayerBitmap2();
   void RenderLayerBitmap3();
-  void RenderLayerOAM(bool bitmap_mode = false);
+  void RenderLayerOAM(bool bitmap_mode);
   void RenderWindow(int id);
 
   void ComposeScanline(int bg_min, int bg_max);

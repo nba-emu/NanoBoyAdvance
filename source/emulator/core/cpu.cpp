@@ -172,7 +172,6 @@ void CPU::PrefetchStepROM(std::uint32_t address, int cycles) {
 void CPU::RunFor(int cycles) {
   bool m4a_xq_enable = config->audio.m4a_xq_enable && m4a_setfreq_address != 0;
 
-
   // TODO: this could end up very slow if RunFor is called too often per second.
   if (m4a_xq_enable && m4a_soundinfo != nullptr) {
     M4AFixupPercussiveChannels();
@@ -309,7 +308,7 @@ void CPU::M4ASampleFreqSetHook() {
       soundinfo_p2 = Read<std::uint32_t>(memory.iram, soundinfo_p1 & 0x00FFFFFF);
       break;
     default:
-      LOG_ERROR("M$A SoundInfo pointer is outside of IWRAM or EWRAM, unsupported.");
+      LOG_ERROR("M4A SoundInfo pointer is outside of IWRAM or EWRAM, unsupported.");
       return;
   }
   
