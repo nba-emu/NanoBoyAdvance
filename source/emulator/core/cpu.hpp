@@ -73,6 +73,7 @@ public:
       std::unique_ptr<nba::Backup> backup_eeprom;
     } rom;
 
+    std::uint32_t latch = 0;
     std::uint32_t bios_latch = 0;
   } memory;
 
@@ -122,6 +123,11 @@ private:
 
   bool IsEEPROMAccess(std::uint32_t address) {
     return memory.rom.backup_eeprom && ((~memory.rom.size & 0x02000000) || address >= 0x0DFFFF00);
+  }
+
+  auto UpdateOpenBus32(std::uint32_t value) -> std::uint32_t {
+    memory.latch = value;
+    return value;
   }
 
   auto ReadMMIO (std::uint32_t address) -> std::uint8_t;

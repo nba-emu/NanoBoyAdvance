@@ -23,56 +23,8 @@ inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
   return memory.bios_latch >> shift;
 }
 
-inline std::uint32_t CPU::ReadUnused(std::uint32_t address) {
-  std::uint32_t result = 0;
-  
-  if (dma.IsRunning()) {
-    return dma.GetOpenBusValue() >> ((address & 3) * 8);
-  }
-
-  if (state.cpsr.f.thumb) {
-    auto r15 = state.r15;
-  
-    switch (r15 >> 24) {
-    case REGION_EWRAM:
-    case REGION_PRAM:
-    case REGION_VRAM:
-    case REGION_ROM_W0_L:
-    case REGION_ROM_W0_H:
-    case REGION_ROM_W1_L:
-    case REGION_ROM_W1_H:
-    case REGION_ROM_W2_L:
-    case REGION_ROM_W2_H: {
-      result = GetPrefetchedOpcode(1) * 0x00010001;
-      break;
-    }
-    case REGION_BIOS:
-    case REGION_OAM: {
-      if (r15 & 3) {
-        result = GetPrefetchedOpcode(0) |
-                (GetPrefetchedOpcode(1) << 16);
-      } else {
-        /* FIXME: this is not correct, but also [$+6] has not been prefetched at this point. */
-        result = GetPrefetchedOpcode(1) * 0x00010001;
-      }
-      break;
-    }
-    case REGION_IWRAM: {
-      if (r15 & 3) {
-        result = GetPrefetchedOpcode(0) |
-                (GetPrefetchedOpcode(1) << 16);
-      } else {
-        result = GetPrefetchedOpcode(1) |
-                (GetPrefetchedOpcode(0) << 16);
-      }
-      break;
-    }
-    }
-  } else {
-    result = GetPrefetchedOpcode(1);
-  }
-    
-  return result >> ((address & 3) * 8);
+inline std::uint32_t CPU::ReadUnused(std::uint32_t address) {    
+  return memory.latch >> ((address & 3) * 8);
 }
 
 inline auto CPU::ReadByte(std::uint32_t address, Access access) -> std::uint8_t {
@@ -247,37 +199,37 @@ inline auto CPU::ReadWord(std::uint32_t address, Access access) -> std::uint32_t
   switch (page) {
   case REGION_BIOS: {
     PrefetchStepRAM(cycles);
-    return ReadBIOS(address);
+    return UpdateOpenBus32(ReadBIOS(address));
   }
   case REGION_EWRAM: {
     PrefetchStepRAM(cycles);
-    return Read<std::uint32_t>(memory.wram, address & 0x3FFFF);
+    return UpdateOpenBus32(Read<std::uint32_t>(memory.wram, address & 0x3FFFF));
   }
   case REGION_IWRAM: {
     PrefetchStepRAM(cycles);
-    return Read<std::uint32_t>(memory.iram, address & 0x7FFF );
+    return UpdateOpenBus32(Read<std::uint32_t>(memory.iram, address & 0x7FFF ));
   }
   case REGION_MMIO: {
     PrefetchStepRAM(cycles);
-    return ReadMMIO(address + 0) |
-          (ReadMMIO(address + 1) << 8 ) |
-          (ReadMMIO(address + 2) << 16) |
-          (ReadMMIO(address + 3) << 24);
+    return UpdateOpenBus32(ReadMMIO(address + 0) |
+                          (ReadMMIO(address + 1) << 8 ) |
+                          (ReadMMIO(address + 2) << 16) |
+                          (ReadMMIO(address + 3) << 24));
   }
   case REGION_PRAM: {
     PrefetchStepRAM(cycles);
-    return Read<std::uint32_t>(ppu.pram, address & 0x3FF);
+    return UpdateOpenBus32(Read<std::uint32_t>(ppu.pram, address & 0x3FF));
   }
   case REGION_VRAM: {
     PrefetchStepRAM(cycles);
     address &= 0x1FFFF;
     if (address >= 0x18000)
       address &= ~0x8000;
-    return Read<std::uint32_t>(ppu.vram, address);
+    return UpdateOpenBus32(Read<std::uint32_t>(ppu.vram, address));
   }
   case REGION_OAM: {
     PrefetchStepRAM(cycles);
-    return Read<std::uint32_t>(ppu.oam, address & 0x3FF);
+    return UpdateOpenBus32(Read<std::uint32_t>(ppu.oam, address & 0x3FF));
   }
   case REGION_ROM_W0_L:
   case REGION_ROM_W0_H:
@@ -292,23 +244,23 @@ inline auto CPU::ReadWord(std::uint32_t address, Access access) -> std::uint32_t
     }
     address &= memory.rom.mask;
     if (IsGPIOAccess(address) && memory.rom.gpio->IsReadable()) {
-      return memory.rom.gpio->Read(address + 0) |
-            (memory.rom.gpio->Read(address + 2) << 16);
+      return UpdateOpenBus32(memory.rom.gpio->Read(address + 0) |
+                            (memory.rom.gpio->Read(address + 2) << 16));
     }
     if (address >= memory.rom.size) {
-      return (((address + 0) / 2) & 0xFFFF) |
-             (((address + 2) / 2) << 16);
+      return UpdateOpenBus32((((address + 0) / 2) & 0xFFFF) |
+                             (((address + 2) / 2) << 16));
     }
-    return Read<std::uint32_t>(memory.rom.data.get(), address);
+    return UpdateOpenBus32(Read<std::uint32_t>(memory.rom.data.get(), address));
   }
   case REGION_SRAM_1:
   case REGION_SRAM_2: {
     PrefetchStepROM(address, cycles);
     address &= 0x0EFFFFFF;
     if (memory.rom.backup_sram) {
-      return memory.rom.backup_sram->Read(address) * 0x01010101;
+      return UpdateOpenBus32(memory.rom.backup_sram->Read(address) * 0x01010101);
     }
-    return 0;
+    return UpdateOpenBus32(0);
   }
   default: {
     PrefetchStepRAM(cycles);
@@ -456,6 +408,8 @@ inline void CPU::WriteWord(std::uint32_t address, std::uint32_t value, Access ac
   if (page != REGION_SRAM_1 && page != REGION_SRAM_2) {
     address &= ~3;
   }
+
+  UpdateOpenBus32(value);
 
   switch (page) {
   case REGION_EWRAM: {
