@@ -21,6 +21,7 @@
 #include <experimental/filesystem>
 #include <fstream>
 #include <map>
+#include <string_view>
 
 #include "emulator.hpp"
 
@@ -46,25 +47,24 @@ Emulator::Emulator(std::shared_ptr<Config> config)
 void Emulator::Reset() { cpu.Reset(); }
 
 auto Emulator::DetectBackupType(std::uint8_t* rom, size_t size) -> BackupType {
-  const std::map<std::string, Config::BackupType> signatures {
+  const std::map<std::string_view, Config::BackupType> signatures {
     { "EEPROM_V",   BackupType::EEPROM_64 },
     { "SRAM_V",     BackupType::SRAM      },
+    { "SRAM_F_V",   BackupType::SRAM      },
     { "FLASH_V",    BackupType::FLASH_64  },
     { "FLASH512_V", BackupType::FLASH_64  },
     { "FLASH1M_V",  BackupType::FLASH_128 }
   };
-  
+
   for (int i = 0; i < size; i += 4) {
-    for (auto const& pair : signatures) {
-      auto const& string = pair.first;
-      
-      if (std::memcmp(&rom[i], string.c_str(), string.size()) == 0) {
-        LOG_INFO("Found ROM string indicating {0} backup type.", std::to_string(pair.second));
-        return pair.second;
+    for (auto const& [signature, type] : signatures) {
+      if (std::memcmp(&rom[i], signature.data(), signature.size()) == 0) {
+        LOG_INFO("Found ROM string indicating {0} backup type.", std::to_string(type));
+        return type;
       }
     }
   }
-  
+
   return Config::BackupType::Detect;
 }
 
@@ -95,21 +95,21 @@ auto Emulator::CalculateMirrorMask(size_t size) -> std::uint32_t {
 
 auto Emulator::LoadBIOS() -> StatusCode {
   auto bios_path = config->bios_path;
-  
+
   if (!fs::exists(bios_path) || !fs::is_regular_file(bios_path)) {
     LOG_ERROR("Unable to load BIOS file: {0}", bios_path);
     return StatusCode::BiosNotFound;
   }
-  
+
   auto size = fs::file_size(bios_path);
-  
+
   if (size != g_bios_size) {
     LOG_ERROR("BIOS file has unexpected size, expected file of {0} bytes.", g_bios_size);
     return StatusCode::BiosWrongSize;
   }
-  
+
   std::ifstream stream { bios_path, std::ios::binary };
-  
+
   /* TODO: most likely this error would only happen
    * if the file cannot be opened due to missing privileges.
    * The status code "BIOS not found" is not accurate, really.
@@ -118,10 +118,10 @@ auto Emulator::LoadBIOS() -> StatusCode {
     LOG_ERROR("Failed to open BIOS file with unknown error.");
     return StatusCode::BiosNotFound;
   }
-  
+
   stream.read((char*)cpu.memory.bios, g_bios_size);
   stream.close();
-  
+
   return StatusCode::Ok;
 }
 
@@ -141,7 +141,7 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
     }
     bios_loaded = true;
   }
-  
+
   /* Ensure ROM exists and has valid size. */
   if (!fs::exists(path) || !fs::is_regular_file(path)) {
     LOG_ERROR("The ROM path does not exist or does not point to a file.");
@@ -149,14 +149,14 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   }
 
   size = fs::file_size(path);
-  
+
   if (size < sizeof(Header) || size > g_max_rom_size) {
     LOG_ERROR("ROM file has unexpected size, expected file size between {0} bytes and 32 MiB.", sizeof(Header));
     return StatusCode::GameWrongSize;
   }
-  
+
   std::ifstream stream { path, std::ios::binary };
-  
+
   /* TODO: most likely this error would only happen
    * if the file cannot be opened due to missing privileges.
    * The status code "Game not found" is not accurate, really.
@@ -165,7 +165,7 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
     LOG_ERROR("Failed to open ROM with unknown error.");
     return StatusCode::GameNotFound;
   }
-    
+
   auto rom = std::make_unique<std::uint8_t[]>(size);
   Header* header = reinterpret_cast<Header*>(rom.get());
   stream.read((char*)(rom.get()), size);
@@ -187,7 +187,7 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
     }
 
     /* If not database entry was found or the entry has no backup type information,
-     * try to search the ROM for strings that can indicate the 
+     * try to search the ROM for strings that can indicate the
      * backup type used by this game.
      */
     if (game_info.backup_type == Config::BackupType::Detect) {
@@ -208,7 +208,7 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   LOG_INFO("Backup: {0}", std::to_string(game_info.backup_type));
   LOG_INFO("RTC:    {0}", game_info.gpio == GPIODeviceType::RTC);
   LOG_INFO("Mirror: {0}", game_info.mirror);
-  
+
   /* Mount cartridge into the cartridge slot. */
   cpu.memory.rom.data = std::move(rom);
   cpu.memory.rom.size = size;
