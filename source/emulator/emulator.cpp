@@ -20,7 +20,7 @@
 #include <exception>
 #include <experimental/filesystem>
 #include <fstream>
-#include <map>
+#include <utility>
 #include <string_view>
 
 #include "emulator.hpp"
@@ -47,7 +47,7 @@ Emulator::Emulator(std::shared_ptr<Config> config)
 void Emulator::Reset() { cpu.Reset(); }
 
 auto Emulator::DetectBackupType(std::uint8_t* rom, size_t size) -> BackupType {
-  const std::map<std::string_view, Config::BackupType> signatures {
+  static constexpr std::pair<std::string_view, Config::BackupType> signatures[6] {
     { "EEPROM_V",   BackupType::EEPROM_64 },
     { "SRAM_V",     BackupType::SRAM      },
     { "SRAM_F_V",   BackupType::SRAM      },
@@ -58,7 +58,7 @@ auto Emulator::DetectBackupType(std::uint8_t* rom, size_t size) -> BackupType {
 
   for (int i = 0; i < size; i += 4) {
     for (auto const& [signature, type] : signatures) {
-      if (std::memcmp(&rom[i], signature.data(), signature.size()) == 0) {
+      if ((i + signature.size()) <= size && std::memcmp(&rom[i], signature.data(), signature.size()) == 0) {
         LOG_INFO("Found ROM string indicating {0} backup type.", std::to_string(type));
         return type;
       }
