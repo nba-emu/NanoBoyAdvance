@@ -95,8 +95,7 @@ The BIOS file must be placed as `bios.bin` in the same folder as the executable.
 will not be as accurate as the original one.
 
 ## Known issues
-- Hello Kitty Collection: Miracle Fashion Maker does not go in-game.
-- Mario & Luigi Superstar Saga: bad audio on the noise channel, inaccuracy in the envelope generator?
+See https://github.com/fleroviux/NanoboyAdvance/issues
 
 ## Acknowledgement
 
