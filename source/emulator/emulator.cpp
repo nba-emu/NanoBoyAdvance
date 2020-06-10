@@ -215,7 +215,7 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   if (game_info.backup_type == Config::BackupType::EEPROM_4 || game_info.backup_type == Config::BackupType::EEPROM_64) {
     cpu.memory.rom.backup_sram.reset();
     cpu.memory.rom.backup_eeprom = std::unique_ptr<Backup>{ CreateBackupInstance(game_info.backup_type, save_path) };
-  } else {
+  } else if (game_info.backup_type != Config::BackupType::None) {
     cpu.memory.rom.backup_sram = std::unique_ptr<Backup>{ CreateBackupInstance(game_info.backup_type, save_path) };
     cpu.memory.rom.backup_eeprom.reset();
   }

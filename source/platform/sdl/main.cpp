@@ -117,9 +117,10 @@ void parse_arguments(int argc, char** argv) {
     } else if (key == "--force-rtc") {
       g_config->force_rtc = true;
     } else if (key == "--save-type") {
-      /* TODO: deduplicate this piece of code. */
+      /* TODO: deduplicate this piece of code? */
       const std::unordered_map<std::string, nba::Config::BackupType> save_types{
         { "detect",     nba::Config::BackupType::Detect    },
+        { "none",       nba::Config::BackupType::None      },
         { "sram",       nba::Config::BackupType::SRAM      },
         { "flash64",    nba::Config::BackupType::FLASH_64  },
         { "flash128",   nba::Config::BackupType::FLASH_128 },

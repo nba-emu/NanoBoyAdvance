@@ -25,6 +25,7 @@ struct Config {
   
   enum class BackupType {
     Detect,
+    None,
     SRAM,
     FLASH_64,
     FLASH_128,
@@ -69,6 +70,7 @@ using BackupType = nba::Config::BackupType;
 inline auto to_string(BackupType value) -> std::string {
   switch (value) {
     case BackupType::Detect: return "Detect";
+    case BackupType::None: return "None";
     case BackupType::SRAM: return "SRAM";
     case BackupType::FLASH_64: return "FLASH_64";
     case BackupType::FLASH_128: return "FLASH_128";

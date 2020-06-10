@@ -23,7 +23,7 @@ const std::map<std::string, GameInfo> g_game_db {
   { "AXVE", { Config::BackupType::FLASH_128, GPIODeviceType::RTC, false } },  /* Pokemon - Ruby Version (USA, Europe) */
   { "AXPE", { Config::BackupType::FLASH_128, GPIODeviceType::RTC, false } },  /* Pokemon - Sapphire Version (USA, Europe) */
   { "AX4P", { Config::BackupType::FLASH_128, GPIODeviceType::None, false } }, /* Super Mario Advance 4 - Super Mario Bros. 3 (Europe)(En,Fr,De,Es,It) */
-  { "A2YE", { Config::BackupType::Detect, GPIODeviceType::None, false } },    /* Top Gun - Combat Zones (USA)(En,Fr,De,Es,It) */
+  { "A2YE", { Config::BackupType::None, GPIODeviceType::None, false } },      /* Top Gun - Combat Zones (USA)(En,Fr,De,Es,It) */
   { "BDBP", { Config::BackupType::EEPROM_64, GPIODeviceType::None, false } }, /* Dragon Ball Z - Taiketsu (Europe)(En,Fr,De,Es,It) */
   { "BM5P", { Config::BackupType::FLASH_64, GPIODeviceType::None, false } },  /* Mario vs. Donkey Kong (Europe) */
   { "BPEE", { Config::BackupType::FLASH_128, GPIODeviceType::RTC, false } },  /* Pokemon - Emerald Version (USA, Europe) */

@@ -56,6 +56,7 @@ void config_toml_read(Config& config, std::string const& path) {
 
       const std::map<std::string, Config::BackupType> save_types{
         { "detect",     Config::BackupType::Detect    },
+        { "none",       Config::BackupType::None      },
         { "sram",       Config::BackupType::SRAM      },
         { "flash64",    Config::BackupType::FLASH_64  },
         { "flash128",   Config::BackupType::FLASH_128 },
@@ -138,6 +139,7 @@ void config_toml_write(Config& config, std::string const& path) {
   std::string save_type;
   switch (config.backup_type) {
     case Config::BackupType::Detect: save_type = "detect"; break;
+    case Config::BackupType::None:   save_type = "none"; break;
     case Config::BackupType::SRAM:   save_type = "sram"; break;
     case Config::BackupType::FLASH_64:  save_type = "flash64"; break;
     case Config::BackupType::FLASH_128: save_type = "flash128"; break;
