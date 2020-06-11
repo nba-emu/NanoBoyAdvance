@@ -76,8 +76,6 @@ export CPPFLAGS="$CPPFLAGS -I/usr/local/opt/glew/include"
 Otherwise the build process should be identical to Linux.
 
 #### Windows
-Building on Windows requires the [clang-cl](https://clang.llvm.org/docs/MSVCCompatibility.html) toolset because MSVC's stack overflows while generating the instruction tables.
-
 Setup [vcpkg](https://github.com/microsoft/vcpkg) and install the required libraries.
 ```
 git clone https://github.com/microsoft/vcpkg
