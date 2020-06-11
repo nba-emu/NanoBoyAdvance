@@ -1,4 +1,10 @@
 cmake_minimum_required(VERSION 2.8)
+
+# Must be set before project
+if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+  set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+endif()
+
 project(NanoboyAdvance CXX)
 
 set(VERSION_MAJOR 0)
