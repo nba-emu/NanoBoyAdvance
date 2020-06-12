@@ -10,12 +10,16 @@
 #include <common/log.hpp>
 #include <emulator/device/audio_device.hpp>
 
+#ifdef _MSC_VER
+#include <SDL2/SDL.h>
+#else
 #include "SDL.h"
+#endif
 
 struct SDL2_AudioDevice : public nba::AudioDevice {
   auto GetSampleRate() -> int final { return have.freq; }
   auto GetBlockSize() -> int final { return have.samples; }
-  
+
   auto SetPassthrough(SDL_AudioCallback passthrough) {
     this->passthrough = passthrough;
   }
@@ -39,7 +43,7 @@ struct SDL2_AudioDevice : public nba::AudioDevice {
     want.samples = 2048;
     want.format = AUDIO_S16;
     want.channels = 2;
-    
+
     if (passthrough != nullptr) {
       want.callback = passthrough;
       want.userdata = this;

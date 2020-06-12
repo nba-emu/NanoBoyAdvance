@@ -76,12 +76,29 @@ export CPPFLAGS="$CPPFLAGS -I/usr/local/opt/glew/include"
 Otherwise the build process should be identical to Linux.
 
 #### Windows
+Setup [vcpkg](https://github.com/microsoft/vcpkg) and install the required libraries.
+```
+git clone https://github.com/microsoft/vcpkg
+cd vcpkg
+bootstrap-vcpkg.bat
+vcpkg install sdl2
+vcpkg install glew
+```
 
-You probably need to lookup the documentation of the environment you are going use.
-Make sure to point CMake to the aforementioned libraries and your compiler of choice.
-I've had success building the emulator with LLVM Clang on Windows.
-With `clang-cl.exe` you can also build and debug the code from Visual Studio, if you want to.
-For LLVM Clang on Windows you should get MSVC versions of the libraries since LLVM Clang aims to be ABI-compatible with MSVC on Windows.
+Generate the Visual Studio solution with CMake.
+```
+cd path/to/NanoboyAdvance
+mkdir build
+cd build
+set VCPKG_ROOT=path/to/vcpkg
+cmake -T clangcl ..
+```
+
+Build the Visual Studio solution. It can also be done via the command line.
+```
+call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
+msbuild NanoboyAdvance.sln
+```
 
 #### Miscellaneous
 
