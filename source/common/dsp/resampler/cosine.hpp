@@ -17,16 +17,19 @@ public:
   CosineResampler(std::shared_ptr<WriteStream<T>> output) 
     : Resampler<T>(output)
   {
-    for (int i = 0; i < s_lut_resolution; i++) {
-      lut[i] = (std::cos(M_PI * i/float(s_lut_resolution)) + 1.0) * 0.5;
+    for (int i = 0; i < kLUTsize; i++) {
+      lut[i] = (std::cos(M_PI * i/float(kLUTsize)) + 1.0) * 0.5;
     }
   }
   
   void Write(T const& input) final {
     while (resample_phase < 1.0) {
-      float x = lut[(int)std::round(resample_phase * s_lut_resolution)];
-      
-      this->output->Write(previous * x + input * (1.0 - x));
+      auto index = resample_phase * kLUTsize;
+      float a0 = lut[int(index) + 0];
+      float a1 = lut[int(index) + 1];
+      float a = a0 + (a1 - a0) * (index - int(index));
+
+      this->output->Write(previous * a + input * (1.0 - a));
       
       resample_phase += this->resample_phase_shift;
     }
@@ -37,11 +40,11 @@ public:
   }
   
 private:
-  static constexpr int s_lut_resolution = 512;
+  static constexpr int kLUTsize = 512;
   
   T previous = {};
   float resample_phase = 0;
-  float lut[s_lut_resolution];
+  float lut[kLUTsize];
 };
 
 template <typename T>
