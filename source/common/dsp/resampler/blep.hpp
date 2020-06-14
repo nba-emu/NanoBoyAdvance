@@ -32,7 +32,7 @@ public:
       for (int j = 3; j < (2 * kTaylorPolyMaxIter + 1); j += 2) {
         x *= x_squared;
         faculty *= (j - 1) * j;
-        lut[i] += sign * x / (faculty * j);
+        result += sign * x / (faculty * j);
         sign = -sign;
       }
 
