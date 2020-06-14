@@ -72,6 +72,7 @@ void Timer::Write(int chan_id, int offset, std::uint8_t value) {
       
       channel.shift = g_ticks_shift[control.frequency];
       channel.mask  = g_ticks_mask[control.frequency];
+      channel.samplerate = 16777216 / ((0x10000 - channel.reload) << channel.shift);
       
       if (!enable_previous && control.enable) {
         /* NOTE: the timing calibration test seems to
@@ -182,7 +183,7 @@ void Timer::Increment(int chan_id, int increment) {
     }
     
     if (chan_id <= 1) {
-      apu->OnTimerOverflow(chan_id, overflows);
+      apu->OnTimerOverflow(chan_id, overflows, channel.samplerate);
     }
     
     if (next_id != 4) {

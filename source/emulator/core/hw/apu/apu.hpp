@@ -27,7 +27,7 @@ public:
   APU(Scheduler* scheduler, DMA* dma, std::shared_ptr<Config>);
   
   void Reset();
-  void OnTimerOverflow(int timer_id, int times);
+  void OnTimerOverflow(int timer_id, int times, int samplerate);
   
   struct MMIO {
     FIFO fifo[2];
@@ -42,11 +42,14 @@ public:
   NoiseChannel psg4;
   
   std::int8_t latch[2];
+  std::shared_ptr<common::dsp::RingBuffer<float>> fifo_buffer[2];
+  std::unique_ptr<common::dsp::Resampler<float>> fifo_resampler[2];
+  int fifo_samplerate[2];
 
   std::mutex buffer_mutex;
   std::shared_ptr<common::dsp::StereoRingBuffer<float>> buffer;
   std::unique_ptr<common::dsp::StereoResampler<float>> resampler;
-  
+
 private:
   void Generate();
   

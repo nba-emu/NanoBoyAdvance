@@ -53,6 +53,7 @@ struct Config {
       Sinc_128,
       Sinc_256
     } interpolation = Interpolation::Cosine;
+    bool interpolate_fifo = true;
     bool m4a_xq_enable = true;
   } audio;
   

@@ -52,10 +52,9 @@ private:
     std::uint16_t reload;
     std::uint32_t counter;
 
-    /* Based on timer frequency. */
     int shift;
     int mask;
-    
+    int samplerate;
     bool cascades_into_timer_causing_irq;
   } channels[4];
 };

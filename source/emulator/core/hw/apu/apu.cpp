@@ -6,8 +6,10 @@
  */
 
 #include <cmath>
+#include <common/dsp/resampler/blep.hpp>
 #include <common/dsp/resampler/cosine.hpp>
 #include <common/dsp/resampler/cubic.hpp>
+#include <common/dsp/resampler/nearest.hpp>
 #include <common/dsp/resampler/windowed-sinc.hpp>
 
 #include "apu.hpp"
@@ -74,25 +76,40 @@ void APU::Reset() {
       break;
   }
   
+  // TODO: use cubic interpolation or better if M4A samplerate hack is active.
+  for (int fifo = 0; fifo < 2; fifo++) {
+    fifo_buffer[fifo] = std::make_shared<RingBuffer<float>>(16, true);
+    fifo_resampler[fifo] = std::make_unique<BlepResampler<float>>(fifo_buffer[fifo]);
+    fifo_samplerate[fifo] = 0;
+  }
+
   resampler->SetSampleRates(mmio.bias.GetSampleRate(), audio_dev->GetSampleRate());
 }
 
-void APU::OnTimerOverflow(int timer_id, int times) {
+void APU::OnTimerOverflow(int timer_id, int times, int samplerate) {
   auto const& soundcnt = mmio.soundcnt;
   
   if (!soundcnt.master_enable) {
     return;
   }
-  
+
   constexpr DMA::Occasion occasion[2] = { DMA::Occasion::FIFO0, DMA::Occasion::FIFO1 };
-  
+
   for (int fifo_id = 0; fifo_id < 2; fifo_id++) {
     if (soundcnt.dma[fifo_id].timer_id == timer_id) {
       auto& fifo = mmio.fifo[fifo_id];
       for (int time = 0; time < times - 1; time++) {
         fifo.Read();
       }
-      latch[fifo_id] = fifo.Read();
+      if (config->audio.interpolate_fifo) {
+        if (samplerate != fifo_samplerate[fifo_id]) {
+          fifo_resampler[fifo_id]->SetSampleRates(samplerate, mmio.bias.GetSampleRate());
+          fifo_samplerate[fifo_id] = samplerate;
+        }
+        fifo_resampler[fifo_id]->Write(fifo.Read() / 128.0);
+      } else {
+        latch[fifo_id] = fifo.Read();
+      }
       if (fifo.Count() <= 16) {
         dma->Request(occasion[fifo_id]);
       }
@@ -107,11 +124,15 @@ void APU::Generate() {
     resampler->SetSampleRates(bias.GetSampleRate(), 
       config->audio_dev->GetSampleRate());
     resolution_old = mmio.bias.resolution;
+    if (config->audio.interpolate_fifo) {
+      for (int fifo = 0; fifo < 2; fifo++) {
+        fifo_resampler[fifo]->SetSampleRates(fifo_samplerate[fifo], mmio.bias.GetSampleRate());
+      }
+    }
   }
   
   common::dsp::StereoSample<std::int16_t> sample { 0, 0 };
   
-  /* TODO: what happens if volume=3 (forbidden)? */
   constexpr int psg_volume_tab[4] = { 1, 2, 4, 0 };
   constexpr int dma_volume_tab[2] = { 2, 4 };
   
@@ -130,12 +151,18 @@ void APU::Generate() {
     
     sample[channel] += psg_sample * psg_volume * psg.master[channel] / 28;
 
-    if (dma[0].enable[channel]) {
-      sample[channel] += latch[0] * dma_volume_tab[dma[0].volume];
-    }
-    
-    if (dma[1].enable[channel]) {
-      sample[channel] += latch[1] * dma_volume_tab[dma[1].volume];
+    if (config->audio.interpolate_fifo) {
+      for (int fifo = 0; fifo < 2; fifo++) {
+        if (dma[fifo].enable[channel]) {
+          sample[channel] += fifo_buffer[fifo]->Read() * dma_volume_tab[dma[fifo].volume] * 127.0;
+        }
+      }
+    } else {
+      for (int fifo = 0; fifo < 2; fifo++) {
+        if (dma[fifo].enable[channel]) {
+          sample[channel] += latch[fifo] * dma_volume_tab[dma[fifo].volume];
+        }
+      }
     }
     
     sample[channel] += mmio.bias.level;
