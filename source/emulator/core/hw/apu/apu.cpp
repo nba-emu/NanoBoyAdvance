@@ -141,6 +141,12 @@ void APU::Generate() {
   
   auto psg_volume = psg_volume_tab[psg.volume];
   
+  if (config->audio.interpolate_fifo) {
+    for (int fifo = 0; fifo < 2; fifo++) {
+      latch[fifo] = std::int8_t(fifo_buffer[fifo]->Read() * 127.0);
+    }
+  }
+
   for (int channel = 0; channel < 2; channel++) {
     std::int16_t psg_sample = 0;
     
@@ -151,17 +157,9 @@ void APU::Generate() {
     
     sample[channel] += psg_sample * psg_volume * psg.master[channel] / 28;
 
-    if (config->audio.interpolate_fifo) {
-      for (int fifo = 0; fifo < 2; fifo++) {
-        if (dma[fifo].enable[channel]) {
-          sample[channel] += fifo_buffer[fifo]->Read() * dma_volume_tab[dma[fifo].volume] * 127.0;
-        }
-      }
-    } else {
-      for (int fifo = 0; fifo < 2; fifo++) {
-        if (dma[fifo].enable[channel]) {
-          sample[channel] += latch[fifo] * dma_volume_tab[dma[fifo].volume];
-        }
+    for (int fifo = 0; fifo < 2; fifo++) {
+      if (dma[fifo].enable[channel]) {
+        sample[channel] += latch[fifo] * dma_volume_tab[dma[fifo].volume];
       }
     }
     
