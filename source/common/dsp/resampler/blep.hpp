@@ -24,15 +24,15 @@ public:
 
     for (int i = 0; i < kLUTsize; i++) {
       double sign = -1;
-      double faculty = 1;
+      double factorial = 1;
       double x = (i - kHalfedLUTSize) / double(kHalfedLUTSize) * M_PI;
       double x_squared = x * x;
       double result = x;
 
       for (int j = 3; j < (2 * kTaylorPolyMaxIter + 1); j += 2) {
         x *= x_squared;
-        faculty *= (j - 1) * j;
-        result += sign * x / (faculty * j);
+        factorial *= (j - 1) * j;
+        result += sign * x / (factorial * j);
         sign = -sign;
       }
 
