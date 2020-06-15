@@ -153,12 +153,13 @@ private:
   /* GamePak prefetch buffer state. */
   struct Prefetch {
     bool active = false;
-    std::uint32_t address[8];
+    std::uint32_t head_address;
     std::uint32_t last_address;
-    int rd_pos = 0;
-    int wr_pos = 0;
     int count = 0;
+    int capacity = 8;
+    int opcode_width = 4;
     int countdown;
+    int duty;
   } prefetch;
   
   std::uint32_t last_rom_address;
