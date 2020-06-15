@@ -7,13 +7,13 @@
 
 inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
   int shift = (address & 3) * 8;
-  
+
   address &= ~3;
 
   if (address >= 0x4000) {
     return ReadUnused(address) >> shift;
   }
-  
+
   if (state.r15 >= 0x4000) {
     return memory.bios_latch >> shift;
   }
@@ -25,14 +25,14 @@ inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
 
 inline std::uint32_t CPU::ReadUnused(std::uint32_t address) {
   std::uint32_t result = 0;
-  
+
   if (dma.IsRunning()) {
     return dma.GetOpenBusValue() >> ((address & 3) * 8);
   }
 
   if (state.cpsr.f.thumb) {
     auto r15 = state.r15;
-  
+
     switch (r15 >> 24) {
     case REGION_EWRAM:
     case REGION_PRAM:
@@ -71,7 +71,7 @@ inline std::uint32_t CPU::ReadUnused(std::uint32_t address) {
   } else {
     result = GetPrefetchedOpcode(1);
   }
-    
+
   return result >> ((address & 3) * 8);
 }
 
@@ -138,8 +138,8 @@ inline auto CPU::ReadByte(std::uint32_t address, Access access) -> std::uint8_t 
     if (memory.rom.backup_sram) {
       return memory.rom.backup_sram->Read(address);
     }
-    return 0;
-  }  
+    return 0xFF;
+  }
   default: {
     PrefetchStepRAM(cycles);
     return ReadUnused(address);
@@ -154,7 +154,7 @@ inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t
   if (page != REGION_SRAM_1 && page != REGION_SRAM_2) {
     address &= ~1;
   }
-  
+
   switch (page) {
   case REGION_BIOS: {
     PrefetchStepRAM(cycles);
@@ -187,7 +187,7 @@ inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t
   case REGION_OAM: {
     PrefetchStepRAM(cycles);
     return Read<std::uint16_t>(ppu.oam, address & 0x3FF);
-  } 
+  }
   /* 0x0DXXXXXX may be used to read/write from EEPROM */
   case REGION_ROM_W2_H: {
     PrefetchStepROM(address, cycles);
@@ -227,7 +227,7 @@ inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t
     if (memory.rom.backup_sram) {
       return memory.rom.backup_sram->Read(address) * 0x0101;
     }
-    return 0;
+    return 0xFFFF;
   }
   default: {
     PrefetchStepRAM(cycles);
@@ -243,7 +243,7 @@ inline auto CPU::ReadWord(std::uint32_t address, Access access) -> std::uint32_t
   if (page != REGION_SRAM_1 && page != REGION_SRAM_2) {
     address &= ~3;
   }
-  
+
   switch (page) {
   case REGION_BIOS: {
     PrefetchStepRAM(cycles);
@@ -308,7 +308,7 @@ inline auto CPU::ReadWord(std::uint32_t address, Access access) -> std::uint32_t
     if (memory.rom.backup_sram) {
       return memory.rom.backup_sram->Read(address) * 0x01010101;
     }
-    return 0;
+    return 0xFFFFFFFF;
   }
   default: {
     PrefetchStepRAM(cycles);
@@ -436,7 +436,7 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, Access ac
       break;
     }
     break;
-  }  
+  }
   case REGION_SRAM_1:
   case REGION_SRAM_2: {
     PrefetchStepROM(address, cycles);
