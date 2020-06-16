@@ -77,10 +77,12 @@ void APU::Reset() {
   }
   
   // TODO: use cubic interpolation or better if M4A samplerate hack is active.
-  for (int fifo = 0; fifo < 2; fifo++) {
-    fifo_buffer[fifo] = std::make_shared<RingBuffer<float>>(16, true);
-    fifo_resampler[fifo] = std::make_unique<BlepResampler<float>>(fifo_buffer[fifo]);
-    fifo_samplerate[fifo] = 0;
+  if (config->audio.interpolate_fifo) {
+    for (int fifo = 0; fifo < 2; fifo++) {
+      fifo_buffer[fifo] = std::make_shared<RingBuffer<float>>(16, true);
+      fifo_resampler[fifo] = std::make_unique<BlepResampler<float>>(fifo_buffer[fifo]);
+      fifo_samplerate[fifo] = 0;
+    }
   }
 
   resampler->SetSampleRates(mmio.bias.GetSampleRate(), audio_dev->GetSampleRate());
