@@ -25,23 +25,23 @@ namespace nba {
 
 class BackupFile {
 public:
-  
+
   static auto OpenOrCreate(std::string const& save_path,
                            std::vector<size_t> const& valid_sizes,
                            int& default_size) -> std::unique_ptr<BackupFile> {
     namespace fs = std::experimental::filesystem;
-    
+
     bool create = true;
     auto flags = std::ios::binary | std::ios::in | std::ios::out;
     std::unique_ptr<BackupFile> file { new BackupFile() };
-    
+
     /* TODO: check file type and permissions? */
-    if (fs::exists(save_path)) {
+    if (fs::is_regular_file(save_path)) {
       auto size = fs::file_size(save_path);
 
       auto begin = valid_sizes.begin();
       auto end = valid_sizes.end();
-      
+
       if (std::find(begin, end, size) != end) {
         file->stream.open(save_path, flags);
         if (file->stream.fail()) {
@@ -55,7 +55,7 @@ public:
     }
 
     file->file_size = default_size;
-    
+
     /* A new save file is created either when no file exists yet,
      * or when the existing file has an invalid size.
      */
@@ -67,17 +67,17 @@ public:
       file->memory.reset(new std::uint8_t[default_size]);
       file->MemorySet(0, default_size, 0xFF);
     }
-    
+
     return file;
   }
-  
+
   auto Read(unsigned index) -> std::uint8_t {
     if (index >= file_size) {
       throw std::runtime_error("BackupFile: out-of-bounds index while reading.");
     }
     return memory[index];
   }
-  
+
   void Write(unsigned index, std::uint8_t value) {
     if (index >= file_size) {
       throw std::runtime_error("BackupFile: out-of-bounds index while writing.");
@@ -87,7 +87,7 @@ public:
       Update(index, 1);
     }
   }
-  
+
   void MemorySet(unsigned index, size_t length, std::uint8_t value) {
     if ((index + length) > file_size) {
       throw std::runtime_error("BackupFile: out-of-bounds index while setting memory.");
@@ -97,7 +97,7 @@ public:
       Update(index, length);
     }
   }
-  
+
   void Update(unsigned index, size_t length) {
     if ((index + length) > file_size) {
       throw std::runtime_error("BackupFile: out-of-bounds index while updating file.");
@@ -105,15 +105,15 @@ public:
     stream.seekg(index);
     stream.write((char*)&memory[index], length);
   }
-  
+
   bool auto_update = true;
-  
+
 private:
   BackupFile() { }
-  
+
   size_t file_size;
   std::fstream stream;
   std::unique_ptr<std::uint8_t[]> memory;
-}; 
+};
 
 } // namespace nba
