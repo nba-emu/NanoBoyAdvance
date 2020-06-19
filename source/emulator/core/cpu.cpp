@@ -155,9 +155,10 @@ void CPU::PrefetchStepROM(std::uint32_t address, int cycles) {
   /* TODO: this check does not guarantee 100% that this is an opcode fetch. */
   if (prefetch.count > 0 && address == state.r15) {
     if (address == prefetch.head_address) {
-      cycles = 1;
       prefetch.count--;
       prefetch.head_address += prefetch.opcode_width;
+      PrefetchStepRAM(1);
+      return;
     } else {
       prefetch.active = false;
       prefetch.count = 0;
