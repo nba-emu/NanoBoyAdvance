@@ -39,6 +39,14 @@ static constexpr int g_dma_from_bitset[] = {
   /* 0b1111 */ 0
 };
 
+static constexpr std::uint32_t g_dma_src_mask[] = { 
+  0x07FFFFFF, 0x0FFFFFFF, 0x0FFFFFFF, 0x0FFFFFFF
+};
+
+static constexpr std::uint32_t g_dma_dst_mask[] = {
+  0x07FFFFFF, 0x07FFFFFF, 0x07FFFFFF, 0x0FFFFFFF
+};
+
 static constexpr std::uint32_t g_dma_len_mask[] = { 
   0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF
 };
@@ -281,19 +289,27 @@ void DMA::Write(int chan_id, int offset, std::uint8_t value) {
   auto& channel = channels[chan_id];
 
   switch (offset) {
-    /* DMAXSAD
-     * NOTE: the most-significant nibble will be removed here. */
-    case 0: channel.src_addr = (channel.src_addr & 0x0FFFFF00) |  (value<<0 ); break;
-    case 1: channel.src_addr = (channel.src_addr & 0x0FFF00FF) |  (value<<8 ); break;
-    case 2: channel.src_addr = (channel.src_addr & 0x0F00FFFF) |  (value<<16); break;
-    case 3: channel.src_addr = (channel.src_addr & 0x00FFFFFF) | ((value<<24) & 0x0F000000); break;
+    /* DMAXSAD */
+    case 0:
+    case 1:
+    case 2:
+    case 3: {
+      int shift = offset * 8;
+      channel.src_addr &= ~((std::uint32_t)0xFF << shift);
+      channel.src_addr |= (value << shift) & g_dma_src_mask[chan_id];
+      break;
+    }
 
-    /* DMAXDAD
-     * NOTE: the most-significant nibble will be removed here. */
-    case 4: channel.dst_addr = (channel.dst_addr & 0x0FFFFF00) |  (value<<0 ); break;
-    case 5: channel.dst_addr = (channel.dst_addr & 0x0FFF00FF) |  (value<<8 ); break;
-    case 6: channel.dst_addr = (channel.dst_addr & 0x0F00FFFF) |  (value<<16); break;
-    case 7: channel.dst_addr = (channel.dst_addr & 0x00FFFFFF) | ((value<<24) & 0x0F000000); break;
+    /* DMAXDAD */
+    case 4:
+    case 5:
+    case 6:
+    case 7: {
+      int shift = (offset - 4) * 8;
+      channel.dst_addr &= ~((std::uint32_t)0xFF << shift);
+      channel.dst_addr |= (value << shift) & g_dma_dst_mask[chan_id];
+      break;
+    }
 
     /* DMAXCNT_L */
     case 8: channel.length = (channel.length & 0xFF00) | (value<<0); break;
