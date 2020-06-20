@@ -161,6 +161,10 @@ void DMA::Run() {
       access = channel.second_access;
       channel.latch.src_addr += 4;
     }
+
+    if (!channel.repeat) {
+      channel.enable = false;
+    }
   } else {
     auto src_modify = g_dma_modify[channel.size][channel.src_cntl];
     auto dst_modify = g_dma_modify[channel.size][channel.dst_cntl];
