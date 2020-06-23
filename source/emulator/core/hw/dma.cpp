@@ -39,7 +39,7 @@ static constexpr int g_dma_from_bitset[] = {
   /* 0b1111 */ 0
 };
 
-static constexpr std::uint32_t g_dma_src_mask[] = { 
+static constexpr std::uint32_t g_dma_src_mask[] = {
   0x07FFFFFF, 0x0FFFFFFF, 0x0FFFFFFF, 0x0FFFFFFF
 };
 
@@ -47,7 +47,7 @@ static constexpr std::uint32_t g_dma_dst_mask[] = {
   0x07FFFFFF, 0x07FFFFFF, 0x07FFFFFF, 0x0FFFFFFF
 };
 
-static constexpr std::uint32_t g_dma_len_mask[] = { 
+static constexpr std::uint32_t g_dma_len_mask[] = {
   0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF
 };
 
@@ -56,27 +56,13 @@ void DMA::Reset() {
   vblank_set.reset();
   video_set.reset();
   runnable.reset();
-  
+
   current = -1;
   interleaved = false;
-  
+
   for (int id = 0; id < 4; id++) {
-    auto& channel = channels[id];
-    channel.id = id;
-    channel.enable = false;
-    channel.repeat = false;
-    channel.interrupt = false;
-    channel.gamepak = false;
-    channel.length  = 0;
-    channel.dst_addr = 0;
-    channel.src_addr = 0;
-    channel.latch.length = 0;
-    channel.latch.dst_addr = 0;
-    channel.latch.src_addr = 0;
-    channel.size = Channel::HWORD;
-    channel.time = Channel::IMMEDIATE;
-    channel.dst_cntl = Channel::INCREMENT;
-    channel.src_cntl = Channel::INCREMENT;
+    channels[id] = {};
+    channels[id].id = id;
   }
 }
 
@@ -87,7 +73,7 @@ void DMA::TryStart(int chan_id) {
     current = chan_id;
     interleaved = true;
   }
-  
+
   runnable.set(chan_id, true);
 }
 
@@ -146,9 +132,9 @@ void DMA::StopVideoXferDMA() {
 
 void DMA::Run() {
   auto& channel = channels[current];
-  
+
   auto access = Access::Nonsequential;
-  
+
   if (channel.is_fifo_dma) {
     runnable.set(channel.id, false);
 
@@ -168,18 +154,18 @@ void DMA::Run() {
   } else {
     auto src_modify = g_dma_modify[channel.size][channel.src_cntl];
     auto dst_modify = g_dma_modify[channel.size][channel.dst_cntl];
-    
+
     #define CHECK_INTERLEAVED\
       if (scheduler->GetRemainingCycleCount() <= 0 || interleaved) {\
         interleaved = false;\
         return;\
       }
-    
+
     #define ADVANCE_REGS\
       channel.latch.src_addr += src_modify;\
       channel.latch.dst_addr += dst_modify;\
       channel.latch.length--;
-    
+
     if (channel.size == Channel::HWORD) {
       if (channel.allow_read) {
         /* HWORD DMA - NORMAL */
@@ -195,7 +181,7 @@ void DMA::Run() {
         /* HWORD DMA - OPEN BUS */
         while (channel.latch.length != 0) {
           CHECK_INTERLEAVED;
-          
+
           memory->WriteHalf(channel.latch.dst_addr, latch, access);
           access = channel.second_access;
           ADVANCE_REGS;
@@ -206,7 +192,7 @@ void DMA::Run() {
         /* WORD DMA - NORMAL */
         while (channel.latch.length != 0) {
           CHECK_INTERLEAVED;
-          
+
           latch = memory->ReadWord(channel.latch.src_addr, access);
           memory->WriteWord(channel.latch.dst_addr, latch, access);
           access = channel.second_access;
@@ -216,14 +202,14 @@ void DMA::Run() {
         /* WORD DMA - OPEN BUS */
         while (channel.latch.length != 0) {
           CHECK_INTERLEAVED;
-          
+
           memory->WriteWord(channel.latch.dst_addr, latch, access);
           access = channel.second_access;
           ADVANCE_REGS;
         }
       }
     }
-    
+
     /* If this code is reached, the DMA was not interleaved and completed. */
     if (channel.repeat) {
       /* Latch length */
@@ -231,7 +217,7 @@ void DMA::Run() {
       if (channel.latch.length == 0) {
         channel.latch.length = g_dma_len_mask[channel.id] + 1;
       }
-      
+
       /* Latch destination address */
       if (channel.dst_cntl == Channel::RELOAD) {
         if (CheckDestinationAddress(channel.id, channel.dst_addr >> 24)) {
@@ -247,11 +233,11 @@ void DMA::Run() {
           channel.latch.dst_addr = 0;
         }
       }
-      
+
       runnable.set(channel.id, false);
     } else {
       channel.enable = false;
-      
+
       /* DMA is not enabled, thus not eligable for HBLANK/VBLANK/VIDEO requests. */
       runnable.set(channel.id, false);
       hblank_set.set(channel.id, false);
@@ -259,11 +245,11 @@ void DMA::Run() {
       video_set.set(channel.id, false);
     }
   }
-  
+
   if (channel.interrupt) {
     irq_controller->Raise(InterruptSource::DMA, channel.id);
   }
-  
+
   /* Select the next DMA to execute */
   current = g_dma_from_bitset[runnable.to_ulong()];
 }
@@ -272,11 +258,11 @@ auto DMA::Read(int chan_id, int offset) -> std::uint8_t {
   auto const& channel = channels[chan_id];
 
   switch (offset) {
-    case 10: {
+    case REG_DMAXCNT_H | 0: {
       return (channel.dst_cntl << 5) |
              (channel.src_cntl << 7);
     }
-    case 11: {
+    case REG_DMAXCNT_H | 1: {
       return (channel.src_cntl  >> 1) |
              (channel.size      << 2) |
              (channel.time      << 4) |
@@ -293,39 +279,32 @@ void DMA::Write(int chan_id, int offset, std::uint8_t value) {
   auto& channel = channels[chan_id];
 
   switch (offset) {
-    /* DMAXSAD */
-    case 0:
-    case 1:
-    case 2:
-    case 3: {
+    case REG_DMAXSAD | 0:
+    case REG_DMAXSAD | 1:
+    case REG_DMAXSAD | 2:
+    case REG_DMAXSAD | 3: {
       int shift = offset * 8;
       channel.src_addr &= ~((std::uint32_t)0xFF << shift);
       channel.src_addr |= (value << shift) & g_dma_src_mask[chan_id];
       break;
     }
-
-    /* DMAXDAD */
-    case 4:
-    case 5:
-    case 6:
-    case 7: {
+    case REG_DMAXDAD | 0:
+    case REG_DMAXDAD | 1:
+    case REG_DMAXDAD | 2:
+    case REG_DMAXDAD | 3: {
       int shift = (offset - 4) * 8;
       channel.dst_addr &= ~((std::uint32_t)0xFF << shift);
       channel.dst_addr |= (value << shift) & g_dma_dst_mask[chan_id];
       break;
     }
-
-    /* DMAXCNT_L */
-    case 8: channel.length = (channel.length & 0xFF00) | (value<<0); break;
-    case 9: channel.length = (channel.length & 0x00FF) | (value<<8); break;
-
-    /* DMAXCNT_H */
-    case 10: {
+    case REG_DMAXCNT_L | 0: channel.length = (channel.length & 0xFF00) | (value<<0); break;
+    case REG_DMAXCNT_L | 1: channel.length = (channel.length & 0x00FF) | (value<<8); break;
+    case REG_DMAXCNT_H | 0: {
       channel.dst_cntl = Channel::Control((value >> 5) & 3);
       channel.src_cntl = Channel::Control((channel.src_cntl & 0b10) | (value>>7));
       break;
     }
-    case 11: {
+    case REG_DMAXCNT_H | 1: {
       bool enable_previous = channel.enable;
 
       channel.src_cntl  = Channel::Control((channel.src_cntl & 0b01) | ((value & 1)<<1));
@@ -335,10 +314,10 @@ void DMA::Write(int chan_id, int offset, std::uint8_t value) {
       channel.gamepak   = (value & 8) && chan_id == 3;
       channel.interrupt =  value & 64;
       channel.enable    =  value & 128;
-      
-      channel.is_fifo_dma = (channel.time == Channel::SPECIAL) && 
+
+      channel.is_fifo_dma = (channel.time == Channel::SPECIAL) &&
                             (chan_id == 1 || chan_id == 2);
-      
+
       OnChannelWritten(chan_id, enable_previous);
       break;
     }
@@ -349,7 +328,7 @@ void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
   auto& channel = channels[chan_id];
 
   if (channel.enable) {
-    /* Update HBLANK/VBLANK DMA sets. 
+    /* Update HBLANK/VBLANK DMA sets.
      * This information is used to schedule these DMAs on request.
      */
     switch (channel.time) {
@@ -370,7 +349,7 @@ void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
     if (!enabled_old) {
       int src_page = GetUnaliasedMemoryArea(channel.src_addr >> 24);
       int dst_page = GetUnaliasedMemoryArea(channel.dst_addr >> 24);
-      
+
       /* Latch destination address */
       if (CheckDestinationAddress(chan_id, dst_page)) {
         channel.latch.dst_addr = channel.dst_addr;
@@ -378,7 +357,7 @@ void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
         /* TODO: disable write completely? */
         channel.latch.dst_addr = 0;
       }
-      
+
       /* Latch source address */
       if (CheckSourceAddress(chan_id, src_page)) {
         channel.latch.src_addr = channel.src_addr;
@@ -386,7 +365,7 @@ void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
       } else {
         channel.allow_read = false;
       }
-      
+
       /* Ensure that all accesses are aligned. */
       if (channel.size == Channel::WORD) {
         channel.latch.src_addr &= ~3;
@@ -395,14 +374,14 @@ void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
         channel.latch.src_addr &= ~1;
         channel.latch.dst_addr &= ~1;
       }
-      
+
       /* Latch length */
       channel.latch.length = channel.length & g_dma_len_mask[chan_id];
       if (channel.latch.length == 0) {
         channel.latch.length = g_dma_len_mask[chan_id] + 1;
       }
-      
-      /* TODO: confirm that read/write to the same area results 
+
+      /* TODO: confirm that read/write to the same area results
        * in only non-sequential accesses.
        */
       if (src_page == dst_page) {
@@ -410,7 +389,7 @@ void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
       } else {
         channel.second_access = Access::Sequential;
       }
-      
+
       /* Immediate DMAs are scheduled right away. */
       if (channel.time == Channel::IMMEDIATE) {
         TryStart(chan_id);

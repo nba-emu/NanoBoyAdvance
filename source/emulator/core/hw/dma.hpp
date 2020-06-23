@@ -18,15 +18,15 @@ namespace nba::core {
 class DMA {
 public:
   using Access = arm::MemoryBase::Access;
-  
+
   DMA(arm::MemoryBase* memory,
       InterruptController* irq_controller,
-      Scheduler* scheduler) 
+      Scheduler* scheduler)
     : memory(memory)
     , irq_controller(irq_controller)
     , scheduler(scheduler)
   { Reset(); }
-  
+
   enum class Occasion {
     HBlank,
     VBlank,
@@ -34,7 +34,7 @@ public:
     FIFO0,
     FIFO1
   };
-  
+
   void Reset();
   void Request(Occasion occasion);
   void StopVideoXferDMA();
@@ -43,36 +43,43 @@ public:
   void Write(int chan_id, int offset, std::uint8_t value);
   bool IsRunning() { return runnable.any(); }
   auto GetOpenBusValue() -> std::uint32_t { return latch; }
-  
+
 private:
+  enum Registers {
+    REG_DMAXSAD = 0,
+    REG_DMAXDAD = 4,
+    REG_DMAXCNT_L = 8,
+    REG_DMAXCNT_H = 10
+  };
+
   constexpr bool CheckDestinationAddress(int chan_id, int page) {
     /* Only DMA3 may write to cartridge area. */
     return chan_id == 3 || page < 0x08;
   }
-  
+
   constexpr bool CheckSourceAddress(int chan_id, int page) {
-    /* DMA0 can not read ROM, but it is able to read the SRAM region. 
+    /* DMA0 can not read ROM, but it is able to read the SRAM region.
      * DMA explcitly disallows reading from BIOS memory,
      * therefore invoking DMA open bus instead of BIOS open bus.
      */
     return (chan_id != 0 || page < 0x08 || page >= 0x0E) && page >= 0x02;
   }
-  
+
   constexpr int GetUnaliasedMemoryArea(int page) {
     if (page >= 0x09 && page <= 0x0D) {
       return 0x08;
     }
-    
+
     if (page == 0x0F) {
       return 0x0E;
     }
-    
+
     return page;
   }
 
   void TryStart(int chan_id);
   void OnChannelWritten(int chan_id, bool enabled_old);
-  
+
   arm::MemoryBase* memory;
   InterruptController* irq_controller;
   Scheduler* scheduler;
@@ -81,25 +88,25 @@ private:
    * If no DMA is running, then the value will be minus one.
    */
   int current;
-  
+
   /* Indicates whether the currently running DMA got
    * interleaved by a higher-priority DMA.
    */
   bool interleaved;
-  
+
   /* Sets of HBLANK/VBLANK/VIDEO channels that will be
    * executable on the respective trigger/DMA request.
    */
   std::bitset<4> hblank_set;
   std::bitset<4> vblank_set;
   std::bitset<4> video_set;
-  
+
   /* Set of DMA channels that may be executed. */
   std::bitset<4> runnable;
-  
+
   /* The last value read by any DMA channel. Required for DMA open bus. */
   std::uint32_t latch;
-  
+
   struct Channel {
     enum Control  {
       INCREMENT = 0,
@@ -122,24 +129,23 @@ private:
 
     int id;
 
-    bool enable;
-    bool repeat;
-    bool interrupt;
-    bool gamepak;
+    bool enable = false;
+    bool repeat = false;
+    bool interrupt = false;
+    bool gamepak = false;
 
-    std::uint16_t length;
-    std::uint32_t dst_addr;
-    std::uint32_t src_addr;
-    Control dst_cntl;
-    Control src_cntl;
-    Timing time;
-    Size size;
+    std::uint16_t length = 0;
+    std::uint32_t dst_addr = 0;
+    std::uint32_t src_addr = 0;
+    Control dst_cntl = Control::INCREMENT;
+    Control src_cntl = Control::INCREMENT;
+    Timing time = Timing::IMMEDIATE;
+    Size size = Size::HWORD;
 
+    bool is_fifo_dma;
     bool allow_read;
     Access second_access;
-    
-    bool is_fifo_dma;
-    
+
     struct {
       std::uint32_t length;
       std::uint32_t dst_addr;
