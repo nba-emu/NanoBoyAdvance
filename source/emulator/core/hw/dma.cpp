@@ -75,6 +75,9 @@ void DMA::TryStart(int chan_id) {
   }
 
   runnable.set(chan_id, true);
+
+  memory->Idle();
+  memory->Idle();
 }
 
 void DMA::Request(Occasion occasion) {
