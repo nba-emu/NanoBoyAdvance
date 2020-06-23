@@ -84,51 +84,27 @@ private:
   InterruptController* irq_controller;
   Scheduler* scheduler;
 
-  /* The id of the DMA that is currently running.
-   * If no DMA is running, then the value will be minus one.
-   */
-  int current;
+  int active_dma_id;
+  bool early_exit_trigger;
 
-  /* Indicates whether the currently running DMA got
-   * interleaved by a higher-priority DMA.
-   */
-  bool interleaved;
-
-  /* Sets of HBLANK/VBLANK/VIDEO channels that will be
-   * executable on the respective trigger/DMA request.
-   */
+  /// Set of currently enabled H-blank DMAs.
   std::bitset<4> hblank_set;
+
+  /// Set of currently enabled V-blank DMAs.
   std::bitset<4> vblank_set;
+
+  /// Set of currently enabled video transfer DMAs.
   std::bitset<4> video_set;
 
-  /* Set of DMA channels that may be executed. */
+  /// Set of DMAs which are currently scheduled for execution.
   std::bitset<4> runnable;
 
-  /* The last value read by any DMA channel. Required for DMA open bus. */
+  /// Most recent value transferred by any DMA channel.
+  /// When attempting read from illegal addresses, this value will be read instead.
   std::uint32_t latch;
 
   struct Channel {
-    enum Control  {
-      INCREMENT = 0,
-      DECREMENT = 1,
-      FIXED  = 2,
-      RELOAD = 3
-    };
-
-    enum Timing {
-      IMMEDIATE = 0,
-      VBLANK  = 1,
-      HBLANK  = 2,
-      SPECIAL = 3
-    };
-
-    enum Size {
-      HWORD = 0,
-      WORD  = 1
-    };
-
     int id;
-
     bool enable = false;
     bool repeat = false;
     bool interrupt = false;
@@ -137,16 +113,30 @@ private:
     std::uint16_t length = 0;
     std::uint32_t dst_addr = 0;
     std::uint32_t src_addr = 0;
-    Control dst_cntl = Control::INCREMENT;
-    Control src_cntl = Control::INCREMENT;
-    Timing time = Timing::IMMEDIATE;
-    Size size = Size::HWORD;
+
+    enum Control  {
+      Increment = 0,
+      Decrement = 1,
+      Fixed  = 2,
+      Reload = 3
+    } dst_cntl = Control::Increment, src_cntl = Control::Increment;
+
+    enum Timing {
+      Immediate = 0,
+      VBlank  = 1,
+      HBlank  = 2,
+      Special = 3
+    } time = Timing::Immediate;
+
+    enum Size {
+      Half = 0,
+      Word  = 1
+    } size = Size::Half;
 
     bool is_fifo_dma;
     bool allow_read;
-    Access second_access;
 
-    struct {
+    struct Latch {
       std::uint32_t length;
       std::uint32_t dst_addr;
       std::uint32_t src_addr;
