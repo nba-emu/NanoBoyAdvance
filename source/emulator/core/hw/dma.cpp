@@ -52,13 +52,12 @@ static constexpr std::uint32_t g_dma_len_mask[] = {
 };
 
 void DMA::Reset() {
-  hblank_set.reset();
-  vblank_set.reset();
-  video_set.reset();
-  runnable.reset();
-
-  active_dma_id = -1;
+  active_dma_id = g_dma_none_id;
   early_exit_trigger = false;
+  hblank_set = 0;
+  vblank_set = 0;
+  video_set = 0;
+  runnable_set = 0;
 
   for (int id = 0; id < 4; id++) {
     channels[id] = {};
@@ -67,17 +66,16 @@ void DMA::Reset() {
 }
 
 void DMA::TryStart(int chan_id) {
-  if (runnable.none()) {
+  if (runnable_set.none()) {
     active_dma_id = chan_id;
   } else if (chan_id < active_dma_id) {
     active_dma_id = chan_id;
     early_exit_trigger = true;
   }
 
-  runnable.set(chan_id, true);
-
   memory->Idle();
   memory->Idle();
+  runnable_set.set(chan_id, true);
 }
 
 void DMA::Request(Occasion occasion) {
@@ -86,7 +84,7 @@ void DMA::Request(Occasion occasion) {
       auto chan_id = g_dma_from_bitset[hblank_set.to_ulong()];
       if (chan_id != g_dma_none_id) {
         TryStart(chan_id);
-        runnable |= hblank_set;
+        runnable_set |= hblank_set;
       }
       break;
     }
@@ -94,7 +92,7 @@ void DMA::Request(Occasion occasion) {
       auto chan_id = g_dma_from_bitset[vblank_set.to_ulong()];
       if (chan_id != g_dma_none_id) {
         TryStart(chan_id);
-        runnable |= vblank_set;
+        runnable_set |= vblank_set;
       }
       break;
     }
@@ -102,7 +100,7 @@ void DMA::Request(Occasion occasion) {
       auto chan_id = g_dma_from_bitset[video_set.to_ulong()];
       if (chan_id != g_dma_none_id) {
         TryStart(chan_id);
-        runnable |= video_set;
+        runnable_set |= video_set;
       }
       break;
     }
@@ -127,9 +125,9 @@ void DMA::StopVideoXferDMA() {
 
   if (channel.enable && channel.time == Channel::Timing::Special) {
     channel.enable = false;
-    runnable.set(3, false);
+    runnable_set.set(3, false);
     video_set.set(3, false);
-    active_dma_id = g_dma_from_bitset[runnable.to_ulong()];
+    active_dma_id = g_dma_from_bitset[runnable_set.to_ulong()];
   }
 }
 
@@ -139,7 +137,7 @@ void DMA::Run() {
   auto access = Access::Nonsequential;
 
   if (channel.is_fifo_dma) {
-    runnable.set(channel.id, false);
+    runnable_set.set(channel.id, false);
 
     /* TODO: figure out how the FIFO DMA works in detail. */
     for (int i = 0; i < 4; i++) {
@@ -233,11 +231,11 @@ void DMA::Run() {
         }
       }
 
-      runnable.set(channel.id, false);
+      runnable_set.set(channel.id, false);
     } else {
       channel.enable = false;
 
-      runnable.set(channel.id, false);
+      runnable_set.set(channel.id, false);
       hblank_set.set(channel.id, false);
       vblank_set.set(channel.id, false);
       video_set.set(channel.id, false);
@@ -248,7 +246,7 @@ void DMA::Run() {
     irq_controller->Raise(InterruptSource::DMA, channel.id);
   }
 
-  active_dma_id = g_dma_from_bitset[runnable.to_ulong()];
+  active_dma_id = g_dma_from_bitset[runnable_set.to_ulong()];
 }
 
 auto DMA::Read(int chan_id, int offset) -> std::uint8_t {
@@ -307,7 +305,7 @@ void DMA::Write(int chan_id, int offset, std::uint8_t value) {
       channel.src_cntl  = Channel::Control((channel.src_cntl & 0b01) | ((value & 1)<<1));
       channel.size      = Channel::Size((value>>2) & 1);
       channel.time      = Channel::Timing((value>>4) & 3);
-      channel.repeat    = (value & 2) && channel.time != Channel::Timing::Immediate;
+      channel.repeat    = (value & 2) && channel.time != Channel::Immediate;
       channel.gamepak   = (value & 8) && chan_id == 3;
       channel.interrupt =  value & 64;
       channel.enable    =  value & 128;

@@ -41,7 +41,7 @@ public:
   void Run();
   auto Read (int chan_id, int offset) -> std::uint8_t;
   void Write(int chan_id, int offset, std::uint8_t value);
-  bool IsRunning() { return runnable.any(); }
+  bool IsRunning() { return runnable_set.any(); }
   auto GetOpenBusValue() -> std::uint32_t { return latch; }
 
 private:
@@ -97,7 +97,7 @@ private:
   std::bitset<4> video_set;
 
   /// Set of DMAs which are currently scheduled for execution.
-  std::bitset<4> runnable;
+  std::bitset<4> runnable_set;
 
   /// Most recent value transferred by any DMA channel.
   /// When attempting read from illegal addresses, this value will be read instead.
@@ -119,19 +119,19 @@ private:
       Decrement = 1,
       Fixed  = 2,
       Reload = 3
-    } dst_cntl = Control::Increment, src_cntl = Control::Increment;
+    } dst_cntl = Increment, src_cntl = Increment;
 
     enum Timing {
       Immediate = 0,
       VBlank  = 1,
       HBlank  = 2,
       Special = 3
-    } time = Timing::Immediate;
+    } time = Immediate;
 
     enum Size {
       Half = 0,
       Word  = 1
-    } size = Size::Half;
+    } size = Half;
 
     bool is_fifo_dma;
     bool allow_read;
