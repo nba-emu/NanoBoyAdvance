@@ -1,5 +1,10 @@
 build
+
+# Visual Studio
 out
-.vscode
 .vs
 CMakeSettings.json
+
+# JetBrains CLion
+.idea
+cmake-build-*
