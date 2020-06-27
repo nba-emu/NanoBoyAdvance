@@ -21,7 +21,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL GNU OR CMAKE_CXX_COMPILER_ID STREQUAL Clang)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast")
 
   option(PROFILE_GPROF "Profile with gprof" OFF)
-  if (PROFILE)
+  if (PROFILE_GPROF)
     add_definitions(-pg)
     set(CMAKE_EXE_LINKER_FLAGS -pg)
   endif()
