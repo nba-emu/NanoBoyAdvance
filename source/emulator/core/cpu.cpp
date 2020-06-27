@@ -180,43 +180,44 @@ void CPU::RunFor(int cycles) {
 
   // TODO: account for per frame overshoot.
   while (scheduler.GetTimestampNow() < limit) {
-    // TODO: optimize the std::min by updating the result whenever it changes.
-    while (scheduler.GetTimestampNow() < std::min(scheduler.GetTimestampTarget(), limit)) {
-      // TODO: eventually move the loop body into a separate method?
-      auto has_servable_irq = irq_controller.HasServableIRQ();
+    auto has_servable_irq = irq_controller.HasServableIRQ();
 
-      if (mmio.haltcnt == HaltControl::HALT && has_servable_irq) {
-        mmio.haltcnt = HaltControl::RUN;
-      }
-
-      /* DMA and CPU cannot run simultaneously since
-       * both access the memory bus.
-       * If DMA is requested the CPU will be blocked.
-       */
-      if (dma.IsRunning()) {
-        dma.Run();
-      } else if (mmio.haltcnt == HaltControl::RUN) {
-        if (irq_controller.MasterEnable() && has_servable_irq) {
-          if (!irq.processing) {
-            irq.processing = true;
-            irq.countdown = 3;
-          } else if (irq.countdown < 0) {
-            SignalIRQ();
-          }
-        } else {
-          irq.processing = false;
-        }
-        if (m4a_xq_enable && state.r15 == m4a_setfreq_address) {
-          M4ASampleFreqSetHook();
-        }
-        Run();
-      } else {
-        /* Forward to the next event or timer IRQ. */
-        Tick(std::min(timer.EstimateCyclesUntilIRQ(), scheduler.GetRemainingCycleCount()));
-      }
+    if (mmio.haltcnt == HaltControl::HALT && has_servable_irq) {
+      mmio.haltcnt = HaltControl::RUN;
     }
 
-    scheduler.Step();
+    /* DMA and CPU cannot run simultaneously since
+     * both access the memory bus.
+     * If DMA is requested the CPU will be blocked.
+     */
+    if (dma.IsRunning()) {
+      dma.Run();
+    } else if (mmio.haltcnt == HaltControl::RUN) {
+      if (irq_controller.MasterEnable() && has_servable_irq) {
+        if (!irq.processing) {
+          irq.processing = true;
+          irq.countdown = 3;
+        } else if (irq.countdown < 0) {
+          SignalIRQ();
+        }
+      } else {
+        irq.processing = false;
+      }
+      if (m4a_xq_enable && state.r15 == m4a_setfreq_address) {
+        M4ASampleFreqSetHook();
+      }
+      Run();
+    } else {
+      /* Forward to the next event or timer IRQ. */
+      Tick(std::min(timer.EstimateCyclesUntilIRQ(), scheduler.GetRemainingCycleCount()));
+    }
+
+    /*// TODO: optimize the std::min by updating the result whenever it changes.
+    while (scheduler.GetTimestampNow() < std::min(scheduler.GetTimestampTarget(), limit)) {
+
+    }
+
+    scheduler.Step();*/
   }
 }
 

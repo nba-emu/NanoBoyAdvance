@@ -47,7 +47,7 @@ public:
   }
 
   auto GetTimestampTarget() const -> std::uint64_t {
-    //assert(size != 0);
+    assert(size != 0);
     return heap[0]->timestamp;
   }
 
@@ -57,14 +57,14 @@ public:
 
   void AddCycles(int cycles) {
     timestamp_now += cycles;
-    //if (timestamp_now >= heap[0]->timestamp && size != 0) {
-    //  Step();
-    //}
+    if (timestamp_now >= heap[0]->timestamp && size != 0) {
+      Step();
+    }
   }
 
   auto Add(std::uint64_t delay, std::function<void(int)> callback) -> Event* {
     int n = size++;
-    //assert(n < kMaxEvents);
+    assert(n < kMaxEvents);
     auto event = heap[n];
     event->timestamp = GetTimestampNow() + delay;
     event->callback = callback;
@@ -119,7 +119,7 @@ private:
   }
 
   void Remove(int n) {
-    //assert(size != 0);
+    assert(size != 0);
     Swap(n, --size);
     Heapify(n);
   }
