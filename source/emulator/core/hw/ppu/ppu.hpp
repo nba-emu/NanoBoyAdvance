@@ -25,7 +25,7 @@ public:
       DMA* dma,
       std::shared_ptr<Config> config);
 
-  void Reset();  
+  void Reset();
 
   std::uint8_t pram[0x00400];
   std::uint8_t oam [0x00400];
@@ -36,12 +36,12 @@ public:
     DisplayStatus dispstat;
 
     std::uint8_t vcount;
-    
+
     BackgroundControl bgcnt[4] { 0, 1, 2, 3 };
-    
+
     std::uint16_t bghofs[4];
     std::uint16_t bgvofs[4];
-    
+
     ReferencePoint bgx[2], bgy[2];
     std::int16_t bgpa[2];
     std::int16_t bgpb[2];
@@ -52,7 +52,7 @@ public:
     WindowRange winv[2];
     WindowLayerSelect winin;
     WindowLayerSelect winout;
-    
+
     Mosaic mosaic;
 
     BlendControl bldcnt;
@@ -83,7 +83,7 @@ private:
     OBJ_WINDOW = 2,
     OBJ_PROHIBITED = 3
   };
-  
+
   enum Layer {
     LAYER_BG0 = 0,
     LAYER_BG1 = 1,
@@ -93,7 +93,7 @@ private:
     LAYER_SFX = 5,
     LAYER_BD  = 5
   };
-  
+
   enum Enable {
     ENABLE_BG0 = 0,
     ENABLE_BG1 = 1,
@@ -102,23 +102,23 @@ private:
     ENABLE_OBJ = 4,
     ENABLE_WIN0 = 5,
     ENABLE_WIN1 = 6,
-    ENABLE_OBJWIN = 7 
+    ENABLE_OBJWIN = 7
   };
 
   static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
-  
-  void Tick();
+
+  void Tick(int cycles_late);
 
   void UpdateInternalAffineRegisters();
   void CheckVerticalCounterIRQ();
 
-  void SetNextEvent(Phase phase);
-  void OnScanlineComplete();
-  void OnHblankSearchComplete();
-  void OnHblankComplete();
-  void OnVblankScanlineComplete();
-  void OnVblankHblankComplete();
-  
+  void SetNextEvent(Phase phase, int cycles_late);
+  void OnScanlineComplete(int cycles_late);
+  void OnHblankSearchComplete(int cycles_late);
+  void OnHblankComplete(int cycles_late);
+  void OnVblankScanlineComplete(int cycles_late);
+  void OnVblankHblankComplete(int cycles_late);
+
   void RenderScanline();
   void RenderLayerText(int id);
   void RenderLayerAffine(int id);
@@ -131,32 +131,33 @@ private:
   void ComposeScanline(int bg_min, int bg_max);
   void InitBlendTable();
   void Blend(std::uint16_t& target1, std::uint16_t target2, BlendControl::Effect sfx);
-  
-  #include "helper.inl"
 
-  Scheduler::Event event { 0, [this] { this->Tick(); } };
+  #include "helper.inl"
 
   Scheduler* scheduler;
   InterruptController* irq_controller;
   DMA* dma;
   std::shared_ptr<Config> config;
+  std::function<void(int)> event_cb = [this](int cycles_late) {
+    this->Tick(cycles_late);
+  };
 
   std::uint16_t buffer_bg[4][240];
-  
+
   struct ObjectPixel {
     std::uint16_t color;
     std::uint8_t  priority;
     unsigned alpha  : 1;
     unsigned window : 1;
   } buffer_obj[240];
-  
+
   bool line_contains_alpha_obj;
-  
+
   bool buffer_win[2][240];
   bool window_scanline_enable[2];
-  
+
   std::uint32_t output[240*160];
-  
+
   Phase phase;
 
   std::uint8_t blend_table[17][17][32][32];

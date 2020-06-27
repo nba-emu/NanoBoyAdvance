@@ -20,7 +20,7 @@ public:
     divider = 0;
     Restart();
   }
-  
+
   void Restart() {
     current_volume = initial_volume;
     step = 0;
@@ -28,61 +28,61 @@ public:
       active = true;
     }
   }
-  
+
   void Tick() {
     if (!active || divider == 0) return;
-    
+
     /* TODO: this does not seem to behave quite right yet. */
     if (step == (divider - 1)) {
       int new_volume = current_volume;
-      
-      if (direction == Direction::Increment) { 
+
+      if (direction == Direction::Increment) {
         new_volume++;
       } else {
         new_volume--;
       }
-      
+
       if (new_volume >= 0 && new_volume <= 15) {
         current_volume = new_volume;
       } else {
         active = false;
       }
-      
+
       step = 0;
     } else {
       step++;
     }
   }
-  
+
   bool active = false;
   bool enabled = false;
-  
+
   enum Direction {
     Increment = 1,
     Decrement = 0
   } direction;
-  
+
   int initial_volume;
   int current_volume;
   int divider;
-  
+
 private:
   int step;
 };
 
 class Sweep {
 public:
-  void Reset() { 
+  void Reset() {
     direction = Direction::Increment;
     initial_freq = 0;
     divider = 0;
     shift = 0;
     Restart();
   }
-  
+
   void Restart() {
     channel_disabled = false;
-    
+
     /* TODO: If the sweep shift is non-zero, frequency calculation and the
      * overflow check are performed immediately.
      */
@@ -93,27 +93,27 @@ public:
       active = shift != 0 || divider != 0;
     }
   }
-  
+
   void Tick() {
     if (!active || divider == 0) return;
-    
+
     if (step == (divider - 1)) {
       int new_freq;
       int offset = shadow_freq >> shift;
-      
+
       if (direction == Direction::Increment) {
         new_freq = shadow_freq + offset;
       } else {
         new_freq = shadow_freq - offset;
       }
-      
+
       if (new_freq >= 2048) {
         channel_disabled = true;
       } else if (shift != 0) {
         shadow_freq  = new_freq;
         current_freq = new_freq;
       }
-      
+
       /* TODO: then frequency calculation and overflow check are run AGAIN immediately
        * using this new value, but this second new frequency is not written back.
        */
@@ -122,16 +122,16 @@ public:
       step++;
     }
   }
-  
+
   bool active = false;
   bool enabled = false;
   bool channel_disabled = false;
-  
+
   enum Direction {
     Increment = 0,
     Decrement = 1
   } direction;
-  
+
   int initial_freq;
   int current_freq;
   int shadow_freq;
@@ -144,17 +144,16 @@ private:
 
 class Sequencer {
 public:
-  Sequencer() { Reset(); }
-    
+  Sequencer(Scheduler* scheduler) : scheduler(scheduler) { Reset(); }
+
   void Reset() {
     length = 0;
     envelope.Reset();
     sweep.Reset();
-    
     step = 0;
-    event.countdown = s_cycles_per_step;
+    scheduler->Add(s_cycles_per_step, event_cb);
   }
-  
+
   void Restart() {
     if (length == 0) {
       length = length_default;
@@ -163,8 +162,8 @@ public:
     envelope.Restart();
     step = 0;
   }
-  
-  void Tick() {
+
+  void Tick(int cycles_late) {
     // http://gbdev.gg8.se/wiki/articles/Gameboy_sound_hardware#Frame_Sequencer
     switch (step) {
       case 0: length--; break;
@@ -176,22 +175,23 @@ public:
       case 6: length--; sweep.Tick(); break;
       case 7: envelope.Tick(); break;
     }
-    
     step = (step + 1) % 8;
-    
-    event.countdown += s_cycles_per_step;
+    scheduler->Add(s_cycles_per_step - cycles_late, event_cb);
   }
-  
-  Scheduler::Event event { 0, [this] { this->Tick(); } };
-  
+
+  std::function<void(int)> event_cb = [this](int cycles_late) {
+    this->Tick(cycles_late);
+  };
+
   int length;
   int length_default = 64;
   Envelope envelope;
   Sweep sweep;
-  
+
 private:
   int step;
-  
+  Scheduler* scheduler;
+
   static constexpr int s_cycles_per_step = 16777216/512;
 };
 

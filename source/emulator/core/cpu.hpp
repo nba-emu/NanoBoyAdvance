@@ -32,7 +32,7 @@ public:
 
   void Reset();
   void RunFor(int cycles);
-  
+
   enum MemoryRegion {
     REGION_BIOS  = 0,
     REGION_EWRAM = 2,
@@ -50,7 +50,7 @@ public:
     REGION_SRAM_1 = 0xE,
     REGION_SRAM_2 = 0xF
   };
-  
+
   enum class HaltControl {
     RUN,
     STOP,
@@ -94,26 +94,26 @@ public:
       int prefetch = 0;
       int cgb = 0;
     } waitcnt;
-  } mmio; 
-  
+  } mmio;
+
   Scheduler scheduler;
   InterruptController irq_controller;
   DMA dma;
   APU apu;
   PPU ppu;
   Timer timer;
-  
+
 private:
   template <typename T>
   auto Read(void* buffer, std::uint32_t address) -> T {
     return *reinterpret_cast<T*>(&(reinterpret_cast<std::uint8_t*>(buffer))[address]);
   }
-  
+
   template <typename T>
   void Write(void* buffer, std::uint32_t address, T value) {
     *reinterpret_cast<T*>(&(reinterpret_cast<std::uint8_t*>(buffer))[address]) = value;
   }
-  
+
   bool IsGPIOAccess(std::uint32_t address) {
     // NOTE: we do not check if the address lies within ROM, since
     // it is not required in the context. This should be reflected in the name though.
@@ -128,14 +128,14 @@ private:
   void WriteMMIO(std::uint32_t address, std::uint8_t value);
   auto ReadBIOS(std::uint32_t address) -> std::uint32_t;
   auto ReadUnused(std::uint32_t address) -> std::uint32_t;
-  
+
   auto ReadByte(std::uint32_t address, Access access) -> std::uint8_t  final;
   auto ReadHalf(std::uint32_t address, Access access) -> std::uint16_t final;
   auto ReadWord(std::uint32_t address, Access access) -> std::uint32_t final;
   void WriteByte(std::uint32_t address, std::uint8_t value, Access access)  final;
   void WriteHalf(std::uint32_t address, std::uint16_t value, Access access) final;
   void WriteWord(std::uint32_t address, std::uint32_t value, Access access) final;
-  
+
   void Tick(int cycles);
   void Idle() final;
   void PrefetchStepRAM(int cycles);
@@ -145,7 +145,7 @@ private:
   void M4ASearchForSampleFreqSet();
   void M4ASampleFreqSetHook();
   void M4AFixupPercussiveChannels();
-  
+
   M4ASoundInfo* m4a_soundinfo;
   int m4a_original_freq = 0;
   std::uint32_t m4a_setfreq_address = 0;
@@ -161,7 +161,7 @@ private:
     int countdown;
     int duty;
   } prefetch;
-  
+
   std::uint32_t last_rom_address;
 
   struct IRQ {
@@ -173,12 +173,12 @@ private:
     { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
     { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
   };
-  
+
   int cycles32[2][256] {
     { 1, 1, 6, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
     { 1, 1, 6, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 1 }
   };
-  
+
   static constexpr int s_ws_nseq[4] = { 4, 3, 2, 8 }; /* Non-sequential SRAM/WS0/WS1/WS2 */
   static constexpr int s_ws_seq0[2] = { 2, 1 };       /* Sequential WS0 */
   static constexpr int s_ws_seq1[2] = { 4, 1 };       /* Sequential WS1 */
@@ -186,5 +186,5 @@ private:
 };
 
 #include "cpu-memory.inl"
-  
+
 } // namespace nba::core

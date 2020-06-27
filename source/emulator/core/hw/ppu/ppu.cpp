@@ -17,7 +17,7 @@ constexpr int PPU::s_wait_cycles[5];
 PPU::PPU(Scheduler* scheduler,
          InterruptController* irq_controller,
          DMA* dma,
-         std::shared_ptr<Config> config) 
+         std::shared_ptr<Config> config)
   : scheduler(scheduler)
   , irq_controller(irq_controller)
   , dma(dma)
@@ -29,8 +29,6 @@ PPU::PPU(Scheduler* scheduler,
 }
 
 void PPU::Reset() {
-  scheduler->Add(event);
-
   std::memset(pram, 0, 0x00400);
   std::memset(oam,  0, 0x00400);
   std::memset(vram, 0, 0x18000);
@@ -44,7 +42,7 @@ void PPU::Reset() {
     mmio.bghofs[i] = 0;
     mmio.bgvofs[i] = 0;
   }
-  
+
   for (int i = 0; i < 2; i++) {
     mmio.bgx[i].Reset();
     mmio.bgy[i].Reset();
@@ -53,46 +51,46 @@ void PPU::Reset() {
     mmio.bgpc[i] = 0;
     mmio.bgpd[i] = 0x100;
   }
-  
+
   mmio.winh[0].Reset();
   mmio.winh[1].Reset();
   mmio.winv[0].Reset();
   mmio.winv[1].Reset();
   mmio.winin.Reset();
   mmio.winout.Reset();
-  
+
   mmio.mosaic.Reset();
-  
+
   mmio.eva = 0;
   mmio.evb = 0;
   mmio.evy = 0;
   mmio.bldcnt.Reset();
-  
-  event.countdown = 0;
-  SetNextEvent(Phase::SCANLINE);
+
+  SetNextEvent(Phase::SCANLINE, 0);
 }
 
-void PPU::SetNextEvent(Phase phase) {
+void PPU::SetNextEvent(Phase phase, int cycles_late) {
   this->phase = phase;
-  event.countdown += s_wait_cycles[static_cast<int>(phase)];
+  scheduler->Add(s_wait_cycles[static_cast<int>(phase)] - cycles_late, event_cb);
 }
 
-void PPU::Tick() {
+void PPU::Tick(int cycles_late) {
+  // TODO: get rid of the indirection and schedule the appropriate method directly.
   switch (phase) {
     case Phase::SCANLINE:
-      OnScanlineComplete();
+      OnScanlineComplete(cycles_late);
       break;
     case Phase::HBLANK_SEARCH:
-      OnHblankSearchComplete();
+      OnHblankSearchComplete(cycles_late);
       break;
     case Phase::HBLANK:
-      OnHblankComplete();
+      OnHblankComplete(cycles_late);
       break;
     case Phase::VBLANK_SCANLINE:
-      OnVblankScanlineComplete();
+      OnVblankScanlineComplete(cycles_late);
       break;
     case Phase::VBLANK_HBLANK:
-      OnVblankHblankComplete();
+      OnVblankHblankComplete(cycles_late);
       break;
   }
 }
@@ -135,8 +133,8 @@ void PPU::CheckVerticalCounterIRQ() {
   dispstat.vcount_flag = vcount_flag_new;
 }
 
-void PPU::OnScanlineComplete() {
-  SetNextEvent(Phase::HBLANK_SEARCH);
+void PPU::OnScanlineComplete(int cycles_late) {
+  SetNextEvent(Phase::HBLANK_SEARCH, cycles_late);
 
   if (mmio.dispstat.hblank_irq_enable) {
     irq_controller->Raise(InterruptSource::HBlank);
@@ -145,8 +143,8 @@ void PPU::OnScanlineComplete() {
   RenderScanline();
 }
 
-void PPU::OnHblankSearchComplete() {
-  SetNextEvent(Phase::HBLANK);
+void PPU::OnHblankSearchComplete(int cycles_late) {
+  SetNextEvent(Phase::HBLANK, cycles_late);
 
   dma->Request(DMA::Occasion::HBlank);
   if (mmio.vcount >= 2) {
@@ -155,26 +153,26 @@ void PPU::OnHblankSearchComplete() {
   mmio.dispstat.hblank_flag = 1;
 }
 
-void PPU::OnHblankComplete() {
+void PPU::OnHblankComplete(int cycles_late) {
   auto& vcount = mmio.vcount;
   auto& dispstat = mmio.dispstat;
   auto& mosaic = mmio.mosaic;
-  
+
   dispstat.hblank_flag = 0;
   vcount++;
   CheckVerticalCounterIRQ();
 
   if (vcount == 160) {
     config->video_dev->Draw(output);
-    
-    SetNextEvent(Phase::VBLANK_SCANLINE);
+
+    SetNextEvent(Phase::VBLANK_SCANLINE, cycles_late);
     dma->Request(DMA::Occasion::VBlank);
     dispstat.vblank_flag = 1;
-    
+
     if (dispstat.vblank_irq_enable) {
       irq_controller->Raise(InterruptSource::VBlank);
     }
-    
+
     /* Reset vertical mosaic counters */
     mosaic.bg._counter_y = 0;
     mosaic.obj._counter_y = 0;
@@ -183,46 +181,46 @@ void PPU::OnHblankComplete() {
     if (++mosaic.bg._counter_y == mosaic.bg.size_y) {
       mosaic.bg._counter_y = 0;
     }
-    
+
     /* Advance vertical OBJ mosaic counter */
     if (++mosaic.obj._counter_y == mosaic.obj.size_y) {
       mosaic.obj._counter_y = 0;
     }
-    
-    SetNextEvent(Phase::SCANLINE);
+
+    SetNextEvent(Phase::SCANLINE, cycles_late);
   }
 
   UpdateInternalAffineRegisters();
 }
 
-void PPU::OnVblankScanlineComplete() {
+void PPU::OnVblankScanlineComplete(int cycles_late) {
   auto& dispstat = mmio.dispstat;
-  
-  SetNextEvent(Phase::VBLANK_HBLANK);
+
+  SetNextEvent(Phase::VBLANK_HBLANK, cycles_late);
   dispstat.hblank_flag = 1;
-  
+
   if (mmio.vcount < 162) {
     dma->Request(DMA::Occasion::Video);
   } else if (mmio.vcount == 162) {
     dma->StopVideoXferDMA();
   }
-  
+
   if (dispstat.hblank_irq_enable) {
     irq_controller->Raise(InterruptSource::HBlank);
   }
 }
 
-void PPU::OnVblankHblankComplete() {
+void PPU::OnVblankHblankComplete(int cycles_late) {
   auto& vcount = mmio.vcount;
   auto& dispstat = mmio.dispstat;
-  
+
   dispstat.hblank_flag = 0;
-    
+
   if (vcount == 227) {
     vcount = 0;
-    SetNextEvent(Phase::SCANLINE);
+    SetNextEvent(Phase::SCANLINE, cycles_late);
   } else {
-    SetNextEvent(Phase::VBLANK_SCANLINE);
+    SetNextEvent(Phase::VBLANK_SCANLINE, cycles_late);
     if (vcount == 226) {
       dispstat.vblank_flag = 0;
     }

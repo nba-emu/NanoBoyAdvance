@@ -19,7 +19,7 @@ namespace nba::core {
 /* Implemented in callback.cpp */
 void AudioCallback(APU* apu, std::int16_t* stream, int byte_len);
 
-APU::APU(Scheduler* scheduler, DMA* dma, std::shared_ptr<Config> config) 
+APU::APU(Scheduler* scheduler, DMA* dma, std::shared_ptr<Config> config)
   : psg1(scheduler)
   , psg2(scheduler)
   , psg3(scheduler)
@@ -36,18 +36,17 @@ void APU::Reset() {
   mmio.fifo[1].Reset();
   mmio.soundcnt.Reset();
   mmio.bias.Reset();
-  
+
   resolution_old = 0;
-  event.countdown = mmio.bias.GetSampleInterval();
-  scheduler->Add(event);
-  
+  scheduler->Add(mmio.bias.GetSampleInterval(), event_cb);
+
   psg1.Reset();
   psg2.Reset();
   psg3.Reset();
   psg4.Reset();
-  
+
   auto audio_dev = config->audio_dev;
-  
+
   audio_dev->Close();
   audio_dev->Open(this, (AudioDevice::Callback)AudioCallback);
 
@@ -75,7 +74,7 @@ void APU::Reset() {
       resampler.reset(new SincStereoResampler<float, 256>(buffer));
       break;
   }
-  
+
   // TODO: use cubic interpolation or better if M4A samplerate hack is active.
   if (config->audio.interpolate_fifo) {
     for (int fifo = 0; fifo < 2; fifo++) {
@@ -90,7 +89,7 @@ void APU::Reset() {
 
 void APU::OnTimerOverflow(int timer_id, int times, int samplerate) {
   auto const& soundcnt = mmio.soundcnt;
-  
+
   if (!soundcnt.master_enable) {
     return;
   }
@@ -119,11 +118,11 @@ void APU::OnTimerOverflow(int timer_id, int times, int samplerate) {
   }
 }
 
-void APU::Generate() {
+void APU::Generate(int cycles_late) {
   auto& bias = mmio.bias;
-  
+
   if (bias.resolution != resolution_old) {
-    resampler->SetSampleRates(bias.GetSampleRate(), 
+    resampler->SetSampleRates(bias.GetSampleRate(),
       config->audio_dev->GetSampleRate());
     resolution_old = mmio.bias.resolution;
     if (config->audio.interpolate_fifo) {
@@ -132,17 +131,17 @@ void APU::Generate() {
       }
     }
   }
-  
+
   common::dsp::StereoSample<std::int16_t> sample { 0, 0 };
-  
+
   constexpr int psg_volume_tab[4] = { 1, 2, 4, 0 };
   constexpr int dma_volume_tab[2] = { 2, 4 };
-  
+
   auto& psg = mmio.soundcnt.psg;
   auto& dma = mmio.soundcnt.dma;
-  
+
   auto psg_volume = psg_volume_tab[psg.volume];
-  
+
   if (config->audio.interpolate_fifo) {
     for (int fifo = 0; fifo < 2; fifo++) {
       latch[fifo] = std::int8_t(fifo_buffer[fifo]->Read() * 127.0);
@@ -151,12 +150,12 @@ void APU::Generate() {
 
   for (int channel = 0; channel < 2; channel++) {
     std::int16_t psg_sample = 0;
-    
+
     if (psg.enable[channel][0]) psg_sample += psg1.sample;
     if (psg.enable[channel][1]) psg_sample += psg2.sample;
     if (psg.enable[channel][2]) psg_sample += psg3.sample;
     if (psg.enable[channel][3]) psg_sample += psg4.sample;
-    
+
     sample[channel] += psg_sample * psg_volume * psg.master[channel] / 28;
 
     for (int fifo = 0; fifo < 2; fifo++) {
@@ -164,17 +163,17 @@ void APU::Generate() {
         sample[channel] += latch[fifo] * dma_volume_tab[dma[fifo].volume];
       }
     }
-    
+
     sample[channel] += mmio.bias.level;
     sample[channel]  = std::clamp(sample[channel], (std::int16_t)0, (std::int16_t)0x3FF);
     sample[channel] -= 0x200;
   }
-  
+
   buffer_mutex.lock();
   resampler->Write({ sample[0] / float(0x200), sample[1] / float(0x200) });
   buffer_mutex.unlock();
-  
-  event.countdown += bias.GetSampleInterval();
+
+  scheduler->Add(mmio.bias.GetSampleInterval() - cycles_late, event_cb);
 }
 
 } // namespace nba::core

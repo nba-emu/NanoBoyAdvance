@@ -9,39 +9,36 @@
 
 namespace nba::core {
 
-NoiseChannel::NoiseChannel(Scheduler* scheduler, BIAS& bias) : bias(bias) {
+NoiseChannel::NoiseChannel(Scheduler* scheduler, BIAS& bias) : scheduler(scheduler), sequencer(scheduler), bias(bias) {
   sequencer.sweep.enabled = false;
   sequencer.envelope.enabled = true;
-
-  scheduler->Add(sequencer.event);
-  scheduler->Add(event);
   Reset();
 }
 
 void NoiseChannel::Reset() {
   sequencer.Reset();
-  
+
   frequency_shift = 0;
   frequency_ratio = 0;
   width = 0;
   length_enable = false;
-  
+
   lfsr = 0;
   sample = 0;
   skip_count = 0;
-  
-  event.countdown = GetSynthesisInterval(7, 15);
+
+  scheduler->Add(GetSynthesisInterval(7, 15), event_cb);
 }
 
-void NoiseChannel::Generate() {
+void NoiseChannel::Generate(int cycles_late) {
   if (length_enable && sequencer.length <= 0) {
     sample = 0;
-    event.countdown = GetSynthesisInterval(7, 15);
+    scheduler->Add(GetSynthesisInterval(7, 15) - cycles_late, event_cb);
     return;
   }
 
   constexpr std::uint16_t lfsr_xor[2] = { 0x6000, 0x60 };
-  
+
   int carry = lfsr & 1;
 
   lfsr >>= 1;
@@ -53,7 +50,7 @@ void NoiseChannel::Generate() {
   }
 
   sample *= sequencer.envelope.current_volume;
-  
+
   /* Skip samples that will never be sampled by the audio mixer. */
   for (int i = 0; i < skip_count; i++) {
     carry = lfsr & 1;
@@ -62,10 +59,10 @@ void NoiseChannel::Generate() {
       lfsr ^= lfsr_xor[width];
     }
   }
-  
+
   int noise_interval = GetSynthesisInterval(frequency_ratio, frequency_shift);
   int mixer_interval = bias.GetSampleInterval();
-  
+
   /* If a channel generates at a higher rate than
    * the audio mixer samples it, then it will generate samples
    * that will be skipped anyways.
@@ -78,13 +75,13 @@ void NoiseChannel::Generate() {
   } else {
     skip_count = 0;
   }
-  
-  event.countdown += noise_interval;
+
+  scheduler->Add(noise_interval - cycles_late, event_cb);
 }
 
 auto NoiseChannel::Read(int offset) -> std::uint8_t {
   auto& envelope = sequencer.envelope;
-  
+
   switch (offset) {
     /* Length / Envelope */
     case 0: return 0;
@@ -93,7 +90,7 @@ auto NoiseChannel::Read(int offset) -> std::uint8_t {
             ((int)envelope.direction << 3) |
             (envelope.initial_volume << 4);
     }
-    case 2: 
+    case 2:
     case 3: return 0;
 
     /* Frequency / Control */
@@ -105,14 +102,14 @@ auto NoiseChannel::Read(int offset) -> std::uint8_t {
     case 5: {
       return length_enable ? 0x40 : 0;
     }
-              
+
     default: return 0;
   }
 }
 
 void NoiseChannel::Write(int offset, std::uint8_t value) {
   auto& envelope = sequencer.envelope;
-  
+
   switch (offset) {
     /* Length / Envelope */
     case 0: {
@@ -139,7 +136,7 @@ void NoiseChannel::Write(int offset, std::uint8_t value) {
       if (value & 0x80) {
         /* TODO: are these the correct initialization values? */
         const std::uint16_t lfsr_init[] = { 0x4000, 0x0040 };
-        
+
         sequencer.Restart();
         lfsr = lfsr_init[width];
       }
