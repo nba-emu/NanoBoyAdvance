@@ -96,6 +96,7 @@ set(HEADERS
   emulator/core/cpu.hpp
   emulator/core/cpu-memory.inl
   emulator/core/cpu-mmio.hpp
+  emulator/core/scheduler.hpp
 
   # Devices
   emulator/device/audio_device.hpp
