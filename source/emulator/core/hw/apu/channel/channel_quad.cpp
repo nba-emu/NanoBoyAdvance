@@ -9,30 +9,25 @@
 
 namespace nba::core {
 
-QuadChannel::QuadChannel(SchedulerNew* scheduler) {
+QuadChannel::QuadChannel(SchedulerNew* scheduler) : scheduler(scheduler), sequencer(scheduler) {
   sequencer.sweep.enabled = true;
   sequencer.envelope.enabled = true;
-
-  //scheduler->Add(sequencer.event);
-  //scheduler->Add(event);
   Reset();
 }
 
 void QuadChannel::Reset() {
   sequencer.Reset();
-
   phase = 0;
   sample = 0;
   wave_duty = 0;
   length_enable = false;
-
-  //event.countdown = GetSynthesisIntervalFromFrequency(0);
+  scheduler->Add(GetSynthesisIntervalFromFrequency(0), event_cb);
 }
 
-void QuadChannel::Generate() {
+void QuadChannel::Generate(int cycles_late) {
   if ((length_enable && sequencer.length <= 0) || sequencer.sweep.channel_disabled) {
     sample = 0;
-    //event.countdown = GetSynthesisIntervalFromFrequency(0);
+    scheduler->Add(GetSynthesisIntervalFromFrequency(0) - cycles_late, event_cb);
     return;
   }
 
@@ -44,10 +39,9 @@ void QuadChannel::Generate() {
   };
 
   sample = std::int8_t(pattern[wave_duty][phase] * sequencer.envelope.current_volume);
-
   phase = (phase + 1) % 8;
 
-  //event.countdown += GetSynthesisIntervalFromFrequency(sequencer.sweep.current_freq);
+  scheduler->Add(GetSynthesisIntervalFromFrequency(sequencer.sweep.current_freq) - cycles_late, event_cb);
 }
 
 auto QuadChannel::Read(int offset) -> std::uint8_t {

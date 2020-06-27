@@ -9,13 +9,10 @@
 
 namespace nba::core {
 
-WaveChannel::WaveChannel(SchedulerNew* scheduler) {
+WaveChannel::WaveChannel(SchedulerNew* scheduler) : scheduler(scheduler), sequencer(scheduler) {
   sequencer.sweep.enabled = false;
   sequencer.envelope.enabled = false;
   sequencer.length_default = 256;
-
-  //scheduler->Add(sequencer.event);
-  //scheduler->Add(event);
   Reset();
 }
 
@@ -39,13 +36,13 @@ void WaveChannel::Reset() {
     }
   }
 
-  //event.countdown = GetSynthesisIntervalFromFrequency(0);
+  scheduler->Add(GetSynthesisIntervalFromFrequency(0), event_cb);
 }
 
-void WaveChannel::Generate() {
+void WaveChannel::Generate(int cycles_late) {
   if (!enabled || (length_enable && sequencer.length <= 0)) {
     sample = 0;
-    //event.countdown = GetSynthesisIntervalFromFrequency(0);
+    scheduler->Add(GetSynthesisIntervalFromFrequency(0) - cycles_late, event_cb);
     return;
   }
 
@@ -70,7 +67,7 @@ void WaveChannel::Generate() {
     }
   }
 
-  //event.countdown += GetSynthesisIntervalFromFrequency(frequency);
+  scheduler->Add(GetSynthesisIntervalFromFrequency(frequency) - cycles_late, event_cb);
 }
 
 auto WaveChannel::Read(int offset) -> std::uint8_t {

@@ -144,15 +144,14 @@ private:
 
 class Sequencer {
 public:
-  Sequencer() { Reset(); }
+  Sequencer(SchedulerNew* scheduler) : scheduler(scheduler) { Reset(); }
 
   void Reset() {
     length = 0;
     envelope.Reset();
     sweep.Reset();
-
     step = 0;
-    //event.countdown = s_cycles_per_step;
+    scheduler->Add(s_cycles_per_step, event_cb);
   }
 
   void Restart() {
@@ -164,7 +163,7 @@ public:
     step = 0;
   }
 
-  void Tick() {
+  void Tick(int cycles_late) {
     // http://gbdev.gg8.se/wiki/articles/Gameboy_sound_hardware#Frame_Sequencer
     switch (step) {
       case 0: length--; break;
@@ -176,13 +175,13 @@ public:
       case 6: length--; sweep.Tick(); break;
       case 7: envelope.Tick(); break;
     }
-
     step = (step + 1) % 8;
-
-    //event.countdown += s_cycles_per_step;
+    scheduler->Add(s_cycles_per_step - cycles_late, event_cb);
   }
 
-  //Scheduler::Event event { 0, [this] { this->Tick(); } };
+  std::function<void(int)> event_cb = [this](int cycles_late) {
+    this->Tick(cycles_late);
+  };
 
   int length;
   int length_default = 64;
@@ -191,6 +190,7 @@ public:
 
 private:
   int step;
+  SchedulerNew* scheduler;
 
   static constexpr int s_cycles_per_step = 16777216/512;
 };

@@ -19,7 +19,7 @@ public:
 
   void Reset();
 
-  void Generate();
+  void Generate(int cycles_late);
   auto Read (int offset) -> std::uint8_t;
   void Write(int offset, std::uint8_t value);
 
@@ -39,8 +39,11 @@ private:
     return 8 * (2048 - frequency);
   }
 
-  //Scheduler::Event event { 0, [this] { this->Generate(); } };
+  std::function<void(int)> event_cb = [this](int cycles_late) {
+    this->Generate(cycles_late);
+  };
 
+  SchedulerNew* scheduler;
   Sequencer sequencer;
 
   bool enabled;
