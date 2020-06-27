@@ -11,7 +11,7 @@
 #include <common/dsp/ring_buffer.hpp>
 #include <emulator/config/config.hpp>
 #include <emulator/core/hw/dma.hpp>
-#include <emulator/core/scheduler_new.hpp>
+#include <emulator/core/scheduler.hpp>
 #include <mutex>
 
 #include "channel/channel_quad.hpp"
@@ -24,7 +24,7 @@ namespace nba::core {
 
 class APU {
 public:
-  APU(SchedulerNew* scheduler, DMA* dma, std::shared_ptr<Config>);
+  APU(Scheduler* scheduler, DMA* dma, std::shared_ptr<Config>);
 
   void Reset();
   void OnTimerOverflow(int timer_id, int times, int samplerate);
@@ -53,7 +53,7 @@ public:
 private:
   void Generate(int cycles_late);
 
-  SchedulerNew* scheduler;
+  Scheduler* scheduler;
   DMA* dma;
   std::shared_ptr<Config> config;
   std::function<void(int)> event_cb = [this](int cycles_late) {

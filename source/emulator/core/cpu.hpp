@@ -21,7 +21,6 @@
 #include "hw/interrupt.hpp"
 #include "hw/timer.hpp"
 #include "scheduler.hpp"
-#include "scheduler_new.hpp"
 
 namespace nba::core {
 
@@ -98,7 +97,6 @@ public:
   } mmio;
 
   Scheduler scheduler;
-  SchedulerNew scheduler_new;
   InterruptController irq_controller;
   DMA dma;
   APU apu;

@@ -9,7 +9,7 @@
 
 namespace nba::core {
 
-NoiseChannel::NoiseChannel(SchedulerNew* scheduler, BIAS& bias) : scheduler(scheduler), sequencer(scheduler), bias(bias) {
+NoiseChannel::NoiseChannel(Scheduler* scheduler, BIAS& bias) : scheduler(scheduler), sequencer(scheduler), bias(bias) {
   sequencer.sweep.enabled = false;
   sequencer.envelope.enabled = true;
   Reset();

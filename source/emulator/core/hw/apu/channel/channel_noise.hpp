@@ -16,7 +16,7 @@ namespace nba::core {
 
 class NoiseChannel {
 public:
-  NoiseChannel(SchedulerNew* scheduler, BIAS& bias);
+  NoiseChannel(Scheduler* scheduler, BIAS& bias);
 
   void Reset();
 
@@ -41,7 +41,7 @@ private:
 
   std::uint16_t lfsr;
 
-  SchedulerNew* scheduler;
+  Scheduler* scheduler;
   Sequencer sequencer;
   std::function<void(int)> event_cb = [this](int cycles_late) {
     this->Generate(cycles_late);

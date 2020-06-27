@@ -19,7 +19,7 @@ namespace nba::core {
 /* Implemented in callback.cpp */
 void AudioCallback(APU* apu, std::int16_t* stream, int byte_len);
 
-APU::APU(SchedulerNew* scheduler, DMA* dma, std::shared_ptr<Config> config)
+APU::APU(Scheduler* scheduler, DMA* dma, std::shared_ptr<Config> config)
   : psg1(scheduler)
   , psg2(scheduler)
   , psg3(scheduler)

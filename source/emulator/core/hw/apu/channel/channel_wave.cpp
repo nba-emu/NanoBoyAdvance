@@ -9,7 +9,7 @@
 
 namespace nba::core {
 
-WaveChannel::WaveChannel(SchedulerNew* scheduler) : scheduler(scheduler), sequencer(scheduler) {
+WaveChannel::WaveChannel(Scheduler* scheduler) : scheduler(scheduler), sequencer(scheduler) {
   sequencer.sweep.enabled = false;
   sequencer.envelope.enabled = false;
   sequencer.length_default = 256;

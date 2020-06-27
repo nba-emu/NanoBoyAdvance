@@ -9,7 +9,7 @@
 
 namespace nba::core {
 
-QuadChannel::QuadChannel(SchedulerNew* scheduler) : scheduler(scheduler), sequencer(scheduler) {
+QuadChannel::QuadChannel(Scheduler* scheduler) : scheduler(scheduler), sequencer(scheduler) {
   sequencer.sweep.enabled = true;
   sequencer.envelope.enabled = true;
   Reset();

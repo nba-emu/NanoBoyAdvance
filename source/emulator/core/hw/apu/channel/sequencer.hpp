@@ -8,7 +8,7 @@
 #pragma once
 
 #include <algorithm>
-#include <emulator/core/scheduler_new.hpp>
+#include <emulator/core/scheduler.hpp>
 
 namespace nba::core {
 
@@ -144,7 +144,7 @@ private:
 
 class Sequencer {
 public:
-  Sequencer(SchedulerNew* scheduler) : scheduler(scheduler) { Reset(); }
+  Sequencer(Scheduler* scheduler) : scheduler(scheduler) { Reset(); }
 
   void Reset() {
     length = 0;
@@ -190,7 +190,7 @@ public:
 
 private:
   int step;
-  SchedulerNew* scheduler;
+  Scheduler* scheduler;
 
   static constexpr int s_cycles_per_step = 16777216/512;
 };

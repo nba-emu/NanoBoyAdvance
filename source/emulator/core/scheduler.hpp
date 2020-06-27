@@ -7,80 +7,127 @@
 
 #pragma once
 
+#include <common/log.hpp>
+#include <cassert>
+#include <cstdint>
 #include <functional>
-#include <limits>
-#include <unordered_set>
 
 namespace nba::core {
 
 class Scheduler {
 public:
   struct Event {
-    int countdown = 0;
-    std::function<void()> tick;
+    std::function<void(int)> callback;
+  private:
+    friend class Scheduler;
+    int handle;
+    std::uint64_t timestamp;
   };
 
-  Scheduler() { Reset(); }
-
-  void Reset() {
-    events.clear();
-    next_event = 0;
-    cpu_cycles = 0;
-    total_cpu_cycles = 0;
+  Scheduler() {
+    for (int i = 0; i < kMaxEvents; i++) {
+      heap[i] = new Event();
+      heap[i]->handle = i;
+    }
+    Reset();
   }
 
-  void AddCycles(int cycles) {
-    cpu_cycles += cycles;
-    total_cpu_cycles += cycles;
+ ~Scheduler() {
+    for (int i = 0; i < kMaxEvents; i++)
+      delete heap[i];
+  }
+
+  void Reset() {
+    timestamp_now = 0;
+    size = 0;
+  }
+
+  auto GetTimestampNow() const -> std::uint64_t {
+    return timestamp_now;
+  }
+
+  auto GetTimestampTarget() const -> std::uint64_t {
+    //assert(size != 0);
+    return heap[0]->timestamp;
   }
 
   auto GetRemainingCycleCount() const -> int {
-    return next_event - cpu_cycles;
+    return int(GetTimestampTarget() - GetTimestampNow());
   }
 
-  auto TotalCycleCount() -> int& {
-    return total_cpu_cycles;
+  void AddCycles(int cycles) {
+    timestamp_now += cycles;
+    //if (timestamp_now >= heap[0]->timestamp && size != 0) {
+    //  Step();
+    //}
   }
-  
-  void Add(Event& event) {
-    events.insert(&event);
-    /* If during emulation an event is added that should happen before
-     * the next time we would synchronize otherwise, then we need to
-     * determine a new, earlier synchronization point.
-     */
-    if (event.countdown < GetRemainingCycleCount()) {
-      Schedule();
+
+  auto Add(std::uint64_t delay, std::function<void(int)> callback) -> Event* {
+    int n = size++;
+    //assert(n < kMaxEvents);
+    auto event = heap[n];
+    event->timestamp = GetTimestampNow() + delay;
+    event->callback = callback;
+    do {
+      n = (n - 1) / 2;
+    } while (n >= 0 && Heapify(n));
+    return event;
+  }
+
+  void Cancel(Event* event) {
+    Remove(event->handle);
+  }
+
+  void Step() {
+    auto now = GetTimestampNow();
+    while (size > 0 && heap[0]->timestamp <= now) {
+      auto event = heap[0];
+      Remove(0);
+      event->callback(int(GetTimestampNow() - event->timestamp));
     }
-  }
-
-  void Remove(Event& event) {
-    events.erase(&event);
-  }
-  
-  void Schedule() {
-    next_event = std::numeric_limits<int>::max();
-
-    for (auto it = events.begin(); it != events.end();) {
-      auto event = *it;
-      ++it;
-      event->countdown -= cpu_cycles;
-      if (event->countdown <= 0) {
-        event->tick();
-      }
-      if (event->countdown < next_event) {
-        next_event = event->countdown;
-      }
-    }
-
-    cpu_cycles = 0;
   }
 
 private:
-  int next_event;
-  int cpu_cycles;
-  int total_cpu_cycles;
+  static constexpr int kMaxEvents = 64;
 
-  std::unordered_set<Event*> events;
+  void Swap(int i, int j) {
+    auto tmp = heap[i];
+    heap[i] = heap[j];
+    heap[j] = tmp;
+    heap[i]->handle = i;
+    heap[j]->handle = j;
+  }
+
+  bool Heapify(int p) {
+    int l = p * 2 + 1;
+    int r = p * 2 + 2;
+    bool swapped = false;
+
+    if (l < size && heap[l]->timestamp < heap[p]->timestamp) {
+      Swap(l, p);
+      Heapify(l);
+      swapped = true;
+    }
+
+    if (r < size && heap[r]->timestamp < heap[p]->timestamp) {
+      Swap(r, p);
+      Heapify(r);
+      swapped = true;
+    }
+
+    return swapped;
+  }
+
+  void Remove(int n) {
+    //assert(size != 0);
+    Swap(n, --size);
+    Heapify(n);
+  }
+
+  std::uint64_t timestamp_now;
+
+  int size;
+  Event* heap[kMaxEvents];
 };
 
 } // namespace nba::core

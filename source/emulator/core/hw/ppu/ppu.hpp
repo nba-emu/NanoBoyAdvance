@@ -10,7 +10,7 @@
 #include <emulator/config/config.hpp>
 #include <emulator/core/hw/dma.hpp>
 #include <emulator/core/hw/interrupt.hpp>
-#include <emulator/core/scheduler_new.hpp>
+#include <emulator/core/scheduler.hpp>
 #include <cstdint>
 #include <functional>
 
@@ -20,7 +20,7 @@ namespace nba::core {
 
 class PPU {
 public:
-  PPU(SchedulerNew* scheduler,
+  PPU(Scheduler* scheduler,
       InterruptController* irq_controller,
       DMA* dma,
       std::shared_ptr<Config> config);
@@ -134,7 +134,7 @@ private:
 
   #include "helper.inl"
 
-  SchedulerNew* scheduler;
+  Scheduler* scheduler;
   InterruptController* irq_controller;
   DMA* dma;
   std::shared_ptr<Config> config;

@@ -21,9 +21,9 @@ constexpr int CPU::s_ws_seq2[2];
 CPU::CPU(std::shared_ptr<Config> config)
   : ARM7TDMI::ARM7TDMI(this)
   , config(config)
-  , dma(this, &irq_controller, &scheduler_new)
-  , apu(&scheduler_new, &dma, config)
-  , ppu(&scheduler_new, &irq_controller, &dma, config)
+  , dma(this, &irq_controller, &scheduler)
+  , apu(&scheduler, &dma, config)
+  , ppu(&scheduler, &irq_controller, &dma, config)
   , timer(&irq_controller, &apu)
 {
   std::memset(memory.bios, 0, 0x04000);
@@ -49,7 +49,7 @@ void CPU::Reset() {
     cycles32[int(Access::Sequential)][i] = 1;
   }
 
-  scheduler_new.Reset();
+  scheduler.Reset();
   irq_controller.Reset();
   dma.Reset();
   timer.Reset();
@@ -78,7 +78,7 @@ void CPU::Tick(int cycles) {
   }
 
   timer.Run(cycles);
-  scheduler_new.AddCycles(cycles);
+  scheduler.AddCycles(cycles);
 
   if (prefetch.active) {
     prefetch.countdown -= cycles;
@@ -176,12 +176,12 @@ void CPU::RunFor(int cycles) {
     M4AFixupPercussiveChannels();
   }
 
-  auto limit = scheduler_new.GetTimestampNow() + cycles;
+  auto limit = scheduler.GetTimestampNow() + cycles;
 
   // TODO: account for per frame overshoot.
-  while (scheduler_new.GetTimestampNow() < limit) {
+  while (scheduler.GetTimestampNow() < limit) {
     // TODO: optimize the std::min by updating the result whenever it changes.
-    while (scheduler_new.GetTimestampNow() < std::min(scheduler_new.GetTimestampTarget(), limit)) {
+    while (scheduler.GetTimestampNow() < std::min(scheduler.GetTimestampTarget(), limit)) {
       // TODO: eventually move the loop body into a separate method?
       auto has_servable_irq = irq_controller.HasServableIRQ();
 
@@ -212,11 +212,11 @@ void CPU::RunFor(int cycles) {
         Run();
       } else {
         /* Forward to the next event or timer IRQ. */
-        Tick(std::min(timer.EstimateCyclesUntilIRQ(), scheduler_new.GetRemainingCycleCount()));
+        Tick(std::min(timer.EstimateCyclesUntilIRQ(), scheduler.GetRemainingCycleCount()));
       }
     }
 
-    scheduler_new.Step();
+    scheduler.Step();
   }
 }
 
