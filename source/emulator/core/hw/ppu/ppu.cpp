@@ -71,7 +71,7 @@ void PPU::Reset() {
 
 void PPU::SetNextEvent(Phase phase, int cycles_late) {
   this->phase = phase;
-  scheduler->Add(s_wait_cycles[static_cast<int>(phase)], event_cb);
+  scheduler->Add(s_wait_cycles[static_cast<int>(phase)] - cycles_late, event_cb);
 }
 
 void PPU::Tick(int cycles_late) {
