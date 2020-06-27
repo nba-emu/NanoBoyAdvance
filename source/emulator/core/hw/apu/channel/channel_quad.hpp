@@ -15,16 +15,16 @@ namespace nba::core {
 
 class QuadChannel {
 public:
-  QuadChannel(Scheduler* scheduler);
-    
+  QuadChannel(SchedulerNew* scheduler);
+
   void Reset();
-  
+
   void Generate();
   auto Read (int offset) -> std::uint8_t;
   void Write(int offset, std::uint8_t value);
-  
+
   std::int8_t sample = 0;
-  
+
 private:
   constexpr int GetSynthesisIntervalFromFrequency(int frequency) {
     // 128 cycles equals 131072 Hz, the highest possible frequency.
@@ -33,7 +33,7 @@ private:
     return 128 * (2048 - frequency) / 8;
   }
 
-  Scheduler::Event event { 0, [this] { this->Generate(); } };
+  //Scheduler::Event event { 0, [this] { this->Generate(); } };
   Sequencer sequencer;
   int phase;
   int wave_duty;

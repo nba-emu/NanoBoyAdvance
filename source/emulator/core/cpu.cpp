@@ -21,9 +21,9 @@ constexpr int CPU::s_ws_seq2[2];
 CPU::CPU(std::shared_ptr<Config> config)
   : ARM7TDMI::ARM7TDMI(this)
   , config(config)
-  , dma(this, &irq_controller, &scheduler)
-  , apu(&scheduler, &dma, config)
-  , ppu(&scheduler, &irq_controller, &dma, config)
+  , dma(this, &irq_controller, &scheduler_new)
+  , apu(&scheduler_new, &dma, config)
+  , ppu(&scheduler_new, &irq_controller, &dma, config)
   , timer(&irq_controller, &apu)
 {
   std::memset(memory.bios, 0, 0x04000);
@@ -41,24 +41,24 @@ void CPU::Reset() {
   prefetch = {};
   last_rom_address = 0;
   UpdateMemoryDelayTable();
-  
+
   for (int i = 16; i < 256; i++) {
     cycles16[int(Access::Nonsequential)][i] = 1;
     cycles32[int(Access::Nonsequential)][i] = 1;
     cycles16[int(Access::Sequential)][i] = 1;
     cycles32[int(Access::Sequential)][i] = 1;
   }
-  
-  /* TODO: properly reset the scheduler */
+
+  scheduler_new.Reset();
   irq_controller.Reset();
   dma.Reset();
   timer.Reset();
   apu.Reset();
   ppu.Reset();
   ARM7TDMI::Reset();
-  
+
   if (config->skip_bios) {
-    state.bank[arm::BANK_SVC][arm::BANK_R13] = 0x03007FE0; 
+    state.bank[arm::BANK_SVC][arm::BANK_R13] = 0x03007FE0;
     state.bank[arm::BANK_IRQ][arm::BANK_R13] = 0x03007FA0;
     state.reg[13] = 0x03007F00;
     state.cpsr.f.mode = arm::MODE_SYS;
@@ -78,11 +78,11 @@ void CPU::Tick(int cycles) {
   }
 
   timer.Run(cycles);
-  scheduler.AddCycles(cycles);
-  
+  scheduler_new.AddCycles(cycles);
+
   if (prefetch.active) {
     prefetch.countdown -= cycles;
-    
+
     if (prefetch.countdown <= 0) {
       prefetch.count++;
       prefetch.active = false;
@@ -176,14 +176,13 @@ void CPU::RunFor(int cycles) {
     M4AFixupPercussiveChannels();
   }
 
-  while (scheduler.TotalCycleCount() < cycles) {
-    scheduler.Schedule();
-  
-    // TODO: this could be problematic, when events are added during execution.
-    int remaining = cycles - scheduler.TotalCycleCount();
-    int limit = std::max(scheduler.GetRemainingCycleCount() - remaining, 0);
+  auto limit = scheduler_new.GetTimestampNow() + cycles;
 
-    while (scheduler.GetRemainingCycleCount() > limit) {
+  // TODO: account for per frame overshoot.
+  while (scheduler_new.GetTimestampNow() < limit) {
+    // TODO: optimize the std::min by updating the result whenever it changes.
+    while (scheduler_new.GetTimestampNow() < std::min(scheduler_new.GetTimestampTarget(), limit)) {
+      // TODO: eventually move the loop body into a separate method?
       auto has_servable_irq = irq_controller.HasServableIRQ();
 
       if (mmio.haltcnt == HaltControl::HALT && has_servable_irq) {
@@ -213,13 +212,12 @@ void CPU::RunFor(int cycles) {
         Run();
       } else {
         /* Forward to the next event or timer IRQ. */
-        Tick(std::min(timer.EstimateCyclesUntilIRQ(), scheduler.GetRemainingCycleCount()));
+        Tick(std::min(timer.EstimateCyclesUntilIRQ(), scheduler_new.GetRemainingCycleCount()));
       }
     }
-  }
 
-  /* Compensate for over- or undershoot from previous calls. */
-  scheduler.TotalCycleCount() = -scheduler.GetRemainingCycleCount();
+    scheduler_new.Step();
+  }
 }
 
 void CPU::UpdateMemoryDelayTable() {
@@ -227,9 +225,9 @@ void CPU::UpdateMemoryDelayTable() {
   auto cycles16_s = cycles16[int(Access::Sequential)];
   auto cycles32_n = cycles32[int(Access::Nonsequential)];
   auto cycles32_s = cycles32[int(Access::Sequential)];
-  
+
   int sram_cycles = 1 + s_ws_nseq[mmio.waitcnt.sram];
-  
+
   cycles16_n[0xE] = sram_cycles;
   cycles32_n[0xE] = sram_cycles;
   cycles16_s[0xE] = sram_cycles;
@@ -240,21 +238,21 @@ void CPU::UpdateMemoryDelayTable() {
     cycles16_n[0x8 + i] = 1 + s_ws_nseq[mmio.waitcnt.ws0_n];
     cycles16_n[0xA + i] = 1 + s_ws_nseq[mmio.waitcnt.ws1_n];
     cycles16_n[0xC + i] = 1 + s_ws_nseq[mmio.waitcnt.ws2_n];
-    
+
     /* ROM: WS0/WS1/WS2 sequential timing. */
     cycles16_s[0x8 + i] = 1 + s_ws_seq0[mmio.waitcnt.ws0_s];
     cycles16_s[0xA + i] = 1 + s_ws_seq1[mmio.waitcnt.ws1_s];
     cycles16_s[0xC + i] = 1 + s_ws_seq2[mmio.waitcnt.ws2_s];
-    
+
     /* ROM: WS0/WS1/WS2 32-bit non-sequential access: 1N access, 1S access */
     cycles32_n[0x8 + i] = cycles16_n[0x8] + cycles16_s[0x8];
     cycles32_n[0xA + i] = cycles16_n[0xA] + cycles16_s[0xA];
     cycles32_n[0xC + i] = cycles16_n[0xC] + cycles16_s[0xC];
-    
+
     /* ROM: WS0/WS1/WS2 32-bit sequential access: 2S accesses */
     cycles32_s[0x8 + i] = cycles16_s[0x8] * 2;
     cycles32_s[0xA + i] = cycles16_s[0xA] * 2;
-    cycles32_s[0xC + i] = cycles16_s[0xC] * 2;  
+    cycles32_s[0xC + i] = cycles16_s[0xC] * 2;
   }
 }
 
@@ -281,7 +279,7 @@ void CPU::M4ASearchForSampleFreqSet() {
   }
 }
 
-void CPU::M4ASampleFreqSetHook() {  
+void CPU::M4ASampleFreqSetHook() {
   static const int frequency_tab[16] = {
     0, 5734, 7884, 10512,
     13379, 15768, 18157, 21024,
@@ -293,7 +291,7 @@ void CPU::M4ASampleFreqSetHook() {
 
   m4a_original_freq = frequency_tab[(state.r0 >> 16) & 15];
   state.r0 = 0x00090000;
-  m4a_soundinfo = nullptr;  
+  m4a_soundinfo = nullptr;
 
   std::uint32_t soundinfo_p1 = Read<std::uint32_t>(memory.rom.data.get(), (m4a_setfreq_address & 0x00FFFFFF) + 492);
   std::uint32_t soundinfo_p2;
@@ -310,9 +308,9 @@ void CPU::M4ASampleFreqSetHook() {
       LOG_ERROR("M4A SoundInfo pointer is outside of IWRAM or EWRAM, unsupported.");
       return;
   }
-  
+
   LOG_INFO("M4A SoundInfo address is 0x{0:08X}", soundinfo_p2);
-  
+
   switch (soundinfo_p2 >> 24) {
     case REGION_EWRAM:
       m4a_soundinfo = reinterpret_cast<M4ASoundInfo*>(memory.wram + (soundinfo_p2 & 0x00FFFFFF));

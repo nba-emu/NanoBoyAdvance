@@ -14,12 +14,10 @@
 #include <emulator/device/video_device.hpp>
 #include <emulator/emulator.hpp>
 #include <fmt/format.h>
-#include <fstream>
 #include <iterator>
 #include <optional>
 #include <string>
 #include <third_party/toml11/toml.hpp>
-#include <thread>
 #include <unordered_map>
 
 #include "device/audio_device.hpp"
@@ -426,7 +424,7 @@ void update_fastforward(bool fastforward) {
 void update_key(SDL_KeyboardEvent* event) {
   bool pressed = event->type == SDL_KEYDOWN;
   auto key = event->keysym.sym;
-  
+
   if (key == keymap.fastforward) {
     update_fastforward(pressed);
   }
@@ -452,7 +450,7 @@ void update_controller() {
   if (g_game_controller == nullptr)
     return;
   SDL_GameControllerUpdate();
-  
+
   auto button_x = SDL_GameControllerGetButton(g_game_controller, SDL_CONTROLLER_BUTTON_X);
   if (g_game_controller_button_x_old && !button_x) {
     update_fastforward(!g_fastforward);
@@ -479,7 +477,7 @@ void update_controller() {
   constexpr auto threshold = std::numeric_limits<int16_t>::max() / 2;
   auto x = SDL_GameControllerGetAxis(g_game_controller, SDL_CONTROLLER_AXIS_LEFTX);
   auto y = SDL_GameControllerGetAxis(g_game_controller, SDL_CONTROLLER_AXIS_LEFTY);
-  
+
   g_controller_input_device.SetKeyStatus(nba::InputDevice::Key::Left, x < -threshold);
   g_controller_input_device.SetKeyStatus(nba::InputDevice::Key::Right, x > threshold);
   g_controller_input_device.SetKeyStatus(nba::InputDevice::Key::Up, y < -threshold);

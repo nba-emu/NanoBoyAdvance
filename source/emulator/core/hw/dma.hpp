@@ -11,7 +11,7 @@
 #include <cstdint>
 #include <emulator/core/arm/memory.hpp>
 #include <emulator/core/hw/interrupt.hpp>
-#include <emulator/core/scheduler.hpp>
+#include <emulator/core/scheduler_new.hpp>
 
 namespace nba::core {
 
@@ -21,7 +21,7 @@ public:
 
   DMA(arm::MemoryBase* memory,
       InterruptController* irq_controller,
-      Scheduler* scheduler)
+      SchedulerNew* scheduler)
     : memory(memory)
     , irq_controller(irq_controller)
     , scheduler(scheduler)
@@ -82,7 +82,7 @@ private:
 
   arm::MemoryBase* memory;
   InterruptController* irq_controller;
-  Scheduler* scheduler;
+  SchedulerNew* scheduler;
 
   int active_dma_id;
   bool early_exit_trigger;
