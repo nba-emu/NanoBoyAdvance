@@ -1,6 +1,6 @@
-/* 
+/*
  * Copyright (C) 2020 fleroviux
- * 
+ *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
  */
@@ -48,6 +48,6 @@ void append(Level level,
 #define LOG_FATAL(message, ...) common::logger::append(logger::detail::Level::Fatal, __FILE__, __func__, __LINE__, \
                                                        fmt::format(message, ## __VA_ARGS__));
 
-#define ASSERT(condition, message, ...) if (!condition) { LOG_ERROR(message, ## __VA_ARGS__); std::exit(-1); }
+#define ASSERT(condition, message, ...) if (!(condition)) { LOG_ERROR(message, ## __VA_ARGS__); std::exit(-1); }
 
 } // namespace common::logger
