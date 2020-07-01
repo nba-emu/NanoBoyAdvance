@@ -24,7 +24,7 @@ CPU::CPU(std::shared_ptr<Config> config)
   , dma(this, &irq_controller, &scheduler)
   , apu(&scheduler, &dma, config)
   , ppu(&scheduler, &irq_controller, &dma, config)
-  , timer(&irq_controller, &apu)
+  , timer(&scheduler, &irq_controller, &apu)
 {
   std::memset(memory.bios, 0, 0x04000);
   memory.rom.size = 0;
@@ -77,7 +77,6 @@ void CPU::Tick(int cycles) {
     irq.countdown -= cycles;
   }
 
-  timer.Run(cycles);
   scheduler.AddCycles(cycles);
 
   if (prefetch.active) {
@@ -180,44 +179,41 @@ void CPU::RunFor(int cycles) {
 
   // TODO: account for per frame overshoot.
   while (scheduler.GetTimestampNow() < limit) {
-    auto has_servable_irq = irq_controller.HasServableIRQ();
-
-    if (mmio.haltcnt == HaltControl::HALT && has_servable_irq) {
-      mmio.haltcnt = HaltControl::RUN;
-    }
-
-    /* DMA and CPU cannot run simultaneously since
-     * both access the memory bus.
-     * If DMA is requested the CPU will be blocked.
-     */
-    if (dma.IsRunning()) {
-      dma.Run();
-    } else if (mmio.haltcnt == HaltControl::RUN) {
-      if (irq_controller.MasterEnable() && has_servable_irq) {
-        if (!irq.processing) {
-          irq.processing = true;
-          irq.countdown = 3;
-        } else if (irq.countdown < 0) {
-          SignalIRQ();
-        }
-      } else {
-        irq.processing = false;
-      }
-      if (m4a_xq_enable && state.r15 == m4a_setfreq_address) {
-        M4ASampleFreqSetHook();
-      }
-      Run();
-    } else {
-      /* Forward to the next event or timer IRQ. */
-      Tick(std::min(timer.EstimateCyclesUntilIRQ(), scheduler.GetRemainingCycleCount()));
-    }
-
-    /*// TODO: optimize the std::min by updating the result whenever it changes.
+    // TODO: optimize the std::min by updating the result whenever it changes.
     while (scheduler.GetTimestampNow() < std::min(scheduler.GetTimestampTarget(), limit)) {
+      auto has_servable_irq = irq_controller.HasServableIRQ();
 
+      if (mmio.haltcnt == HaltControl::HALT && has_servable_irq) {
+        mmio.haltcnt = HaltControl::RUN;
+      }
+
+      /* DMA and CPU cannot run simultaneously since
+       * both access the memory bus.
+       * If DMA is requested the CPU will be blocked.
+       */
+      if (dma.IsRunning()) {
+        dma.Run();
+      } else if (mmio.haltcnt == HaltControl::RUN) {
+        if (irq_controller.MasterEnable() && has_servable_irq) {
+          if (!irq.processing) {
+            irq.processing = true;
+            irq.countdown = 3;
+          } else if (irq.countdown < 0) {
+            SignalIRQ();
+          }
+        } else {
+          irq.processing = false;
+        }
+        if (m4a_xq_enable && state.r15 == m4a_setfreq_address) {
+          M4ASampleFreqSetHook();
+        }
+        Run();
+      } else {
+        Tick(scheduler.GetRemainingCycleCount());
+      }
     }
 
-    scheduler.Step();*/
+    scheduler.Step();
   }
 }
 

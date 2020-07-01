@@ -59,9 +59,6 @@ public:
 
   void AddCycles(int cycles) {
     timestamp_now += cycles;
-    if (timestamp_now >= heap[0]->timestamp && heap_size != 0) {
-      Step();
-    }
   }
 
   auto Add(std::uint64_t delay, std::function<void(int)> callback) -> Event* {

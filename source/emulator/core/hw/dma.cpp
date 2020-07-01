@@ -73,8 +73,8 @@ void DMA::TryStart(int chan_id) {
     early_exit_trigger = true;
   }
 
-  memory->Idle();
-  memory->Idle();
+  /*memory->Idle();
+  memory->Idle();*/
   runnable_set.set(chan_id, true);
 }
 

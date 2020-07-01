@@ -119,3 +119,4 @@ endif()
 if (PLATFORM_SDL)
   add_subdirectory("platform/sdl")
 endif()
+

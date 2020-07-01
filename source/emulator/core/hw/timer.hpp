@@ -9,37 +9,37 @@
 
 #include <cstdint>
 #include <emulator/core/hw/interrupt.hpp>
+#include <emulator/core/scheduler.hpp>
 
 #include "apu/apu.hpp"
 
 namespace nba::core {
-  
+
 class Timer {
 public:
-  Timer(InterruptController* irq_controller, APU* apu) 
-    : irq_controller(irq_controller)
-    , apu(apu) 
-  { Reset(); }
-  
+  Timer(Scheduler* scheduler, InterruptController* irq_controller, APU* apu) : scheduler(scheduler), irq_controller(irq_controller) , apu(apu) { Reset(); }
+
   void Reset();
   auto Read (int chan_id, int offset) -> std::uint8_t;
   void Write(int chan_id, int offset, std::uint8_t value);
-  void Run(int cycles);
-  auto EstimateCyclesUntilIRQ() -> int;
-  
+
 private:
+  // TODO: does this really need to return an u32?
+  auto GetCounterDeltaSinceLastUpdate(int chan_id) -> std::uint32_t;
+  // TODO: get rid of force parameter? It seems fairly useless.
+  // Replace Timer with Channel.
+  void StartTimer(int chan_id, bool force, int cycles_late);
+  void StopTimer(int chan_id);
   void Increment(int chan_id, int increment);
-  
+
+  Scheduler* scheduler;
   InterruptController* irq_controller;
   APU* apu;
 
-  bool may_cause_irq;
-  
-  int run_list[4];
-  int run_count;
-
   struct Channel {
     int id;
+    std::uint16_t reload;
+    std::uint32_t counter;
 
     struct Control {
       int frequency;
@@ -48,14 +48,13 @@ private:
       bool enable;
     } control;
 
-    int cycles;
-    std::uint16_t reload;
-    std::uint32_t counter;
-
+    bool running;
     int shift;
     int mask;
     int samplerate;
-    bool cascades_into_timer_causing_irq;
+    std::uint64_t timestamp_started;
+    Scheduler::Event* event = nullptr;
+    std::function<void(int)> event_cb;
   } channels[4];
 };
 
