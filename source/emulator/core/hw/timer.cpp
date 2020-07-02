@@ -23,7 +23,7 @@ void Timer::Reset() {
     channel.event_cb = [this, id](int cycles_late) {
       // FIXME: ideally we would just capture the existing channel reference... not sure if it is possible.
       auto& channel = channels[id];
-      Increment(channel, 0x10000 - channel.counter);
+      OnOverflow(channel);
       StartChannel(channel, cycles_late);
     };
   }
@@ -119,40 +119,30 @@ void Timer::StartChannel(Channel& channel, int cycles_late) {
 }
 
 void Timer::StopChannel(Channel& channel) {
-  Increment(channel, GetCounterDeltaSinceLastUpdate(channel));
+  channel.counter += GetCounterDeltaSinceLastUpdate(channel);
+  if (channel.counter >= 0x10000) {
+    OnOverflow(channel);
+  }
   scheduler->Cancel(channel.event);
   channel.event = nullptr;
   channel.running = false;
 }
 
-void Timer::Increment(Channel& channel, int increment) {
-  channel.counter += increment;
+void Timer::OnOverflow(Channel& channel) {
+  channel.counter = channel.reload;
 
-  if (channel.counter >= 0x10000) {
-    int overflows = 0;
+  if (channel.control.interrupt) {
+    irq_controller->Raise(InterruptSource::Timer, channel.id);
+  }
 
-    /* NOTE: we could assumes that the timer will only overflow a single time,
-     * which should generally hold true, except maybe if the reload value is
-     * really high (like 0xFFFF). Let's be safe for now.
-     */
-    do {
-      channel.counter = (channel.counter & 0xFFFF) + channel.reload;
-      overflows++;
-    } while (channel.counter >= 0x10000);
+  if (channel.id <= 1) {
+    apu->OnTimerOverflow(channel.id, 1, channel.samplerate);
+  }
 
-    if (channel.control.interrupt) {
-      irq_controller->Raise(InterruptSource::Timer, channel.id);
-    }
-
-    if (channel.id <= 1) {
-      apu->OnTimerOverflow(channel.id, overflows, channel.samplerate);
-    }
-
-    if (channel.id != 3) {
-      auto& next_channel = channels[channel.id + 1];
-      if (next_channel.control.enable && next_channel.control.cascade) {
-        Increment(next_channel, overflows);
-      }
+  if (channel.id != 3) {
+    auto& next_channel = channels[channel.id + 1];
+    if (next_channel.control.enable && next_channel.control.cascade && ++next_channel.counter == 0x10000) {
+      OnOverflow(next_channel);
     }
   }
 }

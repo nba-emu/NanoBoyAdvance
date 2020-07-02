@@ -57,7 +57,7 @@ private:
   auto GetCounterDeltaSinceLastUpdate(Channel const& channel) -> std::uint32_t;
   void StartChannel(Channel& channel, int cycles_late);
   void StopChannel(Channel& channel);
-  void Increment(Channel& channel, int increment);
+  void OnOverflow(Channel& channel);
 };
 
 } // namespace nba::core
