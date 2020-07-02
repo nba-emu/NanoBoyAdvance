@@ -16,23 +16,15 @@ static constexpr int g_ticks_shift[4] = { 0, 6, 8, 10 };
 static constexpr int g_ticks_mask[4] = { 0, 0x3F, 0xFF, 0x3FF };
 
 void Timer::Reset() {
-  for (int chan_id = 0; chan_id < 4; chan_id++) {
-    channels[chan_id].id = chan_id;
-    channels[chan_id].reload = 0;
-    channels[chan_id].counter = 0;
-    channels[chan_id].control.frequency = 0;
-    channels[chan_id].control.cascade = false;
-    channels[chan_id].control.interrupt = false;
-    channels[chan_id].control.enable = false;
-    channels[chan_id].shift = 0;
-    channels[chan_id].mask  = 0;
-    channels[chan_id].running = false;
-    channels[chan_id].timestamp_started = 0;
-    channels[chan_id].event = nullptr;
-
-    channels[chan_id].event_cb = [this, chan_id](int cycles_late) {
-      Increment(chan_id, 0x10000 - channels[chan_id].counter);
-      StartTimer(chan_id, true, cycles_late);
+  for (int id = 0; id < 4; id++) {
+    auto& channel = channels[id];
+    channel = {};
+    channel.id = id;
+    channel.event_cb = [this, id](int cycles_late) {
+      // FIXME: ideally we would just capture the existing channel reference... not sure if it is possible.
+      auto& channel = channels[id];
+      Increment(channel, 0x10000 - channel.counter);
+      StartChannel(channel, cycles_late);
     };
   }
 }
@@ -53,17 +45,17 @@ auto Timer::Read(int chan_id, int offset) -> std::uint8_t {
   // While the timer is still running we must account for time that has passed
   // since the last counter update (overflow or configuration change).
   if (channel.running) {
-    counter += GetCounterDeltaSinceLastUpdate(chan_id);
+    counter += GetCounterDeltaSinceLastUpdate(channel);
   }
 
   switch (offset) {
-    case 0: {
+    case REG_TMXCNT_L | 0: {
       return counter & 0xFF;
     }
-    case 1: {
+    case REG_TMXCNT_L | 1: {
       return counter >> 8;
     }
-    case 2: {
+    case REG_TMXCNT_H: {
       return (control.frequency) |
              (control.cascade   ? 4   : 0) |
              (control.interrupt ? 64  : 0) |
@@ -78,15 +70,13 @@ void Timer::Write(int chan_id, int offset, std::uint8_t value) {
   auto& control = channel.control;
 
   switch (offset) {
-    case 0: channel.reload = (channel.reload & 0xFF00) | (value << 0); break;
-    case 1: channel.reload = (channel.reload & 0x00FF) | (value << 8); break;
-    case 2: {
+    case REG_TMXCNT_L | 0: channel.reload = (channel.reload & 0xFF00) | (value << 0); break;
+    case REG_TMXCNT_L | 1: channel.reload = (channel.reload & 0x00FF) | (value << 8); break;
+    case REG_TMXCNT_H: {
       bool enable_previous = control.enable;
 
-      // TODO: only reschedule the timer if something crucial changed?
-      // This actually might not be an issue due to the system clock alignment though.
       if (channel.running) {
-        StopTimer(chan_id);
+        StopChannel(channel);
       }
 
       control.frequency = value & 3;
@@ -105,50 +95,37 @@ void Timer::Write(int chan_id, int offset, std::uint8_t value) {
           channel.counter = channel.reload;
         }
         if (!control.cascade) {
-          // TODO: remove -2 cycle delay if timer already is running?
-          StartTimer(chan_id, false, (scheduler->GetTimestampNow() & channel.mask) - 2);
+          auto late = (scheduler->GetTimestampNow() & channel.mask);
+          if (!enable_previous) {
+            late -= 2;
+          }
+          StartChannel(channel, late);
         }
       }
     }
   }
 }
 
-auto Timer::GetCounterDeltaSinceLastUpdate(int chan_id) -> std::uint32_t {
-  auto const& channel = channels[chan_id];
+auto Timer::GetCounterDeltaSinceLastUpdate(Channel const& channel) -> std::uint32_t {
   return (scheduler->GetTimestampNow() - channel.timestamp_started) >> channel.shift;
 }
 
-void Timer::StartTimer(int chan_id, bool force, int cycles_late) {
-  auto& channel = channels[chan_id];
-
-  if (channel.running && !force) {
-    LOG_ERROR("timer[{0}]: attempted to start timer, but it already is running.", chan_id);
-    return;
-  }
-
+void Timer::StartChannel(Channel& channel, int cycles_late) {
   int cycles = int((0x10000 - channel.counter) << channel.shift);
+
   channel.running = true;
   channel.timestamp_started = scheduler->GetTimestampNow() - cycles_late;
   channel.event = scheduler->Add(cycles - cycles_late, channel.event_cb);
 }
 
-void Timer::StopTimer(int chan_id) {
-  auto& channel = channels[chan_id];
-
-  if (!channel.running) {
-    LOG_ERROR("timer[{0}]: attempted to stop timer, but it already is stopped.", chan_id);
-    return;
-  }
-
+void Timer::StopChannel(Channel& channel) {
+  Increment(channel, GetCounterDeltaSinceLastUpdate(channel));
   scheduler->Cancel(channel.event);
-  Increment(chan_id, GetCounterDeltaSinceLastUpdate(chan_id));
   channel.event = nullptr;
   channel.running = false;
 }
 
-void Timer::Increment(int chan_id, int increment) {
-  auto& channel = channels[chan_id];
-
+void Timer::Increment(Channel& channel, int increment) {
   channel.counter += increment;
 
   if (channel.counter >= 0x10000) {
@@ -164,17 +141,17 @@ void Timer::Increment(int chan_id, int increment) {
     } while (channel.counter >= 0x10000);
 
     if (channel.control.interrupt) {
-      irq_controller->Raise(InterruptSource::Timer, chan_id);
+      irq_controller->Raise(InterruptSource::Timer, channel.id);
     }
 
-    if (chan_id <= 1) {
-      apu->OnTimerOverflow(chan_id, overflows, channel.samplerate);
+    if (channel.id <= 1) {
+      apu->OnTimerOverflow(channel.id, overflows, channel.samplerate);
     }
 
-    if (chan_id != 3) {
-      auto& next_channel = channels[chan_id + 1];
+    if (channel.id != 3) {
+      auto& next_channel = channels[channel.id + 1];
       if (next_channel.control.enable && next_channel.control.cascade) {
-        Increment(chan_id + 1, overflows);
+        Increment(next_channel, overflows);
       }
     }
   }

@@ -24,31 +24,24 @@ public:
   void Write(int chan_id, int offset, std::uint8_t value);
 
 private:
-  // TODO: does this really need to return an u32?
-  auto GetCounterDeltaSinceLastUpdate(int chan_id) -> std::uint32_t;
-  // TODO: get rid of force parameter? It seems fairly useless.
-  // Replace Timer with Channel.
-  void StartTimer(int chan_id, bool force, int cycles_late);
-  void StopTimer(int chan_id);
-  void Increment(int chan_id, int increment);
-
-  Scheduler* scheduler;
-  InterruptController* irq_controller;
-  APU* apu;
+  enum Registers {
+    REG_TMXCNT_L = 0,
+    REG_TMXCNT_H = 2
+  };
 
   struct Channel {
     int id;
-    std::uint16_t reload;
-    std::uint32_t counter;
+    std::uint16_t reload = 0;
+    std::uint32_t counter = 0;
 
     struct Control {
-      int frequency;
-      bool cascade;
-      bool interrupt;
-      bool enable;
-    } control;
+      int frequency = 0;
+      bool cascade = false;
+      bool interrupt = false;
+      bool enable = false;
+    } control = {};
 
-    bool running;
+    bool running = false;
     int shift;
     int mask;
     int samplerate;
@@ -56,6 +49,15 @@ private:
     Scheduler::Event* event = nullptr;
     std::function<void(int)> event_cb;
   } channels[4];
+
+  Scheduler* scheduler;
+  InterruptController* irq_controller;
+  APU* apu;
+
+  auto GetCounterDeltaSinceLastUpdate(Channel const& channel) -> std::uint32_t;
+  void StartChannel(Channel& channel, int cycles_late);
+  void StopChannel(Channel& channel);
+  void Increment(Channel& channel, int increment);
 };
 
 } // namespace nba::core
