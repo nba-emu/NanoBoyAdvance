@@ -26,6 +26,14 @@ inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
 inline std::uint32_t CPU::ReadUnused(std::uint32_t address) {
   std::uint32_t result = 0;
 
+  // If DMA is running we return a different open bus value,
+  // but DMA may start mid-instruction, so we have to make sure that
+  // events which trigger DMAs are serviced in time.
+  // Note that this still is a hack, since we don't actually inteleave
+  // the CPU mid-instruction to execute DMAs, the returned DMA open bus value
+  // will be outdated/incorrect. This generally seems good enough though.
+  scheduler.Step();
+
   if (dma.IsRunning()) {
     return dma.GetOpenBusValue() >> ((address & 3) * 8);
   }
