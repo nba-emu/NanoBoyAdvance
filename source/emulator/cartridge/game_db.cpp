@@ -40,7 +40,7 @@ const std::map<std::string, GameInfo> g_game_db {
   { "FP7E", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Classic NES Series - Pac-Man (USA, Europe) */
   { "FSME", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Classic NES Series - Super Mario Bros. (USA, Europe) */
   { "FXVE", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Classic NES Series - Xevious (USA, Europe) */
-  { "FZLE", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Classic NES Series - Legend of Zelda (USA, Europe) */
+  { "FZLE", { Config::BackupType::EEPROM_64, GPIODeviceType::None, true } },   /* Classic NES Series - Legend of Zelda (USA, Europe) */
   { "KYGP", { Config::BackupType::EEPROM_64/*_SENSOR*/, GPIODeviceType::None, false } }, /* Yoshi's Universal Gravitation (Europe)(En,Fr,De,Es,It) */
   { "U3IP", { Config::BackupType::Detect, GPIODeviceType::RTC, false } },     /* Boktai - The Sun Is in Your Hand (Europe)(En,Fr,De,Es,It) */
   { "U32P", { Config::BackupType::Detect, GPIODeviceType::RTC, false } },     /* Boktai 2 - Solar Boy Django (Europe)(En,Fr,De,Es,It) */
