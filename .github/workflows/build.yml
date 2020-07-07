@@ -14,8 +14,15 @@ jobs:
         shell: cmd
 
       - name: Setup vcpkg
-        run: vcpkg integrate install
-        shell: cmd
+        run: |
+          Remove-Item "C:\vcpkg" -Recurse -Force
+          $Uri = 'https://github.com/Microsoft/vcpkg.git'
+          $InstallDir = 'C:\vcpkg'
+
+          git clone -b 2020.04 --single-branch --depth=1 $Uri $InstallDir -q
+
+          Invoke-Expression "$InstallDir\bootstrap-vcpkg.bat"
+          vcpkg integrate install
 
       - name: Setup SDL2
         run: vcpkg install sdl2:x64-windows
