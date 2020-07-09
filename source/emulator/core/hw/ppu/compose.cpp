@@ -48,15 +48,15 @@ void PPU::RenderScanline() {
     }
     return;
   }
-  
+
   if (mmio.dispcnt.enable[ENABLE_WIN0]) {
     RenderWindow(0);
   }
-  
+
   if (mmio.dispcnt.enable[ENABLE_WIN1]) {
     RenderWindow(1);
   }
-  
+
   switch (mmio.dispcnt.mode) {
     case 0: {
       /* BG Mode 0 - 240x160 pixels, Text mode */
@@ -139,39 +139,39 @@ void PPU::RenderScanline() {
 void PPU::ComposeScanline(int bg_min, int bg_max) {
   std::uint32_t* line = &output[mmio.vcount * 240];
   std::uint16_t backdrop = ReadPalette(0, 0);
-  
+
   auto const& dispcnt = mmio.dispcnt;
   auto const& bgcnt = mmio.bgcnt;
   auto const& winin = mmio.winin;
   auto const& winout = mmio.winout;
-  
+
   bool win0_active = dispcnt.enable[ENABLE_WIN0] && window_scanline_enable[0];
   bool win1_active = dispcnt.enable[ENABLE_WIN1] && window_scanline_enable[1];
   bool win2_active = dispcnt.enable[ENABLE_OBJWIN];
-  bool no_windows  = !dispcnt.enable[ENABLE_WIN0] && 
+  bool no_windows  = !dispcnt.enable[ENABLE_WIN0] &&
                      !dispcnt.enable[ENABLE_WIN1] &&
                      !dispcnt.enable[ENABLE_OBJWIN];
-  
+
   int bg_list[4];
   int bg_count = 0;
-  
+
   /* Sort enabled backgrounds by their respective priority in ascending order. */
   for (int prio = 3; prio >= 0; prio--) {
     for (int bg = bg_max; bg >= bg_min; bg--) {
       if (dispcnt.enable[bg] && bgcnt[bg].priority == prio) {
-        bg_list[bg_count++] = bg; 
+        bg_list[bg_count++] = bg;
       }
     }
   }
-  
+
   std::uint16_t pixel[2];
-  
+
   for (int x = 0; x < 240; x++) {
     int prio[2] = { 4, 4 };
     int layer[2] = { LAYER_BD, LAYER_BD };
-    
+
     const int* win_layer_enable = winout.enable[0];
-    
+
     /* Determine the window that has the highest priority. */
     if (win0_active && buffer_win[0][x]) {
       win_layer_enable = winin.enable[0];
@@ -180,11 +180,11 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
     } else if (win2_active && buffer_obj[x].window) {
       win_layer_enable = winout.enable[1];
     }
-    
+
     /* Find up to two top-most visible background pixels. */
     for (int i = 0; i < bg_count; i++) {
       int bg = bg_list[i];
-      
+
       if (no_windows || win_layer_enable[bg]) {
         auto pixel_new = buffer_bg[bg][x];
         if (pixel_new != s_color_transparent) {
@@ -195,7 +195,7 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
         }
       }
     }
-    
+
     /* Check if a OBJ pixel takes priority over one of the two
      * top-most background pixels and insert it accordingly.
      */
@@ -203,7 +203,7 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
         buffer_obj[x].color != s_color_transparent &&
         (no_windows || win_layer_enable[LAYER_OBJ])) {
       int priority = buffer_obj[x].priority;
-      
+
       if (priority <= prio[0]) {
         layer[1] = layer[0];
         layer[0] = LAYER_OBJ;
@@ -211,7 +211,7 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
         layer[1] = LAYER_OBJ;
       }
     }
-    
+
     /* Map layer numbers to pixels. */
     for (int i = 0; i < 2; i++) {
       int _layer = layer[i];
@@ -230,7 +230,7 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
           break;
       }
     }
-    
+
     bool is_alpha_obj = layer[0] == LAYER_OBJ && buffer_obj[x].alpha;
 
     if (no_windows || win_layer_enable[LAYER_SFX] || is_alpha_obj) {
@@ -244,7 +244,7 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
         Blend(pixel[0], pixel[1], blend_mode);
       }
     }
-    
+
     line[x] = ConvertColor(pixel[0]);
   }
 }
