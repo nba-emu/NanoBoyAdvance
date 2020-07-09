@@ -6,15 +6,16 @@ set(HEADERS
     device/audio_device.hpp
 )
 
+include(FindSDL2)
 find_package(SDL2 REQUIRED)
-include_directories(${SDL2_INCLUDE_DIRS})
+include_directories(${SDL2_INCLUDE_DIR})
 
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 include_directories(${GLEW_INCLUDE_DIRS})
 
 add_executable(NanoboyAdvance ${SOURCES} ${HEADERS})
-target_link_libraries(NanoboyAdvance nba ${SDL2_LIBRARIES} ${OPENGL_gl_LIBRARY})
+target_link_libraries(NanoboyAdvance nba ${SDL2_LIBRARY} ${OPENGL_gl_LIBRARY})
 if (APPLE)
   target_link_libraries(NanoboyAdvance GLEW::glew)
 else()
