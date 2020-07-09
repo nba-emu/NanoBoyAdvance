@@ -22,7 +22,7 @@ else()
 endif()
 
 file(COPY "${PROJECT_SOURCE_DIR}/resources/config.toml" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
-file(COPY "${PROJECT_SOURCE_DIR}/resources/shader/keymap.toml" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+file(COPY "${PROJECT_SOURCE_DIR}/resources/keymap.toml" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
 add_custom_target(CopyShaders ALL
   COMMAND ${CMAKE_COMMAND} -DSRCDIR=${PROJECT_SOURCE_DIR}/resources/shader
