@@ -1,5 +1,3 @@
-include_directories(.)
-
 option(PLATFORM_SDL "Enable SDL2 frontend" ON)
 
 add_subdirectory(third_party)
@@ -109,6 +107,8 @@ set(HEADERS
 
 add_library(nba STATIC ${SOURCES} ${HEADERS})
 target_link_libraries(nba fmt)
+target_include_directories(nba PUBLIC .)
+
 
 # TODO: this is not really optimal.
 # What do we do about it?
