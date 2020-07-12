@@ -40,10 +40,8 @@ std::uint32_t ADD(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
 }
 
 std::uint32_t ADC(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
-  std::uint32_t op3 = state.cpsr.f.c;
-
   if (set_flags) {
-    std::uint64_t result64 = (std::uint64_t)op1 + (std::uint64_t)op2 + (std::uint64_t)op3;
+    std::uint64_t result64 = (std::uint64_t)op1 + (std::uint64_t)op2 + (std::uint64_t)state.cpsr.f.c;
     std::uint32_t result32 = (std::uint32_t)result64;
 
     SetZeroAndSignFlag(result32);
@@ -51,7 +49,7 @@ std::uint32_t ADC(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
     state.cpsr.f.v = (~(op1 ^ op2) & (op2 ^ result32)) >> 31;
     return result32;
   } else {
-    return op1 + op2 + op3;
+    return op1 + op2 + state.cpsr.f.c;
   }
 }
 
@@ -73,7 +71,7 @@ std::uint32_t SBC(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
 
   if (set_flags) {
     SetZeroAndSignFlag(result);
-    state.cpsr.f.c = (std::uint64_t)op1 >= (std::uint64_t)op2 + !state.cpsr.f.c;
+    state.cpsr.f.c = (std::uint64_t)op1 >= (std::uint64_t)op2 + (std::uint64_t)op3;
     state.cpsr.f.v = ((op1 ^ op2) & (op1 ^ result)) >> 31;
   }
 
