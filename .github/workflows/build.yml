@@ -53,8 +53,8 @@ jobs:
           move build\source\platform\sdl\Release\glew32.dll upload
           move build\source\platform\sdl\Release\SDL2.dll upload
           move build\source\platform\sdl\shader upload\shader
-          move source\platform\sdl\keymap.toml upload
-          move config.toml upload
+          move build\source\platform\sdl\keymap.toml upload
+          move build\source\platform\sdl\config.toml upload
         shell: cmd
 
       - name: Upload files
