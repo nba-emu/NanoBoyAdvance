@@ -12,7 +12,7 @@ void SetZeroAndSignFlag(std::uint32_t value) {
 
 void TickMultiply(std::uint32_t multiplier) {
   std::uint32_t mask = 0xFFFFFF00;
-  
+
   interface->Idle();
 
   while (true) {
@@ -32,8 +32,7 @@ std::uint32_t ADD(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
 
     SetZeroAndSignFlag(result32);
     state.cpsr.f.c = result64 >> 32;
-    state.cpsr.f.v = (~(op1 ^ op2) & (result32 ^ op2)) >> 31;
-
+    state.cpsr.f.v = (~(op1 ^ op2) & (op2 ^ result32)) >> 31;
     return result32;
   } else {
     return op1 + op2;
@@ -49,8 +48,7 @@ std::uint32_t ADC(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
 
     SetZeroAndSignFlag(result32);
     state.cpsr.f.c = result64 >> 32;
-    state.cpsr.f.v = ((~(op1 ^ op2) & ((op1 + op2) ^ op2)) ^
-                     (~((op1 + op2) ^ op3) & (result32 ^ op3))) >> 31;
+    state.cpsr.f.v = (~(op1 ^ op2) & (op2 ^ result32)) >> 31;
     return result32;
   } else {
     return op1 + op2 + op3;
@@ -63,7 +61,7 @@ std::uint32_t SUB(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
   if (set_flags) {
     SetZeroAndSignFlag(result);
     state.cpsr.f.c = op1 >= op2;
-    state.cpsr.f.v = ((op1 ^ op2) & ~(result ^ op2)) >> 31;
+    state.cpsr.f.v = ((op1 ^ op2) & (op1 ^ result)) >> 31;
   }
 
   return result;
@@ -71,25 +69,20 @@ std::uint32_t SUB(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
 
 std::uint32_t SBC(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
   std::uint32_t op3 = (state.cpsr.f.c) ^ 1;
+  std::uint32_t result = op1 - op2 - op3;
 
   if (set_flags) {
-    std::uint32_t result1 = op1 - op2;
-    std::uint32_t result2 = result1 - op3;
-
-    SetZeroAndSignFlag(result2);
-    state.cpsr.f.c = (op1 >= op2) && (result1 >= op3);
-    state.cpsr.f.v = (((op1 ^ op2) & ~(result1 ^ op2)) ^ (result1 & ~result2)) >> 31;
-
-    return result2;
-  } else {
-    return op1 - op2 - op3;
+    SetZeroAndSignFlag(result);
+    state.cpsr.f.c = (std::uint64_t)op1 >= (std::uint64_t)op2 + !state.cpsr.f.c;
+    state.cpsr.f.v = ((op1 ^ op2) & (op1 ^ result)) >> 31;
   }
+
+  return result;
 }
 
 void DoShift(int opcode, std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediate) {
-  /* TODO: is it sane to mask the upper bits before anything else? */
   amount &= 0xFF;
-  
+
   switch (opcode) {
     case 0: LSL(operand, amount, carry); break;
     case 1: LSR(operand, amount, carry, immediate); break;
@@ -162,18 +155,15 @@ void ASR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediat
 }
 
 void ROR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediate) {
-  std::uint32_t lsb;
-
   // ROR #0 equals to RRX #1
   if (amount != 0 || !immediate) {
     if (amount == 0) return;
 
     amount %= 32;
-    operand = (operand >> (amount - 1)) | (operand << (32 - amount + 1));
-    carry = operand & 1;
-    operand = (operand >> 1) | (operand << 31);
+    operand = (operand >> amount) | (operand << (32 - amount));
+    carry = operand >> 31;
   } else {
-    lsb = operand & 1;
+    auto lsb = operand & 1;
     operand = (operand >> 1) | (carry << 31);
     carry = lsb;
   }
