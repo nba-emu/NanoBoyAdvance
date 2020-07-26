@@ -346,19 +346,20 @@ inline void CPU::WriteByte(std::uint32_t address, std::uint8_t value, Access acc
   }
   case REGION_PRAM: {
     PrefetchStepRAM(cycles);
-    Write<std::uint16_t>(ppu.pram, address & 0x3FF, value * 0x0101);
+    Write<std::uint16_t>(ppu.pram, address & 0x3FE, value * 0x0101);
     break;
   }
   case REGION_VRAM: {
+    // TODO: move logic to decide the writeable area to the PPU class.
+    auto limit = ppu.mmio.dispcnt.mode >= 3 ? 0x14000 : 0x10000;
     PrefetchStepRAM(cycles);
     address &= 0x1FFFF;
     if (address >= 0x18000) {
       address &= ~0x8000;
     }
-    if (address >= (ppu.mmio.dispcnt.mode >= 3 ? 0x14000 : 0x10000)) {
-      break;
+    if (address < limit) {
+      Write<std::uint16_t>(ppu.vram, address & ~1, value * 0x0101);
     }
-    Write<std::uint16_t>(ppu.vram, address, value * 0x0101);
     break;
   }
   case REGION_SRAM_1:
@@ -369,6 +370,9 @@ inline void CPU::WriteByte(std::uint32_t address, std::uint8_t value, Access acc
       memory.rom.backup_sram->Write(address, value);
     }
     break;
+  }
+  default: {
+    PrefetchStepRAM(cycles);
   }
   }
 }
@@ -454,6 +458,9 @@ inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, Access ac
     }
     break;
   }
+  default: {
+    PrefetchStepRAM(cycles);
+  }
   }
 }
 
@@ -522,6 +529,9 @@ inline void CPU::WriteWord(std::uint32_t address, std::uint32_t value, Access ac
       memory.rom.backup_sram->Write(address, value >> ((address & 3) * 8));
     }
     break;
+  }
+  default: {
+    PrefetchStepRAM(cycles);
   }
   }
 }
