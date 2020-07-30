@@ -23,20 +23,24 @@ variety of edge-cases and undefined behaviour.
 - basic GLSL shader support
 - lightweight: minimal, configurable SDL2 frontend
 
+## Running
+
+You'll need a Game Boy Advance BIOS dump or a [replacement BIOS](https://github.com/Nebuleon/ReGBA/blob/master/bios/gba_bios.bin).  
+Do note though that a legitimate BIOS will always be more accurate than a replacement.  
+Place the BIOS file named as `bios.bin` into the same folder as the executable or provide a path via the CLI or [config.toml](https://github.com/fleroviux/NanoboyAdvance/blob/master/resource/config.toml) file.
+
+#### CLI arguments
+```
+NanoboyAdvance.exe [--bios bios_path] [--force-rtc] [--save-type type] [--fullscreen] [--scale factor] [--resampler type] [--sync-to-audio yes/no] rom_path
+```
+See [config.toml](https://github.com/fleroviux/NanoboyAdvance/blob/master/resource/config.toml) for more documentation or options.
+
 ## Compiling
 
 See [COMPILING.md](https://github.com/fleroviux/NanoboyAdvance/blob/master/COMPILING.md) in the root directory of this project.
 
-## Running
-
-In order to run NanoboyAdvance you will need a BIOS file.
-You can either dump your own or get an open source replacement online (https://github.com/Nebuleon/ReGBA/blob/master/bios/gba_bios.bin).
-The BIOS file must be placed as `bios.bin` in the same folder as the executable. However keep in mind, that a replacement BIOS
-will not be as accurate as the original one.
-
 ## Acknowledgement
 
 - GBATEK by Martin Korth: a great piece of documentation that made this emulator possible.
-- Talarubi & Near: The GBA color correction shader (https://byuu.net/video/color-emulation)
-- mGBA by endrift: great test suite, also referenced its code for a few details.
-- VisualBoyAdvance by Forgotten: inspired me to pursue emulator programming.
+- Talarubi & Near: GBA color correction algorithm (https://byuu.net/video/color-emulation)
+- endrift: for the gba-suite Test-ROM and mGBA which I referenced for a few details.
