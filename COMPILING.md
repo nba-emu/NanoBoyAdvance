@@ -1,62 +1,102 @@
-NanoboyAdvance can be compiled on Windows, Linux and macOS (FreeBSD should work, but are not tested).
-A modern C++17-capable compiler such as Clang/Clang-CL or G++ is mandatory.
-MSVC is not supported and most definitely doesn't work in the default configuration (stack overflow while parsing templated code).
+NanoboyAdvance can be compiled on Windows, Linux and macOS.
 
-### Dependencies
+### Prerequisites
 
-There are a few dependencies that you need to get:
-- CMake
-- SDL2 development library
-- GLEW
+- C++17-capable compiler such as Clang or G++
+  - MSVC is unlikely to work, it doesn't work in the default configuration.
+- CMake 3.2 or higher
+- OpenGL (usually provided by the operating system)
+- SDL2 library
+- GLEW library
 
-On Arch Linux:\
-`pacman -S cmake sdl2 glew`
+### Source Code
 
-On an Ubuntu or Debian derived system:\
-`apt install cmake libsdl2-dev libglew-dev`
+Clone the Git repository and checkout the submodules:  
 
-On macOS:
-- install macOS 10.15 SDK for OpenGL support
-- SDL2: `brew install sdl2`
-- GLEW: `brew install glew`
-
-### Clone Git repository
-
-Make sure to clone the repository with its submodules:
-```
-git clone --recurse-submodules https://github.com/fleroviux/NanoboyAdvance.git
+```bash
+git clone https://github.com/fleroviux/NanoboyAdvance.git
+git submodule update --init
 ```
 
-### Setup CMake build environment
+### Unix Build (Linux, macOS)
 
-Setup the CMake build in a folder of your choice.
+#### 1. Install dependencies
 
-#### Linux
+The way that you install the dependencies will vary depending on the distribution you use.  
+Typically you'll have to invoke the install command of some package manager.  
+Here is a list of commands for popular distributions and macOS:
+
+##### Arch Linux
+
+```bash
+pacman -S cmake sdl2 glew
+```
+
+##### Ubuntu or other Debian derived
+
+```bash
+apt install cmake libsdl2-dev libglew-dev
+```
+
+##### macOS
+
+Get [Brew](https://brew.sh/) and run:
+``` bash
+brew install cmake sdl2 glew
+```
+
+You may need to manually expose GLEW header:
+```bash
+export CPPFLAGS="$CPPFLAGS -I/usr/local/opt/glew/include"
+```
+
+#### 2. Setup CMake build directory
+
 ```
 cd /somewhere/on/your/system/NanoboyAdvance
 mkdir build
 cd build
 cmake ..
 ```
-A final `make` then compiles the emulator.
-The compiled executables then can be found in `build/source/platform/`.
 
-#### macOS
-As a workaround you may need to manually expose GLEW headers:
-```bash
-export CPPFLAGS="$CPPFLAGS -I/usr/local/opt/glew/include"
-```
-Otherwise the build process should be identical to Linux.
+NOTE: the location and name of the `build` directory is arbitrary.
 
-#### Windows
-Setup [vcpkg](https://github.com/microsoft/vcpkg) and install the required libraries.
+#### 3. Compile
+
+Just run make:
 ```
-git clone https://github.com/microsoft/vcpkg
-cd vcpkg
-bootstrap-vcpkg.bat
+make
+```
+or to use multiple processor cores:
+```
+make -jNUMBER_OF_CORES
+```
+Binaries will be output to `build/source/platform/`
+
+### Windows Build
+
+This guide assumes that you use Visual Studio 2017 (or newer) and [VCPKG](https://github.com/microsoft/vcpkg#quick-start-windows).  
+Note that there are other ways to build on Windows, but they aren't documented.
+
+#### 1. Install dependencies
+
+For older Visual Studio versions (before Visual Studio 2019 16.1 Preview 2) you will have to install [Clang](https://devblogs.microsoft.com/cppblog/clang-llvm-support-in-visual-studio/).
+
+##### 32-bit x86 dependencies
+
+```cmd
 vcpkg install sdl2
 vcpkg install glew
 ```
+
+##### 64-bit x64 dependencies
+
+```cmd
+vcpkg install sdl2:x64-windows
+vcpkg install glew:x64-windows
+```
+
+#### 2. Setup CMake build directory
 
 Generate the Visual Studio solution with CMake.
 ```
@@ -67,12 +107,11 @@ set VCPKG_ROOT=path/to/vcpkg
 cmake -T clangcl ..
 ```
 
-Build the Visual Studio solution. It can also be done via the command line.
+#### 3. Compile
+
+Build the generated Visual Studio solution. It can also be done via the command line.
 ```
 call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
 msbuild NanoboyAdvance.sln
 ```
 
-#### Miscellaneous
-
-If you get an error regarding to `libc++fs` not being found, try commenting out `target_link_libraries(nba stdc++fs)` in `source/CMakeLists.txt`.
