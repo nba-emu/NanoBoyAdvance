@@ -111,9 +111,6 @@ You can either dump your own or get an open source replacement online (https://g
 The BIOS file must be placed as `bios.bin` in the same folder as the executable. However keep in mind, that a replacement BIOS
 will not be as accurate as the original one.
 
-## Known issues
-See https://github.com/fleroviux/NanoboyAdvance/issues
-
 ## Acknowledgement
 
 - GBATEK by Martin Korth: a great piece of documentation that made this emulator possible.
