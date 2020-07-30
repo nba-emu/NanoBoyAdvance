@@ -25,7 +25,7 @@ variety of edge-cases and undefined behaviour.
 
 ## Compiling
 
-See COMPILING.md in the root directory of this project.
+See [COMPILING.md](https://github.com/fleroviux/NanoboyAdvance/blob/master/COMPILING.md) in the root directory of this project.
 
 ## Running
 
