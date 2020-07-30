@@ -26,7 +26,8 @@ variety of edge-cases and undefined behaviour.
 ## Running
 
 You'll need a Game Boy Advance BIOS dump or a [replacement BIOS](https://github.com/Nebuleon/ReGBA/blob/master/bios/gba_bios.bin).  
-Do note though that a legitimate BIOS will always be more accurate than a replacement.  
+Do note though that a legitimate BIOS will always be more accurate than a replacement.
+
 Place the BIOS file named as `bios.bin` into the same folder as the executable or provide a path via the CLI or [config.toml](https://github.com/fleroviux/NanoboyAdvance/blob/master/resource/config.toml) file.
 
 #### CLI arguments
