@@ -32,6 +32,7 @@ auto SerialBus::Read(std::uint32_t address) -> std::uint8_t {
     case SIODATA8 | 0:
       return data8;
     case RCNT | 0:
+      // TODO: bits 0-3 should return current state of SC, SD, SI, SO?
       return rcnt & 0xFF;
     case RCNT | 1:
       return rcnt >> 8;
@@ -43,6 +44,7 @@ auto SerialBus::Read(std::uint32_t address) -> std::uint8_t {
 
 void SerialBus::Write(std::uint32_t address, std::uint8_t value) {
   switch (address) {
+    // TODO: in multiplayer mode SIODATA32 is aliased to SIOMULTI0-1.
     case SIODATA32_L | 0:
       data32 &= 0xFFFFFF00;
       data32 |= value;
@@ -65,8 +67,10 @@ void SerialBus::Write(std::uint32_t address, std::uint8_t value) {
       LOG_TRACE("SIODATA8 = 0x{0:02X}", data8);
       break;
     case RCNT | 0:
+      rcnt = (rcnt & 0xFF0F) | (value & 0xF0);
       break;
     case RCNT | 1:
+      rcnt = (rcnt & 0x3EFF) | ((value << 8) & 0xC100);
       break;
     default:
       LOG_ERROR("Unhandled SIO write to address 0x{0:08X} = 0x{1:02X}", address, value);
