@@ -16,6 +16,8 @@ void SerialBus::Reset() {
   data8 = 0;
   data32 = 0;
   rcnt = 0;
+  siocnt = {};
+  mode = Mode::Normal;
 }
 
 auto SerialBus::Read(std::uint32_t address) -> std::uint8_t {
@@ -37,7 +39,7 @@ auto SerialBus::Read(std::uint32_t address) -> std::uint8_t {
     case RCNT | 1:
       return rcnt >> 8;
     default:
-      LOG_ERROR("Unhandled SIO read from address 0x{0:08X}", address);
+      LOG_ERROR("SIO: unhandled read from address 0x{0:08X}", address);
       return 0;
   }
 }
@@ -60,11 +62,24 @@ void SerialBus::Write(std::uint32_t address, std::uint8_t value) {
     case SIODATA32_H | 1:
       data32 &= 0x00FFFFFF;
       data32 |= value << 24;
-      LOG_TRACE("SIODATA32 = 0x{0:08X}", data32);
+      LOG_TRACE("SIO: SIODATA32 = 0x{0:08X}", data32);
+      break;
+    case SIOCNT | 0:
+      // TODO: update SO during inactivity value.
+      siocnt.clock_source = static_cast<Control::ClockSource>(value & 1);
+      siocnt.clock_speed = static_cast<Control::ClockSpeed>((value >> 1) & 1);
+      if (value & 0x80) {
+        LOG_WARN("SIO: triggered data transfer!");
+      }
+      break;
+    case SIOCNT | 1:
+      siocnt.unused = value & 0xF;
+      siocnt.width = static_cast<Control::Width>((value >> 4) & 1);
+      siocnt.enable_irq = value & 0x40;
       break;
     case SIODATA8:
       data8 = value;
-      LOG_TRACE("SIODATA8 = 0x{0:02X}", data8);
+      LOG_TRACE("SIO: SIODATA8 = 0x{0:02X}", data8);
       break;
     case RCNT | 0:
       rcnt = (rcnt & 0xFF0F) | (value & 0xF0);
@@ -73,7 +88,7 @@ void SerialBus::Write(std::uint32_t address, std::uint8_t value) {
       rcnt = (rcnt & 0x3EFF) | ((value << 8) & 0xC100);
       break;
     default:
-      LOG_ERROR("Unhandled SIO write to address 0x{0:08X} = 0x{1:02X}", address, value);
+      LOG_ERROR("SIO: unhandled write to address 0x{0:08X} = 0x{1:02X}", address, value);
   }
 }
 
