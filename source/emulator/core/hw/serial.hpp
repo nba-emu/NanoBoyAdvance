@@ -18,9 +18,9 @@ public:
   void Write(std::uint32_t address, std::uint8_t value);
 
 private:
-  enum Registers {
-    ASDF = 0,
-  };
+  std::uint8_t data8;
+  std::uint32_t data32;
+  std::uint16_t rcnt;
 };
 
 } // namespace nba::core
