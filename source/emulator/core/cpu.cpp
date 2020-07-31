@@ -55,6 +55,7 @@ void CPU::Reset() {
   timer.Reset();
   apu.Reset();
   ppu.Reset();
+  serial_bus.Reset();
   ARM7TDMI::Reset();
 
   if (config->skip_bios) {

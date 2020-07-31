@@ -6,7 +6,6 @@
  */
 
 #include <common/log.hpp>
-#include <limits>
 
 #include "timer.hpp"
 

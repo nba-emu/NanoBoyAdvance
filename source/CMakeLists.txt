@@ -34,13 +34,13 @@ set(SOURCES
   emulator/core/hw/ppu/registers.cpp
   emulator/core/hw/dma.cpp
   emulator/core/hw/interrupt.cpp
+  emulator/core/hw/serial.cpp
   emulator/core/hw/timer.cpp
   emulator/core/cpu.cpp
   emulator/core/cpu-mmio.cpp
 
   # Emulator
-  emulator/emulator.cpp
-)
+  emulator/emulator.cpp)
 
 set(HEADERS
   # Common
@@ -90,6 +90,7 @@ set(HEADERS
   emulator/core/hw/ppu/registers.hpp
   emulator/core/hw/dma.hpp
   emulator/core/hw/interrupt.hpp
+  emulator/core/hw/serial.hpp
   emulator/core/hw/timer.hpp
   emulator/core/cpu.hpp
   emulator/core/cpu-memory.inl
@@ -102,8 +103,7 @@ set(HEADERS
   emulator/device/video_device.hpp
 
   # Emulator
-  emulator/emulator.hpp
-)
+  emulator/emulator.hpp)
 
 add_library(nba STATIC ${SOURCES} ${HEADERS})
 target_link_libraries(nba fmt)
