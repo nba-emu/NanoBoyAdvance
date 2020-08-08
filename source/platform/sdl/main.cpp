@@ -263,7 +263,6 @@ auto compile_shader(GLuint shader, const char* source) -> bool {
 
 void init(int argc, char** argv) {
   namespace fs = std::experimental::filesystem;
-  std::string config_path = "config.toml";
   if (argc >= 1) {
     fs::current_path(fs::absolute(argv[0]).replace_filename(fs::path{ }));
   }
