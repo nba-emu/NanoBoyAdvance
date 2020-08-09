@@ -25,6 +25,10 @@ jobs:
         run: vcpkg install glew:x64-windows
         shell: cmd
 
+      - name: Setup Qt5
+        run: vcpkg install qt5:x64-windows
+        shell: cmd
+
       - name: Generate solution
         run: |
           mkdir build

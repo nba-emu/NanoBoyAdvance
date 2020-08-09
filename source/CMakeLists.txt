@@ -1,4 +1,5 @@
 option(PLATFORM_SDL "Enable SDL2 frontend" ON)
+option(PLATFORM_QT "Enable Qt frontend" ON)
 
 add_subdirectory(third_party)
 
@@ -120,3 +121,6 @@ if (PLATFORM_SDL)
   add_subdirectory("platform/sdl")
 endif()
 
+if (PLATFORM_QT)
+  add_subdirectory("platform/qt")
+endif()
