@@ -40,7 +40,7 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case BLDCNT+1:   return ppu_io.bldcnt.Read(1);
     case BLDALPHA+0: return ppu_io.eva;
     case BLDALPHA+1: return ppu_io.evb;
-    
+
     /* DMAs 0-3 */
     case DMA0CNT_L:
     case DMA0CNT_L+1: return 0;
@@ -58,7 +58,7 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case DMA3CNT_L+1: return 0;
     case DMA3CNT_H:   return dma.Read(3, 10);
     case DMA3CNT_H+1: return dma.Read(3, 11);
-      
+
     /* SOUND */
     case SOUND1CNT_L:   return apu.psg1.Read(0);
     case SOUND1CNT_L+1: return apu.psg1.Read(1);
@@ -72,7 +72,7 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case SOUND2CNT_L+1: return apu.psg2.Read(3);
     case SOUND2CNT_H:   return apu.psg2.Read(4);
     case SOUND2CNT_H+1: return apu.psg2.Read(5);
-    case SOUND2CNT_H+2: 
+    case SOUND2CNT_H+2:
     case SOUND2CNT_H+3: return 0;
     case SOUND3CNT_L:   return apu.psg3.Read(0);
     case SOUND3CNT_L+1: return apu.psg3.Read(1);
@@ -138,7 +138,7 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case TM3CNT_L+1: return timer.Read(3, 1);
     case TM3CNT_H:   return timer.Read(3, 2);
     case TM3CNT_H+1: return 0;
-  
+
     case KEYINPUT+0: {
       return (config->input_dev->Poll(Key::A)      ? 0 : 1)  |
              (config->input_dev->Poll(Key::B)      ? 0 : 2)  |
@@ -156,7 +156,7 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
 
     case RCNT+0: return mmio.rcnt_hack & 0xFF;
     case RCNT+1: return mmio.rcnt_hack >> 8;
-      
+
     /* Interrupt Control */
     case IE+0:  return irq_controller.Read(0);
     case IE+1:  return irq_controller.Read(1);
@@ -166,7 +166,7 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case IME+1:
     case IME+2:
     case IME+3: return 0;
-      
+
     /* Waitstates */
     case WAITCNT+0: {
       return mmio.waitcnt.sram |
@@ -185,7 +185,7 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case WAITCNT+3: return 0;
     case POSTFLG: return mmio.postflg;
   }
-  
+
   return ReadUnused(address);
 }
 
@@ -271,7 +271,7 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
       ppu_io.bgvofs[3] &= 0x00FF;
       ppu_io.bgvofs[3] |= (value & 1) << 8;
       break;
-      
+
     case BG2PA:   ppu_io.bgpa[0] = (ppu_io.bgpa[0] & 0xFF00) | (value << 0); break;
     case BG2PA+1: ppu_io.bgpa[0] = (ppu_io.bgpa[0] & 0x00FF) | (value << 8); break;
     case BG2PB:   ppu_io.bgpb[0] = (ppu_io.bgpb[0] & 0xFF00) | (value << 0); break;
@@ -304,11 +304,11 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     case BG3Y+1:  ppu_io.bgy[1].Write(1, value); break;
     case BG3Y+2:  ppu_io.bgy[1].Write(2, value); break;
     case BG3Y+3:  ppu_io.bgy[1].Write(3, value); break;
-      
+
     case WIN0H+0: ppu_io.winh[0].Write(0, value); break;
     case WIN0H+1: ppu_io.winh[0].Write(1, value); break;
     case WIN1H+0: ppu_io.winh[1].Write(0, value); break;
-    case WIN1H+1: ppu_io.winh[1].Write(1, value); break;    
+    case WIN1H+1: ppu_io.winh[1].Write(1, value); break;
     case WIN0V+0: ppu_io.winv[0].Write(0, value); break;
     case WIN0V+1: ppu_io.winv[0].Write(1, value); break;
     case WIN1V+0: ppu_io.winv[1].Write(0, value); break;
@@ -330,7 +330,7 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     case BLDY:
       ppu_io.evy = value & 0x1F;
       break;
-    
+
     /* DMAs 0-3 */
     case DMA0SAD:     dma.Write(0, 0, value); break;
     case DMA0SAD+1:   dma.Write(0, 1, value); break;
@@ -380,7 +380,7 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     case DMA3CNT_L+1: dma.Write(3, 9, value); break;
     case DMA3CNT_H:   dma.Write(3, 10, value); break;
     case DMA3CNT_H+1: dma.Write(3, 11, value); break;
-      
+
     /* SOUND */
     case SOUND1CNT_L:   apu.psg1.Write(0, value); break;
     case SOUND1CNT_L+1: apu.psg1.Write(1, value); break;
@@ -434,9 +434,9 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     case SOUNDCNT_H:   apu_io.soundcnt.Write(2, value); break;
     case SOUNDCNT_H+1: apu_io.soundcnt.Write(3, value); break;
     case SOUNDCNT_X:   apu_io.soundcnt.Write(4, value); break;
-    case SOUNDBIAS:    apu_io.bias.Write(0, value);
-    case SOUNDBIAS+1:  apu_io.bias.Write(1, value);
-      
+    case SOUNDBIAS:    apu_io.bias.Write(0, value); break;
+    case SOUNDBIAS+1:  apu_io.bias.Write(1, value); break;
+
     /* Timers 0-3 */
     case TM0CNT_L:   timer.Write(0, 0, value); break;
     case TM0CNT_L+1: timer.Write(0, 1, value); break;
@@ -450,7 +450,7 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     case TM3CNT_L:   timer.Write(3, 0, value); break;
     case TM3CNT_L+1: timer.Write(3, 1, value); break;
     case TM3CNT_H:   timer.Write(3, 2, value); break;
-    
+
     case RCNT: {
       mmio.rcnt_hack &= 0xFF00;
       mmio.rcnt_hack |= value;
