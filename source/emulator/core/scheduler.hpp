@@ -15,8 +15,6 @@ namespace nba::core {
 
 class Scheduler {
 public:
-  static constexpr bool kValidateHeap = false;
-
   struct Event {
     std::function<void(int)> callback;
   private:
@@ -77,10 +75,6 @@ public:
       p = Parent(n);
     }
 
-    if constexpr (kValidateHeap) {
-      ValidateHeap(0);
-    }
-
     return event;
   }
 
@@ -117,10 +111,6 @@ private:
     } else {
       Heapify(n);
     }
-
-    if constexpr (kValidateHeap) {
-      ValidateHeap(0);
-    }
   }
 
   void Swap(int i, int j) {
@@ -143,21 +133,6 @@ private:
     if (r < heap_size && heap[r]->timestamp < heap[n]->timestamp) {
       Swap(r, n);
       Heapify(r);
-    }
-  }
-
-  void ValidateHeap(int n) {
-    int l = LeftChild(n);
-    int r = RightChild(n);
-
-    if (l < heap_size) {
-      ASSERT(heap[l]->timestamp >= heap[n]->timestamp, "heap condition not satisfied");
-      ValidateHeap(l);
-    }
-
-    if (r < heap_size) {
-      ASSERT(heap[r]->timestamp >= heap[n]->timestamp, "heap condition not satisfied");
-      ValidateHeap(r);
     }
   }
 
