@@ -70,6 +70,9 @@ void SerialBus::Write(std::uint32_t address, std::uint8_t value) {
       siocnt.clock_speed = static_cast<Control::ClockSpeed>((value >> 1) & 1);
       if (value & 0x80) {
         LOG_WARN("SIO: triggered data transfer!");
+        // NOTE: this is a very rough hack.
+        if (siocnt.enable_irq)
+          irq_controller->Raise(InterruptSource::Serial);
       }
       break;
     case SIOCNT | 1:

@@ -9,10 +9,14 @@
 
 #include <cstdint>
 
+#include "interrupt.hpp"
+
 namespace nba::core {
 
 class SerialBus {
 public:
+  SerialBus(InterruptController* irq_controller) : irq_controller(irq_controller) {}
+
   void Reset();
   auto Read(std::uint32_t address) -> std::uint8_t;
   void Write(std::uint32_t address, std::uint8_t value);
@@ -49,6 +53,8 @@ private:
     GeneralPurpose,
     JOYBUS
   } mode;
+
+  InterruptController* irq_controller;
 };
 
 } // namespace nba::core

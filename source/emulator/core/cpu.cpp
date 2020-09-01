@@ -27,6 +27,7 @@ CPU::CPU(std::shared_ptr<Config> config)
   , apu(&scheduler, &dma, config)
   , ppu(&scheduler, &irq_controller, &dma, config)
   , timer(&scheduler, &irq_controller, &apu)
+  , serial_bus(&irq_controller)
 {
   std::memset(memory.bios, 0, 0x04000);
   memory.rom.size = 0;
