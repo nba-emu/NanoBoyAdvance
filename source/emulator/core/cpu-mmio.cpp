@@ -138,6 +138,41 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case TM3CNT_H:   return timer.Read(3, 2);
     case TM3CNT_H+1: return 0;
 
+    /* Serial Communication (1, 2) */
+    case SIOMULTI0 | 0:
+    case SIOMULTI0 | 1:
+    case SIOMULTI1 | 0:
+    case SIOMULTI1 | 1:
+    case SIOMULTI2 | 0:
+    case SIOMULTI2 | 1:
+    case SIOMULTI3 | 0:
+    case SIOMULTI3 | 1:
+    case SIOCNT | 0:
+    case SIOCNT | 1:
+    case SIOMLT_SEND | 0:
+    case SIOMLT_SEND | 1:
+    case RCNT | 0:
+    case RCNT | 1:
+    case RCNT | 2:
+    case RCNT | 3:
+    case JOYCNT | 0:
+    case JOYCNT | 1:
+    case JOYCNT | 2:
+    case JOYCNT | 3:
+    case JOY_RECV | 0:
+    case JOY_RECV | 1:
+    case JOY_RECV | 2:
+    case JOY_RECV | 3:
+    case JOY_TRANS | 0:
+    case JOY_TRANS | 1:
+    case JOY_TRANS | 2:
+    case JOY_TRANS | 3:
+    case JOYSTAT | 0:
+    case JOYSTAT | 1:
+    case JOYSTAT | 2:
+    case JOYSTAT | 3:
+      return serial_bus.Read(address);
+
     case KEYINPUT+0: {
       return mmio.keyinput & 0x00FF;
     }
@@ -154,10 +189,6 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
              (mmio.keycnt.and_mode << 7);
     }
 
-
-    case RCNT+0: return mmio.rcnt_hack & 0xFF;
-    case RCNT+1: return mmio.rcnt_hack >> 8;
-
     /* Interrupt Control */
     case IE+0:  return irq_controller.Read(0);
     case IE+1:  return irq_controller.Read(1);
@@ -171,16 +202,16 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     /* Waitstates */
     case WAITCNT+0: {
       return mmio.waitcnt.sram |
-            (mmio.waitcnt.ws0_n << 2) |
-            (mmio.waitcnt.ws0_s << 4) |
-            (mmio.waitcnt.ws1_n << 5) |
-            (mmio.waitcnt.ws1_s << 7);
+             (mmio.waitcnt.ws0_n << 2) |
+             (mmio.waitcnt.ws0_s << 4) |
+             (mmio.waitcnt.ws1_n << 5) |
+             (mmio.waitcnt.ws1_s << 7);
     }
     case WAITCNT+1: {
       return mmio.waitcnt.ws2_n |
-            (mmio.waitcnt.ws2_s << 2) |
-            (mmio.waitcnt.phi << 3) |
-            (mmio.waitcnt.prefetch << 6);
+             (mmio.waitcnt.ws2_s << 2) |
+             (mmio.waitcnt.phi << 3) |
+             (mmio.waitcnt.prefetch << 6);
     }
     case WAITCNT+2:
     case WAITCNT+3: return 0;
@@ -322,15 +353,9 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     case MOSAIC+1: ppu_io.mosaic.Write(1, value); break;
     case BLDCNT+0: ppu_io.bldcnt.Write(0, value); break;
     case BLDCNT+1: ppu_io.bldcnt.Write(1, value); break;
-    case BLDALPHA+0:
-      ppu_io.eva = value & 0x1F;
-      break;
-    case BLDALPHA+1:
-      ppu_io.evb = value & 0x1F;
-      break;
-    case BLDY:
-      ppu_io.evy = value & 0x1F;
-      break;
+    case BLDALPHA+0: ppu_io.eva = value & 0x1F; break;
+    case BLDALPHA+1: ppu_io.evb = value & 0x1F; break;
+    case BLDY: ppu_io.evy = value & 0x1F; break;
 
     /* DMAs 0-3 */
     case DMA0SAD:     dma.Write(0, 0, value); break;
@@ -452,6 +477,42 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     case TM3CNT_L+1: timer.Write(3, 1, value); break;
     case TM3CNT_H:   timer.Write(3, 2, value); break;
 
+    /* Serial Communication (1, 2) */
+    case SIOMULTI0 | 0:
+    case SIOMULTI0 | 1:
+    case SIOMULTI1 | 0:
+    case SIOMULTI1 | 1:
+    case SIOMULTI2 | 0:
+    case SIOMULTI2 | 1:
+    case SIOMULTI3 | 0:
+    case SIOMULTI3 | 1:
+    case SIOCNT | 0:
+    case SIOCNT | 1:
+    case SIOMLT_SEND | 0:
+    case SIOMLT_SEND | 1:
+    case RCNT | 0:
+    case RCNT | 1:
+    case RCNT | 2:
+    case RCNT | 3:
+    case JOYCNT | 0:
+    case JOYCNT | 1:
+    case JOYCNT | 2:
+    case JOYCNT | 3:
+    case JOY_RECV | 0:
+    case JOY_RECV | 1:
+    case JOY_RECV | 2:
+    case JOY_RECV | 3:
+    case JOY_TRANS | 0:
+    case JOY_TRANS | 1:
+    case JOY_TRANS | 2:
+    case JOY_TRANS | 3:
+    case JOYSTAT | 0:
+    case JOYSTAT | 1:
+    case JOYSTAT | 2:
+    case JOYSTAT | 3: {
+      serial_bus.Write(address, value);
+      break;
+    }
 
     case KEYCNT: {
       mmio.keycnt.input_mask &= 0xFF00;
@@ -465,17 +526,6 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
       mmio.keycnt.interrupt = value & 64;
       mmio.keycnt.and_mode = value & 128;
       CheckKeypadInterrupt();
-      break;
-    }
-
-    case RCNT: {
-      mmio.rcnt_hack &= 0xFF00;
-      mmio.rcnt_hack |= value;
-      break;
-    }
-    case RCNT+1: {
-      mmio.rcnt_hack &= 0x00FF;
-      mmio.rcnt_hack |= value << 8;
       break;
     }
 

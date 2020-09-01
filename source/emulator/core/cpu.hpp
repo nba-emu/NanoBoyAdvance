@@ -19,6 +19,7 @@
 #include "hw/ppu/ppu.hpp"
 #include "hw/dma.hpp"
 #include "hw/interrupt.hpp"
+#include "hw/serial.hpp"
 #include "hw/timer.hpp"
 #include "scheduler.hpp"
 
@@ -109,6 +110,7 @@ public:
   APU apu;
   PPU ppu;
   Timer timer;
+  SerialBus serial_bus;
 
 private:
   template <typename T>
