@@ -21,31 +21,35 @@ public:
     : length(length)
     , blocking(blocking)
   {
-    data.reset(new T[length]);
+    data = std::make_unique<T[]>(length);
     Reset();
   }
-  
+
   auto Available() -> int { return count; }
-  
+
   void Reset() {
     rd_ptr = 0;
     wr_ptr = 0;
     count  = 0;
+    // Zero-initialize to avoid reading garbage when reading from an empty buffer.
+    for (int i = 0; i < length; i++) {
+      data[i] = {};
+    }
   }
-  
+
   auto Peek(int offset) -> T const {
     return data[(rd_ptr + offset) % length];
   }
-  
+
   auto Read() -> T {
     T value = data[rd_ptr];
-    if (!blocking || count > 0) {
+    if (count > 0) {
       rd_ptr = (rd_ptr + 1) % length;
       count--;
     }
     return value;
   }
-  
+
   void Write(T const& value) {
     if (blocking && count == length) {
       return;
@@ -54,10 +58,10 @@ public:
     wr_ptr = (wr_ptr + 1) % length;
     count++;
   }
-  
+
 private:
   std::unique_ptr<T[]> data;
-  
+
   int rd_ptr;
   int wr_ptr;
   int length;
@@ -67,5 +71,5 @@ private:
 
 template <typename T>
 using StereoRingBuffer = RingBuffer<StereoSample<T>>;
-  
+
 } // namespace common::dsp

@@ -46,32 +46,31 @@ void APU::Reset() {
   psg4.Reset();
 
   auto audio_dev = config->audio_dev;
-
   audio_dev->Close();
   audio_dev->Open(this, (AudioDevice::Callback)AudioCallback);
 
-  buffer = std::make_unique<common::dsp::StereoRingBuffer<float>>(audio_dev->GetBlockSize() * 4, true);
-
   using Interpolation = Config::Audio::Interpolation;
+
+  buffer = std::make_shared<common::dsp::StereoRingBuffer<float>>(audio_dev->GetBlockSize() * 4, true);
 
   switch (config->audio.interpolation) {
     case Interpolation::Cosine:
-      resampler.reset(new CosineStereoResampler<float>(buffer));
+      resampler = std::make_unique<CosineStereoResampler<float>>(buffer);
       break;
     case Interpolation::Cubic:
-      resampler.reset(new CubicStereoResampler<float>(buffer));
+      resampler = std::make_unique<CubicStereoResampler<float>>(buffer);
       break;
     case Interpolation::Sinc_32:
-      resampler.reset(new SincStereoResampler<float, 32>(buffer));
+      resampler = std::make_unique<SincStereoResampler<float, 32>>(buffer);
       break;
     case Interpolation::Sinc_64:
-      resampler.reset(new SincStereoResampler<float, 64>(buffer));
+      resampler = std::make_unique<SincStereoResampler<float, 64>>(buffer);
       break;
     case Interpolation::Sinc_128:
-      resampler.reset(new SincStereoResampler<float, 128>(buffer));
+      resampler = std::make_unique<SincStereoResampler<float, 128>>(buffer);
       break;
     case Interpolation::Sinc_256:
-      resampler.reset(new SincStereoResampler<float, 256>(buffer));
+      resampler = std::make_unique<SincStereoResampler<float, 256>>(buffer);
       break;
   }
 
@@ -165,7 +164,7 @@ void APU::Generate(int cycles_late) {
     }
 
     sample[channel] += mmio.bias.level;
-    sample[channel]  = std::clamp(sample[channel], (std::int16_t)0, (std::int16_t)0x3FF);
+    sample[channel]  = std::clamp(sample[channel], std::int16_t(0), std::int16_t(0x3FF));
     sample[channel] -= 0x200;
   }
 

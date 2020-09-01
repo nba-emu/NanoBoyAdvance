@@ -87,7 +87,6 @@ void Timer::Write(int chan_id, int offset, std::uint8_t value) {
 
       channel.shift = g_ticks_shift[control.frequency];
       channel.mask  = g_ticks_mask[control.frequency];
-      channel.samplerate = 16777216 / ((0x10000 - channel.reload) << channel.shift);
 
       if (control.enable) {
         if (!enable_previous) {
@@ -101,6 +100,18 @@ void Timer::Write(int chan_id, int offset, std::uint8_t value) {
           StartChannel(channel, late);
         }
       }
+    }
+  }
+
+  if (chan_id <= 1) {
+    constexpr int kCyclesPerSecond = 16777216;
+    auto timer0_duty = 0x10000 - channels[0].reload;
+    auto timer1_duty = 0x10000 - channels[1].reload;
+    channels[0].samplerate = kCyclesPerSecond / (timer0_duty << channels[0].shift);
+    if (channels[1].control.cascade) {
+      channels[1].samplerate = channels[0].samplerate / timer1_duty;
+    } else {
+      channels[1].samplerate = kCyclesPerSecond / (timer1_duty << channels[1].shift);
     }
   }
 }

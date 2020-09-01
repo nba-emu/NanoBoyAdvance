@@ -97,6 +97,7 @@ constexpr std::uint32_t SIOCNT = 0x04000128;
 constexpr std::uint32_t SIOMLT_SEND = 0x0400012A;
 constexpr std::uint32_t SIODATA8 = 0x0400012A;
 constexpr std::uint32_t KEYINPUT = 0x04000130;
+constexpr std::uint32_t KEYCNT = 0x04000132;
 constexpr std::uint32_t RCNT = 0x04000134;
 constexpr std::uint32_t JOYCNT = 0x04000140;
 constexpr std::uint32_t JOY_RECV = 0x04000150;

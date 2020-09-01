@@ -5,6 +5,10 @@
  * Refer to the included LICENSE file.
  */
 
+#ifndef _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
+#endif
+
 #include <atomic>
 #include <common/log.hpp>
 #include <cstdlib>
@@ -13,6 +17,7 @@
 #include <emulator/device/input_device.hpp>
 #include <emulator/device/video_device.hpp>
 #include <emulator/emulator.hpp>
+#include <experimental/filesystem>
 #include <fmt/format.h>
 #include <iterator>
 #include <optional>
@@ -58,6 +63,11 @@ struct KeyMap {
 struct CombinedInputDevice : public nba::InputDevice {
   auto Poll(Key key) -> bool final {
     return g_keyboard_input_device.Poll(key) || g_controller_input_device.Poll(key);
+  }
+
+  void SetOnChangeCallback(std::function<void(void)> callback) {
+    g_keyboard_input_device.SetOnChangeCallback(callback);
+    g_controller_input_device.SetOnChangeCallback(callback);
   }
 };
 
@@ -257,6 +267,10 @@ auto compile_shader(GLuint shader, const char* source) -> bool {
 }
 
 void init(int argc, char** argv) {
+  namespace fs = std::experimental::filesystem;
+  if (argc >= 1) {
+    fs::current_path(fs::absolute(argv[0]).replace_filename(fs::path{ }));
+  }
   common::logger::init();
   config_toml_read(*g_config, "config.toml");
   parse_arguments(argc, argv);

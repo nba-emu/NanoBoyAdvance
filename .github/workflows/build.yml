@@ -14,15 +14,8 @@ jobs:
         shell: cmd
 
       - name: Setup vcpkg
-        run: |
-          Remove-Item "C:\vcpkg" -Recurse -Force
-          $Uri = 'https://github.com/Microsoft/vcpkg.git'
-          $InstallDir = 'C:\vcpkg'
-
-          git clone -b 2020.04 --single-branch --depth=1 $Uri $InstallDir -q
-
-          Invoke-Expression "$InstallDir\bootstrap-vcpkg.bat"
-          vcpkg integrate install
+        run: vcpkg integrate install
+        shell: cmd
 
       - name: Setup SDL2
         run: vcpkg install sdl2:x64-windows
@@ -30,6 +23,10 @@ jobs:
 
       - name: Setup GLEW
         run: vcpkg install glew:x64-windows
+        shell: cmd
+
+      - name: Setup Qt5
+        run: vcpkg install qt5-base:x64-windows
         shell: cmd
 
       - name: Generate solution

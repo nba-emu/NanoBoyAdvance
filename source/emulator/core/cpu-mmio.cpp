@@ -10,7 +10,6 @@
 
 namespace nba::core {
 
-using Key = InputDevice::Key;
 
 auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
   auto& apu_io = apu.mmio;
@@ -175,18 +174,19 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
       return serial_bus.Read(address);
 
     case KEYINPUT+0: {
-      return (config->input_dev->Poll(Key::A)      ? 0 : 1)  |
-             (config->input_dev->Poll(Key::B)      ? 0 : 2)  |
-             (config->input_dev->Poll(Key::Select) ? 0 : 4)  |
-             (config->input_dev->Poll(Key::Start)  ? 0 : 8)  |
-             (config->input_dev->Poll(Key::Right)  ? 0 : 16) |
-             (config->input_dev->Poll(Key::Left)   ? 0 : 32) |
-             (config->input_dev->Poll(Key::Up)     ? 0 : 64) |
-             (config->input_dev->Poll(Key::Down)   ? 0 : 128);
+      return mmio.keyinput & 0x00FF;
     }
     case KEYINPUT+1: {
-      return (config->input_dev->Poll(Key::R) ? 0 : 1) |
-             (config->input_dev->Poll(Key::L) ? 0 : 2);
+      return (mmio.keyinput & 0xFF00) >> 8;
+    }
+
+    case KEYCNT: {
+      return mmio.keycnt.input_mask & 0x00FF;
+    }
+    case KEYCNT+1: {
+      return ((mmio.keycnt.input_mask >> 8) & 3) |
+             (mmio.keycnt.interrupt << 6) |
+             (mmio.keycnt.and_mode << 7);
     }
 
     /* Interrupt Control */
@@ -202,16 +202,16 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     /* Waitstates */
     case WAITCNT+0: {
       return mmio.waitcnt.sram |
-            (mmio.waitcnt.ws0_n << 2) |
-            (mmio.waitcnt.ws0_s << 4) |
-            (mmio.waitcnt.ws1_n << 5) |
-            (mmio.waitcnt.ws1_s << 7);
+             (mmio.waitcnt.ws0_n << 2) |
+             (mmio.waitcnt.ws0_s << 4) |
+             (mmio.waitcnt.ws1_n << 5) |
+             (mmio.waitcnt.ws1_s << 7);
     }
     case WAITCNT+1: {
       return mmio.waitcnt.ws2_n |
-            (mmio.waitcnt.ws2_s << 2) |
-            (mmio.waitcnt.phi << 3) |
-            (mmio.waitcnt.prefetch << 6);
+             (mmio.waitcnt.ws2_s << 2) |
+             (mmio.waitcnt.phi << 3) |
+             (mmio.waitcnt.prefetch << 6);
     }
     case WAITCNT+2:
     case WAITCNT+3: return 0;
@@ -227,557 +227,255 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
 
   switch (address) {
     /* PPU */
-    case DISPCNT + 0:
-      ppu_io.dispcnt.Write(0, value);
-      break;
-    case DISPCNT + 1:
-      ppu_io.dispcnt.Write(1, value);
-      break;
-    case DISPSTAT + 0:
-      ppu_io.dispstat.Write(0, value);
-      break;
-    case DISPSTAT + 1:
-      ppu_io.dispstat.Write(1, value);
-      break;
-    case BG0CNT + 0:
-      ppu_io.bgcnt[0].Write(0, value);
-      break;
-    case BG0CNT + 1:
-      ppu_io.bgcnt[0].Write(1, value);
-      break;
-    case BG1CNT + 0:
-      ppu_io.bgcnt[1].Write(0, value);
-      break;
-    case BG1CNT + 1:
-      ppu_io.bgcnt[1].Write(1, value);
-      break;
-    case BG2CNT + 0:
-      ppu_io.bgcnt[2].Write(0, value);
-      break;
-    case BG2CNT + 1:
-      ppu_io.bgcnt[2].Write(1, value);
-      break;
-    case BG3CNT + 0:
-      ppu_io.bgcnt[3].Write(0, value);
-      break;
-    case BG3CNT + 1:
-      ppu_io.bgcnt[3].Write(1, value);
-      break;
-    case BG0HOFS + 0:
+    case DISPCNT+0:  ppu_io.dispcnt.Write(0, value); break;
+    case DISPCNT+1:  ppu_io.dispcnt.Write(1, value); break;
+    case DISPSTAT+0: ppu_io.dispstat.Write(0, value); break;
+    case DISPSTAT+1: ppu_io.dispstat.Write(1, value); break;
+    case BG0CNT+0:   ppu_io.bgcnt[0].Write(0, value); break;
+    case BG0CNT+1:   ppu_io.bgcnt[0].Write(1, value); break;
+    case BG1CNT+0:   ppu_io.bgcnt[1].Write(0, value); break;
+    case BG1CNT+1:   ppu_io.bgcnt[1].Write(1, value); break;
+    case BG2CNT+0:   ppu_io.bgcnt[2].Write(0, value); break;
+    case BG2CNT+1:   ppu_io.bgcnt[2].Write(1, value); break;
+    case BG3CNT+0:   ppu_io.bgcnt[3].Write(0, value); break;
+    case BG3CNT+1:   ppu_io.bgcnt[3].Write(1, value); break;
+    case BG0HOFS+0:
       ppu_io.bghofs[0] &= 0xFF00;
       ppu_io.bghofs[0] |= value;
       break;
-    case BG0HOFS + 1:
+    case BG0HOFS+1:
       ppu_io.bghofs[0] &= 0x00FF;
       ppu_io.bghofs[0] |= (value & 1) << 8;
       break;
-    case BG0VOFS + 0:
+    case BG0VOFS+0:
       ppu_io.bgvofs[0] &= 0xFF00;
       ppu_io.bgvofs[0] |= value;
       break;
-    case BG0VOFS + 1:
+    case BG0VOFS+1:
       ppu_io.bgvofs[0] &= 0x00FF;
       ppu_io.bgvofs[0] |= (value & 1) << 8;
       break;
-    case BG1HOFS + 0:
+    case BG1HOFS+0:
       ppu_io.bghofs[1] &= 0xFF00;
       ppu_io.bghofs[1] |= value;
       break;
-    case BG1HOFS + 1:
+    case BG1HOFS+1:
       ppu_io.bghofs[1] &= 0x00FF;
       ppu_io.bghofs[1] |= (value & 1) << 8;
       break;
-    case BG1VOFS + 0:
+    case BG1VOFS+0:
       ppu_io.bgvofs[1] &= 0xFF00;
       ppu_io.bgvofs[1] |= value;
       break;
-    case BG1VOFS + 1:
+    case BG1VOFS+1:
       ppu_io.bgvofs[1] &= 0x00FF;
       ppu_io.bgvofs[1] |= (value & 1) << 8;
       break;
-    case BG2HOFS + 0:
+    case BG2HOFS+0:
       ppu_io.bghofs[2] &= 0xFF00;
       ppu_io.bghofs[2] |= value;
       break;
-    case BG2HOFS + 1:
+    case BG2HOFS+1:
       ppu_io.bghofs[2] &= 0x00FF;
       ppu_io.bghofs[2] |= (value & 1) << 8;
       break;
-    case BG2VOFS + 0:
+    case BG2VOFS+0:
       ppu_io.bgvofs[2] &= 0xFF00;
       ppu_io.bgvofs[2] |= value;
       break;
-    case BG2VOFS + 1:
+    case BG2VOFS+1:
       ppu_io.bgvofs[2] &= 0x00FF;
       ppu_io.bgvofs[2] |= (value & 1) << 8;
       break;
-    case BG3HOFS + 0:
+    case BG3HOFS+0:
       ppu_io.bghofs[3] &= 0xFF00;
       ppu_io.bghofs[3] |= value;
       break;
-    case BG3HOFS + 1:
+    case BG3HOFS+1:
       ppu_io.bghofs[3] &= 0x00FF;
       ppu_io.bghofs[3] |= (value & 1) << 8;
       break;
-    case BG3VOFS + 0:
+    case BG3VOFS+0:
       ppu_io.bgvofs[3] &= 0xFF00;
       ppu_io.bgvofs[3] |= value;
       break;
-    case BG3VOFS + 1:
+    case BG3VOFS+1:
       ppu_io.bgvofs[3] &= 0x00FF;
       ppu_io.bgvofs[3] |= (value & 1) << 8;
       break;
 
-    case BG2PA:
-      ppu_io.bgpa[0] = (ppu_io.bgpa[0] & 0xFF00) | (value << 0);
-      break;
-    case BG2PA + 1:
-      ppu_io.bgpa[0] = (ppu_io.bgpa[0] & 0x00FF) | (value << 8);
-      break;
-    case BG2PB:
-      ppu_io.bgpb[0] = (ppu_io.bgpb[0] & 0xFF00) | (value << 0);
-      break;
-    case BG2PB + 1:
-      ppu_io.bgpb[0] = (ppu_io.bgpb[0] & 0x00FF) | (value << 8);
-      break;
-    case BG2PC:
-      ppu_io.bgpc[0] = (ppu_io.bgpc[0] & 0xFF00) | (value << 0);
-      break;
-    case BG2PC + 1:
-      ppu_io.bgpc[0] = (ppu_io.bgpc[0] & 0x00FF) | (value << 8);
-      break;
-    case BG2PD:
-      ppu_io.bgpd[0] = (ppu_io.bgpd[0] & 0xFF00) | (value << 0);
-      break;
-    case BG2PD + 1:
-      ppu_io.bgpd[0] = (ppu_io.bgpd[0] & 0x00FF) | (value << 8);
-      break;
-    case BG2X:
-      ppu_io.bgx[0].Write(0, value);
-      break;
-    case BG2X + 1:
-      ppu_io.bgx[0].Write(1, value);
-      break;
-    case BG2X + 2:
-      ppu_io.bgx[0].Write(2, value);
-      break;
-    case BG2X + 3:
-      ppu_io.bgx[0].Write(3, value);
-      break;
-    case BG2Y:
-      ppu_io.bgy[0].Write(0, value);
-      break;
-    case BG2Y + 1:
-      ppu_io.bgy[0].Write(1, value);
-      break;
-    case BG2Y + 2:
-      ppu_io.bgy[0].Write(2, value);
-      break;
-    case BG2Y + 3:
-      ppu_io.bgy[0].Write(3, value);
-      break;
-    case BG3PA:
-      ppu_io.bgpa[1] = (ppu_io.bgpa[1] & 0xFF00) | (value << 0);
-      break;
-    case BG3PA + 1:
-      ppu_io.bgpa[1] = (ppu_io.bgpa[1] & 0x00FF) | (value << 8);
-      break;
-    case BG3PB:
-      ppu_io.bgpb[1] = (ppu_io.bgpb[1] & 0xFF00) | (value << 0);
-      break;
-    case BG3PB + 1:
-      ppu_io.bgpb[1] = (ppu_io.bgpb[1] & 0x00FF) | (value << 8);
-      break;
-    case BG3PC:
-      ppu_io.bgpc[1] = (ppu_io.bgpc[1] & 0xFF00) | (value << 0);
-      break;
-    case BG3PC + 1:
-      ppu_io.bgpc[1] = (ppu_io.bgpc[1] & 0x00FF) | (value << 8);
-      break;
-    case BG3PD:
-      ppu_io.bgpd[1] = (ppu_io.bgpd[1] & 0xFF00) | (value << 0);
-      break;
-    case BG3PD + 1:
-      ppu_io.bgpd[1] = (ppu_io.bgpd[1] & 0x00FF) | (value << 8);
-      break;
-    case BG3X:
-      ppu_io.bgx[1].Write(0, value);
-      break;
-    case BG3X + 1:
-      ppu_io.bgx[1].Write(1, value);
-      break;
-    case BG3X + 2:
-      ppu_io.bgx[1].Write(2, value);
-      break;
-    case BG3X + 3:
-      ppu_io.bgx[1].Write(3, value);
-      break;
-    case BG3Y:
-      ppu_io.bgy[1].Write(0, value);
-      break;
-    case BG3Y + 1:
-      ppu_io.bgy[1].Write(1, value);
-      break;
-    case BG3Y + 2:
-      ppu_io.bgy[1].Write(2, value);
-      break;
-    case BG3Y + 3:
-      ppu_io.bgy[1].Write(3, value);
-      break;
+    case BG2PA:   ppu_io.bgpa[0] = (ppu_io.bgpa[0] & 0xFF00) | (value << 0); break;
+    case BG2PA+1: ppu_io.bgpa[0] = (ppu_io.bgpa[0] & 0x00FF) | (value << 8); break;
+    case BG2PB:   ppu_io.bgpb[0] = (ppu_io.bgpb[0] & 0xFF00) | (value << 0); break;
+    case BG2PB+1: ppu_io.bgpb[0] = (ppu_io.bgpb[0] & 0x00FF) | (value << 8); break;
+    case BG2PC:   ppu_io.bgpc[0] = (ppu_io.bgpc[0] & 0xFF00) | (value << 0); break;
+    case BG2PC+1: ppu_io.bgpc[0] = (ppu_io.bgpc[0] & 0x00FF) | (value << 8); break;
+    case BG2PD:   ppu_io.bgpd[0] = (ppu_io.bgpd[0] & 0xFF00) | (value << 0); break;
+    case BG2PD+1: ppu_io.bgpd[0] = (ppu_io.bgpd[0] & 0x00FF) | (value << 8); break;
+    case BG2X:    ppu_io.bgx[0].Write(0, value); break;
+    case BG2X+1:  ppu_io.bgx[0].Write(1, value); break;
+    case BG2X+2:  ppu_io.bgx[0].Write(2, value); break;
+    case BG2X+3:  ppu_io.bgx[0].Write(3, value); break;
+    case BG2Y:    ppu_io.bgy[0].Write(0, value); break;
+    case BG2Y+1:  ppu_io.bgy[0].Write(1, value); break;
+    case BG2Y+2:  ppu_io.bgy[0].Write(2, value); break;
+    case BG2Y+3:  ppu_io.bgy[0].Write(3, value); break;
+    case BG3PA:   ppu_io.bgpa[1] = (ppu_io.bgpa[1] & 0xFF00) | (value << 0); break;
+    case BG3PA+1: ppu_io.bgpa[1] = (ppu_io.bgpa[1] & 0x00FF) | (value << 8); break;
+    case BG3PB:   ppu_io.bgpb[1] = (ppu_io.bgpb[1] & 0xFF00) | (value << 0); break;
+    case BG3PB+1: ppu_io.bgpb[1] = (ppu_io.bgpb[1] & 0x00FF) | (value << 8); break;
+    case BG3PC:   ppu_io.bgpc[1] = (ppu_io.bgpc[1] & 0xFF00) | (value << 0); break;
+    case BG3PC+1: ppu_io.bgpc[1] = (ppu_io.bgpc[1] & 0x00FF) | (value << 8); break;
+    case BG3PD:   ppu_io.bgpd[1] = (ppu_io.bgpd[1] & 0xFF00) | (value << 0); break;
+    case BG3PD+1: ppu_io.bgpd[1] = (ppu_io.bgpd[1] & 0x00FF) | (value << 8); break;
+    case BG3X:    ppu_io.bgx[1].Write(0, value); break;
+    case BG3X+1:  ppu_io.bgx[1].Write(1, value); break;
+    case BG3X+2:  ppu_io.bgx[1].Write(2, value); break;
+    case BG3X+3:  ppu_io.bgx[1].Write(3, value); break;
+    case BG3Y:    ppu_io.bgy[1].Write(0, value); break;
+    case BG3Y+1:  ppu_io.bgy[1].Write(1, value); break;
+    case BG3Y+2:  ppu_io.bgy[1].Write(2, value); break;
+    case BG3Y+3:  ppu_io.bgy[1].Write(3, value); break;
 
-    case WIN0H + 0:
-      ppu_io.winh[0].Write(0, value);
-      break;
-    case WIN0H + 1:
-      ppu_io.winh[0].Write(1, value);
-      break;
-    case WIN1H + 0:
-      ppu_io.winh[1].Write(0, value);
-      break;
-    case WIN1H + 1:
-      ppu_io.winh[1].Write(1, value);
-      break;
-    case WIN0V + 0:
-      ppu_io.winv[0].Write(0, value);
-      break;
-    case WIN0V + 1:
-      ppu_io.winv[0].Write(1, value);
-      break;
-    case WIN1V + 0:
-      ppu_io.winv[1].Write(0, value);
-      break;
-    case WIN1V + 1:
-      ppu_io.winv[1].Write(1, value);
-      break;
-    case WININ + 0:
-      ppu_io.winin.Write(0, value);
-      break;
-    case WININ + 1:
-      ppu_io.winin.Write(1, value);
-      break;
-    case WINOUT + 0:
-      ppu_io.winout.Write(0, value);
-      break;
-    case WINOUT + 1:
-      ppu_io.winout.Write(1, value);
-      break;
-    case MOSAIC + 0:
-      ppu_io.mosaic.Write(0, value);
-      break;
-    case MOSAIC + 1:
-      ppu_io.mosaic.Write(1, value);
-      break;
-    case BLDCNT + 0:
-      ppu_io.bldcnt.Write(0, value);
-      break;
-    case BLDCNT + 1:
-      ppu_io.bldcnt.Write(1, value);
-      break;
-    case BLDALPHA + 0:
-      ppu_io.eva = value & 0x1F;
-      break;
-    case BLDALPHA + 1:
-      ppu_io.evb = value & 0x1F;
-      break;
-    case BLDY:
-      ppu_io.evy = value & 0x1F;
-      break;
+    case WIN0H+0: ppu_io.winh[0].Write(0, value); break;
+    case WIN0H+1: ppu_io.winh[0].Write(1, value); break;
+    case WIN1H+0: ppu_io.winh[1].Write(0, value); break;
+    case WIN1H+1: ppu_io.winh[1].Write(1, value); break;
+    case WIN0V+0: ppu_io.winv[0].Write(0, value); break;
+    case WIN0V+1: ppu_io.winv[0].Write(1, value); break;
+    case WIN1V+0: ppu_io.winv[1].Write(0, value); break;
+    case WIN1V+1: ppu_io.winv[1].Write(1, value); break;
+    case WININ+0: ppu_io.winin.Write(0, value); break;
+    case WININ+1: ppu_io.winin.Write(1, value); break;
+    case WINOUT+0: ppu_io.winout.Write(0, value); break;
+    case WINOUT+1: ppu_io.winout.Write(1, value); break;
+    case MOSAIC+0: ppu_io.mosaic.Write(0, value); break;
+    case MOSAIC+1: ppu_io.mosaic.Write(1, value); break;
+    case BLDCNT+0: ppu_io.bldcnt.Write(0, value); break;
+    case BLDCNT+1: ppu_io.bldcnt.Write(1, value); break;
+    case BLDALPHA+0: ppu_io.eva = value & 0x1F; break;
+    case BLDALPHA+1: ppu_io.evb = value & 0x1F; break;
+    case BLDY: ppu_io.evy = value & 0x1F; break;
 
     /* DMAs 0-3 */
-    case DMA0SAD:
-      dma.Write(0, 0, value);
-      break;
-    case DMA0SAD + 1:
-      dma.Write(0, 1, value);
-      break;
-    case DMA0SAD + 2:
-      dma.Write(0, 2, value);
-      break;
-    case DMA0SAD + 3:
-      dma.Write(0, 3, value);
-      break;
-    case DMA0DAD:
-      dma.Write(0, 4, value);
-      break;
-    case DMA0DAD + 1:
-      dma.Write(0, 5, value);
-      break;
-    case DMA0DAD + 2:
-      dma.Write(0, 6, value);
-      break;
-    case DMA0DAD + 3:
-      dma.Write(0, 7, value);
-      break;
-    case DMA0CNT_L:
-      dma.Write(0, 8, value);
-      break;
-    case DMA0CNT_L + 1:
-      dma.Write(0, 9, value);
-      break;
-    case DMA0CNT_H:
-      dma.Write(0, 10, value);
-      break;
-    case DMA0CNT_H + 1:
-      dma.Write(0, 11, value);
-      break;
-    case DMA1SAD:
-      dma.Write(1, 0, value);
-      break;
-    case DMA1SAD + 1:
-      dma.Write(1, 1, value);
-      break;
-    case DMA1SAD + 2:
-      dma.Write(1, 2, value);
-      break;
-    case DMA1SAD + 3:
-      dma.Write(1, 3, value);
-      break;
-    case DMA1DAD:
-      dma.Write(1, 4, value);
-      break;
-    case DMA1DAD + 1:
-      dma.Write(1, 5, value);
-      break;
-    case DMA1DAD + 2:
-      dma.Write(1, 6, value);
-      break;
-    case DMA1DAD + 3:
-      dma.Write(1, 7, value);
-      break;
-    case DMA1CNT_L:
-      dma.Write(1, 8, value);
-      break;
-    case DMA1CNT_L + 1:
-      dma.Write(1, 9, value);
-      break;
-    case DMA1CNT_H:
-      dma.Write(1, 10, value);
-      break;
-    case DMA1CNT_H + 1:
-      dma.Write(1, 11, value);
-      break;
-    case DMA2SAD:
-      dma.Write(2, 0, value);
-      break;
-    case DMA2SAD + 1:
-      dma.Write(2, 1, value);
-      break;
-    case DMA2SAD + 2:
-      dma.Write(2, 2, value);
-      break;
-    case DMA2SAD + 3:
-      dma.Write(2, 3, value);
-      break;
-    case DMA2DAD:
-      dma.Write(2, 4, value);
-      break;
-    case DMA2DAD + 1:
-      dma.Write(2, 5, value);
-      break;
-    case DMA2DAD + 2:
-      dma.Write(2, 6, value);
-      break;
-    case DMA2DAD + 3:
-      dma.Write(2, 7, value);
-      break;
-    case DMA2CNT_L:
-      dma.Write(2, 8, value);
-      break;
-    case DMA2CNT_L + 1:
-      dma.Write(2, 9, value);
-      break;
-    case DMA2CNT_H:
-      dma.Write(2, 10, value);
-      break;
-    case DMA2CNT_H + 1:
-      dma.Write(2, 11, value);
-      break;
-    case DMA3SAD:
-      dma.Write(3, 0, value);
-      break;
-    case DMA3SAD + 1:
-      dma.Write(3, 1, value);
-      break;
-    case DMA3SAD + 2:
-      dma.Write(3, 2, value);
-      break;
-    case DMA3SAD + 3:
-      dma.Write(3, 3, value);
-      break;
-    case DMA3DAD:
-      dma.Write(3, 4, value);
-      break;
-    case DMA3DAD + 1:
-      dma.Write(3, 5, value);
-      break;
-    case DMA3DAD + 2:
-      dma.Write(3, 6, value);
-      break;
-    case DMA3DAD + 3:
-      dma.Write(3, 7, value);
-      break;
-    case DMA3CNT_L:
-      dma.Write(3, 8, value);
-      break;
-    case DMA3CNT_L + 1:
-      dma.Write(3, 9, value);
-      break;
-    case DMA3CNT_H:
-      dma.Write(3, 10, value);
-      break;
-    case DMA3CNT_H + 1:
-      dma.Write(3, 11, value);
-      break;
+    case DMA0SAD:     dma.Write(0, 0, value); break;
+    case DMA0SAD+1:   dma.Write(0, 1, value); break;
+    case DMA0SAD+2:   dma.Write(0, 2, value); break;
+    case DMA0SAD+3:   dma.Write(0, 3, value); break;
+    case DMA0DAD:     dma.Write(0, 4, value); break;
+    case DMA0DAD+1:   dma.Write(0, 5, value); break;
+    case DMA0DAD+2:   dma.Write(0, 6, value); break;
+    case DMA0DAD+3:   dma.Write(0, 7, value); break;
+    case DMA0CNT_L:   dma.Write(0, 8, value); break;
+    case DMA0CNT_L+1: dma.Write(0, 9, value); break;
+    case DMA0CNT_H:   dma.Write(0, 10, value); break;
+    case DMA0CNT_H+1: dma.Write(0, 11, value); break;
+    case DMA1SAD:     dma.Write(1, 0, value); break;
+    case DMA1SAD+1:   dma.Write(1, 1, value); break;
+    case DMA1SAD+2:   dma.Write(1, 2, value); break;
+    case DMA1SAD+3:   dma.Write(1, 3, value); break;
+    case DMA1DAD:     dma.Write(1, 4, value); break;
+    case DMA1DAD+1:   dma.Write(1, 5, value); break;
+    case DMA1DAD+2:   dma.Write(1, 6, value); break;
+    case DMA1DAD+3:   dma.Write(1, 7, value); break;
+    case DMA1CNT_L:   dma.Write(1, 8, value); break;
+    case DMA1CNT_L+1: dma.Write(1, 9, value); break;
+    case DMA1CNT_H:   dma.Write(1, 10, value); break;
+    case DMA1CNT_H+1: dma.Write(1, 11, value); break;
+    case DMA2SAD:     dma.Write(2, 0, value); break;
+    case DMA2SAD+1:   dma.Write(2, 1, value); break;
+    case DMA2SAD+2:   dma.Write(2, 2, value); break;
+    case DMA2SAD+3:   dma.Write(2, 3, value); break;
+    case DMA2DAD:     dma.Write(2, 4, value); break;
+    case DMA2DAD+1:   dma.Write(2, 5, value); break;
+    case DMA2DAD+2:   dma.Write(2, 6, value); break;
+    case DMA2DAD+3:   dma.Write(2, 7, value); break;
+    case DMA2CNT_L:   dma.Write(2, 8, value); break;
+    case DMA2CNT_L+1: dma.Write(2, 9, value); break;
+    case DMA2CNT_H:   dma.Write(2, 10, value); break;
+    case DMA2CNT_H+1: dma.Write(2, 11, value); break;
+    case DMA3SAD:     dma.Write(3, 0, value); break;
+    case DMA3SAD+1:   dma.Write(3, 1, value); break;
+    case DMA3SAD+2:   dma.Write(3, 2, value); break;
+    case DMA3SAD+3:   dma.Write(3, 3, value); break;
+    case DMA3DAD:     dma.Write(3, 4, value); break;
+    case DMA3DAD+1:   dma.Write(3, 5, value); break;
+    case DMA3DAD+2:   dma.Write(3, 6, value); break;
+    case DMA3DAD+3:   dma.Write(3, 7, value); break;
+    case DMA3CNT_L:   dma.Write(3, 8, value); break;
+    case DMA3CNT_L+1: dma.Write(3, 9, value); break;
+    case DMA3CNT_H:   dma.Write(3, 10, value); break;
+    case DMA3CNT_H+1: dma.Write(3, 11, value); break;
 
     /* SOUND */
-    case SOUND1CNT_L:
-      apu.psg1.Write(0, value);
-      break;
-    case SOUND1CNT_L + 1:
-      apu.psg1.Write(1, value);
-      break;
-    case SOUND1CNT_H:
-      apu.psg1.Write(2, value);
-      break;
-    case SOUND1CNT_H + 1:
-      apu.psg1.Write(3, value);
-      break;
-    case SOUND1CNT_X:
-      apu.psg1.Write(4, value);
-      break;
-    case SOUND1CNT_X + 1:
-      apu.psg1.Write(5, value);
-      break;
-    case SOUND2CNT_L:
-      apu.psg2.Write(2, value);
-      break;
-    case SOUND2CNT_L + 1:
-      apu.psg2.Write(3, value);
-      break;
-    case SOUND2CNT_H:
-      apu.psg2.Write(4, value);
-      break;
-    case SOUND2CNT_H + 1:
-      apu.psg2.Write(5, value);
-      break;
-    case SOUND3CNT_L:
-      apu.psg3.Write(0, value);
-      break;
-    case SOUND3CNT_L + 1:
-      apu.psg3.Write(1, value);
-      break;
-    case SOUND3CNT_H:
-      apu.psg3.Write(2, value);
-      break;
-    case SOUND3CNT_H + 1:
-      apu.psg3.Write(3, value);
-      break;
-    case SOUND3CNT_X:
-      apu.psg3.Write(4, value);
-      break;
-    case SOUND3CNT_X + 1:
-      apu.psg3.Write(5, value);
-      break;
-    case SOUND4CNT_L:
-      apu.psg4.Write(0, value);
-      break;
-    case SOUND4CNT_L + 1:
-      apu.psg4.Write(1, value);
-      break;
-    case SOUND4CNT_H:
-      apu.psg4.Write(4, value);
-      break;
-    case SOUND4CNT_H + 1:
-      apu.psg4.Write(5, value);
-      break;
-    case WAVE_RAM + 0:
-    case WAVE_RAM + 1:
-    case WAVE_RAM + 2:
-    case WAVE_RAM + 3:
-    case WAVE_RAM + 4:
-    case WAVE_RAM + 5:
-    case WAVE_RAM + 6:
-    case WAVE_RAM + 7:
-    case WAVE_RAM + 8:
-    case WAVE_RAM + 9:
-    case WAVE_RAM + 10:
-    case WAVE_RAM + 11:
-    case WAVE_RAM + 12:
-    case WAVE_RAM + 13:
-    case WAVE_RAM + 14:
-    case WAVE_RAM + 15: {
+    case SOUND1CNT_L:   apu.psg1.Write(0, value); break;
+    case SOUND1CNT_L+1: apu.psg1.Write(1, value); break;
+    case SOUND1CNT_H:   apu.psg1.Write(2, value); break;
+    case SOUND1CNT_H+1: apu.psg1.Write(3, value); break;
+    case SOUND1CNT_X:   apu.psg1.Write(4, value); break;
+    case SOUND1CNT_X+1: apu.psg1.Write(5, value); break;
+    case SOUND2CNT_L:   apu.psg2.Write(2, value); break;
+    case SOUND2CNT_L+1: apu.psg2.Write(3, value); break;
+    case SOUND2CNT_H:   apu.psg2.Write(4, value); break;
+    case SOUND2CNT_H+1: apu.psg2.Write(5, value); break;
+    case SOUND3CNT_L:   apu.psg3.Write(0, value); break;
+    case SOUND3CNT_L+1: apu.psg3.Write(1, value); break;
+    case SOUND3CNT_H:   apu.psg3.Write(2, value); break;
+    case SOUND3CNT_H+1: apu.psg3.Write(3, value); break;
+    case SOUND3CNT_X:   apu.psg3.Write(4, value); break;
+    case SOUND3CNT_X+1: apu.psg3.Write(5, value); break;
+    case SOUND4CNT_L:   apu.psg4.Write(0, value); break;
+    case SOUND4CNT_L+1: apu.psg4.Write(1, value); break;
+    case SOUND4CNT_H:   apu.psg4.Write(4, value); break;
+    case SOUND4CNT_H+1: apu.psg4.Write(5, value); break;
+    case WAVE_RAM+0:
+    case WAVE_RAM+1:
+    case WAVE_RAM+2:
+    case WAVE_RAM+3:
+    case WAVE_RAM+4:
+    case WAVE_RAM+5:
+    case WAVE_RAM+6:
+    case WAVE_RAM+7:
+    case WAVE_RAM+8:
+    case WAVE_RAM+9:
+    case WAVE_RAM+10:
+    case WAVE_RAM+11:
+    case WAVE_RAM+12:
+    case WAVE_RAM+13:
+    case WAVE_RAM+14:
+    case WAVE_RAM+15: {
       apu.psg3.WriteSample(address & 0xF, value);
       break;
     }
     case FIFO_A:
-    case FIFO_A + 1:
-    case FIFO_A + 2:
-    case FIFO_A + 3:
-      apu_io.fifo[0].Write(value);
-      break;
+    case FIFO_A+1:
+    case FIFO_A+2:
+    case FIFO_A+3: apu_io.fifo[0].Write(value); break;
     case FIFO_B:
-    case FIFO_B + 1:
-    case FIFO_B + 2:
-    case FIFO_B + 3:
-      apu_io.fifo[1].Write(value);
-      break;
-    case SOUNDCNT_L:
-      apu_io.soundcnt.Write(0, value);
-      break;
-    case SOUNDCNT_L + 1:
-      apu_io.soundcnt.Write(1, value);
-      break;
-    case SOUNDCNT_H:
-      apu_io.soundcnt.Write(2, value);
-      break;
-    case SOUNDCNT_H + 1:
-      apu_io.soundcnt.Write(3, value);
-      break;
-    case SOUNDCNT_X:
-      apu_io.soundcnt.Write(4, value);
-      break;
-    case SOUNDBIAS:
-      apu_io.bias.Write(0, value);
-    case SOUNDBIAS + 1:
-      apu_io.bias.Write(1, value);
+    case FIFO_B+1:
+    case FIFO_B+2:
+    case FIFO_B+3: apu_io.fifo[1].Write(value); break;
+    case SOUNDCNT_L:   apu_io.soundcnt.Write(0, value); break;
+    case SOUNDCNT_L+1: apu_io.soundcnt.Write(1, value); break;
+    case SOUNDCNT_H:   apu_io.soundcnt.Write(2, value); break;
+    case SOUNDCNT_H+1: apu_io.soundcnt.Write(3, value); break;
+    case SOUNDCNT_X:   apu_io.soundcnt.Write(4, value); break;
+    case SOUNDBIAS:    apu_io.bias.Write(0, value); break;
+    case SOUNDBIAS+1:  apu_io.bias.Write(1, value); break;
 
     /* Timers 0-3 */
-    case TM0CNT_L:
-      timer.Write(0, 0, value);
-      break;
-    case TM0CNT_L + 1:
-      timer.Write(0, 1, value);
-      break;
-    case TM0CNT_H:
-      timer.Write(0, 2, value);
-      break;
-    case TM1CNT_L:
-      timer.Write(1, 0, value);
-      break;
-    case TM1CNT_L + 1:
-      timer.Write(1, 1, value);
-      break;
-    case TM1CNT_H:
-      timer.Write(1, 2, value);
-      break;
-    case TM2CNT_L:
-      timer.Write(2, 0, value);
-      break;
-    case TM2CNT_L + 1:
-      timer.Write(2, 1, value);
-      break;
-    case TM2CNT_H:
-      timer.Write(2, 2, value);
-      break;
-    case TM3CNT_L:
-      timer.Write(3, 0, value);
-      break;
-    case TM3CNT_L + 1:
-      timer.Write(3, 1, value);
-      break;
-    case TM3CNT_H:
-      timer.Write(3, 2, value);
-      break;
+    case TM0CNT_L:   timer.Write(0, 0, value); break;
+    case TM0CNT_L+1: timer.Write(0, 1, value); break;
+    case TM0CNT_H:   timer.Write(0, 2, value); break;
+    case TM1CNT_L:   timer.Write(1, 0, value); break;
+    case TM1CNT_L+1: timer.Write(1, 1, value); break;
+    case TM1CNT_H:   timer.Write(1, 2, value); break;
+    case TM2CNT_L:   timer.Write(2, 0, value); break;
+    case TM2CNT_L+1: timer.Write(2, 1, value); break;
+    case TM2CNT_H:   timer.Write(2, 2, value); break;
+    case TM3CNT_L:   timer.Write(3, 0, value); break;
+    case TM3CNT_L+1: timer.Write(3, 1, value); break;
+    case TM3CNT_H:   timer.Write(3, 2, value); break;
 
     /* Serial Communication (1, 2) */
     case SIOMULTI0 | 0:
@@ -813,6 +511,21 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     case JOYSTAT | 2:
     case JOYSTAT | 3: {
       serial_bus.Write(address, value);
+      break;
+    }
+
+    case KEYCNT: {
+      mmio.keycnt.input_mask &= 0xFF00;
+      mmio.keycnt.input_mask |= value;
+      CheckKeypadInterrupt();
+      break;
+    }
+    case KEYCNT+1: {
+      mmio.keycnt.input_mask &= 0x00FF;
+      mmio.keycnt.input_mask |= (value & 3) << 8;
+      mmio.keycnt.interrupt = value & 64;
+      mmio.keycnt.and_mode = value & 128;
+      CheckKeypadInterrupt();
       break;
     }
 
