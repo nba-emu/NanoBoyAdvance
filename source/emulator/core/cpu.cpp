@@ -18,6 +18,8 @@ constexpr int CPU::s_ws_seq0[2];
 constexpr int CPU::s_ws_seq1[2];
 constexpr int CPU::s_ws_seq2[2];
 
+using Key = InputDevice::Key;
+
 CPU::CPU(std::shared_ptr<Config> config)
   : ARM7TDMI::ARM7TDMI(this)
   , config(config)
@@ -70,6 +72,9 @@ void CPU::Reset() {
   if (config->audio.m4a_xq_enable && memory.rom.data != nullptr) {
     M4ASearchForSampleFreqSet();
   }
+
+  std::function<void(void)> keypress_callback = std::bind(&CPU::OnKeyPress,this);
+  config->input_dev->SetOnChangeCallback(keypress_callback);
 }
 
 void CPU::Tick(int cycles) {
@@ -326,6 +331,39 @@ void CPU::M4AFixupPercussiveChannels() {
     if (m4a_soundinfo->channels[i].type == 8) {
       m4a_soundinfo->channels[i].type = 0;
       m4a_soundinfo->channels[i].freq = m4a_original_freq;
+    }
+  }
+}
+
+
+void CPU::OnKeyPress() {
+auto &keyinput = mmio.keyinput;
+// cache keystate into keyinput
+keyinput = (config->input_dev->Poll(Key::A)      ? 0 : 1)  |
+           (config->input_dev->Poll(Key::B)      ? 0 : 2)  |
+           (config->input_dev->Poll(Key::Select) ? 0 : 4)  |
+           (config->input_dev->Poll(Key::Start)  ? 0 : 8)  |
+           (config->input_dev->Poll(Key::Right)  ? 0 : 16) |
+           (config->input_dev->Poll(Key::Left)   ? 0 : 32) |
+           (config->input_dev->Poll(Key::Up)     ? 0 : 64) |
+           (config->input_dev->Poll(Key::Down)   ? 0 : 128) |
+           (config->input_dev->Poll(Key::R) ? 0 : 256) |
+           (config->input_dev->Poll(Key::L) ? 0 : 512);
+
+  TestForKeypadInterrupt();
+}
+
+void CPU::TestForKeypadInterrupt() {
+  const auto &keycnt = mmio.keycnt;
+  const auto keyinput = ~mmio.keyinput & 0x3FF;
+  if(keycnt.interrupt) {
+    if(keycnt.and_mode && keycnt.input_mask == keyinput) {
+      irq_controller.Raise(InterruptSource::Keypad);
+    }
+
+    // or mode
+    else if(keycnt.input_mask & keyinput) {
+      irq_controller.Raise(InterruptSource::Keypad);
     }
   }
 }
