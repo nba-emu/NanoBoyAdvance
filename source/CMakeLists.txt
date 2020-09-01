@@ -1,5 +1,5 @@
 option(PLATFORM_SDL "Enable SDL2 frontend" ON)
-option(PLATFORM_QT "Enable Qt frontend" ON)
+option(PLATFORM_QT "Enable Qt frontend" OFF)
 
 add_subdirectory(third_party)
 
