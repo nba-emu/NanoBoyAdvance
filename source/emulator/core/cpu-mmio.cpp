@@ -10,7 +10,6 @@
 
 namespace nba::core {
 
-using Key = InputDevice::Key;
 
 auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
   auto& apu_io = apu.mmio;
@@ -140,19 +139,21 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     case TM3CNT_H+1: return 0;
 
     case KEYINPUT+0: {
-      return (config->input_dev->Poll(Key::A)      ? 0 : 1)  |
-             (config->input_dev->Poll(Key::B)      ? 0 : 2)  |
-             (config->input_dev->Poll(Key::Select) ? 0 : 4)  |
-             (config->input_dev->Poll(Key::Start)  ? 0 : 8)  |
-             (config->input_dev->Poll(Key::Right)  ? 0 : 16) |
-             (config->input_dev->Poll(Key::Left)   ? 0 : 32) |
-             (config->input_dev->Poll(Key::Up)     ? 0 : 64) |
-             (config->input_dev->Poll(Key::Down)   ? 0 : 128);
+      return mmio.keyinput & 0x00FF;
     }
     case KEYINPUT+1: {
-      return (config->input_dev->Poll(Key::R) ? 0 : 1) |
-             (config->input_dev->Poll(Key::L) ? 0 : 2);
+      return (mmio.keyinput & 0xFF00) >> 8;
     }
+
+    case KEYCNT: {
+      return mmio.keycnt.input_mask & 0x00FF;
+    }
+    case KEYCNT+1: {
+      return ((mmio.keycnt.input_mask >> 8) & 3) |
+             (mmio.keycnt.interrupt << 6) |
+             (mmio.keycnt.and_mode << 7);
+    }
+
 
     case RCNT+0: return mmio.rcnt_hack & 0xFF;
     case RCNT+1: return mmio.rcnt_hack >> 8;
@@ -450,6 +451,22 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     case TM3CNT_L:   timer.Write(3, 0, value); break;
     case TM3CNT_L+1: timer.Write(3, 1, value); break;
     case TM3CNT_H:   timer.Write(3, 2, value); break;
+
+
+    case KEYCNT: {
+      mmio.keycnt.input_mask &= 0xFF00;
+      mmio.keycnt.input_mask |= value;
+      TestForKeypadInterrupt();
+      break;
+    }
+    case KEYCNT+1: {
+      mmio.keycnt.input_mask &= 0x00FF;
+      mmio.keycnt.input_mask |= (value & 3) << 8;
+      mmio.keycnt.interrupt = value & 64;
+      mmio.keycnt.and_mode = value & 128;
+      TestForKeypadInterrupt();
+      break;
+    }
 
     case RCNT: {
       mmio.rcnt_hack &= 0xFF00;

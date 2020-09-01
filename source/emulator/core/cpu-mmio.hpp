@@ -88,6 +88,7 @@ constexpr std::uint32_t TM2CNT_H = 0x0400010A;
 constexpr std::uint32_t TM3CNT_L = 0x0400010C;
 constexpr std::uint32_t TM3CNT_H = 0x0400010E;
 constexpr std::uint32_t KEYINPUT = 0x04000130;
+constexpr std::uint32_t KEYCNT = 0x04000132;
 constexpr std::uint32_t RCNT = 0x04000134;
 constexpr std::uint32_t IE = 0x04000200;
 constexpr std::uint32_t IF = 0x04000202;

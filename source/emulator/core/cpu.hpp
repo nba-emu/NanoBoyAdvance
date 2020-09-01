@@ -94,6 +94,13 @@ public:
       int prefetch = 0;
       int cgb = 0;
     } waitcnt;
+
+    struct KeyControl {
+      uint16_t input_mask = 0;
+      bool interrupt = false;
+      bool and_mode = false;
+    } keycnt;
+
   } mmio;
 
   Scheduler scheduler;
@@ -145,6 +152,9 @@ private:
   void M4ASearchForSampleFreqSet();
   void M4ASampleFreqSetHook();
   void M4AFixupPercussiveChannels();
+
+  void TestForKeypadInterrupt();
+  void OnKeyPress();
 
   M4ASoundInfo* m4a_soundinfo;
   int m4a_original_freq = 0;
