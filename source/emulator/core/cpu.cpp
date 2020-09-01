@@ -73,8 +73,7 @@ void CPU::Reset() {
     M4ASearchForSampleFreqSet();
   }
 
-  std::function<void(void)> keypress_callback = std::bind(&CPU::OnKeyPress,this);
-  config->input_dev->SetOnChangeCallback(keypress_callback);
+  config->input_dev->SetOnChangeCallback(std::bind(&CPU::OnKeyPress,this));
 }
 
 void CPU::Tick(int cycles) {
@@ -337,32 +336,29 @@ void CPU::M4AFixupPercussiveChannels() {
 
 
 void CPU::OnKeyPress() {
-auto &keyinput = mmio.keyinput;
-// cache keystate into keyinput
-keyinput = (config->input_dev->Poll(Key::A)      ? 0 : 1)  |
-           (config->input_dev->Poll(Key::B)      ? 0 : 2)  |
-           (config->input_dev->Poll(Key::Select) ? 0 : 4)  |
-           (config->input_dev->Poll(Key::Start)  ? 0 : 8)  |
-           (config->input_dev->Poll(Key::Right)  ? 0 : 16) |
-           (config->input_dev->Poll(Key::Left)   ? 0 : 32) |
-           (config->input_dev->Poll(Key::Up)     ? 0 : 64) |
-           (config->input_dev->Poll(Key::Down)   ? 0 : 128) |
-           (config->input_dev->Poll(Key::R) ? 0 : 256) |
-           (config->input_dev->Poll(Key::L) ? 0 : 512);
+  auto &keyinput = mmio.keyinput;
+  // cache keystate into keyinput
+  keyinput = (config->input_dev->Poll(Key::A)      ? 0 : 1)  |
+             (config->input_dev->Poll(Key::B)      ? 0 : 2)  |
+             (config->input_dev->Poll(Key::Select) ? 0 : 4)  |
+             (config->input_dev->Poll(Key::Start)  ? 0 : 8)  |
+             (config->input_dev->Poll(Key::Right)  ? 0 : 16) |
+             (config->input_dev->Poll(Key::Left)   ? 0 : 32) |
+             (config->input_dev->Poll(Key::Up)     ? 0 : 64) |
+             (config->input_dev->Poll(Key::Down)   ? 0 : 128) |
+             (config->input_dev->Poll(Key::R) ? 0 : 256) |
+             (config->input_dev->Poll(Key::L) ? 0 : 512);
 
-  TestForKeypadInterrupt();
+  CheckKeypadInterrupt();
 }
 
-void CPU::TestForKeypadInterrupt() {
+void CPU::CheckKeypadInterrupt() {
   const auto &keycnt = mmio.keycnt;
   const auto keyinput = ~mmio.keyinput & 0x3FF;
   if(keycnt.interrupt) {
     if(keycnt.and_mode && keycnt.input_mask == keyinput) {
       irq_controller.Raise(InterruptSource::Keypad);
-    }
-
-    // or mode
-    else if(keycnt.input_mask & keyinput) {
+    } else if(keycnt.input_mask & keyinput) {
       irq_controller.Raise(InterruptSource::Keypad);
     }
   }

@@ -456,7 +456,7 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     case KEYCNT: {
       mmio.keycnt.input_mask &= 0xFF00;
       mmio.keycnt.input_mask |= value;
-      TestForKeypadInterrupt();
+      CheckKeypadInterrupt();
       break;
     }
     case KEYCNT+1: {
@@ -464,7 +464,7 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
       mmio.keycnt.input_mask |= (value & 3) << 8;
       mmio.keycnt.interrupt = value & 64;
       mmio.keycnt.and_mode = value & 128;
-      TestForKeypadInterrupt();
+      CheckKeypadInterrupt();
       break;
     }
 

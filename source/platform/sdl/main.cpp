@@ -65,7 +65,10 @@ struct CombinedInputDevice : public nba::InputDevice {
     return g_keyboard_input_device.Poll(key) || g_controller_input_device.Poll(key);
   }
 
-  void SetOnChangeCallback(std::function<void(void)> callback) {}
+  void SetOnChangeCallback(std::function<void(void)> callback) {
+    g_keyboard_input_device.SetOnChangeCallback(callback);
+    g_controller_input_device.SetOnChangeCallback(callback);
+  }
 };
 
 struct SDL2_VideoDevice : public nba::VideoDevice {

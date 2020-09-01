@@ -153,7 +153,7 @@ private:
   void M4ASampleFreqSetHook();
   void M4AFixupPercussiveChannels();
 
-  void TestForKeypadInterrupt();
+  void CheckKeypadInterrupt();
   void OnKeyPress();
 
   M4ASoundInfo* m4a_soundinfo;
