@@ -282,7 +282,7 @@ template <int op, int off>
 void Thumb_LoadStoreSigned(std::uint16_t instruction) {
   int dst  = (instruction >> 0) & 7;
   int base = (instruction >> 3) & 7;
-  
+
   std::uint32_t address = state.reg[base] + state.reg[off];
 
   switch (op) {
@@ -409,17 +409,17 @@ void Thumb_PushPop(std::uint16_t instruction) {
       ReloadPipeline16();
       state.r13 += 0x40;
     } else {
-      WriteWord(state.r13, state.r15 + 2, Access::Nonsequential);
-      state.r15 += 2;
       state.r13 -= 0x40;
+      state.r15 += 2;
+      WriteWord(state.r13, state.r15, Access::Nonsequential);
     }
-    
+
     return;
   }
 
   auto address = state.r13;
   auto access_type = Access::Nonsequential;
-  
+
   if (pop) {
     for (int reg = 0; reg <= 7; reg++) {
       if (list & (1 << reg)) {
@@ -428,7 +428,7 @@ void Thumb_PushPop(std::uint16_t instruction) {
         address += 4;
       }
     }
-    
+
     if (rbit) {
       state.reg[15] = ReadWord(address, access_type) & ~1;
       state.reg[13] = address + 4;
@@ -436,7 +436,7 @@ void Thumb_PushPop(std::uint16_t instruction) {
       ReloadPipeline16();
       return;
     }
-    
+
     interface->Idle();
     state.r13 = address;
   } else {
@@ -458,7 +458,7 @@ void Thumb_PushPop(std::uint16_t instruction) {
         address += 4;
       }
     }
-    
+
     if (rbit) {
       WriteWord(address, state.r14, access_type);
     }
@@ -478,8 +478,8 @@ void Thumb_LoadStoreMultiple(std::uint16_t instruction) {
       state.r15 = ReadWord(state.reg[base], Access::Nonsequential);
       ReloadPipeline16();
     } else {
-      WriteWord(state.reg[base], state.r15 + 2, Access::Nonsequential);
       state.r15 += 2;
+      WriteWord(state.reg[base], state.r15, Access::Nonsequential);
     }
 
     state.reg[base] += 0x40;
@@ -489,7 +489,7 @@ void Thumb_LoadStoreMultiple(std::uint16_t instruction) {
   if (load) {
     std::uint32_t address = state.reg[base];
     auto access_type = Access::Nonsequential;
-    
+
     for (int i = 0; i <= 7; i++) {
       if (list & (1 << i)) {
         state.reg[i] = ReadWord(address, access_type);
