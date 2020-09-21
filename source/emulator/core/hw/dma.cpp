@@ -135,6 +135,8 @@ void DMA::Run() {
   auto& channel = channels[active_dma_id];
 
   auto access = Access::Nonsequential;
+  auto src_modify = g_dma_modify[channel.size][channel.src_cntl];
+  auto dst_modify = g_dma_modify[channel.size][channel.dst_cntl];
 
   if (channel.is_fifo_dma) {
     runnable_set.set(channel.id, false);
@@ -146,16 +148,13 @@ void DMA::Run() {
       }
       memory->WriteWord(channel.latch.dst_addr, latch, access);
       access = Access::Sequential;
-      channel.latch.src_addr += 4;
+      channel.latch.src_addr += src_modify;
     }
 
     if (!channel.repeat) {
       channel.enable = false;
     }
   } else {
-    auto src_modify = g_dma_modify[channel.size][channel.src_cntl];
-    auto dst_modify = g_dma_modify[channel.size][channel.dst_cntl];
-
     #define CHECK_INTERLEAVED\
       if (scheduler->GetRemainingCycleCount() <= 0 || early_exit_trigger) {\
         early_exit_trigger = false;\
