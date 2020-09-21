@@ -120,14 +120,13 @@ private:
       Word  = 1
     } size = Half;
 
-    bool is_fifo_dma;
-    bool allow_read;
-
     struct Latch {
       std::uint32_t length;
       std::uint32_t dst_addr;
       std::uint32_t src_addr;
     } latch;
+
+    bool is_fifo_dma = false;
   } channels[4];
 };
 
