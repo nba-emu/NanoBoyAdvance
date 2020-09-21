@@ -135,10 +135,10 @@ void DMA::Run() {
   auto& channel = channels[active_dma_id];
 
   auto access = Access::Nonsequential;
-  auto src_modify = g_dma_modify[channel.size][channel.src_cntl];
-  auto dst_modify = g_dma_modify[channel.size][channel.dst_cntl];
 
   if (channel.is_fifo_dma) {
+    auto src_modify = g_dma_modify[Channel::Size::Word][channel.src_cntl];
+
     runnable_set.set(channel.id, false);
 
     /* TODO: figure out how the FIFO DMA works in detail. */
@@ -155,6 +155,9 @@ void DMA::Run() {
       channel.enable = false;
     }
   } else {
+    auto src_modify = g_dma_modify[channel.size][channel.src_cntl];
+    auto dst_modify = g_dma_modify[channel.size][channel.dst_cntl];
+
     #define CHECK_INTERLEAVED\
       if (scheduler->GetRemainingCycleCount() <= 0 || early_exit_trigger) {\
         early_exit_trigger = false;\
