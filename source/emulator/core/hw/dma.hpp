@@ -52,16 +52,6 @@ private:
     REG_DMAXCNT_H = 10
   };
 
-  constexpr bool CheckDestinationAddress(int chan_id, int page) {
-    /* TODO: I'm not sure if this is necessary at all. */
-    return chan_id == 3 || page < 0x08;
-  }
-
-  constexpr bool CheckSourceAddress(int chan_id, int page) {
-    /* Do not allow any channel to read from the BIOS / sub-EWRAM region */
-    return page >= 0x02;
-  }
-
   constexpr int GetUnaliasedMemoryArea(int page) {
     if (page >= 0x09 && page <= 0x0D) {
       return 0x08;

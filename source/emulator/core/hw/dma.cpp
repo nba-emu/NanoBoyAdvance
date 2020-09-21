@@ -218,15 +218,11 @@ void DMA::Run() {
       }
 
       if (channel.dst_cntl == Channel::Reload) {
-        if (CheckDestinationAddress(channel.id, channel.dst_addr >> 24)) {
-          channel.latch.dst_addr = channel.dst_addr;
-          if (channel.size == Channel::Word) {
-            channel.latch.dst_addr &= ~3;
-          } else {
-            channel.latch.dst_addr &= ~1;
-          }
+        channel.latch.dst_addr = channel.dst_addr;
+        if (channel.size == Channel::Word) {
+          channel.latch.dst_addr &= ~3;
         } else {
-          channel.latch.dst_addr = 0;
+          channel.latch.dst_addr &= ~1;
         }
       }
 
@@ -341,20 +337,10 @@ void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
 
     if (!enabled_old) {
       int src_page = GetUnaliasedMemoryArea(channel.src_addr >> 24);
-      int dst_page = GetUnaliasedMemoryArea(channel.dst_addr >> 24);
 
-      if (CheckDestinationAddress(chan_id, dst_page)) {
-        channel.latch.dst_addr = channel.dst_addr;
-      } else {
-        channel.latch.dst_addr = 0;
-      }
-
-      if (CheckSourceAddress(chan_id, src_page)) {
-        channel.latch.src_addr = channel.src_addr;
-        channel.allow_read = true;
-      } else {
-        channel.allow_read = false;
-      }
+      channel.latch.dst_addr = channel.dst_addr;
+      channel.latch.src_addr = channel.src_addr;
+      channel.allow_read = src_page >= 0x02;
 
       if (src_page == 0x08) {
         channel.src_cntl = Channel::Control::Increment;
