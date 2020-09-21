@@ -357,6 +357,10 @@ void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
         channel.allow_read = false;
       }
 
+      if (src_page == 0x08) {
+        channel.src_cntl = Channel::Control::Increment;
+      }
+
       if (channel.size == Channel::Word) {
         channel.latch.src_addr &= ~3;
         channel.latch.dst_addr &= ~3;

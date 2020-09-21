@@ -53,16 +53,13 @@ private:
   };
 
   constexpr bool CheckDestinationAddress(int chan_id, int page) {
-    /* Only DMA3 may write to cartridge area. */
+    /* TODO: I'm not sure if this is necessary at all. */
     return chan_id == 3 || page < 0x08;
   }
 
   constexpr bool CheckSourceAddress(int chan_id, int page) {
-    /* DMA0 can not read ROM, but it is able to read the SRAM region.
-     * DMA explcitly disallows reading from BIOS memory,
-     * therefore invoking DMA open bus instead of BIOS open bus.
-     */
-    return (chan_id != 0 || page < 0x08 || page >= 0x0E) && page >= 0x02;
+    /* Do not allow any channel to read from the BIOS / sub-EWRAM region */
+    return page >= 0x02;
   }
 
   constexpr int GetUnaliasedMemoryArea(int page) {
