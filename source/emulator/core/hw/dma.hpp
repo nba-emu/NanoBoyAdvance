@@ -52,45 +52,6 @@ private:
     REG_DMAXCNT_H = 10
   };
 
-  constexpr int GetUnaliasedMemoryArea(int page) {
-    if (page >= 0x09 && page <= 0x0D) {
-      return 0x08;
-    }
-
-    if (page == 0x0F) {
-      return 0x0E;
-    }
-
-    return page;
-  }
-
-  void TryStart(int chan_id);
-  void SelectNextDMA();
-  void OnChannelWritten(int chan_id, bool enabled_old);
-
-  arm::MemoryBase* memory;
-  InterruptController* irq_controller;
-  Scheduler* scheduler;
-
-  int active_dma_id;
-  bool early_exit_trigger;
-
-  /// Set of currently enabled H-blank DMAs.
-  std::bitset<4> hblank_set;
-
-  /// Set of currently enabled V-blank DMAs.
-  std::bitset<4> vblank_set;
-
-  /// Set of currently enabled video transfer DMAs.
-  std::bitset<4> video_set;
-
-  /// Set of DMAs which are currently scheduled for execution.
-  std::bitset<4> runnable_set;
-
-  /// Most recent value transferred by any DMA channel.
-  /// When attempting read from illegal addresses, this value will be read instead.
-  std::uint32_t latch;
-
   struct Channel {
     int id;
     bool enable = false;
@@ -129,6 +90,45 @@ private:
 
     bool is_fifo_dma = false;
   } channels[4];
+
+  constexpr int GetUnaliasedMemoryArea(int page) {
+    if (page >= 0x09 && page <= 0x0D) {
+      return 0x08;
+    }
+
+    if (page == 0x0F) {
+      return 0x0E;
+    }
+
+    return page;
+  }
+
+  void TryStart(int chan_id);
+  void SelectNextDMA();
+  void OnChannelWritten(Channel& channel, bool enable_old);
+
+  arm::MemoryBase* memory;
+  InterruptController* irq_controller;
+  Scheduler* scheduler;
+
+  int active_dma_id;
+  bool early_exit_trigger;
+
+  /// Set of currently enabled H-blank DMAs.
+  std::bitset<4> hblank_set;
+
+  /// Set of currently enabled V-blank DMAs.
+  std::bitset<4> vblank_set;
+
+  /// Set of currently enabled video transfer DMAs.
+  std::bitset<4> video_set;
+
+  /// Set of DMAs which are currently scheduled for execution.
+  std::bitset<4> runnable_set;
+
+  /// Most recent value transferred by any DMA channel.
+  /// When attempting read from illegal addresses, this value will be read instead.
+  std::uint32_t latch;
 };
 
 } // namespace nba::core

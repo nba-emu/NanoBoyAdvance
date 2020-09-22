@@ -189,7 +189,7 @@ void DMA::Run() {
     access = Access::Sequential;
   }
 
-  /* If this code is reached, the DMA was not interleaved and completed. */
+  // If this code is reached, the DMA was not interleaved and completed.
   if (channel.repeat) {
     if (channel.is_fifo_dma) {
       channel.latch.length = 4;
@@ -202,9 +202,10 @@ void DMA::Run() {
 
     if (channel.dst_cntl == Channel::Reload && !channel.is_fifo_dma) {
       channel.latch.dst_addr = channel.dst_addr;
-      // NOTE: we better not use the cached "size" variable here
-      // because the channel configuration may have changed.
-      // Not sure what exactly would happen on HW though...
+      /* NOTE: we better not use the cached "size" variable here
+       * because the channel configuration may have changed.
+       * Not sure what exactly would happen on HW though...
+       */
       if (channel.size == Channel::Word) {
         channel.latch.dst_addr &= ~3;
       } else {
@@ -280,7 +281,7 @@ void DMA::Write(int chan_id, int offset, std::uint8_t value) {
       break;
     }
     case REG_DMAXCNT_H | 1: {
-      bool enable_previous = channel.enable;
+      bool enable_old = channel.enable;
 
       // TODO: check that the actual repeat bit is masked if immediate transfer is selected.
       channel.src_cntl  = Channel::Control((channel.src_cntl & 0b01) | ((value & 1)<<1));
@@ -291,77 +292,85 @@ void DMA::Write(int chan_id, int offset, std::uint8_t value) {
       channel.interrupt =  value & 64;
       channel.enable =  value & 128;
 
-      OnChannelWritten(chan_id, enable_previous);
+      OnChannelWritten(channel, enable_old);
       break;
     }
   }
 }
 
-void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
-  auto& channel = channels[chan_id];
+void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
+  // If the DMA is enabled this information will be regenerated below.
+  hblank_set.set(channel.id, false);
+  vblank_set.set(channel.id, false);
+  video_set.set(channel.id, false);
 
-  if (channel.enable) {
-    /* Update H-blank/V-blank DMA sets.
-     * This information is used to schedule these DMAs on request.
-     */
-    switch (channel.time) {
-      case Channel::HBlank:
-        hblank_set.set(chan_id, true);
-        break;
-      case Channel::VBlank:
-        vblank_set.set(chan_id, true);
-        break;
-      case Channel::Special:
-        if (chan_id == 3) {
-          video_set.set(chan_id, true);
-        }
-        break;
+  if (!channel.enable) {
+    // Gracefully handle self-disabling DMA.
+    if (active_dma_id == channel.id) {
+      // TODO: in some cases the DMA seems to lock up the system.
+      runnable_set.set(channel.id, false);
+      early_exit_trigger = true;
+      SelectNextDMA();
     }
+    return;
+  }
 
-    if (!enabled_old) {
-      int src_page = GetUnaliasedMemoryArea(channel.src_addr >> 24);
-
-      channel.latch.dst_addr = channel.dst_addr;
-      channel.latch.src_addr = channel.src_addr;
-
-      if (src_page == 0x08) {
-        channel.src_cntl = Channel::Control::Increment;
+  /* Update H-blank/V-blank DMA sets.
+   * This information is used to schedule these DMAs on request.
+   */
+  switch (channel.time) {
+    case Channel::HBlank:
+      hblank_set.set(channel.id, true);
+      break;
+    case Channel::VBlank:
+      vblank_set.set(channel.id, true);
+      break;
+    case Channel::Special:
+      if (channel.id == 3) {
+        video_set.set(3, true);
       }
+      break;
+  }
 
-      if (channel.time == Channel::Special && (chan_id == 1 || chan_id == 2)) {
-        channel.is_fifo_dma = true;
+  if (enable_old) {
+    return;
+  }
 
-        channel.size = Channel::Size::Word;
-        channel.latch.length = 4;
-        channel.latch.src_addr &= ~3;
-        channel.latch.dst_addr &= ~3;
-      } else {
-        channel.is_fifo_dma = false;
+  int src_page = GetUnaliasedMemoryArea(channel.src_addr >> 24);
 
-        if (channel.size == Channel::Word) {
-          channel.latch.src_addr &= ~3;
-          channel.latch.dst_addr &= ~3;
-        } else {
-          channel.latch.src_addr &= ~1;
-          channel.latch.dst_addr &= ~1;
-        }
+  channel.latch.dst_addr = channel.dst_addr;
+  channel.latch.src_addr = channel.src_addr;
 
-        channel.latch.length = channel.length & g_dma_len_mask[chan_id];
-        if (channel.latch.length == 0) {
-          channel.latch.length = g_dma_len_mask[chan_id] + 1;
-        }
+  if (src_page == 0x08) {
+    channel.src_cntl = Channel::Control::Increment;
+  }
 
-        if (channel.time == Channel::Immediate) {
-          TryStart(chan_id);
-        }
-      }
-    }
+  if (channel.time == Channel::Special && (channel.id == 1 || channel.id == 2)) {
+    channel.is_fifo_dma = true;
+
+    channel.size = Channel::Size::Word;
+    channel.latch.length = 4;
+    channel.latch.src_addr &= ~3;
+    channel.latch.dst_addr &= ~3;
   } else {
-    runnable_set.set(chan_id, false);
-    hblank_set.set(chan_id, false);
-    vblank_set.set(chan_id, false);
-    video_set.set(chan_id, false);
-    SelectNextDMA();
+    channel.is_fifo_dma = false;
+
+    if (channel.size == Channel::Word) {
+      channel.latch.src_addr &= ~3;
+      channel.latch.dst_addr &= ~3;
+    } else {
+      channel.latch.src_addr &= ~1;
+      channel.latch.dst_addr &= ~1;
+    }
+
+    channel.latch.length = channel.length & g_dma_len_mask[channel.id];
+    if (channel.latch.length == 0) {
+      channel.latch.length = g_dma_len_mask[channel.id] + 1;
+    }
+
+    if (channel.time == Channel::Immediate) {
+      TryStart(channel.id);
+    }
   }
 }
 
