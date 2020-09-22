@@ -357,9 +357,11 @@ void DMA::OnChannelWritten(int chan_id, bool enabled_old) {
       }
     }
   } else {
+    runnable_set.set(chan_id, false);
     hblank_set.set(chan_id, false);
     vblank_set.set(chan_id, false);
     video_set.set(chan_id, false);
+    SelectNextDMA();
   }
 }
 
