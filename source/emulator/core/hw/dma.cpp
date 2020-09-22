@@ -78,6 +78,10 @@ void DMA::TryStart(int chan_id) {
   runnable_set.set(chan_id, true);
 }
 
+void DMA::SelectNextDMA() {
+  active_dma_id = g_dma_from_bitset[runnable_set.to_ulong()];
+}
+
 void DMA::Request(Occasion occasion) {
   switch (occasion) {
     case Occasion::HBlank: {
@@ -127,7 +131,7 @@ void DMA::StopVideoXferDMA() {
     channel.enable = false;
     runnable_set.set(3, false);
     video_set.set(3, false);
-    active_dma_id = g_dma_from_bitset[runnable_set.to_ulong()];
+    SelectNextDMA();
   }
 }
 
@@ -222,7 +226,7 @@ void DMA::Run() {
     irq_controller->Raise(InterruptSource::DMA, channel.id);
   }
 
-  active_dma_id = g_dma_from_bitset[runnable_set.to_ulong()];
+  SelectNextDMA();
 }
 
 auto DMA::Read(int chan_id, int offset) -> std::uint8_t {

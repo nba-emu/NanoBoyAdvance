@@ -65,6 +65,7 @@ private:
   }
 
   void TryStart(int chan_id);
+  void SelectNextDMA();
   void OnChannelWritten(int chan_id, bool enabled_old);
 
   arm::MemoryBase* memory;
