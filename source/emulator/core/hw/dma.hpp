@@ -89,6 +89,7 @@ private:
     } latch;
 
     bool is_fifo_dma = false;
+    Scheduler::Event* startup_event = nullptr;
   } channels[4];
 
   constexpr int GetUnaliasedMemoryArea(int page) {
@@ -103,7 +104,7 @@ private:
     return page;
   }
 
-  void TryStart(int chan_id);
+  void TryStart(int chan_id, unsigned int companion_bitset = 0);
   void SelectNextDMA();
   void OnChannelWritten(Channel& channel, bool enable_old);
 

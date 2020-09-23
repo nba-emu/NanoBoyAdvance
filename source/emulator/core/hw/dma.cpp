@@ -65,17 +65,20 @@ void DMA::Reset() {
   }
 }
 
-void DMA::TryStart(int chan_id) {
-  if (runnable_set.none()) {
-    active_dma_id = chan_id;
-  } else if (chan_id < active_dma_id) {
-    active_dma_id = chan_id;
-    early_exit_trigger = true;
-  }
+void DMA::TryStart(int chan_id, unsigned int companion_bitset) {
+  auto& channel = channels[chan_id];
 
-  //memory->Idle();
-  //memory->Idle();
-  runnable_set.set(chan_id, true);
+  channel.startup_event = scheduler->Add(2, [this, channel, companion_bitset](int cycles_late) {
+    channels[channel.id].startup_event = nullptr; // FIXME
+    if (runnable_set.none()) {
+      active_dma_id = channel.id;
+    } else if (channel.id < active_dma_id) {
+      active_dma_id = channel.id;
+      early_exit_trigger = true;
+    }
+    runnable_set.set(channel.id, true);
+    runnable_set |= companion_bitset;
+  });
 }
 
 void DMA::SelectNextDMA() {
@@ -87,24 +90,21 @@ void DMA::Request(Occasion occasion) {
     case Occasion::HBlank: {
       auto chan_id = g_dma_from_bitset[hblank_set.to_ulong()];
       if (chan_id != g_dma_none_id) {
-        TryStart(chan_id);
-        runnable_set |= hblank_set;
+        TryStart(chan_id, hblank_set.to_ulong());
       }
       break;
     }
     case Occasion::VBlank: {
       auto chan_id = g_dma_from_bitset[vblank_set.to_ulong()];
       if (chan_id != g_dma_none_id) {
-        TryStart(chan_id);
-        runnable_set |= vblank_set;
+        TryStart(chan_id, vblank_set.to_ulong());
       }
       break;
     }
     case Occasion::Video: {
       auto chan_id = g_dma_from_bitset[video_set.to_ulong()];
       if (chan_id != g_dma_none_id) {
-        TryStart(chan_id);
-        runnable_set |= video_set;
+        TryStart(chan_id, video_set.to_ulong());
       }
       break;
     }
@@ -128,6 +128,7 @@ void DMA::StopVideoXferDMA() {
   auto& channel = channels[3];
 
   if (channel.enable && channel.time == Channel::Timing::Special) {
+    // TODO: cancel startup event? Is this actually correct at all?
     channel.enable = false;
     runnable_set.set(3, false);
     video_set.set(3, false);
@@ -292,6 +293,12 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
   video_set.set(channel.id, false);
 
   if (!channel.enable) {
+    // TODO: remove DMA from runnable set?
+    if (channel.startup_event != nullptr) {
+      LOG_WARN("DMA cancelled before it started!");
+      scheduler->Cancel(channel.startup_event);
+      channel.startup_event = nullptr;
+    }
     // Gracefully handle self-disabling DMA.
     if (active_dma_id == channel.id) {
       // TODO: in some cases the DMA seems to lock up the system.
