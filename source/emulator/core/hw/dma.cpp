@@ -154,10 +154,14 @@ void DMA::Run() {
     src_modify = g_dma_modify[size][channel.src_cntl];
   }
 
+  memory->Idle();
+  memory->Idle();
+
   while (channel.latch.length != 0) {
-    if (scheduler->GetRemainingCycleCount() <= 0) {
+    // Not needed anymore when we handle events sub-instruction.
+    /*if (scheduler->GetRemainingCycleCount() <= 0) {
       scheduler->Step();
-    }
+    }*/
 
     if (early_exit_trigger) {
       early_exit_trigger = false;

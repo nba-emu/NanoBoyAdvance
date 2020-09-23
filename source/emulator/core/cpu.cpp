@@ -78,14 +78,26 @@ void CPU::Reset() {
   config->input_dev->SetOnChangeCallback(std::bind(&CPU::OnKeyPress,this));
 }
 
+static bool dma_lock = false;
+
 void CPU::Tick(int cycles) {
+  // DMA can interleave the CPU mid-instruction and will take control of the bus.
+  // NOTE: this implies that Tick() must be called before completing the access.
+  if (dma.IsRunning() && !dma_lock) {
+    dma_lock = true;
+    while (dma.IsRunning())
+      dma.Run();
+    dma_lock = false;
+  }
+
   if (irq.processing && irq.countdown >= 0) {
     irq.countdown -= cycles;
   }
 
   scheduler.AddCycles(cycles);
+  scheduler.Step();
 
-  if (prefetch.active) {
+  if (prefetch.active && !dma_lock) {
     prefetch.countdown -= cycles;
 
     if (prefetch.countdown <= 0) {
@@ -100,6 +112,7 @@ void CPU::Idle() {
 }
 
 void CPU::PrefetchStepRAM(int cycles) {
+  // TODO: bypass prefetch RAM step during DMA?
   if (!mmio.waitcnt.prefetch) {
     Tick(cycles);
     return;
@@ -132,6 +145,7 @@ void CPU::PrefetchStepRAM(int cycles) {
 }
 
 void CPU::PrefetchStepROM(std::uint32_t address, int cycles) {
+  // TODO: bypass prefetch ROM step during DMA?
   if (!mmio.waitcnt.prefetch) {
     Tick(cycles);
     return;
@@ -185,41 +199,36 @@ void CPU::RunFor(int cycles) {
 
   // TODO: account for per frame overshoot.
   while (scheduler.GetTimestampNow() < limit) {
-    // TODO: optimize the std::min by updating the result whenever it changes.
-    while (scheduler.GetTimestampNow() < std::min(scheduler.GetTimestampTarget(), limit)) {
-      auto has_servable_irq = irq_controller.HasServableIRQ();
+    auto has_servable_irq = irq_controller.HasServableIRQ();
 
-      if (mmio.haltcnt == HaltControl::HALT && has_servable_irq) {
-        mmio.haltcnt = HaltControl::RUN;
-      }
-
-      /* DMA and CPU cannot run simultaneously since
-       * both access the memory bus.
-       * If DMA is requested the CPU will be blocked.
-       */
-      if (dma.IsRunning()) {
-        dma.Run();
-      } else if (mmio.haltcnt == HaltControl::RUN) {
-        if (irq_controller.MasterEnable() && has_servable_irq) {
-          if (!irq.processing) {
-            irq.processing = true;
-            irq.countdown = 3;
-          } else if (irq.countdown < 0) {
-            SignalIRQ();
-          }
-        } else {
-          irq.processing = false;
-        }
-        if (m4a_xq_enable && state.r15 == m4a_setfreq_address) {
-          M4ASampleFreqSetHook();
-        }
-        Run();
-      } else {
-        Tick(scheduler.GetRemainingCycleCount());
-      }
+    if (mmio.haltcnt == HaltControl::HALT && has_servable_irq) {
+      mmio.haltcnt = HaltControl::RUN;
     }
 
-    scheduler.Step();
+    if (mmio.haltcnt == HaltControl::RUN) {
+      if (irq_controller.MasterEnable() && has_servable_irq) {
+        if (!irq.processing) {
+          irq.processing = true;
+          irq.countdown = 3;
+        } else if (irq.countdown < 0) {
+          SignalIRQ();
+        }
+      } else {
+        irq.processing = false;
+      }
+      if (m4a_xq_enable && state.r15 == m4a_setfreq_address) {
+        M4ASampleFreqSetHook();
+      }
+      Run();
+    } else {
+      Tick(scheduler.GetRemainingCycleCount());
+    }
+
+    // TODO: optimize the std::min by updating the result whenever it changes.
+    //while (scheduler.GetTimestampNow() < std::min(scheduler.GetTimestampTarget(), limit)) {
+    //}
+
+    //scheduler.Step();
   }
 }
 
