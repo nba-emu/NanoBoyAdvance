@@ -86,8 +86,9 @@ public:
     auto now = GetTimestampNow();
     while (heap_size > 0 && heap[0]->timestamp <= now) {
       auto event = heap[0];
-      Remove(0);
       event->callback(int(now - event->timestamp));
+      // NOTE: we cannot just pass zero because the callback may mess with the event queue.
+      Remove(event->handle);
     }
   }
 
