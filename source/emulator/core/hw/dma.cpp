@@ -155,8 +155,6 @@ void DMA::Run() {
 
   while (channel.latch.length != 0) {
     if (scheduler->GetRemainingCycleCount() <= 0) {
-      // NOTE: it is important that events are served *before* we go on
-      // to check if another DMA channel interleaved the current DMA (early_exit_trigger).
       scheduler->Step();
     }
 
@@ -189,7 +187,12 @@ void DMA::Run() {
     access = Access::Sequential;
   }
 
-  // If this code is reached, the DMA was not interleaved and completed.
+  runnable_set.set(channel.id, false);
+
+  if (channel.interrupt) {
+    irq_controller->Raise(InterruptSource::DMA, channel.id);
+  }
+
   if (channel.repeat) {
     if (channel.is_fifo_dma) {
       channel.latch.length = 4;
@@ -201,30 +204,14 @@ void DMA::Run() {
     }
 
     if (channel.dst_cntl == Channel::Reload && !channel.is_fifo_dma) {
-      channel.latch.dst_addr = channel.dst_addr;
-      /* NOTE: we better not use the cached "size" variable here
-       * because the channel configuration may have changed.
-       * Not sure what exactly would happen on HW though...
-       */
-      if (channel.size == Channel::Word) {
-        channel.latch.dst_addr &= ~3;
-      } else {
-        channel.latch.dst_addr &= ~1;
-      }
+      auto mask = channel.size == Channel::Word ? ~3 : ~1;
+      channel.latch.dst_addr = channel.dst_addr & mask;
     }
-
-    runnable_set.set(channel.id, false);
   } else {
     channel.enable = false;
-
-    runnable_set.set(channel.id, false);
     hblank_set.set(channel.id, false);
     vblank_set.set(channel.id, false);
     video_set.set(channel.id, false);
-  }
-
-  if (channel.interrupt) {
-    irq_controller->Raise(InterruptSource::DMA, channel.id);
   }
 
   SelectNextDMA();
@@ -355,14 +342,9 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
   } else {
     channel.is_fifo_dma = false;
 
-    if (channel.size == Channel::Word) {
-      channel.latch.src_addr &= ~3;
-      channel.latch.dst_addr &= ~3;
-    } else {
-      channel.latch.src_addr &= ~1;
-      channel.latch.dst_addr &= ~1;
-    }
-
+    auto mask = channel.size == Channel::Word ? ~3 : ~1;
+    channel.latch.src_addr &= mask;
+    channel.latch.dst_addr &= mask;
     channel.latch.length = channel.length & g_dma_len_mask[channel.id];
     if (channel.latch.length == 0) {
       channel.latch.length = g_dma_len_mask[channel.id] + 1;
