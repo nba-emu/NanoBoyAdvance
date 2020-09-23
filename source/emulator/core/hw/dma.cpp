@@ -73,8 +73,8 @@ void DMA::TryStart(int chan_id) {
     early_exit_trigger = true;
   }
 
-  /*memory->Idle();
-  memory->Idle();*/
+  //memory->Idle();
+  //memory->Idle();
   runnable_set.set(chan_id, true);
 }
 
@@ -247,7 +247,7 @@ void DMA::Write(int chan_id, int offset, std::uint8_t value) {
     case REG_DMAXSAD | 2:
     case REG_DMAXSAD | 3: {
       int shift = offset * 8;
-      channel.src_addr &= ~((std::uint32_t)0xFF << shift);
+      channel.src_addr &= ~(0xFFUL << shift);
       channel.src_addr |= (value << shift) & g_dma_src_mask[chan_id];
       break;
     }
@@ -256,28 +256,28 @@ void DMA::Write(int chan_id, int offset, std::uint8_t value) {
     case REG_DMAXDAD | 2:
     case REG_DMAXDAD | 3: {
       int shift = (offset - 4) * 8;
-      channel.dst_addr &= ~((std::uint32_t)0xFF << shift);
+      channel.dst_addr &= ~(0xFFUL << shift);
       channel.dst_addr |= (value << shift) & g_dma_dst_mask[chan_id];
       break;
     }
-    case REG_DMAXCNT_L | 0: channel.length = (channel.length & 0xFF00) | (value<<0); break;
-    case REG_DMAXCNT_L | 1: channel.length = (channel.length & 0x00FF) | (value<<8); break;
+    case REG_DMAXCNT_L | 0: channel.length = (channel.length & 0xFF00) | (value << 0); break;
+    case REG_DMAXCNT_L | 1: channel.length = (channel.length & 0x00FF) | (value << 8); break;
     case REG_DMAXCNT_H | 0: {
-      channel.dst_cntl = Channel::Control((value >> 5) & 3);
-      channel.src_cntl = Channel::Control((channel.src_cntl & 0b10) | (value>>7));
+      channel.dst_cntl = static_cast<Channel::Control>((value >> 5) & 3);
+      channel.src_cntl = static_cast<Channel::Control>((channel.src_cntl & 0b10) | (value>>7));
       break;
     }
     case REG_DMAXCNT_H | 1: {
       bool enable_old = channel.enable;
 
       // TODO: check that the actual repeat bit is masked if immediate transfer is selected.
-      channel.src_cntl  = Channel::Control((channel.src_cntl & 0b01) | ((value & 1)<<1));
-      channel.size = Channel::Size((value>>2) & 1);
-      channel.time = Channel::Timing((value>>4) & 3);
+      channel.src_cntl  = Channel::Control((channel.src_cntl & 0b01) | ((value & 1) << 1));
+      channel.size = static_cast<Channel::Size>((value >> 2) & 1);
+      channel.time = static_cast<Channel::Timing>((value >> 4) & 3);
       channel.repeat  = (value & 2) && channel.time != Channel::Immediate;
       channel.gamepak = (value & 8) && chan_id == 3;
-      channel.interrupt =  value & 64;
-      channel.enable =  value & 128;
+      channel.interrupt = value & 64;
+      channel.enable = value & 128;
 
       OnChannelWritten(channel, enable_old);
       break;
