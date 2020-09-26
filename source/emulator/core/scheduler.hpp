@@ -84,7 +84,7 @@ public:
 
   void Step() {
     auto now = GetTimestampNow();
-    while (heap_size > 0 && heap[0]->timestamp <= now) {
+    while (heap[0]->timestamp <= now && heap_size > 0) {
       auto event = heap[0];
       event->callback(int(now - event->timestamp));
       // NOTE: we cannot just pass zero because the callback may mess with the event queue.

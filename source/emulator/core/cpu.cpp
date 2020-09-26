@@ -89,7 +89,6 @@ void CPU::Tick(int cycles) {
     bus_is_controlled_by_dma = false;
   }
 
-
   // TODO: is it possible for the DMA to interleave in the middle of a bus cycle?
   scheduler.AddCycles(cycles);
   scheduler.Step();
@@ -226,12 +225,6 @@ void CPU::RunFor(int cycles) {
     } else {
       Tick(scheduler.GetRemainingCycleCount());
     }
-
-    // TODO: optimize the std::min by updating the result whenever it changes.
-    //while (scheduler.GetTimestampNow() < std::min(scheduler.GetTimestampTarget(), limit)) {
-    //}
-
-    //scheduler.Step();
   }
 }
 
