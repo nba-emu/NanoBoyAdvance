@@ -94,6 +94,7 @@ void Timer::Write(int chan_id, int offset, std::uint8_t value) {
         }
         if (!control.cascade) {
           auto late = (scheduler->GetTimestampNow() & channel.mask);
+          // TODO: better understand and emulate this delay.
           if (!enable_previous) {
             late -= 2;
           }

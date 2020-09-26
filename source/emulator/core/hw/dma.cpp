@@ -154,15 +154,17 @@ void DMA::Run() {
     src_modify = g_dma_modify[size][channel.src_cntl];
   }
 
-  memory->Idle();
-  memory->Idle();
+  // TODO: does the internal processing time only apply if the DMA is
+  // initially started or also when an interleaved DMA is picked up again?
+  auto src_page = GetUnaliasedMemoryArea(channel.src_addr >> 24);
+  auto dst_page = GetUnaliasedMemoryArea(channel.dst_addr >> 24);
+  // ROM to ROM transfer does not appear to have the internal delay.
+  if (src_page != 0x08 || dst_page != 0x08) {
+    memory->Idle();
+    memory->Idle();
+  }
 
   while (channel.latch.length != 0) {
-    // Not needed anymore when we handle events sub-instruction.
-    /*if (scheduler->GetRemainingCycleCount() <= 0) {
-      scheduler->Step();
-    }*/
-
     if (early_exit_trigger) {
       early_exit_trigger = false;
       return;
@@ -297,16 +299,20 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
   video_set.set(channel.id, false);
 
   if (!channel.enable) {
-    // TODO: remove DMA from runnable set?
+    runnable_set.set(channel.id, false);
+
+    // Handle disabling the DMA before it started up.
+    // TODO: not exactly known how hardware handles this edge-case.
     if (channel.startup_event != nullptr) {
-      LOG_WARN("DMA cancelled before it started!");
+      LOG_WARN("DMA{0} was cancelled before its startup completed.", channel.id);
       scheduler->Cancel(channel.startup_event);
       channel.startup_event = nullptr;
     }
-    // Gracefully handle self-disabling DMA.
-    if (active_dma_id == channel.id) {
-      // TODO: in some cases the DMA seems to lock up the system.
-      runnable_set.set(channel.id, false);
+
+    // Handle DMA channel self-disable (via writing to its control register).
+    // TODO: not exactly known how hardware handles this edge-case.
+    if (channel.id == active_dma_id) {
+      LOG_WARN("DMA{0} attempted to disable DMA{1}.", active_dma_id, channel.id);
       early_exit_trigger = true;
       SelectNextDMA();
     }
