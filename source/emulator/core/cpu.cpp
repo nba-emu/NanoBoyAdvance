@@ -43,6 +43,7 @@ void CPU::Reset() {
   mmio = {};
   prefetch = {};
   last_rom_address = 0;
+  bus_is_controlled_by_dma = false;
   UpdateMemoryDelayTable();
 
   for (int i = 16; i < 256; i++) {
@@ -78,26 +79,28 @@ void CPU::Reset() {
   config->input_dev->SetOnChangeCallback(std::bind(&CPU::OnKeyPress,this));
 }
 
-static bool dma_lock = false;
-
 void CPU::Tick(int cycles) {
   // DMA can interleave the CPU mid-instruction and will take control of the bus.
   // NOTE: this implies that Tick() must be called before completing the access.
-  if (dma.IsRunning() && !dma_lock) {
-    dma_lock = true;
+  if (dma.IsRunning() && !bus_is_controlled_by_dma) {
+    bus_is_controlled_by_dma = true;
     while (dma.IsRunning())
       dma.Run();
-    dma_lock = false;
+    bus_is_controlled_by_dma = false;
   }
+
+
+  // TODO: is it possible for the DMA to interleave in the middle of a bus cycle?
+  scheduler.AddCycles(cycles);
+  scheduler.Step();
+
+  // TODO: move IRQ delay and prefetcher load on the scheduler.
 
   if (irq.processing && irq.countdown >= 0) {
     irq.countdown -= cycles;
   }
 
-  scheduler.AddCycles(cycles);
-  scheduler.Step();
-
-  if (prefetch.active && !dma_lock) {
+  if (prefetch.active && !bus_is_controlled_by_dma) {
     prefetch.countdown -= cycles;
 
     if (prefetch.countdown <= 0) {
