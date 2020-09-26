@@ -104,7 +104,7 @@ private:
     return page;
   }
 
-  void TryStart(int chan_id, unsigned int companion_bitset = 0);
+  void ScheduleDMAs(unsigned int bitset);
   void SelectNextDMA();
   void OnChannelWritten(Channel& channel, bool enable_old);
 

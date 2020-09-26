@@ -65,20 +65,21 @@ void DMA::Reset() {
   }
 }
 
-void DMA::TryStart(int chan_id, unsigned int companion_bitset) {
-  auto& channel = channels[chan_id];
-
-  channel.startup_event = scheduler->Add(2, [this, channel, companion_bitset](int cycles_late) {
-    channels[channel.id].startup_event = nullptr; // FIXME
-    if (runnable_set.none()) {
-      active_dma_id = channel.id;
-    } else if (channel.id < active_dma_id) {
-      active_dma_id = channel.id;
-      early_exit_trigger = true;
-    }
-    runnable_set.set(channel.id, true);
-    runnable_set |= companion_bitset;
-  });
+void DMA::ScheduleDMAs(unsigned int bitset) {
+  while (bitset > 0) {
+    auto chan_id = g_dma_from_bitset[bitset];
+    bitset &= ~(1 << chan_id);
+    channels[chan_id].startup_event = scheduler->Add(2, [this, chan_id](int cycles_late) {
+      channels[chan_id].startup_event = nullptr;
+      if (runnable_set.none()) {
+        active_dma_id = chan_id;
+      } else if (chan_id < active_dma_id) {
+        active_dma_id = chan_id;
+        early_exit_trigger = true;
+      }
+      runnable_set.set(chan_id, true);
+    });
+  }
 }
 
 void DMA::SelectNextDMA() {
@@ -87,27 +88,15 @@ void DMA::SelectNextDMA() {
 
 void DMA::Request(Occasion occasion) {
   switch (occasion) {
-    case Occasion::HBlank: {
-      auto chan_id = g_dma_from_bitset[hblank_set.to_ulong()];
-      if (chan_id != g_dma_none_id) {
-        TryStart(chan_id, hblank_set.to_ulong());
-      }
+    case Occasion::HBlank:
+      ScheduleDMAs(hblank_set.to_ulong());
       break;
-    }
-    case Occasion::VBlank: {
-      auto chan_id = g_dma_from_bitset[vblank_set.to_ulong()];
-      if (chan_id != g_dma_none_id) {
-        TryStart(chan_id, vblank_set.to_ulong());
-      }
+    case Occasion::VBlank:
+      ScheduleDMAs(vblank_set.to_ulong());
       break;
-    }
-    case Occasion::Video: {
-      auto chan_id = g_dma_from_bitset[video_set.to_ulong()];
-      if (chan_id != g_dma_none_id) {
-        TryStart(chan_id, video_set.to_ulong());
-      }
+    case Occasion::Video:
+      ScheduleDMAs(video_set.to_ulong());
       break;
-    }
     case Occasion::FIFO0:
     case Occasion::FIFO1: {
       auto address = (occasion == Occasion::FIFO0) ? FIFO_A : FIFO_B;
@@ -116,7 +105,7 @@ void DMA::Request(Occasion occasion) {
         if (channel.enable &&
             channel.time == Channel::Special &&
             channel.dst_addr == address) {
-          TryStart(chan_id);
+          ScheduleDMAs(1 << chan_id);
         }
       }
       break;
@@ -312,7 +301,7 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
     // Handle DMA channel self-disable (via writing to its control register).
     // TODO: not exactly known how hardware handles this edge-case.
     if (channel.id == active_dma_id) {
-      LOG_WARN("DMA{0} attempted to disable DMA{1}.", active_dma_id, channel.id);
+      LOG_WARN("DMA{0} triggered self-disable!", channel.id);
       early_exit_trigger = true;
       SelectNextDMA();
     }
@@ -368,7 +357,7 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
     }
 
     if (channel.time == Channel::Immediate) {
-      TryStart(channel.id);
+      ScheduleDMAs(1 << channel.id);
     }
   }
 }
