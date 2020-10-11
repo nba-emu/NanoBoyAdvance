@@ -57,6 +57,8 @@ public:
 
   void AddCycles(int cycles) {
     timestamp_now += cycles;
+    if (GetTimestampTarget() <= timestamp_now)
+      Step();
   }
 
   auto Add(std::uint64_t delay, std::function<void(int)> callback) -> Event* {
@@ -82,6 +84,13 @@ public:
     Remove(event->handle);
   }
 
+private:
+  static constexpr int kMaxEvents = 64;
+
+  constexpr int Parent(int n) { return (n - 1) / 2; }
+  constexpr int LeftChild(int n) { return n * 2 + 1; }
+  constexpr int RightChild(int n) { return n * 2 + 2; }
+
   void Step() {
     auto now = GetTimestampNow();
     while (heap[0]->timestamp <= now && heap_size > 0) {
@@ -91,13 +100,6 @@ public:
       Remove(event->handle);
     }
   }
-
-private:
-  static constexpr int kMaxEvents = 64;
-
-  constexpr int Parent(int n) { return (n - 1) / 2; }
-  constexpr int LeftChild(int n) { return n * 2 + 1; }
-  constexpr int RightChild(int n) { return n * 2 + 2; }
 
   void Remove(int n) {
     Swap(n, --heap_size);

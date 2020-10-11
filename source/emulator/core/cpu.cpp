@@ -91,7 +91,6 @@ void CPU::Tick(int cycles) {
 
   // TODO: is it possible for the DMA to interleave in the middle of a bus cycle?
   scheduler.AddCycles(cycles);
-  scheduler.Step();
 
   // TODO: move IRQ delay and prefetcher load on the scheduler.
 

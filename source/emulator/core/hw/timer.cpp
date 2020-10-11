@@ -32,13 +32,6 @@ auto Timer::Read(int chan_id, int offset) -> std::uint8_t {
   auto const& channel = channels[chan_id];
   auto const& control = channel.control;
 
-  // The counter value of a cascaded timer can/will only be updated when the
-  // connecting timer overflows. But this overflow event may be late by a couple of cycles,
-  // unless we explicitly force servicing the event.
-  if (channel.control.cascade) {
-    scheduler->Step();
-  }
-
   auto counter = channel.counter;
 
   // While the timer is still running we must account for time that has passed
