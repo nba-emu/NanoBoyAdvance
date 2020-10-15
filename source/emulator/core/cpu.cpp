@@ -84,8 +84,7 @@ void CPU::Tick(int cycles) {
   // NOTE: this implies that Tick() must be called before completing the access.
   if (dma.IsRunning() && !bus_is_controlled_by_dma) {
     bus_is_controlled_by_dma = true;
-    while (dma.IsRunning())
-      dma.Run();
+    dma.Run();
     bus_is_controlled_by_dma = false;
   }
 

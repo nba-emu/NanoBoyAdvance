@@ -126,6 +126,15 @@ void DMA::StopVideoXferDMA() {
 }
 
 void DMA::Run() {
+  if (!IsRunning())
+    return;
+  RunChannel(true);
+  while (IsRunning()) {
+    RunChannel(false);
+  }
+}
+
+void DMA::RunChannel(bool first) {
   auto& channel = channels[active_dma_id];
   int dst_modify;
   int src_modify;
@@ -143,12 +152,11 @@ void DMA::Run() {
     src_modify = g_dma_modify[size][channel.src_cntl];
   }
 
-  // TODO: does the internal processing time only apply if the DMA is
-  // initially started or also when an interleaved DMA is picked up again?
+  // TODO: I don't know how the internal processing time for DMA is supposed to work.
+  // This is what works best so far, but I don't think that it's correct. Needs revision.
   auto src_page = GetUnaliasedMemoryArea(channel.src_addr >> 24);
   auto dst_page = GetUnaliasedMemoryArea(channel.dst_addr >> 24);
-  // ROM to ROM transfer does not appear to have the internal delay.
-  if (src_page != 0x08 || dst_page != 0x08) {
+  if ((src_page != 0x08 || dst_page != 0x08) && first) {
     memory->Idle();
     memory->Idle();
   }
