@@ -24,7 +24,7 @@ enum class DataOp {
   MVN = 15
 };
 
-template <bool immediate, int opcode, bool set_flags, int field4>
+template <bool immediate, DataOp opcode, bool set_flags, int field4>
 void ARM_DataProcessing(std::uint32_t instruction) {
   int reg_dst = (instruction >> 12) & 0xF;
   int reg_op1 = (instruction >> 16) & 0xF;
@@ -66,11 +66,11 @@ void ARM_DataProcessing(std::uint32_t instruction) {
 
     DoShift(shift_type, op2, shift, carry, shift_imm);
   }
- 
+
   auto& cpsr = state.cpsr;
   auto& result = state.reg[reg_dst];
 
-  switch (static_cast<DataOp>(opcode)) {
+  switch (opcode) {
     case DataOp::AND:
       result = op1 & op2;
       if constexpr (set_flags) {
@@ -107,25 +107,19 @@ void ARM_DataProcessing(std::uint32_t instruction) {
       std::uint32_t result = op1 & op2;
       SetZeroAndSignFlag(result);
       cpsr.f.c = carry;
-      // TODO: should be zero according to the manual but we don't really
-      // know how the CPU behaves if reg_dst happens to be non-zero.
-      reg_dst = 0;
       break;
     }
     case DataOp::TEQ: {
       std::uint32_t result = op1 ^ op2;
       SetZeroAndSignFlag(result);
       cpsr.f.c = carry;
-      reg_dst = 0;
       break;
     }
     case DataOp::CMP:
       SUB(op1, op2, true);
-      reg_dst = 0;
       break;
     case DataOp::CMN:
       ADD(op1, op2, true);
-      reg_dst = 0;
       break;
     case DataOp::ORR:
       result = op1 | op2;
@@ -165,10 +159,15 @@ void ARM_DataProcessing(std::uint32_t instruction) {
       state.cpsr.v = spsr.v;
     }
 
-    if (state.cpsr.f.thumb) {
-      ReloadPipeline16();
-    } else {
-      ReloadPipeline32();
+    if constexpr (opcode != DataOp::TST &&
+                  opcode != DataOp::TEQ &&
+                  opcode != DataOp::CMP &&
+                  opcode != DataOp::CMN) {
+      if (state.cpsr.f.thumb) {
+        ReloadPipeline16();
+      } else {
+        ReloadPipeline32();
+      }
     }
   } else {
     state.r15 += 4;
@@ -192,7 +191,7 @@ void ARM_StatusTransfer(std::uint32_t instruction) {
     if (immediate) {
       int value = instruction & 0xFF;
       int shift = ((instruction >> 8) & 0xF) * 2;
-      
+
       op = (value >> shift) | (value << (32 - shift));
     } else {
       op = state.reg[instruction & 0xF];
@@ -211,7 +210,7 @@ void ARM_StatusTransfer(std::uint32_t instruction) {
     }
   } else {
     int dst = (instruction >> 12) & 0xF;
-    
+
     if (use_spsr) {
       state.reg[dst] = p_spsr->v;
     } else {
@@ -233,14 +232,14 @@ void ARM_Multiply(std::uint32_t instruction) {
   int dst = (instruction >> 16) & 0xF;
 
   TickMultiply(state.reg[op2]);
-  
+
   result = state.reg[op1] * state.reg[op2];
 
   if (accumulate) {
     result += state.reg[op3];
     interface->Idle();
   }
-  
+
   if (set_flags) {
     SetZeroAndSignFlag(result);
   }
@@ -254,12 +253,12 @@ template <bool sign_extend, bool accumulate, bool set_flags>
 void ARM_MultiplyLong(std::uint32_t instruction) {
   int op1 = (instruction >> 0) & 0xF;
   int op2 = (instruction >> 8) & 0xF;
-  
+
   int dst_lo = (instruction >> 12) & 0xF;
   int dst_hi = (instruction >> 16) & 0xF;
 
   std::int64_t result;
-  
+
   interface->Idle();
   TickMultiply(state.reg[op2]);
 
@@ -498,7 +497,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
   /* TODO: reverse-engineer special case with usermode registers and a banked base register. */
   int base = (instruction >> 16) & 0xF;
   int list = instruction & 0xFFFF;
-  
+
   Mode mode;
   bool transfer_pc = list & (1 << 15);
   bool switch_mode = user_mode && (!load || !transfer_pc);
@@ -521,7 +520,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
       }
       first = i;
       bytes += 4;
-    }  
+    }
   } else {
     /* If the register list is empty, only r15 will be loaded/stored but
      * the base will be incremented/decremented as if each register was transferred.
@@ -608,7 +607,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
   }
 }
 
-void ARM_Undefined(std::uint32_t instruction) {  
+void ARM_Undefined(std::uint32_t instruction) {
   /* Save return address and program status. */
   state.bank[BANK_UND][BANK_R14] = state.r15 - 4;
   state.spsr[BANK_UND].v = state.cpsr.v;

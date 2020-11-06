@@ -29,7 +29,7 @@ static constexpr auto GenerateHandlerARM() -> Handler32 {
       } else {
         const int field4 = (instruction >> 4) & 0xF;
 
-        return &ARM7TDMI::ARM_DataProcessing<true, opcode, set_flags, field4>;
+        return &ARM7TDMI::ARM_DataProcessing<true, static_cast<ARM7TDMI::DataOp>(opcode), set_flags, field4>;
       }
     } else if ((opcode & 0xFF000F0) == 0x1200010) {
       // ARM.3 Branch and exchange
@@ -75,7 +75,7 @@ static constexpr auto GenerateHandlerARM() -> Handler32 {
       } else {
         const int field4 = (instruction >> 4) & 0xF;
 
-        return &ARM7TDMI::ARM_DataProcessing<false, opcode, set_flags, field4>;
+        return &ARM7TDMI::ARM_DataProcessing<false, static_cast<ARM7TDMI::DataOp>(opcode), set_flags, field4>;
       }
     }
     break;
