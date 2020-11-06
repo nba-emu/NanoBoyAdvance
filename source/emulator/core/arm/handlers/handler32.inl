@@ -103,18 +103,14 @@ void ARM_DataProcessing(std::uint32_t instruction) {
     case DataOp::RSC:
       result = SBC(op2, op1, set_flags);
       break;
-    case DataOp::TST: {
-      std::uint32_t result = op1 & op2;
-      SetZeroAndSignFlag(result);
+    case DataOp::TST:
+      SetZeroAndSignFlag(op1 & op2);
       cpsr.f.c = carry;
       break;
-    }
-    case DataOp::TEQ: {
-      std::uint32_t result = op1 ^ op2;
-      SetZeroAndSignFlag(result);
+    case DataOp::TEQ:
+      SetZeroAndSignFlag(op1 ^ op2);
       cpsr.f.c = carry;
       break;
-    }
     case DataOp::CMP:
       SUB(op1, op2, true);
       break;
