@@ -8,6 +8,7 @@
 #pragma once
 
 #include <common/log.hpp>
+#include <common/likely.hpp>
 #include <cstdint>
 #include <functional>
 
@@ -57,7 +58,7 @@ public:
 
   void AddCycles(int cycles) {
     timestamp_now += cycles;
-    if (GetTimestampTarget() <= timestamp_now)
+    if (unlikely(GetTimestampTarget() <= timestamp_now))
       Step();
   }
 

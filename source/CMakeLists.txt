@@ -51,6 +51,7 @@ set(HEADERS
   common/dsp/resampler/windowed-sinc.hpp
   common/dsp/resampler.hpp
   common/framelimiter.hpp
+  common/likely.hpp
   common/log.hpp
   common/static_for.hpp
 

@@ -5,6 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
+#include <common/likely.hpp>
 #include <emulator/core/cpu-mmio.hpp>
 
 #include "dma.hpp"
@@ -168,7 +169,7 @@ void DMA::RunChannel(bool first) {
     }
 
     if (size == Channel::Half) {
-      if (channel.latch.src_addr >= 0x02000000) {
+      if (likely(channel.latch.src_addr >= 0x02000000)) {
         auto value = memory->ReadHalf(channel.latch.src_addr, access);
         latch = (value << 16) | value;
       } else {
@@ -176,7 +177,7 @@ void DMA::RunChannel(bool first) {
       }
       memory->WriteHalf(channel.latch.dst_addr, latch, access);
     } else {
-      if (channel.latch.src_addr >= 0x02000000) {
+      if (likely(channel.latch.src_addr >= 0x02000000)) {
         latch = memory->ReadWord(channel.latch.src_addr, access);
       } else {
         memory->Idle();

@@ -7,9 +7,8 @@
 
 #include "cpu.hpp"
 
-#include <algorithm>
+#include <common/likely.hpp>
 #include <cstring>
-#include <limits>
 
 namespace nba::core {
 
@@ -82,7 +81,7 @@ void CPU::Reset() {
 void CPU::Tick(int cycles) {
   // DMA can interleave the CPU mid-instruction and will take control of the bus.
   // NOTE: this implies that Tick() must be called before completing the access.
-  if (dma.IsRunning() && !bus_is_controlled_by_dma) {
+  if (unlikely(dma.IsRunning() && !bus_is_controlled_by_dma)) {
     bus_is_controlled_by_dma = true;
     dma.Run();
     bus_is_controlled_by_dma = false;
@@ -113,7 +112,7 @@ void CPU::Idle() {
 
 void CPU::PrefetchStepRAM(int cycles) {
   // TODO: bypass prefetch RAM step during DMA?
-  if (!mmio.waitcnt.prefetch) {
+  if (unlikely(!mmio.waitcnt.prefetch)) {
     Tick(cycles);
     return;
   }
@@ -146,7 +145,7 @@ void CPU::PrefetchStepRAM(int cycles) {
 
 void CPU::PrefetchStepROM(std::uint32_t address, int cycles) {
   // TODO: bypass prefetch ROM step during DMA?
-  if (!mmio.waitcnt.prefetch) {
+  if (unlikely(!mmio.waitcnt.prefetch)) {
     Tick(cycles);
     return;
   }
@@ -201,11 +200,11 @@ void CPU::RunFor(int cycles) {
   while (scheduler.GetTimestampNow() < limit) {
     auto has_servable_irq = irq_controller.HasServableIRQ();
 
-    if (mmio.haltcnt == HaltControl::HALT && has_servable_irq) {
+    if (unlikely(mmio.haltcnt == HaltControl::HALT && has_servable_irq)) {
       mmio.haltcnt = HaltControl::RUN;
     }
 
-    if (mmio.haltcnt == HaltControl::RUN) {
+    if (likely(mmio.haltcnt == HaltControl::RUN)) {
       if (irq_controller.MasterEnable() && has_servable_irq) {
         if (!irq.processing) {
           irq.processing = true;
@@ -216,7 +215,7 @@ void CPU::RunFor(int cycles) {
       } else {
         irq.processing = false;
       }
-      if (m4a_xq_enable && state.r15 == m4a_setfreq_address) {
+      if (unlikely(m4a_xq_enable && state.r15 == m4a_setfreq_address)) {
         M4ASampleFreqSetHook();
       }
       Run();
