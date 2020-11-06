@@ -24,10 +24,8 @@ enum class DataOp {
   MVN = 15
 };
 
-template <bool immediate, int opcode, bool _set_flags, int field4>
+template <bool immediate, DataOp opcode, bool set_flags, int field4>
 void ARM_DataProcessing(std::uint32_t instruction) {
-  bool set_flags = _set_flags;
-
   int reg_dst = (instruction >> 12) & 0xF;
   int reg_op1 = (instruction >> 16) & 0xF;
   int reg_op2 = (instruction >>  0) & 0xF;
@@ -39,60 +37,50 @@ void ARM_DataProcessing(std::uint32_t instruction) {
 
   pipe.fetch_type = Access::Sequential;
 
-  if (immediate) {
+  if constexpr (immediate) {
     int value = instruction & 0xFF;
     int shift = ((instruction >> 8) & 0xF) * 2;
 
     if (shift != 0) {
       carry = (value >> (shift - 1)) & 1;
-      op2   = (value >> shift) | (value << (32 - shift)); 
+      op2   = (value >> shift) | (value << (32 - shift));
     } else {
       op2 = value;
     }
   } else {
+    constexpr int  shift_type = ( field4 >> 1) & 3;
+    constexpr bool shift_imm  = (~field4 >> 0) & 1;
+
     std::uint32_t shift;
-    int  shift_type = ( field4 >> 1) & 3;
-    bool shift_imm  = (~field4 >> 0) & 1;
 
     op2 = state.reg[reg_op2];
 
-    if (shift_imm) {
+    if constexpr (shift_imm) {
       shift = (instruction >> 7) & 0x1F;
     } else {
       shift = state.reg[(instruction >> 8) & 0xF];
 
       if (reg_op1 == 15) op1 += 4;
       if (reg_op2 == 15) op2 += 4;
-
-      interface->Idle();
-      pipe.fetch_type = Access::Nonsequential;
     }
 
     DoShift(shift_type, op2, shift, carry, shift_imm);
   }
 
-  if (reg_dst == 15 && set_flags) {
-    auto spsr = *p_spsr;
-
-    SwitchMode(spsr.f.mode);
-    state.cpsr.v = spsr.v;
-    set_flags = false;
-  }
-
   auto& cpsr = state.cpsr;
   auto& result = state.reg[reg_dst];
 
-  switch (static_cast<DataOp>(opcode)) {
+  switch (opcode) {
     case DataOp::AND:
       result = op1 & op2;
-      if (set_flags) {
+      if constexpr (set_flags) {
         SetZeroAndSignFlag(result);
         cpsr.f.c = carry;
       }
       break;
     case DataOp::EOR:
       result = op1 ^ op2;
-      if (set_flags) {
+      if constexpr (set_flags) {
         SetZeroAndSignFlag(result);
         cpsr.f.c = carry;
       }
@@ -115,16 +103,14 @@ void ARM_DataProcessing(std::uint32_t instruction) {
     case DataOp::RSC:
       result = SBC(op2, op1, set_flags);
       break;
-    case DataOp::TST: {
+    case DataOp::TST:
       SetZeroAndSignFlag(op1 & op2);
       cpsr.f.c = carry;
       break;
-    }
-    case DataOp::TEQ: {
+    case DataOp::TEQ:
       SetZeroAndSignFlag(op1 ^ op2);
       cpsr.f.c = carry;
       break;
-    }
     case DataOp::CMP:
       SUB(op1, op2, true);
       break;
@@ -140,21 +126,21 @@ void ARM_DataProcessing(std::uint32_t instruction) {
       break;
     case DataOp::MOV:
       result = op2;
-      if (set_flags) {
+      if constexpr (set_flags) {
         SetZeroAndSignFlag(result);
         cpsr.f.c = carry;
       }
       break;
     case DataOp::BIC:
       result = op1 & ~op2;
-      if (set_flags) {
+      if constexpr (set_flags) {
         SetZeroAndSignFlag(result);
         cpsr.f.c = carry;
       }
       break;
     case DataOp::MVN:
       result = ~op2;
-      if (set_flags) {
+      if constexpr (set_flags) {
         SetZeroAndSignFlag(result);
         cpsr.f.c = carry;
       }
@@ -162,10 +148,22 @@ void ARM_DataProcessing(std::uint32_t instruction) {
   }
 
   if (reg_dst == 15) {
-    if (state.cpsr.f.thumb) {
-      ReloadPipeline16();
-    } else {
-      ReloadPipeline32();
+    if constexpr (set_flags) {
+      auto spsr = *p_spsr;
+
+      SwitchMode(spsr.f.mode);
+      state.cpsr.v = spsr.v;
+    }
+
+    if constexpr (opcode != DataOp::TST &&
+                  opcode != DataOp::TEQ &&
+                  opcode != DataOp::CMP &&
+                  opcode != DataOp::CMN) {
+      if (state.cpsr.f.thumb) {
+        ReloadPipeline16();
+      } else {
+        ReloadPipeline32();
+      }
     }
   } else {
     state.r15 += 4;
@@ -189,7 +187,7 @@ void ARM_StatusTransfer(std::uint32_t instruction) {
     if (immediate) {
       int value = instruction & 0xFF;
       int shift = ((instruction >> 8) & 0xF) * 2;
-      
+
       op = (value >> shift) | (value << (32 - shift));
     } else {
       op = state.reg[instruction & 0xF];
@@ -208,7 +206,7 @@ void ARM_StatusTransfer(std::uint32_t instruction) {
     }
   } else {
     int dst = (instruction >> 12) & 0xF;
-    
+
     if (use_spsr) {
       state.reg[dst] = p_spsr->v;
     } else {
@@ -230,14 +228,14 @@ void ARM_Multiply(std::uint32_t instruction) {
   int dst = (instruction >> 16) & 0xF;
 
   TickMultiply(state.reg[op2]);
-  
+
   result = state.reg[op1] * state.reg[op2];
 
   if (accumulate) {
     result += state.reg[op3];
     interface->Idle();
   }
-  
+
   if (set_flags) {
     SetZeroAndSignFlag(result);
   }
@@ -251,12 +249,12 @@ template <bool sign_extend, bool accumulate, bool set_flags>
 void ARM_MultiplyLong(std::uint32_t instruction) {
   int op1 = (instruction >> 0) & 0xF;
   int op2 = (instruction >> 8) & 0xF;
-  
+
   int dst_lo = (instruction >> 12) & 0xF;
   int dst_hi = (instruction >> 16) & 0xF;
 
   std::int64_t result;
-  
+
   interface->Idle();
   TickMultiply(state.reg[op2]);
 
@@ -495,7 +493,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
   /* TODO: reverse-engineer special case with usermode registers and a banked base register. */
   int base = (instruction >> 16) & 0xF;
   int list = instruction & 0xFFFF;
-  
+
   Mode mode;
   bool transfer_pc = list & (1 << 15);
   bool switch_mode = user_mode && (!load || !transfer_pc);
@@ -518,7 +516,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
       }
       first = i;
       bytes += 4;
-    }  
+    }
   } else {
     /* If the register list is empty, only r15 will be loaded/stored but
      * the base will be incremented/decremented as if each register was transferred.
@@ -605,7 +603,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
   }
 }
 
-void ARM_Undefined(std::uint32_t instruction) {  
+void ARM_Undefined(std::uint32_t instruction) {
   /* Save return address and program status. */
   state.bank[BANK_UND][BANK_R14] = state.r15 - 4;
   state.spsr[BANK_UND].v = state.cpsr.v;
