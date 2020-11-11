@@ -93,7 +93,7 @@ public:
 
   typedef void (ARM7TDMI::*Handler16)(std::uint16_t);
   typedef void (ARM7TDMI::*Handler32)(std::uint32_t);
-  
+
 private:
   friend struct TableGen;
 
@@ -179,7 +179,7 @@ private:
   #include "handlers/handler16.inl"
   #include "handlers/handler32.inl"
   #include "handlers/memory.inl"
-  
+
   MemoryBase* interface;
   StatusRegister* p_spsr;
 
@@ -187,7 +187,7 @@ private:
     Access fetch_type;
     std::uint32_t opcode[2];
   } pipe;
-  
+
   static std::array<bool, 256> s_condition_lut;
   static std::array<Handler16, 1024> s_opcode_lut_16;
   static std::array<Handler32, 4096> s_opcode_lut_32;

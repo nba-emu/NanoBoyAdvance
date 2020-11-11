@@ -5,6 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
+#include <common/likely.hpp>
 #include <emulator/core/cpu-mmio.hpp>
 
 #include "dma.hpp"
@@ -65,17 +66,21 @@ void DMA::Reset() {
   }
 }
 
-void DMA::TryStart(int chan_id) {
-  if (runnable_set.none()) {
-    active_dma_id = chan_id;
-  } else if (chan_id < active_dma_id) {
-    active_dma_id = chan_id;
-    early_exit_trigger = true;
+void DMA::ScheduleDMAs(unsigned int bitset) {
+  while (bitset > 0) {
+    auto chan_id = g_dma_from_bitset[bitset];
+    bitset &= ~(1 << chan_id);
+    channels[chan_id].startup_event = scheduler->Add(2, [this, chan_id](int cycles_late) {
+      channels[chan_id].startup_event = nullptr;
+      if (runnable_set.none()) {
+        active_dma_id = chan_id;
+      } else if (chan_id < active_dma_id) {
+        active_dma_id = chan_id;
+        early_exit_trigger = true;
+      }
+      runnable_set.set(chan_id, true);
+    });
   }
-
-  //memory->Idle();
-  //memory->Idle();
-  runnable_set.set(chan_id, true);
 }
 
 void DMA::SelectNextDMA() {
@@ -84,30 +89,15 @@ void DMA::SelectNextDMA() {
 
 void DMA::Request(Occasion occasion) {
   switch (occasion) {
-    case Occasion::HBlank: {
-      auto chan_id = g_dma_from_bitset[hblank_set.to_ulong()];
-      if (chan_id != g_dma_none_id) {
-        TryStart(chan_id);
-        runnable_set |= hblank_set;
-      }
+    case Occasion::HBlank:
+      ScheduleDMAs(hblank_set.to_ulong());
       break;
-    }
-    case Occasion::VBlank: {
-      auto chan_id = g_dma_from_bitset[vblank_set.to_ulong()];
-      if (chan_id != g_dma_none_id) {
-        TryStart(chan_id);
-        runnable_set |= vblank_set;
-      }
+    case Occasion::VBlank:
+      ScheduleDMAs(vblank_set.to_ulong());
       break;
-    }
-    case Occasion::Video: {
-      auto chan_id = g_dma_from_bitset[video_set.to_ulong()];
-      if (chan_id != g_dma_none_id) {
-        TryStart(chan_id);
-        runnable_set |= video_set;
-      }
+    case Occasion::Video:
+      ScheduleDMAs(video_set.to_ulong());
       break;
-    }
     case Occasion::FIFO0:
     case Occasion::FIFO1: {
       auto address = (occasion == Occasion::FIFO0) ? FIFO_A : FIFO_B;
@@ -116,7 +106,7 @@ void DMA::Request(Occasion occasion) {
         if (channel.enable &&
             channel.time == Channel::Special &&
             channel.dst_addr == address) {
-          TryStart(chan_id);
+          ScheduleDMAs(1 << chan_id);
         }
       }
       break;
@@ -128,6 +118,7 @@ void DMA::StopVideoXferDMA() {
   auto& channel = channels[3];
 
   if (channel.enable && channel.time == Channel::Timing::Special) {
+    // TODO: cancel startup event? Is this actually correct at all?
     channel.enable = false;
     runnable_set.set(3, false);
     video_set.set(3, false);
@@ -136,6 +127,15 @@ void DMA::StopVideoXferDMA() {
 }
 
 void DMA::Run() {
+  if (!IsRunning())
+    return;
+  RunChannel(true);
+  while (IsRunning()) {
+    RunChannel(false);
+  }
+}
+
+void DMA::RunChannel(bool first) {
   auto& channel = channels[active_dma_id];
   int dst_modify;
   int src_modify;
@@ -153,18 +153,23 @@ void DMA::Run() {
     src_modify = g_dma_modify[size][channel.src_cntl];
   }
 
-  while (channel.latch.length != 0) {
-    if (scheduler->GetRemainingCycleCount() <= 0) {
-      scheduler->Step();
-    }
+  // TODO: I don't know how the internal processing time for DMA is supposed to work.
+  // This is what works best so far, but I don't think that it's correct. Needs revision.
+  auto src_page = GetUnaliasedMemoryArea(channel.src_addr >> 24);
+  auto dst_page = GetUnaliasedMemoryArea(channel.dst_addr >> 24);
+  if ((src_page != 0x08 || dst_page != 0x08) && first) {
+    memory->Idle();
+    memory->Idle();
+  }
 
+  while (channel.latch.length != 0) {
     if (early_exit_trigger) {
       early_exit_trigger = false;
       return;
     }
 
     if (size == Channel::Half) {
-      if (channel.latch.src_addr >= 0x02000000) {
+      if (likely(channel.latch.src_addr >= 0x02000000)) {
         auto value = memory->ReadHalf(channel.latch.src_addr, access);
         latch = (value << 16) | value;
       } else {
@@ -172,7 +177,7 @@ void DMA::Run() {
       }
       memory->WriteHalf(channel.latch.dst_addr, latch, access);
     } else {
-      if (channel.latch.src_addr >= 0x02000000) {
+      if (likely(channel.latch.src_addr >= 0x02000000)) {
         latch = memory->ReadWord(channel.latch.src_addr, access);
       } else {
         memory->Idle();
@@ -292,10 +297,20 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
   video_set.set(channel.id, false);
 
   if (!channel.enable) {
-    // Gracefully handle self-disabling DMA.
-    if (active_dma_id == channel.id) {
-      // TODO: in some cases the DMA seems to lock up the system.
-      runnable_set.set(channel.id, false);
+    runnable_set.set(channel.id, false);
+
+    // Handle disabling the DMA before it started up.
+    // TODO: not exactly known how hardware handles this edge-case.
+    if (channel.startup_event != nullptr) {
+      LOG_WARN("DMA{0} was cancelled before its startup completed.", channel.id);
+      scheduler->Cancel(channel.startup_event);
+      channel.startup_event = nullptr;
+    }
+
+    // Handle DMA channel self-disable (via writing to its control register).
+    // TODO: not exactly known how hardware handles this edge-case.
+    if (channel.id == active_dma_id) {
+      LOG_WARN("DMA{0} triggered self-disable!", channel.id);
       early_exit_trigger = true;
       SelectNextDMA();
     }
@@ -351,7 +366,7 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
     }
 
     if (channel.time == Channel::Immediate) {
-      TryStart(channel.id);
+      ScheduleDMAs(1 << channel.id);
     }
   }
 }

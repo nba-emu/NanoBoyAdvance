@@ -89,6 +89,7 @@ private:
     } latch;
 
     bool is_fifo_dma = false;
+    Scheduler::Event* startup_event = nullptr;
   } channels[4];
 
   constexpr int GetUnaliasedMemoryArea(int page) {
@@ -103,9 +104,10 @@ private:
     return page;
   }
 
-  void TryStart(int chan_id);
+  void ScheduleDMAs(unsigned int bitset);
   void SelectNextDMA();
   void OnChannelWritten(Channel& channel, bool enable_old);
+  void RunChannel(bool first);
 
   arm::MemoryBase* memory;
   InterruptController* irq_controller;

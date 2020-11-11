@@ -7,9 +7,8 @@
 
 #include "cpu.hpp"
 
-#include <algorithm>
+#include <common/likely.hpp>
 #include <cstring>
-#include <limits>
 
 namespace nba::core {
 
@@ -43,6 +42,7 @@ void CPU::Reset() {
   mmio = {};
   prefetch = {};
   last_rom_address = 0;
+  bus_is_controlled_by_dma = false;
   UpdateMemoryDelayTable();
 
   for (int i = 16; i < 256; i++) {
@@ -79,13 +79,24 @@ void CPU::Reset() {
 }
 
 void CPU::Tick(int cycles) {
+  // DMA can interleave the CPU mid-instruction and will take control of the bus.
+  // NOTE: this implies that Tick() must be called before completing the access.
+  if (unlikely(dma.IsRunning() && !bus_is_controlled_by_dma)) {
+    bus_is_controlled_by_dma = true;
+    dma.Run();
+    bus_is_controlled_by_dma = false;
+  }
+
+  // TODO: is it possible for the DMA to interleave in the middle of a bus cycle?
+  scheduler.AddCycles(cycles);
+
+  // TODO: move IRQ delay and prefetcher load on the scheduler.
+
   if (irq.processing && irq.countdown >= 0) {
     irq.countdown -= cycles;
   }
 
-  scheduler.AddCycles(cycles);
-
-  if (prefetch.active) {
+  if (prefetch.active && !bus_is_controlled_by_dma) {
     prefetch.countdown -= cycles;
 
     if (prefetch.countdown <= 0) {
@@ -100,7 +111,8 @@ void CPU::Idle() {
 }
 
 void CPU::PrefetchStepRAM(int cycles) {
-  if (!mmio.waitcnt.prefetch) {
+  // TODO: bypass prefetch RAM step during DMA?
+  if (unlikely(!mmio.waitcnt.prefetch)) {
     Tick(cycles);
     return;
   }
@@ -132,7 +144,8 @@ void CPU::PrefetchStepRAM(int cycles) {
 }
 
 void CPU::PrefetchStepROM(std::uint32_t address, int cycles) {
-  if (!mmio.waitcnt.prefetch) {
+  // TODO: bypass prefetch ROM step during DMA?
+  if (unlikely(!mmio.waitcnt.prefetch)) {
     Tick(cycles);
     return;
   }
@@ -185,41 +198,30 @@ void CPU::RunFor(int cycles) {
 
   // TODO: account for per frame overshoot.
   while (scheduler.GetTimestampNow() < limit) {
-    // TODO: optimize the std::min by updating the result whenever it changes.
-    while (scheduler.GetTimestampNow() < std::min(scheduler.GetTimestampTarget(), limit)) {
-      auto has_servable_irq = irq_controller.HasServableIRQ();
+    auto has_servable_irq = irq_controller.HasServableIRQ();
 
-      if (mmio.haltcnt == HaltControl::HALT && has_servable_irq) {
-        mmio.haltcnt = HaltControl::RUN;
-      }
-
-      /* DMA and CPU cannot run simultaneously since
-       * both access the memory bus.
-       * If DMA is requested the CPU will be blocked.
-       */
-      if (dma.IsRunning()) {
-        dma.Run();
-      } else if (mmio.haltcnt == HaltControl::RUN) {
-        if (irq_controller.MasterEnable() && has_servable_irq) {
-          if (!irq.processing) {
-            irq.processing = true;
-            irq.countdown = 3;
-          } else if (irq.countdown < 0) {
-            SignalIRQ();
-          }
-        } else {
-          irq.processing = false;
-        }
-        if (m4a_xq_enable && state.r15 == m4a_setfreq_address) {
-          M4ASampleFreqSetHook();
-        }
-        Run();
-      } else {
-        Tick(scheduler.GetRemainingCycleCount());
-      }
+    if (unlikely(mmio.haltcnt == HaltControl::HALT && has_servable_irq)) {
+      mmio.haltcnt = HaltControl::RUN;
     }
 
-    scheduler.Step();
+    if (likely(mmio.haltcnt == HaltControl::RUN)) {
+      if (irq_controller.MasterEnable() && has_servable_irq) {
+        if (!irq.processing) {
+          irq.processing = true;
+          irq.countdown = 3;
+        } else if (irq.countdown < 0) {
+          SignalIRQ();
+        }
+      } else {
+        irq.processing = false;
+      }
+      if (unlikely(m4a_xq_enable && state.r15 == m4a_setfreq_address)) {
+        M4ASampleFreqSetHook();
+      }
+      Run();
+    } else {
+      Tick(scheduler.GetRemainingCycleCount());
+    }
   }
 }
 

@@ -8,6 +8,7 @@
 #pragma once
 
 #include <common/log.hpp>
+#include <common/likely.hpp>
 #include <cstdint>
 #include <functional>
 
@@ -57,6 +58,8 @@ public:
 
   void AddCycles(int cycles) {
     timestamp_now += cycles;
+    if (unlikely(GetTimestampTarget() <= timestamp_now))
+      Step();
   }
 
   auto Add(std::uint64_t delay, std::function<void(int)> callback) -> Event* {
@@ -82,22 +85,22 @@ public:
     Remove(event->handle);
   }
 
-  void Step() {
-    auto now = GetTimestampNow();
-    while (heap_size > 0 && heap[0]->timestamp <= now) {
-      auto event = heap[0];
-      event->callback(int(now - event->timestamp));
-      // NOTE: we cannot just pass zero because the callback may mess with the event queue.
-      Remove(event->handle);
-    }
-  }
-
 private:
   static constexpr int kMaxEvents = 64;
 
   constexpr int Parent(int n) { return (n - 1) / 2; }
   constexpr int LeftChild(int n) { return n * 2 + 1; }
   constexpr int RightChild(int n) { return n * 2 + 2; }
+
+  void Step() {
+    auto now = GetTimestampNow();
+    while (heap[0]->timestamp <= now && heap_size > 0) {
+      auto event = heap[0];
+      event->callback(int(now - event->timestamp));
+      // NOTE: we cannot just pass zero because the callback may mess with the event queue.
+      Remove(event->handle);
+    }
+  }
 
   void Remove(int n) {
     Swap(n, --heap_size);
