@@ -26,7 +26,7 @@ inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
 inline std::uint32_t CPU::ReadUnused(std::uint32_t address) {
   std::uint32_t result = 0;
 
-  if (dma.IsRunning()) {
+  if (dma.IsRunning() || openbus_from_dma) {
     return dma.GetOpenBusValue() >> ((address & 3) * 8);
   }
 

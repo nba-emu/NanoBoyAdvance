@@ -182,6 +182,7 @@ private:
   } irq;
 
   bool bus_is_controlled_by_dma;
+  bool openbus_from_dma;
 
   int cycles16[2][256] {
     { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },

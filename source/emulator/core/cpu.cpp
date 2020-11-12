@@ -43,6 +43,7 @@ void CPU::Reset() {
   prefetch = {};
   last_rom_address = 0;
   bus_is_controlled_by_dma = false;
+  openbus_from_dma = false;
   UpdateMemoryDelayTable();
 
   for (int i = 16; i < 256; i++) {
@@ -79,12 +80,15 @@ void CPU::Reset() {
 }
 
 void CPU::Tick(int cycles) {
+  openbus_from_dma = false;
+  
   // DMA can interleave the CPU mid-instruction and will take control of the bus.
   // NOTE: this implies that Tick() must be called before completing the access.
   if (unlikely(dma.IsRunning() && !bus_is_controlled_by_dma)) {
     bus_is_controlled_by_dma = true;
     dma.Run();
     bus_is_controlled_by_dma = false;
+    openbus_from_dma = true;
   }
 
   // TODO: is it possible for the DMA to interleave in the middle of a bus cycle?
