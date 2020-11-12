@@ -5,8 +5,8 @@
 ![license](https://img.shields.io/github/license/fleroviux/NanoboyAdvance)
 [![CodeFactor](https://www.codefactor.io/repository/github/fleroviux/NanoboyAdvance/badge)](https://www.codefactor.io/repository/github/fleroviux/NanoboyAdvance)
 
-NanoboyAdvance is Nintendo Game Boy Advance (TM) emulator.<br>
-It is intended to be highly accurate, reasonably efficient and bloat-free.
+NanoboyAdvance is a highly accurate Nintendo Game Boy Advance (TM) emulator.<br>
+It is also indended to be reasonably efficient, bloat-free and clean code in modern C++.
 
 ![screenshot1](media/screenshot1.png)
 
@@ -18,6 +18,14 @@ It is intended to be highly accurate, reasonably efficient and bloat-free.
 - game controller support
 - basic GLSL shader support
 - lightweight: minimal, configurable SDL2 frontend
+
+## Accuracy
+- very good ARM emulation
+  - if something doesn't work it's likely very obscure **UNPREDICTABLE** or **UNDEFINED** behavior.
+- sub-instruction hardware updates and DMA
+- graphics are on-par but are a topic of research, very little details are known 
+- audio is good but needs some work here and there
+- currently the only software emulator to pass the AGS aging cartridge (https://tcrf.net/AGS_Aging_Cartridge)
 
 ## Running
 
