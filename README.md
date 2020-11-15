@@ -25,7 +25,7 @@ It is also indended to be reasonably efficient, bloat-free and clean code in mod
 - sub-instruction hardware updates and DMA
 - graphics are on-par but are a topic of research, very little details are known 
 - audio is good but needs some work here and there
-- currently the only software emulator to pass the AGS aging cartridge (https://tcrf.net/AGS_Aging_Cartridge)
+- currently the only software emulator to pass the [AGS aging cartridge](https://tcrf.net/AGS_Aging_Cartridge)
 
 ## Running
 
