@@ -49,14 +49,6 @@ void PPU::RenderScanline() {
     return;
   }
 
-  if (mmio.dispcnt.enable[ENABLE_WIN0]) {
-    RenderWindow(0);
-  }
-
-  if (mmio.dispcnt.enable[ENABLE_WIN1]) {
-    RenderWindow(1);
-  }
-
   switch (mmio.dispcnt.mode) {
     case 0: {
       /* BG Mode 0 - 240x160 pixels, Text mode */

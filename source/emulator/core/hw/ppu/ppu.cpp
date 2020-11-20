@@ -140,6 +140,14 @@ void PPU::OnScanlineComplete(int cycles_late) {
     irq_controller->Raise(InterruptSource::HBlank);
   }
 
+  if (mmio.dispcnt.enable[ENABLE_WIN0]) {
+    RenderWindow(0);
+  }
+
+  if (mmio.dispcnt.enable[ENABLE_WIN1]) {
+    RenderWindow(1);
+  }
+
   RenderScanline();
 }
 
@@ -198,6 +206,14 @@ void PPU::OnVblankScanlineComplete(int cycles_late) {
 
   SetNextEvent(Phase::VBLANK_HBLANK, cycles_late);
   dispstat.hblank_flag = 1;
+
+  if (mmio.dispcnt.enable[ENABLE_WIN0]) {
+    RenderWindow(0);
+  }
+
+  if (mmio.dispcnt.enable[ENABLE_WIN1]) {
+    RenderWindow(1);
+  }
 
   if (mmio.vcount < 162) {
     dma->Request(DMA::Occasion::Video);
