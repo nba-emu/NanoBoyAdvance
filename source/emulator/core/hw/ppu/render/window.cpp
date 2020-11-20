@@ -13,16 +13,16 @@ void PPU::RenderWindow(int id) {
   int line = mmio.vcount;
   auto& winv = mmio.winv[id];
 
-  /* Check if the current scanline is outside of the window. */
-  if ((winv.min <= winv.max && (line < winv.min || line >= winv.max)) ||
-      (winv.min >  winv.max && (line < winv.min && line >= winv.max))) {
-    /* Mark window as inactive during the current scanline. */
-    window_scanline_enable[id] = false;
-  } else {
-    auto& winh = mmio.winh[id];
-
-    /* Mark window as active during the current scanline. */
+  if (line == winv.min) {
     window_scanline_enable[id] = true;
+  }
+
+  if (line == winv.max) {
+    window_scanline_enable[id] = false;
+  }
+
+  if (window_scanline_enable[id]) {
+    auto& winh = mmio.winh[id];
 
     /* Only recalculate the LUTs if min/max changed between the last update & now. */
     if (winh._changed) {
