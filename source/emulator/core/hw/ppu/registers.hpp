@@ -11,6 +11,8 @@
 
 namespace nba::core {
 
+class PPU;
+
 struct DisplayControl {
   int mode;
   int cgb_mode;
@@ -28,8 +30,6 @@ struct DisplayControl {
 };
 
 struct DisplayStatus {
-  class PPU* ppu = nullptr;
-
   int vblank_flag;
   int hblank_flag;
   int vcount_flag;
@@ -41,6 +41,8 @@ struct DisplayStatus {
   void Reset();
   auto Read(int address) -> std::uint8_t;
   void Write(int address, std::uint8_t value);
+
+  PPU* ppu = nullptr;
 };
 
 struct BackgroundControl {

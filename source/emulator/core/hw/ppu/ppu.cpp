@@ -12,7 +12,7 @@
 namespace nba::core {
 
 constexpr std::uint16_t PPU::s_color_transparent;
-constexpr int PPU::s_wait_cycles[5];
+constexpr int PPU::s_wait_cycles[4];
 
 PPU::PPU(Scheduler* scheduler,
          InterruptController* irq_controller,
@@ -80,9 +80,6 @@ void PPU::Tick(int cycles_late) {
     case Phase::SCANLINE:
       OnScanlineComplete(cycles_late);
       break;
-    case Phase::HBLANK_SEARCH:
-      OnHblankSearchComplete(cycles_late);
-      break;
     case Phase::HBLANK:
       OnHblankComplete(cycles_late);
       break;
@@ -127,38 +124,28 @@ void PPU::UpdateInternalAffineRegisters() {
 void PPU::CheckVerticalCounterIRQ() {
   auto& dispstat = mmio.dispstat;
   auto vcount_flag_new = dispstat.vcount_setting == mmio.vcount;
+
   if (dispstat.vcount_irq_enable && !dispstat.vcount_flag && vcount_flag_new) {
     irq_controller->Raise(InterruptSource::VCount);
   }
+  
   dispstat.vcount_flag = vcount_flag_new;
 }
 
 void PPU::OnScanlineComplete(int cycles_late) {
-  SetNextEvent(Phase::HBLANK_SEARCH, cycles_late);
+  SetNextEvent(Phase::HBLANK, cycles_late);
+
+  mmio.dispstat.hblank_flag = 1;
 
   if (mmio.dispstat.hblank_irq_enable) {
     irq_controller->Raise(InterruptSource::HBlank);
   }
 
-  if (mmio.dispcnt.enable[ENABLE_WIN0]) {
-    RenderWindow(0);
-  }
-
-  if (mmio.dispcnt.enable[ENABLE_WIN1]) {
-    RenderWindow(1);
-  }
-
-  RenderScanline();
-}
-
-void PPU::OnHblankSearchComplete(int cycles_late) {
-  SetNextEvent(Phase::HBLANK, cycles_late);
-
   dma->Request(DMA::Occasion::HBlank);
+  
   if (mmio.vcount >= 2) {
     dma->Request(DMA::Occasion::Video);
   }
-  mmio.dispstat.hblank_flag = 1;
 }
 
 void PPU::OnHblankComplete(int cycles_late) {
@@ -169,6 +156,14 @@ void PPU::OnHblankComplete(int cycles_late) {
   dispstat.hblank_flag = 0;
   vcount++;
   CheckVerticalCounterIRQ();
+
+  if (mmio.dispcnt.enable[ENABLE_WIN0]) {
+    RenderWindow(0);
+  }
+
+  if (mmio.dispcnt.enable[ENABLE_WIN1]) {
+    RenderWindow(1);
+  }
 
   if (vcount == 160) {
     config->video_dev->Draw(output);
@@ -184,7 +179,11 @@ void PPU::OnHblankComplete(int cycles_late) {
     /* Reset vertical mosaic counters */
     mosaic.bg._counter_y = 0;
     mosaic.obj._counter_y = 0;
+
+    UpdateInternalAffineRegisters();
   } else {
+    SetNextEvent(Phase::SCANLINE, cycles_late);
+
     /* Advance vertical background mosaic counter */
     if (++mosaic.bg._counter_y == mosaic.bg.size_y) {
       mosaic.bg._counter_y = 0;
@@ -195,25 +194,17 @@ void PPU::OnHblankComplete(int cycles_late) {
       mosaic.obj._counter_y = 0;
     }
 
-    SetNextEvent(Phase::SCANLINE, cycles_late);
+    UpdateInternalAffineRegisters();
+    RenderScanline();
   }
-
-  UpdateInternalAffineRegisters();
 }
 
 void PPU::OnVblankScanlineComplete(int cycles_late) {
   auto& dispstat = mmio.dispstat;
 
   SetNextEvent(Phase::VBLANK_HBLANK, cycles_late);
+
   dispstat.hblank_flag = 1;
-
-  if (mmio.dispcnt.enable[ENABLE_WIN0]) {
-    RenderWindow(0);
-  }
-
-  if (mmio.dispcnt.enable[ENABLE_WIN1]) {
-    RenderWindow(1);
-  }
 
   if (mmio.vcount < 162) {
     dma->Request(DMA::Occasion::Video);
@@ -233,14 +224,26 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
   dispstat.hblank_flag = 0;
 
   if (vcount == 227) {
-    vcount = 0;
     SetNextEvent(Phase::SCANLINE, cycles_late);
+    vcount = 0;
   } else {
     SetNextEvent(Phase::VBLANK_SCANLINE, cycles_late);
     if (vcount == 226) {
       dispstat.vblank_flag = 0;
     }
     vcount++;
+  }
+
+  if (mmio.dispcnt.enable[ENABLE_WIN0]) {
+    RenderWindow(0);
+  }
+
+  if (mmio.dispcnt.enable[ENABLE_WIN1]) {
+    RenderWindow(1);
+  }
+
+  if (vcount == 0) {
+    RenderScanline();
   }
 
   CheckVerticalCounterIRQ();

@@ -66,10 +66,9 @@ private:
 
   enum class Phase {
     SCANLINE = 0,
-    HBLANK_SEARCH = 1,
-    HBLANK = 2,
-    VBLANK_SCANLINE = 3,
-    VBLANK_HBLANK = 4
+    HBLANK = 1,
+    VBLANK_SCANLINE = 2,
+    VBLANK_HBLANK = 3
   };
 
   enum ObjAttribute {
@@ -114,7 +113,6 @@ private:
 
   void SetNextEvent(Phase phase, int cycles_late);
   void OnScanlineComplete(int cycles_late);
-  void OnHblankSearchComplete(int cycles_late);
   void OnHblankComplete(int cycles_late);
   void OnVblankScanlineComplete(int cycles_late);
   void OnVblankHblankComplete(int cycles_late);
@@ -163,7 +161,7 @@ private:
   std::uint8_t blend_table[17][17][32][32];
 
   static constexpr std::uint16_t s_color_transparent = 0x8000;
-  static constexpr int s_wait_cycles[5] = { 960, 46, 226, 1006, 226 };
+  static constexpr int s_wait_cycles[4] = { 1006, 226, 1006, 226 };
   static const int s_obj_size[4][4][2];
 };
 
