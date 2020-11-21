@@ -370,14 +370,27 @@ void ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
       }
       break;
     case 2:
-      ASSERT(load, "STR instruction in signed-byte mode is unpredictable.");
-      state.reg[dst] = ReadByteSigned(address, Access::Nonsequential);
-      interface->Idle();
+      if (load) {
+        state.reg[dst] = ReadByteSigned(address, Access::Nonsequential);
+        interface->Idle();
+      } else {
+        // ARMv5 LDRD: this opcode is unpredictable on ARMv4T.
+        // On ARM7TDMI-S it doesn't seem to perform any memory access,
+        // so the load/store cycle probably is internal in this case.
+        interface->Idle();
+        interface->Idle();
+      }
       break;
     case 3:
-      ASSERT(load, "STR instruction in signed-half mode is unpredictable.");
-      state.reg[dst] = ReadHalfSigned(address, Access::Nonsequential);
-      interface->Idle();
+      if (load) {
+        state.reg[dst] = ReadHalfSigned(address, Access::Nonsequential);
+        interface->Idle();
+      } else {
+        // ARMv5 STRD: this opcode is unpredictable on ARMv4T.
+        // On ARM7TDMI-S it doesn't seem to perform any memory access,
+        // so the load/store cycle probably is internal in this case.
+        interface->Idle();
+      }
       break;
   }
 
