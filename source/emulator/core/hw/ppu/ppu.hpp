@@ -108,7 +108,6 @@ private:
 
   void Tick(int cycles_late);
 
-  void UpdateInternalAffineRegisters();
   void CheckVerticalCounterIRQ();
 
   void SetNextEvent(Phase phase, int cycles_late);

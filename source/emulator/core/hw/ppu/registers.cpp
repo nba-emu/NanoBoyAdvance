@@ -48,9 +48,6 @@ void DisplayControl::Write(int address, std::uint8_t value) {
       hblank_oam_access = (value >> 5) & 1;
       oam_mapping_1d = (value >> 6) & 1;
       forced_blank = (value >> 7) & 1;
-      if (mode != mode_old) {
-        _mode_is_dirty = true;
-      }
       break;
     case 1:
       for (int i = 0; i < 8; i++) {

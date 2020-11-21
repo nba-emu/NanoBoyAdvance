@@ -92,35 +92,6 @@ void PPU::Tick(int cycles_late) {
   }
 }
 
-void PPU::UpdateInternalAffineRegisters() {
-  auto& bgx = mmio.bgx;
-  auto& bgy = mmio.bgy;
-  auto& mosaic = mmio.mosaic;
-
-  if (mmio.vcount == 160 || mmio.dispcnt._mode_is_dirty) {
-    mmio.dispcnt._mode_is_dirty = false;
-
-    /* Reload internal affine registers */
-    bgx[0]._current = bgx[0].initial;
-    bgy[0]._current = bgy[0].initial;
-    bgx[1]._current = bgx[1].initial;
-    bgy[1]._current = bgy[1].initial;
-  } else {
-    for (int i = 0; i < 2; i++) {
-      if (mmio.bgcnt[2 + i].mosaic_enable) {
-        /* Vertical mosaic for affine-transformed layers. */
-        if (mosaic.bg._counter_y == 0) {
-          bgx[i]._current += mosaic.bg.size_y * mmio.bgpb[i];
-          bgy[i]._current += mosaic.bg.size_y * mmio.bgpd[i];
-        }
-      } else {
-        bgx[i]._current += mmio.bgpb[i];
-        bgy[i]._current += mmio.bgpd[i];
-      }
-    }
-  }
-}
-
 void PPU::CheckVerticalCounterIRQ() {
   auto& dispstat = mmio.dispstat;
   auto vcount_flag_new = dispstat.vcount_setting == mmio.vcount;
@@ -149,19 +120,22 @@ void PPU::OnScanlineComplete(int cycles_late) {
 }
 
 void PPU::OnHblankComplete(int cycles_late) {
-  auto& vcount = mmio.vcount;
+  auto& dispcnt = mmio.dispcnt;
   auto& dispstat = mmio.dispstat;
+  auto& vcount = mmio.vcount;
+  auto& bgx = mmio.bgx;
+  auto& bgy = mmio.bgy;
   auto& mosaic = mmio.mosaic;
 
   dispstat.hblank_flag = 0;
   vcount++;
   CheckVerticalCounterIRQ();
 
-  if (mmio.dispcnt.enable[ENABLE_WIN0]) {
+  if (dispcnt.enable[ENABLE_WIN0]) {
     RenderWindow(0);
   }
 
-  if (mmio.dispcnt.enable[ENABLE_WIN1]) {
+  if (dispcnt.enable[ENABLE_WIN1]) {
     RenderWindow(1);
   }
 
@@ -176,25 +150,47 @@ void PPU::OnHblankComplete(int cycles_late) {
       irq_controller->Raise(InterruptSource::VBlank);
     }
 
-    /* Reset vertical mosaic counters */
+    // Reset vertical mosaic counters
     mosaic.bg._counter_y = 0;
     mosaic.obj._counter_y = 0;
 
-    UpdateInternalAffineRegisters();
+    // Reload internal affine registers
+    bgx[0]._current = bgx[0].initial;
+    bgy[0]._current = bgy[0].initial;
+    bgx[1]._current = bgx[1].initial;
+    bgy[1]._current = bgy[1].initial;
   } else {
     SetNextEvent(Phase::SCANLINE, cycles_late);
 
-    /* Advance vertical background mosaic counter */
+    // Advance vertical background mosaic counter
     if (++mosaic.bg._counter_y == mosaic.bg.size_y) {
       mosaic.bg._counter_y = 0;
     }
 
-    /* Advance vertical OBJ mosaic counter */
+    // Advance vertical OBJ mosaic counter
     if (++mosaic.obj._counter_y == mosaic.obj.size_y) {
       mosaic.obj._counter_y = 0;
     }
 
-    UpdateInternalAffineRegisters();
+    /* Mode 0 doesn't have any affine backgrounds,
+     * in that case the internal registers seemingly aren't updated.
+     * TODO: needs more research, e.g. what happens if all affine backgrounds are disabled?
+     */
+    if (dispcnt.mode != 0) {
+      // Advance internal affine registers and apply vertical mosaic if applicable.
+      for (int i = 0; i < 2; i++) {
+        if (mmio.bgcnt[2 + i].mosaic_enable) {
+          if (mosaic.bg._counter_y == 0) {
+            bgx[i]._current += mosaic.bg.size_y * mmio.bgpb[i];
+            bgy[i]._current += mosaic.bg.size_y * mmio.bgpd[i];
+          }
+        } else {
+          bgx[i]._current += mmio.bgpb[i];
+          bgy[i]._current += mmio.bgpd[i];
+        }
+      }
+    }
+
     RenderScanline();
   }
 }
