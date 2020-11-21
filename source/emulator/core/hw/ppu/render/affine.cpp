@@ -27,9 +27,9 @@ void PPU::RenderLayerAffine(int id) {
   }
   
   AffineRenderLoop(id, size, size, [&](int line_x, int x, int y) {
+    auto tile_number = vram[map_base + (y / 8) * block_width + (x / 8)];
     buffer[line_x] = DecodeTilePixel8BPP(
-      tile_base,
-      vram[map_base + (y / 8) * block_width + (x / 8)],
+      tile_base + tile_number * 64,
       x % 8,
       y % 8
     );

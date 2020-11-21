@@ -53,8 +53,8 @@ void DecodeTileLine8BPP(std::uint16_t* buffer, std::uint32_t base, int number, i
   }
 }
 
-auto DecodeTilePixel4BPP(std::uint32_t base, int palette, int number, int x, int y) -> std::uint16_t {
-  std::uint32_t offset = base + (number * 32) + (y * 4) + (x / 2);
+auto DecodeTilePixel4BPP(std::uint32_t address, int palette, int x, int y) -> std::uint16_t {
+  std::uint32_t offset = address + (y * 4) + (x / 2);
 
   int tuple = vram[offset];
   int index = (x & 1) ? (tuple >> 4) : (tuple & 0xF);
@@ -66,8 +66,8 @@ auto DecodeTilePixel4BPP(std::uint32_t base, int palette, int number, int x, int
   }
 }
 
-auto DecodeTilePixel8BPP(std::uint32_t base, int number, int x, int y, bool sprite = false) -> std::uint16_t {
-  std::uint32_t offset = base + (number * 64) + (y * 8) + x;
+auto DecodeTilePixel8BPP(std::uint32_t address, int x, int y, bool sprite = false) -> std::uint16_t {
+  std::uint32_t offset = address + (y * 8) + x;
 
   int index = vram[offset];
 
