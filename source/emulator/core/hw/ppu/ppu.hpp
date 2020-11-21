@@ -125,7 +125,11 @@ private:
   void RenderLayerOAM(bool bitmap_mode);
   void RenderWindow(int id);
 
+  template<bool window, bool blending>
+  void ComposeScanlineTmpl(int bg_min, int bg_max);
+
   void ComposeScanline(int bg_min, int bg_max);
+
   void InitBlendTable();
   void Blend(std::uint16_t& target1, std::uint16_t target2, BlendControl::Effect sfx);
 
