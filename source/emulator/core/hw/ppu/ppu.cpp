@@ -41,15 +41,15 @@ void PPU::Reset() {
     mmio.bgcnt[i].Reset();
     mmio.bghofs[i] = 0;
     mmio.bgvofs[i] = 0;
-  }
 
-  for (int i = 0; i < 2; i++) {
-    mmio.bgx[i].Reset();
-    mmio.bgy[i].Reset();
-    mmio.bgpa[i] = 0x100;
-    mmio.bgpb[i] = 0;
-    mmio.bgpc[i] = 0;
-    mmio.bgpd[i] = 0x100;
+    if (i < 2) {
+      mmio.bgx[i].Reset();
+      mmio.bgy[i].Reset();
+      mmio.bgpa[i] = 0x100;
+      mmio.bgpb[i] = 0;
+      mmio.bgpc[i] = 0;
+      mmio.bgpd[i] = 0x100;
+    }
   }
 
   mmio.winh[0].Reset();
@@ -66,30 +66,7 @@ void PPU::Reset() {
   mmio.evy = 0;
   mmio.bldcnt.Reset();
 
-  SetNextEvent(Phase::SCANLINE, 0);
-}
-
-void PPU::SetNextEvent(Phase phase, int cycles_late) {
-  this->phase = phase;
-  scheduler->Add(s_wait_cycles[static_cast<int>(phase)] - cycles_late, event_cb);
-}
-
-void PPU::Tick(int cycles_late) {
-  // TODO: get rid of the indirection and schedule the appropriate method directly.
-  switch (phase) {
-    case Phase::SCANLINE:
-      OnScanlineComplete(cycles_late);
-      break;
-    case Phase::HBLANK:
-      OnHblankComplete(cycles_late);
-      break;
-    case Phase::VBLANK_SCANLINE:
-      OnVblankScanlineComplete(cycles_late);
-      break;
-    case Phase::VBLANK_HBLANK:
-      OnVblankHblankComplete(cycles_late);
-      break;
-  }
+  scheduler->Add(1006, this, &PPU::OnScanlineComplete);
 }
 
 void PPU::CheckVerticalCounterIRQ() {
@@ -104,7 +81,7 @@ void PPU::CheckVerticalCounterIRQ() {
 }
 
 void PPU::OnScanlineComplete(int cycles_late) {
-  SetNextEvent(Phase::HBLANK, cycles_late);
+  scheduler->Add(226 - cycles_late, this, &PPU::OnHblankComplete);
 
   mmio.dispstat.hblank_flag = 1;
 
@@ -142,7 +119,7 @@ void PPU::OnHblankComplete(int cycles_late) {
   if (vcount == 160) {
     config->video_dev->Draw(output);
 
-    SetNextEvent(Phase::VBLANK_SCANLINE, cycles_late);
+    scheduler->Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
     dma->Request(DMA::Occasion::VBlank);
     dispstat.vblank_flag = 1;
 
@@ -160,7 +137,7 @@ void PPU::OnHblankComplete(int cycles_late) {
     bgx[1]._current = bgx[1].initial;
     bgy[1]._current = bgy[1].initial;
   } else {
-    SetNextEvent(Phase::SCANLINE, cycles_late);
+    scheduler->Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
 
     // Advance vertical background mosaic counter
     if (++mosaic.bg._counter_y == mosaic.bg.size_y) {
@@ -198,7 +175,7 @@ void PPU::OnHblankComplete(int cycles_late) {
 void PPU::OnVblankScanlineComplete(int cycles_late) {
   auto& dispstat = mmio.dispstat;
 
-  SetNextEvent(Phase::VBLANK_HBLANK, cycles_late);
+  scheduler->Add(226 - cycles_late, this, &PPU::OnVblankHblankComplete);
 
   dispstat.hblank_flag = 1;
 
@@ -220,10 +197,10 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
   dispstat.hblank_flag = 0;
 
   if (vcount == 227) {
-    SetNextEvent(Phase::SCANLINE, cycles_late);
+    scheduler->Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
     vcount = 0;
   } else {
-    SetNextEvent(Phase::VBLANK_SCANLINE, cycles_late);
+    scheduler->Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
     if (vcount == 226) {
       dispstat.vblank_flag = 0;
     }

@@ -64,13 +64,6 @@ public:
 private:
   friend struct DisplayStatus;
 
-  enum class Phase {
-    SCANLINE = 0,
-    HBLANK = 1,
-    VBLANK_SCANLINE = 2,
-    VBLANK_HBLANK = 3
-  };
-
   enum ObjAttribute {
     OBJ_IS_ALPHA  = 1,
     OBJ_IS_WINDOW = 2
@@ -104,13 +97,8 @@ private:
     ENABLE_OBJWIN = 7
   };
 
-  static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
-
-  void Tick(int cycles_late);
-
   void CheckVerticalCounterIRQ();
 
-  void SetNextEvent(Phase phase, int cycles_late);
   void OnScanlineComplete(int cycles_late);
   void OnHblankComplete(int cycles_late);
   void OnVblankScanlineComplete(int cycles_late);
@@ -124,6 +112,8 @@ private:
   void RenderLayerBitmap3();
   void RenderLayerOAM(bool bitmap_mode);
   void RenderWindow(int id);
+
+  static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
 
   template<bool window, bool blending>
   void ComposeScanlineTmpl(int bg_min, int bg_max);
@@ -139,9 +129,6 @@ private:
   InterruptController* irq_controller;
   DMA* dma;
   std::shared_ptr<Config> config;
-  std::function<void(int)> event_cb = [this](int cycles_late) {
-    this->Tick(cycles_late);
-  };
 
   std::uint16_t buffer_bg[4][240];
 
@@ -158,8 +145,6 @@ private:
   bool window_scanline_enable[2];
 
   std::uint32_t output[240*160];
-
-  Phase phase;
 
   std::uint8_t blend_table[17][17][32][32];
 

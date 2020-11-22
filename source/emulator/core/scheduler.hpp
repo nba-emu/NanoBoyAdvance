@@ -15,7 +15,10 @@
 namespace nba::core {
 
 class Scheduler {
-public:
+public:  
+  template<class T>
+  using EventMethod = void (T::*)(int);
+
   struct Event {
     std::function<void(int)> callback;
   private:
@@ -79,6 +82,13 @@ public:
     }
 
     return event;
+  }
+
+  template<class T>
+  void Add(std::uint64_t delay, T* object, EventMethod<T> method) {
+    Add(delay, [object, method](int cycles_late) {
+      (object->*method)(cycles_late);
+    });
   }
 
   void Cancel(Event* event) {
