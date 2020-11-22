@@ -15,7 +15,7 @@ namespace nba::core {
 
 class SerialBus {
 public:
-  SerialBus(InterruptController* irq_controller) : irq_controller(irq_controller) {}
+  SerialBus(InterruptController& irq_controller) : irq_controller(irq_controller) {}
 
   void Reset();
   auto Read(std::uint32_t address) -> std::uint8_t;
@@ -54,7 +54,7 @@ private:
     JOYBUS
   } mode;
 
-  InterruptController* irq_controller;
+  InterruptController& irq_controller;
 };
 
 } // namespace nba::core

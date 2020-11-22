@@ -20,9 +20,9 @@ namespace nba::core {
 
 class PPU {
 public:
-  PPU(Scheduler* scheduler,
-      InterruptController* irq_controller,
-      DMA* dma,
+  PPU(Scheduler& scheduler,
+      InterruptController& irq_controller,
+      DMA& dma,
       std::shared_ptr<Config> config);
 
   void Reset();
@@ -125,9 +125,9 @@ private:
 
   #include "helper.inl"
 
-  Scheduler* scheduler;
-  InterruptController* irq_controller;
-  DMA* dma;
+  Scheduler& scheduler;
+  InterruptController& irq_controller;
+  DMA& dma;
   std::shared_ptr<Config> config;
 
   std::uint16_t buffer_bg[4][240];
@@ -149,7 +149,6 @@ private:
   std::uint8_t blend_table[17][17][32][32];
 
   static constexpr std::uint16_t s_color_transparent = 0x8000;
-  static constexpr int s_wait_cycles[4] = { 1006, 226, 1006, 226 };
   static const int s_obj_size[4][4][2];
 };
 

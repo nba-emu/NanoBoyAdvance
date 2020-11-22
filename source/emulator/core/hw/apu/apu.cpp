@@ -19,7 +19,7 @@ namespace nba::core {
 /* Implemented in callback.cpp */
 void AudioCallback(APU* apu, std::int16_t* stream, int byte_len);
 
-APU::APU(Scheduler* scheduler, DMA* dma, std::shared_ptr<Config> config)
+APU::APU(Scheduler& scheduler, DMA& dma, std::shared_ptr<Config> config)
   : psg1(scheduler)
   , psg2(scheduler)
   , psg3(scheduler)
@@ -38,7 +38,7 @@ void APU::Reset() {
   mmio.bias.Reset();
 
   resolution_old = 0;
-  scheduler->Add(mmio.bias.GetSampleInterval(), event_cb);
+  scheduler.Add(mmio.bias.GetSampleInterval(), event_cb);
 
   psg1.Reset();
   psg2.Reset();
@@ -111,7 +111,7 @@ void APU::OnTimerOverflow(int timer_id, int times, int samplerate) {
         latch[fifo_id] = fifo.Read();
       }
       if (fifo.Count() <= 16) {
-        dma->Request(occasion[fifo_id]);
+        dma.Request(occasion[fifo_id]);
       }
     }
   }
@@ -172,7 +172,7 @@ void APU::Generate(int cycles_late) {
   resampler->Write({ sample[0] / float(0x200), sample[1] / float(0x200) });
   buffer_mutex.unlock();
 
-  scheduler->Add(mmio.bias.GetSampleInterval() - cycles_late, event_cb);
+  scheduler.Add(mmio.bias.GetSampleInterval() - cycles_late, event_cb);
 }
 
 } // namespace nba::core

@@ -144,14 +144,14 @@ private:
 
 class Sequencer {
 public:
-  Sequencer(Scheduler* scheduler) : scheduler(scheduler) { Reset(); }
+  Sequencer(Scheduler& scheduler) : scheduler(scheduler) { Reset(); }
 
   void Reset() {
     length = 0;
     envelope.Reset();
     sweep.Reset();
     step = 0;
-    scheduler->Add(s_cycles_per_step, event_cb);
+    scheduler.Add(s_cycles_per_step, event_cb);
   }
 
   void Restart() {
@@ -176,7 +176,7 @@ public:
       case 7: envelope.Tick(); break;
     }
     step = (step + 1) % 8;
-    scheduler->Add(s_cycles_per_step - cycles_late, event_cb);
+    scheduler.Add(s_cycles_per_step - cycles_late, event_cb);
   }
 
   std::function<void(int)> event_cb = [this](int cycles_late) {
@@ -190,7 +190,7 @@ public:
 
 private:
   int step;
-  Scheduler* scheduler;
+  Scheduler& scheduler;
 
   static constexpr int s_cycles_per_step = 16777216/512;
 };

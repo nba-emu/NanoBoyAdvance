@@ -70,7 +70,7 @@ void DMA::ScheduleDMAs(unsigned int bitset) {
   while (bitset > 0) {
     auto chan_id = g_dma_from_bitset[bitset];
     bitset &= ~(1 << chan_id);
-    channels[chan_id].startup_event = scheduler->Add(2, [this, chan_id](int cycles_late) {
+    channels[chan_id].startup_event = scheduler.Add(2, [this, chan_id](int cycles_late) {
       channels[chan_id].startup_event = nullptr;
       if (runnable_set.none()) {
         active_dma_id = chan_id;
@@ -158,8 +158,8 @@ void DMA::RunChannel(bool first) {
   auto src_page = GetUnaliasedMemoryArea(channel.src_addr >> 24);
   auto dst_page = GetUnaliasedMemoryArea(channel.dst_addr >> 24);
   if ((src_page != 0x08 || dst_page != 0x08) && first) {
-    memory->Idle();
-    memory->Idle();
+    memory.Idle();
+    memory.Idle();
   }
 
   while (channel.latch.length != 0) {
@@ -170,19 +170,19 @@ void DMA::RunChannel(bool first) {
 
     if (size == Channel::Half) {
       if (likely(channel.latch.src_addr >= 0x02000000)) {
-        auto value = memory->ReadHalf(channel.latch.src_addr, access);
+        auto value = memory.ReadHalf(channel.latch.src_addr, access);
         latch = (value << 16) | value;
       } else {
-        memory->Idle();
+        memory.Idle();
       }
-      memory->WriteHalf(channel.latch.dst_addr, latch, access);
+      memory.WriteHalf(channel.latch.dst_addr, latch, access);
     } else {
       if (likely(channel.latch.src_addr >= 0x02000000)) {
-        latch = memory->ReadWord(channel.latch.src_addr, access);
+        latch = memory.ReadWord(channel.latch.src_addr, access);
       } else {
-        memory->Idle();
+        memory.Idle();
       }
-      memory->WriteWord(channel.latch.dst_addr, latch, access);
+      memory.WriteWord(channel.latch.dst_addr, latch, access);
     }
 
     channel.latch.src_addr += src_modify;
@@ -195,7 +195,7 @@ void DMA::RunChannel(bool first) {
   runnable_set.set(channel.id, false);
 
   if (channel.interrupt) {
-    irq_controller->Raise(InterruptSource::DMA, channel.id);
+    irq_controller.Raise(InterruptSource::DMA, channel.id);
   }
 
   if (channel.repeat) {
@@ -303,7 +303,7 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
     // TODO: not exactly known how hardware handles this edge-case.
     if (channel.startup_event != nullptr) {
       LOG_WARN("DMA{0} was cancelled before its startup completed.", channel.id);
-      scheduler->Cancel(channel.startup_event);
+      scheduler.Cancel(channel.startup_event);
       channel.startup_event = nullptr;
     }
 

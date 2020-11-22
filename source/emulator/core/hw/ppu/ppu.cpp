@@ -12,11 +12,10 @@
 namespace nba::core {
 
 constexpr std::uint16_t PPU::s_color_transparent;
-constexpr int PPU::s_wait_cycles[4];
 
-PPU::PPU(Scheduler* scheduler,
-         InterruptController* irq_controller,
-         DMA* dma,
+PPU::PPU(Scheduler& scheduler,
+         InterruptController& irq_controller,
+         DMA& dma,
          std::shared_ptr<Config> config)
   : scheduler(scheduler)
   , irq_controller(irq_controller)
@@ -66,7 +65,7 @@ void PPU::Reset() {
   mmio.evy = 0;
   mmio.bldcnt.Reset();
 
-  scheduler->Add(1006, this, &PPU::OnScanlineComplete);
+  scheduler.Add(1006, this, &PPU::OnScanlineComplete);
 }
 
 void PPU::CheckVerticalCounterIRQ() {
@@ -74,25 +73,25 @@ void PPU::CheckVerticalCounterIRQ() {
   auto vcount_flag_new = dispstat.vcount_setting == mmio.vcount;
 
   if (dispstat.vcount_irq_enable && !dispstat.vcount_flag && vcount_flag_new) {
-    irq_controller->Raise(InterruptSource::VCount);
+    irq_controller.Raise(InterruptSource::VCount);
   }
   
   dispstat.vcount_flag = vcount_flag_new;
 }
 
 void PPU::OnScanlineComplete(int cycles_late) {
-  scheduler->Add(226 - cycles_late, this, &PPU::OnHblankComplete);
+  scheduler.Add(226 - cycles_late, this, &PPU::OnHblankComplete);
 
   mmio.dispstat.hblank_flag = 1;
 
   if (mmio.dispstat.hblank_irq_enable) {
-    irq_controller->Raise(InterruptSource::HBlank);
+    irq_controller.Raise(InterruptSource::HBlank);
   }
 
-  dma->Request(DMA::Occasion::HBlank);
+  dma.Request(DMA::Occasion::HBlank);
   
   if (mmio.vcount >= 2) {
-    dma->Request(DMA::Occasion::Video);
+    dma.Request(DMA::Occasion::Video);
   }
 }
 
@@ -119,12 +118,12 @@ void PPU::OnHblankComplete(int cycles_late) {
   if (vcount == 160) {
     config->video_dev->Draw(output);
 
-    scheduler->Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
-    dma->Request(DMA::Occasion::VBlank);
+    scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
+    dma.Request(DMA::Occasion::VBlank);
     dispstat.vblank_flag = 1;
 
     if (dispstat.vblank_irq_enable) {
-      irq_controller->Raise(InterruptSource::VBlank);
+      irq_controller.Raise(InterruptSource::VBlank);
     }
 
     // Reset vertical mosaic counters
@@ -137,7 +136,7 @@ void PPU::OnHblankComplete(int cycles_late) {
     bgx[1]._current = bgx[1].initial;
     bgy[1]._current = bgy[1].initial;
   } else {
-    scheduler->Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
+    scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
 
     // Advance vertical background mosaic counter
     if (++mosaic.bg._counter_y == mosaic.bg.size_y) {
@@ -175,18 +174,18 @@ void PPU::OnHblankComplete(int cycles_late) {
 void PPU::OnVblankScanlineComplete(int cycles_late) {
   auto& dispstat = mmio.dispstat;
 
-  scheduler->Add(226 - cycles_late, this, &PPU::OnVblankHblankComplete);
+  scheduler.Add(226 - cycles_late, this, &PPU::OnVblankHblankComplete);
 
   dispstat.hblank_flag = 1;
 
   if (mmio.vcount < 162) {
-    dma->Request(DMA::Occasion::Video);
+    dma.Request(DMA::Occasion::Video);
   } else if (mmio.vcount == 162) {
-    dma->StopVideoXferDMA();
+    dma.StopVideoXferDMA();
   }
 
   if (dispstat.hblank_irq_enable) {
-    irq_controller->Raise(InterruptSource::HBlank);
+    irq_controller.Raise(InterruptSource::HBlank);
   }
 }
 
@@ -197,10 +196,10 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
   dispstat.hblank_flag = 0;
 
   if (vcount == 227) {
-    scheduler->Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
+    scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
     vcount = 0;
   } else {
-    scheduler->Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
+    scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
     if (vcount == 226) {
       dispstat.vblank_flag = 0;
     }

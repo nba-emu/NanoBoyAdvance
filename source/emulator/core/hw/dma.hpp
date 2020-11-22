@@ -19,9 +19,9 @@ class DMA {
 public:
   using Access = arm::MemoryBase::Access;
 
-  DMA(arm::MemoryBase* memory,
-      InterruptController* irq_controller,
-      Scheduler* scheduler)
+  DMA(arm::MemoryBase& memory,
+      InterruptController& irq_controller,
+      Scheduler& scheduler)
     : memory(memory)
     , irq_controller(irq_controller)
     , scheduler(scheduler)
@@ -109,9 +109,9 @@ private:
   void OnChannelWritten(Channel& channel, bool enable_old);
   void RunChannel(bool first);
 
-  arm::MemoryBase* memory;
-  InterruptController* irq_controller;
-  Scheduler* scheduler;
+  arm::MemoryBase& memory;
+  InterruptController& irq_controller;
+  Scheduler& scheduler;
 
   int active_dma_id;
   bool early_exit_trigger;

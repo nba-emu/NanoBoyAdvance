@@ -86,7 +86,7 @@ void Timer::Write(int chan_id, int offset, std::uint8_t value) {
           channel.counter = channel.reload;
         }
         if (!control.cascade) {
-          auto late = (scheduler->GetTimestampNow() & channel.mask);
+          auto late = (scheduler.GetTimestampNow() & channel.mask);
           // TODO: better understand and emulate this delay.
           if (!enable_previous) {
             late -= 2;
@@ -111,15 +111,15 @@ void Timer::Write(int chan_id, int offset, std::uint8_t value) {
 }
 
 auto Timer::GetCounterDeltaSinceLastUpdate(Channel const& channel) -> std::uint32_t {
-  return (scheduler->GetTimestampNow() - channel.timestamp_started) >> channel.shift;
+  return (scheduler.GetTimestampNow() - channel.timestamp_started) >> channel.shift;
 }
 
 void Timer::StartChannel(Channel& channel, int cycles_late) {
   int cycles = int((0x10000 - channel.counter) << channel.shift);
 
   channel.running = true;
-  channel.timestamp_started = scheduler->GetTimestampNow() - cycles_late;
-  channel.event = scheduler->Add(cycles - cycles_late, channel.event_cb);
+  channel.timestamp_started = scheduler.GetTimestampNow() - cycles_late;
+  channel.event = scheduler.Add(cycles - cycles_late, channel.event_cb);
 }
 
 void Timer::StopChannel(Channel& channel) {
@@ -127,7 +127,7 @@ void Timer::StopChannel(Channel& channel) {
   if (channel.counter >= 0x10000) {
     OnOverflow(channel);
   }
-  scheduler->Cancel(channel.event);
+  scheduler.Cancel(channel.event);
   channel.event = nullptr;
   channel.running = false;
 }
@@ -136,11 +136,11 @@ void Timer::OnOverflow(Channel& channel) {
   channel.counter = channel.reload;
 
   if (channel.control.interrupt) {
-    irq_controller->Raise(InterruptSource::Timer, channel.id);
+    irq_controller.Raise(InterruptSource::Timer, channel.id);
   }
 
   if (channel.id <= 1) {
-    apu->OnTimerOverflow(channel.id, 1, channel.samplerate);
+    apu.OnTimerOverflow(channel.id, 1, channel.samplerate);
   }
 
   if (channel.id != 3) {

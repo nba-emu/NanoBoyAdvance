@@ -15,7 +15,7 @@ namespace nba::core {
 
 class WaveChannel {
 public:
-  WaveChannel(Scheduler* scheduler);
+  WaveChannel(Scheduler& scheduler);
 
   void Reset();
 
@@ -43,7 +43,7 @@ private:
     this->Generate(cycles_late);
   };
 
-  Scheduler* scheduler;
+  Scheduler& scheduler;
   Sequencer sequencer;
 
   bool enabled;

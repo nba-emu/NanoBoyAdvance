@@ -9,7 +9,10 @@
 
 namespace nba::core {
 
-NoiseChannel::NoiseChannel(Scheduler* scheduler, BIAS& bias) : scheduler(scheduler), sequencer(scheduler), bias(bias) {
+NoiseChannel::NoiseChannel(Scheduler& scheduler, BIAS& bias)
+    : scheduler(scheduler)
+    , sequencer(scheduler)
+    , bias(bias) {
   sequencer.sweep.enabled = false;
   sequencer.envelope.enabled = true;
   Reset();
@@ -27,13 +30,13 @@ void NoiseChannel::Reset() {
   sample = 0;
   skip_count = 0;
 
-  scheduler->Add(GetSynthesisInterval(7, 15), event_cb);
+  scheduler.Add(GetSynthesisInterval(7, 15), event_cb);
 }
 
 void NoiseChannel::Generate(int cycles_late) {
   if (length_enable && sequencer.length <= 0) {
     sample = 0;
-    scheduler->Add(GetSynthesisInterval(7, 15) - cycles_late, event_cb);
+    scheduler.Add(GetSynthesisInterval(7, 15) - cycles_late, event_cb);
     return;
   }
 
@@ -76,7 +79,7 @@ void NoiseChannel::Generate(int cycles_late) {
     skip_count = 0;
   }
 
-  scheduler->Add(noise_interval - cycles_late, event_cb);
+  scheduler.Add(noise_interval - cycles_late, event_cb);
 }
 
 auto NoiseChannel::Read(int offset) -> std::uint8_t {

@@ -17,7 +17,7 @@ namespace nba::core {
 
 class Timer {
 public:
-  Timer(Scheduler* scheduler, InterruptController* irq_controller, APU* apu) : scheduler(scheduler), irq_controller(irq_controller) , apu(apu) { Reset(); }
+  Timer(Scheduler& scheduler, InterruptController& irq_controller, APU& apu) : scheduler(scheduler), irq_controller(irq_controller) , apu(apu) { Reset(); }
 
   void Reset();
   auto Read (int chan_id, int offset) -> std::uint8_t;
@@ -50,9 +50,9 @@ private:
     std::function<void(int)> event_cb;
   } channels[4];
 
-  Scheduler* scheduler;
-  InterruptController* irq_controller;
-  APU* apu;
+  Scheduler& scheduler;
+  InterruptController& irq_controller;
+  APU& apu;
 
   auto GetCounterDeltaSinceLastUpdate(Channel const& channel) -> std::uint32_t;
   void StartChannel(Channel& channel, int cycles_late);
