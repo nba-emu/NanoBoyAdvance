@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cstdint>
+#include <emulator/core/scheduler.hpp>
 
 #include "sequencer.hpp"
 #include "../registers.hpp"
@@ -23,6 +24,8 @@ public:
   void Generate(int cycles_late);
   auto Read (int offset) -> std::uint8_t;
   void Write(int offset, std::uint8_t value);
+
+  Sequencer sequencer;
 
   std::int8_t sample = 0;
 
@@ -42,7 +45,6 @@ private:
   std::uint16_t lfsr;
 
   Scheduler& scheduler;
-  Sequencer sequencer;
   std::function<void(int)> event_cb = [this](int cycles_late) {
     this->Generate(cycles_late);
   };

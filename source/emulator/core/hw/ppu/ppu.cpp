@@ -11,8 +11,6 @@
 
 namespace nba::core {
 
-constexpr std::uint16_t PPU::s_color_transparent;
-
 PPU::PPU(Scheduler& scheduler, IRQ& irq, DMA& dma, std::shared_ptr<Config> config)
     : scheduler(scheduler)
     , irq(irq)

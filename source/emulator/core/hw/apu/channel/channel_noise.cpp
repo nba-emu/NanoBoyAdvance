@@ -11,7 +11,6 @@ namespace nba::core {
 
 NoiseChannel::NoiseChannel(Scheduler& scheduler, BIAS& bias)
     : scheduler(scheduler)
-    , sequencer(scheduler)
     , bias(bias) {
   sequencer.sweep.enabled = false;
   sequencer.envelope.enabled = true;

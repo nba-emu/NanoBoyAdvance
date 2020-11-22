@@ -38,7 +38,8 @@ void APU::Reset() {
   mmio.bias.Reset();
 
   resolution_old = 0;
-  scheduler.Add(mmio.bias.GetSampleInterval(), event_cb);
+  scheduler.Add(mmio.bias.GetSampleInterval(), this, &APU::StepMixer);
+  scheduler.Add(Sequencer::s_cycles_per_step, this, &APU::StepSequencer);
 
   psg1.Reset();
   psg2.Reset();
@@ -117,7 +118,7 @@ void APU::OnTimerOverflow(int timer_id, int times, int samplerate) {
   }
 }
 
-void APU::Generate(int cycles_late) {
+void APU::StepMixer(int cycles_late) {
   auto& bias = mmio.bias;
 
   if (bias.resolution != resolution_old) {
@@ -172,7 +173,16 @@ void APU::Generate(int cycles_late) {
   resampler->Write({ sample[0] / float(0x200), sample[1] / float(0x200) });
   buffer_mutex.unlock();
 
-  scheduler.Add(mmio.bias.GetSampleInterval() - cycles_late, event_cb);
+  scheduler.Add(mmio.bias.GetSampleInterval() - cycles_late, this, &APU::StepMixer);
+}
+
+void APU::StepSequencer(int cycles_late) {
+  psg1.sequencer.Tick();
+  psg2.sequencer.Tick();
+  psg3.sequencer.Tick();
+  psg4.sequencer.Tick();
+
+  scheduler.Add(Sequencer::s_cycles_per_step - cycles_late, this, &APU::StepSequencer);
 }
 
 } // namespace nba::core

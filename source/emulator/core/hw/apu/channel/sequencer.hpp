@@ -8,7 +8,6 @@
 #pragma once
 
 #include <algorithm>
-#include <emulator/core/scheduler.hpp>
 
 namespace nba::core {
 
@@ -144,14 +143,15 @@ private:
 
 class Sequencer {
 public:
-  Sequencer(Scheduler& scheduler) : scheduler(scheduler) { Reset(); }
+  static constexpr int s_cycles_per_step = 16777216/512;
+
+  Sequencer() { Reset(); }
 
   void Reset() {
     length = 0;
     envelope.Reset();
     sweep.Reset();
     step = 0;
-    scheduler.Add(s_cycles_per_step, event_cb);
   }
 
   void Restart() {
@@ -163,7 +163,7 @@ public:
     step = 0;
   }
 
-  void Tick(int cycles_late) {
+  void Tick() {
     // http://gbdev.gg8.se/wiki/articles/Gameboy_sound_hardware#Frame_Sequencer
     switch (step) {
       case 0: length--; break;
@@ -176,12 +176,7 @@ public:
       case 7: envelope.Tick(); break;
     }
     step = (step + 1) % 8;
-    scheduler.Add(s_cycles_per_step - cycles_late, event_cb);
   }
-
-  std::function<void(int)> event_cb = [this](int cycles_late) {
-    this->Tick(cycles_late);
-  };
 
   int length;
   int length_default = 64;
@@ -190,9 +185,6 @@ public:
 
 private:
   int step;
-  Scheduler& scheduler;
-
-  static constexpr int s_cycles_per_step = 16777216/512;
 };
 
 } // namespace nba::core

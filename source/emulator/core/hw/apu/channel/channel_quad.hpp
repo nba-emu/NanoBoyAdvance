@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cstdint>
+#include <emulator/core/scheduler.hpp>
 
 #include "sequencer.hpp"
 
@@ -23,6 +24,8 @@ public:
   auto Read (int offset) -> std::uint8_t;
   void Write(int offset, std::uint8_t value);
 
+  Sequencer sequencer;
+
   std::int8_t sample = 0;
 
 private:
@@ -34,7 +37,6 @@ private:
   }
 
   Scheduler& scheduler;
-  Sequencer sequencer;
   int phase;
   int wave_duty;
   bool length_enable;

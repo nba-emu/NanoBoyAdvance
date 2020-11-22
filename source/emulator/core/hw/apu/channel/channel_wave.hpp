@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cstdint>
+#include <emulator/core/scheduler.hpp>
 
 #include "sequencer.hpp"
 
@@ -31,6 +32,8 @@ public:
     wave_ram[wave_bank ^ 1][offset] = value;
   }
 
+  Sequencer sequencer;
+
   std::int8_t sample = 0;
 
 private:
@@ -44,7 +47,6 @@ private:
   };
 
   Scheduler& scheduler;
-  Sequencer sequencer;
 
   bool enabled;
   bool force_volume;

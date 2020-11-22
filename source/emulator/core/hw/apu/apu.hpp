@@ -51,15 +51,12 @@ public:
   std::unique_ptr<common::dsp::StereoResampler<float>> resampler;
 
 private:
-  void Generate(int cycles_late);
+  void StepMixer(int cycles_late);
+  void StepSequencer(int cycles_late);
 
   Scheduler& scheduler;
   DMA& dma;
   std::shared_ptr<Config> config;
-  std::function<void(int)> event_cb = [this](int cycles_late) {
-    this->Generate(cycles_late);
-  };
-
   int resolution_old = 0;
 };
 
