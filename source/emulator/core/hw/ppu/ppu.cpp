@@ -16,7 +16,6 @@ PPU::PPU(Scheduler& scheduler, IRQ& irq, DMA& dma, std::shared_ptr<Config> confi
     , irq(irq)
     , dma(dma)
     , config(config) {
-  InitBlendTable();
   Reset();
   mmio.dispstat.ppu = this;
 }

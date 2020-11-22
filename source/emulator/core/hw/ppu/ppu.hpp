@@ -113,10 +113,7 @@ private:
 
   template<bool window, bool blending>
   void ComposeScanlineTmpl(int bg_min, int bg_max);
-
   void ComposeScanline(int bg_min, int bg_max);
-
-  void InitBlendTable();
   void Blend(std::uint16_t& target1, std::uint16_t target2, BlendControl::Effect sfx);
 
   #include "helper.inl"
@@ -128,6 +125,8 @@ private:
 
   std::uint16_t buffer_bg[4][240];
 
+  bool line_contains_alpha_obj;
+
   struct ObjectPixel {
     std::uint16_t color;
     std::uint8_t  priority;
@@ -135,11 +134,10 @@ private:
     unsigned window : 1;
   } buffer_obj[240];
 
-  bool line_contains_alpha_obj;
   bool buffer_win[2][240];
   bool window_scanline_enable[2];
+
   std::uint32_t output[240*160];
-  std::uint8_t blend_table[17][17][32][32];
 
   static constexpr std::uint16_t s_color_transparent = 0x8000;
   static const int s_obj_size[4][4][2];
