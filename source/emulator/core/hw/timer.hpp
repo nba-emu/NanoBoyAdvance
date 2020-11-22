@@ -17,7 +17,12 @@ namespace nba::core {
 
 class Timer {
 public:
-  Timer(Scheduler& scheduler, IRQ& irq, APU& apu) : scheduler(scheduler), irq(irq) , apu(apu) { Reset(); }
+  Timer(Scheduler& scheduler, IRQ& irq, APU& apu)
+      : scheduler(scheduler)
+      , irq(irq)
+      , apu(apu) {
+    Reset();
+  }
 
   void Reset();
   auto Read (int chan_id, int offset) -> std::uint8_t;

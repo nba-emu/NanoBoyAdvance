@@ -19,13 +19,12 @@ class DMA {
 public:
   using Access = arm::MemoryBase::Access;
 
-  DMA(arm::MemoryBase& memory,
-      IRQ& irq,
-      Scheduler& scheduler)
-    : memory(memory)
-    , irq(irq)
-    , scheduler(scheduler)
-  { Reset(); }
+  DMA(arm::MemoryBase& memory, IRQ& irq, Scheduler& scheduler)
+      : memory(memory)
+      , irq(irq)
+      , scheduler(scheduler) {
+    Reset();
+  }
 
   enum class Occasion {
     HBlank,
