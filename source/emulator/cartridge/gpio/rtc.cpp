@@ -223,7 +223,7 @@ void RTC::WriteRegister() {
       break;
     }
     case Register::ForceIRQ: {
-      irq->Raise(nba::core::InterruptSource::GamePak);
+      irq->Raise(nba::core::IRQ::Source::GamePak);
       break;
     }
   }

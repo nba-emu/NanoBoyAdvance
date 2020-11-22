@@ -136,7 +136,7 @@ void Timer::OnOverflow(Channel& channel) {
   channel.counter = channel.reload;
 
   if (channel.control.interrupt) {
-    irq.Raise(InterruptSource::Timer, channel.id);
+    irq.Raise(IRQ::Source::Timer, channel.id);
   }
 
   if (channel.id <= 1) {

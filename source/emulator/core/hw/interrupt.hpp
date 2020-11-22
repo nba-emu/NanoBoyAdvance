@@ -11,19 +11,19 @@
 
 namespace nba::core {
 
-enum class InterruptSource {
-  VBlank,
-  HBlank,
-  VCount,
-  Timer,
-  Serial,
-  DMA,
-  Keypad,
-  GamePak
-};
-
 class IRQ {
 public:
+  enum class Source {
+    VBlank,
+    HBlank,
+    VCount,
+    Timer,
+    Serial,
+    DMA,
+    Keypad,
+    GamePak
+  };
+
   IRQ() { Reset(); }
 
   void Reset() {
@@ -34,7 +34,7 @@ public:
 
   auto Read(int offset) const -> std::uint8_t;
   void Write(int offset, std::uint8_t value);
-  void Raise(InterruptSource source, int id = 0);
+  void Raise(IRQ::Source source, int channel = 0);
 
   bool MasterEnable() const {
     return reg_ime != 0;

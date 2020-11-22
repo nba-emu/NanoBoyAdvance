@@ -366,9 +366,9 @@ void CPU::CheckKeypadInterrupt() {
     return;
   if (keycnt.and_mode) {
     if (keycnt.input_mask == keyinput)
-      irq.Raise(InterruptSource::Keypad);
+      irq.Raise(IRQ::Source::Keypad);
   } else if ((keycnt.input_mask & keyinput) != 0) {
-    irq.Raise(InterruptSource::Keypad);
+    irq.Raise(IRQ::Source::Keypad);
   }
 }
 

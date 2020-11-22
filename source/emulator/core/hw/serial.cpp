@@ -72,7 +72,7 @@ void SerialBus::Write(std::uint32_t address, std::uint8_t value) {
         LOG_WARN("SIO: triggered data transfer!");
         // NOTE: this is a very rough hack.
         if (siocnt.enable_irq)
-          irq.Raise(InterruptSource::Serial);
+          irq.Raise(IRQ::Source::Serial);
       }
       break;
     case SIOCNT | 1:

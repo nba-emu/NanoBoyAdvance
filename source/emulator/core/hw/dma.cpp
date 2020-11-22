@@ -195,7 +195,7 @@ void DMA::RunChannel(bool first) {
   runnable_set.set(channel.id, false);
 
   if (channel.interrupt) {
-    irq.Raise(InterruptSource::DMA, channel.id);
+    irq.Raise(IRQ::Source::DMA, channel.id);
   }
 
   if (channel.repeat) {

@@ -43,30 +43,30 @@ void IRQ::Write(int offset, std::uint8_t value) {
   }
 }
 
-void IRQ::Raise(InterruptSource source, int id) {
+void IRQ::Raise(IRQ::Source source, int channel) {
   switch (source) {
-    case InterruptSource::VBlank:
+    case Source::VBlank:
       reg_if |= 1;
       break;
-    case InterruptSource::HBlank:
+    case Source::HBlank:
       reg_if |= 2;
       break;
-    case InterruptSource::VCount:
+    case Source::VCount:
       reg_if |= 4;
       break;
-    case InterruptSource::Timer:
-      reg_if |= 8 << id;
+    case Source::Timer:
+      reg_if |= 8 << channel;
       break;
-    case InterruptSource::Serial:
+    case Source::Serial:
       reg_if |= 128;
       break;
-    case InterruptSource::DMA:
-      reg_if |= 256 << id;
+    case Source::DMA:
+      reg_if |= 256 << channel;
       break;
-    case InterruptSource::Keypad:
+    case Source::Keypad:
       reg_if |= 4096;
       break;
-    case InterruptSource::GamePak:
+    case Source::GamePak:
       reg_if |= 8192;
       break;
   }
