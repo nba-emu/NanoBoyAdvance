@@ -20,10 +20,7 @@ namespace nba::core {
 
 class PPU {
 public:
-  PPU(Scheduler& scheduler,
-      InterruptController& irq_controller,
-      DMA& dma,
-      std::shared_ptr<Config> config);
+  PPU(Scheduler& scheduler, IRQ& irq, DMA& dma, std::shared_ptr<Config> config);
 
   void Reset();
 
@@ -98,7 +95,6 @@ private:
   };
 
   void CheckVerticalCounterIRQ();
-
   void OnScanlineComplete(int cycles_late);
   void OnHblankComplete(int cycles_late);
   void OnVblankScanlineComplete(int cycles_late);
@@ -126,7 +122,7 @@ private:
   #include "helper.inl"
 
   Scheduler& scheduler;
-  InterruptController& irq_controller;
+  IRQ& irq;
   DMA& dma;
   std::shared_ptr<Config> config;
 
@@ -140,12 +136,9 @@ private:
   } buffer_obj[240];
 
   bool line_contains_alpha_obj;
-
   bool buffer_win[2][240];
   bool window_scanline_enable[2];
-
   std::uint32_t output[240*160];
-
   std::uint8_t blend_table[17][17][32][32];
 
   static constexpr std::uint16_t s_color_transparent = 0x8000;

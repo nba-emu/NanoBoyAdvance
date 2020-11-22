@@ -22,9 +22,9 @@ public:
     Out = 1  // GPIO <- GBA
   };
 
-  GPIO(nba::core::Scheduler* scheduler, nba::core::InterruptController* irq_controller)
+  GPIO(nba::core::Scheduler* scheduler, nba::core::IRQ* irq)
     : scheduler(scheduler)
-    , irq_controller(irq_controller) 
+    , irq(irq) 
   { Reset(); }
 
   virtual ~GPIO() {}
@@ -48,7 +48,7 @@ protected:
   virtual void WritePort(std::uint8_t value) = 0;
 
   nba::core::Scheduler* scheduler;
-  nba::core::InterruptController* irq_controller;
+  nba::core::IRQ* irq;
 
 private:
   enum class Register {

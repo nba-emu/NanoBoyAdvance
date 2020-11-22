@@ -22,9 +22,9 @@ enum class InterruptSource {
   GamePak
 };
 
-class InterruptController {
+class IRQ {
 public:
-  InterruptController() { Reset(); }
+  IRQ() { Reset(); }
 
   void Reset() {
     reg_ime = 0;

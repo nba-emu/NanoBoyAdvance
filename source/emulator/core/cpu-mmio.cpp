@@ -190,11 +190,11 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
     }
 
     /* Interrupt Control */
-    case IE+0:  return irq_controller.Read(0);
-    case IE+1:  return irq_controller.Read(1);
-    case IF+0:  return irq_controller.Read(2);
-    case IF+1:  return irq_controller.Read(3);
-    case IME+0: return irq_controller.Read(4);
+    case IE+0:  return irq.Read(0);
+    case IE+1:  return irq.Read(1);
+    case IF+0:  return irq.Read(2);
+    case IF+1:  return irq.Read(3);
+    case IME+0: return irq.Read(4);
     case IME+1:
     case IME+2:
     case IME+3: return 0;
@@ -530,11 +530,11 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
     }
 
     /* Interrupt Control */
-    case IE+0: irq_controller.Write(0, value); break;
-    case IE+1: irq_controller.Write(1, value); break;
-    case IF+0: irq_controller.Write(2, value); break;
-    case IF+1: irq_controller.Write(3, value); break;
-    case IME:  irq_controller.Write(4, value); break;
+    case IE+0: irq.Write(0, value); break;
+    case IE+1: irq.Write(1, value); break;
+    case IF+0: irq.Write(2, value); break;
+    case IF+1: irq.Write(3, value); break;
+    case IME:  irq.Write(4, value); break;
 
     /* Waitstates */
     case WAITCNT+0: {

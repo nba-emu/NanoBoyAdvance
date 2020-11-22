@@ -20,14 +20,13 @@ constexpr int CPU::s_ws_seq2[2];
 using Key = InputDevice::Key;
 
 CPU::CPU(std::shared_ptr<Config> config)
-  : ARM7TDMI::ARM7TDMI(this)
-  , config(config)
-  , dma(*this, irq_controller, scheduler)
-  , apu(scheduler, dma, config)
-  , ppu(scheduler, irq_controller, dma, config)
-  , timer(scheduler, irq_controller, apu)
-  , serial_bus(irq_controller)
-{
+    : ARM7TDMI::ARM7TDMI(this)
+    , config(config)
+    , dma(*this, irq, scheduler)
+    , apu(scheduler, dma, config)
+    , ppu(scheduler, irq, dma, config)
+    , timer(scheduler, irq, apu)
+    , serial_bus(irq) {
   std::memset(memory.bios, 0, 0x04000);
   memory.rom.size = 0;
   memory.rom.mask = 0;
@@ -38,7 +37,7 @@ void CPU::Reset() {
   std::memset(memory.wram, 0, 0x40000);
   std::memset(memory.iram, 0, 0x08000);
 
-  irq = {};
+  irq_delay = {};
   mmio = {};
   prefetch = {};
   last_rom_address = 0;
@@ -54,7 +53,7 @@ void CPU::Reset() {
   }
 
   scheduler.Reset();
-  irq_controller.Reset();
+  irq.Reset();
   dma.Reset();
   timer.Reset();
   apu.Reset();
@@ -96,8 +95,8 @@ void CPU::Tick(int cycles) {
 
   // TODO: move IRQ delay and prefetcher load on the scheduler.
 
-  if (irq.processing && irq.countdown >= 0) {
-    irq.countdown -= cycles;
+  if (irq_delay.processing && irq_delay.countdown >= 0) {
+    irq_delay.countdown -= cycles;
   }
 
   if (prefetch.active && !bus_is_controlled_by_dma) {
@@ -202,22 +201,22 @@ void CPU::RunFor(int cycles) {
 
   // TODO: account for per frame overshoot.
   while (scheduler.GetTimestampNow() < limit) {
-    auto has_servable_irq = irq_controller.HasServableIRQ();
+    auto has_servable_irq = irq.HasServableIRQ();
 
     if (unlikely(mmio.haltcnt == HaltControl::HALT && has_servable_irq)) {
       mmio.haltcnt = HaltControl::RUN;
     }
 
     if (likely(mmio.haltcnt == HaltControl::RUN)) {
-      if (irq_controller.MasterEnable() && has_servable_irq) {
-        if (!irq.processing) {
-          irq.processing = true;
-          irq.countdown = 3;
-        } else if (irq.countdown < 0) {
+      if (irq.MasterEnable() && has_servable_irq) {
+        if (!irq_delay.processing) {
+          irq_delay.processing = true;
+          irq_delay.countdown = 3;
+        } else if (irq_delay.countdown < 0) {
           SignalIRQ();
         }
       } else {
-        irq.processing = false;
+        irq_delay.processing = false;
       }
       if (unlikely(m4a_xq_enable && state.r15 == m4a_setfreq_address)) {
         M4ASampleFreqSetHook();
@@ -367,9 +366,9 @@ void CPU::CheckKeypadInterrupt() {
     return;
   if (keycnt.and_mode) {
     if (keycnt.input_mask == keyinput)
-      irq_controller.Raise(InterruptSource::Keypad);
+      irq.Raise(InterruptSource::Keypad);
   } else if ((keycnt.input_mask & keyinput) != 0) {
-    irq_controller.Raise(InterruptSource::Keypad);
+    irq.Raise(InterruptSource::Keypad);
   }
 }
 

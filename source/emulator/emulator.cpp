@@ -222,7 +222,7 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
 
   /* Create and mount RTC if necessary. */
   if (game_info.gpio == GPIODeviceType::RTC || config->force_rtc) {
-    cpu.memory.rom.gpio = std::make_unique<RTC>(&cpu.scheduler, &cpu.irq_controller);
+    cpu.memory.rom.gpio = std::make_unique<RTC>(&cpu.scheduler, &cpu.irq);
   } else {
     cpu.memory.rom.gpio.reset();
   }

@@ -20,10 +20,10 @@ public:
   using Access = arm::MemoryBase::Access;
 
   DMA(arm::MemoryBase& memory,
-      InterruptController& irq_controller,
+      IRQ& irq,
       Scheduler& scheduler)
     : memory(memory)
-    , irq_controller(irq_controller)
+    , irq(irq)
     , scheduler(scheduler)
   { Reset(); }
 
@@ -110,7 +110,7 @@ private:
   void RunChannel(bool first);
 
   arm::MemoryBase& memory;
-  InterruptController& irq_controller;
+  IRQ& irq;
   Scheduler& scheduler;
 
   int active_dma_id;

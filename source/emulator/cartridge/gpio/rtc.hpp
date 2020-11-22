@@ -36,7 +36,7 @@ public:
     Free = 7
   };
 
-  RTC(nba::core::Scheduler* scheduler, nba::core::InterruptController* irq_controller) : GPIO(scheduler, irq_controller) {
+  RTC(nba::core::Scheduler* scheduler, nba::core::IRQ* irq) : GPIO(scheduler, irq) {
     Reset();
   }
 

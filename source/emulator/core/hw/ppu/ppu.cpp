@@ -13,15 +13,11 @@ namespace nba::core {
 
 constexpr std::uint16_t PPU::s_color_transparent;
 
-PPU::PPU(Scheduler& scheduler,
-         InterruptController& irq_controller,
-         DMA& dma,
-         std::shared_ptr<Config> config)
-  : scheduler(scheduler)
-  , irq_controller(irq_controller)
-  , dma(dma)
-  , config(config)
-{
+PPU::PPU(Scheduler& scheduler, IRQ& irq, DMA& dma, std::shared_ptr<Config> config)
+    : scheduler(scheduler)
+    , irq(irq)
+    , dma(dma)
+    , config(config) {
   InitBlendTable();
   Reset();
   mmio.dispstat.ppu = this;
@@ -73,7 +69,7 @@ void PPU::CheckVerticalCounterIRQ() {
   auto vcount_flag_new = dispstat.vcount_setting == mmio.vcount;
 
   if (dispstat.vcount_irq_enable && !dispstat.vcount_flag && vcount_flag_new) {
-    irq_controller.Raise(InterruptSource::VCount);
+    irq.Raise(InterruptSource::VCount);
   }
   
   dispstat.vcount_flag = vcount_flag_new;
@@ -85,7 +81,7 @@ void PPU::OnScanlineComplete(int cycles_late) {
   mmio.dispstat.hblank_flag = 1;
 
   if (mmio.dispstat.hblank_irq_enable) {
-    irq_controller.Raise(InterruptSource::HBlank);
+    irq.Raise(InterruptSource::HBlank);
   }
 
   dma.Request(DMA::Occasion::HBlank);
@@ -123,7 +119,7 @@ void PPU::OnHblankComplete(int cycles_late) {
     dispstat.vblank_flag = 1;
 
     if (dispstat.vblank_irq_enable) {
-      irq_controller.Raise(InterruptSource::VBlank);
+      irq.Raise(InterruptSource::VBlank);
     }
 
     // Reset vertical mosaic counters
@@ -185,7 +181,7 @@ void PPU::OnVblankScanlineComplete(int cycles_late) {
   }
 
   if (dispstat.hblank_irq_enable) {
-    irq_controller.Raise(InterruptSource::HBlank);
+    irq.Raise(InterruptSource::HBlank);
   }
 }
 

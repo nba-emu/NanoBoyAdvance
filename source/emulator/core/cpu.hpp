@@ -105,7 +105,7 @@ public:
   } mmio;
 
   Scheduler scheduler;
-  InterruptController irq_controller;
+  IRQ irq;
   DMA dma;
   APU apu;
   PPU ppu;
@@ -176,10 +176,10 @@ private:
 
   std::uint32_t last_rom_address;
 
-  struct IRQ {
+  struct {
     bool processing = false;
     int countdown = 0;
-  } irq;
+  } irq_delay;
 
   bool bus_is_controlled_by_dma;
   bool openbus_from_dma;

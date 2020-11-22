@@ -9,7 +9,7 @@
 
 namespace nba::core {
 
-auto InterruptController::Read(int offset) const -> std::uint8_t {
+auto IRQ::Read(int offset) const -> std::uint8_t {
   switch (offset) {
     case REG_IE|0: return reg_ie & 0xFF;
     case REG_IE|1: return reg_ie >> 8;
@@ -21,7 +21,7 @@ auto InterruptController::Read(int offset) const -> std::uint8_t {
   return 0;
 }
 
-void InterruptController::Write(int offset, std::uint8_t value) {
+void IRQ::Write(int offset, std::uint8_t value) {
   switch (offset) {
     case REG_IE|0:
       reg_ie &= 0xFF00;
@@ -43,7 +43,7 @@ void InterruptController::Write(int offset, std::uint8_t value) {
   }
 }
 
-void InterruptController::Raise(InterruptSource source, int id) {
+void IRQ::Raise(InterruptSource source, int id) {
   switch (source) {
     case InterruptSource::VBlank:
       reg_if |= 1;
