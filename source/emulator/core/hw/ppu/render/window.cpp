@@ -12,6 +12,7 @@ namespace nba::core {
 void PPU::RenderWindow(int id) {
   int line = mmio.vcount;
   auto& winv = mmio.winv[id];
+  auto& winh = mmio.winh[id];
 
   if (line == winv.min) {
     window_scanline_enable[id] = true;
@@ -21,22 +22,18 @@ void PPU::RenderWindow(int id) {
     window_scanline_enable[id] = false;
   }
 
-  if (window_scanline_enable[id]) {
-    auto& winh = mmio.winh[id];
-
-    /* Only recalculate the LUTs if min/max changed between the last update & now. */
-    if (winh._changed) {
-      if (winh.min <= winh.max) {
-        for (int x = 0; x < 240; x++) {
-          buffer_win[id][x] = x >= winh.min && x < winh.max;
-        }
-      } else {
-        for (int x = 0; x < 240; x++) {
-          buffer_win[id][x] = x >= winh.min || x < winh.max;
-        }
+  if (window_scanline_enable[id] && winh._changed) {
+    if (winh.min <= winh.max) {
+      for (int x = 0; x < 240; x++) {
+        buffer_win[id][x] = x >= winh.min && x < winh.max;
       }
-      winh._changed = false;
+    } else {
+      for (int x = 0; x < 240; x++) {
+        buffer_win[id][x] = x >= winh.min || x < winh.max;
+      }
     }
+    
+    winh._changed = false;
   }
 }
 
