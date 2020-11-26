@@ -36,8 +36,8 @@ void PPU::RenderScanline() {
   }
 
   switch (mmio.dispcnt.mode) {
+    // BG Mode 0 - 240x160 pixels, Text mode
     case 0: {
-      /* BG Mode 0 - 240x160 pixels, Text mode */
       for (int i = 0; i < 4; i++) {
         if (mmio.dispcnt.enable[i]) {
           RenderLayerText(i);
@@ -49,8 +49,8 @@ void PPU::RenderScanline() {
       ComposeScanline(0, 3);
       break;
     }
+    // BG Mode 1 - 240x160 pixels, Text and RS mode mixed
     case 1: {
-      /* BG Mode 1 - 240x160 pixels, Text and RS mode mixed */
       for (int i = 0; i < 2; i++) {
         if (mmio.dispcnt.enable[i]) {
           RenderLayerText(i);
@@ -65,9 +65,8 @@ void PPU::RenderScanline() {
       ComposeScanline(0, 2);
       break;
     }
-    case 6:
+    // BG Mode 2 - 240x160 pixels, RS mode
     case 2: {
-      /* BG Mode 2 - 240x160 pixels, RS mode */
       for (int i = 0; i < 2; i++) {
         if (mmio.dispcnt.enable[2 + i]) {
           RenderLayerAffine(i);
@@ -79,9 +78,8 @@ void PPU::RenderScanline() {
       ComposeScanline(2, 3);
       break;
     }
-    case 7:
+    // BG Mode 3 - 240x160 pixels, 32768 colors
     case 3: {
-      /* BG Mode 3 - 240x160 pixels, 32768 colors */
       if (mmio.dispcnt.enable[2]) {
         RenderLayerBitmap1();
       }
@@ -91,8 +89,8 @@ void PPU::RenderScanline() {
       ComposeScanline(2, 2);
       break;
     }
+    // BG Mode 4 - 240x160 pixels, 256 colors (out of 32768 colors)
     case 4: {
-      /* BG Mode 4 - 240x160 pixels, 256 colors (out of 32768 colors) */
       if (mmio.dispcnt.enable[2]) {
         RenderLayerBitmap2();
       }
@@ -102,8 +100,8 @@ void PPU::RenderScanline() {
       ComposeScanline(2, 2);
       break;
     }
+    // BG Mode 5 - 160x128 pixels, 32768 colors
     case 5: {
-      /* BG Mode 5 - 160x128 pixels, 32768 colors */
       if (mmio.dispcnt.enable[2]) {
         RenderLayerBitmap3();
       }
@@ -111,6 +109,15 @@ void PPU::RenderScanline() {
         RenderLayerOAM(true);
       }
       ComposeScanline(2, 2);
+      break;
+    }
+    // BG Modes 6/7 (invalid) - output backdrop color
+    case 6:
+    case 7: {
+      std::uint32_t backdrop = ConvertColor(ReadPalette(0, 0));
+      for (int x = 0; x < 240; x++) {
+        line[x] = backdrop;
+      }
       break;
     }
   }
