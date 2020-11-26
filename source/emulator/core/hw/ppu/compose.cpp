@@ -65,6 +65,7 @@ void PPU::RenderScanline() {
       ComposeScanline(0, 2);
       break;
     }
+    case 6:
     case 2: {
       /* BG Mode 2 - 240x160 pixels, RS mode */
       for (int i = 0; i < 2; i++) {
@@ -78,6 +79,7 @@ void PPU::RenderScanline() {
       ComposeScanline(2, 3);
       break;
     }
+    case 7:
     case 3: {
       /* BG Mode 3 - 240x160 pixels, 32768 colors */
       if (mmio.dispcnt.enable[2]) {
