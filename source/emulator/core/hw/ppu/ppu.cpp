@@ -73,6 +73,12 @@ void PPU::CheckVerticalCounterIRQ() {
 }
 
 void PPU::OnScanlineComplete(int cycles_late) {
+  auto& bgx = mmio.bgx;
+  auto& bgy = mmio.bgy;
+  auto& bgpb = mmio.bgpb;
+  auto& bgpd = mmio.bgpd;
+  auto& mosaic = mmio.mosaic;
+
   scheduler.Add(226 - cycles_late, this, &PPU::OnHblankComplete);
 
   mmio.dispstat.hblank_flag = 1;
@@ -85,6 +91,35 @@ void PPU::OnScanlineComplete(int cycles_late) {
   
   if (mmio.vcount >= 2) {
     dma.Request(DMA::Occasion::Video);
+  }
+
+  // Advance vertical background mosaic counter
+  if (++mosaic.bg._counter_y == mosaic.bg.size_y) {
+    mosaic.bg._counter_y = 0;
+  }
+
+  // Advance vertical OBJ mosaic counter
+  if (++mosaic.obj._counter_y == mosaic.obj.size_y) {
+    mosaic.obj._counter_y = 0;
+  }
+
+  /* Mode 0 doesn't have any affine backgrounds,
+   * in that case the internal registers seemingly aren't updated.
+   * TODO: needs more research, e.g. what happens if all affine backgrounds are disabled?
+   */
+  if (mmio.dispcnt.mode != 0) {
+    // Advance internal affine registers and apply vertical mosaic if applicable.
+    for (int i = 0; i < 2; i++) {
+      if (mmio.bgcnt[2 + i].mosaic_enable) {
+        if (mosaic.bg._counter_y == 0) {
+          bgx[i]._current += mosaic.bg.size_y * bgpb[i];
+          bgy[i]._current += mosaic.bg.size_y * bgpd[i];
+        }
+      } else {
+        bgx[i]._current += bgpb[i];
+        bgy[i]._current += bgpd[i];
+      }
+    }
   }
 }
 
@@ -130,36 +165,6 @@ void PPU::OnHblankComplete(int cycles_late) {
     bgy[1]._current = bgy[1].initial;
   } else {
     scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
-
-    // Advance vertical background mosaic counter
-    if (++mosaic.bg._counter_y == mosaic.bg.size_y) {
-      mosaic.bg._counter_y = 0;
-    }
-
-    // Advance vertical OBJ mosaic counter
-    if (++mosaic.obj._counter_y == mosaic.obj.size_y) {
-      mosaic.obj._counter_y = 0;
-    }
-
-    /* Mode 0 doesn't have any affine backgrounds,
-     * in that case the internal registers seemingly aren't updated.
-     * TODO: needs more research, e.g. what happens if all affine backgrounds are disabled?
-     */
-    if (dispcnt.mode != 0) {
-      // Advance internal affine registers and apply vertical mosaic if applicable.
-      for (int i = 0; i < 2; i++) {
-        if (mmio.bgcnt[2 + i].mosaic_enable) {
-          if (mosaic.bg._counter_y == 0) {
-            bgx[i]._current += mosaic.bg.size_y * mmio.bgpb[i];
-            bgy[i]._current += mosaic.bg.size_y * mmio.bgpd[i];
-          }
-        } else {
-          bgx[i]._current += mmio.bgpb[i];
-          bgy[i]._current += mmio.bgpd[i];
-        }
-      }
-    }
-
     RenderScanline();
   }
 }
