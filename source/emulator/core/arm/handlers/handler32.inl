@@ -617,25 +617,28 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
 }
 
 void ARM_Undefined(std::uint32_t instruction) {
-  /* Save return address and program status. */
-  state.bank[BANK_UND][BANK_R14] = state.r15 - 4;
+  // Save current program status register.
   state.spsr[BANK_UND].v = state.cpsr.v;
 
-  /* Switch to UND mode and disable interrupts. */
+  // Enter UND mode and disable IRQs.
   SwitchMode(MODE_UND);
   state.cpsr.f.mask_irq = 1;
 
-  /* Jump to execution vector */
+  // Save current program counter and jump to UND exception vector.
+  state.r14 = state.r15 - 4;
   state.r15 = 0x04;
   ReloadPipeline32();
 }
 
 void ARM_SWI(std::uint32_t instruction) {
+  // Save current program status register.
   state.spsr[BANK_SVC].v = state.cpsr.v;
 
+  // Enter SVC mode and disable IRQs.
   SwitchMode(MODE_SVC);
   state.cpsr.f.mask_irq = 1;
 
+  // Save current program counter and jump to SVC exception vector.
   state.r14 = state.r15 - 4;
   state.r15 = 0x08;
   ReloadPipeline32();

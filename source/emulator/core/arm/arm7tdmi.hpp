@@ -65,11 +65,14 @@ public:
       return;
     }
 
+    // Save current program status register.
     state.spsr[BANK_IRQ].v = state.cpsr.v;
 
+    // Enter IRQ mode and disable IRQs.
     SwitchMode(MODE_IRQ);
     state.cpsr.f.mask_irq = 1;
 
+    // Save current program counter and disable Thumb.
     if (state.cpsr.f.thumb) {
       state.cpsr.f.thumb = 0;
       state.r14 = state.r15;
@@ -77,6 +80,7 @@ public:
       state.r14 = state.r15 - 4;
     }
 
+    // Jump to IRQ exception vector.
     state.r15 = 0x18;
     ReloadPipeline32();
   }
