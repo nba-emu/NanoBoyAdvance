@@ -631,15 +631,12 @@ void ARM_Undefined(std::uint32_t instruction) {
 }
 
 void ARM_SWI(std::uint32_t instruction) {
-  /* Save return address and program status. */
-  state.bank[BANK_SVC][BANK_R14] = state.r15 - 4;
   state.spsr[BANK_SVC].v = state.cpsr.v;
 
-  /* Switch to SVC mode and disable interrupts. */
   SwitchMode(MODE_SVC);
   state.cpsr.f.mask_irq = 1;
 
-  /* Jump to execution vector */
+  state.r14 = state.r15 - 4;
   state.r15 = 0x08;
   ReloadPipeline32();
 }

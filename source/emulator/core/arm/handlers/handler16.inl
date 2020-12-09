@@ -553,16 +553,13 @@ void Thumb_ConditionalBranch(std::uint16_t instruction) {
 }
 
 void Thumb_SWI(std::uint16_t instruction) {
-  /* Save return address and program status. */
-  state.bank[BANK_SVC][BANK_R14] = state.r15 - 2;
   state.spsr[BANK_SVC].v = state.cpsr.v;
 
-  /* Switch to SVC mode and disable interrupts. */
   SwitchMode(MODE_SVC);
   state.cpsr.f.thumb = 0;
   state.cpsr.f.mask_irq = 1;
 
-  /* Jump to execution vector */
+  state.r14 = state.r15 - 2;
   state.r15 = 0x08;
   ReloadPipeline32();
 }
