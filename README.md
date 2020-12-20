@@ -6,7 +6,7 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/fleroviux/NanoboyAdvance/badge)](https://www.codefactor.io/repository/github/fleroviux/NanoboyAdvance)
 
 NanoboyAdvance is a highly accurate Nintendo Game Boy Advance (TM) emulator.<br>
-It is also indended to be reasonably efficient, bloat-free and clean code in modern C++.
+It is also intended to be reasonably efficient, bloat-free and clean code in modern C++.
 
 ![screenshot1](media/screenshot1.png)
 
@@ -48,5 +48,5 @@ See [COMPILING.md](https://github.com/fleroviux/NanoboyAdvance/blob/master/COMPI
 
 - Martin Korth: for [GBATEK](http://problemkaputt.de/gbatek.htm), a good piece of hardware documentation.
 - endrift: for prior [research](http://mgba.io/tag/emulation/) and [hardware tests](https://github.com/mgba-emu/suite).
-- Talarubi, Near: [GBA color correction algorithm](https://byuu.net/video/color-emulation)
 - destoer, Lady Starbreeze: contributing research and insightful discussions.
+- Talarubi, Near: [GBA color correction algorithm](https://byuu.net/video/color-emulation)
