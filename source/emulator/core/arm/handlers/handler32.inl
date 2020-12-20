@@ -427,21 +427,11 @@ void ARM_BranchAndLink(std::uint32_t instruction) {
 
 template <bool immediate, bool pre, bool add, bool byte, bool writeback, bool load>
 void ARM_SingleDataTransfer(std::uint32_t instruction) {
-  /* TODO: reverse-engineer special case with usermode registers and a banked base register. */
-  Mode mode;
   std::uint32_t offset;
 
   int dst  = (instruction >> 12) & 0xF;
   int base = (instruction >> 16) & 0xF;
   std::uint32_t address = state.reg[base];
-
-  /* Post-indexing implicitly write back to the base register.
-   * In that case user mode registers will be used if the W-bit is set.
-   */
-  if (!pre && writeback) {
-    mode = static_cast<Mode>(state.cpsr.f.mode);
-    SwitchMode(MODE_USR);
-  }
 
   /* Calculate offset relative to base register. */
   if (immediate) {
@@ -477,11 +467,6 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
     } else {
       WriteWord(address, value, Access::Nonsequential);
     }
-  }
-
-  /* Restore original mode (if it was changed) */
-  if (!pre && writeback) {
-    SwitchMode(mode);
   }
 
   /* Write address back to the base register. */
