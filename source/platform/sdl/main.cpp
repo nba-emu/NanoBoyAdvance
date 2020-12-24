@@ -283,10 +283,7 @@ void init(int argc, char** argv) {
     kNativeHeight * g_config->video.scale,
     SDL_WINDOW_OPENGL);
   g_gl_context = SDL_GL_CreateContext(g_window);
-  #ifndef __APPLE__
-  glewExperimental = GL_TRUE;
   glewInit();
-  #endif
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
