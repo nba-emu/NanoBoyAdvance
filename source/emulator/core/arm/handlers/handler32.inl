@@ -62,6 +62,8 @@ void ARM_DataProcessing(std::uint32_t instruction) {
 
       if (reg_op1 == 15) op1 += 4;
       if (reg_op2 == 15) op2 += 4;
+
+      interface->Idle();
     }
 
     DoShift(shift_type, op2, shift, carry, shift_imm);
