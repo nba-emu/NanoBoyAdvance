@@ -21,7 +21,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Release ..
+          cmake -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release ..
           make
 
       - name: Collect files
