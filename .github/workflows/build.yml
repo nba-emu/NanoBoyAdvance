@@ -21,7 +21,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -G "Unix Makefiles" -DCMAKE_CXX_FLAGS="-s -static-pthread -static-libgcc -static-libstdc++" -DSDL2_STATIC=ON -DGLEW_USE_STATIC_LIBS=ON -DCMAKE_BUILD_TYPE=Release ..
+          cmake -G "Unix Makefiles" -DCMAKE_CXX_FLAGS="-s -static gcc stdc++ winpthread -dynamic" -DSDL2_STATIC=ON -DGLEW_USE_STATIC_LIBS=ON -DCMAKE_BUILD_TYPE=Release ..
           make
 
       - name: Collect files
