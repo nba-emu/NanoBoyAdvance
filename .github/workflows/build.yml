@@ -22,7 +22,7 @@ jobs:
           mkdir build
           cd build
           cmake -G "Unix Makefiles" -DCMAKE_CXX_FLAGS="-s" -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++ -l:libwinpthread.a" -DSDL2_STATIC=ON -DGLEW_USE_STATIC_LIBS=ON -DCMAKE_BUILD_TYPE=Release ..
-          make
+          VERBOSE=1 make
 
       - name: Collect files
         run: |
