@@ -3,7 +3,7 @@ name: Build
 on: push
 
 jobs:
-  build-windows-gcc:
+  build-win64:
     runs-on: windows-latest
     defaults:
       run:
@@ -21,13 +21,13 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -G "Unix Makefiles" -DCMAKE_CXX_FLAGS="-static-libgcc -static-libstdc++" -DCMAKE_BUILD_TYPE=Release ..
+          cmake -G "Unix Makefiles" -DCMAKE_CXX_FLAGS="-s -static-libgcc -static-libstdc++" -DCMAKE_BUILD_TYPE=Release ..
           make
 
       - name: Collect files
         run: |
           mkdir upload
-          mv build/source/platform/sdl/NanoboyAdvance upload
+          mv build/source/platform/sdl/NanoboyAdvance.exe upload
           mv build/source/platform/sdl/config.toml upload
           mv build/source/platform/sdl/keymap.toml upload
           mv build/source/platform/sdl/shader upload/shader
@@ -36,59 +36,6 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: NanoboyAdvance-windows-gcc
-          path: upload
-
-  build-windows:
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@master
-
-      - name: Setup submodules
-        run: git submodule update --init
-        shell: cmd
-
-      - name: Setup vcpkg
-        run: vcpkg integrate install
-        shell: cmd
-
-      - name: Setup SDL2
-        run: vcpkg install sdl2:x64-windows
-        shell: cmd
-
-      - name: Setup GLEW
-        run: vcpkg install glew:x64-windows
-        shell: cmd
-
-      - name: Generate solution
-        run: |
-          mkdir build
-          cd build
-          set VCPKG_ROOT=C:/vcpkg
-          cmake -DCMAKE_BUILD_TYPE=Release -T clangcl ..
-        shell: cmd
-
-      - name: Build NanoboyAdvance
-        run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          msbuild /property:Configuration=Release build\NanoboyAdvance.sln
-        shell: cmd
-
-      - name: Collect files
-        run: |
-          mkdir upload
-          move build\source\platform\sdl\Release\NanoboyAdvance.exe upload
-          move build\source\platform\sdl\Release\glew32.dll upload
-          move build\source\platform\sdl\Release\SDL2.dll upload
-          move build\source\platform\sdl\shader upload\shader
-          move build\source\platform\sdl\keymap.toml upload
-          move build\source\platform\sdl\config.toml upload
-        shell: cmd
-
-      - name: Upload files
-        uses: actions/upload-artifact@master
-        with:
-          name: NanoboyAdvance-windows
           path: upload
 
   build-linux:
