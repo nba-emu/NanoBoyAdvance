@@ -15,7 +15,7 @@ jobs:
 
       - uses: msys2/setup-msys2@v2
         with:
-          install: gcc gcc-libs make cmake mingw-w64-x86_64-SDL2 mingw-w64-x86_64-glew
+          install: mingw-w64-clang make cmake mingw-w64-x86_64-SDL2 mingw-w64-x86_64-glew
 
       - name: Build NanoboyAdvance
         run: |
