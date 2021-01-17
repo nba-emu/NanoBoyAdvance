@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@master
       - uses: msys2/setup-msys2@v2
         with:
-          install: gcc make cmake sdl2 glew
+          install: gcc make cmake mingw-w64-SDL2 mingw-w64-glew
 
   build-windows:
     runs-on: windows-latest
