@@ -8,12 +8,12 @@ set(HEADERS
 
 include(FindSDL2)
 find_package(SDL2 REQUIRED)
-find_package(OpenGL)
+find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
 add_executable(NanoboyAdvance ${SOURCES} ${HEADERS})
 target_include_directories(NanoboyAdvance PRIVATE ${SDL2_INCLUDE_DIR} ${GLEW_INCLUDE_DIRS})
-target_link_libraries(NanoboyAdvance nba ${SDL2_LIBRARY} OpenGL::GL)
+target_link_libraries(NanoboyAdvance nba ${SDL2_LIBRARY} ${OPENGL_gl_LIBRARY})
 if (APPLE)
   target_link_libraries(NanoboyAdvance GLEW::glew)
 else()
