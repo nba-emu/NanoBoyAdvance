@@ -21,7 +21,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -G "Unix Makefiles" -DWIN32 -DCMAKE_BUILD_TYPE=Release ..
+          cmake -G "Unix Makefiles" -DWIN32=ON -DCMAKE_BUILD_TYPE=Release ..
           make
 
       - name: Collect files
