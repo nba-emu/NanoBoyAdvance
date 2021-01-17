@@ -9,7 +9,6 @@ set(HEADERS
 include(FindSDL2)
 find_package(SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
-set(GLEW_USE_STATIC_LIBS OFF)
 set(GLEW_VERBOSE ON)
 find_package(GLEW REQUIRED)
 
