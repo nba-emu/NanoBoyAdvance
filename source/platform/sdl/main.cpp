@@ -27,7 +27,7 @@
 
 #include "device/audio_device.hpp"
 
-#include "GL/glew.h"
+#include <GL/glew.h>
 
 #undef main
 
