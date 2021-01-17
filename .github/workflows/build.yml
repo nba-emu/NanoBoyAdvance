@@ -10,13 +10,12 @@ jobs:
         shell: msys2 {0}
     steps:
       - uses: actions/checkout@master
+        with:
+          submodules: true
 
       - uses: msys2/setup-msys2@v2
         with:
           install: gcc make cmake mingw-w64-x86_64-SDL2 mingw-w64-x86_64-glew
-
-      - name: Setup submodules
-        run: git submodule update --init
 
       - name: Build NanoboyAdvance
         run: |
