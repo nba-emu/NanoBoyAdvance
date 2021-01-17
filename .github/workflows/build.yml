@@ -15,13 +15,13 @@ jobs:
 
       - uses: msys2/setup-msys2@v2
         with:
-          install: gcc make cmake mingw-w64-x86_64-SDL2 mingw-w64-x86_64-mesa mingw-w64-x86_64-glew
+          install: gcc make cmake mingw-w64-x86_64-SDL2 mingw-w64-x86_64-glew
 
       - name: Build NanoboyAdvance
         run: |
           mkdir build
           cd build
-          cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+          cmake -G "Unix Makefiles" -DWIN32 -DCMAKE_BUILD_TYPE=Release ..
           make
 
       - name: Collect files
