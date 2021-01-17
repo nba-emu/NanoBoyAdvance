@@ -27,7 +27,6 @@
 
 #include "device/audio_device.hpp"
 
-#include <windef.h>
 #include <GL/glew.h>
 
 #undef main
