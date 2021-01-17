@@ -3,6 +3,17 @@ name: Build
 on: push
 
 jobs:
+  build-windows-gcc:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@master
+      - uses: msys2/setup-msys2@master
+        with:
+          install: gcc make cmake sdl2 glew
+
   build-windows:
     runs-on: windows-latest
 
