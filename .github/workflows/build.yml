@@ -10,9 +10,34 @@ jobs:
         shell: msys2 {0}
     steps:
       - uses: actions/checkout@master
+
       - uses: msys2/setup-msys2@v2
         with:
           install: gcc make cmake mingw-w64-x86_64-SDL2 mingw-w64-x86_64-glew
+
+      - name: Setup submodules
+        run: git submodule update --init
+
+      - name: Build NanoboyAdvance
+        run: |
+          mkdir build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+          make
+
+      - name: Collect files
+        run: |
+          mkdir upload
+          mv build/source/platform/sdl/NanoboyAdvance upload
+          mv build/source/platform/sdl/config.toml upload
+          mv build/source/platform/sdl/keymap.toml upload
+          mv build/source/platform/sdl/shader upload/shader
+
+      - name: Upload files
+        uses: actions/upload-artifact@master
+        with:
+          name: NanoboyAdvance-windows-gcc
+          path: upload
 
   build-windows:
     runs-on: windows-latest
