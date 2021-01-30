@@ -21,7 +21,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -G "Unix Makefiles" -DCMAKE_CXX_FLAGS="-s" -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++" -DSDL2_STATIC=OFF -DGLEW_USE_STATIC_LIBS=ON -DCMAKE_BUILD_TYPE=Release ..
+          cmake -G "Unix Makefiles" -DCMAKE_CXX_FLAGS="-s" -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++" -DSDL2_STATIC=OFF -DGLEW_USE_STATIC_LIBS=OFF -DCMAKE_BUILD_TYPE=Release ..
           VERBOSE=1 make
 
       - name: Collect files
@@ -29,6 +29,7 @@ jobs:
           mkdir upload
           mv build/source/platform/sdl/NanoboyAdvance.exe upload
           cp $(which SDL2.dll) upload
+          cp $(which glew32.dll) upload
           cp $(which libwinpthread-1.dll) upload
           mv build/source/platform/sdl/config.toml upload
           mv build/source/platform/sdl/keymap.toml upload
