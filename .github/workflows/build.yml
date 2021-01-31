@@ -35,7 +35,6 @@ jobs:
           mkdir upload
           mv build/source/platform/sdl/NanoboyAdvance.exe upload
           cp $(which libwinpthread-1.dll) upload
-          
           mv build/source/platform/sdl/config.toml upload
           mv build/source/platform/sdl/keymap.toml upload
           mv build/source/platform/sdl/shader upload/shader
