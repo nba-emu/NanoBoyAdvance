@@ -13,6 +13,19 @@ For stable releases please refer to the [releases](https://github.com/fleroviux/
 
 ![screenshot1](media/screenshot1.png)
 
+## Running
+
+A legitimate Game Boy Advance BIOS dump or a [replacement BIOS](https://github.com/Nebuleon/ReGBA/blob/master/bios/gba_bios.bin) is required.  
+Do note though that the replacement BIOS is less accurate.
+
+Place your BIOS file named as `bios.bin` into the same folder as the executable or provide a path via the CLI or [config.toml](https://github.com/fleroviux/NanoboyAdvance/blob/master/resource/config.toml) file.
+
+#### CLI arguments
+```
+NanoboyAdvance.exe [--bios bios_path] [--force-rtc] [--save-type type] [--fullscreen] [--scale factor] [--resampler type] [--sync-to-audio yes/no] rom_path
+```
+See [config.toml](https://github.com/fleroviux/NanoboyAdvance/blob/master/resource/config.toml) for more documentation or options.
+
 ## Features
 
 - highly accurate GBA emulation
@@ -24,24 +37,10 @@ For stable releases please refer to the [releases](https://github.com/fleroviux/
 
 ## Accuracy
 - very good ARM emulation
-  - if something doesn't work it's likely very obscure **UNPREDICTABLE** or **UNDEFINED** behavior.
 - sub-instruction hardware updates and DMA
-- graphics are on-par but are a topic of research, very little details are known 
+- graphics are on-par with other emulators but are a topic of research, very little details are known 
 - audio is good but needs some work here and there
 - currently the only software emulator to pass the AGS aging cartridge
-
-## Running
-
-You'll need a Game Boy Advance BIOS dump or a [replacement BIOS](https://github.com/Nebuleon/ReGBA/blob/master/bios/gba_bios.bin).  
-Do note though that using a replacement BIOS will reduce accuracy.
-
-Place the BIOS file named as `bios.bin` into the same folder as the executable or provide a path via the CLI or [config.toml](https://github.com/fleroviux/NanoboyAdvance/blob/master/resource/config.toml) file.
-
-#### CLI arguments
-```
-NanoboyAdvance.exe [--bios bios_path] [--force-rtc] [--save-type type] [--fullscreen] [--scale factor] [--resampler type] [--sync-to-audio yes/no] rom_path
-```
-See [config.toml](https://github.com/fleroviux/NanoboyAdvance/blob/master/resource/config.toml) for more documentation or options.
 
 ## Compiling
 
