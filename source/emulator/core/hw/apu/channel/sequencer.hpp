@@ -7,8 +7,6 @@
 
 #pragma once
 
-#include <algorithm>
-
 namespace nba::core {
 
 class Envelope {
