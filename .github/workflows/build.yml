@@ -103,7 +103,7 @@ jobs:
           mkdir build
           cd build
           export CPPFLAGS="$CPPFLAGS -I/usr/local/opt/glew/include"
-          cmake -DCMAKE_CXX_FLAGS="-s"
+          cmake -DCMAKE_CXX_FLAGS="-s" \
                 -DSDL2_STATIC=ON \
                 -DGLEW_USE_STATIC_LIBS=ON \
                 -DCMAKE_BUILD_TYPE=Release ..
