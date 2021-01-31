@@ -73,7 +73,7 @@ make -jNUMBER_OF_CORES
 ```
 Binaries will be output to `build/source/platform/`
 
-### Window Mingw-w64 (GCC)
+### Windows Mingw-w64 (GCC)
 
 #### 1. Install dependencies
 
