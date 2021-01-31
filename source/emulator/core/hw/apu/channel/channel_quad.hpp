@@ -19,6 +19,7 @@ public:
   QuadChannel(Scheduler& scheduler);
 
   void Reset();
+  bool IsEnabled() { return enabled; }
 
   void Generate(int cycles_late);
   auto Read (int offset) -> std::uint8_t;
@@ -37,12 +38,15 @@ private:
   }
 
   Scheduler& scheduler;
-  int phase;
-  int wave_duty;
-  bool length_enable;
   std::function<void(int)> event_cb = [this](int cycles_late) {
     this->Generate(cycles_late);
   };
+
+  int phase;
+  int wave_duty;
+  bool length_enable;
+  bool dac_enable;
+  bool enabled;
 };
 
 } // namespace nba::core

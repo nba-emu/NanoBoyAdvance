@@ -19,6 +19,7 @@ public:
   WaveChannel(Scheduler& scheduler);
 
   void Reset();
+  bool IsEnabled() { return enabled; }
 
   void Generate(int cycles_late);
   auto Read (int offset) -> std::uint8_t;
@@ -42,11 +43,10 @@ private:
     return 8 * (2048 - frequency);
   }
 
+  Scheduler& scheduler;
   std::function<void(int)> event_cb = [this](int cycles_late) {
     this->Generate(cycles_late);
   };
-
-  Scheduler& scheduler;
 
   bool enabled;
   bool force_volume;

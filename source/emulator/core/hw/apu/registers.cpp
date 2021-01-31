@@ -58,7 +58,7 @@ auto SoundControl::Read(int address) -> std::uint8_t {
              (dma[DMA_B].enable[SIDE_LEFT ] ? 32 : 0) |
              (dma[DMA_B].timer_id       ? 64 : 0);
     case 4:
-      /* FIXME: emulate bits 0-3 PSG ON/OFF state. */
+      // FIXME: emulate bits 0-3 PSG ON/OFF state.
       return 0b1111 | (master_enable ? 128 : 0);
       
     default: return 0;
@@ -99,6 +99,7 @@ void SoundControl::Write(int address, std::uint8_t value) {
 
       break;
     case 4:
+      // TODO: reset PSG registers to zero on disable.
       master_enable = value & 128;
       break;
   }

@@ -22,11 +22,17 @@ void QuadChannel::Reset() {
   sample = 0;
   wave_duty = 0;
   length_enable = false;
+  dac_enable = false;
+  enabled = false;
+
   scheduler.Add(GetSynthesisIntervalFromFrequency(0), event_cb);
 }
 
 void QuadChannel::Generate(int cycles_late) {
   if ((length_enable && sequencer.length <= 0) || sequencer.sweep.channel_disabled) {
+    // TODO: enabled should be unset immediately when length becomes zero.
+    // Updating it here is too late.
+    enabled = false;
     sample = 0;
     scheduler.Add(GetSynthesisIntervalFromFrequency(0) - cycles_late, event_cb);
     return;
@@ -39,7 +45,11 @@ void QuadChannel::Generate(int cycles_late) {
     { +8, +8, +8, +8, +8, +8, -8, -8 }
   };
 
-  sample = std::int8_t(pattern[wave_duty][phase] * sequencer.envelope.current_volume);
+  if (dac_enable) {
+    sample = std::int8_t(pattern[wave_duty][phase] * sequencer.envelope.current_volume);
+  } else {
+    sample = 0;
+  }
   phase = (phase + 1) % 8;
 
   scheduler.Add(GetSynthesisIntervalFromFrequency(sequencer.sweep.current_freq) - cycles_late, event_cb);
@@ -102,6 +112,10 @@ void QuadChannel::Write(int offset, std::uint8_t value) {
       envelope.divider = value & 7;
       envelope.direction = Envelope::Direction((value >> 3) & 1);
       envelope.initial_volume = value >> 4;
+      dac_enable = (value >> 3) != 0;
+      if (!dac_enable) {
+        enabled = false;
+      }
       break;
     }
 
@@ -117,6 +131,9 @@ void QuadChannel::Write(int offset, std::uint8_t value) {
       length_enable = value & 0x40;
 
       if (value & 0x80) {
+        if (dac_enable) {
+          enabled = true;
+        }
         phase = 0;
         sequencer.Restart();
       }

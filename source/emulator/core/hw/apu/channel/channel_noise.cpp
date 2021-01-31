@@ -24,6 +24,8 @@ void NoiseChannel::Reset() {
   frequency_ratio = 0;
   width = 0;
   length_enable = false;
+  dac_enable = false;
+  enabled = false;
 
   lfsr = 0;
   sample = 0;
@@ -34,6 +36,9 @@ void NoiseChannel::Reset() {
 
 void NoiseChannel::Generate(int cycles_late) {
   if (length_enable && sequencer.length <= 0) {
+    // TODO: enabled should be unset immediately when length becomes zero.
+    // Updating it here is too late.
+    enabled = false;
     sample = 0;
     scheduler.Add(GetSynthesisInterval(7, 15) - cycles_late, event_cb);
     return;
@@ -52,6 +57,8 @@ void NoiseChannel::Generate(int cycles_late) {
   }
 
   sample *= sequencer.envelope.current_volume;
+
+  if (!dac_enable) sample = 0;
 
   /* Skip samples that will never be sampled by the audio mixer. */
   for (int i = 0; i < skip_count; i++) {
@@ -122,6 +129,10 @@ void NoiseChannel::Write(int offset, std::uint8_t value) {
       envelope.divider = value & 7;
       envelope.direction = Envelope::Direction((value >> 3) & 1);
       envelope.initial_volume = value >> 4;
+      dac_enable = (value >> 3) != 0;
+      if (!dac_enable) {
+        enabled = false;
+      }
       break;
     }
 
@@ -136,9 +147,10 @@ void NoiseChannel::Write(int offset, std::uint8_t value) {
       length_enable = value & 0x40;
 
       if (value & 0x80) {
-        /* TODO: are these the correct initialization values? */
-        const std::uint16_t lfsr_init[] = { 0x4000, 0x0040 };
-
+        constexpr std::uint16_t lfsr_init[] = { 0x4000, 0x0040 };
+        if (dac_enable) {
+          enabled = true;
+        }
         sequencer.Restart();
         lfsr = lfsr_init[width];
       }

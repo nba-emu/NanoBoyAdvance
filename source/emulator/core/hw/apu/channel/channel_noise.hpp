@@ -20,6 +20,7 @@ public:
   NoiseChannel(Scheduler& scheduler, BIAS& bias);
 
   void Reset();
+  bool IsEnabled() { return enabled; }
 
   void Generate(int cycles_late);
   auto Read (int offset) -> std::uint8_t;
@@ -53,6 +54,8 @@ private:
   int  frequency_ratio;
   int  width;
   bool length_enable;
+  bool dac_enable;
+  bool enabled;
 
   BIAS& bias;
   int skip_count;
