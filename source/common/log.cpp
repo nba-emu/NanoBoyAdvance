@@ -40,7 +40,13 @@ void init() {
     }
   }
   
+  // Workaround for Mingw-w64 build with no command line window.
+  // The application will crash otherwise when flushing to a non-existent stdout.
+  // TODO: replace with something less hacky, or at least detect when it's actually necessary.
+#ifdef NDEBUG
   freopen ("log.txt", "w", stdout);
+#endif
+
 #endif
 }
 
