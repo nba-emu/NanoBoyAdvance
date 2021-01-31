@@ -3,57 +3,46 @@ name: Build
 on: push
 
 jobs:
-  build-windows:
+  build-win64:
     runs-on: windows-latest
-
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
       - uses: actions/checkout@master
+        with:
+          submodules: true
 
-      - name: Setup submodules
-        run: git submodule update --init
-        shell: cmd
-
-      - name: Setup vcpkg
-        run: vcpkg integrate install
-        shell: cmd
-
-      - name: Setup SDL2
-        run: vcpkg install sdl2:x64-windows
-        shell: cmd
-
-      - name: Setup GLEW
-        run: vcpkg install glew:x64-windows
-        shell: cmd
-
-      - name: Generate solution
-        run: |
-          mkdir build
-          cd build
-          set VCPKG_ROOT=C:/vcpkg
-          cmake -DCMAKE_BUILD_TYPE=Release -T clangcl ..
-        shell: cmd
+      - uses: msys2/setup-msys2@v2
+        with:
+          install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-SDL2 mingw-w64-x86_64-glew
 
       - name: Build NanoboyAdvance
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          msbuild /property:Configuration=Release build\NanoboyAdvance.sln
-        shell: cmd
+          mkdir build
+          cd build
+          cmake \
+            -G "Unix Makefiles" \
+            -DCMAKE_CXX_FLAGS="-s" \
+            -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++" \
+            -DSDL2_STATIC=ON \
+            -DGLEW_USE_STATIC_LIBS=ON \
+            -DCMAKE_BUILD_TYPE=Release ..
+          make
 
       - name: Collect files
         run: |
           mkdir upload
-          move build\source\platform\sdl\Release\NanoboyAdvance.exe upload
-          move build\source\platform\sdl\Release\glew32.dll upload
-          move build\source\platform\sdl\Release\SDL2.dll upload
-          move build\source\platform\sdl\shader upload\shader
-          move build\source\platform\sdl\keymap.toml upload
-          move build\source\platform\sdl\config.toml upload
-        shell: cmd
+          mv build/source/platform/sdl/NanoboyAdvance.exe upload
+          cp $(which libwinpthread-1.dll) upload
+          mv build/source/platform/sdl/config.toml upload
+          mv build/source/platform/sdl/keymap.toml upload
+          mv build/source/platform/sdl/shader upload/shader
 
       - name: Upload files
         uses: actions/upload-artifact@master
         with:
-          name: NanoboyAdvance-windows
+          name: NanoboyAdvance-win64
           path: upload
 
   build-linux:
@@ -94,7 +83,7 @@ jobs:
           name: NanoboyAdvance-linux
           path: upload
 
-  build-macos:
+  build-macOS:
     runs-on: macos-latest
 
     steps:
@@ -129,5 +118,5 @@ jobs:
       - name: Upload files
         uses: actions/upload-artifact@master
         with:
-          name: NanoboyAdvance-macos
+          name: NanoboyAdvance-macOS
           path: upload

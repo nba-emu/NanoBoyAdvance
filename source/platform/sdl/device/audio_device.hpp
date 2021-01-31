@@ -10,11 +10,7 @@
 #include <common/log.hpp>
 #include <emulator/device/audio_device.hpp>
 
-#ifdef _MSC_VER
-#include <SDL2/SDL.h>
-#else
-#include "SDL.h"
-#endif
+#include <SDL.h>
 
 struct SDL2_AudioDevice : public nba::AudioDevice {
   auto GetSampleRate() -> int final { return have.freq; }
