@@ -8,6 +8,9 @@
 NanoboyAdvance is a highly accurate Nintendo Game Boy Advance (TM) emulator.<br>
 It is also intended to be reasonably efficient, bloat-free and clean code in modern C++.
 
+You can download nightly builds [here](https://github.com/fleroviux/NanoboyAdvance/actions), however a Github account is required.
+For stable releases please refer to the [releases](https://github.com/fleroviux/NanoboyAdvance/releases) page.
+
 ![screenshot1](media/screenshot1.png)
 
 ## Features
