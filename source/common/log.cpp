@@ -38,9 +38,9 @@ void init() {
       mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
       SetConsoleMode(handle, mode);
     }
-  } else {
-    freopen ("log.txt", "w", stdout);
   }
+  
+  freopen ("log.txt", "w", stdout);
 #endif
 }
 
