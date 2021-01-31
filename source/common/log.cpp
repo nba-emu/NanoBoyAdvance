@@ -8,6 +8,7 @@
 #include "log.hpp"
 
 #ifdef WIN32
+#include <stdio.h>
 #include <windows.h>
 #endif
 
@@ -37,6 +38,8 @@ void init() {
       mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
       SetConsoleMode(handle, mode);
     }
+  } else {
+    freopen ("log.txt", "w", stdout);
   }
 #endif
 }
