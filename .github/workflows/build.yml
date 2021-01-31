@@ -103,7 +103,10 @@ jobs:
           mkdir build
           cd build
           export CPPFLAGS="$CPPFLAGS -I/usr/local/opt/glew/include"
-          cmake -DCMAKE_BUILD_TYPE=Release ..
+          cmake -DCMAKE_CXX_FLAGS="-s"
+                -DSDL2_STATIC=ON \
+                -DGLEW_USE_STATIC_LIBS=ON \
+                -DCMAKE_BUILD_TYPE=Release ..
           make
 
       - name: Collect files
@@ -113,7 +116,6 @@ jobs:
           mv build/source/platform/sdl/config.toml upload
           mv build/source/platform/sdl/keymap.toml upload
           mv build/source/platform/sdl/shader upload/shader
-
 
       - name: Upload files
         uses: actions/upload-artifact@master
