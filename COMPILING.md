@@ -56,7 +56,7 @@ export CPPFLAGS="$CPPFLAGS -I/usr/local/opt/glew/include"
 cd /somewhere/on/your/system/NanoboyAdvance
 mkdir build
 cd build
-cmake ..
+cmake -DCMAKE_BUILD_TYPE=Release ..
 ```
 
 NOTE: the location and name of the `build` directory is arbitrary.
@@ -73,10 +73,44 @@ make -jNUMBER_OF_CORES
 ```
 Binaries will be output to `build/source/platform/`
 
-### Windows Build
+### Window Mingw-w64 (GCC)
 
-This guide assumes that you use Visual Studio 2017 (or newer) and [VCPKG](https://github.com/microsoft/vcpkg#quick-start-windows).  
-Note that there are other ways to build on Windows, but they aren't documented.
+#### 1. Install dependencies
+
+This guide uses [MSYS2](https://www.msys2.org/) and Mingw-w64.
+
+#### 1. Install dependencies
+
+In your MSYS2 command line run:
+```bash
+pacman -S make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-SDL2 mingw-w64-x86_64-glew
+```
+
+#### 2. Setup CMake build directory
+
+```bash
+cd path/to/NanoboyAdvance
+mkdir build
+cd build
+cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+```
+NOTE: the location and name of the `build` directory is arbitrary.
+
+#### 3. Compile
+
+Just run make:
+```
+make
+```
+or to use multiple processor cores:
+```
+make -jNUMBER_OF_CORES
+```
+Binaries will be output to `build/source/platform/`
+
+### Windows Visual Studio (Clang)
+
+This guide uses Visual Studio 2017 (or newer) and [VCPKG](https://github.com/microsoft/vcpkg#quick-start-windows).  
 
 #### 1. Install dependencies
 
