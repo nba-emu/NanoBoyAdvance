@@ -42,7 +42,7 @@ jobs:
       - name: Upload files
         uses: actions/upload-artifact@master
         with:
-          name: NanoboyAdvance-windows-gcc
+          name: NanoboyAdvance-win64
           path: upload
 
   build-linux:
@@ -83,7 +83,7 @@ jobs:
           name: NanoboyAdvance-linux
           path: upload
 
-  build-macos:
+  build-macOS:
     runs-on: macos-latest
 
     steps:
@@ -118,5 +118,5 @@ jobs:
       - name: Upload files
         uses: actions/upload-artifact@master
         with:
-          name: NanoboyAdvance-macos
+          name: NanoboyAdvance-macOS
           path: upload
