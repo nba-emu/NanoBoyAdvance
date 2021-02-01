@@ -87,7 +87,7 @@ public:
   }
 
   void Tick() {
-    if (--step == 0) {
+    if (active && --step == 0) {
       int new_freq;
       int offset = shadow_freq >> shift;
 
@@ -164,6 +164,7 @@ public:
       case 6: length--; sweep.Tick(); break;
       case 7: envelope.Tick(); break;
     }
+
     step = (step + 1) % 8;
   }
 

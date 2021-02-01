@@ -16,18 +16,18 @@
 
 namespace nba::core {
 
-/* Implemented in callback.cpp */
+// See callback.cpp for implementation
 void AudioCallback(APU* apu, std::int16_t* stream, int byte_len);
 
 APU::APU(Scheduler& scheduler, DMA& dma, std::shared_ptr<Config> config)
-  : psg1(scheduler)
-  , psg2(scheduler)
-  , psg3(scheduler)
-  , psg4(scheduler, mmio.bias)
-  , scheduler(scheduler)
-  , dma(dma)
-  , config(config)
-{ }
+    : psg1(scheduler)
+    , psg2(scheduler)
+    , psg3(scheduler)
+    , psg4(scheduler, mmio.bias)
+    , scheduler(scheduler)
+    , dma(dma)
+    , config(config) {
+}
 
 void APU::Reset() {
   using namespace common::dsp;
