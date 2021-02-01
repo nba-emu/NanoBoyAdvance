@@ -19,35 +19,30 @@ public:
   }
 
   void Restart() {
+    step = divider;
     current_volume = initial_volume;
-    step = 0;
-    if (enabled) {
-      active = true;
-    }
+    active = enabled;
   }
 
   void Tick() {
-    if (!active || divider == 0) return;
-
-    /* TODO: this does not seem to behave quite right yet. */
-    if (step == (divider - 1)) {
-      int new_volume = current_volume;
-
-      if (direction == Direction::Increment) {
-        new_volume++;
-      } else {
-        new_volume--;
+    if (--step == 0) {
+      step = divider;
+    
+      if (active && divider != 0) {
+        if (direction == Direction::Increment) {
+          if (current_volume != 15) {
+            current_volume++;
+          } else {
+            active = false;
+          }
+        } else {
+          if (current_volume != 0) {
+            current_volume--;
+          } else {
+            active = false;
+          }
+        }
       }
-
-      if (new_volume >= 0 && new_volume <= 15) {
-        current_volume = new_volume;
-      } else {
-        active = false;
-      }
-
-      step = 0;
-    } else {
-      step++;
     }
   }
 
@@ -86,15 +81,13 @@ public:
     if (enabled) {
       current_freq = initial_freq;
       shadow_freq = initial_freq;
-      step = 0;
+      step = divider;
       active = shift != 0 || divider != 0;
     }
   }
 
   void Tick() {
-    if (!active || divider == 0) return;
-
-    if (step == (divider - 1)) {
+    if (--step == 0) {
       int new_freq;
       int offset = shadow_freq >> shift;
 
@@ -114,9 +107,7 @@ public:
       /* TODO: then frequency calculation and overflow check are run AGAIN immediately
        * using this new value, but this second new frequency is not written back.
        */
-      step = 0;
-    } else {
-      step++;
+      step = divider;
     }
   }
 

@@ -60,7 +60,7 @@ void NoiseChannel::Generate(int cycles_late) {
 
   if (!dac_enable) sample = 0;
 
-  /* Skip samples that will never be sampled by the audio mixer. */
+  // Skip samples that will never be sampled by the audio mixer.
   for (int i = 0; i < skip_count; i++) {
     carry = lfsr & 1;
     lfsr >>= 1;
@@ -92,7 +92,7 @@ auto NoiseChannel::Read(int offset) -> std::uint8_t {
   auto& envelope = sequencer.envelope;
 
   switch (offset) {
-    /* Length / Envelope */
+    // Length / Envelope
     case 0: return 0;
     case 1: {
       return envelope.divider |
@@ -102,7 +102,7 @@ auto NoiseChannel::Read(int offset) -> std::uint8_t {
     case 2:
     case 3: return 0;
 
-    /* Frequency / Control */
+    // Frequency / Control
     case 4: {
       return frequency_ratio |
             (width << 3) |
@@ -120,23 +120,40 @@ void NoiseChannel::Write(int offset, std::uint8_t value) {
   auto& envelope = sequencer.envelope;
 
   switch (offset) {
-    /* Length / Envelope */
+    // Length / Envelope
     case 0: {
       sequencer.length = 64 - (value & 63);
       break;
     }
     case 1: {
+      auto divider_old = envelope.divider;
+      auto direction_old = envelope.direction;
+
       envelope.divider = value & 7;
       envelope.direction = Envelope::Direction((value >> 3) & 1);
       envelope.initial_volume = value >> 4;
+
       dac_enable = (value >> 3) != 0;
       if (!dac_enable) {
         enabled = false;
       }
+
+      // Handle envelope "Zombie" mode:
+      // https://gist.github.com/drhelius/3652407#file-game-boy-sound-operation-L491
+      // TODO: what is the exact behavior on AGB systems?
+      if (divider_old == 0 && envelope.active) {
+        envelope.current_volume++;
+      } else if (direction_old == Envelope::Direction::Decrement) {
+        envelope.current_volume += 2;
+      }
+      if (direction_old != envelope.direction) {
+        envelope.current_volume = 16 - envelope.current_volume;
+      }
+      envelope.current_volume &= 15;
       break;
     }
 
-    /* Frequency / Control */
+    // Frequency / Control
     case 4: {
       frequency_ratio = value & 7;
       width = (value >> 3) & 1;
