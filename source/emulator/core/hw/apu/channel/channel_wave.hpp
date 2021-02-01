@@ -19,8 +19,7 @@ public:
   WaveChannel(Scheduler& scheduler);
 
   void Reset();
-  bool IsEnabled() { return enabled; }
-
+  bool IsEnabled() override { return playing && BaseChannel::IsEnabled(); }
   void Generate(int cycles_late);
   auto Read (int offset) -> std::uint8_t;
   void Write(int offset, std::uint8_t value);

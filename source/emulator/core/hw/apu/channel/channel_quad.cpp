@@ -23,13 +23,14 @@ void QuadChannel::Reset() {
   wave_duty = 0;
   dac_enable = false;
 
-  scheduler.Add(GetSynthesisIntervalFromFrequency(0), event_cb);
+  //scheduler.Add(GetSynthesisIntervalFromFrequency(0), event_cb);
 }
 
 void QuadChannel::Generate(int cycles_late) {
-  if (!enabled) {
+  if (!IsEnabled()) {
     sample = 0;
-    scheduler.Add(GetSynthesisIntervalFromFrequency(0) - cycles_late, event_cb);
+    // TODO: do not reschedule event until channel is reactivated.
+    //scheduler.Add(GetSynthesisIntervalFromFrequency(0) - cycles_late, event_cb);
     return;
   }
 
@@ -107,7 +108,7 @@ void QuadChannel::Write(int offset, std::uint8_t value) {
 
       dac_enable = (value >> 3) != 0;
       if (!dac_enable) {
-        enabled = false;
+        Disable();
       }
 
       // Handle envelope "Zombie" mode:
@@ -136,9 +137,10 @@ void QuadChannel::Write(int offset, std::uint8_t value) {
       sweep.current_freq = sweep.initial_freq;
       length.enabled = value & 0x40;
 
-      if (value & 0x80) {
-        if (dac_enable) {
-          enabled = true;
+      if (dac_enable && (value & 0x80)) {
+        if (!IsEnabled()) {
+          // TODO: properly align event to system clock.
+          scheduler.Add(GetSynthesisIntervalFromFrequency(sweep.current_freq), event_cb);
         }
         phase = 0;
         Restart();

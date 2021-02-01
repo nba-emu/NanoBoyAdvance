@@ -29,13 +29,14 @@ void NoiseChannel::Reset() {
   sample = 0;
   skip_count = 0;
 
-  scheduler.Add(GetSynthesisInterval(7, 15), event_cb);
+  //scheduler.Add(GetSynthesisInterval(7, 15), event_cb);
 }
 
 void NoiseChannel::Generate(int cycles_late) {
-  if (!enabled) {
+  if (!IsEnabled()) {
     sample = 0;
-    scheduler.Add(GetSynthesisInterval(7, 15) - cycles_late, event_cb);
+    // TODO: do not reschedule event until channel is reactivated.
+    //scheduler.Add(GetSynthesisInterval(7, 15) - cycles_late, event_cb);
     return;
   }
 
@@ -126,7 +127,7 @@ void NoiseChannel::Write(int offset, std::uint8_t value) {
 
       dac_enable = (value >> 3) != 0;
       if (!dac_enable) {
-        enabled = false;
+        Disable();
       }
 
       // Handle envelope "Zombie" mode:
@@ -154,13 +155,16 @@ void NoiseChannel::Write(int offset, std::uint8_t value) {
     case 5: {
       length.enabled = value & 0x40;
 
-      if (value & 0x80) {
-        constexpr std::uint16_t lfsr_init[] = { 0x4000, 0x0040 };
-        if (dac_enable) {
-          enabled = true;
+      if (dac_enable && (value & 0x80)) {
+        if (!IsEnabled()) {
+          // TODO: properly handle skip count and properly align event to system clock.
+          skip_count = 0;
+          scheduler.Add(GetSynthesisInterval(frequency_ratio, frequency_shift), event_cb);
         }
-        Restart();
+
+        constexpr std::uint16_t lfsr_init[] = { 0x4000, 0x0040 };
         lfsr = lfsr_init[width];
+        Restart();
       }
       break;
     }

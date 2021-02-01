@@ -35,13 +35,17 @@ void WaveChannel::Reset() {
     }
   }
 
-  scheduler.Add(GetSynthesisIntervalFromFrequency(0), event_cb);
+  //scheduler.Add(GetSynthesisIntervalFromFrequency(0), event_cb);
 }
 
 void WaveChannel::Generate(int cycles_late) {
-  if (!playing || !enabled) {
+  if (!IsEnabled()) {
     sample = 0;
-    scheduler.Add(GetSynthesisIntervalFromFrequency(0) - cycles_late, event_cb);
+    // TODO: do not reschedule event until channel is reactivated.
+    //scheduler.Add(GetSynthesisIntervalFromFrequency(0) - cycles_late, event_cb);
+    if (BaseChannel::IsEnabled()) {
+      scheduler.Add(GetSynthesisIntervalFromFrequency(frequency) - cycles_late, event_cb);
+    }
     return;
   }
 
@@ -55,12 +59,10 @@ void WaveChannel::Generate(int cycles_late) {
 
   constexpr int volume_table[4] = { 0, 4, 2, 1 };
 
-  /* TODO: at 100% sample might overflow. */
   sample = (sample - 8) * 4 * (force_volume ? 3 : volume_table[volume]);
 
   if (++phase == 32) {
     phase = 0;
-
     if (dimension) {
       wave_bank ^= 1;
     }
@@ -71,7 +73,7 @@ void WaveChannel::Generate(int cycles_late) {
 
 auto WaveChannel::Read(int offset) -> std::uint8_t {
   switch (offset) {
-    /* Stop / Wave RAM select */
+    // Stop / Wave RAM select
     case 0: {
       return (dimension << 5) |
              (wave_bank << 6) |
@@ -79,14 +81,14 @@ auto WaveChannel::Read(int offset) -> std::uint8_t {
     }
     case 1: return 0;
 
-    /* Length / Volume */
+    // Length / Volume
     case 2: return 0;
     case 3: {
       return (volume << 5) |
              (force_volume  ? 0x80 : 0);
     }
 
-    /* Frequency / Control */
+    // Frequency / Control
     case 4: return 0;
     case 5: {
       return length.enabled ? 0x40 : 0;
@@ -98,7 +100,7 @@ auto WaveChannel::Read(int offset) -> std::uint8_t {
 
 void WaveChannel::Write(int offset, std::uint8_t value) {
   switch (offset) {
-    /* Stop / Wave RAM select */
+    // Stop / Wave RAM select
     case 0: {
       dimension = (value >> 5) & 1;
       wave_bank = (value >> 6) & 1;
@@ -107,7 +109,7 @@ void WaveChannel::Write(int offset, std::uint8_t value) {
     }
     case 1: break;
 
-    /* Length / Volume */
+    // Length / Volume
     case 2: {
       length.length = 256 - value;
       break;
@@ -118,7 +120,7 @@ void WaveChannel::Write(int offset, std::uint8_t value) {
       break;
     }
 
-    /* Frequency / Control */
+    // Frequency / Control
     case 4: {
       frequency = (frequency & ~0xFF) | value;
       break;
@@ -127,15 +129,16 @@ void WaveChannel::Write(int offset, std::uint8_t value) {
       frequency = (frequency & 0xFF) | ((value & 7) << 8);
       length.enabled = value & 0x40;
 
-      if (value & 0x80) {
+      if (playing && (value & 0x80)) {
+        if (!BaseChannel::IsEnabled()) {
+          // TODO: properly align event to system clock.
+          scheduler.Add(GetSynthesisIntervalFromFrequency(frequency), event_cb);
+        }
         phase = 0;
-        enabled = true;
-        Restart();
-
-        /* in 64-digit mode output starts with the first bank */
         if (dimension) {
           wave_bank = 0;
         }
+        Restart();
       }
       break;
     }

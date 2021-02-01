@@ -174,6 +174,8 @@ public:
     Reset();
   }
 
+  virtual bool IsEnabled() { return enabled; }
+
   void Reset() {
     length.Reset();
     envelope.Reset();
@@ -197,15 +199,20 @@ protected:
     length.Restart();
     sweep.Restart();
     envelope.Restart();
+    enabled = true;
     step = 0;
+  }
+
+  void Disable() {
+    enabled = false;
   }
 
   LengthCounter length;
   Envelope envelope;
   Sweep sweep;
-  bool enabled;
 
 private:
+  bool enabled;
   int step;
 };
 
