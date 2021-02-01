@@ -130,25 +130,20 @@ private:
   int step;
 };
 
-class Sequencer {
+class BaseChannel {
 public:
-  static constexpr int s_cycles_per_step = 16777216/512;
+  static constexpr int s_cycles_per_step = 16777216 / 512;
 
-  Sequencer() { Reset(); }
+  BaseChannel(bool enable_envelope, bool enable_sweep) {
+    envelope.enabled = enable_envelope;
+    sweep.enabled = enable_sweep;
+    Reset();
+  }
 
   void Reset() {
     length = 0;
     envelope.Reset();
     sweep.Reset();
-    step = 0;
-  }
-
-  void Restart() {
-    if (length == 0) {
-      length = length_default;
-    }
-    sweep.Restart();
-    envelope.Restart();
     step = 0;
   }
 
@@ -166,6 +161,16 @@ public:
     }
 
     step = (step + 1) % 8;
+  }
+
+protected:
+  void Restart() {
+    if (length == 0) {
+      length = length_default;
+    }
+    sweep.Restart();
+    envelope.Restart();
+    step = 0;
   }
 
   int length;

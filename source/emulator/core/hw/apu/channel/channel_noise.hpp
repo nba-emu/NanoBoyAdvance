@@ -15,7 +15,7 @@
 
 namespace nba::core {
 
-class NoiseChannel : public Sequencer {
+class NoiseChannel : public BaseChannel {
 public:
   NoiseChannel(Scheduler& scheduler, BIAS& bias);
 

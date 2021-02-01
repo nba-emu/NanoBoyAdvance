@@ -14,7 +14,7 @@
 
 namespace nba::core {
 
-class WaveChannel : public Sequencer {
+class WaveChannel : public BaseChannel {
 public:
   WaveChannel(Scheduler& scheduler);
 

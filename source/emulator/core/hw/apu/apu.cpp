@@ -39,7 +39,7 @@ void APU::Reset() {
 
   resolution_old = 0;
   scheduler.Add(mmio.bias.GetSampleInterval(), this, &APU::StepMixer);
-  scheduler.Add(Sequencer::s_cycles_per_step, this, &APU::StepSequencer);
+  scheduler.Add(BaseChannel::s_cycles_per_step, this, &APU::StepSequencer);
 
   psg1.Reset();
   psg2.Reset();
@@ -182,7 +182,7 @@ void APU::StepSequencer(int cycles_late) {
   psg3.Tick();
   psg4.Tick();
 
-  scheduler.Add(Sequencer::s_cycles_per_step - cycles_late, this, &APU::StepSequencer);
+  scheduler.Add(BaseChannel::s_cycles_per_step - cycles_late, this, &APU::StepSequencer);
 }
 
 } // namespace nba::core

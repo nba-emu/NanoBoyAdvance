@@ -10,15 +10,15 @@
 namespace nba::core {
 
 WaveChannel::WaveChannel(Scheduler& scheduler)
-    : scheduler(scheduler) {
-  sweep.enabled = false;
-  envelope.enabled = false;
+    : BaseChannel(false, false)
+    , scheduler(scheduler) {
   length_default = 256;
   Reset();
 }
 
 void WaveChannel::Reset() {
-  Sequencer::Reset();
+  // FIXME
+  BaseChannel::Reset();
 
   phase = 0;
   sample = 0;

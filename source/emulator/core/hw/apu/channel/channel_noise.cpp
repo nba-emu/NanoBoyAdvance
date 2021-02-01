@@ -10,16 +10,15 @@
 namespace nba::core {
 
 NoiseChannel::NoiseChannel(Scheduler& scheduler, BIAS& bias)
-    : scheduler(scheduler)
+    : BaseChannel(true, false)
+    , scheduler(scheduler)
     , bias(bias) {
-  sweep.enabled = false;
-  envelope.enabled = true;
   Reset();
 }
 
 void NoiseChannel::Reset() {
   // FIXME
-  Sequencer::Reset();
+  BaseChannel::Reset();
 
   frequency_shift = 0;
   frequency_ratio = 0;

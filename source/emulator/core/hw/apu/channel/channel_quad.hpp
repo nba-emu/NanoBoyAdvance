@@ -14,7 +14,7 @@
 
 namespace nba::core {
 
-class QuadChannel : public Sequencer {
+class QuadChannel : public BaseChannel {
 public:
   QuadChannel(Scheduler& scheduler);
 

@@ -10,15 +10,14 @@
 namespace nba::core {
 
 QuadChannel::QuadChannel(Scheduler& scheduler)
-    : scheduler(scheduler) {
-  sweep.enabled = true;
-  envelope.enabled = true;
+    : BaseChannel(true, true)
+    , scheduler(scheduler) {
   Reset();
 }
 
 void QuadChannel::Reset() {
   // FIXME
-  Sequencer::Reset();
+  BaseChannel::Reset();
   phase = 0;
   sample = 0;
   wave_duty = 0;
