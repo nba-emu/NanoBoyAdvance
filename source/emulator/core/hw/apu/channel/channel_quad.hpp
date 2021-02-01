@@ -19,11 +19,10 @@ public:
   QuadChannel(Scheduler& scheduler);
 
   void Reset();
+  auto GetSample() -> std::int8_t override { return sample; }
   void Generate(int cycles_late);
   auto Read (int offset) -> std::uint8_t;
   void Write(int offset, std::uint8_t value);
-
-  std::int8_t sample = 0;
 
 private:
   constexpr int GetSynthesisIntervalFromFrequency(int frequency) {
@@ -38,6 +37,7 @@ private:
     this->Generate(cycles_late);
   };
 
+  std::int8_t sample = 0;
   int phase;
   int wave_duty;
   bool dac_enable;

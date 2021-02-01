@@ -175,6 +175,7 @@ public:
   }
 
   virtual bool IsEnabled() { return enabled; }
+  virtual auto GetSample() -> std::int8_t = 0;
 
   void Reset() {
     length.Reset();

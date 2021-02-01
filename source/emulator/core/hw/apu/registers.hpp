@@ -10,6 +10,7 @@
 #include <cstdint>
 
 #include "channel/fifo.hpp"
+#include "channel/sequencer.hpp"
 
 namespace nba::core {
 
@@ -24,18 +25,29 @@ enum DMANumber {
 };
   
 struct SoundControl {
-  SoundControl(FIFO* fifos) : fifos(fifos) { }
+  SoundControl(
+    FIFO* fifos,
+    BaseChannel& psg1,
+    BaseChannel& psg2,
+    BaseChannel& psg3,
+    BaseChannel& psg4)
+      : fifos(fifos)
+      , psg1(psg1)
+      , psg2(psg2)
+      , psg3(psg3)
+      , psg4(psg4) {
+  }
   
   bool master_enable;
 
   struct PSG {
-    int  volume;    /* 0=25% 1=50% 2=100% 3=forbidden */
-    int  master[2]; /* master volume L/R (0..255) */
+    int  volume;
+    int  master[2];
     bool enable[2][4];
   } psg;
 
   struct DMA {
-    int  volume; /* 0=50%, 1=100% */
+    int  volume;
     bool enable[2];
     int  timer_id;
   } dma[2];
@@ -46,6 +58,11 @@ struct SoundControl {
 
 private:
   FIFO* fifos;
+
+  BaseChannel& psg1;
+  BaseChannel& psg2;
+  BaseChannel& psg3;
+  BaseChannel& psg4;
 };
 
 struct BIAS {

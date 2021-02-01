@@ -20,6 +20,7 @@ public:
 
   void Reset();
   bool IsEnabled() override { return playing && BaseChannel::IsEnabled(); }
+  auto GetSample() -> std::int8_t override { return sample; }
   void Generate(int cycles_late);
   auto Read (int offset) -> std::uint8_t;
   void Write(int offset, std::uint8_t value);
@@ -32,8 +33,6 @@ public:
     wave_ram[wave_bank ^ 1][offset] = value;
   }
 
-  std::int8_t sample = 0;
-
 private:
   constexpr int GetSynthesisIntervalFromFrequency(int frequency) {
     // 8 cycles equals 2097152 Hz, the highest possible sample rate.
@@ -45,6 +44,7 @@ private:
     this->Generate(cycles_late);
   };
 
+  std::int8_t sample = 0;
   bool playing;
   bool force_volume;
   int volume;

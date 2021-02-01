@@ -20,11 +20,10 @@ public:
   NoiseChannel(Scheduler& scheduler, BIAS& bias);
 
   void Reset();
+  auto GetSample() -> std::int8_t override { return sample; }
   void Generate(int cycles_late);
   auto Read (int offset) -> std::uint8_t;
   void Write(int offset, std::uint8_t value);
-
-  std::int8_t sample = 0;
 
 private:
   constexpr int GetSynthesisInterval(int ratio, int shift) {
@@ -40,6 +39,7 @@ private:
   }
 
   std::uint16_t lfsr;
+  std::int8_t sample = 0;
 
   Scheduler& scheduler;
   std::function<void(int)> event_cb = [this](int cycles_late) {
