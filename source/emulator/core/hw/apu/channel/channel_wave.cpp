@@ -10,9 +10,8 @@
 namespace nba::core {
 
 WaveChannel::WaveChannel(Scheduler& scheduler)
-    : BaseChannel(false, false)
+    : BaseChannel(false, false, 256)
     , scheduler(scheduler) {
-  length_default = 256;
   Reset();
 }
 
@@ -23,13 +22,12 @@ void WaveChannel::Reset() {
   phase = 0;
   sample = 0;
 
-  enabled = false;
+  playing = false;
   force_volume = false;
   volume = 0;
   frequency = 0;
   dimension = 0;
   wave_bank = 0;
-  length_enable = false;
 
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 16; j++) {
@@ -41,7 +39,7 @@ void WaveChannel::Reset() {
 }
 
 void WaveChannel::Generate(int cycles_late) {
-  if (!enabled || (length_enable && length <= 0)) {
+  if (!playing || !enabled) {
     sample = 0;
     scheduler.Add(GetSynthesisIntervalFromFrequency(0) - cycles_late, event_cb);
     return;
@@ -77,7 +75,7 @@ auto WaveChannel::Read(int offset) -> std::uint8_t {
     case 0: {
       return (dimension << 5) |
              (wave_bank << 6) |
-             (enabled ? 0x80 : 0);
+             (playing ? 0x80 : 0);
     }
     case 1: return 0;
 
@@ -91,7 +89,7 @@ auto WaveChannel::Read(int offset) -> std::uint8_t {
     /* Frequency / Control */
     case 4: return 0;
     case 5: {
-      return length_enable ? 0x40 : 0;
+      return length.enabled ? 0x40 : 0;
     }
 
     default: return 0;
@@ -104,14 +102,14 @@ void WaveChannel::Write(int offset, std::uint8_t value) {
     case 0: {
       dimension = (value >> 5) & 1;
       wave_bank = (value >> 6) & 1;
-      enabled = value & 0x80;
+      playing = value & 0x80;
       break;
     }
     case 1: break;
 
     /* Length / Volume */
     case 2: {
-      length = 256 - value;
+      length.length = 256 - value;
       break;
     }
     case 3: {
@@ -127,10 +125,11 @@ void WaveChannel::Write(int offset, std::uint8_t value) {
     }
     case 5: {
       frequency = (frequency & 0xFF) | ((value & 7) << 8);
-      length_enable = value & 0x40;
+      length.enabled = value & 0x40;
 
       if (value & 0x80) {
         phase = 0;
+        enabled = true;
         Restart();
 
         /* in 64-digit mode output starts with the first bank */

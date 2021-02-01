@@ -46,16 +46,13 @@ private:
     this->Generate(cycles_late);
   };
 
-  bool enabled;
+  bool playing;
   bool force_volume;
-  int  volume;
-  int  frequency;
-  int  dimension;
-  int  wave_bank;
-  bool length_enable;
-
+  int volume;
+  int frequency;
+  int dimension;
+  int wave_bank;
   std::uint8_t wave_ram[2][16];
-
   int phase;
 };
 

@@ -48,12 +48,10 @@ private:
     this->Generate(cycles_late);
   };
 
-  int  frequency_shift;
-  int  frequency_ratio;
-  int  width;
-  bool length_enable;
+  int frequency_shift;
+  int frequency_ratio;
+  int width;
   bool dac_enable;
-  bool enabled;
 
   BIAS& bias;
   int skip_count;

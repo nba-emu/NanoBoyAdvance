@@ -42,9 +42,7 @@ private:
 
   int phase;
   int wave_duty;
-  bool length_enable;
   bool dac_enable;
-  bool enabled;
 };
 
 } // namespace nba::core

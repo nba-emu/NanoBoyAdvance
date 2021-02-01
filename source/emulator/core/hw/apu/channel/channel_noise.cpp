@@ -23,9 +23,7 @@ void NoiseChannel::Reset() {
   frequency_shift = 0;
   frequency_ratio = 0;
   width = 0;
-  length_enable = false;
   dac_enable = false;
-  enabled = false;
 
   lfsr = 0;
   sample = 0;
@@ -35,10 +33,7 @@ void NoiseChannel::Reset() {
 }
 
 void NoiseChannel::Generate(int cycles_late) {
-  if (length_enable && length <= 0) {
-    // TODO: enabled should be unset immediately when length becomes zero.
-    // Updating it here is too late.
-    enabled = false;
+  if (!enabled) {
     sample = 0;
     scheduler.Add(GetSynthesisInterval(7, 15) - cycles_late, event_cb);
     return;
@@ -107,7 +102,7 @@ auto NoiseChannel::Read(int offset) -> std::uint8_t {
             (frequency_shift << 4);
     }
     case 5: {
-      return length_enable ? 0x40 : 0;
+      return length.enabled ? 0x40 : 0;
     }
 
     default: return 0;
@@ -118,7 +113,7 @@ void NoiseChannel::Write(int offset, std::uint8_t value) {
   switch (offset) {
     // Length / Envelope
     case 0: {
-      length = 64 - (value & 63);
+      length.length = 64 - (value & 63);
       break;
     }
     case 1: {
@@ -157,7 +152,7 @@ void NoiseChannel::Write(int offset, std::uint8_t value) {
       break;
     }
     case 5: {
-      length_enable = value & 0x40;
+      length.enabled = value & 0x40;
 
       if (value & 0x80) {
         constexpr std::uint16_t lfsr_init[] = { 0x4000, 0x0040 };
