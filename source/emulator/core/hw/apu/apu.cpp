@@ -177,10 +177,10 @@ void APU::StepMixer(int cycles_late) {
 }
 
 void APU::StepSequencer(int cycles_late) {
-  psg1.sequencer.Tick();
-  psg2.sequencer.Tick();
-  psg3.sequencer.Tick();
-  psg4.sequencer.Tick();
+  psg1.Tick();
+  psg2.Tick();
+  psg3.Tick();
+  psg4.Tick();
 
   scheduler.Add(Sequencer::s_cycles_per_step - cycles_late, this, &APU::StepSequencer);
 }

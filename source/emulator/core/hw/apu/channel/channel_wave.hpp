@@ -14,7 +14,7 @@
 
 namespace nba::core {
 
-class WaveChannel {
+class WaveChannel : public Sequencer {
 public:
   WaveChannel(Scheduler& scheduler);
 
@@ -32,8 +32,6 @@ public:
   void WriteSample(int offset, std::uint8_t value) {
     wave_ram[wave_bank ^ 1][offset] = value;
   }
-
-  Sequencer sequencer;
 
   std::int8_t sample = 0;
 

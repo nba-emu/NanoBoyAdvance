@@ -14,7 +14,7 @@
 
 namespace nba::core {
 
-class QuadChannel {
+class QuadChannel : public Sequencer {
 public:
   QuadChannel(Scheduler& scheduler);
 
@@ -24,8 +24,6 @@ public:
   void Generate(int cycles_late);
   auto Read (int offset) -> std::uint8_t;
   void Write(int offset, std::uint8_t value);
-
-  Sequencer sequencer;
 
   std::int8_t sample = 0;
 

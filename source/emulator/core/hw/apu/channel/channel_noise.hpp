@@ -15,7 +15,7 @@
 
 namespace nba::core {
 
-class NoiseChannel {
+class NoiseChannel : public Sequencer {
 public:
   NoiseChannel(Scheduler& scheduler, BIAS& bias);
 
@@ -25,8 +25,6 @@ public:
   void Generate(int cycles_late);
   auto Read (int offset) -> std::uint8_t;
   void Write(int offset, std::uint8_t value);
-
-  Sequencer sequencer;
 
   std::int8_t sample = 0;
 

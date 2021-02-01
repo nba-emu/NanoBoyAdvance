@@ -11,13 +11,14 @@ namespace nba::core {
 
 QuadChannel::QuadChannel(Scheduler& scheduler)
     : scheduler(scheduler) {
-  sequencer.sweep.enabled = true;
-  sequencer.envelope.enabled = true;
+  sweep.enabled = true;
+  envelope.enabled = true;
   Reset();
 }
 
 void QuadChannel::Reset() {
-  sequencer.Reset();
+  // FIXME
+  Sequencer::Reset();
   phase = 0;
   sample = 0;
   wave_duty = 0;
@@ -29,7 +30,7 @@ void QuadChannel::Reset() {
 }
 
 void QuadChannel::Generate(int cycles_late) {
-  if ((length_enable && sequencer.length <= 0) || sequencer.sweep.channel_disabled) {
+  if ((length_enable && length <= 0) || sweep.channel_disabled) {
     // TODO: enabled should be unset immediately when length becomes zero.
     // Updating it here is too late.
     enabled = false;
@@ -46,19 +47,16 @@ void QuadChannel::Generate(int cycles_late) {
   };
 
   if (dac_enable) {
-    sample = std::int8_t(pattern[wave_duty][phase] * sequencer.envelope.current_volume);
+    sample = std::int8_t(pattern[wave_duty][phase] * envelope.current_volume);
   } else {
     sample = 0;
   }
   phase = (phase + 1) % 8;
 
-  scheduler.Add(GetSynthesisIntervalFromFrequency(sequencer.sweep.current_freq) - cycles_late, event_cb);
+  scheduler.Add(GetSynthesisIntervalFromFrequency(sweep.current_freq) - cycles_late, event_cb);
 }
 
 auto QuadChannel::Read(int offset) -> std::uint8_t {
-  auto& sweep = sequencer.sweep;
-  auto& envelope = sequencer.envelope;
-
   switch (offset) {
     // Sweep Register
     case 0: {
@@ -89,9 +87,6 @@ auto QuadChannel::Read(int offset) -> std::uint8_t {
 }
 
 void QuadChannel::Write(int offset, std::uint8_t value) {
-  auto& sweep = sequencer.sweep;
-  auto& envelope = sequencer.envelope;
-
   switch (offset) {
     // Sweep Register
     case 0: {
@@ -104,7 +99,7 @@ void QuadChannel::Write(int offset, std::uint8_t value) {
 
     // Wave Duty / Length / Envelope
     case 2: {
-      sequencer.length = 64 - (value & 63);
+      length = 64 - (value & 63);
       wave_duty = (value >> 6) & 3;
       break;
     }
@@ -152,7 +147,7 @@ void QuadChannel::Write(int offset, std::uint8_t value) {
           enabled = true;
         }
         phase = 0;
-        sequencer.Restart();
+        Restart();
       }
 
       break;

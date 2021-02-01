@@ -11,14 +11,14 @@ namespace nba::core {
 
 WaveChannel::WaveChannel(Scheduler& scheduler)
     : scheduler(scheduler) {
-  sequencer.sweep.enabled = false;
-  sequencer.envelope.enabled = false;
-  sequencer.length_default = 256;
+  sweep.enabled = false;
+  envelope.enabled = false;
+  length_default = 256;
   Reset();
 }
 
 void WaveChannel::Reset() {
-  sequencer.Reset();
+  Sequencer::Reset();
 
   phase = 0;
   sample = 0;
@@ -41,7 +41,7 @@ void WaveChannel::Reset() {
 }
 
 void WaveChannel::Generate(int cycles_late) {
-  if (!enabled || (length_enable && sequencer.length <= 0)) {
+  if (!enabled || (length_enable && length <= 0)) {
     sample = 0;
     scheduler.Add(GetSynthesisIntervalFromFrequency(0) - cycles_late, event_cb);
     return;
@@ -111,7 +111,7 @@ void WaveChannel::Write(int offset, std::uint8_t value) {
 
     /* Length / Volume */
     case 2: {
-      sequencer.length = 256 - value;
+      length = 256 - value;
       break;
     }
     case 3: {
@@ -131,7 +131,7 @@ void WaveChannel::Write(int offset, std::uint8_t value) {
 
       if (value & 0x80) {
         phase = 0;
-        sequencer.Restart();
+        Restart();
 
         /* in 64-digit mode output starts with the first bank */
         if (dimension) {
