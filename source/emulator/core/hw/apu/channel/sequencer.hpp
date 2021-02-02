@@ -9,6 +9,37 @@
 
 namespace nba::core {
 
+class LengthCounter {
+public:
+  LengthCounter(int default_length) : default_length(default_length) {
+    Reset();
+  }
+
+  void Reset() {
+    enabled = false;
+    length = 0;
+  }
+
+  void Restart() {
+    if (length == 0) {
+      length = default_length;
+    }
+  }
+
+  bool Tick() {
+    if (enabled) {
+      return --length > 0;
+    }
+    return true;
+  }
+
+  int length;
+  bool enabled;
+
+private:
+  int default_length;
+};
+
 class Envelope {
 public:
   void Reset() {
@@ -73,8 +104,6 @@ public:
   }
 
   void Restart() {
-    channel_disabled = false;
-
     /* TODO: If the sweep shift is non-zero, frequency calculation and the
      * overflow check are performed immediately.
      */
@@ -86,10 +115,15 @@ public:
     }
   }
 
-  void Tick() {
+  bool Tick() {
     if (active && --step == 0) {
       int new_freq;
       int offset = shadow_freq >> shift;
+
+      /* TODO: then frequency calculation and overflow check are run AGAIN immediately
+       * using this new value, but this second new frequency is not written back.
+       */
+      step = divider;
 
       if (direction == Direction::Increment) {
         new_freq = shadow_freq + offset;
@@ -98,22 +132,18 @@ public:
       }
 
       if (new_freq >= 2048) {
-        channel_disabled = true;
+        return false;
       } else if (shift != 0) {
         shadow_freq  = new_freq;
         current_freq = new_freq;
       }
-
-      /* TODO: then frequency calculation and overflow check are run AGAIN immediately
-       * using this new value, but this second new frequency is not written back.
-       */
-      step = divider;
     }
+
+    return true;
   }
 
   bool active = false;
   bool enabled = false;
-  bool channel_disabled = false;
 
   enum Direction {
     Increment = 0,
@@ -130,50 +160,60 @@ private:
   int step;
 };
 
-class Sequencer {
+class BaseChannel {
 public:
-  static constexpr int s_cycles_per_step = 16777216/512;
+  static constexpr int s_cycles_per_step = 16777216 / 512;
 
-  Sequencer() { Reset(); }
-
-  void Reset() {
-    length = 0;
-    envelope.Reset();
-    sweep.Reset();
-    step = 0;
+  BaseChannel(
+    bool enable_envelope,
+    bool enable_sweep,
+    int default_length = 64
+  )   : length(default_length) {
+    envelope.enabled = enable_envelope;
+    sweep.enabled = enable_sweep;
+    Reset();
   }
 
-  void Restart() {
-    if (length == 0) {
-      length = length_default;
-    }
-    sweep.Restart();
-    envelope.Restart();
+  virtual bool IsEnabled() { return enabled; }
+  virtual auto GetSample() -> std::int8_t = 0;
+
+  void Reset() {
+    length.Reset();
+    envelope.Reset();
+    sweep.Reset();
+    enabled = false;
     step = 0;
   }
 
   void Tick() {
     // http://gbdev.gg8.se/wiki/articles/Gameboy_sound_hardware#Frame_Sequencer
-    switch (step) {
-      case 0: length--; break;
-      case 1: break;
-      case 2: length--; sweep.Tick(); break;
-      case 3: break;
-      case 4: length--; break;
-      case 5: break;
-      case 6: length--; sweep.Tick(); break;
-      case 7: envelope.Tick(); break;
-    }
+    if ((step & 1) == 0) enabled &= length.Tick();
+    if ((step & 3) == 2) enabled &= sweep.Tick();
+    if (step == 7) envelope.Tick();
 
-    step = (step + 1) % 8;
+    step++;
+    step &= 7;
   }
 
-  int length;
-  int length_default = 64;
+protected:
+  void Restart() {
+    length.Restart();
+    sweep.Restart();
+    envelope.Restart();
+    enabled = true;
+    step = 0;
+  }
+
+  void Disable() {
+    enabled = false;
+  }
+
+  LengthCounter length;
   Envelope envelope;
   Sweep sweep;
 
 private:
+  bool enabled;
   int step;
 };
 

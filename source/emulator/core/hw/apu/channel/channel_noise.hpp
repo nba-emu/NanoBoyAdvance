@@ -15,20 +15,15 @@
 
 namespace nba::core {
 
-class NoiseChannel {
+class NoiseChannel : public BaseChannel {
 public:
   NoiseChannel(Scheduler& scheduler, BIAS& bias);
 
   void Reset();
-  bool IsEnabled() { return enabled; }
-
+  auto GetSample() -> std::int8_t override { return sample; }
   void Generate(int cycles_late);
   auto Read (int offset) -> std::uint8_t;
   void Write(int offset, std::uint8_t value);
-
-  Sequencer sequencer;
-
-  std::int8_t sample = 0;
 
 private:
   constexpr int GetSynthesisInterval(int ratio, int shift) {
@@ -44,18 +39,17 @@ private:
   }
 
   std::uint16_t lfsr;
+  std::int8_t sample = 0;
 
   Scheduler& scheduler;
   std::function<void(int)> event_cb = [this](int cycles_late) {
     this->Generate(cycles_late);
   };
 
-  int  frequency_shift;
-  int  frequency_ratio;
-  int  width;
-  bool length_enable;
+  int frequency_shift;
+  int frequency_ratio;
+  int width;
   bool dac_enable;
-  bool enabled;
 
   BIAS& bias;
   int skip_count;

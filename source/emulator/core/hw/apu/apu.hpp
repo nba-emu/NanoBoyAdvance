@@ -30,16 +30,23 @@ public:
   void OnTimerOverflow(int timer_id, int times, int samplerate);
 
   struct MMIO {
+    MMIO(Scheduler& scheduler)
+        : psg1(scheduler)
+        , psg2(scheduler)
+        , psg3(scheduler)
+        , psg4(scheduler, bias) {
+    }
+
     FIFO fifo[2];
 
-    SoundControl soundcnt { fifo };
+    QuadChannel psg1;
+    QuadChannel psg2;
+    WaveChannel psg3;
+    NoiseChannel psg4;
+
+    SoundControl soundcnt { fifo, psg1, psg2, psg3, psg4 };
     BIAS bias;
   } mmio;
-
-  QuadChannel psg1;
-  QuadChannel psg2;
-  WaveChannel psg3;
-  NoiseChannel psg4;
 
   std::int8_t latch[2];
   std::shared_ptr<common::dsp::RingBuffer<float>> fifo_buffer[2];

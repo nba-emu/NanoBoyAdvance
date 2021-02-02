@@ -20,10 +20,7 @@ namespace nba::core {
 void AudioCallback(APU* apu, std::int16_t* stream, int byte_len);
 
 APU::APU(Scheduler& scheduler, DMA& dma, std::shared_ptr<Config> config)
-    : psg1(scheduler)
-    , psg2(scheduler)
-    , psg3(scheduler)
-    , psg4(scheduler, mmio.bias)
+    : mmio(scheduler)
     , scheduler(scheduler)
     , dma(dma)
     , config(config) {
@@ -34,17 +31,16 @@ void APU::Reset() {
 
   mmio.fifo[0].Reset();
   mmio.fifo[1].Reset();
+  mmio.psg1.Reset();
+  mmio.psg2.Reset();
+  mmio.psg3.Reset();
+  mmio.psg4.Reset();
   mmio.soundcnt.Reset();
   mmio.bias.Reset();
 
   resolution_old = 0;
   scheduler.Add(mmio.bias.GetSampleInterval(), this, &APU::StepMixer);
-  scheduler.Add(Sequencer::s_cycles_per_step, this, &APU::StepSequencer);
-
-  psg1.Reset();
-  psg2.Reset();
-  psg3.Reset();
-  psg4.Reset();
+  scheduler.Add(BaseChannel::s_cycles_per_step, this, &APU::StepSequencer);
 
   auto audio_dev = config->audio_dev;
   audio_dev->Close();
@@ -151,10 +147,10 @@ void APU::StepMixer(int cycles_late) {
   for (int channel = 0; channel < 2; channel++) {
     std::int16_t psg_sample = 0;
 
-    if (psg.enable[channel][0]) psg_sample += psg1.sample;
-    if (psg.enable[channel][1]) psg_sample += psg2.sample;
-    if (psg.enable[channel][2]) psg_sample += psg3.sample;
-    if (psg.enable[channel][3]) psg_sample += psg4.sample;
+    if (psg.enable[channel][0]) psg_sample += mmio.psg1.GetSample();
+    if (psg.enable[channel][1]) psg_sample += mmio.psg2.GetSample();
+    if (psg.enable[channel][2]) psg_sample += mmio.psg3.GetSample();
+    if (psg.enable[channel][3]) psg_sample += mmio.psg4.GetSample();
 
     sample[channel] += psg_sample * psg_volume * psg.master[channel] / 28;
 
@@ -177,12 +173,12 @@ void APU::StepMixer(int cycles_late) {
 }
 
 void APU::StepSequencer(int cycles_late) {
-  psg1.sequencer.Tick();
-  psg2.sequencer.Tick();
-  psg3.sequencer.Tick();
-  psg4.sequencer.Tick();
+  mmio.psg1.Tick();
+  mmio.psg2.Tick();
+  mmio.psg3.Tick();
+  mmio.psg4.Tick();
 
-  scheduler.Add(Sequencer::s_cycles_per_step - cycles_late, this, &APU::StepSequencer);
+  scheduler.Add(BaseChannel::s_cycles_per_step - cycles_late, this, &APU::StepSequencer);
 }
 
 } // namespace nba::core

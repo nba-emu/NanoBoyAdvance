@@ -10,37 +10,33 @@
 namespace nba::core {
 
 NoiseChannel::NoiseChannel(Scheduler& scheduler, BIAS& bias)
-    : scheduler(scheduler)
+    : BaseChannel(true, false)
+    , scheduler(scheduler)
     , bias(bias) {
-  sequencer.sweep.enabled = false;
-  sequencer.envelope.enabled = true;
   Reset();
 }
 
 void NoiseChannel::Reset() {
-  sequencer.Reset();
+  // FIXME
+  BaseChannel::Reset();
 
   frequency_shift = 0;
   frequency_ratio = 0;
   width = 0;
-  length_enable = false;
   dac_enable = false;
-  enabled = false;
 
   lfsr = 0;
   sample = 0;
   skip_count = 0;
 
-  scheduler.Add(GetSynthesisInterval(7, 15), event_cb);
+  //scheduler.Add(GetSynthesisInterval(7, 15), event_cb);
 }
 
 void NoiseChannel::Generate(int cycles_late) {
-  if (length_enable && sequencer.length <= 0) {
-    // TODO: enabled should be unset immediately when length becomes zero.
-    // Updating it here is too late.
-    enabled = false;
+  if (!IsEnabled()) {
     sample = 0;
-    scheduler.Add(GetSynthesisInterval(7, 15) - cycles_late, event_cb);
+    // TODO: do not reschedule event until channel is reactivated.
+    //scheduler.Add(GetSynthesisInterval(7, 15) - cycles_late, event_cb);
     return;
   }
 
@@ -56,7 +52,7 @@ void NoiseChannel::Generate(int cycles_late) {
     sample = -8;
   }
 
-  sample *= sequencer.envelope.current_volume;
+  sample *= envelope.current_volume;
 
   if (!dac_enable) sample = 0;
 
@@ -89,8 +85,6 @@ void NoiseChannel::Generate(int cycles_late) {
 }
 
 auto NoiseChannel::Read(int offset) -> std::uint8_t {
-  auto& envelope = sequencer.envelope;
-
   switch (offset) {
     // Length / Envelope
     case 0: return 0;
@@ -109,7 +103,7 @@ auto NoiseChannel::Read(int offset) -> std::uint8_t {
             (frequency_shift << 4);
     }
     case 5: {
-      return length_enable ? 0x40 : 0;
+      return length.enabled ? 0x40 : 0;
     }
 
     default: return 0;
@@ -117,12 +111,10 @@ auto NoiseChannel::Read(int offset) -> std::uint8_t {
 }
 
 void NoiseChannel::Write(int offset, std::uint8_t value) {
-  auto& envelope = sequencer.envelope;
-
   switch (offset) {
     // Length / Envelope
     case 0: {
-      sequencer.length = 64 - (value & 63);
+      length.length = 64 - (value & 63);
       break;
     }
     case 1: {
@@ -135,7 +127,7 @@ void NoiseChannel::Write(int offset, std::uint8_t value) {
 
       dac_enable = (value >> 3) != 0;
       if (!dac_enable) {
-        enabled = false;
+        Disable();
       }
 
       // Handle envelope "Zombie" mode:
@@ -161,15 +153,18 @@ void NoiseChannel::Write(int offset, std::uint8_t value) {
       break;
     }
     case 5: {
-      length_enable = value & 0x40;
+      length.enabled = value & 0x40;
 
-      if (value & 0x80) {
-        constexpr std::uint16_t lfsr_init[] = { 0x4000, 0x0040 };
-        if (dac_enable) {
-          enabled = true;
+      if (dac_enable && (value & 0x80)) {
+        if (!IsEnabled()) {
+          // TODO: properly handle skip count and properly align event to system clock.
+          skip_count = 0;
+          scheduler.Add(GetSynthesisInterval(frequency_ratio, frequency_shift), event_cb);
         }
-        sequencer.Restart();
+
+        constexpr std::uint16_t lfsr_init[] = { 0x4000, 0x0040 };
         lfsr = lfsr_init[width];
+        Restart();
       }
       break;
     }
