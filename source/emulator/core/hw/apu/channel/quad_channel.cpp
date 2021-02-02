@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-#include "channel_quad.hpp"
+#include "quad_channel.hpp"
 
 namespace nba::core {
 
@@ -16,21 +16,16 @@ QuadChannel::QuadChannel(Scheduler& scheduler)
 }
 
 void QuadChannel::Reset() {
-  // FIXME
   BaseChannel::Reset();
   phase = 0;
   sample = 0;
   wave_duty = 0;
   dac_enable = false;
-
-  //scheduler.Add(GetSynthesisIntervalFromFrequency(0), event_cb);
 }
 
 void QuadChannel::Generate(int cycles_late) {
   if (!IsEnabled()) {
     sample = 0;
-    // TODO: do not reschedule event until channel is reactivated.
-    //scheduler.Add(GetSynthesisIntervalFromFrequency(0) - cycles_late, event_cb);
     return;
   }
 

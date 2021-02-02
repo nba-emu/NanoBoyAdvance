@@ -9,8 +9,8 @@
 
 #include <cstdint>
 
+#include "channel/base_channel.hpp"
 #include "channel/fifo.hpp"
-#include "channel/sequencer.hpp"
 
 namespace nba::core {
 

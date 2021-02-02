@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-#include "channel_noise.hpp"
+#include "noise_channel.hpp"
 
 namespace nba::core {
 
@@ -17,7 +17,6 @@ NoiseChannel::NoiseChannel(Scheduler& scheduler, BIAS& bias)
 }
 
 void NoiseChannel::Reset() {
-  // FIXME
   BaseChannel::Reset();
 
   frequency_shift = 0;
@@ -28,15 +27,11 @@ void NoiseChannel::Reset() {
   lfsr = 0;
   sample = 0;
   skip_count = 0;
-
-  //scheduler.Add(GetSynthesisInterval(7, 15), event_cb);
 }
 
 void NoiseChannel::Generate(int cycles_late) {
   if (!IsEnabled()) {
     sample = 0;
-    // TODO: do not reschedule event until channel is reactivated.
-    //scheduler.Add(GetSynthesisInterval(7, 15) - cycles_late, event_cb);
     return;
   }
 

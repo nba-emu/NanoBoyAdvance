@@ -10,7 +10,7 @@
 #include <cstdint>
 #include <emulator/core/scheduler.hpp>
 
-#include "sequencer.hpp"
+#include "base_channel.hpp"
 
 namespace nba::core {
 

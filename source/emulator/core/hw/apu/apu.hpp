@@ -14,9 +14,9 @@
 #include <emulator/core/scheduler.hpp>
 #include <mutex>
 
-#include "channel/channel_quad.hpp"
-#include "channel/channel_wave.hpp"
-#include "channel/channel_noise.hpp"
+#include "channel/quad_channel.hpp"
+#include "channel/wave_channel.hpp"
+#include "channel/noise_channel.hpp"
 #include "channel/fifo.hpp"
 #include "registers.hpp"
 

@@ -19,9 +19,9 @@ set(SOURCES
 
   # Core
   emulator/core/arm/tablegen/tablegen.cpp
-  emulator/core/hw/apu/channel/channel_noise.cpp
-  emulator/core/hw/apu/channel/channel_quad.cpp
-  emulator/core/hw/apu/channel/channel_wave.cpp
+  emulator/core/hw/apu/channel/noise_channel.cpp
+  emulator/core/hw/apu/channel/quad_channel.cpp
+  emulator/core/hw/apu/channel/wave_channel.cpp
   emulator/core/hw/apu/apu.cpp
   emulator/core/hw/apu/callback.cpp
   emulator/core/hw/apu/registers.cpp
@@ -80,11 +80,14 @@ set(HEADERS
   emulator/core/arm/arm7tdmi.hpp
   emulator/core/arm/memory.hpp
   emulator/core/arm/state.hpp
-  emulator/core/hw/apu/channel/channel_noise.hpp
-  emulator/core/hw/apu/channel/channel_quad.hpp
-  emulator/core/hw/apu/channel/channel_wave.hpp
+  emulator/core/hw/apu/channel/base_channel.hpp
+  emulator/core/hw/apu/channel/envelope.hpp
   emulator/core/hw/apu/channel/fifo.hpp
-  emulator/core/hw/apu/channel/sequencer.hpp
+  emulator/core/hw/apu/channel/length_counter.hpp
+  emulator/core/hw/apu/channel/noise_channel.hpp
+  emulator/core/hw/apu/channel/quad_channel.hpp
+  emulator/core/hw/apu/channel/sweep.hpp
+  emulator/core/hw/apu/channel/wave_channel.hpp
   emulator/core/hw/apu/apu.hpp
   emulator/core/hw/apu/registers.hpp
   emulator/core/hw/ppu/helper.inl

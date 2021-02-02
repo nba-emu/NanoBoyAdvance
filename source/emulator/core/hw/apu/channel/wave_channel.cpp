@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-#include "channel_wave.hpp"
+#include "wave_channel.hpp"
 
 namespace nba::core {
 
@@ -16,7 +16,6 @@ WaveChannel::WaveChannel(Scheduler& scheduler)
 }
 
 void WaveChannel::Reset() {
-  // FIXME
   BaseChannel::Reset();
 
   phase = 0;
@@ -34,15 +33,11 @@ void WaveChannel::Reset() {
       wave_ram[i][j] = 0;
     }
   }
-
-  //scheduler.Add(GetSynthesisIntervalFromFrequency(0), event_cb);
 }
 
 void WaveChannel::Generate(int cycles_late) {
   if (!IsEnabled()) {
     sample = 0;
-    // TODO: do not reschedule event until channel is reactivated.
-    //scheduler.Add(GetSynthesisIntervalFromFrequency(0) - cycles_late, event_cb);
     if (BaseChannel::IsEnabled()) {
       scheduler.Add(GetSynthesisIntervalFromFrequency(frequency) - cycles_late, event_cb);
     }
