@@ -43,9 +43,6 @@ void PPU::RenderScanline() {
           RenderLayerText(i);
         }
       }
-      if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-        RenderLayerOAM(false);
-      }
       ComposeScanline(0, 3);
       break;
     }
@@ -59,9 +56,6 @@ void PPU::RenderScanline() {
       if (mmio.dispcnt.enable[ENABLE_BG2]) {
         RenderLayerAffine(0);
       }
-      if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-        RenderLayerOAM(false);
-      }
       ComposeScanline(0, 2);
       break;
     }
@@ -72,9 +66,6 @@ void PPU::RenderScanline() {
           RenderLayerAffine(i);
         }
       }
-      if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-        RenderLayerOAM(false);
-      }
       ComposeScanline(2, 3);
       break;
     }
@@ -82,9 +73,6 @@ void PPU::RenderScanline() {
     case 3: {
       if (mmio.dispcnt.enable[2]) {
         RenderLayerBitmap1();
-      }
-      if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-        RenderLayerOAM(true);
       }
       ComposeScanline(2, 2);
       break;
@@ -94,9 +82,6 @@ void PPU::RenderScanline() {
       if (mmio.dispcnt.enable[2]) {
         RenderLayerBitmap2();
       }
-      if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-        RenderLayerOAM(true);
-      }
       ComposeScanline(2, 2);
       break;
     }
@@ -105,15 +90,13 @@ void PPU::RenderScanline() {
       if (mmio.dispcnt.enable[2]) {
         RenderLayerBitmap3();
       }
-      if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-        RenderLayerOAM(true);
-      }
       ComposeScanline(2, 2);
       break;
     }
     // BG Modes 6/7 (invalid) - output backdrop color
     case 6:
     case 7: {
+      // TODO: do OBJs still work in this mode?
       std::uint32_t backdrop = ConvertColor(ReadPalette(0, 0));
       for (int x = 0; x < 240; x++) {
         line[x] = backdrop;

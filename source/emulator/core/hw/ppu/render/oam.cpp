@@ -40,7 +40,7 @@ const int PPU::s_obj_size[4][4][2] = {
   }
 };
 
-void PPU::RenderLayerOAM(bool bitmap_mode) {
+void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
   std::int16_t transform[4];
 
   int tile_num;
@@ -122,7 +122,6 @@ void PPU::RenderLayerOAM(bool bitmap_mode) {
       cycles_per_pixel = 1;
     }
 
-    int line = mmio.vcount;
     if (line < (y - half_height) || line >= (y + half_height)) {
       continue;
     }

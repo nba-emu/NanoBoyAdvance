@@ -106,7 +106,7 @@ private:
   void RenderLayerBitmap1();
   void RenderLayerBitmap2();
   void RenderLayerBitmap3();
-  void RenderLayerOAM(bool bitmap_mode);
+  void RenderLayerOAM(bool bitmap_mode, int line);
   void RenderWindow(int id);
 
   static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
