@@ -1,5 +1,3 @@
-option(PLATFORM_SDL "Enable SDL2 frontend" ON)
-option(PLATFORM_QT "Enable Qt frontend" OFF)
 
 add_subdirectory(../external ${CMAKE_CURRENT_BINARY_DIR}/external)
 
@@ -118,13 +116,7 @@ target_include_directories(nba PUBLIC .)
 # TODO: this is not really optimal.
 # What do we do about it?
 if (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
-    target_link_libraries(nba stdc++fs)
+  target_link_libraries(nba stdc++fs)
 endif()
 
-if (PLATFORM_SDL)
-  add_subdirectory("platform/sdl")
-endif()
-
-if (PLATFORM_QT)
-  add_subdirectory("platform/qt")
-endif()
+add_subdirectory("platform/sdl")
