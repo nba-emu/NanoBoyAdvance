@@ -1,7 +1,5 @@
 <h2>NanoBoyAdvance</h2>
 
-![logo](media/logo_cropped.png)
-
 ![license](https://img.shields.io/github/license/fleroviux/NanoboyAdvance)
 [![CodeFactor](https://www.codefactor.io/repository/github/fleroviux/NanoboyAdvance/badge)](https://www.codefactor.io/repository/github/fleroviux/NanoboyAdvance)
 
@@ -11,7 +9,7 @@ It is also intended to be reasonably efficient, bloat-free and clean code in mod
 You can download nightly builds [here](https://github.com/fleroviux/NanoboyAdvance/actions), however a Github account is required.<br>
 For stable releases please refer to the [releases](https://github.com/fleroviux/NanoboyAdvance/releases) page.
 
-![screenshot1](media/screenshot1.png)
+![screenshot1](screenshot.png)
 
 ## Running
 
