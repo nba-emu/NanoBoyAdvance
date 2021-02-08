@@ -75,9 +75,7 @@ Binaries will be output to `build/source/platform/`
 
 ### Windows Mingw-w64 (GCC)
 
-#### 1. Install dependencies
-
-This guide uses [MSYS2](https://www.msys2.org/) and Mingw-w64.
+This guide uses [MSYS2](https://www.msys2.org/) to install Mingw-w64 and other dependencies.
 
 #### 1. Install dependencies
 
