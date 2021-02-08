@@ -1,11 +1,11 @@
-<h2>NanoboyAdvance</h2>
+<h2>NanoBoyAdvance</h2>
 
 ![logo](media/logo_cropped.png)
 
 ![license](https://img.shields.io/github/license/fleroviux/NanoboyAdvance)
 [![CodeFactor](https://www.codefactor.io/repository/github/fleroviux/NanoboyAdvance/badge)](https://www.codefactor.io/repository/github/fleroviux/NanoboyAdvance)
 
-NanoboyAdvance is a highly accurate Nintendo Game Boy Advance (TM) emulator.<br>
+NanoBoyAdvance is a highly accurate Nintendo Game Boy Advance (TM) emulator.<br>
 It is also intended to be reasonably efficient, bloat-free and clean code in modern C++.
 
 You can download nightly builds [here](https://github.com/fleroviux/NanoboyAdvance/actions), however a Github account is required.<br>
