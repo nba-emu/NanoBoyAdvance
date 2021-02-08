@@ -1,5 +1,4 @@
-cmake_policy(SET CMP0077 NEW)
-set(toml11_BUILD_TEST OFF)
+set(toml11_BUILD_TEST OFF CACHE BOOL "Build toml tests" FORCE)
 
 add_subdirectory(fmtlib)
 add_subdirectory(toml11)
