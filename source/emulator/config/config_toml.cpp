@@ -13,7 +13,7 @@
 #include <experimental/filesystem>
 #include <fstream>
 #include <map>
-#include <third_party/toml11/toml.hpp>
+#include <toml.hpp>
 
 #include "config_toml.hpp"
 
