@@ -1,7 +1,7 @@
 option(PLATFORM_SDL "Enable SDL2 frontend" ON)
 option(PLATFORM_QT "Enable Qt frontend" OFF)
 
-add_subdirectory(third_party)
+add_subdirectory(../external ${CMAKE_CURRENT_BINARY_DIR}/external)
 
 set(SOURCES
   # Common
@@ -111,7 +111,7 @@ set(HEADERS
   emulator/emulator.hpp)
 
 add_library(nba STATIC ${SOURCES} ${HEADERS})
-target_link_libraries(nba fmt)
+target_link_libraries(nba fmt toml11::toml11)
 target_include_directories(nba PUBLIC .)
 
 

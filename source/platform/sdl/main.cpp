@@ -22,7 +22,7 @@
 #include <iterator>
 #include <optional>
 #include <string>
-#include <third_party/toml11/toml.hpp>
+#include <toml.hpp>
 #include <unordered_map>
 
 #include "device/audio_device.hpp"
