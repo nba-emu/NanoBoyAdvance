@@ -65,6 +65,15 @@ public:
       return;
     }
 
+    // Prefetch the next instruction
+    // The result will be discarded because we flush the pipeline.
+    // But this is important for timing nonetheless.
+    if (state.cpsr.f.thumb) {
+      ReadHalf(state.r15 & ~1, pipe.fetch_type);
+    } else {
+      ReadWord(state.r15 & ~3, pipe.fetch_type);
+    }
+
     // Save current program status register.
     state.spsr[BANK_IRQ].v = state.cpsr.v;
 
