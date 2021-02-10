@@ -176,11 +176,6 @@ private:
 
   std::uint32_t last_rom_address;
 
-  struct {
-    bool processing = false;
-    int countdown = 0;
-  } irq_delay;
-
   bool bus_is_controlled_by_dma;
   bool openbus_from_dma;
 

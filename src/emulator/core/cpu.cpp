@@ -22,6 +22,7 @@ using Key = InputDevice::Key;
 CPU::CPU(std::shared_ptr<Config> config)
     : ARM7TDMI::ARM7TDMI(this)
     , config(config)
+    , irq(*this)
     , dma(*this, irq, scheduler)
     , apu(scheduler, dma, config)
     , ppu(scheduler, irq, dma, config)
@@ -37,7 +38,6 @@ void CPU::Reset() {
   std::memset(memory.wram, 0, 0x40000);
   std::memset(memory.iram, 0, 0x08000);
 
-  irq_delay = {};
   mmio = {};
   prefetch = {};
   last_rom_address = 0;
@@ -90,14 +90,7 @@ void CPU::Tick(int cycles) {
     openbus_from_dma = true;
   }
 
-  // TODO: is it possible for the DMA to interleave in the middle of a bus cycle?
   scheduler.AddCycles(cycles);
-
-  // TODO: move IRQ delay and prefetcher load on the scheduler.
-
-  if (irq_delay.processing && irq_delay.countdown >= 0) {
-    irq_delay.countdown -= cycles;
-  }
 
   if (prefetch.active && !bus_is_controlled_by_dma) {
     prefetch.countdown -= cycles;
@@ -191,33 +184,18 @@ void CPU::PrefetchStepROM(std::uint32_t address, int cycles) {
 
 void CPU::RunFor(int cycles) {
   bool m4a_xq_enable = config->audio.m4a_xq_enable && m4a_setfreq_address != 0;
-
-  // TODO: this could end up very slow if RunFor is called too often per second.
   if (m4a_xq_enable && m4a_soundinfo != nullptr) {
     M4AFixupPercussiveChannels();
   }
 
   auto limit = scheduler.GetTimestampNow() + cycles;
 
-  // TODO: account for per frame overshoot.
   while (scheduler.GetTimestampNow() < limit) {
-    auto has_servable_irq = irq.HasServableIRQ();
-
-    if (unlikely(mmio.haltcnt == HaltControl::HALT && has_servable_irq)) {
+    if (unlikely(mmio.haltcnt == HaltControl::HALT && irq.HasServableIRQ())) {
       mmio.haltcnt = HaltControl::RUN;
     }
 
     if (likely(mmio.haltcnt == HaltControl::RUN)) {
-      if (irq.MasterEnable() && has_servable_irq) {
-        if (!irq_delay.processing) {
-          irq_delay.processing = true;
-          irq_delay.countdown = 3;
-        } else if (irq_delay.countdown < 0) {
-          SignalIRQ();
-        }
-      } else {
-        irq_delay.processing = false;
-      }
       if (unlikely(m4a_xq_enable && state.r15 == m4a_setfreq_address)) {
         M4ASampleFreqSetHook();
       }

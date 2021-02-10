@@ -41,6 +41,8 @@ void IRQ::Write(int offset, std::uint8_t value) {
       reg_ime = value & 1;
       break;
   }
+
+  UpdateIRQLine();
 }
 
 void IRQ::Raise(IRQ::Source source, int channel) {
@@ -70,6 +72,12 @@ void IRQ::Raise(IRQ::Source source, int channel) {
       reg_if |= 8192;
       break;
   }
+
+  UpdateIRQLine();
+}
+
+void IRQ::UpdateIRQLine() {
+  cpu.IRQLine() = MasterEnable() && HasServableIRQ();
 }
 
 } // namespace nba::core

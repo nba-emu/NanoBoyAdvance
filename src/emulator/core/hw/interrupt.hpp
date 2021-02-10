@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cstdint>
+#include <emulator/core/arm/arm7tdmi.hpp>
 
 namespace nba::core {
 
@@ -24,7 +25,7 @@ public:
     GamePak
   };
 
-  IRQ() { Reset(); }
+  IRQ(arm::ARM7TDMI& cpu) : cpu(cpu) { Reset(); }
 
   void Reset() {
     reg_ime = 0;
@@ -51,9 +52,12 @@ private:
     REG_IME = 4
   };
 
+  void UpdateIRQLine();
+
   int reg_ime;
   std::uint16_t reg_ie;
   std::uint16_t reg_if;
+  arm::ARM7TDMI& cpu;
 };
 
 } // namespace nba::core

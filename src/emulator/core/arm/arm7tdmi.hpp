@@ -21,6 +21,8 @@ public:
 
   ARM7TDMI(MemoryBase* interface) : interface(interface) { Reset(); }
 
+  auto IRQLine() -> bool& { return irq_line; }
+
   void Reset() {
     state.Reset();
 
@@ -29,6 +31,7 @@ public:
     pipe.opcode[0] = 0xF0000000;
     pipe.opcode[1] = 0xF0000000;
     pipe.fetch_type = Access::Nonsequential;
+    irq_line = false;
   }
 
   auto GetPrefetchedOpcode(int slot) -> std::uint32_t {
@@ -36,6 +39,8 @@ public:
   }
 
   void Run() {
+    if (IRQLine()) SignalIRQ();
+
     auto instruction = pipe.opcode[0];
 
     if (state.cpsr.f.thumb) {
@@ -59,6 +64,14 @@ public:
       }
     }
   }
+
+  RegisterFile state;
+
+  typedef void (ARM7TDMI::*Handler16)(std::uint16_t);
+  typedef void (ARM7TDMI::*Handler32)(std::uint32_t);
+
+private:
+  friend struct TableGen;
 
   void SignalIRQ() {
     if (state.cpsr.f.mask_irq) {
@@ -93,14 +106,6 @@ public:
     state.r15 = 0x18;
     ReloadPipeline32();
   }
-
-  RegisterFile state;
-
-  typedef void (ARM7TDMI::*Handler16)(std::uint16_t);
-  typedef void (ARM7TDMI::*Handler32)(std::uint32_t);
-
-private:
-  friend struct TableGen;
 
   bool CheckCondition(Condition condition) {
     if (condition == COND_AL)
@@ -192,6 +197,8 @@ private:
     Access fetch_type;
     std::uint32_t opcode[2];
   } pipe;
+
+  bool irq_line;
 
   static std::array<bool, 256> s_condition_lut;
   static std::array<Handler16, 1024> s_opcode_lut_16;
