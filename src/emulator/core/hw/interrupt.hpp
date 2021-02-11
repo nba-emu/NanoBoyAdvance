@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <emulator/core/arm/arm7tdmi.hpp>
+#include <emulator/core/scheduler.hpp>
 
 namespace nba::core {
 
@@ -25,12 +26,18 @@ public:
     GamePak
   };
 
-  IRQ(arm::ARM7TDMI& cpu) : cpu(cpu) { Reset(); }
+  IRQ(arm::ARM7TDMI& cpu, Scheduler& scheduler)
+      : cpu(cpu)
+      , scheduler(scheduler) {
+    Reset();
+  }
 
   void Reset() {
     reg_ime = 0;
     reg_ie = 0;
     reg_if = 0;
+    event = nullptr;
+    cpu.IRQLine() = false;
   }
 
   auto Read(int offset) const -> std::uint8_t;
@@ -58,6 +65,8 @@ private:
   std::uint16_t reg_ie;
   std::uint16_t reg_if;
   arm::ARM7TDMI& cpu;
+  Scheduler& scheduler;
+  Scheduler::Event* event = nullptr;
 };
 
 } // namespace nba::core
