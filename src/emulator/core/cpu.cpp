@@ -20,7 +20,7 @@ constexpr int CPU::s_ws_seq2[2];
 using Key = InputDevice::Key;
 
 CPU::CPU(std::shared_ptr<Config> config)
-    : ARM7TDMI::ARM7TDMI(this)
+    : ARM7TDMI::ARM7TDMI(scheduler, this)
     , config(config)
     , irq(*this, scheduler)
     , dma(*this, irq, scheduler)

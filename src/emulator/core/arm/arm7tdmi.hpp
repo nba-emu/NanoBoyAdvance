@@ -9,6 +9,7 @@
 
 #include <array>
 #include <common/log.hpp>
+#include <emulator/core/scheduler.hpp>
 
 #include "memory.hpp"
 #include "state.hpp"
@@ -19,7 +20,11 @@ class ARM7TDMI {
 public:
   using Access = MemoryBase::Access;
 
-  ARM7TDMI(MemoryBase* interface) : interface(interface) { Reset(); }
+  ARM7TDMI(Scheduler& scheduler, MemoryBase* interface)
+      : scheduler(scheduler)
+      , interface(interface) {
+    Reset();
+  }
 
   auto IRQLine() -> bool& { return irq_line; }
 
@@ -32,6 +37,7 @@ public:
     pipe.opcode[1] = 0xF0000000;
     pipe.fetch_type = Access::Nonsequential;
     irq_line = false;
+    bus_conflicted = false;
   }
 
   auto GetPrefetchedOpcode(int slot) -> std::uint32_t {
@@ -72,6 +78,20 @@ public:
 
 private:
   friend struct TableGen;
+
+  auto GetReg(int id) -> std::uint32_t {
+    if (bus_conflicted && id >= 8) {
+      return state.reg[id] | state.bank[BANK_NONE][id - 8];
+    }
+    return state.reg[id];
+  }
+
+  void SetReg(int id, std::uint32_t value) {
+    if (bus_conflicted && id >= 8) {
+      state.bank[BANK_NONE][id - 8] = value;
+    }
+    state.reg[id] = value;
+  }
 
   void SignalIRQ() {
     if (state.cpsr.f.mask_irq) {
@@ -128,7 +148,7 @@ private:
   }
 
   auto GetRegisterBankByMode(Mode mode) -> Bank {
-    /* TODO: reverse-engineer which bank the CPU defaults to for invalid modes. */
+    // TODO: reverse-engineer which bank the CPU defaults to for invalid modes.
     switch (mode) {
     case MODE_USR:
     case MODE_SYS:
@@ -190,8 +210,10 @@ private:
   #include "handlers/handler32.inl"
   #include "handlers/memory.inl"
 
+  Scheduler& scheduler;
   MemoryBase* interface;
   StatusRegister* p_spsr;
+  bool bus_conflicted;
 
   struct Pipeline {
     Access fetch_type;

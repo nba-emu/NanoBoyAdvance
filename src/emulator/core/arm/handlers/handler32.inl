@@ -31,7 +31,7 @@ void ARM_DataProcessing(std::uint32_t instruction) {
   int reg_op2 = (instruction >>  0) & 0xF;
 
   std::uint32_t op2 = 0;
-  std::uint32_t op1 = state.reg[reg_op1];
+  std::uint32_t op1 = GetReg(reg_op1);
 
   int carry = state.cpsr.f.c;
 
@@ -53,12 +53,12 @@ void ARM_DataProcessing(std::uint32_t instruction) {
 
     std::uint32_t shift;
 
-    op2 = state.reg[reg_op2];
+    op2 = GetReg(reg_op2);
 
     if constexpr (shift_imm) {
       shift = (instruction >> 7) & 0x1F;
     } else {
-      shift = state.reg[(instruction >> 8) & 0xF];
+      shift = GetReg((instruction >> 8) & 0xF);
 
       if (reg_op1 == 15) op1 += 4;
       if (reg_op2 == 15) op2 += 4;
@@ -70,7 +70,7 @@ void ARM_DataProcessing(std::uint32_t instruction) {
   }
 
   auto& cpsr = state.cpsr;
-  auto& result = state.reg[reg_dst];
+  std::uint32_t result;
 
   switch (opcode) {
     case DataOp::AND:
@@ -79,6 +79,7 @@ void ARM_DataProcessing(std::uint32_t instruction) {
         SetZeroAndSignFlag(result);
         cpsr.f.c = carry;
       }
+      SetReg(reg_dst, result);
       break;
     case DataOp::EOR:
       result = op1 ^ op2;
@@ -86,24 +87,25 @@ void ARM_DataProcessing(std::uint32_t instruction) {
         SetZeroAndSignFlag(result);
         cpsr.f.c = carry;
       }
+      SetReg(reg_dst, result);
       break;
     case DataOp::SUB:
-      result = SUB(op1, op2, set_flags);
+      SetReg(reg_dst, SUB(op1, op2, set_flags));
       break;
     case DataOp::RSB:
-      result = SUB(op2, op1, set_flags);
+      SetReg(reg_dst, SUB(op2, op1, set_flags));
       break;
     case DataOp::ADD:
-      result = ADD(op1, op2, set_flags);
+      SetReg(reg_dst, ADD(op1, op2, set_flags));
       break;
     case DataOp::ADC:
-      result = ADC(op1, op2, set_flags);
+      SetReg(reg_dst, ADC(op1, op2, set_flags));
       break;
     case DataOp::SBC:
-      result = SBC(op1, op2, set_flags);
+      SetReg(reg_dst, SBC(op1, op2, set_flags));
       break;
     case DataOp::RSC:
-      result = SBC(op2, op1, set_flags);
+      SetReg(reg_dst, SBC(op2, op1, set_flags));
       break;
     case DataOp::TST:
       SetZeroAndSignFlag(op1 & op2);
@@ -125,13 +127,14 @@ void ARM_DataProcessing(std::uint32_t instruction) {
         SetZeroAndSignFlag(result);
         cpsr.f.c = carry;
       }
+      SetReg(reg_dst, result);
       break;
     case DataOp::MOV:
-      result = op2;
       if constexpr (set_flags) {
-        SetZeroAndSignFlag(result);
+        SetZeroAndSignFlag(op2);
         cpsr.f.c = carry;
       }
+      SetReg(reg_dst, op2);
       break;
     case DataOp::BIC:
       result = op1 & ~op2;
@@ -139,6 +142,7 @@ void ARM_DataProcessing(std::uint32_t instruction) {
         SetZeroAndSignFlag(result);
         cpsr.f.c = carry;
       }
+      SetReg(reg_dst, result);
       break;
     case DataOp::MVN:
       result = ~op2;
@@ -146,6 +150,7 @@ void ARM_DataProcessing(std::uint32_t instruction) {
         SetZeroAndSignFlag(result);
         cpsr.f.c = carry;
       }
+      SetReg(reg_dst, result);
       break;
   }
 
@@ -192,7 +197,7 @@ void ARM_StatusTransfer(std::uint32_t instruction) {
 
       op = (value >> shift) | (value << (32 - shift));
     } else {
-      op = state.reg[instruction & 0xF];
+      op = GetReg(instruction & 0xF);
     }
 
     std::uint32_t value = op & mask;
@@ -204,15 +209,16 @@ void ARM_StatusTransfer(std::uint32_t instruction) {
       }
       state.cpsr.v = (state.cpsr.v & ~mask) | value;
     } else if (p_spsr != &state.cpsr) {
+      // TODO: does the bus conflict affect SPSR accesses?
       p_spsr->v = (p_spsr->v & ~mask) | value;
     }
   } else {
     int dst = (instruction >> 12) & 0xF;
 
     if (use_spsr) {
-      state.reg[dst] = p_spsr->v;
+      SetReg(dst, p_spsr->v);
     } else {
-      state.reg[dst] = state.cpsr.v;
+      SetReg(dst, state.cpsr.v);
     }
   }
 
@@ -229,12 +235,13 @@ void ARM_Multiply(std::uint32_t instruction) {
   int op3 = (instruction >> 12) & 0xF;
   int dst = (instruction >> 16) & 0xF;
 
-  TickMultiply(state.reg[op2]);
+  // TODO: do not read the register *twice*.
+  TickMultiply(GetReg(op2));
 
-  result = state.reg[op1] * state.reg[op2];
+  result = GetReg(op1) * GetReg(op2);
 
   if (accumulate) {
-    result += state.reg[op3];
+    result += GetReg(op3);
     interface->Idle();
   }
 
@@ -242,7 +249,7 @@ void ARM_Multiply(std::uint32_t instruction) {
     SetZeroAndSignFlag(result);
   }
 
-  state.reg[dst] = result;
+  SetReg(dst, result);
   pipe.fetch_type = Access::Nonsequential;
   state.r15 += 4;
 }
@@ -257,12 +264,13 @@ void ARM_MultiplyLong(std::uint32_t instruction) {
 
   std::int64_t result;
 
+  // TODO: do not read the register *twice*.
   interface->Idle();
-  TickMultiply(state.reg[op2]);
+  TickMultiply(GetReg(op2));
 
   if (sign_extend) {
-    std::int64_t a = state.reg[op1];
-    std::int64_t b = state.reg[op2];
+    std::int64_t a = GetReg(op1);
+    std::int64_t b = GetReg(op2);
 
     /* Sign-extend operands */
     if (a & 0x80000000) a |= 0xFFFFFFFF00000000;
@@ -270,18 +278,18 @@ void ARM_MultiplyLong(std::uint32_t instruction) {
 
     result = a * b;
   } else {
-    std::uint64_t uresult = (std::uint64_t)state.reg[op1] * (std::uint64_t)state.reg[op2];
+    std::uint64_t uresult = (std::uint64_t)GetReg(op1) * (std::uint64_t)GetReg(op2);
 
     result = (std::int64_t)uresult;
   }
 
   if (accumulate) {
-    std::int64_t value = state.reg[dst_hi];
+    std::int64_t value = GetReg(dst_hi);
 
     /* Workaround x86 shift limitations. */
     value <<= 16;
     value <<= 16;
-    value  |= state.reg[dst_lo];
+    value  |= GetReg(dst_lo);
 
     result += value;
     interface->Idle();
@@ -289,8 +297,8 @@ void ARM_MultiplyLong(std::uint32_t instruction) {
 
   std::uint32_t result_hi = result >> 32;
 
-  state.reg[dst_lo] = result & 0xFFFFFFFF;
-  state.reg[dst_hi] = result_hi;
+  SetReg(dst_lo, result & 0xFFFFFFFF);
+  SetReg(dst_hi, result_hi);
 
   if (set_flags) {
     state.cpsr.f.n = result_hi >> 31;
@@ -301,7 +309,6 @@ void ARM_MultiplyLong(std::uint32_t instruction) {
   state.r15 += 4;
 }
 
-/* TODO: Check if timings are correct. */
 template <bool byte>
 void ARM_SingleDataSwap(std::uint32_t instruction) {
   int src  = (instruction >>  0) & 0xF;
@@ -311,21 +318,21 @@ void ARM_SingleDataSwap(std::uint32_t instruction) {
   std::uint32_t tmp;
 
   if (byte) {
-    tmp = ReadByte(state.reg[base], Access::Nonsequential);
-    WriteByte(state.reg[base], (std::uint8_t)state.reg[src], Access::Nonsequential);
+    tmp = ReadByte(GetReg(base), Access::Nonsequential);
+    WriteByte(GetReg(base), (std::uint8_t)GetReg(src), Access::Nonsequential);
   } else {
-    tmp = ReadWordRotate(state.reg[base], Access::Nonsequential);
-    WriteWord(state.reg[base], state.reg[src], Access::Nonsequential);
+    tmp = ReadWordRotate(GetReg(base), Access::Nonsequential);
+    WriteWord(GetReg(base), GetReg(src), Access::Nonsequential);
   }
 
-  state.reg[dst] = tmp;
+  SetReg(dst, tmp);
   interface->Idle();
   pipe.fetch_type = Access::Nonsequential;
   state.r15 += 4;
 }
 
 void ARM_BranchAndExchange(std::uint32_t instruction) {
-  std::uint32_t address = state.reg[instruction & 0xF];
+  std::uint32_t address = GetReg(instruction & 0xF);
 
   if (address & 1) {
     state.r15 = address & ~1;
@@ -343,12 +350,12 @@ void ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
   int base = (instruction >> 16) & 0xF;
 
   std::uint32_t offset;
-  std::uint32_t address = state.reg[base];
+  std::uint32_t address = GetReg(base);
 
   if (immediate) {
     offset = (instruction & 0xF) | ((instruction >> 4) & 0xF0);
   } else {
-    offset = state.reg[instruction & 0xF];
+    offset = GetReg(instruction & 0xF);
   }
 
   if (pre) {
@@ -359,10 +366,10 @@ void ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
     case 0: break;
     case 1:
       if (load) {
-        state.reg[dst] = ReadHalfRotate(address, Access::Nonsequential);
+        SetReg(dst, ReadHalfRotate(address, Access::Nonsequential));
         interface->Idle();
       } else {
-        std::uint32_t value = state.reg[dst];
+        std::uint32_t value = GetReg(dst);
 
         if (dst == 15) {
           value += 4;
@@ -373,7 +380,7 @@ void ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
       break;
     case 2:
       if (load) {
-        state.reg[dst] = ReadByteSigned(address, Access::Nonsequential);
+        SetReg(dst, ReadByteSigned(address, Access::Nonsequential));
         interface->Idle();
       } else {
         // ARMv5 LDRD: this opcode is unpredictable on ARMv4T.
@@ -385,7 +392,7 @@ void ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
       break;
     case 3:
       if (load) {
-        state.reg[dst] = ReadHalfSigned(address, Access::Nonsequential);
+        SetReg(dst, ReadHalfSigned(address, Access::Nonsequential));
         interface->Idle();
       } else {
         // ARMv5 STRD: this opcode is unpredictable on ARMv4T.
@@ -400,7 +407,7 @@ void ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
     if (!pre) {
       address += add ? offset : -offset;
     }
-    state.reg[base] = address;
+    SetReg(base, address);
   }
 
   if (load && dst == 15) {
@@ -433,7 +440,7 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
 
   int dst  = (instruction >> 12) & 0xF;
   int base = (instruction >> 16) & 0xF;
-  std::uint32_t address = state.reg[base];
+  std::uint32_t address = GetReg(base);
 
   /* Calculate offset relative to base register. */
   if (immediate) {
@@ -443,7 +450,7 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
     int opcode = (instruction >> 5) & 3;
     int amount = (instruction >> 7) & 0x1F;
 
-    offset = state.reg[instruction & 0xF];
+    offset = GetReg(instruction & 0xF);
     DoShift(opcode, offset, amount, carry, true);
   }
 
@@ -453,13 +460,13 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
 
   if (load) {
     if (byte) {
-      state.reg[dst] = ReadByte(address, Access::Nonsequential);
+      SetReg(dst, ReadByte(address, Access::Nonsequential));
     } else {
-      state.reg[dst] = ReadWordRotate(address, Access::Nonsequential);
+      SetReg(dst, ReadWordRotate(address, Access::Nonsequential));
     }
     interface->Idle();
   } else {
-    std::uint32_t value = state.reg[dst];
+    std::uint32_t value = GetReg(dst);
 
     /* r15 is $+12 now due to internal prefetch cycle. */
     if (dst == 15) value += 4;
@@ -474,9 +481,9 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
   /* Write address back to the base register. */
   if (!load || base != dst) {
     if (!pre) {
-      state.reg[base] += add ? offset : -offset;
+      SetReg(base, GetReg(base) + (add ? offset : -offset));
     } else if (writeback) {
-      state.reg[base] = address;
+      SetReg(base, address);
     }
   }
 
@@ -501,7 +508,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
   int  bytes = 0;
   bool pre = _pre;
 
-  std::uint32_t address = state.reg[base];
+  std::uint32_t address = GetReg(base);
 
   if (switch_mode) {
     mode = state.cpsr.f.mode;
@@ -556,7 +563,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
     }
 
     if (load) {
-      state.reg[i] = ReadWord(address, access_type);
+      SetReg(i, ReadWord(address, access_type));
       if (i == 15 && user_mode) {
         auto& spsr = *p_spsr;
 
@@ -569,7 +576,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
       /* In hardware r15 is incremented in the cycle before the first transfer. */
       WriteWord(address, state.r15 + 4, access_type);
     } else {
-      WriteWord(address, state.reg[i], access_type);
+      WriteWord(address, GetReg(i), access_type);
     }
 
     if (!pre) {
@@ -581,10 +588,12 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
 
   if (switch_mode) {
     SwitchMode(mode);
+    bus_conflicted = true;
+    scheduler.Add(3, [this](int late) { bus_conflicted = false; });
   }
 
   if (writeback && (!load || !(list & (1 << base)))) {
-    state.reg[base] = base_new;
+    SetReg(base, base_new);
   }
 
   if (load) {
