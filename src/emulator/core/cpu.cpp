@@ -43,7 +43,6 @@ void CPU::Reset() {
   last_rom_address = 0;
   bus_is_controlled_by_dma = false;
   openbus_from_dma = false;
-  cpu_is_halted = false;
   UpdateMemoryDelayTable();
 
   for (int i = 16; i < 256; i++) {
@@ -82,22 +81,11 @@ void CPU::Reset() {
 void CPU::Tick(int cycles) {
   openbus_from_dma = false;
   
-  if (!bus_is_controlled_by_dma) {
-    if (unlikely(mmio.haltcnt == HaltControl::HALT && !cpu_is_halted)) {
-      cpu_is_halted = true;
-      while (!irq.HasServableIRQ()) {
-        Tick(scheduler.GetRemainingCycleCount());
-      }
-      cpu_is_halted = false;
-      mmio.haltcnt = HaltControl::RUN;
-    }
-
-    if (unlikely(dma.IsRunning())) {
-      bus_is_controlled_by_dma = true;
-      dma.Run();
-      bus_is_controlled_by_dma = false;
-      openbus_from_dma = true;
-    }
+  if (unlikely(dma.IsRunning() && !bus_is_controlled_by_dma)) {
+    bus_is_controlled_by_dma = true;
+    dma.Run();
+    bus_is_controlled_by_dma = false;
+    openbus_from_dma = true;
   }
 
   scheduler.AddCycles(cycles);
@@ -201,11 +189,18 @@ void CPU::RunFor(int cycles) {
   auto limit = scheduler.GetTimestampNow() + cycles;
 
   while (scheduler.GetTimestampNow() < limit) {
-    if (unlikely(m4a_xq_enable && state.r15 == m4a_setfreq_address)) {
-      M4ASampleFreqSetHook();
+    if (unlikely(mmio.haltcnt == HaltControl::HALT && irq.HasServableIRQ())) {
+      mmio.haltcnt = HaltControl::RUN;
     }
-    
-    Run();
+
+    if (likely(mmio.haltcnt == HaltControl::RUN)) {
+      if (unlikely(m4a_xq_enable && state.r15 == m4a_setfreq_address)) {
+        M4ASampleFreqSetHook();
+      }
+      Run();
+    } else {
+      Tick(scheduler.GetRemainingCycleCount());
+    }
   }
 }
 
