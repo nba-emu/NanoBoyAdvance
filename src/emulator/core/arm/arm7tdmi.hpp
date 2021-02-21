@@ -37,7 +37,7 @@ public:
     pipe.opcode[1] = 0xF0000000;
     pipe.fetch_type = Access::Nonsequential;
     irq_line = false;
-    bus_conflicted = false;
+    ldm_usermode_conflict = false;
   }
 
   auto GetPrefetchedOpcode(int slot) -> std::uint32_t {
@@ -80,14 +80,14 @@ private:
   friend struct TableGen;
 
   auto GetReg(int id) -> std::uint32_t {
-    if (bus_conflicted && id >= 8) {
+    if (ldm_usermode_conflict && id >= 8) {
       return state.reg[id] | state.bank[BANK_NONE][id - 8];
     }
     return state.reg[id];
   }
 
   void SetReg(int id, std::uint32_t value) {
-    if (bus_conflicted && id >= 8) {
+    if (ldm_usermode_conflict && id >= 8) {
       state.bank[BANK_NONE][id - 8] = value;
     }
     state.reg[id] = value;
@@ -213,7 +213,7 @@ private:
   Scheduler& scheduler;
   MemoryBase* interface;
   StatusRegister* p_spsr;
-  bool bus_conflicted;
+  bool ldm_usermode_conflict;
 
   struct Pipeline {
     Access fetch_type;

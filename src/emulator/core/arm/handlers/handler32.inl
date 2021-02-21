@@ -588,8 +588,12 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
 
   if (switch_mode) {
     SwitchMode(mode);
-    bus_conflicted = true;
-    scheduler.Add(3, [this](int late) { bus_conflicted = false; });
+    // During the following two cycles of a usermode LDM,
+    // register accesses will go to both the user bank and original bank.
+    if (load) {
+      ldm_usermode_conflict = true;
+      scheduler.Add(3, [this](int late) { ldm_usermode_conflict = false; });
+    }
   }
 
   if (writeback && (!load || !(list & (1 << base)))) {
