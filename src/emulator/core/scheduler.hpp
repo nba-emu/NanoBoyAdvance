@@ -60,9 +60,9 @@ public:
   }
 
   void AddCycles(int cycles) {
-    timestamp_now += cycles;
-    if (unlikely(GetTimestampTarget() <= timestamp_now))
-      Step();
+    auto timestamp_next = timestamp_now + cycles;
+    Step(timestamp_next);
+    timestamp_now = timestamp_next;
   }
 
   auto Add(std::uint64_t delay, std::function<void(int)> callback) -> Event* {
@@ -102,11 +102,11 @@ private:
   constexpr int LeftChild(int n) { return n * 2 + 1; }
   constexpr int RightChild(int n) { return n * 2 + 2; }
 
-  void Step() {
-    auto now = GetTimestampNow();
-    while (heap[0]->timestamp <= now && heap_size > 0) {
+  void Step(std::uint64_t timestamp_next) {
+    while (heap[0]->timestamp <= timestamp_next && heap_size > 0) {
       auto event = heap[0];
-      event->callback(int(now - event->timestamp));
+      timestamp_now = event->timestamp;
+      event->callback(0);
       // NOTE: we cannot just pass zero because the callback may mess with the event queue.
       Remove(event->handle);
     }

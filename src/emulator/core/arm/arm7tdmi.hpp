@@ -9,6 +9,7 @@
 
 #include <array>
 #include <common/log.hpp>
+#include <emulator/core/scheduler.hpp>
 
 #include "memory.hpp"
 #include "state.hpp"
@@ -19,7 +20,13 @@ class ARM7TDMI {
 public:
   using Access = MemoryBase::Access;
 
-  ARM7TDMI(MemoryBase* interface) : interface(interface) { Reset(); }
+  ARM7TDMI(Scheduler& scheduler, MemoryBase* interface)
+      : scheduler(scheduler)
+      , interface(interface) {
+    Reset();
+  }
+
+  auto IRQLine() -> bool& { return irq_line; }
 
   void Reset() {
     state.Reset();
@@ -29,6 +36,8 @@ public:
     pipe.opcode[0] = 0xF0000000;
     pipe.opcode[1] = 0xF0000000;
     pipe.fetch_type = Access::Nonsequential;
+    irq_line = false;
+    ldm_usermode_conflict = false;
   }
 
   auto GetPrefetchedOpcode(int slot) -> std::uint32_t {
@@ -36,6 +45,8 @@ public:
   }
 
   void Run() {
+    if (IRQLine()) SignalIRQ();
+
     auto instruction = pipe.opcode[0];
 
     if (state.cpsr.f.thumb) {
@@ -60,9 +71,40 @@ public:
     }
   }
 
+  RegisterFile state;
+
+  typedef void (ARM7TDMI::*Handler16)(std::uint16_t);
+  typedef void (ARM7TDMI::*Handler32)(std::uint32_t);
+
+private:
+  friend struct TableGen;
+
+  auto GetReg(int id) -> std::uint32_t {
+    if (ldm_usermode_conflict && id >= 8) {
+      return state.reg[id] | state.bank[BANK_NONE][id - 8];
+    }
+    return state.reg[id];
+  }
+
+  void SetReg(int id, std::uint32_t value) {
+    if (ldm_usermode_conflict && id >= 8) {
+      state.bank[BANK_NONE][id - 8] = value;
+    }
+    state.reg[id] = value;
+  }
+
   void SignalIRQ() {
     if (state.cpsr.f.mask_irq) {
       return;
+    }
+
+    // Prefetch the next instruction
+    // The result will be discarded because we flush the pipeline.
+    // But this is important for timing nonetheless.
+    if (state.cpsr.f.thumb) {
+      ReadHalf(state.r15 & ~1, pipe.fetch_type);
+    } else {
+      ReadWord(state.r15 & ~3, pipe.fetch_type);
     }
 
     // Save current program status register.
@@ -85,14 +127,6 @@ public:
     ReloadPipeline32();
   }
 
-  RegisterFile state;
-
-  typedef void (ARM7TDMI::*Handler16)(std::uint16_t);
-  typedef void (ARM7TDMI::*Handler32)(std::uint32_t);
-
-private:
-  friend struct TableGen;
-
   bool CheckCondition(Condition condition) {
     if (condition == COND_AL)
       return true;
@@ -114,7 +148,7 @@ private:
   }
 
   auto GetRegisterBankByMode(Mode mode) -> Bank {
-    /* TODO: reverse-engineer which bank the CPU defaults to for invalid modes. */
+    // TODO: reverse-engineer which bank the CPU defaults to for invalid modes.
     switch (mode) {
     case MODE_USR:
     case MODE_SYS:
@@ -176,13 +210,17 @@ private:
   #include "handlers/handler32.inl"
   #include "handlers/memory.inl"
 
+  Scheduler& scheduler;
   MemoryBase* interface;
   StatusRegister* p_spsr;
+  bool ldm_usermode_conflict;
 
   struct Pipeline {
     Access fetch_type;
     std::uint32_t opcode[2];
   } pipe;
+
+  bool irq_line;
 
   static std::array<bool, 256> s_condition_lut;
   static std::array<Handler16, 1024> s_opcode_lut_16;

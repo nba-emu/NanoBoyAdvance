@@ -41,6 +41,8 @@ void IRQ::Write(int offset, std::uint8_t value) {
       reg_ime = value & 1;
       break;
   }
+
+  UpdateIRQLine();
 }
 
 void IRQ::Raise(IRQ::Source source, int channel) {
@@ -69,6 +71,22 @@ void IRQ::Raise(IRQ::Source source, int channel) {
     case Source::GamePak:
       reg_if |= 8192;
       break;
+  }
+
+  UpdateIRQLine();
+}
+
+void IRQ::UpdateIRQLine() {
+  bool irq_line = MasterEnable() && HasServableIRQ();
+
+  if (irq_line != cpu.IRQLine()) {
+    if (event != nullptr) {
+      scheduler.Cancel(event);
+    }
+    event = scheduler.Add(1, [=](int late) {
+      cpu.IRQLine() = irq_line;
+      event = nullptr;
+    });
   }
 }
 
