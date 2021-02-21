@@ -47,6 +47,7 @@ See [COMPILING.md](https://github.com/fleroviux/NanoboyAdvance/blob/master/COMPI
 ## Credit
 
 - Martin Korth: for [GBATEK](http://problemkaputt.de/gbatek.htm), a good piece of hardware documentation.
-- endrift: for prior [research](http://mgba.io/tag/emulation/) and [hardware tests](https://github.com/mgba-emu/suite).
-- destoer, Lady Starbreeze: contributing research and insightful discussions.
-- Talarubi, Near: [GBA color correction algorithm](https://byuu.net/video/color-emulation)
+- [endrift](hrrps://github.com/endrift): for prior [research](http://mgba.io/tag/emulation/) and [hardware tests](https://github.com/mgba-emu/suite).
+- [destoer](https://github.com/destoer): for contributing research, tests and insightful discussions.
+- [LadyStarbreeze](https://github.com/LadyStarbreeze): for contributing research, tests and insightful discussions.
+- Talarubi, Near: for the default [GBA color correction algorithm](https://byuu.net/video/color-emulation)
