@@ -156,7 +156,7 @@ void ARM_DataProcessing(std::uint32_t instruction) {
 
   if (reg_dst == 15) {
     if constexpr (set_flags) {
-      auto spsr = *p_spsr;
+      auto spsr = GetSPSR();
 
       SwitchMode(spsr.f.mode);
       state.cpsr.v = spsr.v;
@@ -208,15 +208,14 @@ void ARM_StatusTransfer(std::uint32_t instruction) {
         SwitchMode(static_cast<Mode>(value & 0x1F));
       }
       state.cpsr.v = (state.cpsr.v & ~mask) | value;
-    } else if (p_spsr != &state.cpsr) {
-      // TODO: does the bus conflict affect SPSR accesses?
-      p_spsr->v = (p_spsr->v & ~mask) | value;
+    } else if (p_spsr != &state.cpsr && likely(!cpu_mode_is_invalid)) {
+      p_spsr->v = (GetSPSR().v & ~mask) | value;
     }
   } else {
     int dst = (instruction >> 12) & 0xF;
 
     if (use_spsr) {
-      SetReg(dst, p_spsr->v);
+      SetReg(dst, GetSPSR().v);
     } else {
       SetReg(dst, state.cpsr.v);
     }
@@ -565,7 +564,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
     if (load) {
       SetReg(i, ReadWord(address, access_type));
       if (i == 15 && user_mode) {
-        auto& spsr = *p_spsr;
+        auto spsr = GetSPSR();
 
         SwitchMode(spsr.f.mode);
         state.cpsr.v = spsr.v;

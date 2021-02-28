@@ -108,6 +108,27 @@ private:
     }
   }
 
+  auto GetSPSR() -> StatusRegister {
+    std::uint32_t spsr = 0;
+
+    if (unlikely(ldm_usermode_conflict)) {
+      /* TODO: current theory is that the value gets OR'd with CPSR,
+       * because in user and system mode SPSR reads return the CPSR value.
+       * But this needs to be confirmed.
+       */
+      spsr |= state.cpsr.v;
+    }
+
+    if (unlikely(cpu_mode_is_invalid)) {
+      // TODO: where does this value come from?
+      spsr |= 0x00000010;
+    } else {
+      spsr |= p_spsr->v;
+    }
+
+    return { .v = spsr };
+  }
+
   void SignalIRQ() {
     if (state.cpsr.f.mask_irq) {
       return;
