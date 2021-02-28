@@ -180,17 +180,16 @@ void ARM_DataProcessing(std::uint32_t instruction) {
 template <bool immediate, bool use_spsr, bool to_status>
 void ARM_StatusTransfer(std::uint32_t instruction) {
   if (to_status) {
-    /* TODO: find out what happens if the thumb bit was altered by MSR. */
     std::uint32_t op;
     std::uint32_t mask = 0;
 
-    /* Create mask based on fsxc-bits. */
+    // Create mask based on fsxc-bits.
     if (instruction & (1 << 16)) mask |= 0x000000FF;
     if (instruction & (1 << 17)) mask |= 0x0000FF00;
     if (instruction & (1 << 18)) mask |= 0x00FF0000;
     if (instruction & (1 << 19)) mask |= 0xFF000000;
 
-    /* Decode source operand. */
+    // Decode source operand. 
     if (immediate) {
       int value = instruction & 0xFF;
       int shift = ((instruction >> 8) & 0xF) * 2;
@@ -200,16 +199,19 @@ void ARM_StatusTransfer(std::uint32_t instruction) {
       op = GetReg(instruction & 0xF);
     }
 
-    std::uint32_t value = op & mask;
-
-    /* Apply masked replace to SPSR or CPSR. */
+    // Apply masked replace to SPSR or CPSR.
     if (!use_spsr) {
-      if (mask & 0xFF) {
-        SwitchMode(static_cast<Mode>(value & 0x1F));
+      // In non-privileged mode (user mode): only condition code bits of CPSR can be changed, control bits can't.
+      if (state.cpsr.f.mode == MODE_USR) {
+        mask &= 0xFF000000;
       }
-      state.cpsr.v = (state.cpsr.v & ~mask) | value;
+      if (mask & 0xFF) {
+        SwitchMode(static_cast<Mode>(op & 0x1F));
+      }
+      // TODO: handle code that alters the Thumb-bit.
+      state.cpsr.v = (state.cpsr.v & ~mask) | (op & mask);
     } else if (p_spsr != &state.cpsr && likely(!cpu_mode_is_invalid)) {
-      p_spsr->v = (GetSPSR().v & ~mask) | value;
+      p_spsr->v = (GetSPSR().v & ~mask) | (op & mask);
     }
   } else {
     int dst = (instruction >> 12) & 0xF;
