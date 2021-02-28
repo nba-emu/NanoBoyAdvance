@@ -8,6 +8,7 @@
 #pragma once
 
 #include <array>
+#include <common/likely.hpp>
 #include <common/log.hpp>
 #include <emulator/core/scheduler.hpp>
 
@@ -38,6 +39,7 @@ public:
     pipe.fetch_type = Access::Nonsequential;
     irq_line = false;
     ldm_usermode_conflict = false;
+    cpu_mode_is_invalid = false;
   }
 
   auto GetPrefetchedOpcode(int slot) -> std::uint32_t {
@@ -80,17 +82,30 @@ private:
   friend struct TableGen;
 
   auto GetReg(int id) -> std::uint32_t {
-    if (ldm_usermode_conflict && id >= 8) {
-      return state.reg[id] | state.bank[BANK_NONE][id - 8];
+    std::uint32_t result = 0;
+    bool is_banked = id >= 8 && id != 15;
+
+    if (unlikely(ldm_usermode_conflict && is_banked)) {
+      result |= state.bank[BANK_NONE][id - 8];
     }
-    return state.reg[id];
+
+    if (likely(!cpu_mode_is_invalid || !is_banked)) {
+      result |= state.reg[id];
+    }
+
+    return result;
   }
 
   void SetReg(int id, std::uint32_t value) {
-    if (ldm_usermode_conflict && id >= 8) {
+    bool is_banked = id >= 8 && id != 15;
+
+    if (unlikely(ldm_usermode_conflict && is_banked)) {
       state.bank[BANK_NONE][id - 8] = value;
     }
-    state.reg[id] = value;
+
+    if (likely(!cpu_mode_is_invalid || !is_banked)) {
+      state.reg[id] = value;
+    }
   }
 
   void SignalIRQ() {
@@ -117,9 +132,9 @@ private:
     // Save current program counter and disable Thumb.
     if (state.cpsr.f.thumb) {
       state.cpsr.f.thumb = 0;
-      state.r14 = state.r15;
+      SetReg(14, state.r15);
     } else {
-      state.r14 = state.r15 - 4;
+      SetReg(14, state.r15 - 4);
     }
 
     // Jump to IRQ exception vector.
@@ -148,7 +163,6 @@ private:
   }
 
   auto GetRegisterBankByMode(Mode mode) -> Bank {
-    // TODO: reverse-engineer which bank the CPU defaults to for invalid modes.
     switch (mode) {
     case MODE_USR:
     case MODE_SYS:
@@ -165,7 +179,7 @@ private:
       return BANK_UND;
     }
 
-    return BANK_UND;
+    return BANK_INVALID;
   }
 
   void SwitchMode(Mode new_mode) {
@@ -203,6 +217,8 @@ private:
       state.r13 = state.bank[new_bank][5];
       state.r14 = state.bank[new_bank][6];
     }
+
+    cpu_mode_is_invalid = new_bank == BANK_INVALID;
   }
 
   #include "handlers/arithmetic.inl"
@@ -214,6 +230,7 @@ private:
   MemoryBase* interface;
   StatusRegister* p_spsr;
   bool ldm_usermode_conflict;
+  bool cpu_mode_is_invalid;
 
   struct Pipeline {
     Access fetch_type;

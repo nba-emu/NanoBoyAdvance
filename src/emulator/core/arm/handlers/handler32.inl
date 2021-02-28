@@ -427,7 +427,7 @@ void ARM_BranchAndLink(std::uint32_t instruction) {
   }
 
   if (link) {
-    state.r14 = state.r15 - 4;
+    SetReg(14, state.r15 - 4);
   }
 
   state.r15 += offset * 4;
@@ -625,7 +625,7 @@ void ARM_Undefined(std::uint32_t instruction) {
   state.cpsr.f.mask_irq = 1;
 
   // Save current program counter and jump to UND exception vector.
-  state.r14 = state.r15 - 4;
+  SetReg(14, state.r15 - 4);
   state.r15 = 0x04;
   ReloadPipeline32();
 }
@@ -639,7 +639,7 @@ void ARM_SWI(std::uint32_t instruction) {
   state.cpsr.f.mask_irq = 1;
 
   // Save current program counter and jump to SVC exception vector.
-  state.r14 = state.r15 - 4;
+  SetReg(14, state.r15 - 4);
   state.r15 = 0x08;
   ReloadPipeline32();
 }
