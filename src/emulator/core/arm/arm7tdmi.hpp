@@ -126,7 +126,7 @@ private:
       spsr |= p_spsr->v;
     }
 
-    return { .v = spsr };
+    return StatusRegister{spsr};
   }
 
   void SignalIRQ() {

@@ -62,6 +62,9 @@ enum BankedRegister {
 };
 
 union StatusRegister {
+  StatusRegister() {};
+  StatusRegister(std::uint32_t value) { v = value; }
+
   struct {
     Mode mode : 5;
     unsigned int thumb : 1;
