@@ -71,7 +71,7 @@ or to use multiple processor cores:
 ```
 make -jNUMBER_OF_CORES
 ```
-Binaries will be output to `build/source/platform/`
+Binaries will be output to `build/src/platform/`
 
 ### Windows Mingw-w64 (GCC)
 
@@ -104,7 +104,7 @@ or to use multiple processor cores:
 ```
 make -jNUMBER_OF_CORES
 ```
-Binaries will be output to `build/source/platform/`
+Binaries will be output to `build/src/platform/`
 
 ### Windows Visual Studio (Clang)
 
