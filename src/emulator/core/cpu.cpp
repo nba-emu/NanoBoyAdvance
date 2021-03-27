@@ -62,12 +62,9 @@ void CPU::Reset() {
   ARM7TDMI::Reset();
 
   if (config->skip_bios) {
-    // Initialize SVC and IRQ mode stacks
-    state.r13 = 0x03007FE0;
-    state.bank[arm::BANK_IRQ][arm::BANK_R13] = 0x03007FA0;
-
-    // Switch to system mode
     SwitchMode(arm::MODE_SYS);
+    state.bank[arm::BANK_SVC][arm::BANK_R13] = 0x03007FE0;
+    state.bank[arm::BANK_IRQ][arm::BANK_R13] = 0x03007FA0;
     state.r13 = 0x03007F00;
     state.r15 = 0x08000000;
   }
