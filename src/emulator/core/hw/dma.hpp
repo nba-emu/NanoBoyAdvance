@@ -85,6 +85,9 @@ private:
       std::uint32_t length;
       std::uint32_t dst_addr;
       std::uint32_t src_addr;
+
+      /// Most recently read (half)word by this channel.
+      std::uint32_t bus = 0;
     } latch;
 
     bool is_fifo_dma = false;
@@ -128,7 +131,7 @@ private:
   std::bitset<4> runnable_set;
 
   /// Most recent value transferred by any DMA channel.
-  /// When attempting read from illegal addresses, this value will be read instead.
+  /// DMAs will read this when reading from unused memory or IO.
   std::uint32_t latch;
 };
 

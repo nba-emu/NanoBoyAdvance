@@ -171,18 +171,20 @@ void DMA::RunChannel(bool first) {
     if (size == Channel::Half) {
       if (likely(channel.latch.src_addr >= 0x02000000)) {
         auto value = memory.ReadHalf(channel.latch.src_addr, access);
-        latch = (value << 16) | value;
+        channel.latch.bus = (value << 16) | value;
+        latch = channel.latch.bus;
       } else {
         memory.Idle();
       }
-      memory.WriteHalf(channel.latch.dst_addr, latch, access);
+      memory.WriteHalf(channel.latch.dst_addr, channel.latch.bus, access);
     } else {
       if (likely(channel.latch.src_addr >= 0x02000000)) {
-        latch = memory.ReadWord(channel.latch.src_addr, access);
+        channel.latch.bus = memory.ReadWord(channel.latch.src_addr, access);
+        latch = channel.latch.bus;
       } else {
         memory.Idle();
       }
-      memory.WriteWord(channel.latch.dst_addr, latch, access);
+      memory.WriteWord(channel.latch.dst_addr, channel.latch.bus, access);
     }
 
     channel.latch.src_addr += src_modify;
