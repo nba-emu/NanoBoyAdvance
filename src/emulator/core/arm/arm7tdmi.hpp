@@ -31,8 +31,7 @@ public:
 
   void Reset() {
     state.Reset();
-
-    SwitchMode(MODE_SYS);
+    SwitchMode(state.cpsr.f.mode);
 
     pipe.opcode[0] = 0xF0000000;
     pipe.opcode[1] = 0xF0000000;
@@ -71,6 +70,45 @@ public:
         state.r15 += 4;
       }
     }
+  }
+
+  void SwitchMode(Mode new_mode) {
+    auto old_bank = GetRegisterBankByMode(state.cpsr.f.mode);
+    auto new_bank = GetRegisterBankByMode(new_mode);
+
+    state.cpsr.f.mode = new_mode;
+
+    if (new_bank != BANK_NONE) {
+      p_spsr = &state.spsr[new_bank];
+    } else {
+      /* In system/user mode reading from SPSR returns the current CPSR value.
+       * However writes to SPSR appear to do nothing.
+       * We take care of this fact in the MSR implementation.
+       */
+      p_spsr = &state.cpsr;
+    }
+
+    if (old_bank == new_bank) {
+      return;
+    }
+
+    if (old_bank == BANK_FIQ || new_bank == BANK_FIQ) {
+      for (int i = 0; i < 7; i++) {
+        state.bank[old_bank][i] = state.reg[8 + i];
+      }
+
+      for (int i = 0; i < 7; i++) {
+        state.reg[8 + i] = state.bank[new_bank][i];
+      }
+    } else {
+      state.bank[old_bank][5] = state.r13;
+      state.bank[old_bank][6] = state.r14;
+
+      state.r13 = state.bank[new_bank][5];
+      state.r14 = state.bank[new_bank][6];
+    }
+
+    cpu_mode_is_invalid = new_bank == BANK_INVALID;
   }
 
   RegisterFile state;
@@ -201,45 +239,6 @@ private:
     }
 
     return BANK_INVALID;
-  }
-
-  void SwitchMode(Mode new_mode) {
-    auto old_bank = GetRegisterBankByMode(state.cpsr.f.mode);
-    auto new_bank = GetRegisterBankByMode(new_mode);
-
-    state.cpsr.f.mode = new_mode;
-
-    if (new_bank != BANK_NONE) {
-      p_spsr = &state.spsr[new_bank];
-    } else {
-      /* In system/user mode reading from SPSR returns the current CPSR value.
-       * However writes to SPSR appear to do nothing.
-       * We take care of this fact in the MSR implementation.
-       */
-      p_spsr = &state.cpsr;
-    }
-
-    if (old_bank == new_bank) {
-      return;
-    }
-
-    if (old_bank == BANK_FIQ || new_bank == BANK_FIQ) {
-      for (int i = 0; i < 7; i++) {
-        state.bank[old_bank][i] = state.reg[8 + i];
-      }
-
-      for (int i = 0; i < 7; i++) {
-        state.reg[8 + i] = state.bank[new_bank][i];
-      }
-    } else {
-      state.bank[old_bank][5] = state.r13;
-      state.bank[old_bank][6] = state.r14;
-
-      state.r13 = state.bank[new_bank][5];
-      state.r14 = state.bank[new_bank][6];
-    }
-
-    cpu_mode_is_invalid = new_bank == BANK_INVALID;
   }
 
   #include "handlers/arithmetic.inl"

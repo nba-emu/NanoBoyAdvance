@@ -122,7 +122,9 @@ struct RegisterFile {
       spsr[i].v = 0;
     }
 
-    cpsr.v = MODE_SYS;
+    cpsr.v = MODE_SVC;
+    cpsr.f.mask_irq = 1;
+    cpsr.f.mask_fiq = 1;
   }
 };
 
