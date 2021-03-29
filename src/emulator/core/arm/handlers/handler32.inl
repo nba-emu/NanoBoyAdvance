@@ -527,7 +527,7 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
 
 template <bool _pre, bool add, bool user_mode, bool writeback, bool load>
 void ARM_BlockDataTransfer(std::uint32_t instruction) {
-  // TODO: reverse-engineer special case with usermode registers and a banked base register.
+  // TODO: test special case with usermode registers and a banked base register.
   int base = (instruction >> 16) & 0xF;
   int list = instruction & 0xFFFF;
 
@@ -600,7 +600,6 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
       if (writeback && i == first) {
         SetReg(base, base_new);
       }
-      // FIXME: properly defer register write to the next cycle. 
       SetReg(i, value);
     } else {
       WriteWord(address, GetReg(i), access_type);
