@@ -276,7 +276,7 @@ void init(int argc, char** argv) {
   parse_arguments(argc, argv);
   load_keymap();
   SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER);
-  g_window = SDL_CreateWindow("NanoboyAdvance",
+  g_window = SDL_CreateWindow("NanoBoyAdvance",
     SDL_WINDOWPOS_CENTERED,
     SDL_WINDOWPOS_CENTERED,
     kNativeWidth * g_config->video.scale,
@@ -375,7 +375,7 @@ void loop() {
     SDL_GL_SwapWindow(g_window);
     auto ticks_end = SDL_GetTicks();
     if ((ticks_end - ticks_start) >= 1000) {
-      auto title = fmt::format("NanoboyAdvance [{0} fps | {1}%]", g_frame_counter, int(g_frame_counter / 60.0 * 100.0));
+      auto title = fmt::format("NanoBoyAdvance [{0} fps | {1}%]", g_frame_counter, int(g_frame_counter / 60.0 * 100.0));
       SDL_SetWindowTitle(g_window, title.c_str());
       g_frame_counter = 0;
       ticks_start = ticks_end;
