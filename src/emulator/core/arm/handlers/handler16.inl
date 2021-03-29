@@ -35,7 +35,6 @@ void Thumb_MoveShiftedRegister(std::uint16_t instruction) {
 
   DoShift(op, result, imm, carry, true);
 
-  /* Update flags */
   state.cpsr.f.c = carry;
   state.cpsr.f.z = (result == 0);
   state.cpsr.f.n = result >> 31;
@@ -67,24 +66,24 @@ void Thumb_Op3(std::uint16_t instruction) {
   std::uint32_t imm = instruction & 0xFF;
 
   switch (op) {
-  case 0b00:
-    /* MOV rD, #imm */
-    state.reg[dst] = imm;
-    state.cpsr.f.n = 0;
-    state.cpsr.f.z = imm == 0;
-    break;
-  case 0b01:
-    /* CMP rD, #imm */
-    SUB(state.reg[dst], imm, true);
-    break;
-  case 0b10:
-    /* ADD rD, #imm */
-    state.reg[dst] = ADD(state.reg[dst], imm, true);
-    break;
-  case 0b11:
-    /* SUB rD, #imm */
-    state.reg[dst] = SUB(state.reg[dst], imm, true);
-    break;
+    case 0b00:
+      // MOV rD, #imm 
+      state.reg[dst] = imm;
+      state.cpsr.f.n = 0;
+      state.cpsr.f.z = imm == 0;
+      break;
+    case 0b01:
+      // CMP rD, #imm
+      SUB(state.reg[dst], imm, true);
+      break;
+    case 0b10:
+      // ADD rD, #imm
+      state.reg[dst] = ADD(state.reg[dst], imm, true);
+      break;
+    case 0b11:
+      // SUB rD, #imm
+      state.reg[dst] = SUB(state.reg[dst], imm, true);
+      break;
   }
 
   pipe.fetch_type = Access::Sequential;
@@ -97,100 +96,112 @@ void Thumb_ALU(std::uint16_t instruction) {
   int src = (instruction >> 3) & 7;
 
   pipe.fetch_type = Access::Sequential;
-
-  /* Order of opcodes has been rearranged for readabilities sake. */
-  switch (static_cast<ThumbDataOp>(op)) {
-  case ThumbDataOp::MVN:
-    state.reg[dst] = ~state.reg[src];
-    SetZeroAndSignFlag(state.reg[dst]);
-    break;
-
-  /* Bitwise logical */
-  case ThumbDataOp::AND:
-    state.reg[dst] &= state.reg[src];
-    SetZeroAndSignFlag(state.reg[dst]);
-    break;
-  case ThumbDataOp::BIC:
-    state.reg[dst] &= ~state.reg[src];
-    SetZeroAndSignFlag(state.reg[dst]);
-    break;
-  case ThumbDataOp::ORR:
-    state.reg[dst] |= state.reg[src];
-    SetZeroAndSignFlag(state.reg[dst]);
-    break;
-  case ThumbDataOp::EOR:
-    state.reg[dst] ^= state.reg[src];
-    SetZeroAndSignFlag(state.reg[dst]);
-    break;
-  case ThumbDataOp::TST: {
-    SetZeroAndSignFlag(state.reg[dst] & state.reg[src]);
-    break;
-  }
-
-  /* LSL, LSR, ASR, ROR */
-  case ThumbDataOp::LSL: {
-    int carry = state.cpsr.f.c;
-    LSL(state.reg[dst], state.reg[src], carry);
-    SetZeroAndSignFlag(state.reg[dst]);
-    state.cpsr.f.c = carry;
-    interface->Idle();
-    pipe.fetch_type = Access::Nonsequential;
-    break;
-  }
-  case ThumbDataOp::LSR: {
-    int carry = state.cpsr.f.c;
-    LSR(state.reg[dst], state.reg[src], carry, false);
-    SetZeroAndSignFlag(state.reg[dst]);
-    state.cpsr.f.c = carry;
-    interface->Idle();
-    pipe.fetch_type = Access::Nonsequential;
-    break;
-  }
-  case ThumbDataOp::ASR: {
-    int carry = state.cpsr.f.c;
-    ASR(state.reg[dst], state.reg[src], carry, false);
-    SetZeroAndSignFlag(state.reg[dst]);
-    state.cpsr.f.c = carry;
-    interface->Idle();
-    pipe.fetch_type = Access::Nonsequential;
-    break;
-  }
-  case ThumbDataOp::ROR: {
-    int carry = state.cpsr.f.c;
-    ROR(state.reg[dst], state.reg[src], carry, false);
-    SetZeroAndSignFlag(state.reg[dst]);
-    state.cpsr.f.c = carry;
-    interface->Idle();
-    pipe.fetch_type = Access::Nonsequential;
-    break;
-  }
-
-  /* Add/Sub with carry, NEG, comparison, multiply */
-  case ThumbDataOp::ADC:
-    state.reg[dst] = ADC(state.reg[dst], state.reg[src], true);
-    break;
-  case ThumbDataOp::SBC:
-    state.reg[dst] = SBC(state.reg[dst], state.reg[src], true);
-    break;
-  case ThumbDataOp::NEG:
-    state.reg[dst] = SUB(0, state.reg[src], true);
-    break;
-  case ThumbDataOp::CMP:
-    SUB(state.reg[dst], state.reg[src], true);
-    break;
-  case ThumbDataOp::CMN:
-    ADD(state.reg[dst], state.reg[src], true);
-    break;
-  case ThumbDataOp::MUL:
-    TickMultiply(state.reg[dst]);
-    state.reg[dst] *= state.reg[src];
-    SetZeroAndSignFlag(state.reg[dst]);
-    state.cpsr.f.c = 0;
-    pipe.fetch_type = Access::Nonsequential;
-    break;
-  }
-
   state.r15 += 2;
+
+  switch (static_cast<ThumbDataOp>(op)) {
+    case ThumbDataOp::AND: {
+      state.reg[dst] &= state.reg[src];
+      SetZeroAndSignFlag(state.reg[dst]);
+      break;
+    }
+    case ThumbDataOp::EOR: {
+      state.reg[dst] ^= state.reg[src];
+      SetZeroAndSignFlag(state.reg[dst]);
+      break;
+    }
+    case ThumbDataOp::LSL: {
+      auto shift = state.reg[src];
+      interface->Idle();
+      pipe.fetch_type = Access::Nonsequential;
+
+      int carry = state.cpsr.f.c;
+      LSL(state.reg[dst], shift, carry);
+      SetZeroAndSignFlag(state.reg[dst]);
+      state.cpsr.f.c = carry;
+      break;
+    }
+    case ThumbDataOp::LSR: {
+      auto shift = state.reg[src];
+      interface->Idle();
+      pipe.fetch_type = Access::Nonsequential;
+
+      int carry = state.cpsr.f.c;
+      LSR(state.reg[dst], shift, carry, false);
+      SetZeroAndSignFlag(state.reg[dst]);
+      state.cpsr.f.c = carry;
+      break;
+    }
+    case ThumbDataOp::ASR: {
+      auto shift = state.reg[src];
+      interface->Idle();
+      pipe.fetch_type = Access::Nonsequential;
+
+      int carry = state.cpsr.f.c;
+      ASR(state.reg[dst], shift, carry, false);
+      SetZeroAndSignFlag(state.reg[dst]);
+      state.cpsr.f.c = carry;
+      break;
+    }
+    case ThumbDataOp::ADC: {
+      state.reg[dst] = ADC(state.reg[dst], state.reg[src], true);
+      break;
+    }
+    case ThumbDataOp::SBC: {
+      state.reg[dst] = SBC(state.reg[dst], state.reg[src], true);
+      break;
+    }
+    case ThumbDataOp::ROR: {
+      auto shift = state.reg[src];
+      interface->Idle();
+      pipe.fetch_type = Access::Nonsequential;      
+
+      int carry = state.cpsr.f.c;
+      ROR(state.reg[dst], shift, carry, false);
+      SetZeroAndSignFlag(state.reg[dst]);
+      state.cpsr.f.c = carry;
+      break;
+    }
+    case ThumbDataOp::TST: {
+      SetZeroAndSignFlag(state.reg[dst] & state.reg[src]);
+      break;
+    }
+    case ThumbDataOp::NEG: {
+      state.reg[dst] = SUB(0, state.reg[src], true);
+      break;
+    }
+    case ThumbDataOp::CMP: {
+      SUB(state.reg[dst], state.reg[src], true);
+      break;
+    }
+    case ThumbDataOp::CMN: {
+      ADD(state.reg[dst], state.reg[src], true);
+      break;
+    }
+    case ThumbDataOp::ORR: {
+      state.reg[dst] |= state.reg[src];
+      SetZeroAndSignFlag(state.reg[dst]);
+      break;
+    }
+    case ThumbDataOp::MUL: {
+      TickMultiply(state.reg[dst]);
+      pipe.fetch_type = Access::Nonsequential;
+
+      state.reg[dst] *= state.reg[src];
+      SetZeroAndSignFlag(state.reg[dst]);
+      state.cpsr.f.c = 0;
+      break;
+    }
+    case ThumbDataOp::BIC: {
+      state.reg[dst] &= ~state.reg[src];
+      SetZeroAndSignFlag(state.reg[dst]);
+      break;
+    }
+    case ThumbDataOp::MVN: {
+      state.reg[dst] = ~state.reg[src];
+      SetZeroAndSignFlag(state.reg[dst]);
+      break;
+    }
+  }
 }
 
 template <int op, bool high1, bool high2>
@@ -208,9 +219,9 @@ void Thumb_HighRegisterOps_BX(std::uint16_t instruction) {
 
   if (src == 15) operand &= ~1;
 
-  /* Check for Branch & Exchange (bx) instruction. */
   if (op == 3) {
-    /* LSB indicates new instruction set (0 = ARM, 1 = THUMB) */
+    // Branch & Exchange (BX)
+    // LSB indicates new instruction set (0 = ARM, 1 = THUMB)
     if (operand & 1) {
       state.r15 = operand & ~1;
       ReloadPipeline16();
@@ -219,13 +230,13 @@ void Thumb_HighRegisterOps_BX(std::uint16_t instruction) {
       state.r15 = operand & ~3;
       ReloadPipeline32();
     }
-  /* Check for Compare (CMP) instruction. */
   } else if (op == 1) {
+    // Compare (CMP)
     SUB(GetReg(dst), operand, true);
     pipe.fetch_type = Access::Sequential;
     state.r15 += 2;
-  /* Otherwise instruction is ADD or MOV. */
   } else {
+    // Addition, move (ADD, MOV)
     if (op == 0) SetReg(dst, GetReg(dst) + operand);
     if (op == 2) SetReg(dst, operand);
 
@@ -244,10 +255,11 @@ void Thumb_LoadStoreRelativePC(std::uint16_t instruction) {
   std::uint32_t offset  = instruction & 0xFF;
   std::uint32_t address = (state.r15 & ~2) + (offset << 2);
 
-  state.reg[dst] = ReadWord(address, Access::Nonsequential);
-  interface->Idle();
   pipe.fetch_type = Access::Nonsequential;
   state.r15 += 2;
+
+  state.reg[dst] = ReadWord(address, Access::Nonsequential);
+  interface->Idle();
 }
 
 template <int op, int off>
@@ -257,25 +269,25 @@ void Thumb_LoadStoreOffsetReg(std::uint16_t instruction) {
 
   std::uint32_t address = state.reg[base] + state.reg[off];
 
-  switch (op) {
-  case 0b00: // STR
-    WriteWord(address, state.reg[dst], Access::Nonsequential);
-    break;
-  case 0b01: // STRB
-    WriteByte(address, (std::uint8_t)state.reg[dst], Access::Nonsequential);
-    break;
-  case 0b10: // LDR
-    state.reg[dst] = ReadWordRotate(address, Access::Nonsequential);
-    interface->Idle();
-    break;
-  case 0b11: // LDRB
-    state.reg[dst] = ReadByte(address, Access::Nonsequential);
-    interface->Idle();
-    break;
-  }
-
   pipe.fetch_type = Access::Nonsequential;
   state.r15 += 2;
+
+  switch (op) {
+    case 0b00: // STR
+      WriteWord(address, state.reg[dst], Access::Nonsequential);
+      break;
+    case 0b01: // STRB
+      WriteByte(address, (std::uint8_t)state.reg[dst], Access::Nonsequential);
+      break;
+    case 0b10: // LDR
+      state.reg[dst] = ReadWordRotate(address, Access::Nonsequential);
+      interface->Idle();
+      break;
+    case 0b11: // LDRB
+      state.reg[dst] = ReadByte(address, Access::Nonsequential);
+      interface->Idle();
+      break;
+  }
 }
 
 template <int op, int off>
@@ -285,30 +297,30 @@ void Thumb_LoadStoreSigned(std::uint16_t instruction) {
 
   std::uint32_t address = state.reg[base] + state.reg[off];
 
-  switch (op) {
-  case 0b00:
-    /* STRH rD, [rB, rO] */
-    WriteHalf(address, state.reg[dst], Access::Nonsequential);
-    break;
-  case 0b01:
-    /* LDSB rD, [rB, rO] */
-    state.reg[dst] = ReadByteSigned(address, Access::Nonsequential);
-    interface->Idle();
-    break;
-  case 0b10:
-    /* LDRH rD, [rB, rO] */
-    state.reg[dst] = ReadHalfRotate(address, Access::Nonsequential);
-    interface->Idle();
-    break;
-  case 0b11:
-    /* LDSH rD, [rB, rO] */
-    state.reg[dst] = ReadHalfSigned(address, Access::Nonsequential);
-    interface->Idle();
-    break;
-  }
-
   pipe.fetch_type = Access::Nonsequential;
   state.r15 += 2;
+
+  switch (op) {
+    case 0b00:
+      // STRH rD, [rB, rO]
+      WriteHalf(address, state.reg[dst], Access::Nonsequential);
+      break;
+    case 0b01:
+      // LDSB rD, [rB, rO]
+      state.reg[dst] = ReadByteSigned(address, Access::Nonsequential);
+      interface->Idle();
+      break;
+    case 0b10:
+      // LDRH rD, [rB, rO]
+      state.reg[dst] = ReadHalfRotate(address, Access::Nonsequential);
+      interface->Idle();
+      break;
+    case 0b11:
+      // LDSH rD, [rB, rO]
+      state.reg[dst] = ReadHalfSigned(address, Access::Nonsequential);
+      interface->Idle();
+      break;
+  }
 }
 
 template <int op, int imm>
@@ -316,29 +328,29 @@ void Thumb_LoadStoreOffsetImm(std::uint16_t instruction) {
   int dst  = (instruction >> 0) & 7;
   int base = (instruction >> 3) & 7;
 
-  switch (op) {
-  case 0b00:
-    /* STR rD, [rB, #imm] */
-    WriteWord(state.reg[base] + imm * 4, state.reg[dst], Access::Nonsequential);
-    break;
-  case 0b01:
-    /* LDR rD, [rB, #imm] */
-    state.reg[dst] = ReadWordRotate(state.reg[base] + imm * 4, Access::Nonsequential);
-    interface->Idle();
-    break;
-  case 0b10:
-    /* STRB rD, [rB, #imm] */
-    WriteByte(state.reg[base] + imm, state.reg[dst], Access::Nonsequential);
-    break;
-  case 0b11:
-    /* LDRB rD, [rB, #imm] */
-    state.reg[dst] = ReadByte(state.reg[base] + imm, Access::Nonsequential);
-    interface->Idle();
-    break;
-  }
-
   pipe.fetch_type = Access::Nonsequential;
   state.r15 += 2;
+
+  switch (op) {
+    case 0b00:
+      // STR rD, [rB, #imm]
+      WriteWord(state.reg[base] + imm * 4, state.reg[dst], Access::Nonsequential);
+      break;
+    case 0b01:
+      // LDR rD, [rB, #imm]
+      state.reg[dst] = ReadWordRotate(state.reg[base] + imm * 4, Access::Nonsequential);
+      interface->Idle();
+      break;
+    case 0b10:
+      // STRB rD, [rB, #imm]
+      WriteByte(state.reg[base] + imm, state.reg[dst], Access::Nonsequential);
+      break;
+    case 0b11:
+      // LDRB rD, [rB, #imm]
+      state.reg[dst] = ReadByte(state.reg[base] + imm, Access::Nonsequential);
+      interface->Idle();
+      break;
+  }
 }
 
 template <bool load, int imm>
@@ -348,15 +360,15 @@ void Thumb_LoadStoreHword(std::uint16_t instruction) {
 
   std::uint32_t address = state.reg[base] + imm * 2;
 
+  pipe.fetch_type = Access::Nonsequential;
+  state.r15 += 2;
+
   if (load) {
     state.reg[dst] = ReadHalfRotate(address, Access::Nonsequential);
     interface->Idle();
   } else {
     WriteHalf(address, state.reg[dst], Access::Nonsequential);
   }
-
-  pipe.fetch_type = Access::Nonsequential;
-  state.r15 += 2;
 }
 
 template <bool load, int dst>
@@ -364,15 +376,15 @@ void Thumb_LoadStoreRelativeToSP(std::uint16_t instruction) {
   std::uint32_t offset  = instruction & 0xFF;
   std::uint32_t address = GetReg(13) + offset * 4;
 
+  pipe.fetch_type = Access::Nonsequential;
+  state.r15 += 2;
+
   if (load) {
     state.reg[dst] = ReadWordRotate(address, Access::Nonsequential);
     interface->Idle();
   } else {
     WriteWord(address, state.reg[dst], Access::Nonsequential);
   }
-
-  pipe.fetch_type = Access::Nonsequential;
-  state.r15 += 2;
 }
 
 template <bool stackptr, int dst>
@@ -402,7 +414,10 @@ template <bool pop, bool rbit>
 void Thumb_PushPop(std::uint16_t instruction) {
   auto list = instruction & 0xFF;
 
-  /* Handle special case for empty register lists. */
+  pipe.fetch_type = Access::Nonsequential;
+  state.r15 += 2;
+
+  // Handle special case for empty register lists.
   if (list == 0 && !rbit) {
     if (pop) {
       state.r15 = ReadWord(GetReg(13), Access::Nonsequential);
@@ -410,10 +425,8 @@ void Thumb_PushPop(std::uint16_t instruction) {
       SetReg(13, GetReg(13) + 0x40);
     } else {
       SetReg(13, GetReg(13) - 0x40);
-      state.r15 += 2;
       WriteWord(GetReg(13), state.r15, Access::Nonsequential);
     }
-
     return;
   }
 
@@ -440,7 +453,7 @@ void Thumb_PushPop(std::uint16_t instruction) {
     interface->Idle();
     SetReg(13, address);
   } else {
-    /* Calculate internal start address (final r13 value) */
+    // Calculate internal start address (final r13 value)
     for (int reg = 0; reg <= 7; reg++) {
       if (list & (1 << reg))
         address -= 4;
@@ -448,7 +461,7 @@ void Thumb_PushPop(std::uint16_t instruction) {
 
     if (rbit) address -= 4;
 
-    /* Store address in r13 before we mess with it. */
+    // Store address in r13 before we mess with it.
     SetReg(13, address);
 
     for (int reg = 0; reg <= 7; reg++) {
@@ -463,25 +476,23 @@ void Thumb_PushPop(std::uint16_t instruction) {
       WriteWord(address, GetReg(14), access_type);
     }
   }
-
-  pipe.fetch_type = Access::Nonsequential;
-  state.r15 += 2;
 }
 
 template <bool load, int base>
 void Thumb_LoadStoreMultiple(std::uint16_t instruction) {
   auto list = instruction & 0xFF;
 
-  /* Handle special case for empty register lists. */
+  pipe.fetch_type = Access::Nonsequential;
+  state.r15 += 2;
+
+  // Handle special case for empty register lists.
   if (list == 0) {
     if (load) {
       state.r15 = ReadWord(state.reg[base], Access::Nonsequential);
       ReloadPipeline16();
     } else {
-      state.r15 += 2;
       WriteWord(state.reg[base], state.r15, Access::Nonsequential);
     }
-
     state.reg[base] += 0x40;
     return;
   }
@@ -505,7 +516,7 @@ void Thumb_LoadStoreMultiple(std::uint16_t instruction) {
     int count = 0;
     int first = 0;
 
-    /* Count number of registers and find first register. */
+    // Count number of registers and find first register.
     for (int reg = 7; reg >= 0; reg--) {
       if (list & (1 << reg)) {
         count++;
@@ -516,12 +527,12 @@ void Thumb_LoadStoreMultiple(std::uint16_t instruction) {
     std::uint32_t address = state.reg[base];
     std::uint32_t base_new = address + count * 4;
 
-    /* Transfer first register (non-sequential access) */
+    // Transfer first register (non-sequential access)
     WriteWord(address, state.reg[first], Access::Nonsequential);
     state.reg[base] = base_new;
     address += 4;
 
-    /* Run until end (sequential accesses) */
+    // Run until end (sequential accesses)
     for (int reg = first + 1; reg <= 7; reg++) {
       if (list & (1 << reg)) {
         WriteWord(address, state.reg[reg], Access::Sequential);
@@ -529,9 +540,6 @@ void Thumb_LoadStoreMultiple(std::uint16_t instruction) {
       }
     }
   }
-
-  pipe.fetch_type = Access::Nonsequential;
-  state.r15 += 2;
 }
 
 template <int cond>
@@ -570,7 +578,7 @@ void Thumb_SWI(std::uint16_t instruction) {
 void Thumb_UnconditionalBranch(std::uint16_t instruction) {
   std::uint32_t imm = (instruction & 0x3FF) * 2;
 
-  /* Sign-extend immediate value. */
+  // Sign-extend immediate value.
   if (instruction & 0x400) {
     imm |= 0xFFFFF800;
   }

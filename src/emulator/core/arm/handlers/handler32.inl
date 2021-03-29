@@ -25,15 +25,17 @@ enum class DataOp {
 };
 
 template <bool immediate, DataOp opcode, bool set_flags, int field4>
-void ARM_DataProcessing(std::uint32_t instruction) {
+void ARM_DataProcessing(std::uint32_t instruction) {  
+  constexpr int  shift_type = ( field4 >> 1) & 3;
+  constexpr bool shift_imm  = (~field4 >> 0) & 1;
+
   int reg_dst = (instruction >> 12) & 0xF;
   int reg_op1 = (instruction >> 16) & 0xF;
   int reg_op2 = (instruction >>  0) & 0xF;
 
-  std::uint32_t op2 = 0;
-  std::uint32_t op1 = GetReg(reg_op1);
-
-  int carry = state.cpsr.f.c;
+  int carry;
+  std::uint32_t op1;
+  std::uint32_t op2;
 
   pipe.fetch_type = Access::Sequential;
 
@@ -47,24 +49,22 @@ void ARM_DataProcessing(std::uint32_t instruction) {
     } else {
       op2 = value;
     }
+
+    op1 = GetReg(reg_op1);
   } else {
-    constexpr int  shift_type = ( field4 >> 1) & 3;
-    constexpr bool shift_imm  = (~field4 >> 0) & 1;
-
     std::uint32_t shift;
-
-    op2 = GetReg(reg_op2);
 
     if constexpr (shift_imm) {
       shift = (instruction >> 7) & 0x1F;
     } else {
       shift = GetReg((instruction >> 8) & 0xF);
-
-      if (reg_op1 == 15) op1 += 4;
-      if (reg_op2 == 15) op2 += 4;
-
+      state.r15 += 4;
       interface->Idle();
     }
+
+    carry = state.cpsr.f.c;
+    op1 = GetReg(reg_op1);
+    op2 = GetReg(reg_op2);
 
     DoShift(shift_type, op2, shift, carry, shift_imm);
   }
@@ -172,7 +172,7 @@ void ARM_DataProcessing(std::uint32_t instruction) {
         ReloadPipeline32();
       }
     }
-  } else {
+  } else if constexpr (immediate || shift_imm) {
     state.r15 += 4;
   }
 }
@@ -236,6 +236,9 @@ void ARM_Multiply(std::uint32_t instruction) {
   int op3 = (instruction >> 12) & 0xF;
   int dst = (instruction >> 16) & 0xF;
 
+  pipe.fetch_type = Access::Nonsequential;
+  state.r15 += 4;
+
   // TODO: do not read the register *twice*.
   TickMultiply(GetReg(op2));
 
@@ -251,8 +254,10 @@ void ARM_Multiply(std::uint32_t instruction) {
   }
 
   SetReg(dst, result);
-  pipe.fetch_type = Access::Nonsequential;
-  state.r15 += 4;
+
+  if (dst == 15) {
+    ReloadPipeline32();
+  }
 }
 
 template <bool sign_extend, bool accumulate, bool set_flags>
@@ -264,6 +269,9 @@ void ARM_MultiplyLong(std::uint32_t instruction) {
   int dst_hi = (instruction >> 16) & 0xF;
 
   std::int64_t result;
+
+  pipe.fetch_type = Access::Nonsequential;
+  state.r15 += 4;
 
   // TODO: do not read the register *twice*.
   interface->Idle();
@@ -298,16 +306,17 @@ void ARM_MultiplyLong(std::uint32_t instruction) {
 
   std::uint32_t result_hi = result >> 32;
 
-  SetReg(dst_lo, result & 0xFFFFFFFF);
-  SetReg(dst_hi, result_hi);
-
   if (set_flags) {
     state.cpsr.f.n = result_hi >> 31;
     state.cpsr.f.z = result == 0;
   }
 
-  pipe.fetch_type = Access::Nonsequential;
-  state.r15 += 4;
+  SetReg(dst_lo, result & 0xFFFFFFFF);
+  SetReg(dst_hi, result_hi);
+
+  if (dst_lo == 15 || dst_hi == 15) {
+    ReloadPipeline32();
+  }
 }
 
 template <bool byte>
@@ -318,6 +327,9 @@ void ARM_SingleDataSwap(std::uint32_t instruction) {
 
   std::uint32_t tmp;
 
+  pipe.fetch_type = Access::Nonsequential;
+  state.r15 += 4;
+
   if (byte) {
     tmp = ReadByte(GetReg(base), Access::Nonsequential);
     WriteByte(GetReg(base), (std::uint8_t)GetReg(src), Access::Nonsequential);
@@ -326,10 +338,13 @@ void ARM_SingleDataSwap(std::uint32_t instruction) {
     WriteWord(GetReg(base), GetReg(src), Access::Nonsequential);
   }
 
-  SetReg(dst, tmp);
   interface->Idle();
-  pipe.fetch_type = Access::Nonsequential;
-  state.r15 += 4;
+  
+  SetReg(dst, tmp);
+
+  if (dst == 15) {
+    ReloadPipeline32();
+  }
 }
 
 void ARM_BranchAndExchange(std::uint32_t instruction) {
@@ -353,69 +368,81 @@ void ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
   std::uint32_t offset;
   std::uint32_t address = GetReg(base);
 
-  if (immediate) {
+  if constexpr (immediate) {
     offset = (instruction & 0xF) | ((instruction >> 4) & 0xF0);
   } else {
     offset = GetReg(instruction & 0xF);
   }
 
-  if (pre) {
-    address += add ? offset : -offset;
+  pipe.fetch_type = Access::Nonsequential;
+  state.r15 += 4;
+
+  if constexpr (!add) {
+    offset = -offset;
+  }
+
+  if constexpr (pre) {
+    address += offset;
   }
 
   switch (opcode) {
     case 0: break;
     case 1:
       if (load) {
-        SetReg(dst, ReadHalfRotate(address, Access::Nonsequential));
-        interface->Idle();
-      } else {
-        std::uint32_t value = GetReg(dst);
-
-        if (dst == 15) {
-          value += 4;
+        auto value = ReadHalfRotate(address, Access::Nonsequential);
+        if constexpr (writeback || !pre) {
+          SetReg(base, GetReg(base) + offset);
         }
-
-        WriteHalf(address, value, Access::Nonsequential);
+        interface->Idle();
+        SetReg(dst, value);
+      } else {
+        WriteHalf(address, GetReg(dst), Access::Nonsequential);
+        if constexpr (writeback || !pre) {
+          SetReg(base, GetReg(base) + offset);
+        }
       }
       break;
     case 2:
       if (load) {
-        SetReg(dst, ReadByteSigned(address, Access::Nonsequential));
+        auto value = ReadByteSigned(address, Access::Nonsequential);
+        if constexpr (writeback || !pre) {
+          SetReg(base, GetReg(base) + offset);
+        }
         interface->Idle();
+        SetReg(dst, value);
       } else {
         // ARMv5 LDRD: this opcode is unpredictable on ARMv4T.
         // On ARM7TDMI-S it doesn't seem to perform any memory access,
         // so the load/store cycle probably is internal in this case.
         interface->Idle();
+        if constexpr (writeback || !pre) {
+          SetReg(base, GetReg(base) + offset);
+        }
         interface->Idle();
       }
       break;
     case 3:
       if (load) {
-        SetReg(dst, ReadHalfSigned(address, Access::Nonsequential));
+        auto value = ReadHalfSigned(address, Access::Nonsequential);
+        if constexpr (writeback || !pre) {
+          SetReg(base, GetReg(base) + offset);
+        }
         interface->Idle();
+        SetReg(dst, value);
       } else {
         // ARMv5 STRD: this opcode is unpredictable on ARMv4T.
         // On ARM7TDMI-S it doesn't seem to perform any memory access,
         // so the load/store cycle probably is internal in this case.
         interface->Idle();
+        if constexpr (writeback || !pre) {
+          SetReg(base, GetReg(base) + offset);
+        }
       }
       break;
   }
 
-  if ((writeback || !pre) && (!load || base != dst)) {
-    if (!pre) {
-      address += add ? offset : -offset;
-    }
-    SetReg(base, address);
-  }
-
   if (load && dst == 15) {
     ReloadPipeline32();
-  } else {
-    pipe.fetch_type = Access::Nonsequential;
-    state.r15 += 4;
   }
 }
 
@@ -443,8 +470,8 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
   int base = (instruction >> 16) & 0xF;
   std::uint32_t address = GetReg(base);
 
-  /* Calculate offset relative to base register. */
-  if (immediate) {
+  // Calculate offset relative to base register.
+  if constexpr (immediate) {
     offset = instruction & 0xFFF;
   } else {
     int carry  = state.cpsr.f.c;
@@ -455,50 +482,53 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
     DoShift(opcode, offset, amount, carry, true);
   }
 
-  if (pre) {
-    address += add ? offset : -offset;
+  pipe.fetch_type = Access::Nonsequential;
+  state.r15 += 4;
+
+  if constexpr(!add) {
+    offset = -offset;
   }
 
-  if (load) {
-    if (byte) {
-      SetReg(dst, ReadByte(address, Access::Nonsequential));
+  if constexpr (pre) {
+    address += offset;
+  }
+
+  if constexpr (load) {
+    std::uint32_t value;
+
+    if constexpr (byte) {
+      value = ReadByte(address, Access::Nonsequential);
     } else {
-      SetReg(dst, ReadWordRotate(address, Access::Nonsequential));
+      value = ReadWordRotate(address, Access::Nonsequential);
     }
+
+    if constexpr (writeback || !pre) {
+      SetReg(base, GetReg(base) + offset);
+    }
+
     interface->Idle();
+
+    SetReg(dst, value);
   } else {
-    std::uint32_t value = GetReg(dst);
-
-    /* r15 is $+12 now due to internal prefetch cycle. */
-    if (dst == 15) value += 4;
-
-    if (byte) {
-      WriteByte(address, (std::uint8_t)value, Access::Nonsequential);
+    if constexpr (byte) {
+      WriteByte(address, (std::uint8_t)GetReg(dst), Access::Nonsequential);
     } else {
-      WriteWord(address, value, Access::Nonsequential);
+      WriteWord(address, GetReg(dst), Access::Nonsequential);
     }
-  }
 
-  /* Write address back to the base register. */
-  if (!load || base != dst) {
-    if (!pre) {
-      SetReg(base, GetReg(base) + (add ? offset : -offset));
-    } else if (writeback) {
-      SetReg(base, address);
+    if constexpr (writeback || !pre) {
+      SetReg(base, GetReg(base) + offset);
     }
   }
 
   if (load && dst == 15) {
     ReloadPipeline32();
-  } else {
-    pipe.fetch_type = Access::Nonsequential;
-    state.r15 += 4;
   }
 }
 
 template <bool _pre, bool add, bool user_mode, bool writeback, bool load>
 void ARM_BlockDataTransfer(std::uint32_t instruction) {
-  /* TODO: reverse-engineer special case with usermode registers and a banked base register. */
+  // TODO: reverse-engineer special case with usermode registers and a banked base register.
   int base = (instruction >> 16) & 0xF;
   int list = instruction & 0xFFFF;
 
@@ -517,7 +547,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
   }
 
   if (list != 0) {
-    /* Determine number of bytes to transfer and the first register in the list. */
+    // Determine number of bytes to transfer and the first register in the list.
     for (int i = 15; i >= 0; i--) {
       if (~list & (1 << i)) {
         continue;
@@ -544,7 +574,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
    * Due to the inverted order post-decrement becomes pre-increment and
    * pre-decrement becomes post-increment.
    */
-  if (!add) {
+  if constexpr (!add) {
     pre = !pre;
     address  -= bytes;
     base_new -= bytes;
@@ -553,6 +583,9 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
   }
 
   auto access_type = Access::Nonsequential;
+
+  pipe.fetch_type = Access::Nonsequential;
+  state.r15 += 4;
 
   for (int i = first; i < 16; i++) {
     if (~list & (1 << i)) {
@@ -563,21 +596,18 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
       address += 4;
     }
 
-    if (load) {
-      SetReg(i, ReadWord(address, access_type));
-      if (i == 15 && user_mode) {
-        auto spsr = GetSPSR();
-
-        SwitchMode(spsr.f.mode);
-        state.cpsr.v = spsr.v;
+    if constexpr (load) {
+      auto value = ReadWord(address, access_type);
+      if (writeback && i == first) {
+        SetReg(base, base_new);
       }
-    } else if (i == base) {
-      WriteWord(address, (i == first) ? base_old : base_new, access_type);
-    } else if (i == 15) {
-      /* In hardware r15 is incremented in the cycle before the first transfer. */
-      WriteWord(address, state.r15 + 4, access_type);
+      // FIXME: properly defer register write to the next cycle.
+      SetReg(i, value);
     } else {
       WriteWord(address, GetReg(i), access_type);
+      if (writeback && i == first) {
+        SetReg(base, base_new);
+      }
     }
 
     if (!pre) {
@@ -587,33 +617,36 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
     access_type = Access::Sequential;
   }
 
+  if constexpr (load) {
+    interface->Idle();
+
+    if (switch_mode) {
+      /* During the following two cycles of a usermode LDM,
+       * register accesses will go to both the user bank and original bank.
+       */
+      ldm_usermode_conflict = true;
+      scheduler.Add(2, [this](int late) {
+        ldm_usermode_conflict = false;
+      });
+    }
+
+    if (transfer_pc) {
+      if constexpr (user_mode) {
+        auto spsr = GetSPSR();
+        SwitchMode(spsr.f.mode);
+        state.cpsr.v = spsr.v;
+      }
+
+      if (state.cpsr.f.thumb) {
+        ReloadPipeline16();
+      } else {
+        ReloadPipeline32();
+      }
+    }
+  }
+
   if (switch_mode) {
     SwitchMode(mode);
-    // During the following two cycles of a usermode LDM,
-    // register accesses will go to both the user bank and original bank.
-    if (load) {
-      ldm_usermode_conflict = true;
-      scheduler.Add(3, [this](int late) { ldm_usermode_conflict = false; });
-    }
-  }
-
-  if (writeback && (!load || !(list & (1 << base)))) {
-    SetReg(base, base_new);
-  }
-
-  if (load) {
-    interface->Idle();
-  }
-
-  if (load && transfer_pc) {
-    if (state.cpsr.f.thumb) {
-      ReloadPipeline16();
-    } else {
-      ReloadPipeline32();
-    }
-  } else {
-    pipe.fetch_type = Access::Nonsequential;
-    state.r15 += 4;
   }
 }
 

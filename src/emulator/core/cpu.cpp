@@ -40,7 +40,6 @@ void CPU::Reset() {
 
   mmio = {};
   prefetch = {};
-  last_rom_address = 0;
   bus_is_controlled_by_dma = false;
   openbus_from_dma = false;
   UpdateMemoryDelayTable();
@@ -111,20 +110,28 @@ void CPU::PrefetchStepRAM(int cycles) {
     return;
   }
 
-  int thumb = state.cpsr.f.thumb;
+  auto thumb = state.cpsr.f.thumb;
+  auto r15 = state.r15;
 
-  if (!prefetch.active && prefetch.count < prefetch.capacity && state.r15 == last_rom_address) {
+  /* During any execute cycle except for the fetch cycle, 
+   * r15 will be three instruction ahead instead of two.
+   */
+  if (!code) {
+    r15 -= thumb ? 2 : 4;
+  }
+
+  if (!prefetch.active && prefetch.rom_code_access && prefetch.count < prefetch.capacity) {
     if (prefetch.count == 0) {
       if (thumb) {
         prefetch.opcode_width = 2;
         prefetch.capacity = 8;
-        prefetch.duty = cycles16[int(Access::Sequential)][state.r15 >> 24];
+        prefetch.duty = cycles16[int(Access::Sequential)][r15 >> 24];
       } else {
         prefetch.opcode_width = 4;
         prefetch.capacity = 4;
-        prefetch.duty = cycles32[int(Access::Sequential)][state.r15 >> 24];
+        prefetch.duty = cycles32[int(Access::Sequential)][r15 >> 24];
       }
-      prefetch.last_address = state.r15 + prefetch.opcode_width;
+      prefetch.last_address = r15 + prefetch.opcode_width;
       prefetch.head_address = prefetch.last_address;
     } else {
       prefetch.last_address += prefetch.opcode_width;
@@ -144,35 +151,26 @@ void CPU::PrefetchStepROM(std::uint32_t address, int cycles) {
     return;
   }
 
+  prefetch.rom_code_access = code;
+
   if (prefetch.active) {
-    /* If prefetching the desired opcode just complete. */
-    if (address == prefetch.last_address) {
-      int count = prefetch.count;
-
+    if (code && address == prefetch.last_address) {
+      // Complete the load and consume the fetched (half)word right away.
       Tick(prefetch.countdown);
-
-      // HACK: overwrite count with its old value to
-      // account for the prefetched opcode being consumed right away.
-      prefetch.count = count;
-
-      last_rom_address = address;
+      prefetch.count--;
       return;
     }
 
     prefetch.active = false;
   }
 
-  last_rom_address = address;
-
-  /* TODO: this check does not guarantee 100% that this is an opcode fetch. */
-  if (prefetch.count > 0 && address == state.r15) {
+  if (code && prefetch.count != 0) {
     if (address == prefetch.head_address) {
       prefetch.count--;
       prefetch.head_address += prefetch.opcode_width;
       PrefetchStepRAM(1);
       return;
     } else {
-      prefetch.active = false;
       prefetch.count = 0;
     }
   }

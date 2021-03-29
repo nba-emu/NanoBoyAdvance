@@ -165,6 +165,7 @@ private:
   /* GamePak prefetch buffer state. */
   struct Prefetch {
     bool active = false;
+    bool rom_code_access = false;
     std::uint32_t head_address;
     std::uint32_t last_address;
     int count = 0;
@@ -173,8 +174,6 @@ private:
     int countdown;
     int duty;
   } prefetch;
-
-  std::uint32_t last_rom_address;
 
   bool bus_is_controlled_by_dma;
   bool openbus_from_dma;
