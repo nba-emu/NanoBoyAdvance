@@ -215,7 +215,7 @@ void Thumb_HighRegisterOps_BX(std::uint16_t instruction) {
   if (high1) dst |= 8;
   if (high2) src |= 8;
 
-  std::uint32_t operand = GetReg(src);
+  std::uint32_t operand = state.reg[src];
 
   if (src == 15) operand &= ~1;
 
@@ -232,13 +232,13 @@ void Thumb_HighRegisterOps_BX(std::uint16_t instruction) {
     }
   } else if (op == 1) {
     // Compare (CMP)
-    SUB(GetReg(dst), operand, true);
+    SUB(state.reg[dst], operand, true);
     pipe.fetch_type = Access::Sequential;
     state.r15 += 2;
   } else {
     // Addition, move (ADD, MOV)
-    if (op == 0) SetReg(dst, GetReg(dst) + operand);
-    if (op == 2) SetReg(dst, operand);
+    if (op == 0) state.reg[dst] += operand;
+    if (op == 2) state.reg[dst]  = operand;
 
     if (dst == 15) {
       state.r15 &= ~1;
@@ -374,7 +374,7 @@ void Thumb_LoadStoreHword(std::uint16_t instruction) {
 template <bool load, int dst>
 void Thumb_LoadStoreRelativeToSP(std::uint16_t instruction) {
   std::uint32_t offset  = instruction & 0xFF;
-  std::uint32_t address = GetReg(13) + offset * 4;
+  std::uint32_t address = state.r13 + offset * 4;
 
   pipe.fetch_type = Access::Nonsequential;
   state.r15 += 2;
@@ -392,7 +392,7 @@ void Thumb_LoadAddress(std::uint16_t instruction) {
   std::uint32_t offset = (instruction  & 0xFF) << 2;
 
   if (stackptr) {
-    state.reg[dst] = GetReg(13) + offset;
+    state.reg[dst] = state.r13 + offset;
   } else {
     state.reg[dst] = (state.r15 & ~2) + offset;
   }
@@ -405,7 +405,8 @@ template <bool sub>
 void Thumb_AddOffsetToSP(std::uint16_t instruction) {
   std::uint32_t offset = (instruction  & 0x7F) * 4;
 
-  SetReg(13, GetReg(13) + (sub ? -offset : offset));
+  state.r13 = state.r13 + (sub ? -offset : offset);
+
   pipe.fetch_type = Access::Sequential;
   state.r15 += 2;
 }
@@ -420,17 +421,17 @@ void Thumb_PushPop(std::uint16_t instruction) {
   // Handle special case for empty register lists.
   if (list == 0 && !rbit) {
     if (pop) {
-      state.r15 = ReadWord(GetReg(13), Access::Nonsequential);
+      state.r15 = ReadWord(state.r13, Access::Nonsequential);
       ReloadPipeline16();
-      SetReg(13, GetReg(13) + 0x40);
+      state.r13 += 0x40;
     } else {
-      SetReg(13, GetReg(13) - 0x40);
-      WriteWord(GetReg(13), state.r15, Access::Nonsequential);
+      state.r13 -= 0x40;
+      WriteWord(state.r13, state.r15, Access::Nonsequential);
     }
     return;
   }
 
-  auto address = GetReg(13);
+  auto address = state.r13;
   auto access_type = Access::Nonsequential;
 
   if (pop) {
@@ -444,14 +445,14 @@ void Thumb_PushPop(std::uint16_t instruction) {
 
     if (rbit) {
       state.reg[15] = ReadWord(address, access_type) & ~1;
-      SetReg(13, address + 4);
+      state.r13 = address + 4;
       interface->Idle();
       ReloadPipeline16();
       return;
     }
 
     interface->Idle();
-    SetReg(13, address);
+    state.r13 = address;
   } else {
     // Calculate internal start address (final r13 value)
     for (int reg = 0; reg <= 7; reg++) {
@@ -462,7 +463,7 @@ void Thumb_PushPop(std::uint16_t instruction) {
     if (rbit) address -= 4;
 
     // Store address in r13 before we mess with it.
-    SetReg(13, address);
+    state.r13 = address;
 
     for (int reg = 0; reg <= 7; reg++) {
       if (list & (1 << reg)) {
@@ -473,7 +474,7 @@ void Thumb_PushPop(std::uint16_t instruction) {
     }
 
     if (rbit) {
-      WriteWord(address, GetReg(14), access_type);
+      WriteWord(address, state.r14, access_type);
     }
   }
 }
@@ -570,7 +571,7 @@ void Thumb_SWI(std::uint16_t instruction) {
   state.cpsr.f.mask_irq = 1;
 
   // Save current program counter and jump to SVC exception vector.
-  SetReg(14, state.r15 - 2);
+  state.r14 = state.r15 - 2;
   state.r15 = 0x08;
   ReloadPipeline32();
 }
@@ -596,14 +597,14 @@ void Thumb_LongBranchLink(std::uint16_t instruction) {
     if (imm & 0x400000) {
       imm |= 0xFF800000;
     }
-    SetReg(14, state.r15 + imm);
+    state.r14 = state.r15 + imm;
     pipe.fetch_type = Access::Sequential;
     state.r15 += 2;
   } else {
     std::uint32_t temp = state.r15 - 2;
 
-    state.r15 = (GetReg(14) + imm * 2) & ~1;
-    SetReg(14, temp | 1);
+    state.r15 = (state.r14 + imm * 2) & ~1;
+    state.r14 = temp | 1;
     ReloadPipeline16();
   }
 }

@@ -295,7 +295,6 @@ void ARM_MultiplyLong(std::uint32_t instruction) {
   if (accumulate) {
     std::int64_t value = GetReg(dst_hi);
 
-    /* Workaround x86 shift limitations. */
     value <<= 16;
     value <<= 16;
     value  |= GetReg(dst_lo);
@@ -601,7 +600,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
       if (writeback && i == first) {
         SetReg(base, base_new);
       }
-      // FIXME: properly defer register write to the next cycle.
+      // FIXME: properly defer register write to the next cycle. 
       SetReg(i, value);
     } else {
       WriteWord(address, GetReg(i), access_type);
