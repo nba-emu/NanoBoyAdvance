@@ -166,15 +166,14 @@ auto CPU::Read_(std::uint32_t address, Access access) -> T {
         return memory.rom.gpio->Read(address);
       }
       if (address >= memory.rom.size) {
-        // TODO: optimize this!
+        auto value = address >> 1;
         if constexpr (std::is_same_v<T, std::uint32_t>) {
-          return (((address + 0) / 2) & 0xFFFF) |
-                 (((address + 2) / 2) << 16);
+          return (value & 0xFFFF) | ((value + 1) << 16);
         }
         if constexpr (std::is_same_v<T, std::uint16_t>) {
-          return address / 2;
+          return value;
         }
-        return (address / 2) >> ((address & 1) * 8);
+        return value >> ((address & 1) * 8);
       }
       return Read<T>(memory.rom.data.get(), address);
     }
