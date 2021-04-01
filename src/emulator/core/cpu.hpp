@@ -13,6 +13,7 @@
 #include <emulator/cartridge/gpio/gpio.hpp>
 #include <emulator/config/config.hpp>
 #include <memory>
+#include <type_traits>
 
 #include "arm/arm7tdmi.hpp"
 #include "hw/apu/apu.hpp"
@@ -137,6 +138,9 @@ private:
   void WriteMMIO(std::uint32_t address, std::uint8_t value);
   auto ReadBIOS(std::uint32_t address) -> std::uint32_t;
   auto ReadUnused(std::uint32_t address) -> std::uint32_t;
+
+  template<typename T>
+  auto Read_(std::uint32_t address, Access access) -> T;
 
   auto ReadByte(std::uint32_t address, Access access) -> std::uint8_t  final;
   auto ReadHalf(std::uint32_t address, Access access) -> std::uint16_t final;
