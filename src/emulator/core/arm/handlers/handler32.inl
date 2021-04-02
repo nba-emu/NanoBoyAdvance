@@ -43,6 +43,8 @@ void ARM_DataProcessing(std::uint32_t instruction) {
     int value = instruction & 0xFF;
     int shift = ((instruction >> 8) & 0xF) * 2;
 
+    carry = state.cpsr.f.c;
+
     if (shift != 0) {
       carry = (value >> (shift - 1)) & 1;
       op2   = (value >> shift) | (value << (32 - shift));
