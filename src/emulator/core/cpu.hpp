@@ -142,12 +142,32 @@ private:
   template<typename T>
   auto Read_(std::uint32_t address, Access access) -> T;
 
-  auto ReadByte(std::uint32_t address, Access access) -> std::uint8_t  final;
-  auto ReadHalf(std::uint32_t address, Access access) -> std::uint16_t final;
-  auto ReadWord(std::uint32_t address, Access access) -> std::uint32_t final;
-  void WriteByte(std::uint32_t address, std::uint8_t value, Access access)  final;
-  void WriteHalf(std::uint32_t address, std::uint16_t value, Access access) final;
-  void WriteWord(std::uint32_t address, std::uint32_t value, Access access) final;
+  template<typename T>
+  void Write_(std::uint32_t address, T value, Access access);
+
+  auto ReadByte(std::uint32_t address, Access access) -> std::uint8_t  final {
+    return Read_<std::uint8_t>(address, access);
+  }
+
+  auto ReadHalf(std::uint32_t address, Access access) -> std::uint16_t final {
+    return Read_<std::uint16_t>(address, access);
+  }
+
+  auto ReadWord(std::uint32_t address, Access access) -> std::uint32_t final {
+    return Read_<std::uint32_t>(address, access);
+  }
+
+  void WriteByte(std::uint32_t address, std::uint8_t  value, Access access) final {
+    Write_<std::uint8_t>(address, value, access);
+  }
+
+  void WriteHalf(std::uint32_t address, std::uint16_t value, Access access) final {
+    Write_<std::uint16_t>(address, value, access);
+  }
+
+  void WriteWord(std::uint32_t address, std::uint32_t value, Access access) final {
+    Write_<std::uint32_t>(address, value, access);
+  }
 
   void Tick(int cycles);
   void Idle() final;

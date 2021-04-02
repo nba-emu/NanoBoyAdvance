@@ -136,7 +136,6 @@ auto CPU::Read_(std::uint32_t address, Access access) -> T {
       PrefetchStepRAM(cycles);
       return Read<T>(ppu.oam, address & 0x3FF);
     }
-
     case REGION_ROM_W2_H: {
       // 0x0DXXXXXX may be used to access EEPROM backup.
       if (std::is_same_v<T, std::uint16_t> && IsEEPROMAccess(address)) {
@@ -157,7 +156,7 @@ auto CPU::Read_(std::uint32_t address, Access access) -> T {
       PrefetchStepROM(address, cycles);
       address &= memory.rom.mask;
       if (IsGPIOAccess(address) && memory.rom.gpio->IsReadable()) {
-        // TODO: verify 8-bit read behavior.
+        // TODO: verify 8-bit and 16-bit read behavior.
         if constexpr (std::is_same_v<T, std::uint32_t>) {
           auto lsw = memory.rom.gpio->Read(address + 0);
           auto msw = memory.rom.gpio->Read(address + 2);
@@ -198,225 +197,127 @@ auto CPU::Read_(std::uint32_t address, Access access) -> T {
   return 0;
 }
 
-inline auto CPU::ReadByte(std::uint32_t address, Access access) -> std::uint8_t {
-  return Read_<std::uint8_t>(address, access);
-}
-
-inline auto CPU::ReadHalf(std::uint32_t address, Access access) -> std::uint16_t {
-  return Read_<std::uint16_t>(address, access);
-}
-
-inline auto CPU::ReadWord(std::uint32_t address, Access access) -> std::uint32_t {
-  return Read_<std::uint32_t>(address, access);
-}
-
-inline void CPU::WriteByte(std::uint32_t address, std::uint8_t value, Access access) {
+template<typename T>
+void CPU::Write_(std::uint32_t address, T value, Access access) {
+  int cycles;
   int page = address >> 24;
-  int cycles = cycles16[int(access)][page];
-
-  switch (page) {
-  case REGION_EWRAM:
-    PrefetchStepRAM(cycles);
-    Write<std::uint8_t>(memory.wram, address & 0x3FFFF, value);
-    break;
-  case REGION_IWRAM: {
-    PrefetchStepRAM(cycles);
-    Write<std::uint8_t>(memory.iram, address & 0x7FFF,  value);
-    break;
-  }
-  case REGION_MMIO: {
-    PrefetchStepRAM(cycles);
-    WriteMMIO(address, value & 0xFF);
-    break;
-  }
-  case REGION_PRAM: {
-    PrefetchStepRAM(cycles);
-    Write<std::uint16_t>(ppu.pram, address & 0x3FE, value * 0x0101);
-    break;
-  }
-  case REGION_VRAM: {
-    // TODO: move logic to decide the writeable area to the PPU class.
-    auto limit = ppu.mmio.dispcnt.mode >= 3 ? 0x14000 : 0x10000;
-    PrefetchStepRAM(cycles);
-    address &= 0x1FFFF;
-    if (address >= 0x18000) {
-      address &= ~0x8000;
-    }
-    if (address < limit) {
-      Write<std::uint16_t>(ppu.vram, address & ~1, value * 0x0101);
-    }
-    break;
-  }
-  case REGION_SRAM_1:
-  case REGION_SRAM_2: {
-    PrefetchStepROM(address, cycles);
-    address &= 0x0EFFFFFF;
-    if (memory.rom.backup_sram) {
-      memory.rom.backup_sram->Write(address, value);
-    }
-    break;
-  }
-  default: {
-    PrefetchStepRAM(cycles);
-  }
-  }
-}
-
-inline void CPU::WriteHalf(std::uint32_t address, std::uint16_t value, Access access) {
-  int page = address >> 24;
-  int cycles = cycles16[int(access)][page];
 
   if (page != REGION_SRAM_1 && page != REGION_SRAM_2) {
-    address &= ~1;
+    address &= ~(sizeof(T) - 1);
+  }
+
+  if ((address & 0x1FFFF) == 0) {
+    access = Access::Nonsequential;
+  }
+  
+  if (std::is_same_v<T, std::uint32_t>) {
+    cycles = cycles32[int(access)][page];
+  } else {
+    cycles = cycles16[int(access)][page];
   }
 
   switch (page) {
-  case REGION_EWRAM: {
-    PrefetchStepRAM(cycles);
-    Write<std::uint16_t>(memory.wram, address & 0x3FFFF, value);
-    break;
-  }
-  case REGION_IWRAM: {
-    PrefetchStepRAM(cycles);
-    Write<std::uint16_t>(memory.iram, address & 0x7FFF,  value);
-    break;
-  }
-  case REGION_MMIO: {
-    PrefetchStepRAM(cycles);
-    WriteMMIO(address + 0, (value >> 0) & 0xFF);
-    WriteMMIO(address + 1, (value >> 8) & 0xFF);
-    break;
-  }
-  case REGION_PRAM: {
-    PrefetchStepRAM(cycles);
-    Write<std::uint16_t>(ppu.pram, address & 0x3FF, value);
-    break;
-  }
-  case REGION_VRAM: {
-    PrefetchStepRAM(cycles);
-    address &= 0x1FFFF;
-    if (address >= 0x18000) {
-      address &= ~0x8000;
+    case REGION_EWRAM:
+      PrefetchStepRAM(cycles);
+      Write<T>(memory.wram, address & 0x3FFFF, value);
+      break;
+    case REGION_IWRAM: {
+      PrefetchStepRAM(cycles);
+      Write<T>(memory.iram, address & 0x7FFF,  value);
+      break;
     }
-    Write<std::uint16_t>(ppu.vram, address, value);
-    break;
-  }
-  case REGION_OAM: {
-    PrefetchStepRAM(cycles);
-    Write<std::uint16_t>(ppu.oam, address & 0x3FF, value);
-    break;
-  }
-  case REGION_ROM_W0_L: case REGION_ROM_W0_H:
-  case REGION_ROM_W1_L: case REGION_ROM_W1_H:
-  case REGION_ROM_W2_L: {
-    PrefetchStepROM(address, cycles);
-    address &= 0x1FFFFFF;
-    if (IsGPIOAccess(address)) {
-      memory.rom.gpio->Write(address + 0, value & 0xFF);
-      memory.rom.gpio->Write(address + 1, value >> 8);
-    }
-    break;
-  }
-  case REGION_ROM_W2_H: {
-    PrefetchStepROM(address, cycles);
-    if (IsEEPROMAccess(address)) {
-      /* TODO: this is not a very nice way to do this. */
-      if (!dma.IsRunning()) {
-        break;
+    case REGION_MMIO: {
+      PrefetchStepRAM(cycles);
+      if constexpr (std::is_same_v<T, std::uint32_t>) {
+        WriteMMIO(address + 0, (value >>  0) & 0xFF);
+        WriteMMIO(address + 1, (value >>  8) & 0xFF);
+        WriteMMIO(address + 2, (value >> 16) & 0xFF);
+        WriteMMIO(address + 3, (value >> 24) & 0xFF);
       }
-      memory.rom.backup_eeprom->Write(address, value);
+      if constexpr (std::is_same_v<T, std::uint16_t>) {
+        WriteMMIO(address + 0, (value >> 0) & 0xFF);
+        WriteMMIO(address + 1, (value >> 8) & 0xFF);
+      }
+      if constexpr (std::is_same_v<T, std::uint8_t>) {
+        WriteMMIO(address, value & 0xFF);
+      }
       break;
     }
-    address &= 0x1FFFFFF;
-    if (IsGPIOAccess(address)) {
-      memory.rom.gpio->Write(address, value & 0xFF);
+    case REGION_PRAM: {
+      PrefetchStepRAM(cycles);
+      if constexpr (std::is_same_v<T, std::uint8_t>) {
+        Write<std::uint16_t>(ppu.pram, address & 0x3FE, value * 0x0101);
+      } else {
+        Write<T>(ppu.pram, address & 0x3FF, value);
+      }
       break;
     }
-    break;
-  }
-  case REGION_SRAM_1:
-  case REGION_SRAM_2: {
-    PrefetchStepROM(address, cycles);
-    address &= 0x0EFFFFFF;
-    if (memory.rom.backup_sram) {
-      memory.rom.backup_sram->Write(address, value >> ((address & 1) * 8));
-    }
-    break;
-  }
-  default: {
-    PrefetchStepRAM(cycles);
-  }
-  }
-}
+    case REGION_VRAM: {
+      PrefetchStepRAM(cycles);
+      address &= 0x1FFFF;
+      if (address >= 0x18000) {
+        address &= ~0x8000;
+      }
+      if (std::is_same_v<T, std::uint8_t>) {
+        // TODO: move logic to decide the writeable area to the PPU class.
+        auto limit = ppu.mmio.dispcnt.mode >= 3 ? 0x14000 : 0x10000;
 
-inline void CPU::WriteWord(std::uint32_t address, std::uint32_t value, Access access) {
-  int page = address >> 24;
-  int cycles = cycles32[int(access)][page];
+        if (address < limit) {
+          Write<std::uint16_t>(ppu.vram, address & ~1, value * 0x0101);
+        }
+      } else {
+        Write<T>(ppu.vram, address, value);
+      }
+      break;
+    }
+    case REGION_OAM: {
+      PrefetchStepRAM(cycles);
+      if constexpr (!std::is_same_v<T, std::uint8_t>) {
+        Write<T>(ppu.oam, address & 0x3FF, value);
+      }
+      break;
+    }
+    case REGION_ROM_W0_L: case REGION_ROM_W0_H:
+    case REGION_ROM_W1_L: case REGION_ROM_W1_H:
+    case REGION_ROM_W2_L: case REGION_ROM_W2_H: {
+      PrefetchStepROM(address, cycles);
+      if (std::is_same_v<T, std::uint16_t> && page == REGION_ROM_W2_H && IsEEPROMAccess(address)) {
+        // TODO: this probably isn't accurate at all.
+        if (dma.IsRunning()) {
+          return;
+        }
+        memory.rom.backup_eeprom->Write(address, value);
+        return;
+      }
+      address &= 0x1FFFFFF;
+      if (IsGPIOAccess(address)) {
+        if constexpr (std::is_same_v<T, std::uint32_t>) {
+          memory.rom.gpio->Write(address + 0, (value >>  0) & 0xFF);
+          memory.rom.gpio->Write(address + 2, (value >> 16) & 0xFF);
+        }
+        if constexpr (std::is_same_v<T, std::uint16_t>) {
+          memory.rom.gpio->Write(address + 0, value & 0xFF);
+          memory.rom.gpio->Write(address + 1, value >> 8);
+        }
+      }
+      break;
+    }
+    case REGION_SRAM_1:
+    case REGION_SRAM_2: {
+      PrefetchStepROM(address, cycles);
+      address &= 0x0EFFFFFF;
+      if (memory.rom.backup_sram) {
+        // TODO: why is it seemingly aware of alignment, when the address
+        // should by force-aligned by the CPU?
+        if (std::is_same_v<T, std::uint32_t>) value >>= (address & 3) * 8;
+        if (std::is_same_v<T, std::uint16_t>) value >>= (address & 1) * 8;
 
-  if (page != REGION_SRAM_1 && page != REGION_SRAM_2) {
-    address &= ~3;
-  }
-
-  switch (page) {
-  case REGION_EWRAM: {
-    PrefetchStepRAM(cycles);
-    Write<std::uint32_t>(memory.wram, address & 0x3FFFF, value);
-    break;
-  }
-  case REGION_IWRAM: {
-    PrefetchStepRAM(cycles);
-    Write<std::uint32_t>(memory.iram, address & 0x7FFF,  value);
-    break;
-  }
-  case REGION_MMIO: {
-    PrefetchStepRAM(cycles);
-    WriteMMIO(address + 0, (value >>  0) & 0xFF);
-    WriteMMIO(address + 1, (value >>  8) & 0xFF);
-    WriteMMIO(address + 2, (value >> 16) & 0xFF);
-    WriteMMIO(address + 3, (value >> 24) & 0xFF);
-    break;
-  }
-  case REGION_PRAM: {
-    PrefetchStepRAM(cycles);
-    Write<std::uint32_t>(ppu.pram, address & 0x3FF, value);
-    break;
-  }
-  case REGION_VRAM: {
-    PrefetchStepRAM(cycles);
-    address &= 0x1FFFF;
-    if (address >= 0x18000) {
-      address &= ~0x8000;
+        memory.rom.backup_sram->Write(address, value);
+      }
+      break;
     }
-    Write<std::uint32_t>(ppu.vram, address, value);
-    break;
-  }
-  case REGION_OAM: {
-    PrefetchStepRAM(cycles);
-    Write<std::uint32_t>(ppu.oam, address & 0x3FF, value);
-    break;
-  }
-  case REGION_ROM_W0_L: case REGION_ROM_W0_H:
-  case REGION_ROM_W1_L: case REGION_ROM_W1_H:
-  case REGION_ROM_W2_L: case REGION_ROM_W2_H: {
-    PrefetchStepROM(address, cycles);
-    address &= 0x1FFFFFF;
-    if (IsGPIOAccess(address)) {
-      memory.rom.gpio->Write(address + 0, (value >>  0) & 0xFF);
-      memory.rom.gpio->Write(address + 2, (value >> 16) & 0xFF);
+    default: {
+      PrefetchStepRAM(cycles);
     }
-    break;
-  }
-  case REGION_SRAM_1:
-  case REGION_SRAM_2: {
-    PrefetchStepROM(address, cycles);
-    address &= 0x0EFFFFFF;
-    if (memory.rom.backup_sram) {
-      memory.rom.backup_sram->Write(address, value >> ((address & 3) * 8));
-    }
-    break;
-  }
-  default: {
-    PrefetchStepRAM(cycles);
-  }
   }
 }
