@@ -39,6 +39,7 @@ static SDL_GLContext g_gl_context;
 static GLuint g_gl_texture;
 static std::uint32_t g_framebuffer[kNativeWidth * kNativeHeight];
 static auto g_frame_counter = 0;
+static auto g_swap_interval = 1;
 
 static std::atomic_bool g_sync_to_audio = true;
 static int g_cycles_per_audio_frame = 0;
@@ -288,7 +289,14 @@ void init(int argc, char** argv) {
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-  SDL_GL_SetSwapInterval(1);
+
+  SDL_DisplayMode mode;
+  SDL_GetCurrentDisplayMode(0, &mode);
+  if (mode.refresh_rate % 60 == 0) {
+    g_swap_interval = mode.refresh_rate / 60;
+  }
+  SDL_GL_SetSwapInterval(g_swap_interval);
+
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glMatrixMode(GL_MODELVIEW);
@@ -428,7 +436,7 @@ void update_fastforward(bool fastforward) {
   if (fastforward) {
     SDL_GL_SetSwapInterval(0);
   } else {
-    SDL_GL_SetSwapInterval(1);
+    SDL_GL_SetSwapInterval(g_swap_interval);
   }
 }
 
