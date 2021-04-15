@@ -542,11 +542,6 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
 
   std::uint32_t address = GetReg(base);
 
-  if (switch_mode) {
-    mode = state.cpsr.f.mode;
-    SwitchMode(MODE_USR);
-  }
-
   if (list != 0) {
     // Determine number of bytes to transfer and the first register in the list.
     for (int i = 15; i >= 0; i--) {
@@ -564,6 +559,12 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
     first = 15;
     transfer_pc = true;
     bytes = 64;
+    switch_mode &= !load;
+  }
+
+  if (switch_mode) {
+    mode = state.cpsr.f.mode;
+    SwitchMode(MODE_USR);
   }
 
   std::uint32_t base_new = address;
