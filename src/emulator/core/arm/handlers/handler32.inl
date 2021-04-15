@@ -535,7 +535,6 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
 
   Mode mode;
   bool transfer_pc = list & (1 << 15);
-  bool switch_mode = user_mode && (!load || !transfer_pc);
   int  first = 0;
   int  bytes = 0;
   bool pre = _pre;
@@ -559,8 +558,9 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
     first = 15;
     transfer_pc = true;
     bytes = 64;
-    switch_mode &= !load;
   }
+
+  bool switch_mode = user_mode && (!load || !transfer_pc);
 
   if (switch_mode) {
     mode = state.cpsr.f.mode;
