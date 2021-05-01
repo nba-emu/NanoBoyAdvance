@@ -173,6 +173,8 @@ void ARM_DataProcessing(std::uint32_t instruction) {
       } else {
         ReloadPipeline32();
       }
+    } else if constexpr (immediate || shift_imm) {
+      state.r15 += 4;
     }
   } else if constexpr (immediate || shift_imm) {
     state.r15 += 4;
