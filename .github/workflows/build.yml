@@ -1,6 +1,6 @@
 name: Build
 
-on: push
+on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build-win64:
@@ -9,116 +9,91 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
         with:
           submodules: true
-
       - uses: msys2/setup-msys2@v2
         with:
           install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-SDL2 mingw-w64-x86_64-glew
-
       - name: Build NanoBoyAdvance
         run: |
-          mkdir build
-          cd build
           cmake \
+            -B build \
             -G "Unix Makefiles" \
             -DCMAKE_CXX_FLAGS="-s" \
             -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++" \
             -DSDL2_STATIC=ON \
             -DGLEW_USE_STATIC_LIBS=ON \
-            -DCMAKE_BUILD_TYPE=Release ..
-          make
-
-      - name: Collect files
+            -DCMAKE_BUILD_TYPE=Release
+          cd build
+          make -j$NUMBER_OF_PROCESSORS
+      - name: Collect artifacts
         run: |
           mkdir upload
-          mv build/src/platform/sdl/NanoBoyAdvance.exe upload
-          cp $(which libwinpthread-1.dll) upload
-          mv build/src/platform/sdl/config.toml upload
-          mv build/src/platform/sdl/keymap.toml upload
-          mv build/src/platform/sdl/shader upload/shader
-
-      - name: Upload files
-        uses: actions/upload-artifact@master
+          cp -r $(which libwinpthread-1.dll) build/src/platform/sdl/{NanoBoyAdvance.exe,{config,keymap}.toml} upload
+          cp -r build/src/platform/sdl/shader upload/shader
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
         with:
           name: NanoBoyAdvance-win64
           path: upload
+          if-no-files-found: error
 
   build-linux:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@master
-
-      - name: Setup submodules
-        run: git submodule update --init
-
-      - name: Setup SDL2
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Setup SDL2 and GLEW
         run: |
-          sudo apt-get update -y -qq
-          sudo apt-get install libsdl2-dev
-
-      - name: Setup GLEW
-        run: sudo apt-get install libglew-dev
-
+          sudo apt-get update -qq
+          sudo apt-get install -y libsdl2-dev libglew-dev
       - name: Build NanoBoyAdvance
         run: |
-          mkdir build
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Release ..
-          make
-
-      - name: Collect files
+          make -j$(nproc)
+      - name: Collect artifacts
         run: |
           mkdir upload
-          mv build/src/platform/sdl/NanoBoyAdvance upload
-          mv build/src/platform/sdl/config.toml upload
-          mv build/src/platform/sdl/keymap.toml upload
-          mv build/src/platform/sdl/shader upload/shader
-
-      - name: Upload files
-        uses: actions/upload-artifact@master
+          cp -r build/src/platform/sdl/{NanoBoyAdvance,{config,keymap}.toml} upload
+          cp -r build/src/platform/sdl/shader upload/shader
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
         with:
           name: NanoBoyAdvance-linux
           path: upload
+          if-no-files-found: error
 
   build-macOS:
     runs-on: macos-latest
-
     steps:
-      - uses: actions/checkout@master
-
-      - name: Setup submodules
-        run: git submodule update --init
-
-      - name: Setup SDL2
-        run: brew install sdl2
-
-      - name: Setup GLEW
-        run: brew install glew
-
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Setup SDL2 and GLEW
+        env:
+          HOMEBREW_NO_ANALYTICS: 1
+        run: brew install sdl2 glew
       - name: Build NanoBoyAdvance
         run: |
-          mkdir build
-          cd build
           export CPPFLAGS="$CPPFLAGS -I/usr/local/opt/glew/include"
-          cmake -DCMAKE_CXX_FLAGS="-s" \
+          cmake -B build \
+                -DCMAKE_CXX_FLAGS="-s" \
                 -DSDL2_STATIC=ON \
                 -DGLEW_USE_STATIC_LIBS=ON \
-                -DCMAKE_BUILD_TYPE=Release ..
-          make
-
-      - name: Collect files
+                -DCMAKE_BUILD_TYPE=Release
+          cd build
+          make -j$(sysctl -n hw.availcpu)
+      - name: Collect artifacts
         run: |
           mkdir upload
-          mv build/src/platform/sdl/NanoBoyAdvance upload
-          mv build/src/platform/sdl/config.toml upload
-          mv build/src/platform/sdl/keymap.toml upload
-          mv build/src/platform/sdl/shader upload/shader
-
-      - name: Upload files
-        uses: actions/upload-artifact@master
+          cp -r build/src/platform/sdl/{NanoBoyAdvance,{config,keymap}.toml} upload
+          cp -r build/src/platform/sdl/shader upload/shader
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
         with:
-          name: NanoBoyAdvance-macOS
+          name: NanoBoyAdvance-${{ runner.os }}
           path: upload
+          if-no-files-found: error
