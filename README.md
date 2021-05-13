@@ -16,13 +16,12 @@ For stable releases please refer to the [releases](https://github.com/fleroviux/
 A legitimate Game Boy Advance BIOS dump or a [replacement BIOS](https://github.com/Nebuleon/ReGBA/blob/master/bios/gba_bios.bin) is required.  
 Do note though that the replacement BIOS is less accurate.
 
-Place your BIOS file named as `bios.bin` into the same folder as the executable or provide a path via the CLI or [config.toml](https://github.com/fleroviux/NanoboyAdvance/blob/master/resource/config.toml) file.
-
+Place your BIOS file named as `bios.bin` into the same folder as the executable or provide a path via the CLI or [config.toml](https://github.com/fleroviux/NanoBoyAdvance/blob/master/src/platform/sdl/resource/config.toml)
 #### CLI arguments
 ```
 NanoboyAdvance.exe [--bios bios_path] [--force-rtc] [--save-type type] [--fullscreen] [--scale factor] [--resampler type] [--sync-to-audio yes/no] rom_path
 ```
-See [config.toml](https://github.com/fleroviux/NanoboyAdvance/blob/master/resource/config.toml) for more documentation or options.
+See [config.toml](https://github.com/fleroviux/NanoBoyAdvance/blob/master/src/platform/sdl/resource/config.toml) for more documentation or options.
 
 ## Features
 
