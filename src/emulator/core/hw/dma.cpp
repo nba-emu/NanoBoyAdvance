@@ -12,8 +12,12 @@
 
 namespace nba::core {
 
-// FIXME: what happens if source control is set to reload?
-static constexpr int g_dma_modify[2][4] = {
+static constexpr int g_dma_src_modify[2][4] = {
+  { 2, -2, 0, 0 },
+  { 4, -4, 0, 0 }
+};
+
+static constexpr int g_dma_dst_modify[2][4] = {
   { 2, -2, 0, 2 },
   { 4, -4, 0, 4 }
 };
@@ -147,10 +151,10 @@ void DMA::RunChannel(bool first) {
   if (channel.is_fifo_dma) {
     size = Channel::Size::Word;
     dst_modify = 0;
-    src_modify = g_dma_modify[size][channel.src_cntl];
+    src_modify = g_dma_src_modify[size][channel.src_cntl];
   } else {
-    dst_modify = g_dma_modify[size][channel.dst_cntl];
-    src_modify = g_dma_modify[size][channel.src_cntl];
+    dst_modify = g_dma_dst_modify[size][channel.dst_cntl];
+    src_modify = g_dma_src_modify[size][channel.src_cntl];
   }
 
   // TODO: I don't know how the internal processing time for DMA is supposed to work.
