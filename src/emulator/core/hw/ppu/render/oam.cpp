@@ -41,15 +41,12 @@ const int PPU::s_obj_size[4][4][2] = {
 };
 
 void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
-  std::int16_t transform[4];
-
   int tile_num;
   std::uint16_t pixel;
+  std::int16_t transform[4];
+  int cycles = mmio.dispcnt.hblank_oam_access ? 954 : 1210;
 
   line_contains_alpha_obj = false;
-
-  int cycles = 0;
-  int cycle_limit = mmio.dispcnt.hblank_oam_access ? 954 : 1210;
 
   for (int x = 0; x < 240; x++) {
     buffer_obj[x].priority = 4;
@@ -94,8 +91,6 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
     int half_width  = width / 2;
     int half_height = height / 2;
 
-    int cycles_per_pixel;
-
     if (affine) {
       int group = ((attr1 >> 9) & 0x1F) << 5;
 
@@ -108,15 +103,11 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
         half_width  *= 2;
         half_height *= 2;
       }
-
-      cycles_per_pixel = 2;
     } else {
       transform[0] = 0x100;
       transform[1] = 0;
       transform[2] = 0;
       transform[3] = 0x100;
-
-      cycles_per_pixel = 1;
     }
 
     x += half_width;
@@ -142,19 +133,9 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
       local_y -= mmio.mosaic.obj._counter_y;
     }
 
-    if (affine) {
-      cycles += 10;
-    }
-
     for (int local_x = -half_width; local_x < half_width; local_x++) {
       int _local_x = local_x - mosaic_x;
       int global_x = local_x + x;
-
-      if (cycles > cycle_limit) {
-        return;
-      }
-
-      cycles += cycles_per_pixel;
 
       if (mosaic && (++mosaic_x == mmio.mosaic.obj.size_x)) {
         mosaic_x = 0;
@@ -224,6 +205,16 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
 
         point.priority = prio;
       }
+    }
+
+    if (affine) {
+      cycles -= 10 + half_width * 4;
+    } else {
+      cycles -= half_width * 2;
+    }
+
+    if (cycles <= 0) {
+      break;
     }
   }
 }
