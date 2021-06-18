@@ -33,7 +33,7 @@ void ARM_DataProcessing(std::uint32_t instruction) {
   int reg_op1 = (instruction >> 16) & 0xF;
   int reg_op2 = (instruction >>  0) & 0xF;
 
-  int carry;
+  int carry = state.cpsr.f.c;
   std::uint32_t op1;
   std::uint32_t op2;
 
@@ -42,8 +42,6 @@ void ARM_DataProcessing(std::uint32_t instruction) {
   if constexpr (immediate) {
     int value = instruction & 0xFF;
     int shift = ((instruction >> 8) & 0xF) * 2;
-
-    carry = state.cpsr.f.c;
 
     if (shift != 0) {
       carry = (value >> (shift - 1)) & 1;
@@ -64,7 +62,6 @@ void ARM_DataProcessing(std::uint32_t instruction) {
       interface->Idle();
     }
 
-    carry = state.cpsr.f.c;
     op1 = GetReg(reg_op1);
     op2 = GetReg(reg_op2);
 
