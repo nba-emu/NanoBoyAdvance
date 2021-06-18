@@ -284,9 +284,8 @@ void CPU::Write_(std::uint32_t address, T value, Access access) {
       if (std::is_same_v<T, std::uint16_t> && page == REGION_ROM_W2_H && IsEEPROMAccess(address)) {
         // TODO: this probably isn't accurate at all.
         if (dma.IsRunning()) {
-          return;
+          memory.rom.backup_eeprom->Write(address, value);
         }
-        memory.rom.backup_eeprom->Write(address, value);
         return;
       }
       address &= 0x1FFFFFF;
