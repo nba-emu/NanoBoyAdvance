@@ -116,7 +116,7 @@ public:
 private:
   template <typename T>
   auto Read(void* buffer, std::uint32_t address) -> T {
-    return *reinterpret_cast<T*>(&(reinterpret_cast<std::uint8_t*>(buffer))[address]);
+     return *reinterpret_cast<T*>(&(reinterpret_cast<std::uint8_t*>(buffer))[address]);
   }
 
   template <typename T>
@@ -134,8 +134,9 @@ private:
     return memory.rom.backup_eeprom && ((~memory.rom.size & 0x02000000) || address >= 0x0DFFFF00);
   }
 
-  auto ReadMMIO (std::uint32_t address) -> std::uint8_t;
+  auto ReadMMIO(std::uint32_t address) -> std::uint8_t;
   void WriteMMIO(std::uint32_t address, std::uint8_t value);
+  void WriteMMIO16(std::uint32_t address, std::uint16_t value);
   auto ReadBIOS(std::uint32_t address) -> std::uint32_t;
   auto ReadUnused(std::uint32_t address) -> std::uint32_t;
 

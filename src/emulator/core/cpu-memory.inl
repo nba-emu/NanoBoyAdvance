@@ -217,10 +217,11 @@ void CPU::Write_(std::uint32_t address, T value, Access access) {
   }
 
   switch (page) {
-    case REGION_EWRAM:
+    case REGION_EWRAM: {
       PrefetchStepRAM(cycles);
       Write<T>(memory.wram, address & 0x3FFFF, value);
       break;
+    }
     case REGION_IWRAM: {
       PrefetchStepRAM(cycles);
       Write<T>(memory.iram, address & 0x7FFF,  value);
@@ -229,14 +230,11 @@ void CPU::Write_(std::uint32_t address, T value, Access access) {
     case REGION_MMIO: {
       PrefetchStepRAM(cycles);
       if constexpr (std::is_same_v<T, std::uint32_t>) {
-        WriteMMIO(address + 0, (value >>  0) & 0xFF);
-        WriteMMIO(address + 1, (value >>  8) & 0xFF);
-        WriteMMIO(address + 2, (value >> 16) & 0xFF);
-        WriteMMIO(address + 3, (value >> 24) & 0xFF);
+        WriteMMIO16(address + 0, value & 0xFFFF);
+        WriteMMIO16(address + 2, value >> 16);
       }
       if constexpr (std::is_same_v<T, std::uint16_t>) {
-        WriteMMIO(address + 0, (value >> 0) & 0xFF);
-        WriteMMIO(address + 1, (value >> 8) & 0xFF);
+        WriteMMIO16(address, value);
       }
       if constexpr (std::is_same_v<T, std::uint8_t>) {
         WriteMMIO(address, value & 0xFF);

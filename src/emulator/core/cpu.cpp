@@ -336,11 +336,15 @@ void CPU::OnKeyPress() {
 void CPU::CheckKeypadInterrupt() {
   const auto& keycnt = mmio.keycnt;
   const auto keyinput = ~mmio.keyinput & 0x3FF;
-  if (!keycnt.interrupt)
+
+  if (!keycnt.interrupt) {
     return;
+  }
+  
   if (keycnt.and_mode) {
-    if (keycnt.input_mask == keyinput)
+    if (keycnt.input_mask == keyinput) {
       irq.Raise(IRQ::Source::Keypad);
+    }
   } else if ((keycnt.input_mask & keyinput) != 0) {
     irq.Raise(IRQ::Source::Keypad);
   }

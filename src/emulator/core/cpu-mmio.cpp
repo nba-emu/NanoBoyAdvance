@@ -565,7 +565,31 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
       break;
     }
 
-    case POSTFLG: mmio.postflg = value & 1; break;
+    case POSTFLG: {
+      mmio.postflg = value & 1;
+      break;
+    }
+  }
+}
+
+void CPU::WriteMMIO16(std::uint32_t address, std::uint16_t value) {
+  switch (address) {
+    /* KEYCNT special-case:
+     * Do not invoke CheckKeypadInterrupt() twice for a single 16-bit write.
+     * See https://github.com/fleroviux/NanoBoyAdvance/issues/152 for details.
+     */
+    case KEYCNT: {
+      mmio.keycnt.input_mask = value & 0x3FF;
+      mmio.keycnt.interrupt = value & 0x4000;
+      mmio.keycnt.and_mode = value & 0x8000;
+      CheckKeypadInterrupt();
+      break;
+    }
+    default: {
+      WriteMMIO(address + 0, (value >> 0) & 0xFF);
+      WriteMMIO(address + 1, (value >> 8) & 0xFF);
+      break;
+    }
   }
 }
 
