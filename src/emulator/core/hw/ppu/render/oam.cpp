@@ -59,7 +59,9 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
   }
 
   for (std::int32_t offset = 0; offset <= 127 * 8; offset += 8) {
-    if ((oam[offset + 1] & 3) == 2) continue;
+    if ((oam[offset + 1] & 3) == 2) {
+      continue;
+    }
 
     std::uint16_t attr0 = (oam[offset + 1] << 8) | oam[offset + 0];
     std::uint16_t attr1 = (oam[offset + 3] << 8) | oam[offset + 2];
@@ -92,9 +94,6 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
     int half_width  = width / 2;
     int half_height = height / 2;
 
-    x += half_width;
-    y += half_height;
-
     int cycles_per_pixel;
 
     if (affine) {
@@ -106,8 +105,6 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
       transform[3] = (oam[group + 0x1F] << 8) | oam[group + 0x1E];
 
       if (attr0b9) {
-        x += half_width;
-        y += half_height;
         half_width  *= 2;
         half_height *= 2;
       }
@@ -121,6 +118,9 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
 
       cycles_per_pixel = 1;
     }
+
+    x += half_width;
+    y += half_height;
 
     if (line < (y - half_height) || line >= (y + half_height)) {
       continue;
@@ -146,7 +146,7 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
       cycles += 10;
     }
 
-    for (int local_x = -half_width; local_x <= half_width; local_x++) {
+    for (int local_x = -half_width; local_x < half_width; local_x++) {
       int _local_x = local_x - mosaic_x;
       int global_x = local_x + x;
 
@@ -212,6 +212,7 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
 
       auto& point = buffer_obj[global_x];
       bool opaque = pixel != s_color_transparent;
+
       if (mode == OBJ_WINDOW) {
         if (opaque) point.window = 1;
       } else if (prio < point.priority || point.color == s_color_transparent) {

@@ -116,7 +116,7 @@ public:
 private:
   template <typename T>
   auto Read(void* buffer, std::uint32_t address) -> T {
-     return *reinterpret_cast<T*>(&(reinterpret_cast<std::uint8_t*>(buffer))[address]);
+    return *reinterpret_cast<T*>(&(reinterpret_cast<std::uint8_t*>(buffer))[address]);
   }
 
   template <typename T>
