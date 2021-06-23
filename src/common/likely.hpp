@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 fleroviux
+ * Copyright (C) 2021 fleroviux
  */
 
 #pragma once

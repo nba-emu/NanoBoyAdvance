@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 fleroviux
+ * Copyright (C) 2021 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
