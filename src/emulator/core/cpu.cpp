@@ -317,18 +317,18 @@ void CPU::M4AFixupPercussiveChannels() {
 
 
 void CPU::OnKeyPress() {
-  auto &keyinput = mmio.keyinput;
-  // cache keystate into keyinput
-  keyinput = (config->input_dev->Poll(Key::A)      ? 0 : 1)  |
-             (config->input_dev->Poll(Key::B)      ? 0 : 2)  |
-             (config->input_dev->Poll(Key::Select) ? 0 : 4)  |
-             (config->input_dev->Poll(Key::Start)  ? 0 : 8)  |
-             (config->input_dev->Poll(Key::Right)  ? 0 : 16) |
-             (config->input_dev->Poll(Key::Left)   ? 0 : 32) |
-             (config->input_dev->Poll(Key::Up)     ? 0 : 64) |
-             (config->input_dev->Poll(Key::Down)   ? 0 : 128) |
-             (config->input_dev->Poll(Key::R) ? 0 : 256) |
-             (config->input_dev->Poll(Key::L) ? 0 : 512);
+  mmio.keyinput = 0;
+
+  if (!config->input_dev->Poll(Key::A)) mmio.keyinput |= 1;
+  if (!config->input_dev->Poll(Key::B)) mmio.keyinput |= 2;
+  if (!config->input_dev->Poll(Key::Select)) mmio.keyinput |= 4;
+  if (!config->input_dev->Poll(Key::Start)) mmio.keyinput |= 8;
+  if (!config->input_dev->Poll(Key::Right)) mmio.keyinput |= 16;
+  if (!config->input_dev->Poll(Key::Left)) mmio.keyinput |= 32;
+  if (!config->input_dev->Poll(Key::Up)) mmio.keyinput |= 64;
+  if (!config->input_dev->Poll(Key::Down)) mmio.keyinput |= 128;
+  if (!config->input_dev->Poll(Key::R)) mmio.keyinput |= 256;
+  if (!config->input_dev->Poll(Key::L)) mmio.keyinput |= 512;
 
   CheckKeypadInterrupt();
 }
