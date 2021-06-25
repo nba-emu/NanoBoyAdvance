@@ -41,7 +41,7 @@ public:
     cpu_mode_is_invalid = false;
   }
 
-  auto GetPrefetchedOpcode(int slot) -> std::uint32_t {
+  auto GetPrefetchedOpcode(int slot) -> u32 {
     return pipe.opcode[slot];
   }
 
@@ -119,14 +119,14 @@ public:
 
   RegisterFile state;
 
-  typedef void (ARM7TDMI::*Handler16)(std::uint16_t);
-  typedef void (ARM7TDMI::*Handler32)(std::uint32_t);
+  typedef void (ARM7TDMI::*Handler16)(u16);
+  typedef void (ARM7TDMI::*Handler32)(u32);
 
 private:
   friend struct TableGen;
 
-  auto GetReg(int id) -> std::uint32_t {
-    std::uint32_t result = 0;
+  auto GetReg(int id) -> u32 {
+    u32 result = 0;
     bool is_banked = id >= 8 && id != 15;
 
     if (unlikely(ldm_usermode_conflict && is_banked)) {
@@ -140,7 +140,7 @@ private:
     return result;
   }
 
-  void SetReg(int id, std::uint32_t value) {
+  void SetReg(int id, u32 value) {
     bool is_banked = id >= 8 && id != 15;
 
     if (unlikely(ldm_usermode_conflict && is_banked)) {
@@ -153,7 +153,7 @@ private:
   }
 
   auto GetSPSR() -> StatusRegister {
-    std::uint32_t spsr = 0;
+    u32 spsr = 0;
 
     if (unlikely(ldm_usermode_conflict)) {
       /* TODO: current theory is that the value gets OR'd with CPSR,
@@ -260,7 +260,7 @@ private:
 
   struct Pipeline {
     Access fetch_type;
-    std::uint32_t opcode[2];
+    u32 opcode[2];
   } pipe;
 
   bool irq_line;

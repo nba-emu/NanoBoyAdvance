@@ -44,15 +44,15 @@ static constexpr int g_dma_from_bitset[] = {
   /* 0b1111 */ 0
 };
 
-static constexpr std::uint32_t g_dma_src_mask[] = {
+static constexpr u32 g_dma_src_mask[] = {
   0x07FFFFFF, 0x0FFFFFFF, 0x0FFFFFFF, 0x0FFFFFFF
 };
 
-static constexpr std::uint32_t g_dma_dst_mask[] = {
+static constexpr u32 g_dma_dst_mask[] = {
   0x07FFFFFF, 0x07FFFFFF, 0x07FFFFFF, 0x0FFFFFFF
 };
 
-static constexpr std::uint32_t g_dma_len_mask[] = {
+static constexpr u32 g_dma_len_mask[] = {
   0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF
 };
 
@@ -173,7 +173,7 @@ void DMA::RunChannel(bool first) {
     }
 
     if (size == Channel::Half) {
-      std::uint16_t value;
+      u16 value;
 
       if (likely(channel.latch.src_addr >= 0x02000000)) {
         value = memory.ReadHalf(channel.latch.src_addr, access);
@@ -236,7 +236,7 @@ void DMA::RunChannel(bool first) {
   SelectNextDMA();
 }
 
-auto DMA::Read(int chan_id, int offset) -> std::uint8_t {
+auto DMA::Read(int chan_id, int offset) -> u8 {
   auto const& channel = channels[chan_id];
 
   switch (offset) {
@@ -257,7 +257,7 @@ auto DMA::Read(int chan_id, int offset) -> std::uint8_t {
   }
 }
 
-void DMA::Write(int chan_id, int offset, std::uint8_t value) {
+void DMA::Write(int chan_id, int offset, u8 value) {
   auto& channel = channels[chan_id];
 
   switch (offset) {

@@ -31,9 +31,9 @@ public:
   void Frame();
   
 private:
-  static auto DetectBackupType(std::uint8_t* rom, size_t size) -> Config::BackupType;
+  static auto DetectBackupType(u8* rom, size_t size) -> Config::BackupType;
   static auto CreateBackupInstance(Config::BackupType backup_type, std::string save_path) -> Backup*;
-  static auto CalculateMirrorMask(size_t size) -> std::uint32_t;
+  static auto CalculateMirrorMask(size_t size) -> u32;
   
   auto LoadBIOS() -> StatusCode; 
   

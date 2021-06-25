@@ -13,7 +13,7 @@ void PPU::RenderLayerText(int id) {
   auto const& bgcnt  = mmio.bgcnt[id];
   auto const& mosaic = mmio.mosaic.bg;
   
-  std::uint32_t tile_base = bgcnt.tile_block * 16384;
+  u32 tile_base = bgcnt.tile_block * 16384;
    
   int line = mmio.bgvofs[id] + mmio.vcount;
   
@@ -30,16 +30,16 @@ void PPU::RenderLayerText(int id) {
   int screen_x = (grid_x / 32) % 2;
   int screen_y = (grid_y / 32) % 2;
 
-  std::uint16_t tile[8];
-  std::uint32_t base = (bgcnt.map_block * 2048) + ((grid_y % 32) * 64);
+  u16 tile[8];
+  u32 base = (bgcnt.map_block * 2048) + ((grid_y % 32) * 64);
 
-  std::uint16_t* buffer = buffer_bg[id];
-  std::int32_t  last_encoder = -1;
-  std::uint16_t encoder;
+  u16* buffer = buffer_bg[id];
+  s32  last_encoder = -1;
+  u16 encoder;
   
   grid_x %= 32;
   
-  std::uint32_t base_adjust;
+  u32 base_adjust;
   
   switch (bgcnt.size) {
     case 0:
@@ -65,7 +65,7 @@ void PPU::RenderLayerText(int id) {
   
   do {
     do {
-      std::uint32_t offset = base + grid_x++ * 2;
+      u32 offset = base + grid_x++ * 2;
       
       encoder = (vram[offset + 1] << 8) | vram[offset];
 

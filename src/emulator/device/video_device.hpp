@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <common/integer.hpp>
 
 namespace nba {
 
@@ -15,11 +15,11 @@ class VideoDevice {
 public:
   virtual ~VideoDevice() {}
 
-  virtual void Draw(std::uint32_t* buffer) = 0;
+  virtual void Draw(u32* buffer) = 0;
 };
 
 class NullVideoDevice : public VideoDevice {
-  void Draw(std::uint32_t* buffer) { }
+  void Draw(u32* buffer) { }
 };
 
 } // namespace nba

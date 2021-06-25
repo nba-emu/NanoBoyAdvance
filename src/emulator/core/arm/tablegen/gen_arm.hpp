@@ -5,9 +5,9 @@
  * Refer to the included LICENSE file.
  */
 
-template <std::uint32_t instruction>
+template <u32 instruction>
 static constexpr auto GenerateHandlerARM() -> Handler32 {
-  const std::uint32_t opcode = instruction & 0x0FFFFFFF;
+  const u32 opcode = instruction & 0x0FFFFFFF;
 
   const bool pre = instruction & (1 << 24);
   const bool add = instruction & (1 << 23);

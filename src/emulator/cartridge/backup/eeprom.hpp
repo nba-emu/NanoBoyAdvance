@@ -24,8 +24,8 @@ public:
   EEPROM(std::string const& save_path, Size size_hint);
   
   void Reset() final;
-  auto Read (std::uint32_t address) -> std::uint8_t final;
-  void Write(std::uint32_t address, std::uint8_t value) final;
+  auto Read (u32 address) -> u8 final;
+  void Write(u32 address, u8 value) final;
   
 private:
   enum State {
@@ -47,7 +47,7 @@ private:
 
   int state;
   int address;
-  std::uint64_t serial_buffer;
+  u64 serial_buffer;
   int transmitted_bits;
 };
 

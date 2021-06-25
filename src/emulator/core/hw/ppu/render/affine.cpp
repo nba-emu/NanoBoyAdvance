@@ -12,12 +12,12 @@ namespace nba::core {
 void PPU::RenderLayerAffine(int id) {
   auto const& bg = mmio.bgcnt[2 + id];
   
-  std::uint16_t* buffer = buffer_bg[2 + id];
+  u16* buffer = buffer_bg[2 + id];
   
   int size;
   int block_width;
-  std::uint32_t map_base  = bg.map_block * 2048;
-  std::uint32_t tile_base = bg.tile_block * 16384;
+  u32 map_base  = bg.map_block * 2048;
+  u32 tile_base = bg.tile_block * 16384;
   
   switch (bg.size) {
     case 0: size = 128;  block_width = 16;  break;

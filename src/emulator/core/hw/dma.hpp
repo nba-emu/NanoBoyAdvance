@@ -8,7 +8,7 @@
 #pragma once
 
 #include <bitset>
-#include <cstdint>
+#include <common/integer.hpp>
 #include <emulator/core/arm/memory.hpp>
 #include <emulator/core/hw/interrupt.hpp>
 #include <emulator/core/scheduler.hpp>
@@ -38,10 +38,10 @@ public:
   void Request(Occasion occasion);
   void StopVideoXferDMA();
   void Run();
-  auto Read (int chan_id, int offset) -> std::uint8_t;
-  void Write(int chan_id, int offset, std::uint8_t value);
+  auto Read (int chan_id, int offset) -> u8;
+  void Write(int chan_id, int offset, u8 value);
   bool IsRunning() { return runnable_set.any(); }
-  auto GetOpenBusValue() -> std::uint32_t { return latch; }
+  auto GetOpenBusValue() -> u32 { return latch; }
 
 private:
   enum Registers {
@@ -58,9 +58,9 @@ private:
     bool interrupt = false;
     bool gamepak = false;
 
-    std::uint16_t length = 0;
-    std::uint32_t dst_addr = 0;
-    std::uint32_t src_addr = 0;
+    u16 length = 0;
+    u32 dst_addr = 0;
+    u32 src_addr = 0;
 
     enum Control  {
       Increment = 0,
@@ -82,12 +82,12 @@ private:
     } size = Half;
 
     struct Latch {
-      std::uint32_t length;
-      std::uint32_t dst_addr;
-      std::uint32_t src_addr;
+      u32 length;
+      u32 dst_addr;
+      u32 src_addr;
 
       /// Most recently read (half)word by this channel.
-      std::uint32_t bus = 0;
+      u32 bus = 0;
     } latch;
 
     bool is_fifo_dma = false;
@@ -132,7 +132,7 @@ private:
 
   /// Most recent value transferred by any DMA channel.
   /// DMAs will read this when reading from unused memory or IO.
-  std::uint32_t latch;
+  u32 latch;
 };
 
 } // namespace nba::core

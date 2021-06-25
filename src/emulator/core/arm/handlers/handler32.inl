@@ -25,7 +25,7 @@ enum class DataOp {
 };
 
 template <bool immediate, DataOp opcode, bool set_flags, int field4>
-void ARM_DataProcessing(std::uint32_t instruction) {  
+void ARM_DataProcessing(u32 instruction) {  
   constexpr int  shift_type = ( field4 >> 1) & 3;
   constexpr bool shift_imm  = (~field4 >> 0) & 1;
 
@@ -34,8 +34,8 @@ void ARM_DataProcessing(std::uint32_t instruction) {
   int reg_op2 = (instruction >>  0) & 0xF;
 
   int carry = state.cpsr.f.c;
-  std::uint32_t op1;
-  std::uint32_t op2;
+  u32 op1;
+  u32 op2;
 
   pipe.fetch_type = Access::Sequential;
 
@@ -52,7 +52,7 @@ void ARM_DataProcessing(std::uint32_t instruction) {
 
     op1 = GetReg(reg_op1);
   } else {
-    std::uint32_t shift;
+    u32 shift;
 
     if constexpr (shift_imm) {
       shift = (instruction >> 7) & 0x1F;
@@ -69,7 +69,7 @@ void ARM_DataProcessing(std::uint32_t instruction) {
   }
 
   auto& cpsr = state.cpsr;
-  std::uint32_t result;
+  u32 result;
 
   switch (opcode) {
     case DataOp::AND:
@@ -179,10 +179,10 @@ void ARM_DataProcessing(std::uint32_t instruction) {
 }
 
 template <bool immediate, bool use_spsr, bool to_status>
-void ARM_StatusTransfer(std::uint32_t instruction) {
+void ARM_StatusTransfer(u32 instruction) {
   if (to_status) {
-    std::uint32_t op;
-    std::uint32_t mask = 0;
+    u32 op;
+    u32 mask = 0;
 
     // Create mask based on fsxc-bits.
     if (instruction & (1 << 16)) mask |= 0x000000FF;
@@ -229,8 +229,8 @@ void ARM_StatusTransfer(std::uint32_t instruction) {
 }
 
 template <bool accumulate, bool set_flags>
-void ARM_Multiply(std::uint32_t instruction) {
-  std::uint32_t result;
+void ARM_Multiply(u32 instruction) {
+  u32 result;
 
   int op1 = (instruction >>  0) & 0xF;
   int op2 = (instruction >>  8) & 0xF;
@@ -262,14 +262,14 @@ void ARM_Multiply(std::uint32_t instruction) {
 }
 
 template <bool sign_extend, bool accumulate, bool set_flags>
-void ARM_MultiplyLong(std::uint32_t instruction) {
+void ARM_MultiplyLong(u32 instruction) {
   int op1 = (instruction >> 0) & 0xF;
   int op2 = (instruction >> 8) & 0xF;
 
   int dst_lo = (instruction >> 12) & 0xF;
   int dst_hi = (instruction >> 16) & 0xF;
 
-  std::int64_t result;
+  s64 result;
 
   pipe.fetch_type = Access::Nonsequential;
   state.r15 += 4;
@@ -279,8 +279,8 @@ void ARM_MultiplyLong(std::uint32_t instruction) {
   TickMultiply(GetReg(op2));
 
   if (sign_extend) {
-    std::int64_t a = GetReg(op1);
-    std::int64_t b = GetReg(op2);
+    s64 a = GetReg(op1);
+    s64 b = GetReg(op2);
 
     /* Sign-extend operands */
     if (a & 0x80000000) a |= 0xFFFFFFFF00000000;
@@ -288,13 +288,13 @@ void ARM_MultiplyLong(std::uint32_t instruction) {
 
     result = a * b;
   } else {
-    std::uint64_t uresult = (std::uint64_t)GetReg(op1) * (std::uint64_t)GetReg(op2);
+    u64 uresult = (u64)GetReg(op1) * (u64)GetReg(op2);
 
-    result = (std::int64_t)uresult;
+    result = (s64)uresult;
   }
 
   if (accumulate) {
-    std::int64_t value = GetReg(dst_hi);
+    s64 value = GetReg(dst_hi);
 
     value <<= 16;
     value <<= 16;
@@ -304,7 +304,7 @@ void ARM_MultiplyLong(std::uint32_t instruction) {
     interface->Idle();
   }
 
-  std::uint32_t result_hi = result >> 32;
+  u32 result_hi = result >> 32;
 
   if (set_flags) {
     state.cpsr.f.n = result_hi >> 31;
@@ -320,19 +320,19 @@ void ARM_MultiplyLong(std::uint32_t instruction) {
 }
 
 template <bool byte>
-void ARM_SingleDataSwap(std::uint32_t instruction) {
+void ARM_SingleDataSwap(u32 instruction) {
   int src  = (instruction >>  0) & 0xF;
   int dst  = (instruction >> 12) & 0xF;
   int base = (instruction >> 16) & 0xF;
 
-  std::uint32_t tmp;
+  u32 tmp;
 
   pipe.fetch_type = Access::Nonsequential;
   state.r15 += 4;
 
   if (byte) {
     tmp = ReadByte(GetReg(base), Access::Nonsequential);
-    WriteByte(GetReg(base), (std::uint8_t)GetReg(src), Access::Nonsequential);
+    WriteByte(GetReg(base), (u8)GetReg(src), Access::Nonsequential);
   } else {
     tmp = ReadWordRotate(GetReg(base), Access::Nonsequential);
     WriteWord(GetReg(base), GetReg(src), Access::Nonsequential);
@@ -347,8 +347,8 @@ void ARM_SingleDataSwap(std::uint32_t instruction) {
   }
 }
 
-void ARM_BranchAndExchange(std::uint32_t instruction) {
-  std::uint32_t address = GetReg(instruction & 0xF);
+void ARM_BranchAndExchange(u32 instruction) {
+  u32 address = GetReg(instruction & 0xF);
 
   if (address & 1) {
     state.r15 = address & ~1;
@@ -361,12 +361,12 @@ void ARM_BranchAndExchange(std::uint32_t instruction) {
 }
 
 template <bool pre, bool add, bool immediate, bool writeback, bool load, int opcode>
-void ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
+void ARM_HalfwordSignedTransfer(u32 instruction) {
   int dst  = (instruction >> 12) & 0xF;
   int base = (instruction >> 16) & 0xF;
 
-  std::uint32_t offset;
-  std::uint32_t address = GetReg(base);
+  u32 offset;
+  u32 address = GetReg(base);
 
   if constexpr (immediate) {
     offset = (instruction & 0xF) | ((instruction >> 4) & 0xF0);
@@ -447,8 +447,8 @@ void ARM_HalfwordSignedTransfer(std::uint32_t instruction) {
 }
 
 template <bool link>
-void ARM_BranchAndLink(std::uint32_t instruction) {
-  std::uint32_t offset = instruction & 0xFFFFFF;
+void ARM_BranchAndLink(u32 instruction) {
+  u32 offset = instruction & 0xFFFFFF;
 
   if (offset & 0x800000) {
     offset |= 0xFF000000;
@@ -463,12 +463,12 @@ void ARM_BranchAndLink(std::uint32_t instruction) {
 }
 
 template <bool immediate, bool pre, bool add, bool byte, bool writeback, bool load>
-void ARM_SingleDataTransfer(std::uint32_t instruction) {
-  std::uint32_t offset;
+void ARM_SingleDataTransfer(u32 instruction) {
+  u32 offset;
 
   int dst  = (instruction >> 12) & 0xF;
   int base = (instruction >> 16) & 0xF;
-  std::uint32_t address = GetReg(base);
+  u32 address = GetReg(base);
 
   // Calculate offset relative to base register.
   if constexpr (immediate) {
@@ -494,7 +494,7 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
   }
 
   if constexpr (load) {
-    std::uint32_t value;
+    u32 value;
 
     if constexpr (byte) {
       value = ReadByte(address, Access::Nonsequential);
@@ -511,7 +511,7 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
     SetReg(dst, value);
   } else {
     if constexpr (byte) {
-      WriteByte(address, (std::uint8_t)GetReg(dst), Access::Nonsequential);
+      WriteByte(address, (u8)GetReg(dst), Access::Nonsequential);
     } else {
       WriteWord(address, GetReg(dst), Access::Nonsequential);
     }
@@ -527,7 +527,7 @@ void ARM_SingleDataTransfer(std::uint32_t instruction) {
 }
 
 template <bool _pre, bool add, bool user_mode, bool writeback, bool load>
-void ARM_BlockDataTransfer(std::uint32_t instruction) {
+void ARM_BlockDataTransfer(u32 instruction) {
   // TODO: test special case with usermode registers and a banked base register.
   int base = (instruction >> 16) & 0xF;
   int list = instruction & 0xFFFF;
@@ -538,7 +538,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
   int  bytes = 0;
   bool pre = _pre;
 
-  std::uint32_t address = GetReg(base);
+  u32 address = GetReg(base);
 
   if (list != 0) {
     // Determine number of bytes to transfer and the first register in the list.
@@ -566,8 +566,8 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
     SwitchMode(MODE_USR);
   }
 
-  std::uint32_t base_new = address;
-  std::uint32_t base_old = address;
+  u32 base_new = address;
+  u32 base_old = address;
 
   /* The CPU always transfers registers sequentially,
    * for decrementing modes it determines the final address first and
@@ -650,7 +650,7 @@ void ARM_BlockDataTransfer(std::uint32_t instruction) {
   }
 }
 
-void ARM_Undefined(std::uint32_t instruction) {
+void ARM_Undefined(u32 instruction) {
   // Save current program status register.
   state.spsr[BANK_UND].v = state.cpsr.v;
 
@@ -664,7 +664,7 @@ void ARM_Undefined(std::uint32_t instruction) {
   ReloadPipeline32();
 }
 
-void ARM_SWI(std::uint32_t instruction) {
+void ARM_SWI(u32 instruction) {
   // Save current program status register.
   state.spsr[BANK_SVC].v = state.cpsr.v;
 

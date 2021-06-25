@@ -26,11 +26,11 @@ public:
     file = BackupFile::OpenOrCreate(save_path, { 32768 }, bytes);
   }
   
-  auto Read(std::uint32_t address) -> std::uint8_t final {
+  auto Read(u32 address) -> u8 final {
     return file->Read(address & 0x7FFF);
   }
   
-  void Write(std::uint32_t address, std::uint8_t value) final {
+  void Write(u32 address, u8 value) final {
     file->Write(address & 0x7FFF, value);
   }
   

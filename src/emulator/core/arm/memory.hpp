@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <common/integer.hpp>
 
 namespace nba::core::arm {
 
@@ -18,13 +18,13 @@ public:
     Sequential  = 1
   };
 
-  virtual std::uint8_t  ReadByte(std::uint32_t address, Access access) = 0;
-  virtual std::uint16_t ReadHalf(std::uint32_t address, Access access) = 0;
-  virtual std::uint32_t ReadWord(std::uint32_t address, Access access) = 0;
+  virtual u8  ReadByte(u32 address, Access access) = 0;
+  virtual u16 ReadHalf(u32 address, Access access) = 0;
+  virtual u32 ReadWord(u32 address, Access access) = 0;
 
-  virtual void WriteByte(std::uint32_t address, std::uint8_t  value, Access access) = 0;
-  virtual void WriteHalf(std::uint32_t address, std::uint16_t value, Access access) = 0;
-  virtual void WriteWord(std::uint32_t address, std::uint32_t value, Access access) = 0;
+  virtual void WriteByte(u32 address, u8  value, Access access) = 0;
+  virtual void WriteHalf(u32 address, u16 value, Access access) = 0;
+  virtual void WriteWord(u32 address, u32 value, Access access) = 0;
 
   virtual void Idle() = 0;
 };

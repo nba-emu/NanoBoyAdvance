@@ -48,7 +48,7 @@ public:
     BIAS bias;
   } mmio;
 
-  std::int8_t latch[2];
+  s8 latch[2];
   std::shared_ptr<common::dsp::RingBuffer<float>> fifo_buffer[2];
   std::unique_ptr<common::dsp::Resampler<float>> fifo_resampler[2];
   int fifo_samplerate[2];

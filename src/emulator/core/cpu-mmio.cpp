@@ -11,7 +11,7 @@
 namespace nba::core {
 
 
-auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
+auto CPU::ReadMMIO(u32 address) -> u8 {
   auto& apu_io = apu.mmio;
   auto& ppu_io = ppu.mmio;
 
@@ -221,7 +221,7 @@ auto CPU::ReadMMIO(std::uint32_t address) -> std::uint8_t {
   return ReadUnused(address);
 }
 
-void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
+void CPU::WriteMMIO(u32 address, u8 value) {
   auto& apu_io = apu.mmio;
   auto& ppu_io = ppu.mmio;
 
@@ -572,7 +572,7 @@ void CPU::WriteMMIO(std::uint32_t address, std::uint8_t value) {
   }
 }
 
-void CPU::WriteMMIO16(std::uint32_t address, std::uint16_t value) {
+void CPU::WriteMMIO16(u32 address, u16 value) {
   switch (address) {
     /* KEYCNT special-case:
      * Do not invoke CheckKeypadInterrupt() twice for a single 16-bit write.

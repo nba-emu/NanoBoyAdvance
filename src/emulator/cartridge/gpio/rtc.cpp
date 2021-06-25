@@ -47,7 +47,7 @@ bool RTC::ReadSIO() {
   return false;
 }
 
-auto RTC::ReadPort() -> std::uint8_t {
+auto RTC::ReadPort() -> u8 {
   if (state == State::Sending) {
     return port.sio << static_cast<int>(Port::SIO);
   }
@@ -55,7 +55,7 @@ auto RTC::ReadPort() -> std::uint8_t {
   return 1;
 }
 
-void RTC::WritePort(std::uint8_t value) {
+void RTC::WritePort(u8 value) {
   int old_sck = port.sck;
   int old_cs  = port.cs;
 

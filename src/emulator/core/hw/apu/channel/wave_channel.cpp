@@ -66,7 +66,7 @@ void WaveChannel::Generate(int cycles_late) {
   scheduler.Add(GetSynthesisIntervalFromFrequency(frequency) - cycles_late, event_cb);
 }
 
-auto WaveChannel::Read(int offset) -> std::uint8_t {
+auto WaveChannel::Read(int offset) -> u8 {
   switch (offset) {
     // Stop / Wave RAM select
     case 0: {
@@ -93,7 +93,7 @@ auto WaveChannel::Read(int offset) -> std::uint8_t {
   }
 }
 
-void WaveChannel::Write(int offset, std::uint8_t value) {
+void WaveChannel::Write(int offset, u8 value) {
   switch (offset) {
     // Stop / Wave RAM select
     case 0: {

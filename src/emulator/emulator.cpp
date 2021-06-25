@@ -46,7 +46,7 @@ Emulator::Emulator(std::shared_ptr<Config> config)
 
 void Emulator::Reset() { cpu.Reset(); }
 
-auto Emulator::DetectBackupType(std::uint8_t* rom, size_t size) -> BackupType {
+auto Emulator::DetectBackupType(u8* rom, size_t size) -> BackupType {
   static constexpr std::pair<std::string_view, Config::BackupType> signatures[6] {
     { "EEPROM_V",   BackupType::EEPROM_64 },
     { "SRAM_V",     BackupType::SRAM      },
@@ -85,8 +85,8 @@ auto Emulator::CreateBackupInstance(Config::BackupType backup_type, std::string 
   }
 }
 
-auto Emulator::CalculateMirrorMask(size_t size) -> std::uint32_t {
-  std::uint32_t mask = 1;
+auto Emulator::CalculateMirrorMask(size_t size) -> u32 {
+  u32 mask = 1;
   while (mask < size) {
     mask *= 2;
   }
@@ -166,7 +166,7 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
     return StatusCode::GameNotFound;
   }
 
-  auto rom = std::make_unique<std::uint8_t[]>(size);
+  auto rom = std::make_unique<u8[]>(size);
   Header* header = reinterpret_cast<Header*>(rom.get());
   stream.read((char*)(rom.get()), size);
   stream.close();

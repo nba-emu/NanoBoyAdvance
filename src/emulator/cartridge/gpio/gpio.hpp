@@ -40,12 +40,12 @@ public:
     return allow_reads;
   }
 
-  auto Read (std::uint32_t address) -> std::uint8_t;
-  void Write(std::uint32_t address, std::uint8_t value);
+  auto Read (u32 address) -> u8;
+  void Write(u32 address, u8 value);
 
 protected:
-  virtual auto ReadPort() -> std::uint8_t = 0;
-  virtual void WritePort(std::uint8_t value) = 0;
+  virtual auto ReadPort() -> u8 = 0;
+  virtual void WritePort(u8 value) = 0;
 
   nba::core::Scheduler* scheduler;
   nba::core::IRQ* irq;
@@ -61,9 +61,9 @@ private:
 
   bool allow_reads;
   PortDirection direction[4];
-  std::uint8_t rd_mask;
-  std::uint8_t wr_mask;
-  std::uint8_t port_data;
+  u8 rd_mask;
+  u8 wr_mask;
+  u8 port_data;
 };
 
 } // namespace nba

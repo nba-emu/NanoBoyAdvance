@@ -35,7 +35,7 @@ void NoiseChannel::Generate(int cycles_late) {
     return;
   }
 
-  constexpr std::uint16_t lfsr_xor[2] = { 0x6000, 0x60 };
+  constexpr u16 lfsr_xor[2] = { 0x6000, 0x60 };
 
   int carry = lfsr & 1;
 
@@ -79,7 +79,7 @@ void NoiseChannel::Generate(int cycles_late) {
   scheduler.Add(noise_interval - cycles_late, event_cb);
 }
 
-auto NoiseChannel::Read(int offset) -> std::uint8_t {
+auto NoiseChannel::Read(int offset) -> u8 {
   switch (offset) {
     // Length / Envelope
     case 0: return 0;
@@ -105,7 +105,7 @@ auto NoiseChannel::Read(int offset) -> std::uint8_t {
   }
 }
 
-void NoiseChannel::Write(int offset, std::uint8_t value) {
+void NoiseChannel::Write(int offset, u8 value) {
   switch (offset) {
     // Length / Envelope
     case 0: {
@@ -157,7 +157,7 @@ void NoiseChannel::Write(int offset, std::uint8_t value) {
           scheduler.Add(GetSynthesisInterval(frequency_ratio, frequency_shift), event_cb);
         }
 
-        constexpr std::uint16_t lfsr_init[] = { 0x4000, 0x0040 };
+        constexpr u16 lfsr_init[] = { 0x4000, 0x0040 };
         lfsr = lfsr_init[width];
         Restart();
       }

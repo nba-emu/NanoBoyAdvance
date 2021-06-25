@@ -12,7 +12,7 @@
 
 namespace nba::core {
 
-void AudioCallback(APU* apu, std::int16_t* stream, int byte_len) {
+void AudioCallback(APU* apu, s16* stream, int byte_len) {
   std::lock_guard<std::mutex> guard(apu->buffer_mutex);
 
   // Do not try to access the buffer if it wasn't setup yet.
@@ -20,7 +20,7 @@ void AudioCallback(APU* apu, std::int16_t* stream, int byte_len) {
     return;
   }
 
-  int samples = byte_len/sizeof(std::int16_t)/2;
+  int samples = byte_len/sizeof(s16)/2;
   int available = apu->buffer->Available();
 
   static constexpr float kMaxAmplitude = 0.999;
@@ -32,8 +32,8 @@ void AudioCallback(APU* apu, std::int16_t* stream, int byte_len) {
       sample[1] = std::clamp(sample[1], -kMaxAmplitude, kMaxAmplitude);
       sample *= 32767.0;
 
-      stream[x*2+0] = std::int16_t(std::round(sample.left));
-      stream[x*2+1] = std::int16_t(std::round(sample.right));
+      stream[x*2+0] = s16(std::round(sample.left));
+      stream[x*2+1] = s16(std::round(sample.right));
     }
   } else {
     int y = 0;
@@ -46,8 +46,8 @@ void AudioCallback(APU* apu, std::int16_t* stream, int byte_len) {
 
       if (++y >= available) y = 0;
 
-      stream[x*2+0] = std::int16_t(std::round(sample.left));
-      stream[x*2+1] = std::int16_t(std::round(sample.right));
+      stream[x*2+0] = s16(std::round(sample.left));
+      stream[x*2+1] = s16(std::round(sample.right));
     }
   }
 }

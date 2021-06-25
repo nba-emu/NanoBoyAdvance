@@ -13,7 +13,7 @@
 
 #include <algorithm>
 #include <experimental/filesystem>
-#include <cstdint>
+#include <common/integer.hpp>
 #include <cstring>
 #include <stdexcept>
 #include <string>
@@ -48,7 +48,7 @@ public:
           throw std::runtime_error("BackupFile: unable to open file: " + save_path);
         }
         default_size = size;
-        file->memory.reset(new std::uint8_t[size]);
+        file->memory.reset(new u8[size]);
         file->stream.read((char*)file->memory.get(), size);
         create = false;
       }
@@ -64,21 +64,21 @@ public:
       if (file->stream.fail()) {
         throw std::runtime_error("BackupFile: unable to create file: " + save_path);
       }
-      file->memory.reset(new std::uint8_t[default_size]);
+      file->memory.reset(new u8[default_size]);
       file->MemorySet(0, default_size, 0xFF);
     }
 
     return file;
   }
 
-  auto Read(unsigned index) -> std::uint8_t {
+  auto Read(unsigned index) -> u8 {
     if (index >= file_size) {
       throw std::runtime_error("BackupFile: out-of-bounds index while reading.");
     }
     return memory[index];
   }
 
-  void Write(unsigned index, std::uint8_t value) {
+  void Write(unsigned index, u8 value) {
     if (index >= file_size) {
       throw std::runtime_error("BackupFile: out-of-bounds index while writing.");
     }
@@ -88,7 +88,7 @@ public:
     }
   }
 
-  void MemorySet(unsigned index, size_t length, std::uint8_t value) {
+  void MemorySet(unsigned index, size_t length, u8 value) {
     if ((index + length) > file_size) {
       throw std::runtime_error("BackupFile: out-of-bounds index while setting memory.");
     }
@@ -113,7 +113,7 @@ private:
 
   size_t file_size;
   std::fstream stream;
-  std::unique_ptr<std::uint8_t[]> memory;
+  std::unique_ptr<u8[]> memory;
 };
 
 } // namespace nba

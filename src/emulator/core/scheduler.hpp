@@ -9,7 +9,7 @@
 
 #include <common/log.hpp>
 #include <common/likely.hpp>
-#include <cstdint>
+#include <common/integer.hpp>
 #include <functional>
 
 namespace nba::core {
@@ -24,7 +24,7 @@ public:
   private:
     friend class Scheduler;
     int handle;
-    std::uint64_t timestamp;
+    u64 timestamp;
   };
 
   Scheduler() {
@@ -46,11 +46,11 @@ public:
     timestamp_now = 0;
   }
 
-  auto GetTimestampNow() const -> std::uint64_t {
+  auto GetTimestampNow() const -> u64 {
     return timestamp_now;
   }
 
-  auto GetTimestampTarget() const -> std::uint64_t {
+  auto GetTimestampTarget() const -> u64 {
     ASSERT(heap_size != 0, "cannot calculate timestamp target for an empty scheduler.");
     return heap[0]->timestamp;
   }
@@ -65,7 +65,7 @@ public:
     timestamp_now = timestamp_next;
   }
 
-  auto Add(std::uint64_t delay, std::function<void(int)> callback) -> Event* {
+  auto Add(u64 delay, std::function<void(int)> callback) -> Event* {
     int n = heap_size++;
     int p = Parent(n);
 
@@ -85,7 +85,7 @@ public:
   }
 
   template<class T>
-  void Add(std::uint64_t delay, T* object, EventMethod<T> method) {
+  void Add(u64 delay, T* object, EventMethod<T> method) {
     Add(delay, [object, method](int cycles_late) {
       (object->*method)(cycles_late);
     });
@@ -102,7 +102,7 @@ private:
   constexpr int LeftChild(int n) { return n * 2 + 1; }
   constexpr int RightChild(int n) { return n * 2 + 2; }
 
-  void Step(std::uint64_t timestamp_next) {
+  void Step(u64 timestamp_next) {
     while (heap[0]->timestamp <= timestamp_next && heap_size > 0) {
       auto event = heap[0];
       timestamp_now = event->timestamp;
@@ -152,7 +152,7 @@ private:
 
   Event* heap[kMaxEvents];
   int heap_size;
-  std::uint64_t timestamp_now;
+  u64 timestamp_now;
 };
 
 } // namespace nba::core

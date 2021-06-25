@@ -32,7 +32,7 @@ void SoundControl::Reset() {
   dma[1].timer_id = 0;
 }
 
-auto SoundControl::Read(int address) -> std::uint8_t {
+auto SoundControl::Read(int address) -> u8 {
   switch (address) {
     case 0:
       return (psg.master[SIDE_RIGHT] << 0) |
@@ -68,7 +68,7 @@ auto SoundControl::Read(int address) -> std::uint8_t {
   }
 }
 
-void SoundControl::Write(int address, std::uint8_t value) {
+void SoundControl::Write(int address, u8 value) {
   switch (address) {
     case 0:
       psg.master[SIDE_RIGHT] = (value >> 0) & 7;
@@ -113,7 +113,7 @@ void BIAS::Reset() {
   resolution = 0;
 }
 
-auto BIAS::Read(int address) -> std::uint8_t {
+auto BIAS::Read(int address) -> u8 {
   switch (address) {
     case 0:  return   level & 0xFF;
     case 1:  return ((level >> 8) & 3) | (resolution << 6);
@@ -121,7 +121,7 @@ auto BIAS::Read(int address) -> std::uint8_t {
   }
 }
 
-void BIAS::Write(int address, std::uint8_t value) {
+void BIAS::Write(int address, u8 value) {
   switch (address) {
     case 0: {
       level = (level & ~0xFF) | (value & ~1);

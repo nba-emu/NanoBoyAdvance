@@ -144,7 +144,7 @@ void CPU::PrefetchStepRAM(int cycles) {
   Tick(cycles);
 }
 
-void CPU::PrefetchStepROM(std::uint32_t address, int cycles) {
+void CPU::PrefetchStepROM(u32 address, int cycles) {
   // TODO: bypass prefetch ROM step during DMA?
   if (unlikely(!mmio.waitcnt.prefetch)) {
     Tick(cycles);
@@ -239,12 +239,12 @@ void CPU::UpdateMemoryDelayTable() {
 }
 
 void CPU::M4ASearchForSampleFreqSet() {
-  static const std::uint8_t pattern[] = {
+  static const u8 pattern[] = {
     0x53, 0x6D, 0x73, 0x68, 0x70, 0xB5, 0x02, 0x1C,
     0x1E, 0x48, 0x04, 0x68, 0xF0, 0x20, 0x00, 0x03,
     0x10, 0x40, 0x02, 0x0C
   };
-  for (std::uint32_t i = 0; i < memory.rom.size; i++) {
+  for (u32 i = 0; i < memory.rom.size; i++) {
     bool match = true;
     for (int j = 0; j < sizeof(pattern); j++) {
       if (memory.rom.data[i + j] != pattern[j]) {
@@ -275,16 +275,16 @@ void CPU::M4ASampleFreqSetHook() {
   state.r0 = 0x00090000;
   m4a_soundinfo = nullptr;
 
-  std::uint32_t soundinfo_p1 = Read<std::uint32_t>(memory.rom.data.get(), (m4a_setfreq_address & 0x00FFFFFF) + 492);
-  std::uint32_t soundinfo_p2;
+  u32 soundinfo_p1 = Read<u32>(memory.rom.data.get(), (m4a_setfreq_address & 0x00FFFFFF) + 492);
+  u32 soundinfo_p2;
   LOG_INFO("M4A SoundInfo pointer at 0x{0:08X}", soundinfo_p1);
 
   switch (soundinfo_p1 >> 24) {
     case REGION_EWRAM:
-      soundinfo_p2 = Read<std::uint32_t>(memory.wram, soundinfo_p1 & 0x00FFFFFF);
+      soundinfo_p2 = Read<u32>(memory.wram, soundinfo_p1 & 0x00FFFFFF);
       break;
     case REGION_IWRAM:
-      soundinfo_p2 = Read<std::uint32_t>(memory.iram, soundinfo_p1 & 0x00FFFFFF);
+      soundinfo_p2 = Read<u32>(memory.iram, soundinfo_p1 & 0x00FFFFFF);
       break;
     default:
       LOG_ERROR("M4A SoundInfo pointer is outside of IWRAM or EWRAM, unsupported.");

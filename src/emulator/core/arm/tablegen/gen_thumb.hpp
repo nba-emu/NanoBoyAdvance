@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-template <std::uint16_t instruction>
+template <u16 instruction>
 static constexpr auto GenerateHandlerThumb() -> Handler16 {
   // THUMB.1 Move shifted register
   if ((instruction & 0xF800) < 0x1800) {

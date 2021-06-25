@@ -43,7 +43,7 @@ void EEPROM::ResetSerialBuffer() {
   transmitted_bits = 0;
 }
 
-auto EEPROM::Read(std::uint32_t address) -> std::uint8_t {
+auto EEPROM::Read(u32 address) -> u8 {
   if (state & STATE_READING) {
     if (state & STATE_DUMMY_NIBBLE) {
       /* Four bits that simply are ignored but will be send. */
@@ -68,7 +68,7 @@ auto EEPROM::Read(std::uint32_t address) -> std::uint8_t {
   return 0;
 }
 
-void EEPROM::Write(std::uint32_t address, std::uint8_t value) {
+void EEPROM::Write(u32 address, u8 value) {
   if (state & STATE_READING) return;
 
   value &= 1;

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <common/integer.hpp>
 
 namespace nba::core {
 
@@ -23,8 +23,8 @@ struct DisplayControl {
   int enable[8];
 
   void Reset();
-  auto Read(int address) -> std::uint8_t;
-  void Write(int address, std::uint8_t value);
+  auto Read(int address) -> u8;
+  void Write(int address, u8 value);
 };
 
 struct DisplayStatus {
@@ -37,8 +37,8 @@ struct DisplayStatus {
   int vcount_setting;
 
   void Reset();
-  auto Read(int address) -> std::uint8_t;
-  void Write(int address, std::uint8_t value);
+  auto Read(int address) -> u8;
+  void Write(int address, u8 value);
 
   PPU* ppu = nullptr;
 };
@@ -56,19 +56,19 @@ struct BackgroundControl {
   BackgroundControl(int id) : id(id) {}
   
   void Reset();
-  auto Read(int address) -> std::uint8_t;
-  void Write(int address, std::uint8_t value);
+  auto Read(int address) -> u8;
+  void Write(int address, u8 value);
 
 private:
   int id;
 };
 
 struct ReferencePoint {
-  std::int32_t initial;
-  std::int32_t _current;
+  s32 initial;
+  s32 _current;
   
   void Reset();
-  void Write(int address, std::uint8_t value);
+  void Write(int address, u8 value);
 };
   
 struct BlendControl {
@@ -82,8 +82,8 @@ struct BlendControl {
   int targets[2][6];
 
   void Reset();
-  auto Read(int address) -> std::uint8_t;
-  void Write(int address, std::uint8_t value);
+  auto Read(int address) -> u8;
+  void Write(int address, u8 value);
 };
 
 struct WindowRange {
@@ -92,15 +92,15 @@ struct WindowRange {
   bool _changed;
 
   void Reset();
-  void Write(int address, std::uint8_t value);
+  void Write(int address, u8 value);
 };
 
 struct WindowLayerSelect {
   int enable[2][6];
 
   void Reset();
-  auto Read(int offset) -> std::uint8_t;
-  void Write(int offset, std::uint8_t value);
+  auto Read(int offset) -> u8;
+  void Write(int offset, u8 value);
 };
 
 struct Mosaic {
@@ -111,7 +111,7 @@ struct Mosaic {
   } bg, obj;
   
   void Reset();
-  void Write(int address, std::uint8_t value);
+  void Write(int address, u8 value);
 };
 
 } // namespace nba::core
