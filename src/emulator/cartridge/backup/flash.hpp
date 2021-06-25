@@ -24,8 +24,8 @@ public:
   FLASH(std::string const& save_path, Size size_hint);
   
   void Reset() final;
-  auto Read (std::uint32_t address) -> std::uint8_t final;
-  void Write(std::uint32_t address, std::uint8_t value) final;
+  auto Read (u32 address) -> u8 final;
+  void Write(u32 address, u8 value) final;
 
 private:
   
@@ -39,8 +39,8 @@ private:
     SELECT_BANK = 0xB0
   };
   
-  void HandleCommand(std::uint32_t address, std::uint8_t value);
-  void HandleExtended(std::uint32_t address, std::uint8_t value);
+  void HandleCommand(u32 address, u8 value);
+  void HandleExtended(u32 address, u8 value);
   
   auto Physical(int index) -> int { return current_bank * 65536 + index; }
   

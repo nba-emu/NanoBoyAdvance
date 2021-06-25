@@ -15,7 +15,7 @@ void DisplayControl::Reset() {
   Write(1, 0);
 }
 
-auto DisplayControl::Read(int address) -> std::uint8_t {
+auto DisplayControl::Read(int address) -> u8 {
   switch (address) {
     case 0:
       return mode |
@@ -38,7 +38,7 @@ auto DisplayControl::Read(int address) -> std::uint8_t {
   return 0;
 }
 
-void DisplayControl::Write(int address, std::uint8_t value) {
+void DisplayControl::Write(int address, u8 value) {
   auto mode_old = mode;
   switch (address) {
     case 0:
@@ -62,7 +62,7 @@ void DisplayStatus::Reset() {
   Write(1, 0);
 }
 
-auto DisplayStatus::Read(int address) -> std::uint8_t {
+auto DisplayStatus::Read(int address) -> u8 {
   switch (address) {
     case 0:
       return vblank_flag |
@@ -78,7 +78,7 @@ auto DisplayStatus::Read(int address) -> std::uint8_t {
   return 0;
 }
 
-void DisplayStatus::Write(int address, std::uint8_t value) {
+void DisplayStatus::Write(int address, u8 value) {
   switch (address) {
     case 0:
       vblank_irq_enable = (value >> 3) & 1;
@@ -100,7 +100,7 @@ void BackgroundControl::Reset() {
   Write(1, 0);
 }
 
-auto BackgroundControl::Read(int address) -> std::uint8_t {
+auto BackgroundControl::Read(int address) -> u8 {
   switch (address) {
     case 0:
       return priority |
@@ -117,7 +117,7 @@ auto BackgroundControl::Read(int address) -> std::uint8_t {
   return 0;
 }
 
-void BackgroundControl::Write(int address, std::uint8_t value) {  
+void BackgroundControl::Write(int address, u8 value) {  
   switch (address) {
     case 0:
       priority = value & 3;
@@ -140,7 +140,7 @@ void ReferencePoint::Reset() {
   initial = _current = 0;
 }
 
-void ReferencePoint::Write(int address, std::uint8_t value) {
+void ReferencePoint::Write(int address, u8 value) {
   switch (address) {
     case 0: initial = (initial & 0x0FFFFF00) | (value <<  0); break;
     case 1: initial = (initial & 0x0FFF00FF) | (value <<  8); break;
@@ -161,7 +161,7 @@ void WindowRange::Reset() {
   _changed = false;
 }
 
-void WindowRange::Write(int address, std::uint8_t value) {
+void WindowRange::Write(int address, u8 value) {
   switch (address) {
     case 0:
       if (value != max) _changed = true;
@@ -179,8 +179,8 @@ void WindowLayerSelect::Reset() {
   Write(1, 0);
 }
 
-auto WindowLayerSelect::Read(int address) -> std::uint8_t {
-  std::uint8_t value = 0;
+auto WindowLayerSelect::Read(int address) -> u8 {
+  u8 value = 0;
   
   for (int i = 0; i < 6; i++) {
     value |= enable[address][i] << i;
@@ -189,7 +189,7 @@ auto WindowLayerSelect::Read(int address) -> std::uint8_t {
   return value;
 }
 
-void WindowLayerSelect::Write(int address, std::uint8_t value) {
+void WindowLayerSelect::Write(int address, u8 value) {
   for (int i = 0; i < 6; i++) {
     enable[address][i] = (value >> i) & 1;
   }
@@ -200,8 +200,8 @@ void BlendControl::Reset() {
   Write(1, 0);
 }
 
-auto BlendControl::Read(int address) -> std::uint8_t {
-  std::uint8_t value = 0;
+auto BlendControl::Read(int address) -> u8 {
+  u8 value = 0;
 
   switch (address) {
     case 0:
@@ -218,7 +218,7 @@ auto BlendControl::Read(int address) -> std::uint8_t {
   return value;
 }
 
-void BlendControl::Write(int address, std::uint8_t value) {
+void BlendControl::Write(int address, u8 value) {
   switch (address)
     case 0: {
       for (int i = 0; i < 6; i++)
@@ -241,7 +241,7 @@ void Mosaic::Reset() {
   bg._counter_y = 0;
 }
 
-void Mosaic::Write(int address, std::uint8_t value) {
+void Mosaic::Write(int address, u8 value) {
   // TODO: how does hardware handle mid-frame or mid-line mosaic changes?
   switch (address)
     case 0: {

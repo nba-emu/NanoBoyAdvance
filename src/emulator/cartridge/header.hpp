@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <common/integer.hpp>
 
 namespace nba {
 
@@ -16,10 +16,10 @@ namespace nba {
 // For details see: http://problemkaputt.de/gbatek.htm#gbacartridgeheader
 struct Header {
   // First instruction
-  std::uint32_t entrypoint;
+  u32 entrypoint;
 
   // Compressed Bitmap (Nintendo Logo)
-  std::uint8_t nintendo_logo[156];
+  u8 nintendo_logo[156];
 
   // Game Title, Code and Maker Code
   struct {
@@ -28,21 +28,21 @@ struct Header {
     char maker[2];
   } game;
 
-  std::uint8_t fixed_96h;
-  std::uint8_t unit_code;
-  std::uint8_t device_type;
-  std::uint8_t reserved[7];
-  std::uint8_t version;
-  std::uint8_t checksum;
-  std::uint8_t reserved2[2];
+  u8 fixed_96h;
+  u8 unit_code;
+  u8 device_type;
+  u8 reserved[7];
+  u8 version;
+  u8 checksum;
+  u8 reserved2[2];
 
   // Multiboot Header
   struct {
-    std::uint32_t ram_entrypoint;
-    std::uint8_t  boot_mode;
-    std::uint8_t  slave_id;
-    std::uint8_t  unused[26];
-    std::uint32_t joy_entrypoint;
+    u32 ram_entrypoint;
+    u8  boot_mode;
+    u8  slave_id;
+    u8  unused[26];
+    u32 joy_entrypoint;
   } mb;
 };
 

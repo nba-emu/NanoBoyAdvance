@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <common/integer.hpp>
 
 #include "interrupt.hpp"
 
@@ -18,13 +18,13 @@ public:
   SerialBus(IRQ& irq) : irq(irq) {}
 
   void Reset();
-  auto Read(std::uint32_t address) -> std::uint8_t;
-  void Write(std::uint32_t address, std::uint8_t value);
+  auto Read(u32 address) -> u8;
+  void Write(u32 address, u8 value);
 
 private:
-  std::uint8_t data8;
-  std::uint32_t data32;
-  std::uint16_t rcnt;
+  u8 data8;
+  u32 data32;
+  u16 rcnt;
 
   struct Control {
     enum class ClockSource {
@@ -38,7 +38,7 @@ private:
     } clock_speed = ClockSpeed::_256KHz;
     // TODO: SI/SO state?
     bool busy = false;
-    std::uint8_t unused = 0;
+    u8 unused = 0;
     enum Width {
       Byte = 0,
       Word = 1

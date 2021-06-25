@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <common/integer.hpp>
 
 namespace nba::core::arm {
 
@@ -63,7 +63,7 @@ enum BankedRegister {
 
 union StatusRegister {
   StatusRegister() {};
-  StatusRegister(std::uint32_t value) { v = value; }
+  StatusRegister(u32 value) { v = value; }
 
   struct {
     Mode mode : 5;
@@ -77,35 +77,35 @@ union StatusRegister {
     unsigned int z : 1;
     unsigned int n : 1;
   } f;
-  std::uint32_t v;
+  u32 v;
 };
 
 struct RegisterFile {
   // General Purpose Registers
   union {
     struct {
-      std::uint32_t r0;
-      std::uint32_t r1;
-      std::uint32_t r2;
-      std::uint32_t r3;
-      std::uint32_t r4;
-      std::uint32_t r5;
-      std::uint32_t r6;
-      std::uint32_t r7;
-      std::uint32_t r8;
-      std::uint32_t r9;
-      std::uint32_t r10;
-      std::uint32_t r11;
-      std::uint32_t r12;
-      std::uint32_t r13;
-      std::uint32_t r14;
-      std::uint32_t r15;
+      u32 r0;
+      u32 r1;
+      u32 r2;
+      u32 r3;
+      u32 r4;
+      u32 r5;
+      u32 r6;
+      u32 r7;
+      u32 r8;
+      u32 r9;
+      u32 r10;
+      u32 r11;
+      u32 r12;
+      u32 r13;
+      u32 r14;
+      u32 r15;
     };
-    std::uint32_t reg[16];
+    u32 reg[16];
   };
   
   // Banked Registers
-  std::uint32_t bank[BANK_COUNT][7];
+  u32 bank[BANK_COUNT][7];
 
   // Program Status Registers
   StatusRegister cpsr;

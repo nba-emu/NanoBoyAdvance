@@ -62,26 +62,26 @@ public:
   std::shared_ptr<Config> config;
 
   struct SystemMemory {
-    std::uint8_t bios[0x04000];
-    std::uint8_t wram[0x40000];
-    std::uint8_t iram[0x08000];
+    u8 bios[0x04000];
+    u8 wram[0x40000];
+    u8 iram[0x08000];
 
     struct ROM {
       std::unique_ptr<uint8_t[]> data;
       size_t size;
-      std::uint32_t mask = 0x1FFFFFF;
+      u32 mask = 0x1FFFFFF;
       std::unique_ptr<nba::GPIO> gpio;
       std::unique_ptr<nba::Backup> backup_sram;
       std::unique_ptr<nba::Backup> backup_eeprom;
     } rom;
 
-    std::uint32_t bios_latch = 0;
+    u32 bios_latch = 0;
   } memory;
 
   struct MMIO {
-    std::uint16_t keyinput = 0x3FF;
-    std::uint16_t rcnt_hack = 0;
-    std::uint8_t postflg = 0;
+    u16 keyinput = 0x3FF;
+    u16 rcnt_hack = 0;
+    u8 postflg = 0;
     HaltControl haltcnt = HaltControl::RUN;
 
     struct WaitstateControl {
@@ -115,65 +115,65 @@ public:
 
 private:
   template <typename T>
-  auto Read(void* buffer, std::uint32_t address) -> T {
-    return *reinterpret_cast<T*>(&(reinterpret_cast<std::uint8_t*>(buffer))[address]);
+  auto Read(void* buffer, u32 address) -> T {
+    return *reinterpret_cast<T*>(&(reinterpret_cast<u8*>(buffer))[address]);
   }
 
   template <typename T>
-  void Write(void* buffer, std::uint32_t address, T value) {
-    *reinterpret_cast<T*>(&(reinterpret_cast<std::uint8_t*>(buffer))[address]) = value;
+  void Write(void* buffer, u32 address, T value) {
+    *reinterpret_cast<T*>(&(reinterpret_cast<u8*>(buffer))[address]) = value;
   }
 
-  bool IsGPIOAccess(std::uint32_t address) {
+  bool IsGPIOAccess(u32 address) {
     // NOTE: we do not check if the address lies within ROM, since
     // it is not required in the context. This should be reflected in the name though.
     return memory.rom.gpio && address >= 0xC4 && address <= 0xC8;
   }
 
-  bool IsEEPROMAccess(std::uint32_t address) {
+  bool IsEEPROMAccess(u32 address) {
     return memory.rom.backup_eeprom && ((~memory.rom.size & 0x02000000) || address >= 0x0DFFFF00);
   }
 
-  auto ReadMMIO(std::uint32_t address) -> std::uint8_t;
-  void WriteMMIO(std::uint32_t address, std::uint8_t value);
-  void WriteMMIO16(std::uint32_t address, std::uint16_t value);
-  auto ReadBIOS(std::uint32_t address) -> std::uint32_t;
-  auto ReadUnused(std::uint32_t address) -> std::uint32_t;
+  auto ReadMMIO(u32 address) -> u8;
+  void WriteMMIO(u32 address, u8 value);
+  void WriteMMIO16(u32 address, u16 value);
+  auto ReadBIOS(u32 address) -> u32;
+  auto ReadUnused(u32 address) -> u32;
 
   template<typename T>
-  auto Read_(std::uint32_t address, Access access) -> T;
+  auto Read_(u32 address, Access access) -> T;
 
   template<typename T>
-  void Write_(std::uint32_t address, T value, Access access);
+  void Write_(u32 address, T value, Access access);
 
-  auto ReadByte(std::uint32_t address, Access access) -> std::uint8_t  final {
-    return Read_<std::uint8_t>(address, access);
+  auto ReadByte(u32 address, Access access) -> u8  final {
+    return Read_<u8>(address, access);
   }
 
-  auto ReadHalf(std::uint32_t address, Access access) -> std::uint16_t final {
-    return Read_<std::uint16_t>(address, access);
+  auto ReadHalf(u32 address, Access access) -> u16 final {
+    return Read_<u16>(address, access);
   }
 
-  auto ReadWord(std::uint32_t address, Access access) -> std::uint32_t final {
-    return Read_<std::uint32_t>(address, access);
+  auto ReadWord(u32 address, Access access) -> u32 final {
+    return Read_<u32>(address, access);
   }
 
-  void WriteByte(std::uint32_t address, std::uint8_t  value, Access access) final {
-    Write_<std::uint8_t>(address, value, access);
+  void WriteByte(u32 address, u8  value, Access access) final {
+    Write_<u8>(address, value, access);
   }
 
-  void WriteHalf(std::uint32_t address, std::uint16_t value, Access access) final {
-    Write_<std::uint16_t>(address, value, access);
+  void WriteHalf(u32 address, u16 value, Access access) final {
+    Write_<u16>(address, value, access);
   }
 
-  void WriteWord(std::uint32_t address, std::uint32_t value, Access access) final {
-    Write_<std::uint32_t>(address, value, access);
+  void WriteWord(u32 address, u32 value, Access access) final {
+    Write_<u32>(address, value, access);
   }
 
   void Tick(int cycles);
   void Idle() final;
   void PrefetchStepRAM(int cycles);
-  void PrefetchStepROM(std::uint32_t address, int cycles);
+  void PrefetchStepROM(u32 address, int cycles);
   void UpdateMemoryDelayTable();
 
   void M4ASearchForSampleFreqSet();
@@ -185,14 +185,14 @@ private:
 
   M4ASoundInfo* m4a_soundinfo;
   int m4a_original_freq = 0;
-  std::uint32_t m4a_setfreq_address = 0;
+  u32 m4a_setfreq_address = 0;
 
   /* GamePak prefetch buffer state. */
   struct Prefetch {
     bool active = false;
     bool rom_code_access = false;
-    std::uint32_t head_address;
-    std::uint32_t last_address;
+    u32 head_address;
+    u32 last_address;
     int count = 0;
     int capacity = 8;
     int opcode_width = 4;

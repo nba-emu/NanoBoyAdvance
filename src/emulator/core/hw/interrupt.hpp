@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <common/integer.hpp>
 #include <emulator/core/arm/arm7tdmi.hpp>
 #include <emulator/core/scheduler.hpp>
 
@@ -40,8 +40,8 @@ public:
     cpu.IRQLine() = false;
   }
 
-  auto Read(int offset) const -> std::uint8_t;
-  void Write(int offset, std::uint8_t value);
+  auto Read(int offset) const -> u8;
+  void Write(int offset, u8 value);
   void Raise(IRQ::Source source, int channel = 0);
 
   bool MasterEnable() const {
@@ -62,8 +62,8 @@ private:
   void UpdateIRQLine();
 
   int reg_ime;
-  std::uint16_t reg_ie;
-  std::uint16_t reg_if;
+  u16 reg_ie;
+  u16 reg_if;
   arm::ARM7TDMI& cpu;
   Scheduler& scheduler;
   Scheduler::Event* event = nullptr;

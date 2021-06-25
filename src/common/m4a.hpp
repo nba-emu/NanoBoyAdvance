@@ -2,74 +2,74 @@
 
 #pragma once
 
-#include <cstdint>
+#include <common/integer.hpp>
 
 static constexpr int kM4AMaxDirectSoundChannels = 12;
 
-using u32ptr_t = std::uint32_t;
+using u32ptr_t = u32;
 
 /* This is really poorly made and I hope it doesn't fall into pieces... */
 
 struct M4ASoundChannel {
-  std::uint8_t status;
-  std::uint8_t type;
-  std::uint8_t rightVolume;
-  std::uint8_t leftVolume;
-  std::uint8_t attack;
-  std::uint8_t decay;
-  std::uint8_t sustain;
-  std::uint8_t release;
-  std::uint8_t ky;
-  std::uint8_t ev;
-  std::uint8_t er;
-  std::uint8_t el;
-  std::uint8_t echoVolume;
-  std::uint8_t echoLength;
-  std::uint8_t d1;
-  std::uint8_t d2;
-  std::uint8_t gt;
-  std::uint8_t mk;
-  std::uint8_t ve;
-  std::uint8_t pr;
-  std::uint8_t rp;
-  std::uint8_t d3[3];
-  std::uint32_t ct;
-  std::uint32_t fw;
-  std::uint32_t freq;
+  u8 status;
+  u8 type;
+  u8 rightVolume;
+  u8 leftVolume;
+  u8 attack;
+  u8 decay;
+  u8 sustain;
+  u8 release;
+  u8 ky;
+  u8 ev;
+  u8 er;
+  u8 el;
+  u8 echoVolume;
+  u8 echoLength;
+  u8 d1;
+  u8 d2;
+  u8 gt;
+  u8 mk;
+  u8 ve;
+  u8 pr;
+  u8 rp;
+  u8 d3[3];
+  u32 ct;
+  u32 fw;
+  u32 freq;
   u32ptr_t wav;
-  std::uint32_t cp;
+  u32 cp;
   u32ptr_t track;
-  std::uint32_t pp;
-  std::uint32_t np;
-  std::uint32_t d4;
-  std::uint16_t xpi;
-  std::uint16_t xpc;
+  u32 pp;
+  u32 np;
+  u32 d4;
+  u16 xpi;
+  u16 xpc;
 };
 
 struct M4ASoundInfo {
-  std::uint32_t magic;
-  volatile std::uint8_t pcmDmaCounter;
-  std::uint8_t reverb;
-  std::uint8_t maxChans;
-  std::uint8_t masterVolume;
-  std::uint8_t freq;
-  std::uint8_t mode;
-  std::uint8_t c15;
-  std::uint8_t pcmDmaPeriod;
-  std::uint8_t maxLines;
-  std::uint8_t gap[3];
-  std::int32_t pcmSamplesPerVBlank;
-  std::int32_t pcmFreq;
-  std::int32_t divFreq;
+  u32 magic;
+  volatile u8 pcmDmaCounter;
+  u8 reverb;
+  u8 maxChans;
+  u8 masterVolume;
+  u8 freq;
+  u8 mode;
+  u8 c15;
+  u8 pcmDmaPeriod;
+  u8 maxLines;
+  u8 gap[3];
+  s32 pcmSamplesPerVBlank;
+  s32 pcmFreq;
+  s32 divFreq;
   u32ptr_t cgbChans;
-  std::uint32_t func;
-  std::uint32_t intp;
+  u32 func;
+  u32 intp;
   u32ptr_t FnCgbSound;
   u32ptr_t FnCgbOscOff;
   u32ptr_t FnMidiKeyToCgbFreq;
-  std::uint32_t MPlayJumpTable;
-  std::uint32_t plynote;
-  std::uint32_t ExtVolPit;
-  std::uint8_t gap2[16];
+  u32 MPlayJumpTable;
+  u32 plynote;
+  u32 ExtVolPit;
+  u8 gap2[16];
   struct M4ASoundChannel channels[kM4AMaxDirectSoundChannels];
 };

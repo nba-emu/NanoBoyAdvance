@@ -29,7 +29,7 @@ void QuadChannel::Generate(int cycles_late) {
     return;
   }
 
-  constexpr std::int16_t pattern[4][8] = {
+  constexpr s16 pattern[4][8] = {
     { +8, -8, -8, -8, -8, -8, -8, -8 },
     { +8, +8, -8, -8, -8, -8, -8, -8 },
     { +8, +8, +8, +8, -8, -8, -8, -8 },
@@ -37,7 +37,7 @@ void QuadChannel::Generate(int cycles_late) {
   };
 
   if (dac_enable) {
-    sample = std::int8_t(pattern[wave_duty][phase] * envelope.current_volume);
+    sample = s8(pattern[wave_duty][phase] * envelope.current_volume);
   } else {
     sample = 0;
   }
@@ -46,7 +46,7 @@ void QuadChannel::Generate(int cycles_late) {
   scheduler.Add(GetSynthesisIntervalFromFrequency(sweep.current_freq) - cycles_late, event_cb);
 }
 
-auto QuadChannel::Read(int offset) -> std::uint8_t {
+auto QuadChannel::Read(int offset) -> u8 {
   switch (offset) {
     // Sweep Register
     case 0: {
@@ -76,7 +76,7 @@ auto QuadChannel::Read(int offset) -> std::uint8_t {
   }
 }
 
-void QuadChannel::Write(int offset, std::uint8_t value) {
+void QuadChannel::Write(int offset, u8 value) {
   switch (offset) {
     // Sweep Register
     case 0: {

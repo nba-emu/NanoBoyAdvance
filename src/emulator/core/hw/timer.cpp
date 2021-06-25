@@ -28,7 +28,7 @@ void Timer::Reset() {
   }
 }
 
-auto Timer::Read(int chan_id, int offset) -> std::uint8_t {
+auto Timer::Read(int chan_id, int offset) -> u8 {
   auto const& channel = channels[chan_id];
   auto const& control = channel.control;
 
@@ -57,7 +57,7 @@ auto Timer::Read(int chan_id, int offset) -> std::uint8_t {
   }
 }
 
-void Timer::Write(int chan_id, int offset, std::uint8_t value) {
+void Timer::Write(int chan_id, int offset, u8 value) {
   auto& channel = channels[chan_id];
   auto& control = channel.control;
 
@@ -110,7 +110,7 @@ void Timer::Write(int chan_id, int offset, std::uint8_t value) {
   }
 }
 
-auto Timer::GetCounterDeltaSinceLastUpdate(Channel const& channel) -> std::uint32_t {
+auto Timer::GetCounterDeltaSinceLastUpdate(Channel const& channel) -> u32 {
   return (scheduler.GetTimestampNow() - channel.timestamp_started) >> channel.shift;
 }
 

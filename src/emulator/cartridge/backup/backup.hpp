@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <common/integer.hpp>
 
 namespace nba { 
 
@@ -17,8 +17,8 @@ public:
   virtual ~Backup() {}
 
   virtual void Reset() = 0;
-  virtual auto Read (std::uint32_t address) -> std::uint8_t = 0;
-  virtual void Write(std::uint32_t address, std::uint8_t value) = 0;
+  virtual auto Read (u32 address) -> u8 = 0;
+  virtual void Write(u32 address, u8 value) = 0;
 };
 
 } // namespace nba

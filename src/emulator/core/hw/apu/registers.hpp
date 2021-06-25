@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <common/integer.hpp>
 
 #include "channel/base_channel.hpp"
 #include "channel/fifo.hpp"
@@ -53,8 +53,8 @@ struct SoundControl {
   } dma[2];
 
   void Reset();
-  auto Read(int address) -> std::uint8_t;
-  void Write(int address, std::uint8_t value);
+  auto Read(int address) -> u8;
+  void Write(int address, u8 value);
 
 private:
   FIFO* fifos;
@@ -70,8 +70,8 @@ struct BIAS {
   int resolution;
 
   void Reset();
-  auto Read(int address) -> std::uint8_t;
-  void Write(int address, std::uint8_t value);
+  auto Read(int address) -> u8;
+  void Write(int address, u8 value);
   
   auto GetSampleInterval() -> int { return 512 >> resolution; }
   auto GetSampleRate() -> int { return 32768 << resolution; }

@@ -5,13 +5,13 @@
  * Refer to the included LICENSE file.
  */
 
-void SetZeroAndSignFlag(std::uint32_t value) {
+void SetZeroAndSignFlag(u32 value) {
   state.cpsr.f.n = value >> 31;
   state.cpsr.f.z = (value == 0);
 }
 
-void TickMultiply(std::uint32_t multiplier) {
-  std::uint32_t mask = 0xFFFFFF00;
+void TickMultiply(u32 multiplier) {
+  u32 mask = 0xFFFFFF00;
 
   interface->Idle();
 
@@ -25,10 +25,10 @@ void TickMultiply(std::uint32_t multiplier) {
   }
 }
 
-std::uint32_t ADD(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
+u32 ADD(u32 op1, u32 op2, bool set_flags) {
   if (set_flags) {
-    std::uint64_t result64 = (std::uint64_t)op1 + (std::uint64_t)op2;
-    std::uint32_t result32 = (std::uint32_t)result64;
+    u64 result64 = (u64)op1 + (u64)op2;
+    u32 result32 = (u32)result64;
 
     SetZeroAndSignFlag(result32);
     state.cpsr.f.c = result64 >> 32;
@@ -39,10 +39,10 @@ std::uint32_t ADD(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
   }
 }
 
-std::uint32_t ADC(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
+u32 ADC(u32 op1, u32 op2, bool set_flags) {
   if (set_flags) {
-    std::uint64_t result64 = (std::uint64_t)op1 + (std::uint64_t)op2 + (std::uint64_t)state.cpsr.f.c;
-    std::uint32_t result32 = (std::uint32_t)result64;
+    u64 result64 = (u64)op1 + (u64)op2 + (u64)state.cpsr.f.c;
+    u32 result32 = (u32)result64;
 
     SetZeroAndSignFlag(result32);
     state.cpsr.f.c = result64 >> 32;
@@ -53,8 +53,8 @@ std::uint32_t ADC(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
   }
 }
 
-std::uint32_t SUB(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
-  std::uint32_t result = op1 - op2;
+u32 SUB(u32 op1, u32 op2, bool set_flags) {
+  u32 result = op1 - op2;
 
   if (set_flags) {
     SetZeroAndSignFlag(result);
@@ -65,20 +65,20 @@ std::uint32_t SUB(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
   return result;
 }
 
-std::uint32_t SBC(std::uint32_t op1, std::uint32_t op2, bool set_flags) {
-  std::uint32_t op3 = (state.cpsr.f.c) ^ 1;
-  std::uint32_t result = op1 - op2 - op3;
+u32 SBC(u32 op1, u32 op2, bool set_flags) {
+  u32 op3 = (state.cpsr.f.c) ^ 1;
+  u32 result = op1 - op2 - op3;
 
   if (set_flags) {
     SetZeroAndSignFlag(result);
-    state.cpsr.f.c = (std::uint64_t)op1 >= (std::uint64_t)op2 + (std::uint64_t)op3;
+    state.cpsr.f.c = (u64)op1 >= (u64)op2 + (u64)op3;
     state.cpsr.f.v = ((op1 ^ op2) & (op1 ^ result)) >> 31;
   }
 
   return result;
 }
 
-void DoShift(int opcode, std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediate) {
+void DoShift(int opcode, u32& operand, u32 amount, int& carry, bool immediate) {
   amount &= 0xFF;
 
   switch (opcode) {
@@ -89,7 +89,7 @@ void DoShift(int opcode, std::uint32_t& operand, std::uint32_t amount, int& carr
   }
 }
 
-void LSL(std::uint32_t& operand, std::uint32_t amount, int& carry) {
+void LSL(u32& operand, u32 amount, int& carry) {
   if (amount == 0) return;
 
   if (amount >= 32) {
@@ -106,7 +106,7 @@ void LSL(std::uint32_t& operand, std::uint32_t amount, int& carry) {
   operand <<= amount;
 }
 
-void LSR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediate) {
+void LSR(u32& operand, u32 amount, int& carry, bool immediate) {
   if (amount == 0) {
     // LSR #0 equals to LSR #32
     if (immediate) {
@@ -130,7 +130,7 @@ void LSR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediat
   operand >>= amount;
 }
 
-void ASR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediate) {
+void ASR(u32& operand, u32 amount, int& carry, bool immediate) {
   if (amount == 0) {
     // ASR #0 equals to ASR #32
     if (immediate) {
@@ -152,7 +152,7 @@ void ASR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediat
   operand = (operand >> amount) | ((0xFFFFFFFF * msb) << (32 - amount));
 }
 
-void ROR(std::uint32_t& operand, std::uint32_t amount, int& carry, bool immediate) {
+void ROR(u32& operand, u32 amount, int& carry, bool immediate) {
   // ROR #0 equals to RRX #1
   if (amount != 0 || !immediate) {
     if (amount == 0) return;

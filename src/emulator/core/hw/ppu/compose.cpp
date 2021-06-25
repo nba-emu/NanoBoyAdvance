@@ -13,7 +13,7 @@ namespace nba::core {
 
 using BlendMode = BlendControl::Effect;
 
-auto PPU::ConvertColor(std::uint16_t color) -> std::uint32_t {
+auto PPU::ConvertColor(u16 color) -> u32 {
   int r = (color >>  0) & 0x1F;
   int g = (color >>  5) & 0x1F;
   int b = (color >> 10) & 0x1F;
@@ -25,8 +25,8 @@ auto PPU::ConvertColor(std::uint16_t color) -> std::uint32_t {
 }
 
 void PPU::RenderScanline() {
-  std::uint16_t  vcount = mmio.vcount;
-  std::uint32_t* line = &output[vcount * 240];
+  u16  vcount = mmio.vcount;
+  u32* line = &output[vcount * 240];
 
   if (mmio.dispcnt.forced_blank) {
     for (int x = 0; x < 240; x++) {
@@ -97,7 +97,7 @@ void PPU::RenderScanline() {
     case 6:
     case 7: {
       // TODO: do OBJs still work in this mode?
-      std::uint32_t backdrop = ConvertColor(ReadPalette(0, 0));
+      u32 backdrop = ConvertColor(ReadPalette(0, 0));
       for (int x = 0; x < 240; x++) {
         line[x] = backdrop;
       }
@@ -108,8 +108,8 @@ void PPU::RenderScanline() {
 
 template<bool window, bool blending>
 void PPU::ComposeScanlineTmpl(int bg_min, int bg_max) {
-  std::uint32_t* line = &output[mmio.vcount * 240];
-  std::uint16_t backdrop = ReadPalette(0, 0);
+  u32* line = &output[mmio.vcount * 240];
+  u16 backdrop = ReadPalette(0, 0);
 
   auto const& dispcnt = mmio.dispcnt;
   auto const& bgcnt = mmio.bgcnt;
@@ -142,7 +142,7 @@ void PPU::ComposeScanlineTmpl(int bg_min, int bg_max) {
 
   int prio[2];
   int layer[2];
-  std::uint16_t pixel[2];
+  u16 pixel[2];
 
   for (int x = 0; x < 240; x++) {
     if constexpr (window) {
@@ -238,7 +238,7 @@ void PPU::ComposeScanlineTmpl(int bg_min, int bg_max) {
           int bg = bg_list[i];
 
           if (!window || win_layer_enable[bg]) {
-            std::uint16_t pixel_new = buffer_bg[bg][x];
+            u16 pixel_new = buffer_bg[bg][x];
             if (pixel_new != s_color_transparent) {
               pixel[0] = pixel_new;
               prio[0] = bgcnt[bg].priority;
@@ -292,8 +292,8 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
   }
 }
 
-void PPU::Blend(std::uint16_t& target1,
-                std::uint16_t  target2,
+void PPU::Blend(u16& target1,
+                u16  target2,
                 BlendMode sfx) {
   int r1 = (target1 >>  0) & 0x1F;
   int g1 = (target1 >>  5) & 0x1F;
@@ -308,9 +308,9 @@ void PPU::Blend(std::uint16_t& target1,
       int g2 = (target2 >>  5) & 0x1F;
       int b2 = (target2 >> 10) & 0x1F;
 
-      r1 = std::min<std::uint8_t>((r1 * eva + r2 * evb) >> 4, 31);
-      g1 = std::min<std::uint8_t>((g1 * eva + g2 * evb) >> 4, 31);
-      b1 = std::min<std::uint8_t>((b1 * eva + b2 * evb) >> 4, 31);
+      r1 = std::min<u8>((r1 * eva + r2 * evb) >> 4, 31);
+      g1 = std::min<u8>((g1 * eva + g2 * evb) >> 4, 31);
+      b1 = std::min<u8>((b1 * eva + b2 * evb) >> 4, 31);
       break;
     }
     case BlendMode::SFX_BRIGHTEN: {

@@ -36,7 +36,7 @@ void FLASH::Reset() {
   }
 }
 
-auto FLASH::Read (std::uint32_t address) -> std::uint8_t {
+auto FLASH::Read (u32 address) -> u8 {
   address &= 0xFFFF;
   
   /* TODO(accuracy): check if the Chip ID is mirrored each 0x100 bytes. */
@@ -53,7 +53,7 @@ auto FLASH::Read (std::uint32_t address) -> std::uint8_t {
   return file->Read(Physical(address));
 }
 
-void FLASH::Write(std::uint32_t address, std::uint8_t value) {
+void FLASH::Write(u32 address, u8 value) {
   /* TODO: figure out how malformed sequences behave. */
   switch (phase) {
     case 0: {
@@ -79,7 +79,7 @@ void FLASH::Write(std::uint32_t address, std::uint8_t value) {
   }
 }
 
-void FLASH::HandleCommand(std::uint32_t address, std::uint8_t value) {
+void FLASH::HandleCommand(u32 address, u8 value) {
   if (address == 0x0E005555) {
     switch (static_cast<Command>(value)) {
       case READ_CHIP_ID: {
@@ -121,7 +121,7 @@ void FLASH::HandleCommand(std::uint32_t address, std::uint8_t value) {
       }
     }
   } else if (enable_erase && (address & ~0xF000) == 0x0E000000 && static_cast<Command>(value) == ERASE_SECTOR) {
-    std::uint32_t base = address & 0xF000;
+    u32 base = address & 0xF000;
     
     file->MemorySet(Physical(base), 0x1000, 0xFF);
     enable_erase = false;
@@ -129,7 +129,7 @@ void FLASH::HandleCommand(std::uint32_t address, std::uint8_t value) {
   }
 }
 
-void FLASH::HandleExtended(std::uint32_t address, std::uint8_t value) {
+void FLASH::HandleExtended(u32 address, u8 value) {
   if (enable_write) {
     file->Write(Physical(address & 0xFFFF), value);
     enable_write = false;

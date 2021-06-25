@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <common/integer.hpp>
 #include <emulator/core/scheduler.hpp>
 
 #include "base_channel.hpp"
@@ -20,10 +20,10 @@ public:
   NoiseChannel(Scheduler& scheduler, BIAS& bias);
 
   void Reset();
-  auto GetSample() -> std::int8_t override { return sample; }
+  auto GetSample() -> s8 override { return sample; }
   void Generate(int cycles_late);
-  auto Read (int offset) -> std::uint8_t;
-  void Write(int offset, std::uint8_t value);
+  auto Read (int offset) -> u8;
+  void Write(int offset, u8 value);
 
 private:
   constexpr int GetSynthesisInterval(int ratio, int shift) {
@@ -38,8 +38,8 @@ private:
     return interval;
   }
 
-  std::uint16_t lfsr;
-  std::int8_t sample = 0;
+  u16 lfsr;
+  s8 sample = 0;
 
   Scheduler& scheduler;
   std::function<void(int)> event_cb = [this](int cycles_late) {

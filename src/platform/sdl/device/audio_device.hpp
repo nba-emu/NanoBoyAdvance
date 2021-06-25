@@ -20,7 +20,7 @@ struct SDL2_AudioDevice : public nba::AudioDevice {
     this->passthrough = passthrough;
   }
 
-  void InvokeCallback(std::int16_t* stream, int byte_len) {
+  void InvokeCallback(s16* stream, int byte_len) {
     if (callback) {
       callback(callback_userdata, stream, byte_len);
     }

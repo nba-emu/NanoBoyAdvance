@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <common/integer.hpp>
 
 namespace nba {
   
@@ -15,7 +15,7 @@ class AudioDevice {
 public:
   virtual ~AudioDevice() {}
 
-  typedef void (*Callback)(void* userdata, std::int16_t* stream, int byte_len);
+  typedef void (*Callback)(void* userdata, s16* stream, int byte_len);
 
   virtual auto GetSampleRate() -> int = 0;
   virtual auto GetBlockSize() -> int = 0;

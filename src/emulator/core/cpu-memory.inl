@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
+inline u32 CPU::ReadBIOS(u32 address) {
   int shift = (address & 3) * 8;
 
   address &= ~3;
@@ -18,13 +18,13 @@ inline std::uint32_t CPU::ReadBIOS(std::uint32_t address) {
     return memory.bios_latch >> shift;
   }
 
-  memory.bios_latch = Read<std::uint32_t>(memory.bios, address);
+  memory.bios_latch = Read<u32>(memory.bios, address);
 
   return memory.bios_latch >> shift;
 }
 
-inline std::uint32_t CPU::ReadUnused(std::uint32_t address) {
-  std::uint32_t result = 0;
+inline u32 CPU::ReadUnused(u32 address) {
+  u32 result = 0;
 
   if (dma.IsRunning() || openbus_from_dma) {
     return dma.GetOpenBusValue() >> ((address & 3) * 8);
@@ -76,7 +76,7 @@ inline std::uint32_t CPU::ReadUnused(std::uint32_t address) {
 }
 
 template<typename T>
-auto CPU::Read_(std::uint32_t address, Access access) -> T {
+auto CPU::Read_(u32 address, Access access) -> T {
   int cycles;
   int page = address >> 24;
 
@@ -88,7 +88,7 @@ auto CPU::Read_(std::uint32_t address, Access access) -> T {
     access = Access::Nonsequential;
   }
   
-  if (std::is_same_v<T, std::uint32_t>) {
+  if (std::is_same_v<T, u32>) {
     cycles = cycles32[int(access)][page];
   } else {
     cycles = cycles16[int(access)][page];
@@ -109,13 +109,13 @@ auto CPU::Read_(std::uint32_t address, Access access) -> T {
     }
     case REGION_MMIO: {
       PrefetchStepRAM(cycles);
-      if constexpr (std::is_same_v<T, std::uint32_t>) {
+      if constexpr (std::is_same_v<T, u32>) {
         return (ReadMMIO(address + 0) <<  0) |
                (ReadMMIO(address + 1) <<  8) |
                (ReadMMIO(address + 2) << 16) |
                (ReadMMIO(address + 3) << 24);
       }
-      if constexpr (std::is_same_v<T, std::uint16_t>) {
+      if constexpr (std::is_same_v<T, u16>) {
         return (ReadMMIO(address + 0) << 0) |
                (ReadMMIO(address + 1) << 8);
       }
@@ -138,7 +138,7 @@ auto CPU::Read_(std::uint32_t address, Access access) -> T {
     }
     case REGION_ROM_W2_H: {
       // 0x0DXXXXXX may be used to access EEPROM backup.
-      if (std::is_same_v<T, std::uint16_t> && IsEEPROMAccess(address)) {
+      if (std::is_same_v<T, u16> && IsEEPROMAccess(address)) {
         PrefetchStepROM(address, cycles);
         // TODO: this works in most cases but is not correct.
         if (!dma.IsRunning()) {
@@ -157,7 +157,7 @@ auto CPU::Read_(std::uint32_t address, Access access) -> T {
       address &= memory.rom.mask;
       if (IsGPIOAccess(address) && memory.rom.gpio->IsReadable()) {
         // TODO: verify 8-bit and 16-bit read behavior.
-        if constexpr (std::is_same_v<T, std::uint32_t>) {
+        if constexpr (std::is_same_v<T, u32>) {
           auto lsw = memory.rom.gpio->Read(address + 0);
           auto msw = memory.rom.gpio->Read(address + 2);
           return (msw << 16) | lsw;
@@ -166,10 +166,10 @@ auto CPU::Read_(std::uint32_t address, Access access) -> T {
       }
       if (address >= memory.rom.size) {
         auto value = address >> 1;
-        if constexpr (std::is_same_v<T, std::uint32_t>) {
+        if constexpr (std::is_same_v<T, u32>) {
           return (value & 0xFFFF) | ((value + 1) << 16);
         }
-        if constexpr (std::is_same_v<T, std::uint16_t>) {
+        if constexpr (std::is_same_v<T, u16>) {
           return value;
         }
         return value >> ((address & 1) * 8);
@@ -180,12 +180,12 @@ auto CPU::Read_(std::uint32_t address, Access access) -> T {
     case REGION_SRAM_2: {
       PrefetchStepROM(address, cycles);
       address &= 0x0EFFFFFF;
-      std::uint32_t value = 0xFF;
+      u32 value = 0xFF;
       if (memory.rom.backup_sram) {
         value = memory.rom.backup_sram->Read(address);
       }
-      if (std::is_same_v<T, std::uint16_t>) value *= 0x0101;
-      if (std::is_same_v<T, std::uint32_t>) value *= 0x01010101;
+      if (std::is_same_v<T, u16>) value *= 0x0101;
+      if (std::is_same_v<T, u32>) value *= 0x01010101;
       return T(value);
     }
     default: {
@@ -198,7 +198,7 @@ auto CPU::Read_(std::uint32_t address, Access access) -> T {
 }
 
 template<typename T>
-void CPU::Write_(std::uint32_t address, T value, Access access) {
+void CPU::Write_(u32 address, T value, Access access) {
   int cycles;
   int page = address >> 24;
 
@@ -210,7 +210,7 @@ void CPU::Write_(std::uint32_t address, T value, Access access) {
     access = Access::Nonsequential;
   }
   
-  if (std::is_same_v<T, std::uint32_t>) {
+  if (std::is_same_v<T, u32>) {
     cycles = cycles32[int(access)][page];
   } else {
     cycles = cycles16[int(access)][page];
@@ -229,22 +229,22 @@ void CPU::Write_(std::uint32_t address, T value, Access access) {
     }
     case REGION_MMIO: {
       PrefetchStepRAM(cycles);
-      if constexpr (std::is_same_v<T, std::uint32_t>) {
+      if constexpr (std::is_same_v<T, u32>) {
         WriteMMIO16(address + 0, value & 0xFFFF);
         WriteMMIO16(address + 2, value >> 16);
       }
-      if constexpr (std::is_same_v<T, std::uint16_t>) {
+      if constexpr (std::is_same_v<T, u16>) {
         WriteMMIO16(address, value);
       }
-      if constexpr (std::is_same_v<T, std::uint8_t>) {
+      if constexpr (std::is_same_v<T, u8>) {
         WriteMMIO(address, value & 0xFF);
       }
       break;
     }
     case REGION_PRAM: {
       PrefetchStepRAM(cycles);
-      if constexpr (std::is_same_v<T, std::uint8_t>) {
-        Write<std::uint16_t>(ppu.pram, address & 0x3FE, value * 0x0101);
+      if constexpr (std::is_same_v<T, u8>) {
+        Write<u16>(ppu.pram, address & 0x3FE, value * 0x0101);
       } else {
         Write<T>(ppu.pram, address & 0x3FF, value);
       }
@@ -256,12 +256,12 @@ void CPU::Write_(std::uint32_t address, T value, Access access) {
       if (address >= 0x18000) {
         address &= ~0x8000;
       }
-      if (std::is_same_v<T, std::uint8_t>) {
+      if (std::is_same_v<T, u8>) {
         // TODO: move logic to decide the writeable area to the PPU class.
         auto limit = ppu.mmio.dispcnt.mode >= 3 ? 0x14000 : 0x10000;
 
         if (address < limit) {
-          Write<std::uint16_t>(ppu.vram, address & ~1, value * 0x0101);
+          Write<u16>(ppu.vram, address & ~1, value * 0x0101);
         }
       } else {
         Write<T>(ppu.vram, address, value);
@@ -270,7 +270,7 @@ void CPU::Write_(std::uint32_t address, T value, Access access) {
     }
     case REGION_OAM: {
       PrefetchStepRAM(cycles);
-      if constexpr (!std::is_same_v<T, std::uint8_t>) {
+      if constexpr (!std::is_same_v<T, u8>) {
         Write<T>(ppu.oam, address & 0x3FF, value);
       }
       break;
@@ -279,7 +279,7 @@ void CPU::Write_(std::uint32_t address, T value, Access access) {
     case REGION_ROM_W1_L: case REGION_ROM_W1_H:
     case REGION_ROM_W2_L: case REGION_ROM_W2_H: {
       PrefetchStepROM(address, cycles);
-      if (std::is_same_v<T, std::uint16_t> && page == REGION_ROM_W2_H && IsEEPROMAccess(address)) {
+      if (std::is_same_v<T, u16> && page == REGION_ROM_W2_H && IsEEPROMAccess(address)) {
         // TODO: this probably isn't accurate at all.
         if (dma.IsRunning()) {
           memory.rom.backup_eeprom->Write(address, value);
@@ -288,11 +288,11 @@ void CPU::Write_(std::uint32_t address, T value, Access access) {
       }
       address &= 0x1FFFFFF;
       if (IsGPIOAccess(address)) {
-        if constexpr (std::is_same_v<T, std::uint32_t>) {
+        if constexpr (std::is_same_v<T, u32>) {
           memory.rom.gpio->Write(address + 0, (value >>  0) & 0xFF);
           memory.rom.gpio->Write(address + 2, (value >> 16) & 0xFF);
         }
-        if constexpr (std::is_same_v<T, std::uint16_t>) {
+        if constexpr (std::is_same_v<T, u16>) {
           memory.rom.gpio->Write(address + 0, value & 0xFF);
           memory.rom.gpio->Write(address + 1, value >> 8);
         }
@@ -306,8 +306,8 @@ void CPU::Write_(std::uint32_t address, T value, Access access) {
       if (memory.rom.backup_sram) {
         // TODO: why is it seemingly aware of alignment, when the address
         // should by force-aligned by the CPU?
-        if (std::is_same_v<T, std::uint32_t>) value >>= (address & 3) * 8;
-        if (std::is_same_v<T, std::uint16_t>) value >>= (address & 1) * 8;
+        if (std::is_same_v<T, u32>) value >>= (address & 3) * 8;
+        if (std::is_same_v<T, u16>) value >>= (address & 1) * 8;
 
         memory.rom.backup_sram->Write(address, value);
       }

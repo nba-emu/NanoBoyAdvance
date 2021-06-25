@@ -43,8 +43,8 @@ public:
   void Reset();
 
 protected:
-  auto ReadPort() -> std::uint8_t final;
-  void WritePort(std::uint8_t value) final;
+  auto ReadPort() -> u8 final;
+  void WritePort(u8 value) final;
 
 private:
   bool ReadSIO();
@@ -54,9 +54,9 @@ private:
   void ReadRegister();
   void WriteRegister();
 
-  static auto ConvertDecimalToBCD(std::uint8_t x) -> std::uint8_t {
-    std::uint8_t y = 0;
-    std::uint8_t e = 1;
+  static auto ConvertDecimalToBCD(u8 x) -> u8 {
+    u8 y = 0;
+    u8 e = 1;
 
     while (x > 0) {
       y += (x % 10) * e;
@@ -71,8 +71,8 @@ private:
   int current_byte;
 
   Register reg;
-  std::uint8_t data;
-  std::uint8_t buffer[7];
+  u8 data;
+  u8 buffer[7];
 
   struct PortData {
     int sck;

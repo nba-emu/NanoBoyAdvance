@@ -17,7 +17,7 @@
 namespace nba::core {
 
 // See callback.cpp for implementation
-void AudioCallback(APU* apu, std::int16_t* stream, int byte_len);
+void AudioCallback(APU* apu, s16* stream, int byte_len);
 
 APU::APU(Scheduler& scheduler, DMA& dma, std::shared_ptr<Config> config)
     : mmio(scheduler)
@@ -128,7 +128,7 @@ void APU::StepMixer(int cycles_late) {
     }
   }
 
-  common::dsp::StereoSample<std::int16_t> sample { 0, 0 };
+  common::dsp::StereoSample<s16> sample { 0, 0 };
 
   constexpr int psg_volume_tab[4] = { 1, 2, 4, 0 };
   constexpr int dma_volume_tab[2] = { 2, 4 };
@@ -140,12 +140,12 @@ void APU::StepMixer(int cycles_late) {
 
   if (config->audio.interpolate_fifo) {
     for (int fifo = 0; fifo < 2; fifo++) {
-      latch[fifo] = std::int8_t(fifo_buffer[fifo]->Read() * 127.0);
+      latch[fifo] = s8(fifo_buffer[fifo]->Read() * 127.0);
     }
   }
 
   for (int channel = 0; channel < 2; channel++) {
-    std::int16_t psg_sample = 0;
+    s16 psg_sample = 0;
 
     if (psg.enable[channel][0]) psg_sample += mmio.psg1.GetSample();
     if (psg.enable[channel][1]) psg_sample += mmio.psg2.GetSample();
@@ -161,7 +161,7 @@ void APU::StepMixer(int cycles_late) {
     }
 
     sample[channel] += mmio.bias.level;
-    sample[channel]  = std::clamp(sample[channel], std::int16_t(0), std::int16_t(0x3FF));
+    sample[channel]  = std::clamp(sample[channel], s16(0), s16(0x3FF));
     sample[channel] -= 0x200;
   }
 

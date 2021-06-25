@@ -42,8 +42,8 @@ const int PPU::s_obj_size[4][4][2] = {
 
 void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
   int tile_num;
-  std::uint16_t pixel;
-  std::int16_t transform[4];
+  u16 pixel;
+  s16 transform[4];
   int cycles = mmio.dispcnt.hblank_oam_access ? 954 : 1210;
 
   line_contains_alpha_obj = false;
@@ -55,20 +55,20 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
     buffer_obj[x].window = 0;
   }
 
-  for (std::int32_t offset = 0; offset <= 127 * 8; offset += 8) {
+  for (s32 offset = 0; offset <= 127 * 8; offset += 8) {
     if ((oam[offset + 1] & 3) == 2) {
       continue;
     }
 
-    std::uint16_t attr0 = (oam[offset + 1] << 8) | oam[offset + 0];
-    std::uint16_t attr1 = (oam[offset + 3] << 8) | oam[offset + 2];
-    std::uint16_t attr2 = (oam[offset + 5] << 8) | oam[offset + 4];
+    u16 attr0 = (oam[offset + 1] << 8) | oam[offset + 0];
+    u16 attr1 = (oam[offset + 3] << 8) | oam[offset + 2];
+    u16 attr2 = (oam[offset + 5] << 8) | oam[offset + 4];
 
     int width;
     int height;
 
-    std::int32_t x = attr1 & 0x1FF;
-    std::int32_t y = attr0 & 0x0FF;
+    s32 x = attr1 & 0x1FF;
+    s32 y = attr0 & 0x0FF;
     int shape  =  attr0 >> 14;
     int size   =  attr1 >> 14;
     int prio   = (attr2 >> 10) & 3;
@@ -124,7 +124,7 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
     int flip_v  = !affine && (attr1 & (1 << 13));
     int is_256  = (attr0 >> 13) & 1;
 
-    std::uint32_t tile_base = 0x10000;
+    u32 tile_base = 0x10000;
 
     int mosaic_x = 0;
 

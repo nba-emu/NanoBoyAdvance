@@ -9,7 +9,7 @@
 
 namespace nba::core {
 
-auto IRQ::Read(int offset) const -> std::uint8_t {
+auto IRQ::Read(int offset) const -> u8 {
   switch (offset) {
     case REG_IE|0: return reg_ie & 0xFF;
     case REG_IE|1: return reg_ie >> 8;
@@ -21,7 +21,7 @@ auto IRQ::Read(int offset) const -> std::uint8_t {
   return 0;
 }
 
-void IRQ::Write(int offset, std::uint8_t value) {
+void IRQ::Write(int offset, u8 value) {
   switch (offset) {
     case REG_IE|0:
       reg_ie &= 0xFF00;

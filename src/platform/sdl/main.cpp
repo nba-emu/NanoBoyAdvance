@@ -37,7 +37,7 @@ static constexpr auto kNativeHeight = 160;
 static SDL_Window* g_window;
 static SDL_GLContext g_gl_context;
 static GLuint g_gl_texture;
-static std::uint32_t g_framebuffer[kNativeWidth * kNativeHeight];
+static u32 g_framebuffer[kNativeWidth * kNativeHeight];
 static auto g_frame_counter = 0;
 static auto g_swap_interval = 1;
 
@@ -73,8 +73,8 @@ struct CombinedInputDevice : public nba::InputDevice {
 };
 
 struct SDL2_VideoDevice : public nba::VideoDevice {
-  void Draw(std::uint32_t* buffer) final {
-    std::memcpy(g_framebuffer, buffer, sizeof(std::uint32_t) * kNativeWidth * kNativeHeight);
+  void Draw(u32* buffer) final {
+    std::memcpy(g_framebuffer, buffer, sizeof(u32) * kNativeWidth * kNativeHeight);
     g_frame_counter++;
   }
 };
@@ -84,7 +84,7 @@ void update_fullscreen();
 void update_viewport();
 void update_key(SDL_KeyboardEvent* event);
 void update_controller();
-void audio_passthrough(SDL2_AudioDevice* audio_device, std::int16_t* stream, int byte_len);
+void audio_passthrough(SDL2_AudioDevice* audio_device, s16* stream, int byte_len);
 
 void usage(char* app_name) {
   fmt::print("Usage: {0} [--bios bios_path] [--force-rtc] [--save-type type] [--fullscreen] [--scale factor] [--resampler type] [--sync-to-audio yes/no] rom_path\n", app_name);
@@ -408,7 +408,7 @@ void destroy() {
   SDL_QuitSubSystem(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER);
 }
 
-void audio_passthrough(SDL2_AudioDevice* audio_device, std::int16_t* stream, int byte_len) {
+void audio_passthrough(SDL2_AudioDevice* audio_device, s16* stream, int byte_len) {
   if (g_sync_to_audio) {
     g_emulator_lock.lock();
     g_emulator->Run(g_cycles_per_audio_frame);

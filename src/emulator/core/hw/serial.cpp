@@ -20,7 +20,7 @@ void SerialBus::Reset() {
   mode = Mode::Normal;
 }
 
-auto SerialBus::Read(std::uint32_t address) -> std::uint8_t {
+auto SerialBus::Read(u32 address) -> u8 {
   switch (address) {
     // TODO: in multiplayer mode SIODATA32 is aliased to SIOMULTI0-1.
     case SIODATA32_L | 0:
@@ -44,7 +44,7 @@ auto SerialBus::Read(std::uint32_t address) -> std::uint8_t {
   }
 }
 
-void SerialBus::Write(std::uint32_t address, std::uint8_t value) {
+void SerialBus::Write(u32 address, u8 value) {
   switch (address) {
     // TODO: in multiplayer mode SIODATA32 is aliased to SIOMULTI0-1.
     case SIODATA32_L | 0:

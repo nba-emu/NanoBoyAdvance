@@ -26,7 +26,7 @@ void GPIO::UpdateReadWriteMasks() {
   wr_mask = ~rd_mask & 15;
 }
 
-auto GPIO::Read(std::uint32_t address) -> std::uint8_t {
+auto GPIO::Read(u32 address) -> u8 {
   if (!allow_reads) {
     return 0;
   }
@@ -52,7 +52,7 @@ auto GPIO::Read(std::uint32_t address) -> std::uint8_t {
   return 0;
 }
 
-void GPIO::Write(std::uint32_t address, std::uint8_t value) {
+void GPIO::Write(u32 address, u8 value) {
   switch (static_cast<Register>(address)) {
     case Register::Data: {
       port_data &= rd_mask;

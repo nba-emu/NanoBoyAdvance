@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-auto ReadPalette(int palette, int index) -> std::uint16_t {
+auto ReadPalette(int palette, int index) -> u16 {
   int cell = (palette * 32) + (index * 2);
 
   /* TODO: On Little-Endian devices we can get away with casting to uint16_t*. */
@@ -13,8 +13,8 @@ auto ReadPalette(int palette, int index) -> std::uint16_t {
            pram[cell + 0]) & 0x7FFF;
 }
 
-void DecodeTileLine4BPP(std::uint16_t* buffer, std::uint32_t base, int palette, int number, int y, bool flip) {
-  std::uint8_t* data = &vram[base + (number * 32) + (y * 4)];
+void DecodeTileLine4BPP(u16* buffer, u32 base, int palette, int number, int y, bool flip) {
+  u8* data = &vram[base + (number * 32) + (y * 4)];
 
   if (flip) {
     for (int x = 0; x < 4; x++) {
@@ -37,8 +37,8 @@ void DecodeTileLine4BPP(std::uint16_t* buffer, std::uint32_t base, int palette, 
   }
 }
 
-void DecodeTileLine8BPP(std::uint16_t* buffer, std::uint32_t base, int number, int y, bool flip) {
-  std::uint8_t* data = &vram[base + (number * 64) + (y * 8)];
+void DecodeTileLine8BPP(u16* buffer, u32 base, int number, int y, bool flip) {
+  u8* data = &vram[base + (number * 64) + (y * 8)];
 
   if (flip) {
     for (int x = 7; x >= 0; x--) {
@@ -53,8 +53,8 @@ void DecodeTileLine8BPP(std::uint16_t* buffer, std::uint32_t base, int number, i
   }
 }
 
-auto DecodeTilePixel4BPP(std::uint32_t address, int palette, int x, int y) -> std::uint16_t {
-  std::uint32_t offset = address + (y * 4) + (x / 2);
+auto DecodeTilePixel4BPP(u32 address, int palette, int x, int y) -> u16 {
+  u32 offset = address + (y * 4) + (x / 2);
 
   int tuple = vram[offset];
   int index = (x & 1) ? (tuple >> 4) : (tuple & 0xF);
@@ -66,8 +66,8 @@ auto DecodeTilePixel4BPP(std::uint32_t address, int palette, int x, int y) -> st
   }
 }
 
-auto DecodeTilePixel8BPP(std::uint32_t address, int x, int y, bool sprite = false) -> std::uint16_t {
-  std::uint32_t offset = address + (y * 8) + x;
+auto DecodeTilePixel8BPP(u32 address, int x, int y, bool sprite = false) -> u16 {
+  u32 offset = address + (y * 8) + x;
 
   int index = vram[offset];
 
@@ -84,18 +84,18 @@ void AffineRenderLoop(int id,
                       std::function<void(int, int, int)> render_func) {
   auto const& bg = mmio.bgcnt[2 + id];
   auto const& mosaic = mmio.mosaic.bg;
-  std::uint16_t* buffer = buffer_bg[2 + id];
+  u16* buffer = buffer_bg[2 + id];
   
-  std::int32_t ref_x = mmio.bgx[id]._current;
-  std::int32_t ref_y = mmio.bgy[id]._current;
-  std::int16_t pa = mmio.bgpa[id];
-  std::int16_t pc = mmio.bgpc[id];
+  s32 ref_x = mmio.bgx[id]._current;
+  s32 ref_y = mmio.bgy[id]._current;
+  s16 pa = mmio.bgpa[id];
+  s16 pc = mmio.bgpc[id];
   
   int mosaic_x = 0;
   
   for (int _x = 0; _x < 240; _x++) {
-    std::int32_t x = ref_x >> 8;
-    std::int32_t y = ref_y >> 8;
+    s32 x = ref_x >> 8;
+    s32 y = ref_y >> 8;
     
     if (bg.mosaic_enable) {
       if (++mosaic_x == mosaic.size_x) {

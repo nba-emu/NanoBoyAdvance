@@ -11,7 +11,7 @@
 #include <emulator/core/hw/dma.hpp>
 #include <emulator/core/hw/interrupt.hpp>
 #include <emulator/core/scheduler.hpp>
-#include <cstdint>
+#include <common/integer.hpp>
 #include <functional>
 
 #include "registers.hpp"
@@ -24,26 +24,26 @@ public:
 
   void Reset();
 
-  std::uint8_t pram[0x00400];
-  std::uint8_t oam [0x00400];
-  std::uint8_t vram[0x18000];
+  u8 pram[0x00400];
+  u8 oam [0x00400];
+  u8 vram[0x18000];
 
   struct MMIO {
     DisplayControl dispcnt;
     DisplayStatus dispstat;
 
-    std::uint8_t vcount;
+    u8 vcount;
 
     BackgroundControl bgcnt[4] { 0, 1, 2, 3 };
 
-    std::uint16_t bghofs[4];
-    std::uint16_t bgvofs[4];
+    u16 bghofs[4];
+    u16 bgvofs[4];
 
     ReferencePoint bgx[2], bgy[2];
-    std::int16_t bgpa[2];
-    std::int16_t bgpb[2];
-    std::int16_t bgpc[2];
-    std::int16_t bgpd[2];
+    s16 bgpa[2];
+    s16 bgpb[2];
+    s16 bgpc[2];
+    s16 bgpd[2];
 
     WindowRange winh[2];
     WindowRange winv[2];
@@ -109,12 +109,12 @@ private:
   void RenderLayerOAM(bool bitmap_mode, int line);
   void RenderWindow(int id);
 
-  static auto ConvertColor(std::uint16_t color) -> std::uint32_t;
+  static auto ConvertColor(u16 color) -> u32;
 
   template<bool window, bool blending>
   void ComposeScanlineTmpl(int bg_min, int bg_max);
   void ComposeScanline(int bg_min, int bg_max);
-  void Blend(std::uint16_t& target1, std::uint16_t target2, BlendControl::Effect sfx);
+  void Blend(u16& target1, u16 target2, BlendControl::Effect sfx);
 
   #include "helper.inl"
 
@@ -123,13 +123,13 @@ private:
   DMA& dma;
   std::shared_ptr<Config> config;
 
-  std::uint16_t buffer_bg[4][240];
+  u16 buffer_bg[4][240];
 
   bool line_contains_alpha_obj;
 
   struct ObjectPixel {
-    std::uint16_t color;
-    std::uint8_t  priority;
+    u16 color;
+    u8  priority;
     unsigned alpha  : 1;
     unsigned window : 1;
   } buffer_obj[240];
@@ -137,9 +137,9 @@ private:
   bool buffer_win[2][240];
   bool window_scanline_enable[2];
 
-  std::uint32_t output[240*160];
+  u32 output[240*160];
 
-  static constexpr std::uint16_t s_color_transparent = 0x8000;
+  static constexpr u16 s_color_transparent = 0x8000;
   static const int s_obj_size[4][4][2];
 };
 

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <common/integer.hpp>
 #include <emulator/core/scheduler.hpp>
 
 #include "base_channel.hpp"
@@ -20,16 +20,16 @@ public:
 
   void Reset();
   bool IsEnabled() override { return playing && BaseChannel::IsEnabled(); }
-  auto GetSample() -> std::int8_t override { return sample; }
+  auto GetSample() -> s8 override { return sample; }
   void Generate(int cycles_late);
-  auto Read (int offset) -> std::uint8_t;
-  void Write(int offset, std::uint8_t value);
+  auto Read (int offset) -> u8;
+  void Write(int offset, u8 value);
 
-  auto ReadSample(int offset) -> std::uint8_t {
+  auto ReadSample(int offset) -> u8 {
     return wave_ram[wave_bank ^ 1][offset];
   }
 
-  void WriteSample(int offset, std::uint8_t value) {
+  void WriteSample(int offset, u8 value) {
     wave_ram[wave_bank ^ 1][offset] = value;
   }
 
@@ -44,14 +44,14 @@ private:
     this->Generate(cycles_late);
   };
 
-  std::int8_t sample = 0;
+  s8 sample = 0;
   bool playing;
   bool force_volume;
   int volume;
   int frequency;
   int dimension;
   int wave_bank;
-  std::uint8_t wave_ram[2][16];
+  u8 wave_ram[2][16];
   int phase;
 };
 

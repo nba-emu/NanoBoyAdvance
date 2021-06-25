@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <common/integer.hpp>
 #include <emulator/core/hw/interrupt.hpp>
 #include <emulator/core/scheduler.hpp>
 
@@ -25,8 +25,8 @@ public:
   }
 
   void Reset();
-  auto Read (int chan_id, int offset) -> std::uint8_t;
-  void Write(int chan_id, int offset, std::uint8_t value);
+  auto Read (int chan_id, int offset) -> u8;
+  void Write(int chan_id, int offset, u8 value);
 
 private:
   enum Registers {
@@ -36,8 +36,8 @@ private:
 
   struct Channel {
     int id;
-    std::uint16_t reload = 0;
-    std::uint32_t counter = 0;
+    u16 reload = 0;
+    u32 counter = 0;
 
     struct Control {
       int frequency = 0;
@@ -50,7 +50,7 @@ private:
     int shift;
     int mask;
     int samplerate;
-    std::uint64_t timestamp_started;
+    u64 timestamp_started;
     Scheduler::Event* event = nullptr;
     std::function<void(int)> event_cb;
   } channels[4];
@@ -59,7 +59,7 @@ private:
   IRQ& irq;
   APU& apu;
 
-  auto GetCounterDeltaSinceLastUpdate(Channel const& channel) -> std::uint32_t;
+  auto GetCounterDeltaSinceLastUpdate(Channel const& channel) -> u32;
   void StartChannel(Channel& channel, int cycles_late);
   void StopChannel(Channel& channel);
   void OnOverflow(Channel& channel);

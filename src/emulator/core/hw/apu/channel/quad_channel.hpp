@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <common/integer.hpp>
 #include <emulator/core/scheduler.hpp>
 
 #include "base_channel.hpp"
@@ -19,10 +19,10 @@ public:
   QuadChannel(Scheduler& scheduler);
 
   void Reset();
-  auto GetSample() -> std::int8_t override { return sample; }
+  auto GetSample() -> s8 override { return sample; }
   void Generate(int cycles_late);
-  auto Read (int offset) -> std::uint8_t;
-  void Write(int offset, std::uint8_t value);
+  auto Read (int offset) -> u8;
+  void Write(int offset, u8 value);
 
 private:
   constexpr int GetSynthesisIntervalFromFrequency(int frequency) {
@@ -37,7 +37,7 @@ private:
     this->Generate(cycles_late);
   };
 
-  std::int8_t sample = 0;
+  s8 sample = 0;
   int phase;
   int wave_duty;
   bool dac_enable;

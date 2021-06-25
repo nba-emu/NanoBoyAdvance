@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <common/integer.hpp>
 
 namespace nba::core {
 
@@ -23,7 +23,7 @@ public:
   
   int Count() const { return count; }
   
-  void Write(std::int8_t sample) {
+  void Write(s8 sample) {
     if (count < s_fifo_len) {
       data[wr_ptr] = sample;
       wr_ptr = (wr_ptr + 1) % s_fifo_len;
@@ -31,8 +31,8 @@ public:
     }
   }
   
-  auto Read() -> std::int8_t {
-    std::int8_t value = data[rd_ptr];
+  auto Read() -> s8 {
+    s8 value = data[rd_ptr];
     
     if (count > 0) {
       rd_ptr = (rd_ptr + 1) % s_fifo_len;
@@ -45,7 +45,7 @@ public:
 private:
   static constexpr int s_fifo_len = 32;
   
-  std::int8_t data[s_fifo_len];
+  s8 data[s_fifo_len];
  
   int rd_ptr;
   int wr_ptr;
