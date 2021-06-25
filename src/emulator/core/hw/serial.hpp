@@ -13,8 +13,7 @@
 
 namespace nba::core {
 
-class SerialBus {
-public:
+struct SerialBus {
   SerialBus(IRQ& irq) : irq(irq) {}
 
   void Reset();

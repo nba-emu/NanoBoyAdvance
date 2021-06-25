@@ -10,24 +10,20 @@
 namespace common::dsp {
 
 template <typename T>
-class ReadStream {
-public:
-  virtual ~ReadStream() {};
+struct ReadStream {
+  virtual ~ReadStream() = default;
 
   virtual auto Read() -> T = 0;
 };
 
 template <typename T>
-class WriteStream {
-public:
-  virtual ~WriteStream() {};
+struct WriteStream {
+  virtual ~WriteStream() = default;
   
   virtual void Write(T const& value) = 0;
 };
 
 template <typename T>
-class Stream : public ReadStream<T>,
-               public WriteStream<T>
-{ };
+struct Stream : ReadStream<T>, WriteStream<T> { };
   
 } // namespace common::dsp

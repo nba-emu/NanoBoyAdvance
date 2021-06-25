@@ -11,9 +11,8 @@
 
 namespace nba {
 
-class VideoDevice {
-public:
-  virtual ~VideoDevice() {}
+struct VideoDevice {
+  virtual ~VideoDevice() = default;
 
   virtual void Draw(u32* buffer) = 0;
 };

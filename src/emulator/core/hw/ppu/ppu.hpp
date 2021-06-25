@@ -18,9 +18,13 @@
 
 namespace nba::core {
 
-class PPU {
-public:
-  PPU(Scheduler& scheduler, IRQ& irq, DMA& dma, std::shared_ptr<Config> config);
+struct PPU {
+  PPU(
+    Scheduler& scheduler,
+    IRQ& irq,
+    DMA& dma,
+    std::shared_ptr<Config> config
+  );
 
   void Reset();
 

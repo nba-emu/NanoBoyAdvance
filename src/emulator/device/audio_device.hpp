@@ -11,9 +11,8 @@
 
 namespace nba {
   
-class AudioDevice {
-public:
-  virtual ~AudioDevice() {}
+struct AudioDevice {
+  virtual ~AudioDevice() = default;
 
   typedef void (*Callback)(void* userdata, s16* stream, int byte_len);
 

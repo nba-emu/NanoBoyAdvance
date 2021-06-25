@@ -6,9 +6,7 @@
 
 static constexpr int kM4AMaxDirectSoundChannels = 12;
 
-using u32ptr_t = u32;
-
-/* This is really poorly made and I hope it doesn't fall into pieces... */
+using u32ptr = u32;
 
 struct M4ASoundChannel {
   u8 status;
@@ -36,9 +34,9 @@ struct M4ASoundChannel {
   u32 ct;
   u32 fw;
   u32 freq;
-  u32ptr_t wav;
+  u32ptr wav;
   u32 cp;
-  u32ptr_t track;
+  u32ptr track;
   u32 pp;
   u32 np;
   u32 d4;
@@ -61,12 +59,12 @@ struct M4ASoundInfo {
   s32 pcmSamplesPerVBlank;
   s32 pcmFreq;
   s32 divFreq;
-  u32ptr_t cgbChans;
+  u32ptr cgbChans;
   u32 func;
   u32 intp;
-  u32ptr_t FnCgbSound;
-  u32ptr_t FnCgbOscOff;
-  u32ptr_t FnMidiKeyToCgbFreq;
+  u32ptr FnCgbSound;
+  u32ptr FnCgbOscOff;
+  u32ptr FnMidiKeyToCgbFreq;
   u32 MPlayJumpTable;
   u32 plynote;
   u32 ExtVolPit;

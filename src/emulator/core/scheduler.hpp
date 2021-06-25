@@ -14,8 +14,7 @@
 
 namespace nba::core {
 
-class Scheduler {
-public:  
+struct Scheduler {  
   template<class T>
   using EventMethod = void (T::*)(int);
 

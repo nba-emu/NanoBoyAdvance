@@ -20,11 +20,8 @@
 namespace common::dsp {
 
 template <typename T>
-class Resampler : public WriteStream<T> {
-public:
+struct Resampler : WriteStream<T> {
   Resampler(std::shared_ptr<WriteStream<T>> output) : output(output) {}
-
-  virtual ~Resampler() {}
   
   virtual void SetSampleRates(float samplerate_in, float samplerate_out) {
     resample_phase_shift = samplerate_in / samplerate_out;

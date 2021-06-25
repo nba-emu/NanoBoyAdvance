@@ -15,12 +15,10 @@
 namespace common::dsp {
 
 template <typename T>
-class RingBuffer : public Stream<T> {
-public:
+struct RingBuffer : Stream<T> {
   RingBuffer(int length, bool blocking = false)
-    : length(length)
-    , blocking(blocking)
-  {
+      : length(length)
+      , blocking(blocking) {
     data = std::make_unique<T[]>(length);
     Reset();
   }

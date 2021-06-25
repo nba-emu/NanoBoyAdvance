@@ -11,12 +11,13 @@
 
 namespace nba::core::arm {
 
-class MemoryBase {
-public:
+struct MemoryBase {
   enum class Access {
     Nonsequential = 0,
     Sequential  = 1
   };
+
+  virtual ~MemoryBase() = default;
 
   virtual u8  ReadByte(u32 address, Access access) = 0;
   virtual u16 ReadHalf(u32 address, Access access) = 0;

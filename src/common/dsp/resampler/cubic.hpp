@@ -12,11 +12,10 @@
 namespace common::dsp {
 
 template <typename T>
-class CubicResampler : public Resampler<T> {
-public:
+struct CubicResampler : Resampler<T> {
   CubicResampler(std::shared_ptr<WriteStream<T>> output) 
-    : Resampler<T>(output)
-  { }
+      : Resampler<T>(output) {
+  }
   
   void Write(T const& input) final {
     while (resample_phase < 1.0) {

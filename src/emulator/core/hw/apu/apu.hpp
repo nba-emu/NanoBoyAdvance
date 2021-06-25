@@ -22,9 +22,12 @@
 
 namespace nba::core {
 
-class APU {
-public:
-  APU(Scheduler& scheduler, DMA& dma, std::shared_ptr<Config>);
+struct APU {
+  APU(
+    Scheduler& scheduler,
+    DMA& dma,
+    std::shared_ptr<Config>
+  );
 
   void Reset();
   void OnTimerOverflow(int timer_id, int times, int samplerate);

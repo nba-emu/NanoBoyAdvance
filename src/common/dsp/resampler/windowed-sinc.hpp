@@ -13,13 +13,11 @@
 namespace common::dsp {
 
 template <typename T, int points>
-class SincResampler : public Resampler<T> {
-public:
+struct SincResampler : Resampler<T> {
   static_assert((points % 4) == 0, "DSP::SincResampler<T, points>: points must be divisible by four.");
 
   SincResampler(std::shared_ptr<WriteStream<T>> output) 
-    : Resampler<T>(output)
-  {
+      : Resampler<T>(output) {
     SetSampleRates(1, 1);
 
     for (int i = 0; i < points - 1; i++) {
@@ -45,7 +43,7 @@ public:
         double sinc = std::sin(cutoff * x1)/x1;
         double blackman = 0.42 - 0.49 * std::cos(x2) + 0.076 * std::cos(2 * x2);
         
-        lut[n * s_lut_resolution+m] = sinc * blackman;
+        lut[n * s_lut_resolution + m] = sinc * blackman;
         kernelSum += sinc * blackman;
       }
     }

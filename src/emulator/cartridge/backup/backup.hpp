@@ -11,10 +11,8 @@
 
 namespace nba { 
 
-class Backup {
-
-public:
-  virtual ~Backup() {}
+struct Backup {
+  virtual ~Backup() = default;
 
   virtual void Reset() = 0;
   virtual auto Read (u32 address) -> u8 = 0;

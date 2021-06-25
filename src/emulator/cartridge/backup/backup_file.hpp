@@ -23,9 +23,7 @@
 
 namespace nba {
 
-class BackupFile {
-public:
-
+struct BackupFile {
   static auto OpenOrCreate(std::string const& save_path,
                            std::vector<size_t> const& valid_sizes,
                            int& default_size) -> std::unique_ptr<BackupFile> {

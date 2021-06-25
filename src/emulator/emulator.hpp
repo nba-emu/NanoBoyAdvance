@@ -13,8 +13,7 @@
 
 namespace nba {
 
-class Emulator {
-public:
+struct Emulator {
   enum class StatusCode {
     BiosNotFound,
     GameNotFound,

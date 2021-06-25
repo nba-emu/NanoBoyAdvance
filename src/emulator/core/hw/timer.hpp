@@ -15,8 +15,7 @@
 
 namespace nba::core {
 
-class Timer {
-public:
+struct Timer {
   Timer(Scheduler& scheduler, IRQ& irq, APU& apu)
       : scheduler(scheduler)
       , irq(irq)

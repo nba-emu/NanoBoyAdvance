@@ -14,8 +14,7 @@
 
 namespace nba {
 
-class EEPROM : public Backup {
-public:
+struct EEPROM : Backup {
   enum Size {
     SIZE_4K  = 0,
     SIZE_64K = 1

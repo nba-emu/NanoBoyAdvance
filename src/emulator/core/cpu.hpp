@@ -26,8 +26,7 @@
 
 namespace nba::core {
 
-class CPU final : private arm::ARM7TDMI, private arm::MemoryBase {
-public:
+struct CPU final : private arm::ARM7TDMI, private arm::MemoryBase {
   using Access = arm::MemoryBase::Access;
 
   CPU(std::shared_ptr<Config> config);

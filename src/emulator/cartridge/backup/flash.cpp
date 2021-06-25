@@ -12,9 +12,8 @@ namespace nba {
 static constexpr int g_save_size[2] = { 65536, 131072 };
 
 FLASH::FLASH(std::string const& save_path, Size size_hint)
-  : size(size_hint)
-  , save_path(save_path)
-{
+    : size(size_hint)
+    , save_path(save_path) {
   Reset();
 }
   
@@ -39,7 +38,7 @@ void FLASH::Reset() {
 auto FLASH::Read (u32 address) -> u8 {
   address &= 0xFFFF;
   
-  /* TODO(accuracy): check if the Chip ID is mirrored each 0x100 bytes. */
+  // TODO: check if the Chip ID should be mirrored each 0x100 bytes.
   if (enable_chip_id && address < 2) {
     // Chip identifier for FLASH64: D4BF (SST 64K)
     // Chip identifier for FLASH128: 09C2 (Macronix 128K)

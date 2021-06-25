@@ -17,8 +17,7 @@
 
 namespace nba::core::arm {
 
-class ARM7TDMI {
-public:
+struct ARM7TDMI {
   using Access = MemoryBase::Access;
 
   ARM7TDMI(Scheduler& scheduler, MemoryBase* interface)
@@ -229,19 +228,19 @@ private:
 
   auto GetRegisterBankByMode(Mode mode) -> Bank {
     switch (mode) {
-    case MODE_USR:
-    case MODE_SYS:
-      return BANK_NONE;
-    case MODE_FIQ:
-      return BANK_FIQ;
-    case MODE_IRQ:
-      return BANK_IRQ;
-    case MODE_SVC:
-      return BANK_SVC;
-    case MODE_ABT:
-      return BANK_ABT;
-    case MODE_UND:
-      return BANK_UND;
+      case MODE_USR:
+      case MODE_SYS:
+        return BANK_NONE;
+      case MODE_FIQ:
+        return BANK_FIQ;
+      case MODE_IRQ:
+        return BANK_IRQ;
+      case MODE_SVC:
+        return BANK_SVC;
+      case MODE_ABT:
+        return BANK_ABT;
+      case MODE_UND:
+        return BANK_UND;
     }
 
     return BANK_INVALID;
