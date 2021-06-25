@@ -14,8 +14,7 @@
 
 namespace nba {
 
-class SRAM : public Backup {
-public:
+struct SRAM : Backup {
   SRAM(std::string const& save_path)
     : save_path(save_path) {
     Reset();

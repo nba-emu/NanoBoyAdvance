@@ -12,11 +12,10 @@
 namespace common::dsp {
 
 template <typename T>
-class NearestResampler : public Resampler<T> {
-public:
+struct NearestResampler : Resampler<T> {
   NearestResampler(std::shared_ptr<WriteStream<T>> output) 
-    : Resampler<T>(output)
-  { }
+      : Resampler<T>(output) {
+  }
   
   void Write(T const& input) final {
     while (resample_phase < 1.0) {

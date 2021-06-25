@@ -16,10 +16,8 @@ static constexpr int g_addr_bits[2] = { 6, 14 };
 static constexpr int g_save_size[2] = { 512, 8192 };
 
 EEPROM::EEPROM(std::string const& save_path, Size size_hint)
-  : size(size_hint)
-  , save_path(save_path)
-  
-{
+    : size(size_hint)
+    , save_path(save_path) {
   Reset();
 }
 
@@ -46,7 +44,7 @@ void EEPROM::ResetSerialBuffer() {
 auto EEPROM::Read(u32 address) -> u8 {
   if (state & STATE_READING) {
     if (state & STATE_DUMMY_NIBBLE) {
-      /* Four bits that simply are ignored but will be send. */
+      // Four bits that simply are ignored but will be send.
       if (++transmitted_bits == 4) {
         state &= ~STATE_DUMMY_NIBBLE;
         ResetSerialBuffer();
@@ -106,7 +104,6 @@ void EEPROM::Write(u32 address, u8 value) {
       ResetSerialBuffer();
     }
   } else if (state & STATE_WRITING) {
-    /* NOTE: we are subtracting one, because we already incremented transmitted_bits. */
     int bit   = (transmitted_bits - 1) % 8;
     int index = (transmitted_bits - 1) / 8;
 

@@ -9,12 +9,13 @@
 
 namespace nba {
 
-// Adapted from VisualBoyAdvance-M's vba-over.ini:
-// https://github.com/visualboyadvance-m/visualboyadvance-m/blob/master/src/vba-over.ini
-// TODO: Currently it is not clear how accurate the EEPROM sizes are.
-// The original vba-over.ini has no information on EEPROM size.
-// I set all Classic NES/Famicon Mini titles to EEPROM_4, since they appear to be
-// the exception, most games probably use the larger size.
+/*
+ * Adapted from VisualBoyAdvance-M's vba-over.ini:
+ * https://github.com/visualboyadvance-m/visualboyadvance-m/blob/master/src/vba-over.ini
+ *
+ * TODO: it is unclear how accurate the EEPROM sizes are.
+ * Since VBA guesses EEPROM sizes, the vba-over.ini did not contain the sizes.
+ */
 const std::map<std::string, GameInfo> g_game_db {
   { "ALFP", { Config::BackupType::EEPROM_64, GPIODeviceType::None, false } }, /* Dragon Ball Z - The Legacy of Goku II (Europe)(En,Fr,De,Es,It) */
   { "ALGP", { Config::BackupType::EEPROM_64, GPIODeviceType::None, false } }, /* Dragon Ball Z - The Legacy of Goku (Europe)(En,Fr,De,Es,It) */

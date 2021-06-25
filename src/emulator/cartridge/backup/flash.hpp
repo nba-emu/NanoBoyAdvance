@@ -14,8 +14,7 @@
 
 namespace nba {
 
-class FLASH : public Backup {
-public:
+struct FLASH : Backup {
   enum Size {
     SIZE_64K  = 0,
     SIZE_128K = 1

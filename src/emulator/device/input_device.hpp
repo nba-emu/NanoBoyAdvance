@@ -11,9 +11,8 @@
 
 namespace nba {
 
-class InputDevice {
-public:
-  virtual ~InputDevice() {}
+struct InputDevice {
+  virtual ~InputDevice() = default;
 
   enum class Key {
     Up,

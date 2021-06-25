@@ -15,8 +15,7 @@
 
 namespace nba::core {
 
-class DMA {
-public:
+struct DMA {
   using Access = arm::MemoryBase::Access;
 
   DMA(arm::MemoryBase& memory, IRQ& irq, Scheduler& scheduler)

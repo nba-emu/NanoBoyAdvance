@@ -11,8 +11,12 @@
 
 namespace nba::core {
 
-PPU::PPU(Scheduler& scheduler, IRQ& irq, DMA& dma, std::shared_ptr<Config> config)
-    : scheduler(scheduler)
+PPU::PPU(
+  Scheduler& scheduler,
+  IRQ& irq,
+  DMA& dma,
+  std::shared_ptr<Config> config
+)   : scheduler(scheduler)
     , irq(irq)
     , dma(dma)
     , config(config) {

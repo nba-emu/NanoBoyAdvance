@@ -12,11 +12,9 @@
 namespace common::dsp {
 
 template <typename T>
-class CosineResampler : public Resampler<T> {
-public:
+struct CosineResampler : Resampler<T> {
   CosineResampler(std::shared_ptr<WriteStream<T>> output) 
-    : Resampler<T>(output)
-  {
+      : Resampler<T>(output) {
     for (int i = 0; i < kLUTsize; i++) {
       lut[i] = (std::cos(M_PI * i/float(kLUTsize)) + 1.0) * 0.5;
     }

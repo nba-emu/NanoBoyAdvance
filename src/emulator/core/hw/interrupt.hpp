@@ -13,8 +13,7 @@
 
 namespace nba::core {
 
-class IRQ {
-public:
+struct IRQ {
   enum class Source {
     VBlank,
     HBlank,

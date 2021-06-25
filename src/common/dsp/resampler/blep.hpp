@@ -13,10 +13,9 @@
 namespace common::dsp {
 
 template <typename T>
-class BlepResampler : public Resampler<T> {
-public:
+struct BlepResampler : Resampler<T> {
   BlepResampler(std::shared_ptr<WriteStream<T>> output)
-    : Resampler<T>(output) {
+      : Resampler<T>(output) {
     static constexpr int kTaylorPolyMaxIter = 5;
     static constexpr int kHalfedLUTSize = kLUTsize / 2;
     
