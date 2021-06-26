@@ -63,7 +63,7 @@ auto EEPROM::Read(u32 address) -> u8 {
     return (file->Read(this->address + index) >> (7 - bit)) & 1;
   }
 
-  return 0;
+  return 1;
 }
 
 void EEPROM::Write(u32 address, u8 value) {

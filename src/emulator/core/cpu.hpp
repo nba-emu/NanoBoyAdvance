@@ -11,6 +11,7 @@
 #include <common/m4a.hpp>
 #include <emulator/cartridge/backup/backup.hpp>
 #include <emulator/cartridge/gpio/gpio.hpp>
+#include <emulator/cartridge/game_pak.hpp>
 #include <emulator/config/config.hpp>
 #include <memory>
 #include <type_traits>
@@ -65,6 +66,7 @@ struct CPU final : private arm::ARM7TDMI, private arm::MemoryBase {
     u8 wram[0x40000];
     u8 iram[0x08000];
 
+    // TODO: remove this, it's obsolete.
     struct ROM {
       std::unique_ptr<uint8_t[]> data;
       size_t size;
@@ -76,6 +78,8 @@ struct CPU final : private arm::ARM7TDMI, private arm::MemoryBase {
 
     u32 bios_latch = 0;
   } memory;
+
+  GamePak game_pak;
 
   struct MMIO {
     u16 keyinput = 0x3FF;

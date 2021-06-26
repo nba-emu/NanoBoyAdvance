@@ -7,7 +7,7 @@
 
 #include "cpu.hpp"
 
-#include <common/likely.hpp>
+#include <common/compiler.hpp>
 #include <cstring>
 
 namespace nba::core {

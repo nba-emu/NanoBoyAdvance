@@ -17,8 +17,8 @@ struct VideoDevice {
   virtual void Draw(u32* buffer) = 0;
 };
 
-class NullVideoDevice : public VideoDevice {
-  void Draw(u32* buffer) { }
+struct NullVideoDevice : VideoDevice {
+  void Draw(u32* buffer) final { }
 };
 
 } // namespace nba

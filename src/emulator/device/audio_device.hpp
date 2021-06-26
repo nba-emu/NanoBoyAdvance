@@ -22,8 +22,7 @@ struct AudioDevice {
   virtual void Close() = 0;
 };
 
-class NullAudioDevice : public AudioDevice {
-public:
+struct NullAudioDevice : AudioDevice {
   auto GetSampleRate() -> int final { return 32768; }
   auto GetBlockSize() -> int final { return 4096; }
   bool Open(void* userdata, Callback callback) final { return true; }

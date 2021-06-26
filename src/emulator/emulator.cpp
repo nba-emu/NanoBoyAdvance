@@ -15,6 +15,7 @@
 #include <emulator/cartridge/backup/flash.hpp>
 #include <emulator/cartridge/backup/sram.hpp>
 #include <emulator/cartridge/gpio/rtc.hpp>
+#include <emulator/cartridge/game_pak.hpp>
 #include <common/log.hpp>
 #include <cstring>
 #include <exception>
@@ -81,7 +82,7 @@ auto Emulator::CreateBackupInstance(Config::BackupType backup_type, std::string 
     case BackupType::EEPROM_64:
       return new EEPROM(save_path, EEPROM::SIZE_64K);
     default:
-      throw std::logic_error("CreateBackupInstance: bad backup type 'Detect'.");
+      throw nullptr;
   }
 }
 
@@ -209,30 +210,19 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   LOG_INFO("RTC:    {0}", game_info.gpio == GPIODeviceType::RTC);
   LOG_INFO("Mirror: {0}", game_info.mirror);
 
-  /* Mount cartridge into the cartridge slot. */
+  // TODO: remove this!!!
   cpu.memory.rom.data = std::move(rom);
   cpu.memory.rom.size = size;
-  if (game_info.backup_type == Config::BackupType::EEPROM_4 || game_info.backup_type == Config::BackupType::EEPROM_64) {
-    cpu.memory.rom.backup_sram.reset();
-    cpu.memory.rom.backup_eeprom = std::unique_ptr<Backup>{ CreateBackupInstance(game_info.backup_type, save_path) };
-  } else if (game_info.backup_type != Config::BackupType::None) {
-    cpu.memory.rom.backup_sram = std::unique_ptr<Backup>{ CreateBackupInstance(game_info.backup_type, save_path) };
-    cpu.memory.rom.backup_eeprom.reset();
-  }
 
-  /* Create and mount RTC if necessary. */
+  // TODO: CreateBackupInstance should return a unique_ptr directly.
+  auto backup = std::unique_ptr<Backup>{CreateBackupInstance(game_info.backup_type, save_path)};
+  auto gpio = std::unique_ptr<GPIO>{};
+
   if (game_info.gpio == GPIODeviceType::RTC || config->force_rtc) {
-    cpu.memory.rom.gpio = std::make_unique<RTC>(&cpu.scheduler, &cpu.irq);
-  } else {
-    cpu.memory.rom.gpio.reset();
+    gpio = std::make_unique<RTC>(&cpu.scheduler, &cpu.irq);
   }
 
-  /* Some games (e.g. Classic NES series) have the ROM memory mirrored. */
-  if (game_info.mirror) {
-    cpu.memory.rom.mask = CalculateMirrorMask(size);
-  } else {
-    cpu.memory.rom.mask = 0x1FFFFFF;
-  }
+  cpu.game_pak = GamePak{cpu.memory.rom.data.get(), size, std::move(backup), std::move(gpio)};
 
   return StatusCode::Ok;
 }

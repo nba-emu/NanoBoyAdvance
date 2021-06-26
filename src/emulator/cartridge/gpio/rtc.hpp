@@ -11,8 +11,7 @@
 
 namespace nba {
 
-class RTC : public GPIO {
-public:
+struct RTC : GPIO {
   enum class Port {
     SCK,
     SIO,
@@ -32,11 +31,13 @@ public:
     ForceIRQ = 3,
     Control = 4,
     Time = 6,
-    // NOTE: GBATEK calls this register "free" but it is unclear what that means.
     Free = 7
   };
 
-  RTC(nba::core::Scheduler* scheduler, nba::core::IRQ* irq) : GPIO(scheduler, irq) {
+  RTC(
+    nba::core::Scheduler* scheduler,
+    nba::core::IRQ* irq
+  )   : GPIO(scheduler, irq) {
     Reset();
   }
 
