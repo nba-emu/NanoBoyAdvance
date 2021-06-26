@@ -170,7 +170,7 @@ void PPU::OnHblankComplete(int cycles_late) {
   } else {
     scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
     RenderScanline();
-    // Render OBJs for the *next* scanline.
+    // Render OBJs for the next scanline.
     if (mmio.dispcnt.enable[ENABLE_OBJ]) {
       RenderLayerOAM(mmio.dispcnt.mode >= 3, mmio.vcount + 1);
     }
@@ -208,7 +208,7 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
     scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
     if (++vcount == 227) {
       dispstat.vblank_flag = 0;
-      // Render OBJs for the *next* scanline
+      // Render OBJs for the next scanline
       if (mmio.dispcnt.enable[ENABLE_OBJ]) {
         RenderLayerOAM(mmio.dispcnt.mode >= 3, 0);
       }
@@ -225,6 +225,10 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
 
   if (vcount == 0) {
     RenderScanline();
+    // Render OBJs for the next scanline
+    if (mmio.dispcnt.enable[ENABLE_OBJ]) {
+      RenderLayerOAM(mmio.dispcnt.mode >= 3, 1);
+    }
   }
 
   CheckVerticalCounterIRQ();
