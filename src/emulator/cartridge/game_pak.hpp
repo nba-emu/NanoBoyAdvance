@@ -20,8 +20,6 @@
 
 namespace nba {
 
-// TODO: handle Classic NES ROM mirroring
-// TODO: better handle ROM data
 // TODO: handle Nseq access resets EEPROM chip?
 // TODO: optimize 32-bit accesses?
 
@@ -31,9 +29,11 @@ struct GamePak {
   GamePak(
     std::vector<u8>&& rom,
     std::unique_ptr<Backup>&& backup,
-    std::unique_ptr<GPIO>&& gpio
+    std::unique_ptr<GPIO>&& gpio,
+    u32 rom_mask = 0x01FF'FFFF
   )   : rom(std::move(rom))
-      , gpio(std::move(gpio)) {
+      , gpio(std::move(gpio))
+      , rom_mask(rom_mask) {
     if (backup != nullptr) {
       if (typeid(*backup.get()) == typeid(EEPROM)) {
         backup_eeprom = std::move(backup);
@@ -59,10 +59,11 @@ struct GamePak {
 
   auto operator=(GamePak&& other) -> GamePak& {
     std::swap(rom, other.rom);
-    std::swap(eeprom_mask, other.eeprom_mask);
     std::swap(backup_sram, other.backup_sram);
     std::swap(backup_eeprom, other.backup_eeprom);
     std::swap(gpio, other.gpio);
+    std::swap(rom_mask, other.rom_mask);
+    std::swap(eeprom_mask, other.eeprom_mask);
     return *this;
   }
 
@@ -78,6 +79,8 @@ struct GamePak {
     if (unlikely(IsEEPROM(address))) {
       return backup_eeprom->Read(0);
     }
+
+    address &= rom_mask;
 
     if (unlikely(address >= rom.size())) {
       return u16(address >> 1);
@@ -126,6 +129,7 @@ private:
   std::unique_ptr<Backup> backup_eeprom;
   std::unique_ptr<GPIO> gpio;
 
+  u32 rom_mask = 0;
   u32 eeprom_mask = 0;
 };
 

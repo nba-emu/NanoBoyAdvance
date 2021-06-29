@@ -167,16 +167,11 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
     return StatusCode::GameNotFound;
   }
 
-  /*auto rom = std::make_unique<u8[]>(size);
-  Header* header = reinterpret_cast<Header*>(rom.get());
-  stream.read((char*)(rom.get()), size);
-  stream.close();*/
   auto rom = std::vector<u8>{};
   rom.assign(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
   stream.close();
 
   auto header = reinterpret_cast<Header*>(rom.data());
-
   game_title.assign(header->game.title, 12);
   game_code.assign(header->game.code, 4);
   game_maker.assign(header->game.maker, 2);
@@ -223,7 +218,12 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
     gpio = std::make_unique<RTC>(&cpu.scheduler, &cpu.irq);
   }
 
-  cpu.game_pak = GamePak{std::move(rom), std::move(backup), std::move(gpio)};
+  u32 mask = 0x01FF'FFFF;
+  if (game_info.mirror) {
+    mask = CalculateMirrorMask(size);
+  }
+
+  cpu.game_pak = GamePak{std::move(rom), std::move(backup), std::move(gpio), mask};
 
   return StatusCode::Ok;
 }
