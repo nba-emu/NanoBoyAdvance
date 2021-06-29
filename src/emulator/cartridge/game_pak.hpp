@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <common/integer.hpp>
 #include <common/compiler.hpp>
+#include <common/punning.hpp>
 #include <memory>
 #include <vector>
 
@@ -86,8 +87,7 @@ struct GamePak {
       return u16(address >> 1);
     }
 
-    // TODO: use a common read<u16> helper.
-    return *(u16*)(&rom.data()[address]);
+    return common::read<u16>(rom.data(), address);
   }
 
   void ALWAYS_INLINE WriteROM(u32 address, u16 value) {

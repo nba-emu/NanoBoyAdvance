@@ -52,6 +52,7 @@ set(HEADERS
   common/integer.hpp
   common/compiler.hpp
   common/log.hpp
+  common/punning.hpp
   common/static_for.hpp
 
   # Cartridge
