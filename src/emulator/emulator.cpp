@@ -167,10 +167,15 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
     return StatusCode::GameNotFound;
   }
 
-  auto rom = std::make_unique<u8[]>(size);
+  /*auto rom = std::make_unique<u8[]>(size);
   Header* header = reinterpret_cast<Header*>(rom.get());
   stream.read((char*)(rom.get()), size);
+  stream.close();*/
+  auto rom = std::vector<u8>{};
+  rom.assign(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
   stream.close();
+
+  auto header = reinterpret_cast<Header*>(rom.data());
 
   game_title.assign(header->game.title, 12);
   game_code.assign(header->game.code, 4);
@@ -193,7 +198,7 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
      */
     if (game_info.backup_type == Config::BackupType::Detect) {
       LOG_INFO("Unable to get backup type from game database.");
-      game_info.backup_type = DetectBackupType(rom.get(), size);
+      game_info.backup_type = DetectBackupType(rom.data(), size);
       if (game_info.backup_type == Config::BackupType::Detect) {
         game_info.backup_type = Config::BackupType::SRAM;
         LOG_WARN("Failed to determine backup type, fallback to SRAM.");
@@ -210,10 +215,6 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   LOG_INFO("RTC:    {0}", game_info.gpio == GPIODeviceType::RTC);
   LOG_INFO("Mirror: {0}", game_info.mirror);
 
-  // TODO: remove this!!!
-  cpu.memory.rom.data = std::move(rom);
-  cpu.memory.rom.size = size;
-
   // TODO: CreateBackupInstance should return a unique_ptr directly.
   auto backup = std::unique_ptr<Backup>{CreateBackupInstance(game_info.backup_type, save_path)};
   auto gpio = std::unique_ptr<GPIO>{};
@@ -222,7 +223,7 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
     gpio = std::make_unique<RTC>(&cpu.scheduler, &cpu.irq);
   }
 
-  cpu.game_pak = GamePak{cpu.memory.rom.data.get(), size, std::move(backup), std::move(gpio)};
+  cpu.game_pak = GamePak{std::move(rom), std::move(backup), std::move(gpio)};
 
   return StatusCode::Ok;
 }

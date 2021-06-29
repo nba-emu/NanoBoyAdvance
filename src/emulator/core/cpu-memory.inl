@@ -34,39 +34,39 @@ inline u32 CPU::ReadUnused(u32 address) {
     auto r15 = state.r15;
 
     switch (r15 >> 24) {
-    case REGION_EWRAM:
-    case REGION_PRAM:
-    case REGION_VRAM:
-    case REGION_ROM_W0_L:
-    case REGION_ROM_W0_H:
-    case REGION_ROM_W1_L:
-    case REGION_ROM_W1_H:
-    case REGION_ROM_W2_L:
-    case REGION_ROM_W2_H: {
-      result = GetPrefetchedOpcode(1) * 0x00010001;
-      break;
-    }
-    case REGION_BIOS:
-    case REGION_OAM: {
-      if (r15 & 3) {
-        result = GetPrefetchedOpcode(0) |
-                (GetPrefetchedOpcode(1) << 16);
-      } else {
-        /* FIXME: this is not correct, but also [$+6] has not been prefetched at this point. */
+      case REGION_EWRAM:
+      case REGION_PRAM:
+      case REGION_VRAM:
+      case REGION_ROM_W0_L:
+      case REGION_ROM_W0_H:
+      case REGION_ROM_W1_L:
+      case REGION_ROM_W1_H:
+      case REGION_ROM_W2_L:
+      case REGION_ROM_W2_H: {
         result = GetPrefetchedOpcode(1) * 0x00010001;
+        break;
       }
-      break;
-    }
-    case REGION_IWRAM: {
-      if (r15 & 3) {
-        result = GetPrefetchedOpcode(0) |
-                (GetPrefetchedOpcode(1) << 16);
-      } else {
-        result = GetPrefetchedOpcode(1) |
-                (GetPrefetchedOpcode(0) << 16);
+      case REGION_BIOS:
+      case REGION_OAM: {
+        if (r15 & 3) {
+          result = GetPrefetchedOpcode(0) |
+                  (GetPrefetchedOpcode(1) << 16);
+        } else {
+          // TODO: this is incorrect, unfortunately [$+6] has not been prefetched yet.
+          result = GetPrefetchedOpcode(1) * 0x00010001;
+        }
+        break;
       }
-      break;
-    }
+      case REGION_IWRAM: {
+        if (r15 & 3) {
+          result = GetPrefetchedOpcode(0) |
+                  (GetPrefetchedOpcode(1) << 16);
+        } else {
+          result = GetPrefetchedOpcode(1) |
+                  (GetPrefetchedOpcode(0) << 16);
+        }
+        break;
+      }
     }
   } else {
     result = GetPrefetchedOpcode(1);

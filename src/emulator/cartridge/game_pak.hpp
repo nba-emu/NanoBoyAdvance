@@ -11,6 +11,7 @@
 #include <common/integer.hpp>
 #include <common/compiler.hpp>
 #include <memory>
+#include <vector>
 
 #include "backup/eeprom.hpp"
 #include "backup/flash.hpp"
@@ -28,17 +29,16 @@ struct GamePak {
   GamePak() {}
 
   GamePak(
-    u8* rom_data,
-    size_t rom_size,
+    std::vector<u8>&& rom,
     std::unique_ptr<Backup>&& backup,
     std::unique_ptr<GPIO>&& gpio
-  )   : rom(rom_data, rom_size)
+  )   : rom(std::move(rom))
       , gpio(std::move(gpio)) {
     if (backup != nullptr) {
       if (typeid(*backup.get()) == typeid(EEPROM)) {
         backup_eeprom = std::move(backup);
       
-        if (rom_size >= 0x0200'0000) {
+        if (this->rom.size() >= 0x0200'0000) {
           eeprom_mask = 0x01FF'FF00;
         } else {
           eeprom_mask = 0x0100'0000;
@@ -79,11 +79,12 @@ struct GamePak {
       return backup_eeprom->Read(0);
     }
 
-    if (unlikely(address >= rom.size)) {
+    if (unlikely(address >= rom.size())) {
       return u16(address >> 1);
     }
 
-    return *(u16*)(&rom.data[address]);
+    // TODO: use a common read<u16> helper.
+    return *(u16*)(&rom.data()[address]);
   }
 
   void ALWAYS_INLINE WriteROM(u32 address, u16 value) {
@@ -120,18 +121,12 @@ private:
     return backup_eeprom && (address & eeprom_mask) == eeprom_mask;
   }
 
-  struct ROM {
-    ROM() {}
-    ROM(u8* data, size_t size) : data(data), size(size) {}
-
-    u8* data = nullptr;
-    size_t size = 0;
-  } rom;
-
-  u32 eeprom_mask = 0;
+  std::vector<u8> rom;
   std::unique_ptr<Backup> backup_sram;
   std::unique_ptr<Backup> backup_eeprom;
   std::unique_ptr<GPIO> gpio;
+
+  u32 eeprom_mask = 0;
 };
 
 } // namespace nba
