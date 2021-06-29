@@ -13,8 +13,7 @@
 
 namespace nba {
 
-class GPIO {
-public:
+struct GPIO {
   // TODO: port directions are described from the perspective
   // of the GBA. Reflect this in the naming.
   enum class PortDirection {
@@ -22,12 +21,15 @@ public:
     Out = 1  // GPIO <- GBA
   };
 
-  GPIO(nba::core::Scheduler* scheduler, nba::core::IRQ* irq)
-    : scheduler(scheduler)
-    , irq(irq) 
-  { Reset(); }
+  GPIO(
+    nba::core::Scheduler* scheduler,
+    nba::core::IRQ* irq
+  )   : scheduler(scheduler)
+      , irq(irq) {
+    Reset();
+  }
 
-  virtual ~GPIO() {}
+  virtual ~GPIO() = default;
 
   void Reset();
 

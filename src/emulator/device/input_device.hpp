@@ -33,8 +33,7 @@ struct InputDevice {
   virtual void SetOnChangeCallback(std::function<void(void)> callback) = 0;
 };
 
-class NullInputDevice : public InputDevice {
-public:
+struct NullInputDevice : InputDevice {
   auto Poll(Key key) -> bool final {
     return false;
   }
@@ -42,8 +41,7 @@ public:
   void SetOnChangeCallback(std::function<void(void)> callback) final {}
 };
 
-class BasicInputDevice : public InputDevice {
-public:
+struct BasicInputDevice : InputDevice {
   void SetKeyStatus(Key key, bool pressed) {
     key_status[static_cast<int>(key)] = pressed;
     keypress_callback();
@@ -53,7 +51,7 @@ public:
     return key_status[static_cast<int>(key)];
   }
 
-  void SetOnChangeCallback(std::function<void(void)> callback) {
+  void SetOnChangeCallback(std::function<void(void)> callback) final {
     keypress_callback = callback;
   }
 private:

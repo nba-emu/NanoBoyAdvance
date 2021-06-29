@@ -48,9 +48,11 @@ set(HEADERS
   common/dsp/resampler/nearest.hpp
   common/dsp/resampler/windowed-sinc.hpp
   common/dsp/resampler.hpp
+  common/compiler.hpp
   common/integer.hpp
-  common/likely.hpp
+  common/compiler.hpp
   common/log.hpp
+  common/punning.hpp
   common/static_for.hpp
 
   # Cartridge
@@ -62,6 +64,7 @@ set(HEADERS
   emulator/cartridge/gpio/gpio.hpp
   emulator/cartridge/gpio/rtc.hpp
   emulator/cartridge/game_db.hpp
+  emulator/cartridge/game_pak.hpp
   emulator/cartridge/header.hpp
 
   # Config

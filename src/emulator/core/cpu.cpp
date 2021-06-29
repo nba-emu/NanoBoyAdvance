@@ -7,7 +7,7 @@
 
 #include "cpu.hpp"
 
-#include <common/likely.hpp>
+#include <common/compiler.hpp>
 #include <cstring>
 
 namespace nba::core {
@@ -275,16 +275,16 @@ void CPU::M4ASampleFreqSetHook() {
   state.r0 = 0x00090000;
   m4a_soundinfo = nullptr;
 
-  u32 soundinfo_p1 = Read<u32>(memory.rom.data.get(), (m4a_setfreq_address & 0x00FFFFFF) + 492);
+  u32 soundinfo_p1 = common::read<u32>(memory.rom.data.get(), (m4a_setfreq_address & 0x00FFFFFF) + 492);
   u32 soundinfo_p2;
   LOG_INFO("M4A SoundInfo pointer at 0x{0:08X}", soundinfo_p1);
 
   switch (soundinfo_p1 >> 24) {
     case REGION_EWRAM:
-      soundinfo_p2 = Read<u32>(memory.wram, soundinfo_p1 & 0x00FFFFFF);
+      soundinfo_p2 = common::read<u32>(memory.wram, soundinfo_p1 & 0x00FFFFFF);
       break;
     case REGION_IWRAM:
-      soundinfo_p2 = Read<u32>(memory.iram, soundinfo_p1 & 0x00FFFFFF);
+      soundinfo_p2 = common::read<u32>(memory.iram, soundinfo_p1 & 0x00FFFFFF);
       break;
     default:
       LOG_ERROR("M4A SoundInfo pointer is outside of IWRAM or EWRAM, unsupported.");

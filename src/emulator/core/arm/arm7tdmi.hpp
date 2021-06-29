@@ -8,7 +8,7 @@
 #pragma once
 
 #include <array>
-#include <common/likely.hpp>
+#include <common/compiler.hpp>
 #include <common/log.hpp>
 #include <emulator/core/scheduler.hpp>
 

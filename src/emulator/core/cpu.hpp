@@ -9,8 +9,10 @@
 
 #include <common/log.hpp>
 #include <common/m4a.hpp>
+#include <common/punning.hpp>
 #include <emulator/cartridge/backup/backup.hpp>
 #include <emulator/cartridge/gpio/gpio.hpp>
+#include <emulator/cartridge/game_pak.hpp>
 #include <emulator/config/config.hpp>
 #include <memory>
 #include <type_traits>
@@ -65,6 +67,7 @@ struct CPU final : private arm::ARM7TDMI, private arm::MemoryBase {
     u8 wram[0x40000];
     u8 iram[0x08000];
 
+    // TODO: remove this, it's obsolete.
     struct ROM {
       std::unique_ptr<uint8_t[]> data;
       size_t size;
@@ -76,6 +79,8 @@ struct CPU final : private arm::ARM7TDMI, private arm::MemoryBase {
 
     u32 bios_latch = 0;
   } memory;
+
+  GamePak game_pak;
 
   struct MMIO {
     u16 keyinput = 0x3FF;
@@ -113,16 +118,6 @@ struct CPU final : private arm::ARM7TDMI, private arm::MemoryBase {
   SerialBus serial_bus;
 
 private:
-  template <typename T>
-  auto Read(void* buffer, u32 address) -> T {
-    return *reinterpret_cast<T*>(&(reinterpret_cast<u8*>(buffer))[address]);
-  }
-
-  template <typename T>
-  void Write(void* buffer, u32 address, T value) {
-    *reinterpret_cast<T*>(&(reinterpret_cast<u8*>(buffer))[address]) = value;
-  }
-
   bool IsGPIOAccess(u32 address) {
     // NOTE: we do not check if the address lies within ROM, since
     // it is not required in the context. This should be reflected in the name though.
@@ -140,33 +135,33 @@ private:
   auto ReadUnused(u32 address) -> u32;
 
   template<typename T>
-  auto Read_(u32 address, Access access) -> T;
+  auto Read(u32 address, Access access) -> T;
 
   template<typename T>
-  void Write_(u32 address, T value, Access access);
+  void Write(u32 address, T value, Access access);
 
   auto ReadByte(u32 address, Access access) -> u8  final {
-    return Read_<u8>(address, access);
+    return Read<u8>(address, access);
   }
 
   auto ReadHalf(u32 address, Access access) -> u16 final {
-    return Read_<u16>(address, access);
+    return Read<u16>(address, access);
   }
 
   auto ReadWord(u32 address, Access access) -> u32 final {
-    return Read_<u32>(address, access);
+    return Read<u32>(address, access);
   }
 
   void WriteByte(u32 address, u8  value, Access access) final {
-    Write_<u8>(address, value, access);
+    Write<u8>(address, value, access);
   }
 
   void WriteHalf(u32 address, u16 value, Access access) final {
-    Write_<u16>(address, value, access);
+    Write<u16>(address, value, access);
   }
 
   void WriteWord(u32 address, u32 value, Access access) final {
-    Write_<u32>(address, value, access);
+    Write<u32>(address, value, access);
   }
 
   void Tick(int cycles);

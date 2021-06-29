@@ -8,7 +8,7 @@
 #pragma once
 
 #include <common/log.hpp>
-#include <common/likely.hpp>
+#include <common/compiler.hpp>
 #include <common/integer.hpp>
 #include <functional>
 

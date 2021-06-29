@@ -15,6 +15,7 @@
 #include <emulator/cartridge/backup/flash.hpp>
 #include <emulator/cartridge/backup/sram.hpp>
 #include <emulator/cartridge/gpio/rtc.hpp>
+#include <emulator/cartridge/game_pak.hpp>
 #include <common/log.hpp>
 #include <cstring>
 #include <exception>
@@ -81,7 +82,7 @@ auto Emulator::CreateBackupInstance(Config::BackupType backup_type, std::string 
     case BackupType::EEPROM_64:
       return new EEPROM(save_path, EEPROM::SIZE_64K);
     default:
-      throw std::logic_error("CreateBackupInstance: bad backup type 'Detect'.");
+      throw nullptr;
   }
 }
 
@@ -166,11 +167,11 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
     return StatusCode::GameNotFound;
   }
 
-  auto rom = std::make_unique<u8[]>(size);
-  Header* header = reinterpret_cast<Header*>(rom.get());
-  stream.read((char*)(rom.get()), size);
+  auto rom = std::vector<u8>{};
+  rom.assign(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
   stream.close();
 
+  auto header = reinterpret_cast<Header*>(rom.data());
   game_title.assign(header->game.title, 12);
   game_code.assign(header->game.code, 4);
   game_maker.assign(header->game.maker, 2);
@@ -192,7 +193,7 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
      */
     if (game_info.backup_type == Config::BackupType::Detect) {
       LOG_INFO("Unable to get backup type from game database.");
-      game_info.backup_type = DetectBackupType(rom.get(), size);
+      game_info.backup_type = DetectBackupType(rom.data(), size);
       if (game_info.backup_type == Config::BackupType::Detect) {
         game_info.backup_type = Config::BackupType::SRAM;
         LOG_WARN("Failed to determine backup type, fallback to SRAM.");
@@ -209,30 +210,20 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   LOG_INFO("RTC:    {0}", game_info.gpio == GPIODeviceType::RTC);
   LOG_INFO("Mirror: {0}", game_info.mirror);
 
-  /* Mount cartridge into the cartridge slot. */
-  cpu.memory.rom.data = std::move(rom);
-  cpu.memory.rom.size = size;
-  if (game_info.backup_type == Config::BackupType::EEPROM_4 || game_info.backup_type == Config::BackupType::EEPROM_64) {
-    cpu.memory.rom.backup_sram.reset();
-    cpu.memory.rom.backup_eeprom = std::unique_ptr<Backup>{ CreateBackupInstance(game_info.backup_type, save_path) };
-  } else if (game_info.backup_type != Config::BackupType::None) {
-    cpu.memory.rom.backup_sram = std::unique_ptr<Backup>{ CreateBackupInstance(game_info.backup_type, save_path) };
-    cpu.memory.rom.backup_eeprom.reset();
-  }
+  // TODO: CreateBackupInstance should return a unique_ptr directly.
+  auto backup = std::unique_ptr<Backup>{CreateBackupInstance(game_info.backup_type, save_path)};
+  auto gpio = std::unique_ptr<GPIO>{};
 
-  /* Create and mount RTC if necessary. */
   if (game_info.gpio == GPIODeviceType::RTC || config->force_rtc) {
-    cpu.memory.rom.gpio = std::make_unique<RTC>(&cpu.scheduler, &cpu.irq);
-  } else {
-    cpu.memory.rom.gpio.reset();
+    gpio = std::make_unique<RTC>(&cpu.scheduler, &cpu.irq);
   }
 
-  /* Some games (e.g. Classic NES series) have the ROM memory mirrored. */
+  u32 mask = 0x01FF'FFFF;
   if (game_info.mirror) {
-    cpu.memory.rom.mask = CalculateMirrorMask(size);
-  } else {
-    cpu.memory.rom.mask = 0x1FFFFFF;
+    mask = CalculateMirrorMask(size);
   }
+
+  cpu.game_pak = GamePak{std::move(rom), std::move(backup), std::move(gpio), mask};
 
   return StatusCode::Ok;
 }
