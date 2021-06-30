@@ -22,7 +22,7 @@
 namespace nba {
 
 // TODO: handle Nseq access resets EEPROM chip?
-// TODO: optimize 32-bit accesses?
+// TODO: optimize EEPROM check away for lower-half ROM address space
 
 struct GamePak {
   GamePak() {}
@@ -68,15 +68,13 @@ struct GamePak {
     return *this;
   }
 
-  auto ALWAYS_INLINE ReadROM(u32 address) -> u16 {
+  auto ALWAYS_INLINE ReadROM16(u32 address) -> u16 {
     address &= 0x01FF'FFFE;
 
-    // TODO: instead of the IsReadable() check, maybe do not enable GPIO by default.
     if (unlikely(IsGPIO(address)) && gpio->IsReadable()) {
       return gpio->Read(address);
     }
 
-    // TODO: make sure this check is optimized away for lower half addresses
     if (unlikely(IsEEPROM(address))) {
       return backup_eeprom->Read(0);
     }
@@ -88,6 +86,32 @@ struct GamePak {
     }
 
     return common::read<u16>(rom.data(), address);
+  }
+
+  auto ALWAYS_INLINE ReadROM32(u32 address) -> u32 {
+    address &= 0x01FF'FFFC;
+
+    if (unlikely(IsGPIO(address)) && gpio->IsReadable()) {
+      auto lsw = gpio->Read(address|0);
+      auto msw = gpio->Read(address|2);
+      return (msw << 16) | lsw;
+    }
+
+    if (unlikely(IsEEPROM(address))) {
+      auto lsw = backup_eeprom->Read(0);
+      auto msw = backup_eeprom->Read(0);
+      return (msw << 16) | lsw;
+    }
+
+    address &= rom_mask;
+
+    if (unlikely(address >= rom.size())) {
+      auto lsw = u16(address >> 1);
+      auto msw = u16(lsw + 1);
+      return (msw << 16) | lsw;
+    }
+
+    return common::read<u32>(rom.data(), address);
   }
 
   void ALWAYS_INLINE WriteROM(u32 address, u16 value) {
