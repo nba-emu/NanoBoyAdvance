@@ -5,10 +5,6 @@
  * Refer to the included LICENSE file.
  */
 
-#ifndef _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#endif
-
 #include <emulator/cartridge/header.hpp>
 #include <emulator/cartridge/game_db.hpp>
 #include <emulator/cartridge/backup/eeprom.hpp>
@@ -19,7 +15,7 @@
 #include <common/log.hpp>
 #include <cstring>
 #include <exception>
-#include <experimental/filesystem>
+#include <filesystem>
 #include <fstream>
 #include <utility>
 #include <string_view>
@@ -28,7 +24,7 @@
 
 namespace nba {
 
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 
 using namespace nba::core;
 
