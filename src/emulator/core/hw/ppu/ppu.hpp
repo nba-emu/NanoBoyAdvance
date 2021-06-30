@@ -7,12 +7,15 @@
 
 #pragma once
 
+#include <common/compiler.hpp>
+#include <common/punning.hpp>
 #include <emulator/config/config.hpp>
 #include <emulator/core/hw/dma.hpp>
 #include <emulator/core/hw/interrupt.hpp>
 #include <emulator/core/scheduler.hpp>
 #include <common/integer.hpp>
 #include <functional>
+#include <type_traits>
 
 #include "registers.hpp"
 
@@ -28,9 +31,56 @@ struct PPU {
 
   void Reset();
 
-  u8 pram[0x00400];
-  u8 oam [0x00400];
-  u8 vram[0x18000];
+  template<typename T>
+  auto ALWAYS_INLINE ReadPRAM(u32 address) noexcept -> T {
+    return common::read<T>(pram, address & 0x3FF);
+  }
+
+  template<typename T>
+  void ALWAYS_INLINE WritePRAM(u32 address, T value) noexcept {
+    if constexpr (std::is_same_v<T, u8>) {
+      common::write<u16>(pram, address & 0x3FE, value * 0x0101);
+    } else {
+      common::write<T>(pram, address & 0x3FF, value);
+    }
+  }
+
+  template<typename T>
+  auto ALWAYS_INLINE ReadVRAM(u32 address) noexcept -> T {
+    address &= 0x1FFFF;
+    if (address >= 0x18000) {
+      address &= ~0x8000;
+    }
+    return common::read<T>(vram, address);
+  }
+
+  template<typename T>
+  void ALWAYS_INLINE WriteVRAM(u32 address, T value) noexcept {
+    address &= 0x1FFFF;
+    if (address >= 0x18000) {
+      address &= ~0x8000;
+    }
+    if (std::is_same_v<T, u8>) {
+      auto limit = mmio.dispcnt.mode >= 3 ? 0x14000 : 0x10000;
+      if (address < limit) {
+        common::write<u16>(vram, address & ~1, value * 0x0101);
+      }
+    } else {
+      common::write<T>(vram, address, value);
+    }
+  }
+
+  template<typename T>
+  auto ALWAYS_INLINE ReadOAM(u32 address) noexcept -> T {
+    return common::read<T>(oam, address & 0x3FF);
+  }
+
+  template<typename T>
+  void ALWAYS_INLINE WriteOAM(u32 address, T value) noexcept {
+    if constexpr (!std::is_same_v<T, u8>) {
+      common::write<T>(oam, address & 0x3FF, value);
+    }
+  }
 
   struct MMIO {
     DisplayControl dispcnt;
@@ -121,6 +171,10 @@ private:
   void Blend(u16& target1, u16 target2, BlendControl::Effect sfx);
 
   #include "helper.inl"
+
+  u8 pram[0x00400];
+  u8 oam [0x00400];
+  u8 vram[0x18000];
 
   Scheduler& scheduler;
   IRQ& irq;
