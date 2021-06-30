@@ -164,10 +164,107 @@ private:
     Write<u32>(address, value, access);
   }
 
-  void Tick(int cycles);
-  void Idle() final;
-  void PrefetchStepRAM(int cycles);
-  void PrefetchStepROM(u32 address, int cycles);
+  void Idle() {
+    PrefetchStepRAM(1);
+  }
+
+  void ALWAYS_INLINE Tick(int cycles) noexcept {
+    openbus_from_dma = false;
+    
+    if (unlikely(dma.IsRunning() && !bus_is_controlled_by_dma)) {
+      bus_is_controlled_by_dma = true;
+      dma.Run();
+      bus_is_controlled_by_dma = false;
+      openbus_from_dma = true;
+    }
+
+    scheduler.AddCycles(cycles);
+
+    if (prefetch.active && !bus_is_controlled_by_dma) {
+      prefetch.countdown -= cycles;
+
+      if (prefetch.countdown <= 0) {
+        prefetch.count++;
+        prefetch.active = false;
+      }
+    }
+  }
+
+  void ALWAYS_INLINE PrefetchStepRAM(int cycles) noexcept {
+    // TODO: bypass prefetch RAM step during DMA?
+    if (unlikely(!mmio.waitcnt.prefetch)) {
+      Tick(cycles);
+      return;
+    }
+
+    auto thumb = state.cpsr.f.thumb;
+    auto r15 = state.r15;
+
+    /* During any execute cycle except for the fetch cycle, 
+     * r15 will be three instruction ahead instead of two.
+     */
+    if (!code) {
+      r15 -= thumb ? 2 : 4;
+    }
+
+    if (!prefetch.active && prefetch.rom_code_access && prefetch.count < prefetch.capacity) {
+      if (prefetch.count == 0) {
+        if (thumb) {
+          prefetch.opcode_width = 2;
+          prefetch.capacity = 8;
+          prefetch.duty = cycles16[int(Access::Sequential)][r15 >> 24];
+        } else {
+          prefetch.opcode_width = 4;
+          prefetch.capacity = 4;
+          prefetch.duty = cycles32[int(Access::Sequential)][r15 >> 24];
+        }
+        prefetch.last_address = r15 + prefetch.opcode_width;
+        prefetch.head_address = prefetch.last_address;
+      } else {
+        prefetch.last_address += prefetch.opcode_width;
+      }
+
+      prefetch.countdown = prefetch.duty;
+      prefetch.active = true;
+    }
+
+    Tick(cycles);
+  }
+
+  void ALWAYS_INLINE PrefetchStepROM(u32 address, int cycles) noexcept {
+    // TODO: bypass prefetch ROM step during DMA?
+    if (unlikely(!mmio.waitcnt.prefetch)) {
+      Tick(cycles);
+      return;
+    }
+
+    prefetch.rom_code_access = code;
+
+    if (prefetch.active) {
+      if (code && address == prefetch.last_address) {
+        // Complete the load and consume the fetched (half)word right away.
+        Tick(prefetch.countdown);
+        prefetch.count--;
+        return;
+      }
+
+      prefetch.active = false;
+    }
+
+    if (code && prefetch.count != 0) {
+      if (address == prefetch.head_address) {
+        prefetch.count--;
+        prefetch.head_address += prefetch.opcode_width;
+        PrefetchStepRAM(1);
+        return;
+      } else {
+        prefetch.count = 0;
+      }
+    }
+
+    Tick(cycles);
+  }
+
   void UpdateMemoryDelayTable();
 
   void M4ASearchForSampleFreqSet();
