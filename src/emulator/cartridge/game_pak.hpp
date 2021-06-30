@@ -68,6 +68,10 @@ struct GamePak {
     return *this;
   }
 
+  auto GetRawROM() const -> std::vector<u8> const& {
+    return rom;
+  }
+
   auto ALWAYS_INLINE ReadROM16(u32 address) -> u16 {
     address &= 0x01FF'FFFE;
 

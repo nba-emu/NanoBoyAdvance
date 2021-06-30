@@ -5,12 +5,8 @@
  * Refer to the included LICENSE file.
  */
 
-#ifndef _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#endif
-
 #include <common/log.hpp>
-#include <experimental/filesystem>
+#include <filesystem>
 #include <fstream>
 #include <map>
 #include <toml.hpp>
@@ -20,7 +16,7 @@
 namespace nba {
 
 void config_toml_read(Config& config, std::string const& path) {
-  if (!std::experimental::filesystem::exists(path)) {
+  if (!std::filesystem::exists(path)) {
     auto default_config = Config{};
     config_toml_write(default_config, path);
     LOG_WARN("No configuration file found, created default configuration file.");
@@ -122,7 +118,7 @@ void config_toml_read(Config& config, std::string const& path) {
 void config_toml_write(Config& config, std::string const& path) {
   toml::basic_value<toml::preserve_comments> data;
 
-  if (std::experimental::filesystem::exists(path)) {
+  if (std::filesystem::exists(path)) {
     try {
       data = toml::parse<toml::preserve_comments>(path);
     } catch (std::exception& ex) {

@@ -5,10 +5,6 @@
  * Refer to the included LICENSE file.
  */
 
-#ifndef _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#endif
-
 #include <atomic>
 #include <common/log.hpp>
 #include <cstdlib>
@@ -17,7 +13,7 @@
 #include <emulator/device/input_device.hpp>
 #include <emulator/device/video_device.hpp>
 #include <emulator/emulator.hpp>
-#include <experimental/filesystem>
+#include <filesystem>
 #include <fmt/format.h>
 #include <iterator>
 #include <optional>
@@ -268,7 +264,7 @@ auto compile_shader(GLuint shader, const char* source) -> bool {
 }
 
 void init(int argc, char** argv) {
-  namespace fs = std::experimental::filesystem;
+  namespace fs = std::filesystem;
   if (argc >= 1) {
     fs::current_path(fs::absolute(argv[0]).replace_filename(fs::path{ }));
   }

@@ -13,7 +13,7 @@
 namespace common {
 
 template<typename T>
-auto read(void* data, uint offset) -> T {
+auto read(void const* data, uint offset) -> T {
   T value;
   memcpy(&value, (u8*)data + offset, sizeof(T));
   return value;

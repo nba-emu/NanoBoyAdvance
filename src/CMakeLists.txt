@@ -115,11 +115,4 @@ add_library(nba STATIC ${SOURCES} ${HEADERS})
 target_link_libraries(nba fmt toml11::toml11)
 target_include_directories(nba PUBLIC .)
 
-
-# TODO: this is not really optimal.
-# What do we do about it?
-if (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
-  target_link_libraries(nba stdc++fs)
-endif()
-
 add_subdirectory("platform/sdl")

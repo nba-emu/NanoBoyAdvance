@@ -7,12 +7,8 @@
 
 #pragma once
 
-#ifndef _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#endif
-
 #include <algorithm>
-#include <experimental/filesystem>
+#include <filesystem>
 #include <common/integer.hpp>
 #include <cstring>
 #include <stdexcept>
@@ -27,7 +23,7 @@ struct BackupFile {
   static auto OpenOrCreate(std::string const& save_path,
                            std::vector<size_t> const& valid_sizes,
                            int& default_size) -> std::unique_ptr<BackupFile> {
-    namespace fs = std::experimental::filesystem;
+    namespace fs = std::filesystem;
 
     bool create = true;
     auto flags = std::ios::binary | std::ios::in | std::ios::out;
