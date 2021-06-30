@@ -141,15 +141,13 @@ auto CPU::Read(u32 address, Access access) -> T {
     case REGION_ROM_W2_H: {
       PrefetchStepROM(address, cycles);
       if constexpr (std::is_same_v<T,  u8>) {
-        return game_pak.ReadROM(address) >> ((address & 1) << 3);
+        return game_pak.ReadROM16(address) >> ((address & 1) << 3);
       }
       if constexpr (std::is_same_v<T, u16>) {
-        return game_pak.ReadROM(address);
+        return game_pak.ReadROM16(address);
       }
       if constexpr (std::is_same_v<T, u32>) {
-        auto lsw = game_pak.ReadROM(address|0);
-        auto msw = game_pak.ReadROM(address|2);
-        return (msw << 16) | lsw;
+        return game_pak.ReadROM32(address);
       }
       break;
     }
