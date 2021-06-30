@@ -36,24 +36,6 @@ struct CPU final : private arm::ARM7TDMI, private arm::MemoryBase {
   void Reset();
   void RunFor(int cycles);
 
-  enum MemoryRegion {
-    REGION_BIOS  = 0,
-    REGION_EWRAM = 2,
-    REGION_IWRAM = 3,
-    REGION_MMIO  = 4,
-    REGION_PRAM  = 5,
-    REGION_VRAM  = 6,
-    REGION_OAM   = 7,
-    REGION_ROM_W0_L = 8,
-    REGION_ROM_W0_H = 9,
-    REGION_ROM_W1_L = 0xA,
-    REGION_ROM_W1_H = 0xB,
-    REGION_ROM_W2_L = 0xC,
-    REGION_ROM_W2_H = 0xD,
-    REGION_SRAM_1 = 0xE,
-    REGION_SRAM_2 = 0xF
-  };
-
   enum class HaltControl {
     RUN,
     STOP,
@@ -95,7 +77,6 @@ struct CPU final : private arm::ARM7TDMI, private arm::MemoryBase {
       bool interrupt = false;
       bool and_mode = false;
     } keycnt;
-
   } mmio;
 
   Scheduler scheduler;

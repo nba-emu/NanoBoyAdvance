@@ -180,10 +180,10 @@ void CPU::M4ASampleFreqSetHook() {
   LOG_INFO("M4A SoundInfo pointer at 0x{0:08X}", soundinfo_p1);
 
   switch (soundinfo_p1 >> 24) {
-    case REGION_EWRAM:
+    case 0x02:
       soundinfo_p2 = common::read<u32>(memory.wram, soundinfo_p1 & 0x00FFFFFF);
       break;
-    case REGION_IWRAM:
+    case 0x03:
       soundinfo_p2 = common::read<u32>(memory.iram, soundinfo_p1 & 0x00FFFFFF);
       break;
     default:
@@ -194,10 +194,10 @@ void CPU::M4ASampleFreqSetHook() {
   LOG_INFO("M4A SoundInfo address is 0x{0:08X}", soundinfo_p2);
 
   switch (soundinfo_p2 >> 24) {
-    case REGION_EWRAM:
+    case 0x02:
       m4a_soundinfo = reinterpret_cast<M4ASoundInfo*>(memory.wram + (soundinfo_p2 & 0x00FFFFFF));
       break;
-    case REGION_IWRAM:
+    case 0x03:
       m4a_soundinfo = reinterpret_cast<M4ASoundInfo*>(memory.iram + (soundinfo_p2 & 0x00FFFFFF));
       break;
     default:
