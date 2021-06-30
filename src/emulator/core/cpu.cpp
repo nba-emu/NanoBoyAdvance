@@ -29,8 +29,6 @@ CPU::CPU(std::shared_ptr<Config> config)
     , timer(scheduler, irq, apu)
     , serial_bus(irq) {
   std::memset(memory.bios, 0, 0x04000);
-  memory.rom.size = 0;
-  memory.rom.mask = 0;
   Reset();
 }
 
@@ -70,7 +68,7 @@ void CPU::Reset() {
 
   m4a_soundinfo = nullptr;
   m4a_original_freq = 0;
-  if (config->audio.m4a_xq_enable && memory.rom.data != nullptr) {
+  if (config->audio.m4a_xq_enable) {
     M4ASearchForSampleFreqSet();
   }
 
@@ -143,10 +141,13 @@ void CPU::M4ASearchForSampleFreqSet() {
     0x1E, 0x48, 0x04, 0x68, 0xF0, 0x20, 0x00, 0x03,
     0x10, 0x40, 0x02, 0x0C
   };
-  for (u32 i = 0; i < memory.rom.size; i++) {
+
+  auto& rom = game_pak.GetRawROM();
+
+  for (u32 i = 0; i < rom.size(); i++) {
     bool match = true;
     for (int j = 0; j < sizeof(pattern); j++) {
-      if (memory.rom.data[i + j] != pattern[j]) {
+      if (rom[i + j] != pattern[j]) {
         match = false;
         i += j;
         break;
@@ -174,7 +175,7 @@ void CPU::M4ASampleFreqSetHook() {
   state.r0 = 0x00090000;
   m4a_soundinfo = nullptr;
 
-  u32 soundinfo_p1 = common::read<u32>(memory.rom.data.get(), (m4a_setfreq_address & 0x00FFFFFF) + 492);
+  u32 soundinfo_p1 = common::read<u32>(game_pak.GetRawROM().data(), (m4a_setfreq_address & 0x00FFFFFF) + 492);
   u32 soundinfo_p2;
   LOG_INFO("M4A SoundInfo pointer at 0x{0:08X}", soundinfo_p1);
 

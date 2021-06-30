@@ -66,17 +66,6 @@ struct CPU final : private arm::ARM7TDMI, private arm::MemoryBase {
     u8 bios[0x04000];
     u8 wram[0x40000];
     u8 iram[0x08000];
-
-    // TODO: remove this, it's obsolete.
-    struct ROM {
-      std::unique_ptr<uint8_t[]> data;
-      size_t size;
-      u32 mask = 0x1FFFFFF;
-      std::unique_ptr<nba::GPIO> gpio;
-      std::unique_ptr<nba::Backup> backup_sram;
-      std::unique_ptr<nba::Backup> backup_eeprom;
-    } rom;
-
     u32 bios_latch = 0;
   } memory;
 
@@ -118,16 +107,6 @@ struct CPU final : private arm::ARM7TDMI, private arm::MemoryBase {
   SerialBus serial_bus;
 
 private:
-  bool IsGPIOAccess(u32 address) {
-    // NOTE: we do not check if the address lies within ROM, since
-    // it is not required in the context. This should be reflected in the name though.
-    return memory.rom.gpio && address >= 0xC4 && address <= 0xC8;
-  }
-
-  bool IsEEPROMAccess(u32 address) {
-    return memory.rom.backup_eeprom && ((~memory.rom.size & 0x02000000) || address >= 0x0DFFFF00);
-  }
-
   auto ReadMMIO(u32 address) -> u8;
   void WriteMMIO(u32 address, u8 value);
   void WriteMMIO16(u32 address, u16 value);
