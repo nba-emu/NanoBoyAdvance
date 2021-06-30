@@ -123,18 +123,15 @@ auto CPU::Read(u32 address, Access access) -> T {
     }
     case REGION_PRAM: {
       PrefetchStepRAM(cycles);
-      return common::read<T>(ppu.pram, address & 0x3FF);
+      return ppu.ReadPRAM<T>(address);
     }
     case REGION_VRAM: {
       PrefetchStepRAM(cycles);
-      address &= 0x1FFFF;
-      if (address >= 0x18000)
-        address &= ~0x8000;
-      return common::read<T>(ppu.vram, address);
+      return ppu.ReadVRAM<T>(address);
     }
     case REGION_OAM: {
       PrefetchStepRAM(cycles);
-      return common::read<T>(ppu.oam, address & 0x3FF);
+      return ppu.ReadOAM<T>(address);
     }
     case REGION_ROM_W0_L:
     case REGION_ROM_W0_H:
@@ -219,36 +216,17 @@ void CPU::Write(u32 address, T value, Access access) {
     }
     case REGION_PRAM: {
       PrefetchStepRAM(cycles);
-      if constexpr (std::is_same_v<T, u8>) {
-        common::write<u16>(ppu.pram, address & 0x3FE, value * 0x0101);
-      } else {
-        common::write<T>(ppu.pram, address & 0x3FF, value);
-      }
+      ppu.WritePRAM<T>(address, value);
       break;
     }
     case REGION_VRAM: {
       PrefetchStepRAM(cycles);
-      address &= 0x1FFFF;
-      if (address >= 0x18000) {
-        address &= ~0x8000;
-      }
-      if (std::is_same_v<T, u8>) {
-        // TODO: move logic to decide the writeable area to the PPU class.
-        auto limit = ppu.mmio.dispcnt.mode >= 3 ? 0x14000 : 0x10000;
-
-        if (address < limit) {
-          common::write<u16>(ppu.vram, address & ~1, value * 0x0101);
-        }
-      } else {
-        common::write<T>(ppu.vram, address, value);
-      }
+      ppu.WriteVRAM<T>(address, value);
       break;
     }
     case REGION_OAM: {
       PrefetchStepRAM(cycles);
-      if constexpr (!std::is_same_v<T, u8>) {
-        common::write<T>(ppu.oam, address & 0x3FF, value);
-      }
+      ppu.WriteOAM<T>(address, value);
       break;
     }
     case REGION_ROM_W0_L:
