@@ -29,7 +29,7 @@ struct BackupFile {
     auto flags = std::ios::binary | std::ios::in | std::ios::out;
     std::unique_ptr<BackupFile> file { new BackupFile() };
 
-    /* TODO: check file type and permissions? */
+    // TODO: check file type and permissions?
     if (fs::is_regular_file(save_path)) {
       auto size = fs::file_size(save_path);
 

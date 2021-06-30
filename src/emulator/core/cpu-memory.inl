@@ -34,20 +34,16 @@ inline u32 CPU::ReadUnused(u32 address) {
     auto r15 = state.r15;
 
     switch (r15 >> 24) {
-      case REGION_EWRAM:
-      case REGION_PRAM:
-      case REGION_VRAM:
-      case REGION_ROM_W0_L:
-      case REGION_ROM_W0_H:
-      case REGION_ROM_W1_L:
-      case REGION_ROM_W1_H:
-      case REGION_ROM_W2_L:
-      case REGION_ROM_W2_H: {
+      // 16-bit busses (minus IWRAM)
+      case 0x02:
+      case 0x05 ... 0x06:
+      case 0x08 ... 0x0D: {
         result = GetPrefetchedOpcode(1) * 0x00010001;
         break;
       }
-      case REGION_BIOS:
-      case REGION_OAM: {
+      // 32-bit busses
+      case 0x00:
+      case 0x07: {
         if (r15 & 3) {
           result = GetPrefetchedOpcode(0) |
                   (GetPrefetchedOpcode(1) << 16);
@@ -57,7 +53,8 @@ inline u32 CPU::ReadUnused(u32 address) {
         }
         break;
       }
-      case REGION_IWRAM: {
+      // 16-bit IWRAM bus (works different from other 16-bit busses)
+      case 0x03: {
         if (r15 & 3) {
           result = GetPrefetchedOpcode(0) |
                   (GetPrefetchedOpcode(1) << 16);
@@ -80,7 +77,7 @@ auto CPU::Read(u32 address, Access access) -> T {
   int cycles;
   int page = address >> 24;
 
-  if (page != REGION_SRAM_1 && page != REGION_SRAM_2) {
+  if (page != 0x0E && page != 0x0F) {
     address &= ~(sizeof(T) - 1);
   }
 
@@ -95,19 +92,19 @@ auto CPU::Read(u32 address, Access access) -> T {
   }
 
   switch (page) {
-    case REGION_BIOS: {
+    case 0x00: {
       PrefetchStepRAM(cycles);
       return ReadBIOS(address);
     }
-    case REGION_EWRAM: {
+    case 0x02: {
       PrefetchStepRAM(cycles);
       return common::read<T>(memory.wram, address & 0x3FFFF);
     }
-    case REGION_IWRAM: {
+    case 0x03: {
       PrefetchStepRAM(cycles);
       return common::read<T>(memory.iram, address & 0x7FFF);
     }
-    case REGION_MMIO: {
+    case 0x04: {
       PrefetchStepRAM(cycles);
       if constexpr (std::is_same_v<T, u32>) {
         return (ReadMMIO(address + 0) <<  0) |
@@ -121,24 +118,19 @@ auto CPU::Read(u32 address, Access access) -> T {
       }
       return ReadMMIO(address);
     }
-    case REGION_PRAM: {
+    case 0x05: {
       PrefetchStepRAM(cycles);
       return ppu.ReadPRAM<T>(address);
     }
-    case REGION_VRAM: {
+    case 0x06: {
       PrefetchStepRAM(cycles);
       return ppu.ReadVRAM<T>(address);
     }
-    case REGION_OAM: {
+    case 0x07: {
       PrefetchStepRAM(cycles);
       return ppu.ReadOAM<T>(address);
     }
-    case REGION_ROM_W0_L:
-    case REGION_ROM_W0_H:
-    case REGION_ROM_W1_L:
-    case REGION_ROM_W1_H:
-    case REGION_ROM_W2_L:
-    case REGION_ROM_W2_H: {
+    case 0x08 ... 0x0D: {
       PrefetchStepROM(address, cycles);
       if constexpr (std::is_same_v<T,  u8>) {
         return game_pak.ReadROM16(address) >> ((address & 1) << 3);
@@ -151,8 +143,7 @@ auto CPU::Read(u32 address, Access access) -> T {
       }
       break;
     }
-    case REGION_SRAM_1:
-    case REGION_SRAM_2: {
+    case 0x0E ... 0x0F: {
       PrefetchStepROM(address, cycles);
       u32 value = game_pak.ReadSRAM(address);
       if (std::is_same_v<T, u16>) value *= 0x0101;
@@ -173,7 +164,7 @@ void CPU::Write(u32 address, T value, Access access) {
   int cycles;
   int page = address >> 24;
 
-  if (page != REGION_SRAM_1 && page != REGION_SRAM_2) {
+  if (page != 0x0E && page != 0x0F) {
     address &= ~(sizeof(T) - 1);
   }
 
@@ -188,17 +179,17 @@ void CPU::Write(u32 address, T value, Access access) {
   }
 
   switch (page) {
-    case REGION_EWRAM: {
+    case 0x02: {
       PrefetchStepRAM(cycles);
       common::write<T>(memory.wram, address & 0x3FFFF, value);
       break;
     }
-    case REGION_IWRAM: {
+    case 0x03: {
       PrefetchStepRAM(cycles);
       common::write<T>(memory.iram, address & 0x7FFF,  value);
       break;
     }
-    case REGION_MMIO: {
+    case 0x04: {
       PrefetchStepRAM(cycles);
       if constexpr (std::is_same_v<T, u32>) {
         WriteMMIO16(address + 0, value & 0xFFFF);
@@ -212,27 +203,22 @@ void CPU::Write(u32 address, T value, Access access) {
       }
       break;
     }
-    case REGION_PRAM: {
+    case 0x05: {
       PrefetchStepRAM(cycles);
       ppu.WritePRAM<T>(address, value);
       break;
     }
-    case REGION_VRAM: {
+    case 0x06: {
       PrefetchStepRAM(cycles);
       ppu.WriteVRAM<T>(address, value);
       break;
     }
-    case REGION_OAM: {
+    case 0x07: {
       PrefetchStepRAM(cycles);
       ppu.WriteOAM<T>(address, value);
       break;
     }
-    case REGION_ROM_W0_L:
-    case REGION_ROM_W0_H:
-    case REGION_ROM_W1_L:
-    case REGION_ROM_W1_H:
-    case REGION_ROM_W2_L:
-    case REGION_ROM_W2_H: {
+    case 0x08 ... 0x0D: {
       // TODO: figure out how 8-bit and 16-bit accesses actually work.
       PrefetchStepROM(address, cycles);
       if constexpr (std::is_same_v<T, u8>) {
@@ -247,8 +233,7 @@ void CPU::Write(u32 address, T value, Access access) {
       }
       break;
     }
-    case REGION_SRAM_1:
-    case REGION_SRAM_2: {
+    case 0x0E ... 0x0F: {
       PrefetchStepROM(address, cycles);
         
       if constexpr (std::is_same_v<T, u32>) value >>= (address & 3) << 3;
