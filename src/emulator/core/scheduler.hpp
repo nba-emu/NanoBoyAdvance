@@ -11,6 +11,7 @@
 #include <common/compiler.hpp>
 #include <common/integer.hpp>
 #include <functional>
+#include <limits>
 
 namespace nba::core {
 
@@ -43,6 +44,9 @@ struct Scheduler {
   void Reset() {
     heap_size = 0;
     timestamp_now = 0;
+    Add(std::numeric_limits<u64>::max(), [](int) {
+      ASSERT(false, "event queue was empty or reached the end of time.")
+    });
   }
 
   auto GetTimestampNow() const -> u64 {
@@ -50,7 +54,6 @@ struct Scheduler {
   }
 
   auto GetTimestampTarget() const -> u64 {
-    ASSERT(heap_size != 0, "cannot calculate timestamp target for an empty scheduler.");
     return heap[0]->timestamp;
   }
 
@@ -106,7 +109,6 @@ private:
       auto event = heap[0];
       timestamp_now = event->timestamp;
       event->callback(0);
-      // NOTE: we cannot just pass zero because the callback may mess with the event queue.
       Remove(event->handle);
     }
   }
