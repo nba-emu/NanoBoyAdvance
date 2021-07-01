@@ -78,9 +78,7 @@ u32 SBC(u32 op1, u32 op2, bool set_flags) {
   return result;
 }
 
-void DoShift(int opcode, u32& operand, u32 amount, int& carry, bool immediate) {
-  amount &= 0xFF;
-
+void DoShift(int opcode, u32& operand, u8 amount, int& carry, bool immediate) {
   switch (opcode) {
     case 0: LSL(operand, amount, carry); break;
     case 1: LSR(operand, amount, carry, immediate); break;
@@ -89,7 +87,7 @@ void DoShift(int opcode, u32& operand, u32 amount, int& carry, bool immediate) {
   }
 }
 
-void LSL(u32& operand, u32 amount, int& carry) {
+void LSL(u32& operand, u8 amount, int& carry) {
   if (amount == 0) return;
 
   if (amount >= 32) {
@@ -106,7 +104,7 @@ void LSL(u32& operand, u32 amount, int& carry) {
   operand <<= amount;
 }
 
-void LSR(u32& operand, u32 amount, int& carry, bool immediate) {
+void LSR(u32& operand, u8 amount, int& carry, bool immediate) {
   if (amount == 0) {
     // LSR #0 equals to LSR #32
     if (immediate) {
@@ -130,7 +128,7 @@ void LSR(u32& operand, u32 amount, int& carry, bool immediate) {
   operand >>= amount;
 }
 
-void ASR(u32& operand, u32 amount, int& carry, bool immediate) {
+void ASR(u32& operand, u8 amount, int& carry, bool immediate) {
   if (amount == 0) {
     // ASR #0 equals to ASR #32
     if (immediate) {
@@ -152,7 +150,7 @@ void ASR(u32& operand, u32 amount, int& carry, bool immediate) {
   operand = (operand >> amount) | ((0xFFFFFFFF * msb) << (32 - amount));
 }
 
-void ROR(u32& operand, u32 amount, int& carry, bool immediate) {
+void ROR(u32& operand, u8 amount, int& carry, bool immediate) {
   // ROR #0 equals to RRX #1
   if (amount != 0 || !immediate) {
     if (amount == 0) return;
