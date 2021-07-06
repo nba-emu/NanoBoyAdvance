@@ -108,7 +108,6 @@ void EEPROM::Write(u32 address, u8 value) {
     int index = (transmitted_bits - 1) / 8;
 
     auto tmp = file->Read(this->address + index);
-    tmp &= ~(1 << (7 - bit));
     tmp |= value << (7 - bit);
     file->Write(this->address + index, tmp);
     
