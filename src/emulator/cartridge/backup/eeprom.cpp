@@ -94,7 +94,7 @@ void EEPROM::Write(u32 address, u8 value) {
   } else if (state & STATE_GET_ADDRESS) {
     if (transmitted_bits == g_addr_bits[size]) {
       this->address  = serial_buffer * 8;
-      this->address &= 0x3FF;
+      this->address &= 0x1FFF;
 
       if (state & STATE_WRITE_MODE) {
         file->MemorySet(this->address, 8, 0);
