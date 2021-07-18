@@ -21,9 +21,13 @@ void PPU::RenderLayerBitmap2() {
   auto frame = mmio.dispcnt.frame * 0xA000;
   
   AffineRenderLoop(0, 240, 160, [&](int line_x, int x, int y) {
-    int index = frame + y * 240 + x;
+    int index = vram[frame + y * 240 + x];
     
-    buffer_bg[2][line_x] = ReadPalette(0, vram[index]);
+    if (index == 0) {
+      buffer_bg[2][line_x] = s_color_transparent;
+    } else {
+      buffer_bg[2][line_x] = ReadPalette(0, index);
+    }
   });
 }
 
