@@ -24,7 +24,7 @@ CPU::CPU(std::shared_ptr<Config> config)
     , config(config)
     , irq(*this, scheduler)
     , dma(*this, irq, scheduler)
-    , apu(scheduler, dma, config)
+    , apu(scheduler, dma, *this, config)
     , ppu(scheduler, irq, dma, config)
     , timer(scheduler, irq, apu)
     , serial_bus(irq) {
@@ -66,21 +66,15 @@ void CPU::Reset() {
     state.r15 = 0x08000000;
   }
 
-  m4a_soundinfo = nullptr;
-  m4a_original_freq = 0;
-  if (config->audio.m4a_xq_enable) {
-    M4ASearchForSampleFreqSet();
-  }
-
   config->input_dev->SetOnChangeCallback(std::bind(&CPU::OnKeyPress,this));
+
+  mp2k_soundmain_address = 0xFFFFFFFF;
+  if (config->audio.m4a_xq_enable) {
+    MP2KSearchSoundMainRAM();
+  }
 }
 
 void CPU::RunFor(int cycles) {
-  bool m4a_xq_enable = config->audio.m4a_xq_enable && m4a_setfreq_address != 0;
-  if (m4a_xq_enable && m4a_soundinfo != nullptr) {
-    M4AFixupPercussiveChannels();
-  }
-
   auto limit = scheduler.GetTimestampNow() + cycles;
 
   while (scheduler.GetTimestampNow() < limit) {
@@ -89,8 +83,8 @@ void CPU::RunFor(int cycles) {
     }
 
     if (likely(mmio.haltcnt == HaltControl::RUN)) {
-      if (unlikely(m4a_xq_enable && state.r15 == m4a_setfreq_address)) {
-        M4ASampleFreqSetHook();
+      if (state.r15 == mp2k_soundmain_address) {
+        MP2KOnSoundMainRAMCalled();  
       }
       Run();
     } else {
@@ -135,87 +129,6 @@ void CPU::UpdateMemoryDelayTable() {
   }
 }
 
-void CPU::M4ASearchForSampleFreqSet() {
-  static const u8 pattern[] = {
-    0x53, 0x6D, 0x73, 0x68, 0x70, 0xB5, 0x02, 0x1C,
-    0x1E, 0x48, 0x04, 0x68, 0xF0, 0x20, 0x00, 0x03,
-    0x10, 0x40, 0x02, 0x0C
-  };
-
-  auto& rom = game_pak.GetRawROM();
-
-  for (u32 i = 0; i < rom.size(); i++) {
-    bool match = true;
-    for (int j = 0; j < sizeof(pattern); j++) {
-      if (rom[i + j] != pattern[j]) {
-        match = false;
-        i += j;
-        break;
-      }
-    }
-    if (match) {
-      m4a_setfreq_address = i + 0x08000008;
-      LOG_INFO("Found M4A SetSampleFreq() routine at 0x{0:08X}.", m4a_setfreq_address);
-      return;
-    }
-  }
-}
-
-void CPU::M4ASampleFreqSetHook() {
-  static const int frequency_tab[16] = {
-    0, 5734, 7884, 10512,
-    13379, 15768, 18157, 21024,
-    26758, 31536, 36314, 40137,
-    42048, 0, 0, 0
-  };
-
-  LOG_INFO("M4A SampleFreqSet() called: r0 = 0x{0:08X}", state.r0);
-
-  m4a_original_freq = frequency_tab[(state.r0 >> 16) & 15];
-  state.r0 = 0x00090000;
-  m4a_soundinfo = nullptr;
-
-  u32 soundinfo_p1 = common::read<u32>(game_pak.GetRawROM().data(), (m4a_setfreq_address & 0x00FFFFFF) + 492);
-  u32 soundinfo_p2;
-  LOG_INFO("M4A SoundInfo pointer at 0x{0:08X}", soundinfo_p1);
-
-  switch (soundinfo_p1 >> 24) {
-    case 0x02:
-      soundinfo_p2 = common::read<u32>(memory.wram, soundinfo_p1 & 0x00FFFFFF);
-      break;
-    case 0x03:
-      soundinfo_p2 = common::read<u32>(memory.iram, soundinfo_p1 & 0x00FFFFFF);
-      break;
-    default:
-      LOG_ERROR("M4A SoundInfo pointer is outside of IWRAM or EWRAM, unsupported.");
-      return;
-  }
-
-  LOG_INFO("M4A SoundInfo address is 0x{0:08X}", soundinfo_p2);
-
-  switch (soundinfo_p2 >> 24) {
-    case 0x02:
-      m4a_soundinfo = reinterpret_cast<M4ASoundInfo*>(memory.wram + (soundinfo_p2 & 0x00FFFFFF));
-      break;
-    case 0x03:
-      m4a_soundinfo = reinterpret_cast<M4ASoundInfo*>(memory.iram + (soundinfo_p2 & 0x00FFFFFF));
-      break;
-    default:
-      LOG_ERROR("M4A SoundInfo is outside of IWRAM or EWRAM, unsupported.");
-      return;
-  }
-}
-
-void CPU::M4AFixupPercussiveChannels() {
-  for (int i = 0; i < kM4AMaxDirectSoundChannels; i++) {
-    if (m4a_soundinfo->channels[i].type == 8) {
-      m4a_soundinfo->channels[i].type = 0;
-      m4a_soundinfo->channels[i].freq = m4a_original_freq;
-    }
-  }
-}
-
-
 void CPU::OnKeyPress() {
   mmio.keyinput = 0;
 
@@ -248,6 +161,70 @@ void CPU::CheckKeypadInterrupt() {
   } else if ((keycnt.input_mask & keyinput) != 0) {
     irq.Raise(IRQ::Source::Keypad);
   }
+}
+
+void CPU::MP2KSearchSoundMainRAM() {
+  // TODO: how much of the function should we include?
+  static const u8 pattern[] = {
+    0x1A, 0x48, 0x00, 0x68, 0x1A, 0x4A, 0x03, 0x68,
+    0x9A, 0x42, 0x00, 0xD0, 0x70, 0x47, 0x01, 0x33,
+    0x03, 0x60, 0xF0, 0xB5, 0x41, 0x46, 0x4A, 0x46,
+    0x53, 0x46, 0x5C, 0x46, 0x1F, 0xB4, 0x86, 0xB0,
+    0x01, 0x7B, 0x00, 0x29
+  };
+
+  auto& rom = game_pak.GetRawROM();
+
+  for (u32 address = 0; address < rom.size(); address += 2) {
+    bool match = true;
+
+    for (int i = 0; i < sizeof(pattern); i++) {
+      if (rom[address + i] != pattern[i]) {
+        match = false;
+        break;
+      }
+    }
+
+    if (match) {
+      // We have found SoundMain(), the address of SoundMainRAM()
+      // is stored relative to SoundMain().
+      mp2k_soundmain_address = common::read<u32>(rom.data(), address + 0x74);
+
+      LOG_INFO("MP2K: found SoundMainRAM() routine at 0x{0:08X}.", mp2k_soundmain_address);
+
+      if (mp2k_soundmain_address & 1) {
+        mp2k_soundmain_address &= ~1;
+        mp2k_soundmain_address += sizeof(u16) * 2;
+      } else {
+        mp2k_soundmain_address &= ~3;
+        mp2k_soundmain_address += sizeof(u32) * 2;
+      }
+      return;
+    }
+  }
+}
+
+void CPU::MP2KOnSoundMainRAMCalled() {
+  M4ASoundInfo* sound_info;
+  auto address = ReadWord(0x03007FF0, Access::Sequential);
+
+  // Get host pointer to SoundMain structure.
+  switch (address >> 24) {
+    case 0x02: {
+      sound_info = (M4ASoundInfo*)&memory.wram[address & 0x3FFFF];
+      break;
+    }
+    case 0x03: {
+      sound_info = (M4ASoundInfo*)&memory.iram[address & 0x7FFF];
+      break;
+    }
+    default: {
+      ASSERT(false, "MP2K HLE: SoundInfo structure is at unsupported address 0x{0:08X}.", address);
+      break;
+    }
+  }
+
+  apu.MP2KSoundMainRAM(*sound_info);
 }
 
 } // namespace nba::core

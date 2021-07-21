@@ -9,7 +9,9 @@
 
 #include <common/dsp/resampler.hpp>
 #include <common/dsp/ring_buffer.hpp>
+#include <common/m4a.hpp>
 #include <emulator/config/config.hpp>
+#include <emulator/core/arm/memory.hpp>
 #include <emulator/core/hw/dma.hpp>
 #include <emulator/core/scheduler.hpp>
 #include <mutex>
@@ -26,11 +28,13 @@ struct APU {
   APU(
     Scheduler& scheduler,
     DMA& dma,
+    arm::MemoryBase& memory,
     std::shared_ptr<Config>
   );
 
   void Reset();
   void OnTimerOverflow(int timer_id, int times, int samplerate);
+  void MP2KSoundMainRAM(M4ASoundInfo sound_info);
 
   struct MMIO {
     MMIO(Scheduler& scheduler)
@@ -51,6 +55,8 @@ struct APU {
     BIAS bias;
   } mmio;
 
+  // TODO: make stuff private if it is possible.
+
   s8 latch[2];
   std::shared_ptr<common::dsp::RingBuffer<float>> fifo_buffer[2];
   std::unique_ptr<common::dsp::Resampler<float>> fifo_resampler[2];
@@ -63,11 +69,22 @@ struct APU {
 private:
   void StepMixer(int cycles_late);
   void StepSequencer(int cycles_late);
+  void MP2KCustomMixer();
 
   Scheduler& scheduler;
   DMA& dma;
+  arm::MemoryBase& memory;
   std::shared_ptr<Config> config;
   int resolution_old = 0;
+  
+  struct MP2K {
+    static constexpr int kSamplesPerFrame = 65536 / 60 + 1;
+
+    bool engaged = false;
+    float buffer[kSamplesPerFrame][2];
+    int read_index = 0;
+    M4ASoundInfo sound_info;
+  } mp2k;
 };
 
 } // namespace nba::core

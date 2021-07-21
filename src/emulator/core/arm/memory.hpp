@@ -28,6 +28,8 @@ struct MemoryBase {
   virtual void WriteWord(u32 address, u32 value, Access access) = 0;
 
   virtual void Idle() = 0;
+
+  bool the_pain = false;
 };
 
 } // namespace nba::core::arm

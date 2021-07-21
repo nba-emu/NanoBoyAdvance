@@ -151,6 +151,10 @@ private:
   }
 
   void ALWAYS_INLINE PrefetchStepRAM(int cycles) noexcept {
+    if (the_pain) {
+      return;
+    }
+
     // TODO: bypass prefetch RAM step during DMA?
     if (unlikely(!mmio.waitcnt.prefetch)) {
       Tick(cycles);
@@ -192,6 +196,10 @@ private:
   }
 
   void ALWAYS_INLINE PrefetchStepROM(u32 address, int cycles) noexcept {
+    if (the_pain) {
+      return;
+    }
+
     // TODO: bypass prefetch ROM step during DMA?
     if (unlikely(!mmio.waitcnt.prefetch)) {
       Tick(cycles);
@@ -226,17 +234,12 @@ private:
   }
 
   void UpdateMemoryDelayTable();
-
-  void M4ASearchForSampleFreqSet();
-  void M4ASampleFreqSetHook();
-  void M4AFixupPercussiveChannels();
-
   void CheckKeypadInterrupt();
   void OnKeyPress();
+  void MP2KSearchSoundMainRAM();
+  void MP2KOnSoundMainRAMCalled();
 
-  M4ASoundInfo* m4a_soundinfo;
-  int m4a_original_freq = 0;
-  u32 m4a_setfreq_address = 0;
+  u32 mp2k_soundmain_address;
 
   /* GamePak prefetch buffer state. */
   struct Prefetch {
