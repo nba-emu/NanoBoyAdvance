@@ -121,9 +121,6 @@ void APU::OnTimerOverflow(int timer_id, int times, int samplerate) {
 }
 
 void APU::StepMixer(int cycles_late) {
-  // TODO: unify as much code as possible
-  // TODO: remove the interpolate FIFOs option? it might be a maintanence burden...
-
   constexpr int psg_volume_tab[4] = { 1, 2, 4, 0 };
   constexpr int dma_volume_tab[2] = { 2, 4 };
 
@@ -267,26 +264,27 @@ static struct {
 void APU::MP2KSoundMainRAM(M4ASoundInfo sound_info) {
   using Access = arm::MemoryBase::Access;
 
-  auto max_channels = sound_info.maxChans;
+  if (sound_info.magic != 0x68736D54) {
+    return;
+  }
 
-  // TODO: validate magic number before claiming to be enganged.
   mp2k.engaged = true;
+
+  auto max_channels = sound_info.maxChans;
 
   for (int i = 0; i < max_channels; i++) {
     auto& channel = sound_info.channels[i];
 
-    auto channel_status = channel.status;
-    auto channel_status_updated = (u32)channel_status;
     u32 envelope_volume;
     u32 wav_address;
 
-    if (channel_status & CHANNEL_ON) {
-      if (!(channel_status & CHANNEL_START)) {
+    if (channel.status & CHANNEL_ON) {
+      if (!(channel.status & CHANNEL_START)) {
         envelope_volume = (u32)channel.ev;
 
-        if (!(channel_status & CHANNEL_IEC)) {
-          if (!(channel_status & CHANNEL_STOP)) {
-            if ((channel_status_updated & CHANNEL_ENV_MASK) == CHANNEL_ENV_DECAY) {
+        if (!(channel.status & CHANNEL_IEC)) {
+          if (!(channel.status & CHANNEL_STOP)) {
+            if ((channel.status & CHANNEL_ENV_MASK) == CHANNEL_ENV_DECAY) {
               auto envelope_sustain = channel.sustain;
 
               envelope_volume = (envelope_volume * channel.decay) >> 8;
@@ -295,53 +293,49 @@ void APU::MP2KSoundMainRAM(M4ASoundInfo sound_info) {
                 if (envelope_sustain == 0) {
                   goto SetupEnvelopeEchoMaybe;
                 }
-
-                channel_status_updated--; // -> CHANNEL_ENV_SUSTAIN
-                channel.status = (u8)channel_status_updated;
+                channel.status = (channel.status & ~CHANNEL_ENV_MASK) | CHANNEL_ENV_SUSTAIN;
                 envelope_volume = envelope_sustain;
               }
-            } else if ((channel_status_updated & CHANNEL_ENV_MASK) == CHANNEL_ENV_ATTACK) {
-              goto LAB_082df230;
+            } else if ((channel.status & CHANNEL_ENV_MASK) == CHANNEL_ENV_ATTACK) {
+              goto ApplyAttack;
             }
           } else {
             envelope_volume = (envelope_volume * channel.release) >> 8;
             if (envelope_volume <= channel.echoVolume) {
 SetupEnvelopeEchoMaybe:
               if (channel.echoVolume == 0) {
-                goto StopChannel;
+                channel.status = 0;
+                continue;
               }
 
-              channel_status_updated = channel_status_updated | CHANNEL_IEC;
-              channel.status = (u8)channel_status_updated;
+              channel.status |= CHANNEL_IEC;
               envelope_volume = (u32)channel.echoVolume;
             }
           }
-        
         } else {
           auto echo_length = channel.echoLength;
           auto echo_length_updated = (u32)echo_length - 1;
           channel.echoLength = echo_length_updated;
           if (echo_length == 0 || echo_length_updated == 0) {
-            goto StopChannel;
+            channel.status = 0;
+            continue;
           }
         }
       } else {
-        if (channel_status & CHANNEL_STOP) {
-StopChannel:
+        if (channel.status & CHANNEL_STOP) {
           channel.status = 0;
           continue;
         }
 
-        channel_status_updated = CHANNEL_ENV_ATTACK;
-        channel.status = channel_status_updated;
+        channel.status = CHANNEL_ENV_ATTACK;
         // channel->current_wave_data = &wave->first_sample + channel->current_wave_time_maybe;
         // channel->current_wave_time_maybe = wave->number_of_samples - channel->current_wave_time_maybe;
         envelope_volume = 0;
         channel.ev = envelope_volume; // 0
         // Note: the following code seems to be related to looping.
-        channel.fw = 0; // <- seems to go into channel_status_updated later???
+        channel.fw = 0; // <- seems to go into channel.status later???
         // if ((*(byte *)((int)&wave->status + 1) & 0xc0) != 0) {
-        //   channel_status_updated = 0x13; // CHANNEL_LOOP | CHANNEL_ENV_ATTACK
+        //   channel.status = 0x13; // CHANNEL_LOOP | CHANNEL_ENV_ATTACK
         //   channel->status = '\x13';
         // }
 
@@ -359,11 +353,10 @@ StopChannel:
           sample = 0;
         }
 
-LAB_082df230:
+ApplyAttack:
         envelope_volume += channel.attack;
         if (envelope_volume > 0xFE) {
-          channel_status_updated--;
-          channel.status = channel_status_updated;
+          channel.status = (channel.status & ~CHANNEL_ENV_MASK) | CHANNEL_ENV_DECAY;
           envelope_volume = 0xFF;
         }
       }
@@ -379,14 +372,14 @@ LAB_082df230:
     
     // Note: the first part of this code checks if the sample should loop,
     // then calculates the pointer to the sample at the loop position and the loop length?
-    // uStack00000010 = channel_status_updated & 0x10;
+    // uStack00000010 = channel.status & 0x10;
     // if (uStack00000010 != 0) {
     //   in_stack_0000000c = &wave->first_sample + wave->loop_start;
     //   uStack00000010 = wave->number_of_samples - wave->loop_start;
     // }
     // current_wave_time_maybe = channel->current_wave_time_maybe;
     // current_wave_data = channel->current_wave_data;
-    // channel_status_updated = channel->fw;
+    // channel.status = channel->fw;
   }
 
   mp2k.sound_info = sound_info;
