@@ -78,12 +78,15 @@ private:
   int resolution_old = 0;
   
   struct MP2K {
+    static constexpr int kDMABufferSize = 1582;
     static constexpr int kSampleRate = 65536;
     static constexpr int kSamplesPerFrame = kSampleRate / 60 + 1;
 
     bool engaged = false;
-    float buffer[kSamplesPerFrame][2];
+    std::unique_ptr<float[]> buffer_;
+    int total_frame_count = 0;
     int read_index = 0;
+    int current_frame = 0;
     M4ASoundInfo sound_info;
   } mp2k;
 };

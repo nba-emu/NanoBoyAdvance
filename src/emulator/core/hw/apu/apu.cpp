@@ -137,7 +137,7 @@ void APU::StepMixer(int cycles_late) {
       resolution_old = 1;
     }
 
-    float* mp2k_sample = mp2k.buffer[mp2k.read_index];
+    float* mp2k_sample = &mp2k.buffer_[(mp2k.current_frame * MP2K::kSamplesPerFrame + mp2k.read_index) * 2];
 
     if (mp2k.read_index == 0) {
       MP2KCustomMixer();
@@ -165,6 +165,7 @@ void APU::StepMixer(int cycles_late) {
 
     if (++mp2k.read_index == MP2K::kSamplesPerFrame) {
       mp2k.read_index = 0;
+      mp2k.current_frame = (mp2k.current_frame + 1) % mp2k.total_frame_count;
     }
 
     buffer_mutex.lock();
@@ -268,7 +269,15 @@ void APU::MP2KSoundMainRAM(M4ASoundInfo sound_info) {
     return;
   }
 
-  mp2k.engaged = true;
+  if (!mp2k.engaged) {
+    ASSERT(sound_info.pcmSamplesPerVBlank != 0, "MP2K: samples per V-blank must not be zero.");
+
+    mp2k.total_frame_count = MP2K::kDMABufferSize / sound_info.pcmSamplesPerVBlank;
+    mp2k.buffer_ = std::make_unique<float[]>(
+      MP2K::kSamplesPerFrame * mp2k.total_frame_count * 2
+    );
+    mp2k.engaged = true;
+  }
 
   auto max_channels = sound_info.maxChans;
 
@@ -388,7 +397,7 @@ ApplyAttack:
 void APU::MP2KCustomMixer() {
   using Access = arm::MemoryBase::Access;
 
-  #define S8F(value) (s8(value) / 128.0)
+  #define S8F(value) (s8(value) / 127.0)
 
   static constexpr float kDifferentialLUT[] = {
     S8F(0x00), S8F(0x01), S8F(0x04), S8F(0x09),
@@ -401,14 +410,27 @@ void APU::MP2KCustomMixer() {
   auto reverb = sound_info.reverb;
   auto max_channels = sound_info.maxChans;
 
+  auto destination = &mp2k.buffer_[mp2k.current_frame * MP2K::kSamplesPerFrame * 2];
+
   if (reverb == 0) {
-    std::memset(mp2k.buffer, 0, sizeof(mp2k.buffer));
+    std::memset(destination, 0, MP2K::kSamplesPerFrame * 2 * sizeof(float));
   } else {
-    // TODO: this reverb algorithm isn't actually the correct formula.
+    auto factor = reverb / (128.0 * 4.0);
+    auto other_frame  = (mp2k.current_frame + 1) % mp2k.total_frame_count;
+    auto other_buffer = &mp2k.buffer_[other_frame * MP2K::kSamplesPerFrame * 2];
+
     for (int i = 0; i < MP2K::kSamplesPerFrame; i++) {
-      auto new_sample = (mp2k.buffer[i][0] * reverb + mp2k.buffer[i][1]) / 256.0;
-      mp2k.buffer[i][0] = new_sample;
-      mp2k.buffer[i][1] = new_sample;
+      float sample_out = 0;
+
+      sample_out += other_buffer[i * 2 + 0];
+      sample_out += other_buffer[i * 2 + 1];
+      sample_out += destination[i * 2 + 0];
+      sample_out += destination[i * 2 + 1];
+
+      sample_out *= factor;
+
+      destination[i * 2 + 0] = sample_out;
+      destination[i * 2 + 1] = sample_out;
     }
   }
   
@@ -482,10 +504,11 @@ void APU::MP2KCustomMixer() {
       float a1 = sample_history[3] - sample_history[2] - a0;
       float a2 = sample_history[1] - sample_history[3];
       float a3 = sample_history[2]; 
-      float sample = a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3;
+      // float sample = a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3;
+      float sample = sample_history[0] * mu + sample_history[1] * (1.0 - mu);
 
-      mp2k.buffer[j][0] += sample * volume_r;
-      mp2k.buffer[j][1] += sample * volume_l;
+      destination[j * 2 + 0] += sample * volume_r;
+      destination[j * 2 + 1] += sample * volume_l;
 
       cache.resample_phase += angular_step;
 

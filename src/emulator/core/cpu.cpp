@@ -208,6 +208,13 @@ void CPU::MP2KOnSoundMainRAMCalled() {
   M4ASoundInfo* sound_info;
   auto address = ReadWord(0x03007FF0, Access::Sequential);
 
+  // auto pcm_dma_counter = state.r4;
+  // auto r5 = state.r5;
+  // auto r6 = state.r6;
+  // // TODO: make sure sizeof(M4ASoundInfo) is correct
+  // auto offset = r5 - (address + sizeof(M4ASoundInfo));
+  // LOG_INFO("offset={} pcm_buffer_size={} pcm_dma_counter={}", offset, r6, pcm_dma_counter);
+
   // Get host pointer to SoundMain structure.
   switch (address >> 24) {
     case 0x02: {
