@@ -190,7 +190,7 @@ void CPU::MP2KSearchSoundMainRAM() {
       // is stored relative to SoundMain().
       mp2k_soundmain_address = common::read<u32>(rom.data(), address + 0x74);
 
-      LOG_INFO("MP2K: found SoundMainRAM() routine at 0x{0:08X}.", address);
+      LOG_INFO("MP2K: found SoundMainRAM() routine at 0x{0:08X}.", mp2k_soundmain_address);
 
       if (mp2k_soundmain_address & 1) {
         mp2k_soundmain_address &= ~1;
@@ -207,13 +207,6 @@ void CPU::MP2KSearchSoundMainRAM() {
 void CPU::MP2KOnSoundMainRAMCalled() {
   M4ASoundInfo* sound_info;
   auto address = ReadWord(0x03007FF0, Access::Sequential);
-
-  // auto pcm_dma_counter = state.r4;
-  // auto r5 = state.r5;
-  // auto r6 = state.r6;
-  // // TODO: make sure sizeof(M4ASoundInfo) is correct
-  // auto offset = r5 - (address + sizeof(M4ASoundInfo));
-  // LOG_INFO("offset={} pcm_buffer_size={} pcm_dma_counter={}", offset, r6, pcm_dma_counter);
 
   // Get host pointer to SoundMain structure.
   switch (address >> 24) {
