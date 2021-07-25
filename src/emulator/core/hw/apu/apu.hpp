@@ -78,7 +78,8 @@ private:
   int resolution_old = 0;
   
   struct MP2K {
-    static constexpr int kSamplesPerFrame = 65536 / 60 + 1;
+    static constexpr int kSampleRate = 65536;
+    static constexpr int kSamplesPerFrame = kSampleRate / 60 + 1;
 
     bool engaged = false;
     float buffer[kSamplesPerFrame][2];

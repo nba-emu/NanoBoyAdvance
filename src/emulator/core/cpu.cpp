@@ -190,7 +190,7 @@ void CPU::MP2KSearchSoundMainRAM() {
       // is stored relative to SoundMain().
       mp2k_soundmain_address = common::read<u32>(rom.data(), address + 0x74);
 
-      LOG_INFO("MP2K: found SoundMainRAM() routine at 0x{0:08X}.", mp2k_soundmain_address);
+      LOG_INFO("MP2K: found SoundMainRAM() routine at 0x{0:08X}.", address);
 
       if (mp2k_soundmain_address & 1) {
         mp2k_soundmain_address &= ~1;

@@ -14,10 +14,6 @@
 
 #include "apu.hpp"
 
-// FIXME
-#include <fstream>
-static std::ofstream dump{"audio_out.bin", std::ios::binary};
-
 namespace nba::core {
 
 // See callback.cpp for implementation
@@ -160,7 +156,7 @@ void APU::StepMixer(int cycles_late) {
 
       sample[channel] += psg_sample * psg_volume * psg.master[channel] / (28.0 * 0x200);
 
-      /* TODO: we assume that MP2K sends left channel to FIFO A and right channel to FIFO B,
+      /* TODO: we assume that MP2K sends right channel to FIFO A and left channel to FIFO B,
        * but we haven't verified that this is actually correct.
        */
       for (int fifo = 0; fifo < 2; fifo++) {
@@ -239,38 +235,41 @@ void APU::StepSequencer(int cycles_late) {
   scheduler.Add(BaseChannel::s_cycles_per_step - cycles_late, this, &APU::StepSequencer);
 }
 
+enum Status : u8 {
+  CHANNEL_START = 0x80,
+  CHANNEL_STOP = 0x40,
+  CHANNEL_LOOP = 0x10,
+  CHANNEL_IEC = 0x04,
+
+  CHANNEL_ENV_MASK = 0x03,
+  CHANNEL_ENV_ATTACK = 0x03,
+  CHANNEL_ENV_DECAY = 0x02,
+  CHANNEL_ENV_SUSTAIN = 0x01,
+  CHANNEL_ENV_RELEASE = 0x00,
+  
+  CHANNEL_ON = CHANNEL_START | CHANNEL_STOP | CHANNEL_IEC | CHANNEL_ENV_MASK 
+};
+
 // TODO: move this to the member variables, nerd.
 static struct {
   bool forward_loop;
-  std::uint32_t frequency;
-  std::uint32_t loop_sample_index;
-  std::uint32_t number_of_samples;
-  std::uint32_t data_address;
-  float current_sample_index;
+  u32 sample_rate;
+  u32 loop_position;
+  u32 number_of_samples;
+  u32 pcm_base_address;
+  int current_position;
+
+  float sample_history[4];
+  float resample_phase;
+  bool should_fetch_sample;
 } channel_cache[kM4AMaxDirectSoundChannels];
 
 void APU::MP2KSoundMainRAM(M4ASoundInfo sound_info) {
   using Access = arm::MemoryBase::Access;
 
-  // https://github.com/pret/pokeemerald/blob/9a195c0fef7a47e5ab55c7047d80969c9cd6e44e/include/gba/m4a_internal.h#L70-L79
-  enum Status : u8 {
-    CHANNEL_START = 0x80,
-    CHANNEL_STOP = 0x40,
-    CHANNEL_LOOP = 0x10,
-    CHANNEL_IEC = 0x04,
-
-    CHANNEL_ENV_MASK = 0x03,
-    CHANNEL_ENV_ATTACK = 0x03,
-    CHANNEL_ENV_DECAY = 0x02,
-    CHANNEL_ENV_SUSTAIN = 0x01,
-    CHANNEL_ENV_RELEASE = 0x00,
-    
-    CHANNEL_ON = CHANNEL_START | CHANNEL_STOP | CHANNEL_IEC | CHANNEL_ENV_MASK 
-  };
-
   auto max_channels = sound_info.maxChans;
 
-  // TODO: perform some validation (magic number e.g.) before claiming to be enganged.
+  // TODO: validate magic number before claiming to be enganged.
   mp2k.engaged = true;
 
   for (int i = 0; i < max_channels; i++) {
@@ -281,7 +280,6 @@ void APU::MP2KSoundMainRAM(M4ASoundInfo sound_info) {
     u32 envelope_volume;
     u32 wav_address;
 
-    // TODO: make sense of this hot mess and clean it up...
     if (channel_status & CHANNEL_ON) {
       if (!(channel_status & CHANNEL_START)) {
         envelope_volume = (u32)channel.ev;
@@ -350,11 +348,16 @@ StopChannel:
         // custom zorgz
         wav_address = sound_info.channels[i].wav;
         channel_cache[i].forward_loop = memory.ReadHalf(wav_address + 2, Access::Sequential) != 0;
-        channel_cache[i].frequency = memory.ReadWord(wav_address + 4, Access::Sequential);
-        channel_cache[i].loop_sample_index = memory.ReadWord(wav_address + 8, Access::Sequential);
+        channel_cache[i].sample_rate = memory.ReadWord(wav_address + 4, Access::Sequential);
+        channel_cache[i].loop_position = memory.ReadWord(wav_address + 8, Access::Sequential);
         channel_cache[i].number_of_samples = memory.ReadWord(wav_address + 12, Access::Sequential);
-        channel_cache[i].data_address = wav_address + 16;
-        channel_cache[i].current_sample_index = 0;
+        channel_cache[i].pcm_base_address = wav_address + 16;
+        channel_cache[i].current_position = 0;
+        channel_cache[i].resample_phase = 0;
+        channel_cache[i].should_fetch_sample = true;
+        for (auto& sample : channel_cache[i].sample_history) {
+          sample = 0;
+        }
 
 LAB_082df230:
         envelope_volume += channel.attack;
@@ -384,8 +387,6 @@ LAB_082df230:
     // current_wave_time_maybe = channel->current_wave_time_maybe;
     // current_wave_data = channel->current_wave_data;
     // channel_status_updated = channel->fw;
-
-    //fmt::print("{:02X} ", channel.ev);
   }
 
   mp2k.sound_info = sound_info;
@@ -394,19 +395,23 @@ LAB_082df230:
 void APU::MP2KCustomMixer() {
   using Access = arm::MemoryBase::Access;
 
+  #define S8F(value) (s8(value) / 128.0)
+
+  static constexpr float kDifferentialLUT[] = {
+    S8F(0x00), S8F(0x01), S8F(0x04), S8F(0x09),
+    S8F(0x10), S8F(0x19), S8F(0x24), S8F(0x31),
+    S8F(0xC0), S8F(0xCF), S8F(0xDC), S8F(0xE7),
+    S8F(0xF0), S8F(0xF7), S8F(0xFC), S8F(0xFF)
+  };
+
   auto const& sound_info = mp2k.sound_info;
   auto reverb = sound_info.reverb;
   auto max_channels = sound_info.maxChans;
 
-  // TODO: reset buffer read index to avoid desync?
-  // TODO: round up number of samples instead of rounding down?
-
-  // mp2k.read_index = 0;
-
   if (reverb == 0) {
     std::memset(mp2k.buffer, 0, sizeof(mp2k.buffer));
   } else {
-    // Reverb algorithm as found in Pokémon:
+    // TODO: this reverb algorithm isn't actually the correct formula.
     for (int i = 0; i < MP2K::kSamplesPerFrame; i++) {
       auto new_sample = (mp2k.buffer[i][0] * reverb + mp2k.buffer[i][1]) / 256.0;
       mp2k.buffer[i][0] = new_sample;
@@ -416,86 +421,96 @@ void APU::MP2KCustomMixer() {
   
   for (int i = 0; i < max_channels; i++) {
     auto& channel = sound_info.channels[i];
+    auto& cache = channel_cache[i];
 
-    // Channel is not playing I guess?
-    if ((channel.status & 0xC7) == 0) {
+    if ((channel.status & CHANNEL_ON) == 0 || cache.sample_rate == 0) {
       continue;
     }
 
-    auto& cache = channel_cache[i];
+    // TODO: clean the calculation of the resampling step up.
+    auto sample_rate = cache.sample_rate / 1024.0;
+    auto note_freq = (std::uint64_t(channel.freq) << 32) / cache.sample_rate / 16384.0;
+    auto angular_step = note_freq / 256.0 * (sample_rate / float(MP2K::kSampleRate));
 
-    // if (cache.frequency == 0) {
-    //   // Welp, not sure what to do in that case.
-    //   continue;
-    // }
-
-    auto sample_rate = cache.frequency / 1024.0;
-    auto note_freq = (std::uint64_t(channel.freq) << 32) / cache.frequency / 16384.0;
-    auto angular_step = note_freq / 256.0 * (sample_rate / 65536.0);
-
-    // TODO: clean this big mess up.
-    if (channel.type == 1) continue;
-    if (channel.type == 2) continue;
-    if (channel.type == 3) continue;
-    if (channel.type == 4) continue;
-    if (channel.type == 8) {
-      // TODO: this appears to be wrong?
-      angular_step = (sound_info.pcmFreq / 65536.0);
-      // angular_step = sample_rate / 65536.0;
+    if ((channel.type & 8) != 0) {
+      angular_step = (sound_info.pcmFreq / float(MP2K::kSampleRate));
     }
 
+    auto volume_l = channel.el / 255.0;
+    auto volume_r = channel.er / 255.0;
+    bool compressed = (channel.type & 32) != 0;
+    auto sample_history = cache.sample_history;
+
     for (int j = 0; j < MP2K::kSamplesPerFrame; j++) {
-      // TODO: implement cubic interpolation in a cleaner, more accurate way!!!
-      auto index0 = int(cache.current_sample_index);
-      auto index1 = std::max(0, index0 - 1);
-      auto index2 = std::max(0, index0 - 2);
-      auto index3 = std::max(0, index0 - 3);
+      if (cache.should_fetch_sample) {
+        float sample;
+        
+        memory.the_pain = true;
 
-      memory.the_pain = true;
+        if (compressed) {
+          auto block_offset  = cache.current_position & 63;
+          auto block_address = cache.pcm_base_address + (cache.current_position >> 6) * 33;
 
-      auto sample3 = std::int8_t(memory.ReadByte(cache.data_address + index3, Access::Sequential)) / 128.0;
-      auto sample2 = std::int8_t(memory.ReadByte(cache.data_address + index2, Access::Sequential)) / 128.0;
-      auto sample1 = std::int8_t(memory.ReadByte(cache.data_address + index1, Access::Sequential)) / 128.0;
-      auto sample0 = std::int8_t(memory.ReadByte(cache.data_address + index0, Access::Sequential)) / 128.0;
+          if (block_offset == 0) {
+            sample = S8F(memory.ReadByte(block_address, Access::Sequential));
+          } else {
+            sample = sample_history[0];
+          }
 
-      memory.the_pain = false;
+          auto address = block_address + (block_offset >> 1) + 1;
+          auto lut_index = memory.ReadByte(address, Access::Sequential);
 
-      float a0, a1, a2, a3;
-      float mu, mu2;    
-      mu  = cache.current_sample_index - int(cache.current_sample_index);
-      mu2 = mu * mu;
-      a0 = sample0 - sample1 - sample3 + sample2;
-      a1 = sample3 - sample2 - a0;
-      a2 = sample1 - sample3;
-      a3 = sample2;
+          if (block_offset & 1) {
+            lut_index &= 15;
+          } else {
+            lut_index >>= 4;
+          }
 
-      auto sample = a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3;
-
-      mp2k.buffer[j][0] += sample * channel.el / 255.0;
-      mp2k.buffer[j][1] += sample * channel.er / 255.0;
-
-      cache.current_sample_index += angular_step;
-
-      if (cache.current_sample_index >= cache.number_of_samples) {
-        if (cache.forward_loop) {
-          do {
-            cache.current_sample_index -= cache.number_of_samples;
-          } while (cache.current_sample_index >= cache.number_of_samples);
-
-          cache.current_sample_index += cache.loop_sample_index;
+          sample += kDifferentialLUT[lut_index];
         } else {
-          cache.current_sample_index = cache.number_of_samples;
+          auto address = cache.pcm_base_address + cache.current_position;
+          sample = S8F(memory.ReadByte(address, Access::Sequential));
+        }
+        
+        memory.the_pain = false;
+      
+        sample_history[3] = sample_history[2];
+        sample_history[2] = sample_history[1];
+        sample_history[1] = sample_history[0];
+        sample_history[0] = sample;
+
+        cache.should_fetch_sample = false;
+      }
+
+      // http://paulbourke.net/miscellaneous/interpolation/
+      float mu  = cache.resample_phase;
+      float mu2 = mu * mu;
+      float a0 = sample_history[0] - sample_history[1] - sample_history[3] + sample_history[2];
+      float a1 = sample_history[3] - sample_history[2] - a0;
+      float a2 = sample_history[1] - sample_history[3];
+      float a3 = sample_history[2]; 
+      float sample = a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3;
+
+      mp2k.buffer[j][0] += sample * volume_r;
+      mp2k.buffer[j][1] += sample * volume_l;
+
+      cache.resample_phase += angular_step;
+
+      if (cache.resample_phase >= 1) {
+        cache.resample_phase -= 1;
+        cache.should_fetch_sample = true;
+
+        if (++cache.current_position >= cache.number_of_samples) {
+          if (cache.forward_loop) {
+            cache.current_position = cache.loop_position;
+          } else {
+            cache.current_position = cache.number_of_samples;
+            cache.should_fetch_sample = false;
+          }
         }
       }
     }
   }
-
-  // for (int i = 0; i < MP2K::kSamplesPerFrame; i++) {
-  //   mp2k.derp_buffer->Write({mp2k.buffer[i][0], mp2k.buffer[i][1]});
-  // }
-
-  // Dump samples to disk for debugging
-  dump.write((char*)mp2k.buffer, sizeof(mp2k.buffer));
 }
 
 } // namespace nba::core
