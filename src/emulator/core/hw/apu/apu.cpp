@@ -490,12 +490,14 @@ void APU::MP2KCustomMixer() {
       cache.resample_phase += angular_step;
 
       if (cache.resample_phase >= 1) {
-        cache.resample_phase -= 1;
+        auto n = int(cache.resample_phase);
+        cache.resample_phase -= n;
+        cache.current_position += n;
         cache.should_fetch_sample = true;
 
-        if (++cache.current_position >= cache.number_of_samples) {
+        if (cache.current_position >= cache.number_of_samples) {
           if (cache.forward_loop) {
-            cache.current_position = cache.loop_position;
+            cache.current_position = cache.loop_position + n - 1;
           } else {
             cache.current_position = cache.number_of_samples;
             cache.should_fetch_sample = false;
