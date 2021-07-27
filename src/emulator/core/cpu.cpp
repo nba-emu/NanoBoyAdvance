@@ -224,7 +224,7 @@ void CPU::MP2KOnSoundMainRAMCalled() {
     }
   }
 
-  apu.MP2KSoundMainRAM(*sound_info);
+  apu.GetMP2K().SoundMainRAM(*sound_info);
 }
 
 } // namespace nba::core

@@ -22,6 +22,7 @@ set(SOURCES
   emulator/core/hw/apu/channel/wave_channel.cpp
   emulator/core/hw/apu/apu.cpp
   emulator/core/hw/apu/callback.cpp
+  emulator/core/hw/apu/mp2k.cpp
   emulator/core/hw/apu/registers.cpp
   emulator/core/hw/ppu/render/affine.cpp
   emulator/core/hw/ppu/render/bitmap.cpp
@@ -90,6 +91,7 @@ set(HEADERS
   emulator/core/hw/apu/channel/sweep.hpp
   emulator/core/hw/apu/channel/wave_channel.hpp
   emulator/core/hw/apu/apu.hpp
+  emulator/core/hw/apu/mp2k.hpp
   emulator/core/hw/apu/registers.hpp
   emulator/core/hw/ppu/helper.inl
   emulator/core/hw/ppu/ppu.hpp

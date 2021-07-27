@@ -9,7 +9,6 @@
 
 #include <common/dsp/resampler.hpp>
 #include <common/dsp/ring_buffer.hpp>
-#include <common/m4a.hpp>
 #include <emulator/config/config.hpp>
 #include <emulator/core/arm/memory.hpp>
 #include <emulator/core/hw/dma.hpp>
@@ -20,6 +19,7 @@
 #include "channel/wave_channel.hpp"
 #include "channel/noise_channel.hpp"
 #include "channel/fifo.hpp"
+#include "mp2k.hpp"
 #include "registers.hpp"
 
 namespace nba::core {
@@ -33,8 +33,8 @@ struct APU {
   );
 
   void Reset();
+  auto GetMP2K() -> MP2K& { return mp2k; }
   void OnTimerOverflow(int timer_id, int times, int samplerate);
-  void MP2KSoundMainRAM(M4ASoundInfo sound_info);
 
   struct MMIO {
     MMIO(Scheduler& scheduler)
@@ -69,26 +69,14 @@ struct APU {
 private:
   void StepMixer(int cycles_late);
   void StepSequencer(int cycles_late);
-  void MP2KCustomMixer();
 
   Scheduler& scheduler;
   DMA& dma;
   arm::MemoryBase& memory;
+  MP2K mp2k;
+  int mp2k_read_index;
   std::shared_ptr<Config> config;
   int resolution_old = 0;
-  
-  struct MP2K {
-    static constexpr int kDMABufferSize = 1582;
-    static constexpr int kSampleRate = 65536;
-    static constexpr int kSamplesPerFrame = kSampleRate / 60 + 1;
-
-    bool engaged = false;
-    std::unique_ptr<float[]> buffer_;
-    int total_frame_count = 0;
-    int read_index = 0;
-    int current_frame = 0;
-    M4ASoundInfo sound_info;
-  } mp2k;
 };
 
 } // namespace nba::core
