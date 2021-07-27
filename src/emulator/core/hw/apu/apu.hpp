@@ -19,7 +19,7 @@
 #include "channel/wave_channel.hpp"
 #include "channel/noise_channel.hpp"
 #include "channel/fifo.hpp"
-#include "mp2k.hpp"
+#include "hle/mp2k.hpp"
 #include "registers.hpp"
 
 namespace nba::core {
@@ -55,13 +55,6 @@ struct APU {
     BIAS bias;
   } mmio;
 
-  // TODO: make stuff private if it is possible.
-
-  s8 latch[2];
-  std::shared_ptr<common::dsp::RingBuffer<float>> fifo_buffer[2];
-  std::unique_ptr<common::dsp::Resampler<float>> fifo_resampler[2];
-  int fifo_samplerate[2];
-
   std::mutex buffer_mutex;
   std::shared_ptr<common::dsp::StereoRingBuffer<float>> buffer;
   std::unique_ptr<common::dsp::StereoResampler<float>> resampler;
@@ -69,6 +62,11 @@ struct APU {
 private:
   void StepMixer(int cycles_late);
   void StepSequencer(int cycles_late);
+
+  s8 latch[2];
+  std::shared_ptr<common::dsp::RingBuffer<float>> fifo_buffer[2];
+  std::unique_ptr<common::dsp::Resampler<float>> fifo_resampler[2];
+  int fifo_samplerate[2];
 
   Scheduler& scheduler;
   DMA& dma;

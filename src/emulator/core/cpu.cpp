@@ -69,7 +69,7 @@ void CPU::Reset() {
   config->input_dev->SetOnChangeCallback(std::bind(&CPU::OnKeyPress,this));
 
   mp2k_soundmain_address = 0xFFFFFFFF;
-  if (config->audio.m4a_xq_enable) {
+  if (config->audio.enable_mp2k_hle) {
     MP2KSearchSoundMainRAM();
   }
 }
