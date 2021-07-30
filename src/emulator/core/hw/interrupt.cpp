@@ -24,12 +24,12 @@ auto IRQ::Read(int offset) const -> u8 {
 void IRQ::Write(int offset, u8 value) {
   switch (offset) {
     case REG_IE|0:
-      reg_ie &= 0xFF00;
+      reg_ie &= 0x3F00;
       reg_ie |= value;
       break;
     case REG_IE|1:
       reg_ie &= 0x00FF;
-      reg_ie |= value << 8;
+      reg_ie |= (value << 8) & 0x3F00;
       break;
     case REG_IF|0:
       reg_if &= ~value;
