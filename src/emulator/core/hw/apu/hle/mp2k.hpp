@@ -75,7 +75,7 @@ struct MP2K {
   }
 
   void Reset();  
-  void SoundMainRAM(SoundInfo sound_info);
+  void SoundMainRAM(SoundInfo const& sound_info);
   void RenderFrame();
   auto ReadSample() -> float*;
 

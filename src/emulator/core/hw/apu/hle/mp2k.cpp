@@ -21,7 +21,7 @@ void MP2K::Reset() {
   }
 }
 
-void MP2K::SoundMainRAM(SoundInfo sound_info) {
+void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
   using Access = arm::MemoryBase::Access;
 
   if (sound_info.magic != 0x68736D54) {
@@ -38,9 +38,11 @@ void MP2K::SoundMainRAM(SoundInfo sound_info) {
 
   auto max_channels = std::min(sound_info.max_channels, kMaxSoundChannels);
 
+  this->sound_info = sound_info;
+
   // TODO: clean this mess up.
   for (int i = 0; i < max_channels; i++) {
-    auto& channel = sound_info.channels[i];
+    auto& channel = this->sound_info.channels[i];
 
     u32 envelope_volume;
 
@@ -122,12 +124,10 @@ ApplyAttack:
     }
 
     channel.envelope_volume = (u8)envelope_volume;
-    envelope_volume = (envelope_volume * (sound_info.master_volume + 1)) >> 4;
+    envelope_volume = (envelope_volume * (this->sound_info.master_volume + 1)) >> 4;
     channel.envelope_volume_r = (u8)((envelope_volume * channel.volume_r) >> 8);
     channel.envelope_volume_l = (u8)((envelope_volume * channel.volume_l) >> 8);
   }
-
-  this->sound_info = sound_info;
 }
 
 void MP2K::RenderFrame() {
