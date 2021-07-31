@@ -11,7 +11,17 @@
 
 namespace nba::core {
 
-void MP2K::SoundMainRAM(M4ASoundInfo sound_info) {
+void MP2K::Reset() {
+  engaged = false;
+  total_frame_count = 0;
+  current_frame = 0;
+  buffer_read_index = 0;
+  for (auto& entry : channel_cache) {
+    entry = {};
+  }
+}
+
+void MP2K::SoundMainRAM(SoundInfo sound_info) {
   using Access = arm::MemoryBase::Access;
 
   if (sound_info.magic != 0x68736D54) {
@@ -19,60 +29,59 @@ void MP2K::SoundMainRAM(M4ASoundInfo sound_info) {
   }
 
   if (!engaged) {
-    ASSERT(sound_info.pcmSamplesPerVBlank != 0, "MP2K: samples per V-blank must not be zero.");
+    ASSERT(sound_info.pcm_samples_per_vblank != 0, "MP2K: samples per V-blank must not be zero.");
 
-    total_frame_count = kDMABufferSize / sound_info.pcmSamplesPerVBlank;
+    total_frame_count = kDMABufferSize / sound_info.pcm_samples_per_vblank;
     buffer = std::make_unique<float[]>(kSamplesPerFrame * total_frame_count * 2);
     engaged = true;
   }
 
-  auto max_channels = sound_info.maxChans;
+  auto max_channels = std::min(sound_info.max_channels, kMaxSoundChannels);
 
   // TODO: clean this mess up.
   for (int i = 0; i < max_channels; i++) {
     auto& channel = sound_info.channels[i];
 
     u32 envelope_volume;
-    u32 wav_address;
 
     if (channel.status & CHANNEL_ON) {
       if (!(channel.status & CHANNEL_START)) {
-        envelope_volume = (u32)channel.ev;
+        envelope_volume = (u32)channel.envelope_volume;
 
         if (!(channel.status & CHANNEL_IEC)) {
           if (!(channel.status & CHANNEL_STOP)) {
             if ((channel.status & CHANNEL_ENV_MASK) == CHANNEL_ENV_DECAY) {
-              auto envelope_sustain = channel.sustain;
+              auto envelope_envelope_sustain = channel.envelope_sustain;
 
-              envelope_volume = (envelope_volume * channel.decay) >> 8;
+              envelope_volume = (envelope_volume * channel.envelope_decay) >> 8;
             
-              if (envelope_volume <= envelope_sustain) {
-                if (envelope_sustain == 0) {
+              if (envelope_volume <= envelope_envelope_sustain) {
+                if (envelope_envelope_sustain == 0) {
                   goto SetupEnvelopeEchoMaybe;
                 }
                 channel.status = (channel.status & ~CHANNEL_ENV_MASK) | CHANNEL_ENV_SUSTAIN;
-                envelope_volume = envelope_sustain;
+                envelope_volume = envelope_envelope_sustain;
               }
             } else if ((channel.status & CHANNEL_ENV_MASK) == CHANNEL_ENV_ATTACK) {
               goto ApplyAttack;
             }
           } else {
-            envelope_volume = (envelope_volume * channel.release) >> 8;
-            if (envelope_volume <= channel.echoVolume) {
+            envelope_volume = (envelope_volume * channel.envelope_release) >> 8;
+            if (envelope_volume <= channel.echo_volume) {
 SetupEnvelopeEchoMaybe:
-              if (channel.echoVolume == 0) {
+              if (channel.echo_volume == 0) {
                 channel.status = 0;
                 continue;
               }
 
               channel.status |= CHANNEL_IEC;
-              envelope_volume = (u32)channel.echoVolume;
+              envelope_volume = (u32)channel.echo_volume;
             }
           }
         } else {
-          auto echo_length = channel.echoLength;
+          auto echo_length = channel.echo_length;
           auto echo_length_updated = (u32)echo_length - 1;
-          channel.echoLength = echo_length_updated;
+          channel.echo_length = echo_length_updated;
           if (echo_length == 0 || echo_length_updated == 0) {
             channel.status = 0;
             continue;
@@ -84,25 +93,11 @@ SetupEnvelopeEchoMaybe:
           continue;
         }
 
-        channel.status = CHANNEL_ENV_ATTACK;
-        // channel->current_wave_data = &wave->first_sample + channel->current_wave_time_maybe;
-        // channel->current_wave_time_maybe = wave->number_of_samples - channel->current_wave_time_maybe;
-        envelope_volume = 0;
-        channel.ev = envelope_volume; // 0
-        // Note: the following code seems to be related to looping.
-        channel.fw = 0; // <- seems to go into channel.status later???
-        // if ((*(byte *)((int)&wave->status + 1) & 0xc0) != 0) {
-        //   channel.status = 0x13; // CHANNEL_LOOP | CHANNEL_ENV_ATTACK
-        //   channel->status = '\x13';
-        // }
-
         // TODO: especially clean THIS mess up.
-        wav_address = sound_info.channels[i].wav;
-        channel_cache[i].forward_loop = memory.ReadHalf(wav_address + 2, Access::Sequential) != 0;
-        channel_cache[i].sample_rate = memory.ReadWord(wav_address + 4, Access::Sequential);
-        channel_cache[i].loop_position = memory.ReadWord(wav_address + 8, Access::Sequential);
-        channel_cache[i].number_of_samples = memory.ReadWord(wav_address + 12, Access::Sequential);
-        channel_cache[i].pcm_base_address = wav_address + 16;
+        channel_cache[i].sample_rate = memory.ReadWord(channel.wave_data_address + 4, Access::Sequential);
+        channel_cache[i].loop_position = memory.ReadWord(channel.wave_data_address + 8, Access::Sequential);
+        channel_cache[i].number_of_samples = memory.ReadWord(channel.wave_data_address + 12, Access::Sequential);
+        channel_cache[i].pcm_base_address = channel.wave_data_address + 16;
         channel_cache[i].current_position = 0;
         channel_cache[i].resample_phase = 0;
         channel_cache[i].should_fetch_sample = true;
@@ -110,8 +105,15 @@ SetupEnvelopeEchoMaybe:
           sample = 0;
         }
 
+        channel.status = CHANNEL_ENV_ATTACK;
+        channel.envelope_volume = 0;
+        envelope_volume = 0;
+        if (memory.ReadByte(channel.wave_data_address + 3, Access::Sequential) & 0xC0) {
+          channel.status |= CHANNEL_LOOP;
+        }
+
 ApplyAttack:
-        envelope_volume += channel.attack;
+        envelope_volume += channel.envelope_attack;
         if (envelope_volume > 0xFE) {
           channel.status = (channel.status & ~CHANNEL_ENV_MASK) | CHANNEL_ENV_DECAY;
           envelope_volume = 0xFF;
@@ -119,24 +121,10 @@ ApplyAttack:
       }
     }
 
-    channel.ev = (u8)envelope_volume;
-    envelope_volume = (envelope_volume * (sound_info.masterVolume + 1)) >> 4;
-    channel.er = (u8)((envelope_volume * channel.rightVolume) >> 8);
-    channel.el = (u8)((envelope_volume * channel.leftVolume) >> 8);
-
-    // Starting here it is probably best to reference the assembly code.
-    // The decompilation is really weird/confusing...
-    
-    // Note: the first part of this code checks if the sample should loop,
-    // then calculates the pointer to the sample at the loop position and the loop length?
-    // uStack00000010 = channel.status & 0x10;
-    // if (uStack00000010 != 0) {
-    //   in_stack_0000000c = &wave->first_sample + wave->loop_start;
-    //   uStack00000010 = wave->number_of_samples - wave->loop_start;
-    // }
-    // current_wave_time_maybe = channel->current_wave_time_maybe;
-    // current_wave_data = channel->current_wave_data;
-    // channel.status = channel->fw;
+    channel.envelope_volume = (u8)envelope_volume;
+    envelope_volume = (envelope_volume * (sound_info.master_volume + 1)) >> 4;
+    channel.envelope_volume_r = (u8)((envelope_volume * channel.volume_r) >> 8);
+    channel.envelope_volume_l = (u8)((envelope_volume * channel.volume_l) >> 8);
   }
 
   this->sound_info = sound_info;
@@ -160,7 +148,7 @@ void MP2K::RenderFrame() {
   current_frame = (current_frame + 1) % total_frame_count;
 
   auto reverb = sound_info.reverb;
-  auto max_channels = sound_info.maxChans;
+  auto max_channels = std::min(sound_info.max_channels, kMaxSoundChannels);
   auto destination = &buffer[current_frame * kSamplesPerFrame * 2];
 
   if (reverb == 0) {
@@ -195,15 +183,15 @@ void MP2K::RenderFrame() {
 
     // TODO: clean the calculation of the resampling step up.
     auto sample_rate = cache.sample_rate / 1024.0;
-    auto note_freq = (std::uint64_t(channel.freq) << 32) / cache.sample_rate / 16384.0;
+    auto note_freq = (std::uint64_t(channel.frequency) << 32) / cache.sample_rate / 16384.0;
     auto angular_step = note_freq / 256.0 * (sample_rate / float(kSampleRate));
 
     if ((channel.type & 8) != 0) {
-      angular_step = (sound_info.pcmFreq / float(kSampleRate));
+      angular_step = (sound_info.pcm_sample_rate / float(kSampleRate));
     }
 
-    auto volume_l = channel.el / 255.0;
-    auto volume_r = channel.er / 255.0;
+    auto volume_l = channel.envelope_volume_l / 255.0;
+    auto volume_r = channel.envelope_volume_r / 255.0;
     bool compressed = (channel.type & 32) != 0;
     auto sample_history = cache.sample_history;
 
@@ -270,7 +258,7 @@ void MP2K::RenderFrame() {
         cache.should_fetch_sample = true;
 
         if (cache.current_position >= cache.number_of_samples) {
-          if (cache.forward_loop) {
+          if (channel.status & CHANNEL_LOOP) {
             cache.current_position = cache.loop_position + n - 1;
           } else {
             cache.current_position = cache.number_of_samples;

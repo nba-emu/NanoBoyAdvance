@@ -8,44 +8,16 @@
 #pragma once
 
 #include <common/integer.hpp>
-#include <common/m4a.hpp>
 #include <emulator/core/arm/memory.hpp>
 
 namespace nba::core {
 
-// TODO: get rid of the extensive copying of e.g. M4ASoundInfo
-// TODO: move definition of M4ASoundInfo into this class.
+// TODO: get rid of the extensive copying of e.g. SoundInfo
 
 struct MP2K {
-  MP2K(arm::MemoryBase& memory) : memory(memory) {
-    Reset();
-  }
+  static constexpr u8 kMaxSoundChannels = 12;
 
-  void Reset() {
-    engaged = false;
-    total_frame_count = 0;
-    current_frame = 0;
-    buffer_read_index = 0;
-    for (auto& entry : channel_cache) {
-      entry = {};
-    }
-  }
-
-  bool IsEngaged() const {
-    return engaged;
-  }
-  
-  void SoundMainRAM(M4ASoundInfo sound_info);
-  void RenderFrame();
-  auto ReadSample() -> float*;
-
-private:
-  static constexpr int kDMABufferSize = 1582;
-  static constexpr int kSampleRate = 65536;
-  static constexpr int kSamplesPerFrame = kSampleRate / 60 + 1;
-
-  // TODO: get rid of this terribleness.
-  enum Status : u8 {
+  enum SoundChannelStatus : u8 {
     CHANNEL_START = 0x80,
     CHANNEL_STOP = 0x40,
     CHANNEL_LOOP = 0x10,
@@ -60,9 +32,60 @@ private:
     CHANNEL_ON = CHANNEL_START | CHANNEL_STOP | CHANNEL_IEC | CHANNEL_ENV_MASK 
   };
 
+  struct SoundChannel {
+    u8 status;
+    u8 type;
+    u8 volume_r;
+    u8 volume_l;
+    u8 envelope_attack;
+    u8 envelope_decay;
+    u8 envelope_sustain;
+    u8 envelope_release;
+    u8 unknown0;
+    u8 envelope_volume;
+    u8 envelope_volume_r;
+    u8 envelope_volume_l;
+    u8 echo_volume;
+    u8 echo_length;
+    u8 unknown1[18];
+    u32 frequency;
+    u32 wave_data_address;
+    u32 unknown2[6];
+  };
+
+  struct SoundInfo {
+    u32 magic;
+    u8 pcm_dma_counter;
+    u8 reverb;
+    u8 max_channels;
+    u8 master_volume;
+    u8 unknown0[8];
+    s32 pcm_samples_per_vblank;
+    s32 pcm_sample_rate;
+    u32 unknown1[14];
+    SoundChannel channels[kMaxSoundChannels];
+  };
+
+  MP2K(arm::MemoryBase& memory) : memory(memory) {
+    Reset();
+  }
+
+  bool IsEngaged() const {
+    return engaged;
+  }
+
+  void Reset();  
+  void SoundMainRAM(SoundInfo sound_info);
+  void RenderFrame();
+  auto ReadSample() -> float*;
+
+private:
+  static constexpr int kDMABufferSize = 1582;
+  static constexpr int kSampleRate = 65536;
+  static constexpr int kSamplesPerFrame = kSampleRate / 60 + 1;
+
   // TODO: get rid of this terribleness.
   struct {
-    bool forward_loop;
     u32 sample_rate;
     u32 loop_position;
     u32 number_of_samples;
@@ -72,11 +95,11 @@ private:
     float sample_history[4];
     float resample_phase;
     bool should_fetch_sample;
-  } channel_cache[kM4AMaxDirectSoundChannels];
+  } channel_cache[kMaxSoundChannels];
 
   bool engaged;
   arm::MemoryBase& memory;
-  M4ASoundInfo sound_info;
+  SoundInfo sound_info;
   std::unique_ptr<float[]> buffer;
   int total_frame_count;
   int current_frame;

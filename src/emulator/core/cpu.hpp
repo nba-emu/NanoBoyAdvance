@@ -8,7 +8,6 @@
 #pragma once
 
 #include <common/log.hpp>
-#include <common/m4a.hpp>
 #include <common/punning.hpp>
 #include <emulator/cartridge/backup/backup.hpp>
 #include <emulator/cartridge/gpio/gpio.hpp>
