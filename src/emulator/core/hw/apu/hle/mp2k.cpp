@@ -40,90 +40,76 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
 
   this->sound_info = sound_info;
 
-  // TODO: clean this mess up.
   for (int i = 0; i < max_channels; i++) {
     auto& channel = this->sound_info.channels[i];
     auto& sampler = samplers[i];
+    auto  envelope_volume = u32(channel.envelope_volume);
+    auto  envelope_phase = channel.status & CHANNEL_ENV_MASK;
 
-    u32 envelope_volume;
+    if ((channel.status & CHANNEL_ON) == 0) {
+      continue;
+    }
 
-    if (channel.status & CHANNEL_ON) {
-      if (!(channel.status & CHANNEL_START)) {
-        envelope_volume = (u32)channel.envelope_volume;
+    if (channel.status & CHANNEL_START) {
+      if (channel.status & CHANNEL_STOP) {
+        channel.status = 0;
+        continue;
+      }
 
-        if (!(channel.status & CHANNEL_IEC)) {
-          if (!(channel.status & CHANNEL_STOP)) {
-            if ((channel.status & CHANNEL_ENV_MASK) == CHANNEL_ENV_DECAY) {
-              auto envelope_envelope_sustain = channel.envelope_sustain;
-
-              envelope_volume = (envelope_volume * channel.envelope_decay) >> 8;
-            
-              if (envelope_volume <= envelope_envelope_sustain) {
-                if (envelope_envelope_sustain == 0 && channel.echo_volume == 0) {
-                  // goto SetupEnvelopeEchoMaybe;
-                  channel.status = 0;
-                  continue;
-                }
-                channel.status = (channel.status & ~CHANNEL_ENV_MASK) | CHANNEL_ENV_SUSTAIN;
-                envelope_volume = envelope_envelope_sustain;
-              }
-            } else if ((channel.status & CHANNEL_ENV_MASK) == CHANNEL_ENV_ATTACK) {
-              // goto ApplyAttack;
-              envelope_volume += channel.envelope_attack;
-              if (envelope_volume > 0xFE) {
-                channel.status = (channel.status & ~CHANNEL_ENV_MASK) | CHANNEL_ENV_DECAY;
-                envelope_volume = 0xFF;
-              }
-            }
-          } else {
-            envelope_volume = (envelope_volume * channel.envelope_release) >> 8;
-            if (envelope_volume <= channel.echo_volume) {
-// SetupEnvelopeEchoMaybe:
-              if (channel.echo_volume == 0) {
-                channel.status = 0;
-                continue;
-              }
-
-              channel.status |= CHANNEL_IEC;
-              envelope_volume = (u32)channel.echo_volume;
-            }
-          }
-        } else {
-          auto echo_length = channel.echo_length;
-          auto echo_length_updated = (u32)echo_length - 1;
-          channel.echo_length = echo_length_updated;
-          if (echo_length == 0 || echo_length_updated == 0) {
-            channel.status = 0;
-            continue;
-          }
-        }
+      envelope_volume = channel.envelope_attack;
+      if (envelope_volume == 0xFF) {
+        channel.status = CHANNEL_ENV_DECAY;
       } else {
-        if (channel.status & CHANNEL_STOP) {
+        channel.status = CHANNEL_ENV_ATTACK;
+      }
+
+      if (memory.ReadByte(channel.wave_data_address + 3, Access::Sequential) & 0xC0) {
+        channel.status |= CHANNEL_LOOP;
+      }
+
+      sampler = {};
+      sampler.wave.pcm_base_address = channel.wave_data_address + 16;
+      sampler.wave.number_of_samples = memory.ReadWord(channel.wave_data_address + 12, Access::Sequential);
+      sampler.wave.loop_position = memory.ReadWord(channel.wave_data_address + 8, Access::Sequential);
+      sampler.wave.sample_rate = memory.ReadWord(channel.wave_data_address + 4, Access::Sequential);
+    } else if (channel.status & CHANNEL_ECHO) {
+      if (channel.echo_length-- == 0) {
+        channel.status = 0;
+        continue;
+      }
+    } else if (channel.status & CHANNEL_STOP) {
+      envelope_volume = (envelope_volume * channel.envelope_release) >> 8;
+
+      if (envelope_volume <= channel.echo_volume) {
+        if (channel.echo_volume == 0) {
           channel.status = 0;
           continue;
         }
 
-        channel.status = CHANNEL_ENV_ATTACK;
-        channel.envelope_volume = 0;
-        envelope_volume = 0;
-        if (memory.ReadByte(channel.wave_data_address + 3, Access::Sequential) & 0xC0) {
-          channel.status |= CHANNEL_LOOP;
-        }
-
-// ApplyAttack:
-        envelope_volume += channel.envelope_attack;
-        if (envelope_volume > 0xFE) {
-          channel.status = (channel.status & ~CHANNEL_ENV_MASK) | CHANNEL_ENV_DECAY;
-          envelope_volume = 0xFF;
-        }
-
-        sampler = {};
-        sampler.wave.pcm_base_address = channel.wave_data_address + 16;
-        sampler.wave.number_of_samples = memory.ReadWord(channel.wave_data_address + 12, Access::Sequential);
-        sampler.wave.loop_position = memory.ReadWord(channel.wave_data_address + 8, Access::Sequential);
-        sampler.wave.sample_rate = memory.ReadWord(channel.wave_data_address + 4, Access::Sequential);
+        channel.status |= CHANNEL_ECHO;
+        envelope_volume = (u32)channel.echo_volume;
       }
-    }
+    } else if (envelope_phase == CHANNEL_ENV_ATTACK) {
+      envelope_volume += channel.envelope_attack;
+
+      if (envelope_volume > 0xFE) {
+        channel.status = (channel.status & ~CHANNEL_ENV_MASK) | CHANNEL_ENV_DECAY;
+        envelope_volume = 0xFF;
+      }
+    } else if (envelope_phase == CHANNEL_ENV_DECAY) {
+      envelope_volume = (envelope_volume * channel.envelope_decay) >> 8;
+    
+      auto envelope_sustain = channel.envelope_sustain;
+      if (envelope_volume <= envelope_sustain) {
+        if (envelope_sustain == 0 && channel.echo_volume == 0) {
+          channel.status = 0;
+          continue;
+        }
+
+        channel.status = (channel.status & ~CHANNEL_ENV_MASK) | CHANNEL_ENV_SUSTAIN;
+        envelope_volume = envelope_sustain;
+      }
+    } 
 
     channel.envelope_volume = (u8)envelope_volume;
     envelope_volume = (envelope_volume * (this->sound_info.master_volume + 1)) >> 4;
@@ -179,11 +165,11 @@ void MP2K::RenderFrame() {
     auto& channel = sound_info.channels[i];
     auto& sampler = samplers[i];
 
-    if ((channel.status & CHANNEL_ON) == 0 || sampler.wave.sample_rate == 0) {
+    if ((channel.status & CHANNEL_ON) == 0) {
       continue;
     }
 
-    // TODO: clean the calculation of the resampling step up.
+    // TODO: can this be optimized further?
     auto sample_rate = sampler.wave.sample_rate / 1024.0;
     auto note_freq = (std::uint64_t(channel.frequency) << 32) / sampler.wave.sample_rate / 16384.0;
     auto angular_step = note_freq / 256.0 * (sample_rate / float(kSampleRate));
