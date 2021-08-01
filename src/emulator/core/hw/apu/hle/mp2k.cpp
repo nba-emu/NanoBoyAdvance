@@ -14,6 +14,7 @@ namespace nba::core {
 
 void MP2K::Reset() {
   engaged = false;
+  use_cubic_filter = false;
   total_frame_count = 0;
   current_frame = 0;
   buffer_read_index = 0;
@@ -202,23 +203,30 @@ void MP2K::RenderFrame() {
           sample = S8ToFloat(cpu.Read<u8, true>(address));
         }
 
-        sample_history[3] = sample_history[2];
-        sample_history[2] = sample_history[1];
+        if (UseCubicFilter()) {
+          sample_history[3] = sample_history[2];
+          sample_history[2] = sample_history[1];
+        }
         sample_history[1] = sample_history[0];
         sample_history[0] = sample;
 
         sampler.should_fetch_sample = false;
       }
 
-      // http://paulbourke.net/miscellaneous/interpolation/
-      float mu  = sampler.resample_phase;
-      // float mu2 = mu * mu;
-      // float a0 = sample_history[0] - sample_history[1] - sample_history[3] + sample_history[2];
-      // float a1 = sample_history[3] - sample_history[2] - a0;
-      // float a2 = sample_history[1] - sample_history[3];
-      // float a3 = sample_history[2]; 
-      // float sample = a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3;
-      float sample = sample_history[0] * mu + sample_history[1] * (1.0 - mu);
+      float sample;
+      float mu = sampler.resample_phase;
+
+      if (UseCubicFilter()) {
+        // http://paulbourke.net/miscellaneous/interpolation/
+        float mu2 = mu * mu;
+        float a0 = sample_history[0] - sample_history[1] - sample_history[3] + sample_history[2];
+        float a1 = sample_history[3] - sample_history[2] - a0;
+        float a2 = sample_history[1] - sample_history[3];
+        float a3 = sample_history[2]; 
+        sample = a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3;
+      } else {
+        sample = sample_history[0] * mu + sample_history[1] * (1.0 - mu);
+      }
 
       destination[j * 2 + 0] += sample * volume_r;
       destination[j * 2 + 1] += sample * volume_l;

@@ -22,6 +22,8 @@ resampler = "cubic"
 # Filter FIFO audio before passing it to the mixer.
 # This will reduce the dity high-frequency aliasing typical to the GBA.
 interpolate_fifo = true
-# High fidelty audio mixer for the popular MP2K/M4A/Sappy audio engine.
+# Reimplementation of the popular MP2K/M4A audio mixer with higher quality.
 # This is experimental and may still have issues.
-enable_mp2k_hle = false
+mp2k_hle_enable = false
+# Use cubic interpolation in the MP2K reimplementation.
+mp2k_hle_cubic = false 

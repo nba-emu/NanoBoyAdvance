@@ -128,10 +128,12 @@ auto CPU::Read(u32 address, Access access) -> T {
                (ReadMMIO(address + 2) << 16) |
                (ReadMMIO(address + 3) << 24);
       }
+
       if constexpr (std::is_same_v<T, u16>) {
         return (ReadMMIO(address + 0) << 0) |
                (ReadMMIO(address + 1) << 8);
       }
+
       return ReadMMIO(address);
     }
     case 0x05: {
@@ -160,9 +162,11 @@ auto CPU::Read(u32 address, Access access) -> T {
       if constexpr (std::is_same_v<T,  u8>) {
         return game_pak.ReadROM16(address) >> ((address & 1) << 3);
       }
+
       if constexpr (std::is_same_v<T, u16>) {
         return game_pak.ReadROM16(address);
       }
+
       if constexpr (std::is_same_v<T, u32>) {
         return game_pak.ReadROM32(address);
       }
@@ -174,12 +178,15 @@ auto CPU::Read(u32 address, Access access) -> T {
       }
 
       u32 value = game_pak.ReadSRAM(address);
+
       if constexpr (std::is_same_v<T, u16>) {
         value *= 0x0101;
       }
+
       if constexpr (std::is_same_v<T, u32>) {
         value *= 0x01010101;
       }
+
       return T(value);
     }
     default: {
@@ -238,9 +245,11 @@ void CPU::Write(u32 address, T value, Access access) {
         WriteMMIO16(address + 0, value & 0xFFFF);
         WriteMMIO16(address + 2, value >> 16);
       }
+
       if constexpr (std::is_same_v<T, u16>) {
         WriteMMIO16(address, value);
       }
+
       if constexpr (std::is_same_v<T, u8>) {
         WriteMMIO(address, value & 0xFF);
       }
@@ -276,9 +285,11 @@ void CPU::Write(u32 address, T value, Access access) {
       if constexpr (std::is_same_v<T, u8>) {
         game_pak.WriteROM(address, value * 0x0101);
       }
+
       if constexpr (std::is_same_v<T, u16>) {
         game_pak.WriteROM(address, value);
       }
+
       if constexpr (std::is_same_v<T, u32>) {
         game_pak.WriteROM(address|0, value & 0xFFFF);
         game_pak.WriteROM(address|2, value >> 16);

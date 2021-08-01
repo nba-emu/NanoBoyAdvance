@@ -70,8 +70,9 @@ void CPU::Reset() {
   config->input_dev->SetOnChangeCallback(std::bind(&CPU::OnKeyPress,this));
 
   mp2k_soundmain_address = 0xFFFFFFFF;
-  if (config->audio.enable_mp2k_hle) {
+  if (config->audio.mp2k_hle_enable) {
     MP2KSearchSoundMainRAM();
+    apu.GetMP2K().UseCubicFilter() = config->audio.mp2k_hle_cubic;
   }
 }
 

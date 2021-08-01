@@ -54,7 +54,8 @@ struct Config {
       Sinc_256
     } interpolation = Interpolation::Cosine;
     bool interpolate_fifo = true;
-    bool enable_mp2k_hle = false;
+    bool mp2k_hle_enable = false;
+    bool mp2k_hle_cubic = false;
   } audio;
   
   std::shared_ptr<AudioDevice> audio_dev = std::make_shared<NullAudioDevice>();

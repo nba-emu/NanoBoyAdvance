@@ -110,7 +110,8 @@ void config_toml_read(Config& config, std::string const& path) {
       }
 
       config.audio.interpolate_fifo = toml::find_or<toml::boolean>(audio, "interpolate_fifo", true);
-      config.audio.enable_mp2k_hle = toml::find_or<toml::boolean>(audio, "enable_mp2k_hle", false);
+      config.audio.mp2k_hle_enable = toml::find_or<toml::boolean>(audio, "mp2k_hle_enable", false);
+      config.audio.mp2k_hle_cubic = toml::find_or<toml::boolean>(audio, "mp2k_hle_cubic", false);
     }
   }
 }
@@ -163,7 +164,8 @@ void config_toml_write(Config& config, std::string const& path) {
   }
   data["audio"]["resampler"] = resampler;
   data["audio"]["interpolate_fifo"] = config.audio.interpolate_fifo;
-  data["audio"]["enable_mp2k_hle"] = config.audio.enable_mp2k_hle;
+  data["audio"]["mp2k_hle_enable"] = config.audio.mp2k_hle_enable;
+  data["audio"]["mp2k_hle_cubic"] = config.audio.mp2k_hle_cubic;
 
   std::ofstream file{ path, std::ios::out };
   file << data;

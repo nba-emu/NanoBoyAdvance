@@ -74,6 +74,10 @@ struct MP2K {
     return engaged;
   }
 
+  bool& UseCubicFilter() {
+    return use_cubic_filter;
+  }
+
   void Reset();  
   void SoundMainRAM(SoundInfo const& sound_info);
   void RenderFrame();
@@ -104,6 +108,7 @@ private:
   } samplers[kMaxSoundChannels];
 
   bool engaged;
+  bool use_cubic_filter;
   CPU& cpu;
   SoundInfo sound_info;
   std::unique_ptr<float[]> buffer;
