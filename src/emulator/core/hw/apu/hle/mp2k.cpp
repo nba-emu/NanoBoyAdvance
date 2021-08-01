@@ -22,8 +22,6 @@ void MP2K::Reset() {
 }
 
 void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
-  using Access = arm::MemoryBase::Access;
-
   if (sound_info.magic != 0x68736D54) {
     return;
   }
@@ -111,26 +109,19 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
       }
     } 
 
-    channel.envelope_volume = (u8)envelope_volume;
+    channel.envelope_volume = u8(envelope_volume);
     envelope_volume = (envelope_volume * (this->sound_info.master_volume + 1)) >> 4;
-    channel.envelope_volume_r = (u8)((envelope_volume * channel.volume_r) >> 8);
-    channel.envelope_volume_l = (u8)((envelope_volume * channel.volume_l) >> 8);
+    channel.envelope_volume_r = u8((envelope_volume * channel.volume_r) >> 8);
+    channel.envelope_volume_l = u8((envelope_volume * channel.volume_l) >> 8);
   }
 }
 
 void MP2K::RenderFrame() {
-  // TODO: move this into the class definition (same for SoundMainRAM)
-  using Access = arm::MemoryBase::Access;
-
-  // TODO: move this into a static constexpr method?
-  #define S8F(value) (s8(value) / 127.0)
-
-  // TODO: move this somewhere else?
   static constexpr float kDifferentialLUT[] = {
-    S8F(0x00), S8F(0x01), S8F(0x04), S8F(0x09),
-    S8F(0x10), S8F(0x19), S8F(0x24), S8F(0x31),
-    S8F(0xC0), S8F(0xCF), S8F(0xDC), S8F(0xE7),
-    S8F(0xF0), S8F(0xF7), S8F(0xFC), S8F(0xFF)
+    S8ToFloat(0x00), S8ToFloat(0x01), S8ToFloat(0x04), S8ToFloat(0x09),
+    S8ToFloat(0x10), S8ToFloat(0x19), S8ToFloat(0x24), S8ToFloat(0x31),
+    S8ToFloat(0xC0), S8ToFloat(0xCF), S8ToFloat(0xDC), S8ToFloat(0xE7),
+    S8ToFloat(0xF0), S8ToFloat(0xF7), S8ToFloat(0xFC), S8ToFloat(0xFF)
   };
 
   current_frame = (current_frame + 1) % total_frame_count;
@@ -194,7 +185,7 @@ void MP2K::RenderFrame() {
           auto block_address = sampler.wave.pcm_base_address + (sampler.current_position >> 6) * 33;
 
           if (block_offset == 0) {
-            sample = S8F(memory.ReadByte(block_address, Access::Sequential));
+            sample = S8ToFloat(memory.ReadByte(block_address, Access::Sequential));
           } else {
             sample = sample_history[0];
           }
@@ -211,7 +202,7 @@ void MP2K::RenderFrame() {
           sample += kDifferentialLUT[lut_index];
         } else {
           auto address = sampler.wave.pcm_base_address + sampler.current_position;
-          sample = S8F(memory.ReadByte(address, Access::Sequential));
+          sample = S8ToFloat(memory.ReadByte(address, Access::Sequential));
         }
         
         memory.the_pain = false;

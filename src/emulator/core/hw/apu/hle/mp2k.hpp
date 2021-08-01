@@ -82,6 +82,12 @@ private:
   static constexpr int kSampleRate = 65536;
   static constexpr int kSamplesPerFrame = kSampleRate / 60 + 1;
 
+  using Access = arm::MemoryBase::Access;
+
+  static constexpr float S8ToFloat(s8 value) {
+    return value / 127.0;
+  }
+
   struct Sampler {
     bool should_fetch_sample = true;
     u32 current_position = 0;
