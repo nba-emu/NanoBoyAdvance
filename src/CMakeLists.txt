@@ -50,6 +50,7 @@ set(HEADERS
   common/dsp/resampler/windowed-sinc.hpp
   common/dsp/resampler.hpp
   common/compiler.hpp
+  common/crc32.hpp
   common/integer.hpp
   common/compiler.hpp
   common/log.hpp

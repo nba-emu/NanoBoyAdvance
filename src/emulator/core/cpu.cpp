@@ -8,6 +8,7 @@
 #include "cpu.hpp"
 
 #include <common/compiler.hpp>
+#include <common/crc32.hpp>
 #include <cstring>
 
 namespace nba::core {
@@ -164,30 +165,19 @@ void CPU::CheckKeypadInterrupt() {
 }
 
 void CPU::MP2KSearchSoundMainRAM() {
-  // TODO: how much of the function should we include?
-  static const u8 pattern[] = {
-    0x1A, 0x48, 0x00, 0x68, 0x1A, 0x4A, 0x03, 0x68,
-    0x9A, 0x42, 0x00, 0xD0, 0x70, 0x47, 0x01, 0x33,
-    0x03, 0x60, 0xF0, 0xB5, 0x41, 0x46, 0x4A, 0x46,
-    0x53, 0x46, 0x5C, 0x46, 0x1F, 0xB4, 0x86, 0xB0,
-    0x01, 0x7B, 0x00, 0x29
-  };
+  static constexpr u32 kSoundMainCRC32 = 0x27EA7FCF;
+  static constexpr int kSoundMainLength = 48;
 
   auto& rom = game_pak.GetRawROM();
+  u32 address_max = rom.size() - kSoundMainLength;
 
-  for (u32 address = 0; address < rom.size(); address += 2) {
-    bool match = true;
+  for (u32 address = 0; address <= address_max; address += 2) {
+    auto crc = crc32(&rom[address], kSoundMainLength);
 
-    for (int i = 0; i < sizeof(pattern); i++) {
-      if (rom[address + i] != pattern[i]) {
-        match = false;
-        break;
-      }
-    }
-
-    if (match) {
-      // We have found SoundMain(), the address of SoundMainRAM()
-      // is stored relative to SoundMain().
+    if (crc == kSoundMainCRC32) {
+      /* We have found SoundMain().
+       * The pointer to SoundMainRAM() is stored at offset 0x74.
+       */
       mp2k_soundmain_address = common::read<u32>(rom.data(), address + 0x74);
 
       LOG_INFO("MP2K: found SoundMainRAM() routine at 0x{0:08X}.", mp2k_soundmain_address);
@@ -199,6 +189,7 @@ void CPU::MP2KSearchSoundMainRAM() {
         mp2k_soundmain_address &= ~3;
         mp2k_soundmain_address += sizeof(u32) * 2;
       }
+
       return;
     }
   }
