@@ -28,7 +28,7 @@ struct APU {
   APU(
     Scheduler& scheduler,
     DMA& dma,
-    arm::MemoryBase& memory,
+    CPU& cpu,
     std::shared_ptr<Config>
   );
 
@@ -70,7 +70,6 @@ private:
 
   Scheduler& scheduler;
   DMA& dma;
-  arm::MemoryBase& memory;
   MP2K mp2k;
   int mp2k_read_index;
   std::shared_ptr<Config> config;

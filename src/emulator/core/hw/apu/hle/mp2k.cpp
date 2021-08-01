@@ -6,6 +6,7 @@
  */
 
 #include <common/log.hpp>
+#include <emulator/core/cpu.hpp>
 
 #include "mp2k.hpp"
 
@@ -61,14 +62,14 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
         channel.status = CHANNEL_ENV_ATTACK;
       }
 
-      if (memory.ReadByte(channel.wave_data_address + 3, Access::Sequential) & 0xC0) {
+      if (cpu.Read<u8, true>(channel.wave_data_address + 3) & 0xC0) {
         channel.status |= CHANNEL_LOOP;
       }
 
       sampler = {};
       sampler.wave.pcm_base_address = channel.wave_data_address + 16;
-      sampler.wave.number_of_samples = memory.ReadWord(channel.wave_data_address + 12, Access::Sequential);
-      sampler.wave.loop_position = memory.ReadWord(channel.wave_data_address + 8, Access::Sequential);
+      sampler.wave.number_of_samples = cpu.Read<u32, true>(channel.wave_data_address + 12);
+      sampler.wave.loop_position = cpu.Read<u32, true>(channel.wave_data_address + 8);
     } else if (channel.status & CHANNEL_ECHO) {
       if (channel.echo_length-- == 0) {
         channel.status = 0;
@@ -175,21 +176,19 @@ void MP2K::RenderFrame() {
     for (int j = 0; j < kSamplesPerFrame; j++) {
       if (sampler.should_fetch_sample) {
         float sample;
-        
-        memory.the_pain = true;
 
         if (compressed) {
           auto block_offset  = sampler.current_position & 63;
           auto block_address = sampler.wave.pcm_base_address + (sampler.current_position >> 6) * 33;
 
           if (block_offset == 0) {
-            sample = S8ToFloat(memory.ReadByte(block_address, Access::Sequential));
+            sample = S8ToFloat(cpu.Read<u8, true>(block_address));
           } else {
             sample = sample_history[0];
           }
 
           auto address = block_address + (block_offset >> 1) + 1;
-          auto lut_index = memory.ReadByte(address, Access::Sequential);
+          auto lut_index = cpu.Read<u8, true>(address);
 
           if (block_offset & 1) {
             lut_index &= 15;
@@ -200,11 +199,9 @@ void MP2K::RenderFrame() {
           sample += kDifferentialLUT[lut_index];
         } else {
           auto address = sampler.wave.pcm_base_address + sampler.current_position;
-          sample = S8ToFloat(memory.ReadByte(address, Access::Sequential));
+          sample = S8ToFloat(cpu.Read<u8, true>(address));
         }
-        
-        memory.the_pain = false;
-      
+
         sample_history[3] = sample_history[2];
         sample_history[2] = sample_history[1];
         sample_history[1] = sample_history[0];

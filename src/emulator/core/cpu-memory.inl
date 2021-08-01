@@ -5,6 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
+template<bool debug>
 inline u32 CPU::ReadBIOS(u32 address) {
   int shift = (address & 3) * 8;
 
@@ -18,9 +19,13 @@ inline u32 CPU::ReadBIOS(u32 address) {
     return memory.bios_latch >> shift;
   }
 
-  memory.bios_latch = common::read<u32>(memory.bios, address);
+  auto word = common::read<u32>(memory.bios, address);
 
-  return memory.bios_latch >> shift;
+  if constexpr (!debug) {
+    memory.bios_latch = word;
+  }
+
+  return word >> shift;
 }
 
 inline u32 CPU::ReadUnused(u32 address) {
@@ -72,7 +77,7 @@ inline u32 CPU::ReadUnused(u32 address) {
   return result >> ((address & 3) * 8);
 }
 
-template<typename T>
+template<typename T, bool debug>
 auto CPU::Read(u32 address, Access access) -> T {
   int cycles;
   int page = address >> 24;
@@ -81,31 +86,42 @@ auto CPU::Read(u32 address, Access access) -> T {
     address &= ~(sizeof(T) - 1);
   }
 
-  if ((address & 0x1FFFF) == 0) {
-    access = Access::Nonsequential;
-  }
-  
-  if (std::is_same_v<T, u32>) {
-    cycles = cycles32[int(access)][page];
-  } else {
-    cycles = cycles16[int(access)][page];
+  if constexpr (!debug) {
+    if ((address & 0x1FFFF) == 0) {
+      access = Access::Nonsequential;
+    }
+    
+    if constexpr (std::is_same_v<T, u32>) {
+      cycles = cycles32[int(access)][page];
+    } else {
+      cycles = cycles16[int(access)][page];
+    }
   }
 
   switch (page) {
     case 0x00: {
-      PrefetchStepRAM(cycles);
-      return ReadBIOS(address);
+      if constexpr (!debug) {
+        PrefetchStepRAM(cycles);
+      }
+      return ReadBIOS<debug>(address);
     }
     case 0x02: {
-      PrefetchStepRAM(cycles);
+      if constexpr (!debug) {
+        PrefetchStepRAM(cycles);
+      }
       return common::read<T>(memory.wram, address & 0x3FFFF);
     }
     case 0x03: {
-      PrefetchStepRAM(cycles);
+      if constexpr (!debug) {
+        PrefetchStepRAM(cycles);
+      }
       return common::read<T>(memory.iram, address & 0x7FFF);
     }
     case 0x04: {
-      PrefetchStepRAM(cycles);
+      if constexpr (!debug) {
+        PrefetchStepRAM(cycles);
+      }
+
       if constexpr (std::is_same_v<T, u32>) {
         return (ReadMMIO(address + 0) <<  0) |
                (ReadMMIO(address + 1) <<  8) |
@@ -119,19 +135,28 @@ auto CPU::Read(u32 address, Access access) -> T {
       return ReadMMIO(address);
     }
     case 0x05: {
-      PrefetchStepRAM(cycles);
+      if constexpr (!debug) {
+        PrefetchStepRAM(cycles);
+      }
       return ppu.ReadPRAM<T>(address);
     }
     case 0x06: {
-      PrefetchStepRAM(cycles);
+      if constexpr (!debug) {
+        PrefetchStepRAM(cycles);
+      }
       return ppu.ReadVRAM<T>(address);
     }
     case 0x07: {
-      PrefetchStepRAM(cycles);
+      if constexpr (!debug) {
+        PrefetchStepRAM(cycles);
+      }
       return ppu.ReadOAM<T>(address);
     }
     case 0x08 ... 0x0D: {
-      PrefetchStepROM(address, cycles);
+      if constexpr (!debug) {
+        PrefetchStepROM(address, cycles);
+      }
+
       if constexpr (std::is_same_v<T,  u8>) {
         return game_pak.ReadROM16(address) >> ((address & 1) << 3);
       }
@@ -144,14 +169,23 @@ auto CPU::Read(u32 address, Access access) -> T {
       break;
     }
     case 0x0E ... 0x0F: {
-      PrefetchStepROM(address, cycles);
+      if constexpr (!debug) {
+        PrefetchStepROM(address, cycles);
+      }
+
       u32 value = game_pak.ReadSRAM(address);
-      if (std::is_same_v<T, u16>) value *= 0x0101;
-      if (std::is_same_v<T, u32>) value *= 0x01010101;
+      if constexpr (std::is_same_v<T, u16>) {
+        value *= 0x0101;
+      }
+      if constexpr (std::is_same_v<T, u32>) {
+        value *= 0x01010101;
+      }
       return T(value);
     }
     default: {
-      PrefetchStepRAM(cycles);
+      if constexpr (!debug) {
+        PrefetchStepRAM(cycles);
+      }
       return ReadUnused(address);
     }
   }  
@@ -159,7 +193,7 @@ auto CPU::Read(u32 address, Access access) -> T {
   return 0;
 }
 
-template<typename T>
+template<typename T, bool debug>
 void CPU::Write(u32 address, T value, Access access) {
   int cycles;
   int page = address >> 24;
@@ -168,29 +202,38 @@ void CPU::Write(u32 address, T value, Access access) {
     address &= ~(sizeof(T) - 1);
   }
 
-  if ((address & 0x1FFFF) == 0) {
-    access = Access::Nonsequential;
-  }
-  
-  if (std::is_same_v<T, u32>) {
-    cycles = cycles32[int(access)][page];
-  } else {
-    cycles = cycles16[int(access)][page];
+  if constexpr (!debug) {
+    if ((address & 0x1FFFF) == 0) {
+      access = Access::Nonsequential;
+    }
+    
+    if (std::is_same_v<T, u32>) {
+      cycles = cycles32[int(access)][page];
+    } else {
+      cycles = cycles16[int(access)][page];
+    }
   }
 
   switch (page) {
     case 0x02: {
-      PrefetchStepRAM(cycles);
+      if constexpr (!debug) {
+        PrefetchStepRAM(cycles);
+      }
       common::write<T>(memory.wram, address & 0x3FFFF, value);
       break;
     }
     case 0x03: {
-      PrefetchStepRAM(cycles);
+      if constexpr (!debug) {
+        PrefetchStepRAM(cycles);
+      }
       common::write<T>(memory.iram, address & 0x7FFF,  value);
       break;
     }
     case 0x04: {
-      PrefetchStepRAM(cycles);
+      if constexpr (!debug) {
+        PrefetchStepRAM(cycles);
+      }
+
       if constexpr (std::is_same_v<T, u32>) {
         WriteMMIO16(address + 0, value & 0xFFFF);
         WriteMMIO16(address + 2, value >> 16);
@@ -204,23 +247,32 @@ void CPU::Write(u32 address, T value, Access access) {
       break;
     }
     case 0x05: {
-      PrefetchStepRAM(cycles);
+      if constexpr (!debug) {
+        PrefetchStepRAM(cycles);
+      }
       ppu.WritePRAM<T>(address, value);
       break;
     }
     case 0x06: {
-      PrefetchStepRAM(cycles);
+      if constexpr (!debug) {
+        PrefetchStepRAM(cycles);
+      }
       ppu.WriteVRAM<T>(address, value);
       break;
     }
     case 0x07: {
-      PrefetchStepRAM(cycles);
+      if constexpr (!debug) {
+        PrefetchStepRAM(cycles);
+      }
       ppu.WriteOAM<T>(address, value);
       break;
     }
     case 0x08 ... 0x0D: {
+      if constexpr (!debug) {
+        PrefetchStepROM(address, cycles);
+      }
+
       // TODO: figure out how 8-bit and 16-bit accesses actually work.
-      PrefetchStepROM(address, cycles);
       if constexpr (std::is_same_v<T, u8>) {
         game_pak.WriteROM(address, value * 0x0101);
       }
@@ -234,16 +286,24 @@ void CPU::Write(u32 address, T value, Access access) {
       break;
     }
     case 0x0E ... 0x0F: {
-      PrefetchStepROM(address, cycles);
+      if constexpr (!debug) {
+        PrefetchStepROM(address, cycles);
+      }
         
-      if constexpr (std::is_same_v<T, u32>) value >>= (address & 3) << 3;
-      if constexpr (std::is_same_v<T, u16>) value >>= (address & 1) << 3;
+      if constexpr (std::is_same_v<T, u32>) {
+        value >>= (address & 3) << 3;
+      }
+      if constexpr (std::is_same_v<T, u16>) {
+        value >>= (address & 1) << 3;
+      }
 
       game_pak.WriteSRAM(address, u8(value));
       break;
     }
     default: {
-      PrefetchStepRAM(cycles);
+      if constexpr (!debug) {
+        PrefetchStepRAM(cycles);
+      }
     }
   }
 }

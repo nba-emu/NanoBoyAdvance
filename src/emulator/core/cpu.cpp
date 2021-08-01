@@ -197,7 +197,7 @@ void CPU::MP2KSearchSoundMainRAM() {
 
 void CPU::MP2KOnSoundMainRAMCalled() {
   MP2K::SoundInfo* sound_info;
-  auto address = ReadWord(0x03007FF0, Access::Sequential);
+  auto address = Read<u32, true>(0x03007FF0);
 
   // Get host pointer to SoundMain structure.
   switch (address >> 24) {

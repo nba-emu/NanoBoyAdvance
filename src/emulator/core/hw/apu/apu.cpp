@@ -22,13 +22,12 @@ void AudioCallback(APU* apu, s16* stream, int byte_len);
 APU::APU(
   Scheduler& scheduler,
   DMA& dma,
-  arm::MemoryBase& memory,
+  nba::core::CPU& cpu,
   std::shared_ptr<Config> config
 )   : mmio(scheduler)
     , scheduler(scheduler)
     , dma(dma)
-    , memory(memory)
-    , mp2k(memory)
+    , mp2k(cpu)
     , config(config) {
 }
 

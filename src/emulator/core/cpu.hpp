@@ -87,40 +87,44 @@ struct CPU final : private arm::ARM7TDMI, private arm::MemoryBase {
   SerialBus serial_bus;
 
 private:
+  friend struct MP2K;
+
   auto ReadMMIO(u32 address) -> u8;
   void WriteMMIO(u32 address, u8 value);
   void WriteMMIO16(u32 address, u16 value);
-  auto ReadBIOS(u32 address) -> u32;
   auto ReadUnused(u32 address) -> u32;
 
-  template<typename T>
-  auto Read(u32 address, Access access) -> T;
+  template<bool debug>
+  auto ReadBIOS(u32 address) -> u32;
+  
+  template<typename T, bool debug>
+  auto Read(u32 address, Access access = Access::Sequential) -> T;
 
-  template<typename T>
-  void Write(u32 address, T value, Access access);
+  template<typename T, bool debug>
+  void Write(u32 address, T value, Access access = Access::Sequential);
 
   auto ReadByte(u32 address, Access access) -> u8  final {
-    return Read<u8>(address, access);
+    return Read<u8, false>(address, access);
   }
 
   auto ReadHalf(u32 address, Access access) -> u16 final {
-    return Read<u16>(address, access);
+    return Read<u16, false>(address, access);
   }
 
   auto ReadWord(u32 address, Access access) -> u32 final {
-    return Read<u32>(address, access);
+    return Read<u32, false>(address, access);
   }
 
   void WriteByte(u32 address, u8  value, Access access) final {
-    Write<u8>(address, value, access);
+    Write<u8, false>(address, value, access);
   }
 
   void WriteHalf(u32 address, u16 value, Access access) final {
-    Write<u16>(address, value, access);
+    Write<u16, false>(address, value, access);
   }
 
   void WriteWord(u32 address, u32 value, Access access) final {
-    Write<u32>(address, value, access);
+    Write<u32, false>(address, value, access);
   }
 
   void Idle() {
@@ -150,10 +154,6 @@ private:
   }
 
   void ALWAYS_INLINE PrefetchStepRAM(int cycles) noexcept {
-    if (the_pain) {
-      return;
-    }
-
     // TODO: bypass prefetch RAM step during DMA?
     if (unlikely(!mmio.waitcnt.prefetch)) {
       Tick(cycles);
@@ -195,10 +195,6 @@ private:
   }
 
   void ALWAYS_INLINE PrefetchStepROM(u32 address, int cycles) noexcept {
-    if (the_pain) {
-      return;
-    }
-
     // TODO: bypass prefetch ROM step during DMA?
     if (unlikely(!mmio.waitcnt.prefetch)) {
       Tick(cycles);

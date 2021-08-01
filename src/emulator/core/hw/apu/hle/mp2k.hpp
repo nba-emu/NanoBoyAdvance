@@ -12,6 +12,8 @@
 
 namespace nba::core {
 
+struct CPU;
+
 struct MP2K {
   static constexpr u8 kMaxSoundChannels = 12;
 
@@ -64,7 +66,7 @@ struct MP2K {
     SoundChannel channels[kMaxSoundChannels];
   };
 
-  MP2K(arm::MemoryBase& memory) : memory(memory) {
+  MP2K(CPU& cpu) : cpu(cpu) {
     Reset();
   }
 
@@ -102,7 +104,7 @@ private:
   } samplers[kMaxSoundChannels];
 
   bool engaged;
-  arm::MemoryBase& memory;
+  CPU& cpu;
   SoundInfo sound_info;
   std::unique_ptr<float[]> buffer;
   int total_frame_count;
