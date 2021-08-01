@@ -69,7 +69,6 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
       sampler.wave.pcm_base_address = channel.wave_data_address + 16;
       sampler.wave.number_of_samples = memory.ReadWord(channel.wave_data_address + 12, Access::Sequential);
       sampler.wave.loop_position = memory.ReadWord(channel.wave_data_address + 8, Access::Sequential);
-      sampler.wave.sample_rate = memory.ReadWord(channel.wave_data_address + 4, Access::Sequential);
     } else if (channel.status & CHANNEL_ECHO) {
       if (channel.echo_length-- == 0) {
         channel.status = 0;
@@ -160,13 +159,12 @@ void MP2K::RenderFrame() {
       continue;
     }
 
-    // TODO: can this be optimized further?
-    auto sample_rate = sampler.wave.sample_rate / 1024.0;
-    auto note_freq = (std::uint64_t(channel.frequency) << 32) / sampler.wave.sample_rate / 16384.0;
-    auto angular_step = note_freq / 256.0 * (sample_rate / float(kSampleRate));
+    float angular_step;
 
-    if ((channel.type & 8) != 0) {
-      angular_step = (sound_info.pcm_sample_rate / float(kSampleRate));
+    if (channel.type & 8) {
+      angular_step = sound_info.pcm_sample_rate / float(kSampleRate);
+    } else {
+      angular_step = channel.frequency / float(kSampleRate);
     }
 
     auto volume_l = channel.envelope_volume_l / 255.0;

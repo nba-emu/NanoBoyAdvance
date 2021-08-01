@@ -98,7 +98,6 @@ private:
       u32 pcm_base_address;
       u32 number_of_samples;
       u32 loop_position;
-      u32 sample_rate;
     } wave;
   } samplers[kMaxSoundChannels];
 
