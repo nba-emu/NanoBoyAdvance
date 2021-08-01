@@ -77,16 +77,17 @@ void IRQ::Raise(IRQ::Source source, int channel) {
 }
 
 void IRQ::UpdateIRQLine() {
-  bool irq_line = MasterEnable() && HasServableIRQ();
+  bool irq_line_new = MasterEnable() && HasServableIRQ();
 
-  if (irq_line != cpu.IRQLine()) {
+  if (irq_line != irq_line_new) {
     if (event != nullptr) {
       scheduler.Cancel(event);
     }
     event = scheduler.Add(1, [=](int late) {
-      cpu.IRQLine() = irq_line;
+      cpu.IRQLine() = irq_line_new;
       event = nullptr;
     });
+    irq_line = irq_line_new;
   }
 }
 
