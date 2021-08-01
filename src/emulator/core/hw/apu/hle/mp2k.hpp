@@ -12,8 +12,6 @@
 
 namespace nba::core {
 
-// TODO: get rid of the extensive copying of e.g. SoundInfo
-
 struct MP2K {
   static constexpr u8 kMaxSoundChannels = 12;
 
@@ -84,18 +82,19 @@ private:
   static constexpr int kSampleRate = 65536;
   static constexpr int kSamplesPerFrame = kSampleRate / 60 + 1;
 
-  // TODO: get rid of this terribleness.
-  struct {
-    u32 sample_rate;
-    u32 loop_position;
-    u32 number_of_samples;
-    u32 pcm_base_address;
-    int current_position;
+  struct Sampler {
+    bool should_fetch_sample = true;
+    u32 current_position = 0;
+    float resample_phase = 0.0;
+    float sample_history[4] {0};
 
-    float sample_history[4];
-    float resample_phase;
-    bool should_fetch_sample;
-  } channel_cache[kMaxSoundChannels];
+    struct {
+      u32 pcm_base_address;
+      u32 number_of_samples;
+      u32 loop_position;
+      u32 sample_rate;
+    } wave;
+  } samplers[kMaxSoundChannels];
 
   bool engaged;
   arm::MemoryBase& memory;
