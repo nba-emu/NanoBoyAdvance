@@ -29,7 +29,7 @@ struct SincResampler : Resampler<T> {
     Resampler<T>::SetSampleRates(samplerate_in, samplerate_out);
     
     float kernelSum = 0.0;
-    float cutoff = 1.0;//0.9;
+    float cutoff = 0.9;
     
     if (this->resample_phase_shift > 1.0) {
       cutoff /= this->resample_phase_shift;

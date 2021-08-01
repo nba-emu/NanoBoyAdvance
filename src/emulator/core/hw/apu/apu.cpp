@@ -22,10 +22,12 @@ void AudioCallback(APU* apu, s16* stream, int byte_len);
 APU::APU(
   Scheduler& scheduler,
   DMA& dma,
+  nba::core::CPU& cpu,
   std::shared_ptr<Config> config
 )   : mmio(scheduler)
     , scheduler(scheduler)
     , dma(dma)
+    , mp2k(cpu)
     , config(config) {
 }
 
@@ -44,6 +46,9 @@ void APU::Reset() {
   resolution_old = 0;
   scheduler.Add(mmio.bias.GetSampleInterval(), this, &APU::StepMixer);
   scheduler.Add(BaseChannel::s_cycles_per_step, this, &APU::StepSequencer);
+
+  mp2k.Reset();
+  mp2k_read_index = {};
 
   auto audio_dev = config->audio_dev;
   audio_dev->Close();
@@ -74,7 +79,6 @@ void APU::Reset() {
       break;
   }
 
-  // TODO: use cubic interpolation or better if M4A samplerate hack is active.
   if (config->audio.interpolate_fifo) {
     for (int fifo = 0; fifo < 2; fifo++) {
       fifo_buffer[fifo] = std::make_shared<RingBuffer<float>>(16, true);
@@ -118,21 +122,6 @@ void APU::OnTimerOverflow(int timer_id, int times, int samplerate) {
 }
 
 void APU::StepMixer(int cycles_late) {
-  auto& bias = mmio.bias;
-
-  if (bias.resolution != resolution_old) {
-    resampler->SetSampleRates(bias.GetSampleRate(),
-      config->audio_dev->GetSampleRate());
-    resolution_old = mmio.bias.resolution;
-    if (config->audio.interpolate_fifo) {
-      for (int fifo = 0; fifo < 2; fifo++) {
-        fifo_resampler[fifo]->SetSampleRates(fifo_samplerate[fifo], mmio.bias.GetSampleRate());
-      }
-    }
-  }
-
-  common::dsp::StereoSample<s16> sample { 0, 0 };
-
   constexpr int psg_volume_tab[4] = { 1, 2, 4, 0 };
   constexpr int dma_volume_tab[2] = { 2, 4 };
 
@@ -141,38 +130,90 @@ void APU::StepMixer(int cycles_late) {
 
   auto psg_volume = psg_volume_tab[psg.volume];
 
-  if (config->audio.interpolate_fifo) {
-    for (int fifo = 0; fifo < 2; fifo++) {
-      latch[fifo] = s8(fifo_buffer[fifo]->Read() * 127.0);
+  if (mp2k.IsEngaged()) {
+    common::dsp::StereoSample<float> sample { 0, 0 };
+
+    if (resolution_old != 1) {
+      resampler->SetSampleRates(65536, config->audio_dev->GetSampleRate());
+      resolution_old = 1;
     }
-  }
 
-  for (int channel = 0; channel < 2; channel++) {
-    s16 psg_sample = 0;
+    auto mp2k_sample = mp2k.ReadSample();
 
-    if (psg.enable[channel][0]) psg_sample += mmio.psg1.GetSample();
-    if (psg.enable[channel][1]) psg_sample += mmio.psg2.GetSample();
-    if (psg.enable[channel][2]) psg_sample += mmio.psg3.GetSample();
-    if (psg.enable[channel][3]) psg_sample += mmio.psg4.GetSample();
+    for (int channel = 0; channel < 2; channel++) {
+      s16 psg_sample = 0;
 
-    sample[channel] += psg_sample * psg_volume * psg.master[channel] / 28;
+      if (psg.enable[channel][0]) psg_sample += mmio.psg1.GetSample();
+      if (psg.enable[channel][1]) psg_sample += mmio.psg2.GetSample();
+      if (psg.enable[channel][2]) psg_sample += mmio.psg3.GetSample();
+      if (psg.enable[channel][3]) psg_sample += mmio.psg4.GetSample();
 
-    for (int fifo = 0; fifo < 2; fifo++) {
-      if (dma[fifo].enable[channel]) {
-        sample[channel] += latch[fifo] * dma_volume_tab[dma[fifo].volume];
+      sample[channel] += psg_sample * psg_volume * psg.master[channel] / (28.0 * 0x200);
+
+      /* TODO: we assume that MP2K sends right channel to FIFO A and left channel to FIFO B,
+       * but we haven't verified that this is actually correct.
+       */
+      for (int fifo = 0; fifo < 2; fifo++) {
+        if (dma[fifo].enable[channel]) {
+          sample[channel] += mp2k_sample[fifo] * dma_volume_tab[dma[fifo].volume] * 0.25;
+        }
       }
     }
 
-    sample[channel] += mmio.bias.level;
-    sample[channel]  = std::clamp(sample[channel], s16(0), s16(0x3FF));
-    sample[channel] -= 0x200;
+    buffer_mutex.lock();
+    resampler->Write(sample);
+    buffer_mutex.unlock();
+
+    scheduler.Add(256 - (scheduler.GetTimestampNow() & 255), this, &APU::StepMixer);
+  } else {
+    common::dsp::StereoSample<s16> sample { 0, 0 };
+
+    auto& bias = mmio.bias;
+
+    if (bias.resolution != resolution_old) {
+      resampler->SetSampleRates(bias.GetSampleRate(),
+        config->audio_dev->GetSampleRate());
+      resolution_old = mmio.bias.resolution;
+      if (config->audio.interpolate_fifo) {
+        for (int fifo = 0; fifo < 2; fifo++) {
+          fifo_resampler[fifo]->SetSampleRates(fifo_samplerate[fifo], mmio.bias.GetSampleRate());
+        }
+      }
+    }
+
+    if (config->audio.interpolate_fifo) {
+      for (int fifo = 0; fifo < 2; fifo++) {
+        latch[fifo] = s8(fifo_buffer[fifo]->Read() * 127.0);
+      }
+    }
+
+    for (int channel = 0; channel < 2; channel++) {
+      s16 psg_sample = 0;
+
+      if (psg.enable[channel][0]) psg_sample += mmio.psg1.GetSample();
+      if (psg.enable[channel][1]) psg_sample += mmio.psg2.GetSample();
+      if (psg.enable[channel][2]) psg_sample += mmio.psg3.GetSample();
+      if (psg.enable[channel][3]) psg_sample += mmio.psg4.GetSample();
+
+      sample[channel] += psg_sample * psg_volume * psg.master[channel] / 28;
+
+      for (int fifo = 0; fifo < 2; fifo++) {
+        if (dma[fifo].enable[channel]) {
+          sample[channel] += latch[fifo] * dma_volume_tab[dma[fifo].volume];
+        }
+      }
+
+      sample[channel] += mmio.bias.level;
+      sample[channel]  = std::clamp(sample[channel], s16(0), s16(0x3FF));
+      sample[channel] -= 0x200;
+    }
+
+    buffer_mutex.lock();
+    resampler->Write({ sample[0] / float(0x200), sample[1] / float(0x200) });
+    buffer_mutex.unlock();
+
+    scheduler.Add(mmio.bias.GetSampleInterval() - cycles_late, this, &APU::StepMixer);
   }
-
-  buffer_mutex.lock();
-  resampler->Write({ sample[0] / float(0x200), sample[1] / float(0x200) });
-  buffer_mutex.unlock();
-
-  scheduler.Add(mmio.bias.GetSampleInterval() - cycles_late, this, &APU::StepMixer);
 }
 
 void APU::StepSequencer(int cycles_late) {

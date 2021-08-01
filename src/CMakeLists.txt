@@ -20,6 +20,7 @@ set(SOURCES
   emulator/core/hw/apu/channel/noise_channel.cpp
   emulator/core/hw/apu/channel/quad_channel.cpp
   emulator/core/hw/apu/channel/wave_channel.cpp
+  emulator/core/hw/apu/hle/mp2k.cpp
   emulator/core/hw/apu/apu.cpp
   emulator/core/hw/apu/callback.cpp
   emulator/core/hw/apu/registers.cpp
@@ -49,6 +50,7 @@ set(HEADERS
   common/dsp/resampler/windowed-sinc.hpp
   common/dsp/resampler.hpp
   common/compiler.hpp
+  common/crc32.hpp
   common/integer.hpp
   common/compiler.hpp
   common/log.hpp
@@ -89,6 +91,7 @@ set(HEADERS
   emulator/core/hw/apu/channel/quad_channel.hpp
   emulator/core/hw/apu/channel/sweep.hpp
   emulator/core/hw/apu/channel/wave_channel.hpp
+  emulator/core/hw/apu/hle/mp2k.hpp
   emulator/core/hw/apu/apu.hpp
   emulator/core/hw/apu/registers.hpp
   emulator/core/hw/ppu/helper.inl

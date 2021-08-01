@@ -10,6 +10,7 @@
 #include <common/dsp/resampler.hpp>
 #include <common/dsp/ring_buffer.hpp>
 #include <emulator/config/config.hpp>
+#include <emulator/core/arm/memory.hpp>
 #include <emulator/core/hw/dma.hpp>
 #include <emulator/core/scheduler.hpp>
 #include <mutex>
@@ -18,6 +19,7 @@
 #include "channel/wave_channel.hpp"
 #include "channel/noise_channel.hpp"
 #include "channel/fifo.hpp"
+#include "hle/mp2k.hpp"
 #include "registers.hpp"
 
 namespace nba::core {
@@ -26,10 +28,12 @@ struct APU {
   APU(
     Scheduler& scheduler,
     DMA& dma,
+    CPU& cpu,
     std::shared_ptr<Config>
   );
 
   void Reset();
+  auto GetMP2K() -> MP2K& { return mp2k; }
   void OnTimerOverflow(int timer_id, int times, int samplerate);
 
   struct MMIO {
@@ -51,11 +55,6 @@ struct APU {
     BIAS bias;
   } mmio;
 
-  s8 latch[2];
-  std::shared_ptr<common::dsp::RingBuffer<float>> fifo_buffer[2];
-  std::unique_ptr<common::dsp::Resampler<float>> fifo_resampler[2];
-  int fifo_samplerate[2];
-
   std::mutex buffer_mutex;
   std::shared_ptr<common::dsp::StereoRingBuffer<float>> buffer;
   std::unique_ptr<common::dsp::StereoResampler<float>> resampler;
@@ -64,8 +63,15 @@ private:
   void StepMixer(int cycles_late);
   void StepSequencer(int cycles_late);
 
+  s8 latch[2];
+  std::shared_ptr<common::dsp::RingBuffer<float>> fifo_buffer[2];
+  std::unique_ptr<common::dsp::Resampler<float>> fifo_resampler[2];
+  int fifo_samplerate[2];
+
   Scheduler& scheduler;
   DMA& dma;
+  MP2K mp2k;
+  int mp2k_read_index;
   std::shared_ptr<Config> config;
   int resolution_old = 0;
 };

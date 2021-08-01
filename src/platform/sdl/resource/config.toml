@@ -22,6 +22,8 @@ resampler = "cubic"
 # Filter FIFO audio before passing it to the mixer.
 # This will reduce the dity high-frequency aliasing typical to the GBA.
 interpolate_fifo = true
-# Higher quality for games using the popular M4A audio engine,
-# but at the cost of accuracy and performance. Games may break.
-m4a_xq_enable = false
+# Reimplementation of the popular MP2K/M4A audio mixer with higher quality.
+# This is experimental and may still have issues.
+mp2k_hle_enable = false
+# Use cubic interpolation in the MP2K reimplementation.
+mp2k_hle_cubic = false 
