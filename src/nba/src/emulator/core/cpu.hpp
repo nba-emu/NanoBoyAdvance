@@ -203,17 +203,6 @@ private:
 
     prefetch.rom_code_access = code;
 
-    if (prefetch.active) {
-      if (code && address == prefetch.last_address) {
-        // Complete the load and consume the fetched (half)word right away.
-        Tick(prefetch.countdown);
-        prefetch.count--;
-        return;
-      }
-
-      prefetch.active = false;
-    }
-
     if (code && prefetch.count != 0) {
       if (address == prefetch.head_address) {
         prefetch.count--;
@@ -223,6 +212,17 @@ private:
       } else {
         prefetch.count = 0;
       }
+    }
+
+    if (prefetch.active) {
+      if (code && address == prefetch.last_address) {
+        // Complete the load and consume the fetched (half)word right away.
+        Tick(prefetch.countdown);
+        prefetch.count--;
+        return;
+      }
+
+      prefetch.active = false;
     }
 
     Tick(cycles);
