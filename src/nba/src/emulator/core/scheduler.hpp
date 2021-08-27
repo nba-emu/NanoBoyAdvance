@@ -87,8 +87,8 @@ struct Scheduler {
   }
 
   template<class T>
-  void Add(u64 delay, T* object, EventMethod<T> method) {
-    Add(delay, [object, method](int cycles_late) {
+  auto Add(u64 delay, T* object, EventMethod<T> method) -> Event* {
+    return Add(delay, [object, method](int cycles_late) {
       (object->*method)(cycles_late);
     });
   }
