@@ -9,7 +9,7 @@
 
 #include <common/log.hpp>
 #include <common/compiler.hpp>
-#include <common/integer.hpp>
+#include <nba/integer.hpp>
 #include <functional>
 #include <limits>
 

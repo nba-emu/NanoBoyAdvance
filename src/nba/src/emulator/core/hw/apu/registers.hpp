@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <common/integer.hpp>
+#include <nba/integer.hpp>
 
 #include "channel/base_channel.hpp"
 #include "channel/fifo.hpp"

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <common/integer.hpp>
+#include <nba/integer.hpp>
 #include <emulator/core/hw/interrupt.hpp>
 #include <emulator/core/scheduler.hpp>
 

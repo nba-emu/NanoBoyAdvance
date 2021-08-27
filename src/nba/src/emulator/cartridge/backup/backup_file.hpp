@@ -9,7 +9,7 @@
 
 #include <algorithm>
 #include <filesystem>
-#include <common/integer.hpp>
+#include <nba/integer.hpp>
 #include <cstring>
 #include <stdexcept>
 #include <string>

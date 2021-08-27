@@ -8,7 +8,7 @@
 #pragma once
 
 #include <bitset>
-#include <common/integer.hpp>
+#include <nba/integer.hpp>
 #include <emulator/core/arm/memory.hpp>
 #include <emulator/core/hw/interrupt.hpp>
 #include <emulator/core/scheduler.hpp>

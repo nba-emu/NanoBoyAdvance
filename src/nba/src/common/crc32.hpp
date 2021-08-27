@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-#include <common/integer.hpp>
+#include <nba/integer.hpp>
 
 inline u32 crc32(u8 const* data, int length) {
   u32 crc32 = 0xFFFFFFFF;

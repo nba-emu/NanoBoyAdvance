@@ -8,7 +8,7 @@
 #pragma once
 
 #include <algorithm>
-#include <common/integer.hpp>
+#include <nba/integer.hpp>
 #include <common/compiler.hpp>
 #include <common/punning.hpp>
 #include <memory>

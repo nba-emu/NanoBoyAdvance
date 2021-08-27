@@ -7,6 +7,10 @@
 
 #pragma once
 
+#ifdef NBA_NO_EXPORT_INT_TYPES
+namespace nba {
+#endif
+
 #include <cstdint>
 
 using u8 = std::uint8_t;
@@ -18,3 +22,7 @@ using s32 = std::int32_t;
 using u64 = std::uint64_t;
 using s64 = std::int64_t;
 using uint = unsigned int;
+
+#ifdef NBA_NO_EXPORT_INT_TYPES
+} // namespace nba
+#endif

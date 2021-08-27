@@ -46,7 +46,6 @@ set(HEADERS
   src/common/dsp/resampler.hpp
   src/common/compiler.hpp
   src/common/crc32.hpp
-  src/common/integer.hpp
   src/common/compiler.hpp
   src/common/log.hpp
   src/common/punning.hpp
@@ -94,12 +93,14 @@ set(HEADERS
   src/emulator/core/cpu-memory.inl
   src/emulator/core/cpu-mmio.hpp
   src/emulator/core/scheduler.hpp
-  src/emulator/device/audio_device.hpp
-  src/emulator/device/input_device.hpp
-  src/emulator/device/video_device.hpp
-  src/emulator/emulator.hpp)
+  src/emulator/emulator.hpp
+)
 
 set(HEADERS_PUBLIC
+  include/nba/device/audio_device.hpp
+  include/nba/device/input_device.hpp
+  include/nba/device/video_device.hpp
+  include/nba/integer.hpp
 )
 
 add_library(nba STATIC ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})

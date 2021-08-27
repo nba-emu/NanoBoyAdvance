@@ -7,13 +7,12 @@
 
 #pragma once
 
-#include <common/integer.hpp>
+#include <nba/device/audio_device.hpp>
+#include <nba/device/input_device.hpp>
+#include <nba/device/video_device.hpp>
+#include <nba/integer.hpp>
 #include <memory>
 #include <string>
-
-#include "../device/audio_device.hpp"
-#include "../device/input_device.hpp"
-#include "../device/video_device.hpp"
 
 namespace nba {
 

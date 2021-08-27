@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <common/integer.hpp>
+#include <nba/integer.hpp>
 
 constexpr u32 DISPCNT = 0x04000000;
 constexpr u32 DISPSTAT = 0x04000004;

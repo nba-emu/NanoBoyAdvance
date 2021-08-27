@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <common/integer.hpp>
+#include <nba/integer.hpp>
 #include <emulator/core/arm/memory.hpp>
 
 namespace nba::core {

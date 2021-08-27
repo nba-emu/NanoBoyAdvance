@@ -13,7 +13,7 @@
 #include <emulator/core/hw/dma.hpp>
 #include <emulator/core/hw/interrupt.hpp>
 #include <emulator/core/scheduler.hpp>
-#include <common/integer.hpp>
+#include <nba/integer.hpp>
 #include <functional>
 #include <type_traits>
 

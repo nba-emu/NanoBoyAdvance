@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <common/integer.hpp>
+#include <nba/integer.hpp>
 #include <emulator/core/scheduler.hpp>
 
 #include "base_channel.hpp"
