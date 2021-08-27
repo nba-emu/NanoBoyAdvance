@@ -9,7 +9,7 @@ It is also intended to be reasonably efficient, bloat-free and clean code in mod
 You can download stable versions on the [releases](https://github.com/fleroviux/NanoboyAdvance/releases) page.<br>
 You can download the latest nightly build [here](https://nightly.link/fleroviux/NanoBoyAdvance/workflows/build/master).
 
-![screenshot1](screenshot.png)
+![screenshot1](docs/screenshot.png)
 
 ## Running
 
@@ -41,7 +41,7 @@ See [config.toml](https://github.com/fleroviux/NanoBoyAdvance/blob/master/src/pl
 
 ## Compiling
 
-See [COMPILING.md](https://github.com/fleroviux/NanoboyAdvance/blob/master/COMPILING.md) in the root directory of this project.
+See [COMPILING.md](https://github.com/fleroviux/NanoboyAdvance/blob/master/docs/COMPILING.md) in the root directory of this project.
 
 ## Credit
 
