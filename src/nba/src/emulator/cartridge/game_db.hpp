@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <emulator/config/config.hpp>
+#include <nba/config.hpp>
 #include <map>
 
 namespace nba {

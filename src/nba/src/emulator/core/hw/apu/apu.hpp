@@ -7,9 +7,10 @@
 
 #pragma once
 
+#include <nba/config.hpp>
+
 #include <common/dsp/resampler.hpp>
 #include <common/dsp/ring_buffer.hpp>
-#include <emulator/config/config.hpp>
 #include <emulator/core/arm/memory.hpp>
 #include <emulator/core/hw/dma.hpp>
 #include <emulator/core/scheduler.hpp>

@@ -7,13 +7,14 @@
 
 #pragma once
 
+#include <nba/config.hpp>
+#include <nba/integer.hpp>
+
 #include <common/compiler.hpp>
 #include <common/punning.hpp>
-#include <emulator/config/config.hpp>
 #include <emulator/core/hw/dma.hpp>
 #include <emulator/core/hw/interrupt.hpp>
 #include <emulator/core/scheduler.hpp>
-#include <nba/integer.hpp>
 #include <functional>
 #include <type_traits>
 

@@ -13,7 +13,6 @@ set(SOURCES
   src/emulator/cartridge/gpio/gpio.cpp
   src/emulator/cartridge/gpio/rtc.cpp
   src/emulator/cartridge/game_db.cpp
-  src/emulator/config/config_toml.cpp
   src/emulator/core/arm/tablegen/tablegen.cpp
   src/emulator/core/hw/apu/channel/noise_channel.cpp
   src/emulator/core/hw/apu/channel/quad_channel.cpp
@@ -60,8 +59,6 @@ set(HEADERS
   src/emulator/cartridge/game_db.hpp
   src/emulator/cartridge/game_pak.hpp
   src/emulator/cartridge/header.hpp
-  src/emulator/config/config.hpp
-  src/emulator/config/config_toml.hpp
   src/emulator/core/arm/handlers/arithmetic.inl
   src/emulator/core/arm/handlers/handler16.inl
   src/emulator/core/arm/handlers/handler32.inl
@@ -100,6 +97,7 @@ set(HEADERS_PUBLIC
   include/nba/device/audio_device.hpp
   include/nba/device/input_device.hpp
   include/nba/device/video_device.hpp
+  include/nba/config.hpp
   include/nba/integer.hpp
 )
 

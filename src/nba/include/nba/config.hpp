@@ -57,6 +57,7 @@ struct Config {
     bool mp2k_hle_cubic = false;
   } audio;
   
+  // TODO: remove this!
   std::shared_ptr<AudioDevice> audio_dev = std::make_shared<NullAudioDevice>();
   std::shared_ptr<InputDevice> input_dev = std::make_shared<NullInputDevice>();
   std::shared_ptr<VideoDevice> video_dev = std::make_shared<NullVideoDevice>();
@@ -64,6 +65,7 @@ struct Config {
 
 } // namespace nba
 
+// TODO: remove this as well!
 namespace std {
 
 using BackupType = nba::Config::BackupType;
