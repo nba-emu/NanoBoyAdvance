@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <nba/config.hpp>
+#include <nba/deprecate/config.hpp>
 
 #include <common/dsp/resampler.hpp>
 #include <common/dsp/ring_buffer.hpp>

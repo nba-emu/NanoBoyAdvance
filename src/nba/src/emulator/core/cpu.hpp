@@ -12,7 +12,7 @@
 #include <emulator/cartridge/backup/backup.hpp>
 #include <emulator/cartridge/gpio/gpio.hpp>
 #include <emulator/cartridge/game_pak.hpp>
-#include <nba/config.hpp>
+#include <nba/deprecate/config.hpp>
 #include <memory>
 #include <type_traits>
 

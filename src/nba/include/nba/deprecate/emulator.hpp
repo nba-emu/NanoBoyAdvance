@@ -7,11 +7,17 @@
 
 #pragma once
 
-#include <emulator/core/cpu.hpp>
+#include <nba/deprecate/config.hpp>
 #include <memory>
 #include <string>
 
 namespace nba {
+
+namespace core {
+struct CPU;
+} // namespace nba::core
+
+struct Backup;
 
 struct Emulator {
   enum class StatusCode {
@@ -23,6 +29,7 @@ struct Emulator {
   };
   
   Emulator(std::shared_ptr<Config> config);
+ ~Emulator();
 
   void Reset();
   auto LoadGame(std::string const& path) -> StatusCode;
@@ -36,7 +43,7 @@ private:
   
   auto LoadBIOS() -> StatusCode; 
   
-  core::CPU cpu;
+  core::CPU* cpu;
   bool bios_loaded = false;
   std::shared_ptr<Config> config;
 };
