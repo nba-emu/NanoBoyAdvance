@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <common/log.hpp>
-#include <emulator/device/audio_device.hpp>
+//#include <common/log.hpp>
+#include <nba/device/audio_device.hpp>
 
 #include <SDL.h>
 
@@ -30,7 +30,7 @@ struct SDL2_AudioDevice : public nba::AudioDevice {
     auto want = SDL_AudioSpec{};
 
     if (SDL_Init(SDL_INIT_AUDIO) < 0) {
-      LOG_ERROR("SDL_Init(SDL_INIT_AUDIO) failed.");
+      //LOG_ERROR("SDL_Init(SDL_INIT_AUDIO) failed.");
       return false;
     }
 
@@ -54,17 +54,17 @@ struct SDL2_AudioDevice : public nba::AudioDevice {
     device = SDL_OpenAudioDevice(NULL, 0, &want, &have, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
 
     if (device == 0) {
-      LOG_ERROR("SDL_OpenAudioDevice: failed to open audio: %s\n", SDL_GetError());
+      //LOG_ERROR("SDL_OpenAudioDevice: failed to open audio: %s\n", SDL_GetError());
       return false;
     }
 
     if (have.format != want.format) {
-      LOG_ERROR("SDL_AudioDevice: S16 sample format unavailable.");
+      //LOG_ERROR("SDL_AudioDevice: S16 sample format unavailable.");
       return false;
     }
 
     if (have.channels != want.channels) {
-      LOG_ERROR("SDL_AudioDevice: Stereo output unavailable.");
+      //LOG_ERROR("SDL_AudioDevice: Stereo output unavailable.");
       return false;
     }
 

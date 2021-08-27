@@ -5,14 +5,14 @@
  * Refer to the included LICENSE file.
  */
 
+
+#include <nba/device/input_device.hpp>
+#include <nba/device/video_device.hpp>
+#include <nba/deprecate/emulator.hpp>
+
 #include <atomic>
-#include <common/log.hpp>
 #include <cstdlib>
 #include <cstring>
-#include <emulator/config/config_toml.hpp>
-#include <emulator/device/input_device.hpp>
-#include <emulator/device/video_device.hpp>
-#include <emulator/emulator.hpp>
 #include <filesystem>
 #include <fmt/format.h>
 #include <iterator>
@@ -21,6 +21,7 @@
 #include <toml.hpp>
 #include <unordered_map>
 
+#include "config_toml.hpp"
 #include "device/audio_device.hpp"
 
 #include <GL/glew.h>
@@ -196,7 +197,7 @@ void load_keymap() {
   try {
     data = toml::parse("keymap.toml");
   } catch (std::exception& ex) {
-    LOG_WARN("Failed to load or parse keymap configuration.");
+    //LOG_WARN("Failed to load or parse keymap configuration.");
     return;
   }
 
@@ -255,7 +256,7 @@ auto compile_shader(GLuint shader, const char* source) -> bool {
 
     auto error_log = std::make_unique<GLchar[]>(max_length);
     glGetShaderInfoLog(shader, max_length, &max_length, error_log.get());
-    LOG_ERROR("Failed to compile shader:\n{0}", error_log.get());
+    //LOG_ERROR("Failed to compile shader:\n{0}", error_log.get());
     glDeleteShader(shader);
     return false;
   }
@@ -268,7 +269,7 @@ void init(int argc, char** argv) {
   if (argc >= 1) {
     fs::current_path(fs::absolute(argv[0]).replace_filename(fs::path{ }));
   }
-  common::logger::init();
+  //common::logger::init();
   config_toml_read(*g_config, "config.toml");
   parse_arguments(argc, argv);
   load_keymap();
@@ -326,7 +327,7 @@ void init(int argc, char** argv) {
     if (SDL_IsGameController(i)) {
       g_game_controller = SDL_GameControllerOpen(i);
       if (g_game_controller != nullptr) {
-        LOG_INFO("Detected game controller '{0}'", SDL_GameControllerNameForIndex(i));
+        //LOG_INFO("Detected game controller '{0}'", SDL_GameControllerNameForIndex(i));
         break;
       }
     }

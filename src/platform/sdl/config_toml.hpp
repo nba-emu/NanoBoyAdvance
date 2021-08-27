@@ -7,9 +7,8 @@
 
 #pragma once
 
+#include <nba/deprecate/config.hpp>
 #include <string>
-
-#include "config.hpp"
 
 namespace nba {
 

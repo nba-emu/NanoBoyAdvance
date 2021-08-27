@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-#include <common/log.hpp>
+//#include <common/log.hpp>
 #include <filesystem>
 #include <fstream>
 #include <map>
@@ -19,7 +19,7 @@ void config_toml_read(Config& config, std::string const& path) {
   if (!std::filesystem::exists(path)) {
     auto default_config = Config{};
     config_toml_write(default_config, path);
-    LOG_WARN("No configuration file found, created default configuration file.");
+    //LOG_WARN("No configuration file found, created default configuration file.");
     return;
   }
 
@@ -28,7 +28,7 @@ void config_toml_read(Config& config, std::string const& path) {
   try {
     data = toml::parse(path);
   } catch (std::exception& ex) {
-    LOG_ERROR("Error while parsing TOML configuration for read: {0}", ex.what());
+    //LOG_ERROR("Error while parsing TOML configuration for read: {0}", ex.what());
     return;
   }
 
@@ -63,7 +63,7 @@ void config_toml_read(Config& config, std::string const& path) {
       auto match = save_types.find(save_type);
 
       if (match == save_types.end()) {
-        LOG_WARN("Save type '{0}' is not valid, defaulting to auto-detect.", save_type);
+        //LOG_WARN("Save type '{0}' is not valid, defaulting to auto-detect.", save_type);
         config.backup_type = Config::BackupType::Detect;
       } else {
         config.backup_type = match->second;
@@ -103,7 +103,7 @@ void config_toml_read(Config& config, std::string const& path) {
       auto match = resamplers.find(resampler);
 
       if (match == resamplers.end()) {
-        LOG_WARN("Resampler '{0}' is not valid, defaulting to cosine resampler.", resampler);
+        //LOG_WARN("Resampler '{0}' is not valid, defaulting to cosine resampler.", resampler);
         config.audio.interpolation = Config::Audio::Interpolation::Cosine;
       } else {
         config.audio.interpolation = match->second;
@@ -123,7 +123,7 @@ void config_toml_write(Config& config, std::string const& path) {
     try {
       data = toml::parse<toml::preserve_comments>(path);
     } catch (std::exception& ex) {
-      LOG_ERROR("Error while parsing TOML configuration for update: {0}\n\nThe file was not updated.", ex.what());
+      //LOG_ERROR("Error while parsing TOML configuration for update: {0}\n\nThe file was not updated.", ex.what());
       return;
     }
   }
