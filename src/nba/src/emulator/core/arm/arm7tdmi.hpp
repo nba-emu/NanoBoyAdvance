@@ -40,7 +40,7 @@ struct ARM7TDMI {
     cpu_mode_is_invalid = false;
   }
 
-  auto GetPrefetchedOpcode(int slot) -> u32 {
+  auto GetFetchedOpcode(int slot) -> u32 {
     return pipe.opcode[slot];
   }
 
