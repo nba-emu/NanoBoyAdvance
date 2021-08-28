@@ -120,7 +120,7 @@ auto Emulator::LoadBIOS() -> StatusCode {
     return StatusCode::BiosNotFound;
   }
 
-  stream.read((char*)cpu->memory.bios, g_bios_size);
+  stream.read((char*)cpu->bus.memory.bios.data(), g_bios_size);
   stream.close();
 
   return StatusCode::Ok;
@@ -223,7 +223,7 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
     mask = CalculateMirrorMask(size);
   }
 
-  cpu->game_pak = GamePak{std::move(rom), std::move(backup), std::move(gpio), mask};
+  cpu->bus.memory.game_pak = GamePak{std::move(rom), std::move(backup), std::move(gpio), mask};
 
   return StatusCode::Ok;
 }

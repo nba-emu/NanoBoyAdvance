@@ -21,14 +21,15 @@ constexpr int CPU::s_ws_seq2[2];
 using Key = InputDevice::Key;
 
 CPU::CPU(std::shared_ptr<Config> config)
-    : ARM7TDMI::ARM7TDMI(scheduler, this)
+    : ARM7TDMI::ARM7TDMI(scheduler, &bus)
     , config(config)
     , irq(*this, scheduler)
-    , dma(*this, irq, scheduler)
+    , dma(bus, irq, scheduler)
     , apu(scheduler, dma, *this, config)
     , ppu(scheduler, irq, dma, config)
     , timer(scheduler, irq, apu)
-    , serial_bus(irq) {
+    , serial_bus(irq)
+    , bus(scheduler, {irq, dma, apu, ppu, timer, serial_bus}) {
   std::memset(memory.bios, 0, 0x04000);
   Reset();
 }
@@ -58,6 +59,7 @@ void CPU::Reset() {
   ppu.Reset();
   serial_bus.Reset();
   ARM7TDMI::Reset();
+  bus.Reset();
 
   if (config->skip_bios) {
     SwitchMode(arm::MODE_SYS);
@@ -80,17 +82,19 @@ void CPU::RunFor(int cycles) {
   auto limit = scheduler.GetTimestampNow() + cycles;
 
   while (scheduler.GetTimestampNow() < limit) {
-    if (unlikely(mmio.haltcnt == HaltControl::HALT && irq.HasServableIRQ())) {
-      mmio.haltcnt = HaltControl::RUN;
+    if (unlikely(bus.hw.mmio.haltcnt == Bus::Hardware::MMIO::HaltControl::HALT && irq.HasServableIRQ())) {
+      bus.hw.mmio.haltcnt = Bus::Hardware::MMIO::HaltControl::RUN;
     }
 
-    if (likely(mmio.haltcnt == HaltControl::RUN)) {
+    if (likely(bus.hw.mmio.haltcnt == Bus::Hardware::MMIO::HaltControl::RUN)) {
       if (state.r15 == mp2k_soundmain_address) {
         MP2KOnSoundMainRAMCalled();  
       }
       Run();
     } else {
-      Tick(scheduler.GetRemainingCycleCount());
+      // TODO
+      bus.PrefetchStepRAM(scheduler.GetRemainingCycleCount());
+      //Tick(scheduler.GetRemainingCycleCount());
     }
   }
 }
@@ -132,18 +136,18 @@ void CPU::UpdateMemoryDelayTable() {
 }
 
 void CPU::OnKeyPress() {
-  mmio.keyinput = 0;
+  bus.hw.mmio.keyinput = 0;
 
-  if (!config->input_dev->Poll(Key::A)) mmio.keyinput |= 1;
-  if (!config->input_dev->Poll(Key::B)) mmio.keyinput |= 2;
-  if (!config->input_dev->Poll(Key::Select)) mmio.keyinput |= 4;
-  if (!config->input_dev->Poll(Key::Start)) mmio.keyinput |= 8;
-  if (!config->input_dev->Poll(Key::Right)) mmio.keyinput |= 16;
-  if (!config->input_dev->Poll(Key::Left)) mmio.keyinput |= 32;
-  if (!config->input_dev->Poll(Key::Up)) mmio.keyinput |= 64;
-  if (!config->input_dev->Poll(Key::Down)) mmio.keyinput |= 128;
-  if (!config->input_dev->Poll(Key::R)) mmio.keyinput |= 256;
-  if (!config->input_dev->Poll(Key::L)) mmio.keyinput |= 512;
+  if (!config->input_dev->Poll(Key::A)) bus.hw.mmio.keyinput |= 1;
+  if (!config->input_dev->Poll(Key::B)) bus.hw.mmio.keyinput |= 2;
+  if (!config->input_dev->Poll(Key::Select)) bus.hw.mmio.keyinput |= 4;
+  if (!config->input_dev->Poll(Key::Start)) bus.hw.mmio.keyinput |= 8;
+  if (!config->input_dev->Poll(Key::Right)) bus.hw.mmio.keyinput |= 16;
+  if (!config->input_dev->Poll(Key::Left)) bus.hw.mmio.keyinput |= 32;
+  if (!config->input_dev->Poll(Key::Up)) bus.hw.mmio.keyinput |= 64;
+  if (!config->input_dev->Poll(Key::Down)) bus.hw.mmio.keyinput |= 128;
+  if (!config->input_dev->Poll(Key::R)) bus.hw.mmio.keyinput |= 256;
+  if (!config->input_dev->Poll(Key::L)) bus.hw.mmio.keyinput |= 512;
 
   CheckKeypadInterrupt();
 }

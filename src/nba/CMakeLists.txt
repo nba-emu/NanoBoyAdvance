@@ -14,6 +14,8 @@ set(SOURCES
   src/emulator/cartridge/gpio/rtc.cpp
   src/emulator/cartridge/game_db.cpp
   src/emulator/core/arm/tablegen/tablegen.cpp
+  src/emulator/core/bus/bus.cpp
+  src/emulator/core/bus/io.cpp
   src/emulator/core/hw/apu/channel/noise_channel.cpp
   src/emulator/core/hw/apu/channel/quad_channel.cpp
   src/emulator/core/hw/apu/channel/wave_channel.cpp
@@ -69,6 +71,8 @@ set(HEADERS
   src/emulator/core/arm/arm7tdmi.hpp
   src/emulator/core/arm/memory.hpp
   src/emulator/core/arm/state.hpp
+  src/emulator/core/bus/bus.hpp
+  src/emulator/core/bus/io.hpp
   src/emulator/core/hw/apu/channel/base_channel.hpp
   src/emulator/core/hw/apu/channel/envelope.hpp
   src/emulator/core/hw/apu/channel/fifo.hpp

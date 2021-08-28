@@ -17,6 +17,7 @@
 #include <type_traits>
 
 #include "arm/arm7tdmi.hpp"
+#include "bus/bus.hpp"
 #include "hw/apu/apu.hpp"
 #include "hw/ppu/ppu.hpp"
 #include "hw/dma.hpp"
@@ -85,6 +86,7 @@ struct CPU final : private arm::ARM7TDMI, private arm::MemoryBase {
   PPU ppu;
   Timer timer;
   SerialBus serial_bus;
+  Bus bus;
 
 private:
   friend struct MP2K;
@@ -154,7 +156,6 @@ private:
   }
 
   void ALWAYS_INLINE PrefetchStepRAM(int cycles) noexcept {
-    // TODO: bypass prefetch RAM step during DMA?
     if (unlikely(!mmio.waitcnt.prefetch)) {
       Tick(cycles);
       return;
@@ -195,7 +196,6 @@ private:
   }
 
   void ALWAYS_INLINE PrefetchStepROM(u32 address, int cycles) noexcept {
-    // TODO: bypass prefetch ROM step during DMA?
     if (unlikely(!mmio.waitcnt.prefetch)) {
       Tick(cycles);
       return;
