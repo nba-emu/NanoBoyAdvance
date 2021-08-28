@@ -29,7 +29,7 @@ CPU::CPU(std::shared_ptr<Config> config)
     , ppu(scheduler, irq, dma, config)
     , timer(scheduler, irq, apu)
     , serial_bus(irq)
-    , bus(scheduler, {irq, dma, apu, ppu, timer, serial_bus}) {
+    , bus(scheduler, {*this, irq, dma, apu, ppu, timer, serial_bus}) {
   std::memset(memory.bios, 0, 0x04000);
   Reset();
 }
@@ -82,11 +82,11 @@ void CPU::RunFor(int cycles) {
   auto limit = scheduler.GetTimestampNow() + cycles;
 
   while (scheduler.GetTimestampNow() < limit) {
-    if (unlikely(bus.hw.mmio.haltcnt == Bus::Hardware::MMIO::HaltControl::HALT && irq.HasServableIRQ())) {
-      bus.hw.mmio.haltcnt = Bus::Hardware::MMIO::HaltControl::RUN;
+    if (unlikely(mmio.haltcnt == HaltControl::HALT && irq.HasServableIRQ())) {
+      mmio.haltcnt = HaltControl::RUN;
     }
 
-    if (likely(bus.hw.mmio.haltcnt == Bus::Hardware::MMIO::HaltControl::RUN)) {
+    if (likely(mmio.haltcnt == HaltControl::RUN)) {
       if (state.r15 == mp2k_soundmain_address) {
         MP2KOnSoundMainRAMCalled();  
       }
@@ -136,18 +136,18 @@ void CPU::UpdateMemoryDelayTable() {
 }
 
 void CPU::OnKeyPress() {
-  bus.hw.mmio.keyinput = 0;
+  mmio.keyinput = 0;
 
-  if (!config->input_dev->Poll(Key::A)) bus.hw.mmio.keyinput |= 1;
-  if (!config->input_dev->Poll(Key::B)) bus.hw.mmio.keyinput |= 2;
-  if (!config->input_dev->Poll(Key::Select)) bus.hw.mmio.keyinput |= 4;
-  if (!config->input_dev->Poll(Key::Start)) bus.hw.mmio.keyinput |= 8;
-  if (!config->input_dev->Poll(Key::Right)) bus.hw.mmio.keyinput |= 16;
-  if (!config->input_dev->Poll(Key::Left)) bus.hw.mmio.keyinput |= 32;
-  if (!config->input_dev->Poll(Key::Up)) bus.hw.mmio.keyinput |= 64;
-  if (!config->input_dev->Poll(Key::Down)) bus.hw.mmio.keyinput |= 128;
-  if (!config->input_dev->Poll(Key::R)) bus.hw.mmio.keyinput |= 256;
-  if (!config->input_dev->Poll(Key::L)) bus.hw.mmio.keyinput |= 512;
+  if (!config->input_dev->Poll(Key::A)) mmio.keyinput |= 1;
+  if (!config->input_dev->Poll(Key::B)) mmio.keyinput |= 2;
+  if (!config->input_dev->Poll(Key::Select)) mmio.keyinput |= 4;
+  if (!config->input_dev->Poll(Key::Start)) mmio.keyinput |= 8;
+  if (!config->input_dev->Poll(Key::Right)) mmio.keyinput |= 16;
+  if (!config->input_dev->Poll(Key::Left)) mmio.keyinput |= 32;
+  if (!config->input_dev->Poll(Key::Up)) mmio.keyinput |= 64;
+  if (!config->input_dev->Poll(Key::Down)) mmio.keyinput |= 128;
+  if (!config->input_dev->Poll(Key::R)) mmio.keyinput |= 256;
+  if (!config->input_dev->Poll(Key::L)) mmio.keyinput |= 512;
 
   CheckKeypadInterrupt();
 }

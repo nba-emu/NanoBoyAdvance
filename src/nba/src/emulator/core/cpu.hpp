@@ -90,6 +90,7 @@ struct CPU final : private arm::ARM7TDMI, private arm::MemoryBase {
 
 private:
   friend struct MP2K;
+  friend struct Bus;
 
   auto ReadMMIO(u32 address) -> u8;
   void WriteMMIO(u32 address, u8 value);

@@ -7,6 +7,7 @@
 
 #include "bus.hpp"
 #include "common/punning.hpp"
+#include "emulator/core/cpu.hpp"
 
 namespace nba::core {
 
@@ -289,10 +290,6 @@ void Bus::PrefetchStepRAM(int cycles) {
   scheduler.AddCycles(cycles);
 }
 
-void Bus::CheckKeyPadIRQ() {
-  // TODO (where does this belong?)
-}
-
 void Bus::UpdateWaitStateTable() {
   // TODO (where does this belong?)
 }
@@ -306,17 +303,16 @@ auto Bus::ReadBIOS(u32 address) -> u32 {
     return ReadOpenBus(address) >> shift;
   }
 
-  // TODO
-  // if (state.r15 >= 0x4000) {
-  //   return memory.bios_latch >> shift;
-  // }
+  if (hw.cpu.state.r15 >= 0x4000) {
+    return memory.latch.bios >> shift;
+  }
   
   return (memory.latch.bios = common::read<u32>(memory.bios.data(), address)) >> shift;
 }
 
 auto Bus::ReadOpenBus(u32 address) -> u32 {
   // TODO
-  return 0xAABBCCDD;
+  return hw.cpu.ReadUnused(address);
 }
 
 } // namespace nba::core

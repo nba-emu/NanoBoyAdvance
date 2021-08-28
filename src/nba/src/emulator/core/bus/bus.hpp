@@ -21,6 +21,8 @@
 
 namespace nba::core {
 
+struct CPU;
+
 struct Bus : arm::MemoryBase {
   void Reset();
 
@@ -48,6 +50,7 @@ struct Bus : arm::MemoryBase {
   } memory;
 
   struct Hardware {
+    CPU& cpu;
     IRQ& irq;
     DMA& dma;
     APU& apu;
@@ -55,39 +58,6 @@ struct Bus : arm::MemoryBase {
     Timer& timer;
     SerialBus& serial_bus;
     Bus* bus = nullptr;
-
-    // TODO: move this outside the Bus class...
-    struct MMIO {
-      u16 keyinput = 0x3FF;
-      u16 rcnt_hack = 0;
-      u8 postflg = 0;
-      
-      // TODO: rename entries to Run, Stop, Halt.
-      enum class HaltControl {
-        RUN,
-        STOP,
-        HALT
-      } haltcnt = HaltControl::RUN;
-
-      struct WaitstateControl {
-        int sram = 0;
-        int ws0_n = 0;
-        int ws0_s = 0;
-        int ws1_n = 0;
-        int ws1_s = 0;
-        int ws2_n = 0;
-        int ws2_s = 0;
-        int phi = 0;
-        int prefetch = 0;
-        int cgb = 0;
-      } waitcnt;
-
-      struct KeyControl {
-        uint16_t input_mask = 0;
-        bool interrupt = false;
-        bool and_mode = false;
-      } keycnt;
-    } mmio;
 
     auto ReadByte(u32 address) ->  u8;
     auto ReadHalf(u32 address) -> u16;
@@ -105,7 +75,6 @@ struct Bus : arm::MemoryBase {
 
   void PrefetchStepROM(u32 address, int cycles);
   void PrefetchStepRAM(int cycles);
-  void CheckKeyPadIRQ();
   void UpdateWaitStateTable();
   auto ReadBIOS(u32 address) -> u32;
   auto ReadOpenBus(u32 address) -> u32;

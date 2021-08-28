@@ -6,11 +6,13 @@
  */
 
 #include "bus.hpp"
+#include "emulator/core/cpu.hpp"
 #include "io.hpp"
 
 namespace nba::core {
 
 auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
+  auto& cpu_io = cpu.mmio;
   auto& apu_io = apu.mmio;
   auto& ppu_io = ppu.mmio;
 
@@ -175,18 +177,18 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
 
     // Joypad
     case KEYINPUT+0: {
-      return mmio.keyinput & 0x00FF;
+      return cpu_io.keyinput & 0x00FF;
     }
     case KEYINPUT+1: {
-      return (mmio.keyinput & 0xFF00) >> 8;
+      return (cpu_io.keyinput & 0xFF00) >> 8;
     }
     case KEYCNT: {
-      return mmio.keycnt.input_mask & 0x00FF;
+      return cpu_io.keycnt.input_mask & 0x00FF;
     }
     case KEYCNT+1: {
-      return ((mmio.keycnt.input_mask >> 8) & 3) |
-             (mmio.keycnt.interrupt << 6) |
-             (mmio.keycnt.and_mode << 7);
+      return ((cpu_io.keycnt.input_mask >> 8) & 3) |
+             (cpu_io.keycnt.interrupt << 6) |
+             (cpu_io.keycnt.and_mode << 7);
     }
 
     // IRQ controller
@@ -201,21 +203,21 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
 
     // System control
     case WAITCNT+0: {
-      return mmio.waitcnt.sram |
-             (mmio.waitcnt.ws0_n << 2) |
-             (mmio.waitcnt.ws0_s << 4) |
-             (mmio.waitcnt.ws1_n << 5) |
-             (mmio.waitcnt.ws1_s << 7);
+      return cpu_io.waitcnt.sram |
+             (cpu_io.waitcnt.ws0_n << 2) |
+             (cpu_io.waitcnt.ws0_s << 4) |
+             (cpu_io.waitcnt.ws1_n << 5) |
+             (cpu_io.waitcnt.ws1_s << 7);
     }
     case WAITCNT+1: {
-      return mmio.waitcnt.ws2_n |
-             (mmio.waitcnt.ws2_s << 2) |
-             (mmio.waitcnt.phi << 3) |
-             (mmio.waitcnt.prefetch << 6);
+      return cpu_io.waitcnt.ws2_n |
+             (cpu_io.waitcnt.ws2_s << 2) |
+             (cpu_io.waitcnt.phi << 3) |
+             (cpu_io.waitcnt.prefetch << 6);
     }
     case WAITCNT+2:
     case WAITCNT+3: return 0;
-    case POSTFLG:   return mmio.postflg;
+    case POSTFLG:   return cpu_io.postflg;
   }
 
   return bus->ReadOpenBus(address);
@@ -233,6 +235,7 @@ auto Bus::Hardware::ReadWord(u32 address) -> u32 {
 }
 
 void Bus::Hardware::WriteByte(u32 address,  u8 value) {
+  auto& cpu_io = cpu.mmio;
   auto& apu_io = apu.mmio;
   auto& ppu_io = ppu.mmio;
 
@@ -542,17 +545,17 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
 
     // Joypad
     case KEYCNT: {
-      mmio.keycnt.input_mask &= 0xFF00;
-      mmio.keycnt.input_mask |= value;
-      bus->CheckKeyPadIRQ();
+      cpu_io.keycnt.input_mask &= 0xFF00;
+      cpu_io.keycnt.input_mask |= value;
+      cpu.CheckKeypadInterrupt();
       break;
     }
     case KEYCNT+1: {
-      mmio.keycnt.input_mask &= 0x00FF;
-      mmio.keycnt.input_mask |= (value & 3) << 8;
-      mmio.keycnt.interrupt = value & 64;
-      mmio.keycnt.and_mode = value & 128;
-      bus->CheckKeyPadIRQ();
+      cpu_io.keycnt.input_mask &= 0x00FF;
+      cpu_io.keycnt.input_mask |= (value & 3) << 8;
+      cpu_io.keycnt.interrupt = value & 64;
+      cpu_io.keycnt.and_mode = value & 128;
+      cpu.CheckKeypadInterrupt();
       break;
     }
 
@@ -565,48 +568,50 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
 
     // System control
     case WAITCNT+0: {
-      mmio.waitcnt.sram  = (value >> 0) & 3;
-      mmio.waitcnt.ws0_n = (value >> 2) & 3;
-      mmio.waitcnt.ws0_s = (value >> 4) & 1;
-      mmio.waitcnt.ws1_n = (value >> 5) & 3;
-      mmio.waitcnt.ws1_s = (value >> 7) & 1;
+      cpu_io.waitcnt.sram  = (value >> 0) & 3;
+      cpu_io.waitcnt.ws0_n = (value >> 2) & 3;
+      cpu_io.waitcnt.ws0_s = (value >> 4) & 1;
+      cpu_io.waitcnt.ws1_n = (value >> 5) & 3;
+      cpu_io.waitcnt.ws1_s = (value >> 7) & 1;
       bus->UpdateWaitStateTable();
       break;
     }
     case WAITCNT+1: {
-      mmio.waitcnt.ws2_n = (value >> 0) & 3;
-      mmio.waitcnt.ws2_s = (value >> 2) & 1;
-      mmio.waitcnt.phi = (value >> 3) & 3;
-      mmio.waitcnt.prefetch = (value >> 6) & 1;
-      mmio.waitcnt.cgb = (value >> 7) & 1;
+      cpu_io.waitcnt.ws2_n = (value >> 0) & 3;
+      cpu_io.waitcnt.ws2_s = (value >> 2) & 1;
+      cpu_io.waitcnt.phi = (value >> 3) & 3;
+      cpu_io.waitcnt.prefetch = (value >> 6) & 1;
+      cpu_io.waitcnt.cgb = (value >> 7) & 1;
       bus->UpdateWaitStateTable();
       break;
     }
     case HALTCNT: {
       if (value & 0x80) {
-        mmio.haltcnt = MMIO::HaltControl::STOP;
+        cpu_io.haltcnt = CPU::HaltControl::STOP;
       } else {
-        mmio.haltcnt = MMIO::HaltControl::HALT;
+        cpu_io.haltcnt = CPU::HaltControl::HALT;
       }
       break;
     }
     case POSTFLG: {
-      mmio.postflg = value & 1;
+      cpu_io.postflg = value & 1;
       break;
     }
   }
 }
 
 void Bus::Hardware::WriteHalf(u32 address, u16 value) {
+  auto& cpu_io = cpu.mmio;
+
   switch (address) {
     /* Do not invoke CheckKeypadInterrupt() twice for a single 16-bit write.
      * See https://github.com/fleroviux/NanoBoyAdvance/issues/152 for details.
      */
     case KEYCNT: {
-      mmio.keycnt.input_mask = value & 0x3FF;
-      mmio.keycnt.interrupt = value & 0x4000;
-      mmio.keycnt.and_mode = value & 0x8000;
-      bus->CheckKeyPadIRQ();
+      cpu_io.keycnt.input_mask = value & 0x3FF;
+      cpu_io.keycnt.interrupt = value & 0x4000;
+      cpu_io.keycnt.and_mode = value & 0x8000;
+      cpu.CheckKeypadInterrupt();
       break;
     }
     default: {
