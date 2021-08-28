@@ -9,7 +9,6 @@
 
 #include <array>
 #include <nba/integer.hpp>
-#include <type_traits>
 
 #include "emulator/cartridge/game_pak.hpp"
 #include "emulator/core/arm/memory.hpp"
@@ -100,13 +99,6 @@ struct Bus : arm::MemoryBase {
   void Prefetch(u32 address, int cycles);
   void Step(int cycles);
   void UpdateWaitStateTable();
-
-  template <typename T> auto GetWait(int page, Access access) -> int {
-    if constexpr (std::is_same_v<T, u32>) {
-      return wait32[int(access)][page];
-    }
-    return wait16[int(access)][page];
-  }
  
   int wait16[2][16] {
     { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
