@@ -129,12 +129,13 @@ template <typename T> auto Bus::Read(u32 address, Access access) -> T {
     }
     // SRAM or FLASH backup
     case 0x0E ... 0x0F: {
+      prefetch.active = false;
+
       if ((address & 0x1'FFFF) == 0) {
         access = Access::Nonsequential;
       }
 
-      // TODO: this should just stop the current prefetch burst but not start a new one.
-      Prefetch(address, wait16[int(access)][page]);
+      Step(wait16[int(access)][page]);
 
       u32 value = memory.game_pak.ReadSRAM(address);
 
@@ -226,12 +227,13 @@ template <typename T> void Bus::Write(u32 address, Access access, T value) {
     }
     // SRAM or FLASH backup
     case 0x0E ... 0x0F: {
+      prefetch.active = false;
+
       if ((address & 0x1'FFFF) == 0) {
         access = Access::Nonsequential;
       }
 
-      // TODO: this should just stop the current prefetch burst but not start a new one.
-      Prefetch(address, wait16[int(access)][page]);
+      Step(wait16[int(access)][page]);
         
       if constexpr(std::is_same_v<T, u16>) value >>= (address & 1) << 3;
       if constexpr(std::is_same_v<T, u32>) value >>= (address & 3) << 3;

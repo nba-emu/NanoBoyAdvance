@@ -68,7 +68,7 @@ void Bus::Step(int cycles) {
 
   scheduler.AddCycles(cycles);
 
-  // TODO: why is it necessara to disable prefetch during a DMA?
+  // TODO: why is it necessary to disable prefetch during a DMA?
   if (prefetch.active && !dma.active) {
     prefetch.countdown -= cycles;
 
