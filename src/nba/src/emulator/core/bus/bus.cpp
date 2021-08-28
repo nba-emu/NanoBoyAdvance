@@ -25,6 +25,7 @@ void Bus::Reset() {
   memory.latch = {};
   prefetch = {};
   dma = {};
+  UpdateWaitStateTable();
 }
 
 void Bus::Attach(GamePak&& game_pak) {

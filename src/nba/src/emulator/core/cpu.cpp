@@ -13,11 +13,6 @@
 
 namespace nba::core {
 
-constexpr int CPU::s_ws_nseq[4];
-constexpr int CPU::s_ws_seq0[2];
-constexpr int CPU::s_ws_seq1[2];
-constexpr int CPU::s_ws_seq2[2];
-
 using Key = InputDevice::Key;
 
 CPU::CPU(std::shared_ptr<Config> config)
@@ -39,17 +34,6 @@ void CPU::Reset() {
   std::memset(memory.iram, 0, 0x08000);
 
   mmio = {};
-  prefetch = {};
-  bus_is_controlled_by_dma = false;
-  openbus_from_dma = false;
-  UpdateMemoryDelayTable();
-
-  for (int i = 16; i < 256; i++) {
-    cycles16[int(Access::Nonsequential)][i] = 1;
-    cycles32[int(Access::Nonsequential)][i] = 1;
-    cycles16[int(Access::Sequential)][i] = 1;
-    cycles32[int(Access::Sequential)][i] = 1;
-  }
 
   scheduler.Reset();
   irq.Reset();
@@ -93,44 +77,7 @@ void CPU::RunFor(int cycles) {
       Run();
     } else {
       bus.PrefetchStepRAM(scheduler.GetRemainingCycleCount());
-      //Tick(scheduler.GetRemainingCycleCount());
     }
-  }
-}
-
-void CPU::UpdateMemoryDelayTable() {
-  auto cycles16_n = cycles16[int(Access::Nonsequential)];
-  auto cycles16_s = cycles16[int(Access::Sequential)];
-  auto cycles32_n = cycles32[int(Access::Nonsequential)];
-  auto cycles32_s = cycles32[int(Access::Sequential)];
-
-  int sram_cycles = 1 + s_ws_nseq[mmio.waitcnt.sram];
-
-  cycles16_n[0xE] = sram_cycles;
-  cycles32_n[0xE] = sram_cycles;
-  cycles16_s[0xE] = sram_cycles;
-  cycles32_s[0xE] = sram_cycles;
-
-  for (int i = 0; i < 2; i++) {
-    /* ROM: WS0/WS1/WS2 non-sequential timing. */
-    cycles16_n[0x8 + i] = 1 + s_ws_nseq[mmio.waitcnt.ws0_n];
-    cycles16_n[0xA + i] = 1 + s_ws_nseq[mmio.waitcnt.ws1_n];
-    cycles16_n[0xC + i] = 1 + s_ws_nseq[mmio.waitcnt.ws2_n];
-
-    /* ROM: WS0/WS1/WS2 sequential timing. */
-    cycles16_s[0x8 + i] = 1 + s_ws_seq0[mmio.waitcnt.ws0_s];
-    cycles16_s[0xA + i] = 1 + s_ws_seq1[mmio.waitcnt.ws1_s];
-    cycles16_s[0xC + i] = 1 + s_ws_seq2[mmio.waitcnt.ws2_s];
-
-    /* ROM: WS0/WS1/WS2 32-bit non-sequential access: 1N access, 1S access */
-    cycles32_n[0x8 + i] = cycles16_n[0x8] + cycles16_s[0x8];
-    cycles32_n[0xA + i] = cycles16_n[0xA] + cycles16_s[0xA];
-    cycles32_n[0xC + i] = cycles16_n[0xC] + cycles16_s[0xC];
-
-    /* ROM: WS0/WS1/WS2 32-bit sequential access: 2S accesses */
-    cycles32_s[0x8 + i] = cycles16_s[0x8] * 2;
-    cycles32_s[0xA + i] = cycles16_s[0xA] * 2;
-    cycles32_s[0xC + i] = cycles16_s[0xC] * 2;
   }
 }
 

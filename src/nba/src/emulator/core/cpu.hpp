@@ -28,7 +28,7 @@
 
 namespace nba::core {
 
-struct CPU final : private arm::ARM7TDMI, private arm::MemoryBase {
+struct CPU final : private arm::ARM7TDMI {
   using Access = arm::MemoryBase::Access;
 
   CPU(std::shared_ptr<Config> config);
@@ -92,183 +92,16 @@ private:
   friend struct MP2K;
   friend struct Bus;
 
-  auto ReadMMIO(u32 address) -> u8;
-  void WriteMMIO(u32 address, u8 value);
-  void WriteMMIO16(u32 address, u16 value);
-  auto ReadUnused(u32 address) -> u32;
-
-  template<bool debug>
-  auto ReadBIOS(u32 address) -> u32;
-  
-  template<typename T, bool debug>
-  auto Read(u32 address, Access access = Access::Sequential) -> T;
-
-  template<typename T, bool debug>
-  void Write(u32 address, T value, Access access = Access::Sequential);
-
-  auto ReadByte(u32 address, Access access) -> u8  final {
-    return Read<u8, false>(address, access);
+  template <typename T, bool debug> auto Read(u32 address) -> T {
+    return 0;
   }
 
-  auto ReadHalf(u32 address, Access access) -> u16 final {
-    return Read<u16, false>(address, access);
-  }
-
-  auto ReadWord(u32 address, Access access) -> u32 final {
-    return Read<u32, false>(address, access);
-  }
-
-  void WriteByte(u32 address, u8  value, Access access) final {
-    Write<u8, false>(address, value, access);
-  }
-
-  void WriteHalf(u32 address, u16 value, Access access) final {
-    Write<u16, false>(address, value, access);
-  }
-
-  void WriteWord(u32 address, u32 value, Access access) final {
-    Write<u32, false>(address, value, access);
-  }
-
-  void Idle() {
-    PrefetchStepRAM(1);
-  }
-
-  void ALWAYS_INLINE Tick(int cycles) noexcept {
-    openbus_from_dma = false;
-    
-    if (unlikely(dma.IsRunning() && !bus_is_controlled_by_dma)) {
-      bus_is_controlled_by_dma = true;
-      dma.Run();
-      bus_is_controlled_by_dma = false;
-      openbus_from_dma = true;
-    }
-
-    scheduler.AddCycles(cycles);
-
-    if (prefetch.active && !bus_is_controlled_by_dma) {
-      prefetch.countdown -= cycles;
-
-      if (prefetch.countdown <= 0) {
-        prefetch.count++;
-        prefetch.active = false;
-      }
-    }
-  }
-
-  void ALWAYS_INLINE PrefetchStepRAM(int cycles) noexcept {
-    if (unlikely(!mmio.waitcnt.prefetch)) {
-      Tick(cycles);
-      return;
-    }
-
-    auto thumb = state.cpsr.f.thumb;
-    auto r15 = state.r15;
-
-    /* During any execute cycle except for the fetch cycle, 
-     * r15 will be three instruction ahead instead of two.
-     */
-    if (!code) {
-      r15 -= thumb ? 2 : 4;
-    }
-
-    if (!prefetch.active && prefetch.rom_code_access && prefetch.count < prefetch.capacity) {
-      if (prefetch.count == 0) {
-        if (thumb) {
-          prefetch.opcode_width = 2;
-          prefetch.capacity = 8;
-          prefetch.duty = cycles16[int(Access::Sequential)][r15 >> 24];
-        } else {
-          prefetch.opcode_width = 4;
-          prefetch.capacity = 4;
-          prefetch.duty = cycles32[int(Access::Sequential)][r15 >> 24];
-        }
-        prefetch.last_address = r15 + prefetch.opcode_width;
-        prefetch.head_address = prefetch.last_address;
-      } else {
-        prefetch.last_address += prefetch.opcode_width;
-      }
-
-      prefetch.countdown = prefetch.duty;
-      prefetch.active = true;
-    }
-
-    Tick(cycles);
-  }
-
-  void ALWAYS_INLINE PrefetchStepROM(u32 address, int cycles) noexcept {
-    if (unlikely(!mmio.waitcnt.prefetch)) {
-      Tick(cycles);
-      return;
-    }
-
-    prefetch.rom_code_access = code;
-
-    if (code && prefetch.count != 0) {
-      if (address == prefetch.head_address) {
-        prefetch.count--;
-        prefetch.head_address += prefetch.opcode_width;
-        PrefetchStepRAM(1);
-        return;
-      } else {
-        prefetch.count = 0;
-      }
-    }
-
-    if (prefetch.active) {
-      if (code && address == prefetch.last_address) {
-        // Complete the load and consume the fetched (half)word right away.
-        Tick(prefetch.countdown);
-        prefetch.count--;
-        return;
-      }
-
-      prefetch.active = false;
-    }
-
-    Tick(cycles);
-  }
-
-  void UpdateMemoryDelayTable();
   void CheckKeypadInterrupt();
   void OnKeyPress();
   void MP2KSearchSoundMainRAM();
   void MP2KOnSoundMainRAMCalled();
 
   u32 mp2k_soundmain_address;
-
-  /* GamePak prefetch buffer state. */
-  struct Prefetch {
-    bool active = false;
-    bool rom_code_access = false;
-    u32 head_address;
-    u32 last_address;
-    int count = 0;
-    int capacity = 8;
-    int opcode_width = 4;
-    int countdown;
-    int duty;
-  } prefetch;
-
-  bool bus_is_controlled_by_dma;
-  bool openbus_from_dma;
-
-  int cycles16[2][256] {
-    { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-    { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-  };
-
-  int cycles32[2][256] {
-    { 1, 1, 6, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-    { 1, 1, 6, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 1 }
-  };
-
-  static constexpr int s_ws_nseq[4] = { 4, 3, 2, 8 }; /* Non-sequential SRAM/WS0/WS1/WS2 */
-  static constexpr int s_ws_seq0[2] = { 2, 1 };       /* Sequential WS0 */
-  static constexpr int s_ws_seq1[2] = { 4, 1 };       /* Sequential WS1 */
-  static constexpr int s_ws_seq2[2] = { 8, 1 };       /* Sequential WS2 */
 };
-
-#include "cpu-memory.inl"
 
 } // namespace nba::core
