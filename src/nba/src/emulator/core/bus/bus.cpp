@@ -58,6 +58,7 @@ void Bus::WriteWord(u32 address, u32 value, Access access) {
 
 template <typename T> auto Bus::Read(u32 address, Access access) -> T {
   auto page = address >> 24;
+  auto is_u32 = std::is_same_v<T, u32>;
 
   if (page != 0x0E && page != 0x0F) {
     address = Align<T>(address);
@@ -71,7 +72,7 @@ template <typename T> auto Bus::Read(u32 address, Access access) -> T {
     }
     // EWRAM (external work RAM)
     case 0x02: {
-      Step(GetWait<T>(0x02, access));
+      Step(is_u32 ? 6 : 3);
       return read<T>(memory.wram.data(), address & 0x3FFFF);
     }
     // IWRAM (internal work RAM)
@@ -89,12 +90,12 @@ template <typename T> auto Bus::Read(u32 address, Access access) -> T {
     }
     // PRAM (palette RAM)
     case 0x05: {
-      Step(GetWait<T>(0x05, access));
+      Step(is_u32 ? 2 : 1);
       return hw.ppu.ReadPRAM<T>(address);
     }
     // VRAM (video RAM)
     case 0x06: {
-      Step(GetWait<T>(0x06, access));
+      Step(is_u32 ? 2 : 1);
       return hw.ppu.ReadVRAM<T>(address);
     }
     // OAM (object attribute map)
@@ -108,17 +109,19 @@ template <typename T> auto Bus::Read(u32 address, Access access) -> T {
         access = Access::Nonsequential;
       }
 
-      PrefetchStepROM(address, GetWait<T>(page, access));
-
       if constexpr(std::is_same_v<T,  u8>) {
-        return memory.game_pak.ReadROM16(address) >> ((address & 1) << 3);
+        auto shift = ((address & 1) << 3);
+        Prefetch(address, wait16[int(access)][page]);
+        return memory.game_pak.ReadROM16(address) >> shift;
       }
 
       if constexpr(std::is_same_v<T, u16>) {
+        Prefetch(address, wait16[int(access)][page]);
         return memory.game_pak.ReadROM16(address);
       }
 
       if constexpr(std::is_same_v<T, u32>) {
+        Prefetch(address, wait32[int(access)][page]);
         return memory.game_pak.ReadROM32(address);  
       }
 
@@ -130,7 +133,8 @@ template <typename T> auto Bus::Read(u32 address, Access access) -> T {
         access = Access::Nonsequential;
       }
 
-      PrefetchStepROM(address, GetWait<T>(page, access));
+      // TODO: this should just stop the current prefetch burst but not start a new one.
+      Prefetch(address, wait16[int(access)][page]);
 
       u32 value = memory.game_pak.ReadSRAM(address);
 
@@ -151,6 +155,7 @@ template <typename T> auto Bus::Read(u32 address, Access access) -> T {
 
 template <typename T> void Bus::Write(u32 address, Access access, T value) {
   auto page = address >> 24;
+  auto is_u32 = std::is_same_v<T, u32>;
 
   if (page != 0x0E && page != 0x0F) {
     address = Align<T>(address);
@@ -159,7 +164,7 @@ template <typename T> void Bus::Write(u32 address, Access access, T value) {
   switch (page) {
     // EWRAM (external work RAM)
     case 0x02: {
-      Step(GetWait<T>(0x02, access));
+      Step(is_u32 ? 6 : 3);
       write<T>(memory.wram.data(), address & 0x3FFFF, value);
       break;
     }
@@ -179,13 +184,13 @@ template <typename T> void Bus::Write(u32 address, Access access, T value) {
     }
     // PRAM (palette RAM)
     case 0x05: {
-      Step(GetWait<T>(0x05, access));
+      Step(is_u32 ? 2 : 1);
       hw.ppu.WritePRAM<T>(address, value);
       break;
     }
     // VRAM (video RAM)
     case 0x06: {
-      Step(GetWait<T>(0x06, access));
+      Step(is_u32 ? 2 : 1);
       hw.ppu.WriteVRAM<T>(address, value);
       break;
     }
@@ -201,18 +206,19 @@ template <typename T> void Bus::Write(u32 address, Access access, T value) {
         access = Access::Nonsequential;
       }
 
-      PrefetchStepROM(address, GetWait<T>(page, access));
-
       // TODO: figure out how 8-bit and 16-bit accesses actually work.
       if constexpr(std::is_same_v<T, u8>) {
+        Prefetch(address, wait16[int(access)][page]);
         memory.game_pak.WriteROM(address, value * 0x0101);
       }
 
       if constexpr(std::is_same_v<T, u16>) {
+        Prefetch(address, wait16[int(access)][page]);
         memory.game_pak.WriteROM(address, value);
       }
 
       if constexpr(std::is_same_v<T, u32>) {
+        Prefetch(address, wait32[int(access)][page]);
         memory.game_pak.WriteROM(address|0, value & 0xFFFF);
         memory.game_pak.WriteROM(address|2, value >> 16);
       }
@@ -224,7 +230,8 @@ template <typename T> void Bus::Write(u32 address, Access access, T value) {
         access = Access::Nonsequential;
       }
 
-      PrefetchStepROM(address, GetWait<T>(page, access));
+      // TODO: this should just stop the current prefetch burst but not start a new one.
+      Prefetch(address, wait16[int(access)][page]);
         
       if constexpr(std::is_same_v<T, u16>) value >>= (address & 1) << 3;
       if constexpr(std::is_same_v<T, u32>) value >>= (address & 3) << 3;

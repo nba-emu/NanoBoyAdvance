@@ -14,7 +14,7 @@ void Bus::Idle() {
   Step(1);
 }
 
-void Bus::PrefetchStepROM(u32 address, int cycles) {
+void Bus::Prefetch(u32 address, int cycles) {
   auto const& cpu = hw.cpu;
 
   if (cpu.mmio.waitcnt.prefetch) {

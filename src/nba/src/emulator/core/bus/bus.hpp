@@ -97,7 +97,7 @@ struct Bus : arm::MemoryBase {
   auto ReadBIOS(u32 address) -> u32;
   auto ReadOpenBus(u32 address) -> u32;
 
-  void PrefetchStepROM(u32 address, int cycles);
+  void Prefetch(u32 address, int cycles);
   void Step(int cycles);
   void UpdateWaitStateTable();
 
