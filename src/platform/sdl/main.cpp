@@ -20,6 +20,7 @@
 #include <string>
 #include <toml.hpp>
 #include <unordered_map>
+#include <mutex>
 
 #include "config_toml.hpp"
 #include "device/audio_device.hpp"

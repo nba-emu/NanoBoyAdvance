@@ -76,7 +76,7 @@ void CPU::RunFor(int cycles) {
       }
       Run();
     } else {
-      bus.PrefetchStepRAM(scheduler.GetRemainingCycleCount());
+      bus.Step(scheduler.GetRemainingCycleCount());
     }
   }
 }

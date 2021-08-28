@@ -66,46 +66,40 @@ template <typename T> auto Bus::Read(u32 address, Access access) -> T {
   switch (page) {
     // BIOS
     case 0x00: {
-      PrefetchStepRAM(1);
+      Step(1);
       return ReadBIOS(address);
     }
     // EWRAM (external work RAM)
     case 0x02: {
-      PrefetchStepRAM(GetWait<T>(0x02, access));
+      Step(GetWait<T>(0x02, access));
       return read<T>(memory.wram.data(), address & 0x3FFFF);
     }
     // IWRAM (internal work RAM)
     case 0x03: {
-      PrefetchStepRAM(GetWait<T>(0x03, access));
+      Step(1);
       return read<T>(memory.iram.data(), address & 0x7FFF);
     }
     // MMIO
     case 0x04: {
-      PrefetchStepRAM(1);
-
-      if constexpr (std::is_same_v<T, u32>) {
-        return hw.ReadWord(address);
-      }
-
-      if constexpr (std::is_same_v<T, u16>) {
-        return hw.ReadHalf(address);
-      }
-
-      return hw.ReadByte(address);
+      Step(1);
+      if constexpr(std::is_same_v<T,  u8>) return hw.ReadByte(address);
+      if constexpr(std::is_same_v<T, u16>) return hw.ReadHalf(address);
+      if constexpr(std::is_same_v<T, u32>) return hw.ReadWord(address);
+      return 0;
     }
     // PRAM (palette RAM)
     case 0x05: {
-      PrefetchStepRAM(GetWait<T>(0x05, access));
+      Step(GetWait<T>(0x05, access));
       return hw.ppu.ReadPRAM<T>(address);
     }
     // VRAM (video RAM)
     case 0x06: {
-      PrefetchStepRAM(GetWait<T>(0x06, access));
+      Step(GetWait<T>(0x06, access));
       return hw.ppu.ReadVRAM<T>(address);
     }
     // OAM (object attribute map)
     case 0x07: {
-      PrefetchStepRAM(1);
+      Step(1);
       return hw.ppu.ReadOAM<T>(address);
     }
     // ROM (WS0, WS1, WS2)
@@ -116,15 +110,19 @@ template <typename T> auto Bus::Read(u32 address, Access access) -> T {
 
       PrefetchStepROM(address, GetWait<T>(page, access));
 
-      if constexpr (std::is_same_v<T,  u8>) {
+      if constexpr(std::is_same_v<T,  u8>) {
         return memory.game_pak.ReadROM16(address) >> ((address & 1) << 3);
       }
 
-      if constexpr (std::is_same_v<T, u16>) {
+      if constexpr(std::is_same_v<T, u16>) {
         return memory.game_pak.ReadROM16(address);
       }
 
-      return memory.game_pak.ReadROM32(address);
+      if constexpr(std::is_same_v<T, u32>) {
+        return memory.game_pak.ReadROM32(address);  
+      }
+
+      return 0;
     }
     // SRAM or FLASH backup
     case 0x0E ... 0x0F: {
@@ -136,19 +134,14 @@ template <typename T> auto Bus::Read(u32 address, Access access) -> T {
 
       u32 value = memory.game_pak.ReadSRAM(address);
 
-      if constexpr (std::is_same_v<T, u16>) {
-        value *= 0x0101;
-      }
-
-      if constexpr (std::is_same_v<T, u32>) {
-        value *= 0x01010101;
-      }
+      if constexpr(std::is_same_v<T, u16>) value *= 0x0101;
+      if constexpr(std::is_same_v<T, u32>) value *= 0x01010101;
 
       return T(value);
     }
     // Unmapped memory
     default: {
-      PrefetchStepRAM(1);
+      Step(1);
       return ReadOpenBus(address);
     }
   }  
@@ -166,48 +159,39 @@ template <typename T> void Bus::Write(u32 address, Access access, T value) {
   switch (page) {
     // EWRAM (external work RAM)
     case 0x02: {
-      PrefetchStepRAM(GetWait<T>(0x02, access));
+      Step(GetWait<T>(0x02, access));
       write<T>(memory.wram.data(), address & 0x3FFFF, value);
       break;
     }
     // IWRAM (internal work RAM)
     case 0x03: {
-      PrefetchStepRAM(GetWait<T>(0x03, access));
+      Step(1);
       write<T>(memory.iram.data(), address & 0x7FFF,  value);
       break;
     }
     // MMIO
     case 0x04: {
-      PrefetchStepRAM(1);
-
-      if constexpr (std::is_same_v<T, u32>) {
-        hw.WriteWord(address, value);
-      }
-
-      if constexpr (std::is_same_v<T, u16>) {
-        hw.WriteHalf(address, value);
-      }
-
-      if constexpr (std::is_same_v<T, u8>) {
-        hw.WriteByte(address, value);
-      }
+      Step(1);
+      if constexpr(std::is_same_v<T,  u8>) hw.WriteByte(address, value);
+      if constexpr(std::is_same_v<T, u16>) hw.WriteHalf(address, value);
+      if constexpr(std::is_same_v<T, u32>) hw.WriteWord(address, value);
       break;
     }
     // PRAM (palette RAM)
     case 0x05: {
-      PrefetchStepRAM(GetWait<T>(0x05, access));
+      Step(GetWait<T>(0x05, access));
       hw.ppu.WritePRAM<T>(address, value);
       break;
     }
     // VRAM (video RAM)
     case 0x06: {
-      PrefetchStepRAM(GetWait<T>(0x06, access));
+      Step(GetWait<T>(0x06, access));
       hw.ppu.WriteVRAM<T>(address, value);
       break;
     }
     // OAM (object attribute map)
     case 0x07: {
-      PrefetchStepRAM(1);
+      Step(1);
       hw.ppu.WriteOAM<T>(address, value);
       break;
     }
@@ -220,15 +204,15 @@ template <typename T> void Bus::Write(u32 address, Access access, T value) {
       PrefetchStepROM(address, GetWait<T>(page, access));
 
       // TODO: figure out how 8-bit and 16-bit accesses actually work.
-      if constexpr (std::is_same_v<T, u8>) {
+      if constexpr(std::is_same_v<T, u8>) {
         memory.game_pak.WriteROM(address, value * 0x0101);
       }
 
-      if constexpr (std::is_same_v<T, u16>) {
+      if constexpr(std::is_same_v<T, u16>) {
         memory.game_pak.WriteROM(address, value);
       }
 
-      if constexpr (std::is_same_v<T, u32>) {
+      if constexpr(std::is_same_v<T, u32>) {
         memory.game_pak.WriteROM(address|0, value & 0xFFFF);
         memory.game_pak.WriteROM(address|2, value >> 16);
       }
@@ -242,20 +226,15 @@ template <typename T> void Bus::Write(u32 address, Access access, T value) {
 
       PrefetchStepROM(address, GetWait<T>(page, access));
         
-      if constexpr (std::is_same_v<T, u32>) {
-        value >>= (address & 3) << 3;
-      }
-
-      if constexpr (std::is_same_v<T, u16>) {
-        value >>= (address & 1) << 3;
-      }
+      if constexpr(std::is_same_v<T, u16>) value >>= (address & 1) << 3;
+      if constexpr(std::is_same_v<T, u32>) value >>= (address & 3) << 3;
 
       memory.game_pak.WriteSRAM(address, u8(value));
       break;
     }
     // Unmapped memory
     default: {
-      PrefetchStepRAM(1);
+      Step(1);
       break;
     }
   }

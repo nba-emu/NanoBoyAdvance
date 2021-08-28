@@ -11,11 +11,7 @@
 namespace nba::core {
 
 void Bus::Idle() {
-  PrefetchStepRAM(1);
-}
-
-void Bus::PrefetchStepRAM(int cycles) {
-  Step(cycles);
+  Step(1);
 }
 
 void Bus::PrefetchStepROM(u32 address, int cycles) {
