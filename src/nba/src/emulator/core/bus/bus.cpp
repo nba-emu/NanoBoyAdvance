@@ -287,7 +287,7 @@ auto Bus::ReadOpenBus(u32 address) -> u32 {
       // BIOS, OAM (32-bit)
       case 0x00:
       case 0x07: {
-        if (r15 & 3) {
+        if ((r15 & 2) == 0) {
           word  = cpu.GetFetchedOpcode(0);
           word |= cpu.GetFetchedOpcode(1) << 16;
         } else {
@@ -300,7 +300,7 @@ auto Bus::ReadOpenBus(u32 address) -> u32 {
       }
       // IWRAM bus (16-bit special-case)
       case 0x03: {
-        if (r15 & 3) {
+        if ((r15 & 2) == 0) {
           word  = cpu.GetFetchedOpcode(0);
           word |= cpu.GetFetchedOpcode(1) << 16;
         } else {
