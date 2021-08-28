@@ -60,29 +60,26 @@ template <typename T> auto Bus::Read(u32 address, Access access) -> T {
   auto page = address >> 24;
   auto is_u32 = std::is_same_v<T, u32>;
 
-  if (page != 0x0E && page != 0x0F) {
-    address = Align<T>(address);
-  }
-
   switch (page) {
     // BIOS
     case 0x00: {
       Step(1);
-      return ReadBIOS(address);
+      return ReadBIOS(Align<T>(address));
     }
     // EWRAM (external work RAM)
     case 0x02: {
       Step(is_u32 ? 6 : 3);
-      return read<T>(memory.wram.data(), address & 0x3FFFF);
+      return read<T>(memory.wram.data(), Align<T>(address) & 0x3FFFF);
     }
     // IWRAM (internal work RAM)
     case 0x03: {
       Step(1);
-      return read<T>(memory.iram.data(), address & 0x7FFF);
+      return read<T>(memory.iram.data(), Align<T>(address) & 0x7FFF);
     }
     // MMIO
     case 0x04: {
       Step(1);
+      address = Align<T>(address);
       if constexpr(std::is_same_v<T,  u8>) return hw.ReadByte(address);
       if constexpr(std::is_same_v<T, u16>) return hw.ReadHalf(address);
       if constexpr(std::is_same_v<T, u32>) return hw.ReadWord(address);
@@ -91,20 +88,22 @@ template <typename T> auto Bus::Read(u32 address, Access access) -> T {
     // PRAM (palette RAM)
     case 0x05: {
       Step(is_u32 ? 2 : 1);
-      return hw.ppu.ReadPRAM<T>(address);
+      return hw.ppu.ReadPRAM<T>(Align<T>(address));
     }
     // VRAM (video RAM)
     case 0x06: {
       Step(is_u32 ? 2 : 1);
-      return hw.ppu.ReadVRAM<T>(address);
+      return hw.ppu.ReadVRAM<T>(Align<T>(address));
     }
     // OAM (object attribute map)
     case 0x07: {
       Step(1);
-      return hw.ppu.ReadOAM<T>(address);
+      return hw.ppu.ReadOAM<T>(Align<T>(address));
     }
     // ROM (WS0, WS1, WS2)
     case 0x08 ... 0x0D: {
+      address = Align<T>(address);
+
       if ((address & 0x1'FFFF) == 0) {
         access = Access::Nonsequential;
       }
@@ -158,26 +157,23 @@ template <typename T> void Bus::Write(u32 address, Access access, T value) {
   auto page = address >> 24;
   auto is_u32 = std::is_same_v<T, u32>;
 
-  if (page != 0x0E && page != 0x0F) {
-    address = Align<T>(address);
-  }
-
   switch (page) {
     // EWRAM (external work RAM)
     case 0x02: {
       Step(is_u32 ? 6 : 3);
-      write<T>(memory.wram.data(), address & 0x3FFFF, value);
+      write<T>(memory.wram.data(), Align<T>(address) & 0x3FFFF, value);
       break;
     }
     // IWRAM (internal work RAM)
     case 0x03: {
       Step(1);
-      write<T>(memory.iram.data(), address & 0x7FFF,  value);
+      write<T>(memory.iram.data(), Align<T>(address) & 0x7FFF,  value);
       break;
     }
     // MMIO
     case 0x04: {
       Step(1);
+      address = Align<T>(address);
       if constexpr(std::is_same_v<T,  u8>) hw.WriteByte(address, value);
       if constexpr(std::is_same_v<T, u16>) hw.WriteHalf(address, value);
       if constexpr(std::is_same_v<T, u32>) hw.WriteWord(address, value);
@@ -186,23 +182,25 @@ template <typename T> void Bus::Write(u32 address, Access access, T value) {
     // PRAM (palette RAM)
     case 0x05: {
       Step(is_u32 ? 2 : 1);
-      hw.ppu.WritePRAM<T>(address, value);
+      hw.ppu.WritePRAM<T>(Align<T>(address), value);
       break;
     }
     // VRAM (video RAM)
     case 0x06: {
       Step(is_u32 ? 2 : 1);
-      hw.ppu.WriteVRAM<T>(address, value);
+      hw.ppu.WriteVRAM<T>(Align<T>(address), value);
       break;
     }
     // OAM (object attribute map)
     case 0x07: {
       Step(1);
-      hw.ppu.WriteOAM<T>(address, value);
+      hw.ppu.WriteOAM<T>(Align<T>(address), value);
       break;
     }
     // ROM (WS0, WS1, WS2)
     case 0x08 ... 0x0D: {
+      address = Align<T>(address);
+
       if ((address & 0x1'FFFF) == 0) {
         access = Access::Nonsequential;
       }
