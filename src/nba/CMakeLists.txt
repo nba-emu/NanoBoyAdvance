@@ -16,6 +16,7 @@ set(SOURCES
   src/emulator/core/arm/tablegen/tablegen.cpp
   src/emulator/core/bus/bus.cpp
   src/emulator/core/bus/io.cpp
+  src/emulator/core/bus/timing.cpp
   src/emulator/core/hw/apu/channel/noise_channel.cpp
   src/emulator/core/hw/apu/channel/quad_channel.cpp
   src/emulator/core/hw/apu/channel/wave_channel.cpp

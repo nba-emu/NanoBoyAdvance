@@ -92,7 +92,6 @@ void CPU::RunFor(int cycles) {
       }
       Run();
     } else {
-      // TODO
       bus.PrefetchStepRAM(scheduler.GetRemainingCycleCount());
       //Tick(scheduler.GetRemainingCycleCount());
     }

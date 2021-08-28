@@ -86,12 +86,14 @@ struct Bus : arm::MemoryBase {
   template<typename T> auto Read (u32 address, Access access) -> T;
   template<typename T> void Write(u32 address, Access access, T value);
 
-  void PrefetchStepROM(u32 address, int cycles);
-  void PrefetchStepRAM(int cycles);
-  void UpdateWaitStateTable();
   auto ReadBIOS(u32 address) -> u32;
   auto ReadOpenBus(u32 address) -> u32;
 
+  void PrefetchStepROM(u32 address, int cycles);
+  void PrefetchStepRAM(int cycles);
+  void Step(int cycles);
+  void UpdateWaitStateTable();
+ 
 public:
   Bus(Scheduler& scheduler, Hardware&& hw);
 };
