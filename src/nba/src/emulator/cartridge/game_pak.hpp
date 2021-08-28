@@ -15,9 +15,7 @@
 #include <vector>
 
 #include "backup/eeprom.hpp"
-#include "backup/flash.hpp"
-#include "backup/sram.hpp"
-#include "gpio/rtc.hpp"
+#include "gpio/gpio.hpp"
 
 namespace nba {
 

@@ -12,17 +12,17 @@
 #include <common/log.hpp>
 #include <emulator/core/scheduler.hpp>
 
-#include "memory.hpp"
+#include "emulator/core/bus/bus.hpp"
 #include "state.hpp"
 
 namespace nba::core::arm {
 
 struct ARM7TDMI {
-  using Access = MemoryBase::Access;
+  using Access = Bus::Access;
 
-  ARM7TDMI(Scheduler& scheduler, MemoryBase* interface)
+  ARM7TDMI(Scheduler& scheduler, Bus& bus)
       : scheduler(scheduler)
-      , interface(interface) {
+      , bus(bus) {
     Reset();
   }
 
@@ -208,15 +208,15 @@ private:
   }
 
   void ReloadPipeline16() {
-    pipe.opcode[0] = interface->ReadHalf(state.r15 + 0, Access::Nonsequential);
-    pipe.opcode[1] = interface->ReadHalf(state.r15 + 2, Access::Sequential);
+    pipe.opcode[0] = bus.ReadHalf(state.r15 + 0, Access::Nonsequential);
+    pipe.opcode[1] = bus.ReadHalf(state.r15 + 2, Access::Sequential);
     pipe.fetch_type = Access::Sequential;
     state.r15 += 4;
   }
 
   void ReloadPipeline32() {
-    pipe.opcode[0] = interface->ReadWord(state.r15 + 0, Access::Nonsequential);
-    pipe.opcode[1] = interface->ReadWord(state.r15 + 4, Access::Sequential);
+    pipe.opcode[0] = bus.ReadWord(state.r15 + 0, Access::Nonsequential);
+    pipe.opcode[1] = bus.ReadWord(state.r15 + 4, Access::Sequential);
     pipe.fetch_type = Access::Sequential;
     state.r15 += 8;
   }
@@ -247,7 +247,7 @@ private:
   #include "handlers/memory.inl"
 
   Scheduler& scheduler;
-  MemoryBase* interface;
+  Bus& bus;
   StatusRegister* p_spsr;
   bool ldm_usermode_conflict;
   bool cpu_mode_is_invalid;

@@ -8,10 +8,13 @@
 #pragma once
 
 #include <nba/integer.hpp>
-#include <emulator/core/arm/arm7tdmi.hpp>
 #include <emulator/core/scheduler.hpp>
 
 namespace nba::core {
+
+namespace arm {
+struct ARM7TDMI;
+};
 
 struct IRQ {
   enum class Source {
@@ -31,15 +34,7 @@ struct IRQ {
     Reset();
   }
 
-  void Reset() {
-    reg_ime = 0;
-    reg_ie = 0;
-    reg_if = 0;
-    event = nullptr;
-    irq_line = false;
-    cpu.IRQLine() = false;
-  }
-
+  void Reset();
   auto Read(int offset) const -> u8;
   void Write(int offset, u8 value);
   void Raise(IRQ::Source source, int channel = 0);

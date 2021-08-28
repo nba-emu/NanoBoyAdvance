@@ -13,7 +13,7 @@ void SetZeroAndSignFlag(u32 value) {
 void TickMultiply(u32 multiplier) {
   u32 mask = 0xFFFFFF00;
 
-  interface->Idle();
+  bus.Idle();
 
   while (true) {
     multiplier &= mask;
@@ -21,7 +21,7 @@ void TickMultiply(u32 multiplier) {
       break;
     }
     mask <<= 8;
-    interface->Idle();
+    bus.Idle();
   }
 }
 

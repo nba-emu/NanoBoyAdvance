@@ -6,7 +6,8 @@
  */
 
 #include <common/compiler.hpp>
-#include <emulator/core/cpu-mmio.hpp>
+#include <emulator/core/bus/bus.hpp>
+#include <emulator/core/bus/io.hpp>
 
 #include "dma.hpp"
 
@@ -144,7 +145,7 @@ void DMA::RunChannel(bool first) {
   int dst_modify;
   int src_modify;
   auto size = channel.size;
-  auto access = Access::Nonsequential;
+  auto access = Bus::Access::Nonsequential;
 
   // TODO: we are caching the size, source and destination address delta.
   // But is it possible for a DMA channel to change its own configuration?
@@ -203,7 +204,7 @@ void DMA::RunChannel(bool first) {
     channel.latch.dst_addr += dst_modify;
     channel.latch.length--;
 
-    access = Access::Sequential;
+    access = Bus::Access::Sequential;
   }
 
   runnable_set.set(channel.id, false);

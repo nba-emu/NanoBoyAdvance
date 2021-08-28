@@ -6,19 +6,19 @@
  */
 
 u32 ReadByte(u32 address, Access access) {
-  return interface->ReadByte(address, access);
+  return bus.ReadByte(address, access);
 }
 
 u32 ReadHalf(u32 address, Access access) {
-  return interface->ReadHalf(address, access);
+  return bus.ReadHalf(address, access);
 }
 
 u32 ReadWord(u32 address, Access access) {
-  return interface->ReadWord(address, access);
+  return bus.ReadWord(address, access);
 }
 
 u32 ReadByteSigned(u32 address, Access access) {
-  u32 value = interface->ReadByte(address, access);
+  u32 value = bus.ReadByte(address, access);
 
   if (value & 0x80) {
     value |= 0xFFFFFF00;
@@ -28,7 +28,7 @@ u32 ReadByteSigned(u32 address, Access access) {
 }
 
 u32 ReadHalfRotate(u32 address, Access access) {
-  u32 value = interface->ReadHalf(address, access);
+  u32 value = bus.ReadHalf(address, access);
 
   if (address & 1) {
     value = (value >> 8) | (value << 24);
@@ -41,12 +41,12 @@ u32 ReadHalfSigned(u32 address, Access access) {
   u32 value;
 
   if (address & 1) {
-    value = interface->ReadByte(address, access);
+    value = bus.ReadByte(address, access);
     if (value & 0x80) {
       value |= 0xFFFFFF00;
     }
   } else {
-    value = interface->ReadHalf(address, access);
+    value = bus.ReadHalf(address, access);
     if (value & 0x8000) {
       value |= 0xFFFF0000;
     }
@@ -56,20 +56,20 @@ u32 ReadHalfSigned(u32 address, Access access) {
 }
 
 u32 ReadWordRotate(u32 address, Access access) {
-  auto value = interface->ReadWord(address, access);
+  auto value = bus.ReadWord(address, access);
   auto shift = (address & 3) * 8;
 
   return (value >> shift) | (value << (32 - shift));
 }
 
 void WriteByte(u32 address, u8  value, Access access) {
-  interface->WriteByte(address, value, access);
+  bus.WriteByte(address, value, access);
 }
 
 void WriteHalf(u32 address, u16 value, Access access) {
-  interface->WriteHalf(address, value, access);
+  bus.WriteHalf(address, value, access);
 }
 
 void WriteWord(u32 address, u32 value, Access access) {
-  interface->WriteWord(address, value, access);
+  bus.WriteWord(address, value, access);
 }

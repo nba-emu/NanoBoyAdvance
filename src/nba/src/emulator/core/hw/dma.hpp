@@ -9,16 +9,15 @@
 
 #include <bitset>
 #include <nba/integer.hpp>
-#include <emulator/core/arm/memory.hpp>
 #include <emulator/core/hw/interrupt.hpp>
 #include <emulator/core/scheduler.hpp>
 
 namespace nba::core {
 
-struct DMA {
-  using Access = arm::MemoryBase::Access;
+struct Bus;
 
-  DMA(arm::MemoryBase& memory, IRQ& irq, Scheduler& scheduler)
+struct DMA {
+  DMA(Bus& memory, IRQ& irq, Scheduler& scheduler)
       : memory(memory)
       , irq(irq)
       , scheduler(scheduler) {
@@ -110,7 +109,7 @@ private:
   void OnChannelWritten(Channel& channel, bool enable_old);
   void RunChannel(bool first);
 
-  arm::MemoryBase& memory;
+  Bus& memory;
   IRQ& irq;
   Scheduler& scheduler;
 

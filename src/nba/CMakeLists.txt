@@ -69,7 +69,6 @@ set(HEADERS
   src/emulator/core/arm/tablegen/gen_arm.hpp
   src/emulator/core/arm/tablegen/gen_thumb.hpp
   src/emulator/core/arm/arm7tdmi.hpp
-  src/emulator/core/arm/memory.hpp
   src/emulator/core/arm/state.hpp
   src/emulator/core/bus/bus.hpp
   src/emulator/core/bus/io.hpp

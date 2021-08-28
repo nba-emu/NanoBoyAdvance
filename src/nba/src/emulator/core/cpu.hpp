@@ -29,8 +29,6 @@
 namespace nba::core {
 
 struct CPU final : private arm::ARM7TDMI {
-  using Access = arm::MemoryBase::Access;
-
   CPU(std::shared_ptr<Config> config);
 
   void Reset();

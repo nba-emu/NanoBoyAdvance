@@ -5,9 +5,20 @@
  * Refer to the included LICENSE file.
  */
 
+#include <emulator/core/arm/arm7tdmi.hpp>
+
 #include "interrupt.hpp"
 
 namespace nba::core {
+
+void IRQ::Reset() {
+  reg_ime = 0;
+  reg_ie = 0;
+  reg_if = 0;
+  event = nullptr;
+  irq_line = false;
+  cpu.IRQLine() = false;
+}
 
 auto IRQ::Read(int offset) const -> u8 {
   switch (offset) {

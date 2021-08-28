@@ -16,7 +16,7 @@ namespace nba::core {
 using Key = InputDevice::Key;
 
 CPU::CPU(std::shared_ptr<Config> config)
-    : ARM7TDMI::ARM7TDMI(scheduler, &bus)
+    : ARM7TDMI::ARM7TDMI(scheduler, bus)
     , config(config)
     , irq(*this, scheduler)
     , dma(bus, irq, scheduler)

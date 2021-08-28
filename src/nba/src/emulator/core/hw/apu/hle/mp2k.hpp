@@ -8,7 +8,6 @@
 #pragma once
 
 #include <nba/integer.hpp>
-#include <emulator/core/arm/memory.hpp>
 
 namespace nba::core {
 
@@ -87,8 +86,6 @@ private:
   static constexpr int kDMABufferSize = 1582;
   static constexpr int kSampleRate = 65536;
   static constexpr int kSamplesPerFrame = kSampleRate / 60 + 1;
-
-  using Access = arm::MemoryBase::Access;
 
   static constexpr float S8ToFloat(s8 value) {
     return value / 127.0;

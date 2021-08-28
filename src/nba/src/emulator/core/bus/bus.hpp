@@ -11,7 +11,6 @@
 #include <nba/integer.hpp>
 
 #include "emulator/cartridge/game_pak.hpp"
-#include "emulator/core/arm/memory.hpp"
 #include "emulator/core/hw/apu/apu.hpp"
 #include "emulator/core/hw/ppu/ppu.hpp"
 #include "emulator/core/hw/dma.hpp"
@@ -23,19 +22,24 @@ namespace nba::core {
 
 struct CPU;
 
-struct Bus : arm::MemoryBase {
+struct Bus {
+  enum class Access {
+    Nonsequential = 0,
+    Sequential  = 1
+  };
+
   void Reset();
   void Attach(GamePak&& game_pak);
 
-  auto ReadByte(u32 address, Access access) ->  u8 override;
-  auto ReadHalf(u32 address, Access access) -> u16 override;
-  auto ReadWord(u32 address, Access access) -> u32 override;
+  auto ReadByte(u32 address, Access access) ->  u8;
+  auto ReadHalf(u32 address, Access access) -> u16;
+  auto ReadWord(u32 address, Access access) -> u32;
 
-  void WriteByte(u32 address, u8  value, Access access) override;
-  void WriteHalf(u32 address, u16 value, Access access) override;
-  void WriteWord(u32 address, u32 value, Access access) override;
+  void WriteByte(u32 address, u8  value, Access access);
+  void WriteHalf(u32 address, u16 value, Access access);
+  void WriteWord(u32 address, u32 value, Access access);
 
-  void Idle() override;
+  void Idle();
 
 //private:
   Scheduler& scheduler;
