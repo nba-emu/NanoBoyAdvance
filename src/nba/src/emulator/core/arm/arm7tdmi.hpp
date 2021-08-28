@@ -44,8 +44,6 @@ struct ARM7TDMI {
     return pipe.opcode[slot];
   }
 
-  bool code = false;
-
   void Run() {
     if (IRQLine()) SignalIRQ();
 
@@ -55,17 +53,14 @@ struct ARM7TDMI {
       state.r15 &= ~1;
 
       pipe.opcode[0] = pipe.opcode[1];
-      code = true;
       pipe.opcode[1] = ReadHalf(state.r15, pipe.fetch_type);
-      code = false;
       (this->*s_opcode_lut_16[instruction >> 6])(instruction);
     } else {
       state.r15 &= ~3;
 
       pipe.opcode[0] = pipe.opcode[1];
-      code = true;
       pipe.opcode[1] = ReadWord(state.r15, pipe.fetch_type);
-      code = false;
+
       if (CheckCondition(static_cast<Condition>(instruction >> 28))) {
         int hash = ((instruction >> 16) & 0xFF0) |
                    ((instruction >>  4) & 0x00F);

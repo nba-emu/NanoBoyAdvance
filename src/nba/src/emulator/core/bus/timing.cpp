@@ -15,41 +15,6 @@ void Bus::Idle() {
 }
 
 void Bus::PrefetchStepRAM(int cycles) {
-  auto const& cpu = hw.cpu;
-
-  if (cpu.mmio.waitcnt.prefetch) {
-    auto thumb = cpu.state.cpsr.f.thumb;
-    auto r15 = cpu.state.r15;
-
-    /* During any execute cycle except for the fetch cycle, 
-     * r15 will be three instruction ahead instead of two.
-     */
-    if (!cpu.code) {
-      r15 -= thumb ? 2 : 4;
-    }
-
-    if (!prefetch.active && prefetch.rom_code_access && prefetch.count < prefetch.capacity) {
-      if (prefetch.count == 0) {
-        if (thumb) {
-          prefetch.opcode_width = 2;
-          prefetch.capacity = 8;
-          prefetch.duty = wait16[int(Access::Sequential)][r15 >> 24];
-        } else {
-          prefetch.opcode_width = 4;
-          prefetch.capacity = 4;
-          prefetch.duty = wait32[int(Access::Sequential)][r15 >> 24];
-        }
-        prefetch.last_address = r15 + prefetch.opcode_width;
-        prefetch.head_address = prefetch.last_address;
-      } else {
-        prefetch.last_address += prefetch.opcode_width;
-      }
-
-      prefetch.countdown = prefetch.duty;
-      prefetch.active = true;
-    }
-  }
-
   Step(cycles);
 }
 
@@ -57,31 +22,42 @@ void Bus::PrefetchStepROM(u32 address, int cycles) {
   auto const& cpu = hw.cpu;
 
   if (cpu.mmio.waitcnt.prefetch) {
-    prefetch.rom_code_access = cpu.code;
-
-    if (cpu.code && prefetch.count != 0) {
-      if (address == prefetch.head_address) {
-        prefetch.count--;
-        prefetch.head_address += prefetch.opcode_width;
-        PrefetchStepRAM(1);
-        return;
-      } else {
-        prefetch.count = 0;
-      }
+    // Case #1: requested address is the first entry in the prefetch buffer.
+    if (prefetch.count != 0 && address == prefetch.head_address) {
+      prefetch.count--;
+      prefetch.head_address += prefetch.opcode_width;
+      Step(1);
+      return;
     }
 
-    if (prefetch.active) {
-      if (cpu.code && address == prefetch.last_address) {
-        Step(prefetch.countdown);
-        prefetch.count--;
-        return;
-      }
-
-      prefetch.active = false;
+    // Case #2: requested address is currently being prefetched.
+    if (prefetch.active && address == prefetch.last_address) {
+      Step(prefetch.countdown);
+      prefetch.head_address = prefetch.last_address;
+      prefetch.count = 0;
+      return;
     }
+
+    // Case #3: requested address is loaded through the Game Pak.
+    // The prefetch unit will be engaged and keeps the burst transfer alive.
+    Step(cycles);
+    prefetch.active = true;
+    prefetch.count = 0;
+    if (cpu.state.cpsr.f.thumb) {
+      prefetch.opcode_width = sizeof(u16);
+      prefetch.capacity = 8;
+      prefetch.duty = wait16[int(Access::Sequential)][address >> 24];
+    } else {
+      prefetch.opcode_width = sizeof(u32);
+      prefetch.capacity = 4;
+      prefetch.duty = wait32[int(Access::Sequential)][address >> 24];
+    }
+    prefetch.countdown = prefetch.duty;
+    prefetch.last_address = address + prefetch.opcode_width;
+    prefetch.head_address = prefetch.last_address;
+  } else {
+    Step(cycles);
   }
-
-  Step(cycles);
 }
 
 void Bus::Step(int cycles) {
@@ -96,12 +72,19 @@ void Bus::Step(int cycles) {
 
   scheduler.AddCycles(cycles);
 
-  if (prefetch.active) {
+  // TODO: why is it necessara to disable prefetch during a DMA?
+  if (prefetch.active && !dma.active) {
     prefetch.countdown -= cycles;
 
     if (prefetch.countdown <= 0) {
       prefetch.count++;
-      prefetch.active = false;
+
+      if (prefetch.count < prefetch.capacity) {
+        prefetch.last_address += prefetch.opcode_width;
+        prefetch.countdown += prefetch.duty;
+      } else {
+        prefetch.active = false;
+      }
     }
   }
 }
