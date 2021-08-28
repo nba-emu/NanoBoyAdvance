@@ -280,34 +280,38 @@ auto Bus::ReadOpenBus(u32 address) -> u32 {
       case 0x02:
       case 0x05 ... 0x06:
       case 0x08 ... 0x0D: {
-        word = cpu.GetPrefetchedOpcode(1) * 0x00010001;
+        word  = cpu.GetFetchedOpcode(1);
+        word |= (word << 16);
         break;
       }
       // BIOS, OAM (32-bit)
       case 0x00:
       case 0x07: {
         if (r15 & 3) {
-          word = cpu.GetPrefetchedOpcode(0) |
-                (cpu.GetPrefetchedOpcode(1) << 16);
+          word  = cpu.GetFetchedOpcode(0);
+          word |= cpu.GetFetchedOpcode(1) << 16;
         } else {
-          word = cpu.GetPrefetchedOpcode(1) * 0x00010001;
+          // TODO: this should be LSW=$+4 MSW=$+6
+          // Unfortunately $+6 has not been fetched at this point. 
+          word  = cpu.GetFetchedOpcode(1);
+          word |= (word << 16);
         }
         break;
       }
       // IWRAM bus (16-bit special-case)
       case 0x03: {
         if (r15 & 3) {
-          word = cpu.GetPrefetchedOpcode(0) |
-                (cpu.GetPrefetchedOpcode(1) << 16);
+          word  = cpu.GetFetchedOpcode(0);
+          word |= cpu.GetFetchedOpcode(1) << 16;
         } else {
-          word = cpu.GetPrefetchedOpcode(1) |
-                (cpu.GetPrefetchedOpcode(0) << 16);
+          word  = cpu.GetFetchedOpcode(1);
+          word |= cpu.GetFetchedOpcode(0) << 16;
         }
         break;
       }
     }
   } else {
-    word = cpu.GetPrefetchedOpcode(1);
+    word = cpu.GetFetchedOpcode(1);
   }
 
   return word >> shift;
