@@ -68,7 +68,10 @@ struct Bus : arm::MemoryBase {
     void WriteWord(u32 address, u32 value);
   } hw;
 
-  bool inside_dma;
+  struct DMA {
+    bool active = false;
+    bool openbus = false;
+  } dma;
 
   template<typename T> auto Read (u32 address, Access access) -> T;
   template<typename T> void Write(u32 address, Access access, T value);

@@ -23,7 +23,7 @@ void Bus::Reset() {
   memory.wram.fill(0);
   memory.iram.fill(0);
   memory.latch = {};
-  inside_dma = false;
+  dma = {};
 }
 
 auto Bus::ReadByte(u32 address, Access access) ->  u8 {
@@ -72,7 +72,7 @@ template<typename T> auto Bus::Read(u32 address, Access access) -> T {
   //   cycles = cycles16[int(access)][page];
   // }
 
-  cycles = 1;
+  cycles = 3;
 
   switch (page) {
     // BIOS
@@ -131,10 +131,7 @@ template<typename T> auto Bus::Read(u32 address, Access access) -> T {
         return memory.game_pak.ReadROM16(address);
       }
 
-      if constexpr (std::is_same_v<T, u32>) {
-        return memory.game_pak.ReadROM32(address);
-      }
-      break;
+      return memory.game_pak.ReadROM32(address);
     }
     // SRAM or FLASH backup
     case 0x0E ... 0x0F: {
@@ -183,7 +180,7 @@ template<typename T> void Bus::Write(u32 address, Access access, T value) {
   //   cycles = cycles16[int(access)][page];
   // }
 
-  cycles = 1;
+  cycles = 3;
 
   switch (page) {
     // EWRAM (external work RAM)
@@ -282,11 +279,15 @@ void Bus::PrefetchStepROM(u32 address, int cycles) {
 
 void Bus::PrefetchStepRAM(int cycles) {
   // TODO (where does this belong?)
-  if (hw.dma.IsRunning() && !inside_dma) {
-    inside_dma = true;
+  dma.openbus = false;
+
+  if (hw.dma.IsRunning() && !dma.active) {
+    dma.active = true;
     hw.dma.Run();
-    inside_dma = false;
+    dma.active = false;
+    dma.openbus = true;
   }
+
   scheduler.AddCycles(cycles);
 }
 
@@ -311,8 +312,53 @@ auto Bus::ReadBIOS(u32 address) -> u32 {
 }
 
 auto Bus::ReadOpenBus(u32 address) -> u32 {
-  // TODO
-  return hw.cpu.ReadUnused(address);
+  u32 word = 0;
+  auto& cpu = hw.cpu;
+  auto shift = (address & 3) << 3;
+
+  if (hw.dma.IsRunning() || dma.openbus) {
+    return hw.dma.GetOpenBusValue() >> shift;
+  }
+
+  if (cpu.state.cpsr.f.thumb) {
+    auto r15 = cpu.state.r15;
+
+    switch (r15 >> 24) {
+      // EWRAM, PRAM, VRAM, ROM (16-bit)
+      case 0x02:
+      case 0x05 ... 0x06:
+      case 0x08 ... 0x0D: {
+        word = cpu.GetPrefetchedOpcode(1) * 0x00010001;
+        break;
+      }
+      // BIOS, OAM (32-bit)
+      case 0x00:
+      case 0x07: {
+        if (r15 & 3) {
+          word = cpu.GetPrefetchedOpcode(0) |
+                (cpu.GetPrefetchedOpcode(1) << 16);
+        } else {
+          word = cpu.GetPrefetchedOpcode(1) * 0x00010001;
+        }
+        break;
+      }
+      // IWRAM bus (16-bit special-case)
+      case 0x03: {
+        if (r15 & 3) {
+          word = cpu.GetPrefetchedOpcode(0) |
+                (cpu.GetPrefetchedOpcode(1) << 16);
+        } else {
+          word = cpu.GetPrefetchedOpcode(1) |
+                (cpu.GetPrefetchedOpcode(0) << 16);
+        }
+        break;
+      }
+    }
+  } else {
+    word = cpu.GetPrefetchedOpcode(1);
+  }
+
+  return word >> shift;
 }
 
 } // namespace nba::core
