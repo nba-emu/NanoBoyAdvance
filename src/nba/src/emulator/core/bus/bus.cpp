@@ -26,12 +26,18 @@ void Bus::Reset() {
   dma = {};
 }
 
+void Bus::Attach(GamePak&& game_pak) {
+  memory.game_pak = std::move(game_pak);
+}
+
 auto Bus::ReadByte(u32 address, Access access) ->  u8 {
   return Read<u8>(address, access);
 }
+
 auto Bus::ReadHalf(u32 address, Access access) -> u16 {
   return Read<u16>(address, access);
 }
+
 auto Bus::ReadWord(u32 address, Access access) -> u32 {
   return Read<u32>(address, access);
 }
@@ -39,53 +45,41 @@ auto Bus::ReadWord(u32 address, Access access) -> u32 {
 void Bus::WriteByte(u32 address, u8  value, Access access) {
   Write<u8>(address, access, value);
 }
+
 void Bus::WriteHalf(u32 address, u16 value, Access access) {
   Write<u16>(address, access, value);
 }
+
 void Bus::WriteWord(u32 address, u32 value, Access access) {
   Write<u32>(address, access, value);
 }
 
-template<typename T> auto Bus::Read(u32 address, Access access) -> T {
-  int cycles;
-  int page = address >> 24;
+template <typename T> auto Bus::Read(u32 address, Access access) -> T {
+  auto page = address >> 24;
 
-  // TODO: optimize this
   if (page != 0x0E && page != 0x0F) {
-    address &= ~(sizeof(T) - 1);
-  }
-
-  // TODO: optimize this
-  if ((address & 0x1FFFF) == 0) {
-    access = Access::Nonsequential;
-  }
-  
-  // TODO: optimize this
-  if constexpr (std::is_same_v<T, u32>) {
-    cycles = cycles32[int(access)][page];
-  } else {
-    cycles = cycles16[int(access)][page];
+    address = Align<T>(address);
   }
 
   switch (page) {
     // BIOS
     case 0x00: {
-      PrefetchStepRAM(cycles);
+      PrefetchStepRAM(1);
       return ReadBIOS(address);
     }
     // EWRAM (external work RAM)
     case 0x02: {
-      PrefetchStepRAM(cycles);
+      PrefetchStepRAM(GetWait<T>(0x02, access));
       return common::read<T>(memory.wram.data(), address & 0x3FFFF);
     }
     // IWRAM (internal work RAM)
     case 0x03: {
-      PrefetchStepRAM(cycles);
+      PrefetchStepRAM(GetWait<T>(0x03, access));
       return common::read<T>(memory.iram.data(), address & 0x7FFF);
     }
     // MMIO
     case 0x04: {
-      PrefetchStepRAM(cycles);
+      PrefetchStepRAM(1);
 
       if constexpr (std::is_same_v<T, u32>) {
         return hw.ReadWord(address);
@@ -99,22 +93,26 @@ template<typename T> auto Bus::Read(u32 address, Access access) -> T {
     }
     // PRAM (palette RAM)
     case 0x05: {
-      PrefetchStepRAM(cycles);
+      PrefetchStepRAM(GetWait<T>(0x05, access));
       return hw.ppu.ReadPRAM<T>(address);
     }
     // VRAM (video RAM)
     case 0x06: {
-      PrefetchStepRAM(cycles);
+      PrefetchStepRAM(GetWait<T>(0x06, access));
       return hw.ppu.ReadVRAM<T>(address);
     }
     // OAM (object attribute map)
     case 0x07: {
-      PrefetchStepRAM(cycles);
+      PrefetchStepRAM(1);
       return hw.ppu.ReadOAM<T>(address);
     }
-    // ROM
+    // ROM (WS0, WS1, WS2)
     case 0x08 ... 0x0D: {
-      PrefetchStepROM(address, cycles);
+      if ((address & 0x1'FFFF) == 0) {
+        access = Access::Nonsequential;
+      }
+
+      PrefetchStepROM(address, GetWait<T>(page, access));
 
       if constexpr (std::is_same_v<T,  u8>) {
         return memory.game_pak.ReadROM16(address) >> ((address & 1) << 3);
@@ -128,7 +126,11 @@ template<typename T> auto Bus::Read(u32 address, Access access) -> T {
     }
     // SRAM or FLASH backup
     case 0x0E ... 0x0F: {
-      PrefetchStepROM(address, cycles);
+      if ((address & 0x1'FFFF) == 0) {
+        access = Access::Nonsequential;
+      }
+
+      PrefetchStepROM(address, GetWait<T>(page, access));
 
       u32 value = memory.game_pak.ReadSRAM(address);
 
@@ -144,7 +146,7 @@ template<typename T> auto Bus::Read(u32 address, Access access) -> T {
     }
     // Unmapped memory
     default: {
-      PrefetchStepRAM(cycles);
+      PrefetchStepRAM(1);
       return ReadOpenBus(address);
     }
   }  
@@ -152,43 +154,29 @@ template<typename T> auto Bus::Read(u32 address, Access access) -> T {
   return 0;
 }
 
-template<typename T> void Bus::Write(u32 address, Access access, T value) {
-  int cycles;
-  int page = address >> 24;
+template <typename T> void Bus::Write(u32 address, Access access, T value) {
+  auto page = address >> 24;
 
-  // TODO: optimiize this
   if (page != 0x0E && page != 0x0F) {
-    address &= ~(sizeof(T) - 1);
-  }
-
-  // TODO: optimize this
-  if ((address & 0x1FFFF) == 0) {
-    access = Access::Nonsequential;
-  }
-  
-  // TODO: optimize this
-  if (std::is_same_v<T, u32>) {
-    cycles = cycles32[int(access)][page];
-  } else {
-    cycles = cycles16[int(access)][page];
+    address = Align<T>(address);
   }
 
   switch (page) {
     // EWRAM (external work RAM)
     case 0x02: {
-      PrefetchStepRAM(cycles);
+      PrefetchStepRAM(GetWait<T>(0x02, access));
       common::write<T>(memory.wram.data(), address & 0x3FFFF, value);
       break;
     }
     // IWRAM (internal work RAM)
     case 0x03: {
-      PrefetchStepRAM(cycles);
+      PrefetchStepRAM(GetWait<T>(0x03, access));
       common::write<T>(memory.iram.data(), address & 0x7FFF,  value);
       break;
     }
     // MMIO
     case 0x04: {
-      PrefetchStepRAM(cycles);
+      PrefetchStepRAM(1);
 
       if constexpr (std::is_same_v<T, u32>) {
         hw.WriteWord(address, value);
@@ -205,25 +193,29 @@ template<typename T> void Bus::Write(u32 address, Access access, T value) {
     }
     // PRAM (palette RAM)
     case 0x05: {
-      PrefetchStepRAM(cycles);
+      PrefetchStepRAM(GetWait<T>(0x05, access));
       hw.ppu.WritePRAM<T>(address, value);
       break;
     }
     // VRAM (video RAM)
     case 0x06: {
-      PrefetchStepRAM(cycles);
+      PrefetchStepRAM(GetWait<T>(0x06, access));
       hw.ppu.WriteVRAM<T>(address, value);
       break;
     }
     // OAM (object attribute map)
     case 0x07: {
-      PrefetchStepRAM(cycles);
+      PrefetchStepRAM(1);
       hw.ppu.WriteOAM<T>(address, value);
       break;
     }
-    // ROM
+    // ROM (WS0, WS1, WS2)
     case 0x08 ... 0x0D: {
-      PrefetchStepROM(address, cycles);
+      if ((address & 0x1'FFFF) == 0) {
+        access = Access::Nonsequential;
+      }
+
+      PrefetchStepROM(address, GetWait<T>(page, access));
 
       // TODO: figure out how 8-bit and 16-bit accesses actually work.
       if constexpr (std::is_same_v<T, u8>) {
@@ -242,7 +234,11 @@ template<typename T> void Bus::Write(u32 address, Access access, T value) {
     }
     // SRAM or FLASH backup
     case 0x0E ... 0x0F: {
-      PrefetchStepROM(address, cycles);
+      if ((address & 0x1'FFFF) == 0) {
+        access = Access::Nonsequential;
+      }
+
+      PrefetchStepROM(address, GetWait<T>(page, access));
         
       if constexpr (std::is_same_v<T, u32>) {
         value >>= (address & 3) << 3;
@@ -257,7 +253,7 @@ template<typename T> void Bus::Write(u32 address, Access access, T value) {
     }
     // Unmapped memory
     default: {
-      PrefetchStepRAM(cycles);
+      PrefetchStepRAM(1);
       break;
     }
   }

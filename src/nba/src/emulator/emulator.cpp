@@ -223,7 +223,7 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
     mask = CalculateMirrorMask(size);
   }
 
-  cpu->bus.memory.game_pak = GamePak{std::move(rom), std::move(backup), std::move(gpio), mask};
+  cpu->bus.Attach(GamePak{std::move(rom), std::move(backup), std::move(gpio), mask});
 
   return StatusCode::Ok;
 }

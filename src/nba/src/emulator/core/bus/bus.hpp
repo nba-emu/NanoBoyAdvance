@@ -9,6 +9,7 @@
 
 #include <array>
 #include <nba/integer.hpp>
+#include <type_traits>
 
 #include "emulator/cartridge/game_pak.hpp"
 #include "emulator/core/arm/memory.hpp"
@@ -25,6 +26,7 @@ struct CPU;
 
 struct Bus : arm::MemoryBase {
   void Reset();
+  void Attach(GamePak&& game_pak);
 
   auto ReadByte(u32 address, Access access) ->  u8 override;
   auto ReadHalf(u32 address, Access access) -> u16 override;
@@ -73,18 +75,12 @@ struct Bus : arm::MemoryBase {
     bool openbus = false;
   } dma;
 
-  // TODO: refactor this
-  int cycles16[2][256] {
-    { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-    { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-  };
-  int cycles32[2][256] {
-    { 1, 1, 6, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
-    { 1, 1, 6, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 1 }
-  };
+  template <typename T> auto Read (u32 address, Access access) -> T;
+  template <typename T> void Write(u32 address, Access access, T value);
 
-  template<typename T> auto Read (u32 address, Access access) -> T;
-  template<typename T> void Write(u32 address, Access access, T value);
+  template <typename T> auto Align(u32 address) -> u32 {
+    return address & ~(sizeof(T) - 1);
+  }
 
   auto ReadBIOS(u32 address) -> u32;
   auto ReadOpenBus(u32 address) -> u32;
@@ -93,7 +89,24 @@ struct Bus : arm::MemoryBase {
   void PrefetchStepRAM(int cycles);
   void Step(int cycles);
   void UpdateWaitStateTable();
+
+  template <typename T> auto GetWait(int page, Access access) -> int {
+    if constexpr (std::is_same_v<T, u32>) {
+      return wait32[int(access)][page];
+    }
+    return wait16[int(access)][page];
+  }
  
+  int wait16[2][16] {
+    { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+    { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+  };
+
+  int wait32[2][16] {
+    { 1, 1, 6, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+    { 1, 1, 6, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 1 }
+  };
+
 public:
   Bus(Scheduler& scheduler, Hardware&& hw);
 };

@@ -15,7 +15,7 @@ void Bus::Idle() {
 }
 
 void Bus::PrefetchStepROM(u32 address, int cycles) {
-  PrefetchStepRAM(cycles);
+  Step(cycles);
 }
 
 void Bus::PrefetchStepRAM(int cycles) {
@@ -48,30 +48,30 @@ void Bus::UpdateWaitStateTable() {
 
   for (int i = 0; i < 2; i++) {
     // ROM: WS0/WS1/WS2 16-bit non-sequential access
-    cycles16[n][0x8 + i] = nseq[waitcnt.ws0_n];
-    cycles16[n][0xA + i] = nseq[waitcnt.ws1_n];
-    cycles16[n][0xC + i] = nseq[waitcnt.ws2_n];
+    wait16[n][0x8 + i] = nseq[waitcnt.ws0_n];
+    wait16[n][0xA + i] = nseq[waitcnt.ws1_n];
+    wait16[n][0xC + i] = nseq[waitcnt.ws2_n];
 
     // ROM: WS0/WS1/WS2 16-bit sequential access
-    cycles16[s][0x8 + i] = seq0[waitcnt.ws0_s];
-    cycles16[s][0xA + i] = seq1[waitcnt.ws1_s];
-    cycles16[s][0xC + i] = seq2[waitcnt.ws2_s];
+    wait16[s][0x8 + i] = seq0[waitcnt.ws0_s];
+    wait16[s][0xA + i] = seq1[waitcnt.ws1_s];
+    wait16[s][0xC + i] = seq2[waitcnt.ws2_s];
 
     // ROM: WS0/WS1/WS2 32-bit non-sequential access: 1N access, 1S access
-    cycles32[n][0x8 + i] = cycles16[n][0x8] + cycles16[s][0x8];
-    cycles32[n][0xA + i] = cycles16[n][0xA] + cycles16[s][0xA];
-    cycles32[n][0xC + i] = cycles16[n][0xC] + cycles16[s][0xC];
+    wait32[n][0x8 + i] = wait16[n][0x8] + wait16[s][0x8];
+    wait32[n][0xA + i] = wait16[n][0xA] + wait16[s][0xA];
+    wait32[n][0xC + i] = wait16[n][0xC] + wait16[s][0xC];
 
     // ROM: WS0/WS1/WS2 32-bit sequential access: 2S accesses
-    cycles32[s][0x8 + i] = cycles16[s][0x8] * 2;
-    cycles32[s][0xA + i] = cycles16[s][0xA] * 2;
-    cycles32[s][0xC + i] = cycles16[s][0xC] * 2;
+    wait32[s][0x8 + i] = wait16[s][0x8] * 2;
+    wait32[s][0xA + i] = wait16[s][0xA] * 2;
+    wait32[s][0xC + i] = wait16[s][0xC] * 2;
 
     // SRAM
-    cycles16[n][0xE + i] = sram;
-    cycles32[n][0xE + i] = sram;
-    cycles16[s][0xE + i] = sram;
-    cycles32[s][0xE + i] = sram;
+    wait16[n][0xE + i] = sram;
+    wait32[n][0xE + i] = sram;
+    wait16[s][0xE + i] = sram;
+    wait32[s][0xE + i] = sram;
   }
 }
 
