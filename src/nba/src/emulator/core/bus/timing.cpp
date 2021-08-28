@@ -14,11 +14,73 @@ void Bus::Idle() {
   PrefetchStepRAM(1);
 }
 
-void Bus::PrefetchStepROM(u32 address, int cycles) {
+void Bus::PrefetchStepRAM(int cycles) {
+  auto const& cpu = hw.cpu;
+
+  if (cpu.mmio.waitcnt.prefetch) {
+    auto thumb = cpu.state.cpsr.f.thumb;
+    auto r15 = cpu.state.r15;
+
+    /* During any execute cycle except for the fetch cycle, 
+     * r15 will be three instruction ahead instead of two.
+     */
+    if (!cpu.code) {
+      r15 -= thumb ? 2 : 4;
+    }
+
+    if (!prefetch.active && prefetch.rom_code_access && prefetch.count < prefetch.capacity) {
+      if (prefetch.count == 0) {
+        if (thumb) {
+          prefetch.opcode_width = 2;
+          prefetch.capacity = 8;
+          prefetch.duty = wait16[int(Access::Sequential)][r15 >> 24];
+        } else {
+          prefetch.opcode_width = 4;
+          prefetch.capacity = 4;
+          prefetch.duty = wait32[int(Access::Sequential)][r15 >> 24];
+        }
+        prefetch.last_address = r15 + prefetch.opcode_width;
+        prefetch.head_address = prefetch.last_address;
+      } else {
+        prefetch.last_address += prefetch.opcode_width;
+      }
+
+      prefetch.countdown = prefetch.duty;
+      prefetch.active = true;
+    }
+  }
+
   Step(cycles);
 }
 
-void Bus::PrefetchStepRAM(int cycles) {
+void Bus::PrefetchStepROM(u32 address, int cycles) {
+  auto const& cpu = hw.cpu;
+
+  if (cpu.mmio.waitcnt.prefetch) {
+    prefetch.rom_code_access = cpu.code;
+
+    if (cpu.code && prefetch.count != 0) {
+      if (address == prefetch.head_address) {
+        prefetch.count--;
+        prefetch.head_address += prefetch.opcode_width;
+        PrefetchStepRAM(1);
+        return;
+      } else {
+        prefetch.count = 0;
+      }
+    }
+
+    if (prefetch.active) {
+      if (cpu.code && address == prefetch.last_address) {
+        Step(prefetch.countdown);
+        prefetch.count--;
+        return;
+      }
+
+      prefetch.active = false;
+    }
+  }
+
   Step(cycles);
 }
 
@@ -33,6 +95,15 @@ void Bus::Step(int cycles) {
   }
 
   scheduler.AddCycles(cycles);
+
+  if (prefetch.active) {
+    prefetch.countdown -= cycles;
+
+    if (prefetch.countdown <= 0) {
+      prefetch.count++;
+      prefetch.active = false;
+    }
+  }
 }
 
 void Bus::UpdateWaitStateTable() {

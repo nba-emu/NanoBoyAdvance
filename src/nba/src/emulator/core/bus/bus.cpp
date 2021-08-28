@@ -23,6 +23,7 @@ void Bus::Reset() {
   memory.wram.fill(0);
   memory.iram.fill(0);
   memory.latch = {};
+  prefetch = {};
   dma = {};
 }
 

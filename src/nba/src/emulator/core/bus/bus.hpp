@@ -70,6 +70,18 @@ struct Bus : arm::MemoryBase {
     void WriteWord(u32 address, u32 value);
   } hw;
 
+  struct Prefetch {
+    bool active = false;
+    bool rom_code_access = false;
+    u32 head_address;
+    u32 last_address;
+    int count = 0;
+    int capacity = 8;
+    int opcode_width = 4;
+    int countdown;
+    int duty;
+  } prefetch;
+
   struct DMA {
     bool active = false;
     bool openbus = false;
@@ -85,8 +97,8 @@ struct Bus : arm::MemoryBase {
   auto ReadBIOS(u32 address) -> u32;
   auto ReadOpenBus(u32 address) -> u32;
 
-  void PrefetchStepROM(u32 address, int cycles);
   void PrefetchStepRAM(int cycles);
+  void PrefetchStepROM(u32 address, int cycles);
   void Step(int cycles);
   void UpdateWaitStateTable();
 
