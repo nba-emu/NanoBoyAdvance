@@ -73,6 +73,16 @@ struct Bus : arm::MemoryBase {
     bool openbus = false;
   } dma;
 
+  // TODO: refactor this
+  int cycles16[2][256] {
+    { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+    { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+  };
+  int cycles32[2][256] {
+    { 1, 1, 6, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+    { 1, 1, 6, 1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 1 }
+  };
+
   template<typename T> auto Read (u32 address, Access access) -> T;
   template<typename T> void Write(u32 address, Access access, T value);
 
