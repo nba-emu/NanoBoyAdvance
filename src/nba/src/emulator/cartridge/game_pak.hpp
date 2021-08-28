@@ -89,7 +89,7 @@ struct GamePak {
       return u16(address >> 1);
     }
 
-    return common::read<u16>(rom.data(), address);
+    return read<u16>(rom.data(), address);
   }
 
   auto ALWAYS_INLINE ReadROM32(u32 address) -> u32 {
@@ -115,7 +115,7 @@ struct GamePak {
       return (msw << 16) | lsw;
     }
 
-    return common::read<u32>(rom.data(), address);
+    return read<u32>(rom.data(), address);
   }
 
   void ALWAYS_INLINE WriteROM(u32 address, u16 value) {

@@ -34,15 +34,15 @@ struct PPU {
 
   template<typename T>
   auto ALWAYS_INLINE ReadPRAM(u32 address) noexcept -> T {
-    return common::read<T>(pram, address & 0x3FF);
+    return read<T>(pram, address & 0x3FF);
   }
 
   template<typename T>
   void ALWAYS_INLINE WritePRAM(u32 address, T value) noexcept {
     if constexpr (std::is_same_v<T, u8>) {
-      common::write<u16>(pram, address & 0x3FE, value * 0x0101);
+      write<u16>(pram, address & 0x3FE, value * 0x0101);
     } else {
-      common::write<T>(pram, address & 0x3FF, value);
+      write<T>(pram, address & 0x3FF, value);
     }
   }
 
@@ -52,7 +52,7 @@ struct PPU {
     if (address >= 0x18000) {
       address &= ~0x8000;
     }
-    return common::read<T>(vram, address);
+    return read<T>(vram, address);
   }
 
   template<typename T>
@@ -64,22 +64,22 @@ struct PPU {
     if (std::is_same_v<T, u8>) {
       auto limit = mmio.dispcnt.mode >= 3 ? 0x14000 : 0x10000;
       if (address < limit) {
-        common::write<u16>(vram, address & ~1, value * 0x0101);
+        write<u16>(vram, address & ~1, value * 0x0101);
       }
     } else {
-      common::write<T>(vram, address, value);
+      write<T>(vram, address, value);
     }
   }
 
   template<typename T>
   auto ALWAYS_INLINE ReadOAM(u32 address) noexcept -> T {
-    return common::read<T>(oam, address & 0x3FF);
+    return read<T>(oam, address & 0x3FF);
   }
 
   template<typename T>
   void ALWAYS_INLINE WriteOAM(u32 address, T value) noexcept {
     if constexpr (!std::is_same_v<T, u8>) {
-      common::write<T>(oam, address & 0x3FF, value);
+      write<T>(oam, address & 0x3FF, value);
     }
   }
 

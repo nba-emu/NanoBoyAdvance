@@ -182,7 +182,7 @@ void CPU::MP2KSearchSoundMainRAM() {
       /* We have found SoundMain().
        * The pointer to SoundMainRAM() is stored at offset 0x74.
        */
-      mp2k_soundmain_address = common::read<u32>(rom.data(), address + 0x74);
+      mp2k_soundmain_address = read<u32>(rom.data(), address + 0x74);
 
       LOG_INFO("MP2K: found SoundMainRAM() routine at 0x{0:08X}.", mp2k_soundmain_address);
 

@@ -7,6 +7,8 @@
 
 #include <nba/integer.hpp>
 
+namespace nba {
+
 inline u32 crc32(u8 const* data, int length) {
   u32 crc32 = 0xFFFFFFFF;
 
@@ -26,3 +28,5 @@ inline u32 crc32(u8 const* data, int length) {
 
   return ~crc32;
 }
+
+} // namespace nba

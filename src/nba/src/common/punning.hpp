@@ -10,7 +10,7 @@
 #include <nba/integer.hpp>
 #include <string.h>
 
-namespace common {
+namespace nba {
 
 template<typename T>
 auto read(void const* data, uint offset) -> T {
@@ -24,4 +24,4 @@ void write(void* data, uint offset, T value) {
   memcpy((u8*)data + offset, &value, sizeof(T));
 }
 
-} // namespace common
+} // namespace nba

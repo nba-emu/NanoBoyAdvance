@@ -70,12 +70,12 @@ template <typename T> auto Bus::Read(u32 address, Access access) -> T {
     // EWRAM (external work RAM)
     case 0x02: {
       PrefetchStepRAM(GetWait<T>(0x02, access));
-      return common::read<T>(memory.wram.data(), address & 0x3FFFF);
+      return read<T>(memory.wram.data(), address & 0x3FFFF);
     }
     // IWRAM (internal work RAM)
     case 0x03: {
       PrefetchStepRAM(GetWait<T>(0x03, access));
-      return common::read<T>(memory.iram.data(), address & 0x7FFF);
+      return read<T>(memory.iram.data(), address & 0x7FFF);
     }
     // MMIO
     case 0x04: {
@@ -165,13 +165,13 @@ template <typename T> void Bus::Write(u32 address, Access access, T value) {
     // EWRAM (external work RAM)
     case 0x02: {
       PrefetchStepRAM(GetWait<T>(0x02, access));
-      common::write<T>(memory.wram.data(), address & 0x3FFFF, value);
+      write<T>(memory.wram.data(), address & 0x3FFFF, value);
       break;
     }
     // IWRAM (internal work RAM)
     case 0x03: {
       PrefetchStepRAM(GetWait<T>(0x03, access));
-      common::write<T>(memory.iram.data(), address & 0x7FFF,  value);
+      write<T>(memory.iram.data(), address & 0x7FFF,  value);
       break;
     }
     // MMIO
@@ -272,7 +272,7 @@ auto Bus::ReadBIOS(u32 address) -> u32 {
     return memory.latch.bios >> shift;
   }
   
-  return (memory.latch.bios = common::read<u32>(memory.bios.data(), address)) >> shift;
+  return (memory.latch.bios = read<u32>(memory.bios.data(), address)) >> shift;
 }
 
 auto Bus::ReadOpenBus(u32 address) -> u32 {

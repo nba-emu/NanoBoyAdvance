@@ -35,7 +35,7 @@ struct TableGen {
   static constexpr auto GenerateTableThumb() -> std::array<Handler16, 1024> {
     std::array<Handler16, 1024> lut{};
 
-    common::static_for<std::size_t, 0, 1024>([&](auto i) {
+    static_for<std::size_t, 0, 1024>([&](auto i) {
       lut[i] = GenerateHandlerThumb<i << 6>();
     });
     return lut;
@@ -44,7 +44,7 @@ struct TableGen {
   static constexpr auto GenerateTableARM() -> std::array<Handler32, 4096> {
     std::array<Handler32, 4096> lut{};
 
-    common::static_for<std::size_t, 0, 4096>([&](auto i) {
+    static_for<std::size_t, 0, 4096>([&](auto i) {
       lut[i] = GenerateHandlerARM<
         ((i & 0xFF0) << 16) |
         ((i & 0xF) << 4)>();

@@ -19,7 +19,7 @@ inline u32 CPU::ReadBIOS(u32 address) {
     return memory.bios_latch >> shift;
   }
 
-  auto word = common::read<u32>(memory.bios, address);
+  auto word = read<u32>(memory.bios, address);
 
   if constexpr (!debug) {
     memory.bios_latch = word;
@@ -109,13 +109,13 @@ auto CPU::Read(u32 address, Access access) -> T {
       if constexpr (!debug) {
         PrefetchStepRAM(cycles);
       }
-      return common::read<T>(memory.wram, address & 0x3FFFF);
+      return read<T>(memory.wram, address & 0x3FFFF);
     }
     case 0x03: {
       if constexpr (!debug) {
         PrefetchStepRAM(cycles);
       }
-      return common::read<T>(memory.iram, address & 0x7FFF);
+      return read<T>(memory.iram, address & 0x7FFF);
     }
     case 0x04: {
       if constexpr (!debug) {
@@ -226,14 +226,14 @@ void CPU::Write(u32 address, T value, Access access) {
       if constexpr (!debug) {
         PrefetchStepRAM(cycles);
       }
-      common::write<T>(memory.wram, address & 0x3FFFF, value);
+      write<T>(memory.wram, address & 0x3FFFF, value);
       break;
     }
     case 0x03: {
       if constexpr (!debug) {
         PrefetchStepRAM(cycles);
       }
-      common::write<T>(memory.iram, address & 0x7FFF,  value);
+      write<T>(memory.iram, address & 0x7FFF,  value);
       break;
     }
     case 0x04: {
