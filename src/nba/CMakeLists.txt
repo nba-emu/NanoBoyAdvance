@@ -91,7 +91,6 @@ set(HEADERS
   src/emulator/core/hw/serial.hpp
   src/emulator/core/hw/timer.hpp
   src/emulator/core/cpu.hpp
-  src/emulator/core/cpu-mmio.hpp
   src/emulator/core/scheduler.hpp
 )
 

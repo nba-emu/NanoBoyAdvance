@@ -6,7 +6,7 @@
  */
 
 #include <common/log.hpp>
-#include <emulator/core/cpu-mmio.hpp>
+#include <emulator/core/bus/io.hpp>
 
 #include "serial.hpp"
 
