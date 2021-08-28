@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "emulator/core/hw/interrupt.hpp"
 #include "gpio.hpp"
 
 namespace nba {
@@ -34,10 +35,7 @@ struct RTC : GPIO {
     Free = 7
   };
 
-  RTC(
-    nba::core::Scheduler* scheduler,
-    nba::core::IRQ* irq
-  )   : GPIO(scheduler, irq) {
+  RTC(core::IRQ& irq) : irq(irq) {
     Reset();
   }
 
@@ -96,6 +94,8 @@ private:
       poweroff = false;
     }
   } control;
+
+  core::IRQ& irq;
 
   static constexpr int s_argument_count[8] = {
     0, // ForceReset

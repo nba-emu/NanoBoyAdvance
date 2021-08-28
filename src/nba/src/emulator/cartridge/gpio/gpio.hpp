@@ -8,8 +8,7 @@
 #pragma once
 
 #include <cassert>
-#include <emulator/core/scheduler.hpp>
-#include <emulator/core/hw/interrupt.hpp>
+#include <nba/integer.hpp>
 
 namespace nba {
 
@@ -21,11 +20,7 @@ struct GPIO {
     Out = 1  // GPIO <- GBA
   };
 
-  GPIO(
-    nba::core::Scheduler* scheduler,
-    nba::core::IRQ* irq
-  )   : scheduler(scheduler)
-      , irq(irq) {
+  GPIO() {
     Reset();
   }
 
@@ -48,9 +43,6 @@ struct GPIO {
 protected:
   virtual auto ReadPort() -> u8 = 0;
   virtual void WritePort(u8 value) = 0;
-
-  nba::core::Scheduler* scheduler;
-  nba::core::IRQ* irq;
 
 private:
   enum class Register {

@@ -215,7 +215,7 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   auto gpio = std::unique_ptr<GPIO>{};
 
   if (game_info.gpio == GPIODeviceType::RTC || config->force_rtc) {
-    gpio = std::make_unique<RTC>(&cpu->scheduler, &cpu->irq);
+    gpio = std::make_unique<RTC>(cpu->irq);
   }
 
   u32 mask = 0x01FF'FFFF;
