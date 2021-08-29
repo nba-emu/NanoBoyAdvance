@@ -139,41 +139,8 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
     case TM3CNT_H+1: return 0;
 
     // Serial communication
-    // TODO: remove this and heavily simplify the stub.
-    case SIOMULTI0 | 0:
-    case SIOMULTI0 | 1:
-    case SIOMULTI1 | 0:
-    case SIOMULTI1 | 1:
-    case SIOMULTI2 | 0:
-    case SIOMULTI2 | 1:
-    case SIOMULTI3 | 0:
-    case SIOMULTI3 | 1:
-    case SIOCNT | 0:
-    case SIOCNT | 1:
-    case SIOMLT_SEND | 0:
-    case SIOMLT_SEND | 1:
-    case RCNT | 0:
-    case RCNT | 1:
-    case RCNT | 2:
-    case RCNT | 3:
-    case JOYCNT | 0:
-    case JOYCNT | 1:
-    case JOYCNT | 2:
-    case JOYCNT | 3:
-    case JOY_RECV | 0:
-    case JOY_RECV | 1:
-    case JOY_RECV | 2:
-    case JOY_RECV | 3:
-    case JOY_TRANS | 0:
-    case JOY_TRANS | 1:
-    case JOY_TRANS | 2:
-    case JOY_TRANS | 3:
-    case JOYSTAT | 0:
-    case JOYSTAT | 1:
-    case JOYSTAT | 2:
-    case JOYSTAT | 3: {
-      return serial_bus.Read(address);
-    }
+    case RCNT+0: return rcnt[0];
+    case RCNT+1: return rcnt[1];
 
     // Keypad
     case KEYINPUT+0: return keypad.input.ReadByte(0);
@@ -496,42 +463,14 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
     case TM3CNT_H:   timer.Write(3, 2, value); break;
 
     // Serial communication
-    // TODO: remove this and heavily simplify the stub.
-    case SIOMULTI0 | 0:
-    case SIOMULTI0 | 1:
-    case SIOMULTI1 | 0:
-    case SIOMULTI1 | 1:
-    case SIOMULTI2 | 0:
-    case SIOMULTI2 | 1:
-    case SIOMULTI3 | 0:
-    case SIOMULTI3 | 1:
-    case SIOCNT | 0:
-    case SIOCNT | 1:
-    case SIOMLT_SEND | 0:
-    case SIOMLT_SEND | 1:
-    case RCNT | 0:
-    case RCNT | 1:
-    case RCNT | 2:
-    case RCNT | 3:
-    case JOYCNT | 0:
-    case JOYCNT | 1:
-    case JOYCNT | 2:
-    case JOYCNT | 3:
-    case JOY_RECV | 0:
-    case JOY_RECV | 1:
-    case JOY_RECV | 2:
-    case JOY_RECV | 3:
-    case JOY_TRANS | 0:
-    case JOY_TRANS | 1:
-    case JOY_TRANS | 2:
-    case JOY_TRANS | 3:
-    case JOYSTAT | 0:
-    case JOYSTAT | 1:
-    case JOYSTAT | 2:
-    case JOYSTAT | 3: {
-      serial_bus.Write(address, value);
+    case SIOCNT: {
+      if (value & 0x80) {
+        irq.Raise(IRQ::Source::Serial);
+      }
       break;
     }
+    case RCNT+0: rcnt[0] = value; break;
+    case RCNT+1: rcnt[1] = value; break;
 
     // Keypad
     case KEYCNT:   keypad.control.WriteByte(0, value); break;

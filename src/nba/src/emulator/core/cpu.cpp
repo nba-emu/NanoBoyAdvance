@@ -23,9 +23,8 @@ CPU::CPU(std::shared_ptr<Config> config)
     , apu(scheduler, dma, *this, config)
     , ppu(scheduler, irq, dma, config)
     , timer(scheduler, irq, apu)
-    , serial_bus(irq)
     , keypad(irq, config)
-    , bus(scheduler, {*this, irq, dma, apu, ppu, timer, serial_bus, keypad}) {
+    , bus(scheduler, {*this, irq, dma, apu, ppu, timer, keypad}) {
   Reset();
 }
 
@@ -36,7 +35,6 @@ void CPU::Reset() {
   timer.Reset();
   apu.Reset();
   ppu.Reset();
-  serial_bus.Reset();
   ARM7TDMI::Reset();
   bus.Reset();
   keypad.Reset();

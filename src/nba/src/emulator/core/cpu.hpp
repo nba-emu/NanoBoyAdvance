@@ -23,7 +23,6 @@
 #include "hw/dma.hpp"
 #include "hw/interrupt.hpp"
 #include "hw/keypad.hpp"
-#include "hw/serial.hpp"
 #include "hw/timer.hpp"
 #include "scheduler.hpp"
 
@@ -52,7 +51,6 @@ struct CPU final : private arm::ARM7TDMI {
   APU apu;
   PPU ppu;
   Timer timer;
-  SerialBus serial_bus;
   KeyPad keypad;
   Bus bus;
 

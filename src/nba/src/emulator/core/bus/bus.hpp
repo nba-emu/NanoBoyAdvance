@@ -16,7 +16,6 @@
 #include "emulator/core/hw/dma.hpp"
 #include "emulator/core/hw/interrupt.hpp"
 #include "emulator/core/hw/keypad.hpp"
-#include "emulator/core/hw/serial.hpp"
 #include "emulator/core/hw/timer.hpp"
 
 namespace nba::core {
@@ -62,7 +61,6 @@ struct Bus {
     APU& apu;
     PPU& ppu;
     Timer& timer;
-    SerialBus& serial_bus;
     KeyPad& keypad;
     Bus* bus = nullptr;
 
@@ -82,6 +80,7 @@ struct Bus {
       Halt
     } haltcnt = HaltControl::Run;
 
+    u8 rcnt[2] { 0, 0 };
     u8 postflg = 0;
 
     auto ReadByte(u32 address) ->  u8;

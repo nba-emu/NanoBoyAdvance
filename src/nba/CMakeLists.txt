@@ -35,7 +35,6 @@ set(SOURCES
   src/emulator/core/hw/dma.cpp
   src/emulator/core/hw/interrupt.cpp
   src/emulator/core/hw/keypad.cpp
-  src/emulator/core/hw/serial.cpp
   src/emulator/core/hw/timer.cpp
   src/emulator/core/cpu.cpp
   src/emulator/emulator.cpp
@@ -90,7 +89,6 @@ set(HEADERS
   src/emulator/core/hw/dma.hpp
   src/emulator/core/hw/interrupt.hpp
   src/emulator/core/hw/keypad.hpp
-  src/emulator/core/hw/serial.hpp
   src/emulator/core/hw/timer.hpp
   src/emulator/core/cpu.hpp
   src/emulator/core/scheduler.hpp
