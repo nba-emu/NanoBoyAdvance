@@ -28,11 +28,11 @@
 
 namespace nba::core {
 
-struct CPU final : private arm::ARM7TDMI {
+struct CPU {
   CPU(std::shared_ptr<Config> config);
 
   void Reset();
-  void RunFor(int cycles);
+  void Run(int cycles);
 
   std::shared_ptr<Config> config;
 
@@ -41,6 +41,7 @@ struct CPU final : private arm::ARM7TDMI {
   friend struct Bus;
 
   Scheduler scheduler;
+  arm::ARM7TDMI cpu;
   IRQ irq;
   DMA dma;
   APU apu;

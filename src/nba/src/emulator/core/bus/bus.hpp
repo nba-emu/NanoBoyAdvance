@@ -20,7 +20,9 @@
 
 namespace nba::core {
 
-struct CPU;
+namespace {
+struct ARM7TDMI;
+} // namespace nba::core::arm
 
 struct Bus {
   enum class Access {
@@ -55,7 +57,7 @@ struct Bus {
   } memory;
 
   struct Hardware {
-    CPU& cpu;
+    arm::ARM7TDMI& cpu;
     IRQ& irq;
     DMA& dma;
     APU& apu;

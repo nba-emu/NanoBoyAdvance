@@ -229,11 +229,11 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
 }
 
 void Emulator::Run(int cycles) {
-  cpu->RunFor(cycles);
+  cpu->Run(cycles);
 }
 
 void Emulator::Frame() {
-  cpu->RunFor(g_cycles_per_frame);
+  cpu->Run(g_cycles_per_frame);
 }
 
 } // namespace nba

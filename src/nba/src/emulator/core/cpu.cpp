@@ -16,35 +16,35 @@ namespace nba::core {
 using Key = InputDevice::Key;
 
 CPU::CPU(std::shared_ptr<Config> config)
-    : ARM7TDMI::ARM7TDMI(scheduler, bus)
-    , config(config)
-    , irq(*this, scheduler)
+    : config(config)
+    , cpu(scheduler, bus)
+    , irq(cpu, scheduler)
     , dma(bus, irq, scheduler)
     , apu(scheduler, dma, *this, config)
     , ppu(scheduler, irq, dma, config)
     , timer(scheduler, irq, apu)
     , keypad(irq, config)
-    , bus(scheduler, {*this, irq, dma, apu, ppu, timer, keypad}) {
+    , bus(scheduler, {cpu, irq, dma, apu, ppu, timer, keypad}) {
   Reset();
 }
 
 void CPU::Reset() {
   scheduler.Reset();
+  cpu.Reset();
   irq.Reset();
   dma.Reset();
   timer.Reset();
   apu.Reset();
   ppu.Reset();
-  ARM7TDMI::Reset();
   bus.Reset();
   keypad.Reset();
 
   if (config->skip_bios) {
-    SwitchMode(arm::MODE_SYS);
-    state.bank[arm::BANK_SVC][arm::BANK_R13] = 0x03007FE0;
-    state.bank[arm::BANK_IRQ][arm::BANK_R13] = 0x03007FA0;
-    state.r13 = 0x03007F00;
-    state.r15 = 0x08000000;
+    cpu.SwitchMode(arm::MODE_SYS);
+    cpu.state.bank[arm::BANK_SVC][arm::BANK_R13] = 0x03007FE0;
+    cpu.state.bank[arm::BANK_IRQ][arm::BANK_R13] = 0x03007FA0;
+    cpu.state.r13 = 0x03007F00;
+    cpu.state.r15 = 0x08000000;
   }
 
   mp2k_soundmain_address = 0xFFFFFFFF;
@@ -54,7 +54,7 @@ void CPU::Reset() {
   }
 }
 
-void CPU::RunFor(int cycles) {
+void CPU::Run(int cycles) {
   using HaltControl = Bus::Hardware::HaltControl;
 
   auto limit = scheduler.GetTimestampNow() + cycles;
@@ -65,10 +65,10 @@ void CPU::RunFor(int cycles) {
     }
 
     if (likely(bus.hw.haltcnt == HaltControl::Run)) {
-      if (state.r15 == mp2k_soundmain_address) {
+      if (cpu.state.r15 == mp2k_soundmain_address) {
         MP2KOnSoundMainRAMCalled();  
       }
-      Run();
+      cpu.Run();
     } else {
       bus.Step(scheduler.GetRemainingCycleCount());
     }
