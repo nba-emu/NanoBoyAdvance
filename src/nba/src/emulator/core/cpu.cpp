@@ -63,14 +63,16 @@ void CPU::Reset() {
 }
 
 void CPU::RunFor(int cycles) {
+  using HaltControl = Bus::Hardware::HaltControl;
+
   auto limit = scheduler.GetTimestampNow() + cycles;
 
   while (scheduler.GetTimestampNow() < limit) {
-    if (unlikely(mmio.haltcnt == HaltControl::HALT && irq.HasServableIRQ())) {
-      mmio.haltcnt = HaltControl::RUN;
+    if (unlikely(bus.hw.haltcnt == HaltControl::Halt && irq.HasServableIRQ())) {
+      bus.hw.haltcnt = HaltControl::Run;
     }
 
-    if (likely(mmio.haltcnt == HaltControl::RUN)) {
+    if (likely(bus.hw.haltcnt == HaltControl::Run)) {
       if (state.r15 == mp2k_soundmain_address) {
         MP2KOnSoundMainRAMCalled();  
       }

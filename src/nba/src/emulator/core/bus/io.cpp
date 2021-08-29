@@ -203,17 +203,17 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
 
     // System control
     case WAITCNT+0: {
-      return cpu_io.waitcnt.sram |
-             (cpu_io.waitcnt.ws0_n << 2) |
-             (cpu_io.waitcnt.ws0_s << 4) |
-             (cpu_io.waitcnt.ws1_n << 5) |
-             (cpu_io.waitcnt.ws1_s << 7);
+      return waitcnt.sram |
+            (waitcnt.ws0_n << 2) |
+            (waitcnt.ws0_s << 4) |
+            (waitcnt.ws1_n << 5) |
+            (waitcnt.ws1_s << 7);
     }
     case WAITCNT+1: {
-      return cpu_io.waitcnt.ws2_n |
-             (cpu_io.waitcnt.ws2_s << 2) |
-             (cpu_io.waitcnt.phi << 3) |
-             (cpu_io.waitcnt.prefetch << 6);
+      return waitcnt.ws2_n |
+            (waitcnt.ws2_s << 2) |
+            (waitcnt.phi << 3) |
+            (waitcnt.prefetch << 6);
     }
     case WAITCNT+2:
     case WAITCNT+3: return 0;
@@ -568,28 +568,28 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
 
     // System control
     case WAITCNT+0: {
-      cpu_io.waitcnt.sram  = (value >> 0) & 3;
-      cpu_io.waitcnt.ws0_n = (value >> 2) & 3;
-      cpu_io.waitcnt.ws0_s = (value >> 4) & 1;
-      cpu_io.waitcnt.ws1_n = (value >> 5) & 3;
-      cpu_io.waitcnt.ws1_s = (value >> 7) & 1;
+      waitcnt.sram  = (value >> 0) & 3;
+      waitcnt.ws0_n = (value >> 2) & 3;
+      waitcnt.ws0_s = (value >> 4) & 1;
+      waitcnt.ws1_n = (value >> 5) & 3;
+      waitcnt.ws1_s = (value >> 7) & 1;
       bus->UpdateWaitStateTable();
       break;
     }
     case WAITCNT+1: {
-      cpu_io.waitcnt.ws2_n = (value >> 0) & 3;
-      cpu_io.waitcnt.ws2_s = (value >> 2) & 1;
-      cpu_io.waitcnt.phi = (value >> 3) & 3;
-      cpu_io.waitcnt.prefetch = (value >> 6) & 1;
-      cpu_io.waitcnt.cgb = (value >> 7) & 1;
+      waitcnt.ws2_n = (value >> 0) & 3;
+      waitcnt.ws2_s = (value >> 2) & 1;
+      waitcnt.phi = (value >> 3) & 3;
+      waitcnt.prefetch = (value >> 6) & 1;
+      waitcnt.cgb = (value >> 7) & 1;
       bus->UpdateWaitStateTable();
       break;
     }
     case HALTCNT: {
       if (value & 0x80) {
-        cpu_io.haltcnt = CPU::HaltControl::STOP;
+        haltcnt = HaltControl::Stop;
       } else {
-        cpu_io.haltcnt = CPU::HaltControl::HALT;
+        haltcnt = HaltControl::Halt;
       }
       break;
     }

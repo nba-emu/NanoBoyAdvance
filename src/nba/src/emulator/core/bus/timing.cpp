@@ -15,9 +15,7 @@ void Bus::Idle() {
 }
 
 void Bus::Prefetch(u32 address, int cycles) {
-  auto const& cpu = hw.cpu;
-
-  if (cpu.mmio.waitcnt.prefetch) {
+  if (hw.waitcnt.prefetch) {
     // Case #1: requested address is the first entry in the prefetch buffer.
     if (prefetch.count != 0 && address == prefetch.head_address) {
       prefetch.count--;
@@ -39,7 +37,7 @@ void Bus::Prefetch(u32 address, int cycles) {
     Step(cycles);
     prefetch.active = true;
     prefetch.count = 0;
-    if (cpu.state.cpsr.f.thumb) {
+    if (hw.cpu.state.cpsr.f.thumb) {
       prefetch.opcode_width = sizeof(u16);
       prefetch.capacity = 8;
       prefetch.duty = wait16[int(Access::Sequential)][address >> 24];
@@ -93,7 +91,7 @@ void Bus::UpdateWaitStateTable() {
 
   auto n = int(Access::Nonsequential);
   auto s = int(Access::Sequential);
-  auto& waitcnt = hw.cpu.mmio.waitcnt;
+  auto& waitcnt = hw.waitcnt;
   auto sram = nseq[waitcnt.sram];
 
   for (int i = 0; i < 2; i++) {

@@ -64,6 +64,25 @@ struct Bus {
     SerialBus& serial_bus;
     Bus* bus = nullptr;
 
+    struct WaitstateControl {
+      int sram = 0;
+      int ws0_n = 0;
+      int ws0_s = 0;
+      int ws1_n = 0;
+      int ws1_s = 0;
+      int ws2_n = 0;
+      int ws2_s = 0;
+      int phi = 0;
+      int prefetch = 0;
+      int cgb = 0;
+    } waitcnt;
+
+    enum class HaltControl {
+      Run,
+      Stop,
+      Halt
+    } haltcnt = HaltControl::Run;
+
     auto ReadByte(u32 address) ->  u8;
     auto ReadHalf(u32 address) -> u16;
     auto ReadWord(u32 address) -> u32;

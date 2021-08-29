@@ -34,12 +34,6 @@ struct CPU final : private arm::ARM7TDMI {
   void Reset();
   void RunFor(int cycles);
 
-  enum class HaltControl {
-    RUN,
-    STOP,
-    HALT
-  };
-
   std::shared_ptr<Config> config;
 
   struct SystemMemory {
@@ -55,20 +49,6 @@ struct CPU final : private arm::ARM7TDMI {
     u16 keyinput = 0x3FF;
     u16 rcnt_hack = 0;
     u8 postflg = 0;
-    HaltControl haltcnt = HaltControl::RUN;
-
-    struct WaitstateControl {
-      int sram = 0;
-      int ws0_n = 0;
-      int ws0_s = 0;
-      int ws1_n = 0;
-      int ws1_s = 0;
-      int ws2_n = 0;
-      int ws2_s = 0;
-      int phi = 0;
-      int prefetch = 0;
-      int cgb = 0;
-    } waitcnt;
 
     struct KeyControl {
       uint16_t input_mask = 0;
