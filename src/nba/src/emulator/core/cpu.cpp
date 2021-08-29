@@ -79,6 +79,7 @@ void CPU::MP2KSearchSoundMainRAM() {
   static constexpr u32 kSoundMainCRC32 = 0x27EA7FCF;
   static constexpr int kSoundMainLength = 48;
 
+  auto& game_pak = bus.memory.game_pak;
   auto& rom = game_pak.GetRawROM();
   u32 address_max = rom.size() - kSoundMainLength;
 
@@ -113,11 +114,11 @@ void CPU::MP2KOnSoundMainRAMCalled() {
   // Get host pointer to SoundMain structure.
   switch (address >> 24) {
     case 0x02: {
-      sound_info = (MP2K::SoundInfo*)&memory.wram[address & 0x3FFFF];
+      sound_info = (MP2K::SoundInfo*)&bus.memory.wram[address & 0x3FFFF];
       break;
     }
     case 0x03: {
-      sound_info = (MP2K::SoundInfo*)&memory.iram[address & 0x7FFF];
+      sound_info = (MP2K::SoundInfo*)&bus.memory.iram[address & 0x7FFF];
       break;
     }
     default: {

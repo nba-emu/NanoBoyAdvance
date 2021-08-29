@@ -36,14 +36,9 @@ struct CPU final : private arm::ARM7TDMI {
 
   std::shared_ptr<Config> config;
 
-  struct SystemMemory {
-    u8 bios[0x04000];
-    u8 wram[0x40000];
-    u8 iram[0x08000];
-    u32 bios_latch = 0;
-  } memory;
-
-  GamePak game_pak;
+//private:
+  //friend struct MP2K;
+  friend struct Bus;
 
   Scheduler scheduler;
   IRQ irq;
@@ -53,10 +48,6 @@ struct CPU final : private arm::ARM7TDMI {
   Timer timer;
   KeyPad keypad;
   Bus bus;
-
-private:
-  friend struct MP2K;
-  friend struct Bus;
 
   template <typename T, bool debug> auto Read(u32 address) -> T {
     return 0;
