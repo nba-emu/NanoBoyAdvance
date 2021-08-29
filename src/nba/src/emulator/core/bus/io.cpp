@@ -172,24 +172,15 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
     case JOYSTAT | 0:
     case JOYSTAT | 1:
     case JOYSTAT | 2:
-    case JOYSTAT | 3:
+    case JOYSTAT | 3: {
       return serial_bus.Read(address);
+    }
 
-    // Joypad
-    case KEYINPUT+0: {
-      return cpu_io.keyinput & 0x00FF;
-    }
-    case KEYINPUT+1: {
-      return (cpu_io.keyinput & 0xFF00) >> 8;
-    }
-    case KEYCNT: {
-      return cpu_io.keycnt.input_mask & 0x00FF;
-    }
-    case KEYCNT+1: {
-      return ((cpu_io.keycnt.input_mask >> 8) & 3) |
-             (cpu_io.keycnt.interrupt << 6) |
-             (cpu_io.keycnt.and_mode << 7);
-    }
+    // Keypad
+    case KEYINPUT+0: return keypad.input.ReadByte(0);
+    case KEYINPUT+1: return keypad.input.ReadByte(1);
+    case KEYCNT:     return keypad.control.ReadByte(0);
+    case KEYCNT+1:   return keypad.control.ReadByte(1);
 
     // IRQ controller
     case IE+0:  return irq.Read(0);
@@ -544,21 +535,9 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
       break;
     }
 
-    // Joypad
-    case KEYCNT: {
-      cpu_io.keycnt.input_mask &= 0xFF00;
-      cpu_io.keycnt.input_mask |= value;
-      cpu.CheckKeypadInterrupt();
-      break;
-    }
-    case KEYCNT+1: {
-      cpu_io.keycnt.input_mask &= 0x00FF;
-      cpu_io.keycnt.input_mask |= (value & 3) << 8;
-      cpu_io.keycnt.interrupt = value & 64;
-      cpu_io.keycnt.and_mode = value & 128;
-      cpu.CheckKeypadInterrupt();
-      break;
-    }
+    // Keypad
+    case KEYCNT:   keypad.control.WriteByte(0, value); break;
+    case KEYCNT+1: keypad.control.WriteByte(1, value); break;
 
     // IRQ controller
     case IE+0: irq.Write(0, value); break;
@@ -604,14 +583,11 @@ void Bus::Hardware::WriteHalf(u32 address, u16 value) {
   auto& cpu_io = cpu.mmio;
 
   switch (address) {
-    /* Do not invoke CheckKeypadInterrupt() twice for a single 16-bit write.
+    /* Do not invoke Keypad::UpdateIRQ() twice for a single 16-bit write.
      * See https://github.com/fleroviux/NanoBoyAdvance/issues/152 for details.
      */
     case KEYCNT: {
-      cpu_io.keycnt.input_mask = value & 0x3FF;
-      cpu_io.keycnt.interrupt = value & 0x4000;
-      cpu_io.keycnt.and_mode = value & 0x8000;
-      cpu.CheckKeypadInterrupt();
+      keypad.control.WriteHalf(value);
       break;
     }
     default: {

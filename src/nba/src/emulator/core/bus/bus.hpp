@@ -15,6 +15,7 @@
 #include "emulator/core/hw/ppu/ppu.hpp"
 #include "emulator/core/hw/dma.hpp"
 #include "emulator/core/hw/interrupt.hpp"
+#include "emulator/core/hw/keypad.hpp"
 #include "emulator/core/hw/serial.hpp"
 #include "emulator/core/hw/timer.hpp"
 
@@ -62,6 +63,7 @@ struct Bus {
     PPU& ppu;
     Timer& timer;
     SerialBus& serial_bus;
+    KeyPad& keypad;
     Bus* bus = nullptr;
 
     struct WaitstateControl {

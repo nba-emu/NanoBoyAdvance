@@ -22,6 +22,7 @@
 #include "hw/ppu/ppu.hpp"
 #include "hw/dma.hpp"
 #include "hw/interrupt.hpp"
+#include "hw/keypad.hpp"
 #include "hw/serial.hpp"
 #include "hw/timer.hpp"
 #include "scheduler.hpp"
@@ -46,14 +47,7 @@ struct CPU final : private arm::ARM7TDMI {
   GamePak game_pak;
 
   struct MMIO {
-    u16 keyinput = 0x3FF;
     u16 rcnt_hack = 0;
-
-    struct KeyControl {
-      uint16_t input_mask = 0;
-      bool interrupt = false;
-      bool and_mode = false;
-    } keycnt;
   } mmio;
 
   Scheduler scheduler;
@@ -63,6 +57,7 @@ struct CPU final : private arm::ARM7TDMI {
   PPU ppu;
   Timer timer;
   SerialBus serial_bus;
+  KeyPad keypad;
   Bus bus;
 
 private:
@@ -73,8 +68,6 @@ private:
     return 0;
   }
 
-  void CheckKeypadInterrupt();
-  void OnKeyPress();
   void MP2KSearchSoundMainRAM();
   void MP2KOnSoundMainRAMCalled();
 

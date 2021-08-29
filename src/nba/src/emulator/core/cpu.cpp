@@ -24,7 +24,8 @@ CPU::CPU(std::shared_ptr<Config> config)
     , ppu(scheduler, irq, dma, config)
     , timer(scheduler, irq, apu)
     , serial_bus(irq)
-    , bus(scheduler, {*this, irq, dma, apu, ppu, timer, serial_bus}) {
+    , keypad(irq, config)
+    , bus(scheduler, {*this, irq, dma, apu, ppu, timer, serial_bus, keypad}) {
   std::memset(memory.bios, 0, 0x04000);
   Reset();
 }
@@ -44,6 +45,7 @@ void CPU::Reset() {
   serial_bus.Reset();
   ARM7TDMI::Reset();
   bus.Reset();
+  keypad.Reset();
 
   if (config->skip_bios) {
     SwitchMode(arm::MODE_SYS);
@@ -52,8 +54,6 @@ void CPU::Reset() {
     state.r13 = 0x03007F00;
     state.r15 = 0x08000000;
   }
-
-  config->input_dev->SetOnChangeCallback(std::bind(&CPU::OnKeyPress,this));
 
   mp2k_soundmain_address = 0xFFFFFFFF;
   if (config->audio.mp2k_hle_enable) {
@@ -80,40 +80,6 @@ void CPU::RunFor(int cycles) {
     } else {
       bus.Step(scheduler.GetRemainingCycleCount());
     }
-  }
-}
-
-void CPU::OnKeyPress() {
-  mmio.keyinput = 0;
-
-  if (!config->input_dev->Poll(Key::A)) mmio.keyinput |= 1;
-  if (!config->input_dev->Poll(Key::B)) mmio.keyinput |= 2;
-  if (!config->input_dev->Poll(Key::Select)) mmio.keyinput |= 4;
-  if (!config->input_dev->Poll(Key::Start)) mmio.keyinput |= 8;
-  if (!config->input_dev->Poll(Key::Right)) mmio.keyinput |= 16;
-  if (!config->input_dev->Poll(Key::Left)) mmio.keyinput |= 32;
-  if (!config->input_dev->Poll(Key::Up)) mmio.keyinput |= 64;
-  if (!config->input_dev->Poll(Key::Down)) mmio.keyinput |= 128;
-  if (!config->input_dev->Poll(Key::R)) mmio.keyinput |= 256;
-  if (!config->input_dev->Poll(Key::L)) mmio.keyinput |= 512;
-
-  CheckKeypadInterrupt();
-}
-
-void CPU::CheckKeypadInterrupt() {
-  const auto& keycnt = mmio.keycnt;
-  const auto keyinput = ~mmio.keyinput & 0x3FF;
-
-  if (!keycnt.interrupt) {
-    return;
-  }
-  
-  if (keycnt.and_mode) {
-    if (keycnt.input_mask == keyinput) {
-      irq.Raise(IRQ::Source::Keypad);
-    }
-  } else if ((keycnt.input_mask & keyinput) != 0) {
-    irq.Raise(IRQ::Source::Keypad);
   }
 }
 
