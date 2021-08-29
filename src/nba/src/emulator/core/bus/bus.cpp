@@ -249,18 +249,14 @@ template <typename T> void Bus::Write(u32 address, Access access, T value) {
 
 auto Bus::ReadBIOS(u32 address) -> u32 {
   auto shift = (address & 3) << 3;
-
   address &= ~3;
-
   if (address >= 0x4000) {
     return ReadOpenBus(address) >> shift;
   }
-
-  if (hw.cpu.state.r15 >= 0x4000) {
-    return memory.latch.bios >> shift;
+  if (hw.cpu.state.r15 < 0x4000) {
+    memory.latch.bios = read<u32>(memory.bios.data(), address);
   }
-  
-  return (memory.latch.bios = read<u32>(memory.bios.data(), address)) >> shift;
+  return memory.latch.bios >> shift;
 }
 
 auto Bus::ReadOpenBus(u32 address) -> u32 {
