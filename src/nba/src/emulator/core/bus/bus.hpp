@@ -75,7 +75,6 @@ struct Bus {
 
   struct Prefetch {
     bool active = false;
-    bool rom_code_access = false;
     u32 head_address;
     u32 last_address;
     int count = 0;
