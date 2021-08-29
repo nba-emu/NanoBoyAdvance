@@ -73,8 +73,8 @@ struct Bus {
       int ws2_n = 0;
       int ws2_s = 0;
       int phi = 0;
-      int prefetch = 0;
-      int cgb = 0;
+      bool prefetch = false;
+      bool cgb = false;
     } waitcnt;
 
     enum class HaltControl {

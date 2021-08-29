@@ -213,7 +213,8 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
       return waitcnt.ws2_n |
             (waitcnt.ws2_s << 2) |
             (waitcnt.phi << 3) |
-            (waitcnt.prefetch << 6);
+            (waitcnt.prefetch ? 64 : 0) |
+            (waitcnt.cgb ? 128 : 0);
     }
     case WAITCNT+2:
     case WAITCNT+3: return 0;
@@ -581,7 +582,6 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
       waitcnt.ws2_s = (value >> 2) & 1;
       waitcnt.phi = (value >> 3) & 3;
       waitcnt.prefetch = (value >> 6) & 1;
-      waitcnt.cgb = (value >> 7) & 1;
       bus->UpdateWaitStateTable();
       break;
     }
