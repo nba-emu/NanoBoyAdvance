@@ -46,10 +46,6 @@ struct CPU final : private arm::ARM7TDMI {
 
   GamePak game_pak;
 
-  struct MMIO {
-    u16 rcnt_hack = 0;
-  } mmio;
-
   Scheduler scheduler;
   IRQ irq;
   DMA dma;

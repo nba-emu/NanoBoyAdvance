@@ -26,16 +26,10 @@ CPU::CPU(std::shared_ptr<Config> config)
     , serial_bus(irq)
     , keypad(irq, config)
     , bus(scheduler, {*this, irq, dma, apu, ppu, timer, serial_bus, keypad}) {
-  std::memset(memory.bios, 0, 0x04000);
   Reset();
 }
 
 void CPU::Reset() {
-  std::memset(memory.wram, 0, 0x40000);
-  std::memset(memory.iram, 0, 0x08000);
-
-  mmio = {};
-
   scheduler.Reset();
   irq.Reset();
   dma.Reset();

@@ -12,7 +12,6 @@
 namespace nba::core {
 
 auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
-  auto& cpu_io = cpu.mmio;
   auto& apu_io = apu.mmio;
   auto& ppu_io = ppu.mmio;
 
@@ -227,7 +226,6 @@ auto Bus::Hardware::ReadWord(u32 address) -> u32 {
 }
 
 void Bus::Hardware::WriteByte(u32 address,  u8 value) {
-  auto& cpu_io = cpu.mmio;
   auto& apu_io = apu.mmio;
   auto& ppu_io = ppu.mmio;
 
@@ -580,8 +578,6 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
 }
 
 void Bus::Hardware::WriteHalf(u32 address, u16 value) {
-  auto& cpu_io = cpu.mmio;
-
   switch (address) {
     /* Do not invoke Keypad::UpdateIRQ() twice for a single 16-bit write.
      * See https://github.com/fleroviux/NanoBoyAdvance/issues/152 for details.
