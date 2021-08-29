@@ -66,12 +66,9 @@ struct Bus {
 
     struct WaitstateControl {
       int sram = 0;
-      int ws0_n = 0;
-      int ws0_s = 0;
-      int ws1_n = 0;
-      int ws1_s = 0;
-      int ws2_n = 0;
-      int ws2_s = 0;
+      int ws0[2] { 0, 0 };
+      int ws1[2] { 0, 0 };
+      int ws2[2] { 0, 0 };
       int phi = 0;
       bool prefetch = false;
       bool cgb = false;

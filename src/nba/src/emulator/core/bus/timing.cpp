@@ -96,14 +96,14 @@ void Bus::UpdateWaitStateTable() {
 
   for (int i = 0; i < 2; i++) {
     // ROM: WS0/WS1/WS2 16-bit non-sequential access
-    wait16[n][0x8 + i] = nseq[waitcnt.ws0_n];
-    wait16[n][0xA + i] = nseq[waitcnt.ws1_n];
-    wait16[n][0xC + i] = nseq[waitcnt.ws2_n];
+    wait16[n][0x8 + i] = nseq[waitcnt.ws0[n]];
+    wait16[n][0xA + i] = nseq[waitcnt.ws1[n]];
+    wait16[n][0xC + i] = nseq[waitcnt.ws2[n]];
 
     // ROM: WS0/WS1/WS2 16-bit sequential access
-    wait16[s][0x8 + i] = seq0[waitcnt.ws0_s];
-    wait16[s][0xA + i] = seq1[waitcnt.ws1_s];
-    wait16[s][0xC + i] = seq2[waitcnt.ws2_s];
+    wait16[s][0x8 + i] = seq0[waitcnt.ws0[s]];
+    wait16[s][0xA + i] = seq1[waitcnt.ws1[s]];
+    wait16[s][0xC + i] = seq2[waitcnt.ws2[s]];
 
     // ROM: WS0/WS1/WS2 32-bit non-sequential access: 1N access, 1S access
     wait32[n][0x8 + i] = wait16[n][0x8] + wait16[s][0x8];

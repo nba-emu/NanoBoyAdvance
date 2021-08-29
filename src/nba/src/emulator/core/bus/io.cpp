@@ -204,14 +204,14 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
     // System control
     case WAITCNT+0: {
       return waitcnt.sram |
-            (waitcnt.ws0_n << 2) |
-            (waitcnt.ws0_s << 4) |
-            (waitcnt.ws1_n << 5) |
-            (waitcnt.ws1_s << 7);
+            (waitcnt.ws0[0] << 2) |
+            (waitcnt.ws0[1] << 4) |
+            (waitcnt.ws1[0] << 5) |
+            (waitcnt.ws1[1] << 7);
     }
     case WAITCNT+1: {
-      return waitcnt.ws2_n |
-            (waitcnt.ws2_s << 2) |
+      return waitcnt.ws2[0] |
+            (waitcnt.ws2[1] << 2) |
             (waitcnt.phi << 3) |
             (waitcnt.prefetch ? 64 : 0) |
             (waitcnt.cgb ? 128 : 0);
@@ -570,16 +570,16 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
     // System control
     case WAITCNT+0: {
       waitcnt.sram  = (value >> 0) & 3;
-      waitcnt.ws0_n = (value >> 2) & 3;
-      waitcnt.ws0_s = (value >> 4) & 1;
-      waitcnt.ws1_n = (value >> 5) & 3;
-      waitcnt.ws1_s = (value >> 7) & 1;
+      waitcnt.ws0[0] = (value >> 2) & 3;
+      waitcnt.ws0[1] = (value >> 4) & 1;
+      waitcnt.ws1[0] = (value >> 5) & 3;
+      waitcnt.ws1[1] = (value >> 7) & 1;
       bus->UpdateWaitStateTable();
       break;
     }
     case WAITCNT+1: {
-      waitcnt.ws2_n = (value >> 0) & 3;
-      waitcnt.ws2_s = (value >> 2) & 1;
+      waitcnt.ws2[0] = (value >> 0) & 3;
+      waitcnt.ws2[1] = (value >> 2) & 1;
       waitcnt.phi = (value >> 3) & 3;
       waitcnt.prefetch = (value >> 6) & 1;
       bus->UpdateWaitStateTable();
