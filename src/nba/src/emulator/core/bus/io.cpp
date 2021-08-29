@@ -218,7 +218,7 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
     }
     case WAITCNT+2:
     case WAITCNT+3: return 0;
-    case POSTFLG:   return cpu_io.postflg;
+    case POSTFLG:   return postflg;
   }
 
   return bus->ReadOpenBus(address);
@@ -594,7 +594,7 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
       break;
     }
     case POSTFLG: {
-      cpu_io.postflg = value & 1;
+      postflg = value & 1;
       break;
     }
   }

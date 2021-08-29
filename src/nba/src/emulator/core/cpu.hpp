@@ -48,7 +48,6 @@ struct CPU final : private arm::ARM7TDMI {
   struct MMIO {
     u16 keyinput = 0x3FF;
     u16 rcnt_hack = 0;
-    u8 postflg = 0;
 
     struct KeyControl {
       uint16_t input_mask = 0;

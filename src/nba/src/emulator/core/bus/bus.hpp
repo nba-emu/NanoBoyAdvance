@@ -80,6 +80,8 @@ struct Bus {
       Halt
     } haltcnt = HaltControl::Run;
 
+    u8 postflg = 0;
+
     auto ReadByte(u32 address) ->  u8;
     auto ReadHalf(u32 address) -> u16;
     auto ReadWord(u32 address) -> u32;
