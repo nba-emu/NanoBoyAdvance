@@ -36,8 +36,8 @@ struct GamePak {
     if (backup != nullptr) {
       if (typeid(*backup.get()) == typeid(EEPROM)) {
         backup_eeprom = std::move(backup);
-      
-        if (this->rom.size() >= 0x0200'0000) {
+
+        if (this->rom.size() >= 0x0100'0001) {
           eeprom_mask = 0x01FF'FF00;
         } else {
           eeprom_mask = 0x0100'0000;
