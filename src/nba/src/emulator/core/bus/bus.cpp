@@ -130,10 +130,6 @@ template <typename T> auto Bus::Read(u32 address, Access access) -> T {
     case 0x0E ... 0x0F: {
       prefetch.active = false;
 
-      if ((address & 0x1'FFFF) == 0) {
-        access = Access::Nonsequential;
-      }
-
       Step(wait16[int(access)][page]);
 
       u32 value = memory.game_pak.ReadSRAM(address);
@@ -226,10 +222,6 @@ template <typename T> void Bus::Write(u32 address, Access access, T value) {
     // SRAM or FLASH backup
     case 0x0E ... 0x0F: {
       prefetch.active = false;
-
-      if ((address & 0x1'FFFF) == 0) {
-        access = Access::Nonsequential;
-      }
 
       Step(wait16[int(access)][page]);
         
