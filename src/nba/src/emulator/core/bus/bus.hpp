@@ -121,6 +121,7 @@ struct Bus {
   auto ReadOpenBus(u32 address) -> u32;
 
   void Prefetch(u32 address, int cycles);
+  void StopPrefetch();
   void Step(int cycles);
   void UpdateWaitStateTable();
  

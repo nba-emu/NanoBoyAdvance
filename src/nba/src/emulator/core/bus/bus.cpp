@@ -128,8 +128,7 @@ template <typename T> auto Bus::Read(u32 address, Access access) -> T {
     }
     // SRAM or FLASH backup
     case 0x0E ... 0x0F: {
-      prefetch.active = false;
-
+      StopPrefetch();
       Step(wait16[int(access)][page]);
 
       u32 value = memory.game_pak.ReadSRAM(address);
@@ -201,7 +200,7 @@ template <typename T> void Bus::Write(u32 address, Access access, T value) {
         access = Access::Nonsequential;
       }
 
-      prefetch.active = false;
+      StopPrefetch();
 
       // TODO: figure out how 8-bit and 16-bit accesses actually work.
       if constexpr(std::is_same_v<T, u8>) {
@@ -223,10 +222,9 @@ template <typename T> void Bus::Write(u32 address, Access access, T value) {
     }
     // SRAM or FLASH backup
     case 0x0E ... 0x0F: {
-      prefetch.active = false;
-
+      StopPrefetch();
       Step(wait16[int(access)][page]);
-        
+
       if constexpr(std::is_same_v<T, u16>) value >>= (address & 1) << 3;
       if constexpr(std::is_same_v<T, u32>) value >>= (address & 3) << 3;
 

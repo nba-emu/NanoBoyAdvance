@@ -54,6 +54,15 @@ void Bus::Prefetch(u32 address, int cycles) {
   }
 }
 
+void Bus::StopPrefetch() {
+  if (prefetch.active) {
+    // TODO: do more testing on the timing.
+    Step(1);
+    prefetch.active = false;
+    prefetch.count = 0;
+  }
+}
+
 void Bus::Step(int cycles) {
   dma.openbus = false;
 
