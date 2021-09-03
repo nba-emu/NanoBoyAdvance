@@ -201,19 +201,21 @@ template <typename T> void Bus::Write(u32 address, Access access, T value) {
         access = Access::Nonsequential;
       }
 
+      prefetch.active = false;
+
       // TODO: figure out how 8-bit and 16-bit accesses actually work.
       if constexpr(std::is_same_v<T, u8>) {
-        Prefetch(address, wait16[int(access)][page]);
+        Step(wait16[int(access)][page]);
         memory.game_pak.WriteROM(address, value * 0x0101);
       }
 
       if constexpr(std::is_same_v<T, u16>) {
-        Prefetch(address, wait16[int(access)][page]);
+        Step(wait16[int(access)][page]);
         memory.game_pak.WriteROM(address, value);
       }
 
       if constexpr(std::is_same_v<T, u32>) {
-        Prefetch(address, wait32[int(access)][page]);
+        Step(wait32[int(access)][page]);
         memory.game_pak.WriteROM(address|0, value & 0xFFFF);
         memory.game_pak.WriteROM(address|2, value >> 16);
       }
