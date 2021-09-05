@@ -16,6 +16,14 @@ void Bus::Idle() {
 
 void Bus::Prefetch(u32 address, int cycles) {
   if (hw.waitcnt.prefetch) {
+    // TODO: distinguish code and data accesses instead of comparing against R15.
+    if (address != hw.cpu.state.r15) {
+      prefetch.active = false;
+      prefetch.count = 0;
+      Step(cycles);
+      return;
+    }
+
     // Case #1: requested address is the first entry in the prefetch buffer.
     if (prefetch.count != 0 && address == prefetch.head_address) {
       prefetch.count--;
@@ -75,8 +83,7 @@ void Bus::Step(int cycles) {
 
   scheduler.AddCycles(cycles);
 
-  // TODO: why is it necessary to disable prefetch during a DMA?
-  if (prefetch.active && !dma.active) {
+  if (prefetch.active) {
     prefetch.countdown -= cycles;
 
     if (prefetch.countdown <= 0) {

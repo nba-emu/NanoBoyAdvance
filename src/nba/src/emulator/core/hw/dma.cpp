@@ -132,11 +132,11 @@ void DMA::StopVideoXferDMA() {
 }
 
 void DMA::Run() {
-  if (!IsRunning())
-    return;
-  RunChannel(true);
-  while (IsRunning()) {
-    RunChannel(false);
+  if (IsRunning()) {
+    RunChannel(true);
+    while (IsRunning()) {
+      RunChannel(false);
+    }
   }
 }
 
