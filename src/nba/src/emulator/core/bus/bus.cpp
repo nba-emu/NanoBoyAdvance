@@ -129,7 +129,7 @@ template <typename T> auto Bus::Read(u32 address, Access access) -> T {
     // SRAM or FLASH backup
     case 0x0E ... 0x0F: {
       StopPrefetch();
-      Step(wait16[int(access)][page]);
+      Step(wait16[0][0xE]);
 
       u32 value = memory.game_pak.ReadSRAM(address);
 
@@ -223,7 +223,7 @@ template <typename T> void Bus::Write(u32 address, Access access, T value) {
     // SRAM or FLASH backup
     case 0x0E ... 0x0F: {
       StopPrefetch();
-      Step(wait16[int(access)][page]);
+      Step(wait16[0][0xE]);
 
       if constexpr(std::is_same_v<T, u16>) value >>= (address & 1) << 3;
       if constexpr(std::is_same_v<T, u32>) value >>= (address & 3) << 3;
