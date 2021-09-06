@@ -56,7 +56,8 @@ void Bus::WriteWord(u32 address, u32 value, Access access) {
   Write<u32>(address, access, value);
 }
 
-template <typename T> auto Bus::Read(u32 address, Access access) -> T {
+template<typename T>
+auto Bus::Read(u32 address, Access access) -> T {
   auto page = address >> 24;
   auto is_u32 = std::is_same_v<T, u32>;
 
@@ -148,7 +149,8 @@ template <typename T> auto Bus::Read(u32 address, Access access) -> T {
   return 0;
 }
 
-template <typename T> void Bus::Write(u32 address, Access access, T value) {
+template<typename T>
+void Bus::Write(u32 address, Access access, T value) {
   auto page = address >> 24;
   auto is_u32 = std::is_same_v<T, u32>;
 
@@ -304,6 +306,50 @@ auto Bus::ReadOpenBus(u32 address) -> u32 {
   }
 
   return word >> shift;
+}
+
+auto Bus::GetHostAddress(u32 address, size_t size) -> u8* {
+  auto& bios = memory.bios;
+  auto& wram = memory.wram;
+  auto& iram = memory.iram;
+  auto& rom = memory.game_pak.GetRawROM();
+
+  auto page = address >> 24;
+  auto offset = address & 0x00FF'FFFF;
+  auto end_offset = offset + size;
+
+  switch (page) {
+    // BIOS
+    case 0x00: {
+      if (end_offset > bios.size()) {
+        break;
+      }
+      return bios.data() + offset;
+    }
+    // EWRAM (external work RAM)
+    case 0x02: {
+      if (end_offset > wram.size()) {
+        break;
+      }
+      return wram.data() + offset;
+    }
+    // IWRAM (internal work RAM)
+    case 0x03: {
+      if (end_offset > iram.size()) {
+        break;
+      }
+      return iram.data() + offset;
+    }
+    // ROM (WS0, WS1, WS2)
+    case 0x08 ... 0x0D: {
+      if (end_offset > rom.size()) {
+        break;
+      }
+      return rom.data() + offset;
+    }
+  }
+
+  ASSERT(false, "cannot get host address for 0x{:08X} ({} bytes)", address, size);
 }
 
 } // namespace nba::core

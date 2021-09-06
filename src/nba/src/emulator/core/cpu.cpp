@@ -83,6 +83,10 @@ void CPU::MP2KSearchSoundMainRAM() {
   auto& rom = game_pak.GetRawROM();
   u32 address_max = rom.size() - kSoundMainLength;
 
+  if (address_max > rom.size()) {
+    return;
+  }
+
   for (u32 address = 0; address <= address_max; address += 2) {
     auto crc = crc32(&rom[address], kSoundMainLength);
 
@@ -108,26 +112,9 @@ void CPU::MP2KSearchSoundMainRAM() {
 }
 
 void CPU::MP2KOnSoundMainRAMCalled() {
-  MP2K::SoundInfo* sound_info;
-  auto address = Read<u32, true>(0x03007FF0);
-
-  // Get host pointer to SoundMain structure.
-  switch (address >> 24) {
-    case 0x02: {
-      sound_info = (MP2K::SoundInfo*)&bus.memory.wram[address & 0x3FFFF];
-      break;
-    }
-    case 0x03: {
-      sound_info = (MP2K::SoundInfo*)&bus.memory.iram[address & 0x7FFF];
-      break;
-    }
-    default: {
-      ASSERT(false, "MP2K HLE: SoundInfo structure is at unsupported address 0x{0:08X}.", address);
-      break;
-    }
-  }
-
-  apu.GetMP2K().SoundMainRAM(*sound_info);
+  apu.GetMP2K().SoundMainRAM(*bus.GetHostAddress<MP2K::SoundInfo>(
+    *bus.GetHostAddress<u32>(0x0300'7FF0))
+  );
 }
 
 } // namespace nba::core

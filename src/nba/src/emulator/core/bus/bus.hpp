@@ -110,10 +110,14 @@ struct Bus {
     bool openbus = false;
   } dma;
 
-  template <typename T> auto Read (u32 address, Access access) -> T;
-  template <typename T> void Write(u32 address, Access access, T value);
+  template<typename T>
+  auto Read(u32 address, Access access) -> T;
+  
+  template<typename T>
+  void Write(u32 address, Access access, T value);
 
-  template <typename T> auto Align(u32 address) -> u32 {
+  template<typename T>
+  auto Align(u32 address) -> u32 {
     return address & ~(sizeof(T) - 1);
   }
 
@@ -137,6 +141,13 @@ struct Bus {
 
 public:
   Bus(Scheduler& scheduler, Hardware&& hw);
+
+  auto GetHostAddress(u32 address, size_t size) -> u8*;
+
+  template<typename T>
+  auto GetHostAddress(u32 address, size_t count = 1) -> T* {
+    return (T*)GetHostAddress(address, sizeof(T) * count);
+  }
 };
 
 } // namespace nba::core

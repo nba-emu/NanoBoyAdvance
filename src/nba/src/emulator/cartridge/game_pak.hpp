@@ -66,7 +66,7 @@ struct GamePak {
     return *this;
   }
 
-  auto GetRawROM() const -> std::vector<u8> const& {
+  auto GetRawROM() -> std::vector<u8>& {
     return rom;
   }
 

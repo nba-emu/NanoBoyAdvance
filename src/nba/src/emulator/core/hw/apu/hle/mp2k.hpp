@@ -97,11 +97,15 @@ private:
     float resample_phase = 0.0;
     float sample_history[4] {0};
 
-    struct {
-      u32 pcm_base_address;
-      u32 number_of_samples;
+    struct WaveHeader {
+      u16 type;
+      u16 status;
+      u32 frequency;
       u32 loop_position;
-    } wave;
+      u32 number_of_samples;
+    } *wave_header;
+
+    u8* wave_data;
   } samplers[kMaxSoundChannels];
 
   bool engaged;
