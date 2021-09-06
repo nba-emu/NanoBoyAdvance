@@ -169,6 +169,7 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
         }
 
         tile_num += block_x * 2;
+        tile_num &= 0x3FF;
 
         if (bitmap_mode && tile_num < 512) {
           continue;
@@ -183,6 +184,7 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
         }
 
         tile_num += block_x;
+        tile_num &= 0x3FF;
 
         if (bitmap_mode && tile_num < 512) {
           continue;
