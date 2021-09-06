@@ -202,7 +202,7 @@ template <typename T> void Bus::Write(u32 address, Access access, T value) {
 
       StopPrefetch();
 
-      // TODO: figure out how 8-bit and 16-bit accesses actually work.
+      // TODO: figure out how 8-bit and 32-bit accesses actually work.
       if constexpr(std::is_same_v<T, u8>) {
         Step(wait16[int(access)][page]);
         memory.game_pak.WriteROM(address, value * 0x0101);
