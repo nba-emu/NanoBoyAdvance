@@ -23,6 +23,11 @@ void Bus::Reset() {
   memory.wram.fill(0);
   memory.iram.fill(0);
   memory.latch = {};
+  hw.waitcnt = {};
+  hw.haltcnt = Hardware::HaltControl::Run;
+  hw.rcnt[0] = 0;
+  hw.rcnt[1] = 0;
+  hw.postflg = 0;
   prefetch = {};
   dma = {};
   UpdateWaitStateTable();
