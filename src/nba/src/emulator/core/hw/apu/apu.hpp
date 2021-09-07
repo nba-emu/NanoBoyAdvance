@@ -28,7 +28,7 @@ struct APU {
   APU(
     Scheduler& scheduler,
     DMA& dma,
-    CPU& cpu,
+    Bus& bus,
     std::shared_ptr<Config>
   );
 

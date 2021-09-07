@@ -20,7 +20,7 @@ CPU::CPU(std::shared_ptr<Config> config)
     , cpu(scheduler, bus)
     , irq(cpu, scheduler)
     , dma(bus, irq, scheduler)
-    , apu(scheduler, dma, *this, config)
+    , apu(scheduler, dma, bus, config)
     , ppu(scheduler, irq, dma, config)
     , timer(scheduler, irq, apu)
     , keypad(irq, config)
@@ -112,8 +112,10 @@ void CPU::MP2KSearchSoundMainRAM() {
 }
 
 void CPU::MP2KOnSoundMainRAMCalled() {
-  apu.GetMP2K().SoundMainRAM(*bus.GetHostAddress<MP2K::SoundInfo>(
-    *bus.GetHostAddress<u32>(0x0300'7FF0))
+  apu.GetMP2K().SoundMainRAM(
+    *bus.GetHostAddress<MP2K::SoundInfo>(
+      *bus.GetHostAddress<u32>(0x0300'7FF0)
+    )
   );
 }
 

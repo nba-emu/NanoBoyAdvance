@@ -6,8 +6,8 @@
  */
 
 #include <common/log.hpp>
-#include <emulator/core/cpu.hpp>
 
+#include "emulator/core/bus/bus.hpp"
 #include "mp2k.hpp"
 
 namespace nba::core {
@@ -63,18 +63,9 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
         channel.status = CHANNEL_ENV_ATTACK;
       }
 
-      // TODO: pass Bus class into MP2K mixer instead of CPU class.
-      // TODO: retrieve wave data pointer when we know the actual size.
-      auto address = channel.wave_data_address;
       sampler = {};
-      sampler.wave_header = cpu.bus.GetHostAddress<Sampler::WaveHeader>(address);
-      sampler.wave_data = cpu.bus.GetHostAddress<u8>(
-        address + sizeof(Sampler::WaveHeader),
-        sampler.wave_header->number_of_samples
-      );
-
-      // TODO: verify that this works!!!
-      if (sampler.wave_header->status & 0xC000) {
+      sampler.wave_info = *bus.GetHostAddress<Sampler::WaveInfo>(channel.wave_address);
+      if (sampler.wave_info.status & 0xC000) {
         channel.status |= CHANNEL_LOOP;
       }
     } else if (channel.status & CHANNEL_ECHO) {
@@ -180,6 +171,22 @@ void MP2K::RenderFrame() {
     bool compressed = (channel.type & 32) != 0;
     auto sample_history = sampler.sample_history;
 
+    auto const& wave_info = sampler.wave_info;
+
+    if (sampler.compressed != compressed || !sampler.wave_data) {
+      auto wave_size = wave_info.number_of_samples;
+      if (compressed) {
+        wave_size *= 33;
+        wave_size = (wave_size + 63) / 64;
+      }
+      sampler.wave_data = bus.GetHostAddress<u8>(
+        channel.wave_address + sizeof(Sampler::WaveInfo), wave_size
+      );
+      sampler.compressed = compressed;
+    }
+
+    auto wave_data = sampler.wave_data;
+
     for (int j = 0; j < kSamplesPerFrame; j++) {
       if (sampler.should_fetch_sample) {
         float sample;
@@ -189,13 +196,13 @@ void MP2K::RenderFrame() {
           auto block_address = (sampler.current_position >> 6) * 33;
 
           if (block_offset == 0) {
-            sample = S8ToFloat(sampler.wave_data[block_address]);
+            sample = S8ToFloat(wave_data[block_address]);
           } else {
             sample = sample_history[0];
           }
 
           auto address = block_address + (block_offset >> 1) + 1;
-          auto lut_index = sampler.wave_data[address];
+          auto lut_index = wave_data[address];
 
           if (block_offset & 1) {
             lut_index &= 15;
@@ -205,7 +212,7 @@ void MP2K::RenderFrame() {
 
           sample += kDifferentialLUT[lut_index];
         } else {
-          sample = S8ToFloat(sampler.wave_data[sampler.current_position]);
+          sample = S8ToFloat(wave_data[sampler.current_position]);
         }
 
         if (UseCubicFilter()) {
@@ -244,13 +251,11 @@ void MP2K::RenderFrame() {
         sampler.current_position += n;
         sampler.should_fetch_sample = true;
 
-        auto wave_header = sampler.wave_header;
-
-        if (sampler.current_position >= wave_header->number_of_samples) {
+        if (sampler.current_position >= wave_info.number_of_samples) {
           if (channel.status & CHANNEL_LOOP) {
-            sampler.current_position = wave_header->loop_position + n - 1;
+            sampler.current_position = wave_info.loop_position + n - 1;
           } else {
-            sampler.current_position = wave_header->number_of_samples;
+            sampler.current_position = wave_info.number_of_samples;
             sampler.should_fetch_sample = false;
           }
         }

@@ -11,7 +11,7 @@
 
 namespace nba::core {
 
-struct CPU;
+struct Bus;
 
 struct MP2K {
   static constexpr u8 kMaxSoundChannels = 12;
@@ -48,7 +48,7 @@ struct MP2K {
     u8 echo_length;
     u8 unknown1[18];
     u32 frequency;
-    u32 wave_data_address;
+    u32 wave_address;
     u32 unknown2[6];
   };
 
@@ -65,7 +65,7 @@ struct MP2K {
     SoundChannel channels[kMaxSoundChannels];
   };
 
-  MP2K(CPU& cpu) : cpu(cpu) {
+  MP2K(Bus& bus) : bus(bus) {
     Reset();
   }
 
@@ -92,25 +92,26 @@ private:
   }
 
   struct Sampler {
+    bool compressed = false;
     bool should_fetch_sample = true;
     u32 current_position = 0;
     float resample_phase = 0.0;
     float sample_history[4] {0};
-
-    struct WaveHeader {
+    
+    struct WaveInfo {
       u16 type;
       u16 status;
       u32 frequency;
       u32 loop_position;
       u32 number_of_samples;
-    } *wave_header;
+    } wave_info;
 
-    u8* wave_data;
+    u8* wave_data = nullptr;
   } samplers[kMaxSoundChannels];
 
   bool engaged;
   bool use_cubic_filter;
-  CPU& cpu;
+  Bus& bus;
   SoundInfo sound_info;
   std::unique_ptr<float[]> buffer;
   int total_frame_count;

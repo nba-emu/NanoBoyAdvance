@@ -315,37 +315,39 @@ auto Bus::GetHostAddress(u32 address, size_t size) -> u8* {
   auto& rom = memory.game_pak.GetRawROM();
 
   auto page = address >> 24;
-  auto offset = address & 0x00FF'FFFF;
-  auto end_offset = offset + size;
 
   switch (page) {
     // BIOS
     case 0x00: {
-      if (end_offset > bios.size()) {
-        break;
+      auto offset = address & 0x00FF'FFFF;
+      if (offset + size <= bios.size()) {
+        return bios.data() + offset;
       }
-      return bios.data() + offset;
+      break;
     }
     // EWRAM (external work RAM)
     case 0x02: {
-      if (end_offset > wram.size()) {
-        break;
+      auto offset = address & 0x00FF'FFFF;
+      if (offset + size <= wram.size()) {
+        return wram.data() + offset;
       }
-      return wram.data() + offset;
+      break;
     }
     // IWRAM (internal work RAM)
     case 0x03: {
-      if (end_offset > iram.size()) {
-        break;
+      auto offset = address & 0x00FF'FFFF;
+      if (offset + size <= iram.size()) {
+        return iram.data() + offset;
       }
-      return iram.data() + offset;
+      break;
     }
     // ROM (WS0, WS1, WS2)
     case 0x08 ... 0x0D: {
-      if (end_offset > rom.size()) {
-        break;
+      auto offset = address & 0x01FF'FFFF;
+      if (offset + size <= rom.size()) {
+        return rom.data() + offset;
       }
-      return rom.data() + offset;
+      break;
     }
   }
 
