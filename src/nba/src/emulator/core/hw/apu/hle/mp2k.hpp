@@ -97,7 +97,7 @@ private:
     u32 current_position = 0;
     float resample_phase = 0.0;
     float sample_history[4] {0};
-    
+
     struct WaveInfo {
       u16 type;
       u16 status;

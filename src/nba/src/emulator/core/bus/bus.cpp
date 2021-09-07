@@ -351,7 +351,7 @@ auto Bus::GetHostAddress(u32 address, size_t size) -> u8* {
     }
   }
 
-  ASSERT(false, "cannot get host address for 0x{:08X} ({} bytes)", address, size);
+  ASSERT(false, "Bus: cannot get host address for 0x{:08X} ({} bytes)", address, size);
 }
 
 } // namespace nba::core
