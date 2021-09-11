@@ -7,11 +7,11 @@
 
 #pragma once
 
-#include "../resampler.hpp"
+#include "common/dsp/resampler.hpp"
 
-namespace common::dsp {
+namespace nba {
 
-template <typename T>
+template<typename T>
 struct CubicResampler : Resampler<T> {
   CubicResampler(std::shared_ptr<WriteStream<T>> output) 
       : Resampler<T>(output) {
@@ -50,4 +50,4 @@ private:
 template <typename T>
 using CubicStereoResampler = CubicResampler<StereoSample<T>>;
 
-} // namespace common::dsp
+} // namespace nba

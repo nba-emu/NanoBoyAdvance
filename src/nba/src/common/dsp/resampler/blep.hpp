@@ -7,12 +7,11 @@
 
 #pragma once
 
-#include <nba/log.hpp>
-#include "../resampler.hpp"
+#include "common/dsp/resampler.hpp"
 
-namespace common::dsp {
+namespace nba {
 
-template <typename T>
+template<typename T>
 struct BlepResampler : Resampler<T> {
   BlepResampler(std::shared_ptr<WriteStream<T>> output)
       : Resampler<T>(output) {
@@ -71,4 +70,4 @@ private:
 template <typename T>
 using BlepStereoResampler = BlepResampler<StereoSample<T>>;
 
-} // namespace common::dsp
+} // namespace nba

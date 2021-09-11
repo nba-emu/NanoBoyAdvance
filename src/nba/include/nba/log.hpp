@@ -27,11 +27,11 @@ enum Level {
 
 namespace detail {
 
-// #if defined(NDEBUG)
-  // static constexpr int kLogMask = Info | Warn | Error | Fatal;
-// #else
+#if defined(NDEBUG)
+  static constexpr int kLogMask = Info | Warn | Error | Fatal;
+#else
   static constexpr int kLogMask = All;
-// #endif
+#endif
 
 } // namespace nba::detail
 

@@ -7,23 +7,23 @@
 
 #pragma once
 
-namespace common::dsp {
+namespace nba {
 
-template <typename T>
+template<typename T>
 struct ReadStream {
   virtual ~ReadStream() = default;
 
   virtual auto Read() -> T = 0;
 };
 
-template <typename T>
+template<typename T>
 struct WriteStream {
   virtual ~WriteStream() = default;
   
   virtual void Write(T const& value) = 0;
 };
 
-template <typename T>
+template<typename T>
 struct Stream : ReadStream<T>, WriteStream<T> { };
   
-} // namespace common::dsp
+} // namespace nba

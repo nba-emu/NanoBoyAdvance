@@ -9,12 +9,12 @@
 
 #include <memory>
 
-#include "stereo.hpp"
-#include "stream.hpp"
+#include "common/dsp/stereo.hpp"
+#include "common/dsp/stream.hpp"
 
-namespace common::dsp {
+namespace nba {
 
-template <typename T>
+template<typename T>
 struct RingBuffer : Stream<T> {
   RingBuffer(int length, bool blocking = false)
       : length(length)
@@ -29,7 +29,6 @@ struct RingBuffer : Stream<T> {
     rd_ptr = 0;
     wr_ptr = 0;
     count  = 0;
-    // Zero-initialize to avoid reading garbage when reading from an empty buffer.
     for (int i = 0; i < length; i++) {
       data[i] = {};
     }
@@ -70,4 +69,4 @@ private:
 template <typename T>
 using StereoRingBuffer = RingBuffer<StereoSample<T>>;
 
-} // namespace common::dsp
+} // namespace nba

@@ -43,13 +43,13 @@ set(HEADERS
   src/common/dsp/resampler/cosine.hpp
   src/common/dsp/resampler/cubic.hpp
   src/common/dsp/resampler/nearest.hpp
-  src/common/dsp/resampler/windowed-sinc.hpp
+  src/common/dsp/resampler/sinc.hpp
   src/common/dsp/resampler.hpp
   src/common/compiler.hpp
   src/common/crc32.hpp
   src/common/compiler.hpp
   src/common/punning.hpp
-  src/common/static_for.hpp
+  src/common/meta.hpp
   src/emulator/cartridge/backup/backup.hpp
   src/emulator/cartridge/backup/backup_file.hpp
   src/emulator/cartridge/backup/eeprom.hpp

@@ -14,12 +14,12 @@
 #define M_PI (3.141592653589793238463)
 #endif
 
-#include "stereo.hpp"
-#include "stream.hpp"
+#include "common/dsp/stereo.hpp"
+#include "common/dsp/stream.hpp"
 
-namespace common::dsp {
+namespace nba {
 
-template <typename T>
+template<typename T>
 struct Resampler : WriteStream<T> {
   Resampler(std::shared_ptr<WriteStream<T>> output) : output(output) {}
   
@@ -36,4 +36,4 @@ protected:
 template <typename T>
 using StereoResampler = Resampler<StereoSample<T>>;
 
-} // namespace common::dsp
+} // namespace nba

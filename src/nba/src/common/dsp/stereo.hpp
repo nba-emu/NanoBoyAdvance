@@ -10,11 +10,11 @@
 #include <memory>
 #include <stdexcept>
 
-#include "stream.hpp"
+#include "common/dsp/stream.hpp"
 
-namespace common::dsp {
+namespace nba {
 
-template <typename T>
+template<typename T>
 struct StereoSample {
   T left  {};
   T right {};
@@ -28,7 +28,7 @@ struct StereoSample {
     if (index == 0) return left;
     if (index == 1) return right;
     
-    throw std::runtime_error("DSP::StereoSample<T>: bad index for operator[].");
+    throw std::runtime_error("StereoSample<T>: bad index for operator[].");
   }
   
   StereoSample<T> operator+(T scalar) const {
@@ -92,4 +92,4 @@ struct StereoSample {
   }
 };
   
-} // namespace common::dsp
+} // namespace nba

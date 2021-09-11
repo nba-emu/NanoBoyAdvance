@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-#include <common/static_for.hpp>
+#include <common/meta.hpp>
 
 #include "../arm7tdmi.hpp"
 

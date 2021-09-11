@@ -10,7 +10,7 @@
 #include <common/dsp/resampler/cosine.hpp>
 #include <common/dsp/resampler/cubic.hpp>
 #include <common/dsp/resampler/nearest.hpp>
-#include <common/dsp/resampler/windowed-sinc.hpp>
+#include <common/dsp/resampler/sinc.hpp>
 
 #include "apu.hpp"
 
@@ -32,8 +32,6 @@ APU::APU(
 }
 
 void APU::Reset() {
-  using namespace common::dsp;
-
   mmio.fifo[0].Reset();
   mmio.fifo[1].Reset();
   mmio.psg1.Reset();
@@ -56,7 +54,7 @@ void APU::Reset() {
 
   using Interpolation = Config::Audio::Interpolation;
 
-  buffer = std::make_shared<common::dsp::StereoRingBuffer<float>>(audio_dev->GetBlockSize() * 4, true);
+  buffer = std::make_shared<StereoRingBuffer<float>>(audio_dev->GetBlockSize() * 4, true);
 
   switch (config->audio.interpolation) {
     case Interpolation::Cosine:
@@ -131,7 +129,7 @@ void APU::StepMixer(int cycles_late) {
   auto psg_volume = psg_volume_tab[psg.volume];
 
   if (mp2k.IsEngaged()) {
-    common::dsp::StereoSample<float> sample { 0, 0 };
+    StereoSample<float> sample { 0, 0 };
 
     if (resolution_old != 1) {
       resampler->SetSampleRates(65536, config->audio_dev->GetSampleRate());
@@ -166,7 +164,7 @@ void APU::StepMixer(int cycles_late) {
 
     scheduler.Add(256 - (scheduler.GetTimestampNow() & 255), this, &APU::StepMixer);
   } else {
-    common::dsp::StereoSample<s16> sample { 0, 0 };
+    StereoSample<s16> sample { 0, 0 };
 
     auto& bias = mmio.bias;
 

@@ -7,11 +7,11 @@
 
 #pragma once
 
-#include "../resampler.hpp"
+#include "common/dsp/resampler.hpp"
 
-namespace common::dsp {
+namespace nba {
 
-template <typename T>
+template<typename T>
 struct NearestResampler : Resampler<T> {
   NearestResampler(std::shared_ptr<WriteStream<T>> output) 
       : Resampler<T>(output) {
@@ -33,4 +33,4 @@ private:
 template <typename T>
 using NearestStereoResampler = NearestResampler<StereoSample<T>>;
 
-} // namespace common::dsp
+} // namespace nba

@@ -7,14 +7,14 @@
 
 #pragma once
 
-#include "../resampler.hpp"
-#include "../ring_buffer.hpp"
+#include "common/dsp/resampler.hpp"
+#include "common/dsp/ring_buffer.hpp"
 
-namespace common::dsp {
+namespace nba {
 
-template <typename T, int points>
+template<typename T, int points>
 struct SincResampler : Resampler<T> {
-  static_assert((points % 4) == 0, "DSP::SincResampler<T, points>: points must be divisible by four.");
+  static_assert((points % 4) == 0, "SincResampler<T, points>: points must be divisible by four.");
 
   SincResampler(std::shared_ptr<WriteStream<T>> output) 
       : Resampler<T>(output) {
@@ -93,4 +93,4 @@ private:
 template <typename T, int points>
 using SincStereoResampler = SincResampler<StereoSample<T>, points>;
 
-} // namespace common::dsp
+} // namespace nba

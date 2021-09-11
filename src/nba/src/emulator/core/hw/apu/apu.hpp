@@ -56,16 +56,16 @@ struct APU {
   } mmio;
 
   std::mutex buffer_mutex;
-  std::shared_ptr<common::dsp::StereoRingBuffer<float>> buffer;
-  std::unique_ptr<common::dsp::StereoResampler<float>> resampler;
+  std::shared_ptr<StereoRingBuffer<float>> buffer;
+  std::unique_ptr<StereoResampler<float>> resampler;
 
 private:
   void StepMixer(int cycles_late);
   void StepSequencer(int cycles_late);
 
   s8 latch[2];
-  std::shared_ptr<common::dsp::RingBuffer<float>> fifo_buffer[2];
-  std::unique_ptr<common::dsp::Resampler<float>> fifo_resampler[2];
+  std::shared_ptr<RingBuffer<float>> fifo_buffer[2];
+  std::unique_ptr<Resampler<float>> fifo_resampler[2];
   int fifo_samplerate[2];
 
   Scheduler& scheduler;
