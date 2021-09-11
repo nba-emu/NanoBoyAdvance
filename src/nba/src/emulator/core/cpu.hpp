@@ -7,14 +7,8 @@
 
 #pragma once
 
-#include <nba/log.hpp>
-#include <common/punning.hpp>
-#include <emulator/cartridge/backup/backup.hpp>
-#include <emulator/cartridge/gpio/gpio.hpp>
-#include <emulator/cartridge/game_pak.hpp>
 #include <nba/deprecate/config.hpp>
 #include <memory>
-#include <type_traits>
 
 #include "arm/arm7tdmi.hpp"
 #include "bus/bus.hpp"
@@ -36,8 +30,6 @@ struct CPU {
 
   std::shared_ptr<Config> config;
 
-//private:
-  //friend struct MP2K;
   friend struct Bus;
 
   Scheduler scheduler;
@@ -49,10 +41,6 @@ struct CPU {
   Timer timer;
   KeyPad keypad;
   Bus bus;
-
-  template <typename T, bool debug> auto Read(u32 address) -> T {
-    return 0;
-  }
 
   void MP2KSearchSoundMainRAM();
   void MP2KOnSoundMainRAMCalled();

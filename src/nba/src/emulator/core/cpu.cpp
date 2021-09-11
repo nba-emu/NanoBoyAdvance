@@ -9,6 +9,7 @@
 
 #include <common/compiler.hpp>
 #include <common/crc32.hpp>
+#include <nba/log.hpp>
 #include <cstring>
 
 namespace nba::core {

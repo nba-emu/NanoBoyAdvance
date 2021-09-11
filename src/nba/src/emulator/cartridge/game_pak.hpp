@@ -9,12 +9,12 @@
 
 #include <algorithm>
 #include <nba/integer.hpp>
+#include <nba/backup/eeprom.hpp>
 #include <common/compiler.hpp>
 #include <common/punning.hpp>
 #include <memory>
 #include <vector>
 
-#include "backup/eeprom.hpp"
 #include "gpio/gpio.hpp"
 
 namespace nba {

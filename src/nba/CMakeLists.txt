@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(SOURCES
   src/emulator/cartridge/backup/eeprom.cpp
   src/emulator/cartridge/backup/flash.cpp
+  src/emulator/cartridge/backup/sram.cpp
   src/emulator/cartridge/gpio/gpio.cpp
   src/emulator/cartridge/gpio/rtc.cpp
   src/emulator/cartridge/game_db.cpp
@@ -50,11 +51,6 @@ set(HEADERS
   src/common/compiler.hpp
   src/common/punning.hpp
   src/common/meta.hpp
-  src/emulator/cartridge/backup/backup.hpp
-  src/emulator/cartridge/backup/backup_file.hpp
-  src/emulator/cartridge/backup/eeprom.hpp
-  src/emulator/cartridge/backup/flash.hpp
-  src/emulator/cartridge/backup/sram.hpp
   src/emulator/cartridge/gpio/gpio.hpp
   src/emulator/cartridge/gpio/rtc.hpp
   src/emulator/cartridge/game_db.hpp
@@ -93,6 +89,11 @@ set(HEADERS
 )
 
 set(HEADERS_PUBLIC
+  include/nba/backup/backup.hpp
+  include/nba/backup/backup_file.hpp
+  include/nba/backup/eeprom.hpp
+  include/nba/backup/flash.hpp
+  include/nba/backup/sram.hpp
   include/nba/device/audio_device.hpp
   include/nba/device/input_device.hpp
   include/nba/device/video_device.hpp

@@ -10,9 +10,9 @@
 #include <emulator/core/cpu.hpp>
 #include <emulator/cartridge/header.hpp>
 #include <emulator/cartridge/game_db.hpp>
-#include <emulator/cartridge/backup/eeprom.hpp>
-#include <emulator/cartridge/backup/flash.hpp>
-#include <emulator/cartridge/backup/sram.hpp>
+#include <nba/backup/eeprom.hpp>
+#include <nba/backup/flash.hpp>
+#include <nba/backup/sram.hpp>
 #include <emulator/cartridge/gpio/rtc.hpp>
 #include <emulator/cartridge/game_pak.hpp>
 #include <nba/log.hpp>
