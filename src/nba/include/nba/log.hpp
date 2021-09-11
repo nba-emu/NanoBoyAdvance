@@ -37,7 +37,7 @@ namespace detail {
 
 template<Level level, typename... Args>
 inline void Log(std::string_view format, Args... args) {
-  if constexpr(detail::kLogMask & level) {
+  if constexpr((detail::kLogMask & level) != 0) {
     char const* prefix = "[?]";
 
     if constexpr(level == Trace) prefix = "\e[36m[T]";
