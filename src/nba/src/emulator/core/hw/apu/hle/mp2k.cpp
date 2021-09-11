@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-#include <common/log.hpp>
+#include <nba/log.hpp>
 
 #include "emulator/core/bus/bus.hpp"
 #include "mp2k.hpp"
@@ -29,7 +29,10 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
   }
 
   if (!engaged) {
-    ASSERT(sound_info.pcm_samples_per_vblank != 0, "MP2K: samples per V-blank must not be zero.");
+    Assert(
+      sound_info.pcm_samples_per_vblank != 0,
+      "MP2K: samples per V-blank must not be zero."
+    );
 
     total_frame_count = kDMABufferSize / sound_info.pcm_samples_per_vblank;
     buffer = std::make_unique<float[]>(kSamplesPerFrame * total_frame_count * 2);

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <common/log.hpp>
+#include <nba/log.hpp>
 #include "../resampler.hpp"
 
 namespace common::dsp {

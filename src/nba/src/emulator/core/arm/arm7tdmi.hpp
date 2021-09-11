@@ -9,7 +9,7 @@
 
 #include <array>
 #include <common/compiler.hpp>
-#include <common/log.hpp>
+#include <nba/log.hpp>
 #include <emulator/core/scheduler.hpp>
 
 #include "emulator/core/bus/bus.hpp"

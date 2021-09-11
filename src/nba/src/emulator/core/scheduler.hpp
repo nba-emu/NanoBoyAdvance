@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <common/log.hpp>
+#include <nba/log.hpp>
 #include <common/compiler.hpp>
 #include <nba/integer.hpp>
 #include <functional>
@@ -45,7 +45,7 @@ struct Scheduler {
     heap_size = 0;
     timestamp_now = 0;
     Add(std::numeric_limits<u64>::max(), [](int) {
-      ASSERT(false, "event queue was empty or reached the end of time.")
+      Assert(false, "Scheduler: reached end of the event queue.");
     });
   }
 
@@ -71,7 +71,10 @@ struct Scheduler {
     int n = heap_size++;
     int p = Parent(n);
 
-    ASSERT(heap_size <= kMaxEvents, "exceeded maximum number of scheduler events.");
+    Assert(
+      heap_size <= kMaxEvents,
+      "Scheduler: reached maximum number of events."
+    );
 
     auto event = heap[n];
     event->timestamp = GetTimestampNow() + delay;

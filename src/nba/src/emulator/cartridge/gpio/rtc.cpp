@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-#include <common/log.hpp>
+#include <nba/log.hpp>
 #include <ctime>
 
 #include "rtc.hpp"
@@ -62,13 +62,13 @@ void RTC::WritePort(u8 value) {
   if (GetPortDirection(static_cast<int>(Port::CS)) == GPIO::PortDirection::Out) {
     port.cs = (value >> static_cast<int>(Port::CS)) & 1;
   } else {
-    LOG_ERROR("RTC: CS port should be set to 'output' but configured as 'input'.");;
+    Log<Error>("RTC: CS port should be set to 'output' but configured as 'input'.");;
   }
 
   if (GetPortDirection(static_cast<int>(Port::SCK)) == GPIO::PortDirection::Out) {
     port.sck = (value >> static_cast<int>(Port::SCK)) & 1;
   } else {
-    LOG_ERROR("RTC: SCK port should be set to 'output' but configured as 'input'.");
+    Log<Error>("RTC: SCK port should be set to 'output' but configured as 'input'.");
   }
 
   if (GetPortDirection(static_cast<int>(Port::SIO)) == GPIO::PortDirection::Out) {
@@ -116,9 +116,9 @@ void RTC::ReceiveCommandSIO() {
     data = (data << 4) | (data >> 4);
     data = ((data & 0x33) << 2) | ((data & 0xCC) >> 2);
     data = ((data & 0x55) << 1) | ((data & 0xAA) >> 1);
-    LOG_DEBUG("RTC: received command in REV format, data=0x{0:X}", data);
+    Log<Trace>("RTC: received command in REV format, data=0x{0:X}", data);
   } else if ((data & 15) != 6) {
-    LOG_ERROR("RTC: received command in unknown format, data=0x{0:X}", data);
+    Log<Error>("RTC: received command in unknown format, data=0x{0:X}", data);
     return;
   }
 
@@ -213,7 +213,7 @@ void RTC::WriteRegister() {
       control.per_minute_irq = buffer[0] & 8;
       control.mode_24h = buffer[0] & 64;
       if (control.per_minute_irq) {
-        LOG_WARN("RTC: enabled the per-minute IRQ. This is currently unimplemented.");
+        Log<Error>("RTC: enabled the unimplemented per-minute IRQ.");
       }
       break;
     }

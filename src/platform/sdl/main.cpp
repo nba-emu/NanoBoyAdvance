@@ -29,6 +29,8 @@
 
 #undef main
 
+using namespace nba;
+
 static constexpr auto kNativeWidth = 240;
 static constexpr auto kNativeHeight = 160;
 
@@ -42,24 +44,24 @@ static auto g_swap_interval = 1;
 static std::atomic_bool g_sync_to_audio = true;
 static int g_cycles_per_audio_frame = 0;
 
-static auto g_keyboard_input_device = nba::BasicInputDevice{};
-static auto g_controller_input_device = nba::BasicInputDevice{};
+static auto g_keyboard_input_device = BasicInputDevice{};
+static auto g_controller_input_device = BasicInputDevice{};
 static SDL_GameController* g_game_controller = nullptr;
 static auto g_game_controller_button_x_old = false;
 static auto g_fastforward = false;
 
-static auto g_config = std::make_shared<nba::Config>();
-static auto g_emulator = std::make_unique<nba::Emulator>(g_config);
+static auto g_config = std::make_shared<Config>();
+static auto g_emulator = std::make_unique<Emulator>(g_config);
 static auto g_emulator_lock = std::mutex{};
 
 struct KeyMap {
   SDL_Keycode fastforward = SDLK_SPACE;
   SDL_Keycode reset = SDLK_F9;
   SDL_Keycode fullscreen = SDLK_F10;
-  std::unordered_map<SDL_Keycode, nba::InputDevice::Key> gba;
+  std::unordered_map<SDL_Keycode, InputDevice::Key> gba;
 } keymap;
 
-struct CombinedInputDevice : public nba::InputDevice {
+struct CombinedInputDevice : public InputDevice {
   auto Poll(Key key) -> bool final {
     return g_keyboard_input_device.Poll(key) || g_controller_input_device.Poll(key);
   }
@@ -70,7 +72,7 @@ struct CombinedInputDevice : public nba::InputDevice {
   }
 };
 
-struct SDL2_VideoDevice : public nba::VideoDevice {
+struct SDL2_VideoDevice : public VideoDevice {
   void Draw(u32* buffer) final {
     std::memcpy(g_framebuffer, buffer, sizeof(u32) * kNativeWidth * kNativeHeight);
     g_frame_counter++;
@@ -125,14 +127,14 @@ void parse_arguments(int argc, char** argv) {
       g_config->force_rtc = true;
     } else if (key == "--save-type") {
       /* TODO: deduplicate this piece of code? */
-      const std::unordered_map<std::string, nba::Config::BackupType> save_types{
-        { "detect",     nba::Config::BackupType::Detect    },
-        { "none",       nba::Config::BackupType::None      },
-        { "sram",       nba::Config::BackupType::SRAM      },
-        { "flash64",    nba::Config::BackupType::FLASH_64  },
-        { "flash128",   nba::Config::BackupType::FLASH_128 },
-        { "eeprom512",  nba::Config::BackupType::EEPROM_4  },
-        { "eeprom8192", nba::Config::BackupType::EEPROM_64 }
+      const std::unordered_map<std::string, Config::BackupType> save_types{
+        { "detect",     Config::BackupType::Detect    },
+        { "none",       Config::BackupType::None      },
+        { "sram",       Config::BackupType::SRAM      },
+        { "flash64",    Config::BackupType::FLASH_64  },
+        { "flash128",   Config::BackupType::FLASH_128 },
+        { "eeprom512",  Config::BackupType::EEPROM_4  },
+        { "eeprom8192", Config::BackupType::EEPROM_64 }
       };
       if (i == limit) {
         usage(argv[0]);
@@ -146,12 +148,12 @@ void parse_arguments(int argc, char** argv) {
       }
     } else if (key == "--resampler") {
       /* TODO: deduplicate this piece of code. */
-      const std::unordered_map<std::string, nba::Config::Audio::Interpolation> resamplers{
-        { "cosine",  nba::Config::Audio::Interpolation::Cosine   },
-        { "cubic",   nba::Config::Audio::Interpolation::Cubic    },
-        { "sinc64",  nba::Config::Audio::Interpolation::Sinc_64  },
-        { "sinc128", nba::Config::Audio::Interpolation::Sinc_128 },
-        { "sinc256", nba::Config::Audio::Interpolation::Sinc_256 }
+      const std::unordered_map<std::string, Config::Audio::Interpolation> resamplers{
+        { "cosine",  Config::Audio::Interpolation::Cosine   },
+        { "cubic",   Config::Audio::Interpolation::Cubic    },
+        { "sinc64",  Config::Audio::Interpolation::Sinc_64  },
+        { "sinc128", Config::Audio::Interpolation::Sinc_128 },
+        { "sinc256", Config::Audio::Interpolation::Sinc_256 }
       };
       if (i == limit) {
         usage(argv[0]);
@@ -174,7 +176,7 @@ void parse_arguments(int argc, char** argv) {
 }
 
 void load_game(std::string const& rom_path) {
-  using StatusCode = nba::Emulator::StatusCode;
+  using StatusCode = Emulator::StatusCode;
 
   switch (g_emulator->LoadGame(rom_path)) {
   case StatusCode::GameNotFound:
@@ -198,7 +200,7 @@ void load_keymap() {
   try {
     data = toml::parse("keymap.toml");
   } catch (std::exception& ex) {
-    //LOG_WARN("Failed to load or parse keymap configuration.");
+    Log<Warn>("SDL: failed to load keymap configuration.");
     return;
   }
 
@@ -218,16 +220,16 @@ void load_keymap() {
 
     if (gba_result.is_ok()) {
       auto gba = gba_result.unwrap();
-      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "a", "A").c_str())] = nba::InputDevice::Key::A;
-      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "b", "B").c_str())] = nba::InputDevice::Key::B;
-      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "l", "D").c_str())] = nba::InputDevice::Key::L;
-      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "r", "F").c_str())] = nba::InputDevice::Key::R;
-      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "start", "Return").c_str())] = nba::InputDevice::Key::Start;
-      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "select", "Backspace").c_str())] = nba::InputDevice::Key::Select;
-      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "up", "Up").c_str())] = nba::InputDevice::Key::Up;
-      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "down", "Down").c_str())] = nba::InputDevice::Key::Down;
-      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "left", "Left").c_str())] = nba::InputDevice::Key::Left;
-      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "right", "Right").c_str())] = nba::InputDevice::Key::Right;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "a", "A").c_str())] = InputDevice::Key::A;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "b", "B").c_str())] = InputDevice::Key::B;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "l", "D").c_str())] = InputDevice::Key::L;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "r", "F").c_str())] = InputDevice::Key::R;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "start", "Return").c_str())] = InputDevice::Key::Start;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "select", "Backspace").c_str())] = InputDevice::Key::Select;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "up", "Up").c_str())] = InputDevice::Key::Up;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "down", "Down").c_str())] = InputDevice::Key::Down;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "left", "Left").c_str())] = InputDevice::Key::Left;
+      keymap.gba[SDL_GetKeyFromName(toml::find_or<std::string>(gba, "right", "Right").c_str())] = InputDevice::Key::Right;
     }
   }
 }
@@ -257,7 +259,7 @@ auto compile_shader(GLuint shader, const char* source) -> bool {
 
     auto error_log = std::make_unique<GLchar[]>(max_length);
     glGetShaderInfoLog(shader, max_length, &max_length, error_log.get());
-    //LOG_ERROR("Failed to compile shader:\n{0}", error_log.get());
+    Log<Error>("SDL: OpenGL: failed to compile shader:\n{0}", error_log.get());
     glDeleteShader(shader);
     return false;
   }
@@ -270,7 +272,6 @@ void init(int argc, char** argv) {
   if (argc >= 1) {
     fs::current_path(fs::absolute(argv[0]).replace_filename(fs::path{ }));
   }
-  //common::logger::init();
   config_toml_read(*g_config, "config.toml");
   parse_arguments(argc, argv);
   load_keymap();
@@ -328,7 +329,7 @@ void init(int argc, char** argv) {
     if (SDL_IsGameController(i)) {
       g_game_controller = SDL_GameControllerOpen(i);
       if (g_game_controller != nullptr) {
-        //LOG_INFO("Detected game controller '{0}'", SDL_GameControllerNameForIndex(i));
+        Log<Info>("SDL: detected game controller '{0}'", SDL_GameControllerNameForIndex(i));
         break;
       }
     }
@@ -474,13 +475,13 @@ void update_controller() {
   }
   g_game_controller_button_x_old = button_x;
 
-  static const std::unordered_map<SDL_GameControllerButton, nba::InputDevice::Key> buttons{
-    { SDL_CONTROLLER_BUTTON_A, nba::InputDevice::Key::A },
-    { SDL_CONTROLLER_BUTTON_B, nba::InputDevice::Key::B },
-    { SDL_CONTROLLER_BUTTON_LEFTSHOULDER , nba::InputDevice::Key::L },
-    { SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, nba::InputDevice::Key::R },
-    { SDL_CONTROLLER_BUTTON_START, nba::InputDevice::Key::Start },
-    { SDL_CONTROLLER_BUTTON_BACK, nba::InputDevice::Key::Select }
+  static const std::unordered_map<SDL_GameControllerButton, InputDevice::Key> buttons{
+    { SDL_CONTROLLER_BUTTON_A, InputDevice::Key::A },
+    { SDL_CONTROLLER_BUTTON_B, InputDevice::Key::B },
+    { SDL_CONTROLLER_BUTTON_LEFTSHOULDER , InputDevice::Key::L },
+    { SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, InputDevice::Key::R },
+    { SDL_CONTROLLER_BUTTON_START, InputDevice::Key::Start },
+    { SDL_CONTROLLER_BUTTON_BACK, InputDevice::Key::Select }
   };
 
   for (auto& button : buttons) {
@@ -495,10 +496,10 @@ void update_controller() {
   auto x = SDL_GameControllerGetAxis(g_game_controller, SDL_CONTROLLER_AXIS_LEFTX);
   auto y = SDL_GameControllerGetAxis(g_game_controller, SDL_CONTROLLER_AXIS_LEFTY);
 
-  g_controller_input_device.SetKeyStatus(nba::InputDevice::Key::Left, x < -threshold);
-  g_controller_input_device.SetKeyStatus(nba::InputDevice::Key::Right, x > threshold);
-  g_controller_input_device.SetKeyStatus(nba::InputDevice::Key::Up, y < -threshold);
-  g_controller_input_device.SetKeyStatus(nba::InputDevice::Key::Down, y > threshold);
+  g_controller_input_device.SetKeyStatus(InputDevice::Key::Left, x < -threshold);
+  g_controller_input_device.SetKeyStatus(InputDevice::Key::Right, x > threshold);
+  g_controller_input_device.SetKeyStatus(InputDevice::Key::Up, y < -threshold);
+  g_controller_input_device.SetKeyStatus(InputDevice::Key::Down, y > threshold);
 }
 
 int main(int argc, char** argv) {

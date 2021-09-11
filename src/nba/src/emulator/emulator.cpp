@@ -15,7 +15,7 @@
 #include <emulator/cartridge/backup/sram.hpp>
 #include <emulator/cartridge/gpio/rtc.hpp>
 #include <emulator/cartridge/game_pak.hpp>
-#include <common/log.hpp>
+#include <nba/log.hpp>
 #include <cstring>
 #include <exception>
 #include <filesystem>
@@ -60,7 +60,7 @@ auto Emulator::DetectBackupType(u8* rom, size_t size) -> BackupType {
   for (int i = 0; i < size; i += 4) {
     for (auto const& [signature, type] : signatures) {
       if ((i + signature.size()) <= size && std::memcmp(&rom[i], signature.data(), signature.size()) == 0) {
-        LOG_INFO("Found ROM string indicating {0} backup type.", std::to_string(type));
+        Log<Info>("Emulator: ROM indicates '{}' backup memory.", std::to_string(type));
         return type;
       }
     }
@@ -98,14 +98,12 @@ auto Emulator::LoadBIOS() -> StatusCode {
   auto bios_path = config->bios_path;
 
   if (!fs::exists(bios_path) || !fs::is_regular_file(bios_path)) {
-    LOG_ERROR("Unable to load BIOS file: {0}", bios_path);
     return StatusCode::BiosNotFound;
   }
 
   auto size = fs::file_size(bios_path);
 
   if (size != g_bios_size) {
-    LOG_ERROR("BIOS file has unexpected size, expected file of {0} bytes.", g_bios_size);
     return StatusCode::BiosWrongSize;
   }
 
@@ -116,7 +114,6 @@ auto Emulator::LoadBIOS() -> StatusCode {
    * The status code "BIOS not found" is not accurate, really.
    */
   if (!stream.good()) {
-    LOG_ERROR("Failed to open BIOS file with unknown error.");
     return StatusCode::BiosNotFound;
   }
 
@@ -145,14 +142,12 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
 
   /* Ensure ROM exists and has valid size. */
   if (!fs::exists(path) || !fs::is_regular_file(path)) {
-    LOG_ERROR("The ROM path does not exist or does not point to a file.");
     return StatusCode::GameNotFound;
   }
 
   size = fs::file_size(path);
 
   if (size < sizeof(Header) || size > g_max_rom_size) {
-    LOG_ERROR("ROM file has unexpected size, expected file size between {0} bytes and 32 MiB.", sizeof(Header));
     return StatusCode::GameWrongSize;
   }
 
@@ -163,7 +158,6 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
    * The status code "Game not found" is not accurate, really.
    */
   if (!stream.good()) {
-    LOG_ERROR("Failed to open ROM with unknown error.");
     return StatusCode::GameNotFound;
   }
 
@@ -183,7 +177,6 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   if (config->backup_type == Config::BackupType::Detect) {
     /* Try to match gamecode with game database. */
     if (auto match = g_game_db.find(game_code); match != g_game_db.end()) {
-      LOG_INFO("Successfully matched ROM to game database entry.");
       game_info = match->second;
     }
 
@@ -192,23 +185,22 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
      * backup type used by this game.
      */
     if (game_info.backup_type == Config::BackupType::Detect) {
-      LOG_INFO("Unable to get backup type from game database.");
       game_info.backup_type = DetectBackupType(rom.data(), size);
       if (game_info.backup_type == Config::BackupType::Detect) {
         game_info.backup_type = Config::BackupType::SRAM;
-        LOG_WARN("Failed to determine backup type, fallback to SRAM.");
+        Log<Warn>("Emulator: failed to get backup type, using SRAM.");
       }
     }
   } else {
     game_info.backup_type = config->backup_type;
   }
 
-  LOG_INFO("Game Title: {0}", game_title);
-  LOG_INFO("Game Code:  {0}", game_code);
-  LOG_INFO("Game Maker: {0}", game_maker);
-  LOG_INFO("Backup: {0}", std::to_string(game_info.backup_type));
-  LOG_INFO("RTC:    {0}", game_info.gpio == GPIODeviceType::RTC);
-  LOG_INFO("Mirror: {0}", game_info.mirror);
+  fmt::print("\tgame title: {}\n", game_title);
+  fmt::print("\tgame code : {}\n", game_code);
+  fmt::print("\tgame maker: {}\n", game_maker);
+  fmt::print("\tmemory: {}\n", std::to_string(game_info.backup_type));
+  fmt::print("\trtc:    {}\n", game_info.gpio == GPIODeviceType::RTC);
+  fmt::print("\tROM mirrored: {}\n", game_info.mirror);
 
   // TODO: CreateBackupInstance should return a unique_ptr directly.
   auto backup = std::unique_ptr<Backup>{CreateBackupInstance(game_info.backup_type, save_path)};

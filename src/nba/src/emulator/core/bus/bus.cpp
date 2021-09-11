@@ -255,6 +255,8 @@ auto Bus::ReadBIOS(u32 address) -> u32 {
   if (hw.cpu.state.r15 < 0x4000) {
     address &= ~3;
     memory.latch.bios = read<u32>(memory.bios.data(), address);
+  } else {
+    Log<Trace>("Bus: illegal BIOS read: 0x{:08X}", address);
   }
   return memory.latch.bios >> shift;
 }
@@ -263,6 +265,8 @@ auto Bus::ReadOpenBus(u32 address) -> u32 {
   u32 word = 0;
   auto& cpu = hw.cpu;
   auto shift = (address & 3) << 3;
+
+  Log<Trace>("Bus: illegal memory read: 0x{:08X}", address);
 
   if (hw.dma.IsRunning() || dma.openbus) {
     return hw.dma.GetOpenBusValue() >> shift;
@@ -356,7 +360,7 @@ auto Bus::GetHostAddress(u32 address, size_t size) -> u8* {
     }
   }
 
-  ASSERT(false, "Bus: cannot get host address for 0x{:08X} ({} bytes)", address, size);
+  Assert(false, "Bus: cannot get host address for 0x{:08X} ({} bytes)", address, size);
 }
 
 } // namespace nba::core

@@ -57,6 +57,17 @@ static constexpr u32 g_dma_len_mask[] = {
   0x3FFF, 0x3FFF, 0x3FFF, 0xFFFF
 };
 
+static constexpr char const* g_address_mode_name[] = {
+  "+", "-", "C", "R+"
+};
+
+static constexpr char const* g_dma_time_name[] = {
+  "imm",
+  "vblank",
+  "hblank",
+  "audio"
+};
+
 void DMA::Reset() {
   active_dma_id = g_dma_none_id;
   early_exit_trigger = false;
@@ -74,8 +85,24 @@ void DMA::Reset() {
 void DMA::ScheduleDMAs(unsigned int bitset) {
   while (bitset > 0) {
     auto chan_id = g_dma_from_bitset[bitset];
+    auto& channel = channels[chan_id];
+
+    Log<Trace>("DMA: request DMA[{}] src=0x{:08X}({}) dst=0x{:08X}({}) count=0x{:05X} word={} repeat={} irq={} ({})",
+      channel.id,
+      channel.src_addr,
+      g_address_mode_name[channel.src_cntl],
+      channel.dst_addr,
+      g_address_mode_name[channel.dst_cntl],
+      channel.length,
+      channel.size,
+      channel.repeat ? 1 : 0,
+      channel.interrupt ? 1 : 0,
+      g_dma_time_name[channel.time]
+    );
+
     bitset &= ~(1 << chan_id);
-    channels[chan_id].startup_event = scheduler.Add(2, [this, chan_id](int cycles_late) {
+
+    channel.startup_event = scheduler.Add(2, [this, chan_id](int cycles_late) {
       channels[chan_id].startup_event = nullptr;
       if (runnable_set.none()) {
         active_dma_id = chan_id;
@@ -317,7 +344,7 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
     // Handle disabling the DMA before it started up.
     // TODO: not exactly known how hardware handles this edge-case.
     if (channel.startup_event != nullptr) {
-      LOG_WARN("DMA{0} was cancelled before its startup completed.", channel.id);
+      Log<Warn>("DMA: disabled DMA{0} while it was starting.", channel.id);
       scheduler.Cancel(channel.startup_event);
       channel.startup_event = nullptr;
     }
@@ -325,7 +352,7 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
     // Handle DMA channel self-disable (via writing to its control register).
     // TODO: not exactly known how hardware handles this edge-case.
     if (channel.id == active_dma_id) {
-      LOG_WARN("DMA{0} triggered self-disable!", channel.id);
+      Log<Warn>("DMA: DMA{0} cleared its own enable bit.", channel.id);
       early_exit_trigger = true;
       SelectNextDMA();
     }

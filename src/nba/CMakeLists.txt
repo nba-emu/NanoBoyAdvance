@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SOURCES
-  src/common/log.cpp
   src/emulator/cartridge/backup/eeprom.cpp
   src/emulator/cartridge/backup/flash.cpp
   src/emulator/cartridge/gpio/gpio.cpp
@@ -49,7 +48,6 @@ set(HEADERS
   src/common/compiler.hpp
   src/common/crc32.hpp
   src/common/compiler.hpp
-  src/common/log.hpp
   src/common/punning.hpp
   src/common/static_for.hpp
   src/emulator/cartridge/backup/backup.hpp
@@ -101,6 +99,7 @@ set(HEADERS_PUBLIC
   include/nba/deprecate/config.hpp
   include/nba/deprecate/emulator.hpp
   include/nba/integer.hpp
+  include/nba/log.hpp
 )
 
 add_library(nba STATIC ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
