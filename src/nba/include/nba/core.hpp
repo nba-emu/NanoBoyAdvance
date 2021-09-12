@@ -18,6 +18,8 @@ namespace nba {
 struct CoreBase {
   static constexpr int kCyclesPerFrame = 280896;
 
+  virtual ~CoreBase() = default;
+
   virtual void Reset() = 0;
   virtual void Attach(std::vector<u8> const& bios);
   virtual void Attach(ROM&& rom) = 0;
