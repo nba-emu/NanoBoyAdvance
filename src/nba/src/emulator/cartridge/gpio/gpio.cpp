@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-#include "gpio.hpp"
+#include <nba/gpio/gpio.hpp>
 
 namespace nba {
 
@@ -37,8 +37,6 @@ auto GPIO::Read(u32 address) -> u8 {
 
       port_data &= wr_mask;
       port_data |= value;
-
-      // CHECKME: what should we return for the masked bits? Are they floating?
       return value;
     }
     case Register::Direction: {

@@ -7,8 +7,9 @@
 
 #pragma once
 
+#include <nba/gpio/gpio.hpp>
+
 #include "emulator/core/hw/interrupt.hpp"
-#include "gpio.hpp"
 
 namespace nba {
 

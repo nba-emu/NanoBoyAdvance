@@ -51,7 +51,6 @@ set(HEADERS
   src/common/compiler.hpp
   src/common/punning.hpp
   src/common/meta.hpp
-  src/emulator/cartridge/gpio/gpio.hpp
   src/emulator/cartridge/gpio/rtc.hpp
   src/emulator/cartridge/game_db.hpp
   src/emulator/cartridge/game_pak.hpp
@@ -94,11 +93,12 @@ set(HEADERS_PUBLIC
   include/nba/backup/eeprom.hpp
   include/nba/backup/flash.hpp
   include/nba/backup/sram.hpp
+  include/nba/deprecate/config.hpp
+  include/nba/deprecate/emulator.hpp
   include/nba/device/audio_device.hpp
   include/nba/device/input_device.hpp
   include/nba/device/video_device.hpp
-  include/nba/deprecate/config.hpp
-  include/nba/deprecate/emulator.hpp
+  include/nba/gpio/gpio.hpp
   include/nba/integer.hpp
   include/nba/log.hpp
 )
