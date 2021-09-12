@@ -10,21 +10,25 @@ find_package(SDL2 REQUIRED)
 
 set(SOURCES
   src/device/sdl_audio_device.cpp
+  src/bios_loader.cpp
   src/config.cpp
   src/emulator.cpp
   src/frame_limiter.cpp
   src/game_db.cpp
+  src/rom_loader.cpp
 )
 
 set(HEADERS
-  src/game_db.hpp
 )
 
 set(HEADERS_PUBLIC
   include/platform/device/sdl_audio_device.hpp
+  include/platform/bios_loader.hpp
   include/platform/config.hpp
   include/platform/emulator.hpp
   include/platform/frame_limiter.hpp
+  include/platform/game_db.hpp
+  include/platform/rom_loader.hpp
 )
 
 add_library(platform-core STATIC ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})

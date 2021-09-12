@@ -13,10 +13,6 @@
 
 namespace nba {
 
-namespace core {
-struct CPU;
-} // namespace nba::core
-
 struct Backup;
 
 struct Emulator {
@@ -29,6 +25,8 @@ struct Emulator {
   };
   
   Emulator(std::shared_ptr<Config> config);
+
+  auto GetCore() -> std::unique_ptr<CoreBase>& { return core; }
 
   void Reset();
   auto LoadGame(std::string const& path) -> StatusCode;

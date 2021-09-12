@@ -19,13 +19,11 @@
 #include <string_view>
 #include <utility>
 
-#include "game_db.hpp"
+#include <platform/game_db.hpp>
 
 namespace nba {
 
 namespace fs = std::filesystem;
-
-using namespace nba::core;
 
 using BackupType = Config::BackupType;
 

@@ -6,6 +6,8 @@
  */
 
 #include <platform/device/sdl_audio_device.hpp>
+#include <platform/bios_loader.hpp>
+#include <platform/rom_loader.hpp>
 #include <QApplication>
 #include <QMenuBar>
 #include <QFileDialog>
@@ -208,9 +210,36 @@ void MainWindow::FileOpen() {
   /* Load emulator configuration */
   ReadConfig();
 
-  /* TODO: move message boxes to another method. */
-  switch (emulator->LoadGame(file.toStdString())) {
-    case StatusCode::GameNotFound: {
+  auto& core = emulator->GetCore();
+
+  // TODO: clean this up!
+
+  switch (nba::BIOSLoader::Load(core, config->bios_path)) {
+    case nba::BIOSLoader::Result::CannotFindFile: {
+      // TODO: ask the user if they want to assign the file.
+      QMessageBox box {this};
+      box.setText(tr("Please reference a BIOS file in the configuration.\n\n"
+                     "Cannot find BIOS: ") + QString{config->bios_path.c_str()});
+      box.setIcon(QMessageBox::Critical);
+      box.setWindowTitle(tr("BIOS not found"));
+      box.exec();
+      return;
+    }
+    case nba::BIOSLoader::Result::CannotOpenFile:
+    case nba::BIOSLoader::Result::BadImage: {
+      QMessageBox box {this};
+      box.setText(tr("Failed to open the BIOS file. "
+                     "Make sure that the permissions are correct and that the BIOS image is valid.\n\n"
+                     "Cannot open BIOS: ") + QString{config->bios_path.c_str()});
+      box.setIcon(QMessageBox::Critical);
+      box.setWindowTitle(tr("Cannot open BIOS"));
+      box.exec();
+      return;
+    }
+  }
+
+  switch (nba::ROMLoader::Load(core, file.toStdString(), config->backup_type, config->force_rtc)) {
+    case nba::ROMLoader::Result::CannotFindFile: {
       QMessageBox box {this};
       box.setText(tr("Cannot find file: ") + QFileInfo(file).fileName());
       box.setIcon(QMessageBox::Critical);
@@ -218,28 +247,12 @@ void MainWindow::FileOpen() {
       box.exec();
       return;
     }
-    case StatusCode::BiosNotFound: {
-      QMessageBox box {this};
-      box.setText(tr("Please reference a BIOS file in the configuration.\n\n"
-                     "Cannot open BIOS: ") + QString{config->bios_path.c_str()});
-      box.setIcon(QMessageBox::Critical);
-      box.setWindowTitle(tr("BIOS not found"));
-      box.exec();
-      return;
-    }
-    case StatusCode::GameWrongSize: {
+    case nba::ROMLoader::Result::CannotOpenFile:
+    case nba::ROMLoader::Result::BadImage: {
       QMessageBox box {this};
       box.setIcon(QMessageBox::Critical);
-      box.setText(tr("The file you opened exceeds the maximum size of 32 MiB."));
-      box.setWindowTitle(tr("ROM exceeds maximum size"));
-      box.exec();
-      return;
-    }
-    case StatusCode::BiosWrongSize: {
-      QMessageBox box {this};
-      box.setIcon(QMessageBox::Critical);
-      box.setText(tr("Your BIOS file exceeds the maximum size of 16 KiB."));
-      box.setWindowTitle(tr("BIOS file exceeds maximum size"));
+      box.setText(tr("The file could not be opened. Make sure that the permissions are correct and that the ROM image is valid."));
+      box.setWindowTitle(tr("Cannot open ROM"));
       box.exec();
       return;
     }
