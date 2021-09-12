@@ -6,7 +6,7 @@
  */
 
 #include "bus.hpp"
-#include "emulator/core/cpu.hpp"
+#include "emulator/core/arm/arm7tdmi.hpp"
 
 namespace nba::core {
 

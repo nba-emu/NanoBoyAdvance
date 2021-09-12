@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <nba/deprecate/config.hpp>
+#include <nba/core.hpp>
 #include <memory>
 #include <string>
 
@@ -43,7 +43,7 @@ private:
   
   auto LoadBIOS() -> StatusCode; 
   
-  core::CPU* cpu;
+  std::unique_ptr<CoreBase> core;
   bool bios_loaded = false;
   std::shared_ptr<Config> config;
 };

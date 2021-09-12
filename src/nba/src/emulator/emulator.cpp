@@ -8,7 +8,6 @@
 #include <nba/deprecate/emulator.hpp>
 #include <nba/rom/rom.hpp>
 
-#include <emulator/core/cpu.hpp>
 #include <emulator/cartridge/header.hpp>
 #include <emulator/cartridge/game_db.hpp>
 #include <nba/rom/backup/eeprom.hpp>
@@ -32,21 +31,19 @@ using namespace nba::core;
 
 using BackupType = Config::BackupType;
 
-constexpr int g_cycles_per_frame = 280896;
 constexpr int g_bios_size = 0x4000;
 constexpr int g_max_rom_size = 33554432; // 32 MiB
 
 Emulator::Emulator(std::shared_ptr<Config> config)
     : config(config) {
-  cpu = new core::CPU{config};
+  core = CreateCore(config);
   Reset();
 }
 
 Emulator::~Emulator() {
-  delete cpu;
 }
 
-void Emulator::Reset() { cpu->Reset(); }
+void Emulator::Reset() { core->Reset(); }
 
 auto Emulator::DetectBackupType(u8* rom, size_t size) -> BackupType {
   static constexpr std::pair<std::string_view, Config::BackupType> signatures[6] {
@@ -118,8 +115,12 @@ auto Emulator::LoadBIOS() -> StatusCode {
     return StatusCode::BiosNotFound;
   }
 
-  stream.read((char*)cpu->bus.memory.bios.data(), g_bios_size);
+  std::vector<u8> bios;
+  bios.resize(size);
+  stream.read((char*)bios.data(), size);
   stream.close();
+
+  core->Attach(bios);
 
   return StatusCode::Ok;
 }
@@ -208,7 +209,7 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
   auto gpio = std::unique_ptr<GPIO>{};
 
   if (game_info.gpio == GPIODeviceType::RTC || config->force_rtc) {
-    gpio = std::make_unique<RTC>(cpu->irq);
+    gpio = core->CreateRTC();
   }
 
   u32 mask = 0x01FF'FFFF;
@@ -216,17 +217,22 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
     mask = CalculateMirrorMask(size);
   }
 
-  cpu->bus.Attach(ROM{std::move(rom), std::move(backup), std::move(gpio), mask});
+  core->Attach(ROM{
+    std::move(rom),
+    std::move(backup),
+    std::move(gpio),
+    mask
+  });
 
   return StatusCode::Ok;
 }
 
 void Emulator::Run(int cycles) {
-  cpu->Run(cycles);
+  core->Run(cycles);
 }
 
 void Emulator::Frame() {
-  cpu->Run(g_cycles_per_frame);
+  core->RunForOneFrame();
 }
 
 } // namespace nba

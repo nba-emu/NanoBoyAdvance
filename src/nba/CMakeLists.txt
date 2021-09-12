@@ -36,7 +36,7 @@ set(SOURCES
   src/emulator/core/hw/interrupt.cpp
   src/emulator/core/hw/keypad.cpp
   src/emulator/core/hw/timer.cpp
-  src/emulator/core/cpu.cpp
+  src/emulator/core/core.cpp
   src/emulator/emulator.cpp
 )
 
@@ -79,7 +79,6 @@ set(HEADERS
   src/emulator/core/hw/interrupt.hpp
   src/emulator/core/hw/keypad.hpp
   src/emulator/core/hw/timer.hpp
-  src/emulator/core/cpu.hpp
   src/emulator/core/scheduler.hpp
 )
 
@@ -98,6 +97,7 @@ set(HEADERS_PUBLIC
   include/nba/rom/backup/sram.hpp
   include/nba/rom/gpio/gpio.hpp
   include/nba/rom/rom.hpp
+  include/nba/core.hpp
   include/nba/integer.hpp
   include/nba/log.hpp
 )

@@ -5,10 +5,12 @@
  * Refer to the included LICENSE file.
  */
 
+#include <algorithm>
 #include <nba/common/punning.hpp>
+#include <stdexcept>
 
 #include "bus.hpp"
-#include "emulator/core/cpu.hpp"
+#include "emulator/core/arm/arm7tdmi.hpp"
 
 namespace nba::core {
 
@@ -32,6 +34,14 @@ void Bus::Reset() {
   prefetch = {};
   dma = {};
   UpdateWaitStateTable();
+}
+
+void Bus::Attach(std::vector<u8> const& bios) {
+  if (bios.size() > memory.bios.size()) {
+    throw std::runtime_error("BIOS image is too big");
+  }
+
+  std::copy(bios.begin(), bios.end(), memory.bios.begin());
 }
 
 void Bus::Attach(ROM&& rom) {

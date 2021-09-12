@@ -6,7 +6,6 @@
  */
 
 #include "bus.hpp"
-#include "emulator/core/cpu.hpp"
 #include "io.hpp"
 
 namespace nba::core {

@@ -41,10 +41,11 @@ inline void Log(std::string_view format, Args... args) {
     char const* prefix = "[?]";
 
     if constexpr(level == Trace) prefix = "\e[36m[T]";
-    if constexpr(level ==  Info) prefix = "\e[36m[T]";
-    if constexpr(level ==  Warn) prefix = "\e[36m[T]";
-    if constexpr(level == Error) prefix = "\e[36m[T]";
-    if constexpr(level == Fatal) prefix = "\e[36m[T]";
+    if constexpr(level == Debug) prefix = "\e[34m[D]";
+    if constexpr(level ==  Info) prefix = "\e[37m[I]";
+    if constexpr(level ==  Warn) prefix = "\e[33m[W]";
+    if constexpr(level == Error) prefix = "\e[35m[E]";
+    if constexpr(level == Fatal) prefix = "\e[31m[F]";
 
     fmt::print("{} {}\n", prefix, fmt::format(format, args...));
   }

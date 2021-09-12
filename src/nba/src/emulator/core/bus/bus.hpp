@@ -10,6 +10,7 @@
 #include <array>
 #include <nba/rom/rom.hpp>
 #include <nba/integer.hpp>
+#include <vector>
 
 #include "emulator/core/hw/apu/apu.hpp"
 #include "emulator/core/hw/ppu/ppu.hpp"
@@ -31,6 +32,7 @@ struct Bus {
   };
 
   void Reset();
+  void Attach(std::vector<u8> const& bios);
   void Attach(ROM&& rom);
 
   auto ReadByte(u32 address, Access access) ->  u8;
