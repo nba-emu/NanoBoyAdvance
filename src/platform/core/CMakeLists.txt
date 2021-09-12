@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SOURCES
   src/emulator.cpp
+  src/frame_limiter.cpp
   src/game_db.cpp
 )
 
@@ -15,6 +16,7 @@ set(HEADERS
 
 set(HEADERS_PUBLIC
   include/platform/emulator.hpp
+  include/platform/frame_limiter.hpp
 )
 
 add_library(platform-core STATIC ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
