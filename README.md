@@ -3,15 +3,14 @@
 ![license](https://img.shields.io/github/license/fleroviux/NanoboyAdvance)
 [![CodeFactor](https://www.codefactor.io/repository/github/fleroviux/NanoboyAdvance/badge)](https://www.codefactor.io/repository/github/fleroviux/NanoboyAdvance)
 
-NanoBoyAdvance is a highly accurate Nintendo Game Boy Advance (TM) emulator.<br>
-It is also intended to be reasonably efficient, bloat-free and clean code in modern C++.
-
-You can download stable versions on the [releases](https://github.com/fleroviux/NanoboyAdvance/releases) page.<br>
-You can download the latest nightly build [here](https://nightly.link/fleroviux/NanoBoyAdvance/workflows/build/master).
+NanoBoyAdvance is a Nintendo Game Boy Advance (TM) emulator with a focus on high accuracy.<br>
 
 ![screenshot1](docs/screenshot.png)
 
 ## Running
+
+Get stable versions on the [releases page](https://github.com/fleroviux/NanoboyAdvance/releases).
+Or alternatively get the latest [nightly build ](https://nightly.link/fleroviux/NanoBoyAdvance/workflows/build/master).
 
 A legitimate Game Boy Advance BIOS dump or a [replacement BIOS](https://github.com/Nebuleon/ReGBA/blob/master/bios/gba_bios.bin) is required.  
 Do note though that the replacement BIOS is less accurate.
@@ -25,23 +24,22 @@ See [config.toml](https://github.com/fleroviux/NanoBoyAdvance/blob/master/src/pl
 
 ## Features
 
-- highly accurate GBA emulation
+- highly-accurate GBA emulation
+- HQ audio mixer (for titles which use the Sappy/MP2K/M4A sound engine)
 - RTC emulation
-- high quality audio
 - game controller support
-- basic GLSL shader support
-- lightweight: minimal, configurable SDL2 frontend
+- GLSL shader support
 
 ## Accuracy
-- very good ARM emulation
-- sub-instruction hardware updates and DMA
-- graphics are on-par with other emulators but are a topic of research, very little details are known 
-- audio is good but needs some work here and there
-- currently the only software emulator to pass the AGS aging cartridge
+- close to cycle-accurate CPU and DMA emulation
+- hardware is updated at the bus cycle (sub-instruction) level
+- very accurate ARM emulation
+- PPU is still scanline based for now
+
 
 ## Compiling
 
-See [COMPILING.md](https://github.com/fleroviux/NanoboyAdvance/blob/master/docs/COMPILING.md) in the root directory of this project.
+See [COMPILING.md](https://github.com/fleroviux/NanoboyAdvance/blob/master/docs/COMPILING.md) in the `docs` folder.
 
 ## Credit
 
