@@ -21,10 +21,10 @@ struct CoreBase {
   virtual ~CoreBase() = default;
 
   virtual void Reset() = 0;
-  virtual void Attach(std::vector<u8> const& bios);
+  virtual void Attach(std::vector<u8> const& bios) = 0;
   virtual void Attach(ROM&& rom) = 0;
   virtual auto CreateRTC() -> std::unique_ptr<GPIO> = 0;
-  virtual void Run(int cycles);
+  virtual void Run(int cycles) = 0;
 
   void RunForOneFrame() {
     Run(kCyclesPerFrame);
