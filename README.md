@@ -20,6 +20,8 @@ NanoBoyAdvance is a Game Boy Advance emulator with a focus on high accuracy.<br>
 - very accurate ARM emulation
 - PPU is still scanline based for now
 
+See [ACCURACY.md](docs/ACCURACY.md) for more information on which tests NanoBoyAdvance passes and fails.
+
 ## Running
 
 Get stable versions on the [releases page](https://github.com/fleroviux/NanoboyAdvance/releases).
