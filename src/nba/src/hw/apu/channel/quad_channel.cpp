@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-#include "quad_channel.hpp"
+#include "hw/apu/channel/quad_channel.hpp"
 
 namespace nba::core {
 

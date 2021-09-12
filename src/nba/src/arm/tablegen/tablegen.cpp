@@ -7,7 +7,7 @@
 
 #include <nba/common/meta.hpp>
 
-#include "../arm7tdmi.hpp"
+#include "arm/arm7tdmi.hpp"
 
 namespace nba::core::arm {
 

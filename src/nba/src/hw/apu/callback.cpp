@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <cmath>
 
-#include "apu.hpp"
+#include "hw/apu/apu.hpp"
 
 namespace nba::core {
 

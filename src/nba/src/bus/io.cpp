@@ -5,8 +5,8 @@
  * Refer to the included LICENSE file.
  */
 
-#include "bus.hpp"
-#include "io.hpp"
+#include "bus/bus.hpp"
+#include "bus/io.hpp"
 
 namespace nba::core {
 

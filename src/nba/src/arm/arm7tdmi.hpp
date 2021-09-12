@@ -13,7 +13,7 @@
 #include <scheduler.hpp>
 
 #include "bus/bus.hpp"
-#include "state.hpp"
+#include "arm/state.hpp"
 
 namespace nba::core::arm {
 

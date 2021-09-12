@@ -8,7 +8,7 @@
 #include <nba/log.hpp>
 
 #include "bus/bus.hpp"
-#include "mp2k.hpp"
+#include "hw/apu/hle/mp2k.hpp"
 
 namespace nba::core {
 

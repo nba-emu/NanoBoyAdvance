@@ -8,7 +8,8 @@
 #pragma once
 
 #include <nba/integer.hpp>
-#include <scheduler.hpp>
+
+#include "scheduler.hpp"
 
 namespace nba::core {
 

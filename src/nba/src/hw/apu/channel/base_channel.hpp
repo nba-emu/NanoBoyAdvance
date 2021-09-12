@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "length_counter.hpp"
-#include "envelope.hpp"
-#include "sweep.hpp"
+#include "hw/apu/channel/length_counter.hpp"
+#include "hw/apu/channel/envelope.hpp"
+#include "hw/apu/channel/sweep.hpp"
 
 namespace nba::core {
 

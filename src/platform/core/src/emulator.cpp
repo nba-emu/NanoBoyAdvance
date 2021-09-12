@@ -5,6 +5,10 @@
  * Refer to the included LICENSE file.
  */
 
+#include <cstring>
+#include <exception>
+#include <filesystem>
+#include <fstream>
 #include <nba/rom/header.hpp>
 #include <nba/rom/rom.hpp>
 #include <nba/rom/backup/eeprom.hpp>
@@ -12,13 +16,8 @@
 #include <nba/rom/backup/sram.hpp>
 #include <nba/log.hpp>
 #include <platform/emulator.hpp>
-
-#include <cstring>
-#include <exception>
-#include <filesystem>
-#include <fstream>
-#include <utility>
 #include <string_view>
+#include <utility>
 
 #include "game_db.hpp"
 
@@ -37,9 +36,6 @@ Emulator::Emulator(std::shared_ptr<Config> config)
     : config(config) {
   core = CreateCore(config);
   Reset();
-}
-
-Emulator::~Emulator() {
 }
 
 void Emulator::Reset() { core->Reset(); }

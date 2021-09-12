@@ -29,7 +29,6 @@ struct Emulator {
   };
   
   Emulator(std::shared_ptr<Config> config);
- ~Emulator();
 
   void Reset();
   auto LoadGame(std::string const& path) -> StatusCode;

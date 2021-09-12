@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-#include "noise_channel.hpp"
+#include "hw/apu/channel/noise_channel.hpp"
 
 namespace nba::core {
 

@@ -8,10 +8,10 @@
 #pragma once
 
 #include <nba/integer.hpp>
-#include <hw/interrupt.hpp>
-#include <scheduler.hpp>
 
-#include "apu/apu.hpp"
+#include "hw/apu/apu.hpp"
+#include "hw/interrupt.hpp"
+#include "scheduler.hpp"
 
 namespace nba::core {
 

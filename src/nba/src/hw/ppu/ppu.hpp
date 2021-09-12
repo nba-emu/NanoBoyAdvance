@@ -7,18 +7,17 @@
 
 #pragma once
 
-#include <nba/config.hpp>
-#include <nba/integer.hpp>
-
+#include <functional>
 #include <nba/common/compiler.hpp>
 #include <nba/common/punning.hpp>
-#include <hw/dma.hpp>
-#include <hw/interrupt.hpp>
-#include <scheduler.hpp>
-#include <functional>
+#include <nba/config.hpp>
+#include <nba/integer.hpp>
 #include <type_traits>
 
-#include "registers.hpp"
+#include "hw/ppu/registers.hpp"
+#include "hw/dma.hpp"
+#include "hw/interrupt.hpp"
+#include "scheduler.hpp"
 
 namespace nba::core {
 

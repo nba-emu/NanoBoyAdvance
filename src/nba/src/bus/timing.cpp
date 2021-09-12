@@ -5,8 +5,8 @@
  * Refer to the included LICENSE file.
  */
 
-#include "bus.hpp"
 #include "arm/arm7tdmi.hpp"
+#include "bus/bus.hpp"
 
 namespace nba::core {
 

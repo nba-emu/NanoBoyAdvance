@@ -9,13 +9,12 @@
 
 #include <cmath>
 #include <memory>
+#include <nba/common/dsp/stereo.hpp>
+#include <nba/common/dsp/stream.hpp>
 
 #ifndef M_PI
 #define M_PI (3.141592653589793238463)
 #endif
-
-#include <nba/common/dsp/stereo.hpp>
-#include <nba/common/dsp/stream.hpp>
 
 namespace nba {
 

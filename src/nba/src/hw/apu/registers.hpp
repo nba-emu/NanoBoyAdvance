@@ -9,8 +9,8 @@
 
 #include <nba/integer.hpp>
 
-#include "channel/base_channel.hpp"
-#include "channel/fifo.hpp"
+#include "hw/apu/channel/base_channel.hpp"
+#include "hw/apu/channel/fifo.hpp"
 
 namespace nba::core {
 

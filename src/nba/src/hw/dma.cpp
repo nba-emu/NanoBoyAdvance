@@ -6,10 +6,10 @@
  */
 
 #include <nba/common/compiler.hpp>
-#include <bus/bus.hpp>
-#include <bus/io.hpp>
 
-#include "dma.hpp"
+#include "bus/bus.hpp"
+#include "bus/io.hpp"
+#include "hw/dma.hpp"
 
 namespace nba::core {
 
@@ -25,7 +25,7 @@ static constexpr int g_dma_dst_modify[2][4] = {
 
 static constexpr int g_dma_none_id = -1;
 
-// NOTE: Retrieves DMA with highest priority from a DMA bitset.
+// Get DMA with highest priority from a bitset.
 static constexpr int g_dma_from_bitset[] = {
   /* 0b0000 */ g_dma_none_id,
   /* 0b0001 */ 0,
