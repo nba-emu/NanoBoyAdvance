@@ -6,8 +6,8 @@
  */
 
 #include <platform/device/sdl_audio_device.hpp>
-#include <platform/bios_loader.hpp>
-#include <platform/rom_loader.hpp>
+#include <platform/loader/bios.hpp>
+#include <platform/loader/rom.hpp>
 #include <QApplication>
 #include <QMenuBar>
 #include <QFileDialog>

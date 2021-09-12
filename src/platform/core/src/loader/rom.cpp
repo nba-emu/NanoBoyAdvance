@@ -7,7 +7,7 @@
 
 #include <filesystem>
 #include <fstream>
-#include <platform/rom_loader.hpp>
+#include <platform/loader/rom.hpp>
 #include <nba/rom/backup/eeprom.hpp>
 #include <nba/rom/backup/flash.hpp>
 #include <nba/rom/backup/sram.hpp>

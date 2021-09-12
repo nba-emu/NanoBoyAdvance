@@ -7,7 +7,7 @@
 
 #include <filesystem>
 #include <fstream>
-#include <platform/bios_loader.hpp>
+#include <platform/loader/bios.hpp>
 #include <vector>
 
 namespace fs = std::filesystem;
