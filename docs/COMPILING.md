@@ -1,9 +1,8 @@
-NanoboyAdvance can be compiled on Windows, Linux and macOS.
+NanoBoyAdvance can be compiled on Windows, Linux and macOS.
 
 ### Prerequisites
 
-- C++17-capable compiler such as Clang or G++
-  - MSVC is unlikely to work, it doesn't work in the default configuration.
+- Clang or G++ with C++17 support
 - CMake 3.2 or higher
 - OpenGL (usually provided by the operating system)
 - SDL2 library
@@ -14,7 +13,7 @@ NanoboyAdvance can be compiled on Windows, Linux and macOS.
 Clone the Git repository and checkout the submodules:  
 
 ```bash
-git clone https://github.com/fleroviux/NanoboyAdvance.git
+git clone https://github.com/fleroviux/NanoBoyAdvance.git
 git submodule update --init
 ```
 
@@ -53,7 +52,7 @@ export CPPFLAGS="$CPPFLAGS -I/usr/local/opt/glew/include"
 #### 2. Setup CMake build directory
 
 ```
-cd /somewhere/on/your/system/NanoboyAdvance
+cd /somewhere/on/your/system/NanoBoyAdvance
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
@@ -71,7 +70,7 @@ or to use multiple processor cores:
 ```
 make -jNUMBER_OF_CORES
 ```
-Binaries will be output to `build/src/platform/`
+Binaries will be output to `build/bin/`
 
 ### Windows Mingw-w64 (GCC)
 
@@ -87,7 +86,7 @@ pacman -S make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-SDL2
 #### 2. Setup CMake build directory
 
 ```bash
-cd path/to/NanoboyAdvance
+cd path/to/NanoBoyAdvance
 mkdir build
 cd build
 cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release ..
@@ -104,9 +103,11 @@ or to use multiple processor cores:
 ```
 make -jNUMBER_OF_CORES
 ```
-Binaries will be output to `build/src/platform/`
+Binaries will be output to `build/bin/`
 
 ### Windows Visual Studio (Clang)
+
+> **WARNING**: Building with Visual Studio is not tested frequently. You might encounter issues.
 
 This guide uses Visual Studio 2017 (or newer) and [VCPKG](https://github.com/microsoft/vcpkg#quick-start-windows).  
 
@@ -132,7 +133,7 @@ vcpkg install glew:x64-windows
 
 Generate the Visual Studio solution with CMake.
 ```
-cd path/to/NanoboyAdvance
+cd path/to/NanoBoyAdvance
 mkdir build
 cd build
 set VCPKG_ROOT=path/to/vcpkg
