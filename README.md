@@ -52,6 +52,6 @@ See [COMPILING.md](https://github.com/fleroviux/NanoboyAdvance/blob/master/docs/
 ## Copyright
 
 NanoBoyAdvance is Copyright © 2015 - 2021 fleroviux.<br>
-It is licensed under the terms of the GNU General Public License (GPL) or any later version. See [LICENSE](LICENSE) for details.
+It is licensed under the terms of the GNU General Public License (GPL) 3.0 or any later version. See [LICENSE](LICENSE) for details.
 
 Game Boy Advance is a registered trademark of Nintendo Co., Ltd.
