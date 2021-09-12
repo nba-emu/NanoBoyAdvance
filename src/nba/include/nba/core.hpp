@@ -8,7 +8,7 @@
 #pragma once
 
 #include <memory>
-#include <nba/deprecate/config.hpp>
+#include <nba/config.hpp>
 #include <nba/integer.hpp>
 #include <nba/rom/rom.hpp>
 #include <vector>

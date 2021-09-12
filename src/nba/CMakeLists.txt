@@ -75,13 +75,13 @@ set(HEADERS
   src/hw/interrupt.hpp
   src/hw/keypad.hpp
   src/hw/timer.hpp
+  src/core.hpp
   src/scheduler.hpp
 )
 
 set(HEADERS_PUBLIC
   include/nba/common/compiler.hpp
   include/nba/common/punning.hpp
-  include/nba/deprecate/config.hpp
   include/nba/device/audio_device.hpp
   include/nba/device/input_device.hpp
   include/nba/device/video_device.hpp
@@ -93,6 +93,7 @@ set(HEADERS_PUBLIC
   include/nba/rom/gpio/gpio.hpp
   include/nba/rom/header.hpp
   include/nba/rom/rom.hpp
+  include/nba/config.hpp
   include/nba/core.hpp
   include/nba/integer.hpp
   include/nba/log.hpp

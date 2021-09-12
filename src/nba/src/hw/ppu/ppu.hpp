@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <nba/deprecate/config.hpp>
+#include <nba/config.hpp>
 #include <nba/integer.hpp>
 
 #include <nba/common/compiler.hpp>

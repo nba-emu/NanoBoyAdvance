@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <nba/deprecate/config.hpp>
+#include <nba/config.hpp>
 #include <map>
 
 namespace nba {
