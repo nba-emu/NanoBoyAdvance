@@ -39,13 +39,6 @@ set(SOURCES
 )
 
 set(HEADERS
-  src/common/dsp/resampler/cosine.hpp
-  src/common/dsp/resampler/cubic.hpp
-  src/common/dsp/resampler/nearest.hpp
-  src/common/dsp/resampler/sinc.hpp
-  src/common/dsp/resampler.hpp
-  src/common/crc32.hpp
-  src/common/meta.hpp
   src/arm/handlers/arithmetic.inl
   src/arm/handlers/handler16.inl
   src/arm/handlers/handler32.inl
@@ -80,7 +73,14 @@ set(HEADERS
 )
 
 set(HEADERS_PUBLIC
+  include/nba/common/dsp/resampler/cosine.hpp
+  include/nba/common/dsp/resampler/cubic.hpp
+  include/nba/common/dsp/resampler/nearest.hpp
+  include/nba/common/dsp/resampler/sinc.hpp
+  include/nba/common/dsp/resampler.hpp
   include/nba/common/compiler.hpp
+  include/nba/common/crc32.hpp
+  include/nba/common/meta.hpp
   include/nba/common/punning.hpp
   include/nba/device/audio_device.hpp
   include/nba/device/input_device.hpp

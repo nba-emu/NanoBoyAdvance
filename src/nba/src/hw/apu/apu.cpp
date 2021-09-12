@@ -6,11 +6,11 @@
  */
 
 #include <cmath>
-#include <common/dsp/resampler/blep.hpp>
-#include <common/dsp/resampler/cosine.hpp>
-#include <common/dsp/resampler/cubic.hpp>
-#include <common/dsp/resampler/nearest.hpp>
-#include <common/dsp/resampler/sinc.hpp>
+#include <nba/common/dsp/resampler/blep.hpp>
+#include <nba/common/dsp/resampler/cosine.hpp>
+#include <nba/common/dsp/resampler/cubic.hpp>
+#include <nba/common/dsp/resampler/nearest.hpp>
+#include <nba/common/dsp/resampler/sinc.hpp>
 
 #include "apu.hpp"
 

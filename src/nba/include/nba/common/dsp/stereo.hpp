@@ -8,9 +8,8 @@
 #pragma once
 
 #include <memory>
+#include <nba/common/dsp/stream.hpp>
 #include <stdexcept>
-
-#include "common/dsp/stream.hpp"
 
 namespace nba {
 

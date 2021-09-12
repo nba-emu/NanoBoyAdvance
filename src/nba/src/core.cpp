@@ -5,7 +5,8 @@
  * Refer to the included LICENSE file.
  */
 
-#include "common/crc32.hpp"
+#include <nba/common/crc32.hpp>
+
 #include "hw/rom/gpio/rtc.hpp"
 #include "core.hpp"
 

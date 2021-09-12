@@ -14,8 +14,8 @@
 #define M_PI (3.141592653589793238463)
 #endif
 
-#include "common/dsp/stereo.hpp"
-#include "common/dsp/stream.hpp"
+#include <nba/common/dsp/stereo.hpp>
+#include <nba/common/dsp/stream.hpp>
 
 namespace nba {
 

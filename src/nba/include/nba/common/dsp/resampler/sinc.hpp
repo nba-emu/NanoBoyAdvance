@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "common/dsp/resampler.hpp"
-#include "common/dsp/ring_buffer.hpp"
+#include <nba/common/dsp/resampler.hpp>
+#include <nba/common/dsp/ring_buffer.hpp>
 
 namespace nba {
 
