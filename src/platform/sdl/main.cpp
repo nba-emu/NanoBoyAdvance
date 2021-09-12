@@ -8,7 +8,7 @@
 
 #include <nba/device/input_device.hpp>
 #include <nba/device/video_device.hpp>
-#include <nba/deprecate/emulator.hpp>
+#include <platform/emulator.hpp>
 
 #include <atomic>
 #include <cstdlib>

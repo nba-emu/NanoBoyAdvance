@@ -12,7 +12,6 @@ set(SOURCES
   src/emulator/cartridge/backup/sram.cpp
   src/emulator/cartridge/gpio/gpio.cpp
   src/emulator/cartridge/gpio/rtc.cpp
-  src/emulator/cartridge/game_db.cpp
   src/emulator/core/arm/tablegen/tablegen.cpp
   src/emulator/core/bus/bus.cpp
   src/emulator/core/bus/io.cpp
@@ -37,7 +36,6 @@ set(SOURCES
   src/emulator/core/hw/keypad.cpp
   src/emulator/core/hw/timer.cpp
   src/emulator/core/core.cpp
-  src/emulator/emulator.cpp
 )
 
 set(HEADERS
@@ -49,8 +47,6 @@ set(HEADERS
   src/common/crc32.hpp
   src/common/meta.hpp
   src/emulator/cartridge/gpio/rtc.hpp
-  src/emulator/cartridge/game_db.hpp
-  src/emulator/cartridge/header.hpp
   src/emulator/core/arm/handlers/arithmetic.inl
   src/emulator/core/arm/handlers/handler16.inl
   src/emulator/core/arm/handlers/handler32.inl
@@ -86,7 +82,6 @@ set(HEADERS_PUBLIC
   include/nba/common/compiler.hpp
   include/nba/common/punning.hpp
   include/nba/deprecate/config.hpp
-  include/nba/deprecate/emulator.hpp
   include/nba/device/audio_device.hpp
   include/nba/device/input_device.hpp
   include/nba/device/video_device.hpp
@@ -96,6 +91,7 @@ set(HEADERS_PUBLIC
   include/nba/rom/backup/flash.hpp
   include/nba/rom/backup/sram.hpp
   include/nba/rom/gpio/gpio.hpp
+  include/nba/rom/header.hpp
   include/nba/rom/rom.hpp
   include/nba/core.hpp
   include/nba/integer.hpp
@@ -106,4 +102,4 @@ add_library(nba STATIC ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
 target_include_directories(nba PRIVATE src)
 target_include_directories(nba PUBLIC include)
 
-target_link_libraries(nba PRIVATE fmt)
+target_link_libraries(nba PUBLIC fmt)
