@@ -31,10 +31,10 @@ set(SOURCES
   src/hw/rom/backup/sram.cpp
   src/hw/rom/gpio/gpio.cpp
   src/hw/rom/gpio/rtc.cpp
-  src/hw/dma.cpp
-  src/hw/interrupt.cpp
-  src/hw/keypad.cpp
-  src/hw/timer.cpp
+  src/hw/dma/dma.cpp
+  src/hw/irq/irq.cpp
+  src/hw/keypad/keypad.cpp
+  src/hw/timer/timer.cpp
   src/core.cpp
 )
 
@@ -64,10 +64,10 @@ set(HEADERS
   src/hw/ppu/ppu.hpp
   src/hw/ppu/registers.hpp
   src/hw/rom/gpio/rtc.hpp
-  src/hw/dma.hpp
-  src/hw/interrupt.hpp
-  src/hw/keypad.hpp
-  src/hw/timer.hpp
+  src/hw/dma/dma.hpp
+  src/hw/irq/irq.hpp
+  src/hw/keypad/keypad.hpp
+  src/hw/timer/timer.hpp
   src/core.hpp
   src/scheduler.hpp
 )

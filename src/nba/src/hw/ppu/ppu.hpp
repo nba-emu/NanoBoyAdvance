@@ -15,8 +15,8 @@
 #include <type_traits>
 
 #include "hw/ppu/registers.hpp"
-#include "hw/dma.hpp"
-#include "hw/interrupt.hpp"
+#include "hw/dma/dma.hpp"
+#include "hw/irq/irq.hpp"
 #include "scheduler.hpp"
 
 namespace nba::core {

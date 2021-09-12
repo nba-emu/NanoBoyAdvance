@@ -7,7 +7,7 @@
 
 #include <arm/arm7tdmi.hpp>
 
-#include "hw/interrupt.hpp"
+#include "hw/irq/irq.hpp"
 
 namespace nba::core {
 

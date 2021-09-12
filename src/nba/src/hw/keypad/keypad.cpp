@@ -7,7 +7,7 @@
 
 #include <nba/common/compiler.hpp>
 
-#include "hw/keypad.hpp"
+#include "hw/keypad/keypad.hpp"
 
 namespace nba::core {
 

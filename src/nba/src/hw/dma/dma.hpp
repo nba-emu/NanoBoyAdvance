@@ -9,7 +9,7 @@
 
 #include <bitset>
 #include <nba/integer.hpp>
-#include <hw/interrupt.hpp>
+#include <hw/irq/irq.hpp>
 
 #include "scheduler.hpp"
 

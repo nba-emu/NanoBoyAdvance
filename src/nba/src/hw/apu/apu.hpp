@@ -18,7 +18,7 @@
 #include "hw/apu/channel/fifo.hpp"
 #include "hw/apu/hle/mp2k.hpp"
 #include "hw/apu/registers.hpp"
-#include "hw/dma.hpp"
+#include "hw/dma/dma.hpp"
 #include "scheduler.hpp"
 
 namespace nba::core {

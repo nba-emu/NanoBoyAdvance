@@ -7,7 +7,7 @@
 
 #include <nba/log.hpp>
 
-#include "hw/timer.hpp"
+#include "hw/timer/timer.hpp"
 
 namespace nba::core {
 
@@ -20,7 +20,6 @@ void Timer::Reset() {
     channel = {};
     channel.id = id;
     channel.event_cb = [this, id](int cycles_late) {
-      // FIXME: ideally we would just capture the existing channel reference... not sure if it is possible.
       auto& channel = channels[id];
       OnOverflow(channel);
       StartChannel(channel, cycles_late);

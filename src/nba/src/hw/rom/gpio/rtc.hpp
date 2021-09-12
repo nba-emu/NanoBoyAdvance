@@ -9,7 +9,7 @@
 
 #include <nba/rom/gpio/gpio.hpp>
 
-#include "hw/interrupt.hpp"
+#include "hw/irq/irq.hpp"
 
 namespace nba {
 

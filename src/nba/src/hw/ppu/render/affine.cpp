@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-#include "../ppu.hpp"
+#include "hw/ppu/ppu.hpp"
 
 namespace nba::core {
 

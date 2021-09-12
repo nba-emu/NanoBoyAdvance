@@ -10,7 +10,7 @@
 #include <nba/integer.hpp>
 
 #include "hw/apu/apu.hpp"
-#include "hw/interrupt.hpp"
+#include "hw/irq/irq.hpp"
 #include "scheduler.hpp"
 
 namespace nba::core {

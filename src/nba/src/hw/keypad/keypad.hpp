@@ -10,7 +10,7 @@
 #include <nba/config.hpp>
 #include <memory>
 
-#include "hw/interrupt.hpp"
+#include "hw/irq/irq.hpp"
 
 namespace nba::core {
 

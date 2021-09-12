@@ -14,10 +14,10 @@
 
 #include "hw/apu/apu.hpp"
 #include "hw/ppu/ppu.hpp"
-#include "hw/dma.hpp"
-#include "hw/interrupt.hpp"
-#include "hw/keypad.hpp"
-#include "hw/timer.hpp"
+#include "hw/dma/dma.hpp"
+#include "hw/irq/irq.hpp"
+#include "hw/keypad/keypad.hpp"
+#include "hw/timer/timer.hpp"
 
 namespace nba::core {
 
