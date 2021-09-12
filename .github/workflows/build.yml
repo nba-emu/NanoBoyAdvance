@@ -30,8 +30,8 @@ jobs:
       - name: Collect artifacts
         run: |
           mkdir upload
-          cp -r $(which libwinpthread-1.dll) build/src/platform/sdl/{NanoBoyAdvance.exe,{config,keymap}.toml} upload
-          cp -r build/src/platform/sdl/shader upload/shader
+          cp -r $(which libwinpthread-1.dll) build/bin/sdl/{NanoBoyAdvance.exe,{config,keymap}.toml} upload
+          cp -r build/bin/sdl/shader upload/shader
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
@@ -57,8 +57,8 @@ jobs:
       - name: Collect artifacts
         run: |
           mkdir upload
-          cp -r build/src/platform/sdl/{NanoBoyAdvance,{config,keymap}.toml} upload
-          cp -r build/src/platform/sdl/shader upload/shader
+          cp -r build/bin/sdl/{NanoBoyAdvance,{config,keymap}.toml} upload
+          cp -r build/bin/sdl/shader upload/shader
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
@@ -89,8 +89,8 @@ jobs:
       - name: Collect artifacts
         run: |
           mkdir upload
-          cp -r build/src/platform/sdl/{NanoBoyAdvance,{config,keymap}.toml} upload
-          cp -r build/src/platform/sdl/shader upload/shader
+          cp -r build/bin/sdl/{NanoBoyAdvance,{config,keymap}.toml} upload
+          cp -r build/bin/sdl/shader upload/shader
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:

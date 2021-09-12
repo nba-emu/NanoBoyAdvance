@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <common/log.hpp>
-#include <emulator/device/audio_device.hpp>
+#include <nba/log.hpp>
+#include <nba/device/audio_device.hpp>
 
 #include <SDL.h>
 
@@ -27,10 +27,12 @@ struct SDL2_AudioDevice : public nba::AudioDevice {
   }
 
   bool Open(void* userdata, Callback callback) final {
+    using namespace nba;
+  
     auto want = SDL_AudioSpec{};
 
     if (SDL_Init(SDL_INIT_AUDIO) < 0) {
-      LOG_ERROR("SDL_Init(SDL_INIT_AUDIO) failed.");
+      Log<Error>("Audio: SDL_Init(SDL_INIT_AUDIO) failed.");
       return false;
     }
 
@@ -54,17 +56,17 @@ struct SDL2_AudioDevice : public nba::AudioDevice {
     device = SDL_OpenAudioDevice(NULL, 0, &want, &have, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
 
     if (device == 0) {
-      LOG_ERROR("SDL_OpenAudioDevice: failed to open audio: %s\n", SDL_GetError());
+      Log<Error>("Audio: SDL_OpenAudioDevice: failed to open audio: %s\n", SDL_GetError());
       return false;
     }
 
     if (have.format != want.format) {
-      LOG_ERROR("SDL_AudioDevice: S16 sample format unavailable.");
+      Log<Error>("Audio: SDL_AudioDevice: S16 sample format unavailable.");
       return false;
     }
 
     if (have.channels != want.channels) {
-      LOG_ERROR("SDL_AudioDevice: Stereo output unavailable.");
+      Log<Error>("Audio: SDL_AudioDevice: Stereo output unavailable.");
       return false;
     }
 

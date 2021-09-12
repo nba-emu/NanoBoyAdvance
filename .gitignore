@@ -8,3 +8,5 @@ CMakeSettings.json
 # JetBrains CLion
 .idea
 cmake-build-*
+
+.DS_Store
