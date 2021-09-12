@@ -8,7 +8,7 @@
 #pragma once
 
 #include <array>
-#include <common/compiler.hpp>
+#include <nba/common/compiler.hpp>
 #include <nba/log.hpp>
 #include <emulator/core/scheduler.hpp>
 

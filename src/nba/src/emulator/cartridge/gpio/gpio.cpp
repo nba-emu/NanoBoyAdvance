@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-#include <nba/gpio/gpio.hpp>
+#include <nba/rom/gpio/gpio.hpp>
 
 namespace nba {
 

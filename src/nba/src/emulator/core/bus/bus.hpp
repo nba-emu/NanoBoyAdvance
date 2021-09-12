@@ -8,9 +8,9 @@
 #pragma once
 
 #include <array>
+#include <nba/rom/rom.hpp>
 #include <nba/integer.hpp>
 
-#include "emulator/cartridge/game_pak.hpp"
 #include "emulator/core/hw/apu/apu.hpp"
 #include "emulator/core/hw/ppu/ppu.hpp"
 #include "emulator/core/hw/dma.hpp"
@@ -31,7 +31,7 @@ struct Bus {
   };
 
   void Reset();
-  void Attach(GamePak&& game_pak);
+  void Attach(ROM&& rom);
 
   auto ReadByte(u32 address, Access access) ->  u8;
   auto ReadHalf(u32 address, Access access) -> u16;
@@ -53,7 +53,7 @@ struct Bus {
     struct Latch {
       u32 bios = 0;
     } latch;
-    GamePak game_pak;
+    ROM rom;
   } memory;
 
   struct Hardware {

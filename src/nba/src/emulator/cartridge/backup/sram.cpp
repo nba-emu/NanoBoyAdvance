@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-#include <nba/backup/sram.hpp>
+#include <nba/rom/backup/sram.hpp>
 
 namespace nba {
 

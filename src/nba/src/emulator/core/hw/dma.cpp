@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-#include <common/compiler.hpp>
+#include <nba/common/compiler.hpp>
 #include <emulator/core/bus/bus.hpp>
 #include <emulator/core/bus/io.hpp>
 

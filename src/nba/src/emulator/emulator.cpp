@@ -6,15 +6,16 @@
  */
 
 #include <nba/deprecate/emulator.hpp>
+#include <nba/rom/rom.hpp>
 
 #include <emulator/core/cpu.hpp>
 #include <emulator/cartridge/header.hpp>
 #include <emulator/cartridge/game_db.hpp>
-#include <nba/backup/eeprom.hpp>
-#include <nba/backup/flash.hpp>
-#include <nba/backup/sram.hpp>
+#include <nba/rom/backup/eeprom.hpp>
+#include <nba/rom/backup/flash.hpp>
+#include <nba/rom/backup/sram.hpp>
 #include <emulator/cartridge/gpio/rtc.hpp>
-#include <emulator/cartridge/game_pak.hpp>
+
 #include <nba/log.hpp>
 #include <cstring>
 #include <exception>
@@ -215,7 +216,7 @@ auto Emulator::LoadGame(std::string const& path) -> StatusCode {
     mask = CalculateMirrorMask(size);
   }
 
-  cpu->bus.Attach(GamePak{std::move(rom), std::move(backup), std::move(gpio), mask});
+  cpu->bus.Attach(ROM{std::move(rom), std::move(backup), std::move(gpio), mask});
 
   return StatusCode::Ok;
 }

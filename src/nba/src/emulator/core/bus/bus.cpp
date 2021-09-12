@@ -5,8 +5,9 @@
  * Refer to the included LICENSE file.
  */
 
+#include <nba/common/punning.hpp>
+
 #include "bus.hpp"
-#include "common/punning.hpp"
 #include "emulator/core/cpu.hpp"
 
 namespace nba::core {
@@ -33,8 +34,8 @@ void Bus::Reset() {
   UpdateWaitStateTable();
 }
 
-void Bus::Attach(GamePak&& game_pak) {
-  memory.game_pak = std::move(game_pak);
+void Bus::Attach(ROM&& rom) {
+  memory.rom = std::move(rom);
 }
 
 auto Bus::ReadByte(u32 address, Access access) ->  u8 {
@@ -117,17 +118,17 @@ auto Bus::Read(u32 address, Access access) -> T {
       if constexpr(std::is_same_v<T,  u8>) {
         auto shift = ((address & 1) << 3);
         Prefetch(address, wait16[int(access)][page]);
-        return memory.game_pak.ReadROM16(address) >> shift;
+        return memory.rom.ReadROM16(address) >> shift;
       }
 
       if constexpr(std::is_same_v<T, u16>) {
         Prefetch(address, wait16[int(access)][page]);
-        return memory.game_pak.ReadROM16(address);
+        return memory.rom.ReadROM16(address);
       }
 
       if constexpr(std::is_same_v<T, u32>) {
         Prefetch(address, wait32[int(access)][page]);
-        return memory.game_pak.ReadROM32(address);  
+        return memory.rom.ReadROM32(address);  
       }
 
       return 0;
@@ -137,7 +138,7 @@ auto Bus::Read(u32 address, Access access) -> T {
       StopPrefetch();
       Step(wait16[0][0xE]);
 
-      u32 value = memory.game_pak.ReadSRAM(address);
+      u32 value = memory.rom.ReadSRAM(address);
 
       if constexpr(std::is_same_v<T, u16>) value *= 0x0101;
       if constexpr(std::is_same_v<T, u32>) value *= 0x01010101;
@@ -212,18 +213,18 @@ void Bus::Write(u32 address, Access access, T value) {
       // TODO: figure out how 8-bit and 32-bit accesses actually work.
       if constexpr(std::is_same_v<T, u8>) {
         Step(wait16[int(access)][page]);
-        memory.game_pak.WriteROM(address, value * 0x0101);
+        memory.rom.WriteROM(address, value * 0x0101);
       }
 
       if constexpr(std::is_same_v<T, u16>) {
         Step(wait16[int(access)][page]);
-        memory.game_pak.WriteROM(address, value);
+        memory.rom.WriteROM(address, value);
       }
 
       if constexpr(std::is_same_v<T, u32>) {
         Step(wait32[int(access)][page]);
-        memory.game_pak.WriteROM(address|0, value & 0xFFFF);
-        memory.game_pak.WriteROM(address|2, value >> 16);
+        memory.rom.WriteROM(address|0, value & 0xFFFF);
+        memory.rom.WriteROM(address|2, value >> 16);
       }
       break;
     }
@@ -235,7 +236,7 @@ void Bus::Write(u32 address, Access access, T value) {
       if constexpr(std::is_same_v<T, u16>) value >>= (address & 1) << 3;
       if constexpr(std::is_same_v<T, u32>) value >>= (address & 3) << 3;
 
-      memory.game_pak.WriteSRAM(address, u8(value));
+      memory.rom.WriteSRAM(address, u8(value));
       break;
     }
     // Unmapped memory
@@ -321,7 +322,7 @@ auto Bus::GetHostAddress(u32 address, size_t size) -> u8* {
   auto& bios = memory.bios;
   auto& wram = memory.wram;
   auto& iram = memory.iram;
-  auto& rom = memory.game_pak.GetRawROM();
+  auto& rom = memory.rom.GetRawROM();
 
   auto page = address >> 24;
 

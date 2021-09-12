@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-#include <nba/backup/flash.hpp>
+#include <nba/rom/backup/flash.hpp>
 
 namespace nba {
 

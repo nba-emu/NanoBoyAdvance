@@ -223,7 +223,7 @@ void RTC::WriteRegister() {
       break;
     }
     case Register::ForceIRQ: {
-      irq.Raise(core::IRQ::Source::GamePak);
+      irq.Raise(core::IRQ::Source::ROM);
       break;
     }
   }

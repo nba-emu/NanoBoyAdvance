@@ -46,14 +46,10 @@ set(HEADERS
   src/common/dsp/resampler/nearest.hpp
   src/common/dsp/resampler/sinc.hpp
   src/common/dsp/resampler.hpp
-  src/common/compiler.hpp
   src/common/crc32.hpp
-  src/common/compiler.hpp
-  src/common/punning.hpp
   src/common/meta.hpp
   src/emulator/cartridge/gpio/rtc.hpp
   src/emulator/cartridge/game_db.hpp
-  src/emulator/cartridge/game_pak.hpp
   src/emulator/cartridge/header.hpp
   src/emulator/core/arm/handlers/arithmetic.inl
   src/emulator/core/arm/handlers/handler16.inl
@@ -88,17 +84,20 @@ set(HEADERS
 )
 
 set(HEADERS_PUBLIC
-  include/nba/backup/backup.hpp
-  include/nba/backup/backup_file.hpp
-  include/nba/backup/eeprom.hpp
-  include/nba/backup/flash.hpp
-  include/nba/backup/sram.hpp
+  include/nba/common/compiler.hpp
+  include/nba/common/punning.hpp
   include/nba/deprecate/config.hpp
   include/nba/deprecate/emulator.hpp
   include/nba/device/audio_device.hpp
   include/nba/device/input_device.hpp
   include/nba/device/video_device.hpp
-  include/nba/gpio/gpio.hpp
+  include/nba/rom/backup/backup.hpp
+  include/nba/rom/backup/backup_file.hpp
+  include/nba/rom/backup/eeprom.hpp
+  include/nba/rom/backup/flash.hpp
+  include/nba/rom/backup/sram.hpp
+  include/nba/rom/gpio/gpio.hpp
+  include/nba/rom/rom.hpp
   include/nba/integer.hpp
   include/nba/log.hpp
 )

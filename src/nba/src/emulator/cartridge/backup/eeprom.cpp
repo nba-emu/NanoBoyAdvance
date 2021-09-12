@@ -7,7 +7,7 @@
 
 #include <cstring>
 #include <exception>
-#include <nba/backup/eeprom.hpp>
+#include <nba/rom/backup/eeprom.hpp>
 
 namespace nba {
 

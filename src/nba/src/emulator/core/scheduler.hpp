@@ -8,7 +8,7 @@
 #pragma once
 
 #include <nba/log.hpp>
-#include <common/compiler.hpp>
+#include <nba/common/compiler.hpp>
 #include <nba/integer.hpp>
 #include <functional>
 #include <limits>

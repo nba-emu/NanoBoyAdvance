@@ -7,7 +7,7 @@
 
 #include "cpu.hpp"
 
-#include <common/compiler.hpp>
+#include <nba/common/compiler.hpp>
 #include <common/crc32.hpp>
 #include <nba/log.hpp>
 #include <cstring>
@@ -80,22 +80,22 @@ void CPU::MP2KSearchSoundMainRAM() {
   static constexpr u32 kSoundMainCRC32 = 0x27EA7FCF;
   static constexpr int kSoundMainLength = 48;
 
-  auto& game_pak = bus.memory.game_pak;
-  auto& rom = game_pak.GetRawROM();
-  u32 address_max = rom.size() - kSoundMainLength;
+  auto& rom = bus.memory.rom;
+  auto& rom_data = rom.GetRawROM();
+  u32 address_max = rom_data.size() - kSoundMainLength;
 
-  if (address_max > rom.size()) {
+  if (address_max > rom_data.size()) {
     return;
   }
 
   for (u32 address = 0; address <= address_max; address += 2) {
-    auto crc = crc32(&rom[address], kSoundMainLength);
+    auto crc = crc32(&rom_data[address], kSoundMainLength);
 
     if (crc == kSoundMainCRC32) {
       /* We have found SoundMain().
        * The pointer to SoundMainRAM() is stored at offset 0x74.
        */
-      mp2k_soundmain_address = read<u32>(rom.data(), address + 0x74);
+      mp2k_soundmain_address = read<u32>(rom_data.data(), address + 0x74);
 
       Log<Trace>("MP2K: found SoundMainRAM() routine at 0x{0:08X}.", mp2k_soundmain_address);
 

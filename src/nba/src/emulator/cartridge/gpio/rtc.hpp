@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <nba/gpio/gpio.hpp>
+#include <nba/rom/gpio/gpio.hpp>
 
 #include "emulator/core/hw/interrupt.hpp"
 

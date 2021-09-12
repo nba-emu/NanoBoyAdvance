@@ -79,7 +79,7 @@ void IRQ::Raise(IRQ::Source source, int channel) {
     case Source::Keypad:
       reg_if |= 4096;
       break;
-    case Source::GamePak:
+    case Source::ROM:
       reg_if |= 8192;
       break;
   }

@@ -25,7 +25,7 @@ struct IRQ {
     Serial,
     DMA,
     Keypad,
-    GamePak
+    ROM
   };
 
   IRQ(arm::ARM7TDMI& cpu, Scheduler& scheduler)

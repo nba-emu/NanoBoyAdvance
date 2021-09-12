@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-#include "common/compiler.hpp"
+#include "nba/common/compiler.hpp"
 #include "keypad.hpp"
 
 namespace nba::core {
