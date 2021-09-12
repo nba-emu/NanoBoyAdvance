@@ -8,10 +8,7 @@
 #pragma once
 
 #include <atomic>
-// #include <common/framelimiter.hpp>
-// #include <emulator/config/config_toml.hpp>
-// #include <emulator/emulator.hpp>
-#include <nba/config.hpp>
+#include <platform/config.hpp>
 #include <platform/emulator.hpp>
 #include <platform/frame_limiter.hpp>
 #include <memory>
@@ -53,7 +50,7 @@ private:
 
       connect(action, &QAction::triggered, [=]() {
         *underlying = entry.second;
-        // config_toml_write(*config, "config.toml");
+        nba::config_toml_write(*config, "config.toml");
       });
     }
 
@@ -63,11 +60,11 @@ private:
   static constexpr auto s_toml_config_path = "config.toml";
 
   void ReadConfig() {
-    // config_toml_read(*config, s_toml_config_path);
+    nba::config_toml_read(*config, s_toml_config_path);
   }
 
   void WriteConfig() {
-    // config_toml_write(*config, s_toml_config_path);
+    nba::config_toml_write(*config, s_toml_config_path);
   }
 
   enum class EmulationState {

@@ -9,6 +9,7 @@
 #include <nba/device/input_device.hpp>
 #include <nba/device/video_device.hpp>
 #include <platform/device/sdl_audio_device.hpp>
+#include <platform/config.hpp>
 #include <platform/emulator.hpp>
 
 #include <atomic>
@@ -22,8 +23,6 @@
 #include <toml.hpp>
 #include <unordered_map>
 #include <mutex>
-
-#include "config_toml.hpp"
 
 #include <GL/glew.h>
 

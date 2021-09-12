@@ -9,9 +9,8 @@
 #include <filesystem>
 #include <fstream>
 #include <map>
+#include <platform/config.hpp>
 #include <toml.hpp>
-
-#include "config_toml.hpp"
 
 namespace nba {
 
