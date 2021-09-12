@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-// #include <platform/sdl/device/audio_device.hpp>
+#include <platform/device/sdl_audio_device.hpp>
 #include <QApplication>
 #include <QMenuBar>
 #include <QFileDialog>
@@ -32,14 +32,11 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
 
   /* Set emulator config */
   config->video_dev = screen;
-  // config->audio_dev = std::make_shared<SDL2_AudioDevice>();
+  config->audio_dev = std::make_shared<nba::SDL2_AudioDevice>();
   config->input_dev = input_device;
   emulator = std::make_unique<nba::Emulator>(config);
 
   app->installEventFilter(this);
-}
-
-MainWindow::~MainWindow() {
 }
 
 void MainWindow::CreateFileMenu(QMenuBar* menubar) {
@@ -61,7 +58,7 @@ void MainWindow::CreateOptionsMenu(QMenuBar* menubar) {
     QFileDialog dialog{this};
     dialog.setAcceptMode(QFileDialog::AcceptOpen);
     dialog.setFileMode(QFileDialog::ExistingFile);
-    dialog.setNameFilter("GameBoyAdvance BIOS (*.bin)");
+    dialog.setNameFilter("Game Boy Advance BIOS (*.bin)");
 
     if (!dialog.exec()) {
       return;
@@ -90,6 +87,10 @@ void MainWindow::CreateOptionsMenu(QMenuBar* menubar) {
     { "Sinc-128", nba::Config::Audio::Interpolation::Sinc_128 },
     { "Sinc-256", nba::Config::Audio::Interpolation::Sinc_256 }
   }, &config->audio.interpolation);
+
+  auto options_hq_audio_menu = options_audio_menu->addMenu("HQ audio mixer");
+  CreateBooleanOption(options_hq_audio_menu, "Enable", &config->audio.mp2k_hle_enable);
+  CreateBooleanOption(options_hq_audio_menu, "Use cubic filter", &config->audio.mp2k_hle_cubic);
 }
 
 void MainWindow::CreateBooleanOption(QMenu* menu, const char* name, bool* underlying) {
@@ -246,6 +247,7 @@ void MainWindow::FileOpen() {
 
   emulator->Reset();
   emulator_state = EmulationState::Running;
+  framelimiter.Reset();
 
   emulator_thread = std::thread([this] {
     emulator_thread_running = true;

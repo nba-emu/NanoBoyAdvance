@@ -8,6 +8,7 @@
 
 #include <nba/device/input_device.hpp>
 #include <nba/device/video_device.hpp>
+#include <platform/device/sdl_audio_device.hpp>
 #include <platform/emulator.hpp>
 
 #include <atomic>
@@ -23,7 +24,6 @@
 #include <mutex>
 
 #include "config_toml.hpp"
-#include "device/audio_device.hpp"
 
 #include <GL/glew.h>
 
@@ -334,7 +334,7 @@ void init(int argc, char** argv) {
       }
     }
   }
-  auto audio_device = std::make_shared<SDL2_AudioDevice>();
+  auto audio_device = std::make_shared<nba::SDL2_AudioDevice>();
   audio_device->SetPassthrough((SDL_AudioCallback)audio_passthrough);
   g_config->audio_dev = audio_device;
   g_config->input_dev = std::make_shared<CombinedInputDevice>();

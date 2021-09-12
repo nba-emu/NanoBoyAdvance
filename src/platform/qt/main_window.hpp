@@ -28,13 +28,12 @@ class MainWindow : public QMainWindow {
 
 public:
   MainWindow(QApplication* app, QWidget* parent = 0);
-  ~MainWindow();
 
 protected:
   bool eventFilter(QObject* obj, QEvent* event);
 
 private slots:
-          void FileOpen();
+  void FileOpen();
 
 private:
   void CreateFileMenu(QMenuBar* menubar);

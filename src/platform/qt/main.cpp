@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
   MainWindow window{ &app };
 
   QCoreApplication::setOrganizationName("fleroviux");
-  QCoreApplication::setApplicationName("NanoboyAdvance");
+  QCoreApplication::setApplicationName("NanoBoyAdvance");
 
   window.show();
   return app.exec();

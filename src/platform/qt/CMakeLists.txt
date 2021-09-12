@@ -2,7 +2,6 @@ project(NanoBoyAdvance-Qt CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeModules)
 
 set(SOURCES
   main.cpp
@@ -25,10 +24,6 @@ find_package(Qt5Widgets REQUIRED)
 find_package(Qt5OpenGL REQUIRED)
 set(QT_DEPS Qt5::Gui Qt5::Widgets Qt5::OpenGL)
 
-include(FindSDL2 REQUIRED)
-find_package(SDL2 REQUIRED)
-include_directories(${SDL2_INCLUDE_DIR})
-
 add_executable(NanoBoyAdvance-Qt ${SOURCES} ${HEADERS})
-target_link_libraries(NanoBoyAdvance-Qt platform-core ${QT_DEPS} ${OPENGL_gl_LIBRARY} ${SDL2_LIBRARY})
+target_link_libraries(NanoBoyAdvance-Qt platform-core ${QT_DEPS} ${OPENGL_gl_LIBRARY})
 set_target_properties(NanoBoyAdvance-Qt PROPERTIES OUTPUT_NAME "NanoBoyAdvance")
