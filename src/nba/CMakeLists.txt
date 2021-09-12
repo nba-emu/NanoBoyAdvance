@@ -7,11 +7,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SOURCES
-  src/emulator/cartridge/backup/eeprom.cpp
-  src/emulator/cartridge/backup/flash.cpp
-  src/emulator/cartridge/backup/sram.cpp
-  src/emulator/cartridge/gpio/gpio.cpp
-  src/emulator/cartridge/gpio/rtc.cpp
   src/emulator/core/arm/tablegen/tablegen.cpp
   src/emulator/core/bus/bus.cpp
   src/emulator/core/bus/io.cpp
@@ -31,6 +26,11 @@ set(SOURCES
   src/emulator/core/hw/ppu/compose.cpp
   src/emulator/core/hw/ppu/ppu.cpp
   src/emulator/core/hw/ppu/registers.cpp
+  src/emulator/core/hw/rom/backup/eeprom.cpp
+  src/emulator/core/hw/rom/backup/flash.cpp
+  src/emulator/core/hw/rom/backup/sram.cpp
+  src/emulator/core/hw/rom/gpio/gpio.cpp
+  src/emulator/core/hw/rom/gpio/rtc.cpp
   src/emulator/core/hw/dma.cpp
   src/emulator/core/hw/interrupt.cpp
   src/emulator/core/hw/keypad.cpp
@@ -46,7 +46,6 @@ set(HEADERS
   src/common/dsp/resampler.hpp
   src/common/crc32.hpp
   src/common/meta.hpp
-  src/emulator/cartridge/gpio/rtc.hpp
   src/emulator/core/arm/handlers/arithmetic.inl
   src/emulator/core/arm/handlers/handler16.inl
   src/emulator/core/arm/handlers/handler32.inl
@@ -71,6 +70,7 @@ set(HEADERS
   src/emulator/core/hw/ppu/helper.inl
   src/emulator/core/hw/ppu/ppu.hpp
   src/emulator/core/hw/ppu/registers.hpp
+  src/emulator/core/hw/rom/gpio/rtc.hpp
   src/emulator/core/hw/dma.hpp
   src/emulator/core/hw/interrupt.hpp
   src/emulator/core/hw/keypad.hpp

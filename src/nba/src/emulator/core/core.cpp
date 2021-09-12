@@ -8,11 +8,11 @@
 #include <nba/core.hpp>
 
 #include "common/crc32.hpp"
-#include "emulator/cartridge/gpio/rtc.hpp"
 #include "emulator/core/arm/arm7tdmi.hpp"
 #include "emulator/core/bus/bus.hpp"
 #include "emulator/core/hw/apu/apu.hpp"
 #include "emulator/core/hw/ppu/ppu.hpp"
+#include "emulator/core/hw/rom/gpio/rtc.hpp"
 #include "emulator/core/hw/dma.hpp"
 #include "emulator/core/hw/interrupt.hpp"
 #include "emulator/core/hw/keypad.hpp"
