@@ -6,8 +6,8 @@
  */
 
 #include <nba/common/compiler.hpp>
-#include <emulator/core/bus/bus.hpp>
-#include <emulator/core/bus/io.hpp>
+#include <bus/bus.hpp>
+#include <bus/io.hpp>
 
 #include "dma.hpp"
 

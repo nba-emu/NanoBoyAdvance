@@ -11,8 +11,8 @@
 
 #include <common/dsp/resampler.hpp>
 #include <common/dsp/ring_buffer.hpp>
-#include <emulator/core/hw/dma.hpp>
-#include <emulator/core/scheduler.hpp>
+#include <hw/dma.hpp>
+#include <scheduler.hpp>
 #include <mutex>
 
 #include "channel/quad_channel.hpp"

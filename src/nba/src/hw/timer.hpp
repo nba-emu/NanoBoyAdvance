@@ -8,8 +8,8 @@
 #pragma once
 
 #include <nba/integer.hpp>
-#include <emulator/core/hw/interrupt.hpp>
-#include <emulator/core/scheduler.hpp>
+#include <hw/interrupt.hpp>
+#include <scheduler.hpp>
 
 #include "apu/apu.hpp"
 

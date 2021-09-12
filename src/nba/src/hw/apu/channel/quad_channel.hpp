@@ -8,16 +8,15 @@
 #pragma once
 
 #include <nba/integer.hpp>
-#include <emulator/core/scheduler.hpp>
+#include <scheduler.hpp>
 
 #include "base_channel.hpp"
-#include "../registers.hpp"
 
 namespace nba::core {
 
-class NoiseChannel : public BaseChannel {
+class QuadChannel : public BaseChannel {
 public:
-  NoiseChannel(Scheduler& scheduler, BIAS& bias);
+  QuadChannel(Scheduler& scheduler);
 
   void Reset();
   auto GetSample() -> s8 override { return sample; }
@@ -26,33 +25,22 @@ public:
   void Write(int offset, u8 value);
 
 private:
-  constexpr int GetSynthesisInterval(int ratio, int shift) {
-    int interval = 64 << shift;
-
-    if (ratio == 0) {
-      interval /= 2;
-    } else {
-      interval *= ratio;
-    }
-
-    return interval;
+  constexpr int GetSynthesisIntervalFromFrequency(int frequency) {
+    // 128 cycles equals 131072 Hz, the highest possible frequency.
+    // We are dividing by eight, because the waveform can change at
+    // eight evenly spaced points inside a single cycle, depending on the wave duty.
+    return 128 * (2048 - frequency) / 8;
   }
-
-  u16 lfsr;
-  s8 sample = 0;
 
   Scheduler& scheduler;
   std::function<void(int)> event_cb = [this](int cycles_late) {
     this->Generate(cycles_late);
   };
 
-  int frequency_shift;
-  int frequency_ratio;
-  int width;
+  s8 sample = 0;
+  int phase;
+  int wave_duty;
   bool dac_enable;
-
-  BIAS& bias;
-  int skip_count;
 };
 
 } // namespace nba::core

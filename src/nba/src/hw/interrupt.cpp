@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-#include <emulator/core/arm/arm7tdmi.hpp>
+#include <arm/arm7tdmi.hpp>
 
 #include "interrupt.hpp"
 

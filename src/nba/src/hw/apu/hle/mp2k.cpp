@@ -7,7 +7,7 @@
 
 #include <nba/log.hpp>
 
-#include "emulator/core/bus/bus.hpp"
+#include "bus/bus.hpp"
 #include "mp2k.hpp"
 
 namespace nba::core {

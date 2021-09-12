@@ -9,7 +9,7 @@
 
 #include <nba/rom/gpio/gpio.hpp>
 
-#include "emulator/core/hw/interrupt.hpp"
+#include "hw/interrupt.hpp"
 
 namespace nba {
 

@@ -12,9 +12,9 @@
 
 #include <nba/common/compiler.hpp>
 #include <nba/common/punning.hpp>
-#include <emulator/core/hw/dma.hpp>
-#include <emulator/core/hw/interrupt.hpp>
-#include <emulator/core/scheduler.hpp>
+#include <hw/dma.hpp>
+#include <hw/interrupt.hpp>
+#include <scheduler.hpp>
 #include <functional>
 #include <type_traits>
 

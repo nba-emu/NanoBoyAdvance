@@ -10,7 +10,7 @@
 #include <nba/deprecate/config.hpp>
 #include <memory>
 
-#include "emulator/core/hw/interrupt.hpp"
+#include "hw/interrupt.hpp"
 
 namespace nba::core {
 

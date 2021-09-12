@@ -12,12 +12,12 @@
 #include <nba/integer.hpp>
 #include <vector>
 
-#include "emulator/core/hw/apu/apu.hpp"
-#include "emulator/core/hw/ppu/ppu.hpp"
-#include "emulator/core/hw/dma.hpp"
-#include "emulator/core/hw/interrupt.hpp"
-#include "emulator/core/hw/keypad.hpp"
-#include "emulator/core/hw/timer.hpp"
+#include "hw/apu/apu.hpp"
+#include "hw/ppu/ppu.hpp"
+#include "hw/dma.hpp"
+#include "hw/interrupt.hpp"
+#include "hw/keypad.hpp"
+#include "hw/timer.hpp"
 
 namespace nba::core {
 

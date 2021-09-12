@@ -10,9 +10,9 @@
 #include <array>
 #include <nba/common/compiler.hpp>
 #include <nba/log.hpp>
-#include <emulator/core/scheduler.hpp>
+#include <scheduler.hpp>
 
-#include "emulator/core/bus/bus.hpp"
+#include "bus/bus.hpp"
 #include "state.hpp"
 
 namespace nba::core::arm {

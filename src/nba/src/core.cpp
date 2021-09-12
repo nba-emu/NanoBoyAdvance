@@ -8,16 +8,16 @@
 #include <nba/core.hpp>
 
 #include "common/crc32.hpp"
-#include "emulator/core/arm/arm7tdmi.hpp"
-#include "emulator/core/bus/bus.hpp"
-#include "emulator/core/hw/apu/apu.hpp"
-#include "emulator/core/hw/ppu/ppu.hpp"
-#include "emulator/core/hw/rom/gpio/rtc.hpp"
-#include "emulator/core/hw/dma.hpp"
-#include "emulator/core/hw/interrupt.hpp"
-#include "emulator/core/hw/keypad.hpp"
-#include "emulator/core/hw/timer.hpp"
-#include "emulator/core/scheduler.hpp"
+#include "arm/arm7tdmi.hpp"
+#include "bus/bus.hpp"
+#include "hw/apu/apu.hpp"
+#include "hw/ppu/ppu.hpp"
+#include "hw/rom/gpio/rtc.hpp"
+#include "hw/dma.hpp"
+#include "hw/interrupt.hpp"
+#include "hw/keypad.hpp"
+#include "hw/timer.hpp"
+#include "scheduler.hpp"
 
 namespace nba {
 

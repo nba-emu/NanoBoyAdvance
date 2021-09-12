@@ -10,7 +10,7 @@
 #include <stdexcept>
 
 #include "bus.hpp"
-#include "emulator/core/arm/arm7tdmi.hpp"
+#include "arm/arm7tdmi.hpp"
 
 namespace nba::core {
 
