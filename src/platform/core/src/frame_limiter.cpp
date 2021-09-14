@@ -22,6 +22,10 @@ void FrameLimiter::Reset(float fps) {
   timestamp_fps_update = std::chrono::steady_clock::now();
 }
 
+auto FrameLimiter::GetFastForward() -> bool {
+  return fast_forward;
+}
+
 void FrameLimiter::SetFastForward(bool value) {
   if (fast_forward != value) {
     fast_forward = value;

@@ -13,6 +13,9 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QKeyEvent>
+#include <unordered_map>
+
+#include <iostream>
 
 #include "main_window.hpp"
 
@@ -39,6 +42,16 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
   emulator = std::make_unique<nba::Emulator>(config);
 
   app->installEventFilter(this);
+
+  keymap_window = new KeyMapWindow{app, this};
+
+  FindGameController();
+}
+
+MainWindow::~MainWindow() {
+  if (game_controller != nullptr) {
+    SDL_GameControllerClose(game_controller);
+  }
 }
 
 void MainWindow::CreateFileMenu(QMenuBar* menubar) {
@@ -93,6 +106,11 @@ void MainWindow::CreateOptionsMenu(QMenuBar* menubar) {
   auto options_hq_audio_menu = options_audio_menu->addMenu("HQ audio mixer");
   CreateBooleanOption(options_hq_audio_menu, "Enable", &config->audio.mp2k_hle_enable);
   CreateBooleanOption(options_hq_audio_menu, "Use cubic filter", &config->audio.mp2k_hle_cubic);
+
+  auto configure_input = options_menu->addAction(tr("Configure input"));
+  connect(configure_input, &QAction::triggered, [this] {
+    keymap_window->exec();
+  });
 }
 
 void MainWindow::CreateBooleanOption(QMenu* menu, const char* name, bool* underlying) {
@@ -136,56 +154,20 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
   auto key = dynamic_cast<QKeyEvent*>(event)->key();
   auto pressed = type == QEvent::KeyPress;
 
-  /* TODO: support dynamic key mapping. */
-  switch (key) {
-    case Qt::Key_A: {
-      input_device->SetKeyStatus(nba::InputDevice::Key::A, pressed);
-      return true;
-    }
-    case Qt::Key_S: {
-      input_device->SetKeyStatus(nba::InputDevice::Key::B, pressed);
-      return true;
-    }
-    case Qt::Key_D: {
-      input_device->SetKeyStatus(nba::InputDevice::Key::L, pressed);
-      return true;
-    }
-    case Qt::Key_F: {
-      input_device->SetKeyStatus(nba::InputDevice::Key::R, pressed);
-      return true;
-    }
-    case Qt::Key_Return: {
-      input_device->SetKeyStatus(nba::InputDevice::Key::Start, pressed);
-      return true;
-    }
-    case Qt::Key_Backspace: {
-      input_device->SetKeyStatus(nba::InputDevice::Key::Select, pressed);
-      return true;
-    }
-    case Qt::Key_Up: {
-      input_device->SetKeyStatus(nba::InputDevice::Key::Up, pressed);
-      return true;
-    }
-    case Qt::Key_Down: {
-      input_device->SetKeyStatus(nba::InputDevice::Key::Down, pressed);
-      return true;
-    }
-    case Qt::Key_Left: {
-      input_device->SetKeyStatus(nba::InputDevice::Key::Left, pressed);
-      return true;
-    }
-    case Qt::Key_Right: {
-      input_device->SetKeyStatus(nba::InputDevice::Key::Right, pressed);
-      return true;
-    }
-    case Qt::Key_Space: {
-      framelimiter.SetFastForward(pressed);
-      return true;
-    }
-    default: {
-      return QObject::eventFilter(obj, event);
+  auto& map = keymap_window->map;
+
+  for (int i = 0; i < nba::InputDevice::kKeyCount; i++) {
+    if (map.keypad[i] == key) {
+      input_device->SetKeyStatus(static_cast<nba::InputDevice::Key>(i), pressed);
     }
   }
+
+  if (key == map.fast_forward) {
+    framelimiter.SetFastForward(pressed);
+    // return true;
+  }
+
+  return QObject::eventFilter(obj, event);
 }
 
 void MainWindow::FileOpen() {
@@ -267,6 +249,7 @@ void MainWindow::FileOpen() {
 
     while (emulator_state == EmulationState::Running) {
       framelimiter.Run([&] {
+        UpdateGameControllerInput();
         emulator->Frame();
       }, [&](int fps) {
         this->setWindowTitle(QString{ (std::string("NanoBoyAdvance [") + std::to_string(fps) + std::string(" fps]")).c_str() });
@@ -277,4 +260,64 @@ void MainWindow::FileOpen() {
   });
 
   emulator_thread.detach();
+}
+
+void MainWindow::FindGameController() {
+  SDL_Init(SDL_INIT_GAMECONTROLLER);
+
+  auto num_joysticks = SDL_NumJoysticks();
+
+  for (int i = 0; i < num_joysticks; i++) {
+    if (SDL_IsGameController(i)) {
+      game_controller = SDL_GameControllerOpen(i);
+      if (game_controller != nullptr) {
+        nba::Log<nba::Info>("Qt: detected game controller '{0}'", SDL_GameControllerNameForIndex(i));
+        break;
+      }
+    }
+  }
+}
+
+void MainWindow::UpdateGameControllerInput() {
+  using Key = nba::InputDevice::Key;
+
+  if (game_controller == nullptr) {
+    return;
+  }
+
+  SDL_GameControllerUpdate();
+
+  auto button_x = SDL_GameControllerGetButton(game_controller, SDL_CONTROLLER_BUTTON_X);
+  if (game_controller_button_x_old && !button_x) {
+    framelimiter.SetFastForward(!framelimiter.GetFastForward());
+  }
+  game_controller_button_x_old = button_x;
+
+  static const std::unordered_map<SDL_GameControllerButton, Key> buttons{
+    { SDL_CONTROLLER_BUTTON_A, Key::A },
+    { SDL_CONTROLLER_BUTTON_B, Key::B },
+    { SDL_CONTROLLER_BUTTON_LEFTSHOULDER , Key::L },
+    { SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, Key::R },
+    { SDL_CONTROLLER_BUTTON_START, Key::Start },
+    { SDL_CONTROLLER_BUTTON_BACK, Key::Select }
+  };
+
+  // TODO: handle concurrent input from keyboard and game controller.
+
+  for (auto& button : buttons) {
+    if (SDL_GameControllerGetButton(game_controller, button.first)) {
+      input_device->SetKeyStatus(button.second, true);
+    } else {
+      input_device->SetKeyStatus(button.second, false);
+    }
+  }
+
+  constexpr auto threshold = std::numeric_limits<int16_t>::max() / 2;
+  auto x = SDL_GameControllerGetAxis(game_controller, SDL_CONTROLLER_AXIS_LEFTX);
+  auto y = SDL_GameControllerGetAxis(game_controller, SDL_CONTROLLER_AXIS_LEFTY);
+
+  input_device->SetKeyStatus(Key::Left, x < -threshold);
+  input_device->SetKeyStatus(Key::Right, x > threshold);
+  input_device->SetKeyStatus(Key::Up, y < -threshold);
+  input_device->SetKeyStatus(Key::Down, y > threshold);
 }

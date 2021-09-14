@@ -20,6 +20,7 @@ struct FrameLimiter {
 
   void Reset();
   void Reset(float fps);
+  auto GetFastForward() -> bool;
   void SetFastForward(bool value);
 
   void Run(

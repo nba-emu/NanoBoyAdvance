@@ -15,9 +15,11 @@
 #include <QMainWindow>
 #include <QActionGroup>
 #include <QMenu>
+#include <SDL.h>
 #include <utility>
 #include <vector>
 
+#include "keymap_window.hpp"
 #include "screen.hpp"
 
 class MainWindow : public QMainWindow {
@@ -25,6 +27,7 @@ class MainWindow : public QMainWindow {
 
 public:
   MainWindow(QApplication* app, QWidget* parent = 0);
+ ~MainWindow();
 
 protected:
   bool eventFilter(QObject* obj, QEvent* event);
@@ -67,6 +70,9 @@ private:
     nba::config_toml_write(*config, s_toml_config_path);
   }
 
+  void FindGameController();
+  void UpdateGameControllerInput();
+
   enum class EmulationState {
     Stopped,
     Running,
@@ -81,4 +87,9 @@ private:
   std::unique_ptr<nba::Emulator> emulator;
   nba::FrameLimiter framelimiter {59.7275};
   std::thread emulator_thread;
+
+  KeyMapWindow* keymap_window;
+
+  SDL_GameController* game_controller = nullptr;
+  bool game_controller_button_x_old = false;
 };
