@@ -5,6 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
+#include "arm/arm7tdmi.hpp"
 #include "bus/bus.hpp"
 #include "bus/io.hpp"
 
@@ -501,15 +502,17 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
       break;
     }
     case HALTCNT: {
-      if (value & 0x80) {
-        haltcnt = HaltControl::Stop;
-      } else {
-        haltcnt = HaltControl::Halt;
+      if (cpu.state.r15 <= 0x3FFF) {
+        if (value & 0x80) {
+          haltcnt = HaltControl::Stop;
+        } else {
+          haltcnt = HaltControl::Halt;
+        }
       }
       break;
     }
     case POSTFLG: {
-      postflg = value & 1;
+      postflg |= value & 1;
       break;
     }
   }
