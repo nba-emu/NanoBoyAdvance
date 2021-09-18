@@ -501,6 +501,12 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
       bus->UpdateWaitStateTable();
       break;
     }
+    case POSTFLG: {
+      if (cpu.state.r15 <= 0x3FFF) {
+        postflg |= value & 1;
+      }
+      break;
+    }
     case HALTCNT: {
       if (cpu.state.r15 <= 0x3FFF) {
         if (value & 0x80) {
@@ -509,10 +515,6 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
           haltcnt = HaltControl::Halt;
         }
       }
-      break;
-    }
-    case POSTFLG: {
-      postflg |= value & 1;
       break;
     }
   }
