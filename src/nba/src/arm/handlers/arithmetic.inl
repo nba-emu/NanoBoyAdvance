@@ -10,6 +10,7 @@ void SetZeroAndSignFlag(u32 value) {
   state.cpsr.f.z = (value == 0);
 }
 
+template<bool is_signed = true>
 void TickMultiply(u32 multiplier) {
   u32 mask = 0xFFFFFF00;
 
@@ -17,9 +18,13 @@ void TickMultiply(u32 multiplier) {
 
   while (true) {
     multiplier &= mask;
-    if (multiplier == 0 || multiplier == mask) {
-      break;
+
+    if (multiplier == 0) break;
+
+    if constexpr(is_signed) {
+      if (multiplier == mask) break;
     }
+
     mask <<= 8;
     bus.Idle();
   }

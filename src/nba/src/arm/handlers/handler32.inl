@@ -230,8 +230,6 @@ void ARM_StatusTransfer(u32 instruction) {
 
 template <bool accumulate, bool set_flags>
 void ARM_Multiply(u32 instruction) {
-  u32 result;
-
   int op1 = (instruction >>  0) & 0xF;
   int op2 = (instruction >>  8) & 0xF;
   int op3 = (instruction >> 12) & 0xF;
@@ -240,10 +238,11 @@ void ARM_Multiply(u32 instruction) {
   pipe.fetch_type = Access::Nonsequential;
   state.r15 += 4;
 
-  // TODO: do not read the register *twice*.
-  TickMultiply(GetReg(op2));
+  auto lhs = GetReg(op1);
+  auto rhs = GetReg(op2);
+  auto result = lhs * rhs;
 
-  result = GetReg(op1) * GetReg(op2);
+  TickMultiply(rhs);
 
   if (accumulate) {
     result += GetReg(op3);
@@ -274,24 +273,17 @@ void ARM_MultiplyLong(u32 instruction) {
   pipe.fetch_type = Access::Nonsequential;
   state.r15 += 4;
 
-  // TODO: do not read the register *twice*.
-  bus.Idle();
-  TickMultiply(GetReg(op2));
+  auto lhs = GetReg(op1);
+  auto rhs = GetReg(op2);
 
   if (sign_extend) {
-    s64 a = GetReg(op1);
-    s64 b = GetReg(op2);
-
-    /* Sign-extend operands */
-    if (a & 0x80000000) a |= 0xFFFFFFFF00000000;
-    if (b & 0x80000000) b |= 0xFFFFFFFF00000000;
-
-    result = a * b;
+    result = s64(s32(lhs)) * s64(s32(rhs));
   } else {
-    u64 uresult = (u64)GetReg(op1) * (u64)GetReg(op2);
-
-    result = (s64)uresult;
+    result = s64(u64(lhs) * u64(rhs));
   }
+
+  TickMultiply<sign_extend>(rhs);
+  bus.Idle();
 
   if (accumulate) {
     s64 value = GetReg(dst_hi);
