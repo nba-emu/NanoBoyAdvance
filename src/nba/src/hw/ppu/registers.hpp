@@ -25,6 +25,8 @@ struct DisplayControl {
   void Reset();
   auto Read(int address) -> u8;
   void Write(int address, u8 value);
+
+  PPU* ppu = nullptr;
 };
 
 struct DisplayStatus {

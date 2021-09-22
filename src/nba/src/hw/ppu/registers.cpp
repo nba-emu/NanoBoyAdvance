@@ -39,7 +39,6 @@ auto DisplayControl::Read(int address) -> u8 {
 }
 
 void DisplayControl::Write(int address, u8 value) {
-  auto mode_old = mode;
   switch (address) {
     case 0:
       mode = value & 7;
@@ -50,7 +49,17 @@ void DisplayControl::Write(int address, u8 value) {
       forced_blank = (value >> 7) & 1;
       break;
     case 1:
-      for (int i = 0; i < 8; i++) {
+      for (int i = 0; i < 4; i++) {
+        auto enable_new = (value >> i) & 1;
+        if (!enable[i] && enable_new) {
+          ppu->enable_bg_delay[i] = 3;
+        } else {
+          ppu->enable_bg[i] = enable_new;
+          ppu->enable_bg_delay[i] = 0;
+        }
+        enable[i] = enable_new;
+      }
+      for (int i = 4; i < 8; i++) {
         enable[i] = (value >> i) & 1;
       }
       break;
@@ -90,9 +99,7 @@ void DisplayStatus::Write(int address, u8 value) {
       break;
   }
 
-  if (ppu != nullptr) {
-    ppu->CheckVerticalCounterIRQ();
-  }
+  ppu->CheckVerticalCounterIRQ();
 }
 
 void BackgroundControl::Reset() {
