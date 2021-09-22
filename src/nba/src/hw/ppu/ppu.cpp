@@ -20,8 +20,9 @@ PPU::PPU(
     , irq(irq)
     , dma(dma)
     , config(config) {
-  Reset();
+  mmio.dispcnt.ppu = this;
   mmio.dispstat.ppu = this;
+  Reset();
 }
 
 void PPU::Reset() {
@@ -34,6 +35,9 @@ void PPU::Reset() {
   mmio.vcount = 0;
 
   for (int i = 0; i < 4; i++) {
+    enable_bg[i] = false;
+    enable_bg_delay[i] = 0;
+
     mmio.bgcnt[i].Reset();
     mmio.bghofs[i] = 0;
     mmio.bgvofs[i] = 0;
@@ -63,6 +67,16 @@ void PPU::Reset() {
   mmio.bldcnt.Reset();
 
   scheduler.Add(1006, this, &PPU::OnScanlineComplete);
+}
+
+void PPU::EnablePendingBGs() {
+  for (int i = 0; i < 4; i++) {
+    if (enable_bg_delay[i] > 0) {
+      if (--enable_bg_delay[i] == 0) {
+        enable_bg[i] = true;
+      }
+    }
+  }
 }
 
 void PPU::CheckVerticalCounterIRQ() {
@@ -108,20 +122,26 @@ void PPU::OnScanlineComplete(int cycles_late) {
   }
 
   /* Mode 0 doesn't have any affine backgrounds,
-   * in that case the internal registers seemingly aren't updated.
-   * TODO: needs more research, e.g. what happens if all affine backgrounds are disabled?
+   * in that case the internal X/Y registers will never be updated.
    */
   if (mmio.dispcnt.mode != 0) {
     // Advance internal affine registers and apply vertical mosaic if applicable.
     for (int i = 0; i < 2; i++) {
-      if (mmio.bgcnt[2 + i].mosaic_enable) {
-        if (mosaic.bg._counter_y == 0) {
-          bgx[i]._current += mosaic.bg.size_y * bgpb[i];
-          bgy[i]._current += mosaic.bg.size_y * bgpd[i];
+      /* Do not update internal X/Y unless the latched BG enable bit is set.
+       * This behavior was confirmed on real hardware.
+       */
+      auto bg_id = 2 + i;
+
+      if (enable_bg[bg_id]) {
+        if (mmio.bgcnt[bg_id].mosaic_enable) {
+          if (mosaic.bg._counter_y == 0) {
+            bgx[i]._current += mosaic.bg.size_y * bgpb[i];
+            bgy[i]._current += mosaic.bg.size_y * bgpd[i];
+          }
+        } else {
+          bgx[i]._current += bgpb[i];
+          bgy[i]._current += bgpd[i];
         }
-      } else {
-        bgx[i]._current += bgpb[i];
-        bgy[i]._current += bgpd[i];
       }
     }
   }
@@ -138,6 +158,7 @@ void PPU::OnHblankComplete(int cycles_late) {
   dispstat.hblank_flag = 0;
   vcount++;
   CheckVerticalCounterIRQ();
+  EnablePendingBGs();
 
   if (dispcnt.enable[ENABLE_WIN0]) {
     RenderWindow(0);
@@ -214,6 +235,8 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
       }
     }
   }
+
+  EnablePendingBGs();
 
   if (mmio.dispcnt.enable[ENABLE_WIN0]) {
     RenderWindow(0);

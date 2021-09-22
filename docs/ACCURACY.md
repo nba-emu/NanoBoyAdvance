@@ -14,7 +14,7 @@ Multiply Long |         72 |             52 |         52 |          52 |        
 BIOS math     |        615 |            615 |        615 |         615 |       615 |
 DMA tests     |       1256 |           1256 |       1232 |        1032 |      1212 |
 Misc Edge Case|         10 |          7 - 8 |      7 - 8 |           7 |         1 |
-Layer Toggle  |          1 |           fail |       pass |        pass |      fail |
+Layer Toggle  |          1 |           pass |       pass |        pass |      fail |
 OAM Update    |          1 |           pass |       fail |        fail |      fail |
 
 In addition NanoBoyAdvance passes the following tests:
