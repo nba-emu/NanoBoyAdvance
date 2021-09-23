@@ -144,7 +144,7 @@ void MainWindow::CreateHelpMenu(QMenuBar* menubar) {
   });
 }
 
-void MainWindow::startEmuThread() {
+void MainWindow::StartEmuThread() {
   emulator->Reset();
   emulator_state = EmulationState::Running;
   framelimiter.Reset();
@@ -167,7 +167,7 @@ void MainWindow::startEmuThread() {
   emulator_thread.detach();  
 }
 
-bool MainWindow::loadRom(const QString &file) {
+bool MainWindow::LoadRom(const QString &file) {
 
   auto& core = emulator->GetCore();
 
