@@ -29,6 +29,9 @@ public:
   MainWindow(QApplication* app, QWidget* parent = 0);
  ~MainWindow();
 
+  bool loadRom(const QString &file);
+  void startEmuThread();
+  
 protected:
   bool eventFilter(QObject* obj, QEvent* event);
 
