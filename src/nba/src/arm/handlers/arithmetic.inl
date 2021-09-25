@@ -31,17 +31,15 @@ void TickMultiply(u32 multiplier) {
 }
 
 u32 ADD(u32 op1, u32 op2, bool set_flags) {
-  if (set_flags) {
-    u64 result64 = (u64)op1 + (u64)op2;
-    u32 result32 = (u32)result64;
+  u32 result = op1 + op2;
 
-    SetZeroAndSignFlag(result32);
-    state.cpsr.f.c = result64 >> 32;
-    state.cpsr.f.v = (~(op1 ^ op2) & (op2 ^ result32)) >> 31;
-    return result32;
-  } else {
-    return op1 + op2;
+  if (set_flags) {
+    SetZeroAndSignFlag(result);
+    state.cpsr.f.c = result < op1;
+    state.cpsr.f.v = (~(op1 ^ op2) & (op2 ^ result)) >> 31;
   }
+
+  return result;
 }
 
 u32 ADC(u32 op1, u32 op2, bool set_flags) {
