@@ -32,11 +32,10 @@ void PPU::Reset() {
 
   mmio.dispcnt.Reset();
   mmio.dispstat.Reset();
-  mmio.vcount = 0;
 
   for (int i = 0; i < 4; i++) {
-    enable_bg[i] = false;
-    enable_bg_delay[i] = 0;
+    enable_bg[0][i] = false;
+    enable_bg[1][i] = false;
 
     mmio.bgcnt[i].Reset();
     mmio.bghofs[i] = 0;
@@ -66,16 +65,27 @@ void PPU::Reset() {
   mmio.evy = 0;
   mmio.bldcnt.Reset();
 
-  scheduler.Add(1006, this, &PPU::OnScanlineComplete);
+  /*
+   * VCOUNT=225 DISPSTAT=3 was measured on a 3DS after reset by Starbreeze.
+   * It is unclear how accurate that measurement is, but it seems plausible,
+   * that the PPU is in scanline 225 after reset.
+   * 
+   * TODO: we likely should also reset to H-blank then?
+   */
+  mmio.vcount = 225;
+  mmio.dispstat.vblank_flag = true;
+  mmio.dispstat.hblank_flag = true;
+  // scheduler.Add(1006, this, &PPU::OnVblankScanlineComplete);
+  scheduler.Add(226, this, &PPU::OnVblankHblankComplete);
 }
 
-void PPU::EnablePendingBGs() {
+void PPU::LatchEnabledBGs() {
   for (int i = 0; i < 4; i++) {
-    if (enable_bg_delay[i] > 0) {
-      if (--enable_bg_delay[i] == 0) {
-        enable_bg[i] = true;
-      }
-    }
+    enable_bg[0][i] = enable_bg[1][i];
+  }
+
+  for (int i = 0; i < 4; i++) {
+    enable_bg[1][i] = mmio.dispcnt.enable[i];
   }
 }
 
@@ -132,7 +142,7 @@ void PPU::OnScanlineComplete(int cycles_late) {
        */
       auto bg_id = 2 + i;
 
-      if (enable_bg[bg_id]) {
+      if (enable_bg[0][bg_id]) {
         if (mmio.bgcnt[bg_id].mosaic_enable) {
           if (mosaic.bg._counter_y == 0) {
             bgx[i]._current += mosaic.bg.size_y * bgpb[i];
@@ -145,6 +155,8 @@ void PPU::OnScanlineComplete(int cycles_late) {
       }
     }
   }
+
+  LatchEnabledBGs();
 }
 
 void PPU::OnHblankComplete(int cycles_late) {
@@ -158,7 +170,6 @@ void PPU::OnHblankComplete(int cycles_late) {
   dispstat.hblank_flag = 0;
   vcount++;
   CheckVerticalCounterIRQ();
-  EnablePendingBGs();
 
   if (dispcnt.enable[ENABLE_WIN0]) {
     RenderWindow(0);
@@ -214,6 +225,10 @@ void PPU::OnVblankScanlineComplete(int cycles_late) {
   if (dispstat.hblank_irq_enable) {
     irq.Raise(IRQ::Source::HBlank);
   }
+
+  if (mmio.vcount >= 225) {
+    LatchEnabledBGs();
+  }
 }
 
 void PPU::OnVblankHblankComplete(int cycles_late) {
@@ -235,8 +250,6 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
       }
     }
   }
-
-  EnablePendingBGs();
 
   if (mmio.dispcnt.enable[ENABLE_WIN0]) {
     RenderWindow(0);
