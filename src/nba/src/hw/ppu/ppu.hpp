@@ -112,8 +112,7 @@ struct PPU {
     int evy;
   } mmio;
 
-  bool enable_bg[4];
-  int  enable_bg_delay[4];
+  bool enable_bg[3][4];
 
 private:
   friend struct DisplayStatus;
@@ -151,7 +150,7 @@ private:
     ENABLE_OBJWIN = 7
   };
 
-  void EnablePendingBGs();
+  void LatchEnabledBGs();
   void CheckVerticalCounterIRQ();
   void OnScanlineComplete(int cycles_late);
   void OnHblankComplete(int cycles_late);

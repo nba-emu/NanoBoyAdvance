@@ -39,7 +39,7 @@ void PPU::RenderScanline() {
     // BG Mode 0 - 240x160 pixels, Text mode
     case 0: {
       for (int i = 0; i < 4; i++) {
-        if (enable_bg[i]) {
+        if (mmio.dispcnt.enable[i]) {
           RenderLayerText(i);
         }
       }
@@ -49,11 +49,11 @@ void PPU::RenderScanline() {
     // BG Mode 1 - 240x160 pixels, Text and RS mode mixed
     case 1: {
       for (int i = 0; i < 2; i++) {
-        if (enable_bg[i]) {
+        if (mmio.dispcnt.enable[i]) {
           RenderLayerText(i);
         }
       }
-      if (enable_bg[ENABLE_BG2]) {
+      if (mmio.dispcnt.enable[ENABLE_BG2]) {
         RenderLayerAffine(0);
       }
       ComposeScanline(0, 2);
@@ -62,7 +62,7 @@ void PPU::RenderScanline() {
     // BG Mode 2 - 240x160 pixels, RS mode
     case 2: {
       for (int i = 0; i < 2; i++) {
-        if (enable_bg[2 + i]) {
+        if (mmio.dispcnt.enable[2 + i]) {
           RenderLayerAffine(i);
         }
       }
@@ -71,7 +71,7 @@ void PPU::RenderScanline() {
     }
     // BG Mode 3 - 240x160 pixels, 32768 colors
     case 3: {
-      if (enable_bg[2]) {
+      if (mmio.dispcnt.enable[2]) {
         RenderLayerBitmap1();
       }
       ComposeScanline(2, 2);
@@ -79,7 +79,7 @@ void PPU::RenderScanline() {
     }
     // BG Mode 4 - 240x160 pixels, 256 colors (out of 32768 colors)
     case 4: {
-      if (enable_bg[2]) {
+      if (mmio.dispcnt.enable[2]) {
         RenderLayerBitmap2();
       }
       ComposeScanline(2, 2);
@@ -87,7 +87,7 @@ void PPU::RenderScanline() {
     }
     // BG Mode 5 - 160x128 pixels, 32768 colors
     case 5: {
-      if (enable_bg[2]) {
+      if (mmio.dispcnt.enable[2]) {
         RenderLayerBitmap3();
       }
       ComposeScanline(2, 2);
@@ -122,7 +122,7 @@ void PPU::ComposeScanlineTmpl(int bg_min, int bg_max) {
   // Sort enabled backgrounds by their respective priority in ascending order.
   for (int prio = 3; prio >= 0; prio--) {
     for (int bg = bg_max; bg >= bg_min; bg--) {
-      if (enable_bg[bg] && bgcnt[bg].priority == prio) {
+      if (enable_bg[0][bg] && mmio.dispcnt.enable[bg] && bgcnt[bg].priority == prio) {
         bg_list[bg_count++] = bg;
       }
     }
