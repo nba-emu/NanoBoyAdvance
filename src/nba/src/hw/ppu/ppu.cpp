@@ -36,6 +36,7 @@ void PPU::Reset() {
   for (int i = 0; i < 4; i++) {
     enable_bg[0][i] = false;
     enable_bg[1][i] = false;
+    enable_bg[2][i] = false;
 
     mmio.bgcnt[i].Reset();
     mmio.bghofs[i] = 0;
@@ -65,17 +66,10 @@ void PPU::Reset() {
   mmio.evy = 0;
   mmio.bldcnt.Reset();
 
-  /*
-   * VCOUNT=225 DISPSTAT=3 was measured on a 3DS after reset by Starbreeze.
-   * It is unclear how accurate that measurement is, but it seems plausible,
-   * that the PPU is in scanline 225 after reset.
-   * 
-   * TODO: we likely should also reset to H-blank then?
-   */
+   // VCOUNT=225 DISPSTAT=3 was measured after reset on a 3DS in GBA mode (thanks Lady Starbreeze).
   mmio.vcount = 225;
   mmio.dispstat.vblank_flag = true;
   mmio.dispstat.hblank_flag = true;
-  // scheduler.Add(1006, this, &PPU::OnVblankScanlineComplete);
   scheduler.Add(226, this, &PPU::OnVblankHblankComplete);
 }
 
@@ -85,7 +79,11 @@ void PPU::LatchEnabledBGs() {
   }
 
   for (int i = 0; i < 4; i++) {
-    enable_bg[1][i] = mmio.dispcnt.enable[i];
+    enable_bg[1][i] = enable_bg[2][i];
+  }
+
+  for (int i = 0; i < 4; i++) {
+    enable_bg[2][i] = mmio.dispcnt.enable[i];
   }
 }
 
@@ -155,8 +153,6 @@ void PPU::OnScanlineComplete(int cycles_late) {
       }
     }
   }
-
-  LatchEnabledBGs();
 }
 
 void PPU::OnHblankComplete(int cycles_late) {
@@ -170,6 +166,7 @@ void PPU::OnHblankComplete(int cycles_late) {
   dispstat.hblank_flag = 0;
   vcount++;
   CheckVerticalCounterIRQ();
+  LatchEnabledBGs();
 
   if (dispcnt.enable[ENABLE_WIN0]) {
     RenderWindow(0);
@@ -225,10 +222,6 @@ void PPU::OnVblankScanlineComplete(int cycles_late) {
   if (dispstat.hblank_irq_enable) {
     irq.Raise(IRQ::Source::HBlank);
   }
-
-  if (mmio.vcount >= 225) {
-    LatchEnabledBGs();
-  }
 }
 
 void PPU::OnVblankHblankComplete(int cycles_late) {
@@ -249,6 +242,10 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
         RenderLayerOAM(mmio.dispcnt.mode >= 3, 0);
       }
     }
+  }
+
+  if (mmio.vcount >= 225) {
+    LatchEnabledBGs();
   }
 
   if (mmio.dispcnt.enable[ENABLE_WIN0]) {
