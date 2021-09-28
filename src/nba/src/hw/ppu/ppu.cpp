@@ -36,7 +36,6 @@ void PPU::Reset() {
   for (int i = 0; i < 4; i++) {
     enable_bg[0][i] = false;
     enable_bg[1][i] = false;
-    enable_bg[2][i] = false;
 
     mmio.bgcnt[i].Reset();
     mmio.bghofs[i] = 0;
@@ -79,11 +78,7 @@ void PPU::LatchEnabledBGs() {
   }
 
   for (int i = 0; i < 4; i++) {
-    enable_bg[1][i] = enable_bg[2][i];
-  }
-
-  for (int i = 0; i < 4; i++) {
-    enable_bg[2][i] = mmio.dispcnt.enable[i];
+    enable_bg[1][i] = mmio.dispcnt.enable[i];
   }
 }
 
@@ -153,6 +148,11 @@ void PPU::OnScanlineComplete(int cycles_late) {
       }
     }
   }
+
+  /* TODO: it appears that this should really happen ~36 cycles into H-draw.
+   * But right now if we do that it breaks at least Pinball Tycoon.
+   */
+  LatchEnabledBGs();
 }
 
 void PPU::OnHblankComplete(int cycles_late) {
@@ -166,7 +166,6 @@ void PPU::OnHblankComplete(int cycles_late) {
   dispstat.hblank_flag = 0;
   vcount++;
   CheckVerticalCounterIRQ();
-  LatchEnabledBGs();
 
   if (dispcnt.enable[ENABLE_WIN0]) {
     RenderWindow(0);
@@ -222,6 +221,13 @@ void PPU::OnVblankScanlineComplete(int cycles_late) {
   if (dispstat.hblank_irq_enable) {
     irq.Raise(IRQ::Source::HBlank);
   }
+
+  if (mmio.vcount >= 225) {
+    /* TODO: it appears that this should really happen ~36 cycles into H-draw.
+     * But right now if we do that it breaks at least Pinball Tycoon.
+     */
+    LatchEnabledBGs();
+  }
 }
 
 void PPU::OnVblankHblankComplete(int cycles_late) {
@@ -242,10 +248,6 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
         RenderLayerOAM(mmio.dispcnt.mode >= 3, 0);
       }
     }
-  }
-
-  if (mmio.vcount >= 225) {
-    LatchEnabledBGs();
   }
 
   if (mmio.dispcnt.enable[ENABLE_WIN0]) {
