@@ -41,12 +41,7 @@ void PPU::RenderScanline() {
       for (int i = 0; i < 4; i++) {
         if (mmio.dispcnt.enable[i]) {
           RenderLayerText(i);
-        }/* else if (!enable_bg[0][i]) {
-          // TODO: fix this properly!
-          for (int x = 0; x < 240; x++) {
-            buffer_bg[i][x] = s_color_transparent;
-          }
-        }*/
+        }
       }
       ComposeScanline(0, 3);
       break;
