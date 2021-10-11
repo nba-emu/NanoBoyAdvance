@@ -14,6 +14,9 @@ set(HEADERS
   main_window.hpp
 )
 
+set(RESOURCES
+)
+
 # CHECKME: dunno, is this required?
 set(CMAKE_AUTOMOC ON)
 
@@ -24,6 +27,17 @@ find_package(Qt5Widgets REQUIRED)
 find_package(Qt5OpenGL REQUIRED)
 set(QT_DEPS Qt5::Gui Qt5::Widgets Qt5::OpenGL)
 
-add_executable(NanoBoyAdvance-Qt ${SOURCES} ${HEADERS})
+# Append application resources (icon and manifest) on Win32.
+if(WIN32)
+  list(APPEND RESOURCES rc/app.rc)
+
+  if(MINGW)
+    set(CMAKE_RC_COMPILER_INIT windres)
+    enable_language(RC)
+    set(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> -i <SOURCE> -o <OBJECT>")
+  endif()  
+endif()
+
+add_executable(NanoBoyAdvance-Qt ${SOURCES} ${HEADERS} ${RESOURCES})
 target_link_libraries(NanoBoyAdvance-Qt platform-core ${QT_DEPS} ${OPENGL_gl_LIBRARY})
 set_target_properties(NanoBoyAdvance-Qt PROPERTIES OUTPUT_NAME "NanoBoyAdvance")
