@@ -39,7 +39,7 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
   config->video_dev = screen;
   config->audio_dev = std::make_shared<nba::SDL2_AudioDevice>();
   config->input_dev = input_device;
-  emulator = std::make_unique<nba::Emulator>(config);
+  core = nba::CreateCore(config);
 
   app->installEventFilter(this);
 
@@ -173,8 +173,6 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
 }
 
 void MainWindow::FileOpen() {
-  using StatusCode = nba::Emulator::StatusCode;
-
   QFileDialog dialog {this};
   dialog.setAcceptMode(QFileDialog::AcceptOpen);
   dialog.setFileMode(QFileDialog::ExistingFile);
@@ -190,8 +188,6 @@ void MainWindow::FileOpen() {
 
   /* Load emulator configuration */
   ReadConfig();
-
-  auto& core = emulator->GetCore();
 
   // TODO: clean this up!
 
@@ -239,7 +235,7 @@ void MainWindow::FileOpen() {
     }
   }
 
-  emulator->Reset();
+  core->Reset();
   emulator_state = EmulationState::Running;
   framelimiter.Reset();
 
@@ -249,7 +245,7 @@ void MainWindow::FileOpen() {
     while (emulator_state == EmulationState::Running) {
       framelimiter.Run([&] {
         UpdateGameControllerInput();
-        emulator->Frame();
+        core->RunForOneFrame();
       }, [&](int fps) {
         this->setWindowTitle(QString{ (std::string("NanoBoyAdvance [") + std::to_string(fps) + std::string(" fps]")).c_str() });
       });

@@ -13,7 +13,6 @@ set(SOURCES
   src/loader/bios.cpp
   src/loader/rom.cpp
   src/config.cpp
-  src/emulator.cpp
   src/frame_limiter.cpp
   src/game_db.cpp
 )
@@ -26,7 +25,6 @@ set(HEADERS_PUBLIC
   include/platform/loader/bios.hpp
   include/platform/loader/rom.hpp
   include/platform/config.hpp
-  include/platform/emulator.hpp
   include/platform/frame_limiter.hpp
   include/platform/game_db.hpp
 )

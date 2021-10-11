@@ -9,7 +9,7 @@
 
 #include <atomic>
 #include <platform/config.hpp>
-#include <platform/emulator.hpp>
+#include <nba/core.hpp>
 #include <platform/frame_limiter.hpp>
 #include <memory>
 #include <QMainWindow>
@@ -85,7 +85,7 @@ private:
   std::shared_ptr<Screen> screen;
   std::shared_ptr<nba::BasicInputDevice> input_device = std::make_shared<nba::BasicInputDevice>();
   std::shared_ptr<nba::Config> config = std::make_shared<nba::Config>();
-  std::unique_ptr<nba::Emulator> emulator;
+  std::unique_ptr<nba::CoreBase> core;
   nba::FrameLimiter framelimiter {59.7275};
   std::thread emulator_thread;
 
