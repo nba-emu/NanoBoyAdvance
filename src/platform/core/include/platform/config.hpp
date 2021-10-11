@@ -9,6 +9,7 @@
 
 #include <nba/config.hpp>
 #include <string>
+#include <toml.hpp>
 
 namespace nba {
 
@@ -33,6 +34,10 @@ struct PlatformConfig : Config {
 
   void Load(std::string const& path);
   void Save(std::string const& path);
+
+protected:
+  virtual void LoadCustomData(toml::value const& data) {}
+  virtual void SaveCustomData(toml::basic_value<toml::preserve_comments>& data) {};
 };
 
 } // namespace nba

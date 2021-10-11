@@ -10,7 +10,6 @@
 #include <fstream>
 #include <map>
 #include <platform/config.hpp>
-#include <toml.hpp>
 
 namespace nba {
 
@@ -111,6 +110,8 @@ void PlatformConfig::Load(std::string const& path) {
       this->audio.mp2k_hle_cubic = toml::find_or<toml::boolean>(audio, "mp2k_hle_cubic", false);
     }
   }
+
+  LoadCustomData(data);
 }
 
 void PlatformConfig::Save(std::string const& path) {
@@ -163,6 +164,8 @@ void PlatformConfig::Save(std::string const& path) {
   data["audio"]["interpolate_fifo"] = this->audio.interpolate_fifo;
   data["audio"]["mp2k_hle_enable"] = this->audio.mp2k_hle_enable;
   data["audio"]["mp2k_hle_cubic"] = this->audio.mp2k_hle_cubic;
+
+  SaveCustomData(data);
 
   std::ofstream file{ path, std::ios::out };
   file << data;
