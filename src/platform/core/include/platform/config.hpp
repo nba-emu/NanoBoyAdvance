@@ -12,7 +12,9 @@
 
 namespace nba {
 
-void config_toml_read (Config &config, std::string const& path);
-void config_toml_write(Config &config, std::string const& path);
+struct PlatformConfig : Config {
+  void Load(std::string const& path);
+  void Save(std::string const& path);
+};
 
 } // namespace nba

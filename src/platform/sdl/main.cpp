@@ -49,7 +49,7 @@ static SDL_GameController* g_game_controller = nullptr;
 static auto g_game_controller_button_x_old = false;
 static auto g_fastforward = false;
 
-static auto g_config = std::make_shared<Config>();
+static auto g_config = std::make_shared<PlatformConfig>();
 static auto g_core = nba::CreateCore(g_config);
 static auto g_core_lock = std::mutex{};
 
@@ -284,7 +284,7 @@ void init(int argc, char** argv) {
   if (argc >= 1) {
     fs::current_path(fs::absolute(argv[0]).replace_filename(fs::path{ }));
   }
-  config_toml_read(*g_config, "config.toml");
+  g_config->Load("config.toml");
   parse_arguments(argc, argv);
   load_keymap();
   SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER);

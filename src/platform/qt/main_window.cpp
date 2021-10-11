@@ -25,8 +25,7 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
   screen = std::make_shared<Screen>(this);
   setCentralWidget(screen.get());
 
-  /* Read the configuration initially so that the correct configuration will be displayed. */
-  ReadConfig();
+  config->Load(kConfigPath);
 
   auto menubar = new QMenuBar(this);
   setMenuBar(menubar);
@@ -82,7 +81,7 @@ void MainWindow::CreateOptionsMenu(QMenuBar* menubar) {
     }
 
     config->bios_path = dialog.selectedFiles().at(0).toStdString();
-    WriteConfig();
+    config->Save(kConfigPath);
   });
 
   auto options_cartridge_menu = options_menu->addMenu(tr("Cartridge"));
@@ -124,7 +123,7 @@ void MainWindow::CreateBooleanOption(QMenu* menu, const char* name, bool* underl
 
   connect(action, &QAction::triggered, [=](bool checked) {
     *underlying = checked;
-    WriteConfig();
+    config->Save(kConfigPath);
   });
 }
 
@@ -186,10 +185,7 @@ void MainWindow::FileOpen() {
 
   StopEmulatorThread();
 
-  /* Load emulator configuration */
-  ReadConfig();
-
-  // TODO: clean this up!
+  config->Load(kConfigPath);
 
   switch (nba::BIOSLoader::Load(core, config->bios_path)) {
     case nba::BIOSLoader::Result::CannotFindFile: {

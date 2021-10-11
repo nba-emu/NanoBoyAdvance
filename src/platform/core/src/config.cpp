@@ -14,11 +14,9 @@
 
 namespace nba {
 
-void config_toml_read(Config& config, std::string const& path) {
+void PlatformConfig::Load(std::string const& path) {
   if (!std::filesystem::exists(path)) {
-    auto default_config = Config{};
-    config_toml_write(default_config, path);
-    Log<Info>("Config: created default configuration file.");
+    Save(path);
     return;
   }
 
@@ -36,9 +34,9 @@ void config_toml_read(Config& config, std::string const& path) {
 
     if (general_result.is_ok()) {
       auto general = general_result.unwrap();
-      config.bios_path = toml::find_or<std::string>(general, "bios_path", "bios.bin");
-      config.skip_bios = toml::find_or<toml::boolean>(general, "bios_skip", false);
-      config.sync_to_audio = toml::find_or<toml::boolean>(general, "sync_to_audio", true);
+      this->bios_path = toml::find_or<std::string>(general, "bios_path", "bios.bin");
+      this->skip_bios = toml::find_or<toml::boolean>(general, "bios_skip", false);
+      this->sync_to_audio = toml::find_or<toml::boolean>(general, "sync_to_audio", true);
     }
   }
 
@@ -63,12 +61,12 @@ void config_toml_read(Config& config, std::string const& path) {
 
       if (match == save_types.end()) {
         Log<Warn>("Config: backup type '{0}' is not valid, defaulting to auto-detect.", save_type);
-        config.backup_type = Config::BackupType::Detect;
+        this->backup_type = Config::BackupType::Detect;
       } else {
-        config.backup_type = match->second;
+        this->backup_type = match->second;
       }
 
-      config.force_rtc = toml::find_or<toml::boolean>(cartridge, "force_rtc", false);
+      this->force_rtc = toml::find_or<toml::boolean>(cartridge, "force_rtc", false);
     }
   }
 
@@ -77,10 +75,10 @@ void config_toml_read(Config& config, std::string const& path) {
 
     if (video_result.is_ok()) {
       auto video = video_result.unwrap();
-      config.video.fullscreen = toml::find_or<toml::boolean>(video, "fullscreen", false);
-      config.video.scale = toml::find_or<int>(video, "scale", 2);
-      config.video.shader.path_vs = toml::find_or<std::string>(video, "shader_vs", "");
-      config.video.shader.path_fs = toml::find_or<std::string>(video, "shader_fs", "");
+      this->video.fullscreen = toml::find_or<toml::boolean>(video, "fullscreen", false);
+      this->video.scale = toml::find_or<int>(video, "scale", 2);
+      this->video.shader.path_vs = toml::find_or<std::string>(video, "shader_vs", "");
+      this->video.shader.path_fs = toml::find_or<std::string>(video, "shader_fs", "");
     }
   }
 
@@ -103,19 +101,19 @@ void config_toml_read(Config& config, std::string const& path) {
 
       if (match == resamplers.end()) {
         Log<Warn>("Config: unknown resampling algorithm: {} (defaulting to cosine).", resampler);
-        config.audio.interpolation = Config::Audio::Interpolation::Cosine;
+        this->audio.interpolation = Config::Audio::Interpolation::Cosine;
       } else {
-        config.audio.interpolation = match->second;
+        this->audio.interpolation = match->second;
       }
 
-      config.audio.interpolate_fifo = toml::find_or<toml::boolean>(audio, "interpolate_fifo", true);
-      config.audio.mp2k_hle_enable = toml::find_or<toml::boolean>(audio, "mp2k_hle_enable", false);
-      config.audio.mp2k_hle_cubic = toml::find_or<toml::boolean>(audio, "mp2k_hle_cubic", false);
+      this->audio.interpolate_fifo = toml::find_or<toml::boolean>(audio, "interpolate_fifo", true);
+      this->audio.mp2k_hle_enable = toml::find_or<toml::boolean>(audio, "mp2k_hle_enable", false);
+      this->audio.mp2k_hle_cubic = toml::find_or<toml::boolean>(audio, "mp2k_hle_cubic", false);
     }
   }
 }
 
-void config_toml_write(Config& config, std::string const& path) {
+void PlatformConfig::Save(std::string const& path) {
   toml::basic_value<toml::preserve_comments> data;
 
   if (std::filesystem::exists(path)) {
@@ -128,13 +126,13 @@ void config_toml_write(Config& config, std::string const& path) {
   }
 
   // General
-  data["general"]["bios_path"] = config.bios_path;
-  data["general"]["bios_skip"] = config.skip_bios;
-  data["general"]["sync_to_audio"] = config.sync_to_audio;
+  data["general"]["bios_path"] = this->bios_path;
+  data["general"]["bios_skip"] = this->skip_bios;
+  data["general"]["sync_to_audio"] = this->sync_to_audio;
 
   // Cartridge
   std::string save_type;
-  switch (config.backup_type) {
+  switch (this->backup_type) {
     case Config::BackupType::Detect: save_type = "detect"; break;
     case Config::BackupType::None:   save_type = "none"; break;
     case Config::BackupType::SRAM:   save_type = "sram"; break;
@@ -144,17 +142,17 @@ void config_toml_write(Config& config, std::string const& path) {
     case Config::BackupType::EEPROM_64: save_type = "eeprom8192"; break;
   }
   data["cartridge"]["save_type"] = save_type;
-  data["cartridge"]["force_rtc"] = config.force_rtc;
+  data["cartridge"]["force_rtc"] = this->force_rtc;
 
   // Video
-  data["video"]["fullscreen"] = config.video.fullscreen;
-  data["video"]["scale"] = config.video.scale;
-  data["video"]["shader_vs"] = config.video.shader.path_vs;
-  data["video"]["shader_fs"] = config.video.shader.path_fs;
+  data["video"]["fullscreen"] = this->video.fullscreen;
+  data["video"]["scale"] = this->video.scale;
+  data["video"]["shader_vs"] = this->video.shader.path_vs;
+  data["video"]["shader_fs"] = this->video.shader.path_fs;
 
   // Audio
   std::string resampler;
-  switch (config.audio.interpolation) {
+  switch (this->audio.interpolation) {
     case Config::Audio::Interpolation::Cosine: resampler = "cosine"; break;
     case Config::Audio::Interpolation::Cubic:  resampler = "cubic";  break;
     case Config::Audio::Interpolation::Sinc_64:  resampler = "sinc64"; break;
@@ -162,9 +160,9 @@ void config_toml_write(Config& config, std::string const& path) {
     case Config::Audio::Interpolation::Sinc_256: resampler = "sinc256"; break;
   }
   data["audio"]["resampler"] = resampler;
-  data["audio"]["interpolate_fifo"] = config.audio.interpolate_fifo;
-  data["audio"]["mp2k_hle_enable"] = config.audio.mp2k_hle_enable;
-  data["audio"]["mp2k_hle_cubic"] = config.audio.mp2k_hle_cubic;
+  data["audio"]["interpolate_fifo"] = this->audio.interpolate_fifo;
+  data["audio"]["mp2k_hle_enable"] = this->audio.mp2k_hle_enable;
+  data["audio"]["mp2k_hle_cubic"] = this->audio.mp2k_hle_cubic;
 
   std::ofstream file{ path, std::ios::out };
   file << data;

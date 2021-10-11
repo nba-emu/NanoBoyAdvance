@@ -53,22 +53,14 @@ private:
 
       connect(action, &QAction::triggered, [=]() {
         *underlying = entry.second;
-        nba::config_toml_write(*config, "config.toml");
+        config->Save(kConfigPath);
       });
     }
 
     menu->addActions(group->actions());
   }
 
-  static constexpr auto s_toml_config_path = "config.toml";
-
-  void ReadConfig() {
-    nba::config_toml_read(*config, s_toml_config_path);
-  }
-
-  void WriteConfig() {
-    nba::config_toml_write(*config, s_toml_config_path);
-  }
+  static constexpr auto kConfigPath = "config.toml";
 
   void FindGameController();
   void UpdateGameControllerInput();
@@ -84,7 +76,7 @@ private:
 
   std::shared_ptr<Screen> screen;
   std::shared_ptr<nba::BasicInputDevice> input_device = std::make_shared<nba::BasicInputDevice>();
-  std::shared_ptr<nba::Config> config = std::make_shared<nba::Config>();
+  std::shared_ptr<nba::PlatformConfig> config = std::make_shared<nba::PlatformConfig>();
   std::unique_ptr<nba::CoreBase> core;
   nba::FrameLimiter framelimiter {59.7275};
   std::thread emulator_thread;
