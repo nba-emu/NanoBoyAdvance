@@ -4,12 +4,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SOURCES
+  config.cpp
   main.cpp
   screen.cpp
   main_window.cpp
 )
 
 set(HEADERS
+  config.hpp
   screen.hpp
   main_window.hpp
 )

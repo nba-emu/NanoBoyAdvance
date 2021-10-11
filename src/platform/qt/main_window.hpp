@@ -8,7 +8,6 @@
 #pragma once
 
 #include <atomic>
-#include <platform/config.hpp>
 #include <nba/core.hpp>
 #include <platform/frame_limiter.hpp>
 #include <memory>
@@ -19,6 +18,7 @@
 #include <utility>
 #include <vector>
 
+#include "config.hpp"
 #include "keymap_window.hpp"
 #include "screen.hpp"
 
@@ -76,7 +76,7 @@ private:
 
   std::shared_ptr<Screen> screen;
   std::shared_ptr<nba::BasicInputDevice> input_device = std::make_shared<nba::BasicInputDevice>();
-  std::shared_ptr<nba::PlatformConfig> config = std::make_shared<nba::PlatformConfig>();
+  std::shared_ptr<QtConfig> config = std::make_shared<QtConfig>();
   std::unique_ptr<nba::CoreBase> core;
   nba::FrameLimiter framelimiter {59.7275};
   std::thread emulator_thread;

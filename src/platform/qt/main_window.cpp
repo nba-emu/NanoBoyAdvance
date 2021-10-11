@@ -42,7 +42,7 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
 
   app->installEventFilter(this);
 
-  keymap_window = new KeyMapWindow{app, this};
+  keymap_window = new KeyMapWindow{app, this, config};
 
   FindGameController();
 }
@@ -155,17 +155,14 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
   auto key = dynamic_cast<QKeyEvent*>(event)->key();
   auto pressed = type == QEvent::KeyPress;
 
-  auto& map = keymap_window->map;
-
   for (int i = 0; i < nba::InputDevice::kKeyCount; i++) {
-    if (map.keypad[i] == key) {
+    if (config->input.gba[i] == key) {
       input_device->SetKeyStatus(static_cast<nba::InputDevice::Key>(i), pressed);
     }
   }
 
-  if (key == map.fast_forward) {
+  if (key == config->input.fast_forward) {
     framelimiter.SetFastForward(pressed);
-    // return true;
   }
 
   return QObject::eventFilter(obj, event);
