@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SOURCES
   config.cpp
+  keymap_window.cpp
   main.cpp
   screen.cpp
   main_window.cpp
@@ -12,6 +13,7 @@ set(SOURCES
 
 set(HEADERS
   config.hpp
+  keymap_window.hpp
   screen.hpp
   main_window.hpp
 )

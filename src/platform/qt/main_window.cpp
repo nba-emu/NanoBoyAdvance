@@ -34,7 +34,6 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
   CreateOptionsMenu(menubar);
   CreateHelpMenu(menubar);
 
-  /* Set emulator config */
   config->video_dev = screen;
   config->audio_dev = std::make_shared<nba::SDL2_AudioDevice>();
   config->input_dev = input_device;
@@ -289,8 +288,6 @@ void MainWindow::UpdateGameControllerInput() {
     { SDL_CONTROLLER_BUTTON_START, Key::Start },
     { SDL_CONTROLLER_BUTTON_BACK, Key::Select }
   };
-
-  // TODO: handle concurrent input from keyboard and game controller.
 
   for (auto& button : buttons) {
     if (SDL_GameControllerGetButton(game_controller, button.first)) {
