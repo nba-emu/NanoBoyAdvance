@@ -72,6 +72,7 @@ private:
 
   void FindGameController();
   void UpdateGameControllerInput();
+  void StopEmulatorThread();
 
   enum class EmulationState {
     Stopped,

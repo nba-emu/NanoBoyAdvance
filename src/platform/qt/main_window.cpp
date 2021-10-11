@@ -49,6 +49,8 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
 }
 
 MainWindow::~MainWindow() {
+  StopEmulatorThread();
+
   if (game_controller != nullptr) {
     SDL_GameControllerClose(game_controller);
   }
@@ -184,10 +186,7 @@ void MainWindow::FileOpen() {
 
   auto file = dialog.selectedFiles().at(0);
 
-  if (emulator_state == EmulationState::Running) {
-    emulator_state = EmulationState::Stopped;
-    while (emulator_thread_running) ;
-  }
+  StopEmulatorThread();
 
   /* Load emulator configuration */
   ReadConfig();
@@ -320,4 +319,11 @@ void MainWindow::UpdateGameControllerInput() {
   input_device->SetKeyStatus(Key::Right, x > threshold);
   input_device->SetKeyStatus(Key::Up, y < -threshold);
   input_device->SetKeyStatus(Key::Down, y > threshold);
+}
+
+void MainWindow::StopEmulatorThread() {
+  if (emulator_state == EmulationState::Running) {
+    emulator_state = EmulationState::Stopped;
+    while (emulator_thread_running) ;
+  }
 }
