@@ -13,6 +13,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QKeyEvent>
+#include <QStatusBar>
 #include <unordered_map>
 
 #include <iostream>
@@ -27,12 +28,16 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
 
   config->Load(kConfigPath);
 
-  auto menubar = new QMenuBar(this);
-  setMenuBar(menubar);
+  auto menu_bar = new QMenuBar(this);
+  menu_bar->setNativeMenuBar(false);
+  setMenuBar(menu_bar);
 
-  CreateFileMenu(menubar);
-  CreateOptionsMenu(menubar);
-  CreateHelpMenu(menubar);
+  auto status_bar = new QStatusBar{this};
+  setStatusBar(status_bar);
+
+  CreateFileMenu(menu_bar);
+  CreateOptionsMenu(menu_bar);
+  CreateHelpMenu(menu_bar);
 
   config->video_dev = screen;
   config->audio_dev = std::make_shared<nba::SDL2_AudioDevice>();
@@ -44,6 +49,11 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
   keymap_window = new KeyMapWindow{app, this, config};
 
   FindGameController();
+
+  connect(this, &MainWindow::UpdateFrameRate, this, [status_bar](int fps) {
+    auto percent = fps / 59.7275 * 100;
+    status_bar->showMessage(QString{fmt::format("{} fps ({:.2f}%)", fps, percent).c_str()});
+  }, Qt::BlockingQueuedConnection);
 }
 
 MainWindow::~MainWindow() {
@@ -54,8 +64,8 @@ MainWindow::~MainWindow() {
   }
 }
 
-void MainWindow::CreateFileMenu(QMenuBar* menubar) {
-  auto file_menu = menubar->addMenu(tr("&File"));
+void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
+  auto file_menu = menu_bar->addMenu(tr("&File"));
   auto file_open = file_menu->addAction(tr("&Open"));
   auto file_close = file_menu->addAction(tr("&Close"));
 
@@ -63,8 +73,8 @@ void MainWindow::CreateFileMenu(QMenuBar* menubar) {
   connect(file_close, &QAction::triggered, &QApplication::quit);
 }
 
-void MainWindow::CreateOptionsMenu(QMenuBar* menubar) {
-  auto options_menu = menubar->addMenu(tr("&Options"));
+void MainWindow::CreateOptionsMenu(QMenuBar* menu_bar) {
+  auto options_menu = menu_bar->addMenu(tr("&Options"));
 
   auto options_bios_menu = options_menu->addMenu(tr("BIOS"));
   auto options_bios_path = options_bios_menu->addAction(tr("Select path"));
@@ -126,8 +136,8 @@ void MainWindow::CreateBooleanOption(QMenu* menu, const char* name, bool* underl
   });
 }
 
-void MainWindow::CreateHelpMenu(QMenuBar* menubar) {
-  auto help_menu = menubar->addMenu(tr("&?"));
+void MainWindow::CreateHelpMenu(QMenuBar* menu_bar) {
+  auto help_menu = menu_bar->addMenu(tr("&?"));
   auto about_app = help_menu->addAction(tr("About NanoBoyAdvance"));
 
   about_app->setMenuRole(QAction::AboutRole);
@@ -239,7 +249,7 @@ void MainWindow::FileOpen() {
         UpdateGameControllerInput();
         core->RunForOneFrame();
       }, [&](int fps) {
-        this->setWindowTitle(QString{ (std::string("NanoBoyAdvance [") + std::to_string(fps) + std::string(" fps]")).c_str() });
+        emit UpdateFrameRate(fps);
       });
     }
 

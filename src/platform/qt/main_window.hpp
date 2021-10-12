@@ -32,13 +32,16 @@ public:
 protected:
   bool eventFilter(QObject* obj, QEvent* event);
 
+signals:
+  void UpdateFrameRate(int fps);
+
 private slots:
   void FileOpen();
 
 private:
-  void CreateFileMenu(QMenuBar* menubar);
-  void CreateOptionsMenu(QMenuBar* menubar);
-  void CreateHelpMenu(QMenuBar* menubar);
+  void CreateFileMenu(QMenuBar* menu_bar);
+  void CreateOptionsMenu(QMenuBar* menu_bar);
+  void CreateHelpMenu(QMenuBar* menu_bar);
   void CreateBooleanOption(QMenu* menu, const char* name, bool* underlying);
 
   template <typename T>
