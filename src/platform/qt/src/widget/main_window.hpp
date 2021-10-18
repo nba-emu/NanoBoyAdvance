@@ -76,7 +76,7 @@ private:
   std::unique_ptr<nba::CoreBase> core;
   std::unique_ptr<nba::EmulatorThread> emu_thread;
 
-  InputWindow* keymap_window;
+  InputWindow* input_window;
 
   SDL_GameController* game_controller = nullptr;
   bool game_controller_button_x_old = false;

@@ -45,10 +45,13 @@ MainWindow::MainWindow(
 
   app->installEventFilter(this);
 
-  keymap_window = new InputWindow{app, this, config};
+  input_window = new InputWindow{app, this, config};
 
   FindGameController();
 
+  emu_thread->SetFrameRateCallback([this](float fps) {
+    emit UpdateFrameRate(fps);
+  });
   connect(this, &MainWindow::UpdateFrameRate, this, [this](int fps) {
     auto percent = fps / 59.7275 * 100;
     setWindowTitle(QString::fromStdString(fmt::format("NanoBoyAdvance 1.4 [{} fps | {:.2f}%]", fps, percent)));;
@@ -146,7 +149,7 @@ void MainWindow::CreateOptionsMenu(QMenuBar* menu_bar) {
 
   auto configure_input = options_menu->addAction(tr("Configure input"));
   connect(configure_input, &QAction::triggered, [this] {
-    keymap_window->exec();
+    input_window->exec();
   });
 }
 
@@ -263,26 +266,6 @@ void MainWindow::FileOpen() {
 
     core->Reset();
     emu_thread->Start();
-
-    /*emulator_state = EmulationState::Running;
-    framelimiter.Reset();
-
-    emulator_thread = std::thread([this] {
-      emulator_thread_running = true;
-
-      while (emulator_state == EmulationState::Running) {
-        framelimiter.Run([&] {
-          UpdateGameControllerInput();
-          core->RunForOneFrame();
-        }, [&](int fps) {
-          emit UpdateFrameRate(fps);
-        });
-      }
-
-      emulator_thread_running = false;
-    });
-
-    emulator_thread.detach();*/
   }
 }
 

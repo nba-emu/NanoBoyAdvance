@@ -31,6 +31,10 @@ void EmulatorThread::SetFastForward(bool enabled) {
   frame_limiter.SetFastForward(enabled);
 }
 
+void EmulatorThread::SetFrameRateCallback(std::function<void(float)> callback) {
+  frame_rate_cb = callback;
+}
+
 void EmulatorThread::Start() {
   if (!running) {
     running = true;
@@ -41,7 +45,7 @@ void EmulatorThread::Start() {
         frame_limiter.Run([this]() {
           core->RunForOneFrame();
         }, [this](float fps) {
-          // ...
+          frame_rate_cb(fps);
         });
       }
     }};

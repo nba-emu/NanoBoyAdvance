@@ -8,9 +8,10 @@
 #pragma once
 
 #include <atomic>
+#include <functional>
 #include <nba/core.hpp>
 #include <platform/frame_limiter.hpp>
-#include <thread>
+#include <thread> 
 
 namespace nba {
 
@@ -21,6 +22,7 @@ struct EmulatorThread {
   bool IsRunning() const;
   bool GetFastForward() const;
   void SetFastForward(bool enabled);
+  void SetFrameRateCallback(std::function<void(float)> callback);
   void Start();
   void Stop();
 
@@ -29,6 +31,7 @@ private:
   FrameLimiter frame_limiter;
   std::thread thread;
   std::atomic_bool running = false;
+  std::function<void(float)> frame_rate_cb;
 };
 
 } // namespace nba
