@@ -11,38 +11,26 @@
 #include <QGLWidget>
 #include <QOpenGLWidget>
 
-class Screen : public QOpenGLWidget,
-               public nba::VideoDevice {
-  Q_OBJECT
+struct Screen : QOpenGLWidget, nba::VideoDevice {
+  Screen(QWidget* parent);
+ ~Screen() override;
 
-public:
-  Screen(QWidget* parent) : QOpenGLWidget(parent) {
-    QSurfaceFormat format;
-    format.setSwapInterval(0);
-    setFormat(format);
+  void Draw(u32* buffer) final;
 
-    // The signal-slot structure is needed, so that Screen::Draw
-    // may be invoked from another thread without causing trouble.
-    connect(this, &Screen::SignalDraw, this, &Screen::DrawSlot);
-  }
+signals:
+  void RequestDraw(u32* buffer);
 
-  ~Screen() override { glDeleteTextures(1, &texture); }
-
-  void Draw(std::uint32_t* buffer) final;
+private slots:
+  void OnRequestDraw(u32* buffer);
 
 protected:
   void initializeGL() override;
   void paintGL() override;
   void resizeGL(int width, int height) override;
 
-private slots:
-  void DrawSlot(std::uint32_t* buffer);
-
-signals:
-  void SignalDraw(std::uint32_t* buffer);
 
 private:
-  auto CompileShader() -> GLuint;
+  auto CreateShader() -> GLuint;
 
   int viewport_x = 0;
   int viewport_width = 0;
@@ -50,4 +38,6 @@ private:
 
   GLuint texture;
   GLuint program;
+
+  Q_OBJECT
 };

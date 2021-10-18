@@ -9,31 +9,40 @@
 
 #include "screen.hpp"
 
-void Screen::Draw(std::uint32_t* buffer) {
-  emit SignalDraw(buffer);
+Screen::Screen(QWidget* parent)
+    : QOpenGLWidget(parent) {
+  QSurfaceFormat format;
+  format.setSwapInterval(0);
+  setFormat(format);
+  connect(this, &Screen::RequestDraw, this, &Screen::OnRequestDraw);
 }
 
-void Screen::DrawSlot(std::uint32_t* buffer) {
-  glBindTexture(GL_TEXTURE_2D, texture);
+Screen::~Screen() {
+  glDeleteTextures(1, &texture);
+}
 
-  /* Update texture pixels */
+void Screen::Draw(u32* buffer) {
+  emit RequestDraw(buffer);
+}
+
+void Screen::OnRequestDraw(u32* buffer) {
+  glBindTexture(GL_TEXTURE_2D, texture);
   glTexImage2D(
-          GL_TEXTURE_2D,
-          0,
-          GL_RGBA,
-          240, /* TODO: do not hardcode the dimensions? */
-          160,
-          0,
-          GL_BGRA,
-          GL_UNSIGNED_BYTE,
-          buffer
+    GL_TEXTURE_2D,
+    0,
+    GL_RGBA,
+    240,
+    160,
+    0,
+    GL_BGRA,
+    GL_UNSIGNED_BYTE,
+    buffer
   );
 
-  /* Redraw screen */
   update();
 }
 
-auto Screen::CompileShader() -> GLuint {
+auto Screen::CreateShader() -> GLuint {
   QGLFunctions ctx(QGLContext::currentContext());
 
   auto vid = ctx.glCreateShader(GL_VERTEX_SHADER);
@@ -48,8 +57,6 @@ auto Screen::CompileShader() -> GLuint {
   };
 
   const char* frag_src[] = {
-    // Credits to Talarubi and byuu for the color correction algorithm.
-    // https://byuu.net/video/color-emulation
     "uniform sampler2D tex;\n"
     "varying vec2 uv;\n"
     "void main(void) {\n"
@@ -62,7 +69,7 @@ auto Screen::CompileShader() -> GLuint {
     "}"
   };
 
-  /* TODO: check for compilation errors. */
+  // TODO: check for and log shader compilation errors.
   ctx.glShaderSource(vid, 1, vert_src, nullptr);
   ctx.glShaderSource(fid, 1, frag_src, nullptr);
   ctx.glCompileShader(vid);
@@ -93,7 +100,7 @@ void Screen::initializeGL() {
   glClearColor(0, 0, 0, 1);
   glClear(GL_COLOR_BUFFER_BIT);
 
-  program = CompileShader();
+  program = CreateShader();
 }
 
 void Screen::paintGL() {

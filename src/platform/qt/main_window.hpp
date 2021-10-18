@@ -22,15 +22,13 @@
 #include "keymap_window.hpp"
 #include "screen.hpp"
 
-class MainWindow : public QMainWindow {
-  Q_OBJECT
+struct MainWindow : QMainWindow {
+  MainWindow(
+    QApplication* app,
+    QWidget* parent = 0
+  );
 
-public:
-  MainWindow(QApplication* app, QWidget* parent = 0);
  ~MainWindow();
-
-protected:
-  bool eventFilter(QObject* obj, QEvent* event);
 
 signals:
   void UpdateFrameRate(int fps);
@@ -38,7 +36,12 @@ signals:
 private slots:
   void FileOpen();
 
+protected:
+  bool eventFilter(QObject* obj, QEvent* event);
+
 private:
+  static constexpr auto kConfigPath = "config.toml";
+
   void CreateFileMenu(QMenuBar* menu_bar);
   void CreateOptionsMenu(QMenuBar* menu_bar);
   void CreateHelpMenu(QMenuBar* menu_bar);
@@ -62,8 +65,6 @@ private:
 
     menu->addActions(group->actions());
   }
-
-  static constexpr auto kConfigPath = "config.toml";
 
   void FindGameController();
   void UpdateGameControllerInput();
@@ -89,4 +90,6 @@ private:
 
   SDL_GameController* game_controller = nullptr;
   bool game_controller_button_x_old = false;
+
+  Q_OBJECT
 };

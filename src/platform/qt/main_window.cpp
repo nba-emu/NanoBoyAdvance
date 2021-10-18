@@ -18,7 +18,10 @@
 
 #include "main_window.hpp"
 
-MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent) {
+MainWindow::MainWindow(
+  QApplication* app,
+  QWidget* parent
+)   : QMainWindow(parent) {
   setWindowTitle("NanoBoyAdvance 1.4");
 
   screen = std::make_shared<Screen>(this);
