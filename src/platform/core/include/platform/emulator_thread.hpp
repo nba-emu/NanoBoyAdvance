@@ -15,16 +15,17 @@
 namespace nba {
 
 struct EmulatorThread {
-  EmulatorThread(std::shared_ptr<CoreBase> core);
+  EmulatorThread(std::unique_ptr<CoreBase>& core);
  ~EmulatorThread();
 
   bool IsRunning() const;
+  bool GetFastForward() const;
   void SetFastForward(bool enabled);
   void Start();
   void Stop();
 
 private:
-  std::shared_ptr<CoreBase> core;
+  std::unique_ptr<CoreBase>& core;
   FrameLimiter frame_limiter;
   std::thread thread;
   std::atomic_bool running = false;

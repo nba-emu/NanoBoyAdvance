@@ -41,6 +41,7 @@ MainWindow::MainWindow(
   config->audio_dev = std::make_shared<nba::SDL2_AudioDevice>();
   config->input_dev = input_device;
   core = nba::CreateCore(config);
+  emu_thread = std::make_unique<nba::EmulatorThread>(core);
 
   app->installEventFilter(this);
 
@@ -57,7 +58,7 @@ MainWindow::MainWindow(
 }
 
 MainWindow::~MainWindow() {
-  StopEmulatorThread();
+  emu_thread->Stop();
 
   if (game_controller != nullptr) {
     SDL_GameControllerClose(game_controller);
@@ -197,7 +198,7 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
   }
 
   if (key == config->input.fast_forward) {
-    framelimiter.SetFastForward(pressed);
+    emu_thread->SetFastForward(pressed);
   }
 
   return QObject::eventFilter(obj, event);
@@ -209,80 +210,80 @@ void MainWindow::FileOpen() {
   dialog.setFileMode(QFileDialog::ExistingFile);
   dialog.setNameFilter("Game Boy Advance ROMs (*.gba *.agb)");
 
-  if (!dialog.exec()) {
-    return;
+  if (dialog.exec()) {
+    auto file = dialog.selectedFiles().at(0);
+
+    emu_thread->Stop();
+
+    config->Load(kConfigPath);
+
+    switch (nba::BIOSLoader::Load(core, config->bios_path)) {
+      case nba::BIOSLoader::Result::CannotFindFile: {
+        // TODO: ask the user if they want to assign the file.
+        QMessageBox box {this};
+        box.setText(tr("Please reference a BIOS file in the configuration.\n\n"
+                       "Cannot find BIOS: ") + QString{config->bios_path.c_str()});
+        box.setIcon(QMessageBox::Critical);
+        box.setWindowTitle(tr("BIOS not found"));
+        box.exec();
+        return;
+      }
+      case nba::BIOSLoader::Result::CannotOpenFile:
+      case nba::BIOSLoader::Result::BadImage: {
+        QMessageBox box {this};
+        box.setText(tr("Failed to open the BIOS file. "
+                       "Make sure that the permissions are correct and that the BIOS image is valid.\n\n"
+                       "Cannot open BIOS: ") + QString{config->bios_path.c_str()});
+        box.setIcon(QMessageBox::Critical);
+        box.setWindowTitle(tr("Cannot open BIOS"));
+        box.exec();
+        return;
+      }
+    }
+
+    switch (nba::ROMLoader::Load(core, file.toStdString(), config->backup_type, config->force_rtc)) {
+      case nba::ROMLoader::Result::CannotFindFile: {
+        QMessageBox box {this};
+        box.setText(tr("Cannot find file: ") + QFileInfo(file).fileName());
+        box.setIcon(QMessageBox::Critical);
+        box.setWindowTitle(tr("File not found"));
+        box.exec();
+        return;
+      }
+      case nba::ROMLoader::Result::CannotOpenFile:
+      case nba::ROMLoader::Result::BadImage: {
+        QMessageBox box {this};
+        box.setIcon(QMessageBox::Critical);
+        box.setText(tr("The file could not be opened. Make sure that the permissions are correct and that the ROM image is valid."));
+        box.setWindowTitle(tr("Cannot open ROM"));
+        box.exec();
+        return;
+      }
+    }
+
+    core->Reset();
+    emu_thread->Start();
+
+    /*emulator_state = EmulationState::Running;
+    framelimiter.Reset();
+
+    emulator_thread = std::thread([this] {
+      emulator_thread_running = true;
+
+      while (emulator_state == EmulationState::Running) {
+        framelimiter.Run([&] {
+          UpdateGameControllerInput();
+          core->RunForOneFrame();
+        }, [&](int fps) {
+          emit UpdateFrameRate(fps);
+        });
+      }
+
+      emulator_thread_running = false;
+    });
+
+    emulator_thread.detach();*/
   }
-
-  auto file = dialog.selectedFiles().at(0);
-
-  StopEmulatorThread();
-
-  config->Load(kConfigPath);
-
-  switch (nba::BIOSLoader::Load(core, config->bios_path)) {
-    case nba::BIOSLoader::Result::CannotFindFile: {
-      // TODO: ask the user if they want to assign the file.
-      QMessageBox box {this};
-      box.setText(tr("Please reference a BIOS file in the configuration.\n\n"
-                     "Cannot find BIOS: ") + QString{config->bios_path.c_str()});
-      box.setIcon(QMessageBox::Critical);
-      box.setWindowTitle(tr("BIOS not found"));
-      box.exec();
-      return;
-    }
-    case nba::BIOSLoader::Result::CannotOpenFile:
-    case nba::BIOSLoader::Result::BadImage: {
-      QMessageBox box {this};
-      box.setText(tr("Failed to open the BIOS file. "
-                     "Make sure that the permissions are correct and that the BIOS image is valid.\n\n"
-                     "Cannot open BIOS: ") + QString{config->bios_path.c_str()});
-      box.setIcon(QMessageBox::Critical);
-      box.setWindowTitle(tr("Cannot open BIOS"));
-      box.exec();
-      return;
-    }
-  }
-
-  switch (nba::ROMLoader::Load(core, file.toStdString(), config->backup_type, config->force_rtc)) {
-    case nba::ROMLoader::Result::CannotFindFile: {
-      QMessageBox box {this};
-      box.setText(tr("Cannot find file: ") + QFileInfo(file).fileName());
-      box.setIcon(QMessageBox::Critical);
-      box.setWindowTitle(tr("File not found"));
-      box.exec();
-      return;
-    }
-    case nba::ROMLoader::Result::CannotOpenFile:
-    case nba::ROMLoader::Result::BadImage: {
-      QMessageBox box {this};
-      box.setIcon(QMessageBox::Critical);
-      box.setText(tr("The file could not be opened. Make sure that the permissions are correct and that the ROM image is valid."));
-      box.setWindowTitle(tr("Cannot open ROM"));
-      box.exec();
-      return;
-    }
-  }
-
-  core->Reset();
-  emulator_state = EmulationState::Running;
-  framelimiter.Reset();
-
-  emulator_thread = std::thread([this] {
-    emulator_thread_running = true;
-
-    while (emulator_state == EmulationState::Running) {
-      framelimiter.Run([&] {
-        UpdateGameControllerInput();
-        core->RunForOneFrame();
-      }, [&](int fps) {
-        emit UpdateFrameRate(fps);
-      });
-    }
-
-    emulator_thread_running = false;
-  });
-
-  emulator_thread.detach();
 }
 
 void MainWindow::FindGameController() {
@@ -312,7 +313,7 @@ void MainWindow::UpdateGameControllerInput() {
 
   auto button_x = SDL_GameControllerGetButton(game_controller, SDL_CONTROLLER_BUTTON_X);
   if (game_controller_button_x_old && !button_x) {
-    framelimiter.SetFastForward(!framelimiter.GetFastForward());
+    emu_thread->SetFastForward(!emu_thread->GetFastForward());
   }
   game_controller_button_x_old = button_x;
 
@@ -341,13 +342,6 @@ void MainWindow::UpdateGameControllerInput() {
   input_device->SetKeyStatus(Key::Right, x > threshold);
   input_device->SetKeyStatus(Key::Up, y < -threshold);
   input_device->SetKeyStatus(Key::Down, y > threshold);
-}
-
-void MainWindow::StopEmulatorThread() {
-  if (emulator_state == EmulationState::Running) {
-    emulator_state = EmulationState::Stopped;
-    while (emulator_thread_running) ;
-  }
 }
 
 void MainWindow::UpdateWindowSize() {

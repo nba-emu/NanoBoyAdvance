@@ -10,7 +10,7 @@
 namespace nba {
 
 EmulatorThread::EmulatorThread(
-  std::shared_ptr<CoreBase> core
+  std::unique_ptr<CoreBase>& core
 )   : core(core) {
   frame_limiter.Reset(59.7275);
 }
@@ -21,6 +21,10 @@ EmulatorThread::~EmulatorThread() {
 
 bool EmulatorThread::IsRunning() const {
   return running;
+}
+
+bool EmulatorThread::GetFastForward() const {
+  return frame_limiter.GetFastForward();
 }
 
 void EmulatorThread::SetFastForward(bool enabled) {
@@ -41,6 +45,13 @@ void EmulatorThread::Start() {
         });
       }
     }};
+  }
+}
+
+void EmulatorThread::Stop() {
+  if (IsRunning()) {
+    running = false;
+    thread.join();
   }
 }
 

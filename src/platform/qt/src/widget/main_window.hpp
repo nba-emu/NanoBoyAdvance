@@ -9,7 +9,7 @@
 
 #include <atomic>
 #include <nba/core.hpp>
-#include <platform/frame_limiter.hpp>
+#include <platform/emulator_thread.hpp>
 #include <memory>
 #include <QMainWindow>
 #include <QActionGroup>
@@ -68,23 +68,13 @@ private:
 
   void FindGameController();
   void UpdateGameControllerInput();
-  void StopEmulatorThread();
   void UpdateWindowSize();
-
-  enum class EmulationState {
-    Stopped,
-    Running,
-    Paused
-  } emulator_state = EmulationState::Stopped;
-
-  std::atomic<bool> emulator_thread_running;
 
   std::shared_ptr<Screen> screen;
   std::shared_ptr<nba::BasicInputDevice> input_device = std::make_shared<nba::BasicInputDevice>();
   std::shared_ptr<QtConfig> config = std::make_shared<QtConfig>();
   std::unique_ptr<nba::CoreBase> core;
-  nba::FrameLimiter framelimiter {59.7275};
-  std::thread emulator_thread;
+  std::unique_ptr<nba::EmulatorThread> emu_thread;
 
   InputWindow* keymap_window;
 
