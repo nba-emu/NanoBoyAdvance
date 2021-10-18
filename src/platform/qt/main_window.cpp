@@ -16,12 +16,10 @@
 #include <QStatusBar>
 #include <unordered_map>
 
-#include <iostream>
-
 #include "main_window.hpp"
 
 MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent) {
-  setWindowTitle("NanoBoyAdvance");
+  setWindowTitle("NanoBoyAdvance 1.4");
 
   screen = std::make_shared<Screen>(this);
   setCentralWidget(screen.get());
@@ -31,9 +29,6 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
   auto menu_bar = new QMenuBar(this);
   menu_bar->setNativeMenuBar(false);
   setMenuBar(menu_bar);
-
-  auto status_bar = new QStatusBar{this};
-  setStatusBar(status_bar);
 
   CreateFileMenu(menu_bar);
   CreateOptionsMenu(menu_bar);
@@ -50,9 +45,9 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
 
   FindGameController();
 
-  connect(this, &MainWindow::UpdateFrameRate, this, [status_bar](int fps) {
+  connect(this, &MainWindow::UpdateFrameRate, this, [this](int fps) {
     auto percent = fps / 59.7275 * 100;
-    status_bar->showMessage(QString{fmt::format("{} fps ({:.2f}%)", fps, percent).c_str()});
+    setWindowTitle(QString::fromStdString(fmt::format("NanoBoyAdvance 1.4 [{} fps | {:.2f}%]", fps, percent)));;
   }, Qt::BlockingQueuedConnection);
 
   UpdateWindowSize();
