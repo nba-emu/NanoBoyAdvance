@@ -54,6 +54,8 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
     auto percent = fps / 59.7275 * 100;
     status_bar->showMessage(QString{fmt::format("{} fps ({:.2f}%)", fps, percent).c_str()});
   }, Qt::BlockingQueuedConnection);
+
+  UpdateWindowSize();
 }
 
 MainWindow::~MainWindow() {
@@ -103,6 +105,32 @@ void MainWindow::CreateOptionsMenu(QMenuBar* menu_bar) {
     { "EEPROM 512B", nba::Config::BackupType::EEPROM_4  },
     { "EEPROM 8K",   nba::Config::BackupType::EEPROM_64 }
   }, &config->backup_type);
+
+  auto options_video_menu = options_menu->addMenu(tr("Video"));
+  auto options_video_scale_menu = options_video_menu->addMenu(tr("Scale"));
+  auto options_video_scale_menu_group = new QActionGroup{this};
+  for (int scale = 1; scale <= 6; scale++) {
+    auto action = options_video_scale_menu_group->addAction(QString::fromStdString(fmt::format("{}x", scale)));
+
+    action->setCheckable(true);
+    action->setChecked(config->video.scale == scale);
+
+    connect(action, &QAction::triggered, [=]() {
+      config->video.scale = scale;
+      config->Save(kConfigPath);
+      UpdateWindowSize();
+    });
+  }
+  options_video_scale_menu->addActions(options_video_scale_menu_group->actions());
+  options_video_menu->addSeparator();
+  auto fullscreen_action = options_video_menu->addAction(tr("Fullscreen"));
+  fullscreen_action->setCheckable(true);
+  fullscreen_action->setChecked(config->video.fullscreen);
+  connect(fullscreen_action, &QAction::triggered, [this](bool fullscreen) {
+    config->video.fullscreen = fullscreen;
+    config->Save(kConfigPath);
+    UpdateWindowSize();
+  });
 
   auto options_audio_menu = options_menu->addMenu(tr("Audio"));
   CreateSelectionOption(options_audio_menu->addMenu("Resampler"), {
@@ -321,5 +349,21 @@ void MainWindow::StopEmulatorThread() {
   if (emulator_state == EmulationState::Running) {
     emulator_state = EmulationState::Stopped;
     while (emulator_thread_running) ;
+  }
+}
+
+void MainWindow::UpdateWindowSize() {
+  if (config->video.fullscreen) {
+    showFullScreen();
+  } else {
+    showNormal();
+
+    auto scale = config->video.scale;
+    auto minimum_size = screen->minimumSize();
+    auto maximum_size = screen->maximumSize();
+    screen->setFixedSize(240 * scale, 160 * scale);
+    adjustSize();
+    screen->setMinimumSize(minimum_size);
+    screen->setMaximumSize(maximum_size);
   }
 }

@@ -30,10 +30,6 @@ public:
 
   void Draw(std::uint32_t* buffer) final;
 
-  auto sizeHint() const -> QSize {
-    return QSize{ 480, 320 };
-  }
-
 protected:
   void initializeGL() override;
   void paintGL() override;
