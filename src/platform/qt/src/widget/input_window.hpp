@@ -22,10 +22,10 @@
 
 #include "config.hpp"
 
-struct KeyMapWindow : QDialog {
+struct InputWindow : QDialog {
   using Key = nba::InputDevice::Key;
 
-  KeyMapWindow(
+  InputWindow(
     QApplication* app,
     QWidget* parent,
     std::shared_ptr<QtConfig> config

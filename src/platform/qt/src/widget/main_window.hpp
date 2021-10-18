@@ -18,9 +18,9 @@
 #include <utility>
 #include <vector>
 
+#include "widget/input_window.hpp"
+#include "widget/screen.hpp"
 #include "config.hpp"
-#include "keymap_window.hpp"
-#include "screen.hpp"
 
 struct MainWindow : QMainWindow {
   MainWindow(
@@ -86,7 +86,7 @@ private:
   nba::FrameLimiter framelimiter {59.7275};
   std::thread emulator_thread;
 
-  KeyMapWindow* keymap_window;
+  InputWindow* keymap_window;
 
   SDL_GameController* game_controller = nullptr;
   bool game_controller_button_x_old = false;

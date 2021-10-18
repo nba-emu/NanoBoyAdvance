@@ -7,7 +7,7 @@
 
 #include <QGLFunctions>
 
-#include "screen.hpp"
+#include "widget/screen.hpp"
 
 Screen::Screen(QWidget* parent)
     : QOpenGLWidget(parent) {

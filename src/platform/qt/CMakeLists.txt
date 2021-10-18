@@ -4,27 +4,25 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SOURCES
-  config.cpp
-  keymap_window.cpp
-  main.cpp
-  screen.cpp
-  main_window.cpp
+  src/widget/input_window.cpp
+  src/widget/main_window.cpp
+  src/widget/screen.cpp
+  src/config.cpp
+  src/main.cpp
 )
 
 set(HEADERS
-  config.hpp
-  keymap_window.hpp
-  screen.hpp
-  main_window.hpp
+  src/widget/input_window.hpp
+  src/widget/main_window.hpp
+  src/widget/screen.hpp
+  src/config.hpp
 )
 
 set(RESOURCES
 )
 
-# CHECKME: dunno, is this required?
 set(CMAKE_AUTOMOC ON)
 
-# CHECKME: possibly we can get rid of all OpenGL dependencies here.
 find_package(OpenGL REQUIRED)
 find_package(Qt5Gui REQUIRED)
 find_package(Qt5Widgets REQUIRED)
@@ -44,4 +42,5 @@ endif()
 
 add_executable(NanoBoyAdvance-Qt ${SOURCES} ${HEADERS} ${RESOURCES})
 target_link_libraries(NanoBoyAdvance-Qt platform-core ${QT_DEPS} ${OPENGL_gl_LIBRARY})
+target_include_directories(NanoBoyAdvance-Qt PRIVATE src)
 set_target_properties(NanoBoyAdvance-Qt PROPERTIES OUTPUT_NAME "NanoBoyAdvance")

@@ -5,9 +5,9 @@
  * Refer to the included LICENSE file.
  */
 
-#include "keymap_window.hpp"
+#include "widget/input_window.hpp"
 
-KeyMapWindow::KeyMapWindow(
+InputWindow::InputWindow(
   QApplication* app,
   QWidget* parent,
   std::shared_ptr<QtConfig> config
@@ -32,7 +32,7 @@ KeyMapWindow::KeyMapWindow(
   setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
 }
 
-bool KeyMapWindow::eventFilter(QObject* obj, QEvent* event) {
+bool InputWindow::eventFilter(QObject* obj, QEvent* event) {
   auto type = event->type();
 
   if (type != QEvent::KeyPress) {
@@ -53,7 +53,7 @@ bool KeyMapWindow::eventFilter(QObject* obj, QEvent* event) {
   return QObject::eventFilter(obj, event);
 }
 
-void KeyMapWindow::CreateKeyMapEntry(QGridLayout* layout, const char* label, int* key) {
+void InputWindow::CreateKeyMapEntry(QGridLayout* layout, const char* label, int* key) {
   auto row = layout->rowCount();
   auto button = new QPushButton{GetKeyName(*key), this};
 
@@ -71,7 +71,7 @@ void KeyMapWindow::CreateKeyMapEntry(QGridLayout* layout, const char* label, int
   });
 }
 
-auto KeyMapWindow::GetKeyName(int key) -> QString {
+auto InputWindow::GetKeyName(int key) -> QString {
   if (key == 0) {
     return "None";
   }

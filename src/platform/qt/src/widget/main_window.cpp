@@ -16,7 +16,7 @@
 #include <QStatusBar>
 #include <unordered_map>
 
-#include "main_window.hpp"
+#include "widget/main_window.hpp"
 
 MainWindow::MainWindow(
   QApplication* app,
@@ -44,7 +44,7 @@ MainWindow::MainWindow(
 
   app->installEventFilter(this);
 
-  keymap_window = new KeyMapWindow{app, this, config};
+  keymap_window = new InputWindow{app, this, config};
 
   FindGameController();
 
