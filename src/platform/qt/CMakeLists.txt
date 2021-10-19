@@ -54,4 +54,8 @@ target_link_libraries(NanoBoyAdvance-Qt platform-core ${QT_DEPS} ${OPENGL_gl_LIB
 target_include_directories(NanoBoyAdvance-Qt PRIVATE src)
 set_target_properties(NanoBoyAdvance-Qt PROPERTIES OUTPUT_NAME "NanoBoyAdvance")
 
+# TEST
+set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+target_link_libraries(NanoBoyAdvance-Qt -static z zstd)
+
 file(COPY "rc/config.toml" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
