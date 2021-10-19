@@ -22,7 +22,7 @@ jobs:
             -G "Unix Makefiles" \
             -DQT5_STATIC_DIR="/c/tools/msys64/mingw64/qt5-static" \
             -DCMAKE_CXX_FLAGS="-s" \
-            -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++" \
+            -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++ -static z zstd" \
             -DSDL2_STATIC=ON \
             -DGLEW_USE_STATIC_LIBS=ON \
             -DCMAKE_BUILD_TYPE=Release
