@@ -31,7 +31,7 @@ jobs:
       - name: Collect artifacts
         run: |
           mkdir upload
-          cp -r $(which libwinpthread-1.dll) build/bin/qt/{NanoBoyAdvance.exe,config.toml} upload
+          cp -r build/bin/qt/{NanoBoyAdvance.exe,config.toml} upload
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
