@@ -14,7 +14,7 @@ jobs:
           submodules: true
       - uses: msys2/setup-msys2@v2
         with:
-          install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-SDL2 mingw-w64-x86_64-glew
+          install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-{cmake,SDL2,glew,qt5-static}
       - name: Build NanoBoyAdvance
         run: |
           cmake \
@@ -48,7 +48,7 @@ jobs:
       - name: Setup SDL2 and GLEW
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y libsdl2-dev libglew-dev
+          sudo apt-get install -y libsdl2-dev libglew-dev qt5-default
       - name: Build NanoBoyAdvance
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -75,7 +75,7 @@ jobs:
       - name: Setup SDL2 and GLEW
         env:
           HOMEBREW_NO_ANALYTICS: 1
-        run: brew install sdl2 glew
+        run: brew install sdl2 glew qt@5
       - name: Build NanoBoyAdvance
         run: |
           export CPPFLAGS="$CPPFLAGS -I/usr/local/opt/glew/include"
