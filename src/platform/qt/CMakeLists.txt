@@ -56,6 +56,6 @@ set_target_properties(NanoBoyAdvance-Qt PROPERTIES OUTPUT_NAME "NanoBoyAdvance")
 
 # TEST
 set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
-target_link_libraries(NanoBoyAdvance-Qt -static z zstd winpthread stdc++)
+target_link_libraries(NanoBoyAdvance-Qt -static z zstd gcc stdc++ winpthread winmm version Imm32 Setupapi)
 
 file(COPY "rc/config.toml" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
