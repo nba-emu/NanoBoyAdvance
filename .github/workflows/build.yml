@@ -24,7 +24,8 @@ jobs:
             -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++" \
             -DSDL2_STATIC=ON \
             -DGLEW_USE_STATIC_LIBS=ON \
-            -DCMAKE_BUILD_TYPE=Release
+            -DCMAKE_BUILD_TYPE=Release \
+            -DQT5_STATIC_DIR=C:/tools/msys64/mingw64/qt5-static
           cd build
           make -j$NUMBER_OF_PROCESSORS
       - name: Collect artifacts
@@ -45,7 +46,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
-      - name: Setup SDL2 and GLEW
+      - name: Setup dependencies
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y libsdl2-dev libglew-dev qt5-default
@@ -72,7 +73,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
-      - name: Setup SDL2 and GLEW
+      - name: Setup dependencies
         env:
           HOMEBREW_NO_ANALYTICS: 1
         run: brew install sdl2 glew qt@5
@@ -83,7 +84,8 @@ jobs:
                 -DCMAKE_CXX_FLAGS="-s" \
                 -DSDL2_STATIC=ON \
                 -DGLEW_USE_STATIC_LIBS=ON \
-                -DCMAKE_BUILD_TYPE=Release
+                -DCMAKE_BUILD_TYPE=Release \
+                -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5)"
           cd build
           make -j$(sysctl -n hw.availcpu)
       - name: Collect artifacts
