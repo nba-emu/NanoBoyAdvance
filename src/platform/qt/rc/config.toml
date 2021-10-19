@@ -1,0 +1,44 @@
+[general]
+bios_path = "bios.bin"
+bios_skip = false
+sync_to_audio = false
+
+[cartridge]
+# Possible values: detect, none, sram, flash64, flash128, eeprom512, eeprom8192
+save_type = "detect"
+# Force-enable RTC emulation, otherwise rely on game database.
+force_rtc = true
+
+[video]
+fullscreen = false
+scale = 2
+shader_vs = ""
+shader_fs = ""
+
+[audio]
+# Possible values: cosine, cubic, sinc64, sinc128, sinc256
+resampler = "cubic"
+# Filter FIFO audio before passing it to the mixer.
+# This will reduce the dity high-frequency aliasing typical to the GBA.
+interpolate_fifo = true
+# Reimplementation of the popular MP2K/M4A audio mixer with higher quality.
+# This is experimental and may still have issues.
+mp2k_hle_enable = false
+# Use cubic interpolation in the MP2K reimplementation.
+mp2k_hle_cubic = false 
+
+[input]
+pause = 16777224
+reset = 16777272
+fast_forward = 32
+[input.gba]
+b = 83
+a = 65
+select = 16777219
+right = 16777236
+r = 70
+l = 68
+left = 16777234
+start = 16777220
+down = 16777237
+up = 16777235
