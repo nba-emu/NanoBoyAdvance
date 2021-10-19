@@ -24,10 +24,19 @@ set(RESOURCES
 set(CMAKE_AUTOMOC ON)
 
 find_package(OpenGL REQUIRED)
-find_package(Qt5Gui REQUIRED)
-find_package(Qt5Widgets REQUIRED)
-find_package(Qt5OpenGL REQUIRED)
-set(QT_DEPS Qt5::Gui Qt5::Widgets Qt5::OpenGL)
+
+# Shamelessly stoles from: https://github.com/Arisotura/melonDS/blob/master/src/frontend/qt_sdl/CMakeLists.txt
+if (QT5_STATIC_DIR)
+  set(QT5_STATIC_BASE ${QT5_STATIC_DIR}/lib/cmake/Qt5)
+  set(Qt5_DIR ${QT5_STATIC_BASE})
+  set(Qt5Core_DIR ${QT5_STATIC_BASE}Core)
+  set(Qt5Gui_DIR ${QT5_STATIC_BASE}Gui)
+  set(Qt5Widgets_DIR ${QT5_STATIC_BASE}Widgets)
+  set(Qt5OpenGL_DIR ${QT5_STATIC_BASE}OpenGL)
+endif()
+
+find_package(Qt5 COMPONENTS Core Gui Widgets OpenGL REQUIRED)
+set(QT_DEPS Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
 
 # Append application resources (icon and manifest) on Win32.
 if(WIN32)
