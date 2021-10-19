@@ -25,14 +25,18 @@ set(CMAKE_AUTOMOC ON)
 
 find_package(OpenGL REQUIRED)
 
-# Shamelessly stoles from: https://github.com/Arisotura/melonDS/blob/master/src/frontend/qt_sdl/CMakeLists.txt
-if (QT5_STATIC_DIR)
-  set(QT5_STATIC_BASE ${QT5_STATIC_DIR}/lib/cmake/Qt5)
-  set(Qt5_DIR ${QT5_STATIC_BASE})
-  set(Qt5Core_DIR ${QT5_STATIC_BASE}Core)
-  set(Qt5Gui_DIR ${QT5_STATIC_BASE}Gui)
-  set(Qt5Widgets_DIR ${QT5_STATIC_BASE}Widgets)
-  set(Qt5OpenGL_DIR ${QT5_STATIC_BASE}OpenGL)
+if(WIN32)
+  option(PLATFORM_QT_STATIC "Build statically linked exectuable (Qt)" OFF)
+  
+  # Shamelessly stolen from melonDS:
+  if(PLATFORM_QT_STATIC AND QT5_STATIC_DIR)
+    set(QT5_STATIC_BASE ${QT5_STATIC_DIR}/lib/cmake/Qt5)
+    set(Qt5_DIR ${QT5_STATIC_BASE})
+    set(Qt5Core_DIR ${QT5_STATIC_BASE}Core)
+    set(Qt5Gui_DIR ${QT5_STATIC_BASE}Gui)
+    set(Qt5Widgets_DIR ${QT5_STATIC_BASE}Widgets)
+    set(Qt5OpenGL_DIR ${QT5_STATIC_BASE}OpenGL)
+  endif()
 endif()
 
 find_package(Qt5 COMPONENTS Core Gui Widgets OpenGL REQUIRED)
@@ -55,3 +59,8 @@ target_include_directories(NanoBoyAdvance-Qt PRIVATE src)
 set_target_properties(NanoBoyAdvance-Qt PROPERTIES OUTPUT_NAME "NanoBoyAdvance")
 
 file(COPY "rc/config.toml" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+
+if(WIN32 AND PLATFORM_QT_STATIC)
+  set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+  target_link_libraries(NanoBoyAdvance-Qt -static z zstd gcc stdc++ winpthread winmm version Imm32 Setupapi)
+endif()

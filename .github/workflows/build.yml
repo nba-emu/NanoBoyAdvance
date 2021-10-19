@@ -20,18 +20,18 @@ jobs:
           cmake \
             -B build \
             -G "Unix Makefiles" \
-            -DQT5_STATIC_DIR="/c/tools/msys64/mingw64/qt5-static" \
+            -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_CXX_FLAGS="-s" \
-            -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++" \
+            -DPLATFORM_QT_STATIC=ON \
             -DSDL2_STATIC=ON \
             -DGLEW_USE_STATIC_LIBS=ON \
-            -DCMAKE_BUILD_TYPE=Release
+            -DQT5_STATIC_DIR="/c/tools/msys64/mingw64/qt5-static"
           cd build
           make -j$NUMBER_OF_PROCESSORS
       - name: Collect artifacts
         run: |
           mkdir upload
-          cp -r $(which libwinpthread-1.dll) build/bin/qt/{NanoBoyAdvance.exe,config.toml} upload
+          cp -r build/bin/qt/{NanoBoyAdvance.exe,config.toml} upload
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
