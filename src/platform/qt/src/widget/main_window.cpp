@@ -61,6 +61,10 @@ MainWindow::MainWindow(
 }
 
 MainWindow::~MainWindow() {
+  // Do not let Qt free the screen widget, which must be kept in a
+  // shared_ptr right now. This is slightly cursed but oh well.
+  (new QMainWindow{})->setCentralWidget(screen.get());
+
   emu_thread->Stop();
 
   if (game_controller != nullptr) {
@@ -70,11 +74,62 @@ MainWindow::~MainWindow() {
 
 void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
   auto file_menu = menu_bar->addMenu(tr("&File"));
-  auto file_open = file_menu->addAction(tr("&Open"));
-  auto file_close = file_menu->addAction(tr("&Close"));
 
-  connect(file_open, &QAction::triggered, this, &MainWindow::FileOpen);
-  connect(file_close, &QAction::triggered, &QApplication::quit);
+  connect(
+    file_menu->addAction(tr("&Open")),
+    &QAction::triggered,
+    this,
+    &MainWindow::FileOpen
+  );
+
+  file_menu->addSeparator();
+
+  connect(
+    file_menu->addAction(tr("Reset")),
+    &QAction::triggered,
+    [this]() {
+      bool was_running = emu_thread->IsRunning();
+      emu_thread->Stop();
+      core->Reset();
+      if (was_running) {
+        emu_thread->Start();
+      }
+    }
+  );
+
+  auto pause = file_menu->addAction(tr("Pause"));
+  pause->setCheckable(true);
+  pause->setChecked(false);
+  connect(
+    pause,
+    &QAction::triggered,
+    [this](bool paused) {
+      emu_thread->SetPause(paused);
+      config->audio_dev->SetPause(paused);
+    }
+  );
+
+  connect(
+    file_menu->addAction(tr("Stop")),
+    &QAction::triggered,
+    [this]() {
+      if (emu_thread->IsRunning()) {
+        emu_thread->Stop();
+        config->audio_dev->Close();
+        screen->Clear();
+
+        setWindowTitle("NanoBoyAdvance 1.4");
+      }
+    }
+  );
+
+  file_menu->addSeparator();
+
+  connect(
+    file_menu->addAction(tr("&Close")),
+    &QAction::triggered,
+    &QApplication::quit
+  );
 }
 
 void MainWindow::CreateOptionsMenu(QMenuBar* menu_bar) {

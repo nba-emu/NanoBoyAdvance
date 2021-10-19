@@ -23,6 +23,14 @@ bool EmulatorThread::IsRunning() const {
   return running;
 }
 
+bool EmulatorThread::IsPaused() const {
+  return paused;
+}
+
+void EmulatorThread::SetPause(bool value) {
+  paused = value;
+}
+
 bool EmulatorThread::GetFastForward() const {
   return frame_limiter.GetFastForward();
 }
@@ -43,8 +51,13 @@ void EmulatorThread::Start() {
 
       while (running) {
         frame_limiter.Run([this]() {
-          core->RunForOneFrame();
+          if (!paused) {
+            core->RunForOneFrame();
+          }
         }, [this](float fps) {
+          if (paused) {
+            fps = 0;
+          }
           frame_rate_cb(fps);
         });
       }

@@ -20,6 +20,8 @@ struct EmulatorThread {
  ~EmulatorThread();
 
   bool IsRunning() const;
+  bool IsPaused() const;
+  void SetPause(bool value);
   bool GetFastForward() const;
   void SetFastForward(bool enabled);
   void SetFrameRateCallback(std::function<void(float)> callback);
@@ -31,6 +33,7 @@ private:
   FrameLimiter frame_limiter;
   std::thread thread;
   std::atomic_bool running = false;
+  bool paused = false;
   std::function<void(float)> frame_rate_cb;
 };
 

@@ -67,6 +67,8 @@ bool SDL2_AudioDevice::Open(void* userdata, Callback callback) {
     return false;
   }
 
+  opened = true;
+
   if (have.format != want.format) {
     Log<Error>("Audio: SDL_AudioDevice: S16 sample format unavailable.");
     return false;
@@ -77,12 +79,23 @@ bool SDL2_AudioDevice::Open(void* userdata, Callback callback) {
     return false;
   }
 
-  SDL_PauseAudioDevice(device, 0);
+  if (!paused) {
+    SDL_PauseAudioDevice(device, 0);
+  }
   return true;
 }
 
+void SDL2_AudioDevice::SetPause(bool value) {
+  if (opened) {
+    SDL_PauseAudioDevice(device, value ? 1 : 0);
+  }
+}
+
 void SDL2_AudioDevice::Close() {
-  SDL_CloseAudioDevice(device);
+  if (opened) {
+    SDL_CloseAudioDevice(device);
+    opened = false;
+  }
 }
 
 } // namespace nba

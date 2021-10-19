@@ -16,6 +16,7 @@ struct Screen : QOpenGLWidget, nba::VideoDevice {
  ~Screen() override;
 
   void Draw(u32* buffer) final;
+  void Clear();
 
 signals:
   void RequestDraw(u32* buffer);
@@ -35,6 +36,7 @@ private:
   int viewport_x = 0;
   int viewport_width = 0;
   int viewport_height = 0;
+  bool should_clear = false;
 
   GLuint texture;
   GLuint program;

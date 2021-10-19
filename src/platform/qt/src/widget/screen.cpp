@@ -22,7 +22,13 @@ Screen::~Screen() {
 }
 
 void Screen::Draw(u32* buffer) {
+  should_clear = false;
   emit RequestDraw(buffer);
+}
+
+void Screen::Clear() {
+  should_clear = true;
+  update();
 }
 
 void Screen::OnRequestDraw(u32* buffer) {
@@ -107,24 +113,30 @@ void Screen::paintGL() {
   QGLFunctions ctx(QGLContext::currentContext());
 
   glViewport(viewport_x, 0, viewport_width, viewport_height);
-  glBindTexture(GL_TEXTURE_2D, texture);
-  ctx.glUseProgram(program);
 
-  glBegin(GL_QUADS);
-  {
-    glTexCoord2f(0, 0);
-    glVertex2f(-1.0f, 1.0f);
+  if (!should_clear) {
+    glBindTexture(GL_TEXTURE_2D, texture);
+    ctx.glUseProgram(program);
+  
+    glBegin(GL_QUADS);
+    {
+      glTexCoord2f(0, 0);
+      glVertex2f(-1.0f, 1.0f);
 
-    glTexCoord2f(1.0f, 0);
-    glVertex2f(1.0f, 1.0f);
+      glTexCoord2f(1.0f, 0);
+      glVertex2f(1.0f, 1.0f);
 
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex2f(1.0f, -1.0f);
+      glTexCoord2f(1.0f, 1.0f);
+      glVertex2f(1.0f, -1.0f);
 
-    glTexCoord2f(0, 1.0f);
-    glVertex2f(-1.0f, -1.0f);
+      glTexCoord2f(0, 1.0f);
+      glVertex2f(-1.0f, -1.0f);
+    }
+    glEnd();
+  } else {
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
   }
-  glEnd();
 }
 
 void Screen::resizeGL(int width, int height) {

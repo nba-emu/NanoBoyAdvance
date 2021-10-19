@@ -22,6 +22,7 @@ struct SDL2_AudioDevice : AudioDevice {
   auto GetSampleRate() -> int final;
   auto GetBlockSize() -> int final;
   bool Open(void* userdata, Callback callback) final;
+  void SetPause(bool value) final;
   void Close() final;
 
 private:
@@ -32,6 +33,8 @@ private:
   SDL_AudioSpec have;
   int want_sample_rate = 48000;
   int want_block_size = 2048;
+  bool opened = false;
+  bool paused = false;
 };
 
 } // namespace nba
