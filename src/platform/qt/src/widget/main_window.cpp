@@ -240,7 +240,7 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
       }
     }
 
-    if (key == config->input.pause && pressed) {
+    if (key == config->input.pause && !pressed) {
       SetPause(!emu_thread->IsPaused());
     }
 
@@ -248,8 +248,8 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
       Reset();
     }
 
-    if (key == config->input.fast_forward) {
-      emu_thread->SetFastForward(pressed);
+    if (key == config->input.fast_forward && !pressed) {
+      emu_thread->SetFastForward(!emu_thread->GetFastForward());
     }
   }
 
