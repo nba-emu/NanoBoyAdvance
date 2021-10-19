@@ -37,7 +37,11 @@ protected:
   bool eventFilter(QObject* obj, QEvent* event);
 
 private:
-  void CreateKeyMapEntry(QGridLayout* layout, const char* label, int* key);
+  void CreateKeyMapEntry(
+    QGridLayout* layout,
+    const char* label,
+    int* key
+  );
 
   static auto GetKeyName(int key) -> QString;
 

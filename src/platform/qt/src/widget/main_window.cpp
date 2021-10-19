@@ -88,24 +88,18 @@ void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
     file_menu->addAction(tr("Reset")),
     &QAction::triggered,
     [this]() {
-      bool was_running = emu_thread->IsRunning();
-      emu_thread->Stop();
-      core->Reset();
-      if (was_running) {
-        emu_thread->Start();
-      }
+      Reset();
     }
   );
 
-  auto pause = file_menu->addAction(tr("Pause"));
-  pause->setCheckable(true);
-  pause->setChecked(false);
+  pause_action = file_menu->addAction(tr("Pause"));
+  pause_action->setCheckable(true);
+  pause_action->setChecked(false);
   connect(
-    pause,
+    pause_action,
     &QAction::triggered,
     [this](bool paused) {
-      emu_thread->SetPause(paused);
-      config->audio_dev->SetPause(paused);
+      SetPause(paused);
     }
   );
 
@@ -113,13 +107,7 @@ void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
     file_menu->addAction(tr("Stop")),
     &QAction::triggered,
     [this]() {
-      if (emu_thread->IsRunning()) {
-        emu_thread->Stop();
-        config->audio_dev->Close();
-        screen->Clear();
-
-        setWindowTitle("NanoBoyAdvance 1.4");
-      }
+      Stop();
     }
   );
 
@@ -242,21 +230,27 @@ void MainWindow::CreateHelpMenu(QMenuBar* menu_bar) {
 bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
   auto type = event->type();
 
-  if (type != QEvent::KeyPress && type != QEvent::KeyRelease) {
-    return QObject::eventFilter(obj, event);
-  }
+  if (obj == this && (type == QEvent::KeyPress || type == QEvent::KeyRelease)) {
+    auto key = dynamic_cast<QKeyEvent*>(event)->key();
+    auto pressed = type == QEvent::KeyPress;
 
-  auto key = dynamic_cast<QKeyEvent*>(event)->key();
-  auto pressed = type == QEvent::KeyPress;
-
-  for (int i = 0; i < nba::InputDevice::kKeyCount; i++) {
-    if (config->input.gba[i] == key) {
-      input_device->SetKeyStatus(static_cast<nba::InputDevice::Key>(i), pressed);
+    for (int i = 0; i < nba::InputDevice::kKeyCount; i++) {
+      if (config->input.gba[i] == key) {
+        input_device->SetKeyStatus(static_cast<nba::InputDevice::Key>(i), pressed);
+      }
     }
-  }
 
-  if (key == config->input.fast_forward) {
-    emu_thread->SetFastForward(pressed);
+    if (key == config->input.pause && pressed) {
+      SetPause(!emu_thread->IsPaused());
+    }
+
+    if (key == config->input.reset && !pressed) {
+      Reset();
+    }
+
+    if (key == config->input.fast_forward) {
+      emu_thread->SetFastForward(pressed);
+    }
   }
 
   return QObject::eventFilter(obj, event);
@@ -321,6 +315,33 @@ void MainWindow::FileOpen() {
 
     core->Reset();
     emu_thread->Start();
+  }
+}
+
+
+void MainWindow::Reset() {
+  bool was_running = emu_thread->IsRunning();
+
+  emu_thread->Stop();
+  core->Reset();
+  if (was_running) {
+    emu_thread->Start();
+  }
+}
+
+void MainWindow::SetPause(bool value) {
+  emu_thread->SetPause(value);
+  config->audio_dev->SetPause(value);
+  pause_action->setChecked(value);
+}
+
+void MainWindow::Stop() {
+  if (emu_thread->IsRunning()) {
+    emu_thread->Stop();
+    config->audio_dev->Close();
+    screen->Clear();
+
+    setWindowTitle("NanoBoyAdvance 1.4");
   }
 }
 

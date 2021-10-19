@@ -25,6 +25,8 @@ InputWindow::InputWindow(
   CreateKeyMapEntry(layout, "Down", &config->input.gba[int(Key::Down)]);
   CreateKeyMapEntry(layout, "Left", &config->input.gba[int(Key::Left)]);
   CreateKeyMapEntry(layout, "Right", &config->input.gba[int(Key::Right)]);
+  CreateKeyMapEntry(layout, "Pause", &config->input.pause);
+  CreateKeyMapEntry(layout, "Reset", &config->input.reset);
   CreateKeyMapEntry(layout, "Fast Forward", &config->input.fast_forward);
 
   app->installEventFilter(this);
@@ -33,13 +35,7 @@ InputWindow::InputWindow(
 }
 
 bool InputWindow::eventFilter(QObject* obj, QEvent* event) {
-  auto type = event->type();
-
-  if (type != QEvent::KeyPress) {
-    return QObject::eventFilter(obj, event);
-  }
-
-  if (waiting_for_keypress) {
+  if (waiting_for_keypress && event->type() == QEvent::KeyPress) {
     auto key_event = dynamic_cast<QKeyEvent*>(event);
     auto key = key_event->key();
     auto name = QKeySequence{key_event->key()}.toString();
@@ -53,7 +49,11 @@ bool InputWindow::eventFilter(QObject* obj, QEvent* event) {
   return QObject::eventFilter(obj, event);
 }
 
-void InputWindow::CreateKeyMapEntry(QGridLayout* layout, const char* label, int* key) {
+void InputWindow::CreateKeyMapEntry(
+  QGridLayout* layout,
+  const char* label,
+  int* key
+) {
   auto row = layout->rowCount();
   auto button = new QPushButton{GetKeyName(*key), this};
 

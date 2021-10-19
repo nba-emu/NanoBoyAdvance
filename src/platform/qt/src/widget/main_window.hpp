@@ -66,6 +66,10 @@ private:
     menu->addActions(group->actions());
   }
 
+  void Reset();
+  void SetPause(bool value);
+  void Stop();
+
   void FindGameController();
   void UpdateGameControllerInput();
   void UpdateWindowSize();
@@ -76,6 +80,7 @@ private:
   std::unique_ptr<nba::CoreBase> core;
   std::unique_ptr<nba::EmulatorThread> emu_thread;
 
+  QAction* pause_action;
   InputWindow* input_window;
 
   SDL_GameController* game_controller = nullptr;
