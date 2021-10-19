@@ -5,7 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
-#include "game_db.hpp"
+#include <platform/game_db.hpp>
 
 namespace nba {
 

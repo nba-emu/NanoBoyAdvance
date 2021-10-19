@@ -31,6 +31,8 @@ struct APU {
     std::shared_ptr<Config>
   );
 
+ ~APU();
+
   void Reset();
   auto GetMP2K() -> MP2K& { return mp2k; }
   void OnTimerOverflow(int timer_id, int times, int samplerate);

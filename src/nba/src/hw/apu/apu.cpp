@@ -31,6 +31,10 @@ APU::APU(
     , config(config) {
 }
 
+APU::~APU() {
+  config->audio_dev->Close();
+}
+
 void APU::Reset() {
   mmio.fifo[0].Reset();
   mmio.fifo[1].Reset();

@@ -1,0 +1,31 @@
+
+#include <windows.h>
+
+IDI_ICON1 ICON DISCARDABLE "app.ico"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     1,4
+PRODUCTVERSION  1,4
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "CompanyName",        "fleroviux"
+            VALUE "FileDescription",    "NanoBoyAdvance"
+            VALUE "FileVersion",        "1.4"
+            VALUE "InternalName",       "NanoBoyAdvance.exe"
+            VALUE "LegalCopyright",     "(c) 2015 - 2021 fleroviux"
+            VALUE "OriginalFilename",   "NanoBoyAdvance.exe"
+            VALUE "ProductName",        "NanoBoyAdvance"
+            VALUE "ProductVersion",     "1.4"
+        END
+    END
+
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1252
+    END
+END
+
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "app.manifest"

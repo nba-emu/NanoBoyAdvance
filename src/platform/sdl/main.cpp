@@ -6,9 +6,11 @@
  */
 
 
-#include <nba/device/input_device.hpp>
-#include <nba/device/video_device.hpp>
-#include <platform/emulator.hpp>
+#include <nba/core.hpp>
+#include <platform/device/sdl_audio_device.hpp>
+#include <platform/loader/bios.hpp>
+#include <platform/loader/rom.hpp>
+#include <platform/config.hpp>
 
 #include <atomic>
 #include <cstdlib>
@@ -21,9 +23,6 @@
 #include <toml.hpp>
 #include <unordered_map>
 #include <mutex>
-
-#include "config_toml.hpp"
-#include "device/audio_device.hpp"
 
 #include <GL/glew.h>
 
@@ -50,9 +49,9 @@ static SDL_GameController* g_game_controller = nullptr;
 static auto g_game_controller_button_x_old = false;
 static auto g_fastforward = false;
 
-static auto g_config = std::make_shared<Config>();
-static auto g_emulator = std::make_unique<Emulator>(g_config);
-static auto g_emulator_lock = std::mutex{};
+static auto g_config = std::make_shared<PlatformConfig>();
+static auto g_core = nba::CreateCore(g_config);
+static auto g_core_lock = std::mutex{};
 
 struct KeyMap {
   SDL_Keycode fastforward = SDLK_SPACE;
@@ -176,21 +175,34 @@ void parse_arguments(int argc, char** argv) {
 }
 
 void load_game(std::string const& rom_path) {
-  using StatusCode = Emulator::StatusCode;
+  auto& bios_path = g_config->bios_path;
 
-  switch (g_emulator->LoadGame(rom_path)) {
-  case StatusCode::GameNotFound:
-    fmt::print("Cannot open ROM: {0}\n", rom_path);
-    std::exit(-2);
-  case StatusCode::BiosNotFound:
-    fmt::print("Cannot open BIOS: {0}\n", g_config->bios_path);
-    std::exit(-3);
-  case StatusCode::GameWrongSize:
-    fmt::print("The provided ROM file is larger than the maximum 32 MiB.\n");
-    std::exit(-4);
-  case StatusCode::BiosWrongSize:
-    fmt::print("The provided BIOS file does not match the expected size of 16 KiB.\n");
-    std::exit(-5);
+  switch (nba::BIOSLoader::Load(g_core, g_config->bios_path)) {
+    case nba::BIOSLoader::Result::CannotFindFile:
+    case nba::BIOSLoader::Result::CannotOpenFile: {
+      fmt::print("Cannot open BIOS: {}\n", bios_path);
+      std::exit(-1);
+      break;
+    }
+    case nba::BIOSLoader::Result::BadImage: {
+      fmt::print("Bad BIOS image: {}\n", bios_path);
+      std::exit(-1);
+      break;
+    }
+  }
+
+  switch (nba::ROMLoader::Load(g_core, rom_path, g_config->backup_type, g_config->force_rtc)) {
+    case nba::ROMLoader::Result::CannotFindFile:
+    case nba::ROMLoader::Result::CannotOpenFile: {
+      fmt::print("Cannot open ROM: {}\n", rom_path);
+      std::exit(-1);
+      break;
+    }
+    case nba::ROMLoader::Result::BadImage: {
+      fmt::print("Bad ROM image: {}\n", rom_path);
+      std::exit(-1);
+      break;
+    }
   }
 }
 
@@ -272,7 +284,7 @@ void init(int argc, char** argv) {
   if (argc >= 1) {
     fs::current_path(fs::absolute(argv[0]).replace_filename(fs::path{ }));
   }
-  config_toml_read(*g_config, "config.toml");
+  g_config->Load("config.toml");
   parse_arguments(argc, argv);
   load_keymap();
   SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER);
@@ -334,12 +346,12 @@ void init(int argc, char** argv) {
       }
     }
   }
-  auto audio_device = std::make_shared<SDL2_AudioDevice>();
+  auto audio_device = std::make_shared<nba::SDL2_AudioDevice>();
   audio_device->SetPassthrough((SDL_AudioCallback)audio_passthrough);
   g_config->audio_dev = audio_device;
   g_config->input_dev = std::make_shared<CombinedInputDevice>();
   g_config->video_dev = std::make_shared<SDL2_VideoDevice>();
-  g_emulator->Reset();
+  g_core->Reset();
   g_cycles_per_audio_frame = 16777216ULL * audio_device->GetBlockSize() / audio_device->GetSampleRate();
 }
 
@@ -351,9 +363,9 @@ void loop() {
   for (;;) {
     update_controller();
     if (!g_sync_to_audio) {
-      g_emulator_lock.lock();
-      g_emulator->Frame();
-      g_emulator_lock.unlock();
+      g_core_lock.lock();
+      g_core->RunForOneFrame();
+      g_core_lock.unlock();
     }
     update_viewport();
     glClear(GL_COLOR_BUFFER_BIT);
@@ -398,7 +410,7 @@ void loop() {
 
 void destroy() {
   // Make sure that the audio thread no longer accesses the emulator.
-  g_emulator_lock.lock();
+  g_core_lock.lock();
   if (g_game_controller != nullptr) {
     SDL_GameControllerClose(g_game_controller);
   }
@@ -409,9 +421,9 @@ void destroy() {
 
 void audio_passthrough(SDL2_AudioDevice* audio_device, s16* stream, int byte_len) {
   if (g_sync_to_audio) {
-    g_emulator_lock.lock();
-    g_emulator->Run(g_cycles_per_audio_frame);
-    g_emulator_lock.unlock();
+    g_core_lock.lock();
+    g_core->Run(g_cycles_per_audio_frame);
+    g_core_lock.unlock();
   }
   audio_device->InvokeCallback(stream, byte_len);
 }
@@ -448,9 +460,9 @@ void update_key(SDL_KeyboardEvent* event) {
   }
 
   if (key == keymap.reset && !pressed) {
-    g_emulator_lock.lock();
-    g_emulator->Reset();
-    g_emulator_lock.unlock();
+    g_core_lock.lock();
+    g_core->Reset();
+    g_core_lock.unlock();
   }
 
   if (key == keymap.fullscreen && !pressed) {
