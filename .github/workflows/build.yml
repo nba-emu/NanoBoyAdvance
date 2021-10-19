@@ -14,7 +14,7 @@ jobs:
           submodules: true
       - uses: msys2/setup-msys2@v2
         with:
-          install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-{cmake,SDL2,glew,qt5-static}
+          install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-SDL2 mingw-w64-x86_64-glew mingw-w64-x86_64-qt5-static
       - name: Build NanoBoyAdvance
         run: |
           cmake \
