@@ -140,6 +140,10 @@ void Screen::paintGL() {
 }
 
 void Screen::resizeGL(int width, int height) {
+  auto dpr = devicePixelRatio();
+  width  *= dpr;
+  height *= dpr;
+
   viewport_width = height + height / 2;
   viewport_height = height;
   viewport_x = (width - viewport_width) / 2;
