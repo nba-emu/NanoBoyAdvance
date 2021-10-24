@@ -5,7 +5,8 @@
  * Refer to the included LICENSE file.
  */
 
-#include <QGLFunctions>
+#include <GL/glew.h>
+// #include <QGLFunctions>
 
 #include "widget/screen.hpp"
 
@@ -18,7 +19,7 @@ Screen::Screen(QWidget* parent)
 }
 
 Screen::~Screen() {
-  glDeleteTextures(1, &texture);
+  // glDeleteTextures(1, &texture);
 }
 
 void Screen::Draw(u32* buffer) {
@@ -32,110 +33,118 @@ void Screen::Clear() {
 }
 
 void Screen::OnRequestDraw(u32* buffer) {
-  glBindTexture(GL_TEXTURE_2D, texture);
-  glTexImage2D(
-    GL_TEXTURE_2D,
-    0,
-    GL_RGBA,
-    240,
-    160,
-    0,
-    GL_BGRA,
-    GL_UNSIGNED_BYTE,
-    buffer
-  );
-
+  // glBindTexture(GL_TEXTURE_2D, texture);
+  // glTexImage2D(
+  //   GL_TEXTURE_2D,
+  //   0,
+  //   GL_RGBA,
+  //   240,
+  //   160,
+  //   0,
+  //   GL_BGRA,
+  //   GL_UNSIGNED_BYTE,
+  //   buffer
+  // );
+  this->buffer = buffer;
   update();
 }
 
 auto Screen::CreateShader() -> GLuint {
-  QGLFunctions ctx(QGLContext::currentContext());
+  // auto vid = glCreateShader(GL_VERTEX_SHADER);
+  // auto fid = glCreateShader(GL_FRAGMENT_SHADER);
 
-  auto vid = ctx.glCreateShader(GL_VERTEX_SHADER);
-  auto fid = ctx.glCreateShader(GL_FRAGMENT_SHADER);
+  // const char* vert_src[] = {
+  //   "varying vec2 uv;\n"
+  //   "void main(void) {\n"
+  //   "    gl_Position = gl_Vertex;\n"
+  //   "    uv = gl_MultiTexCoord0;\n"
+  //   "}"
+  // };
 
-  const char* vert_src[] = {
-    "varying vec2 uv;\n"
-    "void main(void) {\n"
-    "    gl_Position = gl_Vertex;\n"
-    "    uv = gl_MultiTexCoord0;\n"
-    "}"
-  };
+  // const char* frag_src[] = {
+  //   "uniform sampler2D tex;\n"
+  //   "varying vec2 uv;\n"
+  //   "void main(void) {\n"
+  //   "    vec4 color = texture2D(tex, uv);\n"
+  //   "    color.rgb = pow(color.rgb, vec3(4.0));\n"
+  //   "    gl_FragColor.rgb = pow(vec3(color.r + 0.196 * color.g,\n"
+  //   "                                0.039 * color.r + 0.901 * color.g + 0.117 * color.b,\n"
+  //   "                                0.196 * color.r + 0.039 * color.g + 0.862 * color.b), vec3(1.0/2.2));"
+  //   "    gl_FragColor.a = 1.0;\n"
+  //   "}"
+  // };
 
-  const char* frag_src[] = {
-    "uniform sampler2D tex;\n"
-    "varying vec2 uv;\n"
-    "void main(void) {\n"
-    "    vec4 color = texture2D(tex, uv);\n"
-    "    color.rgb = pow(color.rgb, vec3(4.0));\n"
-    "    gl_FragColor.rgb = pow(vec3(color.r + 0.196 * color.g,\n"
-    "                                0.039 * color.r + 0.901 * color.g + 0.117 * color.b,\n"
-    "                                0.196 * color.r + 0.039 * color.g + 0.862 * color.b), vec3(1.0/2.2));"
-    "    gl_FragColor.a = 1.0;\n"
-    "}"
-  };
+  // // TODO: check for and log shader compilation errors.
+  // glShaderSource(vid, 1, vert_src, nullptr);
+  // glShaderSource(fid, 1, frag_src, nullptr);
+  // glCompileShader(vid);
+  // glCompileShader(fid);
 
-  // TODO: check for and log shader compilation errors.
-  ctx.glShaderSource(vid, 1, vert_src, nullptr);
-  ctx.glShaderSource(fid, 1, frag_src, nullptr);
-  ctx.glCompileShader(vid);
-  ctx.glCompileShader(fid);
+  // auto pid = glCreateProgram();
+  // glAttachShader(pid, vid);
+  // glAttachShader(pid, fid);
+  // glLinkProgram(pid);
 
-  auto pid = ctx.glCreateProgram();
-  ctx.glAttachShader(pid, vid);
-  ctx.glAttachShader(pid, fid);
-  ctx.glLinkProgram(pid);
+  // return pid;
 
-  return pid;
+  return 0;
 }
 
 void Screen::initializeGL() {
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
+  makeCurrent();
+  ogl_video_device.Initialize();
 
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
+  // glewInit();
 
-  glEnable(GL_TEXTURE_2D);
-  glGenTextures(1, &texture);
-  glBindTexture(GL_TEXTURE_2D, texture);
+  // glMatrixMode(GL_PROJECTION);
+  // glLoadIdentity();
 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  // glMatrixMode(GL_MODELVIEW);
+  // glLoadIdentity();
 
-  glClearColor(0, 0, 0, 1);
-  glClear(GL_COLOR_BUFFER_BIT);
+  // glEnable(GL_TEXTURE_2D);
+  // glGenTextures(1, &texture);
+  // glBindTexture(GL_TEXTURE_2D, texture);
 
-  program = CreateShader();
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+  // glClearColor(0, 0, 0, 1);
+  // glClear(GL_COLOR_BUFFER_BIT);
+
+  // program = CreateShader();
 }
 
 void Screen::paintGL() {
-  QGLFunctions ctx(QGLContext::currentContext());
+  // glViewport(viewport_x, 0, viewport_width, viewport_height);
 
-  glViewport(viewport_x, 0, viewport_width, viewport_height);
-
-  if (!should_clear) {
-    glBindTexture(GL_TEXTURE_2D, texture);
-    ctx.glUseProgram(program);
+  // if (!should_clear) {
+  //   glBindTexture(GL_TEXTURE_2D, texture);
+  //   glUseProgram(program);
   
-    glBegin(GL_QUADS);
-    {
-      glTexCoord2f(0, 0);
-      glVertex2f(-1.0f, 1.0f);
+  //   glBegin(GL_QUADS);
+  //   {
+  //     glTexCoord2f(0, 0);
+  //     glVertex2f(-1.0f, 1.0f);
 
-      glTexCoord2f(1.0f, 0);
-      glVertex2f(1.0f, 1.0f);
+  //     glTexCoord2f(1.0f, 0);
+  //     glVertex2f(1.0f, 1.0f);
 
-      glTexCoord2f(1.0f, 1.0f);
-      glVertex2f(1.0f, -1.0f);
+  //     glTexCoord2f(1.0f, 1.0f);
+  //     glVertex2f(1.0f, -1.0f);
 
-      glTexCoord2f(0, 1.0f);
-      glVertex2f(-1.0f, -1.0f);
-    }
-    glEnd();
-  } else {
-    glClearColor(0, 0, 0, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
+  //     glTexCoord2f(0, 1.0f);
+  //     glVertex2f(-1.0f, -1.0f);
+  //   }
+  //   glEnd();
+  // } else {
+  //   glClearColor(0, 0, 0, 1);
+  //   glClear(GL_COLOR_BUFFER_BIT);
+  // }
+
+  if (buffer != nullptr) {
+    ogl_video_device.SetDefaultFBO(defaultFramebufferObject());
+    ogl_video_device.Draw(buffer);
   }
 }
 
@@ -144,7 +153,13 @@ void Screen::resizeGL(int width, int height) {
   width  *= dpr;
   height *= dpr;
 
-  viewport_width = height + height / 2;
-  viewport_height = height;
-  viewport_x = (width - viewport_width) / 2;
+  // viewport_width = height + height / 2;
+  // viewport_height = height;
+  // viewport_x = (width - viewport_width) / 2;
+
+  auto view_width  = height + height / 2;
+  auto view_height = height;
+  auto view_x = (width - view_width) / 2;
+
+  ogl_video_device.SetViewport(view_x, 0, view_width, view_height);
 }

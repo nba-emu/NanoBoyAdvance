@@ -23,8 +23,6 @@ set(RESOURCES
 
 set(CMAKE_AUTOMOC ON)
 
-find_package(OpenGL REQUIRED)
-
 if(WIN32)
   option(PLATFORM_QT_STATIC "Build statically linked exectuable (Qt)" OFF)
   
@@ -54,7 +52,7 @@ if(WIN32)
 endif()
 
 add_executable(NanoBoyAdvance-Qt ${SOURCES} ${HEADERS} ${RESOURCES})
-target_link_libraries(NanoBoyAdvance-Qt platform-core ${QT_DEPS} ${OPENGL_gl_LIBRARY})
+target_link_libraries(NanoBoyAdvance-Qt platform-core ${QT_DEPS})
 target_include_directories(NanoBoyAdvance-Qt PRIVATE src)
 set_target_properties(NanoBoyAdvance-Qt PROPERTIES OUTPUT_NAME "NanoBoyAdvance")
 

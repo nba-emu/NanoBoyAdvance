@@ -7,8 +7,11 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeModules)
 
 include(FindSDL2)
 find_package(SDL2 REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED)
 
 set(SOURCES
+  src/device/ogl_video_device.cpp
   src/device/sdl_audio_device.cpp
   src/loader/bios.cpp
   src/loader/rom.cpp
@@ -22,6 +25,7 @@ set(HEADERS
 )
 
 set(HEADERS_PUBLIC
+  include/platform/device/ogl_video_device.hpp
   include/platform/device/sdl_audio_device.hpp
   include/platform/loader/bios.hpp
   include/platform/loader/rom.hpp
@@ -33,6 +37,6 @@ set(HEADERS_PUBLIC
 
 add_library(platform-core STATIC ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
 target_include_directories(platform-core PRIVATE src)
-target_include_directories(platform-core PUBLIC include ${SDL2_INCLUDE_DIR})
+target_include_directories(platform-core PUBLIC include ${SDL2_INCLUDE_DIR} ${GLEW_INCLUDE_DIRS})
 
-target_link_libraries(platform-core PUBLIC nba toml11::toml11 ${SDL2_LIBRARY})
+target_link_libraries(platform-core PUBLIC nba toml11::toml11 ${SDL2_LIBRARY} OpenGL::GL GLEW::GLEW)

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <nba/device/video_device.hpp>
+#include <platform/device/ogl_video_device.hpp>
 #include <QGLWidget>
 #include <QOpenGLWidget>
 
@@ -33,6 +33,8 @@ protected:
 private:
   auto CreateShader() -> GLuint;
 
+  u32* buffer = nullptr;
+
   int viewport_x = 0;
   int viewport_width = 0;
   int viewport_height = 0;
@@ -40,6 +42,8 @@ private:
 
   GLuint texture;
   GLuint program;
+
+  nba::OGLVideoDevice ogl_video_device;
 
   Q_OBJECT
 };
