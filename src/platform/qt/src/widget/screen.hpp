@@ -31,9 +31,14 @@ protected:
 
 
 private:
+  static constexpr int kGBANativeWidth = 240;
+  static constexpr int kGBANativeHeight = 160;
+  static constexpr float kGBANativeAR = static_cast<float>(kGBANativeWidth) / static_cast<float>(kGBANativeHeight);
+
   auto CreateShader() -> GLuint;
 
   int viewport_x = 0;
+  int viewport_y = 0;
   int viewport_width = 0;
   int viewport_height = 0;
   bool should_clear = false;
