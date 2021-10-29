@@ -74,8 +74,10 @@ MainWindow::~MainWindow() {
 void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
   auto file_menu = menu_bar->addMenu(tr("&File"));
 
+  auto open_action = file_menu->addAction(tr("&Open"));
+  open_action->setShortcut(Qt::CTRL + Qt::Key_O);
   connect(
-    file_menu->addAction(tr("&Open")),
+    open_action,
     &QAction::triggered,
     this,
     &MainWindow::FileOpen
@@ -83,8 +85,10 @@ void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
 
   file_menu->addSeparator();
 
+  auto reset_action = file_menu->addAction(tr("Reset"));
+  reset_action->setShortcut(Qt::CTRL + Qt::Key_R);
   connect(
-    file_menu->addAction(tr("Reset")),
+    reset_action,
     &QAction::triggered,
     [this]() {
       Reset();
@@ -94,6 +98,7 @@ void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
   pause_action = file_menu->addAction(tr("Pause"));
   pause_action->setCheckable(true);
   pause_action->setChecked(false);
+  pause_action->setShortcut(Qt::CTRL + Qt::Key_P);
   connect(
     pause_action,
     &QAction::triggered,
@@ -189,9 +194,10 @@ void MainWindow::CreateOptionsMenu(QMenuBar* menu_bar) {
   CreateBooleanOption(options_hq_audio_menu, "Enable", &config->audio.mp2k_hle_enable);
   CreateBooleanOption(options_hq_audio_menu, "Use cubic filter", &config->audio.mp2k_hle_cubic);
 
-  auto configure_input = options_menu->addAction(tr("Configure input"));
-  configure_input->setMenuRole(QAction::NoRole);
-  connect(configure_input, &QAction::triggered, [this] {
+  auto options_input_menu = options_menu->addMenu(tr("Input"));
+  auto remap_input = options_input_menu->addAction(tr("Remap"));
+  remap_input->setMenuRole(QAction::NoRole);
+  connect(remap_input, &QAction::triggered, [this] {
     input_window->exec();
   });
 }
@@ -210,7 +216,7 @@ void MainWindow::CreateBooleanOption(QMenu* menu, const char* name, bool* underl
 }
 
 void MainWindow::CreateHelpMenu(QMenuBar* menu_bar) {
-  auto help_menu = menu_bar->addMenu(tr("&?"));
+  auto help_menu = menu_bar->addMenu(tr("&Help"));
   auto about_app = help_menu->addAction(tr("About NanoBoyAdvance"));
 
   about_app->setMenuRole(QAction::AboutRole);
