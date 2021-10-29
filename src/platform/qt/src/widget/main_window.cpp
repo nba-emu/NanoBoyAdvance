@@ -30,7 +30,6 @@ MainWindow::MainWindow(
   config->Load(kConfigPath);
 
   auto menu_bar = new QMenuBar(this);
-  menu_bar->setNativeMenuBar(false);
   setMenuBar(menu_bar);
 
   CreateFileMenu(menu_bar);
@@ -191,6 +190,7 @@ void MainWindow::CreateOptionsMenu(QMenuBar* menu_bar) {
   CreateBooleanOption(options_hq_audio_menu, "Use cubic filter", &config->audio.mp2k_hle_cubic);
 
   auto configure_input = options_menu->addAction(tr("Configure input"));
+  configure_input->setMenuRole(QAction::NoRole);
   connect(configure_input, &QAction::triggered, [this] {
     input_window->exec();
   });
