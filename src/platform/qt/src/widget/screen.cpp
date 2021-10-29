@@ -37,8 +37,8 @@ void Screen::OnRequestDraw(u32* buffer) {
     GL_TEXTURE_2D,
     0,
     GL_RGBA,
-    240,
-    160,
+    kGBANativeWidth,
+    kGBANativeHeight,
     0,
     GL_BGRA,
     GL_UNSIGNED_BYTE,
@@ -112,7 +112,7 @@ void Screen::initializeGL() {
 void Screen::paintGL() {
   QGLFunctions ctx(QGLContext::currentContext());
 
-  glViewport(viewport_x, 0, viewport_width, viewport_height);
+  glViewport(viewport_x, viewport_y, viewport_width, viewport_height);
 
   if (!should_clear) {
     glBindTexture(GL_TEXTURE_2D, texture);
@@ -144,7 +144,17 @@ void Screen::resizeGL(int width, int height) {
   width  *= dpr;
   height *= dpr;
 
-  viewport_width = height + height / 2;
-  viewport_height = height;
-  viewport_x = (width - viewport_width) / 2;
+  float ar = static_cast<float>(width) / static_cast<float>(height);
+
+  if (ar > kGBANativeAR) {
+    viewport_width = static_cast<int>(height * kGBANativeAR);
+    viewport_height = height;
+    viewport_x = (width - viewport_width) / 2;
+    viewport_y = 0;
+  } else {
+    viewport_width = width;
+    viewport_height = static_cast<int>(width / kGBANativeAR);
+    viewport_x = 0;
+    viewport_y = (height - viewport_height) / 2;
+  }
 }
