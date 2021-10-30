@@ -26,6 +26,20 @@ struct PlatformConfig : Config {
     bool fullscreen = false;
     int scale = 2;
 
+    enum class Filter {
+      Nearest,
+      Linear,
+      xBRZ
+    } filter = Filter::Nearest;
+
+    enum class Color {
+      No,
+      AGB,
+      AGS
+    } color = Color::AGS;
+
+    bool interframe_blending = true;
+
     struct Shader {
       std::string path_vs = "";
       std::string path_fs = "";

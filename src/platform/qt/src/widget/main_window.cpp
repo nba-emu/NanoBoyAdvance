@@ -143,8 +143,6 @@ void MainWindow::CreateVideoMenu(QMenu* parent) {
   }
   
   scale_menu->addActions(scale_group->actions());
-  
-  menu->addSeparator();
 
   auto fullscreen_action = menu->addAction(tr("Fullscreen"));
   fullscreen_action->setCheckable(true);
@@ -154,6 +152,22 @@ void MainWindow::CreateVideoMenu(QMenu* parent) {
     config->Save(kConfigPath);
     UpdateWindowSize();
   });
+
+  menu->addSeparator();
+
+  CreateSelectionOption(menu->addMenu(tr("Filter")), {
+    { "Nearest", nba::PlatformConfig::Video::Filter::Nearest },
+    { "Linear",  nba::PlatformConfig::Video::Filter::Linear  },
+    { "xBRZ",    nba::PlatformConfig::Video::Filter::xBRZ    }
+  }, &config->video.filter);
+
+  CreateSelectionOption(menu->addMenu(tr("Color correction")), {
+    { "None",   nba::PlatformConfig::Video::Color::No  },
+    { "GBA",    nba::PlatformConfig::Video::Color::AGB },
+    { "GBA SP", nba::PlatformConfig::Video::Color::AGS },
+  }, &config->video.color);
+
+  CreateBooleanOption(menu, "Interframe blending", &config->video.interframe_blending);
 }
 
 void MainWindow::CreateAudioMenu(QMenu* parent) {
