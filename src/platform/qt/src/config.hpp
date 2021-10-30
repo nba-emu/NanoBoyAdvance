@@ -25,8 +25,6 @@ struct QtConfig final : nba::PlatformConfig {
       Qt::Key_F
     };
 
-    int pause = Qt::Key_Pause;
-    int reset = Qt::Key_F9;
     int fast_forward = Qt::Key_Space;
   } input;
 

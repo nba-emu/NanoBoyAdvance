@@ -14,8 +14,6 @@ void QtConfig::LoadCustomData(toml::value const& data) {
     if (input_result.is_ok()) {
       auto input_ = input_result.unwrap();
 
-      input.pause = toml::find_or<int>(input_, "pause", Qt::Key_Pause);
-      input.reset = toml::find_or<int>(input_, "reset", Qt::Key_F9);
       input.fast_forward = toml::find_or<int>(input_, "fast_forward", Qt::Key_Space);
     
       if (input_.contains("gba")) {
@@ -42,8 +40,6 @@ void QtConfig::LoadCustomData(toml::value const& data) {
 void QtConfig::SaveCustomData(
   toml::basic_value<toml::preserve_comments>& data
 ) {
-  data["input"]["pause"] = input.pause;
-  data["input"]["reset"] = input.reset;
   data["input"]["fast_forward"] = input.fast_forward;
 
   data["input"]["gba"]["up"] = input.gba[0];
