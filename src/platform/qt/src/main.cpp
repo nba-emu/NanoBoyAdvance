@@ -6,10 +6,16 @@
  */
 
 #include <QApplication>
+#include <stdlib.h>
 
 #include "widget/main_window.hpp"
 
 int main(int argc, char** argv) {
+  // See: https://trac.wxwidgets.org/ticket/19023
+#if defined(__APPLE__)
+  setenv("LC_NUMERIC", "C", 1);
+#endif
+
   QApplication app{ argc, argv };
   MainWindow window{ &app };
 

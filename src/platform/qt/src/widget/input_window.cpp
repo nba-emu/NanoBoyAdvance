@@ -14,6 +14,7 @@ InputWindow::InputWindow(
 )   : QDialog(parent)
     , config(config) {
   auto layout = new QGridLayout{this};
+  layout->setSizeConstraint(QLayout::SetFixedSize);
 
   CreateKeyMapEntry(layout, "A", &config->input.gba[int(Key::A)]);
   CreateKeyMapEntry(layout, "B", &config->input.gba[int(Key::B)]);
@@ -25,8 +26,6 @@ InputWindow::InputWindow(
   CreateKeyMapEntry(layout, "Down", &config->input.gba[int(Key::Down)]);
   CreateKeyMapEntry(layout, "Left", &config->input.gba[int(Key::Left)]);
   CreateKeyMapEntry(layout, "Right", &config->input.gba[int(Key::Right)]);
-  CreateKeyMapEntry(layout, "Pause", &config->input.pause);
-  CreateKeyMapEntry(layout, "Reset", &config->input.reset);
   CreateKeyMapEntry(layout, "Fast Forward", &config->input.fast_forward);
 
   app->installEventFilter(this);

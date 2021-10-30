@@ -30,11 +30,10 @@ MainWindow::MainWindow(
   config->Load(kConfigPath);
 
   auto menu_bar = new QMenuBar(this);
-  menu_bar->setNativeMenuBar(false);
   setMenuBar(menu_bar);
 
   CreateFileMenu(menu_bar);
-  CreateOptionsMenu(menu_bar);
+  CreateConfigMenu(menu_bar);
   CreateHelpMenu(menu_bar);
 
   config->video_dev = screen;
@@ -75,8 +74,10 @@ MainWindow::~MainWindow() {
 void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
   auto file_menu = menu_bar->addMenu(tr("&File"));
 
+  auto open_action = file_menu->addAction(tr("&Open"));
+  open_action->setShortcut(Qt::CTRL + Qt::Key_O);
   connect(
-    file_menu->addAction(tr("&Open")),
+    open_action,
     &QAction::triggered,
     this,
     &MainWindow::FileOpen
@@ -84,8 +85,10 @@ void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
 
   file_menu->addSeparator();
 
+  auto reset_action = file_menu->addAction(tr("Reset"));
+  reset_action->setShortcut(Qt::CTRL + Qt::Key_R);
   connect(
-    file_menu->addAction(tr("Reset")),
+    reset_action,
     &QAction::triggered,
     [this]() {
       Reset();
@@ -95,6 +98,7 @@ void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
   pause_action = file_menu->addAction(tr("Pause"));
   pause_action->setCheckable(true);
   pause_action->setChecked(false);
+  pause_action->setShortcut(Qt::CTRL + Qt::Key_P);
   connect(
     pause_action,
     &QAction::triggered,
@@ -120,42 +124,13 @@ void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
   );
 }
 
-void MainWindow::CreateOptionsMenu(QMenuBar* menu_bar) {
-  auto options_menu = menu_bar->addMenu(tr("&Options"));
+void MainWindow::CreateVideoMenu(QMenu* parent) {
+  auto menu = parent->addMenu(tr("Video"));
+  auto scale_menu  = menu->addMenu(tr("Scale"));
+  auto scale_group = new QActionGroup{this};
 
-  auto options_bios_menu = options_menu->addMenu(tr("BIOS"));
-  auto options_bios_path = options_bios_menu->addAction(tr("Select path"));
-  CreateBooleanOption(options_bios_menu, "Skip intro", &config->skip_bios);
-  connect(options_bios_path, &QAction::triggered, [this] {
-    QFileDialog dialog{this};
-    dialog.setAcceptMode(QFileDialog::AcceptOpen);
-    dialog.setFileMode(QFileDialog::ExistingFile);
-    dialog.setNameFilter("Game Boy Advance BIOS (*.bin)");
-
-    if (!dialog.exec()) {
-      return;
-    }
-
-    config->bios_path = dialog.selectedFiles().at(0).toStdString();
-    config->Save(kConfigPath);
-  });
-
-  auto options_cartridge_menu = options_menu->addMenu(tr("Cartridge"));
-  CreateBooleanOption(options_cartridge_menu, "Force RTC", &config->force_rtc);
-  CreateSelectionOption(options_cartridge_menu->addMenu(tr("Save Type")), {
-    { "Detect",      nba::Config::BackupType::Detect },
-    { "SRAM",        nba::Config::BackupType::SRAM   },
-    { "FLASH 64K",   nba::Config::BackupType::FLASH_64  },
-    { "FLASH 128K",  nba::Config::BackupType::FLASH_128 },
-    { "EEPROM 512B", nba::Config::BackupType::EEPROM_4  },
-    { "EEPROM 8K",   nba::Config::BackupType::EEPROM_64 }
-  }, &config->backup_type);
-
-  auto options_video_menu = options_menu->addMenu(tr("Video"));
-  auto options_video_scale_menu = options_video_menu->addMenu(tr("Scale"));
-  auto options_video_scale_menu_group = new QActionGroup{this};
   for (int scale = 1; scale <= 6; scale++) {
-    auto action = options_video_scale_menu_group->addAction(QString::fromStdString(fmt::format("{}x", scale)));
+    auto action = scale_group->addAction(QString::fromStdString(fmt::format("{}x", scale)));
 
     action->setCheckable(true);
     action->setChecked(config->video.scale == scale);
@@ -166,9 +141,10 @@ void MainWindow::CreateOptionsMenu(QMenuBar* menu_bar) {
       UpdateWindowSize();
     });
   }
-  options_video_scale_menu->addActions(options_video_scale_menu_group->actions());
-  options_video_menu->addSeparator();
-  auto fullscreen_action = options_video_menu->addAction(tr("Fullscreen"));
+  
+  scale_menu->addActions(scale_group->actions());
+
+  auto fullscreen_action = menu->addAction(tr("Fullscreen"));
   fullscreen_action->setCheckable(true);
   fullscreen_action->setChecked(config->video.fullscreen);
   connect(fullscreen_action, &QAction::triggered, [this](bool fullscreen) {
@@ -177,26 +153,89 @@ void MainWindow::CreateOptionsMenu(QMenuBar* menu_bar) {
     UpdateWindowSize();
   });
 
-  auto options_audio_menu = options_menu->addMenu(tr("Audio"));
-  CreateSelectionOption(options_audio_menu->addMenu("Resampler"), {
+  menu->addSeparator();
+
+  CreateSelectionOption(menu->addMenu(tr("Filter")), {
+    { "Nearest", nba::PlatformConfig::Video::Filter::Nearest },
+    { "Linear",  nba::PlatformConfig::Video::Filter::Linear  },
+    { "xBRZ",    nba::PlatformConfig::Video::Filter::xBRZ    }
+  }, &config->video.filter);
+
+  CreateSelectionOption(menu->addMenu(tr("Color correction")), {
+    { "None",   nba::PlatformConfig::Video::Color::No  },
+    { "GBA",    nba::PlatformConfig::Video::Color::AGB },
+    { "GBA SP", nba::PlatformConfig::Video::Color::AGS },
+  }, &config->video.color);
+
+  CreateBooleanOption(menu, "Interframe blending", &config->video.interframe_blending);
+}
+
+void MainWindow::CreateAudioMenu(QMenu* parent) {
+  auto menu = parent->addMenu(tr("Audio"));
+
+  CreateSelectionOption(menu->addMenu("Resampler"), {
     { "Cosine",   nba::Config::Audio::Interpolation::Cosine },
     { "Cubic",    nba::Config::Audio::Interpolation::Cubic  },
     { "Sinc-64",  nba::Config::Audio::Interpolation::Sinc_64  },
     { "Sinc-128", nba::Config::Audio::Interpolation::Sinc_128 },
     { "Sinc-256", nba::Config::Audio::Interpolation::Sinc_256 }
-  }, &config->audio.interpolation);
+  }, &config->audio.interpolation, true);
 
-  auto options_hq_audio_menu = options_audio_menu->addMenu("HQ audio mixer");
-  CreateBooleanOption(options_hq_audio_menu, "Enable", &config->audio.mp2k_hle_enable);
-  CreateBooleanOption(options_hq_audio_menu, "Use cubic filter", &config->audio.mp2k_hle_cubic);
-
-  auto configure_input = options_menu->addAction(tr("Configure input"));
-  connect(configure_input, &QAction::triggered, [this] {
-    input_window->exec();
-  });
+  auto hq_menu = menu->addMenu("MP2K HQ mixer");
+  CreateBooleanOption(hq_menu, "Enable", &config->audio.mp2k_hle_enable, true);
+  CreateBooleanOption(hq_menu, "Cubic interpolation", &config->audio.mp2k_hle_cubic, true);
 }
 
-void MainWindow::CreateBooleanOption(QMenu* menu, const char* name, bool* underlying) {
+void MainWindow::CreateInputMenu(QMenu* parent) {
+  auto menu = parent->addMenu(tr("Input"));
+  
+  auto remap_action = menu->addAction(tr("Remap"));
+  remap_action->setMenuRole(QAction::NoRole);
+  connect(remap_action, &QAction::triggered, [this] {
+    input_window->exec();
+  });
+
+  CreateBooleanOption(menu, "Hold fast forward key", &config->input.hold_fast_forward);
+}
+
+void MainWindow::CreateSystemMenu(QMenu* parent) {
+  auto menu = parent->addMenu(tr("System"));
+
+  auto bios_path_action = menu->addAction(tr("Set BIOS path"));
+  connect(bios_path_action, &QAction::triggered, [this] {
+    SelectBIOS();
+  });
+
+  CreateBooleanOption(menu, "Skip BIOS", &config->skip_bios);
+
+  menu->addSeparator();
+
+  CreateSelectionOption(menu->addMenu(tr("Save Type")), {
+    { "Detect",      nba::Config::BackupType::Detect },
+    { "SRAM",        nba::Config::BackupType::SRAM   },
+    { "FLASH 64K",   nba::Config::BackupType::FLASH_64  },
+    { "FLASH 128K",  nba::Config::BackupType::FLASH_128 },
+    { "EEPROM 512B", nba::Config::BackupType::EEPROM_4  },
+    { "EEPROM 8K",   nba::Config::BackupType::EEPROM_64 }
+  }, &config->backup_type, true);
+
+  CreateBooleanOption(menu, "Force RTC", &config->force_rtc, true);
+}
+
+void MainWindow::CreateConfigMenu(QMenuBar* menu_bar) {
+  auto menu = menu_bar->addMenu(tr("&Config"));
+  CreateVideoMenu(menu);
+  CreateAudioMenu(menu);
+  CreateInputMenu(menu);
+  CreateSystemMenu(menu);
+}
+
+void MainWindow::CreateBooleanOption(
+  QMenu* menu,
+  const char* name,
+  bool* underlying,
+  bool require_reset
+) {
   auto action = menu->addAction(QString{name});
   auto config = this->config;
 
@@ -206,11 +245,14 @@ void MainWindow::CreateBooleanOption(QMenu* menu, const char* name, bool* underl
   connect(action, &QAction::triggered, [=](bool checked) {
     *underlying = checked;
     config->Save(kConfigPath);
+    if (require_reset) {
+      PromptUserForReset();
+    }
   });
 }
 
 void MainWindow::CreateHelpMenu(QMenuBar* menu_bar) {
-  auto help_menu = menu_bar->addMenu(tr("&?"));
+  auto help_menu = menu_bar->addMenu(tr("&Help"));
   auto about_app = help_menu->addAction(tr("About NanoBoyAdvance"));
 
   about_app->setMenuRole(QAction::AboutRole);
@@ -227,29 +269,54 @@ void MainWindow::CreateHelpMenu(QMenuBar* menu_bar) {
   });
 }
 
+void MainWindow::SelectBIOS() {
+  QFileDialog dialog{this};
+  dialog.setAcceptMode(QFileDialog::AcceptOpen);
+  dialog.setFileMode(QFileDialog::ExistingFile);
+  dialog.setNameFilter("Game Boy Advance BIOS (*.bin)");
+
+  if (dialog.exec()) {
+    config->bios_path = dialog.selectedFiles().at(0).toStdString();
+    config->Save(kConfigPath);
+  }
+}
+
+void MainWindow::PromptUserForReset() {
+  if (emu_thread->IsRunning()) {
+    QMessageBox box {this};
+    box.setText(tr("The new configuration will apply only after reset.\n\nDo you want to reset the emulation now?"));
+    box.setIcon(QMessageBox::Question);
+    box.setWindowTitle(tr("NanoBoyAdvance"));
+    box.addButton(QMessageBox::No);
+    box.addButton(QMessageBox::Yes);
+    box.setDefaultButton(QMessageBox::No);
+    
+    if (box.exec() == QMessageBox::Yes) {
+      Reset();
+    }
+  }
+}
+
 bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
   auto type = event->type();
 
   if (obj == this && (type == QEvent::KeyPress || type == QEvent::KeyRelease)) {
     auto key = dynamic_cast<QKeyEvent*>(event)->key();
     auto pressed = type == QEvent::KeyPress;
+    auto const& input = config->input;
 
     for (int i = 0; i < nba::InputDevice::kKeyCount; i++) {
-      if (config->input.gba[i] == key) {
+      if (input.gba[i] == key) {
         input_device->SetKeyStatus(static_cast<nba::InputDevice::Key>(i), pressed);
       }
     }
 
-    if (key == config->input.pause && !pressed) {
-      SetPause(!emu_thread->IsPaused());
-    }
-
-    if (key == config->input.reset && !pressed) {
-      Reset();
-    }
-
-    if (key == config->input.fast_forward && !pressed) {
-      emu_thread->SetFastForward(!emu_thread->GetFastForward());
+    if (key == input.fast_forward) {
+      if (input.hold_fast_forward) {
+        emu_thread->SetFastForward(pressed);
+      } else if (!pressed) {
+        emu_thread->SetFastForward(!emu_thread->GetFastForward());
+      }
     }
   }
 
@@ -263,42 +330,50 @@ void MainWindow::FileOpen() {
   dialog.setNameFilter("Game Boy Advance ROMs (*.gba *.agb)");
 
   if (dialog.exec()) {
+    bool retry;
     auto file = dialog.selectedFiles().at(0);
 
     emu_thread->Stop();
-
     config->Load(kConfigPath);
 
-    switch (nba::BIOSLoader::Load(core, config->bios_path)) {
-      case nba::BIOSLoader::Result::CannotFindFile: {
-        // TODO: ask the user if they want to assign the file.
-        QMessageBox box {this};
-        box.setText(tr("Please reference a BIOS file in the configuration.\n\n"
-                       "Cannot find BIOS: ") + QString{config->bios_path.c_str()});
-        box.setIcon(QMessageBox::Critical);
-        box.setWindowTitle(tr("BIOS not found"));
-        box.exec();
-        return;
+    do {
+      retry = false;
+
+      switch (nba::BIOSLoader::Load(core, config->bios_path)) {
+        case nba::BIOSLoader::Result::CannotFindFile: {
+          QMessageBox box {this};
+          box.setText(tr("A Game Boy Advance BIOS file is required but cannot be located.\n\nWould you like to add one now?"));
+          box.setIcon(QMessageBox::Question);
+          box.setWindowTitle(tr("BIOS not found"));
+          box.addButton(QMessageBox::No);
+          box.addButton(QMessageBox::Yes);
+          box.setDefaultButton(QMessageBox::Yes);
+          
+          if (box.exec() == QMessageBox::Yes) {
+            SelectBIOS();
+            retry = true;
+            continue;
+          }
+          return;
+        }
+        case nba::BIOSLoader::Result::CannotOpenFile:
+        case nba::BIOSLoader::Result::BadImage: {
+          QMessageBox box {this};
+          box.setText(tr("Sorry, the BIOS file could not be loaded.\n\nMake sure that the BIOS image is valid and has correct file permissions."));
+          box.setIcon(QMessageBox::Critical);
+          box.setWindowTitle(tr("Cannot open BIOS"));
+          box.exec();
+          return;
+        }
       }
-      case nba::BIOSLoader::Result::CannotOpenFile:
-      case nba::BIOSLoader::Result::BadImage: {
-        QMessageBox box {this};
-        box.setText(tr("Failed to open the BIOS file. "
-                       "Make sure that the permissions are correct and that the BIOS image is valid.\n\n"
-                       "Cannot open BIOS: ") + QString{config->bios_path.c_str()});
-        box.setIcon(QMessageBox::Critical);
-        box.setWindowTitle(tr("Cannot open BIOS"));
-        box.exec();
-        return;
-      }
-    }
+    } while (retry);
 
     switch (nba::ROMLoader::Load(core, file.toStdString(), config->backup_type, config->force_rtc)) {
       case nba::ROMLoader::Result::CannotFindFile: {
         QMessageBox box {this};
-        box.setText(tr("Cannot find file: ") + QFileInfo(file).fileName());
+        box.setText(tr("Sorry, the specified ROM file cannot be located."));
         box.setIcon(QMessageBox::Critical);
-        box.setWindowTitle(tr("File not found"));
+        box.setWindowTitle(tr("ROM not found"));
         box.exec();
         return;
       }
@@ -306,7 +381,7 @@ void MainWindow::FileOpen() {
       case nba::ROMLoader::Result::BadImage: {
         QMessageBox box {this};
         box.setIcon(QMessageBox::Critical);
-        box.setText(tr("The file could not be opened. Make sure that the permissions are correct and that the ROM image is valid."));
+        box.setText(tr("Sorry, the ROM file could not be loaded.\n\nMake sure that the ROM image is valid and has correct file permissions."));
         box.setWindowTitle(tr("Cannot open ROM"));
         box.exec();
         return;
@@ -317,7 +392,6 @@ void MainWindow::FileOpen() {
     emu_thread->Start();
   }
 }
-
 
 void MainWindow::Reset() {
   bool was_running = emu_thread->IsRunning();

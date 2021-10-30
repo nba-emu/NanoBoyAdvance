@@ -43,12 +43,30 @@ private:
   static constexpr auto kConfigPath = "config.toml";
 
   void CreateFileMenu(QMenuBar* menu_bar);
-  void CreateOptionsMenu(QMenuBar* menu_bar);
+  void CreateVideoMenu(QMenu* parent);
+  void CreateAudioMenu(QMenu* parent);
+  void CreateInputMenu(QMenu* parent);
+  void CreateSystemMenu(QMenu* parent);
+  void CreateConfigMenu(QMenuBar* menu_bar);
   void CreateHelpMenu(QMenuBar* menu_bar);
-  void CreateBooleanOption(QMenu* menu, const char* name, bool* underlying);
+
+  void SelectBIOS();
+  void PromptUserForReset();
+
+  void CreateBooleanOption(
+    QMenu* menu,
+    const char* name,
+    bool* underlying,
+    bool require_reset = false
+  );
 
   template <typename T>
-  void CreateSelectionOption(QMenu* menu, std::vector<std::pair<std::string, T>> const& mapping, T* underlying) {
+  void CreateSelectionOption(
+    QMenu* menu,
+    std::vector<std::pair<std::string, T>> const& mapping,
+    T* underlying,
+    bool require_reset = false
+  ) {
     auto group = new QActionGroup{this};
     auto config = this->config;
 
@@ -60,6 +78,9 @@ private:
       connect(action, &QAction::triggered, [=]() {
         *underlying = entry.second;
         config->Save(kConfigPath);
+        if (require_reset) {
+          PromptUserForReset();
+        }
       });
     }
 
