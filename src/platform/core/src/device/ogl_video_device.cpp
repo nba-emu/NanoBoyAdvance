@@ -27,7 +27,9 @@ static const float kQuadVertices[] = {
   -1,  1,     0, 1,
    1,  1,     1, 1,
    1, -1,     1, 0,
-  -1, -1,     0, 0
+   1, -1,     1, 0,
+  -1, -1,     0, 0,
+  -1,  1,     0, 1
 };
 
 OGLVideoDevice::OGLVideoDevice(std::shared_ptr<PlatformConfig> config) : config(config) {
@@ -289,7 +291,7 @@ void OGLVideoDevice::Draw(u32* buffer) {
       glUniform1i(source_map, 2);
     }
 
-    glDrawArrays(GL_QUADS, 0, 4);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
     target ^= 1;
   }
 }
