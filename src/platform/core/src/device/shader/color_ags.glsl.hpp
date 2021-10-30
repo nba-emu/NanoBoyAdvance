@@ -45,7 +45,7 @@ constexpr auto color_ags_frag = R"(\
   uniform sampler2D u_screen_map;
 
   void main() {
-    vec4 screen = pow(texture2D(u_screen_map, v_uv), vec4(target_gamma + darken_screen)).rgba;
+    vec4 screen = pow(texture(u_screen_map, v_uv), vec4(target_gamma + darken_screen)).rgba;
     vec4 avglum = vec4(0.5);
     screen = mix(screen, avglum, (1.0 - contrast));
      

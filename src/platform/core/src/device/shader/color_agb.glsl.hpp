@@ -15,7 +15,7 @@ constexpr auto color_agb_frag = R"(\
   uniform sampler2D u_screen_map;
 
   void main() {
-    vec4 color = texture2D(u_screen_map, v_uv);
+    vec4 color = texture(u_screen_map, v_uv);
 
     color.rgb = pow(color.rgb, vec3(4.0));
 

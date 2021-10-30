@@ -16,6 +16,7 @@
 #include "device/shader/color_ags.glsl.hpp"
 #include "device/shader/lcd_ghosting.glsl.hpp"
 #include "device/shader/output.glsl.hpp"
+#include "device/shader/xbrz.glsl.hpp"
 
 using Video = nba::PlatformConfig::Video;
 
@@ -86,6 +87,20 @@ void OGLVideoDevice::CreateShaderPrograms() {
   auto const& video = config->video;
 
   ReleaseShaderPrograms();
+
+  // xBRZ freescale upsampling filter (two passes)
+  if (video.filter == Video::Filter::xBRZ) {
+    auto [success0, program0] = CompileProgram(xbrz0_vert, xbrz0_frag);
+    auto [success1, program1] = CompileProgram(xbrz1_vert, xbrz1_frag);
+    
+    if (success0 && success1) {
+      programs.push_back(program0);
+      programs.push_back(program1);
+    } else {
+      if (success0) glDeleteProgram(program0);
+      if (success1) glDeleteProgram(program1);
+    }
+  }
 
   // Color correction pass
   switch (video.color) {
@@ -207,9 +222,11 @@ void OGLVideoDevice::Draw(u32* buffer) {
   glViewport(0, 0, view_width, view_height);
   glBindVertexArray(quad_vao);
 
-  // Bind history buffer in the second texture slot.
   glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_2D, texture[2]);
+  glBindTexture(GL_TEXTURE_2D, texture[2]); // history map
+
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_2D, texture[3]); // LCD source map
 
   auto program_count = programs.size();
 
@@ -265,6 +282,11 @@ void OGLVideoDevice::Draw(u32* buffer) {
     auto history_map = glGetUniformLocation(program_id, "u_history_map");
     if (history_map != -1) {
       glUniform1i(history_map, 1);
+    }
+
+    auto source_map = glGetUniformLocation(program_id, "u_source_map");
+    if (source_map != -1) {
+      glUniform1i(source_map, 2);
     }
 
     glDrawArrays(GL_QUADS, 0, 4);
