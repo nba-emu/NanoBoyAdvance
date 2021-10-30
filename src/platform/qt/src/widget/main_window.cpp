@@ -165,11 +165,11 @@ void MainWindow::CreateAudioMenu(QMenu* parent) {
     { "Sinc-64",  nba::Config::Audio::Interpolation::Sinc_64  },
     { "Sinc-128", nba::Config::Audio::Interpolation::Sinc_128 },
     { "Sinc-256", nba::Config::Audio::Interpolation::Sinc_256 }
-  }, &config->audio.interpolation);
+  }, &config->audio.interpolation, true);
 
   auto hq_menu = menu->addMenu("MP2K HQ mixer");
-  CreateBooleanOption(hq_menu, "Enable", &config->audio.mp2k_hle_enable);
-  CreateBooleanOption(hq_menu, "Cubic interpolation", &config->audio.mp2k_hle_cubic);
+  CreateBooleanOption(hq_menu, "Enable", &config->audio.mp2k_hle_enable, true);
+  CreateBooleanOption(hq_menu, "Cubic interpolation", &config->audio.mp2k_hle_cubic, true);
 }
 
 void MainWindow::CreateInputMenu(QMenu* parent) {
@@ -203,9 +203,9 @@ void MainWindow::CreateSystemMenu(QMenu* parent) {
     { "FLASH 128K",  nba::Config::BackupType::FLASH_128 },
     { "EEPROM 512B", nba::Config::BackupType::EEPROM_4  },
     { "EEPROM 8K",   nba::Config::BackupType::EEPROM_64 }
-  }, &config->backup_type);
+  }, &config->backup_type, true);
 
-  CreateBooleanOption(menu, "Force RTC", &config->force_rtc);
+  CreateBooleanOption(menu, "Force RTC", &config->force_rtc, true);
 }
 
 void MainWindow::CreateConfigMenu(QMenuBar* menu_bar) {
@@ -216,7 +216,12 @@ void MainWindow::CreateConfigMenu(QMenuBar* menu_bar) {
   CreateSystemMenu(menu);
 }
 
-void MainWindow::CreateBooleanOption(QMenu* menu, const char* name, bool* underlying) {
+void MainWindow::CreateBooleanOption(
+  QMenu* menu,
+  const char* name,
+  bool* underlying,
+  bool require_reset
+) {
   auto action = menu->addAction(QString{name});
   auto config = this->config;
 
@@ -226,6 +231,9 @@ void MainWindow::CreateBooleanOption(QMenu* menu, const char* name, bool* underl
   connect(action, &QAction::triggered, [=](bool checked) {
     *underlying = checked;
     config->Save(kConfigPath);
+    if (require_reset) {
+      PromptUserForReset();
+    }
   });
 }
 
@@ -256,6 +264,22 @@ void MainWindow::SelectBIOS() {
   if (dialog.exec()) {
     config->bios_path = dialog.selectedFiles().at(0).toStdString();
     config->Save(kConfigPath);
+  }
+}
+
+void MainWindow::PromptUserForReset() {
+  if (emu_thread->IsRunning()) {
+    QMessageBox box {this};
+    box.setText(tr("The new configuration will apply only after reset.\n\nDo you want to reset the emulation now?"));
+    box.setIcon(QMessageBox::Question);
+    box.setWindowTitle(tr("NanoBoyAdvance"));
+    box.addButton(QMessageBox::No);
+    box.addButton(QMessageBox::Yes);
+    box.setDefaultButton(QMessageBox::No);
+    
+    if (box.exec() == QMessageBox::Yes) {
+      Reset();
+    }
   }
 }
 
@@ -354,7 +378,6 @@ void MainWindow::FileOpen() {
     emu_thread->Start();
   }
 }
-
 
 void MainWindow::Reset() {
   bool was_running = emu_thread->IsRunning();
