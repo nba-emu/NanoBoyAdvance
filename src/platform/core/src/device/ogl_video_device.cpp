@@ -12,6 +12,7 @@
 #include <platform/device/ogl_video_device.hpp>
 #include <memory>
 
+#include "device/shader/color_agb.glsl.hpp"
 #include "device/shader/color_ags.glsl.hpp"
 #include "device/shader/lcd_ghosting.glsl.hpp"
 #include "device/shader/output.glsl.hpp"
@@ -32,7 +33,7 @@ OGLVideoDevice::OGLVideoDevice(std::shared_ptr<PlatformConfig> config) : config(
 }
 
 OGLVideoDevice::~OGLVideoDevice() {
-  // TODO: delete programs that were created.
+  ReleaseShaderPrograms();
   glDeleteVertexArrays(1, &quad_vao);
   glDeleteBuffers(1, &quad_vbo);
   glDeleteFramebuffers(1, &fbo);
@@ -80,6 +81,13 @@ void OGLVideoDevice::CreateShaderPrograms() {
 
   // Color correction pass
   switch (video.color) {
+    case Video::Color::AGB: {
+      auto [success, program] = CompileProgram(color_agb_vert, color_agb_frag);
+      if (success) {
+        programs.push_back(program);
+      }
+      break;
+    }
     case Video::Color::AGS: {
       auto [success, program] = CompileProgram(color_ags_vert, color_ags_frag);
       if (success) {
