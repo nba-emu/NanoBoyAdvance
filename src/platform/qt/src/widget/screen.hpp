@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <platform/device/ogl_video_device.hpp>
+#include <nba/device/video_device.hpp>
 #include <QGLWidget>
 #include <QOpenGLWidget>
 
@@ -31,19 +31,20 @@ protected:
 
 
 private:
+  static constexpr int kGBANativeWidth = 240;
+  static constexpr int kGBANativeHeight = 160;
+  static constexpr float kGBANativeAR = static_cast<float>(kGBANativeWidth) / static_cast<float>(kGBANativeHeight);
+
   auto CreateShader() -> GLuint;
 
-  u32* buffer = nullptr;
-
   int viewport_x = 0;
+  int viewport_y = 0;
   int viewport_width = 0;
   int viewport_height = 0;
   bool should_clear = false;
 
   GLuint texture;
   GLuint program;
-
-  nba::OGLVideoDevice ogl_video_device;
 
   Q_OBJECT
 };

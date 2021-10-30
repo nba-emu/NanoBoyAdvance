@@ -232,12 +232,12 @@ void OGLVideoDevice::LoadShader(std::string const& path) {
 
   // Log<Info>("OGLVideoDevice: loaded shader code: {}", glsl_code);
 
-  auto glsl_vert_code = R"(
-#version 330 core
+//   auto glsl_vert_code = R"(
+// #version 330 core
 
-#define VERTEX
+// #define VERTEX
 
-)" + ;
+// )" + ;
 }
 
 auto OGLVideoDevice::CompileShader(GLenum type, const char* source) -> GLuint {
