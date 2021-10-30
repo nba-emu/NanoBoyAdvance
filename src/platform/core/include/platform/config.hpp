@@ -38,7 +38,7 @@ struct PlatformConfig : Config {
       AGS
     } color = Color::AGS;
 
-    bool interframe_blending = true;
+    bool lcd_ghosting = true;
 
     struct Shader {
       std::string path_vs = "";

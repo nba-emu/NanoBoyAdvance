@@ -16,6 +16,8 @@
 #include "device/shader/lcd_ghosting.glsl.hpp"
 #include "device/shader/output.glsl.hpp"
 
+using Video = nba::PlatformConfig::Video;
+
 namespace nba {
 
 static const float kQuadVertices[] = {
@@ -26,8 +28,11 @@ static const float kQuadVertices[] = {
   -1, -1,     0, 0
 };
 
+OGLVideoDevice::OGLVideoDevice(std::shared_ptr<PlatformConfig> config) : config(config) {
+}
+
 OGLVideoDevice::~OGLVideoDevice() {
-  // TODO: delete and programs that were created.
+  // TODO: delete programs that were created.
   glDeleteVertexArrays(1, &quad_vao);
   glDeleteBuffers(1, &quad_vbo);
   glDeleteFramebuffers(1, &fbo);
@@ -58,15 +63,52 @@ void OGLVideoDevice::Initialize() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   }
 
-  // Compile shader test
-  {
-    program_a = CompileProgram(color_ags_vert, color_ags_frag).second;
-    program_b = CompileProgram(lcd_ghosting_vert, lcd_ghosting_frag).second;
-    program_out = CompileProgram(output_vert, output_frag).second;
-  }  
-
   glClearColor(0, 0, 0, 1);
   glClear(GL_COLOR_BUFFER_BIT);
+
+  ReloadConfig();
+}
+
+void OGLVideoDevice::ReloadConfig() {
+  CreateShaderPrograms();
+}
+
+void OGLVideoDevice::CreateShaderPrograms() {
+  auto const& video = config->video;
+
+  ReleaseShaderPrograms();
+
+  // Color correction pass
+  switch (video.color) {
+    case Video::Color::AGS: {
+      auto [success, program] = CompileProgram(color_ags_vert, color_ags_frag);
+      if (success) {
+        programs.push_back(program);
+      }
+      break;
+    }
+  }
+
+  // LCD ghosting (interframe blending) pass
+  if (video.lcd_ghosting) {
+    auto [success, program] = CompileProgram(lcd_ghosting_vert, lcd_ghosting_frag);
+    if (success) {
+      programs.push_back(program);
+    }
+  }
+
+  // Output pass (final)
+  auto [success, program] = CompileProgram(output_vert, output_frag);
+  if (success) {
+    programs.push_back(program);
+  }
+}
+
+void OGLVideoDevice::ReleaseShaderPrograms() {
+  for (auto program : programs) {   
+    glDeleteProgram(program);
+  }
+  programs.clear();
 }
 
 auto OGLVideoDevice::CompileShader(
@@ -144,9 +186,6 @@ void OGLVideoDevice::SetDefaultFBO(GLuint fbo) {
 }
 
 void OGLVideoDevice::Draw(u32* buffer) {
-  GLuint programs[] = { program_a, program_b, program_out };
-  auto program_count = sizeof(programs) / sizeof(GLuint);
-
   int target = 0;
 
   glViewport(0, 0, view_width, view_height);
@@ -155,6 +194,8 @@ void OGLVideoDevice::Draw(u32* buffer) {
   // Bind history buffer in the second texture slot.
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, texture[2]);
+
+  auto program_count = programs.size();
 
   for (int i = 0; i < program_count; i++) {
     auto program_id = programs[i];

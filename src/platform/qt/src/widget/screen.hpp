@@ -12,10 +12,14 @@
 #include <QOpenGLWidget>
 
 struct Screen : QOpenGLWidget, nba::VideoDevice {
-  Screen(QWidget* parent);
+  Screen(
+    QWidget* parent,
+    std::shared_ptr<nba::PlatformConfig> config
+  );
 
   void Draw(u32* buffer) final;
   void Clear();
+  void ReloadConfig();
 
 signals:
   void RequestDraw(u32* buffer);

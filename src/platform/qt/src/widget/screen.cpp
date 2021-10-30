@@ -9,8 +9,11 @@
 
 #include "widget/screen.hpp"
 
-Screen::Screen(QWidget* parent)
-    : QOpenGLWidget(parent) {
+Screen::Screen(
+  QWidget* parent,
+  std::shared_ptr<nba::PlatformConfig> config
+)   : QOpenGLWidget(parent)
+    , ogl_video_device(config) {
   QSurfaceFormat format;
   format.setSwapInterval(0);
   setFormat(format);
@@ -26,6 +29,10 @@ void Screen::Clear() {
   // TODO: this no longer works at this point.
   should_clear = true;
   update();
+}
+
+void Screen::ReloadConfig() {
+  ogl_video_device.ReloadConfig();
 }
 
 void Screen::OnRequestDraw(u32* buffer) {

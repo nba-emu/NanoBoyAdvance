@@ -8,6 +8,7 @@
 #pragma once
 
 #include <atomic>
+#include <functional>
 #include <nba/core.hpp>
 #include <platform/emulator_thread.hpp>
 #include <memory>
@@ -57,7 +58,8 @@ private:
     QMenu* menu,
     const char* name,
     bool* underlying,
-    bool require_reset = false
+    bool require_reset = false,
+    std::function<void(void)> callback = nullptr
   );
 
   template <typename T>
@@ -65,7 +67,8 @@ private:
     QMenu* menu,
     std::vector<std::pair<std::string, T>> const& mapping,
     T* underlying,
-    bool require_reset = false
+    bool require_reset = false,
+    std::function<void(void)> callback = nullptr
   ) {
     auto group = new QActionGroup{this};
     auto config = this->config;
@@ -80,6 +83,9 @@ private:
         config->Save(kConfigPath);
         if (require_reset) {
           PromptUserForReset();
+        }
+        if (callback) {
+          callback();
         }
       });
     }

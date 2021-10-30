@@ -74,10 +74,37 @@ void PlatformConfig::Load(std::string const& path) {
 
     if (video_result.is_ok()) {
       auto video = video_result.unwrap();
+  
       this->video.fullscreen = toml::find_or<toml::boolean>(video, "fullscreen", false);
       this->video.scale = toml::find_or<int>(video, "scale", 2);
       this->video.shader.path_vs = toml::find_or<std::string>(video, "shader_vs", "");
       this->video.shader.path_fs = toml::find_or<std::string>(video, "shader_fs", "");
+
+      const std::map<std::string, Video::Filter> filters{
+        { "nearest", Video::Filter::Nearest },
+        { "linear",  Video::Filter::Linear  },
+        { "xbrz",    Video::Filter::xBRZ    }
+      };
+
+      const std::map<std::string, Video::Color> color_corrections{
+        { "none", Video::Color::No  },
+        { "agb",  Video::Color::AGB },
+        { "ags",  Video::Color::AGS }
+      };
+
+      auto filter = toml::find_or<std::string>(video, "filter", "nearest");
+      auto filter_match = filters.find(filter);
+      if (filter_match != filters.end()) {
+        this->video.filter = filter_match->second;
+      }
+
+      auto color_correction = toml::find_or<std::string>(video, "color_correction", "ags");
+      auto color_correction_match = color_corrections.find(color_correction);
+      if (color_correction_match != color_corrections.end()) {
+        this->video.color = color_correction_match->second;  
+      }
+
+      this->video.lcd_ghosting = toml::find_or<bool>(video, "lcd_ghosting", true);
     }
   }
 
@@ -146,10 +173,28 @@ void PlatformConfig::Save(std::string const& path) {
   data["cartridge"]["force_rtc"] = this->force_rtc;
 
   // Video
+  std::string filter;
+  std::string color_correction;
+
+  switch (this->video.filter) {
+    case Video::Filter::Nearest: filter = "nearest"; break;
+    case Video::Filter::Linear:  filter = "linear"; break;
+    case Video::Filter::xBRZ:    filter = "xbrz"; break; 
+  }
+
+  switch (this->video.color) {
+    case Video::Color::No:  color_correction = "none"; break;
+    case Video::Color::AGB: color_correction = "agb"; break;
+    case Video::Color::AGS: color_correction = "ags"; break;
+  }
+
   data["video"]["fullscreen"] = this->video.fullscreen;
   data["video"]["scale"] = this->video.scale;
   data["video"]["shader_vs"] = this->video.shader.path_vs;
   data["video"]["shader_fs"] = this->video.shader.path_fs;
+  data["video"]["filter"] = filter;
+  data["video"]["color_correction"] = color_correction;
+  data["video"]["lcd_ghosting"] = this->video.lcd_ghosting;
 
   // Audio
   std::string resampler;

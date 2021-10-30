@@ -9,20 +9,27 @@
 
 #include <nba/device/video_device.hpp>
 #include <GL/glew.h>
+#include <platform/config.hpp>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace nba {
 
 struct OGLVideoDevice : VideoDevice {
-  ~OGLVideoDevice() override;
+  OGLVideoDevice(std::shared_ptr<PlatformConfig> config);
+ ~OGLVideoDevice() override;
 
   void Initialize();
   void SetViewport(int x, int y, int width, int height);
   void SetDefaultFBO(GLuint fbo);
   void Draw(u32* buffer) override;
+  void ReloadConfig();
 
 private:
+  void CreateShaderPrograms();
+  void ReleaseShaderPrograms();
+
   auto CompileShader(
     GLenum type,
     char const* source
@@ -41,11 +48,11 @@ private:
 
   GLuint quad_vao;
   GLuint quad_vbo;
-  GLuint program_a;
-  GLuint program_b;
-  GLuint program_out;
   GLuint fbo;
   GLuint texture[4];
+  std::vector<GLuint> programs;
+
+  std::shared_ptr<PlatformConfig> config;
 };
 
 } // namespace nba
