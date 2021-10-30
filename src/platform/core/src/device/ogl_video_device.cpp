@@ -56,7 +56,7 @@ void OGLVideoDevice::Initialize() {
 
   // Compile shader test
   {
-    const char* vert_src[] = {
+    char const* vert_src[] = {
       R"(\
 #version 330 core
 
@@ -71,7 +71,7 @@ void main() {
 })"
     };
 
-    const char* frag_src[] = {
+    char const* frag_src[] = {
       R"(\
 #version 330 core
 
@@ -166,82 +166,20 @@ void main() {
 })"
     };
 
-    {
-      auto vid = CompileShader(GL_VERTEX_SHADER, vert_src[0]);
-      auto fid = CompileShader(GL_FRAGMENT_SHADER, frag_src[0]);
-
-      program_a = glCreateProgram();
-      glAttachShader(program_a, vid);
-      glAttachShader(program_a, fid);
-      glLinkProgram(program_a);
-
-      glDeleteShader(vid);
-      glDeleteShader(fid);
-    }
-
-    {
-      auto vid = CompileShader(GL_VERTEX_SHADER, vert_src[0]);
-      auto fid = CompileShader(GL_FRAGMENT_SHADER, frag_src[1]);    
-
-      program_b = glCreateProgram();
-      glAttachShader(program_b, vid);
-      glAttachShader(program_b, fid);
-      glLinkProgram(program_b);
-
-      glDeleteShader(vid);
-      glDeleteShader(fid);
-    }
-
-    {
-      auto vid = CompileShader(GL_VERTEX_SHADER, vert_src[0]);
-      auto fid = CompileShader(GL_FRAGMENT_SHADER, frag_src[2]);    
-
-      program_out = glCreateProgram();
-      glAttachShader(program_out, vid);
-      glAttachShader(program_out, fid);
-      glLinkProgram(program_out);
-
-      glDeleteShader(vid);
-      glDeleteShader(fid);
-    }
+    program_a = CompileProgram(vert_src[0], frag_src[0]).second;
+    program_b = CompileProgram(vert_src[0], frag_src[1]).second;
+    program_out = CompileProgram(vert_src[0], frag_src[2]).second;
   }  
 
   glClearColor(0, 0, 0, 1);
   glClear(GL_COLOR_BUFFER_BIT);
-
-  LoadShader("shader/color-ags/color-ags");
 }
 
-void OGLVideoDevice::LoadShader(std::string const& path) {
-  auto glsl_path = fmt::format("{}.glsl", path);
-  auto glsl_file = std::ifstream{glsl_path, std::ios::binary};
-  auto glsl_code = std::string{};
-
-
-  if (!glsl_file.good()) {
-    // throw error...
-  }
-
-  auto glsl_size = std::filesystem::file_size(glsl_path); 
-
-  glsl_code.reserve(glsl_size);
-  glsl_code.assign(
-    std::istreambuf_iterator<char>{glsl_file},
-    std::istreambuf_iterator<char>{}
-  );
-
-  // Log<Info>("OGLVideoDevice: loaded shader code: {}", glsl_code);
-
-//   auto glsl_vert_code = R"(
-// #version 330 core
-
-// #define VERTEX
-
-// )" + ;
-}
-
-auto OGLVideoDevice::CompileShader(GLenum type, const char* source) -> GLuint {
-  const char* source_array[] = { source };
+auto OGLVideoDevice::CompileShader(
+  GLenum type,
+  char const* source
+) -> std::pair<bool, GLuint> {
+  char const* source_array[] = { source };
   
   auto shader = glCreateShader(type);
 
@@ -257,9 +195,32 @@ auto OGLVideoDevice::CompileShader(GLenum type, const char* source) -> GLuint {
     auto error_log = std::make_unique<GLchar[]>(max_length);
     glGetShaderInfoLog(shader, max_length, &max_length, error_log.get());
     Log<Error>("OGLVideoDevice: failed to compile shader:\n{0}", error_log.get());
+    return std::make_pair(false, shader);
   }
 
-  return shader;
+  return std::make_pair(true, shader);
+}
+
+auto OGLVideoDevice::CompileProgram(
+  char const* vertex_src,
+  char const* fragment_src
+) -> std::pair<bool, GLuint> {
+  auto [vert_success, vert_id] = CompileShader(GL_VERTEX_SHADER, vertex_src);
+  auto [frag_success, frag_id] = CompileShader(GL_FRAGMENT_SHADER, fragment_src);
+  
+  if (!vert_success || !frag_success) {
+    return std::make_pair<bool, GLuint>(false, 0);
+  } else {
+    auto prog_id = glCreateProgram();
+
+    glAttachShader(prog_id, vert_id);
+    glAttachShader(prog_id, frag_id);
+    glLinkProgram(prog_id);
+    glDeleteShader(vert_id);
+    glDeleteShader(frag_id);
+
+    return std::make_pair(true, prog_id);
+  }
 }
 
 void OGLVideoDevice::SetViewport(int x, int y, int width, int height) {

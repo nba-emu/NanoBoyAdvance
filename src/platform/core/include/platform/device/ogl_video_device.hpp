@@ -10,6 +10,7 @@
 #include <nba/device/video_device.hpp>
 #include <GL/glew.h>
 #include <string>
+#include <utility>
 
 namespace nba {
 
@@ -20,9 +21,17 @@ struct OGLVideoDevice : VideoDevice {
   void SetViewport(int x, int y, int width, int height);
   void SetDefaultFBO(GLuint fbo);
   void Draw(u32* buffer) override;
+
 private:
-  void LoadShader(std::string const& path);
-  auto CompileShader(GLenum type, const char* source) -> GLuint;
+  auto CompileShader(
+    GLenum type,
+    char const* source
+  ) -> std::pair<bool, GLuint>;
+  
+  auto CompileProgram(
+    char const* vertex_src,
+    char const* fragment_src
+  ) -> std::pair<bool, GLuint>;
 
   int view_x = 0;
   int view_y = 0;
