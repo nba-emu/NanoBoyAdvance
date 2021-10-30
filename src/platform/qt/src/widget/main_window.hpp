@@ -51,6 +51,8 @@ private:
   void CreateHelpMenu(QMenuBar* menu_bar);
   void CreateBooleanOption(QMenu* menu, const char* name, bool* underlying);
 
+  void SelectBIOS();
+
   template <typename T>
   void CreateSelectionOption(QMenu* menu, std::vector<std::pair<std::string, T>> const& mapping, T* underlying) {
     auto group = new QActionGroup{this};
