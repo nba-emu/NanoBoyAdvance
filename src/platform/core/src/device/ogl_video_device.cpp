@@ -71,6 +71,14 @@ void OGLVideoDevice::Initialize() {
 }
 
 void OGLVideoDevice::ReloadConfig() {
+  texture_filter_invalid = true;
+
+  if (config->video.filter == Video::Filter::Linear) {
+    texture_filter = GL_LINEAR;
+  } else {
+    texture_filter = GL_NEAREST;
+  }
+
   CreateShaderPrograms();
 }
 
@@ -240,6 +248,11 @@ void OGLVideoDevice::Draw(u32* buffer) {
         GL_UNSIGNED_BYTE,
         buffer
       );
+      if (texture_filter_invalid) {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texture_filter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texture_filter);
+        texture_filter_invalid = false;
+      }
     } else {
       glBindTexture(GL_TEXTURE_2D, texture[target ^ 1]);
     }

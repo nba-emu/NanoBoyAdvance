@@ -51,6 +51,8 @@ private:
   GLuint fbo;
   GLuint texture[4];
   std::vector<GLuint> programs;
+  GLenum texture_filter = GL_NEAREST;
+  bool texture_filter_invalid = false;
 
   std::shared_ptr<PlatformConfig> config;
 };
