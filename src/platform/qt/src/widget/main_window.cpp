@@ -175,11 +175,13 @@ void MainWindow::CreateAudioMenu(QMenu* parent) {
 void MainWindow::CreateInputMenu(QMenu* parent) {
   auto menu = parent->addMenu(tr("Input"));
   
-  auto remap_input = menu->addAction(tr("Remap"));
-  remap_input->setMenuRole(QAction::NoRole);
-  connect(remap_input, &QAction::triggered, [this] {
+  auto remap_action = menu->addAction(tr("Remap"));
+  remap_action->setMenuRole(QAction::NoRole);
+  connect(remap_action, &QAction::triggered, [this] {
     input_window->exec();
   });
+
+  CreateBooleanOption(menu, "Hold fast forward key", &config->input.hold_fast_forward);
 }
 
 void MainWindow::CreateSystemMenu(QMenu* parent) {
@@ -263,15 +265,20 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
   if (obj == this && (type == QEvent::KeyPress || type == QEvent::KeyRelease)) {
     auto key = dynamic_cast<QKeyEvent*>(event)->key();
     auto pressed = type == QEvent::KeyPress;
+    auto const& input = config->input;
 
     for (int i = 0; i < nba::InputDevice::kKeyCount; i++) {
-      if (config->input.gba[i] == key) {
+      if (input.gba[i] == key) {
         input_device->SetKeyStatus(static_cast<nba::InputDevice::Key>(i), pressed);
       }
     }
 
-    if (key == config->input.fast_forward && !pressed) {
-      emu_thread->SetFastForward(!emu_thread->GetFastForward());
+    if (key == input.fast_forward) {
+      if (input.hold_fast_forward) {
+        emu_thread->SetFastForward(pressed);
+      } else if (!pressed) {
+        emu_thread->SetFastForward(!emu_thread->GetFastForward());
+      }
     }
   }
 

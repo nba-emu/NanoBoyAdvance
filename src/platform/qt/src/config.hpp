@@ -26,6 +26,7 @@ struct QtConfig final : nba::PlatformConfig {
     };
 
     int fast_forward = Qt::Key_Space;
+    bool hold_fast_forward = true;
   } input;
 
 protected:

@@ -31,6 +31,7 @@ mp2k_hle_cubic = false
 pause = 16777224
 reset = 16777272
 fast_forward = 32
+hold_fast_forward = true
 [input.gba]
 b = 83
 a = 65
