@@ -33,7 +33,7 @@ MainWindow::MainWindow(
   setMenuBar(menu_bar);
 
   CreateFileMenu(menu_bar);
-  CreateOptionsMenu(menu_bar);
+  CreateConfigMenu(menu_bar);
   CreateHelpMenu(menu_bar);
 
   config->video_dev = screen;
@@ -124,13 +124,69 @@ void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
   );
 }
 
-void MainWindow::CreateOptionsMenu(QMenuBar* menu_bar) {
-  auto options_menu = menu_bar->addMenu(tr("&Options"));
+void MainWindow::CreateVideoMenu(QMenu* parent) {
+  auto menu = parent->addMenu(tr("Video"));
+  auto scale_menu  = menu->addMenu(tr("Scale"));
+  auto scale_group = new QActionGroup{this};
 
-  auto options_bios_menu = options_menu->addMenu(tr("BIOS"));
-  auto options_bios_path = options_bios_menu->addAction(tr("Select path"));
-  CreateBooleanOption(options_bios_menu, "Skip intro", &config->skip_bios);
-  connect(options_bios_path, &QAction::triggered, [this] {
+  for (int scale = 1; scale <= 6; scale++) {
+    auto action = scale_group->addAction(QString::fromStdString(fmt::format("{}x", scale)));
+
+    action->setCheckable(true);
+    action->setChecked(config->video.scale == scale);
+
+    connect(action, &QAction::triggered, [=]() {
+      config->video.scale = scale;
+      config->Save(kConfigPath);
+      UpdateWindowSize();
+    });
+  }
+  
+  scale_menu->addActions(scale_group->actions());
+  
+  menu->addSeparator();
+
+  auto fullscreen_action = menu->addAction(tr("Fullscreen"));
+  fullscreen_action->setCheckable(true);
+  fullscreen_action->setChecked(config->video.fullscreen);
+  connect(fullscreen_action, &QAction::triggered, [this](bool fullscreen) {
+    config->video.fullscreen = fullscreen;
+    config->Save(kConfigPath);
+    UpdateWindowSize();
+  });
+}
+
+void MainWindow::CreateAudioMenu(QMenu* parent) {
+  auto menu = parent->addMenu(tr("Audio"));
+
+  CreateSelectionOption(menu->addMenu("Resampler"), {
+    { "Cosine",   nba::Config::Audio::Interpolation::Cosine },
+    { "Cubic",    nba::Config::Audio::Interpolation::Cubic  },
+    { "Sinc-64",  nba::Config::Audio::Interpolation::Sinc_64  },
+    { "Sinc-128", nba::Config::Audio::Interpolation::Sinc_128 },
+    { "Sinc-256", nba::Config::Audio::Interpolation::Sinc_256 }
+  }, &config->audio.interpolation);
+
+  auto hq_menu = menu->addMenu("MP2K HQ mixer");
+  CreateBooleanOption(hq_menu, "Enable", &config->audio.mp2k_hle_enable);
+  CreateBooleanOption(hq_menu, "Cubic interpolation", &config->audio.mp2k_hle_cubic);
+}
+
+void MainWindow::CreateInputMenu(QMenu* parent) {
+  auto menu = parent->addMenu(tr("Input"));
+  
+  auto remap_input = menu->addAction(tr("Remap"));
+  remap_input->setMenuRole(QAction::NoRole);
+  connect(remap_input, &QAction::triggered, [this] {
+    input_window->exec();
+  });
+}
+
+void MainWindow::CreateSystemMenu(QMenu* parent) {
+  auto menu = parent->addMenu(tr("System"));
+
+  auto bios_path_action = menu->addAction(tr("Set BIOS path"));
+  connect(bios_path_action, &QAction::triggered, [this] {
     QFileDialog dialog{this};
     dialog.setAcceptMode(QFileDialog::AcceptOpen);
     dialog.setFileMode(QFileDialog::ExistingFile);
@@ -144,9 +200,11 @@ void MainWindow::CreateOptionsMenu(QMenuBar* menu_bar) {
     config->Save(kConfigPath);
   });
 
-  auto options_cartridge_menu = options_menu->addMenu(tr("Cartridge"));
-  CreateBooleanOption(options_cartridge_menu, "Force RTC", &config->force_rtc);
-  CreateSelectionOption(options_cartridge_menu->addMenu(tr("Save Type")), {
+  CreateBooleanOption(menu, "Skip BIOS", &config->skip_bios);
+
+  menu->addSeparator();
+
+  CreateSelectionOption(menu->addMenu(tr("Save Type")), {
     { "Detect",      nba::Config::BackupType::Detect },
     { "SRAM",        nba::Config::BackupType::SRAM   },
     { "FLASH 64K",   nba::Config::BackupType::FLASH_64  },
@@ -155,51 +213,15 @@ void MainWindow::CreateOptionsMenu(QMenuBar* menu_bar) {
     { "EEPROM 8K",   nba::Config::BackupType::EEPROM_64 }
   }, &config->backup_type);
 
-  auto options_video_menu = options_menu->addMenu(tr("Video"));
-  auto options_video_scale_menu = options_video_menu->addMenu(tr("Scale"));
-  auto options_video_scale_menu_group = new QActionGroup{this};
-  for (int scale = 1; scale <= 6; scale++) {
-    auto action = options_video_scale_menu_group->addAction(QString::fromStdString(fmt::format("{}x", scale)));
+  CreateBooleanOption(menu, "Force RTC", &config->force_rtc);
+}
 
-    action->setCheckable(true);
-    action->setChecked(config->video.scale == scale);
-
-    connect(action, &QAction::triggered, [=]() {
-      config->video.scale = scale;
-      config->Save(kConfigPath);
-      UpdateWindowSize();
-    });
-  }
-  options_video_scale_menu->addActions(options_video_scale_menu_group->actions());
-  options_video_menu->addSeparator();
-  auto fullscreen_action = options_video_menu->addAction(tr("Fullscreen"));
-  fullscreen_action->setCheckable(true);
-  fullscreen_action->setChecked(config->video.fullscreen);
-  connect(fullscreen_action, &QAction::triggered, [this](bool fullscreen) {
-    config->video.fullscreen = fullscreen;
-    config->Save(kConfigPath);
-    UpdateWindowSize();
-  });
-
-  auto options_audio_menu = options_menu->addMenu(tr("Audio"));
-  CreateSelectionOption(options_audio_menu->addMenu("Resampler"), {
-    { "Cosine",   nba::Config::Audio::Interpolation::Cosine },
-    { "Cubic",    nba::Config::Audio::Interpolation::Cubic  },
-    { "Sinc-64",  nba::Config::Audio::Interpolation::Sinc_64  },
-    { "Sinc-128", nba::Config::Audio::Interpolation::Sinc_128 },
-    { "Sinc-256", nba::Config::Audio::Interpolation::Sinc_256 }
-  }, &config->audio.interpolation);
-
-  auto options_hq_audio_menu = options_audio_menu->addMenu("HQ audio mixer");
-  CreateBooleanOption(options_hq_audio_menu, "Enable", &config->audio.mp2k_hle_enable);
-  CreateBooleanOption(options_hq_audio_menu, "Use cubic filter", &config->audio.mp2k_hle_cubic);
-
-  auto options_input_menu = options_menu->addMenu(tr("Input"));
-  auto remap_input = options_input_menu->addAction(tr("Remap"));
-  remap_input->setMenuRole(QAction::NoRole);
-  connect(remap_input, &QAction::triggered, [this] {
-    input_window->exec();
-  });
+void MainWindow::CreateConfigMenu(QMenuBar* menu_bar) {
+  auto menu = menu_bar->addMenu(tr("&Config"));
+  CreateVideoMenu(menu);
+  CreateAudioMenu(menu);
+  CreateInputMenu(menu);
+  CreateSystemMenu(menu);
 }
 
 void MainWindow::CreateBooleanOption(QMenu* menu, const char* name, bool* underlying) {

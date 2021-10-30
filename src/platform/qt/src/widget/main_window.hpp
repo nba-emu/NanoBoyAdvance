@@ -43,7 +43,11 @@ private:
   static constexpr auto kConfigPath = "config.toml";
 
   void CreateFileMenu(QMenuBar* menu_bar);
-  void CreateOptionsMenu(QMenuBar* menu_bar);
+  void CreateVideoMenu(QMenu* parent);
+  void CreateAudioMenu(QMenu* parent);
+  void CreateInputMenu(QMenu* parent);
+  void CreateSystemMenu(QMenu* parent);
+  void CreateConfigMenu(QMenuBar* menu_bar);
   void CreateHelpMenu(QMenuBar* menu_bar);
   void CreateBooleanOption(QMenu* menu, const char* name, bool* underlying);
 
