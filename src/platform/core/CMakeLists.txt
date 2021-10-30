@@ -22,6 +22,10 @@ set(SOURCES
 )
 
 set(HEADERS
+  src/device/shader/color_ags.glsl.hpp
+  src/device/shader/common.glsl.hpp
+  src/device/shader/lcd_ghosting.glsl.hpp
+  src/device/shader/output.glsl.hpp
 )
 
 set(HEADERS_PUBLIC

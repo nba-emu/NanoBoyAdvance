@@ -12,6 +12,10 @@
 #include <platform/device/ogl_video_device.hpp>
 #include <memory>
 
+#include "device/shader/color_ags.glsl.hpp"
+#include "device/shader/lcd_ghosting.glsl.hpp"
+#include "device/shader/output.glsl.hpp"
+
 namespace nba {
 
 static const float kQuadVertices[] = {
@@ -56,119 +60,9 @@ void OGLVideoDevice::Initialize() {
 
   // Compile shader test
   {
-    char const* vert_src[] = {
-      R"(\
-#version 330 core
-
-layout(location = 0) in vec2 position;
-layout(location = 1) in vec2 uv;
-
-out vec2 v_uv;
-
-void main() {
-  v_uv = uv;
-  gl_Position = vec4(position, 0.0, 1.0);
-})"
-    };
-
-    char const* frag_src[] = {
-      R"(\
-#version 330 core
-
-/*
-   Shader Modified: Pokefan531
-   Color Mangler
-   Author: hunterk
-   License: Public domain
-*/
-
-// Shader that replicates the LCD dynamics from a GameBoy Advance
-
-#define darken_screen 1.0
-#define target_gamma 2.2
-#define display_gamma 2.2
-#define sat 1.0
-#define lum 0.94
-#define contrast 1.0
-#define blr 0.0
-#define blg 0.0
-#define blb 0.0
-#define r 0.82
-#define g 0.665
-#define b 0.73
-#define rg 0.125
-#define rb 0.195
-#define gr 0.24
-#define gb 0.075
-#define br -0.06
-#define bg 0.21
-#define overscan_percent_x 0.0
-#define overscan_percent_y 0.0
-
-layout(location = 0) out vec4 frag_color;
-
-in vec2 v_uv;
-
-uniform sampler2D u_screen_map;
-
-void main() {
-  vec4 screen = pow(texture2D(u_screen_map, v_uv), vec4(target_gamma + darken_screen)).rgba;
-  vec4 avglum = vec4(0.5);
-  screen = mix(screen, avglum, (1.0 - contrast));
-   
-  mat4 color = mat4(
-    r,   rg,  rb,  0.0,  //red channel
-    gr,  g,   gb,  0.0,  //green channel
-    br,  bg,  b,   0.0,  //blue channel
-    blr, blg, blb, 0.0   //alpha channel; these numbers do nothing for our purposes.
-  );
-        
-  mat4 adjust = mat4(
-    (1.0 - sat) * 0.3086 + sat, (1.0 - sat) * 0.3086, (1.0 - sat) * 0.3086, 1.0,
-    (1.0 - sat) * 0.6094, (1.0 - sat) * 0.6094 + sat, (1.0 - sat) * 0.6094, 1.0,
-    (1.0 - sat) * 0.0820, (1.0 - sat) * 0.0820, (1.0 - sat) * 0.0820 + sat, 1.0,
-    0.0, 0.0, 0.0, 1.0
-  );
-
-  color *= adjust;
-  screen = clamp(screen * lum, 0.0, 1.0);
-  screen = color * screen;
-
-  frag_color = pow(screen, vec4(1.0 / display_gamma));
-})",
-      R"(
-#version 330 core
-
-layout(location = 0) out vec4 frag_color;
-
-in vec2 v_uv;
-
-uniform sampler2D u_screen_map;
-uniform sampler2D u_history_map;
-
-void main() {
-  vec4 color_a = texture2D(u_screen_map, v_uv);
-  vec4 color_b = texture2D(u_history_map, v_uv);
-  frag_color = mix(color_a, color_b, 0.5);
-}
-)",
-      R"(
-#version 330 core
-
-layout(location = 0) out vec4 frag_color;
-
-in vec2 v_uv;
-
-uniform sampler2D u_screen_map;
-
-void main() {
-  frag_color = texture2D(u_screen_map, vec2(v_uv.x, 1.0 - v_uv.y));
-})"
-    };
-
-    program_a = CompileProgram(vert_src[0], frag_src[0]).second;
-    program_b = CompileProgram(vert_src[0], frag_src[1]).second;
-    program_out = CompileProgram(vert_src[0], frag_src[2]).second;
+    program_a = CompileProgram(color_ags_vert, color_ags_frag).second;
+    program_b = CompileProgram(lcd_ghosting_vert, lcd_ghosting_frag).second;
+    program_out = CompileProgram(output_vert, output_frag).second;
   }  
 
   glClearColor(0, 0, 0, 1);
