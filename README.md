@@ -1,7 +1,7 @@
 <h2>NanoBoyAdvance</h2>
 
-![license](https://img.shields.io/github/license/fleroviux/NanoboyAdvance)
-[![CodeFactor](https://www.codefactor.io/repository/github/fleroviux/NanoboyAdvance/badge)](https://www.codefactor.io/repository/github/fleroviux/NanoboyAdvance)
+![license](https://img.shields.io/github/license/nba-emu/NanoBoyAdvance)
+![build](https://img.shields.io/github/workflow/status/nba-emu/NanoBoyAdvance/Build/master)
 
 NanoBoyAdvance is a Game Boy Advance emulator with a focus on high accuracy.<br>
 
@@ -24,18 +24,18 @@ See [ACCURACY.md](docs/ACCURACY.md) for more information on which tests NanoBoyA
 
 ## Running
 
-Get stable versions on the [releases page](https://github.com/fleroviux/NanoboyAdvance/releases).
-Or alternatively get the latest [nightly build ](https://nightly.link/fleroviux/NanoBoyAdvance/workflows/build/master).
+Get stable versions on the [releases page](https://github.com/nba-emu/NanoBoyAdvance/releases).
+Or alternatively get the latest [nightly build ](https://nightly.link/nba-emu/NanoBoyAdvance/workflows/build/master).
 
 A legitimate Game Boy Advance BIOS dump or a [replacement BIOS](https://github.com/Nebuleon/ReGBA/blob/master/bios/gba_bios.bin) is required.  
 Do note though that the replacement BIOS is less accurate.
 
-Place your BIOS file named as `bios.bin` into the same folder as the executable or provide a path via the CLI or [config.toml](https://github.com/fleroviux/NanoBoyAdvance/blob/master/src/platform/sdl/resource/config.toml)
+Place your BIOS file named as `bios.bin` into the same folder as the executable or provide a path via the CLI or [config.toml](https://github.com/nba-emu/NanoBoyAdvance/blob/master/src/platform/sdl/resource/config.toml)
 #### CLI arguments
 ```
 NanoboyAdvance.exe [--bios bios_path] [--force-rtc] [--save-type type] [--fullscreen] [--scale factor] [--resampler type] [--sync-to-audio yes/no] rom_path
 ```
-See [config.toml](https://github.com/fleroviux/NanoBoyAdvance/blob/master/src/platform/sdl/resource/config.toml) for more documentation or options.
+See [config.toml](https://github.com/nba-emu/NanoBoyAdvance/blob/master/src/platform/sdl/resource/config.toml) for more documentation or options.
 
 ## Compiling
 
