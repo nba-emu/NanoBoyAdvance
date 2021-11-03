@@ -24,7 +24,7 @@ MainWindow::MainWindow(
 )   : QMainWindow(parent) {
   setWindowTitle("NanoBoyAdvance 1.4");
 
-  screen = std::make_shared<Screen>(this);
+  screen = std::make_shared<Screen>(this, config);
   setCentralWidget(screen.get());
 
   config->Load(kConfigPath);
@@ -155,19 +155,23 @@ void MainWindow::CreateVideoMenu(QMenu* parent) {
 
   menu->addSeparator();
 
+  auto reload_config = [this]() {
+    screen->ReloadConfig();
+  };
+
   CreateSelectionOption(menu->addMenu(tr("Filter")), {
     { "Nearest", nba::PlatformConfig::Video::Filter::Nearest },
     { "Linear",  nba::PlatformConfig::Video::Filter::Linear  },
     { "xBRZ",    nba::PlatformConfig::Video::Filter::xBRZ    }
-  }, &config->video.filter);
+  }, &config->video.filter, false, reload_config);
 
   CreateSelectionOption(menu->addMenu(tr("Color correction")), {
     { "None",   nba::PlatformConfig::Video::Color::No  },
     { "GBA",    nba::PlatformConfig::Video::Color::AGB },
     { "GBA SP", nba::PlatformConfig::Video::Color::AGS },
-  }, &config->video.color);
+  }, &config->video.color, false, reload_config);
 
-  CreateBooleanOption(menu, "Interframe blending", &config->video.interframe_blending);
+  CreateBooleanOption(menu, "LCD ghosting", &config->video.lcd_ghosting, false, reload_config);
 }
 
 void MainWindow::CreateAudioMenu(QMenu* parent) {
@@ -234,7 +238,8 @@ void MainWindow::CreateBooleanOption(
   QMenu* menu,
   const char* name,
   bool* underlying,
-  bool require_reset
+  bool require_reset,
+  std::function<void(void)> callback
 ) {
   auto action = menu->addAction(QString{name});
   auto config = this->config;
@@ -247,6 +252,9 @@ void MainWindow::CreateBooleanOption(
     config->Save(kConfigPath);
     if (require_reset) {
       PromptUserForReset();
+    }
+    if (callback) {
+      callback();
     }
   });
 }

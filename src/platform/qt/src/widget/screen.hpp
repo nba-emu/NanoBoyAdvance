@@ -7,16 +7,19 @@
 
 #pragma once
 
-#include <nba/device/video_device.hpp>
+#include <platform/device/ogl_video_device.hpp>
 #include <QGLWidget>
 #include <QOpenGLWidget>
 
 struct Screen : QOpenGLWidget, nba::VideoDevice {
-  Screen(QWidget* parent);
- ~Screen() override;
+  Screen(
+    QWidget* parent,
+    std::shared_ptr<nba::PlatformConfig> config
+  );
 
   void Draw(u32* buffer) final;
   void Clear();
+  void ReloadConfig();
 
 signals:
   void RequestDraw(u32* buffer);
@@ -29,22 +32,14 @@ protected:
   void paintGL() override;
   void resizeGL(int width, int height) override;
 
-
 private:
   static constexpr int kGBANativeWidth = 240;
   static constexpr int kGBANativeHeight = 160;
   static constexpr float kGBANativeAR = static_cast<float>(kGBANativeWidth) / static_cast<float>(kGBANativeHeight);
 
-  auto CreateShader() -> GLuint;
-
-  int viewport_x = 0;
-  int viewport_y = 0;
-  int viewport_width = 0;
-  int viewport_height = 0;
+  u32* buffer = nullptr;
   bool should_clear = false;
-
-  GLuint texture;
-  GLuint program;
+  nba::OGLVideoDevice ogl_video_device;
 
   Q_OBJECT
 };

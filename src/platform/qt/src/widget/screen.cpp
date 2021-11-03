@@ -5,20 +5,22 @@
  * Refer to the included LICENSE file.
  */
 
-#include <QGLFunctions>
+#include <GL/glew.h>
 
 #include "widget/screen.hpp"
 
-Screen::Screen(QWidget* parent)
-    : QOpenGLWidget(parent) {
+Screen::Screen(
+  QWidget* parent,
+  std::shared_ptr<nba::PlatformConfig> config
+)   : QOpenGLWidget(parent)
+    , ogl_video_device(config) {
   QSurfaceFormat format;
+  format.setProfile(QSurfaceFormat::CoreProfile);
+  format.setMajorVersion(3);
+  format.setMinorVersion(3);
   format.setSwapInterval(0);
   setFormat(format);
   connect(this, &Screen::RequestDraw, this, &Screen::OnRequestDraw);
-}
-
-Screen::~Screen() {
-  glDeleteTextures(1, &texture);
 }
 
 void Screen::Draw(u32* buffer) {
@@ -27,115 +29,29 @@ void Screen::Draw(u32* buffer) {
 }
 
 void Screen::Clear() {
+  // TODO: this no longer works at this point.
   should_clear = true;
   update();
 }
 
-void Screen::OnRequestDraw(u32* buffer) {
-  glBindTexture(GL_TEXTURE_2D, texture);
-  glTexImage2D(
-    GL_TEXTURE_2D,
-    0,
-    GL_RGBA,
-    kGBANativeWidth,
-    kGBANativeHeight,
-    0,
-    GL_BGRA,
-    GL_UNSIGNED_BYTE,
-    buffer
-  );
+void Screen::ReloadConfig() {
+  ogl_video_device.ReloadConfig();
+}
 
+void Screen::OnRequestDraw(u32* buffer) {
+  this->buffer = buffer;
   update();
 }
 
-auto Screen::CreateShader() -> GLuint {
-  QGLFunctions ctx(QGLContext::currentContext());
-
-  auto vid = ctx.glCreateShader(GL_VERTEX_SHADER);
-  auto fid = ctx.glCreateShader(GL_FRAGMENT_SHADER);
-
-  const char* vert_src[] = {
-    "varying vec2 uv;\n"
-    "void main(void) {\n"
-    "    gl_Position = gl_Vertex;\n"
-    "    uv = gl_MultiTexCoord0;\n"
-    "}"
-  };
-
-  const char* frag_src[] = {
-    "uniform sampler2D tex;\n"
-    "varying vec2 uv;\n"
-    "void main(void) {\n"
-    "    vec4 color = texture2D(tex, uv);\n"
-    "    color.rgb = pow(color.rgb, vec3(4.0));\n"
-    "    gl_FragColor.rgb = pow(vec3(color.r + 0.196 * color.g,\n"
-    "                                0.039 * color.r + 0.901 * color.g + 0.117 * color.b,\n"
-    "                                0.196 * color.r + 0.039 * color.g + 0.862 * color.b), vec3(1.0/2.2));"
-    "    gl_FragColor.a = 1.0;\n"
-    "}"
-  };
-
-  // TODO: check for and log shader compilation errors.
-  ctx.glShaderSource(vid, 1, vert_src, nullptr);
-  ctx.glShaderSource(fid, 1, frag_src, nullptr);
-  ctx.glCompileShader(vid);
-  ctx.glCompileShader(fid);
-
-  auto pid = ctx.glCreateProgram();
-  ctx.glAttachShader(pid, vid);
-  ctx.glAttachShader(pid, fid);
-  ctx.glLinkProgram(pid);
-
-  return pid;
-}
-
 void Screen::initializeGL() {
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-
-  glEnable(GL_TEXTURE_2D);
-  glGenTextures(1, &texture);
-  glBindTexture(GL_TEXTURE_2D, texture);
-
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-  glClearColor(0, 0, 0, 1);
-  glClear(GL_COLOR_BUFFER_BIT);
-
-  program = CreateShader();
+  makeCurrent();
+  ogl_video_device.Initialize();
 }
 
 void Screen::paintGL() {
-  QGLFunctions ctx(QGLContext::currentContext());
-
-  glViewport(viewport_x, viewport_y, viewport_width, viewport_height);
-
-  if (!should_clear) {
-    glBindTexture(GL_TEXTURE_2D, texture);
-    ctx.glUseProgram(program);
-  
-    glBegin(GL_QUADS);
-    {
-      glTexCoord2f(0, 0);
-      glVertex2f(-1.0f, 1.0f);
-
-      glTexCoord2f(1.0f, 0);
-      glVertex2f(1.0f, 1.0f);
-
-      glTexCoord2f(1.0f, 1.0f);
-      glVertex2f(1.0f, -1.0f);
-
-      glTexCoord2f(0, 1.0f);
-      glVertex2f(-1.0f, -1.0f);
-    }
-    glEnd();
-  } else {
-    glClearColor(0, 0, 0, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
+  if (buffer != nullptr) {
+    ogl_video_device.SetDefaultFBO(defaultFramebufferObject());
+    ogl_video_device.Draw(buffer);
   }
 }
 
@@ -143,6 +59,11 @@ void Screen::resizeGL(int width, int height) {
   auto dpr = devicePixelRatio();
   width  *= dpr;
   height *= dpr;
+
+  int viewport_width;
+  int viewport_height;
+  int viewport_x;
+  int viewport_y;
 
   float ar = static_cast<float>(width) / static_cast<float>(height);
 
@@ -157,4 +78,6 @@ void Screen::resizeGL(int width, int height) {
     viewport_x = 0;
     viewport_y = (height - viewport_height) / 2;
   }
+
+  ogl_video_device.SetViewport(viewport_x, viewport_y, viewport_width, viewport_height);
 }
