@@ -26,9 +26,8 @@ See [ACCURACY.md](docs/ACCURACY.md) for more information on which tests NanoBoyA
 
 Download NanoBoyAdvance from the [releases page](https://github.com/nba-emu/NanoBoyAdvance/releases) (or get a [nightly build](https://nightly.link/nba-emu/NanoBoyAdvance/workflows/build/master)).
 
-Upon loading a ROM for the first time you will be prompted to assign the Game Boy Advance BIOS file. 
-You can [dump](https://github.com/mgba-emu/bios-dump/tree/master/src) it from a real console or use an [unofficial BIOS](https://github.com/Nebuleon/ReGBA/blob/master/bios/gba_bios.bin).
-Using an official BIOS dump is more accurate.
+Upon loading a ROM for the first time you will be prompted to assign the Game Boy Advance BIOS file.  
+You can [dump](https://github.com/mgba-emu/bios-dump/tree/master/src) it from a real console (accurate) or use an [unofficial BIOS](https://github.com/Nebuleon/ReGBA/blob/master/bios/gba_bios.bin) (less accurate).
 
 ## Compiling
 
