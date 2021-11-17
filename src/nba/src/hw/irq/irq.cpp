@@ -94,7 +94,7 @@ void IRQ::UpdateIRQLine() {
     if (event != nullptr) {
       scheduler.Cancel(event);
     }
-    event = scheduler.Add(1, [=](int late) {
+    event = scheduler.Add(2, [=](int late) {
       cpu.IRQLine() = irq_line_new;
       event = nullptr;
     });
