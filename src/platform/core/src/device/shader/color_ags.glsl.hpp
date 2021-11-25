@@ -68,5 +68,6 @@ constexpr auto color_ags_frag = R"(\
     screen = color * screen;
 
     frag_color = pow(screen, vec4(1.0 / display_gamma));
+    frag_color.a = 1;
   }
 )";
