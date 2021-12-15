@@ -135,6 +135,26 @@ void OGLVideoDevice::CreateShaderPrograms() {
   if (success) {
     programs.push_back(program);
   }
+
+  // Set constant shader uniforms.
+  for (auto program : programs) {
+    glUseProgram(program);
+
+    auto screen_map = glGetUniformLocation(program, "u_screen_map");
+    if (screen_map != -1) {
+      glUniform1i(screen_map, 0);
+    }
+
+    auto history_map = glGetUniformLocation(program, "u_history_map");
+    if (history_map != -1) {
+      glUniform1i(history_map, 1);
+    }
+
+    auto source_map = glGetUniformLocation(program, "u_source_map");
+    if (source_map != -1) {
+      glUniform1i(source_map, 2);
+    }
+  }
 }
 
 void OGLVideoDevice::ReleaseShaderPrograms() {
@@ -221,28 +241,35 @@ void OGLVideoDevice::SetDefaultFBO(GLuint fbo) {
 void OGLVideoDevice::Draw(u32* buffer) {
   int target = 0;
 
-  glViewport(0, 0, view_width, view_height);
-  glBindVertexArray(quad_vao);
+  // Update and bind LCD screen texture
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, texture[3]);
+  glTexImage2D(
+    GL_TEXTURE_2D, 0, GL_RGBA, 240, 160, 0, GL_BGRA, GL_UNSIGNED_BYTE, buffer
+  );
+  if (texture_filter_invalid) {
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texture_filter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texture_filter);
+    texture_filter_invalid = false;
+  }
 
+  // Bind LCD history map
   glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_2D, texture[2]); // history map
+  glBindTexture(GL_TEXTURE_2D, texture[2]);
 
+  // Bind LCD source map
   glActiveTexture(GL_TEXTURE2);
-  glBindTexture(GL_TEXTURE_2D, texture[3]); // LCD source map
+  glBindTexture(GL_TEXTURE_2D, texture[3]);
 
   auto program_count = programs.size();
 
+  glViewport(0, 0, view_width, view_height);
+  glBindVertexArray(quad_vao);
+
   for (int i = 0; i < program_count; i++) {
-    auto program_id = programs[i];
+    glUseProgram(programs[i]);
 
     if (i == program_count - 1) {
-      // Copy output of current frame to the history buffer.
-      // TODO: this is a bit inefficient.
-      glReadBuffer(GL_COLOR_ATTACHMENT0);
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, texture[2]);
-      glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, view_width, view_height);
-
       glViewport(view_x, view_y, view_width, view_height);
       glBindFramebuffer(GL_FRAMEBUFFER, default_fbo);
     } else {
@@ -250,49 +277,21 @@ void OGLVideoDevice::Draw(u32* buffer) {
       glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture[target], 0);
     }
 
-    glUseProgram(program_id);
-
-    glActiveTexture(GL_TEXTURE0);
-
-    if (i == 0) {
-      glBindTexture(GL_TEXTURE_2D, texture[3]);
-      glTexImage2D(
-        GL_TEXTURE_2D,
-        0,
-        GL_RGBA,
-        240,
-        160,
-        0,
-        GL_BGRA,
-        GL_UNSIGNED_BYTE,
-        buffer
-      );
-      if (texture_filter_invalid) {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texture_filter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texture_filter);
-        texture_filter_invalid = false;
-      }
-    } else {
-      glBindTexture(GL_TEXTURE_2D, texture[target ^ 1]);
-    }
-
-    auto screen_map = glGetUniformLocation(program_id, "u_screen_map");
-    if (screen_map != -1) {
-      glUniform1i(screen_map, 0);
-    }
-
-    auto history_map = glGetUniformLocation(program_id, "u_history_map");
-    if (history_map != -1) {
-      glUniform1i(history_map, 1);
-    }
-
-    auto source_map = glGetUniformLocation(program_id, "u_source_map");
-    if (source_map != -1) {
-      glUniform1i(source_map, 2);
-    }
-
     glDrawArrays(GL_TRIANGLES, 0, 6);
-    target ^= 1;
+
+    // Output of current frame is input of the next frame.
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture[target]);
+
+    if (i == program_count - 3) {
+      /* The next pass is the next-to-last pass, before we render to screen.
+       * Render that pass into a separate texture, so that it can be 
+       * used in the next frame to calculate LCD ghosting.
+       */
+      target = 2;
+    } else {
+      target ^= 1;
+    }
   }
 }
 
