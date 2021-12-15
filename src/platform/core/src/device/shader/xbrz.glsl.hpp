@@ -52,10 +52,9 @@ constexpr auto xbrz0_frag = R"(
 
   in vec2 v_uv;
 
-  uniform sampler2D u_screen_map;
+  uniform sampler2D u_source_map;
 
-  // TODO: make this a uniform?
-  #define u_screen_size vec4(240.0, 160.0, 1.0/240.0, 1.0/160.0)
+  #define u_source_size vec4(240.0, 160.0, 1.0/240.0, 1.0/160.0)
 
   #define BLEND_NONE 0
   #define BLEND_NORMAL 1
@@ -99,7 +98,7 @@ constexpr auto xbrz0_frag = R"(
   #define eq(a,b)  (a == b)
   #define neq(a,b) (a != b)
 
-  #define P(x,y) texture(u_screen_map, coord + u_screen_size.zw * vec2(x, y)).rgb
+  #define P(x,y) texture(u_source_map, coord + u_source_size.zw * vec2(x, y)).rgb
 
 void main() {
   //---------------------------------------
@@ -109,8 +108,8 @@ void main() {
   //                       x|G|H|I|x
   //                       -|x|x|x|-
 
-  vec2 pos = fract(v_uv * u_screen_size.xy) - vec2(0.5, 0.5);
-  vec2 coord = v_uv - pos * u_screen_size.zw;
+  vec2 pos = fract(v_uv * u_source_size.xy) - vec2(0.5, 0.5);
+  vec2 coord = v_uv - pos * u_source_size.zw;
 
   vec3 A = P(-1,-1);
   vec3 B = P( 0,-1);
@@ -269,7 +268,24 @@ frag_color /= 255.0;
 }
 )";
 
-constexpr auto xbrz1_vert = common_vert;
+constexpr auto xbrz1_vert = R"(\
+  #version 330 core
+
+  layout(location = 0) in vec2 position;
+  layout(location = 1) in vec2 uv;
+
+  out vec2 v_uv;
+  out vec4 u_screen_size;
+
+  uniform sampler2D u_screen_map;
+
+  void main() {
+    v_uv = uv;
+    u_screen_size.xy = textureSize(u_screen_map, 0);
+    u_screen_size.zw = 1.0 / textureSize(u_screen_map, 0);
+    gl_Position = vec4(position, 0.0, 1.0);
+  }
+)";
 
 constexpr auto xbrz1_frag = R"(
   #version 330 core
@@ -277,13 +293,11 @@ constexpr auto xbrz1_frag = R"(
   layout(location = 0) out vec4 frag_color;
 
   in vec2 v_uv;
+  in vec4 u_screen_size;
 
   uniform sampler2D u_screen_map; // info texture
   uniform sampler2D u_source_map; // LCD texture
 
-  // TODO: make this a uniform?
-  // TODO: use real sizes
-  #define u_screen_size vec4(240.0 * 3.0, 160.0 * 3.0, 1.0/240.0 * 0.333, 1.0/160.0 * 0.333)
   #define u_source_size vec4(240.0, 160.0, 1.0/240.0, 1.0/160.0)
 
   #define BLEND_NONE 0

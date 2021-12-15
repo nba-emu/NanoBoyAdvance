@@ -279,7 +279,7 @@ void OGLVideoDevice::Draw(u32* buffer) {
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
-    // Output of current frame is input of the next frame.
+    // Output of the current pass is the input for the next pass.
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture[target]);
 
