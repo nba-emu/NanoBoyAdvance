@@ -87,9 +87,9 @@ void PlatformConfig::Load(std::string const& path) {
       };
 
       const std::map<std::string, Video::Color> color_corrections{
-        { "none", Video::Color::No  },
-        { "agb",  Video::Color::AGB },
-        { "ags",  Video::Color::AGS }
+        { "none",  Video::Color::No    },
+        { "higan", Video::Color::higan },
+        { "agb",   Video::Color::AGB   }
       };
 
       auto filter = toml::find_or<std::string>(video, "filter", "nearest");
@@ -183,9 +183,9 @@ void PlatformConfig::Save(std::string const& path) {
   }
 
   switch (this->video.color) {
-    case Video::Color::No:  color_correction = "none"; break;
-    case Video::Color::AGB: color_correction = "agb"; break;
-    case Video::Color::AGS: color_correction = "ags"; break;
+    case Video::Color::No:    color_correction = "none"; break;
+    case Video::Color::higan: color_correction = "higan"; break;
+    case Video::Color::AGB:   color_correction = "agb"; break;
   }
 
   data["video"]["fullscreen"] = this->video.fullscreen;

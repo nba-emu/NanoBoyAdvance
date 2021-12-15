@@ -34,9 +34,9 @@ struct PlatformConfig : Config {
 
     enum class Color {
       No,
-      AGB,
-      AGS
-    } color = Color::AGS;
+      higan,
+      AGB
+    } color = Color::AGB;
 
     bool lcd_ghosting = true;
 

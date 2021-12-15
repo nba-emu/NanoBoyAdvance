@@ -166,9 +166,9 @@ void MainWindow::CreateVideoMenu(QMenu* parent) {
   }, &config->video.filter, false, reload_config);
 
   CreateSelectionOption(menu->addMenu(tr("Color correction")), {
-    { "None",   nba::PlatformConfig::Video::Color::No  },
-    { "GBA",    nba::PlatformConfig::Video::Color::AGB },
-    { "GBA SP", nba::PlatformConfig::Video::Color::AGS },
+    { "None",   nba::PlatformConfig::Video::Color::No    },
+    { "higan",  nba::PlatformConfig::Video::Color::higan },
+    { "GBA",    nba::PlatformConfig::Video::Color::AGB   }
   }, &config->video.color, false, reload_config);
 
   CreateBooleanOption(menu, "LCD ghosting", &config->video.lcd_ghosting, false, reload_config);
