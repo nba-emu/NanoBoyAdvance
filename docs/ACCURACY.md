@@ -18,6 +18,10 @@ Layer Toggle  |          1 |           pass |       pass |        pass |      fa
 OAM Update    |          1 |           pass |       fail |        fail |      fail |
 
 In addition NanoBoyAdvance passes the following tests:
-- Aging cartridge by Nintendo (mGBA fails a single test, VBA-M and other emulators fail a lot more tests)
+- AGS aging cartridge by Nintendo
+  - NanoBoyAdvance was the first public emulator to pass all tests
+  - Almost all emulators fail one or (most of the time) more tests
+  - Recently a few upcoming but immature emulators started passing all tests as well
 - [ARMWrestler](https://github.com/destoer/armwrestler-gba-fixed) by mic-
 - [gba-tests](https://github.com/jsmolka/gba-tests) by jsmolka
+- [FuzzARM](https://github.com/DenSinH/FuzzARM) by DenSinH
