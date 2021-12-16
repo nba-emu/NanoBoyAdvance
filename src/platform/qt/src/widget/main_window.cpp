@@ -47,6 +47,9 @@ MainWindow::MainWindow(
   input_window = new InputWindow{app, this, config};
 
   FindGameController();
+  emu_thread->SetPerFrameCallback(
+    std::bind(&MainWindow::UpdateGameControllerInput, this)
+  );
 
   emu_thread->SetFrameRateCallback([this](float fps) {
     emit UpdateFrameRate(fps);

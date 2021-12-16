@@ -43,6 +43,10 @@ void EmulatorThread::SetFrameRateCallback(std::function<void(float)> callback) {
   frame_rate_cb = callback;
 }
 
+void EmulatorThread::SetPerFrameCallback(std::function<void()> callback) {
+  per_frame_cb = callback;
+}
+
 void EmulatorThread::Start() {
   if (!running) {
     running = true;
@@ -52,6 +56,7 @@ void EmulatorThread::Start() {
       while (running) {
         frame_limiter.Run([this]() {
           if (!paused) {
+            per_frame_cb();
             core->RunForOneFrame();
           }
         }, [this](float fps) {
