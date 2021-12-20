@@ -29,7 +29,6 @@ void Screen::Draw(u32* buffer) {
 }
 
 void Screen::Clear() {
-  // TODO: this no longer works at this point.
   should_clear = true;
   update();
 }
@@ -52,6 +51,12 @@ void Screen::paintGL() {
   if (buffer != nullptr) {
     ogl_video_device.SetDefaultFBO(defaultFramebufferObject());
     ogl_video_device.Draw(buffer);
+  }
+
+  if (should_clear) {
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    should_clear = false;
   }
 }
 
