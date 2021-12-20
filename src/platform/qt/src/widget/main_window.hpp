@@ -15,6 +15,7 @@
 #include <QMainWindow>
 #include <QActionGroup>
 #include <QMenu>
+#include <QTimer>
 #include <SDL.h>
 #include <utility>
 #include <vector>
@@ -98,6 +99,7 @@ private:
   void Stop();
 
   void SetKeyStatus(int channel, nba::InputDevice::Key key, bool pressed);
+  void InitGameController();
   void FindGameController();
   void UpdateGameControllerInput();
   void UpdateWindowSize();

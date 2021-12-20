@@ -46,10 +46,7 @@ MainWindow::MainWindow(
 
   input_window = new InputWindow{app, this, config};
 
-  FindGameController();
-  emu_thread->SetPerFrameCallback(
-    std::bind(&MainWindow::UpdateGameControllerInput, this)
-  );
+  InitGameController();
 
   emu_thread->SetFrameRateCallback([this](float fps) {
     emit UpdateFrameRate(fps);
@@ -438,7 +435,7 @@ void MainWindow::SetKeyStatus(int channel, nba::InputDevice::Key key, bool press
 }
 
 void MainWindow::FindGameController() {
-  SDL_Init(SDL_INIT_GAMECONTROLLER);
+  SDL_GameControllerUpdate();
 
   auto num_joysticks = SDL_NumJoysticks();
 
@@ -451,6 +448,25 @@ void MainWindow::FindGameController() {
       }
     }
   }
+}
+
+void MainWindow::InitGameController() {
+  SDL_Init(SDL_INIT_GAMECONTROLLER);
+  FindGameController();
+
+  // Setup a timer to keep checking for game controllers.
+  auto timer = new QTimer{this};
+  connect(timer, &QTimer::timeout, [this]() {
+    if (game_controller == nullptr) {
+      FindGameController();
+    }
+  });
+  timer->start(1000);
+
+  // Update game controller input once per frame.
+  emu_thread->SetPerFrameCallback(
+    std::bind(&MainWindow::UpdateGameControllerInput, this)
+  );
 }
 
 void MainWindow::UpdateGameControllerInput() {
