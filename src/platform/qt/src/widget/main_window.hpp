@@ -97,6 +97,7 @@ private:
   void SetPause(bool value);
   void Stop();
 
+  void SetKeyStatus(int channel, nba::InputDevice::Key key, bool pressed);
   void FindGameController();
   void UpdateGameControllerInput();
   void UpdateWindowSize();
@@ -106,6 +107,7 @@ private:
   std::shared_ptr<QtConfig> config = std::make_shared<QtConfig>();
   std::unique_ptr<nba::CoreBase> core;
   std::unique_ptr<nba::EmulatorThread> emu_thread;
+  bool key_input[2][nba::InputDevice::kKeyCount] {false};
 
   QAction* pause_action;
   InputWindow* input_window;

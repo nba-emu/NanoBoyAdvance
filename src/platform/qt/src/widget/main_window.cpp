@@ -318,7 +318,7 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
 
     for (int i = 0; i < nba::InputDevice::kKeyCount; i++) {
       if (input.gba[i] == key) {
-        input_device->SetKeyStatus(static_cast<nba::InputDevice::Key>(i), pressed);
+        SetKeyStatus(0, static_cast<nba::InputDevice::Key>(i), pressed);
       }
     }
 
@@ -430,6 +430,13 @@ void MainWindow::Stop() {
   }
 }
 
+void MainWindow::SetKeyStatus(int channel, nba::InputDevice::Key key, bool pressed) {
+  key_input[channel][int(key)] = pressed;
+
+  input_device->SetKeyStatus(key, 
+    key_input[0][int(key)] || key_input[1][int(key)]);
+}
+
 void MainWindow::FindGameController() {
   SDL_Init(SDL_INIT_GAMECONTROLLER);
 
@@ -472,9 +479,9 @@ void MainWindow::UpdateGameControllerInput() {
 
   for (auto& button : buttons) {
     if (SDL_GameControllerGetButton(game_controller, button.first)) {
-      input_device->SetKeyStatus(button.second, true);
+      SetKeyStatus(1, button.second, true);
     } else {
-      input_device->SetKeyStatus(button.second, false);
+      SetKeyStatus(1, button.second, false);
     }
   }
 
@@ -482,10 +489,17 @@ void MainWindow::UpdateGameControllerInput() {
   auto x = SDL_GameControllerGetAxis(game_controller, SDL_CONTROLLER_AXIS_LEFTX);
   auto y = SDL_GameControllerGetAxis(game_controller, SDL_CONTROLLER_AXIS_LEFTY);
 
-  input_device->SetKeyStatus(Key::Left, x < -threshold);
-  input_device->SetKeyStatus(Key::Right, x > threshold);
-  input_device->SetKeyStatus(Key::Up, y < -threshold);
-  input_device->SetKeyStatus(Key::Down, y > threshold);
+  SetKeyStatus(1, Key::Left, x < -threshold || 
+    SDL_GameControllerGetButton(game_controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT));
+
+  SetKeyStatus(1, Key::Right, x > threshold || 
+    SDL_GameControllerGetButton(game_controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT));
+
+  SetKeyStatus(1, Key::Up, y < -threshold ||
+    SDL_GameControllerGetButton(game_controller, SDL_CONTROLLER_BUTTON_DPAD_UP));
+
+  SetKeyStatus(1, Key::Down, y > threshold ||
+    SDL_GameControllerGetButton(game_controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN));
 }
 
 void MainWindow::UpdateWindowSize() {
