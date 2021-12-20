@@ -89,7 +89,7 @@ jobs:
       - name: Collect artifacts
         run: |
           mkdir upload
-          cp -r build/bin/qt/{NanoBoyAdvance,config.toml} upload
+          cp -r build/bin/sdl/{NanoBoyAdvance,config.toml,keymap.toml,shaders} upload
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
