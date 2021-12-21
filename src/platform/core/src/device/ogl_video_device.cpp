@@ -266,6 +266,10 @@ void OGLVideoDevice::Draw(u32* buffer) {
   glViewport(0, 0, view_width, view_height);
   glBindVertexArray(quad_vao);
 
+  if (program_count <= 2) {
+    target = 2;
+  }
+
   for (int i = 0; i < program_count; i++) {
     glUseProgram(programs[i]);
 
