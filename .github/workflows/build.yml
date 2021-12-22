@@ -90,6 +90,7 @@ jobs:
         run: |
           mkdir dmg
           cp -a build/bin/qt/NanoBoyAdvance.app dmg/NanoBoyAdvance.app
+          codesign -s - --deep -f dmg/NanoBoyAdvance.app
           ln -s /Applications dmg/Applications
           hdiutil create \
                   -fs HFS+ \
