@@ -199,7 +199,6 @@ void DMA::RunChannel() {
     auto access_dst = Bus::Access::Sequential;
 
     if (!did_access_rom) {
-      // TODO: research HW behavior for addresses 0x1XXXXXXX - 0xFXXXXXXX
       if (src_addr >= 0x08000000) {
         access_src = Bus::Access::Nonsequential;
         did_access_rom = true;
