@@ -159,20 +159,19 @@ void DMA::StopVideoXferDMA() {
 }
 
 void DMA::Run() {
-  if (IsRunning()) {
-    RunChannel(true);
-    while (IsRunning()) {
-      RunChannel(false);
-    }
-  }
+  memory.Idle();
+  memory.Idle();
+
+  do {
+    RunChannel();
+  } while (IsRunning());
 }
 
-void DMA::RunChannel(bool first) {
+void DMA::RunChannel() {
   auto& channel = channels[active_dma_id];
   int dst_modify;
   int src_modify;
   auto size = channel.size;
-  auto access = Bus::Access::Nonsequential;
 
   // TODO: we are caching the size, source and destination address delta.
   // But is it possible for a DMA channel to change its own configuration?
@@ -185,14 +184,7 @@ void DMA::RunChannel(bool first) {
     src_modify = g_dma_src_modify[size][channel.src_cntl];
   }
 
-  // TODO: I don't know how the internal processing time for DMA is supposed to work.
-  // This is what works best so far, but I don't think that it's correct. Needs revision.
-  auto src_page = GetUnaliasedMemoryArea(channel.src_addr >> 24);
-  auto dst_page = GetUnaliasedMemoryArea(channel.dst_addr >> 24);
-  if ((src_page != 0x08 || dst_page != 0x08) && first) {
-    memory.Idle();
-    memory.Idle();
-  }
+  bool did_access_rom = false;
 
   while (channel.latch.length != 0) {
     if (early_exit_trigger) {
@@ -200,15 +192,32 @@ void DMA::RunChannel(bool first) {
       return;
     }
 
+    auto src_addr = channel.latch.src_addr;
+    auto dst_addr = channel.latch.dst_addr;
+
+    auto access_src = Bus::Access::Sequential;
+    auto access_dst = Bus::Access::Sequential;
+
+    if (!did_access_rom) {
+      // TODO: research HW behavior for addresses 0x1XXXXXXX - 0xFXXXXXXX
+      if (src_addr >= 0x08000000) {
+        access_src = Bus::Access::Nonsequential;
+        did_access_rom = true;
+      } else if (dst_addr >= 0x08000000) {
+        access_dst = Bus::Access::Nonsequential;
+        did_access_rom = true;
+      }
+    }
+
     if (size == Channel::Half) {
       u16 value;
 
-      if (likely(channel.latch.src_addr >= 0x02000000)) {
-        value = memory.ReadHalf(channel.latch.src_addr, access);
+      if (likely(src_addr >= 0x02000000)) {
+        value = memory.ReadHalf(src_addr, access_src);
         channel.latch.bus = (value << 16) | value;
         latch = channel.latch.bus;
       } else {
-        if (channel.latch.dst_addr & 2) {
+        if (dst_addr & 2) {
           value = channel.latch.bus >> 16;
         } else {
           value = channel.latch.bus;
@@ -216,22 +225,21 @@ void DMA::RunChannel(bool first) {
         memory.Idle();
       }
 
-      memory.WriteHalf(channel.latch.dst_addr, value, access);
+      memory.WriteHalf(dst_addr, value, access_dst);
     } else {
-      if (likely(channel.latch.src_addr >= 0x02000000)) {
-        channel.latch.bus = memory.ReadWord(channel.latch.src_addr, access);
+      if (likely(src_addr >= 0x02000000)) {
+        channel.latch.bus = memory.ReadWord(src_addr, access_src);
         latch = channel.latch.bus;
       } else {
         memory.Idle();
       }
-      memory.WriteWord(channel.latch.dst_addr, channel.latch.bus, access);
+
+      memory.WriteWord(dst_addr, channel.latch.bus, access_dst);
     }
 
     channel.latch.src_addr += src_modify;
     channel.latch.dst_addr += dst_modify;
     channel.latch.length--;
-
-    access = Bus::Access::Sequential;
   }
 
   runnable_set.set(channel.id, false);
@@ -385,6 +393,12 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
   channel.latch.dst_addr = channel.dst_addr;
   channel.latch.src_addr = channel.src_addr;
 
+  /*
+   * TODO:
+   * DMA actually always uses sequential accesses for all except the first ROM access.
+   * This is a better explanation of the observed behavior and makes it redundant
+   * to force increment mode.
+   */
   if (src_page == 0x08) {
     channel.src_cntl = Channel::Control::Increment;
   }

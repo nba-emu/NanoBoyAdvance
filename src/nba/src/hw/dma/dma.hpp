@@ -108,7 +108,7 @@ private:
   void ScheduleDMAs(unsigned int bitset);
   void SelectNextDMA();
   void OnChannelWritten(Channel& channel, bool enable_old);
-  void RunChannel(bool first);
+  void RunChannel();
 
   Bus& memory;
   IRQ& irq;
