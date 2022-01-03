@@ -69,6 +69,8 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
     case SOUND1CNT_X+3: return 0;
     case SOUND2CNT_L:   return apu_io.psg2.Read(2);
     case SOUND2CNT_L+1: return apu_io.psg2.Read(3);
+    case SOUND2CNT_L+2:
+    case SOUND2CNT_L+3: return 0;
     case SOUND2CNT_H:   return apu_io.psg2.Read(4);
     case SOUND2CNT_H+1: return apu_io.psg2.Read(5);
     case SOUND2CNT_H+2:
