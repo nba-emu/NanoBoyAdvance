@@ -27,18 +27,20 @@ void KeyPad::Reset() {
 void KeyPad::UpdateInput() {
   auto& input_device = config->input_dev;
 
-  input.value = 0;
+  u16 input = 0;
 
-  if (!input_device->Poll(Key::A)) input.value |= 1;
-  if (!input_device->Poll(Key::B)) input.value |= 2;
-  if (!input_device->Poll(Key::Select)) input.value |= 4;
-  if (!input_device->Poll(Key::Start)) input.value |= 8;
-  if (!input_device->Poll(Key::Right)) input.value |= 16;
-  if (!input_device->Poll(Key::Left)) input.value |= 32;
-  if (!input_device->Poll(Key::Up)) input.value |= 64;
-  if (!input_device->Poll(Key::Down)) input.value |= 128;
-  if (!input_device->Poll(Key::R)) input.value |= 256;
-  if (!input_device->Poll(Key::L)) input.value |= 512;
+  if (!input_device->Poll(Key::A)) input |= 1;
+  if (!input_device->Poll(Key::B)) input |= 2;
+  if (!input_device->Poll(Key::Select)) input |= 4;
+  if (!input_device->Poll(Key::Start)) input |= 8;
+  if (!input_device->Poll(Key::Right)) input |= 16;
+  if (!input_device->Poll(Key::Left)) input |= 32;
+  if (!input_device->Poll(Key::Up)) input |= 64;
+  if (!input_device->Poll(Key::Down)) input |= 128;
+  if (!input_device->Poll(Key::R)) input |= 256;
+  if (!input_device->Poll(Key::L)) input |= 512;
+
+  this->input.value = input;
 
   UpdateIRQ();
 }
