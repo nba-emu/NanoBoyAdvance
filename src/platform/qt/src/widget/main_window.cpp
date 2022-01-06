@@ -134,6 +134,7 @@ void MainWindow::CreateVideoMenu(QMenu* parent) {
 
     action->setCheckable(true);
     action->setChecked(config->video.scale == scale);
+    action->setShortcut(Qt::CTRL + (Qt::Key_1 + scale - 1));
 
     connect(action, &QAction::triggered, [=]() {
       config->video.scale = scale;
@@ -147,6 +148,7 @@ void MainWindow::CreateVideoMenu(QMenu* parent) {
   auto fullscreen_action = menu->addAction(tr("Fullscreen"));
   fullscreen_action->setCheckable(true);
   fullscreen_action->setChecked(config->video.fullscreen);
+  fullscreen_action->setShortcut(Qt::CTRL + Qt::Key_F);
   connect(fullscreen_action, &QAction::triggered, [this](bool fullscreen) {
     config->video.fullscreen = fullscreen;
     config->Save(kConfigPath);
