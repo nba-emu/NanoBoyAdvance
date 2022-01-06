@@ -7,6 +7,7 @@
 
 #include <QApplication>
 #include <QSurfaceFormat>
+#include <QtPlatformHeaders/QWindowsWindowFunctions>
 #include <stdlib.h>
 
 #include "widget/main_window.hpp"
@@ -26,6 +27,10 @@ int main(int argc, char** argv) {
   QSurfaceFormat::setDefaultFormat(format);
 
   QApplication app{ argc, argv };
+
+  // See: https://doc.qt.io/qt-5/windows-issues.html#fullscreen-opengl-based-windows
+  QWindowsWindowFunctions::setHasBorderInFullScreenDefault(true);
+
   MainWindow window{ &app };
 
   QCoreApplication::setOrganizationName("fleroviux");
