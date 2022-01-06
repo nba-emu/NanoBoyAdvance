@@ -5,7 +5,7 @@
 
 constexpr auto color_higan_vert = common_vert;
 
-constexpr auto color_higan_frag = R"(\
+constexpr auto color_higan_frag = R"(
   #version 330 core
 
   layout(location = 0) out vec4 frag_color;

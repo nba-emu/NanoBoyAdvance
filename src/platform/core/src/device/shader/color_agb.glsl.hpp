@@ -5,7 +5,7 @@
 
 constexpr auto color_agb_vert = common_vert;
 
-constexpr auto color_agb_frag = R"(\
+constexpr auto color_agb_frag = R"(
   #version 330 core
 
   /*

@@ -7,7 +7,7 @@
 
 #pragma once
 
-constexpr auto common_vert = R"(\
+constexpr auto common_vert = R"(
   #version 330 core
 
   layout(location = 0) in vec2 position;

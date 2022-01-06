@@ -268,7 +268,7 @@ frag_color /= 255.0;
 }
 )";
 
-constexpr auto xbrz1_vert = R"(\
+constexpr auto xbrz1_vert = R"(
   #version 330 core
 
   layout(location = 0) in vec2 position;

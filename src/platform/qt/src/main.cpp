@@ -7,10 +7,13 @@
 
 #include <QApplication>
 #include <QSurfaceFormat>
-#include <QtPlatformHeaders/QWindowsWindowFunctions>
 #include <stdlib.h>
 
 #include "widget/main_window.hpp"
+
+#if defined(WIN32)
+  #include <QtPlatformHeaders/QWindowsWindowFunctions>
+#endif
 
 int main(int argc, char** argv) {
   // See: https://trac.wxwidgets.org/ticket/19023
@@ -28,8 +31,10 @@ int main(int argc, char** argv) {
 
   QApplication app{ argc, argv };
 
+#if defined(WIN32)
   // See: https://doc.qt.io/qt-5/windows-issues.html#fullscreen-opengl-based-windows
   QWindowsWindowFunctions::setHasBorderInFullScreenDefault(true);
+#endif
 
   MainWindow window{ &app };
 
