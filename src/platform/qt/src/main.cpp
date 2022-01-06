@@ -15,15 +15,15 @@ int main(int argc, char** argv) {
   // See: https://trac.wxwidgets.org/ticket/19023
 #if defined(__APPLE__)
   setenv("LC_NUMERIC", "C", 1);
+#endif
 
-  // On macOS QSurfaceFormat::setDefaultFormat() must be called before constructing the QApplication.
+  // On some systems (e.g. macOS) QSurfaceFormat::setDefaultFormat() must be called before constructing QApplication.
   auto format = QSurfaceFormat{};
   format.setProfile(QSurfaceFormat::CoreProfile);
   format.setMajorVersion(3);
   format.setMinorVersion(3);
   format.setSwapInterval(0);
   QSurfaceFormat::setDefaultFormat(format);
-#endif
 
   QApplication app{ argc, argv };
   MainWindow window{ &app };

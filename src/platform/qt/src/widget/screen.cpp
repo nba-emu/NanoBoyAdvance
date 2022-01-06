@@ -14,12 +14,6 @@ Screen::Screen(
   std::shared_ptr<nba::PlatformConfig> config
 )   : QOpenGLWidget(parent)
     , ogl_video_device(config) {
-  QSurfaceFormat format;
-  format.setProfile(QSurfaceFormat::CoreProfile);
-  format.setMajorVersion(3);
-  format.setMinorVersion(3);
-  format.setSwapInterval(0);
-  setFormat(format);
   connect(this, &Screen::RequestDraw, this, &Screen::OnRequestDraw);
 }
 
