@@ -270,9 +270,9 @@ void MainWindow::CreateHelpMenu(QMenuBar* menu_bar) {
     QMessageBox box{ this };
     box.setTextFormat(Qt::RichText);
     box.setText(tr("NanoBoyAdvance is a Game Boy Advance emulator with a focus on high accuracy.<br><br>"
-                   "Copyright © 2015 - 2021 fleroviux<br><br>"
+                   "Copyright © 2015 - 2022 fleroviux<br><br>"
                    "NanoBoyAdvance is licensed under the GPLv3 or any later version.<br><br>"
-                   "GitHub: <a href=\"https://github.com/fleroviux/NanoBoyAdvance\">https://github.com/fleroviux/NanoBoyAdvance</a><br><br>"
+                   "GitHub: <a href=\"https://github.com/nba-emu/NanoBoyAdvance\">https://github.com/nba-emu/NanoBoyAdvance</a><br><br>"
                    "Game Boy Advance is a registered trademark of Nintendo Co., Ltd."));
     box.setWindowTitle(tr("About NanoBoyAdvance"));
     box.exec();
