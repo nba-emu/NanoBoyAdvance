@@ -35,6 +35,7 @@ set(SOURCES
   src/hw/irq/irq.cpp
   src/hw/keypad/keypad.cpp
   src/hw/timer/timer.cpp
+  src/cheat_device.cpp
   src/core.cpp
 )
 
@@ -68,6 +69,7 @@ set(HEADERS
   src/hw/irq/irq.hpp
   src/hw/keypad/keypad.hpp
   src/hw/timer/timer.hpp
+  src/cheat_device.hpp
   src/core.hpp
   src/scheduler.hpp
 )

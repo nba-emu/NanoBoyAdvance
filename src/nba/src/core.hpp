@@ -15,6 +15,7 @@
 #include "hw/irq/irq.hpp"
 #include "hw/keypad/keypad.hpp"
 #include "hw/timer/timer.hpp"
+#include "cheat_device.hpp"
 #include "scheduler.hpp"
 
 namespace nba::core {
@@ -45,6 +46,7 @@ private:
   Timer timer;
   KeyPad keypad;
   Bus bus;
+  CheatDevice cheat_device;
 };
 
 } // namespace nba::core

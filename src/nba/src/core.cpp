@@ -23,7 +23,8 @@ Core::Core(std::shared_ptr<Config> config)
     , ppu(scheduler, irq, dma, config)
     , timer(scheduler, irq, apu)
     , keypad(irq, config)
-    , bus(scheduler, {cpu, irq, dma, apu, ppu, timer, keypad}) {
+    , bus(scheduler, {cpu, irq, dma, apu, ppu, timer, keypad})
+    , cheat_device(bus, scheduler) {
   Reset();
 }
 
@@ -37,6 +38,7 @@ void Core::Reset() {
   ppu.Reset();
   bus.Reset();
   keypad.Reset();
+  cheat_device.Reset();
 
   if (config->skip_bios) {
     SkipBootScreen();

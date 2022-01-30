@@ -339,7 +339,7 @@ auto Bus::GetHostAddress(u32 address, size_t size) -> u8* {
   switch (page) {
     // BIOS
     case 0x00: {
-      auto offset = address & 0x00FF'FFFF;
+      auto offset = address & 0x3FFF;
       if (offset + size <= bios.size()) {
         return bios.data() + offset;
       }
@@ -347,7 +347,7 @@ auto Bus::GetHostAddress(u32 address, size_t size) -> u8* {
     }
     // EWRAM (external work RAM)
     case 0x02: {
-      auto offset = address & 0x00FF'FFFF;
+      auto offset = address & 0x3FFFF;
       if (offset + size <= wram.size()) {
         return wram.data() + offset;
       }
@@ -355,7 +355,7 @@ auto Bus::GetHostAddress(u32 address, size_t size) -> u8* {
     }
     // IWRAM (internal work RAM)
     case 0x03: {
-      auto offset = address & 0x00FF'FFFF;
+      auto offset = address & 0x7FFF;
       if (offset + size <= iram.size()) {
         return iram.data() + offset;
       }
