@@ -119,11 +119,6 @@ void PPU::OnScanlineComplete(int cycles_late) {
     mosaic.bg._counter_y = 0;
   }
 
-  // Advance vertical OBJ mosaic counter
-  if (++mosaic.obj._counter_y == mosaic.obj.size_y) {
-    mosaic.obj._counter_y = 0;
-  }
-
   /* Mode 0 doesn't have any affine backgrounds,
    * in that case the internal X/Y registers will never be updated.
    */

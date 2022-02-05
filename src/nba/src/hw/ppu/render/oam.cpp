@@ -53,6 +53,7 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
     buffer_obj[x].color = s_color_transparent;
     buffer_obj[x].alpha = 0;
     buffer_obj[x].window = 0;
+    buffer_obj[x].mosaic = 0;
   }
 
   for (s32 offset = 0; offset <= 127 * 8; offset += 8) {
@@ -110,14 +111,14 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
       transform[3] = 0x100;
     }
 
-    x += half_width;
-    y += half_height;
+    int center_x = x + half_width;
+    int center_y = y + half_height;
+    int local_y = line - center_y;
 
-    if (line < (y - half_height) || line >= (y + half_height)) {
+    if (local_y < -half_height || local_y >= half_height) {
       continue;
     }
 
-    int local_y = line - y;
     int number  =  attr2 & 0x3FF;
     int palette = (attr2 >> 12) + 16;
     int flip_h  = !affine && (attr1 & (1 << 12));
@@ -126,27 +127,19 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
 
     u32 tile_base = 0x10000;
 
-    int mosaic_x = 0;
-
     if (mosaic) {
-      mosaic_x = (x - half_width) % mmio.mosaic.obj.size_x;
       local_y -= mmio.mosaic.obj._counter_y;
     }
 
     for (int local_x = -half_width; local_x < half_width; local_x++) {
-      int _local_x = local_x - mosaic_x;
-      int global_x = local_x + x;
-
-      if (mosaic && (++mosaic_x == mmio.mosaic.obj.size_x)) {
-        mosaic_x = 0;
-      }
+      int global_x = local_x + center_x;
 
       if (global_x < 0 || global_x >= 240) {
         continue;
       }
 
-      int tex_x = ((transform[0] * _local_x + transform[1] * local_y) >> 8) + (width / 2);
-      int tex_y = ((transform[2] * _local_x + transform[3] * local_y) >> 8) + (height / 2);
+      int tex_x = ((transform[0] * local_x + transform[1] * local_y) >> 8) + (width / 2);
+      int tex_y = ((transform[2] * local_x + transform[3] * local_y) >> 8) + (height / 2);
 
       if (tex_x >= width || tex_y >= height ||
         tex_x < 0 || tex_y < 0) {
@@ -205,6 +198,7 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
           line_contains_alpha_obj |= point.alpha;
         }
 
+        point.mosaic = mosaic ? 1 : 0;
         point.priority = prio;
       }
     }
@@ -218,6 +212,23 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
     if (cycles <= 0) {
       break;
     }
+  }
+
+  int mosaic_x = 0;
+
+  for (int x = 0; x < 240; x++) {
+    if (buffer_obj[x].mosaic) {
+      buffer_obj[x].color = buffer_obj[x - mosaic_x].color;
+    }
+
+    if (++mosaic_x == mmio.mosaic.obj.size_x) {
+      mosaic_x = 0;
+    }
+  }
+
+  // Advance vertical OBJ mosaic counter
+  if (++mmio.mosaic.obj._counter_y == mmio.mosaic.obj.size_y) {
+    mmio.mosaic.obj._counter_y = 0;
   }
 }
 

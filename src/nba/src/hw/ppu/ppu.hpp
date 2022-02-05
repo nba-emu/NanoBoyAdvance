@@ -193,6 +193,7 @@ private:
     u8  priority;
     unsigned alpha  : 1;
     unsigned window : 1;
+    unsigned mosaic : 1;
   } buffer_obj[240];
 
   bool buffer_win[2][240];
