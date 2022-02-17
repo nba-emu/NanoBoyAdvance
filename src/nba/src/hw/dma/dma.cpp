@@ -160,11 +160,12 @@ void DMA::StopVideoXferDMA() {
 
 void DMA::Run() {
   memory.Idle();
-  memory.Idle();
 
   do {
     RunChannel();
   } while (IsRunning());
+
+  memory.Idle();
 }
 
 void DMA::RunChannel() {
