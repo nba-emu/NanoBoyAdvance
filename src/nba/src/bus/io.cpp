@@ -515,6 +515,7 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
           haltcnt = HaltControl::Stop;
         } else {
           haltcnt = HaltControl::Halt;
+          bus->Idle();
         }
       }
       break;

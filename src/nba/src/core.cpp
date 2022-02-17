@@ -72,6 +72,7 @@ void Core::Run(int cycles) {
 
   while (scheduler.GetTimestampNow() < limit) {
     if (bus.hw.haltcnt == HaltControl::Halt && irq.HasServableIRQ()) {
+      bus.Idle();
       bus.hw.haltcnt = HaltControl::Run;
     }
 
