@@ -46,6 +46,8 @@ struct Bus {
   void Idle();
 
 //private:
+  static constexpr bool kFullBusEmulation = true;
+
   Scheduler& scheduler;
 
   struct Memory {
@@ -54,6 +56,13 @@ struct Bus {
     std::array<u8, 0x08000> iram;
     struct Latch {
       u32 bios = 0;
+      u32 ewram = 0;
+      u32 iwram = 0;
+      u32 pram = 0;
+      u32 vram = 0;
+      u32 oam = 0;
+      u32 rom = 0;
+      u32* current;
     } latch;
     ROM rom;
   } memory;

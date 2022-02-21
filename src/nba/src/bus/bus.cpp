@@ -26,6 +26,7 @@ void Bus::Reset() {
   memory.wram.fill(0);
   memory.iram.fill(0);
   memory.latch = {};
+  memory.latch.current = &memory.latch.bios;
   hw.waitcnt = {};
   hw.haltcnt = Hardware::HaltControl::Run;
   hw.rcnt[0] = 0;
@@ -86,15 +87,41 @@ auto Bus::Read(u32 address, Access access) -> T {
     // EWRAM (external work RAM)
     case 0x02: {
       Step(is_u32 ? 6 : 3);
-      return read<T>(memory.wram.data(), Align<T>(address) & 0x3FFFF);
+      auto data = read<T>(memory.wram.data(), Align<T>(address) & 0x3FFFF);
+      // TODO: this is redundant.
+      if constexpr(kFullBusEmulation) {
+        memory.latch.current = &memory.latch.ewram;
+        if constexpr(std::is_same_v<T,  u8>) memory.latch.ewram = data * 0x01010101;
+        if constexpr(std::is_same_v<T, u16>) memory.latch.ewram = data * 0x00010001;
+        if constexpr(std::is_same_v<T, u32>) memory.latch.ewram = data;
+      }
+      return data;
     }
     // IWRAM (internal work RAM)
     case 0x03: {
       Step(1);
-      return read<T>(memory.iram.data(), Align<T>(address) & 0x7FFF);
+      auto data = read<T>(memory.iram.data(), Align<T>(address) & 0x7FFF);
+      if constexpr(kFullBusEmulation) {
+        memory.latch.current = &memory.latch.iwram;
+
+        // TODO: make this logic a bit more compact.
+        if constexpr(std::is_same_v<T, u8>) {
+          auto shift = (address & 3) * 8;
+          memory.latch.iwram = (memory.latch.iwram & ~(0xFF << shift)) | (data << shift);
+        }
+        if constexpr(std::is_same_v<T, u16>) {
+          auto shift = (address & 2) * 8;
+          memory.latch.iwram = (memory.latch.iwram & ~(0xFFFF << shift)) | (data << shift);
+        }
+        if constexpr(std::is_same_v<T, u32>) {
+          memory.latch.iwram = data;
+        }
+      }
+      return data;
     }
     // MMIO
     case 0x04: {
+      // TODO: research and implement MMIO open bus behaviour.
       Step(1);
       address = Align<T>(address);
       if constexpr(std::is_same_v<T,  u8>) return hw.ReadByte(address);
@@ -105,16 +132,37 @@ auto Bus::Read(u32 address, Access access) -> T {
     // PRAM (palette RAM)
     case 0x05: {
       Step(is_u32 ? 2 : 1);
-      return hw.ppu.ReadPRAM<T>(Align<T>(address));
+      auto data = hw.ppu.ReadPRAM<T>(Align<T>(address));
+      // TODO: this is redundant.
+      if constexpr(kFullBusEmulation) {
+        memory.latch.current = &memory.latch.pram;
+        if constexpr(std::is_same_v<T,  u8>) memory.latch.pram = data * 0x01010101;
+        if constexpr(std::is_same_v<T, u16>) memory.latch.pram = data * 0x00010001;
+        if constexpr(std::is_same_v<T, u32>) memory.latch.pram = data;
+      }
+      return data;
     }
     // VRAM (video RAM)
     case 0x06: {
       Step(is_u32 ? 2 : 1);
-      return hw.ppu.ReadVRAM<T>(Align<T>(address));
+      auto data = hw.ppu.ReadVRAM<T>(Align<T>(address));
+      // TODO: this is redundant.
+      if constexpr(kFullBusEmulation) {
+        memory.latch.current = &memory.latch.vram;
+        if constexpr(std::is_same_v<T,  u8>) memory.latch.vram = data * 0x01010101;
+        if constexpr(std::is_same_v<T, u16>) memory.latch.vram = data * 0x00010001;
+        if constexpr(std::is_same_v<T, u32>) memory.latch.vram = data;
+      }
+      return data;
     }
     // OAM (object attribute map)
     case 0x07: {
       Step(1);
+      // TODO: possibly remove redundant read?
+      if constexpr(kFullBusEmulation) {
+        memory.latch.current = &memory.latch.oam;
+        memory.latch.oam = hw.ppu.ReadOAM<u32>(Align<u32>(address));
+      }
       return hw.ppu.ReadOAM<T>(Align<T>(address));
     }
     // ROM (WS0, WS1, WS2)
@@ -123,6 +171,18 @@ auto Bus::Read(u32 address, Access access) -> T {
 
       if ((address & 0x1'FFFF) == 0) {
         access = Access::Nonsequential;
+      }
+
+      if constexpr(kFullBusEmulation) {
+        // TODO: this breaks EEPROM and GPIO accesses.
+        // TODO: check what the actual hardware behaviour for ARM code is (the current implementation is not consisten for 8/16-bit and 32-bit accesses).
+        memory.latch.current = &memory.latch.rom;
+        if constexpr(std::is_same_v<T, u32>) {
+          memory.latch.rom = memory.rom.ReadROM32(address);
+        } else {
+          memory.latch.rom  = memory.rom.ReadROM16(address);
+          memory.latch.rom |= memory.latch.rom << 16;
+        }
       }
 
       if constexpr(std::is_same_v<T,  u8>) {
@@ -138,7 +198,7 @@ auto Bus::Read(u32 address, Access access) -> T {
 
       if constexpr(std::is_same_v<T, u32>) {
         Prefetch(address, wait32[int(access)][page]);
-        return memory.rom.ReadROM32(address);  
+        return memory.rom.ReadROM32(address);
       }
 
       return 0;
@@ -147,6 +207,8 @@ auto Bus::Read(u32 address, Access access) -> T {
     case 0x0E ... 0x0F: {
       StopPrefetch();
       Step(wait16[0][0xE]);
+
+      // TODO: implement SRAM/FLASH open bus.
 
       u32 value = memory.rom.ReadSRAM(address);
 
@@ -174,17 +236,31 @@ void Bus::Write(u32 address, Access access, T value) {
     // EWRAM (external work RAM)
     case 0x02: {
       Step(is_u32 ? 6 : 3);
+      // TODO: this is redundant.
+      if constexpr(kFullBusEmulation) {
+        memory.latch.current = &memory.latch.ewram;
+        if constexpr(std::is_same_v<T,  u8>) memory.latch.ewram = value * 0x01010101;
+        if constexpr(std::is_same_v<T, u16>) memory.latch.ewram = value * 0x00010001;
+        if constexpr(std::is_same_v<T, u32>) memory.latch.ewram = value;
+      }
       write<T>(memory.wram.data(), Align<T>(address) & 0x3FFFF, value);
       break;
     }
     // IWRAM (internal work RAM)
     case 0x03: {
       Step(1);
+      // TODO: copy this over to the read handler.
+      if constexpr(kFullBusEmulation) {
+        auto shift = (Align<T>(address) & 3) * 8;
+        memory.latch.current = &memory.latch.iwram;
+        memory.latch.iwram = (memory.latch.iwram & ~((T)(0xFFFFFFFF) << shift)) | (value << shift);
+      }
       write<T>(memory.iram.data(), Align<T>(address) & 0x7FFF,  value);
       break;
     }
     // MMIO
     case 0x04: {
+      // TODO: research and understand MMIO open bus.
       Step(1);
       address = Align<T>(address);
       if constexpr(std::is_same_v<T,  u8>) hw.WriteByte(address, value);
@@ -195,24 +271,48 @@ void Bus::Write(u32 address, Access access, T value) {
     // PRAM (palette RAM)
     case 0x05: {
       Step(is_u32 ? 2 : 1);
+      // TODO: this is redundant.
+      if constexpr(kFullBusEmulation) {
+        memory.latch.current = &memory.latch.pram;
+        if constexpr(std::is_same_v<T,  u8>) memory.latch.pram = value * 0x01010101;
+        if constexpr(std::is_same_v<T, u16>) memory.latch.pram = value * 0x00010001;
+        if constexpr(std::is_same_v<T, u32>) memory.latch.pram = value;
+      }
       hw.ppu.WritePRAM<T>(Align<T>(address), value);
       break;
     }
     // VRAM (video RAM)
     case 0x06: {
       Step(is_u32 ? 2 : 1);
+      // TODO: this is redundant.
+      if constexpr(kFullBusEmulation) {
+        memory.latch.current = &memory.latch.vram;
+        if constexpr(std::is_same_v<T,  u8>) memory.latch.vram = value * 0x01010101;
+        if constexpr(std::is_same_v<T, u16>) memory.latch.vram = value * 0x00010001;
+        if constexpr(std::is_same_v<T, u32>) memory.latch.vram = value;
+      }
       hw.ppu.WriteVRAM<T>(Align<T>(address), value);
       break;
     }
     // OAM (object attribute map)
     case 0x07: {
       Step(1);
+      // TODO: confirm actual behavior for OAM (which is a 32-bit bus)
+      // TODO: this is redundant.
+      if constexpr(kFullBusEmulation) {
+        memory.latch.current = &memory.latch.oam;
+        if constexpr(std::is_same_v<T,  u8>) memory.latch.oam = value * 0x01010101;
+        if constexpr(std::is_same_v<T, u16>) memory.latch.oam = value * 0x00010001;
+        if constexpr(std::is_same_v<T, u32>) memory.latch.oam = value;
+      }
       hw.ppu.WriteOAM<T>(Align<T>(address), value);
       break;
     }
     // ROM (WS0, WS1, WS2)
     case 0x08 ... 0x0D: {
       address = Align<T>(address);
+
+      // TODO: implement ROM open bus
 
       if ((address & 0x1'FFFF) == 0) {
         access = Access::Nonsequential;
@@ -242,6 +342,8 @@ void Bus::Write(u32 address, Access access, T value) {
     case 0x0E ... 0x0F: {
       StopPrefetch();
       Step(wait16[0][0xE]);
+
+      // TODO: implement SRAM open bus
 
       if constexpr(std::is_same_v<T, u16>) value >>= (address & 1) << 3;
       if constexpr(std::is_same_v<T, u32>) value >>= (address & 3) << 3;
@@ -278,6 +380,10 @@ auto Bus::ReadOpenBus(u32 address) -> u32 {
   auto shift = (address & 3) << 3;
 
   Log<Trace>("Bus: illegal memory read: 0x{:08X}", address);
+
+  if constexpr(kFullBusEmulation) {
+    return *memory.latch.current >> shift;
+  }
 
   if (hw.dma.IsRunning() || dma.openbus) {
     return hw.dma.GetOpenBusValue() >> shift;
