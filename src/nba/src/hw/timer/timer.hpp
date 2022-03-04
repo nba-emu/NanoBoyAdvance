@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <nba/integer.hpp>
 
 #include "hw/apu/apu.hpp"
@@ -36,6 +37,7 @@ private:
   struct Channel {
     int id;
     u16 reload = 0;
+    u16 reload_latch;
     u32 counter = 0;
 
     struct Control {
@@ -50,8 +52,10 @@ private:
     int mask;
     int samplerate;
     u64 timestamp_started;
-    Scheduler::Event* event = nullptr;
-    std::function<void(int)> event_cb;
+    Scheduler::Event* event_overflow = nullptr;
+    Scheduler::Event* event_latch = nullptr;
+    std::function<void(int)> fn_overflow;
+    std::function<void(int)> fn_latch;
   } channels[4];
 
   Scheduler& scheduler;
