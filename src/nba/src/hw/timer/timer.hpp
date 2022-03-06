@@ -26,7 +26,9 @@ struct Timer {
 
   void Reset();
   auto Read (int chan_id, int offset) -> u8;
-  void Write(int chan_id, int offset, u8 value);
+  void WriteByte(int chan_id, int offset, u8  value);
+  void WriteHalf(int chan_id, int offset, u16 value);
+  void WriteWord(int chan_id, u32 value);
 
 private:
   enum Registers {
@@ -62,6 +64,8 @@ private:
   IRQ& irq;
   APU& apu;
 
+  void WriteControl(Channel& channel, u16 value);
+  void RecalculateSampleRates();
   auto GetCounterDeltaSinceLastUpdate(Channel const& channel) -> u32;
   void StartChannel(Channel& channel, int cycles_late);
   void StopChannel(Channel& channel);

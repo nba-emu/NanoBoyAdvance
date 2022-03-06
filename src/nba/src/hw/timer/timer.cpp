@@ -75,7 +75,7 @@ auto Timer::Read(int chan_id, int offset) -> u8 {
   }
 }
 
-void Timer::Write(int chan_id, int offset, u8 value) {
+void Timer::WriteByte(int chan_id, int offset, u8 value) {
   auto& channel = channels[chan_id];
   auto& control = channel.control;
 
@@ -89,48 +89,92 @@ void Timer::Write(int chan_id, int offset, u8 value) {
       break;
     }
     case REG_TMXCNT_H: {
-      bool enable_previous = control.enable;
-
-      if (channel.running) {
-        StopChannel(channel);
-      }
-
-      control.frequency = value & 3;
-      control.interrupt = value & 64;
-      control.enable = value & 128;
-      if (chan_id != 0) {
-        control.cascade = value & 4;
-      }
-
-      channel.shift = g_ticks_shift[control.frequency];
-      channel.mask  = g_ticks_mask[control.frequency];
-
-      if (control.enable) {
-        if (!enable_previous) {
-          channel.counter = channel.reload;
-        }
-        if (!control.cascade) {
-          auto late = (scheduler.GetTimestampNow() & channel.mask);
-          if (!enable_previous) {
-            late -= 2;
-          }
-          StartChannel(channel, late);
-        }
-      }
+      WriteControl(channel, value);
       break;
     }
   }
 
   if (chan_id <= 1) {
-    constexpr int kCyclesPerSecond = 16777216;
-    auto timer0_duty = 0x10000 - channels[0].reload;
-    auto timer1_duty = 0x10000 - channels[1].reload;
-    channels[0].samplerate = kCyclesPerSecond / (timer0_duty << channels[0].shift);
-    if (channels[1].control.cascade) {
-      channels[1].samplerate = channels[0].samplerate / timer1_duty;
-    } else {
-      channels[1].samplerate = kCyclesPerSecond / (timer1_duty << channels[1].shift);
+    RecalculateSampleRates();
+  }
+}
+
+void Timer::WriteHalf(int chan_id, int offset, u16 value) {
+  auto& channel = channels[chan_id];
+  auto& control = channel.control;
+
+  switch (offset) {
+    case REG_TMXCNT_L: {
+      channel.reload = value;
+      break;
     }
+    case REG_TMXCNT_H: {
+      WriteControl(channel, value);
+      break;
+    }
+  }
+
+  if (chan_id <= 1) {
+    RecalculateSampleRates();
+  }
+}
+
+void Timer::WriteWord(int chan_id, u32 value) {
+  auto& channel = channels[chan_id];
+
+  channel.reload = (u16)value;
+  WriteControl(channel, (u32)(value >> 16));
+
+  if (chan_id <= 1) {
+    RecalculateSampleRates();
+  }
+}
+
+void Timer::WriteControl(Channel& channel, u16 value) {
+  auto& control = channel.control;
+  bool enable_previous = control.enable;
+
+  if (channel.running) {
+    StopChannel(channel);
+  }
+
+  control.frequency = value & 3;
+  control.interrupt = value & 64;
+  control.enable = value & 128;
+  if (channel.id != 0) {
+    control.cascade = value & 4;
+  }
+
+  channel.shift = g_ticks_shift[control.frequency];
+  channel.mask = g_ticks_mask[control.frequency];
+
+  if (control.enable) {
+    if (!enable_previous) {
+      channel.counter = channel.reload;
+    }
+
+    if (!control.cascade) {
+      auto late = (scheduler.GetTimestampNow() & channel.mask);
+      if (!enable_previous) {
+        late -= 2;
+      }
+      StartChannel(channel, late);
+    }
+  }
+}
+
+void Timer::RecalculateSampleRates() {
+  constexpr int kCyclesPerSecond = 16777216;
+
+  auto timer0_duty = 0x10000 - channels[0].reload;
+  auto timer1_duty = 0x10000 - channels[1].reload;
+
+  channels[0].samplerate = kCyclesPerSecond / (timer0_duty << channels[0].shift);
+
+  if (channels[1].control.cascade) {
+    channels[1].samplerate = channels[0].samplerate / timer1_duty;
+  } else {
+    channels[1].samplerate = kCyclesPerSecond / (timer1_duty << channels[1].shift);
   }
 }
 
