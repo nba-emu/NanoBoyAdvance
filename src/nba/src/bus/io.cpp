@@ -123,21 +123,21 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
     case SOUNDBIAS+3:  return 0;
 
     // Timer 0 - 3
-    case TM0CNT_L:   return timer.Read(0, 0);
-    case TM0CNT_L+1: return timer.Read(0, 1);
-    case TM0CNT_H:   return timer.Read(0, 2);
+    case TM0CNT_L:   return timer.ReadByte(0, 0);
+    case TM0CNT_L+1: return timer.ReadByte(0, 1);
+    case TM0CNT_H:   return timer.ReadByte(0, 2);
     case TM0CNT_H+1: return 0;
-    case TM1CNT_L:   return timer.Read(1, 0);
-    case TM1CNT_L+1: return timer.Read(1, 1);
-    case TM1CNT_H:   return timer.Read(1, 2);
+    case TM1CNT_L:   return timer.ReadByte(1, 0);
+    case TM1CNT_L+1: return timer.ReadByte(1, 1);
+    case TM1CNT_H:   return timer.ReadByte(1, 2);
     case TM1CNT_H+1: return 0;
-    case TM2CNT_L:   return timer.Read(2, 0);
-    case TM2CNT_L+1: return timer.Read(2, 1);
-    case TM2CNT_H:   return timer.Read(2, 2);
+    case TM2CNT_L:   return timer.ReadByte(2, 0);
+    case TM2CNT_L+1: return timer.ReadByte(2, 1);
+    case TM2CNT_H:   return timer.ReadByte(2, 2);
     case TM2CNT_H+1: return 0;
-    case TM3CNT_L:   return timer.Read(3, 0);
-    case TM3CNT_L+1: return timer.Read(3, 1);
-    case TM3CNT_H:   return timer.Read(3, 2);
+    case TM3CNT_L:   return timer.ReadByte(3, 0);
+    case TM3CNT_L+1: return timer.ReadByte(3, 1);
+    case TM3CNT_H:   return timer.ReadByte(3, 2);
     case TM3CNT_H+1: return 0;
 
     // Serial communication
@@ -184,10 +184,28 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
 }
 
 auto Bus::Hardware::ReadHalf(u32 address) -> u16 {
+  switch (address) {
+    case TM0CNT_L: return timer.ReadHalf(0, 0);
+    case TM0CNT_H: return timer.ReadHalf(0, 2);
+    case TM1CNT_L: return timer.ReadHalf(1, 0);
+    case TM1CNT_H: return timer.ReadHalf(1, 2);
+    case TM2CNT_L: return timer.ReadHalf(2, 0);
+    case TM2CNT_H: return timer.ReadHalf(2, 2);
+    case TM3CNT_L: return timer.ReadHalf(3, 0);
+    case TM3CNT_H: return timer.ReadHalf(3, 2);
+  }
+
   return ReadByte(address) | (ReadByte(address + 1) << 8);
 }
 
 auto Bus::Hardware::ReadWord(u32 address) -> u32 {
+  switch (address) {
+    case TM0CNT_L: return timer.ReadWord(0);
+    case TM1CNT_L: return timer.ReadWord(1);
+    case TM2CNT_L: return timer.ReadWord(2);
+    case TM3CNT_L: return timer.ReadWord(3);
+  }
+
   return ReadByte(address) |
         (ReadByte(address + 1) <<  8) |
         (ReadByte(address + 2) << 16) |
@@ -451,18 +469,18 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
     case SOUNDBIAS+1:  apu_io.bias.Write(1, value); break;
 
     // Timers 0 - 3
-    case TM0CNT_L:   timer.Write(0, 0, value); break;
-    case TM0CNT_L+1: timer.Write(0, 1, value); break;
-    case TM0CNT_H:   timer.Write(0, 2, value); break;
-    case TM1CNT_L:   timer.Write(1, 0, value); break;
-    case TM1CNT_L+1: timer.Write(1, 1, value); break;
-    case TM1CNT_H:   timer.Write(1, 2, value); break;
-    case TM2CNT_L:   timer.Write(2, 0, value); break;
-    case TM2CNT_L+1: timer.Write(2, 1, value); break;
-    case TM2CNT_H:   timer.Write(2, 2, value); break;
-    case TM3CNT_L:   timer.Write(3, 0, value); break;
-    case TM3CNT_L+1: timer.Write(3, 1, value); break;
-    case TM3CNT_H:   timer.Write(3, 2, value); break;
+    case TM0CNT_L:   timer.WriteByte(0, 0, value); break;
+    case TM0CNT_L+1: timer.WriteByte(0, 1, value); break;
+    case TM0CNT_H:   timer.WriteByte(0, 2, value); break;
+    case TM1CNT_L:   timer.WriteByte(1, 0, value); break;
+    case TM1CNT_L+1: timer.WriteByte(1, 1, value); break;
+    case TM1CNT_H:   timer.WriteByte(1, 2, value); break;
+    case TM2CNT_L:   timer.WriteByte(2, 0, value); break;
+    case TM2CNT_L+1: timer.WriteByte(2, 1, value); break;
+    case TM2CNT_H:   timer.WriteByte(2, 2, value); break;
+    case TM3CNT_L:   timer.WriteByte(3, 0, value); break;
+    case TM3CNT_L+1: timer.WriteByte(3, 1, value); break;
+    case TM3CNT_H:   timer.WriteByte(3, 2, value); break;
 
     // Serial communication
     case SIOCNT: {
@@ -525,6 +543,16 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
 
 void Bus::Hardware::WriteHalf(u32 address, u16 value) {
   switch (address) {
+    // Timers 0 - 3
+    case TM0CNT_L: timer.WriteHalf(0, 0, value); break;
+    case TM0CNT_H: timer.WriteHalf(0, 2, value); break;
+    case TM1CNT_L: timer.WriteHalf(1, 0, value); break;
+    case TM1CNT_H: timer.WriteHalf(1, 2, value); break;
+    case TM2CNT_L: timer.WriteHalf(2, 0, value); break;
+    case TM2CNT_H: timer.WriteHalf(2, 2, value); break;
+    case TM3CNT_L: timer.WriteHalf(3, 0, value); break;
+    case TM3CNT_H: timer.WriteHalf(3, 2, value); break;
+
     /* Do not invoke Keypad::UpdateIRQ() twice for a single 16-bit write.
      * See https://github.com/fleroviux/NanoBoyAdvance/issues/152 for details.
      */
@@ -541,8 +569,18 @@ void Bus::Hardware::WriteHalf(u32 address, u16 value) {
 }
 
 void Bus::Hardware::WriteWord(u32 address, u32 value) {
-  WriteHalf(address + 0, u16(value >>  0));
-  WriteHalf(address + 2, u16(value >> 16));
+  switch (address) {
+    // Timers 0 - 3
+    case TM0CNT_L: timer.WriteWord(0, value); break;
+    case TM1CNT_L: timer.WriteWord(1, value); break;
+    case TM2CNT_L: timer.WriteWord(2, value); break;
+    case TM3CNT_L: timer.WriteWord(3, value); break;
+    default: {
+      WriteHalf(address + 0, u16(value >> 0));
+      WriteHalf(address + 2, u16(value >> 16));
+      break;
+    }
+  }
 }
 
 } // namespace nba::core
