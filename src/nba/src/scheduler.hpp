@@ -25,6 +25,7 @@ struct Scheduler {
     friend class Scheduler;
     int handle;
     u64 timestamp;
+    u64 key;
   };
 
   Scheduler() {
@@ -67,7 +68,7 @@ struct Scheduler {
     timestamp_now = timestamp_next;
   }
 
-  auto Add(u64 delay, std::function<void(int)> callback) -> Event* {
+  auto Add(u64 delay, std::function<void(int)> callback, uint priority = 0) -> Event* {
     int n = heap_size++;
     int p = Parent(n);
 
@@ -76,11 +77,14 @@ struct Scheduler {
       "Scheduler: reached maximum number of events."
     );
 
+    Assert(priority <= 3, "Scheduler: priority must be between 0 and 3.");
+
     auto event = heap[n];
     event->timestamp = GetTimestampNow() + delay;
+    event->key = (event->timestamp << 2) | priority;
     event->callback = callback;
 
-    while (n != 0 && heap[p]->timestamp > heap[n]->timestamp) {
+    while (n != 0 && heap[p]->key > heap[n]->key) {
       Swap(n, p);
       n = p;
       p = Parent(n);
@@ -90,10 +94,10 @@ struct Scheduler {
   }
 
   template<class T>
-  auto Add(u64 delay, T* object, EventMethod<T> method) -> Event* {
+  auto Add(u64 delay, T* object, EventMethod<T> method, uint priority = 0) -> Event* {
     return Add(delay, [object, method](int cycles_late) {
       (object->*method)(cycles_late);
-    });
+    }, priority);
   }
 
   void Cancel(Event* event) {
@@ -120,12 +124,12 @@ private:
     Swap(n, --heap_size);
 
     int p = Parent(n);
-    if (n != 0 && heap[p]->timestamp > heap[n]->timestamp) {
+    if (n != 0 && heap[p]->key > heap[n]->key) {
       do {
         Swap(n, p);
         n = p;
         p = Parent(n);
-      } while (n != 0 && heap[p]->timestamp > heap[n]->timestamp);
+      } while (n != 0 && heap[p]->key > heap[n]->key);
     } else {
       Heapify(n);
     }
@@ -143,12 +147,12 @@ private:
     int l = LeftChild(n);
     int r = RightChild(n);
 
-    if (l < heap_size && heap[l]->timestamp < heap[n]->timestamp) {
+    if (l < heap_size && heap[l]->key < heap[n]->key) {
       Swap(l, n);
       Heapify(l);
     }
 
-    if (r < heap_size && heap[r]->timestamp < heap[n]->timestamp) {
+    if (r < heap_size && heap[r]->key < heap[n]->key) {
       Swap(r, n);
       Heapify(r);
     }
