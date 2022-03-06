@@ -46,33 +46,41 @@ void Timer::Reset() {
   }
 }
 
-auto Timer::Read(int chan_id, int offset) -> u8 {
+auto Timer::ReadByte(int chan_id, int offset) -> u8 {
   auto const& channel = channels[chan_id];
-  auto const& control = channel.control;
-
-  auto counter = channel.counter;
-
-  // While the timer is still running we must account for time that has passed
-  // since the last counter update (overflow or configuration change).
-  if (channel.running) {
-    counter += GetCounterDeltaSinceLastUpdate(channel);
-  }
 
   switch (offset) {
     case REG_TMXCNT_L | 0: {
-      return counter & 0xFF;
+      return (u8)ReadCounter(channel);
     }
     case REG_TMXCNT_L | 1: {
-      return counter >> 8;
+      return (u8)(ReadCounter(channel) >> 8);
     }
     case REG_TMXCNT_H: {
-      return (control.frequency) |
-             (control.cascade   ? 4   : 0) |
-             (control.interrupt ? 64  : 0) |
-             (control.enable    ? 128 : 0);
+      return ReadControl(channel);
     }
-    default: return 0;
   }
+
+  return 0;
+}
+
+auto Timer::ReadHalf(int chan_id, int offset) -> u16 {
+  auto const& channel = channels[chan_id];
+
+  switch (offset) {
+    case REG_TMXCNT_L: {
+      return ReadCounter(channel);
+    }
+    case REG_TMXCNT_H: {
+      return ReadControl(channel);
+    }
+  }
+}
+
+auto Timer::ReadWord(int chan_id) -> u32 {
+  auto const& channel = channels[chan_id];
+
+  return (ReadControl(channel) << 16) | ReadCounter(channel);
 }
 
 void Timer::WriteByte(int chan_id, int offset, u8 value) {
@@ -128,6 +136,27 @@ void Timer::WriteWord(int chan_id, u32 value) {
   if (chan_id <= 1) {
     RecalculateSampleRates();
   }
+}
+
+auto Timer::ReadControl(Channel const& channel) -> u16 {
+  auto& control = channel.control;
+
+  return (control.frequency) |
+         (control.cascade   ?   4 : 0) |
+         (control.interrupt ?  64 : 0) |
+         (control.enable    ? 128 : 0);
+}
+
+auto Timer::ReadCounter(Channel const& channel) -> u16 {
+  auto counter = channel.counter;
+
+  // While the timer is still running we must account for time that has passed
+  // since the last counter update (overflow or configuration change).
+  if (channel.running) {
+    counter += GetCounterDeltaSinceLastUpdate(channel);
+  }
+
+  return counter;
 }
 
 void Timer::WriteControl(Channel& channel, u16 value) {

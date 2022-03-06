@@ -25,7 +25,9 @@ struct Timer {
   }
 
   void Reset();
-  auto Read (int chan_id, int offset) -> u8;
+  auto ReadByte(int chan_id, int offset) -> u8;
+  auto ReadHalf(int chan_id, int offset) -> u16;
+  auto ReadWord(int chan_id) -> u32;
   void WriteByte(int chan_id, int offset, u8  value);
   void WriteHalf(int chan_id, int offset, u16 value);
   void WriteWord(int chan_id, u32 value);
@@ -64,6 +66,8 @@ private:
   IRQ& irq;
   APU& apu;
 
+  auto ReadCounter(Channel const& channel) -> u16;
+  auto ReadControl(Channel const& channel) -> u16;
   void WriteControl(Channel& channel, u16 value);
   void RecalculateSampleRates();
   auto GetCounterDeltaSinceLastUpdate(Channel const& channel) -> u32;
