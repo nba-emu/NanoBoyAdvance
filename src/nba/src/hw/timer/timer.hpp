@@ -57,9 +57,7 @@ private:
     int samplerate;
     u64 timestamp_started;
     Scheduler::Event* event_overflow = nullptr;
-    Scheduler::Event* event_latch = nullptr;
     std::function<void(int)> fn_overflow;
-    std::function<void(int)> fn_latch;
   } channels[4];
 
   Scheduler& scheduler;
@@ -67,8 +65,11 @@ private:
   APU& apu;
 
   auto ReadCounter(Channel const& channel) -> u16;
+  void WriteReload(Channel& channel, u16 value);
+
   auto ReadControl(Channel const& channel) -> u16;
   void WriteControl(Channel& channel, u16 value);
+
   void RecalculateSampleRates();
   auto GetCounterDeltaSinceLastUpdate(Channel const& channel) -> u32;
   void StartChannel(Channel& channel, int cycles_late);
