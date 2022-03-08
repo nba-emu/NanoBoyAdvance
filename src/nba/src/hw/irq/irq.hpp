@@ -62,7 +62,6 @@ private:
   u16 reg_if;
   arm::ARM7TDMI& cpu;
   Scheduler& scheduler;
-  Scheduler::Event* event = nullptr;
   bool irq_line;
 };
 

@@ -15,7 +15,6 @@ void IRQ::Reset() {
   reg_ime = 0;
   reg_ie = 0;
   reg_if = 0;
-  event = nullptr;
   irq_line = false;
   cpu.IRQLine() = false;
 }
@@ -91,13 +90,10 @@ void IRQ::UpdateIRQLine() {
   bool irq_line_new = MasterEnable() && HasServableIRQ();
 
   if (irq_line != irq_line_new) {
-    if (event != nullptr) {
-      scheduler.Cancel(event);
-    }
-    event = scheduler.Add(2, [=](int late) {
+    scheduler.Add(2, [=](int late) {
       cpu.IRQLine() = irq_line_new;
-      event = nullptr;
     });
+
     irq_line = irq_line_new;
   }
 }
