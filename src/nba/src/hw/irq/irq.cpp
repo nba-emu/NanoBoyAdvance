@@ -90,7 +90,7 @@ void IRQ::UpdateIRQLine() {
   bool irq_line_new = MasterEnable() && HasServableIRQ();
 
   if (irq_line != irq_line_new) {
-    scheduler.Add(2, [=](int late) {
+    scheduler.Add(3, [=](int late) {
       cpu.IRQLine() = irq_line_new;
     });
 

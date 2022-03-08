@@ -36,6 +36,7 @@ struct ARM7TDMI {
     pipe.opcode[1] = 0xF0000000;
     pipe.fetch_type = Access::Nonsequential;
     irq_line = false;
+    latch_irq_disable = state.cpsr.f.mask_irq;
     ldm_usermode_conflict = false;
     cpu_mode_is_invalid = false;
   }
@@ -49,11 +50,14 @@ struct ARM7TDMI {
 
     auto instruction = pipe.opcode[0];
 
+    latch_irq_disable = state.cpsr.f.mask_irq;
+
     if (state.cpsr.f.thumb) {
       state.r15 &= ~1;
 
       pipe.opcode[0] = pipe.opcode[1];
       pipe.opcode[1] = ReadHalf(state.r15, pipe.fetch_type);
+
       (this->*s_opcode_lut_16[instruction >> 6])(instruction);
     } else {
       state.r15 &= ~3;
@@ -168,7 +172,7 @@ private:
   }
 
   void SignalIRQ() {
-    if (state.cpsr.f.mask_irq) {
+    if (latch_irq_disable) {
       return;
     }
 
@@ -212,6 +216,8 @@ private:
     pipe.opcode[1] = bus.ReadHalf(state.r15 + 2, Access::Sequential);
     pipe.fetch_type = Access::Sequential;
     state.r15 += 4;
+
+    latch_irq_disable = state.cpsr.f.mask_irq;
   }
 
   void ReloadPipeline32() {
@@ -219,6 +225,8 @@ private:
     pipe.opcode[1] = bus.ReadWord(state.r15 + 4, Access::Sequential);
     pipe.fetch_type = Access::Sequential;
     state.r15 += 8;
+
+    latch_irq_disable = state.cpsr.f.mask_irq;
   }
 
   auto GetRegisterBankByMode(Mode mode) -> Bank {
@@ -258,6 +266,7 @@ private:
   } pipe;
 
   bool irq_line;
+  bool latch_irq_disable;
 
   static std::array<bool, 256> s_condition_lut;
   static std::array<Handler16, 1024> s_opcode_lut_16;
