@@ -52,8 +52,12 @@ MainWindow::MainWindow(
     emit UpdateFrameRate(fps);
   });
   connect(this, &MainWindow::UpdateFrameRate, this, [this](int fps) {
-    auto percent = fps / 59.7275 * 100;
-    setWindowTitle(QString::fromStdString(fmt::format("NanoBoyAdvance 1.4 [{} fps | {:.2f}%]", fps, percent)));;
+    if (config->window.show_fps) {
+      auto percent = fps / 59.7275 * 100;
+      setWindowTitle(QString::fromStdString(fmt::format("NanoBoyAdvance 1.4 [{} fps | {:.2f}%]", fps, percent)));
+    } else {
+      setWindowTitle("NanoBoyAdvance 1.4");
+    }
   }, Qt::BlockingQueuedConnection);
 
   UpdateWindowSize();
@@ -126,36 +130,6 @@ void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
 
 void MainWindow::CreateVideoMenu(QMenu* parent) {
   auto menu = parent->addMenu(tr("Video"));
-  auto scale_menu  = menu->addMenu(tr("Scale"));
-  auto scale_group = new QActionGroup{this};
-
-  for (int scale = 1; scale <= 6; scale++) {
-    auto action = scale_group->addAction(QString::fromStdString(fmt::format("{}x", scale)));
-
-    action->setCheckable(true);
-    action->setChecked(config->video.scale == scale);
-    action->setShortcut(Qt::CTRL + (Qt::Key_1 + scale - 1));
-
-    connect(action, &QAction::triggered, [=]() {
-      config->video.scale = scale;
-      config->Save(kConfigPath);
-      UpdateWindowSize();
-    });
-  }
-  
-  scale_menu->addActions(scale_group->actions());
-
-  auto fullscreen_action = menu->addAction(tr("Fullscreen"));
-  fullscreen_action->setCheckable(true);
-  fullscreen_action->setChecked(config->video.fullscreen);
-  fullscreen_action->setShortcut(Qt::CTRL + Qt::Key_F);
-  connect(fullscreen_action, &QAction::triggered, [this](bool fullscreen) {
-    config->video.fullscreen = fullscreen;
-    config->Save(kConfigPath);
-    UpdateWindowSize();
-  });
-
-  menu->addSeparator();
 
   auto reload_config = [this]() {
     screen->ReloadConfig();
@@ -228,12 +202,48 @@ void MainWindow::CreateSystemMenu(QMenu* parent) {
   CreateBooleanOption(menu, "Force RTC", &config->force_rtc, true);
 }
 
+void MainWindow::CreateWindowMenu(QMenu* parent) {
+  auto menu = parent->addMenu(tr("Window"));
+
+  auto scale_menu  = menu->addMenu(tr("Scale"));
+  auto scale_group = new QActionGroup{this};
+
+  for (int scale = 1; scale <= 6; scale++) {
+    auto action = scale_group->addAction(QString::fromStdString(fmt::format("{}x", scale)));
+
+    action->setCheckable(true);
+    action->setChecked(config->video.scale == scale);
+    action->setShortcut(Qt::CTRL + (Qt::Key_1 + scale - 1));
+
+    connect(action, &QAction::triggered, [=]() {
+      config->video.scale = scale;
+      config->Save(kConfigPath);
+      UpdateWindowSize();
+    });
+  }
+  
+  scale_menu->addActions(scale_group->actions());
+
+  auto fullscreen_action = menu->addAction(tr("Fullscreen"));
+  fullscreen_action->setCheckable(true);
+  fullscreen_action->setChecked(config->video.fullscreen);
+  fullscreen_action->setShortcut(Qt::CTRL + Qt::Key_F);
+  connect(fullscreen_action, &QAction::triggered, [this](bool fullscreen) {
+    config->video.fullscreen = fullscreen;
+    config->Save(kConfigPath);
+    UpdateWindowSize();
+  });
+
+  CreateBooleanOption(menu, "Show FPS", &config->window.show_fps);
+}
+
 void MainWindow::CreateConfigMenu(QMenuBar* menu_bar) {
   auto menu = menu_bar->addMenu(tr("&Config"));
   CreateVideoMenu(menu);
   CreateAudioMenu(menu);
   CreateInputMenu(menu);
   CreateSystemMenu(menu);
+  CreateWindowMenu(menu);
 }
 
 void MainWindow::CreateBooleanOption(

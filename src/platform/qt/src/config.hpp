@@ -29,6 +29,10 @@ struct QtConfig final : nba::PlatformConfig {
     bool hold_fast_forward = true;
   } input;
 
+  struct Window {
+    bool show_fps = false;
+  } window;
+
 protected:
   void LoadCustomData(toml::value const& data) override;
 

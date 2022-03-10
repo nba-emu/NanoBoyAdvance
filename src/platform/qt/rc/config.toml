@@ -43,3 +43,6 @@ left = 16777234
 start = 16777220
 down = 16777237
 up = 16777235
+
+[window]
+show_fps = false

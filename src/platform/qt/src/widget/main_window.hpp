@@ -49,6 +49,7 @@ private:
   void CreateAudioMenu(QMenu* parent);
   void CreateInputMenu(QMenu* parent);
   void CreateSystemMenu(QMenu* parent);
+  void CreateWindowMenu(QMenu* parent);
   void CreateConfigMenu(QMenuBar* menu_bar);
   void CreateHelpMenu(QMenuBar* menu_bar);
 

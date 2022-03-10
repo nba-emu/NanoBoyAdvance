@@ -36,6 +36,16 @@ void QtConfig::LoadCustomData(toml::value const& data) {
       }
     }
   }
+
+  if (data.contains("window")) {
+    auto window_result = toml::expect<toml::value>(data.at("window"));
+
+    if (window_result.is_ok()) {
+      auto window_ = window_result.unwrap();
+
+      window.show_fps = toml::find_or<bool>(window_, "show_fps", false);
+    }
+  }
 }
 
 void QtConfig::SaveCustomData(
@@ -54,4 +64,6 @@ void QtConfig::SaveCustomData(
   data["input"]["gba"]["b"] = input.gba[7];
   data["input"]["gba"]["l"] = input.gba[8];
   data["input"]["gba"]["r"] = input.gba[9];
+
+  data["window"]["show_fps"] = window.show_fps;
 }
