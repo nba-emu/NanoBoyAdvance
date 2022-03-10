@@ -6,6 +6,7 @@
  */
 
 #include <filesystem>
+#include <memory>
 #include <QApplication>
 #include <QSurfaceFormat>
 #include <stdlib.h>
@@ -18,19 +19,26 @@
 
 namespace fs = std::filesystem;
 
-void parse_args(MainWindow& window, int argc, char** argv) {
-  if (argc != 2) {
-    return;
+auto create_window(QApplication& app, int argc, char** argv) -> std::unique_ptr<MainWindow> {
+  fs::path rom;
+
+  if (argc >= 2) {
+    rom = fs::path{argv[1]};
+
+    if (rom.is_relative()) {
+      rom = fs::current_path() / rom;
+    }
+    fs::current_path(fs::path{argv[0]}.remove_filename());
   }
 
-  auto rom = fs::path{argv[1]};
+  auto window = std::make_unique<MainWindow>(&app);
 
-  if (rom.is_relative()) {
-    rom = fs::current_path() / rom;
+  if (!rom.empty()) {
+    window->LoadROM(rom.string());
   }
-  fs::current_path(fs::path{argv[0]}.remove_filename());
 
-  window.LoadROM(rom.string());
+  window->show();
+  return window;
 }
 
 int main(int argc, char** argv) {
@@ -54,14 +62,10 @@ int main(int argc, char** argv) {
   QWindowsWindowFunctions::setHasBorderInFullScreenDefault(true);
 #endif
 
-  MainWindow window{ &app };
-
   QCoreApplication::setOrganizationName("fleroviux");
   QCoreApplication::setApplicationName("NanoBoyAdvance");
 
-  window.show();
-
-  parse_args(window, argc, argv);
+  auto window = create_window(app, argc, argv);
 
   return app.exec();
 }
