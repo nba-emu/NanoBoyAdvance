@@ -32,6 +32,8 @@ struct MainWindow : QMainWindow {
 
  ~MainWindow();
 
+  void LoadROM(std::string path);
+
 signals:
   void UpdateFrameRate(int fps);
 

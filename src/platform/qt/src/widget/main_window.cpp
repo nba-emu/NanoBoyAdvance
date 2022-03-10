@@ -350,66 +350,9 @@ void MainWindow::FileOpen() {
   dialog.setNameFilter("Game Boy Advance ROMs (*.gba *.agb)");
 
   if (dialog.exec()) {
-    bool retry;
     auto file = dialog.selectedFiles().at(0);
 
-    emu_thread->Stop();
-    config->Load(kConfigPath);
-
-    do {
-      retry = false;
-
-      switch (nba::BIOSLoader::Load(core, config->bios_path)) {
-        case nba::BIOSLoader::Result::CannotFindFile: {
-          QMessageBox box {this};
-          box.setText(tr("A Game Boy Advance BIOS file is required but cannot be located.\n\nWould you like to add one now?"));
-          box.setIcon(QMessageBox::Question);
-          box.setWindowTitle(tr("BIOS not found"));
-          box.addButton(QMessageBox::No);
-          box.addButton(QMessageBox::Yes);
-          box.setDefaultButton(QMessageBox::Yes);
-          
-          if (box.exec() == QMessageBox::Yes) {
-            SelectBIOS();
-            retry = true;
-            continue;
-          }
-          return;
-        }
-        case nba::BIOSLoader::Result::CannotOpenFile:
-        case nba::BIOSLoader::Result::BadImage: {
-          QMessageBox box {this};
-          box.setText(tr("Sorry, the BIOS file could not be loaded.\n\nMake sure that the BIOS image is valid and has correct file permissions."));
-          box.setIcon(QMessageBox::Critical);
-          box.setWindowTitle(tr("Cannot open BIOS"));
-          box.exec();
-          return;
-        }
-      }
-    } while (retry);
-
-    switch (nba::ROMLoader::Load(core, file.toStdString(), config->backup_type, config->force_rtc)) {
-      case nba::ROMLoader::Result::CannotFindFile: {
-        QMessageBox box {this};
-        box.setText(tr("Sorry, the specified ROM file cannot be located."));
-        box.setIcon(QMessageBox::Critical);
-        box.setWindowTitle(tr("ROM not found"));
-        box.exec();
-        return;
-      }
-      case nba::ROMLoader::Result::CannotOpenFile:
-      case nba::ROMLoader::Result::BadImage: {
-        QMessageBox box {this};
-        box.setIcon(QMessageBox::Critical);
-        box.setText(tr("Sorry, the ROM file could not be loaded.\n\nMake sure that the ROM image is valid and has correct file permissions."));
-        box.setWindowTitle(tr("Cannot open ROM"));
-        box.exec();
-        return;
-      }
-    }
-
-    core->Reset();
-    emu_thread->Start();
+    LoadROM(file.toStdString());
   }
 }
 
@@ -437,6 +380,68 @@ void MainWindow::Stop() {
 
     setWindowTitle("NanoBoyAdvance 1.4");
   }
+}
+
+void MainWindow::LoadROM(std::string path) {
+  bool retry;
+
+  emu_thread->Stop();
+  config->Load(kConfigPath);
+
+  do {
+    retry = false;
+
+    switch (nba::BIOSLoader::Load(core, config->bios_path)) {
+      case nba::BIOSLoader::Result::CannotFindFile: {
+        QMessageBox box {this};
+        box.setText(tr("A Game Boy Advance BIOS file is required but cannot be located.\n\nWould you like to add one now?"));
+        box.setIcon(QMessageBox::Question);
+        box.setWindowTitle(tr("BIOS not found"));
+        box.addButton(QMessageBox::No);
+        box.addButton(QMessageBox::Yes);
+        box.setDefaultButton(QMessageBox::Yes);
+          
+        if (box.exec() == QMessageBox::Yes) {
+          SelectBIOS();
+          retry = true;
+          continue;
+        }
+        return;
+      }
+      case nba::BIOSLoader::Result::CannotOpenFile:
+      case nba::BIOSLoader::Result::BadImage: {
+        QMessageBox box {this};
+        box.setText(tr("Sorry, the BIOS file could not be loaded.\n\nMake sure that the BIOS image is valid and has correct file permissions."));
+        box.setIcon(QMessageBox::Critical);
+        box.setWindowTitle(tr("Cannot open BIOS"));
+        box.exec();
+        return;
+      }
+    }
+  } while (retry);
+
+  switch (nba::ROMLoader::Load(core, path, config->backup_type, config->force_rtc)) {
+    case nba::ROMLoader::Result::CannotFindFile: {
+      QMessageBox box {this};
+      box.setText(tr("Sorry, the specified ROM file cannot be located."));
+      box.setIcon(QMessageBox::Critical);
+      box.setWindowTitle(tr("ROM not found"));
+      box.exec();
+      return;
+    }
+    case nba::ROMLoader::Result::CannotOpenFile:
+    case nba::ROMLoader::Result::BadImage: {
+      QMessageBox box {this};
+      box.setIcon(QMessageBox::Critical);
+      box.setText(tr("Sorry, the ROM file could not be loaded.\n\nMake sure that the ROM image is valid and has correct file permissions."));
+      box.setWindowTitle(tr("Cannot open ROM"));
+      box.exec();
+      return;
+    }
+  }
+
+  core->Reset();
+  emu_thread->Start();
 }
 
 void MainWindow::SetKeyStatus(int channel, nba::InputDevice::Key key, bool pressed) {

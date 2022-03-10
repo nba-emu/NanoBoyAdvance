@@ -5,6 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
+#include <filesystem>
 #include <QApplication>
 #include <QSurfaceFormat>
 #include <stdlib.h>
@@ -14,6 +15,23 @@
 #if defined(WIN32)
   #include <QtPlatformHeaders/QWindowsWindowFunctions>
 #endif
+
+namespace fs = std::filesystem;
+
+void parse_args(MainWindow& window, int argc, char** argv) {
+  if (argc != 2) {
+    return;
+  }
+
+  auto rom = fs::path{argv[1]};
+
+  if (rom.is_relative()) {
+    rom = fs::current_path() / rom;
+  }
+  fs::current_path(fs::path{argv[0]}.remove_filename());
+
+  window.LoadROM(rom.string());
+}
 
 int main(int argc, char** argv) {
   // See: https://trac.wxwidgets.org/ticket/19023
@@ -42,5 +60,8 @@ int main(int argc, char** argv) {
   QCoreApplication::setApplicationName("NanoBoyAdvance");
 
   window.show();
+
+  parse_args(window, argc, argv);
+
   return app.exec();
 }
