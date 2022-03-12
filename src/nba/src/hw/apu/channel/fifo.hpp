@@ -9,8 +9,6 @@
 
 #include <nba/integer.hpp>
 
-#include <nba/log.hpp>
-
 namespace nba::core {
 
 struct FIFO {
