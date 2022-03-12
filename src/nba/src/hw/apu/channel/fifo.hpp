@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2022 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -9,48 +9,64 @@
 
 #include <nba/integer.hpp>
 
+#include <nba/log.hpp>
+
 namespace nba::core {
 
-class FIFO {   
-public:
+struct FIFO {
   FIFO() { Reset(); }
   
   void Reset() {
     rd_ptr = 0;
     wr_ptr = 0;
     count = 0;
+    pending = 0;
   }
   
   int Count() const { return count; }
-  
-  void Write(s8 sample) {
+
+  void WriteByte(uint offset, u8 value) {
+    const auto shift = offset * 8;
+
+    WriteWord((pending & ~(0x00FF << shift)) | (value << shift));
+  }
+
+  void WriteHalf(uint offset, u8 value) {
+    const auto shift = offset * 8;
+
+    WriteWord((pending & ~(0xFFFF << shift)) | (value << shift));
+  }
+
+  void WriteWord(u32 value) {
+    pending = value;
+
     if (count < s_fifo_len) {
-      data[wr_ptr] = sample;
-      wr_ptr = (wr_ptr + 1) % s_fifo_len;
+      data[wr_ptr] = value;
+      if (++wr_ptr == s_fifo_len) wr_ptr = 0;
       count++;
     }
   }
   
-  auto Read() -> s8 {
-    s8 value = data[rd_ptr];
+  auto ReadWord() -> u32 {
+    u32 value = data[rd_ptr];
     
     if (count > 0) {
-      rd_ptr = (rd_ptr + 1) % s_fifo_len;
+      if (++rd_ptr == s_fifo_len) rd_ptr = 0;
       count--;
     }
-    
+
     return value;
   }
 
 private:
-  static constexpr int s_fifo_len = 32;
+  static constexpr int s_fifo_len = 7;
   
-  s8 data[s_fifo_len];
- 
+  u32 data[s_fifo_len];
+  u32 pending;
+
   int rd_ptr;
   int wr_ptr;
   int count;
 };
   
 } // namespace nba::core
-  

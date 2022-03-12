@@ -44,6 +44,8 @@ void APU::Reset() {
   mmio.psg4.Reset();
   mmio.soundcnt.Reset();
   mmio.bias.Reset();
+  fifo_pipe[0] = {};
+  fifo_pipe[1] = {};
 
   resolution_old = 0;
   scheduler.Add(mmio.bias.GetSampleInterval(), this, &APU::StepMixer);
@@ -104,20 +106,32 @@ void APU::OnTimerOverflow(int timer_id, int times, int samplerate) {
   for (int fifo_id = 0; fifo_id < 2; fifo_id++) {
     if (soundcnt.dma[fifo_id].timer_id == timer_id) {
       auto& fifo = mmio.fifo[fifo_id];
-      for (int time = 0; time < times - 1; time++) {
-        fifo.Read();
+      auto& pipe = fifo_pipe[fifo_id];
+
+      if (fifo.Count() <= 3) {
+        dma.Request(occasion[fifo_id]);
       }
+
+      if (pipe.size == 0 && fifo.Count() > 0) {
+        pipe.word = fifo.ReadWord();
+        pipe.size = 4;
+      }
+
+      s8 sample = (s8)(u8)pipe.word;
+
+      if (pipe.size > 0) {
+        pipe.word >>= 8;
+        pipe.size--;
+      }
+
       if (config->audio.interpolate_fifo) {
         if (samplerate != fifo_samplerate[fifo_id]) {
           fifo_resampler[fifo_id]->SetSampleRates(samplerate, mmio.bias.GetSampleRate());
           fifo_samplerate[fifo_id] = samplerate;
         }
-        fifo_resampler[fifo_id]->Write(fifo.Read() / 128.0);
+        fifo_resampler[fifo_id]->Write(sample / 128.0);
       } else {
-        latch[fifo_id] = fifo.Read();
-      }
-      if (fifo.Count() <= 16) {
-        dma.Request(occasion[fifo_id]);
+        latch[fifo_id] = sample;
       }
     }
   }

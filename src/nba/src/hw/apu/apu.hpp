@@ -56,6 +56,11 @@ struct APU {
     BIAS bias;
   } mmio;
 
+  struct Pipe {
+    u32 word = 0;
+    int size = 0;
+  } fifo_pipe[2];
+
   std::mutex buffer_mutex;
   std::shared_ptr<StereoRingBuffer<float>> buffer;
   std::unique_ptr<StereoResampler<float>> resampler;
