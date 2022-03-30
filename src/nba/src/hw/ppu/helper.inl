@@ -6,50 +6,30 @@
  */
 
 auto ReadPalette(int palette, int index) -> u16 {
-  int cell = (palette * 32) + (index * 2);
-
-  /* TODO: On Little-Endian devices we can get away with casting to uint16_t*. */
-  return ((pram[cell + 1] << 8) |
-           pram[cell + 0]) & 0x7FFF;
+  return read<u16>(pram, palette * 32 + index * 2);
 }
 
 void DecodeTileLine4BPP(u16* buffer, u32 base, int palette, int number, int y, bool flip) {
-  u8* data = &vram[base + (number * 32) + (y * 4)];
+  int xor_x = flip ? 7 : 0;
+  u32 data = read<u32>(vram, base + number * 32 + y * 4);
 
-  if (flip) {
-    for (int x = 0; x < 4; x++) {
-      int d  = *data++;
-      int p1 = d & 15;
-      int p2 = d >> 4;
+  for (int x = 0; x < 8; x++) {
+    int index = data & 15;
 
-      buffer[(x*2+0)^7] = p1 ? ReadPalette(palette, p1) : s_color_transparent;
-      buffer[(x*2+1)^7] = p2 ? ReadPalette(palette, p2) : s_color_transparent;
-    }
-  } else {
-    for (int x = 0; x < 4; x++) {
-      int d  = *data++;
-      int p1 = d & 15;
-      int p2 = d >> 4;
-
-      buffer[x*2+0] = p1 ? ReadPalette(palette, p1) : s_color_transparent;
-      buffer[x*2+1] = p2 ? ReadPalette(palette, p2) : s_color_transparent;
-    }
+    buffer[x ^ xor_x] = index ? ReadPalette(palette, index) : s_color_transparent;
+    data >>= 4;
   }
 }
 
 void DecodeTileLine8BPP(u16* buffer, u32 base, int number, int y, bool flip) {
-  u8* data = &vram[base + (number * 64) + (y * 8)];
+  int xor_x = flip ? 7 : 0;
+  u64 data = read<u64>(vram, base + number * 64 + y * 8);
 
-  if (flip) {
-    for (int x = 7; x >= 0; x--) {
-      int pixel = *data++;
-      buffer[x] = pixel ? ReadPalette(0, pixel) : s_color_transparent;
-    }
-  } else {
-    for (int x = 0; x < 8; x++) {
-      int pixel = *data++;
-      buffer[x] = pixel ? ReadPalette(0, pixel) : s_color_transparent;
-    }
+  for (int x = 0; x < 8; x++) {
+    int index = data & 0xFF;
+
+    buffer[x ^ xor_x] = index ? ReadPalette(0, index) : s_color_transparent;
+    data >>= 8;
   }
 }
 
