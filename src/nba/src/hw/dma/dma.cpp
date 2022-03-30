@@ -70,7 +70,7 @@ static constexpr char const* g_dma_time_name[] = {
 
 void DMA::Reset() {
   active_dma_id = g_dma_none_id;
-  early_exit_trigger = false;
+  should_reenter_transfer_loop = false;
   hblank_set = 0;
   vblank_set = 0;
   video_set = 0;
@@ -108,7 +108,7 @@ void DMA::ScheduleDMAs(unsigned int bitset) {
         active_dma_id = chan_id;
       } else if (chan_id < active_dma_id) {
         active_dma_id = chan_id;
-        early_exit_trigger = true;
+        should_reenter_transfer_loop = true;
       }
       runnable_set.set(chan_id, true);
     });
@@ -186,8 +186,8 @@ void DMA::RunChannel() {
   bool did_access_rom = false;
 
   while (channel.latch.length != 0) {
-    if (early_exit_trigger) {
-      early_exit_trigger = false;
+    if (should_reenter_transfer_loop) {
+      should_reenter_transfer_loop = false;
       return;
     }
 
@@ -359,7 +359,7 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
     // TODO: not exactly known how hardware handles this edge-case.
     if (channel.id == active_dma_id) {
       Log<Warn>("DMA: DMA{0} cleared its own enable bit.", channel.id);
-      early_exit_trigger = true;
+      should_reenter_transfer_loop = true;
       SelectNextDMA();
     }
     return;
@@ -385,10 +385,10 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
   if (enable_old) {
     /* When the config register of a DMA is written while it is running,
      * bail out of the DMA transfer loop so that the new config is used
-     * for the (half-)words transfers following this write.
+     * for the (half-)word transfers following this write.
      */
     if (channel.id == active_dma_id) {
-      early_exit_trigger = true;
+      should_reenter_transfer_loop = true;
     }
     return;
   }

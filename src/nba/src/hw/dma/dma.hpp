@@ -115,7 +115,7 @@ private:
   Scheduler& scheduler;
 
   int active_dma_id;
-  bool early_exit_trigger;
+  bool should_reenter_transfer_loop;
 
   /// Set of currently enabled H-blank DMAs.
   std::bitset<4> hblank_set;
