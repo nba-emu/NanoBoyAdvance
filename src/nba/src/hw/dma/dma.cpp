@@ -174,8 +174,6 @@ void DMA::RunChannel() {
   int src_modify;
   auto size = channel.size;
 
-  // TODO: we are caching the size, source and destination address delta.
-  // But is it possible for a DMA channel to change its own configuration?
   if (channel.is_fifo_dma) {
     size = Channel::Size::Word;
     dst_modify = 0;
@@ -385,6 +383,13 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
   }
 
   if (enable_old) {
+    /* When the config register of a DMA is written while it is running,
+     * bail out of the DMA transfer loop so that the new config is used
+     * for the (half-)words transfers following this write.
+     */
+    if (channel.id == active_dma_id) {
+      early_exit_trigger = true;
+    }
     return;
   }
 
