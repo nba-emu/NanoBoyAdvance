@@ -151,7 +151,8 @@ private:
   }
 
   auto GetSPSR() -> StatusRegister {
-    u32 spsr = 0;
+    // CPSR/SPSR bit4 is forced to one on the ARM7TDMI:
+    u32 spsr = 0x00000010;
 
     if (unlikely(ldm_usermode_conflict)) {
       /* TODO: current theory is that the value gets OR'd with CPSR,
@@ -161,10 +162,7 @@ private:
       spsr |= state.cpsr.v;
     }
 
-    if (unlikely(cpu_mode_is_invalid)) {
-      // TODO: where does this value come from?
-      spsr |= 0x00000010;
-    } else {
+    if (likely(!cpu_mode_is_invalid)) {
       spsr |= p_spsr->v;
     }
 

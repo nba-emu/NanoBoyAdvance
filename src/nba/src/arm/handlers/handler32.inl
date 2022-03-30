@@ -207,6 +207,9 @@ void ARM_StatusTransfer(u32 instruction) {
         mask &= 0xFF000000;
       }
       if (mask & 0xFF) {
+        // CPSR/SPSR bit4 is forced to one on the ARM7TDMI:
+        op |= 0x00000010;
+
         SwitchMode(static_cast<Mode>(op & 0x1F));
       }
       // TODO: handle code that alters the Thumb-bit.
