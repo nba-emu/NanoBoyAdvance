@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2022 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -9,13 +9,14 @@
 
 namespace nba::core {
 
-void PPU::RenderLayerText(int id) {
+void PPU::RenderLayerText(int vcount, int id) {
+  auto& mmio = mmio_copy[vcount];
   auto const& bgcnt  = mmio.bgcnt[id];
   auto const& mosaic = mmio.mosaic.bg;
   
   u32 tile_base = bgcnt.tile_block * 16384;
    
-  int line = mmio.bgvofs[id] + mmio.vcount;
+  int line = mmio.bgvofs[id] + vcount;
   
   /* Apply vertical mosaic */
   if (bgcnt.mosaic_enable) {
@@ -67,7 +68,7 @@ void PPU::RenderLayerText(int id) {
     do {
       u32 offset = base + grid_x++ * 2;
       
-      encoder = (vram[offset + 1] << 8) | vram[offset];
+      encoder = (vram_draw[offset + 1] << 8) | vram_draw[offset];
 
       /* TODO: speed tile decoding itself up. */
       if (encoder != last_encoder) {

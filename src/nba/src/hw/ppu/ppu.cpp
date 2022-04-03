@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2022 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -25,6 +25,10 @@ PPU::PPU(
   Reset();
 }
 
+PPU::~PPU() {
+  StopRenderThread();
+}
+
 void PPU::Reset() {
   std::memset(pram, 0, 0x00400);
   std::memset(oam,  0, 0x00400);
@@ -34,8 +38,8 @@ void PPU::Reset() {
   mmio.dispstat.Reset();
 
   for (int i = 0; i < 4; i++) {
-    enable_bg[0][i] = false;
-    enable_bg[1][i] = false;
+    mmio.enable_bg[0][i] = false;
+    mmio.enable_bg[1][i] = false;
 
     mmio.bgcnt[i].Reset();
     mmio.bghofs[i] = 0;
@@ -70,15 +74,17 @@ void PPU::Reset() {
   mmio.dispstat.vblank_flag = true;
   mmio.dispstat.hblank_flag = true;
   scheduler.Add(226, this, &PPU::OnVblankHblankComplete);
+
+  SetupRenderThread();
 }
 
 void PPU::LatchEnabledBGs() {
   for (int i = 0; i < 4; i++) {
-    enable_bg[0][i] = enable_bg[1][i];
+    mmio.enable_bg[0][i] = mmio.enable_bg[1][i];
   }
 
   for (int i = 0; i < 4; i++) {
-    enable_bg[1][i] = mmio.dispcnt.enable[i];
+    mmio.enable_bg[1][i] = mmio.dispcnt.enable[i];
   }
 }
 
@@ -130,7 +136,7 @@ void PPU::OnScanlineComplete(int cycles_late) {
        */
       auto bg_id = 2 + i;
 
-      if (enable_bg[0][bg_id]) {
+      if (mmio.enable_bg[0][bg_id]) {
         if (mmio.bgcnt[bg_id].mosaic_enable) {
           if (mosaic.bg._counter_y == 0) {
             bgx[i]._current += mosaic.bg.size_y * bgpb[i];
@@ -162,16 +168,16 @@ void PPU::OnHblankComplete(int cycles_late) {
   vcount++;
   CheckVerticalCounterIRQ();
 
-  if (dispcnt.enable[ENABLE_WIN0]) {
-    RenderWindow(0);
-  }
+  // if (dispcnt.enable[ENABLE_WIN0]) {
+  //   RenderWindow(0);
+  // }
 
-  if (dispcnt.enable[ENABLE_WIN1]) {
-    RenderWindow(1);
-  }
+  // if (dispcnt.enable[ENABLE_WIN1]) {
+  //   RenderWindow(1);
+  // }
 
   if (vcount == 160) {
-    config->video_dev->Draw(output);
+    // config->video_dev->Draw(output);
 
     scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
     dma.Request(DMA::Occasion::VBlank);
@@ -192,11 +198,12 @@ void PPU::OnHblankComplete(int cycles_late) {
     bgy[1]._current = bgy[1].initial;
   } else {
     scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
-    RenderScanline();
-    // Render OBJs for the next scanline.
-    if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-      RenderLayerOAM(mmio.dispcnt.mode >= 3, mmio.vcount + 1);
-    }
+    // RenderScanline();
+    SubmitScanline();
+    // // Render OBJs for the next scanline.
+    // if (mmio.dispcnt.enable[ENABLE_OBJ]) {
+    //   RenderLayerOAM(mmio.dispcnt.mode >= 3, mmio.vcount + 1);
+    // }
   }
 }
 
@@ -234,34 +241,113 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
   if (vcount == 227) {
     scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
     vcount = 0;
+
+    // Wait for the renderer to complete, then draw.
+    while (render_thread_vcount <= render_thread_vcount_max) ;
+    config->video_dev->Draw(output);
   } else {
     scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
     if (++vcount == 227) {
       dispstat.vblank_flag = 0;
       // Render OBJs for the next scanline
-      if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-        RenderLayerOAM(mmio.dispcnt.mode >= 3, 0);
-      }
+      // if (mmio.dispcnt.enable[ENABLE_OBJ]) {
+      //   RenderLayerOAM(mmio.dispcnt.mode >= 3, 0);
+      // }
     }
   }
 
-  if (mmio.dispcnt.enable[ENABLE_WIN0]) {
-    RenderWindow(0);
-  }
+  // if (mmio.dispcnt.enable[ENABLE_WIN0]) {
+  //   RenderWindow(0);
+  // }
 
-  if (mmio.dispcnt.enable[ENABLE_WIN1]) {
-    RenderWindow(1);
-  }
+  // if (mmio.dispcnt.enable[ENABLE_WIN1]) {
+  //   RenderWindow(1);
+  // }
 
-  if (vcount == 0) {
-    RenderScanline();
-    // Render OBJs for the next scanline
-    if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-      RenderLayerOAM(mmio.dispcnt.mode >= 3, 1);
-    }
-  }
+  SubmitScanline();
 
   CheckVerticalCounterIRQ();
+}
+
+void PPU::SetupRenderThread() {
+  StopRenderThread();
+
+  render_thread_vcount = 0;
+  render_thread_vcount_max = -1;
+  render_thread_running = true;
+
+  render_thread = std::thread([this]() {
+    while (render_thread_running) {
+      while (render_thread_vcount <= render_thread_vcount_max) {
+        // TODO: this might be racy with SubmitScanline() resetting render_thread_vcount.
+        int vcount = render_thread_vcount;
+        auto& mmio = mmio_copy[vcount];
+
+        if (mmio.dispcnt.enable[ENABLE_WIN0]) {
+          RenderWindow(vcount, 0);
+        }
+
+        if (mmio.dispcnt.enable[ENABLE_WIN1]) {
+          RenderWindow(vcount, 1);
+        }
+
+        if (vcount < 160) {
+          RenderScanline(vcount);
+        
+          // Render OBJs for the next scanline
+          if (mmio.dispcnt.enable[ENABLE_OBJ]) {
+            RenderLayerOAM(mmio.dispcnt.mode >= 3, vcount + 1);
+          }
+        } else if (vcount == 227) {
+          // Render OBJs for the next scanline
+          if (mmio.dispcnt.enable[ENABLE_OBJ]) {
+            RenderLayerOAM(mmio.dispcnt.mode >= 3, 0);
+          }
+        }
+
+        render_thread_vcount++;
+      }
+    }
+  });
+}
+
+void PPU::StopRenderThread() {
+  if (!render_thread_running) {
+    return;
+  }
+
+  render_thread_running = false;
+  render_thread.join();
+}
+
+void PPU::SubmitScanline() {
+  auto vcount = mmio.vcount;
+
+  if (vcount < 160 || vcount == 227) {
+    mmio_copy[vcount] = mmio;
+  } else {
+    mmio_copy[vcount].winh[0] = mmio.winh[0];
+    mmio_copy[vcount].winh[1] = mmio.winh[1];
+    mmio_copy[vcount].winv[0] = mmio.winv[0];
+    mmio_copy[vcount].winv[1] = mmio.winv[1];
+  }
+
+  render_thread_vcount_max = vcount;
+
+  if (vcount == 0) {
+    // Make a snapshot of PRAM, OAM and VRAM at the start of the frame.
+    std::memcpy(pram_draw, pram, sizeof(pram));
+    std::memcpy(oam_draw,  oam,  sizeof(oam ));
+
+    int vram_dirty_size = vram_dirty_range_hi - vram_dirty_range_lo;
+    if (vram_dirty_size > 0) {
+      std::memcpy(&vram_draw[vram_dirty_range_lo], &vram[vram_dirty_range_lo], vram_dirty_size);
+      vram_dirty_range_lo = 0x18000;
+      vram_dirty_range_hi = 0;
+    }
+
+    render_thread_vcount = 0;
+  }
 }
 
 } // namespace nba::core

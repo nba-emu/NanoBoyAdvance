@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2022 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -9,7 +9,8 @@
 
 namespace nba::core {
 
-void PPU::RenderLayerAffine(int id) {
+void PPU::RenderLayerAffine(int vcount, int id) {
+  auto& mmio = mmio_copy[vcount];
   auto const& bg = mmio.bgcnt[2 + id];
   
   u16* buffer = buffer_bg[2 + id];
@@ -26,8 +27,8 @@ void PPU::RenderLayerAffine(int id) {
     case 3: size = 1024; block_width = 128; break;
   }
   
-  AffineRenderLoop(id, size, size, [&](int line_x, int x, int y) {
-    auto tile_number = vram[map_base + (y / 8) * block_width + (x / 8)];
+  AffineRenderLoop(id, size, size, vcount, [&](int line_x, int x, int y) {
+    auto tile_number = vram_draw[map_base + (y / 8) * block_width + (x / 8)];
     buffer[line_x] = DecodeTilePixel8BPP(
       tile_base + tile_number * 64,
       x % 8,

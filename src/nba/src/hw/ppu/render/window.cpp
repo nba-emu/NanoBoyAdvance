@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2022 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -9,16 +9,16 @@
 
 namespace nba::core {
 
-void PPU::RenderWindow(int id) {
-  int line = mmio.vcount;
+void PPU::RenderWindow(int vcount, int id) {
+  auto& mmio = mmio_copy[vcount];
   auto& winv = mmio.winv[id];
   auto& winh = mmio.winh[id];
 
-  if (line == winv.min) {
+  if (vcount == winv.min) {
     window_scanline_enable[id] = true;
   }
 
-  if (line == winv.max) {
+  if (vcount == winv.max) {
     window_scanline_enable[id] = false;
   }
 
