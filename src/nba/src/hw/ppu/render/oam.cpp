@@ -40,8 +40,8 @@ const int PPU::s_obj_size[4][4][2] = {
   }
 };
 
-void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
-  auto& mmio = mmio_copy[line];
+void PPU::RenderLayerOAM(bool bitmap_mode, int vcount, int line) {
+  auto& mmio = mmio_copy[vcount];
 
   int tile_num;
   u16 pixel;

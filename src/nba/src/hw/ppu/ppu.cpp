@@ -296,12 +296,12 @@ void PPU::SetupRenderThread() {
         
           // Render OBJs for the next scanline
           if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-            RenderLayerOAM(mmio.dispcnt.mode >= 3, vcount + 1);
+            RenderLayerOAM(mmio.dispcnt.mode >= 3, vcount, vcount + 1);
           }
         } else if (vcount == 227) {
           // Render OBJs for the next scanline
           if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-            RenderLayerOAM(mmio.dispcnt.mode >= 3, 0);
+            RenderLayerOAM(mmio.dispcnt.mode >= 3, 227, 0);
           }
         }
 

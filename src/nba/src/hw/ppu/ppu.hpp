@@ -203,7 +203,7 @@ private:
   void RenderLayerBitmap1(int vcount);
   void RenderLayerBitmap2(int vcount);
   void RenderLayerBitmap3(int vcount);
-  void RenderLayerOAM(bool bitmap_mode, int line);
+  void RenderLayerOAM(bool bitmap_mode, int vcount, int line);
   void RenderWindow(int vcount, int id);
 
   static auto ConvertColor(u16 color) -> u32;
