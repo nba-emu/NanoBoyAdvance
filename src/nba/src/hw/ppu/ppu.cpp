@@ -125,6 +125,11 @@ void PPU::OnScanlineComplete(int cycles_late) {
     mosaic.bg._counter_y = 0;
   }
 
+  // Advance vertical OBJ mosaic counter
+  if (++mmio.mosaic.obj._counter_y == mmio.mosaic.obj.size_y) {
+    mmio.mosaic.obj._counter_y = 0;
+  }
+
   /* Mode 0 doesn't have any affine backgrounds,
    * in that case the internal X/Y registers will never be updated.
    */
@@ -229,6 +234,13 @@ void PPU::OnVblankScanlineComplete(int cycles_late) {
      * But right now if we do that it breaks at least Pinball Tycoon.
      */
     LatchEnabledBGs();
+
+    if (mmio.vcount == 227) {
+      // Advance vertical OBJ mosaic counter
+      if (++mmio.mosaic.obj._counter_y == mmio.mosaic.obj.size_y) {
+        mmio.mosaic.obj._counter_y = 0;
+      }
+    }
   }
 }
 

@@ -227,11 +227,6 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int vcount, int line) {
       mosaic_x = 0;
     }
   }
-
-  // Advance vertical OBJ mosaic counter
-  if (++mmio.mosaic.obj._counter_y == mmio.mosaic.obj.size_y) {
-    mmio.mosaic.obj._counter_y = 0;
-  }
 }
 
 } // namespace nba::core
