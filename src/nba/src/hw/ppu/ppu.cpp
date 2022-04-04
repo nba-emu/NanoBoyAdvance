@@ -75,6 +75,8 @@ void PPU::Reset() {
   mmio.dispstat.hblank_flag = true;
   scheduler.Add(226, this, &PPU::OnVblankHblankComplete);
 
+  frame = 0;
+
   SetupRenderThread();
 }
 
@@ -256,7 +258,8 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
 
     // Wait for the renderer to complete, then draw.
     while (render_thread_vcount <= render_thread_vcount_max) ;
-    config->video_dev->Draw(output);
+    config->video_dev->Draw(output[frame]);
+    frame ^= 1;
   } else {
     scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
     if (++vcount == 227) {

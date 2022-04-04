@@ -26,7 +26,7 @@ auto PPU::ConvertColor(u16 color) -> u32 {
 
 void PPU::RenderScanline(int vcount) {
   auto& mmio = mmio_copy[vcount];
-  u32* line = &output[vcount * 240];
+  u32* line = &output[frame][vcount * 240];
 
   if (mmio.dispcnt.forced_blank) {
     for (int x = 0; x < 240; x++) {
@@ -110,7 +110,7 @@ template<bool window, bool blending>
 void PPU::ComposeScanlineTmpl(int vcount, int bg_min, int bg_max) {
   auto& mmio = mmio_copy[vcount];
 
-  u32* line = &output[vcount * 240];
+  u32* line = &output[frame][vcount * 240];
   u16 backdrop = ReadPalette(0, 0);
 
   auto const& dispcnt = mmio.dispcnt;

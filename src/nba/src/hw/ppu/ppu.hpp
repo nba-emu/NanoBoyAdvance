@@ -253,7 +253,8 @@ private:
   bool buffer_win[2][240];
   bool window_scanline_enable[2];
 
-  u32 output[240*160];
+  u32 output[2][240 * 160];
+  int frame;
 
   std::thread render_thread;
   std::atomic_int render_thread_vcount;
