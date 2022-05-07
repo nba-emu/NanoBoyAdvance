@@ -27,7 +27,7 @@ MainWindow::MainWindow(
   screen = std::make_shared<Screen>(this, config);
   setCentralWidget(screen.get());
 
-  config->Load(kConfigPath);
+  config->Load();
 
   auto menu_bar = new QMenuBar(this);
   setMenuBar(menu_bar);
@@ -217,7 +217,7 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
 
     connect(action, &QAction::triggered, [=]() {
       config->video.scale = scale;
-      config->Save(kConfigPath);
+      config->Save();
       UpdateWindowSize();
     });
   }
@@ -230,7 +230,7 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
   fullscreen_action->setShortcut(Qt::CTRL + Qt::Key_F);
   connect(fullscreen_action, &QAction::triggered, [this](bool fullscreen) {
     config->video.fullscreen = fullscreen;
-    config->Save(kConfigPath);
+    config->Save();
     UpdateWindowSize();
   });
 
@@ -261,7 +261,7 @@ void MainWindow::CreateBooleanOption(
 
   connect(action, &QAction::triggered, [=](bool checked) {
     *underlying = checked;
-    config->Save(kConfigPath);
+    config->Save();
     if (require_reset) {
       PromptUserForReset();
     }
@@ -297,7 +297,7 @@ void MainWindow::SelectBIOS() {
 
   if (dialog.exec()) {
     config->bios_path = dialog.selectedFiles().at(0).toStdString();
-    config->Save(kConfigPath);
+    config->Save();
   }
 }
 
@@ -386,7 +386,7 @@ void MainWindow::LoadROM(std::string path) {
   bool retry;
 
   emu_thread->Stop();
-  config->Load(kConfigPath);
+  config->Load();
 
   do {
     retry = false;

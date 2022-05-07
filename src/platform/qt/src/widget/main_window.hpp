@@ -44,8 +44,6 @@ protected:
   bool eventFilter(QObject* obj, QEvent* event);
 
 private:
-  static constexpr auto kConfigPath = "config.toml";
-
   void CreateFileMenu(QMenuBar* menu_bar);
   void CreateVideoMenu(QMenu* parent);
   void CreateAudioMenu(QMenu* parent);
@@ -84,7 +82,7 @@ private:
 
       connect(action, &QAction::triggered, [=]() {
         *underlying = entry.second;
-        config->Save(kConfigPath);
+        config->Save();
         if (require_reset) {
           PromptUserForReset();
         }
