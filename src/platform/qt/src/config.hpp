@@ -66,13 +66,13 @@ private:
       const auto pwd = getpwuid(getuid());
 
       if (pwd) {
-        auto config_directory = fs::path{(std::string)pwd->pw_dir + "/Library/Application Support/org.github.fleroviux.NanoBoyAdvance"};
+        auto config_directory = fs::path{pwd->pw_dir} / "/Library/Application Support/org.github.fleroviux.NanoBoyAdvance"};
 
         if (!fs::exists(config_directory)) {
           fs::create_directory(config_directory);
         }
 
-        return (config_directory + "config.toml").string();
+        return (config_directory / "config.toml").string();
       }
     #endif
 
