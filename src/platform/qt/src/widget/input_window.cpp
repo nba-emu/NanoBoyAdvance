@@ -41,7 +41,7 @@ bool InputWindow::eventFilter(QObject* obj, QEvent* event) {
     *current_key = key;
     current_button->setText(GetKeyName(key));
     waiting_for_keypress = false;
-    config->Save("config.toml");
+    config->Save();
     return true;
   }
 

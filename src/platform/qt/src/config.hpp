@@ -7,10 +7,11 @@
 
 #pragma once
 
+#include <filesystem>
 #include <platform/config.hpp>
 #include <Qt>
 
-struct QtConfig final : nba::PlatformConfig {
+struct QtConfig final : nba::PlatformConfig {  
   struct Input {
     int gba[nba::InputDevice::kKeyCount] {
       Qt::Key_Up,
@@ -33,10 +34,34 @@ struct QtConfig final : nba::PlatformConfig {
     bool show_fps = false;
   } window;
 
+  void Load() {
+    nba::PlatformConfig::Load(kConfigPath);
+  }
+
+  void Save() {
+    namespace fs = std::filesystem;
+
+    auto directory = fs::path{kConfigPath}.remove_filename();
+
+    if (!directory.empty() && !fs::exists(directory)) {
+      fs::create_directory(directory);
+    }
+
+    nba::PlatformConfig::Save(kConfigPath);
+  }
+
 protected:
   void LoadCustomData(toml::value const& data) override;
 
   void SaveCustomData(
     toml::basic_value<toml::preserve_comments>& data
   ) override;
+
+private:
+
+#ifdef MACOS_BUILD_APP_BUNDLE
+  static constexpr auto kConfigPath = "~/Library/Application Support/org.github.fleroviux.NanoBoyAdvance/config.toml";
+#else
+  static constexpr auto kConfigPath = "config.toml";
+#endif
 };
