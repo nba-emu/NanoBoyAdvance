@@ -12,6 +12,7 @@
 #include <Qt>
 
 #ifdef MACOS_BUILD_APP_BUNDLE
+  #include <unistd.h>
   #include <pwd.h>
 #endif
 
