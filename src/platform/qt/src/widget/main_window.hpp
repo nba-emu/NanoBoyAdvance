@@ -52,6 +52,7 @@ private:
   void CreateWindowMenu(QMenu* parent);
   void CreateConfigMenu(QMenuBar* menu_bar);
   void CreateHelpMenu(QMenuBar* menu_bar);
+  void RenderRecentFilesMenu();
 
   void SelectBIOS();
   void PromptUserForReset();
@@ -114,6 +115,7 @@ private:
 
   QAction* pause_action;
   InputWindow* input_window;
+  QMenu* recent_menu;
 
   SDL_GameController* game_controller = nullptr;
   bool game_controller_button_x_old = false;
