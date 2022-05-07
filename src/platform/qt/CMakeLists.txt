@@ -69,7 +69,7 @@ if (APPLE AND MACOS_BUILD_APP_BUNDLE)
   list(APPEND RESOURCES rc/NanoBoyAdvance.icns)
   add_executable(NanoBoyAdvance-Qt MACOSX_BUNDLE ${SOURCES} ${HEADERS} ${RESOURCES})
   set_target_properties(NanoBoyAdvance-Qt PROPERTIES RESOURCE rc/NanoBoyAdvance.icns)
-  target_compile_options(NanoBoyAdvance-Qt PRIVATE MACOS_BUILD_APP_BUNDLE)
+  target_compile_definitions(NanoBoyAdvance-Qt PRIVATE MACOS_BUILD_APP_BUNDLE)
 
 	if (MACOS_BUNDLE_QT)
     get_target_property(_qmake_executable Qt5::qmake IMPORTED_LOCATION)
