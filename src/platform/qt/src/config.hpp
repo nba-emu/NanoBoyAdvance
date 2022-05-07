@@ -11,7 +11,15 @@
 #include <platform/config.hpp>
 #include <Qt>
 
+#ifdef MACOS_BUILD_APP_BUNDLE
+  #include <pwd.h>
+#endif
+
 struct QtConfig final : nba::PlatformConfig {  
+  QtConfig() {
+    config_path = GetConfigPath();
+  }
+
   struct Input {
     int gba[nba::InputDevice::kKeyCount] {
       Qt::Key_Up,
@@ -35,19 +43,11 @@ struct QtConfig final : nba::PlatformConfig {
   } window;
 
   void Load() {
-    nba::PlatformConfig::Load(kConfigPath);
+    nba::PlatformConfig::Load(config_path);
   }
 
   void Save() {
-    namespace fs = std::filesystem;
-
-    auto directory = fs::path{kConfigPath}.remove_filename();
-
-    if (!directory.empty() && !fs::exists(directory)) {
-      fs::create_directory(directory);
-    }
-
-    nba::PlatformConfig::Save(kConfigPath);
+    nba::PlatformConfig::Save(config_path);
   }
 
 protected:
@@ -58,10 +58,25 @@ protected:
   ) override;
 
 private:
+  auto GetConfigPath() const -> std::string {
+    namespace fs = std::filesystem;
 
-#ifdef MACOS_BUILD_APP_BUNDLE
-  static constexpr auto kConfigPath = "~/Library/Application Support/org.github.fleroviux.NanoBoyAdvance/config.toml";
-#else
-  static constexpr auto kConfigPath = "config.toml";
-#endif
+    #ifdef MACOS_BUILD_APP_BUNDLE
+      const auto pwd = getpwuid(getuid());
+
+      if (pwd) {
+        auto config_directory = fs::path{pwd->pw_dir} + "Library/Application Support/org.github.fleroviux.NanoBoyAdvance/";
+
+        if (!fs::exists(config_directory)) {
+          fs::create_directory(config_directory);
+        }
+
+        return (config_directory + "config.toml").string();
+      }
+    #endif
+
+    return "config.toml";
+  }
+
+  std::string config_path;
 };
