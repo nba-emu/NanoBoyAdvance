@@ -51,9 +51,12 @@ if(WIN32)
   endif()  
 endif()
 
-
 if (APPLE)
-	option(MACOS_BUNDLE_LIBS "Bundle macOS libraries with the app bundle" OFF)
+  option(MACOS_BUILD_APP_BUNDLE "Build an app bundle" OFF)
+endif()
+
+if (APPLE AND MACOS_BUILD_APP_BUNDLE)
+  option(MACOS_BUNDLE_QT "Bundle Qt with the app bundle" ON)
 
   set(MACOSX_BUNDLE_BUNDLE_NAME "NanoBoyAdvance")
   set(MACOSX_BUNDLE_ICON_FILE "NanoBoyAdvance.icns")
@@ -66,8 +69,9 @@ if (APPLE)
   list(APPEND RESOURCES rc/NanoBoyAdvance.icns)
   add_executable(NanoBoyAdvance-Qt MACOSX_BUNDLE ${SOURCES} ${HEADERS} ${RESOURCES})
   set_target_properties(NanoBoyAdvance-Qt PROPERTIES RESOURCE rc/NanoBoyAdvance.icns)
+  target_compile_options(NanoBoyAdvance-Qt PRIVATE MACOS_BUILD_APP_BUNDLE)
 
-	if (MACOS_BUNDLE_LIBS)
+	if (MACOS_BUNDLE_QT)
     get_target_property(_qmake_executable Qt5::qmake IMPORTED_LOCATION)
     get_filename_component(_qt_bin_dir "${_qmake_executable}" DIRECTORY)
     find_program(MACDEPLOYQT_EXECUTABLE macdeployqt HINTS "${_qt_bin_dir}")
@@ -75,7 +79,7 @@ if (APPLE)
     add_custom_command(TARGET NanoBoyAdvance-Qt POST_BUILD
       COMMAND "${MACDEPLOYQT_EXECUTABLE}" NanoBoyAdvance.app -always-overwrite
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin/qt
-      COMMENT "Deploying macOS libraries..."
+      COMMENT "Deploying Qt..."
     )
   endif()
 else()
