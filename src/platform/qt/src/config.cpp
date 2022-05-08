@@ -46,6 +46,8 @@ void QtConfig::LoadCustomData(toml::value const& data) {
       window.show_fps = toml::find_or<bool>(window_, "show_fps", false);
     }
   }
+
+  recent_files = toml::find_or<std::vector<std::string>>(data, "recent_files", {});
 }
 
 void QtConfig::SaveCustomData(
@@ -66,4 +68,6 @@ void QtConfig::SaveCustomData(
   data["input"]["gba"]["r"] = input.gba[9];
 
   data["window"]["show_fps"] = window.show_fps;
+
+  data["recent_files"] = recent_files;
 }

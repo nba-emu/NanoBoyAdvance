@@ -51,10 +51,45 @@ if(WIN32)
   endif()  
 endif()
 
-add_executable(NanoBoyAdvance-Qt ${SOURCES} ${HEADERS} ${RESOURCES})
+if (APPLE)
+  option(MACOS_BUILD_APP_BUNDLE "Build an app bundle" OFF)
+endif()
+
+if (APPLE AND MACOS_BUILD_APP_BUNDLE)
+  option(MACOS_BUNDLE_QT "Bundle Qt with the app bundle" ON)
+
+  set(MACOSX_BUNDLE_BUNDLE_NAME "NanoBoyAdvance")
+  set(MACOSX_BUNDLE_ICON_FILE "NanoBoyAdvance.icns")
+  set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.github.fleroviux.NanoBoyAdvance")
+  set(MACOSX_BUNDLE_INFO_STRING "Game Boy Advance emulator")
+  set(MACOSX_BUNDLE_SHORT_VERSION_STRING "1.4")
+  set(MACOSX_BUNDLE_LONG_VERSION_STRING "1.4")
+  set(MACOSX_BUNDLE_BUNDLE_VERSION "1.4")
+
+  list(APPEND RESOURCES rc/NanoBoyAdvance.icns)
+  add_executable(NanoBoyAdvance-Qt MACOSX_BUNDLE ${SOURCES} ${HEADERS} ${RESOURCES})
+  set_target_properties(NanoBoyAdvance-Qt PROPERTIES RESOURCE rc/NanoBoyAdvance.icns)
+  target_compile_definitions(NanoBoyAdvance-Qt PRIVATE MACOS_BUILD_APP_BUNDLE)
+
+	if (MACOS_BUNDLE_QT)
+    get_target_property(_qmake_executable Qt5::qmake IMPORTED_LOCATION)
+    get_filename_component(_qt_bin_dir "${_qmake_executable}" DIRECTORY)
+    find_program(MACDEPLOYQT_EXECUTABLE macdeployqt HINTS "${_qt_bin_dir}")
+
+    add_custom_command(TARGET NanoBoyAdvance-Qt POST_BUILD
+      COMMAND "${MACDEPLOYQT_EXECUTABLE}" NanoBoyAdvance.app -always-overwrite
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin/qt
+      COMMENT "Deploying Qt..."
+    )
+  endif()
+else()
+  add_executable(NanoBoyAdvance-Qt ${SOURCES} ${HEADERS} ${RESOURCES})
+endif()
+
+set_target_properties(NanoBoyAdvance-Qt PROPERTIES OUTPUT_NAME "NanoBoyAdvance")
+
 target_link_libraries(NanoBoyAdvance-Qt platform-core ${QT_DEPS})
 target_include_directories(NanoBoyAdvance-Qt PRIVATE src)
-set_target_properties(NanoBoyAdvance-Qt PROPERTIES OUTPUT_NAME "NanoBoyAdvance")
 
 file(COPY "rc/config.toml" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 

@@ -7,10 +7,24 @@
 
 #pragma once
 
+#include <algorithm>
+#include <filesystem>
 #include <platform/config.hpp>
 #include <Qt>
+#include <vector>
 
-struct QtConfig final : nba::PlatformConfig {
+#ifdef MACOS_BUILD_APP_BUNDLE
+  #include <unistd.h>
+  #include <pwd.h>
+#endif
+
+namespace fs = std::filesystem;
+
+struct QtConfig final : nba::PlatformConfig {  
+  QtConfig() {
+    config_path = GetConfigPath();
+  }
+
   struct Input {
     int gba[nba::InputDevice::kKeyCount] {
       Qt::Key_Up,
@@ -33,10 +47,59 @@ struct QtConfig final : nba::PlatformConfig {
     bool show_fps = false;
   } window;
 
+  std::vector<std::string> recent_files;
+
+  void Load() {
+    nba::PlatformConfig::Load(config_path);
+  }
+
+  void Save() {
+    nba::PlatformConfig::Save(config_path);
+  }
+
+  void UpdateRecentFiles(std::string const& path) {
+    auto absolute_path = fs::absolute((fs::path)path).string();
+
+    auto match = std::find(recent_files.begin(), recent_files.end(), absolute_path);
+
+    if (match != recent_files.end()) {
+      recent_files.erase(match);
+    }
+
+    recent_files.insert(recent_files.begin(), absolute_path);
+
+    if (recent_files.size() > 10) {
+      recent_files.pop_back();
+    }
+
+    Save();
+  }
+
 protected:
   void LoadCustomData(toml::value const& data) override;
 
   void SaveCustomData(
     toml::basic_value<toml::preserve_comments>& data
   ) override;
+
+private:
+  auto GetConfigPath() const -> std::string {
+    #ifdef MACOS_BUILD_APP_BUNDLE
+      const auto pwd = getpwuid(getuid());
+
+      if (pwd) {
+        auto config_directory = fs::path{pwd->pw_dir} / "Library/Application Support/org.github.fleroviux.NanoBoyAdvance";
+
+        if (!fs::exists(config_directory)) {
+          fs::create_directory(config_directory);
+        }
+
+        return (config_directory / "config.toml").string();
+      }
+    #endif
+
+    return "config.toml";
+  }
+
+  std::string config_path;
 };

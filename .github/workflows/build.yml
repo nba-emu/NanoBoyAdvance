@@ -77,22 +77,31 @@ jobs:
         run: brew install sdl2 glew qt@5
       - name: Build NanoBoyAdvance
         run: |
-          export CPPFLAGS="$CPPFLAGS -I/usr/local/opt/glew/include"
           cmake -B build \
                 -DCMAKE_CXX_FLAGS="-s" \
                 -DSDL2_STATIC=ON \
                 -DGLEW_USE_STATIC_LIBS=ON \
                 -DCMAKE_BUILD_TYPE=Release \
-                -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5)"
+                -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5);$(brew --prefix glew)" \
+                -DMACOS_BUILD_APP_BUNDLE=ON \
+                -DMACOS_BUNDLE_QT=ON
           cd build
           make -j$(sysctl -n hw.availcpu)
-      - name: Collect artifacts
+      - name: Create disk image
         run: |
-          mkdir upload
-          cp -r build/bin/qt/{NanoBoyAdvance,config.toml} upload
+          mkdir dmg
+          cp -a build/bin/qt/NanoBoyAdvance.app dmg/NanoBoyAdvance.app
+          codesign -s - --deep -f dmg/NanoBoyAdvance.app
+          ln -s /Applications dmg/Applications
+          hdiutil create \
+                  -fs HFS+ \
+                  -volname NanoBoyAdvance \
+                  -srcfolder dmg \
+                  -ov -format UDBZ \
+                  NanoBoyAdvance.dmg
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
           name: NanoBoyAdvance-${{ runner.os }}
-          path: upload
+          path: NanoBoyAdvance.dmg
           if-no-files-found: error

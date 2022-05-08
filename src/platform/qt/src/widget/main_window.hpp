@@ -44,8 +44,6 @@ protected:
   bool eventFilter(QObject* obj, QEvent* event);
 
 private:
-  static constexpr auto kConfigPath = "config.toml";
-
   void CreateFileMenu(QMenuBar* menu_bar);
   void CreateVideoMenu(QMenu* parent);
   void CreateAudioMenu(QMenu* parent);
@@ -54,6 +52,7 @@ private:
   void CreateWindowMenu(QMenu* parent);
   void CreateConfigMenu(QMenuBar* menu_bar);
   void CreateHelpMenu(QMenuBar* menu_bar);
+  void RenderRecentFilesMenu();
 
   void SelectBIOS();
   void PromptUserForReset();
@@ -84,7 +83,7 @@ private:
 
       connect(action, &QAction::triggered, [=]() {
         *underlying = entry.second;
-        config->Save(kConfigPath);
+        config->Save();
         if (require_reset) {
           PromptUserForReset();
         }
@@ -116,6 +115,7 @@ private:
 
   QAction* pause_action;
   InputWindow* input_window;
+  QMenu* recent_menu;
 
   SDL_GameController* game_controller = nullptr;
   bool game_controller_button_x_old = false;

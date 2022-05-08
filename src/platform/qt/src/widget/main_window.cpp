@@ -27,7 +27,7 @@ MainWindow::MainWindow(
   screen = std::make_shared<Screen>(this, config);
   setCentralWidget(screen.get());
 
-  config->Load(kConfigPath);
+  config->Load();
 
   auto menu_bar = new QMenuBar(this);
   setMenuBar(menu_bar);
@@ -86,6 +86,9 @@ void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
     this,
     &MainWindow::FileOpen
   );
+
+  recent_menu = file_menu->addMenu(tr("Recent"));
+  RenderRecentFilesMenu();
 
   file_menu->addSeparator();
 
@@ -213,11 +216,11 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
 
     action->setCheckable(true);
     action->setChecked(config->video.scale == scale);
-    action->setShortcut(Qt::CTRL + (Qt::Key_1 + scale - 1));
+    action->setShortcut(Qt::SHIFT + (Qt::Key_1 + scale - 1));
 
     connect(action, &QAction::triggered, [=]() {
       config->video.scale = scale;
-      config->Save(kConfigPath);
+      config->Save();
       UpdateWindowSize();
     });
   }
@@ -230,7 +233,7 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
   fullscreen_action->setShortcut(Qt::CTRL + Qt::Key_F);
   connect(fullscreen_action, &QAction::triggered, [this](bool fullscreen) {
     config->video.fullscreen = fullscreen;
-    config->Save(kConfigPath);
+    config->Save();
     UpdateWindowSize();
   });
 
@@ -261,7 +264,7 @@ void MainWindow::CreateBooleanOption(
 
   connect(action, &QAction::triggered, [=](bool checked) {
     *underlying = checked;
-    config->Save(kConfigPath);
+    config->Save();
     if (require_reset) {
       PromptUserForReset();
     }
@@ -289,6 +292,22 @@ void MainWindow::CreateHelpMenu(QMenuBar* menu_bar) {
   });
 }
 
+void MainWindow::RenderRecentFilesMenu() {
+  recent_menu->clear();
+
+  size_t i = 0;
+
+  for (auto& path : config->recent_files) {
+    auto action = recent_menu->addAction(QString::fromStdString(path));
+
+    action->setShortcut(Qt::CTRL + (Qt::Key_0 + i++));
+
+    connect(action, &QAction::triggered, [this, path] {
+      LoadROM(path);
+    });
+  }
+}
+
 void MainWindow::SelectBIOS() {
   QFileDialog dialog{this};
   dialog.setAcceptMode(QFileDialog::AcceptOpen);
@@ -297,7 +316,7 @@ void MainWindow::SelectBIOS() {
 
   if (dialog.exec()) {
     config->bios_path = dialog.selectedFiles().at(0).toStdString();
-    config->Save(kConfigPath);
+    config->Save();
   }
 }
 
@@ -350,9 +369,9 @@ void MainWindow::FileOpen() {
   dialog.setNameFilter("Game Boy Advance ROMs (*.gba *.agb)");
 
   if (dialog.exec()) {
-    auto file = dialog.selectedFiles().at(0);
+    auto file = dialog.selectedFiles().at(0).toStdString();
 
-    LoadROM(file.toStdString());
+    LoadROM(file);
   }
 }
 
@@ -386,7 +405,9 @@ void MainWindow::LoadROM(std::string path) {
   bool retry;
 
   emu_thread->Stop();
-  config->Load(kConfigPath);
+  config->Load();
+  config->UpdateRecentFiles(path);
+  RenderRecentFilesMenu();
 
   do {
     retry = false;
