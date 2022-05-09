@@ -31,14 +31,28 @@ void CheatDevice::Update(int late) {
     // 0x8E883EFF92E9660D,
 
     // Shiny pokemon
-    0xF3A9A86D4E2629B4,
-    0x18452A7DDDE55BCC
+    //0xF3A9A86D4E2629B4,
+    //0x18452A7DDDE55BCC,
 
     // Encounter Mew
     // Does not work yet.
     // 0xB749822BCE9BFAC1,
     // 0xA86CDBA519BA49B3,
     // 0x401245E07D57E544
+
+    // 0x760CBE6BBC193ACD,
+    // 0x96BB89299B4E5B77,
+    // 0x7567A6C540752715,
+    // 0xAD86124F2823D8DA,
+    0xB8EDB126E7819C61,
+    0x51CAA2F5214E3CF0,
+
+    0x2918AD7E273631D5,
+    0x093ECE84CE99DAF5,
+    0x921B9D86CCED9C20,
+    0xA6A7471082BD7E29,
+    0xD1656F10035C45A1
+
   };
 
   ExecuteARV3(codes, sizeof(codes)/sizeof(u64));
@@ -73,7 +87,7 @@ void CheatDevice::ExecuteARV3(u64* codes, size_t size) {
       // 00000000 1Aaaaaaa 0000zzzz 00000000  [8000000+aaaaaa*2]=zzzz  (ROM Patch 2)
       // 00000000 1Caaaaaa 0000zzzz 00000000  [8000000+aaaaaa*2]=zzzz  (ROM Patch 3)
       // 00000000 1Eaaaaaa 0000zzzz 00000000  [8000000+aaaaaa*2]=zzzz  (ROM Patch 4)
-      if ((r & 0xFF000000) == 0x18000000) {
+      if ((r & 0xF8000000) == 0x18000000) {
         u32 address = 0x08000000 + ((r & 0xFFFFFF) << 1);
         u16 data = DecryptARV3(codes[i]) >> 32;
         *(u16*)bus.GetHostAddress(address, sizeof(u16)) = data;
