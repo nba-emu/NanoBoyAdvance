@@ -18,13 +18,6 @@ void Bus::Prefetch(u32 address, int cycles) {
   if (hw.waitcnt.prefetch) {
     // TODO: distinguish code and data accesses instead of comparing against R15.
     if (address != hw.cpu.state.r15) {
-      /*if (prefetch.active && hw.cpu.state.r15 >= 0x08000000) {
-        if (prefetch.countdown == 1 || (!hw.cpu.state.cpsr.f.thumb && prefetch.countdown == (prefetch.duty >> 1) + 1)) {
-          cycles++;
-        }
-      }
-      prefetch.active = false;
-      prefetch.count = 0;*/
       StopPrefetch();
       Step(cycles);
       return;

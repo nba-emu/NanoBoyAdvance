@@ -48,32 +48,32 @@ void Bus::Attach(ROM&& rom) {
   memory.rom = std::move(rom);
 }
 
-auto Bus::ReadByte(u32 address, Access access) ->  u8 {
+auto Bus::ReadByte(u32 address, int access) ->  u8 {
   return Read<u8>(address, access);
 }
 
-auto Bus::ReadHalf(u32 address, Access access) -> u16 {
+auto Bus::ReadHalf(u32 address, int access) -> u16 {
   return Read<u16>(address, access);
 }
 
-auto Bus::ReadWord(u32 address, Access access) -> u32 {
+auto Bus::ReadWord(u32 address, int access) -> u32 {
   return Read<u32>(address, access);
 }
 
-void Bus::WriteByte(u32 address, u8  value, Access access) {
+void Bus::WriteByte(u32 address, u8  value, int access) {
   Write<u8>(address, access, value);
 }
 
-void Bus::WriteHalf(u32 address, u16 value, Access access) {
+void Bus::WriteHalf(u32 address, u16 value, int access) {
   Write<u16>(address, access, value);
 }
 
-void Bus::WriteWord(u32 address, u32 value, Access access) {
+void Bus::WriteWord(u32 address, u32 value, int access) {
   Write<u32>(address, access, value);
 }
 
 template<typename T>
-auto Bus::Read(u32 address, Access access) -> T {
+auto Bus::Read(u32 address, int access) -> T {
   auto page = address >> 24;
   auto is_u32 = std::is_same_v<T, u32>;
 
@@ -166,7 +166,7 @@ auto Bus::Read(u32 address, Access access) -> T {
 }
 
 template<typename T>
-void Bus::Write(u32 address, Access access, T value) {
+void Bus::Write(u32 address, int access, T value) {
   auto page = address >> 24;
   auto is_u32 = std::is_same_v<T, u32>;
 
