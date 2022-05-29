@@ -40,7 +40,7 @@ void Thumb_MoveShiftedRegister(u16 instruction) {
   state.cpsr.f.n = result >> 31;
 
   state.reg[dst] = result;
-  pipe.fetch_type = Access::Sequential;
+  pipe.fetch_type = Access::Code | Access::Sequential;
   state.r15 += 2;
 }
 
@@ -56,7 +56,7 @@ void Thumb_AddSub(u16 instruction) {
     state.reg[dst] = ADD(state.reg[src], operand, true);
   }
 
-  pipe.fetch_type = Access::Sequential;
+  pipe.fetch_type = Access::Code | Access::Sequential;
   state.r15 += 2;
 }
 
@@ -86,7 +86,7 @@ void Thumb_Op3(u16 instruction) {
       break;
   }
 
-  pipe.fetch_type = Access::Sequential;
+  pipe.fetch_type = Access::Code | Access::Sequential;
   state.r15 += 2;
 }
 
@@ -95,7 +95,7 @@ void Thumb_ALU(u16 instruction) {
   int dst = (instruction >> 0) & 7;
   int src = (instruction >> 3) & 7;
 
-  pipe.fetch_type = Access::Sequential;
+  pipe.fetch_type = Access::Code | Access::Sequential;
   state.r15 += 2;
 
   switch (static_cast<ThumbDataOp>(op)) {
@@ -112,7 +112,7 @@ void Thumb_ALU(u16 instruction) {
     case ThumbDataOp::LSL: {
       auto shift = state.reg[src];
       bus.Idle();
-      pipe.fetch_type = Access::Nonsequential;
+      pipe.fetch_type = Access::Code | Access::Nonsequential;
 
       int carry = state.cpsr.f.c;
       LSL(state.reg[dst], shift, carry);
@@ -123,7 +123,7 @@ void Thumb_ALU(u16 instruction) {
     case ThumbDataOp::LSR: {
       auto shift = state.reg[src];
       bus.Idle();
-      pipe.fetch_type = Access::Nonsequential;
+      pipe.fetch_type = Access::Code | Access::Nonsequential;
 
       int carry = state.cpsr.f.c;
       LSR(state.reg[dst], shift, carry, false);
@@ -134,7 +134,7 @@ void Thumb_ALU(u16 instruction) {
     case ThumbDataOp::ASR: {
       auto shift = state.reg[src];
       bus.Idle();
-      pipe.fetch_type = Access::Nonsequential;
+      pipe.fetch_type = Access::Code | Access::Nonsequential;
 
       int carry = state.cpsr.f.c;
       ASR(state.reg[dst], shift, carry, false);
@@ -153,7 +153,7 @@ void Thumb_ALU(u16 instruction) {
     case ThumbDataOp::ROR: {
       auto shift = state.reg[src];
       bus.Idle();
-      pipe.fetch_type = Access::Nonsequential;      
+      pipe.fetch_type = Access::Code | Access::Nonsequential;      
 
       int carry = state.cpsr.f.c;
       ROR(state.reg[dst], shift, carry, false);
@@ -184,7 +184,7 @@ void Thumb_ALU(u16 instruction) {
     }
     case ThumbDataOp::MUL: {
       TickMultiply(state.reg[dst]);
-      pipe.fetch_type = Access::Nonsequential;
+      pipe.fetch_type = Access::Code | Access::Nonsequential;
 
       state.reg[dst] *= state.reg[src];
       SetZeroAndSignFlag(state.reg[dst]);
@@ -233,7 +233,7 @@ void Thumb_HighRegisterOps_BX(u16 instruction) {
   } else if (op == 1) {
     // Compare (CMP)
     SUB(state.reg[dst], operand, true);
-    pipe.fetch_type = Access::Sequential;
+    pipe.fetch_type = Access::Code | Access::Sequential;
     state.r15 += 2;
   } else {
     // Addition, move (ADD, MOV)
@@ -244,7 +244,7 @@ void Thumb_HighRegisterOps_BX(u16 instruction) {
       state.r15 &= ~1;
       ReloadPipeline16();
     } else {
-      pipe.fetch_type = Access::Sequential;
+      pipe.fetch_type = Access::Code | Access::Sequential;
       state.r15 += 2;
     }
   }
@@ -255,7 +255,7 @@ void Thumb_LoadStoreRelativePC(u16 instruction) {
   u32 offset  = instruction & 0xFF;
   u32 address = (state.r15 & ~2) + (offset << 2);
 
-  pipe.fetch_type = Access::Nonsequential;
+  pipe.fetch_type = Access::Code | Access::Nonsequential;
   state.r15 += 2;
 
   state.reg[dst] = ReadWord(address, Access::Nonsequential);
@@ -269,7 +269,7 @@ void Thumb_LoadStoreOffsetReg(u16 instruction) {
 
   u32 address = state.reg[base] + state.reg[off];
 
-  pipe.fetch_type = Access::Nonsequential;
+  pipe.fetch_type = Access::Code | Access::Nonsequential;
   state.r15 += 2;
 
   switch (op) {
@@ -297,7 +297,7 @@ void Thumb_LoadStoreSigned(u16 instruction) {
 
   u32 address = state.reg[base] + state.reg[off];
 
-  pipe.fetch_type = Access::Nonsequential;
+  pipe.fetch_type = Access::Code | Access::Nonsequential;
   state.r15 += 2;
 
   switch (op) {
@@ -328,7 +328,7 @@ void Thumb_LoadStoreOffsetImm(u16 instruction) {
   int dst  = (instruction >> 0) & 7;
   int base = (instruction >> 3) & 7;
 
-  pipe.fetch_type = Access::Nonsequential;
+  pipe.fetch_type = Access::Code | Access::Nonsequential;
   state.r15 += 2;
 
   switch (op) {
@@ -360,7 +360,7 @@ void Thumb_LoadStoreHword(u16 instruction) {
 
   u32 address = state.reg[base] + imm * 2;
 
-  pipe.fetch_type = Access::Nonsequential;
+  pipe.fetch_type = Access::Code | Access::Nonsequential;
   state.r15 += 2;
 
   if (load) {
@@ -376,7 +376,7 @@ void Thumb_LoadStoreRelativeToSP(u16 instruction) {
   u32 offset  = instruction & 0xFF;
   u32 address = state.r13 + offset * 4;
 
-  pipe.fetch_type = Access::Nonsequential;
+  pipe.fetch_type = Access::Code | Access::Nonsequential;
   state.r15 += 2;
 
   if (load) {
@@ -397,7 +397,7 @@ void Thumb_LoadAddress(u16 instruction) {
     state.reg[dst] = (state.r15 & ~2) + offset;
   }
 
-  pipe.fetch_type = Access::Sequential;
+  pipe.fetch_type = Access::Code | Access::Sequential;
   state.r15 += 2;
 }
 
@@ -407,7 +407,7 @@ void Thumb_AddOffsetToSP(u16 instruction) {
 
   state.r13 = state.r13 + (sub ? -offset : offset);
 
-  pipe.fetch_type = Access::Sequential;
+  pipe.fetch_type = Access::Code | Access::Sequential;
   state.r15 += 2;
 }
 
@@ -415,7 +415,7 @@ template <bool pop, bool rbit>
 void Thumb_PushPop(u16 instruction) {
   auto list = instruction & 0xFF;
 
-  pipe.fetch_type = Access::Nonsequential;
+  pipe.fetch_type = Access::Code | Access::Nonsequential;
   state.r15 += 2;
 
   // Handle special case for empty register lists.
@@ -483,7 +483,7 @@ template <bool load, int base>
 void Thumb_LoadStoreMultiple(u16 instruction) {
   auto list = instruction & 0xFF;
 
-  pipe.fetch_type = Access::Nonsequential;
+  pipe.fetch_type = Access::Code | Access::Nonsequential;
   state.r15 += 2;
 
   // Handle special case for empty register lists.
@@ -556,7 +556,7 @@ void Thumb_ConditionalBranch(u16 instruction) {
     state.r15 += imm * 2;
     ReloadPipeline16();
   } else {
-    pipe.fetch_type = Access::Sequential;
+    pipe.fetch_type = Access::Code | Access::Sequential;
     state.r15 += 2;
   }
 }
@@ -598,7 +598,7 @@ void Thumb_LongBranchLink(u16 instruction) {
       imm |= 0xFF800000;
     }
     state.r14 = state.r15 + imm;
-    pipe.fetch_type = Access::Sequential;
+    pipe.fetch_type = Access::Code | Access::Sequential;
     state.r15 += 2;
   } else {
     u32 temp = state.r15 - 2;

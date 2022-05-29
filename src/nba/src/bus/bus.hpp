@@ -28,7 +28,8 @@ struct ARM7TDMI;
 struct Bus {
   enum Access {
     Nonsequential = 0,
-    Sequential = 1
+    Sequential = 1,
+    Code = 2
   };
 
   void Reset();
@@ -126,7 +127,7 @@ struct Bus {
   auto ReadBIOS(u32 address) -> u32;
   auto ReadOpenBus(u32 address) -> u32;
 
-  void Prefetch(u32 address, int cycles);
+  void Prefetch(u32 address, bool code, int cycles);
   void StopPrefetch();
   void Step(int cycles);
   void UpdateWaitStateTable();

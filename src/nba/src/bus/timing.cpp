@@ -14,10 +14,9 @@ void Bus::Idle() {
   Step(1);
 }
 
-void Bus::Prefetch(u32 address, int cycles) {
+void Bus::Prefetch(u32 address, bool code, int cycles) {
   if (hw.waitcnt.prefetch) {
-    // TODO: distinguish code and data accesses instead of comparing against R15.
-    if (address != hw.cpu.state.r15) {
+    if (!code) {
       StopPrefetch();
       Step(cycles);
       return;
@@ -63,7 +62,8 @@ void Bus::Prefetch(u32 address, int cycles) {
 
 void Bus::StopPrefetch() {
   if (prefetch.active) {
-    if (prefetch.active && hw.cpu.state.r15 >= 0x08000000) {
+    // TODO: rewrite this mess
+    if (hw.cpu.state.r15 >= 0x08000000 && hw.cpu.state.r15 <= 0x0DFFFFFF) {
       if (prefetch.countdown == 1 || (!hw.cpu.state.cpsr.f.thumb && prefetch.countdown == (prefetch.duty >> 1) + 1)) {
         Step(1);
       }

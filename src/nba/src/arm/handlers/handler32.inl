@@ -37,7 +37,7 @@ void ARM_DataProcessing(u32 instruction) {
   u32 op1;
   u32 op2;
 
-  pipe.fetch_type = Access::Sequential;
+  pipe.fetch_type = Access::Code | Access::Sequential;
 
   if constexpr (immediate) {
     int value = instruction & 0xFF;
@@ -227,7 +227,7 @@ void ARM_StatusTransfer(u32 instruction) {
     }
   }
 
-  pipe.fetch_type = Access::Sequential;
+  pipe.fetch_type = Access::Code | Access::Sequential;
   state.r15 += 4;
 }
 
@@ -238,7 +238,7 @@ void ARM_Multiply(u32 instruction) {
   int op3 = (instruction >> 12) & 0xF;
   int dst = (instruction >> 16) & 0xF;
 
-  pipe.fetch_type = Access::Nonsequential;
+  pipe.fetch_type = Access::Code | Access::Nonsequential;
   state.r15 += 4;
 
   auto lhs = GetReg(op1);
@@ -273,7 +273,7 @@ void ARM_MultiplyLong(u32 instruction) {
 
   s64 result;
 
-  pipe.fetch_type = Access::Nonsequential;
+  pipe.fetch_type = Access::Code | Access::Nonsequential;
   state.r15 += 4;
 
   auto lhs = GetReg(op1);
@@ -322,7 +322,7 @@ void ARM_SingleDataSwap(u32 instruction) {
 
   u32 tmp;
 
-  pipe.fetch_type = Access::Nonsequential;
+  pipe.fetch_type = Access::Code | Access::Nonsequential;
   state.r15 += 4;
 
   if (byte) {
@@ -369,7 +369,7 @@ void ARM_HalfwordSignedTransfer(u32 instruction) {
     offset = GetReg(instruction & 0xF);
   }
 
-  pipe.fetch_type = Access::Nonsequential;
+  pipe.fetch_type = Access::Code | Access::Nonsequential;
   state.r15 += 4;
 
   if constexpr (!add) {
@@ -477,7 +477,7 @@ void ARM_SingleDataTransfer(u32 instruction) {
     DoShift(opcode, offset, amount, carry, true);
   }
 
-  pipe.fetch_type = Access::Nonsequential;
+  pipe.fetch_type = Access::Code | Access::Nonsequential;
   state.r15 += 4;
 
   if constexpr(!add) {
@@ -580,7 +580,7 @@ void ARM_BlockDataTransfer(u32 instruction) {
 
   auto access_type = Access::Nonsequential;
 
-  pipe.fetch_type = Access::Nonsequential;
+  pipe.fetch_type = Access::Code | Access::Nonsequential;
   state.r15 += 4;
 
   for (int i = first; i < 16; i++) {
