@@ -22,7 +22,7 @@ MainWindow::MainWindow(
   QApplication* app,
   QWidget* parent
 )   : QMainWindow(parent) {
-  setWindowTitle("NanoBoyAdvance 1.4");
+  setWindowTitle("NanoBoyAdvance 1.5");
 
   screen = std::make_shared<Screen>(this, config);
   setCentralWidget(screen.get());
@@ -54,9 +54,9 @@ MainWindow::MainWindow(
   connect(this, &MainWindow::UpdateFrameRate, this, [this](int fps) {
     if (config->window.show_fps) {
       auto percent = fps / 59.7275 * 100;
-      setWindowTitle(QString::fromStdString(fmt::format("NanoBoyAdvance 1.4 [{} fps | {:.2f}%]", fps, percent)));
+      setWindowTitle(QString::fromStdString(fmt::format("NanoBoyAdvance 1.5 [{} fps | {:.2f}%]", fps, percent)));
     } else {
-      setWindowTitle("NanoBoyAdvance 1.4");
+      setWindowTitle("NanoBoyAdvance 1.5");
     }
   }, Qt::BlockingQueuedConnection);
 
@@ -282,7 +282,7 @@ void MainWindow::CreateHelpMenu(QMenuBar* menu_bar) {
   connect(about_app, &QAction::triggered, [&] {
     QMessageBox box{ this };
     box.setTextFormat(Qt::RichText);
-    box.setText(tr("NanoBoyAdvance is a Game Boy Advance emulator with a focus on high accuracy.<br><br>"
+    box.setText(tr("NanoBoyAdvance is a Game Boy Advance emulator focused on accuracy.<br><br>"
                    "Copyright © 2015 - 2022 fleroviux<br><br>"
                    "NanoBoyAdvance is licensed under the GPLv3 or any later version.<br><br>"
                    "GitHub: <a href=\"https://github.com/nba-emu/NanoBoyAdvance\">https://github.com/nba-emu/NanoBoyAdvance</a><br><br>"
@@ -397,7 +397,7 @@ void MainWindow::Stop() {
     config->audio_dev->Close();
     screen->Clear();
 
-    setWindowTitle("NanoBoyAdvance 1.4");
+    setWindowTitle("NanoBoyAdvance 1.5");
   }
 }
 
