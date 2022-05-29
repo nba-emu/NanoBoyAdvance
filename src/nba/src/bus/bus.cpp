@@ -48,32 +48,32 @@ void Bus::Attach(ROM&& rom) {
   memory.rom = std::move(rom);
 }
 
-auto Bus::ReadByte(u32 address, Access access) ->  u8 {
+auto Bus::ReadByte(u32 address, int access) ->  u8 {
   return Read<u8>(address, access);
 }
 
-auto Bus::ReadHalf(u32 address, Access access) -> u16 {
+auto Bus::ReadHalf(u32 address, int access) -> u16 {
   return Read<u16>(address, access);
 }
 
-auto Bus::ReadWord(u32 address, Access access) -> u32 {
+auto Bus::ReadWord(u32 address, int access) -> u32 {
   return Read<u32>(address, access);
 }
 
-void Bus::WriteByte(u32 address, u8  value, Access access) {
+void Bus::WriteByte(u32 address, u8  value, int access) {
   Write<u8>(address, access, value);
 }
 
-void Bus::WriteHalf(u32 address, u16 value, Access access) {
+void Bus::WriteHalf(u32 address, u16 value, int access) {
   Write<u16>(address, access, value);
 }
 
-void Bus::WriteWord(u32 address, u32 value, Access access) {
+void Bus::WriteWord(u32 address, u32 value, int access) {
   Write<u32>(address, access, value);
 }
 
 template<typename T>
-auto Bus::Read(u32 address, Access access) -> T {
+auto Bus::Read(u32 address, int access) -> T {
   auto page = address >> 24;
   auto is_u32 = std::is_same_v<T, u32>;
 
@@ -121,23 +121,26 @@ auto Bus::Read(u32 address, Access access) -> T {
     case 0x08 ... 0x0D: {
       address = Align<T>(address);
 
+      auto sequential = access & Sequential;
+      bool code = access & Code;
+
       if ((address & 0x1'FFFF) == 0) {
-        access = Access::Nonsequential;
+        sequential = 0;
       }
 
       if constexpr(std::is_same_v<T,  u8>) {
         auto shift = ((address & 1) << 3);
-        Prefetch(address, wait16[int(access)][page]);
+        Prefetch(address, code, wait16[sequential][page]);
         return memory.rom.ReadROM16(address) >> shift;
       }
 
       if constexpr(std::is_same_v<T, u16>) {
-        Prefetch(address, wait16[int(access)][page]);
+        Prefetch(address, code, wait16[sequential][page]);
         return memory.rom.ReadROM16(address);
       }
 
       if constexpr(std::is_same_v<T, u32>) {
-        Prefetch(address, wait32[int(access)][page]);
+        Prefetch(address, code, wait32[sequential][page]);
         return memory.rom.ReadROM32(address);  
       }
 
@@ -166,7 +169,7 @@ auto Bus::Read(u32 address, Access access) -> T {
 }
 
 template<typename T>
-void Bus::Write(u32 address, Access access, T value) {
+void Bus::Write(u32 address, int access, T value) {
   auto page = address >> 24;
   auto is_u32 = std::is_same_v<T, u32>;
 
@@ -214,25 +217,27 @@ void Bus::Write(u32 address, Access access, T value) {
     case 0x08 ... 0x0D: {
       address = Align<T>(address);
 
+      auto sequential = access & Sequential;
+
       if ((address & 0x1'FFFF) == 0) {
-        access = Access::Nonsequential;
+        sequential = 0;
       }
 
       StopPrefetch();
 
       // TODO: figure out how 8-bit and 32-bit accesses actually work.
       if constexpr(std::is_same_v<T, u8>) {
-        Step(wait16[int(access)][page]);
+        Step(wait16[sequential][page]);
         memory.rom.WriteROM(address, value * 0x0101);
       }
 
       if constexpr(std::is_same_v<T, u16>) {
-        Step(wait16[int(access)][page]);
+        Step(wait16[sequential][page]);
         memory.rom.WriteROM(address, value);
       }
 
       if constexpr(std::is_same_v<T, u32>) {
-        Step(wait32[int(access)][page]);
+        Step(wait32[sequential][page]);
         memory.rom.WriteROM(address|0, value & 0xFFFF);
         memory.rom.WriteROM(address|2, value >> 16);
       }

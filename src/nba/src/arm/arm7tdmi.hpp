@@ -34,7 +34,7 @@ struct ARM7TDMI {
 
     pipe.opcode[0] = 0xF0000000;
     pipe.opcode[1] = 0xF0000000;
-    pipe.fetch_type = Access::Nonsequential;
+    pipe.access = Access::Code | Access::Nonsequential;
     irq_line = false;
     latch_irq_disable = state.cpsr.f.mask_irq;
     ldm_usermode_conflict = false;
@@ -56,21 +56,21 @@ struct ARM7TDMI {
       state.r15 &= ~1;
 
       pipe.opcode[0] = pipe.opcode[1];
-      pipe.opcode[1] = ReadHalf(state.r15, pipe.fetch_type);
+      pipe.opcode[1] = ReadHalf(state.r15, pipe.access);
 
       (this->*s_opcode_lut_16[instruction >> 6])(instruction);
     } else {
       state.r15 &= ~3;
 
       pipe.opcode[0] = pipe.opcode[1];
-      pipe.opcode[1] = ReadWord(state.r15, pipe.fetch_type);
+      pipe.opcode[1] = ReadWord(state.r15, pipe.access);
 
       if (CheckCondition(static_cast<Condition>(instruction >> 28))) {
         int hash = ((instruction >> 16) & 0xFF0) |
                    ((instruction >>  4) & 0x00F);
         (this->*s_opcode_lut_32[hash])(instruction);
       } else {
-        pipe.fetch_type = Access::Sequential;
+        pipe.access = Access::Code | Access::Sequential;
         state.r15 += 4;
       }
     }
@@ -178,9 +178,9 @@ private:
     // The result will be discarded because we flush the pipeline.
     // But this is important for timing nonetheless.
     if (state.cpsr.f.thumb) {
-      ReadHalf(state.r15 & ~1, pipe.fetch_type);
+      ReadHalf(state.r15 & ~1, pipe.access);
     } else {
-      ReadWord(state.r15 & ~3, pipe.fetch_type);
+      ReadWord(state.r15 & ~3, pipe.access);
     }
 
     // Save current program status register.
@@ -210,18 +210,18 @@ private:
   }
 
   void ReloadPipeline16() {
-    pipe.opcode[0] = bus.ReadHalf(state.r15 + 0, Access::Nonsequential);
-    pipe.opcode[1] = bus.ReadHalf(state.r15 + 2, Access::Sequential);
-    pipe.fetch_type = Access::Sequential;
+    pipe.opcode[0] = bus.ReadHalf(state.r15 + 0, Access::Code | Access::Nonsequential);
+    pipe.opcode[1] = bus.ReadHalf(state.r15 + 2, Access::Code | Access::Sequential);
+    pipe.access = Access::Code | Access::Sequential;
     state.r15 += 4;
 
     latch_irq_disable = state.cpsr.f.mask_irq;
   }
 
   void ReloadPipeline32() {
-    pipe.opcode[0] = bus.ReadWord(state.r15 + 0, Access::Nonsequential);
-    pipe.opcode[1] = bus.ReadWord(state.r15 + 4, Access::Sequential);
-    pipe.fetch_type = Access::Sequential;
+    pipe.opcode[0] = bus.ReadWord(state.r15 + 0, Access::Code | Access::Nonsequential);
+    pipe.opcode[1] = bus.ReadWord(state.r15 + 4, Access::Code | Access::Sequential);
+    pipe.access = Access::Code | Access::Sequential;
     state.r15 += 8;
 
     latch_irq_disable = state.cpsr.f.mask_irq;
@@ -259,7 +259,7 @@ private:
   bool cpu_mode_is_invalid;
 
   struct Pipeline {
-    Access fetch_type;
+    int access;
     u32 opcode[2];
   } pipe;
 

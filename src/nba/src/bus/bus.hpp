@@ -26,22 +26,23 @@ struct ARM7TDMI;
 } // namespace nba::core::arm
 
 struct Bus {
-  enum class Access {
+  enum Access {
     Nonsequential = 0,
-    Sequential  = 1
+    Sequential = 1,
+    Code = 2
   };
 
   void Reset();
   void Attach(std::vector<u8> const& bios);
   void Attach(ROM&& rom);
 
-  auto ReadByte(u32 address, Access access) ->  u8;
-  auto ReadHalf(u32 address, Access access) -> u16;
-  auto ReadWord(u32 address, Access access) -> u32;
+  auto ReadByte(u32 address, int access) ->  u8;
+  auto ReadHalf(u32 address, int access) -> u16;
+  auto ReadWord(u32 address, int access) -> u32;
 
-  void WriteByte(u32 address, u8  value, Access access);
-  void WriteHalf(u32 address, u16 value, Access access);
-  void WriteWord(u32 address, u32 value, Access access);
+  void WriteByte(u32 address, u8  value, int access);
+  void WriteHalf(u32 address, u16 value, int access);
+  void WriteWord(u32 address, u32 value, int access);
 
   void Idle();
 
@@ -113,10 +114,10 @@ struct Bus {
   } dma;
 
   template<typename T>
-  auto Read(u32 address, Access access) -> T;
+  auto Read(u32 address, int access) -> T;
   
   template<typename T>
-  void Write(u32 address, Access access, T value);
+  void Write(u32 address, int access, T value);
 
   template<typename T>
   auto Align(u32 address) -> u32 {
@@ -126,7 +127,7 @@ struct Bus {
   auto ReadBIOS(u32 address) -> u32;
   auto ReadOpenBus(u32 address) -> u32;
 
-  void Prefetch(u32 address, int cycles);
+  void Prefetch(u32 address, bool code, int cycles);
   void StopPrefetch();
   void Step(int cycles);
   void UpdateWaitStateTable();
