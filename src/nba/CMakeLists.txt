@@ -31,6 +31,7 @@ set(SOURCES
   src/hw/rom/backup/sram.cpp
   src/hw/rom/gpio/gpio.cpp
   src/hw/rom/gpio/rtc.cpp
+  src/hw/rom/gpio/solar_sensor.cpp
   src/hw/dma/dma.cpp
   src/hw/irq/irq.cpp
   src/hw/keypad/keypad.cpp
@@ -64,6 +65,7 @@ set(HEADERS
   src/hw/ppu/ppu.hpp
   src/hw/ppu/registers.hpp
   src/hw/rom/gpio/rtc.hpp
+  src/hw/rom/gpio/solar_sensor.hpp
   src/hw/dma/dma.hpp
   src/hw/irq/irq.hpp
   src/hw/keypad/keypad.hpp

@@ -59,19 +59,19 @@ void RTC::WritePort(u8 value) {
   int old_sck = port.sck;
   int old_cs  = port.cs;
 
-  if (GetPortDirection(static_cast<int>(Port::CS)) == GPIO::PortDirection::Out) {
+  if (GetPortDirection(static_cast<int>(Port::CS)) == PortDirection::Out) {
     port.cs = (value >> static_cast<int>(Port::CS)) & 1;
   } else {
     Log<Error>("RTC: CS port should be set to 'output' but configured as 'input'.");;
   }
 
-  if (GetPortDirection(static_cast<int>(Port::SCK)) == GPIO::PortDirection::Out) {
+  if (GetPortDirection(static_cast<int>(Port::SCK)) == PortDirection::Out) {
     port.sck = (value >> static_cast<int>(Port::SCK)) & 1;
   } else {
     Log<Error>("RTC: SCK port should be set to 'output' but configured as 'input'.");
   }
 
-  if (GetPortDirection(static_cast<int>(Port::SIO)) == GPIO::PortDirection::Out) {
+  if (GetPortDirection(static_cast<int>(Port::SIO)) == PortDirection::Out) {
     port.sio = (value >> static_cast<int>(Port::SIO)) & 1;
   }
 

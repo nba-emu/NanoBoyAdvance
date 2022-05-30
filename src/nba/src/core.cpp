@@ -8,6 +8,7 @@
 #include <nba/common/crc32.hpp>
 
 #include "hw/rom/gpio/rtc.hpp"
+#include "hw/rom/gpio/solar_sensor.hpp"
 #include "core.hpp"
 
 namespace nba {
@@ -63,6 +64,10 @@ void Core::Attach(ROM&& rom) {
 
 auto Core::CreateRTC() -> std::unique_ptr<GPIO> {
   return std::make_unique<RTC>(irq);
+}
+
+auto Core::CreateSolarSensor() -> std::unique_ptr<GPIO> {
+  return std::make_unique<SolarSensor>();
 }
 
 void Core::Run(int cycles) {
