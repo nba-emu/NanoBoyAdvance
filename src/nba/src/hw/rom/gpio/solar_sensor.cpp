@@ -5,9 +5,8 @@
  * Refer to the included LICENSE file.
  */
 
+#include <nba/rom/gpio/solar_sensor.hpp>
 #include <nba/log.hpp>
-
-#include "solar_sensor.hpp"
 
 namespace nba {
 

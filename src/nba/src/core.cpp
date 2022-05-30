@@ -6,9 +6,9 @@
  */
 
 #include <nba/common/crc32.hpp>
+#include <nba/rom/gpio/rtc.hpp>
+#include <nba/rom/gpio/solar_sensor.hpp>
 
-#include "hw/rom/gpio/rtc.hpp"
-#include "hw/rom/gpio/solar_sensor.hpp"
 #include "core.hpp"
 
 namespace nba {

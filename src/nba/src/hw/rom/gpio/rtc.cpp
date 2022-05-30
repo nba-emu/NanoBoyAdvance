@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2022 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
  */
 
+#include <nba/rom/gpio/rtc.hpp>
 #include <nba/log.hpp>
 #include <ctime>
 
-#include "rtc.hpp"
+#include "hw/irq/irq.hpp"
 
 namespace nba {
 

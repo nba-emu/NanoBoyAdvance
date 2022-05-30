@@ -64,8 +64,6 @@ set(HEADERS
   src/hw/ppu/helper.inl
   src/hw/ppu/ppu.hpp
   src/hw/ppu/registers.hpp
-  src/hw/rom/gpio/rtc.hpp
-  src/hw/rom/gpio/solar_sensor.hpp
   src/hw/dma/dma.hpp
   src/hw/irq/irq.hpp
   src/hw/keypad/keypad.hpp
@@ -93,6 +91,8 @@ set(HEADERS_PUBLIC
   include/nba/rom/backup/flash.hpp
   include/nba/rom/backup/sram.hpp
   include/nba/rom/gpio/gpio.hpp
+  include/nba/rom/gpio/rtc.hpp
+  include/nba/rom/gpio/solar_sensor.hpp
   include/nba/rom/header.hpp
   include/nba/rom/rom.hpp
   include/nba/config.hpp
