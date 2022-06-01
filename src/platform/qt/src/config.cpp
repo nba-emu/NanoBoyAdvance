@@ -44,6 +44,7 @@ void QtConfig::LoadCustomData(toml::value const& data) {
       auto window_ = window_result.unwrap();
 
       window.show_fps = toml::find_or<bool>(window_, "show_fps", false);
+      window.lock_aspect_ratio = toml::find_or<bool>(window_, "lock_aspect_ratio", true);
     }
   }
 
@@ -68,6 +69,7 @@ void QtConfig::SaveCustomData(
   data["input"]["gba"]["r"] = input.gba[9];
 
   data["window"]["show_fps"] = window.show_fps;
+  data["window"]["lock_aspect_ratio"] = window.lock_aspect_ratio;
 
   data["recent_files"] = recent_files;
 }

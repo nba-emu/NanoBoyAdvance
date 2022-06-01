@@ -45,6 +45,7 @@ struct QtConfig final : nba::PlatformConfig {
 
   struct Window {
     bool show_fps = false;
+    bool lock_aspect_ratio = true;
   } window;
 
   std::vector<std::string> recent_files;

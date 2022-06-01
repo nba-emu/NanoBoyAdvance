@@ -11,9 +11,10 @@
 
 Screen::Screen(
   QWidget* parent,
-  std::shared_ptr<nba::PlatformConfig> config
+  std::shared_ptr<QtConfig> config
 )   : QOpenGLWidget(parent)
-    , ogl_video_device(config) {
+    , ogl_video_device(config)
+    , config(config) {
   connect(this, &Screen::RequestDraw, this, &Screen::OnRequestDraw);
 }
 
@@ -29,6 +30,8 @@ void Screen::Clear() {
 
 void Screen::ReloadConfig() {
   ogl_video_device.ReloadConfig();
+
+  resizeGL(size().width(), size().height());
 }
 
 void Screen::OnRequestDraw(u32* buffer) {
@@ -64,18 +67,25 @@ void Screen::resizeGL(int width, int height) {
   int viewport_x;
   int viewport_y;
 
-  float ar = static_cast<float>(width) / static_cast<float>(height);
+  if (config->window.lock_aspect_ratio) {
+    float ar = static_cast<float>(width) / static_cast<float>(height);
 
-  if (ar > kGBANativeAR) {
-    viewport_width = static_cast<int>(height * kGBANativeAR);
-    viewport_height = height;
-    viewport_x = (width - viewport_width) / 2;
-    viewport_y = 0;
+    if (ar > kGBANativeAR) {
+      viewport_width = static_cast<int>(height * kGBANativeAR);
+      viewport_height = height;
+      viewport_x = (width - viewport_width) / 2;
+      viewport_y = 0;
+    } else {
+      viewport_width = width;
+      viewport_height = static_cast<int>(width / kGBANativeAR);
+      viewport_x = 0;
+      viewport_y = (height - viewport_height) / 2;
+    }
   } else {
     viewport_width = width;
-    viewport_height = static_cast<int>(width / kGBANativeAR);
+    viewport_height = height;
     viewport_x = 0;
-    viewport_y = (height - viewport_height) / 2;
+    viewport_y = 0;
   }
 
   ogl_video_device.SetViewport(viewport_x, viewport_y, viewport_width, viewport_height);

@@ -238,6 +238,9 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
   });
 
   CreateBooleanOption(menu, "Show FPS", &config->window.show_fps);
+  CreateBooleanOption(menu, "Lock Aspect Ratio", &config->window.lock_aspect_ratio, false, [this]() {
+    screen->ReloadConfig();
+  });
 }
 
 void MainWindow::CreateConfigMenu(QMenuBar* menu_bar) {
