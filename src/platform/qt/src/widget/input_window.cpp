@@ -87,17 +87,17 @@ void InputWindow::UpdateGameControllerList() {
 auto InputWindow::CreateKeyMapTable() -> QLayout* {
   auto grid = new QGridLayout{this};
 
-  CreateKeyMapEntry(grid, "A", &config->input.gba[int(Key::A)]);
-  CreateKeyMapEntry(grid, "B", &config->input.gba[int(Key::B)]);
-  CreateKeyMapEntry(grid, "L", &config->input.gba[int(Key::L)]);
-  CreateKeyMapEntry(grid, "R", &config->input.gba[int(Key::R)]);
-  CreateKeyMapEntry(grid, "Start", &config->input.gba[int(Key::Start)]);
-  CreateKeyMapEntry(grid, "Select", &config->input.gba[int(Key::Select)]);
-  CreateKeyMapEntry(grid, "Up", &config->input.gba[int(Key::Up)]);
-  CreateKeyMapEntry(grid, "Down", &config->input.gba[int(Key::Down)]);
-  CreateKeyMapEntry(grid, "Left", &config->input.gba[int(Key::Left)]);
-  CreateKeyMapEntry(grid, "Right", &config->input.gba[int(Key::Right)]);
-  CreateKeyMapEntry(grid, "Fast Forward", &config->input.fast_forward);
+  CreateKeyMapEntry(grid, "A", &config->input.gba[int(Key::A)].keyboard);
+  CreateKeyMapEntry(grid, "B", &config->input.gba[int(Key::B)].keyboard);
+  CreateKeyMapEntry(grid, "L", &config->input.gba[int(Key::L)].keyboard);
+  CreateKeyMapEntry(grid, "R", &config->input.gba[int(Key::R)].keyboard);
+  CreateKeyMapEntry(grid, "Start", &config->input.gba[int(Key::Start)].keyboard);
+  CreateKeyMapEntry(grid, "Select", &config->input.gba[int(Key::Select)].keyboard);
+  CreateKeyMapEntry(grid, "Up", &config->input.gba[int(Key::Up)].keyboard);
+  CreateKeyMapEntry(grid, "Down", &config->input.gba[int(Key::Down)].keyboard);
+  CreateKeyMapEntry(grid, "Left", &config->input.gba[int(Key::Left)].keyboard);
+  CreateKeyMapEntry(grid, "Right", &config->input.gba[int(Key::Right)].keyboard);
+  CreateKeyMapEntry(grid, "Fast Forward", &config->input.fast_forward.keyboard);
   return grid;
 }
 

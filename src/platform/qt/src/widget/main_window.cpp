@@ -347,12 +347,12 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
     auto const& input = config->input;
 
     for (int i = 0; i < nba::InputDevice::kKeyCount; i++) {
-      if (input.gba[i] == key) {
+      if (input.gba[i].keyboard == key) {
         SetKeyStatus(0, static_cast<nba::InputDevice::Key>(i), pressed);
       }
     }
 
-    if (key == input.fast_forward) {
+    if (key == input.fast_forward.keyboard) {
       if (input.hold_fast_forward) {
         emu_thread->SetFastForward(pressed);
       } else if (!pressed) {
