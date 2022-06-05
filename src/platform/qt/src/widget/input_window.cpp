@@ -25,6 +25,7 @@ InputWindow::InputWindow(
   app->installEventFilter(this);
 
   setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
+  setWindowTitle("Input Config");
 }
 
 bool InputWindow::eventFilter(QObject* obj, QEvent* event) {
@@ -103,7 +104,7 @@ void InputWindow::UpdateGameControllerList() {
 }
 
 auto InputWindow::CreateKeyMapTable() -> QLayout* {
-  auto grid = new QGridLayout{this};
+  auto grid = new QGridLayout{};
 
   grid->addWidget(new QLabel{tr("Keyboard")}, 0, 1);
   grid->addWidget(new QLabel{tr("Game Controller")}, 0, 2);
@@ -131,32 +132,52 @@ void InputWindow::CreateKeyMapEntry(
 
   layout->addWidget(new QLabel{label}, row, 0);
 
+  QPushButton* button_keyboard;
+  QPushButton* button_controller;
+
   {
-    auto button = new QPushButton{GetKeyboardButtonName(mapping->keyboard)};
+    button_keyboard = new QPushButton{GetKeyboardButtonName(mapping->keyboard)};
    
-    connect(button, &QPushButton::clicked, [=]() {
+    connect(button_keyboard, &QPushButton::clicked, [=]() {
       RestoreActiveButtonLabel();
-      button->setText("[press key]");
+      button_keyboard->setText("[press key]");
       active_mapping = mapping;
-      active_button = button;
+      active_button = button_keyboard;
       waiting_for_keyboard = true;
     });
     
-    layout->addWidget(button, row, 1);
+    layout->addWidget(button_keyboard, row, 1);
   }
 
   {
-    auto button = new QPushButton{GetControllerButtonName(mapping)};
+    button_controller = new QPushButton{GetControllerButtonName(mapping)};
     
-    connect(button, &QPushButton::clicked, [=]() {
+    connect(button_controller, &QPushButton::clicked, [=]() {
       RestoreActiveButtonLabel();
-      button->setText("[press button]");
+      button_controller->setText("[press button]");
       active_mapping = mapping;
-      active_button = button;
+      active_button = button_controller;
       waiting_for_controller = true;
     });
 
-    layout->addWidget(button, row, 2);
+    layout->addWidget(button_controller, row, 2);
+  }
+
+  {
+    auto button = new QPushButton{tr("Clear")};
+
+    connect(button, &QPushButton::clicked, [=]() {
+      if (active_mapping == mapping) {
+        waiting_for_keyboard = false;
+        waiting_for_controller = false;
+      }
+
+      *mapping = {};
+      button_keyboard->setText(GetKeyboardButtonName(mapping->keyboard));
+      button_controller->setText(GetControllerButtonName(mapping));
+    });
+
+    layout->addWidget(button, row, 3);
   }
 }
 
