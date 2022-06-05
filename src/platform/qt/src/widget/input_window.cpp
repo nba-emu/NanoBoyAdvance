@@ -19,7 +19,6 @@ InputWindow::InputWindow(
     , config(config) {
   auto vbox = new QVBoxLayout{this};
   vbox->setSizeConstraint(QLayout::SetFixedSize);
-
   vbox->addLayout(CreateGameControllerList());
   vbox->addLayout(CreateKeyMapTable());
 
@@ -33,6 +32,7 @@ bool InputWindow::eventFilter(QObject* obj, QEvent* event) {
     auto key_event = dynamic_cast<QKeyEvent*>(event);
     auto key = key_event->key();
     auto name = QKeySequence{key_event->key()}.toString();
+
     *current_key = key;
     current_button->setText(GetKeyName(key));
     waiting_for_keypress = false;
@@ -60,7 +60,6 @@ auto InputWindow::CreateGameControllerList() -> QLayout* {
   });
 
   UpdateGameControllerList();
-
   return hbox;
 }
 
@@ -99,7 +98,6 @@ auto InputWindow::CreateKeyMapTable() -> QLayout* {
   CreateKeyMapEntry(grid, "Left", &config->input.gba[int(Key::Left)]);
   CreateKeyMapEntry(grid, "Right", &config->input.gba[int(Key::Right)]);
   CreateKeyMapEntry(grid, "Fast Forward", &config->input.fast_forward);
-
   return grid;
 }
 
@@ -109,9 +107,9 @@ void InputWindow::CreateKeyMapEntry(
   int* key
 ) {
   auto row = layout->rowCount();
-  auto button = new QPushButton{GetKeyName(*key), this};
+  auto button = new QPushButton{GetKeyName(*key)};
 
-  layout->addWidget(new QLabel{label, this}, row, 0);
+  layout->addWidget(new QLabel{label}, row, 0);
   layout->addWidget(button, row, 1);
 
   connect(button, &QPushButton::clicked, [=]() {
