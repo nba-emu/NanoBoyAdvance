@@ -42,6 +42,9 @@ struct InputWindow : QDialog {
     std::shared_ptr<QtConfig> config
   );
 
+  void OnControllerButtonUp(SDL_GameControllerButton button);
+  void OnControllerAxisMove(SDL_GameControllerAxis axis, bool negative);
+
   void UpdateGameControllerList();
 
   std::atomic_bool has_game_controller_choice_changed = false;
@@ -56,14 +59,18 @@ private:
   void CreateKeyMapEntry(
     QGridLayout* layout,
     const char* label,
-    int* key
+    QtConfig::Input::Map* mapping
   );
 
-  static auto GetKeyName(int key) -> QString;
+  void RestoreActiveButtonLabel();
 
-  bool waiting_for_keypress = false;
-  int* current_key = nullptr;
-  QPushButton* current_button = nullptr;
+  static auto GetKeyboardButtonName(int key) -> QString;
+  static auto GetControllerButtonName(QtConfig::Input::Map* mapping) -> QString;
+
+  bool waiting_for_keyboard = false;
+  bool waiting_for_controller = false;
+  QtConfig::Input::Map* active_mapping = nullptr;
+  QPushButton* active_button = nullptr;
   QComboBox* controller_combo_box;
   std::shared_ptr<QtConfig> config;
 };

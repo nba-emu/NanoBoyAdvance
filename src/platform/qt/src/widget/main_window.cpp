@@ -347,12 +347,12 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
     auto const& input = config->input;
 
     for (int i = 0; i < nba::InputDevice::kKeyCount; i++) {
-      if (input.gba[i] == key) {
+      if (input.gba[i].keyboard == key) {
         SetKeyStatus(0, static_cast<nba::InputDevice::Key>(i), pressed);
       }
     }
 
-    if (key == input.fast_forward) {
+    if (key == input.fast_forward.keyboard) {
       if (input.hold_fast_forward) {
         emu_thread->SetFastForward(pressed);
       } else if (!pressed) {
@@ -520,6 +520,30 @@ void MainWindow::UpdateGameController() {
       }
     }
 
+    if (event.type == SDL_CONTROLLERBUTTONUP) {
+      auto button_event = (SDL_ControllerButtonEvent*)&event;
+
+      // TODO: is it even necessary to check the instance id?
+      if (button_event->which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(game_controller))) {
+        input_window->OnControllerButtonUp((SDL_GameControllerButton)button_event->button);
+      }
+    }
+
+    if (event.type == SDL_CONTROLLERAXISMOTION) {
+      auto axis_event = (SDL_ControllerAxisEvent*)&event;
+
+      // TODO: is it even necessary to check the instance id?
+      if (axis_event->which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(game_controller))) {
+        const auto threshold = std::numeric_limits<int16_t>::max() / 2;
+
+        auto value = axis_event->value;
+
+        if (std::abs(value) > threshold) {
+          input_window->OnControllerAxisMove((SDL_GameControllerAxis)axis_event->axis, value < 0);
+        }
+      }
+    }
+
     if (event.type == SDL_CONTROLLERBUTTONDOWN ||
         event.type == SDL_CONTROLLERBUTTONUP ||
         event.type == SDL_CONTROLLERAXISMOTION
@@ -576,44 +600,44 @@ void MainWindow::UpdateGameControllerInput() {
     return;
   }
 
-  auto button_x = SDL_GameControllerGetButton(game_controller, SDL_CONTROLLER_BUTTON_X);
-  if (game_controller_button_x_old && !button_x) {
-    emu_thread->SetFastForward(!emu_thread->GetFastForward());
-  }
-  game_controller_button_x_old = button_x;
+  auto const& input = config->input;
 
-  static const std::unordered_map<SDL_GameControllerButton, Key> buttons{
-    { SDL_CONTROLLER_BUTTON_A, Key::A },
-    { SDL_CONTROLLER_BUTTON_B, Key::B },
-    { SDL_CONTROLLER_BUTTON_LEFTSHOULDER , Key::L },
-    { SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, Key::R },
-    { SDL_CONTROLLER_BUTTON_START, Key::Start },
-    { SDL_CONTROLLER_BUTTON_BACK, Key::Select }
+  const auto evaluate = [&](QtConfig::Input::Map const& mapping) {
+    bool pressed = false;
+  
+    auto button = mapping.controller.button;
+    auto axis = mapping.controller.axis;
+
+    if (button != SDL_CONTROLLER_BUTTON_INVALID) {
+      pressed = pressed || SDL_GameControllerGetButton(game_controller, (SDL_GameControllerButton)button);
+    }
+
+    if (axis != SDL_CONTROLLER_AXIS_INVALID) {
+      const auto threshold = std::numeric_limits<int16_t>::max() / 2;
+
+      auto actual_axis = (SDL_GameControllerAxis)(axis & ~0x80);
+      bool negative = axis & 0x80;
+      auto value = SDL_GameControllerGetAxis(game_controller, actual_axis);
+
+      pressed = pressed || (negative ? (value < -threshold) : (value > threshold));
+    }
+
+    return pressed;
   };
 
-  for (auto& button : buttons) {
-    if (SDL_GameControllerGetButton(game_controller, button.first)) {
-      SetKeyStatus(1, button.second, true);
-    } else {
-      SetKeyStatus(1, button.second, false);
-    }
+  for (int i = 0; i < nba::InputDevice::kKeyCount; i++) {
+    SetKeyStatus(1, static_cast<nba::InputDevice::Key>(i), evaluate(input.gba[i]));
   }
 
-  constexpr auto threshold = std::numeric_limits<int16_t>::max() / 2;
-  auto x = SDL_GameControllerGetAxis(game_controller, SDL_CONTROLLER_AXIS_LEFTX);
-  auto y = SDL_GameControllerGetAxis(game_controller, SDL_CONTROLLER_AXIS_LEFTY);
+  bool fast_forward_button = evaluate(input.fast_forward);
 
-  SetKeyStatus(1, Key::Left, x < -threshold || 
-    SDL_GameControllerGetButton(game_controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT));
+  if (input.hold_fast_forward) {
+    emu_thread->SetFastForward(fast_forward_button);
+  } else if (!fast_forward_button && fast_forward_button_old) {
+    emu_thread->SetFastForward(!emu_thread->GetFastForward());
+  }
 
-  SetKeyStatus(1, Key::Right, x > threshold || 
-    SDL_GameControllerGetButton(game_controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT));
-
-  SetKeyStatus(1, Key::Up, y < -threshold ||
-    SDL_GameControllerGetButton(game_controller, SDL_CONTROLLER_BUTTON_DPAD_UP));
-
-  SetKeyStatus(1, Key::Down, y > threshold ||
-    SDL_GameControllerGetButton(game_controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN));
+  fast_forward_button_old = fast_forward_button;
 }
 
 void MainWindow::UpdateWindowSize() {

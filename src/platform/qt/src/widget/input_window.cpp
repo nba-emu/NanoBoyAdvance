@@ -19,28 +19,53 @@ InputWindow::InputWindow(
     , config(config) {
   auto vbox = new QVBoxLayout{this};
   vbox->setSizeConstraint(QLayout::SetFixedSize);
-  vbox->addLayout(CreateGameControllerList());
   vbox->addLayout(CreateKeyMapTable());
+  vbox->addLayout(CreateGameControllerList());
 
   app->installEventFilter(this);
 
   setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
+  setWindowTitle("Input Config");
 }
 
 bool InputWindow::eventFilter(QObject* obj, QEvent* event) {
-  if (waiting_for_keypress && event->type() == QEvent::KeyPress) {
+  if (waiting_for_keyboard && event->type() == QEvent::KeyPress) {
     auto key_event = dynamic_cast<QKeyEvent*>(event);
     auto key = key_event->key();
     auto name = QKeySequence{key_event->key()}.toString();
 
-    *current_key = key;
-    current_button->setText(GetKeyName(key));
-    waiting_for_keypress = false;
+    active_mapping->keyboard = key;
+    active_button->setText(GetKeyboardButtonName(key));
+    waiting_for_keyboard = false;
     config->Save();
     return true;
   }
 
+  if (obj == this && event->type() == QEvent::Close) {
+    // Cancel the active assignment when the dialog was closed.
+    RestoreActiveButtonLabel();
+    return true;
+  }
+
   return QObject::eventFilter(obj, event);
+}
+
+void InputWindow::OnControllerButtonUp(SDL_GameControllerButton button) {
+  if (waiting_for_controller) {
+    active_mapping->controller.button = button;
+    active_button->setText(GetControllerButtonName(active_mapping));
+    waiting_for_controller = false;
+    config->Save();
+  }
+}
+
+void InputWindow::OnControllerAxisMove(SDL_GameControllerAxis axis, bool negative) {
+  if (waiting_for_controller) {
+    active_mapping->controller.axis = axis | (negative ? 0x80 : 0);
+    active_button->setText(GetControllerButtonName(active_mapping));
+    waiting_for_controller = false;
+    config->Save();
+  }
 }
 
 auto InputWindow::CreateGameControllerList() -> QLayout* {
@@ -85,7 +110,10 @@ void InputWindow::UpdateGameControllerList() {
 }
 
 auto InputWindow::CreateKeyMapTable() -> QLayout* {
-  auto grid = new QGridLayout{this};
+  auto grid = new QGridLayout{};
+
+  grid->addWidget(new QLabel{tr("Keyboard")}, 0, 1);
+  grid->addWidget(new QLabel{tr("Game Controller")}, 0, 2);
 
   CreateKeyMapEntry(grid, "A", &config->input.gba[int(Key::A)]);
   CreateKeyMapEntry(grid, "B", &config->input.gba[int(Key::B)]);
@@ -104,28 +132,98 @@ auto InputWindow::CreateKeyMapTable() -> QLayout* {
 void InputWindow::CreateKeyMapEntry(
   QGridLayout* layout,
   const char* label,
-  int* key
+  QtConfig::Input::Map* mapping
 ) {
   auto row = layout->rowCount();
-  auto button = new QPushButton{GetKeyName(*key)};
 
   layout->addWidget(new QLabel{label}, row, 0);
-  layout->addWidget(button, row, 1);
 
-  connect(button, &QPushButton::clicked, [=]() {
-    if (waiting_for_keypress) {
-      current_button->setText(GetKeyName(*current_key));
-    }
-    button->setText("[press key]");
-    current_key = key;
-    current_button = button;
-    waiting_for_keypress = true;
-  });
+  QPushButton* button_keyboard;
+  QPushButton* button_controller;
+
+  {
+    button_keyboard = new QPushButton{GetKeyboardButtonName(mapping->keyboard)};
+   
+    connect(button_keyboard, &QPushButton::clicked, [=]() {
+      RestoreActiveButtonLabel();
+      button_keyboard->setText("[press key]");
+      active_mapping = mapping;
+      active_button = button_keyboard;
+      waiting_for_keyboard = true;
+    });
+    
+    layout->addWidget(button_keyboard, row, 1);
+  }
+
+  {
+    button_controller = new QPushButton{GetControllerButtonName(mapping)};
+    
+    connect(button_controller, &QPushButton::clicked, [=]() {
+      RestoreActiveButtonLabel();
+      button_controller->setText("[press button]");
+      active_mapping = mapping;
+      active_button = button_controller;
+      waiting_for_controller = true;
+    });
+
+    layout->addWidget(button_controller, row, 2);
+  }
+
+  {
+    auto button = new QPushButton{tr("Clear")};
+
+    connect(button, &QPushButton::clicked, [=]() {
+      if (active_mapping == mapping) {
+        waiting_for_keyboard = false;
+        waiting_for_controller = false;
+      }
+
+      *mapping = {};
+      button_keyboard->setText(GetKeyboardButtonName(mapping->keyboard));
+      button_controller->setText(GetControllerButtonName(mapping));
+    });
+
+    layout->addWidget(button, row, 3);
+  }
 }
 
-auto InputWindow::GetKeyName(int key) -> QString {
+void InputWindow::RestoreActiveButtonLabel() {
+  if (waiting_for_keyboard) {
+    active_button->setText(GetKeyboardButtonName(active_mapping->keyboard));
+    waiting_for_keyboard = false;
+  }
+  
+  if (waiting_for_controller) {
+    active_button->setText(GetControllerButtonName(active_mapping));
+    waiting_for_controller = false;
+  }
+}
+
+auto InputWindow::GetKeyboardButtonName(int key) -> QString {
   if (key == 0) {
     return "None";
   }
   return QKeySequence{key}.toString();
+}
+
+auto InputWindow::GetControllerButtonName(QtConfig::Input::Map* mapping) -> QString {
+  auto button = (SDL_GameControllerButton)mapping->controller.button;
+  auto axis = mapping->controller.axis;
+
+  if (button != SDL_CONTROLLER_BUTTON_INVALID && axis != SDL_CONTROLLER_AXIS_INVALID) {
+    auto button_name = SDL_GameControllerGetStringForButton(button);
+    auto axis_name = SDL_GameControllerGetStringForAxis((SDL_GameControllerAxis)(axis & ~0x80));
+    auto axis_pole = (axis & 0x80) ? '-' : '+';
+
+    return QString::asprintf("%s - %s%c", button_name, axis_name, axis_pole);
+  } else if (button != SDL_CONTROLLER_BUTTON_INVALID) {
+    return SDL_GameControllerGetStringForButton(button);
+  } else if (axis != SDL_CONTROLLER_AXIS_INVALID) {
+    auto axis_name = SDL_GameControllerGetStringForAxis((SDL_GameControllerAxis)(axis & ~0x80));
+    auto axis_pole = (axis & 0x80) ? '-' : '+';
+
+    return QString::asprintf("%s%c", axis_name, axis_pole);
+  }
+
+  return "None";
 }
