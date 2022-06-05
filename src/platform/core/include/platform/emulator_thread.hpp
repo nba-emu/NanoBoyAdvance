@@ -35,8 +35,8 @@ private:
   std::thread thread;
   std::atomic_bool running = false;
   bool paused = false;
-  std::function<void(float)> frame_rate_cb;
-  std::function<void()> per_frame_cb;
+  std::function<void(float)> frame_rate_cb = [](float) {};
+  std::function<void()> per_frame_cb = []() {};
 };
 
 } // namespace nba

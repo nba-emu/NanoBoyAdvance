@@ -14,6 +14,7 @@ void QtConfig::LoadCustomData(toml::value const& data) {
     if (input_result.is_ok()) {
       auto input_ = input_result.unwrap();
 
+      input.controller_guid = toml::find_or<std::string>(input_, "controller_guid", "");
       input.fast_forward = toml::find_or<int>(input_, "fast_forward", Qt::Key_Space);
       input.hold_fast_forward = toml::find_or<bool>(input_, "hold_fast_forward", true);
     
@@ -54,6 +55,7 @@ void QtConfig::LoadCustomData(toml::value const& data) {
 void QtConfig::SaveCustomData(
   toml::basic_value<toml::preserve_comments>& data
 ) {
+  data["input"]["controller_guid"] = input.controller_guid;
   data["input"]["fast_forward"] = input.fast_forward;
   data["input"]["hold_fast_forward"] = input.hold_fast_forward;
 

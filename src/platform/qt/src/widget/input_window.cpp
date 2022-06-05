@@ -1,9 +1,13 @@
 /*
- * Copyright (C) 2020 fleroviux
+ * Copyright (C) 2022 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
  */
+
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <SDL.h>
 
 #include "widget/input_window.hpp"
 
@@ -13,20 +17,11 @@ InputWindow::InputWindow(
   std::shared_ptr<QtConfig> config
 )   : QDialog(parent)
     , config(config) {
-  auto layout = new QGridLayout{this};
-  layout->setSizeConstraint(QLayout::SetFixedSize);
+  auto vbox = new QVBoxLayout{this};
+  vbox->setSizeConstraint(QLayout::SetFixedSize);
 
-  CreateKeyMapEntry(layout, "A", &config->input.gba[int(Key::A)]);
-  CreateKeyMapEntry(layout, "B", &config->input.gba[int(Key::B)]);
-  CreateKeyMapEntry(layout, "L", &config->input.gba[int(Key::L)]);
-  CreateKeyMapEntry(layout, "R", &config->input.gba[int(Key::R)]);
-  CreateKeyMapEntry(layout, "Start", &config->input.gba[int(Key::Start)]);
-  CreateKeyMapEntry(layout, "Select", &config->input.gba[int(Key::Select)]);
-  CreateKeyMapEntry(layout, "Up", &config->input.gba[int(Key::Up)]);
-  CreateKeyMapEntry(layout, "Down", &config->input.gba[int(Key::Down)]);
-  CreateKeyMapEntry(layout, "Left", &config->input.gba[int(Key::Left)]);
-  CreateKeyMapEntry(layout, "Right", &config->input.gba[int(Key::Right)]);
-  CreateKeyMapEntry(layout, "Fast Forward", &config->input.fast_forward);
+  vbox->addLayout(CreateGameControllerList());
+  vbox->addLayout(CreateKeyMapTable());
 
   app->installEventFilter(this);
 
@@ -46,6 +41,66 @@ bool InputWindow::eventFilter(QObject* obj, QEvent* event) {
   }
 
   return QObject::eventFilter(obj, event);
+}
+
+auto InputWindow::CreateGameControllerList() -> QLayout* {
+  auto hbox = new QHBoxLayout{};
+
+  controller_combo_box = new QComboBox();
+
+  auto label = new QLabel{"Game Controller:"};
+  hbox->addWidget(label);
+  hbox->addWidget(controller_combo_box);
+
+  connect(controller_combo_box, QOverload<int>::of(&QComboBox::activated), [this](int index) {
+    config->input.controller_guid = controller_combo_box->itemData(index).toString().toStdString();
+    config->Save();
+
+    has_game_controller_choice_changed = true;
+  });
+
+  UpdateGameControllerList();
+
+  return hbox;
+}
+
+void InputWindow::UpdateGameControllerList() {
+  auto joystick_count = SDL_NumJoysticks();
+
+  controller_combo_box->clear();
+
+  controller_combo_box->addItem("(none)", "");
+  controller_combo_box->setCurrentIndex(0);
+
+  for (int i = 0; i < joystick_count; i++) {
+    if (SDL_IsGameController(i)) {
+      auto guid = GetControllerGUIDStringFromIndex(i);
+
+      controller_combo_box->addItem(SDL_GameControllerNameForIndex(i), QString::fromStdString(guid));
+
+      if (guid == config->input.controller_guid) {
+        controller_combo_box->setCurrentIndex(controller_combo_box->count() - 1);
+      }
+    }
+  }
+}
+
+auto InputWindow::CreateKeyMapTable() -> QLayout* {
+  auto grid = new QGridLayout{this};
+
+  CreateKeyMapEntry(grid, "A", &config->input.gba[int(Key::A)]);
+  CreateKeyMapEntry(grid, "B", &config->input.gba[int(Key::B)]);
+  CreateKeyMapEntry(grid, "L", &config->input.gba[int(Key::L)]);
+  CreateKeyMapEntry(grid, "R", &config->input.gba[int(Key::R)]);
+  CreateKeyMapEntry(grid, "Start", &config->input.gba[int(Key::Start)]);
+  CreateKeyMapEntry(grid, "Select", &config->input.gba[int(Key::Select)]);
+  CreateKeyMapEntry(grid, "Up", &config->input.gba[int(Key::Up)]);
+  CreateKeyMapEntry(grid, "Down", &config->input.gba[int(Key::Down)]);
+  CreateKeyMapEntry(grid, "Left", &config->input.gba[int(Key::Left)]);
+  CreateKeyMapEntry(grid, "Right", &config->input.gba[int(Key::Right)]);
+  CreateKeyMapEntry(grid, "Fast Forward", &config->input.fast_forward);
+
+  return grid;
 }
 
 void InputWindow::CreateKeyMapEntry(

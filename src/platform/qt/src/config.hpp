@@ -39,6 +39,7 @@ struct QtConfig final : nba::PlatformConfig {
       Qt::Key_F
     };
 
+    std::string controller_guid;
     int fast_forward = Qt::Key_Space;
     bool hold_fast_forward = true;
   } input;

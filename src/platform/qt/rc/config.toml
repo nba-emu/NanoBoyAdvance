@@ -32,6 +32,7 @@ pause = 16777224
 reset = 16777272
 fast_forward = 32
 hold_fast_forward = true
+controller_guid = ""
 [input.gba]
 b = 83
 a = 65
@@ -46,3 +47,4 @@ up = 16777235
 
 [window]
 show_fps = false
+lock_aspect_ratio = true
