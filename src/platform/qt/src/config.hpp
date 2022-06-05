@@ -8,6 +8,7 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <filesystem>
 #include <platform/config.hpp>
 #include <Qt>
@@ -28,17 +29,25 @@ struct QtConfig final : nba::PlatformConfig {
 
   struct Input {
     struct Map {
-      int keyboard;
+      int keyboard = 0;
 
       struct {
-        int button;
+        int button = SDL_CONTROLLER_BUTTON_INVALID;
         int axis = SDL_CONTROLLER_AXIS_INVALID;
       } controller;
+
+      static auto FromArray(std::array<int, 3> const& array) -> Map {
+        return {array[0], {array[1], array[2]}};
+      }
+
+      auto Array() -> std::array<int, 3> {
+        return {keyboard, controller.button, controller.axis};
+      }
     };
 
     Map gba[nba::InputDevice::kKeyCount] {
-      {Qt::Key_Up, {SDL_CONTROLLER_BUTTON_DPAD_UP, SDL_CONTROLLER_AXIS_LEFTY}},
-      {Qt::Key_Down, {SDL_CONTROLLER_BUTTON_DPAD_DOWN, SDL_CONTROLLER_AXIS_LEFTY | 0x80}},
+      {Qt::Key_Up, {SDL_CONTROLLER_BUTTON_DPAD_UP, SDL_CONTROLLER_AXIS_LEFTY | 0x80}},
+      {Qt::Key_Down, {SDL_CONTROLLER_BUTTON_DPAD_DOWN, SDL_CONTROLLER_AXIS_LEFTY}},
       {Qt::Key_Left, {SDL_CONTROLLER_BUTTON_DPAD_LEFT, SDL_CONTROLLER_AXIS_LEFTX | 0x80}},
       {Qt::Key_Right, {SDL_CONTROLLER_BUTTON_DPAD_RIGHT, SDL_CONTROLLER_AXIS_LEFTX}},
       {Qt::Key_Return, {SDL_CONTROLLER_BUTTON_START}},
