@@ -43,6 +43,24 @@ bool InputWindow::eventFilter(QObject* obj, QEvent* event) {
   return QObject::eventFilter(obj, event);
 }
 
+void InputWindow::OnControllerButtonUp(SDL_GameControllerButton button) {
+  if (waiting_for_controller) {
+    active_mapping->controller.button = button;
+    active_button->setText(GetControllerButtonName(active_mapping));
+    waiting_for_controller = false;
+    config->Save();
+  }
+}
+
+void InputWindow::OnControllerAxisMove(SDL_GameControllerAxis axis, bool negative) {
+  if (waiting_for_controller) {
+    active_mapping->controller.axis = axis | (negative ? 0x80 : 0);
+    active_button->setText(GetControllerButtonName(active_mapping));
+    waiting_for_controller = false;
+    config->Save();
+  }
+}
+
 auto InputWindow::CreateGameControllerList() -> QLayout* {
   auto hbox = new QHBoxLayout{};
 

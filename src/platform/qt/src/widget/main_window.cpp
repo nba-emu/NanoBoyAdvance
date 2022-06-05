@@ -520,6 +520,30 @@ void MainWindow::UpdateGameController() {
       }
     }
 
+    if (event.type == SDL_CONTROLLERBUTTONUP) {
+      auto button_event = (SDL_ControllerButtonEvent*)&event;
+
+      // TODO: is it even necessary to check the instance id?
+      if (button_event->which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(game_controller))) {
+        input_window->OnControllerButtonUp((SDL_GameControllerButton)button_event->button);
+      }
+    }
+
+    if (event.type == SDL_CONTROLLERAXISMOTION) {
+      auto axis_event = (SDL_ControllerAxisEvent*)&event;
+
+      // TODO: is it even necessary to check the instance id?
+      if (axis_event->which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(game_controller))) {
+        const auto threshold = std::numeric_limits<int16_t>::max() / 2;
+
+        auto value = axis_event->value;
+
+        if (std::abs(value) > threshold) {
+          input_window->OnControllerAxisMove((SDL_GameControllerAxis)axis_event->axis, value < 0);
+        }
+      }
+    }
+
     if (event.type == SDL_CONTROLLERBUTTONDOWN ||
         event.type == SDL_CONTROLLERBUTTONUP ||
         event.type == SDL_CONTROLLERAXISMOTION

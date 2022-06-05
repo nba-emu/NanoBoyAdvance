@@ -8,6 +8,7 @@
 #pragma once
 
 #include <atomic>
+#include <cmath>
 #include <functional>
 #include <nba/core.hpp>
 #include <platform/emulator_thread.hpp>

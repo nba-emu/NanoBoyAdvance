@@ -42,6 +42,9 @@ struct InputWindow : QDialog {
     std::shared_ptr<QtConfig> config
   );
 
+  void OnControllerButtonUp(SDL_GameControllerButton button);
+  void OnControllerAxisMove(SDL_GameControllerAxis axis, bool negative);
+
   void UpdateGameControllerList();
 
   std::atomic_bool has_game_controller_choice_changed = false;
