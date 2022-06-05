@@ -41,6 +41,12 @@ bool InputWindow::eventFilter(QObject* obj, QEvent* event) {
     return true;
   }
 
+  if (obj == this && event->type() == QEvent::Close) {
+    // Cancel the active assignment when the dialog was closed.
+    RestoreActiveButtonLabel();
+    return true;
+  }
+
   return QObject::eventFilter(obj, event);
 }
 
