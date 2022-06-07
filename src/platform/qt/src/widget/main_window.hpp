@@ -123,6 +123,7 @@ private:
   QMenu* recent_menu;
 
   SDL_GameController* game_controller = nullptr;
+  SDL_JoystickID game_controller_instance_id;
   bool fast_forward_button_old = false;
 
   Q_OBJECT

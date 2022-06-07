@@ -513,9 +513,7 @@ void MainWindow::UpdateGameController() {
         input_window->UpdateGameControllerList();
       }
 
-      auto instance_id = ((SDL_JoyDeviceEvent*)&event)->which;
-
-      if (game_controller && instance_id == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(game_controller))) {
+      if (game_controller_instance_id == ((SDL_JoyDeviceEvent*)&event)->which) {
         CloseGameController();
       }
     }
@@ -523,24 +521,17 @@ void MainWindow::UpdateGameController() {
     if (event.type == SDL_CONTROLLERBUTTONUP) {
       auto button_event = (SDL_ControllerButtonEvent*)&event;
 
-      // TODO: is it even necessary to check the instance id?
-      if (button_event->which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(game_controller))) {
-        input_window->OnControllerButtonUp((SDL_GameControllerButton)button_event->button);
-      }
+      input_window->OnControllerButtonUp((SDL_GameControllerButton)button_event->button);
     }
 
     if (event.type == SDL_CONTROLLERAXISMOTION) {
+      const auto threshold = std::numeric_limits<int16_t>::max() / 2;
+
       auto axis_event = (SDL_ControllerAxisEvent*)&event;
+      auto value = axis_event->value;
 
-      // TODO: is it even necessary to check the instance id?
-      if (axis_event->which == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(game_controller))) {
-        const auto threshold = std::numeric_limits<int16_t>::max() / 2;
-
-        auto value = axis_event->value;
-
-        if (std::abs(value) > threshold) {
-          input_window->OnControllerAxisMove((SDL_GameControllerAxis)axis_event->axis, value < 0);
-        }
+      if (std::abs(value) > threshold) {
+        input_window->OnControllerAxisMove((SDL_GameControllerAxis)axis_event->axis, value < 0);
       }
     }
 
@@ -567,6 +558,7 @@ void MainWindow::OpenGameController(std::string const& guid) {
   for (int device_id = 0; device_id < joystick_count; device_id++) {
     if (SDL_IsGameController(device_id) && GetControllerGUIDStringFromIndex(device_id) == guid) {
       game_controller = SDL_GameControllerOpen(device_id);
+      game_controller_instance_id = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(game_controller));
       break;
     }
   }
