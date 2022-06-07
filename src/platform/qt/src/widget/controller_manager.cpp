@@ -28,7 +28,7 @@ void ControllerManager::Initialize() {
 #if defined(__APPLE__)
   timer = new QTimer{this};
   timer->start(100);
-  connect(timer, &QTimer::timeout, std::bind(&ControllerManager::Process, this));
+  connect(timer, &QTimer::timeout, std::bind(&ControllerManager::ProcessEvents, this));
   main_window->emu_thread->SetPerFrameCallback(
     std::bind(&ControllerManager::UpdateKeyState, this));
 #else
@@ -89,6 +89,10 @@ void ControllerManager::ProcessEvents() {
   auto event = SDL_Event{};
   auto input_window = main_window->input_window;
 
+#if defined(__APPLE__)
+  std::lock_guard guard{lock};
+#endif
+
   while (SDL_PollEvent(&event)) {
     switch (event.type) {
       case SDL_JOYDEVICEADDED: {
@@ -143,6 +147,10 @@ void ControllerManager::ProcessEvents() {
 
 void ControllerManager::UpdateKeyState() {
   using Key = nba::InputDevice::Key;
+
+#if defined(__APPLE__)
+  std::lock_guard guard{lock};
+#endif
 
   if (controller == nullptr) {
     return;

@@ -9,6 +9,7 @@
 
 #include <atomic>
 #include <nba/device/input_device.hpp>
+#include <mutex>
 #include <QTimer>
 #include <QWidget>
 #include <SDL.h>
@@ -44,6 +45,7 @@ private:
   std::atomic_bool quitting = false;
   SDL_GameController* controller = nullptr;
   SDL_JoystickID instance_id;
+  std::mutex lock;
   bool fast_forward_button_old = false;
 
   Q_OBJECT
