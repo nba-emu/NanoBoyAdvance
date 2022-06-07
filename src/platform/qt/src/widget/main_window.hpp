@@ -117,6 +117,7 @@ private:
   bool key_input[2][nba::InputDevice::kKeyCount] {false};
   std::atomic_bool quitting = false;
   std::thread controller_thread;
+  QTimer* controller_timer = nullptr;
 
   QAction* pause_action;
   InputWindow* input_window;

@@ -70,8 +70,13 @@ MainWindow::~MainWindow() {
 
   emu_thread->Stop();
 
-  quitting = true;
-  controller_thread.join();
+  if (controller_timer) {
+    controller_timer->stop();
+    CloseGameController();
+  } else {
+    quitting = true;
+    controller_thread.join();
+  }
 }
 
 void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
@@ -477,24 +482,36 @@ void MainWindow::SetKeyStatus(int channel, nba::InputDevice::Key key, bool press
 void MainWindow::InitGameController() {
   SDL_Init(SDL_INIT_GAMECONTROLLER);
 
+  /* On macOS we may not poll SDL events on a separate thread.
+   * So what we do instead is handle device connect/remove events
+   * from a 100 ms Qt timer and updating the input from the emulator thread each frame.
+   */
+#if defined(__APPLE__)
+  controller_timer = new QTimer{this};
+  controller_timer->start(100);
+  connect(controller_timer, &QTimer::timeout, std::bind(&MainWindow::UpdateGameController, this));
+  emu_thread->SetPerFrameCallback(std::bind(&MainWindow::UpdateGameControllerInput, this));
+#else
   controller_thread = std::thread{[this]() {
-    // SDL_WaitEventTimeout() may only be called when the video subsystem is initialised on this thread.
+    // SDL_WaitEventTimeout() requires video to be initialised on the same thread.
     SDL_Init(SDL_INIT_VIDEO);
 
     while (!quitting) {
+      SDL_WaitEventTimeout(nullptr, 100);
+
       UpdateGameController();
+      UpdateGameControllerInput();
     }
 
     CloseGameController();
   }};
+#endif
 }
 
 void MainWindow::UpdateGameController() {
   auto event = SDL_Event{};
 
-  SDL_WaitEventTimeout(nullptr, 100);
-
-  if (SDL_PollEvent(&event)) {
+  while (SDL_PollEvent(&event)) {
     if (event.type == SDL_JOYDEVICEADDED) {
       if (input_window) {
         input_window->UpdateGameControllerList();
@@ -533,13 +550,6 @@ void MainWindow::UpdateGameController() {
       if (std::abs(value) > threshold) {
         input_window->OnControllerAxisMove((SDL_GameControllerAxis)axis_event->axis, value < 0);
       }
-    }
-
-    if (event.type == SDL_CONTROLLERBUTTONDOWN ||
-        event.type == SDL_CONTROLLERBUTTONUP ||
-        event.type == SDL_CONTROLLERAXISMOTION
-    ) {
-      UpdateGameControllerInput();
     }
   }
 
