@@ -495,7 +495,7 @@ void MainWindow::UpdateGameController() {
   SDL_WaitEventTimeout(nullptr, 100);
 
   if (SDL_PollEvent(&event)) {
-    if (event.type == SDL_CONTROLLERDEVICEADDED) {
+    if (event.type == SDL_JOYDEVICEADDED) {
       if (input_window) {
         input_window->UpdateGameControllerList();
       }
@@ -508,14 +508,14 @@ void MainWindow::UpdateGameController() {
       }
     }
 
-    if (event.type == SDL_CONTROLLERDEVICEREMOVED) {
+    if (event.type == SDL_JOYDEVICEREMOVED) {
       if (input_window) {
         input_window->UpdateGameControllerList();
       }
 
       auto instance_id = ((SDL_JoyDeviceEvent*)&event)->which;
 
-      if (instance_id == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(game_controller))) {
+      if (game_controller && instance_id == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(game_controller))) {
         CloseGameController();
       }
     }

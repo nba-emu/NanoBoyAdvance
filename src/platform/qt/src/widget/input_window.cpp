@@ -179,6 +179,7 @@ void InputWindow::CreateKeyMapEntry(
       }
 
       *mapping = {};
+      config->Save();
       button_keyboard->setText(GetKeyboardButtonName(mapping->keyboard));
       button_controller->setText(GetControllerButtonName(mapping));
     });
