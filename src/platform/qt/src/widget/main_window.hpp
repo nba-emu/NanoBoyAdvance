@@ -16,11 +16,10 @@
 #include <QMainWindow>
 #include <QActionGroup>
 #include <QMenu>
-#include <QTimer>
-#include <SDL.h>
 #include <utility>
 #include <vector>
 
+#include "widget/controller_manager.hpp"
 #include "widget/input_window.hpp"
 #include "widget/screen.hpp"
 #include "config.hpp"
@@ -45,6 +44,8 @@ protected:
   bool eventFilter(QObject* obj, QEvent* event);
 
 private:
+  friend struct ControllerManager;
+
   void CreateFileMenu(QMenuBar* menu_bar);
   void CreateVideoMenu(QMenu* parent);
   void CreateAudioMenu(QMenu* parent);
@@ -102,11 +103,6 @@ private:
   void Stop();
 
   void SetKeyStatus(int channel, nba::InputDevice::Key key, bool pressed);
-  void InitGameController();
-  void OpenGameController(std::string const& guid);
-  void CloseGameController();
-  void UpdateGameController();
-  void UpdateGameControllerInput();
   void UpdateWindowSize();
 
   std::shared_ptr<Screen> screen;
@@ -115,17 +111,11 @@ private:
   std::unique_ptr<nba::CoreBase> core;
   std::unique_ptr<nba::EmulatorThread> emu_thread;
   bool key_input[2][nba::InputDevice::kKeyCount] {false};
-  std::atomic_bool quitting = false;
-  std::thread controller_thread;
-  QTimer* controller_timer = nullptr;
+  ControllerManager* controller_manager;
 
   QAction* pause_action;
   InputWindow* input_window;
   QMenu* recent_menu;
-
-  SDL_GameController* game_controller = nullptr;
-  SDL_JoystickID game_controller_instance_id;
-  bool fast_forward_button_old = false;
 
   Q_OBJECT
 };

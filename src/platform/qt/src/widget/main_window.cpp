@@ -44,9 +44,9 @@ MainWindow::MainWindow(
 
   app->installEventFilter(this);
 
-  InitGameController();
-
   input_window = new InputWindow{app, this, config};
+  controller_manager = new ControllerManager(this, config);
+  controller_manager->Initialize();
 
   emu_thread->SetFrameRateCallback([this](float fps) {
     emit UpdateFrameRate(fps);
@@ -70,13 +70,7 @@ MainWindow::~MainWindow() {
 
   emu_thread->Stop();
 
-  if (controller_timer) {
-    controller_timer->stop();
-    CloseGameController();
-  } else {
-    quitting = true;
-    controller_thread.join();
-  }
+  delete controller_manager;
 }
 
 void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
@@ -477,169 +471,6 @@ void MainWindow::SetKeyStatus(int channel, nba::InputDevice::Key key, bool press
 
   input_device->SetKeyStatus(key, 
     key_input[0][int(key)] || key_input[1][int(key)]);
-}
-
-void MainWindow::InitGameController() {
-  SDL_Init(SDL_INIT_GAMECONTROLLER);
-
-  /* On macOS we may not poll SDL events on a separate thread.
-   * So what we do instead is handle device connect/remove events
-   * from a 100 ms Qt timer and updating the input from the emulator thread each frame.
-   */
-#if defined(__APPLE__)
-  controller_timer = new QTimer{this};
-  controller_timer->start(100);
-  connect(controller_timer, &QTimer::timeout, std::bind(&MainWindow::UpdateGameController, this));
-  emu_thread->SetPerFrameCallback(std::bind(&MainWindow::UpdateGameControllerInput, this));
-#else
-  controller_thread = std::thread{[this]() {
-    // SDL_WaitEventTimeout() requires video to be initialised on the same thread.
-    SDL_Init(SDL_INIT_VIDEO);
-
-    while (!quitting) {
-      SDL_WaitEventTimeout(nullptr, 100);
-
-      UpdateGameController();
-      UpdateGameControllerInput();
-    }
-
-    CloseGameController();
-  }};
-#endif
-}
-
-void MainWindow::UpdateGameController() {
-  auto event = SDL_Event{};
-
-  while (SDL_PollEvent(&event)) {
-    if (event.type == SDL_JOYDEVICEADDED) {
-      if (input_window) {
-        input_window->UpdateGameControllerList();
-      }
-
-      auto device_id = ((SDL_JoyDeviceEvent*)&event)->which;
-      auto guid = GetControllerGUIDStringFromIndex(device_id);
-
-      if (guid == config->input.controller_guid) {
-        OpenGameController(guid);
-      }
-    }
-
-    if (event.type == SDL_JOYDEVICEREMOVED) {
-      if (input_window) {
-        input_window->UpdateGameControllerList();
-      }
-
-      if (game_controller_instance_id == ((SDL_JoyDeviceEvent*)&event)->which) {
-        CloseGameController();
-      }
-    }
-
-    if (event.type == SDL_CONTROLLERBUTTONUP) {
-      auto button_event = (SDL_ControllerButtonEvent*)&event;
-
-      input_window->OnControllerButtonUp((SDL_GameControllerButton)button_event->button);
-    }
-
-    if (event.type == SDL_CONTROLLERAXISMOTION) {
-      const auto threshold = std::numeric_limits<int16_t>::max() / 2;
-
-      auto axis_event = (SDL_ControllerAxisEvent*)&event;
-      auto value = axis_event->value;
-
-      if (std::abs(value) > threshold) {
-        input_window->OnControllerAxisMove((SDL_GameControllerAxis)axis_event->axis, value < 0);
-      }
-    }
-  }
-
-  if (input_window->has_game_controller_choice_changed) {
-    OpenGameController(config->input.controller_guid);
-
-    input_window->has_game_controller_choice_changed = false;
-  }
-}
-
-void MainWindow::OpenGameController(std::string const& guid) {
-  auto joystick_count = SDL_NumJoysticks();
-
-  CloseGameController();
-
-  for (int device_id = 0; device_id < joystick_count; device_id++) {
-    if (SDL_IsGameController(device_id) && GetControllerGUIDStringFromIndex(device_id) == guid) {
-      game_controller = SDL_GameControllerOpen(device_id);
-      game_controller_instance_id = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(game_controller));
-      break;
-    }
-  }
-}
-
-void MainWindow::CloseGameController() {
-  using Key = nba::InputDevice::Key;
-
-  // Unset all keys in case any key is currently pressed.
-  SetKeyStatus(1, Key::Up, false);
-  SetKeyStatus(1, Key::Down, false);
-  SetKeyStatus(1, Key::Left, false);
-  SetKeyStatus(1, Key::Right, false);
-  SetKeyStatus(1, Key::Start, false);
-  SetKeyStatus(1, Key::Select, false);
-  SetKeyStatus(1, Key::A, false);
-  SetKeyStatus(1, Key::B, false);
-  SetKeyStatus(1, Key::L, false);
-  SetKeyStatus(1, Key::R, false);
-
-  if (game_controller) {
-    SDL_GameControllerClose(game_controller);
-    game_controller = nullptr;
-  }
-}
-
-void MainWindow::UpdateGameControllerInput() {
-  using Key = nba::InputDevice::Key;
-
-  if (game_controller == nullptr) {
-    return;
-  }
-
-  auto const& input = config->input;
-
-  const auto evaluate = [&](QtConfig::Input::Map const& mapping) {
-    bool pressed = false;
-  
-    auto button = mapping.controller.button;
-    auto axis = mapping.controller.axis;
-
-    if (button != SDL_CONTROLLER_BUTTON_INVALID) {
-      pressed = pressed || SDL_GameControllerGetButton(game_controller, (SDL_GameControllerButton)button);
-    }
-
-    if (axis != SDL_CONTROLLER_AXIS_INVALID) {
-      const auto threshold = std::numeric_limits<int16_t>::max() / 2;
-
-      auto actual_axis = (SDL_GameControllerAxis)(axis & ~0x80);
-      bool negative = axis & 0x80;
-      auto value = SDL_GameControllerGetAxis(game_controller, actual_axis);
-
-      pressed = pressed || (negative ? (value < -threshold) : (value > threshold));
-    }
-
-    return pressed;
-  };
-
-  for (int i = 0; i < nba::InputDevice::kKeyCount; i++) {
-    SetKeyStatus(1, static_cast<nba::InputDevice::Key>(i), evaluate(input.gba[i]));
-  }
-
-  bool fast_forward_button = evaluate(input.fast_forward);
-
-  if (input.hold_fast_forward) {
-    emu_thread->SetFastForward(fast_forward_button);
-  } else if (!fast_forward_button && fast_forward_button_old) {
-    emu_thread->SetFastForward(!emu_thread->GetFastForward());
-  }
-
-  fast_forward_button_old = fast_forward_button;
 }
 
 void MainWindow::UpdateWindowSize() {
