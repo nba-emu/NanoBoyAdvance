@@ -155,14 +155,13 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
       int block_y = tex_y / 8;
 
       if (is_256) {
-        if (mmio.dispcnt.oam_mapping_1d) {
-          tile_num = number + block_y * (width / 4);
-        } else {
-          tile_num = (number & ~1) + block_y * 32;
-        }
+        block_x *= 2;
 
-        tile_num += block_x * 2;
-        tile_num &= 0x3FF;
+        if (mmio.dispcnt.oam_mapping_1d) {
+          tile_num = (number + block_y * (width >> 2) + block_x) & 0x3FF;
+        } else {
+          tile_num = ((number + (block_y * 32)) & 0x3E0) | (((number & ~1) + block_x) & 0x1F);
+        }
 
         if (bitmap_mode && tile_num < 512) {
           continue;
@@ -171,13 +170,10 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
         pixel = DecodeTilePixel8BPP(tile_base + tile_num * 32, tile_x, tile_y, true);
       } else {
         if (mmio.dispcnt.oam_mapping_1d) {
-          tile_num = number + block_y * (width / 8);
+          tile_num = (number + block_y * (width >> 3) + block_x) & 0x3FF;
         } else {
-          tile_num = number + block_y * 32;
+          tile_num = ((number + (block_y * 32)) & 0x3E0) | ((number + block_x) & 0x1F);
         }
-
-        tile_num += block_x;
-        tile_num &= 0x3FF;
 
         if (bitmap_mode && tile_num < 512) {
           continue;
