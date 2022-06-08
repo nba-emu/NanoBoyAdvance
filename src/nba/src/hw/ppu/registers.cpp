@@ -155,7 +155,7 @@ void ReferencePoint::Write(int address, u8 value) {
 void WindowRange::Reset() {
   min = 0;
   max = 0;
-  _changed = false;
+  _changed = true;
 }
 
 void WindowRange::Write(int address, u8 value) {

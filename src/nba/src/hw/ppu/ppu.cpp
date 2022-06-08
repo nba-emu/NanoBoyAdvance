@@ -40,24 +40,24 @@ void PPU::Reset() {
     mmio.bgcnt[i].Reset();
     mmio.bghofs[i] = 0;
     mmio.bgvofs[i] = 0;
-
-    if (i < 2) {
-      mmio.bgx[i].Reset();
-      mmio.bgy[i].Reset();
-      mmio.bgpa[i] = 0x100;
-      mmio.bgpb[i] = 0;
-      mmio.bgpc[i] = 0;
-      mmio.bgpd[i] = 0x100;
-    }
   }
 
-  mmio.winh[0].Reset();
-  mmio.winh[1].Reset();
-  mmio.winv[0].Reset();
-  mmio.winv[1].Reset();
+  for (int i = 0; i < 2; i++) {
+    mmio.bgx[i].Reset();
+    mmio.bgy[i].Reset();
+
+    mmio.bgpa[i] = 0x100;
+    mmio.bgpb[i] = 0;
+    mmio.bgpc[i] = 0;
+    mmio.bgpd[i] = 0x100;
+
+    mmio.winh[i].Reset();
+    mmio.winv[i].Reset();
+    window_scanline_enable[i] = false;
+  }
+
   mmio.winin.Reset();
   mmio.winout.Reset();
-
   mmio.mosaic.Reset();
 
   mmio.eva = 0;
