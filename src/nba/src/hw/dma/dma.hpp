@@ -87,7 +87,7 @@ private:
 
       /// Most recently read (half)word by this channel.
       u32 bus = 0;
-    } latch;
+    } latch = {};
 
     bool is_fifo_dma = false;
     Scheduler::Event* startup_event = nullptr;
