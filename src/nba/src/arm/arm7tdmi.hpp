@@ -96,21 +96,29 @@ struct ARM7TDMI {
       return;
     }
 
-    if (old_bank == BANK_FIQ || new_bank == BANK_FIQ) {
-      for (int i = 0; i < 7; i++) {
-        state.bank[old_bank][i] = state.reg[8 + i];
+    if (old_bank == BANK_FIQ) {
+      for (int i = 0; i < 5; i++) {
+        state.bank[BANK_FIQ][i] = state.reg[8 + i];
       }
 
-      for (int i = 0; i < 7; i++) {
+      for (int i = 0; i < 5; i++) {
+        state.reg[8 + i] = state.bank[BANK_NONE][i];
+      }
+    } else if (new_bank == BANK_FIQ) {
+      for (int i = 0; i < 5; i++) {
+        state.bank[BANK_NONE][i] = state.reg[8 + i];
+      }
+
+      for (int i = 0; i < 5; i++) {
         state.reg[8 + i] = state.bank[new_bank][i];
       }
-    } else {
-      state.bank[old_bank][5] = state.r13;
-      state.bank[old_bank][6] = state.r14;
-
-      state.r13 = state.bank[new_bank][5];
-      state.r14 = state.bank[new_bank][6];
     }
+
+    state.bank[old_bank][5] = state.r13;
+    state.bank[old_bank][6] = state.r14;
+
+    state.r13 = state.bank[new_bank][5];
+    state.r14 = state.bank[new_bank][6];
 
     cpu_mode_is_invalid = new_bank == BANK_INVALID;
   }
