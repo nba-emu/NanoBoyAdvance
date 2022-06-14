@@ -358,6 +358,9 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
         emu_thread->SetFastForward(!emu_thread->GetFastForward());
       }
     }
+  } else if (type == QEvent::FileOpen) {
+	  auto file = dynamic_cast<QFileOpenEvent*>(event)->file();
+    LoadROM(file.toStdString());
   }
 
   return QObject::eventFilter(obj, event);
