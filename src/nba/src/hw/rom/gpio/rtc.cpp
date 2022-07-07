@@ -223,6 +223,10 @@ void RTC::WriteRegister() {
       irq.Raise(core::IRQ::Source::ROM);
       break;
     }
+    default: {
+      Log<Error>("RTC: unhandled register write: {}", (int)reg);
+      break;
+    }
   }
 }
 
