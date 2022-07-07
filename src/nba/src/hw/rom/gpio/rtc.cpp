@@ -33,7 +33,10 @@ void RTC::Reset() {
   port.cs  = 0;
   state = State::Complete;
 
-  control.Reset();
+  control = {};
+
+  // Sennen Kazoku (J) refuses to boot unless the 24h-mode is enabled:
+  control.mode_24h = true;
 }
 
 bool RTC::ReadSIO() {
@@ -110,7 +113,6 @@ void RTC::ReceiveCommandSIO() {
 
   // Check whether the command should be interpreted MSB-first or LSB-first.
   if ((data >> 4) == 6) {
-    // Fast bit-reversal
     data = (data << 4) | (data >> 4);
     data = ((data & 0x33) << 2) | ((data & 0xCC) >> 2);
     data = ((data & 0x55) << 1) | ((data & 0xAA) >> 1);
@@ -169,8 +171,9 @@ void RTC::TransmitBufferSIO() {
 void RTC::ReadRegister() {
   switch (reg) {
     case Register::Control: {
-      buffer[0] = (control.unknown  ?   2 : 0) |
+      buffer[0] = (control.unknown1 ?   2 : 0) |
                   (control.per_minute_irq ? 8 : 0) |
+                  (control.unknown2 ?  32 : 0) |
                   (control.mode_24h ?  64 : 0) |
                   (control.poweroff ? 128 : 0);
       break;
@@ -199,11 +202,12 @@ void RTC::ReadRegister() {
 }
 
 void RTC::WriteRegister() {
-  // TODO: is the datetime register writeable?
+  // TODO: handle writes to the date and time register.
   switch (reg) {
     case Register::Control: {
-      control.unknown = buffer[0] & 2;
+      control.unknown1 = buffer[0] & 2;
       control.per_minute_irq = buffer[0] & 8;
+      control.unknown2 = buffer[0] & 32;
       control.mode_24h = buffer[0] & 64;
       if (control.per_minute_irq) {
         Log<Error>("RTC: enabled the unimplemented per-minute IRQ.");
@@ -211,8 +215,8 @@ void RTC::WriteRegister() {
       break;
     }
     case Register::ForceReset: {
-      // TODO: somehow reset datetime register?
-      control.Reset();
+      // TODO: reset date and time register.
+      control = {};
       break;
     }
     case Register::ForceIRQ: {

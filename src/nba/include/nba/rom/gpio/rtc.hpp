@@ -87,17 +87,11 @@ private:
   State state;
 
   struct ControlRegister {
-    bool unknown;
-    bool per_minute_irq;
-    bool mode_24h;
-    bool poweroff;
-
-    void Reset() {
-      unknown = false;
-      per_minute_irq = false;
-      mode_24h = true;
-      poweroff = false;
-    }
+    bool unknown1 = false;
+    bool per_minute_irq = false;
+    bool unknown2 = false;
+    bool mode_24h = false;
+    bool poweroff = false;
   } control;
 
   core::IRQ& irq;
