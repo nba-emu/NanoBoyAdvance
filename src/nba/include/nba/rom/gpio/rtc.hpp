@@ -95,7 +95,7 @@ private:
     void Reset() {
       unknown = false;
       per_minute_irq = false;
-      mode_24h = false;
+      mode_24h = true;
       poweroff = false;
     }
   } control;
