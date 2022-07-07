@@ -31,7 +31,7 @@ void RTC::Reset() {
   port.sck = 0;
   port.sio = 0; 
   port.cs  = 0;
-  state = State::Command;
+  state = State::Complete;
 
   control.Reset();
 }
@@ -134,14 +134,14 @@ void RTC::ReceiveCommandSIO() {
     if (s_argument_count[(int)reg] > 0) {
       state = State::Sending;
     } else {
-      state = State::Command;
+      state = State::Complete;
     }
   } else {
     if (s_argument_count[(int)reg] > 0) {
       state = State::Receiving;
     } else {
       WriteRegister();
-      state = State::Command;
+      state = State::Complete;
     }
   }
 }
@@ -152,10 +152,7 @@ void RTC::ReceiveBufferSIO() {
 
     if (++current_byte == s_argument_count[(int)reg]) {
       WriteRegister();
-
-      // TODO: does the chip accept more commands or
-      // must it be reenabled before sending the next command?
-      state = State::Command;
+      state = State::Complete;
     }
   } 
 }
@@ -167,9 +164,7 @@ void RTC::TransmitBufferSIO() {
   if (++current_bit == 8) {
     current_bit = 0;
     if (++current_byte == s_argument_count[(int)reg]) {
-      // TODO: does the chip accept more commands or
-      // must it be reenabled before sending the next command?
-      state = State::Command;
+      state = State::Complete;
     }
   }
 }
