@@ -169,6 +169,12 @@ void RTC::TransmitBufferSIO() {
 }
 
 void RTC::ReadRegister() {
+  const auto AdjustHour = [this](int& hour) {
+    if (!control.mode_24h && hour >= 12) {
+      hour = (hour - 12) | 64;
+    }
+  };
+
   switch (reg) {
     case Register::Control: {
       buffer[0] = (control.unknown1 ?   2 : 0) |
@@ -181,6 +187,7 @@ void RTC::ReadRegister() {
     case Register::DateTime: {
       auto timestamp = std::time(nullptr);
       auto time = std::localtime(&timestamp);
+      AdjustHour(time->tm_hour);
       buffer[0] = ConvertDecimalToBCD(time->tm_year - 100);
       buffer[1] = ConvertDecimalToBCD(1 + time->tm_mon);
       buffer[2] = ConvertDecimalToBCD(time->tm_mday);
@@ -193,6 +200,7 @@ void RTC::ReadRegister() {
     case Register::Time: {
       auto timestamp = std::time(nullptr);
       auto time = std::localtime(&timestamp);
+      AdjustHour(time->tm_hour);
       buffer[0] = ConvertDecimalToBCD(time->tm_hour);
       buffer[1] = ConvertDecimalToBCD(time->tm_min);
       buffer[2] = ConvertDecimalToBCD(time->tm_sec);
