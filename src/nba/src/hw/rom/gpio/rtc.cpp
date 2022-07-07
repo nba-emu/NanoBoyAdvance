@@ -76,30 +76,31 @@ void RTC::WritePort(u8 value) {
     port.sio = (value >> static_cast<int>(Port::SIO)) & 1;
   }
 
-  // NOTE: this is not tested but probably needed?
-  if (!old_cs && port.cs) {
-    state = State::Command;
-    current_bit  = 0;
-    current_byte = 0;
-  }
-
-  // TODO: make it clear that SCK is active low!
-  if (!port.cs || !(!old_sck && port.sck)) {
-    return;
-  }
-
-  switch (state) {
-    case State::Command: {
-      ReceiveCommandSIO();
-      break;
+  if (port.cs) {
+    // on CS transition from 0 to 1:
+    if (!old_cs) {
+      state = State::Command;
+      current_bit  = 0;
+      current_byte = 0;
+      return;
     }
-    case State::Receiving: {
-      ReceiveBufferSIO();
-      break;
-    }
-    case State::Sending: {
-      TransmitBufferSIO();
-      break;
+
+    // on SCK transition from 0 to 1:
+    if (!old_sck && port.sck) {
+      switch (state) {
+        case State::Command: {
+          ReceiveCommandSIO();
+          break;
+        }
+        case State::Receiving: {
+          ReceiveBufferSIO();
+          break;
+        }
+        case State::Sending: {
+          TransmitBufferSIO();
+          break;
+        }
+      }
     }
   }
 }
