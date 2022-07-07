@@ -49,11 +49,7 @@ bool RTC::ReadSIO() {
 }
 
 auto RTC::ReadPort() -> u8 {
-  if (state == State::Sending) {
-    return port.sio << static_cast<int>(Port::SIO);
-  }
-
-  return 1;
+  return port.sio << static_cast<int>(Port::SIO);
 }
 
 void RTC::WritePort(u8 value) {
