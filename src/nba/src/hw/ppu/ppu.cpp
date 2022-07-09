@@ -91,6 +91,7 @@ void PPU::LatchEnabledBGs() {
 }
 
 void PPU::LatchBGXYWrites() {
+  // TODO: should BGY be latched when BGX was written and vice versa?
   for (int i = 0; i < 2; i++) {
     auto& bgx = mmio.bgx[i];
     auto& bgy = mmio.bgy[i];
@@ -219,10 +220,10 @@ void PPU::OnHblankComplete(int cycles_late) {
     mosaic.obj._counter_y = 0;
 
     // Reload internal affine registers
-    bgx[0]._current = bgx[0].initial;
-    bgy[0]._current = bgy[0].initial;
-    bgx[1]._current = bgx[1].initial;
-    bgy[1]._current = bgy[1].initial;
+    for (int i = 0; i < 2; i++) {
+      bgx[i]._current = bgx[i].initial;
+      bgy[i]._current = bgy[i].initial;
+    }
   } else {
     scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
     // RenderScanline();
@@ -298,6 +299,8 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
   // if (mmio.dispcnt.enable[ENABLE_WIN1]) {
   //   RenderWindow(1);
   // }
+
+  LatchBGXYWrites();
 
   SubmitScanline();
 
