@@ -205,7 +205,7 @@ void PPU::OnHblankComplete(int cycles_late) {
 
   if (vcount == 160) {
     // config->video_dev->Draw(output);
-    SubmitScanline();
+    ScheduleSubmitScanline();
 
     scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
     dma.Request(DMA::Occasion::VBlank);
@@ -227,7 +227,7 @@ void PPU::OnHblankComplete(int cycles_late) {
   } else {
     scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
     // RenderScanline();
-    SubmitScanline();
+    ScheduleSubmitScanline();
     // // Render OBJs for the next scanline.
     // if (mmio.dispcnt.enable[ENABLE_OBJ]) {
     //   RenderLayerOAM(mmio.dispcnt.mode >= 3, mmio.vcount + 1);
@@ -302,7 +302,7 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
 
   LatchBGXYWrites();
 
-  SubmitScanline();
+  ScheduleSubmitScanline();
 
   CheckVerticalCounterIRQ();
 }
@@ -387,6 +387,12 @@ void PPU::SubmitScanline() {
 
     render_thread_vcount = 0;
   }
+}
+
+void PPU::ScheduleSubmitScanline() {
+  scheduler.Add(32, [this](int cycles_late) {
+    SubmitScanline();
+  });
 }
 
 } // namespace nba::core

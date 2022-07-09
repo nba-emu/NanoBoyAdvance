@@ -217,6 +217,7 @@ private:
   void SetupRenderThread();
   void StopRenderThread();
   void SubmitScanline();
+  void ScheduleSubmitScanline();
 
   void WaitForRenderThread() {
     if (mmio.vcount < 160 && render_thread_vcount < 160) {
