@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2022 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
  */
 
+#include <nba/rom/gpio/rtc.hpp>
 #include <nba/log.hpp>
 #include <ctime>
 
-#include "rtc.hpp"
+#include "hw/irq/irq.hpp"
 
 namespace nba {
 
@@ -30,9 +31,12 @@ void RTC::Reset() {
   port.sck = 0;
   port.sio = 0; 
   port.cs  = 0;
-  state = State::Command;
+  state = State::Complete;
 
-  control.Reset();
+  control = {};
+
+  // Sennen Kazoku (J) refuses to boot unless the 24h-mode is enabled:
+  control.mode_24h = true;
 }
 
 bool RTC::ReadSIO() {
@@ -48,57 +52,54 @@ bool RTC::ReadSIO() {
 }
 
 auto RTC::ReadPort() -> u8 {
-  if (state == State::Sending) {
-    return port.sio << static_cast<int>(Port::SIO);
-  }
-
-  return 1;
+  return port.sio << static_cast<int>(Port::SIO);
 }
 
 void RTC::WritePort(u8 value) {
   int old_sck = port.sck;
   int old_cs  = port.cs;
 
-  if (GetPortDirection(static_cast<int>(Port::CS)) == GPIO::PortDirection::Out) {
+  if (GetPortDirection(static_cast<int>(Port::CS)) == PortDirection::Out) {
     port.cs = (value >> static_cast<int>(Port::CS)) & 1;
   } else {
     Log<Error>("RTC: CS port should be set to 'output' but configured as 'input'.");;
   }
 
-  if (GetPortDirection(static_cast<int>(Port::SCK)) == GPIO::PortDirection::Out) {
+  if (GetPortDirection(static_cast<int>(Port::SCK)) == PortDirection::Out) {
     port.sck = (value >> static_cast<int>(Port::SCK)) & 1;
   } else {
     Log<Error>("RTC: SCK port should be set to 'output' but configured as 'input'.");
   }
 
-  if (GetPortDirection(static_cast<int>(Port::SIO)) == GPIO::PortDirection::Out) {
+  if (GetPortDirection(static_cast<int>(Port::SIO)) == PortDirection::Out) {
     port.sio = (value >> static_cast<int>(Port::SIO)) & 1;
   }
 
-  // NOTE: this is not tested but probably needed?
-  if (!old_cs && port.cs) {
-    state = State::Command;
-    current_bit  = 0;
-    current_byte = 0;
-  }
-
-  // TODO: make it clear that SCK is active low!
-  if (!port.cs || !(!old_sck && port.sck)) {
-    return;
-  }
-
-  switch (state) {
-    case State::Command: {
-      ReceiveCommandSIO();
-      break;
+  if (port.cs) {
+    // on CS transition from 0 to 1:
+    if (!old_cs) {
+      state = State::Command;
+      current_bit  = 0;
+      current_byte = 0;
+      return;
     }
-    case State::Receiving: {
-      ReceiveBufferSIO();
-      break;
-    }
-    case State::Sending: {
-      TransmitBufferSIO();
-      break;
+
+    // on SCK transition from 0 to 1:
+    if (!old_sck && port.sck) {
+      switch (state) {
+        case State::Command: {
+          ReceiveCommandSIO();
+          break;
+        }
+        case State::Receiving: {
+          ReceiveBufferSIO();
+          break;
+        }
+        case State::Sending: {
+          TransmitBufferSIO();
+          break;
+        }
+      }
     }
   }
 }
@@ -112,7 +113,6 @@ void RTC::ReceiveCommandSIO() {
 
   // Check whether the command should be interpreted MSB-first or LSB-first.
   if ((data >> 4) == 6) {
-    // Fast bit-reversal
     data = (data << 4) | (data >> 4);
     data = ((data & 0x33) << 2) | ((data & 0xCC) >> 2);
     data = ((data & 0x55) << 1) | ((data & 0xAA) >> 1);
@@ -133,14 +133,14 @@ void RTC::ReceiveCommandSIO() {
     if (s_argument_count[(int)reg] > 0) {
       state = State::Sending;
     } else {
-      state = State::Command;
+      state = State::Complete;
     }
   } else {
     if (s_argument_count[(int)reg] > 0) {
       state = State::Receiving;
     } else {
       WriteRegister();
-      state = State::Command;
+      state = State::Complete;
     }
   }
 }
@@ -151,10 +151,7 @@ void RTC::ReceiveBufferSIO() {
 
     if (++current_byte == s_argument_count[(int)reg]) {
       WriteRegister();
-
-      // TODO: does the chip accept more commands or
-      // must it be reenabled before sending the next command?
-      state = State::Command;
+      state = State::Complete;
     }
   } 
 }
@@ -166,18 +163,23 @@ void RTC::TransmitBufferSIO() {
   if (++current_bit == 8) {
     current_bit = 0;
     if (++current_byte == s_argument_count[(int)reg]) {
-      // TODO: does the chip accept more commands or
-      // must it be reenabled before sending the next command?
-      state = State::Command;
+      state = State::Complete;
     }
   }
 }
 
 void RTC::ReadRegister() {
+  const auto AdjustHour = [this](int& hour) {
+    if (!control.mode_24h && hour >= 12) {
+      hour = (hour - 12) | 64;
+    }
+  };
+
   switch (reg) {
     case Register::Control: {
-      buffer[0] = (control.unknown  ?   2 : 0) |
+      buffer[0] = (control.unknown1 ?   2 : 0) |
                   (control.per_minute_irq ? 8 : 0) |
+                  (control.unknown2 ?  32 : 0) |
                   (control.mode_24h ?  64 : 0) |
                   (control.poweroff ? 128 : 0);
       break;
@@ -185,6 +187,7 @@ void RTC::ReadRegister() {
     case Register::DateTime: {
       auto timestamp = std::time(nullptr);
       auto time = std::localtime(&timestamp);
+      AdjustHour(time->tm_hour);
       buffer[0] = ConvertDecimalToBCD(time->tm_year - 100);
       buffer[1] = ConvertDecimalToBCD(1 + time->tm_mon);
       buffer[2] = ConvertDecimalToBCD(time->tm_mday);
@@ -197,6 +200,7 @@ void RTC::ReadRegister() {
     case Register::Time: {
       auto timestamp = std::time(nullptr);
       auto time = std::localtime(&timestamp);
+      AdjustHour(time->tm_hour);
       buffer[0] = ConvertDecimalToBCD(time->tm_hour);
       buffer[1] = ConvertDecimalToBCD(time->tm_min);
       buffer[2] = ConvertDecimalToBCD(time->tm_sec);
@@ -206,11 +210,12 @@ void RTC::ReadRegister() {
 }
 
 void RTC::WriteRegister() {
-  // TODO: is the datetime register writeable?
+  // TODO: handle writes to the date and time register.
   switch (reg) {
     case Register::Control: {
-      control.unknown = buffer[0] & 2;
+      control.unknown1 = buffer[0] & 2;
       control.per_minute_irq = buffer[0] & 8;
+      control.unknown2 = buffer[0] & 32;
       control.mode_24h = buffer[0] & 64;
       if (control.per_minute_irq) {
         Log<Error>("RTC: enabled the unimplemented per-minute IRQ.");
@@ -218,12 +223,16 @@ void RTC::WriteRegister() {
       break;
     }
     case Register::ForceReset: {
-      // TODO: somehow reset datetime register?
-      control.Reset();
+      // TODO: reset date and time register.
+      control = {};
       break;
     }
     case Register::ForceIRQ: {
       irq.Raise(core::IRQ::Source::ROM);
+      break;
+    }
+    default: {
+      Log<Error>("RTC: unhandled register write: {}", (int)reg);
       break;
     }
   }

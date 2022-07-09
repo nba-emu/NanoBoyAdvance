@@ -28,21 +28,21 @@ mp2k_hle_enable = false
 mp2k_hle_cubic = false 
 
 [input]
-pause = 16777224
-reset = 16777272
-fast_forward = 32
+fast_forward = [32, -1, 4]
 hold_fast_forward = true
+controller_guid = ""
 [input.gba]
-b = 83
-a = 65
-select = 16777219
-right = 16777236
-r = 70
-l = 68
-left = 16777234
-start = 16777220
-down = 16777237
-up = 16777235
+b = [83, 1, -1]
+a = [65, 0, -1]
+select = [16777219, 4, -1]
+right = [16777236, 14, 0]
+r = [70, 10, -1]
+l = [68, 9, -1]
+left = [16777234, 13, 128]
+start = [16777220, 6, -1]
+down = [16777237, 12, 1]
+up = [16777235, 11, 129]
 
 [window]
 show_fps = false
+lock_aspect_ratio = true

@@ -22,7 +22,7 @@ MainWindow::MainWindow(
   QApplication* app,
   QWidget* parent
 )   : QMainWindow(parent) {
-  setWindowTitle("NanoBoyAdvance 1.4");
+  setWindowTitle("NanoBoyAdvance 1.5");
 
   screen = std::make_shared<Screen>(this, config);
   setCentralWidget(screen.get());
@@ -45,8 +45,8 @@ MainWindow::MainWindow(
   app->installEventFilter(this);
 
   input_window = new InputWindow{app, this, config};
-
-  InitGameController();
+  controller_manager = new ControllerManager(this, config);
+  controller_manager->Initialize();
 
   emu_thread->SetFrameRateCallback([this](float fps) {
     emit UpdateFrameRate(fps);
@@ -54,9 +54,9 @@ MainWindow::MainWindow(
   connect(this, &MainWindow::UpdateFrameRate, this, [this](int fps) {
     if (config->window.show_fps) {
       auto percent = fps / 59.7275 * 100;
-      setWindowTitle(QString::fromStdString(fmt::format("NanoBoyAdvance 1.4 [{} fps | {:.2f}%]", fps, percent)));
+      setWindowTitle(QString::fromStdString(fmt::format("NanoBoyAdvance 1.5 [{} fps | {:.2f}%]", fps, percent)));
     } else {
-      setWindowTitle("NanoBoyAdvance 1.4");
+      setWindowTitle("NanoBoyAdvance 1.5");
     }
   }, Qt::BlockingQueuedConnection);
 
@@ -70,9 +70,7 @@ MainWindow::~MainWindow() {
 
   emu_thread->Stop();
 
-  if (game_controller != nullptr) {
-    SDL_GameControllerClose(game_controller);
-  }
+  delete controller_manager;
 }
 
 void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
@@ -172,7 +170,7 @@ void MainWindow::CreateAudioMenu(QMenu* parent) {
 void MainWindow::CreateInputMenu(QMenu* parent) {
   auto menu = parent->addMenu(tr("Input"));
   
-  auto remap_action = menu->addAction(tr("Remap"));
+  auto remap_action = menu->addAction(tr("Configure"));
   remap_action->setMenuRole(QAction::NoRole);
   connect(remap_action, &QAction::triggered, [this] {
     input_window->exec();
@@ -238,6 +236,9 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
   });
 
   CreateBooleanOption(menu, "Show FPS", &config->window.show_fps);
+  CreateBooleanOption(menu, "Lock Aspect Ratio", &config->window.lock_aspect_ratio, false, [this]() {
+    screen->ReloadConfig();
+  });
 }
 
 void MainWindow::CreateConfigMenu(QMenuBar* menu_bar) {
@@ -282,7 +283,7 @@ void MainWindow::CreateHelpMenu(QMenuBar* menu_bar) {
   connect(about_app, &QAction::triggered, [&] {
     QMessageBox box{ this };
     box.setTextFormat(Qt::RichText);
-    box.setText(tr("NanoBoyAdvance is a Game Boy Advance emulator with a focus on high accuracy.<br><br>"
+    box.setText(tr("NanoBoyAdvance is a Game Boy Advance emulator focused on accuracy.<br><br>"
                    "Copyright © 2015 - 2022 fleroviux<br><br>"
                    "NanoBoyAdvance is licensed under the GPLv3 or any later version.<br><br>"
                    "GitHub: <a href=\"https://github.com/nba-emu/NanoBoyAdvance\">https://github.com/nba-emu/NanoBoyAdvance</a><br><br>"
@@ -345,18 +346,21 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
     auto const& input = config->input;
 
     for (int i = 0; i < nba::InputDevice::kKeyCount; i++) {
-      if (input.gba[i] == key) {
+      if (input.gba[i].keyboard == key) {
         SetKeyStatus(0, static_cast<nba::InputDevice::Key>(i), pressed);
       }
     }
 
-    if (key == input.fast_forward) {
+    if (key == input.fast_forward.keyboard) {
       if (input.hold_fast_forward) {
         emu_thread->SetFastForward(pressed);
       } else if (!pressed) {
         emu_thread->SetFastForward(!emu_thread->GetFastForward());
       }
     }
+  } else if (type == QEvent::FileOpen) {
+	  auto file = dynamic_cast<QFileOpenEvent*>(event)->file();
+    LoadROM(file.toStdString());
   }
 
   return QObject::eventFilter(obj, event);
@@ -397,7 +401,7 @@ void MainWindow::Stop() {
     config->audio_dev->Close();
     screen->Clear();
 
-    setWindowTitle("NanoBoyAdvance 1.4");
+    setWindowTitle("NanoBoyAdvance 1.5");
   }
 }
 
@@ -470,90 +474,6 @@ void MainWindow::SetKeyStatus(int channel, nba::InputDevice::Key key, bool press
 
   input_device->SetKeyStatus(key, 
     key_input[0][int(key)] || key_input[1][int(key)]);
-}
-
-void MainWindow::FindGameController() {
-  SDL_GameControllerUpdate();
-
-  auto num_joysticks = SDL_NumJoysticks();
-
-  for (int i = 0; i < num_joysticks; i++) {
-    if (SDL_IsGameController(i)) {
-      game_controller = SDL_GameControllerOpen(i);
-      if (game_controller != nullptr) {
-        nba::Log<nba::Info>("Qt: detected game controller '{0}'", SDL_GameControllerNameForIndex(i));
-        break;
-      }
-    }
-  }
-}
-
-void MainWindow::InitGameController() {
-  SDL_Init(SDL_INIT_GAMECONTROLLER);
-  FindGameController();
-
-  // Setup a timer to keep checking for game controllers.
-  auto timer = new QTimer{this};
-  connect(timer, &QTimer::timeout, [this]() {
-    if (game_controller == nullptr) {
-      FindGameController();
-    }
-  });
-  timer->start(1000);
-
-  // Update game controller input once per frame.
-  emu_thread->SetPerFrameCallback(
-    std::bind(&MainWindow::UpdateGameControllerInput, this)
-  );
-}
-
-void MainWindow::UpdateGameControllerInput() {
-  using Key = nba::InputDevice::Key;
-
-  if (game_controller == nullptr) {
-    return;
-  }
-
-  SDL_GameControllerUpdate();
-
-  auto button_x = SDL_GameControllerGetButton(game_controller, SDL_CONTROLLER_BUTTON_X);
-  if (game_controller_button_x_old && !button_x) {
-    emu_thread->SetFastForward(!emu_thread->GetFastForward());
-  }
-  game_controller_button_x_old = button_x;
-
-  static const std::unordered_map<SDL_GameControllerButton, Key> buttons{
-    { SDL_CONTROLLER_BUTTON_A, Key::A },
-    { SDL_CONTROLLER_BUTTON_B, Key::B },
-    { SDL_CONTROLLER_BUTTON_LEFTSHOULDER , Key::L },
-    { SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, Key::R },
-    { SDL_CONTROLLER_BUTTON_START, Key::Start },
-    { SDL_CONTROLLER_BUTTON_BACK, Key::Select }
-  };
-
-  for (auto& button : buttons) {
-    if (SDL_GameControllerGetButton(game_controller, button.first)) {
-      SetKeyStatus(1, button.second, true);
-    } else {
-      SetKeyStatus(1, button.second, false);
-    }
-  }
-
-  constexpr auto threshold = std::numeric_limits<int16_t>::max() / 2;
-  auto x = SDL_GameControllerGetAxis(game_controller, SDL_CONTROLLER_AXIS_LEFTX);
-  auto y = SDL_GameControllerGetAxis(game_controller, SDL_CONTROLLER_AXIS_LEFTY);
-
-  SetKeyStatus(1, Key::Left, x < -threshold || 
-    SDL_GameControllerGetButton(game_controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT));
-
-  SetKeyStatus(1, Key::Right, x > threshold || 
-    SDL_GameControllerGetButton(game_controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT));
-
-  SetKeyStatus(1, Key::Up, y < -threshold ||
-    SDL_GameControllerGetButton(game_controller, SDL_CONTROLLER_BUTTON_DPAD_UP));
-
-  SetKeyStatus(1, Key::Down, y > threshold ||
-    SDL_GameControllerGetButton(game_controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN));
 }
 
 void MainWindow::UpdateWindowSize() {

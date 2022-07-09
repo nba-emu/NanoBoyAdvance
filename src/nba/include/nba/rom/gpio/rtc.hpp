@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2022 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -9,9 +9,13 @@
 
 #include <nba/rom/gpio/gpio.hpp>
 
-#include "hw/irq/irq.hpp"
-
 namespace nba {
+
+namespace core {
+
+struct IRQ;
+
+} // namespace nba::core
 
 struct RTC : GPIO {
   enum class Port {
@@ -83,17 +87,11 @@ private:
   State state;
 
   struct ControlRegister {
-    bool unknown;
-    bool per_minute_irq;
-    bool mode_24h;
-    bool poweroff;
-
-    void Reset() {
-      unknown = false;
-      per_minute_irq = false;
-      mode_24h = false;
-      poweroff = false;
-    }
+    bool unknown1 = false;
+    bool per_minute_irq = false;
+    bool unknown2 = false;
+    bool mode_24h = false;
+    bool poweroff = false;
   } control;
 
   core::IRQ& irq;

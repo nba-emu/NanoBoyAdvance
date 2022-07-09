@@ -11,10 +11,12 @@
 #include <QGLWidget>
 #include <QOpenGLWidget>
 
+#include "config.hpp"
+
 struct Screen : QOpenGLWidget, nba::VideoDevice {
   Screen(
     QWidget* parent,
-    std::shared_ptr<nba::PlatformConfig> config
+    std::shared_ptr<QtConfig> config
   );
 
   void Draw(u32* buffer) final;
@@ -40,6 +42,7 @@ private:
   u32* buffer = nullptr;
   bool should_clear = false;
   nba::OGLVideoDevice ogl_video_device;
+  std::shared_ptr<QtConfig> config;
 
   Q_OBJECT
 };

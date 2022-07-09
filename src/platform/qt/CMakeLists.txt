@@ -4,6 +4,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SOURCES
+  src/widget/controller_manager.cpp
   src/widget/input_window.cpp
   src/widget/main_window.cpp
   src/widget/screen.cpp
@@ -12,6 +13,7 @@ set(SOURCES
 )
 
 set(HEADERS
+  src/widget/controller_manager.hpp
   src/widget/input_window.hpp
   src/widget/main_window.hpp
   src/widget/screen.hpp
@@ -60,18 +62,21 @@ if (APPLE AND MACOS_BUILD_APP_BUNDLE)
 
   set(MACOSX_BUNDLE_BUNDLE_NAME "NanoBoyAdvance")
   set(MACOSX_BUNDLE_ICON_FILE "NanoBoyAdvance.icns")
-  set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.github.fleroviux.NanoBoyAdvance")
+  set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.github.nba-emu.NanoBoyAdvance")
   set(MACOSX_BUNDLE_INFO_STRING "Game Boy Advance emulator")
-  set(MACOSX_BUNDLE_SHORT_VERSION_STRING "1.4")
-  set(MACOSX_BUNDLE_LONG_VERSION_STRING "1.4")
-  set(MACOSX_BUNDLE_BUNDLE_VERSION "1.4")
+  set(MACOSX_BUNDLE_SHORT_VERSION_STRING "1.5")
+  set(MACOSX_BUNDLE_LONG_VERSION_STRING "1.5")
+  set(MACOSX_BUNDLE_BUNDLE_VERSION "1.5")
 
   list(APPEND RESOURCES rc/NanoBoyAdvance.icns)
   add_executable(NanoBoyAdvance-Qt MACOSX_BUNDLE ${SOURCES} ${HEADERS} ${RESOURCES})
-  set_target_properties(NanoBoyAdvance-Qt PROPERTIES RESOURCE rc/NanoBoyAdvance.icns)
+  set_target_properties(NanoBoyAdvance-Qt PROPERTIES
+	  RESOURCE rc/NanoBoyAdvance.icns
+	  MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/rc/Info.plist.in"
+  )
   target_compile_definitions(NanoBoyAdvance-Qt PRIVATE MACOS_BUILD_APP_BUNDLE)
 
-	if (MACOS_BUNDLE_QT)
+  if (MACOS_BUNDLE_QT)
     get_target_property(_qmake_executable Qt5::qmake IMPORTED_LOCATION)
     get_filename_component(_qt_bin_dir "${_qmake_executable}" DIRECTORY)
     find_program(MACDEPLOYQT_EXECUTABLE macdeployqt HINTS "${_qt_bin_dir}")
