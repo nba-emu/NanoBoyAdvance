@@ -68,7 +68,8 @@ private:
 struct ReferencePoint {
   s32 initial;
   s32 _current;
-  
+  bool written;
+
   void Reset();
   void Write(int address, u8 value);
 };

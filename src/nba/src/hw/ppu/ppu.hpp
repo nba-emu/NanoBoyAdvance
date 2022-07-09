@@ -151,6 +151,7 @@ private:
   };
 
   void LatchEnabledBGs();
+  void LatchBGXYWrites();
   void CheckVerticalCounterIRQ();
   void OnScanlineComplete(int cycles_late);
   void OnHblankComplete(int cycles_late);

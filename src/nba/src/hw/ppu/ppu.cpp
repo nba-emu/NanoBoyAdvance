@@ -82,6 +82,23 @@ void PPU::LatchEnabledBGs() {
   }
 }
 
+void PPU::LatchBGXYWrites() {
+  for (int i = 0; i < 2; i++) {
+    auto& bgx = mmio.bgx[i];
+    auto& bgy = mmio.bgy[i];
+
+    if (bgx.written) {
+      bgx._current = bgx.initial;
+      bgx.written = false;
+    }
+
+    if (bgy.written) {
+      bgy._current = bgy.initial;
+      bgy.written = false;
+    }
+  }
+}
+
 void PPU::CheckVerticalCounterIRQ() {
   auto& dispstat = mmio.dispstat;
   auto vcount_flag_new = dispstat.vcount_setting == mmio.vcount;
@@ -169,6 +186,8 @@ void PPU::OnHblankComplete(int cycles_late) {
   if (dispcnt.enable[ENABLE_WIN1]) {
     RenderWindow(1);
   }
+
+  LatchBGXYWrites();
 
   if (vcount == 160) {
     config->video_dev->Draw(output);

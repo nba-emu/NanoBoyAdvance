@@ -135,6 +135,7 @@ void BackgroundControl::Write(int address, u8 value) {
 
 void ReferencePoint::Reset() {
   initial = _current = 0;
+  written = false;
 }
 
 void ReferencePoint::Write(int address, u8 value) {
@@ -149,7 +150,7 @@ void ReferencePoint::Write(int address, u8 value) {
     initial |= 0xF0000000;
   }
   
-  _current = initial;
+  written = true;
 }
 
 void WindowRange::Reset() {
