@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2022 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -40,7 +40,9 @@ const int PPU::s_obj_size[4][4][2] = {
   }
 };
 
-void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
+void PPU::RenderLayerOAM(bool bitmap_mode, int vcount, int line) {
+  auto& mmio = mmio_copy[vcount];
+
   int tile_num;
   u16 pixel;
   s16 transform[4];
@@ -57,13 +59,13 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
   }
 
   for (s32 offset = 0; offset <= 127 * 8; offset += 8) {
-    if ((oam[offset + 1] & 3) == 2) {
+    if ((oam_draw[offset + 1] & 3) == 2) {
       continue;
     }
 
-    u16 attr0 = (oam[offset + 1] << 8) | oam[offset + 0];
-    u16 attr1 = (oam[offset + 3] << 8) | oam[offset + 2];
-    u16 attr2 = (oam[offset + 5] << 8) | oam[offset + 4];
+    u16 attr0 = (oam_draw[offset + 1] << 8) | oam_draw[offset + 0];
+    u16 attr1 = (oam_draw[offset + 3] << 8) | oam_draw[offset + 2];
+    u16 attr2 = (oam_draw[offset + 5] << 8) | oam_draw[offset + 4];
 
     int width;
     int height;
@@ -95,10 +97,10 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
     if (affine) {
       int group = ((attr1 >> 9) & 0x1F) << 5;
 
-      transform[0] = (oam[group + 0x7 ] << 8) | oam[group + 0x6 ];
-      transform[1] = (oam[group + 0xF ] << 8) | oam[group + 0xE ];
-      transform[2] = (oam[group + 0x17] << 8) | oam[group + 0x16];
-      transform[3] = (oam[group + 0x1F] << 8) | oam[group + 0x1E];
+      transform[0] = (oam_draw[group + 0x7 ] << 8) | oam_draw[group + 0x6 ];
+      transform[1] = (oam_draw[group + 0xF ] << 8) | oam_draw[group + 0xE ];
+      transform[2] = (oam_draw[group + 0x17] << 8) | oam_draw[group + 0x16];
+      transform[3] = (oam_draw[group + 0x1F] << 8) | oam_draw[group + 0x1E];
 
       if (attr0b9) {
         half_width  *= 2;
@@ -220,11 +222,6 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
     if (++mosaic_x == mmio.mosaic.obj.size_x) {
       mosaic_x = 0;
     }
-  }
-
-  // Advance vertical OBJ mosaic counter
-  if (++mmio.mosaic.obj._counter_y == mmio.mosaic.obj.size_y) {
-    mmio.mosaic.obj._counter_y = 0;
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2022 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -24,9 +24,9 @@ auto PPU::ConvertColor(u16 color) -> u32 {
          0xFF000000;
 }
 
-void PPU::RenderScanline() {
-  u16  vcount = mmio.vcount;
-  u32* line = &output[vcount * 240];
+void PPU::RenderScanline(int vcount) {
+  auto& mmio = mmio_copy[vcount];
+  u32* line = &output[frame][vcount * 240];
 
   if (mmio.dispcnt.forced_blank) {
     for (int x = 0; x < 240; x++) {
@@ -40,57 +40,57 @@ void PPU::RenderScanline() {
     case 0: {
       for (int i = 0; i < 4; i++) {
         if (mmio.dispcnt.enable[i]) {
-          RenderLayerText(i);
+          RenderLayerText(vcount, i);
         }
       }
-      ComposeScanline(0, 3);
+      ComposeScanline(vcount, 0, 3);
       break;
     }
     // BG Mode 1 - 240x160 pixels, Text and RS mode mixed
     case 1: {
       for (int i = 0; i < 2; i++) {
         if (mmio.dispcnt.enable[i]) {
-          RenderLayerText(i);
+          RenderLayerText(vcount, i);
         }
       }
       if (mmio.dispcnt.enable[ENABLE_BG2]) {
-        RenderLayerAffine(0);
+        RenderLayerAffine(vcount, 0);
       }
-      ComposeScanline(0, 2);
+      ComposeScanline(vcount, 0, 2);
       break;
     }
     // BG Mode 2 - 240x160 pixels, RS mode
     case 2: {
       for (int i = 0; i < 2; i++) {
         if (mmio.dispcnt.enable[2 + i]) {
-          RenderLayerAffine(i);
+          RenderLayerAffine(vcount, i);
         }
       }
-      ComposeScanline(2, 3);
+      ComposeScanline(vcount, 2, 3);
       break;
     }
     // BG Mode 3 - 240x160 pixels, 32768 colors
     case 3: {
       if (mmio.dispcnt.enable[2]) {
-        RenderLayerBitmap1();
+        RenderLayerBitmap1(vcount);
       }
-      ComposeScanline(2, 2);
+      ComposeScanline(vcount, 2, 2);
       break;
     }
     // BG Mode 4 - 240x160 pixels, 256 colors (out of 32768 colors)
     case 4: {
       if (mmio.dispcnt.enable[2]) {
-        RenderLayerBitmap2();
+        RenderLayerBitmap2(vcount);
       }
-      ComposeScanline(2, 2);
+      ComposeScanline(vcount, 2, 2);
       break;
     }
     // BG Mode 5 - 160x128 pixels, 32768 colors
     case 5: {
       if (mmio.dispcnt.enable[2]) {
-        RenderLayerBitmap3();
+        RenderLayerBitmap3(vcount);
       }
-      ComposeScanline(2, 2);
+      ComposeScanline(vcount, 2, 2);
       break;
     }
     // BG Modes 6/7 (invalid) - output backdrop color
@@ -107,8 +107,10 @@ void PPU::RenderScanline() {
 }
 
 template<bool window, bool blending>
-void PPU::ComposeScanlineTmpl(int bg_min, int bg_max) {
-  u32* line = &output[mmio.vcount * 240];
+void PPU::ComposeScanlineTmpl(int vcount, int bg_min, int bg_max) {
+  auto& mmio = mmio_copy[vcount];
+
+  u32* line = &output[frame][vcount * 240];
   u16 backdrop = ReadPalette(0, 0);
 
   auto const& dispcnt = mmio.dispcnt;
@@ -122,7 +124,7 @@ void PPU::ComposeScanlineTmpl(int bg_min, int bg_max) {
   // Sort enabled backgrounds by their respective priority in ascending order.
   for (int prio = 3; prio >= 0; prio--) {
     for (int bg = bg_max; bg >= bg_min; bg--) {
-      if (enable_bg[0][bg] && mmio.dispcnt.enable[bg] && bgcnt[bg].priority == prio) {
+      if (mmio.enable_bg[0][bg] && mmio.dispcnt.enable[bg] && bgcnt[bg].priority == prio) {
         bg_list[bg_count++] = bg;
       }
     }
@@ -220,9 +222,9 @@ void PPU::ComposeScanlineTmpl(int bg_min, int bg_max) {
         bool have_src = mmio.bldcnt.targets[1][layer[1]];
 
         if (is_alpha_obj && have_src) {
-          Blend(pixel[0], pixel[1], BlendMode::SFX_BLEND);
+          Blend(vcount, pixel[0], pixel[1], BlendMode::SFX_BLEND);
         } else if (have_dst && blend_mode != BlendMode::SFX_NONE && (have_src || blend_mode != BlendMode::SFX_BLEND)) {
-          Blend(pixel[0], pixel[1], blend_mode);
+          Blend(vcount, pixel[0], pixel[1], blend_mode);
         }
       }
     } else {
@@ -258,7 +260,8 @@ void PPU::ComposeScanlineTmpl(int bg_min, int bg_max) {
   }
 }
 
-void PPU::ComposeScanline(int bg_min, int bg_max) {
+void PPU::ComposeScanline(int vcount, int bg_min, int bg_max) {
+  auto& mmio = mmio_copy[vcount];
   auto const& dispcnt = mmio.dispcnt;
 
   int key = 0;
@@ -275,23 +278,28 @@ void PPU::ComposeScanline(int bg_min, int bg_max) {
 
   switch (key) {
     case 0b00:
-      ComposeScanlineTmpl<false, false>(bg_min, bg_max);
+      ComposeScanlineTmpl<false, false>(vcount, bg_min, bg_max);
       break;
     case 0b01:
-      ComposeScanlineTmpl<true, false>(bg_min, bg_max);
+      ComposeScanlineTmpl<true, false>(vcount, bg_min, bg_max);
       break;
     case 0b10:
-      ComposeScanlineTmpl<false, true>(bg_min, bg_max);
+      ComposeScanlineTmpl<false, true>(vcount, bg_min, bg_max);
       break;
     case 0b11:
-      ComposeScanlineTmpl<true, true>(bg_min, bg_max);
+      ComposeScanlineTmpl<true, true>(vcount, bg_min, bg_max);
       break;
   }
 }
 
-void PPU::Blend(u16& target1,
-                u16  target2,
-                BlendMode sfx) {
+void PPU::Blend(
+  int vcount,
+  u16& target1,
+  u16  target2,
+  BlendMode sfx
+) {
+  auto& mmio = mmio_copy[vcount];
+
   int r1 = (target1 >>  0) & 0x1F;
   int g1 = (target1 >>  5) & 0x1F;
   int b1 = (target1 >> 10) & 0x1F;
