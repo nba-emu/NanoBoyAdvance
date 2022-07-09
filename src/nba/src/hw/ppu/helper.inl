@@ -6,7 +6,7 @@
  */
 
 auto ReadPalette(int palette, int index) -> u16 {
-  return read<u16>(pram_draw, palette * 32 + index * 2);
+  return read<u16>(pram_draw, palette * 32 + index * 2) & 0x7FFF;
 }
 
 void DecodeTileLine4BPP(u16* buffer, u32 base, int palette, int number, int y, bool flip) {
