@@ -185,6 +185,7 @@ void PPU::OnHblankComplete(int cycles_late) {
 
   if (vcount == 160) {
     // config->video_dev->Draw(output);
+    SubmitScanline();
 
     scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
     dma.Request(DMA::Occasion::VBlank);
@@ -341,6 +342,7 @@ void PPU::SubmitScanline() {
   if (vcount < 160 || vcount == 227) {
     mmio_copy[vcount] = mmio;
   } else {
+    mmio_copy[vcount].dispcnt = mmio.dispcnt;
     mmio_copy[vcount].winh[0] = mmio.winh[0];
     mmio_copy[vcount].winh[1] = mmio.winh[1];
     mmio_copy[vcount].winv[0] = mmio.winv[0];
