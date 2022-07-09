@@ -1,17 +1,17 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2022 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
  */
 
 auto ReadPalette(int palette, int index) -> u16 {
-  return read<u16>(pram, palette * 32 + index * 2);
+  return read<u16>(pram_draw, palette * 32 + index * 2);
 }
 
 void DecodeTileLine4BPP(u16* buffer, u32 base, int palette, int number, int y, bool flip) {
   int xor_x = flip ? 7 : 0;
-  u32 data = read<u32>(vram, base + number * 32 + y * 4);
+  u32 data = read<u32>(vram_draw, base + number * 32 + y * 4);
 
   for (int x = 0; x < 8; x++) {
     int index = data & 15;
@@ -23,7 +23,7 @@ void DecodeTileLine4BPP(u16* buffer, u32 base, int palette, int number, int y, b
 
 void DecodeTileLine8BPP(u16* buffer, u32 base, int number, int y, bool flip) {
   int xor_x = flip ? 7 : 0;
-  u64 data = read<u64>(vram, base + number * 64 + y * 8);
+  u64 data = read<u64>(vram_draw, base + number * 64 + y * 8);
 
   for (int x = 0; x < 8; x++) {
     int index = data & 0xFF;
@@ -36,7 +36,7 @@ void DecodeTileLine8BPP(u16* buffer, u32 base, int number, int y, bool flip) {
 auto DecodeTilePixel4BPP(u32 address, int palette, int x, int y) -> u16 {
   u32 offset = address + (y * 4) + (x / 2);
 
-  int tuple = vram[offset];
+  int tuple = vram_draw[offset];
   int index = (x & 1) ? (tuple >> 4) : (tuple & 0xF);
 
   if (index == 0) {
@@ -49,7 +49,7 @@ auto DecodeTilePixel4BPP(u32 address, int palette, int x, int y) -> u16 {
 auto DecodeTilePixel8BPP(u32 address, int x, int y, bool sprite = false) -> u16 {
   u32 offset = address + (y * 8) + x;
 
-  int index = vram[offset];
+  int index = vram_draw[offset];
 
   if (index == 0) {
     return s_color_transparent;
@@ -61,7 +61,9 @@ auto DecodeTilePixel8BPP(u32 address, int x, int y, bool sprite = false) -> u16 
 void AffineRenderLoop(int id,
                       int width,
                       int height,
+                      int vcount,
                       std::function<void(int, int, int)> render_func) {
+  auto& mmio = mmio_copy[vcount];
   auto const& bg = mmio.bgcnt[2 + id];
   auto const& mosaic = mmio.mosaic.bg;
   u16* buffer = buffer_bg[2 + id];
