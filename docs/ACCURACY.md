@@ -1,5 +1,7 @@
 
-Results for the [Game Boy Advance Test Suite](https://github.com/mgba-emu/suite) by endrift:
+# mGBA suite comparison
+
+Comparison of NBA and other emulators on the [mGBA test suite](https://github.com/mgba-emu/suite) by endrift:
 
 Testname      | Test Count | NanoBoyAdvance | mGBA 0.9.3 | VBA-M 2.1.4 | Ares v128 | SkyEmu     |
 --------------|------------|----------------|------------|-------------|-----------|------------|
@@ -17,12 +19,3 @@ Misc Edge Case|         10 |          4 - 5 |      7 - 8 |           7 |        
 Layer Toggle  |          1 |           pass |       fail |        pass |      fail |       pass |
 OAM Update    |          1 |           pass |       fail |        fail |      fail |       pass |
 
-In addition NanoBoyAdvance passes the following tests:
-- AGS aging cartridge by Nintendo
-  - NanoBoyAdvance was the first public emulator to pass all tests
-  - Almost all emulators fail one or (most of the time) more tests
-  - Recently a few upcoming but immature emulators started passing all tests as well
-- [ARMWrestler](https://github.com/destoer/armwrestler-gba-fixed) by mic-
-- [gba-tests](https://github.com/jsmolka/gba-tests) by jsmolka
-- [FuzzARM](https://github.com/DenSinH/FuzzARM) by DenSinH
-- [PrefetchAbuse](https://github.com/GhostRain0/PrefetchAbuse) by GhostRain0 
