@@ -3,7 +3,9 @@
 ![license](https://img.shields.io/github/license/nba-emu/NanoBoyAdvance)
 ![build](https://img.shields.io/github/workflow/status/nba-emu/NanoBoyAdvance/Build/master)
 
-NanoBoyAdvance is a Game Boy Advance emulator focused on accuracy.<br>
+NanoBoyAdvance is a highly accurate Game Boy Advance emulator.<br>
+It aims to be the most accurate Game Boy Advance emulator, while also offering enhancements such as
+improved audio quality.
 
 ![screenshot1](docs/screenshot.png)
 
@@ -26,7 +28,7 @@ You can [dump](https://github.com/mgba-emu/bios-dump/tree/master/src) it from a 
 A lot of attention to detail has been put into developing this core and making it accurate.
 Its CPU and timing emulation is more accurate than other software emulators right now. 
 
-- Cycle-accurate emulation of the CPU, DMA, timers and prefetch buffer
+- Cycle-accurate emulation of the CPU, DMA, timers and Game Pak prefetch buffer
 - Passes all AGS aging cartridge tests (NBA was the first public emulator to achieve this)
 - Passes most tests in the [mGBA test suite](https://github.com/mgba-emu/suite) (see [ACCURACY.md](docs/ACCURACY.md) for more details)
 - Passes [ARMWrestler](https://github.com/destoer/armwrestler-gba-fixed), [gba-suite](https://github.com/jsmolka/gba-tests) and [FuzzARM](https://github.com/DenSinH/FuzzARM) CPU tests
