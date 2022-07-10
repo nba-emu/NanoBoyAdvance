@@ -390,6 +390,14 @@ void PPU::SubmitScanline() {
 }
 
 void PPU::ScheduleSubmitScanline() {
+  /* Star Wars Episode II does not render correctly in the intro,
+   * unless affine background rendering is delayed by ~32 cycles (like on hardware).
+   * See: https://github.com/nba-emu/NanoBoyAdvance/issues/93
+   *
+   * TODO: this code delays ALL rendering which isn't correct.
+   * But this is tricky to fully solve in a (threaded) per-scanline renderer.
+   * Revisit if another game breaks because of this change.
+   */
   scheduler.Add(32, [this](int cycles_late) {
     SubmitScanline();
   });
