@@ -25,7 +25,7 @@ public:
   void Write(int offset, u8 value);
 
 private:
-  constexpr int GetSynthesisIntervalFromFrequency(int frequency) {
+  static constexpr int GetSynthesisIntervalFromFrequency(int frequency) {
     // 128 cycles equals 131072 Hz, the highest possible frequency.
     // We are dividing by eight, because the waveform can change at
     // eight evenly spaced points inside a single cycle, depending on the wave duty.

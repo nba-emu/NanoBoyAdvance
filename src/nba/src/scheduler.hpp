@@ -107,9 +107,9 @@ struct Scheduler {
 private:
   static constexpr int kMaxEvents = 64;
 
-  constexpr int Parent(int n) { return (n - 1) / 2; }
-  constexpr int LeftChild(int n) { return n * 2 + 1; }
-  constexpr int RightChild(int n) { return n * 2 + 2; }
+  static constexpr int Parent(int n) { return (n - 1) / 2; }
+  static constexpr int LeftChild(int n) { return n * 2 + 1; }
+  static constexpr int RightChild(int n) { return n * 2 + 2; }
 
   void Step(u64 timestamp_next) {
     while (heap[0]->timestamp <= timestamp_next && heap_size > 0) {

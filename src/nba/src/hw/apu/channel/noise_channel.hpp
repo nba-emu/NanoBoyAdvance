@@ -26,7 +26,7 @@ public:
   void Write(int offset, u8 value);
 
 private:
-  constexpr int GetSynthesisInterval(int ratio, int shift) {
+  static constexpr int GetSynthesisInterval(int ratio, int shift) {
     int interval = 64 << shift;
 
     if (ratio == 0) {

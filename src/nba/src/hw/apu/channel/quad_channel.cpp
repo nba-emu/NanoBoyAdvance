@@ -29,7 +29,7 @@ void QuadChannel::Generate(int cycles_late) {
     return;
   }
 
-  constexpr s16 pattern[4][8] = {
+  static constexpr int pattern[4][8] = {
     { +8, -8, -8, -8, -8, -8, -8, -8 },
     { +8, +8, -8, -8, -8, -8, -8, -8 },
     { +8, +8, +8, +8, -8, -8, -8, -8 },

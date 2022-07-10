@@ -35,7 +35,7 @@ void NoiseChannel::Generate(int cycles_late) {
     return;
   }
 
-  constexpr u16 lfsr_xor[2] = { 0x6000, 0x60 };
+  static constexpr u16 lfsr_xor[2] = { 0x6000, 0x60 };
 
   int carry = lfsr & 1;
 
@@ -157,7 +157,7 @@ void NoiseChannel::Write(int offset, u8 value) {
           scheduler.Add(GetSynthesisInterval(frequency_ratio, frequency_shift), event_cb);
         }
 
-        constexpr u16 lfsr_init[] = { 0x4000, 0x0040 };
+        static constexpr u16 lfsr_init[] = { 0x4000, 0x0040 };
         lfsr = lfsr_init[width];
         Restart();
       }
