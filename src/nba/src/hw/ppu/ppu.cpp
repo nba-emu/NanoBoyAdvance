@@ -193,18 +193,9 @@ void PPU::OnHblankComplete(int cycles_late) {
   vcount++;
   CheckVerticalCounterIRQ();
 
-  // if (dispcnt.enable[ENABLE_WIN0]) {
-  //   RenderWindow(0);
-  // }
-
-  // if (dispcnt.enable[ENABLE_WIN1]) {
-  //   RenderWindow(1);
-  // }
-
   LatchBGXYWrites();
 
   if (vcount == 160) {
-    // config->video_dev->Draw(output);
     ScheduleSubmitScanline();
 
     scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
@@ -226,12 +217,7 @@ void PPU::OnHblankComplete(int cycles_late) {
     }
   } else {
     scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
-    // RenderScanline();
     ScheduleSubmitScanline();
-    // // Render OBJs for the next scanline.
-    // if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-    //   RenderLayerOAM(mmio.dispcnt.mode >= 3, mmio.vcount + 1);
-    // }
   }
 }
 
@@ -285,20 +271,8 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
     scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
     if (++vcount == 227) {
       dispstat.vblank_flag = 0;
-      // Render OBJs for the next scanline
-      // if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-      //   RenderLayerOAM(mmio.dispcnt.mode >= 3, 0);
-      // }
     }
   }
-
-  // if (mmio.dispcnt.enable[ENABLE_WIN0]) {
-  //   RenderWindow(0);
-  // }
-
-  // if (mmio.dispcnt.enable[ENABLE_WIN1]) {
-  //   RenderWindow(1);
-  // }
 
   LatchBGXYWrites();
 
