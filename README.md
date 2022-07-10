@@ -16,7 +16,7 @@ NanoBoyAdvance is a Game Boy Advance emulator focused on accuracy.<br>
 
 ## Running
 
-Download a recent [development build](https://nightly.link/nba-emu/NanoBoyAdvance/workflows/build/master) or the last [stable release](https://github.com/nba-emu/NanoBoyAdvance/releases)
+Download a recent [development build](https://nightly.link/nba-emu/NanoBoyAdvance/workflows/build/master) or the last [stable release](https://github.com/nba-emu/NanoBoyAdvance/releases).
 
 Upon loading a ROM for the first time you will be prompted to assign the Game Boy Advance BIOS file.  
 You can [dump](https://github.com/mgba-emu/bios-dump/tree/master/src) it from a real console (accurate) or use an [unofficial BIOS](https://github.com/Nebuleon/ReGBA/blob/master/bios/gba_bios.bin) (less accurate).
