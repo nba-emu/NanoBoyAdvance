@@ -26,17 +26,19 @@ You can [dump](https://github.com/mgba-emu/bios-dump/tree/master/src) it from a 
 A lot of attention to detail has been put into developing this core and making it accurate.
 Its CPU and timing emulation is more accurate than other software emulators right now. 
 
-- CPU and DMA is emulated with near cycle-accuracy
-- ARM emulation handles nearly all known edge-cases
+- Cycle-accurate emulation of the CPU, DMA, timers and prefetch buffer
+- Passes all AGS aging cartridge tests (NBA was the first public emulator to achieve this)
+- Passes most tests in the [mGBA test suite](https://github.com/mgba-emu/suite) (see [ACCURACY.md](docs/ACCURACY.md) for more details)
+- Passes [ARMWrestler](https://github.com/destoer/armwrestler-gba-fixed), [gba-suite](https://github.com/jsmolka/gba-tests) and [FuzzARM](https://github.com/DenSinH/FuzzARM) CPU tests
 - Runs many difficult to emulate games without game-specific hacks, for example:
    - Hello Kitty Collection: Miracle Fashion Maker
    - Hamtaro Rainbow Rescue (with Spanish or German language)
+   - Classic NES series
+   - Golden Sun
    - James Pond - Codename Robocod
    - Phantasy Star Collection
-   - Golden Sun
-   - Classic NES series
-- Passes all AGS aging cartridge tests (NBA was the first public emulator to achieve this)
-- See [ACCURACY.md](docs/ACCURACY.md) for a select list of tests that NBA passes
+   
+Cycle-accurate PPU emulation is an active topic of research and will be implemented, once the timing has been understood and documented well enough.
 
 ## Compiling
 
