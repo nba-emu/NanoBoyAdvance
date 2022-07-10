@@ -184,7 +184,7 @@ void Timer::WriteControl(Channel& channel, u16 value) {
         StartChannel(channel, late);
       }
     }
-  }, 1);
+  }, 2);
 }
 
 void Timer::RecalculateSampleRates() {
