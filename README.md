@@ -8,18 +8,15 @@ NanoBoyAdvance is a Game Boy Advance emulator focused on accuracy.<br>
 ![screenshot1](docs/screenshot.png)
 
 ## Features
-- Very high compatibility (see [Accuracy](#accuracy))
+- Very high compatibility and accuracy (see [Accuracy](#accuracy))
 - HQ audio mixer (for games which use Nintendo's MusicPlayer2000 sound engine)
-- Post-processing options:
-    - Color correction
-    - Texture filtering (nearest, linear, xBRZ)
-    - LCD ghosting simulation
+- Post-processing options (color correction, xBRZ upscaling and LCD ghosting simulation)
+- Game controller support (buttons and axises can be remapped)
 - RTC emulation
-- Game controller support
 
 ## Running
 
-Download NanoBoyAdvance from the [releases page](https://github.com/nba-emu/NanoBoyAdvance/releases) (or get a [nightly build](https://nightly.link/nba-emu/NanoBoyAdvance/workflows/build/master)).
+Download a recent [development build](https://nightly.link/nba-emu/NanoBoyAdvance/workflows/build/master) or the last [stable release](https://github.com/nba-emu/NanoBoyAdvance/releases)
 
 Upon loading a ROM for the first time you will be prompted to assign the Game Boy Advance BIOS file.  
 You can [dump](https://github.com/mgba-emu/bios-dump/tree/master/src) it from a real console (accurate) or use an [unofficial BIOS](https://github.com/Nebuleon/ReGBA/blob/master/bios/gba_bios.bin) (less accurate).
