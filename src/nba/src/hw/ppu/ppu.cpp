@@ -126,13 +126,7 @@ void PPU::OnScanlineComplete(int cycles_late) {
   auto& bgpd = mmio.bgpd;
   auto& mosaic = mmio.mosaic;
 
-  scheduler.Add(226 - cycles_late, this, &PPU::OnHblankComplete);
-
   mmio.dispstat.hblank_flag = 1;
-
-  if (mmio.dispstat.hblank_irq_enable) {
-    irq.Raise(IRQ::Source::HBlank);
-  }
 
   dma.Request(DMA::Occasion::HBlank);
   
@@ -179,6 +173,17 @@ void PPU::OnScanlineComplete(int cycles_late) {
    * But right now if we do that it breaks at least Pinball Tycoon.
    */
   LatchEnabledBGs();
+
+  scheduler.Add(4 - cycles_late, this, &PPU::OnHblankIRQTest);
+}
+
+void PPU::OnHblankIRQTest(int cycles_late) {
+  // TODO: confirm that the enable-bit is checked at 1010 and not 1006 cycles.
+  if (mmio.dispstat.hblank_irq_enable) {
+    irq.Raise(IRQ::Source::HBlank);
+  }
+
+  scheduler.Add(222 - cycles_late, this, &PPU::OnHblankComplete);
 }
 
 void PPU::OnHblankComplete(int cycles_late) {
@@ -224,18 +229,12 @@ void PPU::OnHblankComplete(int cycles_late) {
 void PPU::OnVblankScanlineComplete(int cycles_late) {
   auto& dispstat = mmio.dispstat;
 
-  scheduler.Add(226 - cycles_late, this, &PPU::OnVblankHblankComplete);
-
   dispstat.hblank_flag = 1;
 
   if (mmio.vcount < 162) {
     dma.Request(DMA::Occasion::Video);
   } else if (mmio.vcount == 162) {
     dma.StopVideoXferDMA();
-  }
-
-  if (dispstat.hblank_irq_enable) {
-    irq.Raise(IRQ::Source::HBlank);
   }
 
   if (mmio.vcount >= 225) {
@@ -251,6 +250,17 @@ void PPU::OnVblankScanlineComplete(int cycles_late) {
       }
     }
   }
+
+  scheduler.Add(4 - cycles_late, this, &PPU::OnVblankHblankIRQTest);
+}
+
+void PPU::OnVblankHblankIRQTest(int cycles_late) {
+  // TODO: confirm that the enable-bit is checked at 1010 and not 1006 cycles.
+  if (mmio.dispstat.hblank_irq_enable) {
+    irq.Raise(IRQ::Source::HBlank);
+  }
+
+  scheduler.Add(222 - cycles_late, this, &PPU::OnVblankHblankComplete);
 }
 
 void PPU::OnVblankHblankComplete(int cycles_late) {

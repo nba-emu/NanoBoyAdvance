@@ -193,9 +193,12 @@ private:
   void LatchEnabledBGs();
   void LatchBGXYWrites();
   void CheckVerticalCounterIRQ();
+
   void OnScanlineComplete(int cycles_late);
+  void OnHblankIRQTest(int cycles_late);
   void OnHblankComplete(int cycles_late);
   void OnVblankScanlineComplete(int cycles_late);
+  void OnVblankHblankIRQTest(int cycles_late);
   void OnVblankHblankComplete(int cycles_late);
 
   void RenderScanline(int vcount);
