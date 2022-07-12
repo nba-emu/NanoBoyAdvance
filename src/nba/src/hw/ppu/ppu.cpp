@@ -299,7 +299,7 @@ void PPU::SetupRenderThread() {
   render_thread_running = true;
 
   render_thread = std::thread([this]() {
-    while (render_thread_running) {
+    while (render_thread_running.load()) {
       while (render_thread_vcount <= render_thread_vcount_max) {
         // TODO: this might be racy with SubmitScanline() resetting render_thread_vcount.
         int vcount = render_thread_vcount;

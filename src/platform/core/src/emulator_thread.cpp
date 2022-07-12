@@ -53,7 +53,7 @@ void EmulatorThread::Start() {
     thread = std::thread{[this]() {
       frame_limiter.Reset();
 
-      while (running) {
+      while (running.load()) {
         frame_limiter.Run([this]() {
           if (!paused) {
             per_frame_cb();
