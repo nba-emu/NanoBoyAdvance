@@ -52,7 +52,7 @@ bool RTC::ReadSIO() {
 }
 
 auto RTC::ReadPort() -> u8 {
-  return port.sio << static_cast<int>(Port::SIO);
+  return (port.sio & port.cs) << static_cast<int>(Port::SIO);
 }
 
 void RTC::WritePort(u8 value) {

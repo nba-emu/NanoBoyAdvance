@@ -66,7 +66,7 @@ auto Core::CreateRTC() -> std::unique_ptr<GPIO> {
   return std::make_unique<RTC>(irq);
 }
 
-auto Core::CreateSolarSensor() -> std::unique_ptr<GPIO> {
+auto Core::CreateSolarSensor() -> std::unique_ptr<SolarSensor> {
   return std::make_unique<SolarSensor>();
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2022 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -8,7 +8,12 @@
 #pragma once
 
 #include <cassert>
+#include <nba/rom/gpio/device.hpp>
 #include <nba/integer.hpp>
+#include <memory>
+#include <vector>
+
+// TODO: rethink usage of std::shared_ptr for GPIODevices
 
 namespace nba {
 
@@ -25,6 +30,7 @@ struct GPIO {
   virtual ~GPIO() = default;
 
   void Reset();
+  void Attach(std::shared_ptr<GPIODevice> device);
 
   auto GetPortDirection(int port) const -> PortDirection {
     assert(port < 4);
@@ -56,6 +62,8 @@ private:
   u8 rd_mask;
   u8 wr_mask;
   u8 port_data;
+
+  std::vector<std::shared_ptr<GPIODevice>> devices;
 };
 
 } // namespace nba

@@ -7,23 +7,26 @@
 
 #pragma once
 
-#include <nba/rom/gpio/gpio.hpp>
+#include <nba/rom/gpio/device.hpp>
 
 namespace nba {
 
-struct SolarSensor : GPIO {
-  SolarSensor() {
-    Reset();
-  }
+struct SolarSensor final : GPIODevice {
+  SolarSensor();
 
-  void Reset();
-  void SetCurrentLightLevel(u8 level);
-
-protected:
-  auto ReadPort() -> u8 final;
-  void WritePort(u8 value) final;
+  void Reset() override;
+  auto Read() -> int override;
+  void Write(int value) override;
+  void SetLightLevel(u8 level);
 
 private:
+  enum Pin {
+    CLK = 0,
+    RST = 1,
+    nCS = 2,
+    FLG = 3
+  };
+
   int clk;
   u8 counter;
   u8 current_level;
