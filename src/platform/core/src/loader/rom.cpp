@@ -44,27 +44,6 @@ auto ROMLoader::Load(
   BackupType backup_type,
   bool force_rtc
 ) -> Result {
-  /*if (!fs::exists(rom_path)) {
-    return Result::CannotFindFile;
-  }
-
-  if (fs::is_directory(rom_path)) {
-    return Result::CannotOpenFile;
-  }
-
-  auto size = fs::file_size(rom_path);
-  if (size < sizeof(Header) || size > kMaxROMSize) {
-    return Result::BadImage;
-  }
-
-  auto file_stream = std::ifstream{rom_path, std::ios::binary};
-  auto file_data = std::vector<u8>{};
-  if (!file_stream.good()) {
-    return Result::CannotOpenFile;
-  }
-  file_data.resize(size);
-  file_stream.read((char*)file_data.data(), size);*/
-
   auto file_data = std::vector<u8>{};
   auto read_status = ReadFile(rom_path, file_data);
 
