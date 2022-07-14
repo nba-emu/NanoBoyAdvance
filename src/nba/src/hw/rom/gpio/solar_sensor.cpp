@@ -10,39 +10,37 @@
 
 namespace nba {
 
-void SolarSensor::Reset() {
-  // TODO: get rid of this weird construct both in the solar sensor and the RTC.
-  GPIO::Reset();
+SolarSensor::SolarSensor() {
+  Reset();
+}
 
+void SolarSensor::Reset() {
   clk = 0;
   counter = 0;
-  SetCurrentLightLevel(0x50);
+  SetLightLevel(0x50);
 }
 
-void SolarSensor::SetCurrentLightLevel(u8 level) {
-  current_level = level;
+auto SolarSensor::Read() -> int {
+  return (counter > current_level) ? (1 << Pin::FLG) : 0;
 }
 
-auto SolarSensor::ReadPort() -> u8 {
-  return (counter > current_level) ? 8 : 0;
-}
-
-void SolarSensor::WritePort(u8 value) {
+void SolarSensor::Write(int value) {
+  // TODO: rename CLK member variable to old_clk
   auto old_clk = clk;
 
-  // if (GetPortDirection(2) == PortDirection::Out && (value & 4)) {
-  //   // talking to the RTC; ignored
-  //   return;
-  // }
+  if (GetPortDirection(Pin::nCS) == PortDirection::Out && (value & 4)) {
+    // talking to the RTC; ignored
+    return;
+  }
 
-  if (GetPortDirection(0) == PortDirection::Out) {
-    clk = value & 1;
+  if (GetPortDirection(Pin::CLK) == PortDirection::Out) {
+    clk = value & (1 << Pin::CLK);
   } else {
     Log<Error>("SolarSensor: CLK port should be set to 'output' but configured as 'input'.");
   }
   
-  if (GetPortDirection(1) == PortDirection::Out) {
-    if (value & 2) {
+  if (GetPortDirection(Pin::RST) == PortDirection::Out) {
+    if (value & (1 << Pin::RST)) {
       counter = 0;
     }
   } else {
@@ -52,6 +50,10 @@ void SolarSensor::WritePort(u8 value) {
   if (old_clk && !clk) {
     counter++;
   }
+}
+
+void SolarSensor::SetLightLevel(u8 level) {
+  current_level = level;
 }
 
 } // namespace nba

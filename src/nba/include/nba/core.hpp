@@ -10,6 +10,8 @@
 #include <memory>
 #include <nba/config.hpp>
 #include <nba/integer.hpp>
+#include <nba/rom/gpio/rtc.hpp>
+#include <nba/rom/gpio/solar_sensor.hpp>
 #include <nba/rom/rom.hpp>
 #include <vector>
 
@@ -23,8 +25,8 @@ struct CoreBase {
   virtual void Reset() = 0;
   virtual void Attach(std::vector<u8> const& bios) = 0;
   virtual void Attach(ROM&& rom) = 0;
-  virtual auto CreateRTC() -> std::unique_ptr<GPIO> = 0;
-  virtual auto CreateSolarSensor() -> std::unique_ptr<GPIO> = 0;
+  virtual auto CreateRTC() -> std::unique_ptr<RTC> = 0;
+  virtual auto CreateSolarSensor() -> std::unique_ptr<SolarSensor> = 0;
   virtual void Run(int cycles) = 0;
 
   void RunForOneFrame() {

@@ -74,8 +74,10 @@ auto ROMLoader::Load(
   auto backup = CreateBackup(save_path, backup_type);
 
   auto gpio = std::unique_ptr<GPIO>{};
+
   if (game_info.gpio == GPIODeviceType::RTC || force_rtc) {
-    gpio = core->CreateRTC();
+    gpio = std::make_unique<GPIO>();
+    gpio->Attach(core->CreateRTC());
   }
 
   u32 rom_mask = u32(kMaxROMSize - 1);

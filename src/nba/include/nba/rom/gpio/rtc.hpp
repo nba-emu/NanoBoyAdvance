@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <nba/rom/gpio/gpio.hpp>
+#include <nba/rom/gpio/device.hpp>
 
 namespace nba {
 
@@ -17,7 +17,7 @@ struct IRQ;
 
 } // namespace nba::core
 
-struct RTC : GPIO {
+struct RTC final : GPIODevice {
   enum class Port {
     SCK,
     SIO,
@@ -40,15 +40,11 @@ struct RTC : GPIO {
     Free = 7
   };
 
-  RTC(core::IRQ& irq) : irq(irq) {
-    Reset();
-  }
+  RTC(core::IRQ& irq);
 
-  void Reset();
-
-protected:
-  auto ReadPort() -> u8 final;
-  void WritePort(u8 value) final;
+  void Reset() override;
+  auto Read() -> int override;
+  void Write(int value) override;
 
 private:
   bool ReadSIO();
