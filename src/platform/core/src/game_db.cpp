@@ -43,8 +43,8 @@ const std::map<std::string, GameInfo> g_game_db {
   { "FXVE", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Classic NES Series - Xevious (USA, Europe) */
   { "FZLE", { Config::BackupType::EEPROM_64, GPIODeviceType::None, true } },   /* Classic NES Series - Legend of Zelda (USA, Europe) */
   { "KYGP", { Config::BackupType::EEPROM_64/*_SENSOR*/, GPIODeviceType::None, false } }, /* Yoshi's Universal Gravitation (Europe)(En,Fr,De,Es,It) */
-  { "U3IP", { Config::BackupType::Detect, GPIODeviceType::RTC, false } },     /* Boktai - The Sun Is in Your Hand (Europe)(En,Fr,De,Es,It) */
-  { "U32P", { Config::BackupType::Detect, GPIODeviceType::RTC, false } },     /* Boktai 2 - Solar Boy Django (Europe)(En,Fr,De,Es,It) */
+  { "U3IP", { Config::BackupType::Detect, GPIODeviceType::RTC | GPIODeviceType::SolarSensor, false } }, /* Boktai - The Sun Is in Your Hand (Europe)(En,Fr,De,Es,It) */
+  { "U32P", { Config::BackupType::Detect, GPIODeviceType::RTC | GPIODeviceType::SolarSensor, false } }, /* Boktai 2 - Solar Boy Django (Europe)(En,Fr,De,Es,It) */
   { "AGFE", { Config::BackupType::FLASH_64, GPIODeviceType::RTC, false } },   /* Golden Sun - The Lost Age (USA) */
   { "AGSE", { Config::BackupType::FLASH_64, GPIODeviceType::RTC, false } },   /* Golden Sun (USA) */
   { "ALFE", { Config::BackupType::EEPROM_64, GPIODeviceType::None, false } }, /* Dragon Ball Z - The Legacy of Goku II (USA) */
@@ -60,8 +60,8 @@ const std::map<std::string, GameInfo> g_game_db {
   { "BYGE", { Config::BackupType::SRAM, GPIODeviceType::None, false } },      /* Yu-Gi-Oh! GX - Duel Academy (USA) */
   { "KYGE", { Config::BackupType::EEPROM_64, GPIODeviceType::None, false } }, /* Yoshi - Topsy-Turvy (USA) */
   { "PSAE", { Config::BackupType::FLASH_128, GPIODeviceType::None, false } }, /* e-Reader (USA) */
-  { "U3IE", { Config::BackupType::Detect, GPIODeviceType::RTC, false } },     /* Boktai - The Sun Is in Your Hand (USA) */
-  { "U32E", { Config::BackupType::Detect, GPIODeviceType::RTC, false } },     /* Boktai 2 - Solar Boy Django (USA) */
+  { "U3IE", { Config::BackupType::Detect, GPIODeviceType::RTC | GPIODeviceType::SolarSensor, false } }, /* Boktai - The Sun Is in Your Hand (USA) */
+  { "U32E", { Config::BackupType::Detect, GPIODeviceType::RTC | GPIODeviceType::SolarSensor, false } }, /* Boktai 2 - Solar Boy Django (USA) */
   { "ALFJ", { Config::BackupType::EEPROM_64, GPIODeviceType::None, false } }, /* Dragon Ball Z - The Legacy of Goku II International (Japan) */
   { "AXPJ", { Config::BackupType::FLASH_128, GPIODeviceType::RTC, false } },  /* Pocket Monsters - Sapphire (Japan) */
   { "AXVJ", { Config::BackupType::FLASH_128, GPIODeviceType::RTC, false } },  /* Pocket Monsters - Ruby (Japan) */
