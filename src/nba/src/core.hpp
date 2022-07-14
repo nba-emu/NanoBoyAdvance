@@ -25,7 +25,7 @@ struct Core final : CoreBase {
   void Reset() override;
   void Attach(std::vector<u8> const& bios) override;
   void Attach(ROM&& rom) override;
-  auto CreateRTC() -> std::unique_ptr<GPIO> override;
+  auto CreateRTC() -> std::unique_ptr<RTC> override;
   auto CreateSolarSensor() -> std::unique_ptr<SolarSensor> override;
   void Run(int cycles) override;
 

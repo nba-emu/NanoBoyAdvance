@@ -15,13 +15,11 @@ namespace nba {
 
 constexpr int RTC::s_argument_count[8];
 
-void RTC::Reset() {
-  // FIXME: this is a very funky construct.
-  // This method should probably be virtual, but it's called
-  // from the constructor and calling virtual methods from the constructor
-  // is a *very* bad idea.
-  GPIO::Reset();
+RTC::RTC(core::IRQ& irq) : irq(irq) {
+  Reset();
+}
 
+void RTC::Reset() {
   current_bit = 0;
   current_byte = 0;
   data = 0;
@@ -39,23 +37,11 @@ void RTC::Reset() {
   control.mode_24h = true;
 }
 
-bool RTC::ReadSIO() {
-  data &= ~(1 << current_bit);
-  data |= port.sio << current_bit;
-
-  if (++current_bit == 8) {
-    current_bit = 0;
-    return true;
-  }
-
-  return false;
-}
-
-auto RTC::ReadPort() -> u8 {
+auto RTC::Read() -> int {
   return (port.sio & port.cs) << static_cast<int>(Port::SIO);
 }
 
-void RTC::WritePort(u8 value) {
+void RTC::Write(int value) {
   int old_sck = port.sck;
   int old_cs  = port.cs;
 
@@ -102,6 +88,18 @@ void RTC::WritePort(u8 value) {
       }
     }
   }
+}
+
+bool RTC::ReadSIO() {
+  data &= ~(1 << current_bit);
+  data |= port.sio << current_bit;
+
+  if (++current_bit == 8) {
+    current_bit = 0;
+    return true;
+  }
+
+  return false;
 }
 
 void RTC::ReceiveCommandSIO() {

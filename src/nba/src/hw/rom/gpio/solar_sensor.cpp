@@ -30,7 +30,6 @@ void SolarSensor::Write(int value) {
 
   if (GetPortDirection(Pin::nCS) == PortDirection::Out && (value & 4)) {
     // talking to the RTC; ignored
-    Log<Error>("SolarSensor: talking to RTC...");
     return;
   }
 
