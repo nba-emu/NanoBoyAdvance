@@ -4,3 +4,6 @@
 [submodule "source/third_party/toml11"]
 	path = external/toml11
 	url = https://github.com/ToruNiina/toml11
+[submodule "external/unarr"]
+	path = external/unarr
+	url = https://github.com/selmf/unarr

@@ -38,6 +38,9 @@ struct ROMLoader {
   ) -> Result;
 
 private:
+  static auto ReadFile(std::string path, std::vector<u8>& file_data) -> Result;
+  static auto ReadFileFromArchive(std::string path, std::vector<u8>& file_data) -> Result;
+
   static auto GetGameInfo(
     std::vector<u8>& file_data
   ) -> GameInfo;

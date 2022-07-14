@@ -370,7 +370,7 @@ void MainWindow::FileOpen() {
   QFileDialog dialog {this};
   dialog.setAcceptMode(QFileDialog::AcceptOpen);
   dialog.setFileMode(QFileDialog::ExistingFile);
-  dialog.setNameFilter("Game Boy Advance ROMs (*.gba *.agb)");
+  dialog.setNameFilter("Game Boy Advance ROMs (*.gba *.agb *.zip *.rar *.7z *.tar)");
 
   if (dialog.exec()) {
     auto file = dialog.selectedFiles().at(0).toStdString();

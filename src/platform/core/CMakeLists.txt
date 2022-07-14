@@ -44,4 +44,5 @@ add_library(platform-core STATIC ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
 target_include_directories(platform-core PRIVATE src)
 target_include_directories(platform-core PUBLIC include ${SDL2_INCLUDE_DIR} ${GLEW_INCLUDE_DIRS})
 
+target_link_libraries(platform-core PRIVATE unarr)
 target_link_libraries(platform-core PUBLIC nba toml11::toml11 ${SDL2_LIBRARY} OpenGL::GL GLEW::GLEW)
