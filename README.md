@@ -14,7 +14,10 @@ improved audio quality.
 - HQ audio mixer (for games which use Nintendo's MusicPlayer2000 sound engine)
 - Post-processing options (color correction, xBRZ upscaling and LCD ghosting simulation)
 - Game controller support (buttons and axises can be remapped)
+- Loading ROMs from archives (Zip, 7z, Tar and limited RAR[^1] support)
 - RTC emulation
+
+[^1]: RAR 5.0 is currently not supported.
 
 ## Running
 
