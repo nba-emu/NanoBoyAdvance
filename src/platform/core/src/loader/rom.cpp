@@ -16,6 +16,7 @@
 #include <nba/log.hpp>
 #include <string_view>
 #include <utility>
+#include <unarr.h>
 
 namespace fs = std::filesystem;
 
@@ -43,7 +44,7 @@ auto ROMLoader::Load(
   BackupType backup_type,
   bool force_rtc
 ) -> Result {
-  if (!fs::exists(rom_path)) {
+  /*if (!fs::exists(rom_path)) {
     return Result::CannotFindFile;
   }
 
@@ -62,7 +63,20 @@ auto ROMLoader::Load(
     return Result::CannotOpenFile;
   }
   file_data.resize(size);
-  file_stream.read((char*)file_data.data(), size);
+  file_stream.read((char*)file_data.data(), size);*/
+
+  auto file_data = std::vector<u8>{};
+  auto read_status = ReadFile(rom_path, file_data);
+
+  if (read_status != Result::Success) {
+    return read_status;
+  }
+
+  auto size = file_data.size();
+  
+  if (size < sizeof(Header) || size > kMaxROMSize) {
+    return Result::BadImage;
+  }
 
   auto game_info = GetGameInfo(file_data);
 
@@ -97,6 +111,81 @@ auto ROMLoader::Load(
     rom_mask
   });
   return Result::Success;
+}
+
+auto ROMLoader::ReadFile(std::string path, std::vector<u8>& file_data) -> Result {
+  if (!fs::exists(path)) {
+    return Result::CannotFindFile;
+  }
+
+  if (fs::is_directory(path)) {
+    return Result::CannotOpenFile;
+  }
+
+  auto archive_result = ReadFileFromArchive(path, file_data);
+
+  /* Forward result form ReadFileFromArchive() if the archive could be loaded,
+   * and the GBA file was found and loaded or there was no GBA file.
+   */
+  if (archive_result == Result::BadImage ||
+      archive_result == Result::Success) {
+    return archive_result;
+  }
+
+  auto file_stream = std::ifstream{path, std::ios::binary};
+
+  if (!file_stream.good()) {
+    return Result::CannotOpenFile;
+  }
+
+  auto file_size = fs::file_size(path);
+
+  file_data.resize(file_size);
+  file_stream.read((char*)file_data.data(), file_size);
+  return Result::Success;
+}
+
+auto ROMLoader::ReadFileFromArchive(std::string path, std::vector<u8>& file_data) -> Result {
+  auto stream = ar_open_file(path.c_str());
+
+  if (!stream) {
+    return Result::CannotOpenFile;
+  }
+
+  ar_archive* archive = ar_open_zip_archive(stream, false);
+
+  if (!archive) archive = ar_open_rar_archive(stream);
+  if (!archive) archive = ar_open_7z_archive(stream);
+  if (!archive) archive = ar_open_tar_archive(stream);
+
+  if (!archive) {
+    ar_close(stream);
+    return Result::CannotOpenFile;
+  }
+
+  auto result = Result::BadImage;
+
+  while (ar_parse_entry(archive)) {
+    auto filename = ar_entry_get_raw_name(archive);
+
+    if (!filename) {
+      continue;
+    }
+
+    auto extension = fs::path{filename}.extension();
+
+    if (extension == ".gba" || extension == ".GBA") {
+      auto size = ar_entry_get_size(archive);
+      file_data.resize(size);
+      ar_entry_uncompress(archive, file_data.data(), size);
+      result = Result::Success;
+      break;
+    }
+  }
+
+  ar_close_archive(archive);
+  ar_close(stream);
+  return result;
 }
 
 auto ROMLoader::GetGameInfo(
