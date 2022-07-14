@@ -145,12 +145,7 @@ auto ROMLoader::ReadFileFromArchive(std::string path, std::vector<u8>& file_data
   auto result = Result::BadImage;
 
   while (ar_parse_entry(archive)) {
-    auto filename = ar_entry_get_raw_name(archive);
-
-    if (!filename) {
-      continue;
-    }
-
+    auto filename = ar_entry_get_name(archive);
     auto extension = fs::path{filename}.extension();
 
     if (extension == ".gba" || extension == ".GBA") {
