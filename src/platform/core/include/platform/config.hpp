@@ -18,9 +18,11 @@ struct PlatformConfig : Config {
   
   bool sync_to_audio = false;
   
-  BackupType backup_type = BackupType::Detect;
-  
-  bool force_rtc = false;
+  struct Cartridge {
+    BackupType backup_type = BackupType::Detect;
+    bool force_rtc = false;
+    u8 solar_sensor_level = 156;
+  } cartridge;
 
   struct Video {
     bool fullscreen = false;

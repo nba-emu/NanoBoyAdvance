@@ -105,6 +105,8 @@ private:
   void SetKeyStatus(int channel, nba::InputDevice::Key key, bool pressed);
   void UpdateWindowSize();
 
+  void UpdateSolarSensorLevel();
+
   std::shared_ptr<Screen> screen;
   std::shared_ptr<nba::BasicInputDevice> input_device = std::make_shared<nba::BasicInputDevice>();
   std::shared_ptr<QtConfig> config = std::make_shared<QtConfig>();

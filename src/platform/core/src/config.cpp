@@ -60,12 +60,13 @@ void PlatformConfig::Load(std::string const& path) {
 
       if (match == save_types.end()) {
         Log<Warn>("Config: backup type '{0}' is not valid, defaulting to auto-detect.", save_type);
-        this->backup_type = Config::BackupType::Detect;
+        this->cartridge.backup_type = Config::BackupType::Detect;
       } else {
-        this->backup_type = match->second;
+        this->cartridge.backup_type = match->second;
       }
 
-      this->force_rtc = toml::find_or<toml::boolean>(cartridge, "force_rtc", false);
+      this->cartridge.force_rtc = toml::find_or<toml::boolean>(cartridge, "force_rtc", false);
+      this->cartridge.solar_sensor_level = toml::find_or<int>(cartridge, "solar_sensor_level", 156);
     }
   }
 
@@ -160,7 +161,7 @@ void PlatformConfig::Save(std::string const& path) {
 
   // Cartridge
   std::string save_type;
-  switch (this->backup_type) {
+  switch (this->cartridge.backup_type) {
     case Config::BackupType::Detect: save_type = "detect"; break;
     case Config::BackupType::None:   save_type = "none"; break;
     case Config::BackupType::SRAM:   save_type = "sram"; break;
@@ -170,7 +171,8 @@ void PlatformConfig::Save(std::string const& path) {
     case Config::BackupType::EEPROM_64: save_type = "eeprom8192"; break;
   }
   data["cartridge"]["save_type"] = save_type;
-  data["cartridge"]["force_rtc"] = this->force_rtc;
+  data["cartridge"]["force_rtc"] = this->cartridge.force_rtc;
+  data["cartridge"]["solar_sensor_level"] = this->cartridge.solar_sensor_level;
 
   // Video
   std::string filter;
