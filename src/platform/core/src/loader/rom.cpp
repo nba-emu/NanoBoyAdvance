@@ -75,11 +75,6 @@ auto ROMLoader::Load(
 
   auto gpio = std::unique_ptr<GPIO>{};
 
-  /*if (game_info.gpio == GPIODeviceType::RTC || force_rtc) {
-    gpio = std::make_unique<GPIO>();
-    gpio->Attach(core->CreateRTC());
-  }*/
-
   auto gpio_devices = game_info.gpio;
 
   if (force_rtc) {
