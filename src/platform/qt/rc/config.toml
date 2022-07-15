@@ -7,6 +7,8 @@ bios_skip = false
 save_type = "detect"
 # Force-enable RTC emulation, otherwise rely on game database.
 force_rtc = true
+# Force-enable Solar Sensor emulation, otherwise rely on game database.
+force_solar_sensor = true
 # Solar Sensor light intensity (0 = highest intensity, 255 = lowest intensity)
 solar_sensor_level = 156
 

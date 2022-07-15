@@ -201,8 +201,9 @@ void MainWindow::CreateSystemMenu(QMenu* parent) {
   }, &config->cartridge.backup_type, true);
 
   CreateBooleanOption(menu, "Force RTC", &config->cartridge.force_rtc, true);
+  CreateBooleanOption(menu, "Force Solar Sensor", &config->cartridge.force_solar_sensor, true);
 
-  auto solar_menu = menu->addMenu(tr("Solar Sensor"));
+  auto solar_menu = menu->addMenu(tr("Solar Sensor Level"));
   auto solar_level_group = new QActionGroup{this};
 
   for (int i = 0; i <= 10; i++) {
@@ -465,7 +466,17 @@ void MainWindow::LoadROM(std::string path) {
     }
   } while (retry);
 
-  switch (nba::ROMLoader::Load(core, path, config->cartridge.backup_type, config->cartridge.force_rtc)) {
+  auto force_gpio = nba::GPIODeviceType::None;
+
+  if (config->cartridge.force_rtc) {
+    force_gpio = force_gpio | nba::GPIODeviceType::RTC;
+  }
+
+  if (config->cartridge.force_solar_sensor) {
+    force_gpio = force_gpio | nba::GPIODeviceType::SolarSensor;
+  }
+
+  switch (nba::ROMLoader::Load(core, path, config->cartridge.backup_type, force_gpio)) {
     case nba::ROMLoader::Result::CannotFindFile: {
       QMessageBox box {this};
       box.setText(tr("Sorry, the specified ROM file cannot be located."));

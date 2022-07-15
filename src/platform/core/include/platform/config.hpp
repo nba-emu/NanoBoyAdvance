@@ -21,6 +21,7 @@ struct PlatformConfig : Config {
   struct Cartridge {
     BackupType backup_type = BackupType::Detect;
     bool force_rtc = false;
+    bool force_solar_sensor = false;
     u8 solar_sensor_level = 156;
   } cartridge;
 

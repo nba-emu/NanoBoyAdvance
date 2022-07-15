@@ -66,6 +66,7 @@ void PlatformConfig::Load(std::string const& path) {
       }
 
       this->cartridge.force_rtc = toml::find_or<toml::boolean>(cartridge, "force_rtc", false);
+      this->cartridge.force_solar_sensor = toml::find_or<toml::boolean>(cartridge, "force_solar_sensor", false);
       this->cartridge.solar_sensor_level = toml::find_or<int>(cartridge, "solar_sensor_level", 156);
     }
   }
@@ -172,6 +173,7 @@ void PlatformConfig::Save(std::string const& path) {
   }
   data["cartridge"]["save_type"] = save_type;
   data["cartridge"]["force_rtc"] = this->cartridge.force_rtc;
+  data["cartridge"]["force_solar_sensor"] = this->cartridge.force_solar_sensor;
   data["cartridge"]["solar_sensor_level"] = this->cartridge.solar_sensor_level;
 
   // Video

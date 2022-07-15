@@ -26,7 +26,7 @@ struct ROMLoader {
     std::unique_ptr<CoreBase>& core,
     std::string path,
     Config::BackupType backup_type = Config::BackupType::Detect,
-    bool force_rtc = true
+    GPIODeviceType force_gpio = GPIODeviceType::None
   ) -> Result;
 
   static auto Load(
@@ -34,7 +34,7 @@ struct ROMLoader {
     std::string rom_path,
     std::string save_path,
     Config::BackupType backup_type = Config::BackupType::Detect,
-    bool force_rtc = true
+    GPIODeviceType force_gpio = GPIODeviceType::None
   ) -> Result;
 
 private:
