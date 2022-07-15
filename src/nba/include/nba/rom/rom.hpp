@@ -69,6 +69,14 @@ struct ROM {
     return rom;
   }
 
+  template<typename T>
+  auto GetGPIODevice() -> T* {
+    if (gpio) {
+      return gpio->Get<T>();
+    }
+    return nullptr;
+  }
+
   auto ALWAYS_INLINE ReadROM16(u32 address) -> u16 {
     address &= 0x01FF'FFFE;
 

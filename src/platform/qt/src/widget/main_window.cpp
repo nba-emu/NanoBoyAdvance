@@ -465,6 +465,12 @@ void MainWindow::LoadROM(std::string path) {
     }
   }
 
+  auto solar_sensor = core->GetROM().GetGPIODevice<nba::SolarSensor>();
+
+  if (solar_sensor) {
+    solar_sensor->SetLightLevel(0xC0);
+  }
+
   core->Reset();
   emu_thread->Start();
 }
