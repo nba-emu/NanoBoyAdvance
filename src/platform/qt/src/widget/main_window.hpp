@@ -51,6 +51,7 @@ private:
   void CreateAudioMenu(QMenu* parent);
   void CreateInputMenu(QMenu* parent);
   void CreateSystemMenu(QMenu* parent);
+  void CreateSolarSensorValueMenu(QMenu* parent);
   void CreateWindowMenu(QMenu* parent);
   void CreateConfigMenu(QMenuBar* menu_bar);
   void CreateHelpMenu(QMenuBar* menu_bar);
@@ -118,6 +119,7 @@ private:
   QAction* pause_action;
   InputWindow* input_window;
   QMenu* recent_menu;
+  QAction* current_solar_level = nullptr;
 
   Q_OBJECT
 };

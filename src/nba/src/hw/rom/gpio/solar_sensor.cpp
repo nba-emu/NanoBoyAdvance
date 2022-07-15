@@ -17,7 +17,7 @@ SolarSensor::SolarSensor() {
 void SolarSensor::Reset() {
   old_clk = false;
   counter = 0;
-  SetLightLevel(0x9C);
+  SetLightLevel(0x60);
 }
 
 auto SolarSensor::Read() -> int {
@@ -38,7 +38,7 @@ void SolarSensor::Write(int value) {
 }
 
 void SolarSensor::SetLightLevel(u8 level) {
-  current_level = level;
+  current_level = 255 - level;
 }
 
 } // namespace nba

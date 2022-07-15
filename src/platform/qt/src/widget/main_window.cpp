@@ -11,6 +11,7 @@
 #include <QApplication>
 #include <QMenuBar>
 #include <QFileDialog>
+#include <QInputDialog>
 #include <QMessageBox>
 #include <QKeyEvent>
 #include <QStatusBar>
@@ -203,25 +204,45 @@ void MainWindow::CreateSystemMenu(QMenu* parent) {
   CreateBooleanOption(menu, "Force RTC", &config->cartridge.force_rtc, true);
   CreateBooleanOption(menu, "Force Solar Sensor", &config->cartridge.force_solar_sensor, true);
 
-  auto solar_menu = menu->addMenu(tr("Solar Sensor Level"));
-  auto solar_level_group = new QActionGroup{this};
+  menu->addSeparator();
 
-  for (int i = 0; i <= 10; i++) {
-    int level = 0xE8 + (0x50 - 0xE8) * i / 10;
+  CreateSolarSensorValueMenu(menu);
+}
 
-    auto action = solar_level_group->addAction(QString::fromStdString(fmt::format("{}%", i * 10)));
+void MainWindow::CreateSolarSensorValueMenu(QMenu* parent) {
+  auto menu = parent->addMenu(tr("Solar Sensor Level"));
 
-    action->setCheckable(true);
-    action->setChecked(config->cartridge.solar_sensor_level == level);
+  current_solar_level = menu->addAction("");
+  UpdateSolarSensorLevel(); // needed to update label
 
-    connect(action, &QAction::triggered, [=]() {
-      config->cartridge.solar_sensor_level = level;
-      config->Save();
-      UpdateSolarSensorLevel();
+  auto SetSolarLevel = [this](int level) {
+    config->cartridge.solar_sensor_level = level;
+    config->Save();
+    UpdateSolarSensorLevel();
+  };
+
+  auto CreatePreset = [&](QString const& name, int level) {
+    connect(menu->addAction(name), &QAction::triggered, [=]() {
+      SetSolarLevel(level);
     });
+  };
 
-    solar_menu->addActions(solar_level_group->actions());
-  }
+  menu->addSeparator();
+
+  CreatePreset(tr("Low (23)"), 23);
+  CreatePreset(tr("Medium (60)"), 60);
+  CreatePreset(tr("High (99)"), 99);
+  CreatePreset(tr("Maximum (175)"), 175);
+
+  menu->addSeparator();
+
+  connect(menu->addAction(tr("Enter value...")), &QAction::triggered, [=]() {
+    SetSolarLevel(QInputDialog::getInt(
+      this,
+      tr("Solar Sensor Level"),
+      tr("Enter a value between 0 (lowest intensity) and 255 (highest intensity)"),
+      config->cartridge.solar_sensor_level, 0, 255, 1));
+  });
 }
 
 void MainWindow::CreateWindowMenu(QMenu* parent) {
@@ -525,9 +546,18 @@ void MainWindow::UpdateWindowSize() {
 }
 
 void MainWindow::UpdateSolarSensorLevel() {
-  auto solar_sensor = core->GetROM().GetGPIODevice<nba::SolarSensor>();
+  auto level = config->cartridge.solar_sensor_level;
 
-  if (solar_sensor) {
-    solar_sensor->SetLightLevel(config->cartridge.solar_sensor_level);
+  if (core) {
+    auto solar_sensor = core->GetROM().GetGPIODevice<nba::SolarSensor>();
+
+    if (solar_sensor) {
+      solar_sensor->SetLightLevel(level);
+    }
+  }
+
+  if (current_solar_level) {
+    current_solar_level->setText(
+      QString::fromStdString(fmt::format("Current Level: {} / 255", level)));
   }
 }
