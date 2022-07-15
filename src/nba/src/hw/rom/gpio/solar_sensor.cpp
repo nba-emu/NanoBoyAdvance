@@ -15,9 +15,9 @@ SolarSensor::SolarSensor() {
 }
 
 void SolarSensor::Reset() {
-  clk = 0;
+  old_clk = false;
   counter = 0;
-  SetLightLevel(0x50);
+  SetLightLevel(0x9C);
 }
 
 auto SolarSensor::Read() -> int {
@@ -25,31 +25,16 @@ auto SolarSensor::Read() -> int {
 }
 
 void SolarSensor::Write(int value) {
-  // TODO: rename CLK member variable to old_clk
-  auto old_clk = clk;
+  bool clk = (value & (1 << Pin::CLK)) && GetPortDirection(Pin::CLK) == PortDirection::Out;
+  bool rst = (value & (1 << Pin::RST)) && GetPortDirection(Pin::RST) == PortDirection::Out;
 
-  if (GetPortDirection(Pin::nCS) == PortDirection::Out && (value & 4)) {
-    // talking to the RTC; ignored
-    return;
-  }
-
-  if (GetPortDirection(Pin::CLK) == PortDirection::Out) {
-    clk = value & (1 << Pin::CLK);
-  } else {
-    Log<Error>("SolarSensor: CLK port should be set to 'output' but configured as 'input'.");
-  }
-  
-  if (GetPortDirection(Pin::RST) == PortDirection::Out) {
-    if (value & (1 << Pin::RST)) {
-      counter = 0;
-    }
-  } else {
-    Log<Error>("SolarSensor: RST port should be set to 'output' but configured as 'input'.");
-  }
-
-  if (old_clk && !clk) {
+  if (rst) {
+    counter = 0;
+  } else if (old_clk && !clk) {
     counter++;
   }
+
+  old_clk = clk;
 }
 
 void SolarSensor::SetLightLevel(u8 level) {

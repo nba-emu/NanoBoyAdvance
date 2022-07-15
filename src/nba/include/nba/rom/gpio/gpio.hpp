@@ -11,6 +11,8 @@
 #include <nba/rom/gpio/device.hpp>
 #include <nba/integer.hpp>
 #include <memory>
+#include <typeindex>
+#include <unordered_map>
 #include <vector>
 
 namespace nba {
@@ -22,6 +24,16 @@ struct GPIO {
 
   void Reset();
   void Attach(std::shared_ptr<GPIODevice> device);
+
+  template<typename T>
+  auto Get() -> T* {
+    auto match = device_map.find(std::type_index{typeid(T)});
+
+    if (match != device_map.end()) {
+      return (T*)match->second;
+    }
+    return nullptr;
+  }
 
   bool IsReadable() const {
     return allow_reads;
@@ -43,6 +55,8 @@ private:
   u8 port_data;
 
   std::vector<std::shared_ptr<GPIODevice>> devices;
+
+  std::unordered_map<std::type_index, GPIODevice*> device_map;
 };
 
 } // namespace nba

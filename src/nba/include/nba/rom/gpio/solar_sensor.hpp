@@ -27,7 +27,7 @@ private:
     FLG = 3
   };
 
-  int clk;
+  bool old_clk;
   u8 counter;
   u8 current_level;
 };

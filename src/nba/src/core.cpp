@@ -54,6 +54,10 @@ void Core::Reset() {
   }
 }
 
+auto Core::GetROM() -> ROM& {
+  return bus.memory.rom;
+}
+
 void Core::Attach(std::vector<u8> const& bios) {
   bus.Attach(bios);
 }

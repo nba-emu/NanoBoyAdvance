@@ -23,6 +23,7 @@ struct Core final : CoreBase {
   Core(std::shared_ptr<Config> config);
 
   void Reset() override;
+  auto GetROM() -> ROM& override;
   void Attach(std::vector<u8> const& bios) override;
   void Attach(ROM&& rom) override;
   auto CreateRTC() -> std::unique_ptr<RTC> override;

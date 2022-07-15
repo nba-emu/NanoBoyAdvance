@@ -16,6 +16,7 @@ improved audio quality.
 - Game controller support (buttons and axises can be remapped)
 - Loading ROMs from archives (Zip, 7z, Tar and limited RAR[^1] support)
 - RTC emulation
+- Solar Sensor emulation (for example: for Boktai - The Sun is in Your Hand)
 
 [^1]: RAR 5.0 is currently not supported.
 

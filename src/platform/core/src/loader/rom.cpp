@@ -30,11 +30,11 @@ auto ROMLoader::Load(
   std::unique_ptr<CoreBase>& core,
   std::string path,
   Config::BackupType backup_type,
-  bool force_rtc
+  GPIODeviceType force_gpio
 ) -> Result {
   auto save_path = path.substr(0, path.find_last_of(".")) + ".sav";
 
-  return Load(core, path, save_path, backup_type, force_rtc);
+  return Load(core, path, save_path, backup_type, force_gpio);
 }
 
 auto ROMLoader::Load(
@@ -42,7 +42,7 @@ auto ROMLoader::Load(
   std::string rom_path,
   std::string save_path,
   BackupType backup_type,
-  bool force_rtc
+  GPIODeviceType force_gpio
 ) -> Result {
   auto file_data = std::vector<u8>{};
   auto read_status = ReadFile(rom_path, file_data);
@@ -75,16 +75,7 @@ auto ROMLoader::Load(
 
   auto gpio = std::unique_ptr<GPIO>{};
 
-  /*if (game_info.gpio == GPIODeviceType::RTC || force_rtc) {
-    gpio = std::make_unique<GPIO>();
-    gpio->Attach(core->CreateRTC());
-  }*/
-
-  auto gpio_devices = game_info.gpio;
-
-  if (force_rtc) {
-    gpio_devices = gpio_devices | GPIODeviceType::RTC;
-  }
+  auto gpio_devices = game_info.gpio | force_gpio;
 
   if (gpio_devices != GPIODeviceType::None) {
     gpio = std::make_unique<GPIO>();

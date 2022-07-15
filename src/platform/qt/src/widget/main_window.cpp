@@ -198,9 +198,30 @@ void MainWindow::CreateSystemMenu(QMenu* parent) {
     { "FLASH 128K",  nba::Config::BackupType::FLASH_128 },
     { "EEPROM 512B", nba::Config::BackupType::EEPROM_4  },
     { "EEPROM 8K",   nba::Config::BackupType::EEPROM_64 }
-  }, &config->backup_type, true);
+  }, &config->cartridge.backup_type, true);
 
-  CreateBooleanOption(menu, "Force RTC", &config->force_rtc, true);
+  CreateBooleanOption(menu, "Force RTC", &config->cartridge.force_rtc, true);
+  CreateBooleanOption(menu, "Force Solar Sensor", &config->cartridge.force_solar_sensor, true);
+
+  auto solar_menu = menu->addMenu(tr("Solar Sensor Level"));
+  auto solar_level_group = new QActionGroup{this};
+
+  for (int i = 0; i <= 10; i++) {
+    int level = 0xE8 + (0x50 - 0xE8) * i / 10;
+
+    auto action = solar_level_group->addAction(QString::fromStdString(fmt::format("{}%", i * 10)));
+
+    action->setCheckable(true);
+    action->setChecked(config->cartridge.solar_sensor_level == level);
+
+    connect(action, &QAction::triggered, [=]() {
+      config->cartridge.solar_sensor_level = level;
+      config->Save();
+      UpdateSolarSensorLevel();
+    });
+
+    solar_menu->addActions(solar_level_group->actions());
+  }
 }
 
 void MainWindow::CreateWindowMenu(QMenu* parent) {
@@ -445,7 +466,17 @@ void MainWindow::LoadROM(std::string path) {
     }
   } while (retry);
 
-  switch (nba::ROMLoader::Load(core, path, config->backup_type, config->force_rtc)) {
+  auto force_gpio = nba::GPIODeviceType::None;
+
+  if (config->cartridge.force_rtc) {
+    force_gpio = force_gpio | nba::GPIODeviceType::RTC;
+  }
+
+  if (config->cartridge.force_solar_sensor) {
+    force_gpio = force_gpio | nba::GPIODeviceType::SolarSensor;
+  }
+
+  switch (nba::ROMLoader::Load(core, path, config->cartridge.backup_type, force_gpio)) {
     case nba::ROMLoader::Result::CannotFindFile: {
       QMessageBox box {this};
       box.setText(tr("Sorry, the specified ROM file cannot be located."));
@@ -465,6 +496,7 @@ void MainWindow::LoadROM(std::string path) {
     }
   }
 
+  UpdateSolarSensorLevel();
   core->Reset();
   emu_thread->Start();
 }
@@ -489,5 +521,13 @@ void MainWindow::UpdateWindowSize() {
     adjustSize();
     screen->setMinimumSize(minimum_size);
     screen->setMaximumSize(maximum_size);
+  }
+}
+
+void MainWindow::UpdateSolarSensorLevel() {
+  auto solar_sensor = core->GetROM().GetGPIODevice<nba::SolarSensor>();
+
+  if (solar_sensor) {
+    solar_sensor->SetLightLevel(config->cartridge.solar_sensor_level);
   }
 }
