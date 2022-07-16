@@ -123,7 +123,7 @@ void parse_arguments(int argc, char** argv) {
         usage(argv[0]);
       }
     } else if (key == "--force-rtc") {
-      g_config->force_rtc = true;
+      g_config->cartridge.force_rtc = true;
     } else if (key == "--save-type") {
       /* TODO: deduplicate this piece of code? */
       const std::unordered_map<std::string, Config::BackupType> save_types{
@@ -140,7 +140,7 @@ void parse_arguments(int argc, char** argv) {
       }
       auto match = save_types.find(argv[i++]);
       if (match != save_types.end()) {
-        g_config->backup_type = match->second;
+        g_config->cartridge.backup_type = match->second;
       } else {
         fmt::print("Bad save type, refer to config.toml for documentation.\n\n");
         usage(argv[0]);
@@ -191,7 +191,13 @@ void load_game(std::string const& rom_path) {
     }
   }
 
-  switch (nba::ROMLoader::Load(g_core, rom_path, g_config->backup_type, g_config->force_rtc)) {
+  nba::GPIODeviceType force_gpio = nba::GPIODeviceType::None;
+
+  if (g_config->cartridge.force_rtc) {
+    force_gpio = force_gpio | nba::GPIODeviceType::RTC;
+  }
+
+  switch (nba::ROMLoader::Load(g_core, rom_path, g_config->cartridge.backup_type, force_gpio)) {
     case nba::ROMLoader::Result::CannotFindFile:
     case nba::ROMLoader::Result::CannotOpenFile: {
       fmt::print("Cannot open ROM: {}\n", rom_path);
