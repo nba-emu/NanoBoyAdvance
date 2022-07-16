@@ -36,6 +36,7 @@ set(SOURCES
   src/hw/rom/gpio/solar_sensor.cpp
   src/hw/dma/dma.cpp
   src/hw/irq/irq.cpp
+  src/hw/irq/serialization.cpp
   src/hw/keypad/keypad.cpp
   src/hw/timer/timer.cpp
   src/core.cpp

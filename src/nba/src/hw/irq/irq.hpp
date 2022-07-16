@@ -8,6 +8,7 @@
 #pragma once
 
 #include <nba/integer.hpp>
+#include <nba/save_state.hpp>
 
 #include "scheduler.hpp"
 
@@ -47,6 +48,9 @@ struct IRQ {
   bool HasServableIRQ() const {
     return (reg_ie & reg_if) != 0;
   }
+
+  void LoadState(SaveState const& state);
+  void CopyState(SaveState& state);
 
 private:
   enum Registers {

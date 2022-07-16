@@ -13,11 +13,13 @@ void Core::LoadState(SaveState const& state) {
   // TODO: reset scheduler
   cpu.LoadState(state);
   bus.LoadState(state);
+  irq.LoadState(state);
 }
 
 void Core::CopyState(SaveState& state) {
   cpu.CopyState(state);
   bus.CopyState(state);
+  irq.CopyState(state);
 }
 
 } // namespace nba::core

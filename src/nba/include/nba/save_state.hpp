@@ -80,6 +80,13 @@ struct SaveState {
       bool openbus;
     } dma;
   } bus;
+
+  // TODO: keep track of IRQ delay:
+  struct IRQ {
+    u8  reg_ime;
+    u16 reg_ie;
+    u16 reg_if;
+  } irq;
 };
 
 } // namespace nba
