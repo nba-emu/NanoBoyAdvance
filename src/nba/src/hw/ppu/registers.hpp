@@ -26,6 +26,9 @@ struct DisplayControl {
   auto Read(int address) -> u8;
   void Write(int address, u8 value);
 
+  auto ReadHalf() -> u16;
+  void WriteHalf(u16 value);
+
   PPU* ppu = nullptr;
 };
 
@@ -41,6 +44,9 @@ struct DisplayStatus {
   void Reset();
   auto Read(int address) -> u8;
   void Write(int address, u8 value);
+
+  auto ReadHalf() -> u16;
+  void WriteHalf(u16 value);
 
   PPU* ppu = nullptr;
 };
@@ -60,6 +66,9 @@ struct BackgroundControl {
   void Reset();
   auto Read(int address) -> u8;
   void Write(int address, u8 value);
+
+  auto ReadHalf() -> u16;
+  void WriteHalf(u16 value);
 
 private:
   int id;
@@ -87,6 +96,9 @@ struct BlendControl {
   void Reset();
   auto Read(int address) -> u8;
   void Write(int address, u8 value);
+
+  auto ReadHalf() -> u16;
+  void WriteHalf(u16 value);
 };
 
 struct WindowRange {
@@ -96,6 +108,9 @@ struct WindowRange {
 
   void Reset();
   void Write(int address, u8 value);
+
+  auto ReadHalf() -> u16;
+  void WriteHalf(u16 value);
 };
 
 struct WindowLayerSelect {
@@ -104,6 +119,9 @@ struct WindowLayerSelect {
   void Reset();
   auto Read(int offset) -> u8;
   void Write(int offset, u8 value);
+
+  auto ReadHalf() -> u16;
+  void WriteHalf(u16 value);
 };
 
 struct Mosaic {
