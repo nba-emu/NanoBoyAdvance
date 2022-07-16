@@ -74,6 +74,17 @@ auto Core::CreateSolarSensor() -> std::unique_ptr<SolarSensor> {
   return std::make_unique<SolarSensor>();
 }
 
+void Core::LoadState(SaveState const& state) {
+  // TODO: reset scheduler
+  cpu.LoadState(state);
+  bus.LoadState(state);
+}
+
+void Core::CopyState(SaveState& state) {
+  cpu.CopyState(state);
+  bus.CopyState(state);
+}
+
 void Core::Run(int cycles) {
   using HaltControl = Bus::Hardware::HaltControl;
 

@@ -290,6 +290,26 @@ void MainWindow::CreateConfigMenu(QMenuBar* menu_bar) {
   CreateInputMenu(menu);
   CreateSystemMenu(menu);
   CreateWindowMenu(menu);
+
+  connect(menu->addAction("Save State"), &QAction::triggered, [this]() {
+    bool was_running = emu_thread->IsRunning();
+
+    emu_thread->Stop();
+    core->CopyState(save_state_test);
+    if (was_running) {
+      emu_thread->Start();
+    }
+  });
+
+  connect(menu->addAction("Load State"), &QAction::triggered, [this]() {
+    bool was_running = emu_thread->IsRunning();
+
+    emu_thread->Stop();
+    core->LoadState(save_state_test);
+    if (was_running) {
+      emu_thread->Start();
+    }
+  });
 }
 
 void MainWindow::CreateBooleanOption(

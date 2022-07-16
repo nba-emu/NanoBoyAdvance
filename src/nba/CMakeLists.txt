@@ -10,6 +10,7 @@ set(SOURCES
   src/arm/tablegen/tablegen.cpp
   src/bus/bus.cpp
   src/bus/io.cpp
+  src/bus/serialization.cpp
   src/bus/timing.cpp
   src/hw/apu/channel/noise_channel.cpp
   src/hw/apu/channel/quad_channel.cpp

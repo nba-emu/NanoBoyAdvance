@@ -28,6 +28,8 @@ struct Core final : CoreBase {
   void Attach(ROM&& rom) override;
   auto CreateRTC() -> std::unique_ptr<RTC> override;
   auto CreateSolarSensor() -> std::unique_ptr<SolarSensor> override;
+  void LoadState(SaveState const& state) override;
+  void CopyState(SaveState& state) override;
   void Run(int cycles) override;
 
 private:

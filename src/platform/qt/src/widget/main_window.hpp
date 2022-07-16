@@ -121,5 +121,7 @@ private:
   QMenu* recent_menu;
   QAction* current_solar_level = nullptr;
 
+  nba::SaveState save_state_test;
+
   Q_OBJECT
 };
