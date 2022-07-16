@@ -87,6 +87,16 @@ struct SaveState {
     u16 reg_ie;
     u16 reg_if;
   } irq;
+
+  struct PPU {
+    struct IO {
+
+    } io;
+
+    u8 pram[0x00400];
+    u8 oam [0x00400];
+    u8 vram[0x18000];
+  } ppu;
 };
 
 } // namespace nba

@@ -28,6 +28,7 @@ set(SOURCES
   src/hw/ppu/compose.cpp
   src/hw/ppu/ppu.cpp
   src/hw/ppu/registers.cpp
+  src/hw/ppu/serialization.cpp
   src/hw/rom/backup/eeprom.cpp
   src/hw/rom/backup/flash.cpp
   src/hw/rom/backup/sram.cpp

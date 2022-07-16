@@ -14,12 +14,14 @@ void Core::LoadState(SaveState const& state) {
   cpu.LoadState(state);
   bus.LoadState(state);
   irq.LoadState(state);
+  ppu.LoadState(state);
 }
 
 void Core::CopyState(SaveState& state) {
   cpu.CopyState(state);
   bus.CopyState(state);
   irq.CopyState(state);
+  ppu.CopyState(state);
 }
 
 } // namespace nba::core
