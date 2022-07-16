@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SOURCES
   src/arm/tablegen/tablegen.cpp
+  src/arm/serialization.cpp
   src/bus/bus.cpp
   src/bus/io.cpp
   src/bus/serialization.cpp
@@ -38,6 +39,7 @@ set(SOURCES
   src/hw/keypad/keypad.cpp
   src/hw/timer/timer.cpp
   src/core.cpp
+  src/serialization.cpp
 )
 
 set(HEADERS
