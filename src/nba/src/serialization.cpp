@@ -10,7 +10,7 @@
 namespace nba::core {
 
 void Core::LoadState(SaveState const& state) {
-  // TODO: reset scheduler
+  scheduler.Reset();
   cpu.LoadState(state);
   bus.LoadState(state);
   irq.LoadState(state);

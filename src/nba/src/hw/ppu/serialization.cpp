@@ -12,8 +12,7 @@
 namespace nba::core {
 
 void PPU::LoadState(SaveState const& state) {
-  /*
-   * TODO: avoid quitting and recreating the render thread.
+  /* TODO: avoid quitting and recreating the render thread.
    * When we eventually implement rewind, this might be too slow.
    */
   StopRenderThread();
@@ -81,6 +80,25 @@ void PPU::LoadState(SaveState const& state) {
   std::memcpy(vram_draw, state.ppu.vram, 0x18000);
   vram_dirty_range_lo = 0x18000;
   vram_dirty_range_hi = 0;
+
+  auto cycles = state.timestamp % 1232U;
+  bool vblank = mmio.dispstat.vblank_flag;
+  Scheduler::EventMethod<PPU> event_fn;
+
+  /* Recreate the PPU state machine event.
+   * Note that the PPU supposedly starts in H-blank (see PPU::Reset).
+   */
+  if (cycles <= 4) {
+    event_fn = vblank ? &PPU::OnVblankHblankIRQTest : &PPU::OnHblankIRQTest;
+    cycles = 4 - cycles;
+  } else if (cycles <= 226) {
+    event_fn = vblank ? &PPU::OnVblankHblankComplete : &PPU::OnHblankComplete;
+    cycles = 226 - cycles;
+  } else {
+    event_fn = vblank ? &PPU::OnVblankScanlineComplete : &PPU::OnScanlineComplete;
+    cycles = 1232 - cycles;
+  }
+  scheduler.Add(cycles, this, event_fn);
 
   SetupRenderThread();
 }
