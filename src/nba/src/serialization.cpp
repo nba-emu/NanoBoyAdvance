@@ -20,6 +20,7 @@ void Core::LoadState(SaveState const& state) {
   apu.LoadState(state);
   timer.LoadState(state);
   dma.LoadState(state);
+  keypad.LoadState(state);
 }
 
 void Core::CopyState(SaveState& state) {
@@ -34,6 +35,7 @@ void Core::CopyState(SaveState& state) {
   apu.CopyState(state);
   timer.CopyState(state);
   dma.CopyState(state);
+  keypad.CopyState(state);
 }
 
 } // namespace nba::core

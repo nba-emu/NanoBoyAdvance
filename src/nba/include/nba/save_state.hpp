@@ -24,7 +24,7 @@ struct SaveState {
 
   struct ARM {
     // TODO: come up with a cleaner structure?
-    struct {
+    struct RegisterFile {
       u32 gpr[16];
       u32 bank[6][7];
       u32 cpsr;
@@ -304,6 +304,8 @@ struct SaveState {
     u8 wr_mask;
     u8 port_data;
   } gpio;
+
+  u16 keycnt;
 };
 
 } // namespace nba

@@ -43,6 +43,7 @@ set(SOURCES
   src/hw/irq/irq.cpp
   src/hw/irq/serialization.cpp
   src/hw/keypad/keypad.cpp
+  src/hw/keypad/serialization.cpp
   src/hw/timer/serialization.cpp
   src/hw/timer/timer.cpp
   src/core.cpp
