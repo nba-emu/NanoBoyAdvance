@@ -86,6 +86,10 @@ struct ROM {
     if (backup_eeprom) {
       backup_eeprom->LoadState(state);
     }
+
+    if (gpio) {
+      gpio->LoadState(state);
+    }
   }
 
   void CopyState(SaveState& state) {
@@ -95,6 +99,10 @@ struct ROM {
 
     if (backup_eeprom) {
       backup_eeprom->CopyState(state);
+    }
+
+    if (gpio) {
+      gpio->CopyState(state);
     }
   }
 

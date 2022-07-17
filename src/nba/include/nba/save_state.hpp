@@ -271,12 +271,38 @@ struct SaveState {
 
   struct GPIO {
     struct RTC {
+      u8 current_bit;
+      u8 current_byte;
+      u8 reg;
+      u8 data;
+      u8 buffer[7];
 
+      struct PortData {
+        u8 sck;
+        u8 sio;
+        u8 cs;
+      } port;
+
+      u8 state;
+
+      struct ControlRegister {
+        bool unknown1;
+        bool per_minute_irq;
+        bool unknown2;
+        bool mode_24h;
+        bool poweroff;
+      } control;
     } rtc;
 
     struct SolarSensor {
-
+      bool old_clk;
+      u8 counter;
     } solar_sensor;
+
+    bool allow_reads;
+    u8 rd_mask;
+    u8 wr_mask;
+    u8 port_data;
   } gpio;
 };
 

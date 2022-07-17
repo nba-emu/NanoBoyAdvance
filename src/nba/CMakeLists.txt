@@ -36,6 +36,7 @@ set(SOURCES
   src/hw/rom/backup/sram.cpp
   src/hw/rom/gpio/gpio.cpp
   src/hw/rom/gpio/rtc.cpp
+  src/hw/rom/gpio/serialization.cpp
   src/hw/rom/gpio/solar_sensor.cpp
   src/hw/dma/dma.cpp
   src/hw/dma/serialization.cpp

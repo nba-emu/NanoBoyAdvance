@@ -8,6 +8,7 @@
 #pragma once
 
 #include <nba/integer.hpp>
+#include <nba/save_state.hpp>
 
 namespace nba {
 
@@ -22,6 +23,9 @@ struct GPIODevice {
   virtual void Reset() = 0;
   virtual auto Read() -> int = 0;
   virtual void Write(int value) = 0;
+
+  virtual void LoadState(SaveState const& state) {}
+  virtual void CopyState(SaveState& state) {}
   
   void SetPortDirections(int port_directions) {
     this->port_directions = port_directions;

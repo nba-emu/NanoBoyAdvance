@@ -19,6 +19,9 @@ struct SolarSensor final : GPIODevice {
   void Write(int value) override;
   void SetLightLevel(u8 level);
 
+  void LoadState(SaveState const& state) override;
+  void CopyState(SaveState& state) override;
+
 private:
   enum Pin {
     CLK = 0,
