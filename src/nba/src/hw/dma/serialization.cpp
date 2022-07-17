@@ -28,9 +28,9 @@ void DMA::LoadState(SaveState const& state) {
     channel_dst.src_addr = channel_src.src_address;
     channel_dst.length = channel_src.length;
 
-    channel_dst.enable = control & 65536;
+    channel_dst.enable = control & 32768;
     channel_dst.repeat = control & 512;
-    channel_dst.interrupt = control & 32768;
+    channel_dst.interrupt = control & 16384;
     channel_dst.gamepak = control & 2048;
     channel_dst.dst_cntl = (Channel::Control)((control >> 5) & 3);
     channel_dst.src_cntl = (Channel::Control)((control >> 7) & 3);
@@ -47,7 +47,7 @@ void DMA::LoadState(SaveState const& state) {
 
     u64 startup_event_timestamp = channel_src.startup_event_timestamp;
 
-    if (startup_event_timestamp != ~0ULL) {
+    if (channel_dst.enable && startup_event_timestamp != ~0ULL) {
       ScheduleDMAs(1 << i, (int)(startup_event_timestamp - state.timestamp));
     }
   }
@@ -76,8 +76,8 @@ void DMA::CopyState(SaveState& state) {
                           ((int)channel_src.size << 10) |
                           (channel_src.gamepak ? 2048 : 0) |
                           ((int)channel_src.time << 12) |
-                          (channel_src.interrupt ? 32768 : 0) |
-                          (channel_src.enable ? 65536 : 0);
+                          (channel_src.interrupt ? 16384 : 0) |
+                          (channel_src.enable ? 32768 : 0);
 
     channel_dst.latch.dst_address = channel_src.latch.dst_addr;
     channel_dst.latch.src_address = channel_src.latch.src_addr;

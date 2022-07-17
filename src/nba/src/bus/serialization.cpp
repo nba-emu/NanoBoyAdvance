@@ -70,6 +70,9 @@ void Bus::CopyState(SaveState& state) {
   state.bus.prefetch.head_address = prefetch.head_address;
   state.bus.prefetch.count = prefetch.count;
   state.bus.prefetch.countdown = prefetch.countdown;
+
+  state.bus.dma.active = dma.active;
+  state.bus.dma.openbus = dma.openbus;
 }
 
 } // namespace nba::core
