@@ -160,7 +160,7 @@ void WaveChannel::LoadState(SaveState::APU::IO::WaveChannel const& state) {
 
   std::memcpy(wave_ram, state.wave_ram, sizeof(wave_ram));
 
-  if (IsEnabled()) {
+  if (BaseChannel::IsEnabled()) {
     // TODO: properly align event to system clock.
     scheduler.Add(GetSynthesisIntervalFromFrequency(frequency), event_cb);
   }
