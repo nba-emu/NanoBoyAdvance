@@ -13,6 +13,7 @@
 namespace nba {
 
 // TODO: optimise for size?
+// TODO: do not ever use int or bool for 32-bit/64-bit interoperability.
 
 struct SaveState {
   static constexpr u32 kMagicNumber = 0x5353424E; // NBSS
@@ -135,6 +136,89 @@ struct SaveState {
     u8 oam [0x00400];
     u8 vram[0x18000];
   } ppu;
+
+  struct APU {
+    // TODO: !! phase & divider might need to be 16-bit in some/many cases !!
+
+    // TODO: should we serialize the MP2K mixer state?
+    // TODO: should we keep the PSGs in the IO struct?
+    struct IO {
+      struct PSG {
+        bool enabled;
+        u8 step;
+        
+        // TODO: some of these variables may become redundant,
+        // depending on how we reconstruct the PSGs themselfes.
+
+        struct Length {
+          bool enabled;
+          u8 counter;
+        } length;
+
+        struct Envelope {
+          bool active;
+          u8 direction;
+          u8 initial_volume;
+          u8 current_volume;
+          u8 divider;
+          u8 step;
+        } envelope;
+
+        struct Sweep {
+          bool active;
+          u8 direction;
+          u16 initial_freq;
+          u16 current_freq;
+          u16 shadow_freq;
+          u8 divider;
+          u8 shift;
+          u8 step;
+        } sweep;
+      };
+
+      struct QuadChannel : PSG {
+        bool dac_enable;
+        u8 phase;
+        u8 wave_duty;
+        s8 sample;
+      } quad[2];
+
+      struct WaveChannel : PSG {
+        bool playing;
+        bool force_volume;
+        u8 phase;
+        u8 volume;
+        u16 frequency;
+        u8 dimension;
+        u8 wave_bank;
+        u8 wave_ram[2][16];
+      } wave;
+
+      struct NoiseChannel : PSG {
+        bool dac_enable;
+        u8 frequency_shift;
+        u8 frequency_ratio;
+        u8 width;
+      } noise;
+
+      u32 soundcnt;
+      u16 soundbias;
+    } io;
+
+    struct FIFO {
+      u32 data[7];
+      u32 pending;
+      u8 count;
+
+      struct Pipe {
+        u32 word;
+        u8 size;
+      } pipe;
+    } fifo[2];
+
+    u8 resolution_old;
+    u32 fifo_samplerate[2];
+  } apu;
 
   struct Timer {
     u16 counter;

@@ -14,7 +14,7 @@
 
 namespace nba::core {
 
-class QuadChannel : public BaseChannel {
+class QuadChannel final : public BaseChannel {
 public:
   QuadChannel(Scheduler& scheduler);
 
@@ -23,6 +23,9 @@ public:
   void Generate(int cycles_late);
   auto Read (int offset) -> u8;
   void Write(int offset, u8 value);
+
+  void LoadState(SaveState::APU::IO::QuadChannel const& state);
+  void CopyState(SaveState::APU::IO::QuadChannel& state);
 
 private:
   static constexpr int GetSynthesisIntervalFromFrequency(int frequency) {

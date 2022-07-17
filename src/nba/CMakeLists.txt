@@ -20,6 +20,7 @@ set(SOURCES
   src/hw/apu/apu.cpp
   src/hw/apu/callback.cpp
   src/hw/apu/registers.cpp
+  src/hw/apu/serialization.cpp
   src/hw/ppu/render/affine.cpp
   src/hw/ppu/render/bitmap.cpp
   src/hw/ppu/render/oam.cpp

@@ -17,6 +17,7 @@ void Core::LoadState(SaveState const& state) {
   bus.LoadState(state);
   irq.LoadState(state);
   ppu.LoadState(state);
+  apu.LoadState(state);
   timer.LoadState(state);
 }
 
@@ -29,6 +30,7 @@ void Core::CopyState(SaveState& state) {
   bus.CopyState(state);
   irq.CopyState(state);
   ppu.CopyState(state);
+  apu.CopyState(state);
   timer.CopyState(state);
 }
 

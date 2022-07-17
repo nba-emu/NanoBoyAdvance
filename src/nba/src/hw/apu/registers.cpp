@@ -108,6 +108,20 @@ void SoundControl::Write(int address, u8 value) {
   }
 }
 
+auto SoundControl::ReadWord() -> u32 {
+  return (Read(0) <<  0) |
+         (Read(1) <<  8) |
+         (Read(2) << 16) |
+         (Read(3) << 24);
+}
+
+void SoundControl::WriteWord(u32 value) {
+  Write(0, (u8)(value >>  0));
+  Write(1, (u8)(value >>  8));
+  Write(2, (u8)(value >> 16));
+  Write(3, (u8)(value >> 24));
+}
+
 void BIAS::Reset() {
   level = 0x200;
   resolution = 0;
@@ -133,6 +147,15 @@ void BIAS::Write(int address, u8 value) {
       break;
     }
   }
+}
+
+auto BIAS::ReadHalf() -> u16 {
+  return Read(0) | (Read(1) << 8);
+}
+
+void BIAS::WriteHalf(u16 value) {
+  Write(0, (u8)(value >> 0));
+  Write(1, (u8)(value >> 8));
 }
 
 } // namespace nba::core

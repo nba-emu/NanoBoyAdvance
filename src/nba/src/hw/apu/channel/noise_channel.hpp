@@ -25,6 +25,9 @@ public:
   auto Read (int offset) -> u8;
   void Write(int offset, u8 value);
 
+  void LoadState(SaveState::APU::IO::NoiseChannel const& state);
+  void CopyState(SaveState::APU::IO::NoiseChannel& state);
+
 private:
   static constexpr int GetSynthesisInterval(int ratio, int shift) {
     int interval = 64 << shift;

@@ -59,6 +59,8 @@ public:
   int divider;
 
 private:
+  friend class BaseChannel;
+
   int step;
 };
 

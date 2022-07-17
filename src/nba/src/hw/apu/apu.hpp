@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2022 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -10,6 +10,7 @@
 #include <nba/common/dsp/resampler.hpp>
 #include <nba/common/dsp/ring_buffer.hpp>
 #include <nba/config.hpp>
+#include <nba/save_state.hpp>
 #include <mutex>
 
 #include "hw/apu/channel/quad_channel.hpp"
@@ -36,6 +37,9 @@ struct APU {
   void Reset();
   auto GetMP2K() -> MP2K& { return mp2k; }
   void OnTimerOverflow(int timer_id, int times, int samplerate);
+
+  void LoadState(SaveState const& state);
+  void CopyState(SaveState& state);
 
   struct MMIO {
     MMIO(Scheduler& scheduler)

@@ -73,6 +73,8 @@ public:
   int shift;
 
 private:
+  friend class BaseChannel;
+
   int step;
 };
 
