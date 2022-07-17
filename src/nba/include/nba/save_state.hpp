@@ -135,6 +135,17 @@ struct SaveState {
     u8 oam [0x00400];
     u8 vram[0x18000];
   } ppu;
+
+  struct Timer {
+    u16 counter;
+    u16 reload;
+    u16 control;
+
+    struct Pending {
+      u16 reload;
+      u16 control;
+    } pending;
+  } timer[4];
 };
 
 } // namespace nba

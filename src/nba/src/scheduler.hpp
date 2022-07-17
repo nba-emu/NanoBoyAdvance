@@ -54,6 +54,10 @@ struct Scheduler {
     return timestamp_now;
   }
 
+  void SetTimestampNow(u64 timestamp) {
+    timestamp_now = timestamp;
+  }
+
   auto GetTimestampTarget() const -> u64 {
     return heap[0]->timestamp;
   }

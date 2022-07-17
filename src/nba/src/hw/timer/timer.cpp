@@ -135,6 +135,8 @@ auto Timer::ReadCounter(Channel const& channel) -> u16 {
 void Timer::WriteReload(Channel& channel, u16 value) {
   auto id = channel.id;
 
+  channel.pending.reload = value;
+
   scheduler.Add(1, [this, id, value](int late) {  
     channels[id].reload = value;
   }, 1);
@@ -151,6 +153,8 @@ auto Timer::ReadControl(Channel const& channel) -> u16 {
 
 void Timer::WriteControl(Channel& channel, u16 value) {
   auto id = channel.id;
+
+  channel.pending.control = value;
 
   scheduler.Add(1, [this, id, value](int late) {
     auto& channel = channels[id];

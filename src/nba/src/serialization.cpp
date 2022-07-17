@@ -11,17 +11,25 @@ namespace nba::core {
 
 void Core::LoadState(SaveState const& state) {
   scheduler.Reset();
+  scheduler.SetTimestampNow(state.timestamp);
+
   cpu.LoadState(state);
   bus.LoadState(state);
   irq.LoadState(state);
   ppu.LoadState(state);
+  timer.LoadState(state);
 }
 
 void Core::CopyState(SaveState& state) {
+  state.magic = SaveState::kMagicNumber;
+  state.version = 1;
+  state.timestamp = scheduler.GetTimestampNow();
+
   cpu.CopyState(state);
   bus.CopyState(state);
   irq.CopyState(state);
   ppu.CopyState(state);
+  timer.CopyState(state);
 }
 
 } // namespace nba::core
