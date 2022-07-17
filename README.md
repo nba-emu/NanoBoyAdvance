@@ -48,7 +48,7 @@ Cycle-accurate PPU emulation is an active topic of research and will be implemen
 
 ## Compiling
 
-See [COMPILING.md](https://github.com/fleroviux/NanoboyAdvance/blob/master/docs/COMPILING.md) in the `docs` folder.
+See [COMPILING.md](docs/COMPILING.md) in the `docs` folder.
 
 ## Credit
 
