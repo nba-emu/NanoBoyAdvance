@@ -188,7 +188,7 @@ void NoiseChannel::LoadState(SaveState::APU::IO::NoiseChannel const& state) {
   frequency_ratio = state.frequency_ratio;
   width = state.width;
 
-  if (IsEnabled()) {
+  if (dac_enable && IsEnabled()) {
     // TODO: properly handle skip count and properly align event to system clock.
     skip_count = 0;
     scheduler.Add(GetSynthesisInterval(frequency_ratio, frequency_shift), event_cb);

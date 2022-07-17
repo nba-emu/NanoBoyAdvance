@@ -138,18 +138,11 @@ struct SaveState {
   } ppu;
 
   struct APU {
-    // TODO: !! phase & divider might need to be 16-bit in some/many cases !!
-
-    // TODO: should we serialize the MP2K mixer state?
-    // TODO: should we keep the PSGs in the IO struct?
     struct IO {
       struct PSG {
         bool enabled;
         u8 step;
         
-        // TODO: some of these variables may become redundant,
-        // depending on how we reconstruct the PSGs themselfes.
-
         struct Length {
           bool enabled;
           u8 counter;
