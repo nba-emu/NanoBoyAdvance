@@ -100,6 +100,14 @@ struct BackupFile {
     stream.write((char*)&memory[index], length);
   }
 
+  auto Buffer() -> u8* {
+    return memory.get();
+  }
+
+  auto Size() -> size_t {
+    return file_size;
+  }
+
   bool auto_update = true;
 
 private:

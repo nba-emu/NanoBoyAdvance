@@ -25,6 +25,9 @@ struct EEPROM : Backup {
   auto Read (u32 address) -> u8 final;
   void Write(u32 address, u8 value) final;
   
+  void LoadState(SaveState const& state) final;
+  void CopyState(SaveState& state) final;
+
 private:
   enum State {
     STATE_ACCEPT_COMMAND = 1 << 0,

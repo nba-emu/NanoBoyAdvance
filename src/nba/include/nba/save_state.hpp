@@ -248,6 +248,36 @@ struct SaveState {
     u8 runnable_set;
     u32 latch;
   } dma;
+
+  struct Backup {
+    u8 data[131072];
+
+    struct FLASH {
+      u8 current_bank;
+      u8 phase;
+      bool enable_chip_id;
+      bool enable_erase;
+      bool enable_write;
+      bool enable_select;
+    } flash;
+
+    struct EEPROM {
+      u8 state;
+      u16 address;
+      u64 serial_buffer;
+      u8 transmitted_bits;
+    } eeprom;
+  } backup;
+
+  struct GPIO {
+    struct RTC {
+
+    } rtc;
+
+    struct SolarSensor {
+
+    } solar_sensor;
+  } gpio;
 };
 
 } // namespace nba

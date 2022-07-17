@@ -13,6 +13,7 @@ void Bus::LoadState(SaveState const& state) {
   memory.wram = state.bus.memory.wram;
   memory.iram = state.bus.memory.iram;
   memory.latch.bios = state.bus.memory.latch.bios;
+  memory.rom.LoadState(state);
 
   hw.waitcnt.sram = state.bus.io.waitcnt.sram;
   for (int i = 0; i < 2; i++) {
@@ -51,6 +52,7 @@ void Bus::CopyState(SaveState& state) {
   state.bus.memory.wram = memory.wram;
   state.bus.memory.iram = memory.iram;
   state.bus.memory.latch.bios = memory.latch.bios;
+  memory.rom.CopyState(state);
 
   state.bus.io.waitcnt.sram = hw.waitcnt.sram;
   for (int i = 0; i < 2; i++) {

@@ -32,6 +32,7 @@ set(SOURCES
   src/hw/ppu/serialization.cpp
   src/hw/rom/backup/eeprom.cpp
   src/hw/rom/backup/flash.cpp
+  src/hw/rom/backup/serialization.cpp
   src/hw/rom/backup/sram.cpp
   src/hw/rom/gpio/gpio.cpp
   src/hw/rom/gpio/rtc.cpp

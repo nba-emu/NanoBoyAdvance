@@ -14,6 +14,7 @@
 #include <nba/rom/gpio/gpio.hpp>
 #include <nba/common/compiler.hpp>
 #include <nba/common/punning.hpp>
+#include <nba/save_state.hpp>
 #include <vector>
 
 namespace nba {
@@ -75,6 +76,26 @@ struct ROM {
       return gpio->Get<T>();
     }
     return nullptr;
+  }
+
+  void LoadState(SaveState const& state) {
+    if (backup_sram) {
+      backup_sram->LoadState(state);
+    }
+
+    if (backup_eeprom) {
+      backup_eeprom->LoadState(state);
+    }
+  }
+
+  void CopyState(SaveState& state) {
+    if (backup_sram) {
+      backup_sram->CopyState(state);
+    }
+
+    if (backup_eeprom) {
+      backup_eeprom->CopyState(state);
+    }
   }
 
   auto ALWAYS_INLINE ReadROM16(u32 address) -> u16 {
