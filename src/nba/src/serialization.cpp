@@ -19,6 +19,7 @@ void Core::LoadState(SaveState const& state) {
   ppu.LoadState(state);
   apu.LoadState(state);
   timer.LoadState(state);
+  dma.LoadState(state);
 }
 
 void Core::CopyState(SaveState& state) {
@@ -32,6 +33,7 @@ void Core::CopyState(SaveState& state) {
   ppu.CopyState(state);
   apu.CopyState(state);
   timer.CopyState(state);
+  dma.CopyState(state);
 }
 
 } // namespace nba::core

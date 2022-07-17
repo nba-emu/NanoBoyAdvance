@@ -37,6 +37,7 @@ set(SOURCES
   src/hw/rom/gpio/rtc.cpp
   src/hw/rom/gpio/solar_sensor.cpp
   src/hw/dma/dma.cpp
+  src/hw/dma/serialization.cpp
   src/hw/irq/irq.cpp
   src/hw/irq/serialization.cpp
   src/hw/keypad/keypad.cpp

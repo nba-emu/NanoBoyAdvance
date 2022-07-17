@@ -223,6 +223,31 @@ struct SaveState {
       u16 control;
     } pending;
   } timer[4];
+
+  struct DMA {
+    struct Channel {
+      u32 dst_address;
+      u32 src_address;
+      u16 length;
+      u16 control;
+
+      struct Latch {
+        u32 length;
+        u32 dst_address;
+        u32 src_address;
+        u32 bus;
+      } latch;
+
+      bool is_fifo_dma;
+      u64 startup_event_timestamp;
+    } channels[4];
+
+    u8 hblank_set;
+    u8 vblank_set;
+    u8 video_set;
+    u8 runnable_set;
+    u32 latch;
+  } dma;
 };
 
 } // namespace nba

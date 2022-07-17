@@ -82,7 +82,7 @@ void DMA::Reset() {
   }
 }
 
-void DMA::ScheduleDMAs(unsigned int bitset) {
+void DMA::ScheduleDMAs(unsigned int bitset, int delay) {
   while (bitset > 0) {
     auto chan_id = g_dma_from_bitset[bitset];
     auto& channel = channels[chan_id];
@@ -102,7 +102,7 @@ void DMA::ScheduleDMAs(unsigned int bitset) {
 
     bitset &= ~(1 << chan_id);
 
-    channel.startup_event = scheduler.Add(2, [this, chan_id](int cycles_late) {
+    channel.startup_event = scheduler.Add(delay, [this, chan_id](int cycles_late) {
       channels[chan_id].startup_event = nullptr;
       if (runnable_set.none()) {
         active_dma_id = chan_id;

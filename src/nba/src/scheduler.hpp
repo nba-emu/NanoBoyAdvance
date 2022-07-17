@@ -21,10 +21,10 @@ struct Scheduler {
 
   struct Event {
     std::function<void(int)> callback;
+    u64 timestamp; 
   private:
     friend class Scheduler;
     int handle;
-    u64 timestamp;
     u64 key;
   };
 
