@@ -10,7 +10,6 @@
 namespace nba::core {
 
 void DMA::LoadState(SaveState const& state) {
-  active_dma_id = -1;
   should_reenter_transfer_loop = false;
 
   hblank_set = state.dma.hblank_set;
@@ -52,6 +51,8 @@ void DMA::LoadState(SaveState const& state) {
       ScheduleDMAs(1 << i, (int)(startup_event_timestamp - state.timestamp));
     }
   }
+
+  SelectNextDMA();
 }
 
 void DMA::CopyState(SaveState& state) {
