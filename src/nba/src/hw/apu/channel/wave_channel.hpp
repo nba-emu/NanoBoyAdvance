@@ -25,6 +25,9 @@ public:
   auto Read (int offset) -> u8;
   void Write(int offset, u8 value);
 
+  void LoadState(SaveState::APU::IO::WaveChannel const& state);
+  void CopyState(SaveState::APU::IO::WaveChannel& state);
+
   auto ReadSample(int offset) -> u8 {
     return wave_ram[wave_bank ^ 1][offset];
   }

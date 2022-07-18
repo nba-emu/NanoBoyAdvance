@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <nba/integer.hpp>
+#include <nba/save_state.hpp>
 
 #include "hw/apu/apu.hpp"
 #include "hw/irq/irq.hpp"
@@ -32,6 +33,9 @@ struct Timer {
   void WriteHalf(int chan_id, int offset, u16 value);
   void WriteWord(int chan_id, u32 value);
 
+  void LoadState(SaveState const& state);
+  void CopyState(SaveState& state);
+
 private:
   enum Registers {
     REG_TMXCNT_L = 0,
@@ -41,8 +45,12 @@ private:
   struct Channel {
     int id;
     u16 reload = 0;
-    u16 reload_latch;
     u32 counter = 0;
+
+    struct Pending {
+      u16 reload = 0;
+      u16 control = 0;
+    } pending = {};
 
     struct Control {
       int frequency = 0;

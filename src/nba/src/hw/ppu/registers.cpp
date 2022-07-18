@@ -56,6 +56,15 @@ void DisplayControl::Write(int address, u8 value) {
   }
 }
 
+auto DisplayControl::ReadHalf() -> u16 {
+  return Read(0) | (Read(1) << 8);
+}
+
+void DisplayControl::WriteHalf(u16 value) {
+  Write(0, (u8)value);
+  Write(1, (u8)(value >> 8));
+}
+
 void DisplayStatus::Reset() {
   Write(0, 0);
   Write(1, 0);
@@ -90,6 +99,15 @@ void DisplayStatus::Write(int address, u8 value) {
   }
 
   ppu->CheckVerticalCounterIRQ();
+}
+
+auto DisplayStatus::ReadHalf() -> u16 {
+  return Read(0) | (Read(1) << 8);
+}
+
+void DisplayStatus::WriteHalf(u16 value) {
+  Write(0, (u8)value);
+  Write(1, (u8)(value >> 8));
 }
 
 void BackgroundControl::Reset() {
@@ -133,6 +151,15 @@ void BackgroundControl::Write(int address, u8 value) {
   }
 }
 
+auto BackgroundControl::ReadHalf() -> u16 {
+  return Read(0) | (Read(1) << 8);
+}
+
+void BackgroundControl::WriteHalf(u16 value) {
+  Write(0, (u8)value);
+  Write(1, (u8)(value >> 8));
+}
+
 void ReferencePoint::Reset() {
   initial = _current = 0;
   written = false;
@@ -172,6 +199,15 @@ void WindowRange::Write(int address, u8 value) {
   }
 }
 
+auto WindowRange::ReadHalf() -> u16 {
+  return max | (min << 8);
+}
+
+void WindowRange::WriteHalf(u16 value) {
+  Write(0, (u8)value);
+  Write(1, (u8)(value >> 8));
+}
+
 void WindowLayerSelect::Reset() {
   Write(0, 0);
   Write(1, 0);
@@ -191,6 +227,15 @@ void WindowLayerSelect::Write(int address, u8 value) {
   for (int i = 0; i < 6; i++) {
     enable[address][i] = (value >> i) & 1;
   }
+}
+
+auto WindowLayerSelect::ReadHalf() -> u16 {
+  return Read(0) | (Read(1) << 8);
+}
+
+void WindowLayerSelect::WriteHalf(u16 value) {
+  Write(0, (u8)value);
+  Write(1, (u8)(value >> 8));
 }
 
 void BlendControl::Reset() {
@@ -228,6 +273,15 @@ void BlendControl::Write(int address, u8 value) {
         targets[1][i] = (value >> i) & 1;
       break;
   }
+}
+
+auto BlendControl::ReadHalf() -> u16 {
+  return Read(0) | (Read(1) << 8);
+}
+
+void BlendControl::WriteHalf(u16 value) {
+  Write(0, (u8)value);
+  Write(1, (u8)(value >> 8));
 }
 
 void Mosaic::Reset() {

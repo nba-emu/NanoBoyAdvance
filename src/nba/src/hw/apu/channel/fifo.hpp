@@ -8,6 +8,7 @@
 #pragma once
 
 #include <nba/integer.hpp>
+#include <nba/save_state.hpp>
 
 namespace nba::core {
 
@@ -54,6 +55,26 @@ struct FIFO {
     }
 
     return value;
+  }
+
+  void LoadState(SaveState::APU::FIFO const& state) {
+    pending = state.pending;
+    rd_ptr = 0;
+    wr_ptr = state.count % s_fifo_len;
+    count = state.count; 
+
+    for (int i = 0; i < s_fifo_len; i++) {
+      data[i] = state.data[i];
+    }
+  }
+
+  void CopyState(SaveState::APU::FIFO& state) {
+    state.pending = pending;
+    state.count = count;
+
+    for (int i = 0; i < s_fifo_len; i++) {
+      state.data[i] = data[(rd_ptr + i) % s_fifo_len];
+    }
   }
 
 private:

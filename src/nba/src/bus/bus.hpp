@@ -10,6 +10,7 @@
 #include <array>
 #include <nba/rom/rom.hpp>
 #include <nba/integer.hpp>
+#include <nba/save_state.hpp>
 #include <vector>
 
 #include "hw/apu/apu.hpp"
@@ -80,9 +81,9 @@ struct Bus {
     } waitcnt;
 
     enum class HaltControl {
-      Run,
-      Stop,
-      Halt
+      Run = 0,
+      Stop = 1,
+      Halt = 2
     } haltcnt = HaltControl::Run;
 
     u8 rcnt[2] { 0, 0 };
@@ -131,6 +132,9 @@ struct Bus {
   void StopPrefetch();
   void Step(int cycles);
   void UpdateWaitStateTable();
+
+  void LoadState(SaveState const& state);
+  void CopyState(SaveState& state);
  
   int wait16[2][16] {
     { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },

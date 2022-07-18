@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2022 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -8,6 +8,7 @@
 #pragma once
 
 #include <nba/config.hpp>
+#include <nba/save_state.hpp>
 #include <memory>
 
 #include "hw/irq/irq.hpp"
@@ -40,6 +41,9 @@ struct KeyPad {
     void WriteByte(uint offset, u8 value);
     void WriteHalf(u16 value);
   } control;
+
+  void LoadState(SaveState const& state);
+  void CopyState(SaveState& state);
 
 private:
   using Key = InputDevice::Key;

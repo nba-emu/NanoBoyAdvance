@@ -9,6 +9,7 @@
 
 #include <bitset>
 #include <nba/integer.hpp>
+#include <nba/save_state.hpp>
 #include <hw/irq/irq.hpp>
 
 #include "scheduler.hpp"
@@ -41,6 +42,9 @@ struct DMA {
   void Write(int chan_id, int offset, u8 value);
   bool IsRunning() { return runnable_set.any(); }
   auto GetOpenBusValue() -> u32 { return latch; }
+
+  void LoadState(SaveState const& state);
+  void CopyState(SaveState& state);
 
 private:
   enum Registers {
@@ -105,7 +109,7 @@ private:
     return page;
   }
 
-  void ScheduleDMAs(unsigned int bitset);
+  void ScheduleDMAs(unsigned int bitset, int delay = 2);
   void SelectNextDMA();
   void OnChannelWritten(Channel& channel, bool enable_old);
   void RunChannel();

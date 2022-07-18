@@ -8,11 +8,12 @@
 #pragma once
 
 #include <memory>
-#include <nba/config.hpp>
-#include <nba/integer.hpp>
 #include <nba/rom/gpio/rtc.hpp>
 #include <nba/rom/gpio/solar_sensor.hpp>
 #include <nba/rom/rom.hpp>
+#include <nba/config.hpp>
+#include <nba/integer.hpp>
+#include <nba/save_state.hpp>
 #include <vector>
 
 namespace nba {
@@ -28,6 +29,8 @@ struct CoreBase {
   virtual void Attach(ROM&& rom) = 0;
   virtual auto CreateRTC() -> std::unique_ptr<RTC> = 0;
   virtual auto CreateSolarSensor() -> std::unique_ptr<SolarSensor> = 0;
+  virtual void LoadState(SaveState const& state) = 0;
+  virtual void CopyState(SaveState& state) = 0;
   virtual void Run(int cycles) = 0;
 
   void RunForOneFrame() {

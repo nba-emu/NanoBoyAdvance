@@ -5,15 +5,19 @@
  * Refer to the included LICENSE file.
  */
 
+#include <ctime>
+#include <fstream>
 #include <platform/device/sdl_audio_device.hpp>
 #include <platform/loader/bios.hpp>
 #include <platform/loader/rom.hpp>
 #include <QApplication>
+#include <QDateTime>
 #include <QMenuBar>
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QKeyEvent>
+#include <QLocale>
 #include <QStatusBar>
 #include <unordered_map>
 
@@ -88,6 +92,12 @@ void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
 
   recent_menu = file_menu->addMenu(tr("Recent"));
   RenderRecentFilesMenu();
+
+  file_menu->addSeparator();
+
+  load_state_menu = file_menu->addMenu(tr("Load state"));
+  save_state_menu = file_menu->addMenu(tr("Save state"));
+  RenderSaveStateMenus();
 
   file_menu->addSeparator();
 
@@ -351,6 +361,87 @@ void MainWindow::RenderRecentFilesMenu() {
   }
 }
 
+void MainWindow::RenderSaveStateMenus() {
+  load_state_menu->clear();
+  save_state_menu->clear();
+
+  for (int i = 1; i <= 10; i++) {
+    auto empty_state_name = QString::fromStdString(fmt::format("{:02} - (empty)", i));
+
+    auto action_load = load_state_menu->addAction(empty_state_name);
+    auto action_save = save_state_menu->addAction(empty_state_name);
+    
+    action_load->setDisabled(true);
+    action_save->setDisabled(true);
+
+    auto key = Qt::Key_F1 + i - 1;
+    action_load->setShortcut(key);
+    action_save->setShortcut(Qt::SHIFT + key);
+
+    if (game_loaded) {
+      auto slot_filename = std::filesystem::path{game_path}
+        .replace_extension(fmt::format("{:02}.nbss", i))
+        .string();
+
+      if (std::filesystem::exists(slot_filename)) {
+        auto file_info = QFileInfo{QString::fromStdString(slot_filename)};
+        auto date_modified = file_info.lastModified().toLocalTime().toString().toStdString();
+
+        auto state_name = QString::fromStdString(fmt::format("{:02} - {}", i, date_modified));
+
+        action_load->setDisabled(false);
+        action_load->setText(state_name);
+        action_save->setText(state_name);
+
+        connect(action_load, &QAction::triggered, [=]() {
+          if (LoadState(slot_filename) != nba::SaveStateLoader::Result::Success) {
+            // The save state may have been deleted, update the save list:
+            RenderSaveStateMenus();
+          }
+        });
+      }
+
+      action_save->setDisabled(false);
+
+      connect(action_save, &QAction::triggered, [=]() {
+        SaveState(slot_filename);
+        RenderSaveStateMenus();
+      });
+    }
+  }
+
+  load_state_menu->addSeparator();
+  save_state_menu->addSeparator();
+
+  auto load_file_action = load_state_menu->addAction(tr("From file..."));
+  auto save_file_action = save_state_menu->addAction(tr("To file..."));
+
+  load_file_action->setEnabled(game_loaded);
+  save_file_action->setEnabled(game_loaded);
+
+  connect(load_file_action, &QAction::triggered, [this]() {
+    QFileDialog dialog{};
+    dialog.setAcceptMode(QFileDialog::AcceptOpen);
+    dialog.setFileMode(QFileDialog::ExistingFile);
+    dialog.setNameFilter("NanoBoyAdvance Save State (*.nbss)");
+
+    if (dialog.exec()) {
+      LoadState(dialog.selectedFiles().at(0).toStdString());
+    }
+  });
+
+  connect(save_file_action, &QAction::triggered, [this]() {
+    QFileDialog dialog{};
+    dialog.setAcceptMode(QFileDialog::AcceptSave);
+    dialog.setFileMode(QFileDialog::AnyFile);
+    dialog.setNameFilter("NanoBoyAdvance Save State (*.nbss)");
+
+    if (dialog.exec()) {
+      SaveState(dialog.selectedFiles().at(0).toStdString());
+    }
+  });
+}
+
 void MainWindow::SelectBIOS() {
   QFileDialog dialog{this};
   dialog.setAcceptMode(QFileDialog::AcceptOpen);
@@ -443,6 +534,10 @@ void MainWindow::Stop() {
     config->audio_dev->Close();
     screen->Clear();
 
+    // Clear the list of save state slots:
+    game_loaded = false;
+    RenderSaveStateMenus();
+
     setWindowTitle("NanoBoyAdvance 1.5");
   }
 }
@@ -517,9 +612,76 @@ void MainWindow::LoadROM(std::string path) {
     }
   }
 
+  // Update the list of save state slots:
+  game_loaded = true;
+  game_path = path;
+  RenderSaveStateMenus();
+
   UpdateSolarSensorLevel();
   core->Reset();
   emu_thread->Start();
+}
+
+auto MainWindow::LoadState(std::string const& path) -> nba::SaveStateLoader::Result {
+  bool was_running = emu_thread->IsRunning();
+  emu_thread->Stop();
+
+  auto result = nba::SaveStateLoader::Load(core, path);
+
+  QMessageBox box {this};
+  box.setIcon(QMessageBox::Critical);
+
+  switch (result) {
+    case nba::SaveStateLoader::Result::CannotFindFile:
+    case nba::SaveStateLoader::Result::CannotOpenFile: {
+      box.setText(tr("Sorry, the save state file could not be opened."));
+      box.setWindowTitle(tr("File not found"));
+      box.exec();
+      break;
+    }
+    case nba::SaveStateLoader::Result::BadImage: {
+      box.setText(tr("Sorry, this save state is corrupted and could not be loaded."));
+      box.setWindowTitle(tr("Bad save state"));
+      box.exec();
+      break;
+    }
+    case nba::SaveStateLoader::Result::UnsupportedVersion: {
+      box.setText(tr("Sorry, this save state was created with a different version of NanoBoyAdvance and could not be loaded."));
+      box.setWindowTitle(tr("Unsupported save state version"));
+      box.exec();
+      break;
+    }
+    case nba::SaveStateLoader::Result::Success: {
+      break;
+    }
+  }
+
+  if (was_running) {
+    emu_thread->Start();
+  }
+
+  return result;
+}
+
+auto MainWindow::SaveState(std::string const& path) -> nba::SaveStateWriter::Result {
+  bool was_running = emu_thread->IsRunning();
+  emu_thread->Stop();
+
+  auto result = nba::SaveStateWriter::Write(core, path);
+
+  if (result != nba::SaveStateWriter::Result::Success) {
+    QMessageBox box {this};
+    box.setIcon(QMessageBox::Critical);
+    box.setText(tr("Sorry, the save state could not be written to the disk. Make sure that you have sufficient disk space and permissions."));
+    box.setWindowTitle(tr("Failed to write to the disk"));
+    box.exec();
+  }
+
+  if (was_running) {
+    emu_thread->Start();
+  }
+
+  return result;
 }
 
 void MainWindow::SetKeyStatus(int channel, nba::InputDevice::Key key, bool pressed) {

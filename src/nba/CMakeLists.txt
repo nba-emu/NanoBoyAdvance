@@ -8,8 +8,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SOURCES
   src/arm/tablegen/tablegen.cpp
+  src/arm/serialization.cpp
   src/bus/bus.cpp
   src/bus/io.cpp
+  src/bus/serialization.cpp
   src/bus/timing.cpp
   src/hw/apu/channel/noise_channel.cpp
   src/hw/apu/channel/quad_channel.cpp
@@ -18,6 +20,7 @@ set(SOURCES
   src/hw/apu/apu.cpp
   src/hw/apu/callback.cpp
   src/hw/apu/registers.cpp
+  src/hw/apu/serialization.cpp
   src/hw/ppu/render/affine.cpp
   src/hw/ppu/render/bitmap.cpp
   src/hw/ppu/render/oam.cpp
@@ -26,17 +29,25 @@ set(SOURCES
   src/hw/ppu/compose.cpp
   src/hw/ppu/ppu.cpp
   src/hw/ppu/registers.cpp
+  src/hw/ppu/serialization.cpp
   src/hw/rom/backup/eeprom.cpp
   src/hw/rom/backup/flash.cpp
+  src/hw/rom/backup/serialization.cpp
   src/hw/rom/backup/sram.cpp
   src/hw/rom/gpio/gpio.cpp
   src/hw/rom/gpio/rtc.cpp
+  src/hw/rom/gpio/serialization.cpp
   src/hw/rom/gpio/solar_sensor.cpp
   src/hw/dma/dma.cpp
+  src/hw/dma/serialization.cpp
   src/hw/irq/irq.cpp
+  src/hw/irq/serialization.cpp
   src/hw/keypad/keypad.cpp
+  src/hw/keypad/serialization.cpp
+  src/hw/timer/serialization.cpp
   src/hw/timer/timer.cpp
   src/core.cpp
+  src/serialization.cpp
 )
 
 set(HEADERS

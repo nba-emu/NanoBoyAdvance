@@ -10,6 +10,7 @@
 #include <array>
 #include <nba/common/compiler.hpp>
 #include <nba/log.hpp>
+#include <nba/save_state.hpp>
 #include <scheduler.hpp>
 
 #include "bus/bus.hpp"
@@ -122,6 +123,9 @@ struct ARM7TDMI {
 
     cpu_mode_is_invalid = new_bank == BANK_INVALID;
   }
+
+  void LoadState(SaveState const& save_state);
+  void CopyState(SaveState& save_state);
 
   RegisterFile state;
 

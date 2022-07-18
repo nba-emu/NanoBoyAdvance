@@ -10,6 +10,7 @@
 #include <cassert>
 #include <nba/rom/gpio/device.hpp>
 #include <nba/integer.hpp>
+#include <nba/save_state.hpp>
 #include <memory>
 #include <typeindex>
 #include <unordered_map>
@@ -41,6 +42,9 @@ struct GPIO {
 
   auto Read (u32 address) -> u8;
   void Write(u32 address, u8 value);
+
+  void LoadState(SaveState const& state);
+  void CopyState(SaveState& state);
 
 private:
   enum class Register {

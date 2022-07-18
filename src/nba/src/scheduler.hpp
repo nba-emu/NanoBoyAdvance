@@ -21,10 +21,10 @@ struct Scheduler {
 
   struct Event {
     std::function<void(int)> callback;
+    u64 timestamp; 
   private:
     friend class Scheduler;
     int handle;
-    u64 timestamp;
     u64 key;
   };
 
@@ -52,6 +52,10 @@ struct Scheduler {
 
   auto GetTimestampNow() const -> u64 {
     return timestamp_now;
+  }
+
+  void SetTimestampNow(u64 timestamp) {
+    timestamp_now = timestamp;
   }
 
   auto GetTimestampTarget() const -> u64 {

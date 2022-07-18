@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <nba/save_state.hpp>
+
 #include "hw/apu/channel/length_counter.hpp"
 #include "hw/apu/channel/envelope.hpp"
 #include "hw/apu/channel/sweep.hpp"
@@ -47,6 +49,9 @@ public:
     step++;
     step &= 7;
   }
+
+  void LoadState(SaveState::APU::IO::PSG const& state);
+  void CopyState(SaveState::APU::IO::PSG& state);
 
 protected:
   void Restart() {

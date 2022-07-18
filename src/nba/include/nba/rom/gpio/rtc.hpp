@@ -46,6 +46,9 @@ struct RTC final : GPIODevice {
   auto Read() -> int override;
   void Write(int value) override;
 
+  void LoadState(SaveState const& state) override;
+  void CopyState(SaveState& state) override;
+
 private:
   bool ReadSIO();
   void ReceiveCommandSIO();

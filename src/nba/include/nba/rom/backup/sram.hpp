@@ -20,6 +20,9 @@ struct SRAM : Backup {
   auto Read (u32 address) -> u8 final;
   void Write(u32 address, u8 value) final;
   
+  void LoadState(SaveState const& state) final;
+  void CopyState(SaveState& state) final;
+
 private:
   std::string save_path;
   std::unique_ptr<BackupFile> file;

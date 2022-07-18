@@ -13,6 +13,7 @@
 #include <nba/common/punning.hpp>
 #include <nba/config.hpp>
 #include <nba/integer.hpp>
+#include <nba/save_state.hpp>
 #include <thread>
 #include <type_traits>
 
@@ -34,6 +35,9 @@ struct PPU {
  ~PPU(); 
 
   void Reset();
+
+  void LoadState(SaveState const& state);
+  void CopyState(SaveState& state);
 
   template<typename T>
   auto ALWAYS_INLINE ReadPRAM(u32 address) noexcept -> T {

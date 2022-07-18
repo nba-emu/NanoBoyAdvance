@@ -15,6 +15,8 @@ set(SOURCES
   src/device/sdl_audio_device.cpp
   src/loader/bios.cpp
   src/loader/rom.cpp
+  src/loader/save_state.cpp
+  src/writer/save_state.cpp
   src/config.cpp
   src/emulator_thread.cpp
   src/frame_limiter.cpp
@@ -34,6 +36,8 @@ set(HEADERS_PUBLIC
   include/platform/device/sdl_audio_device.hpp
   include/platform/loader/bios.hpp
   include/platform/loader/rom.hpp
+  include/platform/loader/save_state.hpp
+  include/platform/writer/save_state.hpp
   include/platform/config.hpp
   include/platform/emulator_thread.hpp
   include/platform/frame_limiter.hpp

@@ -56,6 +56,9 @@ struct SoundControl {
   auto Read(int address) -> u8;
   void Write(int address, u8 value);
 
+  auto ReadWord() -> u32;
+  void WriteWord(u32 value);
+
 private:
   FIFO* fifos;
 
@@ -72,6 +75,9 @@ struct BIAS {
   void Reset();
   auto Read(int address) -> u8;
   void Write(int address, u8 value);
+
+  auto ReadHalf() -> u16;
+  void WriteHalf(u16 value);
   
   auto GetSampleInterval() -> int { return 512 >> resolution; }
   auto GetSampleRate() -> int { return 32768 << resolution; }
