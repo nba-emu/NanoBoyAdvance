@@ -25,7 +25,7 @@ void Core::LoadState(SaveState const& state) {
 
 void Core::CopyState(SaveState& state) {
   state.magic = SaveState::kMagicNumber;
-  state.version = 1;
+  state.version = SaveState::kCurrentVersion;
   state.timestamp = scheduler.GetTimestampNow();
 
   cpu.CopyState(state);

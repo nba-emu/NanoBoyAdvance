@@ -11,6 +11,8 @@
 #include <cmath>
 #include <functional>
 #include <nba/core.hpp>
+#include <platform/loader/save_state.hpp>
+#include <platform/writer/save_state.hpp>
 #include <platform/emulator_thread.hpp>
 #include <memory>
 #include <QMainWindow>
@@ -56,6 +58,7 @@ private:
   void CreateConfigMenu(QMenuBar* menu_bar);
   void CreateHelpMenu(QMenuBar* menu_bar);
   void RenderRecentFilesMenu();
+  void RenderSaveStateMenus();
 
   void SelectBIOS();
   void PromptUserForReset();
@@ -108,6 +111,9 @@ private:
 
   void UpdateSolarSensorLevel();
 
+  auto LoadState(std::string const& path) -> nba::SaveStateLoader::Result;
+  auto SaveState(std::string const& path) -> nba::SaveStateWriter::Result;
+
   std::shared_ptr<Screen> screen;
   std::shared_ptr<nba::BasicInputDevice> input_device = std::make_shared<nba::BasicInputDevice>();
   std::shared_ptr<QtConfig> config = std::make_shared<QtConfig>();
@@ -120,6 +126,10 @@ private:
   InputWindow* input_window;
   QMenu* recent_menu;
   QAction* current_solar_level = nullptr;
+  QMenu* load_state_menu;
+  QMenu* save_state_menu;
+  bool game_loaded = false;
+  std::string game_path;
 
   nba::SaveState save_state_test;
 
