@@ -63,7 +63,7 @@ MainWindow::MainWindow(
     } else {
       setWindowTitle("NanoBoyAdvance 1.5");
     }
-  }, Qt::BlockingQueuedConnection);
+  }, Qt::QueuedConnection);
 
   UpdateWindowSize();
 }
