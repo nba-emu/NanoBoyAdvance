@@ -35,16 +35,10 @@ Its CPU and timing emulation is more accurate than other software emulators righ
 
 - Cycle-accurate emulation of the CPU, DMA, timers and Game Pak prefetch buffer
 - Passes all AGS aging cartridge tests (NBA was the first public emulator to achieve this)
-- Passes most tests in the [mGBA test suite](https://github.com/mgba-emu/suite) (see [ACCURACY.md](docs/ACCURACY.md) for more details)
+- Passes most tests in the [mGBA test suite](https://github.com/mgba-emu/suite) (see [mGBA suite comparison](docs/ACCURACY.md#mGBA-suite-comparison) for more details)
 - Passes [ARMWrestler](https://github.com/destoer/armwrestler-gba-fixed), [gba-suite](https://github.com/jsmolka/gba-tests) and [FuzzARM](https://github.com/DenSinH/FuzzARM) CPU tests
-- High compatibility, including games that require emulation of peculiar hardware edge-cases to run or look correctly, such as:
-   - Hello Kitty Collection: Miracle Fashion Maker
-   - Classic NES series
-   - James Pond - Codename Robocod
-   - Phantasy Star Collection
-   - Golden Sun
-   - Pinball Tycoon
-   
+- High compatibility, including games that require emulation of peculiar hardware edge-cases (see [Game compatibility](docs/ACCURACY.md#Game-compatibility))
+
 Cycle-accurate PPU emulation is an active topic of research and will be implemented, once the timing has been understood and documented well enough.
 
 ## Compiling
