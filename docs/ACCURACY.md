@@ -19,3 +19,26 @@ Misc Edge Case|         10 |              8 |      7 - 8 |           7 |        
 Layer Toggle  |          1 |           pass |       fail |        pass |      fail |       pass |
 OAM Update    |          1 |           pass |       fail |        fail |      fail |       pass |
 
+# Game compatibility
+
+This is intended to be list of games that used to or currently have issues in NanoBoyAdvance and rely on peculiar edge-cases.
+Some of these issues are minor visual bugs, that do not affect gameplay, others are game breaking.
+
+It is worth noting that all modern, accurate GBA emulators run most of these games flawlessly, having issues with just a couple of them.
+
+## Known working
+
+- Hello Kitty Collection: Miracle Fashion Maker (mid-instruction DMA affects open bus: [mGBA blog article](https://mgba.io/2020/01/25/infinite-loop-holy-grail/))
+- Classic NES series (various edge-cases: [mGBA blog article](https://mgba.io/2014/12/28/classic-nes/))
+- James Pond - Codename Robocod (requires IRQ delaying: see ARM7TDMI-**S** manual about IRQ/FIQ latencies)
+- Phantasy Star Collection (DMA from write-only IO returns open bus: https://github.com/nba-emu/NanoBoyAdvance/issues/109)
+- Pinball Tycoon ([internal affine registers are updated conditionally](https://github.com/mgba-emu/mgba/issues/1668#issuecomment-925306878))
+- Gunstar Heroes (requires limiting sprite render cycles: https://github.com/nba-emu/NanoBoyAdvance/issues/98)
+- Golden Sun (Sprite attributes are updated regardless of transparency: https://github.com/nba-emu/NanoBoyAdvance/issues/99) (minor)
+- Iridion 3D (BGX/BGY writes are latched at the start of the scanline: https://github.com/nba-emu/NanoBoyAdvance/issues/176) (minor)
+
+## Known broken
+
+- Gadget Racers (requires sub-scanline precision: https://github.com/nba-emu/NanoBoyAdvance/issues/230)
+- Metal Max Kai II (original revision) (requires sub-scanline precision: https://github.com/nba-emu/NanoBoyAdvance/issues/229) (minor)
+- Acrobat Kid (requires more precise emulation of VRAM mirror writes: https://github.com/nba-emu/NanoBoyAdvance/issues/102) (minor)
