@@ -4,8 +4,8 @@
 ![build](https://img.shields.io/github/workflow/status/nba-emu/NanoBoyAdvance/Build/master)
 
 NanoBoyAdvance is a highly accurate Game Boy Advance emulator.<br>
-It aims to be the most accurate Game Boy Advance emulator, while also offering enhancements such as
-improved audio quality.
+It aims for cycle-accurate emulation when possible, while also offering enhancements such as
+improved audio quality.<br>
 
 ![screenshot1](docs/screenshot.png)
 
@@ -13,6 +13,7 @@ improved audio quality.
 - Very high compatibility and accuracy (see [Accuracy](#accuracy))
 - HQ audio mixer (for games which use Nintendo's MusicPlayer2000 sound engine)
 - Post-processing options (color correction, xBRZ upscaling and LCD ghosting simulation)
+- Save State support (10x save slots available)
 - Game controller support (buttons and axises can be remapped)
 - Loading ROMs from archives (Zip, 7z, Tar and limited RAR[^1] support)
 - RTC emulation
@@ -36,13 +37,13 @@ Its CPU and timing emulation is more accurate than other software emulators righ
 - Passes all AGS aging cartridge tests (NBA was the first public emulator to achieve this)
 - Passes most tests in the [mGBA test suite](https://github.com/mgba-emu/suite) (see [ACCURACY.md](docs/ACCURACY.md) for more details)
 - Passes [ARMWrestler](https://github.com/destoer/armwrestler-gba-fixed), [gba-suite](https://github.com/jsmolka/gba-tests) and [FuzzARM](https://github.com/DenSinH/FuzzARM) CPU tests
-- Runs many difficult to emulate games without game-specific hacks, for example:
+- High compatibility, including games that require emulation of peculiar hardware edge-cases to run or look correctly, such as:
    - Hello Kitty Collection: Miracle Fashion Maker
-   - Hamtaro Rainbow Rescue (with Spanish or German language)
    - Classic NES series
-   - Golden Sun
    - James Pond - Codename Robocod
    - Phantasy Star Collection
+   - Golden Sun
+   - Pinball Tycoon
    
 Cycle-accurate PPU emulation is an active topic of research and will be implemented, once the timing has been understood and documented well enough.
 
