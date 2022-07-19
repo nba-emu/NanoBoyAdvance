@@ -23,6 +23,13 @@ void ARM7TDMI::LoadState(SaveState const& save_state) {
 
   state.cpsr.v = save_state.arm.regs.cpsr;
 
+  auto bank = GetRegisterBankByMode(state.cpsr.f.mode);
+  if (bank != BANK_NONE) {
+    p_spsr = &state.spsr[bank];
+  } else {
+    p_spsr = &state.cpsr;
+  }
+
   pipe.access = save_state.arm.pipe.access;
 
   for (int i = 0; i < 2; i++) {
