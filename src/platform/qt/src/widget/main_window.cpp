@@ -82,7 +82,7 @@ void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
   auto file_menu = menu_bar->addMenu(tr("&File"));
 
   auto open_action = file_menu->addAction(tr("&Open"));
-  open_action->setShortcut(Qt::CTRL + Qt::Key_O);
+  open_action->setShortcut(Qt::CTRL | Qt::Key_O);
   connect(
     open_action,
     &QAction::triggered,
@@ -102,7 +102,7 @@ void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
   file_menu->addSeparator();
 
   auto reset_action = file_menu->addAction(tr("Reset"));
-  reset_action->setShortcut(Qt::CTRL + Qt::Key_R);
+  reset_action->setShortcut(Qt::CTRL | Qt::Key_R);
   connect(
     reset_action,
     &QAction::triggered,
@@ -114,7 +114,7 @@ void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
   pause_action = file_menu->addAction(tr("Pause"));
   pause_action->setCheckable(true);
   pause_action->setChecked(false);
-  pause_action->setShortcut(Qt::CTRL + Qt::Key_P);
+  pause_action->setShortcut(Qt::CTRL | Qt::Key_P);
   connect(
     pause_action,
     &QAction::triggered,
@@ -266,7 +266,7 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
 
     action->setCheckable(true);
     action->setChecked(config->video.scale == scale);
-    action->setShortcut(Qt::SHIFT + (Qt::Key_1 + scale - 1));
+    action->setShortcut(Qt::SHIFT | (Qt::Key)((int)Qt::Key_1 + scale - 1));
 
     connect(action, &QAction::triggered, [=]() {
       config->video.scale = scale;
@@ -280,7 +280,7 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
   auto fullscreen_action = menu->addAction(tr("Fullscreen"));
   fullscreen_action->setCheckable(true);
   fullscreen_action->setChecked(config->video.fullscreen);
-  fullscreen_action->setShortcut(Qt::CTRL + Qt::Key_F);
+  fullscreen_action->setShortcut(Qt::CTRL | Qt::Key_F);
   connect(fullscreen_action, &QAction::triggered, [this](bool fullscreen) {
     config->video.fullscreen = fullscreen;
     config->Save();
@@ -353,7 +353,7 @@ void MainWindow::RenderRecentFilesMenu() {
   for (auto& path : config->recent_files) {
     auto action = recent_menu->addAction(QString::fromStdString(path));
 
-    action->setShortcut(Qt::CTRL + (Qt::Key_0 + i++));
+    action->setShortcut(Qt::CTRL | (Qt::Key) ((int) Qt::Key_0 + i++));
 
     connect(action, &QAction::triggered, [this, path] {
       LoadROM(path);
@@ -374,9 +374,9 @@ void MainWindow::RenderSaveStateMenus() {
     action_load->setDisabled(true);
     action_save->setDisabled(true);
 
-    auto key = Qt::Key_F1 + i - 1;
+    auto key = (Qt::Key)((int)Qt::Key_F1 + i - 1);
     action_load->setShortcut(key);
-    action_save->setShortcut(Qt::SHIFT + key);
+    action_save->setShortcut(Qt::SHIFT | key);
 
     if (game_loaded) {
       auto slot_filename = std::filesystem::path{game_path}

@@ -25,22 +25,15 @@ set(RESOURCES
 
 set(CMAKE_AUTOMOC ON)
 
-if(WIN32)
-  option(PLATFORM_QT_STATIC "Build statically linked exectuable (Qt)" OFF)
-  
-  # Shamelessly stolen from melonDS:
-  if(PLATFORM_QT_STATIC AND QT5_STATIC_DIR)
-    set(QT5_STATIC_BASE ${QT5_STATIC_DIR}/lib/cmake/Qt5)
-    set(Qt5_DIR ${QT5_STATIC_BASE})
-    set(Qt5Core_DIR ${QT5_STATIC_BASE}Core)
-    set(Qt5Gui_DIR ${QT5_STATIC_BASE}Gui)
-    set(Qt5Widgets_DIR ${QT5_STATIC_BASE}Widgets)
-    set(Qt5OpenGL_DIR ${QT5_STATIC_BASE}OpenGL)
-  endif()
-endif()
+option(USE_QT6 "Use Qt 6" OFF)
 
-find_package(Qt5 COMPONENTS Core Gui Widgets OpenGL REQUIRED)
-set(QT_DEPS Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
+if (USE_QT6)
+  find_package(Qt6 COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets REQUIRED)
+  set(QT_DEPS Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets)
+else()
+  find_package(Qt5 COMPONENTS Core Gui Widgets OpenGL REQUIRED)
+  set(QT_DEPS Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
+endif()
 
 # Append application resources (icon and manifest) on Win32.
 if(WIN32)
@@ -77,7 +70,11 @@ if (APPLE AND MACOS_BUILD_APP_BUNDLE)
   target_compile_definitions(NanoBoyAdvance-Qt PRIVATE MACOS_BUILD_APP_BUNDLE)
 
   if (MACOS_BUNDLE_QT)
-    get_target_property(_qmake_executable Qt5::qmake IMPORTED_LOCATION)
+    if (USE_QT6)
+      get_target_property(_qmake_executable Qt6::qmake IMPORTED_LOCATION)
+    else()
+      get_target_property(_qmake_executable Qt5::qmake IMPORTED_LOCATION)
+    endif()
     get_filename_component(_qt_bin_dir "${_qmake_executable}" DIRECTORY)
     find_program(MACDEPLOYQT_EXECUTABLE macdeployqt HINTS "${_qt_bin_dir}")
 
@@ -89,6 +86,14 @@ if (APPLE AND MACOS_BUILD_APP_BUNDLE)
   endif()
 else()
   add_executable(NanoBoyAdvance-Qt ${SOURCES} ${HEADERS} ${RESOURCES})
+endif()
+
+if (WIN32)
+  option(PLATFORM_QT_STATIC "Build statically linked exectuable (Qt)" OFF)
+
+  if(PLATFORM_QT_STATIC)
+    target_link_options(NanoBoyAdvance-Qt PRIVATE -static)
+  endif()
 endif()
 
 set_target_properties(NanoBoyAdvance-Qt PROPERTIES OUTPUT_NAME "NanoBoyAdvance")
