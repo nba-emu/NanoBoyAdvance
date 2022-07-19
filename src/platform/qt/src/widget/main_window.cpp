@@ -532,7 +532,7 @@ void MainWindow::Stop() {
   if (emu_thread->IsRunning()) {
     emu_thread->Stop();
     config->audio_dev->Close();
-    screen->Clear();
+    screen->SetForceClear(true);
 
     // Clear the list of save state slots:
     game_loaded = false;
@@ -545,10 +545,9 @@ void MainWindow::Stop() {
 void MainWindow::LoadROM(std::string path) {
   bool retry;
 
-  emu_thread->Stop();
+  Stop();
+
   config->Load();
-  config->UpdateRecentFiles(path);
-  RenderRecentFilesMenu();
 
   do {
     retry = false;
@@ -612,6 +611,9 @@ void MainWindow::LoadROM(std::string path) {
     }
   }
 
+  config->UpdateRecentFiles(path);
+  RenderRecentFilesMenu();
+
   // Update the list of save state slots:
   game_loaded = true;
   game_path = path;
@@ -620,6 +622,7 @@ void MainWindow::LoadROM(std::string path) {
   UpdateSolarSensorLevel();
   core->Reset();
   emu_thread->Start();
+  screen->SetForceClear(false);
 }
 
 auto MainWindow::LoadState(std::string const& path) -> nba::SaveStateLoader::Result {

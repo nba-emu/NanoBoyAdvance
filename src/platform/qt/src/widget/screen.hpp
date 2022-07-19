@@ -20,7 +20,7 @@ struct Screen : QOpenGLWidget, nba::VideoDevice {
   );
 
   void Draw(u32* buffer) final;
-  void Clear();
+  void SetForceClear(bool force_clear);
   void ReloadConfig();
 
 signals:
@@ -40,7 +40,7 @@ private:
   static constexpr float kGBANativeAR = static_cast<float>(kGBANativeWidth) / static_cast<float>(kGBANativeHeight);
 
   u32* buffer = nullptr;
-  bool should_clear = false;
+  bool force_clear = false;
   nba::OGLVideoDevice ogl_video_device;
   std::shared_ptr<QtConfig> config;
 

@@ -19,12 +19,11 @@ Screen::Screen(
 }
 
 void Screen::Draw(u32* buffer) {
-  should_clear = false;
   emit RequestDraw(buffer);
 }
 
-void Screen::Clear() {
-  should_clear = true;
+void Screen::SetForceClear(bool force_clear) {
+  this->force_clear = force_clear;
   update();
 }
 
@@ -45,15 +44,12 @@ void Screen::initializeGL() {
 }
 
 void Screen::paintGL() {
-  if (buffer != nullptr) {
-    ogl_video_device.SetDefaultFBO(defaultFramebufferObject());
-    ogl_video_device.Draw(buffer);
-  }
-
-  if (should_clear) {
+  if (force_clear) {
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT);
-    should_clear = false;
+  } else if (buffer != nullptr) {
+    ogl_video_device.SetDefaultFBO(defaultFramebufferObject());
+    ogl_video_device.Draw(buffer);
   }
 }
 
