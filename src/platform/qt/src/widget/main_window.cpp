@@ -266,7 +266,7 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
 
     action->setCheckable(true);
     action->setChecked(config->video.scale == scale);
-    action->setShortcut(Qt::SHIFT | (Qt::Key) ((int) Qt::Key_1 | scale - 1));
+    action->setShortcut(Qt::SHIFT | (Qt::Key)((int)Qt::Key_1 + scale - 1));
 
     connect(action, &QAction::triggered, [=]() {
       config->video.scale = scale;
@@ -374,9 +374,9 @@ void MainWindow::RenderSaveStateMenus() {
     action_load->setDisabled(true);
     action_save->setDisabled(true);
 
-    auto key = Qt::Key_F1 + i - 1;
+    auto key = (Qt::Key)((int)Qt::Key_F1 + i - 1);
     action_load->setShortcut(key);
-    action_save->setShortcut(Qt::SHIFT | (Qt::Key) key);
+    action_save->setShortcut(Qt::SHIFT | key);
 
     if (game_loaded) {
       auto slot_filename = std::filesystem::path{game_path}
