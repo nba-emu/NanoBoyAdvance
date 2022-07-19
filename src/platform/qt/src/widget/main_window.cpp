@@ -611,6 +611,7 @@ void MainWindow::LoadROM(std::string path) {
     }
   }
 
+  // Update the list of recent files
   config->UpdateRecentFiles(path);
   RenderRecentFilesMenu();
 
@@ -619,10 +620,14 @@ void MainWindow::LoadROM(std::string path) {
   game_path = path;
   RenderSaveStateMenus();
 
-  UpdateSolarSensorLevel();
+  // Reset the core and start the emulation thread.
+  // Unpause the emulator if it was paused.
+  SetPause(false);
   core->Reset();
   emu_thread->Start();
   screen->SetForceClear(false);
+
+  UpdateSolarSensorLevel();
 }
 
 auto MainWindow::LoadState(std::string const& path) -> nba::SaveStateLoader::Result {
