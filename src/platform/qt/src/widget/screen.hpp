@@ -8,7 +8,6 @@
 #pragma once
 
 #include <platform/device/ogl_video_device.hpp>
-#include <QGLWidget>
 #include <QOpenGLWidget>
 
 #include "config.hpp"
