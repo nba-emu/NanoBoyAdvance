@@ -69,6 +69,7 @@ struct PPU {
     address &= 0x1FFFF;
     if (address >= 0x18000) {
       if (mmio.dispcnt.mode >= 3) {
+        // TODO: there's a chance that this really returns open bus.
         return 0;
       }
       address &= ~0x8000;
