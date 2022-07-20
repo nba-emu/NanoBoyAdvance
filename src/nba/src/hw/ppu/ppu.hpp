@@ -68,6 +68,9 @@ struct PPU {
   auto ALWAYS_INLINE ReadVRAM(u32 address) noexcept -> T {
     address &= 0x1FFFF;
     if (address >= 0x18000) {
+      if (mmio.dispcnt.mode >= 3) {
+        return 0;
+      }
       address &= ~0x8000;
     }
     return read<T>(vram, address);
@@ -79,6 +82,9 @@ struct PPU {
 
     address &= 0x1FFFF;
     if (address >= 0x18000) {
+      if (mmio.dispcnt.mode >= 3) {
+        return;
+      }
       address &= ~0x8000;
     }
 
