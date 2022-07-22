@@ -67,13 +67,15 @@ struct PPU {
   template<typename T>
   auto ALWAYS_INLINE ReadVRAM(u32 address) noexcept -> T {
     address &= 0x1FFFF;
+
     if (address >= 0x18000) {
-      if (mmio.dispcnt.mode >= 3) {
-        // TODO: there's a chance that this really returns open bus.
+      if ((address & 0x4000) == 0 && mmio.dispcnt.mode >= 3) {
+        // TODO: check if this should actually return open bus.
         return 0;
       }
       address &= ~0x8000;
     }
+
     return read<T>(vram, address);
   }
 
@@ -82,8 +84,9 @@ struct PPU {
     WaitForRenderThread();
 
     address &= 0x1FFFF;
+
     if (address >= 0x18000) {
-      if (mmio.dispcnt.mode >= 3) {
+      if ((address & 0x4000) == 0 && mmio.dispcnt.mode >= 3) {
         return;
       }
       address &= ~0x8000;
