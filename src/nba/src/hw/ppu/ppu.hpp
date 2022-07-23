@@ -8,6 +8,7 @@
 #pragma once
 
 #include <atomic>
+#include <condition_variable>
 #include <functional>
 #include <nba/common/compiler.hpp>
 #include <nba/common/punning.hpp>
@@ -276,6 +277,9 @@ private:
   std::atomic_int render_thread_vcount;
   std::atomic_int render_thread_vcount_max;
   std::atomic_bool render_thread_running = false;
+  std::condition_variable render_thread_cv;
+  std::mutex render_thread_mutex;
+  bool render_thread_ready;
   MMIO mmio_copy[228];
   int vram_dirty_range_lo;
   int vram_dirty_range_hi;

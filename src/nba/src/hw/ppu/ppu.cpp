@@ -297,6 +297,7 @@ void PPU::SetupRenderThread() {
   render_thread_vcount = 0;
   render_thread_vcount_max = -1;
   render_thread_running = true;
+  render_thread_ready = false;
 
   render_thread = std::thread([this]() {
     while (render_thread_running.load()) {
@@ -329,6 +330,12 @@ void PPU::SetupRenderThread() {
 
         render_thread_vcount++;
       }
+
+      // Wait for CV here
+      std::unique_lock lock{render_thread_mutex};
+      render_thread_cv.wait(lock, [this]{ return render_thread_ready; });
+      // TODO: is it okay to do this?
+      render_thread_ready = false;
     }
   });
 }
@@ -336,6 +343,13 @@ void PPU::SetupRenderThread() {
 void PPU::StopRenderThread() {
   if (!render_thread_running) {
     return;
+  }
+
+  // make it wakeup
+  {
+    std::lock_guard lock{render_thread_mutex};
+    render_thread_ready = true;
+    render_thread_cv.notify_one();
   }
 
   render_thread_running = false;
@@ -371,6 +385,10 @@ void PPU::SubmitScanline() {
 
     render_thread_vcount = 0;
   }
+
+  std::lock_guard lock{render_thread_mutex};
+  render_thread_ready = true;
+  render_thread_cv.notify_one();
 }
 
 void PPU::ScheduleSubmitScanline() {
