@@ -297,6 +297,7 @@ void PPU::SetupRenderThread() {
   render_thread_vcount = 0;
   render_thread_vcount_max = -1;
   render_thread_running = true;
+  render_thread_ready = false;
 
   render_thread = std::thread([this]() {
     while (render_thread_running.load()) {
@@ -329,6 +330,11 @@ void PPU::SetupRenderThread() {
 
         render_thread_vcount++;
       }
+
+      // Wait for the emulation thread to submit more work:
+      std::unique_lock lock{render_thread_mutex};
+      render_thread_cv.wait(lock, [this]{return render_thread_ready;});
+      render_thread_ready = false;
     }
   });
 }
@@ -338,6 +344,13 @@ void PPU::StopRenderThread() {
     return;
   }
 
+  // Wake the render thread up, if it is waiting for new data:
+  render_thread_mutex.lock();
+  render_thread_ready = true;
+  render_thread_cv.notify_one();
+  render_thread_mutex.unlock();
+
+  // Tell the render thread to quit and join it:
   render_thread_running = false;
   render_thread.join();
 }
@@ -355,8 +368,6 @@ void PPU::SubmitScanline() {
     mmio_copy[vcount].winv[1] = mmio.winv[1];
   }
 
-  render_thread_vcount_max = vcount;
-
   if (vcount == 0) {
     // Make a snapshot of PRAM, OAM and VRAM at the start of the frame.
     std::memcpy(pram_draw, pram, sizeof(pram));
@@ -371,6 +382,12 @@ void PPU::SubmitScanline() {
 
     render_thread_vcount = 0;
   }
+
+  render_thread_vcount_max = vcount;
+
+  std::lock_guard lock{render_thread_mutex};
+  render_thread_ready = true;
+  render_thread_cv.notify_one();
 }
 
 void PPU::ScheduleSubmitScanline() {
