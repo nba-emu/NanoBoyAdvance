@@ -300,7 +300,7 @@ void DMA::Write(int chan_id, int offset, u8 value) {
     case REG_DMAXCNT_H | 1: {
       bool enable_old = channel.enable;
 
-      // TODO: check that the actual repeat bit is masked if immediate transfer is selected.
+      // TODO: the repeat bit probably should not actually be masked
       channel.src_cntl  = Channel::Control((channel.src_cntl & 0b01) | ((value & 1) << 1));
       channel.size = static_cast<Channel::Size>((value >> 2) & 1);
       channel.time = static_cast<Channel::Timing>((value >> 4) & 3);
@@ -332,90 +332,95 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
     }
   };
 
+  bool enable_new = channel.enable;
+
   // If the DMA is enabled this information will be regenerated below.
   hblank_set.set(channel.id, false);
   vblank_set.set(channel.id, false);
   video_set.set(channel.id, false);
 
-  if (!channel.enable) {
+  if (enable_new) {
+    if (!enable_old) {
+      // DMA enable bit: 0 -> 1 (rising-edge)
+      int src_page = GetUnaliasedMemoryArea(channel.src_addr >> 24);
+
+      channel.latch.dst_addr = channel.dst_addr;
+      channel.latch.src_addr = channel.src_addr;
+
+      /**
+       * TODO:
+       * DMA actually always uses sequential accesses for all except the first ROM access.
+       * This is a better explanation of the observed behavior and makes it redundant
+       * to force increment mode.
+       */
+      if (src_page == 0x08) {
+        channel.src_cntl = Channel::Control::Increment;
+      }
+
+      if (channel.time == Channel::Special && (channel.id == 1 || channel.id == 2)) {
+        channel.is_fifo_dma = true;
+
+        channel.size = Channel::Size::Word;
+        channel.latch.length = 4;
+        channel.latch.src_addr &= ~3;
+        channel.latch.dst_addr &= ~3;
+      } else {
+        channel.is_fifo_dma = false;
+
+        auto mask = channel.size == Channel::Word ? ~3 : ~1;
+        channel.latch.src_addr &= mask;
+        channel.latch.dst_addr &= mask;
+        channel.latch.length = channel.length & g_dma_len_mask[channel.id];
+        if (channel.latch.length == 0) {
+          channel.latch.length = g_dma_len_mask[channel.id] + 1;
+        }
+
+        auto chan_id = channel.id;
+        auto time = channel.time;
+
+        channel.startup_event = scheduler.Add(2, [=](int late) {
+          channels[chan_id].startup_event = nullptr;
+
+          if (time == Channel::Immediate) {
+            ScheduleDMAs(1 << chan_id);
+          } else {
+            UpdateDMASets(chan_id, time);
+          }
+        });
+      }
+    } else {
+      // DMA enable bit: 1 -> 1 (remains set)
+      UpdateDMASets(channel.id, channel.time);
+
+      /* When the config register of a DMA is written while it is running,
+       * bail out of the DMA transfer loop so that the new config is used
+       * for the (half-)word transfers following this write.
+       */
+      if (channel.id == active_dma_id) {
+        should_reenter_transfer_loop = true;
+      }
+    }
+  } else {
+    // DMA enable bit: 1 -> 0 or 0 -> 0 (falling-edge or remains cleared)
     runnable_set.set(channel.id, false);
 
     // Handle disabling the DMA before it started up.
-    // TODO: not exactly known how hardware handles this edge-case.
     if (channel.startup_event != nullptr) {
-      Log<Warn>("DMA: disabled DMA{0} while it was starting.", channel.id);
+      // TODO: figure out exact hardware behaviour.
       scheduler.Cancel(channel.startup_event);
       channel.startup_event = nullptr;
+
+      Log<Warn>("DMA: disabled DMA{0} while it was starting.", channel.id);
     }
 
     // Handle DMA channel self-disable (via writing to its control register).
-    // TODO: not exactly known how hardware handles this edge-case.
     if (channel.id == active_dma_id) {
-      Log<Warn>("DMA: DMA{0} cleared its own enable bit.", channel.id);
+      // TODO: figure out exact hardware behaviour.
       should_reenter_transfer_loop = true;
       SelectNextDMA();
+
+      Log<Warn>("DMA: DMA{0} cleared its own enable bit.", channel.id);
     }
-    return;
-  }
-
-  if (enable_old) {
-    UpdateDMASets(channel.id, channel.time);
-
-    /* When the config register of a DMA is written while it is running,
-     * bail out of the DMA transfer loop so that the new config is used
-     * for the (half-)word transfers following this write.
-     */
-    if (channel.id == active_dma_id) {
-      should_reenter_transfer_loop = true;
-    }
-    return;
-  }
-
-  int src_page = GetUnaliasedMemoryArea(channel.src_addr >> 24);
-
-  channel.latch.dst_addr = channel.dst_addr;
-  channel.latch.src_addr = channel.src_addr;
-
-  /**
-   * TODO:
-   * DMA actually always uses sequential accesses for all except the first ROM access.
-   * This is a better explanation of the observed behavior and makes it redundant
-   * to force increment mode.
-   */
-  if (src_page == 0x08) {
-    channel.src_cntl = Channel::Control::Increment;
-  }
-
-  if (channel.time == Channel::Special && (channel.id == 1 || channel.id == 2)) {
-    channel.is_fifo_dma = true;
-
-    channel.size = Channel::Size::Word;
-    channel.latch.length = 4;
-    channel.latch.src_addr &= ~3;
-    channel.latch.dst_addr &= ~3;
-  } else {
-    channel.is_fifo_dma = false;
-
-    auto mask = channel.size == Channel::Word ? ~3 : ~1;
-    channel.latch.src_addr &= mask;
-    channel.latch.dst_addr &= mask;
-    channel.latch.length = channel.length & g_dma_len_mask[channel.id];
-    if (channel.latch.length == 0) {
-      channel.latch.length = g_dma_len_mask[channel.id] + 1;
-    }
-
-    auto chan_id = channel.id;
-    auto time = channel.time;
-
-    channel.startup_event = scheduler.Add(2, [=](int late) {
-      channels[chan_id].startup_event = nullptr;
-
-      if (time == Channel::Immediate) {
-        ScheduleDMAs(1 << chan_id);
-      } else {
-        UpdateDMASets(chan_id, time);
-      }
-    });
   }
 }
 
