@@ -42,3 +42,4 @@ Some of these issues are minor visual bugs, that do not affect gameplay, others 
 
 - Gadget Racers (requires sub-scanline precision: https://github.com/nba-emu/NanoBoyAdvance/issues/230)
 - Metal Max Kai II (original revision) (requires sub-scanline precision: https://github.com/nba-emu/NanoBoyAdvance/issues/229) (minor issue)
+- Madden NFL 06 (requires VRAM access stalling: https://github.com/nba-emu/NanoBoyAdvance/issues/241)
