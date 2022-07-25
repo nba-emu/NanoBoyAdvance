@@ -82,36 +82,13 @@ void DMA::Reset() {
   }
 }
 
-void DMA::ScheduleDMAs(unsigned int bitset, int delay) {
-  while (bitset > 0) {
-    auto chan_id = g_dma_from_bitset[bitset];
-    auto& channel = channels[chan_id];
-
-    Log<Trace>("DMA: request DMA[{}] src=0x{:08X}({}) dst=0x{:08X}({}) count=0x{:05X} word={} repeat={} irq={} ({})",
-      channel.id,
-      channel.src_addr,
-      g_address_mode_name[channel.src_cntl],
-      channel.dst_addr,
-      g_address_mode_name[channel.dst_cntl],
-      channel.length,
-      channel.size,
-      channel.repeat ? 1 : 0,
-      channel.interrupt ? 1 : 0,
-      g_dma_time_name[channel.time]
-    );
-
-    bitset &= ~(1 << chan_id);
-
-    channel.startup_event = scheduler.Add(delay, [this, chan_id](int cycles_late) {
-      channels[chan_id].startup_event = nullptr;
-      if (runnable_set.none()) {
-        active_dma_id = chan_id;
-      } else if (chan_id < active_dma_id) {
-        active_dma_id = chan_id;
-        should_reenter_transfer_loop = true;
-      }
-      runnable_set.set(chan_id, true);
-    });
+void DMA::ScheduleDMAs(unsigned int bitset) {
+  if (bitset != 0) {
+    if (g_dma_from_bitset[bitset] < active_dma_id) {
+      should_reenter_transfer_loop = true;
+    }
+    runnable_set |= bitset;
+    SelectNextDMA();
   }
 }
 
@@ -261,10 +238,8 @@ void DMA::RunChannel() {
       channel.latch.dst_addr = channel.dst_addr & mask;
     }
   } else {
+    RemoveChannelFromDMASets(channel);
     channel.enable = false;
-    hblank_set.set(channel.id, false);
-    vblank_set.set(channel.id, false);
-    video_set.set(channel.id, false);
   }
 
   SelectNextDMA();
@@ -323,7 +298,7 @@ void DMA::Write(int chan_id, int offset, u8 value) {
     case REG_DMAXCNT_H | 1: {
       bool enable_old = channel.enable;
 
-      // TODO: check that the actual repeat bit is masked if immediate transfer is selected.
+      // TODO: the repeat bit probably should not actually be masked
       channel.src_cntl  = Channel::Control((channel.src_cntl & 0b01) | ((value & 1) << 1));
       channel.size = static_cast<Channel::Size>((value >> 2) & 1);
       channel.time = static_cast<Channel::Timing>((value >> 4) & 3);
@@ -339,97 +314,127 @@ void DMA::Write(int chan_id, int offset, u8 value) {
 }
 
 void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
-  // If the DMA is enabled this information will be regenerated below.
-  hblank_set.set(channel.id, false);
-  vblank_set.set(channel.id, false);
-  video_set.set(channel.id, false);
+  bool enable_new = channel.enable;
 
-  if (!channel.enable) {
+  RemoveChannelFromDMASets(channel);
+
+  if (enable_new) {
+    if (!enable_old) {
+      // DMA enable bit: 0 -> 1 (rising-edge)
+      int src_page = GetUnaliasedMemoryArea(channel.src_addr >> 24);
+
+      channel.latch.dst_addr = channel.dst_addr;
+      channel.latch.src_addr = channel.src_addr;
+
+      /**
+       * TODO:
+       * DMA actually always uses sequential accesses for all except the first ROM access.
+       * This is a better explanation of the observed behavior and makes it redundant
+       * to force increment mode.
+       */
+      if (src_page == 0x08) {
+        channel.src_cntl = Channel::Control::Increment;
+      }
+
+      if (channel.time == Channel::Special && (channel.id == 1 || channel.id == 2)) {
+        channel.is_fifo_dma = true;
+
+        channel.size = Channel::Size::Word;
+        channel.latch.length = 4;
+        channel.latch.src_addr &= ~3;
+        channel.latch.dst_addr &= ~3;
+      } else {
+        channel.is_fifo_dma = false;
+
+        auto mask = channel.size == Channel::Word ? ~3 : ~1;
+        channel.latch.src_addr &= mask;
+        channel.latch.dst_addr &= mask;
+        channel.latch.length = channel.length & g_dma_len_mask[channel.id];
+        if (channel.latch.length == 0) {
+          channel.latch.length = g_dma_len_mask[channel.id] + 1;
+        }
+
+        ScheduleDMAEnable(channel, 2);
+      }
+    } else {
+      // DMA enable bit: 1 -> 1 (remains set)
+
+      // Note: the DMA isn't really running, while it is still enabling.
+      if (channel.enable_event == nullptr) {
+        AddChannelToDMASet(channel);
+
+        /* When the config register of a DMA is written while it is running,
+         * bail out of the DMA transfer loop so that the new config is used
+         * for the (half-)word transfers following this write.
+         */
+        if (channel.id == active_dma_id) {
+          should_reenter_transfer_loop = true;
+        }
+      }
+    }
+  } else {
+    // DMA enable bit: 1 -> 0 or 0 -> 0 (falling-edge or remains cleared)
     runnable_set.set(channel.id, false);
 
     // Handle disabling the DMA before it started up.
-    // TODO: not exactly known how hardware handles this edge-case.
-    if (channel.startup_event != nullptr) {
+    if (channel.enable_event != nullptr) {
+      // TODO: figure out exact hardware behaviour.
+      scheduler.Cancel(channel.enable_event);
+      channel.enable_event = nullptr;
+
       Log<Warn>("DMA: disabled DMA{0} while it was starting.", channel.id);
-      scheduler.Cancel(channel.startup_event);
-      channel.startup_event = nullptr;
     }
 
     // Handle DMA channel self-disable (via writing to its control register).
-    // TODO: not exactly known how hardware handles this edge-case.
     if (channel.id == active_dma_id) {
-      Log<Warn>("DMA: DMA{0} cleared its own enable bit.", channel.id);
+      // TODO: figure out exact hardware behaviour.
       should_reenter_transfer_loop = true;
       SelectNextDMA();
-    }
-    return;
-  }
 
-  /* Update H-blank/V-blank DMA sets.
-   * This information is used to schedule these DMAs on request.
-   */
+      Log<Warn>("DMA: DMA{0} cleared its own enable bit.", channel.id);
+    }
+  }
+}
+
+void DMA::AddChannelToDMASet(Channel& channel) {
   switch (channel.time) {
-    case Channel::HBlank:
+    case Channel::HBlank: {
       hblank_set.set(channel.id, true);
       break;
-    case Channel::VBlank:
+    }
+    case Channel::VBlank: {
       vblank_set.set(channel.id, true);
       break;
-    case Channel::Special:
+    }
+    case Channel::Special: {
       if (channel.id == 3) {
         video_set.set(3, true);
       }
       break;
-  }
-
-  if (enable_old) {
-    /* When the config register of a DMA is written while it is running,
-     * bail out of the DMA transfer loop so that the new config is used
-     * for the (half-)word transfers following this write.
-     */
-    if (channel.id == active_dma_id) {
-      should_reenter_transfer_loop = true;
     }
-    return;
   }
+}
 
-  int src_page = GetUnaliasedMemoryArea(channel.src_addr >> 24);
+void DMA::RemoveChannelFromDMASets(Channel& channel) {
+  hblank_set.set(channel.id, false);
+  vblank_set.set(channel.id, false);
+  video_set.set(channel.id, false);
+}
 
-  channel.latch.dst_addr = channel.dst_addr;
-  channel.latch.src_addr = channel.src_addr;
+void DMA::ScheduleDMAEnable(Channel& channel, int delay) {
+  auto chan_id = channel.id;
 
-  /*
-   * TODO:
-   * DMA actually always uses sequential accesses for all except the first ROM access.
-   * This is a better explanation of the observed behavior and makes it redundant
-   * to force increment mode.
-   */
-  if (src_page == 0x08) {
-    channel.src_cntl = Channel::Control::Increment;
-  }
+  channel.enable_event = scheduler.Add(delay, [=](int late) {
+    auto& channel = channels[chan_id];
 
-  if (channel.time == Channel::Special && (channel.id == 1 || channel.id == 2)) {
-    channel.is_fifo_dma = true;
-
-    channel.size = Channel::Size::Word;
-    channel.latch.length = 4;
-    channel.latch.src_addr &= ~3;
-    channel.latch.dst_addr &= ~3;
-  } else {
-    channel.is_fifo_dma = false;
-
-    auto mask = channel.size == Channel::Word ? ~3 : ~1;
-    channel.latch.src_addr &= mask;
-    channel.latch.dst_addr &= mask;
-    channel.latch.length = channel.length & g_dma_len_mask[channel.id];
-    if (channel.latch.length == 0) {
-      channel.latch.length = g_dma_len_mask[channel.id] + 1;
-    }
+    channel.enable_event = nullptr;
 
     if (channel.time == Channel::Immediate) {
-      ScheduleDMAs(1 << channel.id);
+      ScheduleDMAs(1 << chan_id);
+    } else {
+      AddChannelToDMASet(channel);
     }
-  }
+  });
 }
 
 } // namespace nba::core
