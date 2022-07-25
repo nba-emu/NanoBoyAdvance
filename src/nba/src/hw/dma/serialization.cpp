@@ -47,9 +47,9 @@ void DMA::LoadState(SaveState const& state) {
 
     u64 enable_event_timestamp = channel_src.enable_event_timestamp;
 
-    // if (channel_dst.enable && enable_event_timestamp != ~0ULL) {
-    //   ScheduleDMAs(1 << i, (int)(enable_event_timestamp - state.timestamp));
-    // }
+    if (channel_dst.enable && enable_event_timestamp != ~0ULL) {
+      ScheduleDMAEnable(channels[i], (int)(enable_event_timestamp - state.timestamp));
+    }
   }
 
   SelectNextDMA();
@@ -86,11 +86,11 @@ void DMA::CopyState(SaveState& state) {
 
     channel_dst.is_fifo_dma = channel_src.is_fifo_dma;
 
-    /*if (channel_src.enable_event) {
+    if (channel_src.enable_event) {
       channel_dst.enable_event_timestamp = channel_src.enable_event->timestamp;
     } else {
       channel_dst.enable_event_timestamp = ~0ULL;
-    }*/
+    }
   }
 }
 
