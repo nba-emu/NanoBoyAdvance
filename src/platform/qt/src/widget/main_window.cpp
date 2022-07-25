@@ -16,6 +16,7 @@
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QMimeData>
 #include <QKeyEvent>
 #include <QLocale>
 #include <QStatusBar>
@@ -28,6 +29,7 @@ MainWindow::MainWindow(
   QWidget* parent
 )   : QMainWindow(parent) {
   setWindowTitle("NanoBoyAdvance 1.6");
+  setAcceptDrops(true);
 
   screen = std::make_shared<Screen>(this, config);
   setCentralWidget(screen.get());
@@ -494,9 +496,23 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
   } else if (type == QEvent::FileOpen) {
 	  auto file = dynamic_cast<QFileOpenEvent*>(event)->file();
     LoadROM(file.toStdString());
+  } else if (type == QEvent::Drop) {
+    const QMimeData* mime_data = ((QDropEvent*)event)->mimeData();
+
+    if (mime_data->hasUrls()) {
+      QList<QUrl> url_list = mime_data->urls();
+
+      if (url_list.size() > 0) {
+        LoadROM(url_list.at(0).toLocalFile().toStdString());
+      }
+    }
   }
 
   return QObject::eventFilter(obj, event);
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
+  event->acceptProposedAction();
 }
 
 void MainWindow::FileOpen() {

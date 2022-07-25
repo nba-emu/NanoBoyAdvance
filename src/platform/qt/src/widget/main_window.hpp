@@ -43,7 +43,8 @@ private slots:
   void FileOpen();
 
 protected:
-  bool eventFilter(QObject* obj, QEvent* event);
+  bool eventFilter(QObject* obj, QEvent* event) override;
+  void dragEnterEvent(QDragEnterEvent *event) override;
 
 private:
   friend struct ControllerManager;
