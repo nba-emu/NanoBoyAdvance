@@ -16,8 +16,8 @@ namespace nba {
 
 void GPIO::LoadState(SaveState const& state) {
   allow_reads = state.gpio.allow_reads;
-  rd_mask = state.gpio.rd_mask;
-  wr_mask = state.gpio.wr_mask;
+  rd_mask =   state.gpio.rd_mask;
+  wr_mask = (~state.gpio.rd_mask) & 15;
   port_data = state.gpio.port_data;
 
   for (auto& device : devices) {
@@ -28,7 +28,6 @@ void GPIO::LoadState(SaveState const& state) {
 void GPIO::CopyState(SaveState& state) {
   state.gpio.allow_reads = allow_reads;
   state.gpio.rd_mask = rd_mask;
-  state.gpio.wr_mask = wr_mask;
   state.gpio.port_data = port_data;
 
   for (auto& device : devices) {

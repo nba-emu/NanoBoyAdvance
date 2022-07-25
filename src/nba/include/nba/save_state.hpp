@@ -12,19 +12,17 @@
 
 namespace nba {
 
-// TODO: optimise for size?
-// TODO: do not ever use int or bool for 32-bit/64-bit interoperability.
+// TODO: refactor structure to allow for packing.
 
 struct SaveState {
   static constexpr u32 kMagicNumber = 0x5353424E; // NBSS
-  static constexpr u32 kCurrentVersion = 1;
+  static constexpr u32 kCurrentVersion = 2;
 
   u32 magic;
   u32 version;
   u64 timestamp;
 
   struct ARM {
-    // TODO: come up with a cleaner structure?
     struct RegisterFile {
       u32 gpr[16];
       u32 bank[6][7];
@@ -302,7 +300,6 @@ struct SaveState {
 
     bool allow_reads;
     u8 rd_mask;
-    u8 wr_mask;
     u8 port_data;
   } gpio;
 
