@@ -13,12 +13,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName",        "fleroviux"
             VALUE "FileDescription",    "NanoBoyAdvance"
-            VALUE "FileVersion",        "1.5"
+            VALUE "FileVersion",        "1.6"
             VALUE "InternalName",       "NanoBoyAdvance.exe"
             VALUE "LegalCopyright",     "(c) 2015 - 2022 fleroviux"
             VALUE "OriginalFilename",   "NanoBoyAdvance.exe"
             VALUE "ProductName",        "NanoBoyAdvance"
-            VALUE "ProductVersion",     "1.5"
+            VALUE "ProductVersion",     "1.6"
         END
     END
 

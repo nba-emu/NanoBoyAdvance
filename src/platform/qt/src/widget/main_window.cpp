@@ -27,7 +27,7 @@ MainWindow::MainWindow(
   QApplication* app,
   QWidget* parent
 )   : QMainWindow(parent) {
-  setWindowTitle("NanoBoyAdvance 1.5");
+  setWindowTitle("NanoBoyAdvance 1.6");
 
   screen = std::make_shared<Screen>(this, config);
   setCentralWidget(screen.get());
@@ -59,9 +59,9 @@ MainWindow::MainWindow(
   connect(this, &MainWindow::UpdateFrameRate, this, [this](int fps) {
     if (config->window.show_fps) {
       auto percent = fps / 59.7275 * 100;
-      setWindowTitle(QString::fromStdString(fmt::format("NanoBoyAdvance 1.5 [{} fps | {:.2f}%]", fps, percent)));
+      setWindowTitle(QString::fromStdString(fmt::format("NanoBoyAdvance 1.6 [{} fps | {:.2f}%]", fps, percent)));
     } else {
-      setWindowTitle("NanoBoyAdvance 1.5");
+      setWindowTitle("NanoBoyAdvance 1.6");
     }
   }, Qt::QueuedConnection);
 
@@ -538,7 +538,7 @@ void MainWindow::Stop() {
     game_loaded = false;
     RenderSaveStateMenus();
 
-    setWindowTitle("NanoBoyAdvance 1.5");
+    setWindowTitle("NanoBoyAdvance 1.6");
   }
 }
 
