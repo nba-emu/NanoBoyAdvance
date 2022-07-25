@@ -109,7 +109,7 @@ private:
     return page;
   }
 
-  void ScheduleDMAs(unsigned int bitset, int delay = 2);
+  void ScheduleDMAs(unsigned int bitset);
   void SelectNextDMA();
   void OnChannelWritten(Channel& channel, bool enable_old);
   void RunChannel();

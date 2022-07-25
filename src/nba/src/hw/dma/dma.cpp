@@ -82,36 +82,13 @@ void DMA::Reset() {
   }
 }
 
-void DMA::ScheduleDMAs(unsigned int bitset, int delay) {
-  while (bitset > 0) {
-    auto chan_id = g_dma_from_bitset[bitset];
-    auto& channel = channels[chan_id];
-
-    Log<Trace>("DMA: request DMA[{}] src=0x{:08X}({}) dst=0x{:08X}({}) count=0x{:05X} word={} repeat={} irq={} ({})",
-      channel.id,
-      channel.src_addr,
-      g_address_mode_name[channel.src_cntl],
-      channel.dst_addr,
-      g_address_mode_name[channel.dst_cntl],
-      channel.length,
-      channel.size,
-      channel.repeat ? 1 : 0,
-      channel.interrupt ? 1 : 0,
-      g_dma_time_name[channel.time]
-    );
-
-    bitset &= ~(1 << chan_id);
-
-    channel.startup_event = scheduler.Add(delay, [this, chan_id](int cycles_late) {
-      channels[chan_id].startup_event = nullptr;
-      if (runnable_set.none()) {
-        active_dma_id = chan_id;
-      } else if (chan_id < active_dma_id) {
-        active_dma_id = chan_id;
-        should_reenter_transfer_loop = true;
-      }
-      runnable_set.set(chan_id, true);
-    });
+void DMA::ScheduleDMAs(unsigned int bitset) {
+  if (bitset != 0) {
+    if (g_dma_from_bitset[bitset] < active_dma_id) {
+      should_reenter_transfer_loop = true;
+    }
+    runnable_set |= bitset;
+    SelectNextDMA();
   }
 }
 
@@ -339,6 +316,22 @@ void DMA::Write(int chan_id, int offset, u8 value) {
 }
 
 void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
+  const auto UpdateDMASets = [this](int chan_id, Channel::Timing time) {
+    switch (time) {
+      case Channel::HBlank:
+        hblank_set.set(chan_id, true);
+        break;
+      case Channel::VBlank:
+        vblank_set.set(chan_id, true);
+        break;
+      case Channel::Special:
+        if (chan_id == 3) {
+          video_set.set(3, true);
+        }
+        break;
+    }
+  };
+
   // If the DMA is enabled this information will be regenerated below.
   hblank_set.set(channel.id, false);
   vblank_set.set(channel.id, false);
@@ -365,24 +358,9 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
     return;
   }
 
-  /* Update H-blank/V-blank DMA sets.
-   * This information is used to schedule these DMAs on request.
-   */
-  switch (channel.time) {
-    case Channel::HBlank:
-      hblank_set.set(channel.id, true);
-      break;
-    case Channel::VBlank:
-      vblank_set.set(channel.id, true);
-      break;
-    case Channel::Special:
-      if (channel.id == 3) {
-        video_set.set(3, true);
-      }
-      break;
-  }
-
   if (enable_old) {
+    UpdateDMASets(channel.id, channel.time);
+
     /* When the config register of a DMA is written while it is running,
      * bail out of the DMA transfer loop so that the new config is used
      * for the (half-)word transfers following this write.
@@ -398,7 +376,7 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
   channel.latch.dst_addr = channel.dst_addr;
   channel.latch.src_addr = channel.src_addr;
 
-  /*
+  /**
    * TODO:
    * DMA actually always uses sequential accesses for all except the first ROM access.
    * This is a better explanation of the observed behavior and makes it redundant
@@ -426,9 +404,18 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
       channel.latch.length = g_dma_len_mask[channel.id] + 1;
     }
 
-    if (channel.time == Channel::Immediate) {
-      ScheduleDMAs(1 << channel.id);
-    }
+    auto chan_id = channel.id;
+    auto time = channel.time;
+
+    channel.startup_event = scheduler.Add(2, [=](int late) {
+      channels[chan_id].startup_event = nullptr;
+
+      if (time == Channel::Immediate) {
+        ScheduleDMAs(1 << chan_id);
+      } else {
+        UpdateDMASets(chan_id, time);
+      }
+    });
   }
 }
 
