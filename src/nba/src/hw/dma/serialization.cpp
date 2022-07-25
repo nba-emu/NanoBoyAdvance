@@ -43,12 +43,12 @@ void DMA::LoadState(SaveState const& state) {
     channel_dst.latch.bus = channel_src.latch.bus;
 
     channel_dst.is_fifo_dma = channel_src.is_fifo_dma;
-    channel_dst.startup_event = nullptr;
+    channel_dst.enable_event = nullptr;
 
-    u64 startup_event_timestamp = channel_src.startup_event_timestamp;
+    u64 enable_event_timestamp = channel_src.enable_event_timestamp;
 
-    // if (channel_dst.enable && startup_event_timestamp != ~0ULL) {
-    //   ScheduleDMAs(1 << i, (int)(startup_event_timestamp - state.timestamp));
+    // if (channel_dst.enable && enable_event_timestamp != ~0ULL) {
+    //   ScheduleDMAs(1 << i, (int)(enable_event_timestamp - state.timestamp));
     // }
   }
 
@@ -86,10 +86,10 @@ void DMA::CopyState(SaveState& state) {
 
     channel_dst.is_fifo_dma = channel_src.is_fifo_dma;
 
-    /*if (channel_src.startup_event) {
-      channel_dst.startup_event_timestamp = channel_src.startup_event->timestamp;
+    /*if (channel_src.enable_event) {
+      channel_dst.enable_event_timestamp = channel_src.enable_event->timestamp;
     } else {
-      channel_dst.startup_event_timestamp = ~0ULL;
+      channel_dst.enable_event_timestamp = ~0ULL;
     }*/
   }
 }

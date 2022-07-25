@@ -238,7 +238,7 @@ struct SaveState {
       } latch;
 
       bool is_fifo_dma;
-      u64 startup_event_timestamp;
+      u64 enable_event_timestamp;
     } channels[4];
 
     u8 hblank_set;

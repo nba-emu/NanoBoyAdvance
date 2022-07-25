@@ -94,7 +94,7 @@ private:
     } latch = {};
 
     bool is_fifo_dma = false;
-    Scheduler::Event* startup_event = nullptr;
+    Scheduler::Event* enable_event = nullptr;
   } channels[4];
 
   constexpr int GetUnaliasedMemoryArea(int page) {
@@ -112,6 +112,9 @@ private:
   void ScheduleDMAs(unsigned int bitset);
   void SelectNextDMA();
   void OnChannelWritten(Channel& channel, bool enable_old);
+  void AddChannelToDMASet(Channel& channel);
+  void RemoveChannelFromDMASets(Channel& channel);
+  void ScheduleDMAEnable(Channel& channel, int delay);
   void RunChannel();
 
   Bus& memory;

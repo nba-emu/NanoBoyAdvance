@@ -238,10 +238,8 @@ void DMA::RunChannel() {
       channel.latch.dst_addr = channel.dst_addr & mask;
     }
   } else {
+    RemoveChannelFromDMASets(channel);
     channel.enable = false;
-    hblank_set.set(channel.id, false);
-    vblank_set.set(channel.id, false);
-    video_set.set(channel.id, false);
   }
 
   SelectNextDMA();
@@ -316,28 +314,9 @@ void DMA::Write(int chan_id, int offset, u8 value) {
 }
 
 void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
-  const auto UpdateDMASets = [this](int chan_id, Channel::Timing time) {
-    switch (time) {
-      case Channel::HBlank:
-        hblank_set.set(chan_id, true);
-        break;
-      case Channel::VBlank:
-        vblank_set.set(chan_id, true);
-        break;
-      case Channel::Special:
-        if (chan_id == 3) {
-          video_set.set(3, true);
-        }
-        break;
-    }
-  };
-
   bool enable_new = channel.enable;
 
-  // If the DMA is enabled this information will be regenerated below.
-  hblank_set.set(channel.id, false);
-  vblank_set.set(channel.id, false);
-  video_set.set(channel.id, false);
+  RemoveChannelFromDMASets(channel);
 
   if (enable_new) {
     if (!enable_old) {
@@ -375,29 +354,22 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
           channel.latch.length = g_dma_len_mask[channel.id] + 1;
         }
 
-        auto chan_id = channel.id;
-        auto time = channel.time;
-
-        channel.startup_event = scheduler.Add(2, [=](int late) {
-          channels[chan_id].startup_event = nullptr;
-
-          if (time == Channel::Immediate) {
-            ScheduleDMAs(1 << chan_id);
-          } else {
-            UpdateDMASets(chan_id, time);
-          }
-        });
+        ScheduleDMAEnable(channel, 2);
       }
     } else {
       // DMA enable bit: 1 -> 1 (remains set)
-      UpdateDMASets(channel.id, channel.time);
 
-      /* When the config register of a DMA is written while it is running,
-       * bail out of the DMA transfer loop so that the new config is used
-       * for the (half-)word transfers following this write.
-       */
-      if (channel.id == active_dma_id) {
-        should_reenter_transfer_loop = true;
+      // Note: the DMA isn't really running, while it is still enabling.
+      if (channel.enable_event == nullptr) {
+        AddChannelToDMASet(channel);
+
+        /* When the config register of a DMA is written while it is running,
+         * bail out of the DMA transfer loop so that the new config is used
+         * for the (half-)word transfers following this write.
+         */
+        if (channel.id == active_dma_id) {
+          should_reenter_transfer_loop = true;
+        }
       }
     }
   } else {
@@ -405,10 +377,10 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
     runnable_set.set(channel.id, false);
 
     // Handle disabling the DMA before it started up.
-    if (channel.startup_event != nullptr) {
+    if (channel.enable_event != nullptr) {
       // TODO: figure out exact hardware behaviour.
-      scheduler.Cancel(channel.startup_event);
-      channel.startup_event = nullptr;
+      scheduler.Cancel(channel.enable_event);
+      channel.enable_event = nullptr;
 
       Log<Warn>("DMA: disabled DMA{0} while it was starting.", channel.id);
     }
@@ -422,6 +394,47 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
       Log<Warn>("DMA: DMA{0} cleared its own enable bit.", channel.id);
     }
   }
+}
+
+void DMA::AddChannelToDMASet(Channel& channel) {
+  switch (channel.time) {
+    case Channel::HBlank: {
+      hblank_set.set(channel.id, true);
+      break;
+    }
+    case Channel::VBlank: {
+      vblank_set.set(channel.id, true);
+      break;
+    }
+    case Channel::Special: {
+      if (channel.id == 3) {
+        video_set.set(3, true);
+      }
+      break;
+    }
+  }
+}
+
+void DMA::RemoveChannelFromDMASets(Channel& channel) {
+  hblank_set.set(channel.id, false);
+  vblank_set.set(channel.id, false);
+  video_set.set(channel.id, false);
+}
+
+void DMA::ScheduleDMAEnable(Channel& channel, int delay) {
+  auto chan_id = channel.id;
+
+  channel.enable_event = scheduler.Add(delay, [=](int late) {
+    auto& channel = channels[chan_id];
+
+    channel.enable_event = nullptr;
+
+    if (channel.time == Channel::Immediate) {
+      ScheduleDMAs(1 << chan_id);
+    } else {
+      AddChannelToDMASet(channel);
+    }
+  });
 }
 
 } // namespace nba::core
