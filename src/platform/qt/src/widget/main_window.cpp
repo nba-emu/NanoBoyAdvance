@@ -81,9 +81,9 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
-  auto file_menu = menu_bar->addMenu(tr("&File"));
+  auto file_menu = menu_bar->addMenu(tr("File"));
 
-  auto open_action = file_menu->addAction(tr("&Open"));
+  auto open_action = file_menu->addAction(tr("Open"));
   open_action->setShortcut(Qt::CTRL | Qt::Key_O);
   connect(
     open_action,
@@ -136,7 +136,7 @@ void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
   file_menu->addSeparator();
 
   connect(
-    file_menu->addAction(tr("&Close")),
+    file_menu->addAction(tr("Close")),
     &QAction::triggered,
     &QApplication::quit
   );
@@ -296,7 +296,7 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
 }
 
 void MainWindow::CreateConfigMenu(QMenuBar* menu_bar) {
-  auto menu = menu_bar->addMenu(tr("&Config"));
+  auto menu = menu_bar->addMenu(tr("Config"));
   CreateVideoMenu(menu);
   CreateAudioMenu(menu);
   CreateInputMenu(menu);
@@ -330,7 +330,7 @@ void MainWindow::CreateBooleanOption(
 }
 
 void MainWindow::CreateHelpMenu(QMenuBar* menu_bar) {
-  auto help_menu = menu_bar->addMenu(tr("&Help"));
+  auto help_menu = menu_bar->addMenu(tr("Help"));
   auto about_app = help_menu->addAction(tr("About NanoBoyAdvance"));
 
   about_app->setMenuRole(QAction::AboutRole);

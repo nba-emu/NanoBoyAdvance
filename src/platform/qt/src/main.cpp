@@ -9,6 +9,7 @@
 #include <memory>
 #include <QApplication>
 #include <QSurfaceFormat>
+#include <QProxyStyle>
 #include <stdlib.h>
 
 #include "widget/main_window.hpp"
@@ -18,6 +19,21 @@
 #endif
 
 namespace fs = std::filesystem;
+
+// See: https://stackoverflow.com/a/37023032
+struct MenuStyle : QProxyStyle {
+  int styleHint(
+    StyleHint stylehint,
+    const QStyleOption *opt,
+    const QWidget *widget,
+    QStyleHintReturn *returnData
+  ) const {
+    if (stylehint == QStyle::SH_MenuBar_AltKeyNavigation)
+      return 0;
+
+    return QProxyStyle::styleHint(stylehint, opt, widget, returnData);
+  }
+};
 
 auto create_window(QApplication& app, int argc, char** argv) -> std::unique_ptr<MainWindow> {
   fs::path rom;
@@ -56,6 +72,8 @@ int main(int argc, char** argv) {
   QSurfaceFormat::setDefaultFormat(format);
 
   QApplication app{ argc, argv };
+
+  app.setStyle(new MenuStyle());
 
 #if defined(WIN32)
   // See: https://doc.qt.io/qt-5/windows-issues.html#fullscreen-opengl-based-windows
