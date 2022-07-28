@@ -100,6 +100,8 @@ void PPU::LoadState(SaveState const& state) {
   }
   scheduler.Add(cycles, this, event_fn);
 
+  dma3_video_transfer_running = state.ppu.dma3_video_transfer_running;
+
   SetupRenderThread();
 }
 
@@ -151,6 +153,8 @@ void PPU::CopyState(SaveState& state) {
   std::memcpy(state.ppu.pram, pram, 0x400);
   std::memcpy(state.ppu.oam,  oam,  0x400);
   std::memcpy(state.ppu.vram, vram, 0x18000);
+
+  state.ppu.dma3_video_transfer_running = dma3_video_transfer_running;
 }
 
 } // namespace nba::core

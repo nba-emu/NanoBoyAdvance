@@ -123,16 +123,20 @@ void DMA::Request(Occasion occasion) {
   }
 }
 
-void DMA::StopVideoXferDMA() {
+void DMA::StopVideoTransferDMA() {
   auto& channel = channels[3];
 
-  if (channel.enable && channel.time == Channel::Timing::Special) {
-    // TODO: cancel startup event? Is this actually correct at all?
+  // Disable DMA3
+  // TODO: does HW disable it regardless of the *current* configuration?
+  if (channel.enable) {
     channel.enable = false;
-    runnable_set.set(3, false);
-    video_set.set(3, false);
-    SelectNextDMA();
+    OnChannelWritten(channel, true);
   }
+}
+
+bool DMA::HasVideoTransferDMA() {
+  return channels[3].enable &&
+         channels[3].time == Channel::Timing::Special;
 }
 
 void DMA::Run() {

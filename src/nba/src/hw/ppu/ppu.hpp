@@ -208,6 +208,7 @@ private:
   void LatchEnabledBGs();
   void LatchBGXYWrites();
   void CheckVerticalCounterIRQ();
+  void UpdateVideoTransferDMA();
 
   void OnScanlineComplete(int cycles_late);
   void OnHblankIRQTest(int cycles_late);
@@ -286,6 +287,8 @@ private:
   MMIO mmio_copy[228];
   int vram_dirty_range_lo;
   int vram_dirty_range_hi;
+
+  bool dma3_video_transfer_running;
 
   static constexpr u16 s_color_transparent = 0x8000;
   static const int s_obj_size[4][4][2];

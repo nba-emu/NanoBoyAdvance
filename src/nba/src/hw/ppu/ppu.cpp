@@ -69,13 +69,14 @@ void PPU::Reset() {
   mmio.evy = 0;
   mmio.bldcnt.Reset();
 
-   // VCOUNT=225 DISPSTAT=3 was measured after reset on a 3DS in GBA mode (thanks Lady Starbreeze).
+  // VCOUNT=225 DISPSTAT=3 was measured after reset on a 3DS in GBA mode (thanks Lady Starbreeze).
   mmio.vcount = 225;
   mmio.dispstat.vblank_flag = true;
   mmio.dispstat.hblank_flag = true;
   scheduler.Add(226, this, &PPU::OnVblankHblankComplete);
 
   frame = 0;
+  dma3_video_transfer_running = false;
 
   SetupRenderThread();
 }
@@ -119,6 +120,20 @@ void PPU::CheckVerticalCounterIRQ() {
   dispstat.vcount_flag = vcount_flag_new;
 }
 
+void PPU::UpdateVideoTransferDMA() {
+  int vcount = mmio.vcount;
+
+  if (dma3_video_transfer_running) {
+    if (vcount == 162) {
+      dma.StopVideoTransferDMA();
+    } else if (vcount >= 2 && vcount < 162) {
+      scheduler.Add(9, [this](int late) {
+        dma.Request(DMA::Occasion::Video);
+      });
+    }
+  }
+}
+
 void PPU::OnScanlineComplete(int cycles_late) {
   auto& bgx = mmio.bgx;
   auto& bgy = mmio.bgy;
@@ -130,10 +145,6 @@ void PPU::OnScanlineComplete(int cycles_late) {
 
   dma.Request(DMA::Occasion::HBlank);
   
-  if (mmio.vcount >= 2) {
-    dma.Request(DMA::Occasion::Video);
-  }
-
   // Advance vertical background mosaic counter
   if (++mosaic.bg._counter_y == mosaic.bg.size_y) {
     mosaic.bg._counter_y = 0;
@@ -196,9 +207,10 @@ void PPU::OnHblankComplete(int cycles_late) {
 
   dispstat.hblank_flag = 0;
   vcount++;
-  CheckVerticalCounterIRQ();
 
+  CheckVerticalCounterIRQ();
   LatchBGXYWrites();
+  UpdateVideoTransferDMA();
 
   if (vcount == 160) {
     ScheduleSubmitScanline();
@@ -230,12 +242,6 @@ void PPU::OnVblankScanlineComplete(int cycles_late) {
   auto& dispstat = mmio.dispstat;
 
   dispstat.hblank_flag = 1;
-
-  if (mmio.vcount < 162) {
-    dma.Request(DMA::Occasion::Video);
-  } else if (mmio.vcount == 162) {
-    dma.StopVideoXferDMA();
-  }
 
   if (mmio.vcount >= 225) {
     /* TODO: it appears that this should really happen ~36 cycles into H-draw.
@@ -269,6 +275,15 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
 
   dispstat.hblank_flag = 0;
 
+  if (vcount == 162) {
+    /**
+     * TODO:
+     *  - figure out when precisely DMA3CNT is latched
+     *  - figure out what bits of DMA3CNT are checked
+     */
+    dma3_video_transfer_running = dma.HasVideoTransferDMA();
+  }
+
   if (vcount == 227) {
     scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
     vcount = 0;
@@ -285,10 +300,9 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
   }
 
   LatchBGXYWrites();
-
-  ScheduleSubmitScanline();
-
   CheckVerticalCounterIRQ();
+  ScheduleSubmitScanline();
+  UpdateVideoTransferDMA();
 }
 
 void PPU::SetupRenderThread() {

@@ -16,7 +16,7 @@ namespace nba {
 
 struct SaveState {
   static constexpr u32 kMagicNumber = 0x5353424E; // NBSS
-  static constexpr u32 kCurrentVersion = 2;
+  static constexpr u32 kCurrentVersion = 3;
 
   u32 magic;
   u32 version;
@@ -130,6 +130,7 @@ struct SaveState {
 
     bool enable_bg[2][4];
     bool window_scanline_enable[2];
+    bool dma3_video_transfer_running;
 
     u8 pram[0x00400];
     u8 oam [0x00400];
