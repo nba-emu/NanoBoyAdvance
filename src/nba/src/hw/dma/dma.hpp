@@ -110,12 +110,11 @@ private:
     return page;
   }
 
-  void ScheduleDMAs(unsigned int bitset);
+  void ScheduleDMAs(unsigned int bitset, int delay = 2);
   void SelectNextDMA();
   void OnChannelWritten(Channel& channel, bool enable_old);
   void AddChannelToDMASet(Channel& channel);
   void RemoveChannelFromDMASets(Channel& channel);
-  void ScheduleDMAEnable(Channel& channel, int delay);
   void RunChannel();
 
   Bus& memory;
