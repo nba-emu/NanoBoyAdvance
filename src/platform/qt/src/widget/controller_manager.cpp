@@ -46,6 +46,51 @@ void ControllerManager::Initialize() {
     Close();
   }};
 #endif
+
+  qRegisterMetaType<SDL_GameControllerButton>("SDL_GameControllerButton");
+  qRegisterMetaType<SDL_GameControllerAxis>("SDL_GameControllerAxis");
+
+  connect(
+    this, &ControllerManager::OnControllerListChanged,
+    this, &ControllerManager::UpdateGameControllerList,
+    Qt::QueuedConnection
+  );
+
+  connect(
+    this, &ControllerManager::OnControllerButtonReleased,
+    this, &ControllerManager::BindCurrentKeyToControllerButton,
+    Qt::QueuedConnection
+  );
+
+  connect(
+    this, &ControllerManager::OnControllerAxisMoved,
+    this, &ControllerManager::BindCurrentKeyToControllerAxis,
+    Qt::QueuedConnection
+  );
+}
+
+void ControllerManager::UpdateGameControllerList() {
+  auto input_window = main_window->input_window;
+
+  if (input_window) {
+    input_window->UpdateGameControllerList();
+  }
+}
+
+void ControllerManager::BindCurrentKeyToControllerButton(SDL_GameControllerButton button) {
+  auto input_window = main_window->input_window;
+
+  if (input_window) {
+    input_window->BindCurrentKeyToControllerButton(button);
+  }
+}
+
+void ControllerManager::BindCurrentKeyToControllerAxis(SDL_GameControllerAxis axis, bool negative) {
+  auto input_window = main_window->input_window;
+
+  if (input_window) {
+    input_window->BindCurrentKeyToControllerAxis(axis, negative);
+  }
 }
 
 void ControllerManager::Open(std::string const& guid) {
@@ -96,9 +141,7 @@ void ControllerManager::ProcessEvents() {
   while (SDL_PollEvent(&event)) {
     switch (event.type) {
       case SDL_JOYDEVICEADDED: {
-        if (input_window) {
-          input_window->UpdateGameControllerList();
-        }
+        emit OnControllerListChanged();
 
         auto device_id = ((SDL_JoyDeviceEvent*)&event)->which;
         auto guid = GetControllerGUIDStringFromIndex(device_id);
@@ -109,9 +152,7 @@ void ControllerManager::ProcessEvents() {
         break;
       }
       case SDL_JOYDEVICEREMOVED: {
-        if (input_window) {
-          input_window->UpdateGameControllerList();
-        }
+        emit OnControllerListChanged();
 
         if (instance_id == ((SDL_JoyDeviceEvent*)&event)->which) {
           Close();
@@ -121,7 +162,7 @@ void ControllerManager::ProcessEvents() {
       case SDL_CONTROLLERBUTTONUP: {
         auto button_event = (SDL_ControllerButtonEvent*)&event;
 
-        input_window->OnControllerButtonUp((SDL_GameControllerButton)button_event->button);
+        emit OnControllerButtonReleased((SDL_GameControllerButton)button_event->button);
         break;
       }
       case SDL_CONTROLLERAXISMOTION: {
@@ -131,14 +172,14 @@ void ControllerManager::ProcessEvents() {
         auto value = axis_event->value;
 
         if (std::abs(value) > threshold) {
-          input_window->OnControllerAxisMove((SDL_GameControllerAxis)axis_event->axis, value < 0);
+          emit OnControllerAxisMoved((SDL_GameControllerAxis)axis_event->axis, value < 0);
         }
         break;
       }
     }
   }
 
-  if (input_window->has_game_controller_choice_changed) {
+  if (input_window && input_window->has_game_controller_choice_changed) {
     Open(config->input.controller_guid);
 
     input_window->has_game_controller_choice_changed = false;
