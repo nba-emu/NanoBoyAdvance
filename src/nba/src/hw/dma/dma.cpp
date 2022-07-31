@@ -82,13 +82,24 @@ void DMA::Reset() {
   }
 }
 
-void DMA::ScheduleDMAs(unsigned int bitset) {
-  if (bitset != 0) {
-    if (g_dma_from_bitset[bitset] < active_dma_id) {
-      should_reenter_transfer_loop = true;
-    }
-    runnable_set |= bitset;
-    SelectNextDMA();
+void DMA::ScheduleDMAs(unsigned int bitset, int delay) {
+  while (bitset != 0) {
+    auto chan_id = g_dma_from_bitset[bitset];
+
+    bitset &= ~(1 << chan_id);
+
+    channels[chan_id].enable_event = scheduler.Add(delay, [this, chan_id](int cycles_late) {
+      channels[chan_id].enable_event = nullptr;
+
+      if (runnable_set.none()) {
+        active_dma_id = chan_id;
+      } else if (chan_id < active_dma_id) {
+        active_dma_id = chan_id;
+        should_reenter_transfer_loop = true;
+      }
+
+      runnable_set.set(chan_id, true);      
+    });
   }
 }
 
@@ -358,7 +369,11 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
           channel.latch.length = g_dma_len_mask[channel.id] + 1;
         }
 
-        ScheduleDMAEnable(channel, 2);
+        if (channel.time == Channel::Immediate) {
+          ScheduleDMAs(1 << channel.id);
+        } else {
+          AddChannelToDMASet(channel);
+        }
       }
     } else {
       // DMA enable bit: 1 -> 1 (remains set)
@@ -423,22 +438,6 @@ void DMA::RemoveChannelFromDMASets(Channel& channel) {
   hblank_set.set(channel.id, false);
   vblank_set.set(channel.id, false);
   video_set.set(channel.id, false);
-}
-
-void DMA::ScheduleDMAEnable(Channel& channel, int delay) {
-  auto chan_id = channel.id;
-
-  channel.enable_event = scheduler.Add(delay, [=](int late) {
-    auto& channel = channels[chan_id];
-
-    channel.enable_event = nullptr;
-
-    if (channel.time == Channel::Immediate) {
-      ScheduleDMAs(1 << chan_id);
-    } else {
-      AddChannelToDMASet(channel);
-    }
-  });
 }
 
 } // namespace nba::core
