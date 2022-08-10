@@ -151,11 +151,11 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
     case KEYCNT+1:   return keypad.control.ReadByte(1);
 
     // IRQ controller
-    case IE+0:  return irq.Read(0);
-    case IE+1:  return irq.Read(1);
-    case IF+0:  return irq.Read(2);
-    case IF+1:  return irq.Read(3);
-    case IME+0: return irq.Read(4);
+    case IE+0:  return irq.ReadByte(0);
+    case IE+1:  return irq.ReadByte(1);
+    case IF+0:  return irq.ReadByte(2);
+    case IF+1:  return irq.ReadByte(3);
+    case IME+0: return irq.ReadByte(4);
     case IME+1:
     case IME+2:
     case IME+3: return 0;
@@ -185,6 +185,7 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
 
 auto Bus::Hardware::ReadHalf(u32 address) -> u16 {
   switch (address) {
+    // Timer 0 - 3
     case TM0CNT_L: return timer.ReadHalf(0, 0);
     case TM0CNT_H: return timer.ReadHalf(0, 2);
     case TM1CNT_L: return timer.ReadHalf(1, 0);
@@ -193,6 +194,11 @@ auto Bus::Hardware::ReadHalf(u32 address) -> u16 {
     case TM2CNT_H: return timer.ReadHalf(2, 2);
     case TM3CNT_L: return timer.ReadHalf(3, 0);
     case TM3CNT_H: return timer.ReadHalf(3, 2);
+
+    // IRQ controller
+    case IE:  return irq.ReadHalf(0);
+    case IF:  return irq.ReadHalf(2);
+    case IME: return irq.ReadHalf(4);
   }
 
   return ReadByte(address) | (ReadByte(address + 1) << 8);
@@ -206,10 +212,7 @@ auto Bus::Hardware::ReadWord(u32 address) -> u32 {
     case TM3CNT_L: return timer.ReadWord(3);
   }
 
-  return ReadByte(address) |
-        (ReadByte(address + 1) <<  8) |
-        (ReadByte(address + 2) << 16) |
-        (ReadByte(address + 3) << 24);
+  return ReadHalf(address) | (ReadHalf(address + 2) << 16);
 }
 
 void Bus::Hardware::WriteByte(u32 address,  u8 value) {
@@ -497,11 +500,11 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
     case KEYCNT+1: keypad.control.WriteByte(1, value); break;
 
     // IRQ controller
-    case IE+0: irq.Write(0, value); break;
-    case IE+1: irq.Write(1, value); break;
-    case IF+0: irq.Write(2, value); break;
-    case IF+1: irq.Write(3, value); break;
-    case IME:  irq.Write(4, value); break;
+    case IE+0: irq.WriteByte(0, value); break;
+    case IE+1: irq.WriteByte(1, value); break;
+    case IF+0: irq.WriteByte(2, value); break;
+    case IF+1: irq.WriteByte(3, value); break;
+    case IME:  irq.WriteByte(4, value); break;
 
     // System control
     case WAITCNT+0: {
@@ -567,6 +570,12 @@ void Bus::Hardware::WriteHalf(u32 address, u16 value) {
       keypad.control.WriteHalf(value);
       break;
     }
+
+    // IRQ controller
+    case IE:  irq.WriteHalf(0, value); break;
+    case IF:  irq.WriteHalf(2, value); break;
+    case IME: irq.WriteByte(4, value); break;
+
     default: {
       WriteByte(address + 0, u8(value >> 0));
       WriteByte(address + 1, u8(value >> 8));
@@ -587,6 +596,7 @@ void Bus::Hardware::WriteWord(u32 address, u32 value) {
     case TM1CNT_L: timer.WriteWord(1, value); break;
     case TM2CNT_L: timer.WriteWord(2, value); break;
     case TM3CNT_L: timer.WriteWord(3, value); break;
+
     default: {
       WriteHalf(address + 0, u16(value >> 0));
       WriteHalf(address + 2, u16(value >> 16));

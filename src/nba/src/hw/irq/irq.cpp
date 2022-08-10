@@ -19,7 +19,7 @@ void IRQ::Reset() {
   cpu.IRQLine() = false;
 }
 
-auto IRQ::Read(int offset) const -> u8 {
+auto IRQ::ReadByte(int offset) const -> u8 {
   switch (offset) {
     case REG_IE|0: return reg_ie & 0xFF;
     case REG_IE|1: return reg_ie >> 8;
@@ -31,7 +31,17 @@ auto IRQ::Read(int offset) const -> u8 {
   return 0;
 }
 
-void IRQ::Write(int offset, u8 value) {
+auto IRQ::ReadHalf(int offset) const -> u16 {
+  switch (offset) {
+    case REG_IE:  return reg_ie;
+    case REG_IF:  return reg_if;
+    case REG_IME: return reg_ime ? 1 : 0;
+  }
+
+  return 0;
+}
+
+void IRQ::WriteByte(int offset, u8 value) {
   switch (offset) {
     case REG_IE|0:
       reg_ie &= 0x3F00;
@@ -46,6 +56,22 @@ void IRQ::Write(int offset, u8 value) {
       break;
     case REG_IF|1:
       reg_if &= ~(value << 8);
+      break;
+    case REG_IME:
+      reg_ime = value & 1;
+      break;
+  }
+
+  UpdateIRQLine();
+}
+
+void IRQ::WriteHalf(int offset, u16 value) {
+  switch (offset) {
+    case REG_IE:
+      reg_ie = value & 0x3FFF;
+      break;
+    case REG_IF:
+      reg_if &= ~value;
       break;
     case REG_IME:
       reg_ime = value & 1;

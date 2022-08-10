@@ -37,8 +37,10 @@ struct IRQ {
   }
 
   void Reset();
-  auto Read(int offset) const -> u8;
-  void Write(int offset, u8 value);
+  auto ReadByte(int offset) const -> u8;
+  auto ReadHalf(int offset) const -> u16;
+  void WriteByte(int offset, u8  value);
+  void WriteHalf(int offset, u16 value);
   void Raise(IRQ::Source source, int channel = 0);
 
   bool MasterEnable() const {
