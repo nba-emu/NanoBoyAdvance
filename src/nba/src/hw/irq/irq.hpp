@@ -61,7 +61,7 @@ private:
     REG_IME = 4
   };
 
-  void UpdateIRQLine();
+  void UpdateIRQLine(int event_priority);
 
   int reg_ime;
   u16 reg_ie;

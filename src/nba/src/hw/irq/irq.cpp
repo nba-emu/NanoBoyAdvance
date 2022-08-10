@@ -11,6 +11,11 @@
 
 namespace nba::core {
 
+/**
+ * TODO: figure out what takes priority when an IRQ is asserted
+ * at the same time as IE/IF/IME are written.
+ */
+
 void IRQ::Reset() {
   reg_ime = 0;
   reg_ie = 0;
@@ -62,7 +67,7 @@ void IRQ::WriteByte(int offset, u8 value) {
       break;
   }
 
-  UpdateIRQLine();
+  UpdateIRQLine(1);
 }
 
 void IRQ::WriteHalf(int offset, u16 value) {
@@ -78,7 +83,7 @@ void IRQ::WriteHalf(int offset, u16 value) {
       break;
   }
 
-  UpdateIRQLine();
+  UpdateIRQLine(1);
 }
 
 void IRQ::Raise(IRQ::Source source, int channel) {
@@ -109,16 +114,16 @@ void IRQ::Raise(IRQ::Source source, int channel) {
       break;
   }
 
-  UpdateIRQLine();
+  UpdateIRQLine(0);
 }
 
-void IRQ::UpdateIRQLine() {
+void IRQ::UpdateIRQLine(int event_priority) {
   bool irq_line_new = MasterEnable() && HasServableIRQ();
 
   if (irq_line != irq_line_new) {
     scheduler.Add(3, [=](int late) {
       cpu.IRQLine() = irq_line_new;
-    });
+    }, event_priority);
 
     irq_line = irq_line_new;
   }
