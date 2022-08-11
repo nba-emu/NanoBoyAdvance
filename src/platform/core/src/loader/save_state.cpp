@@ -60,6 +60,50 @@ auto SaveStateLoader::Validate(SaveState const& save_state) -> Result {
     return Result::UnsupportedVersion;
   }
 
+  bool bad_image = false;
+
+  {
+    auto& waitcnt = save_state.bus.io.waitcnt;
+    bad_image |= waitcnt.sram > 3;
+    bad_image |= waitcnt.ws0[0] > 3;
+    bad_image |= waitcnt.ws0[1] > 1;
+    bad_image |= waitcnt.ws1[0] > 3;
+    bad_image |= waitcnt.ws1[1] > 1;
+    bad_image |= waitcnt.ws2[0] > 3;
+    bad_image |= waitcnt.ws2[1] > 1;
+    bad_image |= waitcnt.phi > 3;
+  }
+
+  bad_image |= save_state.ppu.io.vcount > 227;
+
+  {
+    auto& apu = save_state.apu;
+
+    for (int i = 0; i < 2; i++) {
+      bad_image |= apu.io.quad[i].phase > 7;
+      bad_image |= apu.io.quad[i].wave_duty > 3;
+      bad_image |= apu.fifo[i].count > 7;
+    }
+
+    bad_image |= apu.io.wave.phase > 31;
+    bad_image |= apu.io.wave.wave_bank > 1;
+    bad_image |= apu.io.noise.width > 1;
+  }
+
+  {
+    auto& dma = save_state.dma;
+    bad_image |= dma.hblank_set > 0b1111;
+    bad_image |= dma.vblank_set > 0b1111;
+    bad_image |= dma.video_set  > 0b1111;
+    bad_image |= dma.runnable_set > 0b1111;
+  }
+
+  bad_image |= save_state.gpio.rtc.current_byte > 7;
+
+  if (bad_image) {
+    return Result::BadImage;
+  }
+
   return Result::Success;
 }
 
