@@ -52,14 +52,14 @@ struct PPU {
     if constexpr (std::is_same_v<T, u8>) {
       write<u16>(pram, address & 0x3FE, value * 0x0101);
 
-      if (!mmio.dispstat.vblank_flag) {
+      if (mmio.vcount < 160) {
         // TODO: optimise this
         write<u16>(pram_draw, address & 0x3FE, value * 0x0101);    
       }
     } else {
       write<T>(pram, address & 0x3FF, value);
 
-      if (!mmio.dispstat.vblank_flag) {
+      if (mmio.vcount < 160) {
         write<T>(pram_draw, address & 0x3FF, value);    
       }
     }
@@ -99,7 +99,7 @@ struct PPU {
       if (address < limit) {
         write<u16>(vram, address & ~1, value * 0x0101);
 
-        if (!mmio.dispstat.vblank_flag) {
+        if (mmio.vcount < 160) {
           // TODO: optimise this.
           write<u16>(vram_draw, address & ~1, value * 0x0101);
         } else {
@@ -110,7 +110,7 @@ struct PPU {
     } else {
       write<T>(vram, address, value);
 
-      if (!mmio.dispstat.vblank_flag) {
+      if (mmio.vcount < 160) {
         write<T>(vram_draw, address, value);    
       } else {
         vram_dirty_range_lo = std::min(vram_dirty_range_lo, (int)address);
@@ -131,7 +131,7 @@ struct PPU {
     if constexpr (!std::is_same_v<T, u8>) {
       write<T>(oam, address & 0x3FF, value);
 
-      if (!mmio.dispstat.vblank_flag) {
+      if (mmio.vcount < 160) {
         write<T>(oam_draw, address & 0x3FF, value);    
       }
     }
