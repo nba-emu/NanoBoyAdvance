@@ -24,6 +24,7 @@ void EEPROM::LoadState(SaveState const& state) {
 void EEPROM::CopyState(SaveState& state) {
   state.backup.eeprom.state = this->state;
   state.backup.eeprom.address = address;
+  state.backup.eeprom.serial_buffer = serial_buffer;
   state.backup.eeprom.transmitted_bits = transmitted_bits;
 
   std::memcpy(state.backup.data, file->Buffer(), file->Size());
