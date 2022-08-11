@@ -31,6 +31,9 @@ void Timer::LoadState(SaveState const& state) {
     channels[i].shift = g_ticks_shift[channels[i].control.frequency];
     channels[i].mask = g_ticks_mask[channels[i].control.frequency];
 
+    channels[i].running = false;
+    channels[i].event_overflow = nullptr;
+
     if (channels[i].control.enable && !channels[i].control.cascade) {
       // TODO: take care of the one cycle startup-delay:
       StartChannel(channels[i], state.timestamp & channels[i].mask);
@@ -44,6 +47,8 @@ void Timer::LoadState(SaveState const& state) {
       WriteControl(channels[i], pending_control);
     }
   }
+
+  RecalculateSampleRates();
 }
 
 void Timer::CopyState(SaveState& state) {
