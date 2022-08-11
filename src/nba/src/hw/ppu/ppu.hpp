@@ -97,11 +97,14 @@ struct PPU {
       auto limit = mmio.dispcnt.mode >= 3 ? 0x14000 : 0x10000;
 
       if (address < limit) {
-        write<u16>(vram, address & ~1, value * 0x0101);
+        u16 value16 = value * 0x0101;
+
+        address &= ~1;
+
+        write<u16>(vram, address, value16);
 
         if (mmio.vcount < 160) {
-          // TODO: optimise this.
-          write<u16>(vram_draw, address & ~1, value * 0x0101);
+          write<u16>(vram_draw, address, value16);
         } else {
           vram_dirty_range_lo = std::min(vram_dirty_range_lo, (int)address);
           vram_dirty_range_hi = std::max(vram_dirty_range_hi, (int)(address + sizeof(T)));
