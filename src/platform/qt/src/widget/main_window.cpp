@@ -467,6 +467,11 @@ void MainWindow::PromptUserForReset() {
     box.setDefaultButton(QMessageBox::No);
     
     if (box.exec() == QMessageBox::Yes) {
+      // Reload the ROM in case its config (e.g. save type or GPIO) has changed:
+      if (game_loaded) {
+        LoadROM(game_path);
+      }
+
       Reset();
     }
   }
