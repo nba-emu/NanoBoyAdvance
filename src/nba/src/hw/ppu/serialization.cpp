@@ -105,6 +105,12 @@ void PPU::LoadState(SaveState const& state) {
   dma3_video_transfer_running = state.ppu.dma3_video_transfer_running;
 
   SetupRenderThread();
+
+  /* Prevent visible glitches in the first frame,
+   * that happen due to re-rendering scanlines,
+   * which are in the past:
+   */
+  render_thread_vcount = mmio.vcount;
 }
 
 void PPU::CopyState(SaveState& state) {
