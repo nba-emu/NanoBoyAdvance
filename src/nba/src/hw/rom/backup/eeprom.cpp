@@ -143,7 +143,7 @@ void EEPROM::SetSizeHint(Size size) {
     detect_size = false;
 
     if (file->Size() != bytes) {
-      file = BackupFile::OpenOrCreate(save_path, {bytes}, bytes);
+      file = BackupFile::OpenOrCreate(save_path, {(size_t)bytes}, bytes);
     }
   }
 }
