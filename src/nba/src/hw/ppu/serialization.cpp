@@ -81,8 +81,10 @@ void PPU::LoadState(SaveState const& state) {
   vram_dirty_range_lo = 0x18000;
   vram_dirty_range_hi = 0;
 
+  // NOTE: we cannot use DISPCNT.vblank_flag here, because the flag
+  // will be unset during the last scanline.
+  bool vblank = mmio.vcount >= 160;
   auto cycles = state.timestamp % 1232U;
-  bool vblank = mmio.dispstat.vblank_flag;
   Scheduler::EventMethod<PPU> event_fn;
 
   /* Recreate the PPU state machine event.
