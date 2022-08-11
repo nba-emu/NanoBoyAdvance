@@ -53,6 +53,8 @@ private:
   int address;
   u64 serial_buffer;
   int transmitted_bits;
+
+  bool detect_size;
 };
 
 } // namespace nba
