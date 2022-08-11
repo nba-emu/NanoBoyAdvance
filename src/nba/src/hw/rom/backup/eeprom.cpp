@@ -11,8 +11,8 @@
 
 namespace nba {
 
-static constexpr int g_addr_bits[2] = { 6, 14 };
-static constexpr int g_save_size[2] = { 512, 8192 };
+static constexpr int g_addr_bits[3] = { 6, 14, 14 };
+static constexpr int g_save_size[3] = { 512, 8192, 8192 };
 
 EEPROM::EEPROM(std::string const& save_path, Size size_hint)
     : size(size_hint)
@@ -27,10 +27,10 @@ void EEPROM::Reset() {
 
   int bytes = g_save_size[size];
   
-  file = BackupFile::OpenOrCreate(save_path, { 512, 8192 }, bytes);
+  file = BackupFile::OpenOrCreate(save_path, {512, 8192}, bytes);
   if (bytes == g_save_size[0]) {
     size = SIZE_4K;
-  } else {
+  } else if (size != DETECT) { // DETECT has same size as SIZE_64K
     size = SIZE_64K;
   }
 }
@@ -124,6 +124,18 @@ void EEPROM::Write(u32 address, u8 value) {
     }
 
     ResetSerialBuffer();
+  }
+}
+
+void EEPROM::SetSizeHint(Size size) {
+  if (this->size == DETECT) {
+    int bytes = g_save_size[size];
+
+    this->size = size;
+
+    if (file->Size() != bytes) {
+      file = BackupFile::OpenOrCreate(save_path, {bytes}, bytes);
+    }
   }
 }
 

@@ -106,6 +106,12 @@ struct ROM {
     }
   }
 
+  void SetEEPROMSizeHint(EEPROM::Size size) {
+    if (backup_eeprom) {
+      ((EEPROM*)backup_eeprom.get())->SetSizeHint(size);
+    }
+  }
+
   auto ALWAYS_INLINE ReadROM16(u32 address) -> u16 {
     address &= 0x01FF'FFFE;
 

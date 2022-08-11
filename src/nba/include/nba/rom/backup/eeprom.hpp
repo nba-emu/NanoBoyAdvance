@@ -16,7 +16,8 @@ namespace nba {
 struct EEPROM : Backup {
   enum Size {
     SIZE_4K  = 0,
-    SIZE_64K = 1
+    SIZE_64K = 1,
+    DETECT = 2
   };
   
   EEPROM(std::string const& save_path, Size size_hint);
@@ -27,6 +28,8 @@ struct EEPROM : Backup {
   
   void LoadState(SaveState const& state) final;
   void CopyState(SaveState& state) final;
+
+  void SetSizeHint(Size size);
 
 private:
   enum State {
