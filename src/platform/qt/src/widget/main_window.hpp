@@ -108,6 +108,7 @@ private:
   void Stop();
 
   void SetKeyStatus(int channel, nba::InputDevice::Key key, bool pressed);
+  void SetFastForward(int channel, bool pressed);
   void UpdateWindowSize();
 
   void UpdateSolarSensorLevel();
@@ -121,6 +122,7 @@ private:
   std::unique_ptr<nba::CoreBase> core;
   std::unique_ptr<nba::EmulatorThread> emu_thread;
   bool key_input[2][nba::InputDevice::kKeyCount] {false};
+  bool fast_forward[2] {false};
   ControllerManager* controller_manager;
 
   QAction* pause_action;

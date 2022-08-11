@@ -487,11 +487,7 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
     }
 
     if (key == input.fast_forward.keyboard) {
-      if (input.hold_fast_forward) {
-        emu_thread->SetFastForward(pressed);
-      } else if (!pressed) {
-        emu_thread->SetFastForward(!emu_thread->GetFastForward());
-      }
+      SetFastForward(0, pressed);
     }
   } else if (type == QEvent::FileOpen) {
 	  auto file = dynamic_cast<QFileOpenEvent*>(event)->file();
@@ -713,6 +709,18 @@ void MainWindow::SetKeyStatus(int channel, nba::InputDevice::Key key, bool press
 
   input_device->SetKeyStatus(key, 
     key_input[0][int(key)] || key_input[1][int(key)]);
+}
+
+void MainWindow::SetFastForward(int channel, bool pressed) {
+  auto const& input = config->input;
+
+  fast_forward[channel] = pressed;
+
+  if (input.hold_fast_forward) {
+    emu_thread->SetFastForward(fast_forward[0] || fast_forward[1]);
+  } else if (!pressed) {
+    emu_thread->SetFastForward(!emu_thread->GetFastForward());
+  }
 }
 
 void MainWindow::UpdateWindowSize() {

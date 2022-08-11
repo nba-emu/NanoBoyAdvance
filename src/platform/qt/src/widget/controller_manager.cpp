@@ -229,12 +229,8 @@ void ControllerManager::UpdateKeyState() {
 
   bool fast_forward_button = evaluate(input.fast_forward);
 
-  if (input.hold_fast_forward) {
-    main_window->emu_thread->SetFastForward(fast_forward_button);
-  } else if (!fast_forward_button && fast_forward_button_old) {
-    main_window->emu_thread->SetFastForward(
-      !main_window->emu_thread->GetFastForward());
+  if (fast_forward_button != fast_forward_button_old) {
+    main_window->SetFastForward(1, fast_forward_button);
+    fast_forward_button_old = fast_forward_button;
   }
-
-  fast_forward_button_old = fast_forward_button;
 }
