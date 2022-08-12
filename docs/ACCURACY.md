@@ -43,3 +43,7 @@ Some of these issues are minor visual bugs, that do not affect gameplay, others 
 - Gadget Racers (requires sub-scanline precision: https://github.com/nba-emu/NanoBoyAdvance/issues/230)
 - Metal Max Kai II (original revision) (requires sub-scanline precision: https://github.com/nba-emu/NanoBoyAdvance/issues/229) (minor issue)
 - Madden NFL 06 (requires VRAM access stalling: https://github.com/nba-emu/NanoBoyAdvance/issues/241)
+- Final Fantasy VI (crashes at random: https://github.com/nba-emu/NanoBoyAdvance/issues/220)
+- Final Fantasy VI (HQ audio patch) (bugged audio: https://github.com/nba-emu/NanoBoyAdvance/issues/180) (minor issue)
+- All Inside-cap visual novel ports (emulator detection gets set off: https://github.com/nba-emu/NanoBoyAdvance/issues/203)
+- WarioWare - Twisted! (requires gyro sensor emulation: https://github.com/nba-emu/NanoBoyAdvance/issues/103)
