@@ -57,6 +57,7 @@ auto Timer::ReadHalf(int chan_id, int offset) -> u16 {
       return ReadControl(channel);
     }
   }
+  return 0;
 }
 
 auto Timer::ReadWord(int chan_id) -> u32 {

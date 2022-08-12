@@ -5,6 +5,8 @@ add_subdirectory(../../external ${CMAKE_BINARY_DIR}/external)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# used to fix a warning in CMake configuration, change to NEW when this has been deprecated upstream
+set(CMP0072 OLD)
 
 set(SOURCES
   src/arm/tablegen/tablegen.cpp
