@@ -20,9 +20,9 @@ struct PlatformConfig : Config {
   
   struct Cartridge {
     BackupType backup_type = BackupType::Detect;
-    bool force_rtc = false;
+    bool force_rtc = true;
     bool force_solar_sensor = false;
-    u8 solar_sensor_level = 156;
+    u8 solar_sensor_level = 23;
   } cartridge;
 
   struct Video {
@@ -33,7 +33,7 @@ struct PlatformConfig : Config {
       Nearest,
       Linear,
       xBRZ
-    } filter = Filter::Nearest;
+    } filter = Filter::Linear;
 
     enum class Color {
       No,
