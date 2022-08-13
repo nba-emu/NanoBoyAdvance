@@ -26,7 +26,8 @@ struct Config {
     FLASH_64,
     FLASH_128,
     EEPROM_4,
-    EEPROM_64
+    EEPROM_64,
+    EEPROM_DETECT // for internal use
   };
 
   struct Audio {
