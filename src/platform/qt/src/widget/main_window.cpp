@@ -263,8 +263,8 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
   auto scale_menu  = menu->addMenu(tr("Scale"));
   auto scale_group = new QActionGroup{this};
 
-  for (int scale = 1; scale <= 6; scale++) {
-    auto action = scale_group->addAction(QString::fromStdString(fmt::format("{}x", scale)));
+  const auto CreateScaleAction = [&](QString const& label, int scale) {
+    auto action = scale_group->addAction(label);
 
     action->setCheckable(true);
     action->setChecked(config->video.scale == scale);
@@ -275,9 +275,36 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
       config->Save();
       UpdateWindowSize();
     });
+  };
+
+  auto max_scale_menu = menu->addMenu(tr("Maximum scale"));
+  auto max_scale_group = new QActionGroup{this};
+
+  const auto CreateMaximumScaleAction = [&](QString const& label, int scale) {
+    auto action = max_scale_group->addAction(label);
+
+    action->setCheckable(true);
+    action->setChecked(config->window.maximum_scale == scale);
+    action->setShortcut(Qt::ALT | (Qt::Key)((int)Qt::Key_1 + scale - 1));
+
+    connect(action, &QAction::triggered, [=]() {
+      config->window.maximum_scale = scale;
+      config->Save();
+      screen->ReloadConfig();
+    });
+  };
+
+  CreateMaximumScaleAction(tr("Unlocked"), 0);
+
+  for (int scale = 1; scale <= 8; scale++) {
+    auto label = QString::fromStdString(fmt::format("{}x", scale));
+
+    CreateScaleAction(label, scale);
+    CreateMaximumScaleAction(label, scale);
   }
   
   scale_menu->addActions(scale_group->actions());
+  max_scale_menu->addActions(max_scale_group->actions());
 
   auto fullscreen_action = menu->addAction(tr("Fullscreen"));
   fullscreen_action->setCheckable(true);
@@ -289,10 +316,16 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
     UpdateWindowSize();
   });
 
-  CreateBooleanOption(menu, "Show FPS", &config->window.show_fps);
-  CreateBooleanOption(menu, "Lock Aspect Ratio", &config->window.lock_aspect_ratio, false, [this]() {
+  CreateBooleanOption(menu, "Lock aspect ratio", &config->window.lock_aspect_ratio, false, [this]() {
     screen->ReloadConfig();
   });
+  CreateBooleanOption(menu, "Snap to integer scale", &config->window.snap_to_integer_scale, false, [this]() {
+    screen->ReloadConfig();
+  });
+
+  menu->addSeparator();
+
+  CreateBooleanOption(menu, "Show FPS", &config->window.show_fps);
 }
 
 void MainWindow::CreateConfigMenu(QMenuBar* menu_bar) {
@@ -729,13 +762,15 @@ void MainWindow::SetFastForward(int channel, bool pressed) {
 }
 
 void MainWindow::UpdateWindowSize() {
-  if (config->video.fullscreen) {
+  bool fullscreen = config->video.fullscreen;
+
+  if (fullscreen) {
     showFullScreen();
   } else {
     showNormal();
 
     auto scale = config->video.scale;
-    auto minimum_size = screen->minimumSize();
+    auto minimum_size = screen->minimumSize(); 
     auto maximum_size = screen->maximumSize();
     screen->setFixedSize(240 * scale, 160 * scale);
     adjustSize();

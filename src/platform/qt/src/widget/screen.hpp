@@ -38,6 +38,8 @@ private:
   static constexpr int kGBANativeHeight = 160;
   static constexpr float kGBANativeAR = static_cast<float>(kGBANativeWidth) / static_cast<float>(kGBANativeHeight);
 
+  void UpdateViewport();
+
   u32* buffer = nullptr;
   bool force_clear = false;
   nba::OGLVideoDevice ogl_video_device;

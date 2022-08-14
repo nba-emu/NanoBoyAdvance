@@ -48,5 +48,11 @@ down = [16777237, 12, 1]
 up = [16777235, 11, 129]
 
 [window]
+# Set to zero to unlock the scale
+maximum_scale = 0
+# Show the current frames per second in the window title
 show_fps = false
+# Lock the screen to a 3:2 aspect ratio
 lock_aspect_ratio = true
+# Snap screen size to integer multiples of the original screen width and height
+snap_to_integer_scale = false
