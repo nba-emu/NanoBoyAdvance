@@ -39,9 +39,9 @@ MainWindow::MainWindow(
   auto menu_bar = new QMenuBar(this);
   setMenuBar(menu_bar);
 
-  CreateFileMenu(menu_bar);
-  CreateConfigMenu(menu_bar);
-  CreateHelpMenu(menu_bar);
+  CreateFileMenu();
+  CreateConfigMenu();
+  CreateHelpMenu();
 
   config->video_dev = screen;
   config->audio_dev = std::make_shared<nba::SDL2_AudioDevice>();
@@ -80,8 +80,8 @@ MainWindow::~MainWindow() {
   delete controller_manager;
 }
 
-void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
-  auto file_menu = menu_bar->addMenu(tr("File"));
+void MainWindow::CreateFileMenu() {
+  auto file_menu = menuBar()->addMenu(tr("File"));
 
   auto open_action = file_menu->addAction(tr("Open"));
   open_action->setShortcut(Qt::CTRL | Qt::Key_O);
@@ -306,15 +306,17 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
   scale_menu->addActions(scale_group->actions());
   max_scale_menu->addActions(max_scale_group->actions());
 
-  auto fullscreen_action = menu->addAction(tr("Fullscreen"));
+  fullscreen_action = menu->addAction(tr("Fullscreen"));
   fullscreen_action->setCheckable(true);
   fullscreen_action->setChecked(config->window.fullscreen);
   fullscreen_action->setShortcut(Qt::CTRL | Qt::Key_F);
   connect(fullscreen_action, &QAction::triggered, [this](bool fullscreen) {
-    config->window.fullscreen = fullscreen;
-    config->Save();
-    UpdateWindowSize();
+    SetFullscreen(fullscreen);
   });
+
+  CreateBooleanOption(menu, "Show menu in fullscreen", &config->window.fullscreen_show_menu, false, [this]() {
+    UpdateMenuBarVisibility();
+  })->setShortcut(Qt::CTRL | Qt::Key_M);
 
   CreateBooleanOption(menu, "Lock aspect ratio", &config->window.lock_aspect_ratio, false, [this]() {
     screen->ReloadConfig();
@@ -328,8 +330,8 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
   CreateBooleanOption(menu, "Show FPS", &config->window.show_fps);
 }
 
-void MainWindow::CreateConfigMenu(QMenuBar* menu_bar) {
-  auto menu = menu_bar->addMenu(tr("Config"));
+void MainWindow::CreateConfigMenu() {
+  auto menu = menuBar()->addMenu(tr("Config"));
   CreateVideoMenu(menu);
   CreateAudioMenu(menu);
   CreateInputMenu(menu);
@@ -337,33 +339,8 @@ void MainWindow::CreateConfigMenu(QMenuBar* menu_bar) {
   CreateWindowMenu(menu);
 }
 
-void MainWindow::CreateBooleanOption(
-  QMenu* menu,
-  const char* name,
-  bool* underlying,
-  bool require_reset,
-  std::function<void(void)> callback
-) {
-  auto action = menu->addAction(QString{name});
-  auto config = this->config;
-
-  action->setCheckable(true);
-  action->setChecked(*underlying);
-
-  connect(action, &QAction::triggered, [=](bool checked) {
-    *underlying = checked;
-    config->Save();
-    if (require_reset) {
-      PromptUserForReset();
-    }
-    if (callback) {
-      callback();
-    }
-  });
-}
-
-void MainWindow::CreateHelpMenu(QMenuBar* menu_bar) {
-  auto help_menu = menu_bar->addMenu(tr("Help"));
+void MainWindow::CreateHelpMenu() {
+  auto help_menu = menuBar()->addMenu(tr("Help"));
   auto about_app = help_menu->addAction(tr("About NanoBoyAdvance"));
 
   about_app->setMenuRole(QAction::AboutRole);
@@ -380,6 +357,33 @@ void MainWindow::CreateHelpMenu(QMenuBar* menu_bar) {
   });
 }
 
+auto MainWindow::CreateBooleanOption(
+  QMenu* menu,
+  const char* name,
+  bool* underlying,
+  bool require_reset,
+  std::function<void(void)> callback
+) -> QAction* {
+  auto action = menu->addAction(QString{name});
+  auto config = this->config;
+
+  action->setCheckable(true);
+  action->setChecked(*underlying);
+
+  connect(action, &QAction::triggered, [=](bool checked) {
+    *underlying = checked;
+    config->Save();
+    if (require_reset) {
+      PromptUserForReset();
+    }
+    if (callback) {
+      callback();
+    }
+  });
+
+  return action;
+}
+
 void MainWindow::RenderRecentFilesMenu() {
   recent_menu->clear();
 
@@ -394,6 +398,8 @@ void MainWindow::RenderRecentFilesMenu() {
       LoadROM(path);
     });
   }
+
+  UpdateMainWindowActionList();
 }
 
 void MainWindow::RenderSaveStateMenus() {
@@ -475,6 +481,8 @@ void MainWindow::RenderSaveStateMenus() {
       SaveState(dialog.selectedFiles().at(0).toStdString());
     }
   });
+
+  UpdateMainWindowActionList();
 }
 
 void MainWindow::SelectBIOS() {
@@ -527,6 +535,10 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
     if (key == input.fast_forward.keyboard) {
       SetFastForward(0, pressed);
     }
+
+    if (pressed && key == Qt::Key_Escape) {
+      SetFullscreen(false);
+    }
   } else if (type == QEvent::FileOpen) {
 	  auto file = dynamic_cast<QFileOpenEvent*>(event)->file();
     LoadROM(file.toStdString());
@@ -545,8 +557,14 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
   return QObject::eventFilter(obj, event);
 }
 
-void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
+void MainWindow::dragEnterEvent(QDragEnterEvent* event) {
   event->acceptProposedAction();
+}
+
+void MainWindow::mouseDoubleClickEvent(QMouseEvent* event) {
+  if (event->button() == Qt::LeftButton) {
+    SetFullscreen(false);
+  }
 }
 
 void MainWindow::FileOpen() {
@@ -589,6 +607,34 @@ void MainWindow::Stop() {
     RenderSaveStateMenus();
 
     setWindowTitle("NanoBoyAdvance 1.6");
+  
+    UpdateMenuBarVisibility();
+  }
+}
+
+void MainWindow::UpdateMenuBarVisibility() {
+  menuBar()->setVisible(
+    !config->window.fullscreen ||
+    !emu_thread->IsRunning() ||
+     config->window.fullscreen_show_menu
+  );
+
+  UpdateMainWindowActionList();
+}
+
+void MainWindow::UpdateMainWindowActionList() {
+  for (auto action : actions()) {
+    removeAction(action);
+  }
+
+  if (!menuBar()->isVisible()) {
+    for (auto menu : menuBar()->findChildren<QMenu*>()) {
+      for (auto action : menu->actions()) {
+        if (!action->shortcut().isEmpty()) {
+          addAction(action);
+        }
+      }
+    }
   }
 }
 
@@ -678,6 +724,7 @@ void MainWindow::LoadROM(std::string path) {
   screen->SetForceClear(false);
 
   UpdateSolarSensorLevel();
+  UpdateMenuBarVisibility();
 }
 
 auto MainWindow::LoadState(std::string const& path) -> nba::SaveStateLoader::Result {
@@ -776,6 +823,17 @@ void MainWindow::UpdateWindowSize() {
     adjustSize();
     screen->setMinimumSize(minimum_size);
     screen->setMaximumSize(maximum_size);
+  }
+
+  UpdateMenuBarVisibility();
+}
+
+void MainWindow::SetFullscreen(bool value) {
+  if (config->window.fullscreen != value) {
+    config->window.fullscreen = value;
+    config->Save();
+    UpdateWindowSize();
+    fullscreen_action->setChecked(value);
   }
 }
 

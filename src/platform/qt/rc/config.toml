@@ -47,6 +47,7 @@ up = [16777235, 11, 129]
 
 [window]
 fullscreen = false
+fullscreen_show_menu = false
 scale = 2
 # Set to zero to unlock the scale
 maximum_scale = 0
