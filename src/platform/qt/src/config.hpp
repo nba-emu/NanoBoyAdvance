@@ -65,11 +65,12 @@ struct QtConfig final : nba::PlatformConfig {
   } input;
 
   struct Window {
-    // TODO: move old Video settings here
+    int scale = 2;
     int maximum_scale = 0;
-    bool show_fps = false;
+    bool fullscreen = false;
     bool lock_aspect_ratio = true;
     bool snap_to_integer_scale = false;
+    bool show_fps = false;
   } window;
 
   std::vector<std::string> recent_files;

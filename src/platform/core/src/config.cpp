@@ -35,7 +35,6 @@ void PlatformConfig::Load(std::string const& path) {
       auto general = general_result.unwrap();
       this->bios_path = toml::find_or<std::string>(general, "bios_path", "bios.bin");
       this->skip_bios = toml::find_or<toml::boolean>(general, "bios_skip", false);
-      this->sync_to_audio = toml::find_or<toml::boolean>(general, "sync_to_audio", true);
     }
   }
 
@@ -77,11 +76,6 @@ void PlatformConfig::Load(std::string const& path) {
     if (video_result.is_ok()) {
       auto video = video_result.unwrap();
   
-      this->video.fullscreen = toml::find_or<toml::boolean>(video, "fullscreen", false);
-      this->video.scale = toml::find_or<int>(video, "scale", 2);
-      this->video.shader.path_vs = toml::find_or<std::string>(video, "shader_vs", "");
-      this->video.shader.path_fs = toml::find_or<std::string>(video, "shader_fs", "");
-
       const std::map<std::string, Video::Filter> filters{
         { "nearest", Video::Filter::Nearest },
         { "linear",  Video::Filter::Linear  },
@@ -158,7 +152,6 @@ void PlatformConfig::Save(std::string const& path) {
   // General
   data["general"]["bios_path"] = this->bios_path;
   data["general"]["bios_skip"] = this->skip_bios;
-  data["general"]["sync_to_audio"] = this->sync_to_audio;
 
   // Cartridge
   std::string save_type;
@@ -192,10 +185,6 @@ void PlatformConfig::Save(std::string const& path) {
     case Video::Color::AGB:   color_correction = "agb"; break;
   }
 
-  data["video"]["fullscreen"] = this->video.fullscreen;
-  data["video"]["scale"] = this->video.scale;
-  data["video"]["shader_vs"] = this->video.shader.path_vs;
-  data["video"]["shader_fs"] = this->video.shader.path_fs;
   data["video"]["filter"] = filter;
   data["video"]["color_correction"] = color_correction;
   data["video"]["lcd_ghosting"] = this->video.lcd_ghosting;

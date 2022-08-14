@@ -267,11 +267,11 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
     auto action = scale_group->addAction(label);
 
     action->setCheckable(true);
-    action->setChecked(config->video.scale == scale);
+    action->setChecked(config->window.scale == scale);
     action->setShortcut(Qt::SHIFT | (Qt::Key)((int)Qt::Key_1 + scale - 1));
 
     connect(action, &QAction::triggered, [=]() {
-      config->video.scale = scale;
+      config->window.scale = scale;
       config->Save();
       UpdateWindowSize();
     });
@@ -308,10 +308,10 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
 
   auto fullscreen_action = menu->addAction(tr("Fullscreen"));
   fullscreen_action->setCheckable(true);
-  fullscreen_action->setChecked(config->video.fullscreen);
+  fullscreen_action->setChecked(config->window.fullscreen);
   fullscreen_action->setShortcut(Qt::CTRL | Qt::Key_F);
   connect(fullscreen_action, &QAction::triggered, [this](bool fullscreen) {
-    config->video.fullscreen = fullscreen;
+    config->window.fullscreen = fullscreen;
     config->Save();
     UpdateWindowSize();
   });
@@ -762,14 +762,14 @@ void MainWindow::SetFastForward(int channel, bool pressed) {
 }
 
 void MainWindow::UpdateWindowSize() {
-  bool fullscreen = config->video.fullscreen;
+  bool fullscreen = config->window.fullscreen;
 
   if (fullscreen) {
     showFullScreen();
   } else {
     showNormal();
 
-    auto scale = config->video.scale;
+    auto scale = config->window.scale;
     auto minimum_size = screen->minimumSize(); 
     auto maximum_size = screen->maximumSize();
     screen->setFixedSize(240 * scale, 160 * scale);

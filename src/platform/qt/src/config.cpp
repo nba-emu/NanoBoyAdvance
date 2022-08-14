@@ -53,10 +53,12 @@ void QtConfig::LoadCustomData(toml::value const& data) {
     if (window_result.is_ok()) {
       auto window_ = window_result.unwrap();
 
+      window.scale = toml::find_or<int>(window_, "scale", 2);
       window.maximum_scale = toml::find_or<int>(window_, "maximum_scale", 0);
-      window.show_fps = toml::find_or<bool>(window_, "show_fps", false);
+      window.fullscreen = toml::find_or<bool>(window_, "fullscreen", false);
       window.lock_aspect_ratio = toml::find_or<bool>(window_, "lock_aspect_ratio", true);
       window.snap_to_integer_scale = toml::find_or<bool>(window_, "snap_to_integer_scale", false);
+      window.show_fps = toml::find_or<bool>(window_, "show_fps", false);
     }
   }
 
@@ -81,10 +83,12 @@ void QtConfig::SaveCustomData(
   data["input"]["gba"]["l"] = input.gba[8].Array();
   data["input"]["gba"]["r"] = input.gba[9].Array();
 
+  data["window"]["scale"] = window.scale;
   data["window"]["maximum_scale"] = window.maximum_scale;
-  data["window"]["show_fps"] = window.show_fps;
+  data["window"]["fullscreen"] = window.fullscreen;
   data["window"]["lock_aspect_ratio"] = window.lock_aspect_ratio;
   data["window"]["snap_to_integer_scale"] = window.snap_to_integer_scale;
+  data["window"]["show_fps"] = window.show_fps;
 
   data["recent_files"] = recent_files;
 }

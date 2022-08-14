@@ -13,8 +13,6 @@ force_solar_sensor = false
 solar_sensor_level = 23
 
 [video]
-fullscreen = false
-scale = 2
 filter = "linear"
 color_correction = "agb"
 lcd_ghosting = true
@@ -48,6 +46,8 @@ down = [16777237, 12, 1]
 up = [16777235, 11, 129]
 
 [window]
+fullscreen = false
+scale = 2
 # Set to zero to unlock the scale
 maximum_scale = 0
 # Show the current frames per second in the window title

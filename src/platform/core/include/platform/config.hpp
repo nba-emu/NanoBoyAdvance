@@ -16,8 +16,6 @@ namespace nba {
 struct PlatformConfig : Config {
   std::string bios_path = "bios.bin";
   
-  bool sync_to_audio = false;
-  
   struct Cartridge {
     BackupType backup_type = BackupType::Detect;
     bool force_rtc = true;
@@ -26,9 +24,6 @@ struct PlatformConfig : Config {
   } cartridge;
 
   struct Video {
-    bool fullscreen = false;
-    int scale = 2;
-
     enum class Filter {
       Nearest,
       Linear,
@@ -42,11 +37,6 @@ struct PlatformConfig : Config {
     } color = Color::AGB;
 
     bool lcd_ghosting = true;
-
-    struct Shader {
-      std::string path_vs = "";
-      std::string path_fs = "";
-    } shader;
   } video;
 
   void Load(std::string const& path);
