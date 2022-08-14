@@ -49,15 +49,15 @@ protected:
 private:
   friend struct ControllerManager;
 
-  void CreateFileMenu(QMenuBar* menu_bar);
+  void CreateFileMenu();
   void CreateVideoMenu(QMenu* parent);
   void CreateAudioMenu(QMenu* parent);
   void CreateInputMenu(QMenu* parent);
   void CreateSystemMenu(QMenu* parent);
   void CreateSolarSensorValueMenu(QMenu* parent);
   void CreateWindowMenu(QMenu* parent);
-  void CreateConfigMenu(QMenuBar* menu_bar);
-  void CreateHelpMenu(QMenuBar* menu_bar);
+  void CreateConfigMenu();
+  void CreateHelpMenu();
   void RenderRecentFilesMenu();
   void RenderSaveStateMenus();
 
@@ -106,6 +106,8 @@ private:
   void Reset();
   void SetPause(bool value);
   void Stop();
+  void UpdateMenuBarVisibility();
+  void UpdateMainWindowActionList();
 
   void SetKeyStatus(int channel, nba::InputDevice::Key key, bool pressed);
   void SetFastForward(int channel, bool pressed);

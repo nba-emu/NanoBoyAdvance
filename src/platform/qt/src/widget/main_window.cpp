@@ -39,9 +39,9 @@ MainWindow::MainWindow(
   auto menu_bar = new QMenuBar(this);
   setMenuBar(menu_bar);
 
-  CreateFileMenu(menu_bar);
-  CreateConfigMenu(menu_bar);
-  CreateHelpMenu(menu_bar);
+  CreateFileMenu();
+  CreateConfigMenu();
+  CreateHelpMenu();
 
   config->video_dev = screen;
   config->audio_dev = std::make_shared<nba::SDL2_AudioDevice>();
@@ -80,8 +80,8 @@ MainWindow::~MainWindow() {
   delete controller_manager;
 }
 
-void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
-  auto file_menu = menu_bar->addMenu(tr("File"));
+void MainWindow::CreateFileMenu() {
+  auto file_menu = menuBar()->addMenu(tr("File"));
 
   auto open_action = file_menu->addAction(tr("Open"));
   open_action->setShortcut(Qt::CTRL | Qt::Key_O);
@@ -328,13 +328,31 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
   CreateBooleanOption(menu, "Show FPS", &config->window.show_fps);
 }
 
-void MainWindow::CreateConfigMenu(QMenuBar* menu_bar) {
-  auto menu = menu_bar->addMenu(tr("Config"));
+void MainWindow::CreateConfigMenu() {
+  auto menu = menuBar()->addMenu(tr("Config"));
   CreateVideoMenu(menu);
   CreateAudioMenu(menu);
   CreateInputMenu(menu);
   CreateSystemMenu(menu);
   CreateWindowMenu(menu);
+}
+
+void MainWindow::CreateHelpMenu() {
+  auto help_menu = menuBar()->addMenu(tr("Help"));
+  auto about_app = help_menu->addAction(tr("About NanoBoyAdvance"));
+
+  about_app->setMenuRole(QAction::AboutRole);
+  connect(about_app, &QAction::triggered, [&] {
+    QMessageBox box{ this };
+    box.setTextFormat(Qt::RichText);
+    box.setText(tr("NanoBoyAdvance is a Game Boy Advance emulator focused on accuracy.<br><br>"
+                   "Copyright © 2015 - 2022 fleroviux<br><br>"
+                   "NanoBoyAdvance is licensed under the GPLv3 or any later version.<br><br>"
+                   "GitHub: <a href=\"https://github.com/nba-emu/NanoBoyAdvance\">https://github.com/nba-emu/NanoBoyAdvance</a><br><br>"
+                   "Game Boy Advance is a registered trademark of Nintendo Co., Ltd."));
+    box.setWindowTitle(tr("About NanoBoyAdvance"));
+    box.exec();
+  });
 }
 
 void MainWindow::CreateBooleanOption(
@@ -362,24 +380,6 @@ void MainWindow::CreateBooleanOption(
   });
 }
 
-void MainWindow::CreateHelpMenu(QMenuBar* menu_bar) {
-  auto help_menu = menu_bar->addMenu(tr("Help"));
-  auto about_app = help_menu->addAction(tr("About NanoBoyAdvance"));
-
-  about_app->setMenuRole(QAction::AboutRole);
-  connect(about_app, &QAction::triggered, [&] {
-    QMessageBox box{ this };
-    box.setTextFormat(Qt::RichText);
-    box.setText(tr("NanoBoyAdvance is a Game Boy Advance emulator focused on accuracy.<br><br>"
-                   "Copyright © 2015 - 2022 fleroviux<br><br>"
-                   "NanoBoyAdvance is licensed under the GPLv3 or any later version.<br><br>"
-                   "GitHub: <a href=\"https://github.com/nba-emu/NanoBoyAdvance\">https://github.com/nba-emu/NanoBoyAdvance</a><br><br>"
-                   "Game Boy Advance is a registered trademark of Nintendo Co., Ltd."));
-    box.setWindowTitle(tr("About NanoBoyAdvance"));
-    box.exec();
-  });
-}
-
 void MainWindow::RenderRecentFilesMenu() {
   recent_menu->clear();
 
@@ -394,6 +394,8 @@ void MainWindow::RenderRecentFilesMenu() {
       LoadROM(path);
     });
   }
+
+  UpdateMainWindowActionList();
 }
 
 void MainWindow::RenderSaveStateMenus() {
@@ -475,6 +477,8 @@ void MainWindow::RenderSaveStateMenus() {
       SaveState(dialog.selectedFiles().at(0).toStdString());
     }
   });
+
+  UpdateMainWindowActionList();
 }
 
 void MainWindow::SelectBIOS() {
@@ -589,6 +593,30 @@ void MainWindow::Stop() {
     RenderSaveStateMenus();
 
     setWindowTitle("NanoBoyAdvance 1.6");
+  
+    UpdateMenuBarVisibility();
+  }
+}
+
+void MainWindow::UpdateMenuBarVisibility() {
+  menuBar()->setVisible(!config->window.fullscreen || !emu_thread->IsRunning());
+
+  UpdateMainWindowActionList();
+}
+
+void MainWindow::UpdateMainWindowActionList() {
+  for (auto action : actions()) {
+    removeAction(action);
+  }
+
+  if (!menuBar()->isVisible()) {
+    for (auto menu : menuBar()->findChildren<QMenu*>()) {
+      for (auto action : menu->actions()) {
+        if (!action->shortcut().isEmpty()) {
+          addAction(action);
+        }
+      }
+    }
   }
 }
 
@@ -678,6 +706,7 @@ void MainWindow::LoadROM(std::string path) {
   screen->SetForceClear(false);
 
   UpdateSolarSensorLevel();
+  UpdateMenuBarVisibility();
 }
 
 auto MainWindow::LoadState(std::string const& path) -> nba::SaveStateLoader::Result {
@@ -777,6 +806,8 @@ void MainWindow::UpdateWindowSize() {
     screen->setMinimumSize(minimum_size);
     screen->setMaximumSize(maximum_size);
   }
+
+  UpdateMenuBarVisibility();
 }
 
 void MainWindow::UpdateSolarSensorLevel() {
