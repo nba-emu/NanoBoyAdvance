@@ -306,14 +306,12 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
   scale_menu->addActions(scale_group->actions());
   max_scale_menu->addActions(max_scale_group->actions());
 
-  auto fullscreen_action = menu->addAction(tr("Fullscreen"));
+  fullscreen_action = menu->addAction(tr("Fullscreen"));
   fullscreen_action->setCheckable(true);
   fullscreen_action->setChecked(config->window.fullscreen);
   fullscreen_action->setShortcut(Qt::CTRL | Qt::Key_F);
   connect(fullscreen_action, &QAction::triggered, [this](bool fullscreen) {
-    config->window.fullscreen = fullscreen;
-    config->Save();
-    UpdateWindowSize();
+    SetFullscreen(fullscreen);
   });
 
   CreateBooleanOption(menu, "Lock aspect ratio", &config->window.lock_aspect_ratio, false, [this]() {
@@ -531,6 +529,10 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
     if (key == input.fast_forward.keyboard) {
       SetFastForward(0, pressed);
     }
+
+    if (pressed && key == Qt::Key_Escape) {
+      SetFullscreen(false);
+    }
   } else if (type == QEvent::FileOpen) {
 	  auto file = dynamic_cast<QFileOpenEvent*>(event)->file();
     LoadROM(file.toStdString());
@@ -549,8 +551,14 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
   return QObject::eventFilter(obj, event);
 }
 
-void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
+void MainWindow::dragEnterEvent(QDragEnterEvent* event) {
   event->acceptProposedAction();
+}
+
+void MainWindow::mouseDoubleClickEvent(QMouseEvent* event) {
+  if (event->button() == Qt::LeftButton) {
+    SetFullscreen(false);
+  }
 }
 
 void MainWindow::FileOpen() {
@@ -808,6 +816,15 @@ void MainWindow::UpdateWindowSize() {
   }
 
   UpdateMenuBarVisibility();
+}
+
+void MainWindow::SetFullscreen(bool value) {
+  if (config->window.fullscreen != value) {
+    config->window.fullscreen = value;
+    config->Save();
+    UpdateWindowSize();
+    fullscreen_action->setChecked(value);
+  }
 }
 
 void MainWindow::UpdateSolarSensorLevel() {

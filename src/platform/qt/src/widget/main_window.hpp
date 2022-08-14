@@ -44,7 +44,8 @@ private slots:
 
 protected:
   bool eventFilter(QObject* obj, QEvent* event) override;
-  void dragEnterEvent(QDragEnterEvent *event) override;
+  void dragEnterEvent(QDragEnterEvent* event) override;
+  void mouseDoubleClickEvent(QMouseEvent* event) override;
 
 private:
   friend struct ControllerManager;
@@ -112,6 +113,7 @@ private:
   void SetKeyStatus(int channel, nba::InputDevice::Key key, bool pressed);
   void SetFastForward(int channel, bool pressed);
   void UpdateWindowSize();
+  void SetFullscreen(bool value);
 
   void UpdateSolarSensorLevel();
 
@@ -133,6 +135,7 @@ private:
   QAction* current_solar_level = nullptr;
   QMenu* load_state_menu;
   QMenu* save_state_menu;
+  QAction* fullscreen_action;
   bool game_loaded = false;
   std::string game_path;
 
