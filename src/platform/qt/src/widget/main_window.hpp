@@ -65,13 +65,13 @@ private:
   void SelectBIOS();
   void PromptUserForReset();
 
-  void CreateBooleanOption(
+  auto CreateBooleanOption(
     QMenu* menu,
     const char* name,
     bool* underlying,
     bool require_reset = false,
     std::function<void(void)> callback = nullptr
-  );
+  ) -> QAction*;
 
   template <typename T>
   void CreateSelectionOption(

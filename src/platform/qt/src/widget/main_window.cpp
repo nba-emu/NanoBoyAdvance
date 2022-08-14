@@ -314,6 +314,10 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
     SetFullscreen(fullscreen);
   });
 
+  CreateBooleanOption(menu, "Show menu in fullscreen", &config->window.fullscreen_show_menu, false, [this]() {
+    UpdateMenuBarVisibility();
+  })->setShortcut(Qt::CTRL | Qt::Key_M);
+
   CreateBooleanOption(menu, "Lock aspect ratio", &config->window.lock_aspect_ratio, false, [this]() {
     screen->ReloadConfig();
   });
@@ -353,13 +357,13 @@ void MainWindow::CreateHelpMenu() {
   });
 }
 
-void MainWindow::CreateBooleanOption(
+auto MainWindow::CreateBooleanOption(
   QMenu* menu,
   const char* name,
   bool* underlying,
   bool require_reset,
   std::function<void(void)> callback
-) {
+) -> QAction* {
   auto action = menu->addAction(QString{name});
   auto config = this->config;
 
@@ -376,6 +380,8 @@ void MainWindow::CreateBooleanOption(
       callback();
     }
   });
+
+  return action;
 }
 
 void MainWindow::RenderRecentFilesMenu() {
@@ -607,7 +613,11 @@ void MainWindow::Stop() {
 }
 
 void MainWindow::UpdateMenuBarVisibility() {
-  menuBar()->setVisible(!config->window.fullscreen || !emu_thread->IsRunning());
+  menuBar()->setVisible(
+    !config->window.fullscreen ||
+    !emu_thread->IsRunning() ||
+     config->window.fullscreen_show_menu
+  );
 
   UpdateMainWindowActionList();
 }
