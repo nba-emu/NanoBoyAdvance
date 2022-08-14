@@ -309,19 +309,25 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
   fullscreen_action = menu->addAction(tr("Fullscreen"));
   fullscreen_action->setCheckable(true);
   fullscreen_action->setChecked(config->window.fullscreen);
+#if defined(__APPLE__)
+  fullscreen_action->setShortcut(Qt::CTRL | Qt::META | Qt::Key_F);
+#else
   fullscreen_action->setShortcut(Qt::CTRL | Qt::Key_F);
+#endif
   connect(fullscreen_action, &QAction::triggered, [this](bool fullscreen) {
     SetFullscreen(fullscreen);
   });
 
+#if !defined(__APPLE__)
   CreateBooleanOption(menu, "Show menu in fullscreen", &config->window.fullscreen_show_menu, false, [this]() {
     UpdateMenuBarVisibility();
   })->setShortcut(Qt::CTRL | Qt::Key_M);
+#endif
 
   CreateBooleanOption(menu, "Lock aspect ratio", &config->window.lock_aspect_ratio, false, [this]() {
     screen->ReloadConfig();
   });
-  CreateBooleanOption(menu, "Snap to integer scale", &config->window.snap_to_integer_scale, false, [this]() {
+  CreateBooleanOption(menu, "Use integer scaling", &config->window.use_integer_scaling, false, [this]() {
     screen->ReloadConfig();
   });
 

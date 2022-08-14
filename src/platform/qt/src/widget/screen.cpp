@@ -64,7 +64,7 @@ void Screen::UpdateViewport() {
   }
 
   // Lock width and height to (non-uniform) integer scales of the native resolution
-  if (config->window.snap_to_integer_scale) {
+  if (config->window.use_integer_scaling) {
     viewport_width  = kGBANativeWidth  * std::max(1, static_cast<int>(viewport_width  / (float)kGBANativeWidth));
     viewport_height = kGBANativeHeight * std::max(1, static_cast<int>(viewport_height / (float)kGBANativeHeight));
   }

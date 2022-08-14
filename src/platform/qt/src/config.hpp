@@ -70,7 +70,7 @@ struct QtConfig final : nba::PlatformConfig {
     bool fullscreen = false;
     bool fullscreen_show_menu = false;
     bool lock_aspect_ratio = true;
-    bool snap_to_integer_scale = false;
+    bool use_integer_scaling = false;
     bool show_fps = false;
   } window;
 

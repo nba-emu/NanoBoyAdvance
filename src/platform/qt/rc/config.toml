@@ -56,4 +56,4 @@ show_fps = false
 # Lock the screen to a 3:2 aspect ratio
 lock_aspect_ratio = true
 # Snap screen size to integer multiples of the original screen width and height
-snap_to_integer_scale = false
+use_integer_scaling = false

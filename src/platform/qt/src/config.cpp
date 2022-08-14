@@ -58,7 +58,7 @@ void QtConfig::LoadCustomData(toml::value const& data) {
       window.fullscreen = toml::find_or<bool>(window_, "fullscreen", false);
       window.fullscreen_show_menu = toml::find_or<bool>(window_, "fullscreen_show_menu", false);
       window.lock_aspect_ratio = toml::find_or<bool>(window_, "lock_aspect_ratio", true);
-      window.snap_to_integer_scale = toml::find_or<bool>(window_, "snap_to_integer_scale", false);
+      window.use_integer_scaling = toml::find_or<bool>(window_, "use_integer_scaling", false);
       window.show_fps = toml::find_or<bool>(window_, "show_fps", false);
     }
   }
@@ -89,7 +89,7 @@ void QtConfig::SaveCustomData(
   data["window"]["fullscreen"] = window.fullscreen;
   data["window"]["fullscreen_show_menu"] = window.fullscreen_show_menu;
   data["window"]["lock_aspect_ratio"] = window.lock_aspect_ratio;
-  data["window"]["snap_to_integer_scale"] = window.snap_to_integer_scale;
+  data["window"]["use_integer_scaling"] = window.use_integer_scaling;
   data["window"]["show_fps"] = window.show_fps;
 
   data["recent_files"] = recent_files;
