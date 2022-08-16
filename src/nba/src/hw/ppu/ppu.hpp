@@ -33,8 +33,6 @@ struct PPU {
     std::shared_ptr<Config> config
   );
 
- ~PPU(); 
-
   void Reset();
 
   void LoadState(SaveState const& state);
@@ -47,21 +45,10 @@ struct PPU {
 
   template<typename T>
   void ALWAYS_INLINE WritePRAM(u32 address, T value) noexcept {
-    WaitForRenderThread();
-
     if constexpr (std::is_same_v<T, u8>) {
       write<u16>(pram, address & 0x3FE, value * 0x0101);
-
-      if (mmio.vcount < 160) {
-        // TODO: optimise this
-        write<u16>(pram_draw, address & 0x3FE, value * 0x0101);    
-      }
     } else {
       write<T>(pram, address & 0x3FF, value);
-
-      if (mmio.vcount < 160) {
-        write<T>(pram_draw, address & 0x3FF, value);    
-      }
     }
   }
 
@@ -82,8 +69,6 @@ struct PPU {
 
   template<typename T>
   void ALWAYS_INLINE WriteVRAM(u32 address, T value) noexcept {
-    WaitForRenderThread();
-
     address &= 0x1FFFF;
 
     if (address >= 0x18000) {
@@ -97,28 +82,10 @@ struct PPU {
       auto limit = mmio.dispcnt.mode >= 3 ? 0x14000 : 0x10000;
 
       if (address < limit) {
-        u16 value16 = value * 0x0101;
-
-        address &= ~1;
-
-        write<u16>(vram, address, value16);
-
-        if (mmio.vcount < 160) {
-          write<u16>(vram_draw, address, value16);
-        } else {
-          vram_dirty_range_lo = std::min(vram_dirty_range_lo, (int)address);
-          vram_dirty_range_hi = std::max(vram_dirty_range_hi, (int)(address + sizeof(T)));
-        }
+        write<u16>(vram, address & ~1, value * 0x0101);
       }
     } else {
       write<T>(vram, address, value);
-
-      if (mmio.vcount < 160) {
-        write<T>(vram_draw, address, value);    
-      } else {
-        vram_dirty_range_lo = std::min(vram_dirty_range_lo, (int)address);
-        vram_dirty_range_hi = std::max(vram_dirty_range_hi, (int)(address + sizeof(T)));
-      }
     }
   }
 
@@ -129,14 +96,8 @@ struct PPU {
 
   template<typename T>
   void ALWAYS_INLINE WriteOAM(u32 address, T value) noexcept {
-    WaitForRenderThread();
-
     if constexpr (!std::is_same_v<T, u8>) {
       write<T>(oam, address & 0x3FF, value);
-
-      if (mmio.vcount < 160) {
-        write<T>(oam_draw, address & 0x3FF, value);    
-      }
     }
   }
 
@@ -220,81 +181,21 @@ private:
   void OnVblankHblankIRQTest(int cycles_late);
   void OnVblankHblankComplete(int cycles_late);
 
-  void RenderScanline(int vcount);
-  void RenderLayerText(int vcount, int id);
-  void RenderLayerAffine(int vcount, int id);
-  void RenderLayerBitmap1(int vcount);
-  void RenderLayerBitmap2(int vcount);
-  void RenderLayerBitmap3(int vcount);
-  void RenderLayerOAM(bool bitmap_mode, int vcount, int line);
-  void RenderWindow(int vcount, int id);
-
-  static auto ConvertColor(u16 color) -> u32;
-
-  template<bool window, bool blending>
-  void ComposeScanlineTmpl(int vcount, int bg_min, int bg_max);
-  void ComposeScanline(int vcount, int bg_min, int bg_max);
-  void Blend(int vcount, u16& target1, u16 target2, BlendControl::Effect sfx);
-
-  void SetupRenderThread();
-  void StopRenderThread();
-  void SubmitScanline();
-  void ScheduleSubmitScanline();
-
-  void WaitForRenderThread() {
-    if (mmio.vcount < 160 && render_thread_vcount < 160) {
-      while (render_thread_vcount <= render_thread_vcount_max) ;
-    }
-  }
-
-  #include "helper.inl"
-
   u8 pram[0x00400];
   u8 oam [0x00400];
   u8 vram[0x18000];
 
-  u8 pram_draw[0x00400];
-  u8  oam_draw[0x00400];
-  u8 vram_draw[0x18000];
+  bool window_scanline_enable[2];
 
   Scheduler& scheduler;
   IRQ& irq;
   DMA& dma;
   std::shared_ptr<Config> config;
 
-  u16 buffer_bg[4][240];
-
-  bool line_contains_alpha_obj;
-
-  struct ObjectPixel {
-    u16 color;
-    u8  priority;
-    unsigned alpha  : 1;
-    unsigned window : 1;
-    unsigned mosaic : 1;
-  } buffer_obj[240];
-
-  bool buffer_win[2][240];
-  bool window_scanline_enable[2];
-
   u32 output[2][240 * 160];
   int frame;
 
-  std::thread render_thread;
-  std::atomic_int render_thread_vcount;
-  std::atomic_int render_thread_vcount_max;
-  std::atomic_bool render_thread_running = false;
-  std::condition_variable render_thread_cv;
-  std::mutex render_thread_mutex;
-  bool render_thread_ready;
-  MMIO mmio_copy[228];
-  int vram_dirty_range_lo;
-  int vram_dirty_range_hi;
-
   bool dma3_video_transfer_running;
-
-  static constexpr u16 s_color_transparent = 0x8000;
-  static const int s_obj_size[4][4][2];
 };
 
 } // namespace nba::core
