@@ -181,9 +181,47 @@ private:
   void OnVblankHblankIRQTest(int cycles_late);
   void OnVblankHblankComplete(int cycles_late);
 
+  // TODO: think of less terrible names:
+  void InitLineRender();
+  void SyncLineRender();
+  void InitBG(int id);
+  void SyncBG(int id, int cycles);
+  void RenderBGMode2(int id, int cycles);
+  void RenderBGMode3(int cycles);
+  void RenderBGMode4(int cycles);
+  void RenderBGMode5(int cycles);
+  void InitCompose();
+  void SyncCompose(int cycles);
+
   u8 pram[0x00400];
   u8 oam [0x00400];
   u8 vram[0x18000];
+
+  int dispcnt_mode;
+  u64 last_sync_point;
+
+  struct BG {
+    bool engaged;
+
+    int x;
+    int hcounter;
+
+    struct Affine {
+      s32 x;
+      s32 y;
+
+      // Mode1, Mode2 text-based affine modes:
+      bool fetching;
+      u32 address;
+    } affine;
+
+    u32 buffer[256];
+  } bg[4];
+
+  struct Compose {
+    bool engaged;
+    int hcounter;
+  } compose;
 
   bool window_scanline_enable[2];
 

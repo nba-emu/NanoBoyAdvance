@@ -21,6 +21,8 @@ set(SOURCES
   src/hw/apu/callback.cpp
   src/hw/apu/registers.cpp
   src/hw/apu/serialization.cpp
+  src/hw/ppu/background.cpp
+  src/hw/ppu/compose.cpp
   src/hw/ppu/ppu.cpp
   src/hw/ppu/registers.cpp
   src/hw/ppu/serialization.cpp

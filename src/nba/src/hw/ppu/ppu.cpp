@@ -174,6 +174,8 @@ void PPU::OnScanlineComplete(int cycles_late) {
     }
   }
 
+  SyncLineRender();
+
   /* TODO: it appears that this should really happen ~36 cycles into H-draw.
    * But right now if we do that it breaks at least Pinball Tycoon.
    */
@@ -207,7 +209,7 @@ void PPU::OnHblankComplete(int cycles_late) {
   UpdateVideoTransferDMA();
 
   if (vcount == 160) {
-    // ScheduleSubmitScanline();
+    InitLineRender();
 
     scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
     dma.Request(DMA::Occasion::VBlank);
@@ -228,7 +230,7 @@ void PPU::OnHblankComplete(int cycles_late) {
     }
   } else {
     scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
-    // ScheduleSubmitScanline();
+    InitLineRender();
   }
 }
 
@@ -295,8 +297,52 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
 
   LatchBGXYWrites();
   CheckVerticalCounterIRQ();
-  // ScheduleSubmitScanline();
+  InitLineRender();
   UpdateVideoTransferDMA();
+}
+
+void PPU::InitLineRender() {
+  // Minimum and maximum available BGs in each BG mode:
+  const int MIN_BG[8] { 0, 0, 2, 2, 2, 2, -1, -1 };
+  const int MAX_BG[8] { 3, 2, 3, 2, 2, 2, -1, -1 };
+
+  int mode = mmio.dispcnt.mode;
+
+  dispcnt_mode = mode;
+  last_sync_point = scheduler.GetTimestampNow();
+
+  int min_bg = MIN_BG[mode];
+  int max_bg = MAX_BG[mode];
+
+  for (int id = 0; id < 4; id++) {
+    bg[id].engaged = false;
+  }
+
+  for (int id = min_bg; id <= max_bg; id++) {
+    if (mmio.enable_bg[0][id]) {
+      InitBG(id);
+    }
+  }
+
+  InitCompose();
+}
+
+void PPU::SyncLineRender() {
+  u64 sync_point = scheduler.GetTimestampNow();
+  
+  int cycles = (int)(sync_point - last_sync_point);
+
+  for (int id = 0; id < 4; id++) {
+    if (bg[id].engaged) {
+      SyncBG(id, cycles);
+    }
+  }
+
+  if (compose.engaged) {
+    SyncCompose(cycles);
+  }
+  
+  last_sync_point = sync_point;
 }
 
 } // namespace nba::core
