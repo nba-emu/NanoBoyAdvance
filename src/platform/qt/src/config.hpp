@@ -65,8 +65,13 @@ struct QtConfig final : nba::PlatformConfig {
   } input;
 
   struct Window {
-    bool show_fps = false;
+    int scale = 2;
+    int maximum_scale = 0;
+    bool fullscreen = false;
+    bool fullscreen_show_menu = false;
     bool lock_aspect_ratio = true;
+    bool use_integer_scaling = false;
+    bool show_fps = false;
   } window;
 
   std::vector<std::string> recent_files;

@@ -151,13 +151,13 @@ bool DMA::HasVideoTransferDMA() {
 }
 
 void DMA::Run() {
-  memory.Idle();
+  bus.Idle();
 
   do {
     RunChannel();
   } while (IsRunning());
 
-  memory.Idle();
+  bus.Idle();
 }
 
 void DMA::RunChannel() {
@@ -203,7 +203,7 @@ void DMA::RunChannel() {
       u16 value;
 
       if (likely(src_addr >= 0x02000000)) {
-        value = memory.ReadHalf(src_addr, access_src);
+        value = bus.ReadHalf(src_addr, access_src);
         channel.latch.bus = (value << 16) | value;
         latch = channel.latch.bus;
       } else {
@@ -212,19 +212,19 @@ void DMA::RunChannel() {
         } else {
           value = channel.latch.bus;
         }
-        memory.Idle();
+        bus.Idle();
       }
 
-      memory.WriteHalf(dst_addr, value, access_dst);
+      bus.WriteHalf(dst_addr, value, access_dst);
     } else {
       if (likely(src_addr >= 0x02000000)) {
-        channel.latch.bus = memory.ReadWord(src_addr, access_src);
+        channel.latch.bus = bus.ReadWord(src_addr, access_src);
         latch = channel.latch.bus;
       } else {
-        memory.Idle();
+        bus.Idle();
       }
 
-      memory.WriteWord(dst_addr, channel.latch.bus, access_dst);
+      bus.WriteWord(dst_addr, channel.latch.bus, access_dst);
     }
 
     channel.latch.src_addr += src_modify;
@@ -373,6 +373,21 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
           ScheduleDMAs(1 << channel.id);
         } else {
           AddChannelToDMASet(channel);
+        }
+
+        /* Try to auto-detect EEPROM size from the first EEPROM DMA transfer,
+         * since we cannot always determine the size at load time.
+         */
+        if (channel.dst_addr >= 0x0D000000) {
+          int length = channel.length;
+
+          if (length == 9 || length == 73) {
+            bus.memory.rom.SetEEPROMSizeHint(EEPROM::Size::SIZE_4K);
+          }
+
+          if (length == 17 || length == 81) {
+            bus.memory.rom.SetEEPROMSizeHint(EEPROM::Size::SIZE_64K);
+          }
         }
       }
     } else {

@@ -39,9 +39,9 @@ MainWindow::MainWindow(
   auto menu_bar = new QMenuBar(this);
   setMenuBar(menu_bar);
 
-  CreateFileMenu(menu_bar);
-  CreateConfigMenu(menu_bar);
-  CreateHelpMenu(menu_bar);
+  CreateFileMenu();
+  CreateConfigMenu();
+  CreateHelpMenu();
 
   config->video_dev = screen;
   config->audio_dev = std::make_shared<nba::SDL2_AudioDevice>();
@@ -80,8 +80,8 @@ MainWindow::~MainWindow() {
   delete controller_manager;
 }
 
-void MainWindow::CreateFileMenu(QMenuBar* menu_bar) {
-  auto file_menu = menu_bar->addMenu(tr("File"));
+void MainWindow::CreateFileMenu() {
+  auto file_menu = menuBar()->addMenu(tr("File"));
 
   auto open_action = file_menu->addAction(tr("Open"));
   open_action->setShortcut(Qt::CTRL | Qt::Key_O);
@@ -263,40 +263,81 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
   auto scale_menu  = menu->addMenu(tr("Scale"));
   auto scale_group = new QActionGroup{this};
 
-  for (int scale = 1; scale <= 6; scale++) {
-    auto action = scale_group->addAction(QString::fromStdString(fmt::format("{}x", scale)));
+  const auto CreateScaleAction = [&](QString const& label, int scale) {
+    auto action = scale_group->addAction(label);
 
     action->setCheckable(true);
-    action->setChecked(config->video.scale == scale);
+    action->setChecked(config->window.scale == scale);
     action->setShortcut(Qt::SHIFT | (Qt::Key)((int)Qt::Key_1 + scale - 1));
 
     connect(action, &QAction::triggered, [=]() {
-      config->video.scale = scale;
+      config->window.scale = scale;
       config->Save();
       UpdateWindowSize();
     });
+  };
+
+  auto max_scale_menu = menu->addMenu(tr("Maximum scale"));
+  auto max_scale_group = new QActionGroup{this};
+
+  const auto CreateMaximumScaleAction = [&](QString const& label, int scale) {
+    auto action = max_scale_group->addAction(label);
+
+    action->setCheckable(true);
+    action->setChecked(config->window.maximum_scale == scale);
+    action->setShortcut(Qt::ALT | (Qt::Key)((int)Qt::Key_1 + scale - 1));
+
+    connect(action, &QAction::triggered, [=]() {
+      config->window.maximum_scale = scale;
+      config->Save();
+      screen->ReloadConfig();
+    });
+  };
+
+  CreateMaximumScaleAction(tr("Unlocked"), 0);
+
+  for (int scale = 1; scale <= 8; scale++) {
+    auto label = QString::fromStdString(fmt::format("{}x", scale));
+
+    CreateScaleAction(label, scale);
+    CreateMaximumScaleAction(label, scale);
   }
   
   scale_menu->addActions(scale_group->actions());
+  max_scale_menu->addActions(max_scale_group->actions());
 
-  auto fullscreen_action = menu->addAction(tr("Fullscreen"));
+  fullscreen_action = menu->addAction(tr("Fullscreen"));
   fullscreen_action->setCheckable(true);
-  fullscreen_action->setChecked(config->video.fullscreen);
+  fullscreen_action->setChecked(config->window.fullscreen);
+#if defined(__APPLE__)
+  fullscreen_action->setShortcut(Qt::CTRL | Qt::META | Qt::Key_F);
+#else
   fullscreen_action->setShortcut(Qt::CTRL | Qt::Key_F);
+#endif
   connect(fullscreen_action, &QAction::triggered, [this](bool fullscreen) {
-    config->video.fullscreen = fullscreen;
-    config->Save();
-    UpdateWindowSize();
+    SetFullscreen(fullscreen);
   });
 
-  CreateBooleanOption(menu, "Show FPS", &config->window.show_fps);
-  CreateBooleanOption(menu, "Lock Aspect Ratio", &config->window.lock_aspect_ratio, false, [this]() {
+#if !defined(__APPLE__)
+  CreateBooleanOption(menu, "Show menu in fullscreen", &config->window.fullscreen_show_menu, false, [this]() {
+    UpdateMenuBarVisibility();
+  })->setShortcut(Qt::CTRL | Qt::Key_M);
+#endif
+
+  CreateBooleanOption(menu, "Lock aspect ratio", &config->window.lock_aspect_ratio, false, [this]() {
     screen->ReloadConfig();
   });
+  CreateBooleanOption(menu, "Use integer scaling", &config->window.use_integer_scaling, false, [this]() {
+    screen->ReloadConfig();
+  });
+
+  menu->addSeparator();
+
+  CreateBooleanOption(menu, "Show FPS", &config->window.show_fps);
 }
 
-void MainWindow::CreateConfigMenu(QMenuBar* menu_bar) {
-  auto menu = menu_bar->addMenu(tr("Config"));
+void MainWindow::CreateConfigMenu() {
+  auto menu = menuBar()->addMenu(tr("Config"));
   CreateVideoMenu(menu);
   CreateAudioMenu(menu);
   CreateInputMenu(menu);
@@ -304,33 +345,8 @@ void MainWindow::CreateConfigMenu(QMenuBar* menu_bar) {
   CreateWindowMenu(menu);
 }
 
-void MainWindow::CreateBooleanOption(
-  QMenu* menu,
-  const char* name,
-  bool* underlying,
-  bool require_reset,
-  std::function<void(void)> callback
-) {
-  auto action = menu->addAction(QString{name});
-  auto config = this->config;
-
-  action->setCheckable(true);
-  action->setChecked(*underlying);
-
-  connect(action, &QAction::triggered, [=](bool checked) {
-    *underlying = checked;
-    config->Save();
-    if (require_reset) {
-      PromptUserForReset();
-    }
-    if (callback) {
-      callback();
-    }
-  });
-}
-
-void MainWindow::CreateHelpMenu(QMenuBar* menu_bar) {
-  auto help_menu = menu_bar->addMenu(tr("Help"));
+void MainWindow::CreateHelpMenu() {
+  auto help_menu = menuBar()->addMenu(tr("Help"));
   auto about_app = help_menu->addAction(tr("About NanoBoyAdvance"));
 
   about_app->setMenuRole(QAction::AboutRole);
@@ -347,6 +363,33 @@ void MainWindow::CreateHelpMenu(QMenuBar* menu_bar) {
   });
 }
 
+auto MainWindow::CreateBooleanOption(
+  QMenu* menu,
+  const char* name,
+  bool* underlying,
+  bool require_reset,
+  std::function<void(void)> callback
+) -> QAction* {
+  auto action = menu->addAction(QString{name});
+  auto config = this->config;
+
+  action->setCheckable(true);
+  action->setChecked(*underlying);
+
+  connect(action, &QAction::triggered, [=](bool checked) {
+    *underlying = checked;
+    config->Save();
+    if (require_reset) {
+      PromptUserForReset();
+    }
+    if (callback) {
+      callback();
+    }
+  });
+
+  return action;
+}
+
 void MainWindow::RenderRecentFilesMenu() {
   recent_menu->clear();
 
@@ -361,6 +404,8 @@ void MainWindow::RenderRecentFilesMenu() {
       LoadROM(path);
     });
   }
+
+  UpdateMainWindowActionList();
 }
 
 void MainWindow::RenderSaveStateMenus() {
@@ -442,6 +487,8 @@ void MainWindow::RenderSaveStateMenus() {
       SaveState(dialog.selectedFiles().at(0).toStdString());
     }
   });
+
+  UpdateMainWindowActionList();
 }
 
 void MainWindow::SelectBIOS() {
@@ -467,6 +514,11 @@ void MainWindow::PromptUserForReset() {
     box.setDefaultButton(QMessageBox::No);
     
     if (box.exec() == QMessageBox::Yes) {
+      // Reload the ROM in case its config (e.g. save type or GPIO) has changed:
+      if (game_loaded) {
+        LoadROM(game_path);
+      }
+
       Reset();
     }
   }
@@ -489,6 +541,10 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
     if (key == input.fast_forward.keyboard) {
       SetFastForward(0, pressed);
     }
+
+    if (pressed && key == Qt::Key_Escape) {
+      SetFullscreen(false);
+    }
   } else if (type == QEvent::FileOpen) {
 	  auto file = dynamic_cast<QFileOpenEvent*>(event)->file();
     LoadROM(file.toStdString());
@@ -507,8 +563,14 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
   return QObject::eventFilter(obj, event);
 }
 
-void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
+void MainWindow::dragEnterEvent(QDragEnterEvent* event) {
   event->acceptProposedAction();
+}
+
+void MainWindow::mouseDoubleClickEvent(QMouseEvent* event) {
+  if (event->button() == Qt::LeftButton) {
+    SetFullscreen(false);
+  }
 }
 
 void MainWindow::FileOpen() {
@@ -551,6 +613,34 @@ void MainWindow::Stop() {
     RenderSaveStateMenus();
 
     setWindowTitle("NanoBoyAdvance 1.6");
+  
+    UpdateMenuBarVisibility();
+  }
+}
+
+void MainWindow::UpdateMenuBarVisibility() {
+  menuBar()->setVisible(
+    !config->window.fullscreen ||
+    !emu_thread->IsRunning() ||
+     config->window.fullscreen_show_menu
+  );
+
+  UpdateMainWindowActionList();
+}
+
+void MainWindow::UpdateMainWindowActionList() {
+  for (auto action : actions()) {
+    removeAction(action);
+  }
+
+  if (!menuBar()->isVisible()) {
+    for (auto menu : menuBar()->findChildren<QMenu*>()) {
+      for (auto action : menu->actions()) {
+        if (!action->shortcut().isEmpty()) {
+          addAction(action);
+        }
+      }
+    }
   }
 }
 
@@ -640,6 +730,7 @@ void MainWindow::LoadROM(std::string path) {
   screen->SetForceClear(false);
 
   UpdateSolarSensorLevel();
+  UpdateMenuBarVisibility();
 }
 
 auto MainWindow::LoadState(std::string const& path) -> nba::SaveStateLoader::Result {
@@ -724,18 +815,31 @@ void MainWindow::SetFastForward(int channel, bool pressed) {
 }
 
 void MainWindow::UpdateWindowSize() {
-  if (config->video.fullscreen) {
+  bool fullscreen = config->window.fullscreen;
+
+  if (fullscreen) {
     showFullScreen();
   } else {
     showNormal();
 
-    auto scale = config->video.scale;
-    auto minimum_size = screen->minimumSize();
+    auto scale = config->window.scale;
+    auto minimum_size = screen->minimumSize(); 
     auto maximum_size = screen->maximumSize();
     screen->setFixedSize(240 * scale, 160 * scale);
     adjustSize();
     screen->setMinimumSize(minimum_size);
     screen->setMaximumSize(maximum_size);
+  }
+
+  UpdateMenuBarVisibility();
+}
+
+void MainWindow::SetFullscreen(bool value) {
+  if (config->window.fullscreen != value) {
+    config->window.fullscreen = value;
+    config->Save();
+    UpdateWindowSize();
+    fullscreen_action->setChecked(value);
   }
 }
 

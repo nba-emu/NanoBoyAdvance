@@ -44,33 +44,34 @@ private slots:
 
 protected:
   bool eventFilter(QObject* obj, QEvent* event) override;
-  void dragEnterEvent(QDragEnterEvent *event) override;
+  void dragEnterEvent(QDragEnterEvent* event) override;
+  void mouseDoubleClickEvent(QMouseEvent* event) override;
 
 private:
   friend struct ControllerManager;
 
-  void CreateFileMenu(QMenuBar* menu_bar);
+  void CreateFileMenu();
   void CreateVideoMenu(QMenu* parent);
   void CreateAudioMenu(QMenu* parent);
   void CreateInputMenu(QMenu* parent);
   void CreateSystemMenu(QMenu* parent);
   void CreateSolarSensorValueMenu(QMenu* parent);
   void CreateWindowMenu(QMenu* parent);
-  void CreateConfigMenu(QMenuBar* menu_bar);
-  void CreateHelpMenu(QMenuBar* menu_bar);
+  void CreateConfigMenu();
+  void CreateHelpMenu();
   void RenderRecentFilesMenu();
   void RenderSaveStateMenus();
 
   void SelectBIOS();
   void PromptUserForReset();
 
-  void CreateBooleanOption(
+  auto CreateBooleanOption(
     QMenu* menu,
     const char* name,
     bool* underlying,
     bool require_reset = false,
     std::function<void(void)> callback = nullptr
-  );
+  ) -> QAction*;
 
   template <typename T>
   void CreateSelectionOption(
@@ -106,10 +107,13 @@ private:
   void Reset();
   void SetPause(bool value);
   void Stop();
+  void UpdateMenuBarVisibility();
+  void UpdateMainWindowActionList();
 
   void SetKeyStatus(int channel, nba::InputDevice::Key key, bool pressed);
   void SetFastForward(int channel, bool pressed);
   void UpdateWindowSize();
+  void SetFullscreen(bool value);
 
   void UpdateSolarSensorLevel();
 
@@ -131,6 +135,7 @@ private:
   QAction* current_solar_level = nullptr;
   QMenu* load_state_menu;
   QMenu* save_state_menu;
+  QAction* fullscreen_action;
   bool game_loaded = false;
   std::string game_path;
 

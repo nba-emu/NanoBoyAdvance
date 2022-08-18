@@ -25,9 +25,17 @@ void EEPROM::Reset() {
   address = 0;
   ResetSerialBuffer();
 
+  if (size == DETECT) {
+    size = SIZE_64K; // default to 8 KiB size
+    detect_size = true;
+  } else {
+    detect_size = false;
+  }
+
   int bytes = g_save_size[size];
   
-  file = BackupFile::OpenOrCreate(save_path, { 512, 8192 }, bytes);
+  file = BackupFile::OpenOrCreate(save_path, {512, 8192}, bytes);
+
   if (bytes == g_save_size[0]) {
     size = SIZE_4K;
   } else {
@@ -124,6 +132,19 @@ void EEPROM::Write(u32 address, u8 value) {
     }
 
     ResetSerialBuffer();
+  }
+}
+
+void EEPROM::SetSizeHint(Size size) {
+  if (detect_size) {
+    int bytes = g_save_size[size];
+
+    this->size = size;
+    detect_size = false;
+
+    if (file->Size() != bytes) {
+      file = BackupFile::OpenOrCreate(save_path, {(size_t)bytes}, bytes);
+    }
   }
 }
 

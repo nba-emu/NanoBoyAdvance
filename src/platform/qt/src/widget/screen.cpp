@@ -29,13 +29,68 @@ void Screen::SetForceClear(bool force_clear) {
 
 void Screen::ReloadConfig() {
   ogl_video_device.ReloadConfig();
-
-  resizeGL(size().width(), size().height());
+  UpdateViewport();
 }
 
 void Screen::OnRequestDraw(u32* buffer) {
   this->buffer = buffer;
   update();
+}
+
+void Screen::UpdateViewport() {
+  auto dpr = devicePixelRatio();
+  int width  = size().width()  * dpr;
+  int height = size().height() * dpr;
+
+  int viewport_width;
+  int viewport_height;
+  int viewport_x;
+  int viewport_y;
+
+  int max_scale = config->window.maximum_scale;
+
+  viewport_width  = width;
+  viewport_height = height;
+
+  // Lock width and height to an aspect ratio of 3:2 (original GBA screen)
+  if (config->window.lock_aspect_ratio) {
+    float ar = static_cast<float>(width) / static_cast<float>(height);
+
+    if (ar > kGBANativeAR) {
+      viewport_width = static_cast<int>(height * kGBANativeAR);
+    } else {
+      viewport_height = static_cast<int>(width / kGBANativeAR);
+    }
+  }
+
+  // Lock width and height to (non-uniform) integer scales of the native resolution
+  if (config->window.use_integer_scaling) {
+    viewport_width  = kGBANativeWidth  * std::max(1, static_cast<int>(viewport_width  / (float)kGBANativeWidth));
+    viewport_height = kGBANativeHeight * std::max(1, static_cast<int>(viewport_height / (float)kGBANativeHeight));
+  }
+
+  // Limit screen size to a maximum scaling factor
+  if (max_scale > 0) {
+    int max_width  = kGBANativeWidth  * max_scale;
+    int max_height = kGBANativeHeight * max_scale; 
+
+    bool overflowing = viewport_width  >= max_width ||
+                       viewport_height >= max_height;
+
+    bool max_size_fits_into_window = width  >= max_width &&
+                                     height >= max_height;
+
+    if (overflowing && max_size_fits_into_window) {
+      viewport_width  = max_width;
+      viewport_height = max_height;
+    }
+  }
+
+  // Center the viewport
+  viewport_x = (width  - viewport_width ) / 2;
+  viewport_y = (height - viewport_height) / 2;
+
+  ogl_video_device.SetViewport(viewport_x, viewport_y, viewport_width, viewport_height);
 }
 
 void Screen::initializeGL() {
@@ -54,35 +109,5 @@ void Screen::paintGL() {
 }
 
 void Screen::resizeGL(int width, int height) {
-  auto dpr = devicePixelRatio();
-  width  *= dpr;
-  height *= dpr;
-
-  int viewport_width;
-  int viewport_height;
-  int viewport_x;
-  int viewport_y;
-
-  if (config->window.lock_aspect_ratio) {
-    float ar = static_cast<float>(width) / static_cast<float>(height);
-
-    if (ar > kGBANativeAR) {
-      viewport_width = static_cast<int>(height * kGBANativeAR);
-      viewport_height = height;
-      viewport_x = (width - viewport_width) / 2;
-      viewport_y = 0;
-    } else {
-      viewport_width = width;
-      viewport_height = static_cast<int>(width / kGBANativeAR);
-      viewport_x = 0;
-      viewport_y = (height - viewport_height) / 2;
-    }
-  } else {
-    viewport_width = width;
-    viewport_height = height;
-    viewport_x = 0;
-    viewport_y = 0;
-  }
-
-  ogl_video_device.SetViewport(viewport_x, viewport_y, viewport_width, viewport_height);
+  UpdateViewport();
 }

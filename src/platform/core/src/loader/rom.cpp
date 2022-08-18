@@ -192,11 +192,11 @@ auto ROMLoader::GetBackupType(
   std::vector<u8>& file_data
 ) -> BackupType {
   static constexpr std::pair<std::string_view, BackupType> signatures[6] {
-    { "EEPROM_V",   BackupType::EEPROM_64 },
-    { "SRAM_V",     BackupType::SRAM      },
-    { "SRAM_F_V",   BackupType::SRAM      },
-    { "FLASH_V",    BackupType::FLASH_64  },
-    { "FLASH512_V", BackupType::FLASH_64  },
+    { "EEPROM_V",   BackupType::EEPROM_DETECT },
+    { "SRAM_V",     BackupType::SRAM },
+    { "SRAM_F_V",   BackupType::SRAM },
+    { "FLASH_V",    BackupType::FLASH_64 },
+    { "FLASH512_V", BackupType::FLASH_64 },
     { "FLASH1M_V",  BackupType::FLASH_128 }
   };
 
@@ -219,21 +219,12 @@ auto ROMLoader::CreateBackup(
   BackupType backup_type
 ) -> std::unique_ptr<Backup> {
   switch (backup_type) {
-    case BackupType::SRAM: {
-      return std::make_unique<SRAM>(save_path);
-    }
-    case BackupType::FLASH_64: {
-      return std::make_unique<FLASH>(save_path, FLASH::SIZE_64K);
-    }
-    case BackupType::FLASH_128: {
-      return std::make_unique<FLASH>(save_path, FLASH::SIZE_128K);
-    }
-    case BackupType::EEPROM_4: {
-      return std::make_unique<EEPROM>(save_path, EEPROM::SIZE_4K);
-    }
-    case BackupType::EEPROM_64: {
-      return std::make_unique<EEPROM>(save_path, EEPROM::SIZE_64K);
-    }
+    case BackupType::SRAM:      return std::make_unique<SRAM>(save_path);
+    case BackupType::FLASH_64:  return std::make_unique<FLASH>(save_path, FLASH::SIZE_64K);
+    case BackupType::FLASH_128: return std::make_unique<FLASH>(save_path, FLASH::SIZE_128K);
+    case BackupType::EEPROM_4:  return std::make_unique<EEPROM>(save_path, EEPROM::SIZE_4K);
+    case BackupType::EEPROM_64: return std::make_unique<EEPROM>(save_path, EEPROM::SIZE_64K);
+    case BackupType::EEPROM_DETECT: return std::make_unique<EEPROM>(save_path, EEPROM::DETECT);
   }
 
   return {};

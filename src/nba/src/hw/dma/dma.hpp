@@ -19,8 +19,8 @@ namespace nba::core {
 struct Bus;
 
 struct DMA {
-  DMA(Bus& memory, IRQ& irq, Scheduler& scheduler)
-      : memory(memory)
+  DMA(Bus& bus, IRQ& irq, Scheduler& scheduler)
+      : bus(bus)
       , irq(irq)
       , scheduler(scheduler) {
     Reset();
@@ -117,7 +117,7 @@ private:
   void RemoveChannelFromDMASets(Channel& channel);
   void RunChannel();
 
-  Bus& memory;
+  Bus& bus;
   IRQ& irq;
   Scheduler& scheduler;
 
