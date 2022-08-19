@@ -42,13 +42,13 @@ static const int s_obj_size[4][4][2] = {
 
 void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
   int tile_num;
-  u16 pixel;
+  u32 pixel;
   s16 transform[4];
   int cycles = mmio.dispcnt.hblank_oam_access ? 954 : 1210;
 
   for (int x = 0; x < 240; x++) {
     buffer_obj[x].priority = 4;
-    buffer_obj[x].color = 0x8000;
+    buffer_obj[x].color = 0x8000'0000;
     buffer_obj[x].alpha = 0;
     buffer_obj[x].window = 0;
     buffer_obj[x].mosaic = 0;
@@ -181,11 +181,11 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
       }
 
       auto& point = buffer_obj[global_x];
-      bool opaque = pixel != 0x8000;
+      bool opaque = pixel != 0x8000'0000;
 
       if (mode == OBJ_WINDOW) {
         if (opaque) point.window = 1;
-      } else if (prio < point.priority || point.color == 0x8000) {
+      } else if (prio < point.priority || point.color == 0x8000'0000) {
         if (opaque) {
           point.color = pixel;
           point.alpha = (mode == OBJ_SEMI) ? 1 : 0;

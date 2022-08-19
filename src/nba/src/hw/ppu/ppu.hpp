@@ -240,7 +240,7 @@ private:
   } compose;
 
   struct ObjectPixel {
-    u16 color;
+    u32 color;
     u8  priority;
     unsigned alpha  : 1;
     unsigned window : 1;
