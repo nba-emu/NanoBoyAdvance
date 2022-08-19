@@ -186,6 +186,7 @@ private:
   void SyncLineRender();
   void InitBG(int id);
   void SyncBG(int id, int cycles);
+  void RenderBGMode0(int id, int cycles);
   void RenderBGMode2(int id, int cycles);
   void RenderBGMode3(int cycles);
   void RenderBGMode4(int cycles);
@@ -205,6 +206,15 @@ private:
 
     int x;
     int hcounter;
+
+    // TODO: share address field of Text and Affine structs?
+    struct Text {
+      int grid_x;
+      u16* palette;
+      bool flip_x;
+      bool full_palette;
+      u32 address;
+    } text;
 
     struct Affine {
       s32 x;

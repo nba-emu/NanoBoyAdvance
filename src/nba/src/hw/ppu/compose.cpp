@@ -40,7 +40,7 @@ void PPU::SyncCompose(int cycles) {
     int cycle = (hcounter - RENDER_DELAY) & 3;
 
     if (cycle == 0) {
-      u32 pixel = bg[2].buffer[8 + x];
+      u32 pixel = bg[/*2*/0].buffer[8 + x];
 
       switch (pixel & 0xC000'0000) {
         case 0x0000'0000: *buffer++ = RGB565(read<u16>(pram, pixel << 1)); break;
