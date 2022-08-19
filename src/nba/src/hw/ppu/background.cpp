@@ -44,6 +44,110 @@ void PPU::SyncBG(int id, int cycles) {
   }
 }
 
+void PPU::FetchMapMode0(int id) {
+  auto& bg = this->bg[id];
+  auto& bgcnt = mmio.bgcnt[id];
+
+  // TODO: should BGXCNT be latched?
+  u32 tile_base = bgcnt.tile_block << 14;
+  int map_block = bgcnt.map_block;
+
+  // TODO: should BGXHOFS (possibly only the lower three bits?) and BGXVOFS be latched?
+  int line   = mmio.bgvofs[id] + mmio.vcount;
+  int grid_x = (mmio.bghofs[id] >> 3) + bg.text.grid_x;
+  int grid_y = line >> 3;
+  int tile_y = line & 7;
+
+  auto screen_x = (grid_x >> 5) & 1;
+  auto screen_y = (grid_y >> 5) & 1;
+
+  switch (bgcnt.size) {
+    case 1:
+      map_block += screen_x;
+      break;
+    case 2:
+      map_block += screen_y;
+      break;
+    case 3:
+      map_block += screen_x;
+      map_block += screen_y << 1;
+      break;
+  }
+
+  u32 address = (map_block << 11) + ((grid_y & 31) << 6) + ((grid_x & 31) << 1);
+
+  u16 map_entry = read<u16>(vram, address);
+  int number = map_entry & 0x3FF;
+  int palette = map_entry >> 12;
+  bool flip_x = map_entry & (1 << 10);
+  bool flip_y = map_entry & (1 << 11);
+
+  if (flip_y) tile_y ^= 7;
+
+  bg.text.palette = palette;
+  bg.text.full_palette = bgcnt.full_palette;
+  bg.text.flip_x = flip_x;
+
+  if (bgcnt.full_palette) {
+    bg.text.address = tile_base + (number << 6) + (tile_y << 3);
+    if (flip_x) {
+      bg.text.address += 6;
+    }
+  } else {
+    bg.text.address = tile_base + (number << 5) + (tile_y << 2);
+    if (flip_x) {
+      bg.text.address += 2;
+    }
+  }
+}
+
+void PPU::FetchTileMode04BPP(int id) {
+  auto& bg = this->bg[id];
+
+  u16 data = read<u16>(vram, bg.text.address);
+  int flip = bg.text.flip_x ? 3 : 0;
+  int draw_x = bg.x;
+  int palette = bg.text.palette;
+
+  for (int x = 0; x < 4; x++) {
+    u32 index = (data & 15) | (palette << 4);
+
+    bg.buffer[8 + draw_x + (x ^ flip)] = index;
+    data >>= 4;
+  }
+
+  bg.x += 4;
+
+  if (bg.text.flip_x) {
+    bg.text.address -= sizeof(u16);
+  } else {
+    bg.text.address += sizeof(u16);
+  }
+}
+
+void PPU::FetchTileMode08BPP(int id) {
+  auto& bg = this->bg[id];
+
+  u16 data = read<u16>(vram, bg.text.address);
+  int flip = bg.text.flip_x ? 1 : 0;
+  int draw_x = bg.x;
+
+  for (int x = 0; x < 2; x++) {
+    u32 index = data & 0xFF;
+
+    bg.buffer[8 + draw_x + (x ^ flip)] = index;
+    data >>= 8;
+  }
+
+  bg.x += 2;
+
+  if (bg.text.flip_x) {
+    bg.text.address -= sizeof(u16);
+  } else {
+    bg.text.address += sizeof(u16);
+  }
+}
+
 void PPU::RenderBGMode0(int id, int cycles) {
   const int RENDER_DELAY = 34 + id;
 
@@ -55,124 +159,28 @@ void PPU::RenderBGMode0(int id, int cycles) {
 
   bg.hcounter = hcounter_target;
 
-  // ...
-
   hcounter = std::max(hcounter, RENDER_DELAY);
-
-  u32* buffer = &bg.buffer[8];
 
   while (hcounter < hcounter_target) {
     int cycle = (hcounter - RENDER_DELAY) & 31;
 
     if (cycle == 0) {
-      // TODO: should BGXCNT be latched?
-      u32 tile_base = bgcnt.tile_block << 14;
-      int map_block = bgcnt.map_block;
-
-      // TODO: should BGXHOFS and BGXVOFS be latched?
-      int line   = mmio.bgvofs[id] + mmio.vcount;
-      int grid_x = (mmio.bghofs[id] >> 3) + bg.text.grid_x;
-      int grid_y = line >> 3;
-      int tile_y = line & 7;
-
-      auto screen_x = (grid_x >> 5) & 1;
-      auto screen_y = (grid_y >> 5) & 1;
-
-      // TODO: should BGXCNT be latched?
-      switch (bgcnt.size) {
-        case 1:
-          map_block += screen_x;
-          break;
-        case 2:
-          map_block += screen_y;
-          break;
-        case 3:
-          map_block += screen_x;
-          map_block += screen_y << 1;
-          break;
-      }
-
-      u32 address = (map_block << 11) + ((grid_y & 31) << 6) + ((grid_x & 31) << 1);
-
-      u16 map_entry = read<u16>(vram, address);
-      int number = map_entry & 0x3FF;
-      int palette = map_entry >> 12;
-      bool flip_x = map_entry & (1 << 10);
-      bool flip_y = map_entry & (1 << 11);
-
-      if (flip_y) tile_y ^= 7;
-
-      bg.text.palette = palette;
-      bg.text.full_palette = bgcnt.full_palette;
-      bg.text.flip_x = flip_x;
-
-      if (bgcnt.full_palette) {
-        bg.text.address = tile_base + (number << 6) + (tile_y << 3);
-        if (flip_x) {
-          bg.text.address += 6;
-        }
-      } else {
-        bg.text.address = tile_base + (number << 5) + (tile_y << 2);
-        if (flip_x) {
-          bg.text.address += 2;
-        }
-      }
+      FetchMapMode0(id);
     } else {
-      auto& address = bg.text.address;
-
       if (bg.text.full_palette) {
-        if (cycle == 4 || cycle == 12 || cycle == 20 || cycle == 28) {
-
-          u16 data = read<u16>(vram, address);
-          int flip = bg.text.flip_x ? 1 : 0;
-          int draw_x = bg.x;
-          u16* palette = (u16*)pram;
-
-          for (int x = 0; x < 2; x++) {
-            u32 index = data & 0xFF;
-
-            buffer[draw_x + (x ^ flip)] = index;
-
-            data >>= 8;
-          }
-        
-          bg.x += 2;
-          
-          // TODO: test if the address is updated if the BG is disabled.
-          if (bg.text.flip_x) {
-            address -= sizeof(u16);
-          } else {
-            address += sizeof(u16);
-          }
-
+        // cycles: 4, 12, 20, 28
+        if (((cycle - 4) & 7) == 0) {
+          FetchTileMode08BPP(id);
         }
       } else {
-        if (cycle == 4 || cycle == 20) {
-          u16 data = read<u16>(vram, address);
-          int flip = bg.text.flip_x ? 3 : 0;
-          int draw_x = bg.x;
-          int palette = bg.text.palette;
-
-          for (int x = 0; x < 4; x++) {
-            u32 index = (data & 15) | (palette << 4);
-
-            buffer[draw_x + (x ^ flip)] = index;
-            data >>= 4;
-          }
-
-          bg.x += 4;
-        
-          // TODO: test if the address is updated if the BG is disabled.
-          if (bg.text.flip_x) {
-            address -= sizeof(u16);
-          } else {
-            address += sizeof(u16);
-          }
+        // cycles: 4, 20
+        if (((cycle - 4) & 15) == 0) {
+          FetchTileMode04BPP(id);
         }
       }
 
       if (cycle == 28) {
-        // TODO: should we stop at 30 if (BGHOFS & 7) == 0?
+        // TODO: stop at 30 tiles if (BGHOFS & 7) == 0:
         if (++bg.text.grid_x == 31) {
           bg.engaged = false;
           break;

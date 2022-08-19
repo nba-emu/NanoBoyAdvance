@@ -186,6 +186,9 @@ private:
   void SyncLineRender();
   void InitBG(int id);
   void SyncBG(int id, int cycles);
+  void FetchMapMode0(int id);
+  void FetchTileMode04BPP(int id);
+  void FetchTileMode08BPP(int id);
   void RenderBGMode0(int id, int cycles);
   void RenderBGMode2(int id, int cycles);
   void RenderBGMode3(int cycles);
