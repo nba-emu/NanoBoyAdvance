@@ -175,6 +175,10 @@ void PPU::OnScanlineComplete(int cycles_late) {
   }
 
   SyncLineRender();
+  // Render OBJs for the next scanline.
+  if (mmio.dispcnt.enable[ENABLE_OBJ]) {
+    RenderLayerOAM(mmio.dispcnt.mode >= 3, mmio.vcount + 1);
+  }
 
   /* TODO: it appears that this should really happen ~36 cycles into H-draw.
    * But right now if we do that it breaks at least Pinball Tycoon.
@@ -246,6 +250,11 @@ void PPU::OnVblankScanlineComplete(int cycles_late) {
     LatchEnabledBGs();
 
     if (mmio.vcount == 227) {
+      // Render OBJs for the next scanline.
+      if (mmio.dispcnt.enable[ENABLE_OBJ]) {
+        RenderLayerOAM(mmio.dispcnt.mode >= 3, mmio.vcount + 1);
+      }
+
       // Advance vertical OBJ mosaic counter
       if (++mmio.mosaic.obj._counter_y == mmio.mosaic.obj.size_y) {
         mmio.mosaic.obj._counter_y = 0;

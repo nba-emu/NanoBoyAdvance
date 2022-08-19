@@ -196,6 +196,9 @@ private:
   void RenderBGMode5(int cycles);
   void InitCompose();
   void SyncCompose(int cycles);
+  void RenderLayerOAM(bool bitmap_mode, int line);
+
+  #include "helper.inl"
 
   u8 pram[0x00400];
   u8 oam [0x00400];
@@ -235,6 +238,14 @@ private:
     bool engaged;
     int hcounter;
   } compose;
+
+  struct ObjectPixel {
+    u16 color;
+    u8  priority;
+    unsigned alpha  : 1;
+    unsigned window : 1;
+    unsigned mosaic : 1;
+  } buffer_obj[240];
 
   bool window_scanline_enable[2];
 
