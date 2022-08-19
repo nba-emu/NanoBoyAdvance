@@ -63,7 +63,6 @@ void PPU::RenderBGMode0(int id, int cycles) {
 
   while (hcounter < hcounter_target) {
     int cycle = (hcounter - RENDER_DELAY) & 31;
-    // int cycle = ((hcounter - RENDER_DELAY) & 31) >> 2;
 
     if (cycle == 0) {
       // TODO: should BGXCNT be latched?
@@ -103,7 +102,7 @@ void PPU::RenderBGMode0(int id, int cycles) {
 
       if (flip_y) tile_y ^= 7;
 
-      bg.text.palette = (u16*)&pram[palette << 5];
+      bg.text.palette = palette;
       bg.text.full_palette = bgcnt.full_palette;
       bg.text.flip_x = flip_x;
 
@@ -130,21 +129,9 @@ void PPU::RenderBGMode0(int id, int cycles) {
           u16* palette = (u16*)pram;
 
           for (int x = 0; x < 2; x++) {
-            u32 color;
-            u8 index = (u8)data;
+            u32 index = data & 0xFF;
 
-            if (index == 0) {
-              color = 0x8000'0000;;
-            } else {
-              color = palette[index] | 0x4000'0000;
-            }
-
-            // TODO: optimise this!!!
-            // Solution: make BG buffer bigger to allow for overflow on each side!
-            auto final_x = draw_x + (x ^ flip);
-            if (final_x >= 0 && final_x <= 239) {
-              buffer[final_x] = color;
-            }
+            buffer[draw_x + (x ^ flip)] = index;
 
             data >>= 8;
           }
@@ -164,24 +151,12 @@ void PPU::RenderBGMode0(int id, int cycles) {
           u16 data = read<u16>(vram, address);
           int flip = bg.text.flip_x ? 3 : 0;
           int draw_x = bg.x;
-          u16* palette = bg.text.palette;
+          int palette = bg.text.palette;
 
           for (int x = 0; x < 4; x++) {
-            u32 color;
-            u16 index = data & 15;
+            u32 index = (data & 15) | (palette << 4);
 
-            if (index == 0) {
-              color = 0x8000'0000;
-            } else {
-              color = palette[index] | 0x4000'0000;
-            }
-
-            // TODO: optimise this!!!
-            auto final_x = draw_x + (x ^ flip);
-            if (final_x >= 0 && final_x <= 239) {
-              buffer[final_x] = color;
-            }
-
+            buffer[draw_x + (x ^ flip)] = index;
             data >>= 4;
           }
 

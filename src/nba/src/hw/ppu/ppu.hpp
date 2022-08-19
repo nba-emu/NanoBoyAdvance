@@ -210,7 +210,7 @@ private:
     // TODO: share address field of Text and Affine structs?
     struct Text {
       int grid_x;
-      u16* palette;
+      int palette;
       bool flip_x;
       bool full_palette;
       u32 address;
