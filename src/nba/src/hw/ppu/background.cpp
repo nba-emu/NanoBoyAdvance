@@ -164,18 +164,25 @@ void PPU::RenderBGMode0(int id, int cycles) {
   while (hcounter < hcounter_target) {
     int cycle = (hcounter - RENDER_DELAY) & 31;
 
+    int hcounter_next = hcounter + 1;
+
+    // TODO: can this logic be meaningfully optimized more?
     if (cycle == 0) {
       FetchMapMode0(id);
+      hcounter_next = hcounter + 4;
     } else {
       if (bg.text.full_palette) {
-        // cycles: 4, 12, 20, 28
-        if (((cycle - 4) & 7) == 0) {
-          FetchTileMode08BPP(id);
+        switch (cycle) {
+          case  4:
+          case 12:
+          case 20: FetchTileMode08BPP(id); hcounter_next = hcounter + 8; break;
+          case 28: FetchTileMode08BPP(id); hcounter_next = hcounter + 4; break;
         }
       } else {
-        // cycles: 4, 20
-        if (((cycle - 4) & 15) == 0) {
-          FetchTileMode04BPP(id);
+        // TODO: we can get rid of one sync-point by updating grid_x in cycle 20 (only in 4BPP mode).
+        switch (cycle) {
+          case  4: FetchTileMode04BPP(id); hcounter_next = hcounter + 16; break;
+          case 20: FetchTileMode04BPP(id); hcounter_next = hcounter +  8; break;
         }
       }
 
@@ -188,8 +195,7 @@ void PPU::RenderBGMode0(int id, int cycles) {
       }
     }
 
-    // TODO: optimize this:
-    hcounter++;
+    hcounter = hcounter_next;
   }
 }
 
