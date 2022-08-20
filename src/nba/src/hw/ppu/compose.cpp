@@ -176,11 +176,31 @@ auto PPU::Blend(u16 color_a, u16 color_b) -> u16 {
 }
 
 auto PPU::Brighten(u16 color) -> u16 {
-  return color;
+  int evy = std::min<int>(16, mmio.evy);
+
+  int r = (color >>  0) & 0x1F;
+  int g = (color >>  5) & 0x1F;
+  int b = (color >> 10) & 0x1F;
+
+  r += ((31 - r) * evy) >> 4;
+  g += ((31 - g) * evy) >> 4;
+  b += ((31 - b) * evy) >> 4;
+
+  return r | (g << 5) | (b << 10);
 }
 
 auto PPU::Darken(u16 color) -> u16 {
-  return color;
+  int evy = std::min<int>(16, mmio.evy);
+
+  int r = (color >>  0) & 0x1F;
+  int g = (color >>  5) & 0x1F;
+  int b = (color >> 10) & 0x1F;
+
+  r -= (r * evy) >> 4;
+  g -= (g * evy) >> 4;
+  b -= (b * evy) >> 4;
+
+  return r | (g << 5) | (b << 10);
 }
 
 } // namespace nba::core
