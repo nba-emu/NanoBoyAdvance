@@ -52,16 +52,37 @@ struct PPU {
     }
   }
 
+  auto ALWAYS_INLINE GetSpriteVRAMBoundary() noexcept -> u32 {
+    return mmio.dispcnt.mode >= 3 ? 0x14000 : 0x10000;
+  }
+
   template<typename T>
   auto ALWAYS_INLINE ReadVRAM(u32 address) noexcept -> T {
+    u32 boundary = GetSpriteVRAMBoundary();
+
     address &= 0x1FFFF;
 
+    if (address >= boundary) {
+      return ReadVRAM_OBJ<T>(address, boundary);
+    }
+
+    return ReadVRAM_BG<T>(address);
+  }
+
+  template<typename T>
+  auto ALWAYS_INLINE ReadVRAM_BG(u32 address) noexcept -> T {
+    return read<T>(vram, address);
+  }
+
+  template<typename T>
+  auto ALWAYS_INLINE ReadVRAM_OBJ(u32 address, u32 boundary) noexcept -> T {
     if (address >= 0x18000) {
-      if ((address & 0x4000) == 0 && mmio.dispcnt.mode >= 3) {
+      address &= ~0x8000;
+
+      if (address < boundary) {
         // TODO: check if this should actually return open bus.
         return 0;
       }
-      address &= ~0x8000;
     }
 
     return read<T>(vram, address);
@@ -69,22 +90,37 @@ struct PPU {
 
   template<typename T>
   void ALWAYS_INLINE WriteVRAM(u32 address, T value) noexcept {
+    u32 boundary = GetSpriteVRAMBoundary();
+
     address &= 0x1FFFF;
 
-    if (address >= 0x18000) {
-      if ((address & 0x4000) == 0 && mmio.dispcnt.mode >= 3) {
-        return;
-      }
-      address &= ~0x8000;
-    }
-
-    if (std::is_same_v<T, u8>) {
-      auto limit = mmio.dispcnt.mode >= 3 ? 0x14000 : 0x10000;
-
-      if (address < limit) {
-        write<u16>(vram, address & ~1, value * 0x0101);
-      }
+    if (address >= boundary) {
+      WriteVRAM_OBJ<T>(address, value, boundary);
     } else {
+      WriteVRAM_BG<T>(address, value);
+    }
+  }
+
+  template<typename T>
+  auto ALWAYS_INLINE WriteVRAM_BG(u32 address, T value) noexcept {
+    if constexpr (std::is_same_v<T, u8>) {
+      write<u16>(vram, address & ~1, value * 0x0101);
+    } else {
+      write<T>(vram, address, value);
+    }
+  }
+
+  template<typename T>
+  auto ALWAYS_INLINE WriteVRAM_OBJ(u32 address, T value, u32 boundary) noexcept {
+    if constexpr (!std::is_same_v<T, u8>) {
+      if (address >= 0x18000) {
+        address &= ~0x8000;
+
+        if (address < boundary) {
+          return;
+        }
+      }
+
       write<T>(vram, address, value);
     }
   }
