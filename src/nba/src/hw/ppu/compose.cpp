@@ -55,6 +55,11 @@ void PPU::SyncCompose(int cycles) {
                      mmio.dispcnt.enable[ENABLE_WIN1] ||
                      mmio.dispcnt.enable[ENABLE_OBJWIN]; 
 
+  if (x >= 240) {
+    compose.engaged = false;
+    return;
+  }
+
   while (hcounter < hcounter_target) {
     int cycle = (hcounter - RENDER_DELAY) & 3;
 

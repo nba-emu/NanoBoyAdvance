@@ -377,13 +377,8 @@ void PPU::UpdateWindows() {
   int vcount = mmio.vcount;
 
   for (int i = 0; i < 2; i++) {
-    if (vcount == mmio.winv[i].min) {
-      window_flag_v[i] = true;
-    }
-
-    if (vcount == mmio.winv[i].max) {
-      window_flag_v[i] = false;
-    }
+    if (vcount == mmio.winv[i].min) window_flag_v[i] = true;
+    if (vcount == mmio.winv[i].max) window_flag_v[i] = false;
   }
 }
 
