@@ -215,8 +215,6 @@ void PPU::OnHblankComplete(int cycles_late) {
   UpdateWindows();
 
   if (vcount == 160) {
-    InitLineRender();
-
     scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
     dma.Request(DMA::Occasion::VBlank);
     dispstat.vblank_flag = 1;
@@ -299,6 +297,8 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
     // while (render_thread_vcount <= render_thread_vcount_max) ;
     config->video_dev->Draw(output[frame]);
     frame ^= 1;
+
+    InitLineRender();
   } else {
     scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
     if (++vcount == 227) {
@@ -308,7 +308,6 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
 
   LatchBGXYWrites();
   CheckVerticalCounterIRQ();
-  InitLineRender();
   UpdateVideoTransferDMA();
   UpdateWindows();
 }
@@ -330,13 +329,24 @@ void PPU::InitLineRender() {
     bg[id].engaged = false;
   }
 
-  for (int id = min_bg; id <= max_bg; id++) {
-    if (mmio.enable_bg[0][id]) {
-      InitBG(id);
-    }
-  }
+  compose.engaged = false;
 
-  InitCompose();
+  if (mmio.dispcnt.forced_blank) {
+    u32* buffer = &output[frame][mmio.vcount * 240];
+
+    // TODO: figure out how the 'forced blank' bit works on hardware
+    for (int x = 0; x < 240; x++) {
+      buffer[x] = 0xFFF8F8F8;
+    }
+  } else {
+    for (int id = min_bg; id <= max_bg; id++) {
+      if (mmio.enable_bg[0][id]) {
+        InitBG(id);
+      }
+    }
+
+    InitCompose();
+  }
 }
 
 void PPU::SyncLineRender() {
