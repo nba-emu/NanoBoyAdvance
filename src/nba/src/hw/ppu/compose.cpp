@@ -25,6 +25,11 @@ void PPU::InitCompose() {
 void PPU::SyncCompose(int cycles) {
   const int RENDER_DELAY = 41; // TODO: figure out the exact value.
 
+  // TODO: deduplicate these two arrays:
+  // Minimum and maximum available BGs in each BG mode:
+  const int MIN_BG[8] { 0, 0, 2, 2, 2, 2, -1, -1 };
+  const int MAX_BG[8] { 3, 2, 3, 2, 2, 2, -1, -1 };
+
   int hcounter = compose.hcounter;
   int hcounter_target = hcounter + cycles;
 
@@ -71,8 +76,10 @@ void PPU::SyncCompose(int cycles) {
       // Find up to two top-most visible background pixels.
       // TODO: is the BG enable logic correct?
       // And can we optimize this algorithm more without sacrificing accuracy?
+      int min_bg = MIN_BG[dispcnt_mode];
+      int max_bg = MAX_BG[dispcnt_mode];
       for (int priority = 3; priority >= 0; priority--) {
-        for (int id = 3; id >= 0; id--) {
+        for (int id = max_bg; id >= min_bg; id--) {
           if ((!use_windows || win_layer_enable[id]) &&
               mmio.enable_bg[0][id] &&
               mmio.dispcnt.enable[id] &&
