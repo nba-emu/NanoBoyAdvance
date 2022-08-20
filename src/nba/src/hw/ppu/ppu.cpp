@@ -252,7 +252,7 @@ void PPU::OnVblankScanlineComplete(int cycles_late) {
     if (mmio.vcount == 227) {
       // Render OBJs for the next scanline.
       if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-        RenderLayerOAM(mmio.dispcnt.mode >= 3, mmio.vcount + 1);
+        RenderLayerOAM(mmio.dispcnt.mode >= 3, 0);
       }
 
       // Advance vertical OBJ mosaic counter
