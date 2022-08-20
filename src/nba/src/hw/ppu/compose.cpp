@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2022 fleroviux
+ *
+ * Licensed under GPLv3 or any later version.
+ * Refer to the included LICENSE file.
+ */
+
+#include <optional>
 
 #include "hw/ppu/ppu.hpp"
 
@@ -23,7 +31,7 @@ void PPU::InitCompose() {
 }
 
 void PPU::SyncCompose(int cycles) {
-  const int RENDER_DELAY = 41; // TODO: figure out the exact value.
+  const int RENDER_DELAY = 48;
 
   // TODO: deduplicate these two arrays:
   // Minimum and maximum available BGs in each BG mode:
@@ -32,6 +40,7 @@ void PPU::SyncCompose(int cycles) {
 
   int hcounter = compose.hcounter;
   int hcounter_target = hcounter + cycles;
+  std::optional<int> last_access;
 
   compose.hcounter = hcounter_target;
 
@@ -122,9 +131,20 @@ void PPU::SyncCompose(int cycles) {
 
       for (int i = 0; i < 2; i++) {
         switch (color[i] & 0xC000'0000) {
-          case 0x0000'0000: color[i] = read<u16>(pram, color[i] << 1); break;
-          case 0x4000'0000: color[i] &= 0xFFFF; break;
-          case 0x8000'0000: color[i] = backdrop; break;
+          case 0x0000'0000: {
+            color[i] = read<u16>(pram, color[i] << 1);
+            last_access = hcounter;
+            break;
+          }
+          case 0x4000'0000: {
+            color[i] &= 0xFFFF;
+            break;
+          }
+          case 0x8000'0000: {
+            color[i] = backdrop;
+            last_access = hcounter;
+            break;
+          }
         }
       }
 
@@ -160,6 +180,10 @@ void PPU::SyncCompose(int cycles) {
     } else {
       hcounter += 4 - cycle;
     }
+  }
+
+  if (last_access.has_value() && last_access.value() == hcounter_target - 1) {
+    pram_access = true;
   }
 }
 

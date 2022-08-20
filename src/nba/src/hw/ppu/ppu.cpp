@@ -75,6 +75,7 @@ void PPU::Reset() {
   frame = 0;
   dma3_video_transfer_running = false;
 
+  pram_access = false;
   vram_bg_access = false;
 }
 
@@ -356,6 +357,7 @@ void PPU::SyncLineRender() {
   
   int cycles = (int)(sync_point - last_sync_point);
 
+  pram_access = false;
   vram_bg_access = false;
 
   for (int id = 0; id < 4; id++) {

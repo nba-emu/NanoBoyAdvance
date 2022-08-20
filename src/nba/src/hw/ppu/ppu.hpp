@@ -116,6 +116,10 @@ struct PPU {
     return mmio.dispcnt.mode >= 3 ? 0x14000 : 0x10000;
   }
 
+  bool ALWAYS_INLINE DidAccessPRAM() const {
+    return pram_access;
+  }
+
   bool ALWAYS_INLINE DidAccessVRAM_BG() const  {
     return vram_bg_access;
   }
@@ -277,6 +281,7 @@ private:
   bool window_flag_h[2];
   bool window_flag_v[2];
 
+  bool pram_access;
   bool vram_bg_access;
 
   Scheduler& scheduler;

@@ -126,8 +126,38 @@ struct Bus {
   }
 
   template<typename T>
+  auto ALWAYS_INLINE ReadPRAM(u32 address) noexcept -> T {
+    constexpr int cycles = std::is_same_v<T, u32> ? 2 : 1;
+
+    for (int i = 0; i < cycles; i++) {
+      do {
+        Step(1);
+        hw.ppu.Sync();
+      } while(hw.ppu.DidAccessPRAM());
+    }
+
+    return hw.ppu.ReadPRAM<T>(address);
+  }
+
+  template<typename T>
+  void ALWAYS_INLINE WritePRAM(u32 address, T value) noexcept {
+    if constexpr (!std::is_same_v<T, u32>) {
+      do {
+        Step(1);
+        hw.ppu.Sync();
+      } while(hw.ppu.DidAccessPRAM());
+
+      hw.ppu.WritePRAM<T>(address, value);
+    } else {
+      WritePRAM(address + 0, (u16)(value >>  0));
+      WritePRAM(address + 2, (u16)(value >> 16));
+    }
+  }
+
+  template<typename T>
   auto ALWAYS_INLINE ReadVRAM(u32 address) noexcept -> T {
-    int cycles = std::is_same_v<T, u32> ? 2 : 1;
+    constexpr int cycles = std::is_same_v<T, u32> ? 2 : 1;
+
     u32 boundary = hw.ppu.GetSpriteVRAMBoundary();
 
     address &= 0x1FFFF;
@@ -155,7 +185,7 @@ struct Bus {
 
   template<typename T>
   void ALWAYS_INLINE WriteVRAM(u32 address, T value) noexcept {
-    if (!std::is_same_v<T, u32>) {
+    if constexpr (!std::is_same_v<T, u32>) {
       u32 boundary = hw.ppu.GetSpriteVRAMBoundary();
 
       address &= 0x1FFFF;
