@@ -52,23 +52,6 @@ struct PPU {
     }
   }
 
-  auto ALWAYS_INLINE GetSpriteVRAMBoundary() noexcept -> u32 {
-    return mmio.dispcnt.mode >= 3 ? 0x14000 : 0x10000;
-  }
-
-  template<typename T>
-  auto ALWAYS_INLINE ReadVRAM(u32 address) noexcept -> T {
-    u32 boundary = GetSpriteVRAMBoundary();
-
-    address &= 0x1FFFF;
-
-    if (address >= boundary) {
-      return ReadVRAM_OBJ<T>(address, boundary);
-    }
-
-    return ReadVRAM_BG<T>(address);
-  }
-
   template<typename T>
   auto ALWAYS_INLINE ReadVRAM_BG(u32 address) noexcept -> T {
     return read<T>(vram, address);
@@ -86,19 +69,6 @@ struct PPU {
     }
 
     return read<T>(vram, address);
-  }
-
-  template<typename T>
-  void ALWAYS_INLINE WriteVRAM(u32 address, T value) noexcept {
-    u32 boundary = GetSpriteVRAMBoundary();
-
-    address &= 0x1FFFF;
-
-    if (address >= boundary) {
-      WriteVRAM_OBJ<T>(address, value, boundary);
-    } else {
-      WriteVRAM_BG<T>(address, value);
-    }
   }
 
   template<typename T>
@@ -135,6 +105,23 @@ struct PPU {
     if constexpr (!std::is_same_v<T, u8>) {
       write<T>(oam, address & 0x3FF, value);
     }
+  }
+
+  void ALWAYS_INLINE Sync() {
+    // TODO: remove this redundant method
+    SyncLineRender();
+  }
+
+  auto ALWAYS_INLINE GetSpriteVRAMBoundary() noexcept -> u32 {
+    return mmio.dispcnt.mode >= 3 ? 0x14000 : 0x10000;
+  }
+
+  bool ALWAYS_INLINE DidAccessVRAM_BG() const  {
+    return vram_bg_access;
+  }
+
+  bool ALWAYS_INLINE DidAccessVRAM_OBJ() const {
+    return false;
   }
 
   struct MMIO {
@@ -289,6 +276,8 @@ private:
 
   bool window_flag_h[2];
   bool window_flag_v[2];
+
+  bool vram_bg_access;
 
   Scheduler& scheduler;
   IRQ& irq;

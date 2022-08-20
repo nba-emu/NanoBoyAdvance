@@ -74,6 +74,8 @@ void PPU::Reset() {
 
   frame = 0;
   dma3_video_transfer_running = false;
+
+  vram_bg_access = false;
 }
 
 void PPU::LatchEnabledBGs() {
@@ -353,6 +355,8 @@ void PPU::SyncLineRender() {
   u64 sync_point = scheduler.GetTimestampNow();
   
   int cycles = (int)(sync_point - last_sync_point);
+
+  vram_bg_access = false;
 
   for (int id = 0; id < 4; id++) {
     if (bg[id].engaged) {

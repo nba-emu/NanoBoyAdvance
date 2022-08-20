@@ -5,6 +5,8 @@
  * Refer to the included LICENSE file.
  */
 
+#include <optional>
+
 #include "hw/ppu/ppu.hpp"
 
 namespace nba::core {
@@ -159,13 +161,14 @@ void PPU::FetchTileMode08BPP(int id) {
 }
 
 void PPU::RenderBGMode0(int id, int cycles) {
-  const int RENDER_DELAY = 34 + id;
+  const int RENDER_DELAY = 33 + id;
 
   auto& bg = this->bg[id];
   auto& bgcnt = mmio.bgcnt[id];
 
   int hcounter = bg.hcounter;
   int hcounter_target = hcounter + cycles;
+  std::optional<int> last_access;
 
   bg.hcounter = hcounter_target;
 
@@ -179,20 +182,21 @@ void PPU::RenderBGMode0(int id, int cycles) {
     // TODO: can this logic be meaningfully optimized more?
     if (cycle == 0) {
       FetchMapMode0(id);
+      last_access = hcounter;
       hcounter_next = hcounter + 4;
     } else {
       if (bg.text.full_palette) {
         switch (cycle) {
           case  4:
           case 12:
-          case 20: FetchTileMode08BPP(id); hcounter_next = hcounter + 8; break;
-          case 28: FetchTileMode08BPP(id); hcounter_next = hcounter + 4; break;
+          case 20: FetchTileMode08BPP(id); last_access = hcounter; hcounter_next = hcounter + 8; break;
+          case 28: FetchTileMode08BPP(id); last_access = hcounter; hcounter_next = hcounter + 4; break;
         }
       } else {
         // TODO: we can get rid of one sync-point by updating grid_x in cycle 20 (only in 4BPP mode).
         switch (cycle) {
-          case  4: FetchTileMode04BPP(id); hcounter_next = hcounter + 16; break;
-          case 20: FetchTileMode04BPP(id); hcounter_next = hcounter +  8; break;
+          case  4: FetchTileMode04BPP(id); last_access = hcounter; hcounter_next = hcounter + 16; break;
+          case 20: FetchTileMode04BPP(id); last_access = hcounter; hcounter_next = hcounter +  8; break;
         }
       }
 
@@ -207,16 +211,21 @@ void PPU::RenderBGMode0(int id, int cycles) {
 
     hcounter = hcounter_next;
   }
+
+  if (last_access.has_value() && last_access.value() == hcounter_target - 1) {
+    vram_bg_access = true;
+  }
 }
 
 void PPU::RenderBGMode2(int id, int cycles) {
-  const int RENDER_DELAY = 36 + ((id - 2) * 2);
+  const int RENDER_DELAY = 35 - ((id - 2) * 2);
 
   auto& bg = this->bg[id];
   auto& bgcnt = mmio.bgcnt[id];
 
   int hcounter = bg.hcounter;
   int hcounter_target = hcounter + cycles;
+  std::optional<int> last_access;
 
   bg.hcounter = hcounter_target;
 
@@ -258,6 +267,7 @@ void PPU::RenderBGMode2(int id, int cycles) {
         int tile = vram[map_address];
 
         bg.affine.address = tile_base + (tile << 6) + ((y & 7) << 3) + (x & 7);
+        last_access = hcounter;
       }
 
       hcounter++;
@@ -270,6 +280,8 @@ void PPU::RenderBGMode2(int id, int cycles) {
         if (pixel == 0) {
           pixel = 0x8000'0000;
         }
+
+        last_access = hcounter;
       }
 
       *buffer++ = pixel;
@@ -284,15 +296,20 @@ void PPU::RenderBGMode2(int id, int cycles) {
       hcounter += 4 - cycle;
     }
   }
+
+  if (last_access.has_value() && last_access.value() == hcounter_target - 1) {
+    vram_bg_access = true;
+  }
 }
 
 void PPU::RenderBGMode3(int cycles) {
-  const int RENDER_DELAY = 37;
+  const int RENDER_DELAY = 36;
 
   auto& bg = this->bg[2];
 
   int hcounter = bg.hcounter;
   int hcounter_target = hcounter + cycles;
+  std::optional<int> last_access;
 
   bg.hcounter = hcounter_target;
 
@@ -319,6 +336,7 @@ void PPU::RenderBGMode3(int cycles) {
         u32 address = (y * 240 + x) * 2;
 
         pixel = read<u16>(vram, address) | 0x4000'0000;
+        last_access = hcounter;
       }
 
       *buffer++ = pixel;
@@ -333,15 +351,20 @@ void PPU::RenderBGMode3(int cycles) {
       hcounter += 4 - cycle;
     }
   }
+
+  if (last_access.has_value() && last_access.value() == hcounter_target - 1) {
+    vram_bg_access = true;
+  }
 }
 
 void PPU::RenderBGMode4(int cycles) {
-  const int RENDER_DELAY = 37;
+  const int RENDER_DELAY = 36;
 
   auto& bg = this->bg[2];
 
   int hcounter = bg.hcounter;
   int hcounter_target = hcounter + cycles;
+  std::optional<int> last_access;
 
   bg.hcounter = hcounter_target;
 
@@ -371,6 +394,7 @@ void PPU::RenderBGMode4(int cycles) {
         if (pixel == 0) {
           pixel = 0x8000'0000;
         }
+        last_access = hcounter;
       }
 
       *buffer++ = pixel;
@@ -385,15 +409,20 @@ void PPU::RenderBGMode4(int cycles) {
       hcounter += 4 - cycle;
     }
   }
+
+  if (last_access.has_value() && last_access.value() == hcounter_target - 1) {
+    vram_bg_access = true;
+  }
 }
 
 void PPU::RenderBGMode5(int cycles) {
-  const int RENDER_DELAY = 37;
+  const int RENDER_DELAY = 36;
 
   auto& bg = this->bg[2];
 
   int hcounter = bg.hcounter;
   int hcounter_target = hcounter + cycles;
+  std::optional<int> last_access;
 
   bg.hcounter = hcounter_target;
 
@@ -422,6 +451,7 @@ void PPU::RenderBGMode5(int cycles) {
         u32 address = base_address + (y * 160 + x) * 2;
 
         pixel = read<u16>(vram, address) | 0x4000'0000;
+        last_access = hcounter;
       }
 
       *buffer++ = pixel;
@@ -435,6 +465,10 @@ void PPU::RenderBGMode5(int cycles) {
     } else {
       hcounter += 4 - cycle;
     }
+  }
+
+  if (last_access.has_value() && last_access.value() == hcounter_target - 1) {
+    vram_bg_access = true;
   }
 }
 

@@ -109,8 +109,7 @@ auto Bus::Read(u32 address, int access) -> T {
     }
     // VRAM (video RAM)
     case 0x06: {
-      Step(is_u32 ? 2 : 1);
-      return hw.ppu.ReadVRAM<T>(Align<T>(address));
+      return ReadVRAM<T>(Align<T>(address));
     }
     // OAM (object attribute map)
     case 0x07: {
@@ -203,8 +202,7 @@ void Bus::Write(u32 address, int access, T value) {
     }
     // VRAM (video RAM)
     case 0x06: {
-      Step(is_u32 ? 2 : 1);
-      hw.ppu.WriteVRAM<T>(Align<T>(address), value);
+      WriteVRAM<T>(Align<T>(address), value);
       break;
     }
     // OAM (object attribute map)

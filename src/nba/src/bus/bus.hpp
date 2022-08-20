@@ -125,6 +125,64 @@ struct Bus {
     return address & ~(sizeof(T) - 1);
   }
 
+  template<typename T>
+  auto ALWAYS_INLINE ReadVRAM(u32 address) noexcept -> T {
+    int cycles = std::is_same_v<T, u32> ? 2 : 1;
+    u32 boundary = hw.ppu.GetSpriteVRAMBoundary();
+
+    address &= 0x1FFFF;
+
+    if (address >= boundary) {
+      for (int i = 0; i < cycles; i++) {
+        do {
+          Step(1);
+          hw.ppu.Sync();
+        } while(hw.ppu.DidAccessVRAM_OBJ());
+      }
+
+      return hw.ppu.ReadVRAM_OBJ<T>(address, boundary);
+    } else {
+      for (int i = 0; i < cycles; i++) {
+        do {
+          Step(1);
+          hw.ppu.Sync();
+        } while(hw.ppu.DidAccessVRAM_BG());
+      }
+
+      return hw.ppu.ReadVRAM_BG<T>(address);
+    }
+  }
+
+  template<typename T>
+  void ALWAYS_INLINE WriteVRAM(u32 address, T value) noexcept {
+    if (!std::is_same_v<T, u32>) {
+      u32 boundary = hw.ppu.GetSpriteVRAMBoundary();
+
+      address &= 0x1FFFF;
+
+      if (address >= boundary) {
+        // TODO: de-duplicate this code (see ReadVRAM):
+        do {
+          Step(1);
+          hw.ppu.Sync();
+        } while(hw.ppu.DidAccessVRAM_OBJ());
+
+        hw.ppu.WriteVRAM_OBJ<T>(address, value, boundary);
+      } else {
+        // TODO: de-duplicate this code (see ReadVRAM):
+        do {
+          Step(1);
+          hw.ppu.Sync();
+        } while(hw.ppu.DidAccessVRAM_BG());
+
+        hw.ppu.WriteVRAM_BG<T>(address, value);
+      }
+    } else {
+      WriteVRAM<u16>(address + 0, (u16)(value >>  0));
+      WriteVRAM<u16>(address + 2, (u16)(value >> 16));
+    }
+  }
+
   auto ReadBIOS(u32 address) -> u32;
   auto ReadOpenBus(u32 address) -> u32;
 
