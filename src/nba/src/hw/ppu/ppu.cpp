@@ -53,7 +53,8 @@ void PPU::Reset() {
 
     mmio.winh[i].Reset();
     mmio.winv[i].Reset();
-    window_scanline_enable[i] = false;
+    window_flag_h[i] = false;
+    window_flag_v[i] = false;
   }
 
   mmio.winin.Reset();
@@ -211,6 +212,7 @@ void PPU::OnHblankComplete(int cycles_late) {
   CheckVerticalCounterIRQ();
   LatchBGXYWrites();
   UpdateVideoTransferDMA();
+  UpdateWindows();
 
   if (vcount == 160) {
     InitLineRender();
@@ -308,6 +310,7 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
   CheckVerticalCounterIRQ();
   InitLineRender();
   UpdateVideoTransferDMA();
+  UpdateWindows();
 }
 
 void PPU::InitLineRender() {
@@ -352,6 +355,20 @@ void PPU::SyncLineRender() {
   }
   
   last_sync_point = sync_point;
+}
+
+void PPU::UpdateWindows() {
+  int vcount = mmio.vcount;
+
+  for (int i = 0; i < 2; i++) {
+    if (vcount == mmio.winv[i].min) {
+      window_flag_v[i] = true;
+    }
+
+    if (vcount == mmio.winv[i].max) {
+      window_flag_v[i] = false;
+    }
+  }
 }
 
 } // namespace nba::core

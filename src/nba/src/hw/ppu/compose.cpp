@@ -32,25 +32,52 @@ void PPU::SyncCompose(int cycles) {
 
   hcounter = std::max(hcounter, RENDER_DELAY);
 
+  int vcount = mmio.vcount;
   int x = (hcounter - RENDER_DELAY) >> 2;
   u16 backdrop = read<u16>(pram, 0);
-  u32* buffer = &output[frame][mmio.vcount * 240 + x];
+  u32* buffer = &output[frame][vcount * 240 + x];
+
+  bool use_windows = mmio.dispcnt.enable[ENABLE_WIN0] ||
+                     mmio.dispcnt.enable[ENABLE_WIN1] ||
+                     mmio.dispcnt.enable[ENABLE_OBJWIN]; 
 
   while (hcounter < hcounter_target) {
     int cycle = (hcounter - RENDER_DELAY) & 3;
 
     if (cycle == 0) {
+      // Update windows horizontally
+      // TODO: should this also happen within V-blank? Does it matter?
+      for (int i = 0; i < 2; i++) {
+        if (x == mmio.winh[i].min) window_flag_h[i] = true;
+        if (x == mmio.winh[i].max) window_flag_h[i] = false;
+      }
+
+      const int* win_layer_enable;
+
       int prio[2] { 4, 4 };
       int layer[2] { LAYER_BD, LAYER_BD };
       u32 color[2] { 0x8000'0000, 0x8000'0000 };
       bool is_alpha_obj = false;
+
+      // Find the highest-priority active window for this pixel
+      if (use_windows) {
+        // TODO: are the window enable bits delayed like the BG enable bits?
+            if (mmio.dispcnt.enable[ENABLE_WIN0] && window_flag_v[0] && window_flag_h[0]) win_layer_enable = mmio.winin.enable[0];
+        else if (mmio.dispcnt.enable[ENABLE_WIN1] && window_flag_v[1] && window_flag_h[1]) win_layer_enable = mmio.winin.enable[1];
+        else if (mmio.dispcnt.enable[ENABLE_OBJ] && mmio.dispcnt.enable[ENABLE_OBJWIN] && buffer_obj[x].window) win_layer_enable = mmio.winout.enable[1];
+        else win_layer_enable = mmio.winout.enable[0];
+      }
 
       // Find up to two top-most visible background pixels.
       // TODO: is the BG enable logic correct?
       // And can we optimize this algorithm more without sacrificing accuracy?
       for (int priority = 3; priority >= 0; priority--) {
         for (int id = 3; id >= 0; id--) {
-          if (mmio.enable_bg[0][id] && mmio.dispcnt.enable[id] && mmio.bgcnt[id].priority == priority && bg[id].buffer[8 + x] != 0x8000'0000) {
+          if ((!use_windows || win_layer_enable[id]) &&
+              mmio.enable_bg[0][id] &&
+              mmio.dispcnt.enable[id] &&
+              mmio.bgcnt[id].priority == priority &&
+              bg[id].buffer[8 + x] != 0x8000'0000) {
             prio[1] = prio[0];
             prio[0] = priority;
             layer[1] = layer[0];
@@ -62,10 +89,10 @@ void PPU::SyncCompose(int cycles) {
       }
 
       /* Check if a OBJ pixel takes priority over one of the two
-       * top-most background pixels and insert it accordingly.
-       */
+      * top-most background pixels and insert it accordingly.
+      */
       // TODO: is the OBJ enable bit delayed like for BGs?
-      if (mmio.dispcnt.enable[LAYER_OBJ]) {
+      if (mmio.dispcnt.enable[LAYER_OBJ] && (!use_windows || win_layer_enable[LAYER_OBJ])) {
         auto pixel = buffer_obj[x];
 
         if (pixel.color != 0x8000'0000) {
@@ -86,14 +113,6 @@ void PPU::SyncCompose(int cycles) {
         }
       } 
 
-      // // TODO: blending
-      // switch (color[0] & 0xC000'0000) {
-      //   case 0x0000'0000: *buffer++ = RGB565(read<u16>(pram, color[0] << 1)); break;
-      //   case 0x4000'0000: *buffer++ = RGB565(color[0] & 0xFFFF); break;
-      //   case 0x8000'0000: *buffer++ = RGB565(backdrop); break;
-      // }
-
-
       for (int i = 0; i < 2; i++) {
         switch (color[i] & 0xC000'0000) {
           case 0x0000'0000: color[i] = read<u16>(pram, color[i] << 1); break;
@@ -107,7 +126,7 @@ void PPU::SyncCompose(int cycles) {
 
       if (is_alpha_obj && have_blend_src) {
         color[0] = Blend(color[0], color[1]);
-      } else if (have_blend_dst) {
+      } else if (have_blend_dst && (!use_windows || win_layer_enable[LAYER_SFX])) {
         switch (mmio.bldcnt.sfx) {
           case BlendControl::Effect::SFX_BLEND:
             if (have_blend_src) {

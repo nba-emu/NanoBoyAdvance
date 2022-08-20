@@ -200,6 +200,7 @@ private:
   auto Brighten(u16 color) -> u16;
   auto Darken(u16 color) -> u16;
   void RenderLayerOAM(bool bitmap_mode, int line);
+  void UpdateWindows();
 
   #include "helper.inl"
 
@@ -250,7 +251,8 @@ private:
     unsigned mosaic : 1;
   } buffer_obj[240];
 
-  bool window_scanline_enable[2];
+  bool window_flag_h[2];
+  bool window_flag_v[2];
 
   Scheduler& scheduler;
   IRQ& irq;
