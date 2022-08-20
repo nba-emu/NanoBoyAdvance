@@ -237,6 +237,8 @@ private:
   struct Compose {
     bool engaged;
     int hcounter;
+    // int layer[2];
+    // u16 color[2];
   } compose;
 
   struct ObjectPixel {

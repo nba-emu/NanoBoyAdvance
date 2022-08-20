@@ -110,7 +110,13 @@ void PPU::FetchTileMode04BPP(int id) {
   int palette = bg.text.palette;
 
   for (int x = 0; x < 4; x++) {
-    u32 index = (data & 15) | (palette << 4);
+    u32 index = (data & 15);
+
+    if (index == 0) {
+      index = 0x8000'0000;
+    } else {
+      index |= palette << 4;
+    }
 
     bg.buffer[8 + draw_x + (x ^ flip)] = index;
     data >>= 4;
@@ -134,6 +140,10 @@ void PPU::FetchTileMode08BPP(int id) {
 
   for (int x = 0; x < 2; x++) {
     u32 index = data & 0xFF;
+
+    if (index == 0) {
+      index = 0x8000'0000;
+    }
 
     bg.buffer[8 + draw_x + (x ^ flip)] = index;
     data >>= 8;
