@@ -196,6 +196,9 @@ private:
   void RenderBGMode5(int cycles);
   void InitCompose();
   void SyncCompose(int cycles);
+  auto Blend(u16 color_a, u16 color_b) -> u16;
+  auto Brighten(u16 color) -> u16;
+  auto Darken(u16 color) -> u16;
   void RenderLayerOAM(bool bitmap_mode, int line);
 
   #include "helper.inl"
@@ -237,8 +240,6 @@ private:
   struct Compose {
     bool engaged;
     int hcounter;
-    // int layer[2];
-    // u16 color[2];
   } compose;
 
   struct ObjectPixel {

@@ -43,6 +43,7 @@ void PPU::SyncCompose(int cycles) {
       int prio[2] { 4, 4 };
       int layer[2] { LAYER_BD, LAYER_BD };
       u32 color[2] { 0x8000'0000, 0x8000'0000 };
+      bool is_alpha_obj = false;
 
       // Find up to two top-most visible background pixels.
       // TODO: is the BG enable logic correct?
@@ -66,7 +67,7 @@ void PPU::SyncCompose(int cycles) {
       // TODO: is the OBJ enable bit delayed like for BGs?
       if (mmio.dispcnt.enable[LAYER_OBJ]) {
         auto pixel = buffer_obj[x];
-        
+
         if (pixel.color != 0x8000'0000) {
           if (pixel.priority <= prio[0]) {
             prio[1] = prio[0];
@@ -75,6 +76,8 @@ void PPU::SyncCompose(int cycles) {
             layer[0] = LAYER_OBJ;
             color[1] = color[0];
             color[0] = pixel.color;
+
+            is_alpha_obj = pixel.alpha;
           } else if (pixel.priority <= prio[1]) {
             prio[1] = pixel.priority;
             layer[1] = LAYER_OBJ;
@@ -83,12 +86,44 @@ void PPU::SyncCompose(int cycles) {
         }
       } 
 
-      // TODO: blending
-      switch (color[0] & 0xC000'0000) {
-        case 0x0000'0000: *buffer++ = RGB565(read<u16>(pram, color[0] << 1)); break;
-        case 0x4000'0000: *buffer++ = RGB565(color[0] & 0xFFFF); break;
-        case 0x8000'0000: *buffer++ = RGB565(backdrop); break;
+      // // TODO: blending
+      // switch (color[0] & 0xC000'0000) {
+      //   case 0x0000'0000: *buffer++ = RGB565(read<u16>(pram, color[0] << 1)); break;
+      //   case 0x4000'0000: *buffer++ = RGB565(color[0] & 0xFFFF); break;
+      //   case 0x8000'0000: *buffer++ = RGB565(backdrop); break;
+      // }
+
+
+      for (int i = 0; i < 2; i++) {
+        switch (color[i] & 0xC000'0000) {
+          case 0x0000'0000: color[i] = read<u16>(pram, color[i] << 1); break;
+          case 0x4000'0000: color[i] &= 0xFFFF; break;
+          case 0x8000'0000: color[i] = backdrop; break;
+        }
       }
+
+      bool have_blend_dst = mmio.bldcnt.targets[0][layer[0]];
+      bool have_blend_src = mmio.bldcnt.targets[1][layer[1]];
+
+      if (is_alpha_obj && have_blend_src) {
+        color[0] = Blend(color[0], color[1]);
+      } else if (have_blend_dst) {
+        switch (mmio.bldcnt.sfx) {
+          case BlendControl::Effect::SFX_BLEND:
+            if (have_blend_src) {
+              color[0] = Blend(color[0], color[1]);
+            }
+            break;
+          case BlendControl::Effect::SFX_BRIGHTEN:
+            color[0] = Brighten(color[0]);
+            break;
+          case BlendControl::Effect::SFX_DARKEN:
+            color[0] = Darken(color[0]);
+            break;
+        }
+      }
+
+      *buffer++ = RGB565((u16)color[0]);
 
       hcounter += 4;
 
@@ -100,6 +135,33 @@ void PPU::SyncCompose(int cycles) {
       hcounter += 4 - cycle;
     }
   }
+}
+
+auto PPU::Blend(u16 color_a, u16 color_b) -> u16 {
+  int eva = std::min<int>(16, mmio.eva);
+  int evb = std::min<int>(16, mmio.evb);
+
+  int r_a = (color_a >>  0) & 0x1F;
+  int g_a = (color_a >>  5) & 0x1F;
+  int b_a = (color_a >> 10) & 0x1F;
+
+  int r_b = (color_b >>  0) & 0x1F;
+  int g_b = (color_b >>  5) & 0x1F;
+  int b_b = (color_b >> 10) & 0x1F;
+
+  int r_out = std::min<u8>((r_a * eva + r_b * evb + 8) >> 4, 31);
+  int g_out = std::min<u8>((g_a * eva + g_b * evb + 8) >> 4, 31);
+  int b_out = std::min<u8>((b_a * eva + b_b * evb + 8) >> 4, 31);
+
+  return r_out | (g_out << 5) | (b_out << 10);
+}
+
+auto PPU::Brighten(u16 color) -> u16 {
+  return color;
+}
+
+auto PPU::Darken(u16 color) -> u16 {
+  return color;
 }
 
 } // namespace nba::core
