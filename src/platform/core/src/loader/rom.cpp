@@ -16,7 +16,10 @@
 #include <nba/log.hpp>
 #include <string_view>
 #include <utility>
-#include <unarr.h>
+
+#if defined(HAVE_UNARR)
+  #include <unarr.h>
+#endif
 
 namespace fs = std::filesystem;
 
@@ -136,6 +139,9 @@ auto ROMLoader::ReadFile(std::string path, std::vector<u8>& file_data) -> Result
 }
 
 auto ROMLoader::ReadFileFromArchive(std::string path, std::vector<u8>& file_data) -> Result {
+
+#if defined(HAVE_UNARR)
+
   auto stream = ar_open_file(path.c_str());
 
   if (!stream) {
@@ -171,6 +177,10 @@ auto ROMLoader::ReadFileFromArchive(std::string path, std::vector<u8>& file_data
   ar_close_archive(archive);
   ar_close(stream);
   return result;
+
+#else
+  return Result::CannotOpenFile;
+#endif
 }
 
 auto ROMLoader::GetGameInfo(

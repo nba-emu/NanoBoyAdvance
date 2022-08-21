@@ -8,11 +8,18 @@
 #pragma once
 
 #include <nba/device/video_device.hpp>
-#include <GL/glew.h>
 #include <platform/config.hpp>
 #include <string>
 #include <utility>
 #include <vector>
+
+#if defined(SWITCH)
+  #include <EGL/egl.h>
+  #include <EGL/eglext.h>
+  #include <glad/glad.h>
+#else
+  #include <GL/glew.h>
+#endif
 
 namespace nba {
 

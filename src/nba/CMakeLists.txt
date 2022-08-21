@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 project(nba CXX)
 
-add_subdirectory(../../external ${CMAKE_BINARY_DIR}/external)
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -116,7 +114,9 @@ add_library(nba STATIC ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
 target_include_directories(nba PRIVATE src)
 target_include_directories(nba PUBLIC include)
 
-target_link_libraries(nba PUBLIC fmt)
+# if (NOT SWITCH)
+  target_link_libraries(nba PUBLIC fmt)
+# endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   target_compile_options(nba PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fbracket-depth=4096>)

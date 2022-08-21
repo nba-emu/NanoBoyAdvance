@@ -55,7 +55,9 @@ template<typename... Args>
 inline void Assert(bool condition, Args... args) {
   if (!condition) {
     Log<Fatal>(args...);
-    std::exit(-1);
+    
+    // TODO: std::exit not available on the Switch
+    // std::exit(-1);
   }
 }
 
