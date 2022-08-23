@@ -164,7 +164,7 @@ void PPU::FetchTileMode08BPP(int id) {
 }
 
 void PPU::RenderBGMode0(int id, int cycles) {
-  const int RENDER_DELAY = 33 + id;
+  const int RENDER_DELAY = 33 - 4 * (latch.bghofs[id] & 7) + id;
 
   auto& bg = this->bg[id];
 
