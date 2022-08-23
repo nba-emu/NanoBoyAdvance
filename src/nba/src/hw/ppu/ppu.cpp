@@ -145,6 +145,11 @@ void PPU::OnScanlineComplete(int cycles_late) {
 
   SyncLineRender();
 
+  // Render OBJs for the next scanline.
+  if (mmio.dispcnt.enable[ENABLE_OBJ]) {
+    RenderLayerOAM(mmio.dispcnt.mode >= 3, mmio.vcount + 1);
+  }
+
   // Advance vertical background mosaic counter
   if (++mosaic.bg._counter_y == mosaic.bg.size_y) {
     mosaic.bg._counter_y = 0;
@@ -178,11 +183,6 @@ void PPU::OnScanlineComplete(int cycles_late) {
         }
       }
     }
-  }
-
-  // Render OBJs for the next scanline.
-  if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-    RenderLayerOAM(mmio.dispcnt.mode >= 3, mmio.vcount + 1);
   }
 
   /* TODO: it appears that this should really happen ~36 cycles into H-draw.
