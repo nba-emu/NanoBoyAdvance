@@ -29,6 +29,8 @@ void PPU::InitCompose() {
   compose.engaged = true;
   compose.x = 0;
   compose.hcounter = 0;
+  compose.mosaic_bg_x = 0;
+  compose.mosaic_obj_x = 0;
 }
 
 void PPU::SyncCompose(int cycles) {
@@ -91,17 +93,23 @@ void PPU::SyncCompose(int cycles) {
       int max_bg = MAX_BG[dispcnt_mode];
       for (int priority = 3; priority >= 0; priority--) {
         for (int id = max_bg; id >= min_bg; id--) {
+          int bg_x = 8 + x;
+
+          if (latch.bgcnt[id].mosaic_enable) {
+            bg_x -= compose.mosaic_bg_x;
+          }
+
           if ((!use_windows || win_layer_enable[id]) &&
               mmio.enable_bg[0][id] &&
               mmio.dispcnt.enable[id] &&
               mmio.bgcnt[id].priority == priority &&
-              bg[id].buffer[8 + x] != 0x8000'0000) {
+              bg[id].buffer[bg_x] != 0x8000'0000) {
             prio[1] = prio[0];
             prio[0] = priority;
             layer[1] = layer[0];
             layer[0] = id;
             color[1] = color[0];
-            color[0] = bg[id].buffer[8 + x];
+            color[0] = bg[id].buffer[bg_x];
           }
         }
       }
@@ -174,6 +182,11 @@ void PPU::SyncCompose(int cycles) {
       *buffer++ = RGB565((u16)color[0]);
 
       x++;
+
+      if (++compose.mosaic_bg_x == mmio.mosaic.bg.size_x) {
+        compose.mosaic_bg_x = 0;
+      }
+
       hcounter += 4;
     } else {
       hcounter += 4 - cycle;

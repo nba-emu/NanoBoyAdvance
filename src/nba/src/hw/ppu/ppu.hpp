@@ -276,6 +276,8 @@ private:
     bool engaged;
     int x;
     int hcounter;
+    int mosaic_bg_x;
+    int mosaic_obj_x;
   } compose;
 
   struct ObjectPixel {
