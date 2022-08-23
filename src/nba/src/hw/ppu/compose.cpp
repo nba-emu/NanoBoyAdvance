@@ -27,6 +27,7 @@ const auto RGB565 = [](u16 rgb565) -> u32 {
 
 void PPU::InitCompose() {
   compose.engaged = true;
+  compose.x = 0;
   compose.hcounter = 0;
 }
 
@@ -47,18 +48,13 @@ void PPU::SyncCompose(int cycles) {
   hcounter = std::max(hcounter, RENDER_DELAY);
 
   int vcount = mmio.vcount;
-  int x = (hcounter - RENDER_DELAY) >> 2;
+  int x = compose.x;
   u16 backdrop = read<u16>(pram, 0);
   u32* buffer = &output[frame][vcount * 240 + x];
 
   bool use_windows = mmio.dispcnt.enable[ENABLE_WIN0] ||
                      mmio.dispcnt.enable[ENABLE_WIN1] ||
                      mmio.dispcnt.enable[ENABLE_OBJWIN]; 
-
-  if (x >= 240) {
-    compose.engaged = false;
-    return;
-  }
 
   while (hcounter < hcounter_target) {
     int cycle = (hcounter - RENDER_DELAY) & 3;
@@ -186,6 +182,8 @@ void PPU::SyncCompose(int cycles) {
       hcounter += 4 - cycle;
     }
   }
+
+  compose.x = x;
 
   if (last_access.has_value() && last_access.value() == hcounter_target - 1) {
     pram_access = true;

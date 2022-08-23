@@ -275,6 +275,7 @@ private:
 
   struct Compose {
     bool engaged;
+    int x;
     int hcounter;
   } compose;
 
