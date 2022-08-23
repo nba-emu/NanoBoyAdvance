@@ -206,18 +206,6 @@ void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
       break;
     }
   }
-
-  int mosaic_x = 0;
-
-  for (int x = 0; x < 240; x++) {
-    if (buffer_obj[x].mosaic) {
-      buffer_obj[x].color = buffer_obj[x - mosaic_x].color;
-    }
-
-    if (++mosaic_x == mmio.mosaic.obj.size_x) {
-      mosaic_x = 0;
-    }
-  }
 }
 
 } // namespace nba::core

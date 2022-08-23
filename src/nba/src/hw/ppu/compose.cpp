@@ -121,6 +121,10 @@ void PPU::SyncCompose(int cycles) {
       if (mmio.dispcnt.enable[LAYER_OBJ] && (!use_windows || win_layer_enable[LAYER_OBJ])) {
         auto pixel = buffer_obj[x];
 
+        if (pixel.mosaic) {
+          pixel = buffer_obj[x - compose.mosaic_obj_x];
+        }
+
         if (pixel.color != 0x8000'0000) {
           if (pixel.priority <= prio[0]) {
             prio[1] = prio[0];
@@ -183,8 +187,15 @@ void PPU::SyncCompose(int cycles) {
 
       x++;
 
-      if (++compose.mosaic_bg_x == mmio.mosaic.bg.size_x) {
+      compose.mosaic_bg_x = (compose.mosaic_bg_x + 1) & 15;
+      compose.mosaic_obj_x = (compose.mosaic_obj_x + 1) & 15;
+
+      if (compose.mosaic_bg_x == mmio.mosaic.bg.size_x) {
         compose.mosaic_bg_x = 0;
+      }
+
+      if (compose.mosaic_obj_x == mmio.mosaic.obj.size_x) {
+        compose.mosaic_obj_x = 0;
       }
 
       hcounter += 4;
