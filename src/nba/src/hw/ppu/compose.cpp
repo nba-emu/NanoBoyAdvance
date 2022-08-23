@@ -40,10 +40,11 @@ void PPU::SyncCompose(int cycles) {
   const int MAX_BG[8] { 3, 2, 3, 2, 2, 2, -1, -1 };
 
   int hcounter = compose.hcounter;
-  int hcounter_target = hcounter + cycles;
+  int hcounter_current = hcounter + cycles;
+  int hcounter_target = std::min(hcounter_current, kLastRenderCycle);
   std::optional<int> last_access;
 
-  compose.hcounter = hcounter_target;
+  compose.hcounter = hcounter_current;
 
   hcounter = std::max(hcounter, RENDER_DELAY);
 
@@ -172,12 +173,8 @@ void PPU::SyncCompose(int cycles) {
 
       *buffer++ = RGB565((u16)color[0]);
 
+      x++;
       hcounter += 4;
-
-      if (++x == 240) {
-        compose.engaged = false;
-        break;
-      }
     } else {
       hcounter += 4 - cycle;
     }
@@ -185,7 +182,7 @@ void PPU::SyncCompose(int cycles) {
 
   compose.x = x;
 
-  if (last_access.has_value() && last_access.value() == hcounter_target - 1) {
+  if (last_access.has_value() && last_access.value() == hcounter_current - 1) {
     pram_access = true;
   }
 }
