@@ -57,8 +57,12 @@ void PPU::FetchMapMode0(int id) {
   u32 tile_base = bgcnt.tile_block << 14;
   int map_block = bgcnt.map_block;
 
-  // TODO: should BGXHOFS (possibly only the lower three bits?) and BGXVOFS be latched?
-  int line   = mmio.bgvofs[id] + mmio.vcount;
+  int line = mmio.bgvofs[id] + mmio.vcount;
+
+  if (bgcnt.mosaic_enable) {
+    line -= mmio.mosaic.bg._counter_y;
+  }
+
   int grid_x = (latch.bghofs[id] >> 3) + bg.text.grid_x;
   int grid_y = line >> 3;
   int tile_y = line & 7;

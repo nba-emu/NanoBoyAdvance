@@ -142,7 +142,9 @@ void PPU::OnScanlineComplete(int cycles_late) {
   mmio.dispstat.hblank_flag = 1;
 
   dma.Request(DMA::Occasion::HBlank);
-  
+
+  SyncLineRender();
+
   // Advance vertical background mosaic counter
   if (++mosaic.bg._counter_y == mosaic.bg.size_y) {
     mosaic.bg._counter_y = 0;
@@ -178,7 +180,6 @@ void PPU::OnScanlineComplete(int cycles_late) {
     }
   }
 
-  SyncLineRender();
   // Render OBJs for the next scanline.
   if (mmio.dispcnt.enable[ENABLE_OBJ]) {
     RenderLayerOAM(mmio.dispcnt.mode >= 3, mmio.vcount + 1);
