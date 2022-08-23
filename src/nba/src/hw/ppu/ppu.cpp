@@ -354,8 +354,20 @@ void PPU::InitLineRender() {
 
 void PPU::SyncLineRender() {
   u64 sync_point = scheduler.GetTimestampNow();
-  
+
   int cycles = (int)(sync_point - last_sync_point);
+
+  /**
+   * Do not sync multiple times on the same cycle.
+   * This can happen, when this method is called from an event,
+   * in the same cycle as a VRAM/PRAM/OAM/IO access.
+   *
+   * It is necessary to handle this, so that VRAM access stalls
+   * are calculated correctly in that scenario.
+   */
+  if (cycles == 0) {
+    return;
+  }
 
   pram_access = false;
   vram_bg_access = false;

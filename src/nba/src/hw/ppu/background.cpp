@@ -226,10 +226,11 @@ void PPU::RenderBGMode2(int id, int cycles) {
   auto& bgcnt = latch.bgcnt[id];
 
   int hcounter = bg.hcounter;
-  int hcounter_target = hcounter + cycles;
+  int hcounter_current = hcounter + cycles;
+  int hcounter_target = std::min(hcounter_current, kLastRenderCycle);
   std::optional<int> last_access;
 
-  bg.hcounter = hcounter_target;
+  bg.hcounter = hcounter_current;
 
   s16 pa = mmio.bgpa[id - 2];
   s16 pc = mmio.bgpc[id - 2];
@@ -269,8 +270,10 @@ void PPU::RenderBGMode2(int id, int cycles) {
         int tile = vram[map_address];
 
         bg.affine.address = tile_base + (tile << 6) + ((y & 7) << 3) + (x & 7);
-        last_access = hcounter;
       }
+
+      // HW fetches regardless of the bounds check above.
+      last_access = hcounter;
 
       hcounter++;
     } else if (cycle == 1) {
@@ -282,24 +285,23 @@ void PPU::RenderBGMode2(int id, int cycles) {
         if (pixel == 0) {
           pixel = 0x8000'0000;
         }
-
-        last_access = hcounter;
       }
 
-      *buffer++ = pixel;
-    
+      // HW fetches regardless of the bounds check above.
+      last_access = hcounter;
+
+      // TODO: make the BG buffer larger instead of checking bounds
+      if (bg.x++ < 240) {
+        *buffer++ = pixel;
+      }
+
       hcounter += 3;
-
-      if (++bg.x == 240) {
-        bg.engaged = false;
-        break;
-      }
     } else {
       hcounter += 4 - cycle;
     }
   }
 
-  if (last_access.has_value() && last_access.value() == hcounter_target - 1) {
+  if (last_access.has_value() && last_access.value() == hcounter_current - 1) {
     vram_bg_access = true;
   }
 }
