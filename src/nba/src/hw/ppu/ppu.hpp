@@ -243,7 +243,6 @@ private:
   struct Latch {
     BackgroundControl bgcnt[4];
     u16 bghofs[4];
-    u16 bgvofs[4];
   } latch;
 
   struct BG {

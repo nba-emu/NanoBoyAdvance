@@ -31,8 +31,8 @@ void PPU::InitBG(int id) {
   if (dispcnt_mode == 0 || (dispcnt_mode == 1 && id < 2)) {
     bg.x = -(mmio.bghofs[id] & 7);
     bg.text.grid_x = 0;
+    // TODO: is BGHOFS latched entirely or just partially?
     latch.bghofs[id] = mmio.bghofs[id];
-    latch.bgvofs[id] = mmio.bgvofs[id];
   } else {
     bg.x = 0;
   }
@@ -58,7 +58,7 @@ void PPU::FetchMapMode0(int id) {
   int map_block = bgcnt.map_block;
 
   // TODO: should BGXHOFS (possibly only the lower three bits?) and BGXVOFS be latched?
-  int line   = latch.bgvofs[id] + mmio.vcount;
+  int line   = mmio.bgvofs[id] + mmio.vcount;
   int grid_x = (latch.bghofs[id] >> 3) + bg.text.grid_x;
   int grid_y = line >> 3;
   int tile_y = line & 7;
