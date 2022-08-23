@@ -350,6 +350,9 @@ void PPU::InitLineRender() {
 
     InitCompose();
   }
+
+  vram_bg_access = false;
+  pram_access = false;
 }
 
 void PPU::SyncLineRender() {

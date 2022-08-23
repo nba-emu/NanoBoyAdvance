@@ -63,6 +63,8 @@ void PPU::FetchMapMode0(int id) {
   int grid_y = line >> 3;
   int tile_y = line & 7;
 
+  bg.text.grid_x++;
+
   auto screen_x = (grid_x >> 5) & 1;
   auto screen_y = (grid_y >> 5) & 1;
 
@@ -169,10 +171,11 @@ void PPU::RenderBGMode0(int id, int cycles) {
   auto& bg = this->bg[id];
 
   int hcounter = bg.hcounter;
-  int hcounter_target = hcounter + cycles;
+  int hcounter_current = hcounter + cycles;
+  int hcounter_target = std::min(hcounter_current, kLastRenderCycle);
   std::optional<int> last_access;
 
-  bg.hcounter = hcounter_target;
+  bg.hcounter = hcounter_current;
 
   hcounter = std::max(hcounter, RENDER_DELAY);
 
@@ -195,18 +198,9 @@ void PPU::RenderBGMode0(int id, int cycles) {
           case 28: FetchTileMode08BPP(id); last_access = hcounter; hcounter_next = hcounter + 4; break;
         }
       } else {
-        // TODO: we can get rid of one sync-point by updating grid_x in cycle 20 (only in 4BPP mode).
         switch (cycle) {
           case  4: FetchTileMode04BPP(id); last_access = hcounter; hcounter_next = hcounter + 16; break;
-          case 20: FetchTileMode04BPP(id); last_access = hcounter; hcounter_next = hcounter +  8; break;
-        }
-      }
-
-      if (cycle == 28) {
-        // TODO: stop at 30 tiles if (BGHOFS & 7) == 0:
-        if (++bg.text.grid_x == 31) {
-          bg.engaged = false;
-          break;
+          case 20: FetchTileMode04BPP(id); last_access = hcounter; hcounter_next = hcounter + 12; break;
         }
       }
     }
@@ -214,7 +208,7 @@ void PPU::RenderBGMode0(int id, int cycles) {
     hcounter = hcounter_next;
   }
 
-  if (last_access.has_value() && last_access.value() == hcounter_target - 1) {
+  if (last_access.has_value() && last_access.value() == hcounter_current - 1) {
     vram_bg_access = true;
   }
 }
