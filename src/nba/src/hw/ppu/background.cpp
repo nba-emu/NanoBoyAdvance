@@ -425,10 +425,11 @@ void PPU::RenderBGMode5(int cycles) {
   auto& bg = this->bg[2];
 
   int hcounter = bg.hcounter;
-  int hcounter_target = hcounter + cycles;
+  int hcounter_current = hcounter + cycles;
+  int hcounter_target = std::min(hcounter_current, kLastRenderCycle);
   std::optional<int> last_access;
 
-  bg.hcounter = hcounter_target;
+  bg.hcounter = hcounter_current;
 
   s16 pa = mmio.bgpa[0];
   s16 pc = mmio.bgpc[0];
@@ -455,23 +456,23 @@ void PPU::RenderBGMode5(int cycles) {
         u32 address = base_address + (y * 160 + x) * 2;
 
         pixel = read<u16>(vram, address) | 0x4000'0000;
-        last_access = hcounter;
       }
 
-      *buffer++ = pixel;
+      // HW fetches regardless of the bounds check above.
+      last_access = hcounter;
+
+      // TODO: make the BG buffer larger instead of checking bounds
+      if (bg.x++ < 240) {
+        *buffer++ = pixel;
+      }
 
       hcounter += 4;
-
-      if (++bg.x == 240) {
-        bg.engaged = false;
-        break;
-      }
     } else {
       hcounter += 4 - cycle;
     }
   }
 
-  if (last_access.has_value() && last_access.value() == hcounter_target - 1) {
+  if (last_access.has_value() && last_access.value() == hcounter_current - 1) {
     vram_bg_access = true;
   }
 }
