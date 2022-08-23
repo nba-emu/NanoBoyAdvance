@@ -19,6 +19,8 @@ void PPU::InitBG(int id) {
   bg.engaged = true;
   bg.hcounter = 0;
 
+  latch.bgcnt[id] = mmio.bgcnt[id];
+
   if (dispcnt_mode != 0 && id >= 2) { 
     // TODO: rename _current to current:
     bg.affine.x = mmio.bgx[id - 2]._current;
@@ -27,8 +29,10 @@ void PPU::InitBG(int id) {
 
   // Text-mode:
   if (dispcnt_mode == 0 || (dispcnt_mode == 1 && id < 2)) {
-    bg.x = -(mmio.bghofs[id] & 7); // sigh, we write to x twice
+    bg.x = -(mmio.bghofs[id] & 7);
     bg.text.grid_x = 0;
+    latch.bghofs[id] = mmio.bghofs[id];
+    latch.bgvofs[id] = mmio.bgvofs[id];
   } else {
     bg.x = 0;
   }
@@ -48,15 +52,14 @@ void PPU::SyncBG(int id, int cycles) {
 
 void PPU::FetchMapMode0(int id) {
   auto& bg = this->bg[id];
-  auto& bgcnt = mmio.bgcnt[id];
+  auto& bgcnt = latch.bgcnt[id];
 
-  // TODO: should BGXCNT be latched?
   u32 tile_base = bgcnt.tile_block << 14;
   int map_block = bgcnt.map_block;
 
   // TODO: should BGXHOFS (possibly only the lower three bits?) and BGXVOFS be latched?
-  int line   = mmio.bgvofs[id] + mmio.vcount;
-  int grid_x = (mmio.bghofs[id] >> 3) + bg.text.grid_x;
+  int line   = latch.bgvofs[id] + mmio.vcount;
+  int grid_x = (latch.bghofs[id] >> 3) + bg.text.grid_x;
   int grid_y = line >> 3;
   int tile_y = line & 7;
 
@@ -164,7 +167,6 @@ void PPU::RenderBGMode0(int id, int cycles) {
   const int RENDER_DELAY = 33 + id;
 
   auto& bg = this->bg[id];
-  auto& bgcnt = mmio.bgcnt[id];
 
   int hcounter = bg.hcounter;
   int hcounter_target = hcounter + cycles;
@@ -221,7 +223,7 @@ void PPU::RenderBGMode2(int id, int cycles) {
   const int RENDER_DELAY = 35 - ((id - 2) * 2);
 
   auto& bg = this->bg[id];
-  auto& bgcnt = mmio.bgcnt[id];
+  auto& bgcnt = latch.bgcnt[id];
 
   int hcounter = bg.hcounter;
   int hcounter_target = hcounter + cycles;

@@ -238,6 +238,12 @@ private:
   int dispcnt_mode;
   u64 last_sync_point;
 
+  struct Latch {
+    BackgroundControl bgcnt[4];
+    u16 bghofs[4];
+    u16 bgvofs[4];
+  } latch;
+
   struct BG {
     bool engaged;
 

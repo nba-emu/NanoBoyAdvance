@@ -61,6 +61,7 @@ struct BackgroundControl {
   int wraparound = false;
   int size;
 
+  BackgroundControl() {}
   BackgroundControl(int id) : id(id) {}
   
   void Reset();
@@ -71,7 +72,7 @@ struct BackgroundControl {
   void WriteHalf(u16 value);
 
 private:
-  int id;
+  int id = 0;
 };
 
 struct ReferencePoint {
