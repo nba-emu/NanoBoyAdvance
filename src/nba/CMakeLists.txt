@@ -5,8 +5,9 @@ add_subdirectory(../../external ${CMAKE_BINARY_DIR}/external)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# used to fix a warning in CMake configuration, change to NEW when this has been deprecated upstream
+# used to fix warnings in CMake configuration, change this to NEW and the following line to GLVND when this has been deprecated upstream
 set(CMP0072 OLD)
+set(OpenGL_GL_PREFERENCE LEGACY)
 
 set(SOURCES
   src/arm/tablegen/tablegen.cpp
