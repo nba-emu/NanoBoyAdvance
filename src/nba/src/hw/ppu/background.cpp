@@ -182,30 +182,23 @@ void PPU::RenderBGMode0(int id, int cycles) {
   while (hcounter < hcounter_target) {
     int cycle = (hcounter - RENDER_DELAY) & 31;
 
-    int hcounter_next = hcounter + 1;
-
-    // TODO: can this logic be meaningfully optimized more?
-    if (cycle == 0) {
-      FetchMapMode0(id);
-      last_access = hcounter;
-      hcounter_next = hcounter + 4;
+    if (bg.text.full_palette) {
+      switch (cycle) {
+        case  0: FetchMapMode0(id);      last_access = hcounter; hcounter += 4; break;
+        case  4:
+        case 12:
+        case 20: FetchTileMode08BPP(id); last_access = hcounter; hcounter += 8; break;
+        case 28: FetchTileMode08BPP(id); last_access = hcounter; hcounter += 4; break;
+        default: hcounter++; break;
+      }
     } else {
-      if (bg.text.full_palette) {
-        switch (cycle) {
-          case  4:
-          case 12:
-          case 20: FetchTileMode08BPP(id); last_access = hcounter; hcounter_next = hcounter + 8; break;
-          case 28: FetchTileMode08BPP(id); last_access = hcounter; hcounter_next = hcounter + 4; break;
-        }
-      } else {
-        switch (cycle) {
-          case  4: FetchTileMode04BPP(id); last_access = hcounter; hcounter_next = hcounter + 16; break;
-          case 20: FetchTileMode04BPP(id); last_access = hcounter; hcounter_next = hcounter + 12; break;
-        }
+      switch (cycle) {
+        case  0: FetchMapMode0(id);      last_access = hcounter; hcounter += 4; break;
+        case  4: FetchTileMode04BPP(id); last_access = hcounter; hcounter += 16; break;
+        case 20: FetchTileMode04BPP(id); last_access = hcounter; hcounter += 12; break;
+        default: hcounter++; break;
       }
     }
-
-    hcounter = hcounter_next;
   }
 
   if (last_access.has_value() && last_access.value() == hcounter_current - 1) {
