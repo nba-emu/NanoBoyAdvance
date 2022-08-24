@@ -53,8 +53,9 @@ void PPU::Reset() {
 
     mmio.winh[i].Reset();
     mmio.winv[i].Reset();
-    window_flag_h[i] = false;
-    window_flag_v[i] = false;
+    window[i].last_sync_point = 0;
+    window[i].flag_h = false;
+    window[i].flag_v = false;
   }
 
   mmio.winin.Reset();
@@ -382,6 +383,11 @@ void PPU::SyncLineRender() {
     }
   }
 
+  for (int id = 0; id < 2; id++) {
+    // TODO: should we check if the window is enabled?
+    SyncWindow(id);
+  }
+
   if (compose.engaged) {
     SyncCompose(cycles);
   }
@@ -392,10 +398,77 @@ void PPU::SyncLineRender() {
 void PPU::UpdateWindows() {
   int vcount = mmio.vcount;
 
-  for (int i = 0; i < 2; i++) {
-    if (vcount == mmio.winv[i].min) window_flag_v[i] = true;
-    if (vcount == mmio.winv[i].max) window_flag_v[i] = false;
+  // TODO: should we check if the window is enabled?
+  for (int id = 0; id < 2; id++) {
+    SyncWindow(id);
+
+    window[id].x = 0;
+    window[id].hcounter = 0;
+
+    if (vcount == mmio.winv[id].min) window[id].flag_v = true;
+    if (vcount == mmio.winv[id].max) window[id].flag_v = false;
   }
+}
+
+void PPU::SyncWindow(int id) {
+  auto& window = this->window[id];
+
+  u64 sync_point = scheduler.GetTimestampNow();
+
+  int cycles = (int)(sync_point - window.last_sync_point);
+
+  // TODO: get rid of all the magic constants.
+  int hcounter_min = 48 + 4 * mmio.winh[id].min;
+  int hcounter_max = 48 + 4 * mmio.winh[id].max;
+  int hcounter_256 = 48 + 4 * 256;
+
+  int hcounter_sync[4] {
+    hcounter_min,
+    hcounter_max,
+    hcounter_256,
+    hcounter_256 + 1
+  };
+
+  if (hcounter_max < hcounter_min) {
+    std::swap(hcounter_sync[0], hcounter_sync[1]);
+  }
+
+  int hcounter = window.hcounter;
+  int hcounter_current = hcounter + cycles;
+  int hcounter_target = std::min(hcounter_current, hcounter_256);
+
+  window.hcounter = hcounter_current;
+
+  int x0 = window.x;
+
+  while (hcounter <= hcounter_target) {
+    bool active = window.flag_h;
+
+    if (hcounter == hcounter_min) window.flag_h = true;
+    if (hcounter == hcounter_max) window.flag_h = false;
+
+    for (int sync : hcounter_sync) {
+      if (hcounter == sync) {
+        int x1 = (hcounter - 48) >> 2;
+
+        // active &= window_flag_v[id];
+
+        for (int x = x0; x < x1; x++) {
+          window.buffer[x] = active;
+        }
+
+        x0 = x1;
+      }
+
+      if (hcounter < sync) {
+        hcounter = sync;
+        break;
+      }
+    }
+  }
+
+  window.x = x0;
+  window.last_sync_point = sync_point;
 }
 
 } // namespace nba::core

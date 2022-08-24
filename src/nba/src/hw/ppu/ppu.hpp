@@ -230,6 +230,7 @@ private:
   auto Darken(u16 color) -> u16;
   void RenderLayerOAM(bool bitmap_mode, int line);
   void UpdateWindows();
+  void SyncWindow(int id);
 
   #include "helper.inl"
 
@@ -272,6 +273,15 @@ private:
     u32 buffer[256];
   } bg[4];
 
+  struct Window {
+    int x;
+    int hcounter;
+    u64 last_sync_point;
+    bool flag_h;
+    bool flag_v;
+    bool buffer[256];
+  } window[2];
+
   struct Compose {
     bool engaged;
     int x;
@@ -287,9 +297,6 @@ private:
     unsigned window : 1;
     unsigned mosaic : 1;
   } buffer_obj[240];
-
-  bool window_flag_h[2];
-  bool window_flag_v[2];
 
   bool pram_access;
   bool vram_bg_access;

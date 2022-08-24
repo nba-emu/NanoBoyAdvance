@@ -63,13 +63,6 @@ void PPU::SyncCompose(int cycles) {
     int cycle = (hcounter - RENDER_DELAY) & 3;
 
     if (cycle == 0) {
-      // Update windows horizontally
-      // TODO: should this also happen within V-blank? Does it matter?
-      for (int i = 0; i < 2; i++) {
-        if (x == mmio.winh[i].min) window_flag_h[i] = true;
-        if (x == mmio.winh[i].max) window_flag_h[i] = false;
-      }
-
       const int* win_layer_enable;
 
       int prio[2] { 4, 4 };
@@ -80,9 +73,9 @@ void PPU::SyncCompose(int cycles) {
       // Find the highest-priority active window for this pixel
       if (use_windows) {
         // TODO: are the window enable bits delayed like the BG enable bits?
-            if (mmio.dispcnt.enable[ENABLE_WIN0] && window_flag_v[0] && window_flag_h[0]) win_layer_enable = mmio.winin.enable[0];
-        else if (mmio.dispcnt.enable[ENABLE_WIN1] && window_flag_v[1] && window_flag_h[1]) win_layer_enable = mmio.winin.enable[1];
-        else if (mmio.dispcnt.enable[ENABLE_OBJ] && mmio.dispcnt.enable[ENABLE_OBJWIN] && buffer_obj[x].window) win_layer_enable = mmio.winout.enable[1];
+             if (mmio.dispcnt.enable[ENABLE_WIN0] && window[0].flag_v && window[0].buffer[x]) win_layer_enable = mmio.winin.enable[0];
+        else if (mmio.dispcnt.enable[ENABLE_WIN1] && window[1].flag_v && window[1].buffer[x]) win_layer_enable = mmio.winin.enable[1];
+        else if (mmio.dispcnt.enable[ENABLE_OBJ]  && mmio.dispcnt.enable[ENABLE_OBJWIN] && buffer_obj[x].window) win_layer_enable = mmio.winout.enable[1];
         else win_layer_enable = mmio.winout.enable[0];
       }
 
