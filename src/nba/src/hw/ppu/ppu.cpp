@@ -417,6 +417,10 @@ void PPU::SyncWindow(int id) {
 
   int cycles = (int)(sync_point - window.last_sync_point);
 
+  if (cycles == 0) {
+    return;
+  }
+
   // TODO: get rid of all the magic constants.
   int hcounter_min = 48 + 4 * mmio.winh[id].min;
   int hcounter_max = 48 + 4 * mmio.winh[id].max;
