@@ -445,6 +445,8 @@ void PPU::SyncWindow(int id) {
 
   int x0 = window.x;
 
+  hcounter = std::max(hcounter, 48);
+
   while (hcounter <= hcounter_target) {
     bool active = window.flag_h;
 
