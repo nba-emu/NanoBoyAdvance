@@ -426,20 +426,20 @@ void PPU::SyncWindow(int id) {
   int hcounter_max = 48 + 4 * mmio.winh[id].max;
   int hcounter_256 = 48 + 4 * 256;
 
+  int hcounter = window.hcounter;
+  int hcounter_current = hcounter + cycles;
+  int hcounter_target = std::min(hcounter_current, hcounter_256);
+
   int hcounter_sync[4] {
-    hcounter_min,
-    hcounter_max,
-    hcounter_256,
-    hcounter_256 + 1
+    std::min(hcounter_min, hcounter_target),
+    std::min(hcounter_max, hcounter_target),
+    std::min(hcounter_256, hcounter_target),
+    std::min(hcounter_256, hcounter_target) + 1
   };
 
   if (hcounter_max < hcounter_min) {
     std::swap(hcounter_sync[0], hcounter_sync[1]);
   }
-
-  int hcounter = window.hcounter;
-  int hcounter_current = hcounter + cycles;
-  int hcounter_target = std::min(hcounter_current, hcounter_256);
 
   window.hcounter = hcounter_current;
 
