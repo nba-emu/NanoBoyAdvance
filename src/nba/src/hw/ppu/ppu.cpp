@@ -78,6 +78,8 @@ void PPU::Reset() {
 
   pram_access = false;
   vram_bg_access = false;
+  vram_obj_access = false;
+  oam_access = false;
 }
 
 void PPU::LatchEnabledBGs() {
@@ -353,8 +355,10 @@ void PPU::InitLineRender() {
     InitCompose();
   }
 
-  vram_bg_access = false;
   pram_access = false;
+  vram_bg_access = false;
+  vram_obj_access = false;
+  oam_access = false;
 }
 
 void PPU::SyncLineRender() {
@@ -376,6 +380,8 @@ void PPU::SyncLineRender() {
 
   pram_access = false;
   vram_bg_access = false;
+  vram_obj_access = false;
+  oam_access = false;
 
   for (int id = 0; id < 4; id++) {
     if (bg[id].engaged) {

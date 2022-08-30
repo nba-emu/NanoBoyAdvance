@@ -112,8 +112,7 @@ auto Bus::Read(u32 address, int access) -> T {
     }
     // OAM (object attribute map)
     case 0x07: {
-      Step(1);
-      return hw.ppu.ReadOAM<T>(Align<T>(address));
+      return ReadOAM<T>(Align<T>(address));
     }
     // ROM (WS0, WS1, WS2)
     case 0x08 ... 0x0D: {
@@ -208,8 +207,7 @@ void Bus::Write(u32 address, int access, T value) {
     }
     // OAM (object attribute map)
     case 0x07: {
-      Step(1);
-      hw.ppu.WriteOAM<T>(Align<T>(address), value);
+      WriteOAM<T>(Align<T>(address), value);
       break;
     }
     // ROM (WS0, WS1, WS2)

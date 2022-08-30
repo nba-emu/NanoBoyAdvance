@@ -125,7 +125,11 @@ struct PPU {
   }
 
   bool ALWAYS_INLINE DidAccessVRAM_OBJ() const {
-    return false;
+    return vram_obj_access;
+  }
+
+  bool ALWAYS_INLINE DidAccessOAM() const {
+    return oam_access;
   }
 
   struct MMIO {
@@ -300,6 +304,8 @@ private:
 
   bool pram_access;
   bool vram_bg_access;
+  bool vram_obj_access;
+  bool oam_access;
 
   Scheduler& scheduler;
   IRQ& irq;
