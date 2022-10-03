@@ -78,6 +78,9 @@ void PPU::Reset() {
   frame = 0;
   dma3_video_transfer_running = false;
 
+  vram_dirty_range_lo = 0x18000;
+  vram_dirty_range_hi = 0;
+
   SetupRenderThread();
 }
 
