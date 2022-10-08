@@ -202,6 +202,15 @@ private:
     ENABLE_OBJWIN = 7
   };
 
+  enum OAMFetchState {
+    Attr01,
+    Attr2,
+    PA,
+    PB,
+    PC,
+    PD
+  };
+
   void LatchEnabledBGs();
   void LatchBGXYWrites();
   void CheckVerticalCounterIRQ();
@@ -227,6 +236,8 @@ private:
   void RenderBGMode3(int cycles);
   void RenderBGMode4(int cycles);
   void RenderBGMode5(int cycles);
+  void InitOBJ();
+  void SyncOBJ(int cycles);
   void InitCompose();
   void SyncCompose(int cycles);
   auto Blend(u16 color_a, u16 color_b) -> u16;
@@ -276,6 +287,36 @@ private:
 
     u32 buffer[256];
   } bg[4];
+
+  struct OBJ {
+    bool engaged;
+
+    int hcounter;
+    int index;
+    OAMFetchState oam_fetch_state;
+    bool rendering;
+    // bool inhibit_oam_fetch;
+
+    int oam_access_wait;
+    bool first_vram_access_cycle;
+
+    struct {
+      s32 x;
+      s32 y;
+      int width;
+      int height;
+      int half_width;
+      int half_height;
+      int mode;
+      bool affine;
+
+      int local_x;
+      int local_y;
+    } state[2];
+
+    int state_rd;
+    int state_wr;
+  } obj;
 
   struct Window {
     int x;

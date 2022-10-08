@@ -5,6 +5,8 @@
  * Refer to the included LICENSE file.
  */
 
+#include <optional>
+
 #include "hw/ppu/ppu.hpp"
 
 namespace nba::core {
@@ -39,6 +41,204 @@ static const int s_obj_size[4][4][2] = {
     { 0, 0 }
   }
 };
+
+void PPU::InitOBJ() {
+  obj.engaged = true;
+  obj.hcounter = 0;
+  obj.index = 0;
+  obj.oam_fetch_state = Attr01;
+  obj.rendering = false;
+  // obj.inhibit_oam_fetch = false;
+  obj.state_rd = 0;
+  obj.state_wr = 1;
+  obj.oam_access_wait = 0;
+  obj.first_vram_access_cycle = false;
+}
+
+void PPU::SyncOBJ(int cycles) {
+  const int RENDER_DELAY = 42;
+
+  int hcounter = obj.hcounter;
+  int hcounter_current = hcounter + cycles;
+  int hcounter_target = std::min(hcounter_current, 1210 /*!TODO!*/);
+  std::optional<int> last_oam_access;
+  std::optional<int> last_vram_access;
+
+  obj.hcounter = hcounter_current;
+
+  while (hcounter < hcounter_target) {
+    // only do anything every two cycles, yes...
+    if ((hcounter & 1) || hcounter < RENDER_DELAY) {
+      hcounter++;
+      continue;
+    }
+
+    if (obj.rendering) {
+      // @todo: resolve this naming conflict
+      auto& state = obj.state[obj.state_rd];
+
+      if (!state.affine || !obj.first_vram_access_cycle) {
+        int pixel_step = state.affine ? 1 : 2;
+
+        state.local_x += pixel_step;
+
+        last_vram_access = hcounter;
+
+        if (state.local_x >= state.half_width) {
+          obj.rendering = false;
+        }
+      }
+    }
+
+    auto& state = obj.state[obj.state_wr];
+
+    // if (!obj.inhibit_oam_fetch) {
+    if (obj.oam_access_wait == 0 || obj.first_vram_access_cycle) {
+      obj.first_vram_access_cycle = false;
+
+      switch (obj.oam_fetch_state) {
+        case OAMFetchState::Attr01: {
+          // @todo: better solve this:
+          if (obj.index >= 128) {
+            break;
+          }
+
+          u32 attr01 = read<u32>(oam, obj.index * 8);
+
+          last_oam_access = hcounter;
+
+          bool active = false;
+
+          if ((attr01 & 0x300) != 0x200) {
+            int mode = (attr01 >> 10) & 3;
+
+            // @todo: how does HW handle OBJs in 'prohibited' mode?
+            if (mode != OBJ_PROHIBITED) {
+              s32 x =  attr01 & 0x1FF;
+              s32 y = (attr01 >> 16) & 0xFF;
+
+              if (x >= 240) x -= 512;
+              if (y >= 160) y -= 256;
+
+              int shape = (attr01 >> 14) & 3;
+              int size  =  attr01 >> 30;
+
+              int width  = s_obj_size[shape][size][0];
+              int height = s_obj_size[shape][size][1];
+
+              int half_width  = width  >> 1;
+              int half_height = height >> 1;
+
+              bool affine = attr01 & 0x100;
+
+              if (affine) {
+                bool double_width = attr01 & 0x200;
+
+                if (double_width) {
+                  half_width  *= 2;
+                  half_height *= 2;
+                }
+              }
+
+              int center_x = x + half_width;
+              int center_y = y + half_height;
+              int local_y = mmio.vcount - center_y;
+
+              if (local_y >= -half_height && local_y < half_height) {
+                active = true;
+
+                // @todo: sprite mosaic
+                state.x = x;
+                state.y = y;
+                state.width = width;
+                state.height = height;
+                state.half_width = half_width;
+                state.half_height = half_height;
+                state.mode = mode;
+                state.affine = affine;
+                state.local_x = -half_width;
+                state.local_y = local_y;
+              }
+            }
+          }
+
+          if (active) {
+            obj.oam_fetch_state = OAMFetchState::Attr2;
+          } else {
+            obj.index++;
+          }
+          break;
+        }
+        case OAMFetchState::Attr2: {
+          u16 attr2 = read<u16>(oam, obj.index * 8 + 4);
+
+          last_oam_access = hcounter;
+
+          // @todo: transition to PA if sprite is affine
+          if (state.affine) {
+            obj.oam_fetch_state = OAMFetchState::PA;
+          } else {
+            // @todo: this code is redundant
+            obj.rendering = true;
+            obj.state_rd ^= 1;
+            obj.state_wr ^= 1;
+            obj.oam_fetch_state = OAMFetchState::Attr01;
+            obj.index++;
+
+            obj.oam_access_wait = state.half_width - 2;
+            obj.first_vram_access_cycle = true;
+          }
+          break;
+        }
+        case OAMFetchState::PA: {
+          // @todo
+          last_oam_access = hcounter;
+          obj.oam_fetch_state = OAMFetchState::PB;
+          break;
+        }
+        case OAMFetchState::PB: {
+          // @todo
+          last_oam_access = hcounter;
+          obj.oam_fetch_state = OAMFetchState::PC;
+          break;
+        }
+        case OAMFetchState::PC: {
+          // @todo
+          last_oam_access = hcounter;
+          obj.oam_fetch_state = OAMFetchState::PD;
+          break;
+        }
+        case OAMFetchState::PD: {
+          // @todo
+          last_oam_access = hcounter;
+
+          // @todo: this code is redundant
+          obj.rendering = true;
+          obj.state_rd ^= 1;
+          obj.state_wr ^= 1;
+          obj.oam_fetch_state = OAMFetchState::Attr01;
+          obj.index++;
+
+          obj.oam_access_wait = state.half_width * 2 - 1;
+          obj.first_vram_access_cycle = true;
+          break;
+        }
+      }
+    } else {
+      obj.oam_access_wait--;
+    }
+
+    hcounter++;
+  }
+
+  if (last_oam_access.has_value() && last_oam_access.value() == hcounter_current - 1) {
+    oam_access = true;
+  }
+
+  if (last_vram_access.has_value() && last_vram_access.value() == hcounter_current - 1) {
+    vram_obj_access = true;
+  }
+}
 
 void PPU::RenderLayerOAM(bool bitmap_mode, int line) {
   int tile_num;

@@ -336,6 +336,7 @@ void PPU::InitLineRender() {
     bg[id].engaged = false;
   }
 
+  obj.engaged = false;
   compose.engaged = false;
 
   if (mmio.dispcnt.forced_blank) {
@@ -350,6 +351,10 @@ void PPU::InitLineRender() {
       if (mmio.enable_bg[0][id]) {
         InitBG(id);
       }
+    }
+
+    if (mmio.dispcnt.enable[LAYER_OBJ]) {
+      InitOBJ();
     }
 
     InitCompose();
@@ -392,6 +397,10 @@ void PPU::SyncLineRender() {
   for (int id = 0; id < 2; id++) {
     // TODO: should we check if the window is enabled?
     SyncWindow(id);
+  }
+
+  if (obj.engaged) {
+    SyncOBJ(cycles);
   }
 
   if (compose.engaged) {
