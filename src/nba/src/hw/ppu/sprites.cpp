@@ -163,6 +163,7 @@ void PPU::SyncOBJ(int cycles) {
           }
 
           if (active) {
+            // @todo: are PA-PD fetched before or after Attr2???
             obj.oam_fetch_state = OAMFetchState::Attr2;
           } else {
             obj.index++;
