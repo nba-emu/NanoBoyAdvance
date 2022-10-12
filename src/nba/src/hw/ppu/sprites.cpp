@@ -44,6 +44,7 @@ static const int s_obj_size[4][4][2] = {
 
 void PPU::InitOBJ() {
   obj.engaged = true;
+  obj.cycle_limit = mmio.dispcnt.hblank_oam_access ? 1006 : 1210;
   obj.hcounter = 0;
   obj.index = 0;
   obj.oam_fetch_state = Attr01;
@@ -69,7 +70,7 @@ void PPU::SyncOBJ(int cycles) {
 
   int hcounter = obj.hcounter;
   int hcounter_current = hcounter + cycles;
-  int hcounter_target = std::min(hcounter_current, 1210 /*!TODO!*/);
+  int hcounter_target = std::min(hcounter_current, obj.cycle_limit);
   std::optional<int> last_oam_access;
   std::optional<int> last_vram_access;
 

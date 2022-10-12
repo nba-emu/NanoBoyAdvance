@@ -290,6 +290,7 @@ private:
 
   struct OBJ {
     bool engaged;
+    int cycle_limit;
 
     int hcounter;
     int index;
