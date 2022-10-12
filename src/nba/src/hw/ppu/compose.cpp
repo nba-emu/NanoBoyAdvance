@@ -59,6 +59,8 @@ void PPU::SyncCompose(int cycles) {
                      mmio.dispcnt.enable[ENABLE_WIN1] ||
                      mmio.dispcnt.enable[ENABLE_OBJWIN]; 
 
+  auto buffer_obj = this->buffer_obj[mmio.vcount & 1]; // @fixme
+
   while (hcounter < hcounter_target) {
     int cycle = (hcounter - RENDER_DELAY) & 3;
 

@@ -295,7 +295,6 @@ private:
     int index;
     OAMFetchState oam_fetch_state;
     bool rendering;
-    // bool inhibit_oam_fetch;
 
     int oam_access_wait;
     bool first_vram_access_cycle;
@@ -312,6 +311,16 @@ private:
 
       int local_x;
       int local_y;
+
+      int transform_id;
+      s16 transform[4];
+
+      int tile_number;
+      int priority;
+      int palette;
+      bool flip_h;
+      bool flip_v;
+      bool is_256;
     } state[2];
 
     int state_rd;
@@ -341,7 +350,7 @@ private:
     unsigned alpha  : 1;
     unsigned window : 1;
     unsigned mosaic : 1;
-  } buffer_obj[240];
+  } buffer_obj[2][240];
 
   bool pram_access;
   bool vram_bg_access;
