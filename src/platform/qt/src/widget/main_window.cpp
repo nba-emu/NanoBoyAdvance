@@ -510,6 +510,7 @@ void MainWindow::SelectBIOS() {
   if (dialog.exec()) {
     config->bios_path = dialog.selectedFiles().at(0).toStdString();
     config->Save();
+    PromptUserForReset();
   }
 }
 
@@ -521,14 +522,14 @@ void MainWindow::SelectSaveFolder() {
   if (dialog.exec()) {
     config->save_folder = dialog.selectedFiles().at(0).toStdString();
     config->Save();
-    RenderSaveStateMenus();
+    PromptUserForReset();
   }
 }
 
 void MainWindow::RemoveSaveFolder() {
   config->save_folder = "";
   config->Save();
-  RenderSaveStateMenus();
+  PromptUserForReset();
 }
 
 void MainWindow::PromptUserForReset() {
