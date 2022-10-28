@@ -209,14 +209,14 @@ void MainWindow::CreateSystemMenu(QMenu* parent) {
     SelectSaveFolder();
   });
 
-  auto remove_save_folder_action = menu->addAction(tr("Remove save folder"));
+  auto remove_save_folder_action = menu->addAction(tr("Clear save folder"));
   connect(remove_save_folder_action, &QAction::triggered, [this]() {
     RemoveSaveFolder();
   });
 
   menu->addSeparator();
 
-  CreateSelectionOption(menu->addMenu(tr("Save Type")), {
+  CreateSelectionOption(menu->addMenu(tr("Save type")), {
     { "Detect",      nba::Config::BackupType::Detect },
     { "SRAM",        nba::Config::BackupType::SRAM   },
     { "FLASH 64K",   nba::Config::BackupType::FLASH_64  },
@@ -226,7 +226,7 @@ void MainWindow::CreateSystemMenu(QMenu* parent) {
   }, &config->cartridge.backup_type, true);
 
   CreateBooleanOption(menu, "Force RTC", &config->cartridge.force_rtc, true);
-  CreateBooleanOption(menu, "Force Solar Sensor", &config->cartridge.force_solar_sensor, true);
+  CreateBooleanOption(menu, "Force solar sensor", &config->cartridge.force_solar_sensor, true);
 
   menu->addSeparator();
 
@@ -234,7 +234,7 @@ void MainWindow::CreateSystemMenu(QMenu* parent) {
 }
 
 void MainWindow::CreateSolarSensorValueMenu(QMenu* parent) {
-  auto menu = parent->addMenu(tr("Solar Sensor Level"));
+  auto menu = parent->addMenu(tr("Solar sensor level"));
 
   current_solar_level = menu->addAction("");
   UpdateSolarSensorLevel(); // needed to update label
@@ -263,7 +263,7 @@ void MainWindow::CreateSolarSensorValueMenu(QMenu* parent) {
   connect(menu->addAction(tr("Enter value...")), &QAction::triggered, [=]() {
     SetSolarLevel(QInputDialog::getInt(
       this,
-      tr("Solar Sensor Level"),
+      tr("Solar sensor level"),
       tr("Enter a value between 0 (lowest intensity) and 255 (highest intensity)"),
       config->cartridge.solar_sensor_level, 0, 255, 1));
   });
@@ -905,6 +905,6 @@ void MainWindow::UpdateSolarSensorLevel() {
 
   if (current_solar_level) {
     current_solar_level->setText(
-      QString::fromStdString(fmt::format("Current Level: {} / 255", level)));
+      QString::fromStdString(fmt::format("Current level: {} / 255", level)));
   }
 }
