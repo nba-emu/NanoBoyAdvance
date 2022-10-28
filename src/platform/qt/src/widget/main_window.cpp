@@ -519,14 +519,14 @@ void MainWindow::SelectSaveFolder() {
   dialog.setFileMode(QFileDialog::Directory);
 
   if (dialog.exec()) {
-    config->save_path = dialog.selectedFiles().at(0).toStdString();
+    config->save_folder = dialog.selectedFiles().at(0).toStdString();
     config->Save();
     RenderSaveStateMenus();
   }
 }
 
 void MainWindow::RemoveSaveFolder() {
-  config->save_path = "";
+  config->save_folder = "";
   config->Save();
   RenderSaveStateMenus();
 }
@@ -830,14 +830,14 @@ auto MainWindow::SaveState(std::string const& path) -> nba::SaveStateWriter::Res
 }
 
 auto MainWindow::GetSavePath(fs::path const& rom_path, fs::path const& extension) -> fs::path {
-  fs::path save_folder_path = config->save_path;
+  fs::path save_folder = config->save_folder;
 
   if(
-   !save_folder_path.empty() &&
-    fs::exists(save_folder_path) &&
-    fs::is_directory(save_folder_path) 
+   !save_folder.empty() &&
+    fs::exists(save_folder) &&
+    fs::is_directory(save_folder) 
   ) {
-    return save_folder_path / rom_path.filename().replace_extension(extension);
+    return save_folder / rom_path.filename().replace_extension(extension);
   }
 
   return fs::path{rom_path}.replace_extension(extension);
