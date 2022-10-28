@@ -15,6 +15,7 @@ namespace nba {
 
 struct PlatformConfig : Config {
   std::string bios_path = "bios.bin";
+  std::string save_folder = "";
   
   struct Cartridge {
     BackupType backup_type = BackupType::Detect;
