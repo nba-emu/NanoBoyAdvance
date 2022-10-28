@@ -438,9 +438,7 @@ void MainWindow::RenderSaveStateMenus() {
     action_save->setShortcut(Qt::SHIFT | key);
 
     if (game_loaded) {
-      auto slot_filename = fs::path{game_path}
-        .replace_extension(fmt::format("{:02}.nbss", i))
-        .string();
+      auto slot_filename = GetSavePath(game_path, fmt::format("{:02}.nbss", i)).string();
 
       if (fs::exists(slot_filename)) {
         auto file_info = QFileInfo{QString::fromStdString(slot_filename)};
@@ -523,12 +521,14 @@ void MainWindow::SelectSaveFolder() {
   if (dialog.exec()) {
     config->save_path = dialog.selectedFiles().at(0).toStdString();
     config->Save();
+    RenderSaveStateMenus();
   }
 }
 
 void MainWindow::RemoveSaveFolder() {
   config->save_path = "";
   config->Save();
+  RenderSaveStateMenus();
 }
 
 void MainWindow::PromptUserForReset() {
