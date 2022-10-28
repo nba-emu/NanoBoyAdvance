@@ -204,7 +204,19 @@ void MainWindow::CreateSystemMenu(QMenu* parent) {
 
   menu->addSeparator();
 
-  CreateSelectionOption(menu->addMenu(tr("Save Type")), {
+  auto set_save_folder_action = menu->addAction(tr("Set save folder"));
+  connect(set_save_folder_action, &QAction::triggered, [this]() {
+    SelectSaveFolder();
+  });
+
+  auto remove_save_folder_action = menu->addAction(tr("Clear save folder"));
+  connect(remove_save_folder_action, &QAction::triggered, [this]() {
+    RemoveSaveFolder();
+  });
+
+  menu->addSeparator();
+
+  CreateSelectionOption(menu->addMenu(tr("Save type")), {
     { "Detect",      nba::Config::BackupType::Detect },
     { "SRAM",        nba::Config::BackupType::SRAM   },
     { "FLASH 64K",   nba::Config::BackupType::FLASH_64  },
@@ -214,7 +226,7 @@ void MainWindow::CreateSystemMenu(QMenu* parent) {
   }, &config->cartridge.backup_type, true);
 
   CreateBooleanOption(menu, "Force RTC", &config->cartridge.force_rtc, true);
-  CreateBooleanOption(menu, "Force Solar Sensor", &config->cartridge.force_solar_sensor, true);
+  CreateBooleanOption(menu, "Force solar sensor", &config->cartridge.force_solar_sensor, true);
 
   menu->addSeparator();
 
@@ -222,7 +234,7 @@ void MainWindow::CreateSystemMenu(QMenu* parent) {
 }
 
 void MainWindow::CreateSolarSensorValueMenu(QMenu* parent) {
-  auto menu = parent->addMenu(tr("Solar Sensor Level"));
+  auto menu = parent->addMenu(tr("Solar sensor level"));
 
   current_solar_level = menu->addAction("");
   UpdateSolarSensorLevel(); // needed to update label
@@ -251,7 +263,7 @@ void MainWindow::CreateSolarSensorValueMenu(QMenu* parent) {
   connect(menu->addAction(tr("Enter value...")), &QAction::triggered, [=]() {
     SetSolarLevel(QInputDialog::getInt(
       this,
-      tr("Solar Sensor Level"),
+      tr("Solar sensor level"),
       tr("Enter a value between 0 (lowest intensity) and 255 (highest intensity)"),
       config->cartridge.solar_sensor_level, 0, 255, 1));
   });
@@ -426,11 +438,9 @@ void MainWindow::RenderSaveStateMenus() {
     action_save->setShortcut(Qt::SHIFT | key);
 
     if (game_loaded) {
-      auto slot_filename = std::filesystem::path{game_path}
-        .replace_extension(fmt::format("{:02}.nbss", i))
-        .string();
+      auto slot_filename = GetSavePath(game_path, fmt::format("{:02}.nbss", i)).string();
 
-      if (std::filesystem::exists(slot_filename)) {
+      if (fs::exists(slot_filename)) {
         auto file_info = QFileInfo{QString::fromStdString(slot_filename)};
         auto date_modified = file_info.lastModified().toLocalTime().toString().toStdString();
 
@@ -500,7 +510,26 @@ void MainWindow::SelectBIOS() {
   if (dialog.exec()) {
     config->bios_path = dialog.selectedFiles().at(0).toStdString();
     config->Save();
+    PromptUserForReset();
   }
+}
+
+void MainWindow::SelectSaveFolder() {
+  QFileDialog dialog{this};
+  dialog.setAcceptMode(QFileDialog::AcceptOpen);
+  dialog.setFileMode(QFileDialog::Directory);
+
+  if (dialog.exec()) {
+    config->save_folder = dialog.selectedFiles().at(0).toStdString();
+    config->Save();
+    PromptUserForReset();
+  }
+}
+
+void MainWindow::RemoveSaveFolder() {
+  config->save_folder = "";
+  config->Save();
+  PromptUserForReset();
 }
 
 void MainWindow::PromptUserForReset() {
@@ -693,7 +722,13 @@ void MainWindow::LoadROM(std::string path) {
     force_gpio = force_gpio | nba::GPIODeviceType::SolarSensor;
   }
 
-  switch (nba::ROMLoader::Load(core, path, config->cartridge.backup_type, force_gpio)) {
+  auto save_path = GetSavePath(fs::path{path}, ".sav");
+  auto save_type = config->cartridge.backup_type;
+
+  auto result = nba::ROMLoader::Load(
+    core, path, save_path.string(), save_type, force_gpio);
+
+  switch (result) {
     case nba::ROMLoader::Result::CannotFindFile: {
       QMessageBox box {this};
       box.setText(tr("Sorry, the specified ROM file cannot be located."));
@@ -795,6 +830,20 @@ auto MainWindow::SaveState(std::string const& path) -> nba::SaveStateWriter::Res
   return result;
 }
 
+auto MainWindow::GetSavePath(fs::path const& rom_path, fs::path const& extension) -> fs::path {
+  fs::path save_folder = config->save_folder;
+
+  if(
+   !save_folder.empty() &&
+    fs::exists(save_folder) &&
+    fs::is_directory(save_folder) 
+  ) {
+    return save_folder / rom_path.filename().replace_extension(extension);
+  }
+
+  return fs::path{rom_path}.replace_extension(extension);
+}
+
 void MainWindow::SetKeyStatus(int channel, nba::InputDevice::Key key, bool pressed) {
   key_input[channel][int(key)] = pressed;
 
@@ -856,6 +905,6 @@ void MainWindow::UpdateSolarSensorLevel() {
 
   if (current_solar_level) {
     current_solar_level->setText(
-      QString::fromStdString(fmt::format("Current Level: {} / 255", level)));
+      QString::fromStdString(fmt::format("Current level: {} / 255", level)));
   }
 }
