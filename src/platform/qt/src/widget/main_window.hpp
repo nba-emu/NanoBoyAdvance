@@ -63,6 +63,9 @@ private:
   void RenderSaveStateMenus();
 
   void SelectBIOS();
+  void SelectSaveFolder();
+  void RemoveSaveFolder();
+  void ClearSaveFolder();
   void PromptUserForReset();
 
   auto CreateBooleanOption(

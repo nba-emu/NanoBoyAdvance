@@ -35,6 +35,7 @@ void PlatformConfig::Load(std::string const& path) {
       auto general = general_result.unwrap();
       this->bios_path = toml::find_or<std::string>(general, "bios_path", "bios.bin");
       this->skip_bios = toml::find_or<toml::boolean>(general, "bios_skip", false);
+      this->save_path = toml::find_or<std::string>(general, "save_path", "");
     }
   }
 
@@ -152,6 +153,7 @@ void PlatformConfig::Save(std::string const& path) {
   // General
   data["general"]["bios_path"] = this->bios_path;
   data["general"]["bios_skip"] = this->skip_bios;
+  data["general"]["save_path"] = this->save_path;
 
   // Cartridge
   std::string save_type;

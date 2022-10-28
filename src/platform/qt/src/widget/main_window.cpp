@@ -204,6 +204,18 @@ void MainWindow::CreateSystemMenu(QMenu* parent) {
 
   menu->addSeparator();
 
+  auto set_save_folder_action = menu->addAction(tr("Set save folder"));
+  connect(set_save_folder_action, &QAction::triggered, [this]() {
+    SelectSaveFolder();
+  });
+
+  auto remove_save_folder_action = menu->addAction(tr("Remove save folder"));
+  connect(remove_save_folder_action, &QAction::triggered, [this]() {
+    RemoveSaveFolder();
+  });
+
+  menu->addSeparator();
+
   CreateSelectionOption(menu->addMenu(tr("Save Type")), {
     { "Detect",      nba::Config::BackupType::Detect },
     { "SRAM",        nba::Config::BackupType::SRAM   },
@@ -503,6 +515,22 @@ void MainWindow::SelectBIOS() {
   }
 }
 
+void MainWindow::SelectSaveFolder() {
+  QFileDialog dialog{this};
+  dialog.setAcceptMode(QFileDialog::AcceptOpen);
+  dialog.setFileMode(QFileDialog::Directory);
+
+  if (dialog.exec()) {
+    config->save_path = dialog.selectedFiles().at(0).toStdString();
+    config->Save();
+  }
+}
+
+void MainWindow::RemoveSaveFolder() {
+  config->save_path = "";
+  config->Save();
+}
+
 void MainWindow::PromptUserForReset() {
   if (emu_thread->IsRunning()) {
     QMessageBox box {this};
@@ -693,7 +721,27 @@ void MainWindow::LoadROM(std::string path) {
     force_gpio = force_gpio | nba::GPIODeviceType::SolarSensor;
   }
 
-  switch (nba::ROMLoader::Load(core, path, config->cartridge.backup_type, force_gpio)) {
+  nba::ROMLoader::Result result;
+
+  std::filesystem::path save_folder_path = config->save_path;
+
+  if (
+   !save_folder_path.empty() &&
+    std::filesystem::exists(save_folder_path) &&
+    std::filesystem::is_directory(save_folder_path)
+  ) {
+    auto save_path = save_folder_path / std::filesystem::path{path}.filename().replace_extension(".sav");
+  
+    QMessageBox box {this};
+    box.setText(QString::fromStdString(save_path.string()));
+    box.exec();
+
+    result = nba::ROMLoader::Load(core, path, save_path.string(), config->cartridge.backup_type, force_gpio);
+  } else {
+    result = nba::ROMLoader::Load(core, path, config->cartridge.backup_type, force_gpio);
+  }
+
+  switch (result) {
     case nba::ROMLoader::Result::CannotFindFile: {
       QMessageBox box {this};
       box.setText(tr("Sorry, the specified ROM file cannot be located."));
