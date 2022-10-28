@@ -438,11 +438,11 @@ void MainWindow::RenderSaveStateMenus() {
     action_save->setShortcut(Qt::SHIFT | key);
 
     if (game_loaded) {
-      auto slot_filename = std::filesystem::path{game_path}
+      auto slot_filename = fs::path{game_path}
         .replace_extension(fmt::format("{:02}.nbss", i))
         .string();
 
-      if (std::filesystem::exists(slot_filename)) {
+      if (fs::exists(slot_filename)) {
         auto file_info = QFileInfo{QString::fromStdString(slot_filename)};
         auto date_modified = file_info.lastModified().toLocalTime().toString().toStdString();
 
@@ -721,25 +721,11 @@ void MainWindow::LoadROM(std::string path) {
     force_gpio = force_gpio | nba::GPIODeviceType::SolarSensor;
   }
 
-  nba::ROMLoader::Result result;
+  auto save_path = GetSavePath(fs::path{path}, ".sav");
+  auto save_type = config->cartridge.backup_type;
 
-  std::filesystem::path save_folder_path = config->save_path;
-
-  if (
-   !save_folder_path.empty() &&
-    std::filesystem::exists(save_folder_path) &&
-    std::filesystem::is_directory(save_folder_path)
-  ) {
-    auto save_path = save_folder_path / std::filesystem::path{path}.filename().replace_extension(".sav");
-  
-    QMessageBox box {this};
-    box.setText(QString::fromStdString(save_path.string()));
-    box.exec();
-
-    result = nba::ROMLoader::Load(core, path, save_path.string(), config->cartridge.backup_type, force_gpio);
-  } else {
-    result = nba::ROMLoader::Load(core, path, config->cartridge.backup_type, force_gpio);
-  }
+  auto result = nba::ROMLoader::Load(
+    core, path, save_path.string(), save_type, force_gpio);
 
   switch (result) {
     case nba::ROMLoader::Result::CannotFindFile: {
@@ -841,6 +827,20 @@ auto MainWindow::SaveState(std::string const& path) -> nba::SaveStateWriter::Res
   }
 
   return result;
+}
+
+auto MainWindow::GetSavePath(fs::path const& rom_path, fs::path const& extension) -> fs::path {
+  fs::path save_folder_path = config->save_path;
+
+  if(
+   !save_folder_path.empty() &&
+    fs::exists(save_folder_path) &&
+    fs::is_directory(save_folder_path) 
+  ) {
+    return save_folder_path / rom_path.filename().replace_extension(extension);
+  }
+
+  return fs::path{rom_path}.replace_extension(extension);
 }
 
 void MainWindow::SetKeyStatus(int channel, nba::InputDevice::Key key, bool pressed) {

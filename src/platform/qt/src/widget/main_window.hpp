@@ -10,6 +10,7 @@
 #include <atomic>
 #include <cmath>
 #include <functional>
+#include <filesystem>
 #include <nba/core.hpp>
 #include <platform/loader/save_state.hpp>
 #include <platform/writer/save_state.hpp>
@@ -25,6 +26,8 @@
 #include "widget/input_window.hpp"
 #include "widget/screen.hpp"
 #include "config.hpp"
+
+namespace fs = std::filesystem;
 
 struct MainWindow : QMainWindow {
   MainWindow(
@@ -122,6 +125,8 @@ private:
 
   auto LoadState(std::string const& path) -> nba::SaveStateLoader::Result;
   auto SaveState(std::string const& path) -> nba::SaveStateWriter::Result;
+
+  auto GetSavePath(fs::path const& rom_path, fs::path const& extension) -> fs::path;
 
   std::shared_ptr<Screen> screen;
   std::shared_ptr<nba::BasicInputDevice> input_device = std::make_shared<nba::BasicInputDevice>();
