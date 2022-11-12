@@ -31,7 +31,7 @@ Some of these issues are minor visual bugs, that do not affect gameplay, others 
 
 - Hello Kitty Collection: Miracle Fashion Maker (mid-instruction DMA affects open bus: [mGBA blog article](https://mgba.io/2020/01/25/infinite-loop-holy-grail/))
 - Classic NES series (various edge-cases: [mGBA blog article](https://mgba.io/2014/12/28/classic-nes/))
-- James Pond - Codename Robocod (requires IRQ delaying: see ARM7TDMI-**S** manual about IRQ/FIQ latencies)
+- James Pond - Codename Robocod (requires IRQ delaying: see [ARM7TDMI manual](https://documentation-service.arm.com/static/5e8e1323fd977155116a3129?token=) about IRQ/FIQ latencies)
 - Phantasy Star Collection (DMA from write-only IO returns open bus: https://github.com/nba-emu/NanoBoyAdvance/issues/109)
 - Pinball Tycoon ([internal affine registers are updated conditionally](https://github.com/mgba-emu/mgba/issues/1668#issuecomment-925306878))
 - Gunstar Heroes (requires limiting sprite render cycles: https://github.com/nba-emu/NanoBoyAdvance/issues/98)
