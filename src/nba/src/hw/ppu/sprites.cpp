@@ -66,7 +66,7 @@ void PPU::InitOBJ() {
 }
 
 void PPU::SyncOBJ(int cycles) {
-  const int RENDER_DELAY = 42;
+  const int RENDER_DELAY = 40;
 
   int hcounter = obj.hcounter;
   int hcounter_current = hcounter + cycles;

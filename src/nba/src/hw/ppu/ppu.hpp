@@ -167,7 +167,7 @@ struct PPU {
 private:
   friend struct DisplayStatus;
 
-  static constexpr int kLastRenderCycle = 1008;
+  static constexpr int kLastRenderCycle = 1006;
 
   enum ObjAttribute {
     OBJ_IS_ALPHA  = 1,

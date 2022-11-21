@@ -193,7 +193,7 @@ void PPU::OnScanlineComplete(int cycles_late) {
    */
   LatchEnabledBGs();
 
-  scheduler.Add(4 - cycles_late, this, &PPU::OnHblankIRQTest);
+  scheduler.Add(1 - cycles_late, this, &PPU::OnHblankIRQTest);
 }
 
 void PPU::OnHblankIRQTest(int cycles_late) {
@@ -202,7 +202,7 @@ void PPU::OnHblankIRQTest(int cycles_late) {
     irq.Raise(IRQ::Source::HBlank);
   }
 
-  scheduler.Add(222 - cycles_late, this, &PPU::OnHblankComplete);
+  scheduler.Add(224 - cycles_late, this, &PPU::OnHblankComplete);
 }
 
 void PPU::OnHblankComplete(int cycles_late) {
@@ -222,7 +222,7 @@ void PPU::OnHblankComplete(int cycles_late) {
   UpdateWindows();
 
   if (vcount == 160) {
-    scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
+    scheduler.Add(1007 - cycles_late, this, &PPU::OnVblankScanlineComplete);
     dma.Request(DMA::Occasion::VBlank);
     dispstat.vblank_flag = 1;
 
@@ -240,7 +240,7 @@ void PPU::OnHblankComplete(int cycles_late) {
       bgy[i]._current = bgy[i].initial;
     }
   } else {
-    scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
+    scheduler.Add(1007 - cycles_late, this, &PPU::OnScanlineComplete);
     InitLineRender();
   }
 }
@@ -269,7 +269,7 @@ void PPU::OnVblankScanlineComplete(int cycles_late) {
     }
   }
 
-  scheduler.Add(4 - cycles_late, this, &PPU::OnVblankHblankIRQTest);
+  scheduler.Add(1 - cycles_late, this, &PPU::OnVblankHblankIRQTest);
 }
 
 void PPU::OnVblankHblankIRQTest(int cycles_late) {
@@ -278,7 +278,7 @@ void PPU::OnVblankHblankIRQTest(int cycles_late) {
     irq.Raise(IRQ::Source::HBlank);
   }
 
-  scheduler.Add(222 - cycles_late, this, &PPU::OnVblankHblankComplete);
+  scheduler.Add(224 - cycles_late, this, &PPU::OnVblankHblankComplete);
 }
 
 void PPU::OnVblankHblankComplete(int cycles_late) {
@@ -297,7 +297,7 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
   }
 
   if (vcount == 227) {
-    scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
+    scheduler.Add(1007 - cycles_late, this, &PPU::OnScanlineComplete);
     vcount = 0;
 
     // Wait for the renderer to complete, then draw.
@@ -307,7 +307,7 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
 
     InitLineRender();
   } else {
-    scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
+    scheduler.Add(1007 - cycles_late, this, &PPU::OnVblankScanlineComplete);
     if (++vcount == 227) {
       dispstat.vblank_flag = 0;
     }

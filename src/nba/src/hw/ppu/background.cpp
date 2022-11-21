@@ -170,7 +170,7 @@ void PPU::FetchTileMode08BPP(int id) {
 }
 
 void PPU::RenderBGMode0(int id, int cycles) {
-  const int RENDER_DELAY = 33 - 4 * (latch.bghofs[id] & 7) + id;
+  const int RENDER_DELAY = 31 - 4 * (latch.bghofs[id] & 7) + id;
 
   auto& bg = this->bg[id];
 
@@ -211,7 +211,7 @@ void PPU::RenderBGMode0(int id, int cycles) {
 }
 
 void PPU::RenderBGMode2(int id, int cycles) {
-  const int RENDER_DELAY = 35 - ((id - 2) * 2);
+  const int RENDER_DELAY = 33 - ((id - 2) * 2);
 
   auto& bg = this->bg[id];
   auto& bgcnt = latch.bgcnt[id];
@@ -298,7 +298,7 @@ void PPU::RenderBGMode2(int id, int cycles) {
 }
 
 void PPU::RenderBGMode3(int cycles) {
-  const int RENDER_DELAY = 36;
+  const int RENDER_DELAY = 34;
 
   auto& bg = this->bg[2];
 
@@ -354,7 +354,7 @@ void PPU::RenderBGMode3(int cycles) {
 }
 
 void PPU::RenderBGMode4(int cycles) {
-  const int RENDER_DELAY = 36;
+  const int RENDER_DELAY = 34;
 
   auto& bg = this->bg[2];
 
@@ -413,7 +413,7 @@ void PPU::RenderBGMode4(int cycles) {
 }
 
 void PPU::RenderBGMode5(int cycles) {
-  const int RENDER_DELAY = 36;
+  const int RENDER_DELAY = 34;
 
   auto& bg = this->bg[2];
 

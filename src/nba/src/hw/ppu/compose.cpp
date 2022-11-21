@@ -34,7 +34,7 @@ void PPU::InitCompose() {
 }
 
 void PPU::SyncCompose(int cycles) {
-  const int RENDER_DELAY = 48;
+  const int RENDER_DELAY = 46;
 
   // TODO: deduplicate these two arrays:
   // Minimum and maximum available BGs in each BG mode:
