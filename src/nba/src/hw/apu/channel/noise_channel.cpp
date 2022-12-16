@@ -6,6 +6,7 @@
  */
 
 #include "hw/apu/channel/noise_channel.hpp"
+#include "hw/apu/registers.hpp"
 
 namespace nba::core {
 

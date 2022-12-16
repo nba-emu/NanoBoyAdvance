@@ -10,10 +10,11 @@
 #include <nba/integer.hpp>
 
 #include "hw/apu/channel/base_channel.hpp"
-#include "hw/apu/registers.hpp"
 #include "scheduler.hpp"
 
 namespace nba::core {
+
+struct BIAS;
 
 class NoiseChannel : public BaseChannel {
 public:

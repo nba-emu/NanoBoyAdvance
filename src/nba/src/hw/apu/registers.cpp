@@ -70,11 +70,12 @@ auto SoundControl::Read(int address) -> u8 {
 
 void SoundControl::Write(int address, u8 value) {
   switch (address) {
-    case 0:
+    case 0: {
       psg.master[SIDE_RIGHT] = (value >> 0) & 7;
       psg.master[SIDE_LEFT ] = (value >> 4) & 7;
       break;
-    case 1:
+    }
+    case 1: {
       psg.enable[SIDE_RIGHT][0] = value & 1;
       psg.enable[SIDE_RIGHT][1] = value & 2;
       psg.enable[SIDE_RIGHT][2] = value & 4;
@@ -84,12 +85,14 @@ void SoundControl::Write(int address, u8 value) {
       psg.enable[SIDE_LEFT ][2] = value & 64;
       psg.enable[SIDE_LEFT ][3] = value & 128;
       break;
-    case 2:
+    }
+    case 2: {
       psg.volume = (value >> 0) & 3;
       dma[DMA_A].volume = (value >> 2) & 1;
       dma[DMA_B].volume = (value >> 3) & 1;
       break;
-    case 3:
+    }
+    case 3: {
       dma[DMA_A].enable[SIDE_RIGHT] = value & 1;
       dma[DMA_A].enable[SIDE_LEFT ] = value & 2;
       dma[DMA_A].timer_id = (value >> 2) & 1;
@@ -101,10 +104,23 @@ void SoundControl::Write(int address, u8 value) {
       if (value & 0x80) fifos[1].Reset();
 
       break;
-    case 4:
-      // TODO: reset PSG registers to zero on disable.
+    }
+    case 4: {
+      const bool old_master_enable = master_enable;
+
       master_enable = value & 128;
+
+      if(old_master_enable && !master_enable) {
+        psg1.Reset();
+        psg2.Reset();
+        psg3.Reset();
+        psg4.Reset();
+
+        fifos[0].Reset();
+        fifos[1].Reset();
+      }
       break;
+    }
   }
 }
 
