@@ -36,7 +36,7 @@ auto SoundControl::Read(int address) -> u8 {
   switch (address) {
     case 0:
       return (psg.master[SIDE_RIGHT] << 0) |
-           (psg.master[SIDE_LEFT]  << 4);
+             (psg.master[SIDE_LEFT]  << 4);
     case 1:
       return (psg.enable[SIDE_RIGHT][0] ? 1   : 0) |
              (psg.enable[SIDE_RIGHT][1] ? 2   : 0) |
@@ -111,6 +111,10 @@ void SoundControl::Write(int address, u8 value) {
       master_enable = value & 128;
 
       if(old_master_enable && !master_enable) {
+        // set SOUNDCNT_L = 0
+        Write(0, 0);
+        Write(1, 0);
+
         psg1.Reset();
         psg2.Reset();
         psg3.Reset(WaveChannel::ResetWaveRAM::No);
