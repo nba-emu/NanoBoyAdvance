@@ -48,7 +48,7 @@ jobs:
       - name: Setup dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y libsdl2-dev libglew-dev qt5base-dev
+          sudo apt-get install -y libsdl2-dev libglew-dev qtbase5-dev
       - name: Build NanoBoyAdvance
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release
