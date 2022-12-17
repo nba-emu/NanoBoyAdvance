@@ -1,7 +1,7 @@
 <h2>NanoBoyAdvance</h2>
 
 ![license](https://img.shields.io/github/license/nba-emu/NanoBoyAdvance)
-![build](https://img.shields.io/github/workflow/status/nba-emu/NanoBoyAdvance/Build/master)
+![build](https://img.shields.io/github/actions/workflow/status/nba-emu/NanoBoyAdvance/.github/workflows/build.yml?branch=master)
 
 NanoBoyAdvance is a highly accurate Game Boy Advance emulator.<br>
 It aims for cycle-accurate emulation when possible, while also offering enhancements such as
