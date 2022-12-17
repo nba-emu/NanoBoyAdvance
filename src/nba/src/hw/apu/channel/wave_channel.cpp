@@ -12,10 +12,10 @@ namespace nba::core {
 WaveChannel::WaveChannel(Scheduler& scheduler)
     : BaseChannel(false, false, 256)
     , scheduler(scheduler) {
-  Reset();
+  Reset(WaveChannel::ResetWaveRAM::Yes);
 }
 
-void WaveChannel::Reset() {
+void WaveChannel::Reset(ResetWaveRAM reset_wave_ram) {
   BaseChannel::Reset();
 
   phase = 0;
@@ -28,9 +28,11 @@ void WaveChannel::Reset() {
   dimension = 0;
   wave_bank = 0;
 
-  for (int i = 0; i < 2; i++) {
-    for (int j = 0; j < 16; j++) {
-      wave_ram[i][j] = 0;
+  if(reset_wave_ram == ResetWaveRAM::Yes) {
+    for (int i = 0; i < 2; i++) {
+      for (int j = 0; j < 16; j++) {
+        wave_ram[i][j] = 0;
+      }
     }
   }
 }

@@ -113,7 +113,7 @@ void SoundControl::Write(int address, u8 value) {
       if(old_master_enable && !master_enable) {
         psg1.Reset();
         psg2.Reset();
-        psg3.Reset();
+        psg3.Reset(WaveChannel::ResetWaveRAM::No);
         psg4.Reset();
 
         fifos[0].Reset();

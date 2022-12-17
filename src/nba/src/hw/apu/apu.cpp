@@ -40,7 +40,7 @@ void APU::Reset() {
   mmio.fifo[1].Reset();
   mmio.psg1.Reset();
   mmio.psg2.Reset();
-  mmio.psg3.Reset();
+  mmio.psg3.Reset(WaveChannel::ResetWaveRAM::Yes);
   mmio.psg4.Reset();
   mmio.soundcnt.Reset();
   mmio.bias.Reset();

@@ -16,9 +16,14 @@ namespace nba::core {
 
 class WaveChannel : public BaseChannel {
 public:
+  enum class ResetWaveRAM {
+    No,
+    Yes
+  };
+
   WaveChannel(Scheduler& scheduler);
 
-  void Reset();
+  void Reset(ResetWaveRAM reset_wave_ram);
   bool IsEnabled() override { return playing && BaseChannel::IsEnabled(); }
   auto GetSample() -> s8 override { return sample; }
   void Generate(int cycles_late);
