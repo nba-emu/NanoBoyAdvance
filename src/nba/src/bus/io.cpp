@@ -219,6 +219,8 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
   auto& apu_io = apu.mmio;
   auto& ppu_io = ppu.mmio;
 
+  const bool apu_enable = apu_io.soundcnt.master_enable;
+
   switch (address) {
     // PPU
     case DISPCNT+0:  ppu_io.dispcnt.Write(0, value); break;
@@ -416,26 +418,26 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
     case DMA3CNT_H+1: dma.Write(3, 11, value); break;
 
     // Sound
-    case SOUND1CNT_L:   apu_io.psg1.Write(0, value); break;
-    case SOUND1CNT_L+1: apu_io.psg1.Write(1, value); break;
-    case SOUND1CNT_H:   apu_io.psg1.Write(2, value); break;
-    case SOUND1CNT_H+1: apu_io.psg1.Write(3, value); break;
-    case SOUND1CNT_X:   apu_io.psg1.Write(4, value); break;
-    case SOUND1CNT_X+1: apu_io.psg1.Write(5, value); break;
-    case SOUND2CNT_L:   apu_io.psg2.Write(2, value); break;
-    case SOUND2CNT_L+1: apu_io.psg2.Write(3, value); break;
-    case SOUND2CNT_H:   apu_io.psg2.Write(4, value); break;
-    case SOUND2CNT_H+1: apu_io.psg2.Write(5, value); break;
-    case SOUND3CNT_L:   apu_io.psg3.Write(0, value); break;
-    case SOUND3CNT_L+1: apu_io.psg3.Write(1, value); break;
-    case SOUND3CNT_H:   apu_io.psg3.Write(2, value); break;
-    case SOUND3CNT_H+1: apu_io.psg3.Write(3, value); break;
-    case SOUND3CNT_X:   apu_io.psg3.Write(4, value); break;
-    case SOUND3CNT_X+1: apu_io.psg3.Write(5, value); break;
-    case SOUND4CNT_L:   apu_io.psg4.Write(0, value); break;
-    case SOUND4CNT_L+1: apu_io.psg4.Write(1, value); break;
-    case SOUND4CNT_H:   apu_io.psg4.Write(4, value); break;
-    case SOUND4CNT_H+1: apu_io.psg4.Write(5, value); break;
+    case SOUND1CNT_L:   if(apu_enable) apu_io.psg1.Write(0, value); break;
+    case SOUND1CNT_L+1: if(apu_enable) apu_io.psg1.Write(1, value); break;
+    case SOUND1CNT_H:   if(apu_enable) apu_io.psg1.Write(2, value); break;
+    case SOUND1CNT_H+1: if(apu_enable) apu_io.psg1.Write(3, value); break;
+    case SOUND1CNT_X:   if(apu_enable) apu_io.psg1.Write(4, value); break;
+    case SOUND1CNT_X+1: if(apu_enable) apu_io.psg1.Write(5, value); break;
+    case SOUND2CNT_L:   if(apu_enable) apu_io.psg2.Write(2, value); break;
+    case SOUND2CNT_L+1: if(apu_enable) apu_io.psg2.Write(3, value); break;
+    case SOUND2CNT_H:   if(apu_enable) apu_io.psg2.Write(4, value); break;
+    case SOUND2CNT_H+1: if(apu_enable) apu_io.psg2.Write(5, value); break;
+    case SOUND3CNT_L:   if(apu_enable) apu_io.psg3.Write(0, value); break;
+    case SOUND3CNT_L+1: if(apu_enable) apu_io.psg3.Write(1, value); break;
+    case SOUND3CNT_H:   if(apu_enable) apu_io.psg3.Write(2, value); break;
+    case SOUND3CNT_H+1: if(apu_enable) apu_io.psg3.Write(3, value); break;
+    case SOUND3CNT_X:   if(apu_enable) apu_io.psg3.Write(4, value); break;
+    case SOUND3CNT_X+1: if(apu_enable) apu_io.psg3.Write(5, value); break;
+    case SOUND4CNT_L:   if(apu_enable) apu_io.psg4.Write(0, value); break;
+    case SOUND4CNT_L+1: if(apu_enable) apu_io.psg4.Write(1, value); break;
+    case SOUND4CNT_H:   if(apu_enable) apu_io.psg4.Write(4, value); break;
+    case SOUND4CNT_H+1: if(apu_enable) apu_io.psg4.Write(5, value); break;
     case WAVE_RAM+0:
     case WAVE_RAM+1:
     case WAVE_RAM+2:
@@ -455,16 +457,16 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
       apu_io.psg3.WriteSample(address & 0xF, value);
       break;
     }
-    case FIFO_A:   apu_io.fifo[0].WriteByte(0, value); break;
-    case FIFO_A+1: apu_io.fifo[0].WriteByte(1, value); break;
-    case FIFO_A+2: apu_io.fifo[0].WriteByte(2, value); break;
-    case FIFO_A+3: apu_io.fifo[0].WriteByte(3, value); break;
-    case FIFO_B:   apu_io.fifo[1].WriteByte(0, value); break;
-    case FIFO_B+1: apu_io.fifo[1].WriteByte(1, value); break;
-    case FIFO_B+2: apu_io.fifo[1].WriteByte(2, value); break;
-    case FIFO_B+3: apu_io.fifo[1].WriteByte(3, value); break;
-    case SOUNDCNT_L:   apu_io.soundcnt.Write(0, value); break;
-    case SOUNDCNT_L+1: apu_io.soundcnt.Write(1, value); break;
+    case FIFO_A:   if(apu_enable) apu_io.fifo[0].WriteByte(0, value); break;
+    case FIFO_A+1: if(apu_enable) apu_io.fifo[0].WriteByte(1, value); break;
+    case FIFO_A+2: if(apu_enable) apu_io.fifo[0].WriteByte(2, value); break;
+    case FIFO_A+3: if(apu_enable) apu_io.fifo[0].WriteByte(3, value); break;
+    case FIFO_B:   if(apu_enable) apu_io.fifo[1].WriteByte(0, value); break;
+    case FIFO_B+1: if(apu_enable) apu_io.fifo[1].WriteByte(1, value); break;
+    case FIFO_B+2: if(apu_enable) apu_io.fifo[1].WriteByte(2, value); break;
+    case FIFO_B+3: if(apu_enable) apu_io.fifo[1].WriteByte(3, value); break;
+    case SOUNDCNT_L:   if(apu_enable) apu_io.soundcnt.Write(0, value); break;
+    case SOUNDCNT_L+1: if(apu_enable) apu_io.soundcnt.Write(1, value); break;
     case SOUNDCNT_H:   apu_io.soundcnt.Write(2, value); break;
     case SOUNDCNT_H+1: apu_io.soundcnt.Write(3, value); break;
     case SOUNDCNT_X:   apu_io.soundcnt.Write(4, value); break;
