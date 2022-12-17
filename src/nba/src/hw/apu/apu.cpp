@@ -176,6 +176,8 @@ void APU::StepMixer(int cycles_late) {
       }
     }
 
+    if(!mmio.soundcnt.master_enable) sample = {};
+
     buffer_mutex.lock();
     resampler->Write(sample);
     buffer_mutex.unlock();
@@ -223,6 +225,8 @@ void APU::StepMixer(int cycles_late) {
       sample[channel]  = std::clamp(sample[channel], s16(0), s16(0x3FF));
       sample[channel] -= 0x200;
     }
+
+    if(!mmio.soundcnt.master_enable) sample = {};
 
     buffer_mutex.lock();
     resampler->Write({ sample[0] / float(0x200), sample[1] / float(0x200) });
