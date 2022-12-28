@@ -241,7 +241,7 @@ void PPU::SyncOBJ(int cycles) {
 
               int center_x = x + half_width;
               int center_y = y + half_height;
-              int local_y = mmio.vcount - center_y; // @todo: VCOUNT is not correct
+              int local_y = (mmio.vcount + 1 - center_y) % 227; // @todo: VCOUNT is not correct
 
               if (local_y >= -half_height && local_y < half_height) {
                 active = true;
