@@ -51,10 +51,10 @@ void EmulatorThread::Start() {
   if (!running) {
     running = true;
     thread = std::thread{[this]() {
-      frame_limiter.Reset();
+      //frame_limiter.Reset();
 
       while (running.load()) {
-        frame_limiter.Run([this]() {
+        /*frame_limiter.Run([this]() {
           if (!paused) {
             per_frame_cb();
             core->RunForOneFrame();
@@ -64,7 +64,13 @@ void EmulatorThread::Start() {
             fps = 0;
           }
           frame_rate_cb(fps);
-        });
+        });*/
+
+        core->Run(16384);
+
+        if(!GetFastForward()) {
+          while(core->GetAudioBufferFillRatio() > 0.5) ;
+        }
       }
     }};
   }

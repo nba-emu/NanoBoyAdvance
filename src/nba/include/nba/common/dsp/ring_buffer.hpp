@@ -24,6 +24,8 @@ struct RingBuffer : Stream<T> {
 
   auto Available() -> int { return count; }
 
+  auto Capacity() -> int { return length; }
+
   void Reset() {
     rd_ptr = 0;
     wr_ptr = 0;

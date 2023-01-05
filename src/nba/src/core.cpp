@@ -143,6 +143,10 @@ auto Core::SearchSoundMainRAM() -> u32 {
   return 0xFFFFFFFF;
 }
 
+auto Core::GetAudioBufferFillRatio() -> float {
+  return (float)apu.buffer->Available() / apu.buffer->Capacity();
+}
+
 } // namespace nba::core
 
 auto CreateCore(

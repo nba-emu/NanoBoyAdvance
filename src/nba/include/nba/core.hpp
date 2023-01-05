@@ -33,6 +33,8 @@ struct CoreBase {
   virtual void CopyState(SaveState& state) = 0;
   virtual void Run(int cycles) = 0;
 
+  virtual auto GetAudioBufferFillRatio() -> float = 0;
+
   void RunForOneFrame() {
     Run(kCyclesPerFrame);
   }

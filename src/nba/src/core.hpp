@@ -32,6 +32,8 @@ struct Core final : CoreBase {
   void CopyState(SaveState& state) override;
   void Run(int cycles) override;
 
+  auto GetAudioBufferFillRatio() -> float override;
+
 private:
   void SkipBootScreen();
   auto SearchSoundMainRAM() -> u32;
