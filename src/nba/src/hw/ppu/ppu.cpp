@@ -361,14 +361,17 @@ void PPU::StopRenderThread() {
     return;
   }
 
-  // Wake the render thread up, if it is waiting for new data:
+  // Encourage the render thread to exit its main loop:
+  render_thread_running = false;
+  render_thread_vcount_max = -1;
+
+  // Wake the render thread up, in case it is waiting for new data:
   render_thread_mutex.lock();
   render_thread_ready = true;
   render_thread_cv.notify_one();
   render_thread_mutex.unlock();
 
-  // Tell the render thread to quit and join it:
-  render_thread_running = false;
+  // Wait for the render thread to complete execution.
   render_thread.join();
 }
 
