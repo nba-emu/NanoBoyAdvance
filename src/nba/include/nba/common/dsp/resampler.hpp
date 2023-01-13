@@ -26,10 +26,16 @@ struct Resampler : WriteStream<T> {
     resample_phase_shift = samplerate_in / samplerate_out;
   }
 
+  void SetRateScale(float rate_scale) {
+    // @todo: do this in the non-lazy way.
+    this->rate_scale = rate_scale;
+  }
+
 protected:
   std::shared_ptr<WriteStream<T>> output;
   
   float resample_phase_shift = 1;
+  float rate_scale = 1;
 };
 
 template <typename T>

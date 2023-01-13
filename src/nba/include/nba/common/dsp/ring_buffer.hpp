@@ -11,6 +11,8 @@
 #include <nba/common/dsp/stereo.hpp>
 #include <nba/common/dsp/stream.hpp>
 
+#include <nba/log.hpp>
+
 namespace nba {
 
 template<typename T>
@@ -48,6 +50,7 @@ struct RingBuffer : Stream<T> {
 
   void Write(T const& value) {
     if (blocking && count == length) {
+      Log<Info>("Buffer overrun :(");
       return;
     }
     data[wr_ptr] = value;

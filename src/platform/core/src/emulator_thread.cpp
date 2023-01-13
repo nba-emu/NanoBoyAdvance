@@ -12,7 +12,8 @@ namespace nba {
 EmulatorThread::EmulatorThread(
   std::unique_ptr<CoreBase>& core
 )   : core(core) {
-  frame_limiter.Reset(59.7275);
+  // frame_limiter.Reset(59.7275);
+  frame_limiter.Reset(60);
 }
 
 EmulatorThread::~EmulatorThread() {

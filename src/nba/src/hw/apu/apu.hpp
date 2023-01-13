@@ -11,6 +11,8 @@
 #include <nba/common/dsp/ring_buffer.hpp>
 #include <nba/config.hpp>
 #include <nba/save_state.hpp>
+#include <atomic>
+#include <chrono>
 #include <mutex>
 
 #include "hw/apu/channel/quad_channel.hpp"
@@ -69,7 +71,7 @@ struct APU {
   std::shared_ptr<StereoRingBuffer<float>> buffer;
   std::unique_ptr<StereoResampler<float>> resampler;
 
-private:
+// private:
   void StepMixer(int cycles_late);
   void StepSequencer(int cycles_late);
 
@@ -84,6 +86,19 @@ private:
   int mp2k_read_index;
   std::shared_ptr<Config> config;
   int resolution_old = 0;
+
+  // Dynamic Rate Control
+  struct DRC {
+    int samples_read = 0;
+    int samples_written = 0;
+    u64 timestamp_last_update = 0;
+    std::chrono::time_point<std::chrono::steady_clock> time_point_last_update;
+
+    std::chrono::time_point<std::chrono::steady_clock> time_old; // test
+
+    std::atomic<float> host_sample_rate;// = 1;
+    float old_scale = 1;
+  } drc;
 };
 
 } // namespace nba::core

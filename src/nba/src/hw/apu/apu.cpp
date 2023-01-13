@@ -36,6 +36,8 @@ APU::~APU() {
 }
 
 void APU::Reset() {
+  using Interpolation = Config::Audio::Interpolation;
+
   mmio.fifo[0].Reset();
   mmio.fifo[1].Reset();
   mmio.psg1.Reset();
@@ -58,31 +60,18 @@ void APU::Reset() {
   audio_dev->Close();
   audio_dev->Open(this, (AudioDevice::Callback)AudioCallback);
 
-  using Interpolation = Config::Audio::Interpolation;
-
   buffer = std::make_shared<StereoRingBuffer<float>>(audio_dev->GetBlockSize() * 4, true);
 
   switch (config->audio.interpolation) {
-    case Interpolation::Cosine:
-      resampler = std::make_unique<CosineStereoResampler<float>>(buffer);
-      break;
-    case Interpolation::Cubic:
-      resampler = std::make_unique<CubicStereoResampler<float>>(buffer);
-      break;
-    case Interpolation::Sinc_32:
-      resampler = std::make_unique<SincStereoResampler<float, 32>>(buffer);
-      break;
-    case Interpolation::Sinc_64:
-      resampler = std::make_unique<SincStereoResampler<float, 64>>(buffer);
-      break;
-    case Interpolation::Sinc_128:
-      resampler = std::make_unique<SincStereoResampler<float, 128>>(buffer);
-      break;
-    case Interpolation::Sinc_256:
-      resampler = std::make_unique<SincStereoResampler<float, 256>>(buffer);
-      break;
+    case Interpolation::Cosine:   resampler = std::make_unique<CosineStereoResampler<float>>(buffer); break;
+    case Interpolation::Cubic:    resampler = std::make_unique<CubicStereoResampler<float>>(buffer);  break;
+    case Interpolation::Sinc_32:  resampler = std::make_unique<SincStereoResampler<float, 32>>(buffer);  break;
+    case Interpolation::Sinc_64:  resampler = std::make_unique<SincStereoResampler<float, 64>>(buffer);  break;
+    case Interpolation::Sinc_128: resampler = std::make_unique<SincStereoResampler<float, 128>>(buffer); break;
+    case Interpolation::Sinc_256: resampler = std::make_unique<SincStereoResampler<float, 256>>(buffer); break;
   }
 
+  // @todo: remove this feature, as it is not used (exposed) anymore.
   if (config->audio.interpolate_fifo) {
     for (int fifo = 0; fifo < 2; fifo++) {
       fifo_buffer[fifo] = std::make_shared<RingBuffer<float>>(16, true);
@@ -92,6 +81,9 @@ void APU::Reset() {
   }
 
   resampler->SetSampleRates(mmio.bias.GetSampleRate(), audio_dev->GetSampleRate());
+
+  // bleh, stupid std::atomic getting in the way
+  // drc = {};
 }
 
 void APU::OnTimerOverflow(int timer_id, int times, int samplerate) {
@@ -232,7 +224,47 @@ void APU::StepMixer(int cycles_late) {
     resampler->Write({ sample[0] / float(0x200), sample[1] / float(0x200) });
     buffer_mutex.unlock();
 
+    // @todo: force-align this to the system clock.
     scheduler.Add(mmio.bias.GetSampleInterval() - cycles_late, this, &APU::StepMixer);
+  }
+
+  drc.samples_written++;
+
+  // @todo: this could be hooked to the PPU 
+  u64 timestamp_now = scheduler.GetTimestampNow();
+  u64 diff = timestamp_now - drc.timestamp_last_update;
+
+  if(diff >= 280896*60) {
+    auto time_point_now = std::chrono::steady_clock::now();
+
+    auto time_delta = std::chrono::duration_cast<std::chrono::microseconds>(
+      time_point_now - drc.time_point_last_update).count();
+
+    float guest_sample_rate = drc.samples_written / (float)time_delta * 1000000;
+
+    // @todo: do this in a non-shitty way
+    guest_sample_rate *= (float)config->audio_dev->GetSampleRate() / (mp2k.IsEngaged() ? 65536 : mmio.bias.GetSampleRate());
+
+    // fmt::print("guest: {} Hz host: {} Hz\n", guest_sample_rate, drc.host_sample_rate);
+
+    if(guest_sample_rate > 100 && drc.host_sample_rate > 0) {
+      const float kDecay = 0.35;
+      const float kTolerance = 0.0075; // @todo: figure out what a good value is.
+      const float kMin = 1 - kTolerance;
+      const float kMax = 1 + kTolerance;
+
+      float new_scale = guest_sample_rate / drc.host_sample_rate;
+      float smoothed_scale = std::clamp((new_scale - drc.old_scale) * kDecay + drc.old_scale, kMin, kMax);
+
+      resampler->SetRateScale(smoothed_scale);
+      fmt::print("rate: {}\n", smoothed_scale);
+
+      drc.old_scale = smoothed_scale;
+    }
+
+    drc.samples_written = 0;
+    drc.time_point_last_update = time_point_now;
+    drc.timestamp_last_update = timestamp_now;
   }
 }
 

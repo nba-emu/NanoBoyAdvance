@@ -29,7 +29,7 @@ struct CosineResampler : Resampler<T> {
 
       this->output->Write(previous * a + input * (1.0 - a));
       
-      resample_phase += this->resample_phase_shift;
+      resample_phase += this->resample_phase_shift * this->rate_scale;
     }
     
     resample_phase = resample_phase - 1.0;

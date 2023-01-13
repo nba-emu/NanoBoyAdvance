@@ -32,7 +32,7 @@ struct CubicResampler : Resampler<T> {
       
       this->output->Write(a0*mu*mu2 + a1*mu2 + a2*mu + a3);
       
-      resample_phase += this->resample_phase_shift;
+      resample_phase += this->resample_phase_shift * this->rate_scale;
     }
     
     resample_phase = resample_phase - 1.0;

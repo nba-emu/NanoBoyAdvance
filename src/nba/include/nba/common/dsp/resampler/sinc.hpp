@@ -74,7 +74,7 @@ struct SincResampler : Resampler<T> {
 
       this->output->Write(sample);
 
-      resample_phase += this->resample_phase_shift;
+      resample_phase += this->resample_phase_shift * this->rate_scale;
     }
 
     taps.Read();
