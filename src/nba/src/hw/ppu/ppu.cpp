@@ -70,6 +70,8 @@ void PPU::Reset() {
   mmio.dispstat.hblank_flag = true;
   scheduler.Add(226, this, &PPU::OnVblankHblankComplete);
 
+  bg = {};
+
   frame = 0;
   dma3_video_transfer_running = false;
 }
@@ -198,6 +200,8 @@ void PPU::OnHblankComplete(int cycles_late) {
   auto& bgy = mmio.bgy;
   auto& mosaic = mmio.mosaic;
 
+  DrawBackground();
+
   dispstat.hblank_flag = 0;
   vcount++;
 
@@ -226,6 +230,8 @@ void PPU::OnHblankComplete(int cycles_late) {
       bgy[i]._current = bgy[i].initial;
     }
   } else {
+    InitBackground();
+
     scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
     // ScheduleSubmitScanline();
   }
@@ -283,6 +289,8 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
 
     config->video_dev->Draw(output[frame]);
     frame ^= 1;
+
+    InitBackground();
   } else {
     scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
     if (++vcount == 227) {
