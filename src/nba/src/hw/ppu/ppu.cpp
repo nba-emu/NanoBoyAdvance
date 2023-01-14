@@ -25,10 +25,6 @@ PPU::PPU(
   Reset();
 }
 
-PPU::~PPU() {
-  StopRenderThread();
-}
-
 void PPU::Reset() {
   std::memset(pram, 0, 0x00400);
   std::memset(oam,  0, 0x00400);
@@ -57,7 +53,6 @@ void PPU::Reset() {
 
     mmio.winh[i].Reset();
     mmio.winv[i].Reset();
-    window_scanline_enable[i] = false;
   }
 
   mmio.winin.Reset();
@@ -77,11 +72,6 @@ void PPU::Reset() {
 
   frame = 0;
   dma3_video_transfer_running = false;
-
-  vram_dirty_range_lo = 0x18000;
-  vram_dirty_range_hi = 0;
-
-  SetupRenderThread();
 }
 
 void PPU::LatchEnabledBGs() {
@@ -216,7 +206,7 @@ void PPU::OnHblankComplete(int cycles_late) {
   UpdateVideoTransferDMA();
 
   if (vcount == 160) {
-    ScheduleSubmitScanline();
+    // ScheduleSubmitScanline();
 
     scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
     dma.Request(DMA::Occasion::VBlank);
@@ -237,7 +227,7 @@ void PPU::OnHblankComplete(int cycles_late) {
     }
   } else {
     scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
-    ScheduleSubmitScanline();
+    // ScheduleSubmitScanline();
   }
 }
 
@@ -291,8 +281,6 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
     scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
     vcount = 0;
 
-    // Wait for the renderer to complete, then draw.
-    while (render_thread_vcount <= render_thread_vcount_max) ;
     config->video_dev->Draw(output[frame]);
     frame ^= 1;
   } else {
@@ -304,121 +292,8 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
 
   LatchBGXYWrites();
   CheckVerticalCounterIRQ();
-  ScheduleSubmitScanline();
+  // ScheduleSubmitScanline();
   UpdateVideoTransferDMA();
-}
-
-void PPU::SetupRenderThread() {
-  StopRenderThread();
-
-  render_thread_vcount = 0;
-  render_thread_vcount_max = -1;
-  render_thread_running = true;
-  render_thread_ready = false;
-
-  render_thread = std::thread([this]() {
-    while (render_thread_running.load()) {
-      while (render_thread_vcount <= render_thread_vcount_max) {
-        // TODO: this might be racy with SubmitScanline() resetting render_thread_vcount.
-        int vcount = render_thread_vcount;
-        auto& mmio = mmio_copy[vcount];
-
-        if (mmio.dispcnt.enable[ENABLE_WIN0]) {
-          RenderWindow(vcount, 0);
-        }
-
-        if (mmio.dispcnt.enable[ENABLE_WIN1]) {
-          RenderWindow(vcount, 1);
-        }
-
-        if (vcount < 160) {
-          RenderScanline(vcount);
-        
-          // Render OBJs for the next scanline
-          if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-            RenderLayerOAM(mmio.dispcnt.mode >= 3, vcount, vcount + 1);
-          }
-        } else if (vcount == 227) {
-          // Render OBJs for the next scanline
-          if (mmio.dispcnt.enable[ENABLE_OBJ]) {
-            RenderLayerOAM(mmio.dispcnt.mode >= 3, 227, 0);
-          }
-        }
-
-        render_thread_vcount++;
-      }
-
-      // Wait for the emulation thread to submit more work:
-      std::unique_lock lock{render_thread_mutex};
-      render_thread_cv.wait(lock, [this]{return render_thread_ready;});
-      render_thread_ready = false;
-    }
-  });
-}
-
-void PPU::StopRenderThread() {
-  if (!render_thread_running) {
-    return;
-  }
-
-  // Wake the render thread up, if it is waiting for new data:
-  render_thread_mutex.lock();
-  render_thread_ready = true;
-  render_thread_cv.notify_one();
-  render_thread_mutex.unlock();
-
-  // Tell the render thread to quit and join it:
-  render_thread_running = false;
-  render_thread.join();
-}
-
-void PPU::SubmitScanline() {
-  auto vcount = mmio.vcount;
-
-  if (vcount < 160 || vcount == 227) {
-    mmio_copy[vcount] = mmio;
-  } else {
-    mmio_copy[vcount].dispcnt = mmio.dispcnt;
-    mmio_copy[vcount].winh[0] = mmio.winh[0];
-    mmio_copy[vcount].winh[1] = mmio.winh[1];
-    mmio_copy[vcount].winv[0] = mmio.winv[0];
-    mmio_copy[vcount].winv[1] = mmio.winv[1];
-  }
-
-  if (vcount == 0) {
-    // Make a snapshot of PRAM, OAM and VRAM at the start of the frame.
-    std::memcpy(pram_draw, pram, sizeof(pram));
-    std::memcpy(oam_draw,  oam,  sizeof(oam ));
-
-    int vram_dirty_size = vram_dirty_range_hi - vram_dirty_range_lo;
-    if (vram_dirty_size > 0) {
-      std::memcpy(&vram_draw[vram_dirty_range_lo], &vram[vram_dirty_range_lo], vram_dirty_size);
-      vram_dirty_range_lo = 0x18000;
-      vram_dirty_range_hi = 0;
-    }
-
-    render_thread_vcount = 0;
-  }
-
-  render_thread_vcount_max = vcount;
-
-  std::lock_guard lock{render_thread_mutex};
-  render_thread_ready = true;
-  render_thread_cv.notify_one();
-}
-
-void PPU::ScheduleSubmitScanline() {
-  /* Star Wars Episode II does not render correctly in the intro,
-   * unless affine background rendering is delayed by ~32 cycles (like on hardware).
-   * See: https://github.com/nba-emu/NanoBoyAdvance/issues/93
-   *
-   * TODO: this code delays ALL rendering which isn't correct.
-   * But this is tricky to fully solve in a (threaded) per-scanline renderer.
-   * Revisit if another game breaks because of this change.
-   */
-  scheduler.Add(32, [this](int cycles_late) {
-    SubmitScanline();
-  });
 }
 
 } // namespace nba::core
