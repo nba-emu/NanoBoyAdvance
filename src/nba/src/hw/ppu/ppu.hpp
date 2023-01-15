@@ -98,6 +98,10 @@ struct PPU {
     }
   }
 
+  void Sync() {
+    DrawBackground();
+  }
+
   struct MMIO {
     DisplayControl dispcnt;
     DisplayStatus dispstat;
@@ -131,6 +135,8 @@ struct PPU {
   } mmio;
 
 private:
+  static constexpr uint k_bg_cycle_limit = 1006;
+
   friend struct DisplayStatus;
 
   enum ObjAttribute {
@@ -183,6 +189,22 @@ private:
 
   struct Background {
     u64 timestamp_last_sync = 0;
+    uint cycle;
+
+    struct Text {
+      bool fetching;
+
+      struct Tile {
+        u32 address;
+        uint palette;
+        bool flip_x;
+      } tile;
+
+      struct PISO {
+        u16 data;
+        int remaining;
+      } piso;
+    } text[4];
   } bg;
 
   u8 pram[0x00400];
