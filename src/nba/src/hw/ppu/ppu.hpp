@@ -184,10 +184,6 @@ private:
   void OnVblankHblankIRQTest(int cycles_late);
   void OnVblankHblankComplete(int cycles_late);
 
-  void InitBackground();
-  void DrawBackground();
-  template<int mode> void DrawBackgroundImpl(int cycles);
-
   struct Background {
     u64 timestamp_last_sync = 0;
     uint cycle;
@@ -209,6 +205,18 @@ private:
 
     u8 buffer[240];
   } bg;
+
+  void InitBackground();
+  void DrawBackground();
+  template<int mode> void DrawBackgroundImpl(int cycles);
+
+  struct Merge {
+    u64 timestamp_last_sync = 0;
+    uint cycle;
+  } merge;
+
+  void InitMerge();
+  void DrawMerge();
 
   u8 pram[0x00400];
   u8 oam [0x00400];

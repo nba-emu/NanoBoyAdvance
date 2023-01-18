@@ -71,6 +71,7 @@ void PPU::Reset() {
   scheduler.Add(226, this, &PPU::OnVblankHblankComplete);
 
   bg = {};
+  merge = {};
 
   frame = 0;
   dma3_video_transfer_running = false;
@@ -201,6 +202,7 @@ void PPU::OnHblankComplete(int cycles_late) {
   auto& mosaic = mmio.mosaic;
 
   DrawBackground();
+  DrawMerge();
 
   dispstat.hblank_flag = 0;
   vcount++;
@@ -231,6 +233,7 @@ void PPU::OnHblankComplete(int cycles_late) {
     }
   } else {
     InitBackground();
+    InitMerge();
 
     scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
     // ScheduleSubmitScanline();
@@ -291,6 +294,7 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
     frame ^= 1;
 
     InitBackground();
+    InitMerge();
   } else {
     scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
     if (++vcount == 227) {

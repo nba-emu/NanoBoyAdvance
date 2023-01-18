@@ -11,7 +11,7 @@ namespace nba::core {
 
 void PPU::InitBackground() {
   bg.timestamp_last_sync = scheduler.GetTimestampNow();
-  bg.cycle = 0;
+  bg.cycle = 0U;
 
   for(auto& text : bg.text) {
     text.fetching = false;
