@@ -53,7 +53,7 @@ void ALWAYS_INLINE RenderMode0BG(uint id, uint cycle) {
   const int screen_x = (cycle >> 2) - 9;
 
   if(screen_x >= 0 && screen_x < 240) {
-    bg.buffer[id] = index;
+    bg.buffer[screen_x][id] = index;
   }
   
   const uint bghofs = mmio.bghofs[id];

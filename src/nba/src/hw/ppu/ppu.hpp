@@ -100,6 +100,7 @@ struct PPU {
 
   void Sync() {
     DrawBackground();
+    DrawMerge();
   }
 
   struct MMIO {
@@ -203,7 +204,7 @@ private:
       } piso;
     } text[4];
 
-    u8 buffer[240];
+    u8 buffer[240][4];
   } bg;
 
   void InitBackground();
@@ -217,6 +218,7 @@ private:
 
   void InitMerge();
   void DrawMerge();
+  void DrawMergeImpl(int cycles);
 
   u8 pram[0x00400];
   u8 oam [0x00400];
