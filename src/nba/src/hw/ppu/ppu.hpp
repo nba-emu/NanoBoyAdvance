@@ -186,6 +186,9 @@ private:
 
   void InitBackground();
   void DrawBackground();
+  template<int mode> void DrawBackgroundImpl(int cycles);
+
+  void RenderMode0BG(uint id, uint cycle);
 
   struct Background {
     u64 timestamp_last_sync = 0;
