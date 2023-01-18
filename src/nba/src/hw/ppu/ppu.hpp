@@ -188,8 +188,6 @@ private:
   void DrawBackground();
   template<int mode> void DrawBackgroundImpl(int cycles);
 
-  void RenderMode0BG(uint id, uint cycle);
-
   struct Background {
     u64 timestamp_last_sync = 0;
     uint cycle;
@@ -208,6 +206,8 @@ private:
         int remaining;
       } piso;
     } text[4];
+
+    u8 buffer[240];
   } bg;
 
   u8 pram[0x00400];
@@ -223,6 +223,8 @@ private:
   int frame;
 
   bool dma3_video_transfer_running;
+
+  #include "background.inl"
 };
 
 } // namespace nba::core

@@ -67,6 +67,7 @@ set(HEADERS
   src/hw/apu/hle/mp2k.hpp
   src/hw/apu/apu.hpp
   src/hw/apu/registers.hpp
+  src/hw/ppu/background.inl
   src/hw/ppu/ppu.hpp
   src/hw/ppu/registers.hpp
   src/hw/dma/dma.hpp
