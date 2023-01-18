@@ -204,6 +204,13 @@ private:
       } piso;
     } text[4];
 
+    struct Affine {
+      s32 x;
+      s32 y;
+      bool out_of_bounds;
+      u16 tile_address;
+    } affine[2];
+
     u8 buffer[240][4];
   } bg;
 

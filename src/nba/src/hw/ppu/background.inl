@@ -121,5 +121,49 @@ void ALWAYS_INLINE RenderMode0BG(uint id, uint cycle) {
 }
 
 void ALWAYS_INLINE RenderMode2BG(uint id, uint cycle) {
-  // @todo
+  const auto& bgcnt = mmio.bgcnt[2 + id];
+
+  if(cycle < 32U) {
+    return;
+  }
+
+  if((cycle & 1U) == 0U) {
+    const int log_size = bgcnt.size;
+    const s32 size = 128 << log_size;
+    const s32 mask = size - 1;
+
+    s32 x = bg.affine[id].x >> 8;
+    s32 y = bg.affine[id].y >> 8;
+
+    // @todo: figure out in what cycle this happens.
+    bg.affine[id].x += mmio.bgpa[id];
+    bg.affine[id].y += mmio.bgpc[id];
+
+    if(bgcnt.wraparound) {
+      x &= mask;
+      y &= mask;
+      bg.affine[id].out_of_bounds = false;
+    } else {
+      // disable fetches if either X or Y is outside the [0, size) range.
+      bg.affine[id].out_of_bounds = ((x | y) & -size) != 0;
+    }
+
+    const u16 address = (bgcnt.map_block << 11) + ((y >> 3) << (4 + log_size)) + (x >> 3);
+    const u8 tile = vram[address];
+
+    bg.affine[id].tile_address = (bgcnt.tile_block << 14) + (tile << 6) + ((y & 7) << 3) + (x & 7);
+  } else {
+    uint index = 0;
+
+    if(!bg.affine[id].out_of_bounds) {
+      index = vram[bg.affine[id].tile_address];
+    }
+
+    const uint x = (cycle - 32U) >> 2;
+
+    // @todo: make the buffer larger and remove the condition.
+    if(x < 240) {
+      bg.buffer[x][2 + id] = index;
+    }
+  }
 }

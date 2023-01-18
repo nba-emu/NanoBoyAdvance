@@ -16,6 +16,11 @@ void PPU::InitBackground() {
   for(auto& text : bg.text) {
     text.fetching = false;
   }
+
+  for(int id = 0; id < 2; id++) {
+    bg.affine[id].x = mmio.bgx[id]._current;
+    bg.affine[id].y = mmio.bgy[id]._current;
+  }
 }
 
 void PPU::DrawBackground() {
