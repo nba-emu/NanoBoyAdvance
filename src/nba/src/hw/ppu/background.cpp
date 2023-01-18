@@ -51,6 +51,11 @@ void PPU::DrawBackground() {
 }
 
 template<int mode> void PPU::DrawBackgroundImpl(int cycles) {
+  /**
+   * @todo: we are losing out on some possible optimizations,
+   * by implementing the various BG modes in separate methods,
+   * which we have to call on a per-cycle basis.
+   */
   for(int i = 0; i < cycles; i++) {
     // We add one to the cycle counter for convenience,
     // because it makes some of the timing math simpler.
@@ -61,7 +66,6 @@ template<int mode> void PPU::DrawBackgroundImpl(int cycles) {
       const uint id = cycle & 3U; // BG0 - BG3
 
       if((id <= 1 || mode == 0) && mmio.enable_bg[0][id]) {
-        // @todo: make sure that the compiler will inline this call.
         RenderMode0BG(id, cycle);
       }
     }
@@ -70,7 +74,9 @@ template<int mode> void PPU::DrawBackgroundImpl(int cycles) {
     if constexpr(mode == 1 || mode == 2) {
       const int id = ~(cycle >> 1) & 1; // 0: BG2, 1: BG3
 
-      RenderMode2BG(id, cycle);
+      if((id == 0 || mode == 2) && mmio.enable_bg[0][2 + id]) {
+        RenderMode2BG(id, cycle);
+      }
     }
 
     // @todo: I don't think this is always correct, at least in text-mode.
