@@ -42,14 +42,14 @@ void PPU::DrawMergeImpl(int cycles) {
 
   // @todo: fix numbers for Mode 6 and Mode 7
   static constexpr int k_min_max_bg[8][2] {
-    {0, 3}, // Mode 0 (BG0 - BG3 text-mode)
-    {0, 2}, // Mode 1 (BG0 - BG1 text-mode, BG2 affine)
-    {2, 3}, // Mode 2 (BG2 - BG3 affine)
-    {2, 2}, // Mode 3 (BG2 240x160 65526-color bitmap)
-    {2, 2}, // Mode 4 (BG2 240x160 256-color bitmap, double-buffered)
-    {2, 2}, // Mode 5 (BG2 160x128 65536-color bitmap, double-buffered)
-    {0, 0}, // Mode 6 (invalid)
-    {0, 0}, // Mode 7 (invalid)
+    {0,  3}, // Mode 0 (BG0 - BG3 text-mode)
+    {0,  2}, // Mode 1 (BG0 - BG1 text-mode, BG2 affine)
+    {2,  3}, // Mode 2 (BG2 - BG3 affine)
+    {2,  2}, // Mode 3 (BG2 240x160 65526-color bitmap)
+    {2,  2}, // Mode 4 (BG2 240x160 256-color bitmap, double-buffered)
+    {2,  2}, // Mode 5 (BG2 160x128 65536-color bitmap, double-buffered)
+    {0, -1}, // Mode 6 (invalid)
+    {0, -1}, // Mode 7 (invalid)
   };
 
   const int mode = mmio.dispcnt.mode;
@@ -62,9 +62,10 @@ void PPU::DrawMergeImpl(int cycles) {
   int bg_count = 0;
 
   for(int priority = 3; priority >= 0; priority--) {
-    for(int id = 3; id >= 0; id--) {
-      // @todo: should we respect the latched BG enable flags?
-      if(mmio.dispcnt.enable[id] && mmio.bgcnt[id].priority == priority) {
+    for(int id = max_bg; id >= min_bg; id--) {
+      if(mmio.bgcnt[id].priority == priority &&
+         mmio.enable_bg[0][id] &&
+         mmio.dispcnt.enable[id]) {
         bg_list[bg_count++] = id;
       }
     }
