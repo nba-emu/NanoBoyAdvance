@@ -15,6 +15,9 @@ void ALWAYS_INLINE RenderMode0BG(uint id, uint cycle) {
     if(text.piso.remaining == 0) {
       u16 data = read<u16>(vram, text.tile.address);
 
+      // @todo: optimise VRAM access stall emulation
+      bg.timestamp_vram_access = bg.timestamp_last_sync + cycle;
+
       if(text.tile.flip_x) {
         data = (data >> 8) | (data << 8);
 
@@ -88,6 +91,9 @@ void ALWAYS_INLINE RenderMode0BG(uint id, uint cycle) {
 
     const u32 address = (map_block << 11) + ((grid_y & 31U) << 6) + ((grid_x & 31U) << 1);
 
+    // @todo: optimise VRAM access stall emulation
+    bg.timestamp_vram_access = bg.timestamp_last_sync + cycle;
+
     const u16 tile = read<u16>(vram, address);
 
     const uint number = tile & 0x3FFU;
@@ -151,6 +157,9 @@ void ALWAYS_INLINE RenderMode2BG(uint id, uint cycle) {
     const u16 address = (bgcnt.map_block << 11) + ((y >> 3) << (4 + log_size)) + (x >> 3);
     const u8 tile = vram[address];
 
+    // @todo: optimise VRAM access stall emulation
+    bg.timestamp_vram_access = bg.timestamp_last_sync + cycle;
+
     bg.affine[id].tile_address = (bgcnt.tile_block << 14) + (tile << 6) + ((y & 7) << 3) + (x & 7);
   } else {
     uint index = 0;
@@ -158,6 +167,10 @@ void ALWAYS_INLINE RenderMode2BG(uint id, uint cycle) {
     if(!bg.affine[id].out_of_bounds) {
       index = vram[bg.affine[id].tile_address];
     }
+
+    // Real hardware fetches VRAM even if the map coordinate is out-of-bounds.
+    // @todo: optimise VRAM access stall emulation
+    bg.timestamp_vram_access = bg.timestamp_last_sync + cycle;
 
     const uint x = (cycle - 32U) >> 2;
 

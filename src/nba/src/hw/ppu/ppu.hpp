@@ -54,7 +54,7 @@ struct PPU {
     return mmio.dispcnt.mode >= 3 ? 0x14000 : 0x10000;
   }
 
-  template<typename T>
+  /*template<typename T>
   auto ALWAYS_INLINE ReadVRAM(u32 address) noexcept -> T {
     const u32 boundary = GetSpriteVRAMBoundary();
 
@@ -65,7 +65,7 @@ struct PPU {
     }
 
     return ReadVRAM_BG<T>(address);
-  }
+  }*/
 
   template<typename T>
   auto ALWAYS_INLINE ReadVRAM_BG(u32 address) noexcept -> T {
@@ -133,6 +133,14 @@ struct PPU {
     if constexpr (!std::is_same_v<T, u8>) {
       write<T>(oam, address & 0x3FF, value);
     }
+  }
+
+  bool ALWAYS_INLINE DidAccessVRAM_BG() noexcept {
+    return scheduler.GetTimestampNow() == bg.timestamp_vram_access;
+  }
+
+  bool ALWAYS_INLINE DidAccessVRAM_OBJ() noexcept {
+    return false;
   }
 
   void Sync() {
@@ -225,6 +233,7 @@ private:
 
   struct Background {
     u64 timestamp_last_sync = 0;
+    u64 timestamp_vram_access = ~0ULL;
     uint cycle;
 
     struct Text {

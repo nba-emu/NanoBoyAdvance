@@ -23,7 +23,7 @@ void PPU::DrawSprite() {
     return;
   }
 
-  fmt::print("PPU: draw sprites @ VCOUNT={} cycles={}\n", mmio.vcount, cycles);
+  // fmt::print("PPU: draw sprites @ VCOUNT={} cycles={}\n", mmio.vcount, cycles);
 
   DrawSpriteImpl(cycles);
 
