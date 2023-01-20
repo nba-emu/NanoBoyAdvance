@@ -198,7 +198,7 @@ void PPU::OnScanlineComplete(int cycles_late) {
    */
   LatchEnabledBGs();
 
-  scheduler.Add(4 - cycles_late, this, &PPU::OnHblankIRQTest);
+  scheduler.Add(2 - cycles_late, this, &PPU::OnHblankIRQTest);
 }
 
 void PPU::OnHblankIRQTest(int cycles_late) {
@@ -207,7 +207,7 @@ void PPU::OnHblankIRQTest(int cycles_late) {
     irq.Raise(IRQ::Source::HBlank);
   }
 
-  scheduler.Add(222 - cycles_late, this, &PPU::OnHblankComplete);
+  scheduler.Add(224 - cycles_late, this, &PPU::OnHblankComplete);
 }
 
 void PPU::OnHblankComplete(int cycles_late) {
@@ -276,7 +276,7 @@ void PPU::OnVblankScanlineComplete(int cycles_late) {
     }
   }
 
-  scheduler.Add(4 - cycles_late, this, &PPU::OnVblankHblankIRQTest);
+  scheduler.Add(2 - cycles_late, this, &PPU::OnVblankHblankIRQTest);
 }
 
 void PPU::OnVblankHblankIRQTest(int cycles_late) {
@@ -285,7 +285,7 @@ void PPU::OnVblankHblankIRQTest(int cycles_late) {
     irq.Raise(IRQ::Source::HBlank);
   }
 
-  scheduler.Add(222 - cycles_late, this, &PPU::OnVblankHblankComplete);
+  scheduler.Add(224 - cycles_late, this, &PPU::OnVblankHblankComplete);
 }
 
 void PPU::OnVblankHblankComplete(int cycles_late) {
