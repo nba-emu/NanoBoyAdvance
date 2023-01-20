@@ -70,11 +70,28 @@ void PPU::Reset() {
   mmio.dispstat.hblank_flag = true;
   scheduler.Add(226, this, &PPU::OnVblankHblankComplete);
 
+  // To keep the state machine simple, we run sprite engine
+  // from a separate event loop.
+  scheduler.Add(266, this, &PPU::StupidSpriteEventHandler);
+
   bg = {};
+  sprite = {};
   merge = {};
 
   frame = 0;
   dma3_video_transfer_running = false;
+}
+
+void PPU::StupidSpriteEventHandler(int cycles) {
+  if(mmio.vcount <= 159) {
+    DrawSprite();
+  }
+
+  if(mmio.vcount == 227 || mmio.vcount < 159) {
+    InitSprite();
+  }
+
+  scheduler.Add(1232, this, &PPU::StupidSpriteEventHandler);
 }
 
 void PPU::LatchEnabledBGs() {
@@ -297,6 +314,7 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
     InitMerge();
   } else {
     scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
+    
     if (++vcount == 227) {
       dispstat.vblank_flag = 0;
     }

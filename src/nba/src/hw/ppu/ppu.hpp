@@ -100,6 +100,7 @@ struct PPU {
 
   void Sync() {
     DrawBackground();
+    DrawSprite();
     DrawMerge();
   }
 
@@ -217,6 +218,16 @@ private:
   void InitBackground();
   void DrawBackground();
   template<int mode> void DrawBackgroundImpl(int cycles);
+
+  struct Sprite {
+    u64 timestamp_last_sync = 0;
+    uint cycle;
+  } sprite;
+
+  void InitSprite();
+  void DrawSprite();
+  void DrawSpriteImpl(int cycles);
+  void StupidSpriteEventHandler(int cycles);
 
   struct Merge {
     u64 timestamp_last_sync = 0;

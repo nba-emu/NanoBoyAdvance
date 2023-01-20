@@ -25,7 +25,7 @@ void PPU::InitMerge() {
 void PPU::DrawMerge() {
   const u64 timestamp_now = scheduler.GetTimestampNow();
   
-  int cycles = (int)(timestamp_now - merge.timestamp_last_sync);
+  const int cycles = (int)(timestamp_now - merge.timestamp_last_sync);
 
   if(cycles == 0 || merge.cycle >= k_bg_cycle_limit) {
     return;

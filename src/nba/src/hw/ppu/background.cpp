@@ -26,7 +26,7 @@ void PPU::InitBackground() {
 void PPU::DrawBackground() {
   const u64 timestamp_now = scheduler.GetTimestampNow();
   
-  int cycles = (int)(timestamp_now - bg.timestamp_last_sync);
+  const int cycles = (int)(timestamp_now - bg.timestamp_last_sync);
 
   if(cycles == 0 || bg.cycle >= k_bg_cycle_limit) {
     return;
