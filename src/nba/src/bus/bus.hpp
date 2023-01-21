@@ -183,6 +183,26 @@ struct Bus {
     }
   }
 
+  template<typename T>
+  auto ALWAYS_INLINE ReadOAM(u32 address) noexcept -> T {
+    do {
+      Step(1);
+      hw.ppu.Sync();
+    } while(hw.ppu.DidAccessOAM());
+
+    return hw.ppu.ReadOAM<T>(address);
+  }
+
+  template<typename T>
+  void ALWAYS_INLINE WriteOAM(u32 address, T value) noexcept {
+    do {
+      Step(1);
+      hw.ppu.Sync();
+    } while(hw.ppu.DidAccessOAM());
+
+    hw.ppu.WriteOAM<T>(address, value);
+  }
+
   auto ReadBIOS(u32 address) -> u32;
   auto ReadOpenBus(u32 address) -> u32;
 

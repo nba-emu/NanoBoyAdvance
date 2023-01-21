@@ -49,23 +49,9 @@ struct PPU {
     }
   }
 
-
   auto ALWAYS_INLINE GetSpriteVRAMBoundary() noexcept -> u32 {
     return mmio.dispcnt.mode >= 3 ? 0x14000 : 0x10000;
   }
-
-  /*template<typename T>
-  auto ALWAYS_INLINE ReadVRAM(u32 address) noexcept -> T {
-    const u32 boundary = GetSpriteVRAMBoundary();
-
-    address &= 0x1FFFF;
-
-    if (address >= boundary) {
-      return ReadVRAM_OBJ<T>(address, boundary);
-    }
-
-    return ReadVRAM_BG<T>(address);
-  }*/
 
   template<typename T>
   auto ALWAYS_INLINE ReadVRAM_BG(u32 address) noexcept -> T {
@@ -78,7 +64,7 @@ struct PPU {
       address &= ~0x8000;
 
       if (address < boundary) {
-        // TODO: check if this should actually return open bus.
+        // @todo: check if this should actually return open bus.
         return 0;
       }
     }
@@ -140,7 +126,11 @@ struct PPU {
   }
 
   bool ALWAYS_INLINE DidAccessVRAM_OBJ() noexcept {
-    return false;
+    return scheduler.GetTimestampNow() == sprite.timestamp_vram_access + 1U;
+  }
+
+  bool ALWAYS_INLINE DidAccessOAM() noexcept {
+    return scheduler.GetTimestampNow() == sprite.timestamp_oam_access + 1U;
   }
 
   void Sync() {
@@ -265,9 +255,54 @@ private:
   void DrawBackground();
   template<int mode> void DrawBackgroundImpl(int cycles);
 
+  enum class OAMFetchState {
+    Attribute01,
+    Attribute2,
+    PA,
+    PB,
+    PC,
+    PD
+  };
+
   struct Sprite {
     u64 timestamp_last_sync = 0;
+    u64 timestamp_vram_access = ~0ULL;
+    u64 timestamp_oam_access = ~0ULL;
     uint cycle;
+    uint vcount;
+    uint index;
+
+    OAMFetchState oam_fetch_state;
+    int oam_access_wait;
+    bool first_vram_access_cycle;
+
+    struct {
+      s32 x;
+      s32 y;
+      int width;
+      int height;
+      int half_width;
+      int half_height;
+      int mode;
+      bool affine;
+
+      int local_x;
+      int local_y;
+
+      int transform_id;
+      s16 transform[4];
+
+      int tile_number;
+      int priority;
+      int palette;
+      bool flip_h;
+      bool flip_v;
+      bool is_256;
+    } state[2];
+
+    u32 buffer[2][240];
+    u32* buffer_rd;
+    u32* buffer_wr;
   } sprite;
 
   void InitSprite();
