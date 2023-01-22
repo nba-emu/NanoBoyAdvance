@@ -42,8 +42,10 @@ static const int s_obj_size[4][4][2] = {
 
 void PPU::InitSprite() {
   const uint vcount = mmio.vcount;
+  const u64 timestamp_now = scheduler.GetTimestampNow();
 
-  sprite.timestamp_last_sync = scheduler.GetTimestampNow();
+  sprite.timestamp_init = timestamp_now;
+  sprite.timestamp_last_sync = timestamp_now;
   sprite.cycle = 0U;
   sprite.vcount = vcount;
   sprite.index = 0U;
@@ -75,6 +77,8 @@ void PPU::DrawSprite() {
 }
 
 void PPU::DrawSpriteImpl(int cycles) {
+  const uint cycle_limit = mmio.dispcnt.hblank_oam_access ? 964U : 1232U;
+
   for(int i = 0; i < cycles; i++) {
     const uint cycle = sprite.cycle;
 
@@ -94,7 +98,7 @@ void PPU::DrawSpriteImpl(int cycles) {
             const u32 attr01 = read<u32>(oam, sprite.index * 8U);
 
             // @todo: optimise VRAM access stall emulation
-            sprite.timestamp_oam_access = sprite.timestamp_last_sync + cycle;
+            sprite.timestamp_oam_access = sprite.timestamp_init + cycle;
 
             bool active = false;
 
@@ -168,7 +172,7 @@ void PPU::DrawSpriteImpl(int cycles) {
             const u16 attr2 = read<u16>(oam, sprite.index * 8U + 4U);
 
             // @todo: optimise VRAM access stall emulation
-            sprite.timestamp_oam_access = sprite.timestamp_last_sync + cycle;
+            sprite.timestamp_oam_access = sprite.timestamp_init + cycle;
 
             // fmt::print("fetch Attr2 @ {}\n", sprite.timestamp_oam_access);
 
@@ -196,7 +200,7 @@ void PPU::DrawSpriteImpl(int cycles) {
             state.transform[0] = read<s16>(oam, state.transform_id + 0x06);
 
             // @todo: optimise VRAM access stall emulation
-            sprite.timestamp_oam_access = sprite.timestamp_last_sync + cycle;
+            sprite.timestamp_oam_access = sprite.timestamp_init + cycle;
 
             sprite.oam_fetch_state = OAMFetchState::PB;
             break;
@@ -205,7 +209,7 @@ void PPU::DrawSpriteImpl(int cycles) {
             state.transform[1] = read<s16>(oam, state.transform_id + 0x0E);
 
             // @todo: optimise VRAM access stall emulation
-            sprite.timestamp_oam_access = sprite.timestamp_last_sync + cycle;
+            sprite.timestamp_oam_access = sprite.timestamp_init + cycle;
 
             sprite.oam_fetch_state = OAMFetchState::PC;
             break;
@@ -214,7 +218,7 @@ void PPU::DrawSpriteImpl(int cycles) {
             state.transform[2] = read<s16>(oam, state.transform_id + 0x16);
 
             // @todo: optimise VRAM access stall emulation
-            sprite.timestamp_oam_access = sprite.timestamp_last_sync + cycle;
+            sprite.timestamp_oam_access = sprite.timestamp_init + cycle;
 
             sprite.oam_fetch_state = OAMFetchState::PD;
             break;
@@ -223,7 +227,7 @@ void PPU::DrawSpriteImpl(int cycles) {
             state.transform[3] = read<s16>(oam, state.transform_id + 0x1E);
 
             // @todo: optimise VRAM access stall emulation
-            sprite.timestamp_oam_access = sprite.timestamp_last_sync + cycle;
+            sprite.timestamp_oam_access = sprite.timestamp_init + cycle;
 
             // @todo
             sprite.oam_fetch_state = OAMFetchState::Attribute01;
@@ -238,7 +242,7 @@ void PPU::DrawSpriteImpl(int cycles) {
       }
     }
 
-    if(++sprite.cycle == 1232U) {
+    if(++sprite.cycle == cycle_limit) {
       break;
     }
   }

@@ -18,7 +18,10 @@ static u32 RGB555(u16 rgb555) {
 }
 
 void PPU::InitMerge() {
-  merge.timestamp_last_sync = scheduler.GetTimestampNow();
+  const u64 timestamp_now = scheduler.GetTimestampNow();
+  
+  merge.timestamp_init = timestamp_now;
+  merge.timestamp_last_sync = timestamp_now;
   merge.cycle = 0U;
 }
 

@@ -10,7 +10,10 @@
 namespace nba::core {
 
 void PPU::InitBackground() {
-  bg.timestamp_last_sync = scheduler.GetTimestampNow();
+  const u64 timestamp_now = scheduler.GetTimestampNow();
+
+  bg.timestamp_init = timestamp_now;
+  bg.timestamp_last_sync = timestamp_now;
   bg.cycle = 0U;
 
   for(auto& text : bg.text) {

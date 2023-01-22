@@ -222,6 +222,7 @@ private:
   void OnVblankHblankComplete(int cycles_late);
 
   struct Background {
+    u64 timestamp_init = 0;
     u64 timestamp_last_sync = 0;
     u64 timestamp_vram_access = ~0ULL;
     uint cycle;
@@ -265,6 +266,7 @@ private:
   };
 
   struct Sprite {
+    u64 timestamp_init = 0;
     u64 timestamp_last_sync = 0;
     u64 timestamp_vram_access = ~0ULL;
     u64 timestamp_oam_access = ~0ULL;
@@ -311,6 +313,7 @@ private:
   void StupidSpriteEventHandler(int cycles);
 
   struct Merge {
+    u64 timestamp_init = 0;
     u64 timestamp_last_sync = 0;
     uint cycle;
   } merge;
