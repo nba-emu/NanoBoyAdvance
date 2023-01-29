@@ -277,6 +277,7 @@ private:
     OAMFetchState oam_fetch_state;
     int oam_access_wait;
     bool first_vram_access_cycle;
+    bool drawing;
 
     struct {
       s32 x;
@@ -302,6 +303,9 @@ private:
       bool is_256;
     } state[2];
 
+    int state_rd;
+    int state_wr;
+
     u32 buffer[2][240];
     u32* buffer_rd;
     u32* buffer_wr;
@@ -310,6 +314,8 @@ private:
   void InitSprite();
   void DrawSprite();
   void DrawSpriteImpl(int cycles);
+  void DrawSpriteFetchOAM(uint cycle);
+  void DrawSpriteFetchVRAM(uint cycle);
   void StupidSpriteEventHandler(int cycles);
 
   struct Merge {
