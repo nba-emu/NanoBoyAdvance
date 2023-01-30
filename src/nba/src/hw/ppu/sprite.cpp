@@ -50,7 +50,7 @@ void PPU::InitSprite() {
   sprite.vcount = vcount;
   sprite.index = 0U;
 
-  sprite.oam_fetch_state = OAMFetchState::Attribute01;
+  sprite.step = 0;
   sprite.oam_access_wait = 0;
   sprite.first_vram_access_cycle = false;
   sprite.drawing = false;
@@ -109,16 +109,17 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
 
   sprite.first_vram_access_cycle = false;
 
-  switch(sprite.oam_fetch_state) {
-    case OAMFetchState::Attribute01: {
-      // @todo: solve this in a cleaner way
+  const int step = sprite.step;
+
+  switch(step) {
+    case 0: {
+      // @todo: solve this in a cleaner way?
       if(sprite.index >= 128U) {
         break;
       }
 
       const u32 attr01 = read<u32>(oam, sprite.index * 8U);
 
-      // @todo: optimise VRAM access stall emulation
       sprite.timestamp_oam_access = sprite.timestamp_init + cycle;
 
       bool active = false;
@@ -137,7 +138,6 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
           const uint shape = (attr01 >> 14) & 3U;
           const uint size  =  attr01 >> 30;
 
-          // @todo: replace the LUT with something more sensible.
           const int width  = s_obj_size[shape][size][0];
           const int height = s_obj_size[shape][size][1];
 
@@ -174,42 +174,40 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
             state.local_x = -half_width;
             state.local_y = local_y;
 
-            state.transform_id = ((attr01 >> 25) & 31) << 5;
             state.flip_h = !affine && (attr01 & (1 << 28));
             state.flip_v = !affine && (attr01 & (1 << 29));
             state.is_256 = (attr01 >> 13) & 1;
+
+            sprite.matrix_address = 6U + (((attr01 >> 25) & 31U) << 5);
           }
         }
       }
 
       if(active) {
-        sprite.oam_fetch_state = OAMFetchState::Attribute2;
+        sprite.step = 1;
       } else {
         sprite.index++;
       }
       break;
     }
-    case OAMFetchState::Attribute2: {
+    case 1: {
       const u16 attr2 = read<u16>(oam, sprite.index * 8U + 4U);
 
-      // @todo: optimise VRAM access stall emulation
       sprite.timestamp_oam_access = sprite.timestamp_init + cycle;
-
-      // fmt::print("fetch Attr2 @ {}\n", sprite.timestamp_oam_access);
 
       state.tile_number = attr2 & 0x3FF;
       state.priority = (attr2 >> 10) & 3;
       state.palette = (attr2 >> 12) + 16;
 
       if(state.affine) {
-        sprite.oam_fetch_state = OAMFetchState::PA;
+        sprite.step = 2;
       } else {
-        state.transform[0] = 0x100;
-        state.transform[1] = 0;
-        state.transform[2] = 0;
-        state.transform[3] = 0x100;
+        state.matrix[0] = 0x100;
+        state.matrix[1] = 0;
+        state.matrix[2] = 0;
+        state.matrix[3] = 0x100;
 
-        sprite.oam_fetch_state = OAMFetchState::Attribute01;
+        sprite.step = 0;
         sprite.oam_access_wait = state.half_width - 2;
         sprite.first_vram_access_cycle = true;
         sprite.drawing = true;
@@ -219,47 +217,24 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
       }
       break;
     }
-    case OAMFetchState::PA: {
-      state.transform[0] = read<s16>(oam, state.transform_id + 0x06);
+    case 2:
+    case 3:
+    case 4:
+    case 5: {
+      state.matrix[step - 2] = read<s16>(oam, sprite.matrix_address);
+      sprite.matrix_address += 8;
 
-      // @todo: optimise VRAM access stall emulation
       sprite.timestamp_oam_access = sprite.timestamp_init + cycle;
 
-      sprite.oam_fetch_state = OAMFetchState::PB;
-      break;
-    }
-    case OAMFetchState::PB: {
-      state.transform[1] = read<s16>(oam, state.transform_id + 0x0E);
-
-      // @todo: optimise VRAM access stall emulation
-      sprite.timestamp_oam_access = sprite.timestamp_init + cycle;
-
-      sprite.oam_fetch_state = OAMFetchState::PC;
-      break;
-    }
-    case OAMFetchState::PC: {
-      state.transform[2] = read<s16>(oam, state.transform_id + 0x16);
-
-      // @todo: optimise VRAM access stall emulation
-      sprite.timestamp_oam_access = sprite.timestamp_init + cycle;
-
-      sprite.oam_fetch_state = OAMFetchState::PD;
-      break;
-    }
-    case OAMFetchState::PD: {
-      state.transform[3] = read<s16>(oam, state.transform_id + 0x1E);
-
-      // @todo: optimise VRAM access stall emulation
-      sprite.timestamp_oam_access = sprite.timestamp_init + cycle;
-
-      // @todo
-      sprite.oam_fetch_state = OAMFetchState::Attribute01;
-      sprite.oam_access_wait = state.half_width * 2 - 1;
-      sprite.first_vram_access_cycle = true;
-      sprite.drawing = true;
-      sprite.index++;
-      sprite.state_rd ^= 1;
-      sprite.state_wr ^= 1;
+      if(++sprite.step == 6) {
+        sprite.step = 0;
+        sprite.oam_access_wait = state.half_width * 2 - 1;
+        sprite.first_vram_access_cycle = true;
+        sprite.drawing = true;
+        sprite.index++;
+        sprite.state_rd ^= 1;
+        sprite.state_wr ^= 1;
+      }
       break;
     }
   }
@@ -275,7 +250,6 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
   if(!state.affine || !sprite.first_vram_access_cycle) {
     const int pixels = state.affine ? 1 : 2;
 
-    // simulate VRAM fetch
     sprite.timestamp_vram_access = sprite.timestamp_init + sprite.cycle;
 
     for(int i = 0; i < pixels; i++) {

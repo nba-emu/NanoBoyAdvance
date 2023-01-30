@@ -256,15 +256,6 @@ private:
   void DrawBackground();
   template<int mode> void DrawBackgroundImpl(int cycles);
 
-  enum class OAMFetchState {
-    Attribute01,
-    Attribute2,
-    PA,
-    PB,
-    PC,
-    PD
-  };
-
   struct Sprite {
     u64 timestamp_init = 0;
     u64 timestamp_last_sync = 0;
@@ -274,7 +265,8 @@ private:
     uint vcount;
     uint index;
 
-    OAMFetchState oam_fetch_state;
+    int step;
+    uint matrix_address;
     int oam_access_wait;
     bool first_vram_access_cycle;
     bool drawing;
@@ -292,8 +284,7 @@ private:
       int local_x;
       int local_y;
 
-      int transform_id;
-      s16 transform[4];
+      s16 matrix[4];
 
       int tile_number;
       int priority;
