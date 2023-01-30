@@ -265,10 +265,13 @@ private:
     uint vcount;
     uint index;
 
-    int step;
-    uint matrix_address;
-    int oam_access_wait;
-    bool first_vram_access_cycle;
+    struct {
+      int step;
+      uint address;
+      int wait;
+      bool delay_wait;
+    } oam_fetch;
+
     bool drawing;
 
     struct {
@@ -318,6 +321,13 @@ private:
   void InitMerge();
   void DrawMerge();
   void DrawMergeImpl(int cycles);
+
+  template<typename T>
+  auto ALWAYS_INLINE FetchOAM(uint cycle, uint address) -> T {
+    T value = read<T>(oam, address);
+    sprite.timestamp_oam_access = sprite.timestamp_init + cycle;
+    return value;
+  }
 
   u8 pram[0x00400];
   u8 oam [0x00400];

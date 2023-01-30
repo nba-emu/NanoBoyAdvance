@@ -10,28 +10,28 @@
 namespace nba::core {
 
 static const int s_obj_size[4][4][2] = {
-  /* SQUARE */
+  // SQUARE
   {
     { 8 , 8  },
     { 16, 16 },
     { 32, 32 },
     { 64, 64 }
   },
-  /* HORIZONTAL */
+  // HORIZONAL
   {
     { 16, 8  },
     { 32, 8  },
     { 32, 16 },
     { 64, 32 }
   },
-  /* VERTICAL */
+  // VERTICAL
   {
     { 8 , 16 },
     { 8 , 32 },
     { 16, 32 },
     { 32, 64 }
   },
-  /* PROHIBITED */
+  // PROHIBITED
   {
     { 0, 0 },
     { 0, 0 },
@@ -50,9 +50,9 @@ void PPU::InitSprite() {
   sprite.vcount = vcount;
   sprite.index = 0U;
 
-  sprite.step = 0;
-  sprite.oam_access_wait = 0;
-  sprite.first_vram_access_cycle = false;
+  sprite.oam_fetch.step = 0;
+  sprite.oam_fetch.wait = 0;
+  sprite.oam_fetch.delay_wait = false;
   sprite.drawing = false;
 
   sprite.state_rd = 0;
@@ -100,27 +100,27 @@ void PPU::DrawSpriteImpl(int cycles) {
 }
 
 void PPU::DrawSpriteFetchOAM(uint cycle) {
-  if(sprite.oam_access_wait > 0 && !sprite.first_vram_access_cycle) {
-    sprite.oam_access_wait--;
+  auto& oam_fetch = sprite.oam_fetch;
+
+  if(oam_fetch.wait > 0 && !oam_fetch.delay_wait) {
+    oam_fetch.wait--;
     return;
   }
 
+  oam_fetch.delay_wait = false;
+
   auto& state = sprite.state[sprite.state_wr];
 
-  sprite.first_vram_access_cycle = false;
-
-  const int step = sprite.step;
+  const int step = oam_fetch.step;
 
   switch(step) {
-    case 0: {
+    case 0: { // Fetch Attribute #0 and #1 
       // @todo: solve this in a cleaner way?
       if(sprite.index >= 128U) {
         break;
       }
 
-      const u32 attr01 = read<u32>(oam, sprite.index * 8U);
-
-      sprite.timestamp_oam_access = sprite.timestamp_init + cycle;
+      const u32 attr01 = FetchOAM<u32>(cycle, sprite.index * 8U);
 
       bool active = false;
 
@@ -178,38 +178,36 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
             state.flip_v = !affine && (attr01 & (1 << 29));
             state.is_256 = (attr01 >> 13) & 1;
 
-            sprite.matrix_address = 6U + (((attr01 >> 25) & 31U) << 5);
+            oam_fetch.address = (((attr01 >> 25) & 31U) * 32U) + 6U;
           }
         }
       }
 
       if(active) {
-        sprite.step = 1;
+        oam_fetch.step = 1;
       } else {
         sprite.index++;
       }
       break;
     }
-    case 1: {
-      const u16 attr2 = read<u16>(oam, sprite.index * 8U + 4U);
-
-      sprite.timestamp_oam_access = sprite.timestamp_init + cycle;
+    case 1: { // Fetch Attribute #2
+      const u16 attr2 = FetchOAM<u16>(cycle, sprite.index * 8U + 4U);
 
       state.tile_number = attr2 & 0x3FF;
       state.priority = (attr2 >> 10) & 3;
       state.palette = (attr2 >> 12) + 16;
 
       if(state.affine) {
-        sprite.step = 2;
+        oam_fetch.step = 2;
       } else {
         state.matrix[0] = 0x100;
         state.matrix[1] = 0;
         state.matrix[2] = 0;
         state.matrix[3] = 0x100;
 
-        sprite.step = 0;
-        sprite.oam_access_wait = state.half_width - 2;
-        sprite.first_vram_access_cycle = true;
+        oam_fetch.step = 0;
+        oam_fetch.wait = state.half_width - 2;
+        oam_fetch.delay_wait = true;
         sprite.drawing = true;
         sprite.index++;
         sprite.state_rd ^= 1;
@@ -220,16 +218,15 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
     case 2:
     case 3:
     case 4:
-    case 5: {
-      state.matrix[step - 2] = read<s16>(oam, sprite.matrix_address);
-      sprite.matrix_address += 8;
+    case 5: { // Fetch matrix components PA - PD (affine sprites only)
+      state.matrix[step - 2] = FetchOAM<s16>(cycle, oam_fetch.address);
+      
+      oam_fetch.address += 8U;
 
-      sprite.timestamp_oam_access = sprite.timestamp_init + cycle;
-
-      if(++sprite.step == 6) {
-        sprite.step = 0;
-        sprite.oam_access_wait = state.half_width * 2 - 1;
-        sprite.first_vram_access_cycle = true;
+      if(++oam_fetch.step == 6) {
+        oam_fetch.step = 0;
+        oam_fetch.wait = state.half_width * 2 - 1;
+        oam_fetch.delay_wait = true;
         sprite.drawing = true;
         sprite.index++;
         sprite.state_rd ^= 1;
@@ -247,7 +244,7 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
 
   auto& state = sprite.state[sprite.state_rd];
 
-  if(!state.affine || !sprite.first_vram_access_cycle) {
+  if(!state.affine || !sprite.oam_fetch.delay_wait) {
     const int pixels = state.affine ? 1 : 2;
 
     sprite.timestamp_vram_access = sprite.timestamp_init + sprite.cycle;
