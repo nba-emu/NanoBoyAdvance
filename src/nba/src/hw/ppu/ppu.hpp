@@ -295,7 +295,7 @@ private:
       bool flip_h;
       bool flip_v;
       bool is_256;
-    } state[2];
+    } drawer_state[2];
 
     int state_rd;
     int state_wr;

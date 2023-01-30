@@ -17,7 +17,7 @@ static const int s_obj_size[4][4][2] = {
     { 32, 32 },
     { 64, 64 }
   },
-  // HORIZONAL
+  // HORIZONTAL
   {
     { 16, 8  },
     { 32, 8  },
@@ -108,7 +108,7 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
 
   oam_fetch.delay_wait = false;
 
-  auto& state = sprite.state[sprite.state_wr];
+  auto& drawer_state = sprite.drawer_state[sprite.state_wr];
 
   const auto Submit = [&](int wait) {
     // Swap the draw states and engage the drawer unit.
@@ -175,20 +175,20 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
             active = true;
 
             // @todo: sprite mosaic
-            state.x = center_x;
-            state.y = center_y;
-            state.width = width;
-            state.height = height;
-            state.half_width = half_width;
-            state.half_height = half_height;
-            state.mode = mode;
-            state.affine = affine;
-            state.local_x = -half_width;
-            state.local_y = local_y;
+            drawer_state.x = center_x;
+            drawer_state.y = center_y;
+            drawer_state.width = width;
+            drawer_state.height = height;
+            drawer_state.half_width = half_width;
+            drawer_state.half_height = half_height;
+            drawer_state.mode = mode;
+            drawer_state.affine = affine;
+            drawer_state.local_x = -half_width;
+            drawer_state.local_y = local_y;
 
-            state.flip_h = !affine && (attr01 & (1 << 28));
-            state.flip_v = !affine && (attr01 & (1 << 29));
-            state.is_256 = (attr01 >> 13) & 1;
+            drawer_state.flip_h = !affine && (attr01 & (1 << 28));
+            drawer_state.flip_v = !affine && (attr01 & (1 << 29));
+            drawer_state.is_256 = (attr01 >> 13) & 1;
 
             oam_fetch.address = (((attr01 >> 25) & 31U) * 32U) + 6U;
           }
@@ -205,19 +205,19 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
     case 1: { // Fetch Attribute #2
       const u16 attr2 = FetchOAM<u16>(cycle, oam_fetch.index * 8U + 4U);
 
-      state.tile_number = attr2 & 0x3FF;
-      state.priority = (attr2 >> 10) & 3;
-      state.palette = (attr2 >> 12) + 16;
+      drawer_state.tile_number = attr2 & 0x3FF;
+      drawer_state.priority = (attr2 >> 10) & 3;
+      drawer_state.palette = (attr2 >> 12) + 16;
 
-      if(state.affine) {
+      if(drawer_state.affine) {
         oam_fetch.step = 2;
       } else {
-        state.matrix[0] = 0x100;
-        state.matrix[1] = 0;
-        state.matrix[2] = 0;
-        state.matrix[3] = 0x100;
+        drawer_state.matrix[0] = 0x100;
+        drawer_state.matrix[1] = 0;
+        drawer_state.matrix[2] = 0;
+        drawer_state.matrix[3] = 0x100;
 
-        Submit(state.half_width - 2);
+        Submit(drawer_state.half_width - 2);
       }
       break;
     }
@@ -225,12 +225,12 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
     case 3:
     case 4:
     case 5: { // Fetch matrix components PA - PD (affine sprites only)
-      state.matrix[step - 2] = FetchOAM<s16>(cycle, oam_fetch.address);
+      drawer_state.matrix[step - 2] = FetchOAM<s16>(cycle, oam_fetch.address);
       
       oam_fetch.address += 8U;
 
       if(++oam_fetch.step == 6) {
-        Submit(state.half_width * 2 - 1);
+        Submit(drawer_state.half_width * 2 - 1);
       }
       break;
     }
@@ -242,19 +242,19 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
     return;
   }
 
-  auto& state = sprite.state[sprite.state_rd];
+  auto& drawer_state = sprite.drawer_state[sprite.state_rd];
 
-  if(!state.affine || !sprite.oam_fetch.delay_wait) {
-    const int pixels = state.affine ? 1 : 2;
+  if(!drawer_state.affine || !sprite.oam_fetch.delay_wait) {
+    const int pixels = drawer_state.affine ? 1 : 2;
 
     sprite.timestamp_vram_access = sprite.timestamp_init + sprite.cycle;
 
     for(int i = 0; i < pixels; i++) {
       // @todo
-      state.local_x++;
+      drawer_state.local_x++;
     }
 
-    if(state.local_x >= state.half_width) {
+    if(drawer_state.local_x >= drawer_state.half_width) {
       sprite.drawing = false;
     }
   }
