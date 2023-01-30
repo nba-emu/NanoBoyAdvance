@@ -263,12 +263,12 @@ private:
     u64 timestamp_oam_access = ~0ULL;
     uint cycle;
     uint vcount;
-    uint index;
 
     struct {
-      int step;
+      uint index;
+      int  step;
       uint address;
-      int wait;
+      int  wait;
       bool delay_wait;
     } oam_fetch;
 

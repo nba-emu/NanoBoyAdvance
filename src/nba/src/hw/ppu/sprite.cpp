@@ -48,13 +48,12 @@ void PPU::InitSprite() {
   sprite.timestamp_last_sync = timestamp_now;
   sprite.cycle = 0U;
   sprite.vcount = vcount;
-  sprite.index = 0U;
 
+  sprite.oam_fetch.index = 0U;
   sprite.oam_fetch.step = 0;
   sprite.oam_fetch.wait = 0;
   sprite.oam_fetch.delay_wait = false;
   sprite.drawing = false;
-
   sprite.state_rd = 0;
   sprite.state_wr = 1;
 
@@ -111,16 +110,29 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
 
   auto& state = sprite.state[sprite.state_wr];
 
+  const auto Submit = [&](int wait) {
+    // Swap the draw states and engage the drawer unit.
+    sprite.state_rd ^= 1;
+    sprite.state_wr ^= 1;
+    sprite.drawing = true;
+
+    // Start fetching the next OAM entry
+    oam_fetch.index++;
+    oam_fetch.step = 0;
+    oam_fetch.wait = wait;
+    oam_fetch.delay_wait = true;
+  };
+
   const int step = oam_fetch.step;
 
   switch(step) {
     case 0: { // Fetch Attribute #0 and #1 
-      // @todo: solve this in a cleaner way?
-      if(sprite.index >= 128U) {
+      if(oam_fetch.index == 128U) {
+        oam_fetch.step = 6; // we are done!
         break;
       }
 
-      const u32 attr01 = FetchOAM<u32>(cycle, sprite.index * 8U);
+      const u32 attr01 = FetchOAM<u32>(cycle, oam_fetch.index * 8U);
 
       bool active = false;
 
@@ -186,12 +198,12 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
       if(active) {
         oam_fetch.step = 1;
       } else {
-        sprite.index++;
+        oam_fetch.index++;
       }
       break;
     }
     case 1: { // Fetch Attribute #2
-      const u16 attr2 = FetchOAM<u16>(cycle, sprite.index * 8U + 4U);
+      const u16 attr2 = FetchOAM<u16>(cycle, oam_fetch.index * 8U + 4U);
 
       state.tile_number = attr2 & 0x3FF;
       state.priority = (attr2 >> 10) & 3;
@@ -205,13 +217,7 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
         state.matrix[2] = 0;
         state.matrix[3] = 0x100;
 
-        oam_fetch.step = 0;
-        oam_fetch.wait = state.half_width - 2;
-        oam_fetch.delay_wait = true;
-        sprite.drawing = true;
-        sprite.index++;
-        sprite.state_rd ^= 1;
-        sprite.state_wr ^= 1;
+        Submit(state.half_width - 2);
       }
       break;
     }
@@ -224,13 +230,7 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
       oam_fetch.address += 8U;
 
       if(++oam_fetch.step == 6) {
-        oam_fetch.step = 0;
-        oam_fetch.wait = state.half_width * 2 - 1;
-        oam_fetch.delay_wait = true;
-        sprite.drawing = true;
-        sprite.index++;
-        sprite.state_rd ^= 1;
-        sprite.state_wr ^= 1;
+        Submit(state.half_width * 2 - 1);
       }
       break;
     }
