@@ -289,12 +289,15 @@ private:
 
       s16 matrix[4];
 
-      int tile_number;
+      uint tile_number;
       int priority;
-      int palette;
+      uint palette;
       bool flip_h;
       bool flip_v;
       bool is_256;
+
+      int texture_x;
+      int texture_y;
     } drawer_state[2];
 
     int state_rd;
@@ -324,9 +327,19 @@ private:
 
   template<typename T>
   auto ALWAYS_INLINE FetchOAM(uint cycle, uint address) -> T {
-    T value = read<T>(oam, address);
     sprite.timestamp_oam_access = sprite.timestamp_init + cycle;
-    return value;
+    return read<T>(oam, address);
+  }
+
+  template<typename T>
+  auto ALWAYS_INLINE FetchVRAM_OBJ(uint cycle, uint address) -> T {
+    sprite.timestamp_vram_access = sprite.timestamp_init + sprite.cycle;
+
+    // @todo: verify this edge-case against hardware.
+    if(address < GetSpriteVRAMBoundary()) {
+      return 0U;
+    }
+    return read<T>(vram, address);
   }
 
   u8 pram[0x00400];

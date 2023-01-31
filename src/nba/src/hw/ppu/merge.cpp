@@ -91,6 +91,9 @@ void PPU::DrawMergeImpl(int cycles) {
         }
       }
 
+      // @todo: figure out why the if-statement is necessary?
+      if(sprite.buffer_rd) final_color = sprite.buffer_rd[x];
+
       output[frame][mmio.vcount * 240 + x] = RGB555(read<u16>(pram, final_color << 1));
     }
 

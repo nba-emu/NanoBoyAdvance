@@ -167,6 +167,12 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
             }
           }
 
+          // X and Y from OAM data are the top-left corner coordinate
+          // Except for affine sprites, when the double-size feature is used,
+          // the real top-left coordinate is at (X - Width/2, Y - Height/2)
+          // Our screen-space X values range from X to X + Width - 1,
+          // except in double-size mode when it is X - Width/2 to X + Width/2 - 1.
+
           const int center_x = x + half_width;
           const int center_y = y + half_height;
           const int local_y = (sprite.vcount + 1) % 228 - center_y;
@@ -205,18 +211,13 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
     case 1: { // Fetch Attribute #2
       const u16 attr2 = FetchOAM<u16>(cycle, oam_fetch.index * 8U + 4U);
 
-      drawer_state.tile_number = attr2 & 0x3FF;
+      drawer_state.tile_number = attr2 & 0x3FFU;
       drawer_state.priority = (attr2 >> 10) & 3;
-      drawer_state.palette = (attr2 >> 12) + 16;
+      drawer_state.palette = (attr2 >> 12) + 16U;
 
       if(drawer_state.affine) {
         oam_fetch.step = 2;
       } else {
-        drawer_state.matrix[0] = 0x100;
-        drawer_state.matrix[1] = 0;
-        drawer_state.matrix[2] = 0;
-        drawer_state.matrix[3] = 0x100;
-
         Submit(drawer_state.half_width - 2);
       }
       break;
@@ -230,6 +231,13 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
       oam_fetch.address += 8U;
 
       if(++oam_fetch.step == 6) {
+        const int x0 = -drawer_state.half_width;
+        const int y0 =  drawer_state.local_y;
+
+        // @todo: document why the '<< 7' shift is required
+        drawer_state.texture_x = (drawer_state.matrix[0] * x0 + drawer_state.matrix[1] * y0) + (drawer_state.width  << 7);
+        drawer_state.texture_y = (drawer_state.matrix[2] * x0 + drawer_state.matrix[3] * y0) + (drawer_state.height << 7);
+
         Submit(drawer_state.half_width * 2 - 1);
       }
       break;
@@ -244,18 +252,88 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
 
   auto& drawer_state = sprite.drawer_state[sprite.state_rd];
 
-  if(!drawer_state.affine || !sprite.oam_fetch.delay_wait) {
-    const int pixels = drawer_state.affine ? 1 : 2;
-
-    sprite.timestamp_vram_access = sprite.timestamp_init + sprite.cycle;
-
-    for(int i = 0; i < pixels; i++) {
-      // @todo
-      drawer_state.local_x++;
+  if(drawer_state.affine) {
+    if(sprite.oam_fetch.delay_wait) {
+      return;
     }
 
-    if(drawer_state.local_x >= drawer_state.half_width) {
+    const int x = drawer_state.x + drawer_state.local_x;
+    
+    const int width  = drawer_state.width;
+    const int height = drawer_state.height;
+
+    const int texture_x = drawer_state.texture_x >> 8;
+    const int texture_y = drawer_state.texture_y >> 8;
+
+    if(texture_x >= 0 && texture_x < width &&
+        texture_y >= 0 && texture_y < height) {
+
+      const int tile_x  = texture_x & 7;
+      const int tile_y  = texture_y & 7;
+      const int block_x = texture_x >> 3;
+      const int block_y = texture_y >> 3;
+
+      uint tile_number = drawer_state.tile_number;
+
+      uint color_index = 0U;
+
+      if(drawer_state.is_256) {
+        // @todo: can the OAM mapping be changed mid-scanline? what would that do?
+        if(mmio.dispcnt.oam_mapping_1d) {
+          tile_number = (tile_number + block_y * ((uint)width >> 2) + (block_x << 1)) & 0x3FFU;
+        } else {
+          tile_number = ((tile_number + (block_y << 5)) & 0x3E0U) | (((tile_number & ~1) + (block_x << 1)) & 0x1FU);
+        }
+
+        const uint address = 0x10000U + (tile_number << 5) + (tile_y << 3) + tile_x;
+
+        color_index = FetchVRAM_OBJ<u8>(cycle, address);
+
+        if(color_index > 0U) {
+          color_index |= 256U;
+        }
+      } else {
+        // @todo: can the OAM mapping be changed mid-scanline? what would that do?
+        if(mmio.dispcnt.oam_mapping_1d) {
+          tile_number = (tile_number + block_y * ((uint)width >> 3) + block_x) & 0x3FFU;
+        } else {
+          tile_number = ((tile_number + (block_y << 5)) & 0x3E0U) | ((tile_number + block_x) & 0x1FU);
+        }
+
+        const uint address = 0x10000U + (tile_number << 5) + (tile_y << 2) + (tile_x >> 1);
+        const u8 data = FetchVRAM_OBJ<u8>(cycle, address);
+
+        if(tile_x & 1U) {
+          color_index = data >> 4;
+        } else {
+          color_index = data & 15U;
+        }
+
+        if(color_index > 0U) {
+          color_index |= drawer_state.palette << 4;
+        }
+      }
+
+      if(color_index > 0U && x >= 0 && x < 240) {
+        sprite.buffer_wr[x] = color_index;
+      }
+    }
+  
+    drawer_state.texture_x += drawer_state.matrix[0];
+    drawer_state.texture_y += drawer_state.matrix[2];
+
+    if(++drawer_state.local_x == drawer_state.half_width) {
       sprite.drawing = false;
+    }
+  } else {
+    for(int i = 0; i < 2; i++) {
+      const int x = drawer_state.x + drawer_state.local_x;
+
+      if(x >= 0 && x < 240) sprite.buffer_wr[x] = 1;
+
+      if(++drawer_state.local_x == drawer_state.half_width) {
+        sprite.drawing = false;
+      }
     }
   }
 }
