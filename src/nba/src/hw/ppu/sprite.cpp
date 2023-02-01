@@ -167,20 +167,18 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
             }
           }
 
-          // X and Y from OAM data are the top-left corner coordinate
-          // Except for affine sprites, when the double-size feature is used,
-          // the real top-left coordinate is at (X - Width/2, Y - Height/2)
-          // Our screen-space X values range from X to X + Width - 1,
-          // except in double-size mode when it is X - Width/2 to X + Width/2 - 1.
+          // @todo: this can be precalculated at the start of the scanline
+          // @todo: implement vertical sprite mosaic
+          const int line = (sprite.vcount + 1) % 228;
 
           const int center_x = x + half_width;
           const int center_y = y + half_height;
-          const int local_y = (sprite.vcount + 1) % 228 - center_y;
+          const int local_y = line - center_y;
 
           if(local_y >= -half_height && local_y < half_height) {
             active = true;
 
-            // @todo: sprite mosaic
+            // @todo: decode the mosaic bit
             drawer_state.x = center_x;
             drawer_state.y = center_y;
             drawer_state.width = width;
@@ -192,11 +190,22 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
             drawer_state.local_x = -half_width;
             drawer_state.local_y = local_y;
 
+            // @todo: only calculate flip_h for non-affine sprites
             drawer_state.flip_h = !affine && (attr01 & (1 << 28));
-            drawer_state.flip_v = !affine && (attr01 & (1 << 29));
             drawer_state.is_256 = (attr01 >> 13) & 1;
 
             oam_fetch.address = (((attr01 >> 25) & 31U) * 32U) + 6U;
+
+            if(!affine) {
+              const bool flip_v = attr01 & (1 << 29);
+
+              drawer_state.texture_x = 0;
+              drawer_state.texture_y = line - y;
+
+              if(flip_v) {
+                drawer_state.texture_y ^= height - 1;
+              }
+            }
           }
         }
       }
@@ -252,6 +261,29 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
 
   auto& drawer_state = sprite.drawer_state[sprite.state_rd];
 
+  const int width  = drawer_state.width;
+  const int height = drawer_state.height;
+
+  const uint base_tile = drawer_state.tile_number;
+
+  const auto CalculateTileNumber4BPP = [&](int block_x, int block_y) -> uint {
+    // @todo: can the OAM mapping be changed mid-scanline? what would that do?
+    if(mmio.dispcnt.oam_mapping_1d) {
+      return (base_tile + block_y * ((uint)width >> 3) + block_x) & 0x3FFU;
+    }
+
+    return ((base_tile + (block_y << 5)) & 0x3E0U) | ((base_tile + block_x) & 0x1FU);
+  };
+
+  const auto CalculateTileNumber8BPP = [&](int block_x, int block_y) -> uint {
+    // @todo: can the OAM mapping be changed mid-scanline? what would that do?
+    if(mmio.dispcnt.oam_mapping_1d) {
+      return (base_tile + block_y * ((uint)width >> 2) + (block_x << 1)) & 0x3FFU;
+    }
+
+    return ((base_tile + (block_y << 5)) & 0x3E0U) | (((base_tile & ~1) + (block_x << 1)) & 0x1FU);
+  };
+
   if(drawer_state.affine) {
     if(sprite.oam_fetch.delay_wait) {
       return;
@@ -259,32 +291,21 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
 
     const int x = drawer_state.x + drawer_state.local_x;
     
-    const int width  = drawer_state.width;
-    const int height = drawer_state.height;
-
     const int texture_x = drawer_state.texture_x >> 8;
     const int texture_y = drawer_state.texture_y >> 8;
 
     if(texture_x >= 0 && texture_x < width &&
-        texture_y >= 0 && texture_y < height) {
+       texture_y >= 0 && texture_y < height) {
 
       const int tile_x  = texture_x & 7;
       const int tile_y  = texture_y & 7;
       const int block_x = texture_x >> 3;
       const int block_y = texture_y >> 3;
 
-      uint tile_number = drawer_state.tile_number;
-
       uint color_index = 0U;
 
       if(drawer_state.is_256) {
-        // @todo: can the OAM mapping be changed mid-scanline? what would that do?
-        if(mmio.dispcnt.oam_mapping_1d) {
-          tile_number = (tile_number + block_y * ((uint)width >> 2) + (block_x << 1)) & 0x3FFU;
-        } else {
-          tile_number = ((tile_number + (block_y << 5)) & 0x3E0U) | (((tile_number & ~1) + (block_x << 1)) & 0x1FU);
-        }
-
+        const uint tile_number = CalculateTileNumber8BPP(block_x, block_y);
         const uint address = 0x10000U + (tile_number << 5) + (tile_y << 3) + tile_x;
 
         color_index = FetchVRAM_OBJ<u8>(cycle, address);
@@ -293,13 +314,7 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
           color_index |= 256U;
         }
       } else {
-        // @todo: can the OAM mapping be changed mid-scanline? what would that do?
-        if(mmio.dispcnt.oam_mapping_1d) {
-          tile_number = (tile_number + block_y * ((uint)width >> 3) + block_x) & 0x3FFU;
-        } else {
-          tile_number = ((tile_number + (block_y << 5)) & 0x3E0U) | ((tile_number + block_x) & 0x1FU);
-        }
-
+        const uint tile_number = CalculateTileNumber4BPP(block_x, block_y);
         const uint address = 0x10000U + (tile_number << 5) + (tile_y << 2) + (tile_x >> 1);
         const u8 data = FetchVRAM_OBJ<u8>(cycle, address);
 
@@ -326,15 +341,70 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
       sprite.drawing = false;
     }
   } else {
+    const bool flip_h = drawer_state.flip_h;
+
+    const int texture_x = drawer_state.texture_x ^ (flip_h ? (width - 1) : 0);
+    const int texture_y = drawer_state.texture_y;
+
+    const int tile_x  = texture_x & 7;
+    const int tile_y  = texture_y & 7;
+    const int block_x = texture_x >> 3;
+    const int block_y = texture_y >> 3;
+
+    uint color_indices[2] {0, 0};
+
+    uint palette;
+
+    if(drawer_state.is_256) {
+      const uint tile_number = CalculateTileNumber8BPP(block_x, block_y);
+      const uint address = 0x10000U + (tile_number << 5) + (tile_y << 3) + tile_x;
+      const u16 data = FetchVRAM_OBJ<u16>(cycle, address);
+
+      if(flip_h) {
+        color_indices[0] = data >> 8;
+        color_indices[1] = data & 0xFFU;
+      } else {
+        color_indices[0] = data & 0xFFU;
+        color_indices[1] = data >> 8;
+      }
+
+      palette = 256U;
+    } else {
+      const uint tile_number = CalculateTileNumber4BPP(block_x, block_y);
+      const uint address = 0x10000U + (tile_number << 5) + (tile_y << 2) + (tile_x >> 1);
+      const u8 data = FetchVRAM_OBJ<u8>(cycle, address);
+
+      if(flip_h) {
+        color_indices[0] = data >> 4;
+        color_indices[1] = data & 15U;
+      } else {
+        color_indices[0] = data & 15U;
+        color_indices[1] = data >> 4;
+      }
+
+      palette = drawer_state.palette << 4;
+    }
+
+    // @todo: try to optimize this a bit.
     for(int i = 0; i < 2; i++) {
       const int x = drawer_state.x + drawer_state.local_x;
 
-      if(x >= 0 && x < 240) sprite.buffer_wr[x] = 1;
+      uint color_index = color_indices[i];
+
+      if(color_index > 0U) {
+        color_index |= palette;
+      }
+
+      if(x >= 0 && x < 240 && color_index > 0U) {
+        sprite.buffer_wr[x] = color_index;
+      }
 
       if(++drawer_state.local_x == drawer_state.half_width) {
         sprite.drawing = false;
       }
     }
+
+    drawer_state.texture_x += 2;
   }
 }
 
