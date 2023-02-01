@@ -190,14 +190,14 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
             drawer_state.local_x = -half_width;
             drawer_state.local_y = local_y;
 
-            // @todo: only calculate flip_h for non-affine sprites
-            drawer_state.flip_h = !affine && (attr01 & (1 << 28));
             drawer_state.is_256 = (attr01 >> 13) & 1;
 
             oam_fetch.address = (((attr01 >> 25) & 31U) * 32U) + 6U;
 
             if(!affine) {
               const bool flip_v = attr01 & (1 << 29);
+
+              drawer_state.flip_h = attr01 & (1 << 28);
 
               drawer_state.texture_x = 0;
               drawer_state.texture_y = line - y;
@@ -284,6 +284,14 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
     return ((base_tile + (block_y << 5)) & 0x3E0U) | (((base_tile & ~1) + (block_x << 1)) & 0x1FU);
   };
 
+  const auto CalculateAddress4BPP = [&](uint tile, int tile_x, int tile_y) -> uint {
+    return 0x10000U + (tile << 5) + (tile_y << 2) + (tile_x >> 1);
+  };
+
+  const auto CalculateAddress8BPP = [&](uint tile, int tile_x, int tile_y) -> uint {
+    return 0x10000U + (tile << 5) + (tile_y << 3) + tile_x;
+  };
+
   if(drawer_state.affine) {
     if(sprite.oam_fetch.delay_wait) {
       return;
@@ -305,18 +313,16 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
       uint color_index = 0U;
 
       if(drawer_state.is_256) {
-        const uint tile_number = CalculateTileNumber8BPP(block_x, block_y);
-        const uint address = 0x10000U + (tile_number << 5) + (tile_y << 3) + tile_x;
+        const uint tile = CalculateTileNumber8BPP(block_x, block_y);
 
-        color_index = FetchVRAM_OBJ<u8>(cycle, address);
+        color_index = FetchVRAM_OBJ<u8>(cycle, CalculateAddress8BPP(tile, tile_x, tile_y));
 
         if(color_index > 0U) {
           color_index |= 256U;
         }
       } else {
-        const uint tile_number = CalculateTileNumber4BPP(block_x, block_y);
-        const uint address = 0x10000U + (tile_number << 5) + (tile_y << 2) + (tile_x >> 1);
-        const u8 data = FetchVRAM_OBJ<u8>(cycle, address);
+        const uint tile = CalculateTileNumber4BPP(block_x, block_y);
+        const u8 data = FetchVRAM_OBJ<u8>(cycle, CalculateAddress4BPP(tile, tile_x, tile_y));
 
         if(tile_x & 1U) {
           color_index = data >> 4;
@@ -351,14 +357,12 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
     const int block_x = texture_x >> 3;
     const int block_y = texture_y >> 3;
 
+    uint palette;
     uint color_indices[2] {0, 0};
 
-    uint palette;
-
     if(drawer_state.is_256) {
-      const uint tile_number = CalculateTileNumber8BPP(block_x, block_y);
-      const uint address = 0x10000U + (tile_number << 5) + (tile_y << 3) + tile_x;
-      const u16 data = FetchVRAM_OBJ<u16>(cycle, address);
+      const uint tile = CalculateTileNumber8BPP(block_x, block_y);
+      const u16 data = FetchVRAM_OBJ<u16>(cycle, CalculateAddress8BPP(tile, tile_x, tile_y));
 
       if(flip_h) {
         color_indices[0] = data >> 8;
@@ -370,9 +374,8 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
 
       palette = 256U;
     } else {
-      const uint tile_number = CalculateTileNumber4BPP(block_x, block_y);
-      const uint address = 0x10000U + (tile_number << 5) + (tile_y << 2) + (tile_x >> 1);
-      const u8 data = FetchVRAM_OBJ<u8>(cycle, address);
+      const uint tile = CalculateTileNumber4BPP(block_x, block_y);
+      const u8 data = FetchVRAM_OBJ<u8>(cycle, CalculateAddress4BPP(tile, tile_x, tile_y));
 
       if(flip_h) {
         color_indices[0] = data >> 4;
