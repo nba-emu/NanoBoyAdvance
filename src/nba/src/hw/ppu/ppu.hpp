@@ -290,10 +290,9 @@ private:
       s16 matrix[4];
 
       uint tile_number;
-      int priority;
+      uint priority;
       uint palette;
       bool flip_h;
-      bool flip_v;
       bool is_256;
 
       int texture_x;
@@ -303,9 +302,20 @@ private:
     int state_rd;
     int state_wr;
 
-    u32 buffer[2][240];
-    u32* buffer_rd;
-    u32* buffer_wr;
+    union Pixel {
+      struct {
+        u8 color : 8;
+        unsigned priority : 2;
+        unsigned alpha  : 1;
+        unsigned window : 1;
+        unsigned mosaic : 1;
+      };
+      u16 data;
+    };
+
+    Pixel buffer[2][240];
+    Pixel* buffer_rd;
+    Pixel* buffer_wr;
   } sprite;
 
   void InitSprite();

@@ -60,7 +60,7 @@ void PPU::InitSprite() {
   sprite.buffer_rd = sprite.buffer[ vcount & 1];
   sprite.buffer_wr = sprite.buffer[(vcount & 1) ^ 1];
 
-  std::memset(sprite.buffer_wr, 0, sizeof(u32) * 240);
+  std::memset(sprite.buffer_wr, 0, sizeof(Sprite::Pixel) * 240);
 }
 
 void PPU::DrawSprite() {
@@ -221,8 +221,8 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
       const u16 attr2 = FetchOAM<u16>(cycle, oam_fetch.index * 8U + 4U);
 
       drawer_state.tile_number = attr2 & 0x3FFU;
-      drawer_state.priority = (attr2 >> 10) & 3;
-      drawer_state.palette = (attr2 >> 12) + 16U;
+      drawer_state.priority = (attr2 >> 10) & 3U;
+      drawer_state.palette = attr2 >> 12;
 
       if(drawer_state.affine) {
         oam_fetch.step = 2;
@@ -292,6 +292,26 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
     return 0x10000U + (tile << 5) + (tile_y << 3) + tile_x;
   };
 
+  const auto Plot = [&](int x, uint color) {
+    if(x < 0 || x >= 240) return;
+
+    auto& pixel = sprite.buffer_wr[x];
+
+    const bool opaque = color != 0U;
+
+    if(drawer_state.mode == OBJ_WINDOW) {
+      if(opaque) pixel.window = 1;
+    } else if(drawer_state.priority < pixel.priority || pixel.color == 0U) {
+      if(opaque) {
+        pixel.color = color;
+        pixel.alpha = (drawer_state.mode == OBJ_SEMI) ? 1U : 0U;
+      }
+
+      pixel.mosaic = 0; // @todo
+      pixel.priority = drawer_state.priority;
+    }
+  };
+
   if(drawer_state.affine) {
     if(sprite.oam_fetch.delay_wait) {
       return;
@@ -316,10 +336,6 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
         const uint tile = CalculateTileNumber8BPP(block_x, block_y);
 
         color_index = FetchVRAM_OBJ<u8>(cycle, CalculateAddress8BPP(tile, tile_x, tile_y));
-
-        if(color_index > 0U) {
-          color_index |= 256U;
-        }
       } else {
         const uint tile = CalculateTileNumber4BPP(block_x, block_y);
         const u8 data = FetchVRAM_OBJ<u8>(cycle, CalculateAddress4BPP(tile, tile_x, tile_y));
@@ -335,9 +351,7 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
         }
       }
 
-      if(color_index > 0U && x >= 0 && x < 240) {
-        sprite.buffer_wr[x] = color_index;
-      }
+      Plot(x, color_index);
     }
   
     drawer_state.texture_x += drawer_state.matrix[0];
@@ -372,7 +386,7 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
         color_indices[1] = data >> 8;
       }
 
-      palette = 256U;
+      palette = 0U;
     } else {
       const uint tile = CalculateTileNumber4BPP(block_x, block_y);
       const u8 data = FetchVRAM_OBJ<u8>(cycle, CalculateAddress4BPP(tile, tile_x, tile_y));
@@ -398,9 +412,7 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
         color_index |= palette;
       }
 
-      if(x >= 0 && x < 240 && color_index > 0U) {
-        sprite.buffer_wr[x] = color_index;
-      }
+      Plot(x, color_index);
 
       if(++drawer_state.local_x == drawer_state.half_width) {
         sprite.drawing = false;

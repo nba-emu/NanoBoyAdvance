@@ -81,6 +81,7 @@ void PPU::DrawMergeImpl(int cycles) {
       const uint x = (uint)cycle >> 2;
 
       uint final_color = 0U;
+      uint priority = 3U;
 
       for(int i = 0; i < bg_count; i++) {
         const int id = bg_list[i];
@@ -88,11 +89,17 @@ void PPU::DrawMergeImpl(int cycles) {
 
         if(color != 0U) {
           final_color = color;
+          priority = (uint)mmio.bgcnt[id].priority;
         }
       }
 
-      // @todo: figure out why the if-statement is necessary?
-      if(sprite.buffer_rd) final_color = sprite.buffer_rd[x];
+      if(mmio.dispcnt.enable[LAYER_OBJ]) {
+        auto& pixel = sprite.buffer_rd[x];
+
+        if(pixel.color != 0U && pixel.priority <= priority) {
+          final_color = (uint)pixel.color | 256U;
+        }
+      }
 
       output[frame][mmio.vcount * 240 + x] = RGB555(read<u16>(pram, final_color << 1));
     }
