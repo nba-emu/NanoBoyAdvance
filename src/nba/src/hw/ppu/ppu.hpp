@@ -267,27 +267,25 @@ private:
     struct {
       uint index;
       int  step;
-      uint address;
       int  wait;
+      int  pending_wait;
       bool delay_wait;
+      int  initial_local_x;
+      int  initial_local_y;
+      uint matrix_address;
     } oam_fetch;
 
     bool drawing;
 
     struct {
-      s32 x;
-      s32 y;
       int width;
       int height;
-      int half_width;
-      int half_height;
       int mode;
       bool mosaic;
       bool affine;
 
       int draw_x;
       int remaining_pixels;
-      int local_y;
 
       s16 matrix[4];
 

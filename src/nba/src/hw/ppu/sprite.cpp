@@ -110,7 +110,7 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
 
   auto& drawer_state = sprite.drawer_state[sprite.state_wr];
 
-  const auto Submit = [&](int wait) {
+  const auto Submit = [&]() {
     // Swap the draw states and engage the drawer unit.
     sprite.state_rd ^= 1;
     sprite.state_wr ^= 1;
@@ -119,7 +119,7 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
     // Start fetching the next OAM entry
     oam_fetch.index++;
     oam_fetch.step = 0;
-    oam_fetch.wait = wait;
+    oam_fetch.wait = oam_fetch.pending_wait;
     oam_fetch.delay_wait = true;
   };
 
@@ -176,25 +176,15 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
           const int local_y = line - center_y;
 
           if(local_y >= -half_height && local_y < half_height) {
-            active = true;
-
-            // @todo: decode the mosaic bit
-            drawer_state.x = center_x;
-            drawer_state.y = center_y;
             drawer_state.width = width;
             drawer_state.height = height;
-            drawer_state.half_width = half_width;
-            drawer_state.half_height = half_height;
             drawer_state.mode = mode;
             drawer_state.mosaic = attr01 & (1 << 12);
             drawer_state.affine = affine;
             drawer_state.draw_x = x;
             drawer_state.remaining_pixels = half_width << 1;
-            drawer_state.local_y = local_y;
-
+       
             drawer_state.is_256 = (attr01 >> 13) & 1;
-
-            oam_fetch.address = (((attr01 >> 25) & 31U) * 32U) + 6U;
 
             if(!affine) {
               const bool flip_v = attr01 & (1 << 29);
@@ -207,7 +197,16 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
               if(flip_v) {
                 drawer_state.texture_y ^= height - 1;
               }
+
+              oam_fetch.pending_wait = half_width - 2;
+            } else {
+              oam_fetch.initial_local_x = -half_width;
+              oam_fetch.initial_local_y = local_y;
+              oam_fetch.pending_wait = half_width * 2 - 1;
+              oam_fetch.matrix_address = (((attr01 >> 25) & 31U) * 32U) + 6U;
             }
+
+            active = true;
           }
         }
       }
@@ -229,7 +228,7 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
       if(drawer_state.affine) {
         oam_fetch.step = 2;
       } else {
-        Submit(drawer_state.half_width - 2);
+        Submit();
       }
       break;
     }
@@ -237,19 +236,19 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
     case 3:
     case 4:
     case 5: { // Fetch matrix components PA - PD (affine sprites only)
-      drawer_state.matrix[step - 2] = FetchOAM<s16>(cycle, oam_fetch.address);
+      drawer_state.matrix[step - 2] = FetchOAM<s16>(cycle, oam_fetch.matrix_address);
       
-      oam_fetch.address += 8U;
+      oam_fetch.matrix_address += 8U;
 
       if(++oam_fetch.step == 6) {
-        const int x0 = -drawer_state.half_width;
-        const int y0 =  drawer_state.local_y;
+        const int x0 = oam_fetch.initial_local_x;
+        const int y0 = oam_fetch.initial_local_y;
 
         // @todo: document why the '<< 7' shift is required
         drawer_state.texture_x = (drawer_state.matrix[0] * x0 + drawer_state.matrix[1] * y0) + (drawer_state.width  << 7);
         drawer_state.texture_y = (drawer_state.matrix[2] * x0 + drawer_state.matrix[3] * y0) + (drawer_state.height << 7);
 
-        Submit(drawer_state.half_width * 2 - 1);
+        Submit();
       }
       break;
     }
@@ -413,11 +412,13 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
       }
 
       Plot(x, color_index);
-
-      if(--drawer_state.remaining_pixels == 0) sprite.drawing = false;
     }
 
     drawer_state.texture_x += 2;
+    
+    drawer_state.remaining_pixels -= 2;
+
+    if(drawer_state.remaining_pixels == 0) sprite.drawing = false;
   }
 }
 
