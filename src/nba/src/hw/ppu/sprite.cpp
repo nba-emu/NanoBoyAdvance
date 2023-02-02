@@ -318,8 +318,6 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
       return;
     }
 
-    const int x = drawer_state.draw_x++;
-    
     const int texture_x = drawer_state.texture_x >> 8;
     const int texture_y = drawer_state.texture_y >> 8;
 
@@ -352,9 +350,11 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
         }
       }
 
-      Plot(x, color_index);
+      Plot(drawer_state.draw_x, color_index);
     }
   
+    drawer_state.draw_x++;
+
     drawer_state.texture_x += drawer_state.matrix[0];
     drawer_state.texture_y += drawer_state.matrix[2];
 
@@ -401,17 +401,14 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
       palette = drawer_state.palette << 4;
     }
 
-    // @todo: try to optimize this a bit.
     for(int i = 0; i < 2; i++) {
-      const int x = drawer_state.draw_x++;
-
       uint color_index = color_indices[i];
 
       if(color_index > 0U) {
         color_index |= palette;
       }
 
-      Plot(x, color_index);
+      Plot(drawer_state.draw_x++, color_index);
     }
 
     drawer_state.texture_x += 2;
