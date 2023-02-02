@@ -282,6 +282,7 @@ private:
       int half_width;
       int half_height;
       int mode;
+      bool mosaic;
       bool affine;
 
       int local_x;

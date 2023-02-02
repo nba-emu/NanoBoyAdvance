@@ -186,6 +186,7 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
             drawer_state.half_width = half_width;
             drawer_state.half_height = half_height;
             drawer_state.mode = mode;
+            drawer_state.mosaic = attr0 & (1 << 12);
             drawer_state.affine = affine;
             drawer_state.local_x = -half_width;
             drawer_state.local_y = local_y;
@@ -307,7 +308,7 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
         pixel.alpha = (drawer_state.mode == OBJ_SEMI) ? 1U : 0U;
       }
 
-      pixel.mosaic = 0; // @todo
+      pixel.mosaic = drawer_state.mosaic ? 1U : 0U;
       pixel.priority = drawer_state.priority;
     }
   };
