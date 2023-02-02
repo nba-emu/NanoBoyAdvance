@@ -285,7 +285,8 @@ private:
       bool mosaic;
       bool affine;
 
-      int local_x;
+      int draw_x;
+      int remaining_pixels;
       int local_y;
 
       s16 matrix[4];

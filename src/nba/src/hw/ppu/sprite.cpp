@@ -186,9 +186,10 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
             drawer_state.half_width = half_width;
             drawer_state.half_height = half_height;
             drawer_state.mode = mode;
-            drawer_state.mosaic = attr0 & (1 << 12);
+            drawer_state.mosaic = attr01 & (1 << 12);
             drawer_state.affine = affine;
-            drawer_state.local_x = -half_width;
+            drawer_state.draw_x = x;
+            drawer_state.remaining_pixels = half_width << 1;
             drawer_state.local_y = local_y;
 
             drawer_state.is_256 = (attr01 >> 13) & 1;
@@ -318,7 +319,7 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
       return;
     }
 
-    const int x = drawer_state.x + drawer_state.local_x;
+    const int x = drawer_state.draw_x++;
     
     const int texture_x = drawer_state.texture_x >> 8;
     const int texture_y = drawer_state.texture_y >> 8;
@@ -358,9 +359,7 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
     drawer_state.texture_x += drawer_state.matrix[0];
     drawer_state.texture_y += drawer_state.matrix[2];
 
-    if(++drawer_state.local_x == drawer_state.half_width) {
-      sprite.drawing = false;
-    }
+    if(--drawer_state.remaining_pixels == 0) sprite.drawing = false;
   } else {
     const bool flip_h = drawer_state.flip_h;
 
@@ -405,7 +404,7 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
 
     // @todo: try to optimize this a bit.
     for(int i = 0; i < 2; i++) {
-      const int x = drawer_state.x + drawer_state.local_x;
+      const int x = drawer_state.draw_x++;
 
       uint color_index = color_indices[i];
 
@@ -415,9 +414,7 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
 
       Plot(x, color_index);
 
-      if(++drawer_state.local_x == drawer_state.half_width) {
-        sprite.drawing = false;
-      }
+      if(--drawer_state.remaining_pixels == 0) sprite.drawing = false;
     }
 
     drawer_state.texture_x += 2;
