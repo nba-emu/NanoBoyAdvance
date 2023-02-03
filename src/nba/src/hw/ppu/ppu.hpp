@@ -336,20 +336,26 @@ private:
   void DrawMergeImpl(int cycles);
 
   template<typename T>
-  auto ALWAYS_INLINE FetchOAM(uint cycle, uint address) -> T {
-    sprite.timestamp_oam_access = sprite.timestamp_init + cycle;
-    return read<T>(oam, address);
+  auto ALWAYS_INLINE FetchVRAM_BG(uint cycle, uint address) -> T {
+    bg.timestamp_vram_access = bg.timestamp_init + cycle;
+    return read<T>(vram, address);
   }
 
   template<typename T>
   auto ALWAYS_INLINE FetchVRAM_OBJ(uint cycle, uint address) -> T {
-    sprite.timestamp_vram_access = sprite.timestamp_init + sprite.cycle;
+    sprite.timestamp_vram_access = sprite.timestamp_init + cycle;
 
     // @todo: verify this edge-case against hardware.
     if(address < GetSpriteVRAMBoundary()) {
       return 0U;
     }
     return read<T>(vram, address);
+  }
+
+  template<typename T>
+  auto ALWAYS_INLINE FetchOAM(uint cycle, uint address) -> T {
+    sprite.timestamp_oam_access = sprite.timestamp_init + cycle;
+    return read<T>(oam, address);
   }
 
   u8 pram[0x00400];
