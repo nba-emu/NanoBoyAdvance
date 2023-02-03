@@ -82,6 +82,12 @@ template<int mode> void PPU::DrawBackgroundImpl(int cycles) {
       }
     }
 
+    if constexpr(mode == 3 || mode == 4 || mode == 5) {
+      if(mmio.enable_bg[0][2] && (cycle & 3) == 3) {
+        FetchVRAM_BG<u16>(cycle, 0);
+      }
+    }
+
     // @todo: I don't think this is always correct, at least in text-mode.
     if(++bg.cycle == k_bg_cycle_limit) {
       break;

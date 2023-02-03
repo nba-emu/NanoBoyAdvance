@@ -339,6 +339,10 @@ private:
   void InitMerge();
   void DrawMerge();
   void DrawMergeImpl(int cycles);
+  
+  static auto Blend(u16 color_a, u16 color_b, int eva, int evb) -> u16;
+  static auto Brighten(u16 color, int evy) -> u16;
+  static auto Darken(u16 color, int evy) -> u16;
 
   template<typename T>
   auto ALWAYS_INLINE FetchPRAM(uint cycle, uint address) -> T {
