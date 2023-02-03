@@ -101,7 +101,7 @@ void PPU::DrawMergeImpl(int cycles) {
         }
       }
 
-      output[frame][mmio.vcount * 240 + x] = RGB555(read<u16>(pram, final_color << 1));
+      output[frame][mmio.vcount * 240 + x] = RGB555(FetchPRAM<u16>(merge.cycle, final_color << 1));
     }
 
     if(++merge.cycle == k_bg_cycle_limit) {

@@ -104,8 +104,7 @@ auto Bus::Read(u32 address, int access) -> T {
     }
     // PRAM (palette RAM)
     case 0x05: {
-      Step(is_u32 ? 2 : 1);
-      return hw.ppu.ReadPRAM<T>(Align<T>(address));
+      return ReadPRAM<T>(Align<T>(address));
     }
     // VRAM (video RAM)
     case 0x06: {
@@ -195,8 +194,7 @@ void Bus::Write(u32 address, int access, T value) {
     }
     // PRAM (palette RAM)
     case 0x05: {
-      Step(is_u32 ? 2 : 1);
-      hw.ppu.WritePRAM<T>(Align<T>(address), value);
+      WritePRAM<T>(Align<T>(address), value);
       break;
     }
     // VRAM (video RAM)

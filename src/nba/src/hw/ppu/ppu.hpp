@@ -121,6 +121,10 @@ struct PPU {
     }
   }
 
+  bool ALWAYS_INLINE DidAccessPRAM() noexcept {
+    return scheduler.GetTimestampNow() == merge.timestamp_pram_access + 1U;
+  }
+
   bool ALWAYS_INLINE DidAccessVRAM_BG() noexcept {
     return scheduler.GetTimestampNow() == bg.timestamp_vram_access;
   }
@@ -328,12 +332,19 @@ private:
   struct Merge {
     u64 timestamp_init = 0;
     u64 timestamp_last_sync = 0;
+    u64 timestamp_pram_access = 0;
     uint cycle;
   } merge;
 
   void InitMerge();
   void DrawMerge();
   void DrawMergeImpl(int cycles);
+
+  template<typename T>
+  auto ALWAYS_INLINE FetchPRAM(uint cycle, uint address) -> T {
+    merge.timestamp_pram_access = merge.timestamp_init + cycle;
+    return read<T>(pram, address);
+  }
 
   template<typename T>
   auto ALWAYS_INLINE FetchVRAM_BG(uint cycle, uint address) -> T {
