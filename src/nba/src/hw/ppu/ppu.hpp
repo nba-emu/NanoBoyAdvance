@@ -253,7 +253,7 @@ private:
       u16 tile_address;
     } affine[2];
 
-    u8 buffer[240][4];
+    u32 buffer[240][4];
   } bg;
 
   void InitBackground();

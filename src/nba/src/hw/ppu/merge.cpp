@@ -62,12 +62,12 @@ void PPU::DrawMergeImpl(int cycles) {
   const int min_bg = k_min_max_bg[mode][0];
   const int max_bg = k_min_max_bg[mode][1];
 
-  // Enabled BGs sorted from lowest to highest priority.
+  // Enabled BGs sorted from highest to lowest priority.
   int bg_list[4];
   int bg_count = 0;
 
-  for(int priority = 3; priority >= 0; priority--) {
-    for(int id = max_bg; id >= min_bg; id--) {
+  for(int priority = 0; priority <= 3; priority++) {
+    for(int id = min_bg; id <= max_bg; id++) {
       if(mmio.bgcnt[id].priority == priority &&
          mmio.enable_bg[0][id] &&
          mmio.dispcnt.enable[id]) {
@@ -82,28 +82,94 @@ void PPU::DrawMergeImpl(int cycles) {
     if(cycle >= 0 && (cycle & 3) == 0) {
       const uint x = (uint)cycle >> 2;
 
-      uint final_color = 0U;
-      uint priority = 3U;
+      int layers[2] {LAYER_BD, LAYER_BD};
+      u32 colors[2] {0U, 0U};
+      uint priorities[2] {3U, 3U};
 
-      for(int i = 0; i < bg_count; i++) {
-        const int id = bg_list[i];
-        const uint color = bg.buffer[x][id];
+      int bg_list_index = 0;
 
-        if(color != 0U) {
-          final_color = color;
-          priority = (uint)mmio.bgcnt[id].priority;
+      // @todo: avoid extracting the top two layers in cases where it is not necessary.
+      for(int j = 0; j < 2; j++) {
+        while(bg_list_index < bg_count) {
+          const int bg_id = bg_list[bg_list_index];
+          const u32 bg_color = bg.buffer[x][bg_id];
+
+          bg_list_index++;
+
+          if(bg_color != 0U) {
+            layers[j] = bg_id;
+            colors[j] = bg_color;
+            priorities[j] = (uint)mmio.bgcnt[bg_id].priority;
+            break;
+          }
         }
       }
+
+      bool is_alpha_obj = false;
 
       if(mmio.dispcnt.enable[LAYER_OBJ]) {
-        auto& pixel = sprite.buffer_rd[x];
+        const auto pixel = sprite.buffer_rd[x];
 
-        if(pixel.color != 0U && pixel.priority <= priority) {
-          final_color = (uint)pixel.color | 256U;
+        if(pixel.color != 0U) {
+          if(pixel.priority <= priorities[0]) {
+            // We do not care about the priority at this point, so we do not update it.
+            layers[1] = layers[0];
+            colors[1] = colors[0];
+            layers[0] = LAYER_OBJ;
+            colors[0] = pixel.color | 256U;
+
+            is_alpha_obj = pixel.alpha;
+          } else if(pixel.priority <= priorities[1]) {
+            // We do not care about the priority at this point, so we do not update it.
+            layers[1] = LAYER_OBJ;
+            colors[1] = pixel.color | 256U;
+          }
         }
       }
 
-      output[frame][mmio.vcount * 240 + x] = RGB555(FetchPRAM<u16>(merge.cycle, final_color << 1));
+      // @todo: make it clear what the meaning of 0x8000'0000 is.
+      if((colors[0] & 0x8000'0000) == 0) {
+        colors[0] = FetchPRAM<u16>(merge.cycle, colors[0] << 1);
+      }
+
+      // @todo: split into two cycles here
+
+      // @todo: make it clear what the meaning of 0x8000'0000 is.
+      // @todo: do not make this fetch unless it is necessary.
+      if((colors[1] & 0x8000'0000) == 0) {
+        colors[1] = FetchPRAM<u16>(merge.cycle, colors[1] << 1);
+      }
+
+      const bool have_src = mmio.bldcnt.targets[1][layers[1]];
+
+      if(is_alpha_obj && have_src) {
+        colors[0] = Blend(colors[0], colors[1], mmio.eva, mmio.evb);
+      } else if(true/*!window || win_layer_enable[LAYER_SFX]*/) {
+        const bool have_dst = mmio.bldcnt.targets[0][layers[0]];
+
+        switch(mmio.bldcnt.sfx) {
+          case BlendControl::SFX_BLEND: {
+            if(have_dst && have_src) {
+              colors[0] = Blend(colors[0], colors[1], mmio.eva, mmio.evb);
+            }
+            break;
+          }
+          case BlendControl::SFX_BRIGHTEN: {
+            if(have_dst) {
+              colors[0] = Brighten(colors[0], mmio.evy);
+            }
+            break;
+          }
+          case BlendControl::SFX_DARKEN: {
+            if(have_dst) {
+              colors[0] = Darken(colors[0], mmio.evy);
+            }
+            break;
+          }
+        }
+      }
+
+      output[frame][mmio.vcount * 240 + x] = RGB555(colors[0]);
     }
 
     if(++merge.cycle == k_bg_cycle_limit) {
