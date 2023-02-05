@@ -207,6 +207,27 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
             }
 
             active = true;
+
+            const int leftmost_x = center_x - half_width;
+
+            if(leftmost_x < 0) {
+              const int clip = -leftmost_x & (affine ? 0: ~1);
+
+              drawer_state.draw_x += clip;
+              drawer_state.remaining_pixels -= clip;
+
+              if(affine) {
+                oam_fetch.pending_wait -= clip;
+                oam_fetch.initial_local_x += clip;
+              } else {
+                oam_fetch.pending_wait -= clip >> 1;
+                drawer_state.texture_x += clip;
+              }
+
+              if(drawer_state.remaining_pixels <= 0) {
+                active = false;
+              }
+            }
           }
         }
       }
