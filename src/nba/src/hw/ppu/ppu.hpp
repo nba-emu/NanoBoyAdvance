@@ -138,8 +138,12 @@ struct PPU {
   }
 
   void Sync() {
+    // @todo: only update the window when it is necessary or else
+    // we will have a major performance caveat due to the window being updated 
+    // during V-blank and games typically updating graphics during V-blank.
     DrawBackground();
     DrawSprite();
+    DrawWindow();
     DrawMerge();
   }
 
@@ -328,6 +332,19 @@ private:
   void DrawSpriteFetchOAM(uint cycle);
   void DrawSpriteFetchVRAM(uint cycle);
   void StupidSpriteEventHandler(int cycles);
+
+  struct Window {
+    u64 timestamp_last_sync;
+    uint cycle;
+
+    bool v_flag[2] {false, false};
+    bool h_flag[2] {false, false};
+
+    bool buffer[240][2];
+  } window;
+
+  void InitWindow();
+  void DrawWindow();
 
   struct Merge {
     u64 timestamp_init = 0;

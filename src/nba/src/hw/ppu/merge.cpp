@@ -76,11 +76,33 @@ void PPU::DrawMergeImpl(int cycles) {
     }
   }
 
+  // @todo: should the OBJWIN be disabled if sprites are disabled?
+  const bool enable_win0 = mmio.dispcnt.enable[ENABLE_WIN0];
+  const bool enable_win1 = mmio.dispcnt.enable[ENABLE_WIN1];
+  const bool enable_objwin = mmio.dispcnt.enable[ENABLE_OBJWIN];
+
+  const bool have_windows = enable_win0 || enable_win1 || enable_objwin;
+
+  const int* win_layer_enable; // @todo: use bool
+
   for(int i = 0; i < cycles; i++) {
     const int cycle = (int)merge.cycle - 46;
 
     if(cycle >= 0 && (cycle & 3) == 0) {
       const uint x = (uint)cycle >> 2;
+
+      if(have_windows) {
+        // @todo: this probably can be optimized a bit
+        if(enable_win0 && window.buffer[x][0]) {
+          win_layer_enable = mmio.winin.enable[0];
+        } else if(enable_win1 && window.buffer[x][1]) {
+          win_layer_enable = mmio.winin.enable[1];
+        } else if(enable_objwin && sprite.buffer_rd[x].window) {
+          win_layer_enable = mmio.winout.enable[1];
+        } else {
+          win_layer_enable = mmio.winout.enable[0];
+        }
+      }
 
       int layers[2] {LAYER_BD, LAYER_BD};
       u32 colors[2] {0U, 0U};
@@ -92,22 +114,25 @@ void PPU::DrawMergeImpl(int cycles) {
       for(int j = 0; j < 2; j++) {
         while(bg_list_index < bg_count) {
           const int bg_id = bg_list[bg_list_index];
-          const u32 bg_color = bg.buffer[x][bg_id];
 
           bg_list_index++;
 
-          if(bg_color != 0U) {
-            layers[j] = bg_id;
-            colors[j] = bg_color;
-            priorities[j] = (uint)mmio.bgcnt[bg_id].priority;
-            break;
+          if(!have_windows || win_layer_enable[bg_id]) {
+            const u32 bg_color = bg.buffer[x][bg_id];
+
+            if(bg_color != 0U) {
+              layers[j] = bg_id;
+              colors[j] = bg_color;
+              priorities[j] = (uint)mmio.bgcnt[bg_id].priority;
+              break;
+            }
           }
         }
       }
 
       bool is_alpha_obj = false;
 
-      if(mmio.dispcnt.enable[LAYER_OBJ]) {
+      if(mmio.dispcnt.enable[LAYER_OBJ] && (!have_windows || win_layer_enable[LAYER_OBJ])) {
         const auto pixel = sprite.buffer_rd[x];
 
         if(pixel.color != 0U) {
@@ -144,7 +169,7 @@ void PPU::DrawMergeImpl(int cycles) {
 
       if(is_alpha_obj && have_src) {
         colors[0] = Blend(colors[0], colors[1], mmio.eva, mmio.evb);
-      } else if(true/*!window || win_layer_enable[LAYER_SFX]*/) {
+      } else if(!have_windows || win_layer_enable[LAYER_SFX]) {
         const bool have_dst = mmio.bldcnt.targets[0][layers[0]];
 
         switch(mmio.bldcnt.sfx) {

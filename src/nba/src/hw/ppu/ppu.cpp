@@ -74,8 +74,10 @@ void PPU::Reset() {
   // from a separate event loop.
   scheduler.Add(266, this, &PPU::StupidSpriteEventHandler);
 
+  // @todo: initialize window with the appropriate timing.
   bg = {};
   sprite = {};
+  window = {};
   merge = {};
 
   frame = 0;
@@ -219,6 +221,7 @@ void PPU::OnHblankComplete(int cycles_late) {
   auto& mosaic = mmio.mosaic;
 
   DrawBackground();
+  DrawWindow();
   DrawMerge();
 
   dispstat.hblank_flag = 0;
@@ -255,6 +258,8 @@ void PPU::OnHblankComplete(int cycles_late) {
     scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
     // ScheduleSubmitScanline();
   }
+
+  InitWindow();
 }
 
 void PPU::OnVblankScanlineComplete(int cycles_late) {
@@ -292,6 +297,8 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
   auto& vcount = mmio.vcount;
   auto& dispstat = mmio.dispstat;
 
+  DrawWindow();
+
   dispstat.hblank_flag = 0;
 
   if (vcount == 162) {
@@ -324,6 +331,8 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
   CheckVerticalCounterIRQ();
   // ScheduleSubmitScanline();
   UpdateVideoTransferDMA();
+
+  InitWindow();
 }
 
 } // namespace nba::core
