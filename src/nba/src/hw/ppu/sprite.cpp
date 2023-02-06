@@ -386,7 +386,7 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
     const int texture_x = drawer_state.texture_x ^ (flip_h ? (width - 1) : 0);
     const int texture_y = drawer_state.texture_y;
 
-    const int tile_x  = texture_x & 7;
+    const int tile_x  = texture_x & 7 & ~1;
     const int tile_y  = texture_y & 7;
     const int block_x = texture_x >> 3;
     const int block_y = texture_y >> 3;
