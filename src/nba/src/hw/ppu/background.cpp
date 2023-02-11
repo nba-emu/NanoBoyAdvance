@@ -82,9 +82,21 @@ template<int mode> void PPU::DrawBackgroundImpl(int cycles) {
       }
     }
 
-    if constexpr(mode == 3 || mode == 4 || mode == 5) {
-      if(mmio.enable_bg[0][2] && (cycle & 3) == 3) {
-        FetchVRAM_BG<u16>(cycle, 0);
+    if constexpr(mode == 3) {
+      if(mmio.enable_bg[0][2]) {
+        RenderMode3BG(cycle);
+      }
+    }
+
+    if constexpr(mode == 4) {
+      if(mmio.enable_bg[0][2]) {
+        RenderMode4BG(cycle);
+      }
+    }
+
+    if constexpr(mode == 5) {
+      if(mmio.enable_bg[0][2]) {
+        RenderMode5BG(cycle);
       }
     }
 

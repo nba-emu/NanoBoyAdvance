@@ -167,3 +167,81 @@ void ALWAYS_INLINE RenderMode2BG(uint id, uint cycle) {
     }
   }
 }
+
+void ALWAYS_INLINE RenderMode3BG(uint cycle) {
+  if(cycle < 32U || (cycle & 3U) != 3U) {
+    return;
+  }
+
+  const uint screen_x = (cycle - 32U) >> 2;
+
+  const s32 x = bg.affine[0].x >> 8;
+  const s32 y = bg.affine[0].y >> 8;
+
+  u32 color = 0U;
+
+  if(x >= 0 && x < 240 && y >= 0 && y < 160) {
+    const u32 address = ((u32)y * 240U + (u32)x) * 2U;
+
+    color = FetchVRAM_BG<u16>(cycle, address) | 0x8000'0000;
+  }
+
+  if(screen_x < 240U) { // @todo: make the buffer big enough that an overrun cannot happen.
+    bg.buffer[screen_x][2] = color | 0x8000'0000;
+  }
+
+  bg.affine[0].x += mmio.bgpa[0];
+  bg.affine[0].y += mmio.bgpc[0];
+}
+
+void ALWAYS_INLINE RenderMode4BG(uint cycle) {
+  if(cycle < 32U || (cycle & 3U) != 3U) {
+    return;
+  }
+
+  const uint screen_x = (cycle - 32U) >> 2;
+
+  const s32 x = bg.affine[0].x >> 8;
+  const s32 y = bg.affine[0].y >> 8;
+
+  uint index = 0U;
+
+  if(x >= 0 && x < 240 && y >= 0 && y < 160) {
+    const u32 address = mmio.dispcnt.frame * 0xA000U + (u32)y * 240U + (u32)x;
+
+    index = FetchVRAM_BG<u8>(cycle, address);
+  }
+
+  if(screen_x < 240U) { // @todo: make the buffer big enough that an overrun cannot happen.
+    bg.buffer[screen_x][2] = index;
+  }
+
+  bg.affine[0].x += mmio.bgpa[0];
+  bg.affine[0].y += mmio.bgpc[0];
+}
+
+void ALWAYS_INLINE RenderMode5BG(uint cycle) {
+  if(cycle < 32U || (cycle & 3U) != 3U) {
+    return;
+  }
+
+  const uint screen_x = (cycle - 32U) >> 2;
+
+  const s32 x = bg.affine[0].x >> 8;
+  const s32 y = bg.affine[0].y >> 8;
+
+  u32 color = 0U;
+
+  if(x >= 0 && x < 160 && y >= 0 && y < 128) {
+    const u32 address = mmio.dispcnt.frame * 0xA000U + ((u32)y * 160U + (u32)x) * 2U;
+
+    color = FetchVRAM_BG<u16>(cycle, address) | 0x8000'0000;
+  }
+
+  if(screen_x < 240U) { // @todo: make the buffer big enough that an overrun cannot happen.
+    bg.buffer[screen_x][2] = color;
+  }
+
+  bg.affine[0].x += mmio.bgpa[0];
+  bg.affine[0].y += mmio.bgpc[0];
+}
