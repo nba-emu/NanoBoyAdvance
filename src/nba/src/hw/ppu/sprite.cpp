@@ -211,7 +211,7 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
             const int leftmost_x = center_x - half_width;
 
             if(leftmost_x < 0) {
-              const int clip = -leftmost_x & (affine ? 0: ~1);
+              const int clip = -leftmost_x & (affine ? ~0 : ~1);
 
               drawer_state.draw_x += clip;
               drawer_state.remaining_pixels -= clip;
