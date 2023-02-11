@@ -186,7 +186,7 @@ void ALWAYS_INLINE RenderMode3BG(uint cycle) {
     color = FetchVRAM_BG<u16>(cycle, address) | 0x8000'0000;
   }
 
-  if(screen_x < 240U) { // @todo: make the buffer big enough that an overrun cannot happen.
+  if(screen_x < 240U) {
     bg.buffer[screen_x][2] = color | 0x8000'0000;
   }
 
@@ -212,7 +212,7 @@ void ALWAYS_INLINE RenderMode4BG(uint cycle) {
     index = FetchVRAM_BG<u8>(cycle, address);
   }
 
-  if(screen_x < 240U) { // @todo: make the buffer big enough that an overrun cannot happen.
+  if(screen_x < 240U) {
     bg.buffer[screen_x][2] = index;
   }
 
@@ -238,7 +238,7 @@ void ALWAYS_INLINE RenderMode5BG(uint cycle) {
     color = FetchVRAM_BG<u16>(cycle, address) | 0x8000'0000;
   }
 
-  if(screen_x < 240U) { // @todo: make the buffer big enough that an overrun cannot happen.
+  if(screen_x < 240U) {
     bg.buffer[screen_x][2] = color;
   }
 
