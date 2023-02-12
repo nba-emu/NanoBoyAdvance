@@ -172,7 +172,6 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
           // @todo: implement vertical sprite mosaic
           const int line = (sprite.vcount + 1) % 228;
 
-          const int center_x = x + half_width;
           const int center_y = y + half_height;
           const int local_y = line - center_y;
 
@@ -209,10 +208,8 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
 
             active = true;
 
-            const int leftmost_x = center_x - half_width;
-
-            if(leftmost_x < 0) {
-              const int clip = -leftmost_x & (affine ? ~0 : ~1);
+            if(x < 0) {
+              const int clip = -x & (affine ? ~0 : ~1);
 
               drawer_state.draw_x += clip;
               drawer_state.remaining_pixels -= clip;
