@@ -38,7 +38,7 @@ void PPU::DrawWindow() {
   }
 
   for(int i = 0; i < cycles; i++) {
-    if((window.cycle & 3) == 0) {
+    if((window.cycle & 3U) == 0U) {
       const uint x = window.cycle >> 2;
 
       for(int i = 0; i < 2; i++) {
