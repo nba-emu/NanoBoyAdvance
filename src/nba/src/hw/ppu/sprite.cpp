@@ -172,10 +172,9 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
           // @todo: implement vertical sprite mosaic
           const int line = (sprite.vcount + 1) % 228;
 
-          const int center_y = y + half_height;
-          const int local_y = line - center_y;
+          const int y_max = y + half_height * 2;
 
-          if(local_y >= -half_height && local_y < half_height) {
+          if(line >= y && line < y_max) {
             drawer_state.width = width;
             drawer_state.height = height;
             drawer_state.mode = mode;
@@ -201,7 +200,7 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
               oam_fetch.pending_wait = half_width - 2;
             } else {
               oam_fetch.initial_local_x = -half_width;
-              oam_fetch.initial_local_y = local_y;
+              oam_fetch.initial_local_y = line - ((y + y_max) >> 1);
               oam_fetch.pending_wait = half_width * 2 - 1;
               oam_fetch.matrix_address = (((attr01 >> 25) & 31U) * 32U) + 6U;
             }
