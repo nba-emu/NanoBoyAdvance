@@ -324,6 +324,8 @@ private:
     Pixel buffer[2][240];
     Pixel* buffer_rd;
     Pixel* buffer_wr;
+
+    uint latch_cycle_limit;
   } sprite;
 
   void InitSprite();
