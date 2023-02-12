@@ -146,7 +146,6 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
           s32 y =  attr01 & 0xFF;
 
           if(x >= 240) x -= 512;
-          if(y >= 160) y -= 256;
 
           const uint shape = (attr01 >> 14) & 3U;
           const uint size  =  attr01 >> 30;
@@ -172,9 +171,9 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
           // @todo: implement vertical sprite mosaic
           const int line = (sprite.vcount + 1) % 228;
 
-          const int y_max = y + half_height * 2;
+          const int y_max = (y + half_height * 2) & 255;
 
-          if(line >= y && line < y_max) {
+          if((line >= y || y_max < y) && line < y_max) {
             drawer_state.width = width;
             drawer_state.height = height;
             drawer_state.mode = mode;
@@ -191,7 +190,7 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
               drawer_state.flip_h = attr01 & (1 << 28);
 
               drawer_state.texture_x = 0;
-              drawer_state.texture_y = line - y;
+              drawer_state.texture_y = (line - y) & 255;
 
               if(flip_v) {
                 drawer_state.texture_y ^= height - 1;
@@ -200,7 +199,7 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
               oam_fetch.pending_wait = half_width - 2;
             } else {
               oam_fetch.initial_local_x = -half_width;
-              oam_fetch.initial_local_y = line - ((y + y_max) >> 1);
+              oam_fetch.initial_local_y = line - (y_max - half_height);
               oam_fetch.pending_wait = half_width * 2 - 1;
               oam_fetch.matrix_address = (((attr01 >> 25) & 31U) * 32U) + 6U;
             }
