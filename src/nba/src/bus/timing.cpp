@@ -11,6 +11,8 @@
 namespace nba::core {
 
 void Bus::Idle() {
+  if(hw.dma.IsRunning()) hw.dma.Run();
+
   Step(1);
 }
 
@@ -85,15 +87,6 @@ void Bus::StopPrefetch() {
 }
 
 void Bus::Step(int cycles) {
-  dma.openbus = false;
-
-  if (hw.dma.IsRunning() && !dma.active) {
-    dma.active = true;
-    hw.dma.Run();
-    dma.active = false;
-    dma.openbus = true;
-  }
-
   scheduler.AddCycles(cycles);
 
   if (prefetch.active) {

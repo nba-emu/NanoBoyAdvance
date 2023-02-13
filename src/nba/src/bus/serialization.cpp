@@ -44,8 +44,7 @@ void Bus::LoadState(SaveState const& state) {
     prefetch.duty = wait32[int(Access::Sequential)][prefetch.last_address >> 24];
   }
 
-  dma.active = state.bus.dma.active;
-  dma.openbus = state.bus.dma.openbus;
+  last_access = state.bus.last_access;
 }
 
 void Bus::CopyState(SaveState& state) {
@@ -73,8 +72,7 @@ void Bus::CopyState(SaveState& state) {
   state.bus.prefetch.count = prefetch.count;
   state.bus.prefetch.countdown = prefetch.countdown;
 
-  state.bus.dma.active = dma.active;
-  state.bus.dma.openbus = dma.openbus;
+  state.bus.last_access = last_access;
 }
 
 } // namespace nba::core

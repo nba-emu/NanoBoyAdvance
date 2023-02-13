@@ -16,7 +16,7 @@ namespace nba {
 
 struct SaveState {
   static constexpr u32 kMagicNumber = 0x5353424E; // NBSS
-  static constexpr u32 kCurrentVersion = 3;
+  static constexpr u32 kCurrentVersion = 4;
 
   u32 magic;
   u32 version;
@@ -76,10 +76,7 @@ struct SaveState {
       u8 countdown;
     } prefetch;
 
-    struct DMA {
-      bool active;
-      bool openbus;
-    } dma;
+    int last_access;
   } bus;
 
   // TODO: keep track of IRQ delay:

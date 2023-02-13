@@ -91,6 +91,7 @@ set(HEADERS_PUBLIC
   include/nba/common/crc32.hpp
   include/nba/common/meta.hpp
   include/nba/common/punning.hpp
+  include/nba/common/scope_exit.hpp
   include/nba/device/audio_device.hpp
   include/nba/device/input_device.hpp
   include/nba/device/video_device.hpp

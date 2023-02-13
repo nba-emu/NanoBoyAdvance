@@ -30,7 +30,8 @@ struct Bus {
   enum Access {
     Nonsequential = 0,
     Sequential = 1,
-    Code = 2
+    Code = 2,
+    Dma = 4
   };
 
   void Reset();
@@ -109,10 +110,7 @@ struct Bus {
     int duty;
   } prefetch;
 
-  struct DMA {
-    bool active = false;
-    bool openbus = false;
-  } dma;
+  int last_access;
 
   template<typename T>
   auto Read(u32 address, int access) -> T;

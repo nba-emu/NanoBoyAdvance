@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <nba/common/punning.hpp>
+#include <nba/common/scope_exit.hpp>
 #include <stdexcept>
 
 #include "arm/arm7tdmi.hpp"
@@ -32,7 +33,7 @@ void Bus::Reset() {
   hw.rcnt[1] = 0;
   hw.postflg = 0;
   prefetch = {};
-  dma = {};
+  last_access = 0;
   UpdateWaitStateTable();
 }
 
@@ -76,6 +77,13 @@ template<typename T>
 auto Bus::Read(u32 address, int access) -> T {
   auto page = address >> 24;
   auto is_u32 = std::is_same_v<T, u32>;
+
+  // Set last_access to access right before returning.
+  auto _ = ScopeExit{[&]() {
+    last_access = access;
+  }};
+
+  if(!(access & Dma) && hw.dma.IsRunning()) hw.dma.Run();
 
   switch (page) {
     // BIOS
@@ -170,6 +178,8 @@ void Bus::Write(u32 address, int access, T value) {
   auto page = address >> 24;
   auto is_u32 = std::is_same_v<T, u32>;
 
+  if(!(access & Dma) && hw.dma.IsRunning()) hw.dma.Run();
+
   switch (page) {
     // EWRAM (external work RAM)
     case 0x02: {
@@ -255,6 +265,8 @@ void Bus::Write(u32 address, int access, T value) {
       break;
     }
   }
+
+  last_access = access;
 }
 
 auto Bus::ReadBIOS(u32 address) -> u32 {
@@ -279,7 +291,7 @@ auto Bus::ReadOpenBus(u32 address) -> u32 {
 
   Log<Trace>("Bus: illegal memory read: 0x{:08X}", address);
 
-  if (hw.dma.IsRunning() || dma.openbus) {
+  if(last_access & Dma) {
     return hw.dma.GetOpenBusValue() >> shift;
   }
 

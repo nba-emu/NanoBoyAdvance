@@ -81,7 +81,7 @@ void Core::Run(int cycles) {
 
   while (scheduler.GetTimestampNow() < limit) {
     if (bus.hw.haltcnt == HaltControl::Halt && irq.HasServableIRQ()) {
-      bus.Idle();
+      bus.Step(1);
       bus.hw.haltcnt = HaltControl::Run;
     }
 
@@ -96,6 +96,8 @@ void Core::Run(int cycles) {
       }
       cpu.Run();
     } else {
+      if(dma.IsRunning()) dma.Run();
+
       bus.Step(scheduler.GetRemainingCycleCount());
     }
   }

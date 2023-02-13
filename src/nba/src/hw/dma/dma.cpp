@@ -151,13 +151,13 @@ bool DMA::HasVideoTransferDMA() {
 }
 
 void DMA::Run() {
-  bus.Idle();
+  bus.Step(1);
 
   do {
     RunChannel();
   } while (IsRunning());
 
-  bus.Idle();
+  bus.Step(1);
 }
 
 void DMA::RunChannel() {
@@ -186,15 +186,15 @@ void DMA::RunChannel() {
     auto src_addr = channel.latch.src_addr;
     auto dst_addr = channel.latch.dst_addr;
 
-    auto access_src = Bus::Access::Sequential;
-    auto access_dst = Bus::Access::Sequential;
+    auto access_src = Bus::Access::Sequential | Bus::Access::Dma;
+    auto access_dst = Bus::Access::Sequential | Bus::Access::Dma;
 
     if (!did_access_rom) {
       if (src_addr >= 0x08000000) {
-        access_src = Bus::Access::Nonsequential;
+        access_src = Bus::Access::Nonsequential | Bus::Access::Dma;
         did_access_rom = true;
       } else if (dst_addr >= 0x08000000) {
-        access_dst = Bus::Access::Nonsequential;
+        access_dst = Bus::Access::Nonsequential | Bus::Access::Dma;
         did_access_rom = true;
       }
     }
@@ -212,7 +212,7 @@ void DMA::RunChannel() {
         } else {
           value = channel.latch.bus;
         }
-        bus.Idle();
+        bus.Step(1);
       }
 
       bus.WriteHalf(dst_addr, value, access_dst);
@@ -221,7 +221,7 @@ void DMA::RunChannel() {
         channel.latch.bus = bus.ReadWord(src_addr, access_src);
         latch = channel.latch.bus;
       } else {
-        bus.Idle();
+        bus.Step(1);
       }
 
       bus.WriteWord(dst_addr, channel.latch.bus, access_dst);
