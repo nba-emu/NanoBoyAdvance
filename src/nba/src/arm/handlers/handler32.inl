@@ -60,6 +60,8 @@ void ARM_DataProcessing(u32 instruction) {
       shift = GetReg((instruction >> 8) & 0xF);
       state.r15 += 4;
       bus.Idle();
+
+      pipe.access = Access::Code | Access::Nonsequential;
     }
 
     op1 = GetReg(reg_op1);
