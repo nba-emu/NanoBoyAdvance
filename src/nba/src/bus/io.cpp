@@ -141,8 +141,15 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
     case TM3CNT_H+1: return 0;
 
     // Serial communication
+    // @todo: implement sensible read/write behaviour for the remaining registers.
     case RCNT+0: return rcnt[0];
     case RCNT+1: return rcnt[1];
+    case RCNT+2:
+    case RCNT+3: return 0;
+    case 0x04000142:
+    case 0x04000143: return 0;
+    case 0x0400015A:
+    case 0x0400015B: return 0;
 
     // Keypad
     case KEYINPUT+0: return keypad.input.ReadByte(0);
@@ -178,6 +185,9 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
     case WAITCNT+2:
     case WAITCNT+3: return 0;
     case POSTFLG:   return postflg;
+    case HALTCNT:   return 0;
+    case 0x04000302: 
+    case 0x04000303: return 0;
   }
 
   return bus->ReadOpenBus(address);
