@@ -24,6 +24,13 @@ void PPU::InitBackground() {
     bg.affine[id].x = mmio.bgx[id]._current;
     bg.affine[id].y = mmio.bgy[id]._current;
   }
+
+  /**
+   * We are latching this, because the currently the counter
+   * in incremented in H-blank, which means that it might happen 
+   * before BG rendering is done (because there is no sync point at H-blank).
+   */
+  bg.mosaic_counter = mmio.mosaic.bg._counter_y;
 }
 
 void PPU::DrawBackground() {
@@ -34,8 +41,6 @@ void PPU::DrawBackground() {
   if(cycles == 0 || bg.cycle >= k_bg_cycle_limit) {
     return;
   }
-
-  // fmt::print("PPU: draw background @ VCOUNT={} delta={}\n", mmio.vcount, cycles);
 
   const int mode = mmio.dispcnt.mode;
 

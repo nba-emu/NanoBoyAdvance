@@ -258,6 +258,8 @@ private:
     } affine[2];
 
     u32 buffer[240][4];
+
+    int mosaic_counter;
   } bg;
 
   void InitBackground();
