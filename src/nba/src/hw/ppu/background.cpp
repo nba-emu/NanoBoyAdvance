@@ -30,7 +30,7 @@ void PPU::InitBackground() {
    * in incremented in H-blank, which means that it might happen 
    * before BG rendering is done (because there is no sync point at H-blank).
    */
-  bg.mosaic_counter = mmio.mosaic.bg._counter_y;
+  bg.mosaic_y = mmio.mosaic.bg._counter_y;
 }
 
 void PPU::DrawBackground() {
