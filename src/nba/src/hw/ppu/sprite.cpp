@@ -48,6 +48,7 @@ void PPU::InitSprite() {
   sprite.timestamp_last_sync = timestamp_now;
   sprite.cycle = 0U;
   sprite.vcount = vcount;
+  sprite.mosaic_counter = mmio.mosaic.obj._counter_y;
 
   sprite.oam_fetch.index = 0U;
   sprite.oam_fetch.step = 0;
@@ -168,16 +169,21 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
           }
 
           // @todo: this can be precalculated at the start of the scanline
-          // @todo: implement vertical sprite mosaic
-          const int line = (sprite.vcount + 1) % 228;
+          int line = (sprite.vcount + 1) % 228;
 
           const int y_max = (y + half_height * 2) & 255;
 
           if((line >= y || y_max < y) && line < y_max) {
+            const bool mosaic = attr01 & (1 << 12);
+
+            if(mosaic) {
+              line -= sprite.mosaic_counter;
+            }
+
             drawer_state.width = width;
             drawer_state.height = height;
             drawer_state.mode = mode;
-            drawer_state.mosaic = attr01 & (1 << 12);
+            drawer_state.mosaic = mosaic;
             drawer_state.affine = affine;
             drawer_state.draw_x = x;
             drawer_state.remaining_pixels = half_width << 1;

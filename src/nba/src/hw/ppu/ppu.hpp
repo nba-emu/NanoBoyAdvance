@@ -271,6 +271,7 @@ private:
     u64 timestamp_oam_access = ~0ULL;
     uint cycle;
     uint vcount;
+    int mosaic_counter;
 
     struct {
       uint index;
