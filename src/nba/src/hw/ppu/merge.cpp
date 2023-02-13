@@ -25,6 +25,8 @@ void PPU::InitMerge() {
   merge.timestamp_init = timestamp_now;
   merge.timestamp_last_sync = timestamp_now;
   merge.cycle = 0U;
+  merge.mosaic_x[0] = 0U;
+  merge.mosaic_x[1] = 0U;
 }
 
 void PPU::DrawMerge() {
@@ -43,9 +45,6 @@ void PPU::DrawMerge() {
 }
 
 void PPU::DrawMergeImpl(int cycles) {
-  // fmt::print("PPU: draw scanline @ VCOUNT={} delta={}\n", mmio.vcount, cycles);
-
-  // @todo: fix numbers for Mode 6 and Mode 7
   static constexpr int k_min_max_bg[8][2] {
     {0,  3}, // Mode 0 (BG0 - BG3 text-mode)
     {0,  2}, // Mode 1 (BG0 - BG1 text-mode, BG2 affine)
@@ -118,12 +117,14 @@ void PPU::DrawMergeImpl(int cycles) {
           bg_list_index++;
 
           if(!have_windows || win_layer_enable[bg_id]) {
-            const u32 bg_color = bg.buffer[x][bg_id];
+            const auto& bgcnt = mmio.bgcnt[bg_id];
+            const uint mx = x - (bgcnt.mosaic_enable ? merge.mosaic_x[0] : 0U);
+            const u32 bg_color = bg.buffer[mx][bg_id];
 
             if(bg_color != 0U) {
               layers[j] = bg_id;
               colors[j] = bg_color;
-              priorities[j] = (uint)mmio.bgcnt[bg_id].priority;
+              priorities[j] = (uint)bgcnt.priority;
               break;
             }
           }
@@ -133,7 +134,9 @@ void PPU::DrawMergeImpl(int cycles) {
       bool is_alpha_obj = false;
 
       if(mmio.dispcnt.enable[LAYER_OBJ] && (!have_windows || win_layer_enable[LAYER_OBJ])) {
-        const auto pixel = sprite.buffer_rd[x];
+        auto pixel = sprite.buffer_rd[x];
+
+        if(pixel.mosaic) pixel = sprite.buffer_rd[x - merge.mosaic_x[1]];
 
         if(pixel.color != 0U) {
           if(pixel.priority <= priorities[0]) {
@@ -195,6 +198,14 @@ void PPU::DrawMergeImpl(int cycles) {
       }
 
       output[frame][mmio.vcount * 240 + x] = RGB555(colors[0]);
+
+      if(++merge.mosaic_x[0] == (uint)mmio.mosaic.bg.size_x) {
+        merge.mosaic_x[0] = 0U;
+      }
+
+      if(++merge.mosaic_x[1] == (uint)mmio.mosaic.obj.size_x) {
+        merge.mosaic_x[1] = 0U;
+      }
     }
 
     if(++merge.cycle == k_bg_cycle_limit) {

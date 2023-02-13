@@ -356,6 +356,7 @@ private:
     u64 timestamp_last_sync = 0;
     u64 timestamp_pram_access = 0;
     uint cycle;
+    uint mosaic_x[2];
   } merge;
 
   void InitMerge();
