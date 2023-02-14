@@ -35,50 +35,58 @@ void Bus::Idle() {
 }
 
 void Bus::Prefetch(u32 address, bool code, int cycles) {
-  if (hw.waitcnt.prefetch) {
-    if (!code) {
-      StopPrefetch();
-      Step(cycles);
+  if (!code) {
+    StopPrefetch();
+    Step(cycles);
+    return;
+  }
+
+  if (prefetch.active) {
+    // Case #1: requested address is the first entry in the prefetch buffer.
+    if (prefetch.count != 0 && address == prefetch.head_address) {
+      prefetch.count--;
+      prefetch.head_address += prefetch.opcode_width;
+      Step(1);
       return;
     }
 
-    if (prefetch.active) {
-      // Case #1: requested address is the first entry in the prefetch buffer.
-      if (prefetch.count != 0 && address == prefetch.head_address) {
-        prefetch.count--;
-        prefetch.head_address += prefetch.opcode_width;
-        Step(1);
-        return;
-      }
-
-      // Case #2: requested address is currently being prefetched.
-      if (address == prefetch.last_address) {
-        Step(prefetch.countdown);
-        prefetch.head_address = prefetch.last_address;
-        prefetch.count = 0;
-        return;
-      }
+    // Case #2: requested address is currently being prefetched.
+    if (prefetch.countdown > 0 && address == prefetch.last_address) {
+      Step(prefetch.countdown);
+      prefetch.head_address = prefetch.last_address;
+      prefetch.count = 0;
+      return;
     }
+  }
 
-    // Case #3: requested address is loaded through the Game Pak.
+  const int page = address >> 24;
+
+  // Case #3: requested address is loaded through the Game Pak.
+  if(hw.prefetch_disable_bug) {
+    // force the access to be non-sequential.
+    // @todo: make this less dodgy.
+         if(cycles == wait16[1][page]) cycles = wait16[0][8];
+    else if(cycles == wait32[1][page]) cycles = wait32[0][8];
+
+    hw.prefetch_disable_bug = false;
+  }
+  Step(cycles);
+  if(hw.waitcnt.prefetch) {
     // The prefetch unit will be engaged and keeps the burst transfer alive.
-    Step(cycles);
     prefetch.active = true;
     prefetch.count = 0;
     if (hw.cpu.state.cpsr.f.thumb) {
       prefetch.opcode_width = sizeof(u16);
       prefetch.capacity = 8;
-      prefetch.duty = wait16[int(Access::Sequential)][address >> 24];
+      prefetch.duty = wait16[int(Access::Sequential)][page];
     } else {
       prefetch.opcode_width = sizeof(u32);
       prefetch.capacity = 4;
-      prefetch.duty = wait32[int(Access::Sequential)][address >> 24];
+      prefetch.duty = wait32[int(Access::Sequential)][page];
     }
     prefetch.countdown = prefetch.duty;
     prefetch.last_address = address + prefetch.opcode_width;
     prefetch.head_address = prefetch.last_address;
-  } else {
-    Step(cycles);
   }
 }
 
@@ -107,17 +115,19 @@ void Bus::StopPrefetch() {
 void Bus::Step(int cycles) {
   scheduler.AddCycles(cycles);
 
-  if (prefetch.active) {
+  if (prefetch.active && prefetch.countdown > 0) { // todo: perhaps remove first condition
     prefetch.countdown -= cycles;
 
     if (prefetch.countdown <= 0) {
       prefetch.count++;
 
-      if (prefetch.count < prefetch.capacity) {
-        prefetch.last_address += prefetch.opcode_width;
-        prefetch.countdown += prefetch.duty;
-      } else {
-        prefetch.active = false;
+      if(hw.waitcnt.prefetch) {
+        if (prefetch.count < prefetch.capacity) {
+          prefetch.last_address += prefetch.opcode_width;
+          prefetch.countdown += prefetch.duty;
+        } else {
+          prefetch.active = false;
+        }
       }
     }
   }

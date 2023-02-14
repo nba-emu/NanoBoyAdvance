@@ -32,6 +32,7 @@ void Bus::Reset() {
   hw.rcnt[0] = 0;
   hw.rcnt[1] = 0;
   hw.postflg = 0;
+  hw.prefetch_disable_bug = false;
   prefetch = {};
   last_access = 0;
   parallel_internal_cpu_cycle_limit = 0;

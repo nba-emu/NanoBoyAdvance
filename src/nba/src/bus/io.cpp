@@ -532,10 +532,14 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
       break;
     }
     case WAITCNT+1: {
+      const bool prefetch_old = waitcnt.prefetch;
       waitcnt.ws2[0] = (value >> 0) & 3;
       waitcnt.ws2[1] = (value >> 2) & 1;
       waitcnt.phi = (value >> 3) & 3;
       waitcnt.prefetch = (value >> 6) & 1;
+      if(prefetch_old && !waitcnt.prefetch) {
+        prefetch_disable_bug = true;
+      }
       bus->UpdateWaitStateTable();
       break;
     }
