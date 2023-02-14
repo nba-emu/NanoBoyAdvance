@@ -83,7 +83,7 @@ auto Bus::Read(u32 address, int access) -> T {
     last_access = access;
   }};
 
-  if(!(access & Dma) && hw.dma.IsRunning()) hw.dma.Run();
+  if(!(access & (Dma | Lock)) && hw.dma.IsRunning()) hw.dma.Run();
 
   switch (page) {
     // BIOS
@@ -178,7 +178,7 @@ void Bus::Write(u32 address, int access, T value) {
   auto page = address >> 24;
   auto is_u32 = std::is_same_v<T, u32>;
 
-  if(!(access & Dma) && hw.dma.IsRunning()) hw.dma.Run();
+  if(!(access & (Dma | Lock)) && hw.dma.IsRunning()) hw.dma.Run();
 
   switch (page) {
     // EWRAM (external work RAM)

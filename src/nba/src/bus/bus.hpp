@@ -31,7 +31,8 @@ struct Bus {
     Nonsequential = 0,
     Sequential = 1,
     Code = 2,
-    Dma = 4
+    Dma = 4,
+    Lock = 8
   };
 
   void Reset();

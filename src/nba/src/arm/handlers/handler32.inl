@@ -329,10 +329,10 @@ void ARM_SingleDataSwap(u32 instruction) {
 
   if (byte) {
     tmp = ReadByte(GetReg(base), Access::Nonsequential);
-    WriteByte(GetReg(base), (u8)GetReg(src), Access::Nonsequential);
+    WriteByte(GetReg(base), (u8)GetReg(src), Access::Nonsequential | Access::Lock);
   } else {
     tmp = ReadWordRotate(GetReg(base), Access::Nonsequential);
-    WriteWord(GetReg(base), GetReg(src), Access::Nonsequential);
+    WriteWord(GetReg(base), GetReg(src), Access::Nonsequential | Access::Lock);
   }
 
   bus.Idle();
