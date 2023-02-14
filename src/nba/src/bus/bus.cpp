@@ -133,7 +133,7 @@ auto Bus::Read(u32 address, int access) -> T {
       auto sequential = access & Sequential;
       bool code = access & Code;
 
-      if ((address & 0x1'FFFF) == 0) {
+      if ((address & 0x1'FFFF) == 0 || (last_access & Dma)) {
         sequential = 0;
       }
 
@@ -230,7 +230,7 @@ void Bus::Write(u32 address, int access, T value) {
 
       auto sequential = access & Sequential;
 
-      if ((address & 0x1'FFFF) == 0) {
+      if ((address & 0x1'FFFF) == 0 || (last_access & Dma)) {
         sequential = 0;
       }
 
