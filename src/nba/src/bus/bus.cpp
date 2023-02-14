@@ -215,8 +215,7 @@ void Bus::Write(u32 address, int access, T value) {
     }
     // VRAM (video RAM)
     case 0x06: {
-      Step(is_u32 ? 2 : 1);
-      hw.ppu.WriteVRAM<T>(Align<T>(address), value);
+      WriteVRAM<T>(Align<T>(address), value);
       break;
     }
     // OAM (object attribute map)
