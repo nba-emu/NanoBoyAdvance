@@ -11,6 +11,18 @@
 namespace nba::core {
 
 void Bus::Idle() {
+  /**
+   * The CPU can run in parallel to DMA while it executes internal cycles.
+   * It will only be stalled (for the remaining duration of DMA) once it accesses the bus again.
+   *
+   * In this emulator we unfortunately cannot cycle CPU and DMA in parallel.
+   * Instead, we track DMA duration when DMA becomes active on an internal CPU cycle.
+   * We then treat subsequent internal CPU cycles as free until the CPU accesses the bus or
+   * the total number of internal CPU cycles would exceed the DMA duration.
+   *
+   * Fortunately this should have no observable side-effects! 
+   */
+
   if(hw.dma.IsRunning()) {
     parallel_internal_cpu_cycle_limit = hw.dma.Run();
   }
