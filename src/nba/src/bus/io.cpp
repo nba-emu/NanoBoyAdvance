@@ -538,7 +538,7 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
       waitcnt.phi = (value >> 3) & 3;
       waitcnt.prefetch = (value >> 6) & 1;
       if(prefetch_old && !waitcnt.prefetch) {
-        prefetch_disable_bug = true;
+        prefetch_buffer_was_disabled = true;
       }
       bus->UpdateWaitStateTable();
       break;

@@ -82,7 +82,7 @@ struct Bus {
       bool cgb = false;
     } waitcnt;
 
-    bool prefetch_disable_bug = false;
+    bool prefetch_buffer_was_disabled = false;
 
     enum class HaltControl {
       Run = 0,

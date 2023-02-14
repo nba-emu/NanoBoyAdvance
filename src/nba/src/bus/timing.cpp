@@ -62,13 +62,13 @@ void Bus::Prefetch(u32 address, bool code, int cycles) {
   const int page = address >> 24;
 
   // Case #3: requested address is loaded through the Game Pak.
-  if(hw.prefetch_disable_bug) {
+  if(hw.prefetch_buffer_was_disabled) {
     // force the access to be non-sequential.
     // @todo: make this less dodgy.
          if(cycles == wait16[1][page]) cycles = wait16[0][8];
     else if(cycles == wait32[1][page]) cycles = wait32[0][8];
 
-    hw.prefetch_disable_bug = false;
+    hw.prefetch_buffer_was_disabled = false;
   }
   Step(cycles);
   if(hw.waitcnt.prefetch) {
@@ -115,7 +115,7 @@ void Bus::StopPrefetch() {
 void Bus::Step(int cycles) {
   scheduler.AddCycles(cycles);
 
-  if (prefetch.active && prefetch.countdown > 0) { // todo: perhaps remove first condition
+  if (prefetch.active && prefetch.countdown > 0) {
     prefetch.countdown -= cycles;
 
     if (prefetch.countdown <= 0) {
