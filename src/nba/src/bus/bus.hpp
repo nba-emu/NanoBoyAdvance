@@ -112,6 +112,7 @@ struct Bus {
   } prefetch;
 
   int last_access;
+  int parallel_internal_cpu_cycle_limit;
 
   template<typename T>
   auto Read(u32 address, int access) -> T;

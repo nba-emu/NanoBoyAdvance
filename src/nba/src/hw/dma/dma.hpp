@@ -38,7 +38,7 @@ struct DMA {
   void Request(Occasion occasion);
   void StopVideoTransferDMA();
   bool HasVideoTransferDMA();
-  void Run();
+  auto Run() -> int;
   auto Read (int chan_id, int offset) -> u8;
   void Write(int chan_id, int offset, u8 value);
   bool IsRunning() { return runnable_set.any(); }

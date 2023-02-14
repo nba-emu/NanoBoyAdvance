@@ -11,9 +11,15 @@
 namespace nba::core {
 
 void Bus::Idle() {
-  if(hw.dma.IsRunning()) hw.dma.Run();
+  if(hw.dma.IsRunning()) {
+    parallel_internal_cpu_cycle_limit = hw.dma.Run();
+  }
 
-  Step(1);
+  if(parallel_internal_cpu_cycle_limit == 0) {
+    Step(1);
+  } else {
+    parallel_internal_cpu_cycle_limit--;
+  }
 }
 
 void Bus::Prefetch(u32 address, bool code, int cycles) {

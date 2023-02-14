@@ -150,14 +150,20 @@ bool DMA::HasVideoTransferDMA() {
          channels[3].time == Channel::Timing::Special;
 }
 
-void DMA::Run() {
+auto DMA::Run() -> int {
   bus.Step(1);
+
+  const auto timestamp0 = scheduler.GetTimestampNow();
 
   do {
     RunChannel();
   } while (IsRunning());
 
+  const auto timestamp1 = scheduler.GetTimestampNow();
+
   bus.Step(1);
+
+  return (int)(timestamp1 - timestamp0);
 }
 
 void DMA::RunChannel() {

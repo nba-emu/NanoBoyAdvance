@@ -77,6 +77,7 @@ struct SaveState {
     } prefetch;
 
     int last_access;
+    int parallel_internal_cpu_cycle_limit;
   } bus;
 
   // TODO: keep track of IRQ delay:

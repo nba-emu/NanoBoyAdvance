@@ -34,6 +34,7 @@ void Bus::Reset() {
   hw.postflg = 0;
   prefetch = {};
   last_access = 0;
+  parallel_internal_cpu_cycle_limit = 0;
   UpdateWaitStateTable();
 }
 
@@ -84,6 +85,8 @@ auto Bus::Read(u32 address, int access) -> T {
   }};
 
   if(!(access & (Dma | Lock)) && hw.dma.IsRunning()) hw.dma.Run();
+
+  parallel_internal_cpu_cycle_limit = 0;
 
   switch (page) {
     // BIOS
@@ -179,6 +182,8 @@ void Bus::Write(u32 address, int access, T value) {
   auto is_u32 = std::is_same_v<T, u32>;
 
   if(!(access & (Dma | Lock)) && hw.dma.IsRunning()) hw.dma.Run();
+
+  parallel_internal_cpu_cycle_limit = 0;
 
   switch (page) {
     // EWRAM (external work RAM)

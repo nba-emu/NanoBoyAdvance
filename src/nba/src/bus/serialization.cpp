@@ -45,6 +45,8 @@ void Bus::LoadState(SaveState const& state) {
   }
 
   last_access = state.bus.last_access;
+
+  parallel_internal_cpu_cycle_limit = state.bus.parallel_internal_cpu_cycle_limit;
 }
 
 void Bus::CopyState(SaveState& state) {
@@ -73,6 +75,8 @@ void Bus::CopyState(SaveState& state) {
   state.bus.prefetch.countdown = prefetch.countdown;
 
   state.bus.last_access = last_access;
+
+  state.bus.parallel_internal_cpu_cycle_limit = parallel_internal_cpu_cycle_limit;
 }
 
 } // namespace nba::core
