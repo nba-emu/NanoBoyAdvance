@@ -73,7 +73,7 @@ template<int mode> void PPU::DrawBackgroundImpl(int cycles) {
     if constexpr(mode <= 1) {
       const uint id = cycle & 3U; // BG0 - BG3
 
-      if((id <= 1 || mode == 0) && mmio.enable_bg[0][id]) {
+      if((id <= 1 || mode == 0) && mmio.enable_bg[0][id] && mmio.dispcnt.enable[id]) {
         RenderMode0BG(id, cycle);
       }
     }
@@ -82,25 +82,25 @@ template<int mode> void PPU::DrawBackgroundImpl(int cycles) {
     if constexpr(mode == 1 || mode == 2) {
       const int id = ~(cycle >> 1) & 1; // 0: BG2, 1: BG3
 
-      if((id == 0 || mode == 2) && mmio.enable_bg[0][2 + id]) {
+      if((id == 0 || mode == 2) && mmio.enable_bg[0][2 + id] && mmio.dispcnt.enable[2 + id]) {
         RenderMode2BG(id, cycle);
       }
     }
 
     if constexpr(mode == 3) {
-      if(mmio.enable_bg[0][2]) {
+      if(mmio.enable_bg[0][2] && mmio.dispcnt.enable[2]) {
         RenderMode3BG(cycle);
       }
     }
 
     if constexpr(mode == 4) {
-      if(mmio.enable_bg[0][2]) {
+      if(mmio.enable_bg[0][2] && mmio.dispcnt.enable[2]) {
         RenderMode4BG(cycle);
       }
     }
 
     if constexpr(mode == 5) {
-      if(mmio.enable_bg[0][2]) {
+      if(mmio.enable_bg[0][2] && mmio.dispcnt.enable[2]) {
         RenderMode5BG(cycle);
       }
     }

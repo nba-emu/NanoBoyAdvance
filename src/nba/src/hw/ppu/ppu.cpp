@@ -162,7 +162,10 @@ void PPU::OnScanlineComplete(int cycles_late) {
 
   mmio.dispstat.hblank_flag = 1;
 
-  dma.Request(DMA::Occasion::HBlank);
+  // TODO: fix these timings properly eventually.
+  scheduler.Add(1, [this](int) {
+    dma.Request(DMA::Occasion::HBlank);
+  });
   
   // Advance vertical background mosaic counter
   if (++mosaic.bg._counter_y == mosaic.bg.size_y) {
@@ -223,7 +226,9 @@ void PPU::OnHblankComplete(int cycles_late) {
   DrawWindow();
   DrawMerge();
 
-  scheduler.Add(38, [this](int){LatchEnabledBGs();});
+  scheduler.Add(40, [this](int) {
+    LatchEnabledBGs();
+  });
 
   dispstat.hblank_flag = 0;
   vcount++;
@@ -304,8 +309,10 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
     dma3_video_transfer_running = dma.HasVideoTransferDMA();
   }
 
-  if(vcount >= 224) { // @todo: verify
-    scheduler.Add(38, [this](int){LatchEnabledBGs();});
+  if(vcount >= 224) {
+    scheduler.Add(40, [this](int) {
+      LatchEnabledBGs();
+    });
   }
 
   if (vcount == 227) {
