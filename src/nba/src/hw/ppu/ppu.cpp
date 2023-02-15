@@ -102,7 +102,11 @@ void PPU::LatchEnabledBGs() {
   }
 
   for (int i = 0; i < 4; i++) {
-    mmio.enable_bg[1][i] = mmio.dispcnt.enable[i];
+    mmio.enable_bg[1][i] = mmio.enable_bg[2][i];
+  }
+
+  for (int i = 0; i < 4; i++) {
+    mmio.enable_bg[2][i] = mmio.dispcnt.enable[i];
   }
 }
 
@@ -195,11 +199,6 @@ void PPU::OnScanlineComplete(int cycles_late) {
     }
   }
 
-  /* TODO: it appears that this should really happen ~36 cycles into H-draw.
-   * But right now if we do that it breaks at least Pinball Tycoon.
-   */
-  LatchEnabledBGs();
-
   scheduler.Add(2 - cycles_late, this, &PPU::OnHblankIRQTest);
 }
 
@@ -223,6 +222,8 @@ void PPU::OnHblankComplete(int cycles_late) {
   DrawBackground();
   DrawWindow();
   DrawMerge();
+
+  scheduler.Add(38, [this](int){LatchEnabledBGs();});
 
   dispstat.hblank_flag = 0;
   vcount++;
@@ -267,17 +268,10 @@ void PPU::OnVblankScanlineComplete(int cycles_late) {
 
   dispstat.hblank_flag = 1;
 
-  if (mmio.vcount >= 225) {
-    /* TODO: it appears that this should really happen ~36 cycles into H-draw.
-     * But right now if we do that it breaks at least Pinball Tycoon.
-     */
-    LatchEnabledBGs();
-
-    if (mmio.vcount == 227) {
-      // Advance vertical OBJ mosaic counter
-      if (++mmio.mosaic.obj._counter_y == mmio.mosaic.obj.size_y) {
-        mmio.mosaic.obj._counter_y = 0;
-      }
+  if (mmio.vcount == 227) {
+    // Advance vertical OBJ mosaic counter
+    if (++mmio.mosaic.obj._counter_y == mmio.mosaic.obj.size_y) {
+      mmio.mosaic.obj._counter_y = 0;
     }
   }
 
@@ -308,6 +302,10 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
      *  - figure out what bits of DMA3CNT are checked
      */
     dma3_video_transfer_running = dma.HasVideoTransferDMA();
+  }
+
+  if(vcount >= 224) { // @todo: verify
+    scheduler.Add(38, [this](int){LatchEnabledBGs();});
   }
 
   if (vcount == 227) {
