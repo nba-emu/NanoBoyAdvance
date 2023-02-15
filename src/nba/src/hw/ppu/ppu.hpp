@@ -176,7 +176,7 @@ struct PPU {
     int evb;
     int evy;
 
-    bool enable_bg[2][4];
+    bool enable_bg[3][4];
   } mmio;
 
 private:
