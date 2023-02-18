@@ -251,11 +251,11 @@ void PPU::DrawMergeImpl(int cycles) {
 
 auto PPU::Blend(u16 color_a, u16 color_b, int eva, int evb) -> u16 {
   const int r_a =  (color_a >>  0) & 31;
-  const int g_a = ((color_a >>  4) & 62) | (color_a >> 15 << 5);
+  const int g_a = ((color_a >>  4) & 62) | (color_a >> 15);
   const int b_a =  (color_a >> 10) & 31;
 
   const int r_b =  (color_b >>  0) & 31;
-  const int g_b = ((color_b >>  4) & 62) | (color_b >> 15 << 5);
+  const int g_b = ((color_b >>  4) & 62) | (color_b >> 15);
   const int b_b =  (color_b >> 10) & 31;
 
   eva = std::min<int>(16, eva);
@@ -272,7 +272,7 @@ auto PPU::Brighten(u16 color, int evy) -> u16 {
   evy = std::min<int>(16, evy);
 
   int r =  (color >>  0) & 31;
-  int g = ((color >>  4) & 62) | (color >> 15 << 5);
+  int g = ((color >>  4) & 62) | (color >> 15);
   int b =  (color >> 10) & 31;
 
   r += ((31 - r) * evy + 8) >> 4;
@@ -288,7 +288,7 @@ auto PPU::Darken(u16 color, int evy) -> u16 {
   evy = std::min<int>(16, evy);
 
   int r =  (color >>  0) & 31;
-  int g = ((color >>  4) & 62) | (color >> 15 << 5);
+  int g = ((color >>  4) & 62) | (color >> 15);
   int b =  (color >> 10) & 31;
 
   r -= (r * evy + 7) >> 4;
