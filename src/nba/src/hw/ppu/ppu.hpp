@@ -182,8 +182,6 @@ struct PPU {
   } mmio;
 
 private:
-  static constexpr uint k_bg_cycle_limit = 1006;
-
   friend struct DisplayStatus;
 
   enum ObjAttribute {
@@ -238,7 +236,7 @@ private:
     uint cycle;
 
     struct Text {
-      bool fetching;
+      int fetches;
 
       struct Tile {
         u32 address;

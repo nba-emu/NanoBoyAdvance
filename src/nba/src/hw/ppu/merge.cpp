@@ -35,7 +35,7 @@ void PPU::DrawMerge() {
   
   const int cycles = (int)(timestamp_now - merge.timestamp_last_sync);
 
-  if(cycles == 0 || merge.cycle >= k_bg_cycle_limit) {
+  if(cycles == 0 || merge.cycle >= 1006U) {
     return;
   }
 
@@ -253,7 +253,7 @@ void PPU::DrawMergeImpl(int cycles) {
       }
     }
 
-    if(++merge.cycle == k_bg_cycle_limit) {
+    if(++merge.cycle == 1006U) {
       break;
     }
   }

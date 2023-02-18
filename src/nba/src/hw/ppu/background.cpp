@@ -17,7 +17,7 @@ void PPU::InitBackground() {
   bg.cycle = 0U;
 
   for(auto& text : bg.text) {
-    text.fetching = false;
+    text.fetches = 0;
   }
 
   for(int id = 0; id < 2; id++) {
@@ -38,7 +38,7 @@ void PPU::DrawBackground() {
   
   const int cycles = (int)(timestamp_now - bg.timestamp_last_sync);
 
-  if(cycles == 0 || bg.cycle >= k_bg_cycle_limit) {
+  if(cycles == 0 || bg.cycle >= 1232U) {
     return;
   }
 
@@ -80,35 +80,37 @@ template<int mode> void PPU::DrawBackgroundImpl(int cycles) {
       }
     }
 
-    // affine backgrounds
-    if constexpr(mode == 1 || mode == 2) {
-      const int id = ~(cycle >> 1) & 1; // 0: BG2, 1: BG3
+    if(cycle < 1007U) {
+      // affine backgrounds
+      if constexpr(mode == 1 || mode == 2) {
+        const int id = ~(cycle >> 1) & 1; // 0: BG2, 1: BG3
 
-      if((id == 0 || mode == 2) && (latched_dispcnt_and_current_dispcnt & (1024U << id))) {
-        RenderMode2BG(id, cycle);
+        if((id == 0 || mode == 2) && (latched_dispcnt_and_current_dispcnt & (1024U << id))) {
+          RenderMode2BG(id, cycle);
+        }
       }
-    }
 
-    if constexpr(mode == 3) {
-      if(latched_dispcnt_and_current_dispcnt & 1024U) {
-        RenderMode3BG(cycle);
+      if constexpr(mode == 3) {
+        if(latched_dispcnt_and_current_dispcnt & 1024U) {
+          RenderMode3BG(cycle);
+        }
       }
-    }
 
-    if constexpr(mode == 4) {
-      if(latched_dispcnt_and_current_dispcnt & 1024U) {
-        RenderMode4BG(cycle);
+      if constexpr(mode == 4) {
+        if(latched_dispcnt_and_current_dispcnt & 1024U) {
+          RenderMode4BG(cycle);
+        }
       }
-    }
 
-    if constexpr(mode == 5) {
-      if(latched_dispcnt_and_current_dispcnt & 1024U) {
-        RenderMode5BG(cycle);
+      if constexpr(mode == 5) {
+        if(latched_dispcnt_and_current_dispcnt & 1024U) {
+          RenderMode5BG(cycle);
+        }
       }
     }
 
     // @todo: I don't think this is always correct, at least in text-mode.
-    if(++bg.cycle == k_bg_cycle_limit) {
+    if(++bg.cycle == 1232U) {
       break;
     }
   }

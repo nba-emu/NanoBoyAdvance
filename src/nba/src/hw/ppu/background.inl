@@ -11,28 +11,30 @@ void ALWAYS_INLINE RenderMode0BG(uint id, uint cycle) {
   auto& text = bg.text[id];
   
   // @todo: figure out if there is more logical way to control this condition
-  if(text.fetching) {
-    if(text.piso.remaining == 0) {
-      u16 data = FetchVRAM_BG<u16>(cycle, text.tile.address);
+  if(text.fetches > 0 && text.piso.remaining == 0) {
+    u16 data = FetchVRAM_BG<u16>(cycle, text.tile.address);
 
-      if(text.tile.flip_x) {
-        data = (data >> 8) | (data << 8);
+    if(text.tile.flip_x) {
+      data = (data >> 8) | (data << 8);
 
-        if(!bgcnt.full_palette) {
-          data = ((data & 0xF0F0U) >> 4) | ((data & 0x0F0FU) << 4);
-        }
-
-        text.tile.address -= sizeof(u16);
-      } else {
-        text.tile.address += sizeof(u16);
+      if(!bgcnt.full_palette) {
+        data = ((data & 0xF0F0U) >> 4) | ((data & 0x0F0FU) << 4);
       }
 
-      text.piso.data = data;
-      text.piso.remaining = 4;
+      text.tile.address -= sizeof(u16);
+    } else {
+      text.tile.address += sizeof(u16);
     }
+
+    text.piso.data = data;
+    text.piso.remaining = 4;
+
+    text.fetches--;
   }
 
   uint index;
+
+  const int screen_x = (cycle >> 2) - 9;
 
   if(bgcnt.full_palette) {
     index = text.piso.data & 0xFFU;
@@ -50,12 +52,10 @@ void ALWAYS_INLINE RenderMode0BG(uint id, uint cycle) {
     text.piso.remaining--;
   }
 
-  const int screen_x = (cycle >> 2) - 9;
-
   if(screen_x >= 0 && screen_x < 240) {
     bg.buffer[screen_x][id] = index;
   }
-  
+
   const uint bghofs = mmio.bghofs[id];
   const uint bghofs_div_8 = bghofs >> 3;
   const uint bghofs_mod_8 = bghofs & 7U;
@@ -63,11 +63,11 @@ void ALWAYS_INLINE RenderMode0BG(uint id, uint cycle) {
   // @todo: find a better name for this?
   const uint step = (cycle >> 2) + bghofs_mod_8;
 
-  if(step >= 8 && (step & 7) == 0) {
+  if(cycle < 1007U && step >= 8 && (step & 7) == 0) {
     const u32 tile_base = bgcnt.tile_block << 14;
-    /*const*/ uint map_block = bgcnt.map_block;
+    uint map_block = bgcnt.map_block;
 
-    /*const*/ uint line = mmio.vcount + mmio.bgvofs[id];
+    uint line = mmio.vcount + mmio.bgvofs[id];
 
     if(bgcnt.mosaic_enable) {
       line -= (uint)bg.mosaic_y;
@@ -90,33 +90,43 @@ void ALWAYS_INLINE RenderMode0BG(uint id, uint cycle) {
 
     const u16 tile = FetchVRAM_BG<u16>(cycle, address);
 
-    const uint number = tile & 0x3FFU;
-    const bool flip_x = tile & (1U << 10);
-    const bool flip_y = tile & (1U << 11);
+    /**
+     * In cycles 1004 - 1006 map fetches can still happen,
+     * however curiously no tile fetches follow.
+     * If a map fetch were to happen in cycle 1003 though,
+     * tile fetches would follow even during H-blank?
+     */
+    if(cycle < 1004U) {
+      const uint number = tile & 0x3FFU;
+      const bool flip_x = tile & (1U << 10);
+      const bool flip_y = tile & (1U << 11);
 
-    text.tile.palette = tile >> 12;
-    text.tile.flip_x  = flip_x;
+      text.tile.palette = tile >> 12;
+      text.tile.flip_x  = flip_x;
 
-    const uint real_tile_y = flip_y ? (7 - tile_y) : tile_y;
+      const uint real_tile_y = flip_y ? (7 - tile_y) : tile_y;
 
-    // @todo: research the low-level details of the address calculation.
-    if(bgcnt.full_palette) {
-      text.tile.address = tile_base + (number << 6) + (real_tile_y << 3);
+      // @todo: research the low-level details of the address calculation.
+      if(bgcnt.full_palette) {
+        text.tile.address = tile_base + (number << 6) + (real_tile_y << 3);
 
-      if(flip_x) {
-        text.tile.address += 6;
+        if(flip_x) {
+          text.tile.address += 6;
+        }
+
+        text.fetches = 4;
+      } else {
+        text.tile.address = tile_base + (number << 5) + (real_tile_y << 2);
+
+        if(flip_x) {
+          text.tile.address += 2;
+        }
+
+        text.fetches = 2;
       }
-    } else {
-      text.tile.address = tile_base + (number << 5) + (real_tile_y << 2);
 
-      if(flip_x) {
-        text.tile.address += 2;
-      }
+      text.piso.remaining = 0;
     }
-
-    text.fetching = true;
-
-    text.piso.remaining = 0;
   }
 }
 
