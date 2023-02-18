@@ -27,6 +27,7 @@ void PPU::InitMerge() {
   merge.cycle = 0U;
   merge.mosaic_x[0] = 0U;
   merge.mosaic_x[1] = 0U;
+  merge.forced_blank = false;
 }
 
 void PPU::DrawMerge() {
@@ -113,101 +114,109 @@ void PPU::DrawMergeImpl(int cycles) {
     const int phase = cycle & 3;
 
     if(phase == 0) {
-      uint priorities[2] {3U, 3U};
+      merge.forced_blank = ForcedBlank();
 
-      layers[0] = LAYER_BD;
-      layers[1] = LAYER_BD;
-      colors[0] = 0U;
-      colors[1] = 0U;
+      if(!merge.forced_blank) {
+        uint priorities[2] {3U, 3U};
 
-      int bg_list_index = 0;
+        layers[0] = LAYER_BD;
+        layers[1] = LAYER_BD;
+        colors[0] = 0U;
+        colors[1] = 0U;
 
-      // @todo: avoid extracting the top two layers in cases where it is not necessary.
-      for(int j = 0; j < 2; j++) {
-        while(bg_list_index < bg_count) {
-          const int bg_id = bg_list[bg_list_index];
+        int bg_list_index = 0;
 
-          bg_list_index++;
+        // @todo: avoid extracting the top two layers in cases where it is not necessary.
+        for(int j = 0; j < 2; j++) {
+          while(bg_list_index < bg_count) {
+            const int bg_id = bg_list[bg_list_index];
 
-          if(!have_windows || win_layer_enable[bg_id]) {
-            const auto& bgcnt = mmio.bgcnt[bg_id];
-            const uint mx = x - (bgcnt.mosaic_enable ? merge.mosaic_x[0] : 0U);
-            const u32 bg_color = bg.buffer[mx][bg_id];
+            bg_list_index++;
 
-            if(bg_color != 0U) {
-              layers[j] = bg_id;
-              colors[j] = bg_color;
-              priorities[j] = (uint)bgcnt.priority;
-              break;
+            if(!have_windows || win_layer_enable[bg_id]) {
+              const auto& bgcnt = mmio.bgcnt[bg_id];
+              const uint mx = x - (bgcnt.mosaic_enable ? merge.mosaic_x[0] : 0U);
+              const u32 bg_color = bg.buffer[mx][bg_id];
+
+              if(bg_color != 0U) {
+                layers[j] = bg_id;
+                colors[j] = bg_color;
+                priorities[j] = (uint)bgcnt.priority;
+                break;
+              }
             }
           }
         }
-      }
 
-      merge.force_alpha_blend = false;
+        merge.force_alpha_blend = false;
 
-      if(mmio.dispcnt.enable[LAYER_OBJ] && (!have_windows || win_layer_enable[LAYER_OBJ])) {
-        auto pixel = sprite.buffer_rd[x];
+        if(mmio.dispcnt.enable[LAYER_OBJ] && (!have_windows || win_layer_enable[LAYER_OBJ])) {
+          auto pixel = sprite.buffer_rd[x];
 
-        if(pixel.mosaic) pixel = sprite.buffer_rd[x - merge.mosaic_x[1]];
+          if(pixel.mosaic) pixel = sprite.buffer_rd[x - merge.mosaic_x[1]];
 
-        if(pixel.color != 0U) {
-          if(pixel.priority <= priorities[0]) {
-            // We do not care about the priority at this point, so we do not update it.
-            layers[1] = layers[0];
-            colors[1] = colors[0];
-            layers[0] = LAYER_OBJ;
-            colors[0] = pixel.color | 256U;
+          if(pixel.color != 0U) {
+            if(pixel.priority <= priorities[0]) {
+              // We do not care about the priority at this point, so we do not update it.
+              layers[1] = layers[0];
+              colors[1] = colors[0];
+              layers[0] = LAYER_OBJ;
+              colors[0] = pixel.color | 256U;
 
-            merge.force_alpha_blend = pixel.alpha;
-          } else if(pixel.priority <= priorities[1]) {
-            // We do not care about the priority at this point, so we do not update it.
-            layers[1] = LAYER_OBJ;
-            colors[1] = pixel.color | 256U;
+              merge.force_alpha_blend = pixel.alpha;
+            } else if(pixel.priority <= priorities[1]) {
+              // We do not care about the priority at this point, so we do not update it.
+              layers[1] = LAYER_OBJ;
+              colors[1] = pixel.color | 256U;
+            }
           }
         }
-      }
 
-      // @todo: make it clear what the meaning of 0x8000'0000 is.
-      if((colors[0] & 0x8000'0000) == 0) {
-        colors[0] = FetchPRAM<u16>(merge.cycle, colors[0] << 1);
+        // @todo: make it clear what the meaning of 0x8000'0000 is.
+        if((colors[0] & 0x8000'0000) == 0) {
+          colors[0] = FetchPRAM(merge.cycle, colors[0] << 1);
+        }
+      } else {
+        colors[0] = 0x7FFFU; // output white
       }
     } else if(phase == 2) {
-      const bool have_src = mmio.bldcnt.targets[1][layers[1]];
+      if(!merge.forced_blank) {
+        const bool have_src = mmio.bldcnt.targets[1][layers[1]];
 
-      if(merge.force_alpha_blend && have_src) {
-        // @todo: make it clear what the meaning of 0x8000'0000 is.
-        if((colors[1] & 0x8000'0000) == 0) {
-          colors[1] = FetchPRAM<u16>(merge.cycle, colors[1] << 1);
-        }
+        if(merge.force_alpha_blend && have_src) {
+          // @todo: make it clear what the meaning of 0x8000'0000 is.
+          if((colors[1] & 0x8000'0000) == 0) {
+            colors[1] = FetchPRAM(merge.cycle, colors[1] << 1);
+          }
 
-        colors[0] = Blend(colors[0], colors[1], mmio.eva, mmio.evb);
-      } else if(!have_windows || win_layer_enable[LAYER_SFX]) {
-        const bool have_dst = mmio.bldcnt.targets[0][layers[0]];
+          colors[0] = Blend(colors[0], colors[1], mmio.eva, mmio.evb);
+        } else if(!have_windows || win_layer_enable[LAYER_SFX]) {
+          const bool have_dst = mmio.bldcnt.targets[0][layers[0]];
 
-        switch(mmio.bldcnt.sfx) {
-          case BlendControl::SFX_BLEND: {
-            if(have_dst && have_src) {
-              // @todo: make it clear what the meaning of 0x8000'0000 is.
-              if((colors[1] & 0x8000'0000) == 0) {
-                colors[1] = FetchPRAM<u16>(merge.cycle, colors[1] << 1);
+          switch(mmio.bldcnt.sfx) {
+            case BlendControl::SFX_BLEND: {
+              if(have_dst && have_src) {
+                // @todo: make it clear what the meaning of 0x8000'0000 is.
+                if((colors[1] & 0x8000'0000) == 0) {
+                  colors[1] = FetchPRAM(merge.cycle, colors[1] << 1);
+                }
+
+                colors[0] = Blend(colors[0], colors[1], mmio.eva, mmio.evb);
               }
-
-              colors[0] = Blend(colors[0], colors[1], mmio.eva, mmio.evb);
+              break;
             }
-            break;
-          }
-          case BlendControl::SFX_BRIGHTEN: {
-            if(have_dst) {
-              colors[0] = Brighten(colors[0], mmio.evy);
+            case BlendControl::SFX_BRIGHTEN: {
+              if(have_dst) {
+                colors[0] = Brighten(colors[0], mmio.evy);
+              }
+              break;
             }
-            break;
-          }
-          case BlendControl::SFX_DARKEN: {
-            if(have_dst) {
-              colors[0] = Darken(colors[0], mmio.evy);
+            case BlendControl::SFX_DARKEN: {
+              if(have_dst) {
+                colors[0] = Darken(colors[0], mmio.evy);
+              }
+              break;
             }
-            break;
           }
         }
       }

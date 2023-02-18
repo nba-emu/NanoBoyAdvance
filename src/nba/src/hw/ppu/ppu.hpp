@@ -363,6 +363,7 @@ private:
     bool force_alpha_blend;
     u32 colors[2];
     u16 color_l;
+    bool forced_blank;
   } merge;
 
   void InitMerge();
@@ -373,20 +374,29 @@ private:
   static auto Brighten(u16 color, int evy) -> u16;
   static auto Darken(u16 color, int evy) -> u16;
 
-  template<typename T>
-  auto ALWAYS_INLINE FetchPRAM(uint cycle, uint address) -> T {
+  bool ALWAYS_INLINE ForcedBlank() const {
+    return (mmio.dispcnt_latch[0] | mmio.dispcnt.hword) & 0x80U;
+  }
+
+  auto ALWAYS_INLINE FetchPRAM(uint cycle, uint address) -> u16 {
     merge.timestamp_pram_access = merge.timestamp_init + cycle;
-    return read<T>(pram, address);
+    return read<u16>(pram, address);
   }
 
   template<typename T>
   auto ALWAYS_INLINE FetchVRAM_BG(uint cycle, uint address) -> T {
+    if(ForcedBlank()) {
+      return 0U;
+    }
+
     bg.timestamp_vram_access = bg.timestamp_init + cycle;
     return read<T>(vram, address);
   }
 
   template<typename T>
   auto ALWAYS_INLINE FetchVRAM_OBJ(uint cycle, uint address) -> T {
+    // @todo: OBJ circuitry seems to ignore 'forced blank'. But is that really true?
+
     sprite.timestamp_vram_access = sprite.timestamp_init + cycle;
 
     // @todo: verify this edge-case against hardware.
