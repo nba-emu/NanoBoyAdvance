@@ -115,7 +115,7 @@ void Bus::StopPrefetch() {
 void Bus::Step(int cycles) {
   scheduler.AddCycles(cycles);
 
-  if (prefetch.active && prefetch.countdown > 0) {
+  if (prefetch.active) {
     prefetch.countdown -= cycles;
 
     if (prefetch.countdown <= 0) {
