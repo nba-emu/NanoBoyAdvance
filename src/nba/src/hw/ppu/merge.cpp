@@ -226,10 +226,9 @@ auto PPU::Blend(u16 color_a, u16 color_b, int eva, int evb) -> u16 {
   eva = std::min<int>(16, eva);
   evb = std::min<int>(16, evb);
 
-  // @todo: round to nearest?
-  const int r = std::min<u8>((r_a * eva + r_b * evb) >> 4, 31);
-  const int g = std::min<u8>((g_a * eva + g_b * evb) >> 4, 63) >> 1;
-  const int b = std::min<u8>((b_a * eva + b_b * evb) >> 4, 31);
+  const int r = std::min<u8>((r_a * eva + r_b * evb + 8) >> 4, 31);
+  const int g = std::min<u8>((g_a * eva + g_b * evb + 8) >> 4, 63) >> 1;
+  const int b = std::min<u8>((b_a * eva + b_b * evb + 8) >> 4, 31);
 
   return (u16)((b << 10) | (g << 5) | r);
 }
@@ -241,9 +240,9 @@ auto PPU::Brighten(u16 color, int evy) -> u16 {
   int g = ((color >>  4) & 62) | (color >> 15 << 5);
   int b =  (color >> 10) & 31;
 
-  r += ((31 - r) * evy) >> 4;
-  g += ((63 - g) * evy) >> 4;
-  b += ((31 - b) * evy) >> 4;
+  r += ((31 - r) * evy + 8) >> 4;
+  g += ((63 - g) * evy + 8) >> 4;
+  b += ((31 - b) * evy + 8) >> 4;
 
   g >>= 1;
   
@@ -257,9 +256,9 @@ auto PPU::Darken(u16 color, int evy) -> u16 {
   int g = ((color >>  4) & 62) | (color >> 15 << 5);
   int b =  (color >> 10) & 31;
 
-  r -= (r * evy) >> 4;
-  g -= (g * evy) >> 4;
-  b -= (b * evy) >> 4;
+  r -= (r * evy + 7) >> 4;
+  g -= (g * evy + 7) >> 4;
+  b -= (b * evy + 7) >> 4;
 
   g >>= 1;
 
