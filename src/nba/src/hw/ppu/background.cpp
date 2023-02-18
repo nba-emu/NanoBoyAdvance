@@ -109,7 +109,6 @@ template<int mode> void PPU::DrawBackgroundImpl(int cycles) {
       }
     }
 
-    // @todo: I don't think this is always correct, at least in text-mode.
     if(++bg.cycle == 1232U) {
       break;
     }
