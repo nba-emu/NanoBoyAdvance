@@ -197,7 +197,27 @@ void PPU::DrawMergeImpl(int cycles) {
         }
       }
 
-      output[frame][mmio.vcount * 240 + x] = RGB555(colors[0]);
+      if(x & 1) {
+        u16 color_l = merge.color_l;
+        u16 color_r = colors[0];
+
+        if(mmio.greenswap & 1) {
+          const u16 mask = 31U << 5;
+
+          u16 g_l = color_l & mask;
+          u16 g_r = color_r & mask;
+
+          color_l = (color_l & ~mask) | g_r;
+          color_r = (color_r & ~mask) | g_l;
+        }
+
+        u32* out = &output[frame][mmio.vcount * 240 + (x & ~1)];
+
+        out[0] = RGB555(color_l);
+        out[1] = RGB555(color_r);
+      } else {
+        merge.color_l = colors[0];
+      }
 
       if(++merge.mosaic_x[0] == (uint)mmio.mosaic.bg.size_x) {
         merge.mosaic_x[0] = 0U;

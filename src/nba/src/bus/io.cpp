@@ -19,6 +19,8 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
     // PPU
     case DISPCNT+0:  return ppu_io.dispcnt.Read(0);
     case DISPCNT+1:  return ppu_io.dispcnt.Read(1);
+    case GREENSWAP+0: return ppu_io.greenswap;
+    case GREENSWAP+1: return 0;
     case DISPSTAT+0: return ppu_io.dispstat.Read(0);
     case DISPSTAT+1: return ppu_io.dispstat.Read(1);
     case VCOUNT+0:   return ppu_io.vcount & 0xFF;
@@ -238,6 +240,8 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
     // PPU
     case DISPCNT+0:  ppu_io.dispcnt.Write(0, value); break;
     case DISPCNT+1:  ppu_io.dispcnt.Write(1, value); break;
+    case GREENSWAP+0: ppu_io.greenswap = value & 1; break;
+    case GREENSWAP+1: break;
     case DISPSTAT+0: ppu_io.dispstat.Write(0, value); break;
     case DISPSTAT+1: ppu_io.dispstat.Write(1, value); break;
     case BG0CNT+0:   ppu_io.bgcnt[0].Write(0, value); break;

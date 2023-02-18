@@ -151,6 +151,8 @@ struct PPU {
     DisplayControl dispcnt;
     DisplayStatus dispstat;
 
+    u16 greenswap;
+
     u8 vcount;
 
     BackgroundControl bgcnt[4] { 0, 1, 2, 3 };
@@ -357,6 +359,7 @@ private:
     u64 timestamp_pram_access = 0;
     uint cycle;
     uint mosaic_x[2];
+    u16 color_l;
   } merge;
 
   void InitMerge();

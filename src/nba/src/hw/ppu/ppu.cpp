@@ -33,6 +33,8 @@ void PPU::Reset() {
   mmio.dispcnt.Reset();
   mmio.dispstat.Reset();
 
+  mmio.greenswap = 0U;
+
   for (int i = 0; i < 4; i++) {
     mmio.enable_bg[0][i] = false;
     mmio.enable_bg[1][i] = false;
