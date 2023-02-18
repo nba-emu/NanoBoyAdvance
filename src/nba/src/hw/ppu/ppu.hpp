@@ -359,6 +359,9 @@ private:
     u64 timestamp_pram_access = 0;
     uint cycle;
     uint mosaic_x[2];
+    int layers[2];
+    bool force_alpha_blend;
+    u32 colors[2];
     u16 color_l;
   } merge;
 

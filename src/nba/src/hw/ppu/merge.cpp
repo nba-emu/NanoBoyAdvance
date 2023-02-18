@@ -84,28 +84,41 @@ void PPU::DrawMergeImpl(int cycles) {
 
   const int* win_layer_enable; // @todo: use bool
 
+  auto layers = merge.layers;
+  auto colors = merge.colors;
+
   for(int i = 0; i < cycles; i++) {
     const int cycle = (int)merge.cycle - 46;
 
-    if(cycle >= 0 && (cycle & 3) == 0) {
-      const uint x = (uint)cycle >> 2;
+    if(cycle < 0) {
+      merge.cycle++;
+      continue;
+    }
 
-      if(have_windows) {
-        // @todo: this probably can be optimized a bit
-        if(enable_win0 && window.buffer[x][0]) {
-          win_layer_enable = mmio.winin.enable[0];
-        } else if(enable_win1 && window.buffer[x][1]) {
-          win_layer_enable = mmio.winin.enable[1];
-        } else if(enable_objwin && sprite.buffer_rd[x].window) {
-          win_layer_enable = mmio.winout.enable[1];
-        } else {
-          win_layer_enable = mmio.winout.enable[0];
-        }
+    const uint x = (uint)cycle >> 2;
+
+    // @todo: optimize this, this is baaad
+    if(have_windows) {
+      if(enable_win0 && window.buffer[x][0]) {
+        win_layer_enable = mmio.winin.enable[0];
+      } else if(enable_win1 && window.buffer[x][1]) {
+        win_layer_enable = mmio.winin.enable[1];
+      } else if(enable_objwin && sprite.buffer_rd[x].window) {
+        win_layer_enable = mmio.winout.enable[1];
+      } else {
+        win_layer_enable = mmio.winout.enable[0];
       }
+    }
 
-      int layers[2] {LAYER_BD, LAYER_BD};
-      u32 colors[2] {0U, 0U};
+    const int phase = cycle & 3;
+
+    if(phase == 0) {
       uint priorities[2] {3U, 3U};
+
+      layers[0] = LAYER_BD;
+      layers[1] = LAYER_BD;
+      colors[0] = 0U;
+      colors[1] = 0U;
 
       int bg_list_index = 0;
 
@@ -131,7 +144,7 @@ void PPU::DrawMergeImpl(int cycles) {
         }
       }
 
-      bool is_alpha_obj = false;
+      merge.force_alpha_blend = false;
 
       if(mmio.dispcnt.enable[LAYER_OBJ] && (!have_windows || win_layer_enable[LAYER_OBJ])) {
         auto pixel = sprite.buffer_rd[x];
@@ -146,7 +159,7 @@ void PPU::DrawMergeImpl(int cycles) {
             layers[0] = LAYER_OBJ;
             colors[0] = pixel.color | 256U;
 
-            is_alpha_obj = pixel.alpha;
+            merge.force_alpha_blend = pixel.alpha;
           } else if(pixel.priority <= priorities[1]) {
             // We do not care about the priority at this point, so we do not update it.
             layers[1] = LAYER_OBJ;
@@ -159,18 +172,15 @@ void PPU::DrawMergeImpl(int cycles) {
       if((colors[0] & 0x8000'0000) == 0) {
         colors[0] = FetchPRAM<u16>(merge.cycle, colors[0] << 1);
       }
-
-      // @todo: split into two cycles here
-
-      // @todo: make it clear what the meaning of 0x8000'0000 is.
-      // @todo: do not make this fetch unless it is necessary.
-      if((colors[1] & 0x8000'0000) == 0) {
-        colors[1] = FetchPRAM<u16>(merge.cycle, colors[1] << 1);
-      }
-
+    } else if(phase == 2) {
       const bool have_src = mmio.bldcnt.targets[1][layers[1]];
 
-      if(is_alpha_obj && have_src) {
+      if(merge.force_alpha_blend && have_src) {
+        // @todo: make it clear what the meaning of 0x8000'0000 is.
+        if((colors[1] & 0x8000'0000) == 0) {
+          colors[1] = FetchPRAM<u16>(merge.cycle, colors[1] << 1);
+        }
+
         colors[0] = Blend(colors[0], colors[1], mmio.eva, mmio.evb);
       } else if(!have_windows || win_layer_enable[LAYER_SFX]) {
         const bool have_dst = mmio.bldcnt.targets[0][layers[0]];
@@ -178,6 +188,11 @@ void PPU::DrawMergeImpl(int cycles) {
         switch(mmio.bldcnt.sfx) {
           case BlendControl::SFX_BLEND: {
             if(have_dst && have_src) {
+              // @todo: make it clear what the meaning of 0x8000'0000 is.
+              if((colors[1] & 0x8000'0000) == 0) {
+                colors[1] = FetchPRAM<u16>(merge.cycle, colors[1] << 1);
+              }
+
               colors[0] = Blend(colors[0], colors[1], mmio.eva, mmio.evb);
             }
             break;
