@@ -76,10 +76,11 @@ void PPU::DrawMergeImpl(int cycles) {
     }
   }
 
-  // @todo: should the OBJWIN be disabled if sprites are disabled?
+  const bool enable_obj = latched_dispcnt_and_current_dispcnt & (256U << LAYER_OBJ);
+
   const bool enable_win0 = mmio.dispcnt.enable[ENABLE_WIN0];
   const bool enable_win1 = mmio.dispcnt.enable[ENABLE_WIN1];
-  const bool enable_objwin = mmio.dispcnt.enable[ENABLE_OBJWIN];
+  const bool enable_objwin = mmio.dispcnt.enable[ENABLE_OBJWIN] && enable_obj;
 
   const bool have_windows = enable_win0 || enable_win1 || enable_objwin;
 
@@ -150,7 +151,7 @@ void PPU::DrawMergeImpl(int cycles) {
 
         merge.force_alpha_blend = false;
 
-        if(mmio.dispcnt.enable[LAYER_OBJ] && (!have_windows || win_layer_enable[LAYER_OBJ])) {
+        if(enable_obj && (!have_windows || win_layer_enable[LAYER_OBJ])) {
           auto pixel = sprite.buffer_rd[x];
 
           if(pixel.mosaic) pixel = sprite.buffer_rd[x - merge.mosaic_x[1]];
