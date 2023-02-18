@@ -214,22 +214,21 @@ void PPU::DrawMergeImpl(int cycles) {
   }
 }
 
-// @todo: respect the 6-th green channel bit during blending.
-
 auto PPU::Blend(u16 color_a, u16 color_b, int eva, int evb) -> u16 {
-  const int r_a = (color_a >>  0) & 31;
-  const int g_a = (color_a >>  5) & 31;
-  const int b_a = (color_a >> 10) & 31;
+  const int r_a =  (color_a >>  0) & 31;
+  const int g_a = ((color_a >>  4) & 62) | (color_a >> 15 << 5);
+  const int b_a =  (color_a >> 10) & 31;
 
-  const int r_b = (color_b >>  0) & 31;
-  const int g_b = (color_b >>  5) & 31;
-  const int b_b = (color_b >> 10) & 31;
+  const int r_b =  (color_b >>  0) & 31;
+  const int g_b = ((color_b >>  4) & 62) | (color_b >> 15 << 5);
+  const int b_b =  (color_b >> 10) & 31;
 
   eva = std::min<int>(16, eva);
   evb = std::min<int>(16, evb);
 
+  // @todo: round to nearest?
   const int r = std::min<u8>((r_a * eva + r_b * evb) >> 4, 31);
-  const int g = std::min<u8>((g_a * eva + g_b * evb) >> 4, 31);
+  const int g = std::min<u8>((g_a * eva + g_b * evb) >> 4, 63) >> 1;
   const int b = std::min<u8>((b_a * eva + b_b * evb) >> 4, 31);
 
   return (u16)((b << 10) | (g << 5) | r);
@@ -238,13 +237,15 @@ auto PPU::Blend(u16 color_a, u16 color_b, int eva, int evb) -> u16 {
 auto PPU::Brighten(u16 color, int evy) -> u16 {
   evy = std::min<int>(16, evy);
 
-  int r = (color >>  0) & 31;
-  int g = (color >>  5) & 31;
-  int b = (color >> 10) & 31;
+  int r =  (color >>  0) & 31;
+  int g = ((color >>  4) & 62) | (color >> 15 << 5);
+  int b =  (color >> 10) & 31;
 
   r += ((31 - r) * evy) >> 4;
-  g += ((31 - g) * evy) >> 4;
+  g += ((63 - g) * evy) >> 4;
   b += ((31 - b) * evy) >> 4;
+
+  g >>= 1;
   
   return (u16)((b << 10) | (g << 5) | r);
 }
@@ -252,13 +253,15 @@ auto PPU::Brighten(u16 color, int evy) -> u16 {
 auto PPU::Darken(u16 color, int evy) -> u16 {
   evy = std::min<int>(16, evy);
 
-  int r = (color >>  0) & 31;
-  int g = (color >>  5) & 31;
-  int b = (color >> 10) & 31;
+  int r =  (color >>  0) & 31;
+  int g = ((color >>  4) & 62) | (color >> 15 << 5);
+  int b =  (color >> 10) & 31;
 
   r -= (r * evy) >> 4;
   g -= (g * evy) >> 4;
   b -= (b * evy) >> 4;
+
+  g >>= 1;
 
   return (u16)((b << 10) | (g << 5) | r);
 }
