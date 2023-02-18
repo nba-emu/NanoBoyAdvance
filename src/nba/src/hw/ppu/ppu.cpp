@@ -36,9 +36,6 @@ void PPU::Reset() {
   mmio.greenswap = 0U;
 
   for (int i = 0; i < 4; i++) {
-    mmio.enable_bg[0][i] = false;
-    mmio.enable_bg[1][i] = false;
-
     mmio.bgcnt[i].Reset();
     mmio.bghofs[i] = 0;
     mmio.bgvofs[i] = 0;
@@ -65,6 +62,10 @@ void PPU::Reset() {
   mmio.evb = 0;
   mmio.evy = 0;
   mmio.bldcnt.Reset();
+
+  for(int i = 0; i < 3; i++) {
+    mmio.dispcnt_latch[i] = 0U;
+  }
 
   // VCOUNT=225 DISPSTAT=3 was measured after reset on a 3DS in GBA mode (thanks Lady Starbreeze).
   mmio.vcount = 225;
@@ -98,18 +99,10 @@ void PPU::StupidSpriteEventHandler(int cycles) {
   scheduler.Add(1232, this, &PPU::StupidSpriteEventHandler);
 }
 
-void PPU::LatchEnabledBGs() {
-  for (int i = 0; i < 4; i++) {
-    mmio.enable_bg[0][i] = mmio.enable_bg[1][i];
-  }
-
-  for (int i = 0; i < 4; i++) {
-    mmio.enable_bg[1][i] = mmio.enable_bg[2][i];
-  }
-
-  for (int i = 0; i < 4; i++) {
-    mmio.enable_bg[2][i] = mmio.dispcnt.enable[i];
-  }
+void PPU::LatchDISPCNT() {
+  mmio.dispcnt_latch[0] = mmio.dispcnt_latch[1];
+  mmio.dispcnt_latch[1] = mmio.dispcnt_latch[2];
+  mmio.dispcnt_latch[2] = mmio.dispcnt.hword;
 }
 
 void PPU::LatchBGXYWrites() {
@@ -183,6 +176,8 @@ void PPU::OnScanlineComplete(int cycles_late) {
    * in that case the internal X/Y registers will never be updated.
    */
   if (mmio.dispcnt.mode != 0) {
+    const u16 latched_dispcnt_and_current_dispcnt = mmio.dispcnt_latch[0] & mmio.dispcnt.hword;
+
     // Advance internal affine registers and apply vertical mosaic if applicable.
     for (int i = 0; i < 2; i++) {
       /* Do not update internal X/Y unless the latched BG enable bit is set.
@@ -190,7 +185,7 @@ void PPU::OnScanlineComplete(int cycles_late) {
        */
       auto bg_id = 2 + i;
 
-      if (mmio.enable_bg[0][bg_id]) {
+      if (latched_dispcnt_and_current_dispcnt & (256U << bg_id)) {
         if (mmio.bgcnt[bg_id].mosaic_enable) {
           if (mosaic.bg._counter_y == 0) {
             bgx[i]._current += mosaic.bg.size_y * bgpb[i];
@@ -229,7 +224,7 @@ void PPU::OnHblankComplete(int cycles_late) {
   DrawMerge();
 
   scheduler.Add(40, [this](int) {
-    LatchEnabledBGs();
+    LatchDISPCNT();
   });
 
   dispstat.hblank_flag = 0;
@@ -313,7 +308,7 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
 
   if(vcount >= 224) {
     scheduler.Add(40, [this](int) {
-      LatchEnabledBGs();
+      LatchDISPCNT();
     });
   }
 

@@ -61,15 +61,15 @@ void PPU::DrawMergeImpl(int cycles) {
   const int min_bg = k_min_max_bg[mode][0];
   const int max_bg = k_min_max_bg[mode][1];
 
+  const u16 latched_dispcnt_and_current_dispcnt = mmio.dispcnt_latch[0] & mmio.dispcnt.hword;
+
   // Enabled BGs sorted from highest to lowest priority.
   int bg_list[4];
   int bg_count = 0;
 
   for(int priority = 0; priority <= 3; priority++) {
     for(int id = min_bg; id <= max_bg; id++) {
-      if(mmio.bgcnt[id].priority == priority &&
-         mmio.enable_bg[0][id] &&
-         mmio.dispcnt.enable[id]) {
+      if(mmio.bgcnt[id].priority == priority && (latched_dispcnt_and_current_dispcnt & (256U << id))) {
         bg_list[bg_count++] = id;
       }
     }

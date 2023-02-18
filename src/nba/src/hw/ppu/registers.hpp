@@ -14,6 +14,8 @@ namespace nba::core {
 class PPU;
 
 struct DisplayControl {
+  u16 hword;
+
   int mode;
   int cgb_mode;
   int frame;

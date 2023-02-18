@@ -178,7 +178,7 @@ struct PPU {
     int evb;
     int evy;
 
-    bool enable_bg[3][4];
+    u16 dispcnt_latch[3];
   } mmio;
 
 private:
@@ -219,7 +219,7 @@ private:
     ENABLE_OBJWIN = 7
   };
 
-  void LatchEnabledBGs();
+  void LatchDISPCNT();
   void LatchBGXYWrites();
   void CheckVerticalCounterIRQ();
   void UpdateVideoTransferDMA();
