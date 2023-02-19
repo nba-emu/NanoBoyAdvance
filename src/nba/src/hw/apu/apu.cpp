@@ -232,7 +232,10 @@ void APU::StepMixer(int cycles_late) {
     resampler->Write({ sample[0] / float(0x200), sample[1] / float(0x200) });
     buffer_mutex.unlock();
 
-    scheduler.Add(mmio.bias.GetSampleInterval() - cycles_late, this, &APU::StepMixer);
+    const int sample_interval = mmio.bias.GetSampleInterval();
+    const int cycles = sample_interval - (scheduler.GetTimestampNow() & (sample_interval - 1));
+
+    scheduler.Add(cycles - cycles_late, this, &APU::StepMixer);
   }
 }
 
