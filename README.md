@@ -3,8 +3,8 @@
 ![license](https://img.shields.io/github/license/nba-emu/NanoBoyAdvance)
 ![build](https://img.shields.io/github/actions/workflow/status/nba-emu/NanoBoyAdvance/build.yml?branch=master)
 
-NanoBoyAdvance is a highly accurate Game Boy Advance emulator.<br>
-It aims for cycle-accurate emulation when possible, while also offering enhancements such as
+NanoBoyAdvance is a cycle-accurate Game Boy Advance emulator.<br>
+It aims to be as accurate as possible, while also offering enhancements such as
 improved audio quality.<br>
 
 ![screenshot1](docs/screenshot.png)
@@ -30,16 +30,13 @@ You can [dump](https://github.com/mgba-emu/bios-dump/tree/master/src) it from a 
 
 ## Accuracy
 
-A lot of attention to detail has been put into developing this core and making it accurate.
-Its CPU and timing emulation is more accurate than other software emulators right now. 
+A lot of research and attention to detail has been put into developing this core and making it accurate.
 
-- Cycle-accurate emulation of the CPU, DMA, timers and Game Pak prefetch buffer
+- Cycle-accurate emulation of most components, including: CPU, DMA, timers, PPU and Game Pak prefetch
 - Passes all AGS aging cartridge tests (NBA was the first public emulator to achieve this)
 - Passes most tests in the [mGBA test suite](https://github.com/mgba-emu/suite) (see [mGBA suite comparison](docs/ACCURACY.md#mGBA-suite-comparison) for more details)
 - Passes [ARMWrestler](https://github.com/destoer/armwrestler-gba-fixed), [gba-suite](https://github.com/jsmolka/gba-tests) and [FuzzARM](https://github.com/DenSinH/FuzzARM) CPU tests
-- High compatibility, including games that require emulation of peculiar hardware edge-cases (see [Game compatibility](docs/ACCURACY.md#Game-compatibility))
-
-Cycle-accurate PPU emulation is an active topic of research and will be implemented, once the timing has been understood and documented well enough.
+- Very high compatibility, including games that require emulation of peculiar hardware edge-cases (see [Game compatibility](docs/ACCURACY.md#Game-compatibility))
 
 ## Compiling
 
