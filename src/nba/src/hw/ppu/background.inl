@@ -197,7 +197,7 @@ void ALWAYS_INLINE RenderMode3BG(uint cycle) {
   }
 
   if(screen_x < 240U) {
-    bg.buffer[screen_x][2] = color | 0x8000'0000;
+    bg.buffer[screen_x][2] = color;
   }
 
   bg.affine[0].x += mmio.bgpa[0];
