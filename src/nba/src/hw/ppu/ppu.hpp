@@ -218,7 +218,6 @@ private:
   };
 
   void LatchDISPCNT();
-  void LatchBGXYWrites();
   void CheckVerticalCounterIRQ();
   void UpdateVideoTransferDMA();
 

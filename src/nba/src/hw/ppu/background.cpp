@@ -20,9 +20,24 @@ void PPU::InitBackground() {
     text.fetches = 0;
   }
 
+  const bool first_scanline = mmio.vcount == 0;
+
   for(int id = 0; id < 2; id++) {
-    bg.affine[id].x = mmio.bgx[id]._current;
-    bg.affine[id].y = mmio.bgy[id]._current;
+    auto& bgx = mmio.bgx[id];
+    auto& bgy = mmio.bgy[id];
+
+    // @todo: should BGY be latched when BGX was written and vice versa?
+    if(bgx.written || first_scanline) {
+      bgx._current = bgx.initial;
+      bgx.written = false;
+    }
+    if(bgy.written || first_scanline) {
+      bgy._current = bgy.initial;
+      bgy.written = false;
+    }
+
+    bg.affine[id].x = bgx._current;
+    bg.affine[id].y = bgy._current;
   }
 }
 

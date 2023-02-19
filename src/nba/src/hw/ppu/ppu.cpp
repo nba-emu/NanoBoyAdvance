@@ -105,24 +105,6 @@ void PPU::LatchDISPCNT() {
   mmio.dispcnt_latch[2] = mmio.dispcnt.hword;
 }
 
-void PPU::LatchBGXYWrites() {
-  // TODO: should BGY be latched when BGX was written and vice versa?
-  for (int i = 0; i < 2; i++) {
-    auto& bgx = mmio.bgx[i];
-    auto& bgy = mmio.bgy[i];
-
-    if (bgx.written) {
-      bgx._current = bgx.initial;
-      bgx.written = false;
-    }
-
-    if (bgy.written) {
-      bgy._current = bgy.initial;
-      bgy.written = false;
-    }
-  }
-}
-
 void PPU::CheckVerticalCounterIRQ() {
   auto& dispstat = mmio.dispstat;
   auto vcount_flag_new = dispstat.vcount_setting == mmio.vcount;
@@ -187,7 +169,6 @@ void PPU::OnHblankComplete(int cycles_late) {
   vcount++;
 
   CheckVerticalCounterIRQ();
-  LatchBGXYWrites();
   UpdateVideoTransferDMA();
 
   if (vcount == 160) {
@@ -274,7 +255,6 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
     }
   }
 
-  LatchBGXYWrites();
   CheckVerticalCounterIRQ();
   // ScheduleSubmitScanline();
   UpdateVideoTransferDMA();
