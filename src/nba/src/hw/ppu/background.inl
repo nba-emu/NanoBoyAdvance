@@ -70,7 +70,7 @@ void ALWAYS_INLINE RenderMode0BG(uint id, uint cycle) {
     uint line = mmio.vcount + mmio.bgvofs[id];
 
     if(bgcnt.mosaic_enable) {
-      line -= (uint)bg.mosaic_y;
+      line -= (uint)mmio.mosaic.bg._counter_y;
     }
 
     const uint grid_x = bghofs_div_8 + (step >> 3) - 1U;

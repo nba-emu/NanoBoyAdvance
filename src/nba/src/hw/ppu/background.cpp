@@ -24,13 +24,6 @@ void PPU::InitBackground() {
     bg.affine[id].x = mmio.bgx[id]._current;
     bg.affine[id].y = mmio.bgy[id]._current;
   }
-
-  /**
-   * We are latching this, because the currently the counter
-   * in incremented in H-blank, which means that it might happen 
-   * before BG rendering is done (because there is no sync point at H-blank).
-   */
-  bg.mosaic_y = mmio.mosaic.bg._counter_y;
 }
 
 void PPU::DrawBackground() {
@@ -106,6 +99,19 @@ template<int mode> void PPU::DrawBackgroundImpl(int cycles) {
         if(latched_dispcnt_and_current_dispcnt & 1024U) {
           RenderMode5BG(cycle);
         }
+      }
+    }
+
+    // @todo: confirm that the timing is correct.
+    if(cycle == 1007U) {
+      auto& mosaic = mmio.mosaic;
+
+      if(mmio.vcount < 159) {
+        if (++mosaic.bg._counter_y == mosaic.bg.size_y) {
+          mosaic.bg._counter_y = 0;
+        }
+      } else {
+        mosaic.bg._counter_y = 0;
       }
     }
 

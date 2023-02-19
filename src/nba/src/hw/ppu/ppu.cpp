@@ -162,16 +162,6 @@ void PPU::OnScanlineComplete(int cycles_late) {
     dma.Request(DMA::Occasion::HBlank);
   });
   
-  // Advance vertical background mosaic counter
-  if (++mosaic.bg._counter_y == mosaic.bg.size_y) {
-    mosaic.bg._counter_y = 0;
-  }
-
-  // Advance vertical OBJ mosaic counter
-  if (++mmio.mosaic.obj._counter_y == mmio.mosaic.obj.size_y) {
-    mmio.mosaic.obj._counter_y = 0;
-  }
-
   /* Mode 0 doesn't have any affine backgrounds,
    * in that case the internal X/Y registers will never be updated.
    */
@@ -217,7 +207,6 @@ void PPU::OnHblankComplete(int cycles_late) {
   auto& vcount = mmio.vcount;
   auto& bgx = mmio.bgx;
   auto& bgy = mmio.bgy;
-  auto& mosaic = mmio.mosaic;
 
   DrawBackground();
   DrawWindow();
@@ -245,10 +234,6 @@ void PPU::OnHblankComplete(int cycles_late) {
       irq.Raise(IRQ::Source::VBlank);
     }
 
-    // Reset vertical mosaic counters
-    mosaic.bg._counter_y = 0;
-    mosaic.obj._counter_y = 0;
-
     // Reload internal affine registers
     for (int i = 0; i < 2; i++) {
       bgx[i]._current = bgx[i].initial;
@@ -269,13 +254,6 @@ void PPU::OnVblankScanlineComplete(int cycles_late) {
   auto& dispstat = mmio.dispstat;
 
   dispstat.hblank_flag = 1;
-
-  if (mmio.vcount == 227) {
-    // Advance vertical OBJ mosaic counter
-    if (++mmio.mosaic.obj._counter_y == mmio.mosaic.obj.size_y) {
-      mmio.mosaic.obj._counter_y = 0;
-    }
-  }
 
   scheduler.Add(2 - cycles_late, this, &PPU::OnVblankHblankIRQTest);
 }

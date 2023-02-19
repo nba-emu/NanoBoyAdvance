@@ -258,8 +258,6 @@ private:
     } affine[2];
 
     u32 buffer[240][4];
-
-    int mosaic_y;
   } bg;
 
   void InitBackground();
@@ -273,7 +271,6 @@ private:
     u64 timestamp_oam_access = ~0ULL;
     uint cycle;
     uint vcount;
-    int mosaic_y;
 
     struct {
       uint index;
