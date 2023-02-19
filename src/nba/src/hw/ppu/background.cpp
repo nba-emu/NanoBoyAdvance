@@ -102,14 +102,8 @@ template<int mode> void PPU::DrawBackgroundImpl(int cycles) {
       }
     }
 
-    /**
-     * @todo: figure out what the correct timing for updating vertical mosaic
-     * and the internal BG X/Y registers is.
-     * It is could be possible even that the internal BG X/Y registers are 
-     * updated at the end of the scanline, since that's where they're updated,
-     * when they're written mid-frame.
-     */
-    if(cycle == 1007U) {
+    // @todo: research mosaic timing and narrow down the BG X/Y timing more precisely.
+    if(cycle == 1232U) {
       auto& mosaic = mmio.mosaic;
 
       if(mmio.vcount < 159) {
