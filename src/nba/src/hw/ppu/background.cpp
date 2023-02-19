@@ -102,16 +102,54 @@ template<int mode> void PPU::DrawBackgroundImpl(int cycles) {
       }
     }
 
-    // @todo: confirm that the timing is correct.
+    /**
+     * @todo: figure out what the correct timing for updating vertical mosaic
+     * and the internal BG X/Y registers is.
+     * It is could be possible even that the internal BG X/Y registers are 
+     * updated at the end of the scanline, since that's where they're updated,
+     * when they're written mid-frame.
+     */
     if(cycle == 1007U) {
       auto& mosaic = mmio.mosaic;
 
       if(mmio.vcount < 159) {
-        if (++mosaic.bg._counter_y == mosaic.bg.size_y) {
+        if(++mosaic.bg._counter_y == mosaic.bg.size_y) {
           mosaic.bg._counter_y = 0;
         }
       } else {
         mosaic.bg._counter_y = 0;
+      }
+
+      auto& bgx = mmio.bgx;
+      auto& bgy = mmio.bgy;
+      auto& bgpb = mmio.bgpb;
+      auto& bgpd = mmio.bgpd;
+
+      const auto AdvanceBGXY = [&](int id) {
+        auto bg_id = 2 + id;
+
+        /* Do not update internal X/Y unless the latched BG enable bit is set.
+         * This behavior was confirmed on real hardware.
+         */
+        if(latched_dispcnt_and_current_dispcnt & (256U << bg_id)) {
+          if(mmio.bgcnt[bg_id].mosaic_enable) {
+            if(mosaic.bg._counter_y == 0) {
+              bgx[id]._current += mosaic.bg.size_y * bgpb[id];
+              bgy[id]._current += mosaic.bg.size_y * bgpd[id];
+            }
+          } else {
+            bgx[id]._current += bgpb[id];
+            bgy[id]._current += bgpd[id];
+          }
+        }
+      };
+
+      if constexpr(mode >= 1 && mode <= 5) {
+        AdvanceBGXY(0);
+      }
+
+      if constexpr(mode == 2) {
+        AdvanceBGXY(1);
       }
     }
 

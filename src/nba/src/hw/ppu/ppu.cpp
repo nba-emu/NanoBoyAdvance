@@ -149,45 +149,12 @@ void PPU::UpdateVideoTransferDMA() {
 }
 
 void PPU::OnScanlineComplete(int cycles_late) {
-  auto& bgx = mmio.bgx;
-  auto& bgy = mmio.bgy;
-  auto& bgpb = mmio.bgpb;
-  auto& bgpd = mmio.bgpd;
-  auto& mosaic = mmio.mosaic;
-
   mmio.dispstat.hblank_flag = 1;
 
   // TODO: fix these timings properly eventually.
   scheduler.Add(1, [this](int) {
     dma.Request(DMA::Occasion::HBlank);
   });
-  
-  /* Mode 0 doesn't have any affine backgrounds,
-   * in that case the internal X/Y registers will never be updated.
-   */
-  if (mmio.dispcnt.mode != 0) {
-    const u16 latched_dispcnt_and_current_dispcnt = mmio.dispcnt_latch[0] & mmio.dispcnt.hword;
-
-    // Advance internal affine registers and apply vertical mosaic if applicable.
-    for (int i = 0; i < 2; i++) {
-      /* Do not update internal X/Y unless the latched BG enable bit is set.
-       * This behavior was confirmed on real hardware.
-       */
-      auto bg_id = 2 + i;
-
-      if (latched_dispcnt_and_current_dispcnt & (256U << bg_id)) {
-        if (mmio.bgcnt[bg_id].mosaic_enable) {
-          if (mosaic.bg._counter_y == 0) {
-            bgx[i]._current += mosaic.bg.size_y * bgpb[i];
-            bgy[i]._current += mosaic.bg.size_y * bgpd[i];
-          }
-        } else {
-          bgx[i]._current += bgpb[i];
-          bgy[i]._current += bgpd[i];
-        }
-      }
-    }
-  }
 
   scheduler.Add(2 - cycles_late, this, &PPU::OnHblankIRQTest);
 }
