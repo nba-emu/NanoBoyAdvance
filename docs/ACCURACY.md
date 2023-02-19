@@ -37,10 +37,10 @@ Some of these issues are minor visual bugs, that do not affect gameplay, others 
 - Gunstar Heroes (requires limiting sprite render cycles: https://github.com/nba-emu/NanoBoyAdvance/issues/98)
 - Golden Sun (Sprite attributes are updated regardless of transparency: https://github.com/nba-emu/NanoBoyAdvance/issues/99) (minor issue)
 - Iridion 3D (BGX/BGY writes are latched at the start of the scanline: https://github.com/nba-emu/NanoBoyAdvance/issues/176) (minor issue)
-
-## Known broken
-
 - Gadget Racers (requires sub-scanline precision: https://github.com/nba-emu/NanoBoyAdvance/issues/230)
 - Metal Max Kai II (original revision) (requires sub-scanline precision: https://github.com/nba-emu/NanoBoyAdvance/issues/229) (minor issue)
 - Madden NFL 06 (requires VRAM access stalling: https://github.com/nba-emu/NanoBoyAdvance/issues/241)
+
+## Known broken
+
 - All Inside-cap visual novel ports (emulator detection gets set off: https://github.com/nba-emu/NanoBoyAdvance/issues/203)
