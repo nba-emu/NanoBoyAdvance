@@ -48,6 +48,8 @@ private:
   }
 
   Scheduler& scheduler;
+  Scheduler::Event* event = nullptr;
+
   std::function<void(int)> event_cb = [this](int cycles_late) {
     this->Generate(cycles_late);
   };

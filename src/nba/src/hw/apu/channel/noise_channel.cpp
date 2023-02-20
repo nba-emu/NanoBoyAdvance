@@ -28,11 +28,14 @@ void NoiseChannel::Reset() {
   lfsr = 0;
   sample = 0;
   skip_count = 0;
+
+  event = nullptr;
 }
 
 void NoiseChannel::Generate(int cycles_late) {
   if (!IsEnabled()) {
     sample = 0;
+    event = nullptr;
     return;
   }
 
@@ -77,7 +80,7 @@ void NoiseChannel::Generate(int cycles_late) {
     skip_count = 0;
   }
 
-  scheduler.Add(noise_interval - cycles_late, event_cb);
+  event = scheduler.Add(noise_interval - cycles_late, event_cb);
 }
 
 auto NoiseChannel::Read(int offset) -> u8 {
@@ -153,9 +156,11 @@ void NoiseChannel::Write(int offset, u8 value) {
 
       if (dac_enable && (value & 0x80)) {
         if (!IsEnabled()) {
-          // TODO: properly handle skip count and properly align event to system clock.
           skip_count = 0;
-          scheduler.Add(GetSynthesisInterval(frequency_ratio, frequency_shift), event_cb);
+          if(event) {
+            scheduler.Cancel(event);
+          }
+          event = scheduler.Add(GetSynthesisInterval(frequency_ratio, frequency_shift), event_cb);
         }
 
         static constexpr u16 lfsr_init[] = { 0x4000, 0x0040 };

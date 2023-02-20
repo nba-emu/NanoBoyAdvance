@@ -21,11 +21,13 @@ void QuadChannel::Reset() {
   sample = 0;
   wave_duty = 0;
   dac_enable = false;
+  event = nullptr;
 }
 
 void QuadChannel::Generate(int cycles_late) {
   if (!IsEnabled()) {
     sample = 0;
+    event = nullptr;
     return;
   }
 
@@ -43,7 +45,7 @@ void QuadChannel::Generate(int cycles_late) {
   }
   phase = (phase + 1) % 8;
 
-  scheduler.Add(GetSynthesisIntervalFromFrequency(sweep.current_freq) - cycles_late, event_cb);
+  event = scheduler.Add(GetSynthesisIntervalFromFrequency(sweep.current_freq) - cycles_late, event_cb);
 }
 
 auto QuadChannel::Read(int offset) -> u8 {
@@ -134,8 +136,10 @@ void QuadChannel::Write(int offset, u8 value) {
 
       if (dac_enable && (value & 0x80)) {
         if (!IsEnabled()) {
-          // TODO: properly align event to system clock.
-          scheduler.Add(GetSynthesisIntervalFromFrequency(sweep.current_freq), event_cb);
+          if(event) {
+            scheduler.Cancel(event);
+          }
+          event = scheduler.Add(GetSynthesisIntervalFromFrequency(sweep.current_freq), event_cb);
         }
         phase = 0;
         Restart();

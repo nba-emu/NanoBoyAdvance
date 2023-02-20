@@ -35,13 +35,17 @@ void WaveChannel::Reset(ResetWaveRAM reset_wave_ram) {
       }
     }
   }
+
+  event = nullptr;
 }
 
 void WaveChannel::Generate(int cycles_late) {
   if (!IsEnabled()) {
     sample = 0;
     if (BaseChannel::IsEnabled()) {
-      scheduler.Add(GetSynthesisIntervalFromFrequency(frequency) - cycles_late, event_cb);
+      event = scheduler.Add(GetSynthesisIntervalFromFrequency(frequency) - cycles_late, event_cb);
+    } else {
+      event = nullptr;
     }
     return;
   }
@@ -65,7 +69,7 @@ void WaveChannel::Generate(int cycles_late) {
     }
   }
 
-  scheduler.Add(GetSynthesisIntervalFromFrequency(frequency) - cycles_late, event_cb);
+  event = scheduler.Add(GetSynthesisIntervalFromFrequency(frequency) - cycles_late, event_cb);
 }
 
 auto WaveChannel::Read(int offset) -> u8 {
@@ -128,8 +132,10 @@ void WaveChannel::Write(int offset, u8 value) {
 
       if (playing && (value & 0x80)) {
         if (!BaseChannel::IsEnabled()) {
-          // TODO: properly align event to system clock.
-          scheduler.Add(GetSynthesisIntervalFromFrequency(frequency), event_cb);
+          if(event) {
+            scheduler.Cancel(event);
+          }
+          event = scheduler.Add(GetSynthesisIntervalFromFrequency(frequency), event_cb);
         }
         phase = 0;
         if (dimension) {
