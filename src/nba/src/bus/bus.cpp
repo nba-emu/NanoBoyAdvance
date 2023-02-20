@@ -133,7 +133,6 @@ auto Bus::Read(u32 address, int access) -> T {
       auto sequential = access & Sequential;
       bool code = access & Code;
 
-      // @todo: check if DMA forces non-sequential access when crossing page boundaries.
       if ((address & 0x1'FFFF) == 0 || ((last_access & Dma) && !(access & Dma))) {
         sequential = 0;
       }
@@ -230,7 +229,6 @@ void Bus::Write(u32 address, int access, T value) {
 
       auto sequential = access & Sequential;
 
-      // @todo: check if DMA forces non-sequential access when crossing page boundaries.
       if ((address & 0x1'FFFF) == 0 || ((last_access & Dma) && !(access & Dma))) {
         sequential = 0;
       }
