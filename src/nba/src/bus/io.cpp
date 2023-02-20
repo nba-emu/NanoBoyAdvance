@@ -233,9 +233,6 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
 
   const bool apu_enable = apu_io.soundcnt.master_enable;
 
-  // @todo: solve this properly
-  ppu.Sync();
-
   switch (address) {
     // PPU
     case DISPCNT+0:  ppu_io.dispcnt.Write(0, value); break;

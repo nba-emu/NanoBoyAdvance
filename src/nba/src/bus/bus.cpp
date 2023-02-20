@@ -13,6 +13,8 @@
 #include "arm/arm7tdmi.hpp"
 #include "bus/bus.hpp"
 
+#include "io.hpp"
+
 namespace nba::core {
 
 Bus::Bus(Scheduler& scheduler, Hardware&& hw)
@@ -203,6 +205,9 @@ void Bus::Write(u32 address, int access, T value) {
     case 0x04: {
       Step(1);
       address = Align<T>(address);
+      if(address >= DISPCNT && address <= BLDY) {
+        hw.ppu.Sync();
+      }
       if constexpr(std::is_same_v<T,  u8>) hw.WriteByte(address, value);
       if constexpr(std::is_same_v<T, u16>) hw.WriteHalf(address, value);
       if constexpr(std::is_same_v<T, u32>) hw.WriteWord(address, value);
