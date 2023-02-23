@@ -57,6 +57,38 @@ void PPU::LoadState(SaveState const& state) {
   mmio.eva = ss_ppu.io.bldalpha & 31;
   mmio.evb = (ss_ppu.io.bldalpha >> 8) & 31;
   mmio.evy = ss_ppu.io.bldy & 31;
+
+  std::memcpy(pram, state.bus.memory.pram, 0x400);
+  std::memcpy(oam,  state.bus.memory.oam,  0x400);
+  std::memcpy(vram, state.bus.memory.vram, 0x18000);
+
+  /**
+   * NOTE: we cannot use DISPCNT.vblank_flag here, because the flag
+   * will be unset during the last scanline.
+   */
+  bool vblank = mmio.vcount >= 160;
+  auto cycles = state.timestamp % 1232U;
+  Scheduler::EventMethod<PPU> event_fn;
+
+  /* Recreate the PPU state machine event.
+   * Note that the PPU supposedly starts in H-blank (see PPU::Reset).
+   * @todo: adjust this to match our current timings.
+   * @todo: what if the event is scheduled with zero delay? Will this break?
+   */
+  if(cycles <= 266) {
+    scheduler.Add(266 - cycles, this, &PPU::StupidSpriteEventHandler);
+  }
+  if (cycles <= 2) {
+    event_fn = vblank ? &PPU::OnVblankHblankIRQTest : &PPU::OnHblankIRQTest;
+    cycles = 2 - cycles;
+  } else if (cycles <= 224) {
+    event_fn = vblank ? &PPU::OnVblankHblankComplete : &PPU::OnHblankComplete;
+    cycles = 224 - cycles;
+  } else {
+    event_fn = vblank ? &PPU::OnVblankScanlineComplete : &PPU::OnScanlineComplete;
+    cycles = 1232 - cycles;
+  }
+  scheduler.Add(cycles, this, event_fn);
 }
 
 void PPU::CopyState(SaveState& state) {
@@ -99,6 +131,10 @@ void PPU::CopyState(SaveState& state) {
   ss_ppu.io.bldcnt = mmio.bldcnt.ReadHalf();
   ss_ppu.io.bldalpha = mmio.eva | (mmio.evb << 8);
   ss_ppu.io.bldy = mmio.evy;
+
+  std::memcpy(state.bus.memory.pram, pram, 0x400);
+  std::memcpy(state.bus.memory.oam,  oam,  0x400);
+  std::memcpy(state.bus.memory.vram, vram, 0x18000);
 }
 
 } // namespace nba::core

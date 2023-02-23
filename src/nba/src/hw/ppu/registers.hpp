@@ -106,7 +106,6 @@ struct BlendControl {
 struct WindowRange {
   int min;
   int max;
-  bool _changed;
 
   void Reset();
   void Write(int address, u8 value);

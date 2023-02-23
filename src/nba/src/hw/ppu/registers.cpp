@@ -175,17 +175,14 @@ void ReferencePoint::Write(int address, u8 value) {
 void WindowRange::Reset() {
   min = 0;
   max = 0;
-  _changed = true;
 }
 
 void WindowRange::Write(int address, u8 value) {
   switch (address) {
     case 0:
-      if (value != max) _changed = true;
       max = value;
       break;
     case 1:
-      if (value != min) _changed = true;
       min = value;
       break;
   }

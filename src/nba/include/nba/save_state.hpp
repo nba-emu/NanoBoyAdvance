@@ -47,6 +47,9 @@ struct SaveState {
     struct Memory {
       std::array<u8, 0x40000> wram;
       std::array<u8, 0x8000> iram;
+      u8 pram[0x00400];
+      u8 oam [0x00400];
+      u8 vram[0x18000];
       struct Latch {
         u32 bios;
       } latch;
@@ -89,44 +92,6 @@ struct SaveState {
   } irq;
 
   struct PPU {
-    /*struct IO {
-      u16 dispcnt;
-      u16 dispstat;
-      u8 vcount;
-
-      u16 bgcnt[4];
-      u16 bghofs[4];
-      u16 bgvofs[4];
-
-      struct ReferencePoint {
-        s32 initial;
-        s32 current;
-        bool written;
-      } bgx[2], bgy[2];
-
-      s16 bgpa[2];
-      s16 bgpb[2];
-      s16 bgpc[2];
-      s16 bgpd[2];
-
-      u16 winh[2];
-      u16 winv[2];
-      u16 winin;
-      u16 winout;
-
-      struct Mosaic {
-        struct {
-          u8 size_x;
-          u8 size_y;
-          u8 counter_y;
-        } bg, obj;
-      } mosaic;
-
-      u16 bldcnt;
-      u16 bldalpha;
-      u16 bldy;
-    } io;*/
-
     struct IO {
       u16 dispcnt;
       u16 greenswap;
@@ -154,10 +119,6 @@ struct SaveState {
     bool enable_bg[2][4];
     bool window_scanline_enable[2];
     bool dma3_video_transfer_running;
-
-    u8 pram[0x00400];
-    u8 oam [0x00400];
-    u8 vram[0x18000];
   } ppu;
 
   struct APU {
