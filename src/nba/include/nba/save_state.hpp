@@ -116,8 +116,11 @@ struct SaveState {
       u16 bldy;
     } io;
 
-    bool enable_bg[2][4];
-    bool window_scanline_enable[2];
+    struct ReferencePoint {
+      s32  current;
+      bool written;
+    } bgx[2], bgy[2];
+
     bool dma3_video_transfer_running;
   } ppu;
 

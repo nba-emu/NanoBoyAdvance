@@ -37,9 +37,12 @@ void PPU::LoadState(SaveState const& state) {
     mmio.bgpc[id] = ss_ppu.io.bgpc[id];
     mmio.bgpd[id] = ss_ppu.io.bgpd[id];
 
-    // @todo: restore 'current' and 'written' fields
     mmio.bgx[id].initial = (s32)ss_ppu.io.bgx[id];
     mmio.bgy[id].initial = (s32)ss_ppu.io.bgy[id];
+    mmio.bgx[id]._current = ss_ppu.bgx[id].current;
+    mmio.bgx[id].written = ss_ppu.bgx[id].written;
+    mmio.bgy[id]._current = ss_ppu.bgy[id].current;
+    mmio.bgy[id].written = ss_ppu.bgy[id].written;
 
     mmio.winh[id].WriteHalf(ss_ppu.io.winh[id]);
     mmio.winv[id].WriteHalf(ss_ppu.io.winv[id]);
@@ -72,12 +75,9 @@ void PPU::LoadState(SaveState const& state) {
 
   /* Recreate the PPU state machine event.
    * Note that the PPU supposedly starts in H-blank (see PPU::Reset).
-   * @todo: adjust this to match our current timings.
    * @todo: what if the event is scheduled with zero delay? Will this break?
    */
-  if(cycles <= 266) {
-    scheduler.Add(266 - cycles, this, &PPU::StupidSpriteEventHandler);
-  }
+  scheduler.Add((266 - cycles + 1232) % 1232, this, &PPU::StupidSpriteEventHandler);
   if (cycles <= 2) {
     event_fn = vblank ? &PPU::OnVblankHblankIRQTest : &PPU::OnHblankIRQTest;
     cycles = 2 - cycles;
@@ -89,6 +89,8 @@ void PPU::LoadState(SaveState const& state) {
     cycles = 1232 - cycles;
   }
   scheduler.Add(cycles, this, event_fn);
+
+  dma3_video_transfer_running = ss_ppu.dma3_video_transfer_running;
 }
 
 void PPU::CopyState(SaveState& state) {
@@ -112,9 +114,12 @@ void PPU::CopyState(SaveState& state) {
     ss_ppu.io.bgpc[id] = mmio.bgpc[id];
     ss_ppu.io.bgpd[id] = mmio.bgpd[id];
     
-    // @todo: save 'current' and 'written' fields (separately though).
     ss_ppu.io.bgx[id] = (u32)mmio.bgx[id].initial;
     ss_ppu.io.bgy[id] = (u32)mmio.bgy[id].initial;
+    ss_ppu.bgx[id].current = mmio.bgx[id]._current;
+    ss_ppu.bgx[id].written = mmio.bgx[id].written;
+    ss_ppu.bgy[id].current = mmio.bgy[id]._current;
+    ss_ppu.bgy[id].written = mmio.bgy[id].written;
 
     ss_ppu.io.winh[id] = mmio.winh[id].ReadHalf();
     ss_ppu.io.winv[id] = mmio.winv[id].ReadHalf();
@@ -135,6 +140,8 @@ void PPU::CopyState(SaveState& state) {
   std::memcpy(state.bus.memory.pram, pram, 0x400);
   std::memcpy(state.bus.memory.oam,  oam,  0x400);
   std::memcpy(state.bus.memory.vram, vram, 0x18000);
+
+  ss_ppu.dma3_video_transfer_running = dma3_video_transfer_running;
 }
 
 } // namespace nba::core
