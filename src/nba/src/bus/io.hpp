@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2023 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -10,6 +10,7 @@
 #include <nba/integer.hpp>
 
 constexpr u32 DISPCNT = 0x04000000;
+constexpr u32 GREENSWAP = 0x04000002;
 constexpr u32 DISPSTAT = 0x04000004;
 constexpr u32 VCOUNT = 0x04000006;
 constexpr u32 BG0CNT = 0x04000008;

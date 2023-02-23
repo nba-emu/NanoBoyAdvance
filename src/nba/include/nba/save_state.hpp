@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 fleroviux
+ * Copyright (C) 2023 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -16,7 +16,7 @@ namespace nba {
 
 struct SaveState {
   static constexpr u32 kMagicNumber = 0x5353424E; // NBSS
-  static constexpr u32 kCurrentVersion = 3;
+  static constexpr u32 kCurrentVersion = 4;
 
   u32 magic;
   u32 version;
@@ -47,6 +47,9 @@ struct SaveState {
     struct Memory {
       std::array<u8, 0x40000> wram;
       std::array<u8, 0x8000> iram;
+      u8 pram[0x00400];
+      u8 oam [0x00400];
+      u8 vram[0x18000];
       struct Latch {
         u32 bios;
       } latch;
@@ -76,10 +79,9 @@ struct SaveState {
       u8 countdown;
     } prefetch;
 
-    struct DMA {
-      bool active;
-      bool openbus;
-    } dma;
+    int last_access;
+    int parallel_internal_cpu_cycle_limit;
+    bool prefetch_buffer_was_disabled;
   } bus;
 
   // TODO: keep track of IRQ delay:
@@ -92,49 +94,34 @@ struct SaveState {
   struct PPU {
     struct IO {
       u16 dispcnt;
+      u16 greenswap;
       u16 dispstat;
-      u8 vcount;
-
+      u16 vcount;
       u16 bgcnt[4];
       u16 bghofs[4];
       u16 bgvofs[4];
-
-      struct ReferencePoint {
-        s32 initial;
-        s32 current;
-        bool written;
-      } bgx[2], bgy[2];
-
-      s16 bgpa[2];
-      s16 bgpb[2];
-      s16 bgpc[2];
-      s16 bgpd[2];
-
+      u16 bgpa[2];
+      u16 bgpb[2];
+      u16 bgpc[2];
+      u16 bgpd[2];
+      u32 bgx[2];
+      u32 bgy[2];
       u16 winh[2];
       u16 winv[2];
       u16 winin;
       u16 winout;
-
-      struct Mosaic {
-        struct {
-          u8 size_x;
-          u8 size_y;
-          u8 counter_y;
-        } bg, obj;
-      } mosaic;
-
+      u16 mosaic;
       u16 bldcnt;
       u16 bldalpha;
       u16 bldy;
     } io;
 
-    bool enable_bg[2][4];
-    bool window_scanline_enable[2];
-    bool dma3_video_transfer_running;
+    struct ReferencePoint {
+      s32  current;
+      bool written;
+    } bgx[2], bgy[2];
 
-    u8 pram[0x00400];
-    u8 oam [0x00400];
-    u8 vram[0x18000];
+    bool dma3_video_transfer_running;
   } ppu;
 
   struct APU {

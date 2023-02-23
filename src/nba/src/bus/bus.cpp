@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2023 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -7,10 +7,13 @@
 
 #include <algorithm>
 #include <nba/common/punning.hpp>
+#include <nba/common/scope_exit.hpp>
 #include <stdexcept>
 
 #include "arm/arm7tdmi.hpp"
 #include "bus/bus.hpp"
+
+#include "io.hpp"
 
 namespace nba::core {
 
@@ -31,8 +34,10 @@ void Bus::Reset() {
   hw.rcnt[0] = 0;
   hw.rcnt[1] = 0;
   hw.postflg = 0;
+  hw.prefetch_buffer_was_disabled = false;
   prefetch = {};
-  dma = {};
+  last_access = 0;
+  parallel_internal_cpu_cycle_limit = 0;
   UpdateWaitStateTable();
 }
 
@@ -77,6 +82,15 @@ auto Bus::Read(u32 address, int access) -> T {
   auto page = address >> 24;
   auto is_u32 = std::is_same_v<T, u32>;
 
+  // Set last_access to access right before returning.
+  auto _ = ScopeExit{[&]() {
+    last_access = access;
+  }};
+
+  if(!(access & (Dma | Lock)) && hw.dma.IsRunning()) hw.dma.Run();
+
+  parallel_internal_cpu_cycle_limit = 0;
+
   switch (page) {
     // BIOS
     case 0x00: {
@@ -104,18 +118,15 @@ auto Bus::Read(u32 address, int access) -> T {
     }
     // PRAM (palette RAM)
     case 0x05: {
-      Step(is_u32 ? 2 : 1);
-      return hw.ppu.ReadPRAM<T>(Align<T>(address));
+      return ReadPRAM<T>(Align<T>(address));
     }
     // VRAM (video RAM)
     case 0x06: {
-      Step(is_u32 ? 2 : 1);
-      return hw.ppu.ReadVRAM<T>(Align<T>(address));
+      return ReadVRAM<T>(Align<T>(address));
     }
     // OAM (object attribute map)
     case 0x07: {
-      Step(1);
-      return hw.ppu.ReadOAM<T>(Align<T>(address));
+      return ReadOAM<T>(Align<T>(address));
     }
     // ROM (WS0, WS1, WS2)
     case 0x08 ... 0x0D: {
@@ -124,7 +135,7 @@ auto Bus::Read(u32 address, int access) -> T {
       auto sequential = access & Sequential;
       bool code = access & Code;
 
-      if ((address & 0x1'FFFF) == 0) {
+      if ((address & 0x1'FFFF) == 0 || ((last_access & Dma) && !(access & Dma))) {
         sequential = 0;
       }
 
@@ -173,6 +184,10 @@ void Bus::Write(u32 address, int access, T value) {
   auto page = address >> 24;
   auto is_u32 = std::is_same_v<T, u32>;
 
+  if(!(access & (Dma | Lock)) && hw.dma.IsRunning()) hw.dma.Run();
+
+  parallel_internal_cpu_cycle_limit = 0;
+
   switch (page) {
     // EWRAM (external work RAM)
     case 0x02: {
@@ -190,6 +205,9 @@ void Bus::Write(u32 address, int access, T value) {
     case 0x04: {
       Step(1);
       address = Align<T>(address);
+      if(address >= DISPCNT && address <= BLDY) {
+        hw.ppu.Sync();
+      }
       if constexpr(std::is_same_v<T,  u8>) hw.WriteByte(address, value);
       if constexpr(std::is_same_v<T, u16>) hw.WriteHalf(address, value);
       if constexpr(std::is_same_v<T, u32>) hw.WriteWord(address, value);
@@ -197,20 +215,17 @@ void Bus::Write(u32 address, int access, T value) {
     }
     // PRAM (palette RAM)
     case 0x05: {
-      Step(is_u32 ? 2 : 1);
-      hw.ppu.WritePRAM<T>(Align<T>(address), value);
+      WritePRAM<T>(Align<T>(address), value);
       break;
     }
     // VRAM (video RAM)
     case 0x06: {
-      Step(is_u32 ? 2 : 1);
-      hw.ppu.WriteVRAM<T>(Align<T>(address), value);
+      WriteVRAM<T>(Align<T>(address), value);
       break;
     }
     // OAM (object attribute map)
     case 0x07: {
-      Step(1);
-      hw.ppu.WriteOAM<T>(Align<T>(address), value);
+      WriteOAM<T>(Align<T>(address), value);
       break;
     }
     // ROM (WS0, WS1, WS2)
@@ -219,7 +234,7 @@ void Bus::Write(u32 address, int access, T value) {
 
       auto sequential = access & Sequential;
 
-      if ((address & 0x1'FFFF) == 0) {
+      if ((address & 0x1'FFFF) == 0 || ((last_access & Dma) && !(access & Dma))) {
         sequential = 0;
       }
 
@@ -260,6 +275,8 @@ void Bus::Write(u32 address, int access, T value) {
       break;
     }
   }
+
+  last_access = access;
 }
 
 auto Bus::ReadBIOS(u32 address) -> u32 {
@@ -284,7 +301,7 @@ auto Bus::ReadOpenBus(u32 address) -> u32 {
 
   Log<Trace>("Bus: illegal memory read: 0x{:08X}", address);
 
-  if (hw.dma.IsRunning() || dma.openbus) {
+  if(last_access & Dma) {
     return hw.dma.GetOpenBusValue() >> shift;
   }
 

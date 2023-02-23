@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2023 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -19,6 +19,8 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
     // PPU
     case DISPCNT+0:  return ppu_io.dispcnt.Read(0);
     case DISPCNT+1:  return ppu_io.dispcnt.Read(1);
+    case GREENSWAP+0: return ppu_io.greenswap;
+    case GREENSWAP+1: return 0;
     case DISPSTAT+0: return ppu_io.dispstat.Read(0);
     case DISPSTAT+1: return ppu_io.dispstat.Read(1);
     case VCOUNT+0:   return ppu_io.vcount & 0xFF;
@@ -141,8 +143,15 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
     case TM3CNT_H+1: return 0;
 
     // Serial communication
+    // @todo: implement sensible read/write behaviour for the remaining registers.
     case RCNT+0: return rcnt[0];
     case RCNT+1: return rcnt[1];
+    case RCNT+2:
+    case RCNT+3: return 0;
+    case 0x04000142:
+    case 0x04000143: return 0;
+    case 0x0400015A:
+    case 0x0400015B: return 0;
 
     // Keypad
     case KEYINPUT+0: return keypad.input.ReadByte(0);
@@ -178,6 +187,9 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
     case WAITCNT+2:
     case WAITCNT+3: return 0;
     case POSTFLG:   return postflg;
+    case HALTCNT:   return 0;
+    case 0x04000302: 
+    case 0x04000303: return 0;
   }
 
   return bus->ReadOpenBus(address);
@@ -225,6 +237,8 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
     // PPU
     case DISPCNT+0:  ppu_io.dispcnt.Write(0, value); break;
     case DISPCNT+1:  ppu_io.dispcnt.Write(1, value); break;
+    case GREENSWAP+0: ppu_io.greenswap = value & 1; break;
+    case GREENSWAP+1: break;
     case DISPSTAT+0: ppu_io.dispstat.Write(0, value); break;
     case DISPSTAT+1: ppu_io.dispstat.Write(1, value); break;
     case BG0CNT+0:   ppu_io.bgcnt[0].Write(0, value); break;
@@ -519,10 +533,14 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
       break;
     }
     case WAITCNT+1: {
+      const bool prefetch_old = waitcnt.prefetch;
       waitcnt.ws2[0] = (value >> 0) & 3;
       waitcnt.ws2[1] = (value >> 2) & 1;
       waitcnt.phi = (value >> 3) & 3;
       waitcnt.prefetch = (value >> 6) & 1;
+      if(prefetch_old && !waitcnt.prefetch) {
+        prefetch_buffer_was_disabled = true;
+      }
       bus->UpdateWaitStateTable();
       break;
     }
@@ -538,7 +556,7 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
           haltcnt = HaltControl::Stop;
         } else {
           haltcnt = HaltControl::Halt;
-          bus->Idle();
+          bus->Step(1);
         }
       }
       break;

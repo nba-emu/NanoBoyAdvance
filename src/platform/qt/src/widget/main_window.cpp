@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 fleroviux
+ * Copyright (C) 2023 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -366,7 +366,7 @@ void MainWindow::CreateHelpMenu() {
     QMessageBox box{ this };
     box.setTextFormat(Qt::RichText);
     box.setText(tr("NanoBoyAdvance is a Game Boy Advance emulator focused on accuracy.<br><br>"
-                   "Copyright © 2015 - 2022 fleroviux<br><br>"
+                   "Copyright © 2015 - 2023 fleroviux<br><br>"
                    "NanoBoyAdvance is licensed under the GPLv3 or any later version.<br><br>"
                    "GitHub: <a href=\"https://github.com/nba-emu/NanoBoyAdvance\">https://github.com/nba-emu/NanoBoyAdvance</a><br><br>"
                    "Game Boy Advance is a registered trademark of Nintendo Co., Ltd."));

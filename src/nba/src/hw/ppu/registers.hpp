@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 fleroviux
+ * Copyright (C) 2023 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -14,6 +14,8 @@ namespace nba::core {
 class PPU;
 
 struct DisplayControl {
+  u16 hword;
+
   int mode;
   int cgb_mode;
   int frame;
@@ -104,7 +106,6 @@ struct BlendControl {
 struct WindowRange {
   int min;
   int max;
-  bool _changed;
 
   void Reset();
   void Write(int address, u8 value);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2023 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -329,10 +329,10 @@ void ARM_SingleDataSwap(u32 instruction) {
 
   if (byte) {
     tmp = ReadByte(GetReg(base), Access::Nonsequential);
-    WriteByte(GetReg(base), (u8)GetReg(src), Access::Nonsequential);
+    WriteByte(GetReg(base), (u8)GetReg(src), Access::Nonsequential | Access::Lock);
   } else {
     tmp = ReadWordRotate(GetReg(base), Access::Nonsequential);
-    WriteWord(GetReg(base), GetReg(src), Access::Nonsequential);
+    WriteWord(GetReg(base), GetReg(src), Access::Nonsequential | Access::Lock);
   }
 
   bus.Idle();

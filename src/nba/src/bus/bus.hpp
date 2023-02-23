@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2023 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -30,7 +30,9 @@ struct Bus {
   enum Access {
     Nonsequential = 0,
     Sequential = 1,
-    Code = 2
+    Code = 2,
+    Dma = 4,
+    Lock = 8
   };
 
   void Reset();
@@ -80,6 +82,8 @@ struct Bus {
       bool cgb = false;
     } waitcnt;
 
+    bool prefetch_buffer_was_disabled = false;
+
     enum class HaltControl {
       Run = 0,
       Stop = 1,
@@ -109,10 +113,8 @@ struct Bus {
     int duty;
   } prefetch;
 
-  struct DMA {
-    bool active = false;
-    bool openbus = false;
-  } dma;
+  int last_access;
+  int parallel_internal_cpu_cycle_limit;
 
   template<typename T>
   auto Read(u32 address, int access) -> T;
@@ -123,6 +125,114 @@ struct Bus {
   template<typename T>
   auto Align(u32 address) -> u32 {
     return address & ~(sizeof(T) - 1);
+  }
+
+  template<typename T>
+  auto ALWAYS_INLINE ReadPRAM(u32 address) noexcept -> T {
+    constexpr int cycles = std::is_same_v<T, u32> ? 2 : 1;
+
+    for (int i = 0; i < cycles; i++) {
+      do {
+        Step(1);
+        hw.ppu.Sync();
+      } while(hw.ppu.DidAccessPRAM());
+    }
+
+    return hw.ppu.ReadPRAM<T>(address);
+  }
+
+  template<typename T>
+  void ALWAYS_INLINE WritePRAM(u32 address, T value) noexcept {
+    if constexpr (!std::is_same_v<T, u32>) {
+      do {
+        Step(1);
+        hw.ppu.Sync();
+      } while(hw.ppu.DidAccessPRAM());
+
+      hw.ppu.WritePRAM<T>(address, value);
+    } else {
+      WritePRAM(address + 0, (u16)(value >>  0));
+      WritePRAM(address + 2, (u16)(value >> 16));
+    }
+  }
+
+  template<typename T>
+  auto ALWAYS_INLINE ReadVRAM(u32 address) noexcept -> T {
+    constexpr int cycles = std::is_same_v<T, u32> ? 2 : 1;
+
+    u32 boundary = hw.ppu.GetSpriteVRAMBoundary();
+
+    address &= 0x1FFFF;
+
+    if (address >= boundary) {
+      for (int i = 0; i < cycles; i++) {
+        do {
+          Step(1);
+          hw.ppu.Sync();
+        } while(hw.ppu.DidAccessVRAM_OBJ());
+      }
+
+      return hw.ppu.ReadVRAM_OBJ<T>(address, boundary);
+    } else {
+      for (int i = 0; i < cycles; i++) {
+        do {
+          Step(1);
+          hw.ppu.Sync();
+        } while(hw.ppu.DidAccessVRAM_BG());
+      }
+
+      return hw.ppu.ReadVRAM_BG<T>(address);
+    }
+  }
+
+  template<typename T>
+  void ALWAYS_INLINE WriteVRAM(u32 address, T value) noexcept {
+    if constexpr (!std::is_same_v<T, u32>) {
+      u32 boundary = hw.ppu.GetSpriteVRAMBoundary();
+
+      address &= 0x1FFFF;
+
+      if (address >= boundary) {
+        // TODO: de-duplicate this code (see ReadVRAM):
+        do {
+          Step(1);
+          hw.ppu.Sync();
+        } while(hw.ppu.DidAccessVRAM_OBJ());
+
+        hw.ppu.WriteVRAM_OBJ<T>(address, value, boundary);
+      } else {
+        // TODO: de-duplicate this code (see ReadVRAM):
+        do {
+          Step(1);
+          hw.ppu.Sync();
+        } while(hw.ppu.DidAccessVRAM_BG());
+
+        hw.ppu.WriteVRAM_BG<T>(address, value);
+      }
+    } else {
+      WriteVRAM<u16>(address + 0, (u16)(value >>  0));
+      WriteVRAM<u16>(address + 2, (u16)(value >> 16));
+    }
+  }
+
+  template<typename T>
+  auto ALWAYS_INLINE ReadOAM(u32 address) noexcept -> T {
+    do {
+      Step(1);
+      hw.ppu.Sync();
+    } while(hw.ppu.DidAccessOAM());
+
+    return hw.ppu.ReadOAM<T>(address);
+  }
+
+  template<typename T>
+  void ALWAYS_INLINE WriteOAM(u32 address, T value) noexcept {
+    do {
+      Step(1);
+      hw.ppu.Sync();
+    } while(hw.ppu.DidAccessOAM());
+
+    hw.ppu.WriteOAM<T>(address, value);
   }
 
   auto ReadBIOS(u32 address) -> u32;

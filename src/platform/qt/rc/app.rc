@@ -4,8 +4,8 @@
 IDI_ICON1 ICON DISCARDABLE "app.ico"
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION     1,5
-PRODUCTVERSION  1,5
+FILEVERSION     1,6
+PRODUCTVERSION  1,6
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
@@ -15,7 +15,7 @@ BEGIN
             VALUE "FileDescription",    "NanoBoyAdvance"
             VALUE "FileVersion",        "1.6"
             VALUE "InternalName",       "NanoBoyAdvance.exe"
-            VALUE "LegalCopyright",     "(c) 2015 - 2022 fleroviux"
+            VALUE "LegalCopyright",     "(c) 2015 - 2023 fleroviux"
             VALUE "OriginalFilename",   "NanoBoyAdvance.exe"
             VALUE "ProductName",        "NanoBoyAdvance"
             VALUE "ProductVersion",     "1.6"

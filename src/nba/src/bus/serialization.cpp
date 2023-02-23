@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 fleroviux
+ * Copyright (C) 2023 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -29,6 +29,7 @@ void Bus::LoadState(SaveState const& state) {
   hw.rcnt[0] = state.bus.io.rcnt[0];
   hw.rcnt[1] = state.bus.io.rcnt[1];
   hw.postflg = state.bus.io.postflg;
+  hw.prefetch_buffer_was_disabled = state.bus.prefetch_buffer_was_disabled;
 
   prefetch.active = state.bus.prefetch.active;
   prefetch.head_address = state.bus.prefetch.head_address;
@@ -44,8 +45,9 @@ void Bus::LoadState(SaveState const& state) {
     prefetch.duty = wait32[int(Access::Sequential)][prefetch.last_address >> 24];
   }
 
-  dma.active = state.bus.dma.active;
-  dma.openbus = state.bus.dma.openbus;
+  last_access = state.bus.last_access;
+
+  parallel_internal_cpu_cycle_limit = state.bus.parallel_internal_cpu_cycle_limit;
 }
 
 void Bus::CopyState(SaveState& state) {
@@ -67,14 +69,16 @@ void Bus::CopyState(SaveState& state) {
   state.bus.io.rcnt[0] = hw.rcnt[0];
   state.bus.io.rcnt[1] = hw.rcnt[1];
   state.bus.io.postflg = hw.postflg;
+  state.bus.prefetch_buffer_was_disabled = hw.prefetch_buffer_was_disabled;
 
   state.bus.prefetch.active = prefetch.active;
   state.bus.prefetch.head_address = prefetch.head_address;
   state.bus.prefetch.count = prefetch.count;
   state.bus.prefetch.countdown = prefetch.countdown;
 
-  state.bus.dma.active = dma.active;
-  state.bus.dma.openbus = dma.openbus;
+  state.bus.last_access = last_access;
+
+  state.bus.parallel_internal_cpu_cycle_limit = parallel_internal_cpu_cycle_limit;
 }
 
 } // namespace nba::core

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 fleroviux
+ * Copyright (C) 2023 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -16,23 +16,9 @@ void DisplayControl::Reset() {
 }
 
 auto DisplayControl::Read(int address) -> u8 {
-  switch (address) {
-    case 0:
-      return mode |
-            (cgb_mode << 3) |
-            (frame << 4) |
-            (hblank_oam_access << 5) |
-            (oam_mapping_1d << 6) |
-            (forced_blank << 7);
-    case 1:
-      return enable[0] |
-            (enable[1] << 1) |
-            (enable[2] << 2) |
-            (enable[3] << 3) |
-            (enable[4] << 4) |
-            (enable[5] << 5) |
-            (enable[6] << 6) |
-            (enable[7] << 7);
+  switch(address) {
+    case 0: return (u8)(hword >> 0);
+    case 1: return (u8)(hword >> 8);
   }
 
   return 0;
@@ -40,7 +26,9 @@ auto DisplayControl::Read(int address) -> u8 {
 
 void DisplayControl::Write(int address, u8 value) {
   switch (address) {
-    case 0:
+    case 0: {
+      hword = (hword & 0xFF00) | value;
+
       mode = value & 7;
       cgb_mode = (value >> 3) & 1;
       frame = (value >> 4) & 1;
@@ -48,11 +36,15 @@ void DisplayControl::Write(int address, u8 value) {
       oam_mapping_1d = (value >> 6) & 1;
       forced_blank = (value >> 7) & 1;
       break;
-    case 1:
+    }
+    case 1: {
+      hword = (hword & 0x00FF) | (value << 8);
+
       for (int i = 0; i < 8; i++) {
         enable[i] = (value >> i) & 1;
       }
       break;
+    }
   }
 }
 
@@ -183,17 +175,14 @@ void ReferencePoint::Write(int address, u8 value) {
 void WindowRange::Reset() {
   min = 0;
   max = 0;
-  _changed = true;
 }
 
 void WindowRange::Write(int address, u8 value) {
   switch (address) {
     case 0:
-      if (value != max) _changed = true;
       max = value;
       break;
     case 1:
-      if (value != min) _changed = true;
       min = value;
       break;
   }

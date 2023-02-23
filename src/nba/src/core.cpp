@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2023 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -81,7 +81,7 @@ void Core::Run(int cycles) {
 
   while (scheduler.GetTimestampNow() < limit) {
     if (bus.hw.haltcnt == HaltControl::Halt && irq.HasServableIRQ()) {
-      bus.Idle();
+      bus.Step(1);
       bus.hw.haltcnt = HaltControl::Run;
     }
 
@@ -96,6 +96,8 @@ void Core::Run(int cycles) {
       }
       cpu.Run();
     } else {
+      if(dma.IsRunning()) dma.Run();
+
       bus.Step(scheduler.GetRemainingCycleCount());
     }
   }

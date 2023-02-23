@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2023 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -38,7 +38,7 @@ struct DMA {
   void Request(Occasion occasion);
   void StopVideoTransferDMA();
   bool HasVideoTransferDMA();
-  void Run();
+  auto Run() -> int;
   auto Read (int chan_id, int offset) -> u8;
   void Write(int chan_id, int offset, u8 value);
   bool IsRunning() { return runnable_set.any(); }

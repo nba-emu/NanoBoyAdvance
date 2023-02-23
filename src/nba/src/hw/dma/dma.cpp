@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 fleroviux
+ * Copyright (C) 2023 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -150,14 +150,20 @@ bool DMA::HasVideoTransferDMA() {
          channels[3].time == Channel::Timing::Special;
 }
 
-void DMA::Run() {
-  bus.Idle();
+auto DMA::Run() -> int {
+  bus.Step(1);
+
+  const auto timestamp0 = scheduler.GetTimestampNow();
 
   do {
     RunChannel();
   } while (IsRunning());
 
-  bus.Idle();
+  const auto timestamp1 = scheduler.GetTimestampNow();
+
+  bus.Step(1);
+
+  return (int)(timestamp1 - timestamp0);
 }
 
 void DMA::RunChannel() {
@@ -186,15 +192,15 @@ void DMA::RunChannel() {
     auto src_addr = channel.latch.src_addr;
     auto dst_addr = channel.latch.dst_addr;
 
-    auto access_src = Bus::Access::Sequential;
-    auto access_dst = Bus::Access::Sequential;
+    auto access_src = Bus::Access::Sequential | Bus::Access::Dma;
+    auto access_dst = Bus::Access::Sequential | Bus::Access::Dma;
 
     if (!did_access_rom) {
       if (src_addr >= 0x08000000) {
-        access_src = Bus::Access::Nonsequential;
+        access_src = Bus::Access::Nonsequential | Bus::Access::Dma;
         did_access_rom = true;
       } else if (dst_addr >= 0x08000000) {
-        access_dst = Bus::Access::Nonsequential;
+        access_dst = Bus::Access::Nonsequential | Bus::Access::Dma;
         did_access_rom = true;
       }
     }
@@ -212,7 +218,7 @@ void DMA::RunChannel() {
         } else {
           value = channel.latch.bus;
         }
-        bus.Idle();
+        bus.Step(1);
       }
 
       bus.WriteHalf(dst_addr, value, access_dst);
@@ -221,7 +227,7 @@ void DMA::RunChannel() {
         channel.latch.bus = bus.ReadWord(src_addr, access_src);
         latch = channel.latch.bus;
       } else {
-        bus.Idle();
+        bus.Step(1);
       }
 
       bus.WriteWord(dst_addr, channel.latch.bus, access_dst);

@@ -20,16 +20,14 @@ set(SOURCES
   src/hw/apu/apu.cpp
   src/hw/apu/callback.cpp
   src/hw/apu/registers.cpp
-  src/hw/apu/serialization.cpp
-  src/hw/ppu/render/affine.cpp
-  src/hw/ppu/render/bitmap.cpp
-  src/hw/ppu/render/oam.cpp
-  src/hw/ppu/render/text.cpp
-  src/hw/ppu/render/window.cpp
-  src/hw/ppu/compose.cpp
+  src/hw/apu/serialization.cpp#
+  src/hw/ppu/background.cpp
+  src/hw/ppu/merge.cpp
   src/hw/ppu/ppu.cpp
   src/hw/ppu/registers.cpp
   src/hw/ppu/serialization.cpp
+  src/hw/ppu/sprite.cpp
+  src/hw/ppu/window.cpp
   src/hw/rom/backup/eeprom.cpp
   src/hw/rom/backup/flash.cpp
   src/hw/rom/backup/serialization.cpp
@@ -72,7 +70,7 @@ set(HEADERS
   src/hw/apu/hle/mp2k.hpp
   src/hw/apu/apu.hpp
   src/hw/apu/registers.hpp
-  src/hw/ppu/helper.inl
+  src/hw/ppu/background.inl
   src/hw/ppu/ppu.hpp
   src/hw/ppu/registers.hpp
   src/hw/dma/dma.hpp
@@ -93,6 +91,7 @@ set(HEADERS_PUBLIC
   include/nba/common/crc32.hpp
   include/nba/common/meta.hpp
   include/nba/common/punning.hpp
+  include/nba/common/scope_exit.hpp
   include/nba/device/audio_device.hpp
   include/nba/device/input_device.hpp
   include/nba/device/video_device.hpp
