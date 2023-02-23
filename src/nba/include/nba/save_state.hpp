@@ -89,7 +89,7 @@ struct SaveState {
   } irq;
 
   struct PPU {
-    struct IO {
+    /*struct IO {
       u16 dispcnt;
       u16 dispstat;
       u8 vcount;
@@ -122,6 +122,30 @@ struct SaveState {
         } bg, obj;
       } mosaic;
 
+      u16 bldcnt;
+      u16 bldalpha;
+      u16 bldy;
+    } io;*/
+
+    struct IO {
+      u16 dispcnt;
+      u16 greenswap;
+      u16 dispstat;
+      u16 vcount;
+      u16 bgcnt[4];
+      u16 bghofs[4];
+      u16 bgvofs[4];
+      u16 bgpa[2];
+      u16 bgpb[2];
+      u16 bgpc[2];
+      u16 bgpd[2];
+      u32 bgx[2];
+      u32 bgy[2];
+      u16 winh[2];
+      u16 winv[2];
+      u16 winin;
+      u16 winout;
+      u16 mosaic;
       u16 bldcnt;
       u16 bldalpha;
       u16 bldy;
