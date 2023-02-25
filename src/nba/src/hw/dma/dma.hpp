@@ -19,12 +19,7 @@ namespace nba::core {
 struct Bus;
 
 struct DMA {
-  DMA(Bus& bus, IRQ& irq, Scheduler& scheduler)
-      : bus(bus)
-      , irq(irq)
-      , scheduler(scheduler) {
-    Reset();
-  }
+  DMA(Bus& bus, IRQ& irq, Scheduler& scheduler);
 
   enum class Occasion {
     HBlank,
@@ -95,7 +90,7 @@ private:
     } latch = {};
 
     bool is_fifo_dma = false;
-    Scheduler::Event* enable_event = nullptr;
+    Scheduler::Event* event = nullptr;
   } channels[4];
 
   constexpr int GetUnaliasedMemoryArea(int page) {
@@ -111,6 +106,8 @@ private:
   }
 
   void ScheduleDMAs(unsigned int bitset, int delay = 2);
+  void OnActivated(u64 chan_id);
+
   void SelectNextDMA();
   void OnChannelWritten(Channel& channel, bool enable_old);
   void AddChannelToDMASet(Channel& channel);

@@ -54,6 +54,9 @@ struct Scheduler {
     TM_write_reload,
     TM_write_control,
 
+    // DMA
+    DMA_activated,
+
     Count
   };
 
