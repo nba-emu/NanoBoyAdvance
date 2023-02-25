@@ -178,8 +178,6 @@ void PPU::OnHblankComplete() {
   UpdateVideoTransferDMA();
 
   if (vcount == 160) {
-    // ScheduleSubmitScanline();
-
     scheduler.Add(1006, Scheduler::EventClass::PPU_hblank_vblank);
     dma.Request(DMA::Occasion::VBlank);
     dispstat.vblank_flag = 1;
@@ -198,7 +196,6 @@ void PPU::OnHblankComplete() {
     InitMerge();
 
     scheduler.Add(1006, Scheduler::EventClass::PPU_hblank_vdraw);
-    // ScheduleSubmitScanline();
   }
 
   InitWindow();
@@ -260,7 +257,6 @@ void PPU::OnVblankHblankComplete() {
   }
 
   CheckVerticalCounterIRQ();
-  // ScheduleSubmitScanline();
   UpdateVideoTransferDMA();
 
   InitWindow();
