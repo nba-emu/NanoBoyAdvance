@@ -10,6 +10,7 @@
 #include <nba/log.hpp>
 #include <nba/common/compiler.hpp>
 #include <nba/integer.hpp>
+#include <nba/save_state.hpp>
 #include <functional>
 #include <limits>
 
@@ -159,6 +160,34 @@ struct Scheduler {
 
   void Cancel(Event* event) {
     Remove(event->handle);
+  }
+
+  void LoadState(SaveState const& state) {
+    auto& ss_scheduler = state.scheduler;
+
+    for(int i = 0; i < ss_scheduler.event_count; i++) {
+      auto& event = ss_scheduler.events[i];
+
+      u64 timestamp = event.key >> 2;
+      int priority = event.key & 3;
+      EventClass event_class = (EventClass)event.event_class;
+
+      if(event_class != EventClass::Unknown) {
+        Add(timestamp - state.timestamp, event_class, priority);
+      }
+    }
+  }
+
+  void CopyState(SaveState& state) {
+    auto& ss_scheduler = state.scheduler;
+
+    for(int i = 0; i < heap_size; i++) {
+      auto event = heap[i];
+
+      ss_scheduler.events[i] = { event->key, (u16)event->event_class };
+    }
+
+    ss_scheduler.event_count = heap_size;
   }
 
 private:

@@ -227,6 +227,7 @@ private:
   void OnVblankScanlineComplete();
   void OnVblankHblankIRQTest();
   void OnVblankHblankComplete();
+  void StupidSpriteEventHandler();
 
   struct Background {
     u64 timestamp_init = 0;
@@ -332,7 +333,6 @@ private:
   void DrawSpriteImpl(int cycles);
   void DrawSpriteFetchOAM(uint cycle);
   void DrawSpriteFetchVRAM(uint cycle);
-  void StupidSpriteEventHandler();
 
   struct Window {
     u64 timestamp_last_sync;

@@ -13,6 +13,7 @@ void Core::LoadState(SaveState const& state) {
   scheduler.Reset();
   scheduler.SetTimestampNow(state.timestamp);
 
+  scheduler.LoadState(state);
   cpu.LoadState(state);
   bus.LoadState(state);
   irq.LoadState(state);
@@ -28,6 +29,7 @@ void Core::CopyState(SaveState& state) {
   state.version = SaveState::kCurrentVersion;
   state.timestamp = scheduler.GetTimestampNow();
 
+  scheduler.CopyState(state);
   cpu.CopyState(state);
   bus.CopyState(state);
   irq.CopyState(state);

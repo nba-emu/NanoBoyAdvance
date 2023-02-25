@@ -292,6 +292,15 @@ struct SaveState {
   } gpio;
 
   u16 keycnt;
+
+  struct Scheduler {
+    struct Event {
+      u64 key;
+      u16 event_class;
+    } events[64];
+
+    int event_count;
+  } scheduler;
 };
 
 } // namespace nba
