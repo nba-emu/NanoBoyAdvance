@@ -48,6 +48,7 @@ void PPU::InitSprite() {
   sprite.timestamp_last_sync = timestamp_now;
   sprite.cycle = 0U;
   sprite.vcount = (vcount + 1) % 228;
+  sprite.mosaic_y = mmio.mosaic.obj._counter_y;
 
   sprite.oam_fetch.index = 0U;
   sprite.oam_fetch.step = 0;
@@ -93,7 +94,7 @@ void PPU::DrawSpriteImpl(int cycles) {
       DrawSpriteFetchOAM(cycle);
     }
 
-    if(cycle == 966U) { // cycle 1006 in the scanline
+    if(cycle == 1192U) { // cycle 1232 in the scanline
       auto& mosaic = mmio.mosaic;
 
       if(sprite.vcount < 159) {
@@ -186,8 +187,7 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
           if((vcount >= y || y_max < y) && vcount < y_max) {
             const bool mosaic = attr01 & (1 << 12);
 
-            const int mosaic_y = mmio.mosaic.obj._counter_y;
-            const int line = sprite.vcount - (mosaic ? mosaic_y : 0);
+            const int line = sprite.vcount - (mosaic ? sprite.mosaic_y : 0);
 
             drawer_state.width = width;
             drawer_state.height = height;
