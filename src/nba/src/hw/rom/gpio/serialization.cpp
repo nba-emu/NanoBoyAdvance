@@ -20,7 +20,7 @@ void GPIO::LoadState(SaveState const& state) {
   wr_mask = (~state.gpio.rd_mask) & 15;
   port_data = state.gpio.port_data;
 
-  for (auto& device : devices) {
+  for(auto& device : devices) {
     device->LoadState(state);
   }
 }
@@ -30,7 +30,7 @@ void GPIO::CopyState(SaveState& state) {
   state.gpio.rd_mask = rd_mask;
   state.gpio.port_data = port_data;
 
-  for (auto& device : devices) {
+  for(auto& device : devices) {
     device->CopyState(state);
   }
 }

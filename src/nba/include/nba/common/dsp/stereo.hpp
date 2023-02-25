@@ -24,8 +24,8 @@ struct StereoSample {
   }
   
   T& operator[](int index) {
-    if (index == 0) return left;
-    if (index == 1) return right;
+    if(index == 0) return left;
+    if(index == 1) return right;
     
     throw std::runtime_error("StereoSample<T>: bad index for operator[].");
   }

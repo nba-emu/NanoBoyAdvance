@@ -18,17 +18,17 @@ void MP2K::Reset() {
   total_frame_count = 0;
   current_frame = 0;
   buffer_read_index = 0;
-  for (auto& entry : samplers) {
+  for(auto& entry : samplers) {
     entry = {};
   }
 }
 
 void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
-  if (sound_info.magic != 0x68736D54) {
+  if(sound_info.magic != 0x68736D54) {
     return;
   }
 
-  if (!engaged) {
+  if(!engaged) {
     Assert(
       sound_info.pcm_samples_per_vblank != 0,
       "MP2K: samples per V-blank must not be zero."
@@ -43,24 +43,24 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
 
   this->sound_info = sound_info;
 
-  for (int i = 0; i < max_channels; i++) {
+  for(int i = 0; i < max_channels; i++) {
     auto& channel = this->sound_info.channels[i];
     auto& sampler = samplers[i];
     auto  envelope_volume = u32(channel.envelope_volume);
     auto  envelope_phase = channel.status & CHANNEL_ENV_MASK;
 
-    if ((channel.status & CHANNEL_ON) == 0) {
+    if((channel.status & CHANNEL_ON) == 0) {
       continue;
     }
 
-    if (channel.status & CHANNEL_START) {
-      if (channel.status & CHANNEL_STOP) {
+    if(channel.status & CHANNEL_START) {
+      if(channel.status & CHANNEL_STOP) {
         channel.status = 0;
         continue;
       }
 
       envelope_volume = channel.envelope_attack;
-      if (envelope_volume == 0xFF) {
+      if(envelope_volume == 0xFF) {
         channel.status = CHANNEL_ENV_DECAY;
       } else {
         channel.status = CHANNEL_ENV_ATTACK;
@@ -68,19 +68,19 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
 
       sampler = {};
       sampler.wave_info = *bus.GetHostAddress<Sampler::WaveInfo>(channel.wave_address);
-      if (sampler.wave_info.status & 0xC000) {
+      if(sampler.wave_info.status & 0xC000) {
         channel.status |= CHANNEL_LOOP;
       }
-    } else if (channel.status & CHANNEL_ECHO) {
-      if (channel.echo_length-- == 0) {
+    } else if(channel.status & CHANNEL_ECHO) {
+      if(channel.echo_length-- == 0) {
         channel.status = 0;
         continue;
       }
-    } else if (channel.status & CHANNEL_STOP) {
+    } else if(channel.status & CHANNEL_STOP) {
       envelope_volume = (envelope_volume * channel.envelope_release) >> 8;
 
-      if (envelope_volume <= channel.echo_volume) {
-        if (channel.echo_volume == 0) {
+      if(envelope_volume <= channel.echo_volume) {
+        if(channel.echo_volume == 0) {
           channel.status = 0;
           continue;
         }
@@ -88,19 +88,19 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
         channel.status |= CHANNEL_ECHO;
         envelope_volume = (u32)channel.echo_volume;
       }
-    } else if (envelope_phase == CHANNEL_ENV_ATTACK) {
+    } else if(envelope_phase == CHANNEL_ENV_ATTACK) {
       envelope_volume += channel.envelope_attack;
 
-      if (envelope_volume > 0xFE) {
+      if(envelope_volume > 0xFE) {
         channel.status = (channel.status & ~CHANNEL_ENV_MASK) | CHANNEL_ENV_DECAY;
         envelope_volume = 0xFF;
       }
-    } else if (envelope_phase == CHANNEL_ENV_DECAY) {
+    } else if(envelope_phase == CHANNEL_ENV_DECAY) {
       envelope_volume = (envelope_volume * channel.envelope_decay) >> 8;
     
       auto envelope_sustain = channel.envelope_sustain;
-      if (envelope_volume <= envelope_sustain) {
-        if (envelope_sustain == 0 && channel.echo_volume == 0) {
+      if(envelope_volume <= envelope_sustain) {
+        if(envelope_sustain == 0 && channel.echo_volume == 0) {
           channel.status = 0;
           continue;
         }
@@ -131,14 +131,14 @@ void MP2K::RenderFrame() {
   auto max_channels = std::min(sound_info.max_channels, kMaxSoundChannels);
   auto destination = &buffer[current_frame * kSamplesPerFrame * 2];
 
-  if (reverb == 0) {
+  if(reverb == 0) {
     std::memset(destination, 0, kSamplesPerFrame * 2 * sizeof(float));
   } else {
     auto factor = reverb / (128.0 * 4.0);
     auto other_frame  = (current_frame + 1) % total_frame_count;
     auto other_buffer = &buffer[other_frame * kSamplesPerFrame * 2];
 
-    for (int i = 0; i < kSamplesPerFrame; i++) {
+    for(int i = 0; i < kSamplesPerFrame; i++) {
       float sample_out = 0;
 
       sample_out += other_buffer[i * 2 + 0];
@@ -153,17 +153,17 @@ void MP2K::RenderFrame() {
     }
   }
   
-  for (int i = 0; i < max_channels; i++) {
+  for(int i = 0; i < max_channels; i++) {
     auto& channel = sound_info.channels[i];
     auto& sampler = samplers[i];
 
-    if ((channel.status & CHANNEL_ON) == 0) {
+    if((channel.status & CHANNEL_ON) == 0) {
       continue;
     }
 
     float angular_step;
 
-    if (channel.type & 8) {
+    if(channel.type & 8) {
       angular_step = sound_info.pcm_sample_rate / float(kSampleRate);
     } else {
       angular_step = channel.frequency / float(kSampleRate);
@@ -176,9 +176,9 @@ void MP2K::RenderFrame() {
 
     auto const& wave_info = sampler.wave_info;
 
-    if (sampler.compressed != compressed || !sampler.wave_data) {
+    if(sampler.compressed != compressed || !sampler.wave_data) {
       auto wave_size = wave_info.number_of_samples;
-      if (compressed) {
+      if(compressed) {
         wave_size *= 33;
         wave_size = (wave_size + 63) / 64;
       }
@@ -190,15 +190,15 @@ void MP2K::RenderFrame() {
 
     auto wave_data = sampler.wave_data;
 
-    for (int j = 0; j < kSamplesPerFrame; j++) {
-      if (sampler.should_fetch_sample) {
+    for(int j = 0; j < kSamplesPerFrame; j++) {
+      if(sampler.should_fetch_sample) {
         float sample;
 
-        if (compressed) {
+        if(compressed) {
           auto block_offset  = sampler.current_position & 63;
           auto block_address = (sampler.current_position >> 6) * 33;
 
-          if (block_offset == 0) {
+          if(block_offset == 0) {
             sample = S8ToFloat(wave_data[block_address]);
           } else {
             sample = sample_history[0];
@@ -207,7 +207,7 @@ void MP2K::RenderFrame() {
           auto address = block_address + (block_offset >> 1) + 1;
           auto lut_index = wave_data[address];
 
-          if (block_offset & 1) {
+          if(block_offset & 1) {
             lut_index &= 15;
           } else {
             lut_index >>= 4;
@@ -218,7 +218,7 @@ void MP2K::RenderFrame() {
           sample = S8ToFloat(wave_data[sampler.current_position]);
         }
 
-        if (UseCubicFilter()) {
+        if(UseCubicFilter()) {
           sample_history[3] = sample_history[2];
           sample_history[2] = sample_history[1];
         }
@@ -231,7 +231,7 @@ void MP2K::RenderFrame() {
       float sample;
       float mu = sampler.resample_phase;
 
-      if (UseCubicFilter()) {
+      if(UseCubicFilter()) {
         // http://paulbourke.net/miscellaneous/interpolation/
         float mu2 = mu * mu;
         float a0 = sample_history[0] - sample_history[1] - sample_history[3] + sample_history[2];
@@ -248,14 +248,14 @@ void MP2K::RenderFrame() {
 
       sampler.resample_phase += angular_step;
 
-      if (sampler.resample_phase >= 1) {
+      if(sampler.resample_phase >= 1) {
         auto n = int(sampler.resample_phase);
         sampler.resample_phase -= n;
         sampler.current_position += n;
         sampler.should_fetch_sample = true;
 
-        if (sampler.current_position >= wave_info.number_of_samples) {
-          if (channel.status & CHANNEL_LOOP) {
+        if(sampler.current_position >= wave_info.number_of_samples) {
+          if(channel.status & CHANNEL_LOOP) {
             sampler.current_position = wave_info.loop_position + n - 1;
           } else {
             sampler.current_position = wave_info.number_of_samples;
@@ -268,13 +268,13 @@ void MP2K::RenderFrame() {
 }
 
 auto MP2K::ReadSample() -> float* {
-  if (buffer_read_index == 0) {
+  if(buffer_read_index == 0) {
     RenderFrame();
   }
 
   auto sample = &buffer[(current_frame * kSamplesPerFrame + buffer_read_index) * 2];
 
-  if (++buffer_read_index == kSamplesPerFrame) {
+  if(++buffer_read_index == kSamplesPerFrame) {
     buffer_read_index = 0;
   }
 

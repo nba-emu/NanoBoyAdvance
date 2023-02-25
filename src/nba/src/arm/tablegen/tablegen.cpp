@@ -55,7 +55,7 @@ struct TableGen {
   static constexpr auto GenerateConditionTable() -> std::array<bool, 256> {
     std::array<bool, 256> lut{};
     
-    for (int flag_set = 0; flag_set < 16; flag_set++) {
+    for(int flag_set = 0; flag_set < 16; flag_set++) {
       bool n = flag_set & 8;
       bool z = flag_set & 4;
       bool c = flag_set & 2;

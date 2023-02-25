@@ -61,7 +61,7 @@ void OGLVideoDevice::Initialize() {
   glEnable(GL_TEXTURE_2D);
   glGenFramebuffers(1, &fbo);
   glGenTextures(4, texture);
-  for (int i = 0; i < 4; i++) {
+  for(int i = 0; i < 4; i++) {
     glBindTexture(GL_TEXTURE_2D, texture[i]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -76,7 +76,7 @@ void OGLVideoDevice::Initialize() {
 void OGLVideoDevice::ReloadConfig() {
   texture_filter_invalid = true;
 
-  if (config->video.filter == Video::Filter::Linear) {
+  if(config->video.filter == Video::Filter::Linear) {
     texture_filter = GL_LINEAR;
   } else {
     texture_filter = GL_NEAREST;
@@ -91,31 +91,31 @@ void OGLVideoDevice::CreateShaderPrograms() {
   ReleaseShaderPrograms();
 
   // xBRZ freescale upsampling filter (two passes)
-  if (video.filter == Video::Filter::xBRZ) {
+  if(video.filter == Video::Filter::xBRZ) {
     auto [success0, program0] = CompileProgram(xbrz0_vert, xbrz0_frag);
     auto [success1, program1] = CompileProgram(xbrz1_vert, xbrz1_frag);
     
-    if (success0 && success1) {
+    if(success0 && success1) {
       programs.push_back(program0);
       programs.push_back(program1);
     } else {
-      if (success0) glDeleteProgram(program0);
-      if (success1) glDeleteProgram(program1);
+      if(success0) glDeleteProgram(program0);
+      if(success1) glDeleteProgram(program1);
     }
   }
 
   // Color correction pass
-  switch (video.color) {
+  switch(video.color) {
     case Video::Color::higan: {
       auto [success, program] = CompileProgram(color_higan_vert, color_higan_frag);
-      if (success) {
+      if(success) {
         programs.push_back(program);
       }
       break;
     }
     case Video::Color::AGB: {
       auto [success, program] = CompileProgram(color_agb_vert, color_agb_frag);
-      if (success) {
+      if(success) {
         programs.push_back(program);
       }
       break;
@@ -123,42 +123,42 @@ void OGLVideoDevice::CreateShaderPrograms() {
   }
 
   // LCD ghosting (interframe blending) pass
-  if (video.lcd_ghosting) {
+  if(video.lcd_ghosting) {
     auto [success, program] = CompileProgram(lcd_ghosting_vert, lcd_ghosting_frag);
-    if (success) {
+    if(success) {
       programs.push_back(program);
     }
   }
 
   // Output pass (final)
   auto [success, program] = CompileProgram(output_vert, output_frag);
-  if (success) {
+  if(success) {
     programs.push_back(program);
   }
 
   // Set constant shader uniforms.
-  for (auto program : programs) {
+  for(auto program : programs) {
     glUseProgram(program);
 
     auto screen_map = glGetUniformLocation(program, "u_screen_map");
-    if (screen_map != -1) {
+    if(screen_map != -1) {
       glUniform1i(screen_map, 0);
     }
 
     auto history_map = glGetUniformLocation(program, "u_history_map");
-    if (history_map != -1) {
+    if(history_map != -1) {
       glUniform1i(history_map, 1);
     }
 
     auto source_map = glGetUniformLocation(program, "u_source_map");
-    if (source_map != -1) {
+    if(source_map != -1) {
       glUniform1i(source_map, 2);
     }
   }
 }
 
 void OGLVideoDevice::ReleaseShaderPrograms() {
-  for (auto program : programs) {   
+  for(auto program : programs) {   
     glDeleteProgram(program);
   }
   programs.clear();
@@ -197,7 +197,7 @@ auto OGLVideoDevice::CompileProgram(
   auto [vert_success, vert_id] = CompileShader(GL_VERTEX_SHADER, vertex_src);
   auto [frag_success, frag_id] = CompileShader(GL_FRAGMENT_SHADER, fragment_src);
   
-  if (!vert_success || !frag_success) {
+  if(!vert_success || !frag_success) {
     return std::make_pair<bool, GLuint>(false, 0);
   } else {
     auto prog_id = glCreateProgram();
@@ -218,7 +218,7 @@ void OGLVideoDevice::SetViewport(int x, int y, int width, int height) {
   view_width  = width;
   view_height = height;
 
-  for (int i = 0; i < 3; i++) {
+  for(int i = 0; i < 3; i++) {
     glBindTexture(GL_TEXTURE_2D, texture[i]);
     glTexImage2D(
       GL_TEXTURE_2D,
@@ -247,7 +247,7 @@ void OGLVideoDevice::Draw(u32* buffer) {
   glTexImage2D(
     GL_TEXTURE_2D, 0, GL_RGBA, 240, 160, 0, GL_BGRA, GL_UNSIGNED_BYTE, buffer
   );
-  if (texture_filter_invalid) {
+  if(texture_filter_invalid) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texture_filter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texture_filter);
     texture_filter_invalid = false;
@@ -266,14 +266,14 @@ void OGLVideoDevice::Draw(u32* buffer) {
   glViewport(0, 0, view_width, view_height);
   glBindVertexArray(quad_vao);
 
-  if (program_count <= 2) {
+  if(program_count <= 2) {
     target = 2;
   }
 
-  for (int i = 0; i < program_count; i++) {
+  for(int i = 0; i < program_count; i++) {
     glUseProgram(programs[i]);
 
-    if (i == program_count - 1) {
+    if(i == program_count - 1) {
       glViewport(view_x, view_y, view_width, view_height);
       glBindFramebuffer(GL_FRAMEBUFFER, default_fbo);
     } else {
@@ -287,7 +287,7 @@ void OGLVideoDevice::Draw(u32* buffer) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture[target]);
 
-    if (i == program_count - 3) {
+    if(i == program_count - 3) {
       /* The next pass is the next-to-last pass, before we render to screen.
        * Render that pass into a separate texture, so that it can be 
        * used in the next frame to calculate LCD ghosting.

@@ -131,7 +131,7 @@ struct Bus {
   auto ALWAYS_INLINE ReadPRAM(u32 address) noexcept -> T {
     constexpr int cycles = std::is_same_v<T, u32> ? 2 : 1;
 
-    for (int i = 0; i < cycles; i++) {
+    for(int i = 0; i < cycles; i++) {
       do {
         Step(1);
         hw.ppu.Sync();
@@ -164,8 +164,8 @@ struct Bus {
 
     address &= 0x1FFFF;
 
-    if (address >= boundary) {
-      for (int i = 0; i < cycles; i++) {
+    if(address >= boundary) {
+      for(int i = 0; i < cycles; i++) {
         do {
           Step(1);
           hw.ppu.Sync();
@@ -174,7 +174,7 @@ struct Bus {
 
       return hw.ppu.ReadVRAM_OBJ<T>(address, boundary);
     } else {
-      for (int i = 0; i < cycles; i++) {
+      for(int i = 0; i < cycles; i++) {
         do {
           Step(1);
           hw.ppu.Sync();
@@ -192,7 +192,7 @@ struct Bus {
 
       address &= 0x1FFFF;
 
-      if (address >= boundary) {
+      if(address >= boundary) {
         // TODO: de-duplicate this code (see ReadVRAM):
         do {
           Step(1);

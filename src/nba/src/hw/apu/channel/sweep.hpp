@@ -23,7 +23,7 @@ public:
     /* TODO: If the sweep shift is non-zero, frequency calculation and the
      * overflow check are performed immediately.
      */
-    if (enabled) {
+    if(enabled) {
       current_freq = initial_freq;
       shadow_freq = initial_freq;
       step = divider;
@@ -32,7 +32,7 @@ public:
   }
 
   bool Tick() {
-    if (active && --step == 0) {
+    if(active && --step == 0) {
       int new_freq;
       int offset = shadow_freq >> shift;
 
@@ -41,15 +41,15 @@ public:
        */
       step = divider;
 
-      if (direction == Direction::Increment) {
+      if(direction == Direction::Increment) {
         new_freq = shadow_freq + offset;
       } else {
         new_freq = shadow_freq - offset;
       }
 
-      if (new_freq >= 2048) {
+      if(new_freq >= 2048) {
         return false;
-      } else if (shift != 0) {
+      } else if(shift != 0) {
         shadow_freq  = new_freq;
         current_freq = new_freq;
       }

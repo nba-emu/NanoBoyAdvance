@@ -25,7 +25,7 @@ auto DisplayControl::Read(int address) -> u8 {
 }
 
 void DisplayControl::Write(int address, u8 value) {
-  switch (address) {
+  switch(address) {
     case 0: {
       hword = (hword & 0xFF00) | value;
 
@@ -40,7 +40,7 @@ void DisplayControl::Write(int address, u8 value) {
     case 1: {
       hword = (hword & 0x00FF) | (value << 8);
 
-      for (int i = 0; i < 8; i++) {
+      for(int i = 0; i < 8; i++) {
         enable[i] = (value >> i) & 1;
       }
       break;
@@ -63,7 +63,7 @@ void DisplayStatus::Reset() {
 }
 
 auto DisplayStatus::Read(int address) -> u8 {
-  switch (address) {
+  switch(address) {
     case 0:
       return vblank_flag |
             (hblank_flag << 1) |
@@ -79,7 +79,7 @@ auto DisplayStatus::Read(int address) -> u8 {
 }
 
 void DisplayStatus::Write(int address, u8 value) {
-  switch (address) {
+  switch(address) {
     case 0:
       vblank_irq_enable = (value >> 3) & 1;
       hblank_irq_enable = (value >> 4) & 1;
@@ -108,7 +108,7 @@ void BackgroundControl::Reset() {
 }
 
 auto BackgroundControl::Read(int address) -> u8 {
-  switch (address) {
+  switch(address) {
     case 0:
       return priority |
             (tile_block << 2) |
@@ -125,7 +125,7 @@ auto BackgroundControl::Read(int address) -> u8 {
 }
 
 void BackgroundControl::Write(int address, u8 value) {  
-  switch (address) {
+  switch(address) {
     case 0:
       priority = value & 3;
       tile_block = (value >> 2) & 3;
@@ -135,7 +135,7 @@ void BackgroundControl::Write(int address, u8 value) {
       break;
     case 1:
       map_block = value & 0x1F;
-      if (id >= 2) {
+      if(id >= 2) {
         wraparound = (value >> 5) & 1;
       }
       size = value >> 6;
@@ -158,14 +158,14 @@ void ReferencePoint::Reset() {
 }
 
 void ReferencePoint::Write(int address, u8 value) {
-  switch (address) {
+  switch(address) {
     case 0: initial = (initial & 0x0FFFFF00) | (value <<  0); break;
     case 1: initial = (initial & 0x0FFF00FF) | (value <<  8); break;
     case 2: initial = (initial & 0x0F00FFFF) | (value << 16); break;
     case 3: initial = (initial & 0x00FFFFFF) | (value << 24); break;
   }
   
-  if (initial & (1 << 27)) {
+  if(initial & (1 << 27)) {
     initial |= 0xF0000000;
   }
   
@@ -178,7 +178,7 @@ void WindowRange::Reset() {
 }
 
 void WindowRange::Write(int address, u8 value) {
-  switch (address) {
+  switch(address) {
     case 0:
       max = value;
       break;
@@ -205,7 +205,7 @@ void WindowLayerSelect::Reset() {
 auto WindowLayerSelect::Read(int address) -> u8 {
   u8 value = 0;
   
-  for (int i = 0; i < 6; i++) {
+  for(int i = 0; i < 6; i++) {
     value |= enable[address][i] << i;
   }
   
@@ -213,7 +213,7 @@ auto WindowLayerSelect::Read(int address) -> u8 {
 }
 
 void WindowLayerSelect::Write(int address, u8 value) {
-  for (int i = 0; i < 6; i++) {
+  for(int i = 0; i < 6; i++) {
     enable[address][i] = (value >> i) & 1;
   }
 }
@@ -235,14 +235,14 @@ void BlendControl::Reset() {
 auto BlendControl::Read(int address) -> u8 {
   u8 value = 0;
 
-  switch (address) {
+  switch(address) {
     case 0:
-      for (int i = 0; i < 6; i++)
+      for(int i = 0; i < 6; i++)
         value |= targets[0][i] << i;
       value |= sfx << 6;
       break;
     case 1:
-      for (int i = 0; i < 6; i++)
+      for(int i = 0; i < 6; i++)
         value |= targets[1][i] << i;
       break;
   }
@@ -251,14 +251,14 @@ auto BlendControl::Read(int address) -> u8 {
 }
 
 void BlendControl::Write(int address, u8 value) {
-  switch (address)
+  switch(address)
     case 0: {
-      for (int i = 0; i < 6; i++)
+      for(int i = 0; i < 6; i++)
         targets[0][i] = (value >> i) & 1;
       sfx = (Effect)(value >> 6);
       break;
     case 1:
-      for (int i = 0; i < 6; i++)
+      for(int i = 0; i < 6; i++)
         targets[1][i] = (value >> i) & 1;
       break;
   }
@@ -284,7 +284,7 @@ void Mosaic::Reset() {
 
 void Mosaic::Write(int address, u8 value) {
   // TODO: how does hardware handle mid-frame or mid-line mosaic changes?
-  switch (address)
+  switch(address)
     case 0: {
       bg.size_x = (value & 15) + 1;
       bg.size_y = (value >> 4) + 1;

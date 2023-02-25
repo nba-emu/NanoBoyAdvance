@@ -35,7 +35,7 @@ void NoiseChannel::Reset() {
 }
 
 void NoiseChannel::Generate() {
-  if (!IsEnabled()) {
+  if(!IsEnabled()) {
     sample = 0;
     event = nullptr;
     return;
@@ -46,7 +46,7 @@ void NoiseChannel::Generate() {
   int carry = lfsr & 1;
 
   lfsr >>= 1;
-  if (carry) {
+  if(carry) {
     lfsr ^= lfsr_xor[width];
     sample = +8;
   } else {
@@ -55,13 +55,13 @@ void NoiseChannel::Generate() {
 
   sample *= envelope.current_volume;
 
-  if (!dac_enable) sample = 0;
+  if(!dac_enable) sample = 0;
 
   // Skip samples that will never be sampled by the audio mixer.
-  for (int i = 0; i < skip_count; i++) {
+  for(int i = 0; i < skip_count; i++) {
     carry = lfsr & 1;
     lfsr >>= 1;
-    if (carry) {
+    if(carry) {
       lfsr ^= lfsr_xor[width];
     }
   }
@@ -75,7 +75,7 @@ void NoiseChannel::Generate() {
    * In that case we can sample the channel at the same rate
    * as the mixer rate and only output the sample that will be used.
    */
-  if (noise_interval < mixer_interval) {
+  if(noise_interval < mixer_interval) {
     skip_count = mixer_interval/noise_interval - 1;
     noise_interval = mixer_interval;
   } else {
@@ -86,7 +86,7 @@ void NoiseChannel::Generate() {
 }
 
 auto NoiseChannel::Read(int offset) -> u8 {
-  switch (offset) {
+  switch(offset) {
     // Length / Envelope
     case 0: return 0;
     case 1: {
@@ -112,7 +112,7 @@ auto NoiseChannel::Read(int offset) -> u8 {
 }
 
 void NoiseChannel::Write(int offset, u8 value) {
-  switch (offset) {
+  switch(offset) {
     // Length / Envelope
     case 0: {
       length.length = 64 - (value & 63);
@@ -127,19 +127,19 @@ void NoiseChannel::Write(int offset, u8 value) {
       envelope.initial_volume = value >> 4;
 
       dac_enable = (value >> 3) != 0;
-      if (!dac_enable) {
+      if(!dac_enable) {
         Disable();
       }
 
       // Handle envelope "Zombie" mode:
       // https://gist.github.com/drhelius/3652407#file-game-boy-sound-operation-L491
       // TODO: what is the exact behavior on AGB systems?
-      if (divider_old == 0 && envelope.active) {
+      if(divider_old == 0 && envelope.active) {
         envelope.current_volume++;
-      } else if (direction_old == Envelope::Direction::Decrement) {
+      } else if(direction_old == Envelope::Direction::Decrement) {
         envelope.current_volume += 2;
       }
-      if (direction_old != envelope.direction) {
+      if(direction_old != envelope.direction) {
         envelope.current_volume = 16 - envelope.current_volume;
       }
       envelope.current_volume &= 15;
@@ -156,8 +156,8 @@ void NoiseChannel::Write(int offset, u8 value) {
     case 5: {
       length.enabled = value & 0x40;
 
-      if (dac_enable && (value & 0x80)) {
-        if (!IsEnabled()) {
+      if(dac_enable && (value & 0x80)) {
+        if(!IsEnabled()) {
           skip_count = 0;
           if(event) {
             scheduler.Cancel(event);

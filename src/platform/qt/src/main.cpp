@@ -28,7 +28,7 @@ struct MenuStyle : QProxyStyle {
     const QWidget *widget,
     QStyleHintReturn *returnData
   ) const {
-    if (stylehint == QStyle::SH_MenuBar_AltKeyNavigation)
+    if(stylehint == QStyle::SH_MenuBar_AltKeyNavigation)
       return 0;
 
     return QProxyStyle::styleHint(stylehint, opt, widget, returnData);
@@ -38,10 +38,10 @@ struct MenuStyle : QProxyStyle {
 auto create_window(QApplication& app, int argc, char** argv) -> std::unique_ptr<MainWindow> {
   fs::path rom;
 
-  if (argc >= 2) {
+  if(argc >= 2) {
     rom = fs::path{argv[1]};
 
-    if (rom.is_relative()) {
+    if(rom.is_relative()) {
       rom = fs::current_path() / rom;
     }
     fs::current_path(fs::path{argv[0]}.remove_filename());
@@ -49,7 +49,7 @@ auto create_window(QApplication& app, int argc, char** argv) -> std::unique_ptr<
 
   auto window = std::make_unique<MainWindow>(&app);
 
-  if (!rom.empty()) {
+  if(!rom.empty()) {
     window->LoadROM(rom.string());
   }
 

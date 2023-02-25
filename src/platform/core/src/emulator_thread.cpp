@@ -16,7 +16,7 @@ EmulatorThread::EmulatorThread(
 }
 
 EmulatorThread::~EmulatorThread() {
-  if (IsRunning()) Stop();
+  if(IsRunning()) Stop();
 }
 
 bool EmulatorThread::IsRunning() const {
@@ -48,19 +48,19 @@ void EmulatorThread::SetPerFrameCallback(std::function<void()> callback) {
 }
 
 void EmulatorThread::Start() {
-  if (!running) {
+  if(!running) {
     running = true;
     thread = std::thread{[this]() {
       frame_limiter.Reset();
 
-      while (running.load()) {
+      while(running.load()) {
         frame_limiter.Run([this]() {
-          if (!paused) {
+          if(!paused) {
             per_frame_cb();
             core->RunForOneFrame();
           }
         }, [this](float fps) {
-          if (paused) {
+          if(paused) {
             fps = 0;
           }
           frame_rate_cb(fps);
@@ -71,7 +71,7 @@ void EmulatorThread::Start() {
 }
 
 void EmulatorThread::Stop() {
-  if (IsRunning()) {
+  if(IsRunning()) {
     running = false;
     thread.join();
   }

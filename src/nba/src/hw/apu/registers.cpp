@@ -33,7 +33,7 @@ void SoundControl::Reset() {
 }
 
 auto SoundControl::Read(int address) -> u8 {
-  switch (address) {
+  switch(address) {
     case 0:
       return (psg.master[SIDE_RIGHT] << 0) |
              (psg.master[SIDE_LEFT]  << 4);
@@ -69,7 +69,7 @@ auto SoundControl::Read(int address) -> u8 {
 }
 
 void SoundControl::Write(int address, u8 value) {
-  switch (address) {
+  switch(address) {
     case 0: {
       psg.master[SIDE_RIGHT] = (value >> 0) & 7;
       psg.master[SIDE_LEFT ] = (value >> 4) & 7;
@@ -100,8 +100,8 @@ void SoundControl::Write(int address, u8 value) {
       dma[DMA_B].enable[SIDE_LEFT ] = value & 32;
       dma[DMA_B].timer_id = (value >> 6) & 1;
 
-      if (value & 0x08) fifos[0].Reset();
-      if (value & 0x80) fifos[1].Reset();
+      if(value & 0x08) fifos[0].Reset();
+      if(value & 0x80) fifos[1].Reset();
 
       break;
     }
@@ -148,7 +148,7 @@ void BIAS::Reset() {
 }
 
 auto BIAS::Read(int address) -> u8 {
-  switch (address) {
+  switch(address) {
     case 0:  return   level & 0xFF;
     case 1:  return ((level >> 8) & 3) | (resolution << 6);
     default: return 0;
@@ -156,7 +156,7 @@ auto BIAS::Read(int address) -> u8 {
 }
 
 void BIAS::Write(int address, u8 value) {
-  switch (address) {
+  switch(address) {
     case 0: {
       level = (level & ~0xFF) | (value & ~1);
       break;

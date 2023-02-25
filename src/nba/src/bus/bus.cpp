@@ -42,7 +42,7 @@ void Bus::Reset() {
 }
 
 void Bus::Attach(std::vector<u8> const& bios) {
-  if (bios.size() > memory.bios.size()) {
+  if(bios.size() > memory.bios.size()) {
     throw std::runtime_error("BIOS image is too big");
   }
 
@@ -91,7 +91,7 @@ auto Bus::Read(u32 address, int access) -> T {
 
   parallel_internal_cpu_cycle_limit = 0;
 
-  switch (page) {
+  switch(page) {
     // BIOS
     case 0x00: {
       Step(1);
@@ -135,7 +135,7 @@ auto Bus::Read(u32 address, int access) -> T {
       auto sequential = access & Sequential;
       bool code = access & Code;
 
-      if ((address & 0x1'FFFF) == 0 || ((last_access & Dma) && !(access & Dma))) {
+      if((address & 0x1'FFFF) == 0 || ((last_access & Dma) && !(access & Dma))) {
         sequential = 0;
       }
 
@@ -188,7 +188,7 @@ void Bus::Write(u32 address, int access, T value) {
 
   parallel_internal_cpu_cycle_limit = 0;
 
-  switch (page) {
+  switch(page) {
     // EWRAM (external work RAM)
     case 0x02: {
       Step(is_u32 ? 6 : 3);
@@ -234,7 +234,7 @@ void Bus::Write(u32 address, int access, T value) {
 
       auto sequential = access & Sequential;
 
-      if ((address & 0x1'FFFF) == 0 || ((last_access & Dma) && !(access & Dma))) {
+      if((address & 0x1'FFFF) == 0 || ((last_access & Dma) && !(access & Dma))) {
         sequential = 0;
       }
 
@@ -280,12 +280,12 @@ void Bus::Write(u32 address, int access, T value) {
 }
 
 auto Bus::ReadBIOS(u32 address) -> u32 {
-  if (address >= 0x4000) {
+  if(address >= 0x4000) {
     return ReadOpenBus(address);
   }
 
   auto shift = (address & 3) << 3;
-  if (hw.cpu.state.r15 < 0x4000) {
+  if(hw.cpu.state.r15 < 0x4000) {
     address &= ~3;
     memory.latch.bios = read<u32>(memory.bios.data(), address);
   } else {
@@ -305,10 +305,10 @@ auto Bus::ReadOpenBus(u32 address) -> u32 {
     return hw.dma.GetOpenBusValue() >> shift;
   }
 
-  if (cpu.state.cpsr.f.thumb) {
+  if(cpu.state.cpsr.f.thumb) {
     auto r15 = cpu.state.r15;
 
-    switch (r15 >> 24) {
+    switch(r15 >> 24) {
       // EWRAM, PRAM, VRAM, ROM (16-bit)
       case 0x02:
       case 0x05 ... 0x06:
@@ -320,7 +320,7 @@ auto Bus::ReadOpenBus(u32 address) -> u32 {
       // BIOS, OAM (32-bit)
       case 0x00:
       case 0x07: {
-        if ((r15 & 2) == 0) {
+        if((r15 & 2) == 0) {
           word  = cpu.GetFetchedOpcode(0);
           word |= cpu.GetFetchedOpcode(1) << 16;
         } else {
@@ -333,7 +333,7 @@ auto Bus::ReadOpenBus(u32 address) -> u32 {
       }
       // IWRAM bus (16-bit special-case)
       case 0x03: {
-        if ((r15 & 2) == 0) {
+        if((r15 & 2) == 0) {
           word  = cpu.GetFetchedOpcode(0);
           word |= cpu.GetFetchedOpcode(1) << 16;
         } else {
@@ -358,11 +358,11 @@ auto Bus::GetHostAddress(u32 address, size_t size) -> u8* {
 
   auto page = address >> 24;
 
-  switch (page) {
+  switch(page) {
     // BIOS
     case 0x00: {
       auto offset = address & 0x00FF'FFFF;
-      if (offset + size <= bios.size()) {
+      if(offset + size <= bios.size()) {
         return bios.data() + offset;
       }
       break;
@@ -370,7 +370,7 @@ auto Bus::GetHostAddress(u32 address, size_t size) -> u8* {
     // EWRAM (external work RAM)
     case 0x02: {
       auto offset = address & 0x00FF'FFFF;
-      if (offset + size <= wram.size()) {
+      if(offset + size <= wram.size()) {
         return wram.data() + offset;
       }
       break;
@@ -378,7 +378,7 @@ auto Bus::GetHostAddress(u32 address, size_t size) -> u8* {
     // IWRAM (internal work RAM)
     case 0x03: {
       auto offset = address & 0x00FF'FFFF;
-      if (offset + size <= iram.size()) {
+      if(offset + size <= iram.size()) {
         return iram.data() + offset;
       }
       break;
@@ -386,7 +386,7 @@ auto Bus::GetHostAddress(u32 address, size_t size) -> u8* {
     // ROM (WS0, WS1, WS2)
     case 0x08 ... 0x0D: {
       auto offset = address & 0x01FF'FFFF;
-      if (offset + size <= rom.size()) {
+      if(offset + size <= rom.size()) {
         return rom.data() + offset;
       }
       break;

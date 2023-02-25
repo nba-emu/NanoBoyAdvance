@@ -47,24 +47,24 @@ auto ROMLoader::Load(
   auto file_data = std::vector<u8>{};
   auto read_status = ReadFile(rom_path, file_data);
 
-  if (read_status != Result::Success) {
+  if(read_status != Result::Success) {
     return read_status;
   }
 
   auto size = file_data.size();
   
-  if (size < sizeof(Header) || size > kMaxROMSize) {
+  if(size < sizeof(Header) || size > kMaxROMSize) {
     return Result::BadImage;
   }
 
   auto game_info = GetGameInfo(file_data);
 
-  if (backup_type == BackupType::Detect) {
-    if (game_info.backup_type != BackupType::Detect) {
+  if(backup_type == BackupType::Detect) {
+    if(game_info.backup_type != BackupType::Detect) {
       backup_type = game_info.backup_type;
     } else {
       backup_type = GetBackupType(file_data);
-      if (backup_type == BackupType::Detect) {
+      if(backup_type == BackupType::Detect) {
         Log<Warn>("ROMLoader: failed to detect backup type!");
         backup_type = BackupType::SRAM;
       }
@@ -77,20 +77,20 @@ auto ROMLoader::Load(
 
   auto gpio_devices = game_info.gpio | force_gpio;
 
-  if (gpio_devices != GPIODeviceType::None) {
+  if(gpio_devices != GPIODeviceType::None) {
     gpio = std::make_unique<GPIO>();
 
-    if (gpio_devices & GPIODeviceType::RTC) {
+    if(gpio_devices & GPIODeviceType::RTC) {
       gpio->Attach(core->CreateRTC());
     }
 
-    if (gpio_devices & GPIODeviceType::SolarSensor) {
+    if(gpio_devices & GPIODeviceType::SolarSensor) {
       gpio->Attach(core->CreateSolarSensor());
     }
   }
 
   u32 rom_mask = u32(kMaxROMSize - 1);
-  if (game_info.mirror) {
+  if(game_info.mirror) {
     rom_mask = u32(RoundSizeToPowerOfTwo(size) - 1);
   }
 
@@ -104,11 +104,11 @@ auto ROMLoader::Load(
 }
 
 auto ROMLoader::ReadFile(std::string path, std::vector<u8>& file_data) -> Result {
-  if (!fs::exists(path)) {
+  if(!fs::exists(path)) {
     return Result::CannotFindFile;
   }
 
-  if (fs::is_directory(path)) {
+  if(fs::is_directory(path)) {
     return Result::CannotOpenFile;
   }
 
@@ -117,14 +117,14 @@ auto ROMLoader::ReadFile(std::string path, std::vector<u8>& file_data) -> Result
   /* Forward result form ReadFileFromArchive() if the archive could be loaded,
    * and the GBA file was found and loaded or there was no GBA file.
    */
-  if (archive_result == Result::BadImage ||
+  if(archive_result == Result::BadImage ||
       archive_result == Result::Success) {
     return archive_result;
   }
 
   auto file_stream = std::ifstream{path, std::ios::binary};
 
-  if (!file_stream.good()) {
+  if(!file_stream.good()) {
     return Result::CannotOpenFile;
   }
 
@@ -138,28 +138,28 @@ auto ROMLoader::ReadFile(std::string path, std::vector<u8>& file_data) -> Result
 auto ROMLoader::ReadFileFromArchive(std::string path, std::vector<u8>& file_data) -> Result {
   auto stream = ar_open_file(path.c_str());
 
-  if (!stream) {
+  if(!stream) {
     return Result::CannotOpenFile;
   }
 
   ar_archive* archive = ar_open_zip_archive(stream, false);
 
-  if (!archive) archive = ar_open_rar_archive(stream);
-  if (!archive) archive = ar_open_7z_archive(stream);
-  if (!archive) archive = ar_open_tar_archive(stream);
+  if(!archive) archive = ar_open_rar_archive(stream);
+  if(!archive) archive = ar_open_7z_archive(stream);
+  if(!archive) archive = ar_open_tar_archive(stream);
 
-  if (!archive) {
+  if(!archive) {
     ar_close(stream);
     return Result::CannotOpenFile;
   }
 
   auto result = Result::BadImage;
 
-  while (ar_parse_entry(archive)) {
+  while(ar_parse_entry(archive)) {
     auto filename = ar_entry_get_name(archive);
     auto extension = fs::path{filename}.extension();
 
-    if (extension == ".gba" || extension == ".GBA") {
+    if(extension == ".gba" || extension == ".GBA") {
       auto size = ar_entry_get_size(archive);
       file_data.resize(size);
       ar_entry_uncompress(archive, file_data.data(), size);
@@ -181,7 +181,7 @@ auto ROMLoader::GetGameInfo(
   game_code.assign(header->game.code, 4);
 
   auto db_entry = g_game_db.find(game_code);
-  if (db_entry != g_game_db.end()) {
+  if(db_entry != g_game_db.end()) {
     return db_entry->second;
   }
 
@@ -202,9 +202,9 @@ auto ROMLoader::GetBackupType(
 
   const auto size = file_data.size();
 
-  for (int i = 0; i < size; i += sizeof(u32)) {
-    for (auto const& [signature, type] : signatures) {
-      if ((i + signature.size()) <= size &&
+  for(int i = 0; i < size; i += sizeof(u32)) {
+    for(auto const& [signature, type] : signatures) {
+      if((i + signature.size()) <= size &&
           std::memcmp(&file_data[i], signature.data(), signature.size()) == 0) {
         return type;
       }
@@ -218,7 +218,7 @@ auto ROMLoader::CreateBackup(
   std::string save_path,
   BackupType backup_type
 ) -> std::unique_ptr<Backup> {
-  switch (backup_type) {
+  switch(backup_type) {
     case BackupType::SRAM:      return std::make_unique<SRAM>(save_path);
     case BackupType::FLASH_64:  return std::make_unique<FLASH>(save_path, FLASH::SIZE_64K);
     case BackupType::FLASH_128: return std::make_unique<FLASH>(save_path, FLASH::SIZE_128K);
@@ -233,7 +233,7 @@ auto ROMLoader::CreateBackup(
 auto ROMLoader::RoundSizeToPowerOfTwo(size_t size) -> size_t {
   size_t pot_size = 1;
 
-  while (pot_size < size) {
+  while(pot_size < size) {
     pot_size *= 2;
   }
 

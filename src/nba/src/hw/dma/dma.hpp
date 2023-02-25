@@ -94,11 +94,11 @@ private:
   } channels[4];
 
   constexpr int GetUnaliasedMemoryArea(int page) {
-    if (page >= 0x09 && page <= 0x0D) {
+    if(page >= 0x09 && page <= 0x0D) {
       return 0x08;
     }
 
-    if (page == 0x0F) {
+    if(page == 0x0F) {
       return 0x0E;
     }
 

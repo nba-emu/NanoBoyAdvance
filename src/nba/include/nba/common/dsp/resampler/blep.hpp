@@ -20,14 +20,14 @@ struct BlepResampler : Resampler<T> {
     
     double scale;
 
-    for (int i = 0; i < kLUTsize; i++) {
+    for(int i = 0; i < kLUTsize; i++) {
       double sign = -1;
       double factorial = 1;
       double x = (i - kHalfedLUTSize) / double(kHalfedLUTSize) * M_PI;
       double x_squared = x * x;
       double result = x;
 
-      for (int j = 3; j < (2 * kTaylorPolyMaxIter + 1); j += 2) {
+      for(int j = 3; j < (2 * kTaylorPolyMaxIter + 1); j += 2) {
         x *= x_squared;
         factorial *= (j - 1) * j;
         result += sign * x / (factorial * j);
@@ -35,7 +35,7 @@ struct BlepResampler : Resampler<T> {
       }
 
       // Normalize interpolation kernel to [0, 1] range.
-      if (i == 0) {
+      if(i == 0) {
         scale = result;
       }
       lut[i] = result * 0.5 / scale + 0.5;
@@ -43,7 +43,7 @@ struct BlepResampler : Resampler<T> {
   }
 
   void Write(T const& input) final {
-    while (resample_phase < 1.0) {
+    while(resample_phase < 1.0) {
       auto index = resample_phase * kLUTsize;
       float a0 = lut[int(index) + 0];
       float a1 = lut[int(index) + 1];

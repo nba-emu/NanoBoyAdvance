@@ -25,7 +25,7 @@ void IRQ::Reset() {
 }
 
 auto IRQ::ReadByte(int offset) const -> u8 {
-  switch (offset) {
+  switch(offset) {
     case REG_IE|0: return reg_ie & 0xFF;
     case REG_IE|1: return reg_ie >> 8;
     case REG_IF|0: return reg_if & 0xFF;
@@ -37,7 +37,7 @@ auto IRQ::ReadByte(int offset) const -> u8 {
 }
 
 auto IRQ::ReadHalf(int offset) const -> u16 {
-  switch (offset) {
+  switch(offset) {
     case REG_IE:  return reg_ie;
     case REG_IF:  return reg_if;
     case REG_IME: return reg_ime ? 1 : 0;
@@ -47,7 +47,7 @@ auto IRQ::ReadHalf(int offset) const -> u16 {
 }
 
 void IRQ::WriteByte(int offset, u8 value) {
-  switch (offset) {
+  switch(offset) {
     case REG_IE|0:
       reg_ie &= 0x3F00;
       reg_ie |= value;
@@ -71,7 +71,7 @@ void IRQ::WriteByte(int offset, u8 value) {
 }
 
 void IRQ::WriteHalf(int offset, u16 value) {
-  switch (offset) {
+  switch(offset) {
     case REG_IE:
       reg_ie = value & 0x3FFF;
       break;
@@ -87,7 +87,7 @@ void IRQ::WriteHalf(int offset, u16 value) {
 }
 
 void IRQ::Raise(IRQ::Source source, int channel) {
-  switch (source) {
+  switch(source) {
     case Source::VBlank:
       reg_if |= 1;
       break;
@@ -120,7 +120,7 @@ void IRQ::Raise(IRQ::Source source, int channel) {
 void IRQ::UpdateIRQLine(int event_priority) {
   bool irq_line_new = MasterEnable() && HasServableIRQ();
 
-  if (irq_line != irq_line_new) {
+  if(irq_line != irq_line_new) {
     scheduler.Add(3, Scheduler::EventClass::IRQ_synchronizer_delay, event_priority, (u64)irq_line_new);
 
     irq_line = irq_line_new;

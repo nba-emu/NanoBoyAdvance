@@ -21,13 +21,13 @@ public:
   }
 
   void Restart() {
-    if (length == 0) {
+    if(length == 0) {
       length = default_length;
     }
   }
 
   bool Tick() {
-    if (enabled) {
+    if(enabled) {
       return --length > 0;
     }
     return true;

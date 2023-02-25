@@ -14,7 +14,7 @@
 namespace nba {
 
 void PlatformConfig::Load(std::string const& path) {
-  if (!std::filesystem::exists(path)) {
+  if(!std::filesystem::exists(path)) {
     Save(path);
     return;
   }
@@ -28,10 +28,10 @@ void PlatformConfig::Load(std::string const& path) {
     return;
   }
 
-  if (data.contains("general")) {
+  if(data.contains("general")) {
     auto general_result = toml::expect<toml::value>(data.at("general"));
 
-    if (general_result.is_ok()) {
+    if(general_result.is_ok()) {
       auto general = general_result.unwrap();
       this->bios_path = toml::find_or<std::string>(general, "bios_path", "bios.bin");
       this->skip_bios = toml::find_or<toml::boolean>(general, "bios_skip", false);
@@ -39,10 +39,10 @@ void PlatformConfig::Load(std::string const& path) {
     }
   }
 
-  if (data.contains("cartridge")) {
+  if(data.contains("cartridge")) {
     auto cartridge_result = toml::expect<toml::value>(data.at("cartridge"));
 
-    if (cartridge_result.is_ok()) {
+    if(cartridge_result.is_ok()) {
       auto cartridge = cartridge_result.unwrap();
       auto save_type = toml::find_or<std::string>(cartridge, "save_type", "detect");
 
@@ -58,7 +58,7 @@ void PlatformConfig::Load(std::string const& path) {
 
       auto match = save_types.find(save_type);
 
-      if (match == save_types.end()) {
+      if(match == save_types.end()) {
         Log<Warn>("Config: backup type '{0}' is not valid, defaulting to auto-detect.", save_type);
         this->cartridge.backup_type = Config::BackupType::Detect;
       } else {
@@ -71,10 +71,10 @@ void PlatformConfig::Load(std::string const& path) {
     }
   }
 
-  if (data.contains("video")) {
+  if(data.contains("video")) {
     auto video_result = toml::expect<toml::value>(data.at("video"));
 
-    if (video_result.is_ok()) {
+    if(video_result.is_ok()) {
       auto video = video_result.unwrap();
   
       const std::map<std::string, Video::Filter> filters{
@@ -91,13 +91,13 @@ void PlatformConfig::Load(std::string const& path) {
 
       auto filter = toml::find_or<std::string>(video, "filter", "nearest");
       auto filter_match = filters.find(filter);
-      if (filter_match != filters.end()) {
+      if(filter_match != filters.end()) {
         this->video.filter = filter_match->second;
       }
 
       auto color_correction = toml::find_or<std::string>(video, "color_correction", "ags");
       auto color_correction_match = color_corrections.find(color_correction);
-      if (color_correction_match != color_corrections.end()) {
+      if(color_correction_match != color_corrections.end()) {
         this->video.color = color_correction_match->second;  
       }
 
@@ -105,10 +105,10 @@ void PlatformConfig::Load(std::string const& path) {
     }
   }
 
-  if (data.contains("audio")) {
+  if(data.contains("audio")) {
     auto audio_result = toml::expect<toml::value>(data.at("audio"));
 
-    if (audio_result.is_ok()) {
+    if(audio_result.is_ok()) {
       auto audio = audio_result.unwrap();
       auto resampler = toml::find_or<std::string>(audio, "resampler", "cosine");
 
@@ -122,7 +122,7 @@ void PlatformConfig::Load(std::string const& path) {
 
       auto match = resamplers.find(resampler);
 
-      if (match == resamplers.end()) {
+      if(match == resamplers.end()) {
         Log<Warn>("Config: unknown resampling algorithm: {} (defaulting to cosine).", resampler);
         this->audio.interpolation = Config::Audio::Interpolation::Cosine;
       } else {
@@ -141,7 +141,7 @@ void PlatformConfig::Load(std::string const& path) {
 void PlatformConfig::Save(std::string const& path) {
   toml::basic_value<toml::preserve_comments> data;
 
-  if (std::filesystem::exists(path)) {
+  if(std::filesystem::exists(path)) {
     try {
       data = toml::parse<toml::preserve_comments>(path);
     } catch (std::exception& ex) {
@@ -157,7 +157,7 @@ void PlatformConfig::Save(std::string const& path) {
 
   // Cartridge
   std::string save_type;
-  switch (this->cartridge.backup_type) {
+  switch(this->cartridge.backup_type) {
     case Config::BackupType::Detect: save_type = "detect"; break;
     case Config::BackupType::None:   save_type = "none"; break;
     case Config::BackupType::SRAM:   save_type = "sram"; break;
@@ -175,13 +175,13 @@ void PlatformConfig::Save(std::string const& path) {
   std::string filter;
   std::string color_correction;
 
-  switch (this->video.filter) {
+  switch(this->video.filter) {
     case Video::Filter::Nearest: filter = "nearest"; break;
     case Video::Filter::Linear:  filter = "linear"; break;
     case Video::Filter::xBRZ:    filter = "xbrz"; break; 
   }
 
-  switch (this->video.color) {
+  switch(this->video.color) {
     case Video::Color::No:    color_correction = "none"; break;
     case Video::Color::higan: color_correction = "higan"; break;
     case Video::Color::AGB:   color_correction = "agb"; break;
@@ -193,7 +193,7 @@ void PlatformConfig::Save(std::string const& path) {
 
   // Audio
   std::string resampler;
-  switch (this->audio.interpolation) {
+  switch(this->audio.interpolation) {
     case Config::Audio::Interpolation::Cosine: resampler = "cosine"; break;
     case Config::Audio::Interpolation::Cubic:  resampler = "cubic";  break;
     case Config::Audio::Interpolation::Sinc_64:  resampler = "sinc64"; break;

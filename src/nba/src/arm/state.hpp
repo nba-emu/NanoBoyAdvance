@@ -114,10 +114,10 @@ struct RegisterFile {
   RegisterFile() { Reset(); }
   
   void Reset() {
-    for (int i = 0; i < 16; i++) reg[i] = 0;
+    for(int i = 0; i < 16; i++) reg[i] = 0;
 
-    for (int i = 0; i < BANK_COUNT; i++) {
-      for (int j = 0; j < 7; j++)
+    for(int i = 0; i < BANK_COUNT; i++) {
+      for(int j = 0; j < 7; j++)
         bank[i][j] = 0;
       spsr[i].v = 0;
     }

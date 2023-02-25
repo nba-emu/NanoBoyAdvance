@@ -39,14 +39,14 @@ void Core::Reset() {
   bus.Reset();
   keypad.Reset();
 
-  if (config->skip_bios) {
+  if(config->skip_bios) {
     SkipBootScreen();
   }
 
-  if (config->audio.mp2k_hle_enable) {
+  if(config->audio.mp2k_hle_enable) {
     apu.GetMP2K().UseCubicFilter() = config->audio.mp2k_hle_cubic;
     hle_audio_hook = SearchSoundMainRAM();
-    if (hle_audio_hook != 0xFFFFFFFF) {
+    if(hle_audio_hook != 0xFFFFFFFF) {
       Log<Info>("Core: detected MP2K audio mixer @ 0x{:08X}", hle_audio_hook);
     }
   } else {
@@ -79,14 +79,14 @@ void Core::Run(int cycles) {
 
   auto limit = scheduler.GetTimestampNow() + cycles;
 
-  while (scheduler.GetTimestampNow() < limit) {
-    if (bus.hw.haltcnt == HaltControl::Halt && irq.HasServableIRQ()) {
+  while(scheduler.GetTimestampNow() < limit) {
+    if(bus.hw.haltcnt == HaltControl::Halt && irq.HasServableIRQ()) {
       bus.Step(1);
       bus.hw.haltcnt = HaltControl::Run;
     }
 
-    if (bus.hw.haltcnt == HaltControl::Run) {
-      if (cpu.state.r15 == hle_audio_hook) {
+    if(bus.hw.haltcnt == HaltControl::Run) {
+      if(cpu.state.r15 == hle_audio_hook) {
         // TODO: cache the SoundInfo pointer once we have it?
         apu.GetMP2K().SoundMainRAM(
           *bus.GetHostAddress<MP2K::SoundInfo>(
@@ -117,21 +117,21 @@ auto Core::SearchSoundMainRAM() -> u32 {
 
   auto& rom = bus.memory.rom.GetRawROM();
 
-  if (rom.size() < kSoundMainLength) {
+  if(rom.size() < kSoundMainLength) {
     return 0xFFFFFFFF;
   }
 
   u32 address_max = rom.size() - kSoundMainLength;
 
-  for (u32 address = 0; address <= address_max; address += sizeof(u16)) {
+  for(u32 address = 0; address <= address_max; address += sizeof(u16)) {
     auto crc = crc32(&rom[address], kSoundMainLength);
 
-    if (crc == kSoundMainCRC32) {
+    if(crc == kSoundMainCRC32) {
       /* We have found SoundMain().
        * The pointer to SoundMainRAM() is stored at offset 0x74.
        */
       address = read<u32>(rom.data(), address + 0x74);
-      if (address & 1) {
+      if(address & 1) {
         address &= ~1;
         address += sizeof(u16) * 2;
       } else {

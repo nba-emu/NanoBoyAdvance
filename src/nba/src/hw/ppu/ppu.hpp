@@ -60,10 +60,10 @@ struct PPU {
 
   template<typename T>
   auto ALWAYS_INLINE ReadVRAM_OBJ(u32 address, u32 boundary) noexcept -> T {
-    if (address >= 0x18000) {
+    if(address >= 0x18000) {
       address &= ~0x8000;
 
-      if (address < boundary) {
+      if(address < boundary) {
         // @todo: check if this should actually return open bus.
         return 0;
       }
@@ -78,7 +78,7 @@ struct PPU {
 
     address &= 0x1FFFF;
 
-    if (address >= boundary) {
+    if(address >= boundary) {
       WriteVRAM_OBJ<T>(address, value, boundary);
     } else {
       WriteVRAM_BG<T>(address, value);
@@ -97,10 +97,10 @@ struct PPU {
   template<typename T>
   auto ALWAYS_INLINE WriteVRAM_OBJ(u32 address, T value, u32 boundary) noexcept {
     if constexpr (!std::is_same_v<T, u8>) {
-      if (address >= 0x18000) {
+      if(address >= 0x18000) {
         address &= ~0x8000;
 
-        if (address < boundary) {
+        if(address < boundary) {
           return;
         }
       }

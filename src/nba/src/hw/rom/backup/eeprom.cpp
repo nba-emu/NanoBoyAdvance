@@ -25,7 +25,7 @@ void EEPROM::Reset() {
   address = 0;
   ResetSerialBuffer();
 
-  if (size == DETECT) {
+  if(size == DETECT) {
     size = SIZE_64K; // default to 8 KiB size
     detect_size = true;
   } else {
@@ -36,7 +36,7 @@ void EEPROM::Reset() {
   
   file = BackupFile::OpenOrCreate(save_path, {512, 8192}, bytes);
 
-  if (bytes == g_save_size[0]) {
+  if(bytes == g_save_size[0]) {
     size = SIZE_4K;
   } else {
     size = SIZE_64K;
@@ -49,10 +49,10 @@ void EEPROM::ResetSerialBuffer() {
 }
 
 auto EEPROM::Read(u32 address) -> u8 {
-  if (state & STATE_READING) {
-    if (state & STATE_DUMMY_NIBBLE) {
+  if(state & STATE_READING) {
+    if(state & STATE_DUMMY_NIBBLE) {
       // Four bits that simply are ignored but will be send.
-      if (++transmitted_bits == 4) {
+      if(++transmitted_bits == 4) {
         state &= ~STATE_DUMMY_NIBBLE;
         ResetSerialBuffer();
       }
@@ -62,7 +62,7 @@ auto EEPROM::Read(u32 address) -> u8 {
     int bit   = transmitted_bits % 8;
     int index = transmitted_bits / 8;
 
-    if (++transmitted_bits == 64) {
+    if(++transmitted_bits == 64) {
       state = STATE_ACCEPT_COMMAND;
       ResetSerialBuffer();
     }
@@ -74,15 +74,15 @@ auto EEPROM::Read(u32 address) -> u8 {
 }
 
 void EEPROM::Write(u32 address, u8 value) {
-  if (state & STATE_READING) return;
+  if(state & STATE_READING) return;
 
   value &= 1;
 
   serial_buffer = (serial_buffer << 1) | value;
   transmitted_bits++;
 
-  if (state == STATE_ACCEPT_COMMAND && transmitted_bits == 2) {
-    switch (serial_buffer) {
+  if(state == STATE_ACCEPT_COMMAND && transmitted_bits == 2) {
+    switch(serial_buffer) {
       case 2: {
         state = STATE_WRITE_MODE  |
                 STATE_GET_ADDRESS |
@@ -98,19 +98,19 @@ void EEPROM::Write(u32 address, u8 value) {
       }
     }
     ResetSerialBuffer();
-  } else if (state & STATE_GET_ADDRESS) {
-    if (transmitted_bits == g_addr_bits[size]) {
+  } else if(state & STATE_GET_ADDRESS) {
+    if(transmitted_bits == g_addr_bits[size]) {
       this->address  = serial_buffer * 8;
       this->address &= 0x1FFF;
 
-      if (state & STATE_WRITE_MODE) {
+      if(state & STATE_WRITE_MODE) {
         file->MemorySet(this->address, 8, 0);
       }
 
       state &= ~STATE_GET_ADDRESS;
       ResetSerialBuffer();
     }
-  } else if (state & STATE_WRITING) {
+  } else if(state & STATE_WRITING) {
     int bit   = (transmitted_bits - 1) % 8;
     int index = (transmitted_bits - 1) / 8;
 
@@ -118,16 +118,16 @@ void EEPROM::Write(u32 address, u8 value) {
     tmp |= value << (7 - bit);
     file->Write(this->address + index, tmp);
     
-    if (transmitted_bits == 64) {
+    if(transmitted_bits == 64) {
       state &= ~STATE_WRITING;
       ResetSerialBuffer();
     }
-  } else if (state & STATE_EAT_DUMMY) {
+  } else if(state & STATE_EAT_DUMMY) {
     state &= ~STATE_EAT_DUMMY;
 
-    if (state & STATE_READ_MODE) {
+    if(state & STATE_READ_MODE) {
       state |= STATE_READING | STATE_DUMMY_NIBBLE;
-    } else if (state & STATE_WRITE_MODE) {
+    } else if(state & STATE_WRITE_MODE) {
       state = STATE_ACCEPT_COMMAND;
     }
 
@@ -136,13 +136,13 @@ void EEPROM::Write(u32 address, u8 value) {
 }
 
 void EEPROM::SetSizeHint(Size size) {
-  if (detect_size) {
+  if(detect_size) {
     int bytes = g_save_size[size];
 
     this->size = size;
     detect_size = false;
 
-    if (file->Size() != bytes) {
+    if(file->Size() != bytes) {
       file = BackupFile::OpenOrCreate(save_path, {(size_t)bytes}, bytes);
     }
   }

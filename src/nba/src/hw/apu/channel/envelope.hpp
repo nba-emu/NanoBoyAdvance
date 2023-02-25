@@ -25,18 +25,18 @@ public:
   }
 
   void Tick() {
-    if (--step == 0) {
+    if(--step == 0) {
       step = divider;
     
-      if (active && divider != 0) {
-        if (direction == Direction::Increment) {
-          if (current_volume != 15) {
+      if(active && divider != 0) {
+        if(direction == Direction::Increment) {
+          if(current_volume != 15) {
             current_volume++;
           } else {
             active = false;
           }
         } else {
-          if (current_volume != 0) {
+          if(current_volume != 0) {
             current_volume--;
           } else {
             active = false;

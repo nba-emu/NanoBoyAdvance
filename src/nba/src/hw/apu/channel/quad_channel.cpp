@@ -28,7 +28,7 @@ void QuadChannel::Reset() {
 }
 
 void QuadChannel::Generate() {
-  if (!IsEnabled()) {
+  if(!IsEnabled()) {
     sample = 0;
     event = nullptr;
     return;
@@ -41,7 +41,7 @@ void QuadChannel::Generate() {
     { +8, +8, +8, +8, +8, +8, -8, -8 }
   };
 
-  if (dac_enable) {
+  if(dac_enable) {
     sample = s8(pattern[wave_duty][phase] * envelope.current_volume);
   } else {
     sample = 0;
@@ -52,7 +52,7 @@ void QuadChannel::Generate() {
 }
 
 auto QuadChannel::Read(int offset) -> u8 {
-  switch (offset) {
+  switch(offset) {
     // Sweep Register
     case 0: {
       return sweep.shift |
@@ -82,7 +82,7 @@ auto QuadChannel::Read(int offset) -> u8 {
 }
 
 void QuadChannel::Write(int offset, u8 value) {
-  switch (offset) {
+  switch(offset) {
     // Sweep Register
     case 0: {
       sweep.shift = value & 7;
@@ -107,19 +107,19 @@ void QuadChannel::Write(int offset, u8 value) {
       envelope.initial_volume = value >> 4;
 
       dac_enable = (value >> 3) != 0;
-      if (!dac_enable) {
+      if(!dac_enable) {
         Disable();
       }
 
       // Handle envelope "Zombie" mode:
       // https://gist.github.com/drhelius/3652407#file-game-boy-sound-operation-L491
       // TODO: what is the exact behavior on AGB systems?
-      if (divider_old == 0 && envelope.active) {
+      if(divider_old == 0 && envelope.active) {
         envelope.current_volume++;
-      } else if (direction_old == Envelope::Direction::Decrement) {
+      } else if(direction_old == Envelope::Direction::Decrement) {
         envelope.current_volume += 2;
       }
-      if (direction_old != envelope.direction) {
+      if(direction_old != envelope.direction) {
         envelope.current_volume = 16 - envelope.current_volume;
       }
       envelope.current_volume &= 15;
@@ -137,8 +137,8 @@ void QuadChannel::Write(int offset, u8 value) {
       sweep.current_freq = sweep.initial_freq;
       length.enabled = value & 0x40;
 
-      if (dac_enable && (value & 0x80)) {
-        if (!IsEnabled()) {
+      if(dac_enable && (value & 0x80)) {
+        if(!IsEnabled()) {
           if(event) {
             scheduler.Cancel(event);
           }

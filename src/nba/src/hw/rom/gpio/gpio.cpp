@@ -15,7 +15,7 @@ void GPIO::Reset() {
   rd_mask = 0b1111;
   wr_mask = 0b0000;
 
-  for (auto& device : devices) {
+  for(auto& device : devices) {
     device->Reset();
     device->SetPortDirections(0);
   }
@@ -27,15 +27,15 @@ void GPIO::Attach(std::shared_ptr<GPIODevice> device) {
 }
 
 auto GPIO::Read(u32 address) -> u8 {
-  if (!allow_reads) {
+  if(!allow_reads) {
     return 0;
   }
 
-  switch (static_cast<Register>(address)) {
+  switch(static_cast<Register>(address)) {
     case Register::Data: {
       u8 value = 0;
 
-      for (auto& device : devices) {
+      for(auto& device : devices) {
         value |= device->Read();
       }
 
@@ -55,12 +55,12 @@ auto GPIO::Read(u32 address) -> u8 {
 }
 
 void GPIO::Write(u32 address, u8 value) {
-  switch (static_cast<Register>(address)) {
+  switch(static_cast<Register>(address)) {
     case Register::Data: {
       port_data &= rd_mask;
       port_data |= wr_mask & value;
 
-      for (auto& device : devices) {
+      for(auto& device : devices) {
         device->Write(port_data);
       }
       break;
@@ -71,7 +71,7 @@ void GPIO::Write(u32 address, u8 value) {
       rd_mask = ~value & 15;
       wr_mask =  value;
 
-      for (auto& device : devices) {
+      for(auto& device : devices) {
         device->SetPortDirections(value);
       }
       break;

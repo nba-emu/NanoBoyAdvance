@@ -57,7 +57,7 @@ namespace std {
 using BackupType = nba::Config::BackupType;
 
 inline auto to_string(BackupType value) -> std::string {
-  switch (value) {
+  switch(value) {
     case BackupType::Detect: return "Detect";
     case BackupType::None: return "None";
     case BackupType::SRAM: return "SRAM";

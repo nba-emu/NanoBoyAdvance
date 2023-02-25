@@ -29,16 +29,16 @@ void KeyPad::UpdateInput() {
 
   u16 input = 0;
 
-  if (!input_device->Poll(Key::A)) input |= 1;
-  if (!input_device->Poll(Key::B)) input |= 2;
-  if (!input_device->Poll(Key::Select)) input |= 4;
-  if (!input_device->Poll(Key::Start)) input |= 8;
-  if (!input_device->Poll(Key::Right)) input |= 16;
-  if (!input_device->Poll(Key::Left)) input |= 32;
-  if (!input_device->Poll(Key::Up)) input |= 64;
-  if (!input_device->Poll(Key::Down)) input |= 128;
-  if (!input_device->Poll(Key::R)) input |= 256;
-  if (!input_device->Poll(Key::L)) input |= 512;
+  if(!input_device->Poll(Key::A)) input |= 1;
+  if(!input_device->Poll(Key::B)) input |= 2;
+  if(!input_device->Poll(Key::Select)) input |= 4;
+  if(!input_device->Poll(Key::Start)) input |= 8;
+  if(!input_device->Poll(Key::Right)) input |= 16;
+  if(!input_device->Poll(Key::Left)) input |= 32;
+  if(!input_device->Poll(Key::Up)) input |= 64;
+  if(!input_device->Poll(Key::Down)) input |= 128;
+  if(!input_device->Poll(Key::R)) input |= 256;
+  if(!input_device->Poll(Key::L)) input |= 512;
 
   this->input.value = input;
 
@@ -46,21 +46,21 @@ void KeyPad::UpdateInput() {
 }
 
 void KeyPad::UpdateIRQ() {
-  if (control.interrupt) {
+  if(control.interrupt) {
     auto not_input = ~input.value & 0x3FF;
     
-    if (control.mode == KeyControl::Mode::LogicalAND) {
-      if (control.mask == not_input) {
+    if(control.mode == KeyControl::Mode::LogicalAND) {
+      if(control.mask == not_input) {
         irq.Raise(IRQ::Source::Keypad);
       }
-    } else if ((control.mask & not_input) != 0) {
+    } else if((control.mask & not_input) != 0) {
       irq.Raise(IRQ::Source::Keypad);
     }
   }
 }
 
 auto KeyPad::KeyInput::ReadByte(uint offset) -> u8 {
-  switch (offset) {
+  switch(offset) {
     case 0:
       return u8(value);
     case 1:
@@ -71,7 +71,7 @@ auto KeyPad::KeyInput::ReadByte(uint offset) -> u8 {
 }
 
 auto KeyPad::KeyControl::ReadByte(uint offset) -> u8 {
-  switch (offset) {
+  switch(offset) {
     case 0: {
       return u8(mask);
     }
@@ -86,7 +86,7 @@ auto KeyPad::KeyControl::ReadByte(uint offset) -> u8 {
 }
 
 void KeyPad::KeyControl::WriteByte(uint offset, u8 value) {
-  switch (offset) {
+  switch(offset) {
     case 0: {
       mask &= 0xFF00;
       mask |= value;

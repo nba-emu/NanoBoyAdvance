@@ -30,7 +30,7 @@ struct GPIO {
   auto Get() -> T* {
     auto match = device_map.find(std::type_index{typeid(T)});
 
-    if (match != device_map.end()) {
+    if(match != device_map.end()) {
       return (T*)match->second;
     }
     return nullptr;

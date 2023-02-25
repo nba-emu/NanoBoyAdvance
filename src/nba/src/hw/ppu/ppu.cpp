@@ -48,13 +48,13 @@ void PPU::Reset() {
 
   mmio.greenswap = 0U;
 
-  for (int i = 0; i < 4; i++) {
+  for(int i = 0; i < 4; i++) {
     mmio.bgcnt[i].Reset();
     mmio.bghofs[i] = 0;
     mmio.bgvofs[i] = 0;
   }
 
-  for (int i = 0; i < 2; i++) {
+  for(int i = 0; i < 2; i++) {
     mmio.bgx[i].Reset();
     mmio.bgy[i].Reset();
 
@@ -122,7 +122,7 @@ void PPU::CheckVerticalCounterIRQ() {
   auto& dispstat = mmio.dispstat;
   auto vcount_flag_new = dispstat.vcount_setting == mmio.vcount;
 
-  if (dispstat.vcount_irq_enable && !dispstat.vcount_flag && vcount_flag_new) {
+  if(dispstat.vcount_irq_enable && !dispstat.vcount_flag && vcount_flag_new) {
     irq.Raise(IRQ::Source::VCount);
   }
   
@@ -132,10 +132,10 @@ void PPU::CheckVerticalCounterIRQ() {
 void PPU::UpdateVideoTransferDMA() {
   int vcount = mmio.vcount;
 
-  if (dma3_video_transfer_running) {
-    if (vcount == 162) {
+  if(dma3_video_transfer_running) {
+    if(vcount == 162) {
       dma.StopVideoTransferDMA();
-    } else if (vcount >= 2 && vcount < 162) {
+    } else if(vcount >= 2 && vcount < 162) {
       scheduler.Add(9, Scheduler::EventClass::PPU_video_dma);
     }
   }
@@ -150,7 +150,7 @@ void PPU::OnScanlineComplete() {
 
 void PPU::OnHblankIRQTest() {
   // TODO: confirm that the enable-bit is checked at 1010 and not 1006 cycles.
-  if (mmio.dispstat.hblank_irq_enable) {
+  if(mmio.dispstat.hblank_irq_enable) {
     irq.Raise(IRQ::Source::HBlank);
   }
 
@@ -176,17 +176,17 @@ void PPU::OnHblankComplete() {
   CheckVerticalCounterIRQ();
   UpdateVideoTransferDMA();
 
-  if (vcount == 160) {
+  if(vcount == 160) {
     scheduler.Add(1006, Scheduler::EventClass::PPU_hblank_vblank);
     dma.Request(DMA::Occasion::VBlank);
     dispstat.vblank_flag = 1;
 
-    if (dispstat.vblank_irq_enable) {
+    if(dispstat.vblank_irq_enable) {
       irq.Raise(IRQ::Source::VBlank);
     }
 
     // Reload internal affine registers
-    for (int i = 0; i < 2; i++) {
+    for(int i = 0; i < 2; i++) {
       bgx[i]._current = bgx[i].initial;
       bgy[i]._current = bgy[i].initial;
     }
@@ -210,7 +210,7 @@ void PPU::OnVblankScanlineComplete() {
 
 void PPU::OnVblankHblankIRQTest() {
   // TODO: confirm that the enable-bit is checked at 1010 and not 1006 cycles.
-  if (mmio.dispstat.hblank_irq_enable) {
+  if(mmio.dispstat.hblank_irq_enable) {
     irq.Raise(IRQ::Source::HBlank);
   }
 
@@ -225,7 +225,7 @@ void PPU::OnVblankHblankComplete() {
 
   dispstat.hblank_flag = 0;
 
-  if (vcount == 162) {
+  if(vcount == 162) {
     /**
      * TODO:
      *  - figure out when precisely DMA3CNT is latched
@@ -238,7 +238,7 @@ void PPU::OnVblankHblankComplete() {
     scheduler.Add(40, Scheduler::EventClass::PPU_latch_dispcnt);
   }
 
-  if (vcount == 227) {
+  if(vcount == 227) {
     scheduler.Add(1006, Scheduler::EventClass::PPU_hblank_vdraw);
     vcount = 0;
 
@@ -250,7 +250,7 @@ void PPU::OnVblankHblankComplete() {
   } else {
     scheduler.Add(1006, Scheduler::EventClass::PPU_hblank_vblank);
     
-    if (++vcount == 227) {
+    if(++vcount == 227) {
       dispstat.vblank_flag = 0;
     }
   }

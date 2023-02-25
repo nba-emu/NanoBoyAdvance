@@ -35,15 +35,15 @@ void Bus::Idle() {
 }
 
 void Bus::Prefetch(u32 address, bool code, int cycles) {
-  if (!code) {
+  if(!code) {
     StopPrefetch();
     Step(cycles);
     return;
   }
 
-  if (prefetch.active) {
+  if(prefetch.active) {
     // Case #1: requested address is the first entry in the prefetch buffer.
-    if (prefetch.count != 0 && address == prefetch.head_address) {
+    if(prefetch.count != 0 && address == prefetch.head_address) {
       prefetch.count--;
       prefetch.head_address += prefetch.opcode_width;
       Step(1);
@@ -51,7 +51,7 @@ void Bus::Prefetch(u32 address, bool code, int cycles) {
     }
 
     // Case #2: requested address is currently being prefetched.
-    if (prefetch.countdown > 0 && address == prefetch.last_address) {
+    if(prefetch.countdown > 0 && address == prefetch.last_address) {
       Step(prefetch.countdown);
       prefetch.head_address = prefetch.last_address;
       prefetch.count = 0;
@@ -75,7 +75,7 @@ void Bus::Prefetch(u32 address, bool code, int cycles) {
     // The prefetch unit will be engaged and keeps the burst transfer alive.
     prefetch.active = true;
     prefetch.count = 0;
-    if (hw.cpu.state.cpsr.f.thumb) {
+    if(hw.cpu.state.cpsr.f.thumb) {
       prefetch.opcode_width = sizeof(u16);
       prefetch.capacity = 8;
       prefetch.duty = wait16[int(Access::Sequential)][page];
@@ -91,19 +91,19 @@ void Bus::Prefetch(u32 address, bool code, int cycles) {
 }
 
 void Bus::StopPrefetch() {
-  if (prefetch.active) {
+  if(prefetch.active) {
     u32 r15 = hw.cpu.state.r15;
 
     /* If ROM data/SRAM/FLASH is accessed in a cycle, where the prefetch unit
      * is active and finishing a half-word access, then a one-cycle penalty applies.
      * Note: the prefetch unit is only active when executing code from ROM.
      */
-    if (r15 >= 0x08000000 && r15 <= 0x0DFFFFFF) {
+    if(r15 >= 0x08000000 && r15 <= 0x0DFFFFFF) {
       bool arm = !hw.cpu.state.cpsr.f.thumb;
       auto half_duty_plus_one = (prefetch.duty >> 1) + 1;
       auto countdown = prefetch.countdown;
 
-      if (countdown == 1 || (arm && countdown == half_duty_plus_one)) {
+      if(countdown == 1 || (arm && countdown == half_duty_plus_one)) {
         Step(1);
       }
     }
@@ -115,14 +115,14 @@ void Bus::StopPrefetch() {
 void Bus::Step(int cycles) {
   scheduler.AddCycles(cycles);
 
-  if (prefetch.active) {
+  if(prefetch.active) {
     prefetch.countdown -= cycles;
 
-    if (prefetch.countdown <= 0) {
+    if(prefetch.countdown <= 0) {
       prefetch.count++;
 
       if(hw.waitcnt.prefetch) {
-        if (prefetch.count < prefetch.capacity) {
+        if(prefetch.count < prefetch.capacity) {
           prefetch.last_address += prefetch.opcode_width;
           prefetch.countdown += prefetch.duty;
         } else {
@@ -144,7 +144,7 @@ void Bus::UpdateWaitStateTable() {
   auto& waitcnt = hw.waitcnt;
   auto sram = nseq[waitcnt.sram];
 
-  for (int i = 0; i < 2; i++) {
+  for(int i = 0; i < 2; i++) {
     // ROM: WS0/WS1/WS2 16-bit non-sequential access
     wait16[n][0x8 + i] = nseq[waitcnt.ws0[n]];
     wait16[n][0xA + i] = nseq[waitcnt.ws1[n]];

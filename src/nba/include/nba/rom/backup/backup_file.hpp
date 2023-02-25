@@ -30,15 +30,15 @@ struct BackupFile {
     std::unique_ptr<BackupFile> file { new BackupFile() };
 
     // TODO: check file type and permissions?
-    if (fs::is_regular_file(save_path)) {
+    if(fs::is_regular_file(save_path)) {
       auto size = fs::file_size(save_path);
 
       auto begin = valid_sizes.begin();
       auto end = valid_sizes.end();
 
-      if (std::find(begin, end, size) != end) {
+      if(std::find(begin, end, size) != end) {
         file->stream.open(save_path, flags);
-        if (file->stream.fail()) {
+        if(file->stream.fail()) {
           throw std::runtime_error("BackupFile: unable to open file: " + save_path);
         }
         default_size = size;
@@ -53,9 +53,9 @@ struct BackupFile {
     /* A new save file is created either when no file exists yet,
      * or when the existing file has an invalid size.
      */
-    if (create) {
+    if(create) {
       file->stream.open(save_path, flags | std::ios::trunc);
-      if (file->stream.fail()) {
+      if(file->stream.fail()) {
         throw std::runtime_error("BackupFile: unable to create file: " + save_path);
       }
       file->memory.reset(new u8[default_size]);
@@ -66,34 +66,34 @@ struct BackupFile {
   }
 
   auto Read(unsigned index) -> u8 {
-    if (index >= file_size) {
+    if(index >= file_size) {
       throw std::runtime_error("BackupFile: out-of-bounds index while reading.");
     }
     return memory[index];
   }
 
   void Write(unsigned index, u8 value) {
-    if (index >= file_size) {
+    if(index >= file_size) {
       throw std::runtime_error("BackupFile: out-of-bounds index while writing.");
     }
     memory[index] = value;
-    if (auto_update) {
+    if(auto_update) {
       Update(index, 1);
     }
   }
 
   void MemorySet(unsigned index, size_t length, u8 value) {
-    if ((index + length) > file_size) {
+    if((index + length) > file_size) {
       throw std::runtime_error("BackupFile: out-of-bounds index while setting memory.");
     }
     std::memset(&memory[index], value, length);
-    if (auto_update) {
+    if(auto_update) {
       Update(index, length);
     }
   }
 
   void Update(unsigned index, size_t length) {
-    if ((index + length) > file_size) {
+    if((index + length) > file_size) {
       throw std::runtime_error("BackupFile: out-of-bounds index while updating file.");
     }
     stream.seekg(index);

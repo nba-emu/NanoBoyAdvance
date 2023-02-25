@@ -26,7 +26,7 @@ Timer::Timer(Scheduler& scheduler, IRQ& irq, APU& apu)
 }
 
 void Timer::Reset() {
-  for (int id = 0; id < 4; id++) {
+  for(int id = 0; id < 4; id++) {
     auto& channel = channels[id];
     channel = {};
     channel.id = id;
@@ -36,7 +36,7 @@ void Timer::Reset() {
 auto Timer::ReadByte(int chan_id, int offset) -> u8 {
   auto const& channel = channels[chan_id];
 
-  switch (offset) {
+  switch(offset) {
     case REG_TMXCNT_L | 0: {
       return (u8)ReadCounter(channel);
     }
@@ -54,7 +54,7 @@ auto Timer::ReadByte(int chan_id, int offset) -> u8 {
 auto Timer::ReadHalf(int chan_id, int offset) -> u16 {
   auto const& channel = channels[chan_id];
 
-  switch (offset) {
+  switch(offset) {
     case REG_TMXCNT_L: {
       return ReadCounter(channel);
     }
@@ -74,7 +74,7 @@ void Timer::WriteByte(int chan_id, int offset, u8 value) {
   auto& channel = channels[chan_id];
   auto& control = channel.control;
 
-  switch (offset) {
+  switch(offset) {
     case REG_TMXCNT_L | 0: {
       WriteReload(channel, (channel.pending.reload & 0xFF00) | (value << 0));
       break;
@@ -89,7 +89,7 @@ void Timer::WriteByte(int chan_id, int offset, u8 value) {
     }
   }
 
-  if (chan_id <= 1) {
+  if(chan_id <= 1) {
     RecalculateSampleRates();
   }
 }
@@ -98,7 +98,7 @@ void Timer::WriteHalf(int chan_id, int offset, u16 value) {
   auto& channel = channels[chan_id];
   auto& control = channel.control;
 
-  switch (offset) {
+  switch(offset) {
     case REG_TMXCNT_L: {
       WriteReload(channel, value);
       break;
@@ -109,7 +109,7 @@ void Timer::WriteHalf(int chan_id, int offset, u16 value) {
     }
   }
 
-  if (chan_id <= 1) {
+  if(chan_id <= 1) {
     RecalculateSampleRates();
   }
 }
@@ -120,7 +120,7 @@ void Timer::WriteWord(int chan_id, u32 value) {
   WriteReload(channel, (u16)value);
   WriteControl(channel, (u32)(value >> 16));
 
-  if (chan_id <= 1) {
+  if(chan_id <= 1) {
     RecalculateSampleRates();
   }
 }
@@ -130,7 +130,7 @@ auto Timer::ReadCounter(Channel const& channel) -> u16 {
 
   // While the timer is still running we must account for time that has passed
   // since the last counter update (overflow or configuration change).
-  if (channel.running) {
+  if(channel.running) {
     counter += GetCounterDeltaSinceLastUpdate(channel);
   }
 
@@ -168,28 +168,28 @@ void Timer::OnControlWritten(u64 chan_id) {
   bool enable_previous = control.enable;
   u16 value = channel.pending.control;
 
-  if (channel.running) {
+  if(channel.running) {
     StopChannel(channel);
   }
 
   control.frequency = value & 3;
   control.interrupt = value & 64;
   control.enable = value & 128;
-  if (channel.id != 0) {
+  if(channel.id != 0) {
     control.cascade = value & 4;
   }
 
   channel.shift = g_ticks_shift[control.frequency];
   channel.mask = g_ticks_mask[control.frequency];
 
-  if (control.enable) {
-    if (!enable_previous) {
+  if(control.enable) {
+    if(!enable_previous) {
       channel.counter = channel.reload;
     }
 
-    if (!control.cascade) {
+    if(!control.cascade) {
       auto late = (scheduler.GetTimestampNow() & channel.mask);
-      if (!enable_previous) {
+      if(!enable_previous) {
         late -= 1;
       }
       StartChannel(channel, late);
@@ -205,7 +205,7 @@ void Timer::RecalculateSampleRates() {
 
   channels[0].samplerate = kCyclesPerSecond / (timer0_duty << channels[0].shift);
 
-  if (channels[1].control.cascade) {
+  if(channels[1].control.cascade) {
     channels[1].samplerate = channels[0].samplerate / timer1_duty;
   } else {
     channels[1].samplerate = kCyclesPerSecond / (timer1_duty << channels[1].shift);
@@ -226,7 +226,7 @@ void Timer::StartChannel(Channel& channel, int cycle_offset) {
 
 void Timer::StopChannel(Channel& channel) {
   channel.counter += GetCounterDeltaSinceLastUpdate(channel);
-  if (channel.counter >= 0x10000) {
+  if(channel.counter >= 0x10000) {
     ReloadCascadeAndRequestIRQ(channel);
   }
 
@@ -238,17 +238,17 @@ void Timer::StopChannel(Channel& channel) {
 void Timer::ReloadCascadeAndRequestIRQ(Channel& channel) {
   channel.counter = channel.reload;
 
-  if (channel.control.interrupt) {
+  if(channel.control.interrupt) {
     irq.Raise(IRQ::Source::Timer, channel.id);
   }
 
-  if (channel.id <= 1) {
+  if(channel.id <= 1) {
     apu.OnTimerOverflow(channel.id, 1, channel.samplerate);
   }
 
-  if (channel.id != 3) {
+  if(channel.id != 3) {
     auto& next_channel = channels[channel.id + 1];
-    if (next_channel.control.enable && next_channel.control.cascade && ++next_channel.counter == 0x10000) {
+    if(next_channel.control.enable && next_channel.control.cascade && ++next_channel.counter == 0x10000) {
       ReloadCascadeAndRequestIRQ(next_channel);
     }
   }

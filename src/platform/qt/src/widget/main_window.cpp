@@ -59,7 +59,7 @@ MainWindow::MainWindow(
     emit UpdateFrameRate(fps);
   });
   connect(this, &MainWindow::UpdateFrameRate, this, [this](int fps) {
-    if (config->window.show_fps) {
+    if(config->window.show_fps) {
       auto percent = fps / 59.7275 * 100;
       setWindowTitle(QString::fromStdString(fmt::format("NanoBoyAdvance 1.6 [{} fps | {:.2f}%]", fps, percent)));
     } else {
@@ -308,7 +308,7 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
 
   CreateMaximumScaleAction(tr("Unlocked"), 0);
 
-  for (int scale = 1; scale <= 8; scale++) {
+  for(int scale = 1; scale <= 8; scale++) {
     auto label = QString::fromStdString(fmt::format("{}x", scale));
 
     CreateScaleAction(label, scale);
@@ -391,10 +391,10 @@ auto MainWindow::CreateBooleanOption(
   connect(action, &QAction::triggered, [=](bool checked) {
     *underlying = checked;
     config->Save();
-    if (require_reset) {
+    if(require_reset) {
       PromptUserForReset();
     }
-    if (callback) {
+    if(callback) {
       callback();
     }
   });
@@ -407,7 +407,7 @@ void MainWindow::RenderRecentFilesMenu() {
 
   size_t i = 0;
 
-  for (auto& path : config->recent_files) {
+  for(auto& path : config->recent_files) {
     auto action = recent_menu->addAction(QString::fromStdString(path));
 
     action->setShortcut(Qt::CTRL | (Qt::Key) ((int) Qt::Key_0 + i++));
@@ -424,7 +424,7 @@ void MainWindow::RenderSaveStateMenus() {
   load_state_menu->clear();
   save_state_menu->clear();
 
-  for (int i = 1; i <= 10; i++) {
+  for(int i = 1; i <= 10; i++) {
     auto empty_state_name = QString::fromStdString(fmt::format("{:02} - (empty)", i));
 
     auto action_load = load_state_menu->addAction(empty_state_name);
@@ -437,10 +437,10 @@ void MainWindow::RenderSaveStateMenus() {
     action_load->setShortcut(key);
     action_save->setShortcut(Qt::SHIFT | key);
 
-    if (game_loaded) {
+    if(game_loaded) {
       auto slot_filename = GetSavePath(game_path, fmt::format("{:02}.nbss", i)).string();
 
-      if (fs::exists(slot_filename)) {
+      if(fs::exists(slot_filename)) {
         auto file_info = QFileInfo{QString::fromStdString(slot_filename)};
         auto date_modified = file_info.lastModified().toLocalTime().toString().toStdString();
 
@@ -451,7 +451,7 @@ void MainWindow::RenderSaveStateMenus() {
         action_save->setText(state_name);
 
         connect(action_load, &QAction::triggered, [=]() {
-          if (LoadState(slot_filename) != nba::SaveStateLoader::Result::Success) {
+          if(LoadState(slot_filename) != nba::SaveStateLoader::Result::Success) {
             // The save state may have been deleted, update the save list:
             RenderSaveStateMenus();
           }
@@ -482,7 +482,7 @@ void MainWindow::RenderSaveStateMenus() {
     dialog.setFileMode(QFileDialog::ExistingFile);
     dialog.setNameFilter("NanoBoyAdvance Save State (*.nbss)");
 
-    if (dialog.exec()) {
+    if(dialog.exec()) {
       LoadState(dialog.selectedFiles().at(0).toStdString());
     }
   });
@@ -493,7 +493,7 @@ void MainWindow::RenderSaveStateMenus() {
     dialog.setFileMode(QFileDialog::AnyFile);
     dialog.setNameFilter("NanoBoyAdvance Save State (*.nbss)");
 
-    if (dialog.exec()) {
+    if(dialog.exec()) {
       SaveState(dialog.selectedFiles().at(0).toStdString());
     }
   });
@@ -507,7 +507,7 @@ void MainWindow::SelectBIOS() {
   dialog.setFileMode(QFileDialog::ExistingFile);
   dialog.setNameFilter("Game Boy Advance BIOS (*.bin)");
 
-  if (dialog.exec()) {
+  if(dialog.exec()) {
     config->bios_path = dialog.selectedFiles().at(0).toStdString();
     config->Save();
     PromptUserForReset();
@@ -519,7 +519,7 @@ void MainWindow::SelectSaveFolder() {
   dialog.setAcceptMode(QFileDialog::AcceptOpen);
   dialog.setFileMode(QFileDialog::Directory);
 
-  if (dialog.exec()) {
+  if(dialog.exec()) {
     config->save_folder = dialog.selectedFiles().at(0).toStdString();
     config->Save();
     PromptUserForReset();
@@ -533,7 +533,7 @@ void MainWindow::RemoveSaveFolder() {
 }
 
 void MainWindow::PromptUserForReset() {
-  if (emu_thread->IsRunning()) {
+  if(emu_thread->IsRunning()) {
     QMessageBox box {this};
     box.setText(tr("The new configuration will apply only after reset.\n\nDo you want to reset the emulation now?"));
     box.setIcon(QMessageBox::Question);
@@ -542,9 +542,9 @@ void MainWindow::PromptUserForReset() {
     box.addButton(QMessageBox::Yes);
     box.setDefaultButton(QMessageBox::No);
     
-    if (box.exec() == QMessageBox::Yes) {
+    if(box.exec() == QMessageBox::Yes) {
       // Reload the ROM in case its config (e.g. save type or GPIO) has changed:
-      if (game_loaded) {
+      if(game_loaded) {
         LoadROM(game_path);
       }
 
@@ -556,34 +556,34 @@ void MainWindow::PromptUserForReset() {
 bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
   auto type = event->type();
 
-  if (obj == this && (type == QEvent::KeyPress || type == QEvent::KeyRelease)) {
+  if(obj == this && (type == QEvent::KeyPress || type == QEvent::KeyRelease)) {
     auto key = dynamic_cast<QKeyEvent*>(event)->key();
     auto pressed = type == QEvent::KeyPress;
     auto const& input = config->input;
 
-    for (int i = 0; i < nba::InputDevice::kKeyCount; i++) {
-      if (input.gba[i].keyboard == key) {
+    for(int i = 0; i < nba::InputDevice::kKeyCount; i++) {
+      if(input.gba[i].keyboard == key) {
         SetKeyStatus(0, static_cast<nba::InputDevice::Key>(i), pressed);
       }
     }
 
-    if (key == input.fast_forward.keyboard) {
+    if(key == input.fast_forward.keyboard) {
       SetFastForward(0, pressed);
     }
 
-    if (pressed && key == Qt::Key_Escape) {
+    if(pressed && key == Qt::Key_Escape) {
       SetFullscreen(false);
     }
-  } else if (type == QEvent::FileOpen) {
+  } else if(type == QEvent::FileOpen) {
 	  auto file = dynamic_cast<QFileOpenEvent*>(event)->file();
     LoadROM(file.toStdString());
-  } else if (type == QEvent::Drop) {
+  } else if(type == QEvent::Drop) {
     const QMimeData* mime_data = ((QDropEvent*)event)->mimeData();
 
-    if (mime_data->hasUrls()) {
+    if(mime_data->hasUrls()) {
       QList<QUrl> url_list = mime_data->urls();
 
-      if (url_list.size() > 0) {
+      if(url_list.size() > 0) {
         LoadROM(url_list.at(0).toLocalFile().toStdString());
       }
     }
@@ -597,7 +597,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent* event) {
 }
 
 void MainWindow::mouseDoubleClickEvent(QMouseEvent* event) {
-  if (event->button() == Qt::LeftButton) {
+  if(event->button() == Qt::LeftButton) {
     SetFullscreen(false);
   }
 }
@@ -608,7 +608,7 @@ void MainWindow::FileOpen() {
   dialog.setFileMode(QFileDialog::ExistingFile);
   dialog.setNameFilter("Game Boy Advance ROMs (*.gba *.agb *.zip *.rar *.7z *.tar)");
 
-  if (dialog.exec()) {
+  if(dialog.exec()) {
     auto file = dialog.selectedFiles().at(0).toStdString();
 
     LoadROM(file);
@@ -620,7 +620,7 @@ void MainWindow::Reset() {
 
   emu_thread->Stop();
   core->Reset();
-  if (was_running) {
+  if(was_running) {
     emu_thread->Start();
   }
 }
@@ -632,7 +632,7 @@ void MainWindow::SetPause(bool value) {
 }
 
 void MainWindow::Stop() {
-  if (emu_thread->IsRunning()) {
+  if(emu_thread->IsRunning()) {
     emu_thread->Stop();
     config->audio_dev->Close();
     screen->SetForceClear(true);
@@ -658,14 +658,14 @@ void MainWindow::UpdateMenuBarVisibility() {
 }
 
 void MainWindow::UpdateMainWindowActionList() {
-  for (auto action : actions()) {
+  for(auto action : actions()) {
     removeAction(action);
   }
 
-  if (!menuBar()->isVisible()) {
-    for (auto menu : menuBar()->findChildren<QMenu*>()) {
-      for (auto action : menu->actions()) {
-        if (!action->shortcut().isEmpty()) {
+  if(!menuBar()->isVisible()) {
+    for(auto menu : menuBar()->findChildren<QMenu*>()) {
+      for(auto action : menu->actions()) {
+        if(!action->shortcut().isEmpty()) {
           addAction(action);
         }
       }
@@ -683,7 +683,7 @@ void MainWindow::LoadROM(std::string path) {
   do {
     retry = false;
 
-    switch (nba::BIOSLoader::Load(core, config->bios_path)) {
+    switch(nba::BIOSLoader::Load(core, config->bios_path)) {
       case nba::BIOSLoader::Result::CannotFindFile: {
         QMessageBox box {this};
         box.setText(tr("A Game Boy Advance BIOS file is required but cannot be located.\n\nWould you like to add one now?"));
@@ -693,7 +693,7 @@ void MainWindow::LoadROM(std::string path) {
         box.addButton(QMessageBox::Yes);
         box.setDefaultButton(QMessageBox::Yes);
           
-        if (box.exec() == QMessageBox::Yes) {
+        if(box.exec() == QMessageBox::Yes) {
           SelectBIOS();
           retry = true;
           continue;
@@ -710,15 +710,15 @@ void MainWindow::LoadROM(std::string path) {
         return;
       }
     }
-  } while (retry);
+  } while(retry);
 
   auto force_gpio = nba::GPIODeviceType::None;
 
-  if (config->cartridge.force_rtc) {
+  if(config->cartridge.force_rtc) {
     force_gpio = force_gpio | nba::GPIODeviceType::RTC;
   }
 
-  if (config->cartridge.force_solar_sensor) {
+  if(config->cartridge.force_solar_sensor) {
     force_gpio = force_gpio | nba::GPIODeviceType::SolarSensor;
   }
 
@@ -728,7 +728,7 @@ void MainWindow::LoadROM(std::string path) {
   auto result = nba::ROMLoader::Load(
     core, path, save_path.string(), save_type, force_gpio);
 
-  switch (result) {
+  switch(result) {
     case nba::ROMLoader::Result::CannotFindFile: {
       QMessageBox box {this};
       box.setText(tr("Sorry, the specified ROM file cannot be located."));
@@ -777,7 +777,7 @@ auto MainWindow::LoadState(std::string const& path) -> nba::SaveStateLoader::Res
   QMessageBox box {this};
   box.setIcon(QMessageBox::Critical);
 
-  switch (result) {
+  switch(result) {
     case nba::SaveStateLoader::Result::CannotFindFile:
     case nba::SaveStateLoader::Result::CannotOpenFile: {
       box.setText(tr("Sorry, the save state file could not be opened."));
@@ -802,7 +802,7 @@ auto MainWindow::LoadState(std::string const& path) -> nba::SaveStateLoader::Res
     }
   }
 
-  if (was_running) {
+  if(was_running) {
     emu_thread->Start();
   }
 
@@ -815,7 +815,7 @@ auto MainWindow::SaveState(std::string const& path) -> nba::SaveStateWriter::Res
 
   auto result = nba::SaveStateWriter::Write(core, path);
 
-  if (result != nba::SaveStateWriter::Result::Success) {
+  if(result != nba::SaveStateWriter::Result::Success) {
     QMessageBox box {this};
     box.setIcon(QMessageBox::Critical);
     box.setText(tr("Sorry, the save state could not be written to the disk. Make sure that you have sufficient disk space and permissions."));
@@ -823,7 +823,7 @@ auto MainWindow::SaveState(std::string const& path) -> nba::SaveStateWriter::Res
     box.exec();
   }
 
-  if (was_running) {
+  if(was_running) {
     emu_thread->Start();
   }
 
@@ -856,9 +856,9 @@ void MainWindow::SetFastForward(int channel, bool pressed) {
 
   fast_forward[channel] = pressed;
 
-  if (input.hold_fast_forward) {
+  if(input.hold_fast_forward) {
     emu_thread->SetFastForward(fast_forward[0] || fast_forward[1]);
-  } else if (!pressed) {
+  } else if(!pressed) {
     emu_thread->SetFastForward(!emu_thread->GetFastForward());
   }
 }
@@ -866,7 +866,7 @@ void MainWindow::SetFastForward(int channel, bool pressed) {
 void MainWindow::UpdateWindowSize() {
   bool fullscreen = config->window.fullscreen;
 
-  if (fullscreen) {
+  if(fullscreen) {
     showFullScreen();
   } else {
     showNormal();
@@ -884,7 +884,7 @@ void MainWindow::UpdateWindowSize() {
 }
 
 void MainWindow::SetFullscreen(bool value) {
-  if (config->window.fullscreen != value) {
+  if(config->window.fullscreen != value) {
     config->window.fullscreen = value;
     config->Save();
     UpdateWindowSize();
@@ -895,15 +895,15 @@ void MainWindow::SetFullscreen(bool value) {
 void MainWindow::UpdateSolarSensorLevel() {
   auto level = config->cartridge.solar_sensor_level;
 
-  if (core) {
+  if(core) {
     auto solar_sensor = core->GetROM().GetGPIODevice<nba::SolarSensor>();
 
-    if (solar_sensor) {
+    if(solar_sensor) {
       solar_sensor->SetLightLevel(level);
     }
   }
 
-  if (current_solar_level) {
+  if(current_solar_level) {
     current_solar_level->setText(
       QString::fromStdString(fmt::format("Current level: {} / 255", level)));
   }

@@ -10,12 +10,12 @@
 namespace nba::core::arm {
 
 void ARM7TDMI::LoadState(SaveState const& save_state) {
-  for (int i = 0; i < 16; i++) {
+  for(int i = 0; i < 16; i++) {
     state.reg[i] = save_state.arm.regs.gpr[i];
   }
 
-  for (int i = 0; i < BANK_COUNT; i++) {
-    for (int j = 0; j < 7; j++) {
+  for(int i = 0; i < BANK_COUNT; i++) {
+    for(int j = 0; j < 7; j++) {
       state.bank[i][j] = save_state.arm.regs.bank[i][j];
     }
     state.spsr[i].v = save_state.arm.regs.spsr[i];
@@ -24,7 +24,7 @@ void ARM7TDMI::LoadState(SaveState const& save_state) {
   state.cpsr.v = save_state.arm.regs.cpsr;
 
   auto bank = GetRegisterBankByMode(state.cpsr.f.mode);
-  if (bank != BANK_NONE) {
+  if(bank != BANK_NONE) {
     p_spsr = &state.spsr[bank];
   } else {
     p_spsr = &state.cpsr;
@@ -32,7 +32,7 @@ void ARM7TDMI::LoadState(SaveState const& save_state) {
 
   pipe.access = save_state.arm.pipe.access;
 
-  for (int i = 0; i < 2; i++) {
+  for(int i = 0; i < 2; i++) {
     pipe.opcode[i] = save_state.arm.pipe.opcode[i];
   }
 
@@ -45,12 +45,12 @@ void ARM7TDMI::LoadState(SaveState const& save_state) {
 }
 
 void ARM7TDMI::CopyState(SaveState& save_state) {
-  for (int i = 0; i < 16; i++) {
+  for(int i = 0; i < 16; i++) {
     save_state.arm.regs.gpr[i] = state.reg[i];
   }
 
-  for (int i = 0; i < BANK_COUNT; i++) {
-    for (int j = 0; j < 7; j++) {
+  for(int i = 0; i < BANK_COUNT; i++) {
+    for(int j = 0; j < 7; j++) {
       save_state.arm.regs.bank[i][j] = state.bank[i][j];
     }
     save_state.arm.regs.spsr[i] = state.spsr[i].v;
@@ -60,7 +60,7 @@ void ARM7TDMI::CopyState(SaveState& save_state) {
 
   save_state.arm.pipe.access = pipe.access;
 
-  for (int i = 0; i < 2; i++) {
+  for(int i = 0; i < 2; i++) {
     save_state.arm.pipe.opcode[i] = pipe.opcode[i];
   }
 

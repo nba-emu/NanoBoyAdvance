@@ -18,7 +18,7 @@ struct NearestResampler : Resampler<T> {
   }
   
   void Write(T const& input) final {
-    while (resample_phase < 1.0) {
+    while(resample_phase < 1.0) {
       this->output->Write(input);
       resample_phase += this->resample_phase_shift;
     }

@@ -16,7 +16,7 @@ void Bus::LoadState(SaveState const& state) {
   memory.rom.LoadState(state);
 
   hw.waitcnt.sram = state.bus.io.waitcnt.sram;
-  for (int i = 0; i < 2; i++) {
+  for(int i = 0; i < 2; i++) {
     hw.waitcnt.ws0[i] = state.bus.io.waitcnt.ws0[i];
     hw.waitcnt.ws1[i] = state.bus.io.waitcnt.ws1[i];
     hw.waitcnt.ws2[i] = state.bus.io.waitcnt.ws2[i];
@@ -35,7 +35,7 @@ void Bus::LoadState(SaveState const& state) {
   prefetch.head_address = state.bus.prefetch.head_address;
   prefetch.count = state.bus.prefetch.count;
   prefetch.countdown = state.bus.prefetch.countdown;
-  if (state.arm.regs.cpsr & 32) {
+  if(state.arm.regs.cpsr & 32) {
     prefetch.opcode_width = sizeof(u16);
     prefetch.capacity = 8;
     prefetch.duty = wait16[int(Access::Sequential)][prefetch.last_address >> 24];
@@ -57,7 +57,7 @@ void Bus::CopyState(SaveState& state) {
   memory.rom.CopyState(state);
 
   state.bus.io.waitcnt.sram = hw.waitcnt.sram;
-  for (int i = 0; i < 2; i++) {
+  for(int i = 0; i < 2; i++) {
     state.bus.io.waitcnt.ws0[i] = hw.waitcnt.ws0[i];
     state.bus.io.waitcnt.ws1[i] = hw.waitcnt.ws1[i];
     state.bus.io.waitcnt.ws2[i] = hw.waitcnt.ws2[i];

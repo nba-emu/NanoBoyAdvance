@@ -31,8 +31,8 @@ void WaveChannel::Reset(ResetWaveRAM reset_wave_ram) {
   wave_bank = 0;
 
   if(reset_wave_ram == ResetWaveRAM::Yes) {
-    for (int i = 0; i < 2; i++) {
-      for (int j = 0; j < 16; j++) {
+    for(int i = 0; i < 2; i++) {
+      for(int j = 0; j < 16; j++) {
         wave_ram[i][j] = 0;
       }
     }
@@ -42,9 +42,9 @@ void WaveChannel::Reset(ResetWaveRAM reset_wave_ram) {
 }
 
 void WaveChannel::Generate() {
-  if (!IsEnabled()) {
+  if(!IsEnabled()) {
     sample = 0;
-    if (BaseChannel::IsEnabled()) {
+    if(BaseChannel::IsEnabled()) {
       event = scheduler.Add(GetSynthesisIntervalFromFrequency(frequency), Scheduler::EventClass::APU_PSG3_generate);
     } else {
       event = nullptr;
@@ -54,7 +54,7 @@ void WaveChannel::Generate() {
 
   auto byte = wave_ram[wave_bank][phase / 2];
 
-  if ((phase % 2) == 0) {
+  if((phase % 2) == 0) {
     sample = byte >> 4;
   } else {
     sample = byte & 15;
@@ -64,9 +64,9 @@ void WaveChannel::Generate() {
 
   sample = (sample - 8) * 4 * (force_volume ? 3 : volume_table[volume]);
 
-  if (++phase == 32) {
+  if(++phase == 32) {
     phase = 0;
-    if (dimension) {
+    if(dimension) {
       wave_bank ^= 1;
     }
   }
@@ -75,7 +75,7 @@ void WaveChannel::Generate() {
 }
 
 auto WaveChannel::Read(int offset) -> u8 {
-  switch (offset) {
+  switch(offset) {
     // Stop / Wave RAM select
     case 0: {
       return (dimension << 5) |
@@ -102,7 +102,7 @@ auto WaveChannel::Read(int offset) -> u8 {
 }
 
 void WaveChannel::Write(int offset, u8 value) {
-  switch (offset) {
+  switch(offset) {
     // Stop / Wave RAM select
     case 0: {
       dimension = (value >> 5) & 1;
@@ -132,15 +132,15 @@ void WaveChannel::Write(int offset, u8 value) {
       frequency = (frequency & 0xFF) | ((value & 7) << 8);
       length.enabled = value & 0x40;
 
-      if (playing && (value & 0x80)) {
-        if (!BaseChannel::IsEnabled()) {
+      if(playing && (value & 0x80)) {
+        if(!BaseChannel::IsEnabled()) {
           if(event) {
             scheduler.Cancel(event);
           }
           event = scheduler.Add(GetSynthesisIntervalFromFrequency(frequency), Scheduler::EventClass::APU_PSG3_generate);
         }
         phase = 0;
-        if (dimension) {
+        if(dimension) {
           wave_bank = 0;
         }
         Restart();

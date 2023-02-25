@@ -9,7 +9,7 @@
 #include "controller_manager.hpp"
 
 ControllerManager::~ControllerManager() {
-  if (timer) {
+  if(timer) {
     timer->stop();
     Close();
   } else {
@@ -36,7 +36,7 @@ void ControllerManager::Initialize() {
     // SDL_WaitEventTimeout() requires video to be initialised on the same thread.
     SDL_Init(SDL_INIT_VIDEO);
 
-    while (!quitting) {
+    while(!quitting) {
       SDL_WaitEventTimeout(nullptr, 100);
 
       ProcessEvents();
@@ -72,7 +72,7 @@ void ControllerManager::Initialize() {
 void ControllerManager::UpdateGameControllerList() {
   auto input_window = main_window->input_window;
 
-  if (input_window) {
+  if(input_window) {
     input_window->UpdateGameControllerList();
   }
 }
@@ -80,7 +80,7 @@ void ControllerManager::UpdateGameControllerList() {
 void ControllerManager::BindCurrentKeyToControllerButton(SDL_GameControllerButton button) {
   auto input_window = main_window->input_window;
 
-  if (input_window) {
+  if(input_window) {
     input_window->BindCurrentKeyToControllerButton(button);
   }
 }
@@ -88,7 +88,7 @@ void ControllerManager::BindCurrentKeyToControllerButton(SDL_GameControllerButto
 void ControllerManager::BindCurrentKeyToControllerAxis(SDL_GameControllerAxis axis, bool negative) {
   auto input_window = main_window->input_window;
 
-  if (input_window) {
+  if(input_window) {
     input_window->BindCurrentKeyToControllerAxis(axis, negative);
   }
 }
@@ -98,8 +98,8 @@ void ControllerManager::Open(std::string const& guid) {
 
   Close();
 
-  for (int device_id = 0; device_id < joystick_count; device_id++) {
-    if (SDL_IsGameController(device_id) &&
+  for(int device_id = 0; device_id < joystick_count; device_id++) {
+    if(SDL_IsGameController(device_id) &&
         GetControllerGUIDStringFromIndex(device_id) == guid
     ) {
       controller = SDL_GameControllerOpen(device_id);
@@ -124,7 +124,7 @@ void ControllerManager::Close() {
   main_window->SetKeyStatus(1, Key::L, false);
   main_window->SetKeyStatus(1, Key::R, false);
 
-  if (controller) {
+  if(controller) {
     SDL_GameControllerClose(controller);
     controller = nullptr;
   }
@@ -138,15 +138,15 @@ void ControllerManager::ProcessEvents() {
   std::lock_guard guard{lock};
 #endif
 
-  while (SDL_PollEvent(&event)) {
-    switch (event.type) {
+  while(SDL_PollEvent(&event)) {
+    switch(event.type) {
       case SDL_JOYDEVICEADDED: {
         emit OnControllerListChanged();
 
         auto device_id = ((SDL_JoyDeviceEvent*)&event)->which;
         auto guid = GetControllerGUIDStringFromIndex(device_id);
 
-        if (guid == config->input.controller_guid) {
+        if(guid == config->input.controller_guid) {
           Open(guid);
         }
         break;
@@ -154,7 +154,7 @@ void ControllerManager::ProcessEvents() {
       case SDL_JOYDEVICEREMOVED: {
         emit OnControllerListChanged();
 
-        if (instance_id == ((SDL_JoyDeviceEvent*)&event)->which) {
+        if(instance_id == ((SDL_JoyDeviceEvent*)&event)->which) {
           Close();
         }
         break;
@@ -171,7 +171,7 @@ void ControllerManager::ProcessEvents() {
         auto axis_event = (SDL_ControllerAxisEvent*)&event;
         auto value = axis_event->value;
 
-        if (std::abs(value) > threshold) {
+        if(std::abs(value) > threshold) {
           emit OnControllerAxisMoved((SDL_GameControllerAxis)axis_event->axis, value < 0);
         }
         break;
@@ -179,7 +179,7 @@ void ControllerManager::ProcessEvents() {
     }
   }
 
-  if (input_window && input_window->has_game_controller_choice_changed) {
+  if(input_window && input_window->has_game_controller_choice_changed) {
     Open(config->input.controller_guid);
 
     input_window->has_game_controller_choice_changed = false;
@@ -193,7 +193,7 @@ void ControllerManager::UpdateKeyState() {
   std::lock_guard guard{lock};
 #endif
 
-  if (controller == nullptr) {
+  if(controller == nullptr) {
     return;
   }
 
@@ -205,11 +205,11 @@ void ControllerManager::UpdateKeyState() {
     auto button = mapping.controller.button;
     auto axis = mapping.controller.axis;
 
-    if (button != SDL_CONTROLLER_BUTTON_INVALID) {
+    if(button != SDL_CONTROLLER_BUTTON_INVALID) {
       pressed = pressed || SDL_GameControllerGetButton(controller, (SDL_GameControllerButton)button);
     }
 
-    if (axis != SDL_CONTROLLER_AXIS_INVALID) {
+    if(axis != SDL_CONTROLLER_AXIS_INVALID) {
       const auto threshold = std::numeric_limits<int16_t>::max() / 2;
 
       auto actual_axis = (SDL_GameControllerAxis)(axis & ~0x80);
@@ -222,14 +222,14 @@ void ControllerManager::UpdateKeyState() {
     return pressed;
   };
 
-  for (int i = 0; i < nba::InputDevice::kKeyCount; i++) {
+  for(int i = 0; i < nba::InputDevice::kKeyCount; i++) {
     main_window->SetKeyStatus(
       1, static_cast<nba::InputDevice::Key>(i), evaluate(input.gba[i]));
   }
 
   bool fast_forward_button = evaluate(input.fast_forward);
 
-  if (fast_forward_button != fast_forward_button_old) {
+  if(fast_forward_button != fast_forward_button_old) {
     main_window->SetFastForward(1, fast_forward_button);
     fast_forward_button_old = fast_forward_button;
   }

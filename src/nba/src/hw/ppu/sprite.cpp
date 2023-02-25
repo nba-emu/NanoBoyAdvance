@@ -97,7 +97,7 @@ void PPU::DrawSpriteImpl(int cycles) {
       auto& mosaic = mmio.mosaic;
 
       if(sprite.vcount < 159) {
-        if (++mosaic.obj._counter_y == mosaic.obj.size_y) {
+        if(++mosaic.obj._counter_y == mosaic.obj.size_y) {
           mosaic.obj._counter_y = 0;
         }
       } else {

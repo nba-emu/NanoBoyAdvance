@@ -23,7 +23,7 @@ void RTC::Reset() {
   current_bit = 0;
   current_byte = 0;
   data = 0;
-  for (int i = 0; i < 7; i++) {
+  for(int i = 0; i < 7; i++) {
     buffer[i] = 0;
   }
   port.sck = 0;
@@ -45,25 +45,25 @@ void RTC::Write(int value) {
   int old_sck = port.sck;
   int old_cs  = port.cs;
 
-  if (GetPortDirection(static_cast<int>(Port::CS)) == PortDirection::Out) {
+  if(GetPortDirection(static_cast<int>(Port::CS)) == PortDirection::Out) {
     port.cs = (value >> static_cast<int>(Port::CS)) & 1;
   } else {
     Log<Error>("RTC: CS port should be set to 'output' but configured as 'input'.");;
   }
 
-  if (GetPortDirection(static_cast<int>(Port::SCK)) == PortDirection::Out) {
+  if(GetPortDirection(static_cast<int>(Port::SCK)) == PortDirection::Out) {
     port.sck = (value >> static_cast<int>(Port::SCK)) & 1;
   } else {
     Log<Error>("RTC: SCK port should be set to 'output' but configured as 'input'.");
   }
 
-  if (GetPortDirection(static_cast<int>(Port::SIO)) == PortDirection::Out) {
+  if(GetPortDirection(static_cast<int>(Port::SIO)) == PortDirection::Out) {
     port.sio = (value >> static_cast<int>(Port::SIO)) & 1;
   }
 
-  if (port.cs) {
+  if(port.cs) {
     // on CS transition from 0 to 1:
-    if (!old_cs) {
+    if(!old_cs) {
       state = State::Command;
       current_bit  = 0;
       current_byte = 0;
@@ -71,8 +71,8 @@ void RTC::Write(int value) {
     }
 
     // on SCK transition from 0 to 1:
-    if (!old_sck && port.sck) {
-      switch (state) {
+    if(!old_sck && port.sck) {
+      switch(state) {
         case State::Command: {
           ReceiveCommandSIO();
           break;
@@ -94,7 +94,7 @@ bool RTC::ReadSIO() {
   data &= ~(1 << current_bit);
   data |= port.sio << current_bit;
 
-  if (++current_bit == 8) {
+  if(++current_bit == 8) {
     current_bit = 0;
     return true;
   }
@@ -105,17 +105,17 @@ bool RTC::ReadSIO() {
 void RTC::ReceiveCommandSIO() {
   bool completed = ReadSIO();
 
-  if (!completed) {
+  if(!completed) {
     return;
   }
 
   // Check whether the command should be interpreted MSB-first or LSB-first.
-  if ((data >> 4) == 6) {
+  if((data >> 4) == 6) {
     data = (data << 4) | (data >> 4);
     data = ((data & 0x33) << 2) | ((data & 0xCC) >> 2);
     data = ((data & 0x55) << 1) | ((data & 0xAA) >> 1);
     Log<Trace>("RTC: received command in REV format, data=0x{0:X}", data);
-  } else if ((data & 15) != 6) {
+  } else if((data & 15) != 6) {
     Log<Error>("RTC: received command in unknown format, data=0x{0:X}", data);
     return;
   }
@@ -125,16 +125,16 @@ void RTC::ReceiveCommandSIO() {
   current_byte = 0;
 
   // data[7:] determines whether the RTC register will be read or written.
-  if (data & 0x80) {
+  if(data & 0x80) {
     ReadRegister();
 
-    if (s_argument_count[(int)reg] > 0) {
+    if(s_argument_count[(int)reg] > 0) {
       state = State::Sending;
     } else {
       state = State::Complete;
     }
   } else {
-    if (s_argument_count[(int)reg] > 0) {
+    if(s_argument_count[(int)reg] > 0) {
       state = State::Receiving;
     } else {
       WriteRegister();
@@ -144,10 +144,10 @@ void RTC::ReceiveCommandSIO() {
 }
 
 void RTC::ReceiveBufferSIO() {
-  if (current_byte < s_argument_count[(int)reg] && ReadSIO()) {
+  if(current_byte < s_argument_count[(int)reg] && ReadSIO()) {
     buffer[current_byte] = data;
 
-    if (++current_byte == s_argument_count[(int)reg]) {
+    if(++current_byte == s_argument_count[(int)reg]) {
       WriteRegister();
       state = State::Complete;
     }
@@ -158,9 +158,9 @@ void RTC::TransmitBufferSIO() {
   port.sio = buffer[current_byte] & 1;
   buffer[current_byte] >>= 1;
 
-  if (++current_bit == 8) {
+  if(++current_bit == 8) {
     current_bit = 0;
-    if (++current_byte == s_argument_count[(int)reg]) {
+    if(++current_byte == s_argument_count[(int)reg]) {
       state = State::Complete;
     }
   }
@@ -168,12 +168,12 @@ void RTC::TransmitBufferSIO() {
 
 void RTC::ReadRegister() {
   const auto AdjustHour = [this](int& hour) {
-    if (!control.mode_24h && hour >= 12) {
+    if(!control.mode_24h && hour >= 12) {
       hour = (hour - 12) | 64;
     }
   };
 
-  switch (reg) {
+  switch(reg) {
     case Register::Control: {
       buffer[0] = (control.unknown1 ?   2 : 0) |
                   (control.per_minute_irq ? 8 : 0) |
@@ -209,13 +209,13 @@ void RTC::ReadRegister() {
 
 void RTC::WriteRegister() {
   // TODO: handle writes to the date and time register.
-  switch (reg) {
+  switch(reg) {
     case Register::Control: {
       control.unknown1 = buffer[0] & 2;
       control.per_minute_irq = buffer[0] & 8;
       control.unknown2 = buffer[0] & 32;
       control.mode_24h = buffer[0] & 64;
-      if (control.per_minute_irq) {
+      if(control.per_minute_irq) {
         Log<Error>("RTC: enabled the unimplemented per-minute IRQ.");
       }
       break;

@@ -89,13 +89,13 @@ struct QtConfig final : nba::PlatformConfig {
 
     auto match = std::find(recent_files.begin(), recent_files.end(), absolute_path);
 
-    if (match != recent_files.end()) {
+    if(match != recent_files.end()) {
       recent_files.erase(match);
     }
 
     recent_files.insert(recent_files.begin(), absolute_path);
 
-    if (recent_files.size() > 10) {
+    if(recent_files.size() > 10) {
       recent_files.pop_back();
     }
 
@@ -114,10 +114,10 @@ private:
     #ifdef MACOS_BUILD_APP_BUNDLE
       const auto pwd = getpwuid(getuid());
 
-      if (pwd) {
+      if(pwd) {
         auto config_directory = fs::path{pwd->pw_dir} / "Library/Application Support/org.github.fleroviux.NanoBoyAdvance";
 
-        if (!fs::exists(config_directory)) {
+        if(!fs::exists(config_directory)) {
           fs::create_directory(config_directory);
         }
 

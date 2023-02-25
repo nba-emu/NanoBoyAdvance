@@ -33,11 +33,11 @@ struct ROM {
   )   : rom(std::move(rom))
       , gpio(std::move(gpio))
       , rom_mask(rom_mask) {
-    if (backup != nullptr) {
-      if (typeid(*backup.get()) == typeid(EEPROM)) {
+    if(backup != nullptr) {
+      if(typeid(*backup.get()) == typeid(EEPROM)) {
         backup_eeprom = std::move(backup);
 
-        if (this->rom.size() >= 0x0100'0001) {
+        if(this->rom.size() >= 0x0100'0001) {
           eeprom_mask = 0x01FF'FF00;
         } else {
           eeprom_mask = 0x0100'0000;
@@ -72,42 +72,42 @@ struct ROM {
 
   template<typename T>
   auto GetGPIODevice() -> T* {
-    if (gpio) {
+    if(gpio) {
       return gpio->Get<T>();
     }
     return nullptr;
   }
 
   void LoadState(SaveState const& state) {
-    if (backup_sram) {
+    if(backup_sram) {
       backup_sram->LoadState(state);
     }
 
-    if (backup_eeprom) {
+    if(backup_eeprom) {
       backup_eeprom->LoadState(state);
     }
 
-    if (gpio) {
+    if(gpio) {
       gpio->LoadState(state);
     }
   }
 
   void CopyState(SaveState& state) {
-    if (backup_sram) {
+    if(backup_sram) {
       backup_sram->CopyState(state);
     }
 
-    if (backup_eeprom) {
+    if(backup_eeprom) {
       backup_eeprom->CopyState(state);
     }
 
-    if (gpio) {
+    if(gpio) {
       gpio->CopyState(state);
     }
   }
 
   void SetEEPROMSizeHint(EEPROM::Size size) {
-    if (backup_eeprom) {
+    if(backup_eeprom) {
       ((EEPROM*)backup_eeprom.get())->SetSizeHint(size);
     }
   }
@@ -115,17 +115,17 @@ struct ROM {
   auto ALWAYS_INLINE ReadROM16(u32 address) -> u16 {
     address &= 0x01FF'FFFE;
 
-    if (unlikely(IsGPIO(address)) && gpio->IsReadable()) {
+    if(unlikely(IsGPIO(address)) && gpio->IsReadable()) {
       return gpio->Read(address);
     }
 
-    if (unlikely(IsEEPROM(address))) {
+    if(unlikely(IsEEPROM(address))) {
       return backup_eeprom->Read(0);
     }
 
     address &= rom_mask;
 
-    if (unlikely(address >= rom.size())) {
+    if(unlikely(address >= rom.size())) {
       return u16(address >> 1);
     }
 
@@ -135,13 +135,13 @@ struct ROM {
   auto ALWAYS_INLINE ReadROM32(u32 address) -> u32 {
     address &= 0x01FF'FFFC;
 
-    if (unlikely(IsGPIO(address)) && gpio->IsReadable()) {
+    if(unlikely(IsGPIO(address)) && gpio->IsReadable()) {
       auto lsw = gpio->Read(address|0);
       auto msw = gpio->Read(address|2);
       return (msw << 16) | lsw;
     }
 
-    if (unlikely(IsEEPROM(address))) {
+    if(unlikely(IsEEPROM(address))) {
       auto lsw = backup_eeprom->Read(0);
       auto msw = backup_eeprom->Read(0);
       return (msw << 16) | lsw;
@@ -149,7 +149,7 @@ struct ROM {
 
     address &= rom_mask;
 
-    if (unlikely(address >= rom.size())) {
+    if(unlikely(address >= rom.size())) {
       auto lsw = u16(address >> 1);
       auto msw = u16(lsw + 1);
       return (msw << 16) | lsw;
@@ -161,24 +161,24 @@ struct ROM {
   void ALWAYS_INLINE WriteROM(u32 address, u16 value) {
     address &= 0x01FF'FFFE;
 
-    if (IsGPIO(address)) {
+    if(IsGPIO(address)) {
       gpio->Write(address, value);
     }
 
-    if (IsEEPROM(address)) {
+    if(IsEEPROM(address)) {
       backup_eeprom->Write(0, value);
     }
   }
 
   auto ALWAYS_INLINE ReadSRAM(u32 address) -> u8 {
-    if (likely(backup_sram != nullptr)) {
+    if(likely(backup_sram != nullptr)) {
       return backup_sram->Read(address & 0x0EFF'FFFF);
     }
     return 0xFF;
   }
 
   void ALWAYS_INLINE WriteSRAM(u32 address, u8 value) {
-    if (likely(backup_sram != nullptr)) {
+    if(likely(backup_sram != nullptr)) {
       backup_sram->Write(address & 0x0EFF'FFFF, value);
     }
   }

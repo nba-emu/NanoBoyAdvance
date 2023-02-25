@@ -14,7 +14,7 @@ static constexpr int g_ticks_shift[4] = { 0, 6, 8, 10 };
 static constexpr int g_ticks_mask[4] = { 0, 0x3F, 0xFF, 0x3FF };
 
 void Timer::LoadState(SaveState const& state) {
-  for (int i = 0; i < 4; i++) {
+  for(int i = 0; i < 4; i++) {
     u16 reload  = state.timer[i].reload;
     u16 control = state.timer[i].control;
 
@@ -40,7 +40,7 @@ void Timer::LoadState(SaveState const& state) {
 }
 
 void Timer::CopyState(SaveState& state) {
-  for (int i = 0; i < 4; i++) {
+  for(int i = 0; i < 4; i++) {
     state.timer[i].counter = ReadCounter(channels[i]);
     state.timer[i].reload = channels[i].reload;
     state.timer[i].control = ReadControl(channels[i]);

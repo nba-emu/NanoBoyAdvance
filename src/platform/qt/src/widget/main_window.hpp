@@ -90,7 +90,7 @@ private:
     auto group = new QActionGroup{this};
     auto config = this->config;
 
-    for (auto& entry : mapping) {
+    for(auto& entry : mapping) {
       auto action = group->addAction(QString::fromStdString(entry.first));
       action->setCheckable(true);
       action->setChecked(*underlying == entry.second);
@@ -98,10 +98,10 @@ private:
       connect(action, &QAction::triggered, [=]() {
         *underlying = entry.second;
         config->Save();
-        if (require_reset) {
+        if(require_reset) {
           PromptUserForReset();
         }
-        if (callback) {
+        if(callback) {
           callback();
         }
       });

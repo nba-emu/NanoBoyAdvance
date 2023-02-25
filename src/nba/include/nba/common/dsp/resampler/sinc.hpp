@@ -20,7 +20,7 @@ struct SincResampler : Resampler<T> {
       : Resampler<T>(output) {
     SetSampleRates(1, 1);
 
-    for (int i = 0; i < points - 1; i++) {
+    for(int i = 0; i < points - 1; i++) {
       taps.Write({});
     }
   }
@@ -31,12 +31,12 @@ struct SincResampler : Resampler<T> {
     float kernelSum = 0.0;
     float cutoff = 0.9;
     
-    if (this->resample_phase_shift > 1.0) {
+    if(this->resample_phase_shift > 1.0) {
       cutoff /= this->resample_phase_shift;
     }
 
-    for (int n = 0; n < points; n++) {
-      for (int m = 0; m < s_lut_resolution; m++) {
+    for(int n = 0; n < points; n++) {
+      for(int m = 0; m < s_lut_resolution; m++) {
         double t  = m/double(s_lut_resolution);
         double x1 = M_PI * (t - n + points/2) + 1e-6;
         double x2 = 2 * M_PI * (n + t)/points; 
@@ -50,7 +50,7 @@ struct SincResampler : Resampler<T> {
     
     kernelSum /= s_lut_resolution;
     
-    for (int i = 0; i < points * s_lut_resolution; i++) {
+    for(int i = 0; i < points * s_lut_resolution; i++) {
       lut[i] /= kernelSum;
     }
   }
@@ -58,12 +58,12 @@ struct SincResampler : Resampler<T> {
   void Write(T const& input) final {
     taps.Write(input);
 
-    while (resample_phase < 1.0) { 
+    while(resample_phase < 1.0) { 
       T sample = {};
 
       int x = int(std::round(resample_phase * s_lut_resolution));
       
-      for (int n = 0; n < points; n += 4) {        
+      for(int n = 0; n < points; n += 4) {        
         sample += taps.Peek(n + 0) * lut[x + 0 * s_lut_resolution];
         sample += taps.Peek(n + 1) * lut[x + 1 * s_lut_resolution]; 
         sample += taps.Peek(n + 2) * lut[x + 2 * s_lut_resolution]; 

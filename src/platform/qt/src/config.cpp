@@ -8,10 +8,10 @@
 #include "config.hpp"
 
 void QtConfig::LoadCustomData(toml::value const& data) {
-  if (data.contains("input")) {
+  if(data.contains("input")) {
     auto input_result = toml::expect<toml::value>(data.at("input"));
 
-    if (input_result.is_ok()) {
+    if(input_result.is_ok()) {
       using Map = Input::Map;
 
       auto input_ = input_result.unwrap();
@@ -26,10 +26,10 @@ void QtConfig::LoadCustomData(toml::value const& data) {
 
       input.fast_forward = get_map(input_, "fast_forward");
     
-      if (input_.contains("gba")) {
+      if(input_.contains("gba")) {
         auto gba_result = toml::expect<toml::value>(input_.at("gba"));
 
-        if (gba_result.is_ok()) {
+        if(gba_result.is_ok()) {
           auto gba = gba_result.unwrap();
 
           input.gba[0] = get_map(gba, "up");
@@ -47,10 +47,10 @@ void QtConfig::LoadCustomData(toml::value const& data) {
     }
   }
 
-  if (data.contains("window")) {
+  if(data.contains("window")) {
     auto window_result = toml::expect<toml::value>(data.at("window"));
 
-    if (window_result.is_ok()) {
+    if(window_result.is_ok()) {
       auto window_ = window_result.unwrap();
 
       window.scale = toml::find_or<int>(window_, "scale", 2);

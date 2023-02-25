@@ -39,9 +39,9 @@ struct FIFO {
   void WriteWord(u32 value) {
     pending = value;
 
-    if (count < s_fifo_len) {
+    if(count < s_fifo_len) {
       data[wr_ptr] = value;
-      if (++wr_ptr == s_fifo_len) wr_ptr = 0;
+      if(++wr_ptr == s_fifo_len) wr_ptr = 0;
       count++;
     }
   }
@@ -49,8 +49,8 @@ struct FIFO {
   auto ReadWord() -> u32 {
     u32 value = data[rd_ptr];
     
-    if (count > 0) {
-      if (++rd_ptr == s_fifo_len) rd_ptr = 0;
+    if(count > 0) {
+      if(++rd_ptr == s_fifo_len) rd_ptr = 0;
       count--;
     }
 
@@ -63,7 +63,7 @@ struct FIFO {
     wr_ptr = state.count % s_fifo_len;
     count = state.count; 
 
-    for (int i = 0; i < s_fifo_len; i++) {
+    for(int i = 0; i < s_fifo_len; i++) {
       data[i] = state.data[i];
     }
   }
@@ -72,7 +72,7 @@ struct FIFO {
     state.pending = pending;
     state.count = count;
 
-    for (int i = 0; i < s_fifo_len; i++) {
+    for(int i = 0; i < s_fifo_len; i++) {
       state.data[i] = data[(rd_ptr + i) % s_fifo_len];
     }
   }

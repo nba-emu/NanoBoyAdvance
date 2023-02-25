@@ -18,7 +18,7 @@ void DMA::LoadState(SaveState const& state) {
   runnable_set = state.dma.runnable_set;
   latch = state.dma.latch;
 
-  for (int i = 0; i < 4; i++) {
+  for(int i = 0; i < 4; i++) {
     auto& channel_src = state.dma.channels[i];
     auto& channel_dst = channels[i];
 
@@ -57,7 +57,7 @@ void DMA::CopyState(SaveState& state) {
   state.dma.runnable_set = (u8)runnable_set.to_ulong();
   state.dma.latch = latch;
 
-  for (int i = 0; i < 4; i++) {
+  for(int i = 0; i < 4; i++) {
     auto& channel_src = channels[i];
     auto& channel_dst = state.dma.channels[i];
 

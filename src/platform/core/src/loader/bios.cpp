@@ -20,21 +20,21 @@ auto BIOSLoader::Load(
   std::unique_ptr<CoreBase>& core,
   std::string path
 ) -> Result {
-  if (!fs::exists(path)) {
+  if(!fs::exists(path)) {
     return Result::CannotFindFile;
   }
 
-  if (fs::is_directory(path)) {
+  if(fs::is_directory(path)) {
     return Result::CannotOpenFile;
   }
 
   auto size = fs::file_size(path);
-  if (size != kBIOSSize) {
+  if(size != kBIOSSize) {
     return Result::BadImage;
   }
 
   auto file_stream = std::ifstream{path, std::ios::binary};
-  if (!file_stream.good()) {
+  if(!file_stream.good()) {
     return Result::CannotOpenFile;
   }
 

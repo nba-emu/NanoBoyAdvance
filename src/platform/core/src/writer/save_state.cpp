@@ -16,7 +16,7 @@ auto SaveStateWriter::Write(
 ) -> Result {
   std::ofstream file_stream{path, std::ios::binary};
 
-  if (!file_stream.good()) {
+  if(!file_stream.good()) {
     return Result::CannotOpenFile;
   }
 
@@ -25,7 +25,7 @@ auto SaveStateWriter::Write(
 
   file_stream.write((const char*)&save_state, sizeof(SaveState));
   
-  if (!file_stream.good()) {
+  if(!file_stream.good()) {
     return Result::CannotWrite;
   }
 

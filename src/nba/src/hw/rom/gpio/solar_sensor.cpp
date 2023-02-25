@@ -28,9 +28,9 @@ void SolarSensor::Write(int value) {
   bool clk = (value & (1 << Pin::CLK)) && GetPortDirection(Pin::CLK) == PortDirection::Out;
   bool rst = (value & (1 << Pin::RST)) && GetPortDirection(Pin::RST) == PortDirection::Out;
 
-  if (rst) {
+  if(rst) {
     counter = 0;
-  } else if (old_clk && !clk) {
+  } else if(old_clk && !clk) {
     counter++;
   }
 

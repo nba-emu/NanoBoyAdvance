@@ -94,7 +94,7 @@ struct Scheduler {
   }
 
  ~Scheduler() {
-    for (int i = 0; i < kMaxEvents; i++) {
+    for(int i = 0; i < kMaxEvents; i++) {
       delete heap[i];
     }
   }
@@ -161,7 +161,7 @@ struct Scheduler {
     event->user_data = user_data;
     event->event_class = event_class;
 
-    while (n != 0 && heap[p]->key > heap[n]->key) {
+    while(n != 0 && heap[p]->key > heap[n]->key) {
       Swap(n, p);
       n = p;
       p = Parent(n);
@@ -238,7 +238,7 @@ private:
   static constexpr int RightChild(int n) { return n * 2 + 2; }
 
   void Step(u64 timestamp_next) {
-    while (heap[0]->timestamp <= timestamp_next && heap_size > 0) {
+    while(heap[0]->timestamp <= timestamp_next && heap_size > 0) {
       auto event = heap[0];
       timestamp_now = event->timestamp;
       callbacks[(int)event->event_class](event->user_data);
@@ -250,12 +250,12 @@ private:
     Swap(n, --heap_size);
 
     int p = Parent(n);
-    if (n != 0 && heap[p]->key > heap[n]->key) {
+    if(n != 0 && heap[p]->key > heap[n]->key) {
       do {
         Swap(n, p);
         n = p;
         p = Parent(n);
-      } while (n != 0 && heap[p]->key > heap[n]->key);
+      } while(n != 0 && heap[p]->key > heap[n]->key);
     } else {
       Heapify(n);
     }
@@ -273,12 +273,12 @@ private:
     int l = LeftChild(n);
     int r = RightChild(n);
 
-    if (l < heap_size && heap[l]->key < heap[n]->key) {
+    if(l < heap_size && heap[l]->key < heap[n]->key) {
       Swap(l, n);
       Heapify(l);
     }
 
-    if (r < heap_size && heap[r]->key < heap[n]->key) {
+    if(r < heap_size && heap[r]->key < heap[n]->key) {
       Swap(r, n);
       Heapify(r);
     }

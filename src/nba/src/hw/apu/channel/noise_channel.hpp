@@ -33,7 +33,7 @@ private:
   static constexpr int GetSynthesisInterval(int ratio, int shift) {
     int interval = 64 << shift;
 
-    if (ratio == 0) {
+    if(ratio == 0) {
       interval /= 2;
     } else {
       interval *= ratio;

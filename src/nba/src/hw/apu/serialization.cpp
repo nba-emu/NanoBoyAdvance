@@ -21,7 +21,7 @@ void APU::LoadState(SaveState const& state) {
   mmio.psg4.LoadState(state.apu.io.noise);
 
   // TODO: the FIFO sample rate can be reconstructed:
-  for (int i = 0; i < 2; i++) {
+  for(int i = 0; i < 2; i++) {
     mmio.fifo[i].LoadState(state.apu.fifo[i]);
     
     fifo_pipe[i].word = state.apu.fifo[i].pipe.word;
@@ -46,7 +46,7 @@ void APU::CopyState(SaveState& state) {
   mmio.psg3.CopyState(state.apu.io.wave);
   mmio.psg4.CopyState(state.apu.io.noise);
 
-  for (int i = 0; i < 2; i++) {
+  for(int i = 0; i < 2; i++) {
     mmio.fifo[i].CopyState(state.apu.fifo[i]);
 
     state.apu.fifo[i].pipe.word = fifo_pipe[i].word;

@@ -17,17 +17,17 @@ auto SaveStateLoader::Load(
   std::unique_ptr<CoreBase>& core,
   std::string path
 ) -> Result {
-  if (!fs::exists(path)) {
+  if(!fs::exists(path)) {
     return Result::CannotFindFile;
   }
 
-  if (!fs::is_regular_file(path)) {
+  if(!fs::is_regular_file(path)) {
     return Result::CannotOpenFile;
   }
 
   auto file_size = fs::file_size(path);
 
-  if (file_size != sizeof(SaveState)) {
+  if(file_size != sizeof(SaveState)) {
     return Result::BadImage;
   }
 
@@ -35,7 +35,7 @@ auto SaveStateLoader::Load(
 
   std::ifstream file_stream{path, std::ios::binary};
 
-  if (!file_stream.good()) {
+  if(!file_stream.good()) {
     return Result::CannotOpenFile;
   }
 
@@ -43,7 +43,7 @@ auto SaveStateLoader::Load(
 
   auto validate_result = Validate(save_state);
 
-  if (validate_result != Result::Success) {
+  if(validate_result != Result::Success) {
     return validate_result;
   }
 
@@ -52,11 +52,11 @@ auto SaveStateLoader::Load(
 }
 
 auto SaveStateLoader::Validate(SaveState const& save_state) -> Result {
-  if (save_state.magic != SaveState::kMagicNumber) {
+  if(save_state.magic != SaveState::kMagicNumber) {
     return Result::BadImage;
   }
 
-  if (save_state.version != SaveState::kCurrentVersion) {
+  if(save_state.version != SaveState::kCurrentVersion) {
     return Result::UnsupportedVersion;
   }
 
@@ -79,7 +79,7 @@ auto SaveStateLoader::Validate(SaveState const& save_state) -> Result {
   {
     auto& apu = save_state.apu;
 
-    for (int i = 0; i < 2; i++) {
+    for(int i = 0; i < 2; i++) {
       bad_image |= apu.io.quad[i].phase > 7;
       bad_image |= apu.io.quad[i].wave_duty > 3;
       bad_image |= apu.fifo[i].count > 7;
@@ -100,7 +100,7 @@ auto SaveStateLoader::Validate(SaveState const& save_state) -> Result {
 
   bad_image |= save_state.gpio.rtc.current_byte > 7;
 
-  if (bad_image) {
+  if(bad_image) {
     return Result::BadImage;
   }
 

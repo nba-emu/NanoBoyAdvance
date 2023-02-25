@@ -27,9 +27,9 @@ auto FrameLimiter::GetFastForward() const -> bool {
 }
 
 void FrameLimiter::SetFastForward(bool value) {
-  if (fast_forward != value) {
+  if(fast_forward != value) {
     fast_forward = value;
-    if (!fast_forward) {
+    if(!fast_forward) {
       timestamp_target = std::chrono::steady_clock::now();
     }
   }
@@ -48,13 +48,13 @@ void FrameLimiter::Run(
   auto fps_update_delta = std::chrono::duration_cast<std::chrono::milliseconds>(
     now - timestamp_fps_update).count();
 
-  if (fps_update_delta >= kMillisecondsPerSecond) {
+  if(fps_update_delta >= kMillisecondsPerSecond) {
     update_fps(frame_count * float(kMillisecondsPerSecond) / fps_update_delta);
     frame_count = 0;
     timestamp_fps_update = std::chrono::steady_clock::now();
   }
 
-  if (!fast_forward) {
+  if(!fast_forward) {
     std::this_thread::sleep_until(timestamp_target);
   }
 }

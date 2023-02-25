@@ -28,7 +28,7 @@ struct RingBuffer : Stream<T> {
     rd_ptr = 0;
     wr_ptr = 0;
     count  = 0;
-    for (int i = 0; i < length; i++) {
+    for(int i = 0; i < length; i++) {
       data[i] = {};
     }
   }
@@ -39,7 +39,7 @@ struct RingBuffer : Stream<T> {
 
   auto Read() -> T {
     T value = data[rd_ptr];
-    if (count > 0) {
+    if(count > 0) {
       rd_ptr = (rd_ptr + 1) % length;
       count--;
     }
@@ -47,7 +47,7 @@ struct RingBuffer : Stream<T> {
   }
 
   void Write(T const& value) {
-    if (blocking && count == length) {
+    if(blocking && count == length) {
       return;
     }
     data[wr_ptr] = value;

@@ -42,9 +42,9 @@ public:
 
   void Tick() {
     // http://gbdev.gg8.se/wiki/articles/Gameboy_sound_hardware#Frame_Sequencer
-    if ((step & 1) == 0) enabled &= length.Tick();
-    if ((step & 3) == 2) enabled &= sweep.Tick();
-    if (step == 7) envelope.Tick();
+    if((step & 1) == 0) enabled &= length.Tick();
+    if((step & 3) == 2) enabled &= sweep.Tick();
+    if(step == 7) envelope.Tick();
 
     step++;
     step &= 7;

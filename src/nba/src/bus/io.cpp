@@ -15,7 +15,7 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
   auto& apu_io = apu.mmio;
   auto& ppu_io = ppu.mmio;
 
-  switch (address) {
+  switch(address) {
     // PPU
     case DISPCNT+0:  return ppu_io.dispcnt.Read(0);
     case DISPCNT+1:  return ppu_io.dispcnt.Read(1);
@@ -196,7 +196,7 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
 }
 
 auto Bus::Hardware::ReadHalf(u32 address) -> u16 {
-  switch (address) {
+  switch(address) {
     // Timer 0 - 3
     case TM0CNT_L: return timer.ReadHalf(0, 0);
     case TM0CNT_H: return timer.ReadHalf(0, 2);
@@ -217,7 +217,7 @@ auto Bus::Hardware::ReadHalf(u32 address) -> u16 {
 }
 
 auto Bus::Hardware::ReadWord(u32 address) -> u32 {
-  switch (address) {
+  switch(address) {
     case TM0CNT_L: return timer.ReadWord(0);
     case TM1CNT_L: return timer.ReadWord(1);
     case TM2CNT_L: return timer.ReadWord(2);
@@ -233,7 +233,7 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
 
   const bool apu_enable = apu_io.soundcnt.master_enable;
 
-  switch (address) {
+  switch(address) {
     // PPU
     case DISPCNT+0:  ppu_io.dispcnt.Write(0, value); break;
     case DISPCNT+1:  ppu_io.dispcnt.Write(1, value); break;
@@ -503,7 +503,7 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
 
     // Serial communication
     case SIOCNT: {
-      if (value & 0x80) {
+      if(value & 0x80) {
         irq.Raise(IRQ::Source::Serial);
       }
       break;
@@ -545,14 +545,14 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
       break;
     }
     case POSTFLG: {
-      if (cpu.state.r15 <= 0x3FFF) {
+      if(cpu.state.r15 <= 0x3FFF) {
         postflg |= value & 1;
       }
       break;
     }
     case HALTCNT: {
-      if (cpu.state.r15 <= 0x3FFF) {
-        if (value & 0x80) {
+      if(cpu.state.r15 <= 0x3FFF) {
+        if(value & 0x80) {
           haltcnt = HaltControl::Stop;
         } else {
           haltcnt = HaltControl::Halt;
@@ -567,7 +567,7 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
 void Bus::Hardware::WriteHalf(u32 address, u16 value) {
   auto& apu_io = apu.mmio;
 
-  switch (address) {
+  switch(address) {
     case FIFO_A+0: apu_io.fifo[0].WriteHalf(0, value); break;
     case FIFO_A+2: apu_io.fifo[0].WriteHalf(2, value); break;
     case FIFO_B+0: apu_io.fifo[1].WriteHalf(0, value); break;
@@ -607,7 +607,7 @@ void Bus::Hardware::WriteHalf(u32 address, u16 value) {
 void Bus::Hardware::WriteWord(u32 address, u32 value) {
   auto& apu_io = apu.mmio;
 
-  switch (address) {
+  switch(address) {
     case FIFO_A: apu_io.fifo[0].WriteWord(value); break;
     case FIFO_B: apu_io.fifo[1].WriteWord(value); break;
 

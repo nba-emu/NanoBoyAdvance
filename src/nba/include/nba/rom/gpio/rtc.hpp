@@ -61,7 +61,7 @@ private:
     u8 y = 0;
     u8 e = 1;
 
-    while (x > 0) {
+    while(x > 0) {
       y += (x % 10) * e;
       e *= 16;
       x /= 10; 

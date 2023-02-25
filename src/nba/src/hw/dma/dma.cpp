@@ -85,14 +85,14 @@ void DMA::Reset() {
   video_set = 0;
   runnable_set = 0;
 
-  for (int id = 0; id < 4; id++) {
+  for(int id = 0; id < 4; id++) {
     channels[id] = {};
     channels[id].id = id;
   }
 }
 
 void DMA::ScheduleDMAs(unsigned int bitset) {
-  while (bitset != 0) {
+  while(bitset != 0) {
     auto chan_id = g_dma_from_bitset[bitset];
 
     bitset &= ~(1 << chan_id);
@@ -104,9 +104,9 @@ void DMA::ScheduleDMAs(unsigned int bitset) {
 void DMA::OnActivated(u64 chan_id) {
   channels[chan_id].event = nullptr;
 
-  if (runnable_set.none()) {
+  if(runnable_set.none()) {
     active_dma_id = chan_id;
-  } else if (chan_id < active_dma_id) {
+  } else if(chan_id < active_dma_id) {
     active_dma_id = chan_id;
     should_reenter_transfer_loop = true;
   }
@@ -119,7 +119,7 @@ void DMA::SelectNextDMA() {
 }
 
 void DMA::Request(Occasion occasion) {
-  switch (occasion) {
+  switch(occasion) {
     case Occasion::HBlank:
       ScheduleDMAs(hblank_set.to_ulong());
       break;
@@ -132,9 +132,9 @@ void DMA::Request(Occasion occasion) {
     case Occasion::FIFO0:
     case Occasion::FIFO1: {
       auto address = (occasion == Occasion::FIFO0) ? FIFO_A : FIFO_B;
-      for (int chan_id = 1; chan_id <= 2; chan_id++) {
+      for(int chan_id = 1; chan_id <= 2; chan_id++) {
         auto& channel = channels[chan_id];
-        if (channel.enable &&
+        if(channel.enable &&
             channel.time == Channel::Special &&
             channel.dst_addr == address) {
           ScheduleDMAs(1 << chan_id);
@@ -150,7 +150,7 @@ void DMA::StopVideoTransferDMA() {
 
   // Disable DMA3
   // TODO: does HW disable it regardless of the *current* configuration?
-  if (channel.enable) {
+  if(channel.enable) {
     channel.enable = false;
     OnChannelWritten(channel, true);
   }
@@ -168,7 +168,7 @@ auto DMA::Run() -> int {
 
   do {
     RunChannel();
-  } while (IsRunning());
+  } while(IsRunning());
 
   const auto timestamp1 = scheduler.GetTimestampNow();
 
@@ -183,7 +183,7 @@ void DMA::RunChannel() {
   int src_modify;
   auto size = channel.size;
 
-  if (channel.is_fifo_dma) {
+  if(channel.is_fifo_dma) {
     size = Channel::Size::Word;
     dst_modify = 0;
     src_modify = g_dma_src_modify[size][channel.src_cntl];
@@ -194,8 +194,8 @@ void DMA::RunChannel() {
 
   bool did_access_rom = false;
 
-  while (channel.latch.length != 0) {
-    if (should_reenter_transfer_loop) {
+  while(channel.latch.length != 0) {
+    if(should_reenter_transfer_loop) {
       should_reenter_transfer_loop = false;
       return;
     }
@@ -206,25 +206,25 @@ void DMA::RunChannel() {
     auto access_src = Bus::Access::Sequential | Bus::Access::Dma;
     auto access_dst = Bus::Access::Sequential | Bus::Access::Dma;
 
-    if (!did_access_rom) {
-      if (src_addr >= 0x08000000) {
+    if(!did_access_rom) {
+      if(src_addr >= 0x08000000) {
         access_src = Bus::Access::Nonsequential | Bus::Access::Dma;
         did_access_rom = true;
-      } else if (dst_addr >= 0x08000000) {
+      } else if(dst_addr >= 0x08000000) {
         access_dst = Bus::Access::Nonsequential | Bus::Access::Dma;
         did_access_rom = true;
       }
     }
 
-    if (size == Channel::Half) {
+    if(size == Channel::Half) {
       u16 value;
 
-      if (likely(src_addr >= 0x02000000)) {
+      if(likely(src_addr >= 0x02000000)) {
         value = bus.ReadHalf(src_addr, access_src);
         channel.latch.bus = (value << 16) | value;
         latch = channel.latch.bus;
       } else {
-        if (dst_addr & 2) {
+        if(dst_addr & 2) {
           value = channel.latch.bus >> 16;
         } else {
           value = channel.latch.bus;
@@ -234,7 +234,7 @@ void DMA::RunChannel() {
 
       bus.WriteHalf(dst_addr, value, access_dst);
     } else {
-      if (likely(src_addr >= 0x02000000)) {
+      if(likely(src_addr >= 0x02000000)) {
         channel.latch.bus = bus.ReadWord(src_addr, access_src);
         latch = channel.latch.bus;
       } else {
@@ -251,21 +251,21 @@ void DMA::RunChannel() {
 
   runnable_set.set(channel.id, false);
 
-  if (channel.interrupt) {
+  if(channel.interrupt) {
     irq.Raise(IRQ::Source::DMA, channel.id);
   }
 
-  if (channel.repeat) {
-    if (channel.is_fifo_dma) {
+  if(channel.repeat) {
+    if(channel.is_fifo_dma) {
       channel.latch.length = 4;
     } else {
       channel.latch.length = channel.length & g_dma_len_mask[channel.id];
-      if (channel.latch.length == 0) {
+      if(channel.latch.length == 0) {
         channel.latch.length = g_dma_len_mask[channel.id] + 1;
       }
     }
 
-    if (channel.dst_cntl == Channel::Reload && !channel.is_fifo_dma) {
+    if(channel.dst_cntl == Channel::Reload && !channel.is_fifo_dma) {
       auto mask = channel.size == Channel::Word ? ~3 : ~1;
       channel.latch.dst_addr = channel.dst_addr & mask;
     }
@@ -280,7 +280,7 @@ void DMA::RunChannel() {
 auto DMA::Read(int chan_id, int offset) -> u8 {
   auto const& channel = channels[chan_id];
 
-  switch (offset) {
+  switch(offset) {
     case REG_DMAXCNT_H | 0: {
       return (channel.dst_cntl << 5) |
              (channel.src_cntl << 7);
@@ -301,7 +301,7 @@ auto DMA::Read(int chan_id, int offset) -> u8 {
 void DMA::Write(int chan_id, int offset, u8 value) {
   auto& channel = channels[chan_id];
 
-  switch (offset) {
+  switch(offset) {
     case REG_DMAXSAD | 0:
     case REG_DMAXSAD | 1:
     case REG_DMAXSAD | 2:
@@ -350,8 +350,8 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
 
   RemoveChannelFromDMASets(channel);
 
-  if (enable_new) {
-    if (!enable_old) {
+  if(enable_new) {
+    if(!enable_old) {
       // DMA enable bit: 0 -> 1 (rising-edge)
       int src_page = GetUnaliasedMemoryArea(channel.src_addr >> 24);
 
@@ -364,11 +364,11 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
        * This is a better explanation of the observed behavior and makes it redundant
        * to force increment mode.
        */
-      if (src_page == 0x08) {
+      if(src_page == 0x08) {
         channel.src_cntl = Channel::Control::Increment;
       }
 
-      if (channel.time == Channel::Special && (channel.id == 1 || channel.id == 2)) {
+      if(channel.time == Channel::Special && (channel.id == 1 || channel.id == 2)) {
         channel.is_fifo_dma = true;
 
         channel.size = Channel::Size::Word;
@@ -382,11 +382,11 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
         channel.latch.src_addr &= mask;
         channel.latch.dst_addr &= mask;
         channel.latch.length = channel.length & g_dma_len_mask[channel.id];
-        if (channel.latch.length == 0) {
+        if(channel.latch.length == 0) {
           channel.latch.length = g_dma_len_mask[channel.id] + 1;
         }
 
-        if (channel.time == Channel::Immediate) {
+        if(channel.time == Channel::Immediate) {
           ScheduleDMAs(1 << channel.id);
         } else {
           AddChannelToDMASet(channel);
@@ -395,14 +395,14 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
         /* Try to auto-detect EEPROM size from the first EEPROM DMA transfer,
          * since we cannot always determine the size at load time.
          */
-        if (channel.dst_addr >= 0x0D000000) {
+        if(channel.dst_addr >= 0x0D000000) {
           int length = channel.length;
 
-          if (length == 9 || length == 73) {
+          if(length == 9 || length == 73) {
             bus.memory.rom.SetEEPROMSizeHint(EEPROM::Size::SIZE_4K);
           }
 
-          if (length == 17 || length == 81) {
+          if(length == 17 || length == 81) {
             bus.memory.rom.SetEEPROMSizeHint(EEPROM::Size::SIZE_64K);
           }
         }
@@ -411,14 +411,14 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
       // DMA enable bit: 1 -> 1 (remains set)
 
       // Note: the DMA isn't really running, while it is still enabling.
-      if (channel.event == nullptr) {
+      if(channel.event == nullptr) {
         AddChannelToDMASet(channel);
 
         /* When the config register of a DMA is written while it is running,
          * bail out of the DMA transfer loop so that the new config is used
          * for the (half-)word transfers following this write.
          */
-        if (channel.id == active_dma_id) {
+        if(channel.id == active_dma_id) {
           should_reenter_transfer_loop = true;
         }
       }
@@ -428,7 +428,7 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
     runnable_set.set(channel.id, false);
 
     // Handle disabling the DMA before it started up.
-    if (channel.event != nullptr) {
+    if(channel.event != nullptr) {
       // TODO: figure out exact hardware behaviour.
       scheduler.Cancel(channel.event);
       channel.event = nullptr;
@@ -437,7 +437,7 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
     }
 
     // Handle DMA channel self-disable (via writing to its control register).
-    if (channel.id == active_dma_id) {
+    if(channel.id == active_dma_id) {
       // TODO: figure out exact hardware behaviour.
       should_reenter_transfer_loop = true;
       SelectNextDMA();
@@ -448,7 +448,7 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
 }
 
 void DMA::AddChannelToDMASet(Channel& channel) {
-  switch (channel.time) {
+  switch(channel.time) {
     case Channel::HBlank: {
       hblank_set.set(channel.id, true);
       break;
@@ -458,7 +458,7 @@ void DMA::AddChannelToDMASet(Channel& channel) {
       break;
     }
     case Channel::Special: {
-      if (channel.id == 3) {
+      if(channel.id == 3) {
         video_set.set(3, true);
       }
       break;

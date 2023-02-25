@@ -53,10 +53,10 @@ void Screen::UpdateViewport() {
   viewport_height = height;
 
   // Lock width and height to an aspect ratio of 3:2 (original GBA screen)
-  if (config->window.lock_aspect_ratio) {
+  if(config->window.lock_aspect_ratio) {
     float ar = static_cast<float>(width) / static_cast<float>(height);
 
-    if (ar > kGBANativeAR) {
+    if(ar > kGBANativeAR) {
       viewport_width = static_cast<int>(height * kGBANativeAR);
     } else {
       viewport_height = static_cast<int>(width / kGBANativeAR);
@@ -64,13 +64,13 @@ void Screen::UpdateViewport() {
   }
 
   // Lock width and height to (non-uniform) integer scales of the native resolution
-  if (config->window.use_integer_scaling) {
+  if(config->window.use_integer_scaling) {
     viewport_width  = kGBANativeWidth  * std::max(1, static_cast<int>(viewport_width  / (float)kGBANativeWidth));
     viewport_height = kGBANativeHeight * std::max(1, static_cast<int>(viewport_height / (float)kGBANativeHeight));
   }
 
   // Limit screen size to a maximum scaling factor
-  if (max_scale > 0) {
+  if(max_scale > 0) {
     int max_width  = kGBANativeWidth  * max_scale;
     int max_height = kGBANativeHeight * max_scale; 
 
@@ -80,7 +80,7 @@ void Screen::UpdateViewport() {
     bool max_size_fits_into_window = width  >= max_width &&
                                      height >= max_height;
 
-    if (overflowing && max_size_fits_into_window) {
+    if(overflowing && max_size_fits_into_window) {
       viewport_width  = max_width;
       viewport_height = max_height;
     }
@@ -99,10 +99,10 @@ void Screen::initializeGL() {
 }
 
 void Screen::paintGL() {
-  if (force_clear) {
+  if(force_clear) {
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT);
-  } else if (buffer != nullptr) {
+  } else if(buffer != nullptr) {
     ogl_video_device.SetDefaultFBO(defaultFramebufferObject());
     ogl_video_device.Draw(buffer);
   }
