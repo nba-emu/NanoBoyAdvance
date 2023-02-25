@@ -76,11 +76,11 @@ void Timer::WriteByte(int chan_id, int offset, u8 value) {
 
   switch (offset) {
     case REG_TMXCNT_L | 0: {
-      WriteReload(channel, (channel.reload & 0xFF00) | (value << 0));
+      WriteReload(channel, (channel.pending.reload & 0xFF00) | (value << 0));
       break;
     }
     case REG_TMXCNT_L | 1: {
-      WriteReload(channel, (channel.reload & 0x00FF) | (value << 8));
+      WriteReload(channel, (channel.pending.reload & 0x00FF) | (value << 8));
       break;
     }
     case REG_TMXCNT_H: {
@@ -221,7 +221,7 @@ void Timer::StartChannel(Channel& channel, int cycle_offset) {
 
   channel.running = true;
   channel.timestamp_started = scheduler.GetTimestampNow() - cycle_offset;
-  channel.event_overflow = scheduler.Add(cycles, Scheduler::EventClass::TM_overflow);
+  channel.event_overflow = scheduler.Add(cycles, Scheduler::EventClass::TM_overflow, 0, channel.id);
 }
 
 void Timer::StopChannel(Channel& channel) {
