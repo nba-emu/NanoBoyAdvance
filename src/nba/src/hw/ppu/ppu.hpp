@@ -222,15 +222,34 @@ private:
   void UpdateVideoTransferDMA();
 
   void OnScanlineComplete();
-  void OnHblankIRQTest();
   void OnHblankComplete();
   void OnVblankScanlineComplete();
-  void OnVblankHblankIRQTest();
   void OnVblankHblankComplete();
   void StupidSpriteEventHandler();
 
-  void RequestVideoDMA();
-  void RequestHblankDMA();
+  void RequestVideoDMA() {
+    dma.Request(DMA::Occasion::Video);
+  }
+
+  void RequestHblankDMA() {
+    dma.Request(DMA::Occasion::HBlank);
+  }
+
+  void RequestVblankDMA() {
+    dma.Request(DMA::Occasion::VBlank);
+  }
+
+  void RequestHblankIRQ() {
+    irq.Raise(IRQ::Source::HBlank);
+  }
+
+  void RequestVblankIRQ() {
+    irq.Raise(IRQ::Source::VBlank);
+  }
+
+  void RequestVcountIRQ() {
+    irq.Raise(IRQ::Source::VCount);
+  }
 
   struct Background {
     u64 timestamp_init = 0;

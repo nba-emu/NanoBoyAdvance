@@ -30,14 +30,16 @@ struct Scheduler {
     // PPU
     PPU_hdraw_vdraw,
     PPU_hblank_vdraw,
-    PPU_hblank_irq_vdraw,
     PPU_hdraw_vblank,
     PPU_hblank_vblank,
-    PPU_hblank_irq_vblank,
     PPU_begin_sprite_fetch,
     PPU_video_dma,
     PPU_hblank_dma,
     PPU_latch_dispcnt,
+    PPU_update_vcount_flag,
+    PPU_hblank_irq,
+    PPU_vblank_irq,
+    PPU_vcount_irq,
 
     // APU
     APU_mixer,
