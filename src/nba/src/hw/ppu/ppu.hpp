@@ -217,15 +217,15 @@ private:
     ENABLE_OBJWIN = 7
   };
 
-  void LatchDISPCNT();
+  void BeginHDrawVDraw();
+  void BeginHBlankVDraw();
+  void BeginHDrawVBlank();
+  void BeginHBlankVBlank();
+  void BeginSpriteDrawing();
+
   void UpdateVerticalCounterFlag();
   void UpdateVideoTransferDMA();
-
-  void BeginHBlankVDraw();
-  void BeginHDrawVDraw();
-  void BeginHBlankVBlank();
-  void BeginHDrawVBlank();
-  void BeginSpriteDrawing();
+  void LatchDISPCNT();
 
   void RequestVideoDMA() {
     dma.Request(DMA::Occasion::Video);

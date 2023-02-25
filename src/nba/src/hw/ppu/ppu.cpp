@@ -24,12 +24,11 @@ PPU::PPU(
   scheduler.Register(Scheduler::EventClass::PPU_hblank_vdraw, this, &PPU::BeginHBlankVDraw);
   scheduler.Register(Scheduler::EventClass::PPU_hdraw_vblank, this, &PPU::BeginHDrawVBlank);
   scheduler.Register(Scheduler::EventClass::PPU_hblank_vblank, this, &PPU::BeginHBlankVBlank);
-
   scheduler.Register(Scheduler::EventClass::PPU_begin_sprite_fetch, this, &PPU::BeginSpriteDrawing);
-  scheduler.Register(Scheduler::EventClass::PPU_latch_dispcnt, this, &PPU::LatchDISPCNT);
-  scheduler.Register(Scheduler::EventClass::PPU_video_dma, this, &PPU::RequestVideoDMA);
-  scheduler.Register(Scheduler::EventClass::PPU_hblank_dma, this, &PPU::RequestHblankDMA);
+
   scheduler.Register(Scheduler::EventClass::PPU_update_vcount_flag, this, &PPU::UpdateVerticalCounterFlag);
+  scheduler.Register(Scheduler::EventClass::PPU_video_dma, this, &PPU::RequestVideoDMA);
+  scheduler.Register(Scheduler::EventClass::PPU_latch_dispcnt, this, &PPU::LatchDISPCNT);
   scheduler.Register(Scheduler::EventClass::PPU_hblank_irq, this, &PPU::RequestHblankIRQ);
   scheduler.Register(Scheduler::EventClass::PPU_vblank_irq, this, &PPU::RequestVblankIRQ);
   scheduler.Register(Scheduler::EventClass::PPU_vcount_irq, this, &PPU::RequestVcountIRQ);
@@ -101,60 +100,6 @@ void PPU::Reset() {
   dma3_video_transfer_running = false;
 }
 
-void PPU::BeginSpriteDrawing() {
-  if(mmio.vcount <= 159) {
-    DrawSprite();
-  }
-
-  if(mmio.vcount == 227 || mmio.vcount < 159) {
-    InitSprite();
-  }
-
-  scheduler.Add(1232, Scheduler::EventClass::PPU_begin_sprite_fetch);
-}
-
-void PPU::LatchDISPCNT() {
-  mmio.dispcnt_latch[0] = mmio.dispcnt_latch[1];
-  mmio.dispcnt_latch[1] = mmio.dispcnt_latch[2];
-  mmio.dispcnt_latch[2] = mmio.dispcnt.hword;
-}
-
-void PPU::UpdateVerticalCounterFlag() {
-  auto& dispstat = mmio.dispstat;
-  auto vcount_flag_new = dispstat.vcount_setting == mmio.vcount;
-
-  if(dispstat.vcount_irq_enable && !dispstat.vcount_flag && vcount_flag_new) {
-    // @todo: why is it necessary to set the event priority here?
-    scheduler.Add(1, Scheduler::EventClass::PPU_vcount_irq, 1);
-  }
-  
-  dispstat.vcount_flag = vcount_flag_new;
-}
-
-void PPU::UpdateVideoTransferDMA() {
-  int vcount = mmio.vcount;
-
-  if(dma3_video_transfer_running) {
-    if(vcount == 162) {
-      dma.StopVideoTransferDMA();
-    } else if(vcount >= 2 && vcount < 162) {
-      scheduler.Add(3, Scheduler::EventClass::PPU_video_dma);
-    }
-  }
-}
-
-void PPU::BeginHBlankVDraw() {
-  mmio.dispstat.hblank_flag = 1;
-
-  RequestHblankDMA();
-
-  if(mmio.dispstat.hblank_irq_enable) {
-    scheduler.Add(1, Scheduler::EventClass::PPU_hblank_irq);
-  }
-
-  scheduler.Add(225, Scheduler::EventClass::PPU_hdraw_vdraw);
-}
-
 void PPU::BeginHDrawVDraw() {
   auto& dispcnt = mmio.dispcnt;
   auto& dispstat = mmio.dispstat;
@@ -198,16 +143,16 @@ void PPU::BeginHDrawVDraw() {
   InitWindow();
 }
 
-void PPU::BeginHBlankVBlank() {
-  auto& dispstat = mmio.dispstat;
+void PPU::BeginHBlankVDraw() {
+  mmio.dispstat.hblank_flag = 1;
 
-  dispstat.hblank_flag = 1;
+  RequestHblankDMA();
 
   if(mmio.dispstat.hblank_irq_enable) {
     scheduler.Add(1, Scheduler::EventClass::PPU_hblank_irq);
   }
 
-  scheduler.Add(225, Scheduler::EventClass::PPU_hdraw_vblank);
+  scheduler.Add(225, Scheduler::EventClass::PPU_hdraw_vdraw);
 }
 
 void PPU::BeginHDrawVBlank() {
@@ -253,6 +198,60 @@ void PPU::BeginHDrawVBlank() {
   UpdateVideoTransferDMA();
 
   InitWindow();
+}
+
+void PPU::BeginHBlankVBlank() {
+  auto& dispstat = mmio.dispstat;
+
+  dispstat.hblank_flag = 1;
+
+  if(mmio.dispstat.hblank_irq_enable) {
+    scheduler.Add(1, Scheduler::EventClass::PPU_hblank_irq);
+  }
+
+  scheduler.Add(225, Scheduler::EventClass::PPU_hdraw_vblank);
+}
+
+void PPU::BeginSpriteDrawing() {
+  if(mmio.vcount <= 159) {
+    DrawSprite();
+  }
+
+  if(mmio.vcount == 227 || mmio.vcount < 159) {
+    InitSprite();
+  }
+
+  scheduler.Add(1232, Scheduler::EventClass::PPU_begin_sprite_fetch);
+}
+
+void PPU::UpdateVerticalCounterFlag() {
+  auto& dispstat = mmio.dispstat;
+  auto vcount_flag_new = dispstat.vcount_setting == mmio.vcount;
+
+  if(dispstat.vcount_irq_enable && !dispstat.vcount_flag && vcount_flag_new) {
+    // @todo: why is it necessary to set the event priority here?
+    scheduler.Add(1, Scheduler::EventClass::PPU_vcount_irq, 1);
+  }
+  
+  dispstat.vcount_flag = vcount_flag_new;
+}
+
+void PPU::UpdateVideoTransferDMA() {
+  int vcount = mmio.vcount;
+
+  if(dma3_video_transfer_running) {
+    if(vcount == 162) {
+      dma.StopVideoTransferDMA();
+    } else if(vcount >= 2 && vcount < 162) {
+      scheduler.Add(3, Scheduler::EventClass::PPU_video_dma);
+    }
+  }
+}
+
+void PPU::LatchDISPCNT() {
+  mmio.dispcnt_latch[0] = mmio.dispcnt_latch[1];
+  mmio.dispcnt_latch[1] = mmio.dispcnt_latch[2];
+  mmio.dispcnt_latch[2] = mmio.dispcnt.hword;
 }
 
 } // namespace nba::core

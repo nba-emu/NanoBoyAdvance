@@ -33,10 +33,10 @@ struct Scheduler {
     PPU_hdraw_vblank,
     PPU_hblank_vblank,
     PPU_begin_sprite_fetch,
-    PPU_video_dma,
-    PPU_hblank_dma,
-    PPU_latch_dispcnt,
     PPU_update_vcount_flag,
+    PPU_video_dma,
+    PPU_latch_dispcnt,
+
     PPU_hblank_irq,
     PPU_vblank_irq,
     PPU_vcount_irq,
