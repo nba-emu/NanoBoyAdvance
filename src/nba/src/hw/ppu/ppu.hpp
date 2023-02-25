@@ -217,20 +217,39 @@ private:
     ENABLE_OBJWIN = 7
   };
 
-  void LatchDISPCNT();
-  void CheckVerticalCounterIRQ();
+  void BeginHDrawVDraw();
+  void BeginHBlankVDraw();
+  void BeginHDrawVBlank();
+  void BeginHBlankVBlank();
+  void BeginSpriteDrawing();
+
+  void UpdateVerticalCounterFlag();
   void UpdateVideoTransferDMA();
+  void LatchDISPCNT();
 
-  void OnScanlineComplete();
-  void OnHblankIRQTest();
-  void OnHblankComplete();
-  void OnVblankScanlineComplete();
-  void OnVblankHblankIRQTest();
-  void OnVblankHblankComplete();
-  void StupidSpriteEventHandler();
+  void RequestVideoDMA() {
+    dma.Request(DMA::Occasion::Video);
+  }
 
-  void RequestVideoDMA();
-  void RequestHblankDMA();
+  void RequestHblankDMA() {
+    dma.Request(DMA::Occasion::HBlank);
+  }
+
+  void RequestVblankDMA() {
+    dma.Request(DMA::Occasion::VBlank);
+  }
+
+  void RequestHblankIRQ() {
+    irq.Raise(IRQ::Source::HBlank);
+  }
+
+  void RequestVblankIRQ() {
+    irq.Raise(IRQ::Source::VBlank);
+  }
+
+  void RequestVcountIRQ() {
+    irq.Raise(IRQ::Source::VCount);
+  }
 
   struct Background {
     u64 timestamp_init = 0;

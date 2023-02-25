@@ -16,10 +16,24 @@ namespace nba::core {
  * at the same time as IE/IF/IME are written.
  */
 
+IRQ::IRQ(arm::ARM7TDMI& cpu, Scheduler& scheduler)
+    : cpu(cpu)
+    , scheduler(scheduler) {
+  scheduler.Register(Scheduler::EventClass::IRQ_write_io, this, &IRQ::OnWriteIO);
+  scheduler.Register(Scheduler::EventClass::IRQ_synchronizer_delay, this, &IRQ::OnIRQDelayPassed);
+
+  Reset();
+}
+
 void IRQ::Reset() {
+  pending_ime = 0;
+  pending_ie = 0;
+  pending_if = 0;
+
   reg_ime = 0;
   reg_ie = 0;
   reg_if = 0;
+
   irq_line = false;
   cpu.IRQLine() = false;
 }
@@ -49,79 +63,83 @@ auto IRQ::ReadHalf(int offset) const -> u16 {
 void IRQ::WriteByte(int offset, u8 value) {
   switch(offset) {
     case REG_IE|0:
-      reg_ie &= 0x3F00;
-      reg_ie |= value;
+      pending_ie &= 0x3F00;
+      pending_ie |= value;
       break;
     case REG_IE|1:
-      reg_ie &= 0x00FF;
-      reg_ie |= (value << 8) & 0x3F00;
+      pending_ie &= 0x00FF;
+      pending_ie |= (value << 8) & 0x3F00;
       break;
     case REG_IF|0:
-      reg_if &= ~value;
+      pending_if &= ~value;
       break;
     case REG_IF|1:
-      reg_if &= ~(value << 8);
+      pending_if &= ~(value << 8);
       break;
     case REG_IME:
-      reg_ime = value & 1;
+      pending_ime = value & 1;
       break;
   }
 
-  UpdateIRQLine(1);
+  scheduler.Add(1, Scheduler::EventClass::IRQ_write_io, 1);
 }
 
 void IRQ::WriteHalf(int offset, u16 value) {
   switch(offset) {
     case REG_IE:
-      reg_ie = value & 0x3FFF;
+      pending_ie = value & 0x3FFF;
       break;
     case REG_IF:
-      reg_if &= ~value;
+      pending_if &= ~value;
       break;
     case REG_IME:
-      reg_ime = value & 1;
+      pending_ime = value & 1;
       break;
   }
 
-  UpdateIRQLine(1);
+  scheduler.Add(1, Scheduler::EventClass::IRQ_write_io, 1);
 }
 
 void IRQ::Raise(IRQ::Source source, int channel) {
   switch(source) {
     case Source::VBlank:
-      reg_if |= 1;
+      pending_if |= 1;
       break;
     case Source::HBlank:
-      reg_if |= 2;
+      pending_if |= 2;
       break;
     case Source::VCount:
-      reg_if |= 4;
+      pending_if |= 4;
       break;
     case Source::Timer:
-      reg_if |= 8 << channel;
+      pending_if |= 8 << channel;
       break;
     case Source::Serial:
-      reg_if |= 128;
+      pending_if |= 128;
       break;
     case Source::DMA:
-      reg_if |= 256 << channel;
+      pending_if |= 256 << channel;
       break;
     case Source::Keypad:
-      reg_if |= 4096;
+      pending_if |= 4096;
       break;
     case Source::ROM:
-      reg_if |= 8192;
+      pending_if |= 8192;
       break;
   }
 
-  UpdateIRQLine(0);
+  scheduler.Add(1, Scheduler::EventClass::IRQ_write_io, 0);
 }
 
-void IRQ::UpdateIRQLine(int event_priority) {
-  bool irq_line_new = MasterEnable() && HasServableIRQ();
+void IRQ::OnWriteIO() {
+  reg_ime = pending_ime;
+  reg_ie = pending_ie;
+  reg_if = pending_if;
+
+  const bool irq_line_new = MasterEnable() && HasServableIRQ();
 
   if(irq_line != irq_line_new) {
-    scheduler.Add(3, Scheduler::EventClass::IRQ_synchronizer_delay, event_priority, (u64)irq_line_new);
+    scheduler.Add(2, Scheduler::EventClass::IRQ_synchronizer_delay, 0, (u64)irq_line_new);
 
     irq_line = irq_line_new;
   }
