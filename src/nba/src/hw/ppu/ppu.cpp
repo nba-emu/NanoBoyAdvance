@@ -30,6 +30,7 @@ PPU::PPU(
 
   scheduler.Register(Scheduler::EventClass::PPU_begin_sprite_fetch, this, &PPU::StupidSpriteEventHandler);
   scheduler.Register(Scheduler::EventClass::PPU_latch_dispcnt, this, &PPU::LatchDISPCNT);
+  scheduler.Register(Scheduler::EventClass::PPU_video_dma, this, &PPU::RequestVideoDMA);
   scheduler.Register(Scheduler::EventClass::PPU_hblank_dma, this, &PPU::RequestHblankDMA);
 
   mmio.dispcnt.ppu = this;
@@ -135,9 +136,7 @@ void PPU::UpdateVideoTransferDMA() {
     if (vcount == 162) {
       dma.StopVideoTransferDMA();
     } else if (vcount >= 2 && vcount < 162) {
-      scheduler.Add(9, [this](int late) {
-        dma.Request(DMA::Occasion::Video);
-      });
+      scheduler.Add(9, Scheduler::EventClass::PPU_video_dma);
     }
   }
 }
@@ -260,6 +259,10 @@ void PPU::OnVblankHblankComplete() {
   UpdateVideoTransferDMA();
 
   InitWindow();
+}
+
+void PPU::RequestVideoDMA() {
+  dma.Request(DMA::Occasion::Video);
 }
 
 void PPU::RequestHblankDMA() {

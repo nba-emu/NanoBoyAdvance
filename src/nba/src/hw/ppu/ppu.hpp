@@ -229,6 +229,7 @@ private:
   void OnVblankHblankComplete();
   void StupidSpriteEventHandler();
 
+  void RequestVideoDMA();
   void RequestHblankDMA();
 
   struct Background {
