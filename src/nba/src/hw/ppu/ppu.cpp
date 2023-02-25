@@ -29,6 +29,7 @@ PPU::PPU(
   scheduler.Register(Scheduler::EventClass::PPU_hblank_irq_vblank, this, &PPU::OnVblankHblankIRQTest);
 
   scheduler.Register(Scheduler::EventClass::PPU_begin_sprite_fetch, this, &PPU::StupidSpriteEventHandler);
+  scheduler.Register(Scheduler::EventClass::PPU_latch_dispcnt, this, &PPU::LatchDISPCNT);
 
   mmio.dispcnt.ppu = this;
   mmio.dispstat.ppu = this;
@@ -171,9 +172,7 @@ void PPU::OnHblankComplete() {
   DrawWindow();
   DrawMerge();
 
-  scheduler.Add(40, [this](int) {
-    LatchDISPCNT();
-  });
+  scheduler.Add(40, Scheduler::EventClass::PPU_latch_dispcnt);
 
   dispstat.hblank_flag = 0;
   vcount++;
@@ -243,9 +242,7 @@ void PPU::OnVblankHblankComplete() {
   }
 
   if(vcount >= 224) {
-    scheduler.Add(40, [this](int) {
-      LatchDISPCNT();
-    });
+    scheduler.Add(40, Scheduler::EventClass::PPU_latch_dispcnt);
   }
 
   if (vcount == 227) {

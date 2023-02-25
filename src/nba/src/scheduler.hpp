@@ -37,6 +37,7 @@ struct Scheduler {
     PPU_hblank_vblank,
     PPU_hblank_irq_vblank,
     PPU_begin_sprite_fetch,
+    PPU_latch_dispcnt,
 
     // APU
     APU_mixer,
