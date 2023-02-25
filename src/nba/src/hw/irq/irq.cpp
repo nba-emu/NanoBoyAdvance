@@ -121,12 +121,14 @@ void IRQ::UpdateIRQLine(int event_priority) {
   bool irq_line_new = MasterEnable() && HasServableIRQ();
 
   if (irq_line != irq_line_new) {
-    scheduler.Add(3, [=](int late) {
-      cpu.IRQLine() = irq_line_new;
-    }, event_priority);
+    scheduler.Add(3, Scheduler::EventClass::IRQ_synchronizer_delay, event_priority, (u64)irq_line_new);
 
     irq_line = irq_line_new;
   }
+}
+
+void IRQ::OnIRQDelayPassed(u64 irq_line) {
+  cpu.IRQLine() = (bool)irq_line;
 }
 
 } // namespace nba::core

@@ -46,6 +46,9 @@ struct Scheduler {
     APU_PSG3_generate,
     APU_PSG4_generate,
 
+    // IRQ controller
+    IRQ_synchronizer_delay,
+
     Count
   };
 
