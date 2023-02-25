@@ -49,6 +49,7 @@ struct Scheduler {
     friend class Scheduler;
     int handle;
     u64 key;
+    u64 uid;
     EventClass event_class;
   };
 
@@ -76,6 +77,7 @@ struct Scheduler {
   void Reset() {
     heap_size = 0;
     timestamp_now = 0;
+    next_uid = 0;
     Add(std::numeric_limits<u64>::max(), [](int) {
       Assert(false, "Scheduler: reached end of the event queue.");
     });
@@ -128,6 +130,7 @@ struct Scheduler {
     auto event = heap[n];
     event->timestamp = GetTimestampNow() + delay;
     event->key = (event->timestamp << 2) | priority;
+    event->uid = next_uid++;
     event->event_class = event_class;
 
     while (n != 0 && heap[p]->key > heap[n]->key) {
@@ -153,6 +156,7 @@ struct Scheduler {
     auto event = heap[n];
     event->timestamp = GetTimestampNow() + delay;
     event->key = (event->timestamp << 2) | priority;
+    event->uid = next_uid++;
     event->callback = callback;
     event->event_class = EventClass::Unknown;
 
@@ -176,6 +180,18 @@ struct Scheduler {
     Remove(event->handle);
   }
 
+  auto GetEventByUID(u64 uid) -> Event* {
+    for(int i = 0; i < heap_size; i++) {
+      auto event = heap[i];
+
+      if(event->uid == uid) {
+        return event;
+      }
+    }
+
+    return nullptr;
+  }
+
   void LoadState(SaveState const& state) {
     auto& ss_scheduler = state.scheduler;
 
@@ -190,6 +206,8 @@ struct Scheduler {
         Add(timestamp - state.timestamp, event_class, priority);
       }
     }
+
+    next_uid = ss_scheduler.next_uid;
   }
 
   void CopyState(SaveState& state) {
@@ -202,6 +220,7 @@ struct Scheduler {
     }
 
     ss_scheduler.event_count = heap_size;
+    ss_scheduler.next_uid = next_uid;
   }
 
 private:
@@ -266,6 +285,7 @@ private:
   Event* heap[kMaxEvents];
   int heap_size;
   u64 timestamp_now;
+  u64 next_uid;
 
   std::function<void()> callbacks[(int)EventClass::Count];
 };

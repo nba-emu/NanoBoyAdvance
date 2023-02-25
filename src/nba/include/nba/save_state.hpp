@@ -299,7 +299,8 @@ struct SaveState {
       u16 event_class;
     } events[64];
 
-    int event_count;
+    u8 event_count;
+    u64 next_uid;
   } scheduler;
 };
 
