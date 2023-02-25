@@ -296,6 +296,7 @@ struct SaveState {
   struct Scheduler {
     struct Event {
       u64 key;
+      u64 uid;
       u16 event_class;
     } events[64];
 

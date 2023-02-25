@@ -203,10 +203,11 @@ struct Scheduler {
       EventClass event_class = (EventClass)event.event_class;
 
       if(event_class != EventClass::Unknown) {
-        Add(timestamp - state.timestamp, event_class, priority);
+        Add(timestamp - state.timestamp, event_class, priority)->uid = event.uid;
       }
     }
 
+    // This must happen after deserializing all events, because calling Add() modifies `next_uid`.
     next_uid = ss_scheduler.next_uid;
   }
 
@@ -216,7 +217,7 @@ struct Scheduler {
     for(int i = 0; i < heap_size; i++) {
       auto event = heap[i];
 
-      ss_scheduler.events[i] = { event->key, (u16)event->event_class };
+      ss_scheduler.events[i] = { event->key, event->uid, (u16)event->event_class };
     }
 
     ss_scheduler.event_count = heap_size;
