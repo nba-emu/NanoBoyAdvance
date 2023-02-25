@@ -32,12 +32,7 @@ void Timer::LoadState(SaveState const& state) {
     channels[i].mask = g_ticks_mask[channels[i].control.frequency];
 
     channels[i].running = false;
-    channels[i].event_overflow = nullptr;
-
-    if (channels[i].control.enable && !channels[i].control.cascade) {
-      // TODO: take care of the one cycle startup-delay:
-      StartChannel(channels[i], state.timestamp & channels[i].mask);
-    }
+    channels[i].event_overflow = scheduler.GetEventByUID(state.timer[i].event_uid);
 
     if (pending_reload != reload) {
       WriteReload(channels[i], pending_reload);
@@ -58,6 +53,7 @@ void Timer::CopyState(SaveState& state) {
     state.timer[i].control = ReadControl(channels[i]);
     state.timer[i].pending.reload = channels[i].pending.reload;
     state.timer[i].pending.control = channels[i].pending.control;
+    state.timer[i].event_uid = GetEventUID(channels[i].event_overflow);
   }
 }
 

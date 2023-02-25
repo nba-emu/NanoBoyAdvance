@@ -211,6 +211,8 @@ struct SaveState {
       u16 reload;
       u16 control;
     } pending;
+
+    u64 event_uid;
   } timer[4];
 
   struct DMA {

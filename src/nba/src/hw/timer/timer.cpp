@@ -14,17 +14,20 @@ namespace nba::core {
 static constexpr int g_ticks_shift[4] = { 0, 6, 8, 10 };
 static constexpr int g_ticks_mask[4] = { 0, 0x3F, 0xFF, 0x3FF };
 
+Timer::Timer(Scheduler& scheduler, IRQ& irq, APU& apu)
+    : scheduler(scheduler)
+    , irq(irq)
+    , apu(apu) {
+  scheduler.Register(Scheduler::EventClass::TM_overflow, this, &Timer::OnOverflow);
+
+  Reset();
+}
+
 void Timer::Reset() {
   for (int id = 0; id < 4; id++) {
     auto& channel = channels[id];
     channel = {};
     channel.id = id;
-
-    channel.fn_overflow = [this, id](int cycles_late) {
-      auto& channel = channels[id];
-      OnOverflow(channel);
-      StartChannel(channel, cycles_late);
-    };
   }
 }
 
@@ -210,18 +213,18 @@ auto Timer::GetCounterDeltaSinceLastUpdate(Channel const& channel) -> u32 {
   return (scheduler.GetTimestampNow() - channel.timestamp_started) >> channel.shift;
 }
 
-void Timer::StartChannel(Channel& channel, int cycles_late) {
-  int cycles = int((0x10000 - channel.counter) << channel.shift) - cycles_late;
+void Timer::StartChannel(Channel& channel, int cycle_offset) {
+  int cycles = int((0x10000 - channel.counter) << channel.shift) - cycle_offset;
 
   channel.running = true;
-  channel.timestamp_started = scheduler.GetTimestampNow() - cycles_late;
-  channel.event_overflow = scheduler.Add(cycles, channel.fn_overflow);
+  channel.timestamp_started = scheduler.GetTimestampNow() - cycle_offset;
+  channel.event_overflow = scheduler.Add(cycles, Scheduler::EventClass::TM_overflow);
 }
 
 void Timer::StopChannel(Channel& channel) {
   channel.counter += GetCounterDeltaSinceLastUpdate(channel);
   if (channel.counter >= 0x10000) {
-    OnOverflow(channel);
+    ReloadCascadeAndRequestIRQ(channel);
   }
 
   scheduler.Cancel(channel.event_overflow);
@@ -229,7 +232,7 @@ void Timer::StopChannel(Channel& channel) {
   channel.running = false;
 }
 
-void Timer::OnOverflow(Channel& channel) {
+void Timer::ReloadCascadeAndRequestIRQ(Channel& channel) {
   channel.counter = channel.reload;
 
   if (channel.control.interrupt) {
@@ -243,9 +246,16 @@ void Timer::OnOverflow(Channel& channel) {
   if (channel.id != 3) {
     auto& next_channel = channels[channel.id + 1];
     if (next_channel.control.enable && next_channel.control.cascade && ++next_channel.counter == 0x10000) {
-      OnOverflow(next_channel);
+      ReloadCascadeAndRequestIRQ(next_channel);
     }
   }
+}
+
+void Timer::OnOverflow(u64 chan_id) {
+  auto& channel = channels[chan_id];
+
+  ReloadCascadeAndRequestIRQ(channel);
+  StartChannel(channel, 0);
 }
 
 } // namespace nba::core

@@ -18,12 +18,7 @@
 namespace nba::core {
 
 struct Timer {
-  Timer(Scheduler& scheduler, IRQ& irq, APU& apu)
-      : scheduler(scheduler)
-      , irq(irq)
-      , apu(apu) {
-    Reset();
-  }
+  Timer(Scheduler& scheduler, IRQ& irq, APU& apu);
 
   void Reset();
   auto ReadByte(int chan_id, int offset) -> u8;
@@ -65,7 +60,6 @@ private:
     int samplerate;
     u64 timestamp_started;
     Scheduler::Event* event_overflow = nullptr;
-    std::function<void(int)> fn_overflow;
   } channels[4];
 
   Scheduler& scheduler;
@@ -80,9 +74,10 @@ private:
 
   void RecalculateSampleRates();
   auto GetCounterDeltaSinceLastUpdate(Channel const& channel) -> u32;
-  void StartChannel(Channel& channel, int cycles_late);
+  void StartChannel(Channel& channel, int cycle_offset);
   void StopChannel(Channel& channel);
-  void OnOverflow(Channel& channel);
+  void ReloadCascadeAndRequestIRQ(Channel& channel);
+  void OnOverflow(u64 chan_id);
 };
 
 } // namespace nba::core

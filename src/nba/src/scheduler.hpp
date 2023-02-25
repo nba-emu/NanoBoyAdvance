@@ -49,6 +49,9 @@ struct Scheduler {
     // IRQ controller
     IRQ_synchronizer_delay,
 
+    // Timers
+    TM_overflow,
+
     Count
   };
 
