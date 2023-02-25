@@ -46,6 +46,8 @@ void DMA::LoadState(SaveState const& state) {
 
     channel_dst.event = scheduler.GetEventByUID(channel_src.event_uid);
   }
+
+  SelectNextDMA();
 }
 
 void DMA::CopyState(SaveState& state) {
