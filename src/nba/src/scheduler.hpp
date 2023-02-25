@@ -51,6 +51,8 @@ struct Scheduler {
 
     // Timers
     TM_overflow,
+    TM_write_reload,
+    TM_write_control,
 
     Count
   };

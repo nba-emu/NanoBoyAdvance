@@ -17,8 +17,6 @@ void Timer::LoadState(SaveState const& state) {
   for (int i = 0; i < 4; i++) {
     u16 reload  = state.timer[i].reload;
     u16 control = state.timer[i].control;
-    u16 pending_reload  = state.timer[i].pending.reload;
-    u16 pending_control = state.timer[i].pending.control;
 
     channels[i].reload  = reload;
     channels[i].counter = state.timer[i].counter;
@@ -34,13 +32,8 @@ void Timer::LoadState(SaveState const& state) {
     channels[i].running = false;
     channels[i].event_overflow = scheduler.GetEventByUID(state.timer[i].event_uid);
 
-    if (pending_reload != reload) {
-      WriteReload(channels[i], pending_reload);
-    }
-
-    if (pending_control != control) {
-      WriteControl(channels[i], pending_control);
-    }
+    channels[i].pending.reload = state.timer[i].pending.reload;
+    channels[i].pending.control = state.timer[i].pending.control;
   }
 
   RecalculateSampleRates();

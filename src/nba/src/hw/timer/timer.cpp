@@ -19,6 +19,8 @@ Timer::Timer(Scheduler& scheduler, IRQ& irq, APU& apu)
     , irq(irq)
     , apu(apu) {
   scheduler.Register(Scheduler::EventClass::TM_overflow, this, &Timer::OnOverflow);
+  scheduler.Register(Scheduler::EventClass::TM_write_reload, this, &Timer::OnReloadWritten);
+  scheduler.Register(Scheduler::EventClass::TM_write_control, this, &Timer::OnControlWritten);
 
   Reset();
 }
@@ -136,13 +138,9 @@ auto Timer::ReadCounter(Channel const& channel) -> u16 {
 }
 
 void Timer::WriteReload(Channel& channel, u16 value) {
-  auto id = channel.id;
-
   channel.pending.reload = value;
 
-  scheduler.Add(1, [this, id, value](int late) {  
-    channels[id].reload = value;
-  }, 1);
+  scheduler.Add(1, Scheduler::EventClass::TM_write_reload, 1, channel.id);
 }
 
 auto Timer::ReadControl(Channel const& channel) -> u16 {
@@ -155,43 +153,48 @@ auto Timer::ReadControl(Channel const& channel) -> u16 {
 }
 
 void Timer::WriteControl(Channel& channel, u16 value) {
-  auto id = channel.id;
-
   channel.pending.control = value;
 
-  scheduler.Add(1, [this, id, value](int late) {
-    auto& channel = channels[id];
-    auto& control = channel.control;
-    bool enable_previous = control.enable;
+  scheduler.Add(1, Scheduler::EventClass::TM_write_control, 2, channel.id);
+}
 
-    if (channel.running) {
-      StopChannel(channel);
+void Timer::OnReloadWritten(u64 chan_id) {
+  channels[chan_id].reload = channels[chan_id].pending.reload;
+}
+
+void Timer::OnControlWritten(u64 chan_id) {
+  auto& channel = channels[chan_id];
+  auto& control = channel.control;
+  bool enable_previous = control.enable;
+  u16 value = channel.pending.control;
+
+  if (channel.running) {
+    StopChannel(channel);
+  }
+
+  control.frequency = value & 3;
+  control.interrupt = value & 64;
+  control.enable = value & 128;
+  if (channel.id != 0) {
+    control.cascade = value & 4;
+  }
+
+  channel.shift = g_ticks_shift[control.frequency];
+  channel.mask = g_ticks_mask[control.frequency];
+
+  if (control.enable) {
+    if (!enable_previous) {
+      channel.counter = channel.reload;
     }
 
-    control.frequency = value & 3;
-    control.interrupt = value & 64;
-    control.enable = value & 128;
-    if (channel.id != 0) {
-      control.cascade = value & 4;
-    }
-
-    channel.shift = g_ticks_shift[control.frequency];
-    channel.mask = g_ticks_mask[control.frequency];
-
-    if (control.enable) {
+    if (!control.cascade) {
+      auto late = (scheduler.GetTimestampNow() & channel.mask);
       if (!enable_previous) {
-        channel.counter = channel.reload;
+        late -= 1;
       }
-
-      if (!control.cascade) {
-        auto late = (scheduler.GetTimestampNow() & channel.mask);
-        if (!enable_previous) {
-          late -= 1;
-        }
-        StartChannel(channel, late);
-      }
+      StartChannel(channel, late);
     }
-  }, 2);
+  }
 }
 
 void Timer::RecalculateSampleRates() {
