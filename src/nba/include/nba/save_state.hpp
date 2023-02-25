@@ -154,6 +154,8 @@ struct SaveState {
           u8 shift;
           u8 step;
         } sweep;
+
+        u64 event_uid;
       };
 
       struct QuadChannel : PSG {

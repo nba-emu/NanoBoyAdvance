@@ -12,6 +12,8 @@ namespace nba::core {
 WaveChannel::WaveChannel(Scheduler& scheduler)
     : BaseChannel(false, false, 256)
     , scheduler(scheduler) {
+  scheduler.Register(Scheduler::EventClass::APU_PSG3_generate, this, &WaveChannel::Generate);
+
   Reset(WaveChannel::ResetWaveRAM::Yes);
 }
 
@@ -39,11 +41,11 @@ void WaveChannel::Reset(ResetWaveRAM reset_wave_ram) {
   event = nullptr;
 }
 
-void WaveChannel::Generate(int cycles_late) {
+void WaveChannel::Generate() {
   if (!IsEnabled()) {
     sample = 0;
     if (BaseChannel::IsEnabled()) {
-      event = scheduler.Add(GetSynthesisIntervalFromFrequency(frequency) - cycles_late, event_cb);
+      event = scheduler.Add(GetSynthesisIntervalFromFrequency(frequency), Scheduler::EventClass::APU_PSG3_generate);
     } else {
       event = nullptr;
     }
@@ -69,7 +71,7 @@ void WaveChannel::Generate(int cycles_late) {
     }
   }
 
-  event = scheduler.Add(GetSynthesisIntervalFromFrequency(frequency) - cycles_late, event_cb);
+  event = scheduler.Add(GetSynthesisIntervalFromFrequency(frequency), Scheduler::EventClass::APU_PSG3_generate);
 }
 
 auto WaveChannel::Read(int offset) -> u8 {
@@ -135,7 +137,7 @@ void WaveChannel::Write(int offset, u8 value) {
           if(event) {
             scheduler.Cancel(event);
           }
-          event = scheduler.Add(GetSynthesisIntervalFromFrequency(frequency), event_cb);
+          event = scheduler.Add(GetSynthesisIntervalFromFrequency(frequency), Scheduler::EventClass::APU_PSG3_generate);
         }
         phase = 0;
         if (dimension) {

@@ -43,8 +43,8 @@ struct APU {
 
   struct MMIO {
     MMIO(Scheduler& scheduler)
-        : psg1(scheduler)
-        , psg2(scheduler)
+        : psg1(scheduler, Scheduler::EventClass::APU_PSG1_generate)
+        , psg2(scheduler, Scheduler::EventClass::APU_PSG2_generate)
         , psg3(scheduler)
         , psg4(scheduler, bias) {
     }

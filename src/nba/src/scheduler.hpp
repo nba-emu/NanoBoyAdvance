@@ -41,6 +41,10 @@ struct Scheduler {
     // APU
     APU_mixer,
     APU_sequencer,
+    APU_PSG1_generate,
+    APU_PSG2_generate,
+    APU_PSG3_generate,
+    APU_PSG4_generate,
 
     Count
   };
@@ -48,6 +52,9 @@ struct Scheduler {
   struct Event {
     std::function<void(int)> callback;
     u64 timestamp; 
+
+    u64 UID() const { return uid; }
+  
   private:
     friend class Scheduler;
     int handle;
@@ -81,7 +88,7 @@ struct Scheduler {
   void Reset() {
     heap_size = 0;
     timestamp_now = 0;
-    next_uid = 0;
+    next_uid = 1;
     Add(std::numeric_limits<u64>::max(), [](int) {
       Assert(false, "Scheduler: reached end of the event queue.");
     });
@@ -305,5 +312,9 @@ private:
 
   std::function<void(u64)> callbacks[(int)EventClass::Count];
 };
+
+inline u64 GetEventUID(Scheduler::Event* event) {
+  return event ? event->UID() : 0;
+}
 
 } // namespace nba::core

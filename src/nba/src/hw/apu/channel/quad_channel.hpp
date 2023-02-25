@@ -16,11 +16,11 @@ namespace nba::core {
 
 class QuadChannel final : public BaseChannel {
 public:
-  QuadChannel(Scheduler& scheduler);
+  QuadChannel(Scheduler& scheduler, Scheduler::EventClass event_class);
 
   void Reset();
   auto GetSample() -> s8 override { return sample; }
-  void Generate(int cycles_late);
+  void Generate();
   auto Read (int offset) -> u8;
   void Write(int offset, u8 value);
 
@@ -36,11 +36,8 @@ private:
   }
 
   Scheduler& scheduler;
+  Scheduler::EventClass event_class;
   Scheduler::Event* event;
-
-  std::function<void(int)> event_cb = [this](int cycles_late) {
-    this->Generate(cycles_late);
-  };
 
   s8 sample = 0;
   int phase;
