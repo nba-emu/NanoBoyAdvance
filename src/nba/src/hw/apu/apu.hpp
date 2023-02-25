@@ -70,8 +70,8 @@ struct APU {
   std::unique_ptr<StereoResampler<float>> resampler;
 
 private:
-  void StepMixer(int cycles_late);
-  void StepSequencer(int cycles_late);
+  void StepMixer();
+  void StepSequencer();
 
   s8 latch[2];
   std::shared_ptr<RingBuffer<float>> fifo_buffer[2];

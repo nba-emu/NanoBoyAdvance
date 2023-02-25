@@ -20,28 +20,15 @@ PPU::PPU(
     , irq(irq)
     , dma(dma)
     , config(config) {
-  // @todo: get rid of the wrapper jank
-  scheduler.Register(Scheduler::EventClass::PPU_hdraw_vdraw, [this]() {
-    OnHblankComplete();
-  });
-  scheduler.Register(Scheduler::EventClass::PPU_hblank_vdraw, [this]() {
-    OnScanlineComplete();
-  });
-  scheduler.Register(Scheduler::EventClass::PPU_hblank_irq_vdraw, [this]() {
-    OnHblankIRQTest();
-  });
-  scheduler.Register(Scheduler::EventClass::PPU_hdraw_vblank, [this]() {
-    OnVblankHblankComplete();
-  });
-  scheduler.Register(Scheduler::EventClass::PPU_hblank_vblank, [this]() {
-    OnVblankScanlineComplete();
-  });
-  scheduler.Register(Scheduler::EventClass::PPU_hblank_irq_vblank, [this]() {
-    OnVblankHblankIRQTest();
-  });
-  scheduler.Register(Scheduler::EventClass::PPU_begin_sprite_fetch, [this]() {
-    StupidSpriteEventHandler();
-  });
+  scheduler.Register(Scheduler::EventClass::PPU_hdraw_vdraw, this, &PPU::OnHblankComplete);
+  scheduler.Register(Scheduler::EventClass::PPU_hblank_vdraw, this, &PPU::OnScanlineComplete);
+  scheduler.Register(Scheduler::EventClass::PPU_hblank_irq_vdraw, this, &PPU::OnHblankIRQTest);
+
+  scheduler.Register(Scheduler::EventClass::PPU_hdraw_vblank, this, &PPU::OnVblankHblankComplete);
+  scheduler.Register(Scheduler::EventClass::PPU_hblank_vblank, this, &PPU::OnVblankScanlineComplete);
+  scheduler.Register(Scheduler::EventClass::PPU_hblank_irq_vblank, this, &PPU::OnVblankHblankIRQTest);
+
+  scheduler.Register(Scheduler::EventClass::PPU_begin_sprite_fetch, this, &PPU::StupidSpriteEventHandler);
 
   mmio.dispcnt.ppu = this;
   mmio.dispstat.ppu = this;

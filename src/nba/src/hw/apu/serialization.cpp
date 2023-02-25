@@ -32,16 +32,6 @@ void APU::LoadState(SaveState const& state) {
 
   resolution_old = state.apu.resolution_old;
 
-  int mix_event_cycles = mmio.bias.GetSampleInterval();
-  int seq_event_cycles = BaseChannel::s_cycles_per_step;
-
-  // This works because these numbers are powers-of-two:
-  mix_event_cycles -= state.timestamp & (mix_event_cycles - 1);
-  seq_event_cycles -= state.timestamp & (seq_event_cycles - 1);
-
-  scheduler.Add(mix_event_cycles, this, &APU::StepMixer);
-  scheduler.Add(seq_event_cycles, this, &APU::StepSequencer);
-
   // We are simply resetting the MP2K mixer for now,
   // there probably is no need to do complicated (de)serialization.
   mp2k.Reset();

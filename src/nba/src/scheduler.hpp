@@ -20,6 +20,9 @@ struct Scheduler {
   template<class T>
   using EventMethod = void (T::*)(int);
 
+  template<class T>
+  using EventMethod2 = void (T::*)();
+
   enum class EventClass : u16 {
     Unknown,
 
@@ -31,6 +34,10 @@ struct Scheduler {
     PPU_hblank_vblank,
     PPU_hblank_irq_vblank,
     PPU_begin_sprite_fetch,
+
+    // APU
+    APU_mixer,
+    APU_sequencer,
 
     Count
   };
@@ -98,6 +105,13 @@ struct Scheduler {
 
   void Register(EventClass event_class, std::function<void()> callback) {
     callbacks[(int)event_class] = std::move(callback);
+  }
+
+  template<class T>
+  void Register(EventClass event_class, T* object, EventMethod2<T> method, uint priority = 0) {
+    callbacks[(int)event_class] = [object, method]() {
+      (object->*method)();
+    };
   }
 
   auto Add(u64 delay, EventClass event_class, uint priority = 0) -> Event* {
