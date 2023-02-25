@@ -65,31 +65,6 @@ void PPU::LoadState(SaveState const& state) {
   std::memcpy(oam,  state.bus.memory.oam,  0x400);
   std::memcpy(vram, state.bus.memory.vram, 0x18000);
 
-  // /**
-  //  * NOTE: we cannot use DISPCNT.vblank_flag here, because the flag
-  //  * will be unset during the last scanline.
-  //  */
-  // bool vblank = mmio.vcount >= 160;
-  // auto cycles = state.timestamp % 1232U;
-  // Scheduler::EventMethod<PPU> event_fn;
-
-  // /* Recreate the PPU state machine event.
-  //  * Note that the PPU supposedly starts in H-blank (see PPU::Reset).
-  //  * @todo: what if the event is scheduled with zero delay? Will this break?
-  //  */
-  // scheduler.Add((266 - cycles + 1232) % 1232, this, &PPU::StupidSpriteEventHandler);
-  // if (cycles <= 2) {
-  //   event_fn = vblank ? &PPU::OnVblankHblankIRQTest : &PPU::OnHblankIRQTest;
-  //   cycles = 2 - cycles;
-  // } else if (cycles <= 224) {
-  //   event_fn = vblank ? &PPU::OnVblankHblankComplete : &PPU::OnHblankComplete;
-  //   cycles = 224 - cycles;
-  // } else {
-  //   event_fn = vblank ? &PPU::OnVblankScanlineComplete : &PPU::OnScanlineComplete;
-  //   cycles = 1232 - cycles;
-  // }
-  // scheduler.Add(cycles, this, event_fn);
-
   dma3_video_transfer_running = ss_ppu.dma3_video_transfer_running;
 }
 
