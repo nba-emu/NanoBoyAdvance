@@ -30,6 +30,7 @@ PPU::PPU(
 
   scheduler.Register(Scheduler::EventClass::PPU_begin_sprite_fetch, this, &PPU::StupidSpriteEventHandler);
   scheduler.Register(Scheduler::EventClass::PPU_latch_dispcnt, this, &PPU::LatchDISPCNT);
+  scheduler.Register(Scheduler::EventClass::PPU_hblank_dma, this, &PPU::RequestHblankDMA);
 
   mmio.dispcnt.ppu = this;
   mmio.dispstat.ppu = this;
@@ -144,11 +145,7 @@ void PPU::UpdateVideoTransferDMA() {
 void PPU::OnScanlineComplete() {
   mmio.dispstat.hblank_flag = 1;
 
-  // TODO: fix these timings properly eventually.
-  scheduler.Add(1, [this](int) {
-    dma.Request(DMA::Occasion::HBlank);
-  });
-
+  scheduler.Add(1, Scheduler::EventClass::PPU_hblank_dma);
   scheduler.Add(2, Scheduler::EventClass::PPU_hblank_irq_vdraw);
 }
 
@@ -267,6 +264,10 @@ void PPU::OnVblankHblankComplete() {
   UpdateVideoTransferDMA();
 
   InitWindow();
+}
+
+void PPU::RequestHblankDMA() {
+  dma.Request(DMA::Occasion::HBlank);
 }
 
 } // namespace nba::core

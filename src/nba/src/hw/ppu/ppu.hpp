@@ -229,6 +229,8 @@ private:
   void OnVblankHblankComplete();
   void StupidSpriteEventHandler();
 
+  void RequestHblankDMA();
+
   struct Background {
     u64 timestamp_init = 0;
     u64 timestamp_last_sync = 0;
