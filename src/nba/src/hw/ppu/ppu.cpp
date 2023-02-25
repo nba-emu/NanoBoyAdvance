@@ -101,11 +101,8 @@ void PPU::Reset() {
 }
 
 void PPU::BeginHDrawVDraw() {
-  auto& dispcnt = mmio.dispcnt;
   auto& dispstat = mmio.dispstat;
   auto& vcount = mmio.vcount;
-  auto& bgx = mmio.bgx;
-  auto& bgy = mmio.bgy;
 
   DrawBackground();
   DrawWindow();
@@ -126,12 +123,6 @@ void PPU::BeginHDrawVDraw() {
 
     if(dispstat.vblank_irq_enable) {
       scheduler.Add(1, Scheduler::EventClass::PPU_vblank_irq);
-    }
-
-    // Reload internal affine registers
-    for(int i = 0; i < 2; i++) {
-      bgx[i]._current = bgx[i].initial;
-      bgy[i]._current = bgy[i].initial;
     }
   } else {
     InitBackground();
