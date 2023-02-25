@@ -90,7 +90,7 @@ void DisplayStatus::Write(int address, u8 value) {
       break;
   }
 
-  ppu->CheckVerticalCounterIRQ();
+  ppu->UpdateVerticalCounterFlag();
 }
 
 auto DisplayStatus::ReadHalf() -> u16 {

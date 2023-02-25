@@ -218,14 +218,14 @@ private:
   };
 
   void LatchDISPCNT();
-  void CheckVerticalCounterIRQ();
+  void UpdateVerticalCounterFlag();
   void UpdateVideoTransferDMA();
 
-  void OnScanlineComplete();
-  void OnHblankComplete();
-  void OnVblankScanlineComplete();
-  void OnVblankHblankComplete();
-  void StupidSpriteEventHandler();
+  void BeginHBlankVDraw();
+  void BeginHDrawVDraw();
+  void BeginHBlankVBlank();
+  void BeginHDrawVBlank();
+  void BeginSpriteDrawing();
 
   void RequestVideoDMA() {
     dma.Request(DMA::Occasion::Video);
