@@ -29,6 +29,8 @@ APU::APU(
     , dma(dma)
     , mp2k(bus)
     , config(config) {
+  scheduler.Register(Scheduler::EventClass::APU_mixer, this, &APU::StepMixer);
+  scheduler.Register(Scheduler::EventClass::APU_sequencer, this, &APU::StepSequencer);
 }
 
 APU::~APU() {
@@ -48,8 +50,8 @@ void APU::Reset() {
   fifo_pipe[1] = {};
 
   resolution_old = 0;
-  scheduler.Add(mmio.bias.GetSampleInterval(), this, &APU::StepMixer);
-  scheduler.Add(BaseChannel::s_cycles_per_step, this, &APU::StepSequencer);
+  scheduler.Add(mmio.bias.GetSampleInterval(), Scheduler::EventClass::APU_mixer);
+  scheduler.Add(BaseChannel::s_cycles_per_step, Scheduler::EventClass::APU_sequencer);
 
   mp2k.Reset();
   mp2k_read_index = {};
@@ -137,7 +139,7 @@ void APU::OnTimerOverflow(int timer_id, int times, int samplerate) {
   }
 }
 
-void APU::StepMixer(int cycles_late) {
+void APU::StepMixer() {
   constexpr int psg_volume_tab[4] = { 1, 2, 4, 0 };
   constexpr int dma_volume_tab[2] = { 2, 4 };
 
@@ -182,7 +184,7 @@ void APU::StepMixer(int cycles_late) {
     resampler->Write(sample);
     buffer_mutex.unlock();
 
-    scheduler.Add(256 - (scheduler.GetTimestampNow() & 255), this, &APU::StepMixer);
+    scheduler.Add(256 - (scheduler.GetTimestampNow() & 255), Scheduler::EventClass::APU_mixer);
   } else {
     StereoSample<s16> sample { 0, 0 };
 
@@ -235,17 +237,17 @@ void APU::StepMixer(int cycles_late) {
     const int sample_interval = mmio.bias.GetSampleInterval();
     const int cycles = sample_interval - (scheduler.GetTimestampNow() & (sample_interval - 1));
 
-    scheduler.Add(cycles - cycles_late, this, &APU::StepMixer);
+    scheduler.Add(cycles, Scheduler::EventClass::APU_mixer);
   }
 }
 
-void APU::StepSequencer(int cycles_late) {
+void APU::StepSequencer() {
   mmio.psg1.Tick();
   mmio.psg2.Tick();
   mmio.psg3.Tick();
   mmio.psg4.Tick();
 
-  scheduler.Add(BaseChannel::s_cycles_per_step - cycles_late, this, &APU::StepSequencer);
+  scheduler.Add(BaseChannel::s_cycles_per_step, Scheduler::EventClass::APU_sequencer);
 }
 
 } // namespace nba::core

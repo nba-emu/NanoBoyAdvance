@@ -26,7 +26,7 @@ public:
   void Reset(ResetWaveRAM reset_wave_ram);
   bool IsEnabled() override { return playing && BaseChannel::IsEnabled(); }
   auto GetSample() -> s8 override { return sample; }
-  void Generate(int cycles_late);
+  void Generate();
   auto Read (int offset) -> u8;
   void Write(int offset, u8 value);
 
@@ -49,10 +49,6 @@ private:
 
   Scheduler& scheduler;
   Scheduler::Event* event = nullptr;
-
-  std::function<void(int)> event_cb = [this](int cycles_late) {
-    this->Generate(cycles_late);
-  };
 
   s8 sample = 0;
   bool playing;

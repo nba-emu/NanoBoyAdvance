@@ -154,6 +154,8 @@ struct SaveState {
           u8 shift;
           u8 step;
         } sweep;
+
+        u64 event_uid;
       };
 
       struct QuadChannel : PSG {
@@ -209,6 +211,8 @@ struct SaveState {
       u16 reload;
       u16 control;
     } pending;
+
+    u64 event_uid;
   } timer[4];
 
   struct DMA {
@@ -226,7 +230,8 @@ struct SaveState {
       } latch;
 
       bool is_fifo_dma;
-      u64 enable_event_timestamp;
+
+      u64 event_uid;
     } channels[4];
 
     u8 hblank_set;
@@ -292,6 +297,18 @@ struct SaveState {
   } gpio;
 
   u16 keycnt;
+
+  struct Scheduler {
+    struct Event {
+      u64 key;
+      u64 uid;
+      u64 user_data;
+      u16 event_class;
+    } events[64];
+
+    u8 event_count;
+    u64 next_uid;
+  } scheduler;
 };
 
 } // namespace nba

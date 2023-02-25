@@ -14,6 +14,8 @@ NoiseChannel::NoiseChannel(Scheduler& scheduler, BIAS& bias)
     : BaseChannel(true, false)
     , scheduler(scheduler)
     , bias(bias) {
+  scheduler.Register(Scheduler::EventClass::APU_PSG4_generate, this, &NoiseChannel::Generate);
+  
   Reset();
 }
 
@@ -32,7 +34,7 @@ void NoiseChannel::Reset() {
   event = nullptr;
 }
 
-void NoiseChannel::Generate(int cycles_late) {
+void NoiseChannel::Generate() {
   if (!IsEnabled()) {
     sample = 0;
     event = nullptr;
@@ -80,7 +82,7 @@ void NoiseChannel::Generate(int cycles_late) {
     skip_count = 0;
   }
 
-  event = scheduler.Add(noise_interval - cycles_late, event_cb);
+  event = scheduler.Add(noise_interval, Scheduler::EventClass::APU_PSG4_generate);
 }
 
 auto NoiseChannel::Read(int offset) -> u8 {
@@ -160,7 +162,7 @@ void NoiseChannel::Write(int offset, u8 value) {
           if(event) {
             scheduler.Cancel(event);
           }
-          event = scheduler.Add(GetSynthesisInterval(frequency_ratio, frequency_shift), event_cb);
+          event = scheduler.Add(GetSynthesisInterval(frequency_ratio, frequency_shift), Scheduler::EventClass::APU_PSG4_generate);
         }
 
         static constexpr u16 lfsr_init[] = { 0x4000, 0x0040 };

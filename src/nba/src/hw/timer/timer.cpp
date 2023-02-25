@@ -14,17 +14,22 @@ namespace nba::core {
 static constexpr int g_ticks_shift[4] = { 0, 6, 8, 10 };
 static constexpr int g_ticks_mask[4] = { 0, 0x3F, 0xFF, 0x3FF };
 
+Timer::Timer(Scheduler& scheduler, IRQ& irq, APU& apu)
+    : scheduler(scheduler)
+    , irq(irq)
+    , apu(apu) {
+  scheduler.Register(Scheduler::EventClass::TM_overflow, this, &Timer::OnOverflow);
+  scheduler.Register(Scheduler::EventClass::TM_write_reload, this, &Timer::OnReloadWritten);
+  scheduler.Register(Scheduler::EventClass::TM_write_control, this, &Timer::OnControlWritten);
+
+  Reset();
+}
+
 void Timer::Reset() {
   for (int id = 0; id < 4; id++) {
     auto& channel = channels[id];
     channel = {};
     channel.id = id;
-
-    channel.fn_overflow = [this, id](int cycles_late) {
-      auto& channel = channels[id];
-      OnOverflow(channel);
-      StartChannel(channel, cycles_late);
-    };
   }
 }
 
@@ -71,11 +76,11 @@ void Timer::WriteByte(int chan_id, int offset, u8 value) {
 
   switch (offset) {
     case REG_TMXCNT_L | 0: {
-      WriteReload(channel, (channel.reload & 0xFF00) | (value << 0));
+      WriteReload(channel, (channel.pending.reload & 0xFF00) | (value << 0));
       break;
     }
     case REG_TMXCNT_L | 1: {
-      WriteReload(channel, (channel.reload & 0x00FF) | (value << 8));
+      WriteReload(channel, (channel.pending.reload & 0x00FF) | (value << 8));
       break;
     }
     case REG_TMXCNT_H: {
@@ -133,13 +138,9 @@ auto Timer::ReadCounter(Channel const& channel) -> u16 {
 }
 
 void Timer::WriteReload(Channel& channel, u16 value) {
-  auto id = channel.id;
-
   channel.pending.reload = value;
 
-  scheduler.Add(1, [this, id, value](int late) {  
-    channels[id].reload = value;
-  }, 1);
+  scheduler.Add(1, Scheduler::EventClass::TM_write_reload, 1, channel.id);
 }
 
 auto Timer::ReadControl(Channel const& channel) -> u16 {
@@ -152,43 +153,48 @@ auto Timer::ReadControl(Channel const& channel) -> u16 {
 }
 
 void Timer::WriteControl(Channel& channel, u16 value) {
-  auto id = channel.id;
-
   channel.pending.control = value;
 
-  scheduler.Add(1, [this, id, value](int late) {
-    auto& channel = channels[id];
-    auto& control = channel.control;
-    bool enable_previous = control.enable;
+  scheduler.Add(1, Scheduler::EventClass::TM_write_control, 2, channel.id);
+}
 
-    if (channel.running) {
-      StopChannel(channel);
+void Timer::OnReloadWritten(u64 chan_id) {
+  channels[chan_id].reload = channels[chan_id].pending.reload;
+}
+
+void Timer::OnControlWritten(u64 chan_id) {
+  auto& channel = channels[chan_id];
+  auto& control = channel.control;
+  bool enable_previous = control.enable;
+  u16 value = channel.pending.control;
+
+  if (channel.running) {
+    StopChannel(channel);
+  }
+
+  control.frequency = value & 3;
+  control.interrupt = value & 64;
+  control.enable = value & 128;
+  if (channel.id != 0) {
+    control.cascade = value & 4;
+  }
+
+  channel.shift = g_ticks_shift[control.frequency];
+  channel.mask = g_ticks_mask[control.frequency];
+
+  if (control.enable) {
+    if (!enable_previous) {
+      channel.counter = channel.reload;
     }
 
-    control.frequency = value & 3;
-    control.interrupt = value & 64;
-    control.enable = value & 128;
-    if (channel.id != 0) {
-      control.cascade = value & 4;
-    }
-
-    channel.shift = g_ticks_shift[control.frequency];
-    channel.mask = g_ticks_mask[control.frequency];
-
-    if (control.enable) {
+    if (!control.cascade) {
+      auto late = (scheduler.GetTimestampNow() & channel.mask);
       if (!enable_previous) {
-        channel.counter = channel.reload;
+        late -= 1;
       }
-
-      if (!control.cascade) {
-        auto late = (scheduler.GetTimestampNow() & channel.mask);
-        if (!enable_previous) {
-          late -= 1;
-        }
-        StartChannel(channel, late);
-      }
+      StartChannel(channel, late);
     }
-  }, 2);
+  }
 }
 
 void Timer::RecalculateSampleRates() {
@@ -210,18 +216,18 @@ auto Timer::GetCounterDeltaSinceLastUpdate(Channel const& channel) -> u32 {
   return (scheduler.GetTimestampNow() - channel.timestamp_started) >> channel.shift;
 }
 
-void Timer::StartChannel(Channel& channel, int cycles_late) {
-  int cycles = int((0x10000 - channel.counter) << channel.shift) - cycles_late;
+void Timer::StartChannel(Channel& channel, int cycle_offset) {
+  int cycles = int((0x10000 - channel.counter) << channel.shift) - cycle_offset;
 
   channel.running = true;
-  channel.timestamp_started = scheduler.GetTimestampNow() - cycles_late;
-  channel.event_overflow = scheduler.Add(cycles, channel.fn_overflow);
+  channel.timestamp_started = scheduler.GetTimestampNow() - cycle_offset;
+  channel.event_overflow = scheduler.Add(cycles, Scheduler::EventClass::TM_overflow, 0, channel.id);
 }
 
 void Timer::StopChannel(Channel& channel) {
   channel.counter += GetCounterDeltaSinceLastUpdate(channel);
   if (channel.counter >= 0x10000) {
-    OnOverflow(channel);
+    ReloadCascadeAndRequestIRQ(channel);
   }
 
   scheduler.Cancel(channel.event_overflow);
@@ -229,7 +235,7 @@ void Timer::StopChannel(Channel& channel) {
   channel.running = false;
 }
 
-void Timer::OnOverflow(Channel& channel) {
+void Timer::ReloadCascadeAndRequestIRQ(Channel& channel) {
   channel.counter = channel.reload;
 
   if (channel.control.interrupt) {
@@ -243,9 +249,16 @@ void Timer::OnOverflow(Channel& channel) {
   if (channel.id != 3) {
     auto& next_channel = channels[channel.id + 1];
     if (next_channel.control.enable && next_channel.control.cascade && ++next_channel.counter == 0x10000) {
-      OnOverflow(next_channel);
+      ReloadCascadeAndRequestIRQ(next_channel);
     }
   }
+}
+
+void Timer::OnOverflow(u64 chan_id) {
+  auto& channel = channels[chan_id];
+
+  ReloadCascadeAndRequestIRQ(channel);
+  StartChannel(channel, 0);
 }
 
 } // namespace nba::core

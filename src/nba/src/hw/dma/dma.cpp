@@ -68,6 +68,15 @@ static constexpr char const* g_dma_time_name[] = {
   "audio"
 };
 
+DMA::DMA(Bus& bus, IRQ& irq, Scheduler& scheduler)
+    : bus(bus)
+    , irq(irq)
+    , scheduler(scheduler) {
+  scheduler.Register(Scheduler::EventClass::DMA_activated, this, &DMA::OnActivated);
+
+  Reset();
+}
+
 void DMA::Reset() {
   active_dma_id = g_dma_none_id;
   should_reenter_transfer_loop = false;
@@ -82,25 +91,27 @@ void DMA::Reset() {
   }
 }
 
-void DMA::ScheduleDMAs(unsigned int bitset, int delay) {
+void DMA::ScheduleDMAs(unsigned int bitset) {
   while (bitset != 0) {
     auto chan_id = g_dma_from_bitset[bitset];
 
     bitset &= ~(1 << chan_id);
 
-    channels[chan_id].enable_event = scheduler.Add(delay, [this, chan_id](int cycles_late) {
-      channels[chan_id].enable_event = nullptr;
-
-      if (runnable_set.none()) {
-        active_dma_id = chan_id;
-      } else if (chan_id < active_dma_id) {
-        active_dma_id = chan_id;
-        should_reenter_transfer_loop = true;
-      }
-
-      runnable_set.set(chan_id, true);      
-    });
+    channels[chan_id].event = scheduler.Add(2, Scheduler::EventClass::DMA_activated, 0, chan_id);
   }
+}
+
+void DMA::OnActivated(u64 chan_id) {
+  channels[chan_id].event = nullptr;
+
+  if (runnable_set.none()) {
+    active_dma_id = chan_id;
+  } else if (chan_id < active_dma_id) {
+    active_dma_id = chan_id;
+    should_reenter_transfer_loop = true;
+  }
+
+  runnable_set.set(chan_id, true);
 }
 
 void DMA::SelectNextDMA() {
@@ -400,7 +411,7 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
       // DMA enable bit: 1 -> 1 (remains set)
 
       // Note: the DMA isn't really running, while it is still enabling.
-      if (channel.enable_event == nullptr) {
+      if (channel.event == nullptr) {
         AddChannelToDMASet(channel);
 
         /* When the config register of a DMA is written while it is running,
@@ -417,10 +428,10 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
     runnable_set.set(channel.id, false);
 
     // Handle disabling the DMA before it started up.
-    if (channel.enable_event != nullptr) {
+    if (channel.event != nullptr) {
       // TODO: figure out exact hardware behaviour.
-      scheduler.Cancel(channel.enable_event);
-      channel.enable_event = nullptr;
+      scheduler.Cancel(channel.event);
+      channel.event = nullptr;
 
       Log<Warn>("DMA: disabled DMA{0} while it was starting.", channel.id);
     }

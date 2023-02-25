@@ -10,29 +10,86 @@
 #include <nba/log.hpp>
 #include <nba/common/compiler.hpp>
 #include <nba/integer.hpp>
+#include <nba/save_state.hpp>
 #include <functional>
 #include <limits>
 
 namespace nba::core {
 
-struct Scheduler {  
+struct Scheduler {
   template<class T>
-  using EventMethod = void (T::*)(int);
+  using EventMethod = void (T::*)();
+
+  template<class T>
+  using EventMethodWithUserData = void (T::*)(u64);
+
+  enum class EventClass : u16 {
+    // ARM
+    ARM_ldm_usermode_conflict,
+
+    // PPU
+    PPU_hdraw_vdraw,
+    PPU_hblank_vdraw,
+    PPU_hblank_irq_vdraw,
+    PPU_hdraw_vblank,
+    PPU_hblank_vblank,
+    PPU_hblank_irq_vblank,
+    PPU_begin_sprite_fetch,
+    PPU_video_dma,
+    PPU_hblank_dma,
+    PPU_latch_dispcnt,
+
+    // APU
+    APU_mixer,
+    APU_sequencer,
+    APU_PSG1_generate,
+    APU_PSG2_generate,
+    APU_PSG3_generate,
+    APU_PSG4_generate,
+
+    // IRQ controller
+    IRQ_synchronizer_delay,
+
+    // Timers
+    TM_overflow,
+    TM_write_reload,
+    TM_write_control,
+
+    // DMA
+    DMA_activated,
+
+    EndOfQueue,
+    Count
+  };
 
   struct Event {
-    std::function<void(int)> callback;
     u64 timestamp; 
+
+    u64 UID() const { return uid; }
+  
   private:
     friend class Scheduler;
     int handle;
     u64 key;
+    u64 uid;
+    u64 user_data;
+    EventClass event_class;
   };
 
   Scheduler() {
-    for (int i = 0; i < kMaxEvents; i++) {
+    Register(EventClass::EndOfQueue, this, &Scheduler::EndOfQueue);
+
+    for(int i = 0; i < kMaxEvents; i++) {
       heap[i] = new Event();
       heap[i]->handle = i;
     }
+
+    for(int i = 0; i < (int)EventClass::Count; i++) {
+      callbacks[i] = [i](u64 user_data) {
+        Assert(false, "Scheduler: unhandled event class: {}", i);
+      };
+    }
+
     Reset();
   }
 
@@ -45,9 +102,9 @@ struct Scheduler {
   void Reset() {
     heap_size = 0;
     timestamp_now = 0;
-    Add(std::numeric_limits<u64>::max(), [](int) {
-      Assert(false, "Scheduler: reached end of the event queue.");
-    });
+    next_uid = 1;
+
+    Add(std::numeric_limits<u64>::max(), EventClass::EndOfQueue);
   }
 
   auto GetTimestampNow() const -> u64 {
@@ -72,7 +129,21 @@ struct Scheduler {
     timestamp_now = timestamp_next;
   }
 
-  auto Add(u64 delay, std::function<void(int)> callback, uint priority = 0) -> Event* {
+  template<class T>
+  void Register(EventClass event_class, T* object, EventMethod<T> method, uint priority = 0) {
+    callbacks[(int)event_class] = [object, method](u64 user_data) {
+      (object->*method)();
+    };
+  }
+
+  template<class T>
+  void Register(EventClass event_class, T* object, EventMethodWithUserData<T> method, uint priority = 0) {
+    callbacks[(int)event_class] = [object, method](u64 user_data) {
+      (object->*method)(user_data);
+    };
+  }
+
+  auto Add(u64 delay, EventClass event_class, uint priority = 0, u64 user_data = 0) -> Event* {
     int n = heap_size++;
     int p = Parent(n);
 
@@ -86,7 +157,9 @@ struct Scheduler {
     auto event = heap[n];
     event->timestamp = GetTimestampNow() + delay;
     event->key = (event->timestamp << 2) | priority;
-    event->callback = callback;
+    event->uid = next_uid++;
+    event->user_data = user_data;
+    event->event_class = event_class;
 
     while (n != 0 && heap[p]->key > heap[n]->key) {
       Swap(n, p);
@@ -108,6 +181,55 @@ struct Scheduler {
     Remove(event->handle);
   }
 
+  auto GetEventByUID(u64 uid) -> Event* {
+    for(int i = 0; i < heap_size; i++) {
+      auto event = heap[i];
+
+      if(event->uid == uid) {
+        return event;
+      }
+    }
+
+    return nullptr;
+  }
+
+  void LoadState(SaveState const& state) {
+    auto& ss_scheduler = state.scheduler;
+
+    for(int i = 0; i < ss_scheduler.event_count; i++) {
+      auto& event = ss_scheduler.events[i];
+
+      u64 timestamp = event.key >> 2;
+      int priority = event.key & 3;
+      u64 uid = event.uid;
+      u64 user_data = event.user_data;
+      EventClass event_class = (EventClass)event.event_class;
+
+      // This event already was created on Scheduler::Reset()
+      if(event_class == EventClass::EndOfQueue) {
+        continue;
+      }
+
+      Add(timestamp - state.timestamp, event_class, priority, user_data)->uid = uid;
+    }
+
+    // This must happen after deserializing all events, because calling Add() modifies `next_uid`.
+    next_uid = ss_scheduler.next_uid;
+  }
+
+  void CopyState(SaveState& state) {
+    auto& ss_scheduler = state.scheduler;
+
+    for(int i = 0; i < heap_size; i++) {
+      auto event = heap[i];
+
+      ss_scheduler.events[i] = { event->key, event->uid, event->user_data, (u16)event->event_class };
+    }
+
+    ss_scheduler.event_count = heap_size;
+    ss_scheduler.next_uid = next_uid;
+  }
+
 private:
   static constexpr int kMaxEvents = 64;
 
@@ -119,7 +241,7 @@ private:
     while (heap[0]->timestamp <= timestamp_next && heap_size > 0) {
       auto event = heap[0];
       timestamp_now = event->timestamp;
-      event->callback(0);
+      callbacks[(int)event->event_class](event->user_data);
       Remove(event->handle);
     }
   }
@@ -162,9 +284,20 @@ private:
     }
   }
 
+  void EndOfQueue() {
+    Assert(false, "Scheduler: reached end of the event queue.");
+  }
+
   Event* heap[kMaxEvents];
   int heap_size;
   u64 timestamp_now;
+  u64 next_uid;
+
+  std::function<void(u64)> callbacks[(int)EventClass::Count];
 };
+
+inline u64 GetEventUID(Scheduler::Event* event) {
+  return event ? event->UID() : 0;
+}
 
 } // namespace nba::core

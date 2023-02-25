@@ -20,6 +20,19 @@ PPU::PPU(
     , irq(irq)
     , dma(dma)
     , config(config) {
+  scheduler.Register(Scheduler::EventClass::PPU_hdraw_vdraw, this, &PPU::OnHblankComplete);
+  scheduler.Register(Scheduler::EventClass::PPU_hblank_vdraw, this, &PPU::OnScanlineComplete);
+  scheduler.Register(Scheduler::EventClass::PPU_hblank_irq_vdraw, this, &PPU::OnHblankIRQTest);
+
+  scheduler.Register(Scheduler::EventClass::PPU_hdraw_vblank, this, &PPU::OnVblankHblankComplete);
+  scheduler.Register(Scheduler::EventClass::PPU_hblank_vblank, this, &PPU::OnVblankScanlineComplete);
+  scheduler.Register(Scheduler::EventClass::PPU_hblank_irq_vblank, this, &PPU::OnVblankHblankIRQTest);
+
+  scheduler.Register(Scheduler::EventClass::PPU_begin_sprite_fetch, this, &PPU::StupidSpriteEventHandler);
+  scheduler.Register(Scheduler::EventClass::PPU_latch_dispcnt, this, &PPU::LatchDISPCNT);
+  scheduler.Register(Scheduler::EventClass::PPU_video_dma, this, &PPU::RequestVideoDMA);
+  scheduler.Register(Scheduler::EventClass::PPU_hblank_dma, this, &PPU::RequestHblankDMA);
+
   mmio.dispcnt.ppu = this;
   mmio.dispstat.ppu = this;
   Reset();
@@ -71,11 +84,11 @@ void PPU::Reset() {
   mmio.vcount = 225;
   mmio.dispstat.vblank_flag = true;
   mmio.dispstat.hblank_flag = true;
-  scheduler.Add(226, this, &PPU::OnVblankHblankComplete);
+  scheduler.Add(226, Scheduler::EventClass::PPU_hdraw_vblank);
 
   // To keep the state machine simple, we run sprite engine
   // from a separate event loop.
-  scheduler.Add(266, this, &PPU::StupidSpriteEventHandler);
+  scheduler.Add(266, Scheduler::EventClass::PPU_begin_sprite_fetch);
 
   // @todo: initialize window with the appropriate timing.
   bg = {};
@@ -87,7 +100,7 @@ void PPU::Reset() {
   dma3_video_transfer_running = false;
 }
 
-void PPU::StupidSpriteEventHandler(int cycles) {
+void PPU::StupidSpriteEventHandler() {
   if(mmio.vcount <= 159) {
     DrawSprite();
   }
@@ -96,7 +109,7 @@ void PPU::StupidSpriteEventHandler(int cycles) {
     InitSprite();
   }
 
-  scheduler.Add(1232, this, &PPU::StupidSpriteEventHandler);
+  scheduler.Add(1232, Scheduler::EventClass::PPU_begin_sprite_fetch);
 }
 
 void PPU::LatchDISPCNT() {
@@ -123,34 +136,28 @@ void PPU::UpdateVideoTransferDMA() {
     if (vcount == 162) {
       dma.StopVideoTransferDMA();
     } else if (vcount >= 2 && vcount < 162) {
-      scheduler.Add(9, [this](int late) {
-        dma.Request(DMA::Occasion::Video);
-      });
+      scheduler.Add(9, Scheduler::EventClass::PPU_video_dma);
     }
   }
 }
 
-void PPU::OnScanlineComplete(int cycles_late) {
+void PPU::OnScanlineComplete() {
   mmio.dispstat.hblank_flag = 1;
 
-  // TODO: fix these timings properly eventually.
-  scheduler.Add(1, [this](int) {
-    dma.Request(DMA::Occasion::HBlank);
-  });
-
-  scheduler.Add(2 - cycles_late, this, &PPU::OnHblankIRQTest);
+  scheduler.Add(1, Scheduler::EventClass::PPU_hblank_dma);
+  scheduler.Add(2, Scheduler::EventClass::PPU_hblank_irq_vdraw);
 }
 
-void PPU::OnHblankIRQTest(int cycles_late) {
+void PPU::OnHblankIRQTest() {
   // TODO: confirm that the enable-bit is checked at 1010 and not 1006 cycles.
   if (mmio.dispstat.hblank_irq_enable) {
     irq.Raise(IRQ::Source::HBlank);
   }
 
-  scheduler.Add(224 - cycles_late, this, &PPU::OnHblankComplete);
+  scheduler.Add(224, Scheduler::EventClass::PPU_hdraw_vdraw);
 }
 
-void PPU::OnHblankComplete(int cycles_late) {
+void PPU::OnHblankComplete() {
   auto& dispcnt = mmio.dispcnt;
   auto& dispstat = mmio.dispstat;
   auto& vcount = mmio.vcount;
@@ -161,9 +168,7 @@ void PPU::OnHblankComplete(int cycles_late) {
   DrawWindow();
   DrawMerge();
 
-  scheduler.Add(40, [this](int) {
-    LatchDISPCNT();
-  });
+  scheduler.Add(40, Scheduler::EventClass::PPU_latch_dispcnt);
 
   dispstat.hblank_flag = 0;
   vcount++;
@@ -172,9 +177,7 @@ void PPU::OnHblankComplete(int cycles_late) {
   UpdateVideoTransferDMA();
 
   if (vcount == 160) {
-    // ScheduleSubmitScanline();
-
-    scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
+    scheduler.Add(1006, Scheduler::EventClass::PPU_hblank_vblank);
     dma.Request(DMA::Occasion::VBlank);
     dispstat.vblank_flag = 1;
 
@@ -191,31 +194,30 @@ void PPU::OnHblankComplete(int cycles_late) {
     InitBackground();
     InitMerge();
 
-    scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
-    // ScheduleSubmitScanline();
+    scheduler.Add(1006, Scheduler::EventClass::PPU_hblank_vdraw);
   }
 
   InitWindow();
 }
 
-void PPU::OnVblankScanlineComplete(int cycles_late) {
+void PPU::OnVblankScanlineComplete() {
   auto& dispstat = mmio.dispstat;
 
   dispstat.hblank_flag = 1;
 
-  scheduler.Add(2 - cycles_late, this, &PPU::OnVblankHblankIRQTest);
+  scheduler.Add(2, Scheduler::EventClass::PPU_hblank_irq_vblank);
 }
 
-void PPU::OnVblankHblankIRQTest(int cycles_late) {
+void PPU::OnVblankHblankIRQTest() {
   // TODO: confirm that the enable-bit is checked at 1010 and not 1006 cycles.
   if (mmio.dispstat.hblank_irq_enable) {
     irq.Raise(IRQ::Source::HBlank);
   }
 
-  scheduler.Add(224 - cycles_late, this, &PPU::OnVblankHblankComplete);
+  scheduler.Add(224, Scheduler::EventClass::PPU_hdraw_vblank);
 }
 
-void PPU::OnVblankHblankComplete(int cycles_late) {
+void PPU::OnVblankHblankComplete() {
   auto& vcount = mmio.vcount;
   auto& dispstat = mmio.dispstat;
 
@@ -233,13 +235,11 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
   }
 
   if(vcount >= 224) {
-    scheduler.Add(40, [this](int) {
-      LatchDISPCNT();
-    });
+    scheduler.Add(40, Scheduler::EventClass::PPU_latch_dispcnt);
   }
 
   if (vcount == 227) {
-    scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
+    scheduler.Add(1006, Scheduler::EventClass::PPU_hblank_vdraw);
     vcount = 0;
 
     config->video_dev->Draw(output[frame]);
@@ -248,7 +248,7 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
     InitBackground();
     InitMerge();
   } else {
-    scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
+    scheduler.Add(1006, Scheduler::EventClass::PPU_hblank_vblank);
     
     if (++vcount == 227) {
       dispstat.vblank_flag = 0;
@@ -256,10 +256,17 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
   }
 
   CheckVerticalCounterIRQ();
-  // ScheduleSubmitScanline();
   UpdateVideoTransferDMA();
 
   InitWindow();
+}
+
+void PPU::RequestVideoDMA() {
+  dma.Request(DMA::Occasion::Video);
+}
+
+void PPU::RequestHblankDMA() {
+  dma.Request(DMA::Occasion::HBlank);
 }
 
 } // namespace nba::core

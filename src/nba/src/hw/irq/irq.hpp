@@ -33,6 +33,8 @@ struct IRQ {
   IRQ(arm::ARM7TDMI& cpu, Scheduler& scheduler)
       : cpu(cpu)
       , scheduler(scheduler) {
+    scheduler.Register(Scheduler::EventClass::IRQ_synchronizer_delay, this, &IRQ::OnIRQDelayPassed);
+
     Reset();
   }
 
@@ -62,6 +64,8 @@ private:
   };
 
   void UpdateIRQLine(int event_priority);
+
+  void OnIRQDelayPassed(u64 irq_line);
 
   int reg_ime;
   u16 reg_ie;

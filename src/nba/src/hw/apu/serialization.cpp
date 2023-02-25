@@ -32,16 +32,6 @@ void APU::LoadState(SaveState const& state) {
 
   resolution_old = state.apu.resolution_old;
 
-  int mix_event_cycles = mmio.bias.GetSampleInterval();
-  int seq_event_cycles = BaseChannel::s_cycles_per_step;
-
-  // This works because these numbers are powers-of-two:
-  mix_event_cycles -= state.timestamp & (mix_event_cycles - 1);
-  seq_event_cycles -= state.timestamp & (seq_event_cycles - 1);
-
-  scheduler.Add(mix_event_cycles, this, &APU::StepMixer);
-  scheduler.Add(seq_event_cycles, this, &APU::StepSequencer);
-
   // We are simply resetting the MP2K mixer for now,
   // there probably is no need to do complicated (de)serialization.
   mp2k.Reset();
@@ -131,11 +121,7 @@ void QuadChannel::LoadState(SaveState::APU::IO::QuadChannel const& state) {
   phase = state.phase;
   wave_duty = state.wave_duty;
   sample = state.sample;
-
-  if (dac_enable && IsEnabled()) {
-    // TODO: properly align event to system clock.
-    scheduler.Add(GetSynthesisIntervalFromFrequency(sweep.current_freq), event_cb);
-  }
+  event = scheduler.GetEventByUID(state.event_uid);
 }
 
 void QuadChannel::CopyState(SaveState::APU::IO::QuadChannel& state) {
@@ -145,6 +131,7 @@ void QuadChannel::CopyState(SaveState::APU::IO::QuadChannel& state) {
   state.phase = phase;
   state.wave_duty = wave_duty;
   state.sample = sample;
+  state.event_uid = GetEventUID(event);
 }
 
 void WaveChannel::LoadState(SaveState::APU::IO::WaveChannel const& state) {
@@ -157,13 +144,9 @@ void WaveChannel::LoadState(SaveState::APU::IO::WaveChannel const& state) {
   frequency = state.frequency;
   dimension = state.dimension;
   wave_bank = state.wave_bank;
+  event = scheduler.GetEventByUID(state.event_uid);
 
   std::memcpy(wave_ram, state.wave_ram, sizeof(wave_ram));
-
-  if (BaseChannel::IsEnabled()) {
-    // TODO: properly align event to system clock.
-    scheduler.Add(GetSynthesisIntervalFromFrequency(frequency), event_cb);
-  }
 }
 
 void WaveChannel::CopyState(SaveState::APU::IO::WaveChannel& state) {
@@ -176,6 +159,7 @@ void WaveChannel::CopyState(SaveState::APU::IO::WaveChannel& state) {
   state.frequency = frequency;
   state.dimension = dimension;
   state.wave_bank = wave_bank;
+  state.event_uid = GetEventUID(event);
 
   std::memcpy(state.wave_ram, wave_ram, sizeof(wave_ram));
 }
@@ -187,12 +171,7 @@ void NoiseChannel::LoadState(SaveState::APU::IO::NoiseChannel const& state) {
   frequency_shift = state.frequency_shift;
   frequency_ratio = state.frequency_ratio;
   width = state.width;
-
-  if (dac_enable && IsEnabled()) {
-    // TODO: properly handle skip count and properly align event to system clock.
-    skip_count = 0;
-    scheduler.Add(GetSynthesisInterval(frequency_ratio, frequency_shift), event_cb);
-  }
+  event = scheduler.GetEventByUID(state.event_uid);
 }
 
 void NoiseChannel::CopyState(SaveState::APU::IO::NoiseChannel& state) {
@@ -202,6 +181,7 @@ void NoiseChannel::CopyState(SaveState::APU::IO::NoiseChannel& state) {
   state.frequency_shift = frequency_shift;
   state.frequency_ratio = frequency_ratio;
   state.width = width;
+  state.event_uid = GetEventUID(event);
 }
 
 } // namespace nba::core

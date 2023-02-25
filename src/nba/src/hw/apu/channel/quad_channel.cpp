@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2023 fleroviux
- *
+ *<<
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
  */
@@ -9,9 +9,12 @@
 
 namespace nba::core {
 
-QuadChannel::QuadChannel(Scheduler& scheduler)
+QuadChannel::QuadChannel(Scheduler& scheduler, Scheduler::EventClass event_class)
     : BaseChannel(true, true)
-    , scheduler(scheduler) {
+    , scheduler(scheduler)
+    , event_class(event_class) {
+  scheduler.Register(event_class, this, &QuadChannel::Generate);
+
   Reset();
 }
 
@@ -24,7 +27,7 @@ void QuadChannel::Reset() {
   event = nullptr;
 }
 
-void QuadChannel::Generate(int cycles_late) {
+void QuadChannel::Generate() {
   if (!IsEnabled()) {
     sample = 0;
     event = nullptr;
@@ -45,7 +48,7 @@ void QuadChannel::Generate(int cycles_late) {
   }
   phase = (phase + 1) % 8;
 
-  event = scheduler.Add(GetSynthesisIntervalFromFrequency(sweep.current_freq) - cycles_late, event_cb);
+  event = scheduler.Add(GetSynthesisIntervalFromFrequency(sweep.current_freq), event_class);
 }
 
 auto QuadChannel::Read(int offset) -> u8 {
@@ -139,7 +142,7 @@ void QuadChannel::Write(int offset, u8 value) {
           if(event) {
             scheduler.Cancel(event);
           }
-          event = scheduler.Add(GetSynthesisIntervalFromFrequency(sweep.current_freq), event_cb);
+          event = scheduler.Add(GetSynthesisIntervalFromFrequency(sweep.current_freq), event_class);
         }
         phase = 0;
         Restart();
