@@ -91,13 +91,13 @@ void DMA::Reset() {
   }
 }
 
-void DMA::ScheduleDMAs(unsigned int bitset, int delay) {
+void DMA::ScheduleDMAs(unsigned int bitset) {
   while (bitset != 0) {
     auto chan_id = g_dma_from_bitset[bitset];
 
     bitset &= ~(1 << chan_id);
 
-    channels[chan_id].event = scheduler.Add(delay, Scheduler::EventClass::DMA_activated, 0, chan_id);
+    channels[chan_id].event = scheduler.Add(2, Scheduler::EventClass::DMA_activated, 0, chan_id);
   }
 }
 

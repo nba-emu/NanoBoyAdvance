@@ -43,6 +43,7 @@ void DMA::LoadState(SaveState const& state) {
     channel_dst.latch.bus = channel_src.latch.bus;
 
     channel_dst.is_fifo_dma = channel_src.is_fifo_dma;
+
     channel_dst.event = scheduler.GetEventByUID(channel_src.event_uid);
   }
 }
@@ -77,6 +78,7 @@ void DMA::CopyState(SaveState& state) {
     channel_dst.latch.bus = channel_src.latch.bus;
 
     channel_dst.is_fifo_dma = channel_src.is_fifo_dma;
+
     channel_dst.event_uid = GetEventUID(channel_src.event);
   }
 }
