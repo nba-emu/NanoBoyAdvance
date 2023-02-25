@@ -29,6 +29,9 @@ struct Scheduler {
   enum class EventClass : u16 {
     Unknown,
 
+    // ARM
+    ARM_ldm_usermode_conflict,
+
     // PPU
     PPU_hdraw_vdraw,
     PPU_hblank_vdraw,

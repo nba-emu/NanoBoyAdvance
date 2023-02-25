@@ -24,6 +24,8 @@ struct ARM7TDMI {
   ARM7TDMI(Scheduler& scheduler, Bus& bus)
       : scheduler(scheduler)
       , bus(bus) {
+    scheduler.Register(Scheduler::EventClass::ARM_ldm_usermode_conflict, this, &ARM7TDMI::ClearLDMUsermodeConflictFlag);
+
     Reset();
   }
 
@@ -257,6 +259,10 @@ private:
     }
 
     return BANK_INVALID;
+  }
+
+  void ClearLDMUsermodeConflictFlag() {
+    ldm_usermode_conflict = false;
   }
 
   #include "handlers/arithmetic.inl"
