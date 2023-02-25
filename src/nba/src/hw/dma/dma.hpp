@@ -105,7 +105,7 @@ private:
     return page;
   }
 
-  void ScheduleDMAs(unsigned int bitset, int delay);
+  void ScheduleDMAs(unsigned int bitset);
   void OnActivated(u64 chan_id);
 
   void SelectNextDMA();
