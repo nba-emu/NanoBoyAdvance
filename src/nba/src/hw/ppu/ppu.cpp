@@ -22,25 +22,25 @@ PPU::PPU(
     , config(config) {
   // @todo: get rid of the wrapper jank
   scheduler.Register(Scheduler::EventClass::PPU_hdraw_vdraw, [this]() {
-    OnHblankComplete(0);
+    OnHblankComplete();
   });
   scheduler.Register(Scheduler::EventClass::PPU_hblank_vdraw, [this]() {
-    OnScanlineComplete(0);
+    OnScanlineComplete();
   });
   scheduler.Register(Scheduler::EventClass::PPU_hblank_irq_vdraw, [this]() {
-    OnHblankIRQTest(0);
+    OnHblankIRQTest();
   });
   scheduler.Register(Scheduler::EventClass::PPU_hdraw_vblank, [this]() {
-    OnVblankHblankComplete(0);
+    OnVblankHblankComplete();
   });
   scheduler.Register(Scheduler::EventClass::PPU_hblank_vblank, [this]() {
-    OnVblankScanlineComplete(0);
+    OnVblankScanlineComplete();
   });
   scheduler.Register(Scheduler::EventClass::PPU_hblank_irq_vblank, [this]() {
-    OnVblankHblankIRQTest(0);
+    OnVblankHblankIRQTest();
   });
   scheduler.Register(Scheduler::EventClass::PPU_begin_sprite_fetch, [this]() {
-    StupidSpriteEventHandler(0);
+    StupidSpriteEventHandler();
   });
 
   mmio.dispcnt.ppu = this;
@@ -110,7 +110,7 @@ void PPU::Reset() {
   dma3_video_transfer_running = false;
 }
 
-void PPU::StupidSpriteEventHandler(int cycles) {
+void PPU::StupidSpriteEventHandler() {
   if(mmio.vcount <= 159) {
     DrawSprite();
   }
@@ -153,7 +153,7 @@ void PPU::UpdateVideoTransferDMA() {
   }
 }
 
-void PPU::OnScanlineComplete(int cycles_late) {
+void PPU::OnScanlineComplete() {
   mmio.dispstat.hblank_flag = 1;
 
   // TODO: fix these timings properly eventually.
@@ -161,19 +161,19 @@ void PPU::OnScanlineComplete(int cycles_late) {
     dma.Request(DMA::Occasion::HBlank);
   });
 
-  scheduler.Add(2 - cycles_late, Scheduler::EventClass::PPU_hblank_irq_vdraw);
+  scheduler.Add(2, Scheduler::EventClass::PPU_hblank_irq_vdraw);
 }
 
-void PPU::OnHblankIRQTest(int cycles_late) {
+void PPU::OnHblankIRQTest() {
   // TODO: confirm that the enable-bit is checked at 1010 and not 1006 cycles.
   if (mmio.dispstat.hblank_irq_enable) {
     irq.Raise(IRQ::Source::HBlank);
   }
 
-  scheduler.Add(224 - cycles_late, Scheduler::EventClass::PPU_hdraw_vdraw);
+  scheduler.Add(224, Scheduler::EventClass::PPU_hdraw_vdraw);
 }
 
-void PPU::OnHblankComplete(int cycles_late) {
+void PPU::OnHblankComplete() {
   auto& dispcnt = mmio.dispcnt;
   auto& dispstat = mmio.dispstat;
   auto& vcount = mmio.vcount;
@@ -197,7 +197,7 @@ void PPU::OnHblankComplete(int cycles_late) {
   if (vcount == 160) {
     // ScheduleSubmitScanline();
 
-    scheduler.Add(1006 - cycles_late, Scheduler::EventClass::PPU_hblank_vblank);
+    scheduler.Add(1006, Scheduler::EventClass::PPU_hblank_vblank);
     dma.Request(DMA::Occasion::VBlank);
     dispstat.vblank_flag = 1;
 
@@ -214,31 +214,31 @@ void PPU::OnHblankComplete(int cycles_late) {
     InitBackground();
     InitMerge();
 
-    scheduler.Add(1006 - cycles_late, Scheduler::EventClass::PPU_hblank_vdraw);
+    scheduler.Add(1006, Scheduler::EventClass::PPU_hblank_vdraw);
     // ScheduleSubmitScanline();
   }
 
   InitWindow();
 }
 
-void PPU::OnVblankScanlineComplete(int cycles_late) {
+void PPU::OnVblankScanlineComplete() {
   auto& dispstat = mmio.dispstat;
 
   dispstat.hblank_flag = 1;
 
-  scheduler.Add(2 - cycles_late, Scheduler::EventClass::PPU_hblank_irq_vblank);
+  scheduler.Add(2, Scheduler::EventClass::PPU_hblank_irq_vblank);
 }
 
-void PPU::OnVblankHblankIRQTest(int cycles_late) {
+void PPU::OnVblankHblankIRQTest() {
   // TODO: confirm that the enable-bit is checked at 1010 and not 1006 cycles.
   if (mmio.dispstat.hblank_irq_enable) {
     irq.Raise(IRQ::Source::HBlank);
   }
 
-  scheduler.Add(224 - cycles_late, Scheduler::EventClass::PPU_hdraw_vblank);
+  scheduler.Add(224, Scheduler::EventClass::PPU_hdraw_vblank);
 }
 
-void PPU::OnVblankHblankComplete(int cycles_late) {
+void PPU::OnVblankHblankComplete() {
   auto& vcount = mmio.vcount;
   auto& dispstat = mmio.dispstat;
 
@@ -262,7 +262,7 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
   }
 
   if (vcount == 227) {
-    scheduler.Add(1006 - cycles_late, Scheduler::EventClass::PPU_hblank_vdraw);
+    scheduler.Add(1006, Scheduler::EventClass::PPU_hblank_vdraw);
     vcount = 0;
 
     config->video_dev->Draw(output[frame]);
@@ -271,7 +271,7 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
     InitBackground();
     InitMerge();
   } else {
-    scheduler.Add(1006 - cycles_late, Scheduler::EventClass::PPU_hblank_vblank);
+    scheduler.Add(1006, Scheduler::EventClass::PPU_hblank_vblank);
     
     if (++vcount == 227) {
       dispstat.vblank_flag = 0;

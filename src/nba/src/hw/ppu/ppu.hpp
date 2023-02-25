@@ -221,12 +221,12 @@ private:
   void CheckVerticalCounterIRQ();
   void UpdateVideoTransferDMA();
 
-  void OnScanlineComplete(int cycles_late);
-  void OnHblankIRQTest(int cycles_late);
-  void OnHblankComplete(int cycles_late);
-  void OnVblankScanlineComplete(int cycles_late);
-  void OnVblankHblankIRQTest(int cycles_late);
-  void OnVblankHblankComplete(int cycles_late);
+  void OnScanlineComplete();
+  void OnHblankIRQTest();
+  void OnHblankComplete();
+  void OnVblankScanlineComplete();
+  void OnVblankHblankIRQTest();
+  void OnVblankHblankComplete();
 
   struct Background {
     u64 timestamp_init = 0;
@@ -332,7 +332,7 @@ private:
   void DrawSpriteImpl(int cycles);
   void DrawSpriteFetchOAM(uint cycle);
   void DrawSpriteFetchVRAM(uint cycle);
-  void StupidSpriteEventHandler(int cycles);
+  void StupidSpriteEventHandler();
 
   struct Window {
     u64 timestamp_last_sync;
