@@ -622,9 +622,7 @@ void ARM_BlockDataTransfer(u32 instruction) {
        * register accesses will go to both the user bank and original bank.
        */
       ldm_usermode_conflict = true;
-      scheduler.Add(2, [this](int late) {
-        ldm_usermode_conflict = false;
-      });
+      scheduler.Add(2, Scheduler::EventClass::ARM_ldm_usermode_conflict);
     }
 
     if (transfer_pc) {

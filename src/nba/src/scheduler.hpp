@@ -18,17 +18,12 @@ namespace nba::core {
 
 struct Scheduler {
   template<class T>
-  using EventMethod = void (T::*)(int);
+  using EventMethod = void (T::*)();
 
   template<class T>
-  using EventMethod2 = void (T::*)();
-
-  template<class T>
-  using EventMethod3 = void (T::*)(u64);
+  using EventMethodWithUserData = void (T::*)(u64);
 
   enum class EventClass : u16 {
-    Unknown,
-
     // ARM
     ARM_ldm_usermode_conflict,
 
@@ -63,11 +58,11 @@ struct Scheduler {
     // DMA
     DMA_activated,
 
+    EndOfQueue,
     Count
   };
 
   struct Event {
-    std::function<void(int)> callback;
     u64 timestamp; 
 
     u64 UID() const { return uid; }
@@ -82,6 +77,8 @@ struct Scheduler {
   };
 
   Scheduler() {
+    Register(EventClass::EndOfQueue, this, &Scheduler::EndOfQueue);
+
     for(int i = 0; i < kMaxEvents; i++) {
       heap[i] = new Event();
       heap[i]->handle = i;
@@ -106,9 +103,8 @@ struct Scheduler {
     heap_size = 0;
     timestamp_now = 0;
     next_uid = 1;
-    Add(std::numeric_limits<u64>::max(), [](int) {
-      Assert(false, "Scheduler: reached end of the event queue.");
-    });
+
+    Add(std::numeric_limits<u64>::max(), EventClass::EndOfQueue);
   }
 
   auto GetTimestampNow() const -> u64 {
@@ -133,19 +129,15 @@ struct Scheduler {
     timestamp_now = timestamp_next;
   }
 
-  /*void Register(EventClass event_class, std::function<void()> callback) {
-    callbacks[(int)event_class] = std::move(callback);
-  }*/
-
   template<class T>
-  void Register(EventClass event_class, T* object, EventMethod2<T> method, uint priority = 0) {
+  void Register(EventClass event_class, T* object, EventMethod<T> method, uint priority = 0) {
     callbacks[(int)event_class] = [object, method](u64 user_data) {
       (object->*method)();
     };
   }
 
   template<class T>
-  void Register(EventClass event_class, T* object, EventMethod3<T> method, uint priority = 0) {
+  void Register(EventClass event_class, T* object, EventMethodWithUserData<T> method, uint priority = 0) {
     callbacks[(int)event_class] = [object, method](u64 user_data) {
       (object->*method)(user_data);
     };
@@ -168,34 +160,6 @@ struct Scheduler {
     event->uid = next_uid++;
     event->user_data = user_data;
     event->event_class = event_class;
-
-    while (n != 0 && heap[p]->key > heap[n]->key) {
-      Swap(n, p);
-      n = p;
-      p = Parent(n);
-    }
-
-    return event;
-  }
-
-  // OBSOLETE
-  auto Add(u64 delay, std::function<void(int)> callback, uint priority = 0) -> Event* {
-    int n = heap_size++;
-    int p = Parent(n);
-
-    Assert(
-      heap_size <= kMaxEvents,
-      "Scheduler: reached maximum number of events."
-    );
-
-    Assert(priority <= 3, "Scheduler: priority must be between 0 and 3.");
-
-    auto event = heap[n];
-    event->timestamp = GetTimestampNow() + delay;
-    event->key = (event->timestamp << 2) | priority;
-    event->uid = next_uid++;
-    event->callback = callback;
-    event->event_class = EventClass::Unknown;
 
     while (n != 0 && heap[p]->key > heap[n]->key) {
       Swap(n, p);
@@ -241,9 +205,12 @@ struct Scheduler {
       u64 user_data = event.user_data;
       EventClass event_class = (EventClass)event.event_class;
 
-      if(event_class != EventClass::Unknown) {
-        Add(timestamp - state.timestamp, event_class, priority, user_data)->uid = uid;
+      // This event already was created on Scheduler::Reset()
+      if(event_class == EventClass::EndOfQueue) {
+        continue;
       }
+
+      Add(timestamp - state.timestamp, event_class, priority, user_data)->uid = uid;
     }
 
     // This must happen after deserializing all events, because calling Add() modifies `next_uid`.
@@ -274,12 +241,7 @@ private:
     while (heap[0]->timestamp <= timestamp_next && heap_size > 0) {
       auto event = heap[0];
       timestamp_now = event->timestamp;
-      // @todo: cache the callback function? maybe copying it is slow though.
-      if(event->event_class != EventClass::Unknown) {
-        callbacks[(int)event->event_class](event->user_data);
-      } else {
-        event->callback(0);
-      }
+      callbacks[(int)event->event_class](event->user_data);
       Remove(event->handle);
     }
   }
@@ -320,6 +282,10 @@ private:
       Swap(r, n);
       Heapify(r);
     }
+  }
+
+  void EndOfQueue() {
+    Assert(false, "Scheduler: reached end of the event queue.");
   }
 
   Event* heap[kMaxEvents];
