@@ -48,6 +48,7 @@ struct Scheduler {
     APU_PSG4_generate,
 
     // IRQ controller
+    IRQ_write_io,
     IRQ_synchronizer_delay,
 
     // Timers

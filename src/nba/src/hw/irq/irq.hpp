@@ -30,13 +30,7 @@ struct IRQ {
     ROM
   };
 
-  IRQ(arm::ARM7TDMI& cpu, Scheduler& scheduler)
-      : cpu(cpu)
-      , scheduler(scheduler) {
-    scheduler.Register(Scheduler::EventClass::IRQ_synchronizer_delay, this, &IRQ::OnIRQDelayPassed);
-
-    Reset();
-  }
+  IRQ(arm::ARM7TDMI& cpu, Scheduler& scheduler);
 
   void Reset();
   auto ReadByte(int offset) const -> u8;
@@ -63,13 +57,17 @@ private:
     REG_IME = 4
   };
 
-  void UpdateIRQLine(int event_priority);
-
+  void OnWriteIO();
   void OnIRQDelayPassed(u64 irq_line);
+
+  int pending_ime;
+  u16 pending_ie;
+  u16 pending_if;
 
   int reg_ime;
   u16 reg_ie;
   u16 reg_if;
+
   arm::ARM7TDMI& cpu;
   Scheduler& scheduler;
   bool irq_line;
