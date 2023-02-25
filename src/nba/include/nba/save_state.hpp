@@ -84,8 +84,10 @@ struct SaveState {
     bool prefetch_buffer_was_disabled;
   } bus;
 
-  // TODO: keep track of IRQ delay:
   struct IRQ {
+    u8  pending_ime;
+    u16 pending_ie;
+    u16 pending_if;
     u8  reg_ime;
     u16 reg_ie;
     u16 reg_if;
