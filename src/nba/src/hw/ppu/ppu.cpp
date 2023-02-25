@@ -20,6 +20,29 @@ PPU::PPU(
     , irq(irq)
     , dma(dma)
     , config(config) {
+  // @todo: get rid of the wrapper jank
+  scheduler.Register(Scheduler::EventClass::PPU_hdraw_vdraw, [this]() {
+    OnHblankComplete(0);
+  });
+  scheduler.Register(Scheduler::EventClass::PPU_hblank_vdraw, [this]() {
+    OnScanlineComplete(0);
+  });
+  scheduler.Register(Scheduler::EventClass::PPU_hblank_irq_vdraw, [this]() {
+    OnHblankIRQTest(0);
+  });
+  scheduler.Register(Scheduler::EventClass::PPU_hdraw_vblank, [this]() {
+    OnVblankHblankComplete(0);
+  });
+  scheduler.Register(Scheduler::EventClass::PPU_hblank_vblank, [this]() {
+    OnVblankScanlineComplete(0);
+  });
+  scheduler.Register(Scheduler::EventClass::PPU_hblank_irq_vblank, [this]() {
+    OnVblankHblankIRQTest(0);
+  });
+  scheduler.Register(Scheduler::EventClass::PPU_begin_sprite_fetch, [this]() {
+    StupidSpriteEventHandler(0);
+  });
+
   mmio.dispcnt.ppu = this;
   mmio.dispstat.ppu = this;
   Reset();
@@ -71,11 +94,11 @@ void PPU::Reset() {
   mmio.vcount = 225;
   mmio.dispstat.vblank_flag = true;
   mmio.dispstat.hblank_flag = true;
-  scheduler.Add(226, this, &PPU::OnVblankHblankComplete);
+  scheduler.Add(226, Scheduler::EventClass::PPU_hdraw_vblank);
 
   // To keep the state machine simple, we run sprite engine
   // from a separate event loop.
-  scheduler.Add(266, this, &PPU::StupidSpriteEventHandler);
+  scheduler.Add(266, Scheduler::EventClass::PPU_begin_sprite_fetch);
 
   // @todo: initialize window with the appropriate timing.
   bg = {};
@@ -96,7 +119,7 @@ void PPU::StupidSpriteEventHandler(int cycles) {
     InitSprite();
   }
 
-  scheduler.Add(1232, this, &PPU::StupidSpriteEventHandler);
+  scheduler.Add(1232, Scheduler::EventClass::PPU_begin_sprite_fetch);
 }
 
 void PPU::LatchDISPCNT() {
@@ -138,7 +161,7 @@ void PPU::OnScanlineComplete(int cycles_late) {
     dma.Request(DMA::Occasion::HBlank);
   });
 
-  scheduler.Add(2 - cycles_late, this, &PPU::OnHblankIRQTest);
+  scheduler.Add(2 - cycles_late, Scheduler::EventClass::PPU_hblank_irq_vdraw);
 }
 
 void PPU::OnHblankIRQTest(int cycles_late) {
@@ -147,7 +170,7 @@ void PPU::OnHblankIRQTest(int cycles_late) {
     irq.Raise(IRQ::Source::HBlank);
   }
 
-  scheduler.Add(224 - cycles_late, this, &PPU::OnHblankComplete);
+  scheduler.Add(224 - cycles_late, Scheduler::EventClass::PPU_hdraw_vdraw);
 }
 
 void PPU::OnHblankComplete(int cycles_late) {
@@ -174,7 +197,7 @@ void PPU::OnHblankComplete(int cycles_late) {
   if (vcount == 160) {
     // ScheduleSubmitScanline();
 
-    scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
+    scheduler.Add(1006 - cycles_late, Scheduler::EventClass::PPU_hblank_vblank);
     dma.Request(DMA::Occasion::VBlank);
     dispstat.vblank_flag = 1;
 
@@ -191,7 +214,7 @@ void PPU::OnHblankComplete(int cycles_late) {
     InitBackground();
     InitMerge();
 
-    scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
+    scheduler.Add(1006 - cycles_late, Scheduler::EventClass::PPU_hblank_vdraw);
     // ScheduleSubmitScanline();
   }
 
@@ -203,7 +226,7 @@ void PPU::OnVblankScanlineComplete(int cycles_late) {
 
   dispstat.hblank_flag = 1;
 
-  scheduler.Add(2 - cycles_late, this, &PPU::OnVblankHblankIRQTest);
+  scheduler.Add(2 - cycles_late, Scheduler::EventClass::PPU_hblank_irq_vblank);
 }
 
 void PPU::OnVblankHblankIRQTest(int cycles_late) {
@@ -212,7 +235,7 @@ void PPU::OnVblankHblankIRQTest(int cycles_late) {
     irq.Raise(IRQ::Source::HBlank);
   }
 
-  scheduler.Add(224 - cycles_late, this, &PPU::OnVblankHblankComplete);
+  scheduler.Add(224 - cycles_late, Scheduler::EventClass::PPU_hdraw_vblank);
 }
 
 void PPU::OnVblankHblankComplete(int cycles_late) {
@@ -239,7 +262,7 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
   }
 
   if (vcount == 227) {
-    scheduler.Add(1006 - cycles_late, this, &PPU::OnScanlineComplete);
+    scheduler.Add(1006 - cycles_late, Scheduler::EventClass::PPU_hblank_vdraw);
     vcount = 0;
 
     config->video_dev->Draw(output[frame]);
@@ -248,7 +271,7 @@ void PPU::OnVblankHblankComplete(int cycles_late) {
     InitBackground();
     InitMerge();
   } else {
-    scheduler.Add(1006 - cycles_late, this, &PPU::OnVblankScanlineComplete);
+    scheduler.Add(1006 - cycles_late, Scheduler::EventClass::PPU_hblank_vblank);
     
     if (++vcount == 227) {
       dispstat.vblank_flag = 0;
