@@ -297,6 +297,7 @@ struct SaveState {
     struct Event {
       u64 key;
       u64 uid;
+      u64 user_data;
       u16 event_class;
     } events[64];
 

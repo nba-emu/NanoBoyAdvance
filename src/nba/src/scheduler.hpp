@@ -23,6 +23,9 @@ struct Scheduler {
   template<class T>
   using EventMethod2 = void (T::*)();
 
+  template<class T>
+  using EventMethod3 = void (T::*)(u64);
+
   enum class EventClass : u16 {
     Unknown,
 
@@ -50,6 +53,7 @@ struct Scheduler {
     int handle;
     u64 key;
     u64 uid;
+    u64 user_data;
     EventClass event_class;
   };
 
@@ -60,7 +64,7 @@ struct Scheduler {
     }
 
     for(int i = 0; i < (int)EventClass::Count; i++) {
-      callbacks[i] = [i]() {
+      callbacks[i] = [i](u64 user_data) {
         Assert(false, "Scheduler: unhandled event class: {}", i);
       };
     }
@@ -105,18 +109,25 @@ struct Scheduler {
     timestamp_now = timestamp_next;
   }
 
-  void Register(EventClass event_class, std::function<void()> callback) {
+  /*void Register(EventClass event_class, std::function<void()> callback) {
     callbacks[(int)event_class] = std::move(callback);
-  }
+  }*/
 
   template<class T>
   void Register(EventClass event_class, T* object, EventMethod2<T> method, uint priority = 0) {
-    callbacks[(int)event_class] = [object, method]() {
+    callbacks[(int)event_class] = [object, method](u64 user_data) {
       (object->*method)();
     };
   }
 
-  auto Add(u64 delay, EventClass event_class, uint priority = 0) -> Event* {
+  template<class T>
+  void Register(EventClass event_class, T* object, EventMethod3<T> method, uint priority = 0) {
+    callbacks[(int)event_class] = [object, method](u64 user_data) {
+      (object->*method)(user_data);
+    };
+  }
+
+  auto Add(u64 delay, EventClass event_class, uint priority = 0, u64 user_data = 0) -> Event* {
     int n = heap_size++;
     int p = Parent(n);
 
@@ -131,6 +142,7 @@ struct Scheduler {
     event->timestamp = GetTimestampNow() + delay;
     event->key = (event->timestamp << 2) | priority;
     event->uid = next_uid++;
+    event->user_data = user_data;
     event->event_class = event_class;
 
     while (n != 0 && heap[p]->key > heap[n]->key) {
@@ -142,6 +154,7 @@ struct Scheduler {
     return event;
   }
 
+  // OBSOLETE
   auto Add(u64 delay, std::function<void(int)> callback, uint priority = 0) -> Event* {
     int n = heap_size++;
     int p = Parent(n);
@@ -200,10 +213,12 @@ struct Scheduler {
 
       u64 timestamp = event.key >> 2;
       int priority = event.key & 3;
+      u64 uid = event.uid;
+      u64 user_data = event.user_data;
       EventClass event_class = (EventClass)event.event_class;
 
       if(event_class != EventClass::Unknown) {
-        Add(timestamp - state.timestamp, event_class, priority)->uid = event.uid;
+        Add(timestamp - state.timestamp, event_class, priority, user_data)->uid = uid;
       }
     }
 
@@ -217,7 +232,7 @@ struct Scheduler {
     for(int i = 0; i < heap_size; i++) {
       auto event = heap[i];
 
-      ss_scheduler.events[i] = { event->key, event->uid, (u16)event->event_class };
+      ss_scheduler.events[i] = { event->key, event->uid, event->user_data, (u16)event->event_class };
     }
 
     ss_scheduler.event_count = heap_size;
@@ -237,7 +252,7 @@ private:
       timestamp_now = event->timestamp;
       // @todo: cache the callback function? maybe copying it is slow though.
       if(event->event_class != EventClass::Unknown) {
-        callbacks[(int)event->event_class]();
+        callbacks[(int)event->event_class](event->user_data);
       } else {
         event->callback(0);
       }
@@ -288,7 +303,7 @@ private:
   u64 timestamp_now;
   u64 next_uid;
 
-  std::function<void()> callbacks[(int)EventClass::Count];
+  std::function<void(u64)> callbacks[(int)EventClass::Count];
 };
 
 } // namespace nba::core
