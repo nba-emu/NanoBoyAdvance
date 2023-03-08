@@ -34,7 +34,7 @@ pacman -S cmake sdl2 glew qt5-base
 ##### Ubuntu or other Debian derived distribution
 
 ```bash
-apt install cmake libsdl2-dev libglew-dev qtbase5-dev
+apt install cmake libsdl2-dev libglew-dev qtbase5-dev libqt5opengl5-dev
 ```
 
 ##### macOS
