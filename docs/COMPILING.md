@@ -43,6 +43,12 @@ Get [Brew](https://brew.sh/) and run:
 ``` bash
 brew install cmake sdl2 glew qt@5
 ```
+##### FreeBSD
+
+```bash
+su
+pkg install cmake git sdl2 glew qt5 qt5-opengl
+```
 
 #### 2. Setup CMake build directory
 
