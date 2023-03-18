@@ -34,7 +34,7 @@ pacman -S cmake sdl2 glew qt5-base
 ##### Ubuntu or other Debian derived distribution
 
 ```bash
-apt install cmake libsdl2-dev libglew-dev qtbase5-dev
+apt install cmake libsdl2-dev libglew-dev qtbase5-dev libqt5opengl5-dev
 ```
 
 ##### macOS
@@ -42,6 +42,12 @@ apt install cmake libsdl2-dev libglew-dev qtbase5-dev
 Get [Brew](https://brew.sh/) and run:
 ``` bash
 brew install cmake sdl2 glew qt@5
+```
+##### FreeBSD
+
+```bash
+su
+pkg install cmake git sdl2 glew qt5 qt5-opengl
 ```
 
 #### 2. Setup CMake build directory
