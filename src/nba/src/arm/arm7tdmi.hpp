@@ -55,16 +55,14 @@ struct ARM7TDMI {
 
     latch_irq_disable = state.cpsr.f.mask_irq;
 
-    if(state.cpsr.f.thumb) {
-      state.r15 &= ~1;
+    state.r15 &= ~1;
 
+    if(state.cpsr.f.thumb) {
       pipe.opcode[0] = pipe.opcode[1];
       pipe.opcode[1] = ReadHalf(state.r15, pipe.access);
 
       (this->*s_opcode_lut_16[instruction >> 6])(instruction);
     } else {
-      state.r15 &= ~3;
-
       pipe.opcode[0] = pipe.opcode[1];
       pipe.opcode[1] = ReadWord(state.r15, pipe.access);
 

@@ -352,7 +352,7 @@ void ARM_BranchAndExchange(u32 instruction) {
     state.cpsr.f.thumb = 1;
     ReloadPipeline16();
   } else {
-    state.r15 = address & ~3;
+    state.r15 = address;
     ReloadPipeline32();
   }
 }

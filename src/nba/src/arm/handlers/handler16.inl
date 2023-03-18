@@ -227,7 +227,7 @@ void Thumb_HighRegisterOps_BX(u16 instruction) {
       ReloadPipeline16();
     } else {
       state.cpsr.f.thumb = 0;
-      state.r15 = operand & ~3;
+      state.r15 = operand;
       ReloadPipeline32();
     }
   } else if (op == 1) {
