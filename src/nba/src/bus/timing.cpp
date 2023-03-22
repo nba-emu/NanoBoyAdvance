@@ -61,6 +61,8 @@ void Bus::Prefetch(u32 address, bool code, int cycles) {
 
   const int page = address >> 24;
 
+  StopPrefetch();
+
   // Case #3: requested address is loaded through the Game Pak.
   if(hw.prefetch_buffer_was_disabled) {
     // force the access to be non-sequential.
