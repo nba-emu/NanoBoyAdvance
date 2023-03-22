@@ -118,16 +118,14 @@ void Bus::Step(int cycles) {
   if(prefetch.active) {
     prefetch.countdown -= cycles;
 
-    if(prefetch.countdown <= 0) {
+    while(prefetch.countdown <= 0) {
       prefetch.count++;
 
-      if(hw.waitcnt.prefetch) {
-        if(prefetch.count < prefetch.capacity) {
-          prefetch.last_address += prefetch.opcode_width;
-          prefetch.countdown += prefetch.duty;
-        } else {
-          prefetch.active = false;
-        }
+      if(hw.waitcnt.prefetch && prefetch.count < prefetch.capacity) {
+        prefetch.last_address += prefetch.opcode_width;
+        prefetch.countdown += prefetch.duty;
+      } else {
+        break;
       }
     }
   }
