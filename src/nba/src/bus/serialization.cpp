@@ -35,7 +35,8 @@ void Bus::LoadState(SaveState const& state) {
   prefetch.head_address = state.bus.prefetch.head_address;
   prefetch.count = state.bus.prefetch.count;
   prefetch.countdown = state.bus.prefetch.countdown;
-  if(state.arm.regs.cpsr & 32) {
+  prefetch.thumb = state.bus.prefetch.thumb;
+  if(prefetch.thumb) {
     prefetch.opcode_width = sizeof(u16);
     prefetch.capacity = 8;
     prefetch.duty = wait16[int(Access::Sequential)][prefetch.last_address >> 24];
@@ -75,6 +76,7 @@ void Bus::CopyState(SaveState& state) {
   state.bus.prefetch.head_address = prefetch.head_address;
   state.bus.prefetch.count = prefetch.count;
   state.bus.prefetch.countdown = prefetch.countdown;
+  state.bus.prefetch.thumb = prefetch.thumb;
 
   state.bus.last_access = last_access;
 

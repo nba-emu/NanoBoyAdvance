@@ -72,10 +72,13 @@ void Bus::Prefetch(u32 address, bool code, int cycles) {
   }
   Step(cycles);
   if(hw.waitcnt.prefetch) {
+    const bool thumb = hw.cpu.state.cpsr.f.thumb;
+
     // The prefetch unit will be engaged and keeps the burst transfer alive.
     prefetch.active = true;
     prefetch.count = 0;
-    if(hw.cpu.state.cpsr.f.thumb) {
+    prefetch.thumb = thumb;
+    if(thumb) {
       prefetch.opcode_width = sizeof(u16);
       prefetch.capacity = 8;
       prefetch.duty = wait16[int(Access::Sequential)][page];
@@ -99,11 +102,10 @@ void Bus::StopPrefetch() {
      * Note: the prefetch unit is only active when executing code from ROM.
      */
     if(r15 >= 0x08000000 && r15 <= 0x0DFFFFFF) {
-      bool arm = !hw.cpu.state.cpsr.f.thumb;
       auto half_duty_plus_one = (prefetch.duty >> 1) + 1;
       auto countdown = prefetch.countdown;
 
-      if(countdown == 1 || (arm && countdown == half_duty_plus_one)) {
+      if(countdown == 1 || (!prefetch.thumb && countdown == half_duty_plus_one)) {
         Step(1);
       }
     }

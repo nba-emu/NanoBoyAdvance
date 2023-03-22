@@ -16,7 +16,7 @@ namespace nba {
 
 struct SaveState {
   static constexpr u32 kMagicNumber = 0x5353424E; // NBSS
-  static constexpr u32 kCurrentVersion = 4;
+  static constexpr u32 kCurrentVersion = 5;
 
   u32 magic;
   u32 version;
@@ -77,6 +77,7 @@ struct SaveState {
       u32 last_address;
       u8 count;
       u8 countdown;
+      bool thumb;
     } prefetch;
 
     int last_access;

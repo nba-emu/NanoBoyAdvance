@@ -111,6 +111,7 @@ struct Bus {
     int opcode_width = 4;
     int countdown;
     int duty;
+    bool thumb;
   } prefetch;
 
   int last_access;
