@@ -51,7 +51,8 @@ struct Scheduler {
 
     // IRQ controller
     IRQ_write_io,
-    IRQ_synchronizer_delay,
+    IRQ_update_ie_and_if,
+    IRQ_update_irq_line,
 
     // Timers
     TM_overflow,

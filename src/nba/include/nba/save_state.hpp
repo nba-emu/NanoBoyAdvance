@@ -16,7 +16,7 @@ namespace nba {
 
 struct SaveState {
   static constexpr u32 kMagicNumber = 0x5353424E; // NBSS
-  static constexpr u32 kCurrentVersion = 5;
+  static constexpr u32 kCurrentVersion = 6;
 
   u32 magic;
   u32 version;
@@ -92,6 +92,7 @@ struct SaveState {
     u8  reg_ime;
     u16 reg_ie;
     u16 reg_if;
+    bool irq_available;
   } irq;
 
   struct PPU {

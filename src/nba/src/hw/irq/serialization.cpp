@@ -19,7 +19,9 @@ void IRQ::LoadState(SaveState const& state) {
   reg_ie = state.irq.reg_ie;
   reg_if = state.irq.reg_if;
 
-  irq_line = MasterEnable() && HasServableIRQ();
+  irq_line = reg_ime && (reg_ie & reg_if) != 0;
+
+  irq_available = state.irq.irq_available;
 }
 
 void IRQ::CopyState(SaveState& state) {
@@ -30,6 +32,8 @@ void IRQ::CopyState(SaveState& state) {
   state.irq.reg_ime = reg_ime;
   state.irq.reg_ie = reg_ie;
   state.irq.reg_if = reg_if;
+
+  state.irq.irq_available = irq_available;
 }
 
 } // namespace nba::core

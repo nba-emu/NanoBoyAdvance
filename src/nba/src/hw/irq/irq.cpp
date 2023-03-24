@@ -20,7 +20,8 @@ IRQ::IRQ(arm::ARM7TDMI& cpu, Scheduler& scheduler)
     : cpu(cpu)
     , scheduler(scheduler) {
   scheduler.Register(Scheduler::EventClass::IRQ_write_io, this, &IRQ::OnWriteIO);
-  scheduler.Register(Scheduler::EventClass::IRQ_synchronizer_delay, this, &IRQ::OnIRQDelayPassed);
+  scheduler.Register(Scheduler::EventClass::IRQ_update_ie_and_if, this, &IRQ::UpdateIEAndIF);
+  scheduler.Register(Scheduler::EventClass::IRQ_update_irq_line, this, &IRQ::UpdateIRQLine);
 
   Reset();
 }
@@ -36,6 +37,8 @@ void IRQ::Reset() {
 
   irq_line = false;
   cpu.IRQLine() = false;
+
+  irq_available = false;
 }
 
 auto IRQ::ReadByte(int offset) const -> u8 {
@@ -136,16 +139,26 @@ void IRQ::OnWriteIO() {
   reg_ie = pending_ie;
   reg_if = pending_if;
 
-  const bool irq_line_new = MasterEnable() && HasServableIRQ();
+  const bool irq_available_new = reg_ie & reg_if;
+  
+  if(irq_available != irq_available_new) {
+    scheduler.Add(1, Scheduler::EventClass::IRQ_update_ie_and_if, 0, (u64)irq_available_new);
+  }
+
+  const bool irq_line_new = reg_ime && irq_available_new;
 
   if(irq_line != irq_line_new) {
-    scheduler.Add(2, Scheduler::EventClass::IRQ_synchronizer_delay, 0, (u64)irq_line_new);
+    scheduler.Add(2, Scheduler::EventClass::IRQ_update_irq_line, 0, (u64)irq_line_new);
 
     irq_line = irq_line_new;
   }
 }
 
-void IRQ::OnIRQDelayPassed(u64 irq_line) {
+void IRQ::UpdateIEAndIF(u64 irq_available) {
+  this->irq_available = (bool)irq_available;
+}
+
+void IRQ::UpdateIRQLine(u64 irq_line) {
   cpu.IRQLine() = (bool)irq_line;
 }
 

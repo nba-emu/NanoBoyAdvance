@@ -80,7 +80,7 @@ void Core::Run(int cycles) {
   auto limit = scheduler.GetTimestampNow() + cycles;
 
   while(scheduler.GetTimestampNow() < limit) {
-    if(bus.hw.haltcnt == HaltControl::Halt && irq.HasServableIRQ()) {
+    if(bus.hw.haltcnt == HaltControl::Halt && irq.ShouldUnhaltCPU()) {
       bus.Step(1);
       bus.hw.haltcnt = HaltControl::Run;
     }

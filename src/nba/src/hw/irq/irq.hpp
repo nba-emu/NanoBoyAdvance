@@ -39,12 +39,8 @@ struct IRQ {
   void WriteHalf(int offset, u16 value);
   void Raise(IRQ::Source source, int channel = 0);
 
-  bool MasterEnable() const {
-    return reg_ime != 0;
-  }
-
-  bool HasServableIRQ() const {
-    return (reg_ie & reg_if) != 0;
+  bool ShouldUnhaltCPU() const {
+    return irq_available;
   }
 
   void LoadState(SaveState const& state);
@@ -58,7 +54,8 @@ private:
   };
 
   void OnWriteIO();
-  void OnIRQDelayPassed(u64 irq_line);
+  void UpdateIEAndIF(u64 irq_available);
+  void UpdateIRQLine(u64 irq_line);
 
   int pending_ime;
   u16 pending_ie;
@@ -71,6 +68,7 @@ private:
   arm::ARM7TDMI& cpu;
   Scheduler& scheduler;
   bool irq_line;
+  bool irq_available;
 };
 
 } // namespace nba::core
