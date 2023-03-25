@@ -190,6 +190,9 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
     case HALTCNT:   return 0;
     case 0x04000302: 
     case 0x04000303: return 0;
+
+    case MGBA_LOG_ENABLE+0: return (u8)(mgba_log.enable >> 0);
+    case MGBA_LOG_ENABLE+1: return (u8)(mgba_log.enable >> 8);
   }
 
   return bus->ReadOpenBus(address);
@@ -561,6 +564,13 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
       }
       break;
     }
+
+    default: {
+      if(address >= MGBA_LOG_STRING_LO && address < MGBA_LOG_STRING_HI) {
+        mgba_log.message[address & 0xFF] = value;
+      }
+      break;
+    }
   }
 }
 
@@ -595,6 +605,19 @@ void Bus::Hardware::WriteHalf(u32 address, u16 value) {
     case IE:  irq.WriteHalf(0, value); break;
     case IF:  irq.WriteHalf(2, value); break;
     case IME: irq.WriteByte(4, value); break;
+
+    case MGBA_LOG_SEND: {
+      if(mgba_log.enable && (value & 0x100) != 0) {
+        fmt::print("mGBA log: {}\n", mgba_log.message.data());
+      }
+      break;
+    }
+    case MGBA_LOG_ENABLE: {
+      if(value == 0xC0DE) {
+        mgba_log.enable = 0x1DEA;
+      }
+      break;
+    }
 
     default: {
       WriteByte(address + 0, u8(value >> 0));

@@ -93,6 +93,11 @@ struct Bus {
     u8 rcnt[2] { 0, 0 };
     u8 postflg = 0;
 
+    struct MGBALog {
+      u16 enable = 0;
+      std::array<u8, 257> message;
+    } mgba_log = {};
+
     auto ReadByte(u32 address) ->  u8;
     auto ReadHalf(u32 address) -> u16;
     auto ReadWord(u32 address) -> u32;

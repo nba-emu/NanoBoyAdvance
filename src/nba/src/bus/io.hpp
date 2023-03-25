@@ -110,3 +110,8 @@ constexpr u32 WAITCNT = 0x04000204;
 constexpr u32 IME = 0x04000208;
 constexpr u32 POSTFLG = 0x04000300;
 constexpr u32 HALTCNT = 0x04000301;
+
+constexpr u32 MGBA_LOG_STRING_LO = 0x04FFF600;
+constexpr u32 MGBA_LOG_STRING_HI = 0x04FFF700;
+constexpr u32 MGBA_LOG_SEND = 0x04FFF700;
+constexpr u32 MGBA_LOG_ENABLE = 0x04FFF780; 
