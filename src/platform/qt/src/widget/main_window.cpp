@@ -61,7 +61,7 @@ MainWindow::MainWindow(
   connect(this, &MainWindow::UpdateFrameRate, this, [this](int fps) {
     if(config->window.show_fps) {
       auto percent = fps / 59.7275 * 100;
-      setWindowTitle(QString::fromStdString(fmt::format("NanoBoyAdvance 7 [{} fps | {:.2f}%]", fps, percent)));
+      setWindowTitle(QString::fromStdString(fmt::format("NanoBoyAdvance 1.7 [{} fps | {:.2f}%]", fps, percent)));
     } else {
       setWindowTitle("NanoBoyAdvance 1.7");
     }
