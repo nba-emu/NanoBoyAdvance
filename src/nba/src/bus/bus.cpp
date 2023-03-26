@@ -20,7 +20,7 @@ namespace nba::core {
 Bus::Bus(Scheduler& scheduler, Hardware&& hw)
     : scheduler(scheduler)
     , hw(hw) {
-   scheduler.Register(Scheduler::EventClass::SIO_transfer_done, this, &Bus::SIOTransferDone);
+  scheduler.Register(Scheduler::EventClass::SIO_transfer_done, this, &Bus::SIOTransferDone);
 
   this->hw.bus = this;
   memory.bios.fill(0);
