@@ -54,7 +54,7 @@ inline void Log(std::string_view format, Args&&... args) {
 template<typename... Args>
 inline void Assert(bool condition, Args... args) {
   if(!condition) {
-    Log<Fatal>(args...);
+    Log<Fatal>(std::forward<Args>(args)...);
     std::exit(-1);
   }
 }
