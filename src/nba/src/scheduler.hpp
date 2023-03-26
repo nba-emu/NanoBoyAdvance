@@ -62,6 +62,8 @@ struct Scheduler {
     // DMA
     DMA_activated,
 
+    SIO_transfer_done,
+
     EndOfQueue,
     Count
   };

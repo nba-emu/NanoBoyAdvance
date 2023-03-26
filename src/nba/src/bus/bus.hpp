@@ -90,6 +90,7 @@ struct Bus {
       Halt = 2
     } haltcnt = HaltControl::Run;
 
+    u16 siocnt = 0;
     u8 rcnt[2] { 0, 0 };
     u8 postflg = 0;
 
@@ -243,6 +244,8 @@ struct Bus {
 
   auto ReadBIOS(u32 address) -> u32;
   auto ReadOpenBus(u32 address) -> u32;
+
+  void SIOTransferDone();
 
   void Prefetch(u32 address, bool code, int cycles);
   void StopPrefetch();

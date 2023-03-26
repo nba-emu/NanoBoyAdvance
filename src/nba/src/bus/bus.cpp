@@ -20,6 +20,8 @@ namespace nba::core {
 Bus::Bus(Scheduler& scheduler, Hardware&& hw)
     : scheduler(scheduler)
     , hw(hw) {
+   scheduler.Register(Scheduler::EventClass::SIO_transfer_done, this, &Bus::SIOTransferDone);
+
   this->hw.bus = this;
   memory.bios.fill(0);
   Reset();
@@ -31,10 +33,12 @@ void Bus::Reset() {
   memory.latch = {};
   hw.waitcnt = {};
   hw.haltcnt = Hardware::HaltControl::Run;
+  hw.siocnt = 0;
   hw.rcnt[0] = 0;
   hw.rcnt[1] = 0;
   hw.postflg = 0;
   hw.prefetch_buffer_was_disabled = false;
+  hw.mgba_log = {};
   hw.mgba_log.message.fill(0);
   prefetch = {};
   last_access = 0;

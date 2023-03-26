@@ -144,6 +144,8 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
 
     // Serial communication
     // @todo: implement sensible read/write behaviour for the remaining registers.
+    case SIOCNT+0: return (u8)(siocnt >> 0);
+    case SIOCNT+1: return (u8)(siocnt >> 8);
     case RCNT+0: return rcnt[0];
     case RCNT+1: return rcnt[1];
     case RCNT+2:
@@ -505,12 +507,8 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
     case TM3CNT_H:   timer.WriteByte(3, 2, value); break;
 
     // Serial communication
-    case SIOCNT: {
-      if(value & 0x80) {
-        irq.Raise(IRQ::Source::Serial);
-      }
-      break;
-    }
+    case SIOCNT+0: WriteHalf(SIOCNT, (siocnt & 0xFF00) | (value << 0)); break;
+    case SIOCNT+1: WriteHalf(SIOCNT, (siocnt & 0x00FF) | (value << 8)); break;
     case RCNT+0: rcnt[0] = value; break;
     case RCNT+1: rcnt[1] = value; break;
 
@@ -606,6 +604,29 @@ void Bus::Hardware::WriteHalf(u32 address, u16 value) {
     case IF:  irq.WriteHalf(2, value); break;
     case IME: irq.WriteByte(4, value); break;
 
+    case SIOCNT: {
+      siocnt = (siocnt & 0x80u) | (value & ~0x80u);
+
+      if(!(siocnt & 0x80u) && value & 0x80u) {
+        // bit 0 (from bit  1): internal shift clock (0 = 256 KHz, 1 = 2 MHz)
+        // bit 1 (from bit 12): transfer length (0 = 8-bit, 1 = 32-bit)
+        static const int table[4] {
+          512,
+          64,
+          2048,
+          256
+        };
+
+        siocnt |= 0x80u;
+
+        const int cycles = table[((siocnt >> 1) & 1u) | ((siocnt >> 11) & 2u)];
+
+        bus->scheduler.Add(cycles, Scheduler::EventClass::SIO_transfer_done);
+      }
+
+      break;
+    }
+
     case MGBA_LOG_SEND: {
       if(mgba_log.enable && (value & 0x100) != 0) {
         fmt::print("mGBA log: {}\n", mgba_log.message.data());
@@ -646,6 +667,14 @@ void Bus::Hardware::WriteWord(u32 address, u32 value) {
       break;
     }
   }
+}
+
+void Bus::SIOTransferDone() {
+  if(hw.siocnt & 0x4000u) {
+    hw.irq.Raise(IRQ::Source::Serial);
+  }
+
+  hw.siocnt &= ~0x80u;
 }
 
 } // namespace nba::core
