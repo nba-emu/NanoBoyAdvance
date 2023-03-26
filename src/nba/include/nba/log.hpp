@@ -36,7 +36,7 @@ namespace detail {
 } // namespace nba::detail
 
 template<Level level, typename... Args>
-inline void Log(std::string_view format, Args... args) {
+inline void Log(std::string_view format, Args&&... args) {
   if constexpr((detail::kLogMask & level) != 0) {
     char const* prefix = "[?]";
 
@@ -47,7 +47,7 @@ inline void Log(std::string_view format, Args... args) {
     if constexpr(level == Error) prefix = "\e[35m[E]";
     if constexpr(level == Fatal) prefix = "\e[31m[F]";
 
-    fmt::print("{} {}\n", prefix, fmt::format(format, args...));
+    fmt::print("{} {}\n", prefix, fmt::format(format, std::forward<Args>(args)...));
   }
 }
 
