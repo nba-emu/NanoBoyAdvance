@@ -82,6 +82,7 @@ int main(int argc, char** argv) {
 
   QCoreApplication::setOrganizationName("fleroviux");
   QCoreApplication::setApplicationName("NanoBoyAdvance");
+  QGuiApplication::setDesktopFileName("io.github.nba_emuNanoBoyAdvance");
 
   auto window = create_window(app, argc, argv);
 

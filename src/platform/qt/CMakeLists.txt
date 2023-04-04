@@ -26,6 +26,7 @@ set(RESOURCES
 set(CMAKE_AUTOMOC ON)
 
 option(USE_QT6 "Use Qt 6" OFF)
+option(PORTABLE_MODE "Portable Mode" ON)
 
 if (USE_QT6)
   find_package(Qt6 COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets REQUIRED)
@@ -33,6 +34,10 @@ if (USE_QT6)
 else()
   find_package(Qt5 COMPONENTS Core Gui Widgets OpenGL REQUIRED)
   set(QT_DEPS Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
+endif()
+
+if (PORTABLE_MODE)
+  add_compile_definitions(PORTABLE_MODE)
 endif()
 
 # Append application resources (icon and manifest) on Win32.
@@ -43,7 +48,7 @@ if(WIN32)
     set(CMAKE_RC_COMPILER_INIT windres)
     enable_language(RC)
     set(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> -i <SOURCE> -o <OBJECT>")
-  endif()  
+  endif()
 endif()
 
 if (APPLE)
@@ -107,3 +112,8 @@ if(WIN32 AND PLATFORM_QT_STATIC)
   set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
   target_link_libraries(NanoBoyAdvance-Qt -static z zstd gcc stdc++ winpthread winmm version Imm32 Setupapi)
 endif()
+
+install(TARGETS NanoBoyAdvance-Qt DESTINATION bin)
+install(FILES rc/io.github.nba_emuNanoBoyAdvance.png DESTINATION share/icons/hicolor/128x128/apps)
+install(FILES rc/io.github.nba_emuNanoBoyAdvance.desktop DESTINATION share/applications)
+install(FILES rc/io.github.nba_emuNanoBoyAdvance.metainfo.xml DESTINATION share/metainfo)
