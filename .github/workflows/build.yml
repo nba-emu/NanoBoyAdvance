@@ -9,17 +9,17 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
-          submodules: true
+          submodules: recursive
       - uses: msys2/setup-msys2@v2
         with:
           install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-SDL2 mingw-w64-x86_64-glew mingw-w64-x86_64-qt5-static
       - name: Build NanoBoyAdvance
         run: |
           cmake \
-            -B build \
-            -G "Unix Makefiles" \
+            -Bbuild \
+            -G"Unix Makefiles" \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_CXX_FLAGS="-s" \
             -DPLATFORM_QT_STATIC=ON \
@@ -33,7 +33,7 @@ jobs:
           mkdir upload
           cp -r build/bin/qt/{NanoBoyAdvance.exe,config.toml} upload
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: NanoBoyAdvance-win64
           path: upload
@@ -42,7 +42,7 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: recursive
       - name: Setup dependencies
@@ -51,7 +51,7 @@ jobs:
           sudo apt-get install -y libsdl2-dev libglew-dev qtbase5-dev
       - name: Build NanoBoyAdvance
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake -Bbuild -DCMAKE_BUILD_TYPE=Release
           cd build
           make -j$(nproc)
       - name: Collect artifacts
@@ -59,7 +59,7 @@ jobs:
           mkdir upload
           cp -r build/bin/qt/{NanoBoyAdvance,config.toml} upload
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: NanoBoyAdvance-linux
           path: upload
@@ -68,7 +68,7 @@ jobs:
   build-macOS:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: recursive
       - name: Setup dependencies
@@ -77,16 +77,16 @@ jobs:
         run: brew install sdl2 glew qt@5
       - name: Build NanoBoyAdvance
         run: |
-          cmake -B build \
-                -DCMAKE_CXX_FLAGS="-s" \
-                -DSDL2_STATIC=ON \
-                -DGLEW_USE_STATIC_LIBS=ON \
-                -DCMAKE_BUILD_TYPE=Release \
-                -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5);$(brew --prefix glew)" \
-                -DMACOS_BUILD_APP_BUNDLE=ON \
-                -DMACOS_BUNDLE_QT=ON
+          cmake -Bbuild \
+            -DCMAKE_CXX_FLAGS="-s" \
+            -DSDL2_STATIC=ON \
+            -DGLEW_USE_STATIC_LIBS=ON \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5);$(brew --prefix glew)" \
+            -DMACOS_BUILD_APP_BUNDLE=ON \
+            -DMACOS_BUNDLE_QT=ON
           cd build
-          make -j$(sysctl -n hw.availcpu)
+          make -j$(getconf _NPROCESSORS_ONLN)
       - name: Create disk image
         run: |
           mkdir dmg
@@ -94,13 +94,13 @@ jobs:
           codesign -s - --deep -f dmg/NanoBoyAdvance.app
           ln -s /Applications dmg/Applications
           hdiutil create \
-                  -fs HFS+ \
-                  -volname NanoBoyAdvance \
-                  -srcfolder dmg \
-                  -ov -format UDBZ \
-                  NanoBoyAdvance.dmg
+            -fs HFS+ \
+            -volname NanoBoyAdvance \
+            -srcfolder dmg \
+            -ov -format UDBZ \
+            NanoBoyAdvance.dmg
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: NanoBoyAdvance-${{ runner.os }}
           path: NanoBoyAdvance.dmg
