@@ -96,7 +96,10 @@ void Core::Run(int cycles) {
       }
       cpu.Run();
     } else {
-      if(dma.IsRunning()) dma.Run();
+      if(dma.IsRunning()) {
+        dma.Run();
+        if(irq.ShouldUnhaltCPU()) continue; // can become true during the DMA
+      }
 
       bus.Step(scheduler.GetRemainingCycleCount());
     }
