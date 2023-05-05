@@ -402,7 +402,7 @@ private:
 
   template<typename T>
   auto ALWAYS_INLINE FetchVRAM_BG(uint cycle, uint address) -> T {
-    if(ForcedBlank()) {
+    if(ForcedBlank() || address >= GetSpriteVRAMBoundary()) {
       return 0U;
     }
 
@@ -413,13 +413,11 @@ private:
   template<typename T>
   auto ALWAYS_INLINE FetchVRAM_OBJ(uint cycle, uint address) -> T {
     // @todo: OBJ circuitry seems to ignore 'forced blank'. But is that really true?
-
-    sprite.timestamp_vram_access = sprite.timestamp_init + cycle;
-
-    // @todo: verify this edge-case against hardware.
     if(address < GetSpriteVRAMBoundary()) {
       return 0U;
     }
+
+    sprite.timestamp_vram_access = sprite.timestamp_init + cycle;
     return read<T>(vram, address);
   }
 
