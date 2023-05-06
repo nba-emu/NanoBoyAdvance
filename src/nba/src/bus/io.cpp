@@ -554,7 +554,7 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
     case HALTCNT: {
       if(cpu.state.r15 <= 0x3FFF) {
         if(value & 0x80) {
-          haltcnt = HaltControl::Stop;
+          // haltcnt = HaltControl::Stop;
         } else {
           haltcnt = HaltControl::Halt;
           bus->Step(1);
