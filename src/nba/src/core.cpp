@@ -80,28 +80,31 @@ void Core::Run(int cycles) {
   auto limit = scheduler.GetTimestampNow() + cycles;
 
   while(scheduler.GetTimestampNow() < limit) {
-    if(bus.hw.haltcnt == HaltControl::Halt && irq.ShouldUnhaltCPU()) {
-      bus.Step(1);
-      bus.hw.haltcnt = HaltControl::Run;
-    }
-
     if(bus.hw.haltcnt == HaltControl::Run) {
       if(cpu.state.r15 == hle_audio_hook) {
-        // TODO: cache the SoundInfo pointer once we have it?
+        // @todo: cache the SoundInfo pointer once we have it?
         apu.GetMP2K().SoundMainRAM(
           *bus.GetHostAddress<MP2K::SoundInfo>(
-            *bus.GetHostAddress<u32>(0x0300'7FF0)
+            *bus.GetHostAddress<u32>(0x03007FF0)
           )
         );
       }
+
       cpu.Run();
     } else {
-      if(dma.IsRunning()) {
-        dma.Run();
-        if(irq.ShouldUnhaltCPU()) continue; // can become true during the DMA
+      while(scheduler.GetTimestampNow() < limit && !irq.ShouldUnhaltCPU()) {
+        if(dma.IsRunning()) {
+          dma.Run();
+          if(irq.ShouldUnhaltCPU()) continue; // can become true during the DMA
+        }
+
+        bus.Step(scheduler.GetRemainingCycleCount());
       }
 
-      bus.Step(scheduler.GetRemainingCycleCount());
+      if(irq.ShouldUnhaltCPU()) {
+        bus.Step(1);
+        bus.hw.haltcnt = HaltControl::Run;
+      }
     }
   }
 }
