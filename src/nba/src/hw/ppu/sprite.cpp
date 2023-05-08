@@ -9,37 +9,6 @@
 
 namespace nba::core {
 
-static const int s_obj_size[4][4][2] = {
-  // SQUARE
-  {
-    { 8 , 8  },
-    { 16, 16 },
-    { 32, 32 },
-    { 64, 64 }
-  },
-  // HORIZONTAL
-  {
-    { 16, 8  },
-    { 32, 8  },
-    { 32, 16 },
-    { 64, 32 }
-  },
-  // VERTICAL
-  {
-    { 8 , 16 },
-    { 8 , 32 },
-    { 16, 32 },
-    { 32, 64 }
-  },
-  // PROHIBITED
-  {
-    { 0, 0 },
-    { 0, 0 },
-    { 0, 0 },
-    { 0, 0 }
-  }
-};
-
 void PPU::InitSprite() {
   const uint vcount = mmio.vcount;
   const u64 timestamp_now = scheduler.GetTimestampNow();
@@ -113,6 +82,13 @@ void PPU::DrawSpriteImpl(int cycles) {
 }
 
 void PPU::DrawSpriteFetchOAM(uint cycle) {
+  static constexpr int k_sprite_size[4][4][2] = {
+    { { 8 , 8  }, { 16, 16 }, { 32, 32 }, { 64, 64 } }, // Square
+    { { 16, 8  }, { 32, 8  }, { 32, 16 }, { 64, 32 } }, // Horizontal
+    { { 8 , 16 }, { 8 , 32 }, { 16, 32 }, { 32, 64 } }, // Vertical
+    { { 8 , 8  }, { 8 , 8  }, { 8 , 8  }, { 8 , 8  } }  // Prohibited
+  };
+
   auto& oam_fetch = sprite.oam_fetch;
 
   if(oam_fetch.wait > 0 && !oam_fetch.delay_wait) {
@@ -163,8 +139,8 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
           const uint shape = (attr01 >> 14) & 3U;
           const uint size  =  attr01 >> 30;
 
-          const int width  = s_obj_size[shape][size][0];
-          const int height = s_obj_size[shape][size][1];
+          const int width  = k_sprite_size[shape][size][0];
+          const int height = k_sprite_size[shape][size][1];
 
           int half_width  = width  >> 1;
           int half_height = height >> 1;
