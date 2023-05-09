@@ -402,23 +402,29 @@ private:
 
   template<typename T>
   auto ALWAYS_INLINE FetchVRAM_BG(uint cycle, uint address) -> T {
-    if(ForcedBlank() || address >= GetSpriteVRAMBoundary()) {
+    if(ForcedBlank()) {
       return 0U;
     }
 
     bg.timestamp_vram_access = bg.timestamp_init + cycle;
-    return read<T>(vram, address);
+
+    if(likely(address < GetSpriteVRAMBoundary())) {
+      vram_bg_latch = read<u16>(vram, address & ~1U);
+      return read<T>(vram, address);
+    }
+    return read<T>(&vram_bg_latch, address & 1U);
   }
 
   template<typename T>
   auto ALWAYS_INLINE FetchVRAM_OBJ(uint cycle, uint address) -> T {
     // @todo: OBJ circuitry seems to ignore 'forced blank'. But is that really true?
-    if(address < GetSpriteVRAMBoundary()) {
-      return 0U;
-    }
-
     sprite.timestamp_vram_access = sprite.timestamp_init + cycle;
-    return read<T>(vram, address);
+
+    if(likely(address >= GetSpriteVRAMBoundary())) {
+      vram_obj_latch = read<u16>(vram, address & ~1U);
+      return read<T>(vram, address);
+    }
+    return read<T>(&vram_obj_latch, address & 1U);
   }
 
   template<typename T>
@@ -430,6 +436,9 @@ private:
   u8 pram[0x00400];
   u8 oam [0x00400];
   u8 vram[0x18000];
+
+  u16 vram_bg_latch;
+  u16 vram_obj_latch;
 
   Scheduler& scheduler;
   IRQ& irq;
