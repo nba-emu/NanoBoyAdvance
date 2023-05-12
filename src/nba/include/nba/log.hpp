@@ -11,6 +11,7 @@
 #include <fmt/format.h>
 #include <string_view>
 #include <utility>
+#include <nba/print.hpp>
 
 namespace nba {
 
@@ -47,7 +48,7 @@ inline void Log(std::string_view format, Args&&... args) {
     if constexpr(level == Error) prefix = "\e[35m[E]";
     if constexpr(level == Fatal) prefix = "\e[31m[F]";
 
-    fmt::print("{} {}\n", prefix, fmt::format(format, std::forward<Args>(args)...));
+    nba::print("{} {}\n", prefix, fmt::format(format, std::forward<Args>(args)...));
   }
 }
 
