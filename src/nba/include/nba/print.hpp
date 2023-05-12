@@ -19,7 +19,7 @@ namespace nba {
     // See: https://github.com/fmtlib/fmt/issues/1176
     try {
       fmt::print(std::forward<Args>(args)...);
-    } catch(const std::system_error& _) {
+    } catch(const fmt::system_error& _) {
     }
   }
 
