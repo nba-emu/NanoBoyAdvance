@@ -22,10 +22,12 @@ KeyPad::KeyPad(Scheduler& scheduler, IRQ& irq, std::shared_ptr<Config> config)
 
 void KeyPad::Reset() {
   input = {};
+  input.keypad = this;
   control = {};
   control.keypad = this;
   config->input_dev->SetOnChangeCallback(std::bind(&KeyPad::UpdateInput, this));
 
+  input_queue.Reset();
   scheduler.Add(k_poll_interval, Scheduler::EventClass::KeyPad_Poll);
 }
 
@@ -63,15 +65,20 @@ void KeyPad::UpdateIRQ() {
 }
 
 void KeyPad::Poll() {
+  PollInternal();
+  scheduler.Add(k_poll_interval, Scheduler::EventClass::KeyPad_Poll);
+}
+
+void KeyPad::PollInternal() {
   while(input_queue.DataAvailable()) {
     input.value = input_queue.Dequeue();
     UpdateIRQ();
   }
-
-  scheduler.Add(k_poll_interval, Scheduler::EventClass::KeyPad_Poll);
 }
 
 auto KeyPad::KeyInput::ReadByte(uint offset) -> u8 {
+  keypad->PollInternal();
+
   switch(offset) {
     case 0:
       return u8(value);
@@ -124,6 +131,12 @@ void KeyPad::KeyControl::WriteHalf(u16 value) {
   interrupt = value & 0x4000;
   mode = Mode(value >> 15);
   keypad->UpdateIRQ();
+}
+
+void KeyPad::InputQueue::Reset() {
+  rd_ptr = 0;
+  wr_ptr = 0;
+  size = 0;
 }
 
 bool KeyPad::InputQueue::DataAvailable() {

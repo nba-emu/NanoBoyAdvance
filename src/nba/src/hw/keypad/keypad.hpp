@@ -25,6 +25,8 @@ struct KeyPad {
   struct KeyInput {
     u16 value = 0x3FF;
 
+    KeyPad* keypad;
+
     auto ReadByte(uint offset) -> u8;
   } input;
 
@@ -48,7 +50,7 @@ struct KeyPad {
   void CopyState(SaveState& state);
 
 private:
-  static constexpr int k_poll_interval = 4096;
+  static constexpr int k_poll_interval = 16384;
 
   using Key = InputDevice::Key;
 
@@ -56,6 +58,7 @@ private:
   void UpdateIRQ();
 
   void Poll();
+  void PollInternal();
 
   Scheduler& scheduler;
   IRQ& irq;
@@ -69,6 +72,7 @@ private:
     std::size_t rd_ptr = 0;
     std::size_t wr_ptr = 0;
 
+    void Reset();
     bool DataAvailable();
     void Enqueue(u16 input);
     auto Dequeue() -> u16;
