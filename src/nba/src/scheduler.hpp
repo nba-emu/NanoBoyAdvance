@@ -64,6 +64,8 @@ struct Scheduler {
 
     SIO_transfer_done,
 
+    KeyPad_Poll,
+
     EndOfQueue,
     Count
   };

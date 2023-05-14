@@ -23,7 +23,7 @@ Core::Core(std::shared_ptr<Config> config)
     , apu(scheduler, dma, bus, config)
     , ppu(scheduler, irq, dma, config)
     , timer(scheduler, irq, apu)
-    , keypad(irq, config)
+    , keypad(scheduler, irq, config)
     , bus(scheduler, {cpu, irq, dma, apu, ppu, timer, keypad}) {
   Reset();
 }
@@ -77,7 +77,7 @@ auto Core::CreateSolarSensor() -> std::unique_ptr<SolarSensor> {
 void Core::Run(int cycles) {
   using HaltControl = Bus::Hardware::HaltControl;
 
-  auto limit = scheduler.GetTimestampNow() + cycles;
+  const auto limit = scheduler.GetTimestampNow() + cycles;
 
   while(scheduler.GetTimestampNow() < limit) {
     if(bus.hw.haltcnt == HaltControl::Run) {

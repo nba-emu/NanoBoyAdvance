@@ -11,9 +11,12 @@
 
 namespace nba::core {
 
-KeyPad::KeyPad(IRQ& irq, std::shared_ptr<Config> config)
-    : irq(irq)
+KeyPad::KeyPad(Scheduler& scheduler, IRQ& irq, std::shared_ptr<Config> config)
+    : scheduler(scheduler)
+    , irq(irq)
     , config(config) {
+  scheduler.Register(Scheduler::EventClass::KeyPad_Poll, this, &KeyPad::Poll);
+
   Reset();
 }
 
@@ -22,6 +25,8 @@ void KeyPad::Reset() {
   control = {};
   control.keypad = this;
   config->input_dev->SetOnChangeCallback(std::bind(&KeyPad::UpdateInput, this));
+
+  scheduler.Add(k_poll_interval, Scheduler::EventClass::KeyPad_Poll);
 }
 
 void KeyPad::UpdateInput() {
@@ -40,9 +45,7 @@ void KeyPad::UpdateInput() {
   if(!input_device->Poll(Key::R)) input |= 256;
   if(!input_device->Poll(Key::L)) input |= 512;
 
-  this->input.value = input;
-
-  UpdateIRQ();
+  input_queue.Enqueue(input);
 }
 
 void KeyPad::UpdateIRQ() {
@@ -57,6 +60,15 @@ void KeyPad::UpdateIRQ() {
       irq.Raise(IRQ::Source::Keypad);
     }
   }
+}
+
+void KeyPad::Poll() {
+  while(input_queue.DataAvailable()) {
+    input.value = input_queue.Dequeue();
+    UpdateIRQ();
+  }
+
+  scheduler.Add(k_poll_interval, Scheduler::EventClass::KeyPad_Poll);
 }
 
 auto KeyPad::KeyInput::ReadByte(uint offset) -> u8 {
@@ -112,6 +124,34 @@ void KeyPad::KeyControl::WriteHalf(u16 value) {
   interrupt = value & 0x4000;
   mode = Mode(value >> 15);
   keypad->UpdateIRQ();
+}
+
+bool KeyPad::InputQueue::DataAvailable() {
+  return size > 0;
+}
+
+void KeyPad::InputQueue::Enqueue(u16 input) {
+  data[wr_ptr] = input;
+  wr_ptr = (wr_ptr + 1) % k_buffer_size;
+
+  std::size_t current_size = size.load();
+
+  while(!size.compare_exchange_weak(current_size, std::min(current_size + 1u, k_buffer_size))) {
+    current_size = size.load();
+  }
+}
+
+auto KeyPad::InputQueue::Dequeue() -> u16 {
+  const u16 value = data[rd_ptr];
+  rd_ptr = (rd_ptr + 1) % k_buffer_size;
+
+  std::size_t current_size = size.load();
+
+  while(!size.compare_exchange_weak(current_size, current_size - 1)) {
+    current_size = size.load();
+  }
+
+  return value;
 }
 
 } // namespace nba::core

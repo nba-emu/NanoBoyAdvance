@@ -7,16 +7,18 @@
 
 #pragma once
 
+#include <atomic>
 #include <nba/config.hpp>
 #include <nba/save_state.hpp>
 #include <memory>
 
 #include "hw/irq/irq.hpp"
+#include "scheduler.hpp"
 
 namespace nba::core {
 
 struct KeyPad {
-  KeyPad(IRQ& irq, std::shared_ptr<Config> config);
+  KeyPad(Scheduler& scheduler, IRQ& irq, std::shared_ptr<Config> config);
 
   void Reset();
 
@@ -46,13 +48,31 @@ struct KeyPad {
   void CopyState(SaveState& state);
 
 private:
+  static constexpr int k_poll_interval = 4096;
+
   using Key = InputDevice::Key;
 
   void UpdateInput();
   void UpdateIRQ();
 
+  void Poll();
+
+  Scheduler& scheduler;
   IRQ& irq;
   std::shared_ptr<Config> config;
+
+  struct InputQueue {
+    static constexpr std::size_t k_buffer_size = 16;
+
+    std::atomic<u16> data[k_buffer_size];
+    std::atomic<std::size_t> size = 0;
+    std::size_t rd_ptr = 0;
+    std::size_t wr_ptr = 0;
+
+    bool DataAvailable();
+    void Enqueue(u16 input);
+    auto Dequeue() -> u16;
+  } input_queue{};
 };
 
 } // namespace nba::core
