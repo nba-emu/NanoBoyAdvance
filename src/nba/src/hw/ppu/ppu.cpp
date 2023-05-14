@@ -44,7 +44,6 @@ void PPU::Reset() {
   std::memset(vram, 0, 0x18000);
 
   vram_bg_latch = 0U;
-  vram_obj_latch = 0U;
 
   mmio.dispcnt.Reset();
   mmio.dispstat.Reset();

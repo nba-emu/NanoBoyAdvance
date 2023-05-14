@@ -421,10 +421,9 @@ private:
     sprite.timestamp_vram_access = sprite.timestamp_init + cycle;
 
     if(likely(address >= GetSpriteVRAMBoundary())) {
-      vram_obj_latch = read<u16>(vram, address & ~1U);
       return read<T>(vram, address);
     }
-    return read<T>(&vram_obj_latch, address & 1U);
+    return 0u;
   }
 
   template<typename T>
@@ -438,7 +437,6 @@ private:
   u8 vram[0x18000];
 
   u16 vram_bg_latch;
-  u16 vram_obj_latch;
 
   Scheduler& scheduler;
   IRQ& irq;

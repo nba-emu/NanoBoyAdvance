@@ -125,6 +125,7 @@ struct SaveState {
       bool written;
     } bgx[2], bgy[2];
 
+    u16 vram_bg_latch;
     bool dma3_video_transfer_running;
   } ppu;
 
