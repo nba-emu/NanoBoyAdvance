@@ -125,8 +125,15 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
 
     const float hq_master_volume = (sound_info.master_volume + 1) / 16.0;
     envelopes[i].volume = hq_envelope_volume;
-    envelopes[i].volume_r = hq_envelope_volume * (channel.volume_r / 256.0) * hq_master_volume;
-    envelopes[i].volume_l = hq_envelope_volume * (channel.volume_l / 256.0) * hq_master_volume;
+    if(channel.status & CHANNEL_START) {
+      envelopes[i].volume_r[0] = 0.0;
+      envelopes[i].volume_l[0] = 0.0;
+    } else {
+      envelopes[i].volume_r[0] = envelopes[i].volume_r[1];
+      envelopes[i].volume_l[0] = envelopes[i].volume_l[1];
+    }
+    envelopes[i].volume_r[1] = hq_envelope_volume * (channel.volume_r / 256.0) * hq_master_volume;
+    envelopes[i].volume_l[1] = hq_envelope_volume * (channel.volume_l / 256.0) * hq_master_volume;
   }
 }
 
@@ -169,6 +176,7 @@ void MP2K::RenderFrame() {
   for(int i = 0; i < max_channels; i++) {
     auto& channel = sound_info.channels[i];
     auto& sampler = samplers[i];
+    auto& envelope = envelopes[i];
 
     if((channel.status & CHANNEL_ON) == 0) {
       continue;
@@ -182,8 +190,6 @@ void MP2K::RenderFrame() {
       angular_step = channel.frequency / float(kSampleRate);
     }
 
-    auto volume_l = envelopes[i].volume_l;
-    auto volume_r = envelopes[i].volume_r;
     bool compressed = (channel.type & 32) != 0;
     auto sample_history = sampler.sample_history;
 
@@ -204,6 +210,11 @@ void MP2K::RenderFrame() {
     auto wave_data = sampler.wave_data;
 
     for(int j = 0; j < kSamplesPerFrame; j++) {
+      const float t = j / (float)kSamplesPerFrame;
+
+      const float volume_l = envelope.volume_l[0] * (1 - t) + envelope.volume_l[1] * t;
+      const float volume_r = envelope.volume_r[0] * (1 - t) + envelope.volume_r[1] * t;
+
       if(sampler.should_fetch_sample) {
         float sample;
 

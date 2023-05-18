@@ -111,8 +111,8 @@ private:
 
   struct Envelope {
     float volume = 0.0;
-    float volume_l = 0.0;
-    float volume_r = 0.0;
+    float volume_l[2] {0.0, 0.0};
+    float volume_r[2] {0.0, 0.0};
   } envelopes[kMaxSoundChannels];
 
   bool engaged;
