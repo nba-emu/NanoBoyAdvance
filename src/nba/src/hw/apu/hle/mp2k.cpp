@@ -125,15 +125,15 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
 
     const float hq_master_volume = (sound_info.master_volume + 1) / 16.0;
     envelopes[i].volume = hq_envelope_volume;
+    envelopes[i].volume_r[0] = envelopes[i].volume_r[1];
+    envelopes[i].volume_l[0] = envelopes[i].volume_l[1];
+    envelopes[i].volume_r[1] = hq_envelope_volume * (channel.volume_r / 256.0) * hq_master_volume;
+    envelopes[i].volume_l[1] = hq_envelope_volume * (channel.volume_l / 256.0) * hq_master_volume;
+    // @todo: can we predict the next envelope volume instead of delaying envelope by one frame?
     if(channel.status & CHANNEL_START) {
-      envelopes[i].volume_r[0] = 0.0;
-      envelopes[i].volume_l[0] = 0.0;
-    } else {
       envelopes[i].volume_r[0] = envelopes[i].volume_r[1];
       envelopes[i].volume_l[0] = envelopes[i].volume_l[1];
     }
-    envelopes[i].volume_r[1] = hq_envelope_volume * (channel.volume_r / 256.0) * hq_master_volume;
-    envelopes[i].volume_l[1] = hq_envelope_volume * (channel.volume_l / 256.0) * hq_master_volume;
   }
 }
 
