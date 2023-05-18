@@ -18,9 +18,9 @@ void MP2K::Reset() {
   total_frame_count = 0;
   current_frame = 0;
   buffer_read_index = 0;
-  for(auto& entry : samplers) {
-    entry = {};
-  }
+
+  for(auto& sampler : samplers) sampler = {};
+  for(auto& envelope : envelopes) envelope = {};
 }
 
 void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
@@ -49,6 +49,8 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
     auto  envelope_volume = u32(channel.envelope_volume);
     auto  envelope_phase = channel.status & CHANNEL_ENV_MASK;
 
+    float hq_envelope_volume = envelopes[i].volume;
+
     if((channel.status & CHANNEL_ON) == 0) {
       continue;
     }
@@ -65,6 +67,7 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
       } else {
         channel.status = CHANNEL_ENV_ATTACK;
       }
+      hq_envelope_volume = channel.envelope_attack / 256.0;
 
       sampler = {};
       sampler.wave_info = *bus.GetHostAddress<Sampler::WaveInfo>(channel.wave_address);
@@ -78,6 +81,7 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
       }
     } else if(channel.status & CHANNEL_STOP) {
       envelope_volume = (envelope_volume * channel.envelope_release) >> 8;
+      hq_envelope_volume *= channel.envelope_release / 256.0;
 
       if(envelope_volume <= channel.echo_volume) {
         if(channel.echo_volume == 0) {
@@ -87,9 +91,11 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
 
         channel.status |= CHANNEL_ECHO;
         envelope_volume = (u32)channel.echo_volume;
+        hq_envelope_volume = channel.echo_volume / 256.0;
       }
     } else if(envelope_phase == CHANNEL_ENV_ATTACK) {
       envelope_volume += channel.envelope_attack;
+      hq_envelope_volume = std::min(1.0, hq_envelope_volume + channel.envelope_attack / 256.0);
 
       if(envelope_volume > 0xFE) {
         channel.status = (channel.status & ~CHANNEL_ENV_MASK) | CHANNEL_ENV_DECAY;
@@ -97,6 +103,7 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
       }
     } else if(envelope_phase == CHANNEL_ENV_DECAY) {
       envelope_volume = (envelope_volume * channel.envelope_decay) >> 8;
+      hq_envelope_volume *= channel.envelope_decay / 256.0;
     
       auto envelope_sustain = channel.envelope_sustain;
       if(envelope_volume <= envelope_sustain) {
@@ -107,6 +114,7 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
 
         channel.status = (channel.status & ~CHANNEL_ENV_MASK) | CHANNEL_ENV_SUSTAIN;
         envelope_volume = envelope_sustain;
+        hq_envelope_volume = envelope_sustain / 256.0;
       }
     } 
 
@@ -114,6 +122,11 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
     envelope_volume = (envelope_volume * (this->sound_info.master_volume + 1)) >> 4;
     channel.envelope_volume_r = u8((envelope_volume * channel.volume_r) >> 8);
     channel.envelope_volume_l = u8((envelope_volume * channel.volume_l) >> 8);
+
+    const float hq_master_volume = (sound_info.master_volume + 1) / 16.0;
+    envelopes[i].volume = hq_envelope_volume;
+    envelopes[i].volume_r = hq_envelope_volume * (channel.volume_r / 256.0) * hq_master_volume;
+    envelopes[i].volume_l = hq_envelope_volume * (channel.volume_l / 256.0) * hq_master_volume;
   }
 }
 
@@ -169,8 +182,8 @@ void MP2K::RenderFrame() {
       angular_step = channel.frequency / float(kSampleRate);
     }
 
-    auto volume_l = channel.envelope_volume_l / 255.0;
-    auto volume_r = channel.envelope_volume_r / 255.0;
+    auto volume_l = envelopes[i].volume_l;
+    auto volume_r = envelopes[i].volume_r;
     bool compressed = (channel.type & 32) != 0;
     auto sample_history = sampler.sample_history;
 

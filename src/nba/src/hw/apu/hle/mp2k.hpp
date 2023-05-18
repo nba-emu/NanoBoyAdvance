@@ -109,6 +109,12 @@ private:
     u8* wave_data = nullptr;
   } samplers[kMaxSoundChannels];
 
+  struct Envelope {
+    float volume = 0.0;
+    float volume_l = 0.0;
+    float volume_r = 0.0;
+  } envelopes[kMaxSoundChannels];
+
   bool engaged;
   bool use_cubic_filter;
   Bus& bus;
