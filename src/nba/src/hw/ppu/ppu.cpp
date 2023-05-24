@@ -210,12 +210,16 @@ void PPU::BeginHBlankVBlank() {
 void PPU::BeginSpriteDrawing() {
   const uint vcount = mmio.vcount;
 
-  if(vcount <= 159U) {
+  if(vcount < 160U) {
     DrawSprite();
   }
 
-  if(vcount == 227U || vcount < 159U) {
-    InitSprite();
+  if(vcount == 227U || vcount < 160U) {
+    std::swap(sprite.buffer_rd, sprite.buffer_wr);
+
+    if(vcount != 159U) {
+      InitSprite();
+    }
   }
 
   scheduler.Add(1232, Scheduler::EventClass::PPU_begin_sprite_fetch);

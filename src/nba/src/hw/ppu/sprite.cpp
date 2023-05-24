@@ -29,8 +29,6 @@ void PPU::InitSprite() {
   sprite.state_rd = 0;
   sprite.state_wr = 1;
 
-  std::swap(sprite.buffer_rd, sprite.buffer_wr);
-
   // @todo: figure how the cycle limit is implemented in HW.
   // @todo: in unlocked H-blank mode VRAM fetch appears to stop at cycle 960?
   sprite.latch_cycle_limit = mmio.dispcnt.hblank_oam_access ? 964U : 1232U;
