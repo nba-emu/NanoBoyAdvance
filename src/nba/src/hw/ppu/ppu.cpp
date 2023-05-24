@@ -206,11 +206,13 @@ void PPU::BeginHBlankVBlank() {
 }
 
 void PPU::BeginSpriteDrawing() {
-  if(mmio.vcount <= 159) {
+  const uint vcount = mmio.vcount;
+
+  if(vcount <= 159U) {
     DrawSprite();
   }
 
-  if(mmio.vcount == 227 || mmio.vcount < 159) {
+  if(vcount == 227U || vcount < 159U) {
     InitSprite();
   }
 
