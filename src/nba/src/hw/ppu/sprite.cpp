@@ -5,6 +5,8 @@
  * Refer to the included LICENSE file.
  */
 
+#include <algorithm>
+
 #include "ppu.hpp"
 
 namespace nba::core {
@@ -27,8 +29,7 @@ void PPU::InitSprite() {
   sprite.state_rd = 0;
   sprite.state_wr = 1;
 
-  sprite.buffer_rd = sprite.buffer[ vcount & 1];
-  sprite.buffer_wr = sprite.buffer[(vcount & 1) ^ 1];
+  std::swap(sprite.buffer_rd, sprite.buffer_wr);
 
   // @todo: figure how the cycle limit is implemented in HW.
   // @todo: in unlocked H-blank mode VRAM fetch appears to stop at cycle 960?

@@ -95,6 +95,8 @@ void PPU::Reset() {
   // @todo: initialize window with the appropriate timing.
   bg = {};
   sprite = {};
+  sprite.buffer_rd = sprite.buffer[0];
+  sprite.buffer_wr = sprite.buffer[1];
   window = {};
   merge = {};
 
