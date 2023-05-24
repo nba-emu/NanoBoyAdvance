@@ -306,17 +306,23 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
     auto& pixel = sprite.buffer_wr[x];
 
     const bool opaque = color != 0U;
+    const auto mode = drawer_state.mode;
+    const uint priority = drawer_state.priority;
 
-    if(drawer_state.mode == OBJ_WINDOW) {
-      if(opaque) pixel.window = 1;
-    } else if(drawer_state.priority < pixel.priority || pixel.color == 0U) {
-      if(opaque) {
-        pixel.color = color;
-        pixel.alpha = (drawer_state.mode == OBJ_SEMI) ? 1U : 0U;
+    if(priority < pixel.priority || pixel.color == 0U) {
+      if(mode != OBJ_WINDOW) {
+        if(opaque) {
+          pixel.color = color;
+          pixel.alpha = (mode == OBJ_SEMI) ? 1U : 0U;
+        }
+        pixel.mosaic = drawer_state.mosaic ? 1U : 0U;
       }
 
-      pixel.mosaic = drawer_state.mosaic ? 1U : 0U;
-      pixel.priority = drawer_state.priority;
+      pixel.priority = priority;
+    }
+
+    if(mode == OBJ_WINDOW) {
+      if(opaque) pixel.window = 1;
     }
   };
 
