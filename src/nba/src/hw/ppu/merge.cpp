@@ -16,7 +16,7 @@ static u32 RGB555(u16 rgb555) {
   const uint g = (rgb555 >>  5) & 31U;
   const uint b = (rgb555 >> 10) & 31U;
 
-  return 0xFF000000 | r << 19 | g << 11 | b << 3;
+  return 0xFF000000 | (r << 3 | r >> 2) << 16 | (g << 3 | g >> 2) << 8 | (b << 3 | b >> 2);
 }
 
 void PPU::InitMerge() {
