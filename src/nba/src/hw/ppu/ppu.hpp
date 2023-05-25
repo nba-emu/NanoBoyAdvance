@@ -381,6 +381,7 @@ private:
     u32 colors[2];
     u16 color_l;
     bool forced_blank;
+    Sprite::Pixel sprite_pixel_latch;
   } merge;
 
   void InitMerge();
