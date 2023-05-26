@@ -309,20 +309,20 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
     const auto mode = drawer_state.mode;
     const uint priority = drawer_state.priority;
 
-    if(priority < pixel.priority || pixel.color == 0U) {
-      if(mode != OBJ_WINDOW) {
-        if(opaque) {
-          pixel.color = color;
-          pixel.alpha = (mode == OBJ_SEMI) ? 1U : 0U;
-        }
-        pixel.mosaic = drawer_state.mosaic ? 1U : 0U;
+    /**
+     * Transparent/outside OBJ window pixels are treated the same as
+     * normal/semi-transparent sprite pixels, meaning that (unlike opaque/inside OBJ window pixels) they
+     * update the mosaic and priority attributes.
+     */
+    if(mode == OBJ_WINDOW && opaque) {
+      pixel.window = 1;
+    } else if(priority < pixel.priority || pixel.color == 0U) {
+      if(opaque) {
+        pixel.color = color;
+        pixel.alpha = (mode == OBJ_SEMI) ? 1U : 0U;
       }
-
+      pixel.mosaic = drawer_state.mosaic ? 1U : 0U;
       pixel.priority = priority;
-    }
-
-    if(mode == OBJ_WINDOW) {
-      if(opaque) pixel.window = 1;
     }
   };
 
