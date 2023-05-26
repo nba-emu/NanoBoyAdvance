@@ -162,7 +162,7 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
           const int y_max = (y + half_height * 2) & 255;
 
           if((vcount >= y || y_max < y) && vcount < y_max) {
-            const bool mosaic = attr01 & (1 << 12);
+            const bool mosaic = (attr01 & (1 << 12)) && mode != OBJ_WINDOW;
 
             const int line = sprite.vcount - (mosaic ? sprite.mosaic_y : 0);
 
