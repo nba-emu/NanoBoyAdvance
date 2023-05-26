@@ -288,12 +288,10 @@ void Mosaic::Write(int address, u8 value) {
     case 0: {
       bg.size_x = (value & 15) + 1;
       bg.size_y = (value >> 4) + 1;
-      bg._counter_y = 0;
       break;
     case 1:
       obj.size_x = (value & 15) + 1;
       obj.size_y = (value >> 4) + 1;
-      obj._counter_y = 0;
       break;
   }
 }

@@ -68,6 +68,8 @@ void PPU::DrawSpriteImpl(int cycles) {
       if(sprite.vcount < 159) {
         if(++mosaic.obj._counter_y == mosaic.obj.size_y) {
           mosaic.obj._counter_y = 0;
+        } else {
+          mosaic.obj._counter_y &= 15;
         }
       } else {
         mosaic.obj._counter_y = 0;
