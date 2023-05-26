@@ -129,19 +129,12 @@ void DMA::Request(Occasion occasion) {
     case Occasion::Video:
       ScheduleDMAs(video_set.to_ulong());
       break;
-    case Occasion::FIFO0:
-    case Occasion::FIFO1: {
-      auto address = (occasion == Occasion::FIFO0) ? FIFO_A : FIFO_B;
-      for(int chan_id = 1; chan_id <= 2; chan_id++) {
-        auto& channel = channels[chan_id];
-        if(channel.enable &&
-            channel.time == Channel::Special &&
-            channel.dst_addr == address) {
-          ScheduleDMAs(1 << chan_id);
-        }
-      }
+    case Occasion::FIFO0: 
+      if(channels[1].enable && channels[1].time == Channel::Special) ScheduleDMAs(2);
       break;
-    }
+    case Occasion::FIFO1: 
+      if(channels[2].enable && channels[2].time == Channel::Special) ScheduleDMAs(4);
+      break;
   }
 }
 
