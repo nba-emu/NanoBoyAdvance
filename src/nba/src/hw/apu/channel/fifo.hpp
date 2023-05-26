@@ -43,6 +43,8 @@ struct FIFO {
       data[wr_ptr] = value;
       if(++wr_ptr == s_fifo_len) wr_ptr = 0;
       count++;
+    } else {
+      Reset();
     }
   }
   
