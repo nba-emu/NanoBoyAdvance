@@ -109,6 +109,8 @@ private:
     u8* wave_data = nullptr;
   } samplers[kMaxSoundChannels];
 
+  void RenderReverb(float* destination, u8 strength);
+
   bool engaged;
   bool use_cubic_filter;
   Bus& bus;

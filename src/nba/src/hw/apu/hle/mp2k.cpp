@@ -127,32 +127,16 @@ void MP2K::RenderFrame() {
 
   current_frame = (current_frame + 1) % total_frame_count;
 
-  auto reverb = sound_info.reverb;
-  auto max_channels = std::min(sound_info.max_channels, kMaxSoundChannels);
-  auto destination = &buffer[current_frame * kSamplesPerFrame * 2];
+  const auto reverb_strength = sound_info.reverb;
+  const auto max_channels = std::min(sound_info.max_channels, kMaxSoundChannels);
+  const auto destination = &buffer[current_frame * kSamplesPerFrame * 2];
 
-  if(reverb == 0) {
-    std::memset(destination, 0, kSamplesPerFrame * 2 * sizeof(float));
+  if(reverb_strength > 0) {
+    RenderReverb(destination, reverb_strength);
   } else {
-    auto factor = reverb / (128.0 * 4.0);
-    auto other_frame  = (current_frame + 1) % total_frame_count;
-    auto other_buffer = &buffer[other_frame * kSamplesPerFrame * 2];
-
-    for(int i = 0; i < kSamplesPerFrame; i++) {
-      float sample_out = 0;
-
-      sample_out += other_buffer[i * 2 + 0];
-      sample_out += other_buffer[i * 2 + 1];
-      sample_out += destination[i * 2 + 0];
-      sample_out += destination[i * 2 + 1];
-
-      sample_out *= factor;
-
-      destination[i * 2 + 0] = sample_out;
-      destination[i * 2 + 1] = sample_out;
-    }
+    std::memset(destination, 0, kSamplesPerFrame * 2 * sizeof(float));
   }
-  
+
   for(int i = 0; i < max_channels; i++) {
     auto& channel = sound_info.channels[i];
     auto& sampler = samplers[i];
@@ -264,6 +248,63 @@ void MP2K::RenderFrame() {
         }
       }
     }
+  }
+}
+
+void MP2K::RenderReverb(float* destination, u8 strength) {
+  static constexpr float k_early_coefficient = 0.0015;
+
+  static constexpr float k_late_coefficients[3][2] {
+    { 1.0 , 0.1  },
+    { 0.6 , 0.25 },
+    { 0.35, 0.35 }
+  };
+
+  static constexpr float k_normalize_coefficients = []() constexpr {
+    float sum = 0.0;
+
+    for(auto pair : k_late_coefficients) {
+      sum += pair[0];
+      sum += pair[1];
+    } 
+
+    return 1.0 / sum;
+  }();
+
+  // @todo: ensure that the DMA buffer has at least four buffer (i.e. for SotS it doesn't currently).
+
+  const auto early_buffer = &buffer[((current_frame + total_frame_count - 1) % total_frame_count) * kSamplesPerFrame * 2];
+
+  const float* late_buffers[3] {
+    &buffer[((current_frame + 2) % total_frame_count) * kSamplesPerFrame * 2],
+    &buffer[((current_frame + 1) % total_frame_count) * kSamplesPerFrame * 2],
+    destination
+  };
+
+  const auto factor = strength / 128.0;
+
+  for(int l = 0; l < kSamplesPerFrame * 2; l += 2) {
+    const int r = l + 1;
+
+    const float early_reflection_l = early_buffer[l] * k_early_coefficient;
+    const float early_reflection_r = early_buffer[r] * k_early_coefficient;
+
+    float late_reflection_l = 0;
+    float late_reflection_r = 0;
+
+    for(int j = 0; j < 3; j++) {
+      const float sample_l = late_buffers[j][l];
+      const float sample_r = late_buffers[j][r];
+
+      late_reflection_l += sample_l * k_late_coefficients[j][0] + sample_r * k_late_coefficients[j][1];
+      late_reflection_r += sample_l * k_late_coefficients[j][1] + sample_r * k_late_coefficients[j][0];
+    }
+
+    late_reflection_l *= k_normalize_coefficients;
+    late_reflection_r *= k_normalize_coefficients;
+
+    destination[l] = (early_reflection_l + late_reflection_l) * factor;
+    destination[r] = (early_reflection_r + late_reflection_r) * factor;
   }
 }
 
