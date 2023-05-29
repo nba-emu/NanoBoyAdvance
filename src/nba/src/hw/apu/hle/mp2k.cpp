@@ -129,26 +129,22 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
 
     // Try to predict the envelope's value at the start of the next audio frame,
     // so that we can linearly interpolate the envelope between the current and next frame.
-    if(channel.status & CHANNEL_ON) {
-      if(channel.status & CHANNEL_STOP) {
-        if(((envelope_volume * channel.envelope_release) >> 8) <= channel.echo_volume) {
-          hq_envelope_volume[1] = U8ToFloat(channel.echo_volume);
-        } else {
-          hq_envelope_volume[1] = hq_envelope_volume[0] * U8ToFloat(channel.envelope_release);
-        }
-      } else if((channel.status & CHANNEL_ENV_MASK) == CHANNEL_ENV_ATTACK) {
-        hq_envelope_volume[1] = std::min(1.0f, hq_envelope_volume[0] + U8ToFloat(channel.envelope_attack));
-      } else if((channel.status & CHANNEL_ENV_MASK) == CHANNEL_ENV_DECAY) {
-        if(((envelope_volume * channel.envelope_decay) >> 8) <= channel.envelope_sustain) {
-          hq_envelope_volume[1] = U8ToFloat(channel.envelope_sustain);
-        } else {
-          hq_envelope_volume[1] = hq_envelope_volume[0] * U8ToFloat(channel.envelope_decay);
-        }
+    if(channel.status & CHANNEL_STOP) {
+      if(((envelope_volume * channel.envelope_release) >> 8) <= channel.echo_volume) {
+        hq_envelope_volume[1] = U8ToFloat(channel.echo_volume);
       } else {
-        hq_envelope_volume[1] = hq_envelope_volume[0];
+        hq_envelope_volume[1] = hq_envelope_volume[0] * U8ToFloat(channel.envelope_release);
+      }
+    } else if((channel.status & CHANNEL_ENV_MASK) == CHANNEL_ENV_ATTACK) {
+      hq_envelope_volume[1] = std::min(1.0f, hq_envelope_volume[0] + U8ToFloat(channel.envelope_attack));
+    } else if((channel.status & CHANNEL_ENV_MASK) == CHANNEL_ENV_DECAY) {
+      if(((envelope_volume * channel.envelope_decay) >> 8) <= channel.envelope_sustain) {
+        hq_envelope_volume[1] = U8ToFloat(channel.envelope_sustain);
+      } else {
+        hq_envelope_volume[1] = hq_envelope_volume[0] * U8ToFloat(channel.envelope_decay);
       }
     } else {
-      hq_envelope_volume[1] = 0.0f;
+      hq_envelope_volume[1] = hq_envelope_volume[0];
     }
 
     const float hq_master_volume = (sound_info.master_volume + 1) / 16.0;
