@@ -116,7 +116,41 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
         envelope_volume = envelope_sustain;
         hq_envelope_volume = envelope_sustain / 256.0;
       }
-    } 
+    }
+
+    // @todo: optimize this mess
+
+    float final_hq_envelope_volume = hq_envelope_volume;
+
+    if(channel.status & CHANNEL_ON) {
+      if(channel.status & CHANNEL_STOP) {
+        const u8 final_envelope_volume = (envelope_volume * channel.envelope_release) >> 8;
+
+        if(final_envelope_volume <= channel.echo_volume) {
+          if(channel.echo_volume > 0) {
+            final_hq_envelope_volume = channel.echo_volume / 256.0;
+          }
+        } else {
+          final_hq_envelope_volume = hq_envelope_volume * channel.envelope_release / 256.0;
+        }
+      } else if((channel.status & CHANNEL_ENV_MASK) == CHANNEL_ENV_ATTACK) {
+        final_hq_envelope_volume = std::min(1.0, hq_envelope_volume + channel.envelope_attack / 256.0);
+      } else if((channel.status & CHANNEL_ENV_MASK) == CHANNEL_ENV_DECAY) {
+        const u8 final_envelope_volume = (envelope_volume * channel.envelope_decay) >> 8;
+
+        if(final_envelope_volume <= channel.envelope_sustain) {
+          if(channel.envelope_sustain > 0) {
+            final_hq_envelope_volume = channel.envelope_sustain / 256.0;
+          }
+        } else {
+          final_hq_envelope_volume = hq_envelope_volume * channel.envelope_decay / 256.0;
+        }
+      }
+
+      if(final_hq_envelope_volume != hq_envelope_volume) {
+        fmt::print("yay!\n");
+      }
+    }
 
     channel.envelope_volume = u8(envelope_volume);
     envelope_volume = (envelope_volume * (this->sound_info.master_volume + 1)) >> 4;
@@ -125,15 +159,10 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
 
     const float hq_master_volume = (sound_info.master_volume + 1) / 16.0;
     envelopes[i].volume = hq_envelope_volume;
-    envelopes[i].volume_r[0] = envelopes[i].volume_r[1];
-    envelopes[i].volume_l[0] = envelopes[i].volume_l[1];
-    envelopes[i].volume_r[1] = hq_envelope_volume * (channel.volume_r / 256.0) * hq_master_volume;
-    envelopes[i].volume_l[1] = hq_envelope_volume * (channel.volume_l / 256.0) * hq_master_volume;
-    // @todo: can we predict the next envelope volume instead of delaying envelope by one frame?
-    if(channel.status & CHANNEL_START) {
-      envelopes[i].volume_r[0] = envelopes[i].volume_r[1];
-      envelopes[i].volume_l[0] = envelopes[i].volume_l[1];
-    }
+    envelopes[i].volume_r[0] = hq_envelope_volume * (channel.volume_r / 256.0) * hq_master_volume;
+    envelopes[i].volume_l[0] = hq_envelope_volume * (channel.volume_l / 256.0) * hq_master_volume;
+    envelopes[i].volume_r[1] = final_hq_envelope_volume * (channel.volume_r / 256.0) * hq_master_volume;
+    envelopes[i].volume_l[1] = final_hq_envelope_volume * (channel.volume_l / 256.0) * hq_master_volume;
   }
 }
 
