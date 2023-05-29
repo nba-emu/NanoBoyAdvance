@@ -91,6 +91,10 @@ private:
     return value / 127.0;
   }
 
+  static constexpr float U8ToFloat(u8 value) {
+    return value / 256.0;
+  }
+
   struct Sampler {
     bool compressed = false;
     bool should_fetch_sample = true;

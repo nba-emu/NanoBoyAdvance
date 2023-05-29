@@ -43,17 +43,21 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
 
   this->sound_info = sound_info;
 
+  // Update the channel state and envelope volume for this audio frame
   for(int i = 0; i < max_channels; i++) {
     auto& channel = this->sound_info.channels[i];
-    auto& sampler = samplers[i];
-    auto  envelope_volume = u32(channel.envelope_volume);
-    auto  envelope_phase = channel.status & CHANNEL_ENV_MASK;
-
-    float hq_envelope_volume = envelopes[i].volume;
 
     if((channel.status & CHANNEL_ON) == 0) {
       continue;
     }
+
+    auto& sampler = samplers[i];
+    auto  envelope_volume = u32(channel.envelope_volume);
+    auto  envelope_phase = channel.status & CHANNEL_ENV_MASK;
+
+    float hq_envelope_volume[2];
+
+    hq_envelope_volume[0] = envelopes[i].volume;
 
     if(channel.status & CHANNEL_START) {
       if(channel.status & CHANNEL_STOP) {
@@ -67,7 +71,7 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
       } else {
         channel.status = CHANNEL_ENV_ATTACK;
       }
-      hq_envelope_volume = channel.envelope_attack / 256.0;
+      hq_envelope_volume[0] = U8ToFloat(channel.envelope_attack);
 
       sampler = {};
       sampler.wave_info = *bus.GetHostAddress<Sampler::WaveInfo>(channel.wave_address);
@@ -81,7 +85,7 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
       }
     } else if(channel.status & CHANNEL_STOP) {
       envelope_volume = (envelope_volume * channel.envelope_release) >> 8;
-      hq_envelope_volume *= channel.envelope_release / 256.0;
+      hq_envelope_volume[0] *= U8ToFloat(channel.envelope_release);
 
       if(envelope_volume <= channel.echo_volume) {
         if(channel.echo_volume == 0) {
@@ -91,11 +95,11 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
 
         channel.status |= CHANNEL_ECHO;
         envelope_volume = (u32)channel.echo_volume;
-        hq_envelope_volume = channel.echo_volume / 256.0;
+        hq_envelope_volume[0] = U8ToFloat(channel.echo_volume);
       }
     } else if(envelope_phase == CHANNEL_ENV_ATTACK) {
       envelope_volume += channel.envelope_attack;
-      hq_envelope_volume = std::min(1.0, hq_envelope_volume + channel.envelope_attack / 256.0);
+      hq_envelope_volume[0] = std::min(1.0f, hq_envelope_volume[0] + U8ToFloat(channel.envelope_attack));
 
       if(envelope_volume > 0xFE) {
         channel.status = (channel.status & ~CHANNEL_ENV_MASK) | CHANNEL_ENV_DECAY;
@@ -103,7 +107,7 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
       }
     } else if(envelope_phase == CHANNEL_ENV_DECAY) {
       envelope_volume = (envelope_volume * channel.envelope_decay) >> 8;
-      hq_envelope_volume *= channel.envelope_decay / 256.0;
+      hq_envelope_volume[0] *= U8ToFloat(channel.envelope_decay);
     
       auto envelope_sustain = channel.envelope_sustain;
       if(envelope_volume <= envelope_sustain) {
@@ -114,41 +118,7 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
 
         channel.status = (channel.status & ~CHANNEL_ENV_MASK) | CHANNEL_ENV_SUSTAIN;
         envelope_volume = envelope_sustain;
-        hq_envelope_volume = envelope_sustain / 256.0;
-      }
-    }
-
-    // @todo: optimize this mess
-
-    float final_hq_envelope_volume = hq_envelope_volume;
-
-    if(channel.status & CHANNEL_ON) {
-      if(channel.status & CHANNEL_STOP) {
-        const u8 final_envelope_volume = (envelope_volume * channel.envelope_release) >> 8;
-
-        if(final_envelope_volume <= channel.echo_volume) {
-          if(channel.echo_volume > 0) {
-            final_hq_envelope_volume = channel.echo_volume / 256.0;
-          }
-        } else {
-          final_hq_envelope_volume = hq_envelope_volume * channel.envelope_release / 256.0;
-        }
-      } else if((channel.status & CHANNEL_ENV_MASK) == CHANNEL_ENV_ATTACK) {
-        final_hq_envelope_volume = std::min(1.0, hq_envelope_volume + channel.envelope_attack / 256.0);
-      } else if((channel.status & CHANNEL_ENV_MASK) == CHANNEL_ENV_DECAY) {
-        const u8 final_envelope_volume = (envelope_volume * channel.envelope_decay) >> 8;
-
-        if(final_envelope_volume <= channel.envelope_sustain) {
-          if(channel.envelope_sustain > 0) {
-            final_hq_envelope_volume = channel.envelope_sustain / 256.0;
-          }
-        } else {
-          final_hq_envelope_volume = hq_envelope_volume * channel.envelope_decay / 256.0;
-        }
-      }
-
-      if(final_hq_envelope_volume != hq_envelope_volume) {
-        fmt::print("yay!\n");
+        hq_envelope_volume[0] = U8ToFloat(envelope_sustain);
       }
     }
 
@@ -157,12 +127,40 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
     channel.envelope_volume_r = u8((envelope_volume * channel.volume_r) >> 8);
     channel.envelope_volume_l = u8((envelope_volume * channel.volume_l) >> 8);
 
+    // Try to predict the envelope's value at the start of the next audio frame,
+    // so that we can linearly interpolate the envelope between the current and next frame.
+    if(channel.status & CHANNEL_ON) {
+      if(channel.status & CHANNEL_STOP) {
+        if(((envelope_volume * channel.envelope_release) >> 8) <= channel.echo_volume) {
+          hq_envelope_volume[1] = U8ToFloat(channel.echo_volume);
+        } else {
+          hq_envelope_volume[1] = hq_envelope_volume[0] * U8ToFloat(channel.envelope_release);
+        }
+      } else if((channel.status & CHANNEL_ENV_MASK) == CHANNEL_ENV_ATTACK) {
+        hq_envelope_volume[1] = std::min(1.0f, hq_envelope_volume[0] + U8ToFloat(channel.envelope_attack));
+      } else if((channel.status & CHANNEL_ENV_MASK) == CHANNEL_ENV_DECAY) {
+        if(((envelope_volume * channel.envelope_decay) >> 8) <= channel.envelope_sustain) {
+          hq_envelope_volume[1] = U8ToFloat(channel.envelope_sustain);
+        } else {
+          hq_envelope_volume[1] = hq_envelope_volume[0] * U8ToFloat(channel.envelope_decay);
+        }
+      } else {
+        hq_envelope_volume[1] = hq_envelope_volume[0];
+      }
+    } else {
+      hq_envelope_volume[1] = 0.0f;
+    }
+
     const float hq_master_volume = (sound_info.master_volume + 1) / 16.0;
-    envelopes[i].volume = hq_envelope_volume;
-    envelopes[i].volume_r[0] = hq_envelope_volume * (channel.volume_r / 256.0) * hq_master_volume;
-    envelopes[i].volume_l[0] = hq_envelope_volume * (channel.volume_l / 256.0) * hq_master_volume;
-    envelopes[i].volume_r[1] = final_hq_envelope_volume * (channel.volume_r / 256.0) * hq_master_volume;
-    envelopes[i].volume_l[1] = final_hq_envelope_volume * (channel.volume_l / 256.0) * hq_master_volume;
+    const float hq_volume_r = hq_master_volume * U8ToFloat(channel.volume_r);
+    const float hq_volume_l = hq_master_volume * U8ToFloat(channel.volume_l);
+
+    envelopes[i].volume = hq_envelope_volume[0];
+
+    for(int j : {0, 1}) {
+      envelopes[i].volume_r[j] = hq_envelope_volume[j] * hq_volume_r;
+      envelopes[i].volume_l[j] = hq_envelope_volume[j] * hq_volume_l;
+    }
   }
 }
 
