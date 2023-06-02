@@ -15,7 +15,6 @@ namespace nba::core {
 void MP2K::Reset() {
   engaged = false;
   use_cubic_filter = false;
-  total_frame_count = 0;
   current_frame = 0;
   buffer_read_index = 0;
   for(auto& entry : samplers) {
@@ -34,8 +33,7 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
       "MP2K: samples per V-blank must not be zero."
     );
 
-    total_frame_count = kDMABufferSize / sound_info.pcm_samples_per_vblank;
-    buffer = std::make_unique<float[]>(kSamplesPerFrame * total_frame_count * 2);
+    buffer = std::make_unique<float[]>(k_samples_per_frame * k_total_frame_count * 2);
     engaged = true;
   }
 
@@ -125,16 +123,16 @@ void MP2K::RenderFrame() {
     S8ToFloat(0xF0), S8ToFloat(0xF7), S8ToFloat(0xFC), S8ToFloat(0xFF)
   };
 
-  current_frame = (current_frame + 1) % total_frame_count;
+  current_frame = (current_frame + 1) % k_total_frame_count;
 
-  const auto reverb_strength = sound_info.reverb;
+  const auto reverb_strength = 64;//sound_info.reverb;
   const auto max_channels = std::min(sound_info.max_channels, kMaxSoundChannels);
-  const auto destination = &buffer[current_frame * kSamplesPerFrame * 2];
+  const auto destination = &buffer[current_frame * k_samples_per_frame * 2];
 
   if(reverb_strength > 0) {
     RenderReverb(destination, reverb_strength);
   } else {
-    std::memset(destination, 0, kSamplesPerFrame * 2 * sizeof(float));
+    std::memset(destination, 0, k_samples_per_frame * 2 * sizeof(float));
   }
 
   for(int i = 0; i < max_channels; i++) {
@@ -148,9 +146,9 @@ void MP2K::RenderFrame() {
     float angular_step;
 
     if(channel.type & 8) {
-      angular_step = sound_info.pcm_sample_rate / float(kSampleRate);
+      angular_step = sound_info.pcm_sample_rate / float(k_sample_rate);
     } else {
-      angular_step = channel.frequency / float(kSampleRate);
+      angular_step = channel.frequency / float(k_sample_rate);
     }
 
     auto volume_l = channel.envelope_volume_l / 255.0;
@@ -174,7 +172,7 @@ void MP2K::RenderFrame() {
 
     auto wave_data = sampler.wave_data;
 
-    for(int j = 0; j < kSamplesPerFrame; j++) {
+    for(int j = 0; j < k_samples_per_frame; j++) {
       if(sampler.should_fetch_sample) {
         float sample;
 
@@ -271,19 +269,17 @@ void MP2K::RenderReverb(float* destination, u8 strength) {
     return 1.0 / sum;
   }();
 
-  // @todo: ensure that the DMA buffer has at least four buffer (i.e. for SotS it doesn't currently).
-
-  const auto early_buffer = &buffer[((current_frame + total_frame_count - 1) % total_frame_count) * kSamplesPerFrame * 2];
+  const auto early_buffer = &buffer[((current_frame + k_total_frame_count - 1) % k_total_frame_count) * k_samples_per_frame * 2];
 
   const float* late_buffers[3] {
-    &buffer[((current_frame + 2) % total_frame_count) * kSamplesPerFrame * 2],
-    &buffer[((current_frame + 1) % total_frame_count) * kSamplesPerFrame * 2],
+    &buffer[((current_frame + 2) % k_total_frame_count) * k_samples_per_frame * 2],
+    &buffer[((current_frame + 1) % k_total_frame_count) * k_samples_per_frame * 2],
     destination
   };
 
   const auto factor = strength / 128.0;
 
-  for(int l = 0; l < kSamplesPerFrame * 2; l += 2) {
+  for(int l = 0; l < k_samples_per_frame * 2; l += 2) {
     const int r = l + 1;
 
     const float early_reflection_l = early_buffer[l] * k_early_coefficient;
@@ -313,9 +309,9 @@ auto MP2K::ReadSample() -> float* {
     RenderFrame();
   }
 
-  auto sample = &buffer[(current_frame * kSamplesPerFrame + buffer_read_index) * 2];
+  auto sample = &buffer[(current_frame * k_samples_per_frame + buffer_read_index) * 2];
 
-  if(++buffer_read_index == kSamplesPerFrame) {
+  if(++buffer_read_index == k_samples_per_frame) {
     buffer_read_index = 0;
   }
 
