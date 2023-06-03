@@ -59,7 +59,7 @@ void ARM_DataProcessing(u32 instruction) {
     } else {
       shift = GetReg((instruction >> 8) & 0xF);
       state.r15 += 4;
-      bus.Idle();
+      Idle();
 
       pipe.access = Access::Code | Access::Nonsequential;
     }
@@ -251,7 +251,7 @@ void ARM_Multiply(u32 instruction) {
 
   if (accumulate) {
     result += GetReg(op3);
-    bus.Idle();
+    Idle();
   }
 
   if (set_flags) {
@@ -288,7 +288,7 @@ void ARM_MultiplyLong(u32 instruction) {
   }
 
   TickMultiply<sign_extend>(rhs);
-  bus.Idle();
+  Idle();
 
   if (accumulate) {
     s64 value = GetReg(dst_hi);
@@ -298,7 +298,7 @@ void ARM_MultiplyLong(u32 instruction) {
     value  |= GetReg(dst_lo);
 
     result += value;
-    bus.Idle();
+    Idle();
   }
 
   u32 result_hi = result >> 32;
@@ -335,7 +335,7 @@ void ARM_SingleDataSwap(u32 instruction) {
     WriteWord(GetReg(base), GetReg(src), Access::Nonsequential | Access::Lock);
   }
 
-  bus.Idle();
+  Idle();
   
   SetReg(dst, tmp);
 
@@ -390,7 +390,7 @@ void ARM_HalfwordSignedTransfer(u32 instruction) {
         if constexpr (writeback || !pre) {
           SetReg(base, GetReg(base) + offset);
         }
-        bus.Idle();
+        Idle();
         SetReg(dst, value);
       } else {
         WriteHalf(address, GetReg(dst), Access::Nonsequential);
@@ -405,17 +405,17 @@ void ARM_HalfwordSignedTransfer(u32 instruction) {
         if constexpr (writeback || !pre) {
           SetReg(base, GetReg(base) + offset);
         }
-        bus.Idle();
+        Idle();
         SetReg(dst, value);
       } else {
         // ARMv5 LDRD: this opcode is unpredictable on ARMv4T.
         // On ARM7TDMI-S it doesn't seem to perform any memory access,
         // so the load/store cycle probably is internal in this case.
-        bus.Idle();
+        Idle();
         if constexpr (writeback || !pre) {
           SetReg(base, GetReg(base) + offset);
         }
-        bus.Idle();
+        Idle();
       }
       break;
     case 3:
@@ -424,13 +424,13 @@ void ARM_HalfwordSignedTransfer(u32 instruction) {
         if constexpr (writeback || !pre) {
           SetReg(base, GetReg(base) + offset);
         }
-        bus.Idle();
+        Idle();
         SetReg(dst, value);
       } else {
         // ARMv5 STRD: this opcode is unpredictable on ARMv4T.
         // On ARM7TDMI-S it doesn't seem to perform any memory access,
         // so the load/store cycle probably is internal in this case.
-        bus.Idle();
+        Idle();
         if constexpr (writeback || !pre) {
           SetReg(base, GetReg(base) + offset);
         }
@@ -503,7 +503,7 @@ void ARM_SingleDataTransfer(u32 instruction) {
       SetReg(base, GetReg(base) + offset);
     }
 
-    bus.Idle();
+    Idle();
 
     SetReg(dst, value);
   } else {
@@ -615,7 +615,7 @@ void ARM_BlockDataTransfer(u32 instruction) {
   }
 
   if constexpr (load) {
-    bus.Idle();
+    Idle();
 
     if (switch_mode) {
       /* During the following two cycles of a usermode LDM,

@@ -148,7 +148,7 @@ void IRQ::OnWriteIO() {
   const bool irq_line_new = reg_ime && irq_available_new;
 
   if(irq_line != irq_line_new) {
-    scheduler.Add(2, Scheduler::EventClass::IRQ_update_irq_line, 0, (u64)irq_line_new);
+    scheduler.Add(1, Scheduler::EventClass::IRQ_update_irq_line, 0, (u64)irq_line_new);
 
     irq_line = irq_line_new;
   }

@@ -40,6 +40,7 @@ struct ARM7TDMI {
     pipe.access = Access::Code | Access::Nonsequential;
     irq_line = false;
     latch_irq_disable = state.cpsr.f.mask_irq;
+    irq_flag = false;
     ldm_usermode_conflict = false;
     cpu_mode_is_invalid = false;
   }
@@ -49,11 +50,9 @@ struct ARM7TDMI {
   }
 
   void Run() {
-    if(IRQLine()) SignalIRQ();
+    if(irq_flag) SignalIRQ();
 
     auto instruction = pipe.opcode[0];
-
-    latch_irq_disable = state.cpsr.f.mask_irq;
 
     state.r15 &= ~1;
 
@@ -182,10 +181,6 @@ private:
   }
 
   void SignalIRQ() {
-    if(latch_irq_disable) {
-      return;
-    }
-
     // Prefetch the next instruction
     // The result will be discarded because we flush the pipeline.
     // But this is important for timing nonetheless.
@@ -222,8 +217,8 @@ private:
   }
 
   void ReloadPipeline16() {
-    pipe.opcode[0] = bus.ReadHalf(state.r15 + 0, Access::Code | Access::Nonsequential);
-    pipe.opcode[1] = bus.ReadHalf(state.r15 + 2, Access::Code | Access::Sequential);
+    pipe.opcode[0] = ReadHalf(state.r15 + 0, Access::Code | Access::Nonsequential);
+    pipe.opcode[1] = ReadHalf(state.r15 + 2, Access::Code | Access::Sequential);
     pipe.access = Access::Code | Access::Sequential;
     state.r15 += 4;
 
@@ -231,8 +226,8 @@ private:
   }
 
   void ReloadPipeline32() {
-    pipe.opcode[0] = bus.ReadWord(state.r15 + 0, Access::Code | Access::Nonsequential);
-    pipe.opcode[1] = bus.ReadWord(state.r15 + 4, Access::Code | Access::Sequential);
+    pipe.opcode[0] = ReadWord(state.r15 + 0, Access::Code | Access::Nonsequential);
+    pipe.opcode[1] = ReadWord(state.r15 + 4, Access::Code | Access::Sequential);
     pipe.access = Access::Code | Access::Sequential;
     state.r15 += 8;
 
@@ -263,6 +258,10 @@ private:
     ldm_usermode_conflict = false;
   }
 
+  void UpdateIRQFlag() {
+    irq_flag = irq_line & !state.cpsr.f.mask_irq;
+  }
+
   #include "handlers/arithmetic.inl"
   #include "handlers/handler16.inl"
   #include "handlers/handler32.inl"
@@ -281,6 +280,7 @@ private:
 
   bool irq_line;
   bool latch_irq_disable;
+  bool irq_flag;
 
   static std::array<bool, 256> s_condition_lut;
   static std::array<Handler16, 1024> s_opcode_lut_16;

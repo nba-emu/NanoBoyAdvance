@@ -6,18 +6,23 @@
  */
 
 u32 ReadByte(u32 address, int access) {
+  UpdateIRQFlag();
   return bus.ReadByte(address, access);
 }
 
 u32 ReadHalf(u32 address, int access) {
+  UpdateIRQFlag();
   return bus.ReadHalf(address, access);
 }
 
 u32 ReadWord(u32 address, int access) {
+  UpdateIRQFlag();
   return bus.ReadWord(address, access);
 }
 
 u32 ReadByteSigned(u32 address, int access) {
+  UpdateIRQFlag();
+  
   u32 value = bus.ReadByte(address, access);
 
   if (value & 0x80) {
@@ -28,6 +33,8 @@ u32 ReadByteSigned(u32 address, int access) {
 }
 
 u32 ReadHalfRotate(u32 address, int access) {
+  UpdateIRQFlag();
+  
   u32 value = bus.ReadHalf(address, access);
 
   if (address & 1) {
@@ -39,6 +46,8 @@ u32 ReadHalfRotate(u32 address, int access) {
 
 u32 ReadHalfSigned(u32 address, int access) {
   u32 value;
+
+  UpdateIRQFlag();
 
   if (address & 1) {
     value = bus.ReadByte(address, access);
@@ -56,6 +65,8 @@ u32 ReadHalfSigned(u32 address, int access) {
 }
 
 u32 ReadWordRotate(u32 address, int access) {
+  UpdateIRQFlag();
+
   auto value = bus.ReadWord(address, access);
   auto shift = (address & 3) * 8;
 
@@ -63,13 +74,25 @@ u32 ReadWordRotate(u32 address, int access) {
 }
 
 void WriteByte(u32 address, u8  value, int access) {
+  UpdateIRQFlag();
+  
   bus.WriteByte(address, value, access);
 }
 
 void WriteHalf(u32 address, u16 value, int access) {
+  UpdateIRQFlag();
+
   bus.WriteHalf(address, value, access);
 }
 
 void WriteWord(u32 address, u32 value, int access) {
+  UpdateIRQFlag();
+
   bus.WriteWord(address, value, access);
+}
+
+void Idle() {
+  UpdateIRQFlag();
+
+  bus.Idle();
 }

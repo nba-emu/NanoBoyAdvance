@@ -111,7 +111,7 @@ void Thumb_ALU(u16 instruction) {
     }
     case ThumbDataOp::LSL: {
       auto shift = state.reg[src];
-      bus.Idle();
+      Idle();
       pipe.access = Access::Code | Access::Nonsequential;
 
       int carry = state.cpsr.f.c;
@@ -122,7 +122,7 @@ void Thumb_ALU(u16 instruction) {
     }
     case ThumbDataOp::LSR: {
       auto shift = state.reg[src];
-      bus.Idle();
+      Idle();
       pipe.access = Access::Code | Access::Nonsequential;
 
       int carry = state.cpsr.f.c;
@@ -133,7 +133,7 @@ void Thumb_ALU(u16 instruction) {
     }
     case ThumbDataOp::ASR: {
       auto shift = state.reg[src];
-      bus.Idle();
+      Idle();
       pipe.access = Access::Code | Access::Nonsequential;
 
       int carry = state.cpsr.f.c;
@@ -152,7 +152,7 @@ void Thumb_ALU(u16 instruction) {
     }
     case ThumbDataOp::ROR: {
       auto shift = state.reg[src];
-      bus.Idle();
+      Idle();
       pipe.access = Access::Code | Access::Nonsequential;      
 
       int carry = state.cpsr.f.c;
@@ -259,7 +259,7 @@ void Thumb_LoadStoreRelativePC(u16 instruction) {
   state.r15 += 2;
 
   state.reg[dst] = ReadWord(address, Access::Nonsequential);
-  bus.Idle();
+  Idle();
 }
 
 template <int op, int off>
@@ -281,11 +281,11 @@ void Thumb_LoadStoreOffsetReg(u16 instruction) {
       break;
     case 0b10: // LDR
       state.reg[dst] = ReadWordRotate(address, Access::Nonsequential);
-      bus.Idle();
+      Idle();
       break;
     case 0b11: // LDRB
       state.reg[dst] = ReadByte(address, Access::Nonsequential);
-      bus.Idle();
+      Idle();
       break;
   }
 }
@@ -308,17 +308,17 @@ void Thumb_LoadStoreSigned(u16 instruction) {
     case 0b01:
       // LDSB rD, [rB, rO]
       state.reg[dst] = ReadByteSigned(address, Access::Nonsequential);
-      bus.Idle();
+      Idle();
       break;
     case 0b10:
       // LDRH rD, [rB, rO]
       state.reg[dst] = ReadHalfRotate(address, Access::Nonsequential);
-      bus.Idle();
+      Idle();
       break;
     case 0b11:
       // LDSH rD, [rB, rO]
       state.reg[dst] = ReadHalfSigned(address, Access::Nonsequential);
-      bus.Idle();
+      Idle();
       break;
   }
 }
@@ -339,7 +339,7 @@ void Thumb_LoadStoreOffsetImm(u16 instruction) {
     case 0b01:
       // LDR rD, [rB, #imm]
       state.reg[dst] = ReadWordRotate(state.reg[base] + imm * 4, Access::Nonsequential);
-      bus.Idle();
+      Idle();
       break;
     case 0b10:
       // STRB rD, [rB, #imm]
@@ -348,7 +348,7 @@ void Thumb_LoadStoreOffsetImm(u16 instruction) {
     case 0b11:
       // LDRB rD, [rB, #imm]
       state.reg[dst] = ReadByte(state.reg[base] + imm, Access::Nonsequential);
-      bus.Idle();
+      Idle();
       break;
   }
 }
@@ -365,7 +365,7 @@ void Thumb_LoadStoreHword(u16 instruction) {
 
   if (load) {
     state.reg[dst] = ReadHalfRotate(address, Access::Nonsequential);
-    bus.Idle();
+    Idle();
   } else {
     WriteHalf(address, state.reg[dst], Access::Nonsequential);
   }
@@ -381,7 +381,7 @@ void Thumb_LoadStoreRelativeToSP(u16 instruction) {
 
   if (load) {
     state.reg[dst] = ReadWordRotate(address, Access::Nonsequential);
-    bus.Idle();
+    Idle();
   } else {
     WriteWord(address, state.reg[dst], Access::Nonsequential);
   }
@@ -446,12 +446,12 @@ void Thumb_PushPop(u16 instruction) {
     if (rbit) {
       state.reg[15] = ReadWord(address, access_type) & ~1;
       state.r13 = address + 4;
-      bus.Idle();
+      Idle();
       ReloadPipeline16();
       return;
     }
 
-    bus.Idle();
+    Idle();
     state.r13 = address;
   } else {
     // Calculate internal start address (final r13 value)
@@ -509,7 +509,7 @@ void Thumb_LoadStoreMultiple(u16 instruction) {
         address += 4;
       }
     }
-    bus.Idle();
+    Idle();
     if (~list & (1 << base)) {
       state.reg[base] = address;
     }

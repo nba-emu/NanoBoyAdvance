@@ -14,7 +14,7 @@ template<bool is_signed = true>
 void TickMultiply(u32 multiplier) {
   u32 mask = 0xFFFFFF00;
 
-  bus.Idle();
+  Idle();
 
   while (true) {
     multiplier &= mask;
@@ -26,7 +26,7 @@ void TickMultiply(u32 multiplier) {
     }
 
     mask <<= 8;
-    bus.Idle();
+    Idle();
   }
 }
 
