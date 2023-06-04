@@ -830,7 +830,7 @@ auto MainWindow::SaveState(std::u16string const& path) -> nba::SaveStateWriter::
 }
 
 auto MainWindow::GetSavePath(fs::path const& rom_path, fs::path const& extension) -> fs::path {
-  fs::path save_folder = config->save_folder;
+  fs::path save_folder = QString::fromStdString(config->save_folder).toStdU16String();
 
   if(
    !save_folder.empty() &&
