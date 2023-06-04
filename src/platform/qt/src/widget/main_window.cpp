@@ -438,10 +438,10 @@ void MainWindow::RenderSaveStateMenus() {
     action_save->setShortcut(Qt::SHIFT | key);
 
     if(game_loaded) {
-      auto slot_filename = GetSavePath(game_path, fmt::format("{:02}.nbss", i)).string();
+      auto slot_filename = GetSavePath(game_path, fmt::format("{:02}.nbss", i)).u16string();
 
       if(fs::exists(slot_filename)) {
-        auto file_info = QFileInfo{QString::fromStdString(slot_filename)};
+        auto file_info = QFileInfo{QString::fromStdU16String(slot_filename)};
         auto date_modified = file_info.lastModified().toLocalTime().toString().toStdString();
 
         auto state_name = QString::fromStdString(fmt::format("{:02} - {}", i, date_modified));
@@ -483,7 +483,7 @@ void MainWindow::RenderSaveStateMenus() {
     dialog.setNameFilter("NanoBoyAdvance Save State (*.nbss)");
 
     if(dialog.exec()) {
-      LoadState(dialog.selectedFiles().at(0).toStdString());
+      LoadState(dialog.selectedFiles().at(0).toStdU16String());
     }
   });
 
@@ -494,7 +494,7 @@ void MainWindow::RenderSaveStateMenus() {
     dialog.setNameFilter("NanoBoyAdvance Save State (*.nbss)");
 
     if(dialog.exec()) {
-      SaveState(dialog.selectedFiles().at(0).toStdString());
+      SaveState(dialog.selectedFiles().at(0).toStdU16String());
     }
   });
 
@@ -768,7 +768,7 @@ void MainWindow::LoadROM(std::u16string path) {
   UpdateMenuBarVisibility();
 }
 
-auto MainWindow::LoadState(std::string const& path) -> nba::SaveStateLoader::Result {
+auto MainWindow::LoadState(std::u16string const& path) -> nba::SaveStateLoader::Result {
   bool was_running = emu_thread->IsRunning();
   emu_thread->Stop();
 
@@ -809,7 +809,7 @@ auto MainWindow::LoadState(std::string const& path) -> nba::SaveStateLoader::Res
   return result;
 }
 
-auto MainWindow::SaveState(std::string const& path) -> nba::SaveStateWriter::Result {
+auto MainWindow::SaveState(std::u16string const& path) -> nba::SaveStateWriter::Result {
   bool was_running = emu_thread->IsRunning();
   emu_thread->Stop();
 

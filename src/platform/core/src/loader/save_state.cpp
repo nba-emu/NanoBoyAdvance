@@ -15,7 +15,7 @@ namespace nba {
 
 auto SaveStateLoader::Load(
   std::unique_ptr<CoreBase>& core,
-  std::string path
+  fs::path const& path
 ) -> Result {
   if(!fs::exists(path)) {
     return Result::CannotFindFile;
@@ -33,7 +33,7 @@ auto SaveStateLoader::Load(
 
   SaveState save_state;
 
-  std::ifstream file_stream{path, std::ios::binary};
+  std::ifstream file_stream{path.c_str(), std::ios::binary};
 
   if(!file_stream.good()) {
     return Result::CannotOpenFile;

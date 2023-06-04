@@ -27,8 +27,6 @@
 #include "widget/screen.hpp"
 #include "config.hpp"
 
-namespace fs = std::filesystem;
-
 struct MainWindow : QMainWindow {
   MainWindow(
     QApplication* app,
@@ -123,8 +121,8 @@ private:
 
   void UpdateSolarSensorLevel();
 
-  auto LoadState(std::string const& path) -> nba::SaveStateLoader::Result;
-  auto SaveState(std::string const& path) -> nba::SaveStateWriter::Result;
+  auto LoadState(std::u16string const& path) -> nba::SaveStateLoader::Result;
+  auto SaveState(std::u16string const& path) -> nba::SaveStateWriter::Result;
 
   auto GetSavePath(fs::path const& rom_path, fs::path const& extension) -> fs::path;
 
