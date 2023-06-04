@@ -673,7 +673,7 @@ void MainWindow::UpdateMainWindowActionList() {
   }
 }
 
-void MainWindow::LoadROM(std::u16string path) {
+void MainWindow::LoadROM(std::u16string const& path) {
   bool retry;
 
   Stop();
@@ -725,8 +725,7 @@ void MainWindow::LoadROM(std::u16string path) {
   auto save_path = GetSavePath(fs::path{path}, ".sav");
   auto save_type = config->cartridge.backup_type;
 
-  auto result = nba::ROMLoader::Load(
-    core, path, save_path.string(), save_type, force_gpio);
+  auto result = nba::ROMLoader::Load(core, path, save_path, save_type, force_gpio);
 
   switch(result) {
     case nba::ROMLoader::Result::CannotFindFile: {
