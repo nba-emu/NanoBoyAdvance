@@ -9,8 +9,6 @@
 #include <fstream>
 #include <platform/loader/save_state.hpp>
 
-namespace fs = std::filesystem;
-
 namespace nba {
 
 auto SaveStateLoader::Load(

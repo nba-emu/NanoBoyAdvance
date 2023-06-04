@@ -683,7 +683,7 @@ void MainWindow::LoadROM(std::u16string const& path) {
   do {
     retry = false;
 
-    switch(nba::BIOSLoader::Load(core, config->bios_path)) {
+    switch(nba::BIOSLoader::Load(core, QString::fromStdString(config->bios_path).toStdU16String())) {
       case nba::BIOSLoader::Result::CannotFindFile: {
         QMessageBox box {this};
         box.setText(tr("A Game Boy Advance BIOS file is required but cannot be located.\n\nWould you like to add one now?"));
