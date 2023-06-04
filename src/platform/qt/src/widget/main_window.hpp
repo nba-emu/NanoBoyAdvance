@@ -37,7 +37,7 @@ struct MainWindow : QMainWindow {
 
  ~MainWindow();
 
-  void LoadROM(std::string path);
+  void LoadROM(std::u16string path);
 
 signals:
   void UpdateFrameRate(int fps);
@@ -145,7 +145,7 @@ private:
   QMenu* save_state_menu;
   QAction* fullscreen_action;
   bool game_loaded = false;
-  std::string game_path;
+  std::u16string game_path;
 
   nba::SaveState save_state_test;
 

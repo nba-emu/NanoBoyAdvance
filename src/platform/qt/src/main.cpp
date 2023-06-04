@@ -50,7 +50,7 @@ auto create_window(QApplication& app, int argc, char** argv) -> std::unique_ptr<
   auto window = std::make_unique<MainWindow>(&app);
 
   if(!rom.empty()) {
-    window->LoadROM(rom.string());
+    window->LoadROM(rom.u16string());
   }
 
   window->show();

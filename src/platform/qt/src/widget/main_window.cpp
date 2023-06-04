@@ -413,7 +413,7 @@ void MainWindow::RenderRecentFilesMenu() {
     action->setShortcut(Qt::CTRL | (Qt::Key) ((int) Qt::Key_0 + i++));
 
     connect(action, &QAction::triggered, [this, path] {
-      LoadROM(path);
+      LoadROM(QString::fromStdString(path).toStdU16String()); 
     });
   }
 
@@ -576,7 +576,7 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
     }
   } else if(type == QEvent::FileOpen) {
 	  auto file = dynamic_cast<QFileOpenEvent*>(event)->file();
-    LoadROM(file.toStdString());
+    LoadROM(file.toStdU16String());
   } else if(type == QEvent::Drop) {
     const QMimeData* mime_data = ((QDropEvent*)event)->mimeData();
 
@@ -584,7 +584,7 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
       QList<QUrl> url_list = mime_data->urls();
 
       if(url_list.size() > 0) {
-        LoadROM(url_list.at(0).toLocalFile().toStdString());
+        LoadROM(url_list.at(0).toLocalFile().toStdU16String());
       }
     }
   }
@@ -609,7 +609,7 @@ void MainWindow::FileOpen() {
   dialog.setNameFilter("Game Boy Advance ROMs (*.gba *.agb *.zip *.rar *.7z *.tar)");
 
   if(dialog.exec()) {
-    auto file = dialog.selectedFiles().at(0).toStdString();
+    auto file = dialog.selectedFiles().at(0).toStdU16String();
 
     LoadROM(file);
   }
@@ -673,7 +673,7 @@ void MainWindow::UpdateMainWindowActionList() {
   }
 }
 
-void MainWindow::LoadROM(std::string path) {
+void MainWindow::LoadROM(std::u16string path) {
   bool retry;
 
   Stop();

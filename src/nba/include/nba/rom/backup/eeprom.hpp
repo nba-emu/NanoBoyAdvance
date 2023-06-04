@@ -20,7 +20,7 @@ struct EEPROM : Backup {
     DETECT = 2
   };
   
-  EEPROM(std::string const& save_path, Size size_hint);
+  EEPROM(fs::path const& save_path, Size size_hint);
   
   void Reset() final;
   auto Read (u32 address) -> u8 final;
@@ -46,7 +46,7 @@ private:
   void ResetSerialBuffer();
   
   int size;
-  std::string save_path;
+  fs::path save_path;
   std::unique_ptr<BackupFile> file;
 
   int state;

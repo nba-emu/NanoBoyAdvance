@@ -9,7 +9,7 @@
 
 namespace nba {
 
-SRAM::SRAM(std::string const& save_path)
+SRAM::SRAM(fs::path const& save_path)
     : save_path(save_path) {
   Reset();
 }

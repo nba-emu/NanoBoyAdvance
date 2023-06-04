@@ -17,14 +17,14 @@
 #include <string>
 #include <vector>
 
+namespace fs = std::filesystem;
+
 namespace nba {
 
 struct BackupFile {
-  static auto OpenOrCreate(std::string const& save_path,
+  static auto OpenOrCreate(fs::path const& save_path,
                            std::vector<size_t> const& valid_sizes,
                            int& default_size) -> std::unique_ptr<BackupFile> {
-    namespace fs = std::filesystem;
-
     bool create = true;
     auto flags = std::ios::binary | std::ios::in | std::ios::out;
     std::unique_ptr<BackupFile> file { new BackupFile() };
@@ -40,9 +40,9 @@ struct BackupFile {
       auto end = valid_sizes.end();
 
       if(std::find(begin, end, save_size) != end) {
-        file->stream.open(save_path, flags);
+        file->stream.open(save_path.c_str(), flags);
         if(file->stream.fail()) {
-          throw std::runtime_error("BackupFile: unable to open file: " + save_path);
+          throw std::runtime_error("BackupFile: unable to open file: " + save_path.string());
         }
         default_size = save_size;
         file->save_size = save_size;
@@ -59,7 +59,7 @@ struct BackupFile {
       file->save_size = default_size;
       file->stream.open(save_path, flags | std::ios::trunc);
       if(file->stream.fail()) {
-        throw std::runtime_error("BackupFile: unable to create file: " + save_path);
+        throw std::runtime_error("BackupFile: unable to create file: " + save_path.string());
       }
       file->memory.reset(new u8[default_size]);
       file->MemorySet(0, default_size, 0xFF);
