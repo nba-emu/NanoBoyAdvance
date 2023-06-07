@@ -413,7 +413,7 @@ void MainWindow::RenderRecentFilesMenu() {
     action->setShortcut(Qt::CTRL | (Qt::Key) ((int) Qt::Key_0 + i++));
 
     connect(action, &QAction::triggered, [this, path] {
-      LoadROM(path);
+      LoadROM(QString::fromStdString(path).toStdU16String()); 
     });
   }
 
@@ -438,10 +438,10 @@ void MainWindow::RenderSaveStateMenus() {
     action_save->setShortcut(Qt::SHIFT | key);
 
     if(game_loaded) {
-      auto slot_filename = GetSavePath(game_path, fmt::format("{:02}.nbss", i)).string();
+      auto slot_filename = GetSavePath(game_path, fmt::format("{:02}.nbss", i)).u16string();
 
       if(fs::exists(slot_filename)) {
-        auto file_info = QFileInfo{QString::fromStdString(slot_filename)};
+        auto file_info = QFileInfo{QString::fromStdU16String(slot_filename)};
         auto date_modified = file_info.lastModified().toLocalTime().toString().toStdString();
 
         auto state_name = QString::fromStdString(fmt::format("{:02} - {}", i, date_modified));
@@ -483,7 +483,7 @@ void MainWindow::RenderSaveStateMenus() {
     dialog.setNameFilter("NanoBoyAdvance Save State (*.nbss)");
 
     if(dialog.exec()) {
-      LoadState(dialog.selectedFiles().at(0).toStdString());
+      LoadState(dialog.selectedFiles().at(0).toStdU16String());
     }
   });
 
@@ -494,7 +494,7 @@ void MainWindow::RenderSaveStateMenus() {
     dialog.setNameFilter("NanoBoyAdvance Save State (*.nbss)");
 
     if(dialog.exec()) {
-      SaveState(dialog.selectedFiles().at(0).toStdString());
+      SaveState(dialog.selectedFiles().at(0).toStdU16String());
     }
   });
 
@@ -576,7 +576,7 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
     }
   } else if(type == QEvent::FileOpen) {
 	  auto file = dynamic_cast<QFileOpenEvent*>(event)->file();
-    LoadROM(file.toStdString());
+    LoadROM(file.toStdU16String());
   } else if(type == QEvent::Drop) {
     const QMimeData* mime_data = ((QDropEvent*)event)->mimeData();
 
@@ -584,7 +584,7 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
       QList<QUrl> url_list = mime_data->urls();
 
       if(url_list.size() > 0) {
-        LoadROM(url_list.at(0).toLocalFile().toStdString());
+        LoadROM(url_list.at(0).toLocalFile().toStdU16String());
       }
     }
   }
@@ -609,7 +609,7 @@ void MainWindow::FileOpen() {
   dialog.setNameFilter("Game Boy Advance ROMs (*.gba *.agb *.zip *.rar *.7z *.tar)");
 
   if(dialog.exec()) {
-    auto file = dialog.selectedFiles().at(0).toStdString();
+    auto file = dialog.selectedFiles().at(0).toStdU16String();
 
     LoadROM(file);
   }
@@ -673,7 +673,7 @@ void MainWindow::UpdateMainWindowActionList() {
   }
 }
 
-void MainWindow::LoadROM(std::string path) {
+void MainWindow::LoadROM(std::u16string const& path) {
   bool retry;
 
   Stop();
@@ -683,7 +683,7 @@ void MainWindow::LoadROM(std::string path) {
   do {
     retry = false;
 
-    switch(nba::BIOSLoader::Load(core, config->bios_path)) {
+    switch(nba::BIOSLoader::Load(core, QString::fromStdString(config->bios_path).toStdU16String())) {
       case nba::BIOSLoader::Result::CannotFindFile: {
         QMessageBox box {this};
         box.setText(tr("A Game Boy Advance BIOS file is required but cannot be located.\n\nWould you like to add one now?"));
@@ -725,8 +725,7 @@ void MainWindow::LoadROM(std::string path) {
   auto save_path = GetSavePath(fs::path{path}, ".sav");
   auto save_type = config->cartridge.backup_type;
 
-  auto result = nba::ROMLoader::Load(
-    core, path, save_path.string(), save_type, force_gpio);
+  auto result = nba::ROMLoader::Load(core, path, save_path, save_type, force_gpio);
 
   switch(result) {
     case nba::ROMLoader::Result::CannotFindFile: {
@@ -768,7 +767,7 @@ void MainWindow::LoadROM(std::string path) {
   UpdateMenuBarVisibility();
 }
 
-auto MainWindow::LoadState(std::string const& path) -> nba::SaveStateLoader::Result {
+auto MainWindow::LoadState(std::u16string const& path) -> nba::SaveStateLoader::Result {
   bool was_running = emu_thread->IsRunning();
   emu_thread->Stop();
 
@@ -809,7 +808,7 @@ auto MainWindow::LoadState(std::string const& path) -> nba::SaveStateLoader::Res
   return result;
 }
 
-auto MainWindow::SaveState(std::string const& path) -> nba::SaveStateWriter::Result {
+auto MainWindow::SaveState(std::u16string const& path) -> nba::SaveStateWriter::Result {
   bool was_running = emu_thread->IsRunning();
   emu_thread->Stop();
 
@@ -831,7 +830,7 @@ auto MainWindow::SaveState(std::string const& path) -> nba::SaveStateWriter::Res
 }
 
 auto MainWindow::GetSavePath(fs::path const& rom_path, fs::path const& extension) -> fs::path {
-  fs::path save_folder = config->save_folder;
+  fs::path save_folder = QString::fromStdString(config->save_folder).toStdU16String();
 
   if(
    !save_folder.empty() &&

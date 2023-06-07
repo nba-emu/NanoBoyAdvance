@@ -84,10 +84,10 @@ struct QtConfig final : nba::PlatformConfig {
     nba::PlatformConfig::Save(config_path);
   }
 
-  void UpdateRecentFiles(std::string const& path) {
-    auto absolute_path = fs::absolute((fs::path)path).string();
+  void UpdateRecentFiles(std::u16string const& path) {
+    const auto absolute_path = fs::absolute((fs::path)path).string();
 
-    auto match = std::find(recent_files.begin(), recent_files.end(), absolute_path);
+    const auto match = std::find(recent_files.begin(), recent_files.end(), absolute_path);
 
     if(match != recent_files.end()) {
       recent_files.erase(match);

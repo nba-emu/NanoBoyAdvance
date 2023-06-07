@@ -12,9 +12,9 @@ namespace nba {
 
 auto SaveStateWriter::Write(
   std::unique_ptr<CoreBase>& core,
-  std::string path
+  fs::path const& path
 ) -> Result {
-  std::ofstream file_stream{path, std::ios::binary};
+  std::ofstream file_stream{path.c_str(), std::ios::binary};
 
   if(!file_stream.good()) {
     return Result::CannotOpenFile;

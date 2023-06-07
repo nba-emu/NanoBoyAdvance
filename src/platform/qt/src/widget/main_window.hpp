@@ -27,8 +27,6 @@
 #include "widget/screen.hpp"
 #include "config.hpp"
 
-namespace fs = std::filesystem;
-
 struct MainWindow : QMainWindow {
   MainWindow(
     QApplication* app,
@@ -37,7 +35,7 @@ struct MainWindow : QMainWindow {
 
  ~MainWindow();
 
-  void LoadROM(std::string path);
+  void LoadROM(std::u16string const& path);
 
 signals:
   void UpdateFrameRate(int fps);
@@ -123,8 +121,8 @@ private:
 
   void UpdateSolarSensorLevel();
 
-  auto LoadState(std::string const& path) -> nba::SaveStateLoader::Result;
-  auto SaveState(std::string const& path) -> nba::SaveStateWriter::Result;
+  auto LoadState(std::u16string const& path) -> nba::SaveStateLoader::Result;
+  auto SaveState(std::u16string const& path) -> nba::SaveStateWriter::Result;
 
   auto GetSavePath(fs::path const& rom_path, fs::path const& extension) -> fs::path;
 
@@ -145,7 +143,7 @@ private:
   QMenu* save_state_menu;
   QAction* fullscreen_action;
   bool game_loaded = false;
-  std::string game_path;
+  std::u16string game_path;
 
   nba::SaveState save_state_test;
 

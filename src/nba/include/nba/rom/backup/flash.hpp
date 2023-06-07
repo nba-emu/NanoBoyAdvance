@@ -19,7 +19,7 @@ struct FLASH : Backup {
     SIZE_128K = 1
   };
   
-  FLASH(std::string const& save_path, Size size_hint);
+  FLASH(fs::path const& save_path, Size size_hint);
   
   void Reset() final;
   auto Read (u32 address) -> u8 final;
@@ -46,7 +46,7 @@ private:
   auto Physical(int index) -> int { return current_bank * 65536 + index; }
   
   Size size;
-  std::string save_path;
+  fs::path save_path;
   std::unique_ptr<BackupFile> file;
   
   int current_bank;

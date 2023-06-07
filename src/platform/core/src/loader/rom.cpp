@@ -18,8 +18,6 @@
 #include <utility>
 #include <unarr.h>
 
-namespace fs = std::filesystem;
-
 namespace nba {
 
 using BackupType = Config::BackupType;
@@ -28,19 +26,19 @@ static constexpr size_t kMaxROMSize = 32 * 1024 * 1024; // 32 MiB
 
 auto ROMLoader::Load(
   std::unique_ptr<CoreBase>& core,
-  std::string path,
+  fs::path const& path,
   Config::BackupType backup_type,
   GPIODeviceType force_gpio
 ) -> Result {
-  auto save_path = path.substr(0, path.find_last_of(".")) + ".sav";
+  const auto save_path = fs::path{path}.replace_extension(".sav");
 
   return Load(core, path, save_path, backup_type, force_gpio);
 }
 
 auto ROMLoader::Load(
   std::unique_ptr<CoreBase>& core,
-  std::string rom_path,
-  std::string save_path,
+  fs::path const& rom_path,
+  fs::path const& save_path,
   BackupType backup_type,
   GPIODeviceType force_gpio
 ) -> Result {
@@ -103,7 +101,7 @@ auto ROMLoader::Load(
   return Result::Success;
 }
 
-auto ROMLoader::ReadFile(std::string path, std::vector<u8>& file_data) -> Result {
+auto ROMLoader::ReadFile(fs::path const& path, std::vector<u8>& file_data) -> Result {
   if(!fs::exists(path)) {
     return Result::CannotFindFile;
   }
@@ -135,8 +133,8 @@ auto ROMLoader::ReadFile(std::string path, std::vector<u8>& file_data) -> Result
   return Result::Success;
 }
 
-auto ROMLoader::ReadFileFromArchive(std::string path, std::vector<u8>& file_data) -> Result {
-  auto stream = ar_open_file(path.c_str());
+auto ROMLoader::ReadFileFromArchive(fs::path const& path, std::vector<u8>& file_data) -> Result {
+  auto stream = ar_open_file(path.u8string().c_str());
 
   if(!stream) {
     return Result::CannotOpenFile;
@@ -215,7 +213,7 @@ auto ROMLoader::GetBackupType(
 }
 
 auto ROMLoader::CreateBackup(
-  std::string save_path,
+  fs::path const& save_path,
   BackupType backup_type
 ) -> std::unique_ptr<Backup> {
   switch(backup_type) {

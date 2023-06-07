@@ -12,6 +12,8 @@
 #include <platform/game_db.hpp>
 #include <string>
 
+namespace fs = std::filesystem;
+
 namespace nba {
 
 struct ROMLoader {
@@ -24,22 +26,22 @@ struct ROMLoader {
 
   static auto Load(
     std::unique_ptr<CoreBase>& core,
-    std::string path,
+    fs::path const& path,
     Config::BackupType backup_type = Config::BackupType::Detect,
     GPIODeviceType force_gpio = GPIODeviceType::None
   ) -> Result;
 
   static auto Load(
     std::unique_ptr<CoreBase>& core,
-    std::string rom_path,
-    std::string save_path,
+    fs::path const& rom_path,
+    fs::path const& save_path,
     Config::BackupType backup_type = Config::BackupType::Detect,
     GPIODeviceType force_gpio = GPIODeviceType::None
   ) -> Result;
 
 private:
-  static auto ReadFile(std::string path, std::vector<u8>& file_data) -> Result;
-  static auto ReadFileFromArchive(std::string path, std::vector<u8>& file_data) -> Result;
+  static auto ReadFile(fs::path const& path, std::vector<u8>& file_data) -> Result;
+  static auto ReadFileFromArchive(fs::path const& path, std::vector<u8>& file_data) -> Result;
 
   static auto GetGameInfo(
     std::vector<u8>& file_data
@@ -50,7 +52,7 @@ private:
   ) -> Config::BackupType;
 
   static auto CreateBackup(
-    std::string save_path,
+    fs::path const& save_path,
     Config::BackupType backup_type
   ) -> std::unique_ptr<Backup>;
 
