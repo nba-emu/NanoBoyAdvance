@@ -23,6 +23,7 @@
 #include <unordered_map>
 
 #include "widget/main_window.hpp"
+#include "widget/palette_viewer.hpp"
 
 MainWindow::MainWindow(
   QApplication* app,
@@ -68,6 +69,12 @@ MainWindow::MainWindow(
   }, Qt::QueuedConnection);
 
   UpdateWindowSize();
+
+  auto palette_viewer = new PaletteViewer{core.get(), this};
+  palette_viewer->show();
+  // @todo: only update the palette if the window is active.
+  // @todo: think of a better way to do this.
+  connect(screen.get(), &Screen::RequestDraw, palette_viewer, &PaletteViewer::Update);
 }
 
 MainWindow::~MainWindow() {
