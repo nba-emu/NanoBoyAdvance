@@ -9,7 +9,7 @@ set(SOURCES
   src/widget/main_window.cpp
   src/widget/screen.cpp
   src/widget/palette_box.cpp
-  src/widget/palette_viewer.cpp
+  src/widget/palette_viewer_window.cpp
   src/config.cpp
   src/main.cpp
 )
@@ -19,7 +19,7 @@ set(HEADERS
   src/widget/input_window.hpp
   src/widget/main_window.hpp
   src/widget/palette_box.hpp
-  src/widget/palette_viewer.hpp
+  src/widget/palette_viewer_window.hpp
   src/widget/screen.hpp
   src/config.hpp
 )

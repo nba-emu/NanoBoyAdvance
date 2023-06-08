@@ -13,9 +13,9 @@
 #include <QLabel>
 #include <QVBoxLayout>
 
-#include "palette_viewer.hpp"
+#include "palette_viewer_window.hpp"
 
-PaletteViewer::PaletteViewer(nba::CoreBase* core, QWidget* parent) : QDialog(parent) {
+PaletteViewerWindow::PaletteViewerWindow(nba::CoreBase* core, QWidget* parent) : QDialog(parent) {
   const auto vbox = new QVBoxLayout{};
 
   vbox->setSizeConstraint(QLayout::SetFixedSize);
@@ -88,12 +88,16 @@ PaletteViewer::PaletteViewer(nba::CoreBase* core, QWidget* parent) : QDialog(par
   pram = (u16*)core->GetPRAM();
 }
 
-void PaletteViewer::Update() {
+void PaletteViewerWindow::Update() {
+  if(!isVisible()) {
+    return;
+  }
+
   palette_boxes[0]->Draw(&pram[0]);
   palette_boxes[1]->Draw(&pram[256]);
 }
 
-void PaletteViewer::ShowColorInformation(int color_index) {
+void PaletteViewerWindow::ShowColorInformation(int color_index) {
   const u32 address = 0x05000000 + (color_index << 1);
   const int x = color_index & 15;
   const int y = (color_index >> 4) & 15;

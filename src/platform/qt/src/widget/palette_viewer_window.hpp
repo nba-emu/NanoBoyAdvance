@@ -13,8 +13,8 @@
 
 #include "widget/palette_box.hpp"
 
-struct PaletteViewer : QDialog {
-  PaletteViewer(nba::CoreBase* core, QWidget* parent = nullptr);
+struct PaletteViewerWindow : QDialog {
+  PaletteViewerWindow(nba::CoreBase* core, QWidget* parent = nullptr);
 
 public slots:
   void Update();

@@ -23,7 +23,6 @@
 #include <unordered_map>
 
 #include "widget/main_window.hpp"
-#include "widget/palette_viewer.hpp"
 
 MainWindow::MainWindow(
   QApplication* app,
@@ -42,6 +41,7 @@ MainWindow::MainWindow(
 
   CreateFileMenu();
   CreateConfigMenu();
+  CreateToolsMenu();
   CreateHelpMenu();
 
   config->video_dev = screen;
@@ -69,12 +69,6 @@ MainWindow::MainWindow(
   }, Qt::QueuedConnection);
 
   UpdateWindowSize();
-
-  auto palette_viewer = new PaletteViewer{core.get(), this};
-  palette_viewer->show();
-  // @todo: only update the palette if the window is active.
-  // @todo: think of a better way to do this.
-  connect(screen.get(), &Screen::RequestDraw, palette_viewer, &PaletteViewer::Update);
 }
 
 MainWindow::~MainWindow() {
@@ -362,6 +356,21 @@ void MainWindow::CreateConfigMenu() {
   CreateInputMenu(menu);
   CreateSystemMenu(menu);
   CreateWindowMenu(menu);
+}
+
+void MainWindow::CreateToolsMenu() {
+  auto tools_menu = menuBar()->addMenu(tr("Tools"));
+
+  connect(tools_menu->addAction(tr("Palette Viewer")), &QAction::triggered, [this]() {
+    if(!palette_viewer_window) {
+      palette_viewer_window = new PaletteViewerWindow{core.get(), this};
+
+      // @todo: remove the dependendency on the screen component?
+      connect(screen.get(), &Screen::RequestDraw, palette_viewer_window, &PaletteViewerWindow::Update);
+    }
+
+    palette_viewer_window->show();
+  });
 }
 
 void MainWindow::CreateHelpMenu() {

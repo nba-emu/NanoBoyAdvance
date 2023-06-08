@@ -24,6 +24,7 @@
 
 #include "widget/controller_manager.hpp"
 #include "widget/input_window.hpp"
+#include "widget/palette_viewer_window.hpp"
 #include "widget/screen.hpp"
 #include "config.hpp"
 
@@ -59,6 +60,7 @@ private:
   void CreateSolarSensorValueMenu(QMenu* parent);
   void CreateWindowMenu(QMenu* parent);
   void CreateConfigMenu();
+  void CreateToolsMenu();
   void CreateHelpMenu();
   void RenderRecentFilesMenu();
   void RenderSaveStateMenus();
@@ -146,6 +148,8 @@ private:
   std::u16string game_path;
 
   nba::SaveState save_state_test;
+
+  PaletteViewerWindow* palette_viewer_window;
 
   Q_OBJECT
 };
