@@ -41,6 +41,7 @@ MainWindow::MainWindow(
 
   CreateFileMenu();
   CreateConfigMenu();
+  CreateToolsMenu();
   CreateHelpMenu();
 
   config->video_dev = screen;
@@ -355,6 +356,21 @@ void MainWindow::CreateConfigMenu() {
   CreateInputMenu(menu);
   CreateSystemMenu(menu);
   CreateWindowMenu(menu);
+}
+
+void MainWindow::CreateToolsMenu() {
+  auto tools_menu = menuBar()->addMenu(tr("Tools"));
+
+  connect(tools_menu->addAction(tr("Palette Viewer")), &QAction::triggered, [this]() {
+    if(!palette_viewer_window) {
+      palette_viewer_window = new PaletteViewerWindow{core.get(), this};
+
+      // @todo: remove the dependendency on the screen component?
+      connect(screen.get(), &Screen::RequestDraw, palette_viewer_window, &PaletteViewerWindow::Update);
+    }
+
+    palette_viewer_window->show();
+  });
 }
 
 void MainWindow::CreateHelpMenu() {

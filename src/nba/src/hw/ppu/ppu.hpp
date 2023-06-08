@@ -35,6 +35,10 @@ struct PPU {
   void LoadState(SaveState const& state);
   void CopyState(SaveState& state);
 
+  auto GetPRAM() -> u8* {
+    return pram;
+  }
+
   template<typename T>
   auto ALWAYS_INLINE ReadPRAM(u32 address) noexcept -> T {
     return read<T>(pram, address & 0x3FF);

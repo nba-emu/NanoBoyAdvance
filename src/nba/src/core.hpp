@@ -24,6 +24,7 @@ struct Core final : CoreBase {
 
   void Reset() override;
   auto GetROM() -> ROM& override;
+  auto GetPRAM() -> u8* override;
   void Attach(std::vector<u8> const& bios) override;
   void Attach(ROM&& rom) override;
   auto CreateRTC() -> std::unique_ptr<RTC> override;

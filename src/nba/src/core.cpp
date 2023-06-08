@@ -58,6 +58,10 @@ auto Core::GetROM() -> ROM& {
   return bus.memory.rom;
 }
 
+auto Core::GetPRAM() -> u8* {
+  return ppu.GetPRAM();
+}
+
 void Core::Attach(std::vector<u8> const& bios) {
   bus.Attach(bios);
 }
