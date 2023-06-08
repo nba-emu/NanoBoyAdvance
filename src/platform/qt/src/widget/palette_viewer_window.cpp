@@ -55,6 +55,12 @@ PaletteViewerWindow::PaletteViewerWindow(nba::CoreBase* core, QWidget* parent) :
   b_component_label->setFont(monospace_font);
   value_label->setFont(monospace_font);
 
+  address_label->setTextInteractionFlags(Qt::TextSelectableByMouse);
+  r_component_label->setTextInteractionFlags(Qt::TextSelectableByMouse);
+  g_component_label->setTextInteractionFlags(Qt::TextSelectableByMouse);
+  b_component_label->setTextInteractionFlags(Qt::TextSelectableByMouse);
+  value_label->setTextInteractionFlags(Qt::TextSelectableByMouse);
+
   const auto info_hbox = new QHBoxLayout{};
 
   const auto info_grid = new QGridLayout{};
