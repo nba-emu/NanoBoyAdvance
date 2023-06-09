@@ -23,12 +23,11 @@ BackgroundViewerWindow::BackgroundViewerWindow(nba::CoreBase* core, QWidget* par
 
   setLayout(new QHBoxLayout{});
 
-  test_label = new QLabel{"sus"};
+  test_label = new QLabel{""};
   layout()->addWidget(test_label);
 
   canvas = new QWidget{};
-  canvas->setFixedSize(1024, 1024); // TBD
-  canvas->setStyleSheet("background-color: black;"); // TBD
+  canvas->setFixedSize(256, 256);
   canvas->installEventFilter(this);
 
   const auto canvas_scroll_area = new QScrollArea{};
@@ -43,39 +42,37 @@ void BackgroundViewerWindow::Update() {
 
   test_label->setText(QString::fromStdString(fmt::format("DISPCNT: 0x{:08X}", core->PeekHalfIO(0x04000000))));
 
+  DrawBackground();
+
   canvas->update();
 }
 
 bool BackgroundViewerWindow::eventFilter(QObject* object, QEvent* event) {
   if(object == canvas && event->type() == QEvent::Paint) {
-    DrawBackground();
+    PresentBackground();
   }
 
   return false;
 }
 
 void BackgroundViewerWindow::DrawBackground() {
-  // @todo: do all the actual drawing outside the event handler.
-  
-  QPainter painter{canvas};
-
   const u16 dispcnt = core->PeekHalfIO(0x04000000);
   const int mode = dispcnt & 7;
 
   switch(mode) {
-    case 0: DrawBackgroundMode0(painter, 2); break;
-    case 1: DrawBackgroundMode2(painter, 2); break;
-    case 2: DrawBackgroundMode2(painter, 2); break;
-    case 3: DrawBackgroundMode3(painter); break;
-    case 4: DrawBackgroundMode4(painter); break;
-    case 5: DrawBackgroundMode5(painter); break;
+    case 0: DrawBackgroundMode0(2); break;
+    case 1: DrawBackgroundMode2(2); break;
+    case 2: DrawBackgroundMode2(2); break;
+    case 3: DrawBackgroundMode3(); break;
+    case 4: DrawBackgroundMode4(); break;
+    case 5: DrawBackgroundMode5(); break;
     default: {
       break;
     }
   }
 }
 
-void BackgroundViewerWindow::DrawBackgroundMode0(QPainter& painter, int bg_id) {
+void BackgroundViewerWindow::DrawBackgroundMode0(int bg_id) {
   u16* const buffer = (u16*)image.bits();
   
   const u16 bgcnt = core->PeekHalfIO(0x04000008 + (bg_id << 1));
@@ -128,10 +125,90 @@ void BackgroundViewerWindow::DrawBackgroundMode0(QPainter& painter, int bg_id) {
     }
   }
 
-  QRect rect{0, 0, 1024, 1024};
+  canvas->setFixedSize(256 * screens_x, 256 * screens_y);
+}
+
+void BackgroundViewerWindow::DrawBackgroundMode2(int bg_id) {
+  u16* const buffer = (u16*)image.bits();
+
+  const u16 bgcnt = core->PeekHalfIO(0x04000008 + (bg_id << 1));
+  const int size = 128 << (bgcnt >> 14);
+  
+  const u32 tile_base = ((bgcnt >> 2) & 3) << 14;
+  const u32 map_base = ((bgcnt >> 8) & 31) << 11;
+
+  u32 map_address = map_base;
+
+  // @todo: rename x and y - also in the mode 0 code
+
+  for(int y = 0; y < size; y += 8) {
+    for(int x = 0; x < size; x += 8) {
+      const u8 tile = vram[map_address++];
+
+      u32 tile_address = tile_base + (tile << 6);
+
+      for(int tile_y = 0; tile_y < 8; tile_y++) {
+        for(int tile_x = 0; tile_x < 8; tile_x++) {
+          buffer[(y + tile_y) * 1024 + x + tile_x] = pram[vram[tile_address++]];
+        }
+      }
+    }
+  }
+
+  canvas->setFixedSize(size, size);
+}
+
+void BackgroundViewerWindow::DrawBackgroundMode3() {
+  u16* const buffer = (u16*)image.bits();
+
+  u32 address = 0;
+
+  for(int y = 0; y < 160; y++) {
+    for(int x = 0; x < 240; x++) {
+      buffer[y * 1024 + x] = nba::read<u16>(vram, address);
+      address += sizeof(u16);
+    }
+  }
+
+  canvas->setFixedSize(240, 160);
+}
+
+void BackgroundViewerWindow::DrawBackgroundMode4() {
+  u16* const buffer = (u16*)image.bits();
+
+  u32 address = (core->PeekHalfIO(0x04000000) & 0x10U) * 0xA00U;
+
+  for(int y = 0; y < 160; y++) {
+    for(int x = 0; x < 240; x++) {
+      buffer[y * 1024 + x] = pram[nba::read<u8>(vram, address++)];
+    }
+  }
+
+  canvas->setFixedSize(240, 160);
+}
+
+void BackgroundViewerWindow::DrawBackgroundMode5() {
+  u16* const buffer = (u16*)image.bits();
+
+  u32 address = (core->PeekHalfIO(0x04000000) & 0x10U) * 0xA00U;
+
+  for(int y = 0; y < 128; y++) {
+    for(int x = 0; x < 160; x++) {
+      buffer[y * 1024 + x] = nba::read<u16>(vram, address);
+      address += sizeof(u16);
+    }
+  }
+
+  canvas->setFixedSize(160, 128);
+}
+
+void BackgroundViewerWindow::PresentBackground() {
+  QPainter painter{canvas};
+
+  QRect rect{0, 0, canvas->size().width(), canvas->size().height()};
   painter.drawImage(rect, image, rect);
 
-  // Display visible area test
+  /*// Display visible area test
   {
     const u16 bghofs = 340;//core->PeekHalfIO(0x04000010 + (bg_id << 2));
     const u16 bgvofs = 240;//core->PeekHalfIO(0x04000012 + (bg_id << 2));
@@ -168,83 +245,5 @@ void BackgroundViewerWindow::DrawBackgroundMode0(QPainter& painter, int bg_id) {
       painter.drawLine(x_min, y_min, x_min, y_max);
       painter.drawLine(x_max, y_min, x_max, y_max);
     }
-  }
-}
-
-void BackgroundViewerWindow::DrawBackgroundMode2(QPainter& painter, int bg_id) {
-  u16* const buffer = (u16*)image.bits();
-
-  const u16 bgcnt = core->PeekHalfIO(0x04000008 + (bg_id << 1));
-  const int size = 128 << (bgcnt >> 14);
-  
-  const u32 tile_base = ((bgcnt >> 2) & 3) << 14;
-  const u32 map_base = ((bgcnt >> 8) & 31) << 11;
-
-  u32 map_address = map_base;
-
-  // @todo: rename x and y - also in the mode 0 code
-
-  for(int y = 0; y < size; y += 8) {
-    for(int x = 0; x < size; x += 8) {
-      const u8 tile = vram[map_address++];
-
-      u32 tile_address = tile_base + (tile << 6);
-
-      for(int tile_y = 0; tile_y < 8; tile_y++) {
-        for(int tile_x = 0; tile_x < 8; tile_x++) {
-          buffer[(y + tile_y) * 1024 + x + tile_x] = pram[vram[tile_address++]];
-        }
-      }
-    }
-  }
-
-  QRect rect{0, 0, 1024, 1024};
-  painter.drawImage(rect, image, rect);
-}
-
-void BackgroundViewerWindow::DrawBackgroundMode3(QPainter& painter) {
-  u16* const buffer = (u16*)image.bits();
-
-  u32 address = 0;
-
-  for(int y = 0; y < 160; y++) {
-    for(int x = 0; x < 240; x++) {
-      buffer[y * 1024 + x] = nba::read<u16>(vram, address);
-      address += sizeof(u16);
-    }
-  }
-
-  QRect rect{0, 0, 1024, 1024};
-  painter.drawImage(rect, image, rect);
-}
-
-void BackgroundViewerWindow::DrawBackgroundMode4(QPainter& painter) {
-  u16* const buffer = (u16*)image.bits();
-
-  u32 address = (core->PeekHalfIO(0x04000000) & 0x10U) * 0xA00U;
-
-  for(int y = 0; y < 160; y++) {
-    for(int x = 0; x < 240; x++) {
-      buffer[y * 1024 + x] = pram[nba::read<u8>(vram, address++)];
-    }
-  }
-
-  QRect rect{0, 0, 1024, 1024};
-  painter.drawImage(rect, image, rect);
-}
-
-void BackgroundViewerWindow::DrawBackgroundMode5(QPainter& painter) {
-  u16* const buffer = (u16*)image.bits();
-
-  u32 address = (core->PeekHalfIO(0x04000000) & 0x10U) * 0xA00U;
-
-  for(int y = 0; y < 128; y++) {
-    for(int x = 0; x < 160; x++) {
-      buffer[y * 1024 + x] = nba::read<u16>(vram, address);
-      address += sizeof(u16);
-    }
-  }
-
-  QRect rect{0, 0, 1024, 1024};
-  painter.drawImage(rect, image, rect);
+  }*/
 }

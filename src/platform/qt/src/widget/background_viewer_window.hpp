@@ -23,11 +23,13 @@ public slots:
 
 private:
   void DrawBackground();
-  void DrawBackgroundMode0(QPainter& painter, int bg_id);
-  void DrawBackgroundMode2(QPainter& painter, int bg_id);
-  void DrawBackgroundMode3(QPainter& painter);
-  void DrawBackgroundMode4(QPainter& painter);
-  void DrawBackgroundMode5(QPainter& painter);
+  void DrawBackgroundMode0(int bg_id);
+  void DrawBackgroundMode2(int bg_id);
+  void DrawBackgroundMode3();
+  void DrawBackgroundMode4();
+  void DrawBackgroundMode5();
+
+  void PresentBackground();
 
   nba::CoreBase* core;
   u16* pram;
