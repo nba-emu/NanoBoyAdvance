@@ -25,6 +25,10 @@ struct Core final : CoreBase {
   void Reset() override;
   auto GetROM() -> ROM& override;
   auto GetPRAM() -> u8* override;
+  auto GetVRAM() -> u8* override;
+  auto PeekByteIO(u32 address) -> u8  override;
+  auto PeekHalfIO(u32 address) -> u16 override;
+  auto PeekWordIO(u32 address) -> u32 override;
   void Attach(std::vector<u8> const& bios) override;
   void Attach(ROM&& rom) override;
   auto CreateRTC() -> std::unique_ptr<RTC> override;

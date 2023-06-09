@@ -4,6 +4,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SOURCES
+  src/widget/background_viewer_window.cpp
   src/widget/controller_manager.cpp
   src/widget/input_window.cpp
   src/widget/main_window.cpp
@@ -15,6 +16,7 @@ set(SOURCES
 )
 
 set(HEADERS
+  src/widget/background_viewer_window.hpp
   src/widget/controller_manager.hpp
   src/widget/input_window.hpp
   src/widget/main_window.hpp
