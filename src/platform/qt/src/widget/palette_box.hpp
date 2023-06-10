@@ -20,6 +20,7 @@ struct PaletteBox : QWidget {
   void Draw(u16* palette_rgb565, int stride);
   void SetHighlightedPosition(int x, int y);
   void ClearHighlight();
+  u32  GetColorAt(int x, int y);
 
 signals:
   void selected(int x, int y);

@@ -72,10 +72,10 @@ BackgroundViewer::BackgroundViewer(nba::CoreBase* core, QWidget* parent) : QWidg
 
   // Tile information
   {
+    const auto grid = new QGridLayout{};
+
     tile_box = new PaletteBox{8, 8};
 
-    const auto grid = new QGridLayout{};
-    
     int row = 0;
     grid->addWidget(new QLabel(tr("Tile number:")), row, 0);
     grid->addWidget(CreateMonospaceLabel(tile_number_label), row++, 1);
@@ -89,14 +89,32 @@ BackgroundViewer::BackgroundViewer(nba::CoreBase* core, QWidget* parent) : QWidg
     grid->addWidget(CreateCheckBox(tile_flip_h_check_box), row++, 1);
     grid->addWidget(new QLabel(tr("Palette:")), row, 0);
     grid->addWidget(CreateMonospaceLabel(tile_palette_label), row++, 1);
-
-    grid->addWidget(tile_box, row, 0);
+    grid->addWidget(tile_box, row++, 0);
+    grid->addWidget(new QLabel(tr("R:")), row, 0);
+    grid->addWidget(CreateMonospaceLabel(tile_color_r_component_label), row++, 1);
+    grid->addWidget(new QLabel(tr("G:")), row, 0);
+    grid->addWidget(CreateMonospaceLabel(tile_color_g_component_label), row++, 1);
+    grid->addWidget(new QLabel(tr("B:")), row, 0);
+    grid->addWidget(CreateMonospaceLabel(tile_color_b_component_label), row++, 1);
 
     const auto group_box = new QGroupBox{};
     group_box->setLayout(grid);
     group_box->setTitle(tr("Tile"));
 
     info_vbox->addWidget(group_box);
+  
+    connect(tile_box, &PaletteBox::selected, [this](int x, int y) {
+      const u32 color_rgb32 = tile_box->GetColorAt(x, y);
+      const int r = (color_rgb32 >> 18) & 62;
+      const int g = (color_rgb32 >> 10) & 63;
+      const int b = (color_rgb32 >>  2) & 62;
+
+      tile_color_r_component_label->setText(QStringLiteral("%1").arg(r));
+      tile_color_g_component_label->setText(QStringLiteral("%1").arg(g));
+      tile_color_b_component_label->setText(QStringLiteral("%1").arg(b)); 
+
+      tile_box->SetHighlightedPosition(x, y);
+    });
   }
 
   info_vbox->addStretch(1);
@@ -425,7 +443,7 @@ void BackgroundViewer::PresentBackground() {
   QRect rect{0, 0, width, height};
   painter.drawImage(rect, image_rgb32, rect);
 
-  if(selected_tile_x > -1 && selected_tile_y > -1) {
+  if(display_selected_tile) {
     painter.setPen(Qt::red);
     painter.drawRect(selected_tile_x * 8 - 1, selected_tile_y * 8 - 1, 9, 9);
   }
@@ -497,6 +515,7 @@ void BackgroundViewer::DrawTileDetail(int tile_x, int tile_y) {
 
   selected_tile_x = tile_x;
   selected_tile_y = tile_y;
+  display_selected_tile = true;
 
   canvas->update();
 }
@@ -506,8 +525,6 @@ void BackgroundViewer::ClearTileSelection() {
     return;
   }
 
-  selected_tile_x = -1;
-  selected_tile_y = -1;
-
+  display_selected_tile = false;
   canvas->update();
 }

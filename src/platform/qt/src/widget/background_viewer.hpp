@@ -59,10 +59,14 @@ private:
   QCheckBox* tile_flip_v_check_box;
   QCheckBox* tile_flip_h_check_box;
   QLabel* tile_palette_label;
-
-  int selected_tile_x = -1;
-  int selected_tile_y = -1;
   PaletteBox* tile_box;
+  QLabel* tile_color_r_component_label;
+  QLabel* tile_color_g_component_label;
+  QLabel* tile_color_b_component_label;
+
+  bool display_selected_tile = false;
+  int selected_tile_x;
+  int selected_tile_y;
   
   QWidget* canvas;
   QImage image_rgb32{1024, 1024, QImage::Format_RGB32};

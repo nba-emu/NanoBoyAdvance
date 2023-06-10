@@ -50,6 +50,10 @@ void PaletteBox::ClearHighlight() {
   SetHighlightedPosition(-1, -1);
 }
 
+u32 PaletteBox::GetColorAt(int x, int y) {
+  return palette_argb8888[y * columns + x];
+}
+
 void PaletteBox::paintEvent(QPaintEvent* event) {
   QPainter painter{this};
 
