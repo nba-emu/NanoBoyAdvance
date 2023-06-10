@@ -13,6 +13,8 @@
 #include <QLabel>
 #include <QPainter>
 
+#include "widget/palette_box.hpp"
+
 struct BackgroundViewer : QWidget {
   BackgroundViewer(nba::CoreBase* core, QWidget* parent = nullptr);
 
@@ -46,6 +48,8 @@ private:
   QCheckBox* bg_wraparound_check_box;
   QCheckBox* bg_mosaic_check_box;
   QLabel* bg_scroll_label;
+
+  PaletteBox* tile_box;
   
   QWidget* canvas;
   QImage image{1024, 1024, QImage::Format_RGB555};

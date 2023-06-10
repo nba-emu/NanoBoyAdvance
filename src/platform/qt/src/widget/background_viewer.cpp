@@ -14,6 +14,7 @@
 #include <QGridLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
+#include <QMouseEvent>
 #include <QScrollArea>
 #include <QVBoxLayout>
 
@@ -39,32 +40,50 @@ BackgroundViewer::BackgroundViewer(nba::CoreBase* core, QWidget* parent) : QWidg
 
   const auto info_vbox = new QVBoxLayout{};
 
-  const auto bg_info_grid = new QGridLayout{};
-  int row = 0;
-  bg_info_grid->addWidget(new QLabel(tr("BG mode:")), row, 0);
-  bg_info_grid->addWidget(CreateMonospaceLabel(bg_mode_label), row++, 1);
-  bg_info_grid->addWidget(new QLabel(tr("BG priority:")), row, 0);
-  bg_info_grid->addWidget(CreateMonospaceLabel(bg_priority_label), row++, 1);
-  bg_info_grid->addWidget(new QLabel(tr("Size:")), row, 0);
-  bg_info_grid->addWidget(CreateMonospaceLabel(bg_size_label), row++, 1);
-  bg_info_grid->addWidget(new QLabel(tr("Tile base:")), row, 0);
-  bg_info_grid->addWidget(CreateMonospaceLabel(bg_tile_base_label), row++, 1);
-  bg_info_grid->addWidget(new QLabel(tr("Map base:")), row, 0);
-  bg_info_grid->addWidget(CreateMonospaceLabel(bg_map_base_label), row++, 1);
-  bg_info_grid->addWidget(new QLabel(tr("8BPP:")), row, 0);
-  bg_info_grid->addWidget(CreateCheckBox(bg_8bpp_check_box), row++, 1);
-  bg_info_grid->addWidget(new QLabel(tr("Wraparound:")), row, 0);
-  bg_info_grid->addWidget(CreateCheckBox(bg_wraparound_check_box), row++, 1);
-  bg_info_grid->addWidget(new QLabel(tr("Scroll:")), row, 0);
-  bg_info_grid->addWidget(CreateMonospaceLabel(bg_scroll_label), row++, 1);
-  bg_info_grid->setColumnStretch(1, 1);
+  // Background information
+  {
+    const auto bg_info_grid = new QGridLayout{};
+    int row = 0;
+    bg_info_grid->addWidget(new QLabel(tr("BG mode:")), row, 0);
+    bg_info_grid->addWidget(CreateMonospaceLabel(bg_mode_label), row++, 1);
+    bg_info_grid->addWidget(new QLabel(tr("BG priority:")), row, 0);
+    bg_info_grid->addWidget(CreateMonospaceLabel(bg_priority_label), row++, 1);
+    bg_info_grid->addWidget(new QLabel(tr("Size:")), row, 0);
+    bg_info_grid->addWidget(CreateMonospaceLabel(bg_size_label), row++, 1);
+    bg_info_grid->addWidget(new QLabel(tr("Tile base:")), row, 0);
+    bg_info_grid->addWidget(CreateMonospaceLabel(bg_tile_base_label), row++, 1);
+    bg_info_grid->addWidget(new QLabel(tr("Map base:")), row, 0);
+    bg_info_grid->addWidget(CreateMonospaceLabel(bg_map_base_label), row++, 1);
+    bg_info_grid->addWidget(new QLabel(tr("8BPP:")), row, 0);
+    bg_info_grid->addWidget(CreateCheckBox(bg_8bpp_check_box), row++, 1);
+    bg_info_grid->addWidget(new QLabel(tr("Wraparound:")), row, 0);
+    bg_info_grid->addWidget(CreateCheckBox(bg_wraparound_check_box), row++, 1);
+    bg_info_grid->addWidget(new QLabel(tr("Scroll:")), row, 0);
+    bg_info_grid->addWidget(CreateMonospaceLabel(bg_scroll_label), row++, 1);
+    bg_info_grid->setColumnStretch(1, 1);
 
-  const auto bg_info_group_box = new QGroupBox{};
-  bg_info_group_box->setLayout(bg_info_grid);
-  bg_info_group_box->setTitle("Background");
-  info_vbox->addWidget(bg_info_group_box);
+    const auto bg_info_group_box = new QGroupBox{};
+    bg_info_group_box->setLayout(bg_info_grid);
+    bg_info_group_box->setTitle(tr("Background"));
+
+    info_vbox->addWidget(bg_info_group_box);
+  }
+
+  // Tile information
+  {
+    tile_box = new PaletteBox{8, 8};
+
+    const auto tile_info_grid = new QGridLayout{};
+    tile_info_grid->addWidget(tile_box, 0, 0);
+
+    const auto tile_info_group_box = new QGroupBox{};
+    tile_info_group_box->setLayout(tile_info_grid);
+    tile_info_group_box->setTitle(tr("Tile"));
+
+    info_vbox->addWidget(tile_info_group_box);
+  }
+
   info_vbox->addStretch(1);
-
   ((QHBoxLayout*)layout())->addLayout(info_vbox);
 
   canvas = new QWidget{};
@@ -145,8 +164,22 @@ void BackgroundViewer::Update() {
 }
 
 bool BackgroundViewer::eventFilter(QObject* object, QEvent* event) {
-  if(object == canvas && event->type() == QEvent::Paint) {
-    PresentBackground();
+  if(object != canvas) {
+    return false;
+  }
+
+  switch(event->type()) {
+    case QEvent::Paint: {
+      PresentBackground();
+      break;
+    }
+    case QEvent::MouseButtonPress: {
+      const int x = (int)((QMouseEvent*)event)->x() & ~7;
+      const int y = (int)((QMouseEvent*)event)->y() & ~7;
+
+      tile_box->Draw(&((u16*)image.bits())[y * 1024 + x], 1024);
+      break;
+    }
   }
 
   return false;
