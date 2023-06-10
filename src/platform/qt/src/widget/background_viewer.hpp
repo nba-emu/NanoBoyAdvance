@@ -83,7 +83,7 @@ private:
     bool flip_v;
     bool flip_h;
     int palette;
-  } tile_meta_data[64][64];
+  } tile_meta_data[128][128];
 
   Q_OBJECT
 };
