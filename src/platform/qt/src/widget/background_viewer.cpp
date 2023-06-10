@@ -438,7 +438,7 @@ void BackgroundViewer::PresentBackground() {
       const int g = ((color_rgb565 >>  4) & 62) | (color_rgb565 >> 15);
       const int b =  (color_rgb565 >> 10) & 31;
 
-      destination[i++] = (r << 3 | r >> 2) << 16 | (g << 2 | g >> 4) <<  8 | (b << 3 | b >> 2);
+      destination[i++] = 0xFF000000 | (r << 3 | r >> 2) << 16 | (g << 2 | g >> 4) <<  8 | (b << 3 | b >> 2);
     }
 
     i += skip;
