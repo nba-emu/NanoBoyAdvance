@@ -42,6 +42,8 @@ private:
 
   int bg_id = 0;
   int bg_mode = 0;
+  u16 bghofs = 0;
+  u16 bgvofs = 0;
 
   QLabel* bg_mode_label;
   QLabel* bg_priority_label;

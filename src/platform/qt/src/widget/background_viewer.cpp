@@ -166,11 +166,7 @@ void BackgroundViewer::Update() {
   }
 
   const u16 bgcnt = core->PeekHalfIO(0x04000008 + (bg_id << 1));
-  const u16 bghofs = 32; // @todo
-  const u16 bgvofs = 16; // @todo
-
   const int priority = bgcnt & 3;
-
   const u32 tile_base = ((bgcnt >> 2) & 3) << 14;
   const u32 map_base = ((bgcnt >> 8) & 31) << 11;
 
@@ -185,6 +181,8 @@ void BackgroundViewer::Update() {
     width  = 256 << ((bgcnt >> 14) & 1);
     height = 256 <<  (bgcnt >> 15);
     use_8bpp = bgcnt & (1 << 7);
+    bghofs = core->GetBGHOFS(bg_id);
+    bgvofs = core->GetBGVOFS(bg_id);
   } else if(bg_mode <= 2) {
     width  = 128 << (bgcnt >> 14);
     height = width;
@@ -448,14 +446,8 @@ void BackgroundViewer::PresentBackground() {
     painter.drawRect(selected_tile_x * 8 - 1, selected_tile_y * 8 - 1, 9, 9);
   }
 
-  /*// Display visible area test
+  // Display visible area test
   {
-    const u16 bghofs = 340;//core->PeekHalfIO(0x04000010 + (bg_id << 2));
-    const u16 bgvofs = 240;//core->PeekHalfIO(0x04000012 + (bg_id << 2));
-
-    const int width  = 256 * screens_x;
-    const int height = 256 * screens_y;
-
     painter.setPen(Qt::red);
 
     const int x_min = bghofs % width;
@@ -485,7 +477,7 @@ void BackgroundViewer::PresentBackground() {
       painter.drawLine(x_min, y_min, x_min, y_max);
       painter.drawLine(x_max, y_min, x_max, y_max);
     }
-  }*/
+  }
 }
 
 void BackgroundViewer::DrawTileDetail(int tile_x, int tile_y) {

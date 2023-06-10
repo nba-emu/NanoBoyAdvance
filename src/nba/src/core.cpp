@@ -54,30 +54,6 @@ void Core::Reset() {
   }
 }
 
-auto Core::GetROM() -> ROM& {
-  return bus.memory.rom;
-}
-
-auto Core::GetPRAM() -> u8* {
-  return ppu.GetPRAM();
-}
-
-auto Core::GetVRAM() -> u8* {
-  return ppu.GetVRAM();
-}
-
-auto Core::PeekByteIO(u32 address) -> u8  {
-  return bus.hw.ReadByte(address);
-}
-
-auto Core::PeekHalfIO(u32 address) -> u16 {
-  return bus.hw.ReadHalf(address);
-}
-
-auto Core::PeekWordIO(u32 address) -> u32 {
-  return bus.hw.ReadWord(address);
-}
-
 void Core::Attach(std::vector<u8> const& bios) {
   bus.Attach(bios);
 }
@@ -169,6 +145,38 @@ auto Core::SearchSoundMainRAM() -> u32 {
   }
 
   return 0xFFFFFFFF;
+}
+
+auto Core::GetROM() -> ROM& {
+  return bus.memory.rom;
+}
+
+auto Core::GetPRAM() -> u8* {
+  return ppu.GetPRAM();
+}
+
+auto Core::GetVRAM() -> u8* {
+  return ppu.GetVRAM();
+}
+
+auto Core::PeekByteIO(u32 address) -> u8  {
+  return bus.hw.ReadByte(address);
+}
+
+auto Core::PeekHalfIO(u32 address) -> u16 {
+  return bus.hw.ReadHalf(address);
+}
+
+auto Core::PeekWordIO(u32 address) -> u32 {
+  return bus.hw.ReadWord(address);
+}
+
+auto Core::GetBGHOFS(int id) -> u16 {
+  return ppu.mmio.bghofs[id];
+}
+
+auto Core::GetBGVOFS(int id) -> u16 {
+  return ppu.mmio.bgvofs[id];
 }
 
 } // namespace nba::core

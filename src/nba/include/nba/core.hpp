@@ -24,12 +24,7 @@ struct CoreBase {
   virtual ~CoreBase() = default;
 
   virtual void Reset() = 0;
-  virtual auto GetROM() -> ROM& = 0;
-  virtual auto GetPRAM() -> u8* = 0;
-  virtual auto GetVRAM() -> u8* = 0;
-  virtual auto PeekByteIO(u32 address) -> u8;
-  virtual auto PeekHalfIO(u32 address) -> u16;
-  virtual auto PeekWordIO(u32 address) -> u32;
+
   virtual void Attach(std::vector<u8> const& bios) = 0;
   virtual void Attach(ROM&& rom) = 0;
   virtual auto CreateRTC() -> std::unique_ptr<RTC> = 0;
@@ -37,6 +32,17 @@ struct CoreBase {
   virtual void LoadState(SaveState const& state) = 0;
   virtual void CopyState(SaveState& state) = 0;
   virtual void Run(int cycles) = 0;
+
+  virtual auto GetROM() -> ROM& = 0;
+  virtual auto GetPRAM() -> u8* = 0;
+  virtual auto GetVRAM() -> u8* = 0;
+  // @todo: come up with a solution for reading write-only registers.
+  virtual auto PeekByteIO(u32 address) -> u8  = 0;
+  virtual auto PeekHalfIO(u32 address) -> u16 = 0;
+  virtual auto PeekWordIO(u32 address) -> u32 = 0;
+  virtual auto GetBGHOFS(int id) -> u16 = 0;
+  virtual auto GetBGVOFS(int id) -> u16 = 0;
+
 
   void RunForOneFrame() {
     Run(kCyclesPerFrame);

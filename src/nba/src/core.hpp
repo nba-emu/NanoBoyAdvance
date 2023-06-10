@@ -23,12 +23,7 @@ struct Core final : CoreBase {
   Core(std::shared_ptr<Config> config);
 
   void Reset() override;
-  auto GetROM() -> ROM& override;
-  auto GetPRAM() -> u8* override;
-  auto GetVRAM() -> u8* override;
-  auto PeekByteIO(u32 address) -> u8  override;
-  auto PeekHalfIO(u32 address) -> u16 override;
-  auto PeekWordIO(u32 address) -> u32 override;
+
   void Attach(std::vector<u8> const& bios) override;
   void Attach(ROM&& rom) override;
   auto CreateRTC() -> std::unique_ptr<RTC> override;
@@ -36,6 +31,15 @@ struct Core final : CoreBase {
   void LoadState(SaveState const& state) override;
   void CopyState(SaveState& state) override;
   void Run(int cycles) override;
+
+  auto GetROM() -> ROM& override;
+  auto GetPRAM() -> u8* override;
+  auto GetVRAM() -> u8* override;
+  auto PeekByteIO(u32 address) -> u8  override;
+  auto PeekHalfIO(u32 address) -> u16 override;
+  auto PeekWordIO(u32 address) -> u32 override;
+  auto GetBGHOFS(int id) -> u16 override;
+  auto GetBGVOFS(int id) -> u16 override;
 
 private:
   void SkipBootScreen();
