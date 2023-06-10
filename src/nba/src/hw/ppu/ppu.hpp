@@ -39,6 +39,10 @@ struct PPU {
     return pram;
   }
 
+  auto GetVRAM() -> u8* {
+    return vram;
+  }
+
   template<typename T>
   auto ALWAYS_INLINE ReadPRAM(u32 address) noexcept -> T {
     return read<T>(pram, address & 0x3FF);

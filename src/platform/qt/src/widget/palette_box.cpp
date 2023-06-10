@@ -5,40 +5,44 @@
  * Refer to the included LICENSE file.
  */
 
+#include <algorithm>
 #include <cstring>
 #include <QPainter>
 
 #include "palette_box.hpp"
 
-PaletteBox::PaletteBox(QWidget* parent) : QWidget(parent) {
-  std::memset(palette_argb8888, 0, sizeof(palette_argb8888));
+PaletteBox::PaletteBox(int rows, int columns, QWidget* parent) : QWidget(parent), rows(rows), columns(columns) {
+  palette_argb8888 = new u32[rows * columns];
+  std::memset(palette_argb8888, 0, rows * columns * sizeof(u32));
 
-  setFixedSize(16 * k_box_size, 16 * k_box_size);
+  setFixedSize(columns * k_box_size, rows * k_box_size);
 }
 
-void PaletteBox::Draw(u16* palette_rgb565) {
-  for(int i = 0; i < 256; i++) {
-    const u16 color_rgb565 = palette_rgb565[i];
+PaletteBox::~PaletteBox() {
+  delete[] palette_argb8888;
+}
 
-    const int r =  (color_rgb565 >>  0) & 31;
-    const int g = ((color_rgb565 >>  4) & 62) | (color_rgb565 >> 15);
-    const int b =  (color_rgb565 >> 10) & 31;
+void PaletteBox::Draw(u16* palette_rgb565, int stride) {
+  int i = 0;
 
-    const int x = i & 15;
-    const int y = i >> 4;
+  for(int y = 0; y < rows; y++) {
+    for(int x = 0; x < columns; x++) {
+      const u16 color_rgb565 = palette_rgb565[y * stride + x];
 
-    palette_argb8888[x][y] = 0xFF000000 |
-                             (r << 3 | r >> 2) << 16 |
-                             (g << 2 | g >> 4) <<  8 |
-                             (b << 3 | b >> 2); 
+      const int r =  (color_rgb565 >>  0) & 31;
+      const int g = ((color_rgb565 >>  4) & 62) | (color_rgb565 >> 15);
+      const int b =  (color_rgb565 >> 10) & 31;
+
+      palette_argb8888[i++] = 0xFF000000 | (r << 3 | r >> 2) << 16 | (g << 2 | g >> 4) <<  8 | (b << 3 | b >> 2); 
+    }
   }
 
   update();
 }
 
 void PaletteBox::SetHighlightedPosition(int x, int y) {
-  highlighted_x = x;
-  highlighted_y = y;
+  highlighted_x = std::min(columns, x);
+  highlighted_y = std::min(rows, y);
   update();
 }
 
@@ -46,14 +50,20 @@ void PaletteBox::ClearHighlight() {
   SetHighlightedPosition(-1, -1);
 }
 
+u32 PaletteBox::GetColorAt(int x, int y) {
+  return palette_argb8888[y * columns + x];
+}
+
 void PaletteBox::paintEvent(QPaintEvent* event) {
   QPainter painter{this};
 
   painter.setPen(Qt::gray);
 
-  for(int y = 0; y < 16; y++) {
-    for(int x = 0; x < 16; x++) {
-      painter.setBrush(QBrush{palette_argb8888[x][y]});
+  int i = 0;
+
+  for(int y = 0; y < rows; y++) {
+    for(int x = 0; x < columns; x++) {
+      painter.setBrush(QBrush{palette_argb8888[i++]});
       painter.drawRect(x * k_box_size, y * k_box_size, k_box_size, k_box_size);
     }
   }
@@ -69,8 +79,8 @@ void PaletteBox::paintEvent(QPaintEvent* event) {
 }
 
 void PaletteBox::mousePressEvent(QMouseEvent* event) {
-  const int x = (int)(event->x() / k_box_size);
-  const int y = (int)(event->y() / k_box_size);
+  const int x = std::min((int)(event->x() / k_box_size), columns);
+  const int y = std::min((int)(event->y() / k_box_size), rows);
 
   emit selected(x, y);
 }

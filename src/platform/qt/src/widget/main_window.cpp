@@ -361,15 +361,24 @@ void MainWindow::CreateConfigMenu() {
 void MainWindow::CreateToolsMenu() {
   auto tools_menu = menuBar()->addMenu(tr("Tools"));
 
+  // @todo: do not go through the screen component for updates.
+
   connect(tools_menu->addAction(tr("Palette Viewer")), &QAction::triggered, [this]() {
     if(!palette_viewer_window) {
       palette_viewer_window = new PaletteViewerWindow{core.get(), this};
-
-      // @todo: remove the dependendency on the screen component?
       connect(screen.get(), &Screen::RequestDraw, palette_viewer_window, &PaletteViewerWindow::Update);
     }
 
     palette_viewer_window->show();
+  });
+
+  connect(tools_menu->addAction(tr("Background Viewer")), &QAction::triggered, [this]() {
+    if(!background_viewer_window) {
+      background_viewer_window = new BackgroundViewerWindow{core.get(), this};
+      connect(screen.get(), &Screen::RequestDraw, background_viewer_window, &BackgroundViewerWindow::Update);
+    }
+
+    background_viewer_window->show();
   });
 }
 

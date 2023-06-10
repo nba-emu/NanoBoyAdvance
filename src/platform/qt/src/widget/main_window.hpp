@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 
+#include "widget/background_viewer_window.hpp"
 #include "widget/controller_manager.hpp"
 #include "widget/input_window.hpp"
 #include "widget/palette_viewer_window.hpp"
@@ -150,6 +151,7 @@ private:
   nba::SaveState save_state_test;
 
   PaletteViewerWindow* palette_viewer_window;
+  BackgroundViewerWindow* background_viewer_window;
 
   Q_OBJECT
 };

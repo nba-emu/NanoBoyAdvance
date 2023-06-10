@@ -26,7 +26,7 @@ PaletteViewerWindow::PaletteViewerWindow(nba::CoreBase* core, QWidget* parent) :
     const auto group_box = new QGroupBox{};
     const auto group_box_layout = new QVBoxLayout{};
 
-    palette_boxes[box] = new PaletteBox{};
+    palette_boxes[box] = new PaletteBox{16, 16};
 
     connect(palette_boxes[box], &PaletteBox::selected, [=](int x, int y) {
       palette_boxes[box]->SetHighlightedPosition(x, y);
@@ -99,8 +99,8 @@ void PaletteViewerWindow::Update() {
     return;
   }
 
-  palette_boxes[0]->Draw(&pram[0]);
-  palette_boxes[1]->Draw(&pram[256]);
+  palette_boxes[0]->Draw(&pram[0], 16);
+  palette_boxes[1]->Draw(&pram[256], 16);
 }
 
 void PaletteViewerWindow::ShowColorInformation(int color_index) {

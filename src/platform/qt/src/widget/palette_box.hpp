@@ -14,11 +14,13 @@
 
 struct PaletteBox : QWidget {
   
-  PaletteBox(QWidget* parent = nullptr);
+  PaletteBox(int rows, int columns, QWidget* parent = nullptr);
+ ~PaletteBox() override; 
 
-  void Draw(u16* palette_rgb565);
+  void Draw(u16* palette_rgb565, int stride);
   void SetHighlightedPosition(int x, int y);
   void ClearHighlight();
+  u32  GetColorAt(int x, int y);
 
 signals:
   void selected(int x, int y);
@@ -30,10 +32,13 @@ protected:
 private:
   static constexpr int k_box_size = 12;
 
+  int rows;
+  int columns;
+
   int highlighted_x = -1;
   int highlighted_y = -1;
 
-  u32 palette_argb8888[16][16];
+  u32* palette_argb8888;
 
   Q_OBJECT
 };
