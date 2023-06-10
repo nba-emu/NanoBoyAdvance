@@ -218,10 +218,16 @@ bool BackgroundViewer::eventFilter(QObject* object, QEvent* event) {
       break;
     }
     case QEvent::MouseButtonPress: {
-      const int tile_x = (int)(((QMouseEvent*)event)->x() / 8);
-      const int tile_y = (int)(((QMouseEvent*)event)->y() / 8);
+      const QMouseEvent* mouse_event = (QMouseEvent*)event;
 
-      DrawTileDetail(tile_x, tile_y);
+      if(mouse_event->button() == Qt::LeftButton) {
+        const int tile_x = (int)(mouse_event->x() / 8);
+        const int tile_y = (int)(mouse_event->y() / 8);
+
+        DrawTileDetail(tile_x, tile_y);
+      } else {
+        ClearTileSelection();
+      }
       break;
     }
   }
@@ -372,6 +378,11 @@ void BackgroundViewer::PresentBackground() {
   QRect rect{0, 0, canvas->size().width(), canvas->size().height()};
   painter.drawImage(rect, image, rect);
 
+  if(selected_tile_x > -1 && selected_tile_y > -1) {
+    painter.setPen(Qt::red);
+    painter.drawRect(selected_tile_x * 8 - 1, selected_tile_y * 8 - 1, 9, 9);
+  }
+
   /*// Display visible area test
   {
     const u16 bghofs = 340;//core->PeekHalfIO(0x04000010 + (bg_id << 2));
@@ -436,4 +447,20 @@ void BackgroundViewer::DrawTileDetail(int tile_x, int tile_y) {
     tile_flip_h_check_box->setChecked(false);
     tile_palette_label->setText("-");
   }
+
+  selected_tile_x = tile_x;
+  selected_tile_y = tile_y;
+
+  canvas->update();
+}
+
+void BackgroundViewer::ClearTileSelection() {
+  if(!isEnabled()) {
+    return;
+  }
+
+  selected_tile_x = -1;
+  selected_tile_y = -1;
+
+  canvas->update();
 }

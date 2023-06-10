@@ -31,6 +31,7 @@ private:
   void DrawBackgroundMode5();
 
   void DrawTileDetail(int tile_x, int tile_y);
+  void ClearTileSelection();
 
   void PresentBackground();
 
@@ -58,6 +59,8 @@ private:
   QCheckBox* tile_flip_h_check_box;
   QLabel* tile_palette_label;
 
+  int selected_tile_x = -1;
+  int selected_tile_y = -1;
   PaletteBox* tile_box;
   
   QWidget* canvas;
