@@ -274,7 +274,25 @@ void BackgroundViewer::DrawBackgroundMode0() {
           meta_data.flip_h = flip_x > 0;
 
           if(use_8bpp) {
-            // @todo
+            u32 tile_address = tile_base + (tile_number << 6);
+
+            meta_data.tile_address = tile_address;
+            meta_data.palette = 0;
+
+            for(int tile_y = 0; tile_y < 8; tile_y++) {
+              u64 data = nba::read<u64>(vram, tile_address);
+
+              const int image_y = screen_y << 8 | y << 3 | tile_y ^ flip_y;
+
+              for(int tile_x = 0; tile_x < 8; tile_x++) {
+                const int image_x = screen_x << 8 | x << 3 | tile_x ^ flip_x;
+
+                image_rgb565[image_y * 1024 + image_x] = pram[(u8)data];
+                data >>= 8;
+              }
+
+              tile_address += sizeof(u64);
+            }
           } else {
             u32 tile_address = tile_base + (tile_number << 5);
 
