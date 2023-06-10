@@ -41,46 +41,62 @@ BackgroundViewer::BackgroundViewer(nba::CoreBase* core, QWidget* parent) : QWidg
   const auto info_vbox = new QVBoxLayout{};
 
   // Background information
-  {
-    const auto bg_info_grid = new QGridLayout{};
-    int row = 0;
-    bg_info_grid->addWidget(new QLabel(tr("BG mode:")), row, 0);
-    bg_info_grid->addWidget(CreateMonospaceLabel(bg_mode_label), row++, 1);
-    bg_info_grid->addWidget(new QLabel(tr("BG priority:")), row, 0);
-    bg_info_grid->addWidget(CreateMonospaceLabel(bg_priority_label), row++, 1);
-    bg_info_grid->addWidget(new QLabel(tr("Size:")), row, 0);
-    bg_info_grid->addWidget(CreateMonospaceLabel(bg_size_label), row++, 1);
-    bg_info_grid->addWidget(new QLabel(tr("Tile base:")), row, 0);
-    bg_info_grid->addWidget(CreateMonospaceLabel(bg_tile_base_label), row++, 1);
-    bg_info_grid->addWidget(new QLabel(tr("Map base:")), row, 0);
-    bg_info_grid->addWidget(CreateMonospaceLabel(bg_map_base_label), row++, 1);
-    bg_info_grid->addWidget(new QLabel(tr("8BPP:")), row, 0);
-    bg_info_grid->addWidget(CreateCheckBox(bg_8bpp_check_box), row++, 1);
-    bg_info_grid->addWidget(new QLabel(tr("Wraparound:")), row, 0);
-    bg_info_grid->addWidget(CreateCheckBox(bg_wraparound_check_box), row++, 1);
-    bg_info_grid->addWidget(new QLabel(tr("Scroll:")), row, 0);
-    bg_info_grid->addWidget(CreateMonospaceLabel(bg_scroll_label), row++, 1);
-    bg_info_grid->setColumnStretch(1, 1);
+  { 
+    const auto grid = new QGridLayout{};
 
-    const auto bg_info_group_box = new QGroupBox{};
-    bg_info_group_box->setLayout(bg_info_grid);
-    bg_info_group_box->setTitle(tr("Background"));
+    int row = 0; 
+    grid->addWidget(new QLabel(tr("BG mode:")), row, 0);
+    grid->addWidget(CreateMonospaceLabel(bg_mode_label), row++, 1);
+    grid->addWidget(new QLabel(tr("BG priority:")), row, 0);
+    grid->addWidget(CreateMonospaceLabel(bg_priority_label), row++, 1);
+    grid->addWidget(new QLabel(tr("Size:")), row, 0);
+    grid->addWidget(CreateMonospaceLabel(bg_size_label), row++, 1);
+    grid->addWidget(new QLabel(tr("Tile base:")), row, 0);
+    grid->addWidget(CreateMonospaceLabel(bg_tile_base_label), row++, 1);
+    grid->addWidget(new QLabel(tr("Map base:")), row, 0);
+    grid->addWidget(CreateMonospaceLabel(bg_map_base_label), row++, 1);
+    grid->addWidget(new QLabel(tr("8BPP:")), row, 0);
+    grid->addWidget(CreateCheckBox(bg_8bpp_check_box), row++, 1);
+    grid->addWidget(new QLabel(tr("Wraparound:")), row, 0);
+    grid->addWidget(CreateCheckBox(bg_wraparound_check_box), row++, 1);
+    grid->addWidget(new QLabel(tr("Scroll:")), row, 0);
+    grid->addWidget(CreateMonospaceLabel(bg_scroll_label), row++, 1);
+    grid->setColumnStretch(1, 1);
 
-    info_vbox->addWidget(bg_info_group_box);
+    const auto group_box = new QGroupBox{};
+    group_box->setLayout(grid);
+    group_box->setTitle(tr("Background"));
+
+    info_vbox->addWidget(group_box);
   }
 
   // Tile information
   {
     tile_box = new PaletteBox{8, 8};
 
-    const auto tile_info_grid = new QGridLayout{};
-    tile_info_grid->addWidget(tile_box, 0, 0);
+    const auto grid = new QGridLayout{};
+    
+    int row = 0;
+    grid->addWidget(new QLabel(tr("Tile number:")), row, 0);
+    grid->addWidget(CreateMonospaceLabel(tile_number_label), row++, 1);
+    grid->addWidget(new QLabel(tr("Tile address:")), row, 0);
+    grid->addWidget(CreateMonospaceLabel(tile_address_label), row++, 1);
+    grid->addWidget(new QLabel(tr("Map entry address:")), row, 0);
+    grid->addWidget(CreateMonospaceLabel(tile_map_entry_address_label), row++, 1);
+    grid->addWidget(new QLabel(tr("Flip V:")), row, 0);
+    grid->addWidget(CreateCheckBox(tile_flip_v_check_box), row++, 1);
+    grid->addWidget(new QLabel(tr("Flip H:")), row, 0);
+    grid->addWidget(CreateCheckBox(tile_flip_h_check_box), row++, 1);
+    grid->addWidget(new QLabel(tr("Palette:")), row, 0);
+    grid->addWidget(CreateMonospaceLabel(tile_palette_label), row++, 1);
 
-    const auto tile_info_group_box = new QGroupBox{};
-    tile_info_group_box->setLayout(tile_info_grid);
-    tile_info_group_box->setTitle(tr("Tile"));
+    grid->addWidget(tile_box, row, 0);
 
-    info_vbox->addWidget(tile_info_group_box);
+    const auto group_box = new QGroupBox{};
+    group_box->setLayout(grid);
+    group_box->setTitle(tr("Tile"));
+
+    info_vbox->addWidget(group_box);
   }
 
   info_vbox->addStretch(1);
@@ -109,14 +125,26 @@ void BackgroundViewer::Update() {
     return;
   }
 
-  // @todo: handle case when background is not available in the current mode.
+  bg_mode = core->PeekHalfIO(0x04000000) & 7;
 
-  const u16 dispcnt = core->PeekHalfIO(0x04000000);
+  switch(bg_mode) {
+    case 0: setEnabled(true); break;
+    case 1: setEnabled(bg_id != 3); break;
+    case 2: setEnabled(bg_id >= 2); break;
+    case 3:
+    case 4:
+    case 5: setEnabled(bg_id == 2); break;
+    default: setEnabled(false);
+  }
+
+  if(!isEnabled()) {
+    return;
+  }
+
   const u16 bgcnt = core->PeekHalfIO(0x04000008 + (bg_id << 1));
   const u16 bghofs = 32; // @todo
   const u16 bgvofs = 16; // @todo
 
-  const int mode = dispcnt & 7;
   const int priority = bgcnt & 3;
 
   const u32 tile_base = ((bgcnt >> 2) & 3) << 14;
@@ -127,23 +155,23 @@ void BackgroundViewer::Update() {
   bool use_8bpp = false;
   bool wraparound = false;
 
-  const bool text_mode = mode == 0 || (mode == 1 && bg_id < 2);
+  const bool text_mode = bg_mode == 0 || (bg_mode == 1 && bg_id < 2);
 
   if(text_mode) {
     width  = 256 << ((bgcnt >> 14) & 1);
     height = 256 <<  (bgcnt >> 15);
     use_8bpp = bgcnt & (1 << 7);
-  } else if(mode <= 2) {
+  } else if(bg_mode <= 2) {
     width  = 128 << (bgcnt >> 14);
     height = width;
     use_8bpp = true;
     wraparound = bgcnt & (1 << 13);
-  } else if(mode == 5) {
+  } else if(bg_mode == 5) {
     width  = 160;
     height = 128;
   }
 
-  bg_mode_label->setText(QStringLiteral("%1").arg(mode));
+  bg_mode_label->setText(QStringLiteral("%1").arg(bg_mode));
   bg_priority_label->setText(QStringLiteral("%1").arg(priority));
   bg_size_label->setText(QString::fromStdString(fmt::format("{} x {}", width, height)));
   bg_tile_base_label->setText(QString::fromStdString(fmt::format("0x{:08X}", 0x06000000 + tile_base)));
@@ -156,40 +184,7 @@ void BackgroundViewer::Update() {
     bg_scroll_label->setText("-");
   }
 
-  canvas->setFixedSize(width, height);
-
-  DrawBackground();
-
-  canvas->update();
-}
-
-bool BackgroundViewer::eventFilter(QObject* object, QEvent* event) {
-  if(object != canvas) {
-    return false;
-  }
-
-  switch(event->type()) {
-    case QEvent::Paint: {
-      PresentBackground();
-      break;
-    }
-    case QEvent::MouseButtonPress: {
-      const int x = (int)((QMouseEvent*)event)->x() & ~7;
-      const int y = (int)((QMouseEvent*)event)->y() & ~7;
-
-      tile_box->Draw(&((u16*)image.bits())[y * 1024 + x], 1024);
-      break;
-    }
-  }
-
-  return false;
-}
-
-void BackgroundViewer::DrawBackground() {
-  const u16 dispcnt = core->PeekHalfIO(0x04000000);
-  const int mode = dispcnt & 7;
-
-  switch(mode) {
+  switch(bg_mode) {
     case 0: DrawBackgroundMode0(); break;
     case 1: {
       if(bg_id < 2) {
@@ -207,6 +202,31 @@ void BackgroundViewer::DrawBackground() {
       break;
     }
   }
+
+  canvas->setFixedSize(width, height);
+  canvas->update();
+}
+
+bool BackgroundViewer::eventFilter(QObject* object, QEvent* event) {
+  if(object != canvas) {
+    return false;
+  }
+
+  switch(event->type()) {
+    case QEvent::Paint: {
+      PresentBackground();
+      break;
+    }
+    case QEvent::MouseButtonPress: {
+      const int tile_x = (int)(((QMouseEvent*)event)->x() / 8);
+      const int tile_y = (int)(((QMouseEvent*)event)->y() / 8);
+
+      DrawTileDetail(tile_x, tile_y);
+      break;
+    }
+  }
+
+  return false;
 }
 
 void BackgroundViewer::DrawBackgroundMode0() {
@@ -228,17 +248,28 @@ void BackgroundViewer::DrawBackgroundMode0() {
     for(int screen_x = 0; screen_x < screens_x; screen_x++) {
       for(int y = 0; y < 32; y++) {
         for(int x = 0; x < 32; x++) {
-          const u16 map_entry = nba::read<u16>(vram, map_address + (y << 6 | x << 1));
+          const u32 map_entry_address = map_address + (y << 6 | x << 1);
+          const u16 map_entry = nba::read<u16>(vram, map_entry_address);
 
           const int tile_number = map_entry & 0x3FF;
           const int flip_x = (map_entry & (1 << 10)) ? 7 : 0;
           const int flip_y = (map_entry & (1 << 11)) ? 7 : 0;
           const int palette = map_entry >> 12;
 
+          auto& meta_data = tile_meta_data[screen_x << 5 | x][screen_y << 5 | y];
+
+          meta_data.tile_number = tile_number;
+          meta_data.map_entry_address = map_entry_address;
+          meta_data.flip_v = flip_y > 0;
+          meta_data.flip_h = flip_x > 0;
+
           if(use_8bpp) {
             // @todo
           } else {
             u32 tile_address = tile_base + (tile_number << 5);
+
+            meta_data.tile_address = tile_address;
+            meta_data.palette = palette;
 
             for(int tile_y = 0; tile_y < 8; tile_y++) {
               u32 data = nba::read<u32>(vram, tile_address);
@@ -281,6 +312,8 @@ void BackgroundViewer::DrawBackgroundMode2() {
       const u8 tile = vram[map_address++];
 
       u32 tile_address = tile_base + (tile << 6);
+
+      // @todo: populate tile meta data
 
       for(int tile_y = 0; tile_y < 8; tile_y++) {
         for(int tile_x = 0; tile_x < 8; tile_x++) {
@@ -330,6 +363,10 @@ void BackgroundViewer::DrawBackgroundMode5() {
 }
 
 void BackgroundViewer::PresentBackground() {
+  if(!isEnabled()) {
+    return;
+  }
+
   QPainter painter{canvas};
 
   QRect rect{0, 0, canvas->size().width(), canvas->size().height()};
@@ -373,4 +410,30 @@ void BackgroundViewer::PresentBackground() {
       painter.drawLine(x_max, y_min, x_max, y_max);
     }
   }*/
+}
+
+void BackgroundViewer::DrawTileDetail(int tile_x, int tile_y) {
+  if(!isEnabled()) {
+    return;
+  }
+
+  tile_box->Draw(&((u16*)image.bits())[(tile_y * 1024 + tile_x) * 8], 1024);
+
+  if(bg_mode == 0 || (bg_mode == 1 && bg_id < 2)) {
+    auto& meta_data = tile_meta_data[tile_x][tile_y];
+
+    tile_number_label->setText(QStringLiteral("%1").arg(meta_data.tile_number));
+    tile_address_label->setText(QString::fromStdString(fmt::format("0x{:08X}", 0x06000000 + meta_data.tile_address)));
+    tile_map_entry_address_label->setText(QString::fromStdString(fmt::format("0x{:08X}", 0x06000000 + meta_data.map_entry_address)));
+    tile_flip_v_check_box->setChecked(meta_data.flip_v);
+    tile_flip_h_check_box->setChecked(meta_data.flip_h);
+    tile_palette_label->setText(QStringLiteral("%1").arg(meta_data.palette));
+  } else {
+    tile_number_label->setText("-");
+    tile_address_label->setText("-");
+    tile_map_entry_address_label->setText("-");
+    tile_flip_v_check_box->setChecked(false);
+    tile_flip_h_check_box->setChecked(false);
+    tile_palette_label->setText("-");
+  }
 }
