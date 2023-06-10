@@ -335,17 +335,26 @@ void BackgroundViewer::DrawBackgroundMode2() {
 
   for(int y = 0; y < size; y += 8) {
     for(int x = 0; x < size; x += 8) {
-      const u8 tile = vram[map_address++];
+      const u8 tile_number = vram[map_address];
 
-      u32 tile_address = tile_base + (tile << 6);
+      u32 tile_address = tile_base + (tile_number << 6);
 
-      // @todo: populate tile meta data
+      auto& meta_data = tile_meta_data[x >> 3][y >> 3];
+
+      meta_data.tile_number = tile_number;
+      meta_data.tile_address = tile_address;
+      meta_data.map_entry_address = map_address;
+      meta_data.flip_v = false;
+      meta_data.flip_h = false;
+      meta_data.palette = 0;
 
       for(int tile_y = 0; tile_y < 8; tile_y++) {
         for(int tile_x = 0; tile_x < 8; tile_x++) {
           image_rgb565[(y + tile_y) * 1024 + x + tile_x] = pram[vram[tile_address++]];
         }
       }
+
+      map_address++;
     }
   }
 }
@@ -468,7 +477,7 @@ void BackgroundViewer::DrawTileDetail(int tile_x, int tile_y) {
 
   tile_box->Draw(&image_rgb565[(tile_y * 1024 + tile_x) * 8], 1024);
 
-  if(bg_mode == 0 || (bg_mode == 1 && bg_id < 2)) {
+  if(bg_mode <= 2) {
     auto& meta_data = tile_meta_data[tile_x][tile_y];
 
     tile_number_label->setText(QStringLiteral("%1").arg(meta_data.tile_number));
