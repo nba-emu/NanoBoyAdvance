@@ -15,6 +15,7 @@
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QScrollArea>
+#include <QVBoxLayout>
 
 #include "background_viewer.hpp"
 
@@ -36,30 +37,35 @@ BackgroundViewer::BackgroundViewer(nba::CoreBase* core, QWidget* parent) : QWidg
     return check_box;
   };
 
-  const auto info_grid = new QGridLayout{};
-  int row = 0;
-  info_grid->addWidget(new QLabel(tr("BG mode:")), row, 0);
-  info_grid->addWidget(CreateMonospaceLabel(bg_mode_label), row++, 1);
-  info_grid->addWidget(new QLabel(tr("BG priority:")), row, 0);
-  info_grid->addWidget(CreateMonospaceLabel(bg_priority_label), row++, 1);
-  info_grid->addWidget(new QLabel(tr("Size:")), row, 0);
-  info_grid->addWidget(CreateMonospaceLabel(bg_size_label), row++, 1);
-  info_grid->addWidget(new QLabel(tr("Tile base:")), row, 0);
-  info_grid->addWidget(CreateMonospaceLabel(bg_tile_base_label), row++, 1);
-  info_grid->addWidget(new QLabel(tr("Map base:")), row, 0);
-  info_grid->addWidget(CreateMonospaceLabel(bg_map_base_label), row++, 1);
-  info_grid->addWidget(new QLabel(tr("8BPP:")), row, 0);
-  info_grid->addWidget(CreateCheckBox(bg_8bpp_check_box), row++, 1);
-  info_grid->addWidget(new QLabel(tr("Wraparound:")), row, 0);
-  info_grid->addWidget(CreateCheckBox(bg_wraparound_check_box), row++, 1);
-  info_grid->addWidget(new QLabel(tr("Scroll:")), row, 0);
-  info_grid->addWidget(CreateMonospaceLabel(bg_scroll_label), row++, 1);
-  info_grid->setColumnStretch(1, 1);
+  const auto info_vbox = new QVBoxLayout{};
 
-  const auto info_group_box = new QGroupBox{};
-  info_group_box->setLayout(info_grid);
-  info_group_box->setTitle("Background");
-  layout()->addWidget(info_group_box);
+  const auto bg_info_grid = new QGridLayout{};
+  int row = 0;
+  bg_info_grid->addWidget(new QLabel(tr("BG mode:")), row, 0);
+  bg_info_grid->addWidget(CreateMonospaceLabel(bg_mode_label), row++, 1);
+  bg_info_grid->addWidget(new QLabel(tr("BG priority:")), row, 0);
+  bg_info_grid->addWidget(CreateMonospaceLabel(bg_priority_label), row++, 1);
+  bg_info_grid->addWidget(new QLabel(tr("Size:")), row, 0);
+  bg_info_grid->addWidget(CreateMonospaceLabel(bg_size_label), row++, 1);
+  bg_info_grid->addWidget(new QLabel(tr("Tile base:")), row, 0);
+  bg_info_grid->addWidget(CreateMonospaceLabel(bg_tile_base_label), row++, 1);
+  bg_info_grid->addWidget(new QLabel(tr("Map base:")), row, 0);
+  bg_info_grid->addWidget(CreateMonospaceLabel(bg_map_base_label), row++, 1);
+  bg_info_grid->addWidget(new QLabel(tr("8BPP:")), row, 0);
+  bg_info_grid->addWidget(CreateCheckBox(bg_8bpp_check_box), row++, 1);
+  bg_info_grid->addWidget(new QLabel(tr("Wraparound:")), row, 0);
+  bg_info_grid->addWidget(CreateCheckBox(bg_wraparound_check_box), row++, 1);
+  bg_info_grid->addWidget(new QLabel(tr("Scroll:")), row, 0);
+  bg_info_grid->addWidget(CreateMonospaceLabel(bg_scroll_label), row++, 1);
+  bg_info_grid->setColumnStretch(1, 1);
+
+  const auto bg_info_group_box = new QGroupBox{};
+  bg_info_group_box->setLayout(bg_info_grid);
+  bg_info_group_box->setTitle("Background");
+  info_vbox->addWidget(bg_info_group_box);
+  info_vbox->addStretch(1);
+
+  ((QHBoxLayout*)layout())->addLayout(info_vbox);
 
   canvas = new QWidget{};
   canvas->setFixedSize(256, 256);
