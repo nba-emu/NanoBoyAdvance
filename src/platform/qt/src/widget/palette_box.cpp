@@ -19,7 +19,7 @@ PaletteBox::PaletteBox(int rows, int columns, QWidget* parent) : QWidget(parent)
 }
 
 PaletteBox::~PaletteBox() {
-  delete palette_argb8888;
+  delete[] palette_argb8888;
 }
 
 void PaletteBox::Draw(u16* palette_rgb565, int stride) {

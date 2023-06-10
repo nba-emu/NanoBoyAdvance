@@ -114,6 +114,12 @@ BackgroundViewer::BackgroundViewer(nba::CoreBase* core, QWidget* parent) : QWidg
 
   pram = (u16*)core->GetPRAM();
   vram = core->GetVRAM();
+
+  image_rgb565 = new u16[1024 * 1024];
+}
+
+BackgroundViewer::~BackgroundViewer() {
+  delete[] image_rgb565;
 }
 
 void BackgroundViewer::SetBackgroundID(int id) {
@@ -236,8 +242,6 @@ bool BackgroundViewer::eventFilter(QObject* object, QEvent* event) {
 }
 
 void BackgroundViewer::DrawBackgroundMode0() {
-  u16* const buffer = (u16*)image.bits();
-  
   const u16 bgcnt = core->PeekHalfIO(0x04000008 + (bg_id << 1));
 
   const int screens_x = 1 + ((bgcnt >> 14) & 1);
@@ -285,7 +289,7 @@ void BackgroundViewer::DrawBackgroundMode0() {
               for(int tile_x = 0; tile_x < 8; tile_x++) {
                 const int image_x = screen_x << 8 | x << 3 | tile_x ^ flip_x;
 
-                buffer[image_y * 1024 + image_x] = pram[(palette << 4) | (data & 15)];
+                image_rgb565[image_y * 1024 + image_x] = pram[(palette << 4) | (data & 15)];
                 data >>= 4;
               }
 
@@ -301,8 +305,6 @@ void BackgroundViewer::DrawBackgroundMode0() {
 }
 
 void BackgroundViewer::DrawBackgroundMode2() {
-  u16* const buffer = (u16*)image.bits();
-
   const u16 bgcnt = core->PeekHalfIO(0x04000008 + (bg_id << 1));
   const int size = 128 << (bgcnt >> 14);
   
@@ -323,7 +325,7 @@ void BackgroundViewer::DrawBackgroundMode2() {
 
       for(int tile_y = 0; tile_y < 8; tile_y++) {
         for(int tile_x = 0; tile_x < 8; tile_x++) {
-          buffer[(y + tile_y) * 1024 + x + tile_x] = pram[vram[tile_address++]];
+          image_rgb565[(y + tile_y) * 1024 + x + tile_x] = pram[vram[tile_address++]];
         }
       }
     }
@@ -331,38 +333,32 @@ void BackgroundViewer::DrawBackgroundMode2() {
 }
 
 void BackgroundViewer::DrawBackgroundMode3() {
-  u16* const buffer = (u16*)image.bits();
-
   u32 address = 0;
 
   for(int y = 0; y < 160; y++) {
     for(int x = 0; x < 240; x++) {
-      buffer[y * 1024 + x] = nba::read<u16>(vram, address);
+      image_rgb565[y * 1024 + x] = nba::read<u16>(vram, address);
       address += sizeof(u16);
     }
   }
 }
 
 void BackgroundViewer::DrawBackgroundMode4() {
-  u16* const buffer = (u16*)image.bits();
-
   u32 address = (core->PeekHalfIO(0x04000000) & 0x10U) * 0xA00U;
 
   for(int y = 0; y < 160; y++) {
     for(int x = 0; x < 240; x++) {
-      buffer[y * 1024 + x] = pram[nba::read<u8>(vram, address++)];
+      image_rgb565[y * 1024 + x] = pram[nba::read<u8>(vram, address++)];
     }
   }
 }
 
 void BackgroundViewer::DrawBackgroundMode5() {
-  u16* const buffer = (u16*)image.bits();
-
   u32 address = (core->PeekHalfIO(0x04000000) & 0x10U) * 0xA00U;
 
   for(int y = 0; y < 128; y++) {
     for(int x = 0; x < 160; x++) {
-      buffer[y * 1024 + x] = nba::read<u16>(vram, address);
+      image_rgb565[y * 1024 + x] = nba::read<u16>(vram, address);
       address += sizeof(u16);
     }
   }
@@ -375,8 +371,32 @@ void BackgroundViewer::PresentBackground() {
 
   QPainter painter{canvas};
 
-  QRect rect{0, 0, canvas->size().width(), canvas->size().height()};
-  painter.drawImage(rect, image, rect);
+  const int width = canvas->size().width();
+  const int height = canvas->size().height();
+
+  u32* const destination = (u32*)image_rgb32.bits();
+
+  const int skip = 1024 - width;
+
+  int i = 0;
+
+  for(int y = 0; y < height; y++) {
+    for(int x = 0; x < width; x++) {
+      const u16 color_rgb565 = image_rgb565[i];
+
+      // @todo: de-duplicate the RGB565 to RGB32 conversion.
+      const int r =  (color_rgb565 >>  0) & 31;
+      const int g = ((color_rgb565 >>  4) & 62) | (color_rgb565 >> 15);
+      const int b =  (color_rgb565 >> 10) & 31;
+
+      destination[i++] = (r << 3 | r >> 2) << 16 | (g << 2 | g >> 4) <<  8 | (b << 3 | b >> 2);
+    }
+
+    i += skip;
+  }
+
+  QRect rect{0, 0, width, height};
+  painter.drawImage(rect, image_rgb32, rect);
 
   if(selected_tile_x > -1 && selected_tile_y > -1) {
     painter.setPen(Qt::red);
@@ -428,7 +448,7 @@ void BackgroundViewer::DrawTileDetail(int tile_x, int tile_y) {
     return;
   }
 
-  tile_box->Draw(&((u16*)image.bits())[(tile_y * 1024 + tile_x) * 8], 1024);
+  tile_box->Draw(&image_rgb565[(tile_y * 1024 + tile_x) * 8], 1024);
 
   if(bg_mode == 0 || (bg_mode == 1 && bg_id < 2)) {
     auto& meta_data = tile_meta_data[tile_x][tile_y];

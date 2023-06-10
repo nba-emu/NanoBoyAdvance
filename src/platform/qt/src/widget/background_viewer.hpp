@@ -17,6 +17,7 @@
 
 struct BackgroundViewer : QWidget {
   BackgroundViewer(nba::CoreBase* core, QWidget* parent = nullptr);
+ ~BackgroundViewer() override; 
 
   void SetBackgroundID(int id);
   void Update();
@@ -64,7 +65,8 @@ private:
   PaletteBox* tile_box;
   
   QWidget* canvas;
-  QImage image{1024, 1024, QImage::Format_RGB555};
+  QImage image_rgb32{1024, 1024, QImage::Format_RGB32};
+  u16* image_rgb565;
 
   struct TileMetaData {
     int tile_number;
