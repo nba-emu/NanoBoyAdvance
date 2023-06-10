@@ -117,6 +117,10 @@ BackgroundViewer::BackgroundViewer(nba::CoreBase* core, QWidget* parent) : QWidg
     });
   }
 
+  display_screen_viewport_check_box = new QCheckBox{tr("Display screen viewport")};
+  display_screen_viewport_check_box->setChecked(true);
+  info_vbox->addWidget(display_screen_viewport_check_box);
+
   info_vbox->addStretch(1);
   ((QHBoxLayout*)layout())->addLayout(info_vbox);
 
@@ -192,6 +196,8 @@ void BackgroundViewer::Update() {
     width  = 160;
     height = 128;
   }
+
+  display_screen_viewport_check_box->setEnabled(text_mode);
 
   bg_mode_label->setText(QStringLiteral("%1").arg(bg_mode));
   bg_priority_label->setText(QStringLiteral("%1").arg(priority));
@@ -446,8 +452,7 @@ void BackgroundViewer::PresentBackground() {
     painter.drawRect(selected_tile_x * 8 - 1, selected_tile_y * 8 - 1, 9, 9);
   }
 
-  // Display visible area test
-  {
+  if(display_screen_viewport_check_box->isEnabled() && display_screen_viewport_check_box->isChecked()) {
     painter.setPen(Qt::red);
 
     const int x_min = bghofs % width;

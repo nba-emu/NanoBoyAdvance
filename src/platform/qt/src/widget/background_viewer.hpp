@@ -66,6 +66,8 @@ private:
   QLabel* tile_color_g_component_label;
   QLabel* tile_color_b_component_label;
 
+  QCheckBox* display_screen_viewport_check_box;
+
   bool display_selected_tile = false;
   int selected_tile_x;
   int selected_tile_y;
