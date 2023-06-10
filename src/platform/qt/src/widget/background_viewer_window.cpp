@@ -8,7 +8,11 @@
 #include <algorithm>
 #include <fmt/format.h>
 #include <nba/common/punning.hpp>
+#include <optional>
 #include <QEvent>
+#include <QFontDatabase>
+#include <QGridLayout>
+#include <QGroupBox>
 #include <QHBoxLayout>
 #include <QScrollArea>
 
@@ -23,8 +27,45 @@ BackgroundViewerWindow::BackgroundViewerWindow(nba::CoreBase* core, QWidget* par
 
   setLayout(new QHBoxLayout{});
 
-  test_label = new QLabel{""};
-  layout()->addWidget(test_label);
+  const auto monospace_font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+
+  const auto CreateMonospaceLabel = [&](QLabel*& label) {
+    label = new QLabel{"-"};
+    label->setFont(monospace_font);
+    label->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    return label;
+  };
+
+  const auto CreateCheckBox = [&](QCheckBox*& check_box) {
+    check_box = new QCheckBox{};
+    check_box->setEnabled(false);
+    return check_box;
+  };
+
+  const auto info_grid = new QGridLayout{};
+  int row = 0;
+  info_grid->addWidget(new QLabel(tr("BG mode:")), row, 0);
+  info_grid->addWidget(CreateMonospaceLabel(bg_mode_label), row++, 1);
+  info_grid->addWidget(new QLabel(tr("BG priority:")), row, 0);
+  info_grid->addWidget(CreateMonospaceLabel(bg_priority_label), row++, 1);
+  info_grid->addWidget(new QLabel(tr("Size:")), row, 0);
+  info_grid->addWidget(CreateMonospaceLabel(bg_size_label), row++, 1);
+  info_grid->addWidget(new QLabel(tr("Tile base:")), row, 0);
+  info_grid->addWidget(CreateMonospaceLabel(bg_tile_base_label), row++, 1);
+  info_grid->addWidget(new QLabel(tr("Map base:")), row, 0);
+  info_grid->addWidget(CreateMonospaceLabel(bg_map_base_label), row++, 1);
+  info_grid->addWidget(new QLabel(tr("8BPP:")), row, 0);
+  info_grid->addWidget(CreateCheckBox(bg_8bpp_check_box), row++, 1);
+  info_grid->addWidget(new QLabel(tr("Wraparound:")), row, 0);
+  info_grid->addWidget(CreateCheckBox(bg_wraparound_check_box), row++, 1);
+  info_grid->addWidget(new QLabel(tr("Scroll:")), row, 0);
+  info_grid->addWidget(CreateMonospaceLabel(bg_scroll_label), row++, 1);
+  info_grid->setColumnStretch(1, 1);
+
+  const auto info_group_box = new QGroupBox{};
+  info_group_box->setLayout(info_grid);
+  info_group_box->setTitle("Background");
+  layout()->addWidget(info_group_box);
 
   canvas = new QWidget{};
   canvas->setFixedSize(256, 256);
@@ -33,6 +74,8 @@ BackgroundViewerWindow::BackgroundViewerWindow(nba::CoreBase* core, QWidget* par
   const auto canvas_scroll_area = new QScrollArea{};
   canvas_scroll_area->setWidget(canvas);
   layout()->addWidget(canvas_scroll_area);
+
+  ((QHBoxLayout*)layout())->setStretch(1, 1);
 }
 
 void BackgroundViewerWindow::Update() {
@@ -40,7 +83,54 @@ void BackgroundViewerWindow::Update() {
     return;
   }
 
-  test_label->setText(QString::fromStdString(fmt::format("DISPCNT: 0x{:08X}", core->PeekHalfIO(0x04000000))));
+  const int bg_id = 2; // @todo
+
+  const u16 dispcnt = core->PeekHalfIO(0x04000000);
+  const u16 bgcnt = core->PeekHalfIO(0x04000008 + (bg_id << 1));
+  const u16 bghofs = 32; // @todo
+  const u16 bgvofs = 16; // @todo
+
+  const int mode = dispcnt & 7;
+  const int priority = bgcnt & 3;
+
+  const u32 tile_base = ((bgcnt >> 2) & 3) << 14;
+  const u32 map_base = ((bgcnt >> 8) & 31) << 11;
+
+  int width = 240;
+  int height = 160;
+  bool use_8bpp = false;
+  bool wraparound = false;
+
+  const bool text_mode = mode == 0 || (mode == 1 && bg_id < 2);
+
+  if(text_mode) {
+    width  = 256 << ((bgcnt >> 14) & 1);
+    height = 256 <<  (bgcnt >> 15);
+    use_8bpp = bgcnt & (1 << 7);
+  } else if(mode <= 2) {
+    width  = 128 << (bgcnt >> 14);
+    height = width;
+    use_8bpp = true;
+    wraparound = bgcnt & (1 << 13);
+  } else if(mode == 5) {
+    width  = 160;
+    height = 128;
+  }
+
+  bg_mode_label->setText(QStringLiteral("%1").arg(mode));
+  bg_priority_label->setText(QStringLiteral("%1").arg(priority));
+  bg_size_label->setText(QString::fromStdString(fmt::format("{} x {}", width, height)));
+  bg_tile_base_label->setText(QString::fromStdString(fmt::format("0x{:08X}", 0x06000000 + tile_base)));
+  bg_map_base_label->setText(QString::fromStdString(fmt::format("0x{:08X}", 0x06000000 + map_base)));
+  bg_8bpp_check_box->setChecked(use_8bpp);
+  bg_wraparound_check_box->setChecked(wraparound);
+  if(text_mode) {
+    bg_scroll_label->setText(QString::fromStdString(fmt::format("{}, {}", bghofs, bgvofs)));
+  } else {
+    bg_scroll_label->setText("-");
+  }
+
+  canvas->setFixedSize(width, height);
 
   DrawBackground();
 
@@ -124,8 +214,6 @@ void BackgroundViewerWindow::DrawBackgroundMode0(int bg_id) {
       map_address += 2048;
     }
   }
-
-  canvas->setFixedSize(256 * screens_x, 256 * screens_y);
 }
 
 void BackgroundViewerWindow::DrawBackgroundMode2(int bg_id) {
@@ -154,8 +242,6 @@ void BackgroundViewerWindow::DrawBackgroundMode2(int bg_id) {
       }
     }
   }
-
-  canvas->setFixedSize(size, size);
 }
 
 void BackgroundViewerWindow::DrawBackgroundMode3() {
@@ -169,8 +255,6 @@ void BackgroundViewerWindow::DrawBackgroundMode3() {
       address += sizeof(u16);
     }
   }
-
-  canvas->setFixedSize(240, 160);
 }
 
 void BackgroundViewerWindow::DrawBackgroundMode4() {
@@ -183,8 +267,6 @@ void BackgroundViewerWindow::DrawBackgroundMode4() {
       buffer[y * 1024 + x] = pram[nba::read<u8>(vram, address++)];
     }
   }
-
-  canvas->setFixedSize(240, 160);
 }
 
 void BackgroundViewerWindow::DrawBackgroundMode5() {
@@ -198,8 +280,6 @@ void BackgroundViewerWindow::DrawBackgroundMode5() {
       address += sizeof(u16);
     }
   }
-
-  canvas->setFixedSize(160, 128);
 }
 
 void BackgroundViewerWindow::PresentBackground() {

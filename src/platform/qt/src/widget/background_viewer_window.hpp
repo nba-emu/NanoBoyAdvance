@@ -8,6 +8,7 @@
 #pragma once
 
 #include <nba/core.hpp>
+#include <QCheckBox>
 #include <QDialog>
 #include <QImage>
 #include <QLabel>
@@ -35,7 +36,16 @@ private:
   u16* pram;
   u8* vram;
 
-  QLabel* test_label;
+  QLabel* bg_mode_label;
+  QLabel* bg_priority_label;
+  QLabel* bg_size_label;
+  QLabel* bg_tile_base_label;
+  QLabel* bg_map_base_label;
+  QCheckBox* bg_8bpp_check_box;
+  QCheckBox* bg_wraparound_check_box;
+  QCheckBox* bg_mosaic_check_box;
+  QLabel* bg_scroll_label;
+  
   QWidget* canvas;
   QImage image{1024, 1024, QImage::Format_RGB555};
 
