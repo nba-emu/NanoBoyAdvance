@@ -53,6 +53,11 @@ See [COMPILING.md](docs/COMPILING.md) in the `docs` folder.
 - Talarubi and Near: for [higan's GBA color correction algorithm](https://near.sh/articles/video/color-emulation)
 - DeSmuME team and Hyllian: xBRZ upscaling code
 
+## Sister Projects
+- [Panda3DS](https://github.com/wheremyfoodat/panda3DS): A new HLE Nintendo 3DS emulator
+- [Dust](https://github.com/Kelpsyberry/dust/): Nintendo DS emulator for desktop devices and the web
+- [Kaizen](https://github.com/SimoneN64/Kaizen): Experimental work-in-progress low-level N64 emulator
+
 ## Copyright
 
 NanoBoyAdvance is Copyright © 2015 - 2023 fleroviux.<br>
