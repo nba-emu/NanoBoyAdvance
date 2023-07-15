@@ -159,6 +159,10 @@ auto Core::GetVRAM() -> u8* {
   return ppu.GetVRAM();
 }
 
+auto Core::GetOAM() -> u8* {
+  return ppu.GetOAM();
+}
+
 auto Core::PeekByteIO(u32 address) -> u8  {
   return bus.hw.ReadByte(address);
 }

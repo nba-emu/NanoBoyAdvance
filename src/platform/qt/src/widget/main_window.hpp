@@ -27,6 +27,7 @@
 #include "widget/input_window.hpp"
 #include "widget/palette_viewer_window.hpp"
 #include "widget/screen.hpp"
+#include "widget/sprite_viewer.hpp"
 #include "config.hpp"
 
 struct MainWindow : QMainWindow {
@@ -152,6 +153,7 @@ private:
 
   PaletteViewerWindow* palette_viewer_window;
   BackgroundViewerWindow* background_viewer_window;
+  SpriteViewer* sprite_viewer_window;
 
   Q_OBJECT
 };

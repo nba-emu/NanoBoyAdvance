@@ -380,6 +380,15 @@ void MainWindow::CreateToolsMenu() {
 
     background_viewer_window->show();
   });
+
+  connect(tools_menu->addAction(tr("Sprite Viewer")), &QAction::triggered, [this]() {
+    if(!sprite_viewer_window) {
+      sprite_viewer_window = new SpriteViewer{core.get()};
+      connect(screen.get(), &Screen::RequestDraw, sprite_viewer_window, &SpriteViewer::Update);
+    }
+
+    sprite_viewer_window->show();
+  });
 }
 
 void MainWindow::CreateHelpMenu() {
