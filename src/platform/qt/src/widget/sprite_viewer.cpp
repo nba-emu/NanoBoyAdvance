@@ -258,9 +258,11 @@ void SpriteViewer::Update() {
     }
   }
 
-  const int available_render_cycles = (core->PeekHalfIO(0x04000000) & (1 << 5)) ? 964 : 1232;
+  const bool fast_hblank_oam_access = core->PeekHalfIO(0x04000000) & (1 << 5);
+  const int available_render_cycles = fast_hblank_oam_access ? 964 : 1232;
+  const float render_cycle_percentage = 100.0f * (float)render_cycles / (float)available_render_cycles;
 
-  label_sprite_render_cycles->setText(QString::fromStdString(fmt::format("{} ({:.2f} %)", render_cycles, 100.0f * (float)render_cycles / available_render_cycles)));
+  label_sprite_render_cycles->setText(QString::fromStdString(fmt::format("{} ({:.2f} %)", render_cycles, render_cycle_percentage)));
 
   sprite_width = width;
   sprite_height = height;
