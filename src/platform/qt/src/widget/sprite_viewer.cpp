@@ -106,7 +106,11 @@ SpriteViewer::SpriteViewer(nba::CoreBase* core, QWidget* parent) : QWidget{paren
 }
 
 void SpriteViewer::Update() {
-  const int offset = sprite_index_input->value() << 3;
+  const int index = sprite_index_input->value();
+
+  RenderSprite(index, (u32*)image_rgb32.bits());
+
+  const int offset = index << 3;
 
   const u16 attr0 = nba::read<u16>(oam, offset);
   const u16 attr1 = nba::read<u16>(oam, offset + 2);
@@ -127,77 +131,6 @@ void SpriteViewer::Update() {
 
   const bool is_8bpp = attr0 & (1 << 13);
   const uint tile_number = attr2 & 0x3FFu;
-
-  const bool one_dimensional_mapping = core->PeekHalfIO(0x04000000) & (1 << 6);
-
-  const int tiles_x = width >> 3;
-  const int tiles_y = height >> 3;
-
-  u32* const buffer = (u32*)image_rgb32.bits();
-
-  if(is_8bpp) {
-    const u16* palette = &pram[256];
-
-    for(int tile_y = 0; tile_y < tiles_y; tile_y++) {
-      for(int tile_x = 0; tile_x < tiles_x; tile_x++) {
-        int current_tile_number;
-
-        if(one_dimensional_mapping) {
-          current_tile_number = (tile_number + tile_y * (width >> 2) + (tile_x << 1)) & 0x3FF;
-        } else {
-          current_tile_number = ((tile_number + (tile_y * 32)) & 0x3E0) | (((tile_number & ~1) + (tile_x << 1)) & 0x1F);
-        }
-
-        // @todo: handle bad tile numbers and overflows and the likes
-
-        u32 tile_address = 0x10000u + (current_tile_number << 5);
-
-        for(int y = 0; y < 8; y++) {
-          u64 tile_data = nba::read<u64>(vram, tile_address);
-
-          u32* dst = &buffer[tile_y << 9 | y << 6 | tile_x << 3];
-
-          for(int x = 0; x < 8; x++) {
-            *dst++ = RGB555(palette[tile_data & 255u]);
-            tile_data >>= 8;
-          }
-
-          tile_address += sizeof(u64);
-        }
-      }
-    }
-  } else {
-    const u16* palette = &pram[256 | attr2 >> 12 << 4];
-
-    for(int tile_y = 0; tile_y < tiles_y; tile_y++) {
-      for(int tile_x = 0; tile_x < tiles_x; tile_x++) {
-        int current_tile_number;
-
-        if(one_dimensional_mapping) {
-          current_tile_number = (tile_number + tile_y * (width >> 3) + tile_x) & 0x3FF;
-        } else {
-          current_tile_number = ((tile_number + (tile_y * 32)) & 0x3E0) | ((tile_number + tile_x) & 0x1F);
-        }
-
-        // @todo: handle bad tile numbers and overflows and the likes
-
-        u32 tile_address = 0x10000u + (current_tile_number << 5);
-
-        for(int y = 0; y < 8; y++) {
-          u32 tile_data = nba::read<u32>(vram, tile_address);
-
-          u32* dst = &buffer[tile_y << 9 | y << 6 | tile_x << 3];
-
-          for(int x = 0; x < 8; x++) {
-            *dst++ = RGB555(palette[tile_data & 15u]);
-            tile_data >>= 4;
-          }
-
-          tile_address += sizeof(u32);
-        }
-      }
-    }
-  }
 
   static constexpr const char* k_mode_names[4] {
     "Normal", "Semi-Transparent", "Window", "Prohibited"
@@ -272,6 +205,98 @@ void SpriteViewer::Update() {
   magnified_sprite_height = height * magnification;
   canvas->resize(magnified_sprite_width, magnified_sprite_height);
   canvas->update();
+}
+
+void SpriteViewer::RenderSprite(int index, u32* buffer) {
+  static constexpr int k_sprite_size[4][4][2] = {
+    { { 8 , 8  }, { 16, 16 }, { 32, 32 }, { 64, 64 } }, // Square
+    { { 16, 8  }, { 32, 8  }, { 32, 16 }, { 64, 32 } }, // Horizontal
+    { { 8 , 16 }, { 8 , 32 }, { 16, 32 }, { 32, 64 } }, // Vertical
+    { { 8 , 8  }, { 8 , 8  }, { 8 , 8  }, { 8 , 8  } }  // Prohibited
+  };
+
+  const int offset = index << 3;
+
+  const u16 attr0 = nba::read<u16>(oam, offset);
+  const u16 attr1 = nba::read<u16>(oam, offset + 2);
+  const u16 attr2 = nba::read<u16>(oam, offset + 4);
+
+  const int shape  = attr0 >> 14;
+  const int size   = attr1 >> 14;
+  const int width  = k_sprite_size[shape][size][0];
+  const int height = k_sprite_size[shape][size][1];
+
+  const bool is_8bpp = attr0 & (1 << 13);
+  const uint tile_number = attr2 & 0x3FFu;
+
+  const bool one_dimensional_mapping = core->PeekHalfIO(0x04000000) & (1 << 6);
+
+  const int tiles_x = width >> 3;
+  const int tiles_y = height >> 3;
+
+  if(is_8bpp) {
+    const u16* palette = &pram[256];
+
+    for(int tile_y = 0; tile_y < tiles_y; tile_y++) {
+      for(int tile_x = 0; tile_x < tiles_x; tile_x++) {
+        int current_tile_number;
+
+        if(one_dimensional_mapping) {
+          current_tile_number = (tile_number + tile_y * (width >> 2) + (tile_x << 1)) & 0x3FF;
+        } else {
+          current_tile_number = ((tile_number + (tile_y * 32)) & 0x3E0) | (((tile_number & ~1) + (tile_x << 1)) & 0x1F);
+        }
+
+        // @todo: handle bad tile numbers and overflows and the likes
+
+        u32 tile_address = 0x10000u + (current_tile_number << 5);
+
+        for(int y = 0; y < 8; y++) {
+          u64 tile_data = nba::read<u64>(vram, tile_address);
+
+          u32* dst = &buffer[tile_y << 9 | y << 6 | tile_x << 3];
+
+          for(int x = 0; x < 8; x++) {
+            *dst++ = RGB555(palette[tile_data & 255u]);
+            tile_data >>= 8;
+          }
+
+          tile_address += sizeof(u64);
+        }
+      }
+    }
+  } else {
+    const u16* palette = &pram[256 | attr2 >> 12 << 4];
+
+    for(int tile_y = 0; tile_y < tiles_y; tile_y++) {
+      for(int tile_x = 0; tile_x < tiles_x; tile_x++) {
+        int current_tile_number;
+
+        if(one_dimensional_mapping) {
+          current_tile_number = (tile_number + tile_y * (width >> 3) + tile_x) & 0x3FF;
+        } else {
+          current_tile_number = ((tile_number + (tile_y * 32)) & 0x3E0) | ((tile_number + tile_x) & 0x1F);
+        }
+
+        // @todo: handle bad tile numbers and overflows and the likes
+
+        u32 tile_address = 0x10000u + (current_tile_number << 5);
+
+        for(int y = 0; y < 8; y++) {
+          u32 tile_data = nba::read<u32>(vram, tile_address);
+
+          u32* dst = &buffer[tile_y << 9 | y << 6 | tile_x << 3];
+
+          for(int x = 0; x < 8; x++) {
+            *dst++ = RGB555(palette[tile_data & 15u]);
+            tile_data >>= 4;
+          }
+
+          tile_address += sizeof(u32);
+        }
+      }
+    }
+  }
 }
 
 bool SpriteViewer::eventFilter(QObject* object, QEvent* event) {

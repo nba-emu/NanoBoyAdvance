@@ -26,6 +26,8 @@ public slots:
   void Update();
 
 private:
+  void RenderSprite(int index, u32* buffer);
+
   nba::CoreBase* core;
   u16* pram;
   u8* vram;
