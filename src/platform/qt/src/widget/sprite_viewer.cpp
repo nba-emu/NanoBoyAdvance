@@ -98,6 +98,11 @@ SpriteViewer::SpriteViewer(nba::CoreBase* core, QWidget* parent) : QWidget{paren
     layout->addWidget(box);
   }
 
+  atlas_canvas = new QWidget{};
+  atlas_canvas->setFixedSize(1024, 512);
+  layout->addWidget(atlas_canvas);
+  atlas_canvas->installEventFilter(this);
+
   setLayout(layout);
   
   // @todo: move this out of here
@@ -108,7 +113,9 @@ SpriteViewer::SpriteViewer(nba::CoreBase* core, QWidget* parent) : QWidget{paren
 void SpriteViewer::Update() {
   const int index = sprite_index_input->value();
 
-  RenderSprite(index, (u32*)image_rgb32.bits());
+  RenderSpriteAtlas();
+
+  RenderSprite(index, (u32*)image_rgb32.bits(), 64);
 
   const int offset = index << 3;
 
@@ -207,7 +214,7 @@ void SpriteViewer::Update() {
   canvas->update();
 }
 
-void SpriteViewer::RenderSprite(int index, u32* buffer) {
+void SpriteViewer::RenderSprite(int index, u32* buffer, int stride) {
   static constexpr int k_sprite_size[4][4][2] = {
     { { 8 , 8  }, { 16, 16 }, { 32, 32 }, { 64, 64 } }, // Square
     { { 16, 8  }, { 32, 8  }, { 32, 16 }, { 64, 32 } }, // Horizontal
@@ -254,7 +261,7 @@ void SpriteViewer::RenderSprite(int index, u32* buffer) {
         for(int y = 0; y < 8; y++) {
           u64 tile_data = nba::read<u64>(vram, tile_address);
 
-          u32* dst = &buffer[tile_y << 9 | y << 6 | tile_x << 3];
+          u32* dst = &buffer[((tile_y << 3) * stride) | (y * stride) | tile_x << 3];
 
           for(int x = 0; x < 8; x++) {
             *dst++ = RGB555(palette[tile_data & 255u]);
@@ -285,7 +292,7 @@ void SpriteViewer::RenderSprite(int index, u32* buffer) {
         for(int y = 0; y < 8; y++) {
           u32 tile_data = nba::read<u32>(vram, tile_address);
 
-          u32* dst = &buffer[tile_y << 9 | y << 6 | tile_x << 3];
+          u32* dst = &buffer[((tile_y << 3) * stride) | (y * stride) | tile_x << 3];
 
           for(int x = 0; x < 8; x++) {
             *dst++ = RGB555(palette[tile_data & 15u]);
@@ -299,6 +306,20 @@ void SpriteViewer::RenderSprite(int index, u32* buffer) {
   }
 }
 
+void SpriteViewer::RenderSpriteAtlas() {
+  int sprite_index = 0;
+
+  atlas_image_rgb32.fill(0xFF000000u);
+
+  for(int y = 0; y < 8; y++) {
+    for(int x = 0; x < 16; x++) {
+      RenderSprite(sprite_index++, &((u32*)atlas_image_rgb32.bits())[y * 65536 + x * 64], 1024);
+    }
+  }
+
+  atlas_canvas->update();
+}
+
 bool SpriteViewer::eventFilter(QObject* object, QEvent* event) {
   if(object == canvas && event->type() == QEvent::Paint) {
     const QRect src_rect{0, 0, sprite_width, sprite_height};
@@ -306,6 +327,12 @@ bool SpriteViewer::eventFilter(QObject* object, QEvent* event) {
 
     QPainter painter{canvas};
     painter.drawImage(dst_rect, image_rgb32, src_rect);
+    return true;
+  }
+
+  if(object == atlas_canvas && event->type() == QEvent::Paint) {
+    QPainter painter{atlas_canvas};
+    painter.drawImage(0, 0, atlas_image_rgb32);
     return true;
   }
 
