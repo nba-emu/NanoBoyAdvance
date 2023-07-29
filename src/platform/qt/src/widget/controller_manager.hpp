@@ -20,8 +20,6 @@
 
 struct MainWindow;
 
-Q_DECLARE_METATYPE(SDL_GameControllerButton);
-
 struct ControllerManager : QWidget {
   ControllerManager(
     MainWindow* main_window,
@@ -36,13 +34,13 @@ struct ControllerManager : QWidget {
 
 signals:
   void OnControllerListChanged();
-  void OnControllerButtonReleased(SDL_GameControllerButton button);
-  void OnControllerAxisMoved(SDL_GameControllerAxis axis, bool negative);
+  void OnControllerButtonReleased(int button);
+  void OnControllerAxisMoved(int axis, bool negative);
 
 private slots:
   void UpdateGameControllerList();
-  void BindCurrentKeyToControllerButton(SDL_GameControllerButton button);
-  void BindCurrentKeyToControllerAxis(SDL_GameControllerAxis axis, bool negative);
+  void BindCurrentKeyToControllerButton(int button);
+  void BindCurrentKeyToControllerAxis(int axis, bool negative);
 
 private:
   void Open(std::string const& guid);
@@ -55,7 +53,7 @@ private:
   std::thread thread;
   QTimer* timer = nullptr;
   std::atomic_bool quitting = false;
-  SDL_GameController* controller = nullptr;
+  SDL_Joystick* joystick = nullptr;
   SDL_JoystickID instance_id;
   std::mutex lock;
   bool fast_forward_button_old = false;

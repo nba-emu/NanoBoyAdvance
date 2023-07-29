@@ -50,7 +50,7 @@ bool InputWindow::eventFilter(QObject* obj, QEvent* event) {
   return QObject::eventFilter(obj, event);
 }
 
-void InputWindow::BindCurrentKeyToControllerButton(SDL_GameControllerButton button) {
+void InputWindow::BindCurrentKeyToControllerButton(int button) {
   if(waiting_for_controller) {
     active_mapping->controller.button = button;
     active_button->setText(GetControllerButtonName(active_mapping));
@@ -59,7 +59,7 @@ void InputWindow::BindCurrentKeyToControllerButton(SDL_GameControllerButton butt
   }
 }
 
-void InputWindow::BindCurrentKeyToControllerAxis(SDL_GameControllerAxis axis, bool negative) {
+void InputWindow::BindCurrentKeyToControllerAxis(int axis, bool negative) {
   if(waiting_for_controller) {
     active_mapping->controller.axis = axis | (negative ? 0x80 : 0);
     active_button->setText(GetControllerButtonName(active_mapping));
@@ -97,14 +97,12 @@ void InputWindow::UpdateGameControllerList() {
   controller_combo_box->setCurrentIndex(0);
 
   for(int i = 0; i < joystick_count; i++) {
-    if(SDL_IsGameController(i)) {
-      auto guid = GetControllerGUIDStringFromIndex(i);
+    auto guid = GetControllerGUIDStringFromIndex(i);
 
-      controller_combo_box->addItem(SDL_GameControllerNameForIndex(i), QString::fromStdString(guid));
+    controller_combo_box->addItem(SDL_JoystickNameForIndex(i), QString::fromStdString(guid));
 
-      if(guid == config->input.controller_guid) {
-        controller_combo_box->setCurrentIndex(controller_combo_box->count() - 1);
-      }
+    if(guid == config->input.controller_guid) {
+      controller_combo_box->setCurrentIndex(controller_combo_box->count() - 1);
     }
   }
 }
@@ -208,22 +206,22 @@ auto InputWindow::GetKeyboardButtonName(int key) -> QString {
 }
 
 auto InputWindow::GetControllerButtonName(QtConfig::Input::Map* mapping) -> QString {
-  auto button = (SDL_GameControllerButton)mapping->controller.button;
-  auto axis = mapping->controller.axis;
+  const auto button = mapping->controller.button;
+  const auto axis = mapping->controller.axis;
 
+  // const QString button_name = QString::asprintf("Button %d", button);
+  // const QString axis_name = QString::asprintf("Axis%c %d", (axis & 0x80) ? '-' : '+', axis & ~0x80);
+
+  const QString button_name = QStringLiteral("Button %1").arg(button);
+  const QString axis_name = QStringLiteral("Axis%1 %2").arg(axis & 0x80 ? '-' : '+').arg(axis & ~0x80);
+
+  // @todo: fix the conditions up
   if(button != SDL_CONTROLLER_BUTTON_INVALID && axis != SDL_CONTROLLER_AXIS_INVALID) {
-    auto button_name = SDL_GameControllerGetStringForButton(button);
-    auto axis_name = SDL_GameControllerGetStringForAxis((SDL_GameControllerAxis)(axis & ~0x80));
-    auto axis_pole = (axis & 0x80) ? '-' : '+';
-
-    return QString::asprintf("%s - %s%c", button_name, axis_name, axis_pole);
+    return QStringLiteral("%1 - %2").arg(button_name).arg(axis_name);
   } else if(button != SDL_CONTROLLER_BUTTON_INVALID) {
-    return SDL_GameControllerGetStringForButton(button);
+    return button_name;
   } else if(axis != SDL_CONTROLLER_AXIS_INVALID) {
-    auto axis_name = SDL_GameControllerGetStringForAxis((SDL_GameControllerAxis)(axis & ~0x80));
-    auto axis_pole = (axis & 0x80) ? '-' : '+';
-
-    return QString::asprintf("%s%c", axis_name, axis_pole);
+    return axis_name;
   }
 
   return "None";

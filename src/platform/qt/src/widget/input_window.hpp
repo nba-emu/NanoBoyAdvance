@@ -42,8 +42,8 @@ struct InputWindow : QDialog {
     std::shared_ptr<QtConfig> config
   );
 
-  void BindCurrentKeyToControllerButton(SDL_GameControllerButton button);
-  void BindCurrentKeyToControllerAxis(SDL_GameControllerAxis axis, bool negative);
+  void BindCurrentKeyToControllerButton(int button);
+  void BindCurrentKeyToControllerAxis(int axis, bool negative);
 
   void UpdateGameControllerList();
 

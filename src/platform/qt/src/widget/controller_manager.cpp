@@ -47,9 +47,6 @@ void ControllerManager::Initialize() {
   }};
 #endif
 
-  qRegisterMetaType<SDL_GameControllerButton>("SDL_GameControllerButton");
-  qRegisterMetaType<SDL_GameControllerAxis>("SDL_GameControllerAxis");
-
   connect(
     this, &ControllerManager::OnControllerListChanged,
     this, &ControllerManager::UpdateGameControllerList,
@@ -77,7 +74,7 @@ void ControllerManager::UpdateGameControllerList() {
   }
 }
 
-void ControllerManager::BindCurrentKeyToControllerButton(SDL_GameControllerButton button) {
+void ControllerManager::BindCurrentKeyToControllerButton(int button) {
   auto input_window = main_window->input_window;
 
   if(input_window) {
@@ -85,7 +82,7 @@ void ControllerManager::BindCurrentKeyToControllerButton(SDL_GameControllerButto
   }
 }
 
-void ControllerManager::BindCurrentKeyToControllerAxis(SDL_GameControllerAxis axis, bool negative) {
+void ControllerManager::BindCurrentKeyToControllerAxis(int axis, bool negative) {
   auto input_window = main_window->input_window;
 
   if(input_window) {
@@ -99,11 +96,9 @@ void ControllerManager::Open(std::string const& guid) {
   Close();
 
   for(int device_id = 0; device_id < joystick_count; device_id++) {
-    if(SDL_IsGameController(device_id) &&
-        GetControllerGUIDStringFromIndex(device_id) == guid
-    ) {
-      controller = SDL_GameControllerOpen(device_id);
-      instance_id = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(controller));
+    if(GetControllerGUIDStringFromIndex(device_id) == guid) {
+      joystick = SDL_JoystickOpen(device_id);
+      instance_id = SDL_JoystickInstanceID(joystick);
       break;
     }
   }
@@ -124,9 +119,9 @@ void ControllerManager::Close() {
   main_window->SetKeyStatus(1, Key::L, false);
   main_window->SetKeyStatus(1, Key::R, false);
 
-  if(controller) {
-    SDL_GameControllerClose(controller);
-    controller = nullptr;
+  if(joystick) {
+    SDL_JoystickClose(joystick);
+    joystick = nullptr;
   }
 }
 
@@ -159,20 +154,20 @@ void ControllerManager::ProcessEvents() {
         }
         break;
       }
-      case SDL_CONTROLLERBUTTONUP: {
-        auto button_event = (SDL_ControllerButtonEvent*)&event;
+      case SDL_JOYBUTTONUP: {
+        auto button_event = (SDL_JoyButtonEvent*)&event;
 
-        emit OnControllerButtonReleased((SDL_GameControllerButton)button_event->button);
+        emit OnControllerButtonReleased(button_event->button);
         break;
       }
-      case SDL_CONTROLLERAXISMOTION: {
+      case SDL_JOYAXISMOTION: {
         const auto threshold = std::numeric_limits<int16_t>::max() / 2;
 
-        auto axis_event = (SDL_ControllerAxisEvent*)&event;
+        auto axis_event = (SDL_JoyAxisEvent*)&event;
         auto value = axis_event->value;
 
         if(std::abs(value) > threshold) {
-          emit OnControllerAxisMoved((SDL_GameControllerAxis)axis_event->axis, value < 0);
+          emit OnControllerAxisMoved(axis_event->axis, value < 0);
         }
         break;
       }
@@ -193,7 +188,7 @@ void ControllerManager::UpdateKeyState() {
   std::lock_guard guard{lock};
 #endif
 
-  if(controller == nullptr) {
+  if(joystick == nullptr) {
     return;
   }
 
@@ -206,15 +201,17 @@ void ControllerManager::UpdateKeyState() {
     auto axis = mapping.controller.axis;
 
     if(button != SDL_CONTROLLER_BUTTON_INVALID) {
-      pressed = pressed || SDL_GameControllerGetButton(controller, (SDL_GameControllerButton)button);
+      pressed = pressed || SDL_JoystickGetButton(joystick, button);
     }
 
     if(axis != SDL_CONTROLLER_AXIS_INVALID) {
       const auto threshold = std::numeric_limits<int16_t>::max() / 2;
 
-      auto actual_axis = (SDL_GameControllerAxis)(axis & ~0x80);
+      // @todo: replace the 0x80/negative flag with something more sensible
+      // @todo: evaluate if the axis system needs further adjustments.
+      auto actual_axis = axis & ~0x80;
       bool negative = axis & 0x80;
-      auto value = SDL_GameControllerGetAxis(controller, actual_axis);
+      auto value = SDL_JoystickGetAxis(joystick, actual_axis);
 
       pressed = pressed || (negative ? (value < -threshold) : (value > threshold));
     }
