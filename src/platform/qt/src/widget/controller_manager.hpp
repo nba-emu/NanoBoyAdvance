@@ -33,14 +33,14 @@ struct ControllerManager : QWidget {
   void Initialize();
 
 signals:
-  void OnControllerListChanged();
-  void OnControllerButtonReleased(int button);
-  void OnControllerAxisMoved(int axis, bool negative);
+  void OnJoystickListChanged();
+  void OnJoystickButtonReleased(int button);
+  void OnJoystickAxisMoved(int axis, bool negative);
 
 private slots:
-  void UpdateGameControllerList();
-  void BindCurrentKeyToControllerButton(int button);
-  void BindCurrentKeyToControllerAxis(int axis, bool negative);
+  void UpdateJoystickList();
+  void BindCurrentKeyToJoystickButton(int button);
+  void BindCurrentKeyToJoystickAxis(int axis, bool negative);
 
 private:
   void Open(std::string const& guid);

@@ -48,45 +48,45 @@ void ControllerManager::Initialize() {
 #endif
 
   connect(
-    this, &ControllerManager::OnControllerListChanged,
-    this, &ControllerManager::UpdateGameControllerList,
+    this, &ControllerManager::OnJoystickListChanged,
+    this, &ControllerManager::UpdateJoystickList,
     Qt::QueuedConnection
   );
 
   connect(
-    this, &ControllerManager::OnControllerButtonReleased,
-    this, &ControllerManager::BindCurrentKeyToControllerButton,
+    this, &ControllerManager::OnJoystickButtonReleased,
+    this, &ControllerManager::BindCurrentKeyToJoystickButton,
     Qt::QueuedConnection
   );
 
   connect(
-    this, &ControllerManager::OnControllerAxisMoved,
-    this, &ControllerManager::BindCurrentKeyToControllerAxis,
+    this, &ControllerManager::OnJoystickAxisMoved,
+    this, &ControllerManager::BindCurrentKeyToJoystickAxis,
     Qt::QueuedConnection
   );
 }
 
-void ControllerManager::UpdateGameControllerList() {
+void ControllerManager::UpdateJoystickList() {
   auto input_window = main_window->input_window;
 
   if(input_window) {
-    input_window->UpdateGameControllerList();
+    input_window->UpdateJoystickList();
   }
 }
 
-void ControllerManager::BindCurrentKeyToControllerButton(int button) {
+void ControllerManager::BindCurrentKeyToJoystickButton(int button) {
   auto input_window = main_window->input_window;
 
   if(input_window) {
-    input_window->BindCurrentKeyToControllerButton(button);
+    input_window->BindCurrentKeyToJoystickButton(button);
   }
 }
 
-void ControllerManager::BindCurrentKeyToControllerAxis(int axis, bool negative) {
+void ControllerManager::BindCurrentKeyToJoystickAxis(int axis, bool negative) {
   auto input_window = main_window->input_window;
 
   if(input_window) {
-    input_window->BindCurrentKeyToControllerAxis(axis, negative);
+    input_window->BindCurrentKeyToJoystickAxis(axis, negative);
   }
 }
 
@@ -96,7 +96,7 @@ void ControllerManager::Open(std::string const& guid) {
   Close();
 
   for(int device_id = 0; device_id < joystick_count; device_id++) {
-    if(GetControllerGUIDStringFromIndex(device_id) == guid) {
+    if(GetJoystickGUIDStringFromIndex(device_id) == guid) {
       joystick = SDL_JoystickOpen(device_id);
       instance_id = SDL_JoystickInstanceID(joystick);
       break;
@@ -136,10 +136,10 @@ void ControllerManager::ProcessEvents() {
   while(SDL_PollEvent(&event)) {
     switch(event.type) {
       case SDL_JOYDEVICEADDED: {
-        emit OnControllerListChanged();
+        emit OnJoystickListChanged();
 
         auto device_id = ((SDL_JoyDeviceEvent*)&event)->which;
-        auto guid = GetControllerGUIDStringFromIndex(device_id);
+        auto guid = GetJoystickGUIDStringFromIndex(device_id);
 
         if(guid == config->input.controller_guid) {
           Open(guid);
@@ -147,7 +147,7 @@ void ControllerManager::ProcessEvents() {
         break;
       }
       case SDL_JOYDEVICEREMOVED: {
-        emit OnControllerListChanged();
+        emit OnJoystickListChanged();
 
         if(instance_id == ((SDL_JoyDeviceEvent*)&event)->which) {
           Close();
@@ -157,7 +157,7 @@ void ControllerManager::ProcessEvents() {
       case SDL_JOYBUTTONUP: {
         auto button_event = (SDL_JoyButtonEvent*)&event;
 
-        emit OnControllerButtonReleased(button_event->button);
+        emit OnJoystickButtonReleased(button_event->button);
         break;
       }
       case SDL_JOYAXISMOTION: {
@@ -167,7 +167,7 @@ void ControllerManager::ProcessEvents() {
         auto value = axis_event->value;
 
         if(std::abs(value) > threshold) {
-          emit OnControllerAxisMoved(axis_event->axis, value < 0);
+          emit OnJoystickAxisMoved(axis_event->axis, value < 0);
         }
         break;
       }

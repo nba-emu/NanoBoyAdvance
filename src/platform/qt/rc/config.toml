@@ -31,20 +31,20 @@ mp2k_hle_enable = false
 mp2k_hle_cubic = false 
 
 [input]
-fast_forward = [32, -1, 4]
+fast_forward = [32, -1, -1]
 hold_fast_forward = true
 controller_guid = ""
 [input.gba]
-b = [83, 1, -1]
-a = [65, 0, -1]
-select = [16777219, 4, -1]
-right = [16777236, 14, 0]
-r = [70, 10, -1]
-l = [68, 9, -1]
-left = [16777234, 13, 128]
-start = [16777220, 6, -1]
-down = [16777237, 12, 1]
-up = [16777235, 11, 129]
+b = [83, -1, -1]
+a = [65, -1, -1]
+select = [16777219, -1, -1]
+right = [16777236, -1, -1]
+r = [70, -1, -1]
+l = [68, -1, -1]
+left = [16777234, -1, -1]
+start = [16777220, -1, -1]
+down = [16777237, -1, -1]
+up = [16777235, -1, -1]
 
 [window]
 fullscreen = false

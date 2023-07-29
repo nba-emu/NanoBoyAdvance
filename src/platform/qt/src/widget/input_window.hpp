@@ -24,7 +24,7 @@
 
 #include "config.hpp"
 
-inline auto GetControllerGUIDStringFromIndex(int device_index) -> std::string {
+inline auto GetJoystickGUIDStringFromIndex(int device_index) -> std::string {
   auto guid = SDL_JoystickGetDeviceGUID(device_index);
   auto guid_string = std::string{};
 
@@ -42,10 +42,10 @@ struct InputWindow : QDialog {
     std::shared_ptr<QtConfig> config
   );
 
-  void BindCurrentKeyToControllerButton(int button);
-  void BindCurrentKeyToControllerAxis(int axis, bool negative);
+  void BindCurrentKeyToJoystickButton(int button);
+  void BindCurrentKeyToJoystickAxis(int axis, bool negative);
 
-  void UpdateGameControllerList();
+  void UpdateJoystickList();
 
   std::atomic_bool has_game_controller_choice_changed = false;
 
@@ -53,7 +53,7 @@ protected:
   bool eventFilter(QObject* obj, QEvent* event);
 
 private:
-  auto CreateGameControllerList() -> QLayout*;
+  auto CreateJoystickList() -> QLayout*;
   auto CreateKeyMapTable() -> QLayout*;
 
   void CreateKeyMapEntry(
@@ -65,12 +65,12 @@ private:
   void RestoreActiveButtonLabel();
 
   static auto GetKeyboardButtonName(int key) -> QString;
-  static auto GetControllerButtonName(QtConfig::Input::Map* mapping) -> QString;
+  static auto GetJoystickButtonName(QtConfig::Input::Map* mapping) -> QString;
 
   bool waiting_for_keyboard = false;
-  bool waiting_for_controller = false;
+  bool waiting_for_joystick = false;
   QtConfig::Input::Map* active_mapping = nullptr;
   QPushButton* active_button = nullptr;
-  QComboBox* controller_combo_box;
+  QComboBox* joystick_combo_box;
   std::shared_ptr<QtConfig> config;
 };
