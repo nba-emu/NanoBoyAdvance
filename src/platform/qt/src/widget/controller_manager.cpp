@@ -8,9 +8,6 @@
 #include "main_window.hpp"
 #include "controller_manager.hpp"
 
-// TODO: remove this again
-#include <fmt/format.h>
-
 ControllerManager::~ControllerManager() {
   if(timer) {
     timer->stop();
