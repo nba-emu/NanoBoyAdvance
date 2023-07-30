@@ -33,14 +33,16 @@ struct QtConfig final : nba::PlatformConfig {
       struct {
         int button = -1;
         int axis = -1;
+        int hat = -1;
+        int hat_direction = 0;
       } controller{};
 
-      static auto FromArray(std::array<int, 3> const& array) -> Map {
-        return {array[0], {array[1], array[2]}};
+      static auto FromArray(std::array<int, 5> const& array) -> Map {
+        return {array[0], {array[1], array[2], array[3], array[4]}};
       }
 
-      auto Array() -> std::array<int, 3> {
-        return {keyboard, controller.button, controller.axis};
+      auto Array() -> std::array<int, 5> {
+        return {keyboard, controller.button, controller.axis, controller.hat, controller.hat_direction};
       }
     };
 

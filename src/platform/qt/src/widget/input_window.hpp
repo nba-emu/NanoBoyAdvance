@@ -44,6 +44,7 @@ struct InputWindow : QDialog {
 
   void BindCurrentKeyToJoystickButton(int button);
   void BindCurrentKeyToJoystickAxis(int axis, bool negative);
+  void BindCurrentKeyToJoystickHat(int hat, int direction);
 
   void UpdateJoystickList();
 

@@ -8,6 +8,9 @@
 #include "main_window.hpp"
 #include "controller_manager.hpp"
 
+// TODO: remove this again
+#include <fmt/format.h>
+
 ControllerManager::~ControllerManager() {
   if(timer) {
     timer->stop();
@@ -64,6 +67,12 @@ void ControllerManager::Initialize() {
     this, &ControllerManager::BindCurrentKeyToJoystickAxis,
     Qt::QueuedConnection
   );
+
+  connect(
+    this, &ControllerManager::OnJoystickHatMoved,
+    this, &ControllerManager::BindCurrentKeyToJoystickHat,
+    Qt::QueuedConnection
+  );
 }
 
 void ControllerManager::UpdateJoystickList() {
@@ -88,6 +97,14 @@ void ControllerManager::BindCurrentKeyToJoystickAxis(int axis, bool negative) {
   if(input_window) {
     input_window->BindCurrentKeyToJoystickAxis(axis, negative);
   }
+}
+
+void ControllerManager::BindCurrentKeyToJoystickHat(int hat, int direction) {
+  auto input_window = main_window->input_window;
+
+  if(input_window) {
+    input_window->BindCurrentKeyToJoystickHat(hat, direction);
+  } 
 }
 
 void ControllerManager::Open(std::string const& guid) {
@@ -171,6 +188,21 @@ void ControllerManager::ProcessEvents() {
         }
         break;
       }
+      case SDL_JOYHATMOTION: {
+        const auto hat_event = (SDL_JoyHatEvent*)&event;
+
+        /**
+         * Make sure to pick a single direction when the hat is triggered in
+         * two directions at once (i.e. left + up).
+         * To achieve this we extract the lowest set bit with some bit magic.
+         */
+        const int direction = hat_event->value & ~(hat_event->value - 1);
+
+        if(direction != 0) {
+          emit OnJoystickHatMoved(hat_event->hat, direction);
+        }
+        break;
+      }
     }
   }
 
@@ -197,14 +229,15 @@ void ControllerManager::UpdateKeyState() {
   const auto evaluate = [&](QtConfig::Input::Map const& mapping) {
     bool pressed = false;
   
-    auto button = mapping.controller.button;
-    auto axis = mapping.controller.axis;
+    const int button = mapping.controller.button;
+    const int axis = mapping.controller.axis;
+    const int hat = mapping.controller.hat;
 
-    if(button != SDL_CONTROLLER_BUTTON_INVALID) {
+    if(button != -1) {
       pressed = pressed || SDL_JoystickGetButton(joystick, button);
     }
 
-    if(axis != SDL_CONTROLLER_AXIS_INVALID) {
+    if(axis != -1) {
       const auto threshold = std::numeric_limits<int16_t>::max() / 2;
 
       // @todo: replace the 0x80/negative flag with something more sensible
@@ -214,6 +247,12 @@ void ControllerManager::UpdateKeyState() {
       auto value = SDL_JoystickGetAxis(joystick, actual_axis);
 
       pressed = pressed || (negative ? (value < -threshold) : (value > threshold));
+    }
+
+    if(hat != -1) {
+      const int hat_direction = mapping.controller.hat_direction;
+
+      pressed = pressed || ((SDL_JoystickGetHat(joystick, hat) & hat_direction) != 0);
     }
 
     return pressed;

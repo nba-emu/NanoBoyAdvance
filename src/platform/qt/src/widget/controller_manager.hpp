@@ -36,11 +36,13 @@ signals:
   void OnJoystickListChanged();
   void OnJoystickButtonReleased(int button);
   void OnJoystickAxisMoved(int axis, bool negative);
+  void OnJoystickHatMoved(int hat, int direction);
 
 private slots:
   void UpdateJoystickList();
   void BindCurrentKeyToJoystickButton(int button);
   void BindCurrentKeyToJoystickAxis(int axis, bool negative);
+  void BindCurrentKeyToJoystickHat(int hat, int direction);
 
 private:
   void Open(std::string const& guid);

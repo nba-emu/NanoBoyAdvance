@@ -68,6 +68,16 @@ void InputWindow::BindCurrentKeyToJoystickAxis(int axis, bool negative) {
   }
 }
 
+void InputWindow::BindCurrentKeyToJoystickHat(int hat, int direction) {
+  if(waiting_for_joystick) {
+    active_mapping->controller.hat = hat;
+    active_mapping->controller.hat_direction = direction;
+    active_button->setText(GetJoystickButtonName(active_mapping));
+    waiting_for_joystick = false;
+    config->Save();
+  }
+}
+
 auto InputWindow::CreateJoystickList() -> QLayout* {
   auto hbox = new QHBoxLayout{};
 
@@ -206,19 +216,43 @@ auto InputWindow::GetKeyboardButtonName(int key) -> QString {
 }
 
 auto InputWindow::GetJoystickButtonName(QtConfig::Input::Map* mapping) -> QString {
-  const auto button = mapping->controller.button;
-  const auto axis = mapping->controller.axis;
+  const int button = mapping->controller.button;
+  const int axis = mapping->controller.axis;
+  const int hat = mapping->controller.hat;
+  const int hat_direction = mapping->controller.hat_direction;
 
-  const QString button_name = QStringLiteral("Button %1").arg(button);
-  const QString axis_name = QStringLiteral("Axis%1 %2").arg(axis & 0x80 ? '-' : '+').arg(axis & ~0x80);
+  QString name;
 
-  if(button != -1 && axis != -1) {
-    return QStringLiteral("%1 - %2").arg(button_name).arg(axis_name);
-  } else if(button != -1) {
-    return button_name;
-  } else if(axis != -1) {
-    return axis_name;
+  if(button != -1) {
+    if(!name.isEmpty()) name += " - ";
+
+    name += QStringLiteral("Button %1").arg(button);
   }
 
-  return "None";
+  if(axis != -1) {
+    if(!name.isEmpty()) name += " - ";
+
+    name += QStringLiteral("Axis%1 %2").arg(axis & 0x80 ? '-' : '+').arg(axis & ~0x80);
+  }
+
+  if(hat != -1) {
+    if(!name.isEmpty()) name += " - ";
+
+    QString direction_char = "?";
+
+    switch(hat_direction) {
+      case SDL_HAT_DOWN:  direction_char = "↓"; break;
+      case SDL_HAT_UP:    direction_char = "↑"; break;
+      case SDL_HAT_LEFT:  direction_char = "←"; break;
+      case SDL_HAT_RIGHT: direction_char = "→"; break;
+    }
+
+    name += QStringLiteral("Hat%1 %2 ").arg(direction_char).arg(hat);
+  }
+
+  if(name.isEmpty()) {
+    return "None";
+  }
+
+  return name;
 }
