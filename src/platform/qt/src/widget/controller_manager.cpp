@@ -47,50 +47,61 @@ void ControllerManager::Initialize() {
   }};
 #endif
 
-  qRegisterMetaType<SDL_GameControllerButton>("SDL_GameControllerButton");
-  qRegisterMetaType<SDL_GameControllerAxis>("SDL_GameControllerAxis");
-
   connect(
-    this, &ControllerManager::OnControllerListChanged,
-    this, &ControllerManager::UpdateGameControllerList,
+    this, &ControllerManager::OnJoystickListChanged,
+    this, &ControllerManager::UpdateJoystickList,
     Qt::QueuedConnection
   );
 
   connect(
-    this, &ControllerManager::OnControllerButtonReleased,
-    this, &ControllerManager::BindCurrentKeyToControllerButton,
+    this, &ControllerManager::OnJoystickButtonReleased,
+    this, &ControllerManager::BindCurrentKeyToJoystickButton,
     Qt::QueuedConnection
   );
 
   connect(
-    this, &ControllerManager::OnControllerAxisMoved,
-    this, &ControllerManager::BindCurrentKeyToControllerAxis,
+    this, &ControllerManager::OnJoystickAxisMoved,
+    this, &ControllerManager::BindCurrentKeyToJoystickAxis,
+    Qt::QueuedConnection
+  );
+
+  connect(
+    this, &ControllerManager::OnJoystickHatMoved,
+    this, &ControllerManager::BindCurrentKeyToJoystickHat,
     Qt::QueuedConnection
   );
 }
 
-void ControllerManager::UpdateGameControllerList() {
+void ControllerManager::UpdateJoystickList() {
   auto input_window = main_window->input_window;
 
   if(input_window) {
-    input_window->UpdateGameControllerList();
+    input_window->UpdateJoystickList();
   }
 }
 
-void ControllerManager::BindCurrentKeyToControllerButton(SDL_GameControllerButton button) {
+void ControllerManager::BindCurrentKeyToJoystickButton(int button) {
   auto input_window = main_window->input_window;
 
   if(input_window) {
-    input_window->BindCurrentKeyToControllerButton(button);
+    input_window->BindCurrentKeyToJoystickButton(button);
   }
 }
 
-void ControllerManager::BindCurrentKeyToControllerAxis(SDL_GameControllerAxis axis, bool negative) {
+void ControllerManager::BindCurrentKeyToJoystickAxis(int axis, bool negative) {
   auto input_window = main_window->input_window;
 
   if(input_window) {
-    input_window->BindCurrentKeyToControllerAxis(axis, negative);
+    input_window->BindCurrentKeyToJoystickAxis(axis, negative);
   }
+}
+
+void ControllerManager::BindCurrentKeyToJoystickHat(int hat, int direction) {
+  auto input_window = main_window->input_window;
+
+  if(input_window) {
+    input_window->BindCurrentKeyToJoystickHat(hat, direction);
+  } 
 }
 
 void ControllerManager::Open(std::string const& guid) {
@@ -99,11 +110,9 @@ void ControllerManager::Open(std::string const& guid) {
   Close();
 
   for(int device_id = 0; device_id < joystick_count; device_id++) {
-    if(SDL_IsGameController(device_id) &&
-        GetControllerGUIDStringFromIndex(device_id) == guid
-    ) {
-      controller = SDL_GameControllerOpen(device_id);
-      instance_id = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(controller));
+    if(GetJoystickGUIDStringFromIndex(device_id) == guid) {
+      joystick = SDL_JoystickOpen(device_id);
+      instance_id = SDL_JoystickInstanceID(joystick);
       break;
     }
   }
@@ -124,9 +133,9 @@ void ControllerManager::Close() {
   main_window->SetKeyStatus(1, Key::L, false);
   main_window->SetKeyStatus(1, Key::R, false);
 
-  if(controller) {
-    SDL_GameControllerClose(controller);
-    controller = nullptr;
+  if(joystick) {
+    SDL_JoystickClose(joystick);
+    joystick = nullptr;
   }
 }
 
@@ -141,10 +150,10 @@ void ControllerManager::ProcessEvents() {
   while(SDL_PollEvent(&event)) {
     switch(event.type) {
       case SDL_JOYDEVICEADDED: {
-        emit OnControllerListChanged();
+        emit OnJoystickListChanged();
 
         auto device_id = ((SDL_JoyDeviceEvent*)&event)->which;
-        auto guid = GetControllerGUIDStringFromIndex(device_id);
+        auto guid = GetJoystickGUIDStringFromIndex(device_id);
 
         if(guid == config->input.controller_guid) {
           Open(guid);
@@ -152,27 +161,42 @@ void ControllerManager::ProcessEvents() {
         break;
       }
       case SDL_JOYDEVICEREMOVED: {
-        emit OnControllerListChanged();
+        emit OnJoystickListChanged();
 
         if(instance_id == ((SDL_JoyDeviceEvent*)&event)->which) {
           Close();
         }
         break;
       }
-      case SDL_CONTROLLERBUTTONUP: {
-        auto button_event = (SDL_ControllerButtonEvent*)&event;
+      case SDL_JOYBUTTONUP: {
+        auto button_event = (SDL_JoyButtonEvent*)&event;
 
-        emit OnControllerButtonReleased((SDL_GameControllerButton)button_event->button);
+        emit OnJoystickButtonReleased(button_event->button);
         break;
       }
-      case SDL_CONTROLLERAXISMOTION: {
+      case SDL_JOYAXISMOTION: {
         const auto threshold = std::numeric_limits<int16_t>::max() / 2;
 
-        auto axis_event = (SDL_ControllerAxisEvent*)&event;
+        auto axis_event = (SDL_JoyAxisEvent*)&event;
         auto value = axis_event->value;
 
         if(std::abs(value) > threshold) {
-          emit OnControllerAxisMoved((SDL_GameControllerAxis)axis_event->axis, value < 0);
+          emit OnJoystickAxisMoved(axis_event->axis, value < 0);
+        }
+        break;
+      }
+      case SDL_JOYHATMOTION: {
+        const auto hat_event = (SDL_JoyHatEvent*)&event;
+
+        /**
+         * Make sure to pick a single direction when the hat is triggered in
+         * two directions at once (i.e. left + up).
+         * To achieve this we extract the lowest set bit with some bit magic.
+         */
+        const int direction = hat_event->value & ~(hat_event->value - 1);
+
+        if(direction != 0) {
+          emit OnJoystickHatMoved(hat_event->hat, direction);
         }
         break;
       }
@@ -193,7 +217,7 @@ void ControllerManager::UpdateKeyState() {
   std::lock_guard guard{lock};
 #endif
 
-  if(controller == nullptr) {
+  if(joystick == nullptr) {
     return;
   }
 
@@ -202,21 +226,30 @@ void ControllerManager::UpdateKeyState() {
   const auto evaluate = [&](QtConfig::Input::Map const& mapping) {
     bool pressed = false;
   
-    auto button = mapping.controller.button;
-    auto axis = mapping.controller.axis;
+    const int button = mapping.controller.button;
+    const int axis = mapping.controller.axis;
+    const int hat = mapping.controller.hat;
 
-    if(button != SDL_CONTROLLER_BUTTON_INVALID) {
-      pressed = pressed || SDL_GameControllerGetButton(controller, (SDL_GameControllerButton)button);
+    if(button != -1) {
+      pressed = pressed || SDL_JoystickGetButton(joystick, button);
     }
 
-    if(axis != SDL_CONTROLLER_AXIS_INVALID) {
+    if(axis != -1) {
       const auto threshold = std::numeric_limits<int16_t>::max() / 2;
 
-      auto actual_axis = (SDL_GameControllerAxis)(axis & ~0x80);
+      // @todo: replace the 0x80/negative flag with something more sensible
+      // @todo: evaluate if the axis system needs further adjustments.
+      auto actual_axis = axis & ~0x80;
       bool negative = axis & 0x80;
-      auto value = SDL_GameControllerGetAxis(controller, actual_axis);
+      auto value = SDL_JoystickGetAxis(joystick, actual_axis);
 
       pressed = pressed || (negative ? (value < -threshold) : (value > threshold));
+    }
+
+    if(hat != -1) {
+      const int hat_direction = mapping.controller.hat_direction;
+
+      pressed = pressed || ((SDL_JoystickGetHat(joystick, hat) & hat_direction) != 0);
     }
 
     return pressed;
