@@ -61,7 +61,7 @@ void InputWindow::BindCurrentKeyToJoystickButton(int button) {
 
 void InputWindow::BindCurrentKeyToJoystickAxis(int axis, bool negative) {
   if(waiting_for_joystick) {
-    active_mapping->controller.axis = axis | (negative ? 0x80 : 0);
+    active_mapping->controller.axis = axis | (negative ? 0x100 : 0);
     active_button->setText(GetJoystickButtonName(active_mapping));
     waiting_for_joystick = false;
     config->Save();
@@ -232,7 +232,7 @@ auto InputWindow::GetJoystickButtonName(QtConfig::Input::Map* mapping) -> QStrin
   if(axis != -1) {
     if(!name.isEmpty()) name += " - ";
 
-    name += QStringLiteral("Axis%1 %2").arg(axis & 0x80 ? '-' : '+').arg(axis & ~0x80);
+    name += QStringLiteral("Axis%1 %2").arg(axis & 0x100 ? '-' : '+').arg(axis & ~0x100);
   }
 
   if(hat != -1) {

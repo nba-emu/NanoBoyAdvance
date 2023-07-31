@@ -237,10 +237,8 @@ void ControllerManager::UpdateKeyState() {
     if(axis != -1) {
       const auto threshold = std::numeric_limits<int16_t>::max() / 2;
 
-      // @todo: replace the 0x80/negative flag with something more sensible
-      // @todo: evaluate if the axis system needs further adjustments.
-      auto actual_axis = axis & ~0x80;
-      bool negative = axis & 0x80;
+      auto actual_axis = axis & ~0x100;
+      bool negative = axis & 0x100;
       auto value = SDL_JoystickGetAxis(joystick, actual_axis);
 
       pressed = pressed || (negative ? (value < -threshold) : (value > threshold));
