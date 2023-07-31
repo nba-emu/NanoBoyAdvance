@@ -19,7 +19,7 @@ ControllerManager::~ControllerManager() {
 }
 
 void ControllerManager::Initialize() {
-  SDL_Init(SDL_INIT_GAMECONTROLLER);
+  SDL_Init(SDL_INIT_JOYSTICK);
 
   /* On macOS we may not poll SDL events on a separate thread.
    * So what we do instead is handle device connect/remove events
