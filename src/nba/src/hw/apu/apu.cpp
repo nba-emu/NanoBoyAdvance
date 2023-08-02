@@ -6,7 +6,6 @@
  */
 
 #include <cmath>
-#include <nba/common/dsp/resampler/blep.hpp>
 #include <nba/common/dsp/resampler/cosine.hpp>
 #include <nba/common/dsp/resampler/cubic.hpp>
 #include <nba/common/dsp/resampler/nearest.hpp>
