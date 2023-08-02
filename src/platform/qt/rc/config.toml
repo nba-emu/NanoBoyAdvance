@@ -21,9 +21,6 @@ lcd_ghosting = true
 [audio]
 # Possible values: cosine, cubic, sinc64, sinc128, sinc256
 resampler = "cubic"
-# Filter FIFO audio before passing it to the mixer.
-# This will reduce the dity high-frequency aliasing typical to the GBA.
-interpolate_fifo = false
 # Reimplementation of the popular MP2K/M4A audio mixer with higher quality.
 # This is experimental and may still have issues.
 mp2k_hle_enable = false

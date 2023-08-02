@@ -204,7 +204,6 @@ struct SaveState {
     } fifo[2];
 
     u8 resolution_old;
-    u32 fifo_samplerate[2];
   } apu;
 
   struct Timer {

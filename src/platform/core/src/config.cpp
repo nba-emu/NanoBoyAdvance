@@ -129,7 +129,6 @@ void PlatformConfig::Load(std::string const& path) {
         this->audio.interpolation = match->second;
       }
 
-      this->audio.interpolate_fifo = toml::find_or<toml::boolean>(audio, "interpolate_fifo", true);
       this->audio.mp2k_hle_enable = toml::find_or<toml::boolean>(audio, "mp2k_hle_enable", false);
       this->audio.mp2k_hle_cubic = toml::find_or<toml::boolean>(audio, "mp2k_hle_cubic", false);
     }
@@ -201,7 +200,6 @@ void PlatformConfig::Save(std::string const& path) {
     case Config::Audio::Interpolation::Sinc_256: resampler = "sinc256"; break;
   }
   data["audio"]["resampler"] = resampler;
-  data["audio"]["interpolate_fifo"] = this->audio.interpolate_fifo;
   data["audio"]["mp2k_hle_enable"] = this->audio.mp2k_hle_enable;
   data["audio"]["mp2k_hle_cubic"] = this->audio.mp2k_hle_cubic;
 

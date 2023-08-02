@@ -85,18 +85,10 @@ void APU::Reset() {
       break;
   }
 
-  if(config->audio.interpolate_fifo) {
-    for(int fifo = 0; fifo < 2; fifo++) {
-      fifo_buffer[fifo] = std::make_shared<RingBuffer<float>>(16, true);
-      fifo_resampler[fifo] = std::make_unique<BlepResampler<float>>(fifo_buffer[fifo]);
-      fifo_samplerate[fifo] = 0;
-    }
-  }
-
   resampler->SetSampleRates(mmio.bias.GetSampleRate(), audio_dev->GetSampleRate());
 }
 
-void APU::OnTimerOverflow(int timer_id, int times, int samplerate) {
+void APU::OnTimerOverflow(int timer_id, int times) {
   auto const& soundcnt = mmio.soundcnt;
 
   if(!soundcnt.master_enable) {
@@ -126,15 +118,7 @@ void APU::OnTimerOverflow(int timer_id, int times, int samplerate) {
         pipe.size--;
       }
 
-      if(config->audio.interpolate_fifo) {
-        if(samplerate != fifo_samplerate[fifo_id]) {
-          fifo_resampler[fifo_id]->SetSampleRates(samplerate, mmio.bias.GetSampleRate());
-          fifo_samplerate[fifo_id] = samplerate;
-        }
-        fifo_resampler[fifo_id]->Write(sample / 128.0);
-      } else {
-        latch[fifo_id] = sample;
-      }
+      latch[fifo_id] = sample;
     }
   }
 }
@@ -191,20 +175,8 @@ void APU::StepMixer() {
     auto& bias = mmio.bias;
 
     if(bias.resolution != resolution_old) {
-      resampler->SetSampleRates(bias.GetSampleRate(),
-        config->audio_dev->GetSampleRate());
+      resampler->SetSampleRates(bias.GetSampleRate(), config->audio_dev->GetSampleRate());
       resolution_old = mmio.bias.resolution;
-      if(config->audio.interpolate_fifo) {
-        for(int fifo = 0; fifo < 2; fifo++) {
-          fifo_resampler[fifo]->SetSampleRates(fifo_samplerate[fifo], mmio.bias.GetSampleRate());
-        }
-      }
-    }
-
-    if(config->audio.interpolate_fifo) {
-      for(int fifo = 0; fifo < 2; fifo++) {
-        latch[fifo] = s8(fifo_buffer[fifo]->Read() * 127.0);
-      }
     }
 
     for(int channel = 0; channel < 2; channel++) {

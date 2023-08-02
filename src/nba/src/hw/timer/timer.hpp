@@ -75,7 +75,6 @@ private:
   void OnReloadWritten(u64 chan_id);
   void OnControlWritten(u64 chan_id);
 
-  void RecalculateSampleRates();
   auto GetCounterDeltaSinceLastUpdate(Channel const& channel) -> u32;
   void StartChannel(Channel& channel, int cycle_offset);
   void StopChannel(Channel& channel);
