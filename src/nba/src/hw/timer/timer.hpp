@@ -10,10 +10,10 @@
 #include <algorithm>
 #include <nba/integer.hpp>
 #include <nba/save_state.hpp>
+#include <nba/scheduler.hpp>
 
 #include "hw/apu/apu.hpp"
 #include "hw/irq/irq.hpp"
-#include "scheduler.hpp"
 
 namespace nba::core {
 

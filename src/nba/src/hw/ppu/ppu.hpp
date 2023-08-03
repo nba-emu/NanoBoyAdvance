@@ -13,12 +13,12 @@
 #include <nba/config.hpp>
 #include <nba/integer.hpp>
 #include <nba/save_state.hpp>
+#include <nba/scheduler.hpp>
 #include <type_traits>
 
 #include "hw/ppu/registers.hpp"
 #include "hw/dma/dma.hpp"
 #include "hw/irq/irq.hpp"
-#include "scheduler.hpp"
 
 namespace nba::core {
 

@@ -11,6 +11,7 @@
 #include <nba/common/dsp/ring_buffer.hpp>
 #include <nba/config.hpp>
 #include <nba/save_state.hpp>
+#include <nba/scheduler.hpp>
 #include <mutex>
 
 #include "hw/apu/channel/quad_channel.hpp"
@@ -20,7 +21,6 @@
 #include "hw/apu/hle/mp2k.hpp"
 #include "hw/apu/registers.hpp"
 #include "hw/dma/dma.hpp"
-#include "scheduler.hpp"
 
 namespace nba::core {
 

@@ -8,9 +8,9 @@
 #pragma once
 
 #include <nba/integer.hpp>
+#include <nba/scheduler.hpp>
 
 #include "hw/apu/channel/base_channel.hpp"
-#include "scheduler.hpp"
 
 namespace nba::core {
 

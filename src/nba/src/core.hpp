@@ -6,6 +6,7 @@
  */
 
 #include <nba/core.hpp>
+#include <nba/scheduler.hpp>
 
 #include "arm/arm7tdmi.hpp"
 #include "bus/bus.hpp"
@@ -15,7 +16,6 @@
 #include "hw/irq/irq.hpp"
 #include "hw/keypad/keypad.hpp"
 #include "hw/timer/timer.hpp"
-#include "scheduler.hpp"
 
 namespace nba::core {
 

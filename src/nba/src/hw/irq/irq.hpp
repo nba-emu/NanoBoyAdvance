@@ -9,8 +9,7 @@
 
 #include <nba/integer.hpp>
 #include <nba/save_state.hpp>
-
-#include "scheduler.hpp"
+#include <nba/scheduler.hpp>
 
 namespace nba::core {
 
