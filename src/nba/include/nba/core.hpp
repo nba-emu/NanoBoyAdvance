@@ -14,6 +14,7 @@
 #include <nba/config.hpp>
 #include <nba/integer.hpp>
 #include <nba/save_state.hpp>
+#include <nba/scheduler.hpp>
 #include <vector>
 
 namespace nba {
@@ -43,6 +44,7 @@ struct CoreBase {
   virtual auto GetBGHOFS(int id) -> u16 = 0;
   virtual auto GetBGVOFS(int id) -> u16 = 0;
 
+  virtual core::Scheduler& GetScheduler() = 0;
 
   void RunForOneFrame() {
     Run(kCyclesPerFrame);

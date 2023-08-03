@@ -179,6 +179,10 @@ auto Core::GetBGVOFS(int id) -> u16 {
   return ppu.mmio.bgvofs[id];
 }
 
+Scheduler& Core::GetScheduler() {
+  return scheduler;
+}
+
 } // namespace nba::core
 
 auto CreateCore(
