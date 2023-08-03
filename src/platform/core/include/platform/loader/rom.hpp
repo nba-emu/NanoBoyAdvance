@@ -52,6 +52,7 @@ private:
   ) -> Config::BackupType;
 
   static auto CreateBackup(
+    std::unique_ptr<CoreBase>& core,
     fs::path const& save_path,
     Config::BackupType backup_type
   ) -> std::unique_ptr<Backup>;

@@ -258,7 +258,7 @@ struct SaveState {
     } flash;
 
     struct EEPROM {
-      u8 state;
+      u16 state;
       u16 address;
       u64 serial_buffer;
       u8 transmitted_bits;
