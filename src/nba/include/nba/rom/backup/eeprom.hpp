@@ -42,7 +42,7 @@ private:
     STATE_DUMMY_NIBBLE   = 1 << 5,
     STATE_WRITING        = 1 << 6,
     STATE_EAT_DUMMY      = 1 << 7,
-    STATE_BUSY    = 1 << 8
+    STATE_BUSY           = 1 << 8
   };
   
   void ResetSerialBuffer();
