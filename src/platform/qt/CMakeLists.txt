@@ -26,6 +26,7 @@ set(HEADERS
   src/widget/palette_viewer_window.hpp
   src/widget/screen.hpp
   src/config.hpp
+  version.in.hpp
 )
 
 set(RESOURCES
@@ -115,3 +116,5 @@ if(WIN32 AND PLATFORM_QT_STATIC)
   set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
   target_link_libraries(NanoBoyAdvance-Qt -static z zstd gcc stdc++ winpthread winmm version Imm32 Setupapi)
 endif()
+
+include(version.cmake)

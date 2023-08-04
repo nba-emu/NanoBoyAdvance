@@ -153,5 +153,7 @@ private:
   PaletteViewerWindow* palette_viewer_window;
   BackgroundViewerWindow* background_viewer_window;
 
+  QString base_window_title;
+
   Q_OBJECT
 };
