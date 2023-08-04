@@ -650,10 +650,14 @@ void MainWindow::Reset() {
   }
 }
 
-void MainWindow::SetPause(bool value) {
-  emu_thread->SetPause(value);
-  config->audio_dev->SetPause(value);
-  pause_action->setChecked(value);
+void MainWindow::SetPause(bool paused) {
+  if(!paused) {
+    screen->SetForceClear(false);
+  }
+
+  emu_thread->SetPause(paused);
+  config->audio_dev->SetPause(paused);
+  pause_action->setChecked(paused);
 }
 
 void MainWindow::Stop() {
@@ -782,11 +786,16 @@ void MainWindow::LoadROM(std::u16string const& path) {
   RenderSaveStateMenus();
 
   // Reset the core and start the emulation thread.
-  // Unpause the emulator if it was paused.
-  SetPause(false);
+  // If the emulator is currently paused force-clear the screen.
   core->Reset();
   emu_thread->Start();
-  screen->SetForceClear(false);
+
+  /**
+   * If the the emulator is paused we force-clear the screen to avoid 
+   * presenting the last frame from before pausing, since that could be confusing.
+   * In the other case we explicitly disable force-clear, because it is currently enabled (due to the call to Stop() at the top).
+   */
+  screen->SetForceClear(pause_action->isChecked());
 
   UpdateSolarSensorLevel();
   UpdateMenuBarVisibility();

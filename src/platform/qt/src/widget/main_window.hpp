@@ -112,7 +112,7 @@ private:
   }
 
   void Reset();
-  void SetPause(bool value);
+  void SetPause(bool paused);
   void Stop();
   void UpdateMenuBarVisibility();
   void UpdateMainWindowActionList();
