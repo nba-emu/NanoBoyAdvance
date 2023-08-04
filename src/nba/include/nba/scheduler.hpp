@@ -62,6 +62,9 @@ struct Scheduler {
     // DMA
     DMA_activated,
 
+    // Backup memory
+    EEPROM_ready,
+
     SIO_transfer_done,
 
     KeyPad_Poll,

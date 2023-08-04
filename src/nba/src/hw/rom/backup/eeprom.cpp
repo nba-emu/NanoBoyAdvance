@@ -9,14 +9,21 @@
 #include <exception>
 #include <nba/rom/backup/eeprom.hpp>
 
+#include <nba/log.hpp>
+
+using namespace nba::core;
+
 namespace nba {
 
 static constexpr int g_addr_bits[2] = { 6, 14 };
 static constexpr int g_save_size[2] = { 512, 8192 };
 
-EEPROM::EEPROM(fs::path const& save_path, Size size_hint)
+EEPROM::EEPROM(fs::path const& save_path, Size size_hint, core::Scheduler& scheduler)
     : size(size_hint)
-    , save_path(save_path) {
+    , save_path(save_path)
+    , scheduler(scheduler) {
+  scheduler.Register(Scheduler::EventClass::EEPROM_ready, this, &EEPROM::OnReadyAfterWrite);
+  
   Reset();
 }
 
@@ -70,11 +77,11 @@ auto EEPROM::Read(u32 address) -> u8 {
     return (file->Read(this->address + index) >> (7 - bit)) & 1;
   }
 
-  return 1;
+  return (state & STATE_BUSY) ? 0 : 1;
 }
 
 void EEPROM::Write(u32 address, u8 value) {
-  if(state & STATE_READING) return;
+  if(state & (STATE_READING | STATE_BUSY)) return;
 
   value &= 1;
 
@@ -118,6 +125,7 @@ void EEPROM::Write(u32 address, u8 value) {
     tmp |= value << (7 - bit);
     file->Write(this->address + index, tmp);
     
+    // @todo: should the EEPROM be reprogrammed if the dummy bit is never read?
     if(transmitted_bits == 64) {
       state &= ~STATE_WRITING;
       ResetSerialBuffer();
@@ -128,7 +136,13 @@ void EEPROM::Write(u32 address, u8 value) {
     if(state & STATE_READ_MODE) {
       state |= STATE_READING | STATE_DUMMY_NIBBLE;
     } else if(state & STATE_WRITE_MODE) {
-      state = STATE_ACCEPT_COMMAND;
+      /**
+       * It takes ~6 ms for the EEPROM chip to actually write the data.
+       * Presumably a new command cannot be submitted during those ~6 ms.
+       * The exact timing varies based on environmental temperature and likely from cartridge to cartridge. 
+       */ 
+      state = STATE_BUSY;
+      scheduler.Add(101400, Scheduler::EventClass::EEPROM_ready);
     }
 
     ResetSerialBuffer();
@@ -146,6 +160,10 @@ void EEPROM::SetSizeHint(Size size) {
       file = BackupFile::OpenOrCreate(save_path, {(size_t)bytes}, bytes);
     }
   }
+}
+
+void EEPROM::OnReadyAfterWrite() {
+  state = STATE_ACCEPT_COMMAND;
 }
 
 } // namespace nba
