@@ -3,6 +3,8 @@ project(NanoBoyAdvance-Qt CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+include(version.cmake)
+
 set(SOURCES
   src/widget/background_viewer_window.cpp
   src/widget/background_viewer.cpp
@@ -46,7 +48,7 @@ endif()
 
 # Append application resources (icon and manifest) on Win32.
 if(WIN32)
-  list(APPEND RESOURCES rc/app.rc)
+  list(APPEND RESOURCES ${CMAKE_CURRENT_BINARY_DIR}/app.rc)
 
   if(MINGW)
     set(CMAKE_RC_COMPILER_INIT windres)
@@ -66,9 +68,9 @@ if (APPLE AND MACOS_BUILD_APP_BUNDLE)
   set(MACOSX_BUNDLE_ICON_FILE "NanoBoyAdvance.icns")
   set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.github.nba-emu.NanoBoyAdvance")
   set(MACOSX_BUNDLE_INFO_STRING "Game Boy Advance emulator")
-  set(MACOSX_BUNDLE_SHORT_VERSION_STRING "1.7.1")
-  set(MACOSX_BUNDLE_LONG_VERSION_STRING "1.7.1")
-  set(MACOSX_BUNDLE_BUNDLE_VERSION "1.7.1")
+  set(MACOSX_BUNDLE_SHORT_VERSION_STRING "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+  set(MACOSX_BUNDLE_LONG_VERSION_STRING "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+  set(MACOSX_BUNDLE_BUNDLE_VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 
   list(APPEND RESOURCES rc/NanoBoyAdvance.icns)
   add_executable(NanoBoyAdvance-Qt MACOSX_BUNDLE ${SOURCES} ${HEADERS} ${RESOURCES})
@@ -108,7 +110,7 @@ endif()
 set_target_properties(NanoBoyAdvance-Qt PROPERTIES OUTPUT_NAME "NanoBoyAdvance")
 
 target_link_libraries(NanoBoyAdvance-Qt platform-core ${QT_DEPS})
-target_include_directories(NanoBoyAdvance-Qt PRIVATE src)
+target_include_directories(NanoBoyAdvance-Qt PRIVATE src ${CMAKE_CURRENT_BINARY_DIR})
 
 file(COPY "rc/config.toml" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
@@ -116,5 +118,3 @@ if(WIN32 AND PLATFORM_QT_STATIC)
   set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
   target_link_libraries(NanoBoyAdvance-Qt -static z zstd gcc stdc++ winpthread winmm version Imm32 Setupapi)
 endif()
-
-include(version.cmake)

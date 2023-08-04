@@ -22,4 +22,4 @@ if(GIT_FOUND)
 endif()
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/version.in.hpp" "${CMAKE_CURRENT_BINARY_DIR}/version.hpp")
-target_include_directories(NanoBoyAdvance-Qt PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rc/app.rc ${CMAKE_CURRENT_BINARY_DIR}/app.rc)
