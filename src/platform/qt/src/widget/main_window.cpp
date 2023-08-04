@@ -23,12 +23,21 @@
 #include <unordered_map>
 
 #include "widget/main_window.hpp"
+#include "version.hpp"
 
 MainWindow::MainWindow(
   QApplication* app,
   QWidget* parent
 )   : QMainWindow(parent) {
-  setWindowTitle("NanoBoyAdvance 1.7.1");
+  #ifdef RELEASE_BUILD
+    base_window_title = QStringLiteral("NanoBoyAdvance %1.%2.%3")
+      .arg(VERSION_MAJOR).arg(VERSION_MINOR).arg(VERSION_PATCH);
+  #else
+    base_window_title = QStringLiteral("NanoBoyAdvance %1.%2.%3 [%4-%5]")
+      .arg(VERSION_MAJOR).arg(VERSION_MINOR).arg(VERSION_PATCH).arg(VERSION_GIT_BRANCH).arg(VERSION_GIT_HASH);
+  #endif
+
+  setWindowTitle(base_window_title);
   setAcceptDrops(true);
 
   screen = std::make_shared<Screen>(this, config);
@@ -61,10 +70,10 @@ MainWindow::MainWindow(
   });
   connect(this, &MainWindow::UpdateFrameRate, this, [this](int fps) {
     if(config->window.show_fps) {
-      auto percent = fps / 59.7275 * 100;
-      setWindowTitle(QString::fromStdString(fmt::format("NanoBoyAdvance 1.7.1 [{} fps | {:.2f}%]", fps, percent)));
+      const float percent = fps / 59.7275f * 100.0f;
+      setWindowTitle(QStringLiteral("%1 (%2 fps | %3%)").arg(base_window_title).arg(fps).arg(percent));
     } else {
-      setWindowTitle("NanoBoyAdvance 1.7.1");
+      setWindowTitle(base_window_title);
     }
   }, Qt::QueuedConnection);
 
@@ -670,7 +679,7 @@ void MainWindow::Stop() {
     game_loaded = false;
     RenderSaveStateMenus();
 
-    setWindowTitle("NanoBoyAdvance 1.7.1");
+    setWindowTitle(base_window_title);
   
     UpdateMenuBarVisibility();
   }
