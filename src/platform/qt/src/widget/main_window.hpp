@@ -22,12 +22,12 @@
 #include <utility>
 #include <vector>
 
+#include "widget/background_viewer_window.hpp"
 #include "widget/controller_manager.hpp"
 #include "widget/input_window.hpp"
+#include "widget/palette_viewer_window.hpp"
 #include "widget/screen.hpp"
 #include "config.hpp"
-
-namespace fs = std::filesystem;
 
 struct MainWindow : QMainWindow {
   MainWindow(
@@ -37,7 +37,7 @@ struct MainWindow : QMainWindow {
 
  ~MainWindow();
 
-  void LoadROM(std::string path);
+  void LoadROM(std::u16string const& path);
 
 signals:
   void UpdateFrameRate(int fps);
@@ -61,6 +61,7 @@ private:
   void CreateSolarSensorValueMenu(QMenu* parent);
   void CreateWindowMenu(QMenu* parent);
   void CreateConfigMenu();
+  void CreateToolsMenu();
   void CreateHelpMenu();
   void RenderRecentFilesMenu();
   void RenderSaveStateMenus();
@@ -111,7 +112,7 @@ private:
   }
 
   void Reset();
-  void SetPause(bool value);
+  void SetPause(bool paused);
   void Stop();
   void UpdateMenuBarVisibility();
   void UpdateMainWindowActionList();
@@ -123,8 +124,8 @@ private:
 
   void UpdateSolarSensorLevel();
 
-  auto LoadState(std::string const& path) -> nba::SaveStateLoader::Result;
-  auto SaveState(std::string const& path) -> nba::SaveStateWriter::Result;
+  auto LoadState(std::u16string const& path) -> nba::SaveStateLoader::Result;
+  auto SaveState(std::u16string const& path) -> nba::SaveStateWriter::Result;
 
   auto GetSavePath(fs::path const& rom_path, fs::path const& extension) -> fs::path;
 
@@ -145,9 +146,14 @@ private:
   QMenu* save_state_menu;
   QAction* fullscreen_action;
   bool game_loaded = false;
-  std::string game_path;
+  std::u16string game_path;
 
   nba::SaveState save_state_test;
+
+  PaletteViewerWindow* palette_viewer_window;
+  BackgroundViewerWindow* background_viewer_window;
+
+  QString base_window_title;
 
   Q_OBJECT
 };

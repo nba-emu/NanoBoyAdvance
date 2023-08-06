@@ -14,7 +14,7 @@
 namespace nba {
 
 struct SRAM : Backup {
-  SRAM(std::string const& save_path);
+  SRAM(fs::path const& save_path);
 
   void Reset() final;  
   auto Read (u32 address) -> u8 final;
@@ -24,7 +24,7 @@ struct SRAM : Backup {
   void CopyState(SaveState& state) final;
 
 private:
-  std::string save_path;
+  fs::path save_path;
   std::unique_ptr<BackupFile> file;
 };
 

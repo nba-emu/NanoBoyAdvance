@@ -10,10 +10,10 @@
 #include <atomic>
 #include <nba/config.hpp>
 #include <nba/save_state.hpp>
+#include <nba/scheduler.hpp>
 #include <memory>
 
 #include "hw/irq/irq.hpp"
-#include "scheduler.hpp"
 
 namespace nba::core {
 

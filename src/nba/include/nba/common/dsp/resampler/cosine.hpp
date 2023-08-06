@@ -16,16 +16,16 @@ struct CosineResampler : Resampler<T> {
   CosineResampler(std::shared_ptr<WriteStream<T>> output) 
       : Resampler<T>(output) {
     for(int i = 0; i < kLUTsize; i++) {
-      lut[i] = (std::cos(M_PI * i/float(kLUTsize)) + 1.0) * 0.5;
+      lut[i] = (std::cos(M_PI * i / (float)(kLUTsize - 1)) + 1.0) * 0.5;
     }
   }
   
   void Write(T const& input) final {
     while(resample_phase < 1.0) {
-      auto index = resample_phase * kLUTsize;
-      float a0 = lut[int(index) + 0];
-      float a1 = lut[int(index) + 1];
-      float a = a0 + (a1 - a0) * (index - int(index));
+      const float index = resample_phase * (float)(kLUTsize - 1);
+      const float a0 = lut[(int)index];
+      const float a1 = lut[(int)index + 1];
+      const float a = a0 + (a1 - a0) * (index - int(index));
 
       this->output->Write(previous * a + input * (1.0 - a));
       

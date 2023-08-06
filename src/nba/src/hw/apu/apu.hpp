@@ -11,6 +11,7 @@
 #include <nba/common/dsp/ring_buffer.hpp>
 #include <nba/config.hpp>
 #include <nba/save_state.hpp>
+#include <nba/scheduler.hpp>
 #include <mutex>
 
 #include "hw/apu/channel/quad_channel.hpp"
@@ -20,7 +21,6 @@
 #include "hw/apu/hle/mp2k.hpp"
 #include "hw/apu/registers.hpp"
 #include "hw/dma/dma.hpp"
-#include "scheduler.hpp"
 
 namespace nba::core {
 
@@ -36,7 +36,7 @@ struct APU {
 
   void Reset();
   auto GetMP2K() -> MP2K& { return mp2k; }
-  void OnTimerOverflow(int timer_id, int times, int samplerate);
+  void OnTimerOverflow(int timer_id, int times);
 
   void LoadState(SaveState const& state);
   void CopyState(SaveState& state);
@@ -74,9 +74,6 @@ private:
   void StepSequencer();
 
   s8 latch[2];
-  std::shared_ptr<RingBuffer<float>> fifo_buffer[2];
-  std::unique_ptr<Resampler<float>> fifo_resampler[2];
-  int fifo_samplerate[2];
 
   Scheduler& scheduler;
   DMA& dma;

@@ -20,8 +20,7 @@ void QtConfig::LoadCustomData(toml::value const& data) {
       input.hold_fast_forward = toml::find_or<bool>(input_, "hold_fast_forward", true);
 
       const auto get_map = [&](toml::value const& value, std::string key) {
-        return Map::FromArray(toml::find_or<std::array<int, 3>>(value, key, {
-          0, SDL_CONTROLLER_BUTTON_INVALID, SDL_CONTROLLER_AXIS_INVALID}));
+        return Map::FromArray(toml::find_or<std::array<int, 5>>(value, key, {0, -1, -1, -1, 0}));
       };
 
       input.fast_forward = get_map(input_, "fast_forward");

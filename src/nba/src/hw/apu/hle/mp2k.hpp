@@ -91,6 +91,12 @@ private:
     return value / 127.0;
   }
 
+  static constexpr float U8ToFloat(u8 value) {
+    return value / 256.0;
+  }
+
+  void RenderReverb(float* destination, u8 strength);
+
   struct Sampler {
     bool compressed = false;
     bool should_fetch_sample = true;
@@ -109,7 +115,11 @@ private:
     u8* wave_data = nullptr;
   } samplers[kMaxSoundChannels];
 
-  void RenderReverb(float* destination, u8 strength);
+  struct Envelope {
+    float volume = 0.0;
+    float volume_l[2] {0.0, 0.0};
+    float volume_r[2] {0.0, 0.0};
+  } envelopes[kMaxSoundChannels];
 
   bool engaged;
   bool use_cubic_filter;

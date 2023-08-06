@@ -9,6 +9,7 @@
 
 #include <nba/rom/backup/backup.hpp>
 #include <nba/rom/backup/backup_file.hpp>
+#include <nba/scheduler.hpp>
 #include <string>
 
 namespace nba {
@@ -20,7 +21,7 @@ struct EEPROM : Backup {
     DETECT = 2
   };
   
-  EEPROM(std::string const& save_path, Size size_hint);
+  EEPROM(fs::path const& save_path, Size size_hint, core::Scheduler& scheduler);
   
   void Reset() final;
   auto Read (u32 address) -> u8 final;
@@ -40,14 +41,19 @@ private:
     STATE_READING        = 1 << 4,
     STATE_DUMMY_NIBBLE   = 1 << 5,
     STATE_WRITING        = 1 << 6,
-    STATE_EAT_DUMMY      = 1 << 7
+    STATE_EAT_DUMMY      = 1 << 7,
+    STATE_BUSY           = 1 << 8
   };
   
   void ResetSerialBuffer();
-  
+
+  void OnReadyAfterWrite();
+
   int size;
-  std::string save_path;
+  fs::path save_path;
   std::unique_ptr<BackupFile> file;
+
+  core::Scheduler& scheduler;
 
   int state;
   int address;

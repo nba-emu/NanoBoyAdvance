@@ -3,21 +3,32 @@ project(NanoBoyAdvance-Qt CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+include(version.cmake)
+
 set(SOURCES
+  src/widget/background_viewer_window.cpp
+  src/widget/background_viewer.cpp
   src/widget/controller_manager.cpp
   src/widget/input_window.cpp
   src/widget/main_window.cpp
   src/widget/screen.cpp
+  src/widget/palette_box.cpp
+  src/widget/palette_viewer_window.cpp
   src/config.cpp
   src/main.cpp
 )
 
 set(HEADERS
+  src/widget/background_viewer_window.hpp
+  src/widget/background_viewer.hpp
   src/widget/controller_manager.hpp
   src/widget/input_window.hpp
   src/widget/main_window.hpp
+  src/widget/palette_box.hpp
+  src/widget/palette_viewer_window.hpp
   src/widget/screen.hpp
   src/config.hpp
+  version.in.hpp
 )
 
 set(RESOURCES
@@ -37,7 +48,7 @@ endif()
 
 # Append application resources (icon and manifest) on Win32.
 if(WIN32)
-  list(APPEND RESOURCES rc/app.rc)
+  list(APPEND RESOURCES ${CMAKE_CURRENT_BINARY_DIR}/app.rc)
 
   if(MINGW)
     set(CMAKE_RC_COMPILER_INIT windres)
@@ -57,9 +68,9 @@ if (APPLE AND MACOS_BUILD_APP_BUNDLE)
   set(MACOSX_BUNDLE_ICON_FILE "NanoBoyAdvance.icns")
   set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.github.nba-emu.NanoBoyAdvance")
   set(MACOSX_BUNDLE_INFO_STRING "Game Boy Advance emulator")
-  set(MACOSX_BUNDLE_SHORT_VERSION_STRING "1.7.1")
-  set(MACOSX_BUNDLE_LONG_VERSION_STRING "1.7.1")
-  set(MACOSX_BUNDLE_BUNDLE_VERSION "1.7.1")
+  set(MACOSX_BUNDLE_SHORT_VERSION_STRING "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+  set(MACOSX_BUNDLE_LONG_VERSION_STRING "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+  set(MACOSX_BUNDLE_BUNDLE_VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 
   list(APPEND RESOURCES rc/NanoBoyAdvance.icns)
   add_executable(NanoBoyAdvance-Qt MACOSX_BUNDLE ${SOURCES} ${HEADERS} ${RESOURCES})
@@ -99,7 +110,7 @@ endif()
 set_target_properties(NanoBoyAdvance-Qt PROPERTIES OUTPUT_NAME "NanoBoyAdvance")
 
 target_link_libraries(NanoBoyAdvance-Qt platform-core ${QT_DEPS})
-target_include_directories(NanoBoyAdvance-Qt PRIVATE src)
+target_include_directories(NanoBoyAdvance-Qt PRIVATE src ${CMAKE_CURRENT_BINARY_DIR})
 
 file(COPY "rc/config.toml" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 

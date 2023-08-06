@@ -16,7 +16,7 @@ namespace nba {
 
 struct SaveState {
   static constexpr u32 kMagicNumber = 0x5353424E; // NBSS
-  static constexpr u32 kCurrentVersion = 7;
+  static constexpr u32 kCurrentVersion = 8;
 
   u32 magic;
   u32 version;
@@ -204,7 +204,6 @@ struct SaveState {
     } fifo[2];
 
     u8 resolution_old;
-    u32 fifo_samplerate[2];
   } apu;
 
   struct Timer {
@@ -259,7 +258,7 @@ struct SaveState {
     } flash;
 
     struct EEPROM {
-      u8 state;
+      u16 state;
       u16 address;
       u64 serial_buffer;
       u8 transmitted_bits;
