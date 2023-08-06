@@ -15,7 +15,6 @@ namespace nba::core {
 void MP2K::Reset() {
   engaged = false;
   use_cubic_filter = false;
-  total_frame_count = 0;
   current_frame = 0;
   buffer_read_index = 0;
 
@@ -34,8 +33,7 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
       "MP2K: samples per V-blank must not be zero."
     );
 
-    total_frame_count = kDMABufferSize / sound_info.pcm_samples_per_vblank;
-    buffer = std::make_unique<float[]>(kSamplesPerFrame * total_frame_count * 2);
+    buffer = std::make_unique<float[]>(k_samples_per_frame * k_total_frame_count * 2);
     engaged = true;
   }
 
@@ -168,34 +166,18 @@ void MP2K::RenderFrame() {
     S8ToFloat(0xF0), S8ToFloat(0xF7), S8ToFloat(0xFC), S8ToFloat(0xFF)
   };
 
-  current_frame = (current_frame + 1) % total_frame_count;
+  current_frame = (current_frame + 1) % k_total_frame_count;
 
-  auto reverb = sound_info.reverb;
-  auto max_channels = std::min(sound_info.max_channels, kMaxSoundChannels);
-  auto destination = &buffer[current_frame * kSamplesPerFrame * 2];
+  const auto reverb_strength = sound_info.reverb;
+  const auto max_channels = std::min(sound_info.max_channels, kMaxSoundChannels);
+  const auto destination = &buffer[current_frame * k_samples_per_frame * 2];
 
-  if(reverb == 0) {
-    std::memset(destination, 0, kSamplesPerFrame * 2 * sizeof(float));
+  if(reverb_strength > 0) {
+    RenderReverb(destination, reverb_strength);
   } else {
-    auto factor = reverb / (128.0 * 4.0);
-    auto other_frame  = (current_frame + 1) % total_frame_count;
-    auto other_buffer = &buffer[other_frame * kSamplesPerFrame * 2];
-
-    for(int i = 0; i < kSamplesPerFrame; i++) {
-      float sample_out = 0;
-
-      sample_out += other_buffer[i * 2 + 0];
-      sample_out += other_buffer[i * 2 + 1];
-      sample_out += destination[i * 2 + 0];
-      sample_out += destination[i * 2 + 1];
-
-      sample_out *= factor;
-
-      destination[i * 2 + 0] = sample_out;
-      destination[i * 2 + 1] = sample_out;
-    }
+    std::memset(destination, 0, k_samples_per_frame * 2 * sizeof(float));
   }
-  
+
   for(int i = 0; i < max_channels; i++) {
     auto& channel = sound_info.channels[i];
     auto& sampler = samplers[i];
@@ -208,9 +190,9 @@ void MP2K::RenderFrame() {
     float angular_step;
 
     if(channel.type & 8) {
-      angular_step = sound_info.pcm_sample_rate / float(kSampleRate);
+      angular_step = sound_info.pcm_sample_rate / float(k_sample_rate);
     } else {
-      angular_step = channel.frequency / float(kSampleRate);
+      angular_step = channel.frequency / float(k_sample_rate);
     }
 
     bool compressed = (channel.type & 32) != 0;
@@ -232,8 +214,8 @@ void MP2K::RenderFrame() {
 
     auto wave_data = sampler.wave_data;
 
-    for(int j = 0; j < kSamplesPerFrame; j++) {
-      const float t = j / (float)kSamplesPerFrame;
+    for(int j = 0; j < k_samples_per_frame; j++) {
+      const float t = j / (float)k_samples_per_frame;
 
       const float volume_l = envelope.volume_l[0] * (1 - t) + envelope.volume_l[1] * t;
       const float volume_r = envelope.volume_r[0] * (1 - t) + envelope.volume_r[1] * t;
@@ -314,14 +296,69 @@ void MP2K::RenderFrame() {
   }
 }
 
+void MP2K::RenderReverb(float* destination, u8 strength) {
+  static constexpr float k_early_coefficient = 0.0015;
+
+  static constexpr float k_late_coefficients[3][2] {
+    { 1.0 , 0.1  },
+    { 0.6 , 0.25 },
+    { 0.35, 0.35 }
+  };
+
+  static constexpr float k_normalize_coefficients = []() constexpr {
+    float sum = 0.0;
+
+    for(auto pair : k_late_coefficients) {
+      sum += pair[0];
+      sum += pair[1];
+    } 
+
+    return 1.0 / sum;
+  }();
+
+  const auto early_buffer = &buffer[((current_frame + k_total_frame_count - 1) % k_total_frame_count) * k_samples_per_frame * 2];
+
+  const float* late_buffers[3] {
+    &buffer[((current_frame + 2) % k_total_frame_count) * k_samples_per_frame * 2],
+    &buffer[((current_frame + 1) % k_total_frame_count) * k_samples_per_frame * 2],
+    destination
+  };
+
+  const auto factor = strength / 128.0;
+
+  for(int l = 0; l < k_samples_per_frame * 2; l += 2) {
+    const int r = l + 1;
+
+    const float early_reflection_l = early_buffer[l] * k_early_coefficient;
+    const float early_reflection_r = early_buffer[r] * k_early_coefficient;
+
+    float late_reflection_l = 0;
+    float late_reflection_r = 0;
+
+    for(int j = 0; j < 3; j++) {
+      const float sample_l = late_buffers[j][l];
+      const float sample_r = late_buffers[j][r];
+
+      late_reflection_l += sample_l * k_late_coefficients[j][0] + sample_r * k_late_coefficients[j][1];
+      late_reflection_r += sample_l * k_late_coefficients[j][1] + sample_r * k_late_coefficients[j][0];
+    }
+
+    late_reflection_l *= k_normalize_coefficients;
+    late_reflection_r *= k_normalize_coefficients;
+
+    destination[l] = (early_reflection_l + late_reflection_l) * factor;
+    destination[r] = (early_reflection_r + late_reflection_r) * factor;
+  }
+}
+
 auto MP2K::ReadSample() -> float* {
   if(buffer_read_index == 0) {
     RenderFrame();
   }
 
-  auto sample = &buffer[(current_frame * kSamplesPerFrame + buffer_read_index) * 2];
+  auto sample = &buffer[(current_frame * k_samples_per_frame + buffer_read_index) * 2];
 
-  if(++buffer_read_index == kSamplesPerFrame) {
+  if(++buffer_read_index == k_samples_per_frame) {
     buffer_read_index = 0;
   }
 

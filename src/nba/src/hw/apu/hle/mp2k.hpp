@@ -83,9 +83,9 @@ struct MP2K {
   auto ReadSample() -> float*;
 
 private:
-  static constexpr int kDMABufferSize = 1582;
-  static constexpr int kSampleRate = 65536;
-  static constexpr int kSamplesPerFrame = kSampleRate / 60 + 1;
+  static constexpr int k_sample_rate = 65536;
+  static constexpr int k_samples_per_frame = k_sample_rate / 60 + 1;
+  static constexpr int k_total_frame_count = 7;
 
   static constexpr float S8ToFloat(s8 value) {
     return value / 127.0;
@@ -94,6 +94,8 @@ private:
   static constexpr float U8ToFloat(u8 value) {
     return value / 256.0;
   }
+
+  void RenderReverb(float* destination, u8 strength);
 
   struct Sampler {
     bool compressed = false;
@@ -124,7 +126,6 @@ private:
   Bus& bus;
   SoundInfo sound_info;
   std::unique_ptr<float[]> buffer;
-  int total_frame_count;
   int current_frame;
   int buffer_read_index;
 };
