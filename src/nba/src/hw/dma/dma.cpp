@@ -351,16 +351,6 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
       channel.latch.dst_addr = channel.dst_addr;
       channel.latch.src_addr = channel.src_addr;
 
-      /**
-       * TODO:
-       * DMA actually always uses sequential accesses for all except the first ROM access.
-       * This is a better explanation of the observed behavior and makes it redundant
-       * to force increment mode.
-       */
-      if(src_page == 0x08) {
-        channel.src_cntl = Channel::Control::Increment;
-      }
-
       if(channel.time == Channel::Special && (channel.id == 1 || channel.id == 2)) {
         channel.is_fifo_dma = true;
 

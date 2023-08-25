@@ -16,7 +16,7 @@ namespace nba {
 
 struct SaveState {
   static constexpr u32 kMagicNumber = 0x5353424E; // NBSS
-  static constexpr u32 kCurrentVersion = 8;
+  static constexpr u32 kCurrentVersion = 9;
 
   u32 magic;
   u32 version;
@@ -244,6 +244,8 @@ struct SaveState {
     u8 runnable_set;
     u32 latch;
   } dma;
+
+  u32 rom_address_latch;
 
   struct Backup {
     u8 data[131072];
