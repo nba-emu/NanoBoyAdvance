@@ -248,7 +248,7 @@ void DMA::RunChannel() {
     irq.Raise(IRQ::Source::DMA, channel.id);
   }
 
-  if(channel.repeat) {
+  if(channel.repeat && channel.time != Channel::Immediate) {
     if(channel.is_fifo_dma) {
       channel.latch.length = 4;
     } else {
@@ -323,11 +323,10 @@ void DMA::Write(int chan_id, int offset, u8 value) {
     case REG_DMAXCNT_H | 1: {
       bool enable_old = channel.enable;
 
-      // TODO: the repeat bit probably should not actually be masked
       channel.src_cntl  = Channel::Control((channel.src_cntl & 0b01) | ((value & 1) << 1));
       channel.size = static_cast<Channel::Size>((value >> 2) & 1);
       channel.time = static_cast<Channel::Timing>((value >> 4) & 3);
-      channel.repeat  = (value & 2) && channel.time != Channel::Immediate;
+      channel.repeat  =  value & 2;
       channel.gamepak = (value & 8) && chan_id == 3;
       channel.interrupt = value & 64;
       channel.enable = value & 128;
