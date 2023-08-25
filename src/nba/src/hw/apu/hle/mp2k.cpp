@@ -14,7 +14,6 @@ namespace nba::core {
 
 void MP2K::Reset() {
   engaged = false;
-  use_cubic_filter = false;
   current_frame = 0;
   buffer_read_index = 0;
 
@@ -168,7 +167,7 @@ void MP2K::RenderFrame() {
 
   current_frame = (current_frame + 1) % k_total_frame_count;
 
-  const auto reverb_strength = sound_info.reverb;
+  const auto reverb_strength = force_reverb ? std::max(sound_info.reverb, (u8)48) : sound_info.reverb;
   const auto max_channels = std::min(sound_info.max_channels, kMaxSoundChannels);
   const auto destination = &buffer[current_frame * k_samples_per_frame * 2];
 

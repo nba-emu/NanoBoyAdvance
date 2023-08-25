@@ -25,7 +25,9 @@ resampler = "cubic"
 # This is experimental and may still have issues.
 mp2k_hle_enable = false
 # Use cubic interpolation in the MP2K reimplementation.
-mp2k_hle_cubic = false 
+mp2k_hle_cubic = true
+# Force-enable the reverb effect
+mp2k_hle_force_reverb = true
 
 [input]
 fast_forward = [32, -1, -1, -1, 0]

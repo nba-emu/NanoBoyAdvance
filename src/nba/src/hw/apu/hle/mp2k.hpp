@@ -77,6 +77,10 @@ struct MP2K {
     return use_cubic_filter;
   }
 
+  bool& ForceReverb() {
+    return force_reverb;
+  }
+
   void Reset();  
   void SoundMainRAM(SoundInfo const& sound_info);
   void RenderFrame();
@@ -122,7 +126,8 @@ private:
   } envelopes[kMaxSoundChannels];
 
   bool engaged;
-  bool use_cubic_filter;
+  bool use_cubic_filter = false;
+  bool force_reverb = false;
   Bus& bus;
   SoundInfo sound_info;
   std::unique_ptr<float[]> buffer;

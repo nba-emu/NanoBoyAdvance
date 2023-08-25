@@ -41,7 +41,8 @@ struct Config {
     } interpolation = Interpolation::Cubic;
 
     bool mp2k_hle_enable = false;
-    bool mp2k_hle_cubic = false;
+    bool mp2k_hle_cubic = true;
+    bool mp2k_hle_force_reverb = true;
   } audio;
 
   std::shared_ptr<AudioDevice> audio_dev = std::make_shared<NullAudioDevice>();

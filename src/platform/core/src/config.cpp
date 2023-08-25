@@ -130,7 +130,8 @@ void PlatformConfig::Load(std::string const& path) {
       }
 
       this->audio.mp2k_hle_enable = toml::find_or<toml::boolean>(audio, "mp2k_hle_enable", false);
-      this->audio.mp2k_hle_cubic = toml::find_or<toml::boolean>(audio, "mp2k_hle_cubic", false);
+      this->audio.mp2k_hle_cubic = toml::find_or<toml::boolean>(audio, "mp2k_hle_cubic", true);
+      this->audio.mp2k_hle_force_reverb = toml::find_or<toml::boolean>(audio, "mp2k_hle_force_reverb", true);
     }
   }
 
@@ -202,6 +203,7 @@ void PlatformConfig::Save(std::string const& path) {
   data["audio"]["resampler"] = resampler;
   data["audio"]["mp2k_hle_enable"] = this->audio.mp2k_hle_enable;
   data["audio"]["mp2k_hle_cubic"] = this->audio.mp2k_hle_cubic;
+  data["audio"]["mp2k_hle_force_reverb"] = this->audio.mp2k_hle_force_reverb;
 
   SaveCustomData(data);
 

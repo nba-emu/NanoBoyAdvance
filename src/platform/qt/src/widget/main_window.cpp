@@ -188,6 +188,7 @@ void MainWindow::CreateAudioMenu(QMenu* parent) {
   auto hq_menu = menu->addMenu("MP2K HQ mixer");
   CreateBooleanOption(hq_menu, "Enable", &config->audio.mp2k_hle_enable, true);
   CreateBooleanOption(hq_menu, "Cubic interpolation", &config->audio.mp2k_hle_cubic, true);
+  CreateBooleanOption(hq_menu, "Force reverb on", &config->audio.mp2k_hle_force_reverb, true);
 }
 
 void MainWindow::CreateInputMenu(QMenu* parent) {
