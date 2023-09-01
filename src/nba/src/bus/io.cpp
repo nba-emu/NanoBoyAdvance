@@ -577,11 +577,13 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
 void Bus::Hardware::WriteHalf(u32 address, u16 value) {
   auto& apu_io = apu.mmio;
 
+  const bool apu_enable = apu_io.soundcnt.master_enable;
+
   switch(address) {
-    case FIFO_A+0: apu_io.fifo[0].WriteHalf(0, value); break;
-    case FIFO_A+2: apu_io.fifo[0].WriteHalf(2, value); break;
-    case FIFO_B+0: apu_io.fifo[1].WriteHalf(0, value); break;
-    case FIFO_B+2: apu_io.fifo[1].WriteHalf(2, value); break;
+    case FIFO_A+0: if(apu_enable) apu_io.fifo[0].WriteHalf(0, value); break;
+    case FIFO_A+2: if(apu_enable) apu_io.fifo[0].WriteHalf(2, value); break;
+    case FIFO_B+0: if(apu_enable) apu_io.fifo[1].WriteHalf(0, value); break;
+    case FIFO_B+2: if(apu_enable) apu_io.fifo[1].WriteHalf(2, value); break;
 
     // Timers 0 - 3
     case TM0CNT_L: timer.WriteHalf(0, 0, value); break;
@@ -655,9 +657,11 @@ void Bus::Hardware::WriteHalf(u32 address, u16 value) {
 void Bus::Hardware::WriteWord(u32 address, u32 value) {
   auto& apu_io = apu.mmio;
 
+  const bool apu_enable = apu_io.soundcnt.master_enable;
+
   switch(address) {
-    case FIFO_A: apu_io.fifo[0].WriteWord(value); break;
-    case FIFO_B: apu_io.fifo[1].WriteWord(value); break;
+    case FIFO_A: if(apu_enable) apu_io.fifo[0].WriteWord(value); break;
+    case FIFO_B: if(apu_enable) apu_io.fifo[1].WriteWord(value); break;
 
     // Timers 0 - 3
     case TM0CNT_L: timer.WriteWord(0, value); break;
