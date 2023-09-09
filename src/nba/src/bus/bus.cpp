@@ -37,7 +37,7 @@ void Bus::Reset() {
   hw.rcnt[0] = 0;
   hw.rcnt[1] = 0;
   hw.postflg = 0;
-  hw.prefetch_buffer_was_disabled = false;
+  // hw.prefetch_buffer_was_disabled = false;
   hw.mgba_log = {};
   hw.mgba_log.message.fill(0);
   prefetch = {};
@@ -146,18 +146,24 @@ auto Bus::Read(u32 address, int access) -> T {
 
       if constexpr(std::is_same_v<T,  u8>) {
         auto shift = ((address & 1) << 3);
-        Prefetch(address, code, wait16[sequential][page]);
-        return memory.rom.ReadROM16(address, sequential) >> shift;
+        // Prefetch(address, code, wait16[sequential][page]);
+        // return memory.rom.ReadROM16(address, sequential) >> shift;
+        return ReadGamePakROM16(address, sequential) >> shift;
       }
 
       if constexpr(std::is_same_v<T, u16>) {
-        Prefetch(address, code, wait16[sequential][page]);
-        return memory.rom.ReadROM16(address, sequential);
+        // Prefetch(address, code, wait16[sequential][page]);
+        // return memory.rom.ReadROM16(address, sequential);
+        return ReadGamePakROM16(address, sequential);
       }
 
       if constexpr(std::is_same_v<T, u32>) {
-        Prefetch(address, code, wait32[sequential][page]);
-        return memory.rom.ReadROM32(address, sequential);  
+        // Prefetch(address, code, wait32[sequential][page]);
+        // return memory.rom.ReadROM32(address, sequential);
+        // @todo: address on the second access should not matter, so why bother adjusting it?
+        const u32 lsw = ReadGamePakROM16(address, sequential);
+        const u32 msw = ReadGamePakROM16(address + 2U, true);
+        return msw << 16 | lsw;
       }
 
       return 0;

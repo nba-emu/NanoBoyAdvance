@@ -29,22 +29,22 @@ void Bus::LoadState(SaveState const& state) {
   hw.rcnt[0] = state.bus.io.rcnt[0];
   hw.rcnt[1] = state.bus.io.rcnt[1];
   hw.postflg = state.bus.io.postflg;
-  hw.prefetch_buffer_was_disabled = state.bus.prefetch_buffer_was_disabled;
+  // hw.prefetch_buffer_was_disabled = state.bus.prefetch_buffer_was_disabled;
 
-  prefetch.active = state.bus.prefetch.active;
-  prefetch.head_address = state.bus.prefetch.head_address;
-  prefetch.count = state.bus.prefetch.count;
-  prefetch.countdown = state.bus.prefetch.countdown;
-  prefetch.thumb = state.bus.prefetch.thumb;
-  if(prefetch.thumb) {
-    prefetch.opcode_width = sizeof(u16);
-    prefetch.capacity = 8;
-    prefetch.duty = wait16[int(Access::Sequential)][prefetch.last_address >> 24];
-  } else {
-    prefetch.opcode_width = sizeof(u32);
-    prefetch.capacity = 4;
-    prefetch.duty = wait32[int(Access::Sequential)][prefetch.last_address >> 24];
-  }
+  // prefetch.active = state.bus.prefetch.active;
+  // prefetch.head_address = state.bus.prefetch.head_address;
+  // prefetch.count = state.bus.prefetch.count;
+  // prefetch.countdown = state.bus.prefetch.countdown;
+  // prefetch.thumb = state.bus.prefetch.thumb;
+  // if(prefetch.thumb) {
+  //   prefetch.opcode_width = sizeof(u16);
+  //   prefetch.capacity = 8;
+  //   prefetch.duty = wait16[int(Access::Sequential)][prefetch.last_address >> 24];
+  // } else {
+  //   prefetch.opcode_width = sizeof(u32);
+  //   prefetch.capacity = 4;
+  //   prefetch.duty = wait32[int(Access::Sequential)][prefetch.last_address >> 24];
+  // }
 
   last_access = state.bus.last_access;
 
@@ -70,13 +70,13 @@ void Bus::CopyState(SaveState& state) {
   state.bus.io.rcnt[0] = hw.rcnt[0];
   state.bus.io.rcnt[1] = hw.rcnt[1];
   state.bus.io.postflg = hw.postflg;
-  state.bus.prefetch_buffer_was_disabled = hw.prefetch_buffer_was_disabled;
+  // state.bus.prefetch_buffer_was_disabled = hw.prefetch_buffer_was_disabled;
 
-  state.bus.prefetch.active = prefetch.active;
-  state.bus.prefetch.head_address = prefetch.head_address;
-  state.bus.prefetch.count = prefetch.count;
-  state.bus.prefetch.countdown = prefetch.countdown;
-  state.bus.prefetch.thumb = prefetch.thumb;
+  // state.bus.prefetch.active = prefetch.active;
+  // state.bus.prefetch.head_address = prefetch.head_address;
+  // state.bus.prefetch.count = prefetch.count;
+  // state.bus.prefetch.countdown = prefetch.countdown;
+  // state.bus.prefetch.thumb = prefetch.thumb;
 
   state.bus.last_access = last_access;
 

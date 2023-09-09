@@ -35,7 +35,9 @@ void Bus::Idle() {
 }
 
 void Bus::Prefetch(u32 address, bool code, int cycles) {
-  if(!code) {
+  Step(cycles);
+
+  /*if(!code) {
     StopPrefetch();
     Step(cycles);
     return;
@@ -92,34 +94,39 @@ void Bus::Prefetch(u32 address, bool code, int cycles) {
     prefetch.countdown = prefetch.duty;
     prefetch.last_address = address + prefetch.opcode_width;
     prefetch.head_address = prefetch.last_address;
-  }
+  }*/
 }
 
 void Bus::StopPrefetch() {
-  if(prefetch.active) {
-    u32 r15 = hw.cpu.state.r15;
+  // if(prefetch.active) {
+  //   u32 r15 = hw.cpu.state.r15;
 
-    /* If ROM data/SRAM/FLASH is accessed in a cycle, where the prefetch unit
-     * is active and finishing a half-word access, then a one-cycle penalty applies.
-     * Note: the prefetch unit is only active when executing code from ROM.
-     */
-    if(r15 >= 0x08000000 && r15 <= 0x0DFFFFFF) {
-      auto half_duty_plus_one = (prefetch.duty >> 1) + 1;
-      auto countdown = prefetch.countdown;
+  //   /* If ROM data/SRAM/FLASH is accessed in a cycle, where the prefetch unit
+  //    * is active and finishing a half-word access, then a one-cycle penalty applies.
+  //    * Note: the prefetch unit is only active when executing code from ROM.
+  //    */
+  //   if(r15 >= 0x08000000 && r15 <= 0x0DFFFFFF) {
+  //     auto half_duty_plus_one = (prefetch.duty >> 1) + 1;
+  //     auto countdown = prefetch.countdown;
 
-      if(countdown == 1 || (!prefetch.thumb && countdown == half_duty_plus_one)) {
-        Step(1);
-      }
-    }
+  //     if(countdown == 1 || (!prefetch.thumb && countdown == half_duty_plus_one)) {
+  //       Step(1);
+  //     }
+  //   }
 
-    prefetch.active = false;
-  }
+  //   prefetch.active = false;
+  // }
+}
+
+u16 Bus::ReadGamePakROM16(u32 address, int sequential) {
+  Step(wait16[sequential][address >> 24]);
+  return memory.rom.ReadROM16(address, sequential);
 }
 
 void Bus::Step(int cycles) {
   scheduler.AddCycles(cycles);
 
-  if(prefetch.active) {
+  /*if(prefetch.active) {
     prefetch.countdown -= cycles;
 
     while(prefetch.countdown <= 0) {
@@ -132,7 +139,7 @@ void Bus::Step(int cycles) {
         break;
       }
     }
-  }
+  }*/
 }
 
 void Bus::UpdateWaitStateTable() {

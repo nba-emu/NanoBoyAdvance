@@ -82,7 +82,7 @@ struct Bus {
       bool cgb = false;
     } waitcnt;
 
-    bool prefetch_buffer_was_disabled = false;
+    // bool prefetch_buffer_was_disabled = false;
 
     enum class HaltControl {
       Run = 0,
@@ -109,15 +109,7 @@ struct Bus {
   } hw;
 
   struct Prefetch {
-    bool active = false;
-    u32 head_address;
-    u32 last_address;
-    int count = 0;
-    int capacity = 8;
-    int opcode_width = 4;
-    int countdown;
-    int duty;
-    bool thumb;
+    std::array<u16, 8> buffer{};
   } prefetch;
 
   int last_access;
@@ -247,6 +239,7 @@ struct Bus {
 
   void SIOTransferDone();
 
+  u16  ReadGamePakROM16(u32 address, int sequential);
   void Prefetch(u32 address, bool code, int cycles);
   void StopPrefetch();
   void Step(int cycles);
