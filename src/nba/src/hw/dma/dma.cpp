@@ -179,11 +179,10 @@ void DMA::RunChannel() {
   if(channel.is_fifo_dma) {
     size = Channel::Size::Word;
     dst_modify = 0;
-    src_modify = g_dma_src_modify[size][channel.src_cntl];
   } else {
     dst_modify = g_dma_dst_modify[size][channel.dst_cntl];
-    src_modify = g_dma_src_modify[size][channel.src_cntl];
   }
+  src_modify = g_dma_src_modify[size][channel.src_cntl];
 
   bool did_access_rom = false;
 
