@@ -90,9 +90,18 @@ auto Bus::Read(u32 address, int access) -> T {
   // Set last_access to access right before returning.
   auto _ = ScopeExit{[&]() {
     last_access = access;
+
+    // @todo: clean me up!
+    previous_code = access & Code;
+    previous_idle = false;
   }};
 
-  if(!(access & (Dma | Lock)) && hw.dma.IsRunning()) hw.dma.Run();
+  if(!(access & (Dma | Lock)) && hw.dma.IsRunning()) {
+    hw.dma.Run();
+    // TODO: remove this later
+    previous_idle = true;
+    previous_code = false;
+  }
 
   parallel_internal_cpu_cycle_limit = 0;
 
@@ -145,24 +154,20 @@ auto Bus::Read(u32 address, int access) -> T {
       }
 
       if constexpr(std::is_same_v<T,  u8>) {
-        auto shift = ((address & 1) << 3);
-        // Prefetch(address, code, wait16[sequential][page]);
-        // return memory.rom.ReadROM16(address, sequential) >> shift;
-        return ReadGamePakROM16(address, sequential) >> shift;
+        const int shift = ((address & 1) << 3);
+        return ReadGamePakROM16(address, sequential, code) >> shift;
       }
 
       if constexpr(std::is_same_v<T, u16>) {
-        // Prefetch(address, code, wait16[sequential][page]);
-        // return memory.rom.ReadROM16(address, sequential);
-        return ReadGamePakROM16(address, sequential);
+        return ReadGamePakROM16(address, sequential, code);
       }
 
       if constexpr(std::is_same_v<T, u32>) {
-        // Prefetch(address, code, wait32[sequential][page]);
-        // return memory.rom.ReadROM32(address, sequential);
-        // @todo: address on the second access should not matter, so why bother adjusting it?
-        const u32 lsw = ReadGamePakROM16(address, sequential);
-        const u32 msw = ReadGamePakROM16(address + 2U, true);
+        const u32 lsw = ReadGamePakROM16(address, sequential, code);
+        // @todo: clean me up!
+        previous_code = code;
+        previous_idle = false;
+        const u32 msw = ReadGamePakROM16(address + 2U, true, code);
         return msw << 16 | lsw;
       }
 
@@ -195,7 +200,13 @@ void Bus::Write(u32 address, int access, T value) {
   auto page = address >> 24;
   auto is_u32 = std::is_same_v<T, u32>;
 
-  if(!(access & (Dma | Lock)) && hw.dma.IsRunning()) hw.dma.Run();
+  if(!(access & (Dma | Lock)) && hw.dma.IsRunning()) {
+    hw.dma.Run();
+    
+    // TODO: remove this later
+    previous_idle = true;
+    previous_code = false;
+  }
 
   parallel_internal_cpu_cycle_limit = 0;
 
@@ -288,6 +299,10 @@ void Bus::Write(u32 address, int access, T value) {
   }
 
   last_access = access;
+
+  // @todo: clean me up!
+  previous_code = false;
+  previous_idle = false;
 }
 
 auto Bus::ReadBIOS(u32 address) -> u32 {

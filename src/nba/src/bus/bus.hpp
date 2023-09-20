@@ -110,7 +110,15 @@ struct Bus {
 
   struct Prefetch {
     std::array<u16, 8> buffer{};
+    size_t rd_position = 0U;
+    size_t wr_position = 0U;
+    bool fetching = false;
+    int fetch_timer;
+    int fetch_duty;
   } prefetch;
+  // @todo: Implement this more cleanly
+  bool previous_idle = false;
+  bool previous_code = false;
 
   int last_access;
   int parallel_internal_cpu_cycle_limit;
@@ -239,8 +247,8 @@ struct Bus {
 
   void SIOTransferDone();
 
-  u16  ReadGamePakROM16(u32 address, int sequential);
-  void Prefetch(u32 address, bool code, int cycles);
+  u16  ReadGamePakROM16(u32 address, int sequential, bool code);
+  void StepPrefetchUnit(int cycles);
   void StopPrefetch();
   void Step(int cycles);
   void UpdateWaitStateTable();

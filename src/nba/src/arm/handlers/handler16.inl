@@ -112,7 +112,6 @@ void Thumb_ALU(u16 instruction) {
     case ThumbDataOp::LSL: {
       auto shift = state.reg[src];
       bus.Idle();
-      pipe.access = Access::Code | Access::Nonsequential;
 
       int carry = state.cpsr.f.c;
       LSL(state.reg[dst], shift, carry);
@@ -123,7 +122,6 @@ void Thumb_ALU(u16 instruction) {
     case ThumbDataOp::LSR: {
       auto shift = state.reg[src];
       bus.Idle();
-      pipe.access = Access::Code | Access::Nonsequential;
 
       int carry = state.cpsr.f.c;
       LSR(state.reg[dst], shift, carry, false);
@@ -134,7 +132,6 @@ void Thumb_ALU(u16 instruction) {
     case ThumbDataOp::ASR: {
       auto shift = state.reg[src];
       bus.Idle();
-      pipe.access = Access::Code | Access::Nonsequential;
 
       int carry = state.cpsr.f.c;
       ASR(state.reg[dst], shift, carry, false);
@@ -153,7 +150,6 @@ void Thumb_ALU(u16 instruction) {
     case ThumbDataOp::ROR: {
       auto shift = state.reg[src];
       bus.Idle();
-      pipe.access = Access::Code | Access::Nonsequential;      
 
       int carry = state.cpsr.f.c;
       ROR(state.reg[dst], shift, carry, false);
@@ -184,7 +180,6 @@ void Thumb_ALU(u16 instruction) {
     }
     case ThumbDataOp::MUL: {
       TickMultiply(state.reg[dst]);
-      pipe.access = Access::Code | Access::Nonsequential;
 
       state.reg[dst] *= state.reg[src];
       SetZeroAndSignFlag(state.reg[dst]);
@@ -255,7 +250,7 @@ void Thumb_LoadStoreRelativePC(u16 instruction) {
   u32 offset  = instruction & 0xFF;
   u32 address = (state.r15 & ~2) + (offset << 2);
 
-  pipe.access = Access::Code | Access::Nonsequential;
+  pipe.access = Access::Code | Access::Sequential;
   state.r15 += 2;
 
   state.reg[dst] = ReadWord(address, Access::Nonsequential);
@@ -269,23 +264,26 @@ void Thumb_LoadStoreOffsetReg(u16 instruction) {
 
   u32 address = state.reg[base] + state.reg[off];
 
-  pipe.access = Access::Code | Access::Nonsequential;
   state.r15 += 2;
 
   switch (op) {
     case 0b00: // STR
       WriteWord(address, state.reg[dst], Access::Nonsequential);
+      pipe.access = Access::Code | Access::Nonsequential;
       break;
     case 0b01: // STRB
       WriteByte(address, (u8)state.reg[dst], Access::Nonsequential);
+      pipe.access = Access::Code | Access::Nonsequential;
       break;
     case 0b10: // LDR
       state.reg[dst] = ReadWordRotate(address, Access::Nonsequential);
       bus.Idle();
+      pipe.access = Access::Code | Access::Sequential;
       break;
     case 0b11: // LDRB
       state.reg[dst] = ReadByte(address, Access::Nonsequential);
       bus.Idle();
+      pipe.access = Access::Code | Access::Sequential;
       break;
   }
 }
@@ -297,28 +295,31 @@ void Thumb_LoadStoreSigned(u16 instruction) {
 
   u32 address = state.reg[base] + state.reg[off];
 
-  pipe.access = Access::Code | Access::Nonsequential;
   state.r15 += 2;
 
   switch (op) {
     case 0b00:
       // STRH rD, [rB, rO]
       WriteHalf(address, state.reg[dst], Access::Nonsequential);
+      pipe.access = Access::Code | Access::Nonsequential;
       break;
     case 0b01:
       // LDSB rD, [rB, rO]
       state.reg[dst] = ReadByteSigned(address, Access::Nonsequential);
       bus.Idle();
+      pipe.access = Access::Code | Access::Sequential;
       break;
     case 0b10:
       // LDRH rD, [rB, rO]
       state.reg[dst] = ReadHalfRotate(address, Access::Nonsequential);
       bus.Idle();
+      pipe.access = Access::Code | Access::Sequential;
       break;
     case 0b11:
       // LDSH rD, [rB, rO]
       state.reg[dst] = ReadHalfSigned(address, Access::Nonsequential);
       bus.Idle();
+      pipe.access = Access::Code | Access::Sequential;
       break;
   }
 }
@@ -328,27 +329,30 @@ void Thumb_LoadStoreOffsetImm(u16 instruction) {
   int dst  = (instruction >> 0) & 7;
   int base = (instruction >> 3) & 7;
 
-  pipe.access = Access::Code | Access::Nonsequential;
   state.r15 += 2;
 
   switch (op) {
     case 0b00:
       // STR rD, [rB, #imm]
       WriteWord(state.reg[base] + imm * 4, state.reg[dst], Access::Nonsequential);
+      pipe.access = Access::Code | Access::Nonsequential;
       break;
     case 0b01:
       // LDR rD, [rB, #imm]
       state.reg[dst] = ReadWordRotate(state.reg[base] + imm * 4, Access::Nonsequential);
       bus.Idle();
+      pipe.access = Access::Code | Access::Sequential;
       break;
     case 0b10:
       // STRB rD, [rB, #imm]
       WriteByte(state.reg[base] + imm, state.reg[dst], Access::Nonsequential);
+      pipe.access = Access::Code | Access::Nonsequential;
       break;
     case 0b11:
       // LDRB rD, [rB, #imm]
       state.reg[dst] = ReadByte(state.reg[base] + imm, Access::Nonsequential);
       bus.Idle();
+      pipe.access = Access::Code | Access::Sequential; 
       break;
   }
 }
@@ -360,14 +364,15 @@ void Thumb_LoadStoreHword(u16 instruction) {
 
   u32 address = state.reg[base] + imm * 2;
 
-  pipe.access = Access::Code | Access::Nonsequential;
   state.r15 += 2;
 
   if (load) {
     state.reg[dst] = ReadHalfRotate(address, Access::Nonsequential);
     bus.Idle();
+    pipe.access = Access::Code | Access::Sequential;
   } else {
     WriteHalf(address, state.reg[dst], Access::Nonsequential);
+    pipe.access = Access::Code | Access::Nonsequential;
   }
 }
 
@@ -376,14 +381,15 @@ void Thumb_LoadStoreRelativeToSP(u16 instruction) {
   u32 offset  = instruction & 0xFF;
   u32 address = state.r13 + offset * 4;
 
-  pipe.access = Access::Code | Access::Nonsequential;
   state.r15 += 2;
 
   if (load) {
     state.reg[dst] = ReadWordRotate(address, Access::Nonsequential);
     bus.Idle();
+    pipe.access = Access::Code | Access::Sequential;
   } else {
     WriteWord(address, state.reg[dst], Access::Nonsequential);
+    pipe.access = Access::Code | Access::Nonsequential;
   }
 }
 
@@ -415,7 +421,6 @@ template <bool pop, bool rbit>
 void Thumb_PushPop(u16 instruction) {
   auto list = instruction & 0xFF;
 
-  pipe.access = Access::Code | Access::Nonsequential;
   state.r15 += 2;
 
   // Handle special case for empty register lists.
@@ -428,6 +433,7 @@ void Thumb_PushPop(u16 instruction) {
       state.r13 -= 0x40;
       WriteWord(state.r13, state.r15, Access::Nonsequential);
     }
+    pipe.access = Access::Code | Access::Nonsequential;
     return;
   }
 
@@ -453,6 +459,8 @@ void Thumb_PushPop(u16 instruction) {
 
     bus.Idle();
     state.r13 = address;
+
+    pipe.access = Access::Code | Access::Sequential;
   } else {
     // Calculate internal start address (final r13 value)
     for (int reg = 0; reg <= 7; reg++) {
@@ -476,6 +484,8 @@ void Thumb_PushPop(u16 instruction) {
     if (rbit) {
       WriteWord(address, state.r14, access_type);
     }
+
+    pipe.access = Access::Code | Access::Nonsequential;
   }
 }
 
@@ -483,7 +493,6 @@ template <bool load, int base>
 void Thumb_LoadStoreMultiple(u16 instruction) {
   auto list = instruction & 0xFF;
 
-  pipe.access = Access::Code | Access::Nonsequential;
   state.r15 += 2;
 
   // Handle special case for empty register lists.
@@ -495,6 +504,7 @@ void Thumb_LoadStoreMultiple(u16 instruction) {
       WriteWord(state.reg[base], state.r15, Access::Nonsequential);
     }
     state.reg[base] += 0x40;
+    pipe.access = Access::Code | Access::Nonsequential;
     return;
   }
 
@@ -513,6 +523,7 @@ void Thumb_LoadStoreMultiple(u16 instruction) {
     if (~list & (1 << base)) {
       state.reg[base] = address;
     }
+    pipe.access = Access::Code | Access::Sequential;
   } else {
     int count = 0;
     int first = 0;
@@ -540,6 +551,8 @@ void Thumb_LoadStoreMultiple(u16 instruction) {
         address += 4;
       }
     }
+
+    pipe.access = Access::Code | Access::Nonsequential;
   }
 }
 

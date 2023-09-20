@@ -32,114 +32,132 @@ void Bus::Idle() {
   } else {
     parallel_internal_cpu_cycle_limit--;
   }
+
+  // @todo: clean me up
+  previous_code = false;
+  previous_idle = true;
 }
 
-void Bus::Prefetch(u32 address, bool code, int cycles) {
-  Step(cycles);
-
-  /*if(!code) {
-    StopPrefetch();
-    Step(cycles);
-    return;
-  }
-
-  if(prefetch.active) {
-    // Case #1: requested address is the first entry in the prefetch buffer.
-    if(prefetch.count != 0 && address == prefetch.head_address) {
-      prefetch.count--;
-      prefetch.head_address += prefetch.opcode_width;
-      Step(1);
-      return;
+void Bus::StepPrefetchUnit(int cycles) {
+  // Do a dum dum cycle-by-cycle simulation for now. We can fix this later.
+  while(cycles-- > 0) {
+    if(!prefetch.fetching) {
+      return; // nothing to do!
     }
 
-    // Case #2: requested address is currently being prefetched.
-    if(prefetch.countdown > 0 && address == prefetch.last_address) {
-      Step(prefetch.countdown);
-      prefetch.head_address = prefetch.last_address;
-      prefetch.count = 0;
-      return;
+    if(--prefetch.fetch_timer == 0) { // finished fetch, latch data bus value into the buffer
+      prefetch.buffer[prefetch.wr_position] = memory.rom.ReadROM16(0, true); // we do not care about the address because of sequential access
+
+      prefetch.fetch_timer = prefetch.fetch_duty; // reload fetch timer
+
+      if(++prefetch.wr_position == prefetch.buffer.size() || !hw.waitcnt.prefetch) {
+        prefetch.fetching = false;
+      }
     }
   }
-
-  const int page = address >> 24;
-
-  StopPrefetch();
-
-  // Case #3: requested address is loaded through the Game Pak.
-  if(hw.prefetch_buffer_was_disabled) {
-    // force the access to be non-sequential.
-    // @todo: make this less dodgy.
-         if(cycles == wait16[1][page]) cycles = wait16[0][8];
-    else if(cycles == wait32[1][page]) cycles = wait32[0][8];
-
-    hw.prefetch_buffer_was_disabled = false;
-  }
-  Step(cycles);
-  if(hw.waitcnt.prefetch) {
-    const bool thumb = hw.cpu.state.cpsr.f.thumb;
-
-    // The prefetch unit will be engaged and keeps the burst transfer alive.
-    prefetch.active = true;
-    prefetch.count = 0;
-    prefetch.thumb = thumb;
-    if(thumb) {
-      prefetch.opcode_width = sizeof(u16);
-      prefetch.capacity = 8;
-      prefetch.duty = wait16[int(Access::Sequential)][page];
-    } else {
-      prefetch.opcode_width = sizeof(u32);
-      prefetch.capacity = 4;
-      prefetch.duty = wait32[int(Access::Sequential)][page];
-    }
-    prefetch.countdown = prefetch.duty;
-    prefetch.last_address = address + prefetch.opcode_width;
-    prefetch.head_address = prefetch.last_address;
-  }*/
 }
 
 void Bus::StopPrefetch() {
-  // if(prefetch.active) {
-  //   u32 r15 = hw.cpu.state.r15;
+  // For now we interpret this as ROM write or SRAM read/write access
 
-  //   /* If ROM data/SRAM/FLASH is accessed in a cycle, where the prefetch unit
-  //    * is active and finishing a half-word access, then a one-cycle penalty applies.
-  //    * Note: the prefetch unit is only active when executing code from ROM.
-  //    */
-  //   if(r15 >= 0x08000000 && r15 <= 0x0DFFFFFF) {
-  //     auto half_duty_plus_one = (prefetch.duty >> 1) + 1;
-  //     auto countdown = prefetch.countdown;
+  if(prefetch.fetching) {
+    prefetch.fetching = false; // must happen first
 
-  //     if(countdown == 1 || (!prefetch.thumb && countdown == half_duty_plus_one)) {
-  //       Step(1);
-  //     }
-  //   }
+    // Concurrent access penalty
+    if(prefetch.fetch_timer == 1 && hw.cpu.state.r15 >= 0x08000000 && hw.cpu.state.r15 <= 0x0DFFFFFF) { // TODO: remove R15 hack
+      Step(1);
+    }
+  }
 
-  //   prefetch.active = false;
-  // }
+  // Remove me?
+  prefetch.rd_position = 0U;
+  prefetch.wr_position = 0U;
 }
 
-u16 Bus::ReadGamePakROM16(u32 address, int sequential) {
+u16 Bus::ReadGamePakROM16(u32 address, int sequential, bool code) {
+  // TODO: can we really detect actual CPU idle/internal cycles?
+
+  // Try to detect CPU branches based on the previous and current access type
+  if(code && (previous_code || previous_idle) && !sequential) {
+    // @todo: concurrent access penalty?
+    prefetch.rd_position = 0U;
+    prefetch.wr_position = 0U;
+    prefetch.fetching = false;
+  }
+
+  // Force non-sequential access after idle cycle
+  // This must happen after the branch detection
+  if(previous_idle) {
+    sequential = 0;
+  }
+
+  // Read opcodes from the prefetch buffer while it holds data.
+  // Assumption: this can happen as long as there are unconsumed entries in the buffer, even if the prefetch unit is not enabled anymore.
+  if(code && prefetch.rd_position < prefetch.wr_position) {
+    // @todo: concurrent access penalty?
+    Step(1);
+
+    const u16 half_word = prefetch.buffer[prefetch.rd_position++];
+
+    // TEST: reset buffer once everything has been read.
+    if(prefetch.rd_position == prefetch.wr_position) {
+      prefetch.rd_position = 0U;
+      prefetch.wr_position = 0U;
+      // prefetch.fetching = false; // In case that still was true for whatever reason, don't think this really can happen.
+    }
+
+    return half_word;
+  } else if(code && prefetch.fetching && prefetch.rd_position == prefetch.wr_position) {
+    // Handle case where next buffer entry is currently being prefetched.
+
+    Step(prefetch.fetch_timer);
+
+    // TODO: deduplicate logic
+    const u16 half_word = prefetch.buffer[prefetch.rd_position++];
+
+    // TEST: reset buffer once everything has been read.
+    if(prefetch.rd_position == prefetch.wr_position) {
+      prefetch.rd_position = 0U;
+      prefetch.wr_position = 0U;
+      // prefetch.fetching = false; // In case that still was true for whatever reason, don't think this really can happen.
+    }
+
+    return half_word;
+  }
+
+  // Assumption: any data access stops prefetch
+  if(!code) {
+    StopPrefetch();
+  }
+
+  // For practicality we let this happen before engaging prefetch
+  // Further down we assume that this access may have already went through the prefetch unit.
   Step(wait16[sequential][address >> 24]);
-  return memory.rom.ReadROM16(address, sequential);
+  const u16 half_word = memory.rom.ReadROM16(address, sequential);
+
+  /**
+   * Assumed conditions for prefetch to begin doing work:
+   *  - A code ROM access is being made (can be sequential or non-sequential?)
+   *  - Prefetch is enabled in WAITCNT
+   *  - TODO: All entries in the prefetch buffer has been consumed after it has been stopped?
+   */
+  if(code && !prefetch.fetching && hw.waitcnt.prefetch) {
+    // @todo: init at one or zero? we assume one because the first read likely will end up in the prefetch buffer too?
+    // alternatively: should be just increment rd_position and wr_position?
+    prefetch.rd_position = 1U;
+    prefetch.wr_position = 1U;
+    prefetch.fetching = true;
+    prefetch.fetch_duty = wait16[1][8]; // WS0 sequential access timing, TODO: is this always correct? And should it be latched?!?
+    prefetch.fetch_timer = prefetch.fetch_duty;
+  }
+
+  return half_word;
 }
 
 void Bus::Step(int cycles) {
   scheduler.AddCycles(cycles);
 
-  /*if(prefetch.active) {
-    prefetch.countdown -= cycles;
-
-    while(prefetch.countdown <= 0) {
-      prefetch.count++;
-
-      if(hw.waitcnt.prefetch && prefetch.count < prefetch.capacity) {
-        prefetch.last_address += prefetch.opcode_width;
-        prefetch.countdown += prefetch.duty;
-      } else {
-        break;
-      }
-    }
-  }*/
+  StepPrefetchUnit(cycles);
 }
 
 void Bus::UpdateWaitStateTable() {

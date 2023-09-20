@@ -60,8 +60,6 @@ void ARM_DataProcessing(u32 instruction) {
       shift = GetReg((instruction >> 8) & 0xF);
       state.r15 += 4;
       bus.Idle();
-
-      pipe.access = Access::Code | Access::Nonsequential;
     }
 
     op1 = GetReg(reg_op1);
@@ -240,7 +238,7 @@ void ARM_Multiply(u32 instruction) {
   int op3 = (instruction >> 12) & 0xF;
   int dst = (instruction >> 16) & 0xF;
 
-  pipe.access = Access::Code | Access::Nonsequential;
+  pipe.access = Access::Code | Access::Sequential;
   state.r15 += 4;
 
   auto lhs = GetReg(op1);
@@ -275,7 +273,7 @@ void ARM_MultiplyLong(u32 instruction) {
 
   s64 result;
 
-  pipe.access = Access::Code | Access::Nonsequential;
+  pipe.access = Access::Code | Access::Sequential;
   state.r15 += 4;
 
   auto lhs = GetReg(op1);
@@ -324,6 +322,8 @@ void ARM_SingleDataSwap(u32 instruction) {
 
   u32 tmp;
 
+  // TODO: check manual if CPU signals sequential or non-sequential access for the next prefetch.
+
   pipe.access = Access::Code | Access::Nonsequential;
   state.r15 += 4;
 
@@ -371,7 +371,6 @@ void ARM_HalfwordSignedTransfer(u32 instruction) {
     offset = GetReg(instruction & 0xF);
   }
 
-  pipe.access = Access::Code | Access::Nonsequential;
   state.r15 += 4;
 
   if constexpr (!add) {
@@ -392,11 +391,13 @@ void ARM_HalfwordSignedTransfer(u32 instruction) {
         }
         bus.Idle();
         SetReg(dst, value);
+        pipe.access = Access::Code | Access::Sequential;
       } else {
         WriteHalf(address, GetReg(dst), Access::Nonsequential);
         if constexpr (writeback || !pre) {
           SetReg(base, GetReg(base) + offset);
         }
+        pipe.access = Access::Code | Access::Nonsequential;
       }
       break;
     case 2:
@@ -407,6 +408,7 @@ void ARM_HalfwordSignedTransfer(u32 instruction) {
         }
         bus.Idle();
         SetReg(dst, value);
+        pipe.access = Access::Code | Access::Sequential;
       } else {
         // ARMv5 LDRD: this opcode is unpredictable on ARMv4T.
         // On ARM7TDMI-S it doesn't seem to perform any memory access,
@@ -416,6 +418,7 @@ void ARM_HalfwordSignedTransfer(u32 instruction) {
           SetReg(base, GetReg(base) + offset);
         }
         bus.Idle();
+        pipe.access = Access::Code | Access::Sequential; // TODO
       }
       break;
     case 3:
@@ -426,6 +429,7 @@ void ARM_HalfwordSignedTransfer(u32 instruction) {
         }
         bus.Idle();
         SetReg(dst, value);
+        pipe.access = Access::Code | Access::Sequential;
       } else {
         // ARMv5 STRD: this opcode is unpredictable on ARMv4T.
         // On ARM7TDMI-S it doesn't seem to perform any memory access,
@@ -434,6 +438,7 @@ void ARM_HalfwordSignedTransfer(u32 instruction) {
         if constexpr (writeback || !pre) {
           SetReg(base, GetReg(base) + offset);
         }
+        pipe.access = Access::Code | Access::Nonsequential; // TODO
       }
       break;
   }
@@ -479,7 +484,6 @@ void ARM_SingleDataTransfer(u32 instruction) {
     DoShift(opcode, offset, amount, carry, true);
   }
 
-  pipe.access = Access::Code | Access::Nonsequential;
   state.r15 += 4;
 
   if constexpr(!add) {
@@ -504,6 +508,7 @@ void ARM_SingleDataTransfer(u32 instruction) {
     }
 
     bus.Idle();
+    pipe.access = Access::Code | Access::Sequential;
 
     SetReg(dst, value);
   } else {
@@ -516,6 +521,8 @@ void ARM_SingleDataTransfer(u32 instruction) {
     if constexpr (writeback || !pre) {
       SetReg(base, GetReg(base) + offset);
     }
+
+    pipe.access = Access::Code | Access::Nonsequential;
   }
 
   if (load && dst == 15) {
@@ -582,7 +589,11 @@ void ARM_BlockDataTransfer(u32 instruction) {
 
   auto access_type = Access::Nonsequential;
 
-  pipe.access = Access::Code | Access::Nonsequential;
+  if constexpr(load) {
+    pipe.access = Access::Code | Access::Sequential;
+  } else {
+    pipe.access = Access::Code | Access::Nonsequential;
+  }
   state.r15 += 4;
 
   for (int i = first; i < 16; i++) {
