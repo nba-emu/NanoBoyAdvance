@@ -58,7 +58,6 @@ void OGLVideoDevice::Initialize() {
   glEnableVertexAttribArray(1);
 
   // Create three textures and a framebuffer for postprocessing.
-  glEnable(GL_TEXTURE_2D);
   glGenFramebuffers(1, &fbo);
   glGenTextures(4, texture);
   for(int i = 0; i < 4; i++) {
