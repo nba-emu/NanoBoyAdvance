@@ -64,6 +64,7 @@ void OGLVideoDevice::Initialize() {
   glGenTextures(textures.size(), textures.data());
 
   glClearColor(0.0, 0.0, 0.0, 1.0);
+  glEnable(GL_FRAMEBUFFER_SRGB);
 
   ReloadConfig();
 }
