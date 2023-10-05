@@ -28,6 +28,7 @@ struct OGLVideoDevice : VideoDevice {
   void ReloadConfig();
 
 private:
+  void UpdateTextures();
   void CreateShaderPrograms();
   void ReleaseShaderPrograms();
 
@@ -53,7 +54,6 @@ private:
   std::array<GLuint, 4> textures = {};
   std::vector<GLuint> programs;
   GLint texture_filter = GL_NEAREST;
-  bool texture_filter_invalid = false;
 
   std::shared_ptr<PlatformConfig> config;
 };

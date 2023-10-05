@@ -62,11 +62,6 @@ void OGLVideoDevice::Initialize() {
   // Create three textures and a framebuffer for postprocessing.
   glGenFramebuffers(1, &fbo);
   glGenTextures(textures.size(), textures.data());
-  for(int i = 0; i < 4; i++) {
-    glBindTexture(GL_TEXTURE_2D, textures[i]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  }
 
   glClearColor(0, 0, 0, 1);
   glClear(GL_COLOR_BUFFER_BIT);
@@ -75,15 +70,29 @@ void OGLVideoDevice::Initialize() {
 }
 
 void OGLVideoDevice::ReloadConfig() {
-  texture_filter_invalid = true;
-
   if(config->video.filter == Video::Filter::Linear) {
     texture_filter = GL_LINEAR;
   } else {
     texture_filter = GL_NEAREST;
   }
 
+  UpdateTextures();
   CreateShaderPrograms();
+}
+
+void OGLVideoDevice::UpdateTextures() {
+  for(const auto texture : textures) {
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, gba_screen_width, gba_screen_height,
+                 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texture_filter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texture_filter);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  }
 }
 
 void OGLVideoDevice::CreateShaderPrograms() {
@@ -247,11 +256,6 @@ void OGLVideoDevice::Draw(u32* buffer) {
   glBindTexture(GL_TEXTURE_2D, textures[3]);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, gba_screen_width, gba_screen_height,
                0, GL_BGRA, GL_UNSIGNED_BYTE, buffer);
-  if(texture_filter_invalid) {
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texture_filter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texture_filter);
-    texture_filter_invalid = false;
-  }
 
   // Bind LCD history map
   glActiveTexture(GL_TEXTURE1);
