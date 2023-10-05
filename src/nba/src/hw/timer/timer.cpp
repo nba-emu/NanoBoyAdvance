@@ -171,16 +171,28 @@ void Timer::OnControlWritten(u64 chan_id) {
   channel.mask = g_ticks_mask[control.frequency];
 
   if(control.enable) {
-    if(!enable_previous) {
-      channel.counter = channel.reload;
-    }
+    const int late = scheduler.GetTimestampNow() & channel.mask;
 
-    if(!control.cascade) {
-      auto late = (scheduler.GetTimestampNow() & channel.mask);
-      if(!enable_previous) {
-        late -= 1;
+    if(enable_previous) {
+      if(!control.cascade) {
+        StartChannel(channel, late);
       }
-      StartChannel(channel, late);
+    } else {
+      if(control.cascade) {
+        channel.counter = channel.reload;
+      } else if(channel.counter == 0xFFFF && late == 0) {
+        /**
+         * After enabling a timer, it takes one cycle to load the reload value into the counter.
+         * During this cycle, the timer can tick and may even overflow.
+         * We handle this edge-case here.
+         * 
+         * See: https://github.com/nba-emu/NanoBoyAdvance/issues/331
+         */ 
+        StartChannel(channel, 0);
+      } else {
+        channel.counter = channel.reload;
+        StartChannel(channel, late - 1);
+      }
     }
   }
 }
