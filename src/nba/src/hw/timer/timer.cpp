@@ -171,16 +171,17 @@ void Timer::OnControlWritten(u64 chan_id) {
   channel.mask = g_ticks_mask[control.frequency];
 
   if(control.enable) {
-    const int late = scheduler.GetTimestampNow() & channel.mask;
+    // How many cycles are we away from the next prescaler tick?
+    const int prescaler_offset = scheduler.GetTimestampNow() & channel.mask;
 
     if(enable_previous) {
       if(!control.cascade) {
-        StartChannel(channel, late);
+        StartChannel(channel, prescaler_offset);
       }
     } else {
       if(control.cascade) {
         channel.counter = channel.reload;
-      } else if(channel.counter == 0xFFFF && late == 0) {
+      } else if(channel.counter == 0xFFFF && prescaler_offset == 0) {
         /**
          * After enabling a timer, it takes one cycle to load the reload value into the counter.
          * During this cycle, the timer can tick and may even overflow.
@@ -191,7 +192,7 @@ void Timer::OnControlWritten(u64 chan_id) {
         StartChannel(channel, 0);
       } else {
         channel.counter = channel.reload;
-        StartChannel(channel, late - 1);
+        StartChannel(channel, prescaler_offset - 1);
       }
     }
   }
