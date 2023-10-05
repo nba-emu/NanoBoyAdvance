@@ -237,21 +237,6 @@ void OGLVideoDevice::SetViewport(int x, int y, int width, int height) {
   view_width  = width;
   view_height = height;
 
-  for(int i = 0; i < 3; i++) {
-    glBindTexture(GL_TEXTURE_2D, textures[i]);
-    glTexImage2D(
-      GL_TEXTURE_2D,
-      0,
-      GL_RGBA,
-      view_width,
-      view_height,
-      0,
-      GL_BGRA,
-      GL_UNSIGNED_BYTE,
-      nullptr
-    );
-  }
-
   UpdateShaderUniforms();
 }
 
@@ -278,7 +263,7 @@ void OGLVideoDevice::Draw(u32* buffer) {
 
   auto program_count = programs.size();
 
-  glViewport(0, 0, view_width, view_height);
+  glViewport(0, 0, gba_screen_width, gba_screen_height);
   glBindVertexArray(quad_vao);
 
   if(program_count <= 2) {
