@@ -250,8 +250,8 @@ void OGLVideoDevice::Draw(u32* buffer) {
   // Update and bind LCD screen texture
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, textures[3]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, gba_screen_width, gba_screen_height,
-               0, GL_BGRA, GL_UNSIGNED_BYTE, buffer);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, gba_screen_width, gba_screen_height,
+                  GL_BGRA, GL_UNSIGNED_BYTE, buffer);
 
   // Bind LCD history map
   glActiveTexture(GL_TEXTURE1);
