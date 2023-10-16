@@ -78,7 +78,6 @@ set(HEADERS
   src/hw/keypad/keypad.hpp
   src/hw/timer/timer.hpp
   src/core.hpp
-  src/scheduler.hpp
 )
 
 set(HEADERS_PUBLIC
@@ -109,6 +108,9 @@ set(HEADERS_PUBLIC
   include/nba/core.hpp
   include/nba/integer.hpp
   include/nba/log.hpp
+  include/nba/print.hpp
+  include/nba/save_state.hpp
+  include/nba/scheduler.hpp
 )
 
 add_library(nba STATIC ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})

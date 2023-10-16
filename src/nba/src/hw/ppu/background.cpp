@@ -124,6 +124,8 @@ template<int mode> void PPU::DrawBackgroundImpl(int cycles) {
       if(mmio.vcount < 159) {
         if(++mosaic.bg._counter_y == mosaic.bg.size_y) {
           mosaic.bg._counter_y = 0;
+        } else {
+          mosaic.bg._counter_y &= 15;
         }
       } else {
         mosaic.bg._counter_y = 0;

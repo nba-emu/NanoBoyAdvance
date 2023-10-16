@@ -13,12 +13,12 @@
 #include <nba/config.hpp>
 #include <nba/integer.hpp>
 #include <nba/save_state.hpp>
+#include <nba/scheduler.hpp>
 #include <type_traits>
 
 #include "hw/ppu/registers.hpp"
 #include "hw/dma/dma.hpp"
 #include "hw/irq/irq.hpp"
-#include "scheduler.hpp"
 
 namespace nba::core {
 
@@ -34,6 +34,14 @@ struct PPU {
 
   void LoadState(SaveState const& state);
   void CopyState(SaveState& state);
+
+  auto GetPRAM() -> u8* {
+    return pram;
+  }
+
+  auto GetVRAM() -> u8* {
+    return vram;
+  }
 
   template<typename T>
   auto ALWAYS_INLINE ReadPRAM(u32 address) noexcept -> T {
@@ -381,6 +389,7 @@ private:
     u32 colors[2];
     u16 color_l;
     bool forced_blank;
+    Sprite::Pixel sprite_pixel_latch;
   } merge;
 
   void InitMerge();
@@ -406,21 +415,22 @@ private:
       return 0U;
     }
 
-    bg.timestamp_vram_access = bg.timestamp_init + cycle;
-    return read<T>(vram, address);
+    if(likely(address < GetSpriteVRAMBoundary())) {
+      bg.timestamp_vram_access = bg.timestamp_init + cycle;
+      vram_bg_latch = read<u16>(vram, address & ~1U);
+      return read<T>(vram, address);
+    }
+    return read<T>(&vram_bg_latch, address & 1U);
   }
 
   template<typename T>
   auto ALWAYS_INLINE FetchVRAM_OBJ(uint cycle, uint address) -> T {
     // @todo: OBJ circuitry seems to ignore 'forced blank'. But is that really true?
-
-    sprite.timestamp_vram_access = sprite.timestamp_init + cycle;
-
-    // @todo: verify this edge-case against hardware.
-    if(address < GetSpriteVRAMBoundary()) {
-      return 0U;
+    if(likely(address >= GetSpriteVRAMBoundary())) {
+      sprite.timestamp_vram_access = sprite.timestamp_init + cycle;
+      return read<T>(vram, address);
     }
-    return read<T>(vram, address);
+    return 0u;
   }
 
   template<typename T>
@@ -432,6 +442,8 @@ private:
   u8 pram[0x00400];
   u8 oam [0x00400];
   u8 vram[0x18000];
+
+  u16 vram_bg_latch;
 
   Scheduler& scheduler;
   IRQ& irq;

@@ -1,11 +1,11 @@
 
 #include <windows.h>
 
-IDI_ICON1 ICON DISCARDABLE "app.ico"
+IDI_ICON1 ICON DISCARDABLE "${CMAKE_CURRENT_SOURCE_DIR}/rc/app.ico"
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION     1,7
-PRODUCTVERSION  1,7
+FILEVERSION     ${VERSION_MAJOR},${VERSION_MINOR},${VERSION_PATCH}
+PRODUCTVERSION  ${VERSION_MAJOR},${VERSION_MINOR},${VERSION_PATCH}
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
@@ -13,12 +13,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName",        "fleroviux"
             VALUE "FileDescription",    "NanoBoyAdvance"
-            VALUE "FileVersion",        "1.7"
+            VALUE "FileVersion",        "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
             VALUE "InternalName",       "NanoBoyAdvance.exe"
             VALUE "LegalCopyright",     "(c) 2015 - 2023 fleroviux"
             VALUE "OriginalFilename",   "NanoBoyAdvance.exe"
             VALUE "ProductName",        "NanoBoyAdvance"
-            VALUE "ProductVersion",     "1.7"
+            VALUE "ProductVersion",     "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
         END
     END
 
@@ -28,4 +28,4 @@ BEGIN
     END
 END
 
-CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "app.manifest"
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "${CMAKE_CURRENT_SOURCE_DIR}/rc/app.manifest"

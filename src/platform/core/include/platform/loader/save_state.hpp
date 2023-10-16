@@ -7,8 +7,11 @@
 
 #pragma once
 
+#include <filesystem>
 #include <nba/core.hpp>
 #include <string>
+
+namespace fs = std::filesystem;
 
 namespace nba {
 
@@ -23,7 +26,7 @@ struct SaveStateLoader {
 
   static auto Load(
     std::unique_ptr<CoreBase>& core,
-    std::string path
+    fs::path const& path
   ) -> Result;
 
 private:

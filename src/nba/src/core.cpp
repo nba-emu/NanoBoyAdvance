@@ -23,7 +23,7 @@ Core::Core(std::shared_ptr<Config> config)
     , apu(scheduler, dma, bus, config)
     , ppu(scheduler, irq, dma, config)
     , timer(scheduler, irq, apu)
-    , keypad(irq, config)
+    , keypad(scheduler, irq, config)
     , bus(scheduler, {cpu, irq, dma, apu, ppu, timer, keypad}) {
   Reset();
 }
@@ -45,6 +45,7 @@ void Core::Reset() {
 
   if(config->audio.mp2k_hle_enable) {
     apu.GetMP2K().UseCubicFilter() = config->audio.mp2k_hle_cubic;
+    apu.GetMP2K().ForceReverb() = config->audio.mp2k_hle_force_reverb;
     hle_audio_hook = SearchSoundMainRAM();
     if(hle_audio_hook != 0xFFFFFFFF) {
       Log<Info>("Core: detected MP2K audio mixer @ 0x{:08X}", hle_audio_hook);
@@ -52,10 +53,6 @@ void Core::Reset() {
   } else {
     hle_audio_hook = 0xFFFFFFFF;
   }
-}
-
-auto Core::GetROM() -> ROM& {
-  return bus.memory.rom;
 }
 
 void Core::Attach(std::vector<u8> const& bios) {
@@ -77,28 +74,34 @@ auto Core::CreateSolarSensor() -> std::unique_ptr<SolarSensor> {
 void Core::Run(int cycles) {
   using HaltControl = Bus::Hardware::HaltControl;
 
-  auto limit = scheduler.GetTimestampNow() + cycles;
+  const auto limit = scheduler.GetTimestampNow() + cycles;
 
   while(scheduler.GetTimestampNow() < limit) {
-    if(bus.hw.haltcnt == HaltControl::Halt && irq.ShouldUnhaltCPU()) {
-      bus.Step(1);
-      bus.hw.haltcnt = HaltControl::Run;
-    }
-
     if(bus.hw.haltcnt == HaltControl::Run) {
       if(cpu.state.r15 == hle_audio_hook) {
-        // TODO: cache the SoundInfo pointer once we have it?
+        // @todo: cache the SoundInfo pointer once we have it?
         apu.GetMP2K().SoundMainRAM(
           *bus.GetHostAddress<MP2K::SoundInfo>(
-            *bus.GetHostAddress<u32>(0x0300'7FF0)
+            *bus.GetHostAddress<u32>(0x03007FF0)
           )
         );
       }
+
       cpu.Run();
     } else {
-      if(dma.IsRunning()) dma.Run();
+      while(scheduler.GetTimestampNow() < limit && !irq.ShouldUnhaltCPU()) {
+        if(dma.IsRunning()) {
+          dma.Run();
+          if(irq.ShouldUnhaltCPU()) continue; // can become true during the DMA
+        }
 
-      bus.Step(scheduler.GetRemainingCycleCount());
+        bus.Step(scheduler.GetRemainingCycleCount());
+      }
+
+      if(irq.ShouldUnhaltCPU()) {
+        bus.Step(1);
+        bus.hw.haltcnt = HaltControl::Run;
+      }
     }
   }
 }
@@ -143,6 +146,42 @@ auto Core::SearchSoundMainRAM() -> u32 {
   }
 
   return 0xFFFFFFFF;
+}
+
+auto Core::GetROM() -> ROM& {
+  return bus.memory.rom;
+}
+
+auto Core::GetPRAM() -> u8* {
+  return ppu.GetPRAM();
+}
+
+auto Core::GetVRAM() -> u8* {
+  return ppu.GetVRAM();
+}
+
+auto Core::PeekByteIO(u32 address) -> u8  {
+  return bus.hw.ReadByte(address);
+}
+
+auto Core::PeekHalfIO(u32 address) -> u16 {
+  return bus.hw.ReadHalf(address);
+}
+
+auto Core::PeekWordIO(u32 address) -> u32 {
+  return bus.hw.ReadWord(address);
+}
+
+auto Core::GetBGHOFS(int id) -> u16 {
+  return ppu.mmio.bghofs[id];
+}
+
+auto Core::GetBGVOFS(int id) -> u16 {
+  return ppu.mmio.bgvofs[id];
+}
+
+Scheduler& Core::GetScheduler() {
+  return scheduler;
 }
 
 } // namespace nba::core

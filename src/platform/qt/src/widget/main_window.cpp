@@ -23,12 +23,21 @@
 #include <unordered_map>
 
 #include "widget/main_window.hpp"
+#include "version.hpp"
 
 MainWindow::MainWindow(
   QApplication* app,
   QWidget* parent
 )   : QMainWindow(parent) {
-  setWindowTitle("NanoBoyAdvance 1.7");
+  #ifdef RELEASE_BUILD
+    base_window_title = QStringLiteral("NanoBoyAdvance %1.%2.%3")
+      .arg(VERSION_MAJOR).arg(VERSION_MINOR).arg(VERSION_PATCH);
+  #else
+    base_window_title = QStringLiteral("NanoBoyAdvance %1.%2.%3 [%4-%5]")
+      .arg(VERSION_MAJOR).arg(VERSION_MINOR).arg(VERSION_PATCH).arg(VERSION_GIT_BRANCH).arg(VERSION_GIT_HASH);
+  #endif
+
+  setWindowTitle(base_window_title);
   setAcceptDrops(true);
 
   screen = std::make_shared<Screen>(this, config);
@@ -41,6 +50,7 @@ MainWindow::MainWindow(
 
   CreateFileMenu();
   CreateConfigMenu();
+  CreateToolsMenu();
   CreateHelpMenu();
 
   config->video_dev = screen;
@@ -60,10 +70,10 @@ MainWindow::MainWindow(
   });
   connect(this, &MainWindow::UpdateFrameRate, this, [this](int fps) {
     if(config->window.show_fps) {
-      auto percent = fps / 59.7275 * 100;
-      setWindowTitle(QString::fromStdString(fmt::format("NanoBoyAdvance 1.7 [{} fps | {:.2f}%]", fps, percent)));
+      const float percent = fps / 59.7275f * 100.0f;
+      setWindowTitle(QStringLiteral("%1 (%2 fps | %3%)").arg(base_window_title).arg(fps).arg(percent));
     } else {
-      setWindowTitle("NanoBoyAdvance 1.7");
+      setWindowTitle(base_window_title);
     }
   }, Qt::QueuedConnection);
 
@@ -178,6 +188,7 @@ void MainWindow::CreateAudioMenu(QMenu* parent) {
   auto hq_menu = menu->addMenu("MP2K HQ mixer");
   CreateBooleanOption(hq_menu, "Enable", &config->audio.mp2k_hle_enable, true);
   CreateBooleanOption(hq_menu, "Cubic interpolation", &config->audio.mp2k_hle_cubic, true);
+  CreateBooleanOption(hq_menu, "Force reverb on", &config->audio.mp2k_hle_force_reverb, true);
 }
 
 void MainWindow::CreateInputMenu(QMenu* parent) {
@@ -357,6 +368,30 @@ void MainWindow::CreateConfigMenu() {
   CreateWindowMenu(menu);
 }
 
+void MainWindow::CreateToolsMenu() {
+  auto tools_menu = menuBar()->addMenu(tr("Tools"));
+
+  // @todo: do not go through the screen component for updates.
+
+  connect(tools_menu->addAction(tr("Palette Viewer")), &QAction::triggered, [this]() {
+    if(!palette_viewer_window) {
+      palette_viewer_window = new PaletteViewerWindow{core.get(), this};
+      connect(screen.get(), &Screen::RequestDraw, palette_viewer_window, &PaletteViewerWindow::Update);
+    }
+
+    palette_viewer_window->show();
+  });
+
+  connect(tools_menu->addAction(tr("Background Viewer")), &QAction::triggered, [this]() {
+    if(!background_viewer_window) {
+      background_viewer_window = new BackgroundViewerWindow{core.get(), this};
+      connect(screen.get(), &Screen::RequestDraw, background_viewer_window, &BackgroundViewerWindow::Update);
+    }
+
+    background_viewer_window->show();
+  });
+}
+
 void MainWindow::CreateHelpMenu() {
   auto help_menu = menuBar()->addMenu(tr("Help"));
   auto about_app = help_menu->addAction(tr("About NanoBoyAdvance"));
@@ -413,7 +448,7 @@ void MainWindow::RenderRecentFilesMenu() {
     action->setShortcut(Qt::CTRL | (Qt::Key) ((int) Qt::Key_0 + i++));
 
     connect(action, &QAction::triggered, [this, path] {
-      LoadROM(path);
+      LoadROM(QString::fromStdString(path).toStdU16String()); 
     });
   }
 
@@ -438,10 +473,10 @@ void MainWindow::RenderSaveStateMenus() {
     action_save->setShortcut(Qt::SHIFT | key);
 
     if(game_loaded) {
-      auto slot_filename = GetSavePath(game_path, fmt::format("{:02}.nbss", i)).string();
+      auto slot_filename = GetSavePath(game_path, fmt::format("{:02}.nbss", i)).u16string();
 
       if(fs::exists(slot_filename)) {
-        auto file_info = QFileInfo{QString::fromStdString(slot_filename)};
+        auto file_info = QFileInfo{QString::fromStdU16String(slot_filename)};
         auto date_modified = file_info.lastModified().toLocalTime().toString().toStdString();
 
         auto state_name = QString::fromStdString(fmt::format("{:02} - {}", i, date_modified));
@@ -483,7 +518,7 @@ void MainWindow::RenderSaveStateMenus() {
     dialog.setNameFilter("NanoBoyAdvance Save State (*.nbss)");
 
     if(dialog.exec()) {
-      LoadState(dialog.selectedFiles().at(0).toStdString());
+      LoadState(dialog.selectedFiles().at(0).toStdU16String());
     }
   });
 
@@ -494,7 +529,7 @@ void MainWindow::RenderSaveStateMenus() {
     dialog.setNameFilter("NanoBoyAdvance Save State (*.nbss)");
 
     if(dialog.exec()) {
-      SaveState(dialog.selectedFiles().at(0).toStdString());
+      SaveState(dialog.selectedFiles().at(0).toStdU16String());
     }
   });
 
@@ -576,7 +611,7 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
     }
   } else if(type == QEvent::FileOpen) {
 	  auto file = dynamic_cast<QFileOpenEvent*>(event)->file();
-    LoadROM(file.toStdString());
+    LoadROM(file.toStdU16String());
   } else if(type == QEvent::Drop) {
     const QMimeData* mime_data = ((QDropEvent*)event)->mimeData();
 
@@ -584,7 +619,7 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
       QList<QUrl> url_list = mime_data->urls();
 
       if(url_list.size() > 0) {
-        LoadROM(url_list.at(0).toLocalFile().toStdString());
+        LoadROM(url_list.at(0).toLocalFile().toStdU16String());
       }
     }
   }
@@ -609,7 +644,7 @@ void MainWindow::FileOpen() {
   dialog.setNameFilter("Game Boy Advance ROMs (*.gba *.agb *.zip *.rar *.7z *.tar)");
 
   if(dialog.exec()) {
-    auto file = dialog.selectedFiles().at(0).toStdString();
+    auto file = dialog.selectedFiles().at(0).toStdU16String();
 
     LoadROM(file);
   }
@@ -625,10 +660,14 @@ void MainWindow::Reset() {
   }
 }
 
-void MainWindow::SetPause(bool value) {
-  emu_thread->SetPause(value);
-  config->audio_dev->SetPause(value);
-  pause_action->setChecked(value);
+void MainWindow::SetPause(bool paused) {
+  if(!paused) {
+    screen->SetForceClear(false);
+  }
+
+  emu_thread->SetPause(paused);
+  config->audio_dev->SetPause(paused);
+  pause_action->setChecked(paused);
 }
 
 void MainWindow::Stop() {
@@ -641,7 +680,7 @@ void MainWindow::Stop() {
     game_loaded = false;
     RenderSaveStateMenus();
 
-    setWindowTitle("NanoBoyAdvance 1.7");
+    setWindowTitle(base_window_title);
   
     UpdateMenuBarVisibility();
   }
@@ -673,7 +712,7 @@ void MainWindow::UpdateMainWindowActionList() {
   }
 }
 
-void MainWindow::LoadROM(std::string path) {
+void MainWindow::LoadROM(std::u16string const& path) {
   bool retry;
 
   Stop();
@@ -683,7 +722,7 @@ void MainWindow::LoadROM(std::string path) {
   do {
     retry = false;
 
-    switch(nba::BIOSLoader::Load(core, config->bios_path)) {
+    switch(nba::BIOSLoader::Load(core, QString::fromStdString(config->bios_path).toStdU16String())) {
       case nba::BIOSLoader::Result::CannotFindFile: {
         QMessageBox box {this};
         box.setText(tr("A Game Boy Advance BIOS file is required but cannot be located.\n\nWould you like to add one now?"));
@@ -725,8 +764,7 @@ void MainWindow::LoadROM(std::string path) {
   auto save_path = GetSavePath(fs::path{path}, ".sav");
   auto save_type = config->cartridge.backup_type;
 
-  auto result = nba::ROMLoader::Load(
-    core, path, save_path.string(), save_type, force_gpio);
+  auto result = nba::ROMLoader::Load(core, path, save_path, save_type, force_gpio);
 
   switch(result) {
     case nba::ROMLoader::Result::CannotFindFile: {
@@ -758,17 +796,22 @@ void MainWindow::LoadROM(std::string path) {
   RenderSaveStateMenus();
 
   // Reset the core and start the emulation thread.
-  // Unpause the emulator if it was paused.
-  SetPause(false);
+  // If the emulator is currently paused force-clear the screen.
   core->Reset();
   emu_thread->Start();
-  screen->SetForceClear(false);
+
+  /**
+   * If the the emulator is paused we force-clear the screen to avoid 
+   * presenting the last frame from before pausing, since that could be confusing.
+   * In the other case we explicitly disable force-clear, because it is currently enabled (due to the call to Stop() at the top).
+   */
+  screen->SetForceClear(pause_action->isChecked());
 
   UpdateSolarSensorLevel();
   UpdateMenuBarVisibility();
 }
 
-auto MainWindow::LoadState(std::string const& path) -> nba::SaveStateLoader::Result {
+auto MainWindow::LoadState(std::u16string const& path) -> nba::SaveStateLoader::Result {
   bool was_running = emu_thread->IsRunning();
   emu_thread->Stop();
 
@@ -809,7 +852,7 @@ auto MainWindow::LoadState(std::string const& path) -> nba::SaveStateLoader::Res
   return result;
 }
 
-auto MainWindow::SaveState(std::string const& path) -> nba::SaveStateWriter::Result {
+auto MainWindow::SaveState(std::u16string const& path) -> nba::SaveStateWriter::Result {
   bool was_running = emu_thread->IsRunning();
   emu_thread->Stop();
 
@@ -831,7 +874,7 @@ auto MainWindow::SaveState(std::string const& path) -> nba::SaveStateWriter::Res
 }
 
 auto MainWindow::GetSavePath(fs::path const& rom_path, fs::path const& extension) -> fs::path {
-  fs::path save_folder = config->save_folder;
+  fs::path save_folder = QString::fromStdString(config->save_folder).toStdU16String();
 
   if(
    !save_folder.empty() &&

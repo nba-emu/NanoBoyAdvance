@@ -65,6 +65,7 @@ void PPU::LoadState(SaveState const& state) {
   std::memcpy(oam,  state.bus.memory.oam,  0x400);
   std::memcpy(vram, state.bus.memory.vram, 0x18000);
 
+  vram_bg_latch = ss_ppu.vram_bg_latch;
   dma3_video_transfer_running = ss_ppu.dma3_video_transfer_running;
 }
 
@@ -116,6 +117,7 @@ void PPU::CopyState(SaveState& state) {
   std::memcpy(state.bus.memory.oam,  oam,  0x400);
   std::memcpy(state.bus.memory.vram, vram, 0x18000);
 
+  ss_ppu.vram_bg_latch = vram_bg_latch;
   ss_ppu.dma3_video_transfer_running = dma3_video_transfer_running;
 }
 

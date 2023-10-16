@@ -61,7 +61,7 @@ struct SincResampler : Resampler<T> {
     while(resample_phase < 1.0) { 
       T sample = {};
 
-      int x = int(std::round(resample_phase * s_lut_resolution));
+      int x = (int)(resample_phase * s_lut_resolution);
       
       for(int n = 0; n < points; n += 4) {        
         sample += taps.Peek(n + 0) * lut[x + 0 * s_lut_resolution];

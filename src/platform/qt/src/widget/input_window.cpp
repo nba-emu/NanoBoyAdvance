@@ -20,7 +20,7 @@ InputWindow::InputWindow(
   auto vbox = new QVBoxLayout{this};
   vbox->setSizeConstraint(QLayout::SetFixedSize);
   vbox->addLayout(CreateKeyMapTable());
-  vbox->addLayout(CreateGameControllerList());
+  vbox->addLayout(CreateJoystickList());
 
   app->installEventFilter(this);
 
@@ -50,61 +50,69 @@ bool InputWindow::eventFilter(QObject* obj, QEvent* event) {
   return QObject::eventFilter(obj, event);
 }
 
-void InputWindow::BindCurrentKeyToControllerButton(SDL_GameControllerButton button) {
-  if(waiting_for_controller) {
+void InputWindow::BindCurrentKeyToJoystickButton(int button) {
+  if(waiting_for_joystick) {
     active_mapping->controller.button = button;
-    active_button->setText(GetControllerButtonName(active_mapping));
-    waiting_for_controller = false;
+    active_button->setText(GetJoystickButtonName(active_mapping));
+    waiting_for_joystick = false;
     config->Save();
   }
 }
 
-void InputWindow::BindCurrentKeyToControllerAxis(SDL_GameControllerAxis axis, bool negative) {
-  if(waiting_for_controller) {
-    active_mapping->controller.axis = axis | (negative ? 0x80 : 0);
-    active_button->setText(GetControllerButtonName(active_mapping));
-    waiting_for_controller = false;
+void InputWindow::BindCurrentKeyToJoystickAxis(int axis, bool negative) {
+  if(waiting_for_joystick) {
+    active_mapping->controller.axis = axis | (negative ? 0x100 : 0);
+    active_button->setText(GetJoystickButtonName(active_mapping));
+    waiting_for_joystick = false;
     config->Save();
   }
 }
 
-auto InputWindow::CreateGameControllerList() -> QLayout* {
+void InputWindow::BindCurrentKeyToJoystickHat(int hat, int direction) {
+  if(waiting_for_joystick) {
+    active_mapping->controller.hat = hat;
+    active_mapping->controller.hat_direction = direction;
+    active_button->setText(GetJoystickButtonName(active_mapping));
+    waiting_for_joystick = false;
+    config->Save();
+  }
+}
+
+auto InputWindow::CreateJoystickList() -> QLayout* {
   auto hbox = new QHBoxLayout{};
 
-  controller_combo_box = new QComboBox();
+  joystick_combo_box = new QComboBox();
 
-  auto label = new QLabel{"Game Controller:"};
+  auto label = new QLabel{"Joystick:"};
   hbox->addWidget(label);
-  hbox->addWidget(controller_combo_box);
+  hbox->addWidget(joystick_combo_box);
 
-  connect(controller_combo_box, QOverload<int>::of(&QComboBox::activated), [this](int index) {
-    config->input.controller_guid = controller_combo_box->itemData(index).toString().toStdString();
+  connect(joystick_combo_box, QOverload<int>::of(&QComboBox::activated), [this](int index) {
+    config->input.controller_guid = joystick_combo_box->itemData(index).toString().toStdString();
     config->Save();
 
     has_game_controller_choice_changed = true;
   });
 
-  UpdateGameControllerList();
+  UpdateJoystickList();
   return hbox;
 }
 
-void InputWindow::UpdateGameControllerList() {
+void InputWindow::UpdateJoystickList() {
   auto joystick_count = SDL_NumJoysticks();
 
-  controller_combo_box->clear();
+  joystick_combo_box->clear();
 
-  controller_combo_box->addItem("(none)", "");
-  controller_combo_box->setCurrentIndex(0);
+  joystick_combo_box->addItem("(none)", "");
+  joystick_combo_box->setCurrentIndex(0);
 
   for(int i = 0; i < joystick_count; i++) {
-    if(SDL_IsGameController(i)) {
-      auto guid = GetControllerGUIDStringFromIndex(i);
+    auto guid = GetJoystickGUIDStringFromIndex(i);
 
-      controller_combo_box->addItem(SDL_GameControllerNameForIndex(i), QString::fromStdString(guid));
+    joystick_combo_box->addItem(SDL_JoystickNameForIndex(i), QString::fromStdString(guid));
 
-      if(guid == config->input.controller_guid) {
-        controller_combo_box->setCurrentIndex(controller_combo_box->count() - 1);
-      }
+    if(guid == config->input.controller_guid) {
+      joystick_combo_box->setCurrentIndex(joystick_combo_box->count() - 1);
     }
   }
 }
@@ -156,14 +164,14 @@ void InputWindow::CreateKeyMapEntry(
   }
 
   {
-    button_controller = new QPushButton{GetControllerButtonName(mapping)};
+    button_controller = new QPushButton{GetJoystickButtonName(mapping)};
     
     connect(button_controller, &QPushButton::clicked, [=]() {
       RestoreActiveButtonLabel();
       button_controller->setText("[press button]");
       active_mapping = mapping;
       active_button = button_controller;
-      waiting_for_controller = true;
+      waiting_for_joystick = true;
     });
 
     layout->addWidget(button_controller, row, 2);
@@ -175,13 +183,13 @@ void InputWindow::CreateKeyMapEntry(
     connect(button, &QPushButton::clicked, [=]() {
       if(active_mapping == mapping) {
         waiting_for_keyboard = false;
-        waiting_for_controller = false;
+        waiting_for_joystick = false;
       }
 
       *mapping = {};
       config->Save();
       button_keyboard->setText(GetKeyboardButtonName(mapping->keyboard));
-      button_controller->setText(GetControllerButtonName(mapping));
+      button_controller->setText(GetJoystickButtonName(mapping));
     });
 
     layout->addWidget(button, row, 3);
@@ -194,9 +202,9 @@ void InputWindow::RestoreActiveButtonLabel() {
     waiting_for_keyboard = false;
   }
   
-  if(waiting_for_controller) {
-    active_button->setText(GetControllerButtonName(active_mapping));
-    waiting_for_controller = false;
+  if(waiting_for_joystick) {
+    active_button->setText(GetJoystickButtonName(active_mapping));
+    waiting_for_joystick = false;
   }
 }
 
@@ -207,24 +215,44 @@ auto InputWindow::GetKeyboardButtonName(int key) -> QString {
   return QKeySequence{key}.toString();
 }
 
-auto InputWindow::GetControllerButtonName(QtConfig::Input::Map* mapping) -> QString {
-  auto button = (SDL_GameControllerButton)mapping->controller.button;
-  auto axis = mapping->controller.axis;
+auto InputWindow::GetJoystickButtonName(QtConfig::Input::Map* mapping) -> QString {
+  const int button = mapping->controller.button;
+  const int axis = mapping->controller.axis;
+  const int hat = mapping->controller.hat;
+  const int hat_direction = mapping->controller.hat_direction;
 
-  if(button != SDL_CONTROLLER_BUTTON_INVALID && axis != SDL_CONTROLLER_AXIS_INVALID) {
-    auto button_name = SDL_GameControllerGetStringForButton(button);
-    auto axis_name = SDL_GameControllerGetStringForAxis((SDL_GameControllerAxis)(axis & ~0x80));
-    auto axis_pole = (axis & 0x80) ? '-' : '+';
+  QString name;
 
-    return QString::asprintf("%s - %s%c", button_name, axis_name, axis_pole);
-  } else if(button != SDL_CONTROLLER_BUTTON_INVALID) {
-    return SDL_GameControllerGetStringForButton(button);
-  } else if(axis != SDL_CONTROLLER_AXIS_INVALID) {
-    auto axis_name = SDL_GameControllerGetStringForAxis((SDL_GameControllerAxis)(axis & ~0x80));
-    auto axis_pole = (axis & 0x80) ? '-' : '+';
+  if(button != -1) {
+    if(!name.isEmpty()) name += " - ";
 
-    return QString::asprintf("%s%c", axis_name, axis_pole);
+    name += QStringLiteral("Button %1").arg(button);
   }
 
-  return "None";
+  if(axis != -1) {
+    if(!name.isEmpty()) name += " - ";
+
+    name += QStringLiteral("Axis%1 %2").arg(axis & 0x100 ? '-' : '+').arg(axis & ~0x100);
+  }
+
+  if(hat != -1) {
+    if(!name.isEmpty()) name += " - ";
+
+    QString direction_char = "?";
+
+    switch(hat_direction) {
+      case SDL_HAT_DOWN:  direction_char = "↓"; break;
+      case SDL_HAT_UP:    direction_char = "↑"; break;
+      case SDL_HAT_LEFT:  direction_char = "←"; break;
+      case SDL_HAT_RIGHT: direction_char = "→"; break;
+    }
+
+    name += QStringLiteral("Hat%1 %2 ").arg(direction_char).arg(hat);
+  }
+
+  if(name.isEmpty()) {
+    return "None";
+  }
+
+  return name;
 }

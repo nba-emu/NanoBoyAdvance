@@ -188,12 +188,17 @@ void ALWAYS_INLINE RenderMode3BG(uint cycle) {
   const s32 x = bg.affine[0].x >> 8;
   const s32 y = bg.affine[0].y >> 8;
 
+  /**
+   * @todo: confirm that the address actually is 17-bit.
+   * This should matter only for open bus shenanigans when switching BG mode mid-scanline.
+   */
+  const u32 address = ((u32)y * 240U + (u32)x) * 2U;
+  const u16 data = FetchVRAM_BG<u16>(cycle, address & 0x1FFFFU);
+
   u32 color = 0U;
 
   if(x >= 0 && x < 240 && y >= 0 && y < 160) {
-    const u32 address = ((u32)y * 240U + (u32)x) * 2U;
-
-    color = FetchVRAM_BG<u16>(cycle, address) | 0x8000'0000;
+    color = data | 0x8000'0000;
   }
 
   if(screen_x < 240U) {
@@ -214,12 +219,17 @@ void ALWAYS_INLINE RenderMode4BG(uint cycle) {
   const s32 x = bg.affine[0].x >> 8;
   const s32 y = bg.affine[0].y >> 8;
 
+  /**
+   * @todo: confirm that the address actually is 17-bit.
+   * This should matter only for open bus shenanigans when switching BG mode mid-scanline.
+   */
+  const u32 address = mmio.dispcnt.frame * 0xA000U + (u32)y * 240U + (u32)x;
+  const u8  data = FetchVRAM_BG<u8>(cycle, address & 0x1FFFFU);
+
   uint index = 0U;
 
   if(x >= 0 && x < 240 && y >= 0 && y < 160) {
-    const u32 address = mmio.dispcnt.frame * 0xA000U + (u32)y * 240U + (u32)x;
-
-    index = FetchVRAM_BG<u8>(cycle, address);
+    index = data;
   }
 
   if(screen_x < 240U) {
@@ -240,12 +250,17 @@ void ALWAYS_INLINE RenderMode5BG(uint cycle) {
   const s32 x = bg.affine[0].x >> 8;
   const s32 y = bg.affine[0].y >> 8;
 
+  /**
+   * @todo: confirm that the address actually is 17-bit.
+   * This should matter only for open bus shenanigans when switching BG mode mid-scanline.
+   */
+  const u32 address = mmio.dispcnt.frame * 0xA000U + ((u32)y * 160U + (u32)x) * 2U;
+  const u16 data = FetchVRAM_BG<u16>(cycle, address & 0x1FFFFU);
+
   u32 color = 0U;
 
   if(x >= 0 && x < 160 && y >= 0 && y < 128) {
-    const u32 address = mmio.dispcnt.frame * 0xA000U + ((u32)y * 160U + (u32)x) * 2U;
-
-    color = FetchVRAM_BG<u16>(cycle, address) | 0x8000'0000;
+    color = data | 0x8000'0000;
   }
 
   if(screen_x < 240U) {

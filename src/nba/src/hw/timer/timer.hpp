@@ -10,10 +10,10 @@
 #include <algorithm>
 #include <nba/integer.hpp>
 #include <nba/save_state.hpp>
+#include <nba/scheduler.hpp>
 
 #include "hw/apu/apu.hpp"
 #include "hw/irq/irq.hpp"
-#include "scheduler.hpp"
 
 namespace nba::core {
 
@@ -75,7 +75,6 @@ private:
   void OnReloadWritten(u64 chan_id);
   void OnControlWritten(u64 chan_id);
 
-  void RecalculateSampleRates();
   auto GetCounterDeltaSinceLastUpdate(Channel const& channel) -> u32;
   void StartChannel(Channel& channel, int cycle_offset);
   void StopChannel(Channel& channel);

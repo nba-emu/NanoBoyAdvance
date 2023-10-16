@@ -5,40 +5,11 @@
  * Refer to the included LICENSE file.
  */
 
+#include <algorithm>
+
 #include "ppu.hpp"
 
 namespace nba::core {
-
-static const int s_obj_size[4][4][2] = {
-  // SQUARE
-  {
-    { 8 , 8  },
-    { 16, 16 },
-    { 32, 32 },
-    { 64, 64 }
-  },
-  // HORIZONTAL
-  {
-    { 16, 8  },
-    { 32, 8  },
-    { 32, 16 },
-    { 64, 32 }
-  },
-  // VERTICAL
-  {
-    { 8 , 16 },
-    { 8 , 32 },
-    { 16, 32 },
-    { 32, 64 }
-  },
-  // PROHIBITED
-  {
-    { 0, 0 },
-    { 0, 0 },
-    { 0, 0 },
-    { 0, 0 }
-  }
-};
 
 void PPU::InitSprite() {
   const uint vcount = mmio.vcount;
@@ -57,9 +28,6 @@ void PPU::InitSprite() {
   sprite.drawing = false;
   sprite.state_rd = 0;
   sprite.state_wr = 1;
-
-  sprite.buffer_rd = sprite.buffer[ vcount & 1];
-  sprite.buffer_wr = sprite.buffer[(vcount & 1) ^ 1];
 
   // @todo: figure how the cycle limit is implemented in HW.
   // @todo: in unlocked H-blank mode VRAM fetch appears to stop at cycle 960?
@@ -100,6 +68,8 @@ void PPU::DrawSpriteImpl(int cycles) {
       if(sprite.vcount < 159) {
         if(++mosaic.obj._counter_y == mosaic.obj.size_y) {
           mosaic.obj._counter_y = 0;
+        } else {
+          mosaic.obj._counter_y &= 15;
         }
       } else {
         mosaic.obj._counter_y = 0;
@@ -113,6 +83,13 @@ void PPU::DrawSpriteImpl(int cycles) {
 }
 
 void PPU::DrawSpriteFetchOAM(uint cycle) {
+  static constexpr int k_sprite_size[4][4][2] = {
+    { { 8 , 8  }, { 16, 16 }, { 32, 32 }, { 64, 64 } }, // Square
+    { { 16, 8  }, { 32, 8  }, { 32, 16 }, { 64, 32 } }, // Horizontal
+    { { 8 , 16 }, { 8 , 32 }, { 16, 32 }, { 32, 64 } }, // Vertical
+    { { 8 , 8  }, { 8 , 8  }, { 8 , 8  }, { 8 , 8  } }  // Prohibited
+  };
+
   auto& oam_fetch = sprite.oam_fetch;
 
   if(oam_fetch.wait > 0 && !oam_fetch.delay_wait) {
@@ -163,8 +140,8 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
           const uint shape = (attr01 >> 14) & 3U;
           const uint size  =  attr01 >> 30;
 
-          const int width  = s_obj_size[shape][size][0];
-          const int height = s_obj_size[shape][size][1];
+          const int width  = k_sprite_size[shape][size][0];
+          const int height = k_sprite_size[shape][size][1];
 
           int half_width  = width  >> 1;
           int half_height = height >> 1;
@@ -185,9 +162,7 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
           const int y_max = (y + half_height * 2) & 255;
 
           if((vcount >= y || y_max < y) && vcount < y_max) {
-            const bool mosaic = attr01 & (1 << 12);
-
-            const int line = sprite.vcount - (mosaic ? sprite.mosaic_y : 0);
+            const bool mosaic = (attr01 & (1 << 12)) && mode != OBJ_WINDOW;
 
             drawer_state.width = width;
             drawer_state.height = height;
@@ -199,13 +174,19 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
        
             drawer_state.is_256 = (attr01 >> 13) & 1;
 
+            int local_y = (vcount - y) & 255;
+
+            if(mosaic) {
+              local_y = std::max(0, local_y - sprite.mosaic_y);
+            }
+
             if(!affine) {
               const bool flip_v = attr01 & (1 << 29);
 
               drawer_state.flip_h = attr01 & (1 << 28);
 
               drawer_state.texture_x = 0;
-              drawer_state.texture_y = (line - y) & 255;
+              drawer_state.texture_y = local_y;
 
               if(flip_v) {
                 drawer_state.texture_y ^= height - 1;
@@ -214,7 +195,7 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
               oam_fetch.pending_wait = half_width - 2;
             } else {
               oam_fetch.initial_local_x = -half_width;
-              oam_fetch.initial_local_y = line - (y_max - half_height);
+              oam_fetch.initial_local_y = local_y - half_height;
               oam_fetch.pending_wait = half_width * 2 - 1;
               oam_fetch.matrix_address = (((attr01 >> 25) & 31U) * 32U) + 6U;
             }
@@ -331,17 +312,23 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
     auto& pixel = sprite.buffer_wr[x];
 
     const bool opaque = color != 0U;
+    const auto mode = drawer_state.mode;
+    const uint priority = drawer_state.priority;
 
-    if(drawer_state.mode == OBJ_WINDOW) {
-      if(opaque) pixel.window = 1;
-    } else if(drawer_state.priority < pixel.priority || pixel.color == 0U) {
+    /**
+     * Transparent/outside OBJ window pixels are treated the same as
+     * normal/semi-transparent sprite pixels, meaning that (unlike opaque/inside OBJ window pixels) they
+     * update the mosaic and priority attributes.
+     */
+    if(mode == OBJ_WINDOW && opaque) {
+      pixel.window = 1;
+    } else if(priority < pixel.priority || pixel.color == 0U) {
       if(opaque) {
         pixel.color = color;
-        pixel.alpha = (drawer_state.mode == OBJ_SEMI) ? 1U : 0U;
+        pixel.alpha = (mode == OBJ_SEMI) ? 1U : 0U;
       }
-
       pixel.mosaic = drawer_state.mosaic ? 1U : 0U;
-      pixel.priority = drawer_state.priority;
+      pixel.priority = priority;
     }
   };
 

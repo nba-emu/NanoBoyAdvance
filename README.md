@@ -2,6 +2,7 @@
 
 ![license](https://img.shields.io/github/license/nba-emu/NanoBoyAdvance)
 ![build](https://img.shields.io/github/actions/workflow/status/nba-emu/NanoBoyAdvance/build.yml?branch=master)
+[![discord](https://img.shields.io/discord/969218483873251338?logo=discord&label=discord)](https://discord.gg/4NnUjsf7Am)
 
 NanoBoyAdvance is a cycle-accurate Game Boy Advance emulator.<br>
 It aims to be as accurate as possible, while also offering enhancements such as
@@ -51,6 +52,12 @@ See [COMPILING.md](docs/COMPILING.md) in the `docs` folder.
 - Pokefan531 and hunterk: for the default GBA color correction algorithm
 - Talarubi and Near: for [higan's GBA color correction algorithm](https://near.sh/articles/video/color-emulation)
 - DeSmuME team and Hyllian: xBRZ upscaling code
+
+## Sister Projects
+- [Panda3DS](https://github.com/wheremyfoodat/panda3DS): A new HLE Nintendo 3DS emulator
+- [Dust](https://github.com/Kelpsyberry/dust/): Nintendo DS emulator for desktop devices and the web
+- [Kaizen](https://github.com/SimoneN64/Kaizen): Experimental work-in-progress low-level N64 emulator
+- [SkyEmu](https://github.com/skylersaleh/SkyEmu/): A low-level GameBoy, GameBoy Color, GameBoy Advance and Nintendo DS emulator that is designed to be easy to use, cross platform and accurate
 
 ## Copyright
 

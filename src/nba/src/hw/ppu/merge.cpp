@@ -16,7 +16,7 @@ static u32 RGB555(u16 rgb555) {
   const uint g = (rgb555 >>  5) & 31U;
   const uint b = (rgb555 >> 10) & 31U;
 
-  return 0xFF000000 | r << 19 | g << 11 | b << 3;
+  return 0xFF000000 | (r << 3 | r >> 2) << 16 | (g << 3 | g >> 2) << 8 | (b << 3 | b >> 2);
 }
 
 void PPU::InitMerge() {
@@ -28,6 +28,7 @@ void PPU::InitMerge() {
   merge.mosaic_x[0] = 0U;
   merge.mosaic_x[1] = 0U;
   merge.forced_blank = false;
+  merge.sprite_pixel_latch.data = 0U;
 }
 
 void PPU::DrawMerge() {
@@ -151,10 +152,14 @@ void PPU::DrawMergeImpl(int cycles) {
 
         merge.force_alpha_blend = false;
 
-        if(enable_obj && (!have_windows || win_layer_enable[LAYER_OBJ])) {
-          auto pixel = sprite.buffer_rd[x];
+        const auto current_sprite_pixel = enable_obj ? sprite.buffer_rd[x] : Sprite::Pixel{0U};
 
-          if(pixel.mosaic) pixel = sprite.buffer_rd[x - merge.mosaic_x[1]];
+        if(!current_sprite_pixel.mosaic || !merge.sprite_pixel_latch.mosaic || merge.mosaic_x[1] == 0U) {
+          merge.sprite_pixel_latch = current_sprite_pixel;
+        }
+
+        if(enable_obj && (!have_windows || win_layer_enable[LAYER_OBJ])) {
+          const auto pixel = merge.sprite_pixel_latch;
 
           if(pixel.color != 0U) {
             if(pixel.priority <= priorities[0]) {

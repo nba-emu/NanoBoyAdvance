@@ -43,6 +43,8 @@ void PPU::Reset() {
   std::memset(oam,  0, 0x00400);
   std::memset(vram, 0, 0x18000);
 
+  vram_bg_latch = 0U;
+
   mmio.dispcnt.Reset();
   mmio.dispstat.Reset();
 
@@ -93,6 +95,8 @@ void PPU::Reset() {
   // @todo: initialize window with the appropriate timing.
   bg = {};
   sprite = {};
+  sprite.buffer_rd = sprite.buffer[0];
+  sprite.buffer_wr = sprite.buffer[1];
   window = {};
   merge = {};
 
@@ -204,12 +208,18 @@ void PPU::BeginHBlankVBlank() {
 }
 
 void PPU::BeginSpriteDrawing() {
-  if(mmio.vcount <= 159) {
+  const uint vcount = mmio.vcount;
+
+  if(vcount < 160U) {
     DrawSprite();
   }
 
-  if(mmio.vcount == 227 || mmio.vcount < 159) {
-    InitSprite();
+  if(vcount == 227U || vcount < 160U) {
+    std::swap(sprite.buffer_rd, sprite.buffer_wr);
+
+    if(vcount != 159U) {
+      InitSprite();
+    }
   }
 
   scheduler.Add(1232, Scheduler::EventClass::PPU_begin_sprite_fetch);

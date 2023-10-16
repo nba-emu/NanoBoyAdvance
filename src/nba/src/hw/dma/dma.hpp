@@ -10,9 +10,9 @@
 #include <bitset>
 #include <nba/integer.hpp>
 #include <nba/save_state.hpp>
-#include <hw/irq/irq.hpp>
+#include <nba/scheduler.hpp>
 
-#include "scheduler.hpp"
+#include "hw/irq/irq.hpp"
 
 namespace nba::core {
 

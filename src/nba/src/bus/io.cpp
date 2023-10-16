@@ -5,6 +5,8 @@
  * Refer to the included LICENSE file.
  */
 
+#include <cstdio>
+
 #include "arm/arm7tdmi.hpp"
 #include "bus/bus.hpp"
 #include "bus/io.hpp"
@@ -554,7 +556,7 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
     case HALTCNT: {
       if(cpu.state.r15 <= 0x3FFF) {
         if(value & 0x80) {
-          haltcnt = HaltControl::Stop;
+          // haltcnt = HaltControl::Stop;
         } else {
           haltcnt = HaltControl::Halt;
           bus->Step(1);
@@ -575,11 +577,13 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
 void Bus::Hardware::WriteHalf(u32 address, u16 value) {
   auto& apu_io = apu.mmio;
 
+  const bool apu_enable = apu_io.soundcnt.master_enable;
+
   switch(address) {
-    case FIFO_A+0: apu_io.fifo[0].WriteHalf(0, value); break;
-    case FIFO_A+2: apu_io.fifo[0].WriteHalf(2, value); break;
-    case FIFO_B+0: apu_io.fifo[1].WriteHalf(0, value); break;
-    case FIFO_B+2: apu_io.fifo[1].WriteHalf(2, value); break;
+    case FIFO_A+0: if(apu_enable) apu_io.fifo[0].WriteHalf(0, value); break;
+    case FIFO_A+2: if(apu_enable) apu_io.fifo[0].WriteHalf(2, value); break;
+    case FIFO_B+0: if(apu_enable) apu_io.fifo[1].WriteHalf(0, value); break;
+    case FIFO_B+2: if(apu_enable) apu_io.fifo[1].WriteHalf(2, value); break;
 
     // Timers 0 - 3
     case TM0CNT_L: timer.WriteHalf(0, 0, value); break;
@@ -629,7 +633,9 @@ void Bus::Hardware::WriteHalf(u32 address, u16 value) {
 
     case MGBA_LOG_SEND: {
       if(mgba_log.enable && (value & 0x100) != 0) {
-        fmt::print("mGBA log: {}\n", mgba_log.message.data());
+        nba::print("mGBA log: {}\n", mgba_log.message.data());
+        std::fflush(stdout);
+        mgba_log.message.fill(0);
       }
       break;
     }
@@ -651,9 +657,11 @@ void Bus::Hardware::WriteHalf(u32 address, u16 value) {
 void Bus::Hardware::WriteWord(u32 address, u32 value) {
   auto& apu_io = apu.mmio;
 
+  const bool apu_enable = apu_io.soundcnt.master_enable;
+
   switch(address) {
-    case FIFO_A: apu_io.fifo[0].WriteWord(value); break;
-    case FIFO_B: apu_io.fifo[1].WriteWord(value); break;
+    case FIFO_A: if(apu_enable) apu_io.fifo[0].WriteWord(value); break;
+    case FIFO_B: if(apu_enable) apu_io.fifo[1].WriteWord(value); break;
 
     // Timers 0 - 3
     case TM0CNT_L: timer.WriteWord(0, value); break;

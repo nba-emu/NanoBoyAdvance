@@ -10,15 +10,13 @@
 #include <platform/loader/bios.hpp>
 #include <vector>
 
-namespace fs = std::filesystem;
-
 namespace nba {
 
 static constexpr size_t kBIOSSize = 0x4000;
 
 auto BIOSLoader::Load(
   std::unique_ptr<CoreBase>& core,
-  std::string path
+  fs::path const& path
 ) -> Result {
   if(!fs::exists(path)) {
     return Result::CannotFindFile;
@@ -33,7 +31,7 @@ auto BIOSLoader::Load(
     return Result::BadImage;
   }
 
-  auto file_stream = std::ifstream{path, std::ios::binary};
+  auto file_stream = std::ifstream{path.c_str(), std::ios::binary};
   if(!file_stream.good()) {
     return Result::CannotOpenFile;
   }

@@ -30,17 +30,17 @@ const std::map<std::string, GameInfo> g_game_db {
   { "BPEE", { Config::BackupType::FLASH_128, GPIODeviceType::RTC, false } },  /* Pokemon - Emerald Version (USA, Europe) */
   { "BY6P", { Config::BackupType::SRAM, GPIODeviceType::None, false } },      /* Yu-Gi-Oh! - Ultimate Masters - World Championship Tournament 2006 (Europe)(En,Jp,Fr,De,Es,It) */
   { "B24E", { Config::BackupType::FLASH_128, GPIODeviceType::None, false } }, /* Pokemon Mystery Dungeon - Red Rescue Team (USA, Australia) */
-  { "FADE", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Classic NES Series - Castlevania (USA, Europe) */
-  { "FBME", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Classic NES Series - Bomberman (USA, Europe) */
-  { "FDKE", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Classic NES Series - Donkey Kong (USA, Europe) */
-  { "FDME", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Classic NES Series - Dr. Mario (USA, Europe) */
-  { "FEBE", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Classic NES Series - Excitebike (USA, Europe) */
-  { "FICE", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Classic NES Series - Ice Climber (USA, Europe) */
-  { "FLBE", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Classic NES Series - Zelda II - The Adventure of Link (USA, Europe) */
-  { "FMRE", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Classic NES Series - Metroid (USA, Europe) */
-  { "FP7E", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Classic NES Series - Pac-Man (USA, Europe) */
-  { "FSME", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Classic NES Series - Super Mario Bros. (USA, Europe) */
-  { "FXVE", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Classic NES Series - Xevious (USA, Europe) */
+  { "FADE", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },   /* Classic NES Series - Castlevania (USA, Europe) */
+  { "FBME", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },   /* Classic NES Series - Bomberman (USA, Europe) */
+  { "FDKE", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },   /* Classic NES Series - Donkey Kong (USA, Europe) */
+  { "FDME", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },   /* Classic NES Series - Dr. Mario (USA, Europe) */
+  { "FEBE", { Config::BackupType::EEPROM_64, GPIODeviceType::None, true } },   /* Classic NES Series - Excitebike (USA, Europe) */
+  { "FICE", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },   /* Classic NES Series - Ice Climber (USA, Europe) */
+  { "FLBE", { Config::BackupType::EEPROM_64, GPIODeviceType::None, true } },   /* Classic NES Series - Zelda II - The Adventure of Link (USA, Europe) */
+  { "FMRE", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },   /* Classic NES Series - Metroid (USA, Europe) */
+  { "FP7E", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },   /* Classic NES Series - Pac-Man (USA, Europe) */
+  { "FSME", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },   /* Classic NES Series - Super Mario Bros. (USA, Europe) */
+  { "FXVE", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },   /* Classic NES Series - Xevious (USA, Europe) */
   { "FZLE", { Config::BackupType::EEPROM_64, GPIODeviceType::None, true } },   /* Classic NES Series - Legend of Zelda (USA, Europe) */
   { "KYGP", { Config::BackupType::EEPROM_64/*_SENSOR*/, GPIODeviceType::None, false } }, /* Yoshi's Universal Gravitation (Europe)(En,Fr,De,Es,It) */
   { "U3IP", { Config::BackupType::Detect, GPIODeviceType::RTC | GPIODeviceType::SolarSensor, false } }, /* Boktai - The Sun Is in Your Hand (Europe)(En,Fr,De,Es,It) */
@@ -74,26 +74,28 @@ const std::map<std::string, GameInfo> g_game_db {
   { "BPRJ", { Config::BackupType::FLASH_128, GPIODeviceType::None, false } }, /* Pocket Monsters - Fire Red (Japan) */
   { "BDKJ", { Config::BackupType::EEPROM_64, GPIODeviceType::None, false } }, /* Digi Communication 2 - Datou! Black Gemagema Dan (Japan) */
   { "BR4J", { Config::BackupType::Detect, GPIODeviceType::RTC, false } },     /* Rockman EXE 4.5 - Real Operation (Japan) */
-  { "FMBJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Famicom Mini Vol. 01 - Super Mario Bros. (Japan) */
-  { "FCLJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Famicom Mini Vol. 12 - Clu Clu Land (Japan) */
-  { "FBFJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Famicom Mini Vol. 13 - Balloon Fight (Japan) */
-  { "FWCJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Famicom Mini Vol. 14 - Wrecking Crew (Japan) */
-  { "FDMJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Famicom Mini Vol. 15 - Dr. Mario (Japan) */
-  { "FDDJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Famicom Mini Vol. 16 - Dig Dug (Japan) */
-  { "FTBJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Famicom Mini Vol. 17 - Takahashi Meijin no Boukenjima (Japan) */
-  { "FMKJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Famicom Mini Vol. 18 - Makaimura (Japan) */
-  { "FTWJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Famicom Mini Vol. 19 - Twin Bee (Japan) */
-  { "FGGJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Famicom Mini Vol. 20 - Ganbare Goemon! Karakuri Douchuu (Japan) */
-  { "FM2J", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Famicom Mini Vol. 21 - Super Mario Bros. 2 (Japan) */
-  { "FNMJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Famicom Mini Vol. 22 - Nazo no Murasame Jou (Japan) */
-  { "FMRJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Famicom Mini Vol. 23 - Metroid (Japan) */
-  { "FPTJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Famicom Mini Vol. 24 - Hikari Shinwa - Palthena no Kagami (Japan) */
-  { "FLBJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Famicom Mini Vol. 25 - The Legend of Zelda 2 - Link no Bouken (Japan) */
-  { "FFMJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Famicom Mini Vol. 26 - Famicom Mukashi Banashi - Shin Onigashima - Zen Kou Hen (Japan) */
-  { "FTKJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Famicom Mini Vol. 27 - Famicom Tantei Club - Kieta Koukeisha - Zen Kou Hen (Japan) */
-  { "FTUJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Famicom Mini Vol. 28 - Famicom Tantei Club Part II - Ushiro ni Tatsu Shoujo - Zen Kou Hen (Japan) */
-  { "FADJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Famicom Mini Vol. 29 - Akumajou Dracula (Japan) */
-  { "FSDJ", { Config::BackupType::EEPROM_4, GPIODeviceType::None, true } },   /* Famicom Mini Vol. 30 - SD Gundam World - Gachapon Senshi Scramble Wars (Japan) */
+  { "FSRJ", { Config::BackupType::EEPROM_64, GPIODeviceType::None, true } },  /* Famicom Mini - Dai-2-ji Super Robot Taisen (Japan) (Promo) */ 
+  { "FGZJ", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },  /* Famicom Mini - Kidou Senshi Z Gundam - Hot Scramble (Japan) (Promo) */ 
+  { "FMBJ", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },  /* Famicom Mini Vol. 01 - Super Mario Bros. (Japan) */
+  { "FCLJ", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },  /* Famicom Mini Vol. 12 - Clu Clu Land (Japan) */
+  { "FBFJ", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },  /* Famicom Mini Vol. 13 - Balloon Fight (Japan) */
+  { "FWCJ", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },  /* Famicom Mini Vol. 14 - Wrecking Crew (Japan) */
+  { "FDMJ", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },  /* Famicom Mini Vol. 15 - Dr. Mario (Japan) */
+  { "FDDJ", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },  /* Famicom Mini Vol. 16 - Dig Dug (Japan) */
+  { "FTBJ", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },  /* Famicom Mini Vol. 17 - Takahashi Meijin no Boukenjima (Japan) */
+  { "FMKJ", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },  /* Famicom Mini Vol. 18 - Makaimura (Japan) */
+  { "FTWJ", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },  /* Famicom Mini Vol. 19 - Twin Bee (Japan) */
+  { "FGGJ", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },  /* Famicom Mini Vol. 20 - Ganbare Goemon! Karakuri Douchuu (Japan) */
+  { "FM2J", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },  /* Famicom Mini Vol. 21 - Super Mario Bros. 2 (Japan) */
+  { "FNMJ", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },  /* Famicom Mini Vol. 22 - Nazo no Murasame Jou (Japan) */
+  { "FMRJ", { Config::BackupType::EEPROM_64, GPIODeviceType::None, true } },  /* Famicom Mini Vol. 23 - Metroid (Japan) */
+  { "FPTJ", { Config::BackupType::EEPROM_64, GPIODeviceType::None, true } },  /* Famicom Mini Vol. 24 - Hikari Shinwa - Palthena no Kagami (Japan) */
+  { "FLBJ", { Config::BackupType::EEPROM_64, GPIODeviceType::None, true } },  /* Famicom Mini Vol. 25 - The Legend of Zelda 2 - Link no Bouken (Japan) */
+  { "FFMJ", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },  /* Famicom Mini Vol. 26 - Famicom Mukashi Banashi - Shin Onigashima - Zen Kou Hen (Japan) */
+  { "FTKJ", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },  /* Famicom Mini Vol. 27 - Famicom Tantei Club - Kieta Koukeisha - Zen Kou Hen (Japan) */
+  { "FTUJ", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },  /* Famicom Mini Vol. 28 - Famicom Tantei Club Part II - Ushiro ni Tatsu Shoujo - Zen Kou Hen (Japan) */
+  { "FADJ", { Config::BackupType::EEPROM_4,  GPIODeviceType::None, true } },  /* Famicom Mini Vol. 29 - Akumajou Dracula (Japan) */
+  { "FSDJ", { Config::BackupType::EEPROM_64, GPIODeviceType::None, true } },  /* Famicom Mini Vol. 30 - SD Gundam World - Gachapon Senshi Scramble Wars (Japan) */
   { "KHPJ", { Config::BackupType::EEPROM_64/*_SENSOR*/, GPIODeviceType::None, false } }, /* Koro Koro Puzzle - Happy Panechu! (Japan) */
   { "KYGJ", { Config::BackupType::EEPROM_64/*_SENSOR*/, GPIODeviceType::None, false } }, /* Yoshi no Banyuuinryoku (Japan) */
   { "PSAJ", { Config::BackupType::FLASH_128, GPIODeviceType::None, false } }, /* Card e-Reader+ (Japan) */
