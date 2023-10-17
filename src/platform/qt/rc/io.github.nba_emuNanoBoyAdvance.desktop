@@ -1,0 +1,12 @@
+# Created with jdDesktopEntryEdit 1.0
+[Desktop Entry]
+Type=Application
+Name=NanoBoyAdvance
+Comment=A cycle-accurate Nintendo Game Boy Advance emulator
+Icon=io.github.nba_emuNanoBoyAdvance
+TryExec=NanoBoyAdvance
+Exec=NanoBoyAdvance %f
+MimeType=application/x-gameboy-advance-rom;pplication/x-agb-rom;application/x-gba-rom;
+Categories=Game;Emulator;
+Keywords=Emulator;Nintendo;GameBoy;Game Boy Advance;GBA;GB;
+SingleMainWindow=true

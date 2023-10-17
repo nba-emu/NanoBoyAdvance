@@ -1,5 +1,7 @@
 set(toml11_BUILD_TEST OFF CACHE BOOL "Build toml tests" FORCE)
 
+set(CMAKE_SKIP_INSTALL_RULES YES)
+
 add_subdirectory(fmtlib)
 add_subdirectory(toml11)
 

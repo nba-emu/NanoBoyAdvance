@@ -12,6 +12,9 @@
 #include <filesystem>
 #include <platform/config.hpp>
 #include <Qt>
+#include <QStandardPaths>
+#include <QDebug>
+#include <SDL.h>
 #include <vector>
 
 #ifdef MACOS_BUILD_APP_BUNDLE
@@ -21,7 +24,7 @@
 
 namespace fs = std::filesystem;
 
-struct QtConfig final : nba::PlatformConfig {  
+struct QtConfig final : nba::PlatformConfig {
   QtConfig() {
     config_path = GetConfigPath();
   }
@@ -82,6 +85,15 @@ struct QtConfig final : nba::PlatformConfig {
   }
 
   void Save() {
+    auto config_dir = fs::path(config_path).parent_path();
+    if (!fs::exists(config_dir)) {
+        try {
+            fs::create_directories(config_dir);
+        } catch (const std::exception& ex) {
+            qDebug() << "HHH";
+        }
+    }
+
     nba::PlatformConfig::Save(config_path);
   }
 
@@ -126,7 +138,13 @@ private:
       }
     #endif
 
-    return "config.toml";
+    #ifdef PORTABLE_MODE
+      return "config.toml";
+    #else
+      auto config_directory = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation).toStdString();
+      const std::filesystem::path config_path = config_directory;
+      return  (config_path / "NanoBoyAdvance" / "config.toml").string();
+    #endif
   }
 
   std::string config_path;
