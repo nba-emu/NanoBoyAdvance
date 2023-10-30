@@ -146,21 +146,25 @@ void OGLVideoDevice::CreateShaderPrograms() {
     programs.push_back(program);
   }
 
+  UpdateShaderUniforms();
+}
+
+void OGLVideoDevice::UpdateShaderUniforms() {
   // Set constant shader uniforms.
-  for(auto program : programs) {
+  for(const auto program : programs) {
     glUseProgram(program);
 
-    auto screen_map = glGetUniformLocation(program, "u_screen_map");
+    const auto screen_map = glGetUniformLocation(program, "u_screen_map");
     if(screen_map != -1) {
       glUniform1i(screen_map, 0);
     }
 
-    auto history_map = glGetUniformLocation(program, "u_history_map");
+    const auto history_map = glGetUniformLocation(program, "u_history_map");
     if(history_map != -1) {
       glUniform1i(history_map, 1);
     }
 
-    auto source_map = glGetUniformLocation(program, "u_source_map");
+    const auto source_map = glGetUniformLocation(program, "u_source_map");
     if(source_map != -1) {
       glUniform1i(source_map, 2);
     }

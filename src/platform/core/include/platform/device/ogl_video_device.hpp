@@ -30,6 +30,7 @@ struct OGLVideoDevice : VideoDevice {
 private:
   void UpdateTextures();
   void CreateShaderPrograms();
+  void UpdateShaderUniforms();
   void ReleaseShaderPrograms();
 
   auto CompileShader(
