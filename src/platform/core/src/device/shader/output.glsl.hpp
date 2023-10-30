@@ -9,7 +9,7 @@
 
 #include "device/shader/common.glsl.hpp"
 
-constexpr auto output_vert = common_vert;
+constexpr auto output_vert = common_flip_vert;
 
 constexpr auto output_frag = R"(
   #version 330 core
@@ -21,6 +21,6 @@ constexpr auto output_frag = R"(
   uniform sampler2D u_input_map;
 
   void main() {
-    frag_color = texture(u_input_map, vec2(v_uv.x, 1.0 - v_uv.y));
+    frag_color = texture(u_input_map, v_uv);
   }
 )";
