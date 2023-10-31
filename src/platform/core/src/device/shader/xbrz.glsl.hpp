@@ -277,7 +277,7 @@ constexpr auto xbrz1_frag = R"(
 
   in vec2 v_uv;
 
-  uniform sampler2D u_screen_map; // info texture
+  uniform sampler2D u_input_map; // info texture
   uniform sampler2D u_source_map; // LCD texture
   uniform vec2 u_output_size;
 
@@ -343,7 +343,7 @@ constexpr auto xbrz1_frag = R"(
     vec3 F = P( 1, 0);
     vec3 H = P( 0, 1);
 
-    vec4 info = floor(texture(u_screen_map, coord) * 255.0 + 0.5);
+    vec4 info = floor(texture(u_input_map, coord) * 255.0 + 0.5);
 
     // info Mapping: x|y|
     //               w|z|

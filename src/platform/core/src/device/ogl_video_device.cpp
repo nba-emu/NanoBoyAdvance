@@ -154,9 +154,9 @@ void OGLVideoDevice::UpdateShaderUniforms() {
   for(const auto program : programs) {
     glUseProgram(program);
 
-    const auto screen_map = glGetUniformLocation(program, "u_screen_map");
-    if(screen_map != -1) {
-      glUniform1i(screen_map, 0);
+    const auto input_map = glGetUniformLocation(program, "u_input_map");
+    if(input_map != -1) {
+      glUniform1i(input_map, 0);
     }
 
     const auto history_map = glGetUniformLocation(program, "u_history_map");

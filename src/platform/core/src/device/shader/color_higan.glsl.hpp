@@ -12,10 +12,10 @@ constexpr auto color_higan_frag = R"(
 
   in vec2 v_uv;
 
-  uniform sampler2D u_screen_map;
+  uniform sampler2D u_input_map;
 
   void main() {
-    vec4 color = texture(u_screen_map, v_uv);
+    vec4 color = texture(u_input_map, v_uv);
 
     color.rgb = pow(color.rgb, vec3(4.0));
 

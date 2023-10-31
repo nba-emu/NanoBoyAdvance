@@ -18,9 +18,9 @@ constexpr auto output_frag = R"(
 
   in vec2 v_uv;
 
-  uniform sampler2D u_screen_map;
+  uniform sampler2D u_input_map;
 
   void main() {
-    frag_color = texture(u_screen_map, vec2(v_uv.x, 1.0 - v_uv.y));
+    frag_color = texture(u_input_map, vec2(v_uv.x, 1.0 - v_uv.y));
   }
 )";
