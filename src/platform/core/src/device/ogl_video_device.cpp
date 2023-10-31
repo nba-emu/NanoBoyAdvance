@@ -22,6 +22,9 @@ using Video = nba::PlatformConfig::Video;
 
 namespace nba {
 
+static constexpr int gba_screen_width  = 240;
+static constexpr int gba_screen_height = 160;
+
 static const float kQuadVertices[] = {
 // position | UV coord
   -1,  1,     0, 1,
@@ -243,9 +246,8 @@ void OGLVideoDevice::Draw(u32* buffer) {
   // Update and bind LCD screen texture
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, texture[3]);
-  glTexImage2D(
-    GL_TEXTURE_2D, 0, GL_RGBA, 240, 160, 0, GL_BGRA, GL_UNSIGNED_BYTE, buffer
-  );
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, gba_screen_width, gba_screen_height,
+               0, GL_BGRA, GL_UNSIGNED_BYTE, buffer);
   if(texture_filter_invalid) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texture_filter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texture_filter);
