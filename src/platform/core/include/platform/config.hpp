@@ -28,6 +28,7 @@ struct PlatformConfig : Config {
     enum class Filter {
       Nearest,
       Linear,
+      Sharp,
       xBRZ
     } filter = Filter::Linear;
 
