@@ -268,24 +268,7 @@ frag_color /= 255.0;
 }
 )";
 
-constexpr auto xbrz1_vert = R"(
-  #version 330 core
-
-  layout(location = 0) in vec2 position;
-  layout(location = 1) in vec2 uv;
-
-  out vec2 v_uv;
-  out vec4 u_screen_size;
-
-  uniform sampler2D u_screen_map;
-
-  void main() {
-    v_uv = uv;
-    u_screen_size.xy = textureSize(u_screen_map, 0);
-    u_screen_size.zw = 1.0 / textureSize(u_screen_map, 0);
-    gl_Position = vec4(position, 0.0, 1.0);
-  }
-)";
+constexpr auto xbrz1_vert = common_vert;
 
 constexpr auto xbrz1_frag = R"(
   #version 330 core
@@ -293,10 +276,10 @@ constexpr auto xbrz1_frag = R"(
   layout(location = 0) out vec4 frag_color;
 
   in vec2 v_uv;
-  in vec4 u_screen_size;
 
   uniform sampler2D u_screen_map; // info texture
   uniform sampler2D u_source_map; // LCD texture
+  uniform vec2 u_output_size;
 
   #define u_source_size vec4(240.0, 160.0, 1.0/240.0, 1.0/160.0)
 
@@ -350,7 +333,7 @@ constexpr auto xbrz1_frag = R"(
     //                      D|E|F
     //                      -|H|-
 
-    vec2 scale = u_screen_size.xy * u_source_size.zw;
+    vec2 scale = u_output_size.xy * u_source_size.zw;
     vec2 pos = fract(v_uv * u_source_size.xy) - vec2(0.5, 0.5);
     vec2 coord = v_uv - pos * u_source_size.zw;
 

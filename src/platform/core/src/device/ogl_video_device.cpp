@@ -168,6 +168,11 @@ void OGLVideoDevice::UpdateShaderUniforms() {
     if(source_map != -1) {
       glUniform1i(source_map, 2);
     }
+
+    const auto output_size = glGetUniformLocation(program, "u_output_size");
+    if(output_size != -1) {
+      glUniform2f(output_size, view_width, view_height);
+    }
   }
 }
 
@@ -246,6 +251,8 @@ void OGLVideoDevice::SetViewport(int x, int y, int width, int height) {
       nullptr
     );
   }
+
+  UpdateShaderUniforms();
 }
 
 void OGLVideoDevice::SetDefaultFBO(GLuint fbo) {
