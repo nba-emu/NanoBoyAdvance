@@ -40,6 +40,7 @@ struct Config {
       Sinc_256
     } interpolation = Interpolation::Cubic;
 
+    int volume = 100; // between 0 and 100
     bool mp2k_hle_enable = false;
     bool mp2k_hle_cubic = true;
     bool mp2k_hle_force_reverb = true;

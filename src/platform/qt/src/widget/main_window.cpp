@@ -177,6 +177,14 @@ void MainWindow::CreateVideoMenu(QMenu* parent) {
 void MainWindow::CreateAudioMenu(QMenu* parent) {
   auto menu = parent->addMenu(tr("Audio"));
 
+  CreateSelectionOption(menu->addMenu("Volume"), {
+    { "Off",    0 },
+    { "25%",   25 },
+    { "50%",   50 },
+    { "75%",   75 },
+    { "100%", 100 }
+  }, &config->audio.volume, false);
+
   CreateSelectionOption(menu->addMenu("Resampler"), {
     { "Cosine",   nba::Config::Audio::Interpolation::Cosine },
     { "Cubic",    nba::Config::Audio::Interpolation::Cubic  },

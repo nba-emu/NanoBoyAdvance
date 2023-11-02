@@ -15,9 +15,6 @@
 
 namespace nba::core {
 
-// See callback.cpp for implementation
-void AudioCallback(APU* apu, s16* stream, int byte_len);
-
 APU::APU(
   Scheduler& scheduler,
   DMA& dma,

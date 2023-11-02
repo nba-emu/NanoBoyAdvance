@@ -24,6 +24,9 @@
 
 namespace nba::core {
 
+// See callback.cpp for implementation
+void AudioCallback(struct APU* apu, s16* stream, int byte_len);
+
 struct APU {
   APU(
     Scheduler& scheduler,
@@ -70,6 +73,8 @@ struct APU {
   std::unique_ptr<StereoResampler<float>> resampler;
 
 private:
+  friend void AudioCallback(APU* apu, s16* stream, int byte_len);
+
   void StepMixer();
   void StepSequencer();
 
