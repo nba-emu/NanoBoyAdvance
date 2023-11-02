@@ -45,6 +45,7 @@ void Core::Reset() {
 
   if(config->audio.mp2k_hle_enable) {
     apu.GetMP2K().UseCubicFilter() = config->audio.mp2k_hle_cubic;
+    apu.GetMP2K().ForceReverb() = config->audio.mp2k_hle_force_reverb;
     hle_audio_hook = SearchSoundMainRAM();
     if(hle_audio_hook != 0xFFFFFFFF) {
       Log<Info>("Core: detected MP2K audio mixer @ 0x{:08X}", hle_audio_hook);
@@ -181,6 +182,10 @@ auto Core::GetBGHOFS(int id) -> u16 {
 
 auto Core::GetBGVOFS(int id) -> u16 {
   return ppu.mmio.bgvofs[id];
+}
+
+Scheduler& Core::GetScheduler() {
+  return scheduler;
 }
 
 } // namespace nba::core

@@ -19,8 +19,11 @@
 
 namespace nba {
 
-// TODO: handle Nseq access resets EEPROM chip?
-// TODO: optimize EEPROM check away for lower-half ROM address space
+/**
+ * TODO:
+ *  - emulate the EEPROM being selected and deselected at the start/end of burst transfers?
+ *  - optimize EEPROM check away for lower-half ROM address space
+ */
 
 struct ROM {
   ROM() {}
@@ -79,6 +82,8 @@ struct ROM {
   }
 
   void LoadState(SaveState const& state) {
+    rom_address_latch = state.rom_address_latch;
+
     if(backup_sram) {
       backup_sram->LoadState(state);
     }
@@ -93,6 +98,8 @@ struct ROM {
   }
 
   void CopyState(SaveState& state) {
+    state.rom_address_latch = rom_address_latch;
+
     if(backup_sram) {
       backup_sram->CopyState(state);
     }
@@ -112,7 +119,7 @@ struct ROM {
     }
   }
 
-  auto ALWAYS_INLINE ReadROM16(u32 address) -> u16 {
+  auto ALWAYS_INLINE ReadROM16(u32 address, bool sequential) -> u16 {
     address &= 0x01FF'FFFE;
 
     if(unlikely(IsGPIO(address)) && gpio->IsReadable()) {
@@ -123,16 +130,23 @@ struct ROM {
       return backup_eeprom->Read(0);
     }
 
-    address &= rom_mask;
+    u16 data;
 
-    if(unlikely(address >= rom.size())) {
-      return u16(address >> 1);
+    if(!sequential) {
+      rom_address_latch = address & rom_mask;
     }
 
-    return read<u16>(rom.data(), address);
+    if(likely(rom_address_latch < rom.size())) {
+      data = read<u16>(rom.data(), rom_address_latch);
+    } else {
+      data = (u16)(rom_address_latch >> 1);
+    }
+
+    rom_address_latch = (rom_address_latch + sizeof(u16)) & rom_mask;
+    return data;
   }
 
-  auto ALWAYS_INLINE ReadROM32(u32 address) -> u32 {
+  auto ALWAYS_INLINE ReadROM32(u32 address, bool sequential) -> u32 {
     address &= 0x01FF'FFFC;
 
     if(unlikely(IsGPIO(address)) && gpio->IsReadable()) {
@@ -147,18 +161,26 @@ struct ROM {
       return (msw << 16) | lsw;
     }
 
-    address &= rom_mask;
+    u32 data;
 
-    if(unlikely(address >= rom.size())) {
-      auto lsw = u16(address >> 1);
-      auto msw = u16(lsw + 1);
-      return (msw << 16) | lsw;
+    if(!sequential) {
+      rom_address_latch = address & rom_mask;
     }
 
-    return read<u32>(rom.data(), address);
+    if(likely(rom_address_latch < rom.size())) {
+      data = read<u32>(rom.data(), rom_address_latch);
+    } else {
+      const u16 lsw = (u16)(rom_address_latch >> 1);
+      const u16 msw = (u16)(lsw + 1);
+
+      data = (msw << 16) | lsw;
+    }
+
+    rom_address_latch = (rom_address_latch + sizeof(u32)) & rom_mask;
+    return data;
   }
 
-  void ALWAYS_INLINE WriteROM(u32 address, u16 value) {
+  void ALWAYS_INLINE WriteROM(u32 address, u16 value, bool sequential) {
     address &= 0x01FF'FFFE;
 
     if(IsGPIO(address)) {
@@ -167,6 +189,9 @@ struct ROM {
 
     if(IsEEPROM(address)) {
       backup_eeprom->Write(0, value);
+    } else if(!sequential) {
+      // @todo: confirm that a) EEPROM accesses do not update the latched address (or that it doesn't matter) and that b) writes do update the latch.
+      rom_address_latch = address & rom_mask;
     }
   }
 
@@ -197,6 +222,7 @@ private:
   std::unique_ptr<Backup> backup_eeprom;
   std::unique_ptr<GPIO> gpio;
 
+  u32 rom_address_latch = 0;
   u32 rom_mask = 0;
   u32 eeprom_mask = 0;
 };

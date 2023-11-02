@@ -164,8 +164,6 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
           if((vcount >= y || y_max < y) && vcount < y_max) {
             const bool mosaic = (attr01 & (1 << 12)) && mode != OBJ_WINDOW;
 
-            const int line = sprite.vcount - (mosaic ? sprite.mosaic_y : 0);
-
             drawer_state.width = width;
             drawer_state.height = height;
             drawer_state.mode = mode;
@@ -176,13 +174,19 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
        
             drawer_state.is_256 = (attr01 >> 13) & 1;
 
+            int local_y = (vcount - y) & 255;
+
+            if(mosaic) {
+              local_y = std::max(0, local_y - sprite.mosaic_y);
+            }
+
             if(!affine) {
               const bool flip_v = attr01 & (1 << 29);
 
               drawer_state.flip_h = attr01 & (1 << 28);
 
               drawer_state.texture_x = 0;
-              drawer_state.texture_y = (line - y) & 255;
+              drawer_state.texture_y = local_y;
 
               if(flip_v) {
                 drawer_state.texture_y ^= height - 1;
@@ -191,7 +195,7 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
               oam_fetch.pending_wait = half_width - 2;
             } else {
               oam_fetch.initial_local_x = -half_width;
-              oam_fetch.initial_local_y = line - (y_max - half_height);
+              oam_fetch.initial_local_y = local_y - half_height;
               oam_fetch.pending_wait = half_width * 2 - 1;
               oam_fetch.matrix_address = (((attr01 >> 25) & 31U) * 32U) + 6U;
             }

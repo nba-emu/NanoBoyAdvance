@@ -14,13 +14,11 @@ namespace nba::core {
 
 void MP2K::Reset() {
   engaged = false;
-  use_cubic_filter = false;
-  total_frame_count = 0;
   current_frame = 0;
   buffer_read_index = 0;
-  for(auto& entry : samplers) {
-    entry = {};
-  }
+
+  for(auto& sampler : samplers) sampler = {};
+  for(auto& envelope : envelopes) envelope = {};
 }
 
 void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
@@ -34,8 +32,7 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
       "MP2K: samples per V-blank must not be zero."
     );
 
-    total_frame_count = kDMABufferSize / sound_info.pcm_samples_per_vblank;
-    buffer = std::make_unique<float[]>(kSamplesPerFrame * total_frame_count * 2);
+    buffer = std::make_unique<float[]>(k_samples_per_frame * k_total_frame_count * 2);
     engaged = true;
   }
 
@@ -43,15 +40,21 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
 
   this->sound_info = sound_info;
 
+  // Update the channel state and envelope volume for this audio frame
   for(int i = 0; i < max_channels; i++) {
     auto& channel = this->sound_info.channels[i];
-    auto& sampler = samplers[i];
-    auto  envelope_volume = u32(channel.envelope_volume);
-    auto  envelope_phase = channel.status & CHANNEL_ENV_MASK;
 
     if((channel.status & CHANNEL_ON) == 0) {
       continue;
     }
+
+    auto& sampler = samplers[i];
+    auto  envelope_volume = u32(channel.envelope_volume);
+    auto  envelope_phase = channel.status & CHANNEL_ENV_MASK;
+
+    float hq_envelope_volume[2];
+
+    hq_envelope_volume[0] = envelopes[i].volume;
 
     if(channel.status & CHANNEL_START) {
       if(channel.status & CHANNEL_STOP) {
@@ -65,6 +68,7 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
       } else {
         channel.status = CHANNEL_ENV_ATTACK;
       }
+      hq_envelope_volume[0] = U8ToFloat(channel.envelope_attack);
 
       sampler = {};
       sampler.wave_info = *bus.GetHostAddress<Sampler::WaveInfo>(channel.wave_address);
@@ -78,6 +82,7 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
       }
     } else if(channel.status & CHANNEL_STOP) {
       envelope_volume = (envelope_volume * channel.envelope_release) >> 8;
+      hq_envelope_volume[0] *= U8ToFloat(channel.envelope_release);
 
       if(envelope_volume <= channel.echo_volume) {
         if(channel.echo_volume == 0) {
@@ -87,9 +92,11 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
 
         channel.status |= CHANNEL_ECHO;
         envelope_volume = (u32)channel.echo_volume;
+        hq_envelope_volume[0] = U8ToFloat(channel.echo_volume);
       }
     } else if(envelope_phase == CHANNEL_ENV_ATTACK) {
       envelope_volume += channel.envelope_attack;
+      hq_envelope_volume[0] = std::min(1.0f, hq_envelope_volume[0] + U8ToFloat(channel.envelope_attack));
 
       if(envelope_volume > 0xFE) {
         channel.status = (channel.status & ~CHANNEL_ENV_MASK) | CHANNEL_ENV_DECAY;
@@ -97,6 +104,7 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
       }
     } else if(envelope_phase == CHANNEL_ENV_DECAY) {
       envelope_volume = (envelope_volume * channel.envelope_decay) >> 8;
+      hq_envelope_volume[0] *= U8ToFloat(channel.envelope_decay);
     
       auto envelope_sustain = channel.envelope_sustain;
       if(envelope_volume <= envelope_sustain) {
@@ -107,13 +115,45 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
 
         channel.status = (channel.status & ~CHANNEL_ENV_MASK) | CHANNEL_ENV_SUSTAIN;
         envelope_volume = envelope_sustain;
+        hq_envelope_volume[0] = U8ToFloat(envelope_sustain);
       }
-    } 
+    }
 
     channel.envelope_volume = u8(envelope_volume);
     envelope_volume = (envelope_volume * (this->sound_info.master_volume + 1)) >> 4;
     channel.envelope_volume_r = u8((envelope_volume * channel.volume_r) >> 8);
     channel.envelope_volume_l = u8((envelope_volume * channel.volume_l) >> 8);
+
+    // Try to predict the envelope's value at the start of the next audio frame,
+    // so that we can linearly interpolate the envelope between the current and next frame.
+    if(channel.status & CHANNEL_STOP) {
+      if(((envelope_volume * channel.envelope_release) >> 8) <= channel.echo_volume) {
+        hq_envelope_volume[1] = U8ToFloat(channel.echo_volume);
+      } else {
+        hq_envelope_volume[1] = hq_envelope_volume[0] * U8ToFloat(channel.envelope_release);
+      }
+    } else if((channel.status & CHANNEL_ENV_MASK) == CHANNEL_ENV_ATTACK) {
+      hq_envelope_volume[1] = std::min(1.0f, hq_envelope_volume[0] + U8ToFloat(channel.envelope_attack));
+    } else if((channel.status & CHANNEL_ENV_MASK) == CHANNEL_ENV_DECAY) {
+      if(((envelope_volume * channel.envelope_decay) >> 8) <= channel.envelope_sustain) {
+        hq_envelope_volume[1] = U8ToFloat(channel.envelope_sustain);
+      } else {
+        hq_envelope_volume[1] = hq_envelope_volume[0] * U8ToFloat(channel.envelope_decay);
+      }
+    } else {
+      hq_envelope_volume[1] = hq_envelope_volume[0];
+    }
+
+    const float hq_master_volume = (sound_info.master_volume + 1) / 16.0;
+    const float hq_volume_r = hq_master_volume * U8ToFloat(channel.volume_r);
+    const float hq_volume_l = hq_master_volume * U8ToFloat(channel.volume_l);
+
+    envelopes[i].volume = hq_envelope_volume[0];
+
+    for(int j : {0, 1}) {
+      envelopes[i].volume_r[j] = hq_envelope_volume[j] * hq_volume_r;
+      envelopes[i].volume_l[j] = hq_envelope_volume[j] * hq_volume_l;
+    }
   }
 }
 
@@ -125,37 +165,22 @@ void MP2K::RenderFrame() {
     S8ToFloat(0xF0), S8ToFloat(0xF7), S8ToFloat(0xFC), S8ToFloat(0xFF)
   };
 
-  current_frame = (current_frame + 1) % total_frame_count;
+  current_frame = (current_frame + 1) % k_total_frame_count;
 
-  auto reverb = sound_info.reverb;
-  auto max_channels = std::min(sound_info.max_channels, kMaxSoundChannels);
-  auto destination = &buffer[current_frame * kSamplesPerFrame * 2];
+  const auto reverb_strength = force_reverb ? std::max(sound_info.reverb, (u8)48) : sound_info.reverb;
+  const auto max_channels = std::min(sound_info.max_channels, kMaxSoundChannels);
+  const auto destination = &buffer[current_frame * k_samples_per_frame * 2];
 
-  if(reverb == 0) {
-    std::memset(destination, 0, kSamplesPerFrame * 2 * sizeof(float));
+  if(reverb_strength > 0) {
+    RenderReverb(destination, reverb_strength);
   } else {
-    auto factor = reverb / (128.0 * 4.0);
-    auto other_frame  = (current_frame + 1) % total_frame_count;
-    auto other_buffer = &buffer[other_frame * kSamplesPerFrame * 2];
-
-    for(int i = 0; i < kSamplesPerFrame; i++) {
-      float sample_out = 0;
-
-      sample_out += other_buffer[i * 2 + 0];
-      sample_out += other_buffer[i * 2 + 1];
-      sample_out += destination[i * 2 + 0];
-      sample_out += destination[i * 2 + 1];
-
-      sample_out *= factor;
-
-      destination[i * 2 + 0] = sample_out;
-      destination[i * 2 + 1] = sample_out;
-    }
+    std::memset(destination, 0, k_samples_per_frame * 2 * sizeof(float));
   }
-  
+
   for(int i = 0; i < max_channels; i++) {
     auto& channel = sound_info.channels[i];
     auto& sampler = samplers[i];
+    auto& envelope = envelopes[i];
 
     if((channel.status & CHANNEL_ON) == 0) {
       continue;
@@ -164,13 +189,11 @@ void MP2K::RenderFrame() {
     float angular_step;
 
     if(channel.type & 8) {
-      angular_step = sound_info.pcm_sample_rate / float(kSampleRate);
+      angular_step = sound_info.pcm_sample_rate / float(k_sample_rate);
     } else {
-      angular_step = channel.frequency / float(kSampleRate);
+      angular_step = channel.frequency / float(k_sample_rate);
     }
 
-    auto volume_l = channel.envelope_volume_l / 255.0;
-    auto volume_r = channel.envelope_volume_r / 255.0;
     bool compressed = (channel.type & 32) != 0;
     auto sample_history = sampler.sample_history;
 
@@ -190,7 +213,12 @@ void MP2K::RenderFrame() {
 
     auto wave_data = sampler.wave_data;
 
-    for(int j = 0; j < kSamplesPerFrame; j++) {
+    for(int j = 0; j < k_samples_per_frame; j++) {
+      const float t = j / (float)k_samples_per_frame;
+
+      const float volume_l = envelope.volume_l[0] * (1 - t) + envelope.volume_l[1] * t;
+      const float volume_r = envelope.volume_r[0] * (1 - t) + envelope.volume_r[1] * t;
+
       if(sampler.should_fetch_sample) {
         float sample;
 
@@ -267,14 +295,69 @@ void MP2K::RenderFrame() {
   }
 }
 
+void MP2K::RenderReverb(float* destination, u8 strength) {
+  static constexpr float k_early_coefficient = 0.0015;
+
+  static constexpr float k_late_coefficients[3][2] {
+    { 1.0 , 0.1  },
+    { 0.6 , 0.25 },
+    { 0.35, 0.35 }
+  };
+
+  static constexpr float k_normalize_coefficients = []() constexpr {
+    float sum = 0.0;
+
+    for(auto pair : k_late_coefficients) {
+      sum += pair[0];
+      sum += pair[1];
+    } 
+
+    return 1.0 / sum;
+  }();
+
+  const auto early_buffer = &buffer[((current_frame + k_total_frame_count - 1) % k_total_frame_count) * k_samples_per_frame * 2];
+
+  const float* late_buffers[3] {
+    &buffer[((current_frame + 2) % k_total_frame_count) * k_samples_per_frame * 2],
+    &buffer[((current_frame + 1) % k_total_frame_count) * k_samples_per_frame * 2],
+    destination
+  };
+
+  const auto factor = strength / 128.0;
+
+  for(int l = 0; l < k_samples_per_frame * 2; l += 2) {
+    const int r = l + 1;
+
+    const float early_reflection_l = early_buffer[l] * k_early_coefficient;
+    const float early_reflection_r = early_buffer[r] * k_early_coefficient;
+
+    float late_reflection_l = 0;
+    float late_reflection_r = 0;
+
+    for(int j = 0; j < 3; j++) {
+      const float sample_l = late_buffers[j][l];
+      const float sample_r = late_buffers[j][r];
+
+      late_reflection_l += sample_l * k_late_coefficients[j][0] + sample_r * k_late_coefficients[j][1];
+      late_reflection_r += sample_l * k_late_coefficients[j][1] + sample_r * k_late_coefficients[j][0];
+    }
+
+    late_reflection_l *= k_normalize_coefficients;
+    late_reflection_r *= k_normalize_coefficients;
+
+    destination[l] = (early_reflection_l + late_reflection_l) * factor;
+    destination[r] = (early_reflection_r + late_reflection_r) * factor;
+  }
+}
+
 auto MP2K::ReadSample() -> float* {
   if(buffer_read_index == 0) {
     RenderFrame();
   }
 
-  auto sample = &buffer[(current_frame * kSamplesPerFrame + buffer_read_index) * 2];
+  auto sample = &buffer[(current_frame * k_samples_per_frame + buffer_read_index) * 2];
 
-  if(++buffer_read_index == kSamplesPerFrame) {
+  if(++buffer_read_index == k_samples_per_frame) {
     buffer_read_index = 0;
   }
 

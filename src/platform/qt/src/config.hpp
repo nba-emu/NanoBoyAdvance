@@ -12,6 +12,8 @@
 #include <filesystem>
 #include <platform/config.hpp>
 #include <Qt>
+#include <QStandardPaths>
+#include <QDebug>
 #include <SDL.h>
 #include <vector>
 
@@ -22,7 +24,7 @@
 
 namespace fs = std::filesystem;
 
-struct QtConfig final : nba::PlatformConfig {  
+struct QtConfig final : nba::PlatformConfig {
   QtConfig() {
     config_path = GetConfigPath();
   }
@@ -32,33 +34,35 @@ struct QtConfig final : nba::PlatformConfig {
       int keyboard = 0;
 
       struct {
-        int button = SDL_CONTROLLER_BUTTON_INVALID;
-        int axis = SDL_CONTROLLER_AXIS_INVALID;
-      } controller;
+        int button = -1;
+        int axis = -1;
+        int hat = -1;
+        int hat_direction = 0;
+      } controller{};
 
-      static auto FromArray(std::array<int, 3> const& array) -> Map {
-        return {array[0], {array[1], array[2]}};
+      static auto FromArray(std::array<int, 5> const& array) -> Map {
+        return {array[0], {array[1], array[2], array[3], array[4]}};
       }
 
-      auto Array() -> std::array<int, 3> {
-        return {keyboard, controller.button, controller.axis};
+      auto Array() -> std::array<int, 5> {
+        return {keyboard, controller.button, controller.axis, controller.hat, controller.hat_direction};
       }
     };
 
     Map gba[nba::InputDevice::kKeyCount] {
-      {Qt::Key_Up, {SDL_CONTROLLER_BUTTON_DPAD_UP, SDL_CONTROLLER_AXIS_LEFTY | 0x80}},
-      {Qt::Key_Down, {SDL_CONTROLLER_BUTTON_DPAD_DOWN, SDL_CONTROLLER_AXIS_LEFTY}},
-      {Qt::Key_Left, {SDL_CONTROLLER_BUTTON_DPAD_LEFT, SDL_CONTROLLER_AXIS_LEFTX | 0x80}},
-      {Qt::Key_Right, {SDL_CONTROLLER_BUTTON_DPAD_RIGHT, SDL_CONTROLLER_AXIS_LEFTX}},
-      {Qt::Key_Return, {SDL_CONTROLLER_BUTTON_START}},
-      {Qt::Key_Backspace, {SDL_CONTROLLER_BUTTON_BACK}},
-      {Qt::Key_A, {SDL_CONTROLLER_BUTTON_A}},
-      {Qt::Key_S, {SDL_CONTROLLER_BUTTON_B}},
-      {Qt::Key_D, {SDL_CONTROLLER_BUTTON_LEFTSHOULDER}},
-      {Qt::Key_F, {SDL_CONTROLLER_BUTTON_RIGHTSHOULDER}}
+      {Qt::Key_Up},
+      {Qt::Key_Down},
+      {Qt::Key_Left},
+      {Qt::Key_Right},
+      {Qt::Key_Return},
+      {Qt::Key_Backspace},
+      {Qt::Key_A},
+      {Qt::Key_S},
+      {Qt::Key_D},
+      {Qt::Key_F}
     };
 
-    Map fast_forward = {Qt::Key_Space, {SDL_CONTROLLER_BUTTON_X}};
+    Map fast_forward = {Qt::Key_Space};
 
     std::string controller_guid;
     bool hold_fast_forward = true;
@@ -81,6 +85,15 @@ struct QtConfig final : nba::PlatformConfig {
   }
 
   void Save() {
+    auto config_dir = fs::path(config_path).parent_path();
+    if (!fs::exists(config_dir)) {
+        try {
+            fs::create_directories(config_dir);
+        } catch (const std::exception& ex) {
+            qDebug() << "HHH";
+        }
+    }
+
     nba::PlatformConfig::Save(config_path);
   }
 
@@ -125,7 +138,13 @@ private:
       }
     #endif
 
-    return "config.toml";
+    #ifdef PORTABLE_MODE
+      return "config.toml";
+    #else
+      auto config_directory = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation).toStdString();
+      const std::filesystem::path config_path = config_directory;
+      return  (config_path / "NanoBoyAdvance" / "config.toml").string();
+    #endif
   }
 
   std::string config_path;

@@ -69,7 +69,7 @@ auto ROMLoader::Load(
     }
   }
 
-  auto backup = CreateBackup(save_path, backup_type);
+  auto backup = CreateBackup(core, save_path, backup_type);
 
   auto gpio = std::unique_ptr<GPIO>{};
 
@@ -213,6 +213,7 @@ auto ROMLoader::GetBackupType(
 }
 
 auto ROMLoader::CreateBackup(
+  std::unique_ptr<CoreBase>& core,
   fs::path const& save_path,
   BackupType backup_type
 ) -> std::unique_ptr<Backup> {
@@ -220,9 +221,9 @@ auto ROMLoader::CreateBackup(
     case BackupType::SRAM:      return std::make_unique<SRAM>(save_path);
     case BackupType::FLASH_64:  return std::make_unique<FLASH>(save_path, FLASH::SIZE_64K);
     case BackupType::FLASH_128: return std::make_unique<FLASH>(save_path, FLASH::SIZE_128K);
-    case BackupType::EEPROM_4:  return std::make_unique<EEPROM>(save_path, EEPROM::SIZE_4K);
-    case BackupType::EEPROM_64: return std::make_unique<EEPROM>(save_path, EEPROM::SIZE_64K);
-    case BackupType::EEPROM_DETECT: return std::make_unique<EEPROM>(save_path, EEPROM::DETECT);
+    case BackupType::EEPROM_4:  return std::make_unique<EEPROM>(save_path, EEPROM::SIZE_4K, core->GetScheduler());
+    case BackupType::EEPROM_64: return std::make_unique<EEPROM>(save_path, EEPROM::SIZE_64K, core->GetScheduler());
+    case BackupType::EEPROM_DETECT: return std::make_unique<EEPROM>(save_path, EEPROM::DETECT, core->GetScheduler());
   }
 
   return {};

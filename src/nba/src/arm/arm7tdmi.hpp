@@ -11,7 +11,7 @@
 #include <nba/common/compiler.hpp>
 #include <nba/log.hpp>
 #include <nba/save_state.hpp>
-#include <scheduler.hpp>
+#include <nba/scheduler.hpp>
 
 #include "bus/bus.hpp"
 #include "arm/state.hpp"

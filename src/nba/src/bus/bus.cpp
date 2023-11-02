@@ -147,17 +147,17 @@ auto Bus::Read(u32 address, int access) -> T {
       if constexpr(std::is_same_v<T,  u8>) {
         auto shift = ((address & 1) << 3);
         Prefetch(address, code, wait16[sequential][page]);
-        return memory.rom.ReadROM16(address) >> shift;
+        return memory.rom.ReadROM16(address, sequential) >> shift;
       }
 
       if constexpr(std::is_same_v<T, u16>) {
         Prefetch(address, code, wait16[sequential][page]);
-        return memory.rom.ReadROM16(address);
+        return memory.rom.ReadROM16(address, sequential);
       }
 
       if constexpr(std::is_same_v<T, u32>) {
         Prefetch(address, code, wait32[sequential][page]);
-        return memory.rom.ReadROM32(address);  
+        return memory.rom.ReadROM32(address, sequential);  
       }
 
       return 0;
@@ -248,18 +248,18 @@ void Bus::Write(u32 address, int access, T value) {
       // TODO: figure out how 8-bit and 32-bit accesses actually work.
       if constexpr(std::is_same_v<T, u8>) {
         Step(wait16[sequential][page]);
-        memory.rom.WriteROM(address, value * 0x0101);
+        memory.rom.WriteROM(address, value * 0x0101, sequential);
       }
 
       if constexpr(std::is_same_v<T, u16>) {
         Step(wait16[sequential][page]);
-        memory.rom.WriteROM(address, value);
+        memory.rom.WriteROM(address, value, sequential);
       }
 
       if constexpr(std::is_same_v<T, u32>) {
         Step(wait32[sequential][page]);
-        memory.rom.WriteROM(address|0, value & 0xFFFF);
-        memory.rom.WriteROM(address|2, value >> 16);
+        memory.rom.WriteROM(address|0, value & 0xFFFF, sequential);
+        memory.rom.WriteROM(address|2, value >> 16, true);
       }
       break;
     }

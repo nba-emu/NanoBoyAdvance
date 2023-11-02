@@ -113,7 +113,7 @@ private:
   }
 
   void Reset();
-  void SetPause(bool value);
+  void SetPause(bool paused);
   void Stop();
   void UpdateMenuBarVisibility();
   void UpdateMainWindowActionList();
@@ -154,6 +154,8 @@ private:
   PaletteViewerWindow* palette_viewer_window;
   BackgroundViewerWindow* background_viewer_window;
   SpriteViewer* sprite_viewer_window;
+
+  QString base_window_title;
 
   Q_OBJECT
 };

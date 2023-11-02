@@ -6,6 +6,7 @@
  */
 
 #include <nba/core.hpp>
+#include <nba/scheduler.hpp>
 
 #include "arm/arm7tdmi.hpp"
 #include "bus/bus.hpp"
@@ -15,7 +16,6 @@
 #include "hw/irq/irq.hpp"
 #include "hw/keypad/keypad.hpp"
 #include "hw/timer/timer.hpp"
-#include "scheduler.hpp"
 
 namespace nba::core {
 
@@ -41,6 +41,8 @@ struct Core final : CoreBase {
   auto PeekWordIO(u32 address) -> u32 override;
   auto GetBGHOFS(int id) -> u16 override;
   auto GetBGVOFS(int id) -> u16 override;
+
+  Scheduler& GetScheduler() override;
 
 private:
   void SkipBootScreen();

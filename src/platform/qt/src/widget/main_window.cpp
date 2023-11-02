@@ -23,12 +23,21 @@
 #include <unordered_map>
 
 #include "widget/main_window.hpp"
+#include "version.hpp"
 
 MainWindow::MainWindow(
   QApplication* app,
   QWidget* parent
 )   : QMainWindow(parent) {
-  setWindowTitle("NanoBoyAdvance 1.7.1");
+  #ifdef RELEASE_BUILD
+    base_window_title = QStringLiteral("NanoBoyAdvance %1.%2.%3")
+      .arg(VERSION_MAJOR).arg(VERSION_MINOR).arg(VERSION_PATCH);
+  #else
+    base_window_title = QStringLiteral("NanoBoyAdvance %1.%2.%3 [%4-%5]")
+      .arg(VERSION_MAJOR).arg(VERSION_MINOR).arg(VERSION_PATCH).arg(VERSION_GIT_BRANCH).arg(VERSION_GIT_HASH);
+  #endif
+
+  setWindowTitle(base_window_title);
   setAcceptDrops(true);
 
   screen = std::make_shared<Screen>(this, config);
@@ -61,10 +70,10 @@ MainWindow::MainWindow(
   });
   connect(this, &MainWindow::UpdateFrameRate, this, [this](int fps) {
     if(config->window.show_fps) {
-      auto percent = fps / 59.7275 * 100;
-      setWindowTitle(QString::fromStdString(fmt::format("NanoBoyAdvance 1.7.1 [{} fps | {:.2f}%]", fps, percent)));
+      const float percent = fps / 59.7275f * 100.0f;
+      setWindowTitle(QStringLiteral("%1 (%2 fps | %3%)").arg(base_window_title).arg(fps).arg(percent));
     } else {
-      setWindowTitle("NanoBoyAdvance 1.7.1");
+      setWindowTitle(base_window_title);
     }
   }, Qt::QueuedConnection);
 
@@ -168,6 +177,14 @@ void MainWindow::CreateVideoMenu(QMenu* parent) {
 void MainWindow::CreateAudioMenu(QMenu* parent) {
   auto menu = parent->addMenu(tr("Audio"));
 
+  CreateSelectionOption(menu->addMenu("Volume"), {
+    { "Off",    0 },
+    { "25%",   25 },
+    { "50%",   50 },
+    { "75%",   75 },
+    { "100%", 100 }
+  }, &config->audio.volume, false);
+
   CreateSelectionOption(menu->addMenu("Resampler"), {
     { "Cosine",   nba::Config::Audio::Interpolation::Cosine },
     { "Cubic",    nba::Config::Audio::Interpolation::Cubic  },
@@ -179,6 +196,7 @@ void MainWindow::CreateAudioMenu(QMenu* parent) {
   auto hq_menu = menu->addMenu("MP2K HQ mixer");
   CreateBooleanOption(hq_menu, "Enable", &config->audio.mp2k_hle_enable, true);
   CreateBooleanOption(hq_menu, "Cubic interpolation", &config->audio.mp2k_hle_cubic, true);
+  CreateBooleanOption(hq_menu, "Force reverb on", &config->audio.mp2k_hle_force_reverb, true);
 }
 
 void MainWindow::CreateInputMenu(QMenu* parent) {
@@ -659,10 +677,14 @@ void MainWindow::Reset() {
   }
 }
 
-void MainWindow::SetPause(bool value) {
-  emu_thread->SetPause(value);
-  config->audio_dev->SetPause(value);
-  pause_action->setChecked(value);
+void MainWindow::SetPause(bool paused) {
+  if(!paused) {
+    screen->SetForceClear(false);
+  }
+
+  emu_thread->SetPause(paused);
+  config->audio_dev->SetPause(paused);
+  pause_action->setChecked(paused);
 }
 
 void MainWindow::Stop() {
@@ -675,7 +697,7 @@ void MainWindow::Stop() {
     game_loaded = false;
     RenderSaveStateMenus();
 
-    setWindowTitle("NanoBoyAdvance 1.7.1");
+    setWindowTitle(base_window_title);
   
     UpdateMenuBarVisibility();
   }
@@ -791,11 +813,16 @@ void MainWindow::LoadROM(std::u16string const& path) {
   RenderSaveStateMenus();
 
   // Reset the core and start the emulation thread.
-  // Unpause the emulator if it was paused.
-  SetPause(false);
+  // If the emulator is currently paused force-clear the screen.
   core->Reset();
   emu_thread->Start();
-  screen->SetForceClear(false);
+
+  /**
+   * If the the emulator is paused we force-clear the screen to avoid 
+   * presenting the last frame from before pausing, since that could be confusing.
+   * In the other case we explicitly disable force-clear, because it is currently enabled (due to the call to Stop() at the top).
+   */
+  screen->SetForceClear(pause_action->isChecked());
 
   UpdateSolarSensorLevel();
   UpdateMenuBarVisibility();

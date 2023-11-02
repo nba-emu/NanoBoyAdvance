@@ -38,11 +38,12 @@ struct Config {
       Sinc_64,
       Sinc_128,
       Sinc_256
-    } interpolation = Interpolation::Cosine;
+    } interpolation = Interpolation::Cubic;
 
-    bool interpolate_fifo = true;
+    int volume = 100; // between 0 and 100
     bool mp2k_hle_enable = false;
-    bool mp2k_hle_cubic = false;
+    bool mp2k_hle_cubic = true;
+    bool mp2k_hle_force_reverb = true;
   } audio;
 
   std::shared_ptr<AudioDevice> audio_dev = std::make_shared<NullAudioDevice>();

@@ -179,11 +179,10 @@ void DMA::RunChannel() {
   if(channel.is_fifo_dma) {
     size = Channel::Size::Word;
     dst_modify = 0;
-    src_modify = g_dma_src_modify[size][channel.src_cntl];
   } else {
     dst_modify = g_dma_dst_modify[size][channel.dst_cntl];
-    src_modify = g_dma_src_modify[size][channel.src_cntl];
   }
+  src_modify = g_dma_src_modify[size][channel.src_cntl];
 
   bool did_access_rom = false;
 
@@ -248,7 +247,7 @@ void DMA::RunChannel() {
     irq.Raise(IRQ::Source::DMA, channel.id);
   }
 
-  if(channel.repeat) {
+  if(channel.repeat && channel.time != Channel::Immediate) {
     if(channel.is_fifo_dma) {
       channel.latch.length = 4;
     } else {
@@ -323,11 +322,10 @@ void DMA::Write(int chan_id, int offset, u8 value) {
     case REG_DMAXCNT_H | 1: {
       bool enable_old = channel.enable;
 
-      // TODO: the repeat bit probably should not actually be masked
       channel.src_cntl  = Channel::Control((channel.src_cntl & 0b01) | ((value & 1) << 1));
       channel.size = static_cast<Channel::Size>((value >> 2) & 1);
       channel.time = static_cast<Channel::Timing>((value >> 4) & 3);
-      channel.repeat  = (value & 2) && channel.time != Channel::Immediate;
+      channel.repeat  =  value & 2;
       channel.gamepak = (value & 8) && chan_id == 3;
       channel.interrupt = value & 64;
       channel.enable = value & 128;
@@ -350,16 +348,6 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
 
       channel.latch.dst_addr = channel.dst_addr;
       channel.latch.src_addr = channel.src_addr;
-
-      /**
-       * TODO:
-       * DMA actually always uses sequential accesses for all except the first ROM access.
-       * This is a better explanation of the observed behavior and makes it redundant
-       * to force increment mode.
-       */
-      if(src_page == 0x08) {
-        channel.src_cntl = Channel::Control::Increment;
-      }
 
       if(channel.time == Channel::Special && (channel.id == 1 || channel.id == 2)) {
         channel.is_fifo_dma = true;

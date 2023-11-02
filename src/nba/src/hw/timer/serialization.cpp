@@ -35,8 +35,6 @@ void Timer::LoadState(SaveState const& state) {
     channels[i].pending.reload = state.timer[i].pending.reload;
     channels[i].pending.control = state.timer[i].pending.control;
   }
-
-  RecalculateSampleRates();
 }
 
 void Timer::CopyState(SaveState& state) {

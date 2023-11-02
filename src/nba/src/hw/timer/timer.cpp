@@ -88,10 +88,6 @@ void Timer::WriteByte(int chan_id, int offset, u8 value) {
       break;
     }
   }
-
-  if(chan_id <= 1) {
-    RecalculateSampleRates();
-  }
 }
 
 void Timer::WriteHalf(int chan_id, int offset, u16 value) {
@@ -108,10 +104,6 @@ void Timer::WriteHalf(int chan_id, int offset, u16 value) {
       break;
     }
   }
-
-  if(chan_id <= 1) {
-    RecalculateSampleRates();
-  }
 }
 
 void Timer::WriteWord(int chan_id, u32 value) {
@@ -119,10 +111,6 @@ void Timer::WriteWord(int chan_id, u32 value) {
 
   WriteReload(channel, (u16)value);
   WriteControl(channel, (u32)(value >> 16));
-
-  if(chan_id <= 1) {
-    RecalculateSampleRates();
-  }
 }
 
 auto Timer::ReadCounter(Channel const& channel) -> u16 {
@@ -183,32 +171,30 @@ void Timer::OnControlWritten(u64 chan_id) {
   channel.mask = g_ticks_mask[control.frequency];
 
   if(control.enable) {
-    if(!enable_previous) {
-      channel.counter = channel.reload;
-    }
+    // How many cycles are we away from the next prescaler tick?
+    const int prescaler_offset = scheduler.GetTimestampNow() & channel.mask;
 
-    if(!control.cascade) {
-      auto late = (scheduler.GetTimestampNow() & channel.mask);
-      if(!enable_previous) {
-        late -= 1;
+    if(enable_previous) {
+      if(!control.cascade) {
+        StartChannel(channel, prescaler_offset);
       }
-      StartChannel(channel, late);
+    } else {
+      if(control.cascade) {
+        channel.counter = channel.reload;
+      } else if(channel.counter == 0xFFFF && prescaler_offset == 0) {
+        /**
+         * After enabling a timer, it takes one cycle to load the reload value into the counter.
+         * During this cycle, the timer can tick and may even overflow.
+         * We handle this edge-case here.
+         * 
+         * See: https://github.com/nba-emu/NanoBoyAdvance/issues/331
+         */ 
+        StartChannel(channel, 0);
+      } else {
+        channel.counter = channel.reload;
+        StartChannel(channel, prescaler_offset - 1);
+      }
     }
-  }
-}
-
-void Timer::RecalculateSampleRates() {
-  constexpr int kCyclesPerSecond = 16777216;
-
-  auto timer0_duty = 0x10000 - channels[0].reload;
-  auto timer1_duty = 0x10000 - channels[1].reload;
-
-  channels[0].samplerate = kCyclesPerSecond / (timer0_duty << channels[0].shift);
-
-  if(channels[1].control.cascade) {
-    channels[1].samplerate = channels[0].samplerate / timer1_duty;
-  } else {
-    channels[1].samplerate = kCyclesPerSecond / (timer1_duty << channels[1].shift);
   }
 }
 
@@ -243,7 +229,7 @@ void Timer::ReloadCascadeAndRequestIRQ(Channel& channel) {
   }
 
   if(channel.id <= 1) {
-    apu.OnTimerOverflow(channel.id, 1, channel.samplerate);
+    apu.OnTimerOverflow(channel.id, 1);
   }
 
   if(channel.id != 3) {
