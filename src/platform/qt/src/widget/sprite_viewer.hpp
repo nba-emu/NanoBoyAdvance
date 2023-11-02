@@ -22,7 +22,6 @@ struct SpriteViewer : QWidget {
 
   bool eventFilter(QObject* object, QEvent* event) override;
 
-public slots:
   void Update();
 
 private:

@@ -400,11 +400,8 @@ void MainWindow::CreateToolsMenu() {
   });
 
   connect(tools_menu->addAction(tr("Sprite Viewer")), &QAction::triggered, [this]() {
-    if(!sprite_viewer_window) {
-      sprite_viewer_window = new SpriteViewer{core.get()};
-      connect(screen.get(), &Screen::RequestDraw, sprite_viewer_window, &SpriteViewer::Update);
-    }
-
+    const auto sprite_viewer_window = new SpriteViewerWindow{core.get(), this};
+    connect(screen.get(), &Screen::RequestDraw, sprite_viewer_window, &SpriteViewerWindow::Update);
     sprite_viewer_window->show();
   });
 }

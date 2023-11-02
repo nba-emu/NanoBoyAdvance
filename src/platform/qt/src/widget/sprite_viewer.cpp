@@ -104,10 +104,6 @@ SpriteViewer::SpriteViewer(nba::CoreBase* core, QWidget* parent) : QWidget{paren
   atlas_canvas->installEventFilter(this);
 
   setLayout(layout);
-  
-  // @todo: move this out of here
-  setWindowTitle("Sprite Viewer");
-  setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
 }
 
 void SpriteViewer::Update() {

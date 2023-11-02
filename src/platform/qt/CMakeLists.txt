@@ -15,6 +15,7 @@ set(SOURCES
   src/widget/palette_box.cpp
   src/widget/palette_viewer_window.cpp
   src/widget/sprite_viewer.cpp
+  src/widget/sprite_viewer_window.cpp
   src/config.cpp
   src/main.cpp
 )
@@ -29,6 +30,7 @@ set(HEADERS
   src/widget/palette_viewer_window.hpp
   src/widget/screen.hpp
   src/widget/sprite_viewer.hpp
+  src/widget/sprite_viewer_window.hpp
   src/config.hpp
   version.in.hpp
 )
