@@ -25,9 +25,9 @@ public:
   }
 
   void Tick() {
-    if(--step == 0) {
+    if(step == 0) {
       step = divider;
-    
+
       if(active && divider != 0) {
         if(direction == Direction::Increment) {
           if(current_volume != 15) {
@@ -43,6 +43,8 @@ public:
           }
         }
       }
+    } else {
+      step--;
     }
   }
 

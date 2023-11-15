@@ -99,9 +99,6 @@ void QuadChannel::Write(int offset, u8 value) {
       break;
     }
     case 3: {
-      auto divider_old = envelope.divider;
-      auto direction_old = envelope.direction;
-
       envelope.divider = value & 7;
       envelope.direction = Envelope::Direction((value >> 3) & 1);
       envelope.initial_volume = value >> 4;
@@ -110,19 +107,6 @@ void QuadChannel::Write(int offset, u8 value) {
       if(!dac_enable) {
         Disable();
       }
-
-      // Handle envelope "Zombie" mode:
-      // https://gist.github.com/drhelius/3652407#file-game-boy-sound-operation-L491
-      // TODO: what is the exact behavior on AGB systems?
-      if(divider_old == 0 && envelope.active) {
-        envelope.current_volume++;
-      } else if(direction_old == Envelope::Direction::Decrement) {
-        envelope.current_volume += 2;
-      }
-      if(direction_old != envelope.direction) {
-        envelope.current_volume = 16 - envelope.current_volume;
-      }
-      envelope.current_volume &= 15;
       break;
     }
 
