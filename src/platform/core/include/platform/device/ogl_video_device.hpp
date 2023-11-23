@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <array>
 #include <nba/device/video_device.hpp>
 #include <GL/glew.h>
 #include <platform/config.hpp>
@@ -49,9 +50,9 @@ private:
   GLuint quad_vao;
   GLuint quad_vbo;
   GLuint fbo;
-  GLuint texture[4];
+  std::array<GLuint, 4> textures = {};
   std::vector<GLuint> programs;
-  GLenum texture_filter = GL_NEAREST;
+  GLint texture_filter = GL_NEAREST;
   bool texture_filter_invalid = false;
 
   std::shared_ptr<PlatformConfig> config;

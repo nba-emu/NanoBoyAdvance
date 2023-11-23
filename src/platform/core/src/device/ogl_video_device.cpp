@@ -42,7 +42,7 @@ OGLVideoDevice::~OGLVideoDevice() {
   glDeleteVertexArrays(1, &quad_vao);
   glDeleteBuffers(1, &quad_vbo);
   glDeleteFramebuffers(1, &fbo);
-  glDeleteTextures(4, texture);
+  glDeleteTextures(textures.size(), textures.data());
 }
 
 void OGLVideoDevice::Initialize() {
@@ -54,16 +54,16 @@ void OGLVideoDevice::Initialize() {
   glBindVertexArray(quad_vao);
   glBindBuffer(GL_ARRAY_BUFFER, quad_vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(kQuadVertices), kQuadVertices.data(), GL_STATIC_DRAW);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)0);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat)));
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
 
   // Create three textures and a framebuffer for postprocessing.
   glGenFramebuffers(1, &fbo);
-  glGenTextures(4, texture);
+  glGenTextures(textures.size(), textures.data());
   for(int i = 0; i < 4; i++) {
-    glBindTexture(GL_TEXTURE_2D, texture[i]);
+    glBindTexture(GL_TEXTURE_2D, textures[i]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   }
@@ -159,7 +159,7 @@ void OGLVideoDevice::CreateShaderPrograms() {
 }
 
 void OGLVideoDevice::ReleaseShaderPrograms() {
-  for(auto program : programs) {   
+  for(const auto program : programs) {
     glDeleteProgram(program);
   }
   programs.clear();
@@ -220,7 +220,7 @@ void OGLVideoDevice::SetViewport(int x, int y, int width, int height) {
   view_height = height;
 
   for(int i = 0; i < 3; i++) {
-    glBindTexture(GL_TEXTURE_2D, texture[i]);
+    glBindTexture(GL_TEXTURE_2D, textures[i]);
     glTexImage2D(
       GL_TEXTURE_2D,
       0,
@@ -244,7 +244,7 @@ void OGLVideoDevice::Draw(u32* buffer) {
 
   // Update and bind LCD screen texture
   glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, texture[3]);
+  glBindTexture(GL_TEXTURE_2D, textures[3]);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, gba_screen_width, gba_screen_height,
                0, GL_BGRA, GL_UNSIGNED_BYTE, buffer);
   if(texture_filter_invalid) {
@@ -255,11 +255,11 @@ void OGLVideoDevice::Draw(u32* buffer) {
 
   // Bind LCD history map
   glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_2D, texture[2]);
+  glBindTexture(GL_TEXTURE_2D, textures[2]);
 
   // Bind LCD source map
   glActiveTexture(GL_TEXTURE2);
-  glBindTexture(GL_TEXTURE_2D, texture[3]);
+  glBindTexture(GL_TEXTURE_2D, textures[3]);
 
   auto program_count = programs.size();
 
@@ -278,14 +278,14 @@ void OGLVideoDevice::Draw(u32* buffer) {
       glBindFramebuffer(GL_FRAMEBUFFER, default_fbo);
     } else {
       glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture[target], 0);
+      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textures[target], 0);
     }
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
     // Output of the current pass is the input for the next pass.
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture[target]);
+    glBindTexture(GL_TEXTURE_2D, textures[target]);
 
     if(i == program_count - 3) {
       /* The next pass is the next-to-last pass, before we render to screen.
