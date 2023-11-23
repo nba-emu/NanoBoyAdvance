@@ -5,6 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
+#include <array>
 #include <filesystem>
 #include <fmt/format.h>
 #include <fstream>
@@ -25,14 +26,12 @@ namespace nba {
 static constexpr int gba_screen_width  = 240;
 static constexpr int gba_screen_height = 160;
 
-static const float kQuadVertices[] = {
+static constexpr std::array<GLfloat, 4 * 4> kQuadVertices = {
 // position | UV coord
-  -1,  1,     0, 1,
-   1,  1,     1, 1,
-   1, -1,     1, 0,
-   1, -1,     1, 0,
   -1, -1,     0, 0,
-  -1,  1,     0, 1
+   1, -1,     1, 0,
+  -1,  1,     0, 1,
+   1,  1,     1, 1
 };
 
 OGLVideoDevice::OGLVideoDevice(std::shared_ptr<PlatformConfig> config) : config(config) {
@@ -54,7 +53,7 @@ void OGLVideoDevice::Initialize() {
   glGenBuffers(1, &quad_vbo);
   glBindVertexArray(quad_vao);
   glBindBuffer(GL_ARRAY_BUFFER, quad_vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(kQuadVertices), kQuadVertices, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(kQuadVertices), kQuadVertices.data(), GL_STATIC_DRAW);
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
   glEnableVertexAttribArray(0);
@@ -282,7 +281,7 @@ void OGLVideoDevice::Draw(u32* buffer) {
       glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture[target], 0);
     }
 
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
     // Output of the current pass is the input for the next pass.
     glActiveTexture(GL_TEXTURE0);
