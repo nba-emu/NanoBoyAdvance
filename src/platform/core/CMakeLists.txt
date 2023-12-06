@@ -1,8 +1,3 @@
-cmake_minimum_required(VERSION 3.2)
-project(platform-core CXX)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeModules)
 
 include(FindSDL2)
@@ -44,9 +39,11 @@ set(HEADERS_PUBLIC
   include/platform/game_db.hpp
 )
 
-add_library(platform-core STATIC ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
-target_include_directories(platform-core PRIVATE src)
-target_include_directories(platform-core PUBLIC include ${SDL2_INCLUDE_DIR} ${GLEW_INCLUDE_DIRS})
+add_library(platform-core STATIC)
+target_sources(platform-core PRIVATE ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
+target_include_directories(platform-core PRIVATE src PUBLIC include)
 
-target_link_libraries(platform-core PRIVATE unarr)
-target_link_libraries(platform-core PUBLIC nba toml11::toml11 ${SDL2_LIBRARY} OpenGL::GL GLEW::GLEW)
+target_link_libraries(platform-core
+  PRIVATE unarr
+  PUBLIC nba toml11::toml11 ${SDL2_LIBRARY} OpenGL::GL GLEW::GLEW
+)

@@ -1,10 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
-project(nba CXX)
-
-add_subdirectory(../../external ${CMAKE_BINARY_DIR}/external)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_subdirectory(${CMAKE_SOURCE_DIR}/external ${CMAKE_BINARY_DIR}/external)
 
 set(SOURCES
   src/arm/tablegen/tablegen.cpp
@@ -20,7 +14,7 @@ set(SOURCES
   src/hw/apu/apu.cpp
   src/hw/apu/callback.cpp
   src/hw/apu/registers.cpp
-  src/hw/apu/serialization.cpp#
+  src/hw/apu/serialization.cpp
   src/hw/ppu/background.cpp
   src/hw/ppu/merge.cpp
   src/hw/ppu/ppu.cpp
@@ -113,9 +107,9 @@ set(HEADERS_PUBLIC
   include/nba/scheduler.hpp
 )
 
-add_library(nba STATIC ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
-target_include_directories(nba PRIVATE src)
-target_include_directories(nba PUBLIC include)
+add_library(nba STATIC)
+target_sources(nba PRIVATE ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
+target_include_directories(nba PRIVATE src PUBLIC include)
 
 target_link_libraries(nba PUBLIC fmt)
 
