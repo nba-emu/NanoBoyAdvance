@@ -1,5 +1,6 @@
 option(USE_STATIC_SDL "Link against static version of SDL library." OFF)
 option(USE_SYSTEM_TOML11 "Use system-provided toml11 library." OFF)
+option(USE_SYSTEM_UNARR "Use system-provided unarr library." OFF)
 
 if(USE_STATIC_SDL)
   find_package(SDL2 2.0.10
@@ -26,6 +27,29 @@ else()
   )
   set(toml11_INSTALL OFF CACHE BOOL "" FORCE)
   FetchContent_MakeAvailable(toml11)
+endif()
+
+if(USE_SYSTEM_UNARR)
+  find_package(unarr REQUIRED)
+else()
+  set(USE_SYSTEM_BZ2 OFF CACHE BOOL "" FORCE)
+  set(USE_SYSTEM_LZMA OFF CACHE BOOL "" FORCE)
+  set(USE_SYSTEM_ZLIB OFF CACHE BOOL "" FORCE)
+  set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
+  include(FetchContent)
+  FetchContent_Declare(unarr
+    GIT_REPOSITORY https://github.com/selmf/unarr.git
+    GIT_TAG        b211040df83dee513362cdeb9bd87afa26fd5e38 # v1.1.1
+  )
+  FetchContent_GetProperties(unarr)
+  if (NOT unarr_POPULATED)
+    FetchContent_Populate(unarr)
+    if (EXISTS ${unarr_SOURCE_DIR}/CMakeLists.txt)
+      add_subdirectory(${unarr_SOURCE_DIR} ${unarr_BINARY_DIR} EXCLUDE_FROM_ALL)
+      add_library(unarr::unarr ALIAS unarr)
+    endif()
+  endif()
 endif()
 
 set(SOURCES
@@ -77,6 +101,6 @@ else()
 endif()
 
 target_link_libraries(platform-core
-  PRIVATE unarr
+  PRIVATE unarr::unarr
   PUBLIC nba toml11::toml11 OpenGL::GL GLEW::GLEW
 )
