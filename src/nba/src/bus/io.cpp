@@ -633,7 +633,7 @@ void Bus::Hardware::WriteHalf(u32 address, u16 value) {
 
     case MGBA_LOG_SEND: {
       if(mgba_log.enable && (value & 0x100) != 0) {
-        nba::print("mGBA log: {}\n", mgba_log.message.data());
+        fmt::print("mGBA log: {}\n", mgba_log.message.data());
         std::fflush(stdout);
         mgba_log.message.fill(0);
       }

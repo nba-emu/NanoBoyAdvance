@@ -114,7 +114,6 @@ set(HEADERS_PUBLIC
   include/nba/core.hpp
   include/nba/integer.hpp
   include/nba/log.hpp
-  include/nba/print.hpp
   include/nba/save_state.hpp
   include/nba/scheduler.hpp
 )
