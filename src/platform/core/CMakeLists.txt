@@ -1,4 +1,5 @@
 option(USE_STATIC_SDL "Link against static version of SDL library." OFF)
+option(USE_SYSTEM_TOML11 "Use system-provided toml11 library." OFF)
 
 if(USE_STATIC_SDL)
   find_package(SDL2 2.0.10
@@ -14,6 +15,18 @@ endif()
 
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
+
+if(USE_SYSTEM_TOML11)
+  find_package(toml11 3.7 REQUIRED)
+else()
+  include(FetchContent)
+  FetchContent_Declare(toml11
+    GIT_REPOSITORY https://github.com/ToruNiina/toml11.git
+    GIT_TAG        dcfe39a783a94e8d52c885e5883a6fbb21529019 # v3.7.1
+  )
+  set(toml11_INSTALL OFF CACHE BOOL "" FORCE)
+  FetchContent_MakeAvailable(toml11)
+endif()
 
 set(SOURCES
   src/device/ogl_video_device.cpp
