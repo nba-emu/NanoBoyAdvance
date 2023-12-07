@@ -10,8 +10,6 @@ jobs:
         shell: msys2 {0}
     steps:
       - uses: actions/checkout@v3
-        with:
-          submodules: recursive
       - uses: msys2/setup-msys2@v2
         with:
           install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-SDL2 mingw-w64-x86_64-glew mingw-w64-x86_64-qt5-static
@@ -43,8 +41,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          submodules: recursive
       - name: Setup dependencies
         run: |
           sudo apt-get update -qq
@@ -69,8 +65,6 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          submodules: recursive
       - name: Setup dependencies
         env:
           HOMEBREW_NO_ANALYTICS: 1
