@@ -96,7 +96,7 @@ struct Bus {
 
     struct MGBALog {
       u16 enable = 0;
-      std::array<u8, 257> message;
+      std::array<char, 257> message;
     } mgba_log = {};
 
     auto ReadByte(u32 address) ->  u8;
