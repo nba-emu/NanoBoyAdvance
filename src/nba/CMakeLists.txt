@@ -1,4 +1,16 @@
-add_subdirectory(${CMAKE_SOURCE_DIR}/external ${CMAKE_BINARY_DIR}/external)
+option(USE_SYSTEM_FMT "Use system-provided fmt library." OFF)
+
+if(USE_SYSTEM_FMT)
+  find_package(fmt 8.0.1 REQUIRED)
+else()
+  include(FetchContent)
+  FetchContent_Declare(fmt
+    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+    GIT_TAG        f5e54359df4c26b6230fc61d38aa294581393084 # 10.1.1
+  )
+  set(FMT_INSTALL OFF CACHE BOOL "" FORCE)
+  FetchContent_MakeAvailable(fmt)
+endif()
 
 set(SOURCES
   src/arm/tablegen/tablegen.cpp
@@ -111,7 +123,7 @@ add_library(nba STATIC)
 target_sources(nba PRIVATE ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
 target_include_directories(nba PRIVATE src PUBLIC include)
 
-target_link_libraries(nba PUBLIC fmt)
+target_link_libraries(nba PUBLIC fmt::fmt)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   target_compile_options(nba PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fbracket-depth=4096>)
