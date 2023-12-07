@@ -1,7 +1,17 @@
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeModules)
+option(USE_STATIC_SDL "Link against static version of SDL library." OFF)
 
-include(FindSDL2)
-find_package(SDL2 REQUIRED)
+if(USE_STATIC_SDL)
+  find_package(SDL2 2.0.10
+    REQUIRED COMPONENTS SDL2-static
+    OPTIONAL_COMPONENTS SDL2main
+    CONFIG)
+else()
+  find_package(SDL2 2.0.10
+    REQUIRED COMPONENTS SDL2
+    OPTIONAL_COMPONENTS SDL2main
+    CONFIG)
+endif()
+
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
@@ -43,7 +53,17 @@ add_library(platform-core STATIC)
 target_sources(platform-core PRIVATE ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
 target_include_directories(platform-core PRIVATE src PUBLIC include)
 
+if(TARGET SDL2::SDL2main)
+  target_link_libraries(platform-core PUBLIC SDL2::SDL2main)
+endif()
+
+if(USE_STATIC_SDL)
+  target_link_libraries(platform-core PUBLIC SDL2::SDL2-static)
+else()
+  target_link_libraries(platform-core PUBLIC SDL2::SDL2)
+endif()
+
 target_link_libraries(platform-core
   PRIVATE unarr
-  PUBLIC nba toml11::toml11 ${SDL2_LIBRARY} OpenGL::GL GLEW::GLEW
+  PUBLIC nba toml11::toml11 OpenGL::GL GLEW::GLEW
 )
