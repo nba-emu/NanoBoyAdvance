@@ -1,7 +1,10 @@
-cmake_minimum_required(VERSION 3.2)
-project(NanoBoyAdvance)
+cmake_minimum_required(VERSION 3.11...3.28)
+project(NanoBoyAdvance LANGUAGES CXX)
 
-option(PLATFORM_QT "Build Qt frontend" ON)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+option(PLATFORM_QT "Build Qt frontend." ON)
 
 add_subdirectory(src/nba)
 add_subdirectory(src/platform/core)

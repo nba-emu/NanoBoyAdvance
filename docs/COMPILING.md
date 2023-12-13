@@ -1,9 +1,9 @@
-NanoBoyAdvance can be compiled on Windows, Linux and macOS.
+NanoBoyAdvance can be compiled on Windows, Linux, and macOS.
 
 ### Prerequisites
 
-- Clang or G++ with C++17 support
-- CMake 3.2 or higher
+- Clang or GCC with C++17 support
+- CMake 3.11 or higher
 - OpenGL (usually provided by the operating system)
 - SDL2 library
 - GLEW library
@@ -11,10 +11,10 @@ NanoBoyAdvance can be compiled on Windows, Linux and macOS.
 
 ### Source Code
 
-Clone the Git repository with submodules:  
+Clone the Git repository:
 
 ```bash
-git clone --recursive https://github.com/nba-emu/NanoBoyAdvance.git
+git clone https://github.com/nba-emu/NanoBoyAdvance.git
 ```
 
 ### Unix Build (Linux, macOS)
@@ -31,7 +31,7 @@ Here is a list of commands for popular distributions and macOS:
 pacman -S cmake sdl2 glew qt5-base
 ```
 
-##### Ubuntu or other Debian derived distribution
+##### Ubuntu or other Debian-derived distribution
 
 ```bash
 apt install cmake libsdl2-dev libglew-dev qtbase5-dev libqt5opengl5-dev
@@ -40,9 +40,11 @@ apt install cmake libsdl2-dev libglew-dev qtbase5-dev libqt5opengl5-dev
 ##### macOS
 
 Get [Brew](https://brew.sh/) and run:
+
 ``` bash
 brew install cmake sdl2 glew qt@5
 ```
+
 ##### FreeBSD
 
 ```bash
@@ -54,24 +56,22 @@ pkg install cmake git sdl2 glew qt5 qt5-opengl
 
 ```
 cd /somewhere/on/your/system/NanoBoyAdvance
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 ```
 
 NOTE: the location and name of the `build` directory is arbitrary.
 
 #### 3. Compile
 
-Just run make:
+Run CMake build command:
+
 ```
-make
+cmake --build build
 ```
-or to use multiple processor cores:
-```
-make -jNUMBER_OF_CORES
-```
-Binaries will be output to `build/bin/`
+
+Append `-j $(nproc)` to use all processor cores for compilation.
+
+Binaries will be output to `build/bin/`.
 
 ### Windows Mingw-w64 (GCC)
 
@@ -79,7 +79,8 @@ This guide uses [MSYS2](https://www.msys2.org/) to install Mingw-w64 and other d
 
 #### 1. Install dependencies
 
-In your MSYS2 command line run:
+In your MSYS2 command line, run:
+
 ```bash
 pacman -S make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-SDL2 mingw-w64-x86_64-glew mingw-w64-x86_64-qt5-static
 ```
@@ -88,20 +89,19 @@ pacman -S make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-SDL2
 
 ```bash
 cd path/to/NanoBoyAdvance
-mkdir build
-cd build
-cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+cmake -S . -B build -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
 ```
+
 NOTE: the location and name of the `build` directory is arbitrary.
 
 #### 3. Compile
 
-Just run make:
+Run CMake build command:
+
 ```
-make
+cmake --build build
 ```
-or to use multiple processor cores:
-```
-make -jNUMBER_OF_CORES
-```
-Binaries will be output to `build/bin/`
+
+Append `-j $(nproc)` to use all processor cores for compilation.
+
+Binaries will be output to `build/bin/`.
