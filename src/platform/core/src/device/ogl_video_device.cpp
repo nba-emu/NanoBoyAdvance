@@ -17,6 +17,7 @@
 #include "device/shader/color_agb.glsl.hpp"
 #include "device/shader/lcd_ghosting.glsl.hpp"
 #include "device/shader/output.glsl.hpp"
+#include "device/shader/sharp_bilinear.glsl.hpp"
 #include "device/shader/xbrz.glsl.hpp"
 
 using Video = nba::PlatformConfig::Video;
@@ -70,7 +71,8 @@ void OGLVideoDevice::Initialize() {
 }
 
 void OGLVideoDevice::ReloadConfig() {
-  if(config->video.filter == Video::Filter::Linear) {
+  if(config->video.filter == Video::Filter::Linear ||
+     config->video.filter == Video::Filter::Sharp) {
     texture_filter = GL_LINEAR;
   } else {
     texture_filter = GL_NEAREST;
@@ -181,6 +183,14 @@ void OGLVideoDevice::CreateShaderPrograms() {
       } else {
         if(success0) glDeleteProgram(program0);
         if(success1) glDeleteProgram(program1);
+      }
+      break;
+    }
+    // Sharp bilinear.
+    case Video::Filter::Sharp: {
+      auto [success, program] = CompileProgram(sharp_bilinear_vert, sharp_bilinear_frag);
+      if (success) {
+        shader_passes.push_back({program});
       }
       break;
     }
