@@ -10,7 +10,11 @@
 #include "sprite_viewer_window.hpp"
 
 SpriteViewerWindow::SpriteViewerWindow(nba::CoreBase* core, QWidget* parent) : QDialog(parent) {
-  sprite_viewer = new SpriteViewer{core, this};
+  const auto vbox = new QVBoxLayout{};
+
+  sprite_viewer = new SpriteViewer{core, nullptr};
+  vbox->addWidget(sprite_viewer);
+  setLayout(vbox);
 
   setWindowTitle(tr("Sprite Viewer"));
   setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
