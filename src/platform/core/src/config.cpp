@@ -80,6 +80,7 @@ void PlatformConfig::Load(std::string const& path) {
       const std::map<std::string, Video::Filter> filters{
         { "nearest", Video::Filter::Nearest },
         { "linear",  Video::Filter::Linear  },
+        { "sharp",   Video::Filter::Sharp   },
         { "xbrz",    Video::Filter::xBRZ    }
       };
 
@@ -179,6 +180,7 @@ void PlatformConfig::Save(std::string const& path) {
   switch(this->video.filter) {
     case Video::Filter::Nearest: filter = "nearest"; break;
     case Video::Filter::Linear:  filter = "linear"; break;
+    case Video::Filter::Sharp:   filter = "sharp"; break;
     case Video::Filter::xBRZ:    filter = "xbrz"; break; 
   }
 

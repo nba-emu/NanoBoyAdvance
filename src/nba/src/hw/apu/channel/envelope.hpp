@@ -9,6 +9,14 @@
 
 namespace nba::core {
 
+/**
+ * TODO:
+ * - Figure out how the envelope timer behaves when the envelope speed (divider) changes mid-note.
+ *   - Is the new value loaded into the counter right away or on the next reload?
+ * - Is the timer ticked when the envelope is deactivated (divider == 0)?
+ *    - If so, what value is loaded into the timer on channel restart?
+ */
+
 class Envelope {
 public:
   void Reset() {
@@ -25,9 +33,9 @@ public:
   }
 
   void Tick() {
-    if(--step == 0) {
+    if(step == 1) {
       step = divider;
-    
+
       if(active && divider != 0) {
         if(direction == Direction::Increment) {
           if(current_volume != 15) {
@@ -43,6 +51,8 @@ public:
           }
         }
       }
+    } else {
+      step = (step - 1) & 7;
     }
   }
 

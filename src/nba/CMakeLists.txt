@@ -1,10 +1,16 @@
-cmake_minimum_required(VERSION 3.2)
-project(nba CXX)
+option(USE_SYSTEM_FMT "Use system-provided fmt library." OFF)
 
-add_subdirectory(../../external ${CMAKE_BINARY_DIR}/external)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if(USE_SYSTEM_FMT)
+  find_package(fmt 8.0.1 REQUIRED)
+else()
+  include(FetchContent)
+  FetchContent_Declare(fmt
+    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+    GIT_TAG        f5e54359df4c26b6230fc61d38aa294581393084 # 10.1.1
+  )
+  set(FMT_INSTALL OFF CACHE BOOL "" FORCE)
+  FetchContent_MakeAvailable(fmt)
+endif()
 
 set(SOURCES
   src/arm/tablegen/tablegen.cpp
@@ -20,7 +26,7 @@ set(SOURCES
   src/hw/apu/apu.cpp
   src/hw/apu/callback.cpp
   src/hw/apu/registers.cpp
-  src/hw/apu/serialization.cpp#
+  src/hw/apu/serialization.cpp
   src/hw/ppu/background.cpp
   src/hw/ppu/merge.cpp
   src/hw/ppu/ppu.cpp
@@ -108,16 +114,15 @@ set(HEADERS_PUBLIC
   include/nba/core.hpp
   include/nba/integer.hpp
   include/nba/log.hpp
-  include/nba/print.hpp
   include/nba/save_state.hpp
   include/nba/scheduler.hpp
 )
 
-add_library(nba STATIC ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
-target_include_directories(nba PRIVATE src)
-target_include_directories(nba PUBLIC include)
+add_library(nba STATIC)
+target_sources(nba PRIVATE ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
+target_include_directories(nba PRIVATE src PUBLIC include)
 
-target_link_libraries(nba PUBLIC fmt)
+target_link_libraries(nba PUBLIC fmt::fmt)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   target_compile_options(nba PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fbracket-depth=4096>)

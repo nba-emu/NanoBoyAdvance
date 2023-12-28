@@ -1,14 +1,56 @@
-cmake_minimum_required(VERSION 3.2)
-project(platform-core CXX)
+option(USE_STATIC_SDL "Link against static version of SDL library." OFF)
+option(USE_SYSTEM_TOML11 "Use system-provided toml11 library." OFF)
+option(USE_SYSTEM_UNARR "Use system-provided unarr library." OFF)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeModules)
+if(USE_STATIC_SDL)
+  find_package(SDL2 2.0.10
+    REQUIRED COMPONENTS SDL2-static
+    OPTIONAL_COMPONENTS SDL2main
+    CONFIG)
+else()
+  find_package(SDL2 2.0.10
+    REQUIRED COMPONENTS SDL2
+    OPTIONAL_COMPONENTS SDL2main
+    CONFIG)
+endif()
 
-include(FindSDL2)
-find_package(SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
+
+if(USE_SYSTEM_TOML11)
+  find_package(toml11 3.7 REQUIRED)
+else()
+  include(FetchContent)
+  FetchContent_Declare(toml11
+    GIT_REPOSITORY https://github.com/ToruNiina/toml11.git
+    GIT_TAG        dcfe39a783a94e8d52c885e5883a6fbb21529019 # v3.7.1
+  )
+  set(toml11_INSTALL OFF CACHE BOOL "" FORCE)
+  FetchContent_MakeAvailable(toml11)
+endif()
+
+if(USE_SYSTEM_UNARR)
+  find_package(unarr REQUIRED)
+else()
+  set(USE_SYSTEM_BZ2 OFF CACHE BOOL "" FORCE)
+  set(USE_SYSTEM_LZMA OFF CACHE BOOL "" FORCE)
+  set(USE_SYSTEM_ZLIB OFF CACHE BOOL "" FORCE)
+  set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
+  include(FetchContent)
+  FetchContent_Declare(unarr
+    GIT_REPOSITORY https://github.com/selmf/unarr.git
+    GIT_TAG        b211040df83dee513362cdeb9bd87afa26fd5e38 # v1.1.1
+  )
+  FetchContent_GetProperties(unarr)
+  if (NOT unarr_POPULATED)
+    FetchContent_Populate(unarr)
+    if (EXISTS ${unarr_SOURCE_DIR}/CMakeLists.txt)
+      add_subdirectory(${unarr_SOURCE_DIR} ${unarr_BINARY_DIR} EXCLUDE_FROM_ALL)
+      add_library(unarr::unarr ALIAS unarr)
+    endif()
+  endif()
+endif()
 
 set(SOURCES
   src/device/ogl_video_device.cpp
@@ -29,6 +71,8 @@ set(HEADERS
   src/device/shader/common.glsl.hpp
   src/device/shader/lcd_ghosting.glsl.hpp
   src/device/shader/output.glsl.hpp
+  src/device/shader/sharp_bilinear.glsl.hpp
+  src/device/shader/xbrz.glsl.hpp
 )
 
 set(HEADERS_PUBLIC
@@ -44,9 +88,21 @@ set(HEADERS_PUBLIC
   include/platform/game_db.hpp
 )
 
-add_library(platform-core STATIC ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
-target_include_directories(platform-core PRIVATE src)
-target_include_directories(platform-core PUBLIC include ${SDL2_INCLUDE_DIR} ${GLEW_INCLUDE_DIRS})
+add_library(platform-core STATIC)
+target_sources(platform-core PRIVATE ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
+target_include_directories(platform-core PRIVATE src PUBLIC include)
 
-target_link_libraries(platform-core PRIVATE unarr)
-target_link_libraries(platform-core PUBLIC nba toml11::toml11 ${SDL2_LIBRARY} OpenGL::GL GLEW::GLEW)
+if(TARGET SDL2::SDL2main)
+  target_link_libraries(platform-core PUBLIC SDL2::SDL2main)
+endif()
+
+if(USE_STATIC_SDL)
+  target_link_libraries(platform-core PUBLIC SDL2::SDL2-static)
+else()
+  target_link_libraries(platform-core PUBLIC SDL2::SDL2)
+endif()
+
+target_link_libraries(platform-core
+  PRIVATE unarr::unarr
+  PUBLIC nba toml11::toml11 OpenGL::GL GLEW::GLEW
+)

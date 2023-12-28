@@ -162,6 +162,7 @@ void MainWindow::CreateVideoMenu(QMenu* parent) {
   CreateSelectionOption(menu->addMenu(tr("Filter")), {
     { "Nearest", nba::PlatformConfig::Video::Filter::Nearest },
     { "Linear",  nba::PlatformConfig::Video::Filter::Linear  },
+    { "Sharp",   nba::PlatformConfig::Video::Filter::Sharp   },
     { "xBRZ",    nba::PlatformConfig::Video::Filter::xBRZ    }
   }, &config->video.filter, false, reload_config);
 

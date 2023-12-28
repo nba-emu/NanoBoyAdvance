@@ -18,11 +18,11 @@ constexpr auto lcd_ghosting_frag = R"(
 
   in vec2 v_uv;
 
-  uniform sampler2D u_screen_map;
+  uniform sampler2D u_input_map;
   uniform sampler2D u_history_map;
 
   void main() {
-    vec4 color_a = texture(u_screen_map, v_uv);
+    vec4 color_a = texture(u_input_map, v_uv);
     vec4 color_b = texture(u_history_map, v_uv);
     frag_color = mix(color_a, color_b, 0.5);
   }

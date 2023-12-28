@@ -9,6 +9,11 @@
 
 namespace nba::core {
 
+/**
+ * TODO: figure out specifics of how the sweep timer works when the sweep speed (divider) is set to zero
+ * or changed in the middle of a note.
+ */
+
 class Sweep {
 public:
   void Reset() {

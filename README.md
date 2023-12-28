@@ -43,12 +43,11 @@ A lot of research and attention to detail has been put into developing this core
 
 See [COMPILING.md](docs/COMPILING.md) in the `docs` folder.
 
-## Credit
+## Acknowledgements
 
 - Martin Korth: for [GBATEK](http://problemkaputt.de/gbatek.htm), a good piece of hardware documentation.
-- [endrift](https://github.com/endrift): for prior [research](http://mgba.io/tag/emulation/) and [hardware tests](https://github.com/mgba-emu/suite).
-- [destoer](https://github.com/destoer): for contributing research, tests and insightful discussions.
-- [LadyStarbreeze](https://github.com/LadyStarbreeze): for contributing research, tests and insightful discussions.
+- [endrift](https://github.com/endrift): for hardware [research](http://mgba.io/tag/emulation/) and her excellent [test suite](https://github.com/mgba-emu/suite).
+- [destoer](https://github.com/destoer), [Noumi](https://github.com/noumidev), [Zayd](https://github.com/GhostRain0) and [Sky](https://github.com/skylersaleh): for hardware research and tests, countless discussions and being good friends.
 - Pokefan531 and hunterk: for the default GBA color correction algorithm
 - Talarubi and Near: for [higan's GBA color correction algorithm](https://near.sh/articles/video/color-emulation)
 - DeSmuME team and Hyllian: xBRZ upscaling code
