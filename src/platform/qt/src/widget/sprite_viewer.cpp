@@ -77,7 +77,7 @@ SpriteViewer::SpriteViewer(nba::CoreBase* core, QWidget* parent) : QWidget{paren
     QGroupBox* box = new QGroupBox{};
     box->setTitle("Object Attributes");
     QGridLayout* grid = new QGridLayout{};
-    box->setMinimumWidth(230);
+    box->setMinimumWidth(220);
 
     int row = 0;
 

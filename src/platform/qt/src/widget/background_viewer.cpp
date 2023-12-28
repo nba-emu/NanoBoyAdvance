@@ -66,6 +66,7 @@ BackgroundViewer::BackgroundViewer(nba::CoreBase* core, QWidget* parent) : QWidg
     const auto group_box = new QGroupBox{};
     group_box->setLayout(grid);
     group_box->setTitle(tr("Background"));
+    group_box->setMinimumWidth(220);
 
     info_vbox->addWidget(group_box);
   }
@@ -100,6 +101,7 @@ BackgroundViewer::BackgroundViewer(nba::CoreBase* core, QWidget* parent) : QWidg
     const auto group_box = new QGroupBox{};
     group_box->setLayout(grid);
     group_box->setTitle(tr("Tile"));
+    group_box->setMinimumWidth(220);
 
     info_vbox->addWidget(group_box);
   
