@@ -104,13 +104,17 @@ SpriteViewer::SpriteViewer(nba::CoreBase* core, QWidget* parent) : QWidget{paren
     vbox->addWidget(box);
   }
 
+  vbox->addStretch();
+
   hbox->addLayout(vbox);
 
   canvas = new QWidget{};
   canvas->installEventFilter(this);
   hbox->addWidget(canvas);
 
- setLayout(hbox);
+  hbox->setStretch(1, 1);
+
+  setLayout(hbox);
 }
 
 void SpriteViewer::Update() {
