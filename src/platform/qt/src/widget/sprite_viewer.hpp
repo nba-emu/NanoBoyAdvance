@@ -26,7 +26,6 @@ struct SpriteViewer : QWidget {
 
 private:
   void RenderSprite(int index, u32* buffer, int stride);
-  void RenderSpriteAtlas();
 
   nba::CoreBase* core;
   u16* pram;
@@ -37,9 +36,6 @@ private:
   QSpinBox* sprite_index_input;
   QSpinBox* magnification_input;
   QWidget* canvas;
-
-  QImage atlas_image_rgb32{1024, 512, QImage::Format_RGB32};
-  QWidget* atlas_canvas;
 
   QCheckBox* check_sprite_enabled;
   QLabel* label_sprite_position;

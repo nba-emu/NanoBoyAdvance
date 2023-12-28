@@ -46,74 +46,85 @@ static const auto CreateCheckBox = [](QCheckBox*& check_box) {
 SpriteViewer::SpriteViewer(nba::CoreBase* core, QWidget* parent) : QWidget{parent}, core{core} {
   // TODO(fleroviux): do lots of cleanup.
 
-  pram = (u16*)core->GetPRAM();
+  pram = (u16 *) core->GetPRAM();
   vram = core->GetVRAM();
   oam = core->GetOAM();
 
   QHBoxLayout* hbox = new QHBoxLayout{};
-  QVBoxLayout* vbox = new QVBoxLayout{};
 
-  // OAM # and sprite magnification
   {
-    sprite_index_input = new QSpinBox{};
-    sprite_index_input->setMinimum(0);
-    sprite_index_input->setMaximum(127);
+    QVBoxLayout* vbox = new QVBoxLayout{};
 
-    magnification_input = new QSpinBox{};
-    magnification_input->setMinimum(1);
-    magnification_input->setMaximum(16);
+    // OAM # and sprite magnification
+    {
+      sprite_index_input = new QSpinBox{};
+      sprite_index_input->setMinimum(0);
+      sprite_index_input->setMaximum(127);
 
-    const auto grid = new QGridLayout{};
-    int row = 0;
-    grid->addWidget(new QLabel(tr("OAM #:")), row, 0);
-    grid->addWidget(sprite_index_input, row++, 1);
-    grid->addWidget(new QLabel(tr("Magnification:")), row, 0);
-    grid->addWidget(magnification_input, row++, 1);
-    vbox->addLayout(grid);
+      magnification_input = new QSpinBox{};
+      magnification_input->setMinimum(1);
+      magnification_input->setMaximum(16);
+
+      const auto grid = new QGridLayout{};
+      int row = 0;
+      grid->addWidget(new QLabel(tr("OAM #:")), row, 0);
+      grid->addWidget(sprite_index_input, row++, 1);
+      grid->addWidget(new QLabel(tr("Magnification:")), row, 0);
+      grid->addWidget(magnification_input, row++, 1);
+      vbox->addLayout(grid);
+    }
+
+    // Sprite attributes
+    {
+      QGroupBox *box = new QGroupBox{};
+      box->setTitle("Object Attributes");
+      QGridLayout *grid = new QGridLayout{};
+      box->setMinimumWidth(235);
+
+      int row = 0;
+
+      const auto PushRow = [&](const QString &label, QWidget *widget) {
+        grid->addWidget(new QLabel{QStringLiteral("%1:").arg(label)}, row, 0);
+        grid->addWidget(widget, row++, 1);
+      };
+
+      PushRow("Enabled", CreateCheckBox(check_sprite_enabled));
+      PushRow("Position", CreateMonospaceLabel(label_sprite_position));
+      PushRow("Size", CreateMonospaceLabel(label_sprite_size));
+      PushRow("Tile number", CreateMonospaceLabel(label_sprite_tile_number));
+      PushRow("Palette", CreateMonospaceLabel(label_sprite_palette));
+      PushRow("8BPP", CreateCheckBox(check_sprite_8bpp));
+      PushRow("Flip V", CreateCheckBox(check_sprite_vflip));
+      PushRow("Flip H", CreateCheckBox(check_sprite_hflip));
+      PushRow("Mode", CreateMonospaceLabel(label_sprite_mode));
+      PushRow("Affine", CreateCheckBox(check_sprite_affine));
+      PushRow("Transform #", CreateMonospaceLabel(label_sprite_transform));
+      PushRow("Double-size", CreateCheckBox(check_sprite_double_size));
+      PushRow("Mosaic", CreateCheckBox(check_sprite_mosaic));
+      PushRow("Render cycles", CreateMonospaceLabel(label_sprite_render_cycles));
+
+      box->setLayout(grid);
+      vbox->addWidget(box);
+    }
+
+    vbox->addStretch();
+    hbox->addLayout(vbox);
   }
 
-  // Sprite attributes
   {
-    QGroupBox* box = new QGroupBox{};
-    box->setTitle("Object Attributes");
-    QGridLayout* grid = new QGridLayout{};
-    box->setMinimumWidth(220);
+    QVBoxLayout* vbox = new QVBoxLayout{};
 
-    int row = 0;
+    canvas = new QWidget{};
+    canvas->setFixedSize(64, 64);
+    canvas->setFixedSize(64, 64);
+    canvas->installEventFilter(this);
+    vbox->addWidget(canvas);
+    vbox->addStretch(1);
 
-    const auto PushRow = [&](const QString& label, QWidget* widget) {
-      grid->addWidget(new QLabel{QStringLiteral("%1:").arg(label)}, row, 0);
-      grid->addWidget(widget, row++, 1);
-    };
-
-    PushRow("Enabled", CreateCheckBox(check_sprite_enabled));
-    PushRow("Position", CreateMonospaceLabel(label_sprite_position));
-    PushRow("Size", CreateMonospaceLabel(label_sprite_size));
-    PushRow("Tile number", CreateMonospaceLabel(label_sprite_tile_number));
-    PushRow("Palette", CreateMonospaceLabel(label_sprite_palette));
-    PushRow("8BPP", CreateCheckBox(check_sprite_8bpp));
-    PushRow("Flip V", CreateCheckBox(check_sprite_vflip));
-    PushRow("Flip H", CreateCheckBox(check_sprite_hflip));
-    PushRow("Mode", CreateMonospaceLabel(label_sprite_mode));
-    PushRow("Affine", CreateCheckBox(check_sprite_affine));
-    PushRow("Transform #", CreateMonospaceLabel(label_sprite_transform));
-    PushRow("Double-size", CreateCheckBox(check_sprite_double_size));
-    PushRow("Mosaic", CreateCheckBox(check_sprite_mosaic));
-    PushRow("Render cycles", CreateMonospaceLabel(label_sprite_render_cycles));
-
-    box->setLayout(grid);
-    vbox->addWidget(box);
+    hbox->addLayout(vbox);
   }
 
-  vbox->addStretch();
-
-  hbox->addLayout(vbox);
-
-  canvas = new QWidget{};
-  canvas->installEventFilter(this);
-  hbox->addWidget(canvas);
-
-  hbox->setStretch(1, 1);
+  hbox->addStretch(1);
 
   setLayout(hbox);
 }
@@ -281,7 +292,7 @@ void SpriteViewer::Update() {
   const int magnification = magnification_input->value();
   magnified_sprite_width = width * magnification;
   magnified_sprite_height = height * magnification;
-  canvas->resize(magnified_sprite_width, magnified_sprite_height);
+  canvas->setFixedSize(magnified_sprite_width, magnified_sprite_height);
   canvas->update();
 }
 
@@ -292,7 +303,7 @@ bool SpriteViewer::eventFilter(QObject* object, QEvent* event) {
 
     QPainter painter{canvas};
     painter.drawImage(dst_rect, image_rgb32, src_rect);
-    //return true;
+    return true;
   }
 
   return false;
