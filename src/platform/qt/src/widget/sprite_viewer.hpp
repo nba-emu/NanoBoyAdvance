@@ -25,8 +25,6 @@ struct SpriteViewer : QWidget {
   void Update();
 
 private:
-  void RenderSprite(int index, u32* buffer, int stride);
-
   nba::CoreBase* core;
   u16* pram;
   u8* vram;
