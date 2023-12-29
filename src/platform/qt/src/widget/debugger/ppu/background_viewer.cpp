@@ -18,6 +18,7 @@
 #include <QScrollArea>
 #include <QVBoxLayout>
 
+#include "widget/debugger/utility.hpp"
 #include "background_viewer.hpp"
 
 BackgroundViewer::BackgroundViewer(nba::CoreBase* core, QWidget* parent) : QWidget(parent), core(core) {
@@ -433,14 +434,7 @@ void BackgroundViewer::PresentBackground() {
 
   for(int y = 0; y < height; y++) {
     for(int x = 0; x < width; x++) {
-      const u16 color_rgb565 = image_rgb565[i];
-
-      // @todo: de-duplicate the RGB565 to RGB32 conversion.
-      const int r =  (color_rgb565 >>  0) & 31;
-      const int g = ((color_rgb565 >>  4) & 62) | (color_rgb565 >> 15);
-      const int b =  (color_rgb565 >> 10) & 31;
-
-      destination[i++] = 0xFF000000 | (r << 3 | r >> 2) << 16 | (g << 2 | g >> 4) <<  8 | (b << 3 | b >> 2);
+      destination[i++] = Rgb565ToArgb8888(image_rgb565[i]);
     }
 
     i += skip;

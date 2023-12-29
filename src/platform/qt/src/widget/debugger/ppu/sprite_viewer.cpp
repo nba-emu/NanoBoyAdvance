@@ -13,19 +13,10 @@
 #include <QGroupBox>
 #include <QVBoxLayout>
 
+#include "widget/debugger/utility.hpp"
 #include "sprite_viewer.hpp"
 
 // --------------------------------------------------------------------
-
-// @todo: deduplicate these helpers across all viewers
-
-static u32 RGB555(u16 rgb555) {
-  const uint r = (rgb555 >>  0) & 31U;
-  const uint g = (rgb555 >>  5) & 31U;
-  const uint b = (rgb555 >> 10) & 31U;
-
-  return 0xFF000000 | (r << 3 | r >> 2) << 16 | (g << 3 | g >> 2) << 8 | (b << 3 | b >> 2);
-}
 
 static const auto CreateMonospaceLabel = [](QLabel*& label) {
   label = new QLabel{"-"};
@@ -182,7 +173,7 @@ void SpriteViewer::Update() {
           u32* dst = &buffer[tile_y << 9 | y << 6 | tile_x << 3];
 
           for(int x = 0; x < 8; x++) {
-            *dst++ = RGB555(palette[tile_data & 255u]);
+            *dst++ = Rgb565ToArgb8888(palette[tile_data & 255u]);
             tile_data >>= 8;
           }
 
@@ -213,7 +204,7 @@ void SpriteViewer::Update() {
           u32* dst = &buffer[tile_y << 9 | y << 6 | tile_x << 3];
 
           for(int x = 0; x < 8; x++) {
-            *dst++ = RGB555(palette[tile_data & 15u]);
+            *dst++ = Rgb565ToArgb8888(palette[tile_data & 15u]);
             tile_data >>= 4;
           }
 
