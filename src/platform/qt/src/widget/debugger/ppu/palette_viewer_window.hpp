@@ -11,7 +11,7 @@
 #include <QDialog>
 #include <QLabel>
 
-#include "widget/palette_box.hpp"
+#include "palette_box.hpp"
 
 struct PaletteViewerWindow : QDialog {
   PaletteViewerWindow(nba::CoreBase* core, QWidget* parent = nullptr);

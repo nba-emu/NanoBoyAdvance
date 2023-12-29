@@ -2,31 +2,31 @@
 include(version.cmake)
 
 set(SOURCES
-  src/widget/background_viewer_window.cpp
-  src/widget/background_viewer.cpp
+  src/widget/debugger/ppu/background_viewer_window.cpp
+  src/widget/debugger/ppu/background_viewer.cpp
   src/widget/controller_manager.cpp
   src/widget/input_window.cpp
   src/widget/main_window.cpp
   src/widget/screen.cpp
-  src/widget/sprite_viewer.cpp
-  src/widget/sprite_viewer_window.cpp
-  src/widget/palette_box.cpp
-  src/widget/palette_viewer_window.cpp
+  src/widget/debugger/ppu/sprite_viewer.cpp
+  src/widget/debugger/ppu/sprite_viewer_window.cpp
+  src/widget/debugger/ppu/palette_box.cpp
+  src/widget/debugger/ppu/palette_viewer_window.cpp
   src/config.cpp
   src/main.cpp
 )
 
 set(HEADERS
-  src/widget/background_viewer_window.hpp
-  src/widget/background_viewer.hpp
+  src/widget/debugger/ppu/background_viewer_window.hpp
+  src/widget/debugger/ppu/background_viewer.hpp
   src/widget/controller_manager.hpp
   src/widget/input_window.hpp
   src/widget/main_window.hpp
-  src/widget/palette_box.hpp
-  src/widget/palette_viewer_window.hpp
+  src/widget/debugger/ppu/palette_box.hpp
+  src/widget/debugger/ppu/palette_viewer_window.hpp
   src/widget/screen.hpp
-  src/widget/sprite_viewer.hpp
-  src/widget/sprite_viewer_window.hpp
+  src/widget/debugger/ppu/sprite_viewer.hpp
+  src/widget/debugger/ppu/sprite_viewer_window.hpp
   src/config.hpp
   version.in.hpp
 )
