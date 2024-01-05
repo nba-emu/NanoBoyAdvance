@@ -35,6 +35,7 @@ struct Core final : CoreBase {
   auto GetROM() -> ROM& override;
   auto GetPRAM() -> u8* override;
   auto GetVRAM() -> u8* override;
+  auto GetOAM() -> u8* override;
   auto PeekByteIO(u32 address) -> u8  override;
   auto PeekHalfIO(u32 address) -> u16 override;
   auto PeekWordIO(u32 address) -> u32 override;

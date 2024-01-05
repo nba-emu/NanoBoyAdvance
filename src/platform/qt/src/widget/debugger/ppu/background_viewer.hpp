@@ -13,7 +13,7 @@
 #include <QLabel>
 #include <QPainter>
 
-#include "widget/palette_box.hpp"
+#include "palette_box.hpp"
 
 struct BackgroundViewer : QWidget {
   BackgroundViewer(nba::CoreBase* core, QWidget* parent = nullptr);

@@ -9,19 +9,18 @@
 
 #include <nba/core.hpp>
 #include <QDialog>
-#include <QTabWidget>
+#include <QLabel>
 
-#include "widget/background_viewer.hpp"
+#include "sprite_viewer.hpp"
 
-struct BackgroundViewerWindow : QDialog {
-  BackgroundViewerWindow(nba::CoreBase* core, QWidget* parent = nullptr);
+struct SpriteViewerWindow : QDialog {
+  SpriteViewerWindow(nba::CoreBase* core, QWidget* parent = nullptr);
 
 public slots:
   void Update();
 
 private:
-  QTabWidget* tab_widget;
-  BackgroundViewer* bg_viewers[4];
+  SpriteViewer* sprite_viewer;
 
   Q_OBJECT
 };

@@ -22,11 +22,12 @@
 #include <utility>
 #include <vector>
 
-#include "widget/background_viewer_window.hpp"
+#include "widget/debugger/ppu/background_viewer_window.hpp"
 #include "widget/controller_manager.hpp"
 #include "widget/input_window.hpp"
-#include "widget/palette_viewer_window.hpp"
+#include "widget/debugger/ppu/palette_viewer_window.hpp"
 #include "widget/screen.hpp"
+#include "widget/debugger/ppu/sprite_viewer_window.hpp"
 #include "config.hpp"
 
 struct MainWindow : QMainWindow {
@@ -69,7 +70,6 @@ private:
   void SelectBIOS();
   void SelectSaveFolder();
   void RemoveSaveFolder();
-  void ClearSaveFolder();
   void PromptUserForReset();
 
   auto CreateBooleanOption(
