@@ -5,6 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
+#include <nba/log.hpp>
 #include <platform/emulator_thread.hpp>
 
 namespace nba {
@@ -16,7 +17,7 @@ EmulatorThread::EmulatorThread(
 }
 
 EmulatorThread::~EmulatorThread() {
-  if(IsRunning()) Stop();
+  Stop();
 }
 
 bool EmulatorThread::IsRunning() const {
@@ -54,6 +55,8 @@ void EmulatorThread::Start() {
       frame_limiter.Reset();
 
       while(running.load()) {
+        ProcessMessages();
+
         frame_limiter.Run([this]() {
           if(!paused) {
             per_frame_cb();
@@ -74,6 +77,35 @@ void EmulatorThread::Stop() {
   if(IsRunning()) {
     running = false;
     thread.join();
+  }
+}
+
+void EmulatorThread::Reset() {
+  PushMessage({.type = MessageType::Reset});
+}
+
+void EmulatorThread::PushMessage(const Message& message) {
+  std::lock_guard lock_guard{msg_queue_mutex};
+  msg_queue.push(message); // @todo: maybe use emplace.
+}
+
+void EmulatorThread::ProcessMessages() {
+  // potential optimization: use a separate std::atomic_int to track the number of messages in the queue
+  // use atomic_int to do early bail out without acquiring the mutex.
+  std::lock_guard lock_guard{msg_queue_mutex};
+
+  while(!msg_queue.empty()) {
+    const Message& message = msg_queue.front();
+
+    switch(message.type) {
+      case MessageType::Reset: {
+        core->Reset();
+        break;
+      }
+      default: Assert(false, "unhandled message type: {}", (int)message.type);
+    }
+
+    msg_queue.pop();
   }
 }
 

@@ -666,13 +666,7 @@ void MainWindow::FileOpen() {
 }
 
 void MainWindow::Reset() {
-  bool was_running = emu_thread->IsRunning();
-
-  emu_thread->Stop();
-  core->Reset();
-  if(was_running) {
-    emu_thread->Start();
-  }
+  emu_thread->Reset();
 }
 
 void MainWindow::SetPause(bool paused) {

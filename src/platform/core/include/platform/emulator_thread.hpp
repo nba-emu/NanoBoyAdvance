@@ -10,8 +10,11 @@
 #include <atomic>
 #include <functional>
 #include <nba/core.hpp>
+#include <nba/integer.hpp>
 #include <platform/frame_limiter.hpp>
-#include <thread> 
+#include <thread>
+#include <queue>
+#include <mutex>
 
 namespace nba {
 
@@ -29,7 +32,23 @@ struct EmulatorThread {
   void Start();
   void Stop();
 
+  void Reset();
+
 private:
+  enum class MessageType : u8 {
+    Reset
+  };
+
+  struct Message {
+    MessageType type;
+  };
+
+  void PushMessage(const Message& message);
+  void ProcessMessages();
+
+  std::queue<Message> msg_queue;
+  std::mutex msg_queue_mutex;
+
   std::unique_ptr<CoreBase>& core;
   FrameLimiter frame_limiter;
   std::thread thread;
