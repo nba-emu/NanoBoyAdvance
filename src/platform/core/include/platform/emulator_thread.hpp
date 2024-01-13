@@ -33,18 +33,33 @@ struct EmulatorThread {
   void Stop();
 
   void Reset();
+  void SetKeyStatus(Key key, bool pressed);
 
 private:
   enum class MessageType : u8 {
-    Reset
+    Reset,
+    SetKeyStatus
   };
 
   struct Message {
     MessageType type;
+    union {
+      struct {
+        Key key;
+        u8bool pressed;
+      } set_key_status;
+    };
   };
 
   void PushMessage(const Message& message);
   void ProcessMessages();
+
+  static constexpr int k_input_subsample_count = 4;
+  static constexpr int k_cycles_per_second = 16777216;
+  static constexpr int k_cycles_per_frame = 280896;
+  static constexpr int k_cycles_per_subsample = k_cycles_per_frame / k_input_subsample_count;
+  
+  static_assert(k_cycles_per_frame % k_input_subsample_count == 0);
 
   std::queue<Message> msg_queue;
   std::mutex msg_queue_mutex;

@@ -119,7 +119,7 @@ void ControllerManager::Open(std::string const& guid) {
 }
 
 void ControllerManager::Close() {
-  using Key = nba::InputDevice::Key;
+  using Key = nba::Key;
 
   // Unset all keys in case any key is currently pressed.
   main_window->SetKeyStatus(1, Key::Up, false);
@@ -211,7 +211,7 @@ void ControllerManager::ProcessEvents() {
 }
 
 void ControllerManager::UpdateKeyState() {
-  using Key = nba::InputDevice::Key;
+  using Key = nba::Key;
 
 #if defined(__APPLE__)
   std::lock_guard guard{lock};
@@ -253,9 +253,9 @@ void ControllerManager::UpdateKeyState() {
     return pressed;
   };
 
-  for(int i = 0; i < nba::InputDevice::kKeyCount; i++) {
+  for(int i = 0; i < (int)nba::Key::Count; i++) {
     main_window->SetKeyStatus(
-      1, static_cast<nba::InputDevice::Key>(i), evaluate(input.gba[i]));
+      1, static_cast<nba::Key>(i), evaluate(input.gba[i]));
   }
 
   bool fast_forward_button = evaluate(input.fast_forward);

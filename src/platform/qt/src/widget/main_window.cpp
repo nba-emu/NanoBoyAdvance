@@ -55,7 +55,6 @@ MainWindow::MainWindow(
 
   config->video_dev = screen;
   config->audio_dev = std::make_shared<nba::SDL2_AudioDevice>();
-  config->input_dev = input_device;
   core = nba::CreateCore(config);
   emu_thread = std::make_unique<nba::EmulatorThread>(core);
 
@@ -611,9 +610,9 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
     auto pressed = type == QEvent::KeyPress;
     auto const& input = config->input;
 
-    for(int i = 0; i < nba::InputDevice::kKeyCount; i++) {
+    for(int i = 0; i < (int)nba::Key::Count; i++) {
       if(input.gba[i].keyboard == key) {
-        SetKeyStatus(0, static_cast<nba::InputDevice::Key>(i), pressed);
+        SetKeyStatus(0, static_cast<nba::Key>(i), pressed);
       }
     }
 
@@ -896,11 +895,10 @@ auto MainWindow::GetSavePath(fs::path const& rom_path, fs::path const& extension
   return fs::path{rom_path}.replace_extension(extension);
 }
 
-void MainWindow::SetKeyStatus(int channel, nba::InputDevice::Key key, bool pressed) {
-  key_input[channel][int(key)] = pressed;
+void MainWindow::SetKeyStatus(int channel, nba::Key key, bool pressed) {
+  key_input[channel][(int)key] = pressed;
 
-  input_device->SetKeyStatus(key, 
-    key_input[0][int(key)] || key_input[1][int(key)]);
+  emu_thread->SetKeyStatus(key, key_input[0][(int)key] || key_input[1][(int)key]);
 }
 
 void MainWindow::SetFastForward(int channel, bool pressed) {

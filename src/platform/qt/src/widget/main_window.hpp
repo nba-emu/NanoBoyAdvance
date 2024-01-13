@@ -117,7 +117,7 @@ private:
   void UpdateMenuBarVisibility();
   void UpdateMainWindowActionList();
 
-  void SetKeyStatus(int channel, nba::InputDevice::Key key, bool pressed);
+  void SetKeyStatus(int channel, nba::Key key, bool pressed);
   void SetFastForward(int channel, bool pressed);
   void UpdateWindowSize();
   void SetFullscreen(bool value);
@@ -130,11 +130,10 @@ private:
   auto GetSavePath(fs::path const& rom_path, fs::path const& extension) -> fs::path;
 
   std::shared_ptr<Screen> screen;
-  std::shared_ptr<nba::BasicInputDevice> input_device = std::make_shared<nba::BasicInputDevice>();
   std::shared_ptr<QtConfig> config = std::make_shared<QtConfig>();
   std::unique_ptr<nba::CoreBase> core;
   std::unique_ptr<nba::EmulatorThread> emu_thread;
-  bool key_input[2][nba::InputDevice::kKeyCount] {false};
+  bool key_input[2][(int)nba::Key::Count] {false};
   bool fast_forward[2] {false};
   ControllerManager* controller_manager;
 

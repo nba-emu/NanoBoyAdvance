@@ -13,7 +13,7 @@ namespace nba {
 EmulatorThread::EmulatorThread(
   std::unique_ptr<CoreBase>& core
 )   : core(core) {
-  frame_limiter.Reset(59.7275);
+  frame_limiter.Reset(k_cycles_per_second / (float)k_cycles_per_subsample);
 }
 
 EmulatorThread::~EmulatorThread() {
@@ -59,14 +59,16 @@ void EmulatorThread::Start() {
 
         frame_limiter.Run([this]() {
           if(!paused) {
+            // @todo: decide what to do with the per_frame_cb().
             per_frame_cb();
-            core->RunForOneFrame();
+            core->Run(k_cycles_per_subsample);
           }
         }, [this](float fps) {
+          float real_fps = fps / k_input_subsample_count;
           if(paused) {
-            fps = 0;
+            real_fps = 0;
           }
-          frame_rate_cb(fps);
+          frame_rate_cb(real_fps);
         });
       }
     }};
@@ -82,6 +84,13 @@ void EmulatorThread::Stop() {
 
 void EmulatorThread::Reset() {
   PushMessage({.type = MessageType::Reset});
+}
+
+void EmulatorThread::SetKeyStatus(Key key, bool pressed) {
+  PushMessage({
+    .type = MessageType::SetKeyStatus,
+    .set_key_status = {.key = key, .pressed = (u8bool)pressed}
+  });
 }
 
 void EmulatorThread::PushMessage(const Message& message) {
@@ -100,6 +109,10 @@ void EmulatorThread::ProcessMessages() {
     switch(message.type) {
       case MessageType::Reset: {
         core->Reset();
+        break;
+      }
+      case MessageType::SetKeyStatus: {
+        core->SetKeyStatus(message.set_key_status.key, message.set_key_status.pressed);
         break;
       }
       default: Assert(false, "unhandled message type: {}", (int)message.type);

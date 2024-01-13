@@ -19,6 +19,20 @@
 
 namespace nba {
 
+enum class Key : u8 {
+  A = 0,
+  B = 1,
+  Select = 2,
+  Start = 3,
+  Right = 4,
+  Left = 5,
+  Up = 6,
+  Down = 7,
+  L = 8,
+  R = 9,
+  Count = 10
+};
+
 struct CoreBase {
   static constexpr int kCyclesPerFrame = 280896;
 
@@ -32,6 +46,7 @@ struct CoreBase {
   virtual auto CreateSolarSensor() -> std::unique_ptr<SolarSensor> = 0;
   virtual void LoadState(SaveState const& state) = 0;
   virtual void CopyState(SaveState& state) = 0;
+  virtual void SetKeyStatus(Key key, bool pressed) = 0;
   virtual void Run(int cycles) = 0;
 
   virtual auto GetROM() -> ROM& = 0;

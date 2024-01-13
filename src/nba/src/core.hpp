@@ -30,6 +30,7 @@ struct Core final : CoreBase {
   auto CreateSolarSensor() -> std::unique_ptr<SolarSensor> override;
   void LoadState(SaveState const& state) override;
   void CopyState(SaveState& state) override;
+  void SetKeyStatus(Key key, bool pressed) override;
   void Run(int cycles) override;
 
   auto GetROM() -> ROM& override;

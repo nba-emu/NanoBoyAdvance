@@ -98,7 +98,6 @@ set(HEADERS_PUBLIC
   include/nba/common/punning.hpp
   include/nba/common/scope_exit.hpp
   include/nba/device/audio_device.hpp
-  include/nba/device/input_device.hpp
   include/nba/device/video_device.hpp
   include/nba/rom/backup/backup.hpp
   include/nba/rom/backup/backup_file.hpp

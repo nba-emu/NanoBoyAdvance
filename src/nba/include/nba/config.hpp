@@ -9,7 +9,6 @@
 
 #include <memory>
 #include <nba/device/audio_device.hpp>
-#include <nba/device/input_device.hpp>
 #include <nba/device/video_device.hpp>
 #include <nba/integer.hpp>
 #include <string>
@@ -47,7 +46,6 @@ struct Config {
   } audio;
 
   std::shared_ptr<AudioDevice> audio_dev = std::make_shared<NullAudioDevice>();
-  std::shared_ptr<InputDevice> input_dev = std::make_shared<NullInputDevice>();
   std::shared_ptr<VideoDevice> video_dev = std::make_shared<NullVideoDevice>();
 };
 
