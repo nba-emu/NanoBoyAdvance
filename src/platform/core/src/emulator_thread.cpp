@@ -47,32 +47,32 @@ void EmulatorThread::SetPerFrameCallback(std::function<void()> callback) {
 }
 
 void EmulatorThread::Start(std::unique_ptr<CoreBase> core) {
+  Assert(!running, "Started an emulator thread which was already running");
+
   this->core = std::move(core);
+  running = true;
 
-  if(!running) {
-    running = true;
-    thread = std::thread{[this]() {
-      frame_limiter.Reset();
+  thread = std::thread{[this]() {
+    frame_limiter.Reset();
 
-      while(running.load()) {
-        ProcessMessages();
+    while(running.load()) {
+      ProcessMessages();
 
-        frame_limiter.Run([this]() {
-          if(!paused) {
-            // @todo: decide what to do with the per_frame_cb().
-            per_frame_cb();
-            this->core->Run(k_cycles_per_subsample);
-          }
-        }, [this](float fps) {
-          float real_fps = fps / k_input_subsample_count;
-          if(paused) {
-            real_fps = 0;
-          }
-          frame_rate_cb(real_fps);
-        });
-      }
-    }};
-  }
+      frame_limiter.Run([this]() {
+        if(!paused) {
+          // @todo: decide what to do with the per_frame_cb().
+          per_frame_cb();
+          this->core->Run(k_cycles_per_subsample);
+        }
+      }, [this](float fps) {
+        float real_fps = fps / k_input_subsample_count;
+        if(paused) {
+          real_fps = 0;
+        }
+        frame_rate_cb(real_fps);
+      });
+    }
+  }};
 }
 
 std::unique_ptr<CoreBase> EmulatorThread::Stop() {
