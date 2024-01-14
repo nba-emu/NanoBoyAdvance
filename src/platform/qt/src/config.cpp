@@ -31,14 +31,14 @@ void QtConfig::LoadCustomData(toml::value const& data) {
         if(gba_result.is_ok()) {
           auto gba = gba_result.unwrap();
 
-          input.gba[0] = get_map(gba, "up");
-          input.gba[1] = get_map(gba, "down");
-          input.gba[2] = get_map(gba, "left");
-          input.gba[3] = get_map(gba, "right");
-          input.gba[4] = get_map(gba, "start");
-          input.gba[5] = get_map(gba, "select");
-          input.gba[6] = get_map(gba, "a");
-          input.gba[7] = get_map(gba, "b");
+          input.gba[0] = get_map(gba, "a");
+          input.gba[1] = get_map(gba, "b");
+          input.gba[2] = get_map(gba, "select");
+          input.gba[3] = get_map(gba, "start");
+          input.gba[4] = get_map(gba, "right");
+          input.gba[5] = get_map(gba, "left");
+          input.gba[6] = get_map(gba, "up");
+          input.gba[7] = get_map(gba, "down");
           input.gba[8] = get_map(gba, "l");
           input.gba[9] = get_map(gba, "r");
         }
@@ -72,14 +72,14 @@ void QtConfig::SaveCustomData(
   data["input"]["fast_forward"] = input.fast_forward.Array();
   data["input"]["hold_fast_forward"] = input.hold_fast_forward;
 
-  data["input"]["gba"]["up"] = input.gba[0].Array();
-  data["input"]["gba"]["down"] = input.gba[1].Array();
-  data["input"]["gba"]["left"] = input.gba[2].Array();
-  data["input"]["gba"]["right"] = input.gba[3].Array();
-  data["input"]["gba"]["start"] = input.gba[4].Array();
-  data["input"]["gba"]["select"] = input.gba[5].Array();
-  data["input"]["gba"]["a"] = input.gba[6].Array();
-  data["input"]["gba"]["b"] = input.gba[7].Array();
+  data["input"]["gba"]["a"] = input.gba[0].Array();
+  data["input"]["gba"]["b"] = input.gba[1].Array();
+  data["input"]["gba"]["select"] = input.gba[2].Array();
+  data["input"]["gba"]["start"] = input.gba[3].Array();
+  data["input"]["gba"]["right"] = input.gba[4].Array();
+  data["input"]["gba"]["left"] = input.gba[5].Array();
+  data["input"]["gba"]["up"] = input.gba[6].Array();
+  data["input"]["gba"]["down"] = input.gba[7].Array();
   data["input"]["gba"]["l"] = input.gba[8].Array();
   data["input"]["gba"]["r"] = input.gba[9].Array();
 
