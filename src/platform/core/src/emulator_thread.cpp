@@ -72,6 +72,9 @@ void EmulatorThread::Start(std::unique_ptr<CoreBase> core) {
         frame_rate_cb(real_fps);
       });
     }
+
+    // Make sure all messages are handled before exiting
+    ProcessMessages();
   }};
 }
 
@@ -96,6 +99,12 @@ void EmulatorThread::SetKeyStatus(Key key, bool pressed) {
 }
 
 void EmulatorThread::PushMessage(const Message& message) {
+  // @todo: think of the best way to transparently handle messages
+  // sent while the emulator thread isn't running.
+  if(!IsRunning()) {
+    return;
+  }
+
   std::lock_guard lock_guard{msg_queue_mutex};
   msg_queue.push(message); // @todo: maybe use emplace.
 }
