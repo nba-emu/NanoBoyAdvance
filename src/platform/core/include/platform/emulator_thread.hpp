@@ -19,7 +19,7 @@
 namespace nba {
 
 struct EmulatorThread {
-  EmulatorThread(std::unique_ptr<CoreBase>& core);
+  EmulatorThread();
  ~EmulatorThread();
 
   bool IsRunning() const;
@@ -29,8 +29,9 @@ struct EmulatorThread {
   void SetFastForward(bool enabled);
   void SetFrameRateCallback(std::function<void(float)> callback);
   void SetPerFrameCallback(std::function<void()> callback);
-  void Start();
-  void Stop();
+
+  void Start(std::unique_ptr<CoreBase> core);
+  std::unique_ptr<CoreBase> Stop();
 
   void Reset();
   void SetKeyStatus(Key key, bool pressed);
@@ -58,13 +59,13 @@ private:
   static constexpr int k_cycles_per_second = 16777216;
   static constexpr int k_cycles_per_frame = 280896;
   static constexpr int k_cycles_per_subsample = k_cycles_per_frame / k_input_subsample_count;
-  
+
   static_assert(k_cycles_per_frame % k_input_subsample_count == 0);
 
   std::queue<Message> msg_queue;
   std::mutex msg_queue_mutex;
 
-  std::unique_ptr<CoreBase>& core;
+  std::unique_ptr<CoreBase> core;
   FrameLimiter frame_limiter;
   std::thread thread;
   std::atomic_bool running = false;

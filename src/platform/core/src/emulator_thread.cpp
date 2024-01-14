@@ -10,9 +10,7 @@
 
 namespace nba {
 
-EmulatorThread::EmulatorThread(
-  std::unique_ptr<CoreBase>& core
-)   : core(core) {
+EmulatorThread::EmulatorThread() {
   frame_limiter.Reset(k_cycles_per_second / (float)k_cycles_per_subsample);
 }
 
@@ -48,7 +46,9 @@ void EmulatorThread::SetPerFrameCallback(std::function<void()> callback) {
   per_frame_cb = callback;
 }
 
-void EmulatorThread::Start() {
+void EmulatorThread::Start(std::unique_ptr<CoreBase> core) {
+  this->core = std::move(core);
+
   if(!running) {
     running = true;
     thread = std::thread{[this]() {
@@ -61,7 +61,7 @@ void EmulatorThread::Start() {
           if(!paused) {
             // @todo: decide what to do with the per_frame_cb().
             per_frame_cb();
-            core->Run(k_cycles_per_subsample);
+            this->core->Run(k_cycles_per_subsample);
           }
         }, [this](float fps) {
           float real_fps = fps / k_input_subsample_count;
@@ -75,11 +75,13 @@ void EmulatorThread::Start() {
   }
 }
 
-void EmulatorThread::Stop() {
+std::unique_ptr<CoreBase> EmulatorThread::Stop() {
   if(IsRunning()) {
     running = false;
     thread.join();
   }
+
+  return std::move(core);
 }
 
 void EmulatorThread::Reset() {

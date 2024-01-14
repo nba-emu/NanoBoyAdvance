@@ -137,6 +137,10 @@ private:
   bool fast_forward[2] {false};
   ControllerManager* controller_manager;
 
+  // The PPU debuggers do not access the core in a thread-safe way yet.
+  // So until that is fixed we have to keep a raw pointer around...
+  nba::CoreBase* core_not_thread_safe;
+
   QAction* pause_action;
   InputWindow* input_window;
   QMenu* recent_menu;
