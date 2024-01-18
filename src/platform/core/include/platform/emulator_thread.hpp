@@ -56,12 +56,12 @@ private:
   void ProcessMessages();
   void ProcessMessage(const Message& message);
 
-  static constexpr int k_input_subsample_count = 4;
+  static constexpr int k_number_of_input_subframes = 4;
   static constexpr int k_cycles_per_second = 16777216;
   static constexpr int k_cycles_per_frame = 280896;
-  static constexpr int k_cycles_per_subsample = k_cycles_per_frame / k_input_subsample_count;
+  static constexpr int k_cycles_per_subframe = k_cycles_per_frame / k_number_of_input_subframes;
 
-  static_assert(k_cycles_per_frame % k_input_subsample_count == 0);
+  static_assert(k_cycles_per_frame % k_number_of_input_subframes == 0);
 
   std::queue<Message> msg_queue;
   std::mutex msg_queue_mutex;

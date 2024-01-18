@@ -11,7 +11,7 @@
 namespace nba {
 
 EmulatorThread::EmulatorThread() {
-  frame_limiter.Reset(k_cycles_per_second / (float)k_cycles_per_subsample);
+  frame_limiter.Reset(k_cycles_per_second / (float)k_cycles_per_subframe);
 }
 
 EmulatorThread::~EmulatorThread() {
@@ -62,10 +62,10 @@ void EmulatorThread::Start(std::unique_ptr<CoreBase> core) {
         if(!paused) {
           // @todo: decide what to do with the per_frame_cb().
           per_frame_cb();
-          this->core->Run(k_cycles_per_subsample);
+          this->core->Run(k_cycles_per_subframe);
         }
       }, [this](float fps) {
-        float real_fps = fps / k_input_subsample_count;
+        float real_fps = fps / k_number_of_input_subframes;
         if(paused) {
           real_fps = 0;
         }
