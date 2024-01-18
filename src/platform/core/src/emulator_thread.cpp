@@ -105,8 +105,15 @@ void EmulatorThread::PushMessage(const Message& message) {
     return;
   }
 
-  std::lock_guard lock_guard{msg_queue_mutex};
-  msg_queue.push(message); // @todo: maybe use emplace.
+  if(std::this_thread::get_id() == thread.get_id()) {
+    // Messages sent on the emulator thread (i.e. from a callback) do 
+    // not need to be pushed to the message queue.
+    // Process them right away instead to reduce latency.
+    ProcessMessage(message);
+  } else {
+    std::lock_guard lock_guard{msg_queue_mutex};
+    msg_queue.push(message); // @todo: maybe use emplace.
+  }
 }
 
 void EmulatorThread::ProcessMessages() {
@@ -115,21 +122,22 @@ void EmulatorThread::ProcessMessages() {
   std::lock_guard lock_guard{msg_queue_mutex};
 
   while(!msg_queue.empty()) {
-    const Message& message = msg_queue.front();
-
-    switch(message.type) {
-      case MessageType::Reset: {
-        core->Reset();
-        break;
-      }
-      case MessageType::SetKeyStatus: {
-        core->SetKeyStatus(message.set_key_status.key, message.set_key_status.pressed);
-        break;
-      }
-      default: Assert(false, "unhandled message type: {}", (int)message.type);
-    }
-
+    ProcessMessage(msg_queue.front());
     msg_queue.pop();
+  }
+}
+
+void EmulatorThread::ProcessMessage(const Message& message) {
+  switch(message.type) {
+    case MessageType::Reset: {
+      core->Reset();
+      break;
+    }
+    case MessageType::SetKeyStatus: {
+      core->SetKeyStatus(message.set_key_status.key, message.set_key_status.pressed);
+      break;
+    }
+    default: Assert(false, "unhandled message type: {}", (int)message.type);
   }
 }
 

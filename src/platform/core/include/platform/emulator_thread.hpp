@@ -54,6 +54,7 @@ private:
 
   void PushMessage(const Message& message);
   void ProcessMessages();
+  void ProcessMessage(const Message& message);
 
   static constexpr int k_input_subsample_count = 4;
   static constexpr int k_cycles_per_second = 16777216;
