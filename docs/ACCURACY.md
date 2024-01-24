@@ -3,14 +3,14 @@
 
 Comparison of NBA and other emulators on the [mGBA test suite](https://github.com/mgba-emu/suite) by endrift:
 
-Testname      | Test Count | NanoBoyAdvance 1.7 | mGBA 0.10.1 |    VBA-M 2.1.5 | Ares v131 | SkyEmu V2  |
+Testname      | Test Count | NanoBoyAdvance 1.7 | mGBA 0.10.1 |    VBA-M 2.1.5 | Ares v135 | SkyEmu V2  |
 --------------|------------|--------------------|-------------|----------------|-----------|------------|
 Memory        |       1552 |               1552 |        1552 |           1426 |      1552 |       1552 |
-IO read       |        130 |                130 |         120 |            100 |       124 |        125 |
-Timing        |       2020 |               2020 |        1768 |           1024 |      1570 |       2020 |
-Timer         |        936 |                936 |         744 |            440 |       454 |        587 |
+IO read       |        130 |                130 |         120 |            100 |       130 |        125 |
+Timing        |       2020 |               2020 |        1768 |           1024 |      1608 |       2020 |
+Timer         |        936 |                936 |         744 |            440 |       465 |        587 |
 Timer IRQ     |         90 |                 90 |          70 |              8 |         0 |         90 |
-Shifter       |        140 |                140 |         140 |            132 |       132 |        140 |
+Shifter       |        140 |                140 |         140 |            132 |       140 |        140 |
 Carry         |         93 |                 93 |          93 |             93 |        93 |         93 |
 Multiply Long |         72 |                 52 |          52 |             52 |        52 |         52 |
 BIOS math     |        615 |                615 |         615 |            615 |       615 |        615 |
