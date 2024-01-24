@@ -60,8 +60,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 ```
 
 NOTE: the location and name of the `build` directory is arbitrary.
-NOTE: for recent macOS versions, you may need to pass
-`-DCMAKE_PREFIX_PATH="$(brew --prefix qt@5);$(brew --prefix glew)"` as part of the cmake command.
+NOTE: for recent macOS versions, you may need to pass <br> `-DCMAKE_PREFIX_PATH="$(brew --prefix qt@5);$(brew --prefix glew)"` as part of the cmake command.
 
 #### 3. Compile
 
