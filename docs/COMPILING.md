@@ -54,13 +54,24 @@ pkg install cmake git sdl2 glew qt5 qt5-opengl
 
 #### 2. Setup CMake build directory
 
+##### Linux and FreeBSD
+
 ```
 cd /somewhere/on/your/system/NanoBoyAdvance
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 ```
 
-NOTE: the location and name of the `build` directory is arbitrary.<br>
-NOTE: for recent macOS versions, you may need to pass <br> `-DCMAKE_PREFIX_PATH="$(brew --prefix qt@5);$(brew --prefix glew)"` as part of the cmake command.
+NOTE: the location and name of the `build` directory is arbitrary.
+
+##### macOS
+
+```
+cd /somewhere/on/your/system/NanoBoyAdvance
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5);$(brew --prefix glew)"
+```
+
+NOTE: the location and name of the `build` directory is arbitrary.
+
 
 #### 3. Compile
 
