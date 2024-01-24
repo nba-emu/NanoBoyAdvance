@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include <nba/core.hpp>
 #include <atomic>
-#include <nba/device/input_device.hpp>
 #include <mutex>
 #include <QTimer>
 #include <QWidget>

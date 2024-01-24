@@ -55,9 +55,9 @@ MainWindow::MainWindow(
 
   config->video_dev = screen;
   config->audio_dev = std::make_shared<nba::SDL2_AudioDevice>();
-  config->input_dev = input_device;
   core = nba::CreateCore(config);
-  emu_thread = std::make_unique<nba::EmulatorThread>(core);
+  core_not_thread_safe = core.get();
+  emu_thread = std::make_unique<nba::EmulatorThread>();
 
   app->installEventFilter(this);
 
@@ -384,7 +384,7 @@ void MainWindow::CreateToolsMenu() {
 
   connect(tools_menu->addAction(tr("Palette Viewer")), &QAction::triggered, [this]() {
     if(!palette_viewer_window) {
-      palette_viewer_window = new PaletteViewerWindow{core.get(), this};
+      palette_viewer_window = new PaletteViewerWindow{core_not_thread_safe, this};
       connect(screen.get(), &Screen::RequestDraw, palette_viewer_window, &PaletteViewerWindow::Update);
     }
 
@@ -393,7 +393,7 @@ void MainWindow::CreateToolsMenu() {
 
   connect(tools_menu->addAction(tr("Background Viewer")), &QAction::triggered, [this]() {
     if(!background_viewer_window) {
-      background_viewer_window = new BackgroundViewerWindow{core.get(), this};
+      background_viewer_window = new BackgroundViewerWindow{core_not_thread_safe, this};
       connect(screen.get(), &Screen::RequestDraw, background_viewer_window, &BackgroundViewerWindow::Update);
     }
 
@@ -401,7 +401,7 @@ void MainWindow::CreateToolsMenu() {
   });
 
   connect(tools_menu->addAction(tr("Sprite Viewer")), &QAction::triggered, [this]() {
-    const auto sprite_viewer_window = new SpriteViewerWindow{core.get(), this};
+    const auto sprite_viewer_window = new SpriteViewerWindow{core_not_thread_safe, this};
     connect(screen.get(), &Screen::RequestDraw, sprite_viewer_window, &SpriteViewerWindow::Update);
     sprite_viewer_window->show();
   });
@@ -611,9 +611,9 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
     auto pressed = type == QEvent::KeyPress;
     auto const& input = config->input;
 
-    for(int i = 0; i < nba::InputDevice::kKeyCount; i++) {
+    for(int i = 0; i < (int)nba::Key::Count; i++) {
       if(input.gba[i].keyboard == key) {
-        SetKeyStatus(0, static_cast<nba::InputDevice::Key>(i), pressed);
+        SetKeyStatus(0, static_cast<nba::Key>(i), pressed);
       }
     }
 
@@ -666,13 +666,7 @@ void MainWindow::FileOpen() {
 }
 
 void MainWindow::Reset() {
-  bool was_running = emu_thread->IsRunning();
-
-  emu_thread->Stop();
-  core->Reset();
-  if(was_running) {
-    emu_thread->Start();
-  }
+  emu_thread->Reset();
 }
 
 void MainWindow::SetPause(bool paused) {
@@ -687,7 +681,7 @@ void MainWindow::SetPause(bool paused) {
 
 void MainWindow::Stop() {
   if(emu_thread->IsRunning()) {
-    emu_thread->Stop();
+    core = emu_thread->Stop();
     config->audio_dev->Close();
     screen->SetForceClear(true);
 
@@ -813,7 +807,7 @@ void MainWindow::LoadROM(std::u16string const& path) {
   // Reset the core and start the emulation thread.
   // If the emulator is currently paused force-clear the screen.
   core->Reset();
-  emu_thread->Start();
+  emu_thread->Start(std::move(core));
 
   /**
    * If the the emulator is paused we force-clear the screen to avoid 
@@ -828,7 +822,7 @@ void MainWindow::LoadROM(std::u16string const& path) {
 
 auto MainWindow::LoadState(std::u16string const& path) -> nba::SaveStateLoader::Result {
   bool was_running = emu_thread->IsRunning();
-  emu_thread->Stop();
+  core = emu_thread->Stop();
 
   auto result = nba::SaveStateLoader::Load(core, path);
 
@@ -861,7 +855,7 @@ auto MainWindow::LoadState(std::u16string const& path) -> nba::SaveStateLoader::
   }
 
   if(was_running) {
-    emu_thread->Start();
+    emu_thread->Start(std::move(core));
   }
 
   return result;
@@ -869,7 +863,7 @@ auto MainWindow::LoadState(std::u16string const& path) -> nba::SaveStateLoader::
 
 auto MainWindow::SaveState(std::u16string const& path) -> nba::SaveStateWriter::Result {
   bool was_running = emu_thread->IsRunning();
-  emu_thread->Stop();
+  core = emu_thread->Stop();
 
   auto result = nba::SaveStateWriter::Write(core, path);
 
@@ -882,7 +876,7 @@ auto MainWindow::SaveState(std::u16string const& path) -> nba::SaveStateWriter::
   }
 
   if(was_running) {
-    emu_thread->Start();
+    emu_thread->Start(std::move(core));
   }
 
   return result;
@@ -902,11 +896,10 @@ auto MainWindow::GetSavePath(fs::path const& rom_path, fs::path const& extension
   return fs::path{rom_path}.replace_extension(extension);
 }
 
-void MainWindow::SetKeyStatus(int channel, nba::InputDevice::Key key, bool pressed) {
-  key_input[channel][int(key)] = pressed;
+void MainWindow::SetKeyStatus(int channel, nba::Key key, bool pressed) {
+  key_input[channel][(int)key] = pressed;
 
-  input_device->SetKeyStatus(key, 
-    key_input[0][int(key)] || key_input[1][int(key)]);
+  emu_thread->SetKeyStatus(key, key_input[0][(int)key] || key_input[1][(int)key]);
 }
 
 void MainWindow::SetFastForward(int channel, bool pressed) {

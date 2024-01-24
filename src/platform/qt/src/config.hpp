@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <nba/core.hpp>
 #include <algorithm>
 #include <array>
 #include <filesystem>
@@ -49,15 +50,15 @@ struct QtConfig final : nba::PlatformConfig {
       }
     };
 
-    Map gba[nba::InputDevice::kKeyCount] {
-      {Qt::Key_Up},
-      {Qt::Key_Down},
-      {Qt::Key_Left},
-      {Qt::Key_Right},
-      {Qt::Key_Return},
-      {Qt::Key_Backspace},
+    Map gba[(int)nba::Key::Count] {
       {Qt::Key_A},
       {Qt::Key_S},
+      {Qt::Key_Backspace},
+      {Qt::Key_Return},
+      {Qt::Key_Right},
+      {Qt::Key_Left},
+      {Qt::Key_Up},
+      {Qt::Key_Down},
       {Qt::Key_D},
       {Qt::Key_F}
     };

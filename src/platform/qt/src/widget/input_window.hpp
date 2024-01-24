@@ -10,7 +10,7 @@
 #include <atomic>
 #include <filesystem>
 #include <fstream>
-#include <nba/device/input_device.hpp>
+#include <nba/core.hpp>
 #include <nba/log.hpp>
 #include <toml.hpp>
 #include <QApplication>
@@ -34,7 +34,7 @@ inline auto GetJoystickGUIDStringFromIndex(int device_index) -> std::string {
 }
 
 struct InputWindow : QDialog {
-  using Key = nba::InputDevice::Key;
+  using Key = nba::Key;
 
   InputWindow(
     QApplication* app,

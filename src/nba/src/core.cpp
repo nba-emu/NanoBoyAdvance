@@ -23,7 +23,7 @@ Core::Core(std::shared_ptr<Config> config)
     , apu(scheduler, dma, bus, config)
     , ppu(scheduler, irq, dma, config)
     , timer(scheduler, irq, apu)
-    , keypad(scheduler, irq, config)
+    , keypad(scheduler, irq)
     , bus(scheduler, {cpu, irq, dma, apu, ppu, timer, keypad}) {
   Reset();
 }
@@ -69,6 +69,10 @@ auto Core::CreateRTC() -> std::unique_ptr<RTC> {
 
 auto Core::CreateSolarSensor() -> std::unique_ptr<SolarSensor> {
   return std::make_unique<SolarSensor>();
+}
+
+void Core::SetKeyStatus(Key key, bool pressed) {
+  keypad.SetKeyStatus(key, pressed);
 }
 
 void Core::Run(int cycles) {

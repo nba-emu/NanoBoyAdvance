@@ -23,6 +23,8 @@ using u64 = std::uint64_t;
 using s64 = std::int64_t;
 using uint = unsigned int;
 
+using u8bool = u8;
+
 #ifdef NBA_NO_EXPORT_INT_TYPES
 } // namespace nba
 #endif
