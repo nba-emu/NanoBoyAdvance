@@ -400,6 +400,15 @@ void MainWindow::CreateToolsMenu() {
     background_viewer_window->show();
   });
 
+  connect(tools_menu->addAction(tr("Tile Viewer")), &QAction::triggered, [this]() {
+    if(!tile_viewer_window) {
+      tile_viewer_window = new TileViewerWindow{core_not_thread_safe, this};
+      connect(screen.get(), &Screen::RequestDraw, tile_viewer_window, &TileViewerWindow::Update);
+    }
+
+    tile_viewer_window->show();
+  });
+
   connect(tools_menu->addAction(tr("Sprite Viewer")), &QAction::triggered, [this]() {
     const auto sprite_viewer_window = new SpriteViewerWindow{core_not_thread_safe, this};
     connect(screen.get(), &Screen::RequestDraw, sprite_viewer_window, &SpriteViewerWindow::Update);
