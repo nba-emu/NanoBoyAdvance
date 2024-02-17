@@ -18,7 +18,7 @@
 
 TileViewer::TileViewer(nba::CoreBase* core, QWidget* parent) : QWidget(parent) {
   QHBoxLayout* hbox = new QHBoxLayout{};
-  
+
   QVBoxLayout* vbox_l = new QVBoxLayout{};
   QVBoxLayout* vbox_r = new QVBoxLayout{};
   hbox->addLayout(vbox_l);
@@ -33,42 +33,42 @@ TileViewer::TileViewer(nba::CoreBase* core, QWidget* parent) : QWidget(parent) {
   grid->addWidget(CreatePaletteInput(), 1, 1);
   vbox_l->addLayout(grid);
 
-  eight_bpp = new QCheckBox{tr("256 color mode (8BPP)")};
-  vbox_l->addWidget(eight_bpp);
+  m_check_eight_bpp = new QCheckBox{tr("256 color mode (8BPP)")};
+  vbox_l->addWidget(m_check_eight_bpp);
 
   vbox_l->addWidget(CreateTileBaseGroupBox());
   vbox_l->addWidget(CreateTileInfoGroupBox());
   vbox_l->addStretch();
 
-  canvas = new QWidget{};
-  canvas->installEventFilter(this);
-  vbox_r->addWidget(canvas);
+  m_canvas = new QWidget{};
+  m_canvas->installEventFilter(this);
+  vbox_r->addWidget(m_canvas);
   vbox_r->addStretch();
 
-  vram = core->GetVRAM();
-  pram = (u16*)core->GetPRAM();
-  image_rgb565 = new u16[256 * 256];
+  m_vram = core->GetVRAM();
+  m_pram = (u16*)core->GetPRAM();
+  m_image_rgb565 = new u16[256 * 256];
 
   UpdateImpl();
 }
 
 TileViewer::~TileViewer() {
-  delete image_rgb565;
+  delete m_image_rgb565;
 }
 
 QWidget* TileViewer::CreateMagnificationInput() {
-  magnification_input = new QSpinBox{};
-  magnification_input->setMinimum(1);
-  magnification_input->setMaximum(16);
-  connect(magnification_input, QOverload<int>::of(&QSpinBox::valueChanged), [this](int _) { Update(); });
-  return magnification_input;
+  m_magnification_input = new QSpinBox{};
+  m_magnification_input->setMinimum(1);
+  m_magnification_input->setMaximum(16);
+  connect(m_magnification_input, QOverload<int>::of(&QSpinBox::valueChanged), [this](int _) { Update(); });
+  return m_magnification_input;
 }
 
 QWidget* TileViewer::CreatePaletteInput() {
-  palette_input = new QSpinBox{};
-  palette_input->setMinimum(0);
-  palette_input->setMaximum(15);
-  return magnification_input;
+  m_palette_input = new QSpinBox{};
+  m_palette_input->setMinimum(0);
+  m_palette_input->setMaximum(15);
+  return m_magnification_input;
 }
 
 QWidget* TileViewer::CreateTileBaseGroupBox() {
@@ -78,17 +78,17 @@ QWidget* TileViewer::CreateTileBaseGroupBox() {
   group_box->setTitle(tr("Tile Base"));
   group_box->setLayout(vbox);
 
-  for(u32 tile_base = 0x06000000u; tile_base <= 0x06010000u; tile_base += 0x4000u) {
+  for(u32 m_tile_base = 0x06000000u; m_tile_base <= 0x06010000u; m_tile_base += 0x4000u) {
     QRadioButton* radio_button = new QRadioButton{
-      QString::fromStdString(fmt::format("0x{:08X}", tile_base))};
+      QString::fromStdString(fmt::format("0x{:08X}", m_tile_base))};
 
-    connect(radio_button, &QRadioButton::pressed, [this, tile_base]() {
-      this->tile_base = tile_base & 0xFFFFFFu;
+    connect(radio_button, &QRadioButton::pressed, [this, m_tile_base]() {
+      this->m_tile_base = m_tile_base & 0xFFFFFFu;
     });
 
     vbox->addWidget(radio_button);
     
-    if(tile_base == 0x06000000u) radio_button->click();
+    if(m_tile_base == 0x06000000u) radio_button->click();
   }
 
   return group_box;
@@ -102,47 +102,47 @@ QWidget* TileViewer::CreateTileInfoGroupBox() {
   group_box->setLayout(vbox);
 
   QGridLayout* grid_1 = new QGridLayout{};
-  label_tile_number  = CreateMonospaceLabel();
-  label_tile_address = CreateMonospaceLabel();
+  m_label_tile_number  = CreateMonospaceLabel();
+  m_label_tile_address = CreateMonospaceLabel();
   grid_1->addWidget(new QLabel{tr("Tile #:")}, 0, 0);
-  grid_1->addWidget(label_tile_number, 0, 1);
+  grid_1->addWidget(m_label_tile_number, 0, 1);
   grid_1->addWidget(new QLabel{tr("Tile address:")}, 1, 0);
-  grid_1->addWidget(label_tile_address, 1, 1);
+  grid_1->addWidget(m_label_tile_address, 1, 1);
   vbox->addLayout(grid_1);
 
-  tile_box = new PaletteBox{8, 8};
-  vbox->addWidget(tile_box);
+  m_tile_box = new PaletteBox{8, 8};
+  vbox->addWidget(m_tile_box);
 
   QGridLayout* grid_2 = new QGridLayout{};
-  label_color_r_component = CreateMonospaceLabel();
-  label_color_g_component = CreateMonospaceLabel();
-  label_color_b_component = CreateMonospaceLabel();
+  m_label_color_r_component = CreateMonospaceLabel();
+  m_label_color_g_component = CreateMonospaceLabel();
+  m_label_color_b_component = CreateMonospaceLabel();
   grid_2->addWidget(new QLabel{tr("R:")}, 0, 0);
-  grid_2->addWidget(label_color_r_component, 0, 1);
+  grid_2->addWidget(m_label_color_r_component, 0, 1);
   grid_2->addWidget(new QLabel{tr("G:")}, 1, 0);
-  grid_2->addWidget(label_color_g_component, 1, 1);
+  grid_2->addWidget(m_label_color_g_component, 1, 1);
   grid_2->addWidget(new QLabel{tr("B:")}, 2, 0);
-  grid_2->addWidget(label_color_b_component, 2, 1);
+  grid_2->addWidget(m_label_color_b_component, 2, 1);
   vbox->addLayout(grid_2);
 
-  connect(tile_box, &PaletteBox::selected, [this](int x, int y) {
-    const u32 color_rgb32 = tile_box->GetColorAt(x, y);
+  connect(m_tile_box, &PaletteBox::selected, [this](int x, int y) {
+    const u32 color_rgb32 = m_tile_box->GetColorAt(x, y);
     const int r = (color_rgb32 >> 18) & 62;
     const int g = (color_rgb32 >> 10) & 63;
     const int b = (color_rgb32 >>  2) & 62;
 
-    label_color_r_component->setText(QStringLiteral("%1").arg(r));
-    label_color_g_component->setText(QStringLiteral("%1").arg(g));
-    label_color_b_component->setText(QStringLiteral("%1").arg(b)); 
+    m_label_color_r_component->setText(QStringLiteral("%1").arg(r));
+    m_label_color_g_component->setText(QStringLiteral("%1").arg(g));
+    m_label_color_b_component->setText(QStringLiteral("%1").arg(b)); 
 
-    tile_box->SetHighlightedPosition(x, y);
+    m_tile_box->SetHighlightedPosition(x, y);
   });
 
   return group_box;
 }
 
 bool TileViewer::eventFilter(QObject* object, QEvent* event) {
-  if(object != canvas) {
+  if(object != m_canvas) {
     return false;
   }
 
@@ -155,9 +155,9 @@ bool TileViewer::eventFilter(QObject* object, QEvent* event) {
       const QMouseEvent* mouse_event = (QMouseEvent*)event;
 
       if(mouse_event->button() == Qt::LeftButton) {
-        const int canvas_tile_size = 8 * magnification_input->value();
-        const int tile_x = (int)(mouse_event->x() / canvas_tile_size);
-        const int tile_y = (int)(mouse_event->y() / canvas_tile_size);
+        const int m_canvas_tile_size = 8 * m_magnification_input->value();
+        const int tile_x = (int)(mouse_event->x() / m_canvas_tile_size);
+        const int tile_y = (int)(mouse_event->y() / m_canvas_tile_size);
 
         DrawTileDetail(tile_x, tile_y);
       } else {
@@ -171,20 +171,20 @@ bool TileViewer::eventFilter(QObject* object, QEvent* event) {
 }
 
 void TileViewer::PresentTileMap() {
-  const int canvas_w = canvas->size().width();
-  const int canvas_h = canvas->size().height();
+  const int m_canvas_w = m_canvas->size().width();
+  const int m_canvas_h = m_canvas->size().height();
 
-  const QRect src_rect{0, 0, 256, 256 * canvas_h / canvas_w};
-  const QRect dst_rect{0, 0, canvas_w, canvas_h};
+  const QRect src_rect{0, 0, 256, 256 * m_canvas_h / m_canvas_w};
+  const QRect dst_rect{0, 0, m_canvas_w, m_canvas_h};
 
-  QPainter painter{canvas};
-  painter.drawImage(dst_rect, image_rgb32, src_rect);
+  QPainter painter{m_canvas};
+  painter.drawImage(dst_rect, m_image_rgb32, src_rect);
 
-  if(display_selected_tile) {
-    const int tile_size = 8 * canvas_w / 256;
+  if(m_display_selected_tile) {
+    const int tile_size = 8 * m_canvas_w / 256;
 
     painter.setPen(Qt::red);
-    painter.drawRect(selected_tile_x * tile_size - 1, selected_tile_y * tile_size - 1, tile_size + 1, tile_size + 1);
+    painter.drawRect(m_selected_tile_x * tile_size - 1, m_selected_tile_y * tile_size - 1, tile_size + 1, tile_size + 1);
   }
 }
 
@@ -193,19 +193,19 @@ void TileViewer::DrawTileDetail(int tile_x, int tile_y) {
     return;
   }
 
-  tile_box->Draw(&image_rgb565[(tile_y * 256 + tile_x) * 8], 256);
+  m_tile_box->Draw(&m_image_rgb565[(tile_y * 256 + tile_x) * 8], 256);
 
-  selected_tile_x = tile_x;
-  selected_tile_y = tile_y;
-  display_selected_tile = true;
+  m_selected_tile_x = tile_x;
+  m_selected_tile_y = tile_y;
+  m_display_selected_tile = true;
 
   const int tile_number  = tile_y * 32 + tile_x;
-  const u32 tile_address = 0x06000000u + tile_base + tile_number * (eight_bpp->isChecked() ? 64 : 32);
+  const u32 tile_address = 0x06000000u + m_tile_base + tile_number * (m_check_eight_bpp->isChecked() ? 64 : 32);
 
-  label_tile_number->setText(QStringLiteral("%1").arg(tile_number));
-  label_tile_address->setText(QString::fromStdString(fmt::format("0x{:08X}", tile_address)));
+  m_label_tile_number->setText(QStringLiteral("%1").arg(tile_number));
+  m_label_tile_address->setText(QString::fromStdString(fmt::format("0x{:08X}", tile_address)));
 
-  canvas->update();
+  m_canvas->update();
 }
 
 void TileViewer::ClearTileSelection() {
@@ -213,8 +213,8 @@ void TileViewer::ClearTileSelection() {
     return;
   }
 
-  display_selected_tile = false;
-  canvas->update();
+  m_display_selected_tile = false;
+  m_canvas->update();
 }
 
 void TileViewer::Update() {
@@ -224,29 +224,29 @@ void TileViewer::Update() {
 }
 
 void TileViewer::UpdateImpl() {
-  const int magnification = magnification_input->value();
-  const int palette_offset = tile_base == 0x10000u ? 256 : 0;
+  const int magnification = m_magnification_input->value();
+  const int palette_offset = m_tile_base == 0x10000u ? 256 : 0;
 
-  u32* const buffer = (u32*)image_rgb32.bits();
+  u32* const buffer = (u32*)m_image_rgb32.bits();
 
   int height = 256;
-  u32 tile_address = tile_base;
+  u32 tile_address = m_tile_base;
 
-  if(eight_bpp->isChecked()) {
-    u16* const palette = &pram[palette_offset];
+  if(m_check_eight_bpp->isChecked()) {
+    u16* const palette = &m_pram[palette_offset];
 
     for(int tile = 0; tile < 512; tile++) {
-      const int tile_base_x = (tile % 32) * 8;
-      const int tile_base_y = (tile / 32) * 8;
+      const int m_tile_base_x = (tile % 32) * 8;
+      const int m_tile_base_y = (tile / 32) * 8;
 
       for(int y = 0; y < 8; y++) {
-        u64 tile_row_data = nba::read<u64>(vram, tile_address);
+        u64 tile_row_data = nba::read<u64>(m_vram, tile_address);
 
         for(int x = 0; x < 8; x++) {
-          const size_t index = (tile_base_y + y) * 256 + tile_base_x + x;
+          const size_t index = (m_tile_base_y + y) * 256 + m_tile_base_x + x;
           const u16 color_rgb565 = palette[(u8)tile_row_data];
 
-          image_rgb565[index] = color_rgb565;
+          m_image_rgb565[index] = color_rgb565;
           buffer[index] = Rgb565ToArgb8888(color_rgb565);
           tile_row_data >>= 8;
         }
@@ -257,20 +257,20 @@ void TileViewer::UpdateImpl() {
 
     height /= 2;
   } else {
-    u16* const palette = &pram[palette_input->value() * 16 + palette_offset];
+    u16* const palette = &m_pram[m_palette_input->value() * 16 + palette_offset];
 
     for(int tile = 0; tile < 1024; tile++) {
-      const int tile_base_x = (tile % 32) * 8;
-      const int tile_base_y = (tile / 32) * 8;
+      const int m_tile_base_x = (tile % 32) * 8;
+      const int m_tile_base_y = (tile / 32) * 8;
 
       for(int y = 0; y < 8; y++) {
-        u32 tile_row_data = nba::read<u32>(vram, tile_address);
+        u32 tile_row_data = nba::read<u32>(m_vram, tile_address);
 
         for(int x = 0; x < 8; x++) {
-          const size_t index = (tile_base_y + y) * 256 + tile_base_x + x;
+          const size_t index = (m_tile_base_y + y) * 256 + m_tile_base_x + x;
           const u16 color_rgb565 = palette[tile_row_data & 15];
 
-          image_rgb565[index] = color_rgb565;
+          m_image_rgb565[index] = color_rgb565;
           buffer[index] = Rgb565ToArgb8888(color_rgb565);
           tile_row_data >>= 4;
         }
@@ -280,10 +280,10 @@ void TileViewer::UpdateImpl() {
     }
   }
 
-  if(tile_base == 0xC000u) {
+  if(m_tile_base == 0xC000u) {
     height /= 2;
   }
 
-  canvas->setFixedSize(256 * magnification, height * magnification);
-  canvas->update();
+  m_canvas->setFixedSize(256 * magnification, height * magnification);
+  m_canvas->update();
 }
