@@ -26,6 +26,11 @@ struct TileViewer : QWidget {
   void Update();
 
 private:
+  QWidget* CreateMagnificationInput();
+  QWidget* CreatePaletteInput();
+  QWidget* CreateTileBaseGroupBox();
+  QWidget* CreateTileInfoGroupBox();
+
   void PresentTileMap();
   void DrawTileDetail(int tile_x, int tile_y);
   void ClearTileSelection();
