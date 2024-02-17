@@ -18,7 +18,7 @@
 
 // --------------------------------------------------------------------
 
-static const auto CreateMonospaceLabel = [](QLabel*& label) {
+static const auto _CreateMonospaceLabel = [](QLabel*& label) {
   label = new QLabel{"-"};
   label->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
   label->setTextInteractionFlags(Qt::TextSelectableByMouse);
@@ -55,6 +55,7 @@ SpriteViewer::SpriteViewer(nba::CoreBase* core, QWidget* parent) : QWidget{paren
       magnification_input = new QSpinBox{};
       magnification_input->setMinimum(1);
       magnification_input->setMaximum(16);
+      connect(magnification_input, QOverload<int>::of(&QSpinBox::valueChanged), [this](int _) { Update(); });
 
       const auto grid = new QGridLayout{};
       int row = 0;
@@ -80,19 +81,19 @@ SpriteViewer::SpriteViewer(nba::CoreBase* core, QWidget* parent) : QWidget{paren
       };
 
       PushRow("Enabled", CreateCheckBox(check_sprite_enabled));
-      PushRow("Position", CreateMonospaceLabel(label_sprite_position));
-      PushRow("Size", CreateMonospaceLabel(label_sprite_size));
-      PushRow("Tile number", CreateMonospaceLabel(label_sprite_tile_number));
-      PushRow("Palette", CreateMonospaceLabel(label_sprite_palette));
+      PushRow("Position", _CreateMonospaceLabel(label_sprite_position));
+      PushRow("Size", _CreateMonospaceLabel(label_sprite_size));
+      PushRow("Tile #", _CreateMonospaceLabel(label_sprite_tile_number));
+      PushRow("Palette", _CreateMonospaceLabel(label_sprite_palette));
       PushRow("8BPP", CreateCheckBox(check_sprite_8bpp));
       PushRow("Flip V", CreateCheckBox(check_sprite_vflip));
       PushRow("Flip H", CreateCheckBox(check_sprite_hflip));
-      PushRow("Mode", CreateMonospaceLabel(label_sprite_mode));
+      PushRow("Mode", _CreateMonospaceLabel(label_sprite_mode));
       PushRow("Affine", CreateCheckBox(check_sprite_affine));
-      PushRow("Transform #", CreateMonospaceLabel(label_sprite_transform));
+      PushRow("Transform #", _CreateMonospaceLabel(label_sprite_transform));
       PushRow("Double-size", CreateCheckBox(check_sprite_double_size));
       PushRow("Mosaic", CreateCheckBox(check_sprite_mosaic));
-      PushRow("Render cycles", CreateMonospaceLabel(label_sprite_render_cycles));
+      PushRow("Render cycles", _CreateMonospaceLabel(label_sprite_render_cycles));
 
       box->setLayout(grid);
       vbox->addWidget(box);

@@ -2,6 +2,8 @@
 #pragma once
 
 #include <nba/integer.hpp>
+#include <QFontDatabase>
+#include <QLabel>
 
 constexpr u32 Rgb565ToArgb8888(u16 color_rgb565) {
   const uint r =  (color_rgb565 >>  0) & 31;
@@ -12,4 +14,11 @@ constexpr u32 Rgb565ToArgb8888(u16 color_rgb565) {
          (r << 3 | r >> 2) << 16 |
          (g << 2 | g >> 4) <<  8 |
          (b << 3 | b >> 2);
+}
+
+inline QLabel* CreateMonospaceLabel() {
+  QLabel* label = new QLabel{"-"};
+  label->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+  label->setTextInteractionFlags(Qt::TextSelectableByMouse);
+  return label;
 }
