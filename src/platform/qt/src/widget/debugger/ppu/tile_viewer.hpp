@@ -39,8 +39,8 @@ class TileViewer : public QWidget {
 
     u16* m_image_rgb565;
     QImage m_image_rgb32{256, 256, QImage::Format_RGB32};
-    QSpinBox* m_magnification_input;
-    QSpinBox* m_palette_input;
+    QSpinBox* m_spin_magnification;
+    QSpinBox* m_spin_palette_index;
     QCheckBox* m_check_eight_bpp;
     QLabel* m_label_tile_number;
     QLabel* m_label_tile_address;

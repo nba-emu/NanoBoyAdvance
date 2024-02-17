@@ -57,18 +57,18 @@ TileViewer::~TileViewer() {
 }
 
 QWidget* TileViewer::CreateMagnificationInput() {
-  m_magnification_input = new QSpinBox{};
-  m_magnification_input->setMinimum(1);
-  m_magnification_input->setMaximum(16);
-  connect(m_magnification_input, QOverload<int>::of(&QSpinBox::valueChanged), [this](int _) { Update(); });
-  return m_magnification_input;
+  m_spin_magnification = new QSpinBox{};
+  m_spin_magnification->setMinimum(1);
+  m_spin_magnification->setMaximum(16);
+  connect(m_spin_magnification, QOverload<int>::of(&QSpinBox::valueChanged), [this](int _) { Update(); });
+  return m_spin_magnification;
 }
 
 QWidget* TileViewer::CreatePaletteInput() {
-  m_palette_input = new QSpinBox{};
-  m_palette_input->setMinimum(0);
-  m_palette_input->setMaximum(15);
-  return m_magnification_input;
+  m_spin_palette_index = new QSpinBox{};
+  m_spin_palette_index->setMinimum(0);
+  m_spin_palette_index->setMaximum(15);
+  return m_spin_magnification;
 }
 
 QWidget* TileViewer::CreateTileBaseGroupBox() {
@@ -155,7 +155,7 @@ bool TileViewer::eventFilter(QObject* object, QEvent* event) {
       const QMouseEvent* mouse_event = (QMouseEvent*)event;
 
       if(mouse_event->button() == Qt::LeftButton) {
-        const int m_canvas_tile_size = 8 * m_magnification_input->value();
+        const int m_canvas_tile_size = 8 * m_spin_magnification->value();
         const int tile_x = (int)(mouse_event->x() / m_canvas_tile_size);
         const int tile_y = (int)(mouse_event->y() / m_canvas_tile_size);
 
@@ -224,10 +224,11 @@ void TileViewer::Update() {
 }
 
 void TileViewer::UpdateImpl() {
-  const int magnification = m_magnification_input->value();
+  const int magnification = m_spin_magnification->value();
   const int palette_offset = m_tile_base == 0x10000u ? 256 : 0;
 
-  u32* const buffer = (u32*)m_image_rgb32.bits();
+  u16* const image_rgb565 = m_image_rgb565; 
+  u32* const image_rgb32  = (u32*)m_image_rgb32.bits();
 
   int height = 256;
   u32 tile_address = m_tile_base;
@@ -246,8 +247,8 @@ void TileViewer::UpdateImpl() {
           const size_t index = (m_tile_base_y + y) * 256 + m_tile_base_x + x;
           const u16 color_rgb565 = palette[(u8)tile_row_data];
 
-          m_image_rgb565[index] = color_rgb565;
-          buffer[index] = Rgb565ToArgb8888(color_rgb565);
+          image_rgb565[index] = color_rgb565;
+          image_rgb32[index] = Rgb565ToArgb8888(color_rgb565);
           tile_row_data >>= 8;
         }
 
@@ -257,7 +258,7 @@ void TileViewer::UpdateImpl() {
 
     height /= 2;
   } else {
-    u16* const palette = &m_pram[m_palette_input->value() * 16 + palette_offset];
+    u16* const palette = &m_pram[m_spin_palette_index->value() * 16 + palette_offset];
 
     for(int tile = 0; tile < 1024; tile++) {
       const int m_tile_base_x = (tile % 32) * 8;
@@ -270,8 +271,8 @@ void TileViewer::UpdateImpl() {
           const size_t index = (m_tile_base_y + y) * 256 + m_tile_base_x + x;
           const u16 color_rgb565 = palette[tile_row_data & 15];
 
-          m_image_rgb565[index] = color_rgb565;
-          buffer[index] = Rgb565ToArgb8888(color_rgb565);
+          image_rgb565[index] = color_rgb565;
+          image_rgb32[index] = Rgb565ToArgb8888(color_rgb565);
           tile_row_data >>= 4;
         }
 
