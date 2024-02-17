@@ -23,11 +23,12 @@
 #include <vector>
 
 #include "widget/debugger/ppu/background_viewer_window.hpp"
+#include "widget/debugger/ppu/palette_viewer_window.hpp"
+#include "widget/debugger/ppu/sprite_viewer_window.hpp"
+#include "widget/debugger/ppu/tile_viewer_window.hpp"
 #include "widget/controller_manager.hpp"
 #include "widget/input_window.hpp"
-#include "widget/debugger/ppu/palette_viewer_window.hpp"
 #include "widget/screen.hpp"
-#include "widget/debugger/ppu/sprite_viewer_window.hpp"
 #include "config.hpp"
 
 struct MainWindow : QMainWindow {
@@ -155,6 +156,7 @@ private:
 
   PaletteViewerWindow* palette_viewer_window;
   BackgroundViewerWindow* background_viewer_window;
+  TileViewerWindow* tile_viewer_window;
 
   QString base_window_title;
 

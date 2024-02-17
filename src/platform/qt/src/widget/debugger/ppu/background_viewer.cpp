@@ -79,7 +79,7 @@ BackgroundViewer::BackgroundViewer(nba::CoreBase* core, QWidget* parent) : QWidg
     tile_box = new PaletteBox{8, 8};
 
     int row = 0;
-    grid->addWidget(new QLabel(tr("Tile number:")), row, 0);
+    grid->addWidget(new QLabel(tr("Tile #:")), row, 0);
     grid->addWidget(CreateMonospaceLabel(tile_number_label), row++, 1);
     grid->addWidget(new QLabel(tr("Tile address:")), row, 0);
     grid->addWidget(CreateMonospaceLabel(tile_address_label), row++, 1);

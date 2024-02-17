@@ -8,6 +8,8 @@ set(SOURCES
   src/widget/debugger/ppu/sprite_viewer_window.cpp
   src/widget/debugger/ppu/palette_box.cpp
   src/widget/debugger/ppu/palette_viewer_window.cpp
+  src/widget/debugger/ppu/tile_viewer.cpp
+  src/widget/debugger/ppu/tile_viewer_window.cpp
   src/widget/controller_manager.cpp
   src/widget/input_window.cpp
   src/widget/main_window.cpp
@@ -23,6 +25,8 @@ set(HEADERS
   src/widget/debugger/ppu/palette_viewer_window.hpp
   src/widget/debugger/ppu/sprite_viewer.hpp
   src/widget/debugger/ppu/sprite_viewer_window.hpp
+  src/widget/debugger/ppu/tile_viewer.hpp
+  src/widget/debugger/ppu/tile_viewer_window.hpp
   src/widget/debugger/utility.hpp
   src/widget/controller_manager.hpp
   src/widget/input_window.hpp
