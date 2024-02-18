@@ -42,45 +42,41 @@ class BackgroundViewer : public QWidget {
 
     void PresentBackground();
 
-    nba::CoreBase* core;
-    u16* pram;
-    u8* vram;
+    int m_bg_id = 0;
+    int m_bg_mode = 0;
+    u16 m_bghofs = 0;
+    u16 m_bgvofs = 0;
 
-    int bg_id = 0;
-    int bg_mode = 0;
-    u16 bghofs = 0;
-    u16 bgvofs = 0;
+    QLabel* m_label_bg_mode;
+    QLabel* m_label_bg_priority;
+    QLabel* m_label_bg_size;
+    QLabel* m_label_tile_base;
+    QLabel* m_label_map_base;
+    QCheckBox* m_check_8bpp;
+    QCheckBox* m_check_bg_wraparound;
+    QCheckBox* m_check_bg_mosaic;
+    QLabel* m_label_bg_scroll;
 
-    QLabel* bg_mode_label;
-    QLabel* bg_priority_label;
-    QLabel* bg_size_label;
-    QLabel* bg_tile_base_label;
-    QLabel* bg_map_base_label;
-    QCheckBox* bg_8bpp_check_box;
-    QCheckBox* bg_wraparound_check_box;
-    QCheckBox* bg_mosaic_check_box;
-    QLabel* bg_scroll_label;
+    QLabel* m_label_tile_number;
+    QLabel* m_label_tile_address;
+    QLabel* m_label_tile_map_entry_address;
+    QCheckBox* m_check_tile_flip_v;
+    QCheckBox* m_check_tile_flip_h;
+    QLabel* m_label_tile_palette;
+    PaletteBox* m_tile_box;
+    QLabel* m_label_color_r_component;
+    QLabel* m_label_color_g_component;
+    QLabel* m_label_color_b_component;
 
-    QLabel* tile_number_label;
-    QLabel* tile_address_label;
-    QLabel* tile_map_entry_address_label;
-    QCheckBox* tile_flip_v_check_box;
-    QCheckBox* tile_flip_h_check_box;
-    QLabel* tile_palette_label;
-    PaletteBox* tile_box;
-    QLabel* tile_color_r_component_label;
-    QLabel* tile_color_g_component_label;
-    QLabel* tile_color_b_component_label;
+    QCheckBox* m_check_display_screen_viewport;
 
-    QCheckBox* display_screen_viewport_check_box;
-
-    bool display_selected_tile = false;
-    int selected_tile_x;
-    int selected_tile_y;
+    bool m_display_selected_tile = false;
+    int m_selected_tile_x;
+    int m_selected_tile_y;
     
-    QWidget* canvas;
-    QImage image_rgb32{1024, 1024, QImage::Format_RGB32};
-    u16* image_rgb565;
+    QWidget* m_canvas;
+    QImage m_image_rgb32{1024, 1024, QImage::Format_RGB32};
+    u16* m_image_rgb565;
 
     struct TileMetaData {
       int tile_number;
@@ -89,7 +85,11 @@ class BackgroundViewer : public QWidget {
       bool flip_v;
       bool flip_h;
       int palette;
-    } tile_meta_data[128][128];
+    } m_tile_meta_data[128][128];
+
+    nba::CoreBase* m_core;
+    u16* m_pram;
+    u8*  m_vram;
 
     Q_OBJECT
 };
