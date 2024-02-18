@@ -44,4 +44,4 @@ Some of these issues are minor visual bugs, that do not affect gameplay, others 
 
 ## Known broken
 
-- currently none
+- Futari wa Precure - Ariennai! Yume no Sono wa Daimeikyuu: slight audio inaccuracies (see: https://github.com/nba-emu/NanoBoyAdvance/issues/325)
