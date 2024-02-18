@@ -10,7 +10,6 @@
 #include <nba/common/punning.hpp>
 #include <optional>
 #include <QEvent>
-#include <QFontDatabase>
 #include <QGridLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
@@ -22,120 +21,13 @@
 #include "background_viewer.hpp"
 
 BackgroundViewer::BackgroundViewer(nba::CoreBase* core, QWidget* parent) : QWidget(parent), core(core) {
-  setLayout(new QHBoxLayout{});
+  QHBoxLayout* hbox = new QHBoxLayout{};
 
-  const auto monospace_font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
-
-  const auto CreateMonospaceLabel = [&](QLabel*& label) {
-    label = new QLabel{"-"};
-    label->setFont(monospace_font);
-    label->setTextInteractionFlags(Qt::TextSelectableByMouse);
-    return label;
-  };
-
-  const auto CreateCheckBox = [&](QCheckBox*& check_box) {
-    check_box = new QCheckBox{};
-    check_box->setEnabled(false);
-    return check_box;
-  };
-
-  const auto info_vbox = new QVBoxLayout{};
-
-  // Background information
-  { 
-    const auto grid = new QGridLayout{};
-
-    int row = 0; 
-    grid->addWidget(new QLabel(tr("BG mode:")), row, 0);
-    grid->addWidget(CreateMonospaceLabel(bg_mode_label), row++, 1);
-    grid->addWidget(new QLabel(tr("BG priority:")), row, 0);
-    grid->addWidget(CreateMonospaceLabel(bg_priority_label), row++, 1);
-    grid->addWidget(new QLabel(tr("Size:")), row, 0);
-    grid->addWidget(CreateMonospaceLabel(bg_size_label), row++, 1);
-    grid->addWidget(new QLabel(tr("Tile base:")), row, 0);
-    grid->addWidget(CreateMonospaceLabel(bg_tile_base_label), row++, 1);
-    grid->addWidget(new QLabel(tr("Map base:")), row, 0);
-    grid->addWidget(CreateMonospaceLabel(bg_map_base_label), row++, 1);
-    grid->addWidget(new QLabel(tr("8BPP:")), row, 0);
-    grid->addWidget(CreateCheckBox(bg_8bpp_check_box), row++, 1);
-    grid->addWidget(new QLabel(tr("Wraparound:")), row, 0);
-    grid->addWidget(CreateCheckBox(bg_wraparound_check_box), row++, 1);
-    grid->addWidget(new QLabel(tr("Scroll:")), row, 0);
-    grid->addWidget(CreateMonospaceLabel(bg_scroll_label), row++, 1);
-    grid->setColumnStretch(1, 1);
-
-    const auto group_box = new QGroupBox{};
-    group_box->setLayout(grid);
-    group_box->setTitle(tr("Background"));
-    group_box->setMinimumWidth(220);
-
-    info_vbox->addWidget(group_box);
-  }
-
-  // Tile information
-  {
-    const auto grid = new QGridLayout{};
-
-    tile_box = new PaletteBox{8, 8};
-
-    int row = 0;
-    grid->addWidget(new QLabel(tr("Tile #:")), row, 0);
-    grid->addWidget(CreateMonospaceLabel(tile_number_label), row++, 1);
-    grid->addWidget(new QLabel(tr("Tile address:")), row, 0);
-    grid->addWidget(CreateMonospaceLabel(tile_address_label), row++, 1);
-    grid->addWidget(new QLabel(tr("Map entry address:")), row, 0);
-    grid->addWidget(CreateMonospaceLabel(tile_map_entry_address_label), row++, 1);
-    grid->addWidget(new QLabel(tr("Flip V:")), row, 0);
-    grid->addWidget(CreateCheckBox(tile_flip_v_check_box), row++, 1);
-    grid->addWidget(new QLabel(tr("Flip H:")), row, 0);
-    grid->addWidget(CreateCheckBox(tile_flip_h_check_box), row++, 1);
-    grid->addWidget(new QLabel(tr("Palette:")), row, 0);
-    grid->addWidget(CreateMonospaceLabel(tile_palette_label), row++, 1);
-    grid->addWidget(tile_box, row++, 0);
-    grid->addWidget(new QLabel(tr("R:")), row, 0);
-    grid->addWidget(CreateMonospaceLabel(tile_color_r_component_label), row++, 1);
-    grid->addWidget(new QLabel(tr("G:")), row, 0);
-    grid->addWidget(CreateMonospaceLabel(tile_color_g_component_label), row++, 1);
-    grid->addWidget(new QLabel(tr("B:")), row, 0);
-    grid->addWidget(CreateMonospaceLabel(tile_color_b_component_label), row++, 1);
-
-    const auto group_box = new QGroupBox{};
-    group_box->setLayout(grid);
-    group_box->setTitle(tr("Tile"));
-    group_box->setMinimumWidth(220);
-
-    info_vbox->addWidget(group_box);
+  setLayout(hbox);
   
-    connect(tile_box, &PaletteBox::selected, [this](int x, int y) {
-      const u32 color_rgb32 = tile_box->GetColorAt(x, y);
-      const int r = (color_rgb32 >> 18) & 62;
-      const int g = (color_rgb32 >> 10) & 63;
-      const int b = (color_rgb32 >>  2) & 62;
-
-      tile_color_r_component_label->setText(QStringLiteral("%1").arg(r));
-      tile_color_g_component_label->setText(QStringLiteral("%1").arg(g));
-      tile_color_b_component_label->setText(QStringLiteral("%1").arg(b)); 
-
-      tile_box->SetHighlightedPosition(x, y);
-    });
-  }
-
-  display_screen_viewport_check_box = new QCheckBox{tr("Display screen viewport")};
-  display_screen_viewport_check_box->setChecked(true);
-  info_vbox->addWidget(display_screen_viewport_check_box);
-
-  info_vbox->addStretch(1);
-  ((QHBoxLayout*)layout())->addLayout(info_vbox);
-
-  canvas = new QWidget{};
-  canvas->setFixedSize(256, 256);
-  canvas->installEventFilter(this);
-
-  const auto canvas_scroll_area = new QScrollArea{};
-  canvas_scroll_area->setWidget(canvas);
-  layout()->addWidget(canvas_scroll_area);
-
-  ((QHBoxLayout*)layout())->setStretch(1, 1);
+  hbox->addLayout(CreateInfoPanel());
+  hbox->addWidget(CreateCanvasScrollArea());
+  hbox->setStretch(1, 1);
 
   pram = (u16*)core->GetPRAM();
   vram = core->GetVRAM();
@@ -145,6 +37,122 @@ BackgroundViewer::BackgroundViewer(nba::CoreBase* core, QWidget* parent) : QWidg
 
 BackgroundViewer::~BackgroundViewer() {
   delete[] image_rgb565;
+}
+
+QWidget* BackgroundViewer::CreateBackgroundInfoGroupBox() {
+  QGridLayout* grid = new QGridLayout{};
+
+  QGroupBox* group_box = new QGroupBox{};
+  group_box->setTitle(tr("Background"));
+  group_box->setLayout(grid);
+
+  bg_mode_label = CreateMonospaceLabel();
+  bg_priority_label = CreateMonospaceLabel();
+  bg_size_label = CreateMonospaceLabel();
+  bg_tile_base_label = CreateMonospaceLabel();
+  bg_map_base_label = CreateMonospaceLabel();
+  bg_8bpp_check_box = CreateReadOnlyCheckBox();
+  bg_wraparound_check_box = CreateReadOnlyCheckBox();
+  bg_scroll_label = CreateMonospaceLabel();
+
+  int row = 0; 
+  grid->addWidget(new QLabel(tr("BG mode:")), row, 0);
+  grid->addWidget(bg_mode_label, row++, 1);
+  grid->addWidget(new QLabel(tr("BG priority:")), row, 0);
+  grid->addWidget(bg_priority_label, row++, 1);
+  grid->addWidget(new QLabel(tr("Size:")), row, 0);
+  grid->addWidget(bg_size_label, row++, 1);
+  grid->addWidget(new QLabel(tr("Tile base:")), row, 0);
+  grid->addWidget(bg_tile_base_label, row++, 1);
+  grid->addWidget(new QLabel(tr("Map base:")), row, 0);
+  grid->addWidget(bg_map_base_label, row++, 1);
+  grid->addWidget(new QLabel(tr("8BPP:")), row, 0);
+  grid->addWidget(bg_8bpp_check_box, row++, 1);
+  grid->addWidget(new QLabel(tr("Wraparound:")), row, 0);
+  grid->addWidget(bg_wraparound_check_box, row++, 1);
+  grid->addWidget(new QLabel(tr("Scroll:")), row, 0);
+  grid->addWidget(bg_scroll_label, row++, 1);
+  grid->setColumnStretch(1, 1);
+
+  return group_box;
+}
+
+QWidget* BackgroundViewer::CreateTileInfoGroupBox() {
+  QGridLayout* grid = new QGridLayout{};
+
+  QGroupBox* group_box = new QGroupBox{};
+  group_box->setTitle(tr("Tile"));
+  group_box->setLayout(grid);
+
+  tile_box = new PaletteBox{8, 8};
+
+  tile_number_label = CreateMonospaceLabel();
+  tile_address_label = CreateMonospaceLabel();
+  tile_map_entry_address_label = CreateMonospaceLabel();
+  tile_flip_v_check_box = CreateReadOnlyCheckBox();
+  tile_flip_h_check_box = CreateReadOnlyCheckBox();
+  tile_palette_label = CreateMonospaceLabel();
+  tile_color_r_component_label = CreateMonospaceLabel();
+  tile_color_g_component_label = CreateMonospaceLabel();
+  tile_color_b_component_label = CreateMonospaceLabel();
+
+  int row = 0;
+  grid->addWidget(new QLabel(tr("Tile #:")), row, 0);
+  grid->addWidget(tile_number_label, row++, 1);
+  grid->addWidget(new QLabel(tr("Tile address:")), row, 0);
+  grid->addWidget(tile_address_label, row++, 1);
+  grid->addWidget(new QLabel(tr("Map entry address:")), row, 0);
+  grid->addWidget(tile_map_entry_address_label, row++, 1);
+  grid->addWidget(new QLabel(tr("Flip V:")), row, 0);
+  grid->addWidget(tile_flip_v_check_box, row++, 1);
+  grid->addWidget(new QLabel(tr("Flip H:")), row, 0);
+  grid->addWidget(tile_flip_h_check_box, row++, 1);
+  grid->addWidget(new QLabel(tr("Palette:")), row, 0);
+  grid->addWidget(tile_palette_label, row++, 1);
+  grid->addWidget(tile_box, row++, 0);
+  grid->addWidget(new QLabel(tr("R:")), row, 0);
+  grid->addWidget(tile_color_r_component_label, row++, 1);
+  grid->addWidget(new QLabel(tr("G:")), row, 0);
+  grid->addWidget(tile_color_g_component_label, row++, 1);
+  grid->addWidget(new QLabel(tr("B:")), row, 0);
+  grid->addWidget(tile_color_b_component_label, row++, 1);
+
+  connect(tile_box, &PaletteBox::selected, [this](int x, int y) {
+    const u32 color_rgb32 = tile_box->GetColorAt(x, y);
+    const int r = (color_rgb32 >> 18) & 62;
+    const int g = (color_rgb32 >> 10) & 63;
+    const int b = (color_rgb32 >>  2) & 62;
+
+    tile_color_r_component_label->setText(QStringLiteral("%1").arg(r));
+    tile_color_g_component_label->setText(QStringLiteral("%1").arg(g));
+    tile_color_b_component_label->setText(QStringLiteral("%1").arg(b)); 
+
+    tile_box->SetHighlightedPosition(x, y);
+  });
+
+  return group_box;
+}
+
+QLayout* BackgroundViewer::CreateInfoPanel() {
+  QVBoxLayout* vbox = new QVBoxLayout{};
+
+  display_screen_viewport_check_box = new QCheckBox{tr("Display screen viewport")};
+  display_screen_viewport_check_box->setChecked(true);
+  
+  vbox->addWidget(CreateBackgroundInfoGroupBox());
+  vbox->addWidget(CreateTileInfoGroupBox());
+  vbox->addWidget(display_screen_viewport_check_box);
+  vbox->addStretch(1);
+  return vbox;
+}
+
+QWidget* BackgroundViewer::CreateCanvasScrollArea() {
+  QScrollArea* canvas_scroll_area = new QScrollArea{};
+  canvas = new QWidget{};
+  canvas->setFixedSize(256, 256);
+  canvas->installEventFilter(this);
+  canvas_scroll_area->setWidget(canvas);
+  return canvas_scroll_area;
 }
 
 void BackgroundViewer::SetBackgroundID(int id) {

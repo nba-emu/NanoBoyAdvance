@@ -2,6 +2,7 @@
 #pragma once
 
 #include <nba/integer.hpp>
+#include <QCheckBox>
 #include <QFontDatabase>
 #include <QLabel>
 
@@ -21,4 +22,10 @@ inline QLabel* CreateMonospaceLabel() {
   label->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
   label->setTextInteractionFlags(Qt::TextSelectableByMouse);
   return label;
+}
+
+inline QCheckBox* CreateReadOnlyCheckBox() {
+  QCheckBox* check_box = new QCheckBox{};
+  check_box->setEnabled(false);
+  return check_box;
 }

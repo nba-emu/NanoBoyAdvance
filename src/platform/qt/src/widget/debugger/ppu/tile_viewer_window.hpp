@@ -13,14 +13,15 @@
 
 #include "tile_viewer.hpp"
 
-struct TileViewerWindow : QDialog {
-  TileViewerWindow(nba::CoreBase* core, QWidget* parent = nullptr);
+class TileViewerWindow : public QDialog {
+  public:
+    TileViewerWindow(nba::CoreBase* core, QWidget* parent = nullptr);
 
-public slots:
-  void Update();
+  public slots:
+    void Update();
 
-private:
-  TileViewer* tile_viewer;
+  private:
+    TileViewer* tile_viewer;
 
-  Q_OBJECT
+    Q_OBJECT
 };

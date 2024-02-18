@@ -13,15 +13,16 @@
 
 #include "background_viewer.hpp"
 
-struct BackgroundViewerWindow : QDialog {
-  BackgroundViewerWindow(nba::CoreBase* core, QWidget* parent = nullptr);
+class BackgroundViewerWindow : public QDialog {
+  public:
+    BackgroundViewerWindow(nba::CoreBase* core, QWidget* parent = nullptr);
 
-public slots:
-  void Update();
+  public slots:
+    void Update();
 
-private:
-  QTabWidget* tab_widget;
-  BackgroundViewer* bg_viewers[4];
+  private:
+    QTabWidget* tab_widget;
+    BackgroundViewer* bg_viewers[4];
 
-  Q_OBJECT
+    Q_OBJECT
 };
