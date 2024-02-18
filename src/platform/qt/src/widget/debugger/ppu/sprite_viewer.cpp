@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 fleroviux
+ * Copyright (C) 2024 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -10,123 +10,119 @@
 #include <nba/common/punning.hpp>
 
 #include <QGridLayout>
-#include <QGroupBox>
 #include <QVBoxLayout>
 
 #include "widget/debugger/utility.hpp"
 #include "sprite_viewer.hpp"
 
-// --------------------------------------------------------------------
-
-static const auto _CreateMonospaceLabel = [](QLabel*& label) {
-  label = new QLabel{"-"};
-  label->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
-  label->setTextInteractionFlags(Qt::TextSelectableByMouse);
-  return label;
-};
-
-static const auto CreateCheckBox = [](QCheckBox*& check_box) {
-  check_box = new QCheckBox{};
-  check_box->setEnabled(false);
-  return check_box;
-};
-
-// --------------------------------------------------------------------
-
-
-SpriteViewer::SpriteViewer(nba::CoreBase* core, QWidget* parent) : QWidget{parent}, core{core} {
-  // TODO(fleroviux): do lots of cleanup.
-
-  pram = (u16 *) core->GetPRAM();
-  vram = core->GetVRAM();
-  oam = core->GetOAM();
-
+SpriteViewer::SpriteViewer(nba::CoreBase* core, QWidget* parent) : QWidget{parent}, m_core{core} {
   QHBoxLayout* hbox = new QHBoxLayout{};
 
-  {
-    QVBoxLayout* vbox = new QVBoxLayout{};
-
-    // OAM # and sprite magnification
-    {
-      sprite_index_input = new QSpinBox{};
-      sprite_index_input->setMinimum(0);
-      sprite_index_input->setMaximum(127);
-
-      magnification_input = new QSpinBox{};
-      magnification_input->setMinimum(1);
-      magnification_input->setMaximum(16);
-      connect(magnification_input, QOverload<int>::of(&QSpinBox::valueChanged), [this](int _) { Update(); });
-
-      const auto grid = new QGridLayout{};
-      int row = 0;
-      grid->addWidget(new QLabel(tr("OAM #:")), row, 0);
-      grid->addWidget(sprite_index_input, row++, 1);
-      grid->addWidget(new QLabel(tr("Magnification:")), row, 0);
-      grid->addWidget(magnification_input, row++, 1);
-      vbox->addLayout(grid);
-    }
-
-    // Sprite attributes
-    {
-      QGroupBox *box = new QGroupBox{};
-      box->setTitle("Object Attributes");
-      QGridLayout *grid = new QGridLayout{};
-      box->setMinimumWidth(235);
-
-      int row = 0;
-
-      const auto PushRow = [&](const QString &label, QWidget *widget) {
-        grid->addWidget(new QLabel{QStringLiteral("%1:").arg(label)}, row, 0);
-        grid->addWidget(widget, row++, 1);
-      };
-
-      PushRow("Enabled", CreateCheckBox(check_sprite_enabled));
-      PushRow("Position", _CreateMonospaceLabel(label_sprite_position));
-      PushRow("Size", _CreateMonospaceLabel(label_sprite_size));
-      PushRow("Tile #", _CreateMonospaceLabel(label_sprite_tile_number));
-      PushRow("Palette", _CreateMonospaceLabel(label_sprite_palette));
-      PushRow("8BPP", CreateCheckBox(check_sprite_8bpp));
-      PushRow("Flip V", CreateCheckBox(check_sprite_vflip));
-      PushRow("Flip H", CreateCheckBox(check_sprite_hflip));
-      PushRow("Mode", _CreateMonospaceLabel(label_sprite_mode));
-      PushRow("Affine", CreateCheckBox(check_sprite_affine));
-      PushRow("Transform #", _CreateMonospaceLabel(label_sprite_transform));
-      PushRow("Double-size", CreateCheckBox(check_sprite_double_size));
-      PushRow("Mosaic", CreateCheckBox(check_sprite_mosaic));
-      PushRow("Render cycles", _CreateMonospaceLabel(label_sprite_render_cycles));
-
-      box->setLayout(grid);
-      vbox->addWidget(box);
-    }
-
-    vbox->addStretch();
-    hbox->addLayout(vbox);
-  }
-
-  {
-    QVBoxLayout* vbox = new QVBoxLayout{};
-
-    canvas = new QWidget{};
-    canvas->setFixedSize(64, 64);
-    canvas->setFixedSize(64, 64);
-    canvas->installEventFilter(this);
-    vbox->addWidget(canvas);
-    vbox->addStretch(1);
-
-    hbox->addLayout(vbox);
-  }
-
+  hbox->addLayout(CreateInfoLayout());
+  hbox->addLayout(CreateCanvasLayout());
   hbox->addStretch(1);
-
   setLayout(hbox);
+
+  m_pram = (u16*)core->GetPRAM();
+  m_vram = core->GetVRAM();
+  m_oam  = core->GetOAM();
+}
+
+QWidget* SpriteViewer::CreateSpriteIndexInput() {
+  m_spin_sprite_index = new QSpinBox{};
+  m_spin_sprite_index->setMinimum(0);
+  m_spin_sprite_index->setMaximum(127);
+  return m_spin_sprite_index;
+}
+
+QWidget* SpriteViewer::CreateMagnificationInput() {
+  m_spin_magnification = new QSpinBox{};
+  m_spin_magnification->setMinimum(1);
+  m_spin_magnification->setMaximum(16);
+  connect(m_spin_magnification, QOverload<int>::of(&QSpinBox::valueChanged), [this](int _) { Update(); });
+  return m_spin_magnification;
+}
+
+QGroupBox* SpriteViewer::CreateSpriteAttributesGroupBox() {
+  QGridLayout* grid = new QGridLayout{};
+
+  QGroupBox* group_box = new QGroupBox{};
+  group_box->setTitle("Object Attributes");
+  group_box->setLayout(grid);
+  
+  m_check_sprite_enabled = CreateReadOnlyCheckBox();
+  m_label_sprite_position = CreateMonospaceLabel();
+  m_label_sprite_size = CreateMonospaceLabel();
+  m_label_sprite_tile_number = CreateMonospaceLabel();
+  m_label_sprite_palette = CreateMonospaceLabel();
+  m_check_sprite_8bpp = CreateReadOnlyCheckBox();
+  m_check_sprite_vflip = CreateReadOnlyCheckBox();
+  m_check_sprite_hflip = CreateReadOnlyCheckBox();
+  m_label_sprite_mode = CreateMonospaceLabel();
+  m_check_sprite_affine = CreateReadOnlyCheckBox();
+  m_label_sprite_transform = CreateMonospaceLabel();
+  m_check_sprite_double_size = CreateReadOnlyCheckBox();
+  m_check_sprite_mosaic = CreateReadOnlyCheckBox();
+  m_label_sprite_render_cycles = CreateMonospaceLabel();
+
+  int row = 0;
+
+  const auto PushRow = [&](const QString &label, QWidget *widget) {
+    grid->addWidget(new QLabel{QStringLiteral("%1:").arg(label)}, row, 0);
+    grid->addWidget(widget, row++, 1);
+  };
+
+  PushRow("Enabled", m_check_sprite_enabled);
+  PushRow("Position", m_label_sprite_position);
+  PushRow("Size", m_label_sprite_size);
+  PushRow("Tile #", m_label_sprite_tile_number);
+  PushRow("Palette", m_label_sprite_palette);
+  PushRow("8BPP", m_check_sprite_8bpp);
+  PushRow("Flip V", m_check_sprite_vflip);
+  PushRow("Flip H", m_check_sprite_hflip);
+  PushRow("Mode", m_label_sprite_mode);
+  PushRow("Affine", m_check_sprite_affine);
+  PushRow("Transform #", m_label_sprite_transform);
+  PushRow("Double-size", m_check_sprite_double_size);
+  PushRow("Mosaic", m_check_sprite_mosaic);
+  PushRow("Render cycles", m_label_sprite_render_cycles);
+  return group_box;
+}
+
+QLayout* SpriteViewer::CreateInfoLayout() {
+  QVBoxLayout* vbox = new QVBoxLayout{};
+  QGridLayout* grid = new QGridLayout{};
+
+  int row = 0;
+  grid->addWidget(new QLabel(tr("OAM #:")), row, 0);
+  grid->addWidget(CreateSpriteIndexInput(), row++, 1);
+  grid->addWidget(new QLabel(tr("Magnification:")), row, 0);
+  grid->addWidget(CreateMagnificationInput(), row++, 1);
+
+  vbox->addLayout(grid);
+  vbox->addWidget(CreateSpriteAttributesGroupBox());
+  vbox->addStretch();
+  return vbox;
+}
+
+QLayout* SpriteViewer::CreateCanvasLayout() {
+  QVBoxLayout* vbox = new QVBoxLayout{};
+
+  m_canvas = new QWidget{};
+  m_canvas->setFixedSize(64, 64);
+  m_canvas->setFixedSize(64, 64);
+  m_canvas->installEventFilter(this);
+  vbox->addWidget(m_canvas);
+  vbox->addStretch(1);
+  return vbox;
 }
 
 void SpriteViewer::Update() {
-  const int offset = sprite_index_input->value() << 3;
+  const int offset = m_spin_sprite_index->value() << 3;
 
-  const u16 attr0 = nba::read<u16>(oam, offset);
-  const u16 attr1 = nba::read<u16>(oam, offset + 2);
-  const u16 attr2 = nba::read<u16>(oam, offset + 4);
+  const u16 attr0 = nba::read<u16>(m_oam, offset);
+  const u16 attr1 = nba::read<u16>(m_oam, offset + 2);
+  const u16 attr2 = nba::read<u16>(m_oam, offset + 4);
 
   const int shape = attr0 >> 14;
   const int size  = attr1 >> 14;
@@ -144,15 +140,15 @@ void SpriteViewer::Update() {
   const bool is_8bpp = attr0 & (1 << 13);
   const uint tile_number = attr2 & 0x3FFu;
 
-  const bool one_dimensional_mapping = core->PeekHalfIO(0x04000000) & (1 << 6);
+  const bool one_dimensional_mapping = m_core->PeekHalfIO(0x04000000) & (1 << 6);
 
   const int tiles_x = width >> 3;
   const int tiles_y = height >> 3;
 
-  u32* const buffer = (u32*)image_rgb32.bits();
+  u32* const buffer = (u32*)m_image_rgb32.bits();
 
   if(is_8bpp) {
-    const u16* palette = &pram[256];
+    const u16* palette = &m_pram[256];
 
     for(int tile_y = 0; tile_y < tiles_y; tile_y++) {
       for(int tile_x = 0; tile_x < tiles_x; tile_x++) {
@@ -169,7 +165,7 @@ void SpriteViewer::Update() {
         u32 tile_address = 0x10000u + (current_tile_number << 5);
 
         for(int y = 0; y < 8; y++) {
-          u64 tile_data = nba::read<u64>(vram, tile_address);
+          u64 tile_data = nba::read<u64>(m_vram, tile_address);
 
           u32* dst = &buffer[tile_y << 9 | y << 6 | tile_x << 3];
 
@@ -183,7 +179,7 @@ void SpriteViewer::Update() {
       }
     }
   } else {
-    const u16* palette = &pram[256 | attr2 >> 12 << 4];
+    const u16* palette = &m_pram[256 | attr2 >> 12 << 4];
 
     for(int tile_y = 0; tile_y < tiles_y; tile_y++) {
       for(int tile_x = 0; tile_x < tiles_x; tile_x++) {
@@ -200,7 +196,7 @@ void SpriteViewer::Update() {
         u32 tile_address = 0x10000u + (current_tile_number << 5);
 
         for(int y = 0; y < 8; y++) {
-          u32 tile_data = nba::read<u32>(vram, tile_address);
+          u32 tile_data = nba::read<u32>(m_vram, tile_address);
 
           u32* dst = &buffer[tile_y << 9 | y << 6 | tile_x << 3];
 
@@ -226,18 +222,18 @@ void SpriteViewer::Update() {
   const uint mode = (attr0 >> 10) & 3;
   const bool mosaic = attr0 & (1 << 12);
 
-  label_sprite_position->setText(QStringLiteral("%1, %2").arg(x).arg(y));
-  label_sprite_size->setText(QStringLiteral("%1, %2").arg(width).arg(height));
-  label_sprite_tile_number->setText(QStringLiteral("%1").arg(tile_number));
-  label_sprite_palette->setText(QStringLiteral("%1").arg(palette));
-  check_sprite_8bpp->setChecked(is_8bpp);
-  label_sprite_mode->setText(k_mode_names[mode]);
-  check_sprite_affine->setChecked(affine);
-  check_sprite_mosaic->setChecked(mosaic);
+  m_label_sprite_position->setText(QStringLiteral("%1, %2").arg(x).arg(y));
+  m_label_sprite_size->setText(QStringLiteral("%1, %2").arg(width).arg(height));
+  m_label_sprite_tile_number->setText(QStringLiteral("%1").arg(tile_number));
+  m_label_sprite_palette->setText(QStringLiteral("%1").arg(palette));
+  m_check_sprite_8bpp->setChecked(is_8bpp);
+  m_label_sprite_mode->setText(k_mode_names[mode]);
+  m_check_sprite_affine->setChecked(affine);
+  m_check_sprite_mosaic->setChecked(mosaic);
 
-  check_sprite_vflip->setEnabled(!affine);
-  check_sprite_hflip->setEnabled(!affine);
-  check_sprite_double_size->setEnabled(affine);
+  m_check_sprite_vflip->setEnabled(!affine);
+  m_check_sprite_hflip->setEnabled(!affine);
+  m_check_sprite_double_size->setEnabled(affine);
 
   const int signed_x = x >= 240 ? ((int)x - 512) : (int)x;
 
@@ -247,12 +243,12 @@ void SpriteViewer::Update() {
     const bool double_size = attr0 & (1 << 9);
     const uint transform = (attr1 >> 9) & 31u;
 
-    check_sprite_enabled->setChecked(true);
-    check_sprite_vflip->setChecked(false);
-    check_sprite_hflip->setChecked(false);
-    label_sprite_transform->setText(QStringLiteral("%1").arg(transform));
-    check_sprite_double_size->setChecked(double_size);
-    label_sprite_render_cycles->setText("0 (0%)");
+    m_check_sprite_enabled->setChecked(true);
+    m_check_sprite_vflip->setChecked(false);
+    m_check_sprite_hflip->setChecked(false);
+    m_label_sprite_transform->setText(QStringLiteral("%1").arg(transform));
+    m_check_sprite_double_size->setChecked(double_size);
+    m_label_sprite_render_cycles->setText("0 (0%)");
 
     const int clipped_draw_width = std::max(0, (double_size ? 2 * width : width) + std::min(signed_x, 0));
 
@@ -262,39 +258,39 @@ void SpriteViewer::Update() {
     const bool hflip = attr1 & (1 << 12);
     const bool vflip = attr1 & (1 << 13);
 
-    check_sprite_enabled->setChecked(enabled);
-    check_sprite_vflip->setChecked(vflip);
-    check_sprite_hflip->setChecked(hflip);
-    label_sprite_transform->setText("n/a");
-    check_sprite_double_size->setChecked(false);
-    label_sprite_render_cycles->setText("0 (0%)");
+    m_check_sprite_enabled->setChecked(enabled);
+    m_check_sprite_vflip->setChecked(vflip);
+    m_check_sprite_hflip->setChecked(hflip);
+    m_label_sprite_transform->setText("n/a");
+    m_check_sprite_double_size->setChecked(false);
+    m_label_sprite_render_cycles->setText("0 (0%)");
 
     if(enabled) {
       render_cycles = std::max(0, width + std::min(signed_x, 0));
     }
   }
 
-  const int available_render_cycles = (core->PeekHalfIO(0x04000000) & (1 << 5)) ? 964 : 1232;
+  const int available_render_cycles = (m_core->PeekHalfIO(0x04000000) & (1 << 5)) ? 964 : 1232;
 
-  label_sprite_render_cycles->setText(QString::fromStdString(fmt::format("{} ({:.2f} %)", render_cycles, 100.0f * (float)render_cycles / available_render_cycles)));
+  m_label_sprite_render_cycles->setText(QString::fromStdString(fmt::format("{} ({:.2f} %)", render_cycles, 100.0f * (float)render_cycles / available_render_cycles)));
 
-  sprite_width = width;
-  sprite_height = height;
+  m_sprite_width = width;
+  m_sprite_height = height;
 
-  const int magnification = magnification_input->value();
-  magnified_sprite_width = width * magnification;
-  magnified_sprite_height = height * magnification;
-  canvas->setFixedSize(magnified_sprite_width, magnified_sprite_height);
-  canvas->update();
+  const int magnification = m_spin_magnification->value();
+  m_magnified_sprite_width = width * magnification;
+  m_magnified_sprite_height = height * magnification;
+  m_canvas->setFixedSize(m_magnified_sprite_width, m_magnified_sprite_height);
+  m_canvas->update();
 }
 
 bool SpriteViewer::eventFilter(QObject* object, QEvent* event) {
-  if(object == canvas && event->type() == QEvent::Paint) {
-    const QRect src_rect{0, 0, sprite_width, sprite_height};
-    const QRect dst_rect{0, 0, magnified_sprite_width, magnified_sprite_height};
+  if(object == m_canvas && event->type() == QEvent::Paint) {
+    const QRect src_rect{0, 0, m_sprite_width, m_sprite_height};
+    const QRect dst_rect{0, 0, m_magnified_sprite_width, m_magnified_sprite_height};
 
-    QPainter painter{canvas};
-    painter.drawImage(dst_rect, image_rgb32, src_rect);
+    QPainter painter{m_canvas};
+    painter.drawImage(dst_rect, m_image_rgb32, src_rect);
     return true;
   }
 

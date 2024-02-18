@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 fleroviux
+ * Copyright (C) 2024 fleroviux
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -9,7 +9,7 @@
 
 #include <nba/core.hpp>
 #include <QCheckBox>
-#include <QFontDatabase>
+#include <QGroupBox>
 #include <QImage>
 #include <QLabel>
 #include <QPaintEvent>
@@ -17,43 +17,49 @@
 #include <QSpinBox>
 #include <QWidget>
 
-struct SpriteViewer : QWidget {
-  SpriteViewer(nba::CoreBase* core, QWidget* parent = nullptr);
+class SpriteViewer : public QWidget {
+  public:
+    SpriteViewer(nba::CoreBase* core, QWidget* parent = nullptr);
 
-  bool eventFilter(QObject* object, QEvent* event) override;
+    void Update();
+    bool eventFilter(QObject* object, QEvent* event) override;
 
-  void Update();
+  private:
+    QWidget* CreateSpriteIndexInput();
+    QWidget* CreateMagnificationInput();
+    QGroupBox* CreateSpriteAttributesGroupBox();
+    QLayout* CreateInfoLayout();
+    QLayout* CreateCanvasLayout();
 
-private:
-  nba::CoreBase* core;
-  u16* pram;
-  u8* vram;
-  u8* oam;
+    QImage m_image_rgb32{64, 64, QImage::Format_RGB32};
+    QSpinBox* m_spin_sprite_index;
+    QSpinBox* m_spin_magnification;
+    QWidget* m_canvas;
 
-  QImage image_rgb32{64, 64, QImage::Format_RGB32};
-  QSpinBox* sprite_index_input;
-  QSpinBox* magnification_input;
-  QWidget* canvas;
+    QCheckBox* m_check_sprite_enabled;
+    QLabel* m_label_sprite_position;
+    QLabel* m_label_sprite_size;
+    QLabel* m_label_sprite_tile_number;
+    QLabel* m_label_sprite_palette;
+    QCheckBox* m_check_sprite_8bpp;
+    QCheckBox* m_check_sprite_vflip;
+    QCheckBox* m_check_sprite_hflip;
+    QLabel* m_label_sprite_mode;
+    QCheckBox* m_check_sprite_affine;
+    QLabel* m_label_sprite_transform;
+    QCheckBox* m_check_sprite_double_size;
+    QCheckBox* m_check_sprite_mosaic;
+    QLabel* m_label_sprite_render_cycles;
 
-  QCheckBox* check_sprite_enabled;
-  QLabel* label_sprite_position;
-  QLabel* label_sprite_size;
-  QLabel* label_sprite_tile_number;
-  QLabel* label_sprite_palette;
-  QCheckBox* check_sprite_8bpp;
-  QCheckBox* check_sprite_vflip;
-  QCheckBox* check_sprite_hflip;
-  QLabel* label_sprite_mode;
-  QCheckBox* check_sprite_affine;
-  QLabel* label_sprite_transform;
-  QCheckBox* check_sprite_double_size;
-  QCheckBox* check_sprite_mosaic;
-  QLabel* label_sprite_render_cycles;
+    int m_sprite_width = 0;
+    int m_sprite_height = 0;
+    int m_magnified_sprite_width = 0;
+    int m_magnified_sprite_height = 0;
 
-  int sprite_width = 0;
-  int sprite_height = 0;
-  int magnified_sprite_width = 0;
-  int magnified_sprite_height = 0;
+    nba::CoreBase* m_core;
+    u16* m_pram;
+    u8* m_vram;
+    u8* m_oam;
 
-  Q_OBJECT
+    Q_OBJECT
 };

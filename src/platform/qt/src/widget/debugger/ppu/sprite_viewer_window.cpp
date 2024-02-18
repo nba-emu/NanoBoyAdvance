@@ -10,10 +10,10 @@
 #include "sprite_viewer_window.hpp"
 
 SpriteViewerWindow::SpriteViewerWindow(nba::CoreBase* core, QWidget* parent) : QDialog(parent) {
-  const auto vbox = new QVBoxLayout{};
+  QVBoxLayout* vbox = new QVBoxLayout{};
 
-  sprite_viewer = new SpriteViewer{core, nullptr};
-  vbox->addWidget(sprite_viewer);
+  m_sprite_viewer = new SpriteViewer{core, nullptr};
+  vbox->addWidget(m_sprite_viewer);
   setLayout(vbox);
 
   setWindowTitle(tr("Sprite Viewer"));
@@ -21,8 +21,7 @@ SpriteViewerWindow::SpriteViewerWindow(nba::CoreBase* core, QWidget* parent) : Q
 }
 
 void SpriteViewerWindow::Update() {
-  if(!isVisible()) {
-    return;
+  if(isVisible()) {
+    m_sprite_viewer->Update();
   }
-  sprite_viewer->Update();
 }

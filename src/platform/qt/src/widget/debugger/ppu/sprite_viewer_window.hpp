@@ -13,14 +13,15 @@
 
 #include "sprite_viewer.hpp"
 
-struct SpriteViewerWindow : QDialog {
-  SpriteViewerWindow(nba::CoreBase* core, QWidget* parent = nullptr);
+class SpriteViewerWindow : public QDialog {
+  public:
+    SpriteViewerWindow(nba::CoreBase* core, QWidget* parent = nullptr);
 
-public slots:
-  void Update();
+  public slots:
+    void Update();
 
-private:
-  SpriteViewer* sprite_viewer;
+  private:
+    SpriteViewer* m_sprite_viewer;
 
-  Q_OBJECT
+    Q_OBJECT
 };

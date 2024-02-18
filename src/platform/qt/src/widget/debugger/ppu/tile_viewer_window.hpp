@@ -21,7 +21,7 @@ class TileViewerWindow : public QDialog {
     void Update();
 
   private:
-    TileViewer* tile_viewer;
+    TileViewer* m_tile_viewer;
 
     Q_OBJECT
 };

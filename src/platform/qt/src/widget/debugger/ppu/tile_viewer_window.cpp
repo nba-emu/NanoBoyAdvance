@@ -10,10 +10,10 @@
 #include "tile_viewer_window.hpp"
 
 TileViewerWindow::TileViewerWindow(nba::CoreBase* core, QWidget* parent) : QDialog(parent) {
-  const auto vbox = new QVBoxLayout{};
+  QVBoxLayout* vbox = new QVBoxLayout{};
 
-  tile_viewer = new TileViewer{core, nullptr};
-  vbox->addWidget(tile_viewer);
+  m_tile_viewer = new TileViewer{core, nullptr};
+  vbox->addWidget(m_tile_viewer);
   setLayout(vbox);
 
   setWindowTitle(tr("Tile Viewer"));
@@ -21,8 +21,7 @@ TileViewerWindow::TileViewerWindow(nba::CoreBase* core, QWidget* parent) : QDial
 }
 
 void TileViewerWindow::Update() {
-  if(!isVisible()) {
-    return;
+  if(isVisible()) {
+    m_tile_viewer->Update();
   }
-  tile_viewer->Update();
 }

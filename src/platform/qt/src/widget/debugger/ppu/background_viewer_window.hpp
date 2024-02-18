@@ -21,8 +21,8 @@ class BackgroundViewerWindow : public QDialog {
     void Update();
 
   private:
-    QTabWidget* tab_widget;
-    BackgroundViewer* bg_viewers[4];
+    QTabWidget* m_tab_widget;
+    BackgroundViewer* m_bg_viewers[4];
 
     Q_OBJECT
 };
