@@ -9,27 +9,18 @@
 
 #include <nba/core.hpp>
 #include <QDialog>
-#include <QLabel>
 
-#include "color_grid.hpp"
+#include "palette_viewer.hpp"
 
-struct PaletteViewerWindow : QDialog {
-  PaletteViewerWindow(nba::CoreBase* core, QWidget* parent = nullptr);
+class PaletteViewerWindow : public QDialog {
+  public:
+    PaletteViewerWindow(nba::CoreBase* core, QWidget* parent = nullptr);
 
-public slots:
-  void Update();
+  public slots:
+    void Update();
 
-private:
-  void ShowColorInformation(int color_index);
+  private:
+    PaletteViewer* m_palette_viewer;
 
-  u16* pram;
-  ColorGrid* m_palette_color_grids[2];
-  QLabel* address_label;
-  QLabel* r_component_label;
-  QLabel* g_component_label;
-  QLabel* b_component_label;
-  QLabel* value_label;
-  QWidget* info_color;
-
-  Q_OBJECT
+    Q_OBJECT
 };

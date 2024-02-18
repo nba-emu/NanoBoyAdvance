@@ -68,7 +68,7 @@ QWidget* TileViewer::CreatePaletteInput() {
   m_spin_palette_index = new QSpinBox{};
   m_spin_palette_index->setMinimum(0);
   m_spin_palette_index->setMaximum(15);
-  return m_spin_magnification;
+  return m_spin_palette_index;
 }
 
 QWidget* TileViewer::CreateTileBaseGroupBox() {
