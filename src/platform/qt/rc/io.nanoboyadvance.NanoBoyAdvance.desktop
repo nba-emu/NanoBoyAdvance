@@ -3,7 +3,7 @@
 Type=Application
 Name=NanoBoyAdvance
 Comment=A cycle-accurate Nintendo Game Boy Advance emulator
-Icon=io.github.nba_emuNanoBoyAdvance
+Icon=io.nanoboyadvance.NanoBoyAdvance
 TryExec=NanoBoyAdvance
 Exec=NanoBoyAdvance %f
 MimeType=application/x-gameboy-advance-rom;pplication/x-agb-rom;application/x-gba-rom;
