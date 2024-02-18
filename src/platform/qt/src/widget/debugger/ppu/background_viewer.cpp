@@ -459,7 +459,7 @@ void BackgroundViewer::PresentBackground() {
   if(m_check_display_screen_viewport->isEnabled() && m_check_display_screen_viewport->isChecked()) {
     painter.setPen(Qt::red);
 
-    const int x_min = m_bg_id % width;
+    const int x_min = m_bghofs % width;
     const int x_max = (x_min + 239) % width;
 
     const int y_min = m_bgvofs % height;
