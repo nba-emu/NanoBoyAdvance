@@ -23,6 +23,7 @@ jobs:
             -DPLATFORM_QT_STATIC=ON \
             -DUSE_STATIC_SDL=ON \
             -DGLEW_USE_STATIC_LIBS=ON \
+            -DRELEASE_BUILD=ON \
             -DQT5_STATIC_DIR="/c/tools/msys64/mingw64/qt5-static"
           cd build
           make -j$NUMBER_OF_PROCESSORS
@@ -47,7 +48,7 @@ jobs:
           sudo apt-get install -y libsdl2-dev libglew-dev qtbase5-dev
       - name: Build NanoBoyAdvance
         run: |
-          cmake -Bbuild -DCMAKE_BUILD_TYPE=Release
+          cmake -Bbuild -DCMAKE_BUILD_TYPE=Release -DRELEASE_BUILD=ON
           cd build
           make -j$(nproc)
       - name: Collect artifacts
@@ -76,6 +77,7 @@ jobs:
             -DUSE_STATIC_SDL=ON \
             -DGLEW_USE_STATIC_LIBS=ON \
             -DCMAKE_BUILD_TYPE=Release \
+            -DRELEASE_BUILD=ON \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5);$(brew --prefix glew)" \
             -DMACOS_BUILD_APP_BUNDLE=ON \
             -DMACOS_BUNDLE_QT=ON
