@@ -86,13 +86,10 @@ struct QtConfig final : nba::PlatformConfig {
   }
 
   void Save() {
-    auto config_dir = fs::path(config_path).parent_path();
-    if (!fs::exists(config_dir)) {
-        try {
-            fs::create_directories(config_dir);
-        } catch (const std::exception& ex) {
-            qDebug() << "HHH";
-        }
+    const auto config_directory = fs::path(config_path).parent_path();
+
+    if(!config_directory.empty() && !fs::exists(config_directory)) {
+      fs::create_directories(config_directory);
     }
 
     nba::PlatformConfig::Save(config_path);
