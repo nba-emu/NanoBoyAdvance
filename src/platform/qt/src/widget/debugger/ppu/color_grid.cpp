@@ -10,49 +10,49 @@
 #include <QPainter>
 
 #include "widget/debugger/utility.hpp"
-#include "palette_box.hpp"
+#include "color_grid.hpp"
 
-PaletteBox::PaletteBox(int rows, int columns, QWidget* parent)
+ColorGrid::ColorGrid(int rows, int columns, QWidget* parent)
     : QWidget(parent)
     , m_rows(rows)
     , m_columns(columns) {
-  m_palette_argb8888 = new u32[rows * columns];
-  std::memset(m_palette_argb8888, 0, rows * columns * sizeof(u32));
+  m_buffer_argb8888 = new u32[rows * columns];
+  std::memset(m_buffer_argb8888, 0, rows * columns * sizeof(u32));
 
   setFixedSize(columns * k_box_size, rows * k_box_size);
 }
 
-PaletteBox::~PaletteBox() {
-  delete[] m_palette_argb8888;
+ColorGrid::~ColorGrid() {
+  delete[] m_buffer_argb8888;
 }
 
-void PaletteBox::Draw(u16* palette_rgb565, int stride) {
+void ColorGrid::Draw(u16* buffer_rgb565, int stride) {
   int i = 0;
 
   for(int y = 0; y < m_rows; y++) {
     for(int x = 0; x < m_columns; x++) {
-      m_palette_argb8888[i++] = Rgb565ToArgb8888(palette_rgb565[y * stride + x]);
+      m_buffer_argb8888[i++] = Rgb565ToArgb8888(buffer_rgb565[y * stride + x]);
     }
   }
 
   update();
 }
 
-void PaletteBox::SetHighlightedPosition(int x, int y) {
+void ColorGrid::SetHighlightedPosition(int x, int y) {
   m_highlighted_x = std::min(m_columns, x);
   m_highlighted_y = std::min(m_rows, y);
   update();
 }
 
-void PaletteBox::ClearHighlight() {
+void ColorGrid::ClearHighlight() {
   SetHighlightedPosition(-1, -1);
 }
 
-u32 PaletteBox::GetColorAt(int x, int y) {
-  return m_palette_argb8888[y * m_columns + x];
+u32 ColorGrid::GetColorAt(int x, int y) {
+  return m_buffer_argb8888[y * m_columns + x];
 }
 
-void PaletteBox::paintEvent(QPaintEvent* event) {
+void ColorGrid::paintEvent(QPaintEvent* event) {
   QPainter painter{this};
 
   painter.setPen(Qt::gray);
@@ -61,7 +61,7 @@ void PaletteBox::paintEvent(QPaintEvent* event) {
 
   for(int y = 0; y < m_rows; y++) {
     for(int x = 0; x < m_columns; x++) {
-      painter.setBrush(QBrush{m_palette_argb8888[i++]});
+      painter.setBrush(QBrush{m_buffer_argb8888[i++]});
       painter.drawRect(x * k_box_size, y * k_box_size, k_box_size, k_box_size);
     }
   }
@@ -76,7 +76,7 @@ void PaletteBox::paintEvent(QPaintEvent* event) {
   }
 }
 
-void PaletteBox::mousePressEvent(QMouseEvent* event) {
+void ColorGrid::mousePressEvent(QMouseEvent* event) {
   const int x = std::min((int)(event->x() / k_box_size), m_columns);
   const int y = std::min((int)(event->y() / k_box_size), m_rows);
 

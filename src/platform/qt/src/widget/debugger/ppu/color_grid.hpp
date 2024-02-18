@@ -12,12 +12,12 @@
 #include <QPaintEvent>
 #include <QWidget>
 
-class PaletteBox : public QWidget {
+class ColorGrid : public QWidget {
   public:
-    PaletteBox(int rows, int columns, QWidget* parent = nullptr);
-   ~PaletteBox() override; 
+    ColorGrid(int rows, int columns, QWidget* parent = nullptr);
+   ~ColorGrid() override; 
 
-    void Draw(u16* palette_rgb565, int stride);
+    void Draw(u16* buffer_rgb565, int stride);
     void SetHighlightedPosition(int x, int y);
     void ClearHighlight();
     u32  GetColorAt(int x, int y);
@@ -34,11 +34,10 @@ class PaletteBox : public QWidget {
 
     int m_rows;
     int m_columns;
-
     int m_highlighted_x = -1;
     int m_highlighted_y = -1;
 
-    u32* m_palette_argb8888;
+    u32* m_buffer_argb8888;
 
     Q_OBJECT
 };

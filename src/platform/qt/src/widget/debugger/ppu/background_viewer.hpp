@@ -13,7 +13,7 @@
 #include <QLabel>
 #include <QPainter>
 
-#include "palette_box.hpp"
+#include "color_grid.hpp"
 
 class BackgroundViewer : public QWidget {
   public:
@@ -63,7 +63,7 @@ class BackgroundViewer : public QWidget {
     QCheckBox* m_check_tile_flip_v;
     QCheckBox* m_check_tile_flip_h;
     QLabel* m_label_tile_palette;
-    PaletteBox* m_tile_box;
+    ColorGrid* m_tile_color_grid;
     QLabel* m_label_color_r_component;
     QLabel* m_label_color_g_component;
     QLabel* m_label_color_b_component;

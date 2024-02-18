@@ -15,7 +15,7 @@
 #include <QWidget>
 
 #include "widget/debugger/utility.hpp"
-#include "palette_box.hpp"
+#include "color_grid.hpp"
 
 class TileViewer : public QWidget {
   public:
@@ -44,7 +44,7 @@ class TileViewer : public QWidget {
     QCheckBox* m_check_eight_bpp;
     QLabel* m_label_tile_number;
     QLabel* m_label_tile_address;
-    PaletteBox* m_tile_box;
+    ColorGrid* m_tile_color_grid;
     QLabel* m_label_color_r_component;
     QLabel* m_label_color_g_component;
     QLabel* m_label_color_b_component;

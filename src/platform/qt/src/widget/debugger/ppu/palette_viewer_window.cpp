@@ -26,16 +26,16 @@ PaletteViewerWindow::PaletteViewerWindow(nba::CoreBase* core, QWidget* parent) :
     const auto group_box = new QGroupBox{};
     const auto group_box_layout = new QVBoxLayout{};
 
-    palette_boxes[box] = new PaletteBox{16, 16};
+    m_palette_color_grids[box] = new ColorGrid{16, 16};
 
-    connect(palette_boxes[box], &PaletteBox::selected, [=](int x, int y) {
-      palette_boxes[box]->SetHighlightedPosition(x, y);
-      palette_boxes[box ^ 1]->ClearHighlight();
+    connect(m_palette_color_grids[box], &ColorGrid::selected, [=](int x, int y) {
+      m_palette_color_grids[box]->SetHighlightedPosition(x, y);
+      m_palette_color_grids[box ^ 1]->ClearHighlight();
       ShowColorInformation(box << 8 | y << 4 | x);
     });
 
     group_box->setTitle(box == 0 ? tr("Background") : tr("Sprite"));
-    group_box_layout->addWidget(palette_boxes[box]);
+    group_box_layout->addWidget(m_palette_color_grids[box]);
     group_box->setLayout(group_box_layout);
 
     palettes_hbox->addWidget(group_box);
@@ -99,8 +99,8 @@ void PaletteViewerWindow::Update() {
     return;
   }
 
-  palette_boxes[0]->Draw(&pram[0], 16);
-  palette_boxes[1]->Draw(&pram[256], 16);
+  m_palette_color_grids[0]->Draw(&pram[0], 16);
+  m_palette_color_grids[1]->Draw(&pram[256], 16);
 }
 
 void PaletteViewerWindow::ShowColorInformation(int color_index) {

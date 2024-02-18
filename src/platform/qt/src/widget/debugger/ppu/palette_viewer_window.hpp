@@ -11,7 +11,7 @@
 #include <QDialog>
 #include <QLabel>
 
-#include "palette_box.hpp"
+#include "color_grid.hpp"
 
 struct PaletteViewerWindow : QDialog {
   PaletteViewerWindow(nba::CoreBase* core, QWidget* parent = nullptr);
@@ -23,7 +23,7 @@ private:
   void ShowColorInformation(int color_index);
 
   u16* pram;
-  PaletteBox* palette_boxes[2];
+  ColorGrid* m_palette_color_grids[2];
   QLabel* address_label;
   QLabel* r_component_label;
   QLabel* g_component_label;

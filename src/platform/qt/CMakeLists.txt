@@ -6,7 +6,7 @@ set(SOURCES
   src/widget/debugger/ppu/background_viewer.cpp
   src/widget/debugger/ppu/sprite_viewer.cpp
   src/widget/debugger/ppu/sprite_viewer_window.cpp
-  src/widget/debugger/ppu/palette_box.cpp
+  src/widget/debugger/ppu/color_grid.cpp
   src/widget/debugger/ppu/palette_viewer_window.cpp
   src/widget/debugger/ppu/tile_viewer.cpp
   src/widget/debugger/ppu/tile_viewer_window.cpp
@@ -21,7 +21,7 @@ set(SOURCES
 set(HEADERS
   src/widget/debugger/ppu/background_viewer_window.hpp
   src/widget/debugger/ppu/background_viewer.hpp
-  src/widget/debugger/ppu/palette_box.hpp
+  src/widget/debugger/ppu/color_grid.hpp
   src/widget/debugger/ppu/palette_viewer_window.hpp
   src/widget/debugger/ppu/sprite_viewer.hpp
   src/widget/debugger/ppu/sprite_viewer_window.hpp

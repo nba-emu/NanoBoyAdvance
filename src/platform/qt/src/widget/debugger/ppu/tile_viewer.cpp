@@ -110,8 +110,8 @@ QWidget* TileViewer::CreateTileInfoGroupBox() {
   grid_1->addWidget(m_label_tile_address, 1, 1);
   vbox->addLayout(grid_1);
 
-  m_tile_box = new PaletteBox{8, 8};
-  vbox->addWidget(m_tile_box);
+  m_tile_color_grid = new ColorGrid{8, 8};
+  vbox->addWidget(m_tile_color_grid);
 
   QGridLayout* grid_2 = new QGridLayout{};
   m_label_color_r_component = CreateMonospaceLabel();
@@ -125,8 +125,8 @@ QWidget* TileViewer::CreateTileInfoGroupBox() {
   grid_2->addWidget(m_label_color_b_component, 2, 1);
   vbox->addLayout(grid_2);
 
-  connect(m_tile_box, &PaletteBox::selected, [this](int x, int y) {
-    const u32 color_rgb32 = m_tile_box->GetColorAt(x, y);
+  connect(m_tile_color_grid, &ColorGrid::selected, [this](int x, int y) {
+    const u32 color_rgb32 = m_tile_color_grid->GetColorAt(x, y);
     const int r = (color_rgb32 >> 18) & 62;
     const int g = (color_rgb32 >> 10) & 63;
     const int b = (color_rgb32 >>  2) & 62;
@@ -135,7 +135,7 @@ QWidget* TileViewer::CreateTileInfoGroupBox() {
     m_label_color_g_component->setText(QStringLiteral("%1").arg(g));
     m_label_color_b_component->setText(QStringLiteral("%1").arg(b)); 
 
-    m_tile_box->SetHighlightedPosition(x, y);
+    m_tile_color_grid->SetHighlightedPosition(x, y);
   });
 
   return group_box;
@@ -193,7 +193,7 @@ void TileViewer::DrawTileDetail(int tile_x, int tile_y) {
     return;
   }
 
-  m_tile_box->Draw(&m_image_rgb565[(tile_y * 256 + tile_x) * 8], 256);
+  m_tile_color_grid->Draw(&m_image_rgb565[(tile_y * 256 + tile_x) * 8], 256);
 
   m_selected_tile_x = tile_x;
   m_selected_tile_y = tile_y;

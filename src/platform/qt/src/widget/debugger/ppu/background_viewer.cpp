@@ -84,7 +84,7 @@ QWidget* BackgroundViewer::CreateTileInfoGroupBox() {
   group_box->setTitle(tr("Tile"));
   group_box->setLayout(grid);
 
-  m_tile_box = new PaletteBox{8, 8};
+  m_tile_color_grid = new ColorGrid{8, 8};
 
   m_label_tile_number = CreateMonospaceLabel();
   m_label_tile_address = CreateMonospaceLabel();
@@ -109,7 +109,7 @@ QWidget* BackgroundViewer::CreateTileInfoGroupBox() {
   grid->addWidget(m_check_tile_flip_h, row++, 1);
   grid->addWidget(new QLabel(tr("Palette:")), row, 0);
   grid->addWidget(m_label_tile_palette, row++, 1);
-  grid->addWidget(m_tile_box, row++, 0);
+  grid->addWidget(m_tile_color_grid, row++, 0);
   grid->addWidget(new QLabel(tr("R:")), row, 0);
   grid->addWidget(m_label_color_r_component, row++, 1);
   grid->addWidget(new QLabel(tr("G:")), row, 0);
@@ -117,8 +117,8 @@ QWidget* BackgroundViewer::CreateTileInfoGroupBox() {
   grid->addWidget(new QLabel(tr("B:")), row, 0);
   grid->addWidget(m_label_color_b_component, row++, 1);
 
-  connect(m_tile_box, &PaletteBox::selected, [this](int x, int y) {
-    const u32 color_rgb32 = m_tile_box->GetColorAt(x, y);
+  connect(m_tile_color_grid, &ColorGrid::selected, [this](int x, int y) {
+    const u32 color_rgb32 = m_tile_color_grid->GetColorAt(x, y);
     const int r = (color_rgb32 >> 18) & 62;
     const int g = (color_rgb32 >> 10) & 63;
     const int b = (color_rgb32 >>  2) & 62;
@@ -127,7 +127,7 @@ QWidget* BackgroundViewer::CreateTileInfoGroupBox() {
     m_label_color_g_component->setText(QStringLiteral("%1").arg(g));
     m_label_color_b_component->setText(QStringLiteral("%1").arg(b)); 
 
-    m_tile_box->SetHighlightedPosition(x, y);
+    m_tile_color_grid->SetHighlightedPosition(x, y);
   });
 
   return group_box;
@@ -494,7 +494,7 @@ void BackgroundViewer::DrawTileDetail(int tile_x, int tile_y) {
     return;
   }
 
-  m_tile_box->Draw(&m_image_rgb565[(tile_y * 1024 + tile_x) * 8], 1024);
+  m_tile_color_grid->Draw(&m_image_rgb565[(tile_y * 1024 + tile_x) * 8], 1024);
 
   if(m_bg_mode <= 2) {
     auto& meta_data = m_tile_meta_data[tile_x][tile_y];
