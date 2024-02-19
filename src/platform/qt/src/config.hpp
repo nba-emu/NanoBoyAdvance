@@ -59,8 +59,8 @@ struct QtConfig final : nba::PlatformConfig {
       {Qt::Key_Left},
       {Qt::Key_Up},
       {Qt::Key_Down},
-      {Qt::Key_D},
-      {Qt::Key_F}
+      {Qt::Key_F},
+      {Qt::Key_D}
     };
 
     Map fast_forward = {Qt::Key_Space};

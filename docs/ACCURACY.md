@@ -3,23 +3,21 @@
 
 Comparison of NBA and other emulators on the [mGBA test suite](https://github.com/mgba-emu/suite) by endrift:
 
-Testname      | Test Count | NanoBoyAdvance 1.7 | mGBA 0.10.1 |    VBA-M 2.1.5 | Ares v135 | SkyEmu V2  |
+Testname      | Test Count | NanoBoyAdvance 1.8 | mGBA 0.10.3 |    VBA-M 2.1.9 | Ares v135 | SkyEmu V3  |
 --------------|------------|--------------------|-------------|----------------|-----------|------------|
 Memory        |       1552 |               1552 |        1552 |           1426 |      1552 |       1552 |
-IO read       |        130 |                130 |         120 |            100 |       130 |        125 |
+IO read       |        130 |                130 |         120 |            100 |       130 |        130 |
 Timing        |       2020 |               2020 |        1768 |           1024 |      1608 |       2020 |
-Timer         |        936 |                936 |         744 |            440 |       465 |        587 |
+Timer         |        936 |                936 |         744 |            440 |       465 |        706 |
 Timer IRQ     |         90 |                 90 |          70 |              8 |         0 |         90 |
 Shifter       |        140 |                140 |         140 |            132 |       140 |        140 |
 Carry         |         93 |                 93 |          93 |             93 |        93 |         93 |
 Multiply Long |         72 |                 52 |          52 |             52 |        52 |         52 |
 BIOS math     |        615 |                615 |         615 |            615 |       615 |        615 |
 DMA tests     |       1256 |               1256 |        1232 |           1068 |      1212 |       1256 |
-Misc Edge Case|     10[^1] |                  9 |           4 |              7 |         1 |          3 |
+Misc Edge Case|         10 |                  9 |           4 |              8 |         1 |          4 |
 Layer Toggle  |          1 |               pass |        fail |           pass |      fail |       pass |
 OAM Update    |          1 |               pass |        fail |           fail |      fail |       pass |
-
-[^1]: Real hardware passes 9/10 tests.
 
 Passing these tests does not necessarily translate to compatibility or *overall* accuracy.
 But they give a good indication of how truthful an emulator is to hardware in certain areas, such as timing and DMA.
@@ -46,4 +44,4 @@ Some of these issues are minor visual bugs, that do not affect gameplay, others 
 
 ## Known broken
 
-- currently none
+- Futari wa Precure - Ariennai! Yume no Sono wa Daimeikyuu: slight audio inaccuracies (see: https://github.com/nba-emu/NanoBoyAdvance/issues/325)

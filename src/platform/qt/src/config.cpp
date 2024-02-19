@@ -39,8 +39,8 @@ void QtConfig::LoadCustomData(toml::value const& data) {
           input.gba[5] = get_map(gba, "left");
           input.gba[6] = get_map(gba, "up");
           input.gba[7] = get_map(gba, "down");
-          input.gba[8] = get_map(gba, "l");
-          input.gba[9] = get_map(gba, "r");
+          input.gba[8] = get_map(gba, "r");
+          input.gba[9] = get_map(gba, "l");
         }
       }
     }
@@ -80,8 +80,8 @@ void QtConfig::SaveCustomData(
   data["input"]["gba"]["left"] = input.gba[5].Array();
   data["input"]["gba"]["up"] = input.gba[6].Array();
   data["input"]["gba"]["down"] = input.gba[7].Array();
-  data["input"]["gba"]["l"] = input.gba[8].Array();
-  data["input"]["gba"]["r"] = input.gba[9].Array();
+  data["input"]["gba"]["r"] = input.gba[8].Array();
+  data["input"]["gba"]["l"] = input.gba[9].Array();
 
   data["window"]["scale"] = window.scale;
   data["window"]["maximum_scale"] = window.maximum_scale;

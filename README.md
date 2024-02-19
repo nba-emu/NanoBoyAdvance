@@ -19,6 +19,7 @@ improved audio quality.<br>
 - Loading ROMs from archives (Zip, 7z, Tar and limited RAR[^1] support)
 - RTC emulation
 - Solar Sensor emulation (for example: for Boktai - The Sun is in Your Hand)
+- Debug tools: PPU palette, tile, background and sprite viewers
 
 [^1]: RAR 5.0 is currently not supported.
 
