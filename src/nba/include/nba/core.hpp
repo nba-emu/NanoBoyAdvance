@@ -28,8 +28,8 @@ enum class Key : u8 {
   Left = 5,
   Up = 6,
   Down = 7,
-  L = 8,
-  R = 9,
+  R = 8,
+  L = 9,
   Count = 10
 };
 
