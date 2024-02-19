@@ -1,13 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
 <component type="desktop">
-  <!--Created with jdAppStreamEdit 6.0-->
   <id>io.nanoboyadvance.NanoBoyAdvance</id>
   <name>NanoBoyAdvance</name>
   <summary>A cycle-accurate Nintendo Game Boy Advance emulator</summary>
   <developer_name>fleroviux</developer_name>
   <launchable type="desktop-id">io.nanoboyadvance.NanoBoyAdvance.desktop</launchable>
   <metadata_license>CC0-1.0</metadata_license>
-  <project_license>GPL-3.0</project_license>
+  <project_license>GPL-3.0+</project_license>
   <description>
     <p>NanoBoyAdvance is a cycle-accurate Game Boy Advance emulator.
 It aims to be as accurate as possible, while also offering enhancements such as improved audio quality.</p>
@@ -18,9 +17,10 @@ It aims to be as accurate as possible, while also offering enhancements such as 
       <li>Post-processing options (color correction, xBRZ upscaling and LCD ghosting simulation)</li>
       <li>Save State support (10x save slots available)</li>
       <li>Game controller support (buttons and axises can be remapped)</li>
-      <li>Loading ROMs from archives (Zip, 7z, Tar and limited RAR1 support)</li>
+      <li>Loading ROMs from archives (Zip, 7z, Tar and limited RAR support)</li>
       <li>RTC emulation</li>
       <li>Solar Sensor emulation (for example: for Boktai - The Sun is in Your Hand)</li>
+      <li>Debug tools: PPU palette, tile, background and sprite viewers</li>
     </ul>
     <p>Accuracy</p>
     <p>A lot of research and attention to detail has been put into developing this core and making it accurate.</p>
@@ -29,14 +29,64 @@ It aims to be as accurate as possible, while also offering enhancements such as 
       <li>Passes all AGS aging cartridge tests (NBA was the first public emulator to achieve this)</li>
       <li>Passes most tests in the mGBA test suite</li>
       <li>Passes ARMWrestler, gba-suite and FuzzARM CPU tests</li>
+      <li>Very high compatibility, including games that require emulation of peculiar hardware edge-cases</li>
     </ul>
   </description>
   <screenshots>
     <screenshot type="default">
-      <image type="source">https://github.com/nba-emu/NanoBoyAdvance/raw/v1.7/docs/screenshot.png</image>
+      <image type="source">https://raw.githubusercontent.com/nba-emu/NanoBoyAdvance/master/docs/screenshot.png</image>
     </screenshot>
   </screenshots>
   <releases>
+    <release version="1.8.0" date="2024-02-18" tyle="stable">
+      <url>https://github.com/nba-emu/NanoBoyAdvance/releases/tag/v1.8.0</url>
+      <description>
+        <ul>
+          <li>UI: implement "Sharp" video filter for better nearest interpolation at non-integer scales (thanks GranMinigun)</li>
+          <li>UI: implemented PPU viewers for palettes, tiles, backgrounds and sprites</li>
+          <li>UI: add an option to set the audio volume</li>
+          <li>UI: add an option to set the audio volume</li>
+          <li>Input: fix input dropping regression introduced in NBA 1.7.1</li>
+          <li>Input: move from SDL game controller to SDL joystick API (fixes broken mapping on some controllers)</li>
+          <li>APU: MP2K HLE: interpolate envelopes and use floating-point math</li>
+          <li>APU: MP2K HLE: implement a better reverb algorithm</li>
+          <li>APU: MP2K HLE: add an option to force-enable reverb</li>
+          <li>APU: remove "Zombie" mode emulation (does not appear to exist on GBA)</li>
+          <li>APU: fix mid-note envelope frequency changes</li>
+          <li>APU: FIFO writes should happen in place</li>
+          <li>APU: reset FIFOs on overflow</li>
+          <li>APU: add master-enable checks for 16-bit/32-bit IO writes</li>
+          <li>PPU: fix sprite pixels from previous scanline displayed in the last scanline</li>
+          <li>PPU: more accurate update of attribute buffer for OBJWIN sprites</li>
+          <li>PPU: more accurate emulation of horizontal and vertical sprite mosaic</li>
+          <li>PPU: more accurate handling of mid-frame vertical mosaic reconfiguration</li>
+          <li>PPU: fix out-of-bounds bitmap fetches in Mode 3 to 5</li>
+          <li>DMA: fix incorrect mapping of DMA channel to APU FIFO</li>
+          <li>Timer: somewhat handle timer overflow during one cycle enable delay (thanks alyosha)</li>
+          <li>Game Pak: simulate ~6 ms EEPROM device busy period after write (not yet accurate to cartridges that e.g. have been in the freezer for 30 minutes)</li>
+          <li>Game Pak: emulate the Mask ROM internal address register</li>
+          <li>Audio: fix clicking artifacts when using Sinc resampling</li>
+          <li>Audio: fix incorrect liner interpolation in Cosine resampling</li>
+          <li>PlatformCore: fixed hang when fast-forwarding while the emulator is paused</li>
+          <li>Misc: implemented support for unicode paths</li>
+        </ul>
+      </description>
+    </release>
+    <release version="1.7.1" date="2023-05-15" type="stable">
+      <url>https://github.com/nba-emu/NanoBoyAdvance/releases/tag/v1.7.1</url>
+      <description>
+        <ul>
+          <li>PPU: disallow out-of-bounds BG VRAM tile fetches and return open bus</li>
+          <li>Core: do not skip to the next event if the CPU woke up during a DMA</li>
+          <li>KeyPad: always request IRQs from the emulator (not the calling) thread</li>
+          <li>GameDB: fix entries for a bunch of Classic NES and Famicom Mini titles</li>
+          <li>IO: do not enter STOP mode when it is not implemented</li>
+          <li>mGBA log: clear the message buffer after printing the message</li>
+          <li>mGBA log: flush STDOUT after each message</li>
+          <li>Catch fmt::system_error when fmt::print() fails to write to STDOUT</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.7" date="2023-03-26" type="stable">
       <url>https://github.com/nba-emu/NanoBoyAdvance/releases/tag/v1.7</url>
       <description>
@@ -104,7 +154,7 @@ It aims to be as accurate as possible, while also offering enhancements such as 
   <provides>
     <binary>NanoBoyAdvance</binary>
     <mediatype>application/x-gameboy-advance-rom</mediatype>
-    <mediatype>pplication/x-agb-rom</mediatype>
+    <mediatype>application/x-agb-rom</mediatype>
     <mediatype>application/x-gba-rom</mediatype>
   </provides>
   <keywords>
