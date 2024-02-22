@@ -47,8 +47,6 @@ OGLVideoDevice::~OGLVideoDevice() {
 }
 
 void OGLVideoDevice::Initialize() {
-  glewInit();
-
   // Create a fullscreen quad to render to the viewport.
   glGenVertexArrays(1, &quad_vao);
   glGenBuffers(1, &quad_vbo);
