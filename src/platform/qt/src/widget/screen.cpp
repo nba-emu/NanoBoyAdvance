@@ -5,9 +5,10 @@
  * Refer to the included LICENSE file.
  */
 
-#include <GL/glew.h>
-
 #include "widget/screen.hpp"
+
+#include <glad/gl.h>
+#include <QOpenGLContext> // Has to go after glad.
 
 Screen::Screen(
   QWidget* parent,
@@ -93,8 +94,12 @@ void Screen::UpdateViewport() {
   ogl_video_device.SetViewport(viewport_x, viewport_y, viewport_width, viewport_height);
 }
 
+static auto get_proc_address(const char* proc_name) {
+  return QOpenGLContext::currentContext()->getProcAddress(proc_name);
+}
+
 void Screen::initializeGL() {
-  makeCurrent();
+  gladLoadGL(get_proc_address);
   ogl_video_device.Initialize();
 }
 

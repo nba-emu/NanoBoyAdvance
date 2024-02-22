@@ -15,12 +15,21 @@ else()
 endif()
 
 find_package(OpenGL REQUIRED)
-find_package(GLEW REQUIRED)
+
+include(FetchContent)
+FetchContent_Declare(glad
+  GIT_REPOSITORY https://github.com/Dav1dde/glad.git
+  GIT_TAG        adc3d7a1d704e099581ca25bc5bbdf728c2db67b # v2.0.5-2-gadc3d7a
+  SOURCE_SUBDIR  cmake
+)
+FetchContent_MakeAvailable(glad)
+glad_add_library(glad_gl_core_33 STATIC
+  LANGUAGE c REPRODUCIBLE API gl:core=3.3 EXTENSIONS NONE
+)
 
 if(USE_SYSTEM_TOML11)
   find_package(toml11 3.7 REQUIRED)
 else()
-  include(FetchContent)
   FetchContent_Declare(toml11
     GIT_REPOSITORY https://github.com/ToruNiina/toml11.git
     GIT_TAG        dcfe39a783a94e8d52c885e5883a6fbb21529019 # v3.7.1
@@ -37,7 +46,6 @@ else()
   set(USE_SYSTEM_ZLIB OFF CACHE BOOL "" FORCE)
   set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
-  include(FetchContent)
   FetchContent_Declare(unarr
     GIT_REPOSITORY https://github.com/selmf/unarr.git
     GIT_TAG        b211040df83dee513362cdeb9bd87afa26fd5e38 # v1.1.1
@@ -104,5 +112,5 @@ endif()
 
 target_link_libraries(platform-core
   PRIVATE unarr::unarr
-  PUBLIC nba toml11::toml11 OpenGL::GL GLEW::GLEW
+  PUBLIC nba toml11::toml11 OpenGL::GL glad_gl_core_33
 )
