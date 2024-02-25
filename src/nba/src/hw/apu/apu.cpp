@@ -146,7 +146,7 @@ void APU::StepMixer() {
       if(psg.enable[channel][2]) psg_sample += mmio.psg3.GetSample();
       if(psg.enable[channel][3]) psg_sample += mmio.psg4.GetSample();
 
-      sample[channel] += psg_sample * psg_volume * psg.master[channel] / (28.0 * 0x200);
+      sample[channel] += psg_sample * psg_volume * (psg.master[channel] + 1) / (32.0 * 0x200);
 
       /* TODO: we assume that MP2K sends right channel to FIFO A and left channel to FIFO B,
        * but we haven't verified that this is actually correct.
@@ -183,7 +183,7 @@ void APU::StepMixer() {
       if(psg.enable[channel][2]) psg_sample += mmio.psg3.GetSample();
       if(psg.enable[channel][3]) psg_sample += mmio.psg4.GetSample();
 
-      sample[channel] += psg_sample * psg_volume * psg.master[channel] / 28;
+      sample[channel] += psg_sample * psg_volume * (psg.master[channel] + 1) >> 5;
 
       for(int fifo = 0; fifo < 2; fifo++) {
         if(dma[fifo].enable[channel]) {
