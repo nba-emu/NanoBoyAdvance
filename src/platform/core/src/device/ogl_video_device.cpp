@@ -62,8 +62,7 @@ void OGLVideoDevice::Initialize() {
   glGenFramebuffers(1, &fbo);
   glGenTextures(textures.size(), textures.data());
 
-  glClearColor(0, 0, 0, 1);
-  glClear(GL_COLOR_BUFFER_BIT);
+  glClearColor(0.0, 0.0, 0.0, 1.0);
 
   ReloadConfig();
 }
@@ -352,14 +351,16 @@ void OGLVideoDevice::Draw(u32* buffer) {
       copy_area_y      = view_y;
       copy_area_width  = view_width;
       copy_area_height = view_height;
+      glBindFramebuffer(GL_READ_FRAMEBUFFER, default_fbo);
+      glReadBuffer(GL_BACK);
     } else {
       glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
       glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textures[output_index], 0);
+      glReadBuffer(GL_COLOR_ATTACHMENT0);
     }
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textures[history_index]);
-    glReadBuffer(GL_COLOR_ATTACHMENT0);
     glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, copy_area_x, copy_area_y, copy_area_width, copy_area_height);
   }
 }

@@ -20,6 +20,7 @@
 #include <QKeyEvent>
 #include <QLocale>
 #include <QStatusBar>
+#include <QWindow>
 #include <unordered_map>
 
 #include "widget/main_window.hpp"
@@ -40,10 +41,12 @@ MainWindow::MainWindow(
   setWindowTitle(base_window_title);
   setAcceptDrops(true);
 
+  config->Load();
+
   screen = std::make_shared<Screen>(this, config);
   setCentralWidget(screen.get());
-
-  config->Load();
+  screen->windowHandle()->create();
+  screen->Initialize();
 
   auto menu_bar = new QMenuBar(this);
   setMenuBar(menu_bar);
@@ -694,10 +697,6 @@ void MainWindow::ApplyPauseState() {
   const bool window_inactive_and_should_pause = !isActiveWindow() && config->window.pause_emulator_when_inactive;
   const bool paused = pause_action->isChecked() || window_inactive_and_should_pause;
 
-  if(!paused) {
-    screen->SetForceClear(false);
-  }
-
   emu_thread->SetPause(paused);
   config->audio_dev->SetPause(paused);
 }
@@ -706,7 +705,9 @@ void MainWindow::Stop() {
   if(emu_thread->IsRunning()) {
     core = emu_thread->Stop();
     config->audio_dev->Close();
-    screen->SetForceClear(true);
+
+    // Clear the screen.
+    screen->Draw(nullptr);
 
     // Clear the list of save state slots:
     game_loaded = false;
@@ -831,13 +832,6 @@ void MainWindow::LoadROM(std::u16string const& path) {
   // If the emulator is currently paused force-clear the screen.
   core->Reset();
   emu_thread->Start(std::move(core));
-
-  /**
-   * If the the emulator is paused we force-clear the screen to avoid 
-   * presenting the last frame from before pausing, since that could be confusing.
-   * In the other case we explicitly disable force-clear, because it is currently enabled (due to the call to Stop() at the top).
-   */
-  screen->SetForceClear(pause_action->isChecked());
 
   UpdateSolarSensorLevel();
   UpdateMenuBarVisibility();
