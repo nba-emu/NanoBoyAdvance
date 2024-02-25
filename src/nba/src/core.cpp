@@ -83,12 +83,12 @@ void Core::Run(int cycles) {
   while(scheduler.GetTimestampNow() < limit) {
     if(bus.hw.haltcnt == HaltControl::Run) {
       if(cpu.state.r15 == hle_audio_hook) {
-        // @todo: cache the SoundInfo pointer once we have it?
-        apu.GetMP2K().SoundMainRAM(
-          *bus.GetHostAddress<MP2K::SoundInfo>(
-            *bus.GetHostAddress<u32>(0x03007FF0)
-          )
-        );
+        const u32  sound_info_addr = *bus.GetHostAddress<u32>(0x03007FF0);
+        const auto sound_info = bus.GetHostAddress<MP2K::SoundInfo>(sound_info_addr);
+
+        if(sound_info != nullptr) {
+          apu.GetMP2K().SoundMainRAM(*sound_info);
+        }
       }
 
       cpu.Run();
