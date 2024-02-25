@@ -96,6 +96,45 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: NanoBoyAdvance-${{ runner.os }}
+          name: NanoBoyAdvance-${{ runner.os }}-x64
+          path: NanoBoyAdvance.dmg
+          if-no-files-found: error
+
+  build-macOS-arm:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup dependencies
+        env:
+          HOMEBREW_NO_ANALYTICS: 1
+        run: brew install sdl2 glew qt@5
+      - name: Build NanoBoyAdvance
+        run: |
+          cmake -Bbuild \
+            -DCMAKE_CXX_FLAGS="-s" \
+            -DUSE_STATIC_SDL=ON \
+            -DGLEW_USE_STATIC_LIBS=ON \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5);$(brew --prefix glew)" \
+            -DMACOS_BUILD_APP_BUNDLE=ON \
+            -DMACOS_BUNDLE_QT=ON
+          cd build
+          make -j$(getconf _NPROCESSORS_ONLN)
+      - name: Create disk image
+        run: |
+          mkdir dmg
+          cp -a build/bin/qt/NanoBoyAdvance.app dmg/NanoBoyAdvance.app
+          codesign -s - --deep -f dmg/NanoBoyAdvance.app
+          ln -s /Applications dmg/Applications
+          hdiutil create \
+            -fs HFS+ \
+            -volname NanoBoyAdvance \
+            -srcfolder dmg \
+            -ov -format UDBZ \
+            NanoBoyAdvance.dmg
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: NanoBoyAdvance-${{ runner.os }}-arm64
           path: NanoBoyAdvance.dmg
           if-no-files-found: error
