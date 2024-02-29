@@ -49,6 +49,7 @@ private slots:
 
 protected:
   bool eventFilter(QObject* obj, QEvent* event) override;
+  void changeEvent(QEvent* event) override;
   void dragEnterEvent(QDragEnterEvent* event) override;
   void mouseDoubleClickEvent(QMouseEvent* event) override;
 
@@ -114,6 +115,7 @@ private:
 
   void Reset();
   void SetPause(bool paused);
+  void ApplyPauseState();
   void Stop();
   void UpdateMenuBarVisibility();
   void UpdateMainWindowActionList();

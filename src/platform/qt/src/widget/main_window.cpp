@@ -366,6 +366,7 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
   menu->addSeparator();
 
   CreateBooleanOption(menu, "Show FPS", &config->window.show_fps);
+  CreateBooleanOption(menu, "Pause emulator when inactive", &config->window.pause_emulator_when_inactive);
 }
 
 void MainWindow::CreateConfigMenu() {
@@ -613,7 +614,7 @@ void MainWindow::PromptUserForReset() {
 }
 
 bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
-  auto type = event->type();
+  const auto type = event->type();
 
   if(obj == this && (type == QEvent::KeyPress || type == QEvent::KeyRelease)) {
     auto key = dynamic_cast<QKeyEvent*>(event)->key();
@@ -633,7 +634,7 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
     if(pressed && key == Qt::Key_Escape) {
       SetFullscreen(false);
     }
-  } else if(type == QEvent::FileOpen) {
+  } if(type == QEvent::FileOpen) {
 	  auto file = dynamic_cast<QFileOpenEvent*>(event)->file();
     LoadROM(file.toStdU16String());
   } else if(type == QEvent::Drop) {
@@ -649,6 +650,12 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
   }
 
   return QObject::eventFilter(obj, event);
+}
+
+void MainWindow::changeEvent(QEvent* event) {
+  if(event->type() == QEvent::ActivationChange) {
+    ApplyPauseState();
+  }
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent* event) {
@@ -679,13 +686,20 @@ void MainWindow::Reset() {
 }
 
 void MainWindow::SetPause(bool paused) {
+  pause_action->setChecked(paused);
+  ApplyPauseState();
+}
+
+void MainWindow::ApplyPauseState() {
+  const bool window_inactive_and_should_pause = !isActiveWindow() && config->window.pause_emulator_when_inactive;
+  const bool paused = pause_action->isChecked() || window_inactive_and_should_pause;
+
   if(!paused) {
     screen->SetForceClear(false);
   }
 
   emu_thread->SetPause(paused);
   config->audio_dev->SetPause(paused);
-  pause_action->setChecked(paused);
 }
 
 void MainWindow::Stop() {
