@@ -63,6 +63,25 @@ int main(int argc, char** argv) {
   setenv("LC_NUMERIC", "C", 1);
 #endif
 
+#if defined(WIN32)
+  constexpr auto terminal_output = "CONOUT$";
+  constexpr auto null_output = "NUL:";
+
+  // Check whether we are already attached to an output stream.
+  const auto output_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+  if(!output_handle || (output_handle == INVALID_HANDLE_VALUE)) {
+    // If started from terminal, attach and output logs to it.
+    if(AttachConsole(ATTACH_PARENT_PROCESS)) {
+      if(!freopen(terminal_output, "a", stdout)) { assert(false); }
+      if(!freopen(terminal_output, "a", stderr)) { assert(false); }
+    } else {
+      // Otherwise, discard log output.
+      if(!freopen(null_output, "w", stdout)) { assert(false); }
+      if(!freopen(null_output, "w", stderr)) { assert(false); }
+    }
+  }
+#endif
+
   // On some systems (e.g. macOS) QSurfaceFormat::setDefaultFormat() must be called before constructing QApplication.
   auto format = QSurfaceFormat{};
   format.setProfile(QSurfaceFormat::CoreProfile);
