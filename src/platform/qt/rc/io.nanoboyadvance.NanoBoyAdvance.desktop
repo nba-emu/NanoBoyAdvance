@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
 Name=NanoBoyAdvance
-GenericName=Emulator
-Comment=A cycle-accurate Nintendo Game Boy Advance emulator
+GenericName=Game Boy Advance Emulator
+Comment=Cycle-accurate Nintendo Game Boy Advance emulator
 Icon=io.nanoboyadvance.NanoBoyAdvance
 TryExec=NanoBoyAdvance
 Exec=NanoBoyAdvance %f
