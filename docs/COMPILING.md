@@ -4,10 +4,10 @@ NanoBoyAdvance can be compiled on Windows, Linux, and macOS.
 
 - Clang or GCC with C++17 support
 - CMake 3.11 or higher
+- Python modules Jinja and (optionally) lxml
 - OpenGL (usually provided by the operating system)
-- SDL2 library
-- GLEW library
-- Qt5 library
+- SDL 2 library
+- Qt 5 library
 
 ### Source Code
 
@@ -28,13 +28,13 @@ Here is a list of commands for popular distributions and macOS:
 ##### Arch Linux
 
 ```bash
-pacman -S cmake sdl2 glew qt5-base
+pacman -S cmake python-jinja python-lxml sdl2 qt5-base
 ```
 
 ##### Ubuntu or other Debian-derived distribution
 
 ```bash
-apt install cmake libsdl2-dev libglew-dev qtbase5-dev libqt5opengl5-dev
+apt install cmake python3-jinja2 python3-lxml libsdl2-dev qtbase5-dev libqt5opengl5-dev
 ```
 
 ##### macOS
@@ -42,14 +42,15 @@ apt install cmake libsdl2-dev libglew-dev qtbase5-dev libqt5opengl5-dev
 Get [Brew](https://brew.sh/) and run:
 
 ``` bash
-brew install cmake sdl2 glew qt@5
+brew install cmake python@3 sdl2 qt@5
+python3 -m pip install Jinja2
 ```
 
 ##### FreeBSD
 
 ```bash
 su
-pkg install cmake git sdl2 glew qt5 qt5-opengl
+pkg install cmake git py39-Jinja2 py39-lxml sdl2 qt5 qt5-opengl
 ```
 
 #### 2. Setup CMake build directory
@@ -67,7 +68,7 @@ NOTE: the location and name of the `build` directory is arbitrary.
 
 ```
 cd /somewhere/on/your/system/NanoBoyAdvance
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5);$(brew --prefix glew)"
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5)"
 ```
 
 NOTE: the location and name of the `build` directory is arbitrary.
@@ -94,7 +95,7 @@ This guide uses [MSYS2](https://www.msys2.org/) to install Mingw-w64 and other d
 In your MSYS2 command line, run:
 
 ```bash
-pacman -S make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-SDL2 mingw-w64-x86_64-glew mingw-w64-x86_64-qt5-static
+pacman -S make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-python-jinja mingw-w64-x86_64-python-lxml mingw-w64-x86_64-SDL2 mingw-w64-x86_64-qt5-static
 ```
 
 #### 2. Setup CMake build directory
