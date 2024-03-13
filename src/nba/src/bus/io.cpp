@@ -5,15 +5,135 @@
  * Refer to the included LICENSE file.
  */
 
+#include <nba/log.hpp>
 #include <cstdio>
 
 #include "arm/arm7tdmi.hpp"
 #include "bus/bus.hpp"
 #include "bus/io.hpp"
 
+#define REG(address) ((address) >> 2)
+
 namespace nba::core {
 
+static constexpr bool AddressUsesNewIO(u32 address) {
+  return false;
+}
+
+static constexpr int GetAccessSize(u32 mask) {
+  int size = 0;
+  u32 ff = 0xFFu;
+
+  for(int i = 0; i < 4; i++) {
+    if(mask & ff) size += 8;
+
+    ff <<= 8;
+  }
+
+  return size;
+}
+
+static constexpr u32 GetAccessAddressOffset(u32 mask) {
+  int offset = 0;
+
+  for(int i = 0; i < 4; i++) {
+    if(mask & 0xFFu) break;
+
+    offset++;
+    mask >>= 8;
+  }
+
+  return offset;
+}
+
+u8 Bus::Hardware::ReadByteNew(u32 address) {
+  switch(address & 3u) {
+    case 0u: return ReadWord<0x000000FFu>(address);;
+    case 1u: return ReadWord<0x0000FF00u>(address & ~3u) >>  8;
+    case 2u: return ReadWord<0x00FF0000u>(address & ~3u) >> 16;
+    case 3u: return ReadWord<0xFF000000u>(address & ~3u) >> 24;
+  }
+  return 0u;
+}
+
+u16 Bus::Hardware::ReadHalfNew(u32 address) {
+  switch(address & 2u) {
+    case 0u: return ReadWord<0x0000FFFFu>(address);
+    case 2u: return ReadWord<0xFFFF0000u>(address & ~2u) >> 16;
+  }
+  return 0u;
+}
+
+u32 Bus::Hardware::ReadWordNew(u32 address) {
+  return ReadWord<0xFFFFFFFFu>(address);
+}
+
+void Bus::Hardware::WriteByteNew(u32 address, u8  value) {
+  const u32 word = value * 0x01010101u;
+
+  switch(address & 3u) {
+    case 0u: WriteWord<0x000000FFu>(address      , word); break;
+    case 1u: WriteWord<0x0000FF00u>(address & ~3u, word); break;
+    case 2u: WriteWord<0x00FF0000u>(address & ~3u, word); break;
+    case 3u: WriteWord<0xFF000000u>(address & ~3u, word); break;
+  }
+}
+
+void Bus::Hardware::WriteHalfNew(u32 address, u16 value) {
+  const u32 word = value * 0x00010001u;
+
+  switch(address & 2u) {
+    case 0u: WriteWord<0x0000FFFFu>(address      , word); break;
+    case 2u: WriteWord<0xFFFF0000u>(address & ~2u, word); break;
+  }
+}
+
+void Bus::Hardware::WriteWordNew(u32 address, u32 value) {
+  WriteWord<0xFFFFFFFFu>(address, value);
+}
+
+template<u32 mask> u32 Bus::Hardware::ReadWord(u32 address) {
+  u32 value = 0u;
+
+  const auto Unhandled = [&]() {
+    const int access_size = GetAccessSize(mask);
+    const u32 access_address = address + GetAccessAddressOffset(mask);
+
+    Log<Warn>("IO: unhandled {}-bit read from 0x{:08X}", access_size, access_address);
+  }; // @todo: does this *really* need to be in a lambda function?
+
+  switch(REG(address)) {
+    default: {
+      Unhandled();
+    }
+  }
+
+  return bus->ReadOpenBus(address & ~3u);
+}
+
+template<u32 mask> void Bus::Hardware::WriteWord(u32 address, u32 value) {
+  const auto Unhandled = [&]() {
+    const int access_size = GetAccessSize(mask);
+    const u32 access_address = address + GetAccessAddressOffset(mask);
+    const u32 access_value = (value & mask) >> (GetAccessAddressOffset(mask) * 8);
+
+    Log<Warn>("IO: unhandled {}-bit write to 0x{:08X} = 0x{:08X}", access_size, access_address, access_value);
+  }; // @todo: does this *really* need to be in a lambda function?
+
+  switch(REG(address)) {
+    default: {
+      Unhandled();
+    }
+  }
+}
+
+// LEGACY I/O CODE BELOW:
+
 auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
+  if(AddressUsesNewIO(address)) {
+    return ReadByteNew(address);
+  }
+
   auto& apu_io = apu.mmio;
   auto& ppu_io = ppu.mmio;
 
@@ -203,6 +323,10 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
 }
 
 auto Bus::Hardware::ReadHalf(u32 address) -> u16 {
+  if(AddressUsesNewIO(address)) {
+    return ReadHalfNew(address);
+  }
+
   switch(address) {
     // Timer 0 - 3
     case TM0CNT_L: return timer.ReadHalf(0, 0);
@@ -224,6 +348,10 @@ auto Bus::Hardware::ReadHalf(u32 address) -> u16 {
 }
 
 auto Bus::Hardware::ReadWord(u32 address) -> u32 {
+  if(AddressUsesNewIO(address)) {
+    return ReadWordNew(address);
+  }
+
   switch(address) {
     case TM0CNT_L: return timer.ReadWord(0);
     case TM1CNT_L: return timer.ReadWord(1);
@@ -235,6 +363,11 @@ auto Bus::Hardware::ReadWord(u32 address) -> u32 {
 }
 
 void Bus::Hardware::WriteByte(u32 address,  u8 value) {
+  if(AddressUsesNewIO(address)) {
+    WriteByteNew(address, value);
+    return;
+  }
+
   auto& apu_io = apu.mmio;
   auto& ppu_io = ppu.mmio;
 
@@ -575,6 +708,11 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
 }
 
 void Bus::Hardware::WriteHalf(u32 address, u16 value) {
+  if(AddressUsesNewIO(address)) {
+    WriteHalfNew(address, value);
+    return;
+  }
+
   auto& apu_io = apu.mmio;
 
   const bool apu_enable = apu_io.soundcnt.master_enable;
@@ -655,6 +793,11 @@ void Bus::Hardware::WriteHalf(u32 address, u16 value) {
 }
 
 void Bus::Hardware::WriteWord(u32 address, u32 value) {
+  if(AddressUsesNewIO(address)) {
+    WriteWordNew(address, value);
+    return;
+  }
+
   auto& apu_io = apu.mmio;
 
   const bool apu_enable = apu_io.soundcnt.master_enable;
