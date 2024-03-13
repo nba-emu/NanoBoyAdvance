@@ -15,7 +15,7 @@ Carry         |         93 |                 93 |          93 |             93 |
 Multiply Long |         72 |                 52 |          52 |             52 |        52 |         52 |
 BIOS math     |        615 |                615 |         615 |            615 |       615 |        615 |
 DMA tests     |       1256 |               1256 |        1232 |           1068 |      1212 |       1256 |
-Misc Edge Case|         10 |                  9 |           4 |              8 |         1 |          4 |
+Misc Edge Case|         10 |                 10 |           4 |              8 |         1 |          4 |
 Layer Toggle  |          1 |               pass |        fail |           pass |      fail |       pass |
 OAM Update    |          1 |               pass |        fail |           fail |      fail |       pass |
 
