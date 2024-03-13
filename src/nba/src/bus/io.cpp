@@ -108,7 +108,7 @@ template<u32 mask> u32 Bus::Hardware::ReadWord(u32 address) {
     }
   }
 
-  return bus->ReadOpenBus(address & ~3u);
+  return bus->ReadOpenBus(address);
 }
 
 template<u32 mask> void Bus::Hardware::WriteWord(u32 address, u32 value) {
