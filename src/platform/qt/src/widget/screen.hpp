@@ -19,7 +19,7 @@ struct Screen : QWidget, nba::VideoDevice {
     std::shared_ptr<QtConfig> config
   );
 
-  void Initialize();
+  bool Initialize();
   void Draw(u32* buffer) final;
   void ReloadConfig();
   QPaintEngine* paintEngine() const override { return nullptr; }; // Silence Qt.
