@@ -39,6 +39,7 @@ struct MainWindow : QMainWindow {
 
  ~MainWindow();
 
+  bool Initialize();
   void LoadROM(std::u16string const& path);
 
 signals:

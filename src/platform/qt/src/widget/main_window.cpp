@@ -45,8 +45,6 @@ MainWindow::MainWindow(
 
   screen = std::make_shared<Screen>(this, config);
   setCentralWidget(screen.get());
-  screen->windowHandle()->create();
-  screen->Initialize();
 
   auto menu_bar = new QMenuBar(this);
   setMenuBar(menu_bar);
@@ -91,6 +89,19 @@ MainWindow::~MainWindow() {
   emu_thread->Stop();
 
   delete controller_manager;
+}
+
+bool MainWindow::Initialize() {
+  screen->windowHandle()->create();
+  if(!screen->Initialize()) {
+    QMessageBox::critical(this, QApplication::instance()->applicationName(),
+                          tr("Failed to initialize graphics subsystem.\n\n"
+                          "Make sure that your hardware supports OpenGL 3.3 or later, "
+                          "and you have the latest driver version installed."));
+    return false;
+  }
+
+  return true;
 }
 
 void MainWindow::CreateFileMenu() {

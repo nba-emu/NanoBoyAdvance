@@ -28,15 +28,38 @@ static auto get_proc_address(const char* proc_name) {
   return QOpenGLContext::currentContext()->getProcAddress(proc_name);
 }
 
-void Screen::Initialize() {
+bool Screen::Initialize() {
   context = new QOpenGLContext();
-  context->create();
-  context->makeCurrent(this->windowHandle());
+  if(!context->create()) {
+    delete context;
+    context = nullptr;
+    return false;
+  }
+  if(context->format().majorVersion() < 3 ||
+     context->format().majorVersion() == 3 && context->format().minorVersion() < 3) {
+    delete context;
+    context = nullptr;
+    return false;
+  }
 
-  gladLoadGL(get_proc_address);
+  if(!context->makeCurrent(this->windowHandle())) {
+    delete context;
+    context = nullptr;
+    return false;
+  }
+
+  if(!gladLoadGL(get_proc_address)) {
+    delete context;
+    context = nullptr;
+    return false;
+  }
+
   ogl_video_device.Initialize();
+  UpdateViewport();
 
   context->doneCurrent();
+
+  return true;
 }
 
 void Screen::Draw(u32* buffer) {
