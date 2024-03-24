@@ -17,7 +17,7 @@
 namespace nba::core {
 
 static constexpr bool AddressUsesNewIO(u32 address) {
-  return false;
+  return address < 0x04000058u;
 }
 
 static constexpr int GetAccessSize(u32 mask) {
@@ -102,7 +102,49 @@ template<u32 mask> u32 Bus::Hardware::ReadWord(u32 address) {
     Log<Warn>("IO: unhandled {}-bit read from 0x{:08X}", access_size, access_address);
   }; // @todo: does this *really* need to be in a lambda function?
 
+  auto& ppu_io = ppu.mmio;
+
   switch(REG(address)) {
+    case REG(0x04000000u): {
+      if constexpr(mask & 0x000000FFu) value |= ppu_io.dispcnt.Read(0);
+      if constexpr(mask & 0x0000FF00u) value |= ppu_io.dispcnt.Read(1) << 8;
+      if constexpr(mask & 0x00FF0000u) value |= ppu_io.greenswap << 16;
+      return value;
+    }
+    case REG(0x04000004u): {
+      if constexpr(mask & 0x000000FFu) value |= ppu_io.dispstat.Read(0);
+      if constexpr(mask & 0x0000FF00u) value |= ppu_io.dispstat.Read(1) << 8;
+      if constexpr(mask & 0x00FF0000u) value |= ppu_io.vcount << 16;
+      return value;
+    }
+    case REG(0x04000008u): {
+      if constexpr(mask & 0x000000FFu) value |= ppu_io.bgcnt[0].Read(0);
+      if constexpr(mask & 0x0000FF00u) value |= ppu_io.bgcnt[0].Read(1) <<  8;
+      if constexpr(mask & 0x00FF0000u) value |= ppu_io.bgcnt[1].Read(0) << 16;
+      if constexpr(mask & 0xFF000000u) value |= ppu_io.bgcnt[1].Read(1) << 24;
+      return value;
+    }
+    case REG(0x0400000Cu): {
+      if constexpr(mask & 0x000000FFu) value |= ppu_io.bgcnt[2].Read(0);
+      if constexpr(mask & 0x0000FF00u) value |= ppu_io.bgcnt[2].Read(1) <<  8;
+      if constexpr(mask & 0x00FF0000u) value |= ppu_io.bgcnt[3].Read(0) << 16;
+      if constexpr(mask & 0xFF000000u) value |= ppu_io.bgcnt[3].Read(1) << 24;
+      return value;
+    }
+    case REG(0x04000048u): {
+      if constexpr(mask & 0x000000FFu) value |=  ppu_io.winin.Read(0) <<  0;
+      if constexpr(mask & 0x0000FF00u) value |=  ppu_io.winin.Read(1) <<  8;
+      if constexpr(mask & 0x00FF0000u) value |= ppu_io.winout.Read(0) << 16;
+      if constexpr(mask & 0xFF000000u) value |= ppu_io.winout.Read(1) << 24;
+      return value;
+    }
+  case REG(0x04000050u): {
+      if constexpr(mask & 0x000000FFu) value |= ppu_io.bldcnt.Read(0) << 0;
+      if constexpr(mask & 0x0000FF00u) value |= ppu_io.bldcnt.Read(1) << 8;
+      if constexpr(mask & 0x00FF0000u) value |= ppu_io.eva << 16;
+      if constexpr(mask & 0xFF000000u) value |= ppu_io.evb << 24;
+      return value;
+    }
     default: {
       Unhandled();
     }
@@ -120,7 +162,152 @@ template<u32 mask> void Bus::Hardware::WriteWord(u32 address, u32 value) {
     Log<Warn>("IO: unhandled {}-bit write to 0x{:08X} = 0x{:08X}", access_size, access_address, access_value);
   }; // @todo: does this *really* need to be in a lambda function?
 
+  auto& ppu_io = ppu.mmio;
+
   switch(REG(address)) {
+    case REG(0x04000000u): {
+      if constexpr(mask & 0x000000FFu) ppu_io.dispcnt.Write(0, (u8)(value >> 0));
+      if constexpr(mask & 0x0000FF00u) ppu_io.dispcnt.Write(1, (u8)(value >> 8));
+      if constexpr(mask & 0x00FF0000u) ppu_io.greenswap = (value >> 16) & 1;
+      break;
+    }
+    case REG(0x04000004u): {
+      if constexpr(mask & 0x000000FFu) ppu_io.dispstat.Write(0, (u8)(value >> 0));
+      if constexpr(mask & 0x0000FF00u) ppu_io.dispstat.Write(1, (u8)(value >> 8));
+      break;
+    }
+    case REG(0x04000008u): {
+      if constexpr(mask & 0x000000FFu) ppu_io.bgcnt[0].Write(0, (u8)(value >>  0));
+      if constexpr(mask & 0x0000FF00u) ppu_io.bgcnt[0].Write(1, (u8)(value >>  8));
+      if constexpr(mask & 0x00FF0000u) ppu_io.bgcnt[1].Write(0, (u8)(value >> 16));
+      if constexpr(mask & 0xFF000000u) ppu_io.bgcnt[1].Write(1, (u8)(value >> 24));
+      break;
+    }
+    case REG(0x0400000Cu): {
+      if constexpr(mask & 0x000000FFu) ppu_io.bgcnt[2].Write(0, (u8)(value >>  0));
+      if constexpr(mask & 0x0000FF00u) ppu_io.bgcnt[2].Write(1, (u8)(value >>  8));
+      if constexpr(mask & 0x00FF0000u) ppu_io.bgcnt[3].Write(0, (u8)(value >> 16));
+      if constexpr(mask & 0xFF000000u) ppu_io.bgcnt[3].Write(1, (u8)(value >> 24));
+      break;
+    }
+    case REG(0x04000010u): {
+      constexpr u32 lsw_mask = (mask >>  0) & 0x1FFu;
+      constexpr u32 msw_mask = (mask >> 16) & 0x1FFu;
+      
+      if constexpr(mask & 0x0000FFFFu) ppu_io.bghofs[0] = ((value >>  0) & lsw_mask) | (ppu_io.bghofs[0] & ~lsw_mask);
+      if constexpr(mask & 0xFFFF0000u) ppu_io.bgvofs[0] = ((value >> 16) & msw_mask) | (ppu_io.bgvofs[0] & ~msw_mask);
+      break;
+    } 
+    case REG(0x04000014u): {
+      constexpr u32 lsw_mask = (mask >>  0) & 0x1FFu;
+      constexpr u32 msw_mask = (mask >> 16) & 0x1FFu;
+      
+      if constexpr(mask & 0x0000FFFFu) ppu_io.bghofs[1] = ((value >>  0) & lsw_mask) | (ppu_io.bghofs[1] & ~lsw_mask);
+      if constexpr(mask & 0xFFFF0000u) ppu_io.bgvofs[1] = ((value >> 16) & msw_mask) | (ppu_io.bgvofs[1] & ~msw_mask);
+      break;
+    }
+    case REG(0x04000018u): {
+      constexpr u32 lsw_mask = (mask >>  0) & 0x1FFu;
+      constexpr u32 msw_mask = (mask >> 16) & 0x1FFu;
+      
+      if constexpr(mask & 0x0000FFFFu) ppu_io.bghofs[2] = ((value >>  0) & lsw_mask) | (ppu_io.bghofs[2] & ~lsw_mask);
+      if constexpr(mask & 0xFFFF0000u) ppu_io.bgvofs[2] = ((value >> 16) & msw_mask) | (ppu_io.bgvofs[2] & ~msw_mask);
+      break;
+    }
+    case REG(0x0400001Cu): {
+      constexpr u32 lsw_mask = (mask >>  0) & 0x1FFu;
+      constexpr u32 msw_mask = (mask >> 16) & 0x1FFu;
+      
+      if constexpr(mask & 0x0000FFFFu) ppu_io.bghofs[3] = ((value >>  0) & lsw_mask) | (ppu_io.bghofs[3] & ~lsw_mask);
+      if constexpr(mask & 0xFFFF0000u) ppu_io.bgvofs[3] = ((value >> 16) & msw_mask) | (ppu_io.bgvofs[3] & ~msw_mask);
+      break;
+    }
+    case REG(0x04000020u): {
+      if constexpr(mask & 0x0000FFFFu) ppu_io.bgpa[0] = (value & (u16)(mask >>  0)) | (ppu_io.bgpa[0] & ~(u16)(mask >>  0));
+      if constexpr(mask & 0xFFFF0000u) ppu_io.bgpb[0] = (value & (u16)(mask >> 16)) | (ppu_io.bgpb[0] & ~(u16)(mask >> 16));
+      break;
+    }
+    case REG(0x04000024u): {
+      if constexpr(mask & 0x0000FFFFu) ppu_io.bgpc[0] = (value & (u16)(mask >>  0)) | (ppu_io.bgpc[0] & ~(u16)(mask >>  0));
+      if constexpr(mask & 0xFFFF0000u) ppu_io.bgpd[0] = (value & (u16)(mask >> 16)) | (ppu_io.bgpd[0] & ~(u16)(mask >> 16));
+      break;
+    }
+    case REG(0x04000028u): {
+      if constexpr(mask & 0x000000FFu) ppu_io.bgx[0].Write(0, (u8)(value >>  0));
+      if constexpr(mask & 0x0000FF00u) ppu_io.bgx[0].Write(1, (u8)(value >>  8));
+      if constexpr(mask & 0x00FF0000u) ppu_io.bgx[0].Write(2, (u8)(value >> 16));
+      if constexpr(mask & 0xFF000000u) ppu_io.bgx[0].Write(3, (u8)(value >> 24));
+      break;
+    }
+    case REG(0x0400002Cu): {
+      if constexpr(mask & 0x000000FFu) ppu_io.bgy[0].Write(0, (u8)(value >>  0));
+      if constexpr(mask & 0x0000FF00u) ppu_io.bgy[0].Write(1, (u8)(value >>  8));
+      if constexpr(mask & 0x00FF0000u) ppu_io.bgy[0].Write(2, (u8)(value >> 16));
+      if constexpr(mask & 0xFF000000u) ppu_io.bgy[0].Write(3, (u8)(value >> 24));
+      break;
+    }
+    case REG(0x04000030u): {
+      if constexpr(mask & 0x0000FFFFu) ppu_io.bgpa[1] = (value & (u16)(mask >>  0)) | (ppu_io.bgpa[1] & ~(u16)(mask >>  0));
+      if constexpr(mask & 0xFFFF0000u) ppu_io.bgpb[1] = (value & (u16)(mask >> 16)) | (ppu_io.bgpb[1] & ~(u16)(mask >> 16));
+      break;
+    }
+    case REG(0x04000034u): {
+      if constexpr(mask & 0x0000FFFFu) ppu_io.bgpc[1] = (value & (u16)(mask >>  0)) | (ppu_io.bgpc[1] & ~(u16)(mask >>  0));
+      if constexpr(mask & 0xFFFF0000u) ppu_io.bgpd[1] = (value & (u16)(mask >> 16)) | (ppu_io.bgpd[1] & ~(u16)(mask >> 16));
+      break;
+    }
+    case REG(0x04000038u): {
+      if constexpr(mask & 0x000000FFu) ppu_io.bgx[1].Write(0, (u8)(value >>  0));
+      if constexpr(mask & 0x0000FF00u) ppu_io.bgx[1].Write(1, (u8)(value >>  8));
+      if constexpr(mask & 0x00FF0000u) ppu_io.bgx[1].Write(2, (u8)(value >> 16));
+      if constexpr(mask & 0xFF000000u) ppu_io.bgx[1].Write(3, (u8)(value >> 24));
+      break;
+    }
+    case REG(0x0400003Cu): {
+      if constexpr(mask & 0x000000FFu) ppu_io.bgy[1].Write(0, (u8)(value >>  0));
+      if constexpr(mask & 0x0000FF00u) ppu_io.bgy[1].Write(1, (u8)(value >>  8));
+      if constexpr(mask & 0x00FF0000u) ppu_io.bgy[1].Write(2, (u8)(value >> 16));
+      if constexpr(mask & 0xFF000000u) ppu_io.bgy[1].Write(3, (u8)(value >> 24));
+      break;
+    }
+    case REG(0x04000040u): {
+      if constexpr(mask & 0x000000FFu) ppu_io.winh[0].Write(0, (u8)(value >>  0));
+      if constexpr(mask & 0x0000FF00u) ppu_io.winh[0].Write(1, (u8)(value >>  8));
+      if constexpr(mask & 0x00FF0000u) ppu_io.winh[1].Write(0, (u8)(value >> 16));
+      if constexpr(mask & 0xFF000000u) ppu_io.winh[1].Write(1, (u8)(value >> 24));
+      break;
+    }
+    case REG(0x04000044u): {
+      if constexpr(mask & 0x000000FFu) ppu_io.winv[0].Write(0, (u8)(value >>  0));
+      if constexpr(mask & 0x0000FF00u) ppu_io.winv[0].Write(1, (u8)(value >>  8));
+      if constexpr(mask & 0x00FF0000u) ppu_io.winv[1].Write(0, (u8)(value >> 16));
+      if constexpr(mask & 0xFF000000u) ppu_io.winv[1].Write(1, (u8)(value >> 24));
+      break;
+    }
+    case REG(0x04000048u): {
+      if constexpr(mask & 0x000000FFu)  ppu_io.winin.Write(0, (u8)(value >>  0));
+      if constexpr(mask & 0x0000FF00u)  ppu_io.winin.Write(1, (u8)(value >>  8));
+      if constexpr(mask & 0x00FF0000u) ppu_io.winout.Write(0, (u8)(value >> 16));
+      if constexpr(mask & 0xFF000000u) ppu_io.winout.Write(1, (u8)(value >> 24));
+      break;
+    }
+    case REG(0x0400004Cu): {
+      if constexpr(mask & 0x000000FFu) ppu_io.mosaic.Write(0, (u8)(value >> 0));
+      if constexpr(mask & 0x0000FF00u) ppu_io.mosaic.Write(1, (u8)(value >> 8));
+      break;
+    }
+    case REG(0x04000050u): {
+      if constexpr(mask & 0x000000FFu) ppu_io.bldcnt.Write(0, (u8)(value >> 0));
+      if constexpr(mask & 0x0000FF00u) ppu_io.bldcnt.Write(1, (u8)(value >> 8));
+      if constexpr(mask & 0x00FF0000u) ppu_io.eva = (u8)(value >> 16) & 0x1Fu;
+      if constexpr(mask & 0xFF000000u) ppu_io.evb = (u8)(value >> 24) & 0x1Fu;
+      break;
+    }
+    case REG(0x04000054u): {
+      if constexpr(mask & 0x000000FFu) ppu_io.evy = value & 0x1Fu;
+      break;
+    }
+
     default: {
       Unhandled();
     }
@@ -139,30 +326,30 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
 
   switch(address) {
     // PPU
-    case DISPCNT+0:  return ppu_io.dispcnt.Read(0);
-    case DISPCNT+1:  return ppu_io.dispcnt.Read(1);
-    case GREENSWAP+0: return ppu_io.greenswap;
-    case GREENSWAP+1: return 0;
-    case DISPSTAT+0: return ppu_io.dispstat.Read(0);
-    case DISPSTAT+1: return ppu_io.dispstat.Read(1);
-    case VCOUNT+0:   return ppu_io.vcount & 0xFF;
-    case VCOUNT+1:   return 0;
-    case BG0CNT+0:   return ppu_io.bgcnt[0].Read(0);
-    case BG0CNT+1:   return ppu_io.bgcnt[0].Read(1);
-    case BG1CNT+0:   return ppu_io.bgcnt[1].Read(0);
-    case BG1CNT+1:   return ppu_io.bgcnt[1].Read(1);
-    case BG2CNT+0:   return ppu_io.bgcnt[2].Read(0);
-    case BG2CNT+1:   return ppu_io.bgcnt[2].Read(1);
-    case BG3CNT+0:   return ppu_io.bgcnt[3].Read(0);
-    case BG3CNT+1:   return ppu_io.bgcnt[3].Read(1);
-    case WININ+0:    return ppu_io.winin.Read(0);
-    case WININ+1:    return ppu_io.winin.Read(1);
-    case WINOUT+0:   return ppu_io.winout.Read(0);
-    case WINOUT+1:   return ppu_io.winout.Read(1);
-    case BLDCNT+0:   return ppu_io.bldcnt.Read(0);
-    case BLDCNT+1:   return ppu_io.bldcnt.Read(1);
-    case BLDALPHA+0: return ppu_io.eva;
-    case BLDALPHA+1: return ppu_io.evb;
+    // case DISPCNT+0:  return ppu_io.dispcnt.Read(0);
+    // case DISPCNT+1:  return ppu_io.dispcnt.Read(1);
+    // case GREENSWAP+0: return ppu_io.greenswap;
+    // case GREENSWAP+1: return 0;
+    // case DISPSTAT+0: return ppu_io.dispstat.Read(0);
+    // case DISPSTAT+1: return ppu_io.dispstat.Read(1);
+    // case VCOUNT+0:   return ppu_io.vcount & 0xFF;
+    // case VCOUNT+1:   return 0;
+    // case BG0CNT+0:   return ppu_io.bgcnt[0].Read(0);
+    // case BG0CNT+1:   return ppu_io.bgcnt[0].Read(1);
+    // case BG1CNT+0:   return ppu_io.bgcnt[1].Read(0);
+    // case BG1CNT+1:   return ppu_io.bgcnt[1].Read(1);
+    // case BG2CNT+0:   return ppu_io.bgcnt[2].Read(0);
+    // case BG2CNT+1:   return ppu_io.bgcnt[2].Read(1);
+    // case BG3CNT+0:   return ppu_io.bgcnt[3].Read(0);
+    // case BG3CNT+1:   return ppu_io.bgcnt[3].Read(1);
+    // case WININ+0:    return ppu_io.winin.Read(0);
+    // case WININ+1:    return ppu_io.winin.Read(1);
+    // case WINOUT+0:   return ppu_io.winout.Read(0);
+    // case WINOUT+1:   return ppu_io.winout.Read(1);
+    // case BLDCNT+0:   return ppu_io.bldcnt.Read(0);
+    // case BLDCNT+1:   return ppu_io.bldcnt.Read(1);
+    // case BLDALPHA+0: return ppu_io.eva;
+    // case BLDALPHA+1: return ppu_io.evb;
 
     // DMA 0 - 3
     case DMA0CNT_L:
@@ -375,151 +562,151 @@ void Bus::Hardware::WriteByte(u32 address,  u8 value) {
 
   switch(address) {
     // PPU
-    case DISPCNT+0:  ppu_io.dispcnt.Write(0, value); break;
-    case DISPCNT+1:  ppu_io.dispcnt.Write(1, value); break;
-    case GREENSWAP+0: ppu_io.greenswap = value & 1; break;
-    case GREENSWAP+1: break;
-    case DISPSTAT+0: ppu_io.dispstat.Write(0, value); break;
-    case DISPSTAT+1: ppu_io.dispstat.Write(1, value); break;
-    case BG0CNT+0:   ppu_io.bgcnt[0].Write(0, value); break;
-    case BG0CNT+1:   ppu_io.bgcnt[0].Write(1, value); break;
-    case BG1CNT+0:   ppu_io.bgcnt[1].Write(0, value); break;
-    case BG1CNT+1:   ppu_io.bgcnt[1].Write(1, value); break;
-    case BG2CNT+0:   ppu_io.bgcnt[2].Write(0, value); break;
-    case BG2CNT+1:   ppu_io.bgcnt[2].Write(1, value); break;
-    case BG3CNT+0:   ppu_io.bgcnt[3].Write(0, value); break;
-    case BG3CNT+1:   ppu_io.bgcnt[3].Write(1, value); break;
-    case BG0HOFS+0: {
-      ppu_io.bghofs[0] &= 0xFF00;
-      ppu_io.bghofs[0] |= value;
-      break;
-    }
-    case BG0HOFS+1: {
-      ppu_io.bghofs[0] &= 0x00FF;
-      ppu_io.bghofs[0] |= (value & 1) << 8;
-      break;
-    }
-    case BG0VOFS+0: {
-      ppu_io.bgvofs[0] &= 0xFF00;
-      ppu_io.bgvofs[0] |= value;
-      break;
-    }
-    case BG0VOFS+1: {
-      ppu_io.bgvofs[0] &= 0x00FF;
-      ppu_io.bgvofs[0] |= (value & 1) << 8;
-      break;
-    }
-    case BG1HOFS+0: {
-      ppu_io.bghofs[1] &= 0xFF00;
-      ppu_io.bghofs[1] |= value;
-      break;
-    }
-    case BG1HOFS+1: {
-      ppu_io.bghofs[1] &= 0x00FF;
-      ppu_io.bghofs[1] |= (value & 1) << 8;
-      break;
-    }
-    case BG1VOFS+0: {
-      ppu_io.bgvofs[1] &= 0xFF00;
-      ppu_io.bgvofs[1] |= value;
-      break;
-    }
-    case BG1VOFS+1: {
-      ppu_io.bgvofs[1] &= 0x00FF;
-      ppu_io.bgvofs[1] |= (value & 1) << 8;
-      break;
-    }
-    case BG2HOFS+0: {
-      ppu_io.bghofs[2] &= 0xFF00;
-      ppu_io.bghofs[2] |= value;
-      break;
-    }
-    case BG2HOFS+1: {
-      ppu_io.bghofs[2] &= 0x00FF;
-      ppu_io.bghofs[2] |= (value & 1) << 8;
-      break;
-    }
-    case BG2VOFS+0: {
-      ppu_io.bgvofs[2] &= 0xFF00;
-      ppu_io.bgvofs[2] |= value;
-      break;
-    }
-    case BG2VOFS+1: {
-      ppu_io.bgvofs[2] &= 0x00FF;
-      ppu_io.bgvofs[2] |= (value & 1) << 8;
-      break;
-    }
-    case BG3HOFS+0: {
-      ppu_io.bghofs[3] &= 0xFF00;
-      ppu_io.bghofs[3] |= value;
-      break;
-    }
-    case BG3HOFS+1: {
-      ppu_io.bghofs[3] &= 0x00FF;
-      ppu_io.bghofs[3] |= (value & 1) << 8;
-      break;
-    }
-    case BG3VOFS+0: {
-      ppu_io.bgvofs[3] &= 0xFF00;
-      ppu_io.bgvofs[3] |= value;
-      break;
-    }
-    case BG3VOFS+1: {
-      ppu_io.bgvofs[3] &= 0x00FF;
-      ppu_io.bgvofs[3] |= (value & 1) << 8;
-      break;
-    }
-    case BG2PA:   ppu_io.bgpa[0] = (ppu_io.bgpa[0] & 0xFF00) | (value << 0); break;
-    case BG2PA+1: ppu_io.bgpa[0] = (ppu_io.bgpa[0] & 0x00FF) | (value << 8); break;
-    case BG2PB:   ppu_io.bgpb[0] = (ppu_io.bgpb[0] & 0xFF00) | (value << 0); break;
-    case BG2PB+1: ppu_io.bgpb[0] = (ppu_io.bgpb[0] & 0x00FF) | (value << 8); break;
-    case BG2PC:   ppu_io.bgpc[0] = (ppu_io.bgpc[0] & 0xFF00) | (value << 0); break;
-    case BG2PC+1: ppu_io.bgpc[0] = (ppu_io.bgpc[0] & 0x00FF) | (value << 8); break;
-    case BG2PD:   ppu_io.bgpd[0] = (ppu_io.bgpd[0] & 0xFF00) | (value << 0); break;
-    case BG2PD+1: ppu_io.bgpd[0] = (ppu_io.bgpd[0] & 0x00FF) | (value << 8); break;
-    case BG2X:    ppu_io.bgx[0].Write(0, value); break;
-    case BG2X+1:  ppu_io.bgx[0].Write(1, value); break;
-    case BG2X+2:  ppu_io.bgx[0].Write(2, value); break;
-    case BG2X+3:  ppu_io.bgx[0].Write(3, value); break;
-    case BG2Y:    ppu_io.bgy[0].Write(0, value); break;
-    case BG2Y+1:  ppu_io.bgy[0].Write(1, value); break;
-    case BG2Y+2:  ppu_io.bgy[0].Write(2, value); break;
-    case BG2Y+3:  ppu_io.bgy[0].Write(3, value); break;
-    case BG3PA:   ppu_io.bgpa[1] = (ppu_io.bgpa[1] & 0xFF00) | (value << 0); break;
-    case BG3PA+1: ppu_io.bgpa[1] = (ppu_io.bgpa[1] & 0x00FF) | (value << 8); break;
-    case BG3PB:   ppu_io.bgpb[1] = (ppu_io.bgpb[1] & 0xFF00) | (value << 0); break;
-    case BG3PB+1: ppu_io.bgpb[1] = (ppu_io.bgpb[1] & 0x00FF) | (value << 8); break;
-    case BG3PC:   ppu_io.bgpc[1] = (ppu_io.bgpc[1] & 0xFF00) | (value << 0); break;
-    case BG3PC+1: ppu_io.bgpc[1] = (ppu_io.bgpc[1] & 0x00FF) | (value << 8); break;
-    case BG3PD:   ppu_io.bgpd[1] = (ppu_io.bgpd[1] & 0xFF00) | (value << 0); break;
-    case BG3PD+1: ppu_io.bgpd[1] = (ppu_io.bgpd[1] & 0x00FF) | (value << 8); break;
-    case BG3X:    ppu_io.bgx[1].Write(0, value); break;
-    case BG3X+1:  ppu_io.bgx[1].Write(1, value); break;
-    case BG3X+2:  ppu_io.bgx[1].Write(2, value); break;
-    case BG3X+3:  ppu_io.bgx[1].Write(3, value); break;
-    case BG3Y:    ppu_io.bgy[1].Write(0, value); break;
-    case BG3Y+1:  ppu_io.bgy[1].Write(1, value); break;
-    case BG3Y+2:  ppu_io.bgy[1].Write(2, value); break;
-    case BG3Y+3:  ppu_io.bgy[1].Write(3, value); break;
-    case WIN0H+0: ppu_io.winh[0].Write(0, value); break;
-    case WIN0H+1: ppu_io.winh[0].Write(1, value); break;
-    case WIN1H+0: ppu_io.winh[1].Write(0, value); break;
-    case WIN1H+1: ppu_io.winh[1].Write(1, value); break;
-    case WIN0V+0: ppu_io.winv[0].Write(0, value); break;
-    case WIN0V+1: ppu_io.winv[0].Write(1, value); break;
-    case WIN1V+0: ppu_io.winv[1].Write(0, value); break;
-    case WIN1V+1: ppu_io.winv[1].Write(1, value); break;
-    case WININ+0: ppu_io.winin.Write(0, value); break;
-    case WININ+1: ppu_io.winin.Write(1, value); break;
-    case WINOUT+0: ppu_io.winout.Write(0, value); break;
-    case WINOUT+1: ppu_io.winout.Write(1, value); break;
-    case MOSAIC+0: ppu_io.mosaic.Write(0, value); break;
-    case MOSAIC+1: ppu_io.mosaic.Write(1, value); break;
-    case BLDCNT+0: ppu_io.bldcnt.Write(0, value); break;
-    case BLDCNT+1: ppu_io.bldcnt.Write(1, value); break;
-    case BLDALPHA+0: ppu_io.eva = value & 0x1F; break;
-    case BLDALPHA+1: ppu_io.evb = value & 0x1F; break;
-    case BLDY: ppu_io.evy = value & 0x1F; break;
+    // case DISPCNT+0:  ppu_io.dispcnt.Write(0, value); break;
+    // case DISPCNT+1:  ppu_io.dispcnt.Write(1, value); break;
+    // case GREENSWAP+0: ppu_io.greenswap = value & 1; break;
+    // case GREENSWAP+1: break;
+    // case DISPSTAT+0: ppu_io.dispstat.Write(0, value); break;
+    // case DISPSTAT+1: ppu_io.dispstat.Write(1, value); break;
+    // case BG0CNT+0:   ppu_io.bgcnt[0].Write(0, value); break;
+    // case BG0CNT+1:   ppu_io.bgcnt[0].Write(1, value); break;
+    // case BG1CNT+0:   ppu_io.bgcnt[1].Write(0, value); break;
+    // case BG1CNT+1:   ppu_io.bgcnt[1].Write(1, value); break;
+    // case BG2CNT+0:   ppu_io.bgcnt[2].Write(0, value); break;
+    // case BG2CNT+1:   ppu_io.bgcnt[2].Write(1, value); break;
+    // case BG3CNT+0:   ppu_io.bgcnt[3].Write(0, value); break;
+    // case BG3CNT+1:   ppu_io.bgcnt[3].Write(1, value); break;
+    // case BG0HOFS+0: {
+    //   ppu_io.bghofs[0] &= 0xFF00;
+    //   ppu_io.bghofs[0] |= value;
+    //   break;
+    // }
+    // case BG0HOFS+1: {
+    //   ppu_io.bghofs[0] &= 0x00FF;
+    //   ppu_io.bghofs[0] |= (value & 1) << 8;
+    //   break;
+    // }
+    // case BG0VOFS+0: {
+    //   ppu_io.bgvofs[0] &= 0xFF00;
+    //   ppu_io.bgvofs[0] |= value;
+    //   break;
+    // }
+    // case BG0VOFS+1: {
+    //   ppu_io.bgvofs[0] &= 0x00FF;
+    //   ppu_io.bgvofs[0] |= (value & 1) << 8;
+    //   break;
+    // }
+    // case BG1HOFS+0: {
+    //   ppu_io.bghofs[1] &= 0xFF00;
+    //   ppu_io.bghofs[1] |= value;
+    //   break;
+    // }
+    // case BG1HOFS+1: {
+    //   ppu_io.bghofs[1] &= 0x00FF;
+    //   ppu_io.bghofs[1] |= (value & 1) << 8;
+    //   break;
+    // }
+    // case BG1VOFS+0: {
+    //   ppu_io.bgvofs[1] &= 0xFF00;
+    //   ppu_io.bgvofs[1] |= value;
+    //   break;
+    // }
+    // case BG1VOFS+1: {
+    //   ppu_io.bgvofs[1] &= 0x00FF;
+    //   ppu_io.bgvofs[1] |= (value & 1) << 8;
+    //   break;
+    // }
+    // case BG2HOFS+0: {
+    //   ppu_io.bghofs[2] &= 0xFF00;
+    //   ppu_io.bghofs[2] |= value;
+    //   break;
+    // }
+    // case BG2HOFS+1: {
+    //   ppu_io.bghofs[2] &= 0x00FF;
+    //   ppu_io.bghofs[2] |= (value & 1) << 8;
+    //   break;
+    // }
+    // case BG2VOFS+0: {
+    //   ppu_io.bgvofs[2] &= 0xFF00;
+    //   ppu_io.bgvofs[2] |= value;
+    //   break;
+    // }
+    // case BG2VOFS+1: {
+    //   ppu_io.bgvofs[2] &= 0x00FF;
+    //   ppu_io.bgvofs[2] |= (value & 1) << 8;
+    //   break;
+    // }
+    // case BG3HOFS+0: {
+    //   ppu_io.bghofs[3] &= 0xFF00;
+    //   ppu_io.bghofs[3] |= value;
+    //   break;
+    // }
+    // case BG3HOFS+1: {
+    //   ppu_io.bghofs[3] &= 0x00FF;
+    //   ppu_io.bghofs[3] |= (value & 1) << 8;
+    //   break;
+    // }
+    // case BG3VOFS+0: {
+    //   ppu_io.bgvofs[3] &= 0xFF00;
+    //   ppu_io.bgvofs[3] |= value;
+    //   break;
+    // }
+    // case BG3VOFS+1: {
+    //   ppu_io.bgvofs[3] &= 0x00FF;
+    //   ppu_io.bgvofs[3] |= (value & 1) << 8;
+    //   break;
+    // }
+    // case BG2PA:   ppu_io.bgpa[0] = (ppu_io.bgpa[0] & 0xFF00) | (value << 0); break;
+    // case BG2PA+1: ppu_io.bgpa[0] = (ppu_io.bgpa[0] & 0x00FF) | (value << 8); break;
+    // case BG2PB:   ppu_io.bgpb[0] = (ppu_io.bgpb[0] & 0xFF00) | (value << 0); break;
+    // case BG2PB+1: ppu_io.bgpb[0] = (ppu_io.bgpb[0] & 0x00FF) | (value << 8); break;
+    // case BG2PC:   ppu_io.bgpc[0] = (ppu_io.bgpc[0] & 0xFF00) | (value << 0); break;
+    // case BG2PC+1: ppu_io.bgpc[0] = (ppu_io.bgpc[0] & 0x00FF) | (value << 8); break;
+    // case BG2PD:   ppu_io.bgpd[0] = (ppu_io.bgpd[0] & 0xFF00) | (value << 0); break;
+    // case BG2PD+1: ppu_io.bgpd[0] = (ppu_io.bgpd[0] & 0x00FF) | (value << 8); break;
+    // case BG2X:    ppu_io.bgx[0].Write(0, value); break;
+    // case BG2X+1:  ppu_io.bgx[0].Write(1, value); break;
+    // case BG2X+2:  ppu_io.bgx[0].Write(2, value); break;
+    // case BG2X+3:  ppu_io.bgx[0].Write(3, value); break;
+    // case BG2Y:    ppu_io.bgy[0].Write(0, value); break;
+    // case BG2Y+1:  ppu_io.bgy[0].Write(1, value); break;
+    // case BG2Y+2:  ppu_io.bgy[0].Write(2, value); break;
+    // case BG2Y+3:  ppu_io.bgy[0].Write(3, value); break;
+    // case BG3PA:   ppu_io.bgpa[1] = (ppu_io.bgpa[1] & 0xFF00) | (value << 0); break;
+    // case BG3PA+1: ppu_io.bgpa[1] = (ppu_io.bgpa[1] & 0x00FF) | (value << 8); break;
+    // case BG3PB:   ppu_io.bgpb[1] = (ppu_io.bgpb[1] & 0xFF00) | (value << 0); break;
+    // case BG3PB+1: ppu_io.bgpb[1] = (ppu_io.bgpb[1] & 0x00FF) | (value << 8); break;
+    // case BG3PC:   ppu_io.bgpc[1] = (ppu_io.bgpc[1] & 0xFF00) | (value << 0); break;
+    // case BG3PC+1: ppu_io.bgpc[1] = (ppu_io.bgpc[1] & 0x00FF) | (value << 8); break;
+    // case BG3PD:   ppu_io.bgpd[1] = (ppu_io.bgpd[1] & 0xFF00) | (value << 0); break;
+    // case BG3PD+1: ppu_io.bgpd[1] = (ppu_io.bgpd[1] & 0x00FF) | (value << 8); break;
+    // case BG3X:    ppu_io.bgx[1].Write(0, value); break;
+    // case BG3X+1:  ppu_io.bgx[1].Write(1, value); break;
+    // case BG3X+2:  ppu_io.bgx[1].Write(2, value); break;
+    // case BG3X+3:  ppu_io.bgx[1].Write(3, value); break;
+    // case BG3Y:    ppu_io.bgy[1].Write(0, value); break;
+    // case BG3Y+1:  ppu_io.bgy[1].Write(1, value); break;
+    // case BG3Y+2:  ppu_io.bgy[1].Write(2, value); break;
+    // case BG3Y+3:  ppu_io.bgy[1].Write(3, value); break;
+    // case WIN0H+0: ppu_io.winh[0].Write(0, value); break;
+    // case WIN0H+1: ppu_io.winh[0].Write(1, value); break;
+    // case WIN1H+0: ppu_io.winh[1].Write(0, value); break;
+    // case WIN1H+1: ppu_io.winh[1].Write(1, value); break;
+    // case WIN0V+0: ppu_io.winv[0].Write(0, value); break;
+    // case WIN0V+1: ppu_io.winv[0].Write(1, value); break;
+    // case WIN1V+0: ppu_io.winv[1].Write(0, value); break;
+    // case WIN1V+1: ppu_io.winv[1].Write(1, value); break;
+    // case WININ+0: ppu_io.winin.Write(0, value); break;
+    // case WININ+1: ppu_io.winin.Write(1, value); break;
+    // case WINOUT+0: ppu_io.winout.Write(0, value); break;
+    // case WINOUT+1: ppu_io.winout.Write(1, value); break;
+    // case MOSAIC+0: ppu_io.mosaic.Write(0, value); break;
+    // case MOSAIC+1: ppu_io.mosaic.Write(1, value); break;
+    // case BLDCNT+0: ppu_io.bldcnt.Write(0, value); break;
+    // case BLDCNT+1: ppu_io.bldcnt.Write(1, value); break;
+    // case BLDALPHA+0: ppu_io.eva = value & 0x1F; break;
+    // case BLDALPHA+1: ppu_io.evb = value & 0x1F; break;
+    // case BLDY: ppu_io.evy = value & 0x1F; break;
 
     // DMA 0 - 3
     case DMA0SAD:     dma.Write(0, 0, value); break;
