@@ -48,6 +48,9 @@ auto create_window(QApplication& app, int argc, char** argv) -> std::unique_ptr<
   }
 
   auto window = std::make_unique<MainWindow>(&app);
+  if(!window->Initialize()) {
+    return nullptr;
+  }
 
   if(!rom.empty()) {
     window->LoadROM(rom.u16string());
@@ -104,6 +107,9 @@ int main(int argc, char** argv) {
   QGuiApplication::setDesktopFileName("io.github.nba_emuNanoBoyAdvance");
 
   auto window = create_window(app, argc, argv);
+  if(!window) {
+    return EXIT_FAILURE;
+  }
 
   return app.exec();
 }

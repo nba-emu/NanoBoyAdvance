@@ -8,8 +8,8 @@
 #pragma once
 
 #include <array>
+#include <glad/gl.h>
 #include <nba/device/video_device.hpp>
-#include <GL/glew.h>
 #include <platform/config.hpp>
 #include <string>
 #include <utility>
