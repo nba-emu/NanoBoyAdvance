@@ -177,7 +177,8 @@ void MainWindow::CreateVideoMenu(QMenu* parent) {
     { "Nearest", nba::PlatformConfig::Video::Filter::Nearest },
     { "Linear",  nba::PlatformConfig::Video::Filter::Linear  },
     { "Sharp",   nba::PlatformConfig::Video::Filter::Sharp   },
-    { "xBRZ",    nba::PlatformConfig::Video::Filter::xBRZ    }
+    { "xBRZ",    nba::PlatformConfig::Video::Filter::xBRZ    },
+    { "Lcd1x",   nba::PlatformConfig::Video::Filter::Lcd1x   }
   }, &config->video.filter, false, reload_config);
 
   CreateSelectionOption(menu->addMenu(tr("Color correction")), {

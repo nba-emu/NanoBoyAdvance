@@ -78,6 +78,7 @@ set(HEADERS
   src/device/shader/color_agb.glsl.hpp
   src/device/shader/common.glsl.hpp
   src/device/shader/lcd_ghosting.glsl.hpp
+  src/device/shader/lcd1x.glsl.hpp
   src/device/shader/output.glsl.hpp
   src/device/shader/sharp_bilinear.glsl.hpp
   src/device/shader/xbrz.glsl.hpp

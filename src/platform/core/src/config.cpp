@@ -81,7 +81,8 @@ void PlatformConfig::Load(std::string const& path) {
         { "nearest", Video::Filter::Nearest },
         { "linear",  Video::Filter::Linear  },
         { "sharp",   Video::Filter::Sharp   },
-        { "xbrz",    Video::Filter::xBRZ    }
+        { "xbrz",    Video::Filter::xBRZ    },
+        { "lcd1x",   Video::Filter::Lcd1x   }
       };
 
       const std::map<std::string, Video::Color> color_corrections{
@@ -181,7 +182,8 @@ void PlatformConfig::Save(std::string const& path) {
     case Video::Filter::Nearest: filter = "nearest"; break;
     case Video::Filter::Linear:  filter = "linear"; break;
     case Video::Filter::Sharp:   filter = "sharp"; break;
-    case Video::Filter::xBRZ:    filter = "xbrz"; break; 
+    case Video::Filter::xBRZ:    filter = "xbrz"; break;
+    case Video::Filter::Lcd1x:   filter = "lcd1x"; break;
   }
 
   switch(this->video.color) {

@@ -29,7 +29,8 @@ struct PlatformConfig : Config {
       Nearest,
       Linear,
       Sharp,
-      xBRZ
+      xBRZ,
+      Lcd1x
     } filter = Filter::Linear;
 
     enum class Color {
