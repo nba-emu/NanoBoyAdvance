@@ -16,6 +16,7 @@
 #include "device/shader/color_higan.glsl.hpp"
 #include "device/shader/color_agb.glsl.hpp"
 #include "device/shader/lcd_ghosting.glsl.hpp"
+#include "device/shader/lcd1x.glsl.hpp"
 #include "device/shader/output.glsl.hpp"
 #include "device/shader/sharp_bilinear.glsl.hpp"
 #include "device/shader/xbrz.glsl.hpp"
@@ -186,7 +187,15 @@ void OGLVideoDevice::CreateShaderPrograms() {
     // Sharp bilinear.
     case Video::Filter::Sharp: {
       auto [success, program] = CompileProgram(sharp_bilinear_vert, sharp_bilinear_frag);
-      if (success) {
+      if(success) {
+        shader_passes.push_back({program});
+      }
+      break;
+    }
+    // Lcd1x filter
+    case Video::Filter::Lcd1x: {
+      auto [success, program] = CompileProgram(lcd1x_vert, lcd1x_frag);
+      if(success) {
         shader_passes.push_back({program});
       }
       break;
