@@ -17,6 +17,7 @@ solar_sensor_level = 23
 filter = "linear"
 color_correction = "agb"
 lcd_ghosting = true
+lcd_grid = true
 
 [audio]
 # Possible values: cosine, cubic, sinc64, sinc128, sinc256

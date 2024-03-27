@@ -39,6 +39,7 @@ struct PlatformConfig : Config {
     } color = Color::AGB;
 
     bool lcd_ghosting = true;
+    bool lcd_grid = true;
   } video;
 
   void Load(std::string const& path);

@@ -187,6 +187,7 @@ void MainWindow::CreateVideoMenu(QMenu* parent) {
   }, &config->video.color, false, reload_config);
 
   CreateBooleanOption(menu, "LCD ghosting", &config->video.lcd_ghosting, false, reload_config);
+  CreateBooleanOption(menu, "LCD grid", &config->video.lcd_grid, false, reload_config);
 }
 
 void MainWindow::CreateAudioMenu(QMenu* parent) {

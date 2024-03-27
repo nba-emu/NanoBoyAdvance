@@ -202,6 +202,16 @@ void OGLVideoDevice::CreateShaderPrograms() {
     }
   }
 
+  //LCD grid pass
+  if(config->video.lcd_grid) {
+    auto [success, program] = CompileProgram(lcd_grid_vert, lcd_grid_frag);
+    if(success) {
+      
+      shader_passes.push_back({program});
+    }
+  }
+
+
   UpdateShaderUniforms();
 }
 
