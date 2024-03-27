@@ -103,6 +103,7 @@ void PlatformConfig::Load(std::string const& path) {
       }
 
       this->video.lcd_ghosting = toml::find_or<bool>(video, "lcd_ghosting", true);
+      this->video.lcd_grid = toml::find_or<bool>(video, "lcd_grid", true);
     }
   }
 
@@ -193,6 +194,7 @@ void PlatformConfig::Save(std::string const& path) {
   data["video"]["filter"] = filter;
   data["video"]["color_correction"] = color_correction;
   data["video"]["lcd_ghosting"] = this->video.lcd_ghosting;
+  data["video"]["lcd_grid"] = this->video.lcd_grid;
 
   // Audio
   std::string resampler;

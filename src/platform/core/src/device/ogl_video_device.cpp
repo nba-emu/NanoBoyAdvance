@@ -16,6 +16,7 @@
 #include "device/shader/color_higan.glsl.hpp"
 #include "device/shader/color_agb.glsl.hpp"
 #include "device/shader/lcd_ghosting.glsl.hpp"
+#include "device/shader/lcd_grid.glsl.hpp"
 #include "device/shader/output.glsl.hpp"
 #include "device/shader/sharp_bilinear.glsl.hpp"
 #include "device/shader/xbrz.glsl.hpp"
@@ -201,6 +202,16 @@ void OGLVideoDevice::CreateShaderPrograms() {
       break;
     }
   }
+
+  //LCD grid pass
+  if(config->video.lcd_grid) {
+    auto [success, program] = CompileProgram(lcd_grid_vert, lcd_grid_frag);
+    if(success) {
+      
+      shader_passes.push_back({program});
+    }
+  }
+
 
   UpdateShaderUniforms();
 }
