@@ -99,9 +99,9 @@ const std::map<std::string, GameInfo> g_game_db {
   { "KHPJ", { Config::BackupType::EEPROM_64/*_SENSOR*/, GPIODeviceType::None, false } }, /* Koro Koro Puzzle - Happy Panechu! (Japan) */
   { "KYGJ", { Config::BackupType::EEPROM_64/*_SENSOR*/, GPIODeviceType::None, false } }, /* Yoshi no Banyuuinryoku (Japan) */
   { "PSAJ", { Config::BackupType::FLASH_128, GPIODeviceType::None, false } }, /* Card e-Reader+ (Japan) */
-  { "U3IJ", { Config::BackupType::Detect, GPIODeviceType::RTC, false } },     /* Bokura no Taiyou - Taiyou Action RPG (Japan) */
-  { "U32J", { Config::BackupType::Detect, GPIODeviceType::RTC, false } },     /* Zoku Bokura no Taiyou - Taiyou Shounen Django (Japan) */
-  { "U33J", { Config::BackupType::Detect, GPIODeviceType::RTC, false } },     /* Shin Bokura no Taiyou - Gyakushuu no Sabata (Japan) */
+  { "U3IJ", { Config::BackupType::Detect, GPIODeviceType::RTC | GPIODeviceType::SolarSensor, false } },     /* Bokura no Taiyou - Taiyou Action RPG (Japan) */
+  { "U32J", { Config::BackupType::Detect, GPIODeviceType::RTC | GPIODeviceType::SolarSensor, false } },     /* Zoku Bokura no Taiyou - Taiyou Shounen Django (Japan) */
+  { "U33J", { Config::BackupType::Detect, GPIODeviceType::RTC | GPIODeviceType::SolarSensor, false } },     /* Shin Bokura no Taiyou - Gyakushuu no Sabata (Japan) */
   { "AXPF", { Config::BackupType::FLASH_128, GPIODeviceType::RTC, false } },  /* Pokemon - Version Saphir (France) */
   { "AXVF", { Config::BackupType::FLASH_128, GPIODeviceType::RTC, false } },  /* Pokemon - Version Rubis (France) */
   { "BPEF", { Config::BackupType::FLASH_128, GPIODeviceType::RTC, false } },  /* Pokemon - Version Emeraude (France) */
