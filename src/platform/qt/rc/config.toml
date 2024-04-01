@@ -57,3 +57,5 @@ show_fps = false
 lock_aspect_ratio = true
 # Snap screen size to integer multiples of the original screen width and height
 use_integer_scaling = false
+# Pause emulator when the main window becomes inactive
+pause_emulator_when_inactive = true

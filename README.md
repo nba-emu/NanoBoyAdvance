@@ -8,8 +8,6 @@ NanoBoyAdvance is a cycle-accurate Game Boy Advance emulator.<br>
 It aims to be as accurate as possible, while also offering enhancements such as
 improved audio quality.<br>
 
-![screenshot1](docs/screenshot.png)
-
 ## Features
 - Very high compatibility and accuracy (see [Accuracy](#accuracy))
 - HQ audio mixer (for games which use Nintendo's MusicPlayer2000 sound engine)

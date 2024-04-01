@@ -9,10 +9,10 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: msys2/setup-msys2@v2
         with:
-          install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-SDL2 mingw-w64-x86_64-glew mingw-w64-x86_64-qt5-static
+          install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-python-jinja mingw-w64-x86_64-python-lxml mingw-w64-x86_64-SDL2 mingw-w64-x86_64-qt5-static
       - name: Build NanoBoyAdvance
         run: |
           cmake \
@@ -20,9 +20,9 @@ jobs:
             -G"Unix Makefiles" \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_CXX_FLAGS="-s" \
+            -DPython_EXECUTABLE="$(which python3)" \
             -DPLATFORM_QT_STATIC=ON \
             -DUSE_STATIC_SDL=ON \
-            -DGLEW_USE_STATIC_LIBS=ON \
             -DRELEASE_BUILD=ON \
             -DQT5_STATIC_DIR="/c/tools/msys64/mingw64/qt5-static"
           cd build
@@ -32,7 +32,7 @@ jobs:
           mkdir upload
           cp -r build/bin/qt/{NanoBoyAdvance.exe,config.toml} upload
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: NanoBoyAdvance-win64
           path: upload
@@ -41,11 +41,11 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y libsdl2-dev libglew-dev qtbase5-dev
+          sudo apt-get install -y python3-jinja2 python3-lxml libsdl2-dev qtbase5-dev
       - name: Build NanoBoyAdvance
         run: |
           cmake -Bbuild -DCMAKE_BUILD_TYPE=Release -DRELEASE_BUILD=ON
@@ -56,7 +56,7 @@ jobs:
           mkdir upload
           cp -r build/bin/qt/{NanoBoyAdvance,config.toml} upload
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: NanoBoyAdvance-linux
           path: upload
@@ -65,20 +65,28 @@ jobs:
   build-macOS:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
       - name: Setup dependencies
         env:
           HOMEBREW_NO_ANALYTICS: 1
-        run: brew install sdl2 glew qt@5
+        run: |
+          brew install sdl2 qt@5
+          python3 -m pip install Jinja2
       - name: Build NanoBoyAdvance
         run: |
           cmake -Bbuild \
             -DCMAKE_CXX_FLAGS="-s" \
             -DUSE_STATIC_SDL=ON \
-            -DGLEW_USE_STATIC_LIBS=ON \
             -DCMAKE_BUILD_TYPE=Release \
+<<<<<<< HEAD
             -DRELEASE_BUILD=ON \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5);$(brew --prefix glew)" \
+=======
+            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5)" \
+>>>>>>> f53171877606cd6916c5b13c022b06bde3e93aa5
             -DMACOS_BUILD_APP_BUNDLE=ON \
             -DMACOS_BUNDLE_QT=ON
           cd build
@@ -96,8 +104,51 @@ jobs:
             -ov -format UDBZ \
             NanoBoyAdvance.dmg
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: NanoBoyAdvance-${{ runner.os }}
+          name: NanoBoyAdvance-${{ runner.os }}-x64
+          path: NanoBoyAdvance.dmg
+          if-no-files-found: error
+
+  build-macOS-arm:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Setup dependencies
+        env:
+          HOMEBREW_NO_ANALYTICS: 1
+        run: |
+          brew install sdl2 qt@5
+          python3 -m pip install Jinja2
+      - name: Build NanoBoyAdvance
+        run: |
+          cmake -Bbuild \
+            -DCMAKE_CXX_FLAGS="-s" \
+            -DUSE_STATIC_SDL=ON \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5)" \
+            -DMACOS_BUILD_APP_BUNDLE=ON \
+            -DMACOS_BUNDLE_QT=ON
+          cd build
+          make -j$(getconf _NPROCESSORS_ONLN)
+      - name: Create disk image
+        run: |
+          mkdir dmg
+          cp -a build/bin/qt/NanoBoyAdvance.app dmg/NanoBoyAdvance.app
+          codesign -s - --deep -f dmg/NanoBoyAdvance.app
+          ln -s /Applications dmg/Applications
+          hdiutil create \
+            -fs HFS+ \
+            -volname NanoBoyAdvance \
+            -srcfolder dmg \
+            -ov -format UDBZ \
+            NanoBoyAdvance.dmg
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: NanoBoyAdvance-${{ runner.os }}-arm64
           path: NanoBoyAdvance.dmg
           if-no-files-found: error

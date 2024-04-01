@@ -59,6 +59,7 @@ void QtConfig::LoadCustomData(toml::value const& data) {
       window.lock_aspect_ratio = toml::find_or<bool>(window_, "lock_aspect_ratio", true);
       window.use_integer_scaling = toml::find_or<bool>(window_, "use_integer_scaling", false);
       window.show_fps = toml::find_or<bool>(window_, "show_fps", false);
+      window.pause_emulator_when_inactive = toml::find_or<bool>(window_, "pause_emulator_when_inactive", true);
     }
   }
 
@@ -90,6 +91,7 @@ void QtConfig::SaveCustomData(
   data["window"]["lock_aspect_ratio"] = window.lock_aspect_ratio;
   data["window"]["use_integer_scaling"] = window.use_integer_scaling;
   data["window"]["show_fps"] = window.show_fps;
+  data["window"]["pause_emulator_when_inactive"] = window.pause_emulator_when_inactive;
 
   data["recent_files"] = recent_files;
 }

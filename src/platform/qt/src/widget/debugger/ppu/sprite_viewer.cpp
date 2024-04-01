@@ -32,6 +32,7 @@ QWidget* SpriteViewer::CreateSpriteIndexInput() {
   m_spin_sprite_index = new QSpinBox{};
   m_spin_sprite_index->setMinimum(0);
   m_spin_sprite_index->setMaximum(127);
+  connect(m_spin_sprite_index, QOverload<int>::of(&QSpinBox::valueChanged), [this](int _) { Update(); });
   return m_spin_sprite_index;
 }
 
@@ -230,10 +231,6 @@ void SpriteViewer::Update() {
   m_label_sprite_mode->setText(k_mode_names[mode]);
   m_check_sprite_affine->setChecked(affine);
   m_check_sprite_mosaic->setChecked(mosaic);
-
-  m_check_sprite_vflip->setEnabled(!affine);
-  m_check_sprite_hflip->setEnabled(!affine);
-  m_check_sprite_double_size->setEnabled(affine);
 
   const int signed_x = x >= 240 ? ((int)x - 512) : (int)x;
 

@@ -20,6 +20,7 @@
 #include <QKeyEvent>
 #include <QLocale>
 #include <QStatusBar>
+#include <QWindow>
 #include <unordered_map>
 
 #include "widget/main_window.hpp"
@@ -40,10 +41,10 @@ MainWindow::MainWindow(
   setWindowTitle(base_window_title);
   setAcceptDrops(true);
 
+  config->Load();
+
   screen = std::make_shared<Screen>(this, config);
   setCentralWidget(screen.get());
-
-  config->Load();
 
   auto menu_bar = new QMenuBar(this);
   setMenuBar(menu_bar);
@@ -88,6 +89,19 @@ MainWindow::~MainWindow() {
   emu_thread->Stop();
 
   delete controller_manager;
+}
+
+bool MainWindow::Initialize() {
+  screen->windowHandle()->create();
+  if(!screen->Initialize()) {
+    QMessageBox::critical(this, QApplication::instance()->applicationName(),
+                          tr("Failed to initialize graphics subsystem.\n\n"
+                          "Make sure that your hardware supports OpenGL 3.3 or later, "
+                          "and you have the latest driver version installed."));
+    return false;
+  }
+
+  return true;
 }
 
 void MainWindow::CreateFileMenu() {
@@ -366,6 +380,7 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
   menu->addSeparator();
 
   CreateBooleanOption(menu, "Show FPS", &config->window.show_fps);
+  CreateBooleanOption(menu, "Pause emulator when inactive", &config->window.pause_emulator_when_inactive);
 }
 
 void MainWindow::CreateConfigMenu() {
@@ -613,7 +628,7 @@ void MainWindow::PromptUserForReset() {
 }
 
 bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
-  auto type = event->type();
+  const auto type = event->type();
 
   if(obj == this && (type == QEvent::KeyPress || type == QEvent::KeyRelease)) {
     auto key = dynamic_cast<QKeyEvent*>(event)->key();
@@ -633,7 +648,7 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
     if(pressed && key == Qt::Key_Escape) {
       SetFullscreen(false);
     }
-  } else if(type == QEvent::FileOpen) {
+  } if(type == QEvent::FileOpen) {
 	  auto file = dynamic_cast<QFileOpenEvent*>(event)->file();
     LoadROM(file.toStdU16String());
   } else if(type == QEvent::Drop) {
@@ -649,6 +664,12 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
   }
 
   return QObject::eventFilter(obj, event);
+}
+
+void MainWindow::changeEvent(QEvent* event) {
+  if(event->type() == QEvent::ActivationChange) {
+    ApplyPauseState();
+  }
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent* event) {
@@ -679,20 +700,25 @@ void MainWindow::Reset() {
 }
 
 void MainWindow::SetPause(bool paused) {
-  if(!paused) {
-    screen->SetForceClear(false);
-  }
+  pause_action->setChecked(paused);
+  ApplyPauseState();
+}
+
+void MainWindow::ApplyPauseState() {
+  const bool window_inactive_and_should_pause = !isActiveWindow() && config->window.pause_emulator_when_inactive;
+  const bool paused = pause_action->isChecked() || window_inactive_and_should_pause;
 
   emu_thread->SetPause(paused);
   config->audio_dev->SetPause(paused);
-  pause_action->setChecked(paused);
 }
 
 void MainWindow::Stop() {
   if(emu_thread->IsRunning()) {
     core = emu_thread->Stop();
     config->audio_dev->Close();
-    screen->SetForceClear(true);
+
+    // Clear the screen.
+    screen->Draw(nullptr);
 
     // Clear the list of save state slots:
     game_loaded = false;
@@ -817,13 +843,6 @@ void MainWindow::LoadROM(std::u16string const& path) {
   // If the emulator is currently paused force-clear the screen.
   core->Reset();
   emu_thread->Start(std::move(core));
-
-  /**
-   * If the the emulator is paused we force-clear the screen to avoid 
-   * presenting the last frame from before pausing, since that could be confusing.
-   * In the other case we explicitly disable force-clear, because it is currently enabled (due to the call to Stop() at the top).
-   */
-  screen->SetForceClear(pause_action->isChecked());
 
   UpdateSolarSensorLevel();
   UpdateMenuBarVisibility();
@@ -955,8 +974,8 @@ void MainWindow::SetFullscreen(bool value) {
 void MainWindow::UpdateSolarSensorLevel() {
   auto level = config->cartridge.solar_sensor_level;
 
-  if(core) {
-    auto solar_sensor = core->GetROM().GetGPIODevice<nba::SolarSensor>();
+  if(core_not_thread_safe) {
+    nba::SolarSensor* solar_sensor = core_not_thread_safe->GetROM().GetGPIODevice<nba::SolarSensor>();
 
     if(solar_sensor) {
       solar_sensor->SetLightLevel(level);

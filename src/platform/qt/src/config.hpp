@@ -77,6 +77,7 @@ struct QtConfig final : nba::PlatformConfig {
     bool lock_aspect_ratio = true;
     bool use_integer_scaling = false;
     bool show_fps = false;
+    bool pause_emulator_when_inactive = true;
   } window;
 
   std::vector<std::string> recent_files;

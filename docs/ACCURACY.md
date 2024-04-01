@@ -3,11 +3,11 @@
 
 Comparison of NBA and other emulators on the [mGBA test suite](https://github.com/mgba-emu/suite) by endrift:
 
-Testname      | Test Count | NanoBoyAdvance 1.8 | mGBA 0.10.3 |    VBA-M 2.1.9 | Ares v135 | SkyEmu V3  |
+Testname      | Test Count | NanoBoyAdvance 1.8 | mGBA 0.10.3 |    VBA-M 2.1.9 | Ares v137 | SkyEmu V3  |
 --------------|------------|--------------------|-------------|----------------|-----------|------------|
 Memory        |       1552 |               1552 |        1552 |           1426 |      1552 |       1552 |
 IO read       |        130 |                130 |         120 |            100 |       130 |        130 |
-Timing        |       2020 |               2020 |        1768 |           1024 |      1608 |       2020 |
+Timing        |       2020 |               2020 |        1768 |           1024 |      1890 |       2020 |
 Timer         |        936 |                936 |         744 |            440 |       465 |        706 |
 Timer IRQ     |         90 |                 90 |          70 |              8 |         0 |         90 |
 Shifter       |        140 |                140 |         140 |            132 |       140 |        140 |
@@ -15,7 +15,7 @@ Carry         |         93 |                 93 |          93 |             93 |
 Multiply Long |         72 |                 52 |          52 |             52 |        52 |         52 |
 BIOS math     |        615 |                615 |         615 |            615 |       615 |        615 |
 DMA tests     |       1256 |               1256 |        1232 |           1068 |      1212 |       1256 |
-Misc Edge Case|         10 |                  9 |           4 |              8 |         1 |          4 |
+Misc Edge Case|         10 |                 10 |           4 |              8 |         1 |          4 |
 Layer Toggle  |          1 |               pass |        fail |           pass |      fail |       pass |
 OAM Update    |          1 |               pass |        fail |           fail |      fail |       pass |
 

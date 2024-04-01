@@ -39,6 +39,7 @@ struct MainWindow : QMainWindow {
 
  ~MainWindow();
 
+  bool Initialize();
   void LoadROM(std::u16string const& path);
 
 signals:
@@ -49,6 +50,7 @@ private slots:
 
 protected:
   bool eventFilter(QObject* obj, QEvent* event) override;
+  void changeEvent(QEvent* event) override;
   void dragEnterEvent(QDragEnterEvent* event) override;
   void mouseDoubleClickEvent(QMouseEvent* event) override;
 
@@ -114,6 +116,7 @@ private:
 
   void Reset();
   void SetPause(bool paused);
+  void ApplyPauseState();
   void Stop();
   void UpdateMenuBarVisibility();
   void UpdateMainWindowActionList();
@@ -140,7 +143,7 @@ private:
 
   // The PPU debuggers do not access the core in a thread-safe way yet.
   // So until that is fixed we have to keep a raw pointer around...
-  nba::CoreBase* core_not_thread_safe;
+  nba::CoreBase* core_not_thread_safe{};
 
   QAction* pause_action;
   InputWindow* input_window;
