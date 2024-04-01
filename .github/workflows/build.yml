@@ -81,12 +81,8 @@ jobs:
             -DCMAKE_CXX_FLAGS="-s" \
             -DUSE_STATIC_SDL=ON \
             -DCMAKE_BUILD_TYPE=Release \
-<<<<<<< HEAD
             -DRELEASE_BUILD=ON \
-            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5);$(brew --prefix glew)" \
-=======
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5)" \
->>>>>>> f53171877606cd6916c5b13c022b06bde3e93aa5
             -DMACOS_BUILD_APP_BUNDLE=ON \
             -DMACOS_BUNDLE_QT=ON
           cd build
@@ -129,6 +125,7 @@ jobs:
             -DCMAKE_CXX_FLAGS="-s" \
             -DUSE_STATIC_SDL=ON \
             -DCMAKE_BUILD_TYPE=Release \
+            -DRELEASE_BUILD=ON \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5)" \
             -DMACOS_BUILD_APP_BUNDLE=ON \
             -DMACOS_BUNDLE_QT=ON
