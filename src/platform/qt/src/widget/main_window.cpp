@@ -974,8 +974,8 @@ void MainWindow::SetFullscreen(bool value) {
 void MainWindow::UpdateSolarSensorLevel() {
   auto level = config->cartridge.solar_sensor_level;
 
-  if(core) {
-    auto solar_sensor = core->GetROM().GetGPIODevice<nba::SolarSensor>();
+  if(core_not_thread_safe) {
+    nba::SolarSensor* solar_sensor = core_not_thread_safe->GetROM().GetGPIODevice<nba::SolarSensor>();
 
     if(solar_sensor) {
       solar_sensor->SetLightLevel(level);

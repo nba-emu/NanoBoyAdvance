@@ -143,7 +143,7 @@ private:
 
   // The PPU debuggers do not access the core in a thread-safe way yet.
   // So until that is fixed we have to keep a raw pointer around...
-  nba::CoreBase* core_not_thread_safe;
+  nba::CoreBase* core_not_thread_safe{};
 
   QAction* pause_action;
   InputWindow* input_window;
