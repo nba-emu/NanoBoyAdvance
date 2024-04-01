@@ -22,6 +22,7 @@ void GPIO::LoadState(SaveState const& state) {
 
   for(auto& device : devices) {
     device->LoadState(state);
+    device->SetPortDirections(wr_mask);
   }
 }
 
