@@ -19,7 +19,7 @@ find_package(OpenGL REQUIRED)
 include(FetchContent)
 FetchContent_Declare(glad
   GIT_REPOSITORY https://github.com/Dav1dde/glad.git
-  GIT_TAG        adc3d7a1d704e099581ca25bc5bbdf728c2db67b # v2.0.5-2-gadc3d7a
+  GIT_TAG        658f48e72aee3c6582e80b05ac0f8787a64fe6bb # v2.0.6
   SOURCE_SUBDIR  cmake
 )
 FetchContent_MakeAvailable(glad)
@@ -32,7 +32,7 @@ if(USE_SYSTEM_TOML11)
 else()
   FetchContent_Declare(toml11
     GIT_REPOSITORY https://github.com/ToruNiina/toml11.git
-    GIT_TAG        dcfe39a783a94e8d52c885e5883a6fbb21529019 # v3.7.1
+    GIT_TAG        d4eb5f3c9d8557b3820c80d55c41068839341b27 # v3.8.1
   )
   set(toml11_INSTALL OFF CACHE BOOL "" FORCE)
   FetchContent_MakeAvailable(toml11)
