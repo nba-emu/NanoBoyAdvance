@@ -5,6 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
+#include <algorithm>
 #include <cmath>
 #include <nba/common/dsp/resampler/cosine.hpp>
 #include <nba/common/dsp/resampler/cubic.hpp>
