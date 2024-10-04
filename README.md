@@ -34,9 +34,9 @@ A lot of research and attention to detail has been put into developing this core
 
 - Cycle-accurate emulation of most components, including: CPU, DMA, timers, PPU and Game Pak prefetch
 - Passes all AGS aging cartridge tests (NBA was the first public emulator to achieve this)
-- Passes most tests in the [mGBA test suite](https://github.com/mgba-emu/suite) (see [mGBA suite comparison](docs/ACCURACY.md#mGBA-suite-comparison) for more details)
+- Passes most tests in the [mGBA test suite](https://github.com/mgba-emu/suite)
 - Passes [ARMWrestler](https://github.com/destoer/armwrestler-gba-fixed), [gba-suite](https://github.com/jsmolka/gba-tests) and [FuzzARM](https://github.com/DenSinH/FuzzARM) CPU tests
-- Very high compatibility, including games that require emulation of peculiar hardware edge-cases (see [Game compatibility](docs/ACCURACY.md#Game-compatibility))
+- Very high compatibility, including games that require emulation of peculiar hardware edge-cases
 
 ## Compiling
 
