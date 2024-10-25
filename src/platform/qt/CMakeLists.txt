@@ -135,7 +135,12 @@ if(WIN32 AND PLATFORM_QT_STATIC)
   target_link_libraries(NanoBoyAdvance-Qt PRIVATE z zstd $<$<CXX_COMPILER_ID:GNU>:gcc stdc++ winpthread>)
 endif()
 
-install(TARGETS NanoBoyAdvance-Qt DESTINATION bin)
+if(APPLE AND MACOS_BUILD_APP_BUNDLE)
+  install(TARGETS NanoBoyAdvance-Qt BUNDLE DESTINATION Applications)
+else()
+  install(TARGETS NanoBoyAdvance-Qt DESTINATION bin)
+endif()
+
 # Variables LINUX and BSD were introduced only with CMake 3.25.
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   install(FILES rc/io.nanoboyadvance.NanoBoyAdvance.png DESTINATION share/icons/hicolor/128x128/apps)
