@@ -23,7 +23,7 @@ jobs:
             -DPython_EXECUTABLE="$(which python3)" \
             -DPLATFORM_QT_STATIC=ON \
             -DUSE_STATIC_SDL=ON \
-            -DQT5_STATIC_DIR="/c/tools/msys64/mingw64/qt5-static"
+            -DQT5_STATIC_DIR="/mingw64/qt5-static"
           cd build
           make -j$NUMBER_OF_PROCESSORS
       - name: Collect artifacts
