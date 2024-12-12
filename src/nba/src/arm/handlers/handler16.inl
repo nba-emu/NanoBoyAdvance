@@ -183,12 +183,18 @@ void Thumb_ALU(u16 instruction) {
       break;
     }
     case ThumbDataOp::MUL: {
-      TickMultiply(state.reg[dst]);
+      u32 lhs = state.reg[src];
+      u32 rhs = state.reg[dst];
+      bool full = TickMultiply(rhs);
       pipe.access = Access::Code | Access::Nonsequential;
 
-      state.reg[dst] *= state.reg[src];
+      state.reg[dst] = lhs * rhs;
       SetZeroAndSignFlag(state.reg[dst]);
-      state.cpsr.f.c = 0;
+      if (full) {
+        state.cpsr.f.c = MultiplyCarrySimple(rhs);
+      } else {
+        state.cpsr.f.c = MultiplyCarryLo(lhs, rhs);
+      }
       break;
     }
     case ThumbDataOp::BIC: {

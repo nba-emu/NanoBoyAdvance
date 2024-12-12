@@ -247,15 +247,22 @@ void ARM_Multiply(u32 instruction) {
   auto rhs = GetReg(op2);
   auto result = lhs * rhs;
 
-  TickMultiply(rhs);
+  bool full = TickMultiply(rhs);
 
+  u32 accum = 0;
   if (accumulate) {
-    result += GetReg(op3);
+    accum = GetReg(op3);
+    result += accum;
     bus.Idle();
   }
 
   if (set_flags) {
     SetZeroAndSignFlag(result);
+    if (full) {
+      state.cpsr.f.c = MultiplyCarrySimple(rhs);
+    } else {
+      state.cpsr.f.c = MultiplyCarryLo(lhs, rhs, accum);
+    }
   }
 
   SetReg(dst, result);
@@ -273,7 +280,7 @@ void ARM_MultiplyLong(u32 instruction) {
   int dst_lo = (instruction >> 12) & 0xF;
   int dst_hi = (instruction >> 16) & 0xF;
 
-  s64 result;
+  u64 result;
 
   pipe.access = Access::Code | Access::Nonsequential;
   state.r15 += 4;
@@ -284,18 +291,21 @@ void ARM_MultiplyLong(u32 instruction) {
   if (sign_extend) {
     result = s64(s32(lhs)) * s64(s32(rhs));
   } else {
-    result = s64(u64(lhs) * u64(rhs));
+    result = u64(lhs) * u64(rhs);
   }
 
-  TickMultiply<sign_extend>(rhs);
+  bool full = TickMultiply<sign_extend>(rhs);
   bus.Idle();
 
+  u32 accum_lo = 0;
+  u32 accum_hi = 0;
   if (accumulate) {
-    s64 value = GetReg(dst_hi);
+    accum_lo = GetReg(dst_lo);
+    accum_hi = GetReg(dst_hi);
 
-    value <<= 16;
-    value <<= 16;
-    value  |= GetReg(dst_lo);
+    u64 value = accum_hi;
+    value <<= 32;
+    value |= accum_lo;
 
     result += value;
     bus.Idle();
@@ -306,6 +316,11 @@ void ARM_MultiplyLong(u32 instruction) {
   if (set_flags) {
     state.cpsr.f.n = result_hi >> 31;
     state.cpsr.f.z = result == 0;
+    if (full) {
+      state.cpsr.f.c = MultiplyCarryHi<sign_extend>(lhs, rhs, accum_hi);
+    } else {
+      state.cpsr.f.c = MultiplyCarryLo(lhs, rhs, accum_lo);
+    }
   }
 
   SetReg(dst_lo, result & 0xFFFFFFFF);
