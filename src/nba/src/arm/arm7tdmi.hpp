@@ -111,7 +111,7 @@ struct ARM7TDMI {
       }
 
       for(int i = 0; i < 5; i++) {
-        state.reg[8 + i] = state.bank[new_bank][i];
+        state.reg[8 + i] = state.bank[BANK_FIQ][i];
       }
     }
 
