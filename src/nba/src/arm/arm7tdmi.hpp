@@ -87,7 +87,7 @@ struct ARM7TDMI {
       p_spsr = &state.spsr[new_bank];
     } else {
       /* In system/user mode reading from SPSR returns the current CPSR value.
-       * However writes to SPSR appear to do nothing.
+       * However, writes to SPSR appear to do nothing.
        * We take care of this fact in the MSR implementation.
        */
       p_spsr = &state.cpsr;
@@ -118,10 +118,16 @@ struct ARM7TDMI {
     state.bank[old_bank][5] = state.r13;
     state.bank[old_bank][6] = state.r14;
 
-    state.r13 = state.bank[new_bank][5];
-    state.r14 = state.bank[new_bank][6];
-
-    cpu_mode_is_invalid = new_bank == BANK_INVALID;
+    if(new_bank != BANK_INVALID) [[likely]] {
+      state.r13 = state.bank[new_bank][5];
+      state.r14 = state.bank[new_bank][6];
+      cpu_mode_is_invalid = false;
+    } else {
+      for(int i = 0; i < 7; i++) {
+        state.reg[8 + i] = 0u;
+      }
+      cpu_mode_is_invalid = true;
+    }
   }
 
   void LoadState(SaveState const& save_state);
@@ -136,17 +142,12 @@ private:
   friend struct TableGen;
 
   auto GetReg(int id) -> u32 {
-    u32 result = 0;
-    bool is_banked = id >= 8 && id != 15;
+    u32 result = state.reg[id];
 
-    if(unlikely(ldm_usermode_conflict && is_banked)) {
+    if(unlikely(ldm_usermode_conflict && id >= 8 && id != 15)) {
       // This array holds the current user/sys bank value only if the CPU wasn't in user or system mode all along during the user mode LDM instruction.
       // We take care in the LDM implementation that this branch is only taken if that was the case.
       result |= state.bank[BANK_NONE][id - 8];
-    }
-
-    if(likely(!cpu_mode_is_invalid || !is_banked)) {
-      result |= state.reg[id];
     }
 
     return result;
