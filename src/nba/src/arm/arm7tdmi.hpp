@@ -21,6 +21,7 @@
  * - test LDR, STR, LDM and STM behavior when writing back the address to r15
  * - test which bits of CPSR and SPSR are actually writable
  * - more accurately model when CPSR.mask_irq and the IRQ line are sampled
+ * - test if Thumb CMP r15, rX loads SPSR into CPSR
  */
 
 namespace nba::core::arm {
