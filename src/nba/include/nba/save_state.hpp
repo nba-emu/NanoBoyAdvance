@@ -16,7 +16,7 @@ namespace nba {
 
 struct SaveState {
   static constexpr u32 kMagicNumber = 0x5353424E; // NBSS
-  static constexpr u32 kCurrentVersion = 9;
+  static constexpr u32 kCurrentVersion = 10;
 
   u32 magic;
   u32 version;
@@ -25,9 +25,9 @@ struct SaveState {
   struct ARM {
     struct RegisterFile {
       u32 gpr[16];
-      u32 bank[6][7];
+      u32 bank[7][7];
       u32 cpsr;
-      u32 spsr[6];
+      u32 spsr[7];
     } regs;
 
     struct Pipeline {

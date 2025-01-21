@@ -28,8 +28,8 @@ enum Bank {
   BANK_ABT  = 3,
   BANK_IRQ  = 4,
   BANK_UND  = 5,
+  BANK_INVALID = 6,
   BANK_COUNT,
-  BANK_INVALID
 };
 
 enum Condition {
