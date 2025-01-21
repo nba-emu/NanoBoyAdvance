@@ -126,6 +126,7 @@ struct ARM7TDMI {
       for(int i = 0; i < 7; i++) {
         state.reg[8 + i] = 0u;
       }
+      state.spsr[BANK_INVALID] = 0u;
       cpu_mode_is_invalid = true;
     }
   }
@@ -169,7 +170,7 @@ private:
 
   auto GetSPSR() -> StatusRegister {
     // CPSR/SPSR bit4 is forced to one on the ARM7TDMI:
-    u32 spsr = 0x00000010;
+    u32 spsr = p_spsr->v | 0x00000010u;
 
     if(unlikely(ldm_usermode_conflict)) {
       /* TODO: current theory is that the value gets OR'd with CPSR,
@@ -177,10 +178,6 @@ private:
        * But this needs to be confirmed.
        */
       spsr |= state.cpsr.v;
-    }
-
-    if(likely(!cpu_mode_is_invalid)) {
-      spsr |= p_spsr->v;
     }
 
     return StatusRegister{spsr};
