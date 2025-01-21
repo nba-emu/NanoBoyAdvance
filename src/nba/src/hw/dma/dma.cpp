@@ -155,19 +155,17 @@ bool DMA::HasVideoTransferDMA() {
 }
 
 auto DMA::Run() -> int {
-  bus.Step(1);
-
   const auto timestamp0 = scheduler.GetTimestampNow();
+
+  bus.Step(1);
 
   do {
     RunChannel();
   } while(IsRunning());
 
-  const auto timestamp1 = scheduler.GetTimestampNow();
-
   bus.Step(1);
 
-  return (int)(timestamp1 - timestamp0);
+  return (int)(scheduler.GetTimestampNow() - timestamp0);
 }
 
 void DMA::RunChannel() {
