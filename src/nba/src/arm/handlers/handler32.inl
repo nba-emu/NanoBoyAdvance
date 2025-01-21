@@ -544,7 +544,7 @@ void ARM_BlockDataTransfer(u32 instruction) {
   int base = (instruction >> 16) & 0xF;
   int list = instruction & 0xFFFF;
 
-  Mode mode;
+  Mode mode = state.cpsr.f.mode;
   bool transfer_pc = list & (1 << 15);
   int  first = 0;
   int  bytes = 0;
@@ -571,10 +571,15 @@ void ARM_BlockDataTransfer(u32 instruction) {
     bytes = 64;
   }
 
-  bool switch_mode = user_mode && (!load || !transfer_pc);
+  /**
+   * Whether the instruction is a LDM^ instruction and we need to switch to user mode.
+   * Note that we only switch to user mode if we aren't in user or system mode already.
+   * This is important for emulation of the LDM user mode register bus conflict,
+   * since the implementation of this quirk in GetReg() and SetReg() only works if the CPU isn't in user or system mode anymore.
+   */
+  const bool switch_mode = user_mode && (!load || !transfer_pc) && mode != MODE_USR && mode != MODE_SYS;
 
   if (switch_mode) {
-    mode = state.cpsr.f.mode;
     SwitchMode(MODE_USR);
   }
 
@@ -633,7 +638,7 @@ void ARM_BlockDataTransfer(u32 instruction) {
     bus.Idle();
 
     if (switch_mode) {
-      /* During the following two cycles of a usermode LDM,
+      /* During the following two cycles of a user mode LDM,
        * register accesses will go to both the user bank and original bank.
        */
       ldm_usermode_conflict = true;

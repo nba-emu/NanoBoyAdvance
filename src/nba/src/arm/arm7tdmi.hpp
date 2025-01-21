@@ -140,6 +140,8 @@ private:
     bool is_banked = id >= 8 && id != 15;
 
     if(unlikely(ldm_usermode_conflict && is_banked)) {
+      // This array holds the current user/sys bank value only if the CPU wasn't in user or system mode all along during the user mode LDM instruction.
+      // We take care in the LDM implementation that this branch is only taken if that was the case.
       result |= state.bank[BANK_NONE][id - 8];
     }
 
@@ -154,6 +156,8 @@ private:
     bool is_banked = id >= 8 && id != 15;
 
     if(unlikely(ldm_usermode_conflict && is_banked)) {
+      // This array holds the current user/sys bank value only if the CPU wasn't in user or system mode all along during the user mode LDM instruction.
+      // We take care in the LDM implementation that this branch is only taken if that was the case.
       state.bank[BANK_NONE][id - 8] = value;
     }
 
