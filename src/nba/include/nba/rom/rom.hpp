@@ -133,6 +133,11 @@ struct ROM {
     u16 data;
 
     if(!sequential) {
+      // According to Reiner Ziegler official GBA cartridges latch A0 to A23 (not just A0 to A15)
+      // "In theory, you can read an entire GBA ROM with just one non-sequential read (address 0) and all of the other
+      //  reads as sequential so address counters must be used on most address lines to exactly emulate a GBA ROM.
+      //  However, you only need to use address latch / counters on A0-A15 in order to satisfy the GBA since A16-A23 are always accurate."
+      // Source: https://reinerziegler.de.mirrors.gg8.se/GBA/gba.htm#GBA%20cartridges
       rom_address_latch = address & rom_mask;
     }
 
