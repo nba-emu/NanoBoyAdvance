@@ -8,6 +8,7 @@
 #pragma once
 
 #include <array>
+#include <algorithm>
 #include <nba/common/compiler.hpp>
 #include <nba/log.hpp>
 #include <nba/save_state.hpp>

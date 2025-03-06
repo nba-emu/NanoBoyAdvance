@@ -195,79 +195,54 @@ void DoShift(int opcode, u32& operand, u8 amount, int& carry, bool immediate) {
 }
 
 void LSL(u32& operand, u8 amount, int& carry) {
-  if (amount == 0) return;
-
-  if (amount >= 32) {
-    if (amount > 32) {
-      carry = 0;
-    } else {
-      carry = operand & 1;
-    }
-    operand = 0;
-    return;
+  const int adj_amount = std::min<int>(amount, 33);
+  const u32 result = (u32)((u64)operand << adj_amount);
+  if(adj_amount != 0) {
+    carry = (u32)((u64)operand << (adj_amount - 1)) >> 31;
   }
-
-  carry = (operand << (amount - 1)) >> 31;
-  operand <<= amount;
+  operand = result;
 }
 
 void LSR(u32& operand, u8 amount, int& carry, bool immediate) {
-  if (amount == 0) {
-    // LSR #0 equals to LSR #32
-    if (immediate) {
-      amount = 32;
-    } else {
-      return;
-    }
+  // LSR #32 is encoded as LSR #0
+  if(immediate && amount == 0) {
+    amount = 32;
   }
 
-  if (amount >= 32) {
-    if (amount > 32) {
-      carry = 0;
-    } else {
-      carry = operand >> 31;
-    }
-    operand = 0;
-    return;
+  const int adj_amount = std::min<int>(amount, 33);
+  const u32 result = (u32)((u64)operand >> adj_amount);
+  if(adj_amount != 0) {
+    carry = ((u64)operand >> (adj_amount - 1)) & 1u;
   }
-
-  carry = (operand >> (amount - 1)) & 1;
-  operand >>= amount;
+  operand = result;
 }
 
 void ASR(u32& operand, u8 amount, int& carry, bool immediate) {
-  if (amount == 0) {
-    // ASR #0 equals to ASR #32
-    if (immediate) {
-      amount = 32;
-    } else {
-      return;
-    }
+  // ASR #32 is encoded as ASR #0
+  if(immediate && amount == 0) {
+    amount = 32;
   }
 
-  int msb = operand >> 31;
-
-  if (amount >= 32) {
-    carry = msb;
-    operand = 0xFFFFFFFF * msb;
-    return;
+  const int adj_amount = std::min<int>(amount, 33);
+  const u32 result = (u32)((s64)(s32)operand >> adj_amount);
+  if(adj_amount != 0) {
+    carry = ((s64)(s32)operand >> (adj_amount - 1)) & 1u;
   }
-
-  carry = (operand >> (amount - 1)) & 1;
-  operand = (operand >> amount) | ((0xFFFFFFFF * msb) << (32 - amount));
+  operand = result;
 }
 
 void ROR(u32& operand, u8 amount, int& carry, bool immediate) {
-  // ROR #0 equals to RRX #1
-  if (amount != 0 || !immediate) {
-    if (amount == 0) return;
-
-    amount %= 32;
-    operand = (operand >> amount) | (operand << (32 - amount));
-    carry = operand >> 31;
-  } else {
-    auto lsb = operand & 1;
+  // RRX #1 is encoded as ROR #0
+  if(immediate && amount == 0) {
+    const int lsb = operand & 1;
     operand = (operand >> 1) | (carry << 31);
     carry = lsb;
+  } else {
+    if(amount == 0) {
+      return;
+    }
+    const int adj_amount = amount & 31;
+    operand = (operand >> adj_amount) | (operand << ((32 - adj_amount) & 31));
+    carry = operand >> 31;
   }
 }
