@@ -279,7 +279,7 @@ void Mosaic::Reset() {
   bg._counter_y = 0;
   obj.size_x = 1;
   obj.size_y = 1;
-  bg._counter_y = 0;
+  obj._counter_y = 0;
 }
 
 void Mosaic::Write(int address, u8 value) {
