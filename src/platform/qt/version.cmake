@@ -3,7 +3,7 @@ find_package(Git)
 
 set(VERSION_MAJOR 1)
 set(VERSION_MINOR 8)
-set(VERSION_PATCH 1)
+set(VERSION_PATCH 2)
 
 option(RELEASE_BUILD "Build a release version" OFF)
 
