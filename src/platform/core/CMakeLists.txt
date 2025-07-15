@@ -48,7 +48,7 @@ else()
 
   FetchContent_Declare(unarr
     GIT_REPOSITORY https://github.com/nba-emu/unarr.git
-    GIT_TAG        8b57a470a67b131eb6bcb2c314120c419af4a3fe # v1.1.1
+    GIT_TAG        839066857b68a78213510f47ccbe72e2945b1b1d # v1.1.1
   )
   FetchContent_GetProperties(unarr)
   if (NOT unarr_POPULATED)
