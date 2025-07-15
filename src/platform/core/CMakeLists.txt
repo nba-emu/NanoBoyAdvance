@@ -47,8 +47,8 @@ else()
   set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
   FetchContent_Declare(unarr
-    GIT_REPOSITORY https://github.com/selmf/unarr.git
-    GIT_TAG        b211040df83dee513362cdeb9bd87afa26fd5e38 # v1.1.1
+    GIT_REPOSITORY https://github.com/nba-emu/unarr.git
+    GIT_TAG        8b57a470a67b131eb6bcb2c314120c419af4a3fe # v1.1.1
   )
   FetchContent_GetProperties(unarr)
   if (NOT unarr_POPULATED)
