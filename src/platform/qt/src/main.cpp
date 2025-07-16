@@ -44,7 +44,12 @@ auto create_window(QApplication& app, int argc, char** argv) -> std::unique_ptr<
     if(rom.is_relative()) {
       rom = fs::current_path() / rom;
     }
-    fs::current_path(fs::path{argv[0]}.remove_filename());
+
+    fs::path binary_directory = fs::path{argv[0]}.remove_filename();
+    if(binary_directory.is_relative()) {
+      binary_directory = fs::current_path() / binary_directory;
+    }
+    fs::current_path(binary_directory);
   }
 
   auto window = std::make_unique<MainWindow>(&app);
