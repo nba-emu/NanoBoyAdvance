@@ -1,4 +1,5 @@
 option(USE_STATIC_SDL "Link against static version of SDL library." OFF)
+option(USE_SYSTEM_GLAD "Use system-provided glad library." OFF)
 option(USE_SYSTEM_TOML11 "Use system-provided toml11 library." OFF)
 option(USE_SYSTEM_UNARR "Use system-provided unarr library." OFF)
 
@@ -17,12 +18,18 @@ endif()
 find_package(OpenGL REQUIRED)
 
 include(FetchContent)
-FetchContent_Declare(glad
-  GIT_REPOSITORY https://github.com/Dav1dde/glad.git
-  GIT_TAG        658f48e72aee3c6582e80b05ac0f8787a64fe6bb # v2.0.6
-  SOURCE_SUBDIR  cmake
-)
-FetchContent_MakeAvailable(glad)
+
+if(USE_SYSTEM_GLAD)
+  find_package(Glad CONFIG REQUIRED)
+else()
+  FetchContent_Declare(glad
+    GIT_REPOSITORY https://github.com/Dav1dde/glad.git
+    GIT_TAG        658f48e72aee3c6582e80b05ac0f8787a64fe6bb # v2.0.6
+    SOURCE_SUBDIR  cmake
+  )
+  FetchContent_MakeAvailable(glad)
+endif()
+
 glad_add_library(glad_gl_core_33 STATIC
   LANGUAGE c REPRODUCIBLE API gl:core=3.3 EXTENSIONS NONE
 )
