@@ -35,11 +35,11 @@ glad_add_library(glad_gl_core_33 STATIC
 )
 
 if(USE_SYSTEM_TOML11)
-  find_package(toml11 3.7 REQUIRED)
+  find_package(toml11 4.0 REQUIRED)
 else()
   FetchContent_Declare(toml11
     GIT_REPOSITORY https://github.com/ToruNiina/toml11.git
-    GIT_TAG        d4eb5f3c9d8557b3820c80d55c41068839341b27 # v3.8.1
+    GIT_TAG        be08ba2be2a964edcdb3d3e3ea8d100abc26f286 # v4.4.0
   )
   set(toml11_INSTALL OFF CACHE BOOL "" FORCE)
   FetchContent_MakeAvailable(toml11)
