@@ -47,9 +47,7 @@ struct PlatformConfig : Config {
 
 protected:
   virtual void LoadCustomData(toml::value const& data) {}
-  virtual void SaveCustomData(
-    toml::basic_value<toml::preserve_comments>& data
-  ) {};
+  virtual void SaveCustomData(toml::value& data) {}
 };
 
 } // namespace nba

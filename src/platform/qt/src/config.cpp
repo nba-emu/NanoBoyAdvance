@@ -9,66 +9,52 @@
 
 void QtConfig::LoadCustomData(toml::value const& data) {
   if(data.contains("input")) {
-    auto input_result = toml::expect<toml::value>(data.at("input"));
+    using Map = Input::Map;
 
-    if(input_result.is_ok()) {
-      using Map = Input::Map;
+    auto input_ = data.at("input");
 
-      auto input_ = input_result.unwrap();
+    input.controller_guid = toml::find_or<std::string>(input_, "controller_guid", "");
+    input.hold_fast_forward = toml::find_or<bool>(input_, "hold_fast_forward", true);
 
-      input.controller_guid = toml::find_or<std::string>(input_, "controller_guid", "");
-      input.hold_fast_forward = toml::find_or<bool>(input_, "hold_fast_forward", true);
+    const auto get_map = [&](toml::value const& value, std::string key) {
+      return Map::FromArray(toml::find_or<std::array<int, 5>>(value, key, {0, -1, -1, -1, 0}));
+    };
 
-      const auto get_map = [&](toml::value const& value, std::string key) {
-        return Map::FromArray(toml::find_or<std::array<int, 5>>(value, key, {0, -1, -1, -1, 0}));
-      };
+    input.fast_forward = get_map(input_, "fast_forward");
+  
+    if(input_.contains("gba")) {
+      auto gba = input_.at("gba");
 
-      input.fast_forward = get_map(input_, "fast_forward");
-    
-      if(input_.contains("gba")) {
-        auto gba_result = toml::expect<toml::value>(input_.at("gba"));
-
-        if(gba_result.is_ok()) {
-          auto gba = gba_result.unwrap();
-
-          input.gba[0] = get_map(gba, "a");
-          input.gba[1] = get_map(gba, "b");
-          input.gba[2] = get_map(gba, "select");
-          input.gba[3] = get_map(gba, "start");
-          input.gba[4] = get_map(gba, "right");
-          input.gba[5] = get_map(gba, "left");
-          input.gba[6] = get_map(gba, "up");
-          input.gba[7] = get_map(gba, "down");
-          input.gba[8] = get_map(gba, "r");
-          input.gba[9] = get_map(gba, "l");
-        }
-      }
+      input.gba[0] = get_map(gba, "a");
+      input.gba[1] = get_map(gba, "b");
+      input.gba[2] = get_map(gba, "select");
+      input.gba[3] = get_map(gba, "start");
+      input.gba[4] = get_map(gba, "right");
+      input.gba[5] = get_map(gba, "left");
+      input.gba[6] = get_map(gba, "up");
+      input.gba[7] = get_map(gba, "down");
+      input.gba[8] = get_map(gba, "r");
+      input.gba[9] = get_map(gba, "l");
     }
   }
 
   if(data.contains("window")) {
-    auto window_result = toml::expect<toml::value>(data.at("window"));
+    auto window_ = data.at("window");
 
-    if(window_result.is_ok()) {
-      auto window_ = window_result.unwrap();
-
-      window.scale = toml::find_or<int>(window_, "scale", 2);
-      window.maximum_scale = toml::find_or<int>(window_, "maximum_scale", 0);
-      window.fullscreen = toml::find_or<bool>(window_, "fullscreen", false);
-      window.fullscreen_show_menu = toml::find_or<bool>(window_, "fullscreen_show_menu", false);
-      window.lock_aspect_ratio = toml::find_or<bool>(window_, "lock_aspect_ratio", true);
-      window.use_integer_scaling = toml::find_or<bool>(window_, "use_integer_scaling", false);
-      window.show_fps = toml::find_or<bool>(window_, "show_fps", false);
-      window.pause_emulator_when_inactive = toml::find_or<bool>(window_, "pause_emulator_when_inactive", true);
-    }
+    window.scale = toml::find_or<int>(window_, "scale", 2);
+    window.maximum_scale = toml::find_or<int>(window_, "maximum_scale", 0);
+    window.fullscreen = toml::find_or<bool>(window_, "fullscreen", false);
+    window.fullscreen_show_menu = toml::find_or<bool>(window_, "fullscreen_show_menu", false);
+    window.lock_aspect_ratio = toml::find_or<bool>(window_, "lock_aspect_ratio", true);
+    window.use_integer_scaling = toml::find_or<bool>(window_, "use_integer_scaling", false);
+    window.show_fps = toml::find_or<bool>(window_, "show_fps", false);
+    window.pause_emulator_when_inactive = toml::find_or<bool>(window_, "pause_emulator_when_inactive", true);
   }
 
   recent_files = toml::find_or<std::vector<std::string>>(data, "recent_files", {});
 }
 
-void QtConfig::SaveCustomData(
-  toml::basic_value<toml::preserve_comments>& data
-) {
+void QtConfig::SaveCustomData(toml::value& data) {
   data["input"]["controller_guid"] = input.controller_guid;
   data["input"]["fast_forward"] = input.fast_forward.Array();
   data["input"]["hold_fast_forward"] = input.hold_fast_forward;

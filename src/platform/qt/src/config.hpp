@@ -117,9 +117,7 @@ struct QtConfig final : nba::PlatformConfig {
 protected:
   void LoadCustomData(toml::value const& data) override;
 
-  void SaveCustomData(
-    toml::basic_value<toml::preserve_comments>& data
-  ) override;
+  void SaveCustomData(toml::value& data) override;
 
 private:
   auto GetConfigPath() const -> std::string {
