@@ -23,7 +23,8 @@ jobs:
             -DPython_EXECUTABLE="$(which python3)" \
             -DPLATFORM_QT_STATIC=ON \
             -DUSE_STATIC_SDL=ON \
-            -DQT5_STATIC_DIR="/mingw64/qt5-static"
+            -DQT5_STATIC_DIR="/mingw64/qt5-static" \
+            -DRELEASE_BUILD=ON
           cd build
           make -j$NUMBER_OF_PROCESSORS
       - name: Collect artifacts
@@ -47,7 +48,7 @@ jobs:
           sudo apt-get install -y python3-jinja2 python3-lxml libsdl2-dev qtbase5-dev
       - name: Build NanoBoyAdvance
         run: |
-          cmake -Bbuild -DCMAKE_BUILD_TYPE=Release
+          cmake -Bbuild -DCMAKE_BUILD_TYPE=Release -DRELEASE_BUILD=ON
           cd build
           make -j$(nproc)
       - name: Collect artifacts
@@ -82,7 +83,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5)" \
             -DMACOS_BUILD_APP_BUNDLE=ON \
-            -DMACOS_BUNDLE_QT=ON
+            -DMACOS_BUNDLE_QT=ON \
+            -DRELEASE_BUILD=ON
           cd build
           make -j$(getconf _NPROCESSORS_ONLN)
       - name: Create disk image
@@ -125,7 +127,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5)" \
             -DMACOS_BUILD_APP_BUNDLE=ON \
-            -DMACOS_BUNDLE_QT=ON
+            -DMACOS_BUNDLE_QT=ON \
+            -DRELEASE_BUILD=ON
           cd build
           make -j$(getconf _NPROCESSORS_ONLN)
       - name: Create disk image
