@@ -62,7 +62,10 @@ jobs:
           if-no-files-found: error
 
   build-macOS:
-    runs-on: macos-13
+    strategy:
+      matrix:
+        os: [macos-13, macos-14]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -100,49 +103,6 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: NanoBoyAdvance-${{ runner.os }}-x64
-          path: NanoBoyAdvance.dmg
-          if-no-files-found: error
-
-  build-macOS-arm:
-    runs-on: macos-14
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-      - name: Setup dependencies
-        env:
-          HOMEBREW_NO_ANALYTICS: 1
-        run: |
-          brew install sdl2 qt@5
-          python3 -m pip install Jinja2
-      - name: Build NanoBoyAdvance
-        run: |
-          cmake -Bbuild \
-            -DCMAKE_CXX_FLAGS="-s" \
-            -DUSE_STATIC_SDL=ON \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5)" \
-            -DMACOS_BUILD_APP_BUNDLE=ON \
-            -DMACOS_BUNDLE_QT=ON
-          cd build
-          make -j$(getconf _NPROCESSORS_ONLN)
-      - name: Create disk image
-        run: |
-          mkdir dmg
-          cp -a build/bin/qt/NanoBoyAdvance.app dmg/NanoBoyAdvance.app
-          codesign -s - --deep -f dmg/NanoBoyAdvance.app
-          ln -s /Applications dmg/Applications
-          hdiutil create \
-            -fs HFS+ \
-            -volname NanoBoyAdvance \
-            -srcfolder dmg \
-            -ov -format UDBZ \
-            NanoBoyAdvance.dmg
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: NanoBoyAdvance-${{ runner.os }}-arm64
+          name: NanoBoyAdvance-${{ runner.os }}-${{ runner.arch }}
           path: NanoBoyAdvance.dmg
           if-no-files-found: error
