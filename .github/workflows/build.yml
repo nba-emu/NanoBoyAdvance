@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: msys2/setup-msys2@v2
         with:
-          install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-python-jinja mingw-w64-x86_64-python-lxml mingw-w64-x86_64-SDL3 mingw-w64-x86_64-qt5-static
+          install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-python-jinja mingw-w64-x86_64-python-lxml mingw-w64-x86_64-sdl3 mingw-w64-x86_64-qt5-static
       - name: Build NanoBoyAdvance
         run: |
           cmake \
