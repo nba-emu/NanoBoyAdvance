@@ -81,7 +81,7 @@ jobs:
         run: |
           cmake -Bbuild \
             -DCMAKE_CXX_FLAGS="-s" \
-            -DUSE_STATIC_SDL=ON \
+            -DUSE_STATIC_SDL=OFF \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5)" \
             -DMACOS_BUILD_APP_BUNDLE=ON \
