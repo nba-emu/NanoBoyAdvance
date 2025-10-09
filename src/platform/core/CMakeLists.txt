@@ -4,12 +4,12 @@ option(USE_SYSTEM_TOML11 "Use system-provided toml11 library." OFF)
 option(USE_SYSTEM_UNARR "Use system-provided unarr library." OFF)
 
 if(USE_STATIC_SDL)
-  find_package(SDL3 3.2.0
+  find_package(SDL3 3.2.22
     REQUIRED COMPONENTS SDL3-static
     OPTIONAL_COMPONENTS SDL3main
     CONFIG)
 else()
-  find_package(SDL3 3.2.0
+  find_package(SDL3 3.2.22
     REQUIRED COMPONENTS SDL3
     OPTIONAL_COMPONENTS SDL3main
     CONFIG)
