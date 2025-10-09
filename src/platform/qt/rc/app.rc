@@ -15,7 +15,7 @@ BEGIN
             VALUE "FileDescription",    "NanoBoyAdvance"
             VALUE "FileVersion",        "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
             VALUE "InternalName",       "NanoBoyAdvance.exe"
-            VALUE "LegalCopyright",     "(c) 2015 - 2024 fleroviux"
+            VALUE "LegalCopyright",     "(c) 2015 - 2025 fleroviux"
             VALUE "OriginalFilename",   "NanoBoyAdvance.exe"
             VALUE "ProductName",        "NanoBoyAdvance"
             VALUE "ProductVersion",     "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
