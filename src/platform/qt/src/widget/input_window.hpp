@@ -11,25 +11,21 @@
 #include <filesystem>
 #include <fstream>
 #include <nba/core.hpp>
-#include <nba/log.hpp>
-#include <toml.hpp>
 #include <QApplication>
 #include <QComboBox>
 #include <QDialog>
 #include <QGridLayout>
 #include <QKeyEvent>
-#include <QKeySequence>
 #include <QPushButton>
-#include <QLabel>
 
 #include "config.hpp"
 
-inline auto GetJoystickGUIDStringFromIndex(int device_index) -> std::string {
-  auto guid = SDL_JoystickGetDeviceGUID(device_index);
-  auto guid_string = std::string{};
+inline std::string GetGUIDStringFromJoystickID(SDL_JoystickID joystick_id) {
+  const SDL_GUID guid = SDL_GetJoystickGUIDForID(joystick_id);
 
-  guid_string.resize(sizeof(SDL_JoystickGUID) * 2);
-  SDL_JoystickGetGUIDString(guid, guid_string.data(), guid_string.size() + 1);
+  std::string guid_string{};
+  guid_string.resize(sizeof(SDL_GUID) * 2);
+  SDL_GUIDToString(guid, guid_string.data(), guid_string.size() + 1);
   return guid_string;
 }
 

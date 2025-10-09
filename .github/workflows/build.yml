@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: msys2/setup-msys2@v2
         with:
-          install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-python-jinja mingw-w64-x86_64-python-lxml mingw-w64-x86_64-SDL2 mingw-w64-x86_64-qt5-static
+          install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-python-jinja mingw-w64-x86_64-python-lxml mingw-w64-x86_64-SDL3 mingw-w64-x86_64-qt5-static
       - name: Build NanoBoyAdvance
         run: |
           cmake \
@@ -44,7 +44,7 @@ jobs:
       - name: Setup dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y python3-jinja2 python3-lxml libsdl2-dev qtbase5-dev
+          sudo apt-get install -y python3-jinja2 python3-lxml libsdl3-dev qtbase5-dev
       - name: Build NanoBoyAdvance
         run: |
           cmake -Bbuild -DCMAKE_BUILD_TYPE=Release
@@ -75,7 +75,7 @@ jobs:
         env:
           HOMEBREW_NO_ANALYTICS: 1
         run: |
-          brew install sdl2 qt@5
+          brew install sdl3 qt@5
           python3 -m pip install Jinja2
       - name: Build NanoBoyAdvance
         run: |

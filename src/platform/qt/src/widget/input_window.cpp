@@ -7,7 +7,8 @@
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
-#include <SDL.h>
+#include <QLabel>
+#include <SDL3/SDL.h>
 
 #include "widget/input_window.hpp"
 
@@ -99,7 +100,8 @@ auto InputWindow::CreateJoystickList() -> QLayout* {
 }
 
 void InputWindow::UpdateJoystickList() {
-  auto joystick_count = SDL_NumJoysticks();
+  int joystick_count{};
+  SDL_JoystickID* joystick_ids = SDL_GetJoysticks(&joystick_count);
 
   joystick_combo_box->clear();
 
@@ -107,9 +109,9 @@ void InputWindow::UpdateJoystickList() {
   joystick_combo_box->setCurrentIndex(0);
 
   for(int i = 0; i < joystick_count; i++) {
-    auto guid = GetJoystickGUIDStringFromIndex(i);
+    auto guid = GetGUIDStringFromJoystickID(i);
 
-    joystick_combo_box->addItem(SDL_JoystickNameForIndex(i), QString::fromStdString(guid));
+    joystick_combo_box->addItem(SDL_GetJoystickNameForID(joystick_ids[i]), QString::fromStdString(guid));
 
     if(guid == config->input.controller_guid) {
       joystick_combo_box->setCurrentIndex(joystick_combo_box->count() - 1);

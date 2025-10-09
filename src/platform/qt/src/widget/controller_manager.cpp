@@ -105,14 +105,14 @@ void ControllerManager::BindCurrentKeyToJoystickHat(int hat, int direction) {
 }
 
 void ControllerManager::Open(std::string const& guid) {
-  auto joystick_count = SDL_NumJoysticks();
+  int joystick_count{};
+  SDL_JoystickID* joystick_ids = SDL_GetJoysticks(&joystick_count);
 
   Close();
 
-  for(int device_id = 0; device_id < joystick_count; device_id++) {
-    if(GetJoystickGUIDStringFromIndex(device_id) == guid) {
-      joystick = SDL_JoystickOpen(device_id);
-      instance_id = SDL_JoystickInstanceID(joystick);
+  for(int device_index = 0; device_index < joystick_count; device_index++) {
+    if(GetGUIDStringFromJoystickID(device_index) == guid) {
+      joystick = SDL_OpenJoystick(joystick_ids[device_index]);
       break;
     }
   }
@@ -134,7 +134,7 @@ void ControllerManager::Close() {
   main_window->SetKeyStatus(1, Key::R, false);
 
   if(joystick) {
-    SDL_JoystickClose(joystick);
+    SDL_CloseJoystick(joystick);
     joystick = nullptr;
   }
 }
@@ -149,44 +149,38 @@ void ControllerManager::ProcessEvents() {
 
   while(SDL_PollEvent(&event)) {
     switch(event.type) {
-      case SDL_JOYDEVICEADDED: {
+      case SDL_EVENT_JOYSTICK_ADDED: {
         emit OnJoystickListChanged();
 
-        auto device_id = ((SDL_JoyDeviceEvent*)&event)->which;
-        auto guid = GetJoystickGUIDStringFromIndex(device_id);
-
+        const std::string guid = GetGUIDStringFromJoystickID(reinterpret_cast<SDL_JoyDeviceEvent*>(&event)->which);
         if(guid == config->input.controller_guid) {
           Open(guid);
         }
         break;
       }
-      case SDL_JOYDEVICEREMOVED: {
+      case SDL_EVENT_JOYSTICK_REMOVED: {
         emit OnJoystickListChanged();
 
-        if(instance_id == ((SDL_JoyDeviceEvent*)&event)->which) {
+        if(joystick_id == reinterpret_cast<SDL_JoyDeviceEvent*>(&event)->which) {
           Close();
         }
         break;
       }
-      case SDL_JOYBUTTONUP: {
-        auto button_event = (SDL_JoyButtonEvent*)&event;
-
-        emit OnJoystickButtonReleased(button_event->button);
+      case SDL_EVENT_JOYSTICK_BUTTON_UP: {
+        emit OnJoystickButtonReleased(reinterpret_cast<SDL_JoyButtonEvent*>(&event)->button);
         break;
       }
-      case SDL_JOYAXISMOTION: {
+      case SDL_EVENT_JOYSTICK_AXIS_MOTION: {
         const auto threshold = std::numeric_limits<int16_t>::max() / 2;
 
-        auto axis_event = (SDL_JoyAxisEvent*)&event;
-        auto value = axis_event->value;
-
-        if(std::abs(value) > threshold) {
-          emit OnJoystickAxisMoved(axis_event->axis, value < 0);
+        const SDL_JoyAxisEvent* const axis_event = reinterpret_cast<SDL_JoyAxisEvent*>(&event);
+        if(std::abs(axis_event->value) > threshold) {
+          emit OnJoystickAxisMoved(axis_event->axis, axis_event->value < 0);
         }
         break;
       }
-      case SDL_JOYHATMOTION: {
-        const auto hat_event = (SDL_JoyHatEvent*)&event;
+      case SDL_EVENT_JOYSTICK_HAT_MOTION: {
+        const auto hat_event = reinterpret_cast<SDL_JoyHatEvent*>(&event);
 
         /**
          * Make sure to pick a single direction when the hat is triggered in
@@ -231,15 +225,15 @@ void ControllerManager::UpdateKeyState() {
     const int hat = mapping.controller.hat;
 
     if(button != -1) {
-      pressed = pressed || SDL_JoystickGetButton(joystick, button);
+      pressed = pressed || SDL_GetJoystickButton(joystick, button);
     }
 
     if(axis != -1) {
-      const auto threshold = std::numeric_limits<int16_t>::max() / 2;
+      constexpr s16 threshold = std::numeric_limits<s16>::max() / 2;
 
-      auto actual_axis = axis & ~0x100;
-      bool negative = axis & 0x100;
-      auto value = SDL_JoystickGetAxis(joystick, actual_axis);
+      const auto actual_axis = axis & ~0x100;
+      const bool negative = axis & 0x100;
+      const s16 value = SDL_GetJoystickAxis(joystick, actual_axis);
 
       pressed = pressed || (negative ? (value < -threshold) : (value > threshold));
     }
@@ -247,13 +241,13 @@ void ControllerManager::UpdateKeyState() {
     if(hat != -1) {
       const int hat_direction = mapping.controller.hat_direction;
 
-      pressed = pressed || ((SDL_JoystickGetHat(joystick, hat) & hat_direction) != 0);
+      pressed = pressed || ((SDL_GetJoystickHat(joystick, hat) & hat_direction) != 0);
     }
 
     return pressed;
   };
 
-  for(int i = 0; i < (int)nba::Key::Count; i++) {
+  for(int i = 0; i < (int)Key::Count; i++) {
     main_window->SetKeyStatus(
       1, static_cast<nba::Key>(i), evaluate(input.gba[i]));
   }

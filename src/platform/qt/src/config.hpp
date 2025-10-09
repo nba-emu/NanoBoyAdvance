@@ -15,7 +15,7 @@
 #include <Qt>
 #include <QStandardPaths>
 #include <QDebug>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <vector>
 
 #ifdef MACOS_BUILD_APP_BUNDLE

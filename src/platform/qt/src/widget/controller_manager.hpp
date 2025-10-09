@@ -12,7 +12,7 @@
 #include <mutex>
 #include <QTimer>
 #include <QWidget>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <thread>
 
 #include "config.hpp"
@@ -56,7 +56,7 @@ private:
   QTimer* timer = nullptr;
   std::atomic_bool quitting = false;
   SDL_Joystick* joystick = nullptr;
-  SDL_JoystickID instance_id;
+  SDL_JoystickID joystick_id;
   std::mutex lock;
   bool fast_forward_button_old = false;
 

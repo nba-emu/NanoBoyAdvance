@@ -7,34 +7,31 @@
 
 #pragma once
 
-#include <nba/log.hpp>
 #include <nba/device/audio_device.hpp>
-#include <SDL.h>
+#include <SDL3/SDL.h>
+#include <vector>
 
 namespace nba {
 
-struct SDL2_AudioDevice : AudioDevice {
-  void SetSampleRate(int sample_rate);
-  void SetBlockSize(int buffer_size);
-  void SetPassthrough(SDL_AudioCallback passthrough);
-  void InvokeCallback(s16* stream, int byte_len);
+void SDL3_AudioDeviceCallback(struct SDL3_AudioDevice* audio_device, SDL_AudioStream* stream, int additional_amount, int total_amount);
 
-  auto GetSampleRate() -> int final;
-  auto GetBlockSize() -> int final;
-  bool Open(void* userdata, Callback callback) final;
-  void SetPause(bool value) final;
-  void Close() final;
+class SDL3_AudioDevice : public AudioDevice {
+  public:
+    int GetSampleRate() final;
+    int GetBlockSize() final;
+    bool Open(void* userdata, Callback callback) final;
+    void SetPause(bool value) final;
+    void Close() final;
 
-private:
-  Callback callback;
-  void* callback_userdata;
-  SDL_AudioCallback passthrough = nullptr;
-  SDL_AudioDeviceID device;
-  SDL_AudioSpec have;
-  int want_sample_rate = 48000;
-  int want_block_size = 2048;
-  bool opened = false;
-  bool paused = false;
+  private:
+    friend void SDL3_AudioDeviceCallback(SDL3_AudioDevice* audio_device, SDL_AudioStream* stream, int additional_amount, int total_amount);
+
+    Callback m_callback{};
+    void* m_callback_userdata{};
+    SDL_AudioStream* m_audio_stream{};
+    bool m_opened{};
+    bool m_paused{};
+    std::vector<u8> m_tmp_buffer{};
 };
 
 } // namespace nba

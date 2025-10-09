@@ -55,7 +55,7 @@ MainWindow::MainWindow(
   CreateHelpMenu();
 
   config->video_dev = screen;
-  config->audio_dev = std::make_shared<nba::SDL2_AudioDevice>();
+  config->audio_dev = std::make_shared<nba::SDL3_AudioDevice>();
   core = nba::CreateCore(config);
   core_not_thread_safe = core.get();
   emu_thread = std::make_unique<nba::EmulatorThread>();

@@ -11,24 +11,26 @@
 
 namespace nba {
   
-struct AudioDevice {
-  virtual ~AudioDevice() = default;
+class AudioDevice {
+  public:
+    typedef void (*Callback)(void* userdata, s16* stream, int byte_len);
 
-  typedef void (*Callback)(void* userdata, s16* stream, int byte_len);
+    virtual ~AudioDevice() = default;
 
-  virtual auto GetSampleRate() -> int = 0;
-  virtual auto GetBlockSize() -> int = 0;
-  virtual bool Open(void* userdata, Callback callback) = 0;
-  virtual void SetPause(bool value) = 0;
-  virtual void Close() = 0;
+    virtual int GetSampleRate() = 0;
+    virtual int GetBlockSize() = 0;
+    virtual bool Open(void* userdata, Callback callback) = 0;
+    virtual void SetPause(bool value) = 0;
+    virtual void Close() = 0;
 };
 
-struct NullAudioDevice : AudioDevice {
-  auto GetSampleRate() -> int final { return 32768; }
-  auto GetBlockSize() -> int final { return 4096; }
-  bool Open(void* userdata, Callback callback) final { return true; }
-  void SetPause(bool value) final { }
-  void Close() { }
+class NullAudioDevice : public AudioDevice {
+  public:
+    int GetSampleRate() final { return 32768; }
+    int GetBlockSize() final { return 4096; }
+    bool Open(void* userdata, Callback callback) final { return true; }
+    void SetPause(bool value) final { }
+    void Close() { }
 };
 
 } // namespace nba

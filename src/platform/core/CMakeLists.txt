@@ -4,14 +4,14 @@ option(USE_SYSTEM_TOML11 "Use system-provided toml11 library." OFF)
 option(USE_SYSTEM_UNARR "Use system-provided unarr library." OFF)
 
 if(USE_STATIC_SDL)
-  find_package(SDL2 2.0.10
-    REQUIRED COMPONENTS SDL2-static
-    OPTIONAL_COMPONENTS SDL2main
+  find_package(SDL3 3.2.24
+    REQUIRED COMPONENTS SDL3-static
+    OPTIONAL_COMPONENTS SDL3main
     CONFIG)
 else()
-  find_package(SDL2 2.0.10
-    REQUIRED COMPONENTS SDL2
-    OPTIONAL_COMPONENTS SDL2main
+  find_package(SDL3 3.2.24
+    REQUIRED COMPONENTS SDL3
+    OPTIONAL_COMPONENTS SDL3main
     CONFIG)
 endif()
 
@@ -108,14 +108,14 @@ add_library(platform-core STATIC)
 target_sources(platform-core PRIVATE ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
 target_include_directories(platform-core PRIVATE src PUBLIC include)
 
-if(TARGET SDL2::SDL2main)
-  target_link_libraries(platform-core PUBLIC SDL2::SDL2main)
+if(TARGET SDL3::SDL3main)
+  target_link_libraries(platform-core PUBLIC SDL3::SDL3main)
 endif()
 
 if(USE_STATIC_SDL)
-  target_link_libraries(platform-core PUBLIC SDL2::SDL2-static)
+  target_link_libraries(platform-core PUBLIC SDL3::SDL3-static)
 else()
-  target_link_libraries(platform-core PUBLIC SDL2::SDL2)
+  target_link_libraries(platform-core PUBLIC SDL3::SDL3)
 endif()
 
 target_link_libraries(platform-core
