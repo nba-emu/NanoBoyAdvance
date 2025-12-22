@@ -15,6 +15,7 @@ void QtConfig::LoadCustomData(toml::value const& data) {
 
     input.controller_guid = toml::find_or<std::string>(input_, "controller_guid", "");
     input.hold_fast_forward = toml::find_or<bool>(input_, "hold_fast_forward", true);
+    input.fast_forward_speed = toml::find_or<int>(input_, "fast_forward_speed", 0);
 
     const auto get_map = [&](toml::value const& value, std::string key) {
       return Map::FromArray(toml::find_or<std::array<int, 5>>(value, key, {0, -1, -1, -1, 0}));
@@ -58,6 +59,7 @@ void QtConfig::SaveCustomData(toml::value& data) {
   data["input"]["controller_guid"] = input.controller_guid;
   data["input"]["fast_forward"] = input.fast_forward.Array();
   data["input"]["hold_fast_forward"] = input.hold_fast_forward;
+  data["input"]["fast_forward_speed"] = input.fast_forward_speed;
 
   data["input"]["gba"]["a"] = input.gba[0].Array();
   data["input"]["gba"]["b"] = input.gba[1].Array();

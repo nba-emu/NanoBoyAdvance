@@ -22,6 +22,7 @@ struct FrameLimiter {
   void Reset(float fps);
   auto GetFastForward() const -> bool;
   void SetFastForward(bool value);
+  void SetFastForwardSpeed(int speed);
 
   void Run(
     std::function<void(void)> frame_advance,
@@ -36,6 +37,7 @@ private:
   int frame_duration;
   float frames_per_second;
   bool fast_forward = false;
+  int fast_forward_speed = 0;
 
   std::chrono::time_point<std::chrono::steady_clock> timestamp_target;
   std::chrono::time_point<std::chrono::steady_clock> timestamp_fps_update;

@@ -35,12 +35,21 @@ void FrameLimiter::SetFastForward(bool value) {
   }
 }
 
+void FrameLimiter::SetFastForwardSpeed(int speed) {
+  if (speed < 0) {
+    speed = 0;
+  }
+  fast_forward_speed = speed;
+}
+
 void FrameLimiter::Run(
   std::function<void(void)> frame_advance,
   std::function<void(float)> update_fps
 ) {
   if(!fast_forward) {
     timestamp_target += std::chrono::microseconds(frame_duration);
+  } else if (fast_forward_speed > 0) {
+    timestamp_target += std::chrono::microseconds(frame_duration / fast_forward_speed);
   }
 
   frame_advance();
@@ -58,6 +67,12 @@ void FrameLimiter::Run(
 
   if(!fast_forward) {
     std::this_thread::sleep_until(timestamp_target);
+  } else if (fast_forward_speed > 0) {
+    if (now < timestamp_target) {
+        std::this_thread::sleep_until(timestamp_target);
+    } else {
+        timestamp_target = now;
+    }
   }
 }
 

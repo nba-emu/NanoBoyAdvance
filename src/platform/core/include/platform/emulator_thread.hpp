@@ -27,6 +27,7 @@ struct EmulatorThread {
   void SetPause(bool value);
   bool GetFastForward() const;
   void SetFastForward(bool enabled);
+  void SetFastForwardSpeed(int speed);
   void SetFrameRateCallback(std::function<void(float)> callback);
   void SetPerFrameCallback(std::function<void()> callback);
 

@@ -69,6 +69,7 @@ MainWindow::MainWindow(
   emu_thread->SetFrameRateCallback([this](float fps) {
     emit UpdateFrameRate(fps);
   });
+  emu_thread->SetFastForwardSpeed(config->input.fast_forward_speed);
   connect(this, &MainWindow::UpdateFrameRate, this, [this](int fps) {
     if(config->window.show_fps) {
       const float percent = fps / 59.7275f * 100.0f;
@@ -225,6 +226,15 @@ void MainWindow::CreateInputMenu(QMenu* parent) {
   });
 
   CreateBooleanOption(menu, "Hold fast forward key", &config->input.hold_fast_forward);
+
+  CreateSelectionOption(menu->addMenu(tr("Fast forward speed")), {
+    { "Unlimited", 0 },
+    { "2x", 2 },
+    { "3x", 3 },
+    { "4x", 4 }
+  }, &config->input.fast_forward_speed, false, [this]() {
+    emu_thread->SetFastForwardSpeed(config->input.fast_forward_speed);
+  });
 }
 
 void MainWindow::CreateSystemMenu(QMenu* parent) {

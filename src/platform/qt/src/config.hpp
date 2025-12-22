@@ -67,6 +67,7 @@ struct QtConfig final : nba::PlatformConfig {
 
     std::string controller_guid;
     bool hold_fast_forward = true;
+    int fast_forward_speed = 0;
   } input;
 
   struct Window {
