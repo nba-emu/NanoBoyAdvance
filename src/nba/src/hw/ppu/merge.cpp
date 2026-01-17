@@ -153,8 +153,11 @@ void PPU::DrawMergeImpl(int cycles) {
         merge.force_alpha_blend = false;
 
         const auto current_sprite_pixel = enable_obj ? sprite.buffer_rd[x] : Sprite::Pixel{0U};
-
-        if(!current_sprite_pixel.mosaic || !merge.sprite_pixel_latch.mosaic || merge.mosaic_x[1] == 0U) {
+        if(
+          !current_sprite_pixel.mosaic || !merge.sprite_pixel_latch.mosaic ||
+          current_sprite_pixel.priority < merge.sprite_pixel_latch.priority ||
+          merge.mosaic_x[1] == 0U
+        ) {
           merge.sprite_pixel_latch = current_sprite_pixel;
         }
 
