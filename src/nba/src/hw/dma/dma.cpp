@@ -312,6 +312,8 @@ void DMA::Write(int chan_id, int offset, u8 value) {
     }
     case REG_DMAXCNT_L | 0: channel.length = (channel.length & 0xFF00) | (value << 0); break;
     case REG_DMAXCNT_L | 1: channel.length = (channel.length & 0x00FF) | (value << 8); break;
+    // TODO(fleroviux): a byte-sized write of 0x80 to the LSB allegedly can enable a DMA. Something related to byte mirroring on the bus.
+    // Does this affect all bits? Do other registers on the GBA have edge-cases like that?
     case REG_DMAXCNT_H | 0: {
       channel.dst_cntl = static_cast<Channel::Control>((value >> 5) & 3);
       channel.src_cntl = static_cast<Channel::Control>((channel.src_cntl & 0b10) | (value>>7));
