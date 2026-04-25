@@ -244,6 +244,7 @@ void PPU::UpdateVideoTransferDMA() {
     if(vcount == 162) {
       dma.StopVideoTransferDMA();
     } else if(vcount >= 2 && vcount < 162) {
+      // TODO(fleroviux): allegedly this DMA only runs every other frame (something related to screen polarity inversion?)
       scheduler.Add(3, Scheduler::EventClass::PPU_video_dma);
     }
   }
