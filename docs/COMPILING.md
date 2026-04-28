@@ -43,7 +43,9 @@ Get [Brew](https://brew.sh/) and run:
 
 ``` bash
 brew install cmake python@3 sdl2 qt@5
-python3 -m pip install Jinja2
+cd /path/to/NanoBoyAdvance
+python3 -m venv .venv
+.venv/bin/pip install Jinja2
 ```
 
 ##### FreeBSD
@@ -58,7 +60,7 @@ pkg install cmake git py39-Jinja2 py39-lxml sdl2 qt5 qt5-opengl
 ##### Linux and FreeBSD
 
 ```
-cd /somewhere/on/your/system/NanoBoyAdvance
+cd /path/to/NanoBoyAdvance
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 ```
 
@@ -67,8 +69,8 @@ NOTE: the location and name of the `build` directory is arbitrary.
 ##### macOS
 
 ```
-cd /somewhere/on/your/system/NanoBoyAdvance
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5)"
+cd /path/to/system/NanoBoyAdvance
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5)" -DPython_ROOT_DIR=/path/to/NanoBoyAdvance/.venv/
 ```
 
 NOTE: the location and name of the `build` directory is arbitrary.
@@ -101,7 +103,7 @@ pacman -S make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-pyth
 #### 2. Setup CMake build directory
 
 ```bash
-cd path/to/NanoBoyAdvance
+cd /path/to/NanoBoyAdvance
 cmake -S . -B build -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
 ```
 
