@@ -82,7 +82,7 @@ struct QtConfig final : nba::PlatformConfig {
 
   std::vector<std::string> recent_files;
 
-  int fast_forward_speed{0};
+  int fast_forward_speed{2};
 
   void Load() {
     nba::PlatformConfig::Load(config_path);

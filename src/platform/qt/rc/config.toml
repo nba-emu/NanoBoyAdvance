@@ -15,7 +15,7 @@ force_solar_sensor = false
 solar_sensor_level = 23
 
 [video]
-filter = "linear"
+filter = "nearest"
 color_correction = "agb"
 lcd_ghosting = true
 
