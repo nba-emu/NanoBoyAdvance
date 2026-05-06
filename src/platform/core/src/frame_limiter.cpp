@@ -10,27 +10,27 @@
 namespace nba {
 
 void FrameLimiter::Reset() {
-  Reset(frames_per_second);
+  Reset(m_frames_per_second);
 }
 
 void FrameLimiter::Reset(float fps) {
-  frame_count = 0;
-  frame_duration = int(kMicrosecondsPerSecond / fps);
-  frames_per_second = fps;
-  fast_forward = false;
-  timestamp_target = std::chrono::steady_clock::now();
-  timestamp_fps_update = std::chrono::steady_clock::now();
+  m_frame_count = 0;
+  m_frame_duration = int(k_microseconds_per_second / fps);
+  m_frames_per_second = fps;
+  m_fast_forward = false;
+  m_timestamp_target = std::chrono::steady_clock::now();
+  m_timestamp_fps_update = std::chrono::steady_clock::now();
 }
 
-auto FrameLimiter::GetFastForward() const -> bool {
-  return fast_forward;
+bool FrameLimiter::GetFastForward() const {
+  return m_fast_forward;
 }
 
 void FrameLimiter::SetFastForward(bool value) {
-  if(fast_forward != value) {
-    fast_forward = value;
-    if(!fast_forward) {
-      timestamp_target = std::chrono::steady_clock::now();
+  if(m_fast_forward != value) {
+    m_fast_forward = value;
+    if(!m_fast_forward) {
+      m_timestamp_target = std::chrono::steady_clock::now();
     }
   }
 }
@@ -39,25 +39,25 @@ void FrameLimiter::Run(
   std::function<void(void)> frame_advance,
   std::function<void(float)> update_fps
 ) {
-  if(!fast_forward) {
-    timestamp_target += std::chrono::microseconds(frame_duration);
+  if(!m_fast_forward) {
+    m_timestamp_target += std::chrono::microseconds(m_frame_duration);
   }
 
   frame_advance();
-  frame_count++;
+  m_frame_count++;
     
   auto now = std::chrono::steady_clock::now(); 
   auto fps_update_delta = std::chrono::duration_cast<std::chrono::milliseconds>(
-    now - timestamp_fps_update).count();
+    now - m_timestamp_fps_update).count();
 
-  if(fps_update_delta >= kMillisecondsPerSecond) {
-    update_fps(frame_count * float(kMillisecondsPerSecond) / fps_update_delta);
-    frame_count = 0;
-    timestamp_fps_update = std::chrono::steady_clock::now();
+  if(fps_update_delta >= k_milliseconds_per_second) {
+    update_fps(m_frame_count * float(k_milliseconds_per_second) / fps_update_delta);
+    m_frame_count = 0;
+    m_timestamp_fps_update = std::chrono::steady_clock::now();
   }
 
-  if(!fast_forward) {
-    std::this_thread::sleep_until(timestamp_target);
+  if(!m_fast_forward) {
+    std::this_thread::sleep_until(m_timestamp_target);
   }
 }
 
