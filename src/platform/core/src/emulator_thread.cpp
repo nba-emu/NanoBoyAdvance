@@ -38,6 +38,10 @@ void EmulatorThread::SetFastForward(bool enabled) {
   frame_limiter.SetFastForward(enabled);
 }
 
+void EmulatorThread::SetFastForwardSpeed(int speed) {
+  frame_limiter.SetFastForwardSpeed(speed);
+}
+
 void EmulatorThread::SetFrameRateCallback(std::function<void(float)> callback) {
   frame_rate_cb = callback;
 }

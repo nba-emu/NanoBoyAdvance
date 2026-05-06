@@ -9,7 +9,6 @@
 
 #include <chrono>
 #include <functional>
-#include <thread>
 
 namespace nba {
 
@@ -23,6 +22,7 @@ class FrameLimiter {
     void Reset(float fps);
     bool GetFastForward() const;
     void SetFastForward(bool value);
+    void SetFastForwardSpeed(int speed);
 
     void Run(
       std::function<void(void)> frame_advance,
@@ -37,6 +37,7 @@ class FrameLimiter {
     int m_frame_duration{};
     float m_frames_per_second{};
     bool m_fast_forward{false};
+    int m_fast_forward_speed{0};
 
     std::chrono::time_point<std::chrono::steady_clock> m_timestamp_target{};
     std::chrono::time_point<std::chrono::steady_clock> m_timestamp_fps_update{};

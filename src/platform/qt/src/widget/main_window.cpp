@@ -59,6 +59,7 @@ MainWindow::MainWindow(
   core = nba::CreateCore(config);
   core_not_thread_safe = core.get();
   emu_thread = std::make_unique<nba::EmulatorThread>();
+  emu_thread->SetFastForwardSpeed(config->fast_forward_speed);
 
   app->installEventFilter(this);
 
@@ -266,6 +267,18 @@ void MainWindow::CreateSystemMenu(QMenu* parent) {
   menu->addSeparator();
 
   CreateSolarSensorValueMenu(menu);
+
+  menu->addSeparator();
+
+  CreateSelectionOption(menu->addMenu(tr("Fast forward speed")), {
+    { "∞", 0 },
+    { "2x", 2 },
+    { "4x", 4 },
+    { "8x", 8 },
+  }, &config->fast_forward_speed, false, [this]() {
+    emu_thread->SetFastForwardSpeed(config->fast_forward_speed);
+    config->Save();
+  });
 }
 
 void MainWindow::CreateSolarSensorValueMenu(QMenu* parent) {

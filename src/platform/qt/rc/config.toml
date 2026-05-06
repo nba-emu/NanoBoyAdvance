@@ -2,6 +2,7 @@
 bios_path = "bios.bin"
 bios_skip = false
 save_folder = ""
+fast_forward_speed = 2
 
 [cartridge]
 # Possible values: detect, none, sram, flash64, flash128, eeprom512, eeprom8192

@@ -52,6 +52,8 @@ void QtConfig::LoadCustomData(toml::value const& data) {
   }
 
   recent_files = toml::find_or<std::vector<std::string>>(data, "recent_files", {});
+
+  fast_forward_speed = toml::find_or<int>(data, "fast_forward_speed", 0);
 }
 
 void QtConfig::SaveCustomData(toml::value& data) {
@@ -80,4 +82,6 @@ void QtConfig::SaveCustomData(toml::value& data) {
   data["window"]["pause_emulator_when_inactive"] = window.pause_emulator_when_inactive;
 
   data["recent_files"] = recent_files;
+
+  data["fast_forward_speed"] = fast_forward_speed;
 }

@@ -7,6 +7,9 @@
 
 #include <platform/frame_limiter.hpp>
 
+#include <algorithm>
+#include <thread>
+
 namespace nba {
 
 void FrameLimiter::Reset() {
@@ -35,12 +38,19 @@ void FrameLimiter::SetFastForward(bool value) {
   }
 }
 
+void FrameLimiter::SetFastForwardSpeed(int speed) {
+  m_fast_forward_speed = speed;
+}
+
 void FrameLimiter::Run(
   std::function<void(void)> frame_advance,
   std::function<void(float)> update_fps
 ) {
-  if(!m_fast_forward) {
-    m_timestamp_target += std::chrono::microseconds(m_frame_duration);
+  const bool limiting_fps = !m_fast_forward || m_fast_forward_speed > 0;
+
+  if(limiting_fps) {
+    const int fps_multiplier = m_fast_forward && m_fast_forward_speed > 0 ? m_fast_forward_speed : 1;
+    m_timestamp_target += std::chrono::microseconds(m_frame_duration / fps_multiplier);
   }
 
   frame_advance();
@@ -56,7 +66,7 @@ void FrameLimiter::Run(
     m_timestamp_fps_update = std::chrono::steady_clock::now();
   }
 
-  if(!m_fast_forward) {
+  if(limiting_fps) {
     std::this_thread::sleep_until(m_timestamp_target);
   }
 }
