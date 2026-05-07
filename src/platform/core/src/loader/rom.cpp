@@ -50,7 +50,7 @@ auto ROMLoader::Load(
   }
 
   auto size = file_data.size();
-  
+
   if(size < sizeof(Header) || size > kMaxROMSize) {
     return Result::BadImage;
   }
@@ -218,12 +218,13 @@ auto ROMLoader::CreateBackup(
   BackupType backup_type
 ) -> std::unique_ptr<Backup> {
   switch(backup_type) {
-    case BackupType::SRAM:      return std::make_unique<SRAM>(save_path);
-    case BackupType::FLASH_64:  return std::make_unique<FLASH>(save_path, FLASH::SIZE_64K);
+    case BackupType::SRAM: return std::make_unique<SRAM>(save_path);
+    case BackupType::FLASH_64: return std::make_unique<FLASH>(save_path, FLASH::SIZE_64K);
     case BackupType::FLASH_128: return std::make_unique<FLASH>(save_path, FLASH::SIZE_128K);
-    case BackupType::EEPROM_4:  return std::make_unique<EEPROM>(save_path, EEPROM::SIZE_4K, core->GetScheduler());
+    case BackupType::EEPROM_4: return std::make_unique<EEPROM>(save_path, EEPROM::SIZE_4K, core->GetScheduler());
     case BackupType::EEPROM_64: return std::make_unique<EEPROM>(save_path, EEPROM::SIZE_64K, core->GetScheduler());
     case BackupType::EEPROM_DETECT: return std::make_unique<EEPROM>(save_path, EEPROM::DETECT, core->GetScheduler());
+    default: unreachable();
   }
 
   return {};

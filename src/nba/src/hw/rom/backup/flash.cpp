@@ -5,6 +5,7 @@
  * Refer to the included LICENSE file.
  */
 
+#include <nba/common/compiler.hpp>
 #include <nba/rom/backup/flash.hpp>
 
 namespace nba {
@@ -16,7 +17,7 @@ FLASH::FLASH(fs::path const& save_path, Size size_hint)
     , save_path(save_path) {
   Reset();
 }
-  
+
 void FLASH::Reset() {
   current_bank = 0;
   phase = 0;
@@ -24,9 +25,9 @@ void FLASH::Reset() {
   enable_erase = false;
   enable_write = false;
   enable_select = false;
-  
+
   int bytes = g_save_size[size];
-  
+
   file = BackupFile::OpenOrCreate(save_path, { 65536, 131072 }, bytes);
   if(bytes == g_save_size[0]) {
     size = SIZE_64K;
@@ -37,7 +38,7 @@ void FLASH::Reset() {
 
 auto FLASH::Read (u32 address) -> u8 {
   address &= 0xFFFF;
-  
+
   // TODO: check if the Chip ID should be mirrored each 0x100 bytes.
   if(enable_chip_id && address < 2) {
     // Chip identifier for FLASH64: D4BF (SST 64K)
@@ -48,7 +49,7 @@ auto FLASH::Read (u32 address) -> u8 {
       return (address == 0) ? 0xBF : 0xD4;
     }
   }
-  
+
   return file->Read(Physical(address));
 }
 
@@ -118,10 +119,13 @@ void FLASH::HandleCommand(u32 address, u8 value) {
         }
         break;
       }
+      default: {
+        unreachable();
+      }
     }
   } else if(enable_erase && (address & ~0xF000) == 0x0E000000 && static_cast<Command>(value) == ERASE_SECTOR) {
     u32 base = address & 0xF000;
-    
+
     file->MemorySet(Physical(base), 0x1000, 0xFF);
     enable_erase = false;
     phase = 0;
@@ -136,7 +140,7 @@ void FLASH::HandleExtended(u32 address, u8 value) {
     current_bank = value & 1;
     enable_select = false;
   }
-      
+
   phase = 0;
 }
 

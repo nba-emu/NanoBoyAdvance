@@ -62,6 +62,8 @@ auto Timer::ReadHalf(int chan_id, int offset) -> u16 {
       return ReadControl(channel);
     }
   }
+
+  unreachable();
 }
 
 auto Timer::ReadWord(int chan_id) -> u32 {
@@ -186,9 +188,9 @@ void Timer::OnControlWritten(u64 chan_id) {
          * After enabling a timer, it takes one cycle to load the reload value into the counter.
          * During this cycle, the timer can tick and may even overflow.
          * We handle this edge-case here.
-         * 
+         *
          * See: https://github.com/nba-emu/NanoBoyAdvance/issues/331
-         */ 
+         */
         StartChannel(channel, 0);
       } else {
         channel.counter = channel.reload;

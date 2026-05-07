@@ -218,7 +218,7 @@ void MainWindow::CreateAudioMenu(QMenu* parent) {
 
 void MainWindow::CreateInputMenu(QMenu* parent) {
   auto menu = parent->addMenu(tr("Input"));
-  
+
   auto remap_action = menu->addAction(tr("Configure"));
   remap_action->setMenuRole(QAction::NoRole);
   connect(remap_action, &QAction::triggered, [this] {
@@ -362,7 +362,7 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
     CreateScaleAction(label, scale);
     CreateMaximumScaleAction(label, scale);
   }
-  
+
   scale_menu->addActions(scale_group->actions());
   max_scale_menu->addActions(max_scale_group->actions());
 
@@ -501,7 +501,7 @@ void MainWindow::RenderRecentFilesMenu() {
     action->setShortcut(Qt::CTRL | (Qt::Key) ((int) Qt::Key_0 + i++));
 
     connect(action, &QAction::triggered, [this, path] {
-      LoadROM(QString::fromStdString(path).toStdU16String()); 
+      LoadROM(QString::fromStdString(path).toStdU16String());
     });
   }
 
@@ -517,7 +517,7 @@ void MainWindow::RenderSaveStateMenus() {
 
     auto action_load = load_state_menu->addAction(empty_state_name);
     auto action_save = save_state_menu->addAction(empty_state_name);
-    
+
     action_load->setDisabled(true);
     action_save->setDisabled(true);
 
@@ -629,7 +629,7 @@ void MainWindow::PromptUserForReset() {
     box.addButton(QMessageBox::No);
     box.addButton(QMessageBox::Yes);
     box.setDefaultButton(QMessageBox::No);
-    
+
     if(box.exec() == QMessageBox::Yes) {
       // Reload the ROM in case its config (e.g. save type or GPIO) has changed:
       if(game_loaded) {
@@ -739,7 +739,7 @@ void MainWindow::Stop() {
     RenderSaveStateMenus();
 
     setWindowTitle(base_window_title);
-  
+
     UpdateMenuBarVisibility();
   }
 }
@@ -781,6 +781,10 @@ void MainWindow::LoadROM(std::u16string const& path) {
     retry = false;
 
     switch(nba::BIOSLoader::Load(core, QString::fromStdString(config->bios_path).toStdU16String())) {
+      case nba::BIOSLoader::Result::Success: {
+        break;
+      }
+
       case nba::BIOSLoader::Result::CannotFindFile: {
         QMessageBox box {this};
         box.setText(tr("A Game Boy Advance BIOS file is required but cannot be located.\n\nWould you like to add one now?"));
@@ -789,7 +793,7 @@ void MainWindow::LoadROM(std::u16string const& path) {
         box.addButton(QMessageBox::No);
         box.addButton(QMessageBox::Yes);
         box.setDefaultButton(QMessageBox::Yes);
-          
+
         if(box.exec() == QMessageBox::Yes) {
           SelectBIOS();
           retry = true;
@@ -825,6 +829,10 @@ void MainWindow::LoadROM(std::u16string const& path) {
   auto result = nba::ROMLoader::Load(core, path, save_path, save_type, force_gpio);
 
   switch(result) {
+    case nba::ROMLoader::Result::Success: {
+      break;
+    }
+
     case nba::ROMLoader::Result::CannotFindFile: {
       QMessageBox box {this};
       box.setText(tr("Sorry, the specified ROM file cannot be located."));
@@ -930,7 +938,7 @@ auto MainWindow::GetSavePath(fs::path const& rom_path, fs::path const& extension
   if(
    !save_folder.empty() &&
     fs::exists(save_folder) &&
-    fs::is_directory(save_folder) 
+    fs::is_directory(save_folder)
   ) {
     return save_folder / rom_path.filename().replace_extension(extension);
   }
@@ -965,7 +973,7 @@ void MainWindow::UpdateWindowSize() {
     showNormal();
 
     auto scale = config->window.scale;
-    auto minimum_size = screen->minimumSize(); 
+    auto minimum_size = screen->minimumSize();
     auto maximum_size = screen->maximumSize();
     screen->setFixedSize(240 * scale, 160 * scale);
     adjustSize();

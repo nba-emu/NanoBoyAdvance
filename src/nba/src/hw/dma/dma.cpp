@@ -8,7 +8,6 @@
 #include <nba/common/compiler.hpp>
 
 #include "bus/bus.hpp"
-#include "bus/io.hpp"
 #include "hw/dma/dma.hpp"
 
 namespace nba::core {
@@ -129,10 +128,10 @@ void DMA::Request(Occasion occasion) {
     case Occasion::Video:
       ScheduleDMAs(video_set.to_ulong());
       break;
-    case Occasion::FIFO0: 
+    case Occasion::FIFO0:
       if(channels[1].enable && channels[1].time == Channel::Special) ScheduleDMAs(2);
       break;
-    case Occasion::FIFO1: 
+    case Occasion::FIFO1:
       if(channels[2].enable && channels[2].time == Channel::Special) ScheduleDMAs(4);
       break;
   }
@@ -443,6 +442,9 @@ void DMA::AddChannelToDMASet(Channel& channel) {
         video_set.set(3, true);
       }
       break;
+    }
+    default: {
+      unreachable();
     }
   }
 }

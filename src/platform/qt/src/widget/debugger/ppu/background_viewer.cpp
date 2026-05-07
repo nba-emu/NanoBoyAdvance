@@ -5,10 +5,8 @@
  * Refer to the included LICENSE file.
  */
 
-#include <algorithm>
 #include <fmt/format.h>
 #include <nba/common/punning.hpp>
-#include <optional>
 #include <QEvent>
 #include <QGridLayout>
 #include <QGroupBox>
@@ -24,7 +22,7 @@ BackgroundViewer::BackgroundViewer(nba::CoreBase* core, QWidget* parent) : QWidg
   QHBoxLayout* hbox = new QHBoxLayout{};
 
   setLayout(hbox);
-  
+
   hbox->addLayout(CreateInfoPanel());
   hbox->addWidget(CreateCanvasScrollArea());
   hbox->setStretch(1, 1);
@@ -55,7 +53,7 @@ QWidget* BackgroundViewer::CreateBackgroundInfoGroupBox() {
   m_check_bg_wraparound = CreateReadOnlyCheckBox();
   m_label_bg_scroll = CreateMonospaceLabel();
 
-  int row = 0; 
+  int row = 0;
   grid->addWidget(new QLabel(tr("BG mode:")), row, 0);
   grid->addWidget(m_label_bg_mode, row++, 1);
   grid->addWidget(new QLabel(tr("BG priority:")), row, 0);
@@ -125,7 +123,7 @@ QWidget* BackgroundViewer::CreateTileInfoGroupBox() {
 
     m_label_color_r_component->setText(QStringLiteral("%1").arg(r));
     m_label_color_g_component->setText(QStringLiteral("%1").arg(g));
-    m_label_color_b_component->setText(QStringLiteral("%1").arg(b)); 
+    m_label_color_b_component->setText(QStringLiteral("%1").arg(b));
 
     m_tile_color_grid->SetHighlightedPosition(x, y);
   });
@@ -138,7 +136,7 @@ QLayout* BackgroundViewer::CreateInfoPanel() {
 
   m_check_display_screen_viewport = new QCheckBox{tr("Display screen viewport")};
   m_check_display_screen_viewport->setChecked(true);
-  
+
   vbox->addWidget(CreateBackgroundInfoGroupBox());
   vbox->addWidget(CreateTileInfoGroupBox());
   vbox->addWidget(m_check_display_screen_viewport);
@@ -269,6 +267,10 @@ bool BackgroundViewer::eventFilter(QObject* object, QEvent* event) {
       }
       break;
     }
+
+    default: {
+      // intentional fallthrough
+    }
   }
 
   return false;
@@ -358,7 +360,7 @@ void BackgroundViewer::DrawBackgroundMode0() {
 void BackgroundViewer::DrawBackgroundMode2() {
   const u16 bgcnt = m_core->PeekHalfIO(0x04000008 + (m_bg_id << 1));
   const int size = 128 << (bgcnt >> 14);
-  
+
   const u32 tile_base = ((bgcnt >> 2) & 3) << 14;
   const u32 map_base = ((bgcnt >> 8) & 31) << 11;
 
@@ -468,7 +470,7 @@ void BackgroundViewer::PresentBackground() {
     if(x_max < x_min) {
       painter.drawLine(x_min, y_min, width - 1, y_min);
       painter.drawLine(x_min, y_max, width - 1, y_max);
-      
+
       painter.drawLine(0, y_min, x_max, y_min);
       painter.drawLine(0, y_max, x_max, y_max);
     } else {

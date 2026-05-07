@@ -68,9 +68,6 @@ void APU::Reset() {
     case Interpolation::Cubic:
       resampler = std::make_unique<CubicStereoResampler<float>>(buffer);
       break;
-    case Interpolation::Sinc_32:
-      resampler = std::make_unique<SincStereoResampler<float, 32>>(buffer);
-      break;
     case Interpolation::Sinc_64:
       resampler = std::make_unique<SincStereoResampler<float, 64>>(buffer);
       break;

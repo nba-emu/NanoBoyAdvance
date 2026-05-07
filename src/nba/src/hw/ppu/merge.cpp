@@ -21,7 +21,7 @@ static u32 RGB555(u16 rgb555) {
 
 void PPU::InitMerge() {
   const u64 timestamp_now = scheduler.GetTimestampNow();
-  
+
   merge.timestamp_init = timestamp_now;
   merge.timestamp_last_sync = timestamp_now;
   merge.cycle = 0U;
@@ -33,7 +33,7 @@ void PPU::InitMerge() {
 
 void PPU::DrawMerge() {
   const u64 timestamp_now = scheduler.GetTimestampNow();
-  
+
   const int cycles = (int)(timestamp_now - merge.timestamp_last_sync);
 
   if(cycles == 0 || merge.cycle >= 1006U) {
@@ -226,6 +226,9 @@ void PPU::DrawMergeImpl(int cycles) {
               }
               break;
             }
+            default: {
+              unreachable();
+            }
           }
         }
       }
@@ -298,7 +301,7 @@ auto PPU::Brighten(u16 color, int evy) -> u16 {
   b += ((31 - b) * evy + 8) >> 4;
 
   g >>= 1;
-  
+
   return (u16)((b << 10) | (g << 5) | r);
 }
 

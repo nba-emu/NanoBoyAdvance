@@ -7,7 +7,7 @@ NanoBoyAdvance can be compiled on Windows, Linux, and macOS.
 - Python modules Jinja and (optionally) lxml
 - OpenGL (usually provided by the operating system)
 - SDL 2 library
-- Qt 5 library
+- Qt 6 library
 
 ### Source Code
 
@@ -41,9 +41,9 @@ apt install cmake python3-jinja2 python3-lxml libsdl2-dev qtbase5-dev libqt5open
 
 Get [Brew](https://brew.sh/) and run:
 
-``` bash
+```bash
 brew install cmake python@3 sdl2 qt@5
-cd /path/to/NanoBoyAdvance
+cd </path/to/NanoBoyAdvance>
 python3 -m venv .venv
 .venv/bin/pip install Jinja2
 ```

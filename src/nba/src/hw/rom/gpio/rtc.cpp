@@ -27,7 +27,7 @@ void RTC::Reset() {
     buffer[i] = 0;
   }
   port.sck = 0;
-  port.sio = 0; 
+  port.sio = 0;
   port.cs  = 0;
   state = State::Complete;
 
@@ -84,6 +84,9 @@ void RTC::Write(int value) {
         case State::Sending: {
           TransmitBufferSIO();
           break;
+        }
+        default: {
+          unreachable();
         }
       }
     }
@@ -151,7 +154,7 @@ void RTC::ReceiveBufferSIO() {
       WriteRegister();
       state = State::Complete;
     }
-  } 
+  }
 }
 
 void RTC::TransmitBufferSIO() {
@@ -203,6 +206,9 @@ void RTC::ReadRegister() {
       buffer[1] = ConvertDecimalToBCD(time->tm_min);
       buffer[2] = ConvertDecimalToBCD(time->tm_sec);
       break;
+    }
+    default: {
+      unreachable();
     }
   }
 }

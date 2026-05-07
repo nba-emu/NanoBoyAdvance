@@ -87,7 +87,7 @@ QWidget* TileViewer::CreateTileBaseGroupBox() {
     });
 
     vbox->addWidget(radio_button);
-    
+
     if(m_tile_base == 0x06000000u) radio_button->click();
   }
 
@@ -133,7 +133,7 @@ QWidget* TileViewer::CreateTileInfoGroupBox() {
 
     m_label_color_r_component->setText(QStringLiteral("%1").arg(r));
     m_label_color_g_component->setText(QStringLiteral("%1").arg(g));
-    m_label_color_b_component->setText(QStringLiteral("%1").arg(b)); 
+    m_label_color_b_component->setText(QStringLiteral("%1").arg(b));
 
     m_tile_color_grid->SetHighlightedPosition(x, y);
   });
@@ -164,6 +164,9 @@ bool TileViewer::eventFilter(QObject* object, QEvent* event) {
         ClearTileSelection();
       }
       return true;
+    }
+    default: {
+      // intentional fallthrough
     }
   }
 
@@ -227,7 +230,7 @@ void TileViewer::UpdateImpl() {
   const int magnification = m_spin_magnification->value();
   const int palette_offset = m_tile_base == 0x10000u ? 256 : 0;
 
-  u16* const image_rgb565 = m_image_rgb565; 
+  u16* const image_rgb565 = m_image_rgb565;
   u32* const image_rgb32  = (u32*)m_image_rgb32.bits();
 
   int height = 256;

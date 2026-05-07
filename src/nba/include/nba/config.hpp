@@ -33,7 +33,6 @@ struct Config {
     enum class Interpolation {
       Cosine,
       Cubic,
-      Sinc_32,
       Sinc_64,
       Sinc_128,
       Sinc_256
