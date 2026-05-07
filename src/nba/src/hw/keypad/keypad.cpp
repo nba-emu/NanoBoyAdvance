@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -39,7 +39,7 @@ void KeyPad::SetKeyStatus(Key key, bool pressed) {
 void KeyPad::UpdateIRQ() {
   if(control.interrupt) {
     auto not_input = ~input.value & 0x3FF;
-    
+
     if(control.mode == KeyControl::Mode::LogicalAND) {
       if(control.mask == not_input) {
         irq.Raise(IRQ::Source::Keypad);

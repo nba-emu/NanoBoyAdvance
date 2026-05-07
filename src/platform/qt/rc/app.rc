@@ -15,7 +15,7 @@ BEGIN
             VALUE "FileDescription", "Cycle-accurate Nintendo Game Boy Advance emulator"
             VALUE "FileVersion", "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
             VALUE "InternalName", "NanoBoyAdvance.exe"
-            VALUE "LegalCopyright", "(c) 2025 fleroviux"
+            VALUE "LegalCopyright", "(c) 2026 Mireille Meyer"
             VALUE "OriginalFilename", "NanoBoyAdvance.exe"
             VALUE "ProductName", "NanoBoyAdvance"
             VALUE "ProductVersion", "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"

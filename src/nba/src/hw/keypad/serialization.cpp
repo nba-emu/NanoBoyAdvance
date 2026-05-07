@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -18,7 +18,7 @@ void KeyPad::LoadState(SaveState const& state) {
 }
 
 void KeyPad::CopyState(SaveState& state) {
-  state.keycnt = control.mask | 
+  state.keycnt = control.mask |
                 (control.interrupt ? 0x4000 : 0) |
                 ((int)control.mode << 15);
 }
