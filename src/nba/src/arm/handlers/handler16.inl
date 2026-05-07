@@ -67,7 +67,7 @@ void Thumb_Op3(u16 instruction) {
 
   switch (op) {
     case 0b00:
-      // MOV rD, #imm 
+      // MOV rD, #imm
       state.reg[dst] = imm;
       state.cpsr.f.n = 0;
       state.cpsr.f.z = imm == 0;
@@ -153,7 +153,7 @@ void Thumb_ALU(u16 instruction) {
     case ThumbDataOp::ROR: {
       auto shift = state.reg[src];
       bus.Idle();
-      pipe.access = Access::Code | Access::Nonsequential;      
+      pipe.access = Access::Code | Access::Nonsequential;
 
       int carry = state.cpsr.f.c;
       ROR(state.reg[dst], shift, carry, false);

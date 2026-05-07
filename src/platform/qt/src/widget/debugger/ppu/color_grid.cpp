@@ -5,9 +5,9 @@
  * Refer to the included LICENSE file.
  */
 
+#include <QPainter>
 #include <algorithm>
 #include <cstring>
-#include <QPainter>
 
 #include "widget/debugger/utility.hpp"
 #include "color_grid.hpp"

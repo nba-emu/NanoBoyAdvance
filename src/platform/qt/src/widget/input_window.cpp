@@ -11,12 +11,7 @@
 
 #include "widget/input_window.hpp"
 
-InputWindow::InputWindow(
-  QApplication* app,
-  QWidget* parent,
-  std::shared_ptr<QtConfig> config
-)   : QDialog(parent)
-    , config(config) {
+InputWindow::InputWindow(QApplication* app, QWidget* parent, std::shared_ptr<QtConfig> config) : QDialog(parent), config(config) {
   auto vbox = new QVBoxLayout{this};
   vbox->setSizeConstraint(QLayout::SetFixedSize);
   vbox->addLayout(CreateKeyMapTable());
@@ -134,6 +129,7 @@ auto InputWindow::CreateKeyMapTable() -> QLayout* {
   CreateKeyMapEntry(grid, "Left", &config->input.gba[int(Key::Left)]);
   CreateKeyMapEntry(grid, "Right", &config->input.gba[int(Key::Right)]);
   CreateKeyMapEntry(grid, "Fast Forward", &config->input.fast_forward);
+
   return grid;
 }
 
@@ -151,7 +147,7 @@ void InputWindow::CreateKeyMapEntry(
 
   {
     button_keyboard = new QPushButton{GetKeyboardButtonName(mapping->keyboard)};
-   
+
     connect(button_keyboard, &QPushButton::clicked, [=]() {
       RestoreActiveButtonLabel();
       button_keyboard->setText("[press key]");
@@ -159,13 +155,13 @@ void InputWindow::CreateKeyMapEntry(
       active_button = button_keyboard;
       waiting_for_keyboard = true;
     });
-    
+
     layout->addWidget(button_keyboard, row, 1);
   }
 
   {
     button_controller = new QPushButton{GetJoystickButtonName(mapping)};
-    
+
     connect(button_controller, &QPushButton::clicked, [=]() {
       RestoreActiveButtonLabel();
       button_controller->setText("[press button]");
@@ -201,7 +197,7 @@ void InputWindow::RestoreActiveButtonLabel() {
     active_button->setText(GetKeyboardButtonName(active_mapping->keyboard));
     waiting_for_keyboard = false;
   }
-  
+
   if(waiting_for_joystick) {
     active_button->setText(GetJoystickButtonName(active_mapping));
     waiting_for_joystick = false;

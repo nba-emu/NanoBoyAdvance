@@ -15,7 +15,7 @@ NoiseChannel::NoiseChannel(Scheduler& scheduler, BIAS& bias)
     , scheduler(scheduler)
     , bias(bias) {
   scheduler.Register(Scheduler::EventClass::APU_PSG4_generate, this, &NoiseChannel::Generate);
-  
+
   Reset();
 }
 

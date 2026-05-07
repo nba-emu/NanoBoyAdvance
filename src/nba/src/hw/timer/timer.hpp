@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <algorithm>
 #include <nba/integer.hpp>
 #include <nba/save_state.hpp>
 #include <nba/scheduler.hpp>

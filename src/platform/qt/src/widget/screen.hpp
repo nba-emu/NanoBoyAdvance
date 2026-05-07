@@ -14,10 +14,7 @@
 #include "config.hpp"
 
 struct Screen : QWidget, nba::VideoDevice {
-  explicit Screen(
-    QWidget* parent,
-    std::shared_ptr<QtConfig> config
-  );
+  explicit Screen(QWidget* parent, std::shared_ptr<QtConfig> config);
 
   bool Initialize();
   void Draw(u32* buffer) final;

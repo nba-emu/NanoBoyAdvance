@@ -5,8 +5,8 @@
  * Refer to the included LICENSE file.
  */
 
-#include <fmt/format.h>
 #include <nba/common/punning.hpp>
+#include <fmt/format.h>
 #include <QEvent>
 #include <QGridLayout>
 #include <QGroupBox>

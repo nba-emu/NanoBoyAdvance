@@ -5,9 +5,9 @@
  * Refer to the included LICENSE file.
  */
 
+#include <platform/loader/save_state.hpp>
 #include <filesystem>
 #include <fstream>
-#include <platform/loader/save_state.hpp>
 
 namespace nba {
 

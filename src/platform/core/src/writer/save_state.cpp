@@ -24,7 +24,7 @@ auto SaveStateWriter::Write(
   core->CopyState(save_state);
 
   file_stream.write((const char*)&save_state, sizeof(SaveState));
-  
+
   if(!file_stream.good()) {
     return Result::CannotWrite;
   }

@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include <bitset>
 #include <nba/integer.hpp>
 #include <nba/save_state.hpp>
 #include <nba/scheduler.hpp>
+#include <bitset>
 
 #include "hw/irq/irq.hpp"
 

@@ -9,17 +9,16 @@
 
 #include <nba/rom/backup/backup.hpp>
 #include <nba/rom/backup/backup_file.hpp>
-#include <string>
 
 namespace nba {
 
 struct SRAM : Backup {
   SRAM(fs::path const& save_path);
 
-  void Reset() final;  
+  void Reset() final;
   auto Read (u32 address) -> u8 final;
   void Write(u32 address, u8 value) final;
-  
+
   void LoadState(SaveState const& state) final;
   void CopyState(SaveState& state) final;
 

@@ -7,11 +7,11 @@
 
 #pragma once
 
-#include <atomic>
-#include <functional>
 #include <nba/core.hpp>
 #include <nba/integer.hpp>
 #include <platform/frame_limiter.hpp>
+#include <atomic>
+#include <functional>
 #include <thread>
 #include <queue>
 #include <mutex>

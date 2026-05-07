@@ -58,12 +58,12 @@ auto SoundControl::Read(int address) -> u8 {
              (dma[DMA_B].enable[SIDE_LEFT ] ? 32 : 0) |
              (dma[DMA_B].timer_id       ? 64 : 0);
     case 4:
-      
+
       return (psg1.IsEnabled() ? 1 : 0) |
              (psg2.IsEnabled() ? 2 : 0) |
              (psg3.IsEnabled() ? 4 : 0) |
              (psg4.IsEnabled() ? 8 : 0) | (master_enable ? 128 : 0);
-      
+
     default: return 0;
   }
 }

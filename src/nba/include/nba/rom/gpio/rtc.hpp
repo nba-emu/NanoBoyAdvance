@@ -64,7 +64,7 @@ private:
     while(x > 0) {
       y += (x % 10) * e;
       e *= 16;
-      x /= 10; 
+      x /= 10;
     }
 
     return y;

@@ -26,7 +26,7 @@ struct GPIODevice {
 
   virtual void LoadState(SaveState const& state) {}
   virtual void CopyState(SaveState& state) {}
-  
+
   void SetPortDirections(int port_directions) {
     this->port_directions = port_directions;
   }

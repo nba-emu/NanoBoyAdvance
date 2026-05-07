@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include <memory>
 #include <nba/device/audio_device.hpp>
 #include <nba/device/video_device.hpp>
 #include <nba/integer.hpp>
+#include <memory>
 #include <string>
 
 namespace nba {

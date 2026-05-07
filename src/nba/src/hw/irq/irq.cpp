@@ -140,7 +140,7 @@ void IRQ::OnWriteIO() {
   reg_if = pending_if;
 
   const bool irq_available_new = reg_ie & reg_if;
-  
+
   if(irq_available != irq_available_new) {
     scheduler.Add(1, Scheduler::EventClass::IRQ_update_ie_and_if, 0, (u64)irq_available_new);
   }

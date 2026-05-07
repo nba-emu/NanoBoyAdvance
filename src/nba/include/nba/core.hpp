@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <memory>
 #include <nba/rom/gpio/rtc.hpp>
 #include <nba/rom/gpio/solar_sensor.hpp>
 #include <nba/rom/rom.hpp>
@@ -15,6 +14,7 @@
 #include <nba/integer.hpp>
 #include <nba/save_state.hpp>
 #include <nba/scheduler.hpp>
+#include <memory>
 #include <vector>
 
 namespace nba {

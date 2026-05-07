@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <array>
 #include <nba/integer.hpp>
+#include <array>
 
 namespace nba {
 
@@ -134,7 +134,7 @@ struct SaveState {
       struct PSG {
         bool enabled;
         u8 step;
-        
+
         struct Length {
           bool enabled;
           u8 counter;

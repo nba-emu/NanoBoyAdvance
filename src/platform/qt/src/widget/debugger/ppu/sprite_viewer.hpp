@@ -12,8 +12,8 @@
 #include <QGroupBox>
 #include <QImage>
 #include <QLabel>
-#include <QPaintEvent>
 #include <QPainter>
+#include <QPaintEvent>
 #include <QSpinBox>
 #include <QWidget>
 

@@ -5,8 +5,6 @@
  * Refer to the included LICENSE file.
  */
 
-#include <ctime>
-#include <fstream>
 #include <platform/device/sdl_audio_device.hpp>
 #include <platform/loader/bios.hpp>
 #include <platform/loader/rom.hpp>
@@ -21,8 +19,9 @@
 #include <QLocale>
 #include <QStatusBar>
 #include <QWindow>
-#include <unordered_map>
+#include <ctime>
 
+#include "widget/debugger/ppu/sprite_viewer_window.hpp"
 #include "widget/main_window.hpp"
 #include "version.hpp"
 

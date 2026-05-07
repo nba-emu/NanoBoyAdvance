@@ -5,8 +5,8 @@
  * Refer to the included LICENSE file.
  */
 
-#include <fmt/format.h>
 #include <nba/common/punning.hpp>
+#include <fmt/format.h>
 #include <QGridLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
@@ -14,6 +14,7 @@
 #include <QRadioButton>
 #include <QVBoxLayout>
 
+#include "widget/debugger/utility.hpp"
 #include "tile_viewer.hpp"
 
 TileViewer::TileViewer(nba::CoreBase* core, QWidget* parent) : QWidget(parent) {

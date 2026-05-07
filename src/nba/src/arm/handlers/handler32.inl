@@ -25,7 +25,7 @@ enum class DataOp {
 };
 
 template <bool immediate, DataOp opcode, bool set_flags, int field4>
-void ARM_DataProcessing(u32 instruction) {  
+void ARM_DataProcessing(u32 instruction) {
   constexpr int  shift_type = ( field4 >> 1) & 3;
   constexpr bool shift_imm  = (~field4 >> 0) & 1;
 
@@ -192,7 +192,7 @@ void ARM_StatusTransfer(u32 instruction) {
     if (instruction & (1 << 18)) mask |= 0x00FF0000;
     if (instruction & (1 << 19)) mask |= 0xFF000000;
 
-    // Decode source operand. 
+    // Decode source operand.
     if (immediate) {
       int value = instruction & 0xFF;
       int shift = ((instruction >> 8) & 0xF) * 2;
@@ -351,7 +351,7 @@ void ARM_SingleDataSwap(u32 instruction) {
   }
 
   bus.Idle();
-  
+
   SetReg(dst, tmp);
 
   if (dst == 15) {

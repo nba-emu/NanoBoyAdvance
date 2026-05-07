@@ -10,7 +10,7 @@
 #include <nba/integer.hpp>
 
 namespace nba {
-  
+
 struct AudioDevice {
   virtual ~AudioDevice() = default;
 

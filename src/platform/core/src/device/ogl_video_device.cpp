@@ -5,12 +5,10 @@
  * Refer to the included LICENSE file.
  */
 
-#include <array>
-#include <filesystem>
-#include <fmt/format.h>
-#include <fstream>
 #include <nba/log.hpp>
 #include <platform/device/ogl_video_device.hpp>
+#include <fmt/format.h>
+#include <array>
 #include <memory>
 
 #include "device/shader/color_higan.glsl.hpp"
@@ -253,12 +251,12 @@ auto OGLVideoDevice::CompileShader(
   char const* source
 ) -> std::pair<bool, GLuint> {
   char const* source_array[] = { source };
-  
+
   auto shader = glCreateShader(type);
 
   glShaderSource(shader, 1, source_array, nullptr);
   glCompileShader(shader);
-  
+
   GLint compiled = 0;
   glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
   if(compiled == GL_FALSE) {
@@ -280,7 +278,7 @@ auto OGLVideoDevice::CompileProgram(
 ) -> std::pair<bool, GLuint> {
   auto [vert_success, vert_id] = CompileShader(GL_VERTEX_SHADER, vertex_src);
   auto [frag_success, frag_id] = CompileShader(GL_FRAGMENT_SHADER, fragment_src);
-  
+
   if(!vert_success || !frag_success) {
     return std::make_pair<bool, GLuint>(false, 0);
   } else {

@@ -110,7 +110,7 @@ void EmulatorThread::PushMessage(const Message& message) {
   }
 
   if(std::this_thread::get_id() == thread.get_id()) {
-    // Messages sent on the emulator thread (i.e. from a callback) do 
+    // Messages sent on the emulator thread (i.e. from a callback) do
     // not need to be pushed to the message queue.
     // Process them right away instead to reduce latency.
     ProcessMessage(message);

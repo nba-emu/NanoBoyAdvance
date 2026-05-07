@@ -7,24 +7,21 @@
 
 #pragma once
 
-#include <atomic>
-#include <cmath>
-#include <functional>
-#include <filesystem>
 #include <nba/core.hpp>
 #include <platform/loader/save_state.hpp>
 #include <platform/writer/save_state.hpp>
 #include <platform/emulator_thread.hpp>
-#include <memory>
-#include <QMainWindow>
 #include <QActionGroup>
+#include <QMainWindow>
 #include <QMenu>
+#include <functional>
+#include <filesystem>
+#include <memory>
 #include <utility>
 #include <vector>
 
 #include "widget/debugger/ppu/background_viewer_window.hpp"
 #include "widget/debugger/ppu/palette_viewer_window.hpp"
-#include "widget/debugger/ppu/sprite_viewer_window.hpp"
 #include "widget/debugger/ppu/tile_viewer_window.hpp"
 #include "widget/controller_manager.hpp"
 #include "widget/input_window.hpp"

@@ -5,18 +5,18 @@
  * Refer to the included LICENSE file.
  */
 
-#include <filesystem>
-#include <fstream>
-#include <platform/loader/rom.hpp>
 #include <nba/rom/backup/eeprom.hpp>
 #include <nba/rom/backup/flash.hpp>
 #include <nba/rom/backup/sram.hpp>
 #include <nba/rom/header.hpp>
 #include <nba/rom/rom.hpp>
 #include <nba/log.hpp>
+#include <platform/loader/rom.hpp>
+#include <unarr.h>
+#include <filesystem>
+#include <fstream>
 #include <string_view>
 #include <utility>
-#include <unarr.h>
 
 namespace nba {
 

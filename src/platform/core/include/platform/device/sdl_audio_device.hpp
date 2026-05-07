@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <nba/log.hpp>
 #include <nba/device/audio_device.hpp>
+#include <nba/log.hpp>
 #include <SDL.h>
 
 namespace nba {

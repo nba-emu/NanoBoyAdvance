@@ -7,9 +7,6 @@
 
 #pragma once
 
-#include <atomic>
-#include <filesystem>
-#include <fstream>
 #include <nba/core.hpp>
 #include <nba/log.hpp>
 #include <toml.hpp>
@@ -19,8 +16,9 @@
 #include <QGridLayout>
 #include <QKeyEvent>
 #include <QKeySequence>
-#include <QPushButton>
 #include <QLabel>
+#include <QPushButton>
+#include <atomic>
 
 #include "config.hpp"
 

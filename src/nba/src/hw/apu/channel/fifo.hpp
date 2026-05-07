@@ -14,7 +14,7 @@ namespace nba::core {
 
 struct FIFO {
   FIFO() { Reset(); }
-  
+
   void Reset() {
     rd_ptr = 0;
     wr_ptr = 0;
@@ -22,7 +22,7 @@ struct FIFO {
 
     for(u32& word : data) word = 0U;
   }
-  
+
   int Count() const { return count; }
 
   void WriteByte(uint offset, u8 value) {
@@ -46,10 +46,10 @@ struct FIFO {
       Reset();
     }
   }
-  
+
   auto ReadWord() -> u32 {
     u32 value = data[rd_ptr];
-    
+
     if(count > 0) {
       if(++rd_ptr == s_fifo_len) rd_ptr = 0;
       count--;
@@ -61,7 +61,7 @@ struct FIFO {
   void LoadState(SaveState::APU::FIFO const& state) {
     rd_ptr = 0;
     wr_ptr = state.count % s_fifo_len;
-    count = state.count; 
+    count = state.count;
 
     for(int i = 0; i < s_fifo_len; i++) {
       data[i] = state.data[i];
@@ -78,7 +78,7 @@ struct FIFO {
 
 private:
   static constexpr int s_fifo_len = 7;
-  
+
   u32 data[s_fifo_len];
   u32 pending;
 
@@ -86,5 +86,5 @@ private:
   int wr_ptr;
   int count;
 };
-  
+
 } // namespace nba::core

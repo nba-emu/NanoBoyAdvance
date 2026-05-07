@@ -12,18 +12,18 @@ jobs:
       - uses: actions/checkout@v4
       - uses: msys2/setup-msys2@v2
         with:
-          install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-python-jinja mingw-w64-x86_64-python-lxml mingw-w64-x86_64-SDL2 mingw-w64-x86_64-qt5-static
+          install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-python-jinja mingw-w64-x86_64-python-lxml mingw-w64-x86_64-SDL2 mingw-w64-x86_64-qt6-static mingw-w64-x86_64-pcre2
       - name: Build NanoBoyAdvance
         run: |
           cmake \
-            -Bbuild \
-            -G"Unix Makefiles" \
+            -B build \
+            -G "Unix Makefiles" \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_CXX_FLAGS="-s" \
             -DPython_EXECUTABLE="$(which python3)" \
             -DPLATFORM_QT_STATIC=ON \
             -DUSE_STATIC_SDL=ON \
-            -DQT5_STATIC_DIR="/mingw64/qt5-static"
+            -DQT5_STATIC_DIR="/mingw64/qt6-static"
           cd build
           make -j$NUMBER_OF_PROCESSORS
       - name: Collect artifacts
@@ -44,10 +44,10 @@ jobs:
       - name: Setup dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y python3-jinja2 python3-lxml libsdl2-dev qtbase5-dev
+          sudo apt-get install -y python3-jinja2 python3-lxml libsdl2-dev qt6-base-dev
       - name: Build NanoBoyAdvance
         run: |
-          cmake -Bbuild -DCMAKE_BUILD_TYPE=Release
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
           cd build
           make -j$(nproc)
       - name: Collect artifacts
@@ -61,7 +61,7 @@ jobs:
           path: upload
           if-no-files-found: error
 
-  build-macOS:
+  build-macos:
     strategy:
       matrix:
         os: [macos-14]
@@ -75,11 +75,11 @@ jobs:
         env:
           HOMEBREW_NO_ANALYTICS: 1
         run: |
-          brew install sdl2 qt@5
+          brew install sdl2 qt@6
           python3 -m pip install Jinja2
       - name: Build NanoBoyAdvance
         run: |
-          cmake -Bbuild \
+          cmake -B build \
             -DCMAKE_CXX_FLAGS="-s" \
             -DUSE_STATIC_SDL=ON \
             -DCMAKE_BUILD_TYPE=Release \

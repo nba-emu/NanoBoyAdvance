@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <functional>
 #include <nba/common/compiler.hpp>
 #include <nba/common/punning.hpp>
 #include <nba/config.hpp>
@@ -151,7 +150,7 @@ struct PPU {
 
   void Sync() {
     // @todo: only update the window when it is necessary or else
-    // we will have a major performance caveat due to the window being updated 
+    // we will have a major performance caveat due to the window being updated
     // during V-blank and games typically updating graphics during V-blank.
     DrawBackground();
     DrawSprite();
@@ -399,7 +398,7 @@ private:
   void InitMerge();
   void DrawMerge();
   void DrawMergeImpl(int cycles);
-  
+
   static auto Blend(u16 color_a, u16 color_b, int eva, int evb) -> u16;
   static auto Brighten(u16 color, int evy) -> u16;
   static auto Darken(u16 color, int evy) -> u16;

@@ -20,7 +20,7 @@ void Bus::Idle() {
    * We then treat subsequent internal CPU cycles as free until the CPU accesses the bus or
    * the total number of internal CPU cycles would exceed the DMA duration.
    *
-   * Fortunately this should have no observable side-effects! 
+   * Fortunately this should have no observable side-effects!
    */
 
   if(hw.dma.IsRunning()) {

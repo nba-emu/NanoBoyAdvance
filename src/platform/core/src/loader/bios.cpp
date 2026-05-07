@@ -5,9 +5,9 @@
  * Refer to the included LICENSE file.
  */
 
+#include <platform/loader/bios.hpp>
 #include <filesystem>
 #include <fstream>
-#include <platform/loader/bios.hpp>
 #include <vector>
 
 namespace nba {

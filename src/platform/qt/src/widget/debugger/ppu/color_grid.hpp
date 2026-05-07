@@ -15,7 +15,7 @@
 class ColorGrid : public QWidget {
   public:
     ColorGrid(int rows, int columns, QWidget* parent = nullptr);
-   ~ColorGrid() override; 
+   ~ColorGrid() override;
 
     void Draw(u16* buffer_rgb565, int stride);
     void SetHighlightedPosition(int x, int y);

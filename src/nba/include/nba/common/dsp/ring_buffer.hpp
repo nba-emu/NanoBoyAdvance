@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include <memory>
 #include <nba/common/dsp/stereo.hpp>
 #include <nba/common/dsp/stream.hpp>
+#include <memory>
 
 namespace nba {
 

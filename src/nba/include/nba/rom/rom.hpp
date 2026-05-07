@@ -7,14 +7,14 @@
 
 #pragma once
 
-#include <algorithm>
-#include <memory>
-#include <nba/integer.hpp>
-#include <nba/rom/backup/eeprom.hpp>
-#include <nba/rom/gpio/gpio.hpp>
 #include <nba/common/compiler.hpp>
 #include <nba/common/punning.hpp>
+#include <nba/rom/backup/eeprom.hpp>
+#include <nba/rom/gpio/gpio.hpp>
+#include <nba/integer.hpp>
 #include <nba/save_state.hpp>
+#include <algorithm>
+#include <memory>
 #include <vector>
 
 namespace nba {

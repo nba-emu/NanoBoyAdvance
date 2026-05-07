@@ -5,31 +5,25 @@
  * Refer to the included LICENSE file.
  */
 
-#include <filesystem>
-#include <memory>
 #include <QApplication>
 #include <QSurfaceFormat>
 #include <QProxyStyle>
-#include <stdlib.h>
-
-#include "widget/main_window.hpp"
+#include <cstdlib>
+#include <filesystem>
+#include <memory>
 
 #if defined(WIN32)
-  #include <QtPlatformHeaders/QWindowsWindowFunctions>
+#include <QtPlatformHeaders/QWindowsWindowFunctions>
 #endif
+
+#include "widget/main_window.hpp"
 
 namespace fs = std::filesystem;
 
 // See: https://stackoverflow.com/a/37023032
 struct MenuStyle : QProxyStyle {
-  int styleHint(
-    StyleHint stylehint,
-    const QStyleOption *opt,
-    const QWidget *widget,
-    QStyleHintReturn *returnData
-  ) const {
-    if(stylehint == QStyle::SH_MenuBar_AltKeyNavigation)
-      return 0;
+  int styleHint(StyleHint stylehint, const QStyleOption *opt, const QWidget *widget, QStyleHintReturn *returnData) const {
+    if(stylehint == QStyle::SH_MenuBar_AltKeyNavigation) return 0;
 
     return QProxyStyle::styleHint(stylehint, opt, widget, returnData);
   }
@@ -90,7 +84,7 @@ int main(int argc, char** argv) {
   }
 #endif
 
-  // On some systems (e.g. macOS) QSurfaceFormat::setDefaultFormat() must be called before constructing QApplication.
+  // On some systems (e.g. macOS) QSurfaceFormat::setDefaultFormat() must be called before constructing a QApplication.
   auto format = QSurfaceFormat{};
   format.setProfile(QSurfaceFormat::CoreProfile);
   format.setMajorVersion(3);

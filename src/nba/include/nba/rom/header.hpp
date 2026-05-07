@@ -11,7 +11,7 @@
 
 namespace nba {
 
-#pragma pack(push, 1) 
+#pragma pack(push, 1)
 
 // For details see: http://problemkaputt.de/gbatek.htm#gbacartridgeheader
 struct Header {

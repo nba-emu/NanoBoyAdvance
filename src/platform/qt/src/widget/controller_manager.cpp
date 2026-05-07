@@ -101,7 +101,7 @@ void ControllerManager::BindCurrentKeyToJoystickHat(int hat, int direction) {
 
   if(input_window) {
     input_window->BindCurrentKeyToJoystickHat(hat, direction);
-  } 
+  }
 }
 
 void ControllerManager::Open(std::string const& guid) {
@@ -225,7 +225,7 @@ void ControllerManager::UpdateKeyState() {
 
   const auto evaluate = [&](QtConfig::Input::Map const& mapping) {
     bool pressed = false;
-  
+
     const int button = mapping.controller.button;
     const int axis = mapping.controller.axis;
     const int hat = mapping.controller.hat;

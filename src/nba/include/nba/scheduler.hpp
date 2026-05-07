@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include <nba/log.hpp>
 #include <nba/common/compiler.hpp>
 #include <nba/integer.hpp>
+#include <nba/log.hpp>
 #include <nba/save_state.hpp>
 #include <functional>
 #include <limits>
@@ -72,10 +72,10 @@ struct Scheduler {
   };
 
   struct Event {
-    u64 timestamp; 
+    u64 timestamp;
 
     u64 UID() const { return uid; }
-  
+
   private:
     friend class Scheduler;
     int handle;

@@ -11,12 +11,7 @@
 #include <QOpenGLContext> // Has to go after glad.
 #include <QWindow>
 
-Screen::Screen(
-  QWidget* parent,
-  std::shared_ptr<QtConfig> config
-)   : QWidget(parent)
-    , ogl_video_device(config)
-    , config(config) {
+Screen::Screen(QWidget* parent, std::shared_ptr<QtConfig> config) : QWidget(parent), ogl_video_device(config), config(config) {
   connect(this, &Screen::RequestDraw, this, &Screen::OnRequestDraw);
   setAttribute(Qt::WA_NativeWindow);
   setAttribute(Qt::WA_OpaquePaintEvent);
@@ -35,6 +30,7 @@ bool Screen::Initialize() {
     context = nullptr;
     return false;
   }
+
   if(context->format().majorVersion() < 3 ||
      context->format().majorVersion() == 3 && context->format().minorVersion() < 3) {
     delete context;
@@ -134,29 +130,26 @@ void Screen::UpdateViewport() {
 
   // Lock width and height to (non-uniform) integer scales of the native resolution
   if(config->window.use_integer_scaling) {
-    viewport_width  = kGBANativeWidth  * std::max(1, static_cast<int>(viewport_width  / (float)kGBANativeWidth));
+    viewport_width  = kGBANativeWidth * std::max(1, static_cast<int>(viewport_width / (float)kGBANativeWidth));
     viewport_height = kGBANativeHeight * std::max(1, static_cast<int>(viewport_height / (float)kGBANativeHeight));
   }
 
   // Limit screen size to a maximum scaling factor
   if(max_scale > 0) {
-    int max_width  = kGBANativeWidth  * max_scale;
-    int max_height = kGBANativeHeight * max_scale; 
+    int max_width  = kGBANativeWidth * max_scale;
+    int max_height = kGBANativeHeight * max_scale;
 
-    bool overflowing = viewport_width  >= max_width ||
-                       viewport_height >= max_height;
-
-    bool max_size_fits_into_window = width  >= max_width &&
-                                     height >= max_height;
+    bool overflowing = viewport_width >= max_width || viewport_height >= max_height;
+    bool max_size_fits_into_window = width >= max_width && height >= max_height;
 
     if(overflowing && max_size_fits_into_window) {
-      viewport_width  = max_width;
+      viewport_width = max_width;
       viewport_height = max_height;
     }
   }
 
   // Center the viewport
-  viewport_x = (width  - viewport_width ) / 2;
+  viewport_x = (width - viewport_width ) / 2;
   viewport_y = (height - viewport_height) / 2;
 
   context->makeCurrent(this->windowHandle());

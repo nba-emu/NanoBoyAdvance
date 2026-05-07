@@ -10,7 +10,7 @@
 #include <nba/integer.hpp>
 #include <nba/save_state.hpp>
 
-namespace nba { 
+namespace nba {
 
 struct Backup {
   virtual ~Backup() = default;

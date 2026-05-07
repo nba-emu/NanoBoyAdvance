@@ -123,7 +123,10 @@ target_include_directories(nba PRIVATE src PUBLIC include)
 
 target_link_libraries(nba PUBLIC fmt::fmt)
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # Disables some annoying warning about typeids being too evaluated™️
   target_compile_options(nba PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fbracket-depth=4096> PUBLIC -Wno-potentially-evaluated-expression)
+  if(APPLE)
+    target_compile_options(nba PUBLIC -Wno-unused-command-line-argument -Wno-unknown-warning-option)
+  endif()
 endif()

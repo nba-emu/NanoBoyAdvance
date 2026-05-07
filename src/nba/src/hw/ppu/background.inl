@@ -9,7 +9,7 @@ void ALWAYS_INLINE RenderMode0BG(uint id, uint cycle) {
   const auto& bgcnt = mmio.bgcnt[id];
 
   auto& text = bg.text[id];
-  
+
   // @todo: figure out if there is more logical way to control this condition
   if(text.fetches > 0 && text.piso.remaining == 0) {
     u16 data = FetchVRAM_BG<u16>(cycle, text.tile.address);

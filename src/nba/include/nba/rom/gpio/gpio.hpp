@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include <cassert>
 #include <nba/rom/gpio/device.hpp>
 #include <nba/integer.hpp>
 #include <nba/save_state.hpp>
+#include <cassert>
 #include <memory>
 #include <typeindex>
 #include <unordered_map>

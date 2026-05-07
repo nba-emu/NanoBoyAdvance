@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <array>
 #include <fmt/color.h>
 #include <fmt/format.h>
 #include <string_view>

@@ -5,14 +5,13 @@
  * Refer to the included LICENSE file.
  */
 
-#include <algorithm>
 #include <nba/common/punning.hpp>
 #include <nba/common/scope_exit.hpp>
+#include <algorithm>
 #include <stdexcept>
 
 #include "arm/arm7tdmi.hpp"
 #include "bus/bus.hpp"
-
 #include "io.hpp"
 
 namespace nba::core {
@@ -157,7 +156,7 @@ auto Bus::Read(u32 address, int access) -> T {
 
       if constexpr(std::is_same_v<T, u32>) {
         Prefetch(address, code, wait32[sequential][page]);
-        return memory.rom.ReadROM32(address, sequential);  
+        return memory.rom.ReadROM32(address, sequential);
       }
 
       return 0;
@@ -179,7 +178,7 @@ auto Bus::Read(u32 address, int access) -> T {
       Step(1);
       return ReadOpenBus(Align<T>(address));
     }
-  }  
+  }
 
   return 0;
 }
@@ -330,7 +329,7 @@ auto Bus::ReadOpenBus(u32 address) -> u32 {
           word |= cpu.GetFetchedOpcode(1) << 16;
         } else {
           // TODO: this should be LSW=$+4 MSW=$+6
-          // Unfortunately $+6 has not been fetched at this point. 
+          // Unfortunately $+6 has not been fetched at this point.
           word  = cpu.GetFetchedOpcode(1);
           word |= (word << 16);
         }
