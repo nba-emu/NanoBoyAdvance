@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: msys2/setup-msys2@v2
         with:
-          install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-python-jinja mingw-w64-x86_64-python-lxml mingw-w64-x86_64-SDL2 mingw-w64-x86_64-qt6-static mingw-w64-x86_64-dbus mingw-w64-x86_64-double-conversion mingw-w64-x86_64-fontconfig mingw-w64-x86_64-freetype mingw-w64-x86_64-harfbuzz mingw-w64-x86_64-icu mingw-w64-x86_64-libjpeg-turbo mingw-w64-x86_64-libpng mingw-w64-x86_64-md4c mingw-w64-x86_64-openssl mingw-w64-x86_64-pcre2 mingw-w64-x86_64-sqlite3 mingw-w64-x86_64-vulkan mingw-w64-x86_64-zlib mingw-w64-x86_64-zstd
+          install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-python-jinja mingw-w64-x86_64-python-lxml mingw-w64-x86_64-SDL2 mingw-w64-x86_64-qt6-static mingw-w64-x86_64-dbus mingw-w64-x86_64-double-conversion mingw-w64-x86_64-fontconfig mingw-w64-x86_64-freetype mingw-w64-x86_64-harfbuzz mingw-w64-x86_64-icu mingw-w64-x86_64-libjpeg-turbo mingw-w64-x86_64-libpng mingw-w64-x86_64-libwebp mingw-w64-x86_64-md4c mingw-w64-x86_64-openssl mingw-w64-x86_64-pcre2 mingw-w64-x86_64-sqlite3 mingw-w64-x86_64-vulkan mingw-w64-x86_64-zlib mingw-w64-x86_64-zstd
       - name: Build NanoBoyAdvance
         run: |
           cmake \
