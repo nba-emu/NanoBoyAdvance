@@ -66,7 +66,7 @@ inline void Log(std::string_view format, Args&&... args) {
     }
 
     const auto& style_ref = style;
-    fmt::print(style_ref, "{} {}\n", prefix, fmt::format(format, std::forward<Args>(args)...));
+    fmt::print(style_ref, "{} {}\n", prefix, fmt::format(fmt::runtime(format), std::forward<Args>(args)...));
   }
 }
 

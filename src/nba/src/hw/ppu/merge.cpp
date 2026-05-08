@@ -227,7 +227,7 @@ void PPU::DrawMergeImpl(int cycles) {
               break;
             }
             default: {
-              unreachable();
+              break;
             }
           }
         }

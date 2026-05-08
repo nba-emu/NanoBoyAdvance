@@ -7,6 +7,7 @@
 
 #include <nba/rom/gpio/rtc.hpp>
 #include <nba/log.hpp>
+#include <cassert>
 #include <ctime>
 
 #include "hw/irq/irq.hpp"
@@ -86,7 +87,7 @@ void RTC::Write(int value) {
           break;
         }
         default: {
-          unreachable();
+          assert(false);
         }
       }
     }
@@ -208,7 +209,7 @@ void RTC::ReadRegister() {
       break;
     }
     default: {
-      unreachable();
+      assert(false);
     }
   }
 }

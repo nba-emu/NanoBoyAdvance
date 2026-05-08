@@ -148,7 +148,7 @@ void InputWindow::CreateKeyMapEntry(
   {
     button_keyboard = new QPushButton{GetKeyboardButtonName(mapping->keyboard)};
 
-    connect(button_keyboard, &QPushButton::clicked, [=]() {
+    connect(button_keyboard, &QPushButton::clicked, [=, this]() {
       RestoreActiveButtonLabel();
       button_keyboard->setText("[press key]");
       active_mapping = mapping;
@@ -162,7 +162,7 @@ void InputWindow::CreateKeyMapEntry(
   {
     button_controller = new QPushButton{GetJoystickButtonName(mapping)};
 
-    connect(button_controller, &QPushButton::clicked, [=]() {
+    connect(button_controller, &QPushButton::clicked, [=, this]() {
       RestoreActiveButtonLabel();
       button_controller->setText("[press button]");
       active_mapping = mapping;
@@ -176,7 +176,7 @@ void InputWindow::CreateKeyMapEntry(
   {
     auto button = new QPushButton{tr("Clear")};
 
-    connect(button, &QPushButton::clicked, [=]() {
+    connect(button, &QPushButton::clicked, [=, this]() {
       if(active_mapping == mapping) {
         waiting_for_keyboard = false;
         waiting_for_joystick = false;

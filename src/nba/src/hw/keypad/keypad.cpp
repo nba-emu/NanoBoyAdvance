@@ -52,28 +52,24 @@ void KeyPad::UpdateIRQ() {
 
 auto KeyPad::KeyInput::ReadByte(uint offset) -> u8 {
   switch(offset) {
-    case 0:
-      return u8(value);
-    case 1:
-      return u8(value >> 8);
+    case 0: return u8(value);
+    case 1: return u8(value >> 8);
+    default: break;
   }
 
-  unreachable();
+  assert(false);
+  return 0;
 }
 
 auto KeyPad::KeyControl::ReadByte(uint offset) -> u8 {
   switch(offset) {
-    case 0: {
-      return u8(mask);
-    }
-    case 1: {
-      return ((mask >> 8) & 3) |
-              (interrupt ? 64 : 0) |
-              (int(mode) << 7);
-    }
+    case 0: return u8(mask);
+    case 1: return ((mask >> 8) & 3) | (interrupt ? 64 : 0) | (int(mode) << 7);
+    default: break;
   }
 
-  unreachable();
+  assert(false);
+  return 0;
 }
 
 void KeyPad::KeyControl::WriteByte(uint offset, u8 value) {
@@ -91,7 +87,7 @@ void KeyPad::KeyControl::WriteByte(uint offset, u8 value) {
       break;
     }
     default: {
-      unreachable();
+      assert(false);
     }
   }
 

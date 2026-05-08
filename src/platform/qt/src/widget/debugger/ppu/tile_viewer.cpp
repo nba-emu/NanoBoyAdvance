@@ -169,7 +169,7 @@ bool TileViewer::eventFilter(QObject* object, QEvent* event) {
       return true;
     }
     default: {
-      // intentional fallthrough
+      break;
     }
   }
 

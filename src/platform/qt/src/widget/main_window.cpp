@@ -307,7 +307,7 @@ void MainWindow::CreateSolarSensorValueMenu(QMenu* parent) {
 
   menu->addSeparator();
 
-  connect(menu->addAction(tr("Enter value...")), &QAction::triggered, [=]() {
+  connect(menu->addAction(tr("Enter value...")), &QAction::triggered, [=, this]() {
     SetSolarLevel(QInputDialog::getInt(
       this,
       tr("Solar sensor level"),
@@ -329,7 +329,7 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
     action->setChecked(config->window.scale == scale);
     action->setShortcut(Qt::SHIFT | (Qt::Key)((int)Qt::Key_1 + scale - 1));
 
-    connect(action, &QAction::triggered, [=]() {
+    connect(action, &QAction::triggered, [=, this]() {
       config->window.scale = scale;
       config->Save();
       UpdateWindowSize();
@@ -346,7 +346,7 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
     action->setChecked(config->window.maximum_scale == scale);
     action->setShortcut(Qt::ALT | (Qt::Key)((int)Qt::Key_1 + scale - 1));
 
-    connect(action, &QAction::triggered, [=]() {
+    connect(action, &QAction::triggered, [=, this]() {
       config->window.maximum_scale = scale;
       config->Save();
       screen->ReloadConfig();
@@ -475,7 +475,7 @@ auto MainWindow::CreateBooleanOption(
   action->setCheckable(true);
   action->setChecked(*underlying);
 
-  connect(action, &QAction::triggered, [=](bool checked) {
+  connect(action, &QAction::triggered, [=, this](bool checked) {
     *underlying = checked;
     config->Save();
     if(require_reset) {
@@ -537,7 +537,7 @@ void MainWindow::RenderSaveStateMenus() {
         action_load->setText(state_name);
         action_save->setText(state_name);
 
-        connect(action_load, &QAction::triggered, [=]() {
+        connect(action_load, &QAction::triggered, [=, this]() {
           if(LoadState(slot_filename) != nba::SaveStateLoader::Result::Success) {
             // The save state may have been deleted, update the save list:
             RenderSaveStateMenus();
@@ -547,7 +547,7 @@ void MainWindow::RenderSaveStateMenus() {
 
       action_save->setDisabled(false);
 
-      connect(action_save, &QAction::triggered, [=]() {
+      connect(action_save, &QAction::triggered, [=, this]() {
         SaveState(slot_filename);
         RenderSaveStateMenus();
       });

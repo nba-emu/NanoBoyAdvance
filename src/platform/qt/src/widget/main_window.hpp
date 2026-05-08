@@ -96,7 +96,7 @@ private:
       action->setCheckable(true);
       action->setChecked(*underlying == entry.second);
 
-      connect(action, &QAction::triggered, [=]() {
+      connect(action, &QAction::triggered, [=, this]() {
         *underlying = entry.second;
         config->Save();
         if(require_reset) {

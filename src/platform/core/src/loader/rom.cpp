@@ -134,7 +134,7 @@ auto ROMLoader::ReadFile(fs::path const& path, std::vector<u8>& file_data) -> Re
 }
 
 auto ROMLoader::ReadFileFromArchive(fs::path const& path, std::vector<u8>& file_data) -> Result {
-  auto stream = ar_open_file(path.u8string().c_str());
+  auto stream = ar_open_file(reinterpret_cast<const char*>(path.u8string().c_str()));
 
   if(!stream) {
     return Result::CannotOpenFile;
@@ -224,7 +224,7 @@ auto ROMLoader::CreateBackup(
     case BackupType::EEPROM_4: return std::make_unique<EEPROM>(save_path, EEPROM::SIZE_4K, core->GetScheduler());
     case BackupType::EEPROM_64: return std::make_unique<EEPROM>(save_path, EEPROM::SIZE_64K, core->GetScheduler());
     case BackupType::EEPROM_DETECT: return std::make_unique<EEPROM>(save_path, EEPROM::DETECT, core->GetScheduler());
-    default: unreachable();
+    default: assert(false);
   }
 
   return {};

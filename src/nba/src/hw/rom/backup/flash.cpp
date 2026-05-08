@@ -7,6 +7,7 @@
 
 #include <nba/common/compiler.hpp>
 #include <nba/rom/backup/flash.hpp>
+#include <cassert>
 
 namespace nba {
 
@@ -120,7 +121,7 @@ void FLASH::HandleCommand(u32 address, u8 value) {
         break;
       }
       default: {
-        unreachable();
+        assert(false);
       }
     }
   } else if(enable_erase && (address & ~0xF000) == 0x0E000000 && static_cast<Command>(value) == ERASE_SECTOR) {

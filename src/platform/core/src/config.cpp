@@ -153,7 +153,7 @@ void PlatformConfig::Save(std::string const& path) {
     case Config::BackupType::FLASH_128:     save_type = "flash128"; break;
     case Config::BackupType::EEPROM_4:      save_type = "eeprom512"; break;
     case Config::BackupType::EEPROM_64:     save_type = "eeprom8192"; break;
-    case Config::BackupType::EEPROM_DETECT: unreachable();
+    case Config::BackupType::EEPROM_DETECT: assert(false);
   }
   data["cartridge"]["save_type"]          = save_type;
   data["cartridge"]["force_rtc"]          = this->cartridge.force_rtc;

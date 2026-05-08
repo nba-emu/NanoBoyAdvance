@@ -208,7 +208,7 @@ void DMA::RunChannel() {
     if(size == Channel::Half) {
       u16 value;
 
-      if(likely(src_addr >= 0x02000000)) {
+      if(src_addr >= 0x02000000) [[likely]] {
         value = bus.ReadHalf(src_addr, access_src);
         channel.latch.bus = (value << 16) | value;
         latch = channel.latch.bus;
@@ -223,7 +223,7 @@ void DMA::RunChannel() {
 
       bus.WriteHalf(dst_addr, value, access_dst);
     } else {
-      if(likely(src_addr >= 0x02000000)) {
+      if(src_addr >= 0x02000000) [[likely]] {
         channel.latch.bus = bus.ReadWord(src_addr, access_src);
         latch = channel.latch.bus;
       } else {
@@ -444,7 +444,7 @@ void DMA::AddChannelToDMASet(Channel& channel) {
       break;
     }
     default: {
-      unreachable();
+      break;
     }
   }
 }

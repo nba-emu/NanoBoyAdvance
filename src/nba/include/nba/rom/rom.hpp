@@ -122,11 +122,11 @@ struct ROM {
   auto ALWAYS_INLINE ReadROM16(u32 address, bool sequential) -> u16 {
     address &= 0x01FF'FFFE;
 
-    if(unlikely(IsGPIO(address)) && gpio->IsReadable()) {
+    if(IsGPIO(address) && gpio->IsReadable()) [[unlikely]] {
       return gpio->Read(address);
     }
 
-    if(unlikely(IsEEPROM(address))) {
+    if(IsEEPROM(address)) [[unlikely]] {
       return backup_eeprom->Read(0);
     }
 
@@ -141,7 +141,7 @@ struct ROM {
       rom_address_latch = address & rom_mask;
     }
 
-    if(likely(rom_address_latch < rom.size())) {
+    if(rom_address_latch < rom.size()) [[likely]] {
       data = read<u16>(rom.data(), rom_address_latch);
     } else {
       data = (u16)(rom_address_latch >> 1);
@@ -154,13 +154,13 @@ struct ROM {
   auto ALWAYS_INLINE ReadROM32(u32 address, bool sequential) -> u32 {
     address &= 0x01FF'FFFC;
 
-    if(unlikely(IsGPIO(address)) && gpio->IsReadable()) {
+    if(IsGPIO(address) && gpio->IsReadable()) [[unlikely]] {
       auto lsw = gpio->Read(address|0);
       auto msw = gpio->Read(address|2);
       return (msw << 16) | lsw;
     }
 
-    if(unlikely(IsEEPROM(address))) {
+    if(IsEEPROM(address)) [[unlikely]] {
       auto lsw = backup_eeprom->Read(0);
       auto msw = backup_eeprom->Read(0);
       return (msw << 16) | lsw;
@@ -172,7 +172,7 @@ struct ROM {
       rom_address_latch = address & rom_mask;
     }
 
-    if(likely(rom_address_latch < rom.size())) {
+    if(rom_address_latch < rom.size()) [[likely]] {
       data = read<u32>(rom.data(), rom_address_latch);
     } else {
       const u16 lsw = (u16)(rom_address_latch >> 1);
@@ -201,14 +201,14 @@ struct ROM {
   }
 
   auto ALWAYS_INLINE ReadSRAM(u32 address) -> u8 {
-    if(likely(backup_sram != nullptr)) {
+    if(backup_sram != nullptr) [[likely]] {
       return backup_sram->Read(address & 0x0EFF'FFFF);
     }
     return 0xFF;
   }
 
   void ALWAYS_INLINE WriteSRAM(u32 address, u8 value) {
-    if(likely(backup_sram != nullptr)) {
+    if(backup_sram != nullptr) [[likely]] {
       backup_sram->Write(address & 0x0EFF'FFFF, value);
     }
   }

@@ -271,7 +271,7 @@ bool BackgroundViewer::eventFilter(QObject* object, QEvent* event) {
     }
 
     default: {
-      // intentional fallthrough
+      break;
     }
   }
 

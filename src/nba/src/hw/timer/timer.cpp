@@ -6,6 +6,7 @@
  */
 
 #include <nba/log.hpp>
+#include <cassert>
 
 #include "hw/timer/timer.hpp"
 
@@ -61,9 +62,13 @@ auto Timer::ReadHalf(int chan_id, int offset) -> u16 {
     case REG_TMXCNT_H: {
       return ReadControl(channel);
     }
+    default: {
+      break;
+    }
   }
 
-  unreachable();
+  assert(false);
+  return 0;
 }
 
 auto Timer::ReadWord(int chan_id) -> u32 {

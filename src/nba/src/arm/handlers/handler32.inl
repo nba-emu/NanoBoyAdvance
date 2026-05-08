@@ -216,7 +216,7 @@ void ARM_StatusTransfer(u32 instruction) {
       }
       // TODO: handle code that alters the Thumb-bit.
       state.cpsr.v = (state.cpsr.v & ~mask) | (op & mask);
-    } else if (p_spsr != &state.cpsr && likely(!cpu_mode_is_invalid)) {
+    } else if (p_spsr != &state.cpsr && !cpu_mode_is_invalid) [[likely]] {
       p_spsr->v = (GetSPSR().v & ~mask) | (op & mask);
     }
   } else {

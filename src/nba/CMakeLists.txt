@@ -6,7 +6,7 @@ else()
   include(FetchContent)
   FetchContent_Declare(fmt
     GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-    GIT_TAG        e69e5f977d458f2650bb346dadf2ad30c5320281 # 10.2.1
+    GIT_TAG        407c905e45ad75fc29bf0f9bb7c5c2fd3475976f # 12.1.0
   )
   set(FMT_INSTALL OFF CACHE BOOL "" FORCE)
   FetchContent_MakeAvailable(fmt)
@@ -92,7 +92,6 @@ set(HEADERS_PUBLIC
   include/nba/common/dsp/resampler/nearest.hpp
   include/nba/common/dsp/resampler/sinc.hpp
   include/nba/common/dsp/resampler.hpp
-  include/nba/common/compiler.hpp
   include/nba/common/crc32.hpp
   include/nba/common/meta.hpp
   include/nba/common/punning.hpp
