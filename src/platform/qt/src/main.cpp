@@ -13,8 +13,8 @@
 #include <memory>
 
 #if defined(WIN32)
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN 1
+//#define NOMINMAX 1 // msys defines this already
 
 #include <Windows.h>
 #endif

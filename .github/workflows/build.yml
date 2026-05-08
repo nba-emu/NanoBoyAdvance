@@ -79,6 +79,7 @@ jobs:
         run: |
           cmake -B build \
             -G Ninja \
+            -DCMAKE_C_FLAGS="-Wno-unknown-warning-option" \
             -DUSE_STATIC_SDL=ON \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)" \
