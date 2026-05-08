@@ -13,7 +13,7 @@ NanoBoyAdvance can be compiled on Windows, Linux, and macOS.
 
 Clone the Git repository:
 
-```bash
+```sh
 git clone https://github.com/nba-emu/NanoBoyAdvance.git
 ```
 
@@ -27,13 +27,13 @@ Here is a list of commands for popular distributions and macOS:
 
 ##### Arch Linux
 
-```bash
+```sh
 pacman -S cmake python-jinja python-lxml sdl2 qt5-base
 ```
 
 ##### Ubuntu or other Debian-derived distribution
 
-```bash
+```sh
 apt install cmake python3-jinja2 python3-lxml libsdl2-dev qtbase5-dev libqt5opengl5-dev
 ```
 
@@ -41,7 +41,7 @@ apt install cmake python3-jinja2 python3-lxml libsdl2-dev qtbase5-dev libqt5open
 
 Get [Brew](https://brew.sh/) and run:
 
-```bash
+```sh
 brew install cmake python@3 sdl2 qt@5
 cd </path/to/NanoBoyAdvance>
 python3 -m venv .venv
@@ -50,8 +50,7 @@ python3 -m venv .venv
 
 ##### FreeBSD
 
-```bash
-su
+```sh
 pkg install cmake git py39-Jinja2 py39-lxml sdl2 qt5 qt5-opengl
 ```
 
@@ -59,8 +58,8 @@ pkg install cmake git py39-Jinja2 py39-lxml sdl2 qt5 qt5-opengl
 
 ##### Linux and FreeBSD
 
-```
-cd /path/to/NanoBoyAdvance
+```sh
+cd </path/to/NanoBoyAdvance>
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 ```
 
@@ -68,9 +67,9 @@ NOTE: the location and name of the `build` directory is arbitrary.
 
 ##### macOS
 
-```
+```sh
 cd /path/to/system/NanoBoyAdvance
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5)" -DPython_ROOT_DIR=/path/to/NanoBoyAdvance/.venv/
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)"
 ```
 
 NOTE: the location and name of the `build` directory is arbitrary.
@@ -80,7 +79,7 @@ NOTE: the location and name of the `build` directory is arbitrary.
 
 Run CMake build command:
 
-```
+```sh
 cmake --build build
 ```
 
@@ -96,15 +95,15 @@ This guide uses [MSYS2](https://www.msys2.org/) to install Mingw-w64 and other d
 
 In your MSYS2 command line, run:
 
-```bash
-pacman -S make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-python-jinja mingw-w64-x86_64-python-lxml mingw-w64-x86_64-SDL2 mingw-w64-x86_64-qt5-static
+```sh
+pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-python-jinja mingw-w64-x86_64-python-lxml mingw-w64-x86_64-SDL2 mingw-w64-x86_64-qt6-static mingw-w64-x86_64-dbus mingw-w64-x86_64-double-conversion mingw-w64-x86_64-fontconfig mingw-w64-x86_64-freetype mingw-w64-x86_64-harfbuzz mingw-w64-x86_64-icu mingw-w64-x86_64-libjpeg-turbo mingw-w64-x86_64-libpng mingw-w64-x86_64-libwebp mingw-w64-x86_64-md4c mingw-w64-x86_64-openssl mingw-w64-x86_64-pcre2 mingw-w64-x86_64-sqlite3 mingw-w64-x86_64-vulkan mingw-w64-x86_64-zlib mingw-w64-x86_64-zstd
 ```
 
 #### 2. Setup CMake build directory
 
-```bash
-cd /path/to/NanoBoyAdvance
-cmake -S . -B build -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
+```sh
+cd </path/to/NanoBoyAdvance>
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 ```
 
 NOTE: the location and name of the `build` directory is arbitrary.
@@ -113,7 +112,7 @@ NOTE: the location and name of the `build` directory is arbitrary.
 
 Run CMake build command:
 
-```
+```sh
 cmake --build build
 ```
 

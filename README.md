@@ -1,12 +1,11 @@
-<h2>NanoBoyAdvance</h2>
+# NanoBoyAdvance
 
 [![license](https://img.shields.io/github/license/nba-emu/NanoBoyAdvance)](https://github.com/nba-emu/NanoBoyAdvance/blob/master/LICENSE)
 [![build](https://img.shields.io/github/actions/workflow/status/nba-emu/NanoBoyAdvance/build.yml?branch=master)](https://github.com/nba-emu/NanoBoyAdvance/actions/workflows/build.yml)
 [![discord](https://img.shields.io/discord/969218483873251338?logo=discord&label=discord)](https://discord.gg/4NnUjsf7Am)
 
-NanoBoyAdvance is a cycle-accurate Game Boy Advance emulator.<br>
-It aims to be as accurate as possible, while also offering enhancements such as
-improved audio quality.<br>
+NanoBoyAdvance is a cycle-accurate Game Boy Advance emulator.  
+It aims to be as accurate as possible, while also offering enhancements such as improved audio quality.  
 
 ## Features
 - Very high compatibility and accuracy (see [Accuracy](#accuracy))
@@ -19,7 +18,7 @@ improved audio quality.<br>
 - Solar Sensor emulation (for example: for Boktai - The Sun is in Your Hand)
 - Debug tools: PPU palette, tile, background and sprite viewers
 
-[^1]: RAR 5.0 is currently not supported.
+##### [^1]: RAR 5.0 is currently not supported.
 
 ## Running
 
@@ -44,12 +43,12 @@ See [COMPILING.md](docs/COMPILING.md) in the `docs` folder.
 
 ## Acknowledgements
 
-- Martin Korth: for [GBATEK](http://problemkaputt.de/gbatek.htm), a good piece of hardware documentation.
-- [endrift](https://github.com/endrift): for hardware [research](http://mgba.io/tag/emulation/) and her excellent [test suite](https://github.com/mgba-emu/suite).
-- [destoer](https://github.com/destoer), [Noumi](https://github.com/noumidev), [Zayd](https://github.com/GhostRain0) and [Sky](https://github.com/skylersaleh): for hardware research and tests, countless discussions and being good friends.
-- Pokefan531 and hunterk: for the default GBA color correction algorithm
-- Talarubi and Near: for [higan's GBA color correction algorithm](https://near.sh/articles/video/color-emulation)
-- DeSmuME team and Hyllian: xBRZ upscaling code
+- **Martin Korth** for [GBATEK](http://problemkaputt.de/gbatek.htm), a good piece of hardware documentation.
+- **[endrift](https://github.com/endrift)** for hardware [research](http://mgba.io/tag/emulation/) and her excellent [test suite](https://github.com/mgba-emu/suite).
+- **[destoer](https://github.com/destoer)**, **[Noumi](https://github.com/noumidev)**, **[Sky](https://github.com/skylersaleh)** and **[Zayd](https://github.com/GhostRain0)** for hardware research and tests, countless discussions and being good friends.
+- **Pokefan531** and **hunterk** for the default GBA color correction algorithm,
+- **Talarubi** and **Near** for [higan's GBA color correction algorithm](https://near.sh/articles/video/color-emulation).
+- **DeSmuME** and **Hyllian** for xBRZ upscaling code.
 
 ## Sister Projects
 - [Panda3DS](https://github.com/wheremyfoodat/panda3DS): A new HLE Nintendo 3DS emulator
@@ -58,8 +57,7 @@ See [COMPILING.md](docs/COMPILING.md) in the `docs` folder.
 - [SkyEmu](https://github.com/skylersaleh/SkyEmu/): A low-level GameBoy, GameBoy Color, GameBoy Advance and Nintendo DS emulator that is designed to be easy to use, cross platform and accurate
 
 ## Copyright
-
-NanoBoyAdvance is Copyright © 2026 Mireille Meyer.<br>
-It is licensed under the terms of the GNU General Public License (GPL) 3.0 or any later version. See [LICENSE](LICENSE) for details.
+NanoBoyAdvance is licensed under the terms of the GNU General Public License (GPL) 3.0 or any later version.
+See [LICENSE](LICENSE) for details.
 
 Game Boy Advance is a registered trademark of Nintendo Co., Ltd.
