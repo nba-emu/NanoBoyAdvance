@@ -83,7 +83,7 @@ jobs:
             -DCMAKE_CXX_FLAGS="-s" \
             -DUSE_STATIC_SDL=ON \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5)" \
+            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)" \
             -DMACOS_BUILD_APP_BUNDLE=ON \
             -DMACOS_BUNDLE_QT=ON
           cd build
