@@ -9,7 +9,7 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: msys2/setup-msys2@v2
         with:
           install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-python-jinja mingw-w64-x86_64-python-lxml mingw-w64-x86_64-SDL2 mingw-w64-x86_64-qt6-static mingw-w64-x86_64-dbus mingw-w64-x86_64-double-conversion mingw-w64-x86_64-fontconfig mingw-w64-x86_64-freetype mingw-w64-x86_64-harfbuzz mingw-w64-x86_64-icu mingw-w64-x86_64-libjpeg-turbo mingw-w64-x86_64-libpng mingw-w64-x86_64-libwebp mingw-w64-x86_64-md4c mingw-w64-x86_64-openssl mingw-w64-x86_64-pcre2 mingw-w64-x86_64-sqlite3 mingw-w64-x86_64-vulkan mingw-w64-x86_64-zlib mingw-w64-x86_64-zstd
@@ -31,7 +31,7 @@ jobs:
           mkdir upload
           cp -r build/bin/qt/{NanoBoyAdvance.exe,config.toml} upload
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: NanoBoyAdvance-win64
           path: upload
@@ -40,7 +40,7 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup dependencies
         run: |
           sudo apt-get update -qq
@@ -55,7 +55,7 @@ jobs:
           mkdir upload
           cp -r build/bin/qt/{NanoBoyAdvance,config.toml} upload
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: NanoBoyAdvance-linux
           path: upload
@@ -67,8 +67,8 @@ jobs:
         os: [macos-14]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.x'
       - name: Setup dependencies
@@ -101,7 +101,7 @@ jobs:
             -ov -format UDBZ \
             NanoBoyAdvance.dmg
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: NanoBoyAdvance-${{ runner.os }}-${{ runner.arch }}
           path: NanoBoyAdvance.dmg
