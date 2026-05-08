@@ -3,7 +3,7 @@
   <id>io.nanoboyadvance.NanoBoyAdvance</id>
   <name>NanoBoyAdvance</name>
   <summary>Cycle-accurate Nintendo Game Boy Advance emulator</summary>
-  <developer_name>fleroviux</developer_name>
+  <developer_name>Mireille Meyer</developer_name>
   <launchable type="desktop-id">io.nanoboyadvance.NanoBoyAdvance.desktop</launchable>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0+</project_license>

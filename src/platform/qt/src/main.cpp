@@ -13,7 +13,10 @@
 #include <memory>
 
 #if defined(WIN32)
-#include <QtPlatformHeaders/QWindowsWindowFunctions>
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+
+#include <Windows.h>
 #endif
 
 #include "widget/main_window.hpp"
@@ -60,11 +63,6 @@ auto create_window(QApplication& app, int argc, char** argv) -> std::unique_ptr<
 }
 
 int main(int argc, char** argv) {
-  // See: https://trac.wxwidgets.org/ticket/19023
-#if defined(__APPLE__)
-  setenv("LC_NUMERIC", "C", 1);
-#endif
-
 #if defined(WIN32)
   constexpr auto terminal_output = "CONOUT$";
   constexpr auto null_output = "NUL:";
@@ -95,11 +93,6 @@ int main(int argc, char** argv) {
   QApplication app{ argc, argv };
 
   app.setStyle(new MenuStyle());
-
-#if defined(WIN32)
-  // See: https://doc.qt.io/qt-5/windows-issues.html#fullscreen-opengl-based-windows
-  QWindowsWindowFunctions::setHasBorderInFullScreenDefault(true);
-#endif
 
   QCoreApplication::setOrganizationName("fleroviux");
   QCoreApplication::setApplicationName("NanoBoyAdvance");
