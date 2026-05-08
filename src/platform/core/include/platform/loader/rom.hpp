@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -7,10 +7,9 @@
 
 #pragma once
 
-#include <nba/core.hpp>
 #include <nba/rom/backup/backup.hpp>
+#include <nba/core.hpp>
 #include <platform/game_db.hpp>
-#include <string>
 
 namespace fs = std::filesystem;
 

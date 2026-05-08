@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -38,7 +38,7 @@ QLayout* PaletteViewer::CreatePaletteGrids() {
 
     m_palette_color_grids[grid] = new ColorGrid{16, 16};
 
-    connect(m_palette_color_grids[grid], &ColorGrid::selected, [=](int x, int y) {
+    connect(m_palette_color_grids[grid], &ColorGrid::selected, [=, this](int x, int y) {
       m_palette_color_grids[grid]->SetHighlightedPosition(x, y);
       m_palette_color_grids[grid ^ 1]->ClearHighlight();
       ShowColorInfo(grid << 8 | y << 4 | x);

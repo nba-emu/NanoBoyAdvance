@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -16,13 +16,13 @@ void APU::LoadState(SaveState const& state) {
   mmio.bias.WriteHalf(state.apu.io.soundbias);
 
   mmio.psg1.LoadState(state.apu.io.quad[0]);
-  mmio.psg2.LoadState(state.apu.io.quad[1]);  
+  mmio.psg2.LoadState(state.apu.io.quad[1]);
   mmio.psg3.LoadState(state.apu.io.wave);
   mmio.psg4.LoadState(state.apu.io.noise);
 
   for(int i = 0; i < 2; i++) {
     mmio.fifo[i].LoadState(state.apu.fifo[i]);
-    
+
     fifo_pipe[i].word = state.apu.fifo[i].pipe.word;
     fifo_pipe[i].size = state.apu.fifo[i].pipe.size;
   }
@@ -39,7 +39,7 @@ void APU::CopyState(SaveState& state) {
   state.apu.io.soundbias = mmio.bias.ReadHalf();
 
   mmio.psg1.CopyState(state.apu.io.quad[0]);
-  mmio.psg2.CopyState(state.apu.io.quad[1]);  
+  mmio.psg2.CopyState(state.apu.io.quad[1]);
   mmio.psg3.CopyState(state.apu.io.wave);
   mmio.psg4.CopyState(state.apu.io.noise);
 

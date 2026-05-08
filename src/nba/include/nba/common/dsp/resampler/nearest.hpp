@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -13,19 +13,19 @@ namespace nba {
 
 template<typename T>
 struct NearestResampler : Resampler<T> {
-  NearestResampler(std::shared_ptr<WriteStream<T>> output) 
+  NearestResampler(std::shared_ptr<WriteStream<T>> output)
       : Resampler<T>(output) {
   }
-  
+
   void Write(T const& input) final {
     while(resample_phase < 1.0) {
       this->output->Write(input);
       resample_phase += this->resample_phase_shift;
     }
-    
+
     resample_phase = resample_phase - 1.0;
   }
-  
+
 private:
   float resample_phase = 0;
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -7,6 +7,7 @@
 
 #include <nba/rom/gpio/rtc.hpp>
 #include <nba/log.hpp>
+#include <cassert>
 #include <ctime>
 
 #include "hw/irq/irq.hpp"
@@ -27,7 +28,7 @@ void RTC::Reset() {
     buffer[i] = 0;
   }
   port.sck = 0;
-  port.sio = 0; 
+  port.sio = 0;
   port.cs  = 0;
   state = State::Complete;
 
@@ -84,6 +85,9 @@ void RTC::Write(int value) {
         case State::Sending: {
           TransmitBufferSIO();
           break;
+        }
+        default: {
+          assert(false);
         }
       }
     }
@@ -151,7 +155,7 @@ void RTC::ReceiveBufferSIO() {
       WriteRegister();
       state = State::Complete;
     }
-  } 
+  }
 }
 
 void RTC::TransmitBufferSIO() {
@@ -203,6 +207,9 @@ void RTC::ReadRegister() {
       buffer[1] = ConvertDecimalToBCD(time->tm_min);
       buffer[2] = ConvertDecimalToBCD(time->tm_sec);
       break;
+    }
+    default: {
+      assert(false);
     }
   }
 }

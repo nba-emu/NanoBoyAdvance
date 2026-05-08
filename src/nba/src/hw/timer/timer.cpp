@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
  */
 
 #include <nba/log.hpp>
+#include <cassert>
 
 #include "hw/timer/timer.hpp"
 
@@ -61,7 +62,13 @@ auto Timer::ReadHalf(int chan_id, int offset) -> u16 {
     case REG_TMXCNT_H: {
       return ReadControl(channel);
     }
+    default: {
+      break;
+    }
   }
+
+  assert(false);
+  return 0;
 }
 
 auto Timer::ReadWord(int chan_id) -> u32 {
@@ -186,9 +193,9 @@ void Timer::OnControlWritten(u64 chan_id) {
          * After enabling a timer, it takes one cycle to load the reload value into the counter.
          * During this cycle, the timer can tick and may even overflow.
          * We handle this edge-case here.
-         * 
+         *
          * See: https://github.com/nba-emu/NanoBoyAdvance/issues/331
-         */ 
+         */
         StartChannel(channel, 0);
       } else {
         channel.counter = channel.reload;

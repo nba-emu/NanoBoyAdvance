@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -8,7 +8,6 @@
 #include <nba/common/compiler.hpp>
 
 #include "bus/bus.hpp"
-#include "bus/io.hpp"
 #include "hw/dma/dma.hpp"
 
 namespace nba::core {
@@ -129,10 +128,10 @@ void DMA::Request(Occasion occasion) {
     case Occasion::Video:
       ScheduleDMAs(video_set.to_ulong());
       break;
-    case Occasion::FIFO0: 
+    case Occasion::FIFO0:
       if(channels[1].enable && channels[1].time == Channel::Special) ScheduleDMAs(2);
       break;
-    case Occasion::FIFO1: 
+    case Occasion::FIFO1:
       if(channels[2].enable && channels[2].time == Channel::Special) ScheduleDMAs(4);
       break;
   }
@@ -209,7 +208,7 @@ void DMA::RunChannel() {
     if(size == Channel::Half) {
       u16 value;
 
-      if(likely(src_addr >= 0x02000000)) {
+      if(src_addr >= 0x02000000) [[likely]] {
         value = bus.ReadHalf(src_addr, access_src);
         channel.latch.bus = (value << 16) | value;
         latch = channel.latch.bus;
@@ -224,7 +223,7 @@ void DMA::RunChannel() {
 
       bus.WriteHalf(dst_addr, value, access_dst);
     } else {
-      if(likely(src_addr >= 0x02000000)) {
+      if(src_addr >= 0x02000000) [[likely]] {
         channel.latch.bus = bus.ReadWord(src_addr, access_src);
         latch = channel.latch.bus;
       } else {
@@ -442,6 +441,9 @@ void DMA::AddChannelToDMASet(Channel& channel) {
       if(channel.id == 3) {
         video_set.set(3, true);
       }
+      break;
+    }
+    default: {
       break;
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -7,12 +7,12 @@
 
 #pragma once
 
+#include <nba/integer.hpp>
 #include <algorithm>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <memory>
-#include <nba/integer.hpp>
 #include <stdexcept>
 #include <string>
 #include <vector>

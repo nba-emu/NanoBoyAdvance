@@ -1,12 +1,10 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
  */
 
-#include <ctime>
-#include <fstream>
 #include <platform/device/sdl_audio_device.hpp>
 #include <platform/loader/bios.hpp>
 #include <platform/loader/rom.hpp>
@@ -21,8 +19,9 @@
 #include <QLocale>
 #include <QStatusBar>
 #include <QWindow>
-#include <unordered_map>
+#include <ctime>
 
+#include "widget/debugger/ppu/sprite_viewer_window.hpp"
 #include "widget/main_window.hpp"
 #include "version.hpp"
 
@@ -218,7 +217,7 @@ void MainWindow::CreateAudioMenu(QMenu* parent) {
 
 void MainWindow::CreateInputMenu(QMenu* parent) {
   auto menu = parent->addMenu(tr("Input"));
-  
+
   auto remap_action = menu->addAction(tr("Configure"));
   remap_action->setMenuRole(QAction::NoRole);
   connect(remap_action, &QAction::triggered, [this] {
@@ -308,7 +307,7 @@ void MainWindow::CreateSolarSensorValueMenu(QMenu* parent) {
 
   menu->addSeparator();
 
-  connect(menu->addAction(tr("Enter value...")), &QAction::triggered, [=]() {
+  connect(menu->addAction(tr("Enter value...")), &QAction::triggered, [=, this]() {
     SetSolarLevel(QInputDialog::getInt(
       this,
       tr("Solar sensor level"),
@@ -330,7 +329,7 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
     action->setChecked(config->window.scale == scale);
     action->setShortcut(Qt::SHIFT | (Qt::Key)((int)Qt::Key_1 + scale - 1));
 
-    connect(action, &QAction::triggered, [=]() {
+    connect(action, &QAction::triggered, [=, this]() {
       config->window.scale = scale;
       config->Save();
       UpdateWindowSize();
@@ -347,7 +346,7 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
     action->setChecked(config->window.maximum_scale == scale);
     action->setShortcut(Qt::ALT | (Qt::Key)((int)Qt::Key_1 + scale - 1));
 
-    connect(action, &QAction::triggered, [=]() {
+    connect(action, &QAction::triggered, [=, this]() {
       config->window.maximum_scale = scale;
       config->Save();
       screen->ReloadConfig();
@@ -362,7 +361,7 @@ void MainWindow::CreateWindowMenu(QMenu* parent) {
     CreateScaleAction(label, scale);
     CreateMaximumScaleAction(label, scale);
   }
-  
+
   scale_menu->addActions(scale_group->actions());
   max_scale_menu->addActions(max_scale_group->actions());
 
@@ -454,7 +453,7 @@ void MainWindow::CreateHelpMenu() {
     QMessageBox box{ this };
     box.setTextFormat(Qt::RichText);
     box.setText(tr("NanoBoyAdvance is a Game Boy Advance emulator focused on accuracy.<br><br>"
-                   "Copyright © 2015 - 2025 fleroviux<br><br>"
+                   "Copyright © 2026 Mireille Meyer<br><br>"
                    "NanoBoyAdvance is licensed under the GPLv3 or any later version.<br><br>"
                    "GitHub: <a href=\"https://github.com/nba-emu/NanoBoyAdvance\">https://github.com/nba-emu/NanoBoyAdvance</a><br><br>"
                    "Game Boy Advance is a registered trademark of Nintendo Co., Ltd."));
@@ -476,7 +475,7 @@ auto MainWindow::CreateBooleanOption(
   action->setCheckable(true);
   action->setChecked(*underlying);
 
-  connect(action, &QAction::triggered, [=](bool checked) {
+  connect(action, &QAction::triggered, [=, this](bool checked) {
     *underlying = checked;
     config->Save();
     if(require_reset) {
@@ -501,7 +500,7 @@ void MainWindow::RenderRecentFilesMenu() {
     action->setShortcut(Qt::CTRL | (Qt::Key) ((int) Qt::Key_0 + i++));
 
     connect(action, &QAction::triggered, [this, path] {
-      LoadROM(QString::fromStdString(path).toStdU16String()); 
+      LoadROM(QString::fromStdString(path).toStdU16String());
     });
   }
 
@@ -517,7 +516,7 @@ void MainWindow::RenderSaveStateMenus() {
 
     auto action_load = load_state_menu->addAction(empty_state_name);
     auto action_save = save_state_menu->addAction(empty_state_name);
-    
+
     action_load->setDisabled(true);
     action_save->setDisabled(true);
 
@@ -538,7 +537,7 @@ void MainWindow::RenderSaveStateMenus() {
         action_load->setText(state_name);
         action_save->setText(state_name);
 
-        connect(action_load, &QAction::triggered, [=]() {
+        connect(action_load, &QAction::triggered, [=, this]() {
           if(LoadState(slot_filename) != nba::SaveStateLoader::Result::Success) {
             // The save state may have been deleted, update the save list:
             RenderSaveStateMenus();
@@ -548,7 +547,7 @@ void MainWindow::RenderSaveStateMenus() {
 
       action_save->setDisabled(false);
 
-      connect(action_save, &QAction::triggered, [=]() {
+      connect(action_save, &QAction::triggered, [=, this]() {
         SaveState(slot_filename);
         RenderSaveStateMenus();
       });
@@ -629,7 +628,7 @@ void MainWindow::PromptUserForReset() {
     box.addButton(QMessageBox::No);
     box.addButton(QMessageBox::Yes);
     box.setDefaultButton(QMessageBox::No);
-    
+
     if(box.exec() == QMessageBox::Yes) {
       // Reload the ROM in case its config (e.g. save type or GPIO) has changed:
       if(game_loaded) {
@@ -739,7 +738,7 @@ void MainWindow::Stop() {
     RenderSaveStateMenus();
 
     setWindowTitle(base_window_title);
-  
+
     UpdateMenuBarVisibility();
   }
 }
@@ -781,6 +780,10 @@ void MainWindow::LoadROM(std::u16string const& path) {
     retry = false;
 
     switch(nba::BIOSLoader::Load(core, QString::fromStdString(config->bios_path).toStdU16String())) {
+      case nba::BIOSLoader::Result::Success: {
+        break;
+      }
+
       case nba::BIOSLoader::Result::CannotFindFile: {
         QMessageBox box {this};
         box.setText(tr("A Game Boy Advance BIOS file is required but cannot be located.\n\nWould you like to add one now?"));
@@ -789,7 +792,7 @@ void MainWindow::LoadROM(std::u16string const& path) {
         box.addButton(QMessageBox::No);
         box.addButton(QMessageBox::Yes);
         box.setDefaultButton(QMessageBox::Yes);
-          
+
         if(box.exec() == QMessageBox::Yes) {
           SelectBIOS();
           retry = true;
@@ -825,6 +828,10 @@ void MainWindow::LoadROM(std::u16string const& path) {
   auto result = nba::ROMLoader::Load(core, path, save_path, save_type, force_gpio);
 
   switch(result) {
+    case nba::ROMLoader::Result::Success: {
+      break;
+    }
+
     case nba::ROMLoader::Result::CannotFindFile: {
       QMessageBox box {this};
       box.setText(tr("Sorry, the specified ROM file cannot be located."));
@@ -930,7 +937,7 @@ auto MainWindow::GetSavePath(fs::path const& rom_path, fs::path const& extension
   if(
    !save_folder.empty() &&
     fs::exists(save_folder) &&
-    fs::is_directory(save_folder) 
+    fs::is_directory(save_folder)
   ) {
     return save_folder / rom_path.filename().replace_extension(extension);
   }
@@ -965,7 +972,7 @@ void MainWindow::UpdateWindowSize() {
     showNormal();
 
     auto scale = config->window.scale;
-    auto minimum_size = screen->minimumSize(); 
+    auto minimum_size = screen->minimumSize();
     auto maximum_size = screen->maximumSize();
     screen->setFixedSize(240 * scale, 160 * scale);
     adjustSize();

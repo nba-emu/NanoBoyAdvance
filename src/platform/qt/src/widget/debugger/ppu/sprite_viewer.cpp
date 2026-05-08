@@ -1,16 +1,15 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
  */
 
-#include <algorithm>
 #include <fmt/format.h>
 #include <nba/common/punning.hpp>
-
 #include <QGridLayout>
 #include <QVBoxLayout>
+#include <algorithm>
 
 #include "widget/debugger/utility.hpp"
 #include "sprite_viewer.hpp"
@@ -50,7 +49,7 @@ QGroupBox* SpriteViewer::CreateSpriteAttributesGroupBox() {
   QGroupBox* group_box = new QGroupBox{};
   group_box->setTitle("Object Attributes");
   group_box->setLayout(grid);
-  
+
   m_check_sprite_enabled = CreateReadOnlyCheckBox();
   m_label_sprite_position = CreateMonospaceLabel();
   m_label_sprite_size = CreateMonospaceLabel();

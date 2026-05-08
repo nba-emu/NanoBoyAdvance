@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include <cassert>
 #include <nba/rom/gpio/device.hpp>
 #include <nba/integer.hpp>
 #include <nba/save_state.hpp>
+#include <cassert>
 #include <memory>
 #include <typeindex>
 #include <unordered_map>

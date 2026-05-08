@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include <nba/log.hpp>
 #include <nba/common/compiler.hpp>
 #include <nba/integer.hpp>
+#include <nba/log.hpp>
 #include <nba/save_state.hpp>
 #include <functional>
 #include <limits>
@@ -72,10 +72,10 @@ struct Scheduler {
   };
 
   struct Event {
-    u64 timestamp; 
+    u64 timestamp;
 
     u64 UID() const { return uid; }
-  
+
   private:
     friend class Scheduler;
     int handle;

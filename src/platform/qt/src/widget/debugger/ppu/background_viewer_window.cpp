@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -14,7 +14,7 @@ BackgroundViewerWindow::BackgroundViewerWindow(nba::CoreBase* core, QWidget* par
 
   for(int id = 0; id < 4; id++) {
     const auto bg_viewer = new BackgroundViewer{core};
-    
+
     bg_viewer->SetBackgroundID(id);
     m_tab_widget->addTab(bg_viewer, QStringLiteral("BG%1").arg(id));
     m_bg_viewers[id] = bg_viewer;

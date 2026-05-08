@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -8,15 +8,15 @@
 #pragma once
 
 #include <nba/config.hpp>
-#include <string>
 #include <toml.hpp>
+#include <string>
 
 namespace nba {
 
 struct PlatformConfig : Config {
   std::string bios_path = "bios.bin";
   std::string save_folder = "";
-  
+
   struct Cartridge {
     BackupType backup_type = BackupType::Detect;
     bool force_rtc = true;

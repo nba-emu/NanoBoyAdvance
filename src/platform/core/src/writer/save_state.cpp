@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -24,7 +24,7 @@ auto SaveStateWriter::Write(
   core->CopyState(save_state);
 
   file_stream.write((const char*)&save_state, sizeof(SaveState));
-  
+
   if(!file_stream.good()) {
     return Result::CannotWrite;
   }

@@ -43,7 +43,7 @@ set(RESOURCES
 
 set(CMAKE_AUTOMOC ON)
 
-option(USE_QT6 "Use Qt 6" OFF)
+option(USE_QT6 "Use Qt 6" ON)
 option(PORTABLE_MODE "Portable Mode" ON)
 
 if(USE_QT6)

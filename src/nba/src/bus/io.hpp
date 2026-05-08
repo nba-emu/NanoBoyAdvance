@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -114,4 +114,4 @@ constexpr u32 HALTCNT = 0x04000301;
 constexpr u32 MGBA_LOG_STRING_LO = 0x04FFF600;
 constexpr u32 MGBA_LOG_STRING_HI = 0x04FFF700;
 constexpr u32 MGBA_LOG_SEND = 0x04FFF700;
-constexpr u32 MGBA_LOG_ENABLE = 0x04FFF780; 
+constexpr u32 MGBA_LOG_ENABLE = 0x04FFF780;

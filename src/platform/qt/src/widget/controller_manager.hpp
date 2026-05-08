@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -8,25 +8,19 @@
 #pragma once
 
 #include <nba/core.hpp>
-#include <atomic>
-#include <mutex>
 #include <QTimer>
 #include <QWidget>
 #include <SDL.h>
+#include <atomic>
+#include <mutex>
 #include <thread>
 
 #include "config.hpp"
-#include "widget/input_window.hpp"
 
 struct MainWindow;
 
 struct ControllerManager : QWidget {
-  ControllerManager(
-    MainWindow* main_window,
-    std::shared_ptr<QtConfig> config
-  )   : main_window(main_window)
-      , config(config) {
-  }
+  ControllerManager(MainWindow* main_window, std::shared_ptr<QtConfig> config) : main_window(main_window), config(config) { }
 
  ~ControllerManager();
 

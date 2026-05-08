@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -12,8 +12,8 @@
 #include <QGroupBox>
 #include <QImage>
 #include <QLabel>
-#include <QPaintEvent>
 #include <QPainter>
+#include <QPaintEvent>
 #include <QSpinBox>
 #include <QWidget>
 

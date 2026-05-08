@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -77,7 +77,7 @@ void PPU::CopyState(SaveState& state) {
   ss_ppu.io.greenswap = mmio.greenswap;
   ss_ppu.io.dispstat = mmio.dispstat.ReadHalf();
   ss_ppu.io.vcount = mmio.vcount;
-  
+
   for(int id = 0; id < 4; id++) {
     ss_ppu.io.bgcnt[id] = mmio.bgcnt[id].ReadHalf();
     ss_ppu.io.bghofs[id] = mmio.bghofs[id];
@@ -89,7 +89,7 @@ void PPU::CopyState(SaveState& state) {
     ss_ppu.io.bgpb[id] = mmio.bgpb[id];
     ss_ppu.io.bgpc[id] = mmio.bgpc[id];
     ss_ppu.io.bgpd[id] = mmio.bgpd[id];
-    
+
     ss_ppu.io.bgx[id] = (u32)mmio.bgx[id].initial;
     ss_ppu.io.bgy[id] = (u32)mmio.bgy[id].initial;
     ss_ppu.bgx[id].current = mmio.bgx[id]._current;
@@ -108,7 +108,7 @@ void PPU::CopyState(SaveState& state) {
                      mosaic.bg.size_y  << 4 |
                      mosaic.obj.size_x << 8 |
                      mosaic.obj.size_y << 12;
-  
+
   ss_ppu.io.bldcnt = mmio.bldcnt.ReadHalf();
   ss_ppu.io.bldalpha = mmio.eva | (mmio.evb << 8);
   ss_ppu.io.bldy = mmio.evy;

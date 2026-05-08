@@ -1,14 +1,21 @@
 /*
-   Author: rsn8887 (based on TheMaister)
-   License: Public domain
+ * Copyright (C) 2026 Mireille Meyer
+ *
+ * Licensed under GPLv3 or any later version.
+ * Refer to the included LICENSE file.
+ */
 
-   This is an integer prescale filter that should be combined
-   with a bilinear hardware filtering (GL_BILINEAR filter or some such) to achieve
-   a smooth scaling result with minimum blur. This is good for pixelgraphics
-   that are scaled by non-integer factors.
+/*
+  Author: rsn8887 (based on TheMaister)
+  License: Public domain
 
-   The prescale factor and texel coordinates are precalculated
-   in the vertex shader for speed.
+  This is an integer prescale filter that should be combined
+  with a bilinear hardware filtering (GL_BILINEAR filter or some such) to achieve
+  a smooth scaling result with minimum blur. This is good for pixelgraphics
+  that are scaled by non-integer factors.
+
+  The prescale factor and texel coordinates are precalculated
+  in the vertex shader for speed.
 */
 
 #pragma once

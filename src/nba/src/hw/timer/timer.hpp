@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <algorithm>
 #include <nba/integer.hpp>
 #include <nba/save_state.hpp>
 #include <nba/scheduler.hpp>

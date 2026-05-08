@@ -1,16 +1,15 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
  */
 
-#include <cstring>
 #include <nba/rom/gpio/gpio.hpp>
 #include <nba/rom/gpio/rtc.hpp>
 #include <nba/rom/gpio/solar_sensor.hpp>
-
 #include <nba/log.hpp>
+#include <cstring>
 
 namespace nba {
 

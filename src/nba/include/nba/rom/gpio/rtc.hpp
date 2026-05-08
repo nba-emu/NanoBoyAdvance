@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -64,7 +64,7 @@ private:
     while(x > 0) {
       y += (x % 10) * e;
       e *= 16;
-      x /= 10; 
+      x /= 10;
     }
 
     return y;

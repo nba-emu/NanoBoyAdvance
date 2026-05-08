@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -19,11 +19,11 @@ struct ReadStream {
 template<typename T>
 struct WriteStream {
   virtual ~WriteStream() = default;
-  
+
   virtual void Write(T const& value) = 0;
 };
 
 template<typename T>
 struct Stream : ReadStream<T>, WriteStream<T> { };
-  
+
 } // namespace nba

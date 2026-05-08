@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -7,7 +7,6 @@
 
 #include <platform/frame_limiter.hpp>
 
-#include <algorithm>
 #include <thread>
 
 namespace nba {
@@ -55,8 +54,8 @@ void FrameLimiter::Run(
 
   frame_advance();
   m_frame_count++;
-    
-  auto now = std::chrono::steady_clock::now(); 
+
+  auto now = std::chrono::steady_clock::now();
   auto fps_update_delta = std::chrono::duration_cast<std::chrono::milliseconds>(
     now - m_timestamp_fps_update).count();
 

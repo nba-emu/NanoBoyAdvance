@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <array>
 #include <fmt/color.h>
 #include <fmt/format.h>
 #include <string_view>
@@ -67,7 +66,7 @@ inline void Log(std::string_view format, Args&&... args) {
     }
 
     const auto& style_ref = style;
-    fmt::print(style_ref, "{} {}\n", prefix, fmt::format(format, std::forward<Args>(args)...));
+    fmt::print(style_ref, "{} {}\n", prefix, fmt::format(fmt::runtime(format), std::forward<Args>(args)...));
   }
 }
 

@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
  */
 
 #include <algorithm>
-#include <cmath>
 #include <nba/common/dsp/resampler/cosine.hpp>
 #include <nba/common/dsp/resampler/cubic.hpp>
 #include <nba/common/dsp/resampler/nearest.hpp>
@@ -67,9 +66,6 @@ void APU::Reset() {
       break;
     case Interpolation::Cubic:
       resampler = std::make_unique<CubicStereoResampler<float>>(buffer);
-      break;
-    case Interpolation::Sinc_32:
-      resampler = std::make_unique<SincStereoResampler<float, 32>>(buffer);
       break;
     case Interpolation::Sinc_64:
       resampler = std::make_unique<SincStereoResampler<float, 64>>(buffer);

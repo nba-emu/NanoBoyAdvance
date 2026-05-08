@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -117,7 +117,7 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
   const int step = oam_fetch.step;
 
   switch(step) {
-    case 0: { // Fetch Attribute #0 and #1 
+    case 0: { // Fetch Attribute #0 and #1
       if(oam_fetch.index == 128U) {
         oam_fetch.step = 6; // we are done!
         break;
@@ -171,7 +171,7 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
             drawer_state.affine = affine;
             drawer_state.draw_x = x;
             drawer_state.remaining_pixels = half_width << 1;
-       
+
             drawer_state.is_256 = (attr01 >> 13) & 1;
 
             int local_y = (vcount - y) & 255;
@@ -250,7 +250,7 @@ void PPU::DrawSpriteFetchOAM(uint cycle) {
     case 4:
     case 5: { // Fetch matrix components PA - PD (affine sprites only)
       drawer_state.matrix[step - 2] = FetchOAM<s16>(cycle, oam_fetch.matrix_address);
-      
+
       oam_fetch.matrix_address += 8U;
 
       if(++oam_fetch.step == 6) {
@@ -371,7 +371,7 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
 
       Plot(drawer_state.draw_x, color_index);
     }
-  
+
     drawer_state.draw_x++;
 
     drawer_state.texture_x += drawer_state.matrix[0];
@@ -431,7 +431,7 @@ void PPU::DrawSpriteFetchVRAM(uint cycle) {
     }
 
     drawer_state.texture_x += 2;
-    
+
     drawer_state.remaining_pixels -= 2;
 
     if(drawer_state.remaining_pixels == 0) sprite.drawing = false;

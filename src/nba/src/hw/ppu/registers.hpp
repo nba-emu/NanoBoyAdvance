@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -64,7 +64,7 @@ struct BackgroundControl {
   int size;
 
   BackgroundControl(int id) : id(id) {}
-  
+
   void Reset();
   auto Read(int address) -> u8;
   void Write(int address, u8 value);
@@ -84,7 +84,7 @@ struct ReferencePoint {
   void Reset();
   void Write(int address, u8 value);
 };
-  
+
 struct BlendControl {
   enum Effect {
     SFX_NONE,
@@ -92,7 +92,7 @@ struct BlendControl {
     SFX_BRIGHTEN,
     SFX_DARKEN
   } sfx;
-  
+
   int targets[2][6];
 
   void Reset();
@@ -131,7 +131,7 @@ struct Mosaic {
     int size_y;
     int _counter_y;
   } bg, obj;
-  
+
   void Reset();
   void Write(int address, u8 value);
 };

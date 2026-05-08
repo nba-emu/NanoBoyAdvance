@@ -9,29 +9,28 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: msys2/setup-msys2@v2
         with:
-          install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-python-jinja mingw-w64-x86_64-python-lxml mingw-w64-x86_64-SDL2 mingw-w64-x86_64-qt5-static
+          install: mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-python-jinja mingw-w64-x86_64-python-lxml mingw-w64-x86_64-SDL2 mingw-w64-x86_64-qt6-static mingw-w64-x86_64-dbus mingw-w64-x86_64-double-conversion mingw-w64-x86_64-fontconfig mingw-w64-x86_64-freetype mingw-w64-x86_64-harfbuzz mingw-w64-x86_64-icu mingw-w64-x86_64-libjpeg-turbo mingw-w64-x86_64-libpng mingw-w64-x86_64-libwebp mingw-w64-x86_64-md4c mingw-w64-x86_64-openssl mingw-w64-x86_64-pcre2 mingw-w64-x86_64-sqlite3 mingw-w64-x86_64-vulkan mingw-w64-x86_64-zlib mingw-w64-x86_64-zstd
       - name: Build NanoBoyAdvance
         run: |
           cmake \
-            -Bbuild \
-            -G"Unix Makefiles" \
+            -B build \
+            -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_CXX_FLAGS="-s" \
             -DPython_EXECUTABLE="$(which python3)" \
             -DPLATFORM_QT_STATIC=ON \
             -DUSE_STATIC_SDL=ON \
-            -DQT5_STATIC_DIR="/mingw64/qt5-static"
-          cd build
-          make -j$NUMBER_OF_PROCESSORS
+            -DQT5_STATIC_DIR="/mingw64/qt6-static"
+          cmake --build build -j$(nproc)
       - name: Collect artifacts
         run: |
           mkdir upload
           cp -r build/bin/qt/{NanoBoyAdvance.exe,config.toml} upload
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: NanoBoyAdvance-win64
           path: upload
@@ -40,54 +39,53 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y python3-jinja2 python3-lxml libsdl2-dev qtbase5-dev
+          sudo apt-get install -y python3-jinja2 python3-lxml libsdl2-dev qt6-base-dev ninja-build
       - name: Build NanoBoyAdvance
         run: |
-          cmake -Bbuild -DCMAKE_BUILD_TYPE=Release
-          cd build
-          make -j$(nproc)
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j$(nproc)
       - name: Collect artifacts
         run: |
           mkdir upload
           cp -r build/bin/qt/{NanoBoyAdvance,config.toml} upload
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: NanoBoyAdvance-linux
           path: upload
           if-no-files-found: error
 
-  build-macOS:
+  build-macos:
     strategy:
       matrix:
         os: [macos-14]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.x'
       - name: Setup dependencies
         env:
           HOMEBREW_NO_ANALYTICS: 1
         run: |
-          brew install sdl2 qt@5
+          brew install sdl2 qt@6
           python3 -m pip install Jinja2
       - name: Build NanoBoyAdvance
         run: |
-          cmake -Bbuild \
-            -DCMAKE_CXX_FLAGS="-s" \
+          cmake -B build \
+            -G Ninja \
+            -DCMAKE_C_FLAGS="-Wno-unknown-warning-option" \
             -DUSE_STATIC_SDL=ON \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5)" \
+            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)" \
             -DMACOS_BUILD_APP_BUNDLE=ON \
             -DMACOS_BUNDLE_QT=ON
-          cd build
-          make -j$(getconf _NPROCESSORS_ONLN)
+          cmake --build build -j$(_NPROCESSORS_ONLN)
       - name: Create disk image
         run: |
           mkdir dmg
@@ -101,7 +99,7 @@ jobs:
             -ov -format UDBZ \
             NanoBoyAdvance.dmg
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: NanoBoyAdvance-${{ runner.os }}-${{ runner.arch }}
           path: NanoBoyAdvance.dmg

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -18,12 +18,12 @@
 class BackgroundViewer : public QWidget {
   public:
     BackgroundViewer(nba::CoreBase* core, QWidget* parent = nullptr);
-   ~BackgroundViewer() override; 
+   ~BackgroundViewer() override;
 
     void SetBackgroundID(int id);
     void Update();
 
-    bool eventFilter(QObject* object, QEvent* event);
+    bool eventFilter(QObject* object, QEvent* event) override;
 
   private:
     QWidget* CreateBackgroundInfoGroupBox();
@@ -73,7 +73,7 @@ class BackgroundViewer : public QWidget {
     bool m_display_selected_tile = false;
     int m_selected_tile_x;
     int m_selected_tile_y;
-    
+
     QWidget* m_canvas;
     QImage m_image_rgb32{1024, 1024, QImage::Format_RGB32};
     u16* m_image_rgb565;

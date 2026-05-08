@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -11,12 +11,7 @@
 
 #include "widget/input_window.hpp"
 
-InputWindow::InputWindow(
-  QApplication* app,
-  QWidget* parent,
-  std::shared_ptr<QtConfig> config
-)   : QDialog(parent)
-    , config(config) {
+InputWindow::InputWindow(QApplication* app, QWidget* parent, std::shared_ptr<QtConfig> config) : QDialog(parent), config(config) {
   auto vbox = new QVBoxLayout{this};
   vbox->setSizeConstraint(QLayout::SetFixedSize);
   vbox->addLayout(CreateKeyMapTable());
@@ -134,6 +129,7 @@ auto InputWindow::CreateKeyMapTable() -> QLayout* {
   CreateKeyMapEntry(grid, "Left", &config->input.gba[int(Key::Left)]);
   CreateKeyMapEntry(grid, "Right", &config->input.gba[int(Key::Right)]);
   CreateKeyMapEntry(grid, "Fast Forward", &config->input.fast_forward);
+
   return grid;
 }
 
@@ -151,22 +147,22 @@ void InputWindow::CreateKeyMapEntry(
 
   {
     button_keyboard = new QPushButton{GetKeyboardButtonName(mapping->keyboard)};
-   
-    connect(button_keyboard, &QPushButton::clicked, [=]() {
+
+    connect(button_keyboard, &QPushButton::clicked, [=, this]() {
       RestoreActiveButtonLabel();
       button_keyboard->setText("[press key]");
       active_mapping = mapping;
       active_button = button_keyboard;
       waiting_for_keyboard = true;
     });
-    
+
     layout->addWidget(button_keyboard, row, 1);
   }
 
   {
     button_controller = new QPushButton{GetJoystickButtonName(mapping)};
-    
-    connect(button_controller, &QPushButton::clicked, [=]() {
+
+    connect(button_controller, &QPushButton::clicked, [=, this]() {
       RestoreActiveButtonLabel();
       button_controller->setText("[press button]");
       active_mapping = mapping;
@@ -180,7 +176,7 @@ void InputWindow::CreateKeyMapEntry(
   {
     auto button = new QPushButton{tr("Clear")};
 
-    connect(button, &QPushButton::clicked, [=]() {
+    connect(button, &QPushButton::clicked, [=, this]() {
       if(active_mapping == mapping) {
         waiting_for_keyboard = false;
         waiting_for_joystick = false;
@@ -201,7 +197,7 @@ void InputWindow::RestoreActiveButtonLabel() {
     active_button->setText(GetKeyboardButtonName(active_mapping->keyboard));
     waiting_for_keyboard = false;
   }
-  
+
   if(waiting_for_joystick) {
     active_button->setText(GetJoystickButtonName(active_mapping));
     waiting_for_joystick = false;

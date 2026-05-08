@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -7,12 +7,11 @@
 
 #pragma once
 
-#include <array>
-#include <algorithm>
 #include <nba/common/compiler.hpp>
 #include <nba/log.hpp>
 #include <nba/save_state.hpp>
 #include <nba/scheduler.hpp>
+#include <array>
 
 #include "bus/bus.hpp"
 #include "arm/state.hpp"
@@ -154,7 +153,7 @@ private:
   auto GetReg(int id) -> u32 {
     u32 result = state.reg[id];
 
-    if(unlikely(ldm_usermode_conflict && id >= 8 && id != 15)) {
+    if(ldm_usermode_conflict && id >= 8 && id != 15) [[unlikely]] {
       // This array holds the current user/sys bank value only if the CPU wasn't in user or system mode all along during the user mode LDM instruction.
       // We take care in the LDM implementation that this branch is only taken if that was the case.
       result |= state.bank[BANK_NONE][id - 8];
@@ -166,13 +165,13 @@ private:
   void SetReg(int id, u32 value) {
     bool is_banked = id >= 8 && id != 15;
 
-    if(unlikely(ldm_usermode_conflict && is_banked)) {
+    if(ldm_usermode_conflict && is_banked) [[unlikely]] {
       // This array holds the current user/sys bank value only if the CPU wasn't in user or system mode all along during the user mode LDM instruction.
       // We take care in the LDM implementation that this branch is only taken if that was the case.
       state.bank[BANK_NONE][id - 8] = value;
     }
 
-    if(likely(!cpu_mode_is_invalid || !is_banked)) {
+    if(!cpu_mode_is_invalid || !is_banked) [[likely]] {
       state.reg[id] = value;
     }
   }
@@ -181,7 +180,7 @@ private:
     // CPSR/SPSR bit4 is forced to one on the ARM7TDMI:
     u32 spsr = p_spsr->v | 0x00000010u;
 
-    if(unlikely(ldm_usermode_conflict)) {
+    if(ldm_usermode_conflict) [[unlikely]] {
       /* TODO: current theory is that the value gets OR'd with CPSR,
        * because in user and system mode SPSR reads return the CPSR value.
        * But this needs to be confirmed.

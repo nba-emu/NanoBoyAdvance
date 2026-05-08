@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -14,13 +14,12 @@
 #include <QSpinBox>
 #include <QWidget>
 
-#include "widget/debugger/utility.hpp"
 #include "color_grid.hpp"
 
 class TileViewer : public QWidget {
   public:
     TileViewer(nba::CoreBase* core, QWidget* parent = nullptr);
-   ~TileViewer(); 
+   ~TileViewer();
 
     bool eventFilter(QObject* object, QEvent* event) override;
 

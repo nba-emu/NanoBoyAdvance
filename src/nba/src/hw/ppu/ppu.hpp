@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <functional>
 #include <nba/common/compiler.hpp>
 #include <nba/common/punning.hpp>
 #include <nba/config.hpp>
@@ -151,7 +150,7 @@ struct PPU {
 
   void Sync() {
     // @todo: only update the window when it is necessary or else
-    // we will have a major performance caveat due to the window being updated 
+    // we will have a major performance caveat due to the window being updated
     // during V-blank and games typically updating graphics during V-blank.
     DrawBackground();
     DrawSprite();
@@ -399,7 +398,7 @@ private:
   void InitMerge();
   void DrawMerge();
   void DrawMergeImpl(int cycles);
-  
+
   static auto Blend(u16 color_a, u16 color_b, int eva, int evb) -> u16;
   static auto Brighten(u16 color, int evy) -> u16;
   static auto Darken(u16 color, int evy) -> u16;
@@ -419,7 +418,7 @@ private:
       return 0U;
     }
 
-    if(likely(address < GetSpriteVRAMBoundary())) {
+    if(address < GetSpriteVRAMBoundary()) [[likely]] {
       bg.timestamp_vram_access = bg.timestamp_init + cycle;
       vram_bg_latch = read<u16>(vram, address & ~1U);
       return read<T>(vram, address);
@@ -430,7 +429,7 @@ private:
   template<typename T>
   auto ALWAYS_INLINE FetchVRAM_OBJ(uint cycle, uint address) -> T {
     // @todo: OBJ circuitry seems to ignore 'forced blank'. But is that really true?
-    if(likely(address >= GetSpriteVRAMBoundary())) {
+    if(address >= GetSpriteVRAMBoundary()) [[likely]] {
       sprite.timestamp_vram_access = sprite.timestamp_init + cycle;
       return read<T>(vram, address);
     }

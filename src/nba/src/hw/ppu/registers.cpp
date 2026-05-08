@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -124,7 +124,7 @@ auto BackgroundControl::Read(int address) -> u8 {
   return 0;
 }
 
-void BackgroundControl::Write(int address, u8 value) {  
+void BackgroundControl::Write(int address, u8 value) {
   switch(address) {
     case 0:
       priority = value & 3;
@@ -164,11 +164,11 @@ void ReferencePoint::Write(int address, u8 value) {
     case 2: initial = (initial & 0x0F00FFFF) | (value << 16); break;
     case 3: initial = (initial & 0x00FFFFFF) | (value << 24); break;
   }
-  
+
   if(initial & (1 << 27)) {
     initial |= 0xF0000000;
   }
-  
+
   written = true;
 }
 
@@ -204,11 +204,11 @@ void WindowLayerSelect::Reset() {
 
 auto WindowLayerSelect::Read(int address) -> u8 {
   u8 value = 0;
-  
+
   for(int i = 0; i < 6; i++) {
     value |= enable[address][i] << i;
   }
-  
+
   return value;
 }
 

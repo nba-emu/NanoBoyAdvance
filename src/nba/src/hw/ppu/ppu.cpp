@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -184,7 +184,7 @@ void PPU::BeginHDrawVBlank() {
     InitMerge();
   } else {
     scheduler.Add(1007, Scheduler::EventClass::PPU_hblank_vblank);
-    
+
     if(++vcount == 227) {
       dispstat.vblank_flag = 0;
     }
@@ -233,7 +233,7 @@ void PPU::UpdateVerticalCounterFlag() {
     // @todo: why is it necessary to set the event priority here?
     scheduler.Add(1, Scheduler::EventClass::PPU_vcount_irq, 1);
   }
-  
+
   dispstat.vcount_flag = vcount_flag_new;
 }
 

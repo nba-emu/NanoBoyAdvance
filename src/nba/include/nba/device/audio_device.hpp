@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -10,7 +10,7 @@
 #include <nba/integer.hpp>
 
 namespace nba {
-  
+
 struct AudioDevice {
   virtual ~AudioDevice() = default;
 

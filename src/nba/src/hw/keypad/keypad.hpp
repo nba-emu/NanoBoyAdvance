@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -10,7 +10,6 @@
 #include <nba/core.hpp>
 #include <nba/save_state.hpp>
 #include <nba/scheduler.hpp>
-#include <memory>
 
 #include "hw/irq/irq.hpp"
 
@@ -38,7 +37,7 @@ struct KeyPad {
       LogicalOR  = 0,
       LogicalAND = 1
     } mode = Mode::LogicalOR;
-  
+
     KeyPad* keypad;
 
     auto ReadByte(uint offset) -> u8;

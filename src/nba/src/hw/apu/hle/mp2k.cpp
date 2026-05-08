@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -70,7 +70,7 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
       }
       hq_envelope_volume[0] = U8ToFloat(channel.envelope_attack);
 
-      const Sampler::WaveInfo* const wave_info = bus.GetHostAddress<Sampler::WaveInfo>(channel.wave_address); 
+      const Sampler::WaveInfo* const wave_info = bus.GetHostAddress<Sampler::WaveInfo>(channel.wave_address);
       if(wave_info == nullptr) {
         Log<Warn>("MP2K: channel[{}] wave address is invalid: 0x{:08X}", channel.wave_address);
         channel.status = 0; // Disable channel, there is no good way to deal with this.
@@ -111,7 +111,7 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
     } else if(envelope_phase == CHANNEL_ENV_DECAY) {
       envelope_volume = (envelope_volume * channel.envelope_decay) >> 8;
       hq_envelope_volume[0] *= U8ToFloat(channel.envelope_decay);
-    
+
       auto envelope_sustain = channel.envelope_sustain;
       if(envelope_volume <= envelope_sustain) {
         if(envelope_sustain == 0 && channel.echo_volume == 0) {
@@ -275,7 +275,7 @@ void MP2K::RenderFrame() {
         float a0 = sample_history[0] - sample_history[1] - sample_history[3] + sample_history[2];
         float a1 = sample_history[3] - sample_history[2] - a0;
         float a2 = sample_history[1] - sample_history[3];
-        float a3 = sample_history[2]; 
+        float a3 = sample_history[2];
         sample = a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3;
       } else {
         sample = sample_history[0] * mu + sample_history[1] * (1.0 - mu);
@@ -320,7 +320,7 @@ void MP2K::RenderReverb(float* destination, u8 strength) {
     for(auto pair : k_late_coefficients) {
       sum += pair[0];
       sum += pair[1];
-    } 
+    }
 
     return 1.0 / sum;
   }();

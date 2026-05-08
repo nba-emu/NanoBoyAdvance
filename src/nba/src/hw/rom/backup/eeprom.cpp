@@ -1,15 +1,13 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
  */
 
-#include <cstring>
-#include <exception>
-#include <nba/rom/backup/eeprom.hpp>
-
 #include <nba/log.hpp>
+#include <nba/rom/backup/eeprom.hpp>
+#include <cstring>
 
 using namespace nba::core;
 
@@ -23,7 +21,7 @@ EEPROM::EEPROM(fs::path const& save_path, Size size_hint, core::Scheduler& sched
     , save_path(save_path)
     , scheduler(scheduler) {
   scheduler.Register(Scheduler::EventClass::EEPROM_ready, this, &EEPROM::OnReadyAfterWrite);
-  
+
   Reset();
 }
 
@@ -40,7 +38,7 @@ void EEPROM::Reset() {
   }
 
   int bytes = g_save_size[size];
-  
+
   file = BackupFile::OpenOrCreate(save_path, {512, 8192}, bytes);
 
   if(bytes == g_save_size[0]) {
@@ -65,7 +63,7 @@ auto EEPROM::Read(u32 address) -> u8 {
       }
       return 0;
     }
-    
+
     int bit   = transmitted_bits % 8;
     int index = transmitted_bits / 8;
 
@@ -73,7 +71,7 @@ auto EEPROM::Read(u32 address) -> u8 {
       state = STATE_ACCEPT_COMMAND;
       ResetSerialBuffer();
     }
-      
+
     return (file->Read(this->address + index) >> (7 - bit)) & 1;
   }
 
@@ -124,7 +122,7 @@ void EEPROM::Write(u32 address, u8 value) {
     auto tmp = file->Read(this->address + index);
     tmp |= value << (7 - bit);
     file->Write(this->address + index, tmp);
-    
+
     // @todo: should the EEPROM be reprogrammed if the dummy bit is never read?
     if(transmitted_bits == 64) {
       state &= ~STATE_WRITING;
@@ -139,8 +137,8 @@ void EEPROM::Write(u32 address, u8 value) {
       /**
        * It takes ~6 ms for the EEPROM chip to actually write the data.
        * Presumably a new command cannot be submitted during those ~6 ms.
-       * The exact timing varies based on environmental temperature and likely from cartridge to cartridge. 
-       */ 
+       * The exact timing varies based on environmental temperature and likely from cartridge to cartridge.
+       */
       state = STATE_BUSY;
       scheduler.Add(101400, Scheduler::EventClass::EEPROM_ready);
     }

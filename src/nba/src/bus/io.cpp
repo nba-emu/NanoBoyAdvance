@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -192,7 +192,7 @@ auto Bus::Hardware::ReadByte(u32 address) ->  u8 {
     case WAITCNT+3: return 0;
     case POSTFLG:   return postflg;
     case HALTCNT:   return 0;
-    case 0x04000302: 
+    case 0x04000302:
     case 0x04000303: return 0;
 
     case MGBA_LOG_ENABLE+0: return (u8)(mgba_log.enable >> 0);

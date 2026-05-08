@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
  */
 
-#include <fmt/format.h>
 #include <nba/common/punning.hpp>
+#include <fmt/format.h>
 #include <QGridLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
@@ -14,6 +14,7 @@
 #include <QRadioButton>
 #include <QVBoxLayout>
 
+#include "widget/debugger/utility.hpp"
 #include "tile_viewer.hpp"
 
 TileViewer::TileViewer(nba::CoreBase* core, QWidget* parent) : QWidget(parent) {
@@ -87,7 +88,7 @@ QWidget* TileViewer::CreateTileBaseGroupBox() {
     });
 
     vbox->addWidget(radio_button);
-    
+
     if(m_tile_base == 0x06000000u) radio_button->click();
   }
 
@@ -133,7 +134,7 @@ QWidget* TileViewer::CreateTileInfoGroupBox() {
 
     m_label_color_r_component->setText(QStringLiteral("%1").arg(r));
     m_label_color_g_component->setText(QStringLiteral("%1").arg(g));
-    m_label_color_b_component->setText(QStringLiteral("%1").arg(b)); 
+    m_label_color_b_component->setText(QStringLiteral("%1").arg(b));
 
     m_tile_color_grid->SetHighlightedPosition(x, y);
   });
@@ -155,15 +156,20 @@ bool TileViewer::eventFilter(QObject* object, QEvent* event) {
       const QMouseEvent* mouse_event = (QMouseEvent*)event;
 
       if(mouse_event->button() == Qt::LeftButton) {
+        const auto position = mouse_event->position();
         const int m_canvas_tile_size = 8 * m_spin_magnification->value();
-        const int tile_x = (int)(mouse_event->x() / m_canvas_tile_size);
-        const int tile_y = (int)(mouse_event->y() / m_canvas_tile_size);
+
+        const int tile_x = (int)(position.x() / m_canvas_tile_size);
+        const int tile_y = (int)(position.y() / m_canvas_tile_size);
 
         DrawTileDetail(tile_x, tile_y);
       } else {
         ClearTileSelection();
       }
       return true;
+    }
+    default: {
+      break;
     }
   }
 
@@ -227,7 +233,7 @@ void TileViewer::UpdateImpl() {
   const int magnification = m_spin_magnification->value();
   const int palette_offset = m_tile_base == 0x10000u ? 256 : 0;
 
-  u16* const image_rgb565 = m_image_rgb565; 
+  u16* const image_rgb565 = m_image_rgb565;
   u32* const image_rgb32  = (u32*)m_image_rgb32.bits();
 
   int height = 256;

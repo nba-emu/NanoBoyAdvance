@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include <memory>
 #include <nba/device/audio_device.hpp>
 #include <nba/device/video_device.hpp>
 #include <nba/integer.hpp>
+#include <memory>
 #include <string>
 
 namespace nba {
@@ -33,7 +33,6 @@ struct Config {
     enum class Interpolation {
       Cosine,
       Cubic,
-      Sinc_32,
       Sinc_64,
       Sinc_128,
       Sinc_256

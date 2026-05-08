@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include <array>
 #include <nba/rom/rom.hpp>
 #include <nba/integer.hpp>
 #include <nba/save_state.hpp>
+#include <array>
 #include <vector>
 
 #include "hw/apu/apu.hpp"
@@ -125,7 +125,7 @@ struct Bus {
 
   template<typename T>
   auto Read(u32 address, int access) -> T;
-  
+
   template<typename T>
   void Write(u32 address, int access, T value);
 
@@ -254,7 +254,7 @@ struct Bus {
 
   void LoadState(SaveState const& state);
   void CopyState(SaveState& state);
- 
+
   int wait16[2][16] {
     { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
     { 1, 1, 3, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },

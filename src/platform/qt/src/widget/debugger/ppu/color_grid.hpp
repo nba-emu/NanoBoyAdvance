@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -15,7 +15,7 @@
 class ColorGrid : public QWidget {
   public:
     ColorGrid(int rows, int columns, QWidget* parent = nullptr);
-   ~ColorGrid() override; 
+   ~ColorGrid() override;
 
     void Draw(u16* buffer_rgb565, int stride);
     void SetHighlightedPosition(int x, int y);

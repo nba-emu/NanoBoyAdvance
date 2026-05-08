@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -20,7 +20,7 @@ void Bus::Idle() {
    * We then treat subsequent internal CPU cycles as free until the CPU accesses the bus or
    * the total number of internal CPU cycles would exceed the DMA duration.
    *
-   * Fortunately this should have no observable side-effects! 
+   * Fortunately this should have no observable side-effects!
    */
 
   if(hw.dma.IsRunning()) {

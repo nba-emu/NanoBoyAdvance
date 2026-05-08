@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -103,16 +103,16 @@ struct RegisterFile {
     };
     u32 reg[16];
   };
-  
+
   // Banked Registers
   u32 bank[BANK_COUNT][7];
 
   // Program Status Registers
   StatusRegister cpsr;
   StatusRegister spsr[BANK_COUNT];
-  
+
   RegisterFile() { Reset(); }
-  
+
   void Reset() {
     for(int i = 0; i < 16; i++) reg[i] = 0;
 

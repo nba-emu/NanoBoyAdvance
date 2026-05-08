@@ -1,35 +1,32 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
  */
 
-#include <filesystem>
-#include <memory>
 #include <QApplication>
 #include <QSurfaceFormat>
 #include <QProxyStyle>
-#include <stdlib.h>
-
-#include "widget/main_window.hpp"
+#include <cstdlib>
+#include <filesystem>
+#include <memory>
 
 #if defined(WIN32)
-  #include <QtPlatformHeaders/QWindowsWindowFunctions>
+#define WIN32_LEAN_AND_MEAN 1
+//#define NOMINMAX 1 // msys defines this already
+
+#include <Windows.h>
 #endif
+
+#include "widget/main_window.hpp"
 
 namespace fs = std::filesystem;
 
 // See: https://stackoverflow.com/a/37023032
 struct MenuStyle : QProxyStyle {
-  int styleHint(
-    StyleHint stylehint,
-    const QStyleOption *opt,
-    const QWidget *widget,
-    QStyleHintReturn *returnData
-  ) const {
-    if(stylehint == QStyle::SH_MenuBar_AltKeyNavigation)
-      return 0;
+  int styleHint(StyleHint stylehint, const QStyleOption *opt, const QWidget *widget, QStyleHintReturn *returnData) const {
+    if(stylehint == QStyle::SH_MenuBar_AltKeyNavigation) return 0;
 
     return QProxyStyle::styleHint(stylehint, opt, widget, returnData);
   }
@@ -66,11 +63,6 @@ auto create_window(QApplication& app, int argc, char** argv) -> std::unique_ptr<
 }
 
 int main(int argc, char** argv) {
-  // See: https://trac.wxwidgets.org/ticket/19023
-#if defined(__APPLE__)
-  setenv("LC_NUMERIC", "C", 1);
-#endif
-
 #if defined(WIN32)
   constexpr auto terminal_output = "CONOUT$";
   constexpr auto null_output = "NUL:";
@@ -90,7 +82,7 @@ int main(int argc, char** argv) {
   }
 #endif
 
-  // On some systems (e.g. macOS) QSurfaceFormat::setDefaultFormat() must be called before constructing QApplication.
+  // On some systems (e.g. macOS) QSurfaceFormat::setDefaultFormat() must be called before constructing a QApplication.
   auto format = QSurfaceFormat{};
   format.setProfile(QSurfaceFormat::CoreProfile);
   format.setMajorVersion(3);
@@ -101,11 +93,6 @@ int main(int argc, char** argv) {
   QApplication app{ argc, argv };
 
   app.setStyle(new MenuStyle());
-
-#if defined(WIN32)
-  // See: https://doc.qt.io/qt-5/windows-issues.html#fullscreen-opengl-based-windows
-  QWindowsWindowFunctions::setHasBorderInFullScreenDefault(true);
-#endif
 
   QCoreApplication::setOrganizationName("fleroviux");
   QCoreApplication::setApplicationName("NanoBoyAdvance");

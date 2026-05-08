@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -11,7 +11,7 @@
 
 namespace nba {
 
-#pragma pack(push, 1) 
+#pragma pack(push, 1)
 
 // For details see: http://problemkaputt.de/gbatek.htm#gbacartridgeheader
 struct Header {

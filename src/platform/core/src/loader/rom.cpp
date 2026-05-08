@@ -1,22 +1,22 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
  */
 
-#include <filesystem>
-#include <fstream>
-#include <platform/loader/rom.hpp>
 #include <nba/rom/backup/eeprom.hpp>
 #include <nba/rom/backup/flash.hpp>
 #include <nba/rom/backup/sram.hpp>
 #include <nba/rom/header.hpp>
 #include <nba/rom/rom.hpp>
 #include <nba/log.hpp>
+#include <platform/loader/rom.hpp>
+#include <unarr.h>
+#include <filesystem>
+#include <fstream>
 #include <string_view>
 #include <utility>
-#include <unarr.h>
 
 namespace nba {
 
@@ -50,7 +50,7 @@ auto ROMLoader::Load(
   }
 
   auto size = file_data.size();
-  
+
   if(size < sizeof(Header) || size > kMaxROMSize) {
     return Result::BadImage;
   }
@@ -134,7 +134,7 @@ auto ROMLoader::ReadFile(fs::path const& path, std::vector<u8>& file_data) -> Re
 }
 
 auto ROMLoader::ReadFileFromArchive(fs::path const& path, std::vector<u8>& file_data) -> Result {
-  auto stream = ar_open_file(path.u8string().c_str());
+  auto stream = ar_open_file(reinterpret_cast<const char*>(path.u8string().c_str()));
 
   if(!stream) {
     return Result::CannotOpenFile;
@@ -218,12 +218,13 @@ auto ROMLoader::CreateBackup(
   BackupType backup_type
 ) -> std::unique_ptr<Backup> {
   switch(backup_type) {
-    case BackupType::SRAM:      return std::make_unique<SRAM>(save_path);
-    case BackupType::FLASH_64:  return std::make_unique<FLASH>(save_path, FLASH::SIZE_64K);
+    case BackupType::SRAM: return std::make_unique<SRAM>(save_path);
+    case BackupType::FLASH_64: return std::make_unique<FLASH>(save_path, FLASH::SIZE_64K);
     case BackupType::FLASH_128: return std::make_unique<FLASH>(save_path, FLASH::SIZE_128K);
-    case BackupType::EEPROM_4:  return std::make_unique<EEPROM>(save_path, EEPROM::SIZE_4K, core->GetScheduler());
+    case BackupType::EEPROM_4: return std::make_unique<EEPROM>(save_path, EEPROM::SIZE_4K, core->GetScheduler());
     case BackupType::EEPROM_64: return std::make_unique<EEPROM>(save_path, EEPROM::SIZE_64K, core->GetScheduler());
     case BackupType::EEPROM_DETECT: return std::make_unique<EEPROM>(save_path, EEPROM::DETECT, core->GetScheduler());
+    default: assert(false);
   }
 
   return {};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -20,12 +20,12 @@ enum Side {
   SIDE_LEFT  = 0,
   SIDE_RIGHT = 1
 };
-  
+
 enum DMANumber {
   DMA_A = 0,
   DMA_B = 1
 };
-  
+
 struct SoundControl {
   SoundControl(
     FIFO* fifos,
@@ -39,7 +39,7 @@ struct SoundControl {
       , psg3(psg3)
       , psg4(psg4) {
   }
-  
+
   bool master_enable;
 
   struct PSG {
@@ -80,7 +80,7 @@ struct BIAS {
 
   auto ReadHalf() -> u16;
   void WriteHalf(u16 value);
-  
+
   auto GetSampleInterval() -> int { return 512 >> resolution; }
   auto GetSampleRate() -> int { return 32768 << resolution; }
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -7,11 +7,10 @@
 
 #pragma once
 
-#include <array>
-#include <glad/gl.h>
 #include <nba/device/video_device.hpp>
 #include <platform/config.hpp>
-#include <string>
+#include <glad/gl.h>
+#include <array>
 #include <utility>
 #include <vector>
 
@@ -37,7 +36,7 @@ private:
     GLenum type,
     char const* source
   ) -> std::pair<bool, GLuint>;
-  
+
   auto CompileProgram(
     char const* vertex_src,
     char const* fragment_src

@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) 2026 Mireille Meyer
+ *
+ * Licensed under GPLv3 or any later version.
+ * Refer to the included LICENSE file.
+ */
 
 #pragma once
 
@@ -48,14 +54,14 @@ constexpr auto color_agb_frag = R"(
     vec4 screen = pow(texture(u_input_map, v_uv), vec4(target_gamma + darken_screen)).rgba;
     vec4 avglum = vec4(0.5);
     screen = mix(screen, avglum, (1.0 - contrast));
-     
+
     mat4 color = mat4(
       r,   rg,  rb,  0.0,  //red channel
       gr,  g,   gb,  0.0,  //green channel
       br,  bg,  b,   0.0,  //blue channel
       blr, blg, blb, 0.0   //alpha channel; these numbers do nothing for our purposes.
     );
-          
+
     mat4 adjust = mat4(
       (1.0 - sat) * 0.3086 + sat, (1.0 - sat) * 0.3086, (1.0 - sat) * 0.3086, 1.0,
       (1.0 - sat) * 0.6094, (1.0 - sat) * 0.6094 + sat, (1.0 - sat) * 0.6094, 1.0,

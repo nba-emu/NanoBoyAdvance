@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -11,19 +11,19 @@ void QtConfig::LoadCustomData(toml::value const& data) {
   if(data.contains("input")) {
     using Map = Input::Map;
 
-    auto input_ = data.at("input");
+    auto input_config = data.at("input");
 
-    input.controller_guid = toml::find_or<std::string>(input_, "controller_guid", "");
-    input.hold_fast_forward = toml::find_or<bool>(input_, "hold_fast_forward", true);
+    input.controller_guid = toml::find_or<std::string>(input_config, "controller_guid", "");
+    input.hold_fast_forward = toml::find_or<bool>(input_config, "hold_fast_forward", true);
 
     const auto get_map = [&](toml::value const& value, std::string key) {
       return Map::FromArray(toml::find_or<std::array<int, 5>>(value, key, {0, -1, -1, -1, 0}));
     };
 
-    input.fast_forward = get_map(input_, "fast_forward");
-  
-    if(input_.contains("gba")) {
-      auto gba = input_.at("gba");
+    input.fast_forward = get_map(input_config, "fast_forward");
+
+    if(input_config.contains("gba")) {
+      auto gba = input_config.at("gba");
 
       input.gba[0] = get_map(gba, "a");
       input.gba[1] = get_map(gba, "b");
@@ -39,16 +39,16 @@ void QtConfig::LoadCustomData(toml::value const& data) {
   }
 
   if(data.contains("window")) {
-    auto window_ = data.at("window");
+    auto window_config = data.at("window");
 
-    window.scale = toml::find_or<int>(window_, "scale", 2);
-    window.maximum_scale = toml::find_or<int>(window_, "maximum_scale", 0);
-    window.fullscreen = toml::find_or<bool>(window_, "fullscreen", false);
-    window.fullscreen_show_menu = toml::find_or<bool>(window_, "fullscreen_show_menu", false);
-    window.lock_aspect_ratio = toml::find_or<bool>(window_, "lock_aspect_ratio", true);
-    window.use_integer_scaling = toml::find_or<bool>(window_, "use_integer_scaling", false);
-    window.show_fps = toml::find_or<bool>(window_, "show_fps", false);
-    window.pause_emulator_when_inactive = toml::find_or<bool>(window_, "pause_emulator_when_inactive", true);
+    window.scale = toml::find_or<int>(window_config, "scale", 2);
+    window.maximum_scale = toml::find_or<int>(window_config, "maximum_scale", 0);
+    window.fullscreen = toml::find_or<bool>(window_config, "fullscreen", false);
+    window.fullscreen_show_menu = toml::find_or<bool>(window_config, "fullscreen_show_menu", false);
+    window.lock_aspect_ratio = toml::find_or<bool>(window_config, "lock_aspect_ratio", true);
+    window.use_integer_scaling = toml::find_or<bool>(window_config, "use_integer_scaling", false);
+    window.show_fps = toml::find_or<bool>(window_config, "show_fps", false);
+    window.pause_emulator_when_inactive = toml::find_or<bool>(window_config, "pause_emulator_when_inactive", true);
   }
 
   recent_files = toml::find_or<std::vector<std::string>>(data, "recent_files", {});

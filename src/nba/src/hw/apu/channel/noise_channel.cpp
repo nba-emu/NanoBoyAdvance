@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -15,7 +15,7 @@ NoiseChannel::NoiseChannel(Scheduler& scheduler, BIAS& bias)
     , scheduler(scheduler)
     , bias(bias) {
   scheduler.Register(Scheduler::EventClass::APU_PSG4_generate, this, &NoiseChannel::Generate);
-  
+
   Reset();
 }
 

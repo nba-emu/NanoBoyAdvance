@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -26,7 +26,7 @@ struct GPIODevice {
 
   virtual void LoadState(SaveState const& state) {}
   virtual void CopyState(SaveState& state) {}
-  
+
   void SetPortDirections(int port_directions) {
     this->port_directions = port_directions;
   }

@@ -30,6 +30,8 @@
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>${MACOSX_BUNDLE_COPYRIGHT}</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Microphones are not used by NanoBoyAdvance. This requeest is a consequence of how audio devices are initialized by SDL. You can safely deny permission.</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <nba/log.hpp>
 #include <nba/device/audio_device.hpp>
+#include <nba/log.hpp>
 #include <SDL.h>
 
 namespace nba {

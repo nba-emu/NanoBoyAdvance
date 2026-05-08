@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
  */
 
+#include <QPainter>
 #include <algorithm>
 #include <cstring>
-#include <QPainter>
 
 #include "widget/debugger/utility.hpp"
 #include "color_grid.hpp"
@@ -77,8 +77,10 @@ void ColorGrid::paintEvent(QPaintEvent* event) {
 }
 
 void ColorGrid::mousePressEvent(QMouseEvent* event) {
-  const int x = std::min((int)(event->x() / k_box_size), m_columns);
-  const int y = std::min((int)(event->y() / k_box_size), m_rows);
+  const auto position = event->position();
+
+  const int x = std::min((int)(position.x() / k_box_size), m_columns);
+  const int y = std::min((int)(position.y() / k_box_size), m_rows);
 
   emit selected(x, y);
 }

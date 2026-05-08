@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
  */
 
-#include <cstring>
 #include <nba/rom/backup/eeprom.hpp>
 #include <nba/rom/backup/flash.hpp>
 #include <nba/rom/backup/sram.hpp>
+#include <cstring>
 
 namespace nba {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -7,11 +7,11 @@
 
 #pragma once
 
+#include <cstdint>
+
 #ifdef NBA_NO_EXPORT_INT_TYPES
 namespace nba {
 #endif
-
-#include <cstdint>
 
 using u8 = std::uint8_t;
 using s8 = std::int8_t;

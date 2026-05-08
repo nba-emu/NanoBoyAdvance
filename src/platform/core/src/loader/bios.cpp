@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
  */
 
+#include <platform/loader/bios.hpp>
 #include <filesystem>
 #include <fstream>
-#include <platform/loader/bios.hpp>
 #include <vector>
 
 namespace nba {

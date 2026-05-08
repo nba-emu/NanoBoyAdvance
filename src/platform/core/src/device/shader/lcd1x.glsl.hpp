@@ -1,4 +1,11 @@
 /*
+ * Copyright (C) 2026 Mireille Meyer
+ *
+ * Licensed under GPLv3 or any later version.
+ * Refer to the included LICENSE file.
+ */
+
+/*
  * lcd1x - Simple LCD 'scanline' shader, based on lcd3x
  *
  * Original code by Gigaherz, released into the public domain

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -43,7 +43,7 @@ void PPU::InitBackground() {
 
 void PPU::DrawBackground() {
   const u64 timestamp_now = scheduler.GetTimestampNow();
-  
+
   const int cycles = (int)(timestamp_now - bg.timestamp_last_sync);
 
   if(cycles == 0 || bg.cycle >= 1232U) {
@@ -59,7 +59,7 @@ void PPU::DrawBackground() {
     case 3: DrawBackgroundImpl<3>(cycles); break;
     case 4: DrawBackgroundImpl<4>(cycles); break;
     case 5: DrawBackgroundImpl<5>(cycles); break;
-    case 6: 
+    case 6:
     case 7: DrawBackgroundImpl<7>(cycles); break;
   }
 
@@ -68,7 +68,7 @@ void PPU::DrawBackground() {
 
 template<int mode> void PPU::DrawBackgroundImpl(int cycles) {
   const u16 latched_dispcnt_and_current_dispcnt = mmio.dispcnt_latch[0] & mmio.dispcnt.hword;
-  
+
   /**
    * @todo: we are losing out on some possible optimizations,
    * by implementing the various BG modes in separate methods,

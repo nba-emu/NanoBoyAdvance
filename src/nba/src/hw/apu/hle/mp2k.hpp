@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
@@ -8,6 +8,7 @@
 #pragma once
 
 #include <nba/integer.hpp>
+#include <memory>
 
 namespace nba::core {
 
@@ -27,8 +28,8 @@ struct MP2K {
     CHANNEL_ENV_DECAY = 0x02,
     CHANNEL_ENV_SUSTAIN = 0x01,
     CHANNEL_ENV_RELEASE = 0x00,
-    
-    CHANNEL_ON = CHANNEL_START | CHANNEL_STOP | CHANNEL_ECHO | CHANNEL_ENV_MASK 
+
+    CHANNEL_ON = CHANNEL_START | CHANNEL_STOP | CHANNEL_ECHO | CHANNEL_ENV_MASK
   };
 
   struct SoundChannel {
@@ -81,7 +82,7 @@ struct MP2K {
     return force_reverb;
   }
 
-  void Reset();  
+  void Reset();
   void SoundMainRAM(SoundInfo const& sound_info);
   void RenderFrame();
   auto ReadSample() -> float*;

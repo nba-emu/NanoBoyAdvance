@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2025 fleroviux
+ * Copyright (C) 2026 Mireille Meyer
  *
  * Licensed under GPLv3 or any later version.
  * Refer to the included LICENSE file.
  */
 
+#include <nba/common/compiler.hpp>
 #include <nba/log.hpp>
+#include <platform/config.hpp>
 #include <filesystem>
 #include <fstream>
 #include <map>
-#include <platform/config.hpp>
 
 namespace nba {
 
@@ -65,7 +66,7 @@ void PlatformConfig::Load(std::string const& path) {
 
   if(data.contains("video")) {
     auto video = data.at("video");
-  
+
     const std::map<std::string, Video::Filter> filters{
       { "nearest", Video::Filter::Nearest },
       { "linear",  Video::Filter::Linear  },
@@ -89,7 +90,7 @@ void PlatformConfig::Load(std::string const& path) {
     auto color_correction = toml::find_or<std::string>(video, "color_correction", "ags");
     auto color_correction_match = color_corrections.find(color_correction);
     if(color_correction_match != color_corrections.end()) {
-      this->video.color = color_correction_match->second;  
+      this->video.color = color_correction_match->second;
     }
 
     this->video.lcd_ghosting = toml::find_or<bool>(video, "lcd_ghosting", true);
@@ -138,23 +139,24 @@ void PlatformConfig::Save(std::string const& path) {
   }
 
   // General
-  data["general"]["bios_path"] = this->bios_path;
-  data["general"]["bios_skip"] = this->skip_bios;
+  data["general"]["bios_path"]   = this->bios_path;
+  data["general"]["bios_skip"]   = this->skip_bios;
   data["general"]["save_folder"] = this->save_folder;
 
   // Cartridge
   std::string save_type;
   switch(this->cartridge.backup_type) {
-    case Config::BackupType::Detect: save_type = "detect"; break;
-    case Config::BackupType::None:   save_type = "none"; break;
-    case Config::BackupType::SRAM:   save_type = "sram"; break;
-    case Config::BackupType::FLASH_64:  save_type = "flash64"; break;
-    case Config::BackupType::FLASH_128: save_type = "flash128"; break;
-    case Config::BackupType::EEPROM_4:  save_type = "eeprom512"; break;
-    case Config::BackupType::EEPROM_64: save_type = "eeprom8192"; break;
+    case Config::BackupType::Detect:        save_type = "detect"; break;
+    case Config::BackupType::None:          save_type = "none"; break;
+    case Config::BackupType::SRAM:          save_type = "sram"; break;
+    case Config::BackupType::FLASH_64:      save_type = "flash64"; break;
+    case Config::BackupType::FLASH_128:     save_type = "flash128"; break;
+    case Config::BackupType::EEPROM_4:      save_type = "eeprom512"; break;
+    case Config::BackupType::EEPROM_64:     save_type = "eeprom8192"; break;
+    case Config::BackupType::EEPROM_DETECT: assert(false);
   }
-  data["cartridge"]["save_type"] = save_type;
-  data["cartridge"]["force_rtc"] = this->cartridge.force_rtc;
+  data["cartridge"]["save_type"]          = save_type;
+  data["cartridge"]["force_rtc"]          = this->cartridge.force_rtc;
   data["cartridge"]["force_solar_sensor"] = this->cartridge.force_solar_sensor;
   data["cartridge"]["solar_sensor_level"] = this->cartridge.solar_sensor_level;
 
@@ -183,16 +185,17 @@ void PlatformConfig::Save(std::string const& path) {
   // Audio
   std::string resampler;
   switch(this->audio.interpolation) {
-    case Config::Audio::Interpolation::Cosine: resampler = "cosine"; break;
-    case Config::Audio::Interpolation::Cubic:  resampler = "cubic";  break;
+    case Config::Audio::Interpolation::Cosine:   resampler = "cosine"; break;
+    case Config::Audio::Interpolation::Cubic:    resampler = "cubic";  break;
     case Config::Audio::Interpolation::Sinc_64:  resampler = "sinc64"; break;
     case Config::Audio::Interpolation::Sinc_128: resampler = "sinc128"; break;
     case Config::Audio::Interpolation::Sinc_256: resampler = "sinc256"; break;
   }
-  data["audio"]["resampler"] = resampler;
-  data["audio"]["volume"] = this->audio.volume;
-  data["audio"]["mp2k_hle_enable"] = this->audio.mp2k_hle_enable;
-  data["audio"]["mp2k_hle_cubic"] = this->audio.mp2k_hle_cubic;
+
+  data["audio"]["resampler"]             = resampler;
+  data["audio"]["volume"]                = this->audio.volume;
+  data["audio"]["mp2k_hle_enable"]       = this->audio.mp2k_hle_enable;
+  data["audio"]["mp2k_hle_cubic"]        = this->audio.mp2k_hle_cubic;
   data["audio"]["mp2k_hle_force_reverb"] = this->audio.mp2k_hle_force_reverb;
 
   SaveCustomData(data);
