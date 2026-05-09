@@ -7,17 +7,17 @@
 	<key>CFBundleExecutable</key>
 	<string>${MACOSX_BUNDLE_EXECUTABLE_NAME}</string>
 	<key>CFBundleGetInfoString</key>
-	<string>${MACOSX_BUNDLE_INFO_STRING}</string>
+	<string>Game Boy Advance emulator</string>
 	<key>CFBundleIconFile</key>
-	<string>${MACOSX_BUNDLE_ICON_FILE}</string>
+	<string>NanoBoyAdvance.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>${MACOSX_BUNDLE_GUI_IDENTIFIER}</string>
+	<string>com.github.nba-emu.NanoBoyAdvance</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleLongVersionString</key>
 	<string>${MACOSX_BUNDLE_LONG_VERSION_STRING}</string>
 	<key>CFBundleName</key>
-	<string>${MACOSX_BUNDLE_BUNDLE_NAME}</string>
+	<string>NanoBoyAdvance</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

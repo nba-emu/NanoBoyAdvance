@@ -1,5 +1,4 @@
 # NanoBoyAdvance
-
 [![license](https://img.shields.io/github/license/nba-emu/NanoBoyAdvance)](https://github.com/nba-emu/NanoBoyAdvance/blob/master/LICENSE)
 [![build](https://img.shields.io/github/actions/workflow/status/nba-emu/NanoBoyAdvance/build.yml?branch=master)](https://github.com/nba-emu/NanoBoyAdvance/actions/workflows/build.yml)
 [![discord](https://img.shields.io/discord/969218483873251338?logo=discord&label=discord)](https://discord.gg/4NnUjsf7Am)
@@ -21,14 +20,12 @@ It aims to be as accurate as possible, while also offering enhancements such as 
 [^1]: RAR 5.0 is currently not supported.
 
 ## Running
-
 Download a recent [development build](https://nightly.link/nba-emu/NanoBoyAdvance/workflows/build/master) or the last [stable release](https://github.com/nba-emu/NanoBoyAdvance/releases).
 
 Upon loading a ROM for the first time you will be prompted to assign the Game Boy Advance BIOS file.  
 You can [dump](https://github.com/mgba-emu/bios-dump/tree/master/src) it from a real console (accurate) or use an [unofficial BIOS](https://github.com/Nebuleon/ReGBA/blob/master/bios/gba_bios.bin) (less accurate).
 
 ## Accuracy
-
 A lot of research and attention to detail has been put into developing this core and making it accurate.
 
 - Cycle-accurate emulation of most components, including: CPU, DMA, timers, PPU and Game Pak prefetch
@@ -38,23 +35,60 @@ A lot of research and attention to detail has been put into developing this core
 - Very high compatibility, including games that require emulation of peculiar hardware edge-cases
 
 ## Compiling
+Prerequisites:
+- Clang or GCC with C++20 support
+- CMake 3.20 or newer
+- Python 3.9 or newer as well as `Jinja2` and (optionally) `lxml`
+- SDL 2.0.10 or newer
+- Qt 6.0 or newer
 
-See [COMPILING.md](docs/COMPILING.md) in the `docs` folder.
+| Distribution | Packages | Package Manager |
+|---|---|---|
+| Arch Linux | `cmake python-jinja python-lxml sdl2 qt6-base` | pacman |
+| Debian & Ubuntu | `cmake python3-jinja2 python3-lxml libsdl2-dev qt6-base-dev` | apt |
+| | | |
+| macOS | `cmake python@3 sdl2 qt@6` | Homebrew |
+| | | |
+| FreeBSD | `cmake git py39-Jinja2 py39-lxml sdl2 qt6-base` | pkg |
+
+On platforms where Jinja isn't installed through the package manager, like Windows or macOS, Jinja needs to be installed manually.
+
+Windows:
+```ps1
+python.exe -m venv .venv
+.\.venv\Scripts\pip.exe install Jinja2
+```
+
+macOS:
+```sh
+python3 -m venv .venv
+.venv/bin/pip install Jinja2
+```
+
+You can the now configure NanoBoyAdvance:
+```sh
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+```
+For Windows, append `-DQt6_DIR=path\to\Qt6-config.cmake -DSDL2_DIR=path\to\SDL2-config.cmake`, with the correct paths given.
+
+Compiling can be done through `cmake --build build`.
 
 ## Acknowledgements
-
-- **Martin Korth** for [GBATEK](http://problemkaputt.de/gbatek.htm), a good piece of hardware documentation.
-- **[endrift](https://github.com/endrift)** for hardware [research](http://mgba.io/tag/emulation/) and her excellent [test suite](https://github.com/mgba-emu/suite).
-- **[destoer](https://github.com/destoer)**, **[Noumi](https://github.com/noumidev)**, **[Sky](https://github.com/skylersaleh)** and **[Zayd](https://github.com/GhostRain0)** for hardware research and tests, countless discussions and being good friends.
-- **Pokefan531** and **hunterk** for the default GBA color correction algorithm,
-- **Talarubi** and **Near** for [higan's GBA color correction algorithm](https://near.sh/articles/video/color-emulation).
-- **DeSmuME** and **Hyllian** for xBRZ upscaling code.
+| Individual(s) | Their impact |
+|---|---|
+| Martin Korth | [GBATEK](http://problemkaputt.de/gbatek.htm), a good piece of hardware documentation |
+| [endrift](https://github.com/endrift) | Hardware [research](http://mgba.io/tag/emulation/) and her excellent [test suite](https://github.com/mgba-emu/suite) |
+| [destoer](https://github.com/destoer), [Noumi](https://github.com/noumidev), [Sky](https://github.com/skylersaleh) and [Zayd](https://github.com/zaydlang) | Hardware research and tests, countless discussions and being good friends |
+| Pokefan531, hunterk | The default GBA color correction algorithm |
+| Talarubi, Near | [higan's GBA color correction algorithm](https://near.sh/articles/video/color-emulation) |
+| DeSmuME, Hyllian | xBRZ upscaling code |
 
 ## Sister Projects
-- [Panda3DS](https://github.com/wheremyfoodat/panda3DS): A new HLE Nintendo 3DS emulator
-- [Dust](https://github.com/Kelpsyberry/dust/): Nintendo DS emulator for desktop devices and the web
-- [Kaizen](https://github.com/SimoneN64/Kaizen): Experimental work-in-progress low-level N64 emulator
-- [SkyEmu](https://github.com/skylersaleh/SkyEmu/): A low-level GameBoy, GameBoy Color, GameBoy Advance and Nintendo DS emulator that is designed to be easy to use, cross platform and accurate
+| Project | Description |
+|---|---|
+| [Panda3DS](https://github.com/wheremyfoodat/panda3DS) | A new HLE Nintendo 3DS emulator |
+| [Dust](https://github.com/Kelpsyberry/dust/) | Nintendo DS emulator for desktop devices and the web |
+| [SkyEmu](https://github.com/skylersaleh/SkyEmu/) | A low-level GameBoy, GameBoy Color, GameBoy Advance and Nintendo DS emulator that is designed to be easy to use, cross platform and accurate |
 
 ## Copyright
 NanoBoyAdvance is licensed under the terms of the GNU General Public License (GPL) 3.0 or any later version.

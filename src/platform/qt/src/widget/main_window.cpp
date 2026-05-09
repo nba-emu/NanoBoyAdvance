@@ -29,7 +29,7 @@ MainWindow::MainWindow(
   QApplication* app,
   QWidget* parent
 )   : QMainWindow(parent) {
-  #ifdef RELEASE_BUILD
+  #ifdef IS_RELEASE
     base_window_title = QStringLiteral("NanoBoyAdvance %1.%2.%3")
       .arg(VERSION_MAJOR).arg(VERSION_MINOR).arg(VERSION_PATCH);
   #else

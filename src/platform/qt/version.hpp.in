@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #pragma once
 
@@ -6,4 +8,3 @@
 #define VERSION_PATCH (${VERSION_PATCH})
 #define VERSION_GIT_BRANCH "${VERSION_GIT_BRANCH}"
 #define VERSION_GIT_HASH "${VERSION_GIT_HASH}"
-#cmakedefine RELEASE_BUILD

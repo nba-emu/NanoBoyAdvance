@@ -1,16 +1,7 @@
-option(USE_SYSTEM_FMT "Use system-provided fmt library." OFF)
+# SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
+# SPDX-License-Identifier: GPL-3.0-or-later
 
-if(USE_SYSTEM_FMT)
-  find_package(fmt 8.0.1 REQUIRED)
-else()
-  include(FetchContent)
-  FetchContent_Declare(fmt
-    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-    GIT_TAG        407c905e45ad75fc29bf0f9bb7c5c2fd3475976f # 12.1.0
-  )
-  set(FMT_INSTALL OFF CACHE BOOL "" FORCE)
-  FetchContent_MakeAvailable(fmt)
-endif()
+find_package(fmt 12.1.0 REQUIRED)
 
 set(SOURCES
   src/arm/tablegen/tablegen.cpp
@@ -117,15 +108,11 @@ set(HEADERS_PUBLIC
 )
 
 add_library(nba STATIC)
-target_sources(nba PRIVATE ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
-target_include_directories(nba PRIVATE src PUBLIC include)
-
+target_sources(nba PRIVATE ${HEADERS_PUBLIC} ${HEADERS} ${SOURCES})
+target_include_directories(nba PUBLIC include PRIVATE src)
 target_link_libraries(nba PUBLIC fmt::fmt)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # Disables some annoying warning about typeids being too evaluated™️
   target_compile_options(nba PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fbracket-depth=4096> PUBLIC -Wno-potentially-evaluated-expression)
-  if(APPLE)
-    target_compile_options(nba PUBLIC -Wno-unused-command-line-argument -Wno-unknown-warning-option)
-  endif()
 endif()
