@@ -1,0 +1,30 @@
+name: ClusterFuzzLite fuzzing
+
+on: [push, pull_request]
+
+permissions: read-all
+
+jobs:
+  fuzzing:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [address]
+    steps:
+    - name: Build Fuzzers (${{ matrix.sanitizer }})
+      id: build
+      uses: google/clusterfuzzlite/actions/build_fuzzers@v1
+      with:
+        sanitizer: ${{ matrix.sanitizer }}
+        language: c++
+        bad-build-check: false
+    - name: Run Fuzzers (${{ matrix.sanitizer }})
+      id: run
+      uses: google/clusterfuzzlite/actions/run_fuzzers@v1
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        fuzz-seconds: 240
+        mode: 'code-change'
+        report-unreproducible-crashes: false
+        sanitizer: ${{ matrix.sanitizer }}

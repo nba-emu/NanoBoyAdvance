@@ -37,7 +37,7 @@ A lot of research and attention to detail has been put into developing this core
 ## Compiling
 Prerequisites:
 - Clang or GCC with C++20 support
-- CMake 3.20 or newer
+- CMake 3.24 or newer
 - Python 3.9 or newer as well as `Jinja2` and (optionally) `lxml`
 - SDL 2.0.10 or newer
 - Qt 6.0 or newer

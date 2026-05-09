@@ -3,7 +3,6 @@
 
 find_package(OpenGL REQUIRED)
 find_package(SDL2 2.0.10 REQUIRED COMPONENTS SDL2)
-find_package(toml11 4.4.0 REQUIRED)
 
 set(SOURCES
   src/device/ogl_video_device.cpp

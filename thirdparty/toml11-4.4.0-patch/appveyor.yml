@@ -1,0 +1,41 @@
+version: "{build}"
+
+environment:
+  matrix:
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      MSVC_VERSION: 2017
+      CXX_VERSION: 11
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      MSVC_VERSION: 2017
+      CXX_VERSION: 14
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      MSVC_VERSION: 2017
+      CXX_VERSION: 17
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      MSVC_VERSION: 2019
+      CXX_VERSION: 11
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      MSVC_VERSION: 2019
+      CXX_VERSION: 14
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      MSVC_VERSION: 2019
+      CXX_VERSION: 17
+
+configuration:
+  - Debug
+
+clone_depth: 10
+clone_folder: c:\toml11
+
+install:
+  - git submodule update --init --recursive
+
+build_script:
+  - '"C:\Program Files (x86)\Microsoft Visual Studio\%MSVC_VERSION%\Community\VC\Auxiliary\Build\vcvarsall.bat" x64'
+  - cd C:\toml11
+  - cmake -B build -G"NMake Makefiles" -DCMAKE_BUILD_TYPE=%configuration% -DCMAKE_CXX_STANDARD=%CXX_VERSION% -DTOML11_BUILD_TESTS=ON -DBUILD_TESTING=ON -DTOML11_PRECOMPILE=ON
+  - cmake --build build
+
+test_script:
+  - cd build\tests\
+  - ctest --timeout 300 --output-on-failure

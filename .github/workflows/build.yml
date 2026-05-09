@@ -23,21 +23,21 @@ jobs:
 #          if-no-files-found: error
 
   build-linux:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, X64]
     steps:
       - uses: actions/checkout@v6
       - name: Setup dependencies
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y libfmt-dev libsdl2-dev libtoml11-dev ninja-build python3-jinja2 python3-lxml qt6-base-dev
+          sudo apt update -qq
+          sudo apt install -y libfmt-dev libsdl2-dev ninja-build python3-jinja2 python3-lxml qt6-base-dev
       - name: Build NanoBoyAdvance
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DWEIRD_STUPID_CI_BULLSHIT_DISABLE_TOML11_PRETTY_PLEASE=ON
           cmake --build build -j$(nproc)
       - name: Collect artifacts
         run: |
           mkdir upload
-          cp -r build/bin/qt/{NanoBoyAdvance,config.toml} upload
+          cp -r build/bin/qt/release/{NanoBoyAdvance,config.toml} upload
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
