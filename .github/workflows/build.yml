@@ -29,7 +29,7 @@ jobs:
       - name: Setup dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y python3-jinja2 python3-lxml libsdl2-dev qt6-base-dev ninja-build
+          sudo apt-get install -y libfmt-dev libsdl2-dev libtoml11-dev ninja-build python3-jinja2 python3-lxml qt6-base-dev
       - name: Build NanoBoyAdvance
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -65,7 +65,7 @@ jobs:
       - name: Create disk image
         run: |
           mkdir dmg
-          cp -a build/bin/qt/NanoBoyAdvance.app dmg/NanoBoyAdvance.app
+          cp -a build/bin/qt/Release/NanoBoyAdvance.app dmg/NanoBoyAdvance.app
           codesign -s - --deep -f dmg/NanoBoyAdvance.app
           ln -s /Applications dmg/Applications
           hdiutil create -fs HFS+ -volname NanoBoyAdvance -srcfolder dmg -ov -format UDBZ NanoBoyAdvance.dmg

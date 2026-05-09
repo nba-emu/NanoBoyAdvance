@@ -1,8 +1,8 @@
 # SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-find_package(Glad QUIET OPTIONAL)
-find_package(unarr QUIET OPTIONAL)
+find_package(Glad QUIET)
+find_package(unarr QUIET)
 
 if(Glad_FOUND)
   glad_add_library(glad_gl_core_33 STATIC LANGUAGE c REPRODUCIBLE API gl:core=3.3 EXTENSIONS NONE)
