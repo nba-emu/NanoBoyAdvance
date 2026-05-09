@@ -26,10 +26,6 @@ jobs:
     runs-on: [self-hosted, linux, X64]
     steps:
       - uses: actions/checkout@v6
-      - name: Setup dependencies
-        run: |
-          sudo apt update -qq
-          sudo apt install -y libfmt-dev libsdl2-dev ninja-build python3-jinja2 python3-lxml qt6-base-dev
       - name: Build NanoBoyAdvance
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release -DWEIRD_STUPID_CI_BULLSHIT_DISABLE_TOML11_PRETTY_PLEASE=ON
@@ -68,7 +64,7 @@ jobs:
           cp -a build/bin/qt/Release/NanoBoyAdvance.app dmg/NanoBoyAdvance.app
           codesign -s - --deep -f dmg/NanoBoyAdvance.app
           ln -s /Applications dmg/Applications
-          hdiutil create -fs HFS+ -volname NanoBoyAdvance -srcfolder dmg -ov -format UDBZ NanoBoyAdvance.dmg
+          hdiutil create -fs HFS+ -volname NanoBoyAdvance -srcfolder dmg -ov -format UDBZ NanoBoyAdvance-arm64.dmg
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
