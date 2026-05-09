@@ -1,0 +1,17 @@
+﻿unarr contains code by:
+
+* The Unarchiver project (https://bitbucket.org/kosovan/theunarchiver/)
+* Simon Bünzli (zeniko at gmail.com, http://www.zeniko.ch/#SumatraPDF)
+* Felix Kauselmann (licorn at gmail.com)
+* Bastien Nocera (hadess at hadess.net, http://www.hadess.net/)
+* Wang Xin-yu (王昕宇) (comicfans44 at gmail.com)
+* Liu Xiang (liuxiang at loongson.cn, https://www.loongson.cn/)
+* Mastercoms (mastercoms at tuta.io)
+
+Most code is licensed under LGPLv3 (see COPYING). Exceptions are in code
+included from other projects:
+
+Files           License        URL
+----------------------------------------------------------------------------------
+common/crc32.c  Public Domain  https://gnunet.org/svn/gnunet/src/util/crypto_crc.c
+lzmasdk/*.*     Public Domain  http://www.7-zip.org/sdk.html

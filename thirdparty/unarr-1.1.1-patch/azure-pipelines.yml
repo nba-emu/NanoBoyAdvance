@@ -1,0 +1,75 @@
+# https://aka.ms/yaml
+
+trigger:
+- master
+- develop
+
+jobs:
+
+- job: Linux
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+    - script: |
+        sudo apt-get install -y zlib1g-dev libbz2-dev liblzma-dev libcmocka-dev
+      displayName: 'Install dependencies'
+    - task: CMake@1
+      inputs:
+        cmakeArgs: '-DBUILD_INTEGRATION_TESTS=ON -DBUILD_UNIT_TESTS=ON ..'
+      displayName: 'Generate CMake cache'
+    - task: CMake@1
+      inputs:
+        cmakeArgs: '--build .'
+      displayName: 'Build'
+    - script: ctest --output-on-failure --no-compress-output -T test
+      workingDirectory: build
+      displayName: Run tests
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'cTest'
+        testResultsFiles: build/Testing/*/Test.xml
+
+- job: Windows
+  pool:
+    vmImage: 'windows-latest'
+  steps:
+    - script: vcpkg install cmocka --triplet x64-windows
+      displayName: Install dependencies
+    - task: CMake@1
+      inputs:
+        cmakeArgs: '-DBUILD_INTEGRATION_TESTS=ON -DBUILD_UNIT_TESTS=ON -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+      displayName: 'Generate CMake cache'
+    - task: CMake@1
+      inputs:
+        cmakeArgs: '--build . --config Release'
+      displayName: 'Build'
+    - script: ctest --output-on-failure --no-compress-output --extra-verbose -C Release -T test
+      workingDirectory: build
+      displayName: Run tests
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'cTest'
+        testResultsFiles: build/Testing/*/Test.xml
+
+- job: MacOS
+  pool:
+    vmImage: 'macOS-latest'
+  steps:
+    - script: |
+        brew install cmocka
+      displayName: 'Install dependencies'
+    - task: CMake@1
+      inputs:
+        cmakeArgs: '-DBUILD_INTEGRATION_TESTS=ON -DBUILD_UNIT_TESTS=ON ..'
+      displayName: 'Generate CMake cache'
+    - task: CMake@1
+      inputs:
+        cmakeArgs: '--build .'
+      displayName: 'Build'
+    - script: ctest --output-on-failure --no-compress-output -T test
+      workingDirectory: build
+      displayName: Run tests
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'cTest'
+        testResultsFiles: build/Testing/*/Test.xml
