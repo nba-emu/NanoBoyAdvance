@@ -1,0 +1,217 @@
+v1.8.2
+- UI: implement LCD1x shader (thanks @DestinyXZ9)
+- ARM: implement multiplication carry algorithm (thanks @zaydlang, @calc84maniac)
+- ARM: fix LDM^ bus conflict logic breaks in user mode
+- ARM: fix out-of-bounds accesses when switching in or out of an invalid CPU mode
+- ARM: optimize GPR and SPSR reads
+- ARM: optimize LSL, LSR, ASR and ROR arithmetic
+- DMA: allow CPU internal ticks during CPU<->DMA transition cycles
+- PPU: correctly reset OBJ mosaic Y counter (thanks @j-mattsson)
+
+v1.8.1
+- UI: implement an option to pause the emulator when the window is inactive
+- UI: improve lack of response to input changes in the sprite viewer when the emulator is paused
+- UI: replace QOpenGLWidget with QWidget (thanks @GranMinigun)
+- UI: fix solar sensor level menu that has been broken in 1.8.0 (fixes #370)
+- GPIO: fix broken deserialization of port directions
+- APU: MP2K HLE: handle corrupted wave info addresses (fixes #362)
+- APU: PSG L/R volume must be remapped from 0-7 to 1-8
+- GameDB: Japanese Boktai releases have a solar sensor (thanks @raphaelr)
+- Redirect stdout on Windows (thanks @GranMinigun)
+
+v1.8.0
+- UI: implement "Sharp" video filter for better nearest interpolation at non-integer scales (thanks GranMinigun)
+- UI: implemented PPU viewers for palettes, tiles, backgrounds and sprites
+- UI: add an option to set the audio volume
+- UI: do not unpause emulator after loading a new ROM
+- Input: fix input dropping regression introduced in NBA 1.7.1
+- Input: move from SDL game controller to SDL joystick API (fixes broken mapping on some controllers)
+- APU: MP2K HLE: interpolate envelopes and use floating-point math
+- APU: MP2K HLE: implement a better reverb algorithm
+- APU: MP2K HLE: add an option to force-enable reverb
+- APU: remove "Zombie" mode emulation (does not appear to exist on GBA)
+- APU: fix mid-note envelope frequency changes
+- APU: FIFO writes should happen in place
+- APU: reset FIFOs on overflow
+- APU: add master-enable checks for 16-bit/32-bit IO writes
+- PPU: fix sprite pixels from previous scanline displayed in the last scanline
+- PPU: more accurate update of attribute buffer for OBJWIN sprites (fixes #275)
+- PPU: more accurate emulation of horizontal and vertical sprite mosaic (fixes #322)
+- PPU: more accurate handling of mid-frame vertical mosaic reconfiguration
+- PPU: fix out-of-bounds bitmap fetches in Mode 3 to 5
+- DMA: fix incorrect mapping of DMA channel to APU FIFO
+- Timer: somewhat handle timer overflow during one cycle enable delay (thanks alyosha)
+- Game Pak: simulate ~6 ms EEPROM device busy period after write (not yet accurate to cartridges that e.g. have been in the freezer for 30 minutes)
+- Game Pak: emulate the Mask ROM internal address register
+- Audio: fix clicking artifacts when using Sinc resampling
+- Audio: fix incorrect liner interpolation in Cosine resampling
+- PlatformCore: fixed hang when fast-forwarding while the emulator is paused
+- Misc: implemented support for unicode paths
+
+v1.7
+- UI: implement a 'Use integer scaling' option
+- UI: allow limiting the screen scale
+- UI: allow accessing the menu during fullscreen gameplay
+- UI: allow setting a custom save folder
+- Core: implement save compatibility with mGBA 0.10.0+
+- Core: implement basic support for the mGBA logging interface
+- PPU: rewrite the PPU to be mostly cycle-accurate (fixes #241, #230, #229, #208, #141)
+- PPU: implement the GREENSWAP register
+- PPU: use the 6-th green channel bit during blending
+- PPU: round the blending result to the nearest integer
+- ARM: fix a minor timing oversight in ARM mode
+- ARM: SWP and SWPB should lock the bus (no DMA interleave is possible)
+- ARM: do not force-align mis-aligned PC in ARM mode
+- Bus: allow the CPU to execute idle cycles in parallel to DMA
+- Bus: more accurately emulate disabling the prefetch buffer
+- Bus: force the first CPU access after a DMA to be non-sequential
+- Bus: implement penalty for ROM code access during the last ROM prefetch cycle (fixes #203)
+- IRQ: delay IO writes by one cycle
+- IRQ: delay update of the IE&IF condition for unhalting the CPU
+- SIO: implement basic serial transfer timing (fixes #282)
+- APU: emulate the master enable bit
+- APU: cancel a potentially pending event whan starting a channel (fixes #278)
+- Scheduler: allow for (de)serialization of events for save states
+
+v1.6
+- UI: implement game controller selection and remapping
+- UI: enable loading ROMs from archives (Zip, 7z, RAR4)
+- UI: enable loading ROMs via Drag & Drop onto the main window
+- UI: fix occasional crashes when loading a ROM while the emulator is running
+- UI: fix screen clearing and stop audio if ROM could not be loaded
+- UI: unpause the emulator if a ROM is loaded
+- UI: add an option to unlock the aspect ratio
+- Core: implement Solar Sensor emulation (for Boktai I and II)
+- Core: implement experimental save state support
+- Save Memory: automatically detect EEPROM save sizes (closes #219)
+- ARM: fix switch between FIQ and non-user/system modes
+- PPU: delay H-blank IRQs by four cycles (fixes #89, fixes #175)
+- PPU: disable VRAM mirror at 06018000h in bitmap modes (fixes #102)
+- PPU: latch BGX/Y writes at the beginning of each scanline (fixes #176)
+- PPU: delay scanline rendering by 32 cycles (fixes #93)
+- PPU: properly initialise WIN0/1 state after reset (fixes #223)
+- PPU: 2D OBJs should wraparound horizontally (fixes #224)
+- PPU: move rendering to a secondary thread for better performance
+- PPU: improve DMA3 video transfer timing
+- PPU: respect WININ/WINOUT if Alpha OBJ does not have a blend source
+- IRQ: add 16-bit IO access handlers to avoid scheduling multiple events
+- IRQ: assign (preliminary) priorities to events for IRQ raise and acknowledge/disable events
+- Timer: be explicit about IO write event order
+- RTC: enable 24h-mode by default (fixes #136)
+- RTC: multiple small fixes and accuracy improvements
+
+v1.5
+- ARM: force CPSR/SPSR bit 4 to one (fixes Banjo-Kazooie: Grunty's Revenge)
+- Bus: Game Pak access sometimes incurs a one-cycle penalty when prefetch is active
+- Bus: HALT incurs a two-cycle penalty
+- DMA: make access pattern (more) accurate for ROM to ROM and other weird DMAs.
+- DMA: move the second internal cycle at the end of the transfer
+- DMA: handle more changes to the control register during a transfer
+- IRQ: rework interrupt delay emulation (once again)
+- Timer: writing to the control register takes one cycle to apply
+- PPU: apply horizontal sprite mosaic as a post-process
+- APU: model FIFO as a buffer of seven (not eight) 32-bit words (thanks Gericom) (fixes #101)
+- APU: high bits of SOUND2CNT_L should return zero
+- Input: make KEYINPUT updates atomic to avoid incorrect game resets (from the Key IRQ)
+- UI: maintain a list of recently opened files for quick loading
+- UI: allow loading ROMs via process arguments
+- UI: add shortcuts for fullscreen and window scale
+- UI: implement a workaround for the broken menu bar during fullscreen on Windows
+- UI: hide the FPS counter by default and add an option to unhide it
+- OpenGL: fix a black screen issue on some Intel integrated GPUs
+- macOS: build NanoBoyAdvance as an App Bundle (thanks nadiaholmquist)
+
+v1.4
+- Audio: added a high-quality software/HLE mixer for the MusicPlayer2000 sound engine
+- Platform: added a new Qt frontend with OpenGL post-processing options
+- PPU: render sprites one scanline ahead (fixes #130)
+- PPU: fix an off-by-one in the OBJ draw loop
+- PPU: apply OAM draw limit only on OAM (instead of pixel) boundaries for now
+- PPU: fix Mode4 transparency (fixes #169)
+- PPU: emulate BG enable delay (fixes #94)
+- PPU: update internal (affine) X/Y registers only if the BG is enabled (fixes #177)
+- Memory: handle 16-bit KEYCNT writes (fixes #152)
+- Memory: HALTCNT and POSTFLG should only be writable from BIOS code
+- Memory: mask top two bits of the IE register
+- DMA: each DMA channel should have its own memory data register (MDR)
+- CPU: rework IRQ signal propagation delay
+- CPU: improve IRQ exception timing
+- CPU: emulate user-mode LDM bus conflict
+- CPU: handle invalid CPU modes
+- CPU: emulate MSR user-mode restrictions
+- CPU: boot into supervisor mode instead of system mode
+- CPU: handle rD=r15 edge-case in CMP/CMN/TST and TEQ
+- CPU: Thumb ALU shifts now mask the shift amount
+- CPU: fix unsigned multiply-long timing
+- EEPROM: fix address masking
+
+v1.3 (tag: 1.3)
+- ARM: handle CMP, CMN, TST and TEQ with rD = 15
+- ARM: handle mode switches when the register bank does not change.
+- ARM: removed errorneous user-mode switch from LDRT/STRT opcodes.
+- DMA: allow DMAs to take priority over the CPU in the middle of an instruction
+- DMA: delay DMA startup by two cycles and account for 2I internal cycles
+- DMA: force ROM accesses to increment source address mode
+- DMA: respect source address mode setting for FIFO DMA
+- DMA: force FIFO DMA to use word sized accesses
+- DMA: handle manual disable (via enable flag) more gracefully
+- Timer: respect cascade flag in sample rate calculation
+- APU: emulate DAC enable bits (fixes #64)
+- PPU: match WIN0/1 trigger logic to hardware (thanks @destoer)
+- PPU: fix H-blank IRQ timing (once again)
+- PPU: better handle internal affine registers when multiple BG modes are used in a single frame.
+- PPU: handle invalid BG modes 6 and 7 (thanks @ladystarbreeze)
+- PPU: update internal affine & mosaic registers at the start of H-blank, not at the end.
+- MMIO: do not fallthrough on SOUNDBIAS writes (fixes #125)
+- Keypad: implemented keypad IRQ (thanks @destoer)
+- Serial: implemented a serial IRQ stub
+- SDL: always call glewInit() (fixes #129 )
+- SDL: use binary directory as current working directory
+
+v1.2
+- CPU: Optimized GamePak prefetch buffer emulation
+- CPU: Reading prefetched GamePak memory engages the GamePak prefetcher.
+- CPU: Delay all IRQs by four cycles (fixes James Pond)
+- CPU: Handle pipeline flush for halfword reads
+- CPU: Force next ARM instruction fetch to be sequential if the condition isn't met.
+- CPU: Optimized ADC and SBC flag calculations
+- DMA: Ignore repeat-flag for immediate DMAs
+- DMA: Mask source and destination addresses on write.
+- DMA: Properly disable non-repeating FIFO DMA (fixes #97)
+- Timer: Greatly optimized emulation efficiency, timers now are scheduled.
+- Memory: Fix unaligned S16 reads from out-of-bounds ROM
+- Memory: Allow read/write to POSTFLG register
+- Memory: Allow read from WAVE_RAM registers
+- Memory: Fix unaligned S8/S16 reads from SRAM
+- Memory: Handle DMA reads from open bus addresses (fixes #109)
+- Memory: Improved GPIO bus emulation
+- Memory: Force-align 16-bit expanded 8-bit VRAM and PRAM writes.
+- PPU: Raise H-blank IRQs after 960 cycles instead of 1006 (fixes #89)
+- PPU: Handle OBJ priority hijacking (fixes #99)
+- PPU: Respect per-scanline cycle limit for OBJ rendering (fixes #98)
+- PPU: Handle odd tile numbers in 256-color OBJs (fixes #106)
+- PPU: Emulate tile number limit for 256-color OBJs
+- PPU: Latch internal affine registers on mode switch (fixes #90)
+- PPU: Handle setting V-count setting to the current V-count value.
+- PPU: Make V-count IRQ edge-triggered
+- PPU: Fixed broken semi-transparency logic
+- APU: Clamp samples before converting to S16 format (fixes #100)
+- APU: Use BLEP resampler to improve quality of direct audio.
+- RTC: Fix off-by-one error in the day of month.
+- GameDB: Added save type override for Acrobat Kid (Japan)
+- GameDB: Added save type override for Baldur's Gate - Dark Alliance
+- GameDB: Added save type override for 007 - Everything or Nothing
+- GameDB: Added save type override for Super Monkey Ball Jr.
+- GameDB: Fixed save type override for Classic NES - Legend of Zelda
+- Common/DSP: Linearly interpolate CosineResampler lookup-table
+- Common/DSP: Added a BLEP resampler
+- Miscellaneous: Do not sync to audio by default
+- Miscellaneous: Experimental, optional hack to increase audio sample rate in games which use the M4A/Sappy sound engine. This will break games and is thus not turned on by default.
+
+v1.1
+- Implemented GLSL shader support
+- Fix broken Vsync on Windows and presumably macOS
+- Fix crash when no keymap.toml is present
+
+v1.0
+Initial version.
