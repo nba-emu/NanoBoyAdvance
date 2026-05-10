@@ -1,3 +1,12 @@
+v1.8.3
+- Core: Improved fast-forwarding, adding 2x, 4x and 8x options alongside infinite
+- UI: Set default filter to nearest
+- Platform: Upgrade to Qt 6
+- Platform: Fix controller lag on macOS
+- CI: Pivot Windows builds to MSVC, remove macOS Intel builds
+- Remove broken links from README, remove COMPILING and move its instructions to README
+- Update dependencies
+
 v1.8.2
 - UI: implement LCD1x shader (thanks @DestinyXZ9)
 - ARM: implement multiplication carry algorithm (thanks @zaydlang, @calc84maniac)
