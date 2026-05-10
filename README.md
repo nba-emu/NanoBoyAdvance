@@ -37,18 +37,18 @@ A lot of research and attention to detail has been put into developing this core
 ## Compiling
 Prerequisites:
 - Clang or GCC with C++20 support
-- CMake 3.24 or newer
+- CMake 3.24 or newer (Recommended generator is Ninja)
 - SDL 2.0.10 or newer
 - Qt 6.0 or newer
 
 | Distribution | Packages | Package Manager |
 |---|---|---|
-| Arch Linux | `cmake sdl2 qt6-base` | pacman |
-| Debian & Ubuntu | `cmake libsdl2-dev qt6-base-dev` | apt |
+| Arch Linux | `cmake ninja sdl2 qt6-base` | pacman |
+| Debian & Ubuntu | `cmake ninja-build libsdl2-dev qt6-base-dev` | apt |
 | | | |
-| macOS | `cmake sdl2 qt@6` | Homebrew |
+| macOS | `cmake ninja sdl2 qt@6` | Homebrew |
 | | | |
-| FreeBSD | `cmake git sdl2 qt6-base` | pkg |
+| FreeBSD | `cmake devel/ninja git sdl2 qt6-base` | pkg |
 
 You can then configure NanoBoyAdvance:
 ```sh
