@@ -38,7 +38,6 @@ A lot of research and attention to detail has been put into developing this core
 Prerequisites:
 - Clang or GCC with C++20 support
 - CMake 3.24 or newer
-- Python 3.9 or newer as well as `Jinja2` and (optionally) `lxml`
 - SDL 2.0.10 or newer
 - Qt 6.0 or newer
 
@@ -49,29 +48,16 @@ Prerequisites:
 | | | |
 | macOS | `cmake python@3 sdl2 qt@6` | Homebrew |
 | | | |
-| FreeBSD | `cmake git  sdl2 qt6-base` | pkg |
+| FreeBSD | `cmake git sdl2 qt6-base` | pkg |
 
-On platforms where Jinja isn't installed through the package manager, like Windows or macOS, Jinja needs to be installed manually.
-
-Windows:
-```ps1
-python.exe -m venv .venv
-.\.venv\Scripts\pip.exe install Jinja2
-```
-
-macOS:
-```sh
-python3 -m venv .venv
-.venv/bin/pip install Jinja2
-```
-
-You can the now configure NanoBoyAdvance:
+You can then configure NanoBoyAdvance:
 ```sh
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 ```
-For Windows, append `-DQt6_DIR=path\to\Qt6-config.cmake -DSDL2_DIR=path\to\SDL2-config.cmake`, with the correct paths given.
 
-Compiling can be done through `cmake --build build`.
+For Windows, append `-DQt6_DIR=path\to\Qt6-config.cmake` and `-DSDL2_DIR=path\to\SDL2-config.cmake`, with the correct paths given.
+
+Compiling can now be done through `cmake --build build`.
 
 ## Acknowledgements
 | Individual(s) | Their impact |
