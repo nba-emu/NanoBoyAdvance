@@ -19,10 +19,6 @@ else()
   set(IS_RELEASE OFF)
 endif()
 
-if(NOT DEFINED Python_ROOT_DIR AND EXISTS ${CMAKE_CURRENT_LIST_DIR}/.venv)
-  set(Python_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/.venv)
-endif()
-
 project(NanoBoyAdvance LANGUAGES C CXX)
 
 if(WIN32)

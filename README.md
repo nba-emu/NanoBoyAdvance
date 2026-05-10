@@ -45,11 +45,11 @@ Prerequisites:
 | Distribution | Packages | Package Manager |
 |---|---|---|
 | Arch Linux | `cmake python-jinja python-lxml sdl2 qt6-base` | pacman |
-| Debian & Ubuntu | `cmake python3-jinja2 python3-lxml libsdl2-dev qt6-base-dev` | apt |
+| Debian & Ubuntu | `cmake libsdl2-dev qt6-base-dev` | apt |
 | | | |
 | macOS | `cmake python@3 sdl2 qt@6` | Homebrew |
 | | | |
-| FreeBSD | `cmake git py39-Jinja2 py39-lxml sdl2 qt6-base` | pkg |
+| FreeBSD | `cmake git  sdl2 qt6-base` | pkg |
 
 On platforms where Jinja isn't installed through the package manager, like Windows or macOS, Jinja needs to be installed manually.
 
