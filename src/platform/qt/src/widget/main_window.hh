@@ -1,0 +1,160 @@
+// SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#pragma once
+
+#include <nba/core.hh>
+#include <platform/loader/save_state.hh>
+#include <platform/writer/save_state.hh>
+#include <platform/emulator_thread.hh>
+#include <QActionGroup>
+#include <QMainWindow>
+#include <QMenu>
+#include <functional>
+#include <filesystem>
+#include <memory>
+#include <utility>
+#include <vector>
+
+#include "widget/debugger/ppu/background_viewer_window.hh"
+#include "widget/debugger/ppu/palette_viewer_window.hh"
+#include "widget/debugger/ppu/tile_viewer_window.hh"
+#include "widget/controller_manager.hh"
+#include "widget/input_window.hh"
+#include "widget/screen.hh"
+#include "config.hh"
+
+struct MainWindow : QMainWindow {
+  MainWindow(
+    QApplication* app,
+    QWidget* parent = 0
+  );
+
+ ~MainWindow();
+
+  bool Initialize();
+  void LoadROM(std::u16string const& path);
+
+signals:
+  void UpdateFrameRate(int fps);
+
+private slots:
+  void FileOpen();
+
+protected:
+  bool eventFilter(QObject* obj, QEvent* event) override;
+  void changeEvent(QEvent* event) override;
+  void dragEnterEvent(QDragEnterEvent* event) override;
+  void mouseDoubleClickEvent(QMouseEvent* event) override;
+
+private:
+  friend struct ControllerManager;
+
+  void CreateFileMenu();
+  void CreateVideoMenu(QMenu* parent);
+  void CreateAudioMenu(QMenu* parent);
+  void CreateInputMenu(QMenu* parent);
+  void CreateSystemMenu(QMenu* parent);
+  void CreateSolarSensorValueMenu(QMenu* parent);
+  void CreateWindowMenu(QMenu* parent);
+  void CreateConfigMenu();
+  void CreateToolsMenu();
+  void CreateHelpMenu();
+  void RenderRecentFilesMenu();
+  void RenderSaveStateMenus();
+
+  void SelectBIOS();
+  void SelectSaveFolder();
+  void RemoveSaveFolder();
+  void PromptUserForReset();
+
+  auto CreateBooleanOption(
+    QMenu* menu,
+    const char* name,
+    bool* underlying,
+    bool require_reset = false,
+    std::function<void(void)> callback = nullptr
+  ) -> QAction*;
+
+  template <typename T>
+  void CreateSelectionOption(
+    QMenu* menu,
+    std::vector<std::pair<std::string, T>> const& mapping,
+    T* underlying,
+    bool require_reset = false,
+    std::function<void(void)> callback = nullptr
+  ) {
+    auto group = new QActionGroup{this};
+    auto config = this->config;
+
+    for(auto& entry : mapping) {
+      auto action = group->addAction(QString::fromStdString(entry.first));
+      action->setCheckable(true);
+      action->setChecked(*underlying == entry.second);
+
+      connect(action, &QAction::triggered, [=, this]() {
+        *underlying = entry.second;
+        config->Save();
+        if(require_reset) {
+          PromptUserForReset();
+        }
+        if(callback) {
+          callback();
+        }
+      });
+    }
+
+    menu->addActions(group->actions());
+  }
+
+  void Reset();
+  void SetPause(bool paused);
+  void ApplyPauseState();
+  void Stop();
+  void UpdateMenuBarVisibility();
+  void UpdateMainWindowActionList();
+
+  void SetKeyStatus(int channel, nba::Key key, bool pressed);
+  void SetFastForward(int channel, bool pressed);
+  void UpdateWindowSize();
+  void SetFullscreen(bool value);
+
+  void UpdateSolarSensorLevel();
+
+  auto LoadState(std::u16string const& path) -> nba::SaveStateLoader::Result;
+  auto SaveState(std::u16string const& path) -> nba::SaveStateWriter::Result;
+
+  auto GetSavePath(fs::path const& rom_path, fs::path const& extension) -> fs::path;
+
+  std::shared_ptr<Screen> screen;
+  std::shared_ptr<QtConfig> config = std::make_shared<QtConfig>();
+  std::unique_ptr<nba::CoreBase> core;
+  std::unique_ptr<nba::EmulatorThread> emu_thread;
+  bool key_input[2][(int)nba::Key::Count] {false};
+  bool fast_forward[2] {false};
+  ControllerManager* controller_manager;
+
+  // The PPU debuggers do not access the core in a thread-safe way yet.
+  // So until that is fixed we have to keep a raw pointer around...
+  nba::CoreBase* core_not_thread_safe{};
+
+  QAction* pause_action;
+  InputWindow* input_window;
+  QMenu* recent_menu;
+  QAction* current_solar_level = nullptr;
+  QMenu* load_state_menu;
+  QMenu* save_state_menu;
+  QAction* fullscreen_action;
+  bool game_loaded = false;
+  std::u16string game_path;
+
+  nba::SaveState save_state_test;
+
+  PaletteViewerWindow* palette_viewer_window;
+  BackgroundViewerWindow* background_viewer_window;
+  TileViewerWindow* tile_viewer_window;
+
+  QString base_window_title;
+
+  Q_OBJECT
+};

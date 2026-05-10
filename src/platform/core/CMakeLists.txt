@@ -5,40 +5,40 @@ find_package(OpenGL REQUIRED)
 find_package(SDL2 REQUIRED COMPONENTS SDL2)
 
 set(SOURCES
-  src/device/ogl_video_device.cpp
-  src/device/sdl_audio_device.cpp
-  src/loader/bios.cpp
-  src/loader/rom.cpp
-  src/loader/save_state.cpp
-  src/writer/save_state.cpp
-  src/config.cpp
-  src/emulator_thread.cpp
-  src/frame_limiter.cpp
-  src/game_db.cpp
+  src/device/ogl_video_device.cc
+  src/device/sdl_audio_device.cc
+  src/loader/bios.cc
+  src/loader/rom.cc
+  src/loader/save_state.cc
+  src/writer/save_state.cc
+  src/config.cc
+  src/emulator_thread.cc
+  src/frame_limiter.cc
+  src/game_db.cc
 )
 
 set(HEADERS
-  src/device/shader/color_higan.glsl.hpp
-  src/device/shader/color_agb.glsl.hpp
-  src/device/shader/common.glsl.hpp
-  src/device/shader/lcd_ghosting.glsl.hpp
-  src/device/shader/lcd1x.glsl.hpp
-  src/device/shader/output.glsl.hpp
-  src/device/shader/sharp_bilinear.glsl.hpp
-  src/device/shader/xbrz.glsl.hpp
+  src/device/shader/color_higan.glsl.hh
+  src/device/shader/color_agb.glsl.hh
+  src/device/shader/common.glsl.hh
+  src/device/shader/lcd_ghosting.glsl.hh
+  src/device/shader/lcd1x.glsl.hh
+  src/device/shader/output.glsl.hh
+  src/device/shader/sharp_bilinear.glsl.hh
+  src/device/shader/xbrz.glsl.hh
 )
 
 set(HEADERS_PUBLIC
-  include/platform/device/ogl_video_device.hpp
-  include/platform/device/sdl_audio_device.hpp
-  include/platform/loader/bios.hpp
-  include/platform/loader/rom.hpp
-  include/platform/loader/save_state.hpp
-  include/platform/writer/save_state.hpp
-  include/platform/config.hpp
-  include/platform/emulator_thread.hpp
-  include/platform/frame_limiter.hpp
-  include/platform/game_db.hpp
+  include/platform/device/ogl_video_device.hh
+  include/platform/device/sdl_audio_device.hh
+  include/platform/loader/bios.hh
+  include/platform/loader/rom.hh
+  include/platform/loader/save_state.hh
+  include/platform/writer/save_state.hh
+  include/platform/config.hh
+  include/platform/emulator_thread.hh
+  include/platform/frame_limiter.hh
+  include/platform/game_db.hh
 )
 
 add_library(platform-core STATIC)

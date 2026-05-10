@@ -15,4 +15,4 @@ if(GIT_FOUND)
   string(STRIP "${VERSION_GIT_HASH}" VERSION_GIT_HASH)
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.hpp)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.hh.in ${CMAKE_CURRENT_BINARY_DIR}/version.hh)

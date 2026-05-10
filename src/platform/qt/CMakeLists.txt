@@ -12,40 +12,40 @@ set(CMAKE_AUTOMOC ON)
 find_package(Qt6 COMPONENTS Core Gui Widgets OpenGL REQUIRED)
 
 set(SOURCES
-  src/widget/debugger/ppu/background_viewer_window.cpp
-  src/widget/debugger/ppu/background_viewer.cpp
-  src/widget/debugger/ppu/sprite_viewer.cpp
-  src/widget/debugger/ppu/sprite_viewer_window.cpp
-  src/widget/debugger/ppu/color_grid.cpp
-  src/widget/debugger/ppu/palette_viewer.cpp
-  src/widget/debugger/ppu/palette_viewer_window.cpp
-  src/widget/debugger/ppu/tile_viewer.cpp
-  src/widget/debugger/ppu/tile_viewer_window.cpp
-  src/widget/controller_manager.cpp
-  src/widget/input_window.cpp
-  src/widget/main_window.cpp
-  src/widget/screen.cpp
-  src/config.cpp
-  src/main.cpp
+  src/widget/debugger/ppu/background_viewer_window.cc
+  src/widget/debugger/ppu/background_viewer.cc
+  src/widget/debugger/ppu/sprite_viewer.cc
+  src/widget/debugger/ppu/sprite_viewer_window.cc
+  src/widget/debugger/ppu/color_grid.cc
+  src/widget/debugger/ppu/palette_viewer.cc
+  src/widget/debugger/ppu/palette_viewer_window.cc
+  src/widget/debugger/ppu/tile_viewer.cc
+  src/widget/debugger/ppu/tile_viewer_window.cc
+  src/widget/controller_manager.cc
+  src/widget/input_window.cc
+  src/widget/main_window.cc
+  src/widget/screen.cc
+  src/config.cc
+  src/main.cc
 )
 
 set(HEADERS
-  src/widget/debugger/ppu/background_viewer_window.hpp
-  src/widget/debugger/ppu/background_viewer.hpp
-  src/widget/debugger/ppu/color_grid.hpp
-  src/widget/debugger/ppu/palette_viewer.hpp
-  src/widget/debugger/ppu/palette_viewer_window.hpp
-  src/widget/debugger/ppu/sprite_viewer.hpp
-  src/widget/debugger/ppu/sprite_viewer_window.hpp
-  src/widget/debugger/ppu/tile_viewer.hpp
-  src/widget/debugger/ppu/tile_viewer_window.hpp
-  src/widget/debugger/utility.hpp
-  src/widget/controller_manager.hpp
-  src/widget/input_window.hpp
-  src/widget/main_window.hpp
-  src/widget/screen.hpp
-  src/config.hpp
-  ${CMAKE_CURRENT_BINARY_DIR}/version.hpp
+  src/widget/debugger/ppu/background_viewer_window.hh
+  src/widget/debugger/ppu/background_viewer.hh
+  src/widget/debugger/ppu/color_grid.hh
+  src/widget/debugger/ppu/palette_viewer.hh
+  src/widget/debugger/ppu/palette_viewer_window.hh
+  src/widget/debugger/ppu/sprite_viewer.hh
+  src/widget/debugger/ppu/sprite_viewer_window.hh
+  src/widget/debugger/ppu/tile_viewer.hh
+  src/widget/debugger/ppu/tile_viewer_window.hh
+  src/widget/debugger/utility.hh
+  src/widget/controller_manager.hh
+  src/widget/input_window.hh
+  src/widget/main_window.hh
+  src/widget/screen.hh
+  src/config.hh
+  ${CMAKE_CURRENT_BINARY_DIR}/version.hh
 )
 
 set(RESOURCES

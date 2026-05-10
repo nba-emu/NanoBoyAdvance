@@ -1,0 +1,100 @@
+// SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#include <nba/common/compiler.hh>
+
+#include "hw/keypad/keypad.hh"
+
+namespace nba::core {
+
+KeyPad::KeyPad(Scheduler& scheduler, IRQ& irq)
+    : scheduler(scheduler)
+    , irq(irq) {
+  Reset();
+}
+
+void KeyPad::Reset() {
+  input = {};
+  input.keypad = this;
+  control = {};
+  control.keypad = this;
+}
+
+void KeyPad::SetKeyStatus(Key key, bool pressed) {
+  const u16 bit = 1 << (int)key;
+
+  if(pressed) {
+    input.value &= ~bit;
+  } else {
+    input.value |=  bit;
+  }
+
+  UpdateIRQ();
+}
+
+void KeyPad::UpdateIRQ() {
+  if(control.interrupt) {
+    auto not_input = ~input.value & 0x3FF;
+
+    if(control.mode == KeyControl::Mode::LogicalAND) {
+      if(control.mask == not_input) {
+        irq.Raise(IRQ::Source::Keypad);
+      }
+    } else if((control.mask & not_input) != 0) {
+      irq.Raise(IRQ::Source::Keypad);
+    }
+  }
+}
+
+auto KeyPad::KeyInput::ReadByte(uint offset) -> u8 {
+  switch(offset) {
+    case 0: return u8(value);
+    case 1: return u8(value >> 8);
+    default: break;
+  }
+
+  assert(false);
+  return 0;
+}
+
+auto KeyPad::KeyControl::ReadByte(uint offset) -> u8 {
+  switch(offset) {
+    case 0: return u8(mask);
+    case 1: return ((mask >> 8) & 3) | (interrupt ? 64 : 0) | (int(mode) << 7);
+    default: break;
+  }
+
+  assert(false);
+  return 0;
+}
+
+void KeyPad::KeyControl::WriteByte(uint offset, u8 value) {
+  switch(offset) {
+    case 0: {
+      mask &= 0xFF00;
+      mask |= value;
+      break;
+    }
+    case 1: {
+      mask &= 0x00FF;
+      mask |= (value & 3) << 8;
+      interrupt = value & 64;
+      mode = Mode(value >> 7);
+      break;
+    }
+    default: {
+      assert(false);
+    }
+  }
+
+  keypad->UpdateIRQ();
+}
+
+void KeyPad::KeyControl::WriteHalf(u16 value) {
+  mask = value & 0x03FF;
+  interrupt = value & 0x4000;
+  mode = Mode(value >> 15);
+  keypad->UpdateIRQ();
+}
+
+} // namespace nba::core

@@ -1,0 +1,44 @@
+// SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#pragma once
+
+#include <platform/device/ogl_video_device.hh>
+#include <QOpenGLContext>
+#include <QWidget>
+
+#include "config.hh"
+
+struct Screen : QWidget, nba::VideoDevice {
+  explicit Screen(QWidget* parent, std::shared_ptr<QtConfig> config);
+
+  bool Initialize();
+  void Draw(u32* buffer) final;
+  void ReloadConfig();
+  QPaintEngine* paintEngine() const override { return nullptr; }; // Silence Qt.
+
+signals:
+  void RequestDraw(u32* buffer);
+
+private slots:
+  void OnRequestDraw(u32* buffer);
+
+protected:
+  void paintEvent(QPaintEvent* event) override;
+  void resizeEvent(QResizeEvent* event) override;
+
+private:
+  static constexpr int kGBANativeWidth = 240;
+  static constexpr int kGBANativeHeight = 160;
+  static constexpr float kGBANativeAR = static_cast<float>(kGBANativeWidth) / static_cast<float>(kGBANativeHeight);
+
+  void Render();
+  void UpdateViewport();
+
+  u32* buffer = nullptr;
+  QOpenGLContext* context = nullptr;
+  nba::OGLVideoDevice ogl_video_device;
+  std::shared_ptr<QtConfig> config;
+
+  Q_OBJECT
+};
