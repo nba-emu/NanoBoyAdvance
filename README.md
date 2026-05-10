@@ -43,10 +43,10 @@ Prerequisites:
 
 | Distribution | Packages | Package Manager |
 |---|---|---|
-| Arch Linux | `cmake python-jinja python-lxml sdl2 qt6-base` | pacman |
+| Arch Linux | `cmake sdl2 qt6-base` | pacman |
 | Debian & Ubuntu | `cmake libsdl2-dev qt6-base-dev` | apt |
 | | | |
-| macOS | `cmake python@3 sdl2 qt@6` | Homebrew |
+| macOS | `cmake sdl2 qt@6` | Homebrew |
 | | | |
 | FreeBSD | `cmake git sdl2 qt6-base` | pkg |
 
