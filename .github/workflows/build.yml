@@ -3,37 +3,30 @@ name: Build
 on: [push, pull_request, workflow_dispatch]
 
 jobs:
-#  build-win64:
-#    runs-on: windows-latest
-#    steps:
-#      - uses: actions/checkout@v6
-#      - name: Build NanoBoyAdvance
-#        run: |
-#          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-#          cmake --build build -j$(nproc)
-#      - name: Collect artifacts
-#        run: |
-#          mkdir upload
-#          cp -r build/bin/qt upload
-#      - name: Upload artifacts
-#        uses: actions/upload-artifact@v7
-#        with:
-#          name: NanoBoyAdvance-${{ runner.os }}-${{ runner.arch }}
-#          path: upload
-#          if-no-files-found: error
-
-  build-linux:
-    runs-on: [self-hosted, linux, X64]
+  build-win64:
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6
+      - name: Check out the Windows prebuilt libraries repository
+        uses: actions/checkout@v6
+        with:
+          repository: nba-emu/ext-windows-bin
+          path: ext-windows-bin
+          lfs: true
+      - name: Extract all
+        run: |
+          Set-Location -Path ext-windows-bin
+          zstd -d -T0 --rm $(Get-ChildItem *.zst)
+          foreach ($file in Get-ChildItem *.tar) { tar xf $file; Remove-Item $file }
+          Set-Location -Path ..
       - name: Build NanoBoyAdvance
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DWEIRD_STUPID_CI_BULLSHIT_DISABLE_TOML11_PRETTY_PLEASE=ON
-          cmake --build build -j$(nproc)
+          cmake -B build -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang -DCMAKE_BUILD_TYPE=Release "-Dfmt_DIR=ext-windows-bin/fmt-12.1.0/lib/cmake/fmt" "-DQt6_DIR=ext-windows-bin/Qt-6.11.0/lib/cmake/Qt6" "-DSDL2_DIR=ext-windows-bin/SDL2-2.32.10/cmake"
+          cmake --build build -j$([Environment]::ProcessorCount)
       - name: Collect artifacts
         run: |
-          mkdir upload
-          cp -r build/bin/qt/Release/NanoBoyAdvance src/platform/qt/rc/config.toml upload
+          New-Item upload
+          Copy-Item -Recurse @("build/bin/qt/Release/platform", "build/bin/qt/Release/styles", "build/bin/qt/Release/NanoBoyAdvance.exe", "build/bin/qt/Release/Qt6Core.dll", "build/bin/qt/Release/Qt6Gui.dll", "build/bin/qt/Release/Qt6Widgets.dll", "ext-windows-bin/SDL2-2.32.10/lib/SDL2.dll") -Destination upload
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -41,34 +34,53 @@ jobs:
           path: upload
           if-no-files-found: error
 
-  build-macos:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.x'
-      - name: Setup dependencies
-        env:
-          HOMEBREW_NO_ANALYTICS: 1
-        run: |
-          brew install fmt qt@6 sdl2 toml11
-          python3 -m pip install Jinja2
-      - name: Build NanoBoyAdvance
-        run: |
-          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DMACOS_BUILD_APP_BUNDLE=ON
-          cmake --build build -j$(sysctl -n hw.logicalcpu)
-      - name: Create disk image
-        run: |
-          mkdir dmg
-          cp -a build/bin/qt/Release/NanoBoyAdvance.app dmg/NanoBoyAdvance.app
-          codesign -s - --deep -f dmg/NanoBoyAdvance.app
-          ln -s /Applications dmg/Applications
-          hdiutil create -fs HFS+ -volname NanoBoyAdvance -srcfolder dmg -ov -format UDBZ NanoBoyAdvance-arm64.dmg
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: NanoBoyAdvance-${{ runner.os }}-${{ runner.arch }}
-          path: NanoBoyAdvance-arm64.dmg
-          archive: false
-          if-no-files-found: error
+#  build-linux:
+#    runs-on: [self-hosted, linux, X64]
+#    steps:
+#      - uses: actions/checkout@v6
+#      - name: Build NanoBoyAdvance
+#        run: |
+#          cmake -B build -DCMAKE_BUILD_TYPE=Release -DWEIRD_STUPID_CI_BULLSHIT_DISABLE_TOML11_PRETTY_PLEASE=ON
+#          cmake --build build -j$(nproc)
+#      - name: Collect artifacts
+#        run: |
+#          mkdir upload
+#          cp -r build/bin/qt/Release/NanoBoyAdvance src/platform/qt/rc/config.toml upload
+#      - name: Upload artifacts
+#        uses: actions/upload-artifact@v7
+#        with:
+#          name: NanoBoyAdvance-${{ runner.os }}-${{ runner.arch }}
+#          path: upload
+#          if-no-files-found: error
+#
+#  build-macos:
+#    runs-on: macos-latest
+#    steps:
+#      - uses: actions/checkout@v6
+#      - uses: actions/setup-python@v6
+#        with:
+#          python-version: '3.x'
+#      - name: Setup dependencies
+#        env:
+#          HOMEBREW_NO_ANALYTICS: 1
+#        run: |
+#          brew install fmt qt@6 sdl2 toml11
+#          python3 -m pip install Jinja2
+#      - name: Build NanoBoyAdvance
+#        run: |
+#          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DMACOS_BUILD_APP_BUNDLE=ON
+#          cmake --build build -j$(sysctl -n hw.logicalcpu)
+#      - name: Create disk image
+#        run: |
+#          mkdir dmg
+#          cp -a build/bin/qt/Release/NanoBoyAdvance.app dmg/NanoBoyAdvance.app
+#          codesign -s - --deep -f dmg/NanoBoyAdvance.app
+#          ln -s /Applications dmg/Applications
+#          hdiutil create -fs HFS+ -volname NanoBoyAdvance -srcfolder dmg -ov -format UDBZ NanoBoyAdvance-arm64.dmg
+#      - name: Upload artifacts
+#        uses: actions/upload-artifact@v7
+#        with:
+#          name: NanoBoyAdvance-${{ runner.os }}-${{ runner.arch }}
+#          path: NanoBoyAdvance-arm64.dmg
+#          archive: false
+#          if-no-files-found: error
