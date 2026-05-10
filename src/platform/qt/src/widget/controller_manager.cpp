@@ -19,11 +19,11 @@ void ControllerManager::Initialize() {
 
   /* On macOS we may not poll SDL events on a separate thread.
    * So what we do instead is handle device connect/remove events
-   * from a 100 ms Qt timer and updating the input from the emulator thread each frame.
+   * from a 16 ms Qt timer and updating the input from the emulator thread each frame.
    */
 #if defined(__APPLE__)
   timer = new QTimer{this};
-  timer->start(100);
+  timer->start(16);
   connect(timer, &QTimer::timeout, std::bind(&ControllerManager::ProcessEvents, this));
   main_window->emu_thread->SetPerFrameCallback(
     std::bind(&ControllerManager::UpdateKeyState, this));
