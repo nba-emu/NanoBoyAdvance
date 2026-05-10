@@ -1,8 +1,6 @@
 # SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-find_package(fmt 9.1.0 REQUIRED)
-
 set(SOURCES
   src/arm/tablegen/tablegen.cpp
   src/arm/serialization.cpp

@@ -22,7 +22,7 @@ jobs:
       - name: Build NanoBoyAdvance
         run: |
           cmake -B build -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang -DCMAKE_BUILD_TYPE=Release "-Dfmt_DIR=ext-windows-bin/fmt-12.1.0/lib/cmake/fmt" "-DQt6_DIR=ext-windows-bin/Qt-6.11.0/lib/cmake/Qt6" "-DSDL2_DIR=ext-windows-bin/SDL2-2.32.10/cmake"
-          cmake --build build -j$([Environment]::ProcessorCount)
+          cmake --build build -j $([Environment]::ProcessorCount)
       - name: Collect artifacts
         run: |
           New-Item upload
@@ -40,7 +40,7 @@ jobs:
 #      - uses: actions/checkout@v6
 #      - name: Build NanoBoyAdvance
 #        run: |
-#          cmake -B build -DCMAKE_BUILD_TYPE=Release -DWEIRD_STUPID_CI_BULLSHIT_DISABLE_TOML11_PRETTY_PLEASE=ON
+#          cmake -B build -DCMAKE_BUILD_TYPE=Release -DWEIRD_STUPID_CI_BULLSHIT_DISABLE_OLD_JINK_PRETTY_PLEASE=ON
 #          cmake --build build -j$(nproc)
 #      - name: Collect artifacts
 #        run: |
@@ -64,7 +64,7 @@ jobs:
 #        env:
 #          HOMEBREW_NO_ANALYTICS: 1
 #        run: |
-#          brew install fmt qt@6 sdl2 toml11
+#          brew install qt@6 sdl2
 #          python3 -m pip install Jinja2
 #      - name: Build NanoBoyAdvance
 #        run: |
