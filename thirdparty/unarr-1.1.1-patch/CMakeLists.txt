@@ -25,7 +25,7 @@ option(USE_SYSTEM_LZMA "Build with system lzma/xz if possible" ON)
 option(USE_SYSTEM_ZLIB "Build with system zlib if possible" ON)
 option(USE_ZLIB_CRC "Use zlib crc32" OFF)
 
-option(BUILD_SHARED_LIBS "Build ${PROJECT_NAME} as a shared library" ON)
+option(BUILD_SHARED_LIBS "Build ${PROJECT_NAME} as a shared library" OFF)
 
 option(BUILD_INTEGRATION_TESTS
        "Build unarr-test executable and integration tests" OFF)

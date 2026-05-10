@@ -1,7 +1,5 @@
-/*
- * SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
- * SPDX-License-Identifier: GPL-3.0-or-later
- */
+// SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 void ALWAYS_INLINE RenderMode0BG(uint id, uint cycle) {
   const auto& bgcnt = mmio.bgcnt[id];
