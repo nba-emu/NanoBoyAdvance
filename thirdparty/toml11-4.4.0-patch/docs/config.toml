@@ -1,0 +1,34 @@
+baseURL      = "https://toruniina.github.io/toml11"
+title        = "toml11"
+languageCode = "en-us"
+theme        = "hugo-book"
+disablePathToLower = true
+
+[languages]
+[languages.en]
+weight = 1
+languageName = "English"
+contentDir = "content.en"
+
+[languages.ja]
+weight = 2
+languageName = "日本語"
+contentDir = "content.ja"
+
+[menu]
+[[menu.after]]
+name   = "GitHub"
+url    = "https://github.com/ToruNiina/toml11"
+weight = 10
+
+[params]
+BookTheme    = 'auto'
+BookToC      = true
+BookSection  = 'docs'
+BookSearch   = true
+BookComments = false
+BookRepo     = 'https://github.com/ToruNiina/toml11'
+
+[markup.tableOfContents]
+startLevel = 1
+endLevel = 3

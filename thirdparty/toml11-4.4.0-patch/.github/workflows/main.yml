@@ -1,0 +1,213 @@
+name: build
+
+on: [push, pull_request]
+
+jobs:
+  build-linux-gcc:
+    runs-on: Ubuntu-24.04
+    strategy:
+      matrix:
+        compiler: ['g++-14', 'g++-13', 'g++-12', 'g++-11', 'g++-10', 'g++-9']
+        standard: ['11', '14', '17', '20']
+        precompile: ['ON', 'OFF']
+        betafeature: ['ON', 'OFF']
+    steps:
+      - name: Get number of CPU cores
+        uses: SimenB/github-actions-cpu-cores@v2
+        id: cpu-cores
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install
+        run: |
+            sudo apt-get update
+            sudo apt-get install language-pack-fr # test serializer w/ locale
+            sudo apt-get install ${{ matrix.compiler }}
+      - name: Configure
+        run: |
+            cmake -B build/ -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} -DCMAKE_CXX_STANDARD=${{ matrix.standard }} -DTOML11_BUILD_TESTS=ON -DTOML11_PRECOMPILE=${{ matrix.precompile }} -DTOML11_ENABLE_ACCESS_CHECK=${{ matrix.betafeature }}
+      - name: Build
+        run: |
+            cmake --build build/ -j${{ steps.cpu-cores.outputs.count }}
+      - name: Test
+        run: |
+            ctest --output-on-failure --test-dir build/
+
+  build-linux-gcc-sanitizers:
+    runs-on: Ubuntu-24.04
+    strategy:
+      matrix:
+        compiler: ['g++-13']
+        standard: ['11', '14', '17', '20']
+        precompile: ['ON', 'OFF']
+        betafeature: ['ON', 'OFF']
+        asan: ['ON', 'OFF']
+        ubsan: ['ON', 'OFF']
+        exclude:
+          - asan: 'ON'
+            ubsan: 'ON'
+    steps:
+      - name: Get number of CPU cores
+        uses: SimenB/github-actions-cpu-cores@v2
+        id: cpu-cores
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install
+        run: |
+            sudo apt-get update
+            sudo apt-get install language-pack-fr # test serializer w/ locale
+            sudo apt-get install ${{ matrix.compiler }}
+      - name: Configure
+        run: |
+            cmake -B build/ -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} -DCMAKE_CXX_STANDARD=${{ matrix.standard }} -DTOML11_BUILD_TESTS=ON -DTOML11_PRECOMPILE=${{ matrix.precompile }} -DTOML11_ENABLE_ACCESS_CHECK=${{ matrix.betafeature }} -DTOML11_TEST_WITH_ASAN=${{ matrix.asan }} -DTOML11_TEST_WITH_UBSAN=${{ matrix.ubsan }}
+      - name: Build
+        run: |
+            cmake --build build/ -j${{ steps.cpu-cores.outputs.count }}
+      - name: Test
+        run: |
+            ctest --output-on-failure --test-dir build/
+
+  build-linux-clang:
+    runs-on: Ubuntu-24.04
+    strategy:
+      matrix:
+        compiler: ['19', '18', '17', '16']
+        standard: ['11', '14', '17', '20']
+        precompile: ['ON', 'OFF']
+    steps:
+      - name: Get number of CPU cores
+        uses: SimenB/github-actions-cpu-cores@v2
+        id: cpu-cores
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install
+        run: |
+            sudo apt-get update
+            sudo apt-get install language-pack-fr # test serializer w/ locale
+            sudo apt-get install clang-${{ matrix.compiler }}
+      - name: Configure
+        run: |
+            cmake -B build/ -DCMAKE_CXX_COMPILER=clang++-${{ matrix.compiler }} -DCMAKE_CXX_STANDARD=${{ matrix.standard }} -DTOML11_BUILD_TESTS=ON -DTOML11_PRECOMPILE=${{ matrix.precompile }}
+      - name: Build
+        run: |
+            cmake --build build/ -j${{ steps.cpu-cores.outputs.count }}
+      - name: Test
+        run: |
+            ctest --output-on-failure --test-dir build/
+
+  build-linux-old-clang:
+    runs-on: Ubuntu-22.04
+    strategy:
+      matrix:
+        compiler: ['15', '14', '13', '12', '11']
+        standard: ['11', '14', '17', '20']
+        precompile: ['ON', 'OFF']
+        exclude:
+            - {compiler: '14', standard: '20'}
+            - {compiler: '13', standard: '20'}
+            - {compiler: '12', standard: '20'}
+            - {compiler: '11', standard: '20'}
+    steps:
+      - name: Get number of CPU cores
+        uses: SimenB/github-actions-cpu-cores@v2
+        id: cpu-cores
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install
+        run: |
+            sudo apt-get update
+            sudo apt-get install language-pack-fr # test serializer w/ locale
+            sudo apt-get install clang-${{ matrix.compiler }}
+      - name: Configure
+        run: |
+            cmake -B build/ -DCMAKE_CXX_COMPILER=clang++-${{ matrix.compiler }} -DCMAKE_CXX_STANDARD=${{ matrix.standard }} -DTOML11_BUILD_TESTS=ON -DTOML11_PRECOMPILE=${{ matrix.precompile }}
+      - name: Build
+        run: |
+            cmake --build build/ -j${{ steps.cpu-cores.outputs.count }}
+      - name: Test
+        run: |
+            ctest --output-on-failure --test-dir build/
+
+  build-osx-14:
+    runs-on: macos-14
+    strategy:
+      matrix:
+        standard: ['11', '14', '17', '20']
+        precompile: ['ON', 'OFF']
+        betafeature: ['ON', 'OFF']
+    steps:
+      - name: Get number of CPU cores
+        uses: SimenB/github-actions-cpu-cores@v2
+        id: cpu-cores
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Configure
+        run: |
+            cmake -B build/ -DCMAKE_CXX_STANDARD=${{ matrix.standard }} -DTOML11_BUILD_TESTS=ON -DTOML11_PRECOMPILE=${{ matrix.precompile }} -DTOML11_ENABLE_ACCESS_CHECK=${{ matrix.betafeature }}
+      - name: Build
+        run: |
+            cmake --build build/ -j${{ steps.cpu-cores.outputs.count }}
+      - name: Test
+        run: |
+            ctest --output-on-failure --test-dir build/
+
+  build-osx-13:
+    runs-on: macos-13
+    strategy:
+      matrix:
+        standard: ['11', '14', '17', '20']
+        precompile: ['ON', 'OFF']
+    steps:
+      - name: Get number of CPU cores
+        uses: SimenB/github-actions-cpu-cores@v2
+        id: cpu-cores
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Configure
+        run: |
+            cmake -B build/ -DCMAKE_CXX_STANDARD=${{ matrix.standard }} -DTOML11_BUILD_TESTS=ON -DTOML11_PRECOMPILE=${{ matrix.precompile }}
+      - name: Build
+        run: |
+            cmake --build build/ -j${{ steps.cpu-cores.outputs.count }}
+      - name: Test
+        run: |
+            ctest --output-on-failure --test-dir build/
+
+  build-windows-msvc:
+    runs-on: windows-2022
+    strategy:
+      matrix:
+        standard: ['11', '14', '17', '20']
+        config: ['Release', 'Debug']
+        precompile: ['ON', 'OFF']
+        betafeature: ['ON', 'OFF']
+    steps:
+      - name: Get number of CPU cores
+        uses: SimenB/github-actions-cpu-cores@v2
+        id: cpu-cores
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Configure
+        shell: cmd
+        run: |
+            cmake -B build/ -G "NMake Makefiles" -DTOML11_BUILD_TESTS=ON -DCMAKE_CXX_STANDARD=${{ matrix.standard }} -DTOML11_PRECOMPILE=${{ matrix.precompile }} -DTOML11_ENABLE_ACCESS_CHECK=${{ matrix.betafeature }}
+      - name: Build
+        run: |
+            cmake --build ./build --config "${{ matrix.config }}" -j${{ steps.cpu-cores.outputs.count }}
+      - name: Test
+        run: |
+            ctest --build-config "${{ matrix.config }}" --test-dir build/ --output-on-failure

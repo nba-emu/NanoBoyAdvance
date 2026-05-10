@@ -4,103 +4,88 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build-win64:
-    runs-on: windows-latest
-    defaults:
-      run:
-        shell: msys2 {0}
+    runs-on: windows-2025-vs2026
     steps:
       - uses: actions/checkout@v6
-      - uses: msys2/setup-msys2@v2
         with:
-          install: mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-python-jinja mingw-w64-x86_64-python-lxml mingw-w64-x86_64-SDL2 mingw-w64-x86_64-qt6-static mingw-w64-x86_64-dbus mingw-w64-x86_64-double-conversion mingw-w64-x86_64-fontconfig mingw-w64-x86_64-freetype mingw-w64-x86_64-harfbuzz mingw-w64-x86_64-icu mingw-w64-x86_64-libjpeg-turbo mingw-w64-x86_64-libpng mingw-w64-x86_64-libwebp mingw-w64-x86_64-md4c mingw-w64-x86_64-openssl mingw-w64-x86_64-pcre2 mingw-w64-x86_64-sqlite3 mingw-w64-x86_64-vulkan mingw-w64-x86_64-zlib mingw-w64-x86_64-zstd
-      - name: Build NanoBoyAdvance
+          path: NanoBoyAdvance
+      - name: Cache prebuilt libraries
+        id: cache-windows-prebuilts
+        uses: actions/cache@v5
+        with:
+          path: ext-windows-bin
+          key: ${{ runner.os }}-prebuilts
+      - name: Check out prebuilt libraries
+        if: steps.cache-windows-prebuilts.outputs.cache-hit != 'true'
+        uses: actions/checkout@v6
+        with:
+          repository: nba-emu/ext-windows-bin
+          path: ext-windows-bin
+          lfs: true
+      - name: Extract prebuilt libraries
+        if: steps.cache-windows-prebuilts.outputs.cache-hit != 'true'
         run: |
-          cmake \
-            -B build \
-            -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_CXX_FLAGS="-s" \
-            -DPython_EXECUTABLE="$(which python3)" \
-            -DPLATFORM_QT_STATIC=ON \
-            -DUSE_STATIC_SDL=ON \
-            -DQT5_STATIC_DIR="/mingw64/qt6-static"
-          cmake --build build -j$(nproc)
+          Set-Location -Path ext-windows-bin
+          zstd -d -T0 --rm $(Get-ChildItem *.zst)
+          foreach ($file in Get-ChildItem *.tar) { tar xf $file; Remove-Item $file }
+      - name: Build
+        run: |
+          cmake -S $env:GITHUB_WORKSPACE\NanoBoyAdvance -B $env:GITHUB_WORKSPACE\build -G Ninja "-DSDL2_DIR=$env:GITHUB_WORKSPACE\ext-windows-bin\SDL2-2.32.10\cmake" "-DQt6_DIR=$env:GITHUB_WORKSPACE\ext-windows-bin\Qt-6.11.0\lib\cmake\Qt6" -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang -DCMAKE_BUILD_TYPE=Release
+          cmake --build $env:GITHUB_WORKSPACE\build -j $([Environment]::ProcessorCount)
       - name: Collect artifacts
         run: |
-          mkdir upload
-          cp -r build/bin/qt/{NanoBoyAdvance.exe,config.toml} upload
+          New-Item -ItemType Directory upload
+          Copy-Item -Recurse build\bin\qt\Release\platforms,build\bin\qt\Release\styles,build\bin\qt\Release\NanoBoyAdvance.exe,build\bin\qt\Release\Qt6Core.dll,build\bin\qt\Release\Qt6Gui.dll,build\bin\qt\Release\Qt6Widgets.dll,ext-windows-bin\SDL2-2.32.10\lib\SDL2.dll -Destination upload
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: NanoBoyAdvance-win64
+          name: NanoBoyAdvance-${{ runner.os }}-${{ runner.arch }}
           path: upload
           if-no-files-found: error
 
   build-linux:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, X64]
     steps:
       - uses: actions/checkout@v6
-      - name: Setup dependencies
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y python3-jinja2 python3-lxml libsdl2-dev qt6-base-dev ninja-build
-      - name: Build NanoBoyAdvance
+      - name: Build
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build -j$(nproc)
       - name: Collect artifacts
         run: |
           mkdir upload
-          cp -r build/bin/qt/{NanoBoyAdvance,config.toml} upload
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: NanoBoyAdvance-linux
-          path: upload
-          if-no-files-found: error
-
-  build-macos:
-    strategy:
-      matrix:
-        os: [macos-14]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.x'
-      - name: Setup dependencies
-        env:
-          HOMEBREW_NO_ANALYTICS: 1
-        run: |
-          brew install sdl2 qt@6
-          python3 -m pip install Jinja2
-      - name: Build NanoBoyAdvance
-        run: |
-          cmake -B build \
-            -G Ninja \
-            -DCMAKE_C_FLAGS="-Wno-unknown-warning-option" \
-            -DUSE_STATIC_SDL=ON \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)" \
-            -DMACOS_BUILD_APP_BUNDLE=ON \
-            -DMACOS_BUNDLE_QT=ON
-          cmake --build build -j$(_NPROCESSORS_ONLN)
-      - name: Create disk image
-        run: |
-          mkdir dmg
-          cp -a build/bin/qt/NanoBoyAdvance.app dmg/NanoBoyAdvance.app
-          codesign -s - --deep -f dmg/NanoBoyAdvance.app
-          ln -s /Applications dmg/Applications
-          hdiutil create \
-            -fs HFS+ \
-            -volname NanoBoyAdvance \
-            -srcfolder dmg \
-            -ov -format UDBZ \
-            NanoBoyAdvance.dmg
+          cp -r build/bin/qt/Release/NanoBoyAdvance src/platform/qt/rc/config.toml upload
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: NanoBoyAdvance-${{ runner.os }}-${{ runner.arch }}
-          path: NanoBoyAdvance.dmg
+          path: upload
+          if-no-files-found: error
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup dependencies
+        env:
+          HOMEBREW_NO_ANALYTICS: 1
+        run: |
+          brew install qt@6 sdl2
+      - name: Build
+        run: |
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DMACOS_BUILD_APP_BUNDLE=ON
+          cmake --build build -j$(sysctl -n hw.logicalcpu)
+      - name: Create disk image
+        run: |
+          mkdir dmg
+          cp -a build/bin/qt/Release/NanoBoyAdvance.app dmg/NanoBoyAdvance.app
+          codesign -s - --deep -f dmg/NanoBoyAdvance.app
+          ln -s /Applications dmg/Applications
+          hdiutil create -fs HFS+ -volname NanoBoyAdvance -srcfolder dmg -ov -format UDBZ NanoBoyAdvance-arm64.dmg
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: NanoBoyAdvance-${{ runner.os }}-${{ runner.arch }}
+          path: NanoBoyAdvance-arm64.dmg
+          archive: false
           if-no-files-found: error

@@ -1,0 +1,11 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+@UNARR_DEPENDS_BZip2@
+@UNARR_DEPENDS_LibLZMA@
+@UNARR_DEPENDS_ZLIB@
+
+if (NOT TARGET unarr::unarr)
+  include("${CMAKE_CURRENT_LIST_DIR}/unarr-targets.cmake")
+endif()

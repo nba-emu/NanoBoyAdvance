@@ -1,0 +1,6 @@
+add_subdirectory(boost_container)
+add_subdirectory(boost_multiprecision)
+add_subdirectory(parse_file)
+add_subdirectory(reflect)
+add_subdirectory(u8string)
+add_subdirectory(unicode)

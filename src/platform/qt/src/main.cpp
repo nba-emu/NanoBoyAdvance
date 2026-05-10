@@ -1,9 +1,5 @@
-/*
- * Copyright (C) 2026 Mireille Meyer
- *
- * Licensed under GPLv3 or any later version.
- * Refer to the included LICENSE file.
- */
+// SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #include <QApplication>
 #include <QSurfaceFormat>
@@ -14,7 +10,7 @@
 
 #if defined(WIN32)
 #define WIN32_LEAN_AND_MEAN 1
-//#define NOMINMAX 1 // msys defines this already
+#define NOMINMAX 1
 
 #include <Windows.h>
 #endif

@@ -1,0 +1,41 @@
+name: toml-test
+
+on: [push, pull_request]
+
+jobs:
+  toml-test:
+    runs-on: Ubuntu-22.04
+    strategy:
+      matrix:
+        compiler: ['g++-12']
+        standard: ['11', '14', '17', '20']
+        asan: ['ON', 'OFF']
+        ubsan: ['ON', 'OFF']
+        exclude:
+          - asan: 'ON'
+            ubsan: 'ON'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install
+        run: |
+            sudo apt update
+            sudo apt install -y ${{ matrix.compiler }}
+      - name: Setup Go
+        uses: actions/setup-go@v5
+      - name: Configure
+        run: |
+            cmake -B build/ -DBUILD_TESTING=OFF -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} -DCMAKE_CXX_STANDARD=${{ matrix.standard }} -DTOML11_BUILD_TOML_TESTS=ON -DTOML11_TEST_WITH_ASAN=${{ matrix.asan }} -DTOML11_TEST_WITH_UBSAN=${{ matrix.ubsan }}
+      - name: Build
+        run: |
+            cmake --build build/
+      - name: Test
+        run: |
+            go install github.com/toml-lang/toml-test/cmd/toml-test@latest
+            toml-test ./build/tests/toml11_decoder
+            # skipped tests does not conform the latest commit in toml-lang/toml
+            toml-test -toml 1.1.0 ./build/tests/toml11_decoder_v1_1_0 -skip invalid/control/comment-del,invalid/control/comment-lf,invalid/control/comment-us
+            toml-test -encoder ./build/tests/toml11_encoder
+

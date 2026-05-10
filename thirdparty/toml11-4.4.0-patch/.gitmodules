@@ -1,0 +1,9 @@
+[submodule "tests/extlib/doctest"]
+	path = tests/extlib/doctest
+	url = https://github.com/doctest/doctest.git
+[submodule "tests/extlib/json"]
+	path = tests/extlib/json
+	url = https://github.com/nlohmann/json.git
+[submodule "docs/themes/hugo-book"]
+	path = docs/themes/hugo-book
+	url = https://github.com/alex-shpak/hugo-book.git

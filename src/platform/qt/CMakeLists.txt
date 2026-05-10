@@ -1,5 +1,15 @@
+# SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 include(version.cmake)
+
+cmake_dependent_option(MACOS_BUILD_APP_BUNDLE "Package as an app bundle" ON APPLE OFF)
+cmake_dependent_option(WINDOWS_DEPLOY_QT "Deploys Qt and other libraries on Windows" ON WIN32 OFF)
+
+cmake_dependent_option(PORTABLE_MODE "Enable portable mode" OFF MACOS_BUILD_APP_BUNDLE ON)
+
+set(CMAKE_AUTOMOC ON)
+find_package(Qt6 COMPONENTS Core Gui Widgets OpenGL REQUIRED)
 
 set(SOURCES
   src/widget/debugger/ppu/background_viewer_window.cpp
@@ -35,24 +45,12 @@ set(HEADERS
   src/widget/main_window.hpp
   src/widget/screen.hpp
   src/config.hpp
-  version.in.hpp
+  ${CMAKE_CURRENT_BINARY_DIR}/version.hpp
 )
 
 set(RESOURCES
+  # ...
 )
-
-set(CMAKE_AUTOMOC ON)
-
-option(USE_QT6 "Use Qt 6" ON)
-option(PORTABLE_MODE "Portable Mode" ON)
-
-if(USE_QT6)
-  find_package(Qt6 COMPONENTS Core Gui Widgets OpenGL REQUIRED)
-  set(QT_DEPS Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGL)
-else()
-  find_package(Qt5 COMPONENTS Core Gui Widgets OpenGL REQUIRED)
-  set(QT_DEPS Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
-endif()
 
 if(PORTABLE_MODE)
   add_compile_definitions(PORTABLE_MODE)
@@ -60,80 +58,40 @@ endif()
 
 add_executable(NanoBoyAdvance-Qt)
 
+target_compile_definitions(NanoBoyAdvance-Qt PRIVATE $<$<NOT:$<CONFIG:Debug>>:IS_RELEASE>)
+
 # Append application resources (icon and manifest) on Win32.
 if(WIN32)
-  list(APPEND RESOURCES ${CMAKE_CURRENT_BINARY_DIR}/app.rc)
-
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rc/app.rc.in ${CMAKE_CURRENT_BINARY_DIR}/app.rc)
+  list(APPEND RESOURCES ${CMAKE_CURRENT_BINARY_DIR}/app.rc ${CMAKE_CURRENT_LIST_DIR}/rc/app.manifest)
+  target_compile_definitions(NanoBoyAdvance-Qt PRIVATE SDL_MAIN_HANDLED=1)
   set_target_properties(NanoBoyAdvance-Qt PROPERTIES WIN32_EXECUTABLE ON)
 
-  if(MINGW)
-    set(CMAKE_RC_COMPILER_INIT windres)
-    enable_language(RC)
-    set(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> -i <SOURCE> -o <OBJECT>")
+  if(WINDOWS_DEPLOY_QT)
+    get_target_property(WINDEPLOYQT_EXECUTABLE Qt6::windeployqt IMPORTED_LOCATION)
+    add_custom_command(TARGET NanoBoyAdvance-Qt POST_BUILD COMMAND "${WINDEPLOYQT_EXECUTABLE}" NanoBoyAdvance.exe WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG> COMMENT "Deploying Qt...")
   endif()
 endif()
 
-if(APPLE)
-  option(MACOS_BUILD_APP_BUNDLE "Build an app bundle" OFF)
-endif()
-
 if(APPLE AND MACOS_BUILD_APP_BUNDLE)
-  option(MACOS_BUNDLE_QT "Bundle Qt with the app bundle" ON)
-
   set(MACOSX_BUNDLE_BUNDLE_NAME "NanoBoyAdvance")
-  set(MACOSX_BUNDLE_ICON_FILE "NanoBoyAdvance.icns")
-  set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.github.nba-emu.NanoBoyAdvance")
-  set(MACOSX_BUNDLE_INFO_STRING "Game Boy Advance emulator")
   set(MACOSX_BUNDLE_SHORT_VERSION_STRING "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
   set(MACOSX_BUNDLE_LONG_VERSION_STRING "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
   set(MACOSX_BUNDLE_BUNDLE_VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 
   list(APPEND RESOURCES rc/NanoBoyAdvance.icns)
-  set_target_properties(NanoBoyAdvance-Qt PROPERTIES
-    RESOURCE rc/NanoBoyAdvance.icns
-    MACOSX_BUNDLE ON
-    MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/rc/Info.plist.in"
-  )
+  set_target_properties(NanoBoyAdvance-Qt PROPERTIES RESOURCE rc/NanoBoyAdvance.icns MACOSX_BUNDLE ON MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/rc/Info.plist.in")
   target_compile_definitions(NanoBoyAdvance-Qt PRIVATE MACOS_BUILD_APP_BUNDLE)
 
-  if(MACOS_BUNDLE_QT)
-    if(USE_QT6)
-      get_target_property(_qmake_executable Qt6::qmake IMPORTED_LOCATION)
-    else()
-      get_target_property(_qmake_executable Qt5::qmake IMPORTED_LOCATION)
-    endif()
-    get_filename_component(_qt_bin_dir "${_qmake_executable}" DIRECTORY)
-    find_program(MACDEPLOYQT_EXECUTABLE macdeployqt HINTS "${_qt_bin_dir}")
-
-    add_custom_command(TARGET NanoBoyAdvance-Qt POST_BUILD
-      COMMAND "${MACDEPLOYQT_EXECUTABLE}" NanoBoyAdvance.app -always-overwrite
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin/qt
-      COMMENT "Deploying Qt..."
-    )
-  endif()
+  get_target_property(MACDEPLOYQT_EXECUTABLE Qt6::macdeployqt IMPORTED_LOCATION)
+  add_custom_command(TARGET NanoBoyAdvance-Qt POST_BUILD COMMAND "${MACDEPLOYQT_EXECUTABLE}" NanoBoyAdvance.app -always-overwrite WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG> COMMENT "Deploying Qt...")
 endif()
 
 target_sources(NanoBoyAdvance-Qt PRIVATE ${SOURCES} ${HEADERS} ${RESOURCES})
 
-if(WIN32)
-  option(PLATFORM_QT_STATIC "Build statically linked exectuable (Qt)" OFF)
-
-  if(PLATFORM_QT_STATIC)
-    target_link_options(NanoBoyAdvance-Qt PRIVATE -static)
-  endif()
-endif()
-
 set_target_properties(NanoBoyAdvance-Qt PROPERTIES OUTPUT_NAME "NanoBoyAdvance")
-
-target_link_libraries(NanoBoyAdvance-Qt PRIVATE platform-core ${QT_DEPS})
+target_link_libraries(NanoBoyAdvance-Qt PRIVATE platform-core Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGL)
 target_include_directories(NanoBoyAdvance-Qt PRIVATE src ${CMAKE_CURRENT_BINARY_DIR})
-
-file(COPY "rc/config.toml" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
-
-if(WIN32 AND PLATFORM_QT_STATIC)
-  set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
-  target_link_libraries(NanoBoyAdvance-Qt PRIVATE z zstd $<$<CXX_COMPILER_ID:GNU>:gcc stdc++ winpthread>)
-endif()
 
 if(APPLE AND MACOS_BUILD_APP_BUNDLE)
   install(TARGETS NanoBoyAdvance-Qt BUNDLE DESTINATION Applications)

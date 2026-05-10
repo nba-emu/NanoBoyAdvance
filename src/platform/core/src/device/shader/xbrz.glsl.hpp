@@ -1,9 +1,5 @@
-/*
- * Copyright (C) 2026 Mireille Meyer
- *
- * Licensed under GPLv3 or any later version.
- * Refer to the included LICENSE file.
- */
+// SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 // xBRZ upscale filter, ported from this repository:
 // https://github.com/hizzlekizzle/quark-shaders/blob/master/xBRZ-Freescale.shader/xBRZ-Freescale-p0.fs

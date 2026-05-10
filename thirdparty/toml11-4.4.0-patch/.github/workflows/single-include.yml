@@ -1,0 +1,33 @@
+name: gen-singlue-include
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  generate:
+    runs-on: Ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build
+        run: |
+            g++-12 -std=c++20 -O2 tools/expand/main.cpp -o expand
+            ./expand include/toml.hpp > single_include.hpp
+      - name: Check diff
+        id: check-diff
+        continue-on-error: true
+        run: |
+            diff single_include.hpp single_include/toml.hpp
+      - name: Commit and Push
+        if: steps.check-diff.outcome == 'failure'
+        run: |
+            mv single_include.hpp single_include/toml.hpp
+            git config --global user.name  "ToruNiina"
+            git config --global user.email "ToruNiina@users.noreply.github.com"
+            git add single_include/toml.hpp
+            git commit -m "feat [skip ci]: update single_include"
+            git push origin main
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

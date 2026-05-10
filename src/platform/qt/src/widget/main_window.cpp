@@ -1,9 +1,5 @@
-/*
- * Copyright (C) 2026 Mireille Meyer
- *
- * Licensed under GPLv3 or any later version.
- * Refer to the included LICENSE file.
- */
+// SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #include <platform/device/sdl_audio_device.hpp>
 #include <platform/loader/bios.hpp>
@@ -25,17 +21,12 @@
 #include "widget/main_window.hpp"
 #include "version.hpp"
 
-MainWindow::MainWindow(
-  QApplication* app,
-  QWidget* parent
-)   : QMainWindow(parent) {
-  #ifdef RELEASE_BUILD
-    base_window_title = QStringLiteral("NanoBoyAdvance %1.%2.%3")
-      .arg(VERSION_MAJOR).arg(VERSION_MINOR).arg(VERSION_PATCH);
-  #else
-    base_window_title = QStringLiteral("NanoBoyAdvance %1.%2.%3 [%4-%5]")
-      .arg(VERSION_MAJOR).arg(VERSION_MINOR).arg(VERSION_PATCH).arg(VERSION_GIT_BRANCH).arg(VERSION_GIT_HASH);
-  #endif
+MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent) {
+#if IS_RELEASE
+  base_window_title = QStringLiteral("NanoBoyAdvance %1").arg(VERSION_STRING);
+#else
+  base_window_title = QStringLiteral("NanoBoyAdvance %1 [%2-%3]").arg(VERSION_STRING).arg(VERSION_GIT_BRANCH).arg(VERSION_GIT_HASH);
+#endif
 
   setWindowTitle(base_window_title);
   setAcceptDrops(true);
@@ -453,10 +444,11 @@ void MainWindow::CreateHelpMenu() {
     QMessageBox box{ this };
     box.setTextFormat(Qt::RichText);
     box.setText(tr("NanoBoyAdvance is a Game Boy Advance emulator focused on accuracy.<br><br>"
-                   "Copyright © 2026 Mireille Meyer<br><br>"
+                   "Copyright © 2026 The NanoBoyAdvance Authors<br><br>"
                    "NanoBoyAdvance is licensed under the GPLv3 or any later version.<br><br>"
                    "GitHub: <a href=\"https://github.com/nba-emu/NanoBoyAdvance\">https://github.com/nba-emu/NanoBoyAdvance</a><br><br>"
-                   "Game Boy Advance is a registered trademark of Nintendo Co., Ltd."));
+                   "Game Boy Advance is a registered trademark of Nintendo Co., Ltd.<br><br>"
+                   "Version: " VERSION_STRING "-" VERSION_GIT_BRANCH "-" VERSION_GIT_HASH));
     box.setWindowTitle(tr("About NanoBoyAdvance"));
     box.exec();
   });

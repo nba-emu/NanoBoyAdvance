@@ -1,0 +1,2 @@
+"W\u0302" = 1 # in NFC, this key is the same as the following key
+"Ŵ"       = 2 # so it fails.

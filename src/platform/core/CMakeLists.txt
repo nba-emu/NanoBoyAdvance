@@ -1,68 +1,8 @@
-option(USE_STATIC_SDL "Link against static version of SDL library." OFF)
-option(USE_SYSTEM_GLAD "Use system-provided glad library." OFF)
-option(USE_SYSTEM_TOML11 "Use system-provided toml11 library." OFF)
-option(USE_SYSTEM_UNARR "Use system-provided unarr library." OFF)
-
-if(USE_STATIC_SDL)
-  find_package(SDL2 2.0.10
-    REQUIRED COMPONENTS SDL2-static
-    OPTIONAL_COMPONENTS SDL2main
-    CONFIG)
-else()
-  find_package(SDL2 2.0.10
-    REQUIRED COMPONENTS SDL2
-    OPTIONAL_COMPONENTS SDL2main
-    CONFIG)
-endif()
+# SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 find_package(OpenGL REQUIRED)
-
-include(FetchContent)
-
-if(USE_SYSTEM_GLAD)
-  find_package(Glad CONFIG REQUIRED)
-else()
-  FetchContent_Declare(glad
-    GIT_REPOSITORY https://github.com/Dav1dde/glad.git
-    GIT_TAG        658f48e72aee3c6582e80b05ac0f8787a64fe6bb # v2.0.6
-    SOURCE_SUBDIR  cmake
-  )
-  FetchContent_MakeAvailable(glad)
-endif()
-
-glad_add_library(glad_gl_core_33 STATIC
-  LANGUAGE c REPRODUCIBLE API gl:core=3.3 EXTENSIONS NONE
-)
-
-if(USE_SYSTEM_TOML11)
-  find_package(toml11 4.0 REQUIRED)
-else()
-  FetchContent_Declare(toml11
-    GIT_REPOSITORY https://github.com/ToruNiina/toml11.git
-    GIT_TAG        be08ba2be2a964edcdb3d3e3ea8d100abc26f286 # v4.4.0
-  )
-  set(toml11_INSTALL OFF CACHE BOOL "" FORCE)
-  FetchContent_MakeAvailable(toml11)
-endif()
-
-if(USE_SYSTEM_UNARR)
-  find_package(unarr REQUIRED)
-else()
-  set(USE_SYSTEM_BZ2 OFF CACHE BOOL "" FORCE)
-  set(USE_SYSTEM_LZMA OFF CACHE BOOL "" FORCE)
-  set(USE_SYSTEM_ZLIB OFF CACHE BOOL "" FORCE)
-  set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-
-  FetchContent_Declare(unarr
-    GIT_REPOSITORY https://github.com/nba-emu/unarr.git
-    GIT_TAG        839066857b68a78213510f47ccbe72e2945b1b1d # v1.1.1
-  )
-  FetchContent_GetProperties(unarr)
-  if (NOT unarr_POPULATED)
-    FetchContent_MakeAvailable(unarr)
-    add_library(unarr::unarr ALIAS unarr)
-  endif()
-endif()
+find_package(SDL2 REQUIRED COMPONENTS SDL2)
 
 set(SOURCES
   src/device/ogl_video_device.cpp
@@ -104,18 +44,4 @@ set(HEADERS_PUBLIC
 add_library(platform-core STATIC)
 target_sources(platform-core PRIVATE ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
 target_include_directories(platform-core PRIVATE src PUBLIC include)
-
-if(TARGET SDL2::SDL2main)
-  target_link_libraries(platform-core PUBLIC SDL2::SDL2main)
-endif()
-
-if(USE_STATIC_SDL)
-  target_link_libraries(platform-core PUBLIC SDL2::SDL2-static)
-else()
-  target_link_libraries(platform-core PUBLIC SDL2::SDL2)
-endif()
-
-target_link_libraries(platform-core
-  PRIVATE unarr::unarr
-  PUBLIC nba toml11::toml11 OpenGL::GL glad_gl_core_33
-)
+target_link_libraries(platform-core PUBLIC nba toml11::toml11 SDL2::SDL2 OpenGL::GL glad PRIVATE unarr)

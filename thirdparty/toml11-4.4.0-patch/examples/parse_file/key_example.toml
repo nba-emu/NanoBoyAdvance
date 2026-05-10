@@ -1,0 +1,26 @@
+# This is a TOML document.
+# This contains most of the examples in the spec (from https://toml.io).
+
+[keys]
+
+key = "value"
+bare_key = "value"
+bare-key = "value"
+1234 = "value"
+
+"127.0.0.1"          = "value"
+"character encoding" = "value"
+"ʎǝʞ"                = "value"
+'key2'               = "value"
+'quoted "value"'     = "value"
+
+"" = "blank"
+
+fruits.apple.skin = "thin"
+fruits.apple.color = "red"
+
+fruits.orange.skin = "thick"
+fruits.orange.color = "orange"
+
+site."google.com" = true
+3.14159 = "pi"
