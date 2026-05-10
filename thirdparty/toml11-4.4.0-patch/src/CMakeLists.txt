@@ -195,4 +195,4 @@ endif()
 
 add_library(toml11::toml11 ALIAS toml11)
 
-target_compile_options(toml11 INTERFACE -Wno-stringop-overflow)
+target_compile_options(toml11 INTERFACE -Wno-stringop-overflow -Wno-unknown-warning-option)

@@ -33,7 +33,7 @@ jobs:
       - name: Collect artifacts
         run: |
           mkdir upload
-          cp -r build/bin/qt/release/{NanoBoyAdvance,config.toml} upload
+          cp -r build/bin/qt/Release/NanoBoyAdvance src/platform/qt/rc/config.toml upload
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:

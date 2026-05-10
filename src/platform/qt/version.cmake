@@ -16,4 +16,3 @@ if(GIT_FOUND)
 endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.hpp)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rc/app.rc.in ${CMAKE_CURRENT_BINARY_DIR}/app.rc)

@@ -58,14 +58,15 @@ endif()
 
 add_executable(NanoBoyAdvance-Qt)
 
-
 if(IS_RELEASE)
   target_compile_definitions(NanoBoyAdvance-Qt PRIVATE IS_RELEASE)
 endif()
 
 # Append application resources (icon and manifest) on Win32.
 if(WIN32)
-  list(APPEND RESOURCES ${CMAKE_CURRENT_BINARY_DIR}/app.rc.in ${CMAKE_CURRENT_LIST_DIR}/rc/app.manifest)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rc/app.rc.in ${CMAKE_CURRENT_BINARY_DIR}/app.rc)
+  list(APPEND RESOURCES ${CMAKE_CURRENT_BINARY_DIR}/app.rc ${CMAKE_CURRENT_LIST_DIR}/rc/app.manifest)
+  target_compile_definitions(NanoBoyAdvance-Qt PRIVATE SDL_MAIN_HANDLED=1)
   set_target_properties(NanoBoyAdvance-Qt PROPERTIES WIN32_EXECUTABLE ON)
 
   if(WINDOWS_DEPLOY_QT)
@@ -93,8 +94,6 @@ target_sources(NanoBoyAdvance-Qt PRIVATE ${SOURCES} ${HEADERS} ${RESOURCES})
 set_target_properties(NanoBoyAdvance-Qt PROPERTIES OUTPUT_NAME "NanoBoyAdvance")
 target_link_libraries(NanoBoyAdvance-Qt PRIVATE platform-core Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGL)
 target_include_directories(NanoBoyAdvance-Qt PRIVATE src ${CMAKE_CURRENT_BINARY_DIR})
-
-file(COPY "rc/config.toml" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
 if(APPLE AND MACOS_BUILD_APP_BUNDLE)
   install(TARGETS NanoBoyAdvance-Qt BUNDLE DESTINATION Applications)

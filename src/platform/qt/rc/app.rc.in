@@ -1,11 +1,11 @@
 
 #include <windows.h>
 
-IDI_ICON1 ICON DISCARDABLE "${CMAKE_CURRENT_SOURCE_DIR}/rc/app.ico"
+IDI_ICON1 ICON DISCARDABLE "@CMAKE_CURRENT_SOURCE_DIR@/rc/app.ico"
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION ${VERSION_MAJOR},${VERSION_MINOR},${VERSION_PATCH}
-PRODUCTVERSION  ${VERSION_MAJOR},${VERSION_MINOR},${VERSION_PATCH}
+FILEVERSION @VERSION_MAJOR@,@VERSION_MINOR@,@VERSION_PATCH@
+PRODUCTVERSION  @VERSION_MAJOR@,@VERSION_MINOR@,@VERSION_PATCH@
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
@@ -13,12 +13,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "fleroviux"
             VALUE "FileDescription", "Cycle-accurate Nintendo Game Boy Advance emulator"
-            VALUE "FileVersion", "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
+            VALUE "FileVersion", "@VERSION_MAJOR@.@VERSION_MINOR@.@VERSION_PATCH@"
             VALUE "InternalName", "NanoBoyAdvance.exe"
-            VALUE "LegalCopyright", "(c) 2026 Mireille Meyer"
+            VALUE "LegalCopyright", "(c) 2026 The NanoBoyAdvance Authors"
             VALUE "OriginalFilename", "NanoBoyAdvance.exe"
             VALUE "ProductName", "NanoBoyAdvance"
-            VALUE "ProductVersion", "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
+            VALUE "ProductVersion", "@VERSION_MAJOR@.@VERSION_MINOR@.@VERSION_PATCH@"
         END
     END
 

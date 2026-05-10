@@ -25,6 +25,10 @@ endif()
 
 project(NanoBoyAdvance LANGUAGES C CXX)
 
+if(WIN32)
+  add_compile_definitions(_CRT_SECURE_NO_WARNINGS=1)
+endif()
+
 option(PLATFORM_QT "Build the Qt 6 frontend." ON)
 
 add_subdirectory(thirdparty)
