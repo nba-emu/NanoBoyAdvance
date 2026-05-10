@@ -14,7 +14,7 @@ if(NOT DEFINED CMAKE_BUILD_TYPE)
 endif()
 
 if(NOT CMAKE_BUILD_TYPE STREQUAL Debug)
-  set(IS_RELEASE OFF)
+  set(IS_RELEASE ON)
 else()
   set(IS_RELEASE OFF)
 endif()

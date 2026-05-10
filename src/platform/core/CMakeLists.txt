@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 find_package(OpenGL REQUIRED)
-find_package(SDL2 2.0.10 REQUIRED COMPONENTS SDL2)
+find_package(SDL2 REQUIRED COMPONENTS SDL2)
 
 set(SOURCES
   src/device/ogl_video_device.cpp

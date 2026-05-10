@@ -3,10 +3,10 @@
 
 include(version.cmake)
 
-cmake_dependent_option(MACOS_BUILD_APP_BUNDLE "Package as an app bundle" ON APPLE AND IS_RELEASE OFF)
-cmake_dependent_option(WINDOWS_DEPLOY_QT "Deploys Qt and other libraries on Windows" ON WIN32 AND IS_RELEASE OFF)
+cmake_dependent_option(MACOS_BUILD_APP_BUNDLE "Package as an app bundle" ON APPLE OFF)
+cmake_dependent_option(WINDOWS_DEPLOY_QT "Deploys Qt and other libraries on Windows" ON WIN32 OFF)
 
-cmake_dependent_option(PORTABLE_MODE "Enable portable mode" OFF IS_RELEASE ON)
+cmake_dependent_option(PORTABLE_MODE "Enable portable mode" OFF MACOS_BUILD_APP_BUNDLE ON)
 
 set(CMAKE_AUTOMOC ON)
 find_package(Qt6 COMPONENTS Core Gui Widgets OpenGL REQUIRED)
@@ -58,9 +58,7 @@ endif()
 
 add_executable(NanoBoyAdvance-Qt)
 
-if(IS_RELEASE)
-  target_compile_definitions(NanoBoyAdvance-Qt PRIVATE IS_RELEASE)
-endif()
+target_compile_definitions(NanoBoyAdvance-Qt PRIVATE $<$<NOT:$<CONFIG:Debug>>:IS_RELEASE>)
 
 # Append application resources (icon and manifest) on Win32.
 if(WIN32)
