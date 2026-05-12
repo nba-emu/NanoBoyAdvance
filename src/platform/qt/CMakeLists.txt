@@ -62,8 +62,8 @@ target_compile_definitions(NanoBoyAdvance-Qt PRIVATE $<$<NOT:$<CONFIG:Debug>>:IS
 
 # Append application resources (icon and manifest) on Win32.
 if(WIN32)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rc/app.rc.in ${CMAKE_CURRENT_BINARY_DIR}/app.rc)
-  list(APPEND RESOURCES ${CMAKE_CURRENT_BINARY_DIR}/app.rc ${CMAKE_CURRENT_LIST_DIR}/rc/app.manifest)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/Windows/app.rc.in ${CMAKE_CURRENT_BINARY_DIR}/app.rc)
+  list(APPEND RESOURCES ${CMAKE_CURRENT_BINARY_DIR}/app.rc ${CMAKE_CURRENT_LIST_DIR}/resources/Windows/app.manifest)
   target_compile_definitions(NanoBoyAdvance-Qt PRIVATE SDL_MAIN_HANDLED=1)
   set_target_properties(NanoBoyAdvance-Qt PROPERTIES WIN32_EXECUTABLE ON)
 
@@ -79,8 +79,8 @@ if(APPLE AND MACOS_BUILD_APP_BUNDLE)
   set(MACOSX_BUNDLE_LONG_VERSION_STRING "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
   set(MACOSX_BUNDLE_BUNDLE_VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 
-  list(APPEND RESOURCES rc/NanoBoyAdvance.icns)
-  set_target_properties(NanoBoyAdvance-Qt PROPERTIES RESOURCE rc/NanoBoyAdvance.icns MACOSX_BUNDLE ON MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/rc/Info.plist.in")
+  list(APPEND RESOURCES resources/macOS/NanoBoyAdvance.icns)
+  set_target_properties(NanoBoyAdvance-Qt PROPERTIES RESOURCE resources/macOS/NanoBoyAdvance.icns MACOSX_BUNDLE ON MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/resources/macOS/Info.plist.in")
   target_compile_definitions(NanoBoyAdvance-Qt PRIVATE MACOS_BUILD_APP_BUNDLE)
 
   get_target_property(MACDEPLOYQT_EXECUTABLE Qt6::macdeployqt IMPORTED_LOCATION)
@@ -101,6 +101,6 @@ endif()
 
 # Variables LINUX and BSD were introduced only with CMake 3.25.
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-  install(FILES rc/io.nanoboyadvance.NanoBoyAdvance.png DESTINATION share/icons/hicolor/128x128/apps)
-  install(FILES rc/io.nanoboyadvance.NanoBoyAdvance.desktop DESTINATION share/applications)
+  install(FILES resources/Linux/io.nanoboyadvance.NanoBoyAdvance.png DESTINATION share/icons/hicolor/128x128/apps)
+  install(FILES resources/Linux/io.nanoboyadvance.NanoBoyAdvance.desktop DESTINATION share/applications)
 endif()
