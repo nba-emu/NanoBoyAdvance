@@ -69,8 +69,7 @@ void BaseChannel::LoadState(SaveState::APU::IO::PSG const& state) {
   // Sweep
   sweep.active = state.sweep.active;
   sweep.direction = (Sweep::Direction)state.sweep.direction;
-  sweep.initial_freq = state.sweep.initial_freq;
-  sweep.initial_freq = state.sweep.current_freq;
+  sweep.current_freq = state.sweep.current_freq;
   sweep.shadow_freq = state.sweep.shadow_freq;
   sweep.divider = state.sweep.divider;
   sweep.shift = state.sweep.shift;
@@ -97,7 +96,6 @@ void BaseChannel::CopyState(SaveState::APU::IO::PSG& state) {
   // Sweep
   state.sweep.active = sweep.active;
   state.sweep.direction = sweep.direction;
-  state.sweep.initial_freq = sweep.initial_freq;
   state.sweep.current_freq = sweep.current_freq;
   state.sweep.shadow_freq = sweep.shadow_freq;
   state.sweep.divider = sweep.divider;

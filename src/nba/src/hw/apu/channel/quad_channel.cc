@@ -108,13 +108,11 @@ void QuadChannel::Write(int offset, u8 value) {
 
     // Frequency / Control
     case 4: {
-      sweep.initial_freq = (sweep.initial_freq & ~0xFF) | value;
-      sweep.current_freq = sweep.initial_freq;
+      sweep.current_freq = (sweep.current_freq & ~0xFF) | value;
       break;
     }
     case 5: {
-      sweep.initial_freq = (sweep.initial_freq & 0xFF) | (((int)value & 7) << 8);
-      sweep.current_freq = sweep.initial_freq;
+      sweep.current_freq = (sweep.current_freq & 0xFF) | (((int)value & 7) << 8);
       length.enabled = value & 0x40;
 
       if(dac_enable && (value & 0x80)) {

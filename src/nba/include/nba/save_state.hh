@@ -148,7 +148,7 @@ struct SaveState {
         struct Sweep {
           bool active;
           u8 direction;
-          u16 initial_freq;
+          u16 reserved;
           u16 current_freq;
           u16 shadow_freq;
           u8 divider;
