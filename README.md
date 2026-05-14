@@ -12,15 +12,13 @@ It aims to be as accurate as possible, while also offering enhancements such as 
 - Post-processing options (color correction, xBRZ upscaling and LCD ghosting simulation)
 - Save State support (10x save slots available)
 - Game controller support (buttons and axises can be remapped)
-- Loading ROMs from archives (Zip, 7z, Tar and limited RAR[^1] support)
+- Loading ROMs from archives (including ZIP, 7z, tar and more)
 - RTC emulation
 - Solar Sensor emulation (for example: for Boktai - The Sun is in Your Hand)
 - Debug tools: PPU palette, tile, background and sprite viewers
 
-[^1]: RAR 5.0 is currently not supported.
-
 ## Running
-Download a recent [development build](https://nightly.link/nba-emu/NanoBoyAdvance/workflows/build/master) or the last [stable release](https://github.com/nba-emu/NanoBoyAdvance/releases).
+Download the lastest [release](https://github.com/nba-emu/NanoBoyAdvance/releases).
 
 Upon loading a ROM for the first time you will be prompted to assign the Game Boy Advance BIOS file.  
 You can [dump](https://github.com/mgba-emu/bios-dump/tree/master/src) it from a real console (accurate) or use an [unofficial BIOS](https://github.com/Nebuleon/ReGBA/blob/master/bios/gba_bios.bin) (less accurate).
@@ -41,14 +39,14 @@ Prerequisites:
 - SDL 2.0.10 or newer
 - Qt 6.0 or newer
 
-| Distribution | Packages | Package Manager |
-|---|---|---|
-| Arch Linux | `cmake ninja sdl2 qt6-base` | pacman |
-| Debian & Ubuntu | `cmake ninja-build libsdl2-dev qt6-base-dev` | apt |
-| | | |
-| macOS | `cmake ninja sdl2 qt@6` | Homebrew |
-| | | |
-| FreeBSD | `cmake devel/ninja git sdl2 qt6-base` | pkg |
+| Distribution | Packages | Package Manager | Notes |
+|---|---|---|---|
+| Arch Linux | `cmake ninja sdl2 qt6-base` | pacman | |
+| Debian & Ubuntu | `cmake ninja-build libsdl2-dev qt6-base-dev` | apt | |
+| | | | |
+| macOS | `cmake ninja sdl2 qt@6` | Homebrew | |
+| | | | |
+| FreeBSD | `cmake devel/ninja git sdl2 qt6-base` | pkg | Untested on CI. Use at your own risk:tm:. |
 
 You can then configure NanoBoyAdvance:
 ```sh
@@ -70,11 +68,7 @@ Compiling can now be done through `cmake --build build`.
 | DeSmuME, Hyllian | xBRZ upscaling code |
 
 ## Sister Projects
-| Project | Description |
-|---|---|
-| [Panda3DS](https://github.com/wheremyfoodat/panda3DS) | A new HLE Nintendo 3DS emulator |
-| [Dust](https://github.com/Kelpsyberry/dust/) | Nintendo DS emulator for desktop devices and the web |
-| [SkyEmu](https://github.com/skylersaleh/SkyEmu/) | A low-level GameBoy, GameBoy Color, GameBoy Advance and Nintendo DS emulator that is designed to be easy to use, cross platform and accurate |
+Our sister projects include **[SkyEmu](https://github.com/skylersaleh/SkyEmu/)**, **[Dust](https://github.com/Kelpsyberry/dust/)** and **[Panda3DS](https://github.com/wheremyfoodat/panda3DS)**.
 
 ## Copyright
 NanoBoyAdvance is licensed under the terms of the GNU General Public License (GPL) 3.0 or any later version.
