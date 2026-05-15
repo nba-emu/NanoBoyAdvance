@@ -6,8 +6,8 @@
 #include <nba/rom/backup/sram.hh>
 #include <nba/rom/header.hh>
 #include <nba/rom/rom.hh>
-#include <nba/log.hh>
 #include <platform/loader/rom.hh>
+#include <atom/logger/logger.hh>
 #include <unarr.h>
 #include <filesystem>
 #include <fstream>
@@ -59,7 +59,7 @@ auto ROMLoader::Load(
     } else {
       backup_type = GetBackupType(file_data);
       if(backup_type == BackupType::Detect) {
-        Log<Warn>("ROMLoader: failed to detect backup type!");
+        ATOM_WARN("ROMLoader: failed to detect backup type!");
         backup_type = BackupType::SRAM;
       }
     }

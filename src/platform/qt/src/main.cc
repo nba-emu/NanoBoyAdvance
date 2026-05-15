@@ -15,6 +15,10 @@
 #include <Windows.h>
 #endif
 
+#include <atom/logger/sink/console.hh>
+#include <atom/panic.hh>
+#include <QMessageBox>
+
 #include "widget/main_window.hh"
 
 namespace fs = std::filesystem;
@@ -58,6 +62,8 @@ auto create_window(QApplication& app, int argc, char** argv) -> std::unique_ptr<
   return window;
 }
 
+static void atom_panic_handler(const char* file, int line, const char* message);
+
 int main(int argc, char** argv) {
 #if defined(WIN32)
   constexpr auto terminal_output = "CONOUT$";
@@ -77,6 +83,10 @@ int main(int argc, char** argv) {
     }
   }
 #endif
+
+  // Atom setup
+  atom::get_logger().InstallSink(std::make_shared<atom::LoggerConsoleSink>());
+  atom::set_panic_handler(atom_panic_handler);
 
   // On some systems (e.g. macOS) QSurfaceFormat::setDefaultFormat() must be called before constructing a QApplication.
   auto format = QSurfaceFormat{};
@@ -100,4 +110,8 @@ int main(int argc, char** argv) {
   }
 
   return app.exec();
+}
+
+static void atom_panic_handler(const char* file, int line, const char* message) {
+  QMessageBox::critical(nullptr, "Panic", QStringLiteral("%2\n\nFile: %0:%1").arg(file).arg(line).arg(message));
 }

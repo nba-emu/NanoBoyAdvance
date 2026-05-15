@@ -1,0 +1,14 @@
+"""
+atom is a collection of C++ libraries that I have written for use in my personal projects.
+"""
+
+module(
+  name = "atom",
+  version = "1.0.0",
+  bazel_compatibility = [">=7.2.1"],
+  compatibility_level = 1,
+)
+
+bazel_dep(name = "rules_cc", version = "0.2.0")
+bazel_dep(name = "rules_license", version = "1.0.0")
+bazel_dep(name = "fmt", version = "11.2.0")

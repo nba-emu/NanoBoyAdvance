@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include <nba/common/compiler.hh>
-#include <nba/log.hh>
 #include <nba/save_state.hh>
 #include <nba/scheduler.hh>
 #include <array>

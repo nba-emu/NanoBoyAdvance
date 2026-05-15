@@ -4,6 +4,7 @@
 #include <nba/common/crc32.hh>
 #include <nba/rom/gpio/rtc.hh>
 #include <nba/rom/gpio/solar_sensor.hh>
+#include <atom/logger/logger.hh>
 
 #include "core.hh"
 
@@ -44,7 +45,7 @@ void Core::Reset() {
     apu.GetMP2K().ForceReverb() = config->audio.mp2k_hle_force_reverb;
     hle_audio_hook = SearchSoundMainRAM();
     if(hle_audio_hook != 0xFFFFFFFF) {
-      Log<Info>("Core: detected MP2K audio mixer @ 0x{:08X}", hle_audio_hook);
+      ATOM_INFO("Core: detected MP2K audio mixer @ 0x{:08X}", hle_audio_hook);
     }
   } else {
     hle_audio_hook = 0xFFFFFFFF;

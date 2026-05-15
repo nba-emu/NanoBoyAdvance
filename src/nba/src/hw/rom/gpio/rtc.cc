@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include <nba/rom/gpio/rtc.hh>
-#include <nba/log.hh>
+#include <atom/logger/logger.hh>
 #include <cassert>
 #include <ctime>
 
@@ -45,13 +45,13 @@ void RTC::Write(int value) {
   if(GetPortDirection(static_cast<int>(Port::CS)) == PortDirection::Out) {
     port.cs = (value >> static_cast<int>(Port::CS)) & 1;
   } else {
-    Log<Error>("RTC: CS port should be set to 'output' but configured as 'input'.");;
+    ATOM_ERROR("RTC: CS port should be set to 'output' but configured as 'input'.");;
   }
 
   if(GetPortDirection(static_cast<int>(Port::SCK)) == PortDirection::Out) {
     port.sck = (value >> static_cast<int>(Port::SCK)) & 1;
   } else {
-    Log<Error>("RTC: SCK port should be set to 'output' but configured as 'input'.");
+    ATOM_ERROR("RTC: SCK port should be set to 'output' but configured as 'input'.");
   }
 
   if(GetPortDirection(static_cast<int>(Port::SIO)) == PortDirection::Out) {
@@ -114,9 +114,8 @@ void RTC::ReceiveCommandSIO() {
     data = (data << 4) | (data >> 4);
     data = ((data & 0x33) << 2) | ((data & 0xCC) >> 2);
     data = ((data & 0x55) << 1) | ((data & 0xAA) >> 1);
-    Log<Trace>("RTC: received command in REV format, data=0x{0:X}", data);
   } else if((data & 15) != 6) {
-    Log<Error>("RTC: received command in unknown format, data=0x{0:X}", data);
+    ATOM_ERROR("RTC: received command in unknown format, data=0x{0:X}", data);
     return;
   }
 
@@ -219,7 +218,7 @@ void RTC::WriteRegister() {
       control.unknown2 = buffer[0] & 32;
       control.mode_24h = buffer[0] & 64;
       if(control.per_minute_irq) {
-        Log<Error>("RTC: enabled the unimplemented per-minute IRQ.");
+        ATOM_ERROR("RTC: enabled the unimplemented per-minute IRQ.");
       }
       break;
     }
@@ -233,7 +232,7 @@ void RTC::WriteRegister() {
       break;
     }
     default: {
-      Log<Error>("RTC: unhandled register write: {}", (int)reg);
+      ATOM_ERROR("RTC: unhandled register write: {}", (int)reg);
       break;
     }
   }

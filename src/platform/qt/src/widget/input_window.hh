@@ -4,7 +4,6 @@
 #pragma once
 
 #include <nba/core.hh>
-#include <nba/log.hh>
 #include <toml.hpp>
 #include <QApplication>
 #include <QComboBox>

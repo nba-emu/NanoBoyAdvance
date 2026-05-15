@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include <nba/rom/gpio/solar_sensor.hh>
-#include <nba/log.hh>
 
 namespace nba {
 

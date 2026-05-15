@@ -1,9 +1,8 @@
 // SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include <nba/log.hh>
 #include <platform/device/ogl_video_device.hh>
-#include <fmt/format.h>
+#include <atom/logger/logger.hh>
 #include <array>
 #include <memory>
 
@@ -261,7 +260,7 @@ auto OGLVideoDevice::CompileShader(
 
     auto error_log = std::make_unique<GLchar[]>(max_length);
     glGetShaderInfoLog(shader, max_length, &max_length, error_log.get());
-    Log<Error>("OGLVideoDevice: failed to compile shader:\n{0}", error_log.get());
+    ATOM_ERROR("OGLVideoDevice: failed to compile shader:\n{0}", error_log.get());
     return std::make_pair(false, shader);
   }
 

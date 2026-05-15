@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include <nba/log.hh>
 #include <platform/device/sdl_audio_device.hh>
+#include <atom/logger/logger.hh>
 
 namespace nba {
 
@@ -36,7 +36,7 @@ bool SDL2_AudioDevice::Open(void* userdata, Callback callback) {
   auto want = SDL_AudioSpec{};
 
   if(SDL_Init(SDL_INIT_AUDIO) < 0) {
-    Log<Error>("Audio: SDL_Init(SDL_INIT_AUDIO) failed.");
+    ATOM_ERROR("Audio: SDL_Init(SDL_INIT_AUDIO) failed.");
     return false;
   }
 
@@ -59,19 +59,19 @@ bool SDL2_AudioDevice::Open(void* userdata, Callback callback) {
   device = SDL_OpenAudioDevice(NULL, 0, &want, &have, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
 
   if(device == 0) {
-    Log<Error>("Audio: SDL_OpenAudioDevice: failed to open audio: %s\n", SDL_GetError());
+    ATOM_ERROR("Audio: SDL_OpenAudioDevice: failed to open audio: %s\n", SDL_GetError());
     return false;
   }
 
   opened = true;
 
   if(have.format != want.format) {
-    Log<Error>("Audio: SDL_AudioDevice: S16 sample format unavailable.");
+    ATOM_ERROR("Audio: SDL_AudioDevice: S16 sample format unavailable.");
     return false;
   }
 
   if(have.channels != want.channels) {
-    Log<Error>("Audio: SDL_AudioDevice: Stereo output unavailable.");
+    ATOM_ERROR("Audio: SDL_AudioDevice: Stereo output unavailable.");
     return false;
   }
 

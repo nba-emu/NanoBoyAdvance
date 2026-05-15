@@ -3,10 +3,9 @@
 
 #pragma once
 
-#include <nba/common/compiler.hh>
 #include <nba/integer.hh>
-#include <nba/log.hh>
 #include <nba/save_state.hh>
+#include <atom/panic.hh>
 #include <functional>
 #include <limits>
 
@@ -91,7 +90,7 @@ struct Scheduler {
 
     for(int i = 0; i < (int)EventClass::Count; i++) {
       callbacks[i] = [i](u64 user_data) {
-        Assert(false, "Scheduler: unhandled event class: {}", i);
+        ATOM_PANIC("Unhandled event class: {}", i);
       };
     }
 
@@ -152,12 +151,13 @@ struct Scheduler {
     int n = heap_size++;
     int p = Parent(n);
 
-    Assert(
-      heap_size <= kMaxEvents,
-      "Scheduler: reached maximum number of events."
-    );
+    if(heap_size > kMaxEvents) [[unlikely]] {
+      ATOM_PANIC("Reached maximum number of events.");
+    }
 
-    Assert(priority <= 3, "Scheduler: priority must be between 0 and 3.");
+    if(priority > 3) [[unlikely]] {
+      ATOM_PANIC("Priority must be between 0 and 3.")
+    }
 
     auto event = heap[n];
     event->timestamp = GetTimestampNow() + delay;
@@ -290,7 +290,7 @@ private:
   }
 
   void EndOfQueue() {
-    Assert(false, "Scheduler: reached end of the event queue.");
+    ATOM_PANIC("Reached end of the event queue.");
   }
 
   Event* heap[kMaxEvents];

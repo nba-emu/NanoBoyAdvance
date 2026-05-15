@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include <nba/log.hh>
 #include <platform/emulator_thread.hh>
+#include <atom/panic.hh>
 
 namespace nba {
 
@@ -47,7 +47,9 @@ void EmulatorThread::SetPerFrameCallback(std::function<void()> callback) {
 }
 
 void EmulatorThread::Start(std::unique_ptr<CoreBase> core) {
-  Assert(!running, "Started an emulator thread which was already running");
+  if(running) [[unlikely]] {
+    ATOM_PANIC("Started an emulator thread which was already running");
+  }
 
   this->core = std::move(core);
   running = true;
@@ -137,7 +139,7 @@ void EmulatorThread::ProcessMessage(const Message& message) {
       core->SetKeyStatus(message.set_key_status.key, message.set_key_status.pressed);
       break;
     }
-    default: Assert(false, "unhandled message type: {}", (int)message.type);
+    default: ATOM_PANIC("Unhandled message type: {}", (int)message.type);
   }
 }
 
