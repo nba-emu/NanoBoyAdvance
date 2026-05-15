@@ -1,10 +1,11 @@
 // SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include <atom/logger/logger.hh>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
-#include <SDL.h>
 
+#include "controller_manager.hh"
 #include "widget/input_window.hh"
 
 InputWindow::InputWindow(QApplication* app, QWidget* parent, std::shared_ptr<QtConfig> config) : QDialog(parent), config(config) {
@@ -90,7 +91,12 @@ auto InputWindow::CreateJoystickList() -> QLayout* {
 }
 
 void InputWindow::UpdateJoystickList() {
-  auto joystick_count = SDL_NumJoysticks();
+  auto joystick_count = 0;
+  auto ids = SDL_GetJoysticks(&joystick_count);
+  if (ids == nullptr) {
+    ATOM_ERROR("SDL_GetJoysticks failed: \"{}\"", SDL_GetError());
+    return;
+  }
 
   joystick_combo_box->clear();
 
@@ -98,10 +104,16 @@ void InputWindow::UpdateJoystickList() {
   joystick_combo_box->setCurrentIndex(0);
 
   for(int i = 0; i < joystick_count; i++) {
-    auto guid = GetJoystickGUIDStringFromIndex(i);
+    auto id = ids[i];
 
-    joystick_combo_box->addItem(SDL_JoystickNameForIndex(i), QString::fromStdString(guid));
+    auto guid = GetJoystickGUIDStringFromIndex(id);
+    auto name = SDL_GetJoystickNameForID(id);
+    if (name == nullptr) {
+      ATOM_ERROR("SDL_GetJoystickNameForID failed: \"{}\"", SDL_GetError());
+      return;
+    }
 
+    joystick_combo_box->addItem(name, QString::fromStdString(guid));
     if(guid == config->input.controller_guid) {
       joystick_combo_box->setCurrentIndex(joystick_combo_box->count() - 1);
     }

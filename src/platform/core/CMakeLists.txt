@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 find_package(OpenGL REQUIRED)
-find_package(SDL2 REQUIRED COMPONENTS SDL2)
+find_package(SDL3 REQUIRED COMPONENTS SDL3)
 
 set(SOURCES
   src/device/ogl_video_device.cc
@@ -44,4 +44,4 @@ set(HEADERS_PUBLIC
 add_library(platform-core STATIC)
 target_sources(platform-core PRIVATE ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
 target_include_directories(platform-core PRIVATE src PUBLIC include)
-target_link_libraries(platform-core PUBLIC nba toml11::toml11 SDL2::SDL2 OpenGL::GL glad PRIVATE unarr)
+target_link_libraries(platform-core PUBLIC nba toml11::toml11 SDL3::SDL3 OpenGL::GL glad PRIVATE unarr)

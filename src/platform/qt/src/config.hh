@@ -9,14 +9,14 @@
 #include <filesystem>
 #include <platform/config.hh>
 #include <Qt>
-#include <QStandardPaths>
 #include <QDebug>
-#include <SDL.h>
+#include <QStandardPaths>
+#include <SDL3/SDL.h>
 #include <vector>
 
 #ifdef MACOS_BUILD_APP_BUNDLE
-  #include <unistd.h>
-  #include <pwd.h>
+#include <unistd.h>
+#include <pwd.h>
 #endif
 
 namespace fs = std::filesystem;

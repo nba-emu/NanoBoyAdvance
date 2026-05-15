@@ -9,12 +9,12 @@ jobs:
       - uses: actions/checkout@v6
       - name: Build
         run: |
-          cmake -B build -G Ninja "-DCMAKE_MAKE_PROGRAM=C:\Tools\ninja.exe" "-DSDL2_DIR=C:\Libraries\SDL2-2.32.10\cmake" "-DQt6_DIR=C:\Libraries\Qt-6.11.0\lib\cmake\Qt6" -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang -DCMAKE_BUILD_TYPE=Release
+          cmake -B build -G Ninja "-DCMAKE_MAKE_PROGRAM=C:\Tools\ninja.exe" "-DSDL3_DIR=C:\Libraries\SDL3-3.4.8\cmake" "-DQt6_DIR=C:\Libraries\Qt-6.11.0\lib\cmake\Qt6" -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang -DCMAKE_BUILD_TYPE=Release
           cmake --build build -j $([Environment]::ProcessorCount)
       - name: Collect artifacts
         run: |
           New-Item -ItemType Directory upload
-          Copy-Item -Recurse build\bin\qt\Release\platforms,build\bin\qt\Release\styles,build\bin\qt\Release\NanoBoyAdvance.exe,build\bin\qt\Release\Qt6Core.dll,build\bin\qt\Release\Qt6Gui.dll,build\bin\qt\Release\Qt6Widgets.dll,C:\Libraries\SDL2-2.32.10\lib\SDL2.dll -Destination upload
+          Copy-Item -Recurse build\bin\qt\Release\platforms,build\bin\qt\Release\styles,build\bin\qt\Release\NanoBoyAdvance.exe,build\bin\qt\Release\Qt6Core.dll,build\bin\qt\Release\Qt6Gui.dll,build\bin\qt\Release\Qt6Widgets.dll,C:\Libraries\SDL3-3.4.8\lib\SDL3.dll -Destination upload
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -57,7 +57,7 @@ jobs:
         env:
           HOMEBREW_NO_ANALYTICS: 1
         run: |
-          brew install qt@6 sdl2
+          brew install qt@6 sdl3
       - name: Build
         run: |
           cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DMACOS_BUILD_APP_BUNDLE=ON

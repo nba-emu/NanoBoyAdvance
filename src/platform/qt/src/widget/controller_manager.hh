@@ -6,7 +6,7 @@
 #include <nba/core.hh>
 #include <QTimer>
 #include <QWidget>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <atomic>
 #include <mutex>
 #include <thread>
@@ -15,9 +15,11 @@
 
 struct MainWindow;
 
-struct ControllerManager : QWidget {
-  ControllerManager(MainWindow* main_window, std::shared_ptr<QtConfig> config) : main_window(main_window), config(config) { }
+std::string GetJoystickGUIDStringFromIndex(int device_index);
 
+struct ControllerManager : QWidget {
+public:
+  ControllerManager(MainWindow* main_window, std::shared_ptr<QtConfig> config);
  ~ControllerManager();
 
   void Initialize();
@@ -40,15 +42,15 @@ private:
   void ProcessEvents();
   void UpdateKeyState();
 
-  MainWindow* main_window;
-  std::shared_ptr<QtConfig> config;
-  std::thread thread;
-  QTimer* timer = nullptr;
-  std::atomic_bool quitting = false;
-  SDL_Joystick* joystick = nullptr;
-  SDL_JoystickID instance_id;
-  std::mutex lock;
-  bool fast_forward_button_old = false;
+  MainWindow* m_main_window;
+  std::shared_ptr<QtConfig> m_config;
+  std::thread m_thread;
+  QTimer* m_timer = nullptr;
+  std::atomic_bool m_is_quitting = false;
+  SDL_Joystick* m_joystick = nullptr;
+  SDL_JoystickID m_instance_id;
+  std::mutex m_lock;
+  bool m_ff_button_previous_state = false;
 
   Q_OBJECT
 };

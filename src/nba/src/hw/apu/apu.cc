@@ -11,18 +11,11 @@
 
 namespace nba::core {
 
-APU::APU(
-  Scheduler& scheduler,
-  DMA& dma,
-  Bus& bus,
-  std::shared_ptr<Config> config
-)   : mmio(scheduler)
-    , scheduler(scheduler)
-    , dma(dma)
-    , mp2k(bus)
-    , config(config) {
+APU::APU(Scheduler& scheduler, DMA& dma, Bus& bus, std::shared_ptr<Config> config) : mmio(scheduler), scheduler(scheduler), dma(dma), mp2k(bus), config(config) {
   scheduler.Register(Scheduler::EventClass::APU_mixer, this, &APU::StepMixer);
   scheduler.Register(Scheduler::EventClass::APU_sequencer, this, &APU::StepSequencer);
+
+  config->audio_dev->Open(this, (AudioDevice::Callback)AudioCallback);
 }
 
 APU::~APU() {
@@ -48,13 +41,11 @@ void APU::Reset() {
   mp2k.Reset();
   mp2k_read_index = {};
 
-  auto audio_dev = config->audio_dev;
-  audio_dev->Close();
-  audio_dev->Open(this, (AudioDevice::Callback)AudioCallback);
+  config->audio_dev->Reset();
 
   using Interpolation = Config::Audio::Interpolation;
 
-  buffer = std::make_shared<StereoRingBuffer<float>>(audio_dev->GetBlockSize() * 4, true);
+  buffer = std::make_shared<StereoRingBuffer<float>>(8192, true);
 
   switch(config->audio.interpolation) {
     case Interpolation::Cosine:
@@ -74,7 +65,7 @@ void APU::Reset() {
       break;
   }
 
-  resampler->SetSampleRates(mmio.bias.GetSampleRate(), audio_dev->GetSampleRate());
+  resampler->SetSampleRates(mmio.bias.GetSampleRate(), config->audio_dev->GetSampleRate());
 }
 
 void APU::OnTimerOverflow(int timer_id, int times) {

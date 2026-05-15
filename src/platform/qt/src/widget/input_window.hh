@@ -17,23 +17,10 @@
 
 #include "config.hh"
 
-inline auto GetJoystickGUIDStringFromIndex(int device_index) -> std::string {
-  auto guid = SDL_JoystickGetDeviceGUID(device_index);
-  auto guid_string = std::string{};
-
-  guid_string.resize(sizeof(SDL_JoystickGUID) * 2);
-  SDL_JoystickGetGUIDString(guid, guid_string.data(), guid_string.size() + 1);
-  return guid_string;
-}
-
 struct InputWindow : QDialog {
   using Key = nba::Key;
 
-  InputWindow(
-    QApplication* app,
-    QWidget* parent,
-    std::shared_ptr<QtConfig> config
-  );
+  InputWindow(QApplication* app, QWidget* parent, std::shared_ptr<QtConfig> config);
 
   void BindCurrentKeyToJoystickButton(int button);
   void BindCurrentKeyToJoystickAxis(int axis, bool negative);
