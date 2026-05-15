@@ -1,3 +1,8 @@
+(unreleased)
+- APU: Fix writes to frequency for PSG0 and PSG1
+- Platform: Upgrade to SDL 3
+- Platform: Provide AppImage for Linux
+
 v1.8.3
 - Core: Improved fast-forwarding, adding 2x, 4x and 8x options alongside infinite
 - UI: Set default filter to nearest
