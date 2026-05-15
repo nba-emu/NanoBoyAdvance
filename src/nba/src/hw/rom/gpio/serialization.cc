@@ -5,6 +5,8 @@
 #include <nba/rom/gpio/rtc.hh>
 #include <nba/rom/gpio/solar_sensor.hh>
 
+#include <cstring>
+
 namespace nba {
 
 void GPIO::LoadState(SaveState const& state) {
