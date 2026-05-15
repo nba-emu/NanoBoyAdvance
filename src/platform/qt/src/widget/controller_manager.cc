@@ -191,7 +191,6 @@ void ControllerManager::ProcessEvents() {
       case SDL_EVENT_JOYSTICK_AXIS_MOTION: {
         const auto threshold = std::numeric_limits<int16_t>::max() / 2;
 
-        // FIXME: negative axes cause fast-forward to be default-on, positive axes tend not to be able to trigger fast-forward at all
         auto value = event.jaxis.value;
         if(std::abs(value) > threshold) {
           emit OnJoystickAxisMoved(event.jaxis.axis, value < 0);
@@ -251,11 +250,22 @@ void ControllerManager::UpdateKeyState() {
     if(axis != -1) {
       const auto threshold = std::numeric_limits<int16_t>::max() / 2;
 
-      auto actual_axis = axis & ~0x100;
+      auto axis_id = axis & ~0x100;
       bool negative = axis & 0x100;
-      auto value = SDL_GetJoystickAxis(m_joystick, actual_axis);
+      auto value = SDL_GetJoystickAxis(m_joystick, axis_id);
 
-      pressed = pressed || (negative ? (value < -threshold) : (value > threshold));
+      int16_t initial = 0;
+      SDL_GetJoystickAxisInitialState(m_joystick, axis_id, &initial);
+
+      // SDL (both 2 and 3) implement trigger axes differently on different controllers, e.g Xbox controllers have a range from 0 - 32767, but DualSense (and other PlayStation controllers?) use -32768 - 32767, which can be checked through SDL_GetJoystickAxisInitialState.
+      // DualSense controllers and any controllers that implement triggers that way currently break this code if the negative end of the axis is used (the one triggered by pressing).
+      // We deal with this by checking if the value reaches or exceeds 0, meaning it is past the mid point.
+      // Yes, this means the zero point is in the middle of the trigger. The SDL developers really are special
+      if (negative && initial == std::numeric_limits<int16_t>::min()) {
+        pressed = pressed || value >= 0;
+      } else {
+        pressed = pressed || (negative ? (value < -threshold) : (value > threshold));
+      }
     }
 
     if(hat != -1) {
