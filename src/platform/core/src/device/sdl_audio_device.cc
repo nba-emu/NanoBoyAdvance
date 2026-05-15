@@ -6,92 +6,68 @@
 
 namespace nba {
 
-void SDL2_AudioDevice::SetSampleRate(int sample_rate) {
-  want_sample_rate = sample_rate;
-}
+bool SDL3_AudioDevice::Open(void* userdata, Callback callback) {
+  auto specification = SDL_AudioSpec{};
 
-void SDL2_AudioDevice::SetBlockSize(int block_size) {
-  want_block_size = block_size;
-}
-
-void SDL2_AudioDevice::SetPassthrough(SDL_AudioCallback passthrough) {
-  this->passthrough = passthrough;
-}
-
-void SDL2_AudioDevice::InvokeCallback(s16* stream, int byte_len) {
-  if(callback) {
-    callback(callback_userdata, stream, byte_len);
-  }
-}
-
-auto SDL2_AudioDevice::GetSampleRate() -> int {
-  return have.freq;
-}
-
-auto SDL2_AudioDevice::GetBlockSize() -> int {
-  return have.samples;
-}
-
-bool SDL2_AudioDevice::Open(void* userdata, Callback callback) {
-  auto want = SDL_AudioSpec{};
-
-  if(SDL_Init(SDL_INIT_AUDIO) < 0) {
+  if(!SDL_Init(SDL_INIT_AUDIO)) {
     ATOM_ERROR("Audio: SDL_Init(SDL_INIT_AUDIO) failed.");
     return false;
   }
 
-  want.freq = want_sample_rate;
-  want.samples = want_block_size;
-  want.format = AUDIO_S16;
-  want.channels = 2;
+  specification.freq = 48000;
+  specification.format = SDL_AUDIO_S16LE;
+  specification.channels = 2;
 
-  if(passthrough != nullptr) {
-    want.callback = passthrough;
-    want.userdata = this;
-  } else {
-    want.callback = (SDL_AudioCallback)callback;
-    want.userdata = userdata;
-  }
-
-  this->callback = callback;
-  callback_userdata = userdata;
-
-  device = SDL_OpenAudioDevice(NULL, 0, &want, &have, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
-
-  if(device == 0) {
-    ATOM_ERROR("Audio: SDL_OpenAudioDevice: failed to open audio: %s\n", SDL_GetError());
+  m_stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &specification, SDL3_AudioDevice::InternalCallback, this);
+  if(m_stream == 0) {
+    ATOM_ERROR("Audio: SDL_OpenAudioDeviceStream: failed to open audio: %s\n", SDL_GetError());
     return false;
   }
 
-  opened = true;
+  m_callback = callback;
+  m_data.resize(4096); // most systems seem happy with this
+  m_specification = specification;
+  m_userdata = userdata;
 
-  if(have.format != want.format) {
-    ATOM_ERROR("Audio: SDL_AudioDevice: S16 sample format unavailable.");
-    return false;
-  }
+  SDL_ResumeAudioStreamDevice(m_stream);
 
-  if(have.channels != want.channels) {
-    ATOM_ERROR("Audio: SDL_AudioDevice: Stereo output unavailable.");
-    return false;
-  }
-
-  if(!paused) {
-    SDL_PauseAudioDevice(device, 0);
-  }
   return true;
 }
 
-void SDL2_AudioDevice::SetPause(bool value) {
-  if(opened) {
-    SDL_PauseAudioDevice(device, value ? 1 : 0);
+void SDL3_AudioDevice::Close() {
+  if(m_stream == nullptr) {
+    return;
   }
+
+  SDL_DestroyAudioStream(m_stream);
+  m_stream = nullptr;
 }
 
-void SDL2_AudioDevice::Close() {
-  if(opened) {
-    SDL_CloseAudioDevice(device);
-    opened = false;
+
+void SDL3_AudioDevice::Reset() {
+  if(m_stream == nullptr) {
+    return;
   }
+
+  SDL_ClearAudioStream(m_stream);
+}
+
+void SDL3_AudioDevice::SetPause(bool value) {
+  if(m_stream == nullptr) {
+    return;
+  }
+
+  (value ? SDL_PauseAudioStreamDevice : SDL_ResumeAudioStreamDevice)(m_stream);
+}
+
+void SDL3_AudioDevice::InternalCallback(void* userdata, SDL_AudioStream* stream, int additional_amount, int total_amount) {
+  SDL3_AudioDevice* instance = reinterpret_cast<SDL3_AudioDevice*>(userdata);
+  if (total_amount > instance->m_data.size()) {
+    instance->m_data.resize(total_amount);
+  }
+
+  instance->m_callback(instance->m_userdata, instance->m_data.data(), additional_amount);
+  SDL_PutAudioStreamDataNoCopy(stream, instance->m_data.data(), additional_amount, nullptr, nullptr);
 }
 
 } // namespace nba

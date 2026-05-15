@@ -45,7 +45,7 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
   CreateHelpMenu();
 
   config->video_dev = screen;
-  config->audio_dev = std::make_shared<nba::SDL2_AudioDevice>();
+  config->audio_dev = std::make_shared<nba::SDL3_AudioDevice>();
   core = nba::CreateCore(config);
   core_not_thread_safe = core.get();
   emu_thread = std::make_unique<nba::EmulatorThread>();
@@ -53,9 +53,10 @@ MainWindow::MainWindow(QApplication* app, QWidget* parent) : QMainWindow(parent)
 
   app->installEventFilter(this);
 
-  input_window = new InputWindow{app, this, config};
   controller_manager = new ControllerManager(this, config);
   controller_manager->Initialize();
+
+  input_window = new InputWindow(app, this, config); // TODO: remove all controller management from InputWindow and move it to ControllerManager
 
   emu_thread->SetFrameRateCallback([this](float fps) {
     emit UpdateFrameRate(fps);
@@ -489,7 +490,7 @@ void MainWindow::RenderRecentFilesMenu() {
   for(auto& path : config->recent_files) {
     auto action = recent_menu->addAction(QString::fromStdString(path));
 
-    action->setShortcut(Qt::CTRL | (Qt::Key) ((int) Qt::Key_0 + i++));
+    action->setShortcut(Qt::CTRL | (Qt::Key) ((int) Qt::Key_1 + i++));
 
     connect(action, &QAction::triggered, [this, path] {
       LoadROM(QString::fromStdString(path).toStdU16String());
@@ -720,7 +721,6 @@ void MainWindow::ApplyPauseState() {
 void MainWindow::Stop() {
   if(emu_thread->IsRunning()) {
     core = emu_thread->Stop();
-    config->audio_dev->Close();
 
     // Clear the screen.
     screen->Draw(nullptr);

@@ -24,14 +24,8 @@ namespace nba::core {
 void AudioCallback(struct APU* apu, s16* stream, int byte_len);
 
 struct APU {
-  APU(
-    Scheduler& scheduler,
-    DMA& dma,
-    Bus& bus,
-    std::shared_ptr<Config>
-  );
-
- ~APU();
+  APU(Scheduler& scheduler, DMA& dma, Bus& bus, std::shared_ptr<Config> config);
+  ~APU();
 
   void Reset();
   auto GetMP2K() -> MP2K& { return mp2k; }
