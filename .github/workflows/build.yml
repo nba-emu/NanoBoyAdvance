@@ -4,38 +4,17 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build-win64:
-    runs-on: windows-2025-vs2026
+    runs-on: [self-hosted, windows, X64]
     steps:
       - uses: actions/checkout@v6
-        with:
-          path: NanoBoyAdvance
-      - name: Cache prebuilt libraries
-        id: cache-windows-prebuilts
-        uses: actions/cache@v5
-        with:
-          path: ext-windows-bin
-          key: ${{ runner.os }}-prebuilts
-      - name: Check out prebuilt libraries
-        if: steps.cache-windows-prebuilts.outputs.cache-hit != 'true'
-        uses: actions/checkout@v6
-        with:
-          repository: nba-emu/ext-windows-bin
-          path: ext-windows-bin
-          lfs: true
-      - name: Extract prebuilt libraries
-        if: steps.cache-windows-prebuilts.outputs.cache-hit != 'true'
-        run: |
-          Set-Location -Path ext-windows-bin
-          zstd -d -T0 --rm $(Get-ChildItem *.zst)
-          foreach ($file in Get-ChildItem *.tar) { tar xf $file; Remove-Item $file }
       - name: Build
         run: |
-          cmake -S $env:GITHUB_WORKSPACE\NanoBoyAdvance -B $env:GITHUB_WORKSPACE\build -G Ninja "-DSDL2_DIR=$env:GITHUB_WORKSPACE\ext-windows-bin\SDL2-2.32.10\cmake" "-DQt6_DIR=$env:GITHUB_WORKSPACE\ext-windows-bin\Qt-6.11.0\lib\cmake\Qt6" -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang -DCMAKE_BUILD_TYPE=Release
-          cmake --build $env:GITHUB_WORKSPACE\build -j $([Environment]::ProcessorCount)
+          cmake -B build -G Ninja "-DSDL2_DIR=C:\Libraries\SDL2-2.32.10\cmake" "-DQt6_DIR=C:\Libraries\Qt-6.11.0\lib\cmake\Qt6" -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j$([Environment]::ProcessorCount)
       - name: Collect artifacts
         run: |
           New-Item -ItemType Directory upload
-          Copy-Item -Recurse build\bin\qt\Release\platforms,build\bin\qt\Release\styles,build\bin\qt\Release\NanoBoyAdvance.exe,build\bin\qt\Release\Qt6Core.dll,build\bin\qt\Release\Qt6Gui.dll,build\bin\qt\Release\Qt6Widgets.dll,ext-windows-bin\SDL2-2.32.10\lib\SDL2.dll -Destination upload
+          Copy-Item -Recurse build\bin\qt\Release\platforms,build\bin\qt\Release\styles,build\bin\qt\Release\NanoBoyAdvance.exe,build\bin\qt\Release\Qt6Core.dll,build\bin\qt\Release\Qt6Gui.dll,build\bin\qt\Release\Qt6Widgets.dll,C:\Libraries\SDL2-2.32.10\lib\SDL2.dll -Destination upload
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
