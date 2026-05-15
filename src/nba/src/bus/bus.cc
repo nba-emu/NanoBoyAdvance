@@ -3,6 +3,7 @@
 
 #include <nba/common/punning.hh>
 #include <nba/common/scope_exit.hh>
+#include <atom/logger/logger.hh>
 #include <algorithm>
 #include <stdexcept>
 
@@ -289,7 +290,7 @@ auto Bus::ReadBIOS(u32 address) -> u32 {
     address &= ~3;
     memory.latch.bios = read<u32>(memory.bios.data(), address);
   } else {
-    Log<Trace>("Bus: illegal BIOS read: 0x{:08X}", address);
+    ATOM_TRACE("Bus: illegal BIOS read: 0x{:08X}", address);
   }
   return memory.latch.bios >> shift;
 }
@@ -299,7 +300,7 @@ auto Bus::ReadOpenBus(u32 address) -> u32 {
   auto& cpu = hw.cpu;
   auto shift = (address & 3) << 3;
 
-  Log<Trace>("Bus: illegal memory read: 0x{:08X}", address);
+  ATOM_TRACE("Bus: illegal memory read: 0x{:08X}", address);
 
   if(last_access & Dma) {
     return hw.dma.GetOpenBusValue() >> shift;

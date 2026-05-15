@@ -1,9 +1,8 @@
 // SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include <nba/common/compiler.hh>
-#include <nba/log.hh>
 #include <platform/config.hh>
+#include <atom/logger/logger.hh>
 #include <filesystem>
 #include <fstream>
 #include <map>
@@ -21,7 +20,7 @@ void PlatformConfig::Load(std::string const& path) {
   try {
     data = toml::parse(path);
   } catch (std::exception& ex) {
-    Log<Error>("Config: error while parsing TOML configuration: {0}", ex.what());
+    ATOM_ERROR("Config: error while parsing TOML configuration: {0}", ex.what());
     return;
   }
 
@@ -49,7 +48,7 @@ void PlatformConfig::Load(std::string const& path) {
     auto match = save_types.find(save_type);
 
     if(match == save_types.end()) {
-      Log<Warn>("Config: backup type '{0}' is not valid, defaulting to auto-detect.", save_type);
+      ATOM_WARN("Config: backup type '{0}' is not valid, defaulting to auto-detect.", save_type);
       this->cartridge.backup_type = Config::BackupType::Detect;
     } else {
       this->cartridge.backup_type = match->second;
@@ -107,7 +106,7 @@ void PlatformConfig::Load(std::string const& path) {
     auto match = resamplers.find(resampler);
 
     if(match == resamplers.end()) {
-      Log<Warn>("Config: unknown resampling algorithm: {} (defaulting to cosine).", resampler);
+      ATOM_WARN("Config: unknown resampling algorithm: {} (defaulting to cosine).", resampler);
       this->audio.interpolation = Config::Audio::Interpolation::Cosine;
     } else {
       this->audio.interpolation = match->second;
@@ -129,7 +128,7 @@ void PlatformConfig::Save(std::string const& path) {
     try {
       data = toml::parse(path);
     } catch (std::exception& ex) {
-      Log<Error>("Config: error while parsing TOML configuration: {0}", ex.what());
+      ATOM_ERROR("Config: error while parsing TOML configuration: {0}", ex.what());
       return;
     }
   }

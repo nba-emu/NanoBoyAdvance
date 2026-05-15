@@ -1,9 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include <nba/log.hh>
 #include <nba/rom/backup/eeprom.hh>
-#include <cstring>
 
 using namespace nba::core;
 

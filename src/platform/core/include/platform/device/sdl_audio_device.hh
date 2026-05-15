@@ -4,7 +4,6 @@
 #pragma once
 
 #include <nba/device/audio_device.hh>
-#include <nba/log.hh>
 #include <SDL.h>
 
 namespace nba {

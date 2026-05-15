@@ -100,7 +100,6 @@ set(HEADERS_PUBLIC
   include/nba/config.hh
   include/nba/core.hh
   include/nba/integer.hh
-  include/nba/log.hh
   include/nba/save_state.hh
   include/nba/scheduler.hh
 )
@@ -108,7 +107,7 @@ set(HEADERS_PUBLIC
 add_library(nba STATIC)
 target_sources(nba PRIVATE ${HEADERS_PUBLIC} ${HEADERS} ${SOURCES})
 target_include_directories(nba PUBLIC include PRIVATE src)
-target_link_libraries(nba PUBLIC fmt::fmt)
+target_link_libraries(nba PUBLIC atom-common atom-logger)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # Disables some annoying warning about typeids being too evaluated™️

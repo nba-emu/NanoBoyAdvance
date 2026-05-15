@@ -4,7 +4,7 @@
 #include <nba/rom/gpio/gpio.hh>
 #include <nba/rom/gpio/rtc.hh>
 #include <nba/rom/gpio/solar_sensor.hh>
-#include <nba/log.hh>
+
 #include <cstring>
 
 namespace nba {

@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include <nba/log.hh>
+#include <atom/logger/logger.hh>
+#include <atom/panic.hh>
 
 #include "bus/bus.hh"
 #include "hw/apu/hle/mp2k.hh"
@@ -23,11 +24,9 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
   }
 
   if(!engaged) {
-    Assert(
-      sound_info.pcm_samples_per_vblank != 0,
-      "MP2K: samples per V-blank must not be zero."
-    );
-
+    if(sound_info.pcm_samples_per_vblank == 0) [[unlikely]] {
+      ATOM_PANIC("Samples per V-blank must not be zero.");
+    }
     buffer = std::make_unique<float[]>(k_samples_per_frame * k_total_frame_count * 2);
     engaged = true;
   }
@@ -68,7 +67,7 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
 
       const Sampler::WaveInfo* const wave_info = bus.GetHostAddress<Sampler::WaveInfo>(channel.wave_address);
       if(wave_info == nullptr) {
-        Log<Warn>("MP2K: channel[{}] wave address is invalid: 0x{:08X}", channel.wave_address);
+        ATOM_WARN("MP2K: channel[{}] wave address is invalid: 0x{:08X}", channel.wave_address);
         channel.status = 0; // Disable channel, there is no good way to deal with this.
         continue;
       }
@@ -210,7 +209,7 @@ void MP2K::RenderFrame() {
       const u32 wave_data_begin = channel.wave_address + sizeof(Sampler::WaveInfo);
       sampler.wave_data = bus.GetHostAddress<u8>(wave_data_begin, wave_size);
       if(sampler.wave_data == nullptr) {
-        Log<Warn>("MP2K: channel[{}] sample data has bad memory range 0x{:08X} - 0x{:08X}.", i, wave_data_begin, wave_data_begin + wave_size);
+        ATOM_WARN("MP2K: channel[{}] sample data has bad memory range 0x{:08X} - 0x{:08X}.", i, wave_data_begin, wave_data_begin + wave_size);
         channel.status = 0; // Disable channel, there is no good way to deal with this.
         continue;
       }

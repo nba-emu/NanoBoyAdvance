@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include <nba/common/compiler.hh>
+#include <atom/logger/logger.hh>
 
 #include "bus/bus.hh"
 #include "hw/dma/dma.hh"
@@ -409,7 +409,7 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
       scheduler.Cancel(channel.event);
       channel.event = nullptr;
 
-      Log<Warn>("DMA: disabled DMA{0} while it was starting.", channel.id);
+      ATOM_WARN("DMA: disabled DMA{0} while it was starting.", channel.id);
     }
 
     // Handle DMA channel self-disable (via writing to its control register).
@@ -418,7 +418,7 @@ void DMA::OnChannelWritten(Channel& channel, bool enable_old) {
       should_reenter_transfer_loop = true;
       SelectNextDMA();
 
-      Log<Warn>("DMA: DMA{0} cleared its own enable bit.", channel.id);
+      ATOM_WARN("DMA: DMA{0} cleared its own enable bit.", channel.id);
     }
   }
 }
