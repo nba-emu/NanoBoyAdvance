@@ -57,7 +57,7 @@ jobs:
         env:
           HOMEBREW_NO_ANALYTICS: 1
         run: |
-          brew install qt@6 sdl2
+          brew install qt@6 sdl3
       - name: Build
         run: |
           cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DMACOS_BUILD_APP_BUNDLE=ON

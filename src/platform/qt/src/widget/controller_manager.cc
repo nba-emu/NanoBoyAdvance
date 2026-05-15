@@ -40,11 +40,11 @@ void ControllerManager::Initialize() {
   connect(m_timer, &QTimer::timeout, std::bind(&ControllerManager::ProcessEvents, this));
   m_main_window->emu_thread->SetPerFrameCallback(std::bind(&ControllerManager::UpdateKeyState, this));
 #else
-  thread = std::thread{[this]() {
+  m_thread = std::thread{[this]() {
     // SDL_WaitEventTimeout() requires video to be initialised on the same thread.
     SDL_Init(SDL_INIT_VIDEO);
 
-    while(!quitting) {
+    while(!m_is_quitting) {
       SDL_WaitEventTimeout(nullptr, 100);
 
       ProcessEvents();

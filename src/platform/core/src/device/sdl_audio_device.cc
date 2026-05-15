@@ -67,7 +67,7 @@ void SDL3_AudioDevice::InternalCallback(void* userdata, SDL_AudioStream* stream,
   }
 
   instance->m_callback(instance->m_userdata, instance->m_data.data(), additional_amount);
-  SDL_PutAudioStreamDataNoCopy(stream, instance->m_data.data(), additional_amount, nullptr, nullptr);
+  SDL_PutAudioStreamData(stream, instance->m_data.data(), additional_amount);
 }
 
 } // namespace nba
