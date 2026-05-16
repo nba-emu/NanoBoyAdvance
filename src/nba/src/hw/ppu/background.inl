@@ -6,7 +6,7 @@ void ALWAYS_INLINE RenderMode0BG(uint id, uint cycle) {
 
   auto& text = bg.text[id];
 
-  // @todo: figure out if there is more logical way to control this condition
+  // TODO(Mireille): figure out if there is more logical way to control this condition
   if(text.fetches > 0 && text.piso.remaining == 0) {
     u16 data = FetchVRAM_BG<u16>(cycle, text.tile.address);
 
@@ -31,20 +31,19 @@ void ALWAYS_INLINE RenderMode0BG(uint id, uint cycle) {
   uint index;
 
   const int screen_x = (cycle >> 2) - 9;
+  const int pixel_shift = ((4 - text.piso.remaining) & 3) * 4; // TODO(Mireille): make this more readable. How would HW do this?
 
   if(bgcnt.full_palette) {
-    index = text.piso.data & 0xFFU;
+    index = (text.piso.data >> pixel_shift) & 0xFFU;
 
-    text.piso.data >>= 8;
     text.piso.remaining -= 2;
   } else {
-    index = text.piso.data & 0x0FU;
+    index = (text.piso.data >> pixel_shift) & 0x0FU;
 
     if(index != 0U) {
       index |= text.tile.palette << 4;
     }
 
-    text.piso.data >>= 4;
     text.piso.remaining--;
   }
 
@@ -56,7 +55,7 @@ void ALWAYS_INLINE RenderMode0BG(uint id, uint cycle) {
   const uint bghofs_div_8 = bghofs >> 3;
   const uint bghofs_mod_8 = bghofs & 7U;
 
-  // @todo: find a better name for this?
+  // TODO(Mireille): find a better name for this?
   const uint step = (cycle >> 2) + bghofs_mod_8;
 
   if(cycle < 1007U && step >= 8 && (step & 7) == 0) {
@@ -102,7 +101,7 @@ void ALWAYS_INLINE RenderMode0BG(uint id, uint cycle) {
 
       const uint real_tile_y = flip_y ? (7 - tile_y) : tile_y;
 
-      // @todo: research the low-level details of the address calculation.
+      // TODO(Mireille): research the low-level details of the address calculation.
       if(bgcnt.full_palette) {
         text.tile.address = tile_base + (number << 6) + (real_tile_y << 3);
 
@@ -141,7 +140,7 @@ void ALWAYS_INLINE RenderMode2BG(uint id, uint cycle) {
     s32 x = bg.affine[id].x >> 8;
     s32 y = bg.affine[id].y >> 8;
 
-    // @todo: figure out in what cycle this happens.
+    // TODO(Mireille): figure out in what cycle this happens.
     bg.affine[id].x += mmio.bgpa[id];
     bg.affine[id].y += mmio.bgpc[id];
 
@@ -167,7 +166,7 @@ void ALWAYS_INLINE RenderMode2BG(uint id, uint cycle) {
 
     const uint x = (cycle - 32U) >> 2;
 
-    // @todo: make the buffer larger and remove the condition.
+    // TODO(Mireille): make the buffer larger and remove the condition.
     if(x < 240) {
       bg.buffer[x][2 + id] = index;
     }
@@ -185,7 +184,7 @@ void ALWAYS_INLINE RenderMode3BG(uint cycle) {
   const s32 y = bg.affine[0].y >> 8;
 
   /**
-   * @todo: confirm that the address actually is 17-bit.
+   * TODO(Mireille): confirm that the address actually is 17-bit.
    * This should matter only for open bus shenanigans when switching BG mode mid-scanline.
    */
   const u32 address = ((u32)y * 240U + (u32)x) * 2U;
@@ -216,7 +215,7 @@ void ALWAYS_INLINE RenderMode4BG(uint cycle) {
   const s32 y = bg.affine[0].y >> 8;
 
   /**
-   * @todo: confirm that the address actually is 17-bit.
+   * TODO(Mireille): confirm that the address actually is 17-bit.
    * This should matter only for open bus shenanigans when switching BG mode mid-scanline.
    */
   const u32 address = mmio.dispcnt.frame * 0xA000U + (u32)y * 240U + (u32)x;
@@ -247,7 +246,7 @@ void ALWAYS_INLINE RenderMode5BG(uint cycle) {
   const s32 y = bg.affine[0].y >> 8;
 
   /**
-   * @todo: confirm that the address actually is 17-bit.
+   * TODO(Mireille): confirm that the address actually is 17-bit.
    * This should matter only for open bus shenanigans when switching BG mode mid-scanline.
    */
   const u32 address = mmio.dispcnt.frame * 0xA000U + ((u32)y * 160U + (u32)x) * 2U;
