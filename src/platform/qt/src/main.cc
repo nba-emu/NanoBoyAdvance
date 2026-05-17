@@ -84,6 +84,15 @@ int main(int argc, char** argv) {
   }
 #endif
 
+#if defined(linux)
+  // Fix for https://github.com/nba-emu/NanoBoyAdvance/issues/425
+  // Qt 6, Wayland and EGL currently don't seem to get along very well, causing QOpenGLContext::create to fail with EGL_BAD_MATCH (3009) or EGL_BAD_SURFACE (300d).
+  // We're unfortunately not the only emulator plagued by this (https://github.com/mgba-emu/mgba/issues/3736, https://github.com/melonDS-emu/melonDS/issues/2643).
+  // To alleviate this problem, we simply run with Xcb instead of Wayland, which is also what Valve's SteamOS does, and their contractors at least get paid to know stuff. I sure don't!
+  // This should be removed once the problem is solved.
+  setenv("QT_QPA_PLATFORM", "xcb", 0);
+#endif
+
   // Atom setup
   atom::get_logger().InstallSink(std::make_shared<atom::LoggerConsoleSink>());
   atom::set_panic_handler(atom_panic_handler);
