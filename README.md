@@ -64,7 +64,7 @@ Compiling can now be done through `cmake --build build`.
 | [endrift](https://github.com/endrift) | Hardware [research](http://mgba.io/tag/emulation/) and her excellent [test suite](https://github.com/mgba-emu/suite) |
 | [destoer](https://github.com/destoer), [Noumi](https://github.com/noumidev), [Sky](https://github.com/skylersaleh) and [Zayd](https://github.com/zaydlang) | Hardware research and tests, countless discussions and being good friends |
 | Pokefan531, hunterk | The default GBA color correction algorithm |
-| Talarubi, Near | [higan's GBA color correction algorithm](https://near.sh/articles/video/color-emulation) |
+| Talarubi, Near | [higan's GBA color correction algorithm](https://archive.ares-emu.net/near.sh/articles/video/color-emulation.html) |
 | DeSmuME, Hyllian | xBRZ upscaling code |
 
 ## Sister Projects
