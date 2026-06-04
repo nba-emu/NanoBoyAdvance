@@ -26,12 +26,22 @@ if(WIN32)
 endif()
 
 option(PLATFORM_QT "Build the Qt 6 frontend." ON)
+option(PLATFORM_DREAMCAST "Build the Dreamcast (KallistiOS) frontend." OFF)
+
+if(PLATFORM_DREAMCAST)
+  set(PLATFORM_QT OFF)
+  add_compile_definitions(PLATFORM_DREAMCAST=1)
+endif()
 
 add_subdirectory(thirdparty)
 
 add_subdirectory(src/nba)
 add_subdirectory(src/platform/core)
 
-if (PLATFORM_QT)
+if(PLATFORM_QT)
   add_subdirectory(src/platform/qt ${CMAKE_CURRENT_BINARY_DIR}/bin/qt/)
+endif()
+
+if(PLATFORM_DREAMCAST)
+  add_subdirectory(src/platform/dreamcast ${CMAKE_CURRENT_BINARY_DIR}/bin/dreamcast/)
 endif()
