@@ -17,10 +17,26 @@ It aims to be as accurate as possible, while also offering enhancements such as 
 - Solar Sensor emulation (for example: for Boktai - The Sun is in Your Hand)
 - Debug tools: PPU palette, tile, background and sprite viewers
 
-## Running
-Download the lastest [release](https://github.com/nba-emu/NanoBoyAdvance/releases).
+## Project Scope
+This fork of NanoBoyAdvance is a **Dreamcast-only port**. 
+- **In Scope:** Retail Dreamcast hardware, common ODE/CD workflows, KallistiOS toolchain builds.
+- **Out of Scope:** Desktop builds (Windows, Linux, macOS) or other platforms.
 
-Upon loading a ROM for the first time you will be prompted to assign the Game Boy Advance BIOS file.  
+### Feature Matrix (Dreamcast Port)
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Core Emulation | Working | Accurate CPU/PPU emulation |
+| Audio Output | Working | snd_stream output; MP2K HLE disabled |
+| Video Output | Working | PVR framebuffer |
+| Input | Working | Maple controller |
+| Save Files | Partial | Filesystem only, no VMU support yet |
+| Save States | Missing | UI not implemented |
+| ROM Browser | Missing | Hardcoded to `/cd/rom.gba` currently |
+
+## Running & Compiling
+For instructions on how to build and run this port on the Sega Dreamcast, please see **[DREAMCAST.md](DREAMCAST.md)**.
+
+Upon loading a ROM for the first time, the emulator requires a Game Boy Advance BIOS file.  
 You can [dump](https://github.com/mgba-emu/bios-dump/tree/master/src) it from a real console (accurate) or use an [unofficial BIOS](https://github.com/Nebuleon/ReGBA/blob/master/bios/gba_bios.bin) (less accurate).
 
 ## Accuracy
@@ -33,29 +49,8 @@ A lot of research and attention to detail has been put into developing this core
 - Very high compatibility, including games that require emulation of peculiar hardware edge-cases
 
 ## Compiling
-Prerequisites:
-- Clang or GCC with C++20 support
-- CMake 3.24 or newer (Recommended generator is Ninja)
-- SDL 3.0.0 or newer
-- Qt 6.0 or newer
 
-| Distribution | Packages | Package Manager | Notes |
-|---|---|---|---|
-| Arch Linux | `cmake ninja sdl3 qt6-base` | pacman | |
-| Debian & Ubuntu | `cmake ninja-build libsdl3-dev qt6-base-dev` | apt | |
-| | | | |
-| macOS | `cmake ninja sdl3 qt@6` | Homebrew | |
-| | | | |
-| FreeBSD | `cmake devel/ninja git sdl3 qt6-base` | pkg | Untested on CI. Use at your own risk:tm:. |
-
-You can then configure NanoBoyAdvance:
-```sh
-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-```
-
-For Windows, append `-DQt6_DIR=path\to\Qt6-config.cmake` and `-DSDL3_DIR=path\to\SDL3-config.cmake`, with the correct paths given.
-
-Compiling can now be done through `cmake --build build`.
+*Please note: Desktop builds (Linux, macOS, Windows) are no longer supported in this fork.*
 
 ## Acknowledgements
 | Individual(s) | Their impact |
