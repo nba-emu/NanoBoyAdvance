@@ -1,12 +1,7 @@
 # SPDX-FileCopyrightText: Copyright 2026 The NanoBoyAdvance Authors
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-find_package(OpenGL REQUIRED)
-find_package(SDL3 REQUIRED COMPONENTS SDL3)
-
 set(SOURCES
-  src/device/ogl_video_device.cc
-  src/device/sdl_audio_device.cc
   src/loader/bios.cc
   src/loader/rom.cc
   src/loader/save_state.cc
@@ -17,20 +12,7 @@ set(SOURCES
   src/game_db.cc
 )
 
-set(HEADERS
-  src/device/shader/color_higan.glsl.hh
-  src/device/shader/color_agb.glsl.hh
-  src/device/shader/common.glsl.hh
-  src/device/shader/lcd_ghosting.glsl.hh
-  src/device/shader/lcd1x.glsl.hh
-  src/device/shader/output.glsl.hh
-  src/device/shader/sharp_bilinear.glsl.hh
-  src/device/shader/xbrz.glsl.hh
-)
-
 set(HEADERS_PUBLIC
-  include/platform/device/ogl_video_device.hh
-  include/platform/device/sdl_audio_device.hh
   include/platform/loader/bios.hh
   include/platform/loader/rom.hh
   include/platform/loader/save_state.hh
@@ -41,7 +23,40 @@ set(HEADERS_PUBLIC
   include/platform/game_db.hh
 )
 
+set(HEADERS)
+
+if(NOT PLATFORM_DREAMCAST)
+  find_package(OpenGL REQUIRED)
+  find_package(SDL3 REQUIRED COMPONENTS SDL3)
+
+  list(APPEND SOURCES
+    src/device/ogl_video_device.cc
+    src/device/sdl_audio_device.cc
+  )
+
+  list(APPEND HEADERS
+    src/device/shader/color_higan.glsl.hh
+    src/device/shader/color_agb.glsl.hh
+    src/device/shader/common.glsl.hh
+    src/device/shader/lcd_ghosting.glsl.hh
+    src/device/shader/lcd1x.glsl.hh
+    src/device/shader/output.glsl.hh
+    src/device/shader/sharp_bilinear.glsl.hh
+    src/device/shader/xbrz.glsl.hh
+  )
+
+  list(APPEND HEADERS_PUBLIC
+    include/platform/device/ogl_video_device.hh
+    include/platform/device/sdl_audio_device.hh
+  )
+endif()
+
 add_library(platform-core STATIC)
 target_sources(platform-core PRIVATE ${SOURCES} ${HEADERS} ${HEADERS_PUBLIC})
 target_include_directories(platform-core PRIVATE src PUBLIC include)
-target_link_libraries(platform-core PUBLIC nba toml11::toml11 SDL3::SDL3 OpenGL::GL glad PRIVATE unarr)
+
+if(PLATFORM_DREAMCAST)
+  target_link_libraries(platform-core PUBLIC nba toml11::toml11 PRIVATE unarr)
+else()
+  target_link_libraries(platform-core PUBLIC nba toml11::toml11 SDL3::SDL3 OpenGL::GL glad PRIVATE unarr)
+endif()
