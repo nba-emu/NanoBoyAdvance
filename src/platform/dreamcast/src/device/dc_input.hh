@@ -17,9 +17,18 @@
 namespace nba {
 
 // Maps Dreamcast controller buttons to GBA Key enums.
-// Call PollInput() each frame to update key states on the core.
+// PollInput() returns true once the exit combo has been held long enough.
 struct DCInput {
-  void PollInput(CoreBase& core);
+  // ~25% of the analog stick range (±127).
+  static constexpr int kAnalogDeadZone = 32;
+  static constexpr int kExitDebounceFrames = 60;
+
+  auto PollInput(CoreBase& core) -> bool;
+
+private:
+  static void ClearKeys(CoreBase& core);
+
+  int exit_combo_frames_ = 0;
 };
 
 } // namespace nba

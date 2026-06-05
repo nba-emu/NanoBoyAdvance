@@ -51,6 +51,11 @@ auto ROMLoader::Load(
     return Result::BadImage;
   }
 
+  auto* header = reinterpret_cast<Header*>(file_data.data());
+  if(header->fixed_96h != 0x96) {
+    return Result::BadImage;
+  }
+
   auto game_info = GetGameInfo(file_data);
 
   if(backup_type == BackupType::Detect) {
@@ -126,6 +131,9 @@ auto ROMLoader::ReadFile(fs::path const& path, std::vector<u8>& file_data) -> Re
 
   file_data.resize(file_size);
   file_stream.read((char*)file_data.data(), file_size);
+  if(file_stream.gcount() != static_cast<std::streamsize>(file_size)) {
+    return Result::CannotOpenFile;
+  }
   return Result::Success;
 }
 
@@ -224,6 +232,39 @@ auto ROMLoader::CreateBackup(
   }
 
   return {};
+}
+
+auto ROMLoader::Validate(fs::path const& path) -> Result {
+  auto file_data = std::vector<u8>{};
+  auto read_status = ReadFile(path, file_data);
+
+  if(read_status != Result::Success) {
+    return read_status;
+  }
+
+  auto size = file_data.size();
+
+  if(size < sizeof(Header) || size > kMaxROMSize) {
+    return Result::BadImage;
+  }
+
+  auto* header = reinterpret_cast<Header*>(file_data.data());
+  if(header->fixed_96h != 0x96) {
+    return Result::BadImage;
+  }
+
+  return Result::Success;
+}
+
+auto ROMLoader::Describe(Result result) -> const char* {
+  switch(result) {
+    case Result::CannotFindFile: return "ROM file not found";
+    case Result::CannotOpenFile: return "ROM file could not be read";
+    case Result::BadImage: return "ROM image is invalid";
+    case Result::Success: return "Success";
+  }
+
+  return "Unknown ROM loader error";
 }
 
 auto ROMLoader::RoundSizeToPowerOfTwo(size_t size) -> size_t {

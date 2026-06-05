@@ -22,6 +22,9 @@ struct BIOSLoader {
     std::unique_ptr<CoreBase>& core,
     fs::path const& path
   ) -> Result;
+
+  static auto Validate(fs::path const& path) -> Result;
+  static auto Describe(Result result) -> const char*;
 };
 
 } // namespace nba

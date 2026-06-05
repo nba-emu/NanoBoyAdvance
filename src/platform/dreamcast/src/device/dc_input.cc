@@ -5,13 +5,27 @@
 
 namespace nba {
 
-void DCInput::PollInput(CoreBase& core) {
+void DCInput::ClearKeys(CoreBase& core) {
+  for(int i = 0; i < static_cast<int>(Key::Count); i++) {
+    core.SetKeyStatus(static_cast<Key>(i), false);
+  }
+}
+
+auto DCInput::PollInput(CoreBase& core) -> bool {
 #if NBA_DC_HAS_KOS
   maple_device_t* cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
-  if(!cont) return;
+  if(!cont) {
+    ClearKeys(core);
+    exit_combo_frames_ = 0;
+    return false;
+  }
 
   cont_state_t* state = (cont_state_t*)maple_dev_status(cont);
-  if(!state) return;
+  if(!state) {
+    ClearKeys(core);
+    exit_combo_frames_ = 0;
+    return false;
+  }
 
   // Map Dreamcast buttons to GBA keys.
   // DC A → GBA A, DC B → GBA B, DC X → GBA L, DC Y → GBA R
@@ -22,28 +36,29 @@ void DCInput::PollInput(CoreBase& core) {
   core.SetKeyStatus(Key::L,      state->buttons & CONT_X);
   core.SetKeyStatus(Key::R,      state->buttons & CONT_Y);
   core.SetKeyStatus(Key::Start,  state->buttons & CONT_START);
-  core.SetKeyStatus(Key::Select, state->buttons & CONT_D); // DC D button as Select
-  core.SetKeyStatus(Key::Up,     state->buttons & CONT_DPAD_UP);
-  core.SetKeyStatus(Key::Down,   state->buttons & CONT_DPAD_DOWN);
-  core.SetKeyStatus(Key::Left,   state->buttons & CONT_DPAD_LEFT);
-  core.SetKeyStatus(Key::Right,  state->buttons & CONT_DPAD_RIGHT);
+  core.SetKeyStatus(Key::Select, state->buttons & CONT_D);
 
-  // Analog stick → D-pad fallback (dead zone of 32)
-  constexpr int kDeadZone = 32;
+  bool left  = (state->buttons & CONT_DPAD_LEFT)  || (state->joyx < -kAnalogDeadZone);
+  bool right = (state->buttons & CONT_DPAD_RIGHT) || (state->joyx >  kAnalogDeadZone);
+  bool up    = (state->buttons & CONT_DPAD_UP)    || (state->joyy < -kAnalogDeadZone);
+  bool down  = (state->buttons & CONT_DPAD_DOWN)  || (state->joyy >  kAnalogDeadZone);
 
-  if(state->joyx < -kDeadZone) {
-    core.SetKeyStatus(Key::Left, true);
-  } else if(state->joyx > kDeadZone) {
-    core.SetKeyStatus(Key::Right, true);
+  core.SetKeyStatus(Key::Left,  left && !right);
+  core.SetKeyStatus(Key::Right, right && !left);
+  core.SetKeyStatus(Key::Up,    up && !down);
+  core.SetKeyStatus(Key::Down,  down && !up);
+
+  const uint32 exit_combo = CONT_START | CONT_A | CONT_B | CONT_X | CONT_Y;
+  if((state->buttons & exit_combo) == exit_combo) {
+    exit_combo_frames_++;
+  } else {
+    exit_combo_frames_ = 0;
   }
 
-  if(state->joyy < -kDeadZone) {
-    core.SetKeyStatus(Key::Up, true);
-  } else if(state->joyy > kDeadZone) {
-    core.SetKeyStatus(Key::Down, true);
-  }
+  return exit_combo_frames_ >= kExitDebounceFrames;
 #else
   (void)core;
+  return false;
 #endif
 }
 
