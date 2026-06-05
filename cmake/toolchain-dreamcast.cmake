@@ -29,10 +29,10 @@ set(KOS_ARCH    "dreamcast")
 set(KOS_SUBARCH "pristine")
 
 # Cross-compiler
-set(CMAKE_C_COMPILER   "${KOS_CC_BASE}/bin/sh-elf-gcc")
-set(CMAKE_CXX_COMPILER "${KOS_CC_BASE}/bin/sh-elf-g++")
-set(CMAKE_AR           "${KOS_CC_BASE}/bin/sh-elf-ar" CACHE FILEPATH "Archiver")
-set(CMAKE_RANLIB       "${KOS_CC_BASE}/bin/sh-elf-ranlib" CACHE FILEPATH "Ranlib")
+set(CMAKE_C_COMPILER   "${KOS_CC_BASE}/bin/sh-elf-gcc.exe")
+set(CMAKE_CXX_COMPILER "${KOS_CC_BASE}/bin/sh-elf-g++.exe")
+set(CMAKE_AR           "${KOS_CC_BASE}/bin/sh-elf-ar.exe" CACHE FILEPATH "Archiver")
+set(CMAKE_RANLIB       "${KOS_CC_BASE}/bin/sh-elf-ranlib.exe" CACHE FILEPATH "Ranlib")
 
 # Don't try to run test executables on the host
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
@@ -54,18 +54,19 @@ include_directories(SYSTEM ${KOS_INCS})
 link_directories(${KOS_LIBS})
 
 # KOS compiler/linker flags
-set(KOS_CFLAGS "-ml -m4-single-only -fno-exceptions -D__DREAMCAST__ -D_arch_dreamcast -DPLATFORM_DREAMCAST=1")
-set(KOS_CXXFLAGS "${KOS_CFLAGS} -fno-rtti -std=c++20")
+set(KOS_CFLAGS "-ml -m4-single-only -D__DREAMCAST__ -D_arch_dreamcast -DPLATFORM_DREAMCAST=1")
+set(KOS_CXXFLAGS "${KOS_CFLAGS} -std=c++20")
 
 set(CMAKE_C_FLAGS_INIT   "${KOS_CFLAGS}")
 set(CMAKE_CXX_FLAGS_INIT "${KOS_CXXFLAGS}")
 
 set(CMAKE_EXE_LINKER_FLAGS_INIT
-  "-ml -m4-single-only -Wl,-Ttext=0x8c010000 -T${KOS_BASE}/utils/ldscripts/shlelf.xc -nodefaultlibs"
+  "-ml -m4-single-only -Wl,-Ttext=0x8c010000 -T${KOS_BASE}/utils/ldscripts/shlelf.xc -nostdlib"
 )
 
-# KOS libraries to link (order matters)
-set(KOS_LINK_LIBS "-lkallisti -lc -lgcc -lm")
+set(KOS_LINK_LIBS
+  "-Wl,--start-group -lkallisti -lstdc++ -lm -lc -lgcc -Wl,--end-group"
+)
 
 set(CMAKE_C_STANDARD_LIBRARIES   "${KOS_LINK_LIBS}")
 set(CMAKE_CXX_STANDARD_LIBRARIES "${KOS_LINK_LIBS}")

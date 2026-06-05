@@ -23,6 +23,8 @@ struct BIOSLoader {
     fs::path const& path
   ) -> Result;
 
+  static auto LoadEmbedded(std::unique_ptr<CoreBase>& core) -> Result;
+
   static auto Validate(fs::path const& path) -> Result;
   static auto Describe(Result result) -> const char*;
 };

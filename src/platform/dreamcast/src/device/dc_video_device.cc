@@ -7,9 +7,10 @@
 #include <array>
 #include <cstring>
 
+#include "../font_8x16.hh"
+
 #if NBA_DC_HAS_KOS
 #include <dc/video.h>
-#include <dc/bfont.h>
 #endif
 
 namespace nba {
@@ -36,13 +37,29 @@ void DCVideoDevice::ClearScreen() {
 
 void DCVideoDevice::DrawText(int x, int y, std::string_view text) {
 #if NBA_DC_HAS_KOS
-  if(!vram_base_ || text.empty()) return;
+  if(!vram_base_) return;
 
-  char line[64];
-  const auto line_len = std::min(text.size(), sizeof(line) - 1);
-  std::memcpy(line, text.data(), line_len);
-  line[line_len] = '\0';
-  bfont_draw_str_vram(x, y, 0, line);
+  const uint16 fg = 0xFFFF;
+  const uint16 bg = 0x0000;
+
+  int cursor_x = x;
+  int cursor_y = y;
+  for(char c : text) {
+    if(c < 32 || c > 126) {
+      cursor_x += kFontWidth;
+      continue;
+    }
+    const auto& glyph = kFont8x16[c - 32];
+    for(int row = 0; row < static_cast<int>(kFontHeight); row++) {
+      const std::uint8_t bits = glyph[row];
+      uint16* dst = vram_base_ + (cursor_y + row) * kScreenWidth + cursor_x;
+      for(int col = 0; col < static_cast<int>(kFontWidth); col++) {
+        const bool on = (bits >> (7 - col)) & 1;
+        dst[col] = on ? fg : bg;
+      }
+    }
+    cursor_x += kFontWidth;
+  }
 #else
   (void)x;
   (void)y;

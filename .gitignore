@@ -16,3 +16,7 @@ CMakeSettings.json
 cmake-build-*
 
 .DS_Store
+
+dreamsdk.conf
+*.elf
+build-dc/

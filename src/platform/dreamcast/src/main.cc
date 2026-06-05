@@ -16,6 +16,7 @@
 #include "device/dc_video_device.hh"
 #include "device/dc_audio_device.hh"
 #include "device/dc_input.hh"
+#include "open_bios.hh"
 
 #include <cstdio>
 #include <exception>
@@ -32,6 +33,12 @@ KOS_INIT_FLAGS(INIT_DEFAULT);
 
 using namespace nba;
 
+auto BIOSLoader::LoadEmbedded(std::unique_ptr<CoreBase>& core) -> Result {
+  std::vector<u8> file_data(kOpenBIOS, kOpenBIOS + 16384);
+  core->Attach(file_data);
+  return Result::Success;
+}
+
 static constexpr float kGBAFrameRate =
   static_cast<float>(16777216) / static_cast<float>(280896);
 
@@ -45,12 +52,17 @@ static auto LoadEmulator(
   const auto bios_path = config->bios_path;
 
   auto bios_result = BIOSLoader::Validate(bios_path);
+  bool using_embedded_bios = false;
+
   if(bios_result != BIOSLoader::Result::Success) {
-    char message[160];
-    std::snprintf(message, sizeof(message), "%s\n%s",
-                  BIOSLoader::Describe(bios_result), bios_path.c_str());
-    ui.ShowFatalError(message, input);
-    return false;
+    char msg[160];
+    std::snprintf(msg, sizeof(msg), "%s not found - using OpenBIOS", bios_path.c_str());
+    ui.ClearScreen();
+    ui.DrawTitle("OpenBIOS");
+    ui.DrawTextMultiline(48, 120, msg);
+    ui.DrawStatusBar("Continuing with built-in BIOS...");
+    ui.Present();
+    using_embedded_bios = true;
   }
 
   auto rom_result = ROMLoader::Validate(rom_path);
@@ -62,10 +74,7 @@ static auto LoadEmulator(
     return false;
   }
 
-  if(!EnsureDirectory(config->save_folder)) {
-    ui.ShowFatalError("Could not create save folder", input);
-    return false;
-  }
+  // Save directory may not be writable on FlyCast; continue anyway
 
   const auto save_path = GetSavePath(*config, rom_path);
 
@@ -87,7 +96,11 @@ static auto LoadEmulator(
     return false;
   }
 
-  bios_result = BIOSLoader::Load(core, bios_path);
+  if(using_embedded_bios) {
+    bios_result = BIOSLoader::LoadEmbedded(core);
+  } else {
+    bios_result = BIOSLoader::Load(core, bios_path);
+  }
   if(bios_result != BIOSLoader::Result::Success) {
     char message[160];
     std::snprintf(message, sizeof(message), "%s\n%s",
@@ -177,16 +190,20 @@ int main(int argc, char** argv) {
   }
 
   DCUI ui{*video_device};
-  DCInput input;
 
-  auto config = std::make_shared<DreamcastConfig>();
-  config->LoadDreamcast(DreamcastConfig::kDefaultConfigPath);
-  EnsureDirectory(config->save_folder);
-  EnsureDirectory(config->rom_folder);
-
+  // Draw UI first, then do FS operations (which may hang on FlyCast)
   ui.ClearScreen();
   ui.DrawTitle("NanoBoyAdvance");
   ui.DrawTextCentered(120, "Dreamcast Edition");
+  ui.DrawStatusBar("Loading...");
+  ui.Present();
+
+  DCInput input;
+
+  auto config = std::make_shared<DreamcastConfig>();
+  config->ApplyDefaults();
+  // Skip filesystem-dependent LoadDreamcast/EnsureDirectory that may hang on FlyCast
+
   ui.DrawStatusBar("Loading frontend...");
   ui.Present();
 

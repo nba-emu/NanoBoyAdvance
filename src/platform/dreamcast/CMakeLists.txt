@@ -10,6 +10,9 @@ set(SOURCES
   src/dc_rom_browser.cc
   src/dc_frontend.cc
   src/main.cc
+  src/open_bios.cc
+  src/romdisk_stub.c
+  src/posix_stubs.c
 )
 
 set(HEADERS

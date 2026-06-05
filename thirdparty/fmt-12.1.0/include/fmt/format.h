@@ -1475,6 +1475,38 @@ template <> struct float_info<double> {
   static const int shorter_interval_tie_upper_threshold = -77;
 };
 
+template <typename T>
+struct float_info<T, enable_if_t<std::numeric_limits<T>::is_specialized &&
+                                 !is_float128<T>::value &&
+                                 !is_double_double<T>::value &&
+                                 std::numeric_limits<T>::digits == 24>> {
+  using carrier_uint = uint32_t;
+  static const int exponent_bits = 8;
+  static const int kappa = 1;
+  static const int big_divisor = 100;
+  static const int small_divisor = 10;
+  static const int min_k = -31;
+  static const int max_k = 46;
+  static const int shorter_interval_tie_lower_threshold = -35;
+  static const int shorter_interval_tie_upper_threshold = -35;
+};
+
+template <typename T>
+struct float_info<T, enable_if_t<std::numeric_limits<T>::is_specialized &&
+                                 !is_float128<T>::value &&
+                                 !is_double_double<T>::value &&
+                                 std::numeric_limits<T>::digits == 53>> {
+  using carrier_uint = uint64_t;
+  static const int exponent_bits = 11;
+  static const int kappa = 2;
+  static const int big_divisor = 1000;
+  static const int small_divisor = 100;
+  static const int min_k = -292;
+  static const int max_k = 341;
+  static const int shorter_interval_tie_lower_threshold = -77;
+  static const int shorter_interval_tie_upper_threshold = -77;
+};
+
 // An 80- or 128-bit floating point number.
 template <typename T>
 struct float_info<T, enable_if_t<std::numeric_limits<T>::digits == 64 ||

@@ -1171,7 +1171,7 @@ class serializer
 
     string_type format_indent(const indent_char indent_type) const // {{{
     {
-        const auto indent = static_cast<std::size_t>((std::max)(0, this->current_indent_));
+        const auto indent = static_cast<std::size_t>((std::max)(static_cast<decltype(this->current_indent_)>(0), this->current_indent_));
         if(indent_type == indent_char::space)
         {
             return string_conv<string_type>(make_string(indent, ' '));

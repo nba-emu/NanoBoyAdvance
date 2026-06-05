@@ -25,6 +25,9 @@ if(NOT PLATFORM_DREAMCAST)
 endif()
 
 if(NOT fmt_FOUND)
+  if(PLATFORM_DREAMCAST)
+    set(FMT_OS OFF CACHE BOOL "" FORCE)
+  endif()
   add_subdirectory(fmt-12.1.0)
 endif()
 

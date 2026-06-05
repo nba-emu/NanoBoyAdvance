@@ -43,8 +43,8 @@ private:
   static constexpr int kScale = 2;
   static constexpr int kOffsetX = (kScreenWidth  - kGBAWidth  * kScale) / 2;
   static constexpr int kOffsetY = (kScreenHeight - kGBAHeight * kScale) / 2;
-  static constexpr int kFontWidth = 12;
-  static constexpr int kLineHeight = 24;
+  static constexpr int kFontWidth = 8;
+  static constexpr int kLineHeight = 18;
   static constexpr int kStatusBarY = 448;
 
 #if NBA_DC_HAS_KOS
