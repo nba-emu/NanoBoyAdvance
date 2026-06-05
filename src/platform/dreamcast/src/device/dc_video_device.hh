@@ -25,6 +25,7 @@ struct DCVideoDevice : VideoDevice {
 
   bool Initialize();
   void Draw(u32* buffer) override;
+  void ShowFatalError(const char* message);
 
   void ClearScreen();
   void DrawText(int x, int y, std::string_view text);
