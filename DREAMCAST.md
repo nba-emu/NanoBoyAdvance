@@ -56,25 +56,62 @@ sh-elf-objcopy -O binary build-dc/bin/dreamcast/Release/NanoBoyAdvance.elf NanoB
 mkdir -p cd_root
 cp 1ST_READ.BIN cd_root/
 cp your_bios.bin cd_root/bios.bin
-cp your_rom.gba  cd_root/rom.gba
 
-# Create the ISO
+# Optional: place ROMs on disc root or use /pc/roms on writable media
+mkdir -p pc_root/roms pc_root/saves
+cp your_rom.gba pc_root/roms/
+
+# Create the ISO (adjust layout for your loader/ODE workflow)
 mkisofs -C 0,11702 -V "NBA_DC" -G IP.BIN -l -o nba-dc.iso cd_root/
 ```
 
-## File Layout on Disc
+## File Layout
 
-The Dreamcast frontend expects:
+| File / Folder | Path | Description |
+|---------------|------|-------------|
+| GBA BIOS | `/cd/bios.bin` or `/pc/bios.bin` | Required. Configurable in settings |
+| GBA ROMs | `/pc/roms/*.gba` or `/cd/*.gba` | Scanned by the in-app ROM browser |
+| Save data | `/pc/saves/<rom>.sav` | Per-ROM backup saves (configurable folder) |
+| Settings | `/pc/nba-dc.toml` | Frame skip, audio buffer, path overrides |
 
-| File | Path | Description |
-|------|------|-------------|
-| GBA BIOS | `/cd/bios.bin` | Required. Dump from real hardware or use unofficial BIOS |
-| GBA ROM  | `/cd/rom.gba`  | The ROM to run |
-| Save data | `/pc/rom.sav` | Writable path for cartridge backup saves (SD/IDE adapter) |
+Writable `/pc` paths require an SD/IDE adapter or equivalent host filesystem mount.
 
-Missing or invalid BIOS/ROM files show an on-screen error and wait for Start before returning to the loader.
+### Save Policy
 
-## Hardware Mapping
+- Backup saves use the writable filesystem (`/pc/saves` by default).
+- Each ROM gets its own `<rom-stem>.sav` file.
+- **VMU saves are not supported yet** — VMU remains planned for a future milestone.
+
+## Frontend Controls
+
+### ROM Browser
+
+| Button | Action |
+|--------|--------|
+| D-Pad / Analog | Move selection |
+| A | Launch selected ROM |
+| B | Return to loader |
+| Y | Open settings |
+| Start | Return to loader |
+
+### Settings
+
+| Button | Action |
+|--------|--------|
+| D-Pad Up/Down | Select row |
+| D-Pad Left/Right | Adjust value |
+| A | Save and return (on last row) |
+| B | Cancel without saving |
+
+Configurable options:
+
+- **Frame skip** (0–3 extra emulated frames per display frame)
+- **Audio buffer** (2048 / 4096 / 8192 bytes — lower = less latency, higher = safer)
+- **BIOS path** (`/cd/bios.bin` or `/pc/bios.bin`)
+- **ROM folder** (`/pc/roms` or `/cd`)
+- **Save folder** (`/pc/saves` or `/pc`)
+
+## Hardware Mapping (Gameplay)
 
 | Dreamcast Button | GBA Button |
 |-----------------|------------|
@@ -87,16 +124,17 @@ Missing or invalid BIOS/ROM files show an on-screen error and wait for Start bef
 | D-Pad           | D-Pad      |
 | Analog Stick    | D-Pad (dead zone: 32, ~25% of ±127 range) |
 
-**Exit combo**: Hold Start + A + B + X + Y simultaneously for ~1 second to exit.
+**Exit combo during gameplay**: Hold Start + A + B + X + Y for ~1 second to return to the ROM browser.
+
+Errors and loading screens show on-screen text with path details. Press Start to dismiss fatal errors.
 
 ## Current Limitations
 
 - **No save states** – save state UI is not implemented yet
-- **No ROM browser** – a single ROM path is hardcoded to `/cd/rom.gba`
+- **No VMU saves** – filesystem saves only
 - **No post-processing** – color correction, xBRZ upscaling, and LCD ghosting are disabled
 - **No HLE audio** – MP2K HLE is disabled for performance reasons
 - **Single-threaded** – the emulation loop runs on the main thread
-- **No VMU save support** – backup saves go to `/pc/rom.sav` on writable media
 
 ## Architecture
 
@@ -104,7 +142,12 @@ Missing or invalid BIOS/ROM files show an on-screen error and wait for Start bef
 src/platform/dreamcast/
 ├── CMakeLists.txt
 └── src/
-    ├── main.cc                    # Entry point + main loop
+    ├── main.cc                    # Frontend loop + emulation sessions
+    ├── dc_config.hh/cc            # Dreamcast settings (TOML)
+    ├── dc_ui.hh/cc                # On-screen menus and overlays
+    ├── dc_frontend.hh/cc          # ROM browser + settings menus
+    ├── dc_rom_browser.hh/cc       # ROM directory scanning
+    ├── dc_paths.hh                # Save path helpers
     └── device/
         ├── dc_video_device.hh/cc  # PVR framebuffer video output
         ├── dc_audio_device.hh/cc  # KOS snd_stream audio output
@@ -115,9 +158,8 @@ The Dreamcast backend reuses the core emulator library (`nba`) and the platform-
 
 ## Performance Notes
 
-The Dreamcast SH4 at 200 MHz is significantly slower than modern desktop CPUs. Expect performance challenges with cycle-accurate GBA emulation. Potential future optimizations:
+The Dreamcast SH4 at 200 MHz is significantly slower than modern desktop CPUs. Expect performance challenges with cycle-accurate GBA emulation. Built-in tuning options:
 
-- Frame skipping
-- Audio buffer tuning
+- Frame skip (settings menu)
+- Audio buffer size (settings menu)
 - SH4-specific compiler flags (`-m4-single-only` is already used)
-- Selective accuracy trade-offs for performance-critical paths

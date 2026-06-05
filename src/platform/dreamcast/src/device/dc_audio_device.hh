@@ -23,6 +23,7 @@ struct DCAudioDevice : AudioDevice {
   void Reset() override;
   auto GetSampleRate() -> int override;
   void SetPause(bool value) override;
+  void SetBufferSize(int bytes);
   auto IsOpened() const -> bool { return opened_; }
 
 private:
@@ -38,6 +39,7 @@ private:
   Callback callback_ = nullptr;
   void* userdata_ = nullptr;
   bool opened_ = false;
+  int buffer_size_ = 4096;
 };
 
 } // namespace nba

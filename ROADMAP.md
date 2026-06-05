@@ -60,6 +60,14 @@ This roadmap outlines the planned milestones for completing the Dreamcast port o
 - [ ] Add in-app settings surface for key options (frame skip, audio latency, BIOS/ROM path behavior)
 - [ ] Improve user-facing overlays/messages for loading, errors, and exit combo
 
+### Milestone 2 Current Baseline (2026-06-05)
+- ROM browser scans `/pc/roms` and `/cd` for valid `.gba` files.
+- Per-ROM save files are stored under `/pc/saves/<rom>.sav` (configurable).
+- Settings persist to `/pc/nba-dc.toml` (frame skip, audio buffer, BIOS/ROM/save paths).
+- In-app menus use on-screen text with A/B/Y/Start navigation.
+- Loading and exit overlays show current paths and exit combo hints.
+- VMU saves remain out of scope; filesystem policy is documented in `DREAMCAST.md`.
+
 ## Milestone 3: Performance Profile and Compatibility Pass
 **Goal:** Maximize frame rates and establish clear compatibility expectations.
 - [ ] Establish a repeatable Dreamcast benchmark/test ROM set

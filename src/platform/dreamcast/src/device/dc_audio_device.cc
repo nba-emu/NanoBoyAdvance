@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "device/dc_audio_device.hh"
+#include <algorithm>
 #include <cstring>
 
 namespace nba {
@@ -9,6 +10,12 @@ namespace nba {
 #if NBA_DC_HAS_KOS
 DCAudioDevice* DCAudioDevice::s_instance = nullptr;
 #endif
+
+void DCAudioDevice::SetBufferSize(int bytes) {
+  if(bytes == 2048 || bytes == 4096 || bytes == 8192) {
+    buffer_size_ = bytes;
+  }
+}
 
 bool DCAudioDevice::Open(void* userdata, Callback callback) {
   callback_ = callback;
@@ -18,7 +25,7 @@ bool DCAudioDevice::Open(void* userdata, Callback callback) {
   s_instance = this;
 
   snd_stream_init();
-  stream_handle_ = snd_stream_alloc(StreamCallback, 8192);
+  stream_handle_ = snd_stream_alloc(StreamCallback, buffer_size_);
 
   if(stream_handle_ == SND_STREAM_INVALID) {
     return false;
@@ -79,13 +86,15 @@ void* DCAudioDevice::StreamCallback(snd_stream_hnd_t hnd, int req, int* done) {
 
   static s16 stream_buffer[8192];
 
+  const int request = std::min(req, static_cast<int>(sizeof(stream_buffer)));
+
   if(s_instance && s_instance->callback_) {
-    s_instance->callback_(s_instance->userdata_, stream_buffer, req);
+    s_instance->callback_(s_instance->userdata_, stream_buffer, request);
   } else {
-    std::memset(stream_buffer, 0, req);
+    std::memset(stream_buffer, 0, request);
   }
 
-  *done = req;
+  *done = request;
   return stream_buffer;
 }
 #endif

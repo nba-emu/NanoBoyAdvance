@@ -4,6 +4,7 @@
 #include "device/dc_video_device.hh"
 
 #include <algorithm>
+#include <array>
 #include <cstring>
 
 #if NBA_DC_HAS_KOS
@@ -21,11 +22,75 @@ bool DCVideoDevice::Initialize() {
 #if NBA_DC_HAS_KOS
   vid_set_mode(DM_640x480, PM_RGB565);
   vram_base_ = (uint16*)vram_s;
-
-  // Clear the screen to black
-  std::memset(vram_base_, 0, kScreenWidth * kScreenHeight * sizeof(uint16));
+  ClearScreen();
 #endif
   return true;
+}
+
+void DCVideoDevice::ClearScreen() {
+#if NBA_DC_HAS_KOS
+  if(!vram_base_) return;
+  std::memset(vram_base_, 0, kScreenWidth * kScreenHeight * sizeof(uint16));
+#endif
+}
+
+void DCVideoDevice::DrawText(int x, int y, std::string_view text) {
+#if NBA_DC_HAS_KOS
+  if(!vram_base_ || text.empty()) return;
+
+  char line[64];
+  const auto line_len = std::min(text.size(), sizeof(line) - 1);
+  std::memcpy(line, text.data(), line_len);
+  line[line_len] = '\0';
+  bfont_draw_str_vram(x, y, 0, line);
+#else
+  (void)x;
+  (void)y;
+  (void)text;
+#endif
+}
+
+void DCVideoDevice::DrawTextCentered(int y, std::string_view text) {
+  const int x = std::max(0, kOffsetX + ((kGBAWidth * kScale) / 2) - (static_cast<int>(text.size()) * kFontWidth) / 2);
+  DrawText(x, y, text);
+}
+
+void DCVideoDevice::DrawTextMultiline(int x, int y, std::string_view text) {
+  while(!text.empty()) {
+    const auto newline = text.find('\n');
+    const auto line = text.substr(0, newline);
+    DrawText(x, y, line);
+    y += kLineHeight;
+
+    if(newline == std::string_view::npos) {
+      break;
+    }
+
+    text.remove_prefix(newline + 1);
+  }
+}
+
+void DCVideoDevice::DrawStatusBar(std::string_view text) {
+#if NBA_DC_HAS_KOS
+  if(!vram_base_) return;
+
+  for(int x = 0; x < kScreenWidth; x++) {
+    vram_base_[kStatusBarY * kScreenWidth + x] = 0x1084;
+  }
+#endif
+
+  DrawText(16, kStatusBarY + 4, text);
+}
+
+void DCVideoDevice::DrawOverlay(std::string_view text) {
+  DrawStatusBar(text);
+  Present();
+}
+
+void DCVideoDevice::Present() {
+#if NBA_DC_HAS_KOS
+  vid_waitvbl();
+#endif
 }
 
 void DCVideoDevice::Draw(u32* buffer) {
@@ -40,7 +105,6 @@ void DCVideoDevice::Draw(u32* buffer) {
       uint16* dst = vram_base_ + screen_y * kScreenWidth + kOffsetX;
 
       for(int x = 0; x < kGBAWidth; x++) {
-        // Core outputs BGRA8888 (B in low byte)
         const u32 pixel = buffer[y * kGBAWidth + x];
         const u8 b = (pixel >>  0) & 0xFF;
         const u8 g = (pixel >>  8) & 0xFF;
@@ -60,35 +124,9 @@ void DCVideoDevice::Draw(u32* buffer) {
 }
 
 void DCVideoDevice::ShowFatalError(const char* message) {
-#if NBA_DC_HAS_KOS
-  if(!vram_base_ || !message) return;
-
-  std::memset(vram_base_, 0, kScreenWidth * kScreenHeight * sizeof(uint16));
-
-  int y = kOffsetY;
-  const char* line_start = message;
-
-  while(*line_start) {
-    const char* line_end = line_start;
-    while(*line_end && *line_end != '\n') {
-      line_end++;
-    }
-
-    char line[64];
-    const auto line_len = std::min<size_t>(line_end - line_start, sizeof(line) - 1);
-    std::memcpy(line, line_start, line_len);
-    line[line_len] = '\0';
-
-    bfont_draw_str_vram(kOffsetX, y, 0, line);
-    y += 24;
-
-    line_start = *line_end ? line_end + 1 : line_end;
-  }
-
-  vid_waitvbl();
-#else
-  (void)message;
-#endif
+  ClearScreen();
+  DrawTextMultiline(kOffsetX, kOffsetY, message ? message : "Unknown error");
+  Present();
 }
 
 } // namespace nba
