@@ -24,6 +24,14 @@ struct SettingRow {
   void (*adjust)(DreamcastConfig&, int direction);
 };
 
+auto PerformanceLabel(DreamcastConfig const& config) -> std::string {
+  return DreamcastConfig::ProfileName(config.performance_profile);
+}
+
+auto ShowFpsLabel(DreamcastConfig const& config) -> std::string {
+  return config.show_fps ? "On" : "Off";
+}
+
 auto FrameSkipLabel(DreamcastConfig const& config) -> std::string {
   return std::to_string(config.frame_skip);
 }
@@ -42,6 +50,23 @@ auto ROMFolderLabel(DreamcastConfig const& config) -> std::string {
 
 auto SaveFolderLabel(DreamcastConfig const& config) -> std::string {
   return config.save_folder;
+}
+
+void AdjustPerformance(DreamcastConfig& config, int direction) {
+  static constexpr std::array<DreamcastConfig::PerformanceProfile, 3> kProfiles{
+    DreamcastConfig::PerformanceProfile::Accuracy,
+    DreamcastConfig::PerformanceProfile::Balanced,
+    DreamcastConfig::PerformanceProfile::Speed
+  };
+  const auto current = std::find(kProfiles.begin(), kProfiles.end(), config.performance_profile);
+  int index = current == kProfiles.end() ? 1 : static_cast<int>(current - kProfiles.begin());
+  index = std::clamp(index + direction, 0, static_cast<int>(kProfiles.size()) - 1);
+  config.ApplyPerformanceProfile(kProfiles[index]);
+}
+
+void AdjustShowFps(DreamcastConfig& config, int direction) {
+  (void)direction;
+  config.show_fps = !config.show_fps;
 }
 
 void AdjustFrameSkip(DreamcastConfig& config, int direction) {
@@ -85,6 +110,8 @@ void AdjustSaveFolder(DreamcastConfig& config, int direction) {
 }
 
 static constexpr SettingRow kSettings[] {
+  { "Performance", PerformanceLabel, AdjustPerformance },
+  { "Show FPS", ShowFpsLabel, AdjustShowFps },
   { "Frame skip", FrameSkipLabel, AdjustFrameSkip },
   { "Audio buffer", AudioBufferLabel, AdjustAudioBuffer },
   { "BIOS path", BiosPathLabel, AdjustBiosPath },

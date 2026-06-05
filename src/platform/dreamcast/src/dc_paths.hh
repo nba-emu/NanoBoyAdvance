@@ -36,7 +36,8 @@ inline auto GetSavePath(DreamcastConfig const& config, fs::path const& rom_path)
     return fs::path{DreamcastConfig::kDefaultSaveFolder} / (stem + ".sav");
   }
 
-  return rom_path.replace_extension(".sav");
+  auto save_path = rom_path;
+  return save_path.replace_extension(".sav");
 }
 
 } // namespace nba
