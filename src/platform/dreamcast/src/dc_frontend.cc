@@ -170,6 +170,10 @@ auto DCSettingsMenu::Run(
     } else if(menu.cancel) {
       return;
     }
+
+#if NBA_DC_HAS_KOS
+    vid_waitvbl();
+#endif
   }
 }
 
@@ -231,7 +235,6 @@ auto DCFrontend::Run(
       selection = (selection + 1) % static_cast<int>(entries.size());
     } else if(menu.confirm) {
       config.last_rom = entries[selection].path.string();
-      config.SaveDreamcast(DreamcastConfig::kDefaultConfigPath);
       return Result{Action::LaunchROM, entries[selection].path};
     } else if(menu.settings) {
       DCSettingsMenu::Run(ui, input, config);
@@ -247,6 +250,10 @@ auto DCFrontend::Run(
     } else if(selection >= scroll_offset + kVisibleRows) {
       scroll_offset = selection - kVisibleRows + 1;
     }
+
+#if NBA_DC_HAS_KOS
+    vid_waitvbl();
+#endif
   }
 }
 

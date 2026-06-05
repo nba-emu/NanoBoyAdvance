@@ -41,6 +41,24 @@ auto BIOSLoader::LoadEmbedded(std::unique_ptr<CoreBase>& core) -> Result {
 
 static constexpr float kGBAFrameRate =
   static_cast<float>(16777216) / static_cast<float>(280896);
+static constexpr size_t kMaxGBAROMSize = 32 * 1024 * 1024;
+
+static auto IsDreamcastVirtualPath(fs::path const& path) -> bool {
+  const auto path_string = path.string();
+  return path_string.rfind("/cd/", 0) == 0 || path_string.rfind("/pc/", 0) == 0;
+}
+
+static auto FormatROMSize(size_t size) -> std::string {
+  char message[48];
+  std::snprintf(
+    message,
+    sizeof(message),
+    "%lu bytes (%lu MiB)",
+    static_cast<unsigned long>(size),
+    static_cast<unsigned long>(size / (1024 * 1024))
+  );
+  return message;
+}
 
 static auto LoadEmulator(
   DCUI& ui,
@@ -51,6 +69,22 @@ static auto LoadEmulator(
 ) -> bool {
   const auto bios_path = config->bios_path;
 
+  auto breadcrumb = [&](const char* phase, std::string const& detail = {}) {
+    std::printf("[NBA-DC] %s", phase);
+    if(!detail.empty()) {
+      std::printf(": %s", detail.c_str());
+    }
+    std::printf("\n");
+    std::fflush(stdout);
+
+    ui.ClearScreen();
+    ui.DrawTitle("Debug");
+    ui.DrawTextMultiline(48, 96, std::string{phase} + (detail.empty() ? "" : "\n" + detail));
+    ui.DrawStatusBar("Launching ROM...");
+    ui.Present();
+  };
+
+  breadcrumb("Phase 1: BIOS check", bios_path);
   auto bios_result = BIOSLoader::Validate(bios_path);
   bool using_embedded_bios = false;
 
@@ -65,7 +99,39 @@ static auto LoadEmulator(
     using_embedded_bios = true;
   }
 
-  auto rom_result = ROMLoader::Validate(rom_path);
+  auto rom_result = ROMLoader::Result::Success;
+  size_t rom_size = 0;
+  auto size_result = ROMLoader::GetFileSize(rom_path, rom_size);
+  if(size_result != ROMLoader::Result::Success) {
+    char message[160];
+    std::snprintf(message, sizeof(message), "%s\n%s",
+                  ROMLoader::Describe(size_result), rom_path.c_str());
+    ui.ShowFatalError(message, input);
+    return false;
+  }
+
+  if(rom_size > kMaxGBAROMSize) {
+    char message[192];
+    std::snprintf(
+      message,
+      sizeof(message),
+      "ROM is too large for GBA\n%s\n%s",
+      FormatROMSize(rom_size).c_str(),
+      rom_path.c_str()
+    );
+    ui.ShowFatalError(message, input);
+    return false;
+  }
+
+#if NBA_DC_HAS_KOS
+  if(IsDreamcastVirtualPath(rom_path)) {
+    breadcrumb("Phase 2: ROM size precheck", FormatROMSize(rom_size));
+  } else
+#endif
+  {
+    breadcrumb("Phase 2: ROM precheck", FormatROMSize(rom_size));
+    rom_result = ROMLoader::Validate(rom_path);
+  }
   if(rom_result != ROMLoader::Result::Success) {
     char message[160];
     std::snprintf(message, sizeof(message), "%s\n%s",
@@ -76,6 +142,7 @@ static auto LoadEmulator(
 
   // Save directory may not be writable on FlyCast; continue anyway
 
+  breadcrumb("Phase 3: Save path", "CD ROMs use memory-backed /pc saves");
   const auto save_path = GetSavePath(*config, rom_path);
 
   ui.ClearScreen();
@@ -85,17 +152,20 @@ static auto LoadEmulator(
   ui.DrawStatusBar("Loading game data...");
   ui.Present();
 
+  breadcrumb("Phase 4: Audio device");
   auto audio_device = std::make_shared<DCAudioDevice>();
   audio_device->SetBufferSize(config->audio_buffer_size);
   config->audio_dev = audio_device;
   config->video_dev = video_device;
 
+  breadcrumb("Phase 5: Core create");
   auto core = CreateCore(config);
   if(!core || !audio_device->IsOpened()) {
     ui.ShowFatalError("Failed to initialize emulator core", input);
     return false;
   }
 
+  breadcrumb("Phase 6: BIOS load", using_embedded_bios ? "Embedded OpenBIOS" : bios_path);
   if(using_embedded_bios) {
     bios_result = BIOSLoader::LoadEmbedded(core);
   } else {
@@ -110,6 +180,7 @@ static auto LoadEmulator(
   }
 
   try {
+    breadcrumb("Phase 7: ROM load", rom_path.string());
     rom_result = ROMLoader::Load(
       core,
       rom_path,
@@ -131,13 +202,22 @@ static auto LoadEmulator(
     return false;
   }
 
+  breadcrumb("Phase 8: Core reset");
   core->Reset();
+  breadcrumb("Phase 9: Enter frame loop");
 
   FrameLimiter frame_limiter(kGBAFrameRate);
   bool running = true;
   float measured_fps = 0.0f;
+  int debug_frames = 0;
 
   while(running) {
+    if(debug_frames < 3) {
+      char message[64];
+      std::snprintf(message, sizeof(message), "Frame %d before CPU", debug_frames);
+      breadcrumb("Phase 10: First frames", message);
+    }
+
     frame_limiter.Run([&]() {
       if(input.PollInput(*core)) {
         running = false;
@@ -150,6 +230,13 @@ static auto LoadEmulator(
     }, [&](float fps) {
       measured_fps = fps;
     });
+
+    if(debug_frames < 3) {
+      char message[64];
+      std::snprintf(message, sizeof(message), "Frame %d after CPU", debug_frames);
+      breadcrumb("Phase 11: First frames", message);
+      debug_frames++;
+    }
 
 #if NBA_DC_HAS_KOS
     snd_stream_poll(SND_STREAM_INVALID);
@@ -167,7 +254,7 @@ static auto LoadEmulator(
       video_device->DrawOverlay("Hold Start+A+B+X+Y to exit");
     }
 
-    vid_waitvbl();
+    video_device->Present();
 #endif
   }
 

@@ -24,6 +24,7 @@ const std::map<std::string, GameInfo> g_game_db {
   { "BDBP", { Config::BackupType::EEPROM_64,            GPIODeviceType::None,                              false } }, /* Dragon Ball Z - Taiketsu (Europe)(En,Fr,De,Es,It) */
   { "BM5P", { Config::BackupType::FLASH_64,             GPIODeviceType::None,                              false } }, /* Mario vs. Donkey Kong (Europe) */
   { "BPEE", { Config::BackupType::FLASH_128,            GPIODeviceType::RTC,                               false } }, /* Pokemon - Emerald Version (USA, Europe) */
+  { "B8KE", { Config::BackupType::SRAM,                 GPIODeviceType::None,                              false } }, /* Kirby & The Amazing Mirror (USA) */
   { "BY6P", { Config::BackupType::SRAM,                 GPIODeviceType::None,                              false } }, /* Yu-Gi-Oh! - Ultimate Masters - World Championship Tournament 2006 (Europe)(En,Jp,Fr,De,Es,It) */
   { "B24E", { Config::BackupType::FLASH_128,            GPIODeviceType::None,                              false } }, /* Pokemon Mystery Dungeon - Red Rescue Team (USA, Australia) */
   { "FADE", { Config::BackupType::EEPROM_4,             GPIODeviceType::None,                              true  } }, /* Classic NES Series - Castlevania (USA, Europe) */

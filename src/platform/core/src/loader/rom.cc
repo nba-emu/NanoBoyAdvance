@@ -9,6 +9,7 @@
 #include <platform/loader/rom.hh>
 #include <atom/logger/logger.hh>
 #include <unarr.h>
+#include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <string_view>
@@ -19,6 +20,13 @@ namespace nba {
 using BackupType = Config::BackupType;
 
 static constexpr size_t kMaxROMSize = 32 * 1024 * 1024; // 32 MiB
+
+#if defined(PLATFORM_DREAMCAST)
+static auto IsDreamcastVirtualPath(fs::path const& path) -> bool {
+  const auto path_string = path.string();
+  return path_string.rfind("/cd/", 0) == 0 || path_string.rfind("/pc/", 0) == 0;
+}
+#endif
 
 static auto ValidateROMData(std::vector<u8> const& file_data) -> ROMLoader::Result {
   auto size = file_data.size();
@@ -53,6 +61,79 @@ auto ROMLoader::Load(
   BackupType backup_type,
   GPIODeviceType force_gpio
 ) -> Result {
+#if defined(PLATFORM_DREAMCAST)
+  if(IsDreamcastVirtualPath(rom_path)) {
+    size_t size = 0;
+    auto size_status = GetFileSize(rom_path, size);
+    if(size_status != Result::Success) {
+      return size_status;
+    }
+
+    if(size < sizeof(Header) || size > kMaxROMSize) {
+      return Result::BadImage;
+    }
+
+    auto* file = std::fopen(rom_path.string().c_str(), "rb");
+    if(!file) {
+      return Result::CannotOpenFile;
+    }
+
+    auto header_data = std::vector<u8>(sizeof(Header));
+    const auto header_read = std::fread(header_data.data(), 1, header_data.size(), file);
+    std::fclose(file);
+
+    if(header_read != header_data.size()) {
+      return Result::CannotOpenFile;
+    }
+
+    auto validation = ValidateROMData(header_data);
+    if(validation != Result::Success) {
+      return validation;
+    }
+
+    auto game_info = GetGameInfo(header_data);
+
+    if(backup_type == BackupType::Detect) {
+      if(game_info.backup_type != BackupType::Detect) {
+        backup_type = game_info.backup_type;
+      } else {
+        ATOM_WARN("ROMLoader: failed to detect backup type from game database!");
+        backup_type = BackupType::SRAM;
+      }
+    }
+
+    auto backup = CreateBackup(core, save_path, backup_type);
+    auto gpio = std::unique_ptr<GPIO>{};
+    auto gpio_devices = game_info.gpio | force_gpio;
+
+    if(gpio_devices != GPIODeviceType::None) {
+      gpio = std::make_unique<GPIO>();
+
+      if(gpio_devices & GPIODeviceType::RTC) {
+        gpio->Attach(core->CreateRTC());
+      }
+
+      if(gpio_devices & GPIODeviceType::SolarSensor) {
+        gpio->Attach(core->CreateSolarSensor());
+      }
+    }
+
+    u32 rom_mask = u32(kMaxROMSize - 1);
+    if(game_info.mirror) {
+      rom_mask = u32(RoundSizeToPowerOfTwo(size) - 1);
+    }
+
+    core->Attach(ROM{
+      rom_path.string(),
+      size,
+      std::move(backup),
+      std::move(gpio),
+      rom_mask
+    });
+    return Result::Success;
+  }
+#endif
+
   auto file_data = std::vector<u8>{};
   auto read_status = ReadFile(rom_path, file_data);
 
@@ -114,6 +195,33 @@ auto ROMLoader::Load(
 }
 
 auto ROMLoader::ReadFile(fs::path const& path, std::vector<u8>& file_data) -> Result {
+#if defined(PLATFORM_DREAMCAST)
+  const auto path_string = path.string();
+  if(path_string.rfind("/cd/", 0) == 0 || path_string.rfind("/pc/", 0) == 0) {
+    auto* file = std::fopen(path_string.c_str(), "rb");
+    if(!file) {
+      return Result::CannotOpenFile;
+    }
+
+    if(std::fseek(file, 0, SEEK_END) != 0) {
+      std::fclose(file);
+      return Result::CannotOpenFile;
+    }
+
+    const auto size = std::ftell(file);
+    if(size < 0 || std::fseek(file, 0, SEEK_SET) != 0) {
+      std::fclose(file);
+      return Result::CannotOpenFile;
+    }
+
+    file_data.resize(static_cast<size_t>(size));
+    const auto read = std::fread(file_data.data(), 1, file_data.size(), file);
+    std::fclose(file);
+
+    return read == file_data.size() ? Result::Success : Result::CannotOpenFile;
+  }
+#endif
+
   if(!fs::exists(path)) {
     return Result::CannotFindFile;
   }
@@ -254,6 +362,46 @@ auto ROMLoader::Validate(fs::path const& path) -> Result {
   }
 
   return ValidateROMData(file_data);
+}
+
+auto ROMLoader::GetFileSize(fs::path const& path, size_t& file_size) -> Result {
+  file_size = 0;
+
+#if defined(PLATFORM_DREAMCAST)
+  const auto path_string = path.string();
+  if(path_string.rfind("/cd/", 0) == 0 || path_string.rfind("/pc/", 0) == 0) {
+    auto* file = std::fopen(path_string.c_str(), "rb");
+    if(!file) {
+      return Result::CannotOpenFile;
+    }
+
+    if(std::fseek(file, 0, SEEK_END) != 0) {
+      std::fclose(file);
+      return Result::CannotOpenFile;
+    }
+
+    const auto size = std::ftell(file);
+    std::fclose(file);
+
+    if(size < 0) {
+      return Result::CannotOpenFile;
+    }
+
+    file_size = static_cast<size_t>(size);
+    return Result::Success;
+  }
+#endif
+
+  if(!fs::exists(path)) {
+    return Result::CannotFindFile;
+  }
+
+  if(fs::is_directory(path)) {
+    return Result::CannotOpenFile;
+  }
+
+  file_size = static_cast<size_t>(fs::file_size(path));
+  return Result::Success;
 }
 
 auto ROMLoader::Describe(Result result) -> const char* {

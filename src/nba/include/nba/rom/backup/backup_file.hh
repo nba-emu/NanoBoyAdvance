@@ -25,6 +25,17 @@ struct BackupFile {
     auto flags = std::ios::binary | std::ios::in | std::ios::out;
     std::unique_ptr<BackupFile> file { new BackupFile() };
 
+#if defined(PLATFORM_DREAMCAST)
+    const auto save_path_string = save_path.string();
+    if(save_path_string.rfind("/pc/", 0) == 0) {
+      file->save_size = default_size;
+      file->memory.reset(new u8[default_size]);
+      file->auto_update = false;
+      file->MemorySet(0, default_size, 0xFF);
+      return file;
+    }
+#endif
+
     // @todo: check file type and permissions?
     if(fs::is_regular_file(save_path)) {
       auto file_size = fs::file_size(save_path);

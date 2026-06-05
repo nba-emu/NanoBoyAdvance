@@ -6,15 +6,81 @@
 #include <platform/loader/rom.hh>
 
 #include <algorithm>
+#include <cstring>
+#include <dirent.h>
 #include <set>
 
 namespace nba {
+
+static auto HasGBAExtension(std::string const& path) -> bool {
+  const auto dot = path.find_last_of('.');
+  if(dot == std::string::npos) {
+    return false;
+  }
+
+  auto extension = path.substr(dot);
+  const auto version = extension.find(';');
+  if(version != std::string::npos) {
+    extension.resize(version);
+  }
+
+  return extension == ".gba" || extension == ".GBA";
+}
+
+static auto AddROMEntry(
+  fs::path const& path,
+  std::set<fs::path>& seen,
+  std::vector<ROMEntry>& entries,
+  bool validate = true
+) -> void {
+  if(!seen.insert(path).second) {
+    return;
+  }
+
+  if(validate && ROMLoader::Validate(path) != ROMLoader::Result::Success) {
+    return;
+  }
+
+  entries.push_back(ROMEntry{path, path.filename().string()});
+}
 
 static auto AddDirectoryEntries(
   fs::path const& directory,
   std::set<fs::path>& seen,
   std::vector<ROMEntry>& entries
 ) -> void {
+#if defined(PLATFORM_DREAMCAST)
+  const auto directory_string = directory.string();
+  if(directory_string == "/cd") {
+    static constexpr const char* kCDCandidates[] {
+      "Kirby.gba"
+    };
+
+    for(auto const* candidate : kCDCandidates) {
+      AddROMEntry(directory / candidate, seen, entries, false);
+    }
+    return;
+  }
+
+  if(auto* dir = opendir(directory_string.c_str())) {
+    while(auto* entry = readdir(dir)) {
+      if(std::strcmp(entry->d_name, ".") == 0 || std::strcmp(entry->d_name, "..") == 0) {
+        continue;
+      }
+
+      const auto name = std::string{entry->d_name};
+      if(!HasGBAExtension(name)) {
+        continue;
+      }
+
+      AddROMEntry(directory / name, seen, entries);
+    }
+
+    closedir(dir);
+    return;
+  }
+#endif
+
   if(directory.empty() || !fs::exists(directory) || !fs::is_directory(directory)) {
     return;
   }
@@ -26,19 +92,11 @@ static auto AddDirectoryEntries(
     }
 
     const auto path = entry.path();
-    if(path.extension() != ".gba" && path.extension() != ".GBA") {
+    if(!HasGBAExtension(path.filename().string())) {
       continue;
     }
 
-    if(!seen.insert(path).second) {
-      continue;
-    }
-
-    if(ROMLoader::Validate(path) != ROMLoader::Result::Success) {
-      continue;
-    }
-
-    entries.push_back(ROMEntry{path, path.filename().string()});
+    AddROMEntry(path, seen, entries);
   }
 }
 

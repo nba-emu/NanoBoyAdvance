@@ -30,6 +30,7 @@ bool DCVideoDevice::Initialize() {
 
 void DCVideoDevice::ClearScreen() {
 #if NBA_DC_HAS_KOS
+  vram_base_ = (uint16*)vram_s;
   if(!vram_base_) return;
   std::memset(vram_base_, 0, kScreenWidth * kScreenHeight * sizeof(uint16));
 #endif
@@ -37,6 +38,7 @@ void DCVideoDevice::ClearScreen() {
 
 void DCVideoDevice::DrawText(int x, int y, std::string_view text) {
 #if NBA_DC_HAS_KOS
+  vram_base_ = (uint16*)vram_s;
   if(!vram_base_) return;
 
   const uint16 fg = 0xFFFF;
@@ -89,6 +91,7 @@ void DCVideoDevice::DrawTextMultiline(int x, int y, std::string_view text) {
 
 void DCVideoDevice::DrawStatusBar(std::string_view text) {
 #if NBA_DC_HAS_KOS
+  vram_base_ = (uint16*)vram_s;
   if(!vram_base_) return;
 
   for(int x = 0; x < kScreenWidth; x++) {
@@ -112,6 +115,7 @@ void DCVideoDevice::Present() {
 
 void DCVideoDevice::Draw(u32* buffer) {
 #if NBA_DC_HAS_KOS
+  vram_base_ = (uint16*)vram_s;
   if(!vram_base_ || !buffer) return;
 
   // Convert BGRA8888 GBA output to RGB565 and blit scaled 2x to VRAM.

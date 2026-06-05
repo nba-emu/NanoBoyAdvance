@@ -10,7 +10,11 @@
 #include <nba/integer.hh>
 #include <nba/save_state.hh>
 #include <algorithm>
+#include <array>
+#include <cstdio>
+#include <cstring>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace nba {
@@ -22,6 +26,9 @@ namespace nba {
  */
 
 struct ROM {
+  static constexpr size_t kPageSize = 1024 * 1024;
+  static constexpr size_t kPageCount = 4;
+
   ROM() {}
 
   ROM(
@@ -47,6 +54,46 @@ struct ROM {
     }
   }
 
+#if defined(PLATFORM_DREAMCAST)
+  ROM(
+    std::string&& path,
+    size_t size,
+    std::unique_ptr<Backup>&& backup,
+    std::unique_ptr<GPIO>&& gpio,
+    u32 rom_mask = 0x01FF'FFFF
+  )   : rom_path(std::move(path))
+      , rom_size(size)
+      , backup_sram(nullptr)
+      , backup_eeprom(nullptr)
+      , gpio(std::move(gpio))
+      , rom_mask(rom_mask) {
+    rom_file = std::fopen(rom_path.c_str(), "rb");
+    for(auto& page : rom_pages) {
+      page.data.resize(kPageSize);
+    }
+
+    if(backup != nullptr) {
+      if(typeid(*backup.get()) == typeid(EEPROM)) {
+        backup_eeprom = std::move(backup);
+
+        if(rom_size >= 0x0100'0001) {
+          eeprom_mask = 0x01FF'FF00;
+        } else {
+          eeprom_mask = 0x0100'0000;
+        }
+      } else {
+        backup_sram = std::move(backup);
+      }
+    }
+  }
+#endif
+
+  ~ROM() {
+#if defined(PLATFORM_DREAMCAST)
+    ClosePagedFile();
+#endif
+  }
+
   ROM(ROM const&) = delete;
 
   ROM(ROM&& other) {
@@ -56,7 +103,17 @@ struct ROM {
   auto operator=(ROM const&) -> ROM& = delete;
 
   auto operator=(ROM&& other) -> ROM& {
+#if defined(PLATFORM_DREAMCAST)
+    ClosePagedFile();
+#endif
     std::swap(rom, other.rom);
+#if defined(PLATFORM_DREAMCAST)
+    std::swap(rom_path, other.rom_path);
+    std::swap(rom_size, other.rom_size);
+    std::swap(rom_file, other.rom_file);
+    std::swap(rom_pages, other.rom_pages);
+    std::swap(rom_page_clock, other.rom_page_clock);
+#endif
     std::swap(backup_sram, other.backup_sram);
     std::swap(backup_eeprom, other.backup_eeprom);
     std::swap(gpio, other.gpio);
@@ -139,6 +196,10 @@ struct ROM {
 
     if(rom_address_latch < rom.size()) [[likely]] {
       data = read<u16>(rom.data(), rom_address_latch);
+#if defined(PLATFORM_DREAMCAST)
+    } else if(IsPagedROM() && rom_address_latch + sizeof(u16) <= rom_size) {
+      data = ReadPaged16(rom_address_latch);
+#endif
     } else {
       data = (u16)(rom_address_latch >> 1);
     }
@@ -170,6 +231,10 @@ struct ROM {
 
     if(rom_address_latch < rom.size()) [[likely]] {
       data = read<u32>(rom.data(), rom_address_latch);
+#if defined(PLATFORM_DREAMCAST)
+    } else if(IsPagedROM() && rom_address_latch + sizeof(u32) <= rom_size) {
+      data = ReadPaged32(rom_address_latch);
+#endif
     } else {
       const u16 lsw = (u16)(rom_address_latch >> 1);
       const u16 msw = (u16)(lsw + 1);
@@ -218,7 +283,121 @@ private:
     return backup_eeprom && (address & eeprom_mask) == eeprom_mask;
   }
 
+#if defined(PLATFORM_DREAMCAST)
+  void ClosePagedFile() {
+    if(rom_file) {
+      std::fclose(rom_file);
+      rom_file = nullptr;
+    }
+  }
+
+  bool ALWAYS_INLINE IsPagedROM() const {
+    return rom_file != nullptr;
+  }
+
+  void LoadPagedROM(u32 address) {
+    if(!rom_file) {
+      return;
+    }
+
+    const auto page_start = address & ~(u32(kPageSize) - 1);
+    rom_page_clock++;
+
+    for(auto& page : rom_pages) {
+      if(page.valid && page.start == page_start) {
+        page.last_used = rom_page_clock;
+        return;
+      }
+    }
+
+    auto* target = &rom_pages[0];
+    for(auto& page : rom_pages) {
+      if(!page.valid) {
+        target = &page;
+        break;
+      }
+
+      if(page.last_used < target->last_used) {
+        target = &page;
+      }
+    }
+
+    size_t bytes_to_read = kPageSize;
+    if(page_start + bytes_to_read > rom_size) {
+      bytes_to_read = rom_size - page_start;
+    }
+
+    std::fseek(rom_file, static_cast<long>(page_start), SEEK_SET);
+    const auto bytes_read = std::fread(target->data.data(), 1, bytes_to_read, rom_file);
+
+    if(bytes_read < kPageSize) {
+      std::memset(target->data.data() + bytes_read, 0, kPageSize - bytes_read);
+    }
+
+    target->start = page_start;
+    target->last_used = rom_page_clock;
+    target->valid = true;
+  }
+
+  auto ReadPaged8(u32 address) -> u8 {
+    LoadPagedROM(address);
+    const auto page_start = address & ~(u32(kPageSize) - 1);
+    for(auto& page : rom_pages) {
+      if(page.valid && page.start == page_start) {
+        return page.data[address & (u32(kPageSize) - 1)];
+      }
+    }
+    return 0xFF;
+  }
+
+  auto ReadPaged16(u32 address) -> u16 {
+    const auto page_offset = address & (u32(kPageSize) - 1);
+    if(page_offset + sizeof(u16) <= kPageSize) {
+      LoadPagedROM(address);
+      const auto page_start = address & ~(u32(kPageSize) - 1);
+      for(auto& page : rom_pages) {
+        if(page.valid && page.start == page_start) {
+          return read<u16>(page.data.data(), page_offset);
+        }
+      }
+      return 0xFFFF;
+    }
+
+    return u16(ReadPaged8(address) | (ReadPaged8(address + 1) << 8));
+  }
+
+  auto ReadPaged32(u32 address) -> u32 {
+    const auto page_offset = address & (u32(kPageSize) - 1);
+    if(page_offset + sizeof(u32) <= kPageSize) {
+      LoadPagedROM(address);
+      const auto page_start = address & ~(u32(kPageSize) - 1);
+      for(auto& page : rom_pages) {
+        if(page.valid && page.start == page_start) {
+          return read<u32>(page.data.data(), page_offset);
+        }
+      }
+      return 0xFFFF'FFFF;
+    }
+
+    return u32(ReadPaged16(address) | (ReadPaged16(address + 2) << 16));
+  }
+#endif
+
   std::vector<u8> rom;
+#if defined(PLATFORM_DREAMCAST)
+  struct PagedROMPage {
+    std::vector<u8> data;
+    u32 start = 0;
+    u32 last_used = 0;
+    bool valid = false;
+  };
+
+  std::string rom_path;
+  size_t rom_size = 0;
+  FILE* rom_file = nullptr;
+  std::array<PagedROMPage, kPageCount> rom_pages;
+  u32 rom_page_clock = 0;
+#endif
   std::unique_ptr<Backup> backup_sram;
   std::unique_ptr<Backup> backup_eeprom;
   std::unique_ptr<GPIO> gpio;

@@ -35,6 +35,7 @@ struct ROMLoader {
   ) -> Result;
 
   static auto Validate(fs::path const& path) -> Result;
+  static auto GetFileSize(fs::path const& path, size_t& file_size) -> Result;
   static auto Describe(Result result) -> const char*;
 
 private:
