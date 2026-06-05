@@ -34,6 +34,9 @@ struct ROMLoader {
     GPIODeviceType force_gpio = GPIODeviceType::None
   ) -> Result;
 
+  static auto Validate(fs::path const& path) -> Result;
+  static auto Describe(Result result) -> const char*;
+
 private:
   static auto ReadFile(fs::path const& path, std::vector<u8>& file_data) -> Result;
   static auto ReadFileFromArchive(fs::path const& path, std::vector<u8>& file_data) -> Result;

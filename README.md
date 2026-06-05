@@ -29,7 +29,7 @@ This fork of NanoBoyAdvance is a **Dreamcast-only port**.
 | Audio Output | Working | snd_stream output; MP2K HLE disabled |
 | Video Output | Working | PVR framebuffer |
 | Input | Working | Maple controller |
-| Save Files | Partial | Filesystem only, no VMU support yet |
+| Save Files | Partial | Filesystem at `/pc/rom.sav`, no VMU support yet |
 | Save States | Missing | UI not implemented |
 | ROM Browser | Missing | Hardcoded to `/cd/rom.gba` currently |
 

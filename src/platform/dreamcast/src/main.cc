@@ -9,6 +9,7 @@
 #include <platform/loader/bios.hh>
 #include <platform/loader/rom.hh>
 #include <platform/config.hh>
+#include <platform/frame_limiter.hh>
 
 #include <atom/logger/logger.hh>
 
@@ -18,10 +19,12 @@
 
 #include <memory>
 #include <cstdio>
+#include <exception>
 
 #if defined(PLATFORM_DREAMCAST) && __has_include(<kos.h>)
 #define NBA_DC_HAS_KOS 1
 #include <kos.h>
+#include <dc/maple/controller.h>
 KOS_INIT_FLAGS(INIT_DEFAULT);
 #else
 #define NBA_DC_HAS_KOS 0
@@ -33,6 +36,39 @@ using namespace nba;
 // When using DreamSDK with an SD adapter these resolve to the SD card root.
 static constexpr const char* kBIOSPath = "/cd/bios.bin";
 static constexpr const char* kROMPath  = "/cd/rom.gba";
+static constexpr const char* kSavePath = "/pc/rom.sav";
+
+static constexpr float kGBAFrameRate =
+  static_cast<float>(16777216) / static_cast<float>(280896);
+
+#if NBA_DC_HAS_KOS
+static void WaitForStartToExit() {
+  std::printf("Press Start to return to the loader.\n");
+
+  while(true) {
+    maple_device_t* cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+    if(cont) {
+      cont_state_t* state = (cont_state_t*)maple_dev_status(cont);
+      if(state && (state->buttons & CONT_START)) {
+        break;
+      }
+    }
+
+    vid_waitvbl();
+  }
+}
+#endif
+
+static auto FailFatal(DCVideoDevice& video, const char* message) -> int {
+  std::printf("Error: %s\n", message);
+  video.ShowFatalError(message);
+
+#if NBA_DC_HAS_KOS
+  WaitForStartToExit();
+#endif
+
+  return 1;
+}
 
 int main(int argc, char** argv) {
   (void)argc;
@@ -41,6 +77,29 @@ int main(int argc, char** argv) {
   std::printf("NanoBoyAdvance Dreamcast Edition\n");
   std::printf("Initializing...\n");
 
+  auto video_device = std::make_shared<DCVideoDevice>();
+  if(!video_device->Initialize()) {
+    std::printf("Error: failed to initialize video device.\n");
+    return 1;
+  }
+
+  // Validate media before opening audio or creating the core.
+  auto bios_result = BIOSLoader::Validate(kBIOSPath);
+  if(bios_result != BIOSLoader::Result::Success) {
+    char message[128];
+    std::snprintf(message, sizeof(message), "%s\n%s",
+                  BIOSLoader::Describe(bios_result), kBIOSPath);
+    return FailFatal(*video_device, message);
+  }
+
+  auto rom_result = ROMLoader::Validate(kROMPath);
+  if(rom_result != ROMLoader::Result::Success) {
+    char message[128];
+    std::snprintf(message, sizeof(message), "%s\n%s",
+                  ROMLoader::Describe(rom_result), kROMPath);
+    return FailFatal(*video_device, message);
+  }
+
   // --- Create platform config with Dreamcast-appropriate defaults ---
   auto config = std::make_shared<PlatformConfig>();
   config->audio.mp2k_hle_enable = false; // Disable HLE audio (too expensive)
@@ -48,13 +107,6 @@ int main(int argc, char** argv) {
   config->video.filter = PlatformConfig::Video::Filter::Nearest;
   config->video.color  = PlatformConfig::Video::Color::No; // Skip color correction
   config->video.lcd_ghosting = false; // Skip LCD ghosting (no shader support)
-
-  // --- Create and attach Dreamcast-specific devices ---
-  auto video_device = std::make_shared<DCVideoDevice>();
-  if(!video_device->Initialize()) {
-    std::printf("Error: failed to initialize video device.\n");
-    return 1;
-  }
   config->video_dev = video_device;
 
   auto audio_device = std::make_shared<DCAudioDevice>();
@@ -63,27 +115,40 @@ int main(int argc, char** argv) {
   // --- Create emulator core ---
   auto core = CreateCore(config);
   if(!core) {
-    std::printf("Error: failed to create emulator core.\n");
-    return 1;
+    return FailFatal(*video_device, "Failed to create emulator core");
+  }
+
+  if(!audio_device->IsOpened()) {
+    return FailFatal(*video_device, "Audio device failed to open");
   }
 
   // --- Load BIOS ---
-  auto bios_result = BIOSLoader::Load(core, kBIOSPath);
+  bios_result = BIOSLoader::Load(core, kBIOSPath);
   if(bios_result != BIOSLoader::Result::Success) {
-    std::printf("Error: failed to load BIOS from %s (error %d).\n",
-                kBIOSPath, (int)bios_result);
-    return 1;
+    char message[128];
+    std::snprintf(message, sizeof(message), "%s\n%s",
+                  BIOSLoader::Describe(bios_result), kBIOSPath);
+    return FailFatal(*video_device, message);
   }
   std::printf("BIOS loaded from %s\n", kBIOSPath);
 
   // --- Load ROM ---
-  auto rom_result = ROMLoader::Load(core, kROMPath);
+  try {
+    rom_result = ROMLoader::Load(core, kROMPath, kSavePath);
+  } catch(const std::exception& exception) {
+    char message[160];
+    std::snprintf(message, sizeof(message), "Save file error\n%s", exception.what());
+    return FailFatal(*video_device, message);
+  }
+
   if(rom_result != ROMLoader::Result::Success) {
-    std::printf("Error: failed to load ROM from %s (error %d).\n",
-                kROMPath, (int)rom_result);
-    return 1;
+    char message[128];
+    std::snprintf(message, sizeof(message), "%s\n%s",
+                  ROMLoader::Describe(rom_result), kROMPath);
+    return FailFatal(*video_device, message);
   }
   std::printf("ROM loaded from %s\n", kROMPath);
+  std::printf("Save path: %s\n", kSavePath);
 
   // --- Reset core ---
   core->Reset();
@@ -91,41 +156,32 @@ int main(int argc, char** argv) {
 
   // --- Input handler ---
   DCInput input;
+  FrameLimiter frame_limiter(kGBAFrameRate);
 
   // --- Main emulation loop (single-threaded) ---
   bool running = true;
 
   while(running) {
-    // Poll Dreamcast controller input
-    input.PollInput(*core);
+    frame_limiter.Run([&]() {
+      if(input.PollInput(*core)) {
+        running = false;
+        return;
+      }
 
-    // Run one GBA frame
-    core->RunForOneFrame();
+      core->RunForOneFrame();
+    }, [](float) {});
 
     // Pump audio stream (KOS needs periodic polling)
 #if NBA_DC_HAS_KOS
-    snd_stream_poll(SND_STREAM_INVALID); // poll all streams
-#endif
-
-    // Check for exit condition (Start + A + B + X + Y held simultaneously)
-#if NBA_DC_HAS_KOS
-    maple_device_t* cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
-    if(cont) {
-      cont_state_t* state = (cont_state_t*)maple_dev_status(cont);
-      if(state) {
-        const uint32 exit_combo = CONT_START | CONT_A | CONT_B | CONT_X | CONT_Y;
-        if((state->buttons & exit_combo) == exit_combo) {
-          running = false;
-        }
-      }
-    }
+    snd_stream_poll(SND_STREAM_INVALID);
+    vid_waitvbl();
 #endif
   }
 
   std::printf("Exiting NanoBoyAdvance.\n");
 
-  // Clean up audio before exit
-  audio_device->Close();
+  // Destroy the core before exit so APU closes audio exactly once.
+  core.reset();
 
   return 0;
 }

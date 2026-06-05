@@ -11,9 +11,12 @@ This roadmap outlines the planned milestones for completing the Dreamcast port o
 - [ ] Confirm audio/video timing is stable across long play sessions
 
 ### Milestone 1 Current Baseline (2026-06-05)
-- Boot path is fixed to `/cd/bios.bin` and `/cd/rom.gba`, then enters a single-threaded frame loop.
-- Exit path is fixed to Start + A + B + X + Y simultaneously.
-- BIOS and ROM load failures currently exit with a printed error code.
+- Boot path is fixed to `/cd/bios.bin` and `/cd/rom.gba`, then enters a single-threaded frame loop paced to ~59.73 Hz.
+- Save data is written to `/pc/rom.sav` on writable media instead of read-only `/cd`.
+- Exit path is Start + A + B + X + Y held for ~1 second (60 frames).
+- BIOS and ROM are validated before core/audio init; loader failures show on-screen text plus serial output, then wait for Start.
+- Loader read paths verify full file reads and ROM header validity (`fixed_96h == 0x96`).
+- Controller disconnect clears key state; opposing directional inputs are resolved to prevent stuck movement.
 - Desktop/CI-side Dreamcast build validation currently depends on KallistiOS tooling; local baseline build failed without `KOS_BASE` and Ninja.
 
 ### Reproducible Milestone 1 Failure Cases

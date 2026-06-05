@@ -70,6 +70,9 @@ The Dreamcast frontend expects:
 |------|------|-------------|
 | GBA BIOS | `/cd/bios.bin` | Required. Dump from real hardware or use unofficial BIOS |
 | GBA ROM  | `/cd/rom.gba`  | The ROM to run |
+| Save data | `/pc/rom.sav` | Writable path for cartridge backup saves (SD/IDE adapter) |
+
+Missing or invalid BIOS/ROM files show an on-screen error and wait for Start before returning to the loader.
 
 ## Hardware Mapping
 
@@ -82,18 +85,18 @@ The Dreamcast frontend expects:
 | Start           | Start      |
 | D (unused btn)  | Select     |
 | D-Pad           | D-Pad      |
-| Analog Stick    | D-Pad (with dead zone) |
+| Analog Stick    | D-Pad (dead zone: 32, ~25% of ±127 range) |
 
-**Exit combo**: Hold Start + A + B + X + Y simultaneously to exit.
+**Exit combo**: Hold Start + A + B + X + Y simultaneously for ~1 second to exit.
 
 ## Current Limitations
 
 - **No save states** – save state UI is not implemented yet
-- **No ROM browser** – a single ROM path is hardcoded; change `kROMPath` in `main.cc`
+- **No ROM browser** – a single ROM path is hardcoded to `/cd/rom.gba`
 - **No post-processing** – color correction, xBRZ upscaling, and LCD ghosting are disabled
 - **No HLE audio** – MP2K HLE is disabled for performance reasons
 - **Single-threaded** – the emulation loop runs on the main thread
-- **No VMU save support** – backup saves go to the filesystem only
+- **No VMU save support** – backup saves go to `/pc/rom.sav` on writable media
 
 ## Architecture
 

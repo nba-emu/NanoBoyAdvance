@@ -3,12 +3,13 @@
 
 #include "device/dc_video_device.hh"
 
+#include <algorithm>
+#include <cstring>
+
 #if NBA_DC_HAS_KOS
 #include <dc/video.h>
-#include <dc/pvr.h>
+#include <dc/bfont.h>
 #endif
-
-#include <cstring>
 
 namespace nba {
 
@@ -55,6 +56,38 @@ void DCVideoDevice::Draw(u32* buffer) {
   }
 #else
   (void)buffer;
+#endif
+}
+
+void DCVideoDevice::ShowFatalError(const char* message) {
+#if NBA_DC_HAS_KOS
+  if(!vram_base_ || !message) return;
+
+  std::memset(vram_base_, 0, kScreenWidth * kScreenHeight * sizeof(uint16));
+
+  int y = kOffsetY;
+  const char* line_start = message;
+
+  while(*line_start) {
+    const char* line_end = line_start;
+    while(*line_end && *line_end != '\n') {
+      line_end++;
+    }
+
+    char line[64];
+    const auto line_len = std::min<size_t>(line_end - line_start, sizeof(line) - 1);
+    std::memcpy(line, line_start, line_len);
+    line[line_len] = '\0';
+
+    bfont_draw_str_vram(kOffsetX, y, 0, line);
+    y += 24;
+
+    line_start = *line_end ? line_end + 1 : line_end;
+  }
+
+  vid_waitvbl();
+#else
+  (void)message;
 #endif
 }
 

@@ -23,6 +23,7 @@ struct DCAudioDevice : AudioDevice {
   void Reset() override;
   auto GetSampleRate() -> int override;
   void SetPause(bool value) override;
+  auto IsOpened() const -> bool { return opened_; }
 
 private:
 #if NBA_DC_HAS_KOS

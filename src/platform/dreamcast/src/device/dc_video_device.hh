@@ -23,6 +23,7 @@ struct DCVideoDevice : VideoDevice {
 
   bool Initialize();
   void Draw(u32* buffer) override;
+  void ShowFatalError(const char* message);
 
 private:
   static constexpr int kGBAWidth  = 240;
