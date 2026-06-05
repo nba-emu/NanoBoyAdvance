@@ -5,6 +5,10 @@ set(SOURCES
   src/device/dc_video_device.cc
   src/device/dc_audio_device.cc
   src/device/dc_input.cc
+  src/dc_config.cc
+  src/dc_ui.cc
+  src/dc_rom_browser.cc
+  src/dc_frontend.cc
   src/main.cc
 )
 
@@ -12,6 +16,11 @@ set(HEADERS
   src/device/dc_video_device.hh
   src/device/dc_audio_device.hh
   src/device/dc_input.hh
+  src/dc_config.hh
+  src/dc_paths.hh
+  src/dc_ui.hh
+  src/dc_rom_browser.hh
+  src/dc_frontend.hh
 )
 
 add_executable(NanoBoyAdvance-DC)

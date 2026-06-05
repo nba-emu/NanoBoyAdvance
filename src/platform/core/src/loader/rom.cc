@@ -20,6 +20,21 @@ using BackupType = Config::BackupType;
 
 static constexpr size_t kMaxROMSize = 32 * 1024 * 1024; // 32 MiB
 
+static auto ValidateROMData(std::vector<u8> const& file_data) -> ROMLoader::Result {
+  auto size = file_data.size();
+
+  if(size < sizeof(Header) || size > kMaxROMSize) {
+    return ROMLoader::Result::BadImage;
+  }
+
+  auto* header = reinterpret_cast<Header const*>(file_data.data());
+  if(header->fixed_96h != 0x96) {
+    return ROMLoader::Result::BadImage;
+  }
+
+  return ROMLoader::Result::Success;
+}
+
 auto ROMLoader::Load(
   std::unique_ptr<CoreBase>& core,
   fs::path const& path,
@@ -47,13 +62,9 @@ auto ROMLoader::Load(
 
   auto size = file_data.size();
 
-  if(size < sizeof(Header) || size > kMaxROMSize) {
-    return Result::BadImage;
-  }
-
-  auto* header = reinterpret_cast<Header*>(file_data.data());
-  if(header->fixed_96h != 0x96) {
-    return Result::BadImage;
+  auto validation = ValidateROMData(file_data);
+  if(validation != Result::Success) {
+    return validation;
   }
 
   auto game_info = GetGameInfo(file_data);
@@ -242,18 +253,7 @@ auto ROMLoader::Validate(fs::path const& path) -> Result {
     return read_status;
   }
 
-  auto size = file_data.size();
-
-  if(size < sizeof(Header) || size > kMaxROMSize) {
-    return Result::BadImage;
-  }
-
-  auto* header = reinterpret_cast<Header*>(file_data.data());
-  if(header->fixed_96h != 0x96) {
-    return Result::BadImage;
-  }
-
-  return Result::Success;
+  return ValidateROMData(file_data);
 }
 
 auto ROMLoader::Describe(Result result) -> const char* {

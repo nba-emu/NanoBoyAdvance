@@ -2,29 +2,29 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // Dreamcast frontend for NanoBoyAdvance.
-// Single-threaded main loop: poll input → run one frame → render → audio pump.
-// ROMs and BIOS are loaded from the filesystem (SD card via DreamSDK, or cd).
 
 #include <nba/core.hh>
 #include <platform/loader/bios.hh>
 #include <platform/loader/rom.hh>
-#include <platform/config.hh>
 #include <platform/frame_limiter.hh>
 
-#include <atom/logger/logger.hh>
-
+#include "dc_config.hh"
+#include "dc_frontend.hh"
+#include "dc_paths.hh"
+#include "dc_rom_browser.hh"
+#include "dc_ui.hh"
 #include "device/dc_video_device.hh"
 #include "device/dc_audio_device.hh"
 #include "device/dc_input.hh"
 
-#include <memory>
 #include <cstdio>
 #include <exception>
+#include <memory>
+#include <string>
 
 #if defined(PLATFORM_DREAMCAST) && __has_include(<kos.h>)
 #define NBA_DC_HAS_KOS 1
 #include <kos.h>
-#include <dc/maple/controller.h>
 KOS_INIT_FLAGS(INIT_DEFAULT);
 #else
 #define NBA_DC_HAS_KOS 0
@@ -32,133 +32,95 @@ KOS_INIT_FLAGS(INIT_DEFAULT);
 
 using namespace nba;
 
-// Hardcoded paths for the Dreamcast filesystem.
-// When using DreamSDK with an SD adapter these resolve to the SD card root.
-static constexpr const char* kBIOSPath = "/cd/bios.bin";
-static constexpr const char* kROMPath  = "/cd/rom.gba";
-static constexpr const char* kSavePath = "/pc/rom.sav";
-
 static constexpr float kGBAFrameRate =
   static_cast<float>(16777216) / static_cast<float>(280896);
 
-#if NBA_DC_HAS_KOS
-static void WaitForStartToExit() {
-  std::printf("Press Start to return to the loader.\n");
+static auto LoadEmulator(
+  DCUI& ui,
+  DCInput& input,
+  std::shared_ptr<DreamcastConfig> config,
+  std::shared_ptr<DCVideoDevice> video_device,
+  fs::path const& rom_path
+) -> bool {
+  const auto bios_path = config->bios_path;
 
-  while(true) {
-    maple_device_t* cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
-    if(cont) {
-      cont_state_t* state = (cont_state_t*)maple_dev_status(cont);
-      if(state && (state->buttons & CONT_START)) {
-        break;
-      }
-    }
-
-    vid_waitvbl();
-  }
-}
-#endif
-
-static auto FailFatal(DCVideoDevice& video, const char* message) -> int {
-  std::printf("Error: %s\n", message);
-  video.ShowFatalError(message);
-
-#if NBA_DC_HAS_KOS
-  WaitForStartToExit();
-#endif
-
-  return 1;
-}
-
-int main(int argc, char** argv) {
-  (void)argc;
-  (void)argv;
-
-  std::printf("NanoBoyAdvance Dreamcast Edition\n");
-  std::printf("Initializing...\n");
-
-  auto video_device = std::make_shared<DCVideoDevice>();
-  if(!video_device->Initialize()) {
-    std::printf("Error: failed to initialize video device.\n");
-    return 1;
-  }
-
-  // Validate media before opening audio or creating the core.
-  auto bios_result = BIOSLoader::Validate(kBIOSPath);
+  auto bios_result = BIOSLoader::Validate(bios_path);
   if(bios_result != BIOSLoader::Result::Success) {
-    char message[128];
+    char message[160];
     std::snprintf(message, sizeof(message), "%s\n%s",
-                  BIOSLoader::Describe(bios_result), kBIOSPath);
-    return FailFatal(*video_device, message);
+                  BIOSLoader::Describe(bios_result), bios_path.c_str());
+    ui.ShowFatalError(message, input);
+    return false;
   }
 
-  auto rom_result = ROMLoader::Validate(kROMPath);
+  auto rom_result = ROMLoader::Validate(rom_path);
   if(rom_result != ROMLoader::Result::Success) {
-    char message[128];
+    char message[160];
     std::snprintf(message, sizeof(message), "%s\n%s",
-                  ROMLoader::Describe(rom_result), kROMPath);
-    return FailFatal(*video_device, message);
+                  ROMLoader::Describe(rom_result), rom_path.c_str());
+    ui.ShowFatalError(message, input);
+    return false;
   }
 
-  // --- Create platform config with Dreamcast-appropriate defaults ---
-  auto config = std::make_shared<PlatformConfig>();
-  config->audio.mp2k_hle_enable = false; // Disable HLE audio (too expensive)
-  config->audio.interpolation = Config::Audio::Interpolation::Cosine; // Lightest resampler
-  config->video.filter = PlatformConfig::Video::Filter::Nearest;
-  config->video.color  = PlatformConfig::Video::Color::No; // Skip color correction
-  config->video.lcd_ghosting = false; // Skip LCD ghosting (no shader support)
-  config->video_dev = video_device;
+  if(!EnsureDirectory(config->save_folder)) {
+    ui.ShowFatalError("Could not create save folder", input);
+    return false;
+  }
+
+  const auto save_path = GetSavePath(*config, rom_path);
+
+  ui.ClearScreen();
+  ui.DrawTitle("Loading");
+  ui.DrawTextMultiline(48, 120, std::string{"BIOS: "} + bios_path + "\nROM: " + rom_path.string() +
+                                   "\nSave: " + save_path.string());
+  ui.DrawStatusBar("Loading game data...");
+  ui.Present();
 
   auto audio_device = std::make_shared<DCAudioDevice>();
+  audio_device->SetBufferSize(config->audio_buffer_size);
   config->audio_dev = audio_device;
+  config->video_dev = video_device;
 
-  // --- Create emulator core ---
   auto core = CreateCore(config);
-  if(!core) {
-    return FailFatal(*video_device, "Failed to create emulator core");
+  if(!core || !audio_device->IsOpened()) {
+    ui.ShowFatalError("Failed to initialize emulator core", input);
+    return false;
   }
 
-  if(!audio_device->IsOpened()) {
-    return FailFatal(*video_device, "Audio device failed to open");
-  }
-
-  // --- Load BIOS ---
-  bios_result = BIOSLoader::Load(core, kBIOSPath);
+  bios_result = BIOSLoader::Load(core, bios_path);
   if(bios_result != BIOSLoader::Result::Success) {
-    char message[128];
-    std::snprintf(message, sizeof(message), "%s\n%s",
-                  BIOSLoader::Describe(bios_result), kBIOSPath);
-    return FailFatal(*video_device, message);
-  }
-  std::printf("BIOS loaded from %s\n", kBIOSPath);
-
-  // --- Load ROM ---
-  try {
-    rom_result = ROMLoader::Load(core, kROMPath, kSavePath);
-  } catch(const std::exception& exception) {
     char message[160];
+    std::snprintf(message, sizeof(message), "%s\n%s",
+                  BIOSLoader::Describe(bios_result), bios_path.c_str());
+    ui.ShowFatalError(message, input);
+    return false;
+  }
+
+  try {
+    rom_result = ROMLoader::Load(
+      core,
+      rom_path,
+      save_path,
+      config->cartridge.backup_type
+    );
+  } catch(const std::exception& exception) {
+    char message[192];
     std::snprintf(message, sizeof(message), "Save file error\n%s", exception.what());
-    return FailFatal(*video_device, message);
+    ui.ShowFatalError(message, input);
+    return false;
   }
 
   if(rom_result != ROMLoader::Result::Success) {
-    char message[128];
+    char message[160];
     std::snprintf(message, sizeof(message), "%s\n%s",
-                  ROMLoader::Describe(rom_result), kROMPath);
-    return FailFatal(*video_device, message);
+                  ROMLoader::Describe(rom_result), rom_path.c_str());
+    ui.ShowFatalError(message, input);
+    return false;
   }
-  std::printf("ROM loaded from %s\n", kROMPath);
-  std::printf("Save path: %s\n", kSavePath);
 
-  // --- Reset core ---
   core->Reset();
-  std::printf("Core reset. Entering main loop.\n");
 
-  // --- Input handler ---
-  DCInput input;
   FrameLimiter frame_limiter(kGBAFrameRate);
-
-  // --- Main emulation loop (single-threaded) ---
   bool running = true;
 
   while(running) {
@@ -168,20 +130,71 @@ int main(int argc, char** argv) {
         return;
       }
 
-      core->RunForOneFrame();
+      for(int skip = 0; skip <= config->frame_skip; skip++) {
+        core->RunForOneFrame();
+      }
     }, [](float) {});
 
-    // Pump audio stream (KOS needs periodic polling)
 #if NBA_DC_HAS_KOS
     snd_stream_poll(SND_STREAM_INVALID);
+
+    if(input.IsExitHintActive()) {
+      video_device->DrawOverlay("Hold Start+A+B+X+Y to exit");
+    }
+
     vid_waitvbl();
 #endif
   }
 
-  std::printf("Exiting NanoBoyAdvance.\n");
-
-  // Destroy the core before exit so APU closes audio exactly once.
+  ui.ClearScreen();
+  ui.DrawOverlay("Returning to menu...");
   core.reset();
+  return true;
+}
+
+int main(int argc, char** argv) {
+  (void)argc;
+  (void)argv;
+
+  std::printf("NanoBoyAdvance Dreamcast Edition\n");
+
+  auto video_device = std::make_shared<DCVideoDevice>();
+  if(!video_device->Initialize()) {
+    std::printf("Error: failed to initialize video device.\n");
+    return 1;
+  }
+
+  DCUI ui{*video_device};
+  DCInput input;
+
+  auto config = std::make_shared<DreamcastConfig>();
+  config->LoadDreamcast(DreamcastConfig::kDefaultConfigPath);
+  EnsureDirectory(config->save_folder);
+  EnsureDirectory(config->rom_folder);
+
+  ui.ClearScreen();
+  ui.DrawTitle("NanoBoyAdvance");
+  ui.DrawTextCentered(120, "Dreamcast Edition");
+  ui.DrawStatusBar("Loading frontend...");
+  ui.Present();
+
+  while(true) {
+    auto entries = ROMBrowser::Scan(*config);
+    auto frontend_result = DCFrontend::Run(ui, input, *config, entries);
+
+    if(frontend_result.action == DCFrontend::Action::ReturnToLoader) {
+      ui.ShowMessage("Goodbye", "Returning to loader.", input, false);
+      break;
+    }
+
+    if(frontend_result.action == DCFrontend::Action::OpenSettings) {
+      continue;
+    }
+
+    if(frontend_result.action == DCFrontend::Action::LaunchROM) {
+      LoadEmulator(ui, input, config, video_device, frontend_result.rom_path);
+    }
+  }
 
   return 0;
 }

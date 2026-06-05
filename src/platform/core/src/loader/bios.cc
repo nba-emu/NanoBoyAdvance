@@ -10,67 +10,51 @@ namespace nba {
 
 static constexpr size_t kBIOSSize = 0x4000;
 
-auto BIOSLoader::Load(
-  std::unique_ptr<CoreBase>& core,
-  fs::path const& path
-) -> Result {
+static auto ReadBIOSFile(fs::path const& path, std::vector<u8>& file_data) -> BIOSLoader::Result {
   if(!fs::exists(path)) {
-    return Result::CannotFindFile;
+    return BIOSLoader::Result::CannotFindFile;
   }
 
   if(fs::is_directory(path)) {
-    return Result::CannotOpenFile;
+    return BIOSLoader::Result::CannotOpenFile;
   }
 
   auto size = fs::file_size(path);
   if(size != kBIOSSize) {
-    return Result::BadImage;
+    return BIOSLoader::Result::BadImage;
   }
 
   auto file_stream = std::ifstream{path.c_str(), std::ios::binary};
   if(!file_stream.good()) {
-    return Result::CannotOpenFile;
+    return BIOSLoader::Result::CannotOpenFile;
   }
 
-  std::vector<u8> file_data;
   file_data.resize(size);
-  file_stream.read((char*)file_data.data(), size);
+  file_stream.read(reinterpret_cast<char*>(file_data.data()), size);
   if(file_stream.gcount() != static_cast<std::streamsize>(size)) {
-    return Result::CannotOpenFile;
+    return BIOSLoader::Result::CannotOpenFile;
   }
-  file_stream.close();
+
+  return BIOSLoader::Result::Success;
+}
+
+auto BIOSLoader::Load(
+  std::unique_ptr<CoreBase>& core,
+  fs::path const& path
+) -> Result {
+  std::vector<u8> file_data;
+  auto result = ReadBIOSFile(path, file_data);
+  if(result != Result::Success) {
+    return result;
+  }
 
   core->Attach(file_data);
   return Result::Success;
 }
 
 auto BIOSLoader::Validate(fs::path const& path) -> Result {
-  if(!fs::exists(path)) {
-    return Result::CannotFindFile;
-  }
-
-  if(fs::is_directory(path)) {
-    return Result::CannotOpenFile;
-  }
-
-  auto size = fs::file_size(path);
-  if(size != kBIOSSize) {
-    return Result::BadImage;
-  }
-
-  auto file_stream = std::ifstream{path.c_str(), std::ios::binary};
-  if(!file_stream.good()) {
-    return Result::CannotOpenFile;
-  }
-
   std::vector<u8> file_data;
-  file_data.resize(size);
-  file_stream.read((char*)file_data.data(), size);
-  if(file_stream.gcount() != static_cast<std::streamsize>(size)) {
-    return Result::CannotOpenFile;
-  }
-
-  return Result::Success;
+  return ReadBIOSFile(path, file_data);
 }
 
 auto BIOSLoader::Describe(Result result) -> const char* {

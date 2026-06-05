@@ -29,9 +29,9 @@ This fork of NanoBoyAdvance is a **Dreamcast-only port**.
 | Audio Output | Working | snd_stream output; MP2K HLE disabled |
 | Video Output | Working | PVR framebuffer |
 | Input | Working | Maple controller |
-| Save Files | Partial | Filesystem at `/pc/rom.sav`, no VMU support yet |
+| Save Files | Partial | Per-ROM saves at `/pc/saves`, no VMU support yet |
 | Save States | Missing | UI not implemented |
-| ROM Browser | Missing | Hardcoded to `/cd/rom.gba` currently |
+| ROM Browser | Working | Scans `/pc/roms` and `/cd` |
 
 ## Running & Compiling
 For instructions on how to build and run this port on the Sega Dreamcast, please see **[DREAMCAST.md](DREAMCAST.md)**.

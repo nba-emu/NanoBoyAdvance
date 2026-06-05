@@ -5,6 +5,8 @@
 
 #include <nba/device/video_device.hh>
 
+#include <string_view>
+
 #if defined(PLATFORM_DREAMCAST) && __has_include(<kos.h>)
 #define NBA_DC_HAS_KOS 1
 #include <kos.h>
@@ -23,6 +25,16 @@ struct DCVideoDevice : VideoDevice {
 
   bool Initialize();
   void Draw(u32* buffer) override;
+
+  void ClearScreen();
+  void DrawText(int x, int y, std::string_view text);
+  void DrawTextCentered(int y, std::string_view text);
+  void DrawTextMultiline(int x, int y, std::string_view text);
+  void DrawStatusBar(std::string_view text);
+  void DrawOverlay(std::string_view text);
+  void Present();
+
+  // Legacy helper retained for compatibility with early startup paths.
   void ShowFatalError(const char* message);
 
 private:
@@ -33,6 +45,9 @@ private:
   static constexpr int kScale = 2;
   static constexpr int kOffsetX = (kScreenWidth  - kGBAWidth  * kScale) / 2;
   static constexpr int kOffsetY = (kScreenHeight - kGBAHeight * kScale) / 2;
+  static constexpr int kFontWidth = 12;
+  static constexpr int kLineHeight = 24;
+  static constexpr int kStatusBarY = 448;
 
 #if NBA_DC_HAS_KOS
   uint16* vram_base_ = nullptr;
