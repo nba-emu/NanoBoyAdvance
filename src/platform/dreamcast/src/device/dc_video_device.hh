@@ -35,9 +35,6 @@ struct DCVideoDevice : VideoDevice {
   void DrawOverlay(std::string_view text);
   void Present();
 
-  // Legacy helper retained for compatibility with early startup paths.
-  void ShowFatalError(const char* message);
-
 private:
   static constexpr int kGBAWidth  = 240;
   static constexpr int kGBAHeight = 160;

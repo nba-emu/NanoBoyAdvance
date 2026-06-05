@@ -122,6 +122,7 @@ static auto LoadEmulator(
 
   FrameLimiter frame_limiter(kGBAFrameRate);
   bool running = true;
+  float measured_fps = 0.0f;
 
   while(running) {
     frame_limiter.Run([&]() {
@@ -133,10 +134,21 @@ static auto LoadEmulator(
       for(int skip = 0; skip <= config->frame_skip; skip++) {
         core->RunForOneFrame();
       }
-    }, [](float) {});
+    }, [&](float fps) {
+      measured_fps = fps;
+    });
 
 #if NBA_DC_HAS_KOS
     snd_stream_poll(SND_STREAM_INVALID);
+
+    if(config->show_fps) {
+      // Persistent benchmark readout in the top-left margin (outside the
+      // centered GBA frame, so the per-frame blit never overwrites it).
+      // Fixed width keeps stale digits from lingering as the value changes.
+      char fps_text[24];
+      std::snprintf(fps_text, sizeof(fps_text), "FPS %5.1f", measured_fps);
+      video_device->DrawText(8, 8, fps_text);
+    }
 
     if(input.IsExitHintActive()) {
       video_device->DrawOverlay("Hold Start+A+B+X+Y to exit");

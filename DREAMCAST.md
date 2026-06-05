@@ -105,11 +105,17 @@ Writable `/pc` paths require an SD/IDE adapter or equivalent host filesystem mou
 
 Configurable options:
 
+- **Performance** (`Accuracy` / `Balanced` / `Speed` — see Performance Profiles below)
+- **Show FPS** (`On` / `Off` — overlays the measured frame rate during play)
 - **Frame skip** (0–3 extra emulated frames per display frame)
 - **Audio buffer** (2048 / 4096 / 8192 bytes — lower = less latency, higher = safer)
 - **BIOS path** (`/cd/bios.bin` or `/pc/bios.bin`)
 - **ROM folder** (`/pc/roms` or `/cd`)
 - **Save folder** (`/pc/saves` or `/pc`)
+
+Selecting a **Performance** profile rewrites the audio/video/frame-skip knobs
+to that profile's preset; you can then fine-tune Frame skip and Audio buffer
+afterward without losing the rest of the preset.
 
 ## Hardware Mapping (Gameplay)
 
@@ -132,8 +138,7 @@ Errors and loading screens show on-screen text with path details. Press Start to
 
 - **No save states** – save state UI is not implemented yet
 - **No VMU saves** – filesystem saves only
-- **No post-processing** – color correction, xBRZ upscaling, and LCD ghosting are disabled
-- **No HLE audio** – MP2K HLE is disabled for performance reasons
+- **No post-processing** – color correction and xBRZ upscaling are disabled (LCD ghosting is enabled only by the Accuracy profile)
 - **Single-threaded** – the emulation loop runs on the main thread
 
 ## Architecture
@@ -160,6 +165,65 @@ The Dreamcast backend reuses the core emulator library (`nba`) and the platform-
 
 The Dreamcast SH4 at 200 MHz is significantly slower than modern desktop CPUs. Expect performance challenges with cycle-accurate GBA emulation. Built-in tuning options:
 
+- Performance profile (settings menu)
 - Frame skip (settings menu)
 - Audio buffer size (settings menu)
 - SH4-specific compiler flags (`-m4-single-only` is already used)
+
+### Performance Profiles
+
+The **Performance** setting selects a coherent preset of the accuracy/speed
+knobs. Pick the highest-fidelity profile a given game can sustain at full speed.
+
+| Profile      | Audio mixing   | Interpolation | Frame skip | Audio buffer | LCD ghosting |
+|--------------|----------------|---------------|------------|--------------|--------------|
+| **Accuracy** | Native (LLE)   | Sinc-64       | 0          | 8192         | On           |
+| **Balanced** | Native (LLE)   | Cosine        | 0          | 4096         | Off          |
+| **Speed**    | MP2K HLE       | Cosine        | 1          | 8192         | Off          |
+
+- **Accuracy** – closest to real GBA behavior; best for light 2D titles that
+  already hold full speed and benefit from accurate audio.
+- **Balanced** (default) – native audio with cheap interpolation and no frame
+  skipping. Good fidelity with CPU headroom on most games.
+- **Speed** – HLE audio bypasses the GBA sound CPU and one skipped frame
+  reclaims headroom for the heaviest titles (3D/Mode-7-heavy games).
+
+Switching profiles overwrites Frame skip and Audio buffer; adjust those rows
+afterward to fine-tune within a profile.
+
+### FPS Overlay / Benchmarking
+
+Enable **Show FPS** in settings to overlay the measured display frame rate in
+the top-left corner during play. The reading is averaged once per second by the
+frame limiter. A title running at full speed reports ~59.7 FPS (the GBA's native
+rate); sustained readings below that indicate the SH4 cannot keep up at the
+current profile.
+
+### Repeatable Benchmark Workflow
+
+To compare profiles or measure a code change consistently:
+
+1. Use the same retail Dreamcast hardware and the same BIOS dump for every run.
+2. Pick a fixed in-game scene per ROM (e.g. a specific level intro or a heavy
+   battle/effect screen) and reach it the same way each time.
+3. Enable **Show FPS** and let the scene run untouched for ~30 seconds, then
+   record the steady-state FPS reading.
+4. Repeat across the Accuracy / Balanced / Speed profiles, changing only the
+   profile between runs.
+5. Note the lowest profile that holds ~59.7 FPS for that scene; that is the
+   game's recommended profile in the compatibility table below.
+
+A suggested benchmark set spans the GBA workload range: a light 2D title, a
+sprite-heavy action title, a Mode-7 / pseudo-3D title, and an audio-heavy title.
+Record actual ROMs used in `COMPATIBILITY.md` so results stay reproducible.
+
+### Compatibility Tiers
+
+Per-game results are tracked in [`COMPATIBILITY.md`](COMPATIBILITY.md) using
+these tiers:
+
+| Tier | Meaning |
+|------|---------|
+| **Playable** | Holds ~full speed on at least one profile with no game-breaking issues. |
+| **Runs** | Boots and is playable but with noticeable slowdown or audio/video artifacts. |
+| **Broken** | Fails to boot, hangs, or has issues that prevent normal play. |

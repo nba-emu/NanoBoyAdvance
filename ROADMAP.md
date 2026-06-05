@@ -75,6 +75,34 @@ This roadmap outlines the planned milestones for completing the Dreamcast port o
 - [ ] Add optional performance profiles (accuracy-first vs speed-first)
 - [ ] Document per-game compatibility tiers and known regressions
 
+### Milestone 3 Current Baseline (2026-06-05)
+- Performance profiles (`Accuracy` / `Balanced` / `Speed`) are selectable in the
+  settings menu and persisted to `/pc/nba-dc.toml`. Each profile applies a
+  coherent preset of MP2K HLE, audio interpolation, frame skip, audio buffer,
+  and LCD ghosting; Balanced is the default.
+- A `Show FPS` toggle overlays the frame-limiter's measured frame rate during
+  play to support repeatable benchmarking.
+- The benchmark workflow, suggested test-ROM workload set, and compatibility
+  tiers are documented in `DREAMCAST.md` and tracked in `COMPATIBILITY.md`.
+- Concrete benchmark ROMs, per-game results, recommended profiles, and known
+  regressions remain to be filled in from on-device validation.
+
+### Milestone 3 Execution Order (Required)
+1. Lock the benchmark ROM set and per-ROM benchmark scenes first.
+2. Capture baseline FPS per profile on-device second, recording in `COMPATIBILITY.md`.
+3. Tune CPU/audio/video hot paths against those baselines third.
+
+### Milestone 3 Acceptance Criteria
+- **Repeatable benchmark set**
+  - A fixed ROM/workload set and per-ROM scenes are recorded in `COMPATIBILITY.md`.
+  - Re-running a scene on the same hardware/profile reproduces FPS within a small margin.
+- **Hot-path tuning**
+  - Measured FPS improves (or holds) versus the recorded baseline after tuning, with no accuracy regression on the Accuracy profile.
+- **Performance profiles**
+  - Accuracy/Balanced/Speed profiles select and persist correctly and visibly change runtime behavior on-device.
+- **Documented compatibility**
+  - Each benchmarked game has a tier, a recommended profile, and any known regressions recorded in `COMPATIBILITY.md`.
+
 ## Milestone 4: Release Packaging + Contributor Workflow
 **Goal:** Finalize the project for public releases and outside contributions.
 - [ ] Standardize build + image creation into one documented release process
