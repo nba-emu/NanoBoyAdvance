@@ -62,15 +62,23 @@ static auto AddDirectoryEntries(
   const auto directory_string = directory.string();
 
   // Use POSIX opendir/readdir for all Dreamcast paths.  On real KallistiOS
-  // hardware this enumerates both /pc and /cd correctly; ISO9660 filenames
-  // with version suffixes (e.g. "GAME.GBA;1") are handled by HasGBAExtension.
+  // hardware this enumerates both /pc and /cd correctly.  ISO9660 discs may
+  // expose filenames with version suffixes (e.g. "GAME.GBA;1"); strip the
+  // suffix from the path so that fopen always receives a clean name.
   if(auto* dir = opendir(directory_string.c_str())) {
     while(auto* entry = readdir(dir)) {
       if(std::strcmp(entry->d_name, ".") == 0 || std::strcmp(entry->d_name, "..") == 0) {
         continue;
       }
 
-      const auto name = std::string{entry->d_name};
+      auto name = std::string{entry->d_name};
+
+      // Strip ISO9660 version suffix from the filename used as the file path.
+      const auto semicolon_pos = name.rfind(';');
+      if(semicolon_pos != std::string::npos) {
+        name.resize(semicolon_pos);
+      }
+
       if(!HasGBAExtension(name)) {
         continue;
       }

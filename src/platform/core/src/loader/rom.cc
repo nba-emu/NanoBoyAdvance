@@ -189,6 +189,14 @@ auto ROMLoader::Load(
       std::move(gpio),
       rom_mask
     });
+
+    // The ROM constructor opens the file for paged reads.  If fopen failed
+    // (e.g. disc ejected between validation and load), the ROM object is
+    // invalid; report the error rather than running with open-bus behavior.
+    if(!core->GetROM().IsPagedROM()) {
+      return Result::CannotOpenFile;
+    }
+
     return Result::Success;
   }
 #endif

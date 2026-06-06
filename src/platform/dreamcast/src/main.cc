@@ -142,8 +142,18 @@ static auto LoadEmulator(
 
   // Save directory may not be writable on FlyCast; continue anyway
 
-  breadcrumb("Phase 3: Save path", "CD ROMs use memory-backed /pc saves");
+  breadcrumb("Phase 3: Save path", "Creating save directory");
   const auto save_path = GetSavePath(*config, rom_path);
+
+  // Ensure the save directory exists before creating backup files.
+  // EnsureDirectoryPOSIX uses POSIX mkdir which works through the KOS
+  // virtual filesystem on both real hardware and Flycast.
+  {
+    const auto save_dir = save_path.parent_path().string();
+    if(!save_dir.empty()) {
+      EnsureDirectoryPOSIX(save_dir);
+    }
+  }
 
   ui.ClearScreen();
   ui.DrawTitle("Loading");
