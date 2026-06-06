@@ -5,6 +5,7 @@
 
 #include <nba/integer.hh>
 #include <algorithm>
+#include <cstdio>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -28,10 +29,57 @@ struct BackupFile {
 #if defined(PLATFORM_DREAMCAST)
     const auto save_path_string = save_path.string();
     if(save_path_string.rfind("/pc/", 0) == 0) {
-      file->save_size = default_size;
+      // On Dreamcast /pc/ paths std::filesystem is unreliable; use the C file
+      // API which works through KOS's virtual filesystem layer.
+      file->save_size = static_cast<size_t>(default_size);
       file->memory.reset(new u8[default_size]);
-      file->auto_update = false;
-      file->MemorySet(0, default_size, 0xFF);
+      std::memset(file->memory.get(), 0xFF, default_size);
+      file->auto_update = false; // default; upgraded below if stream opens
+
+      // Attempt to load an existing save file.
+      bool loaded_existing = false;
+      if(auto* f = std::fopen(save_path_string.c_str(), "rb")) {
+        std::fseek(f, 0, SEEK_END);
+        const long fsz = std::ftell(f);
+        if(fsz > 0) {
+          const size_t save_size = static_cast<size_t>(fsz) & ~size_t(63);
+          const auto begin = valid_sizes.begin();
+          const auto end   = valid_sizes.end();
+          if(std::find(begin, end, save_size) != end) {
+            std::fseek(f, 0, SEEK_SET);
+            std::fread(file->memory.get(), 1, save_size, f);
+            file->save_size = save_size;
+            default_size = static_cast<int>(save_size);
+            loaded_existing = true;
+          }
+        }
+        std::fclose(f);
+      }
+
+      // Try to open the stream for write-back.  On real KallistiOS hardware
+      // this works (std::fstream delegates to fopen); on Flycast the stream
+      // may fail to open, in which case save data remains in-memory only.
+      //
+      // If we loaded an existing valid save, open in-place without truncating
+      // so we only rewrite bytes that actually change (via Update / auto_update).
+      // If no valid save existed, truncate to create a fresh file.
+      if(loaded_existing) {
+        file->stream.open(save_path_string.c_str(), flags);
+      } else {
+        file->stream.open(save_path_string.c_str(), flags | std::ios::trunc);
+        if(file->stream.good()) {
+          // Write the initial 0xFF-filled block so the file has the right size.
+          file->stream.write(
+            reinterpret_cast<const char*>(file->memory.get()),
+            static_cast<std::streamsize>(file->save_size)
+          );
+        }
+      }
+
+      if(file->stream.good()) {
+        file->auto_update = true;
+      }
+
       return file;
     }
 #endif
@@ -106,8 +154,8 @@ struct BackupFile {
     if((index + length) > save_size) {
       throw std::runtime_error("BackupFile: out-of-bounds index while updating file.");
     }
-    stream.seekg(index);
-    stream.write((char*)&memory[index], length);
+    stream.seekp(static_cast<std::streamoff>(index));
+    stream.write(reinterpret_cast<const char*>(&memory[index]), static_cast<std::streamsize>(length));
   }
 
   auto Buffer() -> u8* {

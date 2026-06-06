@@ -6,6 +6,13 @@
 #include <nba/rom/gpio/solar_sensor.hh>
 #include <atom/logger/logger.hh>
 
+#if defined(PLATFORM_DREAMCAST)
+#include <algorithm>
+#include <cstdio>
+#include <cstring>
+#include <vector>
+#endif
+
 #include "core.hh"
 
 namespace nba {
@@ -119,35 +126,108 @@ auto Core::SearchSoundMainRAM() -> u32 {
   static constexpr u32 kSoundMainCRC32 = 0x27EA7FCF;
   static constexpr int kSoundMainLength = 48;
 
-  auto& rom = bus.memory.rom.GetRawROM();
+  auto& rom_vec = bus.memory.rom.GetRawROM();
 
-  if(rom.size() < kSoundMainLength) {
+  if(rom_vec.size() >= kSoundMainLength) {
+    u32 address_max = rom_vec.size() - kSoundMainLength;
+
+    for(u32 address = 0; address <= address_max; address += sizeof(u16)) {
+      auto crc = crc32(&rom_vec[address], kSoundMainLength);
+
+      if(crc == kSoundMainCRC32) {
+        /* We have found SoundMain().
+         * The pointer to SoundMainRAM() is stored at offset 0x74.
+         */
+        address = read<u32>(rom_vec.data(), address + 0x74);
+        if(address & 1) {
+          address &= ~1;
+          address += sizeof(u16) * 2;
+        } else {
+          address &= ~3;
+          address += sizeof(u32) * 2;
+        }
+        return address;
+      }
+    }
+
     return 0xFFFFFFFF;
   }
 
-  u32 address_max = rom.size() - kSoundMainLength;
+#if defined(PLATFORM_DREAMCAST)
+  return SearchSoundMainRAMFromFile();
+#else
+  return 0xFFFFFFFF;
+#endif
+}
 
-  for(u32 address = 0; address <= address_max; address += sizeof(u16)) {
-    auto crc = crc32(&rom[address], kSoundMainLength);
+#if defined(PLATFORM_DREAMCAST)
+auto Core::SearchSoundMainRAMFromFile() -> u32 {
+  static constexpr u32 kSoundMainCRC32 = 0x27EA7FCF;
+  static constexpr int kSoundMainLength = 48;
 
-    if(crc == kSoundMainCRC32) {
-      /* We have found SoundMain().
-       * The pointer to SoundMainRAM() is stored at offset 0x74.
-       */
-      address = read<u32>(rom.data(), address + 0x74);
-      if(address & 1) {
-        address &= ~1;
-        address += sizeof(u16) * 2;
-      } else {
-        address &= ~3;
-        address += sizeof(u32) * 2;
-      }
-      return address;
-    }
+  // After finding SoundMain, we read a pointer at offset 0x74 (116 bytes).
+  // The overlap past kChunkSize must cover both the 48-byte CRC window AND
+  // the 4-byte pointer read at offset 0x74, giving 0x74 + 4 = 120 bytes.
+  static constexpr size_t kChunkSize   = 64 * 1024;
+  static constexpr size_t kOverlapSize = 0x74 + sizeof(u32); // 120 bytes
+
+  // MP2K SoundMain lives in the game-engine portion of ROM.  Capping the
+  // search at 8 MiB covers virtually all GBA titles while bounding the CD
+  // read time to a few seconds instead of scanning the full 16+ MiB.
+  static constexpr size_t kMaxSearchSize = 8 * 1024 * 1024;
+
+  auto& rom = bus.memory.rom;
+  if(!rom.IsPagedROM()) {
+    return 0xFFFFFFFF;
   }
 
-  return 0xFFFFFFFF;
+  const size_t rom_size   = std::min(rom.GetPagedROMSize(), kMaxSearchSize);
+  const auto& rom_path    = rom.GetPagedROMPath();
+
+  auto* file = std::fopen(rom_path.c_str(), "rb");
+  if(!file) {
+    return 0xFFFFFFFF;
+  }
+
+  std::vector<u8> chunk(kChunkSize + kOverlapSize);
+  u32 result = 0xFFFFFFFF;
+  size_t file_offset = 0;
+
+  while(file_offset < rom_size && result == 0xFFFFFFFF) {
+    const size_t to_read = std::min(kChunkSize + kOverlapSize, rom_size - file_offset);
+    if(std::fseek(file, static_cast<long>(file_offset), SEEK_SET) != 0) break;
+    const size_t bytes_read = std::fread(chunk.data(), 1, to_read, file);
+    if(bytes_read < static_cast<size_t>(kSoundMainLength)) break;
+
+    // Only scan positions where the full 48-byte CRC window AND the 120-byte
+    // pointer read both fit within the buffer we actually read.
+    const size_t safe_limit = (bytes_read >= kOverlapSize)
+      ? std::min(bytes_read - kOverlapSize, kChunkSize)
+      : 0;
+
+    for(size_t i = 0; i <= safe_limit; i += sizeof(u16)) {
+      if(crc32(&chunk[i], kSoundMainLength) == kSoundMainCRC32) {
+        u32 address;
+        std::memcpy(&address, &chunk[i + 0x74], sizeof(u32));
+        if(address & 1) {
+          address &= ~1u;
+          address += sizeof(u16) * 2;
+        } else {
+          address &= ~3u;
+          address += sizeof(u32) * 2;
+        }
+        result = address;
+        break;
+      }
+    }
+
+    file_offset += kChunkSize;
+  }
+
+  std::fclose(file);
+  return result;
 }
+#endif
 
 auto Core::GetROM() -> ROM& {
   return bus.memory.rom;

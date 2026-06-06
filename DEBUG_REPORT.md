@@ -19,11 +19,15 @@
 ## Current Local Changes
 
 - `src/platform/dreamcast/src/dc_rom_browser.cc`
-  - Adds Dreamcast-specific directory fallback using POSIX `opendir`.
-  - Special-cases `/cd` to avoid dangerous directory enumeration in Flycast.
-  - Currently inserts only `Kirby.gba` for the test CDI.
-  - Skips menu-time validation for `/cd` candidates to avoid reading a 16 MiB
-    ROM just to populate the browser.
+  - Uses POSIX `opendir`/`readdir` for all directories including `/cd`.
+    On real KallistiOS hardware this correctly enumerates the disc root.
+  - Removed the hardcoded `Kirby.gba` candidate list; any `.gba` / `.GBA`
+    file present in `/cd` or `/pc/roms` is now discovered automatically.
+  - ISO9660 version suffixes (e.g. `GAME.GBA;1`) are stripped from display
+    labels but preserved in the file path for `fopen`.
+  - `last_rom` existence check uses `fopen` instead of `fs::exists` for
+    `/cd` and `/pc` paths, which may not work through the KOS VFS layer.
+  - Validation of ROM entries now only reads the 228-byte header (see below).
 
 - `src/platform/core/src/loader/rom.cc`
   - Adds a Dreamcast-specific `fopen`/`fread` path for `/cd` and `/pc`.
@@ -31,6 +35,24 @@
     size without allocating and reading the whole cartridge.
   - Dreamcast virtual paths now attach a file-backed paged ROM instead of
     allocating the full cartridge into `std::vector<u8>`.
+  - `ROMLoader::Validate()` for Dreamcast virtual paths now reads only the
+    228-byte GBA header instead of the full ROM, preventing a 16 MiB
+    allocation just to populate the ROM browser.
+  - `GetBackupTypeFromFile()` scans the ROM file in 64 KiB chunks for save
+    backup signatures (`SRAM_V`, `EEPROM_V`, `FLASH_V`, etc.).  This enables
+    correct backup type detection for ROMs not in the game database, without
+    loading the entire file into memory.
+
+- `src/nba/include/nba/rom/rom.hh`
+  - Adds public `IsPagedROM()`, `GetPagedROMSize()`, and `GetPagedROMPath()`
+    accessors so the core layer can inspect paged ROM state.
+
+- `src/nba/src/core.cc`
+  - `SearchSoundMainRAM()` now falls through to `SearchSoundMainRAMFromFile()`
+    when the ROM vector is empty (paged ROM case on Dreamcast).
+  - `SearchSoundMainRAMFromFile()` reads the ROM file in 64 KiB chunks and
+    performs the same CRC32 scan, enabling MP2K HLE on the Speed profile
+    even for large paged-ROM cartridges.
 
 - `src/nba/include/nba/rom/rom.hh`
   - Adds a Dreamcast-only 4 MiB page cache for cartridge reads, split into
