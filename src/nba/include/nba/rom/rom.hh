@@ -138,6 +138,15 @@ struct ROM {
   auto GetPagedROMPath() const -> std::string const& {
     return rom_path;
   }
+
+  // Warm the page cache with the first page of the ROM so that the initial
+  // burst of CPU instruction fetches after Reset() hits the cache rather than
+  // triggering CD-ROM I/O on the first executed opcode.
+  void PreloadFirstPage() {
+    if(IsPagedROM()) {
+      LoadPagedROM(0);
+    }
+  }
 #endif
 
   template<typename T>
@@ -340,6 +349,8 @@ private:
     std::fseek(rom_file, static_cast<long>(page_start), SEEK_SET);
     const auto bytes_read = std::fread(target->data.data(), 1, bytes_to_read, rom_file);
 
+    // Pad unread bytes with 0.  This covers both the normal case (last ROM
+    // page is smaller than kPageSize) and read errors (bytes_read < bytes_to_read).
     if(bytes_read < kPageSize) {
       std::memset(target->data.data() + bytes_read, 0, kPageSize - bytes_read);
     }
