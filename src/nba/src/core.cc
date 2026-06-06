@@ -165,34 +165,47 @@ auto Core::SearchSoundMainRAMFromFile() -> u32 {
   static constexpr u32 kSoundMainCRC32 = 0x27EA7FCF;
   static constexpr int kSoundMainLength = 48;
 
+  // After finding SoundMain, we read a pointer at offset 0x74 (116 bytes).
+  // The overlap past kChunkSize must cover both the 48-byte CRC window AND
+  // the 4-byte pointer read at offset 0x74, giving 0x74 + 4 = 120 bytes.
+  static constexpr size_t kChunkSize   = 64 * 1024;
+  static constexpr size_t kOverlapSize = 0x74 + sizeof(u32); // 120 bytes
+
+  // MP2K SoundMain lives in the game-engine portion of ROM.  Capping the
+  // search at 8 MiB covers virtually all GBA titles while bounding the CD
+  // read time to a few seconds instead of scanning the full 16+ MiB.
+  static constexpr size_t kMaxSearchSize = 8 * 1024 * 1024;
+
   auto& rom = bus.memory.rom;
   if(!rom.IsPagedROM()) {
     return 0xFFFFFFFF;
   }
 
-  const size_t rom_size = rom.GetPagedROMSize();
-  const auto& rom_path  = rom.GetPagedROMPath();
+  const size_t rom_size   = std::min(rom.GetPagedROMSize(), kMaxSearchSize);
+  const auto& rom_path    = rom.GetPagedROMPath();
 
   auto* file = std::fopen(rom_path.c_str(), "rb");
   if(!file) {
     return 0xFFFFFFFF;
   }
 
-  // Read chunks with enough overlap to ensure we never split a 48-byte
-  // SoundMain pattern across a chunk boundary.
-  static constexpr size_t kChunkSize = 64 * 1024;
-  std::vector<u8> chunk(kChunkSize + kSoundMainLength);
+  std::vector<u8> chunk(kChunkSize + kOverlapSize);
   u32 result = 0xFFFFFFFF;
   size_t file_offset = 0;
 
   while(file_offset < rom_size && result == 0xFFFFFFFF) {
-    const size_t to_read = std::min(kChunkSize + kSoundMainLength, rom_size - file_offset);
+    const size_t to_read = std::min(kChunkSize + kOverlapSize, rom_size - file_offset);
     if(std::fseek(file, static_cast<long>(file_offset), SEEK_SET) != 0) break;
     const size_t bytes_read = std::fread(chunk.data(), 1, to_read, file);
     if(bytes_read < static_cast<size_t>(kSoundMainLength)) break;
 
-    const size_t scan_limit = std::min(bytes_read - kSoundMainLength, kChunkSize);
-    for(size_t i = 0; i <= scan_limit; i += sizeof(u16)) {
+    // Only scan positions where the full 48-byte CRC window AND the 120-byte
+    // pointer read both fit within the buffer we actually read.
+    const size_t safe_limit = (bytes_read >= kOverlapSize)
+      ? std::min(bytes_read - kOverlapSize, kChunkSize)
+      : 0;
+
+    for(size_t i = 0; i <= safe_limit; i += sizeof(u16)) {
       if(crc32(&chunk[i], kSoundMainLength) == kSoundMainCRC32) {
         u32 address;
         std::memcpy(&address, &chunk[i + 0x74], sizeof(u32));

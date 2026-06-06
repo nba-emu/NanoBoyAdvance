@@ -146,7 +146,13 @@ auto ROMBrowser::Scan(DreamcastConfig const& config) -> std::vector<ROMEntry> {
     if(last_rom_exists &&
         ROMLoader::Validate(last_path) == ROMLoader::Result::Success &&
         seen.insert(last_path).second) {
-      entries.push_back(ROMEntry{last_path, last_path.filename().string() + " (last)"});
+      auto last_label = last_path.filename().string();
+      // Strip any ISO9660 version suffix from the label.
+      const auto sc = last_label.rfind(';');
+      if(sc != std::string::npos) {
+        last_label.resize(sc);
+      }
+      entries.push_back(ROMEntry{last_path, std::move(last_label) + " (last)"});
     }
   }
 
