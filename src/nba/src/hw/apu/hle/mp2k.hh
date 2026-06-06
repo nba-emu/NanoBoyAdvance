@@ -5,6 +5,7 @@
 
 #include <nba/integer.hh>
 #include <memory>
+#include <vector>
 
 namespace nba::core {
 
@@ -114,7 +115,11 @@ private:
     } wave_info;
 
     u8* wave_data = nullptr;
+    std::vector<u8> wave_data_owned;
   } samplers[kMaxSoundChannels];
+
+  auto ReadWaveInfo(u32 address, Sampler::WaveInfo& wave_info) -> bool;
+  auto ResolveWaveData(u32 address, size_t size, Sampler& sampler) -> u8*;
 
   struct Envelope {
     float volume = 0.0;

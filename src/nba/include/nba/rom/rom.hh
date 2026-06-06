@@ -15,6 +15,7 @@
 #include <cstring>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace nba {
@@ -68,9 +69,6 @@ struct ROM {
       , gpio(std::move(gpio))
       , rom_mask(rom_mask) {
     rom_file = std::fopen(rom_path.c_str(), "rb");
-    for(auto& page : rom_pages) {
-      page.data.resize(kPageSize);
-    }
 
     if(backup != nullptr) {
       if(typeid(*backup.get()) == typeid(EEPROM)) {
@@ -126,6 +124,64 @@ struct ROM {
     return rom;
   }
 
+  auto CopyRange(u32 address, size_t size, u8* dest) -> bool {
+    if(dest == nullptr) {
+      return size == 0;
+    }
+
+    if(size == 0) {
+      return true;
+    }
+
+    if(!rom.empty()) {
+      if(address + size > rom.size()) {
+        return false;
+      }
+
+      std::memcpy(dest, rom.data() + address, size);
+      return true;
+    }
+
+#if defined(PLATFORM_DREAMCAST)
+    if(address + size > rom_size) {
+      return false;
+    }
+
+    if(!IsPagedROM()) {
+      return false;
+    }
+
+    size_t copied = 0;
+    while(copied < size) {
+      const u32 addr = address + static_cast<u32>(copied);
+      LoadPagedROM(addr);
+
+      const auto page_start = addr & ~(u32(kPageSize) - 1);
+      const auto page_offset = addr & (u32(kPageSize) - 1);
+      const size_t chunk = std::min(size - copied, kPageSize - page_offset);
+
+      bool found = false;
+      for(auto& page : rom_pages) {
+        if(page.valid && page.start == page_start) {
+          std::memcpy(dest + copied, page.data.data() + page_offset, chunk);
+          found = true;
+          break;
+        }
+      }
+
+      if(!found) {
+        return false;
+      }
+
+      copied += chunk;
+    }
+
+    return true;
+#else
+    return false;
+#endif
+  }
+
 #if defined(PLATFORM_DREAMCAST)
   auto IsPagedROM() const -> bool {
     return rom_file != nullptr;
@@ -146,6 +202,28 @@ struct ROM {
     if(IsPagedROM()) {
       LoadPagedROM(0);
     }
+  }
+
+  // Returns a host pointer when the entire range is resident in a single page
+  // cache slot.  The pointer is only valid until the next paged ROM read.
+  auto GetHostAddressRange(u32 address, size_t size) -> u8* {
+    if(size == 0 || address + size > rom_size) {
+      return nullptr;
+    }
+
+    LoadPagedROM(address);
+    const auto page_start = address & ~(u32(kPageSize) - 1);
+    if(address + size > page_start + kPageSize) {
+      return nullptr;
+    }
+
+    for(auto& page : rom_pages) {
+      if(page.valid && page.start == page_start) {
+        return page.data.data() + (address & (u32(kPageSize) - 1));
+      }
+    }
+
+    return nullptr;
   }
 #endif
 
@@ -346,7 +424,18 @@ private:
       bytes_to_read = rom_size - page_start;
     }
 
-    std::fseek(rom_file, static_cast<long>(page_start), SEEK_SET);
+    if(target->data.empty()) {
+      target->data.resize(kPageSize);
+    }
+
+    if(std::fseek(rom_file, static_cast<long>(page_start), SEEK_SET) != 0) {
+      std::memset(target->data.data(), 0, kPageSize);
+      target->start = page_start;
+      target->last_used = rom_page_clock;
+      target->valid = true;
+      return;
+    }
+
     const auto bytes_read = std::fread(target->data.data(), 1, bytes_to_read, rom_file);
 
     // Pad unread bytes with 0.  This covers both the normal case (last ROM

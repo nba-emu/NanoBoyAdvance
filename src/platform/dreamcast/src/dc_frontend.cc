@@ -32,6 +32,10 @@ auto ShowFpsLabel(DreamcastConfig const& config) -> std::string {
   return config.show_fps ? "On" : "Off";
 }
 
+auto AllowLargeRomsLabel(DreamcastConfig const& config) -> std::string {
+  return config.allow_large_roms ? "On" : "Off";
+}
+
 auto FrameSkipLabel(DreamcastConfig const& config) -> std::string {
   return std::to_string(config.frame_skip);
 }
@@ -67,6 +71,11 @@ void AdjustPerformance(DreamcastConfig& config, int direction) {
 void AdjustShowFps(DreamcastConfig& config, int direction) {
   (void)direction;
   config.show_fps = !config.show_fps;
+}
+
+void AdjustAllowLargeRoms(DreamcastConfig& config, int direction) {
+  (void)direction;
+  config.allow_large_roms = !config.allow_large_roms;
 }
 
 void AdjustFrameSkip(DreamcastConfig& config, int direction) {
@@ -112,6 +121,7 @@ void AdjustSaveFolder(DreamcastConfig& config, int direction) {
 static constexpr SettingRow kSettings[] {
   { "Performance", PerformanceLabel, AdjustPerformance },
   { "Show FPS", ShowFpsLabel, AdjustShowFps },
+  { "Large ROMs (>8 MiB)", AllowLargeRomsLabel, AdjustAllowLargeRoms },
   { "Frame skip", FrameSkipLabel, AdjustFrameSkip },
   { "Audio buffer", AudioBufferLabel, AdjustAudioBuffer },
   { "BIOS path", BiosPathLabel, AdjustBiosPath },

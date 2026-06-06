@@ -42,6 +42,7 @@ auto BIOSLoader::LoadEmbedded(std::unique_ptr<CoreBase>& core) -> Result {
 static constexpr float kGBAFrameRate =
   static_cast<float>(16777216) / static_cast<float>(280896);
 static constexpr size_t kMaxGBAROMSize = 32 * 1024 * 1024;
+static constexpr size_t kStockDreamcastMaxROMSize = 8 * 1024 * 1024;
 
 static auto IsDreamcastVirtualPath(fs::path const& path) -> bool {
   const auto path_string = path.string();
@@ -122,6 +123,23 @@ static auto LoadEmulator(
     ui.ShowFatalError(message, input);
     return false;
   }
+
+#if NBA_DC_HAS_KOS
+  if(IsDreamcastVirtualPath(rom_path) &&
+      rom_size > kStockDreamcastMaxROMSize &&
+      !config->allow_large_roms) {
+    char message[256];
+    std::snprintf(
+      message,
+      sizeof(message),
+      "ROM exceeds 8 MiB stock limit\n%s\n%s\n\nEnable Large ROMs in Settings\nfor 32 MB RAM mod testing.",
+      FormatROMSize(rom_size).c_str(),
+      rom_path.c_str()
+    );
+    ui.ShowFatalError(message, input);
+    return false;
+  }
+#endif
 
 #if NBA_DC_HAS_KOS
   if(IsDreamcastVirtualPath(rom_path)) {

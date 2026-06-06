@@ -9,6 +9,30 @@
 
 namespace nba::core {
 
+auto MP2K::ReadWaveInfo(u32 address, Sampler::WaveInfo& wave_info) -> bool {
+  if(auto* host = bus.GetHostAddress<Sampler::WaveInfo>(address)) {
+    wave_info = *host;
+    return true;
+  }
+
+  return bus.CopyHostMemory(address, sizeof(Sampler::WaveInfo), reinterpret_cast<u8*>(&wave_info));
+}
+
+auto MP2K::ResolveWaveData(u32 address, size_t size, Sampler& sampler) -> u8* {
+  if(auto* host = bus.GetHostAddress<u8>(address, size)) {
+    sampler.wave_data_owned.clear();
+    return host;
+  }
+
+  sampler.wave_data_owned.resize(size);
+  if(!bus.CopyHostMemory(address, size, sampler.wave_data_owned.data())) {
+    sampler.wave_data_owned.clear();
+    return nullptr;
+  }
+
+  return sampler.wave_data_owned.data();
+}
+
 void MP2K::Reset() {
   engaged = false;
   current_frame = 0;
@@ -65,14 +89,15 @@ void MP2K::SoundMainRAM(SoundInfo const& sound_info) {
       }
       hq_envelope_volume[0] = U8ToFloat(channel.envelope_attack);
 
+      sampler = {};
       const Sampler::WaveInfo* const wave_info = bus.GetHostAddress<Sampler::WaveInfo>(channel.wave_address);
-      if(wave_info == nullptr) {
-        ATOM_WARN("MP2K: channel[{}] wave address is invalid: 0x{:08X}", channel.wave_address);
-        channel.status = 0; // Disable channel, there is no good way to deal with this.
+      if(wave_info != nullptr) {
+        sampler.wave_info = *wave_info;
+      } else if(!ReadWaveInfo(channel.wave_address, sampler.wave_info)) {
+        ATOM_WARN("MP2K: channel[{}] wave address is invalid: 0x{:08X}", i, channel.wave_address);
+        channel.status = 0;
         continue;
       }
-      sampler = {};
-      sampler.wave_info = *wave_info;
       if(sampler.wave_info.status & 0xC000) {
         channel.status |= CHANNEL_LOOP;
       }
@@ -207,7 +232,7 @@ void MP2K::RenderFrame() {
         wave_size = (wave_size + 63) / 64;
       }
       const u32 wave_data_begin = channel.wave_address + sizeof(Sampler::WaveInfo);
-      sampler.wave_data = bus.GetHostAddress<u8>(wave_data_begin, wave_size);
+      sampler.wave_data = ResolveWaveData(wave_data_begin, wave_size, sampler);
       if(sampler.wave_data == nullptr) {
         ATOM_WARN("MP2K: channel[{}] sample data has bad memory range 0x{:08X} - 0x{:08X}.", i, wave_data_begin, wave_data_begin + wave_size);
         channel.status = 0; // Disable channel, there is no good way to deal with this.
