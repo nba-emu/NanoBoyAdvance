@@ -26,6 +26,62 @@ static auto IsDreamcastVirtualPath(fs::path const& path) -> bool {
   const auto path_string = path.string();
   return path_string.rfind("/cd/", 0) == 0 || path_string.rfind("/pc/", 0) == 0;
 }
+
+// Scans a ROM file in chunks to detect the save backup type from embedded
+// signature strings (e.g. "SRAM_V", "EEPROM_V").  This avoids loading the
+// entire cartridge into memory, which is essential for large ROMs on Dreamcast.
+static auto GetBackupTypeFromFile(fs::path const& path, size_t rom_size) -> Config::BackupType {
+  using BackupType = Config::BackupType;
+
+  static constexpr std::pair<std::string_view, BackupType> kSignatures[] {
+    { "EEPROM_V",   BackupType::EEPROM_DETECT },
+    { "SRAM_V",     BackupType::SRAM },
+    { "SRAM_F_V",   BackupType::SRAM },
+    { "FLASH_V",    BackupType::FLASH_64 },
+    { "FLASH512_V", BackupType::FLASH_64 },
+    { "FLASH1M_V",  BackupType::FLASH_128 }
+  };
+  static constexpr size_t kMaxSigLen = 10; // length of longest possible signature
+  static constexpr size_t kChunkSize = 64 * 1024;
+
+  auto* file = std::fopen(path.string().c_str(), "rb");
+  if(!file) {
+    return BackupType::Detect;
+  }
+
+  // Allocate one extra kMaxSigLen bytes so signatures that straddle a chunk
+  // boundary are still found when we scan up to kChunkSize positions per chunk.
+  std::vector<u8> chunk(kChunkSize + kMaxSigLen, 0xFF);
+  BackupType result = BackupType::Detect;
+  size_t file_offset = 0;
+
+  while(file_offset < rom_size && result == BackupType::Detect) {
+    const size_t to_read = std::min(kChunkSize + kMaxSigLen, rom_size - file_offset);
+    if(std::fseek(file, static_cast<long>(file_offset), SEEK_SET) != 0) break;
+    const size_t bytes_read = std::fread(chunk.data(), 1, to_read, file);
+    if(bytes_read == 0) break;
+
+    // Scan at 4-byte aligned offsets (matching the in-memory scanner in
+    // GetBackupType).  The extra kMaxSigLen bytes let us safely compare
+    // signatures whose first character lands at the very end of the chunk.
+    const size_t scan_limit = std::min(bytes_read, kChunkSize);
+    for(size_t i = 0; i + sizeof(u32) <= scan_limit; i += sizeof(u32)) {
+      for(auto const& [sig, type] : kSignatures) {
+        if(i + sig.size() <= bytes_read &&
+            std::memcmp(&chunk[i], sig.data(), sig.size()) == 0) {
+          result = type;
+          break;
+        }
+      }
+      if(result != BackupType::Detect) break;
+    }
+
+    file_offset += kChunkSize;
+  }
+
+  std::fclose(file);
+  return result;
+}
 #endif
 
 static auto ValidateROMData(std::vector<u8> const& file_data) -> ROMLoader::Result {
@@ -97,8 +153,11 @@ auto ROMLoader::Load(
       if(game_info.backup_type != BackupType::Detect) {
         backup_type = game_info.backup_type;
       } else {
-        ATOM_WARN("ROMLoader: failed to detect backup type from game database!");
-        backup_type = BackupType::SRAM;
+        backup_type = GetBackupTypeFromFile(rom_path, size);
+        if(backup_type == BackupType::Detect) {
+          ATOM_WARN("ROMLoader: failed to detect backup type!");
+          backup_type = BackupType::SRAM;
+        }
       }
     }
 
@@ -354,6 +413,36 @@ auto ROMLoader::CreateBackup(
 }
 
 auto ROMLoader::Validate(fs::path const& path) -> Result {
+#if defined(PLATFORM_DREAMCAST)
+  if(IsDreamcastVirtualPath(path)) {
+    // Read only the ROM header to avoid loading the entire cartridge into memory.
+    size_t size = 0;
+    auto size_status = GetFileSize(path, size);
+    if(size_status != Result::Success) {
+      return size_status;
+    }
+
+    if(size < sizeof(Header) || size > kMaxROMSize) {
+      return Result::BadImage;
+    }
+
+    auto* file = std::fopen(path.string().c_str(), "rb");
+    if(!file) {
+      return Result::CannotOpenFile;
+    }
+
+    auto header_data = std::vector<u8>(sizeof(Header));
+    const auto read = std::fread(header_data.data(), 1, header_data.size(), file);
+    std::fclose(file);
+
+    if(read != header_data.size()) {
+      return Result::CannotOpenFile;
+    }
+
+    return ValidateROMData(header_data);
+  }
+#endif
+
   auto file_data = std::vector<u8>{};
   auto read_status = ReadFile(path, file_data);
 

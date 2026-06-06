@@ -126,6 +126,20 @@ struct ROM {
     return rom;
   }
 
+#if defined(PLATFORM_DREAMCAST)
+  auto IsPagedROM() const -> bool {
+    return rom_file != nullptr;
+  }
+
+  auto GetPagedROMSize() const -> size_t {
+    return rom_size;
+  }
+
+  auto GetPagedROMPath() const -> std::string const& {
+    return rom_path;
+  }
+#endif
+
   template<typename T>
   auto GetGPIODevice() -> T* {
     if(gpio) {
@@ -289,10 +303,6 @@ private:
       std::fclose(rom_file);
       rom_file = nullptr;
     }
-  }
-
-  bool ALWAYS_INLINE IsPagedROM() const {
-    return rom_file != nullptr;
   }
 
   void LoadPagedROM(u32 address) {

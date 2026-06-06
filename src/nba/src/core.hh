@@ -44,6 +44,9 @@ struct Core final : CoreBase {
 private:
   void SkipBootScreen();
   auto SearchSoundMainRAM() -> u32;
+#if defined(PLATFORM_DREAMCAST)
+  auto SearchSoundMainRAMFromFile() -> u32;
+#endif
 
   u32 hle_audio_hook;
   std::shared_ptr<Config> config;
