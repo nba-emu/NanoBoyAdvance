@@ -78,9 +78,35 @@ Writable `/pc` paths require an SD/IDE adapter or equivalent host filesystem mou
 
 ### Save Policy
 
-- Backup saves use the writable filesystem (`/pc/saves` by default).
+- Backup saves are written to the writable filesystem (`/pc/saves` by default).
 - Each ROM gets its own `<rom-stem>.sav` file.
+- The save directory is created automatically with `mkdir` on first use.
+- On real KallistiOS hardware the save file is opened and written through the
+  KOS virtual filesystem; on Flycast (where the `/pc/` stream may not support
+  writes) saves remain in-memory for the session only.
+- Existing save files from previous sessions are loaded on startup even on
+  Flycast if the file can be read via `fopen`.
 - **VMU saves are not supported yet** — VMU remains planned for a future milestone.
+
+### ROM Loading
+
+- Large ROMs are loaded using a 4 MiB paged file cache (four 1 MiB pages with
+  LRU eviction) rather than allocating the full cartridge into main RAM.
+- Page 0 is preloaded during ROM attach so the first CPU instruction fetch
+  does not block on CD I/O.
+- ROM validation reads only the 228-byte GBA header; the full file is never
+  read into memory during browser scanning or pre-launch validation.
+- Backup type is detected by scanning the ROM file in 64 KiB chunks for save
+  signature strings when the game is not in the built-in database.
+
+### Flycast Testing Notes
+
+- The ROM browser enumerates `/cd` using POSIX `opendir`/`readdir`.  On real
+  KallistiOS hardware this works correctly.  On Flycast, `opendir("/cd")` may
+  behave differently; if the disc root appears empty, copy your `.gba` files
+  to `/pc/roms` and point the ROM folder setting there instead.
+- ISO9660 version suffixes (e.g. `GAME.GBA;1`) in filenames are stripped
+  automatically from both display labels and file paths.
 
 ## Frontend Controls
 
