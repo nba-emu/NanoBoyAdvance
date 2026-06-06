@@ -17,6 +17,7 @@ namespace nba {
 struct ROMEntry {
   fs::path path;
   std::string label;
+  size_t size = 0;
 };
 
 struct ROMBrowser {

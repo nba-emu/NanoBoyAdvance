@@ -98,6 +98,12 @@ Writable `/pc` paths require an SD/IDE adapter or equivalent host filesystem mou
   read into memory during browser scanning or pre-launch validation.
 - Backup type is detected by scanning the ROM file in 64 KiB chunks for save
   signature strings when the game is not in the built-in database.
+- ROMs over 8 MiB are blocked on stock 16 MB hardware unless **Large ROMs
+  (>8 MiB)** is enabled in Settings.  On a 32 MB RAM mod (or Flycast with
+  `RamMod32MB`), KallistiOS reports extended RAM via `DBL_MEM` and large ROMs
+  are allowed automatically.
+- The ROM browser shows each cartridge size and marks titles that need the
+  Large ROMs setting with `[Large ROMs]`.
 
 ### Flycast Testing Notes
 

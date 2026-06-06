@@ -3,6 +3,7 @@
 
 #include "dc_frontend.hh"
 
+#include "dc_memory.hh"
 #include "dc_paths.hh"
 #include "dc_rom_browser.hh"
 
@@ -33,6 +34,9 @@ auto ShowFpsLabel(DreamcastConfig const& config) -> std::string {
 }
 
 auto AllowLargeRomsLabel(DreamcastConfig const& config) -> std::string {
+  if(HasExtendedRAM()) {
+    return "Auto (32 MB)";
+  }
   return config.allow_large_roms ? "On" : "Off";
 }
 

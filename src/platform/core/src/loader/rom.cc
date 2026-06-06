@@ -199,7 +199,9 @@ auto ROMLoader::Load(
 
     // Warm page 0 so the first CPU instruction fetch after Reset() hits the
     // cache instead of triggering disc I/O on the very first opcode.
-    core->GetROM().PreloadFirstPage();
+    if(!core->GetROM().PreloadFirstPage() || core->GetROM().HasReadError()) {
+      return Result::CannotOpenFile;
+    }
 
     return Result::Success;
   }

@@ -87,11 +87,11 @@ void Core::Run(int cycles) {
   while(scheduler.GetTimestampNow() < limit) {
     if(bus.hw.haltcnt == HaltControl::Run) {
       if(cpu.state.r15 == hle_audio_hook) {
-        const u32  sound_info_addr = *bus.GetHostAddress<u32>(0x03007FF0);
-        const auto sound_info = bus.GetHostAddress<MP2K::SoundInfo>(sound_info_addr);
-
-        if(sound_info != nullptr) {
-          apu.GetMP2K().SoundMainRAM(*sound_info);
+        if(auto* sound_info_ptr = bus.GetHostAddress<u32>(0x03007FF0)) {
+          const u32 sound_info_addr = *sound_info_ptr;
+          if(const auto sound_info = bus.GetHostAddress<MP2K::SoundInfo>(sound_info_addr)) {
+            apu.GetMP2K().SoundMainRAM(*sound_info);
+          }
         }
       }
 

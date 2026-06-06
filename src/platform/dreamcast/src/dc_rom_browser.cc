@@ -3,6 +3,7 @@
 
 #include "dc_rom_browser.hh"
 
+#include "dc_memory.hh"
 #include <platform/loader/rom.hh>
 
 #include <algorithm>
@@ -28,10 +29,50 @@ static auto HasGBAExtension(std::string const& path) -> bool {
   return extension == ".gba" || extension == ".GBA";
 }
 
+static auto FormatROMSizeLabel(size_t size) -> std::string {
+  if(size >= 1024 * 1024) {
+    char buffer[32];
+    std::snprintf(
+      buffer,
+      sizeof(buffer),
+      "%lu MiB",
+      static_cast<unsigned long>(size / (1024 * 1024))
+    );
+    return buffer;
+  }
+
+  char buffer[32];
+  std::snprintf(
+    buffer,
+    sizeof(buffer),
+    "%lu KiB",
+    static_cast<unsigned long>((size + 1023) / 1024)
+  );
+  return buffer;
+}
+
+static auto BuildROMLabel(
+  std::string base_label,
+  size_t size,
+  DreamcastConfig const& config
+) -> std::string {
+  auto label = std::move(base_label);
+  label += " (";
+  label += FormatROMSizeLabel(size);
+  label += ')';
+
+  if(size > kStockDreamcastMaxROMSize && !CanLoadLargeROM(config)) {
+    label += " [Large ROMs]";
+  }
+
+  return label;
+}
+
 static auto AddROMEntry(
   fs::path const& path,
   std::set<fs::path>& seen,
   std::vector<ROMEntry>& entries,
+  DreamcastConfig const& config,
   bool validate = true
 ) -> void {
   if(!seen.insert(path).second) {
@@ -39,6 +80,11 @@ static auto AddROMEntry(
   }
 
   if(validate && ROMLoader::Validate(path) != ROMLoader::Result::Success) {
+    return;
+  }
+
+  size_t size = 0;
+  if(ROMLoader::GetFileSize(path, size) != ROMLoader::Result::Success) {
     return;
   }
 
@@ -50,13 +96,18 @@ static auto AddROMEntry(
     label.resize(semicolon);
   }
 
-  entries.push_back(ROMEntry{path, std::move(label)});
+  entries.push_back(ROMEntry{
+    path,
+    BuildROMLabel(std::move(label), size, config),
+    size
+  });
 }
 
 static auto AddDirectoryEntries(
   fs::path const& directory,
   std::set<fs::path>& seen,
-  std::vector<ROMEntry>& entries
+  std::vector<ROMEntry>& entries,
+  DreamcastConfig const& config
 ) -> void {
 #if defined(PLATFORM_DREAMCAST)
   const auto directory_string = directory.string();
@@ -83,7 +134,7 @@ static auto AddDirectoryEntries(
         continue;
       }
 
-      AddROMEntry(directory / name, seen, entries);
+      AddROMEntry(directory / name, seen, entries, config);
     }
 
     closedir(dir);
@@ -108,7 +159,7 @@ static auto AddDirectoryEntries(
       continue;
     }
 
-    AddROMEntry(path, seen, entries);
+    AddROMEntry(path, seen, entries, config);
   }
 }
 
@@ -116,8 +167,8 @@ auto ROMBrowser::Scan(DreamcastConfig const& config) -> std::vector<ROMEntry> {
   std::set<fs::path> seen;
   std::vector<ROMEntry> entries;
 
-  AddDirectoryEntries(config.rom_folder, seen, entries);
-  AddDirectoryEntries("/cd", seen, entries);
+  AddDirectoryEntries(config.rom_folder, seen, entries, config);
+  AddDirectoryEntries("/cd", seen, entries, config);
 
   if(!config.last_rom.empty()) {
     const fs::path last_path{config.last_rom};
@@ -146,13 +197,19 @@ auto ROMBrowser::Scan(DreamcastConfig const& config) -> std::vector<ROMEntry> {
     if(last_rom_exists &&
         ROMLoader::Validate(last_path) == ROMLoader::Result::Success &&
         seen.insert(last_path).second) {
-      auto last_label = last_path.filename().string();
-      // Strip any ISO9660 version suffix from the label.
-      const auto sc = last_label.rfind(';');
-      if(sc != std::string::npos) {
-        last_label.resize(sc);
+      size_t size = 0;
+      if(ROMLoader::GetFileSize(last_path, size) == ROMLoader::Result::Success) {
+        auto last_label = last_path.filename().string();
+        const auto sc = last_label.rfind(';');
+        if(sc != std::string::npos) {
+          last_label.resize(sc);
+        }
+        entries.push_back(ROMEntry{
+          last_path,
+          BuildROMLabel(std::move(last_label), size, config) + " (last)",
+          size
+        });
       }
-      entries.push_back(ROMEntry{last_path, std::move(last_label) + " (last)"});
     }
   }
 
