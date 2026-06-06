@@ -37,6 +37,7 @@ struct BackupFile {
       file->auto_update = false; // default; upgraded below if stream opens
 
       // Attempt to load an existing save file.
+      bool loaded_existing = false;
       if(auto* f = std::fopen(save_path_string.c_str(), "rb")) {
         std::fseek(f, 0, SEEK_END);
         const long fsz = std::ftell(f);
@@ -49,6 +50,7 @@ struct BackupFile {
             std::fread(file->memory.get(), 1, save_size, f);
             file->save_size = save_size;
             default_size = static_cast<int>(save_size);
+            loaded_existing = true;
           }
         }
         std::fclose(f);
@@ -57,15 +59,25 @@ struct BackupFile {
       // Try to open the stream for write-back.  On real KallistiOS hardware
       // this works (std::fstream delegates to fopen); on Flycast the stream
       // may fail to open, in which case save data remains in-memory only.
-      file->stream.open(save_path_string.c_str(), flags | std::ios::trunc);
-      if(file->stream.good()) {
-        file->stream.write(
-          reinterpret_cast<const char*>(file->memory.get()),
-          static_cast<std::streamsize>(file->save_size)
-        );
+      //
+      // If we loaded an existing valid save, open in-place without truncating
+      // so we only rewrite bytes that actually change (via Update / auto_update).
+      // If no valid save existed, truncate to create a fresh file.
+      if(loaded_existing) {
+        file->stream.open(save_path_string.c_str(), flags);
+      } else {
+        file->stream.open(save_path_string.c_str(), flags | std::ios::trunc);
         if(file->stream.good()) {
-          file->auto_update = true;
+          // Write the initial 0xFF-filled block so the file has the right size.
+          file->stream.write(
+            reinterpret_cast<const char*>(file->memory.get()),
+            static_cast<std::streamsize>(file->save_size)
+          );
         }
+      }
+
+      if(file->stream.good()) {
+        file->auto_update = true;
       }
 
       return file;
