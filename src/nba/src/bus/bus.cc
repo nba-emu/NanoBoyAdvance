@@ -5,6 +5,7 @@
 #include <nba/common/scope_exit.hh>
 #include <atom/logger/logger.hh>
 #include <algorithm>
+#include <cstring>
 #include <stdexcept>
 
 #include "arm/arm7tdmi.hh"
@@ -355,7 +356,7 @@ auto Bus::GetHostAddress(u32 address, size_t size) -> u8* {
   auto& bios = memory.bios;
   auto& wram = memory.wram;
   auto& iram = memory.iram;
-  auto& rom = memory.rom.GetRawROM();
+  auto& rom = memory.rom;
 
   auto page = address >> 24;
 
@@ -387,14 +388,44 @@ auto Bus::GetHostAddress(u32 address, size_t size) -> u8* {
     // ROM (WS0, WS1, WS2)
     case 0x08 ... 0x0D: {
       auto offset = address & 0x01FF'FFFF;
-      if(offset + size <= rom.size()) {
-        return rom.data() + offset;
+      auto& rom_vec = rom.GetRawROM();
+      if(offset + size <= rom_vec.size()) {
+        return rom_vec.data() + offset;
       }
+
+#if defined(PLATFORM_DREAMCAST)
+      return rom.GetHostAddressRange(offset, size);
+#endif
       break;
     }
   }
 
   return nullptr;
+}
+
+auto Bus::CopyHostMemory(u32 address, size_t size, u8* dest) -> bool {
+  if(dest == nullptr) {
+    return size == 0;
+  }
+
+  if(size == 0) {
+    return true;
+  }
+
+  if(auto* host = GetHostAddress(address, size)) {
+    std::memcpy(dest, host, size);
+    return true;
+  }
+
+  auto page = address >> 24;
+
+  switch(page) {
+    case 0x08 ... 0x0D: {
+      return memory.rom.CopyRange(address & 0x01FF'FFFF, size, dest);
+    }
+  }
+
+  return false;
 }
 
 } // namespace nba::core

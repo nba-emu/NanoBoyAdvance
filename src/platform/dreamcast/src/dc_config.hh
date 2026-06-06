@@ -27,6 +27,7 @@ struct DreamcastConfig : PlatformConfig {
   int frame_skip = 0;
   int audio_buffer_size = 4096;
   bool show_fps = false;
+  bool allow_large_roms = false;
   PerformanceProfile performance_profile = PerformanceProfile::Balanced;
   std::string rom_folder = kDefaultROMFolder;
   std::string last_rom;

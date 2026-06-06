@@ -10,6 +10,7 @@
 
 #include "dc_config.hh"
 #include "dc_frontend.hh"
+#include "dc_memory.hh"
 #include "dc_paths.hh"
 #include "dc_rom_browser.hh"
 #include "dc_ui.hh"
@@ -124,8 +125,29 @@ static auto LoadEmulator(
   }
 
 #if NBA_DC_HAS_KOS
+  if(IsDreamcastVirtualPath(rom_path) &&
+      rom_size > kStockDreamcastMaxROMSize &&
+      !CanLoadLargeROM(*config)) {
+    char message[320];
+    std::snprintf(
+      message,
+      sizeof(message),
+      "ROM exceeds 8 MiB stock limit\n%s\n%s\n\nEnable Large ROMs in Settings\nor use a 32 MB RAM mod.",
+      FormatROMSize(rom_size).c_str(),
+      rom_path.c_str()
+    );
+    ui.ShowFatalError(message, input);
+    return false;
+  }
+#endif
+
+#if NBA_DC_HAS_KOS
   if(IsDreamcastVirtualPath(rom_path)) {
-    breadcrumb("Phase 2: ROM size precheck", FormatROMSize(rom_size));
+    std::string phase2_detail = FormatROMSize(rom_size);
+#if NBA_DC_HAS_ARCH
+    phase2_detail += HasExtendedRAM() ? "\nSystem RAM: 32 MB" : "\nSystem RAM: 16 MB";
+#endif
+    breadcrumb("Phase 2: ROM size precheck", phase2_detail);
   } else
 #endif
   {

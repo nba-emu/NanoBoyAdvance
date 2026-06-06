@@ -266,6 +266,8 @@ public:
 
   auto GetHostAddress(u32 address, size_t size) -> u8*;
 
+  auto CopyHostMemory(u32 address, size_t size, u8* dest) -> bool;
+
   template<typename T>
   auto GetHostAddress(u32 address, size_t count = 1) -> T* {
     return (T*)GetHostAddress(address, sizeof(T) * count);
