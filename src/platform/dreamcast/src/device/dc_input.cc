@@ -28,12 +28,19 @@ auto DCInput::ReadControllerState() -> cont_state_t* {
 auto DCInput::ButtonPressed(uint32 current, uint32 previous, uint32 mask) -> bool {
   return (current & mask) && !(previous & mask);
 }
+
+static auto IsInvalidControllerState(cont_state_t const* state) -> bool {
+  // Flycast can report every digital button bit set when no usable keyboard
+  // or controller mapping is active.  Treat that impossible menu state as
+  // disconnected input so the runtime does not see the exit combo held.
+  return state && state->buttons == 0xFFFF;
+}
 #endif
 
 auto DCInput::PollInput(CoreBase& core) -> bool {
 #if NBA_DC_HAS_KOS
   cont_state_t* state = ReadControllerState();
-  if(!state) {
+  if(!state || IsInvalidControllerState(state)) {
     ClearKeys(core);
     exit_combo_frames_ = 0;
     return false;
@@ -80,7 +87,7 @@ auto DCInput::PollMenu(DCMenuInput& menu) -> void {
   menu = {};
 
   cont_state_t* state = ReadControllerState();
-  if(!state) {
+  if(!state || IsInvalidControllerState(state)) {
     previous_buttons_ = 0xFFFF;
     previous_joyx_ = 0;
     previous_joyy_ = 0;
@@ -128,7 +135,7 @@ auto DCInput::WaitForButton(Button button) -> void {
 
   while(true) {
     cont_state_t* state = ReadControllerState();
-    if(state && (state->buttons & mask)) {
+    if(state && !IsInvalidControllerState(state) && (state->buttons & mask)) {
       break;
     }
 
@@ -137,7 +144,7 @@ auto DCInput::WaitForButton(Button button) -> void {
 
   while(true) {
     cont_state_t* state = ReadControllerState();
-    if(!state || !(state->buttons & mask)) {
+    if(!state || IsInvalidControllerState(state) || !(state->buttons & mask)) {
       break;
     }
 

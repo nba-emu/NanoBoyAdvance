@@ -73,34 +73,37 @@ static auto AddROMEntry(
   std::set<fs::path>& seen,
   std::vector<ROMEntry>& entries,
   DreamcastConfig const& config,
-  bool validate = true
-) -> void {
-  if(!seen.insert(path).second) {
-    return;
+  bool validate = true,
+  std::string label_override = {}
+) -> bool {
+  if(seen.find(path) != seen.end()) {
+    return false;
   }
 
   if(validate && ROMLoader::Validate(path) != ROMLoader::Result::Success) {
-    return;
+    return false;
   }
 
   size_t size = 0;
   if(ROMLoader::GetFileSize(path, size) != ROMLoader::Result::Success) {
-    return;
+    return false;
   }
 
   // Strip the ISO9660 version suffix (e.g. ";1") from the display label so
   // disc filenames like "GAME.GBA;1" appear as "GAME.GBA" in the menu.
-  auto label = path.filename().string();
+  auto label = label_override.empty() ? path.filename().string() : std::move(label_override);
   const auto semicolon = label.rfind(';');
   if(semicolon != std::string::npos) {
     label.resize(semicolon);
   }
 
+  seen.insert(path);
   entries.push_back(ROMEntry{
     path,
     BuildROMLabel(std::move(label), size, config),
     size
   });
+  return true;
 }
 
 static auto AddDirectoryEntries(
@@ -122,19 +125,26 @@ static auto AddDirectoryEntries(
         continue;
       }
 
-      auto name = std::string{entry->d_name};
+      auto raw_name = std::string{entry->d_name};
+      auto clean_name = raw_name;
 
-      // Strip ISO9660 version suffix from the filename used as the file path.
-      const auto semicolon_pos = name.rfind(';');
+      // Strip ISO9660 version suffix for extension checks and display labels.
+      const auto semicolon_pos = clean_name.rfind(';');
       if(semicolon_pos != std::string::npos) {
-        name.resize(semicolon_pos);
+        clean_name.resize(semicolon_pos);
       }
 
-      if(!HasGBAExtension(name)) {
+      if(!HasGBAExtension(clean_name)) {
         continue;
       }
 
-      AddROMEntry(directory / name, seen, entries, config);
+      // KOS/Flycast ISO9660 drivers differ on whether fopen wants "GAME.GBA"
+      // or the raw "GAME.GBA;1" directory entry. Try the clean path first for
+      // stable save names, then fall back to the raw path if needed.
+      if(!AddROMEntry(directory / clean_name, seen, entries, config, true, clean_name) &&
+          raw_name != clean_name) {
+        AddROMEntry(directory / raw_name, seen, entries, config, true, clean_name);
+      }
     }
 
     closedir(dir);

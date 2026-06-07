@@ -90,8 +90,9 @@ Writable `/pc` paths require an SD/IDE adapter or equivalent host filesystem mou
 
 ### ROM Loading
 
-- Large ROMs are loaded using a 4 MiB paged file cache (four 1 MiB pages with
-  LRU eviction) rather than allocating the full cartridge into main RAM.
+- Large ROMs are loaded using a paged file cache rather than allocating the full
+  cartridge into main RAM. ROMs up to 8 MiB use two active 1 MiB pages; larger
+  ROMs use four active 1 MiB pages with LRU eviction.
 - Page 0 is preloaded during ROM attach so the first CPU instruction fetch
   does not block on CD I/O.
 - ROM validation reads only the 228-byte GBA header; the full file is never
@@ -139,6 +140,7 @@ Configurable options:
 
 - **Performance** (`Accuracy` / `Balanced` / `Speed` — see Performance Profiles below)
 - **Show FPS** (`On` / `Off` — overlays the measured frame rate during play)
+- **Large ROMs** (`On` / `Off` — allows >8 MiB ROMs for 32 MB mod testing)
 - **Frame skip** (0–3 extra emulated frames per display frame)
 - **Audio buffer** (2048 / 4096 / 8192 bytes — lower = less latency, higher = safer)
 - **BIOS path** (`/cd/bios.bin` or `/pc/bios.bin`)
@@ -223,13 +225,18 @@ knobs. Pick the highest-fidelity profile a given game can sustain at full speed.
 Switching profiles overwrites Frame skip and Audio buffer; adjust those rows
 afterward to fine-tune within a profile.
 
+Large ROMs defaults to **Off** for stock Dreamcast memory budgets. Leave it off
+for retail hardware; enable it only when testing a 32 MB RAM mod or emulator
+configuration known to have the extra memory headroom.
+
 ### FPS Overlay / Benchmarking
 
 Enable **Show FPS** in settings to overlay the measured display frame rate in
 the top-left corner during play. The reading is averaged once per second by the
-frame limiter. A title running at full speed reports ~59.7 FPS (the GBA's native
-rate); sustained readings below that indicate the SH4 cannot keep up at the
-current profile.
+frame limiter. The overlay also shows `PG`, the number of ROM page-cache misses
+since the previous FPS sample. A title running at full speed reports ~59.7 FPS
+(the GBA's native rate); sustained readings below that indicate the SH4 cannot
+keep up at the current profile.
 
 ### Repeatable Benchmark Workflow
 
@@ -239,7 +246,7 @@ To compare profiles or measure a code change consistently:
 2. Pick a fixed in-game scene per ROM (e.g. a specific level intro or a heavy
    battle/effect screen) and reach it the same way each time.
 3. Enable **Show FPS** and let the scene run untouched for ~30 seconds, then
-   record the steady-state FPS reading.
+   record the steady-state FPS and `PG` readings.
 4. Repeat across the Accuracy / Balanced / Speed profiles, changing only the
    profile between runs.
 5. Note the lowest profile that holds ~59.7 FPS for that scene; that is the

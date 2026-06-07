@@ -1,8 +1,8 @@
 # NanoBoyAdvance – Dreamcast Compatibility & Benchmarks
 
 This document tracks per-game compatibility tiers, recommended performance
-profiles, and known regressions for the Dreamcast port. It is the canonical
-record for the Milestone 3 benchmark/compatibility pass.
+profiles, and known regressions for the Dreamcast port. Active planning lives
+in `ROADMAP.md`; this file is the results table for the Milestone 3 pass.
 
 See [`DREAMCAST.md`](DREAMCAST.md#repeatable-benchmark-workflow) for the
 benchmark workflow and the tier definitions.

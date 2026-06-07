@@ -1,5 +1,8 @@
 # Dreamcast Kirby Crash Debug Report
 
+Active planning has moved to `ROADMAP.md`. This file is kept as the evidence
+log for the Kirby large-ROM crash investigation.
+
 ## Test Case
 
 - ROM: `C:\Users\allen\Downloads\Kirby & the Amazing Mirror\Kirby & The Amazing Mirror (USA).gba`
@@ -24,7 +27,8 @@
   - Removed the hardcoded `Kirby.gba` candidate list; any `.gba` / `.GBA`
     file present in `/cd` or `/pc/roms` is now discovered automatically.
   - ISO9660 version suffixes (e.g. `GAME.GBA;1`) are stripped from display
-    labels but preserved in the file path for `fopen`.
+    labels. The browser tries the clean path first, then falls back to the raw
+    directory entry if the clean path does not open.
   - `last_rom` existence check uses `fopen` instead of `fs::exists` for
     `/cd` and `/pc` paths, which may not work through the KOS VFS layer.
   - Validation of ROM entries now only reads the 228-byte header (see below).
@@ -55,8 +59,9 @@
     even for large paged-ROM cartridges.
 
 - `src/nba/include/nba/rom/rom.hh`
-  - Adds a Dreamcast-only 4 MiB page cache for cartridge reads, split into
-    four 1 MiB LRU pages.
+  - Adds a Dreamcast-only paged cache for cartridge reads. ROMs up to 8 MiB use
+    two active 1 MiB pages; larger ROMs use four active 1 MiB LRU pages.
+  - Counts page-cache misses so stutter can be correlated with ROM paging.
   - Keeps the existing `std::vector<u8>` ROM backend for all non-Dreamcast
     builds.
 
@@ -77,6 +82,11 @@
   - Skips the duplicate full-ROM `ROMLoader::Validate()` read for Dreamcast
     virtual paths (`/cd` and `/pc`). This means Kirby is no longer read once
     during validation and a second time during load.
+  - Checks the paged ROM backend for media read failures during gameplay and
+    returns to a deterministic fatal-error screen instead of continuing on
+    invalid open-bus data.
+  - Logs FPS plus ROM page misses once per FPS sample, and shows page misses as
+    `PG` when the FPS overlay is enabled.
   - Adds first-frame breadcrumbs before and after the first three CPU frames.
 
 - `src/nba/include/nba/rom/backup/backup_file.hh`
@@ -145,27 +155,3 @@
   Useful as a reference but less mature and less directly portable.
   URL: https://github.com/pokemium/magia
 
-## Recommended Next Fixes
-
-1. Confirm the breadcrumb phase where Flycast exits.
-   - Crash before "Phase 7: ROM load" means launch setup still has a platform
-     issue.
-   - Crash during or immediately after "Phase 7: ROM load" means memory pressure
-     or ROM attach is the leading cause.
-
-2. Measure the paged reader's runtime behavior.
-   - The current page cache has four 1 MiB pages.
-   - If gameplay starts but stutters badly, tune page size/cache count.
-   - If gameplay crashes later, inspect DMA/MP2K paths that expect a host ROM
-     pointer.
-
-3. Add a ROM-size policy before allocation.
-   - For short-term stability, reject >8 MiB on stock Dreamcast and show a clear
-     message.
-   - For 32 MB mod testing, allow large ROMs only after confirming remaining
-     heap.
-
-4. Build a small known-good 4 MiB or 8 MiB GBA ROM CDI.
-   - If small ROMs launch, the Kirby failure is almost certainly large-ROM memory
-     handling.
-   - If small ROMs also crash, focus on `/pc` save creation or KOS file APIs.

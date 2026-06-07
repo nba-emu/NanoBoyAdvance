@@ -12,6 +12,7 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <cstddef>
 #include <string_view>
 #include <utility>
 
@@ -20,8 +21,22 @@ namespace nba {
 using BackupType = Config::BackupType;
 
 static constexpr size_t kMaxROMSize = 32 * 1024 * 1024; // 32 MiB
+static constexpr size_t kHeaderChecksumStart = 0xA0;
+static constexpr size_t kHeaderChecksumEnd = 0xBC;
 
 #if defined(PLATFORM_DREAMCAST)
+static constexpr bool kDreamcastForceFlatSmallROMs = false;
+static constexpr size_t kDreamcastFlatROMLimit = 8 * 1024 * 1024;
+
+static void DreamcastLoaderTrace(char const* phase, fs::path const& path, size_t size = 0) {
+  std::printf("[NBA-DC] ROMLoader %s: %s", phase, path.string().c_str());
+  if(size != 0) {
+    std::printf(" (%lu bytes)", static_cast<unsigned long>(size));
+  }
+  std::printf("\n");
+  std::fflush(stdout);
+}
+
 static auto IsDreamcastVirtualPath(fs::path const& path) -> bool {
   const auto path_string = path.string();
   return path_string.rfind("/cd/", 0) == 0 || path_string.rfind("/pc/", 0) == 0;
@@ -84,6 +99,79 @@ static auto GetBackupTypeFromFile(fs::path const& path, size_t rom_size) -> Conf
 }
 #endif
 
+struct ParsedROMHeader {
+  std::string title;
+  std::string code;
+  std::string maker;
+  u8 unit_code = 0;
+  u8 device_type = 0;
+  u8 version = 0;
+  u8 checksum = 0;
+  bool fixed_marker_ok = false;
+  bool checksum_ok = false;
+  GameInfo game_info;
+};
+
+static auto TrimHeaderString(char const* data, size_t size) -> std::string {
+  auto result = std::string{data, data + size};
+  while(!result.empty() && (result.back() == '\0' || result.back() == ' ')) {
+    result.pop_back();
+  }
+  return result;
+}
+
+static auto HeaderChecksumMatches(std::vector<u8> const& file_data) -> bool {
+  if(file_data.size() <= offsetof(Header, checksum)) {
+    return false;
+  }
+
+  u8 checksum = 0;
+  for(size_t i = kHeaderChecksumStart; i <= kHeaderChecksumEnd; i++) {
+    checksum = static_cast<u8>(checksum - file_data[i]);
+  }
+  checksum = static_cast<u8>(checksum - 0x19);
+  return checksum == file_data[offsetof(Header, checksum)];
+}
+
+static auto ParseROMHeader(std::vector<u8> const& file_data) -> ParsedROMHeader {
+  auto info = ParsedROMHeader{};
+  if(file_data.size() < sizeof(Header)) {
+    return info;
+  }
+
+  auto const* header = reinterpret_cast<Header const*>(file_data.data());
+  info.title = TrimHeaderString(header->game.title, sizeof(header->game.title));
+  info.code = TrimHeaderString(header->game.code, sizeof(header->game.code));
+  info.maker = TrimHeaderString(header->game.maker, sizeof(header->game.maker));
+  info.unit_code = header->unit_code;
+  info.device_type = header->device_type;
+  info.version = header->version;
+  info.checksum = header->checksum;
+  info.fixed_marker_ok = header->fixed_96h == 0x96;
+  info.checksum_ok = HeaderChecksumMatches(file_data);
+  if(auto db_entry = g_game_db.find(info.code); db_entry != g_game_db.end()) {
+    info.game_info = db_entry->second;
+  }
+  return info;
+}
+
+static void TraceROMHeader(ParsedROMHeader const& info, fs::path const& path) {
+  std::printf(
+    "[NBA-DC] ROM header: %s title='%s' code='%s' maker='%s' unit=0x%02X device=0x%02X version=0x%02X checksum=0x%02X fixed=%s checksum_ok=%s\n",
+    path.string().c_str(),
+    info.title.c_str(),
+    info.code.c_str(),
+    info.maker.c_str(),
+    info.unit_code,
+    info.device_type,
+    info.version,
+    info.checksum,
+    info.fixed_marker_ok ? "yes" : "no",
+    info.checksum_ok ? "yes" : "no"
+  );
+  std::fflush(stdout);
+}
+
 static auto ValidateROMData(std::vector<u8> const& file_data) -> ROMLoader::Result {
   auto size = file_data.size();
 
@@ -91,8 +179,8 @@ static auto ValidateROMData(std::vector<u8> const& file_data) -> ROMLoader::Resu
     return ROMLoader::Result::BadImage;
   }
 
-  auto* header = reinterpret_cast<Header const*>(file_data.data());
-  if(header->fixed_96h != 0x96) {
+  auto header = ParseROMHeader(file_data);
+  if(!header.fixed_marker_ok) {
     return ROMLoader::Result::BadImage;
   }
 
@@ -119,37 +207,132 @@ auto ROMLoader::Load(
 ) -> Result {
 #if defined(PLATFORM_DREAMCAST)
   if(IsDreamcastVirtualPath(rom_path)) {
+    DreamcastLoaderTrace("7A enter", rom_path);
     size_t size = 0;
+    DreamcastLoaderTrace("7B stat begin", rom_path);
     auto size_status = GetFileSize(rom_path, size);
     if(size_status != Result::Success) {
+      DreamcastLoaderTrace("7B stat failed", rom_path);
       return size_status;
     }
+    DreamcastLoaderTrace("7B stat ok", rom_path, size);
 
     if(size < sizeof(Header) || size > kMaxROMSize) {
+      DreamcastLoaderTrace("7B size invalid", rom_path, size);
       return Result::BadImage;
     }
 
-    auto* file = std::fopen(rom_path.string().c_str(), "rb");
-    if(!file) {
-      return Result::CannotOpenFile;
+    if(kDreamcastForceFlatSmallROMs && size <= kDreamcastFlatROMLimit) {
+      DreamcastLoaderTrace("7C flat small-ROM selected", rom_path, size);
+
+      auto file_data = std::vector<u8>{};
+      DreamcastLoaderTrace("7D flat read begin", rom_path, size);
+      auto read_status = ReadFile(rom_path, file_data);
+      if(read_status != Result::Success) {
+        DreamcastLoaderTrace("7D flat read failed", rom_path);
+        return read_status;
+      }
+      DreamcastLoaderTrace("7D flat read ok", rom_path, file_data.size());
+
+      DreamcastLoaderTrace("7E flat validate begin", rom_path, file_data.size());
+      auto validation = ValidateROMData(file_data);
+      if(validation != Result::Success) {
+        DreamcastLoaderTrace("7E flat validate failed", rom_path, file_data.size());
+        return validation;
+      }
+      DreamcastLoaderTrace("7E flat validate ok", rom_path, file_data.size());
+
+      DreamcastLoaderTrace("7F header parse begin", rom_path, file_data.size());
+      auto header_info = ParseROMHeader(file_data);
+      TraceROMHeader(header_info, rom_path);
+      auto game_info = header_info.game_info;
+      DreamcastLoaderTrace("7F cartridge info ok", rom_path, file_data.size());
+
+      if(backup_type == BackupType::Detect) {
+        DreamcastLoaderTrace("7G backup detect begin", rom_path, file_data.size());
+        if(game_info.backup_type != BackupType::Detect) {
+          backup_type = game_info.backup_type;
+        } else {
+          backup_type = GetBackupType(file_data);
+          if(backup_type == BackupType::Detect) {
+            ATOM_WARN("ROMLoader: failed to detect backup type!");
+            backup_type = BackupType::SRAM;
+          }
+        }
+        DreamcastLoaderTrace("7G backup detect ok", rom_path, file_data.size());
+      }
+
+      DreamcastLoaderTrace("7H backup create begin", rom_path, file_data.size());
+      auto backup = CreateBackup(core, save_path, backup_type);
+      DreamcastLoaderTrace("7H backup create ok", rom_path, file_data.size());
+      auto gpio = std::unique_ptr<GPIO>{};
+      auto gpio_devices = game_info.gpio | force_gpio;
+
+      if(gpio_devices != GPIODeviceType::None) {
+        DreamcastLoaderTrace("7I gpio create begin", rom_path, file_data.size());
+        gpio = std::make_unique<GPIO>();
+
+        if(gpio_devices & GPIODeviceType::RTC) {
+          gpio->Attach(core->CreateRTC());
+        }
+
+        if(gpio_devices & GPIODeviceType::SolarSensor) {
+          gpio->Attach(core->CreateSolarSensor());
+        }
+        DreamcastLoaderTrace("7I gpio create ok", rom_path, file_data.size());
+      }
+
+      u32 rom_mask = u32(kMaxROMSize - 1);
+      if(game_info.mirror) {
+        rom_mask = u32(RoundSizeToPowerOfTwo(size) - 1);
+      }
+
+      DreamcastLoaderTrace("7J flat attach begin", rom_path, file_data.size());
+      core->Attach(ROM{
+        std::move(file_data),
+        std::move(backup),
+        std::move(gpio),
+        rom_mask
+      });
+      DreamcastLoaderTrace("7J flat attach ok", rom_path, size);
+      return Result::Success;
     }
 
+    DreamcastLoaderTrace("7C paged open begin", rom_path, size);
+    auto* file = std::fopen(rom_path.string().c_str(), "rb");
+    if(!file) {
+      DreamcastLoaderTrace("7C paged open failed", rom_path, size);
+      return Result::CannotOpenFile;
+    }
+    DreamcastLoaderTrace("7C paged open ok", rom_path, size);
+
     auto header_data = std::vector<u8>(sizeof(Header));
+    DreamcastLoaderTrace("7D header read begin", rom_path, size);
     const auto header_read = std::fread(header_data.data(), 1, header_data.size(), file);
     std::fclose(file);
 
     if(header_read != header_data.size()) {
+      DreamcastLoaderTrace("7D header read failed", rom_path, header_read);
       return Result::CannotOpenFile;
     }
+    DreamcastLoaderTrace("7D header read ok", rom_path, header_read);
 
+    DreamcastLoaderTrace("7E header validate begin", rom_path, header_read);
     auto validation = ValidateROMData(header_data);
     if(validation != Result::Success) {
+      DreamcastLoaderTrace("7E header validate failed", rom_path, header_read);
       return validation;
     }
+    DreamcastLoaderTrace("7E header validate ok", rom_path, header_read);
 
-    auto game_info = GetGameInfo(header_data);
+    DreamcastLoaderTrace("7F header parse begin", rom_path, header_read);
+    auto header_info = ParseROMHeader(header_data);
+    TraceROMHeader(header_info, rom_path);
+    auto game_info = header_info.game_info;
+    DreamcastLoaderTrace("7F cartridge info ok", rom_path, header_read);
 
     if(backup_type == BackupType::Detect) {
+      DreamcastLoaderTrace("7G backup detect begin", rom_path, size);
       if(game_info.backup_type != BackupType::Detect) {
         backup_type = game_info.backup_type;
       } else {
@@ -159,13 +342,17 @@ auto ROMLoader::Load(
           backup_type = BackupType::SRAM;
         }
       }
+      DreamcastLoaderTrace("7G backup detect ok", rom_path, size);
     }
 
+    DreamcastLoaderTrace("7H backup create begin", rom_path, size);
     auto backup = CreateBackup(core, save_path, backup_type);
+    DreamcastLoaderTrace("7H backup create ok", rom_path, size);
     auto gpio = std::unique_ptr<GPIO>{};
     auto gpio_devices = game_info.gpio | force_gpio;
 
     if(gpio_devices != GPIODeviceType::None) {
+      DreamcastLoaderTrace("7I gpio create begin", rom_path, size);
       gpio = std::make_unique<GPIO>();
 
       if(gpio_devices & GPIODeviceType::RTC) {
@@ -175,6 +362,7 @@ auto ROMLoader::Load(
       if(gpio_devices & GPIODeviceType::SolarSensor) {
         gpio->Attach(core->CreateSolarSensor());
       }
+      DreamcastLoaderTrace("7I gpio create ok", rom_path, size);
     }
 
     u32 rom_mask = u32(kMaxROMSize - 1);
@@ -182,6 +370,7 @@ auto ROMLoader::Load(
       rom_mask = u32(RoundSizeToPowerOfTwo(size) - 1);
     }
 
+    DreamcastLoaderTrace("7J paged attach begin", rom_path, size);
     core->Attach(ROM{
       rom_path.string(),
       size,
@@ -189,19 +378,25 @@ auto ROMLoader::Load(
       std::move(gpio),
       rom_mask
     });
+    DreamcastLoaderTrace("7J paged attach ok", rom_path, size);
 
     // The ROM constructor opens the file for paged reads.  If fopen failed
     // (e.g. disc ejected between validation and load), the ROM object is
     // invalid; report the error rather than running with open-bus behavior.
     if(!core->GetROM().IsPagedROM()) {
+      DreamcastLoaderTrace("7K paged reopen failed", rom_path, size);
       return Result::CannotOpenFile;
     }
+    DreamcastLoaderTrace("7K paged reopen ok", rom_path, size);
 
     // Warm page 0 so the first CPU instruction fetch after Reset() hits the
     // cache instead of triggering disc I/O on the very first opcode.
+    DreamcastLoaderTrace("7L preload begin", rom_path, size);
     if(!core->GetROM().PreloadFirstPage() || core->GetROM().HasReadError()) {
+      DreamcastLoaderTrace("7L preload failed", rom_path, size);
       return Result::CannotOpenFile;
     }
+    DreamcastLoaderTrace("7L preload ok", rom_path, size);
 
     return Result::Success;
   }
@@ -221,7 +416,8 @@ auto ROMLoader::Load(
     return validation;
   }
 
-  auto game_info = GetGameInfo(file_data);
+  auto header_info = ParseROMHeader(file_data);
+  auto game_info = header_info.game_info;
 
   if(backup_type == BackupType::Detect) {
     if(game_info.backup_type != BackupType::Detect) {

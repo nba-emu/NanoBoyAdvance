@@ -364,7 +364,7 @@ auto Bus::GetHostAddress(u32 address, size_t size) -> u8* {
     // BIOS
     case 0x00: {
       auto offset = address & 0x00FF'FFFF;
-      if(offset + size <= bios.size()) {
+      if(offset <= bios.size() && size <= bios.size() - offset) {
         return bios.data() + offset;
       }
       break;
@@ -372,7 +372,7 @@ auto Bus::GetHostAddress(u32 address, size_t size) -> u8* {
     // EWRAM (external work RAM)
     case 0x02: {
       auto offset = address & 0x00FF'FFFF;
-      if(offset + size <= wram.size()) {
+      if(offset <= wram.size() && size <= wram.size() - offset) {
         return wram.data() + offset;
       }
       break;
@@ -380,7 +380,7 @@ auto Bus::GetHostAddress(u32 address, size_t size) -> u8* {
     // IWRAM (internal work RAM)
     case 0x03: {
       auto offset = address & 0x00FF'FFFF;
-      if(offset + size <= iram.size()) {
+      if(offset <= iram.size() && size <= iram.size() - offset) {
         return iram.data() + offset;
       }
       break;
@@ -389,7 +389,7 @@ auto Bus::GetHostAddress(u32 address, size_t size) -> u8* {
     case 0x08 ... 0x0D: {
       auto offset = address & 0x01FF'FFFF;
       auto& rom_vec = rom.GetRawROM();
-      if(offset + size <= rom_vec.size()) {
+      if(offset <= rom_vec.size() && size <= rom_vec.size() - offset) {
         return rom_vec.data() + offset;
       }
 

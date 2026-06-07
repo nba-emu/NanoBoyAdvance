@@ -43,10 +43,30 @@ auto BIOSLoader::LoadEmbedded(std::unique_ptr<CoreBase>& core) -> Result {
 static constexpr float kGBAFrameRate =
   static_cast<float>(16777216) / static_cast<float>(280896);
 static constexpr size_t kMaxGBAROMSize = 32 * 1024 * 1024;
+static constexpr bool kDreamcastAutobootTekken = false;
+static constexpr char kDreamcastAutobootROM[] = "/cd/tekken.gba";
+static constexpr char kDreamcastAutobootROMFallback[] = "/cd/Tekken.gba";
 
 static auto IsDreamcastVirtualPath(fs::path const& path) -> bool {
   const auto path_string = path.string();
   return path_string.rfind("/cd/", 0) == 0 || path_string.rfind("/pc/", 0) == 0;
+}
+
+static auto GetROMSourceName(fs::path const& path) -> const char* {
+  const auto path_string = path.string();
+  if(path_string.rfind("/cd/", 0) == 0) {
+    return "CD root";
+  }
+
+  if(path_string.rfind("/pc/roms/", 0) == 0) {
+    return "PC ROMs";
+  }
+
+  if(path_string.rfind("/pc/", 0) == 0) {
+    return "PC";
+  }
+
+  return "Unknown";
 }
 
 static auto FormatROMSize(size_t size) -> std::string {
@@ -61,11 +81,95 @@ static auto FormatROMSize(size_t size) -> std::string {
   return message;
 }
 
+static auto ResolveAutobootROMPath(DreamcastConfig const& config, std::string& report) -> fs::path {
+  report.clear();
+
+  auto probe = [&](fs::path const& candidate, char const* label) -> bool {
+    const auto result = ROMLoader::Validate(candidate);
+    char line[192];
+    std::snprintf(
+      line,
+      sizeof(line),
+      "%s: %s -> %s\n",
+      label,
+      candidate.string().c_str(),
+      ROMLoader::Describe(result)
+    );
+    report += line;
+    std::printf("[NBA-DC] Autoboot probe %s", line);
+    std::fflush(stdout);
+    return result == ROMLoader::Result::Success;
+  };
+
+  fs::path lower{kDreamcastAutobootROM};
+  if(probe(lower, "lower")) {
+    return lower;
+  }
+
+  fs::path mixed{kDreamcastAutobootROMFallback};
+  if(probe(mixed, "mixed")) {
+    return mixed;
+  }
+
+  fs::path upper{"/cd/TEKKEN.GBA"};
+  if(probe(upper, "upper")) {
+    return upper;
+  }
+
+  fs::path upper_version{"/cd/TEKKEN.GBA;1"};
+  if(probe(upper_version, "upper;1")) {
+    return upper_version;
+  }
+
+  auto entries = ROMBrowser::Scan(config);
+  char count_line[80];
+  std::snprintf(
+    count_line,
+    sizeof(count_line),
+    "scan entries: %lu\n",
+    static_cast<unsigned long>(entries.size())
+  );
+  report += count_line;
+  std::printf("[NBA-DC] Autoboot %s", count_line);
+  std::fflush(stdout);
+
+  for(auto const& entry : entries) {
+    char line[256];
+    std::snprintf(
+      line,
+      sizeof(line),
+      "scan: %s | %s | %lu bytes\n",
+      entry.path.string().c_str(),
+      entry.label.c_str(),
+      static_cast<unsigned long>(entry.size)
+    );
+    report += line;
+    std::printf("[NBA-DC] Autoboot %s", line);
+    std::fflush(stdout);
+
+    if(entry.path.string().rfind("/cd/", 0) == 0) {
+      return entry.path;
+    }
+  }
+
+  return lower;
+}
+
+static void HoldDebugBreadcrumbFrames(int frames) {
+#if NBA_DC_HAS_KOS
+  for(int i = 0; i < frames; i++) {
+    vid_waitvbl();
+  }
+#else
+  (void)frames;
+#endif
+}
+
 static auto LoadEmulator(
   DCUI& ui,
   DCInput& input,
-  std::shared_ptr<DreamcastConfig> config,
-  std::shared_ptr<DCVideoDevice> video_device,
+  std::shared_ptr<DreamcastConfig>& config,
+  std::shared_ptr<DCVideoDevice>& video_device,
   fs::path const& rom_path
 ) -> bool {
   const auto bios_path = config->bios_path;
@@ -83,6 +187,7 @@ static auto LoadEmulator(
     ui.DrawTextMultiline(48, 96, std::string{phase} + (detail.empty() ? "" : "\n" + detail));
     ui.DrawStatusBar("Launching ROM...");
     ui.Present();
+    HoldDebugBreadcrumbFrames(30);
   };
 
   breadcrumb("Phase 1: BIOS check", bios_path);
@@ -109,6 +214,19 @@ static auto LoadEmulator(
                   ROMLoader::Describe(size_result), rom_path.c_str());
     ui.ShowFatalError(message, input);
     return false;
+  }
+
+  {
+    char detail[320];
+    std::snprintf(
+      detail,
+      sizeof(detail),
+      "Path: %s\nSource: %s\nSize: %s",
+      rom_path.string().c_str(),
+      GetROMSourceName(rom_path),
+      FormatROMSize(rom_size).c_str()
+    );
+    breadcrumb("ROM selected", detail);
   }
 
   if(rom_size > kMaxGBAROMSize) {
@@ -189,9 +307,13 @@ static auto LoadEmulator(
 
   breadcrumb("Phase 4: Audio device");
   auto audio_device = std::make_shared<DCAudioDevice>();
+  breadcrumb("Phase 4A: Audio allocated");
   audio_device->SetBufferSize(config->audio_buffer_size);
+  breadcrumb("Phase 4B: Audio buffer set");
   config->audio_dev = audio_device;
+  breadcrumb("Phase 4C: Audio config attached");
   config->video_dev = video_device;
+  breadcrumb("Phase 4D: Video config attached");
 
   breadcrumb("Phase 5: Core create");
   auto core = CreateCore(config);
@@ -224,7 +346,7 @@ static auto LoadEmulator(
     );
   } catch(const std::exception& exception) {
     char message[192];
-    std::snprintf(message, sizeof(message), "Save file error\n%s", exception.what());
+    std::snprintf(message, sizeof(message), "ROM load error\n%s", exception.what());
     ui.ShowFatalError(message, input);
     return false;
   }
@@ -243,7 +365,9 @@ static auto LoadEmulator(
 
   FrameLimiter frame_limiter(kGBAFrameRate);
   bool running = true;
+  bool rom_read_failed = false;
   float measured_fps = 0.0f;
+  u32 measured_page_misses = 0;
   int debug_frames = 0;
 
   while(running) {
@@ -261,9 +385,21 @@ static auto LoadEmulator(
 
       for(int skip = 0; skip <= config->frame_skip; skip++) {
         core->RunForOneFrame();
+        if(core->GetROM().HasReadError()) {
+          rom_read_failed = true;
+          running = false;
+          return;
+        }
       }
     }, [&](float fps) {
       measured_fps = fps;
+      measured_page_misses = core->GetROM().TakePageMissCount();
+      std::printf(
+        "[NBA-DC] Runtime: FPS %.1f, ROM page misses %lu\n",
+        static_cast<double>(measured_fps),
+        static_cast<unsigned long>(measured_page_misses)
+      );
+      std::fflush(stdout);
     });
 
     if(debug_frames < 3) {
@@ -280,8 +416,14 @@ static auto LoadEmulator(
       // Persistent benchmark readout in the top-left margin (outside the
       // centered GBA frame, so the per-frame blit never overwrites it).
       // Fixed width keeps stale digits from lingering as the value changes.
-      char fps_text[24];
-      std::snprintf(fps_text, sizeof(fps_text), "FPS %5.1f", measured_fps);
+      char fps_text[40];
+      std::snprintf(
+        fps_text,
+        sizeof(fps_text),
+        "FPS %5.1f PG %3lu",
+        static_cast<double>(measured_fps),
+        static_cast<unsigned long>(measured_page_misses)
+      );
       video_device->DrawText(8, 8, fps_text);
     }
 
@@ -294,9 +436,23 @@ static auto LoadEmulator(
   }
 
   ui.ClearScreen();
-  ui.DrawOverlay("Returning to menu...");
   core.reset();
+  if(rom_read_failed) {
+    ui.ShowFatalError("ROM media read failed\nCheck disc/ODE media and try again.", input);
+  } else {
+    ui.DrawOverlay("Returning to menu...");
+  }
   return true;
+}
+
+static auto RunLoadEmulator(
+  DCUI& ui,
+  DCInput& input,
+  std::shared_ptr<DreamcastConfig>& config,
+  std::shared_ptr<DCVideoDevice>& video_device,
+  fs::path const& rom_path
+) -> bool {
+  return LoadEmulator(ui, input, config, video_device, rom_path);
 }
 
 int main(int argc, char** argv) {
@@ -329,8 +485,60 @@ int main(int argc, char** argv) {
   ui.DrawStatusBar("Loading frontend...");
   ui.Present();
 
+  if(kDreamcastAutobootTekken) {
+    std::string autoboot_report;
+    const auto autoboot_path = ResolveAutobootROMPath(*config, autoboot_report);
+    std::printf("[NBA-DC] Autoboot ROM: %s\n", autoboot_path.string().c_str());
+    std::fflush(stdout);
+
+    ui.ClearScreen();
+    ui.DrawTitle("Autoboot");
+    ui.DrawTextMultiline(
+      48,
+      88,
+      std::string{"AUTOBOOT\n"} + autoboot_path.string() + "\n\n" + autoboot_report
+    );
+    ui.DrawStatusBar("CDI-only Tekken stability test");
+    ui.Present();
+    HoldDebugBreadcrumbFrames(120);
+
+    const bool loaded = RunLoadEmulator(ui, input, config, video_device, autoboot_path);
+    ui.ShowMessage(
+      loaded ? "Autoboot ended" : "Autoboot failed",
+      loaded ? "Session returned from emulator." : "LoadEmulator returned false after diagnostics.",
+      input,
+      true
+    );
+    return 0;
+  }
+
   while(true) {
+    std::printf("[NBA-DC] Frontend: scanning ROMs\n");
+    std::fflush(stdout);
+    ui.ClearScreen();
+    ui.DrawTitle("NanoBoyAdvance");
+    ui.DrawTextCentered(120, "Scanning ROMs...");
+    ui.DrawStatusBar("Reading /pc/roms and /cd");
+    ui.Present();
+
     auto entries = ROMBrowser::Scan(*config);
+
+    char scan_message[80];
+    std::snprintf(
+      scan_message,
+      sizeof(scan_message),
+      "Found %lu ROM%s",
+      static_cast<unsigned long>(entries.size()),
+      entries.size() == 1 ? "" : "s"
+    );
+    std::printf("[NBA-DC] Frontend: %s\n", scan_message);
+    std::fflush(stdout);
+    ui.ClearScreen();
+    ui.DrawTitle("NanoBoyAdvance");
+    ui.DrawTextCentered(120, scan_message);
+    ui.DrawStatusBar("Opening frontend...");
+    ui.Present();
+
     auto frontend_result = DCFrontend::Run(ui, input, *config, entries);
 
     if(frontend_result.action == DCFrontend::Action::ReturnToLoader) {
@@ -343,7 +551,7 @@ int main(int argc, char** argv) {
     }
 
     if(frontend_result.action == DCFrontend::Action::LaunchROM) {
-      LoadEmulator(ui, input, config, video_device, frontend_result.rom_path);
+      RunLoadEmulator(ui, input, config, video_device, frontend_result.rom_path);
     }
   }
 

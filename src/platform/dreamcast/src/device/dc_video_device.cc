@@ -47,17 +47,40 @@ void DCVideoDevice::DrawText(int x, int y, std::string_view text) {
   int cursor_x = x;
   int cursor_y = y;
   for(char c : text) {
+    if(cursor_y <= -static_cast<int>(kFontHeight) || cursor_y >= kScreenHeight) {
+      return;
+    }
+
     if(c < 32 || c > 126) {
       cursor_x += kFontWidth;
       continue;
     }
+
+    if(cursor_x >= kScreenWidth) {
+      break;
+    }
+
+    if(cursor_x <= -static_cast<int>(kFontWidth)) {
+      cursor_x += kFontWidth;
+      continue;
+    }
+
     const auto& glyph = kFont8x16[c - 32];
     for(int row = 0; row < static_cast<int>(kFontHeight); row++) {
+      const int dst_y = cursor_y + row;
+      if(dst_y < 0 || dst_y >= kScreenHeight) {
+        continue;
+      }
+
       const std::uint8_t bits = glyph[row];
-      uint16* dst = vram_base_ + (cursor_y + row) * kScreenWidth + cursor_x;
       for(int col = 0; col < static_cast<int>(kFontWidth); col++) {
+        const int dst_x = cursor_x + col;
+        if(dst_x < 0 || dst_x >= kScreenWidth) {
+          continue;
+        }
+
         const bool on = (bits >> (7 - col)) & 1;
-        dst[col] = on ? fg : bg;
+        vram_base_[dst_y * kScreenWidth + dst_x] = on ? fg : bg;
       }
     }
     cursor_x += kFontWidth;
@@ -75,7 +98,7 @@ void DCVideoDevice::DrawTextCentered(int y, std::string_view text) {
 }
 
 void DCVideoDevice::DrawTextMultiline(int x, int y, std::string_view text) {
-  while(!text.empty()) {
+  while(!text.empty() && y < kScreenHeight) {
     const auto newline = text.find('\n');
     const auto line = text.substr(0, newline);
     DrawText(x, y, line);

@@ -29,6 +29,8 @@ namespace nba {
 struct ROM {
   static constexpr size_t kPageSize = 1024 * 1024;
   static constexpr size_t kPageCount = 4;
+  static constexpr size_t kSmallROMPageCount = 2;
+  static constexpr size_t kLargeROMThreshold = 8 * 1024 * 1024;
 
   ROM() {}
 
@@ -112,6 +114,7 @@ struct ROM {
     std::swap(rom_pages, other.rom_pages);
     std::swap(rom_page_clock, other.rom_page_clock);
     std::swap(rom_read_error, other.rom_read_error);
+    std::swap(rom_page_miss_count, other.rom_page_miss_count);
 #endif
     std::swap(backup_sram, other.backup_sram);
     std::swap(backup_eeprom, other.backup_eeprom);
@@ -135,7 +138,7 @@ struct ROM {
     }
 
     if(!rom.empty()) {
-      if(address + size > rom.size()) {
+      if(address > rom.size() || size > rom.size() - address) {
         return false;
       }
 
@@ -144,7 +147,7 @@ struct ROM {
     }
 
 #if defined(PLATFORM_DREAMCAST)
-    if(address + size > rom_size) {
+    if(address > rom_size || size > rom_size - address) {
       return false;
     }
 
@@ -161,10 +164,13 @@ struct ROM {
 
       const auto page_start = addr & ~(u32(kPageSize) - 1);
       const auto page_offset = addr & (u32(kPageSize) - 1);
-      const size_t chunk = std::min(size - copied, kPageSize - page_offset);
+      const size_t page_remaining = kPageSize - static_cast<size_t>(page_offset);
+      const size_t chunk = std::min(size - copied, page_remaining);
 
       bool found = false;
-      for(auto& page : rom_pages) {
+      const size_t active_pages = ActivePageCount();
+      for(size_t page_index = 0; page_index < active_pages; page_index++) {
+        auto& page = rom_pages[page_index];
         if(page.valid && page.start == page_start) {
           std::memcpy(dest + copied, page.data.data() + page_offset, chunk);
           found = true;
@@ -214,20 +220,34 @@ struct ROM {
     return rom_read_error;
   }
 
+  auto GetActivePageCount() const -> size_t {
+    return ActivePageCount();
+  }
+
+  auto TakePageMissCount() -> u32 {
+    const u32 count = rom_page_miss_count;
+    rom_page_miss_count = 0;
+    return count;
+  }
+
   // Returns a host pointer when the entire range is resident in a single page
   // cache slot.  The pointer is only valid until the next paged ROM read.
   auto GetHostAddressRange(u32 address, size_t size) -> u8* {
-    if(size == 0 || address + size > rom_size) {
+    if(size == 0 || address > rom_size || size > rom_size - address) {
       return nullptr;
     }
 
-    LoadPagedROM(address);
+    if(!LoadPagedROM(address)) {
+      return nullptr;
+    }
     const auto page_start = address & ~(u32(kPageSize) - 1);
-    if(address + size > page_start + kPageSize) {
+    if(size > (page_start + kPageSize) - address) {
       return nullptr;
     }
 
-    for(auto& page : rom_pages) {
+    const size_t active_pages = ActivePageCount();
+    for(size_t page_index = 0; page_index < active_pages; page_index++) {
+      auto& page = rom_pages[page_index];
       if(page.valid && page.start == page_start) {
         return page.data.data() + (address & (u32(kPageSize) - 1));
       }
@@ -305,7 +325,8 @@ struct ROM {
       rom_address_latch = address & rom_mask;
     }
 
-    if(rom_address_latch < rom.size()) [[likely]] {
+    if(rom_address_latch <= rom.size() &&
+        sizeof(u16) <= rom.size() - rom_address_latch) [[likely]] {
       data = read<u16>(rom.data(), rom_address_latch);
 #if defined(PLATFORM_DREAMCAST)
     } else if(IsPagedROM() && rom_address_latch + sizeof(u16) <= rom_size) {
@@ -340,7 +361,8 @@ struct ROM {
       rom_address_latch = address & rom_mask;
     }
 
-    if(rom_address_latch < rom.size()) [[likely]] {
+    if(rom_address_latch <= rom.size() &&
+        sizeof(u32) <= rom.size() - rom_address_latch) [[likely]] {
       data = read<u32>(rom.data(), rom_address_latch);
 #if defined(PLATFORM_DREAMCAST)
     } else if(IsPagedROM() && rom_address_latch + sizeof(u32) <= rom_size) {
@@ -409,9 +431,11 @@ private:
     }
 
     const auto page_start = address & ~(u32(kPageSize) - 1);
+    const size_t active_pages = ActivePageCount();
     rom_page_clock++;
 
-    for(auto& page : rom_pages) {
+    for(size_t page_index = 0; page_index < active_pages; page_index++) {
+      auto& page = rom_pages[page_index];
       if(page.valid && page.start == page_start) {
         page.last_used = rom_page_clock;
         return !rom_read_error;
@@ -419,7 +443,8 @@ private:
     }
 
     auto* target = &rom_pages[0];
-    for(auto& page : rom_pages) {
+    for(size_t page_index = 0; page_index < active_pages; page_index++) {
+      auto& page = rom_pages[page_index];
       if(!page.valid) {
         target = &page;
         break;
@@ -429,6 +454,8 @@ private:
         target = &page;
       }
     }
+
+    rom_page_miss_count++;
 
     size_t bytes_to_read = kPageSize;
     if(page_start + bytes_to_read > rom_size) {
@@ -467,9 +494,13 @@ private:
   }
 
   auto ReadPaged8(u32 address) -> u8 {
-    LoadPagedROM(address);
+    if(address >= rom_size || !LoadPagedROM(address)) {
+      return 0xFF;
+    }
     const auto page_start = address & ~(u32(kPageSize) - 1);
-    for(auto& page : rom_pages) {
+    const size_t active_pages = ActivePageCount();
+    for(size_t page_index = 0; page_index < active_pages; page_index++) {
+      auto& page = rom_pages[page_index];
       if(page.valid && page.start == page_start) {
         return page.data[address & (u32(kPageSize) - 1)];
       }
@@ -478,35 +509,20 @@ private:
   }
 
   auto ReadPaged16(u32 address) -> u16 {
-    const auto page_offset = address & (u32(kPageSize) - 1);
-    if(page_offset + sizeof(u16) <= kPageSize) {
-      LoadPagedROM(address);
-      const auto page_start = address & ~(u32(kPageSize) - 1);
-      for(auto& page : rom_pages) {
-        if(page.valid && page.start == page_start) {
-          return read<u16>(page.data.data(), page_offset);
-        }
-      }
-      return 0xFFFF;
-    }
-
-    return u16(ReadPaged8(address) | (ReadPaged8(address + 1) << 8));
+    return u16(u32(ReadPaged8(address)) | (u32(ReadPaged8(address + 1)) << 8));
   }
 
   auto ReadPaged32(u32 address) -> u32 {
-    const auto page_offset = address & (u32(kPageSize) - 1);
-    if(page_offset + sizeof(u32) <= kPageSize) {
-      LoadPagedROM(address);
-      const auto page_start = address & ~(u32(kPageSize) - 1);
-      for(auto& page : rom_pages) {
-        if(page.valid && page.start == page_start) {
-          return read<u32>(page.data.data(), page_offset);
-        }
-      }
-      return 0xFFFF'FFFF;
-    }
+    return u32(
+      u32(ReadPaged8(address)) |
+      (u32(ReadPaged8(address + 1)) << 8) |
+      (u32(ReadPaged8(address + 2)) << 16) |
+      (u32(ReadPaged8(address + 3)) << 24)
+    );
+  }
 
-    return u32(ReadPaged16(address) | (ReadPaged16(address + 2) << 16));
+  auto ActivePageCount() const -> size_t {
+    return rom_size > kLargeROMThreshold ? kPageCount : kSmallROMPageCount;
   }
 #endif
 
@@ -524,6 +540,7 @@ private:
   FILE* rom_file = nullptr;
   std::array<PagedROMPage, kPageCount> rom_pages;
   u32 rom_page_clock = 0;
+  u32 rom_page_miss_count = 0;
   bool rom_read_error = false;
 #endif
   std::unique_ptr<Backup> backup_sram;

@@ -37,6 +37,7 @@ auto AllowLargeRomsLabel(DreamcastConfig const& config) -> std::string {
   if(HasExtendedRAM()) {
     return "Auto (32 MB)";
   }
+
   return config.allow_large_roms ? "On" : "Off";
 }
 

@@ -14,6 +14,7 @@ void DreamcastConfig::ApplyDefaults() {
   video.filter = PlatformConfig::Video::Filter::Nearest;
   video.color = PlatformConfig::Video::Color::No;
   show_fps = false;
+  allow_large_roms = false;
 
   // The Balanced profile seeds the CPU/audio/video knobs (mp2k HLE,
   // interpolation, frame skip, audio buffer, LCD ghosting).
