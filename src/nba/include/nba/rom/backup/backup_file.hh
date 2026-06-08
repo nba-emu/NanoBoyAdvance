@@ -25,6 +25,7 @@ struct BackupFile {
     bool create = true;
     auto flags = std::ios::binary | std::ios::in | std::ios::out;
     std::unique_ptr<BackupFile> file { new BackupFile() };
+    file->path = save_path;
 
 #if defined(PLATFORM_DREAMCAST)
     const auto save_path_string = save_path.string();
@@ -166,11 +167,46 @@ struct BackupFile {
     return save_size;
   }
 
+  // Whether save writes are streamed straight to disk.  This is false on
+  // platforms/media where the backing stream could not be opened for writing
+  // (e.g. Flycast's read-only /pc/ stream), in which case the save lives only
+  // in memory until Flush() is called at a quiet point such as session exit.
+  auto IsPersistent() const -> bool {
+    return auto_update;
+  }
+
+  // Best-effort write of the whole save buffer to disk.  For persistent
+  // sessions this just flushes the open stream; for in-memory-only sessions it
+  // makes a single clean fopen("wb") attempt, which can succeed at exit even
+  // when the per-write streaming path failed earlier.  Returns true if the
+  // save is now safely on disk.
+  auto Flush() -> bool {
+    if(auto_update) {
+      stream.flush();
+      return stream.good();
+    }
+
+    if(path.empty() || !memory) {
+      return false;
+    }
+
+    auto* f = std::fopen(path.string().c_str(), "wb");
+    if(!f) {
+      return false;
+    }
+
+    const size_t written = std::fwrite(memory.get(), 1, save_size, f);
+    const bool flushed = std::fflush(f) == 0;
+    const bool closed = std::fclose(f) == 0;
+    return written == save_size && flushed && closed;
+  }
+
   bool auto_update = true;
 
 private:
   BackupFile() { }
 
+  fs::path path;
   size_t save_size;
   std::fstream stream;
   std::unique_ptr<u8[]> memory;

@@ -84,7 +84,9 @@ without full-ROM allocations or undefined behavior after media failures.
 - [x] Document VMU as out of scope for now.
 - [ ] Re-enable safe config load/save once Flycast `/pc` behavior is fully
   understood.
-- [ ] Improve save UX for in-memory-only sessions.
+- [x] Improve save UX for in-memory-only sessions: attempt a clean full-buffer
+  save flush on exit when streaming writes were unavailable, and tell the user
+  whether their progress was persisted.
 - [ ] Add clearer browser affordances for unavailable large ROMs on stock RAM.
 
 ## Milestone 3: Performance + Compatibility

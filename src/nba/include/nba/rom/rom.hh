@@ -245,6 +245,37 @@ struct ROM {
     return nullptr;
   }
 
+  // Whether this cartridge has a save backup at all.
+  auto HasBackup() const -> bool {
+    return backup_sram != nullptr || backup_eeprom != nullptr;
+  }
+
+  // Whether every present backup is streaming its writes to disk.  Returns
+  // false when a backup exists but its save only lives in memory this session
+  // (e.g. read-only media), which the frontend can surface to the user.
+  auto IsBackupPersistent() const -> bool {
+    if(backup_sram && !backup_sram->IsPersistent()) {
+      return false;
+    }
+    if(backup_eeprom && !backup_eeprom->IsPersistent()) {
+      return false;
+    }
+    return true;
+  }
+
+  // Best-effort persist of all present backups to disk.  Returns true only if
+  // every backup is safely on disk afterwards.
+  auto FlushBackup() -> bool {
+    bool ok = true;
+    if(backup_sram) {
+      ok = backup_sram->Flush() && ok;
+    }
+    if(backup_eeprom) {
+      ok = backup_eeprom->Flush() && ok;
+    }
+    return ok;
+  }
+
   void LoadState(SaveState const& state) {
     rom_address_latch = state.rom_address_latch;
 

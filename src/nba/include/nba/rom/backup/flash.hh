@@ -23,6 +23,9 @@ struct FLASH : Backup {
   void LoadState(SaveState const& state) final;
   void CopyState(SaveState& state) final;
 
+  auto IsPersistent() const -> bool final { return file ? file->IsPersistent() : true; }
+  auto Flush() -> bool final { return file ? file->Flush() : true; }
+
 private:
 
   enum Command {

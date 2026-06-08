@@ -86,6 +86,13 @@ Writable `/pc` paths require an SD/IDE adapter or equivalent host filesystem mou
   writes) saves remain in-memory for the session only.
 - Existing save files from previous sessions are loaded on startup even on
   Flycast if the file can be read via `fopen`.
+- When streaming writes are unavailable (in-memory-only session), the emulator
+  makes one clean full-buffer write to the save file when you exit back to the
+  ROM browser.  This single `fopen("wb")` attempt can succeed at exit even when
+  the per-write streaming path failed during play.  A message reports whether
+  your progress was persisted (`Save Written`) or could not be saved
+  (`Save Not Written`); the latter suggests pointing the save folder at a
+  writable `/pc` location.
 - **VMU saves are not supported yet** — VMU remains planned for a future milestone.
 
 ### ROM Loading

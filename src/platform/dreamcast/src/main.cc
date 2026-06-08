@@ -435,10 +435,44 @@ static auto LoadEmulator(
 #endif
   }
 
+  // Persist saves before tearing the core down.  On read-only media (e.g.
+  // Flycast's /pc/ stream) backup writes never reached disk during play; make
+  // one clean attempt now and tell the user whether their progress survived.
+  bool save_in_memory_only = false;
+  bool save_flush_ok = true;
+  if(!rom_read_failed && core->GetROM().HasBackup()) {
+    save_in_memory_only = !core->GetROM().IsBackupPersistent();
+    save_flush_ok = core->GetROM().FlushBackup();
+    std::printf(
+      "[NBA-DC] Save flush: in_memory_only=%d flush_ok=%d\n",
+      save_in_memory_only ? 1 : 0,
+      save_flush_ok ? 1 : 0
+    );
+    std::fflush(stdout);
+  }
+
   ui.ClearScreen();
   core.reset();
   if(rom_read_failed) {
     ui.ShowFatalError("ROM media read failed\nCheck disc/ODE media and try again.", input);
+  } else if(save_in_memory_only) {
+    if(save_flush_ok) {
+      ui.ShowMessage(
+        "Save Written",
+        "Saves were in-memory this session\n(read-only media during play).\n\n"
+        "Your progress was written to disk\non exit.",
+        input,
+        true
+      );
+    } else {
+      ui.ShowMessage(
+        "Save Not Written",
+        "Saves could not be written to disk\n(read-only media).\n\n"
+        "Progress from this session may be\nlost.  Use a writable /pc save\nfolder to keep saves.",
+        input,
+        true
+      );
+    }
   } else {
     ui.DrawOverlay("Returning to menu...");
   }
