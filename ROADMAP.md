@@ -82,8 +82,9 @@ without full-ROM allocations or undefined behavior after media failures.
   buffer, BIOS path, ROM folder, and save folder.
 - [x] Store per-ROM saves under `/pc/saves/<rom>.sav`.
 - [x] Document VMU as out of scope for now.
-- [ ] Re-enable safe config load/save once Flycast `/pc` behavior is fully
-  understood.
+- [x] Re-enable safe config load at startup via an `fopen` probe and in-memory
+  TOML parse (no `std::filesystem`, no write-on-miss), so saved settings survive
+  a reboot without risking the Flycast `/pc` hang.
 - [x] Improve save UX for in-memory-only sessions: attempt a clean full-buffer
   save flush on exit when streaming writes were unavailable, and tell the user
   whether their progress was persisted.

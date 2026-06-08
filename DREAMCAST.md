@@ -162,6 +162,18 @@ Selecting a **Performance** profile rewrites the audio/video/frame-skip knobs
 to that profile's preset; you can then fine-tune Frame skip and Audio buffer
 afterward without losing the rest of the preset.
 
+### Settings Persistence
+
+- Settings are saved to `/pc/nba-dc.toml` when you choose **Save and return**
+  in the settings menu.
+- At startup the emulator loads that file with a best-effort, guarded reader:
+  it probes the file with `fopen` and parses it from memory, so it never calls
+  `std::filesystem` and never writes a new file on a miss. This keeps saved
+  settings across reboots without risking the Flycast `/pc/` hang that a
+  filesystem-based load could trigger.
+- If the file is missing or malformed, the emulator silently falls back to
+  defaults; the `[NBA-DC] Config:` line on stdout reports which path was taken.
+
 ## Hardware Mapping (Gameplay)
 
 | Dreamcast Button | GBA Button |

@@ -513,8 +513,11 @@ int main(int argc, char** argv) {
   DCInput input;
 
   auto config = std::make_shared<DreamcastConfig>();
-  config->ApplyDefaults();
-  // Skip filesystem-dependent LoadDreamcast/EnsureDirectory that may hang on FlyCast
+  // Best-effort config load: probes the file with fopen and parses it from
+  // memory (no std::filesystem, no write-on-miss), so saved settings survive a
+  // reboot without risking the Flycast /pc/ hang that the full LoadDreamcast
+  // path can trigger.  ApplyDefaults() runs inside LoadDreamcastSafe.
+  config->LoadDreamcastSafe(DreamcastConfig::kDefaultConfigPath);
 
   ui.DrawStatusBar("Loading frontend...");
   ui.Present();

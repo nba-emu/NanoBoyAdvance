@@ -37,6 +37,11 @@ struct DreamcastConfig : PlatformConfig {
   // called when the user explicitly switches profiles in the settings menu.
   void ApplyPerformanceProfile(PerformanceProfile profile);
   void LoadDreamcast(std::string const& path);
+  // Best-effort config load that probes the file with fopen and parses it from
+  // memory, avoiding std::filesystem and never writing a file on a miss.  Safe
+  // to call at startup on Flycast's /pc/ virtual filesystem where the regular
+  // LoadDreamcast path can hang.
+  void LoadDreamcastSafe(std::string const& path);
   void SaveDreamcast(std::string const& path);
 
   static auto ProfileName(PerformanceProfile profile) -> const char*;

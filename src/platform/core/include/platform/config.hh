@@ -42,6 +42,11 @@ struct PlatformConfig : Config {
   void Save(std::string const& path);
 
 protected:
+  // Applies an already-parsed TOML document onto this config.  Split out from
+  // Load(path) so callers that obtained the document another way (e.g. reading
+  // the file through a platform-specific API) can reuse the same mapping.
+  void LoadFromData(toml::value const& data);
+
   virtual void LoadCustomData(toml::value const& data) {}
   virtual void SaveCustomData(toml::value& data) {}
 };

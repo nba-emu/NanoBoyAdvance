@@ -4,6 +4,8 @@
 #include "dc_config.hh"
 
 #include <algorithm>
+#include <cstdio>
+#include <string>
 
 namespace nba {
 
@@ -82,6 +84,50 @@ void DreamcastConfig::LoadDreamcast(std::string const& path) {
   }
 
   SaveDreamcast(path);
+}
+
+void DreamcastConfig::LoadDreamcastSafe(std::string const& path) {
+  ApplyDefaults();
+
+  // Probe for the config file with fopen rather than std::filesystem, which can
+  // hang or misbehave on Flycast's /pc/ virtual filesystem.  If the file is
+  // absent or unreadable, keep defaults and intentionally do NOT write a new
+  // file here (a write could hang on the same media); settings are persisted
+  // later when the user saves from the settings menu.
+  auto* file = std::fopen(path.c_str(), "rb");
+  if(!file) {
+    std::printf("[NBA-DC] Config: none found at %s, using defaults\n", path.c_str());
+    std::fflush(stdout);
+    return;
+  }
+
+  std::string content;
+  char buffer[1024];
+  size_t read = 0;
+  while((read = std::fread(buffer, 1, sizeof(buffer), file)) > 0) {
+    content.append(buffer, read);
+  }
+  std::fclose(file);
+
+  if(content.empty()) {
+    std::printf("[NBA-DC] Config: empty file at %s, using defaults\n", path.c_str());
+    std::fflush(stdout);
+    return;
+  }
+
+  // Parse from the in-memory buffer so toml never touches the filesystem.  On a
+  // malformed file, fall back cleanly to defaults instead of a partial state.
+  try {
+    auto data = toml::parse_str(content);
+    LoadFromData(data);
+    std::printf("[NBA-DC] Config: loaded %s\n", path.c_str());
+    std::fflush(stdout);
+  } catch(std::exception const& ex) {
+    ApplyDefaults();
+    std::printf("[NBA-DC] Config: parse error in %s (%s), using defaults\n",
+                path.c_str(), ex.what());
+    std::fflush(stdout);
+  }
 }
 
 void DreamcastConfig::SaveDreamcast(std::string const& path) {

@@ -24,6 +24,10 @@ void PlatformConfig::Load(std::string const& path) {
     return;
   }
 
+  LoadFromData(data);
+}
+
+void PlatformConfig::LoadFromData(toml::value const& data) {
   if(data.contains("general")) {
     auto general = data.at("general");
     this->bios_path = toml::find_or<std::string>(general, "bios_path", "bios.bin");
