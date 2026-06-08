@@ -164,15 +164,21 @@ afterward without losing the rest of the preset.
 
 ### Settings Persistence
 
-- Settings are saved to `/pc/nba-dc.toml` when you choose **Save and return**
-  in the settings menu.
-- At startup the emulator loads that file with a best-effort, guarded reader:
-  it probes the file with `fopen` and parses it from memory, so it never calls
+- Settings are saved to `/pc/nba-dc.toml`:
+  - when you choose **Save and return** in the settings menu, and
+  - automatically right before a ROM launches, so the **last played ROM**
+    (`last_rom`) is remembered and pre-selected in the browser next time.
+- Both saves use a guarded one-shot writer: the config is serialized to memory
+  and written with a single `fopen("wb")`. It avoids `std::filesystem` and the
+  read-modify-write (re-parsing the existing file) that the regular save path
+  performs, so it will not hang on Flycast's `/pc/` virtual filesystem.
+- At startup the emulator loads that file with a matching guarded reader: it
+  probes the file with `fopen` and parses it from memory, so it never calls
   `std::filesystem` and never writes a new file on a miss. This keeps saved
-  settings across reboots without risking the Flycast `/pc/` hang that a
-  filesystem-based load could trigger.
+  settings across reboots without risking a Flycast `/pc/` hang.
 - If the file is missing or malformed, the emulator silently falls back to
-  defaults; the `[NBA-DC] Config:` line on stdout reports which path was taken.
+  defaults; the `[NBA-DC] Config:` lines on stdout report which path was taken
+  and whether each save succeeded.
 
 ## Hardware Mapping (Gameplay)
 

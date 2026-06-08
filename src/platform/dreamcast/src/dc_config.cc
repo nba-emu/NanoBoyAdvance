@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <sstream>
 #include <string>
 
 namespace nba {
@@ -131,7 +132,45 @@ void DreamcastConfig::LoadDreamcastSafe(std::string const& path) {
 }
 
 void DreamcastConfig::SaveDreamcast(std::string const& path) {
-  Save(path);
+  // Route through the guarded writer so settings saves never hit the
+  // std::filesystem / read-modify-write path that can hang on Flycast.
+  SaveDreamcastSafe(path);
+}
+
+auto DreamcastConfig::SaveDreamcastSafe(std::string const& path) -> bool {
+  // Build the full document fresh in memory.  Unlike the base Save path we do
+  // not read and merge the existing file (a parse that can hang on /pc/); the
+  // Dreamcast config writes every key it owns, so nothing is lost.
+  std::string content;
+  try {
+    toml::value data;
+    SaveToData(data);
+    std::ostringstream oss;
+    oss << data;
+    content = oss.str();
+  } catch(std::exception const& ex) {
+    std::printf("[NBA-DC] Config: serialize error for %s (%s)\n", path.c_str(), ex.what());
+    std::fflush(stdout);
+    return false;
+  }
+
+  auto* file = std::fopen(path.c_str(), "wb");
+  if(!file) {
+    std::printf("[NBA-DC] Config: could not open %s for write\n", path.c_str());
+    std::fflush(stdout);
+    return false;
+  }
+
+  const size_t written = std::fwrite(content.data(), 1, content.size(), file);
+  const bool flushed = std::fflush(file) == 0;
+  const bool closed = std::fclose(file) == 0;
+  const bool ok = written == content.size() && flushed && closed;
+
+  std::printf("[NBA-DC] Config: save %s %s (%lu bytes)\n",
+              path.c_str(), ok ? "ok" : "failed",
+              static_cast<unsigned long>(content.size()));
+  std::fflush(stdout);
+  return ok;
 }
 
 void DreamcastConfig::LoadCustomData(toml::value const& data) {

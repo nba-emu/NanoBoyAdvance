@@ -137,6 +137,14 @@ void PlatformConfig::Save(std::string const& path) {
     }
   }
 
+  SaveToData(data);
+
+  std::ofstream file{ path, std::ios::out };
+  file << data;
+  file.close();
+}
+
+void PlatformConfig::SaveToData(toml::value& data) {
   // General
   data["general"]["bios_path"]   = this->bios_path;
   data["general"]["bios_skip"]   = this->skip_bios;
@@ -198,10 +206,6 @@ void PlatformConfig::Save(std::string const& path) {
   data["audio"]["mp2k_hle_force_reverb"] = this->audio.mp2k_hle_force_reverb;
 
   SaveCustomData(data);
-
-  std::ofstream file{ path, std::ios::out };
-  file << data;
-  file.close();
 }
 
 } // namespace nba

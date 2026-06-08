@@ -43,6 +43,12 @@ struct DreamcastConfig : PlatformConfig {
   // LoadDreamcast path can hang.
   void LoadDreamcastSafe(std::string const& path);
   void SaveDreamcast(std::string const& path);
+  // Best-effort config save that serializes to memory and writes the whole file
+  // with a single fopen("wb"), avoiding std::filesystem and the read-modify
+  // (toml::parse of the existing file) that the regular Save path performs.
+  // Safe to call at a quiet point (e.g. right before launching a ROM) on
+  // Flycast's /pc/ virtual filesystem.  Returns true if the file was written.
+  auto SaveDreamcastSafe(std::string const& path) -> bool;
 
   static auto ProfileName(PerformanceProfile profile) -> const char*;
   static auto ProfileFromName(std::string const& name, PerformanceProfile fallback)

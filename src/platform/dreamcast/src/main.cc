@@ -588,6 +588,10 @@ int main(int argc, char** argv) {
     }
 
     if(frontend_result.action == DCFrontend::Action::LaunchROM) {
+      // Persist settings (notably last_rom) at this quiet point with the
+      // guarded one-shot writer, so the choice survives a reboot without
+      // risking a filesystem hang mid-launch.
+      config->SaveDreamcastSafe(DreamcastConfig::kDefaultConfigPath);
       RunLoadEmulator(ui, input, config, video_device, frontend_result.rom_path);
     }
   }

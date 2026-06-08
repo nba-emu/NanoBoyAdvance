@@ -85,6 +85,10 @@ without full-ROM allocations or undefined behavior after media failures.
 - [x] Re-enable safe config load at startup via an `fopen` probe and in-memory
   TOML parse (no `std::filesystem`, no write-on-miss), so saved settings survive
   a reboot without risking the Flycast `/pc` hang.
+- [x] Add a guarded one-shot config save (serialize to memory, single
+  `fopen("wb")`) used by the settings menu and automatically before each ROM
+  launch, so `last_rom` and settings persist without a filesystem-based
+  read-modify-write that could hang on Flycast.
 - [x] Improve save UX for in-memory-only sessions: attempt a clean full-buffer
   save flush on exit when streaming writes were unavailable, and tell the user
   whether their progress was persisted.
