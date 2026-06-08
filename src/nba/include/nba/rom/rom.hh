@@ -158,30 +158,16 @@ struct ROM {
     size_t copied = 0;
     while(copied < size) {
       const u32 addr = address + static_cast<u32>(copied);
-      if(!LoadPagedROM(addr)) {
+      auto* page = LoadPagedROM(addr);
+      if(page == nullptr) {
         return false;
       }
 
-      const auto page_start = addr & ~(u32(kPageSize) - 1);
       const auto page_offset = addr & (u32(kPageSize) - 1);
       const size_t page_remaining = kPageSize - static_cast<size_t>(page_offset);
       const size_t chunk = std::min(size - copied, page_remaining);
 
-      bool found = false;
-      const size_t active_pages = ActivePageCount();
-      for(size_t page_index = 0; page_index < active_pages; page_index++) {
-        auto& page = rom_pages[page_index];
-        if(page.valid && page.start == page_start) {
-          std::memcpy(dest + copied, page.data.data() + page_offset, chunk);
-          found = true;
-          break;
-        }
-      }
-
-      if(!found) {
-        return false;
-      }
-
+      std::memcpy(dest + copied, page->data.data() + page_offset, chunk);
       copied += chunk;
     }
 
@@ -213,7 +199,7 @@ struct ROM {
     }
 
     rom_read_error = false;
-    return LoadPagedROM(0);
+    return LoadPagedROM(0) != nullptr;
   }
 
   auto HasReadError() const -> bool {
@@ -237,23 +223,17 @@ struct ROM {
       return nullptr;
     }
 
-    if(!LoadPagedROM(address)) {
-      return nullptr;
-    }
     const auto page_start = address & ~(u32(kPageSize) - 1);
     if(size > (page_start + kPageSize) - address) {
       return nullptr;
     }
 
-    const size_t active_pages = ActivePageCount();
-    for(size_t page_index = 0; page_index < active_pages; page_index++) {
-      auto& page = rom_pages[page_index];
-      if(page.valid && page.start == page_start) {
-        return page.data.data() + (address & (u32(kPageSize) - 1));
-      }
+    auto* page = LoadPagedROM(address);
+    if(page == nullptr) {
+      return nullptr;
     }
 
-    return nullptr;
+    return page->data.data() + (address & (u32(kPageSize) - 1));
   }
 #endif
 
@@ -417,6 +397,13 @@ private:
   }
 
 #if defined(PLATFORM_DREAMCAST)
+  struct PagedROMPage {
+    std::vector<u8> data;
+    u32 start = 0;
+    u32 last_used = 0;
+    bool valid = false;
+  };
+
   void ClosePagedFile() {
     if(rom_file) {
       std::fclose(rom_file);
@@ -424,10 +411,14 @@ private:
     }
   }
 
-  auto LoadPagedROM(u32 address) -> bool {
+  // Resolves the page containing `address`, reading it from the backing file
+  // (with LRU eviction) on a cache miss.  Returns the resident page, or nullptr
+  // on a media read failure.  Returning the page directly lets callers read
+  // straight from the page buffer instead of re-scanning the cache.
+  auto LoadPagedROM(u32 address) -> PagedROMPage* {
     if(!rom_file) {
       rom_read_error = true;
-      return false;
+      return nullptr;
     }
 
     const auto page_start = address & ~(u32(kPageSize) - 1);
@@ -438,7 +429,7 @@ private:
       auto& page = rom_pages[page_index];
       if(page.valid && page.start == page_start) {
         page.last_used = rom_page_clock;
-        return !rom_read_error;
+        return rom_read_error ? nullptr : &page;
       }
     }
 
@@ -469,7 +460,7 @@ private:
     if(std::fseek(rom_file, static_cast<long>(page_start), SEEK_SET) != 0) {
       rom_read_error = true;
       target->valid = false;
-      return false;
+      return nullptr;
     }
 
     const auto bytes_read = std::fread(target->data.data(), 1, bytes_to_read, rom_file);
@@ -481,7 +472,7 @@ private:
       } else {
         rom_read_error = true;
         target->valid = false;
-        return false;
+        return nullptr;
       }
     } else if(bytes_read < kPageSize) {
       std::memset(target->data.data() + bytes_read, 0, kPageSize - bytes_read);
@@ -490,29 +481,53 @@ private:
     target->start = page_start;
     target->last_used = rom_page_clock;
     target->valid = true;
-    return true;
+    return target;
   }
 
   auto ReadPaged8(u32 address) -> u8 {
-    if(address >= rom_size || !LoadPagedROM(address)) {
+    if(address >= rom_size) {
       return 0xFF;
     }
-    const auto page_start = address & ~(u32(kPageSize) - 1);
-    const size_t active_pages = ActivePageCount();
-    for(size_t page_index = 0; page_index < active_pages; page_index++) {
-      auto& page = rom_pages[page_index];
-      if(page.valid && page.start == page_start) {
-        return page.data[address & (u32(kPageSize) - 1)];
-      }
+    if(auto* page = LoadPagedROM(address)) {
+      return page->data[address & (u32(kPageSize) - 1)];
     }
     return 0xFF;
   }
 
   auto ReadPaged16(u32 address) -> u16 {
+    const auto page_offset = address & (u32(kPageSize) - 1);
+
+    // Fast path: the whole halfword lives inside a single page, so resolve the
+    // page once and read it directly instead of fetching byte-by-byte.
+    if(page_offset <= kPageSize - sizeof(u16)) [[likely]] {
+      if(address >= rom_size) {
+        return 0xFFFF;
+      }
+      if(auto* page = LoadPagedROM(address)) {
+        return read<u16>(page->data.data(), page_offset);
+      }
+      return 0xFFFF;
+    }
+
+    // Slow path: the access straddles a page boundary.
     return u16(u32(ReadPaged8(address)) | (u32(ReadPaged8(address + 1)) << 8));
   }
 
   auto ReadPaged32(u32 address) -> u32 {
+    const auto page_offset = address & (u32(kPageSize) - 1);
+
+    // Fast path: the whole word lives inside a single page.
+    if(page_offset <= kPageSize - sizeof(u32)) [[likely]] {
+      if(address >= rom_size) {
+        return 0xFFFF'FFFF;
+      }
+      if(auto* page = LoadPagedROM(address)) {
+        return read<u32>(page->data.data(), page_offset);
+      }
+      return 0xFFFF'FFFF;
+    }
+
+    // Slow path: the access straddles a page boundary.
     return u32(
       u32(ReadPaged8(address)) |
       (u32(ReadPaged8(address + 1)) << 8) |
@@ -528,13 +543,6 @@ private:
 
   std::vector<u8> rom;
 #if defined(PLATFORM_DREAMCAST)
-  struct PagedROMPage {
-    std::vector<u8> data;
-    u32 start = 0;
-    u32 last_used = 0;
-    bool valid = false;
-  };
-
   std::string rom_path;
   size_t rom_size = 0;
   FILE* rom_file = nullptr;

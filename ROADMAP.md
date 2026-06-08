@@ -39,6 +39,10 @@ without full-ROM allocations or undefined behavior after media failures.
   ROMs up to 8 MiB and four pages only for larger ROMs.
 - [x] Add page-cache telemetry in the FPS interval log/overlay (`PG` = ROM page
   misses since the previous FPS sample).
+- [x] Optimize the paged-ROM read hot path: 16/32-bit fetches now resolve the
+  cache page once and read directly from the page buffer instead of fetching
+  byte-by-byte (each byte previously re-ran the page lookup and cache scan).
+  Boundary-spanning accesses still fall back to the byte-wise path.
 - [x] Keep the Dreamcast build green after the latest upstream pull.
 
 ### Next Actions
