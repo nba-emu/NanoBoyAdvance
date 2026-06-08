@@ -87,7 +87,9 @@ without full-ROM allocations or undefined behavior after media failures.
 - [x] Improve save UX for in-memory-only sessions: attempt a clean full-buffer
   save flush on exit when streaming writes were unavailable, and tell the user
   whether their progress was persisted.
-- [ ] Add clearer browser affordances for unavailable large ROMs on stock RAM.
+- [x] Add clearer browser affordances for unavailable large ROMs on stock RAM:
+  oversized ROMs are tagged `[Needs Large ROMs]` and selecting one shows an
+  explanatory message instead of launching into a fatal-error screen.
 
 ## Milestone 3: Performance + Compatibility
 

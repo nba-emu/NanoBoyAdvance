@@ -110,8 +110,12 @@ Writable `/pc` paths require an SD/IDE adapter or equivalent host filesystem mou
   (>8 MiB)** is enabled in Settings.  On a 32 MB RAM mod (or Flycast with
   `RamMod32MB`), KallistiOS reports extended RAM via `DBL_MEM` and large ROMs
   are allowed automatically.
-- The ROM browser shows each cartridge size and marks titles that need the
-  Large ROMs setting with `[Large ROMs]`.
+- The ROM browser shows each cartridge size and marks titles that exceed the
+  stock 8 MiB limit on the current RAM configuration with `[Needs Large ROMs]`.
+  Selecting such a title does not launch it; the browser shows a message
+  explaining that the **Large ROMs** setting (or a 32 MB RAM mod) is required.
+  Enabling **Large ROMs** in Settings and returning rescans the list, clearing
+  the tag for ROMs that now fit.
 
 ### Flycast Testing Notes
 

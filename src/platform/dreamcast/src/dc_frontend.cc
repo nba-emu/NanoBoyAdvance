@@ -249,8 +249,24 @@ auto DCFrontend::Run(
     } else if(menu.down) {
       selection = (selection + 1) % static_cast<int>(entries.size());
     } else if(menu.confirm) {
-      config.last_rom = entries[selection].path.string();
-      return Result{Action::LaunchROM, entries[selection].path};
+      auto const& entry = entries[selection];
+
+      // Refuse to launch ROMs that exceed the stock 8 MiB limit when the
+      // current configuration cannot load them, and explain how to enable
+      // them, instead of dropping the user into a fatal-error screen.
+      if(entry.needs_large_roms) {
+        ui.ShowMessage(
+          "Large ROM Unavailable",
+          "This ROM is larger than 8 MiB and\nneeds more RAM than stock Dreamcast\n"
+          "provides.\n\nEnable \"Large ROMs\" in Settings\n(for a 32 MB RAM mod) to play it.",
+          input,
+          true
+        );
+        continue;
+      }
+
+      config.last_rom = entry.path.string();
+      return Result{Action::LaunchROM, entry.path};
     } else if(menu.settings) {
       DCSettingsMenu::Run(ui, input, config);
       return Result{Action::OpenSettings, {}};

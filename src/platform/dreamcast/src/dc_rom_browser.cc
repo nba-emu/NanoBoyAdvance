@@ -51,6 +51,10 @@ static auto FormatROMSizeLabel(size_t size) -> std::string {
   return buffer;
 }
 
+static auto NeedsLargeROMs(size_t size, DreamcastConfig const& config) -> bool {
+  return size > kStockDreamcastMaxROMSize && !CanLoadLargeROM(config);
+}
+
 static auto BuildROMLabel(
   std::string base_label,
   size_t size,
@@ -61,8 +65,10 @@ static auto BuildROMLabel(
   label += FormatROMSizeLabel(size);
   label += ')';
 
-  if(size > kStockDreamcastMaxROMSize && !CanLoadLargeROM(config)) {
-    label += " [Large ROMs]";
+  if(NeedsLargeROMs(size, config)) {
+    // Marked unavailable on the current RAM configuration; the browser refuses
+    // to launch these and explains why when selected.
+    label += " [Needs Large ROMs]";
   }
 
   return label;
@@ -101,7 +107,8 @@ static auto AddROMEntry(
   entries.push_back(ROMEntry{
     path,
     BuildROMLabel(std::move(label), size, config),
-    size
+    size,
+    NeedsLargeROMs(size, config)
   });
   return true;
 }
@@ -217,7 +224,8 @@ auto ROMBrowser::Scan(DreamcastConfig const& config) -> std::vector<ROMEntry> {
         entries.push_back(ROMEntry{
           last_path,
           BuildROMLabel(std::move(last_label), size, config) + " (last)",
-          size
+          size,
+          NeedsLargeROMs(size, config)
         });
       }
     }
