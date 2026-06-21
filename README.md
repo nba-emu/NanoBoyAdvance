@@ -1,6 +1,4 @@
 # NanoBoyAdvance
-[![license](https://img.shields.io/github/license/nba-emu/NanoBoyAdvance)](https://github.com/nba-emu/NanoBoyAdvance/blob/master/LICENSE)
-[![build](https://img.shields.io/github/actions/workflow/status/nba-emu/NanoBoyAdvance/build.yml?branch=master)](https://github.com/nba-emu/NanoBoyAdvance/actions/workflows/build.yml)
 [![discord](https://img.shields.io/discord/969218483873251338?logo=discord&label=discord)](https://discord.gg/HDshKwvcj)
 
 NanoBoyAdvance is a cycle-accurate Game Boy Advance emulator.  
@@ -21,7 +19,7 @@ It aims to be as accurate as possible, while also offering enhancements such as 
 Download the lastest [release](https://github.com/nba-emu/NanoBoyAdvance/releases).
 
 Upon loading a ROM for the first time you will be prompted to assign the Game Boy Advance BIOS file.  
-You can [dump](https://github.com/mgba-emu/bios-dump/tree/master/src) it from a real console (accurate) or use an [unofficial BIOS](https://github.com/Nebuleon/ReGBA/blob/master/bios/gba_bios.bin) (less accurate).
+You can [dump](https://github.com/mgba-emu/bios-dump) it from a real console (accurate) or use an [unofficial BIOS](https://github.com/Nebuleon/ReGBA) (Use `gba_bios.bin` from the `bios` folder.) (less accurate).
 
 ## Accuracy
 A lot of research and attention to detail has been put into developing this core and making it accurate.
@@ -68,7 +66,7 @@ Compiling can now be done through `cmake --build build`.
 | DeSmuME, Hyllian | xBRZ upscaling code |
 
 ## Sister Projects
-Our sister projects include **[SkyEmu](https://github.com/skylersaleh/SkyEmu/)**, **[Dust](https://github.com/Kelpsyberry/dust/)** and **[Panda3DS](https://github.com/wheremyfoodat/panda3DS)**.
+Our sister projects include **[SkyEmu](https://github.com/skylersaleh/SkyEmu)**, **[Dust](https://github.com/Kelpsyberry/dust)** and **[Panda3DS](https://github.com/wheremyfoodat/panda3DS)**.
 
 ## Copyright
 NanoBoyAdvance is licensed under the terms of the GNU General Public License (GPL) 3.0 or any later version.
