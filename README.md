@@ -1,3 +1,7 @@
+# Migrated to Codeberg!
+
+Development of the project on GitHub has ceased and will continue over on [Codeberg](https://codeberg.org/nba-emu/NanoBoyAdvance).
+
 # NanoBoyAdvance
 [![discord](https://img.shields.io/discord/969218483873251338?logo=discord&label=discord)](https://discord.gg/HDshKwvcj)
 
